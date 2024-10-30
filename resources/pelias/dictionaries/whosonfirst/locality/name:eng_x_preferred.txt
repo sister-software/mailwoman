@@ -1,0 +1,81 @@
+
+# these are the only two decent values in file: locality/abrv:eng_x_preferred.txt
+nyc
+sf
+# add in NYC boroughs
+manhattan
+queens
+brooklyn
+staten island
+bronx
+# remove problematic locality names
+!italy
+!college
+!university
+!hospital
+!temple
+!cathedral
+!airport
+!deli
+!us
+!germany
+!japan
+!empire
+!unit
+# 18 person county in texas
+!art
+# remove any localities which share a name with a US state
+!alabama
+!alaska
+!arizona
+!arkansas
+!california
+!colorado
+!connecticut
+!delaware
+!florida
+!georgia
+!hawaii
+!idaho
+!illinois
+!indiana
+!iowa
+!kansas
+!kentucky
+!louisiana
+!maine
+!maryland
+!massachusetts
+!michigan
+!minnesota
+!mississippi
+!missouri
+!montana
+!nebraska
+!nevada
+!new hampshire
+!new jersey
+!new mexico
+#!new york
+!north carolina
+!north dakota
+!ohio
+!oklahoma
+!oregon
+!pennsylvania rhode island
+!south carolina
+!south dakota
+!tennessee
+!texas
+!utah
+!vermont
+!virginia
+#!washington
+!west virginia
+!wisconsin
+!wyoming
+
+# https://github.com/pelias/parser/issues/140
+!broadway
+!esplanade
+!market

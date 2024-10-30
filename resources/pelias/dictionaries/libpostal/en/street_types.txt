@@ -1,0 +1,16 @@
+# 183 Vista Paku, Pauanui, 3579, New Zealand
+paku
+
+# Rushendon Furlong, Pitstone, England
+furlong
+
+# bad abbreviation for the very uncommon suffix "Artery"
+!art
+
+# 1384 Cambridge beltway, Cambridge, MD 21613, USA
+beltway
+
+# https://github.com/pelias/parser/issues/140
+!broadway|bdwy|bway|bwy|brdway
+!esplanade|esp|espl
+market
