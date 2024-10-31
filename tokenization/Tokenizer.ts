@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import Solution from "../solver/Solution.js"
-import permutate from "./permutate.js"
+import { Solution } from "../solver/Solution.js"
+import { permutate } from "./permutate.js"
 import { Span } from "./Span.js"
 import split from "./split.js"
 import * as funcs from "./split_funcs.js"

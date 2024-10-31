@@ -6,7 +6,7 @@
 
 import test from "tape"
 import { Span } from "./Span.js"
-import permutate from "./permutate.js"
+import { permutate } from "./permutate.js"
 
 function getSpans(spans: Span[], ...indexes: number[]) {
 	return indexes.map((i) => spans[i]!)

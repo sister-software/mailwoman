@@ -5,7 +5,7 @@
  */
 
 import { Tokenizer } from "../tokenization/Tokenizer.js"
-import Solution from "./Solution.js"
+import { Solution } from "./Solution.js"
 import HashMapSolver from "./super/HashMapSolver.js"
 const MAX_RECURSION = 10
 const MAX_SOLUTIONS = 50000

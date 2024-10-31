@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "Utilities for working with contacts for email, phone, and postal addresses.",
 	"keywords": [
 		"pelias"
@@ -26,39 +26,25 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
-		".": {
-			"import": "./out/index.js"
-		},
-		"./classifier/super": {
-			"import": "./out/classifier/super/index.js"
-		},
-		"./classifier": {
-			"import": "./out/classifier/index.js"
-		},
-		"./classification": {
-			"import": "./out/classification/index.js"
-		},
-		"./server": {
-			"import": "./out/server/index.js"
-		},
-		"./sdk/test/utils": {
-			"import": "./out/sdk/test/utils/index.js"
-		},
-		"./sdk/repo": {
-			"import": "./out/sdk/repo.js"
-		},
-		"./*": {
-			"import": "./out/*"
-		}
+		".": "./out/index.js",
+		"./classifier/super": "./out/classifier/super/index.js",
+		"./classifier": "./out/classifier/index.js",
+		"./classification": "./out/classification/index.js",
+		"./server": "./out/server/index.js",
+		"./sdk/test/utils": "./out/sdk/test/utils/index.js",
+		"./sdk/repo": "./out/sdk/repo.js",
+		"./*": "./out/*"
 	},
 	"bin": "./out/bin/cli.js",
 	"files": [
+		"!out/test/**/*",
+		"!*/**/*.ts",
 		"out/**/*.js",
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map",
 		"out/**/*.json",
-		"!out/test/**/*"
+		"resources/**/*"
 	],
 	"scripts": {
 		"demo": "mailwoman parse '3551 W. Hillsboro Blvd Deerfield Beach, FL 33442'",

@@ -5,7 +5,7 @@
  */
 
 import { Classifier } from "../classifier/super/BaseClassifier.js"
-import Solution from "../solver/Solution.js"
+import { Solution } from "../solver/Solution.js"
 import { Solver } from "../solver/super/BaseSolver.js"
 import { Tokenizer } from "../tokenization/Tokenizer.js"
 

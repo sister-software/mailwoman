@@ -8,7 +8,7 @@ import { HouseNumberClassification, StreetClassification } from "mailwoman/class
 import test from "tape"
 import { Span } from "../tokenization/Span.js"
 import { Tokenizer } from "../tokenization/Tokenizer.js"
-import Solution from "./Solution.js"
+import { Solution } from "./Solution.js"
 import SolutionPair from "./SolutionPair.js"
 import SubsetFilter from "./SubsetFilter.js"
 

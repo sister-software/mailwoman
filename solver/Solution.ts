@@ -147,5 +147,3 @@ export class Solution {
 	// @todo implement this
 	// equals(solution) {}
 }
-
-export default Solution

@@ -6,7 +6,7 @@
 
 import { Span } from "../../tokenization/Span.js"
 import { Tokenizer } from "../../tokenization/Tokenizer.js"
-import Solution from "../Solution.js"
+import { Solution } from "../Solution.js"
 import SolutionPair from "../SolutionPair.js"
 import { Solver } from "./BaseSolver.js"
 const MAX_PAIRS_PER_LABEL = 8

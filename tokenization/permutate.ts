@@ -5,6 +5,7 @@
  */
 
 import { Span } from "./Span.js"
+
 const JOIN_CHAR = " "
 
 /**
@@ -16,7 +17,6 @@ const JOIN_CHAR = " "
  * Note: we should honor word boundary delimiters (such as comma) when creating permutations ported:
  * https://github.com/pelias/placeholder/blob/master/lib/permutations.js
  */
-
 function permutateRec(
 	prevSpan: Span,
 	currentSpan: Span,
@@ -77,9 +77,13 @@ function permutateRec(
 }
 
 /**
- * Produce all the possible token groups from adjacent input tokens (without reordering tokens)
+ * Produce all the possible token groups from adjacent input tokens (without reordering tokens).
+ *
+ * Example: ['soho', 'new', 'york', 'usa'] [ ['soho', 'new', 'york', 'usa'], ['soho', 'new',
+ * 'york'], ['soho', 'new'], ['soho'], ['new', 'york', 'usa'], ['new', 'york'], ['new'], ['york',
+ * 'usa'], ['york'], ['usa'], ]
  */
-function permutate(spans: Span[], windowMin: number, windowMax: number): Span[] {
+export function permutate(spans: Span[], windowMin: number, windowMax: number): Span[] {
 	const permutations: Span[] = []
 
 	spans.forEach((span) => {
@@ -87,11 +91,3 @@ function permutate(spans: Span[], windowMin: number, windowMax: number): Span[] 
 	})
 	return permutations
 }
-
-export default permutate
-
-/**
- * Example: ['soho', 'new', 'york', 'usa'] [ ['soho', 'new', 'york', 'usa'], ['soho', 'new',
- * 'york'], ['soho', 'new'], ['soho'], ['new', 'york', 'usa'], ['new', 'york'], ['new'], ['york',
- * 'usa'], ['york'], ['usa'], ]
- */

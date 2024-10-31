@@ -9,7 +9,7 @@ import test from "tape"
 import { Span } from "../tokenization/Span.js"
 import { Tokenizer } from "../tokenization/Tokenizer.js"
 import OrphanedUnitTypeDeclassifier from "./OrphanedUnitTypeDeclassifier.js"
-import Solution from "./Solution.js"
+import { Solution } from "./Solution.js"
 import SolutionPair from "./SolutionPair.js"
 
 test("UnitClassification missing: remove UnitTypeClassification", (t) => {

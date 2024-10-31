@@ -7,7 +7,7 @@
 import test from "tape"
 import * as common from "../sdk/test/utils/index.js"
 import { Tokenizer } from "../tokenization/Tokenizer.js"
-import Solution from "./Solution.js"
+import { Solution } from "./Solution.js"
 
 test("constructor", (t) => {
 	const sol = new Solution()

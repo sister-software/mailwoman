@@ -9,7 +9,7 @@ import test from "tape"
 import { Span } from "../tokenization/Span.js"
 import { Tokenizer } from "../tokenization/Tokenizer.js"
 import MustNotFollowFilter from "./MustNotFollowFilter.js"
-import Solution from "./Solution.js"
+import { Solution } from "./Solution.js"
 import SolutionPair from "./SolutionPair.js"
 
 test("postcode_preceeds_street: remove postcode", (t) => {
