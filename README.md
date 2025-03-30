@@ -5,8 +5,6 @@ A natural language classification engine for geocoding.
 ![GitHub License](https://img.shields.io/github/license/sister-software/mailwoman)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/sister-software/mailwoman)
 
-# Pelias Parser
-
 ## AddressParser Example
 
 ```

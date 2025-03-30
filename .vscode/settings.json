@@ -57,6 +57,8 @@
 	"search.exclude": {
 		"**/dist": true,
 		"**/out": true,
+		// "**/*.test.ts": true,
+		"**/dictionaries/**/*.txt": true,
 		"**/scratch": true,
 		".docusaurus": true,
 		"./functions": true,
@@ -127,6 +129,7 @@
 	"github.copilot.enable": {
 		"*": true,
 		"csv": false,
-		"scminput": false
+		"scminput": false,
+		"**/dictionaries/**/*.txt": true
 	}
 }

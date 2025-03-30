@@ -2,9 +2,7 @@
 	"extends": "@sister.software/tsconfig",
 	"compilerOptions": {
 		"baseUrl": ".",
-		"paths": {
-			"mailwoman/sdk/repo": ["./src/sdk/repo"]
-		}
+		"outDir": "./out"
 	},
 
 	"exclude": ["./out/**/*"]

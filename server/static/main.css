@@ -1,0 +1,192 @@
+@import "https://unpkg.com/open-props";
+@import "https://unpkg.com/open-props/normalize.min.css";
+
+.ansi-green-bg {
+	background-color: var(--green-6);
+}
+
+.ansi-red-bg {
+	background-color: var(--red-6);
+}
+
+.ansi-yellow-bg {
+	background-color: var(--yellow-6);
+}
+
+.ansi-blue-bg {
+	background-color: var(--blue-6);
+}
+
+.ansi-cyan-bg {
+	background-color: var(--cyan-6);
+}
+
+.ansi-magenta-bg {
+	background-color: var(--pink-6);
+}
+
+.ansi-white-bg {
+	background-color: var(--stone-1);
+}
+
+.ansi-black-fg {
+	color: var(--black-9);
+}
+
+.ansi-red-fg {
+	color: var(--red-9);
+}
+
+.ansi-green-fg {
+	color: var(--green-5);
+}
+
+.ansi-yellow-fg {
+	color: var(--yellow-2);
+}
+
+.ansi-blue-fg {
+	color: var(--blue-9);
+}
+
+.ansi-magenta-fg {
+	color: var(--pink-9);
+}
+
+.ansi-cyan-fg {
+	color: var(--cyan-9);
+}
+
+.ansi-white-fg {
+	color: var(--white-9);
+}
+
+.ansi-bright-black-bg {
+	background-color: var(--gray-5);
+}
+
+.ansi-bright-red-bg {
+	background-color: var(--red-0);
+}
+
+.ansi-bright-green-bg {
+	background-color: var(--green-0);
+}
+
+.ansi-bright-yellow-bg {
+	background-color: var(--yellow-0);
+}
+
+.ansi-bright-blue-bg {
+	background-color: var(--blue-0);
+}
+
+.ansi-bright-magenta-bg {
+	background-color: var(--pink-0);
+}
+
+.ansi-bright-cyan-bg {
+	background-color: var(--cyan-0);
+}
+
+.ansi-bright-white-bg {
+	background-color: var(--white-0);
+}
+
+.ansi-bright-black-fg {
+	color: var(--gray-6);
+}
+
+.ansi-bright-red-fg {
+	color: var(--red-0);
+}
+
+.ansi-bright-green-fg {
+	color: var(--green-0);
+}
+
+.ansi-bright-yellow-fg {
+	color: var(--yellow-2);
+}
+
+.ansi-bright-blue-fg {
+	color: var(--blue-0);
+}
+
+.ansi-bright-magenta-fg {
+	color: var(--pink-0);
+}
+
+.ansi-bright-cyan-fg {
+	color: var(--cyan-0);
+}
+
+.ansi-bright-white-fg {
+	color: var(--white-0);
+}
+
+fieldset {
+	display: flex;
+
+	& > input {
+		flex: 1;
+	}
+}
+
+.button,
+#text {
+	font-size: var(--font-size-fluid-0);
+	font-weight: var(--font-weight-7);
+
+	padding-inline: var(--size-6);
+	padding-block: var(--size-3);
+}
+
+#table {
+	margin-block: var(--size-5);
+	font-family: "Fira Code", "Courier New", Courier, monospace;
+}
+
+.kb {
+	white-space: nowrap;
+	color: var(--gray-9);
+	text-shadow: 2px 2px var(--blue-1);
+	border-radius: var(--radius-2);
+	font-weight: var(--font-weight-8);
+	background-color: var(--yellow-0);
+}
+
+#table tbody tr th,
+#table tbody tr td {
+	text-align: center;
+	text-overflow: clip;
+}
+
+.score {
+	background-color: var(--surface-1);
+}
+
+.span {
+	background-color: var(--surface-3);
+}
+
+.span-street {
+	background-color: var(--orange-6);
+}
+
+.span-house_number {
+	background-color: var(--purple-6);
+}
+
+.span-postcode {
+	background-color: var(--blue-6);
+}
+
+#debug {
+	white-space: pre-wrap;
+	font-family: monospace;
+}
+
+#debug span {
+	display: inline-block;
+}

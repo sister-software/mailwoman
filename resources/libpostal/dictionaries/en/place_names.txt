@@ -58,7 +58,7 @@ cinemas
 cineplex
 circus|crcs|crc
 city hall
-clinic
+clinic|health clinic
 club|clb
 clubhouse|club house
 clubrooms

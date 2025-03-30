@@ -1,10 +1,6 @@
-/**
- * @copyright Teffen Ellis
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- */
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-export * from "./debug/DebugOutputBuilder.js"
-export * from "./parser/index.js"
-export * from "./solver/Solution.js"
-export * from "./tokenization/Tokenizer.js"
+export * from "./classifiers/index.js"
+export * from "./core/index.js"
+export * from "./utils/index.js"
