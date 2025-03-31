@@ -20,8 +20,13 @@ export class PersonalSuffixClassifier extends PhraseClassifier {
 	public explore(span: Span): void {
 		if (span.flags.has("numeral")) return
 
-		if (this.index.has(span.normalized.replace(/\.$/, ""))) {
-			span.classifications.add("personal_suffix")
-		}
+		const languages = this.index.get(span.normalized.replace(/\.$/, ""))
+
+		if (!languages) return
+
+		span.classifications.add({
+			classification: "personal_suffix",
+			languages,
+		})
 	}
 }

@@ -31,7 +31,7 @@ export interface Classifier {
 	/**
 	 * Perform classification on the given input.
 	 */
-	classify?(input: Span | string): Span
+	classify(input: Span | string): Span
 }
 
 export interface ClassifierOptions {

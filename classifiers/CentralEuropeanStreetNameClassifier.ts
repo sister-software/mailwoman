@@ -17,7 +17,7 @@ export class CentralEuropeanStreetNameClassifier extends SectionClassifier {
 		if (!first || !last) return
 
 		// Is the first child a toponym, like a region or city?
-		if (!first.is("toponym")) return
+		if (first.is("toponym")) return
 
 		// Section doesn't end with a housenumber?
 		if (!last.is("house_number")) return

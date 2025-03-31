@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "0.3.1",
+	"version": "1.0.0",
 	"description": "Utilities for working with contacts for email, phone, and postal addresses.",
 	"keywords": [
 		"address",
@@ -95,7 +95,7 @@
 		"piscina": "^4.7.0",
 		"pluralize": "^8.0.0",
 		"regenerate": "^1.4.2",
-		"spliterator": "^1.6.3",
+		"spliterator": "^1.6.4",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {

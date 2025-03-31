@@ -4080,7 +4080,7 @@ __metadata:
     prettier-plugin-packagejson: "npm:^2.5.3"
     react: "npm:^18.3.1"
     regenerate: "npm:^1.4.2"
-    spliterator: "npm:^1.6.3"
+    spliterator: "npm:^1.6.4"
     tap-difflet: "npm:^0.7.2"
     tape: "npm:^5.9.0"
     typescript: "npm:^5.6.3"
@@ -6167,9 +6167,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"spliterator@npm:^1.6.3":
-  version: 1.6.3
-  resolution: "spliterator@npm:1.6.3"
+"spliterator@npm:^1.6.4":
+  version: 1.6.4
+  resolution: "spliterator@npm:1.6.4"
   dependencies:
     change-case: "npm:^5.4.4"
     yargs: "npm:^17.2.1"
@@ -6180,7 +6180,7 @@ __metadata:
       optional: true
   bin:
     spliterator: out/node/cli/index.js
-  checksum: 10/2563723039b81fa13bc12e84bb2bfa58e3cedd0bd945f1e9336b3d9201f3db7507fc91e11d25ff1be3a33ab9e8dd74d8220bc92f9bdb7960508c8f43d9c5e77a
+  checksum: 10/5e850556fa205aa8ce9a79d28a2be0b16ee33c63dc741fffe55c10f3e08fb5ceff33cf8bf8bb7c2221cd5e6b7a6869d92e1a712184fc61179240b5e9e19b173d
   languageName: node
   linkType: hard
 

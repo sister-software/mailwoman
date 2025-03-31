@@ -4,15 +4,13 @@
 /**
  * A resource with a display name.
  */
-export interface Displayable {
+export type Displayable<T> = T & {
 	displayName?: string
 }
-
-export type WithDisplayable<T> = T & Displayable
 
 /**
  * Type predicate to determine if a value is displayable.
  */
-export function isDisplayable(value: unknown): value is Displayable {
+export function isDisplayable<T>(value: T): value is Displayable<T> {
 	return typeof value === "object" && value !== null && "displayName" in value
 }

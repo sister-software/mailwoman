@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { Displayable } from "./debugging.js"
-
 /**
  * A resource that can be disposed of either synchronously or asynchronously.
  */
@@ -50,12 +48,12 @@ export class ResourceMapCache<
 		F extends ResourceFactoryLike<K, R> = ResourceConstructor<K, R>,
 	>
 	extends Map<K, R>
-	implements AsyncDisposable, Displayable
+	implements AsyncDisposable
 {
 	/**
 	 * The human-readable name of the resource.
 	 */
-	public displayName?: string
+	public displayName: string = "ResourceMapCache"
 
 	constructor(ResourceConstructor: ResourceConstructor<K, R>)
 	constructor(factory: ResourceFactory<K, R>)

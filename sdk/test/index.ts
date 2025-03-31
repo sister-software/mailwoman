@@ -135,7 +135,11 @@ export function assertCongruent<Item>(
 	}
 }
 
-export type ExpectedClassificationEntry = [input: string, Iterable<LibPostalLanguageCode>]
+export type ExpectedClassificationEntry = [
+	input: string,
+	Iterable<LibPostalLanguageCode>,
+	expectPositiveMatch?: boolean,
+]
 
 /**
  * Assert that a classifier correctly classifies a set of inputs.
@@ -149,23 +153,29 @@ export function assertClassification(
 		throw new TypeError(`Classifier ${classifier.constructor.name} does not implement the classify method`)
 	}
 
-	for (const [input, expectedLanguages] of expectations) {
-		test(`classify: ${input}`, async (t) => {
-			const actual = (await classifier.classify!(input)).classifications.get(classificationTarget)
+	for (const [input, expectedLanguages, expectPositiveMatch = true] of expectations) {
+		test(`classify: ${input}`, (t) => {
+			const actualMatch = classifier.classify(input).classifications.get(classificationTarget)
 
-			if (!actual) {
-				t.fail(`"${input}" is not classified as ${classificationTarget}`)
+			if (!actualMatch) {
+				if (expectPositiveMatch) {
+					t.fail(`"${input}" is not classified as ${classificationTarget}`)
+					return
+				}
+
+				t.pass(`"${input}" is not classified as ${classificationTarget}`)
+				t.end()
 				return
 			}
 
-			t.true(actual, `"${input}" is classified as ${classificationTarget}`)
+			t.true(actualMatch, `"${input}" is classified as ${classificationTarget}`)
 
 			const expectedLanguageSet = new Set(expectedLanguages)
 			if (expectedLanguageSet.size) {
-				const actualLanguageSet = new Set(actual.languages)
+				const actualLanguageSet = new Set(actualMatch.languages)
 
 				if (actualLanguageSet.isSupersetOf(expectedLanguageSet)) {
-					t.pass(`"${input}" is classified as a given name in ${JSON.stringify(Array.from(expectedLanguageSet))}`)
+					t.pass(`"${input}" is classified as a  in ${JSON.stringify(Array.from(expectedLanguageSet))}`)
 				} else {
 					t.fail(
 						`Expected "${input}" to be classified in ${JSON.stringify(Array.from(expectedLanguageSet))} but only found in ${JSON.stringify(Array.from(actualLanguageSet))}`

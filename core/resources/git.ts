@@ -4,7 +4,7 @@
 import * as fs from "node:fs/promises"
 import { PathBuilder, PathBuilderLike } from "path-ts"
 import { $ } from "zx"
-import { checkIfExists } from "./fs.js"
+import { tryStat } from "./fs.js"
 
 /**
  * Metadata for a repository source.
@@ -24,7 +24,7 @@ export async function prepareRepositoryDirectories(
 
 	await fs.mkdir(ownerDirectory, { recursive: true })
 
-	const exists = await checkIfExists(repoDirectory)
+	const exists = await tryStat(repoDirectory)
 
 	return { ownerDirectory, repoDirectory, exists }
 }

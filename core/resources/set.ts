@@ -138,6 +138,16 @@ export class Sequence<T extends WeakKey> extends Set<T> {
 	}
 }
 
+export function disposeOf<T extends Disposable | PropertyKey>(set: Pick<Set<T>, "clear" | typeof Symbol.iterator>) {
+	for (const node of set) {
+		if (!node || typeof node !== "object") continue
+
+		node[Symbol.dispose]?.()
+	}
+
+	set.clear()
+}
+
 /**
  * A set that cleans up its elements when disposed.
  */

@@ -5,44 +5,29 @@ A natural language classification engine for geocoding.
 ![GitHub License](https://img.shields.io/github/license/sister-software/mailwoman)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/sister-software/mailwoman)
 
-## AddressParser Example
+```js
+// npx mailwoman debug "Mt Tabor Park, 6220 SE Salmon St, Portland, OR 97215, USA"
 
-```
-30 w 26 st nyc 10010
-
-(0.95) ➜ [
-  { housenumber: '30' },
-  { street: 'w 26 st' },
-  { locality: 'nyc' },
-  { postcode: '10010' }
+;[
+	{ venue: "Mt Tabor Park", confidence: 0.8, offset: 0, penalty: 0 },
+	{ house_number: "6220", confidence: 0.9, offset: 15, penalty: 0 },
+	{ street: "SE Salmon St", confidence: 0.98, offset: 20, penalty: 0 },
+	{ locality: "Portland", confidence: 1, offset: 34, penalty: 0 },
+	{ region: "OR", confidence: 1, offset: 44, penalty: 0 },
+	{ postcode: "97215", confidence: 1, offset: 47, penalty: 0 },
+	{ country: "USA", confidence: 0.9, offset: 54, penalty: 0 },
 ]
 ```
-
-## Application Interfaces
-
-You can access the library via three different interfaces:
-
-- all parts of the codebase are available in `javascript` via `npm`
-- on the `command line` via the `node bin/cli.js` script
-- through a `web service` via the `node server/http.js` script
-
-> the web service provides an interactive demo at the URL `/parser/parse`
 
 ## Quick Start
 
 A quick and easy way to get started with the library is to use the command-line interface:
 
 ```
-node bin/cli.js West 26th Street, New York, NYC, 10010
+npx mailwoman parse "West 26th Street, New York, NYC, 10010"
 ```
 
-![cli](./docs/cli.png)
-
----
-
 # Architecture Description
-
-Please refer to the CLI screenshot above for a visual reference.
 
 ## Tokenization
 
@@ -93,11 +78,11 @@ The graph is free-form, so it's easy to add a new relationship between terms in 
 Graph Example:
 
 ```js
-// find the next word in this section
-word.findOne("next")
+// Find the next word in this section
+word.next
 
-// find all words in this phrase
-phrase.findAll("child")
+// Find all words in this phrase
+phrase.children
 ```
 
 ## Classification
@@ -131,24 +116,24 @@ You can find them in the `/classifier` directory, dictionary-based classifiers u
 Example of some of the included classifiers:
 
 - Word Classifiers
-  - HouseNumberClassifier
-  - PostcodeClassifier
-  - StreetPrefixClassifier
-  - StreetSuffixClassifier
-  - CompoundStreetClassifier
-  - DirectionalClassifier
-  - OrdinalClassifier
-  - StopWordClassifier
+  - `house_number`
+  - `postcode`
+  - `street_prefix`
+  - `street_suffix`
+  - `compound_street`
+  - `directional`
+  - `ordinal`
+  - `stop_word`
 - Phrase Classifiers
-  - IntersectionClassifier
-  - PersonClassifier
-  - GivenNameClassifier
-  - SurnameClassifier
-  - PersonalSuffixClassifier
-  - PersonalTitleClassifier
-  - ChainClassifier
-  - PlaceClassifier
-  - WhosOnFirstClassifier
+  - `intersection`
+  - `person`
+  - `given_name`
+  - `surname`
+  - `personal_suffix`
+  - `personal_title`
+  - `chain`
+  - `place`
+  - `whos_on_first`
 
 ## Solvers
 
@@ -203,4 +188,4 @@ For more information on commercial usage licensing, please contact us at
 
 # Acknowledgements
 
-This project was built by the [Sister Software](https://sister.software) team and was made possible by the contributions of the Pelias community.
+This project was made possible by contributions of the Pelias community.

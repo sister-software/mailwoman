@@ -5,12 +5,15 @@ import { Alpha2LanguageCode } from "mailwoman/core/resources/languages"
 import { TextNormalizer, TextNormalizerInit } from "mailwoman/core/tokenization"
 import { resourceDictionaryPathBuilder } from "mailwoman/sdk/repo"
 import { readdir } from "node:fs/promises"
+import { availableParallelism } from "node:os"
 import { PathBuilder } from "path-ts"
 import pluralize from "pluralize"
 import { TextSpliterator } from "spliterator"
-import { checkIfExists } from "./fs.js"
+import { takeAsync } from "./collections.js"
+import { tryStat } from "./fs.js"
 import { LocaleIndex } from "./LocaleIndex.js"
 
+const batchSize = availableParallelism()
 const libPostalDataDirectory = resourceDictionaryPathBuilder("libpostal")
 const libPostalInternalDataDirectory = resourceDictionaryPathBuilder("internal", "libpostal")
 
@@ -28,30 +31,34 @@ export const availableLanguages = await readdir(libPostalDataDirectory).then((di
 	return Array.from(languageCodeDirectories) as LibPostalLanguageCode[]
 })
 
-export type LibPostalFileEntry = [filePath: string, languageCode: LibPostalLanguageCode]
+export interface LibPostalFileEntry {
+	filePath: string
+	languageCode: LibPostalLanguageCode
+}
 
 /**
  * Given a filename and a list of selected language codes, return all matching files.
+ *
+ * @param filename The name of the file to search for.
+ * @param dataDirectory The directory to search in.
+ * @param languageCodes An iterable of language codes to search for.
+ *
+ * @returns A list of file paths and their corresponding language codes.
  */
-async function findFilesMatchingLocale(
+async function* findFilesMatchingLocale(
 	filename: string,
 	dataDirectory: PathBuilder,
 	languageCodes: LibPostalLanguageCode[]
-): Promise<LibPostalFileEntry[]> {
-	const matches: LibPostalFileEntry[] = []
+) {
+	for (const languageCode of languageCodes) {
+		const filePath = dataDirectory(languageCode, filename).toString()
+		const stats = await tryStat(filePath)
 
-	await Promise.all(
-		Array.from(languageCodes, async (languageCode) => {
-			const filePath = dataDirectory(languageCode, filename).toString()
-			const exists = await checkIfExists(filePath)
+		if (!stats) continue
+		const entry: LibPostalFileEntry = { filePath, languageCode }
 
-			if (!exists) return
-
-			matches.push([filePath, languageCode])
-		})
-	)
-
-	return matches
+		yield entry
+	}
 }
 
 interface LibPostalNormalizerInit extends TextNormalizerInit {
@@ -75,49 +82,60 @@ export async function prepareLocaleIndex(
 		normalizer,
 	})
 
-	const fileEntries = await findFilesMatchingLocale(filename, libPostalDataDirectory, languageCodes)
+	let inserted = false
 
-	const internalFileEntries = await findFilesMatchingLocale(filename, libPostalInternalDataDirectory, languageCodes)
+	const fileEntries = takeAsync(findFilesMatchingLocale(filename, libPostalDataDirectory, languageCodes), batchSize)
 
-	await Promise.all(
-		Array.from(fileEntries, async ([filePath, languageCode]) => {
-			const lines = TextSpliterator.fromAsync(filePath)
+	for await (const batch of fileEntries) {
+		await Promise.all(
+			batch.map(async ({ filePath, languageCode }) => {
+				const lines = TextSpliterator.fromAsync(filePath)
 
-			for await (const line of lines) {
-				for (const entry of TextSpliterator.from(line, { delimiter: "|" })) {
-					index.add(entry, languageCode)
+				for await (const line of lines) {
+					for (const entry of TextSpliterator.from(line, { delimiter: "|" })) {
+						index.add(entry, languageCode)
+						inserted = true
+					}
 				}
-			}
-		})
+			})
+		)
+	}
+
+	const internalFileEntries = takeAsync(
+		findFilesMatchingLocale(filename, libPostalInternalDataDirectory, languageCodes),
+		batchSize
 	)
 
-	await Promise.all(
-		Array.from(internalFileEntries, async ([filePath, languageCode]) => {
-			const lines = TextSpliterator.fromAsync(filePath)
+	for await (const batch of internalFileEntries) {
+		await Promise.all(
+			batch.map(async ({ filePath, languageCode }) => {
+				const lines = TextSpliterator.fromAsync(filePath)
 
-			for await (const line of lines) {
-				if (!line) continue
+				for await (const line of lines) {
+					if (!line) continue
 
-				const firstCharacter = line[0]
-				// Skip comments.
-				if (firstCharacter === "#") continue
+					const firstCharacter = line[0]
+					// Skip comments.
+					if (firstCharacter === "#") continue
 
-				if (firstCharacter === "!") {
-					for (const entry of TextSpliterator.from(line.slice(1), { delimiter: "|" })) {
-						index.remove(entry)
+					if (firstCharacter === "!") {
+						for (const entry of TextSpliterator.from(line.slice(1), { delimiter: "|" })) {
+							index.remove(entry)
+						}
+
+						continue
 					}
 
-					continue
+					for (const entry of TextSpliterator.from(line, { delimiter: "|" })) {
+						index.add(entry, languageCode)
+						inserted = true
+					}
 				}
+			})
+		)
+	}
 
-				for (const entry of TextSpliterator.from(line, { delimiter: "|" })) {
-					index.add(entry, languageCode)
-				}
-			}
-		})
-	)
-
-	if (index.size === 0) {
+	if (index.size === 0 && !inserted) {
 		throw new Error(
 			`No index matches found for ${filename} in ${libPostalDataDirectory} for languages ${languageCodes}`
 		)
@@ -139,8 +157,6 @@ export function generatePlurals(index: LocaleIndex<LibPostalLanguageCode>) {
 
 		const plural = pluralize(singularCell)
 
-		const cell = index.open(plural)
-
-		cell.add("en")
+		index.add(plural, "en")
 	}
 }

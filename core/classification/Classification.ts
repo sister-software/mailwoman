@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { WithDisplayable } from "mailwoman/core"
+import { Displayable } from "../resources/debugging.js"
+import type { Alpha3bLanguageCode } from "../resources/languages/index.js"
+import type { LibPostalLanguageCode } from "../resources/libpostal.js"
 
 /**
  * Classification recognized by Mailwoman.
@@ -115,7 +117,7 @@ export interface ClassificationMatch {
 	 * If a language is present in this set, it means that the value which it is associated with is a
 	 * valid value in that language.
 	 */
-	readonly languages?: WithDisplayable<ReadonlySet<string>>
+	readonly languages?: Displayable<ReadonlySet<LibPostalLanguageCode | Alpha3bLanguageCode>>
 
 	/**
 	 * Flags associated with the classification, i.e. clarifying details to enhance the

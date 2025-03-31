@@ -1,16 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { resourceDictionaryPathBuilder } from "mailwoman/sdk/repo"
 import { TextNormalizer } from "../tokenization/normalizer.js"
-import { WithDisplayable } from "./debugging.js"
-import { ResourceMapCache } from "./ResourceMapCache.js"
-import { DisposableSet } from "./set.js"
-
-const dictPath = resourceDictionaryPathBuilder("libpostal")
-
-const libPostalDictionary = resourceDictionaryPathBuilder("libpostal")
-const wofInternalPlacetypeDictionary = resourceDictionaryPathBuilder("internal", "whosonfirst")
+import { Displayable } from "./debugging.js"
 
 /**
  * Options for the locale index.
@@ -26,18 +18,19 @@ export interface LocaleIndexOptions {
  * If a value is present in this index, it means that the value is a valid value in at least one
  * language.
  */
-export class LocaleIndex<LanguageCodes extends string> extends ResourceMapCache<
-	string,
-	WithDisplayable<DisposableSet<LanguageCodes>>
-> {
+export class LocaleIndex<LanguageCodes extends string> extends Map<string, Set<LanguageCodes>> {
+	/**
+	 * The normalizer to use for placenames.
+	 */
 	public readonly normalizer?: TextNormalizer
+
 	/**
 	 * The source of the index.
 	 */
-	public override displayName: string
+	public displayName: string
 
 	constructor(entries: Iterable<readonly [string, Iterable<LanguageCodes>]> = [], options: LocaleIndexOptions) {
-		super((_placename: string) => new DisposableSet<LanguageCodes>())
+		super()
 
 		this.displayName = options?.displayName ?? "unknown"
 		this.normalizer = options?.normalizer
@@ -67,6 +60,7 @@ export class LocaleIndex<LanguageCodes extends string> extends ResourceMapCache<
 		if (!placename) return
 
 		const placenameIndex = this.open(placename)
+
 		placenameIndex.displayName = this.displayName
 
 		for (const language of languageCodes) {
@@ -86,15 +80,32 @@ export class LocaleIndex<LanguageCodes extends string> extends ResourceMapCache<
 
 		if (!placename) return
 
-		this.close(placename)
+		super.delete(placename)
+	}
+
+	public open(placename: string): Displayable<Set<LanguageCodes>> {
+		if (this.normalizer) {
+			placename = this.normalizer.normalize(placename)
+		}
+
+		if (!placename) {
+			throw new Error(`Placename "${placename}" is empty or invalid.`)
+		}
+
+		let placenameIndex: Displayable<Set<LanguageCodes>> | undefined = this.get(placename)
+
+		if (!placenameIndex) {
+			placenameIndex = new Set<LanguageCodes>()
+			this.set(placename, placenameIndex)
+		}
+
+		return placenameIndex
 	}
 
 	/**
 	 * Get the language codes associated with a placename.
 	 */
-	public override get(placename: string): DisposableSet<LanguageCodes> | undefined {
-		return super.get(placename)
-	}
+	declare get: (placename: string) => Displayable<Set<LanguageCodes>> | undefined
 
 	/**
 	 * Serialize the index to JSON.

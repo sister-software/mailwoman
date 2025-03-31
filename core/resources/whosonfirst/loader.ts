@@ -7,8 +7,8 @@ import { TextNormalizer } from "mailwoman/core/tokenization"
 
 import { PathBuilder, PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
+import { Displayable } from "../debugging.js"
 import { ResourceMapCache } from "../ResourceMapCache.js"
-import { WithDisplayable } from "../debugging.js"
 import { DisposableSet } from "../set.js"
 import { parsePlacetypeSource } from "./placetypes/admin.js"
 
@@ -34,7 +34,7 @@ export interface WOFCacheOptions {
  *
  * If a value is present in this index, it means that the value is a valid in at least one language.
  */
-export class WOFPlacenameCache extends ResourceMapCache<string, WithDisplayable<DisposableSet<Alpha3bLanguageCode>>> {
+export class WOFPlacenameCache extends ResourceMapCache<string, DisposableSet<Alpha3bLanguageCode>> {
 	normalizer: TextNormalizer
 	blacklist?: Set<string>
 	dataDirectory: PathBuilder
@@ -45,8 +45,7 @@ export class WOFPlacenameCache extends ResourceMapCache<string, WithDisplayable<
 
 	constructor(options: WOFCacheOptions) {
 		super((_placename: string) => {
-			const nextLanguageSet: WithDisplayable<DisposableSet<Alpha3bLanguageCode>> =
-				new DisposableSet<Alpha3bLanguageCode>()
+			const nextLanguageSet: Displayable<DisposableSet<Alpha3bLanguageCode>> = new DisposableSet<Alpha3bLanguageCode>()
 
 			nextLanguageSet.displayName = this.displayName
 

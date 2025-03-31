@@ -68,6 +68,7 @@ valid.forEach((span) => {
 			ClassificationsMatchMap.from({
 				classification: "street",
 				confidence: 0.5,
+				flags: new Set(["central_european_street_name"]),
 			}),
 			`'${span.body}'`
 		)

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { Classifier, TokenContext } from "mailwoman/core"
+import { Classifier, Span, TokenContext } from "mailwoman/core"
 
 /**
  * Classify the first and last tokens in a section.
@@ -33,5 +33,12 @@ export class TokenPositionClassifier implements Classifier {
 					lastChild.classifications.add("end_token_single_character")
 				}
 			})
+	}
+
+	/**
+	 * @deprecated Use "classifyTokens" instead.
+	 */
+	public classify(_input: Span | string): Span {
+		throw new TypeError('This classifier cannot be used to classify a span directly. Use "classifyTokens" instead.')
 	}
 }
