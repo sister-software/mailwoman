@@ -1,67 +1,72 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import test from "tape"
+import { expect, test } from "vitest"
+import { Alpha2LanguageCode, pluckLanguageLabel } from "../core/index.js"
 import { StreetSuffixClassifier } from "./StreetSuffixClassifier.js"
 
 const classifier = await new StreetSuffixClassifier().ready()
 
-test("index: does not contain single char tokens", (t) => {
+test("index: does not contain single char tokens", () => {
 	const singleCharacterTokens = Iterator.from(classifier.index)
 		.filter(([token]) => token.length < 2)
 		.map(([token, languages]) => [token, Array.from(languages)])
 		.toArray()
 
-	t.deepEqual(singleCharacterTokens, [], "StreetSuffixClassifier contain single character tokens")
-	t.end()
+	expect(singleCharacterTokens, "StreetSuffixClassifier contain single character tokens").toEqual([])
 })
 
-for (const token of ["street", "st", "st.", "road", "rd", "rd.", "boulevard", "blvd", "blvd."]) {
-	test(`english suffix: ${token}`, (t) => {
-		const span = classifier.classify(token)
+const positiveTestCases = new Map<string, string[]>([
+	[
+		// ---
+		Alpha2LanguageCode.English,
+		["street", "st", "st.", "road", "rd", "rd.", "boulevard", "blvd", "blvd."],
+	],
+	[
+		// ---
+		Alpha2LanguageCode.German,
+		["straße", "strasse", "str", "str.", "platz", "pl.", "allee", "al", "al.", "weg", "w."],
+	],
+	["internal", ["paku"]],
+])
 
-		const match = span.classifications.get("street_suffix")
+for (const [language, tokens] of positiveTestCases) {
+	const label = pluckLanguageLabel(language)
 
-		t.ok(match, `"${token}" is classified as a street suffix`)
+	test(`valid street types: ${label}`, () => {
+		for (const token of tokens) {
+			const span = classifier.classify(token)
 
-		t.equal(match?.confidence, token.length > 1 ? 1 : 0.2, `"${token}" confidence is correct`)
+			const match = span.classifications.get("street_suffix")
 
-		t.end()
+			expect(match, `"${token}" is classified as a street suffix`).toBeTruthy()
+			expect(match?.confidence, `"${token}" confidence is correct`).toEqual(token.length > 1 ? 1 : 0.2)
+		}
 	})
 }
 
-for (const token of ["straße", "strasse", "str", "str.", "platz", "pl.", "allee", "al", "al.", "weg", "w."]) {
-	test(`german suffix: ${token}`, (t) => {
-		const span = classifier.classify(token)
-		const match = span.classifications.get("street_suffix")
+const negativeTestCases = new Map<string, string[]>([
+	[Alpha2LanguageCode.English, ["and", "or", "the", "a", "an", "are"]],
+])
 
-		t.ok(match, `"${token}" is classified as a street suffix`)
+for (const [language, tokens] of negativeTestCases) {
+	const label = pluckLanguageLabel(language)
 
-		t.equal(match?.confidence, token.length > 1 ? 1 : 0.2, `"${token}" confidence is correct`)
+	test(`valid street types: ${label}`, () => {
+		for (const token of tokens) {
+			const span = classifier.classify(token)
 
-		t.end()
-	})
-}
-
-for (const token of ["paku"]) {
-	test(`valid internal street types: ${token}`, (t) => {
-		const span = classifier.classify("paku")
-		const match = span.classifications.get("street_suffix")
-
-		t.ok(match, `"${token}" is classified as a street suffix`)
-
-		t.equal(match?.confidence, token.length > 1 ? 1 : 0.2, `"${token}" confidence is correct`)
-
-		t.end()
-	})
-}
-
-for (const token of ["and"]) {
-	test(`invalid internal street types: ${token}`, (t) => {
-		const span = classifier.classify(token)
-
-		t.equals(span.classifications.size, 0)
-
-		t.end()
+			if (span.classifications.size > 0) {
+				for (const match of span.classifications.values()) {
+					const languages = Array.from(match.languages ?? [], (l) => pluckLanguageLabel(l))
+					expect(
+						match.classification,
+						`"${token}" is classified as a street suffix (${languages.join(", ")}), but should not be`
+					).toBeFalsy()
+				}
+			} else {
+				expect(span.classifications.size, `"${token}" is not classified as a street suffix in ${label}`).toEqual(0)
+			}
+		}
 	})
 }

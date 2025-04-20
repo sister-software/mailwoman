@@ -1,130 +1,126 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import test from "tape"
+import { expect, test } from "vitest"
 import { Span } from "./Span.js"
 
-test("constructor: defaults", (t) => {
+test("constructor: defaults", () => {
 	const span = Span.from()
-	t.equals(span.body, "")
-	t.equals(span.normalized, "")
-	t.equals(span.start, 0)
-	t.equals(span.end, 0)
 
-	t.equals(span.classifications.size, 0)
-	t.false(span.flags.has("numeric"))
-	t.false(span.flags.has("ends_with_period"))
-	t.end()
+	expect(span.body).toStrictEqual("")
+	expect(span.normalized).toStrictEqual("")
+	expect(span.start).toStrictEqual(0)
+	expect(span.end).toStrictEqual(0)
+
+	expect(span.classifications.size).toEqual(0)
+	expect(span.flags.has("numeric")).toBe(false)
+	expect(span.flags.has("ends_with_period")).toBe(false)
 })
 
-test("constructor: string", (t) => {
+test("constructor: string", () => {
 	const span = Span.from("Example")
-	t.equals(span.body, "Example")
-	t.equals(span.normalized, "example")
-	t.equals(span.start, 0)
-	t.equals(span.end, 7)
-	t.false(span.flags.has("numeric"))
-	t.false(span.flags.has("ends_with_period"))
-	t.end()
+
+	expect(span.body).toStrictEqual("Example")
+	expect(span.normalized).toStrictEqual("example")
+	expect(span.start).toStrictEqual(0)
+	expect(span.end).toStrictEqual(7)
+	expect(span.flags.has("numeric")).toBe(false)
+	expect(span.flags.has("ends_with_period")).toBe(false)
 })
 
-test("constructor: string + start", (t) => {
+test("constructor: string + start", () => {
 	const span = Span.from("Example", { start: 10 })
-	t.equals(span.body, "Example")
-	t.equals(span.normalized, "example")
-	t.equals(span.start, 10)
-	t.equals(span.end, 17)
-	t.false(span.flags.has("numeric"))
-	t.false(span.flags.has("ends_with_period"))
-	t.end()
+
+	expect(span.body).toStrictEqual("Example")
+	expect(span.normalized).toStrictEqual("example")
+	expect(span.start).toStrictEqual(10)
+	expect(span.end).toStrictEqual(17)
+	expect(span.flags.has("numeric")).toBe(false)
+	expect(span.flags.has("ends_with_period")).toBe(false)
 })
 
-test("setBody: empty string", (t) => {
+test("setBody: empty string", () => {
 	const span = Span.from("Example")
+
 	span.body = ""
-	t.equals(span.body, "")
-	t.equals(span.normalized, "")
-	t.equals(span.start, 0)
-	t.equals(span.end, 0)
-	t.false(span.flags.has("numeric"))
-	t.false(span.flags.has("ends_with_period"))
-	t.end()
+	expect(span.body).toStrictEqual("")
+	expect(span.normalized).toStrictEqual("")
+	expect(span.start).toStrictEqual(0)
+	expect(span.end).toStrictEqual(0)
+	expect(span.flags.has("numeric")).toBe(false)
+	expect(span.flags.has("ends_with_period")).toBe(false)
 })
 
-test("setBody: update body", (t) => {
+test("setBody: update body", () => {
 	const span = Span.from("Example")
-	t.equals(span.body, "Example")
+
+	expect(span.body).toStrictEqual("Example")
 	span.body = "Foo"
-	t.equals(span.body, "Foo")
-	t.end()
+	expect(span.body).toStrictEqual("Foo")
 })
 
-test("setBody: update norm", (t) => {
+test("setBody: update norm", () => {
 	const span = Span.from("Example")
-	t.equals(span.normalized, "example")
+
+	expect(span.normalized).toStrictEqual("example")
 	span.body = "Foo"
-	t.equals(span.normalized, "foo")
-	t.end()
+	expect(span.normalized).toStrictEqual("foo")
 })
 
-test("setBody: update end", (t) => {
+test("setBody: update end", () => {
 	const span = Span.from("Example", { start: 10 })
-	t.equals(span.start, 10)
-	t.equals(span.end, 17)
+
+	expect(span.start).toStrictEqual(10)
+	expect(span.end).toStrictEqual(17)
 	span.body = "Foo"
-	t.equals(span.start, 10)
-	t.equals(span.end, 13)
-	t.end()
+	expect(span.start).toStrictEqual(10)
+	expect(span.end).toStrictEqual(13)
 })
 
-test("setBody: update contains.numerals", (t) => {
+test("setBody: update contains.numerals", () => {
 	const span = Span.from("Example")
 
-	t.true(span.flags.has("alpha"))
-	t.false(span.flags.has("numeral"))
-	t.false(span.flags.has("alphanumeric"))
+	expect(span.flags.has("alpha")).toBe(true)
+	expect(span.flags.has("numeral")).toBe(false)
+	expect(span.flags.has("alphanumeric")).toBe(false)
 
 	span.body = "foo1bar"
-	t.true(span.flags.has("alphanumeric"))
-	t.true(span.flags.has("numeral"))
-	t.end()
+	expect(span.flags.has("alphanumeric")).toBe(true)
+	expect(span.flags.has("numeral")).toBe(true)
 })
 
-test("setBody: update contains.final.period", (t) => {
+test("setBody: update contains.final.period", () => {
 	const span = Span.from("Example")
-	t.false(span.flags.has("ends_with_period"))
+
+	expect(span.flags.has("ends_with_period")).toBe(false)
 	span.body = "Foo."
-	t.true(span.flags.has("ends_with_period"))
-	t.end()
+	expect(span.flags.has("ends_with_period")).toBe(true)
 })
 
-test("setBody: trim text when greater than 140 characters with spaces", (t) => {
+test("setBody: trim text when greater than 140 characters with spaces", () => {
 	const span =
 		Span.from(`Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
       Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.`)
-	t.equals(span.start, 0)
-	t.equals(span.end, 140)
-	t.end()
+	expect(span.start).toStrictEqual(0)
+	expect(span.end).toStrictEqual(140)
 })
 
-test("setBody: do not trim text when it's 140 characters", (t) => {
+test("setBody: do not trim text when it's 140 characters", () => {
 	const span = Span.from(
 		"LoremipsumdolorsitametconsecteturadipiscingelitseddoeiusmodtemporincididuntutlaboreetdoloremagnaaliquaUtenimadminimveniamquisnostrudexercita"
 	)
-	t.equals(span.start, 0)
-	t.equals(span.end, 140)
-	t.end()
+	expect(span.start).toStrictEqual(0)
+	expect(span.end).toStrictEqual(140)
 })
 
-test("intersects: basic", (t) => {
+test("intersects: basic", () => {
 	const spanA = Span.from("A")
 	const spanB = Span.from("B")
-	t.true(spanA.intersects(spanB))
-	t.true(spanB.intersects(spanA))
-	t.end()
+	expect(spanA.intersects(spanB)).toBe(true)
+	expect(spanB.intersects(spanA)).toBe(true)
 })
 
-test("intersects: advanced", (t) => {
+test("intersects: advanced", () => {
 	const spanA = Span.from("A")
 	spanA.start = 0
 	spanA.end = 1
@@ -137,24 +133,22 @@ test("intersects: advanced", (t) => {
 	spanC.start = 0
 	spanC.end = 2
 
-	t.false(spanA.intersects(spanB))
-	t.false(spanB.intersects(spanA))
-	t.true(spanA.intersects(spanC))
-	t.true(spanC.intersects(spanA))
-	t.true(spanB.intersects(spanC))
-	t.true(spanC.intersects(spanB))
-	t.end()
+	expect(spanA.intersects(spanB)).toBe(false)
+	expect(spanB.intersects(spanA)).toBe(false)
+	expect(spanA.intersects(spanC)).toBe(true)
+	expect(spanC.intersects(spanA)).toBe(true)
+	expect(spanB.intersects(spanC)).toBe(true)
+	expect(spanC.intersects(spanB)).toBe(true)
 })
 
-test("covers: basic", (t) => {
+test("covers: basic", () => {
 	const spanA = Span.from("A")
 	const spanB = Span.from("B")
-	t.true(spanA.covers(spanB))
-	t.true(spanB.covers(spanA))
-	t.end()
+	expect(spanA.covers(spanB)).toBe(true)
+	expect(spanB.covers(spanA)).toBe(true)
 })
 
-test("covers: advanced", (t) => {
+test("covers: advanced", () => {
 	const spanA = Span.from("A")
 	spanA.start = 0
 	spanA.end = 10
@@ -167,72 +161,66 @@ test("covers: advanced", (t) => {
 	spanC.start = 0
 	spanC.end = 5
 
-	t.true(spanA.covers(spanB))
-	t.false(spanB.covers(spanA))
-	t.true(spanA.covers(spanC))
-	t.false(spanC.covers(spanA))
-	t.false(spanB.covers(spanC))
-	t.false(spanC.covers(spanB))
-	t.end()
+	expect(spanA.covers(spanB)).toBe(true)
+	expect(spanB.covers(spanA)).toBe(false)
+	expect(spanA.covers(spanC)).toBe(true)
+	expect(spanC.covers(spanA)).toBe(false)
+	expect(spanB.covers(spanC)).toBe(false)
+	expect(spanC.covers(spanB)).toBe(false)
 })
 
-test("distance: same", (t) => {
+test("distance: same", () => {
 	const spanA = Span.from("A")
 	const spanB = Span.from("B")
 
-	t.equal(0, spanA.distance(spanB))
-	t.equal(0, spanB.distance(spanA))
-	t.end()
+	expect(spanA.distance(spanB)).toEqual(0)
+	expect(spanB.distance(spanA)).toEqual(0)
 })
 
-test("distance: right", (t) => {
+test("distance: right", () => {
 	const spanA = Span.from("A")
 	const spanB = Span.from("B")
 	spanB.start = 5
 	spanB.end = 6
 
-	t.equal(4, spanA.distance(spanB))
-	t.equal(4, spanB.distance(spanA))
-	t.end()
+	expect(spanA.distance(spanB)).toEqual(4)
+	expect(spanB.distance(spanA)).toEqual(4)
 })
 
-test("distance: left", (t) => {
+test("distance: left", () => {
 	const spanA = Span.from("A")
 	spanA.start = 2
 	spanA.end = 3
 
 	const spanB = Span.from("B")
 
-	t.equal(1, spanA.distance(spanB))
-	t.equal(1, spanB.distance(spanA))
-	t.end()
+	expect(spanA.distance(spanB)).toEqual(1)
+	expect(spanB.distance(spanA)).toEqual(1)
 })
 
-test("connectSiblings - array list", (t) => {
+test("connectSiblings - array list", () => {
 	const spans = [Span.from("A"), Span.from("B"), Span.from("C")] as const
 	Span.connectSiblings(...spans)
 
-	t.deepEquals(spans[0].nextSibling, spans[1])
-	t.notOk(spans[0].previousSibling)
-	t.deepEquals(spans[1].nextSibling, spans[2])
-	t.deepEquals(spans[1].previousSibling, spans[0])
-	t.notOk(spans[2].nextSibling)
-	t.deepEquals(spans[2].previousSibling, spans[1])
-	t.end()
+	expect(spans[0].nextSibling).toStrictEqual(spans[1])
+	expect(spans[0].previousSibling).toBeFalsy()
+	expect(spans[1].nextSibling).toStrictEqual(spans[2])
+	expect(spans[1].previousSibling).toStrictEqual(spans[0])
+	expect(spans[2].nextSibling).toBeFalsy()
+	expect(spans[2].previousSibling).toStrictEqual(spans[1])
 })
 
-test("connectSiblings - list of items", (t) => {
+test("connectSiblings - list of items", () => {
 	const a = Span.from("A")
 	const b = Span.from("B")
 	const c = Span.from("C")
 
 	Span.connectSiblings(a, b, c)
 
-	t.deepEquals(a.nextSibling, b)
-	t.notOk(a.previousSibling)
-	t.deepEquals(b.nextSibling, c)
-	t.deepEquals(b.previousSibling, a)
-	t.notOk(c.nextSibling)
-	t.deepEquals(c.previousSibling, b)
-	t.end()
+	expect(a.nextSibling).toStrictEqual(b)
+	expect(a.previousSibling).toBeFalsy()
+	expect(b.nextSibling).toStrictEqual(c)
+	expect(b.previousSibling).toStrictEqual(a)
+	expect(c.nextSibling).toBeFalsy()
+	expect(c.previousSibling).toStrictEqual(b)
 })

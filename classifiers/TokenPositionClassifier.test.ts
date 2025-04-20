@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { Span, TokenContext } from "mailwoman/core"
-import test from "tape"
+import { expect, test } from "vitest"
 import { TokenPositionClassifier } from "./TokenPositionClassifier.js"
 
 const classifier = new TokenPositionClassifier()
@@ -36,54 +36,49 @@ function classify(body: string) {
 	}
 }
 
-test("classify: empty string", (t) => {
+test("classify: empty string", () => {
 	const c = classify("")
 
-	t.equals(c.start_token.length, 0)
-	t.equals(c.end_token.length, 0)
-	t.equals(c.end_token_single_character.length, 0)
-	t.end()
+	expect(c.start_token.length).toEqual(0)
+	expect(c.end_token.length).toEqual(0)
+	expect(c.end_token_single_character.length).toEqual(0)
 })
 
-test("classify: A", (t) => {
+test("classify: A", () => {
 	const c = classify("A")
-	t.equals(c.start_token.length, 1)
-	t.equals(c.start_token[0]!.body, "A")
-	t.equals(c.end_token.length, 1)
-	t.equals(c.end_token[0]!.body, "A")
-	t.equals(c.end_token_single_character.length, 1)
-	t.equals(c.end_token_single_character[0]!.body, "A")
-	t.end()
+	expect(c.start_token.length).toEqual(1)
+	expect(c.start_token[0]!.body).toEqual("A")
+	expect(c.end_token.length).toEqual(1)
+	expect(c.end_token[0]!.body).toEqual("A")
+	expect(c.end_token_single_character.length).toEqual(1)
+	expect(c.end_token_single_character[0]!.body).toEqual("A")
 })
 
-test("classify: A B", (t) => {
+test("classify: A B", () => {
 	const c = classify("A B")
-	t.equals(c.start_token.length, 1)
-	t.equals(c.start_token[0]!.body, "A")
-	t.equals(c.end_token.length, 1)
-	t.equals(c.end_token[0]!.body, "B")
-	t.equals(c.end_token_single_character.length, 1)
-	t.equals(c.end_token_single_character[0]!.body, "B")
-	t.end()
+	expect(c.start_token.length).toEqual(1)
+	expect(c.start_token[0]!.body).toEqual("A")
+	expect(c.end_token.length).toEqual(1)
+	expect(c.end_token[0]!.body).toEqual("B")
+	expect(c.end_token_single_character.length).toEqual(1)
+	expect(c.end_token_single_character[0]!.body).toEqual("B")
 })
 
-test("classify: A BC", (t) => {
+test("classify: A BC", () => {
 	const c = classify("A BC")
-	t.equals(c.start_token.length, 1)
-	t.equals(c.start_token[0]!.body, "A")
-	t.equals(c.end_token.length, 1)
-	t.equals(c.end_token[0]!.body, "BC")
-	t.equals(c.end_token_single_character.length, 0)
-	t.end()
+	expect(c.start_token.length).toEqual(1)
+	expect(c.start_token[0]!.body).toEqual("A")
+	expect(c.end_token.length).toEqual(1)
+	expect(c.end_token[0]!.body, ").toEqual(BC")
+	expect(c.end_token_single_character.length).toEqual(0)
 })
 
-test("classify: A BC, D", (t) => {
+test("classify: A BC, D", () => {
 	const c = classify("A BC, D")
-	t.equals(c.start_token.length, 1)
-	t.equals(c.start_token[0]!.body, "A")
-	t.equals(c.end_token.length, 1)
-	t.equals(c.end_token[0]!.body, "D")
-	t.equals(c.end_token_single_character.length, 1)
-	t.equals(c.end_token_single_character[0]!.body, "D")
-	t.end()
+	expect(c.start_token.length).toEqual(1)
+	expect(c.start_token[0]!.body).toEqual("A")
+	expect(c.end_token.length).toEqual(1)
+	expect(c.end_token[0]!.body).toEqual("D")
+	expect(c.end_token_single_character.length).toEqual(1)
+	expect(c.end_token_single_character[0]!.body).toEqual("D")
 })

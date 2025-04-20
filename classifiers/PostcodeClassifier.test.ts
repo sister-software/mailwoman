@@ -2,84 +2,73 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { ClassificationsMatchMap } from "mailwoman/core"
-import test from "tape"
+import { expect, test } from "vitest"
 import { PostcodeClassifier } from "./PostcodeClassifier.js"
 
 const classifier = await new PostcodeClassifier().ready()
 
-test("classify: USA ZIP", (t) => {
+test("classify: USA ZIP", () => {
 	const span = classifier.classify("10010")
 
-	t.same(span.classifications, ClassificationsMatchMap.from("postcode"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("postcode"))
 })
 
-test("classify: USA ZIP Plus 4", (t) => {
+test("classify: USA ZIP Plus 4", () => {
 	const span = classifier.classify("99577-0727")
 
-	t.same(span.classifications, ClassificationsMatchMap.from("postcode"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("postcode"))
 })
 
-test("classify: DEU", (t) => {
+test("classify: DEU", () => {
 	const span = classifier.classify("10117")
 
-	t.same(span.classifications, ClassificationsMatchMap.from("postcode"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("postcode"))
 })
 
-test("classify: NZD", (t) => {
+test("classify: NZD", () => {
 	const span = classifier.classify("6012")
 
-	t.same(span.classifications, ClassificationsMatchMap.from("postcode"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("postcode"))
 })
 
-test("classify: AUD", (t) => {
+test("classify: AUD", () => {
 	const span = classifier.classify("2000")
 
-	t.same(span.classifications, ClassificationsMatchMap.from("postcode"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("postcode"))
 })
 
-test("classify: FRA", (t) => {
+test("classify: FRA", () => {
 	const span = classifier.classify("75000")
 
-	t.same(span.classifications, ClassificationsMatchMap.from("postcode"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("postcode"))
 })
 
-test("classify: GBP", (t) => {
+test("classify: GBP", () => {
 	const span = classifier.classify("E81DN")
 
-	t.same(span.classifications, ClassificationsMatchMap.from("postcode"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("postcode"))
 })
 
-test("classify: JAP", (t) => {
+test("classify: JAP", () => {
 	const span = classifier.classify("100-0000")
 
-	t.same(span.classifications, ClassificationsMatchMap.from("postcode"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("postcode"))
 })
 
-test("classify: RUS", (t) => {
+test("classify: RUS", () => {
 	const span = classifier.classify("101000")
 
-	t.same(span.classifications, ClassificationsMatchMap.from("postcode"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("postcode"))
 })
 
-test("classify: BRA", (t) => {
+test("classify: BRA", () => {
 	const span = classifier.classify("18180-000")
 
-	t.same(span.classifications, ClassificationsMatchMap.from("postcode"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("postcode"))
 })
 
-test("classify: NLD", (t) => {
+test("classify: NLD", () => {
 	const span = classifier.classify("7512EC")
 
-	t.same(span.classifications, ClassificationsMatchMap.from("postcode"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("postcode"))
 })

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { assertDeepSerialized } from "mailwoman/sdk/test"
-import test from "tape"
+import { expect, test } from "vitest"
 import { Span } from "./Span.js"
 import { permutate } from "./permutate.js"
 
@@ -20,7 +20,7 @@ function selectByIndex<T>(items: Iterable<T>, ...selectedIndices: number[]): T[]
 	})
 }
 
-test("permutate: simple", (t) => {
+test("permutate: simple", () => {
 	const span0 = Span.from("SoHo", { start: 0 })
 	const span1 = Span.from("New", { start: 5 })
 	const span2 = Span.from("York", { start: 9 })
@@ -92,16 +92,13 @@ test("permutate: simple", (t) => {
 	const actual = permutate(spans, { from: 1, to: 6 })
 
 	assertDeepSerialized(
-		t,
 		actual,
 		[perm1, perm2, perm3, perm4, perm5, perm6, perm7, perm8, perm9, perm10],
 		"permutations are correct"
 	)
-
-	t.end()
 })
 
-test("permutate: tokens contain whitespace", (t) => {
+test("permutate: tokens contain whitespace", () => {
 	const span0 = Span.from("SoHo", { start: 0 })
 	const span1 = Span.from("New York", { start: 5 })
 	const span2 = Span.from("USA", { start: 14 })
@@ -148,11 +145,10 @@ test("permutate: tokens contain whitespace", (t) => {
 	// perm6.lastChild = span2
 
 	const actual = permutate(spans, { from: 1, to: 6 })
-	assertDeepSerialized(t, actual, [perm1, perm2, perm3, perm4, perm5, perm6])
-	t.end()
+	assertDeepSerialized(actual, [perm1, perm2, perm3, perm4, perm5, perm6])
 })
 
-test("permutate: smaller window", (t) => {
+test("permutate: smaller window", () => {
 	const span0 = Span.from("SoHo", { start: 0 })
 	const span1 = Span.from("New", { start: 5 })
 	const span2 = Span.from("York", { start: 9 })
@@ -205,11 +201,10 @@ test("permutate: smaller window", (t) => {
 	// perm7.lastChild = span3
 
 	const actual = permutate(spans, { from: 1, to: 2 })
-	assertDeepSerialized(t, actual, [perm1, perm2, perm3, perm4, perm5, perm6, perm7])
-	t.end()
+	assertDeepSerialized(actual, [perm1, perm2, perm3, perm4, perm5, perm6, perm7])
 })
 
-test("permutate: start/end values", (t) => {
+test("permutate: start/end values", () => {
 	// "  SoHo     New  York  "
 
 	const span0 = Span.from("SoHo", { start: 2 })
@@ -271,11 +266,10 @@ test("permutate: start/end values", (t) => {
 	// perm6.lastChild = span1
 
 	const actual = permutate(spans, { from: 1, to: 6 })
-	assertDeepSerialized(t, actual, [perm1, perm2, perm3, perm4, perm5, perm6])
-	t.end()
+	assertDeepSerialized(actual, [perm1, perm2, perm3, perm4, perm5, perm6])
 })
 
-test("permutate: relationships", (t) => {
+test("permutate: relationships", () => {
 	const span1 = Span.from("SoHo", { start: 0 })
 	const span2 = Span.from("New", { start: 5 })
 	const span3 = Span.from("York", { start: 14 })
@@ -286,48 +280,46 @@ test("permutate: relationships", (t) => {
 	// Soho New York
 	const permutation1 = actual[0]!
 
-	t.true(permutation1.children.has(span1), "perm1 contains span1")
-	t.true(span1.parents.has(permutation1), "span1 parent is perm1")
+	expect(permutation1.children.has(span1), "perm1 contains span1").toBe(true)
+	expect(span1.parents.has(permutation1), "span1 parent is perm1").toBe(true)
 
-	t.true(permutation1.children.has(span2), "perm1 contains span2")
-	t.true(span2.parents.has(permutation1), "span2 parent is perm1")
-	t.true(permutation1.children.has(span3), "perm1 contains span3")
-	t.true(span3.parents.has(permutation1), "span3 parent is perm1")
+	expect(permutation1.children.has(span2), "perm1 contains span2").toBe(true)
+	expect(span2.parents.has(permutation1), "span2 parent is perm1").toBe(true)
+	expect(permutation1.children.has(span3), "perm1 contains span3").toBe(true)
+	expect(span3.parents.has(permutation1), "span3 parent is perm1").toBe(true)
 
 	// Soho New
 	const perm2 = actual[1]!
 
-	t.true(perm2.children.has(span1))
-	t.true(span1.parents.has(perm2), "span1 parent is perm2")
-	t.true(perm2.children.has(span2), "perm2 contains span2")
-	t.true(span2.parents.has(perm2), "span2 parent is perm2")
+	expect(perm2.children.has(span1)).toBe(true)
+	expect(span1.parents.has(perm2), "span1 parent is perm2").toBe(true)
+	expect(perm2.children.has(span2), "perm2 contains span2").toBe(true)
+	expect(span2.parents.has(perm2), "span2 parent is perm2").toBe(true)
 
 	// Soho
 	const perm3 = actual[2]!
-	t.true(perm3.children.has(span1))
-	t.true(span1.parents.has(perm3), "span1 parent is perm3")
+	expect(perm3.children.has(span1)).toBe(true)
+	expect(span1.parents.has(perm3), "span1 parent is perm3").toBe(true)
 
 	// New York
 	const perm4 = actual[3]!
-	t.true(perm4.children.has(span2))
-	t.true(span2.parents.has(perm4), "span2 parent is perm4")
-	t.true(perm4.children.has(span3))
-	t.true(span3.parents.has(perm4), "span3 parent is perm4")
+	expect(perm4.children.has(span2)).toBe(true)
+	expect(span2.parents.has(perm4), "span2 parent is perm4").toBe(true)
+	expect(perm4.children.has(span3)).toBe(true)
+	expect(span3.parents.has(perm4), "span3 parent is perm4").toBe(true)
 
 	// New
 	const perm5 = actual[4]!
-	t.true(perm5.children.has(span2), "perm5 contains span2")
-	t.true(span2.parents.has(perm5), "span2 parent is perm5")
+	expect(perm5.children.has(span2), "perm5 contains span2").toBe(true)
+	expect(span2.parents.has(perm5), "span2 parent is perm5").toBe(true)
 
 	// York
 	const perm6 = actual[5]!
-	t.true(perm6.children.has(span3), "perm6 contains span3")
-	t.true(span3.parents.has(perm6), "span3 parent is perm6")
-
-	t.end()
+	expect(perm6.children.has(span3), "perm6 contains span3").toBe(true)
+	expect(span3.parents.has(perm6), "span3 parent is perm6").toBe(true)
 })
 
-test("permutate: with hyphen", (t) => {
+test("permutate: with hyphen", () => {
 	const span1 = Span.from("SoHo", { start: 0 })
 	const span2 = Span.from("New-York", { start: 5 })
 	const span3 = Span.from("USA", { start: 14 })
@@ -428,7 +420,7 @@ test("permutate: with hyphen", (t) => {
 
 	const actual = permutate(spans, { from: 1, to: 10 })
 
-	assertDeepSerialized(t, actual, [
+	assertDeepSerialized(actual, [
 		perm1,
 		perm2,
 		perm3,
@@ -444,5 +436,4 @@ test("permutate: with hyphen", (t) => {
 		perm13,
 		perm14,
 	])
-	t.end()
 })

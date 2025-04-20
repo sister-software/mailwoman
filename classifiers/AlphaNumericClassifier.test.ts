@@ -2,91 +2,78 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { ClassificationsMatchMap } from "mailwoman/core"
-import test from "tape"
+import { expect, test } from "vitest"
 import { AlphaNumericClassifier } from "./AlphaNumericClassifier.js"
 
 const classifier = new AlphaNumericClassifier()
 
-test("AlphaClassification: English letter", (t) => {
+test("AlphaClassification: English letter", () => {
 	const span = classifier.classify("A")
-	t.same(span.classifications, ClassificationsMatchMap.from("alpha"))
-	t.end()
+
+	expect(span.classifications).toEqual(ClassificationsMatchMap.from("alpha"))
 })
 
-test("AlphaClassification: English mixed-case word", (t) => {
+test("AlphaClassification: English mixed-case word", () => {
 	const span = classifier.classify("TesT ExAmPle")
-	t.same(span.classifications, ClassificationsMatchMap.from("alpha"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("alpha"))
 })
 
-test("AlphaClassification: Japanese", (t) => {
+test("AlphaClassification: Japanese", () => {
 	const span = classifier.classify("東京")
-	t.same(span.classifications, ClassificationsMatchMap.from("alpha"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("alpha"))
 })
 
-test("AlphaClassification: Mandarin", (t) => {
+test("AlphaClassification: Mandarin", () => {
 	const span = classifier.classify("北京市")
-	t.same(span.classifications, ClassificationsMatchMap.from("alpha"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("alpha"))
 })
 
-test("AlphaClassification: Cyrillic", (t) => {
+test("AlphaClassification: Cyrillic", () => {
 	const span = classifier.classify("Москва́")
-	t.same(span.classifications, ClassificationsMatchMap.from("alpha"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("alpha"))
 })
 
-test("NumericClassification: single digit", (t) => {
+test("NumericClassification: single digit", () => {
 	const span = classifier.classify("1")
-	t.same(span.classifications, ClassificationsMatchMap.from("numeric"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("numeric"))
 })
 
-test("NumericClassification: multiple digits", (t) => {
+test("NumericClassification: multiple digits", () => {
 	const span = classifier.classify("1234567890")
-	t.same(span.classifications, ClassificationsMatchMap.from("numeric"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("numeric"))
 })
 
-test("PunctuationClassification: single char", (t) => {
+test("PunctuationClassification: single char", () => {
 	const span = classifier.classify("@")
-	t.same(span.classifications, ClassificationsMatchMap.from("punctuation"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("punctuation"))
 })
 
-test("PunctuationClassification: multiple chars", (t) => {
+test("PunctuationClassification: multiple chars", () => {
 	const span = classifier.classify("###&$%")
-	t.same(span.classifications, ClassificationsMatchMap.from("punctuation"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("punctuation"))
 })
 
-test("AlphaNumericClassification: English letter", (t) => {
+test("AlphaNumericClassification: English letter", () => {
 	const span = classifier.classify("1A")
-	t.same(span.classifications, ClassificationsMatchMap.from("alphanumeric"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("alphanumeric"))
 })
 
-test("AlphaNumericClassification: English mixed-case word", (t) => {
+test("AlphaNumericClassification: English mixed-case word", () => {
 	const span = classifier.classify("100 TesT ExAmPle")
-	t.same(span.classifications, ClassificationsMatchMap.from("alphanumeric"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("alphanumeric"))
 })
 
-test("AlphaNumericClassification: Japanese", (t) => {
+test("AlphaNumericClassification: Japanese", () => {
 	const span = classifier.classify("1東京")
-	t.same(span.classifications, ClassificationsMatchMap.from("alphanumeric"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("alphanumeric"))
 })
 
-test("AlphaNumericClassification: Mandarin", (t) => {
+test("AlphaNumericClassification: Mandarin", () => {
 	const span = classifier.classify("北京市1")
-	t.same(span.classifications, ClassificationsMatchMap.from("alphanumeric"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("alphanumeric"))
 })
 
-test("AlphaNumericClassification: Cyrillic", (t) => {
+test("AlphaNumericClassification: Cyrillic", () => {
 	const span = classifier.classify("1Москва́")
-	t.same(span.classifications, ClassificationsMatchMap.from("alphanumeric"))
-	t.end()
+	expect(span.classifications).toStrictEqual(ClassificationsMatchMap.from("alphanumeric"))
 })

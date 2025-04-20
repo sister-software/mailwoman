@@ -1,5 +1,18 @@
 {
 	"extends": "@sister.software/tsconfig",
+	"watchOptions": {
+		"excludeDirectories": [
+			"**/.git", // Git
+			"**/.yarn", // Yarn
+			"**/.vscode", // VS Code
+			"**/.vscode-test-web", // VS Code Web Test
+			"**/dist", // Distributed build files
+			"**/out", // Output build files
+			"**/.drafts", // Drafts
+			"**/.github", // GitHub
+			"**/node_modules" // Node modules
+		]
+	},
 	"compilerOptions": {
 		"baseUrl": ".",
 		"outDir": "./out"

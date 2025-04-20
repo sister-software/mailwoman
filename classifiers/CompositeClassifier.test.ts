@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { Classification, Classifications, ClassifierSchemeCriteria, phraseMatchesScheme, Span } from "mailwoman/core"
-import test from "tape"
+import { expect, test } from "vitest"
 
 const PositiveMatchID = "PositiveMatch" as unknown as Classification
 const NegativeMatchID = "NegativeMatch" as unknown as Classification
@@ -10,39 +10,35 @@ const NegativeMatchID = "NegativeMatch" as unknown as Classification
 Classifications.add(PositiveMatchID)
 Classifications.add(NegativeMatchID)
 
-test("match: scheme.is multi-token", (t) => {
+test("match: scheme.is multi-token", () => {
 	const scheme: ClassifierSchemeCriteria = {
 		is: [PositiveMatchID],
 	}
 
 	const phrase = Span.from("Test Phrase")
-	t.false(phraseMatchesScheme(scheme, phrase))
+	expect(phraseMatchesScheme(scheme, phrase)).toBe(false)
 
 	phrase.classifications.add(PositiveMatchID)
-	t.true(phraseMatchesScheme(scheme, phrase))
-
-	t.end()
+	expect(phraseMatchesScheme(scheme, phrase)).toBe(true)
 })
 
-test("match: scheme.is single-token", (t) => {
+test("match: scheme.is single-token", () => {
 	const scheme: ClassifierSchemeCriteria = {
 		is: [PositiveMatchID],
 	}
 
 	const phrase = Span.from("Test")
-	t.false(phraseMatchesScheme(scheme, phrase))
+	expect(phraseMatchesScheme(scheme, phrase)).toBe(false)
 
 	const child = Span.from("Test")
 	phrase.children.add(child)
 
 	child.classifications.add(PositiveMatchID)
 
-	t.true(phraseMatchesScheme(scheme, phrase))
-
-	t.end()
+	expect(phraseMatchesScheme(scheme, phrase)).toBe(true)
 })
 
-test("match: scheme.not multi-token", (t) => {
+test("match: scheme.not multi-token", () => {
 	const scheme: ClassifierSchemeCriteria = {
 		is: [PositiveMatchID],
 		classification: PositiveMatchID,
@@ -50,36 +46,32 @@ test("match: scheme.not multi-token", (t) => {
 	}
 
 	const phrase = Span.from("Test Phrase")
-	t.false(phraseMatchesScheme(scheme, phrase))
+	expect(phraseMatchesScheme(scheme, phrase)).toBe(false)
 
 	phrase.classifications.add(PositiveMatchID)
 
-	t.true(phraseMatchesScheme(scheme, phrase))
+	expect(phraseMatchesScheme(scheme, phrase)).toBe(true)
 
 	phrase.classifications.add(NegativeMatchID)
 
-	t.false(phraseMatchesScheme(scheme, phrase))
-
-	t.end()
+	expect(phraseMatchesScheme(scheme, phrase)).toBe(false)
 })
 
-test("match: scheme.not single-token", (t) => {
+test("match: scheme.not single-token", () => {
 	const scheme: ClassifierSchemeCriteria = {
 		is: [PositiveMatchID],
 		not: [NegativeMatchID],
 	}
 
 	const phrase = Span.from("Test")
-	t.false(phraseMatchesScheme(scheme, phrase))
+	expect(phraseMatchesScheme(scheme, phrase)).toBe(false)
 
 	const child = Span.from("Test")
 	phrase.children.add(child)
 
 	child.classifications.add(PositiveMatchID)
-	t.true(phraseMatchesScheme(scheme, phrase))
+	expect(phraseMatchesScheme(scheme, phrase)).toBe(true)
 
 	child.classifications.add(NegativeMatchID)
-	t.false(phraseMatchesScheme(scheme, phrase))
-
-	t.end()
+	expect(phraseMatchesScheme(scheme, phrase)).toBe(false)
 })

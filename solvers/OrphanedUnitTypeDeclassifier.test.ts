@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { Solution, SolutionMatch, Span } from "mailwoman/core"
-import test from "tape"
+import { expect, test } from "vitest"
 import { OrphanedUnitTypeDeclassifier } from "./OrphanedUnitTypeDeclassifier.js"
 
-test("UnitClassification missing: remove unit_type", (t) => {
+test("UnitClassification missing: remove unit_type", () => {
 	const s1 = Span.from("A")
 	s1.start = 0
 	s1.end = 1
@@ -22,13 +22,12 @@ test("UnitClassification missing: remove unit_type", (t) => {
 	const c = new OrphanedUnitTypeDeclassifier()
 	c.solve({ solutions })
 
-	t.deepEquals(solutions.length, 1)
-	t.deepEquals(solutions[0]!.matches.length, 1)
-	t.deepEquals(solutions[0]!.matches[0], sp2)
-	t.end()
+	expect(solutions.length).toStrictEqual(1)
+	expect(solutions[0]!.matches.length).toStrictEqual(1)
+	expect(solutions[0]!.matches[0]).toStrictEqual(sp2)
 })
 
-test("UnitClassification present: do not remove unit_type", (t) => {
+test("UnitClassification present: do not remove unit_type", () => {
 	const s1 = Span.from("A")
 	s1.start = 0
 	s1.end = 1
@@ -50,10 +49,9 @@ test("UnitClassification present: do not remove unit_type", (t) => {
 	const c = new OrphanedUnitTypeDeclassifier()
 	c.solve({ solutions })
 
-	t.deepEquals(solutions.length, 1)
-	t.deepEquals(solutions[0]!.matches.length, 3)
-	t.deepEquals(solutions[0]!.matches[0], sp1)
-	t.deepEquals(solutions[0]!.matches[1], sp2)
-	t.deepEquals(solutions[0]!.matches[2], sp3)
-	t.end()
+	expect(solutions.length).toStrictEqual(1)
+	expect(solutions[0]!.matches.length).toStrictEqual(3)
+	expect(solutions[0]!.matches[0]).toStrictEqual(sp1)
+	expect(solutions[0]!.matches[1]).toStrictEqual(sp2)
+	expect(solutions[0]!.matches[2]).toStrictEqual(sp3)
 })

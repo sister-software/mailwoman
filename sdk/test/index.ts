@@ -3,8 +3,7 @@
 
 import { ClassificationRecord, createAddressParser } from "mailwoman"
 import { Classification, Classifier, LibPostalLanguageCode } from "mailwoman/core"
-import test from "tape"
-
+import { expect, test } from "vitest"
 /**
  * Global test parser instance.
  */
@@ -12,24 +11,18 @@ export const parser = createAddressParser({
 	// languages: ["en"],
 })
 
-export function assert(input: string, ...expectedClassifications: ClassificationRecord[]): Promise<void> {
-	const { resolve, promise } = Promise.withResolvers<void>()
-
-	test(input, async (t) => {
-		t.teardown(resolve)
-
+export function assert(input: string, ...expectedClassifications: ClassificationRecord[]) {
+	return test(input, async () => {
 		const solutions = await parser.parse(input)
 
 		if (expectedClassifications.length === 0) {
 			if (solutions.length !== 0) {
-				t.deepEqual(solutions, [], "Expected no solutions.")
-				t.end()
+				expect(solutions, "Expected no solutions").toEqual([])
 
 				return
 			}
 
-			t.pass("No solutions and no expected records.")
-			t.end()
+			expect(true, "No solutions and no expected records.").toBe(true)
 
 			return
 		}
@@ -38,41 +31,33 @@ export function assert(input: string, ...expectedClassifications: Classification
 			const bestMatch = solutions[i]
 
 			if (!bestMatch) {
-				// t.fail(`Cannot find a match for expected record ${i}: ${JSON.stringify(expectedClassification)}.`)
-				t.deepEqual(null, expectedClassification, `Match for expected record @ ${i}`)
-				t.end()
+				// throw new Error(`Cannot find a match for expected record ${i}: ${JSON.stringify(expectedClassification)}.`)
+				expect(null, `Match for expected record @ ${i}`).toEqual(expectedClassification)
 
 				return
 			}
 
-			t.deepEqual(
+			expect(
 				bestMatch.classifications,
-				expectedClassification,
 				`Classification record ${i + 1} of ${expectedClassifications.length} matches.`
-			)
+			).toEqual(expectedClassification)
 		}
-
-		t.end()
 	})
-
-	return promise
 }
 
 /**
  * Assert that two items are deeply equal after JSON serialization.
  *
- * @param t - The test object.
  * @param actual - The actual item.
  * @param expected - The expected item.
  * @param message - The message to display.
  */
 export function assertDeepSerialized(
-	t: test.Test,
 	actual: unknown,
 	expected: unknown,
 	message = "Items are deeply equally after serialization"
 ): void {
-	t.equals(JSON.stringify(actual), JSON.stringify(expected), message)
+	expect(JSON.stringify(actual), message).toStrictEqual(JSON.stringify(expected))
 }
 
 /**
@@ -108,7 +93,6 @@ export function* zip<T, U>(
  * same order.
  */
 export function assertCongruent<Item>(
-	t: test.Test,
 	actualItemIterators: Iterable<Iterable<Item>>,
 	...expectedItemIterators: Iterable<Item>[]
 ): void {
@@ -116,22 +100,20 @@ export function assertCongruent<Item>(
 
 	for (const [actualItemIterator, expectedItemIterator, iteratorsIndex] of mergedIterators) {
 		if (typeof expectedItemIterator === "undefined") {
-			t.fail(`Expected items at index ${iteratorsIndex} not found`)
-			return
+			throw new Error(`Expected items at index ${iteratorsIndex} not found`)
 		}
 
 		if (typeof actualItemIterator === "undefined") {
-			t.fail(`Actual items at index ${iteratorsIndex} not found`)
-			return
+			throw new Error(`Actual items at index ${iteratorsIndex} not found`)
 		}
 
 		const zipped = zip(actualItemIterator, expectedItemIterator)
 
 		for (const [actualItem, expectedItem, itemIndex] of zipped) {
-			t.same(actualItem, expectedItem, `Item ${itemIndex} of iterator ${iteratorsIndex} matches`)
+			expect(actualItem, `Item ${itemIndex} of iterator ${iteratorsIndex} matches`).toEqual(expectedItem)
 		}
 
-		t.pass("All items match")
+		expect(true, `All items match in iterator ${iteratorsIndex}`).toBe(true)
 	}
 }
 
@@ -154,36 +136,33 @@ export function assertClassification(
 	}
 
 	for (const [input, expectedLanguages, expectPositiveMatch = true] of expectations) {
-		test(`classify: ${input}`, (t) => {
+		test(`classify: ${input}`, () => {
 			const actualMatch = classifier.classify(input).classifications.get(classificationTarget)
 
 			if (!actualMatch) {
 				if (expectPositiveMatch) {
-					t.fail(`"${input}" is not classified as ${classificationTarget}`)
-					return
+					throw new Error(`"${input}" is not classified as ${classificationTarget}`)
 				}
 
-				t.pass(`"${input}" is not classified as ${classificationTarget}`)
-				t.end()
+				expect(true, `"${input}" is not classified as ${classificationTarget}`).toBe(true)
 				return
 			}
 
-			t.true(actualMatch, `"${input}" is classified as ${classificationTarget}`)
+			expect(actualMatch, `"${input}" is classified as ${classificationTarget}`).toBeTruthy()
 
 			const expectedLanguageSet = new Set(expectedLanguages)
+
 			if (expectedLanguageSet.size) {
 				const actualLanguageSet = new Set(actualMatch.languages)
 
-				if (actualLanguageSet.isSupersetOf(expectedLanguageSet)) {
-					t.pass(`"${input}" is classified as a  in ${JSON.stringify(Array.from(expectedLanguageSet))}`)
-				} else {
-					t.fail(
+				if (!actualLanguageSet.isSupersetOf(expectedLanguageSet)) {
+					throw new Error(
 						`Expected "${input}" to be classified in ${JSON.stringify(Array.from(expectedLanguageSet))} but only found in ${JSON.stringify(Array.from(actualLanguageSet))}`
 					)
 				}
-			}
 
-			t.end()
+				expect(true, `"${input}" is classified as a  in ${JSON.stringify(Array.from(expectedLanguageSet))}`).toBe(true)
+			}
 		})
 	}
 }

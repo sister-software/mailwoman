@@ -18,7 +18,7 @@ export interface SpanCreationOptions {
 const kSpanID: unique symbol = Symbol("SpanID")
 
 export interface SerializedSpan {
-	[kSpanID]: number
+	// [kSpanID]: number
 	body: string
 	start: number
 	end: number
@@ -51,7 +51,7 @@ export class Span extends Graph<Span> {
 	/**
 	 * The unique identifier for this span.
 	 */
-	readonly [kSpanID] = Span.IDCounter++
+	readonly [kSpanID]!: number
 
 	public get id(): number {
 		return this[kSpanID]
@@ -99,6 +99,14 @@ export class Span extends Graph<Span> {
 
 	constructor(body = "", start = 0) {
 		super()
+
+		// this[kSpanID] = Span.IDCounter++
+		Object.defineProperty(this, kSpanID, {
+			value: Span.IDCounter++,
+			writable: false,
+			enumerable: false,
+			configurable: false,
+		})
 
 		// Note that `start` should be set first to ensure that `end` is calculated correctly.
 		this.start = start
@@ -216,7 +224,7 @@ export class Span extends Graph<Span> {
 	 */
 	public toJSON(): SerializedSpan {
 		return {
-			[kSpanID]: this.id,
+			// [kSpanID]: this.id,
 			body: this.body,
 			start: this.start,
 			end: this.end,

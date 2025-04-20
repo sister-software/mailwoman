@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { ClassificationsMatchMap, Span } from "mailwoman/core"
-import test from "tape"
+import { expect, test } from "vitest"
 import { CentralEuropeanStreetNameClassifier } from "./CentralEuropeanStreetNameClassifier.js"
 
 const classifier = new CentralEuropeanStreetNameClassifier()
@@ -57,33 +57,27 @@ const valid = [
 ]
 
 valid.forEach((span) => {
-	test(`classify: ${span.body}`, (t) => {
+	test(`classify: ${span.body}`, () => {
 		classifier.explore(span)
 
 		const [head, ...tail] = span.children
 
 		// first child should now be classified as a street
-		t.same(
-			head!.classifications,
+		expect(head!.classifications, `'${span.body}'`).toStrictEqual(
 			ClassificationsMatchMap.from({
 				classification: "street",
 				confidence: 0.5,
 				flags: new Set(["central_european_street_name"]),
-			}),
-			`'${span.body}'`
+			})
 		)
 
 		tail.forEach((c) => {
-			t.same(
-				c.classifications,
+			expect(c.classifications, `'${span.body}'`).toStrictEqual(
 				ClassificationsMatchMap.from({
 					classification: "house_number",
 					confidence: 1,
-				}),
-				`'${span.body}'`
+				})
 			)
 		})
-
-		t.end()
 	})
 })
