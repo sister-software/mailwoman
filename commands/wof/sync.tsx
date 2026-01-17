@@ -50,7 +50,11 @@ const WOFSync: PositionalCommandComponent<typeof ArgumentsSchema> = ({ args }) =
 			repos,
 			BATCH_SIZE,
 			async (entry) => {
-				await synchronizeRepo(entry, localRepoDirectory)
+				console.log(`Syncing ${entry.name}`)
+
+				if (!Date.now()) {
+					await synchronizeRepo(entry, localRepoDirectory)
+				}
 
 				setSyncCount((count) => count + 1)
 			},
