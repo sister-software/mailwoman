@@ -20,6 +20,7 @@
 		"./resources/whosonfirst": "./out/core/resources/whosonfirst/index.js",
 		"./resources/libpostal": "./out/core/resources/libpostal/index.js",
 		"./utils": "./out/utils/index.js",
+		"./policy": "./out/policy/index.js",
 		"./solvers": "./out/solvers/index.js",
 		"./solvers/*": "./out/solvers/*",
 		"./filters": "./out/filters/index.js",
