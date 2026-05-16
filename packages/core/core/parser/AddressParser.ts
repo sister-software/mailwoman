@@ -24,6 +24,14 @@ export interface AddressParserOptions {
 
 export interface ParseOptions {
 	verbose?: boolean
+
+	/**
+	 * BCP-47 locale tag (e.g. `"en-US"`, `"fr-FR"`). When provided, downstream locale-aware pipelines
+	 * (Phase 1+) narrow classification to the registered `LocaleProfile`. Accepted but ignored by the
+	 * legacy rule-only pipeline in Phase 0; the field exists so the CLI and library callers can begin
+	 * tagging their requests now.
+	 */
+	locale?: string
 }
 
 export interface VerboseParseResult {
