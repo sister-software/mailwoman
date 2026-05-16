@@ -95,3 +95,25 @@ Decisions that affect future code. One entry per decision.
 **Rationale:** TS project references demand explicit workspace-scoped dependency edges. Scoped imports satisfy that and make the dependency graph legible. The symlink is cheap insurance for the edge cases (e.g., `sdk/test/index.ts` uses `from "mailwoman"` self-reference, which only works because the root package owns that name).
 
 **Reversibility:** reversible; the rewrite was mechanical (`scripts/rewrite-workspace-imports.mjs`), can be reverted by inverting the mapping.
+
+## 2026-05-16 — Phase 0 task 3: ship contracts + adapter scaffolding now, defer registry sweep + solver rewire
+
+**Context:** Phase 0 task 3 lists two success conditions: (a) the new `ClassificationProposal` / `Classifier` interfaces exist and an adapter wraps legacy rule classifiers in them, and (b) "every rule classifier emits `ClassificationProposal[]`" and "the solver code is updated minimally to consume the new shape but produces identical solutions."
+
+Condition (b) requires:
+
+1. A per-classifier registry of `(legacy ctor, id, emits, legacyTags, locales)` rows — manual cataloging across ~35 classifiers.
+2. A solver-side adapter that consumes a flat list of `ClassificationProposal` and reapplies them to the span graph the solver currently expects, OR a rewrite of the solver to consume proposals natively.
+
+Both are mechanical-but-bulky.
+
+**Options considered:**
+
+1. Land everything in one commit — large, risk-heavy, hard to review. Single failure surface for both adapter mechanics and solver-rewire.
+2. Land the contracts and the adapter mechanism in one commit (with a representative equivalence test on `HouseNumberClassifier`); land the registry of wrapped classifiers and the solver consumer in follow-up commits, each gated on the same green test suite. Production path on the legacy mutation API stays intact in the interim.
+
+**Chosen:** option 2.
+
+**Rationale:** The contracts are the high-leverage piece — Phase 1 (corpus) and beyond key off `ClassificationProposal` / `ComponentTag`. Putting the interfaces and adapter mechanism in place unblocks downstream work even if the rule classifiers haven't all been wrapped yet. Wrapping is mechanical; the legacy path keeps working until the wrappers are in place, so "no behavior change in Phase 0" is preserved.
+
+**Reversibility:** trivially extensible — the adapter is the canonical mechanism, and registries can land file-by-file. The remaining task-3 work is logged in `LOG.md` as a follow-up to this phase.

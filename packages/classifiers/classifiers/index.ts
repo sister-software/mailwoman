@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+export * from "./adapter.js"
 export * from "./AdjacencyClassifier.js"
 export * from "./AlphaNumericClassifier.js"
 export * from "./CentralEuropeanStreetNameClassifier.js"
