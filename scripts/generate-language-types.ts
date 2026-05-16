@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+import { repoRootPathBuilder, resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
 import { pascalCase } from "change-case"
 import * as csv from "csv-parse"
-import { repoRootPathBuilder, resourceDictionaryPathBuilder } from "mailwoman/sdk/repo"
 import { createReadStream } from "node:fs"
 import * as fs from "node:fs/promises"
 

@@ -7,9 +7,9 @@
 import { Spinner } from "@inkjs/ui"
 import { Text } from "ink"
 import { createAddressParser, createDiagnosticReport } from "mailwoman"
-import { CommandComponent } from "mailwoman/sdk/cli"
 import { useEffect, useState } from "react"
 import zod from "zod"
+import { CommandComponent } from "../sdk/cli.js"
 
 const ArgumentsSchema = zod.array(zod.string().describe("A formatted postal address"))
 export { ArgumentsSchema as args, ParseConfigSchema as options }

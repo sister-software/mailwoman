@@ -1,0 +1,9 @@
+{
+	"extends": "@sister.software/tsconfig",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"outDir": "./out"
+	},
+	"include": ["./core/**/*", "./utils/**/*", "./commands/**/*", "./solvers/**/*", "./filters/**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"]
+}

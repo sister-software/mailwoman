@@ -5,17 +5,17 @@
  */
 
 import { ProgressBar } from "@inkjs/ui"
+import { takeInParallel } from "@mailwoman/core"
+import { formatMinutes, formatQuantity, takeAsync, tallyPatternCount } from "@mailwoman/core/resources"
 import FastGlob from "fast-glob"
 import { Box, Text } from "ink"
-import { takeInParallel } from "mailwoman/core"
-import { formatMinutes, formatQuantity, takeAsync, tallyPatternCount } from "mailwoman/core/resources"
-import { PositionalCommandComponent } from "mailwoman/sdk/cli"
 import { availableParallelism } from "node:os"
 import { setImmediate } from "node:timers/promises"
 import { PathBuilder } from "path-ts"
 import { Piscina } from "piscina"
 import { useCallback, useEffect, useState } from "react"
 import zod from "zod"
+import { PositionalCommandComponent } from "../../../sdk/cli.js"
 
 type PluckDefaultExport<T> = T extends { default: infer U } ? U : never
 type InferPiscina<T> = T extends (...args: never) => unknown ? Piscina<Parameters<T>[0], ReturnType<T>> : never

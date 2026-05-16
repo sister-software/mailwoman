@@ -5,16 +5,16 @@
  */
 
 import { Spinner, StatusMessage } from "@inkjs/ui"
+import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import express from "express"
 import { Box, Text } from "ink"
-import { CommandComponent } from "mailwoman/sdk/cli"
-import { repoRootPathBuilder } from "mailwoman/sdk/repo"
-import { AddressRouter } from "mailwoman/server"
 import cluster, { Worker } from "node:cluster"
 import { availableParallelism } from "node:os"
 import * as process from "node:process"
 import { useEffect, useState } from "react"
 import zod from "zod"
+import { CommandComponent } from "../sdk/cli.js"
+import { AddressRouter } from "../server/index.js"
 
 const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 	options: { cpus = availableParallelism() },
