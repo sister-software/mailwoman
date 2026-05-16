@@ -34,6 +34,7 @@
 		"./worker": "./out/worker.mjs",
 		"./core": "./packages/core/out/core/index.js",
 		"./core/classification": "./packages/core/out/core/classification/index.js",
+		"./core/types": "./packages/core/out/core/types/index.js",
 		"./core/parser": "./packages/core/out/core/parser/index.js",
 		"./core/solver": "./packages/core/out/core/solver/index.js",
 		"./core/formatter": "./packages/core/out/core/formatter/index.js",

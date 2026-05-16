@@ -10,6 +10,7 @@
 		".": "./out/core/index.js",
 		"./classification": "./out/core/classification/index.js",
 		"./tokenization": "./out/core/tokenization/index.js",
+		"./types": "./out/core/types/index.js",
 		"./parser": "./out/core/parser/index.js",
 		"./solver": "./out/core/solver/index.js",
 		"./formatter": "./out/core/formatter/index.js",
