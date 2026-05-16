@@ -36,6 +36,7 @@
 		"./core/classification": "./packages/core/out/core/classification/index.js",
 		"./core/types": "./packages/core/out/core/types/index.js",
 		"./policy": "./packages/core/out/policy/index.js",
+		"./locale": "./packages/core/out/locale/index.js",
 		"./core/parser": "./packages/core/out/core/parser/index.js",
 		"./core/solver": "./packages/core/out/core/solver/index.js",
 		"./core/formatter": "./packages/core/out/core/formatter/index.js",

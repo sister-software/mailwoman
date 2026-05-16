@@ -4,6 +4,14 @@
 		"baseUrl": ".",
 		"outDir": "./out"
 	},
-	"include": ["./core/**/*", "./utils/**/*", "./commands/**/*", "./solvers/**/*", "./filters/**/*", "./policy/**/*"],
+	"include": [
+		"./core/**/*",
+		"./utils/**/*",
+		"./commands/**/*",
+		"./solvers/**/*",
+		"./filters/**/*",
+		"./policy/**/*",
+		"./locale/**/*"
+	],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"]
 }
