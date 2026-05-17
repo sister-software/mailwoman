@@ -42,10 +42,11 @@ describe("corpus run schema validation", () => {
 })
 
 describe("npx mailwoman corpus list", () => {
-	test("exits 0 and notes the empty registry", async () => {
+	test("exits 0 and includes every registered adapter id", async () => {
 		const { stdout, stderr } = await exec("node", [cliBin, "corpus", "list"], { timeout: 10_000 })
 		expect(stderr).toBe("")
-		expect(stdout).toMatch(/No adapters registered/i)
+		expect(stdout).toMatch(/wof-admin/i)
+		expect(stdout).toMatch(/CC0/i)
 	}, 15_000)
 })
 

@@ -13,27 +13,22 @@
 import { defaultAdapterRegistry } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
 
+/**
+ * Per-line output is rendered as a single `Text` node so Ink does not column-wrap the adapter id
+ * when the host stdout is non-TTY (CI, spawned tests). The list is meant to be grep-friendly, not
+ * pretty.
+ */
 const CorpusList = () => {
 	const adapters = defaultAdapterRegistry.list()
 
 	if (adapters.length === 0) {
-		return (
-			<Box flexDirection="column">
-				<Text dimColor>No adapters registered.</Text>
-			</Box>
-		)
+		return <Text dimColor>No adapters registered.</Text>
 	}
 
 	return (
 		<Box flexDirection="column">
 			{adapters.map((a) => (
-				<Box key={a.id}>
-					<Text bold>{a.id}</Text>
-					<Text>{"  "}</Text>
-					<Text dimColor>{a.defaultLicense}</Text>
-					<Text>{"  "}</Text>
-					<Text>{a.description}</Text>
-				</Box>
+				<Text key={a.id}>{`${a.id}\t${a.defaultLicense}\t${a.description}`}</Text>
 			))}
 		</Box>
 	)
