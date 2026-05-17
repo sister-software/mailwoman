@@ -4,11 +4,18 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtemp, readFile, rm } from "node:fs/promises"
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { defaultHoldouts, hashBucket, splitRows, writeSplitManifests } from "./split.js"
+import {
+	defaultHoldouts,
+	hashBucket,
+	splitForRow,
+	splitRows,
+	writeSplitManifests,
+	writeSplitManifestsFromLabeledFiles,
+} from "./split.js"
 
 interface MinRow {
 	source_id: string
@@ -150,5 +157,97 @@ describe("writeSplitManifests", () => {
 		const second = await readFile(join(scratch, "train.txt"), "utf8")
 		expect(first).toBe(second)
 		expect(first.trim().split("\n")).toEqual(["a", "b", "c"])
+	})
+})
+
+describe("splitForRow (pure per-row decision)", () => {
+	it("matches splitRows for the same inputs", () => {
+		const rows: MinRow[] = [
+			row("us-1", "US", "Vermont"),
+			row("us-2", "US", "Oregon"),
+			row("us-3", "US", "Wyoming"),
+			row("fr-1", "FR", "Corse"),
+			row("fr-2", "FR", "Île-de-France"),
+		]
+		const manifest = splitRows(rows)
+		for (const r of rows) {
+			const split = splitForRow(r)
+			if (split === "train") expect(manifest.train).toContain(r.source_id)
+			else if (split === "val") expect(manifest.val).toContain(r.source_id)
+			else expect(manifest.test).toContain(r.source_id)
+		}
+	})
+
+	it("rows without a region land in train", () => {
+		expect(splitForRow(row("us-1", "US"))).toBe("train")
+	})
+
+	it("custom holdouts override defaults", () => {
+		expect(splitForRow(row("us-1", "US", "California"), { US: ["California"] })).not.toBe("train")
+		expect(splitForRow(row("us-1", "US", "Vermont"), { US: ["California"] })).toBe("train")
+	})
+})
+
+describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
+	it("writes sorted train/val/test.txt + SPLIT_MANIFEST.json from per-split labeled JSONL", async () => {
+		const labeledPaths = {
+			train: join(scratch, "labeled-train.jsonl"),
+			val: join(scratch, "labeled-val.jsonl"),
+			test: join(scratch, "labeled-test.jsonl"),
+		}
+		// Write per-split labeled files in non-sorted order to exercise the external sort.
+		await writeFile(
+			labeledPaths.train,
+			['{"source_id":"us-c"}', '{"source_id":"us-a"}', '{"source_id":"us-b"}', ""].join("\n")
+		)
+		await writeFile(labeledPaths.val, ['{"source_id":"vt-2"}', '{"source_id":"vt-1"}', ""].join("\n"))
+		await writeFile(labeledPaths.test, ['{"source_id":"wy-1"}', ""].join("\n"))
+
+		const counts = { train: 3, val: 2, test: 1 }
+		const result = await writeSplitManifestsFromLabeledFiles({
+			labeledPaths,
+			outputDir: scratch,
+			corpusVersion: "0.1.1",
+			counts,
+		})
+
+		expect(result).toEqual({ train: 3, val: 2, test: 1, total: 6 })
+
+		const train = await readFile(join(scratch, "train.txt"), "utf8")
+		expect(train.trim().split("\n")).toEqual(["us-a", "us-b", "us-c"])
+
+		const val = await readFile(join(scratch, "val.txt"), "utf8")
+		expect(val.trim().split("\n")).toEqual(["vt-1", "vt-2"])
+
+		const test = await readFile(join(scratch, "test.txt"), "utf8")
+		expect(test.trim()).toBe("wy-1")
+
+		const summary = JSON.parse(await readFile(join(scratch, "SPLIT_MANIFEST.json"), "utf8"))
+		expect(summary).toMatchObject({
+			corpus_version: "0.1.1",
+			counts: { train: 3, val: 2, test: 1, total: 6 },
+		})
+		expect(summary.holdouts.US).toContain("Vermont")
+	})
+
+	it("handles an empty per-split file (no source_ids → empty .txt)", async () => {
+		const labeledPaths = {
+			train: join(scratch, "labeled-train.jsonl"),
+			val: join(scratch, "labeled-val.jsonl"),
+			test: join(scratch, "labeled-test.jsonl"),
+		}
+		await writeFile(labeledPaths.train, '{"source_id":"only-train"}\n')
+		await writeFile(labeledPaths.val, "")
+		await writeFile(labeledPaths.test, "")
+
+		await writeSplitManifestsFromLabeledFiles({
+			labeledPaths,
+			outputDir: scratch,
+			corpusVersion: "0.1.1",
+			counts: { train: 1, val: 0, test: 0 },
+		})
+		expect((await readFile(join(scratch, "val.txt"), "utf8")).trim()).toBe("")
+		expect((await readFile(join(scratch, "test.txt"), "utf8")).trim()).toBe("")
+		expect((await readFile(join(scratch, "train.txt"), "utf8")).trim()).toBe("only-train")
 	})
 })

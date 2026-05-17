@@ -55,7 +55,13 @@ import { defaultAdapterRegistry } from "./adapter.js"
 import { alignRow } from "./align.js"
 import { writeShards, type ShardManifest } from "./parquet.js"
 import { runAdapter, type AdapterRunManifest } from "./runner.js"
-import { splitRows, writeSplitManifests, type SplitManifest, type SplitName } from "./split.js"
+import {
+	defaultHoldouts,
+	splitForRow,
+	writeSplitManifestsFromLabeledFiles,
+	type SplitManifest,
+	type SplitName,
+} from "./split.js"
 import { defaultAugmentationsForCountry, synthesizeRow } from "./synthesize.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow } from "./types.js"
 
@@ -143,28 +149,28 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	}
 
 	// 2 + 3. Synthesis + alignment: stream every canonical.jsonl, optionally augment, align,
-	// write labeled.jsonl + quarantine.jsonl. We also collect a (source_id → SplitName) map
-	// for the parquet step.
-	const labeledPath = join(intermediateDir, "labeled.jsonl")
+	// and route each labeled row directly to its split-specific JSONL (`labeled-{train,val,test}.
+	// jsonl`). Memory cost is O(1) — the prior in-memory `splitInputs` array + `splitByIdMap`
+	// + `SplitManifest.{train,val,test}` arrays are gone; per-row split is decided inline via
+	// `splitForRow` (a pure function of source_id + region + holdout policy).
+	const labeledPaths: Record<SplitName, string> = {
+		train: join(intermediateDir, "labeled-train.jsonl"),
+		val: join(intermediateDir, "labeled-val.jsonl"),
+		test: join(intermediateDir, "labeled-test.jsonl"),
+	}
+	const labeledStreams: Record<SplitName, WriteStream> = {
+		train: createWriteStream(labeledPaths.train, { encoding: "utf8" }),
+		val: createWriteStream(labeledPaths.val, { encoding: "utf8" }),
+		test: createWriteStream(labeledPaths.test, { encoding: "utf8" }),
+	}
 	const quarantinePath = join(intermediateDir, "quarantine.jsonl")
-	const labeledStream = createWriteStream(labeledPath, { encoding: "utf8" })
 	const quarantineStream = createWriteStream(quarantinePath, { encoding: "utf8" })
 
 	let aligned = 0
 	let quarantined = 0
-	const splitInputs: Array<{
-		source_id: string
-		country: string
-		corpus_version: string
-		components: { region?: string }
-	}> = []
+	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+	const holdouts = defaultHoldouts()
 
-	const writeLabeled = (row: LabeledRow): void => {
-		if (!labeledStream.write(`${JSON.stringify(row)}\n`)) {
-			// Backpressure: we read it back later anyway. Fire-and-forget here is OK at
-			// fixture scale; tighter scales can plumb drain handling.
-		}
-	}
 	const writeQuarantine = (row: CanonicalRow, reason: string): void => {
 		quarantineStream.write(`${JSON.stringify({ row, reason })}\n`)
 	}
@@ -181,13 +187,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			for (const r of fanned) {
 				const result = alignRow(r)
 				if (result.kind === "labeled") {
-					writeLabeled(result.row)
-					splitInputs.push({
-						source_id: result.row.source_id,
-						country: result.row.country,
-						corpus_version: result.row.corpus_version,
-						components: { region: result.row.components.region },
-					})
+					const split = splitForRow(result.row, holdouts)
+					labeledStreams[split].write(`${JSON.stringify(result.row)}\n`)
+					counts[split]++
 					aligned++
 				} else {
 					writeQuarantine(r, result.row.reason)
@@ -197,29 +199,38 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		}
 	}
 
-	labeledStream.end()
+	for (const s of Object.values(labeledStreams)) s.end()
 	quarantineStream.end()
-	await Promise.all([streamEnd(labeledStream), streamEnd(quarantineStream)])
+	await Promise.all([...Object.values(labeledStreams).map(streamEnd), streamEnd(quarantineStream)])
 
-	// 4. Splits.
+	// 4. Splits — manifest derived by streaming the per-split labeled files; no in-memory
+	// source-id arrays. `sort(1)` from coreutils produces the deterministic per-split .txt
+	// manifests with disk spill for splits that exceed in-memory thresholds.
 	opts.onProgress?.("split", `splitting ${aligned} aligned rows`)
-	const splitManifest = splitRows(splitInputs)
 	const splitsDir = join(opts.outputDir, "splits")
-	await writeSplitManifests(splitManifest, splitsDir)
-
-	const splitByIdMap = new Map<string, SplitName>()
-	for (const id of splitManifest.train) splitByIdMap.set(id, "train")
-	for (const id of splitManifest.val) splitByIdMap.set(id, "val")
-	for (const id of splitManifest.test) splitByIdMap.set(id, "test")
-
-	// 5. Parquet shards.
-	opts.onProgress?.("shard", "writing parquet shards")
-	const shardManifest = await writeShards(streamJsonl<LabeledRow>(labeledPath), {
-		outputDir: opts.outputDir,
+	const splitCounts = await writeSplitManifestsFromLabeledFiles({
+		labeledPaths,
+		outputDir: splitsDir,
 		corpusVersion: opts.corpusVersion,
-		rowsPerShard,
-		splitFor: (id) => splitByIdMap.get(id) ?? "train",
+		counts,
+		holdouts,
 	})
+
+	// 5. Parquet shards — per-split labeled JSONL streams in, sharded `.parquet` out. The prior
+	// `splitFor(source_id)` callback (and the `Map<source_id, SplitName>` behind it) is gone.
+	opts.onProgress?.("shard", "writing parquet shards")
+	const shardManifest = await writeShards(
+		{
+			train: streamJsonl<LabeledRow>(labeledPaths.train),
+			val: streamJsonl<LabeledRow>(labeledPaths.val),
+			test: streamJsonl<LabeledRow>(labeledPaths.test),
+		},
+		{
+			outputDir: opts.outputDir,
+			corpusVersion: opts.corpusVersion,
+			rowsPerShard,
+		}
+	)
 
 	// 6. Top-level manifest.
 	opts.onProgress?.("manifest", "writing top-level MANIFEST.json")
@@ -228,7 +239,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		built_at,
 		adapters: adapterRuns,
 		skipped_adapters: skipped,
-		splits: { counts: splitManifest.counts, holdouts: splitManifest.holdouts },
+		splits: { counts: splitCounts, holdouts },
 		shards: { counts: shardManifest.counts, total_rows: shardManifest.total_rows },
 		quarantine_count: quarantined,
 		total_aligned_rows: aligned,
