@@ -96,8 +96,9 @@ describe("validateGoldenFile", () => {
 describe("validateGoldenDir against the in-repo seed set", () => {
 	it("returns zero issues for data/eval/golden/v0.1.0", async () => {
 		const report = await validateGoldenDir(goldenDir)
-		expect(report.files).toBe(2)
-		expect(report.entries).toBeGreaterThanOrEqual(20)
+		// us.jsonl + fr.jsonl + adversarial.jsonl (Phase 1.6 §3)
+		expect(report.files).toBe(3)
+		expect(report.entries).toBeGreaterThanOrEqual(70)
 		expect(report.issues).toEqual([])
 	})
 })

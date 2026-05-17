@@ -34,7 +34,7 @@ ingest has two important wrinkles the operator should know before running:
    `tl_2024_<5-digit-FIPS>_addrfeat.zip` where the 5-digit FIPS is the
    2-digit state FIPS concatenated with the 3-digit county FIPS. A single
    state can ship anywhere from ~3 county zips (DC) to ~250 (Texas). PLACE
-   *is* per-state (`tl_2024_<state-fips>_place.zip`).
+   _is_ per-state (`tl_2024_<state-fips>_place.zip`).
 2. **`STATEFP` is NOT a column in ADDRFEAT shapefiles.** It's present in
    PLACE but not ADDRFEAT. The mailwoman adapter expects `tiger_streets`
    to have a `statefp` column, so it must be derived at ingest time. The

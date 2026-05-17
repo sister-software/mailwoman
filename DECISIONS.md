@@ -289,3 +289,78 @@ the AWS SDK dependency tolerated). The Python converter file is deleted
 in this commit; recovering it would mean restoring from git history (it
 was 109 LOC and trivially re-derivable from the existing Parquet schema
 definition).
+
+## 2026-05-17 — Phase 1.6 §2.1: composition is a separate primitive, not an Augmentation
+
+**Context:** Phase 1.6 §2.1 (#22) asks for a `composeAdversarialRow`
+primitive that takes a venue string + an existing `CanonicalRow` from
+another adapter and renders them together as a single adversarial
+training example. The pre-existing single-row augmentations
+(`case-upper`, `state-abbreviate`, `us-street-suffix-expand`, ...)
+all live in `packages/corpus/src/synthesize.ts` as pure
+`(CanonicalRow) -> CanonicalRow | null` functions registered in
+`AUGMENTATIONS` and applied via `synthesizeRow`. The new compose
+primitive could not fit that mold.
+
+**Options considered:**
+
+1. **Make compose an `Augmentation`** by widening the interface to
+   take an optional second row + an options bag. Forces every existing
+   augmentation to grow a no-op parameter; muddies the
+   `synthesizeRow` generator contract; and the output of compose is
+   structurally a `LabeledRow`, not a `CanonicalRow`, which would
+   break the homogeneous-output guarantee `synthesizeRow` callers
+   rely on.
+2. **Land compose as a new primitive alongside augmentations** in
+   `synthesize.ts` with a distinct signature
+   `(venue: string, address: CanonicalRow, opts) -> ComposeResult`,
+   not registered in `AUGMENTATIONS`, not part of
+   `defaultAugmentationsForCountry`. Build-time policy applies
+   compose to address rows independently of the augmentation pass.
+3. **Move compose into a new file** (e.g. `compose.ts`). Pure code
+   organization; no behavior difference; loses the
+   single-stop-for-row-synthesis property `synthesize.ts` was meant
+   to have.
+
+**Chosen:** option 2.
+
+**Rationale:** the two operations differ in three load-bearing ways
+that make a shared signature wrong, not just inconvenient:
+
+1. **Output shape.** Augmentations emit `CanonicalRow` and defer
+   labeling to `alignRow`. Compose emits `LabeledRow` directly because
+   naive post-hoc alignment would mis-label the embedded
+   place-shaped tokens (the "Buffalo Health Clinic, Buffalo NY"
+   bug — alignment's substring search would grab the venue's
+   "Buffalo" as the locality, or vice versa). The deterministic
+   boundary in compose is the entire point of the primitive; you
+   cannot get there from an `Augmentation` signature without
+   destroying the contract.
+2. **Arity.** Augmentations are unary; compose is binary. Folding
+   the second input into an options bag works mechanically but
+   reads as a hack: every other augmentation would have a
+   nonsensical opt and the type system wouldn't catch passing
+   compose without one.
+3. **Provenance.** Augmentations chain `source_id` linearly under a
+   single row's `base_source_id`. Compositions cite the address
+   row's `base_source_id` and carry the venue string on a
+   `venue` component the address adapter didn't emit. The
+   provenance graph is genuinely two-source.
+
+The compose primitive lives in `synthesize.ts` alongside the
+augmentations (one stop for "things that mutate corpus rows"), but
+under its own export name and outside the `AUGMENTATIONS` registry,
+so `synthesizeRow` callers see only the unary
+`CanonicalRow → CanonicalRow` machinery and compose users reach for
+the binary call explicitly.
+
+**Throttling (~5-15% of training set):** policy belongs in the build
+pipeline, not the primitive. `composeAdversarialRow` is a pure
+function returning a `ComposeResult`; the caller decides how often
+to invoke it. Putting a fraction inside the primitive would couple
+it to the corpus size, which it cannot see.
+
+**Reversibility:** trivially reversible. The compose primitive is
+~80 LOC in one file; folding it into a shared `Augmentation`
+interface (option 1) or relocating it to `compose.ts` (option 3)
+is a mechanical refactor with no schema implications.
