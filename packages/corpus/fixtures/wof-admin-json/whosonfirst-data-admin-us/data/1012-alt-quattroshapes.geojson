@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": 1012,
+  "properties": {
+    "wof:id": 1012,
+    "wof:name": "Portland (alt-geometry, should be ignored)",
+    "wof:placetype": "locality",
+    "wof:country": "US",
+    "wof:parent_id": 1011,
+    "mz:is_current": 1,
+    "src:alt_label": "quattroshapes"
+  },
+  "geometry": null
+}

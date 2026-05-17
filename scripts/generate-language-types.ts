@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { repoRootPathBuilder, resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
 import { pascalCase } from "change-case"
 import * as csv from "csv-parse"
-import { repoRootPathBuilder, resourceDictionaryPathBuilder } from "mailwoman/sdk/repo"
 import { createReadStream } from "node:fs"
 import * as fs from "node:fs/promises"
 

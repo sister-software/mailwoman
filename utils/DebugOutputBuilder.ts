@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import chalk from "chalk"
 import {
 	ClassificationMatch,
 	pluckLanguageLabel,
@@ -9,7 +8,8 @@ import {
 	Span,
 	TokenContext,
 	VerboseParseResult,
-} from "mailwoman/core"
+} from "@mailwoman/core"
+import chalk from "chalk"
 import { inspect } from "node:util"
 
 function formatClassificationLanguages(classification: ClassificationMatch): string {

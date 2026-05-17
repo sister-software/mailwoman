@@ -1,0 +1,13 @@
+{
+  "type": "Feature",
+  "id": 5003,
+  "properties": {
+    "wof:id": 5003,
+    "wof:name": "33701",
+    "wof:placetype": "postalcode",
+    "wof:country": "US",
+    "wof:parent_id": 1021,
+    "mz:is_current": -1
+  },
+  "geometry": null
+}

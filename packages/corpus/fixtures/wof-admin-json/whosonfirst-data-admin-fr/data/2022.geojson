@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": 2022,
+  "properties": {
+    "wof:id": 2022,
+    "wof:name": "Lyon",
+    "wof:placetype": "locality",
+    "wof:country": "FR",
+    "wof:parent_id": 2021,
+    "mz:is_current": 1,
+    "name:fra_x_preferred": ["Lyon"]
+  },
+  "geometry": null
+}

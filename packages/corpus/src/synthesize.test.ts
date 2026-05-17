@@ -1,0 +1,611 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import { BIO_LABELS } from "@mailwoman/core/types"
+import { describe, expect, it } from "vitest"
+import {
+	AUGMENTATIONS,
+	accentStrip,
+	caseLower,
+	caseUpper,
+	composeAdversarialRow,
+	defaultAugmentationsForCountry,
+	directionalAbbreviate,
+	directionalExpand,
+	doubleSpace,
+	dropCommas,
+	particleStrip,
+	stateAbbreviate,
+	stateExpand,
+	streetSuffixAbbreviate,
+	streetSuffixExpand,
+	synthesizeRow,
+	zipPlus4DashDrop,
+} from "./synthesize.js"
+import type { CanonicalRow } from "./types.js"
+
+const baseRow = (over: Partial<CanonicalRow>): CanonicalRow => ({
+	raw: "",
+	components: {},
+	country: "US",
+	source: "test",
+	source_id: "t-1",
+	corpus_version: "0.1.0",
+	license: "CC0-1.0",
+	...over,
+})
+
+describe("universal augmentations", () => {
+	it("caseUpper transforms raw + components, sets synth marker", () => {
+		const out = caseUpper(
+			baseRow({ raw: "Portland, OR 97214", components: { locality: "Portland", region: "OR", postcode: "97214" } })
+		)!
+		expect(out.raw).toBe("PORTLAND, OR 97214")
+		expect(out.components.locality).toBe("PORTLAND")
+		expect(out.synth?.method).toBe("case-upper")
+		expect(out.synth?.base_source_id).toBe("t-1")
+		expect(out.source_id).toBe("t-1+case-upper")
+	})
+
+	it("caseUpper returns null on already-upper input", () => {
+		const out = caseUpper(baseRow({ raw: "PARIS", components: { locality: "PARIS" } }))
+		expect(out).toBeNull()
+	})
+
+	it("caseLower flips Paris → paris", () => {
+		const out = caseLower(baseRow({ raw: "Paris", components: { locality: "Paris" } }))!
+		expect(out.raw).toBe("paris")
+		expect(out.components.locality).toBe("paris")
+	})
+
+	it("dropCommas strips commas + collapses spaces", () => {
+		const out = dropCommas(
+			baseRow({ raw: "Portland, OR 97214", components: { locality: "Portland", region: "OR", postcode: "97214" } })
+		)!
+		expect(out.raw).toBe("Portland OR 97214")
+		expect(out.synth?.method).toBe("drop-commas")
+	})
+
+	it("doubleSpace inserts double spaces in raw AND in components (alignment-safe)", () => {
+		const out = doubleSpace(
+			baseRow({
+				raw: "Champs Élysées, Paris, France",
+				components: { street: "Champs Élysées", locality: "Paris", country: "France" },
+			})
+		)!
+		expect(out.raw).toBe("Champs  Élysées,  Paris,  France")
+		// Components must double-space too: alignment substring-searches each component in raw,
+		// so single-spaced "Champs Élysées" would not appear in the double-spaced raw.
+		expect(out.components.street).toBe("Champs  Élysées")
+		expect(out.components.locality).toBe("Paris")
+		expect(out.components.country).toBe("France")
+		// Substring invariant: every component value must appear in raw.
+		for (const v of Object.values(out.components)) {
+			if (v) expect(out.raw.includes(v)).toBe(true)
+		}
+	})
+
+	it("accentStrip flips Hôtel → Hotel, Île-de-France → Ile-de-France", () => {
+		const out = accentStrip(
+			baseRow({
+				raw: "Paris, Île-de-France, France",
+				country: "FR",
+				components: { locality: "Paris", region: "Île-de-France", country: "France" },
+			})
+		)!
+		expect(out.raw).toBe("Paris, Ile-de-France, France")
+		expect(out.components.region).toBe("Ile-de-France")
+	})
+
+	it("accentStrip returns null when no accents present", () => {
+		const out = accentStrip(baseRow({ raw: "Paris", components: { locality: "Paris" } }))
+		expect(out).toBeNull()
+	})
+})
+
+describe("US augmentations", () => {
+	it("stateExpand OR → Oregon", () => {
+		const out = stateExpand(
+			baseRow({
+				raw: "Portland, OR 97214",
+				components: { locality: "Portland", region: "OR", postcode: "97214" },
+			})
+		)!
+		expect(out.raw).toBe("Portland, Oregon 97214")
+		expect(out.components.region).toBe("Oregon")
+		expect(out.synth?.method).toBe("state-expand")
+	})
+
+	it("stateAbbreviate Oregon → OR", () => {
+		const out = stateAbbreviate(
+			baseRow({
+				raw: "Portland, Oregon",
+				components: { locality: "Portland", region: "Oregon" },
+			})
+		)!
+		expect(out.raw).toBe("Portland, OR")
+		expect(out.components.region).toBe("OR")
+	})
+
+	it("stateExpand only fires for US country", () => {
+		const out = stateExpand(baseRow({ raw: "Paris OR", country: "FR", components: { region: "OR" } }))
+		expect(out).toBeNull()
+	})
+
+	it("directionalExpand NW → Northwest in street_suffix", () => {
+		const out = directionalExpand(
+			baseRow({
+				raw: "1600 Pennsylvania Ave NW",
+				components: { house_number: "1600", street: "Pennsylvania", street_suffix: "Ave NW" },
+			})
+		)!
+		expect(out.raw).toBe("1600 Pennsylvania Ave Northwest")
+		expect(out.components.street_suffix).toBe("Ave Northwest")
+	})
+
+	it("directionalAbbreviate Southeast → SE in street", () => {
+		const out = directionalAbbreviate(
+			baseRow({
+				raw: "6220 Salmon St Southeast",
+				components: { house_number: "6220", street: "Salmon St Southeast" },
+			})
+		)!
+		expect(out.raw).toBe("6220 Salmon St SE")
+	})
+
+	it("zipPlus4DashDrop 12345-6789 → 123456789", () => {
+		const out = zipPlus4DashDrop(
+			baseRow({
+				raw: "Portland, OR 12345-6789",
+				components: { locality: "Portland", region: "OR", postcode: "12345-6789" },
+			})
+		)!
+		expect(out.components.postcode).toBe("123456789")
+		expect(out.raw).toBe("Portland, OR 123456789")
+	})
+
+	it("zipPlus4DashDrop returns null for non-ZIP+4 postcodes", () => {
+		const out = zipPlus4DashDrop(baseRow({ components: { postcode: "97214" } }))
+		expect(out).toBeNull()
+	})
+})
+
+describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
+	it("streetSuffixAbbreviate Avenue → Ave (title case preserved)", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "350 5th Avenue, New York, NY 10118",
+				components: {
+					house_number: "350",
+					street: "5th Avenue",
+					locality: "New York",
+					region: "NY",
+					postcode: "10118",
+				},
+			})
+		)!
+		expect(out.components.street).toBe("5th Ave")
+		expect(out.raw).toBe("350 5th Ave, New York, NY 10118")
+		expect(out.synth?.method).toBe("us-street-suffix-abbreviate")
+	})
+
+	it("streetSuffixAbbreviate AVENUE → AVE (uppercase preserved, OpenAddresses-style)", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "350 5TH AVENUE, NEW YORK, NY 10118",
+				components: {
+					house_number: "350",
+					street: "5TH AVENUE",
+					locality: "NEW YORK",
+					region: "NY",
+					postcode: "10118",
+				},
+			})
+		)!
+		expect(out.components.street).toBe("5TH AVE")
+		expect(out.raw).toContain("5TH AVE,")
+	})
+
+	it("streetSuffixAbbreviate Street → St", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "100 Main Street, Anytown, US",
+				components: { house_number: "100", street: "Main Street", locality: "Anytown" },
+			})
+		)!
+		expect(out.components.street).toBe("Main St")
+		expect(out.raw).toContain("Main St,")
+	})
+
+	it("streetSuffixAbbreviate Boulevard → Blvd", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "1 Sunset Boulevard",
+				components: { house_number: "1", street: "Sunset Boulevard" },
+			})
+		)!
+		expect(out.components.street).toBe("Sunset Blvd")
+	})
+
+	it("streetSuffixAbbreviate returns null when trailing word is already the preferred abbreviation", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "100 Main St",
+				components: { house_number: "100", street: "Main St" },
+			})
+		)
+		expect(out).toBeNull()
+	})
+
+	it("streetSuffixAbbreviate accepts non-preferred variants and rewrites them to preferred (AV → AVE)", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "100 MAIN AV",
+				components: { house_number: "100", street: "MAIN AV" },
+			})
+		)!
+		expect(out.components.street).toBe("MAIN AVE")
+	})
+
+	it("streetSuffixAbbreviate returns null when no trailing USPS suffix is recognized", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "100 Broadway",
+				components: { house_number: "100", street: "Broadway" },
+			})
+		)
+		expect(out).toBeNull()
+	})
+
+	it("streetSuffixAbbreviate only fires for US country", () => {
+		const out = streetSuffixAbbreviate(baseRow({ country: "FR", components: { street: "Avenue Foch" } }))
+		expect(out).toBeNull()
+	})
+
+	it("streetSuffixExpand Ave → Avenue (title case preserved)", () => {
+		const out = streetSuffixExpand(
+			baseRow({
+				raw: "350 5th Ave, New York, NY 10118",
+				components: { house_number: "350", street: "5th Ave", locality: "New York", region: "NY", postcode: "10118" },
+			})
+		)!
+		expect(out.components.street).toBe("5th Avenue")
+		expect(out.raw).toBe("350 5th Avenue, New York, NY 10118")
+		expect(out.synth?.method).toBe("us-street-suffix-expand")
+	})
+
+	it("streetSuffixExpand AVE → AVENUE (uppercase preserved)", () => {
+		const out = streetSuffixExpand(
+			baseRow({
+				raw: "350 5TH AVE",
+				components: { house_number: "350", street: "5TH AVE" },
+			})
+		)!
+		expect(out.components.street).toBe("5TH AVENUE")
+	})
+
+	it("streetSuffixExpand handles non-preferred variants (AV → AVENUE, STRT → STREET)", () => {
+		const av = streetSuffixExpand(baseRow({ raw: "1 MAIN AV", components: { house_number: "1", street: "MAIN AV" } }))!
+		expect(av.components.street).toBe("MAIN AVENUE")
+
+		const strt = streetSuffixExpand(
+			baseRow({ raw: "1 MAIN STRT", components: { house_number: "1", street: "MAIN STRT" } })
+		)!
+		expect(strt.components.street).toBe("MAIN STREET")
+	})
+
+	it("streetSuffixExpand returns null when trailing word is already the canonical full form", () => {
+		const out = streetSuffixExpand(
+			baseRow({
+				raw: "1 Sunset Boulevard",
+				components: { house_number: "1", street: "Sunset Boulevard" },
+			})
+		)
+		expect(out).toBeNull()
+	})
+
+	it("AUGMENTATIONS includes us-street-suffix-abbreviate + us-street-suffix-expand", () => {
+		expect(AUGMENTATIONS["us-street-suffix-abbreviate"]).toBe(streetSuffixAbbreviate)
+		expect(AUGMENTATIONS["us-street-suffix-expand"]).toBe(streetSuffixExpand)
+	})
+
+	it("defaultAugmentationsForCountry('US') includes both suffix augmentations", () => {
+		const us = defaultAugmentationsForCountry("US")
+		expect(us).toContain(streetSuffixAbbreviate)
+		expect(us).toContain(streetSuffixExpand)
+	})
+})
+
+describe("FR augmentations", () => {
+	it("particleStrip removes 'de la' from raw and drops particle component", () => {
+		const out = particleStrip(
+			baseRow({
+				raw: "10 Rue de la République, 75008 Paris",
+				country: "FR",
+				components: {
+					house_number: "10",
+					street_prefix: "Rue",
+					street_prefix_particle: "de la",
+					street: "République",
+					locality: "Paris",
+					postcode: "75008",
+				},
+			})
+		)!
+		expect(out.raw).toBe("10 Rue République, 75008 Paris")
+		expect(out.components.street_prefix_particle).toBeUndefined()
+		expect(out.components.street_prefix).toBe("Rue")
+		expect(out.synth?.method).toBe("particle-strip")
+	})
+
+	it("particleStrip returns null when no particle is present", () => {
+		const out = particleStrip(baseRow({ country: "FR", components: { street: "République" } }))
+		expect(out).toBeNull()
+	})
+
+	it("particleStrip skips US rows", () => {
+		const out = particleStrip(baseRow({ country: "US", components: { street_prefix_particle: "de la" } }))
+		expect(out).toBeNull()
+	})
+})
+
+describe("registry + defaults", () => {
+	it("AUGMENTATIONS maps every public augmentation by stable id", () => {
+		expect(AUGMENTATIONS["case-upper"]).toBe(caseUpper)
+		expect(AUGMENTATIONS["accent-strip"]).toBe(accentStrip)
+		expect(AUGMENTATIONS["state-expand"]).toBe(stateExpand)
+	})
+
+	it("defaultAugmentationsForCountry: US includes state-expand, FR includes accent-strip", () => {
+		const us = defaultAugmentationsForCountry("US")
+		const fr = defaultAugmentationsForCountry("FR")
+		expect(us).toContain(stateExpand)
+		expect(us).toContain(stateAbbreviate)
+		expect(fr).toContain(accentStrip)
+		expect(fr).toContain(particleStrip)
+		expect(us).not.toContain(particleStrip)
+		expect(fr).not.toContain(stateExpand)
+	})
+
+	it("synthesizeRow yields non-null transforms across the default policy", () => {
+		const row = baseRow({
+			raw: "Portland, OR 97214",
+			components: { locality: "Portland", region: "OR", postcode: "97214" },
+		})
+		const out = Array.from(synthesizeRow(row))
+		// Case-upper + case-lower + drop-commas + double-space + state-expand all apply
+		const methods = out.map((r) => r.synth?.method)
+		expect(methods).toContain("case-upper")
+		expect(methods).toContain("case-lower")
+		expect(methods).toContain("drop-commas")
+		expect(methods).toContain("double-space")
+		expect(methods).toContain("state-expand")
+	})
+
+	it("source_id of an augmented row chains under its base", () => {
+		const row = baseRow({
+			raw: "Portland, Oregon",
+			components: { locality: "Portland", region: "Oregon" },
+		})
+		const out = Array.from(synthesizeRow(row))
+		const upper = out.find((r) => r.synth?.method === "case-upper")!
+		expect(upper.source_id).toBe("t-1+case-upper")
+		expect(upper.synth?.base_source_id).toBe("t-1")
+	})
+})
+
+// ===========================================================================
+// composeAdversarialRow (Phase 1.6 §2.1)
+// ===========================================================================
+
+describe("composeAdversarialRow", () => {
+	it("emits a LabeledRow that round-trips through the BIO label vocabulary", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+		})
+		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+		expect(result.row.tokens.length).toBe(result.row.labels.length)
+		for (const label of result.row.labels) {
+			expect(BIO_LABELS).toContain(label)
+		}
+	})
+
+	it("place-name venue: shared 'Buffalo' token stays labeled venue, not locality", () => {
+		// Kryptonite case #1 from CONTEXT.md / issue #22.
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+		})
+		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+
+		expect(result.row.raw).toBe("Buffalo Health Clinic, Buffalo, NY 14201")
+		// The venue prefix: three tokens, all venue-labeled.
+		expect(result.row.tokens.slice(0, 3)).toEqual(["Buffalo", "Health", "Clinic"])
+		expect(result.row.labels.slice(0, 3)).toEqual(["B-venue", "I-venue", "I-venue"])
+		// The address half: the second "Buffalo" must be the locality, NOT venue.
+		const buffaloIndices = result.row.tokens.map((t, i) => (t === "Buffalo" ? i : -1)).filter((i) => i >= 0)
+		expect(buffaloIndices).toHaveLength(2)
+		expect(result.row.labels[buffaloIndices[0]!]).toBe("B-venue")
+		expect(result.row.labels[buffaloIndices[1]!]).toBe("B-locality")
+	})
+
+	it("place-shaped venue: embedded multi-token place-shaped substring stays venue-labeled", () => {
+		// Kryptonite case #2: venue contains a substring that looks like a complete address.
+		const address = baseRow({
+			raw: "Las Vegas, NV 89109",
+			components: { locality: "Las Vegas", region: "NV", postcode: "89109" },
+			source_id: "wof-admin-las-vegas",
+		})
+		const result = composeAdversarialRow("New York, New York Steakhouse", address, {
+			pattern: "place-shaped-venue",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+
+		expect(result.row.raw).toBe("New York, New York Steakhouse, Las Vegas, NV 89109")
+		// The venue is 5 tokens: New York New York Steakhouse — all venue.
+		expect(result.row.tokens.slice(0, 5)).toEqual(["New", "York", "New", "York", "Steakhouse"])
+		expect(result.row.labels.slice(0, 5)).toEqual(["B-venue", "I-venue", "I-venue", "I-venue", "I-venue"])
+		// The address half: "Las" + "Vegas" → B-locality + I-locality.
+		const lasIdx = result.row.tokens.indexOf("Las")
+		expect(lasIdx).toBeGreaterThan(0)
+		expect(result.row.labels[lasIdx]).toBe("B-locality")
+		expect(result.row.labels[lasIdx + 1]).toBe("I-locality")
+	})
+
+	it("particle-honorific ambiguity: apostrophe + St. tokens land under venue", () => {
+		// Kryptonite case #3: apostrophe + St./Saint ambiguity. "P'tit" and "St." are inside
+		// the venue surface form, not a street_prefix or honorific in the address.
+		const address = baseRow({
+			raw: "Montreal, QC H2X 1Y4",
+			country: "CA",
+			components: { locality: "Montreal", region: "QC", postcode: "H2X 1Y4" },
+			source_id: "test-montreal",
+		})
+		const result = composeAdversarialRow("P'tit St. Denis Street Café", address, {
+			pattern: "particle-honorific",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+
+		// The venue tokens via the whitespace tokenizer: P'tit, St, Denis, Street, Café
+		// (period is a separator, apostrophe joins, accented chars are word chars).
+		expect(result.row.tokens[0]).toBe("P'tit")
+		expect(result.row.tokens[1]).toBe("St")
+		// Every venue token gets the venue label — the embedded "St" is venue, not
+		// street_prefix.
+		const venueTokenCount = 5
+		for (let i = 0; i < venueTokenCount; i++) {
+			expect(result.row.labels[i]).toBe(i === 0 ? "B-venue" : "I-venue")
+		}
+	})
+
+	it("address components survive forward onto the composed row as-is", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+		})
+		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+
+		expect(result.row.components).toMatchObject({
+			venue: "Buffalo Health Clinic",
+			locality: "Buffalo",
+			region: "NY",
+			postcode: "14201",
+		})
+	})
+
+	it("synth marker carries compose:<pattern> + base_source_id from the address row", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+		})
+		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+
+		expect(result.row.synth?.method).toBe("compose:place-name-venue")
+		expect(result.row.synth?.base_source_id).toBe("wof-admin-buffalo")
+		expect(result.row.source_id).toBe("wof-admin-buffalo+compose:place-name-venue")
+	})
+
+	it("preserves country/locale/license/source from the underlying address row", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+			country: "US",
+			locale: "en-US",
+			source: "wof-admin",
+			license: "CC0-1.0",
+		})
+		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+
+		expect(result.row.country).toBe("US")
+		expect(result.row.locale).toBe("en-US")
+		expect(result.row.source).toBe("wof-admin")
+		expect(result.row.license).toBe("CC0-1.0")
+	})
+
+	it("separator option controls the join character", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+		})
+		const spaced = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+			separator: " ",
+		})
+		expect(spaced.kind).toBe("labeled")
+		if (spaced.kind === "labeled") expect(spaced.row.raw).toBe("Buffalo Health Clinic Buffalo, NY 14201")
+
+		const newline = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+			separator: "\n",
+		})
+		expect(newline.kind).toBe("labeled")
+		if (newline.kind === "labeled") expect(newline.row.raw).toBe("Buffalo Health Clinic\nBuffalo, NY 14201")
+	})
+
+	it("empty venue quarantines with reason=venue-empty", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+		})
+		const result = composeAdversarialRow("   ", address, { pattern: "place-name-venue" })
+		expect(result.kind).toBe("quarantined")
+		if (result.kind === "quarantined") expect(result.row.reason).toBe("venue-empty")
+	})
+
+	it("address that fails alignment quarantines with the propagated reason", () => {
+		// region "QQQQQQ" can't be located in the raw and is too far from any window to match
+		// under default edit distance — alignment quarantines it.
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "QQQQQQ", postcode: "14201" },
+		})
+		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+		})
+		expect(result.kind).toBe("quarantined")
+		if (result.kind === "quarantined") {
+			expect(result.row.reason).toContain("compose-address-")
+			expect(result.row.reason).toContain("region")
+		}
+	})
+
+	it("is deterministic: two compositions of the same inputs produce identical output", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+		})
+		const a = composeAdversarialRow("Buffalo Health Clinic", address, { pattern: "place-name-venue" })
+		const b = composeAdversarialRow("Buffalo Health Clinic", address, { pattern: "place-name-venue" })
+		expect(a).toEqual(b)
+	})
+})

@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": 2010,
+  "properties": {
+    "wof:id": 2010,
+    "wof:name": "Île-de-France",
+    "wof:placetype": "region",
+    "wof:country": "FR",
+    "wof:parent_id": 2001,
+    "mz:is_current": 1,
+    "name:fra_x_preferred": ["Île-de-France"]
+  },
+  "geometry": null
+}

@@ -1,0 +1,10 @@
+{
+	"extends": "@sister.software/tsconfig",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"outDir": "./out"
+	},
+	"include": ["./classifiers/**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [{ "path": "../core" }]
+}

@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": 2021,
+  "properties": {
+    "wof:id": 2021,
+    "wof:name": "Rhône",
+    "wof:placetype": "county",
+    "wof:country": "FR",
+    "wof:parent_id": 2020,
+    "mz:is_current": 1,
+    "name:fra_x_preferred": ["Rhône"]
+  },
+  "geometry": null
+}
