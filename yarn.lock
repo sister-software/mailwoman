@@ -417,6 +417,7 @@ __metadata:
     "@fragaria/address-formatter": "npm:^6.3.0"
     "@mailwoman/core": "workspace:*"
     better-sqlite3: "npm:^11.5.0"
+    fastest-levenshtein: "npm:^1.0.16"
   languageName: unknown
   linkType: soft
 
@@ -3279,6 +3280,13 @@ __metadata:
   version: 2.0.6
   resolution: "fast-levenshtein@npm:2.0.6"
   checksum: 10/eb7e220ecf2bab5159d157350b81d01f75726a4382f5a9266f42b9150c4523b9795f7f5d9fbbbeaeac09a441b2369f05ee02db48ea938584205530fe5693cfe1
+  languageName: node
+  linkType: hard
+
+"fastest-levenshtein@npm:^1.0.16":
+  version: 1.0.16
+  resolution: "fastest-levenshtein@npm:1.0.16"
+  checksum: 10/ee85d33b5cef592033f70e1c13ae8624055950b4eb832435099cd56aa313d7f251b873bedbc06a517adfaff7b31756d139535991e2406967438e03a1bf1b008e
   languageName: node
   linkType: hard
 

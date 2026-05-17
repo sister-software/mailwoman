@@ -7,6 +7,7 @@
 export * from "./adapter.js"
 export * from "./adapters/index.js"
 export * from "./align.js"
+export * from "./build.js"
 export * from "./format.js"
 export * from "./parquet.js"
 export * from "./runner.js"
