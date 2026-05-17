@@ -741,3 +741,182 @@ Phase 2 baseline. v0.1.1 (synth-ON, after the splitInputs refactor)
 is a "nice to have, not blocking" item — when the operator wants
 augmented corpus parity with external geocoding benchmarks, that's
 when the hour goes in.
+
+## 2026-05-17 — splitInputs refactor: multiplex labeled.jsonl per split, drop the in-memory split map
+
+**Context:** operator greenlit the refactor described in the
+2026-05-17 "splitInputs refactor scope" entry above. This entry
+records what actually shipped (design decisions made during the
+implementation that the scope sketch didn't pin down).
+
+### `splitForRow` extracted as pure helper
+
+`packages/corpus/src/split.ts` now exports `splitForRow(row,
+holdouts?): SplitName` — the per-row branch of the prior `splitRows`
+function lifted into a pure helper. `splitRows` was kept (still
+returns the in-memory `SplitManifest` shape) and now goes through
+`splitForRow` internally so the in-memory and streaming paths can't
+diverge on bucketing semantics. Tests cover both paths against the
+same fixture inputs.
+
+### `writeSplitManifestsFromLabeledFiles` shells out to `sort(1)`
+
+The streaming-friendly manifest writer
+(`writeSplitManifestsFromLabeledFiles`) streams source_ids out of
+per-split labeled JSONLs and pipes them to coreutils `sort(1)` with
+`LC_ALL=C` for cross-host byte-deterministic sorting. The alternative
+(in-process sort) would have required either (a) loading the full
+per-split source_id array into memory — defeating the refactor's
+purpose — or (b) implementing an external mergesort in JS, which is
+non-trivial. `sort(1)` is universally available on Linux/macOS and
+handles disk spill automatically.
+
+`LC_ALL=C` is load-bearing: without it, locale-aware sorting can
+produce different byte order across machines with different `LANG`
+settings, breaking the cross-host determinism guarantee the manifests
+exist to provide.
+
+### `writeShards` signature change: `PerSplitRows`, not `splitFor` callback
+
+`writeShards(rows, {splitFor})` became `writeShards(perSplit,
+opts)`. The old shape pushed an O(n) `Map<source_id, SplitName>` onto
+the caller (`buildCorpus`); the new shape pre-partitions rows into
+per-split AsyncIterables, so the sharder iterates them sequentially
+and only one parquet writer is open at a time. Memory cost in the
+shard phase drops from O(n_aligned_rows) to O(row_group_size ×
+row_size) ≈ 12 MiB.
+
+The alternative I considered (keep `(rows, splitFor)` and let the
+sharder lazily route via `splitFor`) would have left the O(n) Map
+inside `buildCorpus` and added per-row callback overhead in the
+shard hot path. Reshaping the interface was the cleaner break.
+
+### What I did NOT change
+
+- `splitRows` and `writeSplitManifests` stay (in-memory path for
+  tests + small-fixture callers). Removing them would have been a
+  breaking change to the package's public surface; the streaming
+  path is additive.
+- Manifest format on disk: unchanged. `SPLIT_MANIFEST.json` has the
+  same shape (`{corpus_version, holdouts, counts}`); per-split
+  `{train,val,test}.txt` files are still sorted line-separated
+  source_ids.
+- Parquet shard layout, schema, compression: unchanged.
+
+### Measured outcome
+
+The synth-ON v0.1.1 build (22,439,941 labeled rows, ~4.92× fan-out
+over v0.1.0's 4.56M canonical) ran on the same 8 GiB container that
+v0.1.0 ran on, with RSS peaking at ~3.9 GiB during the wof-admin
+adapter phase (ancestry index dominated) and falling to ~700-800 MiB
+through align/split/shard. No OOM, no `--max-old-space-size` bump
+needed beyond the v0.1.0 setting of 5800 MiB. The refactor's stated
+target ("from ~5 GiB synth-ON projection to ~600 MiB") is met for
+the align/split/shard phases; the adapter phase's ~3.9 GiB residency
+of the WOF ancestry index is a separate problem outside this
+refactor's scope.
+
+## 2026-05-17 — `doubleSpace` augmentation must update components (not just `raw`)
+
+**Context:** the first synth-ON v0.1.1 build attempt produced a
+8.94% quarantine rate (2,006,426 / 22,448,911 canonical+augmented
+rows). Drill-down via the per-method breakdown:
+2,004,682 (99.9%) of the quarantines traced back to the
+`double-space` augmentation in `synthesize.ts`.
+
+### Bug
+
+`doubleSpace` was implemented as:
+
+```ts
+export const doubleSpace: Augmentation = (row) => {
+	if (!/ /.test(row.raw)) return null
+	const newRaw = row.raw.replace(/ /g, "  ")
+	return withAugmentation(row, "double-space", newRaw, { ...row.components })
+}
+```
+
+— it doubled spaces in `raw` but spread the components unchanged.
+The corpus pipeline's `alignRow` (`packages/corpus/src/align.ts`)
+uses substring search to find each component's surface form inside
+`raw` so it can assign BIO labels to the right token spans. With
+single-spaced components and double-spaced raw, the substring search
+fails:
+
+- raw: `"5  Chemin  des  Amandiers,  13980  Alleins"` (BAN address,
+  spaces doubled)
+- `components.street`: `"Chemin des Amandiers"` (still single-spaced)
+
+The substring search for `"Chemin des Amandiers"` cannot find a
+match inside the double-spaced raw, so the row is quarantined with
+`reason: "component-not-found:street"`.
+
+### Why the unit test missed it
+
+The pre-existing `doubleSpace` test in `synthesize.test.ts` only
+asserted on `out.raw`:
+
+```ts
+const out = doubleSpace(baseRow({ raw: "Paris France", components: { locality: "Paris", country: "France" } }))!
+expect(out.raw).toBe("Paris  France")
+```
+
+…and the assertion is satisfied even with the bug, because the test
+inputs use single-word components (`"Paris"`, `"France"`) which
+don't have internal spaces to double. The bug only manifests on
+multi-word components — which are the majority of real-world data
+(streets, multi-word place names, country surface forms like
+`"United States of America"`).
+
+### Fix
+
+Apply the same `replace(/ /g, "  ")` to every component value, so
+the substring contract holds:
+
+```ts
+export const doubleSpace: Augmentation = (row) => {
+	if (!/ /.test(row.raw)) return null
+	const newRaw = row.raw.replace(/ /g, "  ")
+	const newComponents: ComponentDict = {}
+	for (const [k, v] of Object.entries(row.components)) {
+		if (v) newComponents[k as ComponentTag] = v.replace(/ /g, "  ")
+	}
+	return withAugmentation(row, "double-space", newRaw, newComponents)
+}
+```
+
+The regression test now asserts the **substring invariant**: every
+component value must appear in `raw`. This catches not just this
+specific bug but any future augmentation that breaks the same
+contract.
+
+### Why no other augmentations had the bug
+
+`caseUpper` and `caseLower` correctly upper/lower-case both raw and
+components. `dropCommas` leaves components alone but normalizes
+whitespace in raw — the substring search still succeeds because
+components didn't have commas to begin with. `accentStrip` and the
+US-specific augmentations also update components and raw in
+lockstep. `doubleSpace` was the only one that mutated `raw`-shape
+without the corresponding components mutation, because spaces don't
+appear in the toUpperCase/toLowerCase axis the bulk of the code is
+organized around.
+
+### Quarantine after the fix
+
+Retried build: **8,970 / 22,448,911 = 0.040% quarantine rate**, a
+99.9% reduction. Remaining quarantines are 7,226 double-space cases
+that downstream-amplify the pre-existing WOF whitespace artifacts
+that v0.1.0 surfaced (66 originals; components carrying internal
+double-spaces from `name:*` properties that `formatAddress`
+collapses in `raw`); the doubleSpace augmentation doubles BOTH the
+pre-existing 2-space component artifact (→ 4 spaces) AND the raw
+(→ 2 spaces), so the alignment substring contract still fails for
+these specific rows. Same root cause as v0.1.0's 66 quarantines,
+just amplified through the synth fan-out. Fixing it properly would
+mean adding a whitespace-normalization step in
+`reconcileComponents` at canonical-row emission time so components
+and raw share a single-space normal form before alignment ever sees
+them. That is the right fix for the residual but is out of scope
+for v0.1.1 — 0.040% is well under the operator's 10% interrupt
+threshold.
