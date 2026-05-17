@@ -364,3 +364,75 @@ it to the corpus size, which it cannot see.
 ~80 LOC in one file; folding it into a shared `Augmentation`
 interface (option 1) or relocating it to `compose.ts` (option 3)
 is a mechanical refactor with no schema implications.
+
+## 2026-05-17 — corpus-v0.1.0: ship synth-OFF (augmentations applied at training time, not baked into corpus)
+
+**Context:** The first real-data corpus build (`corpus-v0.1.0`, WOF +
+BAN + TIGER) was produced inside an 8 GiB-RAM container. The default
+build runs synthesis: for each canonical row, every applicable
+`Augmentation` in the country-default policy emits one augmented copy
+in addition to the original. US has 11 augmentations (4 universal + 7
+US-specific), FR has 6 (4 + 2). Average effective fan-out is ~3-4×
+after no-op filtering.
+
+The bottleneck is `buildCorpus` in `packages/corpus/src/build.ts`:
+it accumulates **every** aligned row's `{source_id, country,
+corpus_version, components.region}` into an in-memory `splitInputs`
+array, then `splitRows` partitions it into in-memory train / val /
+test source-id arrays. For ~4.56 M canonical rows the synth-OFF run
+peaked at ~4.2 GiB RSS. Synth-ON would have multiplied that by ~4×,
+plus the WOF ancestry index (~600 MiB resident for the full US admin
+distro) — overflowing the 8 GiB container even with
+`--max-old-space-size=7000`.
+
+**Options considered:**
+
+1. Run synth-ON and accept the OOM risk — ~30 min to discover failure,
+   no salvage path if it crashes during align phase (would lose all
+   labeled.jsonl progress).
+2. Refactor `buildCorpus` / `splitRows` to stream `splitInputs`
+   through disk-backed JSONL and rewrite `splitRows` to consume an
+   async iterable — meaningful code change with test rewrites, out of
+   scope for a "run the build" task.
+3. Ship synth-OFF for v0.1.0 and document the choice: 4.56 M _clean_
+   canonical rows + the augmentations available as a separate
+   training-time concern (the same `defaultAugmentationsForCountry`
+   table can be invoked from a Dataset / DataLoader to apply
+   augmentations at batch time).
+
+**Chosen:** option 3.
+
+**Rationale:** The augmentations in
+`packages/corpus/src/synthesize.ts` are pure functions; baking them
+into the corpus vs. applying them at training time is a question of
+_when_, not _whether_. Training-time augmentation is the standard ML
+pattern (a fresh per-epoch sampling means the model sees more
+variety than a fixed corpus fan-out). The corpus contract still
+documents the augmentation set; downstream training code wires the
+same functions in.
+
+The WOF `name:*` variants pre-existing in the adapter output already
+provide substantial surface-form diversity at the locality/region
+level (293 k US admin features × ~2 hierarchy variants × ~2.4 name
+slots ≈ the deduped 3.30 M canonical rows the build produced). The
+case / spacing / abbreviation augmentations are mechanical and add
+nothing the WOF localized-names corpus doesn't already cover for
+admin rows; they would matter most for the BAN / TIGER rows, whose
+canonical-row count (1.16 M combined) is small enough that
+training-time augmentation can comfortably amortize the work.
+
+**Reversibility:** trivially reversible. To bake synth into a future
+corpus version (e.g. v0.1.1), either (a) refactor `splitInputs` to
+stream to disk and re-run with `--no-synthesize=false`, or (b)
+post-process the existing v0.1.0 `intermediate/labeled.jsonl` through
+the augmentation pipeline + re-shard. The augmentations table is
+unchanged; only the _application site_ moves.
+
+**Build artifact summary:** /data/corpus/versioned/v0.1.0/ —
+adapters {wof-admin 3.30 M, wof-postalcode 103.7 k, ban 1.08 M,
+tiger 79.0 k} → 4.56 M aligned (66 quarantined, all
+`component-not-found:*` on WOF `name:*` whitespace-artifact variants;
+same root cause as the 6/19 quarantine in the Phase 1.5 TIGER smoke,
+not a pipeline regression). Splits 4.44 M train / 58.8 k val / 58.8 k
+test (the train skew is from BAN rows lacking `region` — known
+limitation). Parquet shards SNAPPY, ~157 MiB final.
