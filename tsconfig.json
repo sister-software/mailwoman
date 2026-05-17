@@ -30,5 +30,5 @@
 		"commands/**/*"
 	],
 	"exclude": ["./out/**/*", "./packages/**/*"],
-	"references": [{ "path": "./packages/core" }, { "path": "./packages/classifiers" }]
+	"references": [{ "path": "./packages/core" }, { "path": "./packages/classifiers" }, { "path": "./packages/corpus" }]
 }

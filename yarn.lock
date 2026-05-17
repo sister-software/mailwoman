@@ -410,6 +410,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/corpus@workspace:packages/corpus":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/corpus@workspace:packages/corpus"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@napi-rs/nice-android-arm-eabi@npm:1.0.1":
   version: 1.0.1
   resolution: "@napi-rs/nice-android-arm-eabi@npm:1.0.1"

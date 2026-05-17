@@ -1,0 +1,16 @@
+{
+	"name": "@mailwoman/corpus",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Mailwoman corpus pipeline: BIO-labeled dataset builder for the neural classifier.",
+	"license": "AGPL-3.0-only",
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/src/index.js",
+		"./types": "./out/src/types.js"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*"
+	}
+}

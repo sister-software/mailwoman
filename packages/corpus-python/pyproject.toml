@@ -1,0 +1,30 @@
+[project]
+name = "mailwoman-corpus-python"
+version = "0.1.0"
+description = "Python helpers for the Mailwoman corpus pipeline (tokenizer training, Parquet conversion)."
+readme = "README.md"
+license = { text = "AGPL-3.0-only" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Sister Software", email = "contact@sister.software" },
+]
+dependencies = [
+    # Pin loose; install via `pip install -e .` from this directory.
+    "sentencepiece>=0.2.0",
+    "pyarrow>=15.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
