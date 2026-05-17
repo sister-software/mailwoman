@@ -27,3 +27,12 @@ node_modules
 *.yaml
 *.yml
 
+## Playpen control protocol (machine-written, format must round-trip exactly)
+.playpen/control/**
+.playpen/**/*.md
+
+## Corpus fixtures: line-delimited GeoJSON is one Feature per line, not a single JSON document
+packages/corpus/fixtures/**/*.geojson
+packages/corpus/fixtures/**/*.geojsonl
+packages/corpus/fixtures/**/*.ndgeojson
+
