@@ -18,6 +18,8 @@ import {
 	particleStrip,
 	stateAbbreviate,
 	stateExpand,
+	streetSuffixAbbreviate,
+	streetSuffixExpand,
 	synthesizeRow,
 	zipPlus4DashDrop,
 } from "./synthesize.js"
@@ -152,6 +154,152 @@ describe("US augmentations", () => {
 	it("zipPlus4DashDrop returns null for non-ZIP+4 postcodes", () => {
 		const out = zipPlus4DashDrop(baseRow({ components: { postcode: "97214" } }))
 		expect(out).toBeNull()
+	})
+})
+
+describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
+	it("streetSuffixAbbreviate Avenue → Ave (title case preserved)", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "350 5th Avenue, New York, NY 10118",
+				components: {
+					house_number: "350",
+					street: "5th Avenue",
+					locality: "New York",
+					region: "NY",
+					postcode: "10118",
+				},
+			})
+		)!
+		expect(out.components.street).toBe("5th Ave")
+		expect(out.raw).toBe("350 5th Ave, New York, NY 10118")
+		expect(out.synth?.method).toBe("us-street-suffix-abbreviate")
+	})
+
+	it("streetSuffixAbbreviate AVENUE → AVE (uppercase preserved, OpenAddresses-style)", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "350 5TH AVENUE, NEW YORK, NY 10118",
+				components: {
+					house_number: "350",
+					street: "5TH AVENUE",
+					locality: "NEW YORK",
+					region: "NY",
+					postcode: "10118",
+				},
+			})
+		)!
+		expect(out.components.street).toBe("5TH AVE")
+		expect(out.raw).toContain("5TH AVE,")
+	})
+
+	it("streetSuffixAbbreviate Street → St", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "100 Main Street, Anytown, US",
+				components: { house_number: "100", street: "Main Street", locality: "Anytown" },
+			})
+		)!
+		expect(out.components.street).toBe("Main St")
+		expect(out.raw).toContain("Main St,")
+	})
+
+	it("streetSuffixAbbreviate Boulevard → Blvd", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "1 Sunset Boulevard",
+				components: { house_number: "1", street: "Sunset Boulevard" },
+			})
+		)!
+		expect(out.components.street).toBe("Sunset Blvd")
+	})
+
+	it("streetSuffixAbbreviate returns null when trailing word is already the preferred abbreviation", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "100 Main St",
+				components: { house_number: "100", street: "Main St" },
+			})
+		)
+		expect(out).toBeNull()
+	})
+
+	it("streetSuffixAbbreviate accepts non-preferred variants and rewrites them to preferred (AV → AVE)", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "100 MAIN AV",
+				components: { house_number: "100", street: "MAIN AV" },
+			})
+		)!
+		expect(out.components.street).toBe("MAIN AVE")
+	})
+
+	it("streetSuffixAbbreviate returns null when no trailing USPS suffix is recognized", () => {
+		const out = streetSuffixAbbreviate(
+			baseRow({
+				raw: "100 Broadway",
+				components: { house_number: "100", street: "Broadway" },
+			})
+		)
+		expect(out).toBeNull()
+	})
+
+	it("streetSuffixAbbreviate only fires for US country", () => {
+		const out = streetSuffixAbbreviate(baseRow({ country: "FR", components: { street: "Avenue Foch" } }))
+		expect(out).toBeNull()
+	})
+
+	it("streetSuffixExpand Ave → Avenue (title case preserved)", () => {
+		const out = streetSuffixExpand(
+			baseRow({
+				raw: "350 5th Ave, New York, NY 10118",
+				components: { house_number: "350", street: "5th Ave", locality: "New York", region: "NY", postcode: "10118" },
+			})
+		)!
+		expect(out.components.street).toBe("5th Avenue")
+		expect(out.raw).toBe("350 5th Avenue, New York, NY 10118")
+		expect(out.synth?.method).toBe("us-street-suffix-expand")
+	})
+
+	it("streetSuffixExpand AVE → AVENUE (uppercase preserved)", () => {
+		const out = streetSuffixExpand(
+			baseRow({
+				raw: "350 5TH AVE",
+				components: { house_number: "350", street: "5TH AVE" },
+			})
+		)!
+		expect(out.components.street).toBe("5TH AVENUE")
+	})
+
+	it("streetSuffixExpand handles non-preferred variants (AV → AVENUE, STRT → STREET)", () => {
+		const av = streetSuffixExpand(baseRow({ raw: "1 MAIN AV", components: { house_number: "1", street: "MAIN AV" } }))!
+		expect(av.components.street).toBe("MAIN AVENUE")
+
+		const strt = streetSuffixExpand(
+			baseRow({ raw: "1 MAIN STRT", components: { house_number: "1", street: "MAIN STRT" } })
+		)!
+		expect(strt.components.street).toBe("MAIN STREET")
+	})
+
+	it("streetSuffixExpand returns null when trailing word is already the canonical full form", () => {
+		const out = streetSuffixExpand(
+			baseRow({
+				raw: "1 Sunset Boulevard",
+				components: { house_number: "1", street: "Sunset Boulevard" },
+			})
+		)
+		expect(out).toBeNull()
+	})
+
+	it("AUGMENTATIONS includes us-street-suffix-abbreviate + us-street-suffix-expand", () => {
+		expect(AUGMENTATIONS["us-street-suffix-abbreviate"]).toBe(streetSuffixAbbreviate)
+		expect(AUGMENTATIONS["us-street-suffix-expand"]).toBe(streetSuffixExpand)
+	})
+
+	it("defaultAugmentationsForCountry('US') includes both suffix augmentations", () => {
+		const us = defaultAugmentationsForCountry("US")
+		expect(us).toContain(streetSuffixAbbreviate)
+		expect(us).toContain(streetSuffixExpand)
 	})
 })
 

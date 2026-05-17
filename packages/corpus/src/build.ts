@@ -18,7 +18,8 @@
  *        `test.txt`.
  *   5. **Parquet shards** — `writeShards` streams labeled rows into 1M-row `.parquet` shards per split
  *        under `corpus-v<version>/{train,val,test}/part-NNNN.parquet` (SNAPPY-compressed, 50k-row
- *        row groups), with per-shard checksums + per-stage manifest in `corpus-v<version>/MANIFEST.json`.
+ *        row groups), with per-shard checksums + per-stage manifest in
+ *        `corpus-v<version>/MANIFEST.json`.
  *   6. **Top-level manifest** — `<outputDir>/MANIFEST.json` ties every per-stage manifest together with
  *        a top-level corpus_version, built_at, and aggregate counts.
  *

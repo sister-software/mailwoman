@@ -36,3 +36,8 @@ packages/corpus/fixtures/**/*.geojson
 packages/corpus/fixtures/**/*.geojsonl
 packages/corpus/fixtures/**/*.ndgeojson
 
+## Append-only narrative logs — prettier's markdown formatter mangles bare `_` / `*`
+## inside one-line entries (e.g. `node_modules` → `node*modules`, `synth_*` → `synth*\*`),
+## which corrupts already-shipped historical lines on every run. Keep these byte-for-byte.
+LOG.md
+

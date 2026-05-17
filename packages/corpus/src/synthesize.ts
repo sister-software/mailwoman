@@ -25,6 +25,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/core/types"
+import { US_STREET_SUFFIX_PREFERRED_ABBR, matchCase, matchTrailingSuffix } from "./codex/us-street-suffix.js"
 import type { CanonicalRow } from "./types.js"
 
 /**
@@ -262,6 +263,63 @@ export const directionalAbbreviate: Augmentation = (row) => {
 	return withAugmentation(row, "directional-abbreviate", newRaw, newComponents)
 }
 
+/**
+ * US: swap the trailing street-suffix word in `components.street` to its preferred USPS
+ * abbreviation, preserving case. `"5th Avenue"` → `"5th Ave"`; `"5TH AVENUE"` → `"5TH AVE"`; `"main
+ * street"` → `"main st"`. Returns null when no trailing suffix is recognized, when the trailing
+ * word is already the preferred abbreviation, or when the swap would leave `raw` un- touched
+ * (alignment requires both raw and components to move in lockstep).
+ *
+ * Targets the trailing word only to avoid mangling streets like "Avenue of the Americas" where the
+ * suffix-shaped word is part of the proper name rather than a USPS suffix.
+ */
+export const streetSuffixAbbreviate: Augmentation = (row) => {
+	if (row.country !== "US") return null
+	const street = row.components.street
+	if (!street) return null
+	const match = matchTrailingSuffix(street)
+	if (!match) return null
+
+	const preferred = US_STREET_SUFFIX_PREFERRED_ABBR[match.canonical]
+	const target = matchCase(preferred, match.matched)
+	if (target === match.matched) return null
+
+	const newStreet = `${street.slice(0, street.lastIndexOf(match.matched))}${target}`
+	if (newStreet === street) return null
+
+	const newComponents: ComponentDict = { ...row.components, street: newStreet }
+	const newRaw = row.raw.replace(new RegExp(`\\b${escapeRegex(street)}\\b`, "g"), newStreet)
+	if (newRaw === row.raw) return null
+	return withAugmentation(row, "us-street-suffix-abbreviate", newRaw, newComponents)
+}
+
+/**
+ * US: swap the trailing street-suffix word in `components.street` to its full canonical form,
+ * preserving case. `"5th Ave"` → `"5th Avenue"`; `"5TH AVE"` → `"5TH AVENUE"`; `"main st"` → `"main
+ * street"`. Returns null when no trailing suffix is recognized, when the trailing word is already
+ * the canonical full form, or when the swap would leave `raw` untouched.
+ *
+ * Same trailing-word-only rule as `streetSuffixAbbreviate`.
+ */
+export const streetSuffixExpand: Augmentation = (row) => {
+	if (row.country !== "US") return null
+	const street = row.components.street
+	if (!street) return null
+	const match = matchTrailingSuffix(street)
+	if (!match) return null
+
+	const target = matchCase(match.canonical, match.matched)
+	if (target === match.matched) return null
+
+	const newStreet = `${street.slice(0, street.lastIndexOf(match.matched))}${target}`
+	if (newStreet === street) return null
+
+	const newComponents: ComponentDict = { ...row.components, street: newStreet }
+	const newRaw = row.raw.replace(new RegExp(`\\b${escapeRegex(street)}\\b`, "g"), newStreet)
+	if (newRaw === row.raw) return null
+	return withAugmentation(row, "us-street-suffix-expand", newRaw, newComponents)
+}
+
 /** US: ZIP+4 form `12345-6789` → `123456789` (dash dropped). */
 export const zipPlus4DashDrop: Augmentation = (row) => {
 	if (row.country !== "US") return null
@@ -306,6 +364,8 @@ export const AUGMENTATIONS: Record<string, Augmentation> = {
 	"state-abbreviate": stateAbbreviate,
 	"directional-expand": directionalExpand,
 	"directional-abbreviate": directionalAbbreviate,
+	"us-street-suffix-abbreviate": streetSuffixAbbreviate,
+	"us-street-suffix-expand": streetSuffixExpand,
 	"zip-plus4-dash-drop": zipPlus4DashDrop,
 	"particle-strip": particleStrip,
 }
@@ -315,7 +375,16 @@ export function defaultAugmentationsForCountry(country: string): readonly Augmen
 	const universal = [caseUpper, caseLower, dropCommas, doubleSpace]
 	switch (country) {
 		case "US":
-			return [...universal, stateExpand, stateAbbreviate, directionalExpand, directionalAbbreviate, zipPlus4DashDrop]
+			return [
+				...universal,
+				stateExpand,
+				stateAbbreviate,
+				directionalExpand,
+				directionalAbbreviate,
+				streetSuffixAbbreviate,
+				streetSuffixExpand,
+				zipPlus4DashDrop,
+			]
 		case "FR":
 			return [...universal, accentStrip, particleStrip]
 		default:
