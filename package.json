@@ -96,6 +96,9 @@
 		"postinstall": "node ./scripts/postinstall-self-link.mjs"
 	},
 	"prettier": "@sister.software/prettier-config",
+	"resolutions": {
+		"@dsnp/parquetjs@1.7.0": "patch:@dsnp/parquetjs@npm%3A1.7.0#./.yarn/patches/@dsnp-parquetjs-npm-1.7.0-efe8288b39.patch"
+	},
 	"dependencies": {
 		"@fragaria/address-formatter": "^6.3.0",
 		"better-sqlite3": "^11.5.0",

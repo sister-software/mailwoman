@@ -16,9 +16,9 @@
  *   4. **Splits** — `splitRows` partitions labeled `source_id`s into train/val/test by locality holdout.
  *        Manifest written to `splits/SPLIT_MANIFEST.json` + per-split `train.txt` / `val.txt` /
  *        `test.txt`.
- *   5. **Parquet shards** — `writeShards` streams labeled rows into 1M-row JSONL shards per split under
- *        `corpus-v<version>/{train,val,test}/part-NNNN.jsonl`, with checksums in
- *        `corpus-v<version>/MANIFEST.json`.
+ *   5. **Parquet shards** — `writeShards` streams labeled rows into 1M-row `.parquet` shards per split
+ *        under `corpus-v<version>/{train,val,test}/part-NNNN.parquet` (SNAPPY-compressed, 50k-row
+ *        row groups), with per-shard checksums + per-stage manifest in `corpus-v<version>/MANIFEST.json`.
  *   6. **Top-level manifest** — `<outputDir>/MANIFEST.json` ties every per-stage manifest together with
  *        a top-level corpus_version, built_at, and aggregate counts.
  *
@@ -36,9 +36,9 @@
  *     train.txt / val.txt / test.txt
  *   corpus-v<version>/
  *     MANIFEST.json
- *     train/part-NNNN.jsonl
- *     val/part-NNNN.jsonl
- *     test/part-NNNN.jsonl
+ *     train/part-NNNN.parquet
+ *     val/part-NNNN.parquet
+ *     test/part-NNNN.parquet
  * ```
  *
  *   The intermediate files live alongside the final shards for reproducibility + debugging. Operators

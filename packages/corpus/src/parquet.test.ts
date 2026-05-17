@@ -8,7 +8,16 @@ import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { PARQUET_COLUMNS, rowToParquet, writeShards, type ParquetRow } from "./parquet.js"
+import { ParquetReader } from "./parquet-wrapper/index.js"
+import {
+	LABELED_ROW_SCHEMA,
+	PARQUET_COLUMNS,
+	ROW_GROUP_SIZE,
+	SHARD_COMPRESSION,
+	rowToParquet,
+	writeShards,
+	type ParquetRow,
+} from "./parquet.js"
 import type { SplitName } from "./split.js"
 import type { LabeledRow } from "./types.js"
 
@@ -27,6 +36,17 @@ const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 
 async function* asyncFrom<T>(items: readonly T[]): AsyncIterable<T> {
 	for (const item of items) yield item
+}
+
+/** Read every row from a `.parquet` file in on-disk order. */
+async function readParquet(path: string): Promise<ParquetRow[]> {
+	const reader = await ParquetReader.openFile<ParquetRow>(path)
+	const cursor = reader.getCursor()
+	const out: ParquetRow[] = []
+	let row: ParquetRow | null
+	while ((row = (await cursor.next()) as ParquetRow | null)) out.push(row)
+	await reader.close()
+	return out
 }
 
 let scratch: string
@@ -65,6 +85,29 @@ describe("rowToParquet", () => {
 	})
 })
 
+describe("LABELED_ROW_SCHEMA", () => {
+	it("covers every PARQUET_COLUMNS entry", () => {
+		expect(Object.keys(LABELED_ROW_SCHEMA).sort()).toEqual([...PARQUET_COLUMNS].sort())
+	})
+
+	it("marks locale / synth_method / synth_base_id optional", () => {
+		expect(LABELED_ROW_SCHEMA.locale.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.synth_method.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.synth_base_id.optional).toBe(true)
+	})
+
+	it("marks tokens / labels REPEATED", () => {
+		expect(LABELED_ROW_SCHEMA.tokens.repeated).toBe(true)
+		expect(LABELED_ROW_SCHEMA.labels.repeated).toBe(true)
+	})
+
+	it("uses SHARD_COMPRESSION on every column", () => {
+		for (const def of Object.values(LABELED_ROW_SCHEMA)) {
+			expect(def.compression).toBe(SHARD_COMPRESSION)
+		}
+	})
+})
+
 describe("writeShards", () => {
 	it("PARQUET_COLUMNS lists every emitted column in order", () => {
 		const cols: string[] = [...PARQUET_COLUMNS]
@@ -83,7 +126,7 @@ describe("writeShards", () => {
 		])
 	})
 
-	it("writes per-split JSONL shards + MANIFEST.json", async () => {
+	it("writes per-split .parquet shards readable by ParquetReader, with MANIFEST.json", async () => {
 		const splitFor = (id: string): SplitName => {
 			if (id === "t-1") return "val"
 			if (id === "t-2") return "test"
@@ -91,7 +134,7 @@ describe("writeShards", () => {
 		}
 
 		const rows: LabeledRow[] = [
-			labeled({ source_id: "t-1", raw: "Paris" }),
+			labeled({ source_id: "t-1", raw: "Paris", locale: "fr-FR" }),
 			labeled({ source_id: "t-2", raw: "Lyon" }),
 			labeled({ source_id: "t-3", raw: "Marseille" }),
 			labeled({ source_id: "t-4", raw: "Nice" }),
@@ -107,25 +150,36 @@ describe("writeShards", () => {
 		expect(m.total_rows).toBe(4)
 		expect(m.counts).toEqual({ train: 2, val: 1, test: 1 })
 		expect(m.shards).toHaveLength(3)
+		expect(m.row_group_size).toBe(ROW_GROUP_SIZE)
 
 		const trainShard = m.shards.find((s) => s.split === "train")!
 		expect(trainShard.rows).toBe(2)
+		expect(trainShard.format).toBe("parquet")
+		expect(trainShard.compression).toBe(SHARD_COMPRESSION)
 		expect(trainShard.first_source_id).toBe("t-3")
 		expect(trainShard.last_source_id).toBe("t-4")
 		expect(trainShard.sha256).toMatch(/^[0-9a-f]{64}$/)
+		expect(trainShard.path).toMatch(/\.parquet$/)
 
-		const trainFile = await readFile(trainShard.path, "utf8")
-		const trainRows = trainFile
-			.trim()
-			.split("\n")
-			.map((l) => JSON.parse(l) as ParquetRow)
+		// Round-trip: read the train shard back and confirm row content.
+		const trainRows = await readParquet(trainShard.path)
 		expect(trainRows).toHaveLength(2)
 		expect(trainRows[0]!.raw).toBe("Marseille")
 		expect(trainRows[0]!.tokens).toEqual(["Paris"])
+		expect(trainRows[0]!.labels).toEqual(["B-locality"])
+		// `locale` is optional + absent on train rows — parquetjs may surface as null or undefined.
+		expect(trainRows[0]!.locale ?? null).toBeNull()
+		expect(trainRows[1]!.raw).toBe("Nice")
+
+		// Round-trip the val shard with an explicit locale set.
+		const valShard = m.shards.find((s) => s.split === "val")!
+		const valRows = await readParquet(valShard.path)
+		expect(valRows[0]!.locale).toBe("fr-FR")
 
 		const manifestOnDisk = JSON.parse(await readFile(join(scratch, "corpus-v0.1.0", "MANIFEST.json"), "utf8"))
 		expect(manifestOnDisk.total_rows).toBe(4)
 		expect(manifestOnDisk.schema).toEqual([...PARQUET_COLUMNS])
+		expect(manifestOnDisk.row_group_size).toBe(ROW_GROUP_SIZE)
 	})
 
 	it("rolls to a new shard at rowsPerShard rows", async () => {
@@ -143,9 +197,15 @@ describe("writeShards", () => {
 		expect(trainShards[1]!.rows).toBe(10)
 		expect(trainShards[2]!.rows).toBe(5)
 		expect(m.total_rows).toBe(25)
+
+		// Confirm each shard is a real readable .parquet
+		for (const shard of trainShards) {
+			const back = await readParquet(shard.path)
+			expect(back.length).toBe(shard.rows)
+		}
 	})
 
-	it("two runs over the same rows produce identical sha256 per shard", async () => {
+	it("two runs over the same rows produce a byte-identical parquet file (deterministic sha256)", async () => {
 		const rows = [labeled({ source_id: "t-1", raw: "A" }), labeled({ source_id: "t-2", raw: "B" })]
 		const a = await writeShards(asyncFrom(rows), {
 			outputDir: scratch,
@@ -159,5 +219,24 @@ describe("writeShards", () => {
 			splitFor: () => "train",
 		})
 		expect(a.shards[0]!.sha256).toBe(b.shards[0]!.sha256)
+	})
+
+	it("rows projected through appendShape omit nulls so optional columns are absent on disk", async () => {
+		// One row with locale set, one without. Both should round-trip the relevant value.
+		const rows = [
+			labeled({ source_id: "t-with", raw: "with locale", locale: "fr-FR" }),
+			labeled({ source_id: "t-without", raw: "no locale" }),
+		]
+		const m = await writeShards(asyncFrom(rows), {
+			outputDir: scratch,
+			corpusVersion: "0.1.0",
+			splitFor: () => "train",
+		})
+		const back = await readParquet(m.shards[0]!.path)
+		expect(back).toHaveLength(2)
+		const withLocale = back.find((r) => r.source_id === "t-with")!
+		const withoutLocale = back.find((r) => r.source_id === "t-without")!
+		expect(withLocale.locale).toBe("fr-FR")
+		expect(withoutLocale.locale ?? null).toBeNull()
 	})
 })

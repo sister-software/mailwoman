@@ -3,26 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Final output sharder for the corpus pipeline (Phase 1 task #7 in the plan).
+ *   Final output sharder for the corpus pipeline.
  *
- *   The plan allows two output paths:
+ *   Phase 1 (#9) shipped JSONL shards + a Python (PyArrow) converter as the path to binary Parquet —
+ *   bridging until the JS toolchain caught up. Phase 1.5 (#18 §4) replaced that with a native JS
+ *   writer based on the salvaged `@dsnp/parquetjs` wrapper from isp-nexus (now in
+ *   `./parquet-wrapper/`). The build pipeline no longer touches Python at all in its hot path; the
+ *   only remaining Python is the one-shot `train_tokenizer.py` SentencePiece step.
  *
- *   1. `@dsnp/parquetjs` — native JS Parquet writer.
- *   2. JSONL shards + a tiny Python (PyArrow) converter.
- *
- *   This module ships path #2: it streams `LabeledRow`s into 1M-row JSONL shards under
- *   `<outputDir>/corpus-v<version>/<split>/part-NNNN.jsonl` with a per-shard SHA-256, and writes a
- *   `MANIFEST.json` capturing the schema, every shard's checksum + counts, and the corpus version.
- *   The companion Python script `packages/corpus-python/scripts/jsonl_to_parquet.py` reads these
- *   shards and writes real Parquet via PyArrow (driven by the operator when binary Parquet is
- *   required for the training loop).
- *
- *   Rationale for shipping JSONL first:
- *
- *   - Reviewable in the corpus build pipeline (line-oriented).
- *   - No native binary dep on the JS side (parquetjs has had ARM64 + list-column issues historically).
- *   - Final binary format is trivial to swap in via the Python converter or a future `parquetjs`-based
- *       writer; the schema + checksum manifest is unchanged.
+ *   Compression: `SNAPPY`. The plan in #18 §4 specified `zstd`, but `@dsnp/parquetjs` 1.7.0 only
+ *   supports UNCOMPRESSED / GZIP / SNAPPY / BROTLI (see `node_modules/@dsnp/parquetjs/dist/lib/
+ *   compression.js`). SNAPPY is the standard ML-corpus default (PyArrow's default too) and is the
+ *   closest substitute on speed; revisit if @dsnp/parquetjs gains zstd support. Documented in
+ *   `DECISIONS.md`.
  *
  *   Layout under `<outputDir>`:
  *
@@ -30,24 +23,40 @@
  *   corpus-v<version>/
  *   MANIFEST.json
  *   train/
- *     part-0000.jsonl
- *     part-0001.jsonl
+ *     part-0000.parquet
+ *     part-0001.parquet
  *     ...
  *   val/
- *     part-0000.jsonl
+ *     part-0000.parquet
  *   test/
- *     part-0000.jsonl
+ *     part-0000.parquet
  * ```
+ *
+ *   Each shard caps at `rowsPerShard` (default 1_000_000); within a shard, parquetjs flushes row
+ *   groups every `ROW_GROUP_SIZE` (50_000) rows per the issue spec. The MANIFEST captures every
+ *   shard's path, row count, byte size, and SHA-256 (computed by re-reading the shard once after
+ *   close — cheap relative to writing it).
  */
 
-import { createWriteStream, type WriteStream } from "node:fs"
-import { mkdir, writeFile } from "node:fs/promises"
+import { createHash } from "node:crypto"
+import { createReadStream } from "node:fs"
+import { mkdir, stat, writeFile } from "node:fs/promises"
 import { join } from "node:path"
-import { streamingSha256, type StreamingHasher } from "./adapter.js"
+import { ParquetWriter, type ParquetSchemaDefinition } from "./parquet-wrapper/index.js"
 import type { SplitName } from "./split.js"
 import type { LabeledRow } from "./types.js"
 
-/** A single Parquet-style row shape. Same fields the Python converter expects. */
+/** Row groups flush at this many rows (parquetjs internal cadence within a shard). */
+export const ROW_GROUP_SIZE = 50_000
+
+/** Snappy is the only zstd-equivalent codec available in @dsnp/parquetjs 1.7.0. */
+export const SHARD_COMPRESSION = "SNAPPY" as const
+
+/**
+ * A single Parquet-style row shape. The `[key: string]: unknown` index signature is required for
+ * compatibility with `ParquetRecordLike` in the wrapper — parquetjs accepts any string key on
+ * rows.
+ */
 export interface ParquetRow {
 	raw: string
 	tokens: readonly string[]
@@ -60,6 +69,7 @@ export interface ParquetRow {
 	license: string
 	synth_method: string | null
 	synth_base_id: string | null
+	[key: string]: unknown
 }
 
 /** Column names emitted into every shard. Matches `ParquetRow`. */
@@ -77,10 +87,30 @@ export const PARQUET_COLUMNS = [
 	"synth_base_id",
 ] as const
 
+/**
+ * Parquet schema for `LabeledRow` per #18 §4. Optional fields use `optional: true`; repeated UTF8
+ * columns capture tokens/labels arrays. Compression is per-column SNAPPY.
+ */
+export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
+	raw: { type: "UTF8", compression: SHARD_COMPRESSION },
+	tokens: { type: "UTF8", repeated: true, compression: SHARD_COMPRESSION },
+	labels: { type: "UTF8", repeated: true, compression: SHARD_COMPRESSION },
+	country: { type: "UTF8", compression: SHARD_COMPRESSION },
+	locale: { type: "UTF8", compression: SHARD_COMPRESSION, optional: true },
+	source: { type: "UTF8", compression: SHARD_COMPRESSION },
+	source_id: { type: "UTF8", compression: SHARD_COMPRESSION },
+	corpus_version: { type: "UTF8", compression: SHARD_COMPRESSION },
+	license: { type: "UTF8", compression: SHARD_COMPRESSION },
+	synth_method: { type: "UTF8", compression: SHARD_COMPRESSION, optional: true },
+	synth_base_id: { type: "UTF8", compression: SHARD_COMPRESSION, optional: true },
+}
+
 /** Per-shard metadata captured in `MANIFEST.json`. */
 export interface ShardDescriptor {
 	split: SplitName
 	path: string
+	format: "parquet"
+	compression: typeof SHARD_COMPRESSION
 	rows: number
 	bytes: number
 	sha256: string
@@ -92,6 +122,7 @@ export interface ShardManifest {
 	corpus_version: string
 	schema: readonly string[]
 	rows_per_shard: number
+	row_group_size: number
 	shards: ShardDescriptor[]
 	counts: Record<SplitName, number>
 	total_rows: number
@@ -104,13 +135,12 @@ export interface WriteShardsOptions {
 	/** Corpus version stamped onto rows + into the output directory name. */
 	corpusVersion: string
 
-	/** Max rows per JSONL shard. Default 1_000_000 per the Phase 1 plan. */
+	/** Max rows per `.parquet` shard. Default 1_000_000 per the Phase 1 plan. */
 	rowsPerShard?: number
 
 	/**
 	 * Mapping from `source_id` → split. Built by the caller (typically from `splitRows`). Rows whose
-	 * `source_id` isn't in the map are sent to the `train` split as a safe default. The
-	 * unsplit-default behavior is logged in the manifest.
+	 * `source_id` isn't in the map are sent to the `train` split as a safe default.
 	 */
 	splitFor(sourceId: string): SplitName
 }
@@ -133,9 +163,30 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 }
 
 /**
- * Stream labeled rows into JSONL shards, sharded by split. Returns a manifest enumerating every
- * shard's checksum + row count. The runner is responsible for persisting the manifest (it's just
- * JSON-serializable).
+ * Project a `ParquetRow` for `appendRow`. parquetjs treats `null` as "skip" for `optional` columns;
+ * passing it explicitly is fine, but cleaner to omit so the on-disk Definition Levels match what
+ * PyArrow / DuckDB / etc. produce for the same logical row.
+ */
+function appendShape(row: ParquetRow): Record<string, unknown> {
+	const out: Record<string, unknown> = {
+		raw: row.raw,
+		tokens: row.tokens,
+		labels: row.labels,
+		country: row.country,
+		source: row.source,
+		source_id: row.source_id,
+		corpus_version: row.corpus_version,
+		license: row.license,
+	}
+	if (row.locale !== null) out.locale = row.locale
+	if (row.synth_method !== null) out.synth_method = row.synth_method
+	if (row.synth_base_id !== null) out.synth_base_id = row.synth_base_id
+	return out
+}
+
+/**
+ * Stream labeled rows into `.parquet` shards, sharded by split. Returns a manifest enumerating
+ * every shard's checksum + row count. The runner is responsible for persisting the manifest.
  */
 export async function writeShards(rows: AsyncIterable<LabeledRow>, opts: WriteShardsOptions): Promise<ShardManifest> {
 	const rowsPerShard = opts.rowsPerShard ?? 1_000_000
@@ -145,11 +196,9 @@ export async function writeShards(rows: AsyncIterable<LabeledRow>, opts: WriteSh
 	interface OpenShard {
 		split: SplitName
 		shardIndex: number
-		stream: WriteStream
-		hasher: StreamingHasher
+		writer: ParquetWriter<ParquetRow>
 		path: string
 		rows: number
-		bytes: number
 		first_source_id: string
 		last_source_id: string
 	}
@@ -160,14 +209,17 @@ export async function writeShards(rows: AsyncIterable<LabeledRow>, opts: WriteSh
 	let totalRows = 0
 
 	const flushShard = async (s: OpenShard): Promise<void> => {
-		s.stream.end()
-		await once(s.stream, "close")
+		await s.writer.close()
+		const fileStat = await stat(s.path)
+		const sha256 = await hashFile(s.path)
 		shards.push({
 			split: s.split,
 			path: s.path,
+			format: "parquet",
+			compression: SHARD_COMPRESSION,
 			rows: s.rows,
-			bytes: s.bytes,
-			sha256: s.hasher.digest(),
+			bytes: fileStat.size,
+			sha256,
 			first_source_id: s.first_source_id,
 			last_source_id: s.last_source_id,
 		})
@@ -176,16 +228,19 @@ export async function writeShards(rows: AsyncIterable<LabeledRow>, opts: WriteSh
 	const openShard = async (split: SplitName, shardIndex: number): Promise<OpenShard> => {
 		const splitDir = join(corpusDir, split)
 		await mkdir(splitDir, { recursive: true })
-		const path = join(splitDir, `part-${String(shardIndex).padStart(4, "0")}.jsonl`)
-		const stream = createWriteStream(path, { encoding: "utf8" })
+		const path = join(splitDir, `part-${String(shardIndex).padStart(4, "0")}.parquet`)
+		const writer = await ParquetWriter.openFile<ParquetRow>(LABELED_ROW_SCHEMA, path, {
+			rowGroupSize: ROW_GROUP_SIZE,
+		})
+		writer.setMetadata("mailwoman.corpus_version", opts.corpusVersion)
+		writer.setMetadata("mailwoman.split", split)
+		writer.setMetadata("mailwoman.shard_index", String(shardIndex))
 		return {
 			split,
 			shardIndex,
-			stream,
-			hasher: streamingSha256(),
+			writer,
 			path,
 			rows: 0,
-			bytes: 0,
 			first_source_id: "",
 			last_source_id: "",
 		}
@@ -199,10 +254,8 @@ export async function writeShards(rows: AsyncIterable<LabeledRow>, opts: WriteSh
 			open.set(split, cur)
 		}
 
-		const line = `${JSON.stringify(rowToParquet(row))}\n`
-		if (!cur.stream.write(line)) await once(cur.stream, "drain")
-		cur.hasher.update(line)
-		cur.bytes += Buffer.byteLength(line, "utf8")
+		const pq = rowToParquet(row)
+		await cur.writer.appendRow(appendShape(pq) as unknown as ParquetRow)
 		if (cur.rows === 0) cur.first_source_id = row.source_id
 		cur.last_source_id = row.source_id
 		cur.rows++
@@ -218,10 +271,7 @@ export async function writeShards(rows: AsyncIterable<LabeledRow>, opts: WriteSh
 
 	for (const cur of open.values()) {
 		if (cur.rows > 0) await flushShard(cur)
-		else {
-			cur.stream.end()
-			await once(cur.stream, "close")
-		}
+		else await cur.writer.close()
 	}
 
 	shards.sort((a, b) => (a.split === b.split ? a.path.localeCompare(b.path) : a.split.localeCompare(b.split)))
@@ -230,6 +280,7 @@ export async function writeShards(rows: AsyncIterable<LabeledRow>, opts: WriteSh
 		corpus_version: opts.corpusVersion,
 		schema: PARQUET_COLUMNS,
 		rows_per_shard: rowsPerShard,
+		row_group_size: ROW_GROUP_SIZE,
 		shards,
 		counts,
 		total_rows: totalRows,
@@ -238,17 +289,10 @@ export async function writeShards(rows: AsyncIterable<LabeledRow>, opts: WriteSh
 	return manifest
 }
 
-function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {
-	return new Promise((resolve, reject) => {
-		const onEvent = (): void => {
-			emitter.off("error", onError)
-			resolve()
-		}
-		const onError = (err: Error): void => {
-			emitter.off(event, onEvent)
-			reject(err)
-		}
-		emitter.once(event, onEvent)
-		emitter.once("error", onError)
-	})
+/** Single-pass SHA-256 over the file at `path`. Cheap relative to Parquet write throughput. */
+async function hashFile(path: string): Promise<string> {
+	const hash = createHash("sha256")
+	const stream = createReadStream(path)
+	for await (const chunk of stream) hash.update(chunk as Buffer)
+	return hash.digest("hex")
 }

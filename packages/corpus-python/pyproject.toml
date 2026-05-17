@@ -1,7 +1,7 @@
 [project]
 name = "mailwoman-corpus-python"
 version = "0.1.0"
-description = "Python helpers for the Mailwoman corpus pipeline (tokenizer training, Parquet conversion)."
+description = "Python helpers for the Mailwoman corpus pipeline (SentencePiece tokenizer training)."
 readme = "README.md"
 license = { text = "AGPL-3.0-only" }
 requires-python = ">=3.10"
@@ -10,8 +10,9 @@ authors = [
 ]
 dependencies = [
     # Pin loose; install via `pip install -e .` from this directory.
+    # PyArrow was dropped in Phase 1.5 (#18 §4) when corpus build moved to JS-native Parquet
+    # via @dsnp/parquetjs. SentencePiece training is the only remaining Python step.
     "sentencepiece>=0.2.0",
-    "pyarrow>=15.0.0",
 ]
 
 [project.optional-dependencies]
