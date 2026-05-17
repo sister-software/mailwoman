@@ -153,3 +153,51 @@ in every emitted `SPLIT_MANIFEST.json`.
 **Reversibility:** trivially reversible — the holdout list is a single
 constant in `packages/corpus/src/split.ts`. Changing it triggers a new
 corpus version (manifests change, so consumers must re-download splits).
+
+## 2026-05-17 — Phase 1.5 §4: JS-native Parquet via patched @dsnp/parquetjs (SNAPPY, not zstd)
+
+**Context:** Phase 1 (#9 / PR #17) shipped the corpus sharder as JSONL
+shards + a Python (PyArrow) converter (`packages/corpus-python/scripts/
+jsonl_to_parquet.py`) — bridging until the JS toolchain caught up.
+Phase 1.5 (#18 §4) replaces that with a native JS writer based on the
+isp-nexus parquet wrapper, removing Python from the build hot path
+per the operator's "less Python the better" stance.
+
+**Salvage source:** `isp-nexus/universe@6eeb7bd99643a6d62a8b8abbd50968a1e492b90b`
+`sdk/parquet/{index,schema,writer,reader}.ts` (252 LOC total, AGPL-3.0,
+same license as mailwoman → direct copy clean). Ported to
+`packages/corpus/src/parquet-wrapper/`. Two trims relative to the original:
+(a) dropped the `@isp.nexus/core/polyfills/promises/withResolvers` import
+since Node 22 has `Promise.withResolvers` natively; (b) replaced the
+`path-ts` `PathBuilderLike` on `openFile` with the plain `string | URL`
+the `@dsnp/parquetjs` envelope reader accepts directly.
+
+**Yarn patch:** carried over `.yarn/patches/@dsnp-parquetjs-npm-1.7.0-efe8288b39.patch`
+verbatim from isp-nexus. The patch moves `@aws-sdk/client-s3` plus several
+`@types/*` packages from runtime `dependencies` to `devDependencies` in
+the upstream `@dsnp/parquetjs@1.7.0` `package.json`. Saves ~50 MB of
+supply-chain surface and bundle weight; mailwoman does not use S3
+storage so the AWS SDK is pure dead weight.
+
+**Compression:** `SNAPPY`, not `zstd` as #18 §4 specified. The reason is
+mechanical, not preferential: `@dsnp/parquetjs@1.7.0` only exposes
+UNCOMPRESSED / GZIP / SNAPPY / BROTLI codecs in `compression.js`. SNAPPY
+is the standard ML-corpus default (PyArrow's default too) and is the
+closest substitute on speed and ratio for textual columns. If
+`@dsnp/parquetjs` gains zstd support in a future release the swap is a
+one-line constant change in `parquet.ts`.
+
+**Row group size:** 50_000, per the issue spec (within parquetjs's
+default file-level cap; we set it via `WriterOptions.rowGroupSize`).
+Shard-level cap remains 1_000_000 rows from the Phase 1 plan, so each
+shard typically contains ~20 row groups.
+
+**Reversibility:** mostly reversible. The JS writer is a drop-in; tests
+round-trip rows through `ParquetReader` so a regression surfaces
+immediately. If the patched dep ever breaks against an upstream
+parquetjs release, the patch can be re-derived from the upstream
+`package.json` diff in a few minutes (or pinned without the patch and
+the AWS SDK dependency tolerated). The Python converter file is deleted
+in this commit; recovering it would mean restoring from git history (it
+was 109 LOC and trivially re-derivable from the existing Parquet schema
+definition).

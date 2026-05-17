@@ -16,14 +16,23 @@
 import { defaultAdapterRegistry } from "../adapter.js"
 import type { CorpusAdapter } from "../types.js"
 import { banAdapter } from "./ban/adapter.js"
+import { openaddressesAdapter } from "./openaddresses/adapter.js"
+import { tigerAdapter } from "./tiger/adapter.js"
 import { wofAdminAdapter } from "./wof-admin/adapter.js"
 import { wofPostalcodeAdapter } from "./wof-postalcode/adapter.js"
 
 /**
- * Phase 1 built-in adapters. Order is significant: `corpus build` iterates this list to drive every
- * adapter in turn. Coarse-first; street-level after.
+ * Built-in adapters. Order is significant: `corpus build` iterates this list to drive every adapter
+ * in turn. Coarse-first (admin → postcode), then street-level (BAN FR, TIGER US, OpenAddresses
+ * global).
  */
-export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [wofAdminAdapter, wofPostalcodeAdapter, banAdapter]
+export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
+	wofAdminAdapter,
+	wofPostalcodeAdapter,
+	banAdapter,
+	tigerAdapter,
+	openaddressesAdapter,
+]
 
 for (const adapter of BUILTIN_ADAPTERS) {
 	if (!defaultAdapterRegistry.get(adapter.id)) {
@@ -32,5 +41,11 @@ for (const adapter of BUILTIN_ADAPTERS) {
 }
 
 export { BAN_ADAPTER_ID, banAdapter } from "./ban/adapter.js"
+export {
+	OPENADDRESSES_ADAPTER_ID,
+	OPENADDRESSES_DEFAULT_LICENSE,
+	openaddressesAdapter,
+} from "./openaddresses/adapter.js"
+export { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, tigerAdapter } from "./tiger/adapter.js"
 export { WOF_ADMIN_ADAPTER_ID, wofAdminAdapter } from "./wof-admin/adapter.js"
 export { WOF_POSTALCODE_ADAPTER_ID, wofPostalcodeAdapter } from "./wof-postalcode/adapter.js"

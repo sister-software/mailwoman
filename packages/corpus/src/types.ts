@@ -30,8 +30,8 @@ export interface SourceProvenance {
 
 	/**
 	 * Stable id within the adapter's source. For SQLite-backed adapters this is the row's primary
-	 * key; for CSV/GeoJSON, a hash of the canonical components. Must be stable across reruns so dedup
-	 * + holdout manifests are reproducible.
+	 * key; for CSV/GeoJSON, a hash of the canonical components. Must be stable across reruns so that
+	 * dedup and holdout manifests are reproducible.
 	 */
 	source_id: string
 
