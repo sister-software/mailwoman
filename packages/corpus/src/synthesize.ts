@@ -88,11 +88,21 @@ export const dropCommas: Augmentation = (row) => {
 	return withAugmentation(row, "drop-commas", newRaw, { ...row.components })
 }
 
-/** Replace single spaces with double spaces in `raw`. Components unchanged. */
+/**
+ * Replace single spaces with double spaces in `raw` AND in every component value. The component
+ * update is load-bearing for alignment: `alignRow` substring-searches each component's surface form
+ * inside `raw`, so doubling the spaces in `raw` only would leave single-spaced components
+ * unfindable (this was the bug behind v0.1.1's first build attempt — 99.9% of quarantined rows
+ * traced back to this augmentation). Doubling both keeps the substring contract intact.
+ */
 export const doubleSpace: Augmentation = (row) => {
 	if (!/ /.test(row.raw)) return null
 	const newRaw = row.raw.replace(/ /g, "  ")
-	return withAugmentation(row, "double-space", newRaw, { ...row.components })
+	const newComponents: ComponentDict = {}
+	for (const [k, v] of Object.entries(row.components)) {
+		if (v) newComponents[k as ComponentTag] = v.replace(/ /g, "  ")
+	}
+	return withAugmentation(row, "double-space", newRaw, newComponents)
 }
 
 /**
