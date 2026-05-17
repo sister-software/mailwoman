@@ -48,6 +48,9 @@
 		"./core/tokenization": "./packages/core/out/core/tokenization/index.js",
 		"./utils": "./out/utils/index.js",
 		"./classifiers": "./packages/classifiers/out/classifiers/index.js",
+		"./corpus": "./packages/corpus/out/src/index.js",
+		"./corpus/types": "./packages/corpus/out/src/types.js",
+		"./corpus/format": "./packages/corpus/out/src/format.js",
 		"./solvers": "./packages/core/out/solvers/index.js",
 		"./solvers/*": "./packages/core/out/solvers/*",
 		"./filters": "./packages/core/out/filters/index.js",
@@ -69,7 +72,8 @@
 		"resources/**/*"
 	],
 	"workspaces": [
-		"packages/*"
+		"packages/*",
+		"!packages/corpus-python"
 	],
 	"scripts": {
 		"sync:test": "mailwoman wof sync ../",

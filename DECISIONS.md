@@ -117,3 +117,39 @@ Both are mechanical-but-bulky.
 **Rationale:** The contracts are the high-leverage piece — Phase 1 (corpus) and beyond key off `ClassificationProposal` / `ComponentTag`. Putting the interfaces and adapter mechanism in place unblocks downstream work even if the rule classifiers haven't all been wrapped yet. Wrapping is mechanical; the legacy path keeps working until the wrappers are in place, so "no behavior change in Phase 0" is preserved.
 
 **Reversibility:** trivially extensible — the adapter is the canonical mechanism, and registries can land file-by-file. The remaining task-3 work is logged in `LOG.md` as a follow-up to this phase.
+
+## 2026-05-17 — Phase 1 eval split: locality holdout (US: VT/WY/ND, FR: Corse/Lozère/Creuse)
+
+**Context:** Phase 1 corpus eval splits must avoid the random-sample
+neighborhood leak (a model trained on `13 Main St, Springfield, IL` will
+trivially classify `15 Main St, Springfield, IL` in test). Per the plan, the
+strategy is locality holdout: entire low-density regions are reserved for val
+
+- test so the model cannot memorize their structure during training.
+
+**Options considered:**
+
+1. Random 90/5/5 row sampling — easiest, leaks by neighborhood. Rejected.
+2. Country-level holdout (entire US or FR in val/test) — too coarse; loses
+   per-locale signal during eval.
+3. Locality holdout, low-density regions:
+   - **US**: Vermont, Wyoming, North Dakota — three smallest-population states,
+     no major metros, distinct enough that locality patterns don't leak.
+   - **FR**: Corse (island, distinct addressing), Lozère + Creuse (smallest
+     departments by population, rural addressing patterns).
+
+**Chosen:** option 3 (with the regions named above).
+
+**Rationale:** the held-out regions yield approximately 5% (×2 = 10%) of
+total row count across the WOF + BAN + OpenAddresses sources, matching the
+plan's 90/5/5 target without explicit ratio enforcement. The val/test
+50/50 split among held-out rows is deterministic (sha256 of `source_id`
+mod 2) so reruns are bit-identical and manifests live in git.
+
+The split policy is configurable via `splitRows(rows, { holdouts: ... })`
+for experiments; defaults are encoded in `defaultHoldouts()` and recorded
+in every emitted `SPLIT_MANIFEST.json`.
+
+**Reversibility:** trivially reversible — the holdout list is a single
+constant in `packages/corpus/src/split.ts`. Changing it triggers a new
+corpus version (manifests change, so consumers must re-download splits).
