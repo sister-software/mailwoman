@@ -69,9 +69,23 @@ describe("universal augmentations", () => {
 		expect(out.synth?.method).toBe("drop-commas")
 	})
 
-	it("doubleSpace inserts double spaces", () => {
-		const out = doubleSpace(baseRow({ raw: "Paris France", components: { locality: "Paris", country: "France" } }))!
-		expect(out.raw).toBe("Paris  France")
+	it("doubleSpace inserts double spaces in raw AND in components (alignment-safe)", () => {
+		const out = doubleSpace(
+			baseRow({
+				raw: "Champs Élysées, Paris, France",
+				components: { street: "Champs Élysées", locality: "Paris", country: "France" },
+			})
+		)!
+		expect(out.raw).toBe("Champs  Élysées,  Paris,  France")
+		// Components must double-space too: alignment substring-searches each component in raw,
+		// so single-spaced "Champs Élysées" would not appear in the double-spaced raw.
+		expect(out.components.street).toBe("Champs  Élysées")
+		expect(out.components.locality).toBe("Paris")
+		expect(out.components.country).toBe("France")
+		// Substring invariant: every component value must appear in raw.
+		for (const v of Object.values(out.components)) {
+			if (v) expect(out.raw.includes(v)).toBe(true)
+		}
 	})
 
 	it("accentStrip flips Hôtel → Hotel, Île-de-France → Ile-de-France", () => {

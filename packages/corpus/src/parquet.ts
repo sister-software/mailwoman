@@ -137,13 +137,16 @@ export interface WriteShardsOptions {
 
 	/** Max rows per `.parquet` shard. Default 1_000_000 per the Phase 1 plan. */
 	rowsPerShard?: number
-
-	/**
-	 * Mapping from `source_id` → split. Built by the caller (typically from `splitRows`). Rows whose
-	 * `source_id` isn't in the map are sent to the `train` split as a safe default.
-	 */
-	splitFor(sourceId: string): SplitName
 }
+
+/**
+ * Pre-partitioned labeled-row streams, one per split. Callers (`buildCorpus`) decide each row's
+ * split inline at align time via `splitForRow` and route rows to the matching stream, eliminating
+ * the prior `Map<source_id, SplitName>` O(n) lookup table.
+ *
+ * Splits with no rows can be omitted (or passed as an empty iterable); `writeShards` skips them.
+ */
+export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 
 /** Project a labeled row to the Parquet schema. */
 export function rowToParquet(row: LabeledRow): ParquetRow {
@@ -185,93 +188,87 @@ function appendShape(row: ParquetRow): Record<string, unknown> {
 }
 
 /**
- * Stream labeled rows into `.parquet` shards, sharded by split. Returns a manifest enumerating
- * every shard's checksum + row count. The runner is responsible for persisting the manifest.
+ * Stream labeled rows into `.parquet` shards, one set of shards per split. Splits are processed
+ * sequentially so that only one shard writer is open at a time — memory cost is bounded by the
+ * parquetjs row-group buffer (~`ROW_GROUP_SIZE × row_size`), not by the labeled-row count.
+ *
+ * Callers pass per-split `AsyncIterable<LabeledRow>` (`PerSplitRows`); the prior
+ * `splitFor(sourceId)` callback is gone because pre-partitioning at the caller eliminates the O(n)
+ * `Map<source_id, SplitName>` it required. See `buildCorpus` for the new wire-up.
  */
-export async function writeShards(rows: AsyncIterable<LabeledRow>, opts: WriteShardsOptions): Promise<ShardManifest> {
+export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptions): Promise<ShardManifest> {
 	const rowsPerShard = opts.rowsPerShard ?? 1_000_000
 	const corpusDir = join(opts.outputDir, `corpus-v${opts.corpusVersion}`)
 	await mkdir(corpusDir, { recursive: true })
 
-	interface OpenShard {
-		split: SplitName
-		shardIndex: number
-		writer: ParquetWriter<ParquetRow>
-		path: string
-		rows: number
-		first_source_id: string
-		last_source_id: string
-	}
-
-	const open = new Map<SplitName, OpenShard>()
 	const shards: ShardDescriptor[] = []
 	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 	let totalRows = 0
 
-	const flushShard = async (s: OpenShard): Promise<void> => {
-		await s.writer.close()
-		const fileStat = await stat(s.path)
-		const sha256 = await hashFile(s.path)
-		shards.push({
-			split: s.split,
-			path: s.path,
-			format: "parquet",
-			compression: SHARD_COMPRESSION,
-			rows: s.rows,
-			bytes: fileStat.size,
-			sha256,
-			first_source_id: s.first_source_id,
-			last_source_id: s.last_source_id,
-		})
-	}
+	for (const split of ["train", "val", "test"] as const) {
+		const rows = perSplit[split]
+		if (!rows) continue
 
-	const openShard = async (split: SplitName, shardIndex: number): Promise<OpenShard> => {
-		const splitDir = join(corpusDir, split)
-		await mkdir(splitDir, { recursive: true })
-		const path = join(splitDir, `part-${String(shardIndex).padStart(4, "0")}.parquet`)
-		const writer = await ParquetWriter.openFile<ParquetRow>(LABELED_ROW_SCHEMA, path, {
-			rowGroupSize: ROW_GROUP_SIZE,
-		})
-		writer.setMetadata("mailwoman.corpus_version", opts.corpusVersion)
-		writer.setMetadata("mailwoman.split", split)
-		writer.setMetadata("mailwoman.shard_index", String(shardIndex))
-		return {
-			split,
-			shardIndex,
-			writer,
-			path,
-			rows: 0,
-			first_source_id: "",
-			last_source_id: "",
-		}
-	}
+		let shardIndex = 0
+		let writer: ParquetWriter<ParquetRow> | null = null
+		let path = ""
+		let shardRows = 0
+		let firstSourceId = ""
+		let lastSourceId = ""
 
-	for await (const row of rows) {
-		const split = opts.splitFor(row.source_id)
-		let cur = open.get(split)
-		if (!cur) {
-			cur = await openShard(split, 0)
-			open.set(split, cur)
+		const openShard = async (): Promise<void> => {
+			const splitDir = join(corpusDir, split)
+			await mkdir(splitDir, { recursive: true })
+			path = join(splitDir, `part-${String(shardIndex).padStart(4, "0")}.parquet`)
+			writer = await ParquetWriter.openFile<ParquetRow>(LABELED_ROW_SCHEMA, path, {
+				rowGroupSize: ROW_GROUP_SIZE,
+			})
+			writer.setMetadata("mailwoman.corpus_version", opts.corpusVersion)
+			writer.setMetadata("mailwoman.split", split)
+			writer.setMetadata("mailwoman.shard_index", String(shardIndex))
+			shardRows = 0
+			firstSourceId = ""
+			lastSourceId = ""
 		}
 
-		const pq = rowToParquet(row)
-		await cur.writer.appendRow(appendShape(pq) as unknown as ParquetRow)
-		if (cur.rows === 0) cur.first_source_id = row.source_id
-		cur.last_source_id = row.source_id
-		cur.rows++
-		counts[split]++
-		totalRows++
-
-		if (cur.rows >= rowsPerShard) {
-			await flushShard(cur)
-			const next = await openShard(split, cur.shardIndex + 1)
-			open.set(split, next)
+		const closeShard = async (): Promise<void> => {
+			if (!writer) return
+			await writer.close()
+			if (shardRows > 0) {
+				const fileStat = await stat(path)
+				const sha256 = await hashFile(path)
+				shards.push({
+					split,
+					path,
+					format: "parquet",
+					compression: SHARD_COMPRESSION,
+					rows: shardRows,
+					bytes: fileStat.size,
+					sha256,
+					first_source_id: firstSourceId,
+					last_source_id: lastSourceId,
+				})
+			}
+			writer = null
 		}
-	}
 
-	for (const cur of open.values()) {
-		if (cur.rows > 0) await flushShard(cur)
-		else await cur.writer.close()
+		for await (const row of rows) {
+			if (!writer) await openShard()
+			const pq = rowToParquet(row)
+			await writer!.appendRow(appendShape(pq) as unknown as ParquetRow)
+			if (shardRows === 0) firstSourceId = row.source_id
+			lastSourceId = row.source_id
+			shardRows++
+			counts[split]++
+			totalRows++
+
+			if (shardRows >= rowsPerShard) {
+				await closeShard()
+				shardIndex++
+			}
+		}
+
+		await closeShard()
 	}
 
 	shards.sort((a, b) => (a.split === b.split ? a.path.localeCompare(b.path) : a.split.localeCompare(b.split)))

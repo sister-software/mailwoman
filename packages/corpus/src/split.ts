@@ -24,9 +24,12 @@
  *   (under `corpus/splits/<version>/`) so reruns are reproducible bit-for-bit.
  */
 
+import { spawn } from "node:child_process"
 import { createHash } from "node:crypto"
-import { mkdir, writeFile } from "node:fs/promises"
+import { createReadStream, createWriteStream } from "node:fs"
+import { mkdir, unlink, writeFile } from "node:fs/promises"
 import { join } from "node:path"
+import { createInterface } from "node:readline"
 import type { CanonicalRow, LabeledRow } from "./types.js"
 
 export type SplitName = "train" | "val" | "test"
@@ -69,8 +72,30 @@ export function defaultHoldouts(): Record<string, readonly string[]> {
 type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "corpus_version" | "components">
 
 /**
+ * Pure per-row split decision. Used by both the in-memory `splitRows` and by the streaming
+ * `buildCorpus` align loop (`build.ts`) to decide each row's split without retaining the row in
+ * heap. Identical hash bucketing semantics to the array-based path so the decision is stable
+ * regardless of caller.
+ */
+export function splitForRow(
+	row: Pick<SplitInputRow, "source_id" | "country" | "components">,
+	holdouts: Record<string, readonly string[]> = defaultHoldouts()
+): SplitName {
+	const region = row.components.region
+	const countryHoldouts = holdouts[row.country] ?? []
+	const isHeldOut = region !== undefined && countryHoldouts.includes(region)
+	if (!isHeldOut) return "train"
+	// 50/50 deterministic by source_id hash. Same input always lands in the same split.
+	return hashBucket(row.source_id, 2) === 0 ? "val" : "test"
+}
+
+/**
  * Compute a `SplitManifest` from an iterable of labeled (or canonical) rows. Both shapes are
  * accepted — only `source_id`, `country`, `corpus_version`, and `components.region` are consulted.
+ *
+ * Retained for in-memory callers (tests; small-scale fixture runs). Real-data builds via
+ * `buildCorpus` use the streaming path (`splitForRow` + `writeSplitManifestsFromLabeledFiles`) to
+ * avoid materializing every aligned row's split membership in heap.
  */
 export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}): SplitManifest {
 	const holdouts = opts.holdouts ?? defaultHoldouts()
@@ -81,19 +106,10 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 
 	for (const row of rows) {
 		if (!corpus_version && row.corpus_version) corpus_version = row.corpus_version
-
-		const region = row.components.region
-		const countryHoldouts = holdouts[row.country] ?? []
-		const isHeldOut = region !== undefined && countryHoldouts.includes(region)
-
-		if (isHeldOut) {
-			// 50/50 deterministic by source_id hash. Same input always lands in the same split.
-			const bucket = hashBucket(row.source_id, 2)
-			if (bucket === 0) val.push(row.source_id)
-			else test.push(row.source_id)
-		} else {
-			train.push(row.source_id)
-		}
+		const split = splitForRow(row, holdouts)
+		if (split === "train") train.push(row.source_id)
+		else if (split === "val") val.push(row.source_id)
+		else test.push(row.source_id)
 	}
 
 	const total = train.length + val.length + test.length
@@ -139,3 +155,79 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: st
 
 /** Type re-export for callers that want to ingest LabeledRow specifically. */
 export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "corpus_version" | "components">
+
+/**
+ * Streaming variant of `writeSplitManifests`: derives the per-split source-id .txt manifests +
+ * `SPLIT_MANIFEST.json` by streaming three per-split labeled-row JSONL files (one per split).
+ * Memory cost is O(1) — `sort(1)` from coreutils handles the deterministic sort with disk spill for
+ * files that exceed in-memory thresholds.
+ *
+ * Used by `buildCorpus` after the align loop has already partitioned labeled rows into
+ * `labeled-{train,val,test}.jsonl` via `splitForRow`. Counts are pre-computed by the align loop and
+ * passed in (zero re-scan).
+ */
+export async function writeSplitManifestsFromLabeledFiles(opts: {
+	labeledPaths: Record<SplitName, string>
+	outputDir: string
+	corpusVersion: string
+	counts: Record<SplitName, number>
+	holdouts?: Record<string, readonly string[]>
+}): Promise<SplitManifest["counts"]> {
+	await mkdir(opts.outputDir, { recursive: true })
+	const holdouts = opts.holdouts ?? defaultHoldouts()
+
+	for (const split of ["train", "val", "test"] as const) {
+		const labeledPath = opts.labeledPaths[split]
+		const outPath = join(opts.outputDir, `${split}.txt`)
+		await streamSortedSourceIds(labeledPath, outPath)
+	}
+
+	const total = opts.counts.train + opts.counts.val + opts.counts.test
+	const summary = {
+		corpus_version: opts.corpusVersion,
+		holdouts,
+		counts: { ...opts.counts, total },
+	}
+	await writeFile(join(opts.outputDir, "SPLIT_MANIFEST.json"), `${JSON.stringify(summary, null, 2)}\n`, "utf8")
+	return summary.counts
+}
+
+/**
+ * Extract `source_id`s from a labeled JSONL file, write them sorted to `outPath`. Empty input →
+ * empty output file (not absent). Uses `sort(1)` for disk-spilling external sort so peak memory
+ * stays O(1) regardless of labeled-row count.
+ */
+async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string): Promise<void> {
+	const unsortedPath = `${outPath}.unsorted`
+	const out = createWriteStream(unsortedPath, { encoding: "utf8" })
+	const rl = createInterface({ input: createReadStream(labeledJsonlPath, { encoding: "utf8" }), crlfDelay: Infinity })
+
+	await new Promise<void>((resolve, reject) => {
+		rl.on("line", (line) => {
+			if (!line) return
+			try {
+				const obj = JSON.parse(line) as { source_id?: string }
+				if (typeof obj.source_id === "string") out.write(`${obj.source_id}\n`)
+			} catch (err) {
+				reject(err as Error)
+			}
+		})
+		rl.on("close", () => {
+			out.end()
+		})
+		rl.on("error", reject)
+		out.on("close", () => resolve())
+		out.on("error", reject)
+	})
+
+	await new Promise<void>((resolve, reject) => {
+		// LC_ALL=C: byte-sort, locale-independent → deterministic across hosts.
+		const proc = spawn("sort", [unsortedPath, "-o", outPath], { env: { ...process.env, LC_ALL: "C" } })
+		proc.on("error", reject)
+		proc.on("exit", (code) => {
+			if (code === 0) resolve()
+			else reject(new Error(`sort exited with code ${code}`))
+		})
+	})
+	await unlink(unsortedPath).catch(() => {})
+}

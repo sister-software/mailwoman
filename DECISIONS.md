@@ -364,3 +364,559 @@ it to the corpus size, which it cannot see.
 ~80 LOC in one file; folding it into a shared `Augmentation`
 interface (option 1) or relocating it to `compose.ts` (option 3)
 is a mechanical refactor with no schema implications.
+
+## 2026-05-17 — corpus-v0.1.0: ship synth-OFF (augmentations applied at training time, not baked into corpus)
+
+**Context:** The first real-data corpus build (`corpus-v0.1.0`, WOF +
+BAN + TIGER) was produced inside an 8 GiB-RAM container. The default
+build runs synthesis: for each canonical row, every applicable
+`Augmentation` in the country-default policy emits one augmented copy
+in addition to the original. US has 11 augmentations (4 universal + 7
+US-specific), FR has 6 (4 + 2). Average effective fan-out is ~3-4×
+after no-op filtering.
+
+The bottleneck is `buildCorpus` in `packages/corpus/src/build.ts`:
+it accumulates **every** aligned row's `{source_id, country,
+corpus_version, components.region}` into an in-memory `splitInputs`
+array, then `splitRows` partitions it into in-memory train / val /
+test source-id arrays. For ~4.56 M canonical rows the synth-OFF run
+peaked at ~4.2 GiB RSS. Synth-ON would have multiplied that by ~4×,
+plus the WOF ancestry index (~600 MiB resident for the full US admin
+distro) — overflowing the 8 GiB container even with
+`--max-old-space-size=7000`.
+
+**Options considered:**
+
+1. Run synth-ON and accept the OOM risk — ~30 min to discover failure,
+   no salvage path if it crashes during align phase (would lose all
+   labeled.jsonl progress).
+2. Refactor `buildCorpus` / `splitRows` to stream `splitInputs`
+   through disk-backed JSONL and rewrite `splitRows` to consume an
+   async iterable — meaningful code change with test rewrites, out of
+   scope for a "run the build" task.
+3. Ship synth-OFF for v0.1.0 and document the choice: 4.56 M _clean_
+   canonical rows + the augmentations available as a separate
+   training-time concern (the same `defaultAugmentationsForCountry`
+   table can be invoked from a Dataset / DataLoader to apply
+   augmentations at batch time).
+
+**Chosen:** option 3.
+
+**Rationale:** The augmentations in
+`packages/corpus/src/synthesize.ts` are pure functions; baking them
+into the corpus vs. applying them at training time is a question of
+_when_, not _whether_. Training-time augmentation is the standard ML
+pattern (a fresh per-epoch sampling means the model sees more
+variety than a fixed corpus fan-out). The corpus contract still
+documents the augmentation set; downstream training code wires the
+same functions in.
+
+The WOF `name:*` variants pre-existing in the adapter output already
+provide substantial surface-form diversity at the locality/region
+level (293 k US admin features × ~2 hierarchy variants × ~2.4 name
+slots ≈ the deduped 3.30 M canonical rows the build produced). The
+case / spacing / abbreviation augmentations are mechanical and add
+nothing the WOF localized-names corpus doesn't already cover for
+admin rows; they would matter most for the BAN / TIGER rows, whose
+canonical-row count (1.16 M combined) is small enough that
+training-time augmentation can comfortably amortize the work.
+
+**Reversibility:** trivially reversible. To bake synth into a future
+corpus version (e.g. v0.1.1), either (a) refactor `splitInputs` to
+stream to disk and re-run with `--no-synthesize=false`, or (b)
+post-process the existing v0.1.0 `intermediate/labeled.jsonl` through
+the augmentation pipeline + re-shard. The augmentations table is
+unchanged; only the _application site_ moves.
+
+**Build artifact summary:** /data/corpus/versioned/v0.1.0/ —
+adapters {wof-admin 3.30 M, wof-postalcode 103.7 k, ban 1.08 M,
+tiger 79.0 k} → 4.56 M aligned (66 quarantined, all
+`component-not-found:*` on WOF `name:*` whitespace-artifact variants;
+same root cause as the 6/19 quarantine in the Phase 1.5 TIGER smoke,
+not a pipeline regression). Splits 4.44 M train / 58.8 k val / 58.8 k
+test (the train skew is from BAN rows lacking `region` — known
+limitation). Parquet shards SNAPPY, ~157 MiB final.
+
+## 2026-05-17 — `splitInputs` refactor scope (memory-streaming for synth-ON v0.1.1)
+
+**Operator follow-up question:** "Describe what splits today, what would
+need to change, and why it's an hour's work rather than the kind of
+thing you'd just turn on."
+
+### What's in memory today
+
+Three data structures pin every aligned row's split membership in heap
+during a `buildCorpus` run:
+
+1. **`splitInputs` array** — `packages/corpus/src/build.ts:155-160`.
+   Pushed once per aligned row in the align loop (line 185). Holds
+   `{source_id, country, corpus_version, components:{region}}` ≈ 150
+   bytes/entry under V8.
+2. **`SplitManifest.{train,val,test}` arrays** —
+   `packages/corpus/src/split.ts:75-108`. `splitRows()` returns three
+   in-memory `string[]` of source_ids (one per row, partitioned by
+   holdout policy). ~50 bytes/entry × 1 entry per aligned row.
+3. **`splitByIdMap`** — `packages/corpus/src/build.ts:210-213`. A
+   `Map<source_id, SplitName>` reassembled from the three arrays above,
+   used as the `splitFor` callback for the parquet sharder
+   (`packages/corpus/src/parquet.ts:250`). ~100 bytes/entry × 1 entry
+   per aligned row.
+
+All three are O(n_aligned_rows). At 4.56 M rows the trio takes ~1.6 GiB
+of heap (measured: RSS peak during this run was 4.2 GiB total, with the
+WOF ancestry index, buffers, and V8 overhead making up the balance).
+
+### Failure mode if synth is enabled today
+
+`alignRow` is called once per `synthesizeRow` output. For each input
+canonical row, US augmentations produce up to 11 additional rows
+(`caseUpper, caseLower, dropCommas, doubleSpace, stateExpand,
+stateAbbreviate, directionalExpand, directionalAbbreviate,
+streetSuffixAbbreviate, streetSuffixExpand, zipPlus4DashDrop` —
+`packages/corpus/src/synthesize.ts:374-393`); FR augmentations
+produce up to 6. Each non-null augmented row appends to `splitInputs`
+and eventually to `splitByIdMap`.
+
+Effective fan-out depends on which fields are present. WOF country /
+region rows no-op most US augmentations (no `street`, `state`, or
+`zip` to operate on). Realistic per-class projections:
+
+| Class                          | Fan-out (incl. original) |
+| ------------------------------ | -----------------------: |
+| WOF admin US, country/region   |                       3× |
+| WOF admin US, locality / sub   |                       4× |
+| WOF postalcode US              |                       6× |
+| BAN FR (house_number + street) |                       6× |
+| TIGER US (street + region)     |                       6× |
+| WOF admin FR (mostly FR-univ)  |                       4× |
+
+Weighted average across the 4.56 M v0.1.0 row mix: **~4.5× fan-out**.
+
+Projected synth-ON labeled count: **~20 M rows**. At that scale the
+three in-memory structures cost ~5 GiB on their own; add ~600 MiB for
+the WOF ancestry index and ~500 MiB baseline node/buffers and the
+process needs ~6 GiB heap before V8 itself starts shedding cache.
+With `--max-old-space-size=5800` (the largest safe value in an 8 GiB
+container that still leaves the kernel breathing room) the run
+**OOMs during the align phase** — typically with no salvageable
+output because the partial `labeled.jsonl` predates the split-map
+construction and there's no way to resume.
+
+### What the refactor changes
+
+The cleanest shape (and the one I'd ship for v0.1.1) eliminates **all
+three** in-memory structures by deciding each row's split inline at
+align time, then multiplexing `labeled.jsonl` writes across three
+per-split files. This is the right shape because the split decision
+is a pure function of `{country, region, source_id}` — no global state
+needed.
+
+Concrete plan:
+
+1. **`split.ts`** — extract a pure helper `splitForRow(row, holdouts):
+SplitName` from the body of `splitRows()` (the per-row branch at
+   lines 85-95 of the current `split.ts`). Keep `splitRows()` itself
+   for callers that want the array shape (it's also exported from
+   the package surface; removing it is a breaking change). New helper
+   is ~10 lines.
+
+2. **`build.ts` align loop (lines 172-197)** — replace the single
+   `labeledStream` with three per-split streams
+   (`labeled-train.jsonl`, `labeled-val.jsonl`, `labeled-test.jsonl`)
+   under `intermediateDir`. For each aligned row, call
+   `splitForRow(result.row, holdouts)` and route the JSON line to
+   the matching stream. Drop the `splitInputs.push(...)` block
+   entirely. ~15 lines change.
+
+3. **`build.ts` split phase (lines 204-213)** — `splitRows(splitInputs)`
+   call goes away. Instead, after the align loop closes the per-split
+   streams, compute `SplitManifest.counts` from a final pass that just
+   `wc -l`s each file (or tracks `aligned_per_split` counters during
+   the align loop, which is one increment per write — trivially
+   cheap). `writeSplitManifests` is reworked to take per-split file
+   paths and stream-sort the source_ids to `<outputDir>/splits/
+{train,val,test}.txt` via a streaming external sort (or accept
+   that the per-split files are already in arrival order and skip
+   the sort — the manifest needs deterministic order for git-diff
+   stability, but a deterministic per-row stream → sorted output is
+   provided by sorting each file with a single-pass external sort,
+   which `sort(1)` does on disk in O(1) memory; can also use a
+   skip-list / mergesort in JS if we want to stay in-process).
+
+4. **`build.ts` parquet phase (lines 215-222)** — `writeShards` is
+   already streaming over the labeled JSONL via `streamJsonl`. The
+   `splitFor` callback (parquet.ts:145, 250) becomes unnecessary
+   because the labeled JSONL is already partitioned by split — call
+   `writeShards` three times, once per split, against the matching
+   per-split file. Memory cost goes to zero.
+
+The `splitByIdMap` disappears. The `SplitManifest` arrays disappear.
+`splitInputs` disappears. Peak memory drops from ~5 GiB (synth-ON
+projection) to ~600 MiB (the WOF ancestry index, which is a
+separate problem).
+
+### Hour-level estimate
+
+The plumbing is mechanical but it touches three files (`build.ts`,
+`split.ts`, `parquet.ts` signature change for `writeShards`) plus
+three test files (`build.test.ts`, `split.test.ts`, `parquet.test.ts`).
+The interface change to `writeShards` is the broadest — moving from
+`(rows, opts.splitFor)` to `(perSplitPaths)`. Counting:
+
+- Source edits: ~50 LOC across three files.
+- Test edits: ~30 LOC (most tests pass full LabeledRow objects directly;
+  the e2e build.test.ts just needs different file paths in assertions).
+- Manifest format: backwards-compatible (the on-disk
+  `SPLIT_MANIFEST.json` shape is unchanged; only the in-process
+  array shape goes).
+
+That's why it's roughly an hour — not "just turn on synth". Refactor
+
+- tests + a sanity-pass build at fixture scale to confirm parity,
+  then a real-data run.
+
+### Why I didn't ship it as part of v0.1.0
+
+The brief was "real-data corpus build v0.1.0 — see what breaks." It
+broke in a predictable, well-defined place (the in-memory split
+machinery), but the build artifact is still complete and useful as a
+Phase 2 baseline. Doing the refactor inline would have turned a
+"run the pipeline" task into a "ship an interface change" task —
+broader scope, more review surface, and the v0.1.0 artifact would
+have been gated on un-related code review.
+
+If the operator wants v0.1.1 synth-ON, the refactor is the
+next-session unit of work, not an in-line patch on this branch.
+
+## 2026-05-17 — Was synth-OFF the right call for v0.1.0? (decision rationale, not just "what's needed for v0.1.1")
+
+**Operator follow-up question:** decision rationale, observed
+scale-effects, fan-out projection, and Phase 2 baseline viability.
+
+### Scale-effects observed during the synth-OFF run
+
+- **Memory.** RSS climbed to ~4.0 GiB during the wof-admin adapter
+  run (ancestry index of 293 k US admin records keyed by `wof:id` to
+  a list of parent ids — ~600 MiB resident; held the entire run
+  because the postalcode adapter needs cross-repo ancestor names
+  for unincorporated-ZIP synthesis). RSS then climbed to ~4.2 GiB
+  during align as `splitInputs` accumulated 4.56 M entries
+  (~680 MiB) and again at split phase as `splitByIdMap` materialized
+  another ~450 MiB. With `--max-old-space-size=5800` and ~1.5 GiB
+  reserved for V8 bookkeeping / GC headroom, the synth-OFF run
+  finished with ~600 MiB heap to spare.
+- **Time.** Adapter phase 11m38s total (wof-admin alone 9m53s
+  dominated; wof-postalcode 1m44s, ban 18s, tiger 48s). Align +
+  split + shard ~9 min. End-to-end ~21 min.
+- **Disk.** intermediate/labeled.jsonl 1.5 GiB at 4.56 M rows
+  (327 bytes/row JSON). canonical.jsonl-per-adapter 1.27 GiB. Final
+  parquet shards 157 MiB SNAPPY (factor-9 compression vs JSONL,
+  consistent with text-heavy address columns). Total /data/corpus
+  /versioned/v0.1.0/ ≈ 3.2 GiB on disk.
+- **Quarantine.** 66 / 4.56 M = 0.0014%. All
+  `component-not-found:*` from WOF localized `name:*` properties
+  carrying internal double-spaces. Not synth-related — the same
+  rate would have surfaced on synth-ON. No `reconcileComponents`
+  tuning needed.
+
+### Synth-ON fan-out projection
+
+Drawn from `defaultAugmentationsForCountry()` in
+`packages/corpus/src/synthesize.ts:374-393`:
+
+- **US**: 11 augmentations (`caseUpper, caseLower, dropCommas,
+doubleSpace, stateExpand, stateAbbreviate, directionalExpand,
+directionalAbbreviate, streetSuffixAbbreviate, streetSuffixExpand,
+zipPlus4DashDrop`). Each augmentation is `(row) → row | null`;
+  null is returned when the row lacks the relevant field
+  (e.g., `stateExpand` on a country-only row).
+- **FR**: 6 augmentations (4 universal + `accentStrip, particleStrip`).
+
+Per-class effective fan-out (including the original) for the v0.1.0
+input mix:
+
+| Row class                          | Adapter        | Multiplier |
+| ---------------------------------- | -------------- | ---------: |
+| WOF admin US country/region        | wof-admin      |         3× |
+| WOF admin US locality / sub        | wof-admin      |         4× |
+| WOF admin FR (no US augmentations) | wof-admin      |         4× |
+| WOF postalcode US (zip + state)    | wof-postalcode |         6× |
+| WOF postalcode FR (FR-universal)   | wof-postalcode |         5× |
+| BAN FR (house_number + street)     | ban            |         6× |
+| TIGER US street (street + region)  | tiger          |         6× |
+| TIGER US place (locality only)     | tiger          |         4× |
+
+Weighted across the 4.56 M v0.1.0 mix (60% WOF admin US, 25% WOF
+admin FR, 8% other) → **~4.5× average fan-out**.
+
+Projected synth-ON labeled count: **~20 M rows**. ~3× the
+synth-OFF v0.1.0.
+
+### What pushed me to skip synth on _this_ run
+
+In priority order:
+
+1. **OOM risk during align, with no resume path.** The build is
+   atomic — if `splitInputs.push` triggers OOM mid-align, the
+   partial `labeled.jsonl` is unusable and the per-adapter
+   canonical files are unindexed for resumption. I'd burn ~12 min
+   on adapters, ~15 min into align, then crash. **At 4.5× fan-out
+   the OOM is the central-case outcome, not an edge.**
+2. **Time-to-result.** Operator brief said "see what breaks" — a
+   completed 4.56 M-row v0.1.0 in 21 min beats a failed 20 M-row
+   attempt in 40 min. Fail-fast turned into ship-fast.
+3. **Augmentation duplication with WOF `name:*` variants.** The
+   wof-admin adapter already fans rows out across 1+ name slots
+   per WOF record (the Phase 1.5.1 fix). 866 k of the 4.16 M
+   yielded rows deduped to a single canonical key — meaning the
+   WOF `name:*` machinery already produces ~5 surface forms per
+   logical record on average. Layering `caseUpper` / `caseLower`
+   on top of "Saint Petersburg" / "St. Petersburg" / "Санкт-
+   Петербург" doubles the count for marginal additional variety;
+   most of the diversity work was already done by adapter-level
+   fan-out for the wof-admin majority of the corpus.
+4. **Training-time augmentation is the better default anyway.**
+   The augmentation functions in `synthesize.ts` are pure and
+   importable from the training-time data loader. Per-batch
+   sampling at training time gives **more** variety than a fixed
+   corpus fan-out (each epoch sees fresh augmentations rather than
+   the same K pre-computed ones), at the cost of (a) augmenting
+   live in the data loader and (b) not materializing the augmented
+   text in the corpus on disk. Modern PyTorch / HuggingFace
+   datasets handle this idiomatically.
+
+Quarantine inflation was NOT a factor — the augmentations are
+designed to be `reconcileComponents`-friendly and the fixture-scale
+runs in Phase 1.5 showed zero quarantine inflation from synth.
+Disk was not a factor — 6.6 GiB labeled.jsonl is well under our
+815 GiB free.
+
+### Phase 2 baseline viability
+
+**Synth-OFF v0.1.0 is a usable Phase 2 baseline.** Specifically:
+
+- **Surface-form diversity at the locality / region / country
+  level**: covered by WOF `name:*` variants pre-existing in the
+  adapter output. For example, the country-level row for `wof:id=
+85633147` (France) emits 100+ name-slot variants from canonical
+  `wof:name = "France"` through `name:abk_x_preferred = "Францие"`
+  (Abkhaz). These already exercise per-script tokenization and
+  diacritic handling.
+- **Surface-form diversity at the street / house_number level**:
+  partially covered. BAN rows ship as-is (no `caseUpper` / accent
+  variants); TIGER rows ship in title-cased USPS form. This is the
+  layer that training-time augmentation should handle — at training
+  time, the data loader can apply the same `defaultAugmentations`
+  table per-batch.
+- **Quantitative scale**: 4.56 M labeled rows is comparable to or
+  larger than the WikiNERd corpus that the Phase 2 plan referenced
+  as a structural inspiration. It is enough to bootstrap a v0.1.x
+  classifier without further data work.
+
+What v0.1.0 does **NOT** cover, that synth-ON v0.1.1 would add:
+
+- US ZIP+4-with-dash variants vs no-dash (`zipPlus4DashDrop`).
+- US directional abbreviation (`NW` ↔ `Northwest`) for non-WOF
+  rows. WOF rows have no directionals; TIGER street rows have
+  them but in only one form.
+- US state expand/abbreviate for the TIGER + WOF postalcode rows
+  (WOF admin US gets both forms via name slots; TIGER places
+  ship abbreviated only).
+- US street-suffix expand/abbreviate (`Ave` ↔ `Avenue`) — the
+  Phase 1.5 USPS Pub-28 codex augmentation. TIGER rows ship in
+  one form.
+
+These are the layers where training-time augmentation can do the
+work, applied per-batch from the same `defaultAugmentationsForCountry`
+table. **Phase 2 does not need to wait** for v0.1.1; it can proceed
+on v0.1.0 with a training-time augmentation step in the data loader.
+If v0.1.1 is wanted for offline-augmented benchmarking parity with
+external models, that's a follow-up unit of work (see the
+`splitInputs` refactor section above).
+
+### Conclusion
+
+Synth-OFF was the right call for v0.1.0. The artifact is a usable
+Phase 2 baseline. v0.1.1 (synth-ON, after the splitInputs refactor)
+is a "nice to have, not blocking" item — when the operator wants
+augmented corpus parity with external geocoding benchmarks, that's
+when the hour goes in.
+
+## 2026-05-17 — splitInputs refactor: multiplex labeled.jsonl per split, drop the in-memory split map
+
+**Context:** operator greenlit the refactor described in the
+2026-05-17 "splitInputs refactor scope" entry above. This entry
+records what actually shipped (design decisions made during the
+implementation that the scope sketch didn't pin down).
+
+### `splitForRow` extracted as pure helper
+
+`packages/corpus/src/split.ts` now exports `splitForRow(row,
+holdouts?): SplitName` — the per-row branch of the prior `splitRows`
+function lifted into a pure helper. `splitRows` was kept (still
+returns the in-memory `SplitManifest` shape) and now goes through
+`splitForRow` internally so the in-memory and streaming paths can't
+diverge on bucketing semantics. Tests cover both paths against the
+same fixture inputs.
+
+### `writeSplitManifestsFromLabeledFiles` shells out to `sort(1)`
+
+The streaming-friendly manifest writer
+(`writeSplitManifestsFromLabeledFiles`) streams source_ids out of
+per-split labeled JSONLs and pipes them to coreutils `sort(1)` with
+`LC_ALL=C` for cross-host byte-deterministic sorting. The alternative
+(in-process sort) would have required either (a) loading the full
+per-split source_id array into memory — defeating the refactor's
+purpose — or (b) implementing an external mergesort in JS, which is
+non-trivial. `sort(1)` is universally available on Linux/macOS and
+handles disk spill automatically.
+
+`LC_ALL=C` is load-bearing: without it, locale-aware sorting can
+produce different byte order across machines with different `LANG`
+settings, breaking the cross-host determinism guarantee the manifests
+exist to provide.
+
+### `writeShards` signature change: `PerSplitRows`, not `splitFor` callback
+
+`writeShards(rows, {splitFor})` became `writeShards(perSplit,
+opts)`. The old shape pushed an O(n) `Map<source_id, SplitName>` onto
+the caller (`buildCorpus`); the new shape pre-partitions rows into
+per-split AsyncIterables, so the sharder iterates them sequentially
+and only one parquet writer is open at a time. Memory cost in the
+shard phase drops from O(n_aligned_rows) to O(row_group_size ×
+row_size) ≈ 12 MiB.
+
+The alternative I considered (keep `(rows, splitFor)` and let the
+sharder lazily route via `splitFor`) would have left the O(n) Map
+inside `buildCorpus` and added per-row callback overhead in the
+shard hot path. Reshaping the interface was the cleaner break.
+
+### What I did NOT change
+
+- `splitRows` and `writeSplitManifests` stay (in-memory path for
+  tests + small-fixture callers). Removing them would have been a
+  breaking change to the package's public surface; the streaming
+  path is additive.
+- Manifest format on disk: unchanged. `SPLIT_MANIFEST.json` has the
+  same shape (`{corpus_version, holdouts, counts}`); per-split
+  `{train,val,test}.txt` files are still sorted line-separated
+  source_ids.
+- Parquet shard layout, schema, compression: unchanged.
+
+### Measured outcome
+
+The synth-ON v0.1.1 build (22,439,941 labeled rows, ~4.92× fan-out
+over v0.1.0's 4.56M canonical) ran on the same 8 GiB container that
+v0.1.0 ran on, with RSS peaking at ~3.9 GiB during the wof-admin
+adapter phase (ancestry index dominated) and falling to ~700-800 MiB
+through align/split/shard. No OOM, no `--max-old-space-size` bump
+needed beyond the v0.1.0 setting of 5800 MiB. The refactor's stated
+target ("from ~5 GiB synth-ON projection to ~600 MiB") is met for
+the align/split/shard phases; the adapter phase's ~3.9 GiB residency
+of the WOF ancestry index is a separate problem outside this
+refactor's scope.
+
+## 2026-05-17 — `doubleSpace` augmentation must update components (not just `raw`)
+
+**Context:** the first synth-ON v0.1.1 build attempt produced a
+8.94% quarantine rate (2,006,426 / 22,448,911 canonical+augmented
+rows). Drill-down via the per-method breakdown:
+2,004,682 (99.9%) of the quarantines traced back to the
+`double-space` augmentation in `synthesize.ts`.
+
+### Bug
+
+`doubleSpace` was implemented as:
+
+```ts
+export const doubleSpace: Augmentation = (row) => {
+	if (!/ /.test(row.raw)) return null
+	const newRaw = row.raw.replace(/ /g, "  ")
+	return withAugmentation(row, "double-space", newRaw, { ...row.components })
+}
+```
+
+— it doubled spaces in `raw` but spread the components unchanged.
+The corpus pipeline's `alignRow` (`packages/corpus/src/align.ts`)
+uses substring search to find each component's surface form inside
+`raw` so it can assign BIO labels to the right token spans. With
+single-spaced components and double-spaced raw, the substring search
+fails:
+
+- raw: `"5  Chemin  des  Amandiers,  13980  Alleins"` (BAN address,
+  spaces doubled)
+- `components.street`: `"Chemin des Amandiers"` (still single-spaced)
+
+The substring search for `"Chemin des Amandiers"` cannot find a
+match inside the double-spaced raw, so the row is quarantined with
+`reason: "component-not-found:street"`.
+
+### Why the unit test missed it
+
+The pre-existing `doubleSpace` test in `synthesize.test.ts` only
+asserted on `out.raw`:
+
+```ts
+const out = doubleSpace(baseRow({ raw: "Paris France", components: { locality: "Paris", country: "France" } }))!
+expect(out.raw).toBe("Paris  France")
+```
+
+…and the assertion is satisfied even with the bug, because the test
+inputs use single-word components (`"Paris"`, `"France"`) which
+don't have internal spaces to double. The bug only manifests on
+multi-word components — which are the majority of real-world data
+(streets, multi-word place names, country surface forms like
+`"United States of America"`).
+
+### Fix
+
+Apply the same `replace(/ /g, "  ")` to every component value, so
+the substring contract holds:
+
+```ts
+export const doubleSpace: Augmentation = (row) => {
+	if (!/ /.test(row.raw)) return null
+	const newRaw = row.raw.replace(/ /g, "  ")
+	const newComponents: ComponentDict = {}
+	for (const [k, v] of Object.entries(row.components)) {
+		if (v) newComponents[k as ComponentTag] = v.replace(/ /g, "  ")
+	}
+	return withAugmentation(row, "double-space", newRaw, newComponents)
+}
+```
+
+The regression test now asserts the **substring invariant**: every
+component value must appear in `raw`. This catches not just this
+specific bug but any future augmentation that breaks the same
+contract.
+
+### Why no other augmentations had the bug
+
+`caseUpper` and `caseLower` correctly upper/lower-case both raw and
+components. `dropCommas` leaves components alone but normalizes
+whitespace in raw — the substring search still succeeds because
+components didn't have commas to begin with. `accentStrip` and the
+US-specific augmentations also update components and raw in
+lockstep. `doubleSpace` was the only one that mutated `raw`-shape
+without the corresponding components mutation, because spaces don't
+appear in the toUpperCase/toLowerCase axis the bulk of the code is
+organized around.
+
+### Quarantine after the fix
+
+Retried build: **8,970 / 22,448,911 = 0.040% quarantine rate**, a
+99.9% reduction. Remaining quarantines are 7,226 double-space cases
+that downstream-amplify the pre-existing WOF whitespace artifacts
+that v0.1.0 surfaced (66 originals; components carrying internal
+double-spaces from `name:*` properties that `formatAddress`
+collapses in `raw`); the doubleSpace augmentation doubles BOTH the
+pre-existing 2-space component artifact (→ 4 spaces) AND the raw
+(→ 2 spaces), so the alignment substring contract still fails for
+these specific rows. Same root cause as v0.1.0's 66 quarantines,
+just amplified through the synth fan-out. Fixing it properly would
+mean adding a whitespace-normalization step in
+`reconcileComponents` at canonical-row emission time so components
+and raw share a single-space normal form before alignment ever sees
+them. That is the right fix for the residual but is out of scope
+for v0.1.1 — 0.040% is well under the operator's 10% interrupt
+threshold.
