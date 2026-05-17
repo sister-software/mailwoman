@@ -29,7 +29,7 @@
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import type { ComponentTag } from "@mailwoman/core/types"
 import Database from "better-sqlite3"
-import { formatAddress } from "../../format.js"
+import { formatAddress, reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
 
 /**
@@ -242,10 +242,12 @@ export function createWofAdminAdapter(): CorpusAdapter {
 
 						const raw = formatAddress(variant.components, row.country, { separator: ", " })
 						if (!raw) continue
+						const aligned = reconcileComponents(variant.components, raw)
+						if (Object.keys(aligned).length === 0) continue
 
 						yield {
 							raw,
-							components: variant.components,
+							components: aligned,
 							country: row.country,
 							locale: LOCALE_BY_COUNTRY[row.country],
 							source: WOF_ADMIN_ADAPTER_ID,

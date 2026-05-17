@@ -53,6 +53,35 @@ export interface FormatAddressOptions {
 type ComponentDict = Partial<Record<ComponentTag, string>>
 
 /**
+ * After rendering, drop any component whose value isn't actually present in the formatted `raw`.
+ * OpenCage's per-country templates legitimately omit some inputs:
+ *
+ * - **FR**: regions are absorbed by the postcode and rarely render verbatim (`"75008 Paris, France"`
+ *   — `"Île-de-France"` is dropped).
+ * - **US**: state names are abbreviated (`"Oregon"` → `"OR"`); the verbatim form may not survive.
+ *
+ * Alignment downstream requires `components[tag]` to occur in `raw` (within fuzzy-match tolerance).
+ * If a component was dropped or transformed beyond Levenshtein reach, keeping it in the dict
+ * guarantees a quarantine reject. Reconciliation prunes the dropouts up front so the row arrives at
+ * alignment with a self-consistent (`raw`, `components`) pair.
+ *
+ * Comparison is case- and whitespace-insensitive. The retained value in `components` is the
+ * **original** input — alignment will fuzzy-match it against the raw character span.
+ */
+export function reconcileComponents(components: ComponentDict, raw: string): ComponentDict {
+	const haystack = raw.toLowerCase().replace(/\s+/g, " ")
+	const out: ComponentDict = {}
+	for (const [k, v] of Object.entries(components)) {
+		if (!v) continue
+		const needle = v.toLowerCase().replace(/\s+/g, " ")
+		if (haystack.includes(needle)) {
+			out[k as ComponentTag] = v
+		}
+	}
+	return out
+}
+
+/**
  * Render a component dict into an idiomatic per-country address string.
  *
  * Returns an empty string if `components` is empty after translation. Throws nothing — bad inputs
