@@ -8,9 +8,11 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": "./out/src/index.js",
-		"./types": "./out/src/types.js"
+		"./types": "./out/src/types.js",
+		"./format": "./out/src/format.js"
 	},
 	"dependencies": {
+		"@fragaria/address-formatter": "^6.3.0",
 		"@mailwoman/core": "workspace:*"
 	}
 }

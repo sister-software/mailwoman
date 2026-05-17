@@ -50,6 +50,7 @@
 		"./classifiers": "./packages/classifiers/out/classifiers/index.js",
 		"./corpus": "./packages/corpus/out/src/index.js",
 		"./corpus/types": "./packages/corpus/out/src/types.js",
+		"./corpus/format": "./packages/corpus/out/src/format.js",
 		"./solvers": "./packages/core/out/solvers/index.js",
 		"./solvers/*": "./packages/core/out/solvers/*",
 		"./filters": "./packages/core/out/filters/index.js",
