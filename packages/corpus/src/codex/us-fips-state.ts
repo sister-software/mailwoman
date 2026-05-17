@@ -94,3 +94,21 @@ export function lookupFipsState(statefp: string | null | undefined): UsStateInfo
 	if (!statefp) return null
 	return US_FIPS_STATE[statefp] ?? null
 }
+
+/**
+ * Inverted view: two-letter postal abbreviation → `UsStateInfo`. Built once at module load. Used by
+ * adapters whose source data ships the abbreviation rather than the FIPS code (FCC BDC, most
+ * federal CSVs).
+ */
+export const US_STATE_BY_ABBREVIATION: Readonly<Record<string, UsStateInfo>> = Object.freeze(
+	Object.fromEntries(Object.values(US_FIPS_STATE).map((info) => [info.abbreviation, info]))
+)
+
+/**
+ * Lookup helper for adapters carrying 2-char USPS abbreviations (`"CA"`, `"VT"`). Case-folded; null
+ * for any value outside the 50 states + DC + the five primary territories.
+ */
+export function lookupStateAbbreviation(abbreviation: string | null | undefined): UsStateInfo | null {
+	if (!abbreviation) return null
+	return US_STATE_BY_ABBREVIATION[abbreviation.toUpperCase()] ?? null
+}

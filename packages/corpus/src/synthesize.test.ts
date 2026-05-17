@@ -4,12 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
+import { BIO_LABELS } from "@mailwoman/core/types"
 import { describe, expect, it } from "vitest"
 import {
 	AUGMENTATIONS,
 	accentStrip,
 	caseLower,
 	caseUpper,
+	composeAdversarialRow,
 	defaultAugmentationsForCountry,
 	directionalAbbreviate,
 	directionalExpand,
@@ -378,5 +380,221 @@ describe("registry + defaults", () => {
 		const upper = out.find((r) => r.synth?.method === "case-upper")!
 		expect(upper.source_id).toBe("t-1+case-upper")
 		expect(upper.synth?.base_source_id).toBe("t-1")
+	})
+})
+
+// ===========================================================================
+// composeAdversarialRow (Phase 1.6 §2.1)
+// ===========================================================================
+
+describe("composeAdversarialRow", () => {
+	it("emits a LabeledRow that round-trips through the BIO label vocabulary", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+		})
+		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+		expect(result.row.tokens.length).toBe(result.row.labels.length)
+		for (const label of result.row.labels) {
+			expect(BIO_LABELS).toContain(label)
+		}
+	})
+
+	it("place-name venue: shared 'Buffalo' token stays labeled venue, not locality", () => {
+		// Kryptonite case #1 from CONTEXT.md / issue #22.
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+		})
+		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+
+		expect(result.row.raw).toBe("Buffalo Health Clinic, Buffalo, NY 14201")
+		// The venue prefix: three tokens, all venue-labeled.
+		expect(result.row.tokens.slice(0, 3)).toEqual(["Buffalo", "Health", "Clinic"])
+		expect(result.row.labels.slice(0, 3)).toEqual(["B-venue", "I-venue", "I-venue"])
+		// The address half: the second "Buffalo" must be the locality, NOT venue.
+		const buffaloIndices = result.row.tokens.map((t, i) => (t === "Buffalo" ? i : -1)).filter((i) => i >= 0)
+		expect(buffaloIndices).toHaveLength(2)
+		expect(result.row.labels[buffaloIndices[0]!]).toBe("B-venue")
+		expect(result.row.labels[buffaloIndices[1]!]).toBe("B-locality")
+	})
+
+	it("place-shaped venue: embedded multi-token place-shaped substring stays venue-labeled", () => {
+		// Kryptonite case #2: venue contains a substring that looks like a complete address.
+		const address = baseRow({
+			raw: "Las Vegas, NV 89109",
+			components: { locality: "Las Vegas", region: "NV", postcode: "89109" },
+			source_id: "wof-admin-las-vegas",
+		})
+		const result = composeAdversarialRow("New York, New York Steakhouse", address, {
+			pattern: "place-shaped-venue",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+
+		expect(result.row.raw).toBe("New York, New York Steakhouse, Las Vegas, NV 89109")
+		// The venue is 5 tokens: New York New York Steakhouse — all venue.
+		expect(result.row.tokens.slice(0, 5)).toEqual(["New", "York", "New", "York", "Steakhouse"])
+		expect(result.row.labels.slice(0, 5)).toEqual(["B-venue", "I-venue", "I-venue", "I-venue", "I-venue"])
+		// The address half: "Las" + "Vegas" → B-locality + I-locality.
+		const lasIdx = result.row.tokens.indexOf("Las")
+		expect(lasIdx).toBeGreaterThan(0)
+		expect(result.row.labels[lasIdx]).toBe("B-locality")
+		expect(result.row.labels[lasIdx + 1]).toBe("I-locality")
+	})
+
+	it("particle-honorific ambiguity: apostrophe + St. tokens land under venue", () => {
+		// Kryptonite case #3: apostrophe + St./Saint ambiguity. "P'tit" and "St." are inside
+		// the venue surface form, not a street_prefix or honorific in the address.
+		const address = baseRow({
+			raw: "Montreal, QC H2X 1Y4",
+			country: "CA",
+			components: { locality: "Montreal", region: "QC", postcode: "H2X 1Y4" },
+			source_id: "test-montreal",
+		})
+		const result = composeAdversarialRow("P'tit St. Denis Street Café", address, {
+			pattern: "particle-honorific",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+
+		// The venue tokens via the whitespace tokenizer: P'tit, St, Denis, Street, Café
+		// (period is a separator, apostrophe joins, accented chars are word chars).
+		expect(result.row.tokens[0]).toBe("P'tit")
+		expect(result.row.tokens[1]).toBe("St")
+		// Every venue token gets the venue label — the embedded "St" is venue, not
+		// street_prefix.
+		const venueTokenCount = 5
+		for (let i = 0; i < venueTokenCount; i++) {
+			expect(result.row.labels[i]).toBe(i === 0 ? "B-venue" : "I-venue")
+		}
+	})
+
+	it("address components survive forward onto the composed row as-is", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+		})
+		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+
+		expect(result.row.components).toMatchObject({
+			venue: "Buffalo Health Clinic",
+			locality: "Buffalo",
+			region: "NY",
+			postcode: "14201",
+		})
+	})
+
+	it("synth marker carries compose:<pattern> + base_source_id from the address row", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+		})
+		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+
+		expect(result.row.synth?.method).toBe("compose:place-name-venue")
+		expect(result.row.synth?.base_source_id).toBe("wof-admin-buffalo")
+		expect(result.row.source_id).toBe("wof-admin-buffalo+compose:place-name-venue")
+	})
+
+	it("preserves country/locale/license/source from the underlying address row", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+			country: "US",
+			locale: "en-US",
+			source: "wof-admin",
+			license: "CC0-1.0",
+		})
+		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+
+		expect(result.row.country).toBe("US")
+		expect(result.row.locale).toBe("en-US")
+		expect(result.row.source).toBe("wof-admin")
+		expect(result.row.license).toBe("CC0-1.0")
+	})
+
+	it("separator option controls the join character", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+		})
+		const spaced = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+			separator: " ",
+		})
+		expect(spaced.kind).toBe("labeled")
+		if (spaced.kind === "labeled") expect(spaced.row.raw).toBe("Buffalo Health Clinic Buffalo, NY 14201")
+
+		const newline = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+			separator: "\n",
+		})
+		expect(newline.kind).toBe("labeled")
+		if (newline.kind === "labeled") expect(newline.row.raw).toBe("Buffalo Health Clinic\nBuffalo, NY 14201")
+	})
+
+	it("empty venue quarantines with reason=venue-empty", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+		})
+		const result = composeAdversarialRow("   ", address, { pattern: "place-name-venue" })
+		expect(result.kind).toBe("quarantined")
+		if (result.kind === "quarantined") expect(result.row.reason).toBe("venue-empty")
+	})
+
+	it("address that fails alignment quarantines with the propagated reason", () => {
+		// region "QQQQQQ" can't be located in the raw and is too far from any window to match
+		// under default edit distance — alignment quarantines it.
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "QQQQQQ", postcode: "14201" },
+		})
+		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+		})
+		expect(result.kind).toBe("quarantined")
+		if (result.kind === "quarantined") {
+			expect(result.row.reason).toContain("compose-address-")
+			expect(result.row.reason).toContain("region")
+		}
+	})
+
+	it("is deterministic: two compositions of the same inputs produce identical output", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+		})
+		const a = composeAdversarialRow("Buffalo Health Clinic", address, { pattern: "place-name-venue" })
+		const b = composeAdversarialRow("Buffalo Health Clinic", address, { pattern: "place-name-venue" })
+		expect(a).toEqual(b)
 	})
 })

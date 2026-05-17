@@ -24,9 +24,11 @@
  *   most useful at training time, not corpus build time.
  */
 
-import type { ComponentTag } from "@mailwoman/core/types"
+import type { BioLabel, ComponentTag } from "@mailwoman/core/types"
+import { alignRow } from "./align.js"
 import { US_STREET_SUFFIX_PREFERRED_ABBR, matchCase, matchTrailingSuffix } from "./codex/us-street-suffix.js"
-import type { CanonicalRow } from "./types.js"
+import { whitespaceTokenizer, type Tokenizer } from "./tokenize.js"
+import type { CanonicalRow, LabeledRow, QuarantinedRow } from "./types.js"
 
 /**
  * An augmentation transforms a single row. Return `null` if the augmentation doesn't apply (e.g.
@@ -408,4 +410,145 @@ export function* synthesizeRow(
 
 function escapeRegex(s: string): string {
 	return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+// ===========================================================================
+// Compositional synthesis (Phase 1.6 §2.1)
+// ===========================================================================
+//
+// The single-row augmentations above transform one `CanonicalRow` into another with `raw` and
+// `components` moved in lockstep, leaving alignment to derive labels downstream. Composition is
+// fundamentally different: it takes a **venue string** and an **address row** from a different
+// source and renders them together as a single `raw`, producing adversarial training examples
+// where embedded place-shaped tokens collide with real address components.
+//
+// Naive post-hoc alignment of the composed string would mis-label the embedded tokens: a venue
+// like `"Buffalo Health Clinic"` shares the token `"Buffalo"` with an address locality
+// `"Buffalo, NY"`, and alignment's leftmost-substring search would claim the venue's `"Buffalo"`
+// as the locality (or vice versa, depending on order). Composition therefore **emits labels
+// directly** — venue tokens are unconditionally labeled `B-venue` / `I-venue`, and the address
+// half re-uses the labels produced by aligning the un-composed address row in isolation. No
+// re-search across the composed boundary.
+//
+// Why a separate primitive (not an `Augmentation`):
+//
+// - Augmentations are unary `(CanonicalRow) -> CanonicalRow | null` and run through
+//   `synthesizeRow`. Composition is binary `(string, CanonicalRow) -> LabeledRow` and emits
+//   `LabeledRow` directly (it cannot defer labels to alignment without the embedded-token bug).
+// - Augmentations preserve provenance to a single source; compositions cite the address source
+//   in `synth.base_source_id` and carry the venue surface form on the `venue` component.
+// - Throttling (the issue calls for ~5-15% of training set) is a build-time policy, not an
+//   adapter-level concern — the build pipeline applies it; the primitive stays pure.
+//
+// See `DECISIONS.md` for the rationale on why composition lives alongside augmentation but is
+// not part of the `AUGMENTATIONS` registry.
+
+/** Options accepted by `composeAdversarialRow`. */
+export interface ComposeAdversarialOptions {
+	/**
+	 * Stable pattern label written into the emitted row's `synth.method` field (as
+	 * `compose:<pattern>`). Free-form but should be one of a small set of canonical pattern names so
+	 * downstream filtering / stratification can target individual patterns.
+	 *
+	 * Recommended values (Phase 1.6 §2.1):
+	 *
+	 * - `"place-name-venue"` — venue token shared with locality (`Buffalo Health Clinic, Buffalo NY`).
+	 * - `"place-shaped-venue"` — venue contains a place-shaped substring (`New York, New York
+	 *   Steakhouse, Las Vegas NV`).
+	 * - `"particle-honorific"` — apostrophe + St./Saint ambiguity (`P'tit St. Denis Street Café`).
+	 */
+	pattern: string
+
+	/**
+	 * Separator inserted between the venue and the address `raw`. Default `", "`. Single space (`"
+	 * "`) produces the harder unpunctuated variant; newline (`"\n"`) the multi-line variant.
+	 */
+	separator?: string
+
+	/**
+	 * Tokenizer to apply to the venue prefix. Default `whitespaceTokenizer()`. The address half uses
+	 * the same tokenizer when re-aligned — pass a consistent one if customizing.
+	 */
+	tokenizer?: Tokenizer
+}
+
+/** Either a successful labeled composition or a quarantined attempt. */
+export type ComposeResult = { kind: "labeled"; row: LabeledRow } | { kind: "quarantined"; row: QuarantinedRow }
+
+/**
+ * Compose a venue string + an address row into a single adversarial `LabeledRow`.
+ *
+ * The emitted row's `raw` is `${venue}${separator}${address.raw}`. Tokens are produced by
+ * tokenizing the two halves independently and concatenating; labels are venue tokens → `B-venue` /
+ * `I-venue` followed by the address's labels (obtained by aligning the input address in isolation).
+ * This deterministic boundary is the entire point of the primitive: the embedded place-shaped
+ * tokens in the venue stay labeled as `venue`, never as the address's locality / region / etc.,
+ * even when they share surface forms.
+ *
+ * The address's components are forwarded as-is (alignment ran on them and they survived); `venue`
+ * is added on top with the trimmed venue string as its surface form.
+ *
+ * Returns `{ kind: "quarantined" }` when:
+ *
+ * - The venue is empty or whitespace-only.
+ * - The address row fails alignment in isolation (the underlying failure reason is propagated).
+ */
+export function composeAdversarialRow(
+	venue: string,
+	address: CanonicalRow,
+	options: ComposeAdversarialOptions
+): ComposeResult {
+	const separator = options.separator ?? ", "
+	const tokenizer = options.tokenizer ?? whitespaceTokenizer()
+
+	const venueTrimmed = venue.trim()
+	if (!venueTrimmed) {
+		return { kind: "quarantined", row: { row: address, reason: "venue-empty" } }
+	}
+
+	const addressAligned = alignRow(address, { tokenizer })
+	if (addressAligned.kind !== "labeled") {
+		// Surface the address's quarantine reason but tag it with the compose attempt for
+		// debugging. The original CanonicalRow stays on the QuarantinedRow so callers can
+		// inspect the address payload.
+		return {
+			kind: "quarantined",
+			row: { row: address, reason: `compose-address-${addressAligned.row.reason}` },
+		}
+	}
+
+	const venueTokens = tokenizer.tokenize(venueTrimmed)
+	if (venueTokens.length === 0) {
+		return { kind: "quarantined", row: { row: address, reason: "venue-no-tokens" } }
+	}
+
+	const venueLabels: BioLabel[] = venueTokens.map((_, i) => (i === 0 ? "B-venue" : "I-venue"))
+
+	const tokens: string[] = [...venueTokens.map((t) => t.text), ...addressAligned.row.tokens]
+	const labels: BioLabel[] = [...venueLabels, ...addressAligned.row.labels]
+
+	const composedRaw = `${venueTrimmed}${separator}${address.raw}`
+	const composedComponents = {
+		venue: venueTrimmed,
+		...address.components,
+	}
+
+	const baseSourceId = address.synth?.base_source_id ?? address.source_id
+	const method = `compose:${options.pattern}`
+
+	const composed: LabeledRow = {
+		raw: composedRaw,
+		components: composedComponents,
+		country: address.country,
+		locale: address.locale,
+		source: address.source,
+		source_id: `${address.source_id}+${method}`,
+		corpus_version: address.corpus_version,
+		license: address.license,
+		synth: { method, base_source_id: baseSourceId },
+		tokens,
+		labels,
+	}
+
+	return { kind: "labeled", row: composed }
 }

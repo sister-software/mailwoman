@@ -22,15 +22,18 @@
 import { defaultAdapterRegistry } from "../adapter.js"
 import type { CorpusAdapter } from "../types.js"
 import { banAdapter } from "./ban/adapter.js"
+import { fccBdcAdapter } from "./fcc-bdc/adapter.js"
 import { openaddressesAdapter } from "./openaddresses/adapter.js"
 import { tigerAdapter } from "./tiger/adapter.js"
+import { usgovHrsaFqhcAdapter } from "./usgov-hrsa-fqhc/adapter.js"
+import { usgovSamhsaTreatmentLocatorAdapter } from "./usgov-samhsa-treatment-locator/adapter.js"
 import { wofAdminAdapter } from "./wof-admin-json/adapter.js"
 import { wofPostalcodeAdapter } from "./wof-postalcode-json/adapter.js"
 
 /**
  * Built-in adapters. Order is significant: `corpus build` iterates this list to drive every adapter
  * in turn. Coarse-first (admin → postcode), then street-level (BAN FR, TIGER US, OpenAddresses
- * global).
+ * global), then adversarial-source (FCC BDC US, HRSA FQHC US, SAMHSA Treatment Locator US).
  */
 export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	wofAdminAdapter,
@@ -38,6 +41,9 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	banAdapter,
 	tigerAdapter,
 	openaddressesAdapter,
+	fccBdcAdapter,
+	usgovHrsaFqhcAdapter,
+	usgovSamhsaTreatmentLocatorAdapter,
 ]
 
 for (const adapter of BUILTIN_ADAPTERS) {
@@ -47,11 +53,22 @@ for (const adapter of BUILTIN_ADAPTERS) {
 }
 
 export { BAN_ADAPTER_ID, banAdapter } from "./ban/adapter.js"
+export { FCC_BDC_ADAPTER_ID, FCC_BDC_DEFAULT_LICENSE, fccBdcAdapter } from "./fcc-bdc/adapter.js"
 export {
 	OPENADDRESSES_ADAPTER_ID,
 	OPENADDRESSES_DEFAULT_LICENSE,
 	openaddressesAdapter,
 } from "./openaddresses/adapter.js"
 export { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, tigerAdapter } from "./tiger/adapter.js"
+export {
+	USGOV_HRSA_FQHC_ADAPTER_ID,
+	USGOV_HRSA_FQHC_DEFAULT_LICENSE,
+	usgovHrsaFqhcAdapter,
+} from "./usgov-hrsa-fqhc/adapter.js"
+export {
+	USGOV_SAMHSA_ADAPTER_ID,
+	USGOV_SAMHSA_DEFAULT_LICENSE,
+	usgovSamhsaTreatmentLocatorAdapter,
+} from "./usgov-samhsa-treatment-locator/adapter.js"
 export { WOF_ADMIN_ADAPTER_ID, wofAdminAdapter } from "./wof-admin-json/adapter.js"
 export { WOF_POSTALCODE_ADAPTER_ID, wofPostalcodeAdapter } from "./wof-postalcode-json/adapter.js"
