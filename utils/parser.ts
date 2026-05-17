@@ -41,9 +41,9 @@ import {
 	UnitClassifier,
 	UnitDesignatorClassifier,
 	WhosOnFirstClassifier,
-} from "mailwoman/classifiers"
-import { AddressParser, AddressParserOptions } from "mailwoman/core/parser"
-import { InvalidSolutionFilter, RelationshipFilter, SubsetFilter, TokenDistanceFilter } from "mailwoman/filters"
+} from "@mailwoman/classifiers"
+import { InvalidSolutionFilter, RelationshipFilter, SubsetFilter, TokenDistanceFilter } from "@mailwoman/core/filters"
+import { AddressParser, AddressParserOptions } from "@mailwoman/core/parser"
 import {
 	ExclusiveCartesianSolver,
 	HouseNumberPositionPenalty,
@@ -53,7 +53,7 @@ import {
 	OrphanedUnitTypeDeclassifier,
 	PostcodePositionPenalty,
 	VenueCaptureSolver,
-} from "mailwoman/solvers"
+} from "@mailwoman/core/solvers"
 
 /**
  * Create an address parser with the given options.

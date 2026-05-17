@@ -396,6 +396,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mailwoman/classifiers@workspace:packages/classifiers":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/classifiers@workspace:packages/classifiers"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/core@workspace:*, @mailwoman/core@workspace:packages/core":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/core@workspace:packages/core"
+  languageName: unknown
+  linkType: soft
+
 "@napi-rs/nice-android-arm-eabi@npm:1.0.1":
   version: 1.0.1
   resolution: "@napi-rs/nice-android-arm-eabi@npm:1.0.1"

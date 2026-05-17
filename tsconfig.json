@@ -2,21 +2,33 @@
 	"extends": "@sister.software/tsconfig",
 	"watchOptions": {
 		"excludeDirectories": [
-			"**/.git", // Git
-			"**/.yarn", // Yarn
-			"**/.vscode", // VS Code
-			"**/.vscode-test-web", // VS Code Web Test
-			"**/dist", // Distributed build files
-			"**/out", // Output build files
-			"**/.drafts", // Drafts
-			"**/.github", // GitHub
-			"**/node_modules" // Node modules
+			"**/.git",
+			"**/.yarn",
+			"**/.vscode",
+			"**/.vscode-test-web",
+			"**/dist",
+			"**/out",
+			"**/.drafts",
+			"**/.github",
+			"**/node_modules"
 		]
 	},
 	"compilerOptions": {
 		"baseUrl": ".",
 		"outDir": "./out"
 	},
-
-	"exclude": ["./out/**/*"]
+	"include": [
+		"index.ts",
+		"cli.ts",
+		"vitest.config.ts",
+		"eslint.config.mjs",
+		"sdk/**/*",
+		"server/**/*",
+		"scripts/**/*",
+		"test/**/*",
+		"utils/**/*",
+		"commands/**/*"
+	],
+	"exclude": ["./out/**/*", "./packages/**/*"],
+	"references": [{ "path": "./packages/core" }, { "path": "./packages/classifiers" }]
 }

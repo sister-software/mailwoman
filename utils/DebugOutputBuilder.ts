@@ -4,7 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import chalk from "chalk"
 import {
 	ClassificationMatch,
 	pluckLanguageLabel,
@@ -12,7 +11,8 @@ import {
 	Span,
 	TokenContext,
 	VerboseParseResult,
-} from "mailwoman/core"
+} from "@mailwoman/core"
+import chalk from "chalk"
 import { inspect } from "node:util"
 
 function formatClassificationLanguages(classification: ClassificationMatch): string {

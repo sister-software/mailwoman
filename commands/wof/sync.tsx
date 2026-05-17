@@ -5,7 +5,6 @@
  */
 
 import { ProgressBar } from "@inkjs/ui"
-import { Box, Text } from "ink"
 import {
 	formatQuantity,
 	Placetype,
@@ -13,13 +12,14 @@ import {
 	RepositorySource,
 	synchronizeRepo,
 	takeInParallel,
-} from "mailwoman/core"
-import { PositionalCommandComponent } from "mailwoman/sdk/cli"
+} from "@mailwoman/core"
+import { Box, Text } from "ink"
 import { availableParallelism } from "node:os"
 import { PathBuilder } from "path-ts"
 import { useEffect, useMemo, useState } from "react"
 import zod from "zod"
 import { $ } from "zx"
+import { PositionalCommandComponent } from "../../sdk/cli.js"
 
 const BATCH_SIZE = availableParallelism()
 const WOF_REPO_OWNER = "whosonfirst-data"

@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./classifiers/index.js"
-export * from "./core/index.js"
+export * from "@mailwoman/classifiers"
+export * from "@mailwoman/core"
 export * from "./utils/index.js"
