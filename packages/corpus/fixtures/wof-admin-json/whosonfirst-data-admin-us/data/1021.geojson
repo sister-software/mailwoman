@@ -1,0 +1,15 @@
+{
+  "type": "Feature",
+  "id": 1021,
+  "properties": {
+    "wof:id": 1021,
+    "wof:name": "Saint Petersburg",
+    "wof:placetype": "locality",
+    "wof:country": "US",
+    "wof:parent_id": 1020,
+    "mz:is_current": -1,
+    "name:eng_x_preferred": ["Saint Petersburg"],
+    "name:eng_x_colloquial": ["St. Petersburg", "St Pete"]
+  },
+  "geometry": null
+}

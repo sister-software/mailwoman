@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": 2020,
+  "properties": {
+    "wof:id": 2020,
+    "wof:name": "Auvergne-Rhône-Alpes",
+    "wof:placetype": "region",
+    "wof:country": "FR",
+    "wof:parent_id": 2001,
+    "mz:is_current": 1,
+    "name:fra_x_preferred": ["Auvergne-Rhône-Alpes"]
+  },
+  "geometry": null
+}

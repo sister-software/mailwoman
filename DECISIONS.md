@@ -154,6 +154,94 @@ in every emitted `SPLIT_MANIFEST.json`.
 constant in `packages/corpus/src/split.ts`. Changing it triggers a new
 corpus version (manifests change, so consumers must re-download splits).
 
+## 2026-05-17 — Phase 1.5.1: WOF adapters pivot from SQLite to per-record GeoJSON bundles
+
+**Context:** the Phase 1.5 wof-admin / wof-postalcode adapters were built against
+the SpatiaLite `.spatial.db` distribution at `dist.whosonfirst.org/sqlite/`.
+First real-data fetch attempt failed three sanity checks:
+
+1. **Mirror is dead.** `dist.whosonfirst.org` returns NXDOMAIN. The
+   Geocode-Earth-hosted mirror at `data.geocode.earth/wof/dist/sqlite/` is
+   the only one still being maintained (by the Pelias developers, who are
+   the sole maintainers of the WOF SQLite export tooling).
+2. **`is_current = 1` filter excludes everything.** The
+   Geocode-Earth-hosted `whosonfirst-data-postalcode-fr-latest.db` ships
+   27,119 postalcode rows, all with `mz:is_current = -1` (WOF's "unknown
+   but treated as active" convention; the Pelias importer accepts `-1`
+   alongside `1`). The Phase 1.5 SQLite adapter's `is_current = 1`
+   predicate emits zero rows from this distribution.
+3. **Voltron exposure on `names`.** The `names` table in the SQLite
+   distribution is empty (0 rows). Localized name variants
+   (`name:eng_x_preferred`, `name:rus_x_colloquial`, etc.) live in a
+   separate distribution that the SQLite path doesn't pull. The
+   St. Petersburg / Mt. Vernon / Ft. Lauderdale alternation cases the
+   adapter is meant to surface as training signal cannot be solved on the
+   SQLite path — even with the `is_current` filter loosened.
+
+Combined with operator preference for JSON over SQLite, the pivot was the
+right call.
+
+**Options considered:**
+
+1. Patch the SQLite path to accept `is_current ∈ {1, -1}` and let
+   `name:*` variants stay unaddressed for Phase 1.5.1 — lands the
+   `is_current` fix but leaves the bigger St. Petersburg motivation
+   for a later phase.
+2. Replace both adapters with JSON-bundle implementations
+   (`packages/corpus/src/adapters/wof-admin-json/`,
+   `packages/corpus/src/adapters/wof-postalcode-json/`) that consume
+   per-record GeoJSON files from cloned
+   `github.com/whosonfirst-data/whosonfirst-data-{admin,postalcode}-<cc>`
+   repos. Per-feature emission iterates `name:*` variants natively
+   (this is where the colloquial / preferred / per-locale forms live in
+   the source data); `mz:is_current ∈ {1, -1}` semantics are honored;
+   no SQLite distribution dependency.
+3. Add a `names`-table secondary-distribution loader alongside the
+   SQLite path — more code, still depends on a fragile mirror.
+
+**Chosen:** option 2.
+
+**Rationale:** the JSON-bundle path is the authoritative source for
+WOF data; the SQLite export is downstream tooling that happens to be
+incomplete (no names, no postcode `is_current = 1`). Consuming the
+authoritative source eliminates the mirror failure mode and unlocks
+the `name:*` variant emission Phase 1.5.1 was filed to deliver. Path:
+adapter pair under `packages/corpus/src/adapters/wof-{admin,postalcode}-json/`,
+shared utilities at `packages/corpus/src/wof-json.ts`, fixtures as
+hand-curated cloned-repo skeletons under
+`packages/corpus/fixtures/wof-{admin,postalcode}-json/`. The registered
+adapter ids (`wof-admin`, `wof-postalcode`) are unchanged so `mailwoman
+corpus build` callsites do not move.
+
+**`source_id` format change:** the new adapter pair appends a
+**name-slot** segment to the previous SQLite-era `source_id` format:
+
+- **Before**: `wof-admin-<wof_id>-<hierarchy-variant>` (e.g.
+  `wof-admin-1012-with-region`)
+- **After**: `wof-admin-<wof_id>-<name-slot>-<hierarchy-variant>` (e.g.
+  `wof-admin-1012-default-with-region`,
+  `wof-admin-85633793-name-eng-x-colloquial-self`)
+
+The `default` slot uses the canonical `wof:name` (or
+`COUNTRY_DISPLAY_NAME` for country records, preserving the legacy
+adapter's OpenCage-canonical behavior). Every `name:*` variant whose
+value differs from `default` becomes an additional slot, with the
+property key rewritten through `[:_]` → `-` for safe `source_id`
+embedding (`name:eng_x_colloquial` → `name-eng-x-colloquial`). This
+makes the St. Petersburg quirk a deduplication-safe training signal:
+`"Saint Petersburg"` (default) and `"St. Petersburg"` (eng_x_colloquial)
+both produce rows for the same WOF id without colliding under
+`canonicalDedupKey`.
+
+**Reversibility:** mostly reversible. The new adapters live in
+sibling directories so the SQLite path could be re-introduced if a
+future Phase needs it; the `source_id` change is observable from any
+downstream consumer that pinned to the old format, so a corpus
+version bump is the right place to absorb it (the next corpus build
+under `corpus-v0.1.x` will emit the new format throughout). The
+`better-sqlite3` runtime dep stays in `packages/corpus`'s
+`package.json` because the `tiger` adapter still uses it.
+
 ## 2026-05-17 — Phase 1.5 §4: JS-native Parquet via patched @dsnp/parquetjs (SNAPPY, not zstd)
 
 **Context:** Phase 1 (#9 / PR #17) shipped the corpus sharder as JSONL

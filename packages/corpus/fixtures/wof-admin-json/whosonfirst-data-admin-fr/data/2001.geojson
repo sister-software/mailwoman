@@ -1,0 +1,15 @@
+{
+  "type": "Feature",
+  "id": 2001,
+  "properties": {
+    "wof:id": 2001,
+    "wof:name": "France",
+    "wof:placetype": "country",
+    "wof:country": "FR",
+    "wof:parent_id": -1,
+    "mz:is_current": -1,
+    "name:fra_x_preferred": ["France"],
+    "name:eng_x_preferred": ["France"]
+  },
+  "geometry": null
+}

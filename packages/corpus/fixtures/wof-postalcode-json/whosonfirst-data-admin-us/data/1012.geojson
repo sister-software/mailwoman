@@ -1,0 +1,13 @@
+{
+  "type": "Feature",
+  "id": 1012,
+  "properties": {
+    "wof:id": 1012,
+    "wof:name": "Portland",
+    "wof:placetype": "locality",
+    "wof:country": "US",
+    "wof:parent_id": 1010,
+    "mz:is_current": 1
+  },
+  "geometry": null
+}

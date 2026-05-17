@@ -1,0 +1,13 @@
+{
+  "type": "Feature",
+  "id": 1020,
+  "properties": {
+    "wof:id": 1020,
+    "wof:name": "Florida",
+    "wof:placetype": "region",
+    "wof:country": "US",
+    "wof:parent_id": 1001,
+    "mz:is_current": -1
+  },
+  "geometry": null
+}

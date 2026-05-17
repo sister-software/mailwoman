@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": 1099,
+  "properties": {
+    "wof:id": 1099,
+    "wof:name": "Old Place",
+    "wof:placetype": "locality",
+    "wof:country": "US",
+    "wof:parent_id": 1001,
+    "mz:is_current": 0,
+    "name:eng_x_preferred": ["Old Place"]
+  },
+  "geometry": null
+}
