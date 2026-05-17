@@ -417,6 +417,7 @@ __metadata:
     "@fragaria/address-formatter": "npm:^6.3.0"
     "@mailwoman/core": "workspace:*"
     better-sqlite3: "npm:^11.5.0"
+    csv-parse: "npm:^5.5.6"
     fastest-levenshtein: "npm:^1.0.16"
   languageName: unknown
   linkType: soft

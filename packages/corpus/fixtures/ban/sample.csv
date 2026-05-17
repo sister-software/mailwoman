@@ -1,0 +1,8 @@
+id;id_fantoir;numero;rep;nom_voie;code_postal;code_insee;nom_commune;code_insee_ancienne_commune;nom_ancienne_commune;x;y;lon;lat;type_position;alias;nom_ld;libelle_acheminement;nom_afnor;source;certification_commune
+75108_0001_00001;7510800001;1;;Rue de Rivoli;75001;75101;Paris;;;651650.0;6862500.0;2.3408;48.8595;entrance;;;PARIS;RUE DE RIVOLI;BAN;1
+75108_0001_00010;7510800001;10;;Rue de Rivoli;75001;75101;Paris;;;651720.0;6862480.0;2.3416;48.8593;entrance;;;PARIS;RUE DE RIVOLI;BAN;1
+75108_0008_00001;7510800008;1;bis;Avenue des Champs-Élysées;75008;75108;Paris;;;651900.0;6863100.0;2.3036;48.8698;entrance;;;PARIS;AVENUE DES CHAMPS-ELYSEES;BAN;1
+69002_0010_00045;6900200010;45;;Cours Lafayette;69003;69383;Lyon;;;842500.0;6520500.0;4.8463;45.7595;entrance;;;LYON;COURS LAFAYETTE;BAN;1
+69002_0010_00046;6900200010;46;;Cours Lafayette;69003;69383;Lyon;;;842520.0;6520490.0;4.8464;45.7594;entrance;;;LYON;COURS LAFAYETTE;BAN;1
+13201_0050_00100;1320100050;100;;Rue de la République;13001;13201;Marseille;;;893000.0;6248000.0;5.3760;43.2964;entrance;;;MARSEILLE;RUE DE LA REPUBLIQUE;BAN;1
+06088_0020_00007;0608800020;7;;Promenade des Anglais;06000;06088;Nice;;;1043000.0;6298000.0;7.2620;43.6961;entrance;;;NICE;PROMENADE DES ANGLAIS;BAN;1
