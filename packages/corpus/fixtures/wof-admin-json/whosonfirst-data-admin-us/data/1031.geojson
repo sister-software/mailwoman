@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": 1031,
+  "properties": {
+    "wof:id": 1031,
+    "wof:name": "Burlington",
+    "wof:placetype": "locality",
+    "wof:country": "US",
+    "wof:parent_id": 1030,
+    "mz:is_current": 1,
+    "name:eng_x_preferred": ["Burlington"]
+  },
+  "geometry": null
+}

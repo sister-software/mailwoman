@@ -1,0 +1,16 @@
+{
+  "type": "Feature",
+  "id": 1001,
+  "properties": {
+    "wof:id": 1001,
+    "wof:name": "United States",
+    "wof:placetype": "country",
+    "wof:country": "US",
+    "wof:parent_id": -1,
+    "mz:is_current": -1,
+    "name:eng_x_preferred": ["United States"],
+    "name:eng_x_colloquial": ["USA", "America"]
+  },
+  "geometry": null,
+  "bbox": [-180, 18, -66, 72]
+}

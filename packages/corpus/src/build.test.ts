@@ -3,40 +3,40 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   End-to-end integration test for `buildCorpus` against the wof-admin fixture.
+ *   End-to-end integration test for `buildCorpus` against the wof-admin JSON-bundle fixture.
+ *
+ *   Phase 1.5.1 moved the WOF adapters from SQLite to per-record GeoJSON bundles. This test was
+ *   updated in lockstep: the adapter is the JSON-bundle implementation at
+ *   `./adapters/wof-admin-json/`, the fixture is a directory of cloned-repo skeletons under
+ *   `../fixtures/wof-admin-json/` (no on-disk SQLite materialization step), and the holdout
+ *   assertion still keys on "Vermont" since that's defined by the corpus split policy, not the
+ *   fixture shape.
  */
 
-import Database from "better-sqlite3"
 import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
-import { wofAdminAdapter } from "./adapters/wof-admin/adapter.js"
+import { wofAdminAdapter } from "./adapters/wof-admin-json/adapter.js"
 import { buildCorpus, type BuildStage } from "./build.js"
 import { ParquetReader } from "./parquet-wrapper/index.js"
 import type { ParquetRow } from "./parquet.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
-const fixtureSqlPath = resolve(here, "../fixtures/wof-admin/fixture.sql")
+const fixtureRoot = resolve(here, "../fixtures/wof-admin-json")
 
 let scratch: string
-let fixtureDb: string
 
 beforeEach(async () => {
 	scratch = await mkdtemp(join(tmpdir(), "mailwoman-build-"))
-	const sql = await readFile(fixtureSqlPath, "utf8")
-	fixtureDb = join(scratch, "wof-admin-fixture.db")
-	const db = new Database(fixtureDb)
-	db.exec(sql)
-	db.close()
 })
 
 afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
 
-describe("buildCorpus end-to-end against wof-admin fixture", () => {
+describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 	it("produces top-level MANIFEST.json + parquet shards + splits + quarantine pile", async () => {
 		const outDir = join(scratch, "build")
 		const stages: BuildStage[] = []
@@ -44,7 +44,7 @@ describe("buildCorpus end-to-end against wof-admin fixture", () => {
 			outputDir: outDir,
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
-			adapterInputs: { "wof-admin": { inputPath: fixtureDb } },
+			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			synthesize: true,
 			onProgress: (stage) => stages.push(stage),
 		})
@@ -92,7 +92,7 @@ describe("buildCorpus end-to-end against wof-admin fixture", () => {
 			outputDir: outDir,
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
-			adapterInputs: { "wof-admin": { inputPath: fixtureDb, country: "US" } },
+			adapterInputs: { "wof-admin": { inputPath: fixtureRoot, country: "US" } },
 			synthesize: false,
 		})
 
@@ -120,14 +120,14 @@ describe("buildCorpus end-to-end against wof-admin fixture", () => {
 			outputDir: join(scratch, "no-synth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
-			adapterInputs: { "wof-admin": { inputPath: fixtureDb } },
+			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			synthesize: false,
 		})
 		const withSynth = await buildCorpus({
 			outputDir: join(scratch, "with-synth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
-			adapterInputs: { "wof-admin": { inputPath: fixtureDb } },
+			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
 			synthesize: true,
 		})
 		expect(withSynth.total_aligned_rows).toBeGreaterThan(noSynth.total_aligned_rows)

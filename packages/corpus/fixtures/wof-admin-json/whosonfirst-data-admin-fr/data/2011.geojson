@@ -1,0 +1,15 @@
+{
+  "type": "Feature",
+  "id": 2011,
+  "properties": {
+    "wof:id": 2011,
+    "wof:name": "Paris",
+    "wof:placetype": "locality",
+    "wof:country": "FR",
+    "wof:parent_id": 2010,
+    "mz:is_current": -1,
+    "name:fra_x_preferred": ["Paris"],
+    "name:eng_x_preferred": ["Paris"]
+  },
+  "geometry": null
+}

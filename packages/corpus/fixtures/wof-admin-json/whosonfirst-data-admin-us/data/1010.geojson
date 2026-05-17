@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": 1010,
+  "properties": {
+    "wof:id": 1010,
+    "wof:name": "Oregon",
+    "wof:placetype": "region",
+    "wof:country": "US",
+    "wof:parent_id": 1001,
+    "mz:is_current": -1,
+    "name:eng_x_preferred": ["Oregon"]
+  },
+  "geometry": null
+}

@@ -1,0 +1,13 @@
+{
+  "type": "Feature",
+  "id": 5102,
+  "properties": {
+    "wof:id": 5102,
+    "wof:name": "75001",
+    "wof:placetype": "postalcode",
+    "wof:country": "FR",
+    "wof:parent_id": 2011,
+    "mz:is_current": -1
+  },
+  "geometry": null
+}

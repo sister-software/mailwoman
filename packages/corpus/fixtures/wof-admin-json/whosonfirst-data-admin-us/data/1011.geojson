@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "id": 1011,
+  "properties": {
+    "wof:id": 1011,
+    "wof:name": "Multnomah County",
+    "wof:placetype": "county",
+    "wof:country": "US",
+    "wof:parent_id": 1010,
+    "mz:is_current": 1,
+    "name:eng_x_preferred": ["Multnomah County"]
+  },
+  "geometry": null
+}

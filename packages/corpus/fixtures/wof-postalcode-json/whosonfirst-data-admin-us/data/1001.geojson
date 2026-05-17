@@ -1,0 +1,13 @@
+{
+  "type": "Feature",
+  "id": 1001,
+  "properties": {
+    "wof:id": 1001,
+    "wof:name": "United States",
+    "wof:placetype": "country",
+    "wof:country": "US",
+    "wof:parent_id": -1,
+    "mz:is_current": -1
+  },
+  "geometry": null
+}
