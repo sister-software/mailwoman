@@ -920,3 +920,102 @@ and raw share a single-space normal form before alignment ever sees
 them. That is the right fix for the residual but is out of scope
 for v0.1.1 — 0.040% is well under the operator's 10% interrupt
 threshold.
+
+## phase-2 — train tokenizer v0.1.0 on corpus-v0.1.0 (synth-OFF), not v0.1.1
+
+The Phase 2 plan locks tokenizer version to corpus version (1:1 — retraining mid-corpus
+shifts SP token spans, which silently invalidates the stored whitespace-aligned BIO labels
+in every parquet shard). v0.1.0 (synth-OFF, 4.56M rows) and v0.1.1 (synth-ON, 22.4M rows)
+share the _canonical_ row set; v0.1.1 just adds case / spacing / accent / suffix augmentations.
+
+For a unigram tokenizer with byte_fallback, those augmentations don't change the
+character set or word forms in interesting ways — v0.1.0's character coverage already hits
+the configured 0.9995. We trained on a 500k-US + 500k-FR reservoir sample from v0.1.0 to:
+
+1. Honor the corpus-version lock the Phase 1 plan defined.
+2. Keep training time short (1M lines, ~90 seconds end-to-end).
+3. Avoid biasing the vocab toward the doubled / cased / accent-stripped synth variants
+   when most production inputs at inference time will be unaugmented.
+
+If we later retrain at v0.2.0 with new adapters that expand the character coverage (CJK
+real data, RTL scripts, etc.), bump the tokenizer version in lockstep.
+
+## phase-2 — single multilingual coarse model, exported per-locale with identical weights
+
+Phase 2 §7 explicitly recommends this for Stage 1: "coarse is cheap to share". We confirmed:
+
+- Same SP tokenizer for US + FR (byte_fallback handles non-Latin tokens for both).
+- Same label set (Stage 1 coarse: country / region / locality / dependent_locality /
+  postcode / subregion / cedex). No locale-specific tags at this stage.
+- The BertForTokenClassification head doesn't condition on locale.
+
+So `neural-weights-en-us` and `neural-weights-fr-fr` ship byte-identical `model.onnx` +
+`tokenizer.model`. The per-locale split is purely a packaging convention so `@mailwoman/neural`
+can resolve weights by locale tag. Splitting into per-locale weights is a Phase 3 decision
+keyed off package size + load behavior — punted per the Phase 2 plan.
+
+## phase-2 — torch.onnx.export uses dynamo=True (not the legacy TorchScript path)
+
+`torch.onnx.export(..., dynamo=False)` raises `IndexError: tuple index out of range` inside
+`transformers.masking_utils.sdpa_mask` on the Transformers 5.x line. The line
+`q_length, q_offset = q_length.shape[0], q_length[0].to(device)` expects a tensor; the
+TorchScript tracer hands it a `torch.Size` tuple. The bug surfaces even when we force
+`_attn_implementation="eager"` because eager-mask still funnels through `sdpa_mask`.
+
+The dynamo path (`dynamo=True`, requires the `onnxscript` package) traces through
+`torch.export.export` and FX, which evaluates the tensor-shape ops correctly. We pin
+`onnxscript` as a build-time dep of the `[train]` extra. Output ONNX is opset 17 with
+dynamic axes `batch` + `sequence`; parity vs PyTorch is 1.67e-6 (well under the 1e-4
+spec) on a 32-sample probe.
+
+If we later pin Transformers to <5 we can switch back to the legacy path — the dynamo
+output is byte-different (richer optimization passes) but functionally equivalent.
+
+## phase-2 — CPU-side smoke artifact ships as a smoke-tagged package, not Phase 2 PR-blocker
+
+Phase 2's success criteria require beating rule-based Mailwoman on golden-set F1 for coarse
+components. The container has no GPU; the 6L/256H model trains at ~0.85 steps/s on CPU.
+Hitting the spec'd 50k steps would take ~16 hours; even then, on a 74-entry golden set
+(10 US + 10 FR + 54 adversarial — far short of the 500+500 target) the F1 estimates would be
+high-variance.
+
+Decision: run a CPU-only smoke training (2L/128H × 200 steps × batch 16) to validate the
+entire pipeline (train → eval → ONNX → int8 quant → weights-package assembly) end-to-end,
+and write the resulting artifacts into `packages/neural-weights-{en-us,fr-fr}/` with a
+prominent **SMOKE BUILD — NOT PRODUCTION WEIGHTS** banner in the README + a matching note
+in the model-card. The operator's GPU-host run replaces these in place using the same
+`python -m mailwoman_train` CLI. The session-notes file enumerates the runbook.
+
+This keeps the package shape stable so `@mailwoman/neural` (Phase 3) can be wired against
+the directory structure today, even while the weights themselves are placeholders.
+
+## phase-2 — hand-rolled encoder, not `BertForTokenClassification` or `nn.TransformerEncoderLayer`
+
+The lab training GPU is a Radeon 780M (gfx1103). Per the validated `project-lab-gpu-780m`
+recipe (operator brief on 2026-05-17), this hardware has two firmware-level gotchas on the
+ROCm 6.2 wheel:
+
+1. Flash- and mem-efficient-SDPA attention paths trigger HW Exceptions ("GPU Hang"). Only
+   the math SDPA kernel runs stably. We force this via
+   `torch.backends.cuda.enable_math_sdp(True)` plus the other two off, at every CLI entry.
+2. `nn.TransformerEncoderLayer`'s fused path hangs at batch ≥128 fp32. We compose the
+   block by hand: `nn.MultiheadAttention` + `nn.LayerNorm` + linear FFN.
+
+A third surprise we hit and patched here: `torch.autocast(bfloat16)` selects an internal
+fused MHA fast-path that hangs at batch ≥64 on this hardware too. The workaround is to cast
+the _model itself_ to bf16 (`model.to(dtype=torch.bfloat16)`) and feed bf16 tensors —
+"true bf16" training rather than autocast. Same throughput envelope, no fast-path.
+
+A fourth: `torch.onnx.export` on the GPU hangs during dynamo tracing for the same model.
+The exporter is moved to CPU explicitly before tracing; output ONNX is device-agnostic so
+the production runtime is unaffected.
+
+Empirical batch ceiling: 64 micro-batch. Operator's brief said ≤192; we ran into hangs at
+96 with our specific code path. Effective batch reaches the §4 plan's "256 (lower if OOM)"
+target via `grad_accum_steps=2` → effective 128. At 5.4 optimizer steps/sec × 64 = 345
+samples/sec sustained, which is 2× the operator's documented 175 samples/sec for the
+planned geometry. 50k optimizer steps with accum=2 = 100k micro-batches ≈ 5–6 hours wall
+on this hardware.
+
+Compatibility note: the smoke run on CPU (pre-GPU-recipe) used
+`BertForTokenClassification`; those artifacts are wholly replaced.

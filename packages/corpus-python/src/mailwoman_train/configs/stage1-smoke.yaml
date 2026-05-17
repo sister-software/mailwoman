@@ -1,0 +1,46 @@
+# Smoke-test config — tiny step budget for CPU-only verification of the full pipeline.
+# Used by `python -m mailwoman_train smoke` to prove data → train → eval → ONNX → quantize.
+# Do NOT use this for production weights; the model will be undertrained.
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.1.1/corpus-v0.1.1
+  tokenizer_dir: /data/models/tokenizer/v0.1.0
+  max_length: 64
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  train_rows_per_epoch: 4096
+  val_rows: 512
+  coarse_filter: true
+
+model:
+  hidden_size: 128
+  num_hidden_layers: 2
+  num_attention_heads: 4
+  intermediate_size: 256
+  max_position_embeddings: 64
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+
+train:
+  output_dir: /data/models/checkpoints/smoke
+  seed: 42
+  batch_size: 16
+  eval_batch_size: 32
+  grad_accum_steps: 1
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 20
+  max_steps: 200
+  eval_every_steps: 100
+  save_every_steps: 200
+  log_every_steps: 20
+  # bf16 matches the production-config recipe — exercises the same dtype code path.
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/train_log.csv"
+
+eval:
+  golden_dir: ""
+  val_jsonl: ""

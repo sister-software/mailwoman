@@ -56,3 +56,15 @@ dist
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Python artifacts (packages/corpus-python)
+**/.venv/
+**/__pycache__/
+**/*.egg-info/
+**/*.pyc
+
+# Neural-weights model binaries — kept out of git per Phase 2 §"Eval reports committed
+# to git (numbers, not models)". model-card.json carries the eval numbers; .onnx and
+# .model files are reproduced by `python -m mailwoman_train package`.
+packages/neural-weights-*/model.onnx
+packages/neural-weights-*/tokenizer.model
