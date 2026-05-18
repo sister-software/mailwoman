@@ -1,9 +1,9 @@
 {
 	"name": "@mailwoman/core",
 	"version": "1.0.0",
-	"private": true,
 	"description": "Mailwoman core: tokenization, classification primitives, solver, formatter, resources, filters, solvers, utils, CLI commands.",
 	"license": "AGPL-3.0-only",
+	"private": true,
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
