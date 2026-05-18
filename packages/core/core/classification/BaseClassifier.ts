@@ -2,7 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ * @copyright Sister Software
+ * @license AGPL-3.0
  * @abstract
+ * @author Teffen Ellis, et al.
  */
 
 import { Alpha2LanguageCode } from "@mailwoman/core"

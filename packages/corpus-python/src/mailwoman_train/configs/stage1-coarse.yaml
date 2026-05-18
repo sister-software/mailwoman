@@ -7,14 +7,30 @@
 # label set here without an explicit phase plan.
 
 data:
-  # corpus-v0.1.1 (synth-ON, 22.4M rows, locality-holdout splits). Per operator brief —
-  # v0.1.0 is the synth-OFF baseline; v0.1.1 is what the model trains on.
-  corpus_dir: /data/corpus/versioned/v0.1.1/corpus-v0.1.1
+  # corpus-v0.2.0 (synth-ON, 263.7M rows, 10 adapters, locality-holdout splits).
+  # Built 2026-05-18 nightshift. Full BAN (102 départements), full TIGER (all US),
+  # NPPES, IMLS, HRSA, and state sources included.
+  corpus_dir: /data/corpus/versioned/v0.2.0/corpus-v0.2.0
   tokenizer_dir: /data/models/tokenizer/v0.1.0
   max_length: 128
   country_weights:
     US: 1.0
     FR: 1.0
+  # Per-source oversampling weights (issue #43). Counters the wof-admin positional-
+  # heuristic overfit diagnosed in PR #42. Weights reduced vs v0.1.1 plan because
+  # the expanded corpus is naturally more balanced — wof-admin is only ~1.25% of
+  # aligned rows (down from ~75%).
+  source_weights:
+    wof-admin: 1.0
+    wof-postalcode: 1.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
   train_rows_per_epoch: null
   val_rows: 4096
   coarse_filter: true

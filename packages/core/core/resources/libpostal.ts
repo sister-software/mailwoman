@@ -5,7 +5,7 @@
  */
 
 import { Alpha2LanguageCode } from "@mailwoman/core/resources/languages"
-import { TextNormalizer, TextNormalizerInit } from "@mailwoman/core/tokenization"
+import { TextNormalizer, type TextNormalizerInit } from "@mailwoman/core/tokenization"
 import { readdir } from "node:fs/promises"
 import { availableParallelism } from "node:os"
 import { PathBuilder } from "path-ts"

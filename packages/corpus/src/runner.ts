@@ -118,6 +118,8 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 	const stream = createWriteStream(jsonlPath, { encoding: "utf8" })
 	const hasher: StreamingHasher = streamingSha256()
 	const seen = new Set<string>()
+	const DEDUP_MAX_SIZE = 10_000_000
+	let dedupExhausted = false
 
 	let yielded = 0
 	let written = 0
@@ -144,11 +146,20 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 
 			const stamped: CanonicalRow = { ...row, corpus_version: corpusVersion }
 			const key = canonicalDedupKey(stamped)
-			if (seen.has(key)) {
-				if (yielded % progressEvery === 0) emitProgress()
-				continue
+			if (!dedupExhausted) {
+				if (seen.has(key)) {
+					if (yielded % progressEvery === 0) emitProgress()
+					continue
+				}
+				if (seen.size >= DEDUP_MAX_SIZE) {
+					dedupExhausted = true
+					process.stderr.write(
+						`  runner: dedup set full at ${DEDUP_MAX_SIZE.toLocaleString()} — skipping dedup for remaining rows\n`
+					)
+				} else {
+					seen.add(key)
+				}
 			}
-			seen.add(key)
 
 			const line = `${JSON.stringify(stamped)}\n`
 			hasher.update(line)

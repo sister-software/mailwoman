@@ -46,10 +46,10 @@ export function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
  * A map-like object that caches disposable resources, creating them on demand.
  */
 export class ResourceMapCache<
-		K extends PropertyKey = PropertyKey,
-		R extends DisposableLike = DisposableLike,
-		F extends ResourceFactoryLike<K, R> = ResourceConstructor<K, R>,
-	>
+	K extends PropertyKey = PropertyKey,
+	R extends DisposableLike = DisposableLike,
+	F extends ResourceFactoryLike<K, R> = ResourceConstructor<K, R>,
+>
 	extends Map<K, R>
 	implements AsyncDisposable
 {

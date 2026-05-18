@@ -1,0 +1,185 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://github.com/sister-software/mailwoman/blob/main/evals/schema/scores-by-version.schema.json",
+	"title": "Mailwoman eval scores ledger",
+	"description": "Versioned per-(model, eval-set) evaluation scores for the mailwoman neural parser. One file lives at evals/scores-by-version.json; one `runs[]` entry per training run that produced shippable weights or a measured baseline.",
+	"type": "object",
+	"required": ["schema_version", "runs"],
+	"additionalProperties": false,
+	"properties": {
+		"schema_version": {
+			"type": "integer",
+			"const": 1,
+			"description": "Bumps only when a breaking change to this schema requires migration."
+		},
+		"runs": {
+			"type": "array",
+			"items": { "$ref": "#/$defs/Run" }
+		}
+	},
+	"$defs": {
+		"Run": {
+			"type": "object",
+			"required": [
+				"run_id",
+				"model_version",
+				"model_path",
+				"corpus_version",
+				"corpus_sha256",
+				"eval_set_version",
+				"eval_set_sha256",
+				"trained_at",
+				"hardware",
+				"training_steps",
+				"training_wall_clock_seconds",
+				"metrics"
+			],
+			"additionalProperties": false,
+			"properties": {
+				"run_id": {
+					"type": "string",
+					"pattern": "^[a-z0-9-]+$",
+					"description": "Stable opaque identifier for the run, e.g. 'stage1-coarse-2026-05-18-rocm62'. Unique within the file."
+				},
+				"model_version": {
+					"type": "string",
+					"pattern": "^\\d+\\.\\d+\\.\\d+(-[a-z0-9-]+)?$",
+					"description": "Semver of the shipped @mailwoman/neural-weights-* package this run corresponds to. Pre-release suffixes allowed for non-shipped baselines."
+				},
+				"model_path": {
+					"type": "string",
+					"description": "Canonical npm package path or relative filesystem path, e.g. '@mailwoman/neural-weights-en-us@0.1.0' or 'packages/neural-weights-en-us'."
+				},
+				"corpus_version": {
+					"type": "string",
+					"description": "Mailwoman corpus version, e.g. '0.1.1'."
+				},
+				"corpus_sha256": {
+					"type": "string",
+					"pattern": "^[a-f0-9]{64}$",
+					"description": "SHA-256 of the corpus MANIFEST.json that produced this run."
+				},
+				"eval_set_version": {
+					"type": "string",
+					"description": "Golden-set version label, e.g. 'golden-v0.1.0'."
+				},
+				"eval_set_sha256": {
+					"type": "string",
+					"pattern": "^[a-f0-9]{64}$",
+					"description": "SHA-256 of the eval-set tar/manifest. Prevents silent eval-set drift."
+				},
+				"trained_at": {
+					"type": "string",
+					"format": "date-time",
+					"description": "ISO-8601 UTC timestamp the training run completed."
+				},
+				"hardware": {
+					"type": "string",
+					"description": "Free-text hardware + framework summary, e.g. 'AMD Radeon 780M, ROCm 6.2, torch 2.5.1+rocm6.2'."
+				},
+				"training_steps": {
+					"type": "integer",
+					"minimum": 0,
+					"description": "Total optimizer.step() calls completed."
+				},
+				"training_wall_clock_seconds": {
+					"type": "number",
+					"minimum": 0,
+					"description": "Wall-clock training time in seconds."
+				},
+				"metrics": { "$ref": "#/$defs/Metrics" },
+				"notes": {
+					"type": "string",
+					"description": "Free-text annotation: notable changes vs prior run, training quirks, calibration notes, etc."
+				}
+			}
+		},
+		"Metrics": {
+			"type": "object",
+			"required": ["overall", "per_component"],
+			"additionalProperties": false,
+			"properties": {
+				"overall": {
+					"type": "object",
+					"required": ["macro_f1", "micro_f1", "exact_match"],
+					"additionalProperties": false,
+					"properties": {
+						"macro_f1": { "$ref": "#/$defs/Unit" },
+						"micro_f1": { "$ref": "#/$defs/Unit" },
+						"exact_match": {
+							"$ref": "#/$defs/Unit",
+							"description": "Fraction of eval rows where every component matches the gold value exactly (case-insensitive, trimmed)."
+						}
+					}
+				},
+				"per_component": {
+					"type": "object",
+					"description": "Per-component (country, region, locality, ...) metrics. Keys are the component names; values are the metric block.",
+					"patternProperties": {
+						"^[a-z_]+$": { "$ref": "#/$defs/ComponentMetrics" }
+					},
+					"additionalProperties": false
+				},
+				"calibration_buckets": {
+					"type": "array",
+					"description": "Calibration buckets sorted by descending confidence. Mandatory for shipped releases; optional for ad-hoc baselines.",
+					"items": { "$ref": "#/$defs/CalibrationBucket" }
+				},
+				"adversarial_set": {
+					"type": "object",
+					"description": "Per-named-adversarial-case scores (e.g. 'buffalo_buffalo', 'saint_petersburg'). Tracks the bitter-lesson kryptonite cases distinctly. Keys are case-name slugs.",
+					"patternProperties": {
+						"^[a-z0-9_]+$": {
+							"type": "object",
+							"required": ["f1", "sample_count"],
+							"additionalProperties": false,
+							"properties": {
+								"f1": { "$ref": "#/$defs/Unit" },
+								"sample_count": { "type": "integer", "minimum": 1 }
+							}
+						}
+					},
+					"additionalProperties": false
+				}
+			}
+		},
+		"ComponentMetrics": {
+			"type": "object",
+			"required": ["f1", "precision", "recall", "support"],
+			"additionalProperties": false,
+			"properties": {
+				"f1": { "$ref": "#/$defs/Unit" },
+				"precision": { "$ref": "#/$defs/Unit" },
+				"recall": { "$ref": "#/$defs/Unit" },
+				"support": {
+					"type": "integer",
+					"minimum": 0,
+					"description": "Number of eval rows where this component had a non-empty gold value."
+				}
+			}
+		},
+		"CalibrationBucket": {
+			"type": "object",
+			"required": ["min_conf", "max_conf", "observed_accuracy", "sample_count"],
+			"additionalProperties": false,
+			"properties": {
+				"min_conf": { "$ref": "#/$defs/Unit" },
+				"max_conf": { "$ref": "#/$defs/Unit" },
+				"observed_accuracy": {
+					"$ref": "#/$defs/Unit",
+					"description": "Observed accuracy of predictions whose confidence fell in [min_conf, max_conf]. A well-calibrated bucket has observed_accuracy ≈ (min_conf + max_conf) / 2."
+				},
+				"sample_count": {
+					"type": "integer",
+					"minimum": 0
+				}
+			}
+		},
+		"Unit": {
+			"type": "number",
+			"minimum": 0,
+			"maximum": 1,
+			"description": "A scalar in the unit interval [0, 1]."
+		}
+	}
+}

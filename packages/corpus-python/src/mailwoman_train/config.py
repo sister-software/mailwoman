@@ -21,6 +21,11 @@ class DataConfig:
     max_length: int = 128
     # Per-country sampling weights for the train split. Anything not listed gets dropped.
     country_weights: dict[str, float] = field(default_factory=lambda: {"US": 1.0, "FR": 1.0})
+    # Per-source sampling weights, keyed on adapter id (e.g. "ban", "tiger", "usgov-nppes").
+    # When None (default): all sources pass, no source-level filtering.
+    # When set: rows from unlisted sources are dropped. Weight / max_weight acceptance
+    # multiplies with country_weights — a row must pass both filters to survive.
+    source_weights: dict[str, float] | None = None
     # Hard cap on how many rows the streaming loader yields per epoch (None = unlimited).
     train_rows_per_epoch: int | None = None
     val_rows: int | None = 4096

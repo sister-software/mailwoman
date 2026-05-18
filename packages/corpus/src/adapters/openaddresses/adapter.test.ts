@@ -40,16 +40,17 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
-		expect(manifest.yielded).toBe(6)
+		// CC-BY-SA-4.0 row is filtered by default → 5 rows
+		expect(manifest.yielded).toBe(5)
 		const rows = await loadRows()
-		expect(rows).toHaveLength(6)
+		expect(rows).toHaveLength(5)
 		expect(rows.every((r) => r.country === "US")).toBe(true)
 		expect(rows.every((r) => r.source === OPENADDRESSES_ADAPTER_ID)).toBe(true)
 	})
 
 	it("propagates per-row LICENSE and falls back to defaultLicense when absent", async () => {
 		await runAdapter({
-			adapter: createOpenaddressesAdapter(),
+			adapter: createOpenaddressesAdapter({ allowShareAlike: true }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -69,7 +70,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 
 	it("honors a non-default `defaultLicense` for license-less rows", async () => {
 		await runAdapter({
-			adapter: createOpenaddressesAdapter({ defaultLicense: "ODbL-1.0" }),
+			adapter: createOpenaddressesAdapter({ defaultLicense: "ODbL-1.0", allowShareAlike: true }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -81,7 +82,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 
 	it("composes a US-idiomatic raw line with house_number + street + locality + region + postcode", async () => {
 		await runAdapter({
-			adapter: createOpenaddressesAdapter(),
+			adapter: createOpenaddressesAdapter({ allowShareAlike: true }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -103,7 +104,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 
 	it("includes unit on the road line when present", async () => {
 		await runAdapter({
-			adapter: createOpenaddressesAdapter(),
+			adapter: createOpenaddressesAdapter({ allowShareAlike: true }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
@@ -241,6 +242,34 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			corpusVersion: "0.1.0",
 		})
 		expect(a.sha256).toBe(b.sha256)
+	})
+
+	it("filters share-alike licenses (ODbL, CC-BY-SA, CC-SA) by default", async () => {
+		await runAdapter({
+			adapter: createOpenaddressesAdapter(),
+			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
+			outputDir: scratch,
+			corpusVersion: "0.1.0",
+		})
+		const rows = await loadRows()
+		// CC-BY-SA-4.0 row (e5f6…) must be absent by default
+		expect(rows.find((r) => r.source_id === "openaddresses-e5f6071829304152")).toBeUndefined()
+		// All surviving rows must have non-share-alike licenses
+		for (const r of rows) {
+			expect(r.license).not.toMatch(/^ODbL|^CC-BY-SA|^CC-SA/i)
+		}
+	})
+
+	it("passes share-alike rows through when allowShareAlike is set", async () => {
+		await runAdapter({
+			adapter: createOpenaddressesAdapter({ allowShareAlike: true }),
+			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
+			outputDir: scratch,
+			corpusVersion: "0.1.0",
+		})
+		const rows = await loadRows()
+		expect(rows).toHaveLength(6)
+		expect(rows.find((r) => r.source_id === "openaddresses-e5f6071829304152")?.license).toBe("CC-BY-SA-4.0")
 	})
 
 	it("accepts UPPERCASE property names (legacy OA dumps)", async () => {

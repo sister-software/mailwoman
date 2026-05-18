@@ -89,6 +89,13 @@ function parseFeatureLine(line: string): OaProperties | null {
 	return normalizeProperties(obj.properties)
 }
 
+/**
+ * Licenses that require share-alike or create a copyleft obligation on derived works. Rows carrying
+ * any of these licenses are dropped by default because they would contaminate proprietary-weights
+ * training. Per the licensing strategy (#26).
+ */
+const SHARE_ALIKE_PATTERN = /^ODbL|^Open Database License|^CC-BY-SA|^CC-SA/i
+
 export interface OpenaddressesAdapterOptions {
 	/**
 	 * Per-row license used when a Feature lacks an explicit `LICENSE` property. Defaults to
@@ -96,6 +103,12 @@ export interface OpenaddressesAdapterOptions {
 	 * via the runner's adapter-options passthrough.
 	 */
 	defaultLicense?: string
+
+	/**
+	 * When true, rows with share-alike licenses (ODbL, CC-BY-SA, CC-SA) are NOT filtered. Default
+	 * false — share-alike rows are dropped per the licensing strategy (#26).
+	 */
+	allowShareAlike?: boolean
 }
 
 /**
@@ -104,6 +117,7 @@ export interface OpenaddressesAdapterOptions {
  */
 export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {}): CorpusAdapter {
 	const defaultLicense = opts.defaultLicense ?? OPENADDRESSES_DEFAULT_LICENSE
+	const allowShareAlike = opts.allowShareAlike ?? false
 
 	return {
 		id: OPENADDRESSES_ADAPTER_ID,
@@ -122,6 +136,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 			const lines = createInterface({ input: stream, crlfDelay: Infinity })
 
 			let emitted = 0
+			let shareAlikeBlocked = 0
 			try {
 				for await (const line of lines) {
 					if (adapterOpts.signal?.aborted) break
@@ -142,6 +157,13 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 					if (!street) continue
 					if (!city && !postcode) continue
 
+					const license = (props.license?.trim() || defaultLicense).trim()
+
+					if (!allowShareAlike && SHARE_ALIKE_PATTERN.test(license)) {
+						shareAlikeBlocked++
+						continue
+					}
+
 					const components: CanonicalRow["components"] = {}
 					if (houseNumber) components.house_number = houseNumber
 					if (street) components.street = street
@@ -161,8 +183,6 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 						? `${OPENADDRESSES_ADAPTER_ID}-${sourceIdSeed}`
 						: stableSourceId(OPENADDRESSES_ADAPTER_ID, aligned)
 
-					const license = (props.license?.trim() || defaultLicense).trim()
-
 					yield {
 						raw,
 						components: aligned,
@@ -177,6 +197,9 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 			} finally {
 				lines.close()
 				stream.destroy()
+				if (shareAlikeBlocked > 0) {
+					process.stderr.write(`  openaddresses: ${shareAlikeBlocked} share-alike rows dropped, ${emitted} kept\n`)
+				}
 			}
 		},
 	}
