@@ -115,6 +115,7 @@ function parseCli() {
 			provider: { type: "string", default: "deepseek" },
 			model: { type: "string" },
 			concurrency: { type: "string", default: "4" },
+			"include-sources": { type: "string" },
 		},
 	})
 	const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
@@ -126,6 +127,9 @@ function parseCli() {
 		provider: values.provider! as "deepseek" | "anthropic",
 		model: values.model ?? (values.provider === "anthropic" ? "claude-haiku-4-5-20251001" : "deepseek-chat"),
 		concurrency: Number.parseInt(values.concurrency!, 10),
+		includeSources: values["include-sources"]
+			? new Set(values["include-sources"].split(",").map((s) => s.trim()))
+			: null,
 	}
 }
 
@@ -167,40 +171,59 @@ function decodeComponents(tokens: string[], labels: string[]): Record<string, st
 	return out
 }
 
-async function loadSeeds(corpusPath: string, count: number): Promise<Seed[]> {
-	process.stderr.write(`reading seeds from ${corpusPath} (target: ${count}, stratified)\n`)
-	const reader = await ParquetReader.openFile(corpusPath)
-	const cursor = reader.getCursor()
+async function loadSeeds(corpusPath: string, count: number, includeSources: Set<string> | null): Promise<Seed[]> {
+	const paths = corpusPath
+		.split(",")
+		.map((p) => p.trim())
+		.filter(Boolean)
+	process.stderr.write(`reading seeds from ${paths.length} shard(s) (target: ${count}, stratified)\n`)
+	if (includeSources) {
+		process.stderr.write(`  include-sources filter: ${Array.from(includeSources).join(", ")}\n`)
+	}
 
-	// Stratified sampling: read all rows, group by source, then sample evenly across sources.
-	// The test shard is ~300K rows / ~13 MB — fits in memory comfortably.
+	// Stratified sampling: read all rows from all shards, group by source. Bounded by per-source
+	// reservoir: keep at most max(2*count, 5000) rows per source so we don't blow memory on train
+	// shards (1M rows × many shards). Sampling later is uniform within each pool.
 	const bySource = new Map<string, Seed[]>()
+	const PER_SOURCE_CAP = Math.max(2 * count, 5000)
 	let scanned = 0
 	let skippedThinComponents = 0
-	while (true) {
-		const row = (await cursor.next()) as CorpusRow | null
-		if (!row) break
-		scanned++
-		const components = decodeComponents(row.tokens ?? [], row.labels ?? [])
-		// Skip rows with too few components — single-name wof-admin entries don't make useful seeds
-		if (Object.keys(components).length < 2) {
-			skippedThinComponents++
-			continue
-		}
-		const seed: Seed = {
-			raw: row.raw,
-			components,
-			country: row.country,
-			source: row.source,
-			source_id: row.source_id,
-		}
-		const bucket = bySource.get(row.source)
-		if (bucket) bucket.push(seed)
-		else bySource.set(row.source, [seed])
-	}
-	await reader.close()
 
-	process.stderr.write(`  scanned ${scanned} rows; thin-components dropped: ${skippedThinComponents}\n`)
+	for (const path of paths) {
+		const reader = await ParquetReader.openFile(path)
+		const cursor = reader.getCursor()
+		while (true) {
+			const row = (await cursor.next()) as CorpusRow | null
+			if (!row) break
+			scanned++
+			// Source allow-list (CLI --include-sources) — applied early to skip parsing rows we won't use
+			if (includeSources && !includeSources.has(row.source)) continue
+			const components = decodeComponents(row.tokens ?? [], row.labels ?? [])
+			// Skip rows with too few components — single-name wof-admin entries don't make useful seeds
+			if (Object.keys(components).length < 2) {
+				skippedThinComponents++
+				continue
+			}
+			const seed: Seed = {
+				raw: row.raw,
+				components,
+				country: row.country,
+				source: row.source,
+				source_id: row.source_id,
+			}
+			let bucket = bySource.get(row.source)
+			if (!bucket) {
+				bucket = []
+				bySource.set(row.source, bucket)
+			}
+			if (bucket.length < PER_SOURCE_CAP) bucket.push(seed)
+		}
+		await reader.close()
+	}
+
+	process.stderr.write(
+		`  scanned ${scanned} rows across ${paths.length} shard(s); thin-components dropped: ${skippedThinComponents}\n`
+	)
 	process.stderr.write(`  per-source pool sizes:\n`)
 	for (const [src, pool] of bySource) process.stderr.write(`    ${src}: ${pool.length}\n`)
 
@@ -390,7 +413,7 @@ async function main() {
 	const provider = opts.provider === "anthropic" ? makeAnthropicProvider(opts.model) : makeDeepseekProvider(opts.model)
 	process.stderr.write(`provider: ${provider.name}  model: ${provider.model}\n`)
 
-	const seeds = await loadSeeds(opts.corpusPath, opts.count)
+	const seeds = await loadSeeds(opts.corpusPath, opts.count, opts.includeSources)
 	if (seeds.length === 0) {
 		process.stderr.write("no seeds loaded — corpus path or filter is wrong\n")
 		process.exitCode = 2
