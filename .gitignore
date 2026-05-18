@@ -69,3 +69,7 @@ dist
 packages/neural-weights-*/model.onnx
 packages/neural-weights-*/tokenizer.model
 .claude/
+
+# expand-golden.ts outputs — operator skims locally, then promotes to versioned dir
+data/eval/golden/candidates/
+

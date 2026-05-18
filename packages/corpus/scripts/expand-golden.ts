@@ -168,33 +168,65 @@ function decodeComponents(tokens: string[], labels: string[]): Record<string, st
 }
 
 async function loadSeeds(corpusPath: string, count: number): Promise<Seed[]> {
-	process.stderr.write(`reading seeds from ${corpusPath} (target: ${count})\n`)
+	process.stderr.write(`reading seeds from ${corpusPath} (target: ${count}, stratified)\n`)
 	const reader = await ParquetReader.openFile(corpusPath)
 	const cursor = reader.getCursor()
-	const seeds: Seed[] = []
-	let scanned = 0
 
-	// Stratified-ish sampling: skip rows with reservoir-style fairness based on hash of source_id.
-	// Simple approach for the pilot: take the first N rows that have meaningful components.
-	// Real stratification can come in v2 once we see pilot results.
-	while (seeds.length < count) {
+	// Stratified sampling: read all rows, group by source, then sample evenly across sources.
+	// The test shard is ~300K rows / ~13 MB — fits in memory comfortably.
+	const bySource = new Map<string, Seed[]>()
+	let scanned = 0
+	let skippedThinComponents = 0
+	while (true) {
 		const row = (await cursor.next()) as CorpusRow | null
 		if (!row) break
 		scanned++
 		const components = decodeComponents(row.tokens ?? [], row.labels ?? [])
 		// Skip rows with too few components — single-name wof-admin entries don't make useful seeds
-		if (Object.keys(components).length < 2) continue
-		seeds.push({
+		if (Object.keys(components).length < 2) {
+			skippedThinComponents++
+			continue
+		}
+		const seed: Seed = {
 			raw: row.raw,
 			components,
 			country: row.country,
 			source: row.source,
 			source_id: row.source_id,
-		})
+		}
+		const bucket = bySource.get(row.source)
+		if (bucket) bucket.push(seed)
+		else bySource.set(row.source, [seed])
 	}
 	await reader.close()
-	process.stderr.write(`  → loaded ${seeds.length} seeds (scanned ${scanned} rows)\n`)
-	return seeds
+
+	process.stderr.write(`  scanned ${scanned} rows; thin-components dropped: ${skippedThinComponents}\n`)
+	process.stderr.write(`  per-source pool sizes:\n`)
+	for (const [src, pool] of bySource) process.stderr.write(`    ${src}: ${pool.length}\n`)
+
+	// Round-robin sample. Each source gives floor(count / nSources) seeds; rounding goes
+	// to sources in alphabetical order. If a pool is smaller than its target, take all of it.
+	const sources = Array.from(bySource.keys()).sort()
+	const perSource = Math.floor(count / sources.length)
+	const remainder = count - perSource * sources.length
+	const picked: Seed[] = []
+	for (let i = 0; i < sources.length; i++) {
+		const src = sources[i]!
+		const pool = bySource.get(src)!
+		const target = perSource + (i < remainder ? 1 : 0)
+		// Random subsample without replacement — deterministic via shuffle then slice
+		for (let j = pool.length - 1; j > 0; j--) {
+			const k = Math.floor(Math.random() * (j + 1))
+			;[pool[j], pool[k]] = [pool[k]!, pool[j]!]
+		}
+		const take = Math.min(target, pool.length)
+		picked.push(...pool.slice(0, take))
+		if (take < target) {
+			process.stderr.write(`    ⚠ ${src}: requested ${target}, pool had ${pool.length}\n`)
+		}
+	}
+	process.stderr.write(`  → loaded ${picked.length} seeds across ${sources.length} sources\n`)
+	return picked
 }
 
 // ── LLM providers ─────────────────────────────────────────────────────────
@@ -207,18 +239,25 @@ interface LlmProvider {
 
 const SYSTEM_PROMPT = `You are a postal-address surface-form generator. Given a structured address, produce realistic variants a human might type into a geocoder.
 
-CONSTRAINT — you MUST preserve every component value verbatim in the output. You may:
+CONSTRAINT — you MUST preserve every kept component value verbatim in the output. You may:
 - vary case (UPPER, lower, Title Case)
-- abbreviate (Saint → St, Avenue → Ave, Boulevard → Blvd)
-- vary punctuation (commas, dashes, spaces)
-- reorder components (postcode-first, country-first)
-- drop OPTIONAL components (country, postcode) — but list them in "dropped"
+- abbreviate (Saint → St, Avenue → Ave, Boulevard → Blvd, North → N, etc.)
+- vary punctuation (commas, dashes, spaces, line breaks)
+- reorder components (postcode-first, country-first, address-only)
+- drop OPTIONAL components — list them in "dropped"
+
+OPTIONAL components (allowed to drop): country, postcode, dependent_locality, subregion, cedex.
+REQUIRED components (must keep, even if input has them): locality, region (when present),
+street, house_number, venue (when present).
+
+ALWAYS keep AT LEAST 2 components in the final raw text. Single-component variants like
+"VT" or "Paris" are USELESS as eval entries — do not produce them.
 
 You MUST NOT:
-- introduce typos (validator will drop those silently — wasted output)
+- introduce typos (validator drops these silently — wasted tokens)
 - invent new component values
-- omit required components (locality, region)
 - produce text longer than 500 characters
+- output a degenerate single-token answer
 
 OUTPUT a JSON array of N objects, each shaped {"raw": "...", "dropped": ["..."]}.`
 
@@ -314,17 +353,33 @@ function normalize(s: string): string {
 	return s.toLowerCase().replace(/\s+/g, " ").trim()
 }
 
+// Components that are NEVER allowed to be dropped — keeps degenerate single-token candidates out.
+const REQUIRED_COMPONENT_TAGS = new Set(["locality", "region", "street", "house_number", "venue"])
+
 function validate(seed: Seed, candidate: Candidate): boolean {
 	if (!candidate.raw || typeof candidate.raw !== "string") return false
 	if (candidate.raw.length > 500) return false
 	if (/```|<\/?\w+>|^\s*\{/.test(candidate.raw)) return false
 	const normRaw = normalize(candidate.raw)
 	const dropped = new Set(candidate.dropped ?? [])
+
+	// LLM cannot drop required components present in the seed.
+	for (const tag of dropped) {
+		if (REQUIRED_COMPONENT_TAGS.has(tag) && seed.components[tag]) return false
+	}
+
+	// Every kept component value must appear verbatim (post-normalization) in the candidate raw.
+	let keptCount = 0
 	for (const [tag, value] of Object.entries(seed.components)) {
 		if (dropped.has(tag)) continue
 		if (!value) continue
 		if (!normRaw.includes(normalize(value))) return false
+		keptCount++
 	}
+
+	// Reject degenerate single-component candidates ("VT", "Paris" alone).
+	if (keptCount < 2) return false
+
 	return true
 }
 
