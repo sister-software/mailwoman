@@ -36,9 +36,9 @@
 #   Note: The DOT site uses Akamai Bot Manager; unattended curl returns 403.
 #
 # OPTION B — ArcGIS paged export (automated; slow for full dataset):
-#   Set NAD_MODE=featureserver to page through the live FeatureService.
-#   Saves per-state NDJSON chunks under $OUT_ROOT/usgov-nad/featureserver/.
-#   Use STATES= to subset: STATES="HI AK PR" ./fetch-nad.sh --mode featureserver
+#   Set NAD_MODE=featureserver to page through the live FeatureService by OID.
+#   Saves NDJSON chunks under $OUT_ROOT/usgov-nad/featureserver/.
+#   Use FS_START_OID / FS_END_OID / FS_CHUNK_SIZE to control paging.
 #
 # OPTION C — Environment override for any accessible URL:
 #   NAD_URL="https://..." ./fetch-nad.sh
@@ -54,8 +54,9 @@
 #   NAD_URL      — override primary download URL
 #   NAD_RELEASE  — override release tag, default "r17"
 #   NAD_MODE     — "bulk" (default) or "featureserver"
-#   STATES       — space-separated state codes for featureserver mode
-#                  (default: all 50 states + DC + AS + GU + PR + VI + MP)
+#   FS_CHUNK_SIZE — featureserver: records per output file (default 100000)
+#   FS_START_OID  — featureserver: start OID (default 1, useful for resuming)
+#   FS_END_OID    — featureserver: end OID (default: total count)
 #
 # Idempotent: in bulk mode, skips if dest ZIP exists and sha256 matches MANIFEST.
 # In featureserver mode, skips per-state files already written.
@@ -75,105 +76,110 @@ mkdir -p "$dest_dir"
 
 FEATURE_SERVICE_URL="https://services.arcgis.com/xOi1kZaI0eWDREZv/ArcGIS/rest/services/Address_Points_from_National_Address_Database_view/FeatureServer/0"
 
-# All US states + DC + territories
-ALL_STATES=(
-  AL AK AZ AR CA CO CT DE FL GA
-  HI ID IL IN IA KS KY LA ME MD
-  MA MI MN MS MO MT NE NV NH NJ
-  NM NY NC ND OH OK OR PA RI SC
-  SD TN TX UT VT VA WA WV WI WY
-  DC
-  AS GU MP PR VI
-)
-
 # ── Mode: featureserver ───────────────────────────────────────────────────────
+#
+# Pages the full FeatureService by OBJECTID range (2000 records/page).
+# The live service as of 2026-05 has 96,893,147 records.
+#
+# NOTE: State-based WHERE clauses time out on this service because there is no
+# index on the State field. OBJECTID-based pagination is used instead.
+# Re-running resumes from the last completed chunk (idempotent).
+#
+# Env vars (featureserver mode):
+#   FS_CHUNK_SIZE  — records per output file, default 100000
+#   FS_START_OID   — start OBJECTID (default 1, useful for resuming)
+#   FS_END_OID     — end OBJECTID (default: total count)
 
 featureserver_mode() {
   local chunk_dir="$dest_dir/featureserver"
   mkdir -p "$chunk_dir"
 
-  # Determine state list
-  if [ -n "${STATES:-}" ]; then
-    read -r -a state_list <<< "$STATES"
-  else
-    state_list=("${ALL_STATES[@]}")
-  fi
+  local page_size=2000
+  local chunk_size="${FS_CHUNK_SIZE:-100000}"  # records per output file
 
-  local fetched=0
-  local skipped=0
-  local failed=0
+  # Discover total record count and OID range
+  echo "=== $SLUG / featureserver"
+  echo "  Discovering record count from FeatureService ..."
+  local total_count
+  total_count=$(curl -sS --max-time 30 \
+    "${FEATURE_SERVICE_URL}/query?where=1%3D1&returnCountOnly=true&f=json" 2>/dev/null \
+    | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('count', 0))" 2>/dev/null || echo "0")
+  echo "  Total records: $total_count"
 
-  for state in "${state_list[@]}"; do
-    local state_file="$chunk_dir/${state}.ndjson"
-    local state_manifest="$chunk_dir/${state}.manifest.json"
+  local start_oid="${FS_START_OID:-1}"
+  local end_oid="${FS_END_OID:-$total_count}"
+  echo "  OID range: $start_oid .. $end_oid"
 
-    echo "=== $SLUG / featureserver / $state"
+  local fetched_chunks=0
+  local skipped_chunks=0
+  local total_records=0
+  local oid_cursor="$start_oid"
 
-    # Idempotency: skip if manifest shows complete
-    if [ -f "$state_manifest" ]; then
-      is_complete=$(python3 -c "import json; d=json.load(open('$state_manifest')); print(d.get('complete', False))" 2>/dev/null || echo "False")
+  while [ "$oid_cursor" -le "$end_oid" ]; do
+    local chunk_end=$((oid_cursor + chunk_size - 1))
+    [ "$chunk_end" -gt "$end_oid" ] && chunk_end="$end_oid"
+
+    local chunk_name="oids_${oid_cursor}-${chunk_end}"
+    local chunk_file="$chunk_dir/${chunk_name}.ndjson"
+    local chunk_manifest="$chunk_dir/${chunk_name}.manifest.json"
+
+    # Idempotency: skip completed chunks
+    if [ -f "$chunk_manifest" ] && [ -f "$chunk_file" ]; then
+      is_complete=$(python3 -c "import json; d=json.load(open('$chunk_manifest')); print(d.get('complete', False))" 2>/dev/null || echo "False")
       if [ "$is_complete" = "True" ]; then
-        echo "  ✓ Already complete (MANIFEST) — skipping."
-        skipped=$((skipped + 1))
+        echo "  ✓ $chunk_name — already complete, skipping."
+        skipped_chunks=$((skipped_chunks + 1))
+        oid_cursor=$((chunk_end + 1))
         continue
       fi
     fi
 
-    # Count records for this state
-    count_resp=$(curl -sS --max-time 30 \
-      "${FEATURE_SERVICE_URL}/query?where=State+%3D+%27${state}%27&returnCountOnly=true&f=json" 2>/dev/null || echo '{"count":0}')
-    total=$(python3 -c "import json; print(json.loads('${count_resp}').get('count', 0))" 2>/dev/null || echo "0")
-    echo "  Records: $total"
-
-    if [ "$total" -eq 0 ]; then
-      echo "  ✗ Zero records for state $state — skipping (state may not be in NAD yet)."
-      failed=$((failed + 1))
-      continue
-    fi
-
-    # Page through and write NDJSON
-    local offset=0
-    local page_size=2000
+    echo "  Fetching $chunk_name ..."
+    : > "$chunk_file"  # truncate for clean write
     local written=0
-    : > "$state_file"  # truncate
+    local page_cursor="$oid_cursor"
 
-    while [ "$offset" -lt "$total" ]; do
-      resp=$(curl -sS --max-time 60 \
-        "${FEATURE_SERVICE_URL}/query?where=State+%3D+%27${state}%27&outFields=*&f=json&resultOffset=${offset}&resultRecordCount=${page_size}" 2>/dev/null) || {
-        echo "  ✗ Page fetch failed at offset $offset" >&2
-        failed=$((failed + 1))
-        break
-      }
+    while [ "$page_cursor" -le "$chunk_end" ]; do
+      local page_end=$((page_cursor + page_size - 1))
+      [ "$page_end" -gt "$chunk_end" ] && page_end="$chunk_end"
 
-      page_count=$(python3 -c "
+      local tmp_resp
+      tmp_resp=$(mktemp /tmp/nad_page_XXXXXX.json)
+      if curl -sS --max-time 60 \
+        "${FEATURE_SERVICE_URL}/query?where=OBJECTID+BETWEEN+${page_cursor}+AND+${page_end}&outFields=*&f=json&resultRecordCount=${page_size}" \
+        -o "$tmp_resp" 2>/dev/null; then
+
+        page_n=$(python3 - "$tmp_resp" "$chunk_file" << 'PYEOF'
 import json, sys
-d = json.loads(sys.argv[1])
+tmp, out = sys.argv[1], sys.argv[2]
+with open(tmp) as f:
+    d = json.load(f)
 features = d.get('features', [])
-for f in features:
-    print(json.dumps(f['attributes']))
-print(len(features), file=sys.stderr)
-" "$resp" >> "$state_file" 2>&1) || true
-
-      page_n=$(python3 -c "import json; d=json.loads('${resp}'); print(len(d.get('features', [])))" 2>/dev/null || echo "0")
-      written=$((written + page_n))
-      offset=$((offset + page_size))
-
-      if [ "$page_n" -lt "$page_size" ]; then
-        break
+with open(out, 'a') as o:
+    for feat in features:
+        o.write(json.dumps(feat['attributes']) + '\n')
+print(len(features))
+PYEOF
+)
+        written=$((written + page_n))
+      else
+        echo "  ✗ Page fetch failed at OID $page_cursor" >&2
       fi
+      rm -f "$tmp_resp"
+      page_cursor=$((page_end + 1))
     done
 
     local file_size
-    file_size=$(stat -c '%s' "$state_file" 2>/dev/null || stat -f '%z' "$state_file")
+    file_size=$(stat -c '%s' "$chunk_file" 2>/dev/null || stat -f '%z' "$chunk_file")
     local sha
-    sha=$(sha256sum "$state_file" | awk '{print $1}')
+    sha=$(sha256sum "$chunk_file" | awk '{print $1}')
 
-    cat > "$state_manifest" <<MANIFEST_EOF
+    cat > "$chunk_manifest" <<MANIFEST_EOF
 {
   "source_url": "${FEATURE_SERVICE_URL}",
-  "state": "${state}",
+  "oid_range": [${oid_cursor}, ${chunk_end}],
   "downloaded_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "filename": "${state}.ndjson",
+  "filename": "${chunk_name}.ndjson",
   "sha256": "${sha}",
   "bytes": ${file_size},
   "record_count": ${written},
@@ -181,14 +187,17 @@ print(len(features), file=sys.stderr)
 }
 MANIFEST_EOF
 
-    echo "  ✓ $written records  $(numfmt --to=iec "$file_size" 2>/dev/null || echo "$file_size bytes")  sha256=$sha"
-    fetched=$((fetched + 1))
+    echo "    ✓ $written records  $(numfmt --to=iec "$file_size" 2>/dev/null || echo "$file_size bytes")"
+    fetched_chunks=$((fetched_chunks + 1))
+    total_records=$((total_records + written))
+    oid_cursor=$((chunk_end + 1))
   done
 
   echo
   echo "=== featureserver summary ==="
-  echo "fetched: $fetched  |  skipped (already done): $skipped  |  failed: $failed"
-  [ "$failed" -eq 0 ]
+  echo "chunks fetched: $fetched_chunks  |  skipped (already done): $skipped_chunks"
+  echo "total records this run: $total_records"
+  echo "output dir: $chunk_dir"
 }
 
 # ── Mode: bulk (ZIP from DOT S3) ─────────────────────────────────────────────
