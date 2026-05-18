@@ -9,12 +9,20 @@ multi-gigabyte national dumps.
 ## Input
 
 Download a country-partitioned dump from:
-<https://batch.openaddresses.io/data> (the `collection.geojsonl` files
-under `us/`, `ca/`, `fr/`, etc.).
+<https://batch.openaddresses.io> (the collection download endpoint for
+country codes: `ca`, `us-west`, `us-south`, `us-northeast`, `us-midwest`,
+`global`).
 
-Point `--input` at a single `.geojsonl` (or `.geojson` if your dump
-ships as line-delimited despite the extension). The runner is invoked
-with `--country US|CA|FR|...` to stamp the country on every row —
+**Authentication required (as of 2026-05-18):** bulk collection downloads
+now require a free registered account. Use the `fetch-openaddresses.sh`
+script which handles auth via `OA_BATCH_TOKEN` — see
+`packages/corpus/scripts/fetch-sources/README.md` for setup steps.
+
+Files land at:
+`$OUT_ROOT/openaddresses/<country>/collection.geojsonl`
+
+Point `--input` at that `.geojsonl`. The runner is invoked with
+`--country US|CA|FR|...` to stamp the country on every row —
 OpenAddresses Features themselves do not carry a country code, so this
 flag is required.
 
