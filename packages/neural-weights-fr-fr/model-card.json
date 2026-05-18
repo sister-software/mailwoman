@@ -1,0 +1,146 @@
+{
+	"name": "neural-weights-fr-fr",
+	"version": "0.1.0",
+	"phase": "Stage 1 (coarse)",
+	"license": "AGPL-3.0-only",
+	"locale": "fr-fr",
+	"training": {
+		"corpus_version": "0.1.1",
+		"tokenizer_version": "0.1.0",
+		"steps": 6000,
+		"hardware": "AMD Radeon 780M (gfx1103) bf16 14.6 GiB VRAM",
+		"duration_seconds": 3300.0,
+		"started_at": null,
+		"completed_at": "2026-05-18T01:08:50.900882Z"
+	},
+	"components_supported": ["country", "region", "locality", "dependent_locality", "postcode", "subregion", "cedex"],
+	"eval": {
+		"n_entries": 74,
+		"full_parse_exact_match": 0.0,
+		"mean_token_confidence": 0.8653123214716713,
+		"per_component": {
+			"country": {
+				"precision": 0.0,
+				"recall": 0.0,
+				"f1": 0.0,
+				"support": 6
+			},
+			"region": {
+				"precision": 0.09859154929438603,
+				"recall": 0.11111111110934745,
+				"f1": 0.10447761144052128,
+				"support": 63
+			},
+			"locality": {
+				"precision": 0.04225352112616544,
+				"recall": 0.04166666666608796,
+				"f1": 0.04195804145747958,
+				"support": 72
+			},
+			"dependent_locality": {
+				"precision": 0.0,
+				"recall": 0.0,
+				"f1": 0.0,
+				"support": 1
+			},
+			"postcode": {
+				"precision": 0.0,
+				"recall": 0.0,
+				"f1": 0.0,
+				"support": 65
+			},
+			"subregion": {
+				"precision": 0.0,
+				"recall": 0.0,
+				"f1": 0.0,
+				"support": 0
+			},
+			"cedex": {
+				"precision": 0.0,
+				"recall": 0.0,
+				"f1": 0.0,
+				"support": 1
+			}
+		},
+		"calibration": [
+			{
+				"low": 0.0,
+				"high": 0.1,
+				"n": 0,
+				"acc": 0.0
+			},
+			{
+				"low": 0.1,
+				"high": 0.2,
+				"n": 0,
+				"acc": 0.0
+			},
+			{
+				"low": 0.2,
+				"high": 0.3,
+				"n": 5,
+				"acc": 0.0
+			},
+			{
+				"low": 0.3,
+				"high": 0.4,
+				"n": 36,
+				"acc": 0.2222222222222222
+			},
+			{
+				"low": 0.4,
+				"high": 0.5,
+				"n": 56,
+				"acc": 0.21428571428571427
+			},
+			{
+				"low": 0.5,
+				"high": 0.6,
+				"n": 73,
+				"acc": 0.2054794520547945
+			},
+			{
+				"low": 0.6,
+				"high": 0.7,
+				"n": 64,
+				"acc": 0.09375
+			},
+			{
+				"low": 0.7,
+				"high": 0.8,
+				"n": 94,
+				"acc": 0.2127659574468085
+			},
+			{
+				"low": 0.8,
+				"high": 0.9,
+				"n": 95,
+				"acc": 0.23157894736842105
+			},
+			{
+				"low": 0.9,
+				"high": 1.0,
+				"n": 777,
+				"acc": 0.3590733590733591
+			}
+		]
+	},
+	"known_failure_modes": [
+		"underperforms on Hawaiian addresses (sparse in training corpus)",
+		"particle-honorific kryptonite (e.g. FR 'Saint-Just-Saint-Rambert') if not in synth set",
+		"non-Latin scripts (CJK, Cyrillic) fall through to byte-fallback tokens; F1 unknown"
+	],
+	"notes": "Stage 1 coarse model; training stopped at step 6000 due to clear overfitting (val_loss bottomed, macro_f1 peaked). Per-component F1 well below the \u00a76 95% target \u2014 root cause: training corpus is 75% wof-admin single-name entries, model overfits to a positional heuristic. v0.2.0 should use source-weighted sampling to balance street-level (BAN, TIGER) vs admin (WOF) rows. See LOG.md + DECISIONS.md.",
+	"format": {
+		"model": "ONNX int8 dynamic",
+		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=16000",
+		"max_sequence_length": 128,
+		"opset": 17
+	},
+	"files": {
+		"model": "model.onnx",
+		"tokenizer": "tokenizer.model",
+		"model_card": "model-card.json"
+	},
+	"base_relpath": "/data/models/checkpoints/stage1-coarse/step-006000"
+}

@@ -1,7 +1,7 @@
 [project]
 name = "mailwoman-corpus-python"
 version = "0.1.0"
-description = "Python helpers for the Mailwoman corpus pipeline (SentencePiece tokenizer training)."
+description = "Python helpers for the Mailwoman corpus pipeline (SentencePiece tokenizer training + Phase 2 training)."
 readme = "README.md"
 license = { text = "AGPL-3.0-only" }
 requires-python = ">=3.10"
@@ -11,13 +11,26 @@ authors = [
 dependencies = [
     # Pin loose; install via `pip install -e .` from this directory.
     # PyArrow was dropped in Phase 1.5 (#18 §4) when corpus build moved to JS-native Parquet
-    # via @dsnp/parquetjs. SentencePiece training is the only remaining Python step.
+    # via @dsnp/parquetjs, then re-added in Phase 2 (issue #10) for the training data loader.
     "sentencepiece>=0.2.0",
+    "pyarrow>=15",
+    "pyyaml>=6",
+    "numpy>=1.26,<3",
 ]
 
+# Heavy ML deps live under [train] so plain tokenizer-training and corpus utilities
+# can install without dragging PyTorch / Transformers / ONNX onto every machine.
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
+]
+train = [
+    "torch>=2.2",
+    "transformers>=4.41",
+    "datasets>=2.19",
+    "onnx>=1.16",
+    "onnxruntime>=1.18",
+    "tqdm>=4.66",
 ]
 
 [build-system]

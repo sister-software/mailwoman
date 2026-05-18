@@ -888,6 +888,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/neural-weights-en-us@workspace:packages/neural-weights-en-us":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/neural-weights-en-us@workspace:packages/neural-weights-en-us"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/neural-weights-fr-fr@workspace:packages/neural-weights-fr-fr":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/neural-weights-fr-fr@workspace:packages/neural-weights-fr-fr"
+  languageName: unknown
+  linkType: soft
+
 "@napi-rs/nice-android-arm-eabi@npm:1.0.1":
   version: 1.0.1
   resolution: "@napi-rs/nice-android-arm-eabi@npm:1.0.1"

@@ -1,0 +1,20 @@
+{
+	"name": "@mailwoman/neural-weights-fr-fr",
+	"version": "0.1.0",
+	"private": false,
+	"description": "Mailwoman neural-classifier weights for locale 'fr-fr'. Data-only package — loaded by @mailwoman/neural at runtime.",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman"
+	},
+	"license": "AGPL-3.0-only",
+	"files": [
+		"model.onnx",
+		"tokenizer.model",
+		"model-card.json",
+		"README.md"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}

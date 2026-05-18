@@ -1,0 +1,59 @@
+# Stage 1 coarse-component config (Phase 2, issue #10).
+#
+# Trains a 6-layer / 256-hidden / 4-head encoder on coarse address components only:
+# country, region, locality, dependent_locality, postcode, subregion, cedex (+ O).
+#
+# Stages 2 (street-level) and 3 (venue-level) are future phases — do NOT widen the
+# label set here without an explicit phase plan.
+
+data:
+  # corpus-v0.1.1 (synth-ON, 22.4M rows, locality-holdout splits). Per operator brief —
+  # v0.1.0 is the synth-OFF baseline; v0.1.1 is what the model trains on.
+  corpus_dir: /data/corpus/versioned/v0.1.1/corpus-v0.1.1
+  tokenizer_dir: /data/models/tokenizer/v0.1.0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  train_rows_per_epoch: null
+  val_rows: 4096
+  coarse_filter: true
+
+model:
+  hidden_size: 256
+  num_hidden_layers: 6
+  num_attention_heads: 4
+  intermediate_size: 1024
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+
+train:
+  output_dir: /data/models/checkpoints/stage1-coarse
+  seed: 42
+  # Empirically validated envelope on gfx1103 with hand-rolled MultiheadAttention + bf16:
+  # batch=64 stable, batch≥96 hangs. Use 64 with grad_accum=2 → effective batch 128.
+  # Phase 2 plan asks for batch 256 nominally, "lower if OOM" — gfx1103 hangs are the
+  # equivalent of OOM here. ~345 samples/sec sustained; ~10-12h for 50k steps.
+  batch_size: 64
+  eval_batch_size: 80
+  grad_accum_steps: 2
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  max_steps: 50000
+  eval_every_steps: 2000
+  # gfx1103 firmware hangs under sustained load; lose less work per crash by saving more
+  # frequently. Optimizer + scheduler state are checkpointed, so resume is exact.
+  save_every_steps: 2000
+  log_every_steps: 100
+  precision: bf16
+  num_workers: 2
+  csv_log_path: "{output_dir}/train_log.csv"
+
+eval:
+  # Use the in-repo golden set as the eval anchor. Operator can also point to a
+  # holdout val.jsonl if one is curated.
+  golden_dir: "" # filled in by --golden-dir at CLI time, or leave empty
+  val_jsonl: ""
