@@ -28,9 +28,11 @@ single executable place.
 
 ## Coverage
 
-| Script | Sources | License tier |
-| --- | --- | --- |
-| `fetch-hrsa.sh` | HRSA Health Center Service Delivery Sites (federal) | A (US PD) |
+| Script                   | Sources                                                                             | License tier            |
+| ------------------------ | ----------------------------------------------------------------------------------- | ----------------------- |
+| `fetch-hrsa.sh`          | HRSA Health Center Service Delivery Sites (federal)                                 | A (US PD)               |
+| `fetch-imls-pls.sh`      | IMLS Public Libraries Survey — outlet-level (~17K library branches, FY 2023)        | A (US PD)               |
+| `fetch-nppes.sh`         | NPPES NPI registry — full monthly dissemination (~7M provider venue+address rows)   | A (US PD)               |
 | `fetch-state-sources.sh` | NY/TX/DE/OR notaries, IA contractors, WA health providers, HI schools, HI lobbyists | A (state PD-equivalent) |
 
 License tiers per `docs/licensing-strategy.md` (or the playpen knowledge base
