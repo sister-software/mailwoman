@@ -124,6 +124,41 @@ def render_package_json(locale: str) -> dict:
     }
 
 
+_PHASE2_TARGETS = {
+    "country": 0.95,
+    "region": 0.95,
+    "locality": 0.95,
+    "postcode": 0.95,
+}
+
+
+def _phase2_status_line(eval_report: dict) -> str:
+    """Honest one-liner about how this build measures up to the Phase 2 §6 95% F1 target."""
+    per = eval_report.get("per_component", {}) or {}
+    components_at_target: list[str] = []
+    components_below: list[tuple[str, float]] = []
+    for tag, target in _PHASE2_TARGETS.items():
+        if tag not in per:
+            continue
+        f1 = float(per[tag].get("f1", 0.0))
+        if f1 >= target:
+            components_at_target.append(tag)
+        else:
+            components_below.append((tag, f1))
+    if not components_below:
+        return "**✓ Meets Phase 2 §6 targets (≥95% F1) on every coarse component.**"
+    lines = [
+        "**⚠ Below Phase 2 §6 targets (≥95% F1):**",
+        "",
+    ]
+    for tag, f1 in components_below:
+        lines.append(f"- `{tag}` F1 = **{f1:.4f}** (target ≥0.95)")
+    if components_at_target:
+        lines.append("")
+        lines.append("At target: " + ", ".join(f"`{t}`" for t in components_at_target))
+    return "\n".join(lines)
+
+
 def render_readme(
     *,
     locale: str,
@@ -148,6 +183,10 @@ def render_readme(
         f"- corpus: **{corpus_version}**",
         f"- training steps: **{training_steps}**",
         f"- hardware: **{training_hardware}**",
+        "",
+        "## Phase 2 §6 status",
+        "",
+        _phase2_status_line(eval_report),
         "",
         "## Eval (golden set)",
         "",

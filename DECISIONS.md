@@ -1019,3 +1019,53 @@ on this hardware.
 
 Compatibility note: the smoke run on CPU (pre-GPU-recipe) used
 `BertForTokenClassification`; those artifacts are wholly replaced.
+
+## phase-2 — ship Stage 1 weights below the §6 95% F1 target, with honest model card
+
+Phase 2 §6 sets a 95% per-component F1 target. The v0.1.0 model trained this session lands
+nowhere near that: country=0.000, region=0.104, locality=0.042, postcode=0.000 on the
+74-entry golden set.
+
+Per the issue's "When to ship vs train more" framing, <90% F1 = stop and re-examine. The
+diagnosis (see LOG.md 01:10 entry) points to a corpus-balance issue, not an architecture
+or training bug: 75% of training rows are wof-admin "Name" / "Name, Country" entries, and
+the model overfits to a positional heuristic ("first-token = locality, middle = region,
+end = country"). Golden-set entries with street prefixes (e.g.
+`1600 Pennsylvania Avenue NW, Washington, DC 20500`) confuse this heuristic — the model
+labels the whole street prefix as `I-locality`.
+
+We still ship the weights packages with these numbers, because:
+
+1. The package shape is the actual Phase 2 deliverable for downstream Phase 3 wiring.
+   `@mailwoman/neural` (Phase 3) needs to load a `model.onnx` + `tokenizer.model` at the
+   committed paths. Shipping placeholders blocks Phase 3 indefinitely.
+2. The model-card and README honestly report **⚠ Below Phase 2 §6 targets** with the
+   per-component numbers. Anyone consuming these weights sees the gap at a glance.
+3. The recipe for a successful v0.2.0 retrain is documented (source-weighted sampling
+   or synthesized street prefixes). That's a future-session fix, not a Phase 2 blocker.
+
+The Phase 2 plan also says: "Beats rule-based Mailwoman on golden set for `country` and
+`region` components by at least 2 F1 points. If not, investigate before proceeding — the
+architecture is fine, the corpus is probably the issue." That's exactly the call we made.
+
+## phase-2 — auto-restart wrapper for gfx1103 GPU hangs under sustained training load
+
+The gfx1103 firmware exhibits `HW Exception by GPU node-1 ... GPU Hang` roughly every
+30–60 minutes under sustained training load. The hangs are unpredictable in timing but
+recoverable: the process aborts (exit 134), the GPU recovers in a few seconds, and a
+fresh process initializes normally.
+
+Rather than try to harden the kernel against an in-process recovery (no clean
+`torch.cuda.recover()` API), Phase 2 ships `packages/corpus-python/scripts/train_with_resume.sh`
+— a thin bash loop that re-launches `python -m mailwoman_train train --resume auto`
+after every non-zero exit, sleeping 15 seconds between attempts. `--resume auto` walks
+the checkpoint directory and picks the highest-step `step-XXXXXX/` to resume from.
+
+To make resume meaningful, `save_checkpoint` writes the full training state per call:
+`pytorch_model.bin` (weights), `optimizer.pt` (Adam moments), `scheduler.pt`
+(cosine-decay step), and `training_state.json` (the integer step). On resume,
+`train()` loads all of these; if `scheduler.pt` is missing (pre-resume-feature
+checkpoint), it fast-forwards the scheduler by `resume_step` steps so the LR matches.
+
+Save cadence dropped from `save_every_steps=5000` to `save_every_steps=2000` so the
+worst-case wasted work per crash is half an eval interval.

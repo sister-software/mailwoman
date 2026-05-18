@@ -141,30 +141,66 @@ def save_checkpoint(
     output_dir: Path,
     step: int,
     extras: dict,
+    *,
+    optim: torch.optim.Optimizer | None = None,
+    scheduler: torch.optim.lr_scheduler._LRScheduler | None = None,
+    rng_state: dict | None = None,
 ) -> Path:
-    """Save model state_dict + config + step extras into ``output_dir/step-XXXXX/``."""
+    """Save model + optimizer + scheduler + RNG state into ``output_dir/step-XXXXX/``.
+
+    Full resume capability — gfx1103 has firmware GPU hangs under sustained load, so a
+    crash-and-resume loop is expected. The latest checkpoint contains everything needed to
+    pick up exactly where the previous run left off (modulo data-loader position, which is
+    re-seeded per-epoch on resume).
+    """
     ck = output_dir / f"step-{step:06d}"
     ck.mkdir(parents=True, exist_ok=True)
     if hasattr(model, "save_pretrained"):
         model.save_pretrained(ck)  # type: ignore[arg-type]
     else:
         torch.save(model.state_dict(), ck / "pytorch_model.bin")
+    if optim is not None:
+        torch.save(optim.state_dict(), ck / "optimizer.pt")
+    if scheduler is not None:
+        torch.save(scheduler.state_dict(), ck / "scheduler.pt")
+    if rng_state is not None:
+        torch.save(rng_state, ck / "rng_state.pt")
     (ck / "training_state.json").write_text(json.dumps(extras, indent=2) + "\n", encoding="utf-8")
     return ck
 
 
-def train(cfg: Config) -> None:
+def find_latest_checkpoint(output_dir: Path) -> Path | None:
+    """Return the highest-step ``step-XXXXXX`` checkpoint dir under ``output_dir``, or None."""
+    if not output_dir.is_dir():
+        return None
+    candidates = sorted(output_dir.glob("step-*"))
+    return candidates[-1] if candidates else None
+
+
+def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     _set_seed(cfg.train.seed)
     # Mandatory on gfx1103 — flash/mem-efficient SDPA paths crash bf16 on this GPU.
     force_math_sdpa()
     output_dir = Path(cfg.train.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Auto-detect latest checkpoint when resume_from == "auto" — convenient for restart-on-hang.
+    if resume_from == "auto":
+        latest = find_latest_checkpoint(output_dir)
+        resume_from = latest
+
     tokenizer = Tokenizer(Path(cfg.data.tokenizer_dir) / "tokenizer.model")
     verify_tokenizer_alignment(Path(cfg.data.corpus_dir), tokenizer)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = build_model(cfg, vocab_size=tokenizer.vocab_size, pad_token_id=tokenizer.pad_id)
+    if resume_from is not None:
+        # Use the checkpoint's saved model rather than a fresh from-scratch init.
+        from .model import MailwomanCoarseEncoder
+
+        print(f"resuming from {resume_from}")
+        model = MailwomanCoarseEncoder.from_pretrained(resume_from)
+    else:
+        model = build_model(cfg, vocab_size=tokenizer.vocab_size, pad_token_id=tokenizer.pad_id)
     model.to(device)
 
     print(f"device={device} param_count={model_param_count(model):,}")
@@ -187,22 +223,46 @@ def train(cfg: Config) -> None:
     # Effective batch size = batch_size × grad_accum_steps. Optimizer steps every `accum` calls.
     accum = max(1, int(cfg.train.grad_accum_steps))
 
+    # Resume — load optimizer/scheduler/step.
+    resume_step = 0
+    if resume_from is not None:
+        resume_from_path = Path(resume_from)
+        opt_p = resume_from_path / "optimizer.pt"
+        if opt_p.is_file():
+            optim.load_state_dict(torch.load(opt_p, weights_only=False))
+        ts_p = resume_from_path / "training_state.json"
+        if ts_p.is_file():
+            ts = json.loads(ts_p.read_text(encoding="utf-8"))
+            resume_step = int(ts.get("step", 0))
+        sched_p = resume_from_path / "scheduler.pt"
+        if sched_p.is_file():
+            scheduler.load_state_dict(torch.load(sched_p, weights_only=False))
+        else:
+            # Pre-resume-feature checkpoint: scheduler.pt didn't exist. Fast-forward the
+            # scheduler so LR is correct for the resumed step. ``scheduler.step()`` is cheap.
+            for _ in range(resume_step):
+                scheduler.step()
+        print(f"resumed at step={resume_step}")
+
     csv_path = csv_log_path(cfg)
     csv_path.parent.mkdir(parents=True, exist_ok=True)
-    csv_fh = csv_path.open("w", encoding="utf-8", newline="")
+    # On resume, append to the existing CSV instead of clobbering.
+    csv_mode = "a" if resume_step > 0 and csv_path.is_file() else "w"
+    csv_fh = csv_path.open(csv_mode, encoding="utf-8", newline="")
     csv_writer = csv.writer(csv_fh)
-    csv_writer.writerow(
-        [
-            "step",
-            "wall_seconds",
-            "train_loss",
-            "lr",
-            "val_loss",
-            "val_macro_f1",
-        ]
-    )
+    if csv_mode == "w":
+        csv_writer.writerow(
+            [
+                "step",
+                "wall_seconds",
+                "train_loss",
+                "lr",
+                "val_loss",
+                "val_macro_f1",
+            ]
+        )
 
-    step = 0
+    step = resume_step
     micro_step = 0
     started = time.time()
     train_loss_running = 0.0
@@ -290,7 +350,9 @@ def train(cfg: Config) -> None:
                         },
                         "vocab_size": tokenizer.vocab_size,
                     }
-                    ck = save_checkpoint(model, output_dir, step, extras)
+                    ck = save_checkpoint(
+                        model, output_dir, step, extras, optim=optim, scheduler=scheduler
+                    )
                     print(f"  [save] checkpoint → {ck}")
         # Final save.
         extras = {
@@ -302,6 +364,6 @@ def train(cfg: Config) -> None:
             },
             "vocab_size": tokenizer.vocab_size,
         }
-        save_checkpoint(model, output_dir, step, extras)
+        save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
     finally:
         csv_fh.close()

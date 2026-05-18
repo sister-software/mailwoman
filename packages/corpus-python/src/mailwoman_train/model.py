@@ -170,12 +170,26 @@ class MailwomanCoarseEncoder(nn.Module):
         self._init_weights()
 
     def _init_weights(self) -> None:
-        """Xavier-style init for linears + small-normal embeddings."""
+        """Xavier-style init for linears + small-normal embeddings + LN gamma=1.
+
+        Critical: ``nn.LayerNorm.weight`` (``gamma``) MUST be initialized to 1.0, not 0.
+        A previous version zeroed every 1D parameter, which collapsed every LN to a constant
+        output (``gamma·normalized + beta`` = 0·anything + 0 = 0) and made the model
+        predict the same class for every token regardless of input. Loss plateaued near
+        the all-O baseline and macro-F1 sat at floor.
+        """
         for p in self.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
             elif p.dim() == 1 and p.requires_grad:
                 nn.init.zeros_(p)
+        # Reset every LayerNorm to default (gamma=1, beta=0). The blanket loop above
+        # accidentally zeroed gamma; LN with gamma=0 emits 0 + beta for all inputs.
+        for module in self.modules():
+            if isinstance(module, nn.LayerNorm):
+                nn.init.ones_(module.weight)
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)
         nn.init.normal_(self.token_embeddings.weight, mean=0.0, std=0.02)
         nn.init.normal_(self.position_embeddings.weight, mean=0.0, std=0.02)
         if self.token_embeddings.padding_idx is not None:

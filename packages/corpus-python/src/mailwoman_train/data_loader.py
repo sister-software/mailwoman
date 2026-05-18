@@ -64,33 +64,39 @@ def _row_components_keys(labels: Sequence[str]) -> list[str]:
     return list(out)
 
 
-def iter_rows(
+def _raw_row_stream(
     corpus_dir: Path,
     split: str,
     *,
     rng: random.Random,
     country_weights: dict[str, float],
     coarse_filter: bool,
-    row_limit: int | None = None,
 ) -> Iterator[dict]:
-    """Yield raw rows from parquet shards, filtered by country + coarse-presence.
+    """Internal unshuffled stream: yields filter-accepted rows in shard / row-group / row order.
 
-    Streams via PyArrow row groups so peak RSS stays under a row-group's worth.
+    Wrapped by ``iter_rows`` with a reservoir-style shuffle buffer.
     """
     shard_paths = _shard_paths(corpus_dir, split)
-    if not country_weights:
-        raise ValueError("country_weights must be non-empty")
     max_weight = max(country_weights.values())
-    yielded = 0
-    for shard in shard_paths:
+    # Shard-order shuffle: visit shards in random order each epoch so consecutive optimizer
+    # steps don't see only one shard's data even before the row-level shuffle buffer kicks in.
+    shard_order = list(shard_paths)
+    rng.shuffle(shard_order)
+    for shard in shard_order:
         pf = pq.ParquetFile(shard)
-        for rg in range(pf.num_row_groups):
+        # Within a shard, row-groups also visited in random order.
+        rg_order = list(range(pf.num_row_groups))
+        rng.shuffle(rg_order)
+        for rg in rg_order:
             t = pf.read_row_group(rg, columns=list(_REQUIRED_COLUMNS))
             raws = t["raw"]
             tokens_col = t["tokens"]
             labels_col = t["labels"]
             countries = t["country"]
-            for i in range(t.num_rows):
+            # Within a row-group, permute indices so adjacent yields are non-contiguous.
+            idx_order = list(range(t.num_rows))
+            rng.shuffle(idx_order)
+            for i in idx_order:
                 country = countries[i].as_py()
                 weight = country_weights.get(country)
                 if weight is None or weight <= 0:
@@ -109,9 +115,75 @@ def iter_rows(
                     "labels": bio_labels,
                     "country": country,
                 }
-                yielded += 1
-                if row_limit is not None and yielded >= row_limit:
-                    return
+
+
+def iter_rows(
+    corpus_dir: Path,
+    split: str,
+    *,
+    rng: random.Random,
+    country_weights: dict[str, float],
+    coarse_filter: bool,
+    row_limit: int | None = None,
+    shuffle_buffer: int = 16384,
+) -> Iterator[dict]:
+    """Yield rows from parquet shards, filtered + shuffled.
+
+    Shuffling is done at three levels:
+
+    1. Shard order (per-epoch): shards visited in random order.
+    2. Row-group order within shard: row-groups visited in random order.
+    3. Within row-group: row indices permuted before scan.
+
+    Then a reservoir-style ``shuffle_buffer`` of size ``shuffle_buffer`` rows mixes
+    yields across row-group boundaries. This is the standard HuggingFace ``streaming``
+    shuffle pattern: hold ``N`` rows, pop a random one, replace from the upstream stream
+    (when exhausted, drain the buffer in random order).
+
+    Skipping shuffle (``shuffle_buffer<=0``) is intentionally not supported — the previous
+    sequential layout caused val_loss to diverge at step ~1500. Always shuffle.
+
+    Per Phase 2 §2 (stratified sampling): ``country_weights`` is applied during the raw
+    scan, *before* the buffer, so sampled fractions land in the buffer with the configured
+    weights.
+
+    Memory: each buffered row is a dict of {raw: str, tokens: list[str], labels: list[str],
+    country: str}. For Stage 1 coarse rows, that's ~1 KB per row; default 16384 buffer is
+    ~16 MB resident, well within budget.
+    """
+    if not country_weights:
+        raise ValueError("country_weights must be non-empty")
+    upstream = _raw_row_stream(
+        corpus_dir,
+        split,
+        rng=rng,
+        country_weights=country_weights,
+        coarse_filter=coarse_filter,
+    )
+    buf: list[dict] = []
+    yielded = 0
+    # Fill the buffer first.
+    try:
+        for _ in range(shuffle_buffer):
+            buf.append(next(upstream))
+    except StopIteration:
+        pass
+    # Stream out: every time we yield, pull the next from upstream into the freed slot.
+    for row in upstream:
+        j = rng.randrange(len(buf))
+        out = buf[j]
+        buf[j] = row
+        yield out
+        yielded += 1
+        if row_limit is not None and yielded >= row_limit:
+            return
+    # Drain whatever remains in the buffer.
+    rng.shuffle(buf)
+    for out in buf:
+        yield out
+        yielded += 1
+        if row_limit is not None and yielded >= row_limit:
+            return
 
 
 def iter_encoded(

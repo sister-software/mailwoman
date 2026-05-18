@@ -46,7 +46,7 @@ def cmd_train(args: argparse.Namespace) -> int:
         cfg.train.output_dir = args.output_dir
     if args.max_steps is not None:
         cfg.train.max_steps = args.max_steps
-    train(cfg)
+    train(cfg, resume_from=args.resume)
     return 0
 
 
@@ -359,6 +359,11 @@ def build_parser() -> argparse.ArgumentParser:
     common(p)
     p.add_argument("--output-dir", default=None)
     p.add_argument("--max-steps", type=int, default=None)
+    p.add_argument(
+        "--resume",
+        default=None,
+        help='Resume from this checkpoint dir, or pass "auto" to use the latest step-* under output_dir.',
+    )
     p.set_defaults(func=cmd_train)
 
     p = sub.add_parser("eval", help="Eval a checkpoint against the golden set")
