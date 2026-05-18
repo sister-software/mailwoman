@@ -30,6 +30,7 @@ import { stateTxNotariesAdapter } from "./state-tx-notaries/adapter.js"
 import { tigerAdapter } from "./tiger/adapter.js"
 import { usgovHrsaFqhcAdapter } from "./usgov-hrsa-fqhc/adapter.js"
 import { usgovImlsPlsAdapter } from "./usgov-imls-pls/adapter.js"
+import { usgovNadAdapter } from "./usgov-nad/adapter.js"
 import { usgovNppesAdapter } from "./usgov-nppes/adapter.js"
 import { usgovSamhsaTreatmentLocatorAdapter } from "./usgov-samhsa-treatment-locator/adapter.js"
 import { wofAdminAdapter } from "./wof-admin-json/adapter.js"
@@ -50,6 +51,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	usgovHrsaFqhcAdapter,
 	usgovSamhsaTreatmentLocatorAdapter,
 	usgovNppesAdapter,
+	usgovNadAdapter,
 	usgovImlsPlsAdapter,
 	stateIaContractorsAdapter,
 	stateTxNotariesAdapter,
@@ -95,6 +97,7 @@ export {
 	USGOV_IMLS_PLS_DEFAULT_LICENSE,
 	usgovImlsPlsAdapter,
 } from "./usgov-imls-pls/adapter.js"
+export { USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE, usgovNadAdapter } from "./usgov-nad/adapter.js"
 export { USGOV_NPPES_ADAPTER_ID, USGOV_NPPES_DEFAULT_LICENSE, usgovNppesAdapter } from "./usgov-nppes/adapter.js"
 export {
 	USGOV_SAMHSA_ADAPTER_ID,
