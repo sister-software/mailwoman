@@ -141,7 +141,7 @@ def iter_rows(
     source_weights: dict[str, float] | None = None,
     coarse_filter: bool,
     row_limit: int | None = None,
-    shuffle_buffer: int = 16384,
+    shuffle_buffer: int = 131072,
 ) -> Iterator[dict]:
     """Yield rows from parquet shards, filtered + shuffled.
 
@@ -166,7 +166,10 @@ def iter_rows(
 
     Memory: each buffered row is a dict of {raw: str, tokens: list[str], labels: list[str],
     country: str, source: str}. For Stage 1 coarse rows, that's ~1 KB per row; default
-    16384 buffer is ~16 MB resident, well within budget.
+    131072 buffer is ~128 MB resident, well within budget. The v0.1.1 default of 16384
+    was sized for a 22M-row corpus; v0.2.0 ships 263M rows so the same 16k buffer would
+    sample only 0.006% per shuffle — within-shard order would dominate. 128k buffer
+    samples 0.05% which restores effective randomness without meaningful RAM impact.
     """
     if not country_weights:
         raise ValueError("country_weights must be non-empty")
