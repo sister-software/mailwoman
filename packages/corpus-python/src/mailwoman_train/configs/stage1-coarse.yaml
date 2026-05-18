@@ -59,11 +59,14 @@ train:
   weight_decay: 0.01
   warmup_steps: 1000
   max_steps: 50000
-  eval_every_steps: 2000
-  # gfx1103 firmware hangs under sustained load; lose less work per crash by saving more
-  # frequently. Optimizer + scheduler state are checkpointed, so resume is exact.
-  save_every_steps: 2000
-  log_every_steps: 100
+  eval_every_steps: 250
+  # gfx1103 firmware hangs under sustained load. Empirical: hangs cluster around step
+  # ~100 from cold start (likely thermal accumulation through the first sustained
+  # backward-only stretch). Save every 100 to bound lost work to ≤ ~40 s per hang, and
+  # keep eval-every below typical hang-interval so periodic forward-only passes
+  # introduce thermal breathing room. Optimizer + scheduler state are checkpointed.
+  save_every_steps: 100
+  log_every_steps: 50
   precision: bf16
   num_workers: 2
   csv_log_path: "{output_dir}/train_log.csv"
