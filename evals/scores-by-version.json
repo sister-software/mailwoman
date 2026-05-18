@@ -2,42 +2,68 @@
 	"schema_version": 1,
 	"runs": [
 		{
-			"run_id": "stage1-coarse-2026-05-18-rocm62",
+			"run_id": "stage1-coarse-v0.1.0-vs-golden-v0.1.0",
 			"model_version": "0.1.0",
 			"model_path": "@mailwoman/neural-weights-en-us@0.1.0",
 			"corpus_version": "0.1.1",
-			"corpus_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+			"corpus_sha256": "2d8999a8bd2ee097a319a07757e3722ce1d7f28855def0c51c7e4a1bc242bdfc",
 			"eval_set_version": "golden-v0.1.0",
-			"eval_set_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-			"trained_at": "2026-05-18T05:00:00Z",
+			"eval_set_sha256": "1490af3b6a1af40e515296378fea3d839b3bac56a2bc1943565a919276f5caa0",
+			"trained_at": "2026-05-18T01:04:00Z",
 			"hardware": "AMD Radeon 780M (gfx1103), ROCm 6.2, torch 2.5.1+rocm6.2",
-			"training_steps": 50000,
-			"training_wall_clock_seconds": 36000,
+			"training_steps": 6000,
+			"training_wall_clock_seconds": 14400,
 			"metrics": {
 				"overall": {
-					"macro_f1": 0.873,
-					"micro_f1": 0.891,
-					"exact_match": 0.804
+					"macro_f1": 0.0365,
+					"micro_f1": 0,
+					"exact_match": 0
 				},
 				"per_component": {
-					"country": { "f1": 0.987, "precision": 0.991, "recall": 0.984, "support": 4096 },
-					"region": { "f1": 0.954, "precision": 0.948, "recall": 0.96, "support": 4096 },
-					"locality": { "f1": 0.892, "precision": 0.885, "recall": 0.9, "support": 4096 },
-					"postcode": { "f1": 0.961, "precision": 0.965, "recall": 0.958, "support": 4096 }
-				},
-				"calibration_buckets": [
-					{ "min_conf": 0.95, "max_conf": 1.0, "observed_accuracy": 0.991, "sample_count": 12340 },
-					{ "min_conf": 0.8, "max_conf": 0.95, "observed_accuracy": 0.892, "sample_count": 8541 },
-					{ "min_conf": 0.5, "max_conf": 0.8, "observed_accuracy": 0.621, "sample_count": 2104 },
-					{ "min_conf": 0.0, "max_conf": 0.5, "observed_accuracy": 0.182, "sample_count": 543 }
-				],
-				"adversarial_set": {
-					"buffalo_buffalo": { "f1": 0.78, "sample_count": 50 },
-					"saint_petersburg": { "f1": 0.91, "sample_count": 30 },
-					"ny_ny_steakhouse": { "f1": 0.65, "sample_count": 40 }
+					"country": { "f1": 0, "precision": 0, "recall": 0, "support": 0 },
+					"region": { "f1": 0.104, "precision": 0, "recall": 0, "support": 0 },
+					"locality": { "f1": 0.042, "precision": 0, "recall": 0, "support": 0 },
+					"postcode": { "f1": 0, "precision": 0, "recall": 0, "support": 0 }
 				}
 			},
-			"notes": "Stage 1 baseline. First Phase 2 production run. Calibration is the headline weakness — confidence buckets 0.5-0.8 are notably underconfident; consider temperature scaling."
+			"notes": "Phase 2 ship. F1 reported from PR #42 session-notes (only the per-component F1 numbers were captured; precision/recall/support/calibration not preserved at that time). Early-stopped at step 6000/50000 per §6 '<90% F1 stop and re-examine' clause. See PR #42 for full diagnosis (positional-heuristic overfit from 75% wof-admin single-name training corpus)."
+		},
+		{
+			"run_id": "stage1-coarse-v0.1.0-vs-golden-v0.1.2",
+			"model_version": "0.1.0",
+			"model_path": "@mailwoman/neural-weights-en-us@0.1.0",
+			"corpus_version": "0.1.1",
+			"corpus_sha256": "2d8999a8bd2ee097a319a07757e3722ce1d7f28855def0c51c7e4a1bc242bdfc",
+			"eval_set_version": "golden-v0.1.2",
+			"eval_set_sha256": "4b258868d4578074ec83f7315d782c19a2f3fcb1f2c8ddc48ac1516752d957ec",
+			"trained_at": "2026-05-18T01:04:00Z",
+			"hardware": "AMD Radeon 780M (gfx1103), ROCm 6.2, torch 2.5.1+rocm6.2 (eval re-run CPU-only)",
+			"training_steps": 6000,
+			"training_wall_clock_seconds": 14400,
+			"metrics": {
+				"overall": {
+					"macro_f1": 0.0314,
+					"micro_f1": 0.0,
+					"exact_match": 0.00882
+				},
+				"per_component": {
+					"country": { "f1": 0.0246, "precision": 0.0135, "recall": 0.1388, "support": 245 },
+					"region": { "f1": 0.0367, "precision": 0.0333, "recall": 0.0409, "support": 3205 },
+					"locality": { "f1": 0.0776, "precision": 0.0677, "recall": 0.0909, "support": 3357 },
+					"postcode": { "f1": 0.0007, "precision": 1.0, "recall": 0.0003, "support": 2980 }
+				},
+				"calibration_buckets": [
+					{ "min_conf": 0.95, "max_conf": 1.0, "observed_accuracy": 0.3366, "sample_count": 38328 },
+					{ "min_conf": 0.8, "max_conf": 0.9, "observed_accuracy": 0.2472, "sample_count": 5627 },
+					{ "min_conf": 0.7, "max_conf": 0.8, "observed_accuracy": 0.2183, "sample_count": 4206 },
+					{ "min_conf": 0.6, "max_conf": 0.7, "observed_accuracy": 0.2042, "sample_count": 3981 },
+					{ "min_conf": 0.5, "max_conf": 0.6, "observed_accuracy": 0.1846, "sample_count": 4030 },
+					{ "min_conf": 0.4, "max_conf": 0.5, "observed_accuracy": 0.1366, "sample_count": 3207 },
+					{ "min_conf": 0.3, "max_conf": 0.4, "observed_accuracy": 0.1084, "sample_count": 1660 },
+					{ "min_conf": 0.2, "max_conf": 0.3, "observed_accuracy": 0.0913, "sample_count": 208 }
+				]
+			},
+			"notes": "Apples-to-apples baseline against the expanded golden v0.1.2 (4535 entries) so v0.2.0 (in-flight) gets a direct delta. Calibration is the headline finding — 38K predictions in 0.9-1.0 conf bucket are only 33.7% accurate (model is confidently wrong, severe overconfidence). Postcode precision is artifically 1.0 because the model only emitted ONE postcode prediction out of 2980 (recall 0.0003); not meaningful. Eval ONNX checkpoint: /data/models/quantized/model-v0.1.0-int8.onnx sha256 aa8c2acf55e25fb23beead3bcafd543e44bc874c664d19182a2681554f73ebe6 (but eval ran against the archived pytorch checkpoint at stage1-coarse-v0.1.0-archived/step-006000 which is the source the ONNX was exported from)."
 		}
 	]
 }
