@@ -37,11 +37,12 @@ def build_model_card(
     training_hardware: str,
     training_duration_seconds: float,
     base_path: Path,
+    package_version: str = "0.1.0",
 ) -> dict:
     """Construct the ModelCard payload. Fields per Phase 2 §10."""
     return {
         "name": f"neural-weights-{locale}",
-        "version": "0.1.0",
+        "version": package_version,
         "phase": "Stage 1 (coarse)",
         "license": "AGPL-3.0-only",
         "locale": locale,
@@ -108,10 +109,10 @@ def write_package(
     return package_dir
 
 
-def render_package_json(locale: str) -> dict:
+def render_package_json(locale: str, *, package_version: str = "0.1.0") -> dict:
     return {
         "name": f"@mailwoman/neural-weights-{locale}",
-        "version": "0.1.0",
+        "version": package_version,
         "license": "AGPL-3.0-only",
         "description": (
             f"Mailwoman neural-classifier weights for locale '{locale}'. "

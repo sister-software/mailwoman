@@ -49,21 +49,28 @@ train:
   output_dir: /data/models/checkpoints/stage1-coarse
   seed: 42
   # Empirically validated envelope on gfx1103 with hand-rolled MultiheadAttention + bf16:
-  # batch=64 stable, batch≥96 hangs. Use 64 with grad_accum=2 → effective batch 128.
-  # Phase 2 plan asks for batch 256 nominally, "lower if OOM" — gfx1103 hangs are the
-  # equivalent of OOM here. ~345 samples/sec sustained; ~10-12h for 50k steps.
-  batch_size: 64
-  eval_batch_size: 80
-  grad_accum_steps: 2
+  # batch=64 was the v0.1.0 setting but in the v0.2.0 retrain the firmware hangs cluster
+  # every ~50-100 steps at b=64, even with the v0.1.0 model architecture unchanged. The
+  # v0.1.0 ship session evidently got lucky on the gfx1103 hang RNG. Drop to b=32 with
+  # grad_accum=4 → same effective batch 128. The 200-step pre-flight at b=32 ran without
+  # a single hang, and per-step rate (~4.5/s) is actually faster than b=64 (~2.4/s) in
+  # this container's specific firmware state. Phase 2 plan asks for batch 256 nominally,
+  # "lower if OOM" — gfx1103 hangs are the equivalent of OOM here.
+  batch_size: 32
+  eval_batch_size: 40
+  grad_accum_steps: 4
   learning_rate: 5.0e-4
   weight_decay: 0.01
   warmup_steps: 1000
   max_steps: 50000
-  eval_every_steps: 2000
-  # gfx1103 firmware hangs under sustained load; lose less work per crash by saving more
-  # frequently. Optimizer + scheduler state are checkpointed, so resume is exact.
-  save_every_steps: 2000
-  log_every_steps: 100
+  eval_every_steps: 250
+  # gfx1103 firmware hangs under sustained load. Empirical: hangs cluster around step
+  # ~100 from cold start (likely thermal accumulation through the first sustained
+  # backward-only stretch). Save every 100 to bound lost work to ≤ ~40 s per hang, and
+  # keep eval-every below typical hang-interval so periodic forward-only passes
+  # introduce thermal breathing room. Optimizer + scheduler state are checkpointed.
+  save_every_steps: 100
+  log_every_steps: 50
   precision: bf16
   num_workers: 2
   csv_log_path: "{output_dir}/train_log.csv"

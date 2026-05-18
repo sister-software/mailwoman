@@ -53,11 +53,21 @@ def collapse_label(bio_label: str) -> str:
 
 
 def coarse_components_present(components_keys: list[str]) -> bool:
-    """True iff the row has ``country`` and at least one of (region, locality, postcode).
+    """True iff the row has at least one Stage 1 coarse tag.
 
     Used to filter the training rows per Phase 2 §5.1.
+
+    The original gate (v0.1.0) required a ``country`` tag plus one of
+    (region, locality, postcode), modeled on wof-admin's "Paris, France"-style rows.
+    That gate silently dropped every non-wof-admin source in corpus v0.2.0 — BAN,
+    TIGER, NPPES, IMLS, state-* all label house_number / street / postcode / locality /
+    region without a country token, because country is implicit in the data source's
+    geography. The strict gate is therefore the upstream cause of the v0.1.0
+    positional-heuristic overfit (PR #42, issue #43): pre-filter the training data was
+    ~73% wof-admin, post-filter it was ~100% wof-admin.
+
+    Relaxed gate: accept rows that carry at least one of the coarse tags. Rows whose
+    only tags are sub-coarse (``house_number``, ``street``, ``venue``) carry no
+    coarse-level supervision and are still dropped.
     """
-    keys = set(components_keys)
-    if "country" not in keys:
-        return False
-    return bool(keys & {"region", "locality", "postcode"})
+    return bool(set(components_keys) & set(STAGE1_COARSE_TAGS))

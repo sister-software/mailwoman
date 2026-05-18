@@ -64,6 +64,106 @@ def _row_components_keys(labels: Sequence[str]) -> list[str]:
     return list(out)
 
 
+def _shard_first_source(shard: Path) -> str:
+    """Return the ``source`` value of the first row in a parquet shard.
+
+    Corpus v0.2.0 shards are 100% source-segregated (one source per shard), so reading
+    the first row's source identifies the shard's source. Costs ~50 ms / shard at index
+    time; called once per shard when ``_raw_row_stream`` starts.
+    """
+    pf = pq.ParquetFile(shard)
+    rg = pf.read_row_group(0, columns=["source"])
+    return rg["source"][0].as_py()
+
+
+def _shard_row_iter(
+    shard: Path,
+    *,
+    expected_source: str | None,
+    rng: random.Random,
+    country_weights: dict[str, float],
+    max_weight: float,
+    coarse_filter: bool,
+) -> Iterator[dict]:
+    """Yield filter-accepted rows from a single parquet shard, with row-group + row shuffle.
+
+    Applies the country-weight acceptance test, (when ``coarse_filter`` is set) the
+    coarse-label gate, and — when ``expected_source`` is given — a per-row source equality
+    check. The per-row source check matters for the 2 "transition" shards in corpus
+    v0.2.0 (part-0016 and part-0259) where one source's data ends and the next begins
+    mid-shard; without it the per-source iterator would yield rows from the wrong source.
+
+    Does **not** apply source weighting — source weighting is handled at the multinomial
+    sampler level in ``_raw_row_stream``, so that the observed mix matches ``source_weights``
+    exactly (rather than the ``raw_share × accept_share`` shape that per-row source
+    acceptance produces, which under v0.2.0's heavy raw-share skew toward BAN proved
+    unreliable as a steering mechanism — PR #44).
+    """
+    pf = pq.ParquetFile(shard)
+    rg_order = list(range(pf.num_row_groups))
+    rng.shuffle(rg_order)
+    for rg in rg_order:
+        t = pf.read_row_group(rg, columns=list(_REQUIRED_COLUMNS))
+        raws = t["raw"]
+        tokens_col = t["tokens"]
+        labels_col = t["labels"]
+        countries = t["country"]
+        sources = t["source"]
+        idx_order = list(range(t.num_rows))
+        rng.shuffle(idx_order)
+        for i in idx_order:
+            source = sources[i].as_py()
+            if expected_source is not None and source != expected_source:
+                continue
+            country = countries[i].as_py()
+            weight = country_weights.get(country)
+            if weight is None or weight <= 0:
+                continue
+            if weight < max_weight and rng.random() > weight / max_weight:
+                continue
+            bio_labels = labels_col[i].as_py()
+            if coarse_filter:
+                keys = _row_components_keys(bio_labels)
+                if not coarse_components_present(keys):
+                    continue
+            yield {
+                "raw": raws[i].as_py(),
+                "tokens": tokens_col[i].as_py(),
+                "labels": bio_labels,
+                "country": country,
+                "source": source,
+            }
+
+
+def _source_iter(
+    shards: list[Path],
+    *,
+    expected_source: str,
+    rng: random.Random,
+    country_weights: dict[str, float],
+    max_weight: float,
+    coarse_filter: bool,
+) -> Iterator[dict]:
+    """Yield rows from a sequence of shards, restricted to ``expected_source``.
+
+    Shards are visited in shuffled order; within each shard, row-groups and row indices
+    are also shuffled (see ``_shard_row_iter``). One row-group's worth of rows is held
+    in memory at a time per source, so total RAM is bounded by the number of distinct
+    sources, not by any shard-pool parameter.
+    """
+    order = list(shards)
+    rng.shuffle(order)
+    for s in order:
+        yield from _shard_row_iter(
+            s,
+            expected_source=expected_source,
+            rng=rng,
+            country_weights=country_weights,
+            max_weight=max_weight,
+            coarse_filter=coarse_filter,
+        )
+
+
 def _raw_row_stream(
     corpus_dir: Path,
     split: str,
@@ -73,63 +173,89 @@ def _raw_row_stream(
     source_weights: dict[str, float] | None,
     coarse_filter: bool,
 ) -> Iterator[dict]:
-    """Internal unshuffled stream: yields filter-accepted rows in shard / row-group / row order.
+    """Internal stream: yields filter-accepted rows, sampled by weighted source multinomial.
 
     Wrapped by ``iter_rows`` with a reservoir-style shuffle buffer.
+
+    Architecture:
+
+    1. Bucket shards by their (single) ``source`` value. Corpus v0.2.0 shards are 100%
+       source-segregated, so this is a one-time scan of one row-group header per shard.
+    2. For each source, build a per-source row iterator that visits its shards in shuffled
+       order. Each iterator yields rows after country + coarse filtering.
+    3. On each pull, sample a source via the ``source_weights`` multinomial (or uniform
+       when ``source_weights`` is None) and yield the next row from that source's iterator.
+       When a source's iterator exhausts, drop it from the multinomial and renormalize.
+
+    Why this and not per-row source acceptance:
+
+    The naive approach of accepting each row with probability ``source_weights[source] /
+    max(source_weights)`` was the original v0.2.0 implementation (PR #44). It is correct
+    on average — the observed mix converges to ``raw_share × accept_share / norm`` — but
+    under v0.2.0's shard layout it fails empirically: shards are 1M-row single-source
+    blocks, so the downstream shuffle buffer fills entirely from the current shard's
+    source before any cross-source mixing happens. Long runs of one source within a batch
+    reproduce the positional-heuristic overfit that motivated this issue (#43).
+
+    Source-level multinomial sampling makes the observed mix match ``source_weights``
+    *exactly* per-pull, regardless of raw share or shard layout. Memory: one active
+    row-group per source ≈ ``|sources| × 50 MB`` peak — ~300 MB for v0.2.0's 6 train-split
+    sources, well within budget.
     """
     shard_paths = _shard_paths(corpus_dir, split)
     max_weight = max(country_weights.values())
-    max_source_weight = max(source_weights.values()) if source_weights else 1.0
-    # Shard-order shuffle: visit shards in random order each epoch so consecutive optimizer
-    # steps don't see only one shard's data even before the row-level shuffle buffer kicks in.
-    shard_order = list(shard_paths)
-    rng.shuffle(shard_order)
-    for shard in shard_order:
-        pf = pq.ParquetFile(shard)
-        # Within a shard, row-groups also visited in random order.
-        rg_order = list(range(pf.num_row_groups))
-        rng.shuffle(rg_order)
-        for rg in rg_order:
-            t = pf.read_row_group(rg, columns=list(_REQUIRED_COLUMNS))
-            raws = t["raw"]
-            tokens_col = t["tokens"]
-            labels_col = t["labels"]
-            countries = t["country"]
-            sources = t["source"]
-            # Within a row-group, permute indices so adjacent yields are non-contiguous.
-            idx_order = list(range(t.num_rows))
-            rng.shuffle(idx_order)
-            for i in idx_order:
-                country = countries[i].as_py()
-                weight = country_weights.get(country)
-                if weight is None or weight <= 0:
-                    continue
-                # Stratified acceptance — accept w.p. weight / max_weight.
-                if weight < max_weight and rng.random() > weight / max_weight:
-                    continue
-                # Per-source stratified acceptance (independent of country filter).
-                # When source_weights is None, all sources pass.
-                if source_weights is not None:
-                    source = sources[i].as_py()
-                    sw = source_weights.get(source)
-                    if sw is None or sw <= 0:
-                        continue
-                    if sw < max_source_weight and rng.random() > sw / max_source_weight:
-                        continue
-                else:
-                    source = sources[i].as_py()
-                bio_labels = labels_col[i].as_py()
-                if coarse_filter:
-                    keys = _row_components_keys(bio_labels)
-                    if not coarse_components_present(keys):
-                        continue
-                yield {
-                    "raw": raws[i].as_py(),
-                    "tokens": tokens_col[i].as_py(),
-                    "labels": bio_labels,
-                    "country": country,
-                    "source": source,
-                }
+
+    by_source: dict[str, list[Path]] = {}
+    for s in shard_paths:
+        src = _shard_first_source(s)
+        by_source.setdefault(src, []).append(s)
+
+    if source_weights is not None:
+        by_source = {
+            src: shards
+            for src, shards in by_source.items()
+            if source_weights.get(src, 0) > 0
+        }
+        if not by_source:
+            raise ValueError(
+                "no shards remain after applying source_weights — every shard's source "
+                f"is missing from or zero-weighted in source_weights={source_weights!r}"
+            )
+
+    iters: dict[str, Iterator[dict]] = {
+        src: _source_iter(
+            shards,
+            expected_source=src,
+            rng=rng,
+            country_weights=country_weights,
+            max_weight=max_weight,
+            coarse_filter=coarse_filter,
+        )
+        for src, shards in by_source.items()
+    }
+    weights: dict[str, float] = {
+        src: float(source_weights[src]) if source_weights is not None else 1.0
+        for src in iters
+    }
+
+    while iters:
+        sources = list(iters.keys())
+        cum: list[float] = []
+        total = 0.0
+        for src in sources:
+            total += weights[src]
+            cum.append(total)
+        r = rng.random() * total
+        chosen = sources[-1]
+        for src, c in zip(sources, cum):
+            if r < c:
+                chosen = src
+                break
+        try:
+            yield next(iters[chosen])
+        except StopIteration:
+            del iters[chosen]
+            del weights[chosen]
 
 
 def iter_rows(
