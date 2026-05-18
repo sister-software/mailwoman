@@ -191,8 +191,9 @@ def cmd_package(args: argparse.Namespace) -> int:
             training_hardware=args.hardware,
             training_duration_seconds=args.training_duration_seconds,
             base_path=ck_dir,
+            package_version=args.package_version,
         )
-        pkg_json = render_package_json(locale)
+        pkg_json = render_package_json(locale, package_version=args.package_version)
         readme = render_readme(
             locale=locale,
             corpus_version=args.corpus_version,
@@ -394,6 +395,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--locales", default="en-us,fr-fr")
     p.add_argument("--corpus-version", default="0.1.0")
     p.add_argument("--tokenizer-version", default="0.1.0")
+    p.add_argument("--package-version", default="0.1.0", help="Version stamp for model-card.json + package.json")
     p.add_argument("--steps", type=int, default=0)
     p.add_argument("--hardware", default="")
     p.add_argument("--training-duration-seconds", type=float, default=0.0)
