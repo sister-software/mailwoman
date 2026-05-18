@@ -36,7 +36,7 @@ from .config import Config, DataConfig
 from .labels import IGNORE_INDEX, coarse_components_present
 from .tokenizer import Tokenizer, encode_row, whitespace_spans
 
-_REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country")
+_REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country", "source")
 
 
 @dataclass
@@ -70,6 +70,7 @@ def _raw_row_stream(
     *,
     rng: random.Random,
     country_weights: dict[str, float],
+    source_weights: dict[str, float] | None,
     coarse_filter: bool,
 ) -> Iterator[dict]:
     """Internal unshuffled stream: yields filter-accepted rows in shard / row-group / row order.
@@ -78,6 +79,7 @@ def _raw_row_stream(
     """
     shard_paths = _shard_paths(corpus_dir, split)
     max_weight = max(country_weights.values())
+    max_source_weight = max(source_weights.values()) if source_weights else 1.0
     # Shard-order shuffle: visit shards in random order each epoch so consecutive optimizer
     # steps don't see only one shard's data even before the row-level shuffle buffer kicks in.
     shard_order = list(shard_paths)
@@ -93,6 +95,7 @@ def _raw_row_stream(
             tokens_col = t["tokens"]
             labels_col = t["labels"]
             countries = t["country"]
+            sources = t["source"]
             # Within a row-group, permute indices so adjacent yields are non-contiguous.
             idx_order = list(range(t.num_rows))
             rng.shuffle(idx_order)
@@ -104,6 +107,17 @@ def _raw_row_stream(
                 # Stratified acceptance — accept w.p. weight / max_weight.
                 if weight < max_weight and rng.random() > weight / max_weight:
                     continue
+                # Per-source stratified acceptance (independent of country filter).
+                # When source_weights is None, all sources pass.
+                if source_weights is not None:
+                    source = sources[i].as_py()
+                    sw = source_weights.get(source)
+                    if sw is None or sw <= 0:
+                        continue
+                    if sw < max_source_weight and rng.random() > sw / max_source_weight:
+                        continue
+                else:
+                    source = sources[i].as_py()
                 bio_labels = labels_col[i].as_py()
                 if coarse_filter:
                     keys = _row_components_keys(bio_labels)
@@ -114,6 +128,7 @@ def _raw_row_stream(
                     "tokens": tokens_col[i].as_py(),
                     "labels": bio_labels,
                     "country": country,
+                    "source": source,
                 }
 
 
@@ -123,6 +138,7 @@ def iter_rows(
     *,
     rng: random.Random,
     country_weights: dict[str, float],
+    source_weights: dict[str, float] | None = None,
     coarse_filter: bool,
     row_limit: int | None = None,
     shuffle_buffer: int = 16384,
@@ -145,11 +161,12 @@ def iter_rows(
 
     Per Phase 2 §2 (stratified sampling): ``country_weights`` is applied during the raw
     scan, *before* the buffer, so sampled fractions land in the buffer with the configured
-    weights.
+    weights. ``source_weights`` multiplies with ``country_weights`` — a row must pass
+    both to survive. When ``source_weights`` is ``None`` (default), all sources pass.
 
     Memory: each buffered row is a dict of {raw: str, tokens: list[str], labels: list[str],
-    country: str}. For Stage 1 coarse rows, that's ~1 KB per row; default 16384 buffer is
-    ~16 MB resident, well within budget.
+    country: str, source: str}. For Stage 1 coarse rows, that's ~1 KB per row; default
+    16384 buffer is ~16 MB resident, well within budget.
     """
     if not country_weights:
         raise ValueError("country_weights must be non-empty")
@@ -158,6 +175,7 @@ def iter_rows(
         split,
         rng=rng,
         country_weights=country_weights,
+        source_weights=source_weights,
         coarse_filter=coarse_filter,
     )
     buf: list[dict] = []
@@ -205,6 +223,7 @@ def iter_encoded(
         split,
         rng=rng,
         country_weights=cfg_data.country_weights,
+        source_weights=cfg_data.source_weights,
         coarse_filter=cfg_data.coarse_filter,
         row_limit=row_limit,
     ):

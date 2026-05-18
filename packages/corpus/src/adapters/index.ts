@@ -24,8 +24,13 @@ import type { CorpusAdapter } from "../types.js"
 import { banAdapter } from "./ban/adapter.js"
 import { fccBdcAdapter } from "./fcc-bdc/adapter.js"
 import { openaddressesAdapter } from "./openaddresses/adapter.js"
+import { stateIaContractorsAdapter } from "./state-ia-contractors/adapter.js"
+import { stateNyNotariesAdapter } from "./state-ny-notaries/adapter.js"
+import { stateTxNotariesAdapter } from "./state-tx-notaries/adapter.js"
 import { tigerAdapter } from "./tiger/adapter.js"
 import { usgovHrsaFqhcAdapter } from "./usgov-hrsa-fqhc/adapter.js"
+import { usgovImlsPlsAdapter } from "./usgov-imls-pls/adapter.js"
+import { usgovNppesAdapter } from "./usgov-nppes/adapter.js"
 import { usgovSamhsaTreatmentLocatorAdapter } from "./usgov-samhsa-treatment-locator/adapter.js"
 import { wofAdminAdapter } from "./wof-admin-json/adapter.js"
 import { wofPostalcodeAdapter } from "./wof-postalcode-json/adapter.js"
@@ -44,6 +49,11 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	fccBdcAdapter,
 	usgovHrsaFqhcAdapter,
 	usgovSamhsaTreatmentLocatorAdapter,
+	usgovNppesAdapter,
+	usgovImlsPlsAdapter,
+	stateIaContractorsAdapter,
+	stateTxNotariesAdapter,
+	stateNyNotariesAdapter,
 ]
 
 for (const adapter of BUILTIN_ADAPTERS) {
@@ -59,12 +69,33 @@ export {
 	OPENADDRESSES_DEFAULT_LICENSE,
 	openaddressesAdapter,
 } from "./openaddresses/adapter.js"
+export {
+	STATE_IA_CONTRACTORS_ADAPTER_ID,
+	STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
+	stateIaContractorsAdapter,
+} from "./state-ia-contractors/adapter.js"
+export {
+	STATE_NY_NOTARIES_ADAPTER_ID,
+	STATE_NY_NOTARIES_DEFAULT_LICENSE,
+	stateNyNotariesAdapter,
+} from "./state-ny-notaries/adapter.js"
+export {
+	STATE_TX_NOTARIES_ADAPTER_ID,
+	STATE_TX_NOTARIES_DEFAULT_LICENSE,
+	stateTxNotariesAdapter,
+} from "./state-tx-notaries/adapter.js"
 export { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, tigerAdapter } from "./tiger/adapter.js"
 export {
 	USGOV_HRSA_FQHC_ADAPTER_ID,
 	USGOV_HRSA_FQHC_DEFAULT_LICENSE,
 	usgovHrsaFqhcAdapter,
 } from "./usgov-hrsa-fqhc/adapter.js"
+export {
+	USGOV_IMLS_PLS_ADAPTER_ID,
+	USGOV_IMLS_PLS_DEFAULT_LICENSE,
+	usgovImlsPlsAdapter,
+} from "./usgov-imls-pls/adapter.js"
+export { USGOV_NPPES_ADAPTER_ID, USGOV_NPPES_DEFAULT_LICENSE, usgovNppesAdapter } from "./usgov-nppes/adapter.js"
 export {
 	USGOV_SAMHSA_ADAPTER_ID,
 	USGOV_SAMHSA_DEFAULT_LICENSE,

@@ -68,3 +68,4 @@ dist
 # .model files are reproduced by `python -m mailwoman_train package`.
 packages/neural-weights-*/model.onnx
 packages/neural-weights-*/tokenizer.model
+.claude/
