@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Mailwoman — address parser demo</title>
+		<style>
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				font-family:
+					ui-sans-serif,
+					system-ui,
+					-apple-system,
+					sans-serif;
+				margin: 0;
+				padding: 2rem;
+				max-width: 920px;
+				margin-inline: auto;
+				line-height: 1.5;
+				color: #222;
+				background: #fafafa;
+			}
+			h1 {
+				font-weight: 600;
+				margin-top: 0;
+			}
+			h2 {
+				font-weight: 500;
+				margin-top: 1.5rem;
+				border-bottom: 1px solid #ddd;
+				padding-bottom: 0.25rem;
+			}
+			.meta {
+				color: #888;
+				font-size: 0.85em;
+			}
+			.model-banner {
+				background: #fff3cd;
+				border-left: 3px solid #f6a;
+				padding: 0.5rem 1rem;
+				margin-bottom: 1rem;
+				font-size: 0.9em;
+			}
+			textarea {
+				width: 100%;
+				font-family: ui-monospace, "SF Mono", monospace;
+				font-size: 1em;
+				padding: 0.75rem;
+				min-height: 70px;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+				resize: vertical;
+			}
+			.row {
+				display: flex;
+				gap: 1rem;
+				align-items: center;
+				margin: 1rem 0;
+			}
+			button {
+				padding: 0.5rem 1.25rem;
+				font-size: 0.95em;
+				cursor: pointer;
+				background: #345;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				transition: background 0.1s;
+			}
+			button:hover {
+				background: #456;
+			}
+			button.secondary {
+				background: #e4e4e4;
+				color: #333;
+				font-size: 0.85em;
+				padding: 0.3rem 0.75rem;
+				margin: 2px;
+			}
+			button.secondary:hover {
+				background: #d4d4d4;
+			}
+			.examples {
+				margin: 0.5rem 0 1.5rem;
+			}
+			.legend {
+				display: flex;
+				gap: 1rem;
+				flex-wrap: wrap;
+				font-size: 0.85em;
+				margin: 1rem 0;
+			}
+			.legend-item {
+				display: flex;
+				align-items: center;
+				gap: 0.35rem;
+			}
+			.swatch {
+				width: 14px;
+				height: 14px;
+				border-radius: 3px;
+				display: inline-block;
+			}
+			.components {
+				margin: 1rem 0;
+				padding: 0.75rem 1rem;
+				background: white;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+			}
+			.comp-row {
+				display: grid;
+				grid-template-columns: 160px 1fr;
+				gap: 1rem;
+				padding: 0.3rem 0;
+				border-bottom: 1px solid #f0f0f0;
+			}
+			.comp-row:last-child {
+				border-bottom: none;
+			}
+			.comp-tag {
+				font-weight: 600;
+				color: #345;
+			}
+			.comp-value {
+				font-family: ui-monospace, monospace;
+				word-break: break-all;
+			}
+			.empty-components {
+				color: #888;
+				font-style: italic;
+				padding: 0.5rem;
+			}
+			.token-grid {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+				margin: 1rem 0;
+			}
+			.token {
+				padding: 0.4rem 0.6rem;
+				border-radius: 4px;
+				font-family: ui-monospace, monospace;
+				font-size: 0.85em;
+				color: white;
+				min-width: 60px;
+				text-align: center;
+				box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+			}
+			.token-piece {
+				font-weight: 600;
+			}
+			.token-meta {
+				font-size: 0.7em;
+				opacity: 0.85;
+				margin-top: 0.15rem;
+			}
+			.conf-bar {
+				height: 3px;
+				background: rgba(255, 255, 255, 0.3);
+				border-radius: 2px;
+				margin-top: 0.25rem;
+			}
+			.conf-fill {
+				height: 100%;
+				background: rgba(255, 255, 255, 0.9);
+				border-radius: 2px;
+			}
+			/* Per-class colors — keep in sync with backend LABELS */
+			.label-O {
+				background: #aaa;
+			}
+			.label-country {
+				background: #c0392b;
+			}
+			.label-region {
+				background: #d35400;
+			}
+			.label-locality {
+				background: #27ae60;
+			}
+			.label-postcode {
+				background: #2980b9;
+			}
+			.label-subregion {
+				background: #8e44ad;
+			}
+			.label-dependent_locality {
+				background: #16a085;
+			}
+			.label-cedex {
+				background: #e91e63;
+			}
+			pre {
+				background: #1e1e1e;
+				color: #d4d4d4;
+				padding: 1rem;
+				border-radius: 4px;
+				overflow-x: auto;
+				font-size: 0.85em;
+			}
+			.stat {
+				display: inline-block;
+				padding: 0.15rem 0.5rem;
+				background: #eee;
+				border-radius: 3px;
+				font-size: 0.85em;
+				margin-right: 0.5rem;
+			}
+			.stat strong {
+				color: #345;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Mailwoman address parser — live demo</h1>
+		<div class="model-banner">
+			<strong>⚠ Alpha — v0.1.0 baseline weights.</strong>
+			This model trained 6,000 of 50,000 planned steps and ships below targets (macro F1 ~0.03) due to corpus-imbalance
+			overfit. Use to demo the API + UX shape; v0.2.0 should land in ~1h with much better numbers.
+		</div>
+
+		<textarea id="input" autofocus>1600 Pennsylvania Avenue NW, Washington, DC 20500</textarea>
+
+		<div class="row">
+			<button onclick="parseIt()">Parse →</button>
+			<span class="meta">or press <kbd>Ctrl+Enter</kbd></span>
+		</div>
+
+		<div class="examples">
+			<div class="meta" style="margin-bottom: 0.3rem">try one of these:</div>
+			<button class="secondary" onclick="setEx('Buffalo Health Center Inc., 200 Elmwood Ave, Buffalo, NY 14222')">
+				venue with name collision
+			</button>
+			<button class="secondary" onclick="setEx('245 1st Ave N, Saint Petersburg, FL 33701')">
+				St. Petersburg disambiguation
+			</button>
+			<button class="secondary" onclick="setEx('15 Rue de Rivoli, 75004 Paris, France')">French street address</button>
+			<button class="secondary" onclick="setEx('RR 2 Box 67, Rural Springs, MT 59101')">rural route</button>
+			<button class="secondary" onclick="setEx('PO Box 1234, Anchorage, AK 99501')">PO box</button>
+			<button class="secondary" onclick="setEx('40-12 Bell Blvd, Bayside, NY 11361')">hyphenated NYC house</button>
+			<button class="secondary" onclick="setEx('The New York Steakhouse, 123 Main St, New York, NY 10001')">
+				name repetition
+			</button>
+		</div>
+
+		<div class="legend">
+			<span class="legend-item"><span class="swatch label-country"></span>country</span>
+			<span class="legend-item"><span class="swatch label-region"></span>region</span>
+			<span class="legend-item"><span class="swatch label-locality"></span>locality</span>
+			<span class="legend-item"><span class="swatch label-postcode"></span>postcode</span>
+			<span class="legend-item"><span class="swatch label-subregion"></span>subregion</span>
+			<span class="legend-item"><span class="swatch label-dependent_locality"></span>dep_locality</span>
+			<span class="legend-item"><span class="swatch label-cedex"></span>cedex</span>
+			<span class="legend-item"><span class="swatch label-O"></span>O (no label)</span>
+		</div>
+
+		<div id="results"></div>
+
+		<script>
+			function setEx(text) {
+				document.getElementById("input").value = text
+				parseIt()
+			}
+
+			async function parseIt() {
+				const text = document.getElementById("input").value.trim()
+				if (!text) return
+				const out = document.getElementById("results")
+				out.innerHTML = '<p class="meta">…parsing…</p>'
+				let data
+				try {
+					const res = await fetch("/parse", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ text }),
+					})
+					data = await res.json()
+					if (!res.ok) {
+						out.innerHTML = `<p style="color:#c0392b">${escapeHtml(data.error || res.statusText)}</p>`
+						return
+					}
+				} catch (e) {
+					out.innerHTML = `<p style="color:#c0392b">network error: ${escapeHtml(String(e))}</p>`
+					return
+				}
+				render(data)
+			}
+
+			function colorClass(label) {
+				if (label === "O") return "label-O"
+				const tag = label.split("-").slice(1).join("-")
+				return `label-${tag}`
+			}
+
+			function render(data) {
+				let html = ""
+				html += `<h2>Parsed components</h2><div class="components">`
+				const comps = Object.entries(data.components)
+				if (comps.length === 0) {
+					html += `<div class="empty-components">none — model produced no recognized labels (everything came back as O)</div>`
+				} else {
+					for (const [tag, value] of comps) {
+						html += `<div class="comp-row"><span class="comp-tag">${tag}</span><span class="comp-value">${escapeHtml(value)}</span></div>`
+					}
+				}
+				html += `</div>`
+
+				html += `<h2>Per-token BIO labels + confidence</h2>`
+				html += `<div><span class="stat">mean conf: <strong>${data.mean_confidence.toFixed(3)}</strong></span>`
+				html += `<span class="stat">tokens: <strong>${data.tokens.length}</strong></span>`
+				html += `<span class="stat">model: <strong>${escapeHtml(data.model)}</strong></span></div>`
+				html += `<div class="token-grid">`
+				for (const t of data.tokens) {
+					html += `<div class="token ${colorClass(t.label)}">
+      <div class="token-piece">${escapeHtml(t.piece)}</div>
+      <div class="token-meta">${escapeHtml(t.label)} · ${(t.confidence * 100).toFixed(0)}%</div>
+      <div class="conf-bar"><div class="conf-fill" style="width:${t.confidence * 100}%"></div></div>
+    </div>`
+				}
+				html += `</div>`
+
+				html += `<h2>Raw JSON response</h2><pre>${escapeHtml(JSON.stringify(data, null, 2))}</pre>`
+				document.getElementById("results").innerHTML = html
+			}
+
+			function escapeHtml(s) {
+				return String(s)
+					.replace(/&/g, "&amp;")
+					.replace(/</g, "&lt;")
+					.replace(/>/g, "&gt;")
+					.replace(/"/g, "&quot;")
+					.replace(/'/g, "&#39;")
+			}
+
+			document.getElementById("input").addEventListener("keydown", (e) => {
+				if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+					parseIt()
+				}
+			})
+
+			// auto-fire on load with the default example
+			window.addEventListener("DOMContentLoaded", parseIt)
+		</script>
+	</body>
+</html>
