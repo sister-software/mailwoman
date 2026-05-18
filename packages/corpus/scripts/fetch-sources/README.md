@@ -28,17 +28,42 @@ single executable place.
 
 ## Coverage
 
-| Script                   | Sources                                                                             | License tier            |
-| ------------------------ | ----------------------------------------------------------------------------------- | ----------------------- |
-| `fetch-hrsa.sh`          | HRSA Health Center Service Delivery Sites (federal)                                 | A (US PD)               |
-| `fetch-imls-pls.sh`      | IMLS Public Libraries Survey — outlet-level (~17K library branches, FY 2023)        | A (US PD)               |
-| `fetch-nppes.sh`         | NPPES NPI registry — full monthly dissemination (~7M provider venue+address rows)   | A (US PD)               |
-| `fetch-state-sources.sh` | NY/TX/DE/OR notaries, IA contractors, WA health providers, HI schools, HI lobbyists | A (state PD-equivalent) |
+| Script                   | Sources                                                                             | License tier               |
+| ------------------------ | ----------------------------------------------------------------------------------- | -------------------------- |
+| `fetch-hrsa.sh`          | HRSA Health Center Service Delivery Sites (federal)                                 | A (US PD)                  |
+| `fetch-imls-pls.sh`      | IMLS Public Libraries Survey — outlet-level (~17K library branches, FY 2023)        | A (US PD)                  |
+| `fetch-nppes.sh`         | NPPES NPI registry — full monthly dissemination (~7M provider venue+address rows)   | A (US PD)                  |
+| `fetch-state-sources.sh` | NY/TX/DE/OR notaries, IA contractors, WA health providers, HI schools, HI lobbyists | A (state PD-equivalent)    |
+| `fetch-openaddresses.sh` | OpenAddresses country collections (default: Canada / `ca`)                          | B/C mixed — per-row filter |
 
 License tiers per `docs/licensing-strategy.md` (or the playpen knowledge base
 mirror at `docs/docs/projects/mailwoman/licensing-strategy.md`). Sources here
-are all Tier A — safe for proprietary-weights training without attribution
-beyond the model-card disclosure.
+are all Tier A except `fetch-openaddresses.sh`, which is a **Tier-mixed**
+source: the downloaded collection includes CC0, CC-BY, OGL, and ODbL/CC-BY-SA
+rows. The per-row `LICENSE` filter in the `openaddresses` adapter is
+load-bearing — Tier-C (ODbL, CC-BY-SA) rows are dropped at ingest by default
+to protect proprietary-weights training.
+
+### OpenAddresses authentication (as of 2026-05-18)
+
+`batch.openaddresses.io` now requires a free registered account for bulk
+downloads (auth gate prevents CDN abuse; data remains openly licensed).
+`fetch-openaddresses.sh` reads `OA_BATCH_TOKEN` from the environment:
+
+```sh
+# One-time: register at https://batch.openaddresses.io/register
+# Log in → Profile → "Create Token" → copy token
+export OA_BATCH_TOKEN=<your-token>
+
+# Download Canada (~2 GiB compressed, ~7 GiB uncompressed)
+OUT_ROOT=/mnt/playpen/mailwoman-data/corpus/sources \
+  packages/corpus/scripts/fetch-sources/fetch-openaddresses.sh --country ca
+
+# Or any other OA country code
+OA_BATCH_TOKEN=$OA_BATCH_TOKEN packages/corpus/scripts/fetch-sources/fetch-openaddresses.sh --country fr
+```
+
+The script without a token prints setup instructions and exits cleanly.
 
 ## Adding a new source
 
