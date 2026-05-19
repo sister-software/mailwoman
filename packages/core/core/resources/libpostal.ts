@@ -13,7 +13,7 @@ import pluralize from "pluralize"
 import { TextSpliterator } from "spliterator"
 import { resourceDictionaryPathBuilder } from "../../utils/repo.js"
 import { takeAsync } from "./collections.js"
-import { tryStat } from "./fs.js"
+import { readLines, tryStat } from "./fs.js"
 import { LocaleIndex } from "./LocaleIndex.js"
 
 const batchSize = availableParallelism()
@@ -92,7 +92,7 @@ export async function prepareLocaleIndex(
 	for await (const batch of fileEntries) {
 		await Promise.all(
 			batch.map(async ({ filePath, languageCode }) => {
-				const lines = TextSpliterator.fromAsync(filePath)
+				const lines = readLines(filePath)
 
 				for await (const line of lines) {
 					for (const entry of TextSpliterator.from(line, { delimiter: "|" })) {
@@ -112,7 +112,7 @@ export async function prepareLocaleIndex(
 	for await (const batch of internalFileEntries) {
 		await Promise.all(
 			batch.map(async ({ filePath, languageCode }) => {
-				const lines = TextSpliterator.fromAsync(filePath)
+				const lines = readLines(filePath)
 
 				for await (const line of lines) {
 					if (!line) continue

@@ -9,8 +9,8 @@ import { TextNormalizer } from "@mailwoman/core/tokenization"
 import FastGlob, { Entry } from "fast-glob"
 
 import { PathBuilder, PathBuilderLike } from "path-ts"
-import { TextSpliterator } from "spliterator"
 import { Displayable } from "../debugging.js"
+import { readLines } from "../fs.js"
 import { ResourceMapCache } from "../ResourceMapCache.js"
 import { DisposableSet } from "../set.js"
 import { parsePlacetypeSource } from "./placetypes/admin.js"
@@ -117,7 +117,7 @@ export class WOFPlacenameCache extends ResourceMapCache<string, DisposableSet<Al
 		for await (const fileEntry of globStream) {
 			const { languageCode = "eng" } = parsePlacetypeSource(fileEntry.name)
 
-			const lines = TextSpliterator.fromAsync(fileEntry.path)
+			const lines = readLines(fileEntry.path)
 
 			for await (const line of lines) {
 				const row = line.trim()
