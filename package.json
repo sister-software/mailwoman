@@ -26,10 +26,11 @@
 		"lint:prettier:fix": "prettier --cache --write -u .",
 		"prepare": "husky",
 		"release": "release-it",
-		"test": "vitest",
+		"test": "vitest --run",
 		"test:coverage": "vitest --coverage",
 		"test:integration": "vitest --dir ./mailwoman/test",
-		"test:unit": "vitest --exclude ./mailwoman/test"
+		"test:unit": "vitest --exclude ./mailwoman/test",
+		"test:watch": "vitest --watch"
 	},
 	"type": "module",
 	"devDependencies": {

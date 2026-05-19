@@ -30,7 +30,7 @@
 		"before:init": [
 			"echo 'Pre-flight: compile + test + copy-weights'",
 			"yarn compile",
-			"yarn test --run",
+			"yarn test",
 			"node scripts/copy-weights.mjs"
 		],
 		"after:release": "echo 'Released v${version}'"

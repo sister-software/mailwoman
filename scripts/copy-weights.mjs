@@ -15,6 +15,7 @@
  *   - MAILWOMAN_PUBLISH_TOKENIZER: path to the v0.1.0 tokenizer.model
  *
  *   Idempotent. Used by .release-it.json's before:release hook.
+ * @import {PathLike} from "node:fs"
  */
 
 import { copyFile, mkdir, stat } from "node:fs/promises"
@@ -32,6 +33,9 @@ const SOURCE_TOKENIZER =
 
 const TARGETS = ["neural-weights-en-us", "neural-weights-fr-fr"]
 
+/**
+ * @param {PathLike} path
+ */
 async function exists(path) {
 	try {
 		await stat(path)
