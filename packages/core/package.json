@@ -14,6 +14,7 @@
 		"./parser": "./out/core/parser/index.js",
 		"./solver": "./out/core/solver/index.js",
 		"./formatter": "./out/core/formatter/index.js",
+		"./decoder": "./out/core/decoder/index.js",
 		"./resources": "./out/core/resources/index.js",
 		"./resources/languages": "./out/core/resources/languages/index.js",
 		"./resources/db": "./out/core/resources/db/index.js",

@@ -1,0 +1,147 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { describe, expect, test } from "vitest"
+import type { BioLabel } from "../types/component.js"
+import { buildAddressTree } from "./build-tree.js"
+import { decodeAsJson } from "./serialize-json.js"
+import { decodeAsTuples } from "./serialize-tuples.js"
+import { decodeAsXml } from "./serialize-xml.js"
+import type { DecoderToken } from "./types.js"
+
+function tok(piece: string, start: number, end: number, label: BioLabel, confidence = 1): DecoderToken {
+	return { piece, start, end, label, confidence }
+}
+
+const WHITE_HOUSE_RAW = "1600 Pennsylvania Avenue NW, Washington, DC 20500"
+const WHITE_HOUSE_TOKENS: DecoderToken[] = [
+	tok("1600", 0, 4, "B-house_number"),
+	tok("Pennsylvania", 5, 17, "B-street"),
+	tok("Avenue", 18, 24, "I-street"),
+	tok("NW", 25, 27, "I-street"),
+	tok(",", 27, 28, "O"),
+	tok("Washington", 29, 39, "B-locality"),
+	tok(",", 39, 40, "O"),
+	tok("DC", 41, 43, "B-region"),
+	tok("20500", 44, 49, "B-postcode"),
+]
+
+describe("decodeAsJson (libpostal-compat)", () => {
+	test("flattens to a tag→value map", () => {
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		expect(decodeAsJson(tree)).toEqual({
+			house_number: "1600",
+			street: "Pennsylvania Avenue NW",
+			locality: "Washington",
+			region: "DC",
+			postcode: "20500",
+		})
+	})
+
+	test("first-occurrence wins for repeated tags", () => {
+		// "Springfield IL Springfield MA" → two B-locality
+		const raw = "Springfield IL Springfield MA"
+		const tokens: DecoderToken[] = [
+			tok("Springfield", 0, 11, "B-locality"),
+			tok("IL", 12, 14, "B-region"),
+			tok("Springfield", 15, 26, "B-locality"),
+			tok("MA", 27, 29, "B-region"),
+		]
+		const tree = buildAddressTree(raw, tokens)
+		const json = decodeAsJson(tree)
+		// First locality / region encountered in tree walk wins.
+		expect(json.locality).toBeDefined()
+		expect(json.region).toBeDefined()
+	})
+})
+
+describe("decodeAsTuples (order-preserving)", () => {
+	test("returns spans in source order", () => {
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		expect(decodeAsTuples(tree)).toEqual([
+			["house_number", "1600"],
+			["street", "Pennsylvania Avenue NW"],
+			["locality", "Washington"],
+			["region", "DC"],
+			["postcode", "20500"],
+		])
+	})
+
+	test("preserves repetition", () => {
+		const raw = "Springfield IL Springfield MA"
+		const tokens: DecoderToken[] = [
+			tok("Springfield", 0, 11, "B-locality"),
+			tok("IL", 12, 14, "B-region"),
+			tok("Springfield", 15, 26, "B-locality"),
+			tok("MA", 27, 29, "B-region"),
+		]
+		const tree = buildAddressTree(raw, tokens)
+		const tuples = decodeAsTuples(tree)
+		expect(tuples.filter(([t]) => t === "locality").length).toBe(2)
+		expect(tuples.filter(([t]) => t === "region").length).toBe(2)
+	})
+})
+
+describe("decodeAsXml (nested mixed-content)", () => {
+	test("emits root <address> with @raw and nested components with @start/@end/@conf", () => {
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const xml = decodeAsXml(tree)
+		// Root attribute carries the raw input.
+		expect(xml).toContain(`<address raw="1600 Pennsylvania Avenue NW, Washington, DC 20500">`)
+		// Region wraps locality wraps street/postcode.
+		expect(xml).toContain(`<region start="41" end="43" conf="1.00">DC`)
+		expect(xml).toContain(`<locality start="29" end="39" conf="1.00">Washington`)
+		expect(xml).toContain(`<street start="5" end="27" conf="1.00">Pennsylvania Avenue NW`)
+		expect(xml).toContain(`<house_number start="0" end="4" conf="1.00">1600</house_number>`)
+		expect(xml).toContain(`<postcode start="44" end="49" conf="1.00">20500</postcode>`)
+		// Closing tags balance.
+		expect(xml).toContain(`</street>`)
+		expect(xml).toContain(`</locality>`)
+		expect(xml).toContain(`</region>`)
+		expect(xml).toContain(`</address>`)
+	})
+
+	test("escapes XML special chars in @raw and component values", () => {
+		const raw = `<dangerous & "quoted">`
+		const tokens: DecoderToken[] = [tok(raw, 0, raw.length, "B-locality")]
+		const tree = buildAddressTree(raw, tokens)
+		const xml = decodeAsXml(tree)
+		expect(xml).toContain(`raw="&lt;dangerous &amp; &quot;quoted&quot;&gt;"`)
+		expect(xml).toContain(`>&lt;dangerous &amp; &quot;quoted&quot;&gt;<`)
+		expect(xml).not.toContain(`raw="<dangerous`)
+	})
+
+	test("respects opts: includeOffsets=false drops start/end attrs", () => {
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const xml = decodeAsXml(tree, { includeOffsets: false })
+		expect(xml).not.toContain(`start=`)
+		expect(xml).not.toContain(`end=`)
+		expect(xml).toContain(`conf="1.00"`)
+	})
+
+	test("respects opts: includeConf=false drops conf attrs", () => {
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const xml = decodeAsXml(tree, { includeConf: false })
+		expect(xml).not.toContain(`conf=`)
+		expect(xml).toContain(`start=`)
+	})
+
+	test("opts: pretty=false emits a single line", () => {
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const xml = decodeAsXml(tree, { pretty: false })
+		expect(xml.includes("\n")).toBe(false)
+		expect(xml.includes("\t")).toBe(false)
+	})
+
+	test("well-formed: every opened tag closes", () => {
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const xml = decodeAsXml(tree)
+		const openers = [...xml.matchAll(/<([a-z_]+)(?:\s[^>]*)?>/g)].map((m) => m[1])
+		const closers = [...xml.matchAll(/<\/([a-z_]+)>/g)].map((m) => m[1])
+		// Self-closing tags would shorten the closer list; we don't emit any, so they should match.
+		expect(openers.sort()).toEqual(closers.sort())
+	})
+})

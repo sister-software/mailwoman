@@ -5,6 +5,7 @@
  */
 
 export * from "./classification/index.js"
+export * from "./decoder/index.js"
 export * from "./formatter/index.js"
 export * from "./parser/index.js"
 export * from "./resources/index.js"
