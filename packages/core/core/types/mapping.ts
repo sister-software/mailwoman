@@ -51,3 +51,27 @@ export function legacyClassificationToComponentTag(legacy: Classification): Comp
  * filter the span graph by "which legacy tags do I expect this classifier to produce."
  */
 export const MAPPED_LEGACY_CLASSIFICATIONS = Object.keys(LEGACY_TO_COMPONENT) as Classification[]
+
+/**
+ * Inverse of {@link LEGACY_TO_COMPONENT}. Picks the FIRST legacy entry that maps to each component —
+ * for tags with multiple legacy aliases (e.g. `intersection_a` and `intersection_b` both come from
+ * legacy `intersection`), the deterministic "first wins" rule is documented and tested.
+ */
+const COMPONENT_TO_LEGACY: Partial<Record<ComponentTag, Classification>> = (() => {
+	const out: Partial<Record<ComponentTag, Classification>> = {}
+	for (const [legacy, component] of Object.entries(LEGACY_TO_COMPONENT) as Array<[Classification, ComponentTag]>) {
+		if (!(component in out)) out[component] = legacy
+	}
+	return out
+})()
+
+/**
+ * Translate a canonical {@link ComponentTag} into a legacy {@link Classification}, or `null` when the
+ * component has no legacy equivalent (e.g. JP-specific tags that don't exist in the rule path).
+ *
+ * Used by the parser-level proposal pipeline to write surviving neural proposals back into the
+ * `TokenContext`'s span graph as classifications the solver can read.
+ */
+export function componentTagToLegacyClassification(component: ComponentTag): Classification | null {
+	return COMPONENT_TO_LEGACY[component] ?? null
+}
