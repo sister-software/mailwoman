@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { ClassifierSchemeConfig, CompositeClassifier } from "@mailwoman/core"
+import { type ClassifierSchemeConfig, CompositeClassifier } from "@mailwoman/core"
 
 const configs: ClassifierSchemeConfig[] = [
 	{

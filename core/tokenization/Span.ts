@@ -13,9 +13,9 @@ import {
 	type ClassificationMatch,
 	ClassificationsMatchMap,
 } from "../classification/Classification.js"
-import { Displayable } from "../resources/debugging.js"
-import { Alpha3bLanguageCode } from "../resources/languages/index.js"
-import { LibPostalLanguageCode } from "../resources/libpostal.js"
+import type { Displayable } from "../resources/debugging.js"
+import type { Alpha3bLanguageCode } from "../resources/languages/index.js"
+import type { LibPostalLanguageCode } from "../resources/libpostal.js"
 import { Graph } from "./Graph.js"
 
 const MAX_SPAN_LENGTH = 140

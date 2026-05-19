@@ -76,7 +76,7 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 		// Documented unsupported cases in tokenizer.ts: byte-fallback pieces (`<0xHH>`) and inputs
 		// containing zero-width joiner / non-joiner characters that the walker can't account for.
 		const BYTE_FALLBACK_RE = /^<0x[0-9A-F]{2}>$/u
-		const ZERO_WIDTH_RE = /[​-‏﻿]/u
+		const ZERO_WIDTH_RE = /[\u200B-\u200F\uFEFF]/u
 
 		let supported = 0
 		let mismatches = 0

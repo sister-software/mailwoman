@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { ClassificationMatch, ClassificationsMatchInput } from "@mailwoman/core/classification"
+import type { ClassificationMatch, ClassificationsMatchInput } from "@mailwoman/core/classification"
 import { Span } from "@mailwoman/core/tokenization"
 
 export interface SerializedSolutionMatch extends ClassificationMatch {

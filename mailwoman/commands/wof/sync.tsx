@@ -9,7 +9,7 @@ import {
 	formatQuantity,
 	Placetype,
 	PLACETYPES_REPO_SOURCE,
-	RepositorySource,
+	type RepositorySource,
 	synchronizeRepo,
 	takeInParallel,
 } from "@mailwoman/core"
@@ -19,7 +19,7 @@ import { PathBuilder } from "path-ts"
 import { useEffect, useMemo, useState } from "react"
 import zod from "zod"
 import { $ } from "zx"
-import { CommandComponent } from "../../sdk/cli.js"
+import type { CommandComponent } from "../../sdk/cli.js"
 
 const BATCH_SIZE = availableParallelism()
 const WOF_REPO_OWNER = "whosonfirst-data"
@@ -71,6 +71,7 @@ const WOFSync: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = 
 			.map((entry): RepositorySource => ({ ...entry, owner: WOF_REPO_OWNER }))
 
 		const filtered = allow ? discovered.filter((entry) => allow.has(entry.name)) : discovered
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot repo discovery; refactor pending
 		setRepos([...filtered, PLACETYPES_REPO_SOURCE])
 	}, [localRepoDirectory, allow])
 

@@ -14,7 +14,7 @@ import { Text } from "ink"
 import { createAddressParser, createDiagnosticReport } from "mailwoman"
 import { useEffect, useState } from "react"
 import zod from "zod"
-import { CommandComponent } from "../sdk/cli.js"
+import type { CommandComponent } from "../sdk/cli.js"
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
@@ -82,6 +82,7 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 		const input = args[0]!
 
 		if (options.policy && options.policy.length > 0 && !options.neural) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount validation; refactor pending
 			setError("--policy requires --neural in this version (rule-side policy integration is a follow-up).")
 			return
 		}

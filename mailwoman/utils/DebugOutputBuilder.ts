@@ -5,12 +5,12 @@
  */
 
 import {
-	ClassificationMatch,
+	type ClassificationMatch,
 	pluckLanguageLabel,
 	Solution,
 	Span,
 	TokenContext,
-	VerboseParseResult,
+	type VerboseParseResult,
 } from "@mailwoman/core"
 import chalk from "chalk"
 import { inspect } from "node:util"

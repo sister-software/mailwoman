@@ -5,15 +5,15 @@
  */
 
 import {
-	Classification,
-	ClassificationConfidenceMap,
-	ClassificationMap,
-	ClassificationRecord,
+	type Classification,
+	type ClassificationConfidenceMap,
+	type ClassificationMap,
+	type ClassificationRecord,
 	isVisibleClassification,
 } from "@mailwoman/core/classification"
 import { formatAddress } from "@mailwoman/core/formatter"
 import type { TokenContext } from "@mailwoman/core/tokenization"
-import { SerializedSolutionMatch, SolutionMatch } from "./SolutionMatch.js"
+import { type SerializedSolutionMatch, SolutionMatch } from "./SolutionMatch.js"
 
 export interface SerializedSolution {
 	score: number

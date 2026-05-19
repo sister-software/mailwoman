@@ -6,14 +6,14 @@
 
 import {
 	Alpha2LanguageCode,
-	Alpha3bLanguageCode,
+	type Alpha3bLanguageCode,
 	Alpha3bToAlpha2,
 	isAlpha3bLanguageCode,
 } from "@mailwoman/core/resources/languages"
-import sqlite, { Options as SQLiteOptions } from "better-sqlite3"
-import { PathBuilder, PathBuilderLike } from "path-ts"
+import sqlite, { type Options as SQLiteOptions } from "better-sqlite3"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { tryWithBackoff } from "./DataSourceCache.js"
-import { WhosOnFirstPlacetype } from "./placetypes/definition.js"
+import type { WhosOnFirstPlacetype } from "./placetypes/definition.js"
 
 export interface PlacetypeDataSourceOptions<
 	P extends WhosOnFirstPlacetype = WhosOnFirstPlacetype,

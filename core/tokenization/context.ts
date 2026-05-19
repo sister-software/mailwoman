@@ -7,11 +7,11 @@
 import {
 	compareMatchesByStart,
 	rankingSolutionsByAreaClassification,
-	SerializedSolution,
+	type SerializedSolution,
 	type Solution,
 } from "@mailwoman/core/solver"
 import { permutate } from "./permutate.js"
-import { SerializedSpan, Span } from "./Span.js"
+import { type SerializedSpan, Span } from "./Span.js"
 import { fieldsFuncBoundary, fieldsFuncHyphenOrWhiteSpace, fieldsFuncWhiteSpace, splitByField } from "./split.js"
 
 export interface SerializedTokenContext {

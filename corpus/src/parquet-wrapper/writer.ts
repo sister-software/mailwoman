@@ -19,12 +19,17 @@
  */
 
 import { ParquetWriter as BaseParquetWriter } from "@dsnp/parquetjs"
-import { WriterOptions } from "@dsnp/parquetjs/dist/lib/declare.js"
-import { osopen, WriteStreamMinimal } from "@dsnp/parquetjs/dist/lib/util.js"
+import type { WriterOptions } from "@dsnp/parquetjs/dist/lib/declare.js"
+import { osopen, type WriteStreamMinimal } from "@dsnp/parquetjs/dist/lib/util.js"
 import { ParquetEnvelopeWriter } from "@dsnp/parquetjs/dist/lib/writer.js"
 import * as fs from "node:fs/promises"
 import * as path from "node:path"
-import { ParquetRecordLike, ParquetSchema, ParquetSchemaDefinition, ParquetSchemaDefinitionCache } from "./schema.js"
+import {
+	type ParquetRecordLike,
+	ParquetSchema,
+	type ParquetSchemaDefinition,
+	ParquetSchemaDefinitionCache,
+} from "./schema.js"
 
 /** A typed Parquet writer, wrapping the base Parquet writer. */
 export class ParquetWriter<T extends ParquetRecordLike> extends BaseParquetWriter implements AsyncDisposable {

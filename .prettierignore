@@ -32,9 +32,9 @@ node_modules
 .playpen/**/*.md
 
 ## Corpus fixtures: line-delimited GeoJSON is one Feature per line, not a single JSON document
-packages/corpus/fixtures/**/*.geojson
-packages/corpus/fixtures/**/*.geojsonl
-packages/corpus/fixtures/**/*.ndgeojson
+corpus/fixtures/**/*.geojson
+corpus/fixtures/**/*.geojsonl
+corpus/fixtures/**/*.ndgeojson
 
 ## Append-only narrative logs — prettier's markdown formatter mangles bare `_` / `*`
 ## inside one-line entries (e.g. `node_modules` → `node*modules`, `synth_*` → `synth*\*`),

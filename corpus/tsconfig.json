@@ -1,7 +1,6 @@
 {
 	"extends": "@sister.software/tsconfig",
 	"compilerOptions": {
-		"baseUrl": ".",
 		"outDir": "./out"
 	},
 	"include": ["./src/**/*"],

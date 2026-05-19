@@ -5,7 +5,7 @@
  */
 
 import { TextNormalizer } from "../tokenization/normalizer.js"
-import { Displayable } from "./debugging.js"
+import type { Displayable } from "./debugging.js"
 
 /**
  * Options for the locale index.
@@ -113,7 +113,7 @@ export class LocaleIndex<LanguageCodes extends string> extends Map<string, Set<L
 	/**
 	 * Serialize the index to JSON.
 	 */
-	public override toJSON() {
+	public toJSON() {
 		const entries: Array<[string, LanguageCodes[]]> = []
 
 		for (const [placename, languages] of this) {

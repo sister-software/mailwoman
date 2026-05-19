@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Classification, HashMapSolver, Solution, TokenContext } from "@mailwoman/core"
+import { type Classification, HashMapSolver, Solution, TokenContext } from "@mailwoman/core"
 
 // classifications which are more granular than StreetClassification
 // should not be included in intersection solutions.

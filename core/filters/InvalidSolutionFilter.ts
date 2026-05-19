@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Classification, Solver, SolverContext } from "@mailwoman/core"
+import type { Classification, Solver, SolverContext } from "@mailwoman/core"
 
 type InvalidSequence = Classification[]
 

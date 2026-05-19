@@ -7,8 +7,8 @@
  *   package.json `exports` field points at `./out/.../index.js` — those files don't exist until tsc
  *   has run. With these aliases vitest can run from a clean checkout.
  *
- *   `solvers/*` and `filters/*` use a glob-style export, so the alias mirrors that with a regex
- *   that preserves the trailing path segment.
+ *   `solvers/*` and `filters/*` use a glob-style export, so the alias mirrors that with a regex that
+ *   preserves the trailing path segment.
  */
 
 /// <reference types="vitest/config" />

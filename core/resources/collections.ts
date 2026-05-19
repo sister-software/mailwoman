@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { PathBuilderLike } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 import { $ } from "zx"
 
 /**

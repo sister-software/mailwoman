@@ -5,11 +5,11 @@
  */
 
 import {
-	Classification,
+	type Classification,
 	PhraseClassifier,
 	Span,
 	TextNormalizer,
-	WhosOnFirstPlacetype,
+	type WhosOnFirstPlacetype,
 	WOFPlacenameCache,
 } from "@mailwoman/core"
 

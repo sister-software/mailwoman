@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Stats } from "node:fs"
+import type { Stats } from "node:fs"
 import { stat } from "node:fs/promises"
-import { PathBuilderLike } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * Attempts to stat a file or directory.

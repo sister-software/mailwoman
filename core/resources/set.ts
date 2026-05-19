@@ -112,7 +112,7 @@ export class Sequence<T extends WeakKey> extends Set<T> {
 	/**
 	 * Serialize the sequence to JSON.
 	 */
-	public override toJSON(): T[] {
+	public toJSON(): T[] {
 		return Array.from(this)
 	}
 

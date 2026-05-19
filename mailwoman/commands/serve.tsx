@@ -13,7 +13,7 @@ import { availableParallelism } from "node:os"
 import * as process from "node:process"
 import { useEffect, useState } from "react"
 import zod from "zod"
-import { CommandComponent } from "../sdk/cli.js"
+import type { CommandComponent } from "../sdk/cli.js"
 import { AddressRouter } from "../server/index.js"
 
 const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
@@ -22,6 +22,7 @@ const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 	const [workers, setWorkers] = useState<Worker[]>()
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot cluster bootstrap; refactor pending
 		setWorkers(Array.from({ length: cpus }, () => cluster.fork()))
 
 		cluster.on("exit", (worker, code, signal) => {
@@ -99,7 +100,7 @@ const WorkerStatus: React.FC<{ worker: Worker }> = ({ worker }) => {
 
 	return (
 		<StatusMessage variant="error">
-			Unknown status "{status}" ({worker.process.pid})
+			Unknown status &quot;{status}&quot; ({worker.process.pid})
 		</StatusMessage>
 	)
 }

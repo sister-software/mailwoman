@@ -1,11 +1,10 @@
 /**
  * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
  * @copyright Sister Software
  * @license AGPL-3.0
+ * @license AGPL-3.0
  * @abstract
+ * @author Teffen Ellis, et al.
  * @author Teffen Ellis, et al.
  */
 

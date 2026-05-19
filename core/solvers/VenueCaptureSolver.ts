@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Solver, SolverContext } from "@mailwoman/core"
+import type { Solver, SolverContext } from "@mailwoman/core"
 
 /**
  * This solver extends solutions with venues to ensure that they are no spans are left behind.

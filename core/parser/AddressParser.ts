@@ -5,9 +5,15 @@
  */
 
 import { Alpha2LanguageCode } from "@mailwoman/core"
-import { Classifier, ClassifierConstructor } from "@mailwoman/core/classification"
+import type { Classifier, ClassifierConstructor } from "@mailwoman/core/classification"
 import type { PolicyRegistry } from "@mailwoman/core/policy"
-import { FilterRelation, SerializedSolution, Solution, Solver, SolverConstructor } from "@mailwoman/core/solver"
+import {
+	type FilterRelation,
+	type SerializedSolution,
+	Solution,
+	type Solver,
+	type SolverConstructor,
+} from "@mailwoman/core/solver"
 import { TokenContext } from "@mailwoman/core/tokenization"
 import type { ClassificationProposal, ProposalClassifier } from "@mailwoman/core/types"
 import type { PerformanceMeasure } from "node:perf_hooks"

@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { ClassificationRecord, createAddressParser } from "mailwoman"
-import { Classification, Classifier, LibPostalLanguageCode } from "@mailwoman/core"
+import { type Classification, type Classifier, type LibPostalLanguageCode } from "@mailwoman/core"
+import { type ClassificationRecord, createAddressParser } from "mailwoman"
 import { expect, test } from "vitest"
 /**
  * Global test parser instance.

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { LibPostalLanguageCode, LocaleIndex, Span, WordClassifier } from "@mailwoman/core"
+import { type LibPostalLanguageCode, LocaleIndex, Span, WordClassifier } from "@mailwoman/core"
 
 /**
  * Special handling of streets with no suffix

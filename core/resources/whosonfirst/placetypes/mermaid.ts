@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { PlacetypeRole } from "./definition.js"
+import type { PlacetypeRole } from "./definition.js"
 import { Placetype } from "./Placetype.js"
 
 /**

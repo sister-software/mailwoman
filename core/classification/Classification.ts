@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Displayable } from "../resources/debugging.js"
+import type { Displayable } from "../resources/debugging.js"
 import type { Alpha3bLanguageCode } from "../resources/languages/index.js"
 import type { LibPostalLanguageCode } from "../resources/libpostal.js"
 
@@ -196,7 +196,7 @@ export class ClassificationsMatchMap extends Map<Classification, ClassificationM
 	/**
 	 * Serialize the classification map to JSON.
 	 */
-	public override toJSON(): ClassificationMatch[] {
+	public toJSON(): ClassificationMatch[] {
 		return this.values().toArray()
 	}
 

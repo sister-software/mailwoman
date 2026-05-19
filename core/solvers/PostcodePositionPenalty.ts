@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Solver, SolverContext } from "@mailwoman/core"
+import type { Solver, SolverContext } from "@mailwoman/core"
 
 const basePenalty = 0.1
 

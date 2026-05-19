@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { expect, test } from "vitest"
 import { assertDeepSerialized } from "mailwoman/sdk/test"
+import { expect, test } from "vitest"
 import { Span } from "./Span.js"
 import { permutate } from "./permutate.js"
 

@@ -5,7 +5,7 @@
  */
 
 import { Span, TokenContext } from "@mailwoman/core/tokenization"
-import { Classifier } from "./BaseClassifier.js"
+import type { Classifier } from "./BaseClassifier.js"
 
 export interface SectionClassifierUtils {
 	findPhrasesContaining: (child: Span) => Span[]

@@ -16,7 +16,7 @@ import { Box, Text } from "ink"
 import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
-import { CommandComponent } from "../../sdk/cli.js"
+import type { CommandComponent } from "../../sdk/cli.js"
 
 const ArgumentsSchema = zod.array(zod.string().describe("Adapter id (e.g. wof-admin, ban, openaddresses)"))
 
@@ -70,6 +70,7 @@ const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema
 	useEffect(() => {
 		const adapterId = args[0]
 		if (!adapterId) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount validation; refactor pending
 			setError("missing positional argument: <adapter-id>")
 			return
 		}

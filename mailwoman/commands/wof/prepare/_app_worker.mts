@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { pluckPlacetypeSpec, ResourceMapCache, type WOFFeature } from "@mailwoman/core"
 import { Redis } from "ioredis"
-import { pluckPlacetypeSpec, ResourceMapCache, WOFFeature } from "mailwoman/core"
 import { readFileSync } from "node:fs"
 
 class FeatureCache extends Redis implements AsyncDisposable {

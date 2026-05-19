@@ -4,7 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-import { FilterRelation, FilterRelationRule, Solution, Solver, SolverContext, Span } from "@mailwoman/core"
+import {
+	type FilterRelation,
+	type FilterRelationRule,
+	Solution,
+	type Solver,
+	type SolverContext,
+	Span,
+} from "@mailwoman/core"
 
 export class RelationshipFilter implements Solver {
 	constructor(protected rules: FilterRelationRule[]) {}

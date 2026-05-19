@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
+import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
 import { TextNormalizer } from "@mailwoman/core/tokenization"
-import FastGlob, { Entry } from "fast-glob"
+import FastGlob, { type Entry } from "fast-glob"
 
-import { PathBuilder, PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
-import { Displayable } from "../debugging.js"
+import type { Displayable } from "../debugging.js"
 import { ResourceMapCache } from "../ResourceMapCache.js"
 import { DisposableSet } from "../set.js"
 import { parsePlacetypeSource } from "./placetypes/admin.js"
@@ -145,7 +145,7 @@ export class WOFPlacenameCache extends ResourceMapCache<string, DisposableSet<Al
 		}
 	}
 
-	public override toJSON() {
+	public toJSON() {
 		const entries: Array<[string, Alpha3bLanguageCode[]]> = []
 
 		for (const [placename, languages] of this) {

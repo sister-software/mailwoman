@@ -8,12 +8,12 @@ import FastGlob from "fast-glob"
 import * as fs from "node:fs/promises"
 import { PathBuilder } from "path-ts"
 import { takeInParallel } from "../../collections.js"
-import { prepareRepositoryDirectories, RepositorySource } from "../../git.js"
+import { prepareRepositoryDirectories, type RepositorySource } from "../../git.js"
 import {
 	normalizePlacetypeDefinition,
-	PlacetypeDefinition,
-	PlacetypeDefinitionInit,
-	PlacetypeRole,
+	type PlacetypeDefinition,
+	type PlacetypeDefinitionInit,
+	type PlacetypeRole,
 	PlacetypeRoleOrder,
 } from "./definition.js"
 

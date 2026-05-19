@@ -20,7 +20,7 @@ import { Box, Text } from "ink"
 import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
-import { CommandComponent } from "../../sdk/cli.js"
+import type { CommandComponent } from "../../sdk/cli.js"
 
 /**
  * `--inputs` accepts either:
@@ -83,6 +83,7 @@ const CorpusBuild: CommandComponent<typeof BuildConfigSchema> = ({ options }) =>
 		try {
 			inputsParsed = InputsSchema.parse(JSON.parse(options.inputs))
 		} catch (err) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount validation; refactor pending
 			setError(`invalid --inputs JSON: ${(err as Error).message}`)
 			return
 		}

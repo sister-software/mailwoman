@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { PostcodeSpec, Span, WordClassifier } from "@mailwoman/core"
+import { type PostcodeSpec, Span, WordClassifier } from "@mailwoman/core"
 import { corePackagePathBuilder } from "@mailwoman/core/utils"
 import { readFile } from "node:fs/promises"
 

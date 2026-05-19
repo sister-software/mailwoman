@@ -1,15 +1,9 @@
 {
 	"extends": "@sister.software/tsconfig",
 	"compilerOptions": {
-		"baseUrl": ".",
 		"outDir": "./out"
 	},
 	"include": ["./**/*"],
-	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./test/**/*"],
-	"references": [
-		{ "path": "../core" },
-		{ "path": "../classifiers" },
-		{ "path": "../corpus" },
-		{ "path": "../neural" }
-	]
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./test/**/*", "./server/static/**"],
+	"references": [{ "path": "../core" }, { "path": "../classifiers" }, { "path": "../corpus" }, { "path": "../neural" }]
 }

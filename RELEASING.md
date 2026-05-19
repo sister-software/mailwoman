@@ -2,15 +2,15 @@
 
 Mailwoman publishes 7 npm packages from this monorepo in a single coordinated release:
 
-| Package | Workspace dir | Notes |
-|---|---|---|
-| `mailwoman` | `mailwoman/` | CLI + high-level `AddressParser` |
-| `@mailwoman/core` | `core/` | tokenization, classification primitives, solver, decoder; ships ~9 MB of libpostal+WOF dictionaries under `core/data/` |
-| `@mailwoman/classifiers` | `classifiers/` | rule-based classifiers |
-| `@mailwoman/corpus` | `corpus/` | BIO-labeled dataset builder |
-| `@mailwoman/neural` | `neural/` | SentencePiece tokenizer + ONNX runtime + decoder wiring |
-| `@mailwoman/neural-weights-en-us` | `neural-weights-en-us/` | trained model bundle (en-us) |
-| `@mailwoman/neural-weights-fr-fr` | `neural-weights-fr-fr/` | trained model bundle (fr-fr) |
+| Package                           | Workspace dir           | Notes                                                                                                                  |
+| --------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `mailwoman`                       | `mailwoman/`            | CLI + high-level `AddressParser`                                                                                       |
+| `@mailwoman/core`                 | `core/`                 | tokenization, classification primitives, solver, decoder; ships ~9 MB of libpostal+WOF dictionaries under `core/data/` |
+| `@mailwoman/classifiers`          | `classifiers/`          | rule-based classifiers                                                                                                 |
+| `@mailwoman/corpus`               | `corpus/`               | BIO-labeled dataset builder                                                                                            |
+| `@mailwoman/neural`               | `neural/`               | SentencePiece tokenizer + ONNX runtime + decoder wiring                                                                |
+| `@mailwoman/neural-weights-en-us` | `neural-weights-en-us/` | trained model bundle (en-us)                                                                                           |
+| `@mailwoman/neural-weights-fr-fr` | `neural-weights-fr-fr/` | trained model bundle (fr-fr)                                                                                           |
 
 [`release-it`](https://github.com/release-it/release-it) drives the cut + tag + publish + GitHub release. [`@release-it-plugins/workspaces`](https://github.com/release-it-plugins/workspaces) coordinates the multi-package version bump and per-package `npm publish`.
 
@@ -29,6 +29,7 @@ yarn release --dry-run
 ```
 
 This will:
+
 1. Compile + test (`yarn compile` then `yarn test --run`)
 2. Materialize trained weights into `neural-weights-{en-us,fr-fr}/` via `scripts/copy-weights.mjs`
 3. Show the proposed version bump for each workspace
@@ -43,6 +44,7 @@ yarn release
 ```
 
 Prompts for the version (or pass `--patch` / `--minor` / `--major` / `--ci`). The plugin will:
+
 1. Bump `package.json#version` across all listed workspaces in sync
 2. Commit the bumps with message `release: v<version>`
 3. Tag the commit `v<version>`
@@ -70,13 +72,13 @@ The binaries are gitignored in the workspace dirs (`neural-weights-*/.gitignore`
 
 ## Common failures
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| `403 Forbidden` from npm publish | Token missing publish rights on `@mailwoman` scope | npmjs.com → tokens → check scope coverage |
-| `requireCleanWorkingDir` aborts | Uncommitted changes | `git status`, commit or stash |
-| `requireBranch` aborts | Not on `main` | `git switch main` |
-| Hook `yarn test --run` fails | Pre-existing test breakage | Fix tests OR temporarily comment the hook in `.release-it.json` and document the divergence in the release notes |
-| `copy-weights.mjs` `Missing source model` | Running from a machine without `/mnt/playpen/` | Set `MAILWOMAN_PUBLISH_MODEL` + `MAILWOMAN_PUBLISH_TOKENIZER` env vars |
+| Symptom                                   | Cause                                              | Fix                                                                                                              |
+| ----------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `403 Forbidden` from npm publish          | Token missing publish rights on `@mailwoman` scope | npmjs.com → tokens → check scope coverage                                                                        |
+| `requireCleanWorkingDir` aborts           | Uncommitted changes                                | `git status`, commit or stash                                                                                    |
+| `requireBranch` aborts                    | Not on `main`                                      | `git switch main`                                                                                                |
+| Hook `yarn test --run` fails              | Pre-existing test breakage                         | Fix tests OR temporarily comment the hook in `.release-it.json` and document the divergence in the release notes |
+| `copy-weights.mjs` `Missing source model` | Running from a machine without `/mnt/playpen/`     | Set `MAILWOMAN_PUBLISH_MODEL` + `MAILWOMAN_PUBLISH_TOKENIZER` env vars                                           |
 
 ## What's NOT automated yet
 

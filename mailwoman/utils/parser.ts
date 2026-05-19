@@ -43,7 +43,7 @@ import {
 	WhosOnFirstClassifier,
 } from "@mailwoman/classifiers"
 import { InvalidSolutionFilter, RelationshipFilter, SubsetFilter, TokenDistanceFilter } from "@mailwoman/core/filters"
-import { AddressParser, AddressParserOptions } from "@mailwoman/core/parser"
+import { AddressParser, type AddressParserOptions } from "@mailwoman/core/parser"
 import {
 	ExclusiveCartesianSolver,
 	HouseNumberPositionPenalty,

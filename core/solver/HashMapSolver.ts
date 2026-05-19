@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Classification, isVisibleClassification } from "@mailwoman/core/classification"
+import { type Classification, isVisibleClassification } from "@mailwoman/core/classification"
 import { Span, TokenContext } from "@mailwoman/core/tokenization"
-import { Solver } from "./BaseSolver.js"
+import type { Solver } from "./BaseSolver.js"
 import { Solution } from "./Solution.js"
 import { SolutionMatch } from "./SolutionMatch.js"
 

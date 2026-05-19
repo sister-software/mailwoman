@@ -17,8 +17,8 @@
 
 import sqlite from "better-sqlite3"
 // import { Presets, SingleBar } from "cli-progress"
-import { resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
 import { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
+import { resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
 import { mkdir, writeFile } from "node:fs/promises"
 
 const resourceDictionaryDirectory = resourceDictionaryPathBuilder("whosonfirst")

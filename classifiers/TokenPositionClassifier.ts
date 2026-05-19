@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Classifier, Span, TokenContext } from "@mailwoman/core"
+import { type Classifier, Span, TokenContext } from "@mailwoman/core"
 
 /**
  * Classify the first and last tokens in a section.

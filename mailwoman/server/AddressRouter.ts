@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { RequestHandler, Router } from "express"
-import { createAddressParser, createDiagnosticReport, SerializedSolution } from "mailwoman"
+import { type RequestHandler, Router } from "express"
+import { createAddressParser, createDiagnosticReport, type SerializedSolution } from "mailwoman"
 
 /**
  * Response from the address parser endpoint.

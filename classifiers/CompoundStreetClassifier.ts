@@ -6,7 +6,7 @@
 
 import {
 	Alpha2LanguageCode,
-	LibPostalLanguageCode,
+	type LibPostalLanguageCode,
 	LocaleIndex,
 	prepareLocaleIndex,
 	Span,

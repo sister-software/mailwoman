@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { expect, test } from "vitest"
 import { assertCongruent } from "mailwoman/sdk/test"
+import { expect, test } from "vitest"
 import { TokenContext } from "./context.js"
 
 test("constructor: basic", () => {

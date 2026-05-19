@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Alpha2LanguageCode, Solver, SolverContext } from "@mailwoman/core"
+import { Alpha2LanguageCode, type Solver, type SolverContext } from "@mailwoman/core"
 
 const basePenalty = 0.05
 

@@ -15,7 +15,7 @@ import { PathBuilder } from "path-ts"
 import { Piscina } from "piscina"
 import { useCallback, useEffect, useState } from "react"
 import zod from "zod"
-import { PositionalCommandComponent } from "../../../sdk/cli.js"
+import type { PositionalCommandComponent } from "../../../sdk/cli.js"
 
 type PluckDefaultExport<T> = T extends { default: infer U } ? U : never
 type InferPiscina<T> = T extends (...args: never) => unknown ? Piscina<Parameters<T>[0], ReturnType<T>> : never
@@ -38,6 +38,7 @@ const WOFPrepare: PositionalCommandComponent<typeof ArgumentsSchema> = ({ args: 
 	const [throughput, setThroughput] = useState(0)
 	const [recordCount, setRecordCount] = useState(-1)
 	const percentage = recordCount === -1 ? 0 : (insertionCount / recordCount) * 100
+	// eslint-disable-next-line react-hooks/purity -- progress UI re-derives elapsed each render; refactor to interval-timer state pending
 	const elapsed = performance.now() - startTime
 
 	const eta = Number.isFinite(throughput) ? (recordCount - insertionCount) / throughput : NaN

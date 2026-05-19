@@ -6,7 +6,7 @@
 
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
-import { createPathBuilderResolver, Join, PathBuilder } from "path-ts"
+import { createPathBuilderResolver, type Join, PathBuilder } from "path-ts"
 
 /**
  * Aliased path to the root of the repository.

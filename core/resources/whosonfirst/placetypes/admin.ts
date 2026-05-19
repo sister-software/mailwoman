@@ -6,13 +6,13 @@
 
 import {
 	Alpha2LanguageCode,
-	Alpha3bLanguageCode,
+	type Alpha3bLanguageCode,
 	Alpha3bToAlpha2,
 	isAlpha2LanguageCode,
 	isAlpha3bLanguageCode,
 } from "@mailwoman/core/resources/languages"
 import type { Feature, Geometry } from "geojson"
-import { WhosOnFirstPlacetype } from "./definition.js"
+import type { WhosOnFirstPlacetype } from "./definition.js"
 
 export interface WOFBaseProperties {
 	"wof:id": number

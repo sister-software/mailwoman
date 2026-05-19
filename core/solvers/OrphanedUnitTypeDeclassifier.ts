@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { SolverContext } from "@mailwoman/core"
+import type { SolverContext } from "@mailwoman/core"
 
 export class OrphanedUnitTypeDeclassifier {
 	solve(context: SolverContext): void {

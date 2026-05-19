@@ -6,9 +6,9 @@
 
 import {
 	Alpha2LanguageCode,
-	Classifier,
-	ClassifierOptions,
-	LibPostalLanguageCode,
+	type Classifier,
+	type ClassifierOptions,
+	type LibPostalLanguageCode,
 	LocaleIndex,
 	prepareLocaleIndex,
 	Span,

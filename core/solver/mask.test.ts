@@ -5,8 +5,8 @@
  */
 
 import { createMask } from "@mailwoman/core"
-import { expect, test } from "vitest"
 import { parser } from "mailwoman/sdk/test"
+import { expect, test } from "vitest"
 
 const testCases: Array<[input: string, output: string]> = [
 	[

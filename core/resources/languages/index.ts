@@ -5,7 +5,7 @@
  */
 
 export * from "./types.gen.js"
-import { Alpha2LabelMap, Alpha2LanguageCode, Alpha3bLabelMap, Alpha3bLanguageCode } from "./types.gen.js"
+import { Alpha2LabelMap, Alpha2LanguageCode, Alpha3bLabelMap, type Alpha3bLanguageCode } from "./types.gen.js"
 
 /**
  * Prefixed languages are those which use a street prefix instead of a suffix.

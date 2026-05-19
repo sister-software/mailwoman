@@ -7,7 +7,7 @@
 import { describe, expect, test } from "vitest"
 import type { BioLabel } from "../types/component.js"
 import { buildAddressTree } from "./build-tree.js"
-import type { DecoderToken } from "./types.js"
+import type { AddressNode, DecoderToken } from "./types.js"
 
 /** Construct a DecoderToken — confidence defaults to 1.0 for fixture brevity. */
 function tok(piece: string, start: number, end: number, label: BioLabel, confidence = 1): DecoderToken {
@@ -38,7 +38,7 @@ describe("buildAddressTree", () => {
 		const tree = buildAddressTree(WHITE_HOUSE, whiteHouseTokens())
 		// 5 spans: house_number, street, locality, region, postcode
 		const allTags: string[] = []
-		const collect = (n: { tag: string; children: any[] }): void => {
+		const collect = (n: AddressNode): void => {
 			allTags.push(n.tag)
 			for (const c of n.children) collect(c)
 		}
@@ -106,7 +106,7 @@ describe("buildAddressTree", () => {
 	})
 })
 
-function findByTag(nodes: Array<{ tag: string; children: any[] }>, tag: string): any {
+function findByTag(nodes: AddressNode[], tag: string): AddressNode | null {
 	for (const n of nodes) {
 		if (n.tag === tag) return n
 		const inChild = findByTag(n.children, tag)

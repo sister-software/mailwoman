@@ -6,12 +6,12 @@
 
 import "core-js/actual/disposable-stack/index.js"
 
-import { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
+import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
 import { mkdirSync } from "node:fs"
 import { setTimeout } from "node:timers/promises"
 import { dirname } from "path-ts"
-import { PlacetypeDataSource, PlacetypeDataSourceOptions } from "./PlacetypeDataSource.js"
-import { WhosOnFirstPlacetype } from "./placetypes/definition.js"
+import { PlacetypeDataSource, type PlacetypeDataSourceOptions } from "./PlacetypeDataSource.js"
+import type { WhosOnFirstPlacetype } from "./placetypes/definition.js"
 
 export class DataSourceCache extends DisposableStack {
 	#placetypeToLanguage = new Map<WhosOnFirstPlacetype, Map<Alpha3bLanguageCode, PlacetypeDataSource>>()

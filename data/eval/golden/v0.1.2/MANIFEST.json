@@ -1,19 +1,19 @@
 {
-  "promoted_at": "2026-05-18T15:17:12.093Z",
-  "from": "data/eval/golden/candidates/expand-v012-20260518-171007.jsonl",
-  "from_sha256": "d59d55254dc7d778ac78d324ec3bc63d56cbf42d63a825962c00ea20daf9046c",
-  "files": {
-    "adversarial.jsonl": {
-      "entries": 54,
-      "sha256": "90b4b61355bdc7283917940edc9fd75b53f0660e04251a20c5f8430525070742"
-    },
-    "fr.jsonl": {
-      "entries": 1545,
-      "sha256": "9c6609e0d7c56cbc4b337523f2e8dd211d9b4384ab7df8e6e14a90701a39a113"
-    },
-    "us.jsonl": {
-      "entries": 2936,
-      "sha256": "fe9e4bb5cbd492b04ae5936fbbbef6d50b453f00bd0714208ce3d33b7d9ddef3"
-    }
-  }
+	"promoted_at": "2026-05-18T15:17:12.093Z",
+	"from": "data/eval/golden/candidates/expand-v012-20260518-171007.jsonl",
+	"from_sha256": "d59d55254dc7d778ac78d324ec3bc63d56cbf42d63a825962c00ea20daf9046c",
+	"files": {
+		"adversarial.jsonl": {
+			"entries": 54,
+			"sha256": "90b4b61355bdc7283917940edc9fd75b53f0660e04251a20c5f8430525070742"
+		},
+		"fr.jsonl": {
+			"entries": 1545,
+			"sha256": "9c6609e0d7c56cbc4b337523f2e8dd211d9b4384ab7df8e6e14a90701a39a113"
+		},
+		"us.jsonl": {
+			"entries": 2936,
+			"sha256": "fe9e4bb5cbd492b04ae5936fbbbef6d50b453f00bd0714208ce3d33b7d9ddef3"
+		}
+	}
 }
