@@ -1,0 +1,82 @@
+# Stage 1 coarse-component config (Phase 2, issue #10).
+#
+# Trains a 6-layer / 256-hidden / 4-head encoder on coarse address components only:
+# country, region, locality, dependent_locality, postcode, subregion, cedex (+ O).
+#
+# Stages 2 (street-level) and 3 (venue-level) are future phases — do NOT widen the
+# label set here without an explicit phase plan.
+
+data:
+  # corpus-v0.2.0 (synth-ON, 263.7M rows, 10 adapters, locality-holdout splits).
+  # Built 2026-05-18 nightshift. Full BAN (102 départements), full TIGER (all US),
+  # NPPES, IMLS, HRSA, and state sources included.
+  corpus_dir: /data/corpus/versioned/v0.2.0/corpus-v0.2.0
+  tokenizer_dir: /data/models/tokenizer/v0.1.0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  # Per-source oversampling weights (issue #43). Counters the wof-admin positional-
+  # heuristic overfit diagnosed in PR #42. Weights reduced vs v0.1.1 plan because
+  # the expanded corpus is naturally more balanced — wof-admin is only ~1.25% of
+  # aligned rows (down from ~75%).
+  source_weights:
+    wof-admin: 1.0
+    wof-postalcode: 1.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+  train_rows_per_epoch: null
+  val_rows: 4096
+  coarse_filter: true
+
+model:
+  hidden_size: 256
+  num_hidden_layers: 6
+  num_attention_heads: 4
+  intermediate_size: 1024
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+
+train:
+  output_dir: /data/models/checkpoints/stage1-coarse
+  seed: 42
+  # Empirically validated envelope on gfx1103 with hand-rolled MultiheadAttention + bf16:
+  # batch=64 was the v0.1.0 setting but in the v0.2.0 retrain the firmware hangs cluster
+  # every ~50-100 steps at b=64, even with the v0.1.0 model architecture unchanged. The
+  # v0.1.0 ship session evidently got lucky on the gfx1103 hang RNG. Drop to b=32 with
+  # grad_accum=4 → same effective batch 128. The 200-step pre-flight at b=32 ran without
+  # a single hang, and per-step rate (~4.5/s) is actually faster than b=64 (~2.4/s) in
+  # this container's specific firmware state. Phase 2 plan asks for batch 256 nominally,
+  # "lower if OOM" — gfx1103 hangs are the equivalent of OOM here.
+  batch_size: 32
+  eval_batch_size: 40
+  grad_accum_steps: 4
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  max_steps: 50000
+  eval_every_steps: 250
+  # gfx1103 firmware hangs under sustained load. Empirical: hangs cluster around step
+  # ~100 from cold start (likely thermal accumulation through the first sustained
+  # backward-only stretch). Save every 100 to bound lost work to ≤ ~40 s per hang, and
+  # keep eval-every below typical hang-interval so periodic forward-only passes
+  # introduce thermal breathing room. Optimizer + scheduler state are checkpointed.
+  save_every_steps: 100
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 2
+  csv_log_path: "{output_dir}/train_log.csv"
+
+eval:
+  # Use the in-repo golden set as the eval anchor. Operator can also point to a
+  # holdout val.jsonl if one is curated.
+  golden_dir: "" # filled in by --golden-dir at CLI time, or leave empty
+  val_jsonl: ""

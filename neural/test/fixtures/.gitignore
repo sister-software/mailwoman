@@ -1,0 +1,4 @@
+# Large-scale parity fixtures are generated on the host from corpus parquet
+# (see generate-tokenizer-parity.py --from-parquet). ~3 MB per 10k entries —
+# too large for git. The CI-safe 17-entry fixture is committed.
+tokenizer-parity-large-*.json

@@ -14,21 +14,15 @@
 		]
 	},
 	"compilerOptions": {
-		"baseUrl": ".",
-		"outDir": "./out"
+		"composite": true,
+		"emitDeclarationOnly": true
 	},
-	"include": [
-		"index.ts",
-		"cli.ts",
-		"vitest.config.ts",
-		"eslint.config.mjs",
-		"sdk/**/*",
-		"server/**/*",
-		"scripts/**/*",
-		"test/**/*",
-		"utils/**/*",
-		"commands/**/*"
-	],
-	"exclude": ["./out/**/*", "./packages/**/*"],
-	"references": [{ "path": "./packages/core" }, { "path": "./packages/classifiers" }, { "path": "./packages/corpus" }]
+	"include": [],
+	"references": [
+		{ "path": "./core" },
+		{ "path": "./classifiers" },
+		{ "path": "./corpus" },
+		{ "path": "./neural" },
+		{ "path": "./mailwoman" }
+	]
 }
