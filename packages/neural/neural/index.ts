@@ -7,5 +7,6 @@
 export * from "./classifier.js"
 export * from "./labels.js"
 export * from "./onnx-runner.js"
+export * from "./proposal-classifier.js"
 export * from "./tokenizer.js"
 export * from "./weights.js"
