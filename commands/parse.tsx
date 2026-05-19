@@ -5,6 +5,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { Text } from "ink"
 import { createAddressParser, createDiagnosticReport } from "mailwoman"
 import { useEffect, useState } from "react"
@@ -18,9 +19,25 @@ const ParseConfigSchema = zod.object({
 	debug: zod.boolean().optional().default(false).describe("Enable verbose debugging output"),
 	locale: zod
 		.string()
-		.regex(/^[a-z]{2}(-[A-Z]{2})?$/u, "Expected a BCP-47 tag like en-US or fr-FR")
+		.regex(/^[a-z]{2}(-[a-z]{2})?$/u, "Expected a BCP-47-ish tag like en-us or fr-fr (lowercase)")
 		.optional()
-		.describe("BCP-47 locale tag (e.g. en-US, fr-FR). Reserved for the upcoming neural pipeline."),
+		.default("en-us")
+		.describe("Locale tag matching a weights package (en-us, fr-fr). Default en-us."),
+	neural: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe("Route through the neural classifier instead of the rule-based parser."),
+	format: zod
+		.enum(["json", "tuple", "xml"])
+		.optional()
+		.default("json")
+		.describe("Output projection for --neural. Ignored without --neural."),
+	model: zod.string().optional().describe("Explicit model.onnx path (--neural only). Overrides --locale resolution."),
+	tokenizer: zod
+		.string()
+		.optional()
+		.describe("Explicit tokenizer.model path (--neural only). Overrides --locale resolution."),
 })
 
 const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsSchema> = ({ options, args }) => {
@@ -28,9 +45,31 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 	const [error, setError] = useState<string>()
 
 	useEffect(() => {
-		const parser = createAddressParser()
 		const input = args[0]!
 
+		if (options.neural) {
+			NeuralAddressClassifier.loadFromWeights({
+				locale: options.locale,
+				modelPath: options.model,
+				tokenizerPath: options.tokenizer,
+			})
+				.then(async (cls) => {
+					switch (options.format) {
+						case "xml":
+							return cls.parseXml(input)
+						case "tuple":
+							return JSON.stringify(await cls.parseTuples(input), null, 2)
+						case "json":
+						default:
+							return JSON.stringify(await cls.parseJson(input), null, 2)
+					}
+				})
+				.then(setOutput)
+				.catch((err) => setError(err.message))
+			return
+		}
+
+		const parser = createAddressParser()
 		const parseOpts = options.locale ? { locale: options.locale } : {}
 
 		if (options.debug) {
@@ -45,7 +84,7 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 				.then((results) => setOutput(JSON.stringify(results, null, 2)))
 				.catch((err) => setError(err.message))
 		}
-	}, [args, options.debug, options.locale])
+	}, [args, options.debug, options.locale, options.neural, options.format, options.model, options.tokenizer])
 
 	if (error) {
 		return <Text color="red">{error}</Text>

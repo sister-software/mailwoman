@@ -22,6 +22,7 @@ import {
 import { STAGE1_BIO_LABELS } from "./labels.js"
 import { OnnxRunner } from "./onnx-runner.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
+import { type ResolveWeightsOpts, resolveWeights } from "./weights.js"
 
 export interface NeuralAddressClassifierConfig {
 	tokenizer: MailwomanTokenizer
@@ -35,6 +36,22 @@ export class NeuralAddressClassifier {
 
 	constructor(private readonly cfg: NeuralAddressClassifierConfig) {
 		this.labels = cfg.labels ?? STAGE1_BIO_LABELS
+	}
+
+	/**
+	 * One-call factory that resolves the weights package (or explicit paths), loads the tokenizer and
+	 * ONNX runner, and returns a ready-to-use classifier.
+	 *
+	 * Resolution order: explicit paths in `opts` → `@mailwoman/neural-weights-<locale>` package →
+	 * throws a single actionable error.
+	 */
+	static async loadFromWeights(opts: ResolveWeightsOpts = {}): Promise<NeuralAddressClassifier> {
+		const { modelPath, tokenizerPath } = resolveWeights(opts)
+		const [tokenizer, runner] = await Promise.all([
+			MailwomanTokenizer.loadFromFile(tokenizerPath),
+			OnnxRunner.create(modelPath),
+		])
+		return new NeuralAddressClassifier({ tokenizer, runner })
 	}
 
 	/** Tokenize → infer → argmax/softmax → decoder tree. */
