@@ -80,23 +80,23 @@ The binaries are gitignored in the workspace dirs (`neural-weights-*/.gitignore`
 | Hook `yarn test --run` fails              | Pre-existing test breakage                         | Fix tests OR temporarily comment the hook in `.release-it.json` and document the divergence in the release notes |
 | `copy-weights.mjs` `Missing source model` | Running from a machine without `/mnt/playpen/`     | Set `MAILWOMAN_PUBLISH_MODEL` + `MAILWOMAN_PUBLISH_TOKENIZER` env vars                                           |
 
-## Releasing from CI (manual dispatch)
+## Releasing from CI (manual dispatch + npm Trusted Publishing)
 
-`.github/workflows/release.yml` exposes the same flow from the GitHub Actions UI.
+`.github/workflows/publish.yml` exposes the same flow from the GitHub Actions UI. Auth uses **npm Trusted Publishing** (OIDC) — no `NPM_TOKEN` secret in the repo, no auth token in `~/.npmrc`. npmjs.com is configured to accept publishes from this exact workflow file path.
 
-1. **One-time** — add an `NPM_TOKEN` secret to the mailwoman repo (Settings → Secrets and variables → Actions → New repository secret). Generate via npmjs.com → Access Tokens → "Automation" type (bypasses 2FA). Scope to `@mailwoman` + `mailwoman`.
-2. **Run a release** — Actions tab → `release` workflow → Run workflow.
+1. **One-time setup on the npm side** (already done): each `@mailwoman/*` package + `mailwoman` has a Trusted Publisher configured pointing at `sister-software/mailwoman` repo + workflow file `.github/workflows/publish.yml`. If you move/rename that file, update the npm side too.
+2. **Run a release** — Actions tab → `publish` workflow → Run workflow.
    - `version` — `patch` / `minor` / `major` / specific semver like `2.1.0`. Default `patch`.
    - `release_weights` — boolean. Default **false**. See below.
    - `dry_run` — boolean. Default false. Set true to preview without publishing.
 
-The workflow checks out main, installs, runs `yarn release --ci --increment=<version>`. release-it's pre-flight hooks (compile + test + copy-weights) run as usual.
+The workflow checks out main, installs, runs `yarn release --ci --increment=<version>`. release-it's pre-flight hooks (compile + test + copy-weights) run as usual. Per-workspace publish uses `yarn pack -o <tmpfile>` (translates `workspace:*` → concrete versions) followed by `npm publish <tmpfile>` (the npm CLI auto-detects the OIDC environment and authenticates via Trusted Publishing; `--provenance` is auto-enabled).
 
 ### CI weights handling
 
 Weight binaries (`model.onnx`, `tokenizer.model`) live at `/mnt/playpen/mailwoman-data/` on your host and aren't fetchable from CI runners. The release workflow has two modes:
 
-- **`release_weights=false` (default)** — bumps + publishes only the code workspaces (`mailwoman`, `@mailwoman/{core,classifiers,corpus,neural}`). `@mailwoman/neural-weights-*` are excluded from this release; they stay at whatever their last-published version is. `copy-weights.mjs` is skipped via `MAILWOMAN_SKIP_WEIGHTS_COPY=1`.
+- **`release_weights=false` (default)** — bumps + publishes only the code workspaces (`mailwoman`, `@mailwoman/{core,classifiers,corpus,neural}`). `@mailwoman/neural-weights-*` are excluded from this release; they stay at whatever their last-published version is. `copy-weights.mjs` is skipped via `MAILWOMAN_SKIP_WEIGHTS_COPY=1`; `publish-workspace.mjs` skips the actual publish via `MAILWOMAN_SKIP_WEIGHTS=1`. The bump phase still touches their `package.json` versions on disk (keeps monorepo in sync) — only the npm publish is skipped.
 - **`release_weights=true`** — requires `neural-weights-{en-us,fr-fr}/model.onnx` already present in the workspace (uploaded as a workflow artifact before this run, etc.). Otherwise the workflow's pre-publish guard fails fast.
 
 In practice: cut code releases from CI, cut weights releases from local. Closes the version-drift gap that the sync-mode workspaces plugin would otherwise force.
