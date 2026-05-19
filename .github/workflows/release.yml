@@ -1,0 +1,107 @@
+# Manual-dispatch release workflow.
+#
+# Triggered from GitHub Actions UI → "Run workflow". Bumps versions
+# (sync across all workspaces), tags, pushes, publishes to npm, and
+# creates a GitHub release. Same flow as the local `yarn release`
+# documented in RELEASING.md, just running in CI.
+#
+# Requires repo secret NPM_TOKEN (npm "Automation" token type — bypasses
+# 2FA). GITHUB_TOKEN is provided automatically by the runtime.
+#
+# ⚠ Weights packages — the neural-weights-{en-us,fr-fr} workspaces need
+# real model.onnx + tokenizer.model binaries before `yarn npm publish`.
+# Those binaries live at /mnt/playpen/mailwoman-data/ on the operator's
+# host and aren't checked into git. This workflow looks for them at the
+# upload path you pass via `weights_artifact` input; if missing AND
+# `release_weights=true`, the workflow fails fast with a clear message.
+#
+# Default behavior (`release_weights=false`) excludes the weights
+# workspaces from the publish set entirely — code packages ship,
+# weights stay at their last-published version. Use the local
+# `yarn release` flow when you want to cut a new weights release.
+name: release
+
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: "Version bump (patch / minor / major / specific semver like 2.1.0)"
+                required: true
+                default: patch
+                type: string
+            release_weights:
+                description: "Include @mailwoman/neural-weights-* in this release?"
+                required: false
+                default: false
+                type: boolean
+            dry_run:
+                description: "Dry run — show what would happen, don't actually publish"
+                required: false
+                default: false
+                type: boolean
+
+permissions:
+    contents: write
+    id-token: write
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  # release-it needs full history to compute the version tag base.
+                  fetch-depth: 0
+                  token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: yarn
+                  registry-url: https://registry.npmjs.org
+
+            - name: Enable Corepack (yarn 4)
+              run: corepack enable
+
+            - name: Configure npm auth
+              run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+              env:
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+            - name: Configure git identity (for release-it commits)
+              run: |
+                  git config --global user.name "github-actions[bot]"
+                  git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            - name: Install dependencies
+              run: yarn install --immutable
+
+            - name: Guard — weights presence vs release_weights input
+              if: ${{ inputs.release_weights }}
+              run: |
+                  if [ ! -f "neural-weights-en-us/model.onnx" ] || [ ! -f "neural-weights-fr-fr/model.onnx" ]; then
+                      echo "::error::release_weights=true but weight binaries are missing from the workspace dirs."
+                      echo "::error::Upload the binaries via a workflow artifact or run yarn release locally."
+                      exit 1
+                  fi
+
+            - name: Release
+              env:
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  # When release_weights=false (default): skip copy-weights AND
+                  # tell publish-workspace.mjs to skip the neural-weights-*
+                  # workspaces. The plugin still bumps their package.json
+                  # versions on disk (keeping the monorepo in sync) — only the
+                  # npm publish is skipped.
+                  MAILWOMAN_SKIP_WEIGHTS_COPY: ${{ inputs.release_weights == false && '1' || '' }}
+                  MAILWOMAN_SKIP_WEIGHTS: ${{ inputs.release_weights == false && '1' || '' }}
+              run: |
+                  set -euo pipefail
+                  ARGS=(--ci --increment="${{ inputs.version }}")
+                  if [ "${{ inputs.dry_run }}" = "true" ]; then
+                      ARGS+=(--dry-run)
+                  fi
+                  yarn release "${ARGS[@]}"

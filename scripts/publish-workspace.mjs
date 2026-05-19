@@ -34,6 +34,18 @@ const workspacePath = process.env.RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE
 const tag = process.env.RELEASE_IT_WORKSPACES_TAG || "latest"
 const access = process.env.RELEASE_IT_WORKSPACES_ACCESS || ""
 const otp = process.env.RELEASE_IT_WORKSPACES_OTP || ""
+
+// CI release workflow sets MAILWOMAN_SKIP_WEIGHTS=1 when its release_weights
+// input is false (the default). The plugin still bumps the weights packages'
+// versions in package.json on disk — only the npm publish is skipped — so the
+// monorepo stays in sync; the weights workspaces simply skip a release tick
+// on npm and pick up at the next local release.
+const SKIP_WEIGHTS = !!process.env.MAILWOMAN_SKIP_WEIGHTS
+const isWeightsWorkspace = /^\.\/neural-weights-/.test(workspacePath ?? "")
+if (SKIP_WEIGHTS && isWeightsWorkspace) {
+	console.error(`publish-workspace: MAILWOMAN_SKIP_WEIGHTS set — skipping ${workspacePath}`)
+	process.exit(0)
+}
 const dryRun = process.env.RELEASE_IT_WORKSPACES_DRY_RUN === "true"
 
 if (!workspacePath) {
