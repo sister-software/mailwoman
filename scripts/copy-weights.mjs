@@ -46,6 +46,16 @@ async function exists(path) {
 }
 
 async function main() {
+	// CI release workflow sets MAILWOMAN_SKIP_WEIGHTS_COPY=1 when release_weights
+	// input is false (the default). Weights binaries live at /mnt/playpen on the
+	// operator's host and aren't fetchable from CI; the workflow excludes the
+	// weights workspaces from the publish set in that mode, so skipping the
+	// copy is correct.
+	if (process.env.MAILWOMAN_SKIP_WEIGHTS_COPY) {
+		process.stderr.write("copy-weights: MAILWOMAN_SKIP_WEIGHTS_COPY set — skipping.\n")
+		return
+	}
+
 	if (!(await exists(SOURCE_MODEL))) {
 		throw new Error(`Missing source model: ${SOURCE_MODEL}\nSet MAILWOMAN_PUBLISH_MODEL to override.`)
 	}
