@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { parseGoldenLine, unreachableComponents, validateGoldenDir, validateGoldenFile } from "./golden.js"
 
 const here = dirname(fileURLToPath(import.meta.url))
-const goldenDir = resolve(here, "../../../data/eval/golden/v0.1.0")
+const goldenDir = resolve(here, "../../data/eval/golden/v0.1.0")
 
 let scratch: string
 beforeEach(async () => {
