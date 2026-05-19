@@ -14,21 +14,14 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/sister-software/mailwoman.git"
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "mailwoman"
 	},
 	"bugs": {
 		"url": "https://github.com/sister-software/mailwoman/issues"
 	},
 	"homepage": "https://github.com/sister-software/mailwoman",
 	"type": "module",
-	"keywords": [
-		"address",
-		"parser",
-		"usps",
-		"postal",
-		"pelias"
-	],
-	"bin": "./out/cli.js",
 	"exports": {
 		"./package.json": "./package.json",
 		".": "./out/index.js",
@@ -37,15 +30,6 @@
 		"./sdk/repo": "./out/sdk/repo.js",
 		"./sdk/cli": "./out/sdk/cli.js"
 	},
-	"files": [
-		"!out/test/**/*",
-		"!**/*.ts",
-		"out/**/*.js",
-		"out/**/*.js.map",
-		"out/**/*.d.ts",
-		"out/**/*.d.ts.map",
-		"out/**/*.json"
-	],
 	"dependencies": {
 		"@fragaria/address-formatter": "^6.3.0",
 		"@mailwoman/classifiers": "workspace:*",
@@ -69,6 +53,23 @@
 		"ink": "^7.0.3",
 		"react": "^19.2.6"
 	},
+	"files": [
+		"!out/test/**/*",
+		"!**/*.ts",
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"out/**/*.json"
+	],
+	"keywords": [
+		"address",
+		"parser",
+		"usps",
+		"postal",
+		"pelias"
+	],
+	"bin": "./out/cli.js",
 	"peerDependenciesMeta": {
 		"@inkjs/ui": {
 			"optional": true
@@ -82,5 +83,8 @@
 		"react": {
 			"optional": true
 		}
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

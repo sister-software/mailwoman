@@ -1,0 +1,38 @@
+{
+	"$schema": "https://unpkg.com/release-it/schema/release-it.json",
+	"plugins": {
+		"@release-it-plugins/workspaces": {
+			"workspaces": [
+				"core",
+				"classifiers",
+				"corpus",
+				"neural",
+				"neural-weights-en-us",
+				"neural-weights-fr-fr",
+				"mailwoman"
+			],
+			"publish": true
+		}
+	},
+	"npm": false,
+	"git": {
+		"commitMessage": "release: v${version}",
+		"tagName": "v${version}",
+		"tagAnnotation": "Release v${version}",
+		"requireCleanWorkingDir": true,
+		"requireBranch": "main"
+	},
+	"github": {
+		"release": true,
+		"releaseName": "v${version}"
+	},
+	"hooks": {
+		"before:init": [
+			"echo 'Pre-flight: compile + test + copy-weights'",
+			"yarn compile",
+			"yarn test --run",
+			"node scripts/copy-weights.mjs"
+		],
+		"after:release": "echo 'Released v${version}'"
+	}
+}

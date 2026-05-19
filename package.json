@@ -1,9 +1,9 @@
 {
 	"name": "@mailwoman/universe",
 	"version": "1.0.0",
-	"private": true,
 	"description": "Mailwoman monorepo workspace root.",
 	"license": "AGPL-3.0-only",
+	"private": true,
 	"contributors": [
 		{
 			"name": "Teffen Ellis",
@@ -14,16 +14,6 @@
 		"type": "git",
 		"url": "https://github.com/sister-software/mailwoman.git"
 	},
-	"type": "module",
-	"workspaces": [
-		"mailwoman",
-		"core",
-		"classifiers",
-		"corpus",
-		"neural",
-		"neural-weights-en-us",
-		"neural-weights-fr-fr"
-	],
 	"scripts": {
 		"compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
 		"compile:clean": "tsc -b --clean",
@@ -35,13 +25,16 @@
 		"lint:prettier:check": "prettier --cache --check -u .",
 		"lint:prettier:fix": "prettier --cache --write -u .",
 		"prepare": "husky",
+		"release": "release-it",
 		"test": "vitest",
 		"test:coverage": "vitest --coverage",
 		"test:integration": "vitest --dir ./mailwoman/test",
 		"test:unit": "vitest --exclude ./mailwoman/test"
 	},
+	"type": "module",
 	"devDependencies": {
 		"@inkjs/ui": "^2.0.0",
+		"@release-it-plugins/workspaces": "^5",
 		"@sister.software/eslint-config": "^8.0.1",
 		"@sister.software/prettier-config": "^8.0.1",
 		"@sister.software/tsconfig": "^8.0.1",
@@ -69,12 +62,22 @@
 		"prettier-plugin-organize-imports": "^4.3.0",
 		"prettier-plugin-packagejson": "^3.0.2",
 		"react": "^19.2.6",
+		"release-it": "^19",
 		"tap-difflet": "^0.7.2",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.59.3",
 		"vitest": "3.1.1",
 		"zx": "^8.2.2"
 	},
+	"workspaces": [
+		"mailwoman",
+		"core",
+		"classifiers",
+		"corpus",
+		"neural",
+		"neural-weights-en-us",
+		"neural-weights-fr-fr"
+	],
 	"resolutions": {
 		"@dsnp/parquetjs@1.7.0": "patch:@dsnp/parquetjs@npm%3A1.7.0#./.yarn/patches/@dsnp-parquetjs-npm-1.7.0-efe8288b39.patch"
 	},

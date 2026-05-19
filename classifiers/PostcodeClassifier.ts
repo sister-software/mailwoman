@@ -5,10 +5,10 @@
  */
 
 import { PostcodeSpec, Span, WordClassifier } from "@mailwoman/core"
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
+import { corePackagePathBuilder } from "@mailwoman/core/utils"
 import { readFile } from "node:fs/promises"
 
-const dictPath = repoRootPathBuilder("resources", "chromium-i18n", "ssl-address")
+const dictPath = corePackagePathBuilder("data", "chromium-i18n", "ssl-address")
 
 const DefaultPostcodeCountries: readonly string[] = [
 	// ---
