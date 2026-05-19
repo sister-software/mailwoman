@@ -4,13 +4,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Publish a single workspace via `yarn npm publish`. Invoked by
- *   `@release-it-plugins/workspaces` once per non-private workspace.
+ *   Publish a single workspace via `yarn npm publish`. Invoked by `@release-it-plugins/workspaces`
+ *   once per non-private workspace.
  *
  *   Why this exists: the plugin's default publish command is `npm publish ./<workspace>`. npm's
  *   publish step does NOT translate yarn 4's `workspace:*` protocol — packages ship with
- *   unresolvable deps and consumers hit `EUNSUPPORTEDPROTOCOL`. `yarn npm publish` IS aware of
- *   the workspace protocol and rewrites it to the concrete version at publish time.
+ *   unresolvable deps and consumers hit `EUNSUPPORTEDPROTOCOL`. `yarn npm publish` IS aware of the
+ *   workspace protocol and rewrites it to the concrete version at publish time.
  *
  *   This script reads the plugin's env vars and constructs the right `yarn npm publish` call.
  *
