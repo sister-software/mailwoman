@@ -4,7 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
-import { type Classification, type ClassificationMatch, ClassificationsMatchMap } from "@mailwoman/core/classification"
+// Imported via deep relative path (not @mailwoman/core/classification) to avoid a runtime cycle:
+// classification/index.ts re-exports SectionClassifier / WordClassifier which themselves import
+// Span from @mailwoman/core/tokenization, creating a TDZ that surfaces as "Class extends value
+// undefined" when the source-mode test runner loads tokenization first.
+import {
+	type Classification,
+	type ClassificationMatch,
+	ClassificationsMatchMap,
+} from "../classification/Classification.js"
 import { Displayable } from "../resources/debugging.js"
 import { Alpha3bLanguageCode } from "../resources/languages/index.js"
 import { LibPostalLanguageCode } from "../resources/libpostal.js"
