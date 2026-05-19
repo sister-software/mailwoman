@@ -43,7 +43,13 @@ describe("corpus run schema validation", () => {
 
 describe("npx mailwoman corpus list", () => {
 	test("exits 0 and includes every registered adapter id", async () => {
-		const { stdout, stderr } = await exec("node", [cliBin, "corpus", "list"], { timeout: 10_000 })
+		// NODE_NO_WARNINGS=1 silences Node deprecation chatter (e.g. DEP0040
+		// punycode noise from a transitive dep on Node 22) that would
+		// otherwise pollute stderr and break the `stderr === ""` assertion.
+		const { stdout, stderr } = await exec("node", [cliBin, "corpus", "list"], {
+			timeout: 10_000,
+			env: { ...process.env, NODE_NO_WARNINGS: "1" },
+		})
 		expect(stderr).toBe("")
 		expect(stdout).toMatch(/wof-admin/i)
 		expect(stdout).toMatch(/CC0/i)
