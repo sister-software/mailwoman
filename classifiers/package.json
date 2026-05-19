@@ -1,0 +1,16 @@
+{
+	"name": "@mailwoman/classifiers",
+	"version": "1.0.0",
+	"description": "Mailwoman rule-based classifiers.",
+	"license": "AGPL-3.0-only",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js",
+		"./*": "./out/*"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*"
+	}
+}

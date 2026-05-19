@@ -1,30 +1,32 @@
 {
-	"name": "mailwoman",
+	"name": "@mailwoman/universe",
 	"version": "1.0.0",
-	"description": "Utilities for working with contacts for email, phone, and postal addresses.",
+	"private": true,
+	"description": "Mailwoman monorepo workspace root.",
 	"license": "AGPL-3.0-only",
 	"contributors": [
 		{
 			"name": "Teffen Ellis",
 			"email": "teffen@sister.software"
-		},
-		{
-			"name": "Pelias Contributors"
 		}
 	],
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/sister-software/mailwoman.git"
 	},
-	"bugs": {
-		"url": "https://github.com/sister-software/mailwoman/issues"
-	},
-	"homepage": "https://github.com/sister-software/mailwoman",
+	"type": "module",
+	"workspaces": [
+		"mailwoman",
+		"core",
+		"classifiers",
+		"corpus",
+		"neural",
+		"neural-weights-en-us",
+		"neural-weights-fr-fr"
+	],
 	"scripts": {
-		"ci": "./bin/test",
-		"compile": "node ./scripts/postinstall-self-link.mjs && NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
-		"compile:clean": "node ./sdk/out/scripts/clean.js",
-		"postinstall": "node ./scripts/postinstall-self-link.mjs",
+		"compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
+		"compile:clean": "tsc -b --clean",
 		"lint": "run-s lint:prettier:check lint:eslint:check",
 		"lint:eslint:check": "eslint .",
 		"lint:eslint:fix": "eslint --fix .",
@@ -32,60 +34,11 @@
 		"lint:prettier": "eslint .",
 		"lint:prettier:check": "prettier --cache --check -u .",
 		"lint:prettier:fix": "prettier --cache --write -u .",
-		"prepare": "node ./scripts/postinstall-self-link.mjs && husky",
-		"serve": "mailwoman serve",
-		"sync:test": "mailwoman wof sync ../",
-		"test": "node ./scripts/postinstall-self-link.mjs && vitest",
-		"test:coverage": "node ./scripts/postinstall-self-link.mjs && vitest --coverage",
-		"test:integration": "node ./scripts/postinstall-self-link.mjs && vitest --dir ./test",
-		"test:unit": "node ./scripts/postinstall-self-link.mjs && vitest --exclude ./test"
-	},
-	"type": "module",
-	"exports": {
-		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./worker": "./out/worker.mjs",
-		"./core": "./packages/core/out/core/index.js",
-		"./core/classification": "./packages/core/out/core/classification/index.js",
-		"./core/types": "./packages/core/out/core/types/index.js",
-		"./policy": "./packages/core/out/policy/index.js",
-		"./locale": "./packages/core/out/locale/index.js",
-		"./core/parser": "./packages/core/out/core/parser/index.js",
-		"./core/solver": "./packages/core/out/core/solver/index.js",
-		"./core/formatter": "./packages/core/out/core/formatter/index.js",
-		"./core/resources": "./packages/core/out/core/resources/index.js",
-		"./core/resources/languages": "./packages/core/out/core/resources/languages/index.js",
-		"./core/resources/db": "./packages/core/out/core/resources/db/index.js",
-		"./core/resources/whosonfirst": "./packages/core/out/core/resources/whosonfirst/index.js",
-		"./core/resources/libpostal": "./packages/core/out/core/resources/libpostal/index.js",
-		"./core/tokenization": "./packages/core/out/core/tokenization/index.js",
-		"./utils": "./out/utils/index.js",
-		"./classifiers": "./packages/classifiers/out/classifiers/index.js",
-		"./corpus": "./packages/corpus/out/src/index.js",
-		"./corpus/types": "./packages/corpus/out/src/types.js",
-		"./corpus/format": "./packages/corpus/out/src/format.js",
-		"./solvers": "./packages/core/out/solvers/index.js",
-		"./solvers/*": "./packages/core/out/solvers/*",
-		"./filters": "./packages/core/out/filters/index.js",
-		"./filters/*": "./packages/core/out/filters/*",
-		"./server": "./out/server/index.js",
-		"./sdk/test": "./out/sdk/test/index.js",
-		"./sdk/repo": "./out/sdk/repo.js",
-		"./sdk/cli": "./out/sdk/cli.js"
-	},
-	"dependencies": {
-		"@fragaria/address-formatter": "^6.3.0",
-		"better-sqlite3": "^11.5.0",
-		"change-case": "^5.4.4",
-		"geojson": "^0.5.0",
-		"ioredis": "^5.4.1",
-		"pastel": "^4.0.1",
-		"path-ts": "^1.0.5",
-		"piscina": "^4.7.0",
-		"pluralize": "^8.0.0",
-		"regenerate": "^1.4.2",
-		"spliterator": "^2.0.0",
-		"zod": "^3.23.8"
+		"prepare": "husky",
+		"test": "vitest",
+		"test:coverage": "vitest --coverage",
+		"test:integration": "vitest --dir ./mailwoman/test",
+		"test:unit": "vitest --exclude ./mailwoman/test"
 	},
 	"devDependencies": {
 		"@inkjs/ui": "^2.0.0",
@@ -106,7 +59,6 @@
 		"csv-parse": "^5.5.6",
 		"eslint": "^9.13.0",
 		"eslint-plugin-html": "^8.1.2",
-		"express": "^5.0.1",
 		"fast-glob": "^3.3.2",
 		"faucet": "^0.0.4",
 		"husky": "^9.1.6",
@@ -123,27 +75,6 @@
 		"vitest": "3.1.1",
 		"zx": "^8.2.2"
 	},
-	"peerDependencies": {
-		"@inkjs/ui": "^2.0.0",
-		"core-js": "^3.49.0",
-		"express": "^4.21.1",
-		"ink": "^7.0.3",
-		"react": "^19.2.6"
-	},
-	"workspaces": [
-		"packages/*",
-		"!packages/corpus-python"
-	],
-	"files": [
-		"!out/test/**/*",
-		"!*/**/*.ts",
-		"out/**/*.js",
-		"out/**/*.js.map",
-		"out/**/*.d.ts",
-		"out/**/*.d.ts.map",
-		"out/**/*.json",
-		"resources/**/*"
-	],
 	"resolutions": {
 		"@dsnp/parquetjs@1.7.0": "patch:@dsnp/parquetjs@npm%3A1.7.0#./.yarn/patches/@dsnp-parquetjs-npm-1.7.0-efe8288b39.patch"
 	},
@@ -151,30 +82,5 @@
 		"node": ">= 10.0.0"
 	},
 	"packageManager": "yarn@4.14.1+sha512.64df448055b2d37ba269d7db535a469b8da93f8ef1140c25fd7a83c00a8fbaacb214ca0e02553b92a2c54cef78bb67d0b4817fab02001df0e24fac0faccc3b42",
-	"prettier": "@sister.software/prettier-config",
-	"keywords": [
-		"address",
-		"parser",
-		"usps",
-		"postal",
-		"pelias"
-	],
-	"bin": "./out/cli.js",
-	"peerDependenciesMeta": {
-		"@inkjs/ui": {
-			"optional": true
-		},
-		"core-js": {
-			"optional": true
-		},
-		"express": {
-			"optional": true
-		},
-		"ink": {
-			"optional": true
-		},
-		"react": {
-			"optional": true
-		}
-	}
+	"prettier": "@sister.software/prettier-config"
 }

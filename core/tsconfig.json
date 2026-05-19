@@ -1,0 +1,8 @@
+{
+	"extends": "@sister.software/tsconfig",
+	"compilerOptions": {
+		"outDir": "./out"
+	},
+	"include": ["./**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"]
+}
