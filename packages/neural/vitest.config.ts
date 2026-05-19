@@ -22,6 +22,9 @@ const here = fileURLToPath(new URL(".", import.meta.url))
 
 export default defineConfig({
 	resolve: {
+		// Regex form maps every @mailwoman/core/<subpath> to the source index of that subdir, so
+		// transitive imports (e.g. tokenization → solver) resolve without needing an entry per
+		// subpath.
 		alias: {
 			"@mailwoman/core/decoder": resolve(here, "../core/core/decoder/index.ts"),
 			"@mailwoman/core/types": resolve(here, "../core/core/types/index.ts"),
