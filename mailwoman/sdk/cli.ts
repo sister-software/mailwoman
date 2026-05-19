@@ -22,7 +22,7 @@ export type PositionalCommandComponent<T extends zod.ZodTypeAny> = React.FC<Posi
  * Type-helper to infer the options of a command.
  */
 export type CommandProps<
-	OptionProps extends zod.AnyZodObject,
+	OptionProps extends zod.ZodObject,
 	PositionalProps extends zod.ZodTypeAny | unknown = unknown,
 > = {
 	options: zod.infer<OptionProps>
@@ -33,6 +33,6 @@ export type CommandProps<
  * React component for a command with options.
  */
 export type CommandComponent<
-	OptionProps extends zod.AnyZodObject,
+	OptionProps extends zod.ZodObject,
 	PositionalProps extends zod.ZodTypeAny | unknown = unknown,
 > = React.FC<CommandProps<OptionProps, PositionalProps>>

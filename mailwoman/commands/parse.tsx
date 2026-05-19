@@ -26,10 +26,10 @@ const ParseConfigSchema = zod.object({
 	debug: zod.boolean().optional().default(false).describe("Enable verbose debugging output"),
 	locale: zod
 		.string()
-		.regex(/^[a-z]{2}(-[a-z]{2})?$/u, "Expected a BCP-47-ish tag like en-us or fr-fr (lowercase)")
+		.regex(/^[a-z]{2}(-[A-Z]{2})?$/u, "Expected a BCP-47 tag like en-US or fr-FR")
 		.optional()
-		.default("en-us")
-		.describe("Locale tag matching a weights package (en-us, fr-fr). Default en-us."),
+		.default("en-US")
+		.describe("Locale tag matching a weights package (en-US, fr-FR). Default en-US."),
 	neural: zod
 		.boolean()
 		.optional()

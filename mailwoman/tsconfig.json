@@ -1,7 +1,9 @@
 {
 	"extends": "@sister.software/tsconfig",
 	"compilerOptions": {
-		"outDir": "./out"
+		"outDir": "./out",
+		"emitDeclarationOnly": false,
+		"allowImportingTsExtensions": false
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./test/**/*", "./server/static/**"],
