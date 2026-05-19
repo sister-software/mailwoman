@@ -4,15 +4,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Publish a single workspace via `yarn npm publish`. Invoked by `@release-it-plugins/workspaces`
- *   once per non-private workspace.
+ *   Publish a single workspace. Invoked by `@release-it-plugins/workspaces` once per non-private
+ *   workspace.
  *
- *   Why this exists: the plugin's default publish command is `npm publish ./<workspace>`. npm's
- *   publish step does NOT translate yarn 4's `workspace:*` protocol — packages ship with
- *   unresolvable deps and consumers hit `EUNSUPPORTEDPROTOCOL`. `yarn npm publish` IS aware of the
- *   workspace protocol and rewrites it to the concrete version at publish time.
+ *   Two-step flow:
  *
- *   This script reads the plugin's env vars and constructs the right `yarn npm publish` call.
+ *   1. `yarn pack -o <tmpfile>` — yarn 4 translates `workspace:*` deps to the concrete sibling version
+ *        while building the tarball. npm's own publish step does NOT do this translation, and
+ *        shipping `workspace:*` to consumers breaks `npm install` (EUNSUPPORTEDPROTOCOL).
+ *   2. `npm publish <tmpfile>` — npm CLI is the right tool for the actual publish because it
+ *        auto-detects GitHub Actions' OIDC environment and uses it for Trusted Publishing. Yarn's
+ *        `yarn npm publish` doesn't integrate with npm's OIDC flow.
  *
  *   Env contract from the plugin (see node_modules/@release-it-plugins/workspaces/index.js):
  *
@@ -21,11 +23,16 @@
  *   - RELEASE_IT_WORKSPACES_ACCESS: "public" / "restricted"
  *   - RELEASE_IT_WORKSPACES_OTP: one-time password (may be empty)
  *   - RELEASE_IT_WORKSPACES_DRY_RUN: "true" / "false"
+ *
+ *   Per-workspace skip: MAILWOMAN_SKIP_WEIGHTS=1 makes this script exit 0 for the neural-weights-*
+ *   workspaces. CI release workflow uses this when its `release_weights` input is false — keeps the
+ *   monorepo version-synced in git while npm doesn't see a weights tick.
  */
 
 import { spawnSync } from "node:child_process"
-import { copyFileSync, lstatSync, readFileSync, readlinkSync, unlinkSync } from "node:fs"
-import { dirname, resolve } from "node:path"
+import { copyFileSync, lstatSync, mkdtempSync, readFileSync, readlinkSync, rmSync, unlinkSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url))
@@ -34,18 +41,6 @@ const workspacePath = process.env.RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE
 const tag = process.env.RELEASE_IT_WORKSPACES_TAG || "latest"
 const access = process.env.RELEASE_IT_WORKSPACES_ACCESS || ""
 const otp = process.env.RELEASE_IT_WORKSPACES_OTP || ""
-
-// CI release workflow sets MAILWOMAN_SKIP_WEIGHTS=1 when its release_weights
-// input is false (the default). The plugin still bumps the weights packages'
-// versions in package.json on disk — only the npm publish is skipped — so the
-// monorepo stays in sync; the weights workspaces simply skip a release tick
-// on npm and pick up at the next local release.
-const SKIP_WEIGHTS = !!process.env.MAILWOMAN_SKIP_WEIGHTS
-const isWeightsWorkspace = /^\.\/neural-weights-/.test(workspacePath ?? "")
-if (SKIP_WEIGHTS && isWeightsWorkspace) {
-	console.error(`publish-workspace: MAILWOMAN_SKIP_WEIGHTS set — skipping ${workspacePath}`)
-	process.exit(0)
-}
 const dryRun = process.env.RELEASE_IT_WORKSPACES_DRY_RUN === "true"
 
 if (!workspacePath) {
@@ -53,26 +48,55 @@ if (!workspacePath) {
 	process.exit(2)
 }
 
-const args = ["npm", "publish", "--tag", tag, "--tolerate-republish"]
-if (access) args.push("--access", access)
-if (otp) args.push("--otp", otp)
-// yarn npm publish doesn't have a --dry-run; emulate by skipping the spawn.
-const cwd = resolve(repoRoot, workspacePath)
-
-// Dereference any symlinks among the workspace's `files` entries before
-// publishing — yarn npm publish refuses to upload tarballs containing
-// symlinks (registry returns HTTP 415). The neural-weights workspaces in
-// particular can end up with symlinks from `scripts/link-dev-weights.sh`
-// (run directly or via `weights.test.ts`).
-dereferenceWorkspaceSymlinks(cwd)
-
-console.error(`publish-workspace: ${dryRun ? "[dry-run] " : ""}yarn ${args.join(" ")} (cwd: ${cwd})`)
-if (dryRun) {
+const SKIP_WEIGHTS = !!process.env.MAILWOMAN_SKIP_WEIGHTS
+const isWeightsWorkspace = /^\.\/neural-weights-/.test(workspacePath)
+if (SKIP_WEIGHTS && isWeightsWorkspace) {
+	console.error(`publish-workspace: MAILWOMAN_SKIP_WEIGHTS set — skipping ${workspacePath}`)
 	process.exit(0)
 }
 
-const result = spawnSync("yarn", args, { cwd, stdio: "inherit" })
-process.exit(result.status ?? 1)
+const cwd = resolve(repoRoot, workspacePath)
+
+// Dereference any symlinks among the workspace's `files` entries before
+// publishing — npm/yarn refuse to upload tarballs containing symlinks
+// (registry returns HTTP 415). The neural-weights workspaces in particular
+// can end up with symlinks from `scripts/link-dev-weights.sh`.
+dereferenceWorkspaceSymlinks(cwd)
+
+const tmpDir = mkdtempSync(join(tmpdir(), "mailwoman-publish-"))
+const tarballPath = join(tmpDir, "package.tgz")
+
+try {
+	// Step 1: yarn pack — produces a tarball with workspace:* deps translated
+	// to concrete versions.
+	const packArgs = ["pack", "-o", tarballPath]
+	console.error(`publish-workspace: yarn ${packArgs.join(" ")} (cwd: ${cwd})`)
+	const packResult = spawnSync("yarn", packArgs, { cwd, stdio: "inherit" })
+	if (packResult.status !== 0) {
+		console.error(`publish-workspace: yarn pack failed (exit ${packResult.status})`)
+		process.exit(packResult.status ?? 1)
+	}
+
+	// Step 2: npm publish <tarball> — npm CLI auto-detects OIDC environment
+	// in GitHub Actions and uses it for Trusted Publishing. --provenance opts
+	// into npm's package provenance attestation (also OIDC-driven).
+	const publishArgs = ["publish", tarballPath, "--tag", tag]
+	if (access) publishArgs.push("--access", access)
+	if (otp) publishArgs.push("--otp", otp)
+	// --provenance only works in CI under OIDC; npm CLI errors out otherwise.
+	// Auto-enable when GitHub Actions environment is detected.
+	if (process.env.GITHUB_ACTIONS === "true") publishArgs.push("--provenance")
+
+	console.error(`publish-workspace: ${dryRun ? "[dry-run] " : ""}npm ${publishArgs.join(" ")}`)
+	if (dryRun) {
+		process.exit(0)
+	}
+
+	const publishResult = spawnSync("npm", publishArgs, { stdio: "inherit" })
+	process.exit(publishResult.status ?? 1)
+} finally {
+	rmSync(tmpDir, { recursive: true, force: true })
+}
 
 /**
  * Replace any symlinked `files` entries with real copies of their targets.
@@ -93,3 +117,4 @@ function dereferenceWorkspaceSymlinks(workspaceDir) {
 		console.error(`publish-workspace: dereferenced ${entry} ← ${resolved}`)
 	}
 }
+

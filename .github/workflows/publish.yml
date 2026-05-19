@@ -1,25 +1,29 @@
-# Manual-dispatch release workflow.
+# Manual-dispatch publish workflow with npm Trusted Publishing.
 #
 # Triggered from GitHub Actions UI → "Run workflow". Bumps versions
 # (sync across all workspaces), tags, pushes, publishes to npm, and
 # creates a GitHub release. Same flow as the local `yarn release`
 # documented in RELEASING.md, just running in CI.
 #
-# Requires repo secret NPM_TOKEN (npm "Automation" token type — bypasses
-# 2FA). GITHUB_TOKEN is provided automatically by the runtime.
+# Auth: npm Trusted Publishing (OIDC). No NPM_TOKEN secret needed in
+# this workflow — npmjs.com is configured to accept publishes from
+# this exact workflow file (path: .github/workflows/publish.yml). The
+# `id-token: write` permission below is what lets GitHub Actions mint
+# the OIDC token npm verifies against.
 #
-# ⚠ Weights packages — the neural-weights-{en-us,fr-fr} workspaces need
-# real model.onnx + tokenizer.model binaries before `yarn npm publish`.
-# Those binaries live at /mnt/playpen/mailwoman-data/ on the operator's
-# host and aren't checked into git. This workflow looks for them at the
-# upload path you pass via `weights_artifact` input; if missing AND
-# `release_weights=true`, the workflow fails fast with a clear message.
+# GITHUB_TOKEN is provided automatically by the runtime.
 #
-# Default behavior (`release_weights=false`) excludes the weights
-# workspaces from the publish set entirely — code packages ship,
-# weights stay at their last-published version. Use the local
+# ⚠ Weights packages — the neural-weights-{en-us,fr-fr} workspaces
+# need real model.onnx + tokenizer.model binaries before publish.
+# Those binaries live at /mnt/playpen/mailwoman-data/ on the
+# operator's host and aren't checked into git. Default behavior
+# (`release_weights=false`) skips the weights publish step entirely:
+# scripts/copy-weights.mjs short-circuits, and publish-workspace.mjs
+# detects weights workspaces and exits 0. The plugin still bumps
+# their package.json versions on disk (keeps monorepo versions in
+# sync) — only the npm publish is skipped. Use the local
 # `yarn release` flow when you want to cut a new weights release.
-name: release
+name: publish
 
 on:
     workflow_dispatch:
@@ -45,7 +49,7 @@ permissions:
     id-token: write
 
 jobs:
-    release:
+    publish:
         runs-on: ubuntu-latest
         timeout-minutes: 30
         steps:
@@ -64,11 +68,6 @@ jobs:
 
             - name: Enable Corepack (yarn 4)
               run: corepack enable
-
-            - name: Configure npm auth
-              run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-              env:
-                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
             - name: Configure git identity (for release-it commits)
               run: |
@@ -89,7 +88,6 @@ jobs:
 
             - name: Release
               env:
-                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   # When release_weights=false (default): skip copy-weights AND
                   # tell publish-workspace.mjs to skip the neural-weights-*
