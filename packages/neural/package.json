@@ -1,0 +1,18 @@
+{
+	"name": "@mailwoman/neural",
+	"version": "0.1.0",
+	"description": "Mailwoman neural classifier runtime: SentencePiece tokenizer + ONNX inference + decoder wiring.",
+	"license": "AGPL-3.0-only",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/neural/index.js",
+		"./tokenizer": "./out/neural/tokenizer.js"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@sctg/sentencepiece-js": "^1.3.3",
+		"onnxruntime-node": "^1.26.0"
+	}
+}
