@@ -1,0 +1,5 @@
+# Symlinks created by `scripts/link-dev-weights.sh` for local testing.
+# At publish time these get replaced with real files copied from /mnt/playpen/
+# (per the `files` array in package.json).
+/model.onnx
+/tokenizer.model
