@@ -1,29 +1,29 @@
 {
-	"name": "@mailwoman/classifiers",
-	"version": "2.0.0",
-	"description": "Mailwoman rule-based classifiers.",
-	"license": "AGPL-3.0-only",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/sister-software/mailwoman.git",
-		"directory": "classifiers"
-	},
-	"type": "module",
-	"exports": {
-		"./package.json": "./package.json",
-		".": "./out/index.js",
-		"./*": "./out/*"
-	},
-	"dependencies": {
-		"@mailwoman/core": "workspace:*"
-	},
-	"files": [
-		"out/**/*.js",
-		"out/**/*.js.map",
-		"out/**/*.d.ts",
-		"out/**/*.d.ts.map"
-	],
-	"publishConfig": {
-		"access": "public"
-	}
+ "name": "@mailwoman/classifiers",
+ "version": "2.0.1",
+ "description": "Mailwoman rule-based classifiers.",
+ "license": "AGPL-3.0-only",
+ "repository": {
+  "type": "git",
+  "url": "https://github.com/sister-software/mailwoman.git",
+  "directory": "classifiers"
+ },
+ "type": "module",
+ "exports": {
+  "./package.json": "./package.json",
+  ".": "./out/index.js",
+  "./*": "./out/*"
+ },
+ "dependencies": {
+  "@mailwoman/core": "workspace:*"
+ },
+ "files": [
+  "out/**/*.js",
+  "out/**/*.js.map",
+  "out/**/*.d.ts",
+  "out/**/*.d.ts.map"
+ ],
+ "publishConfig": {
+  "access": "public"
+ }
 }

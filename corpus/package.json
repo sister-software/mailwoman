@@ -1,36 +1,36 @@
 {
-	"name": "@mailwoman/corpus",
-	"version": "2.0.0",
-	"description": "Mailwoman corpus pipeline: BIO-labeled dataset builder for the neural classifier.",
-	"license": "AGPL-3.0-only",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/sister-software/mailwoman.git",
-		"directory": "corpus"
-	},
-	"type": "module",
-	"exports": {
-		"./package.json": "./package.json",
-		".": "./out/src/index.js",
-		"./types": "./out/src/types.js",
-		"./format": "./out/src/format.js"
-	},
-	"dependencies": {
-		"@dsnp/parquetjs": "1.7.0",
-		"@fragaria/address-formatter": "^6.3.0",
-		"@mailwoman/core": "workspace:*",
-		"better-sqlite3": "^11.5.0",
-		"csv-parse": "^5.5.6",
-		"fastest-levenshtein": "^1.0.16",
-		"lru-cache": "^10.0.1"
-	},
-	"files": [
-		"out/**/*.js",
-		"out/**/*.js.map",
-		"out/**/*.d.ts",
-		"out/**/*.d.ts.map"
-	],
-	"publishConfig": {
-		"access": "public"
-	}
+ "name": "@mailwoman/corpus",
+ "version": "2.0.1",
+ "description": "Mailwoman corpus pipeline: BIO-labeled dataset builder for the neural classifier.",
+ "license": "AGPL-3.0-only",
+ "repository": {
+  "type": "git",
+  "url": "https://github.com/sister-software/mailwoman.git",
+  "directory": "corpus"
+ },
+ "type": "module",
+ "exports": {
+  "./package.json": "./package.json",
+  ".": "./out/src/index.js",
+  "./types": "./out/src/types.js",
+  "./format": "./out/src/format.js"
+ },
+ "dependencies": {
+  "@dsnp/parquetjs": "1.7.0",
+  "@fragaria/address-formatter": "^6.3.0",
+  "@mailwoman/core": "workspace:*",
+  "better-sqlite3": "^11.5.0",
+  "csv-parse": "^5.5.6",
+  "fastest-levenshtein": "^1.0.16",
+  "lru-cache": "^10.0.1"
+ },
+ "files": [
+  "out/**/*.js",
+  "out/**/*.js.map",
+  "out/**/*.d.ts",
+  "out/**/*.d.ts.map"
+ ],
+ "publishConfig": {
+  "access": "public"
+ }
 }
