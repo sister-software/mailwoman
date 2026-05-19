@@ -33,8 +33,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
 
 /**
  * The absolute path to the root of the repository.
+ *
+ * In compiled mode this file lives at `packages/core/out/utils/repo.js` and the walk goes up
+ * `PathReflection.length` (4) levels. In source mode — e.g. vitest loading the `.ts` file directly
+ * via a workspace alias — the `out/` segment is absent and the file is one level shallower, so we
+ * walk up one less. Detect the mode by looking for `/out/` in `__dirname`.
  */
-const RepoRootAbsolutePath = resolve(__dirname, ...PathReflection.map(() => ".."))
+const __isCompiledTree = __dirname.includes(`/${OutDirectoryName}/`)
+const __upCount = __isCompiledTree ? PathReflection.length : PathReflection.length - 1
+const RepoRootAbsolutePath = resolve(__dirname, ...Array.from({ length: __upCount }, () => ".."))
 type RepoRootAbsolutePath = RepoRootAlias
 
 /**
