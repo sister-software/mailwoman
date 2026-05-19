@@ -5,3 +5,4 @@
  */
 
 export * from "./AddressParser.js"
+export * from "./proposal-pipeline.js"

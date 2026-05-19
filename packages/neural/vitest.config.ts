@@ -28,6 +28,10 @@ export default defineConfig({
 		alias: {
 			"@mailwoman/core/decoder": resolve(here, "../core/core/decoder/index.ts"),
 			"@mailwoman/core/types": resolve(here, "../core/core/types/index.ts"),
+			// Sub-subpath alias: bring the pure proposal-pipeline module without dragging in
+			// AddressParser → classification → tokenization → libpostal init cascade.
+			"@mailwoman/core/parser/proposal-pipeline": resolve(here, "../core/core/parser/proposal-pipeline.ts"),
+			"@mailwoman/core/policy": resolve(here, "../core/policy/index.ts"),
 		},
 	},
 	test: {

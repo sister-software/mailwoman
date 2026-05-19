@@ -6,9 +6,12 @@
 
 import { Alpha2LanguageCode } from "@mailwoman/core"
 import { Classifier, ClassifierConstructor } from "@mailwoman/core/classification"
+import type { PolicyRegistry } from "@mailwoman/core/policy"
 import { FilterRelation, SerializedSolution, Solution, Solver, SolverConstructor } from "@mailwoman/core/solver"
 import { TokenContext } from "@mailwoman/core/tokenization"
+import type { ClassificationProposal, ProposalClassifier } from "@mailwoman/core/types"
 import type { PerformanceMeasure } from "node:perf_hooks"
+import { runProposalPipeline, type WritebackResult } from "./proposal-pipeline.js"
 
 export interface AddressParserOptions {
 	classifiers?: Iterable<Classifier | ClassifierConstructor>
@@ -20,6 +23,20 @@ export interface AddressParserOptions {
 		| ReadonlySet<Alpha2LanguageCode>
 	solutionLimit?: number
 	mustNotFollow?: FilterRelation[]
+	/**
+	 * Proposal-based classifiers (rule classifiers via `wrapLegacyClassifier`, the neural classifier
+	 * via `createNeuralProposalClassifier`, or any custom impl). When provided, they run AFTER the
+	 * legacy `classifiers` mutation pass; surviving proposals are written back to the same
+	 * `TokenContext` for the solver. The legacy `classifiers` array still runs unchanged so existing
+	 * setups stay byte-compatible.
+	 */
+	proposalClassifiers?: Iterable<ProposalClassifier>
+	/**
+	 * Policy registry consulted to filter the merged proposal stream before writeback. When absent,
+	 * every proposal survives. Typically `InMemoryPolicyRegistry.withDefaults()` plus per-component
+	 * overrides set at startup.
+	 */
+	policy?: PolicyRegistry
 }
 
 export interface ParseOptions {
@@ -42,6 +59,15 @@ export interface VerboseParseResult {
 		classifier: PerformanceMeasure
 		solver: PerformanceMeasure
 	}
+	/**
+	 * Present when proposal classifiers ran. `proposals` is the policy-filtered list; `writeback` is
+	 * a small summary of how many proposals reached the context's span graph. Omitted when no
+	 * `proposalClassifiers` were configured.
+	 */
+	proposals?: {
+		filtered: ClassificationProposal[]
+		writeback: WritebackResult
+	}
 }
 
 /**
@@ -50,12 +76,21 @@ export interface VerboseParseResult {
 export class AddressParser {
 	protected classifiers: Classifier[]
 	protected solvers: Solver[]
+	protected proposalClassifiers: ProposalClassifier[]
+	protected policy?: PolicyRegistry
 
 	protected solutionLimit: number
 
 	#initialized = false
 
-	constructor({ languages, classifiers = [], solvers = [], solutionLimit = 10 }: AddressParserOptions = {}) {
+	constructor({
+		languages,
+		classifiers = [],
+		solvers = [],
+		proposalClassifiers = [],
+		policy,
+		solutionLimit = 10,
+	}: AddressParserOptions = {}) {
 		this.classifiers = Array.from(classifiers, (AddressClassifier) => {
 			return typeof AddressClassifier === "function" ? new AddressClassifier({ languages }) : AddressClassifier
 		})
@@ -64,13 +99,19 @@ export class AddressParser {
 			return typeof AddressSolver === "function" ? new AddressSolver() : AddressSolver
 		})
 
+		this.proposalClassifiers = Array.from(proposalClassifiers)
+		this.policy = policy
+
 		this.solutionLimit = solutionLimit
 	}
 
 	async ready(): Promise<this> {
 		if (this.#initialized) return this
 
-		await Promise.all(this.classifiers.map((classifier) => classifier.ready?.()))
+		await Promise.all([
+			...this.classifiers.map((classifier) => classifier.ready?.()),
+			...this.proposalClassifiers.map((classifier) => classifier.ready?.()),
+		])
 
 		this.#initialized = true
 
@@ -86,7 +127,7 @@ export class AddressParser {
 	public parse(input: string, options?: ParseOptions): Promise<SerializedSolution[]>
 	public async parse(
 		input: string,
-		{ verbose }: ParseOptions = {}
+		{ verbose, locale }: ParseOptions = {}
 	): Promise<SerializedSolution[] | VerboseParseResult> {
 		if (typeof input !== "string") {
 			throw new TypeError("Failed to parse address: input must be a string.")
@@ -103,6 +144,16 @@ export class AddressParser {
 		const startClassifier = performance.now()
 
 		this.classify(context)
+
+		let proposalsSummary: VerboseParseResult["proposals"] | undefined
+		if (this.proposalClassifiers.length > 0) {
+			const { proposals, writeback } = await runProposalPipeline(context, this.proposalClassifiers, {
+				policy: this.policy,
+				locale,
+				classifierContext: { locale },
+			})
+			proposalsSummary = { filtered: proposals, writeback }
+		}
 
 		const endClassifier = performance.now()
 
@@ -121,6 +172,7 @@ export class AddressParser {
 					classifier: performance.measure("Classifier", { start: startClassifier, end: endClassifier }),
 					solver: performance.measure("Solver", { start: startSolve, end: endSolve }),
 				},
+				...(proposalsSummary ? { proposals: proposalsSummary } : {}),
 			}
 		}
 
