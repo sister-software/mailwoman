@@ -24,7 +24,8 @@
  */
 
 import { spawnSync } from "node:child_process"
-import { resolve } from "node:path"
+import { copyFileSync, lstatSync, readFileSync, readlinkSync, unlinkSync } from "node:fs"
+import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url))
@@ -46,6 +47,13 @@ if (otp) args.push("--otp", otp)
 // yarn npm publish doesn't have a --dry-run; emulate by skipping the spawn.
 const cwd = resolve(repoRoot, workspacePath)
 
+// Dereference any symlinks among the workspace's `files` entries before
+// publishing — yarn npm publish refuses to upload tarballs containing
+// symlinks (registry returns HTTP 415). The neural-weights workspaces in
+// particular can end up with symlinks from `scripts/link-dev-weights.sh`
+// (run directly or via `weights.test.ts`).
+dereferenceWorkspaceSymlinks(cwd)
+
 console.error(`publish-workspace: ${dryRun ? "[dry-run] " : ""}yarn ${args.join(" ")} (cwd: ${cwd})`)
 if (dryRun) {
 	process.exit(0)
@@ -53,3 +61,23 @@ if (dryRun) {
 
 const result = spawnSync("yarn", args, { cwd, stdio: "inherit" })
 process.exit(result.status ?? 1)
+
+/**
+ * Replace any symlinked `files` entries with real copies of their targets.
+ *
+ * @param {string} workspaceDir
+ */
+function dereferenceWorkspaceSymlinks(workspaceDir) {
+	const pkg = JSON.parse(readFileSync(resolve(workspaceDir, "package.json"), "utf8"))
+	for (const entry of pkg.files ?? []) {
+		if (typeof entry !== "string" || /[*?[{]/.test(entry)) continue // skip globs
+		const target = resolve(workspaceDir, entry)
+		const st = lstatSync(target, { throwIfNoEntry: false })
+		if (!st?.isSymbolicLink()) continue
+		const linkDest = readlinkSync(target)
+		const resolved = resolve(dirname(target), linkDest)
+		unlinkSync(target)
+		copyFileSync(resolved, target)
+		console.error(`publish-workspace: dereferenced ${entry} ← ${resolved}`)
+	}
+}
