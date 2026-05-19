@@ -34,6 +34,7 @@
 			"yarn test",
 			"node scripts/copy-weights.mjs"
 		],
+		"after:bump": "yarn prettier --write --log-level warn -u package.json '**/package.json'",
 		"after:release": "echo 'Released v${version}'"
 	}
 }
