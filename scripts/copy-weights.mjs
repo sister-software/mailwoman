@@ -18,7 +18,7 @@
  * @import {PathLike} from "node:fs"
  */
 
-import { copyFile, mkdir, stat } from "node:fs/promises"
+import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -58,9 +58,26 @@ async function main() {
 		await mkdir(dir, { recursive: true })
 		const modelDest = resolve(dir, "model.onnx")
 		const tokenizerDest = resolve(dir, "tokenizer.model")
+		// Unlink first so a pre-existing symlink (from link-dev-weights.sh) is
+		// replaced with a real file. Otherwise copyFile follows the symlink and
+		// writes through it, leaving the symlink in place — which yarn refuses
+		// to publish (npm registry rejects symlinks with HTTP 415).
+		await removeIfPresent(modelDest)
+		await removeIfPresent(tokenizerDest)
 		await copyFile(SOURCE_MODEL, modelDest)
 		await copyFile(SOURCE_TOKENIZER, tokenizerDest)
 		process.stderr.write(`copied weights → ${workspace}/{model.onnx,tokenizer.model}\n`)
+	}
+}
+
+/**
+ * @param {PathLike} path
+ */
+async function removeIfPresent(path) {
+	try {
+		await unlink(path)
+	} catch (err) {
+		if (/** @type {NodeJS.ErrnoException} */ (err).code !== "ENOENT") throw err
 	}
 }
 
