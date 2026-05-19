@@ -1,90 +1,90 @@
 {
-	"name": "@mailwoman/universe",
-	"version": "1.0.0",
-	"description": "Mailwoman monorepo workspace root.",
-	"license": "AGPL-3.0-only",
-	"private": true,
-	"contributors": [
-		{
-			"name": "Teffen Ellis",
-			"email": "teffen@sister.software"
-		}
-	],
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/sister-software/mailwoman.git"
-	},
-	"scripts": {
-		"compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
-		"compile:clean": "tsc -b --clean",
-		"lint": "run-s lint:prettier:check lint:eslint:check",
-		"lint:eslint:check": "eslint .",
-		"lint:eslint:fix": "eslint --fix .",
-		"lint:fix": "run-s lint:prettier:fix lint:eslint:fix",
-		"lint:prettier": "eslint .",
-		"lint:prettier:check": "prettier --cache --check -u .",
-		"lint:prettier:fix": "prettier --cache --write -u .",
-		"prepare": "husky",
-		"release": "release-it",
-		"test": "vitest --run",
-		"test:coverage": "vitest --coverage",
-		"test:integration": "vitest --dir ./mailwoman/test",
-		"test:unit": "vitest --exclude ./mailwoman/test",
-		"test:watch": "vitest --watch"
-	},
-	"type": "module",
-	"devDependencies": {
-		"@inkjs/ui": "^2.0.0",
-		"@release-it-plugins/workspaces": "^5",
-		"@sister.software/eslint-config": "^8.0.1",
-		"@sister.software/prettier-config": "^8.0.1",
-		"@sister.software/tsconfig": "^8.0.1",
-		"@types/better-sqlite3": "^7.6.13",
-		"@types/core-js": "^2.5.8",
-		"@types/express": "^5.0.0",
-		"@types/geojson": "^7946.0.14",
-		"@types/node": "^22.9.0",
-		"@types/pluralize": "^0.0.33",
-		"@types/react": "^19.2.0",
-		"@types/regenerate": "^1.4.3",
-		"ansi_up": "^6.0.2",
-		"chalk": "^5.3.0",
-		"core-js": "^3.39.0",
-		"csv-parse": "^5.5.6",
-		"eslint": "^9.13.0",
-		"eslint-plugin-html": "^8.1.2",
-		"fast-glob": "^3.3.2",
-		"faucet": "^0.0.4",
-		"husky": "^9.1.6",
-		"ink": "^7.0.3",
-		"npm-run-all": "^4.1.5",
-		"prettier": "^3.8.3",
-		"prettier-plugin-jsdoc": "^1.8.0",
-		"prettier-plugin-organize-imports": "^4.3.0",
-		"prettier-plugin-packagejson": "^3.0.2",
-		"react": "^19.2.6",
-		"release-it": "^19",
-		"tap-difflet": "^0.7.2",
-		"typescript": "^6.0.3",
-		"typescript-eslint": "^8.59.3",
-		"vitest": "3.1.1",
-		"zx": "^8.2.2"
-	},
-	"workspaces": [
-		"mailwoman",
-		"core",
-		"classifiers",
-		"corpus",
-		"neural",
-		"neural-weights-en-us",
-		"neural-weights-fr-fr"
-	],
-	"resolutions": {
-		"@dsnp/parquetjs@1.7.0": "patch:@dsnp/parquetjs@npm%3A1.7.0#./.yarn/patches/@dsnp-parquetjs-npm-1.7.0-efe8288b39.patch"
-	},
-	"engines": {
-		"node": ">= 10.0.0"
-	},
-	"packageManager": "yarn@4.14.1+sha512.64df448055b2d37ba269d7db535a469b8da93f8ef1140c25fd7a83c00a8fbaacb214ca0e02553b92a2c54cef78bb67d0b4817fab02001df0e24fac0faccc3b42",
-	"prettier": "@sister.software/prettier-config"
+ "name": "@mailwoman/universe",
+ "version": "2.0.0",
+ "description": "Mailwoman monorepo workspace root.",
+ "license": "AGPL-3.0-only",
+ "private": true,
+ "contributors": [
+  {
+   "name": "Teffen Ellis",
+   "email": "teffen@sister.software"
+  }
+ ],
+ "repository": {
+  "type": "git",
+  "url": "https://github.com/sister-software/mailwoman.git"
+ },
+ "scripts": {
+  "compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
+  "compile:clean": "tsc -b --clean",
+  "lint": "run-s lint:prettier:check lint:eslint:check",
+  "lint:eslint:check": "eslint .",
+  "lint:eslint:fix": "eslint --fix .",
+  "lint:fix": "run-s lint:prettier:fix lint:eslint:fix",
+  "lint:prettier": "eslint .",
+  "lint:prettier:check": "prettier --cache --check -u .",
+  "lint:prettier:fix": "prettier --cache --write -u .",
+  "prepare": "husky",
+  "release": "release-it",
+  "test": "vitest --run",
+  "test:coverage": "vitest --coverage",
+  "test:integration": "vitest --dir ./mailwoman/test",
+  "test:unit": "vitest --exclude ./mailwoman/test",
+  "test:watch": "vitest --watch"
+ },
+ "type": "module",
+ "devDependencies": {
+  "@inkjs/ui": "^2.0.0",
+  "@release-it-plugins/workspaces": "^5",
+  "@sister.software/eslint-config": "^8.0.1",
+  "@sister.software/prettier-config": "^8.0.1",
+  "@sister.software/tsconfig": "^8.0.1",
+  "@types/better-sqlite3": "^7.6.13",
+  "@types/core-js": "^2.5.8",
+  "@types/express": "^5.0.0",
+  "@types/geojson": "^7946.0.14",
+  "@types/node": "^22.9.0",
+  "@types/pluralize": "^0.0.33",
+  "@types/react": "^19.2.0",
+  "@types/regenerate": "^1.4.3",
+  "ansi_up": "^6.0.2",
+  "chalk": "^5.3.0",
+  "core-js": "^3.39.0",
+  "csv-parse": "^5.5.6",
+  "eslint": "^9.13.0",
+  "eslint-plugin-html": "^8.1.2",
+  "fast-glob": "^3.3.2",
+  "faucet": "^0.0.4",
+  "husky": "^9.1.6",
+  "ink": "^7.0.3",
+  "npm-run-all": "^4.1.5",
+  "prettier": "^3.8.3",
+  "prettier-plugin-jsdoc": "^1.8.0",
+  "prettier-plugin-organize-imports": "^4.3.0",
+  "prettier-plugin-packagejson": "^3.0.2",
+  "react": "^19.2.6",
+  "release-it": "^19",
+  "tap-difflet": "^0.7.2",
+  "typescript": "^6.0.3",
+  "typescript-eslint": "^8.59.3",
+  "vitest": "3.1.1",
+  "zx": "^8.2.2"
+ },
+ "workspaces": [
+  "mailwoman",
+  "core",
+  "classifiers",
+  "corpus",
+  "neural",
+  "neural-weights-en-us",
+  "neural-weights-fr-fr"
+ ],
+ "resolutions": {
+  "@dsnp/parquetjs@1.7.0": "patch:@dsnp/parquetjs@npm%3A1.7.0#./.yarn/patches/@dsnp-parquetjs-npm-1.7.0-efe8288b39.patch"
+ },
+ "engines": {
+  "node": ">= 10.0.0"
+ },
+ "packageManager": "yarn@4.14.1+sha512.64df448055b2d37ba269d7db535a469b8da93f8ef1140c25fd7a83c00a8fbaacb214ca0e02553b92a2c54cef78bb67d0b4817fab02001df0e24fac0faccc3b42",
+ "prettier": "@sister.software/prettier-config"
 }
