@@ -3,7 +3,11 @@
 	"version": "1.0.0",
 	"description": "Mailwoman rule-based classifiers.",
 	"license": "AGPL-3.0-only",
-	"private": true,
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "classifiers"
+	},
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
@@ -12,5 +16,14 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map"
+	],
+	"publishConfig": {
+		"access": "public"
 	}
 }

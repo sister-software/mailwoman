@@ -50,6 +50,19 @@ type RepoRootAbsolutePath = RepoRootAlias
 export const repoRootPathBuilder = createPathBuilderResolver<RepoRootAlias>(RepoRootAbsolutePath)
 
 /**
+ * Path builder relative to the `@mailwoman/core` workspace root (the directory containing
+ * `package.json` for this package).
+ *
+ * In compiled mode this resolves to `core/` (one level above `core/out/utils/repo.js`'s `out/`). In
+ * source mode it's the same `core/` directly above `core/utils/repo.ts`. Used to locate
+ * package-bundled assets (dictionary data) that live under the workspace root, NOT the repo root —
+ * so that `npm install @mailwoman/core` ships those assets alongside the JS without any
+ * post-install copy step.
+ */
+const CorePackageAbsolutePath = resolve(__dirname, "..", __isCompiledTree ? ".." : "")
+export const corePackagePathBuilder = createPathBuilderResolver<RepoRootAlias>(CorePackageAbsolutePath)
+
+/**
  * Path builder relative to a specific package's output directory.
  */
 export function tsOutPathBuilder<S extends string[]>(
@@ -62,13 +75,17 @@ export function tsOutPathBuilder<S extends string[]>(
 export type AddressResource = "chromium-i18n/ssl-address" | "libpostal" | "internal" | "whosonfirst"
 
 /**
- * Path builder relative to a address resource dictionary directory
+ * Path builder relative to a address resource dictionary directory.
+ *
+ * Data lives at `core/data/<resource>/dictionaries/...` so the @mailwoman/core npm package ships
+ * dictionaries via its `files` glob. Use {@link corePackagePathBuilder} directly for non- dictionary
+ * assets (e.g. chromium-i18n/ssl-address) that don't have the `dictionaries/` subdir.
  */
 export function resourceDictionaryPathBuilder<A extends AddressResource, S extends string[]>(
 	resource: A,
 	...pathSegments: S
 ) {
-	return repoRootPathBuilder("resources", resource, "dictionaries", ...pathSegments)
+	return corePackagePathBuilder("data", resource, "dictionaries", ...pathSegments)
 }
 
 /**

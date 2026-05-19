@@ -1,9 +1,13 @@
 {
 	"name": "@mailwoman/core",
 	"version": "1.0.0",
-	"description": "Mailwoman core: tokenization, classification primitives, solver, formatter, resources, filters, solvers, utils, CLI commands.",
+	"description": "Mailwoman core: tokenization, classification primitives, solver, formatter, resources, filters, solvers, utils.",
 	"license": "AGPL-3.0-only",
-	"private": true,
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "core"
+	},
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
@@ -27,5 +31,15 @@
 		"./solvers/*": "./out/solvers/*",
 		"./filters": "./out/filters/index.js",
 		"./filters/*": "./out/filters/*"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"data/**/*"
+	],
+	"publishConfig": {
+		"access": "public"
 	}
 }
