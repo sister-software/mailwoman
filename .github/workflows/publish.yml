@@ -82,7 +82,8 @@ jobs:
               run: |
                   if [ ! -f "neural-weights-en-us/model.onnx" ] || [ ! -f "neural-weights-fr-fr/model.onnx" ]; then
                       echo "::error::release_weights=true but weight binaries are missing from the workspace dirs."
-                      echo "::error::Upload the binaries via a workflow artifact or run yarn release locally."
+                      echo "::error::Most common next step: re-run this workflow with release_weights=false to publish just the code packages (mailwoman + @mailwoman/{core,classifiers,corpus,neural}). Weights stay at their last-published version."
+                      echo "::error::Other options: cut weights releases from local (yarn release pulls them from /mnt/playpen/mailwoman-data/), or upload the binaries via a workflow artifact before this run."
                       exit 1
                   fi
 
