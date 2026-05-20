@@ -50,6 +50,9 @@
 		"spliterator": "^2.0.0",
 		"zod": "^4.1.12"
 	},
+	"peerDependencies": {
+		"@mailwoman/resolver-wof-sqlite": "workspace:*"
+	},
 	"files": [
 		"!out/test/**/*",
 		"!**/*.ts",
@@ -69,6 +72,9 @@
 	"bin": "./out/cli.js",
 	"peerDependenciesMeta": {
 		"@inkjs/ui": {
+			"optional": true
+		},
+		"@mailwoman/resolver-wof-sqlite": {
 			"optional": true
 		},
 		"core-js": {

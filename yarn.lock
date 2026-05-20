@@ -7538,8 +7538,12 @@ __metadata:
     regenerate: "npm:^1.4.2"
     spliterator: "npm:^2.0.0"
     zod: "npm:^4.1.12"
+  peerDependencies:
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
   peerDependenciesMeta:
     "@inkjs/ui":
+      optional: true
+    "@mailwoman/resolver-wof-sqlite":
       optional: true
     core-js:
       optional: true

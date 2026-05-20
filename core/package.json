@@ -26,6 +26,7 @@
 		"./utils": "./out/utils/index.js",
 		"./locale": "./out/locale/index.js",
 		"./policy": "./out/policy/index.js",
+		"./resolver": "./out/resolver/index.js",
 		"./kysley/client": "./out/kysley/client.js",
 		"./kysley/dialect": "./out/kysley/dialect.js",
 		"./kysley/dialect-config": "./out/kysley/dialect-config.js",

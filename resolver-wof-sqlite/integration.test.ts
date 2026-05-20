@@ -54,7 +54,7 @@ describeIfWof(`WofSqlitePlaceLookup integration against ${wofPath}`, () => {
 				expect(c.country).toBe("US")
 				expect(c.lat).toBeGreaterThan(0)
 				expect(c.lon).toBeLessThan(0)
-				expect(c.wof_id).toBeGreaterThan(0)
+				expect(c.id).toBeGreaterThan(0)
 			}
 			// At least one of the candidates IS plain "Paris" (not "Saint Paris" / "South Paris" / etc).
 			expect(candidates.some((c) => c.name === "Paris")).toBe(true)
@@ -64,8 +64,8 @@ describeIfWof(`WofSqlitePlaceLookup integration against ${wofPath}`, () => {
 			const candidates = await lookup.findPlace({ text: "Springfield", placetype: "locality", limit: 50 })
 			// The US has dozens of Springfields — admin-us has many.
 			expect(candidates.length).toBeGreaterThan(5)
-			// All distinct wof_ids
-			const ids = new Set(candidates.map((c) => c.wof_id))
+			// All distinct ids
+			const ids = new Set(candidates.map((c) => c.id))
 			expect(ids.size).toBe(candidates.length)
 		})
 
@@ -107,7 +107,7 @@ describeIfWof(`WofSqlitePlaceLookup integration against ${wofPath}`, () => {
 			// Ashley (US, IL) — admin-us ships a jpn alt: アシュリー (id 1108979833).
 			const candidates = await lookup.findPlace({ text: "アシュリー", placetype: "locality", limit: 10 })
 			expect(candidates.length).toBeGreaterThan(0)
-			const ashley = candidates.find((c) => c.wof_id === 1108979833)
+			const ashley = candidates.find((c) => c.id === 1108979833)
 			expect(ashley).toBeDefined()
 			expect(ashley!.name).toBe("Ashley")
 		})
@@ -130,7 +130,7 @@ describeIfWof(`WofSqlitePlaceLookup integration against ${wofPath}`, () => {
 				limit: 50,
 			})
 			expect(constrained.length).toBeGreaterThan(0)
-			expect(constrained.find((c) => c.wof_id === springfields[0]!.wof_id)).toBeDefined()
+			expect(constrained.find((c) => c.id === springfields[0]!.id)).toBeDefined()
 		})
 	})
 

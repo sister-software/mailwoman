@@ -17,7 +17,11 @@
  *   - `src` — provenance for the assertion. Formatted as `<source>:<sourceId>` when both fields are
  *       present on the node, `<source>` when only the broad category is set, omitted when neither
  *       is. Phase 4.1 surfaces classifier provenance (`rule:whos_on_first`, `neural:v0.3.1-en-us`);
- *       Phase 4.3 will overlay resolver provenance (`wof-admin:101751113`).
+ *       Phase 4.3 overlays resolver provenance (`resolver:wof-admin:101751119`).
+ *   - `lat` / `lon` — resolver-supplied centroid (Phase 4.3). Emitted only when both are set.
+ *   - `place` — resolver-supplied normalized place URI like `wof:101751119` (Phase 4.3). Emitted only
+ *       when `node.placeId` is set; distinct from `src` so callers that want the bare place id
+ *       without the vendor prefix have a direct attribute to read.
  *   - Root `<address>` carries `raw` — the full input string for round-trip.
  *
  *   ⚠ DOM gotcha: `element.textContent` on a mixed-content node returns the concatenation of all
@@ -37,6 +41,10 @@ export interface SerializeXmlOpts {
 	includeOffsets?: boolean
 	/** Include `src` provenance attribute when the node carries source info. Default true. */
 	includeSrc?: boolean
+	/** Include `lat` + `lon` resolver-supplied centroid attrs when set on the node. Default true. */
+	includeGeo?: boolean
+	/** Include `place` resolver-supplied normalized place URI when set. Default true. */
+	includePlace?: boolean
 }
 
 function escapeXml(s: string): string {
@@ -50,6 +58,12 @@ function srcAttrValue(node: AddressNode): string | null {
 	return null
 }
 
+/**
+ * Centroid precision for resolver-supplied lat/lon. 6 decimal places is ~11 cm at the equator —
+ * more than enough for any postal-address resolver and short enough to stay readable.
+ */
+const GEO_PRECISION = 6
+
 function attrs(node: AddressNode, opts: Required<SerializeXmlOpts>): string {
 	const parts: string[] = []
 	if (opts.includeOffsets) parts.push(`start="${node.start}"`, `end="${node.end}"`)
@@ -57,6 +71,14 @@ function attrs(node: AddressNode, opts: Required<SerializeXmlOpts>): string {
 	if (opts.includeSrc) {
 		const src = srcAttrValue(node)
 		if (src !== null) parts.push(`src="${escapeXml(src)}"`)
+	}
+	// Emit lat + lon together — a centroid is meaningless with only one coordinate. Resolvers that
+	// can produce one but not the other shouldn't decorate the node at all.
+	if (opts.includeGeo && node.lat !== undefined && node.lon !== undefined) {
+		parts.push(`lat="${node.lat.toFixed(GEO_PRECISION)}"`, `lon="${node.lon.toFixed(GEO_PRECISION)}"`)
+	}
+	if (opts.includePlace && node.placeId !== undefined) {
+		parts.push(`place="${escapeXml(node.placeId)}"`)
 	}
 	return parts.length === 0 ? "" : " " + parts.join(" ")
 }
@@ -82,6 +104,8 @@ export function decodeAsXml(tree: AddressTree, opts: SerializeXmlOpts = {}): str
 		includeConf: opts.includeConf ?? true,
 		includeOffsets: opts.includeOffsets ?? true,
 		includeSrc: opts.includeSrc ?? true,
+		includeGeo: opts.includeGeo ?? true,
+		includePlace: opts.includePlace ?? true,
 	}
 	const rawAttr = escapeXml(tree.raw)
 	const nl = full.pretty ? "\n" : ""

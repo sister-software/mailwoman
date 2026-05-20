@@ -65,7 +65,7 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 }
 
 interface RawSearchRow {
-	wof_id: number
+	id: number
 	name: string
 	placetype: string
 	country: string | null
@@ -140,7 +140,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 		const stmt = this.#db.prepare(`
 			SELECT
-				spr.id AS wof_id,
+				spr.id AS id,
 				spr.name,
 				spr.placetype,
 				spr.country,
@@ -183,7 +183,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			score -= (this.#weights.lengthPenaltyWeight * extraLen) / 10
 
 			return {
-				wof_id: row.wof_id,
+				id: row.id,
 				name: row.name,
 				placetype: row.placetype as WofPlacetype,
 				country: row.country ?? "",

@@ -67,15 +67,32 @@ export interface AddressNode {
 	children: AddressNode[]
 	/**
 	 * Broad category of the assertion's origin. `"rule"` and `"neural"` come from classifier
-	 * proposals; `"resolver"` will be added in Phase 4.3 when a resolver overwrites the attribution.
+	 * proposals; `"resolver"` is set by Phase 4.3's resolver when it overwrites the classifier
+	 * attribution (the displaced classifier source lands in `metadata.classifier_source`).
 	 */
 	source?: string
 	/**
 	 * Specific identifier within `source`: a rule classifier id like `"whos_on_first"`, a neural
-	 * model card version like `"neural-v0.3.1-en-us"`, or (Phase 4.3) a resolver place id like
-	 * `"wof-admin:101751113"`.
+	 * model card version like `"neural-v0.3.1-en-us"`, or a resolver-supplied place id like
+	 * `"wof-admin:101751119"`.
 	 */
 	sourceId?: string
+	/** Resolver-supplied centroid latitude (Phase 4.3). Optional — only set when a resolver wins. */
+	lat?: number
+	/** Resolver-supplied centroid longitude (Phase 4.3). Optional — only set when a resolver wins. */
+	lon?: number
+	/**
+	 * Resolver-supplied normalized place URI (Phase 4.3) — `"wof:101751119"` for a WOF place.
+	 * Distinct from `sourceId` (which includes the resolver vendor) so consumers that want the
+	 * canonical place id without the vendor prefix have one.
+	 */
+	placeId?: string
+	/**
+	 * Opaque per-node metadata bag. Phase 4.3 uses keys `classifier_source` and
+	 * `classifier_source_id` to preserve the displaced classifier attribution when a resolver wins.
+	 * Never consulted by the decoder or serializers — debugging + downstream telemetry only.
+	 */
+	metadata?: Record<string, unknown>
 }
 
 /**
