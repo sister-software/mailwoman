@@ -35,7 +35,7 @@ Most state ArcGIS Hubs publish data under CC-BY or equivalent open terms; check 
 
 ## Licensing reality
 
-State records aren't "public domain" in the IP sense, but factual data (name + address) isn't copyrightable under *Feist v. Rural Telephone*. A few caveats:
+State records aren't "public domain" in the IP sense, but factual data (name + address) isn't copyrightable under _Feist v. Rural Telephone_. A few caveats:
 
 - **Washington OSPI school directory**: state law forbids commercial use of directory data.
 - **OSM (ODbL)**: share-alike obligations may extend to models trained on it — unsettled, but a risk if the corpus is republished.
@@ -49,6 +49,7 @@ For maximum licensing safety on published model weights, restrict to US-federal 
 ## Education
 
 ### Federal aggregators
+
 - **NCES Common Core of Data (CCD) — Public School & District Universe** — https://nces.ed.gov/ccd/ccddata.asp — Bulk CSV/SAS downloads of every public school + district in the US with address. Default CCD home: https://nces.ed.gov/ccd/ — public-use, no restriction.
 - **NCES CCD Public School Name & Address File** — https://nces.ed.gov/ccd/psadd.asp — Direct CSV address files, grouped by state. Public domain.
 - **NCES Private School Universe Survey (PSS)** — https://nces.ed.gov/surveys/pss/ — Biennial directory of private schools (not bundled into CCD).
@@ -110,6 +111,7 @@ For maximum licensing safety on published model weights, restrict to US-federal 
 ## Libraries
 
 ### Federal aggregator
+
 - **IMLS Public Libraries Survey (PLS)** — https://www.imls.gov/research-evaluation/surveys/public-libraries-survey-pls — Annual national bulk dataset (CSV/SAS/SPSS) of every administrative-entity public library AND every outlet (branch), with addresses. Public-use, no restriction. Catalog mirror: https://catalog.data.gov/dataset/public-library-survey-pls-2022. Open Data: https://data.imls.gov/.
 
 ### State public library directories
@@ -184,6 +186,7 @@ State-level public databases of licensed professionals (with practice/office add
 - **ARELLO** (multi-state real estate licensee directory) — https://www.arello.com/ — query-only
 
 ### State unified license portals
+
 (Some states route many professions through a single search; per-profession entries below reference these where applicable.)
 
 - **California DCA License Search** — covers medical, nursing, real estate (separate ADRE), 150+ DCA professions — https://search.dca.ca.gov/
@@ -225,12 +228,14 @@ State-level public databases of licensed professionals (with practice/office add
 ### Per state
 
 #### Alabama
+
 - Medical: Alabama Board of Medical Examiners — https://www.albme.gov/consumers/licensee-search/ — query-only
 - Nursing: Alabama Board of Nursing — https://abn.alabama.gov/applications/LicenseLookup.aspx — query-only
 - Real estate: Alabama Real Estate Commission (AREC) — https://arec.alabama.gov/apps/LicenseSearch — query-only; bulk list request at https://arec.alabama.gov/apps/listrequest
 - Contractor: Alabama Licensing Board for General Contractors — https://genconbd.alabama.gov/database-sql/roster.aspx — query-only
 
 #### Alaska
+
 - All four professions use the unified Alaska CBPL Professional License Search: https://www.commerce.alaska.gov/cbp/main/search/professional — query-only
 - Medical: State Medical Board (via CBPL) — https://www.commerce.alaska.gov/web/cbpl/ProfessionalLicensing/StateMedicalBoard/ProfessionalLicenseSearch.aspx
 - Nursing: Board of Nursing (via CBPL) — https://www.commerce.alaska.gov/web/cbpl/ProfessionalLicensing/BoardofNursing/OnlineLicenseVerification
@@ -238,18 +243,21 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: Construction Contractors (via CBPL) — https://www.commerce.alaska.gov/web/cbpl/ProfessionalLicensing/ConstructionContractors
 
 #### Arizona
+
 - Medical: Arizona Medical Board — https://www.azmd.gov/doctorsearch/doctorsearch — query-only
 - Nursing: Arizona Board of Nursing — https://azbn.gov/licenses-and-certifications/primary-source-verification — query-only
 - Real estate: Arizona Department of Real Estate (ADRE) — https://services.azre.gov/publicdatabase/SearchIndividuals.aspx — query-only
 - Contractor: Arizona Registrar of Contractors (ROC) — https://azroc.my.site.com/AZRoc/s/contractor-search — query-only
 
 #### Arkansas
+
 - Medical: Arkansas State Medical Board — https://armedicalboard.adh.arkansas.gov/public/verify/default.aspx — query-only
 - Nursing: Arkansas State Board of Nursing — https://arsbn.boardsofnursing.org/licenselookup — query-only
 - Real estate: Arkansas Real Estate Commission — https://labor.arkansas.gov/licensing/real-estate-commission/arec-roster/agent-search/ — query-only
 - Contractor: Arkansas Contractors Licensing Board — http://aclb2.arkansas.gov/clbsearch.php — query-only
 
 #### California
+
 - Unified DCA portal: https://search.dca.ca.gov/ (medical, nursing covered)
 - Medical: Medical Board of California (via DCA Search) — https://search.dca.ca.gov/ — query-only
 - Nursing: California BRN (via DCA Search) — https://search.dca.ca.gov/ — query-only
@@ -257,18 +265,21 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: Contractors State License Board (CSLB) — https://www.cslb.ca.gov/OnlineServices/CheckLicenseII/CheckLicense.aspx — query-only
 
 #### Colorado
+
 - Medical: Colorado DORA Medical Board (via DORA License Lookup) — https://apps2.colorado.gov/dora/licensing/lookup/licenselookup.aspx — query-only
 - Nursing: Colorado DORA Board of Nursing (same DORA Lookup) — https://apps2.colorado.gov/dora/licensing/lookup/licenselookup.aspx — query-only; also rosters at https://apps2.colorado.gov/dora/licensing/lookup/generateroster.aspx (bulk per board)
 - Real estate: Colorado Division of Real Estate eLicense — https://apps2.colorado.gov/dre/licensing/lookup/licenselookup.aspx — query-only
 - Contractor: Local-only — no state general contractor board (state regulates only certain trades; e.g. electrical/plumbing via DORA)
 
 #### Connecticut
+
 - Medical: CT eLicense (DPH) — https://www.elicense.ct.gov/Lookup/LicenseLookup.aspx — query-only
 - Nursing: CT eLicense (DPH) — https://www.elicense.ct.gov/Lookup/LicenseLookup.aspx — query-only
 - Real estate: CT eLicense (DCP Real Estate Brokers) — https://www.elicense.ct.gov/Lookup/LicenseLookup.aspx — query-only
 - Contractor: CT Dept. of Consumer Protection eLicense (Home Improvement Contractor) — https://www.elicense.ct.gov/Lookup/LicenseLookup.aspx — query-only
 
 #### Delaware
+
 - All four via DELPROS — https://delpros.delaware.gov/OH_VerifyLicense — query-only
 - Medical: Delaware Board of Medical Licensure & Discipline (via DELPROS)
 - Nursing: Delaware Board of Nursing (via DELPROS)
@@ -276,24 +287,28 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: Local-only at general-contractor level; specialty trades (electrical, plumbing) licensed via DELPROS
 
 #### District of Columbia
+
 - Medical: DC Health Board of Medicine License Search — https://app.hpla.doh.dc.gov/Weblookupcs/ — query-only
 - Nursing: DC Health Board of Nursing (same DC Health verification portal) — https://app.hpla.doh.dc.gov/Weblookupcs/ — query-only
 - Real estate: DC DLCP OPLA License Search — https://govservices.dcra.dc.gov/oplaportal/Home/GetLicenseSearchDetails — query-only
 - Contractor: DC DLCP OPLA / Construction Contractor licensing — https://govservices.dcra.dc.gov/oplaportal/Home/GetLicenseSearchDetails — query-only
 
 #### Florida
+
 - Medical: FL DOH MQA Search Portal — https://mqa-internet.doh.state.fl.us/MQASearchServices/HealthCareProviders — query-only
 - Nursing: FL DOH MQA Search Portal — https://mqa-internet.doh.state.fl.us/MQASearchServices/HealthCareProviders — query-only
 - Real estate: Florida DBPR License Search — https://www.myfloridalicense.com/wl11.asp?mode=2&search=Name — query-only
 - Contractor: Florida DBPR (Construction Industry Licensing Board) — https://www.myfloridalicense.com/wl11.asp?mode=2&search=Name — query-only
 
 #### Georgia
+
 - Medical: Georgia Composite Medical Board — https://gateway.medicalboard.georgia.gov/verification/search.aspx — query-only
 - Nursing: Georgia Board of Nursing (SOS Verification) — https://verify.sos.ga.gov/verification/ — query-only
 - Real estate: Georgia Real Estate Commission — https://ata.grec.state.ga.us/account/search — query-only
 - Contractor: GA State Licensing Board for Residential & General Contractors (SOS Licensing) — https://verify.sos.ga.gov/verification/ — query-only
 
 #### Hawaii
+
 - All four via Hawaii DCCA PVL Search — https://mypvl.dcca.hawaii.gov/public-license-search/ — query-only; bulk PVL dataset listed at https://opendata.hawaii.gov/dataset/professional-and-vocational-licensing-pvl-search
 - Medical: Hawaii Medical Board (via PVL)
 - Nursing: Hawaii Board of Nursing (via PVL)
@@ -301,6 +316,7 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: Hawaii Contractors License Board (via PVL); RICO check at https://cca.hawaii.gov/rico/check/
 
 #### Idaho
+
 - All four via Idaho DOPL License Search — https://dopl.idaho.gov/license-search/ — query-only
 - Medical: Idaho Board of Medicine — https://dopl.idaho.gov/bom/
 - Nursing: Idaho Board of Nursing — https://dopl.idaho.gov/bon/bon-license-search/
@@ -308,6 +324,7 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: Public Works Contractor (DOPL); residential contractors registered (limited) — https://dopl.idaho.gov/license-search/
 
 #### Illinois
+
 - All four via Illinois IDFPR License Lookup — https://online-dfpr.micropact.com/lookup/licenselookup.aspx — query-only
 - Medical: IL Medical Board (via IDFPR)
 - Nursing: IL Board of Nursing (via IDFPR)
@@ -315,6 +332,7 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: Illinois does not have a statewide general contractor license — local-only at GC level; roofing & plumbing licensed via IDFPR
 
 #### Indiana
+
 - All via Indiana PLA — https://secure.in.gov/apps/pla/search and https://mylicense.in.gov/everification/ — query-only
 - Medical: Indiana Medical Licensing Board (via PLA)
 - Nursing: Indiana State Board of Nursing (via PLA)
@@ -322,48 +340,56 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: Local-only — no state general contractor license (Plumbing Commission licenses plumbers via PLA)
 
 #### Iowa
+
 - Medical: Iowa Board of Medicine — https://eservices.iowa.gov/PublicPortal/Iowa/IBM/licenseQuery/LicenseQuery.jsp?Profession=Physician — query-only
 - Nursing: Iowa Board of Nursing — https://eservices.iowa.gov/PublicPortal/Iowa/IBON/common/index.jsp — query-only
 - Real estate: Iowa Real Estate Commission (via My Iowa PLB) — https://ia-plb.my.site.com/LicenseSearchPage — query-only
 - Contractor: Iowa Construction Contractor Registration (DIAL) — query at https://dial.iowa.gov/i-need/records ; **bulk CSV: Active Iowa Construction Contractor Registrations** — https://data.iowa.gov/Workforce/Active-Iowa-Construction-Contractor-Registrations/dpf3-iz94
 
 #### Kansas
+
 - Medical: Kansas Board of Healing Arts — https://www.kansas.gov/ssrv-ksbhada/search.html — query-only
 - Nursing: Kansas State Board of Nursing — https://portal.egov.ksbn.ks.gov/verification/ — query-only
 - Real estate: Kansas Real Estate Commission — https://www.krec.ks.gov/resources/search — query-only
 - Contractor: Local-only — no state contractor license (state regulates only roofers via AG; specialty/trade licensure varies)
 
 #### Kentucky
+
 - Medical: Kentucky Board of Medical Licensure — https://kbml.ky.gov/physician/Pages/Physician-Profile-Verification-of-Physician-License.aspx — query-only
 - Nursing: Kentucky Board of Nursing — https://kybn.boardsofnursing.org/licenselookup — query-only
 - Real estate: Kentucky Real Estate Commission — https://secure.kentucky.gov/KREC/databasesearch — query-only
 - Contractor: Local-only at GC level; KY Dept. of Housing/Buildings & Construction licenses HVAC/plumbing/electrical separately
 
 #### Louisiana
+
 - Medical: Louisiana State Board of Medical Examiners — https://online.lasbme.org/#/verifylicense — query-only
 - Nursing: Louisiana State Board of Nursing — https://lsbn.boardsofnursing.org/licenselookup — query-only
 - Real estate: Louisiana Real Estate Commission (LREC) — https://portal.lrec.gov/public/search — query-only
 - Contractor: Louisiana State Licensing Board for Contractors — https://arlspublic.lslbc.louisiana.gov/Public/DetailedSearch/ByName — query-only (multiple search modes)
 
 #### Maine
+
 - Medical: Maine Board of Licensure in Medicine — https://www.maine.gov/md/licensure/license-verification — query-only
 - Nursing: Maine State Board of Nursing — https://www.maine.gov/boardofnursing/licensing/verifications.html — query-only (search via PFR licensee portal)
 - Real estate: Maine Real Estate Commission (via OPOR/PFR) — https://www.maine.gov/pfr/consumer/licensee-search — query-only; bulk download offered
 - Contractor: Local-only at GC level (no state contractor licensing board); some trades licensed via Maine OPOR
 
 #### Maryland
+
 - Medical: Maryland Board of Physicians — https://www.mbp.state.md.us/bpqapp/ — query-only
 - Nursing: Maryland Board of Nursing — https://lookup.mbon.org/verification/ — query-only
 - Real estate: Maryland Real Estate Commission (DLLR Public Query) — https://www.dllr.state.md.us/cgi-bin/ElectronicLicensing/OP_search/OP_search.cgi?calling_app=RE%3A%3ARE_qselect — query-only
 - Contractor: Maryland Home Improvement Commission (MHIC) Public Query — https://www.dllr.state.md.us/cgi-bin/ElectronicLicensing/OP_search/OP_search.cgi?calling_app=HIC::HIC_qselect — query-only
 
 #### Massachusetts
+
 - Medical: Massachusetts Board of Registration in Medicine — findmydoctor: https://findmydoctor.mass.gov/ — query-only
 - Nursing: MA Board of Registration in Nursing — https://madph.mylicense.com/verification/ — query-only
 - Real estate: MA Board of Registration of Real Estate Brokers (via DPL eLicensing) — https://elicensing21.mass.gov/CitizenAccess/GeneralProperty/PropertyLookUp.aspx?isLicensee=Y — query-only
 - Contractor: MA Home Improvement Contractor (OCABR) Search — https://contractorhub.mass.gov/s/hic-contractor-search and https://services.oca.state.ma.us/hic/licenseelist.aspx — query-only; also OPSI Construction Supervisor License search via mass.gov
 
 #### Michigan
+
 - All four via MiPLUS / LARA — https://val.apps.lara.state.mi.us/ — query-only
 - Medical: MI Board of Medicine (via MiPLUS)
 - Nursing: MI Board of Nursing (via MiPLUS)
@@ -371,18 +397,21 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: MI Residential Builders & M&A Contractors (via MiPLUS)
 
 #### Minnesota
+
 - Medical: Minnesota Board of Medical Practice — https://mn.gov/boards/medical-practice/verify/index.jsp — query-only
 - Nursing: Minnesota Board of Nursing — https://mn.gov/boards/nursing/verify-a-license/index.jsp — query-only
 - Real estate: Minnesota Department of Commerce License Lookup — https://mn.gov/commerce/licensing/license-lookup/ — query-only
 - Contractor: Minnesota DLI License & Registration Lookup (residential contractors/remodelers/roofers) — https://www.dli.mn.gov/license-and-registration-lookup — query-only; **bulk: nightly downloadable spreadsheet of all CCLD licensees**
 
 #### Mississippi
+
 - Medical: Mississippi State Board of Medical Licensure — https://gateway.msbml.ms.gov/verification/search.aspx — query-only (full DB available for $300)
 - Nursing: Mississippi Board of Nursing — https://gateway.licensure.msbn.ms.gov/Verification/search.aspx — query-only
 - Real estate: Mississippi Real Estate Commission — https://www.mrec2.webapps.ms.gov/publicview/mrecPublicBrokerSearch.aspx?Div=MREC — query-only
 - Contractor: Mississippi State Board of Contractors (MSBOC) — https://www.msboc.us/ (search at search.msboc.us) — query-only
 
 #### Missouri
+
 - All via MO DPR Licensee Search — https://pr.mo.gov/licensee-search.asp — query-only; **bulk "Downloadable Listings" updated nightly** at https://pr.mo.gov/
 - Medical: Missouri Board of Registration for the Healing Arts (via DPR)
 - Nursing: Missouri State Board of Nursing (via DPR)
@@ -390,6 +419,7 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: Local-only — no state general contractor license
 
 #### Montana
+
 - All four via Montana DLI Licensee Lookup — https://ebizws.mt.gov/PUBLICPORTAL/home.jsp — query-only; bulk Licensee Mailing Lists at https://boards.bsd.dli.mt.gov/_global-pages/additional-license-information/licensee-mailing-lists
 - Medical: Montana Board of Medical Examiners (via DLI)
 - Nursing: Montana Board of Nursing (via DLI)
@@ -397,18 +427,21 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: Montana Construction Contractor Registration (via DLI)
 
 #### Nebraska
+
 - Medical: Nebraska Board of Medicine & Surgery (DHHS) — https://www.nebraska.gov/LISSearch/search.cgi — query-only
 - Nursing: Nebraska Board of Nursing (DHHS) — https://www.nebraska.gov/LISSearch/search.cgi — query-only
 - Real estate: Nebraska Real Estate Commission — https://nrec.igovsolution.net/online/Verification/Individual — query-only
 - Contractor: Nebraska Dept. of Labor Contractor Registration — https://dol.nebraska.gov/conreg/Search — query-only (full database publicly searchable)
 
 #### Nevada
+
 - Medical: Nevada State Board of Medical Examiners — https://nsbme.mylicense.com/verification/Search.aspx — query-only
 - Nursing: Nevada State Board of Nursing — https://nvbn.boardsofnursing.org/licenselookup — query-only
 - Real estate: Nevada Real Estate Division — https://red.prod.secure.nv.gov/lookup/licenselookup.aspx — query-only
 - Contractor: Nevada State Contractors Board (NSCB) — https://app.nvcontractorsboard.com/Clients/NVSCB/Public/ContractorLicenseSearch/ContractorLicenseSearch.aspx — query-only
 
 #### New Hampshire
+
 - All four via NH OPLC License Lookup — https://www.oplc.nh.gov/license-lookup — query-only
 - Medical: NH Board of Medicine (via OPLC)
 - Nursing: NH Board of Nursing (via OPLC)
@@ -416,6 +449,7 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: Local-only — no state general contractor license (NH licenses some trades, e.g. electricians, via OPLC)
 
 #### New Jersey
+
 - All major professions via NJ DCA License Verification — https://newjersey.mylicense.com/verification/ — query-only
 - Medical: NJ State Board of Medical Examiners — https://www.njconsumeraffairs.gov/bme/Pages/verification.aspx — query-only
 - Nursing: NJ Board of Nursing (via DCA) — https://newjersey.mylicense.com/verification/
@@ -423,6 +457,7 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: NJ Home Improvement Contractor (via DCA Consumer Affairs) — https://newjersey.mylicense.com/verification/ — query-only
 
 #### New Mexico
+
 - All four via NM RLD Public Search — https://nmrldlpi.my.site.com/bcd/s/rld-public-search — query-only; legacy verification at http://verification.rld.state.nm.us/
 - Medical: New Mexico Medical Board (via RLD)
 - Nursing: New Mexico Board of Nursing (via RLD)
@@ -430,42 +465,49 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: New Mexico Construction Industries Division (via RLD)
 
 #### New York
+
 - Medical: NYSED Office of the Professions Online Verification — https://eservices.nysed.gov/professions/verification-search — query-only
 - Nursing: NYSED Office of the Professions (same portal) — https://eservices.nysed.gov/professions/verification-search — query-only
 - Real estate: NYS DOS Division of Licensing Services (eAccessNY public search) — https://appext20.dos.ny.gov/nydos/selSearchType.do — query-only
 - Contractor: Local-only at GC level (e.g. NYC DOB Home Improvement Contractor licensing); no statewide general contractor license
 
 #### North Carolina
+
 - Medical: North Carolina Medical Board — https://portal.ncmedboard.org/verification/search.aspx — query-only; NCMB Roster (bulk-ish list)
 - Nursing: North Carolina Board of Nursing — https://portal.ncbon.com/licenseverification/search.aspx — query-only
 - Real estate: North Carolina Real Estate Commission — https://license.ncrec.gov/ncrec/oecgi3.exe/O4W_LIC_SEARCH_NEW — query-only
 - Contractor: NC Licensing Board for General Contractors (NCLBGC) — https://portal.nclbgc.org/Public/Search — query-only
 
 #### North Dakota
+
 - Medical: North Dakota Board of Medicine — https://www.ndbom.org/public/find_verify/verify.asp — query-only
 - Nursing: North Dakota Board of Nursing — https://ndbon.boardsofnursing.org/licenselookup — query-only
 - Real estate: North Dakota Real Estate Commission Licensee Directory — https://services.realestatend.org/directory/ — query-only
 - Contractor: North Dakota Secretary of State (FirstStop) Contractor Search — https://firststop.sos.nd.gov/search/contractor — query-only
 
 #### Ohio
+
 - Medical: State Medical Board of Ohio (via eLicense) — https://elicense.ohio.gov/oh_verifylicense — query-only
 - Nursing: Ohio Board of Nursing (via eLicense) — https://elicense.ohio.gov/oh_verifylicense — query-only
 - Real estate: Ohio Division of Real Estate & Professional Licensing — https://elicense3.com.ohio.gov/lookup/licenselookup.aspx — query-only (note: site migrated Oct 2025; check https://com.ohio.gov/newsystem)
 - Contractor: Ohio Construction Industry Licensing Board (OCILB) — https://elicense4.com.ohio.gov/lookup/licenselookup.aspx — query-only (trades only; OH has no state GC license)
 
 #### Oklahoma
+
 - Medical: Oklahoma State Board of Medical Licensure & Supervision — https://www.okmedicalboard.org/search — query-only (separate DO board at https://oklahoma.gov/osboe.html)
 - Nursing: Oklahoma Board of Nursing — https://okbn.boardsofnursing.org/licenselookup — query-only
 - Real estate: Oklahoma Real Estate Commission (OREC) — https://orec.us.thentiacloud.net/webs/orec/ — query-only
 - Contractor: Oklahoma Construction Industries Board (CIB) — https://okcibv7prod.glsuite.us/GLSuiteWeb/Clients/OKCIB/Public/LicenseeSearch/LicenseeSearch.aspx — query-only (trade-only; OK has no state GC license)
 
 #### Oregon
+
 - Medical: Oregon Medical Board — https://omb.oregon.gov/search — query-only
 - Nursing: Oregon State Board of Nursing — https://osbn.boardsofnursing.org/licenselookup — query-only
 - Real estate: Oregon Real Estate Agency (OREA eLicense) — https://orea.elicense.micropact.com/Lookup/LicenseLookup.aspx — query-only
 - Contractor: Oregon Construction Contractors Board (CCB) — https://search.ccb.state.or.us/search/ — query-only
 
 #### Pennsylvania
+
 - All medical/nursing/real estate via PALS — https://www.pals.pa.gov/ — query-only
 - Medical: PA State Board of Medicine (via PALS)
 - Nursing: PA State Board of Nursing (via PALS)
@@ -473,12 +515,14 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: PA Attorney General Home Improvement Contractor Registration — https://hicsearch.attorneygeneral.gov/ — query-only
 
 #### Rhode Island
+
 - Medical: RI Department of Health (Board of Medical Licensure & Discipline) — https://healthri.mylicense.com/verification/ — query-only
 - Nursing: RI Department of Health (Board of Nurse Registration) — https://healthri.mylicense.com/verification/ — query-only
 - Real estate: RI Department of Business Regulation Real Estate Lookup — https://ridbrprod-search.state-reg-eastern.tylerapp.com/ — query-only
 - Contractor: RI Contractors' Registration & Licensing Board (CRLB) — https://crb.ri.gov/search/contractor-search — query-only
 
 #### South Carolina
+
 - All four via SC LLR Licensee Lookup — https://verify.llronline.com/LicLookup/LookupMain.aspx — query-only
 - Medical: SC Board of Medical Examiners — https://verify.llronline.com/LicLookup/Med/Med.aspx?div=16
 - Nursing: SC Board of Nursing (via LLR) — https://verify.llronline.com/LicLookup/LookupMain.aspx
@@ -486,24 +530,28 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: SC Contractor's Licensing Board (commercial) — https://verify.llronline.com/LicLookup/Contractors/Contractor.aspx ; Residential Builders — https://verify.llronline.com/LicLookup/Resbu/Resbu.aspx
 
 #### South Dakota
+
 - Medical: SD Board of Medical & Osteopathic Examiners (SDBMOE) — https://sdbmoe.gov/ (Licensee Lookup) — query-only
 - Nursing: SD Board of Nursing — https://sdbon.boardsofnursing.org/licenselookup — query-only
 - Real estate: SD Real Estate Commission Licensee List — https://dlr.sd.gov/realestate/license_verification_system.aspx — query-only
 - Contractor: Local-only — no state general contractor license (specialty trades only via DLR boards; contractor excise-tax license via DOR)
 
 #### Tennessee
+
 - Medical: TN Department of Health Licensure Verification — https://apps.health.tn.gov/Licensure/ — query-only
 - Nursing: TN Department of Health (same portal) — https://apps.health.tn.gov/Licensure/ — query-only
 - Real estate: TN Real Estate Commission (via DCI Verify portal) — https://verify.tn.gov/ — query-only
 - Contractor: TN Board for Licensing Contractors (via DCI Verify portal) — https://verify.tn.gov/ — query-only
 
 #### Texas
+
 - Medical: Texas Medical Board (LIST) — https://www.tmb.state.tx.us/resources/for-the-public/look-up-a-license and https://list.tmb.state.tx.us/ — query-only
 - Nursing: Texas Board of Nursing — https://www.bon.texas.gov/licensure_verification.asp — query-only
 - Real estate: Texas Real Estate Commission (TREC) — https://www.trec.texas.gov/license-search — query-only; **bulk: TREC High Value Data Sets** — https://www.trec.texas.gov/public/high-value-data-sets
 - Contractor: Texas Department of Licensing & Regulation (TDLR) — https://www.tdlr.texas.gov/LicenseSearch/ — query-only (TX has no state GC license; TDLR covers electricians/HVAC/etc.)
 
 #### Utah
+
 - All four via Utah DOPL License Lookup Verification — https://secure.utah.gov/llv/search/index.html — query-only
 - Medical: Utah Physician Licensing Board (via DOPL)
 - Nursing: Utah Board of Nursing (via DOPL)
@@ -511,6 +559,7 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: Utah Contractors (via DOPL)
 
 #### Vermont
+
 - All four via VT OPR "Find a Professional" — https://sos.vermont.gov/opr/find-a-professional — query-only
 - Medical: Vermont Board of Medical Practice (via OPR)
 - Nursing: Vermont State Board of Nursing (via OPR)
@@ -518,24 +567,28 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: Vermont Residential Contractor Registration (via OPR) — https://sos.vermont.gov/residential-contractors
 
 #### Virginia
+
 - Medical: Virginia Department of Health Professions (DHP) License Lookup — https://dhp.virginiainteractive.org/Lookup — query-only
 - Nursing: Virginia DHP (same portal) — https://dhp.virginiainteractive.org/Lookup — query-only
 - Real estate: Virginia DPOR License Lookup — https://www.dpor.virginia.gov/LicenseLookup — query-only
 - Contractor: Virginia DPOR Board for Contractors — https://www.dpor.virginia.gov/LicenseLookup — query-only
 
 #### Washington
+
 - Medical: Washington DOH Provider Credential Search — https://doh.wa.gov/licenses-permits-and-certificates/provider-credential-or-facility-search — query-only; **bulk: WA Health Care Provider Credential Data on data.wa.gov** — https://data.wa.gov/health/Health-Care-Provider-Credential-Data/qxh8-f4bd
 - Nursing: Washington DOH (same provider credential search) — https://doh.wa.gov/licenses-permits-and-certificates/provider-credential-or-facility-search — query-only + bulk (above)
 - Real estate: Washington DOL Professional License Lookup — https://professions.dol.wa.gov/s/license-lookup — query-only
 - Contractor: Washington L&I Verify a Contractor — https://secure.lni.wa.gov/verify/ — query-only
 
 #### West Virginia
+
 - Medical: WV Board of Medicine — https://wvbom.wv.gov/public/search/ — query-only (separate WV Board of Osteopathic Medicine at https://www.wvbdosteo.org/verify/)
 - Nursing: WV RN Board — https://wvrn.boardsofnursing.org/licenselookup — query-only (LPN Board separate at https://lpnboard.wv.gov/licensure/Pages/Check-Licensure-Status.aspx)
 - Real estate: WV Real Estate Commission — https://apps.wv.gov/REC/Licensing/Application/LicenseInfoService — query-only
 - Contractor: WV Contractor Licensing Board — https://wvclboard.wv.gov/verify/ — query-only
 
 #### Wisconsin
+
 - All four via Wisconsin DSPS License Search — https://licensesearch.wi.gov/ — query-only
 - Medical: WI Medical Examining Board (via DSPS)
 - Nursing: WI Board of Nursing (via DSPS)
@@ -543,6 +596,7 @@ State-level public databases of licensed professionals (with practice/office add
 - Contractor: WI Dwelling Contractor / trades (via DSPS)
 
 #### Wyoming
+
 - Medical: Wyoming Board of Medicine — https://wyomedboard.wyo.gov/consumers/license-lookup — query-only
 - Nursing: Wyoming State Board of Nursing — https://wybn.boardsofnursing.org/licenselookup — query-only
 - Real estate: Wyoming Real Estate Commission — https://realestate.wyo.gov/ (public license search) — query-only
@@ -553,6 +607,7 @@ State-level public databases of licensed professionals (with practice/office add
 ## Secretary of State, business, notary, charity, lobbyist
 
 ### Notes on scope and quirks
+
 - Business entity searches: every state offers free name/agent query; only a minority offer bulk downloads (FL, OR partial via open data, LA via paid API, HI by-record paid). DE does not publish principal addresses. NV charges for some access; TX SOSDirect charges $1/search.
 - Notary registries: most states publish searchable directories. NH, TN, WY publish only PDF lists or none. GA notaries are commissioned by county clerks but indexed centrally by GSCCCA.
 - Charity registries: typically AG, but SoS in CO, GA, MD, MS, NC, ND, OK, PA, SC, TN, WA, WV; DBR in RI; DCP in CT; DLCP in DC; VDACS in VA; DPFR in ME; DFI in WI; FDACS in FL; DCP in UT (transitioning to DCCC). DE, ID, MT, SD, WY have no state-level charity registration (only fundraisers in some). AZ repealed charity registration in 2013 (veterans + fundraisers still register).
@@ -561,306 +616,357 @@ State-level public databases of licensed professionals (with practice/office add
 ### Per state
 
 ### Alabama
+
 - Business entity search: Alabama Secretary of State — https://arc-sos.state.al.us/CGI/CORPNAME.MBR/INPUT — query-only — includes registered agent
 - Notary registry: Alabama Secretary of State — https://arc-sos.state.al.us/CGI/notename.mbr/input — query-only (also county-level browsing)
 - Charity registry: Alabama Attorney General — https://www.alabamaag.gov/licensing-registration/charitable-organizations/ (search: https://ago.igovsolution.net/online/Lookups/Business.aspx) — query-only
 - Lobbyist registry: Alabama Ethics Commission — https://ethics.alabama.gov/lobbyists.aspx — query-only; annual PDF list at https://ethics.alabama.gov/docs/LobbyList/2024LobbyistList.pdf
 
 ### Alaska
+
 - Business entity search: Alaska Division of Corporations, Business and Professional Licensing — https://www.commerce.alaska.gov/cbp/main/search/entities — query-only — registered agent included
 - Notary registry: Office of the Lieutenant Governor — https://aws.state.ak.us/NotaryDirectory/ — query-only
 - Charity registry: Alaska Department of Law — https://www.law.alaska.gov/department/civil/consumer/charities_list.html — list/query
 - Lobbyist registry: Alaska Public Offices Commission (APOC) — https://apoc.doa.alaska.gov/filer-resources/lobbying/ — query-only
 
 ### Arizona
+
 - Business entity search: Arizona Corporation Commission (eCorp) — https://ecorp.azcc.gov/EntitySearch/Index — query-only; database purchase available
 - Notary registry: Arizona Secretary of State — https://apps.azsos.gov/apps/notary/search/default.aspx — query-only (by name/county/zip)
 - Charity registry: AZ repealed charity registration in 2013. Veterans charities only — Arizona Secretary of State — https://azsos.gov/business/other-services/veterans-charities-organizations — query-only
 - Lobbyist registry: Arizona Secretary of State — https://lobbying.az.gov/ — query-only; bulk DB purchasable ($25) at https://azsos.gov/services/database-purchasing
 
 ### Arkansas
+
 - Business entity search: Arkansas Secretary of State — https://bcs.sos.arkansas.gov/search — query-only
 - Notary registry: Arkansas Secretary of State — https://bcs.sos.arkansas.gov/search/notary — query-only
 - Charity registry: Arkansas Secretary of State (oversight by SoS since 2018; AG focuses on enforcement) — https://www.sos.arkansas.gov/business-commercial-services-bcs/nonprofit-charitable-entities/charitable-entities — query-only
 - Lobbyist registry: Arkansas Secretary of State / Ethics — https://ethics-disclosures.sos.arkansas.gov/public/lobbyist/lobbyistdata — query-only
 
 ### California
+
 - Business entity search: California Secretary of State (bizfile Online) — https://bizfileonline.sos.ca.gov/search/business — query-only; includes principal + agent addresses; free PDF copies
 - Notary registry: California Secretary of State — https://www.sos.ca.gov/notary/notary-public-listing — query-only (active commissions)
 - Charity registry: California Attorney General Registry of Charities and Fundraisers — https://rct.doj.ca.gov/Verification/Web/Search.aspx?facility=Y — query-only
 - Lobbyist registry: California Secretary of State (CAL-ACCESS) — https://cal-access.sos.ca.gov/Lobbying/ — query-only; bulk daily data downloads available
 
 ### Colorado
+
 - Business entity search: Colorado Secretary of State — https://www.sos.state.co.us/biz/BusinessEntityCriteriaExt.do — query-only; includes principal and registered agent
 - Notary registry: Colorado Secretary of State — https://www.sos.state.co.us/notary/pages/public/verifyNotary.xhtml — query-only
 - Charity registry: Colorado Secretary of State (Charities and Fundraisers) — https://www.coloradosos.gov/ccsa/pages/search/basic.xhtml — query-only
 - Lobbyist registry: Colorado Secretary of State — https://www.sos.state.co.us/lobby/SearchLobbyist.do — query-only; PDF directories also published
 
 ### Connecticut
+
 - Business entity search: Connecticut Secretary of the State (business.ct.gov; CONCORD legacy) — https://service.ct.gov/business/s/onlinebusinesssearch — query-only
 - Notary registry: Connecticut Secretary of the State (eLicense) — https://www.elicense.ct.gov/Lookup/LicenseLookup.aspx — query-only (select Notary Public)
 - Charity registry: Connecticut Department of Consumer Protection (Public Charities Unit) — https://portal.ct.gov/dcp/charities/public-charities — query-only
 - Lobbyist registry: Connecticut Office of State Ethics — https://www.oseapps.ct.gov/NewLobbyist/security/loginhome.aspx — query-only
 
 ### Delaware
+
 - Business entity search: Delaware Division of Corporations — https://icis.corp.delaware.gov/ecorp/entitysearch/namesearch.aspx — query-only — NOTE: Delaware does NOT publish full principal/officer addresses publicly, only registered agent; detailed status $10–$20/entity
 - Notary registry: Delaware Notary Public (Department of State) — https://notary.delaware.gov/ ; bulk dataset at https://data.delaware.gov/Licenses-and-Certifications/Notaries-Commissioned-in-Delaware/q8dr-mj6p — bulk available
 - Charity registry: Delaware does NOT require general charity registration. No public registry. Private foundations file 990-PF with AG. Investigate manually: https://attorneygeneral.delaware.gov/tag/charities/
 - Lobbyist registry: Delaware Public Integrity Commission (PIRS) — https://pirs.delaware.gov/ — query-only
 
 ### District of Columbia
+
 - Business entity search: DC Department of Licensing and Consumer Protection (CorpOnline) — https://corponline.dlcp.dc.gov/homepage — query-only
 - Notary registry: Office of the Secretary of DC (Office of Notary Commissions and Authentications) — https://os.dc.gov/service/notary-public-search — query-only with map
 - Charity registry: DC Department of Licensing and Consumer Protection (Basic Business License - Charitable Services Business) — https://dlcp.dc.gov/node/1618416 — license search via CorpOnline / MyDC Business Center — query-only
 - Lobbyist registry: DC Board of Ethics and Government Accountability (BEGA) — https://efiler.bega.dc.gov/LRRSearch — query-only
 
 ### Florida
+
 - Business entity search: Florida Department of State, Division of Corporations (Sunbiz) — https://search.sunbiz.org/ — bulk download — Daily & quarterly via SFTP at https://dos.fl.gov/sunbiz/other-services/data-downloads/
 - Notary registry: Florida Department of State, Division of Corporations — https://notaries.dos.fl.gov/not001.html — query-only
 - Charity registry: Florida Department of Agriculture and Consumer Services (Check-A-Charity) — https://csapp.fdacs.gov/CSPublicApp/CheckACharity/CheckACharity.aspx — query-only
 - Lobbyist registry: Florida Lobbyist Registration Office (Joint Legislative/Executive portal) — https://www.floridalobbyist.gov/ — query-only; directories at /LobbyistInformation/RegisteredExecutiveLobbyists and /RegisteredLegislativeLobbyists
 
 ### Georgia
+
 - Business entity search: Georgia Secretary of State (Corporations Division) — https://ecorp.sos.ga.gov/businesssearch — query-only
 - Notary registry: Georgia Superior Court Clerks' Cooperative Authority (GSCCCA) — https://search.gsccca.org/notary/ — query-only (statewide index of county-commissioned notaries)
 - Charity registry: Georgia Secretary of State (Securities & Charities Division) — https://sos.ga.gov/index.php/securities/registered_charities_search — query-only (verify portal: http://verify.sos.ga.gov/Verification)
 - Lobbyist registry: Georgia Government Transparency and Campaign Finance Commission — https://media.ethics.ga.gov/search/lobbyist/lobbyist_byname.aspx — query-only
 
 ### Hawaii
+
 - Business entity search: Hawaii Business Express / BREG (DCCA Business Registration Division) — https://hbe.ehawaii.gov/documents — query-only; bulk lists paid (5¢/record via List Builder)
 - Notary registry: Hawaii Department of the Attorney General — https://notary.ehawaii.gov/notary/public/publicsearch.html — query-only
 - Charity registry: Hawaii Department of the Attorney General (Tax & Charities Division) — https://ag.hawaii.gov/tax/ — query-only (Hawaii Charity Finder)
 - Lobbyist registry: Hawaii State Ethics Commission — https://hawaiiethics.my.site.com/public/s/ — query-only; bulk CSV at data.gov: https://catalog.data.gov/dataset/hawaii-state-ethics-commissions-lobbyist-registration-statements
 
 ### Idaho
+
 - Business entity search: Idaho Secretary of State (SOSBiz) — https://sosbiz.idaho.gov/search/business/ — query-only
 - Notary registry: Idaho Secretary of State (SOSBiz) — https://sosbiz.idaho.gov/search/notary — query-only
 - Charity registry: ID has NO general charity registration requirement. No public registry. Investigate manually. Telephone solicitors register with AG: https://www.ag.idaho.gov/
 - Lobbyist registry: Idaho Secretary of State (Sunshine system) — https://sunshine.voteidaho.gov/lobbyists — query-only
 
 ### Illinois
+
 - Business entity search: Illinois Secretary of State — https://apps.ilsos.gov/businessentitysearch/ — query-only
 - Notary registry: Illinois Secretary of State — https://apps.ilsos.gov/notarysearch/ — query-only
 - Charity registry: Illinois Attorney General (Charitable Trust Bureau) — https://charitable.illinoisattorneygeneral.gov/ — query-only (new portal launched Aug 2025)
 - Lobbyist registry: Illinois Secretary of State — https://apps.ilsos.gov/lobbyistsearch/index.jsp — query-only; bulk download via Illinois Data Portal
 
 ### Indiana
+
 - Business entity search: Indiana Secretary of State (INBiz) — https://bsd.sos.in.gov/publicbusinesssearch — query-only
 - Notary registry: Indiana Secretary of State (INBiz) — https://inbiz.in.gov/certification/notary — query-only
 - Charity registry: Indiana does not register charities themselves; only professional solicitors register with AG — https://www.in.gov/attorneygeneral/consumer-protection-division/charities-and-donors/charitable-fundraising/ — query-only for fundraisers
 - Lobbyist registry: Indiana Lobby Registration Commission (ILRC) — https://www.in.gov/ilrc/ ; lobbying data at https://www.in.gov/ilrc/lobbying-data/ — query-only
 
 ### Iowa
+
 - Business entity search: Iowa Secretary of State (Fast Track Filing) — https://sos.iowa.gov/search/business/search.aspx — query-only
 - Notary registry: Iowa Secretary of State — https://sos.iowa.gov/search/notary/search.aspx — query-only
 - Charity registry: IA has NO general charity registration. Charitable trusts and professional fundraisers register with AG — https://www.iowaattorneygeneral.gov/for-businesses/professional-fundraisers-and-charity-information--registration — query-only
 - Lobbyist registry: Iowa Legislature — https://www.legis.iowa.gov/lobbyist — query-only; executive branch via Iowa Ethics & Campaign Disclosure Board: https://ethics.iowa.gov/ethics/executive-branch-lobbying
 
 ### Kansas
+
 - Business entity search: Kansas Secretary of State — https://www.sos.ks.gov/eforms/BusinessEntity/Search.aspx — query-only
 - Notary registry: Kansas Secretary of State — https://www.sos.ks.gov/general-services/notary_public/notary-search.aspx — query-only
 - Charity registry: Kansas Attorney General — https://www.ag.ks.gov/in-your-corner-kansas/resources/charity-search — query-only
 - Lobbyist registry: Kansas Secretary of State — https://www.sos.ks.gov/elections/lobbyists_directory_search.aspx — query-only
 
 ### Kentucky
+
 - Business entity search: Kentucky Secretary of State — https://sosbes.sos.ky.gov/BusSearchNProfile/search.aspx — query-only
 - Notary registry: Kentucky Secretary of State — https://web.sos.ky.gov/notaries/ — query-only (limited public search)
 - Charity registry: Kentucky Attorney General — https://www.ag.ky.gov/Resources/Consumer-Resources/charity/Pages/registration.aspx — registration program; query-only via 990 archive
 - Lobbyist registry: Kentucky Legislative Ethics Commission (KLEC) — https://apps.klec.ky.gov/ — query-only
 
 ### Louisiana
+
 - Business entity search: Louisiana Secretary of State (CORAWeb) — https://coraweb.sos.la.gov/commercialsearch/commercialsearch.aspx — query-only; paid Commercial API for bulk
 - Notary registry: Louisiana Secretary of State — https://coraweb.sos.la.gov/Notary/NotarySearch.aspx — query-only; bulk download referenced ("Notary Bulk Data")
 - Charity registry: Louisiana Attorney General — https://www.ag.state.la.us/Charities — query-only; only charities using professional solicitors must register
 - Lobbyist registry: Louisiana Ethics Administration / Board of Ethics — https://ethics.la.gov/lobbyistdata/SearchByLobbyist.aspx — query-only
 
 ### Maine
+
 - Business entity search: Maine Secretary of State (ICRS) — https://apps3.web.maine.gov/nei-sos-icrs/ICRS — query-only
 - Notary registry: Maine Secretary of State — https://www.maine.gov/online/notary/search/ — query-only
 - Charity registry: Maine Department of Professional and Financial Regulation (OPOR) — https://www.maine.gov/pfr/professionallicensing/professions/charitable-solicitations-act/licensing/charitable-organizations — query-only
 - Lobbyist registry: Maine Commission on Governmental Ethics and Election Practices — https://www.maine.gov/ethics/lobbyists — query-only
 
 ### Maryland
+
 - Business entity search: Maryland State Department of Assessments and Taxation (SDAT) via Business Express — https://egov.maryland.gov/businessexpress/entitysearch — query-only
 - Notary registry: Maryland Secretary of State (Notary Division) — https://mdsos2.my.site.com/s/search-notary-database — query-only
 - Charity registry: Maryland Secretary of State (Charitable Organizations Division) — https://onestop.md.gov/list_views/62f3e1797f7e3200016a3dab (Charity Public Registry); main page https://sos.maryland.gov/Charity/pages/default.aspx — query-only
 - Lobbyist registry: Maryland State Ethics Commission — https://lobby-ethics.maryland.gov/public_access — query-only
 
 ### Massachusetts
+
 - Business entity search: Massachusetts Secretary of the Commonwealth (Corporations Division) — https://corp.sec.state.ma.us/corpweb/CorpSearch/CorpSearch.aspx — query-only
 - Notary registry: Massachusetts does not publish a public notary search. Contact Public Records Division, Secretary of the Commonwealth — https://www.mass.gov/info-details/find-a-notary-public — Not searchable online; investigate manually
 - Charity registry: Massachusetts Attorney General (Non-Profit Organizations/Public Charities Division) — https://masscharities.my.site.com/FilingSearch/s/ — query-only
 - Lobbyist registry: Massachusetts Secretary of the Commonwealth (Lobbyist Division) — https://www.sec.state.ma.us/lobbyistpublicsearch/ — query-only
 
 ### Michigan
+
 - Business entity search: Michigan LARA Corporations Division (MiBusiness Registry) — https://mibusinessregistry.lara.state.mi.us/search/business — query-only
 - Notary registry: Michigan Secretary of State (Office of the Great Seal) — https://dsvsesvc.sos.state.mi.us/TAP/_/ — query-only
 - Charity registry: Michigan Attorney General (Charitable Trust Section) — https://www.ag.state.mi.us/charitabletrust/frmDisclaimer.aspx — query-only
 - Lobbyist registry: Michigan Secretary of State / Bureau of Elections (MiTN) — https://mi-boe.entellitrak.com/etk-mi-boe-prod/page.request.do?page=page.miboeLobbyPublicSearch — query-only
 
 ### Minnesota
+
 - Business entity search: Minnesota Secretary of State — https://mblsportal.sos.mn.gov/Business/Search — query-only
 - Notary registry: Minnesota Secretary of State — https://notary.sos.mn.gov/ — query-only
 - Charity registry: Minnesota Attorney General — https://www.ag.state.mn.us/Charity/Search/ — query-only
 - Lobbyist registry: Minnesota Campaign Finance and Public Disclosure Board — https://cfb.mn.gov/reports-and-data/viewers/lobbying/lobbyists/ — query-only; current lists at https://cfb.mn.gov/reports-and-data/searches-and-lists/other-reports-and-lists/current-lists/
 
 ### Mississippi
+
 - Business entity search: Mississippi Secretary of State — https://corp.sos.ms.gov/corp/portal/c/page/corpBusinessIdSearch/portal.aspx — query-only
 - Notary registry: Mississippi Secretary of State — https://www.sos.ms.gov/notarysearch/notarysearch.aspx — query-only
 - Charity registry: Mississippi Secretary of State (Charities Division) — https://charities.sos.ms.gov/online/portal/ch/page/charities-search/portal.aspx — query-only
 - Lobbyist registry: Mississippi Secretary of State (Elections Division) — https://www.sos.ms.gov/elec/portal/msel/page/search/portal.aspx — query-only
 
 ### Missouri
+
 - Business entity search: Missouri Secretary of State — https://www.sos.mo.gov/BusinessEntity/soskb/csearch.asp — query-only
 - Notary registry: Missouri Secretary of State — https://s1.sos.mo.gov/business/notary/search/notarysearch.aspx — query-only
 - Charity registry: Missouri Attorney General — https://ago.mo.gov/civil-division/consumer/charity — search via "Check-a-Charity"; query-only
 - Lobbyist registry: Missouri Ethics Commission — https://mec.mo.gov/mec/Lobbying/LobbyistSearch.aspx — query-only
 
 ### Montana
+
 - Business entity search: Montana Secretary of State — https://biz.sosmt.gov/search — query-only
 - Notary registry: Montana Secretary of State — https://sosmt.gov/notary/find-a-notary/ — query-only (opt-in for public listing)
 - Charity registry: MT has NO state-level charity registration. No public registry. Investigate manually
 - Lobbyist registry: Montana Commissioner of Political Practices (COPP) — https://politicalpractices.mt.gov/home/Legislative-Session-and-Lobbying/Lobbying-FAQ — query-only via COPP portal
 
 ### Nebraska
+
 - Business entity search: Nebraska Secretary of State — https://www.nebraska.gov/sos/corp/corpsearch.cgi — query-only — verified via https://sos.nebraska.gov/business-services/corporate-and-business
 - Notary registry: Nebraska Secretary of State — https://sos.nebraska.gov/business-services/notary-public — limited public search; manage by contacting (402) 471-2558; investigate further for searchable index
 - Charity registry: NE has NO general charity registration with state agency. Charitable trust notice requirements via AG — https://protectthegoodlife.nebraska.gov/charitable-trusts — query/notice-only
 - Lobbyist registry: Nebraska Legislature / Clerk of the Legislature (Nebraska Accountability and Disclosure Commission for activity reports) — https://nebraskalegislature.gov/lobbyist/ ; NADC: https://nadc.nebraska.gov/view-campaign-filings-personal-financial-disclosures-potential-conflicts-lobbying-reports-and-more — query-only
 
 ### Nevada
+
 - Business entity search: Nevada Secretary of State (SilverFlume) — https://esos.nv.gov/EntitySearch/OnlineEntitySearch — query-only free; full document access has fees historically
 - Notary registry: Nevada Secretary of State — https://esos.nv.gov/NotarySearchOnline/NotarySearchExternal — query-only
 - Charity registry: Nevada Secretary of State (Commercial Recording Division) — https://www.nvsos.gov/sos/licensing/charitable-organizations — query via Business Entity Search; bulk data download referenced
 - Lobbyist registry: Nevada Legislature (Legislative Counsel Bureau) — https://www.leg.state.nv.us/lobbyist/ — query-only
 
 ### New Hampshire
+
 - Business entity search: New Hampshire Secretary of State (NH QuickStart) — https://quickstart.sos.nh.gov/online/BusinessInquire — query-only
 - Notary registry: NH has no public online notary search; the SoS publishes a roster (Spring 2023+) — https://www.sos.nh.gov/notary-public — Investigate manually
 - Charity registry: New Hampshire Department of Justice (Charitable Trusts Unit) — https://www.doj.nh.gov/bureaus/charitable-trusts/registered-charities — query-only
 - Lobbyist registry: New Hampshire Secretary of State — https://www.sos.nh.gov/lobbyists — query-only; PDF/Excel lists for each session
 
 ### New Jersey
+
 - Business entity search: New Jersey Department of the Treasury, Division of Revenue and Enterprise Services — https://www.njportal.com/dor/businessnamesearch/ — query-only (free name search; status reports paid)
 - Notary registry: New Jersey Treasury, Division of Revenue — https://www.nj.gov/cgi-bin/treas/revenue/search5.pl — query-only
 - Charity registry: New Jersey Division of Consumer Affairs (Charities Registration & Investigation Section) — https://charportal.dca.njoag.gov/Charity-Registration/CHR-Public-Search-Page/ — query-only
 - Lobbyist registry: New Jersey Election Law Enforcement Commission (ELEC) — https://www.elec.nj.gov/publicinformation.htm — query-only
 
 ### New Mexico
+
 - Business entity search: New Mexico Secretary of State — https://enterprise.sos.nm.gov/search/business — query-only
 - Notary registry: New Mexico Secretary of State — https://enterprise.sos.nm.gov/search/notary — query-only
 - Charity registry: New Mexico Department of Justice (formerly AG) — https://secure.nmdoj.gov/CharitySearch/ — query-only
 - Lobbyist registry: New Mexico Secretary of State — https://www.cfis.state.nm.us/media/ReportLobbyistFilingPeriods.aspx ; legacy reports at https://portal.sos.state.nm.us/financialDisclosure/SearchLobbyist.aspx — query-only; downloadable CSV/PDF
 
 ### New York
+
 - Business entity search: New York Department of State, Division of Corporations — https://apps.dos.ny.gov/publicInquiry/ — query-only (owners/principals NOT publicly available; agent and entity info only)
 - Notary registry: New York Department of State — https://dos.ny.gov/search-commissioned-nys-notaries-public — query-only; bulk dataset at https://data.ny.gov/Economic-Development/Commissioned-NYS-Notaries-Public/rwbv-mz6z
 - Charity registry: New York Attorney General (Charities Bureau) — https://charities-search.ag.ny.gov/RegistrySearch — query-only
 - Lobbyist registry: New York Commission on Ethics and Lobbying in Government (COELIG, successor to JCOPE) — https://ethics.ny.gov/ — query-only via Public Reporting (legal status under litigation)
 
 ### North Carolina
+
 - Business entity search: North Carolina Secretary of State — https://www.sosnc.gov/online_services/search/by_title/search_Business_Registration — query-only
 - Notary registry: North Carolina Secretary of State — https://www.sosnc.gov/online_services/notary/search_notary_number — query-only
 - Charity registry: North Carolina Secretary of State (Charitable Solicitation Licensing Division) — https://www.sosnc.gov/online_services/search/Charities_Results — query-only
 - Lobbyist registry: North Carolina Secretary of State (Lobbying Compliance Division) — https://www.sosnc.gov/online_services/search/lobbying_results — query-only
 
 ### North Dakota
+
 - Business entity search: North Dakota Secretary of State (FirstStop) — https://firststop.sos.nd.gov/search/business — query-only
 - Notary registry: North Dakota Secretary of State (FirstStop) — https://firststop.sos.nd.gov/search/notary — query-only; data list requests available
 - Charity registry: North Dakota Secretary of State — https://firststop.sos.nd.gov/search/charitable — query-only
 - Lobbyist registry: North Dakota Secretary of State (FirstStop) — https://firststop.sos.nd.gov/search/lobbyist — query-only; annual lists at https://firststop.sos.nd.gov/lists
 
 ### Ohio
+
 - Business entity search: Ohio Secretary of State — https://businesssearch.ohiosos.gov/ — query-only
 - Notary registry: Ohio Secretary of State — https://www.ohiosos.gov/notary — query-only
 - Charity registry: Ohio Attorney General — https://charitable.ohioago.gov/Research-Charities — query-only
 - Lobbyist registry: Ohio Joint Legislative Ethics Committee — Office of the Legislative Inspector General (OLAC) — https://www2.jlec-olig.state.oh.us/olac/ — query-only
 
 ### Oklahoma
+
 - Business entity search: Oklahoma Secretary of State — https://www.sos.ok.gov/corp/corpInquiryFind.aspx — query-only
 - Notary registry: Oklahoma Secretary of State — https://www.sos.ok.gov/notary/search.aspx — query-only
 - Charity registry: Oklahoma Secretary of State — https://www.sos.ok.gov/corp/charityInquiryFind.aspx — query-only
 - Lobbyist registry: Oklahoma Ethics Commission (Guardian system) — https://guardian.ok.gov/ ; older system: https://pay.apps.ok.gov/ethics/lobbyist/public_index.php — query-only (Guardian 2.0 public portal partially delayed)
 
 ### Oregon
+
 - Business entity search: Oregon Secretary of State — https://sos.oregon.gov/business/Pages/find.aspx — query-only; some data via Oregon open data portal
 - Notary registry: Oregon Secretary of State — https://sos.oregon.gov/business/Pages/notary-public-directory.aspx — query-only; bulk Active Notaries dataset at https://data.oregon.gov/business/Active-Notaries/j2pk-zk6z
 - Charity registry: Oregon Department of Justice (Charitable Activities Section) — https://justice.oregon.gov/charities — query-only
 - Lobbyist registry: Oregon Government Ethics Commission — https://apps.oregon.gov/OGEC/EFS/Records — query-only
 
 ### Pennsylvania
+
 - Business entity search: Pennsylvania Department of State (Bureau of Corporations and Charitable Organizations) — https://file.dos.pa.gov/search/business — query-only
 - Notary registry: Pennsylvania Department of State — https://www.notaries.pa.gov/pages/notarysearch.aspx — query-only
 - Charity registry: Pennsylvania Department of State (Bureau of Corporations and Charitable Organizations) — https://www.charities.pa.gov/ — query-only
 - Lobbyist registry: Pennsylvania Department of State (Lobbying Disclosure) — https://www.pa.gov/services/dos/search-lobbying-disclosure-reports — query-only
 
 ### Rhode Island
+
 - Business entity search: Rhode Island Department of State — https://business.sos.ri.gov/corpweb/corpsearch/corpsearch.aspx — query-only
 - Notary registry: Rhode Island Department of State — https://business.sos.ri.gov/PublicNotarySearch/Home — query-only
 - Charity registry: Rhode Island Department of Business Regulation (DBR) — https://dbr.ri.gov/banking-securities-and-charitable-organizations/securities-and-charities/charitable-organizations — query/file-only; no robust public search
 - Lobbyist registry: Rhode Island Department of State (Lobby Tracker) — https://lobbytracker.sos.ri.gov/ — query-only
 
 ### South Carolina
+
 - Business entity search: South Carolina Secretary of State — https://businessfilings.sc.gov/BusinessFiling/Entity/Search — query-only (note: officers/directors not maintained by SoS)
 - Notary registry: South Carolina Secretary of State — https://search.scsos.com/notaries — query-only
 - Charity registry: South Carolina Secretary of State — https://search.scsos.com/charities — query-only
 - Lobbyist registry: South Carolina State Ethics Commission — https://apps.sc.gov/lobbyingactivity/LAIndex.aspx — query-only
 
 ### South Dakota
+
 - Business entity search: South Dakota Secretary of State — https://sosenterprise.sd.gov/BusinessServices/Business/FilingSearch.aspx — query-only
 - Notary registry: South Dakota Secretary of State — https://sosenterprise.sd.gov/BusinessServices/Notary/NotarySearch.aspx — query-only
 - Charity registry: SD has NO charity registration. Paid telephone solicitors register with AG Division of Consumer Protection — https://consumer.sd.gov/fastfacts/charity.aspx — minimal; investigate manually
 - Lobbyist registry: South Dakota Secretary of State — https://sosenterprise.sd.gov/BusinessServices/Lobbyist/LobbyistSearch.aspx — query-only
 
 ### Tennessee
+
 - Business entity search: Tennessee Secretary of State — https://tnbear.tn.gov/Ecommerce/FilingSearch.aspx (linked from https://sos.tn.gov/businesses) — query-only
 - Notary registry: Tennessee Secretary of State — https://sos.tn.gov/businesses/services/search-notary-commissions — query-only (notaries elected by county legislative body; commissioned by SoS)
 - Charity registry: Tennessee Secretary of State (Division of Charitable Solicitations and Gaming) — https://tncab.tnsos.gov/portal/registered-charities-search — query-only
 - Lobbyist registry: Tennessee Ethics Commission (Bureau of Ethics and Campaign Finance) — https://apps.tn.gov/ilobby/ — query-only
 
 ### Texas
+
 - Business entity search: Texas Secretary of State (SOSDirect) — https://direct.sos.state.tx.us/acct/acct-login.asp — query-only; $1/search; account required; free filing status at https://webservices.sos.state.tx.us/filing-status/status.aspx
 - Notary registry: Texas Secretary of State — https://direct.sos.state.tx.us/notaries/NotarySearch.asp — query-only; bulk data at https://data.texas.gov/dataset/Texas-Notary-Public-Commissions/gmd3-bnrd — bulk available
 - Charity registry: TX has NO general charity registration. Specific categories (law enforcement telephone solicitors under LETSA, veterans, public safety) register with AG — https://www.texasattorneygeneral.gov/divisions/charitable-trusts/registration-and-filings
 - Lobbyist registry: Texas Ethics Commission — https://www.ethics.state.tx.us/search/lobby/ — query-only; PDF lists by cycle; data downloads back to 1993
 
 ### Utah
+
 - Business entity search: Utah Division of Corporations and Commercial Code — https://businessregistration.utah.gov/EntitySearch/OnlineEntitySearch — query-only
 - Notary registry: Utah Lieutenant Governor's Office — https://secure.utah.gov/notary/search.html — query-only
 - Charity registry: Transitioning: as of Jan 1 2025, nonprofits register with Utah Division of Corporations and Commercial Code (DCCC) — https://commerce.utah.gov/dcp/for-businesses/charities/ — DCP historical search; investigate manually for new DCCC integration
 - Lobbyist registry: Utah Lieutenant Governor's Office — https://lobbyist.utah.gov/search/publicsearch — query-only
 
 ### Vermont
+
 - Business entity search: Vermont Secretary of State — https://bizfilings.vermont.gov/online/BusinessInquire — query-only
 - Notary registry: Vermont Secretary of State (Office of Professional Regulation) — https://sos.vermont.gov/opr/online-services — "Find a Professional"; downloadable roster available
 - Charity registry: Vermont Attorney General — https://ago.vermont.gov/attorney-generals-office-divisions-and-unit/charities-and-paid-fundraisers/paid-fundraisers — only paid fundraisers register; charities themselves not state-registered; investigate manually for charity list
 - Lobbyist registry: Vermont Secretary of State (Vermont Lobbying Information System) — https://lobbying.vermont.gov/Public/SearchByEmployer — query-only
 
 ### Virginia
+
 - Business entity search: Virginia State Corporation Commission (Clerk's Information System) — https://cis.scc.virginia.gov/ — query-only
 - Notary registry: Virginia Secretary of the Commonwealth — https://solutions.virginia.gov/Notary/Search/Search — query-only
 - Charity registry: Virginia Department of Agriculture and Consumer Services (Office of Charitable and Regulatory Programs) — https://cos.vdacs.virginia.gov/ — query-only
 - Lobbyist registry: Virginia Conflict of Interest and Ethics Advisory Council — https://ethics.dls.virginia.gov/ ; search at http://ethicssearch.dls.virginia.gov/ — query-only
 
 ### Washington
+
 - Business entity search: Washington Secretary of State (CCFS - Corporations and Charities Filing System) — https://ccfs.sos.wa.gov/ — query-only
 - Notary registry: Washington State Department of Licensing — https://professions.dol.wa.gov/s/license-lookup — query-only (select Notaries)
 - Charity registry: Washington Secretary of State (Charities Program) — https://ccfs.sos.wa.gov/ or https://give.wa.gov/search — query-only
 - Lobbyist registry: Washington Public Disclosure Commission (PDC) — https://www.pdc.wa.gov/political-disclosure-reporting-data/browse-search-data/lobbyists/agents ; clients at /employers — query-only
 
 ### West Virginia
+
 - Business entity search: West Virginia Secretary of State — https://apps.wv.gov/sos/businessentitysearch/ — query-only
 - Notary registry: West Virginia Secretary of State — https://erls.wvsos.gov/NotarySearchOnline/NotarySearchExternal — query-only
 - Charity registry: West Virginia Secretary of State (Charitable Organizations Division) — https://erls.wvsos.gov/OnlineCharitiesSearch/Search — query-only
 - Lobbyist registry: West Virginia Ethics Commission — https://ethics.wv.gov/lobbyist-directories — searchable PDF directories of lobbyists and employers; registration portal at https://registerlobbyist.wv.gov/
 
 ### Wisconsin
+
 - Business entity search: Wisconsin Department of Financial Institutions (DFI) — https://apps.dfi.wi.gov/apps/corpsearch/search.aspx — query-only (note: DFI, not SoS)
 - Notary registry: Wisconsin Department of Financial Institutions — https://apps.dfi.wi.gov/apps/notarysearch/SearchCriteria.aspx — query-only
 - Charity registry: Wisconsin Department of Financial Institutions — https://apps.dfi.wi.gov/apps/notarysearch is for notaries; charities at https://apps.dfi.wi.gov/ice/berg/Registration/OrganizationCredentialSearch.aspx (select Charitable Organizations 800) — query-only
 - Lobbyist registry: Wisconsin Ethics Commission (Eye on Lobbying) — https://lobbying.wi.gov/ — query-only
 
 ### Wyoming
+
 - Business entity search: Wyoming Secretary of State — https://wyobiz.wyo.gov/business/filingsearch.aspx — query-only
 - Notary registry: Wyoming Secretary of State has no public online notary search. Notary info on commission only — https://sos.wyo.gov/services/notaries.aspx — Not searchable online; investigate manually
 - Charity registry: WY has NO state-level charity registration. No public registry. Investigate manually
@@ -933,6 +1039,7 @@ License terms note: most state ArcGIS Hub deployments default to Esri Open Data 
 Each state lists, where available: Child care licensing, Assisted living/nursing home (state-level), Alcohol/ABC, Cannabis (where legal & public), Auto dealer licensing.
 
 ### Alabama
+
 - Child care: AL Dept. of Human Resources, Child Care Services — https://apps.dhr.alabama.gov/daycare/daycare_search — query-only.
 - Assisted living/nursing: AL Dept. of Public Health, Bureau of Health Provider Standards — https://www.alabamapublichealth.gov/providerstandards/directory.html — query-only directory.
 - Alcohol/ABC: AL ABC Board — https://alabcboard.gov/licensing-compliance — query-only; no public bulk download.
@@ -940,12 +1047,14 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: AL Dept. of Revenue Motor Vehicle Division — https://www.revenue.alabama.gov/division/motor-vehicle/ — Not found — investigate manually for public roster.
 
 ### Alaska
+
 - Child care: AK Dept. of Health, Child Care Program Office — https://health.alaska.gov/en/division-of-public-assistance/child-care-program-office/ — search tool; bulk not obvious.
 - Assisted living/nursing: AK Dept. of Health, Residential Licensing — https://health.alaska.gov/en/division-of-health-care-services/residential-licensing/ — query-only.
 - Alcohol/ABC + Cannabis: AK Alcohol & Marijuana Control Office (AMCO) — https://www.commerce.alaska.gov/web/amco — license search; status PDFs.
 - Auto dealer: AK DMV — https://doa.alaska.gov/dmv/dealer/ — Current Dealer List in PDF/Excel (bulk download).
 
 ### Arizona
+
 - Child care: AZ Dept. of Health Services, Bureau of Child Care Licensing — https://geodata-adhsgis.hub.arcgis.com/datasets/state-licensed-childcare-facilities-in-arizona — bulk download (ArcGIS).
 - Assisted living/nursing: AZ DHS Bureau of Residential Facilities Licensing — https://azcarecheck.azdhs.gov/s/ — query-only (AZ Care Check).
 - Alcohol/ABC: AZ Dept. of Liquor Licenses & Control — https://liquor.az.gov/license-search — query-only; legacy lookup at https://www.azliquor.gov/query/query.cfm.
@@ -953,6 +1062,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: AZ MVD Dealer Licensing — https://azdot.gov/mvd/services/professional-services/dealer-licensing — Not found — investigate manually for public roster.
 
 ### Arkansas
+
 - Child care: AR Dept. of Human Services, Child Care Licensing — https://ardhslicensing.my.site.com/elicensing/s/search-provider/find-providers?language=en_US&tab=CC — query-only.
 - Assisted living/nursing: AR Dept. of Human Services / Office of Long Term Care — https://humanservices.arkansas.gov/divisions-shared-services/medical-services/office-of-long-term-care/ — Not found — investigate manually for public roster.
 - Alcohol/ABC: AR Dept. of Finance & Administration, Alcoholic Beverage Control — https://www.dfa.arkansas.gov/office/alcohol-beverage-control/ — monthly Permit Change Lists in PDF (https://www.dfa.arkansas.gov/wp-content/uploads/January_2026_PermitChangeList.pdf).
@@ -960,6 +1070,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: AR State Police, Used Motor Vehicle Dealer Roster — https://dps.arkansas.gov/law-enforcement/arkansas-state-police/services-programs/used-motor-vehicle-dealer-license/used-motor-vehicle-dealer-roster/ — bulk roster.
 
 ### California
+
 - Child care: CA Dept. of Social Services, Community Care Licensing Division — https://www.ccld.dss.ca.gov/carefacilitysearch/ — query + open dataset at https://cdss.ca.gov/inforesources/cdss-programs/community-care-licensing/ccld-data.
 - Assisted living/nursing: CA CDPH "Cal Health Find" — https://www.cdph.ca.gov/Programs/CHCQ/LCP/CalHealthFind/pages/home.aspx — query; bulk via CHHS Open Data — https://data.chhs.ca.gov/dataset/healthcare-facility-locations.
 - Alcohol/ABC: CA Dept. of Alcoholic Beverage Control — https://www.abc.ca.gov/licensing/licensing-reports/ — bulk download (CSV, refreshed daily).
@@ -967,6 +1078,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: CA DMV Occupational License Lookup — https://www.dmv.ca.gov/portal/vehicle-industry-services/occupational-licensing/occupational-license-lookup/ — query-only.
 
 ### Colorado
+
 - Child care: CO Dept. of Early Childhood — https://apps.colorado.gov/apps/cdhs/childcare/lookup/index.jsf (Colorado Shines) — query; bulk via CDPHE ArcGIS: https://data-cdphe.opendata.arcgis.com/datasets/ba8161673d734074a081006adc7ea496.
 - Assisted living/nursing: CDPHE Health Facilities — https://cdphe.colorado.gov/find-and-compare-facilities — query-only.
 - Alcohol/ABC: CO Dept. of Revenue, Liquor Enforcement Division — https://sbg.colorado.gov/liquor-license-lists — monthly PDFs/Excel; open data: https://data.colorado.gov/Business/CO-Liquor-Licenses/ptf9-yh8v.
@@ -974,6 +1086,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: CO Auto Industry Division — https://sbg.colorado.gov/active-facility-license-listings-auto-industry-division — bulk listings + https://codor.mylicense.com/AID_Verification/.
 
 ### Connecticut
+
 - Child care: CT Office of Early Childhood — https://www.211childcare.org/ + state license search at https://www.elicense.ct.gov/ — query-only.
 - Assisted living/nursing: CT Dept. of Public Health Facility Licensing & Investigations Section — https://portal.ct.gov/dph/health-care-quality-and-safety/the-facility-licensing--investigations-section/facility-licensing--investigations-section — query.
 - Alcohol/ABC: CT Dept. of Consumer Protection, Liquor Control — https://data.ct.gov/Business/Liquor-Permits/wbja-pumr — Socrata bulk download.
@@ -981,6 +1094,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: CT DMV — https://portal.ct.gov/dmv/dealers/dealers/dealers-and-repairers — Not found — investigate manually for bulk roster.
 
 ### Delaware
+
 - Child care: DE Office of Child Care Licensing (DSCYF) — https://kids.delaware.gov/occl/ — query-only.
 - Assisted living/nursing: DE Division of Health Care Quality — https://dhss.delaware.gov/dhcq/ — query.
 - Alcohol/ABC: DE Alcoholic Beverage Control Commission — https://date.delaware.gov/OABCC/ — license search; data available on DE open data portal (https://data.delaware.gov/).
@@ -988,6 +1102,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: DE DMV — https://www.dmv.de.gov/services/dealer_services/index.shtml — Not found — investigate manually.
 
 ### District of Columbia
+
 - Child care: DC Office of the State Superintendent of Education (OSSE) — https://osse.dc.gov/service/child-care-licensing-and-monitoring — query; bulk via Open Data DC.
 - Assisted living/nursing: DC Dept. of Health, Health Regulation and Licensing Administration — https://dchealth.dc.gov/service/health-care-facility-and-laboratory-licensing — query.
 - Alcohol/ABC: DC Alcoholic Beverage and Cannabis Administration (ABCA) — https://abra.dc.gov/page/abra-licensee-search — query; bulk via Open Data DC.
@@ -995,6 +1110,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: DC DMV — https://dmv.dc.gov/service/business-services — Not found — investigate manually.
 
 ### Florida
+
 - Child care: FL Dept. of Children and Families, Child Care Provider Search — https://cares.myflfamilies.com/PublicSearch/ — query-only.
 - Assisted living/nursing: FL Agency for Health Care Administration (AHCA), FloridaHealthFinder — https://www.floridahealthfinder.gov/facilitylocator/FacilitySearch.aspx — query; bulk via https://ahca.myflorida.com/health-care-policy-and-oversight/health-quality-assurance/health-facility-regulation.
 - Alcohol/ABC: FL Dept. of Business and Professional Regulation, Division of ABT — https://www.myfloridalicense.com/wl11.asp?mode=0&SID= — license search; bulk via FL DBPR data downloads.
@@ -1002,6 +1118,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: FL Dept. of Highway Safety and Motor Vehicles — https://services.flhsmv.gov/MVDLLicenseSearch/ — query-only license search.
 
 ### Georgia
+
 - Child care: GA Dept. of Early Care and Learning (DECAL) — https://families.decal.ga.gov/ChildCare/Search — query-only.
 - Assisted living/nursing: GA Dept. of Community Health, Healthcare Facility Regulation — https://dch.georgia.gov/divisionsoffices/healthcare-facility-regulation/healthcare-facility-licensing — Not found — investigate manually for facility search.
 - Alcohol/ABC: GA Dept. of Revenue, Alcohol & Tobacco Division — https://dor.georgia.gov/alcohol-tobacco — Not found — investigate manually for bulk licensee list.
@@ -1009,6 +1126,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: GA Board of Used Motor Vehicle Dealers — https://sos.ga.gov/used-motor-vehicle-dealers — license verification: https://verify.sos.ga.gov/verification/.
 
 ### Hawaii
+
 - Child care: HI Dept. of Human Services, Child Care Licensing — https://humanservices.hawaii.gov/bessd/cclp/ — query.
 - Assisted living/nursing: HI Dept. of Health, Office of Health Care Assurance — https://health.hawaii.gov/ohca/facility-search/ — query.
 - Alcohol/ABC: Honolulu Liquor Commission + county-level (HI has county-level liquor commissions); no statewide unified DB. Hawaii County: https://www.hawaiicounty.gov/departments/liquor-control.
@@ -1016,6 +1134,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: HI Dept. of Commerce and Consumer Affairs (DCCA) — https://mypvl.dcca.hawaii.gov/public-license-search/ — query-only.
 
 ### Idaho
+
 - Child care: ID Dept. of Health and Welfare, Child Care Licensing — https://healthandwelfare.idaho.gov/services-programs/children-families/child-care-licensing — query.
 - Assisted living/nursing: ID Dept. of Health and Welfare, Residential Assisted Living Facilities — https://healthandwelfare.idaho.gov/providers/facility-and-resident-care/residential-care-or-assisted-living-facilities — Not found — investigate manually for public roster.
 - Alcohol/ABC: ID State Liquor Division — https://liquor.idaho.gov/ — control state; ID State Police Alcohol Beverage Control issues retail licenses — https://isp.idaho.gov/abc/. Not found — investigate manually for downloadable roster.
@@ -1023,6 +1142,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: ID Transportation Dept., Dealer Operations — https://itd.idaho.gov/dmv/dealer-licensing/ — Not found — investigate manually for public roster.
 
 ### Illinois
+
 - Child care: IL Dept. of Children and Family Services (DCFS) — https://www.dcfs.illinois.gov/safe-kids/parents/find-licensed-child-care.html — query-only.
 - Assisted living/nursing: IL Dept. of Public Health, Health Care Facility Profiles — https://hfsrs.illinois.gov/ — query; bulk via data.illinois.gov.
 - Alcohol/ABC: IL Liquor Control Commission — https://www2.illinois.gov/sites/ilcc/Pages/default.aspx — license search; bulk via data.illinois.gov.
@@ -1030,6 +1150,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: IL Secretary of State, Dealer Licensing — https://www.ilsos.gov/departments/vehicles/dealer/home.html — Not found — investigate manually for public roster.
 
 ### Indiana
+
 - Child care: IN Family and Social Services Administration, Child Care Finder — https://www.in.gov/fssa/carefinder/ — query.
 - Assisted living/nursing: IN State Dept. of Health — https://gateway.in.gov/welcome/welcome — Not found — investigate manually for facility search.
 - Alcohol/ABC: IN Alcohol and Tobacco Commission — https://www.in.gov/atc/ — license search; bulk available on Indiana Data Hub: https://hub.mph.in.gov/.
@@ -1037,6 +1158,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: IN Secretary of State, Auto Dealer Services — https://www.in.gov/sos/dealer/ — license verification: https://inbiz.in.gov/.
 
 ### Iowa
+
 - Child care: IA Dept. of Health and Human Services, Child Care — https://ccmis.dhs.state.ia.us/ChildCareProvider — query (search & resource referral).
 - Assisted living/nursing: IA Dept. of Inspections, Appeals and Licensing, Health Facilities — https://dia-hfd.iowa.gov/facilities — query.
 - Alcohol/ABC: IA Alcoholic Beverages Division — https://abd.iowa.gov/ — license search; bulk via data.iowa.gov: https://data.iowa.gov/browse?category=Alcohol+%26+Drugs.
@@ -1044,6 +1166,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: IA Dept. of Transportation, Motor Vehicle Enforcement — https://iowadot.gov/mvd/motor-vehicle-enforcement — Not found — investigate manually.
 
 ### Kansas
+
 - Child care: KS Dept. of Health and Environment, Child Care Licensing — https://www.kdhe.ks.gov/192/Child-Care-Licensing — query at https://childcareapp.kdhe.state.ks.us/.
 - Assisted living/nursing: KS Dept. for Aging and Disability Services (KDADS) — https://www.kdads.ks.gov/commissions/survey-certification-credentialing-commission — Not found — investigate manually.
 - Alcohol/ABC: KS Dept. of Revenue, Alcoholic Beverage Control — https://www.ksrevenue.gov/abcindex.html — license search; bulk not obvious.
@@ -1051,6 +1174,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: KS Dept. of Revenue, Division of Vehicles — https://www.ksrevenue.gov/dovindex.html — Not found — investigate manually.
 
 ### Kentucky
+
 - Child care: KY Cabinet for Health and Family Services, Division of Regulated Child Care — https://prdweb.chfs.ky.gov/ChildCare/SearchChildCare.aspx — query.
 - Assisted living/nursing: KY Office of Inspector General, Long Term Care Facilities — https://chfs.ky.gov/agencies/os/oig/dhc/Pages/default.aspx — query; bulk not obvious.
 - Alcohol/ABC: KY Dept. of Alcoholic Beverage Control — https://abc.ky.gov/Pages/default.aspx — license search.
@@ -1058,6 +1182,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: KY Motor Vehicle Commission — https://mvc.ky.gov/Pages/default.aspx — license verification: https://mvc.ky.gov/Pages/Look-up-a-Salesperson-or-Dealership.aspx.
 
 ### Louisiana
+
 - Child care: LA Dept. of Education, Early Childhood — https://www.louisianabelieves.com/early-childhood — query at https://childcaremap.la.gov/.
 - Assisted living/nursing: LA Dept. of Health, Health Standards Section — https://ldh.la.gov/page/256 — query.
 - Alcohol/ABC: LA Office of Alcohol and Tobacco Control — https://atc.louisiana.gov/ — license search at https://atc.la.gov/atc/permits.
@@ -1065,6 +1190,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: LA Used Motor Vehicle Commission — https://www.lumvc.com/ — query; LA Motor Vehicle Commission (new dealers): https://lmvc.la.gov/.
 
 ### Maine
+
 - Child care: ME Dept. of Health and Human Services, Child Care Licensing — https://www.maine.gov/dhhs/ocfs/provider-resources/child-care-licensing-information — query at https://www.maine.gov/dhhs/ocfs/provider-resources/find-child-care.
 - Assisted living/nursing: ME DHHS, Division of Licensing and Certification — https://www.maine.gov/dhhs/ocfs/provider-resources/licensing — query.
 - Alcohol/ABC: ME Bureau of Alcoholic Beverages and Lottery Operations (control state for off-premise) + Bureau of Licensing — https://www.maine.gov/dafs/bablo/ — Not found — investigate manually for retail licensee list.
@@ -1072,6 +1198,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: ME Bureau of Motor Vehicles — https://www.maine.gov/sos/bmv/licenses/dealerinfo.html — Not found — investigate manually for public roster.
 
 ### Maryland
+
 - Child care: MD State Dept. of Education, Office of Child Care — https://earlychildhood.marylandpublicschools.org/child-care-providers/office-child-care-locate-child-care — query at https://ccvalidate.msde.maryland.gov/.
 - Assisted living/nursing: MD Dept. of Health, Office of Health Care Quality — https://health.maryland.gov/ohcq/Pages/Home.aspx — query.
 - Alcohol/ABC: MD Alcohol and Tobacco Commission — https://atc.maryland.gov/ — license search; county boards also issue.
@@ -1079,6 +1206,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: MD Motor Vehicle Administration, Business Licensing & Consumer Services — https://mva.maryland.gov/businesses/Pages/dealer.aspx — Not found — investigate manually for public roster.
 
 ### Massachusetts
+
 - Child care: MA Dept. of Early Education and Care — https://www.mass.gov/info-details/find-a-licensed-program-or-search-a-licensed-program-s-history — query at https://eeclead.force.com/EEC_ChildCareSearch.
 - Assisted living/nursing: MA Dept. of Public Health + Executive Office of Elder Affairs (assisted living) — https://www.mass.gov/info-details/find-an-assisted-living-residence — query; nursing homes at https://www.mass.gov/info-details/find-a-nursing-home.
 - Alcohol/ABC: MA Alcoholic Beverages Control Commission — https://www.mass.gov/orgs/alcoholic-beverages-control-commission — license search via local licensing authorities; MA Open Checkbook for ABCC.
@@ -1086,6 +1214,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: MA Registry of Motor Vehicles — https://www.mass.gov/lists/motor-vehicle-business-and-supplier-information — Not found — investigate manually for bulk roster.
 
 ### Michigan
+
 - Child care: MI Dept. of Lifelong Education, Advancement and Potential (MiLEAP), Child Care Licensing — https://www.michigan.gov/lara/bureau-list/cclb — query at https://www.michigan.gov/greatstarttoquality.
 - Assisted living/nursing: MI Dept. of Licensing and Regulatory Affairs (LARA), Bureau of Community and Health Systems — https://www.michigan.gov/lara/bureau-list/bchs — query at https://w2.lara.state.mi.us/VAL/.
 - Alcohol/ABC: MI Liquor Control Commission — https://www.michigan.gov/lara/bureau-list/mlcc — license search at https://aca3.accela.com/MLCC/.
@@ -1093,6 +1222,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: MI Secretary of State, Business Services — https://www.michigan.gov/sos/businesses — Not found — investigate manually for public roster.
 
 ### Minnesota
+
 - Child care: MN Dept. of Human Services, Licensing — https://www.dhs.state.mn.us/main/idcplg?IdcService=GET_DYNAMIC_CONVERSION&RevisionSelectionMethod=LatestReleased&dDocName=id_004008 — query at https://licensinglookup.dhs.state.mn.us/.
 - Assisted living/nursing: MN Dept. of Health — https://www.health.state.mn.us/facilities/regulation/index.html — facility search at https://apps.health.state.mn.us/ords/r/dhss/hfid.
 - Alcohol/ABC: MN Dept. of Public Safety, Alcohol and Gambling Enforcement — https://dps.mn.gov/divisions/age — Not found — investigate manually for bulk licensee list.
@@ -1100,6 +1230,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: MN Dept. of Public Safety, Driver and Vehicle Services — https://dps.mn.gov/divisions/dvs/business-resources/Pages/dealer-services.aspx — Not found — investigate manually.
 
 ### Mississippi
+
 - Child care: MS State Dept. of Health, Child Care Facilities — https://msdh.ms.gov/page/30,0,183.html — query at https://msdh.ms.gov/childcaresearch/.
 - Assisted living/nursing: MS State Dept. of Health, Health Facilities Licensure and Certification — https://msdh.ms.gov/page/30,0,82.html — query.
 - Alcohol/ABC: MS Dept. of Revenue, Alcoholic Beverage Control — https://www.dor.ms.gov/abc — license search; MS is a control state.
@@ -1107,6 +1238,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: MS Motor Vehicle Commission — https://www.mmvc.ms.gov/ — Not found — investigate manually.
 
 ### Missouri
+
 - Child care: MO Dept. of Elementary and Secondary Education, Office of Childhood — https://dese.mo.gov/childhood/child-care — query at https://healthapps.dhss.mo.gov/showmechildcare/.
 - Assisted living/nursing: MO Dept. of Health and Senior Services, Section for Long-Term Care Regulation — https://health.mo.gov/seniors/nursinghomes/ — query.
 - Alcohol/ABC: MO Division of Alcohol and Tobacco Control — https://atc.dps.mo.gov/ — license search.
@@ -1114,6 +1246,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: MO Dept. of Revenue, Motor Vehicle Bureau — https://dor.mo.gov/motor-vehicle/dealers/ — Not found — investigate manually for public roster.
 
 ### Montana
+
 - Child care: MT Dept. of Public Health and Human Services, Early Childhood and Family Support — https://dphhs.mt.gov/ecfsd/childcare/ — query at https://childcarechoices.dphhs.mt.gov/.
 - Assisted living/nursing: MT DPHHS, Quality Assurance Division, Licensure Bureau — https://dphhs.mt.gov/qad/licensure — query at https://dphhs.mt.gov/qad/licensure/healthcarefacilities.
 - Alcohol/ABC: MT Dept. of Revenue, Liquor Control Division — https://mtrevenue.gov/liquor/ — license search at https://app.mt.gov/lcc/.
@@ -1121,6 +1254,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: MT Dept. of Justice, Motor Vehicle Division — https://dojmt.gov/driving/mvd-business-partners/ — Not found — investigate manually.
 
 ### Nebraska
+
 - Child care: NE DHHS, Child Care Licensing — https://dhhs.ne.gov/Pages/Child-Care-Licensing.aspx — query at https://dhhs.ne.gov/Pages/Child-Care-Roster.aspx (downloadable roster).
 - Assisted living/nursing: NE DHHS, Division of Public Health, Licensure Unit — https://dhhs.ne.gov/Pages/Healthcare-Facility-and-Provider-Look-up.aspx — query.
 - Alcohol/ABC: NE Liquor Control Commission — https://lcc.nebraska.gov/ — license search; downloadable lists available.
@@ -1128,6 +1262,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: NE Motor Vehicle Industry Licensing Board — https://www.mvib.nebraska.gov/ — license verification.
 
 ### Nevada
+
 - Child care: NV DHHS, Child Care Licensing — https://dpbh.nv.gov/Reg/ChildCare/dta/Licensure/ — query.
 - Assisted living/nursing: NV DHHS, Division of Public and Behavioral Health, Health Care Quality & Compliance — https://dpbh.nv.gov/Reg/HealthFacilities/Health_Facilities_-_Home/ — query.
 - Alcohol/ABC: NV Dept. of Taxation (regulates wholesalers); retail licensing is local/county — https://tax.nv.gov/services/liquor — Not found — investigate manually.
@@ -1135,6 +1270,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: NV DMV, Occupational and Business Licensing — https://dmvnv.com/dealers.htm — license verification at https://dmvapp.nv.gov/dmv/OBL/OBL_Lookup/Pages/OBLLookup.aspx.
 
 ### New Hampshire
+
 - Child care: NH DHHS, Child Care Licensing Unit — https://www.dhhs.nh.gov/programs-services/licensing-residential-care-and-child-care — query at https://nhpublichealth.force.com/nhccsearch/s/.
 - Assisted living/nursing: NH DHHS, Health Facilities Administration — https://www.dhhs.nh.gov/programs-services/health-care-licensing/health-facilities-licensing-and-certification — query.
 - Alcohol/ABC: NH Liquor Commission — https://www.nh.gov/liquor/ — control state; license search at https://www.liquorandwineoutlets.com/.
@@ -1142,6 +1278,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: NH DMV — https://www.nh.gov/safety/divisions/dmv/dealers/ — Not found — investigate manually for public roster.
 
 ### New Jersey
+
 - Child care: NJ Dept. of Children and Families, Office of Licensing — https://www.nj.gov/dcf/providers/licensing/laws/CCCmanual.html — query at https://www.childcarenj.gov/.
 - Assisted living/nursing: NJ Dept. of Health, Health Facility Survey and Field Operations — https://www.nj.gov/health/healthfacilities/ — facility search.
 - Alcohol/ABC: NJ Division of Alcoholic Beverage Control — https://www.nj.gov/oag/abc/ — license search; data available via data.nj.gov.
@@ -1149,6 +1286,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: NJ Motor Vehicle Commission, Business Licensing Services Bureau — https://www.nj.gov/mvc/business/dealer.htm — Not found — investigate manually.
 
 ### New Mexico
+
 - Child care: NM Early Childhood Education and Care Department — https://www.nmececd.org/ — query at https://nmececd.force.com/providersearch/s/.
 - Assisted living/nursing: NM Dept. of Health, Division of Health Improvement — https://www.nmhealth.org/about/dhi/hflc/ — query.
 - Alcohol/ABC: NM Regulation and Licensing Department, Alcoholic Beverage Control Division — https://www.rld.nm.gov/alcohol-and-gaming/ — license search.
@@ -1156,6 +1294,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: NM Motor Vehicle Division, Dealer Licensing — https://www.mvd.newmexico.gov/dealers/ — Not found — investigate manually for public roster.
 
 ### New York
+
 - Child care: NY Office of Children and Family Services (OCFS) — https://ocfs.ny.gov/programs/childcare/looking/ — query at https://ocfs.ny.gov/programs/childcare/looking/lookup.php.
 - Assisted living/nursing: NY State Dept. of Health, Nursing Home Profile — https://profiles.health.ny.gov/nursing_home/ — query; assisted living: https://profiles.health.ny.gov/adult_care.
 - Alcohol/ABC: NY State Liquor Authority — https://sla.ny.gov/ — license search via https://www.tax.ny.gov/research/liquor.htm; bulk on data.ny.gov: https://data.ny.gov/Economic-Development/Liquor-Authority-Quarterly-List-of-Active-Licenses/hrvs-fxs2.
@@ -1163,6 +1302,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: NY DMV — https://dmv.ny.gov/business-services/find-business — query at https://dmv.ny.gov/find-business.
 
 ### North Carolina
+
 - Child care: NC DHHS, Division of Child Development and Early Education — https://ncchildcaresearch.dhhs.nc.gov/ — query; bulk via NC.gov data.
 - Assisted living/nursing: NC DHHS, Division of Health Service Regulation — https://info.ncdhhs.gov/dhsr/reports.htm — facility reports + downloads.
 - Alcohol/ABC: NC ABC Commission — https://abc.nc.gov/ — license search; NC is partial control state.
@@ -1170,6 +1310,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: NC Division of Motor Vehicles, License and Theft Bureau — https://www.ncdot.gov/dmv/license-id/dealers/Pages/default.aspx — Not found — investigate manually.
 
 ### North Dakota
+
 - Child care: ND DHHS, Early Childhood Services — https://www.hhs.nd.gov/cfs/childcare — query at https://www.ndchildcare.org/.
 - Assisted living/nursing: ND DHHS, Division of Health Facilities — https://www.hhs.nd.gov/health/health-facilities — query.
 - Alcohol/ABC: ND Office of State Tax Commissioner, Alcohol Tax Section — https://www.tax.nd.gov/business/alcohol-tax — Not found — investigate manually for retail licensee list.
@@ -1177,6 +1318,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: ND DOT, Motor Vehicle Dealer Section — https://www.dot.nd.gov/dotnet/forms/motorvehicle/dealer.aspx — Not found — investigate manually.
 
 ### Ohio
+
 - Child care: OH Dept. of Children and Youth, Child Care Search — https://childcaresearch.ohio.gov/ — query; bulk available.
 - Assisted living/nursing: OH Dept. of Health, Bureau of Survey and Certification — https://odh.ohio.gov/know-our-programs/long-term-care/long-term-care — query at https://gw.odh.ohio.gov/eLicense/.
 - Alcohol/ABC: OH Dept. of Commerce, Division of Liquor Control — https://com.ohio.gov/divisions-and-programs/liquor-control/about — license lookup; OH is partial control state.
@@ -1184,6 +1326,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: OH Bureau of Motor Vehicles, Dealer Licensing — https://bmv.ohio.gov/dealer-licensing.aspx — Not found — investigate manually.
 
 ### Oklahoma
+
 - Child care: OK Dept. of Human Services, Child Care Services — https://oklahoma.gov/okdhs/services/cc/child-care-search.html — query at https://oklahoma.gov/okdhs/services/cc/find-childcare.html.
 - Assisted living/nursing: OK State Dept. of Health, Long Term Care Service — https://oklahoma.gov/health/protective-health/long-term-care-service.html — query.
 - Alcohol/ABC: OK Alcoholic Beverage Laws Enforcement (ABLE) Commission — https://oklahoma.gov/able.html — license search.
@@ -1191,6 +1334,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: OK Used Motor Vehicle and Parts Commission — https://oklahoma.gov/umvpc.html — license verification.
 
 ### Oregon
+
 - Child care: OR Dept. of Early Learning and Care — https://oregonearlylearning.com/ — query at https://oregonchildcare.org/.
 - Assisted living/nursing: OR Dept. of Human Services, Aging and People with Disabilities — https://www.oregon.gov/odhs/providers-partners/ltc-providers/Pages/default.aspx — facility search at https://ltclicensing.oregon.gov/Facilities.
 - Alcohol/ABC: OR Liquor and Cannabis Commission (OLCC) — https://www.oregon.gov/olcc/ — license search; bulk download available.
@@ -1198,6 +1342,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: OR DMV, Business Regulation — https://www.oregon.gov/odot/dmv/pages/business/vehicledealer.aspx — Not found — investigate manually.
 
 ### Pennsylvania
+
 - Child care: PA Dept. of Human Services, Office of Child Development and Early Learning — https://www.findchildcare.pa.gov/ — query.
 - Assisted living/nursing: PA Dept. of Health, Health Facility Locator — https://sais.health.pa.gov/commonpoc/content/PublicWeb/NHLocator2.asp — query; PA DHS for assisted living: https://www.dhs.pa.gov/Services/Assistance/Pages/Assisted-Living-Residences.aspx.
 - Alcohol/ABC: PA Liquor Control Board (control state) + PA State Police Bureau of Liquor Control Enforcement — https://www.lcb.pa.gov/Licensing/Pages/default.aspx — license search at https://www.lcbapps.lcb.state.pa.us/Licensing/PublicLicenseeInfo/.
@@ -1205,6 +1350,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: PA State Board of Vehicle Manufacturers, Dealers and Salespersons — https://www.pa.gov/agencies/dos/programs/professional-licensing/boards-commissions/state-board-of-vehicle-manufacturers-dealers-and-salespersons.html — license verification at https://www.pals.pa.gov/.
 
 ### Rhode Island
+
 - Child care: RI Dept. of Human Services, Office of Child Care — https://dhs.ri.gov/programs-and-services/child-care-assistance-program — query at https://exit.healthsourceri.com/dhs/childcare/.
 - Assisted living/nursing: RI Dept. of Health, Center for Health Facilities Regulation — https://health.ri.gov/find/facilities/ — query.
 - Alcohol/ABC: RI Dept. of Business Regulation, Division of Commercial Licensing, Liquor — https://dbr.ri.gov/divisions/commerciallicensing/liquor.php — Not found — investigate manually for retail licensee list (issued by municipalities).
@@ -1212,6 +1358,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: RI DMV, Dealers' License & Regulations Office — https://www.dmv.ri.gov/registrations/dealers/ — Not found — investigate manually.
 
 ### South Carolina
+
 - Child care: SC Dept. of Social Services, Child Care Licensing — https://childcare.sc.gov/ — query.
 - Assisted living/nursing: SC Dept. of Public Health, Bureau of Health Facilities Licensing — https://dph.sc.gov/about/divisions-offices/healthcare-quality/health-care-facility-licensing — query.
 - Alcohol/ABC: SC Dept. of Revenue, Alcohol Beverage Licensing — https://dor.sc.gov/tax/abl — license search.
@@ -1219,6 +1366,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: SC DMV, Dealer Licensing — https://www.scdmvonline.com/Dealers — license verification at https://scdmvonline.com/Dealers/Dealer-Lookup.
 
 ### South Dakota
+
 - Child care: SD Dept. of Social Services, Child Care Services — https://dss.sd.gov/childcare/ — query at https://apps.sd.gov/SS19DCCS/Default.aspx.
 - Assisted living/nursing: SD Dept. of Health, Office of Health Care Facilities Licensure and Certification — https://doh.sd.gov/providers/licensure/ — query.
 - Alcohol/ABC: SD Dept. of Revenue, Alcohol & Tobacco — https://dor.sd.gov/businesses/taxes/alcohol-tax/ — Not found — investigate manually for retail licensee list (issued locally).
@@ -1226,6 +1374,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: SD Dept. of Revenue, Motor Vehicles — https://dor.sd.gov/businesses/motor-vehicle/dealer-licensing/ — Not found — investigate manually.
 
 ### Tennessee
+
 - Child care: TN Dept. of Human Services, Child Care Licensing — https://www.tn.gov/humanservices/for-families/child-care-services.html — query at https://apps.tn.gov/dhsccsearch/.
 - Assisted living/nursing: TN Dept. of Health, Health Care Facilities — https://www.tn.gov/health/health-program-areas/health-care-facilities.html — query at https://apps.health.tn.gov/Licensure.
 - Alcohol/ABC: TN Alcoholic Beverage Commission — https://www.tn.gov/abc — license search.
@@ -1233,6 +1382,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: TN Motor Vehicle Commission — https://www.tn.gov/commerce/regboards/mvc.html — license verification at https://verify.tn.gov/.
 
 ### Texas
+
 - Child care: TX Health and Human Services, Child Care Licensing — https://www.hhs.texas.gov/services/safety/child-care — query at https://www.hhs.texas.gov/providers/protective-services-providers/child-care-regulation/search-texas-child-care-operations.
 - Assisted living/nursing: TX HHS, Long-Term Care Regulation — https://www.hhs.texas.gov/providers/long-term-care-providers — bulk LTC facility downloads at https://www.hhs.texas.gov/providers/long-term-care-providers/long-term-care-provider-search.
 - Alcohol/ABC: TX Alcoholic Beverage Commission — https://www.tabc.texas.gov/ — public inquiry at https://apps.tabc.texas.gov/publicinquiry/ — bulk available.
@@ -1240,6 +1390,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: TX Dept. of Motor Vehicles — https://www.txdmv.gov/dealers — license search at https://www.txdmv.gov/dealers/licensee-search.
 
 ### Utah
+
 - Child care: UT Dept. of Health and Human Services, Child Care Licensing — https://ccl.utah.gov/ccl/ — query at https://ccl.utah.gov/CCL/Provider/Search.
 - Assisted living/nursing: UT DHHS, Health Facility Licensing and Certification — https://hflc.health.utah.gov/ — query.
 - Alcohol/ABC: UT Dept. of Alcoholic Beverage Services (control state) — https://abs.utah.gov/ — licensee list.
@@ -1247,6 +1398,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: UT Motor Vehicle Enforcement Division — https://mved.utah.gov/ — license verification at https://secure.utah.gov/mvedlookup/.
 
 ### Vermont
+
 - Child care: VT Dept. for Children and Families, Child Development Division — https://dcf.vermont.gov/cdd/find-child-care — query at https://www.brightfutures.dcf.state.vt.us/.
 - Assisted living/nursing: VT Dept. of Disabilities, Aging and Independent Living, Division of Licensing and Protection — https://dail.vermont.gov/about-dail/divisions/licensing-and-protection — facility list.
 - Alcohol/ABC: VT Dept. of Liquor and Lottery — https://liquorcontrol.vermont.gov/ — control state; license search at https://liquorcontrol.vermont.gov/licensees.
@@ -1254,6 +1406,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: VT DMV, Motor Vehicle Dealers — https://dmv.vermont.gov/dealers — Not found — investigate manually for public roster.
 
 ### Virginia
+
 - Child care: VA Dept. of Education, Office of Child Care Health and Safety — https://www.doe.virginia.gov/programs-services/early-childhood — query at https://www.dss.virginia.gov/facility/search/cc2.cgi.
 - Assisted living/nursing: VA Dept. of Health, Office of Licensure and Certification — https://www.vdh.virginia.gov/licensure-and-certification/ — query; VDSS for assisted living: https://www.dss.virginia.gov/facility/search/alf.cgi.
 - Alcohol/ABC: VA ABC Authority (control state) — https://www.abc.virginia.gov/ — license search at https://www.abc.virginia.gov/licensees.
@@ -1261,6 +1414,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: VA Motor Vehicle Dealer Board — https://www.mvdb.virginia.gov/ — license search at https://mvdbportal.dpor.virginia.gov/Lookup/Index.
 
 ### Washington
+
 - Child care: WA Dept. of Children, Youth, and Families — https://www.dcyf.wa.gov/services/earlylearning-childcare/find-child-care — query.
 - Assisted living/nursing: WA Dept. of Social and Health Services, Aging and Long-Term Support Administration — https://fortress.wa.gov/dshs/adsaapps/lookup/ — facility lookup.
 - Alcohol/ABC: WA State Liquor and Cannabis Board (WSLCB) — https://lcb.wa.gov/records/frequently-requested-lists — bulk list downloads.
@@ -1268,6 +1422,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: WA Dept. of Licensing, Vehicle Dealers and Manufacturers — https://www.dol.wa.gov/business/vehicleregistration/dealersmfg.html — license verification at https://professions.dol.wa.gov/s/license-lookup.
 
 ### West Virginia
+
 - Child care: WV Dept. of Human Services, Bureau for Family Assistance — https://dhhr.wv.gov/bcf/services/familyassistance/Children/Pages/ChildCare.aspx — query at https://dhhr.wv.gov/bcf/services/familyassistance/Children/Pages/Search.aspx.
 - Assisted living/nursing: WV Office of Health Facility Licensure and Certification — https://ohflac.wvdhhr.org/ — query.
 - Alcohol/ABC: WV Alcohol Beverage Control Administration — https://abca.wv.gov/ — license search.
@@ -1275,6 +1430,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: WV Division of Motor Vehicles, Dealer Services — https://transportation.wv.gov/DMV/Dealers/Pages/default.aspx — Not found — investigate manually.
 
 ### Wisconsin
+
 - Child care: WI Dept. of Children and Families, Child Care Regulation — https://dcf.wisconsin.gov/cclicensing — query at https://childcarefinder.wisconsin.gov/.
 - Assisted living/nursing: WI Dept. of Health Services, Division of Quality Assurance — https://www.dhs.wisconsin.gov/regulations/index.htm — facility search at https://www.dhs.wisconsin.gov/dqa/index.htm.
 - Alcohol/ABC: WI Dept. of Revenue, Alcohol Beverage and Tobacco — https://www.revenue.wi.gov/Pages/FAQS/ise-atc.aspx — Not found — investigate manually (retail licenses issued by municipalities).
@@ -1282,6 +1438,7 @@ Each state lists, where available: Child care licensing, Assisted living/nursing
 - Auto dealer: WI Dept. of Transportation, Dealer & Agent Section — https://wisconsindot.gov/Pages/dmv/dlr-agents/dlr-lic/default.aspx — Not found — investigate manually.
 
 ### Wyoming
+
 - Child care: WY Dept. of Family Services, Early Childhood Programs — https://dfs.wyo.gov/community-services/early-childhood-programs/child-care-licensing/ — query.
 - Assisted living/nursing: WY Dept. of Health, Healthcare Licensing and Surveys — https://health.wyo.gov/aging/hls/ — query.
 - Alcohol/ABC: WY Dept. of Revenue, Liquor Division (control state) — https://revenue.wyo.gov/liquor-division — Not found — investigate manually for retail licensee list (issued locally).

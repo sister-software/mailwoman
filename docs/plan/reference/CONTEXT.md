@@ -117,7 +117,7 @@ The principle that inverts this trap, and that should be quoted verbatim whereve
 - **Phase 2 training metrics** must capture confidence calibration and graceful-degradation rate, not just per-component F1. A model that scores well on F1 while reporting overconfident wrong answers on ambiguous inputs fails the success metric.
 - **`ClassifierPolicy.confidence_threshold` tuning posture**: pick values that prefer "no answer + ask" over "wrong with high confidence." Never tune against specific user-reported failures — that's the entrenchment cycle starting.
 - **Bug-triage process**: when a parser bug is reported, add a **training row**, not a rule or a confidence demerit. The bug report becomes a corpus entry; the model learns from the example without anyone touching the parser machinery. If a bug surfaces a missing schema tag, that's a Phase 0 revisit (see `reference/SCHEMA.md`), not a confidence patch.
-- **Golden eval set** must include intentionally-ambiguous addresses where the *correct* answer is "partial parse + low-confidence flag" — not just the unambiguous cases.
+- **Golden eval set** must include intentionally-ambiguous addresses where the _correct_ answer is "partial parse + low-confidence flag" — not just the unambiguous cases.
 - **No `confidence_boost` / `confidence_demerit` layer** in the synthesis pipeline or downstream of the model. That's the rule-era machinery the bitter lesson rejects. The model's softmax probability is the confidence; calibration is a training-time concern.
 
 ## What this project is not
