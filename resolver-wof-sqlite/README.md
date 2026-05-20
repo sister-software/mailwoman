@@ -181,6 +181,22 @@ new WofSqlitePlaceLookup({ databasePath }, { countryMatchBoost: 0.5 })
 
 Defaults are in `lookup.ts::DEFAULT_WEIGHTS`.
 
+## Query syntax
+
+`FindPlaceQuery.text` accepts free-text input — apostrophes / parens / accented characters / etc.
+are all stripped safely before going to FTS5. Per-token rules:
+
+- **Bare tokens** (`"Paris"`, `"62701"`) become FTS5 **phrase matches**: `"Paris"` matches places
+  named exactly "Paris", `"62701"` matches the postcode 62701 exactly.
+- **Trailing `*`** (`"627*"`, `"Pari*"`) becomes FTS5 **prefix syntax**: `627*` matches every
+  postcode starting with 627, `Pari*` matches Paris / Parishville / etc. The caller explicitly
+  signals "prefix"; bare tokens stay phrase-matched for safety.
+- **Multiple tokens** join with implicit AND: `"Pari* TX"` matches places whose name contains
+  both a `Pari*`-prefixed word AND the word `TX`.
+
+Example: `findPlace({ text: "902*", placetype: "postalcode" })` returns 90201, 90210, 90211, …
+matching the Los Angeles ZIP corridor.
+
 ## Attribution (CC-BY 4.0)
 
 Who's On First data is licensed [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). Downstream applications shipping resolved results from this package **must** carry an attribution notice — for example:
