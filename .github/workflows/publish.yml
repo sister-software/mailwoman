@@ -26,81 +26,81 @@
 name: publish
 
 on:
-    workflow_dispatch:
-        inputs:
-            version:
-                description: "Version bump (patch / minor / major / specific semver like 2.1.0)"
-                required: true
-                default: patch
-                type: string
-            release_weights:
-                description: "Include @mailwoman/neural-weights-* in this release?"
-                required: false
-                default: false
-                type: boolean
-            dry_run:
-                description: "Dry run — show what would happen, don't actually publish"
-                required: false
-                default: false
-                type: boolean
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version bump (patch / minor / major / specific semver like 2.1.0)"
+        required: true
+        default: patch
+        type: string
+      release_weights:
+        description: "Include @mailwoman/neural-weights-* in this release?"
+        required: false
+        default: false
+        type: boolean
+      dry_run:
+        description: "Dry run — show what would happen, don't actually publish"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
-    contents: write
-    id-token: write
+  contents: write
+  id-token: write
 
 jobs:
-    publish:
-        runs-on: ubuntu-latest
-        timeout-minutes: 30
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                  # release-it needs full history to compute the version tag base.
-                  fetch-depth: 0
-                  token: ${{ secrets.GITHUB_TOKEN }}
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # release-it needs full history to compute the version tag base.
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Setup Node
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 22
-                  cache: yarn
-                  registry-url: https://registry.npmjs.org
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          registry-url: https://registry.npmjs.org
 
-            - name: Enable Corepack (yarn 4)
-              run: corepack enable
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
 
-            - name: Configure git identity (for release-it commits)
-              run: |
-                  git config --global user.name "github-actions[bot]"
-                  git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Configure git identity (for release-it commits)
+        run: | # shell
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-            - name: Install dependencies
-              run: yarn install --immutable
+      - name: Install dependencies
+        run: yarn install --immutable
 
-            - name: Guard — weights presence vs release_weights input
-              if: ${{ inputs.release_weights }}
-              run: |
-                  if [ ! -f "neural-weights-en-us/model.onnx" ] || [ ! -f "neural-weights-fr-fr/model.onnx" ]; then
-                      echo "::error::release_weights=true but weight binaries are missing from the workspace dirs."
-                      echo "::error::Most common next step: re-run this workflow with release_weights=false to publish just the code packages (mailwoman + @mailwoman/{core,classifiers,corpus,neural}). Weights stay at their last-published version."
-                      echo "::error::Other options: cut weights releases from local (yarn release pulls them from /mnt/playpen/mailwoman-data/), or upload the binaries via a workflow artifact before this run."
-                      exit 1
-                  fi
+      - name: Guard — weights presence vs release_weights input
+        if: ${{ inputs.release_weights }}
+        run: | # shell
+          if [ ! -f "neural-weights-en-us/model.onnx" ] || [ ! -f "neural-weights-fr-fr/model.onnx" ]; then
+              echo "::error::release_weights=true but weight binaries are missing from the workspace dirs."
+              echo "::error::Most common next step: re-run this workflow with release_weights=false to publish just the code packages (mailwoman + @mailwoman/{core,classifiers,corpus,neural}). Weights stay at their last-published version."
+              echo "::error::Other options: cut weights releases from local (yarn release pulls them from /mnt/playpen/mailwoman-data/), or upload the binaries via a workflow artifact before this run."
+              exit 1
+          fi
 
-            - name: Release
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  # When release_weights=false (default): skip copy-weights AND
-                  # tell publish-workspace.mjs to skip the neural-weights-*
-                  # workspaces. The plugin still bumps their package.json
-                  # versions on disk (keeping the monorepo in sync) — only the
-                  # npm publish is skipped.
-                  MAILWOMAN_SKIP_WEIGHTS_COPY: ${{ inputs.release_weights == false && '1' || '' }}
-                  MAILWOMAN_SKIP_WEIGHTS: ${{ inputs.release_weights == false && '1' || '' }}
-              run: |
-                  set -euo pipefail
-                  ARGS=(--ci --increment="${{ inputs.version }}")
-                  if [ "${{ inputs.dry_run }}" = "true" ]; then
-                      ARGS+=(--dry-run)
-                  fi
-                  yarn release "${ARGS[@]}"
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # When release_weights=false (default): skip copy-weights AND
+          # tell publish-workspace.mjs to skip the neural-weights-*
+          # workspaces. The plugin still bumps their package.json
+          # versions on disk (keeping the monorepo in sync) — only the
+          # npm publish is skipped.
+          MAILWOMAN_SKIP_WEIGHTS_COPY: ${{ inputs.release_weights == false && '1' || '' }}
+          MAILWOMAN_SKIP_WEIGHTS: ${{ inputs.release_weights == false && '1' || '' }}
+        run: | # shell
+          set -euo pipefail
+          ARGS=(--ci --increment="${{ inputs.version }}")
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+              ARGS+=(--dry-run)
+          fi
+          yarn release "${ARGS[@]}"

@@ -117,4 +117,3 @@ function dereferenceWorkspaceSymlinks(workspaceDir) {
 		console.error(`publish-workspace: dereferenced ${entry} ← ${resolved}`)
 	}
 }
-

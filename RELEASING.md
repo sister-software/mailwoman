@@ -30,7 +30,7 @@ yarn release --dry-run
 
 This will:
 
-1. Compile + test (`yarn compile` then `yarn test --run`)
+1. Compile + test (`yarn compile` then `yarn ci:test` — the latter runs all tests without watch mode)
 2. Materialize trained weights into `neural-weights-{en-us,fr-fr}/` via `scripts/copy-weights.mjs`
 3. Show the proposed version bump for each workspace
 4. Stage the would-be tag + GitHub release + npm publishes — without executing them

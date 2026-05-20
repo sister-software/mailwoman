@@ -15,6 +15,7 @@
 		"url": "https://github.com/sister-software/mailwoman.git"
 	},
 	"scripts": {
+		"ci:test": "vitest --run",
 		"compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
 		"compile:clean": "tsc -b --clean",
 		"lint": "run-s lint:prettier:check lint:eslint:check",
@@ -26,11 +27,10 @@
 		"lint:prettier:fix": "prettier --cache --write -u .",
 		"prepare": "husky",
 		"release": "release-it",
-		"test": "vitest --run",
+		"test": "vitest",
 		"test:coverage": "vitest --coverage",
 		"test:integration": "vitest --dir ./mailwoman/test",
-		"test:unit": "vitest --exclude ./mailwoman/test",
-		"test:watch": "vitest --watch"
+		"test:unit": "vitest --exclude ./mailwoman/test"
 	},
 	"type": "module",
 	"devDependencies": {
