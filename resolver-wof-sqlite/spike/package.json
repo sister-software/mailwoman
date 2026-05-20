@@ -1,0 +1,14 @@
+{
+	"name": "@mailwoman/spike-sqlite-wasm",
+	"version": "0.0.0",
+	"description": "Spike — measure sqlite-wasm + sql.js-httpvfs performance against real WOF distributions.",
+	"private": true,
+	"scripts": {
+		"spike": "node run.mjs"
+	},
+	"type": "module",
+	"dependencies": {
+		"playwright": "^1.49.0",
+		"sql.js-httpvfs": "^0.8.12"
+	}
+}

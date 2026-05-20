@@ -1,0 +1,312 @@
+{
+	"db": "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db",
+	"dbBytes": 4266897408,
+	"pageSize": 4096,
+	"pageCount": 1041723,
+	"queries": [
+		{
+			"label": "exact: New York",
+			"rowsReturned": 10,
+			"localMs": 39.2,
+			"plan": ["place_search", "spr"],
+			"footprint": {
+				"place_search_config": {
+					"pages": 1,
+					"bytes": 4096
+				},
+				"place_search_content": {
+					"pages": 10977,
+					"bytes": 44961792
+				},
+				"place_search_data": {
+					"pages": 4468,
+					"bytes": 18300928
+				},
+				"place_search_docsize": {
+					"pages": 723,
+					"bytes": 2961408
+				},
+				"place_search_idx": {
+					"pages": 24,
+					"bytes": 98304
+				},
+				"spr": {
+					"pages": 10316,
+					"bytes": 42254336
+				}
+			},
+			"footprintTotalPages": 26509,
+			"footprintTotalBytes": 108580864,
+			"estimatedPages": 155,
+			"estimatedBytes": 634880,
+			"estimatedRequests": 10
+		},
+		{
+			"label": "exact: Springfield",
+			"rowsReturned": 10,
+			"localMs": 0.23,
+			"plan": ["place_search", "spr"],
+			"footprint": {
+				"place_search_config": {
+					"pages": 1,
+					"bytes": 4096
+				},
+				"place_search_content": {
+					"pages": 10977,
+					"bytes": 44961792
+				},
+				"place_search_data": {
+					"pages": 4468,
+					"bytes": 18300928
+				},
+				"place_search_docsize": {
+					"pages": 723,
+					"bytes": 2961408
+				},
+				"place_search_idx": {
+					"pages": 24,
+					"bytes": 98304
+				},
+				"spr": {
+					"pages": 10316,
+					"bytes": 42254336
+				}
+			},
+			"footprintTotalPages": 26509,
+			"footprintTotalBytes": 108580864,
+			"estimatedPages": 155,
+			"estimatedBytes": 634880,
+			"estimatedRequests": 10
+		},
+		{
+			"label": "prefix: 902*",
+			"rowsReturned": 0,
+			"localMs": 0.14,
+			"plan": ["place_search", "spr"],
+			"footprint": {
+				"place_search_config": {
+					"pages": 1,
+					"bytes": 4096
+				},
+				"place_search_content": {
+					"pages": 10977,
+					"bytes": 44961792
+				},
+				"place_search_data": {
+					"pages": 4468,
+					"bytes": 18300928
+				},
+				"place_search_docsize": {
+					"pages": 723,
+					"bytes": 2961408
+				},
+				"place_search_idx": {
+					"pages": 24,
+					"bytes": 98304
+				},
+				"spr": {
+					"pages": 10316,
+					"bytes": 42254336
+				}
+			},
+			"footprintTotalPages": 26509,
+			"footprintTotalBytes": 108580864,
+			"estimatedPages": 23,
+			"estimatedBytes": 94208,
+			"estimatedRequests": 2
+		},
+		{
+			"label": "ranked: New York by population",
+			"rowsReturned": 10,
+			"localMs": 0.61,
+			"plan": ["place_search", "spr", "place_population"],
+			"footprint": {
+				"place_population": {
+					"pages": 298,
+					"bytes": 1220608
+				},
+				"place_search_config": {
+					"pages": 1,
+					"bytes": 4096
+				},
+				"place_search_content": {
+					"pages": 10977,
+					"bytes": 44961792
+				},
+				"place_search_data": {
+					"pages": 4468,
+					"bytes": 18300928
+				},
+				"place_search_docsize": {
+					"pages": 723,
+					"bytes": 2961408
+				},
+				"place_search_idx": {
+					"pages": 24,
+					"bytes": 98304
+				},
+				"spr": {
+					"pages": 10316,
+					"bytes": 42254336
+				}
+			},
+			"footprintTotalPages": 26807,
+			"footprintTotalBytes": 109801472,
+			"estimatedPages": 156,
+			"estimatedBytes": 638976,
+			"estimatedRequests": 10
+		},
+		{
+			"label": "bbox: Illinois bounding box",
+			"rowsReturned": 10,
+			"localMs": 8.95,
+			"plan": ["spr", "place_bbox"],
+			"footprint": {
+				"place_bbox_node": {
+					"pages": 2535,
+					"bytes": 10383360
+				},
+				"place_bbox_parent": {
+					"pages": 22,
+					"bytes": 90112
+				},
+				"place_bbox_rowid": {
+					"pages": 852,
+					"bytes": 3489792
+				},
+				"spr": {
+					"pages": 10316,
+					"bytes": 42254336
+				}
+			},
+			"footprintTotalPages": 13725,
+			"footprintTotalBytes": 56217600,
+			"estimatedPages": 146,
+			"estimatedBytes": 598016,
+			"estimatedRequests": 10
+		},
+		{
+			"label": "proximity: near Springfield IL",
+			"rowsReturned": 5,
+			"localMs": 1.35,
+			"plan": ["place_search", "spr", "place_bbox"],
+			"footprint": {
+				"place_bbox_node": {
+					"pages": 2535,
+					"bytes": 10383360
+				},
+				"place_bbox_parent": {
+					"pages": 22,
+					"bytes": 90112
+				},
+				"place_bbox_rowid": {
+					"pages": 852,
+					"bytes": 3489792
+				},
+				"place_search_config": {
+					"pages": 1,
+					"bytes": 4096
+				},
+				"place_search_content": {
+					"pages": 10977,
+					"bytes": 44961792
+				},
+				"place_search_data": {
+					"pages": 4468,
+					"bytes": 18300928
+				},
+				"place_search_docsize": {
+					"pages": 723,
+					"bytes": 2961408
+				},
+				"place_search_idx": {
+					"pages": 24,
+					"bytes": 98304
+				},
+				"spr": {
+					"pages": 10316,
+					"bytes": 42254336
+				}
+			},
+			"footprintTotalPages": 29918,
+			"footprintTotalBytes": 122544128,
+			"estimatedPages": 83,
+			"estimatedBytes": 339968,
+			"estimatedRequests": 6
+		},
+		{
+			"label": "warm: New York repeat",
+			"rowsReturned": 10,
+			"localMs": 0.28,
+			"plan": ["place_search", "spr"],
+			"footprint": {
+				"place_search_config": {
+					"pages": 1,
+					"bytes": 4096
+				},
+				"place_search_content": {
+					"pages": 10977,
+					"bytes": 44961792
+				},
+				"place_search_data": {
+					"pages": 4468,
+					"bytes": 18300928
+				},
+				"place_search_docsize": {
+					"pages": 723,
+					"bytes": 2961408
+				},
+				"place_search_idx": {
+					"pages": 24,
+					"bytes": 98304
+				},
+				"spr": {
+					"pages": 10316,
+					"bytes": 42254336
+				}
+			},
+			"footprintTotalPages": 26509,
+			"footprintTotalBytes": 108580864,
+			"estimatedPages": 155,
+			"estimatedBytes": 634880,
+			"estimatedRequests": 10
+		},
+		{
+			"label": "warm: Springfield repeat",
+			"rowsReturned": 10,
+			"localMs": 0.23,
+			"plan": ["place_search", "spr"],
+			"footprint": {
+				"place_search_config": {
+					"pages": 1,
+					"bytes": 4096
+				},
+				"place_search_content": {
+					"pages": 10977,
+					"bytes": 44961792
+				},
+				"place_search_data": {
+					"pages": 4468,
+					"bytes": 18300928
+				},
+				"place_search_docsize": {
+					"pages": 723,
+					"bytes": 2961408
+				},
+				"place_search_idx": {
+					"pages": 24,
+					"bytes": 98304
+				},
+				"spr": {
+					"pages": 10316,
+					"bytes": 42254336
+				}
+			},
+			"footprintTotalPages": 26509,
+			"footprintTotalBytes": 108580864,
+			"estimatedPages": 155,
+			"estimatedBytes": 634880,
+			"estimatedRequests": 10
+		}
+	]
+}
