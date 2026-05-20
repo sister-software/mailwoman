@@ -250,12 +250,12 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 	}
 
 	// --- Create database + import ---
-	const Database = (await import("better-sqlite3")).default
+	const { DatabaseSync } = await import("node:sqlite")
 	mkdirSync(dirname(opts.outputPath), { recursive: true })
 
-	const db = new Database(opts.outputPath)
-	db.pragma("journal_mode = OFF") // faster for bulk import
-	db.pragma("synchronous = OFF")
+	const db = new DatabaseSync(opts.outputPath)
+	db.exec("PRAGMA journal_mode = OFF") // faster for bulk import
+	db.exec("PRAGMA synchronous = OFF")
 
 	db.exec(createTableSQL)
 
@@ -284,11 +284,19 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 	let imported = 0
 	let headerSkipped = false
 
-	const doInsert = db.transaction(() => {
-		for (const row of batch) {
-			insertStmt.run(row)
+	// node:sqlite has no `db.transaction(fn)` wrapper; use raw BEGIN/COMMIT around the batch.
+	const doInsert = () => {
+		db.exec("BEGIN")
+		try {
+			for (const row of batch) {
+				insertStmt.run(...row)
+			}
+			db.exec("COMMIT")
+		} catch (err) {
+			db.exec("ROLLBACK")
+			throw err
 		}
-	})
+	}
 
 	const batch: unknown[][] = []
 	const BATCH_SIZE = 10000

@@ -39,7 +39,6 @@
 		"@sister.software/eslint-config": "^8.0.1",
 		"@sister.software/prettier-config": "^8.0.1",
 		"@sister.software/tsconfig": "^8.0.1",
-		"@types/better-sqlite3": "^7.6.13",
 		"@types/core-js": "^2.5.8",
 		"@types/express": "^5.0.0",
 		"@types/geojson": "^7946.0.14",
