@@ -29,7 +29,7 @@ const candidates = await lookup.findPlace({
 })
 
 for (const c of candidates) {
-	console.log(c.wof_id, c.name, c.country, c.lat, c.lon, "score:", c.score)
+	console.log(c.id, c.name, c.country, c.lat, c.lon, "score:", c.score)
 }
 
 lookup.close()

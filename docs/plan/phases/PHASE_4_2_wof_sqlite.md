@@ -2,7 +2,7 @@
 
 **Parent:** [`PHASE_4_resolver.md`](./PHASE_4_resolver.md) (Option B picked: SQLite FTS5 + WOF SQLite).
 
-**Goal:** ship `@mailwoman/resolver-wof-sqlite` — a small standalone package that loads a Who's On First SQLite distribution and exposes a typed `PlaceLookup` interface backed by FTS5 full-text matching. Independently useful: callers can resolve `"Paris, FR"` → `wof_id: 101751119, lat: 48.85, lon: 2.34` without going through the full mailwoman parser.
+**Goal:** ship `@mailwoman/resolver-wof-sqlite` — a small standalone package that loads a Who's On First SQLite distribution and exposes a typed `PlaceLookup` interface backed by FTS5 full-text matching. Independently useful: callers can resolve `"Paris, FR"` → `id: 101751119, lat: 48.85, lon: 2.34` without going through the full mailwoman parser.
 
 **Branch:** `feature/phase-4-2-wof-sqlite` (this PR).
 
@@ -65,7 +65,7 @@ Three independent reasons:
 // resolver-wof-sqlite/index.ts
 
 export interface PlaceCandidate {
-	wof_id: number
+	id: number
 	name: string
 	placetype: WofPlacetype
 	country: string // ISO 3166-1 alpha-2

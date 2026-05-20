@@ -11,7 +11,7 @@
 
 ## Status
 
-**Not started.** This document is the design intent so the operator can review the shape before implementation begins.
+**Shipped (2026-05-20).** Implementation matches the design below, with three deviations called out in the changelog. The `Resolver` interface + `resolveTree` live in `@mailwoman/core/resolver`; the WOF backing is provided through `@mailwoman/resolver-wof-sqlite` as an **optional peer dep** that the CLI dynamic-imports only when `--resolve` is set.
 
 ## What "integration" means here
 
@@ -128,3 +128,7 @@ mailwoman parse --resolve --resolve-db /path/to/wof.db --format xml "..."
 ## Changelog
 
 - **2026-05-20** — written as design intent during the autonomous night shift. Not yet started; awaits operator review.
+- **2026-05-20** (same day, post-sync) — shipped. Three deviations from the original plan:
+  1. **`@mailwoman/resolver-wof-sqlite` is an optional peer dep, not a hard dep.** The CLI dynamic-imports it inside `withResolver()` so callers who never set `--resolve` don't pay the kysely + resolver bundle cost. Honors the Phase 4.2 plan's "optional dep" intent.
+  2. **`PlaceCandidate.wof_id` → `id` rename.** Phase 4.2 shipped the WOF candidate with a `wof_id` field; that was structurally incompatible with `core/resolver`'s generic `ResolvedPlace.id`. Renamed in this PR so `WofSqlitePlaceLookup` satisfies `ResolverBackend` without an adapter shim. No external consumers yet so the breakage was free.
+  3. **Pre-existing locale-casing bug fix bundled.** `resolveWeights` was forming `@mailwoman/neural-weights-en-US` (uppercase region) but the package is lowercase. The CLI accepts canonical `en-US` casing; `weights.ts` now lowercases before forming the package name. Surfaced on the first end-to-end smoke test; fix shipped alongside Phase 4.3.

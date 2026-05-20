@@ -53,7 +53,10 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 		return { modelPath: opts.modelPath, tokenizerPath: opts.tokenizerPath, source: "explicit" }
 	}
 
-	const locale = opts.locale ?? "en-us"
+	// Package names follow the all-lowercase BCP-47 convention (`neural-weights-en-us`,
+	// `neural-weights-fr-fr`). The CLI's locale validation accepts canonical `en-US` / `fr-FR`
+	// casing, so we normalize here rather than at the callsite.
+	const locale = (opts.locale ?? "en-us").toLowerCase()
 	const packageName = `@mailwoman/neural-weights-${locale}`
 	let packageDir: string
 	try {
