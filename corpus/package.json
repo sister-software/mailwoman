@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/corpus",
-	"version": "2.0.7",
+	"version": "2.0.8",
 	"description": "Mailwoman corpus pipeline: BIO-labeled dataset builder for the neural classifier.",
 	"license": "AGPL-3.0-only",
 	"repository": {
