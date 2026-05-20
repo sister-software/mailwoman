@@ -18,14 +18,28 @@ import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 import { buildPlaceSearchFts, PLACE_BBOX_TABLE, placeBboxExists, placeSearchFtsExists } from "./fts.js"
 import { bboxAround, haversineKm } from "./geo.js"
 import type { WofDatabase } from "./schema.js"
+import { pickShardForPlacetype, resolveShards, type ResolvedShard, type ShardConfig } from "./sharding.js"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "./types.js"
 
 export interface WofSqlitePlaceLookupOpts {
-	/** Path to the WOF SQLite distribution on disk. Mutually exclusive with `database`. */
-	databasePath?: string
+	/**
+	 * Path to the WOF SQLite distribution on disk. Mutually exclusive with `database`.
+	 *
+	 * **Single string** — opens that one DB as the main shard.
+	 *
+	 * **Array** — opens the first entry as main, then ATTACHes each subsequent entry as a separate
+	 * SQLite schema. Schema names are derived from the filename (`whosonfirst-data-postalcode-
+	 * us-latest.db` → `postalcode_us`); override with `ShardConfig.schemaName` when the filename
+	 * doesn't follow WOF convention. See `sharding.ts` for the derivation rules.
+	 *
+	 * Routing: queries with a `placetype` matching a shard's name (or explicit `placetypes` hint) are
+	 * sent to that shard; everything else hits main. Cross-shard UNION is NOT done — BM25 isn't
+	 * comparable across separately-indexed corpora.
+	 */
+	databasePath?: string | ReadonlyArray<string | ShardConfig>
 	/**
 	 * Pre-opened DatabaseSync — primarily for tests against an inline fixture DB. Mutually exclusive
-	 * with `databasePath`.
+	 * with `databasePath`. Multi-shard requires `databasePath` (so the lookup owns the ATTACH).
 	 */
 	database?: DatabaseSync
 	/**
@@ -33,6 +47,9 @@ export interface WofSqlitePlaceLookupOpts {
 	 * exist. The upstream WOF distribution does NOT ship FTS5, so callers either set this once on
 	 * first open or pre-build it via the operator-side CLI documented in the README. Default false —
 	 * the resolver assumes the index already exists and errors loudly if it doesn't.
+	 *
+	 * With multi-shard, `buildFts: true` builds the index on the **main** shard only. Other shards
+	 * must be pre-built via `mailwoman-wof-build-fts` — operator script for predictable cost.
 	 */
 	buildFts?: boolean
 }
@@ -96,8 +113,15 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * Cached at construction so we don't `sqlite_master` query on every findPlace call. Bbox + near-
 	 * with-radius queries fall back to no-filter when this is false, preserving compatibility with
 	 * DBs that were FTS-built before the R*Tree shipped.
+	 *
+	 * Per-shard: a shard is only considered to have the bbox index if its own R*Tree table exists.
 	 */
-	readonly #hasBboxIndex: boolean
+	readonly #hasBboxIndex: Map<string, boolean>
+	/**
+	 * Resolved shard list. Always at least one entry; first is `main`. Multi-shard adds extras with
+	 * their own derived (or override) schema names.
+	 */
+	readonly #shards: ResolvedShard[]
 
 	constructor(opts: WofSqlitePlaceLookupOpts, weights?: Partial<RankingWeights>) {
 		if (opts.database && opts.databasePath) {
@@ -110,9 +134,17 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		if (opts.database) {
 			this.#db = opts.database
 			this.#ownsDb = false
+			this.#shards = [{ path: ":memory:", schemaName: "main", placetypes: [] }]
 		} else {
-			this.#db = new DatabaseSync(opts.databasePath!, { readOnly: false })
+			const shards = resolveShards(opts.databasePath!)
+			this.#shards = shards
+			this.#db = new DatabaseSync(shards[0]!.path, { readOnly: false })
 			this.#ownsDb = true
+			// ATTACH each non-main shard. Schema names were validated by resolveShards, so safe to
+			// interpolate directly (SQLite ATTACH doesn't accept parameters for the schema name).
+			for (const s of shards.slice(1)) {
+				this.#db.exec(`ATTACH DATABASE '${s.path.replace(/'/g, "''")}' AS ${s.schemaName}`)
+			}
 		}
 
 		// node:sqlite has no .pragma() helper; pragmas are executed as plain SQL.
@@ -128,7 +160,22 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			dialect: new SqliteDialect({ database: this.#db }),
 		})
 		this.#weights = { ...DEFAULT_WEIGHTS, ...(weights ?? {}) }
-		this.#hasBboxIndex = placeBboxExists(this.#db)
+
+		// Probe each shard's bbox index presence — driven by per-shard `place_bbox` table existence.
+		this.#hasBboxIndex = new Map()
+		for (const s of this.#shards) {
+			this.#hasBboxIndex.set(s.schemaName, this.#shardHasBbox(s.schemaName))
+		}
+	}
+
+	#shardHasBbox(schemaName: string): boolean {
+		// For main, the existing helper works directly. For attached shards we have to ask via the
+		// schema-qualified `sqlite_master` view.
+		if (schemaName === "main") return placeBboxExists(this.#db)
+		const row = this.#db
+			.prepare(`SELECT name FROM ${schemaName}.sqlite_master WHERE type = 'table' AND name = ?`)
+			.get(PLACE_BBOX_TABLE) as { name: string } | undefined
+		return Boolean(row)
 	}
 
 	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
@@ -139,9 +186,18 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		const ftsQuery = sanitizeFtsQuery(query.text)
 		if (!ftsQuery) return []
 
+		// Pick the shard for this query. Multi-shard routing is placetype-driven; a query without
+		// `placetype` always goes to main. (Mixed-placetype queries with multiple shards aren't
+		// supported in v1 — caller can issue two findPlace calls and merge in TS if needed.)
+		const firstPlacetype = placetypes?.[0]
+		const shard = pickShardForPlacetype(this.#shards, firstPlacetype)
+		const sch = shard.schemaName // bare schema name; safe to interpolate (validated at construction)
+
 		// Filter out historical / superseded / deprecated places by default — they live in the same
 		// spr table but should never win a contemporary lookup. `is_current = 0` is the only WOF
 		// value that means "not current"; both `-1` (modern) and `1` (legacy) mean current. See #91.
+		// Note: with schema-qualified FROM the bare `place_search` reference in MATCH resolves to
+		// the FROM table — required by FTS5 parser, see sharding.ts header comment.
 		const where: string[] = ["place_search MATCH ?", "spr.is_current != 0", "spr.is_deprecated = 0"]
 		const params: SQLInputValue[] = [ftsQuery]
 
@@ -154,17 +210,18 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			params.push(query.country)
 		}
 		if (query.parentId !== undefined) {
-			where.push("(spr.parent_id = ? OR spr.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?))")
+			where.push(`(spr.parent_id = ? OR spr.id IN (SELECT id FROM ${sch}.ancestors WHERE ancestor_id = ?))`)
 			params.push(query.parentId, query.parentId)
 		}
 
 		// Bbox + near-with-radius are SQL-level filters via the R*Tree. We only emit the JOIN when
-		// the R*Tree is actually present; missing-but-requested is silently treated as no-bbox-filter
-		// so callers without the index don't crash. (Verbose mode could log here — defer.)
-		const useBboxJoin = (query.bbox || query.near?.maxDistanceKm !== undefined) && this.#hasBboxIndex
-		let joinClause = "JOIN spr ON spr.id = place_search.wof_id"
+		// the active shard has the R*Tree; missing-but-requested is silently treated as no-bbox-
+		// filter so legacy DBs / shards-without-bbox don't crash.
+		const shardHasBbox = this.#hasBboxIndex.get(sch) === true
+		const useBboxJoin = (query.bbox || query.near?.maxDistanceKm !== undefined) && shardHasBbox
+		let joinClause = `JOIN ${sch}.spr ON spr.id = place_search.wof_id`
 		if (useBboxJoin) {
-			joinClause += ` JOIN ${PLACE_BBOX_TABLE} bbox ON bbox.id = spr.id`
+			joinClause += ` JOIN ${sch}.${PLACE_BBOX_TABLE} bbox ON bbox.id = spr.id`
 			// AABB intersection — both bbox sides must overlap. R*Tree handles this in O(log n).
 			const filterBox = query.bbox
 				? query.bbox
@@ -173,6 +230,8 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			params.push(filterBox.maxLat, filterBox.minLat, filterBox.maxLon, filterBox.minLon)
 		}
 
+		// Schema-qualified FROM with bare-name MATCH — required syntax for FTS5 on attached schemas.
+		// See sharding.ts header for the gotcha that drove this design.
 		const stmt = this.#db.prepare(`
 			SELECT
 				spr.id AS id,
@@ -183,7 +242,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				bm25(place_search) AS rank,
 				spr.latitude AS lat,
 				spr.longitude AS lon
-			FROM place_search
+			FROM ${sch}.place_search
 			${joinClause}
 			WHERE ${where.join(" AND ")}
 			ORDER BY rank ASC

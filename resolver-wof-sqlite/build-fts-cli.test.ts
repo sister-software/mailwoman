@@ -108,12 +108,32 @@ describe("build-fts-cli main()", () => {
 		stderrSpy.mockRestore()
 	})
 
-	test("exits 2 when zero or multiple positional args are passed", () => {
+	test("exits 2 when zero positional args are passed", () => {
 		const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
-
 		expect(() => main([])).toThrow(/process\.exit.*"2"/)
-		expect(() => main(["a.db", "b.db"])).toThrow(/process\.exit.*"2"/)
+		stderrSpy.mockRestore()
+	})
 
+	test("accepts multiple positional args (variadic — one DB per arg)", () => {
+		// Build two real fixture DBs and pass them both. Both should land with indexes.
+		const dbA = join(scratch, "a.db")
+		const dbB = join(scratch, "b.db")
+		buildFixtureDb(dbA)
+		buildFixtureDb(dbB)
+		const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
+		expect(main([dbA, dbB])).toBe(0)
+		const written = stderrSpy.mock.calls.map((c) => String(c[0])).join("")
+		// One "Built" line per DB.
+		expect(written.match(/Built:/g)?.length).toBe(2)
+		stderrSpy.mockRestore()
+	})
+
+	test("multi-DB invocation surfaces the worst exit code (missing file → 1)", () => {
+		const dbOK = join(scratch, "ok.db")
+		buildFixtureDb(dbOK)
+		const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
+		// Good DB succeeds, missing DB fails. Worst-of-both = 1.
+		expect(main([dbOK, "/nope/missing.db"])).toBe(1)
 		stderrSpy.mockRestore()
 	})
 

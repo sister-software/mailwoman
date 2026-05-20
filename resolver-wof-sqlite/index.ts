@@ -21,3 +21,11 @@ export {
 } from "./fts.js"
 
 export { bboxAround, haversineKm, type Bbox } from "./geo.js"
+
+export {
+	deriveSchemaName,
+	pickShardForPlacetype,
+	resolveShards,
+	type ResolvedShard,
+	type ShardConfig,
+} from "./sharding.js"
