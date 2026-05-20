@@ -53,21 +53,27 @@ env:
   # ahead of the forced switch in June 2026 / removal in Sep 2026.
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
+# Serialize publish runs. Don't cancel an in-flight publish — release-it has
+# already created commits/tags by the time a second dispatch arrives, and
+# killing it mid-flight leaves the repo in a partial-release state.
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           # release-it needs full history to compute the version tag base.
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 24
+          node-version-file: .nvmrc
           cache: yarn
           registry-url: https://registry.npmjs.org
 
@@ -100,8 +106,8 @@ jobs:
           # workspaces. The plugin still bumps their package.json
           # versions on disk (keeping the monorepo in sync) — only the
           # npm publish is skipped.
-          MAILWOMAN_SKIP_WEIGHTS_COPY: ${{ inputs.release_weights == false && '1' || '' }}
-          MAILWOMAN_SKIP_WEIGHTS: ${{ inputs.release_weights == false && '1' || '' }}
+          MAILWOMAN_SKIP_WEIGHTS_COPY: ${{ !inputs.release_weights && '1' || '' }}
+          MAILWOMAN_SKIP_WEIGHTS: ${{ !inputs.release_weights && '1' || '' }}
         run: | # shell
           set -euo pipefail
           ARGS=(--ci --increment="${{ inputs.version }}")
