@@ -416,20 +416,39 @@ function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WofPlacetype[] | n
  * Make an arbitrary user-typed string safe for FTS5 MATCH.
  *
  * FTS5 has its own query syntax (`"phrase"`, `term1 OR term2`, `prefix*`, NEAR/N, etc.). Letting
- * raw user input through means a user typing `Paris's` or `St. (Petersburg)` causes a syntax error.
- * We strip everything but `[\p{L}\p{N} ]`, then quote each token as a phrase and join with implicit
- * AND. Conservative but predictable.
+ * raw user input through means a user typing `Paris's` or `St. (Petersburg)` causes a syntax
+ * error.
+ *
+ * Per-token rules:
+ *
+ * - Strip all punctuation except trailing `*` from each whitespace-separated token.
+ * - **Trailing `*`** is preserved as FTS5 **prefix syntax** — `627*` becomes the literal `627*`
+ *   (unquoted). The caller signaled they want a prefix; respect that.
+ * - All other tokens are wrapped in `"..."` as a single-word phrase. Conservative — handles
+ *   apostrophes, parens, accented input, etc. safely.
+ * - Multiple tokens join with implicit AND.
+ *
+ * Examples:
+ *
+ * - `"Paris"` → `"Paris"` (phrase)
+ * - `"627*"` → `627*` (prefix)
+ * - `"St. (Petersburg)"` → `"St" "Petersburg"` (two phrases, AND-joined)
+ * - `"Pari* TX"` → `Pari* "TX"` (mixed prefix + phrase)
+ * - `"*"` alone → `""` (no body → drop)
  */
 function sanitizeFtsQuery(text: string): string {
-	const tokens = text
-		.normalize("NFKC")
-		.replace(/[^\p{L}\p{N}\s]/gu, " ")
-		.split(/\s+/u)
-		.map((t) => t.trim())
-		.filter((t) => t.length > 0)
-
-	if (tokens.length === 0) return ""
-	return tokens.map((t) => `"${t.replace(/"/g, '""')}"`).join(" ")
+	const out: string[] = []
+	for (const rawToken of text.normalize("NFKC").split(/\s+/u)) {
+		const trimmed = rawToken.trim()
+		if (!trimmed) continue
+		const hasPrefixStar = trimmed.endsWith("*")
+		// Strip everything except letters + numbers from the token body. Apostrophes / hyphens /
+		// any embedded `*` all go. The trailing `*` (if any) is reapplied separately below.
+		const body = trimmed.replace(/[^\p{L}\p{N}]/gu, "")
+		if (!body) continue
+		out.push(hasPrefixStar ? `${body}*` : `"${body.replace(/"/g, '""')}"`)
+	}
+	return out.join(" ")
 }
 
 // `sql` is imported only because future Kysely-typed queries will use it; silence "unused" linting.
