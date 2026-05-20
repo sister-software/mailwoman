@@ -1,0 +1,193 @@
+/**
+ * Mailwoman resolver-demo styles. Deliberately minimal — system font, ~640px column, no framework.
+ */
+:root {
+	color-scheme: light dark;
+	--fg: #1c1c1c;
+	--fg-dim: #5a5a5a;
+	--bg: #fafafa;
+	--bg-elev: #ffffff;
+	--accent: #1f6feb;
+	--accent-dim: #cfe3ff;
+	--mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+	--ok: #1a7f37;
+	--warn: #9a6700;
+	--err: #cf222e;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--fg: #e6e6e6;
+		--fg-dim: #9e9e9e;
+		--bg: #121212;
+		--bg-elev: #1d1d1d;
+		--accent: #58a6ff;
+		--accent-dim: #1f2a3a;
+		--ok: #56d364;
+		--warn: #e3b341;
+		--err: #f85149;
+	}
+}
+
+* {
+	box-sizing: border-box;
+}
+html,
+body {
+	margin: 0;
+	padding: 0;
+	background: var(--bg);
+	color: var(--fg);
+	font-family:
+		system-ui,
+		-apple-system,
+		"Segoe UI",
+		Roboto,
+		Helvetica,
+		Arial,
+		sans-serif;
+	line-height: 1.5;
+}
+body {
+	max-width: 880px;
+	margin: 0 auto;
+	padding: 24px 16px 80px;
+}
+
+header h1 {
+	margin: 0 0 4px;
+	font-size: 1.5rem;
+	letter-spacing: -0.02em;
+}
+.tagline {
+	margin: 0 0 24px;
+	color: var(--fg-dim);
+	font-size: 0.9rem;
+}
+.tagline a {
+	color: inherit;
+}
+
+#resolve-form {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 16px;
+	align-items: center;
+}
+#resolve-form label {
+	font-weight: 600;
+	min-width: 64px;
+}
+#resolve-form input {
+	flex: 1;
+	padding: 8px 10px;
+	font-size: 1rem;
+	background: var(--bg-elev);
+	color: var(--fg);
+	border: 1px solid var(--fg-dim);
+	border-radius: 4px;
+}
+#resolve-form button {
+	padding: 8px 16px;
+	font-size: 1rem;
+	background: var(--accent);
+	color: #fff;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+}
+#resolve-form button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.status {
+	padding: 8px 12px;
+	border-radius: 4px;
+	margin-bottom: 16px;
+	font-size: 0.9rem;
+}
+.status.loading {
+	background: var(--accent-dim);
+	color: var(--fg);
+}
+.status.error {
+	background: #ffe5e5;
+	color: var(--err);
+	border: 1px solid var(--err);
+}
+@media (prefers-color-scheme: dark) {
+	.status.error {
+		background: #2a1212;
+	}
+}
+
+#results h2 {
+	margin: 24px 0 8px;
+	font-size: 1.05rem;
+	color: var(--fg);
+}
+#results h2 .hint {
+	color: var(--fg-dim);
+	font-weight: 400;
+	font-size: 0.8rem;
+	margin-left: 6px;
+}
+
+.xml {
+	background: var(--bg-elev);
+	border: 1px solid var(--accent-dim);
+	border-radius: 4px;
+	padding: 12px;
+	overflow-x: auto;
+	font-family: var(--mono);
+	font-size: 0.85rem;
+	line-height: 1.4;
+}
+
+#nodes-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.85rem;
+	font-family: var(--mono);
+}
+#nodes-table th,
+#nodes-table td {
+	text-align: left;
+	padding: 6px 8px;
+	border-bottom: 1px solid var(--accent-dim);
+	vertical-align: top;
+}
+#nodes-table th {
+	font-weight: 600;
+	background: var(--bg-elev);
+}
+#nodes-table tr.resolved td {
+	background: rgba(31, 111, 235, 0.05);
+}
+#nodes-table .depth-indent {
+	display: inline-block;
+	color: var(--fg-dim);
+}
+#nodes-table .tag {
+	color: var(--accent);
+}
+#nodes-table .place {
+	color: var(--ok);
+}
+#nodes-table .conf-low {
+	color: var(--warn);
+}
+
+footer {
+	margin-top: 32px;
+	padding-top: 16px;
+	border-top: 1px solid var(--accent-dim);
+	color: var(--fg-dim);
+	font-size: 0.85rem;
+}
+footer code {
+	font-family: var(--mono);
+	background: var(--bg-elev);
+	padding: 1px 6px;
+	border-radius: 3px;
+}
