@@ -25,6 +25,17 @@ import type { BioLabel, ComponentTag } from "../types/component.js"
 import { PARENT_OF } from "./containment.js"
 import type { AddressNode, AddressTree, DecoderToken } from "./types.js"
 
+/**
+ * Optional caller-supplied attribution stamped on every emitted node. The BIO stream comes from a
+ * single model, so there's no per-span variation — one source for the whole tree.
+ *
+ * Phase 4.3 may overlay a resolver-derived attribution per node on top of this baseline.
+ */
+export interface BuildTreeOpts {
+	source?: string
+	sourceId?: string
+}
+
 interface OpenSpan {
 	tag: ComponentTag
 	start: number
@@ -38,15 +49,18 @@ function bioParts(label: BioLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag
 	return { prefix: label.slice(0, dash) as "B" | "I", tag: label.slice(dash + 1) as ComponentTag }
 }
 
-function flush(open: OpenSpan | null, raw: string, out: AddressNode[]): null {
+function flush(open: OpenSpan | null, raw: string, out: AddressNode[], attribution: BuildTreeOpts): null {
 	if (!open) return null
 	const value = raw.slice(open.start, open.end)
 	const confidence = open.confidences.reduce((a, b) => a + b, 0) / open.confidences.length
-	out.push({ tag: open.tag, start: open.start, end: open.end, value, confidence, children: [] })
+	const node: AddressNode = { tag: open.tag, start: open.start, end: open.end, value, confidence, children: [] }
+	if (attribution.source !== undefined) node.source = attribution.source
+	if (attribution.sourceId !== undefined) node.sourceId = attribution.sourceId
+	out.push(node)
 	return null
 }
 
-function emitSpans(raw: string, tokens: DecoderToken[]): AddressNode[] {
+function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOpts): AddressNode[] {
 	const out: AddressNode[] = []
 	let open: OpenSpan | null = null
 
@@ -54,12 +68,12 @@ function emitSpans(raw: string, tokens: DecoderToken[]): AddressNode[] {
 		const { prefix, tag } = bioParts(tok.label)
 
 		if (prefix === "O") {
-			open = flush(open, raw, out)
+			open = flush(open, raw, out, attribution)
 			continue
 		}
 
 		if (prefix === "B" || open === null || open.tag !== tag) {
-			open = flush(open, raw, out)
+			open = flush(open, raw, out, attribution)
 			open = { tag: tag!, start: tok.start, end: tok.end, confidences: [tok.confidence] }
 			continue
 		}
@@ -69,7 +83,7 @@ function emitSpans(raw: string, tokens: DecoderToken[]): AddressNode[] {
 		open.confidences.push(tok.confidence)
 	}
 
-	flush(open, raw, out)
+	flush(open, raw, out, attribution)
 	return out
 }
 
@@ -99,9 +113,12 @@ function sortByStart(nodes: AddressNode[]): void {
  *
  * @param raw The original input as fed to the tokenizer.
  * @param tokens Model output: one entry per piece with predicted BIO label + confidence.
+ * @param opts Optional attribution stamped on every emitted node. Callers in the neural pipeline
+ *   pass `{ source: "neural", sourceId: <model-card-version> }` to mark provenance for the XML
+ *   serializer's `src` attribute.
  */
-export function buildAddressTree(raw: string, tokens: DecoderToken[]): AddressTree {
-	const spans = emitSpans(raw, tokens)
+export function buildAddressTree(raw: string, tokens: DecoderToken[], opts: BuildTreeOpts = {}): AddressTree {
+	const spans = emitSpans(raw, tokens, opts)
 	const roots: AddressNode[] = []
 
 	for (const span of spans) {

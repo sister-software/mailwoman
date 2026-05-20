@@ -18,6 +18,12 @@
  *       parser availability.
  *
  *   See `containment.ts` for the parent-of mapping that drives nesting.
+ *
+ *   Phase 4.1 added optional `source` / `sourceId` on `AddressNode` so the XML serializer can emit
+ *   provenance via `src="<source>:<sourceId>"`. The neural pipeline stamps these via
+ *   `BuildTreeOpts`; the proposal-derived path threads them through from `ClassificationProposal`.
+ *   JSON / tuple projections deliberately do not surface provenance — libpostal compat is
+ *   load-bearing.
  */
 
 import type { BioLabel, ComponentTag } from "../types/component.js"
@@ -59,6 +65,17 @@ export interface AddressNode {
 	end: number
 	confidence: number
 	children: AddressNode[]
+	/**
+	 * Broad category of the assertion's origin. `"rule"` and `"neural"` come from classifier
+	 * proposals; `"resolver"` will be added in Phase 4.3 when a resolver overwrites the attribution.
+	 */
+	source?: string
+	/**
+	 * Specific identifier within `source`: a rule classifier id like `"whos_on_first"`, a neural
+	 * model card version like `"neural-v0.3.1-en-us"`, or (Phase 4.3) a resolver place id like
+	 * `"wof-admin:101751113"`.
+	 */
+	sourceId?: string
 }
 
 /**

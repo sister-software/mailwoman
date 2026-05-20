@@ -14,8 +14,11 @@
  *   - `conf` — aggregated confidence in [0, 1], two decimal places.
  *   - `start` / `end` — character offsets in the raw input. Preserves source order alongside the
  *       containment-derived element order.
+ *   - `src` — provenance for the assertion. Formatted as `<source>:<sourceId>` when both fields are
+ *       present on the node, `<source>` when only the broad category is set, omitted when neither
+ *       is. Phase 4.1 surfaces classifier provenance (`rule:whos_on_first`, `neural:v0.3.1-en-us`);
+ *       Phase 4.3 will overlay resolver provenance (`wof-admin:101751113`).
  *   - Root `<address>` carries `raw` — the full input string for round-trip.
- *   - `src` is reserved for Phase 4 (Resolver source provenance) and not emitted here.
  *
  *   ⚠ DOM gotcha: `element.textContent` on a mixed-content node returns the concatenation of all
  *   descendant text (parent value + children values). Use `Array.from(el.childNodes).filter(n =>
@@ -32,16 +35,29 @@ export interface SerializeXmlOpts {
 	includeConf?: boolean
 	/** Include `start` + `end` char-offset attributes. Default true. */
 	includeOffsets?: boolean
+	/** Include `src` provenance attribute when the node carries source info. Default true. */
+	includeSrc?: boolean
 }
 
 function escapeXml(s: string): string {
 	return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
 }
 
+function srcAttrValue(node: AddressNode): string | null {
+	if (node.source && node.sourceId) return `${node.source}:${node.sourceId}`
+	if (node.source) return node.source
+	if (node.sourceId) return node.sourceId
+	return null
+}
+
 function attrs(node: AddressNode, opts: Required<SerializeXmlOpts>): string {
 	const parts: string[] = []
 	if (opts.includeOffsets) parts.push(`start="${node.start}"`, `end="${node.end}"`)
 	if (opts.includeConf) parts.push(`conf="${node.confidence.toFixed(2)}"`)
+	if (opts.includeSrc) {
+		const src = srcAttrValue(node)
+		if (src !== null) parts.push(`src="${escapeXml(src)}"`)
+	}
 	return parts.length === 0 ? "" : " " + parts.join(" ")
 }
 
@@ -65,6 +81,7 @@ export function decodeAsXml(tree: AddressTree, opts: SerializeXmlOpts = {}): str
 		pretty: opts.pretty ?? true,
 		includeConf: opts.includeConf ?? true,
 		includeOffsets: opts.includeOffsets ?? true,
+		includeSrc: opts.includeSrc ?? true,
 	}
 	const rawAttr = escapeXml(tree.raw)
 	const nl = full.pretty ? "\n" : ""
