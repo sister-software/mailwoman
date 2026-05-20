@@ -9,3 +9,11 @@ export type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "
 export type { AncestorsTable, GeojsonTable, NamesTable, PlaceSearchTable, PlacesTable, WofDatabase } from "./schema.js"
 
 export { WofSqlitePlaceLookup, type RankingWeights, type WofSqlitePlaceLookupOpts } from "./lookup.js"
+
+export {
+	PLACE_SEARCH_TABLE,
+	buildPlaceSearchFts,
+	placeSearchFtsExists,
+	type BuildPlaceSearchFtsOpts,
+	type BuildPlaceSearchFtsResult,
+} from "./fts.js"

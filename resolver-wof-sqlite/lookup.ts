@@ -15,6 +15,7 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite"
 
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 
+import { buildPlaceSearchFts, placeSearchFtsExists } from "./fts.js"
 import type { WofDatabase } from "./schema.js"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "./types.js"
 
@@ -211,37 +212,13 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 	/** Build the FTS5 virtual table from the `names` + `places` tables. */
 	#ensureFts(): void {
-		const existsRow = this.#db
-			.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'place_search'`)
-			.get() as { name: string } | undefined
-
-		if (existsRow) return
-
-		this.#db.exec(`
-			CREATE VIRTUAL TABLE place_search USING fts5(
-				wof_id UNINDEXED,
-				name,
-				alt_names,
-				tokenize = 'unicode61 remove_diacritics 2'
-			);
-		`)
-		this.#db.exec(`
-			INSERT INTO place_search (wof_id, name, alt_names)
-			SELECT
-				places.id,
-				places.name,
-				COALESCE((SELECT GROUP_CONCAT(name, ' ') FROM names WHERE names.place_id = places.id), '')
-			FROM places;
-		`)
+		buildPlaceSearchFts(this.#db)
 	}
 
 	#assertFtsExists(): void {
-		const row = this.#db
-			.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'place_search'`)
-			.get() as { name: string } | undefined
-		if (!row) {
+		if (!placeSearchFtsExists(this.#db)) {
 			throw new Error(
-				"WofSqlitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFts: true` to build it on open, or run the operator-side index-build CLI documented in the README."
+				"WofSqlitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFts: true` to build it on open, or run `mailwoman-wof-build-fts <path-to-wof.db>` ahead of time (see resolver-wof-sqlite/README.md)."
 			)
 		}
 	}
