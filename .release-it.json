@@ -12,7 +12,8 @@
 				"mailwoman"
 			],
 			"publish": true,
-			"publishCommand": "node scripts/publish-workspace.mjs"
+			"publishCommand": "node scripts/publish-workspace.mjs",
+			"skipChecks": true
 		}
 	},
 	"npm": false,
@@ -31,7 +32,7 @@
 		"before:init": [
 			"echo 'Pre-flight: compile + test + copy-weights'",
 			"yarn compile",
-			"yarn test",
+			"yarn ci:test",
 			"node scripts/copy-weights.mjs"
 		],
 		"after:bump": "yarn prettier --write --log-level warn -u package.json '**/package.json'",
