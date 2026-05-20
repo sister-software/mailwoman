@@ -7611,12 +7611,14 @@ __metadata:
   resolution: "mailwoman@workspace:mailwoman"
   dependencies:
     "@fragaria/address-formatter": "npm:^6.3.0"
+    "@inkjs/ui": "npm:^2.0.0"
     "@mailwoman/classifiers": "workspace:*"
     "@mailwoman/core": "workspace:*"
     better-sqlite3: "npm:^11.5.0"
     change-case: "npm:^5.4.4"
     express: "npm:^5.0.1"
     geojson: "npm:^0.5.0"
+    ink: "npm:^7.0.3"
     ioredis: "npm:^5.4.1"
     pastel: "npm:^4.0.1"
     path-ts: "npm:^1.0.5"
@@ -7626,9 +7628,7 @@ __metadata:
     spliterator: "npm:^2.0.0"
     zod: "npm:^4.1.12"
   peerDependencies:
-    "@inkjs/ui": ^2.0.0
     core-js: ^3.49.0
-    ink: ^7.0.3
     react: ^19.2.6
   peerDependenciesMeta:
     "@inkjs/ui":
