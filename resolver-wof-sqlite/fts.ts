@@ -9,8 +9,9 @@
  *   `mailwoman-wof-build-fts` CLI (ahead-of-time build to avoid first-open latency in production).
  *
  *   Upstream WOF SQLite distributions do NOT ship FTS5. The index lives in a `place_search` virtual
- *   table whose rows mirror `(places.id, places.name, GROUP_CONCAT(names.name))` — one row per
- *   place, with all alternate names concatenated into a single search-token bag.
+ *   table whose rows mirror `(spr.id, spr.name, GROUP_CONCAT(names.name))` — one current,
+ *   non-deprecated place per row, with all alternate names concatenated into a single search-token
+ *   bag.
  */
 
 import type { DatabaseSync } from "node:sqlite"
@@ -90,13 +91,18 @@ export function buildPlaceSearchFts(db: DatabaseSync, opts: BuildPlaceSearchFtsO
 	`)
 
 	onProgress("populating")
+	// Excludes deprecated / superseded / non-current places. `is_current` uses a -1/0 convention in
+	// WOF — `-1` means "current"; anything else is historical.
 	db.exec(`
 		INSERT INTO ${PLACE_SEARCH_TABLE} (wof_id, name, alt_names)
 		SELECT
-			places.id,
-			places.name,
-			COALESCE((SELECT GROUP_CONCAT(name, ' ') FROM names WHERE names.place_id = places.id), '')
-		FROM places;
+			spr.id,
+			spr.name,
+			COALESCE((SELECT GROUP_CONCAT(name, ' ') FROM names WHERE names.id = spr.id), '')
+		FROM spr
+		WHERE spr.is_current = -1
+			AND spr.is_deprecated = 0
+			AND spr.name IS NOT NULL;
 	`)
 
 	const countRow = db.prepare(`SELECT COUNT(*) AS n FROM ${PLACE_SEARCH_TABLE}`).get() as { n: number }
