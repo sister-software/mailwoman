@@ -5,7 +5,6 @@
  */
 
 export * from "./collections.js"
-export * from "./db/index.js"
 export * from "./debugging.js"
 export * from "./fs.js"
 export * from "./git.js"
