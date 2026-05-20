@@ -160,8 +160,8 @@ const FIXTURE: FixturePlace[] = [
 function buildFixtureDb(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 	// Schema mirrors the real WOF SQLite distribution at data.geocode.earth (subset of columns we
-	// actually read; full schema is documented in `schema.ts`). Note the WOF lifecycle-flag
-	// convention: `is_current = -1` means "currently valid".
+	// actually read; full schema is documented in `schema.ts`). WOF lifecycle: both `is_current = -1`
+	// (modern) and `is_current = 1` (legacy) mean current; `0` means not current. See #91.
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY,

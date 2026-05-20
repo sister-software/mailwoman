@@ -173,6 +173,53 @@ describe("buildPlaceSearchFts", () => {
 		expect(hits.map((h) => h.id)).toContain(1)
 		db.close()
 	})
+
+	test("indexes places with is_current = 1 (legacy Mapzen-era) as well as is_current = -1 (modern); see #91", () => {
+		const db = buildBaseSchema()
+		// Add one place tagged with the legacy convention (`is_current = 1`). WOF mixes both
+		// conventions; ~42% of admin-US rows carry `1` rather than `-1`. The filter must accept
+		// both — the Phase 4.2 regression was excluding all of these.
+		db.exec(`
+			INSERT INTO spr VALUES (
+				1000, NULL, 'Legacy Place', 'locality', 'US',
+				40.0, -80.0,
+				39.9, 40.1, -80.1, -79.9,
+				1, 0  /* is_current = 1 (legacy), is_deprecated = 0 */
+			);
+		`)
+		const result = buildPlaceSearchFts(db)
+		expect(result.indexedRows).toBe(4) // 3 modern + 1 legacy
+		// MATCH against the new row to confirm it's actually queryable.
+		const hit = db.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH ?`).get("Legacy Place") as
+			| { wof_id: number }
+			| undefined
+		expect(hit?.wof_id).toBe(1000)
+		// Also confirm the bbox row landed in the R*Tree.
+		const bboxHit = db.prepare(`SELECT id FROM place_bbox WHERE min_lat <= ? AND max_lat >= ?`).all(40.0, 40.0) as {
+			id: number
+		}[]
+		expect(bboxHit.map((h) => h.id)).toContain(1000)
+		db.close()
+	})
+
+	test("excludes is_current = 0 places (no-longer-current); see #91", () => {
+		const db = buildBaseSchema()
+		db.exec(`
+			INSERT INTO spr VALUES (
+				2000, NULL, 'Phantom Place', 'locality', 'US',
+				40.0, -80.0,
+				39.9, 40.1, -80.1, -79.9,
+				0, 0
+			);
+		`)
+		const result = buildPlaceSearchFts(db)
+		expect(result.indexedRows).toBe(3) // the phantom is excluded
+		const hit = db.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH ?`).get("Phantom") as
+			| { wof_id: number }
+			| undefined
+		expect(hit).toBeUndefined()
+		db.close()
+	})
 })
 
 describe("placeSearchFtsExists", () => {
