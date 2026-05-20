@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/neural-weights-fr-fr",
-	"version": "2.0.9",
+	"version": "2.1.0",
 	"description": "Mailwoman neural-classifier weights for locale 'fr-fr'. Data-only package — loaded by @mailwoman/neural at runtime.",
 	"license": "AGPL-3.0-only",
 	"repository": {
