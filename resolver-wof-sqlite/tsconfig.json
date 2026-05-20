@@ -6,6 +6,6 @@
 		"allowImportingTsExtensions": false
 	},
 	"include": ["./**/*"],
-	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./spike/**/*"],
 	"references": [{ "path": "../core" }]
 }
