@@ -55,7 +55,44 @@ bunzip2 whosonfirst-data-admin-us-latest.db.bz2
 Upstream WOF SQLite distributions ship a `places` table but **not** an FTS5 index. The resolver needs FTS5 to do fast prefix + token-bag matching. Two options:
 
 1. **`buildFts: true` on construction** — builds the index lazily on first open. Cost is one-time but expensive (~minutes on the full US admin shard). Use for prototyping.
-2. **Pre-build the index** — run the build once via your own script (`db.exec("CREATE VIRTUAL TABLE place_search ..."); db.exec("INSERT INTO place_search SELECT ...")`) and ship the DB with the index included. Faster startup for production.
+2. **Pre-build the index with `mailwoman-wof-build-fts`** — ship the DB with the index included so first-open is fast. Recommended for production.
+
+### `mailwoman-wof-build-fts` CLI
+
+A one-shot operator script ships with this package as a `bin`:
+
+```bash
+npx mailwoman-wof-build-fts /path/to/whosonfirst-data-admin-us-latest.db
+```
+
+The CLI:
+
+- Opens the DB read-write.
+- Creates the `place_search` FTS5 virtual table (with the same schema the lazy build uses).
+- Populates it from `places` + `names` (alternate-name concatenation included).
+- Reports progress to stderr per phase (`checking` → `creating` → `populating` → `done`).
+- Exits 0 with a no-op message if the index already exists.
+
+```bash
+# Refresh after pulling a newer WOF dump
+npx mailwoman-wof-build-fts /path/to/wof.db --drop
+```
+
+`--drop` rebuilds from scratch — useful after refreshing the `places` / `names` tables from a newer dump. Without `--drop` the CLI is a no-op when the index is already present.
+
+You can also build the index programmatically via the package's `./fts` subpath:
+
+```ts
+import { DatabaseSync } from "node:sqlite"
+import { buildPlaceSearchFts } from "@mailwoman/resolver-wof-sqlite/fts"
+
+const db = new DatabaseSync("/path/to/wof.db")
+const { created, indexedRows, durationMs } = buildPlaceSearchFts(db, {
+	drop: false,
+	onProgress: (phase, detail) => console.log(phase, detail),
+})
+db.close()
+```
 
 ## Ranking
 
