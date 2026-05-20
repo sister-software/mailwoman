@@ -42,7 +42,6 @@ export async function collectProposals(
 		for (const section of sections) {
 			tasks.push(
 				classifier.classify(section, context).catch((err) => {
-					// eslint-disable-next-line no-console
 					console.warn(`[proposal-pipeline] ${classifier.id} threw on section "${section.body}":`, err)
 					return []
 				})
