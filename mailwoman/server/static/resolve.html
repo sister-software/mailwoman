@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta charset="utf-8" />
+		<title>Mailwoman Resolver Demo</title>
+		<link rel="stylesheet" href="/resolve.css" />
+	</head>
+	<body>
+		<header>
+			<h1>Mailwoman Resolver</h1>
+			<p class="tagline">
+				Free-text address →
+				<a href="https://github.com/sister-software/mailwoman">neural parser</a> →
+				<a href="https://whosonfirst.org">WOF</a> resolver → structured tree + place coordinates.
+			</p>
+		</header>
+
+		<form id="resolve-form">
+			<label for="text">Address</label>
+			<input
+				id="text"
+				type="search"
+				name="text"
+				placeholder="e.g. Springfield, Illinois or 1600 Pennsylvania Ave NW"
+				autocomplete="off"
+				required
+			/>
+			<button type="submit">Resolve</button>
+		</form>
+
+		<section id="status" class="status" hidden></section>
+
+		<section id="results" hidden>
+			<h2>
+				Resolved tree
+				<span class="hint">(XML — `src=`/`lat=`/`lon=`/`place=` attrs come from the resolver)</span>
+			</h2>
+			<pre id="xml" class="xml"></pre>
+
+			<h2>
+				Nodes
+				<span class="hint">(flattened with depth indent — rows with `wof:` are resolver-decorated)</span>
+			</h2>
+			<table id="nodes-table">
+				<thead>
+					<tr>
+						<th>Tag</th>
+						<th>Value</th>
+						<th>Conf</th>
+						<th>Source</th>
+						<th>Place</th>
+						<th>Lat</th>
+						<th>Lon</th>
+					</tr>
+				</thead>
+				<tbody id="nodes-body"></tbody>
+			</table>
+		</section>
+
+		<footer>
+			<p>
+				<a href="/">parser demo</a>
+				· built with
+				<code>POST /api/resolve</code>
+				· source on
+				<a href="https://github.com/sister-software/mailwoman">GitHub</a>
+			</p>
+		</footer>
+
+		<script type="module" src="/resolve.js"></script>
+	</body>
+</html>

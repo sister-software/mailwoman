@@ -5,16 +5,17 @@
  */
 
 import { Spinner, StatusMessage } from "@inkjs/ui"
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import express from "express"
 import { Box, Text } from "ink"
 import cluster, { Worker } from "node:cluster"
 import { availableParallelism } from "node:os"
+import { dirname, resolve as resolvePath } from "node:path"
 import * as process from "node:process"
+import { fileURLToPath } from "node:url"
 import { useEffect, useState } from "react"
 import zod from "zod"
 import type { CommandComponent } from "../sdk/cli.js"
-import { AddressRouter } from "../server/index.js"
+import { AddressRouter, ResolveRouter } from "../server/index.js"
 
 const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 	options: { cpus = availableParallelism() },
@@ -111,9 +112,13 @@ const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { p
 
 		app.use(express.json())
 		app.use(AddressRouter)
-		app.use("/admin/wof")
+		app.use(ResolveRouter)
 
-		const staticPath = repoRootPathBuilder("server", "static").toString()
+		// `mailwoman/server/static/` lives next to the compiled `mailwoman/out/commands/serve.js`,
+		// so resolve relative to this file rather than relying on a repo-root path builder that
+		// pre-dated the flat-layout move.
+		const thisDir = dirname(fileURLToPath(import.meta.url))
+		const staticPath = resolvePath(thisDir, "..", "..", "server", "static")
 
 		console.log("Serving static files from", staticPath)
 		app.use(express.static(staticPath))
