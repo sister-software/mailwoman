@@ -35,7 +35,6 @@
 		"@inkjs/ui": "^2.0.0",
 		"@mailwoman/classifiers": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"better-sqlite3": "^11.5.0",
 		"change-case": "^5.4.4",
 		"core-js": "^3.49.0",
 		"express": "^5.0.1",

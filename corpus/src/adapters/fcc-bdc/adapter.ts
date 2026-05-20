@@ -34,7 +34,7 @@
  *   re-stamp accordingly.
  */
 
-import Database from "better-sqlite3"
+import { DatabaseSync } from "node:sqlite"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.js"
 import { formatAddress, reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -115,16 +115,16 @@ export function createFccBdcAdapter(): CorpusAdapter {
 				throw new Error(`fcc-bdc adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const db = new Database(opts.inputPath, { readonly: true, fileMustExist: true })
+			const db = new DatabaseSync(opts.inputPath, { readOnly: true })
 			let emitted = 0
 			try {
-				const stmt = db.prepare<[], BdcLocationRow>(
+				const stmt = db.prepare(
 					`SELECT location_id, address_primary, city, state, zip, zip_suffix
 					 FROM bdc_locations
 					 ORDER BY location_id`
 				)
 
-				for (const row of stmt.iterate()) {
+				for (const row of stmt.iterate() as IterableIterator<BdcLocationRow>) {
 					if (opts.signal?.aborted) return
 					if (opts.limit !== undefined && emitted >= opts.limit) return
 

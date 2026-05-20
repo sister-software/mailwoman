@@ -10,7 +10,7 @@ import {
 	Alpha3bToAlpha2,
 	isAlpha3bLanguageCode,
 } from "@mailwoman/core/resources/languages"
-import sqlite, { type Options as SQLiteOptions } from "better-sqlite3"
+import { DatabaseSync, type DatabaseSyncOptions, type SQLInputValue } from "node:sqlite"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { tryWithBackoff } from "./DataSourceCache.js"
 import type { WhosOnFirstPlacetype } from "./placetypes/definition.js"
@@ -67,7 +67,7 @@ export interface PlacetypeRecord {
  * A data source for WhosOnFirst placetype records.
  */
 export class PlacetypeDataSource implements Disposable {
-	#db: sqlite.Database
+	#db: DatabaseSync
 
 	public static createPath<P extends WhosOnFirstPlacetype, L extends Alpha3bLanguageCode | Alpha2LanguageCode>({
 		placetype,
@@ -118,12 +118,13 @@ export class PlacetypeDataSource implements Disposable {
 		`)
 	}
 
-	constructor(databasePath: PathBuilderLike, dbOptions?: SQLiteOptions) {
-		this.#db = sqlite(databasePath.toString(), dbOptions)
+	constructor(databasePath: PathBuilderLike, dbOptions?: DatabaseSyncOptions) {
+		this.#db = new DatabaseSync(databasePath.toString(), dbOptions)
 
-		this.#db.pragma("busy_timeout = 10000")
-		this.#db.pragma("journal_mode = WAL")
-		this.#db.pragma("synchronous = OFF")
+		// node:sqlite has no .pragma() helper; pragmas are executed as plain SQL.
+		this.#db.exec("PRAGMA busy_timeout = 10000")
+		this.#db.exec("PRAGMA journal_mode = WAL")
+		this.#db.exec("PRAGMA synchronous = OFF")
 
 		this.prepareTables()
 		//this.prepareIndexes()
@@ -138,7 +139,7 @@ export class PlacetypeDataSource implements Disposable {
 	 */
 
 	public find(criteria: Partial<PlacetypeRecord>): IteratorObject<PlacetypeRecord> {
-		const statement = this.#db.prepare<[], PlacetypeRecord>(/* sql */ `
+		const statement = this.#db.prepare(/* sql */ `
 			SELECT *
 			FROM records
 			WHERE ${Object.keys(criteria)
@@ -146,7 +147,11 @@ export class PlacetypeDataSource implements Disposable {
 				.join(" OR ")}
 		`)
 
-		return Iterator.from(statement.iterate())
+		// node:sqlite's StatementSync.iterate() accepts named params via an object whose keys match
+		// the `@name` / `:name` / `$name` placeholders in the SQL.
+		return Iterator.from(
+			statement.iterate(criteria as unknown as Record<string, SQLInputValue>)
+		) as unknown as IteratorObject<PlacetypeRecord>
 	}
 
 	/**
@@ -156,7 +161,7 @@ export class PlacetypeDataSource implements Disposable {
 	 */
 	public async upsert(record: PlacetypeRecord): Promise<void> {
 		const perform = () => {
-			const statement = this.#db.prepare<PlacetypeRecord>(/* sql */ `
+			const statement = this.#db.prepare(/* sql */ `
 			INSERT INTO records
 			(id, src, name, preferred, variant, colloquial, abbr, short, parent_id)
 			VALUES (
@@ -180,7 +185,7 @@ export class PlacetypeDataSource implements Disposable {
 			parent_id = excluded.parent_id
 			`)
 
-			statement.run(record)
+			statement.run(record as unknown as Record<string, SQLInputValue>)
 		}
 
 		await tryWithBackoff(5, perform)

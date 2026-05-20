@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import Database from "better-sqlite3"
 import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
+import { DatabaseSync } from "node:sqlite"
 import { fileURLToPath } from "node:url"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { runAdapter } from "../../runner.js"
@@ -23,7 +23,7 @@ let dbPath: string
 async function buildFixtureDb(): Promise<string> {
 	const sql = await readFile(fixtureSqlPath, "utf8")
 	const path = join(scratch, "tiger-fixture.db")
-	const db = new Database(path)
+	const db = new DatabaseSync(path)
 	db.exec(sql)
 	db.close()
 	return path
@@ -126,7 +126,7 @@ describe("tiger adapter against fixture.sql", () => {
 	it("zipl !== zipr produces two street variants (one per side)", async () => {
 		// Build a mini DB with one segment whose left and right ZIPs differ.
 		const inline = join(scratch, "split-zip.db")
-		const db = new Database(inline)
+		const db = new DatabaseSync(inline)
 		db.exec(`
 			CREATE TABLE tiger_streets (linearid TEXT PRIMARY KEY, fullname TEXT NOT NULL, zipl TEXT, zipr TEXT, statefp TEXT NOT NULL);
 			CREATE TABLE tiger_places (geoid TEXT PRIMARY KEY, name TEXT NOT NULL, statefp TEXT NOT NULL, lsad TEXT);
@@ -152,7 +152,7 @@ describe("tiger adapter against fixture.sql", () => {
 
 	it("street with no ZIPs emits a single zipless variant", async () => {
 		const inline = join(scratch, "no-zip.db")
-		const db = new Database(inline)
+		const db = new DatabaseSync(inline)
 		db.exec(`
 			CREATE TABLE tiger_streets (linearid TEXT PRIMARY KEY, fullname TEXT NOT NULL, zipl TEXT, zipr TEXT, statefp TEXT NOT NULL);
 			CREATE TABLE tiger_places (geoid TEXT PRIMARY KEY, name TEXT NOT NULL, statefp TEXT NOT NULL, lsad TEXT);
@@ -175,7 +175,7 @@ describe("tiger adapter against fixture.sql", () => {
 
 	it("rows with an unrecognized state FIPS code are dropped", async () => {
 		const inline = join(scratch, "bad-fips.db")
-		const db = new Database(inline)
+		const db = new DatabaseSync(inline)
 		db.exec(`
 			CREATE TABLE tiger_streets (linearid TEXT PRIMARY KEY, fullname TEXT NOT NULL, zipl TEXT, zipr TEXT, statefp TEXT NOT NULL);
 			CREATE TABLE tiger_places (geoid TEXT PRIMARY KEY, name TEXT NOT NULL, statefp TEXT NOT NULL, lsad TEXT);
