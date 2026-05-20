@@ -5,6 +5,8 @@
 
 ## Build asset directories
 /build
+docs/build
+docs/.docusaurus
 coverage
 dist
 out

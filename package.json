@@ -39,7 +39,6 @@
 		"@sister.software/eslint-config": "^8.0.1",
 		"@sister.software/prettier-config": "^8.0.1",
 		"@sister.software/tsconfig": "^8.0.1",
-		"@types/core-js": "^2.5.8",
 		"@types/express": "^5.0.0",
 		"@types/geojson": "^7946.0.14",
 		"@types/node": "^24.0.0",
@@ -48,7 +47,6 @@
 		"@types/regenerate": "^1.4.3",
 		"ansi_up": "^6.0.2",
 		"chalk": "^5.3.0",
-		"core-js": "^3.39.0",
 		"csv-parse": "^5.5.6",
 		"eslint": "^9.13.0",
 		"eslint-plugin-html": "^8.1.2",
@@ -77,7 +75,8 @@
 		"neural",
 		"neural-weights-en-us",
 		"neural-weights-fr-fr",
-		"resolver-wof-sqlite"
+		"resolver-wof-sqlite",
+		"docs"
 	],
 	"resolutions": {
 		"@dsnp/parquetjs@1.7.0": "patch:@dsnp/parquetjs@npm%3A1.7.0#./.yarn/patches/@dsnp-parquetjs-npm-1.7.0-efe8288b39.patch"

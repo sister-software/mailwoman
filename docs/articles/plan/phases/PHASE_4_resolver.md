@@ -12,7 +12,7 @@
 
 Three forcing functions:
 
-1. **The XML serializer already reserves the `src` attribute** ([serialize-xml.ts:18](../../core/decoder/serialize-xml.ts)). The TODO comment is a public commitment; shipping a release that adds the attr is non-breaking only because consumers don't depend on its absence _yet_. Every release that goes out without `src` makes the eventual flip costlier.
+1. **The XML serializer already reserves the `src` attribute** (serialize-xml.ts:18 `../../core/decoder/serialize-xml.ts`). The TODO comment is a public commitment; shipping a release that adds the attr is non-breaking only because consumers don't depend on its absence _yet_. Every release that goes out without `src` makes the eventual flip costlier.
 2. **The neural classifier emits proposals with `source` + `source_id` fields that the decoder discards.** That's free debugging signal we're throwing away.
 3. **Resolver feedback into parsing was the project creator's original vision** (per `reference/ARCHITECTURE.md`'s opening). The resolver is not bolted on — it shares the `AddressTree` representation.
 

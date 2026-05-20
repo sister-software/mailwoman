@@ -272,7 +272,7 @@ None of these are Phase 0–3 scope. Filed for Phase 4 territory or beyond. spaC
 
 ### Casual descriptions (for audiences who don't want the architecture deep-dive)
 
-- **Technical**: "Small encoder-only transformer (BERT-class, from scratch, ~few-million params, <40 MB int8 ONNX), per-token classification head emitting BIO-tagged address-component spans. Runs in Node via onnxruntime-node, no Python at inference."
+- **Technical**: "Small encoder-only transformer (BERT-class, from scratch, ~few-million params, less than 40 MB int8 ONNX), per-token classification head emitting BIO-tagged address-component spans. Runs in Node via onnxruntime-node, no Python at inference."
 - **Practitioner**: "Tiny BERT-class NER model specialized for address parsing — a learned replacement for libpostal's CRF, sized to fit in a Node process. Architecturally the same family as spaCy's ja_core_news_trf, ~10× smaller because the task is narrower."
 - **User-facing**: "A small ONNX model that reads an address string and tells you, with per-component confidence, what each piece of it means."
 - **For the bitter-lesson audience**: "The contextual-parser half of a contextual-parser-plus-constraint-solver geocoder front-end. The transformer proposes; the policy registry + solver dispose."

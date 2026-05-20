@@ -112,7 +112,7 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 		}
 
 		if (options.resolve && !options.neural) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount validation; refactor pending
+			// TODO -- one-shot mount validation; refactor pending
 			setError(
 				"--resolve requires --neural. The rule-based parser doesn't produce the AddressTree shape the resolver needs."
 			)
@@ -142,18 +142,7 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 				.then((results) => setOutput(JSON.stringify(results, null, 2)))
 				.catch((err) => setError(err.message))
 		}
-	}, [
-		args,
-		options.debug,
-		options.locale,
-		options.neural,
-		options.format,
-		options.model,
-		options.tokenizer,
-		options.policy,
-		options.resolve,
-		options.resolveDb,
-	])
+	}, [args, options])
 
 	if (error) {
 		return <Text color="red">{error}</Text>
