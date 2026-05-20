@@ -21,7 +21,6 @@
 		"./decoder": "./out/decoder/index.js",
 		"./resources": "./out/resources/index.js",
 		"./resources/languages": "./out/resources/languages/index.js",
-		"./resources/db": "./out/resources/db/index.js",
 		"./resources/whosonfirst": "./out/resources/whosonfirst/index.js",
 		"./resources/libpostal": "./out/resources/libpostal/index.js",
 		"./utils": "./out/utils/index.js",
@@ -31,6 +30,11 @@
 		"./solvers/*": "./out/solvers/*",
 		"./filters": "./out/filters/index.js",
 		"./filters/*": "./out/filters/*"
+	},
+	"imports": {
+		"#*": {
+			"import": "./*.ts"
+		}
 	},
 	"dependencies": {
 		"kysely": "^0.29.2"

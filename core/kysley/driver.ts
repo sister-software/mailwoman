@@ -55,9 +55,10 @@ export class SqliteDriver implements Driver {
 	}
 
 	async init(): Promise<void> {
-		this.#db = typeof this.#config.database === "function" ? await this.#config.database() : this.#config.database
+		const db = typeof this.#config.database === "function" ? await this.#config.database() : this.#config.database
 
-		this.#connection = new SqliteConnection(this.#db)
+		this.#db = db
+		this.#connection = new SqliteConnection(db)
 
 		if (this.#config.onCreateConnection) {
 			await this.#config.onCreateConnection(this.#connection)

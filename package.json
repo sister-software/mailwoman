@@ -43,7 +43,7 @@
 		"@types/core-js": "^2.5.8",
 		"@types/express": "^5.0.0",
 		"@types/geojson": "^7946.0.14",
-		"@types/node": "^22.9.0",
+		"@types/node": "^24.0.0",
 		"@types/pluralize": "^0.0.33",
 		"@types/react": "^19.2.0",
 		"@types/regenerate": "^1.4.3",
