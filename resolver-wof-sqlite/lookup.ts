@@ -1,0 +1,276 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `WofSqlitePlaceLookup` — the resolver implementation backed by `node:sqlite` + a Kysely-typed
+ *   query layer where the queries are non-trivial, and raw SQL where they aren't (FTS5 MATCH, the
+ *   FTS index build).
+ *
+ *   See `docs/plan/phases/PHASE_4_2_wof_sqlite.md` for the design rationale.
+ */
+
+import { Kysely, sql } from "kysely"
+import { DatabaseSync, type SQLInputValue } from "node:sqlite"
+
+import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
+
+import type { WofDatabase } from "./schema.js"
+import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "./types.js"
+
+export interface WofSqlitePlaceLookupOpts {
+	/** Path to the WOF SQLite distribution on disk. Mutually exclusive with `database`. */
+	databasePath?: string
+	/**
+	 * Pre-opened DatabaseSync — primarily for tests against an inline fixture DB. Mutually exclusive
+	 * with `databasePath`.
+	 */
+	database?: DatabaseSync
+	/**
+	 * If true, build the FTS5 `place_search` virtual table on construction if it doesn't already
+	 * exist. The upstream WOF distribution does NOT ship FTS5, so callers either set this once on
+	 * first open or pre-build it via the operator-side CLI documented in the README. Default false —
+	 * the resolver assumes the index already exists and errors loudly if it doesn't.
+	 */
+	buildFts?: boolean
+}
+
+/**
+ * Ranking weights for `findPlace`. Tweakable per-instance but defaults match the values declared in
+ * the Phase 4.2 plan doc.
+ */
+export interface RankingWeights {
+	/** Boost when the candidate's placetype matches an explicit `placetype` filter. */
+	placetypeMatchBoost: number
+	/** Boost when the candidate is a locality and no explicit placetype was requested. */
+	localityImplicitBoost: number
+	/** Boost when the candidate's country matches an explicit `country` filter. */
+	countryMatchBoost: number
+	/** Boost when the candidate is a direct child of the requested `parentId`. */
+	directChildBoost: number
+	/** Boost when the candidate is a transitive descendant of the requested `parentId`. */
+	descendantBoost: number
+	/** Multiplier on the length-penalty term (penalizes much-longer-than-query names). */
+	lengthPenaltyWeight: number
+}
+
+const DEFAULT_WEIGHTS: RankingWeights = {
+	placetypeMatchBoost: 0.5,
+	localityImplicitBoost: 0.2,
+	countryMatchBoost: 0.3,
+	directChildBoost: 0.5,
+	descendantBoost: 0.2,
+	lengthPenaltyWeight: 0.1,
+}
+
+interface RawSearchRow {
+	wof_id: number
+	name: string
+	placetype: string
+	country: string | null
+	parent_id: number | null
+	rank: number // BM25 (lower = better in SQLite); we negate to get higher-is-better
+	lat: number | null
+	lon: number | null
+}
+
+export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
+	readonly #db: DatabaseSync
+	readonly #ownsDb: boolean
+	readonly #kysely: Kysely<WofDatabase>
+	readonly #weights: RankingWeights
+
+	constructor(opts: WofSqlitePlaceLookupOpts, weights?: Partial<RankingWeights>) {
+		if (opts.database && opts.databasePath) {
+			throw new Error("WofSqlitePlaceLookup: pass either `database` or `databasePath`, not both")
+		}
+		if (!opts.database && !opts.databasePath) {
+			throw new Error("WofSqlitePlaceLookup: one of `database` or `databasePath` is required")
+		}
+
+		if (opts.database) {
+			this.#db = opts.database
+			this.#ownsDb = false
+		} else {
+			this.#db = new DatabaseSync(opts.databasePath!, { readOnly: false })
+			this.#ownsDb = true
+		}
+
+		// node:sqlite has no .pragma() helper; pragmas are executed as plain SQL.
+		this.#db.exec("PRAGMA busy_timeout = 5000")
+
+		if (opts.buildFts) {
+			this.#ensureFts()
+		} else {
+			this.#assertFtsExists()
+		}
+
+		this.#kysely = new Kysely<WofDatabase>({
+			dialect: new SqliteDialect({ database: this.#db }),
+		})
+		this.#weights = { ...DEFAULT_WEIGHTS, ...(weights ?? {}) }
+	}
+
+	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
+		const limit = query.limit ?? 10
+		const ftsLimit = limit * 4 // over-fetch so post-scoring has room to re-rank
+
+		const placetypes = normalizePlacetypes(query.placetype)
+		const ftsQuery = sanitizeFtsQuery(query.text)
+		if (!ftsQuery) return []
+
+		const where: string[] = ["place_search MATCH ?"]
+		const params: SQLInputValue[] = [ftsQuery]
+
+		if (placetypes && placetypes.length > 0) {
+			where.push(`places.placetype IN (${placetypes.map(() => "?").join(", ")})`)
+			params.push(...placetypes)
+		}
+		if (query.country) {
+			where.push("places.country = ?")
+			params.push(query.country)
+		}
+		if (query.parentId !== undefined) {
+			where.push("(places.parent_id = ? OR places.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?))")
+			params.push(query.parentId, query.parentId)
+		}
+
+		const stmt = this.#db.prepare(`
+			SELECT
+				places.id AS wof_id,
+				places.name,
+				places.placetype,
+				places.country,
+				places.parent_id,
+				bm25(place_search) AS rank,
+				CAST(json_extract(geojson.body, '$.properties."geom:latitude"') AS REAL) AS lat,
+				CAST(json_extract(geojson.body, '$.properties."geom:longitude"') AS REAL) AS lon
+			FROM place_search
+			JOIN places ON places.id = place_search.wof_id
+			LEFT JOIN geojson ON geojson.id = places.id
+			WHERE ${where.join(" AND ")}
+			ORDER BY rank ASC
+			LIMIT ?
+		`)
+		params.push(ftsLimit)
+
+		const rawRows = stmt.all(...params) as unknown as RawSearchRow[]
+
+		const queryLen = query.text.length
+		const candidates = rawRows.map((row): PlaceCandidate => {
+			// SQLite's bm25() returns a lower-is-better score (negative for matches). Negate so we
+			// start from a higher-is-better baseline.
+			let score = -row.rank
+			if (placetypes && placetypes.length > 0 && placetypes.includes(row.placetype as WofPlacetype)) {
+				score += this.#weights.placetypeMatchBoost
+			}
+			if (!placetypes && row.placetype === "locality") {
+				score += this.#weights.localityImplicitBoost
+			}
+			if (query.country && row.country === query.country) {
+				score += this.#weights.countryMatchBoost
+			}
+			if (query.parentId !== undefined) {
+				if (row.parent_id === query.parentId) {
+					score += this.#weights.directChildBoost
+				} else {
+					score += this.#weights.descendantBoost
+				}
+			}
+			const extraLen = Math.max(0, row.name.length - queryLen - 3)
+			score -= (this.#weights.lengthPenaltyWeight * extraLen) / 10
+
+			return {
+				wof_id: row.wof_id,
+				name: row.name,
+				placetype: row.placetype as WofPlacetype,
+				country: row.country ?? "",
+				lat: row.lat ?? 0,
+				lon: row.lon ?? 0,
+				parent_id: row.parent_id ?? undefined,
+				score,
+			}
+		})
+
+		candidates.sort((a, b) => b.score - a.score)
+		return Promise.resolve(candidates.slice(0, limit))
+	}
+
+	close(): void {
+		// Destroying the Kysely instance closes the underlying connection IF we own it. If the caller
+		// passed in a pre-opened DatabaseSync (test fixture), respect their ownership.
+		void this.#kysely.destroy()
+		if (this.#ownsDb) {
+			this.#db.close()
+		}
+	}
+
+	[Symbol.dispose](): void {
+		this.close()
+	}
+
+	/** Build the FTS5 virtual table from the `names` + `places` tables. */
+	#ensureFts(): void {
+		const existsRow = this.#db
+			.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'place_search'`)
+			.get() as { name: string } | undefined
+
+		if (existsRow) return
+
+		this.#db.exec(`
+			CREATE VIRTUAL TABLE place_search USING fts5(
+				wof_id UNINDEXED,
+				name,
+				alt_names,
+				tokenize = 'unicode61 remove_diacritics 2'
+			);
+		`)
+		this.#db.exec(`
+			INSERT INTO place_search (wof_id, name, alt_names)
+			SELECT
+				places.id,
+				places.name,
+				COALESCE((SELECT GROUP_CONCAT(name, ' ') FROM names WHERE names.place_id = places.id), '')
+			FROM places;
+		`)
+	}
+
+	#assertFtsExists(): void {
+		const row = this.#db
+			.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'place_search'`)
+			.get() as { name: string } | undefined
+		if (!row) {
+			throw new Error(
+				"WofSqlitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFts: true` to build it on open, or run the operator-side index-build CLI documented in the README."
+			)
+		}
+	}
+}
+
+function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WofPlacetype[] | null {
+	if (!p) return null
+	return Array.isArray(p) ? p : [p]
+}
+
+/**
+ * Make an arbitrary user-typed string safe for FTS5 MATCH.
+ *
+ * FTS5 has its own query syntax (`"phrase"`, `term1 OR term2`, `prefix*`, NEAR/N, etc.). Letting
+ * raw user input through means a user typing `Paris's` or `St. (Petersburg)` causes a syntax error.
+ * We strip everything but `[\p{L}\p{N} ]`, then quote each token as a phrase and join with implicit
+ * AND. Conservative but predictable.
+ */
+function sanitizeFtsQuery(text: string): string {
+	const tokens = text
+		.normalize("NFKC")
+		.replace(/[^\p{L}\p{N}\s]/gu, " ")
+		.split(/\s+/u)
+		.map((t) => t.trim())
+		.filter((t) => t.length > 0)
+
+	if (tokens.length === 0) return ""
+	return tokens.map((t) => `"${t.replace(/"/g, '""')}"`).join(" ")
+}
+
+// `sql` is imported only because future Kysely-typed queries will use it; silence "unused" linting.
+void sql

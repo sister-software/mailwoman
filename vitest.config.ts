@@ -22,10 +22,11 @@ const here = fileURLToPath(new URL(".", import.meta.url))
 export default defineConfig({
 	resolve: {
 		alias: [
-			// @mailwoman/core — `solvers/*` and `filters/*` are glob subpaths that preserve the
-			// trailing filename, everything else resolves to a directory `index.ts`.
+			// @mailwoman/core — `solvers/*` / `filters/*` / `kysley/*` are glob subpaths that preserve
+			// the trailing filename, everything else resolves to a directory `index.ts`.
 			{ find: /^@mailwoman\/core\/solvers\/(.+)$/, replacement: resolve(here, "core/solvers/$1") },
 			{ find: /^@mailwoman\/core\/filters\/(.+)$/, replacement: resolve(here, "core/filters/$1") },
+			{ find: /^@mailwoman\/core\/kysley\/(.+)$/, replacement: resolve(here, "core/kysley/$1.ts") },
 			{
 				find: "@mailwoman/core/parser/proposal-pipeline",
 				replacement: resolve(here, "core/parser/proposal-pipeline.ts"),
