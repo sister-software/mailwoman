@@ -1507,6 +1507,8 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     kysely: "npm:^0.29.2"
+  bin:
+    mailwoman-wof-build-fts: ./out/build-fts-cli.js
   languageName: unknown
   linkType: soft
 
