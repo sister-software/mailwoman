@@ -14,26 +14,28 @@ import { buildPlaceSearchFts, PLACE_SEARCH_TABLE, placeSearchFtsExists } from ".
 
 function buildBaseSchema(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+	// Mirror the real WOF SQLite schema subset that fts.ts queries.
 	db.exec(`
-		CREATE TABLE places (
+		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY,
 			parent_id INTEGER,
-			name TEXT NOT NULL,
-			placetype TEXT NOT NULL,
-			country TEXT
+			name TEXT,
+			placetype TEXT,
+			country TEXT,
+			is_current INTEGER,
+			is_deprecated INTEGER
 		);
 		CREATE TABLE names (
-			rowid INTEGER PRIMARY KEY,
-			place_id INTEGER NOT NULL,
-			language TEXT NOT NULL,
-			kind TEXT NOT NULL,
+			rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+			id INTEGER NOT NULL,
+			language TEXT,
 			name TEXT NOT NULL
 		);
-		INSERT INTO places VALUES (1, NULL, 'Paris', 'locality', 'FR');
-		INSERT INTO places VALUES (2, NULL, 'Springfield', 'locality', 'US');
-		INSERT INTO places VALUES (3, NULL, 'London', 'locality', 'GB');
-		INSERT INTO names (place_id, language, kind, name) VALUES (1, 'und', 'variant', 'パリ');
-		INSERT INTO names (place_id, language, kind, name) VALUES (1, 'und', 'variant', 'París');
+		INSERT INTO spr VALUES (1, NULL, 'Paris', 'locality', 'FR', -1, 0);
+		INSERT INTO spr VALUES (2, NULL, 'Springfield', 'locality', 'US', -1, 0);
+		INSERT INTO spr VALUES (3, NULL, 'London', 'locality', 'GB', -1, 0);
+		INSERT INTO names (id, language, name) VALUES (1, 'und', 'パリ');
+		INSERT INTO names (id, language, name) VALUES (1, 'und', 'París');
 	`)
 	return db
 }
@@ -68,7 +70,7 @@ describe("buildPlaceSearchFts", () => {
 		buildPlaceSearchFts(db)
 
 		// Add a new place but don't reindex yet — count should still be the original 3.
-		db.exec(`INSERT INTO places VALUES (4, NULL, 'Tokyo', 'locality', 'JP');`)
+		db.exec(`INSERT INTO spr VALUES (4, NULL, 'Tokyo', 'locality', 'JP', -1, 0);`)
 		expect((db.prepare(`SELECT COUNT(*) AS n FROM ${PLACE_SEARCH_TABLE}`).get() as { n: number }).n).toBe(3)
 
 		const result = buildPlaceSearchFts(db, { drop: true })

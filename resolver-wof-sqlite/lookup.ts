@@ -120,35 +120,36 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		const ftsQuery = sanitizeFtsQuery(query.text)
 		if (!ftsQuery) return []
 
-		const where: string[] = ["place_search MATCH ?"]
+		// Filter out historical / superseded / deprecated places by default — they live in the same
+		// spr table but should never win a contemporary lookup.
+		const where: string[] = ["place_search MATCH ?", "spr.is_current = -1", "spr.is_deprecated = 0"]
 		const params: SQLInputValue[] = [ftsQuery]
 
 		if (placetypes && placetypes.length > 0) {
-			where.push(`places.placetype IN (${placetypes.map(() => "?").join(", ")})`)
+			where.push(`spr.placetype IN (${placetypes.map(() => "?").join(", ")})`)
 			params.push(...placetypes)
 		}
 		if (query.country) {
-			where.push("places.country = ?")
+			where.push("spr.country = ?")
 			params.push(query.country)
 		}
 		if (query.parentId !== undefined) {
-			where.push("(places.parent_id = ? OR places.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?))")
+			where.push("(spr.parent_id = ? OR spr.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?))")
 			params.push(query.parentId, query.parentId)
 		}
 
 		const stmt = this.#db.prepare(`
 			SELECT
-				places.id AS wof_id,
-				places.name,
-				places.placetype,
-				places.country,
-				places.parent_id,
+				spr.id AS wof_id,
+				spr.name,
+				spr.placetype,
+				spr.country,
+				spr.parent_id,
 				bm25(place_search) AS rank,
-				CAST(json_extract(geojson.body, '$.properties."geom:latitude"') AS REAL) AS lat,
-				CAST(json_extract(geojson.body, '$.properties."geom:longitude"') AS REAL) AS lon
+				spr.latitude AS lat,
+				spr.longitude AS lon
 			FROM place_search
-			JOIN places ON places.id = place_search.wof_id
-			LEFT JOIN geojson ON geojson.id = places.id
+			JOIN spr ON spr.id = place_search.wof_id
 			WHERE ${where.join(" AND ")}
 			ORDER BY rank ASC
 			LIMIT ?

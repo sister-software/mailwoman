@@ -21,10 +21,13 @@ let scratch: string
 function buildFixtureDb(path: string): void {
 	const db = new DatabaseSync(path)
 	db.exec(`
-		CREATE TABLE places (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT NOT NULL, placetype TEXT NOT NULL, country TEXT);
-		CREATE TABLE names (rowid INTEGER PRIMARY KEY, place_id INTEGER, language TEXT, kind TEXT, name TEXT);
-		INSERT INTO places VALUES (1, NULL, 'Paris', 'locality', 'FR');
-		INSERT INTO places VALUES (2, NULL, 'Tokyo', 'locality', 'JP');
+		CREATE TABLE spr (
+			id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
+			is_current INTEGER, is_deprecated INTEGER
+		);
+		CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);
+		INSERT INTO spr VALUES (1, NULL, 'Paris', 'locality', 'FR', -1, 0);
+		INSERT INTO spr VALUES (2, NULL, 'Tokyo', 'locality', 'JP', -1, 0);
 	`)
 	db.close()
 }

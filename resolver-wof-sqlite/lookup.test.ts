@@ -159,48 +159,46 @@ const FIXTURE: FixturePlace[] = [
 
 function buildFixtureDb(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
+	// Schema mirrors the real WOF SQLite distribution at data.geocode.earth (subset of columns we
+	// actually read; full schema is documented in `schema.ts`). Note the WOF lifecycle-flag
+	// convention: `is_current = -1` means "currently valid".
 	db.exec(`
-		CREATE TABLE places (
+		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY,
 			parent_id INTEGER,
-			name TEXT NOT NULL,
-			placetype TEXT NOT NULL,
-			country TEXT
+			name TEXT,
+			placetype TEXT,
+			country TEXT,
+			latitude REAL,
+			longitude REAL,
+			is_current INTEGER,
+			is_deprecated INTEGER
 		);
 		CREATE TABLE names (
-			rowid INTEGER PRIMARY KEY,
-			place_id INTEGER NOT NULL,
-			language TEXT NOT NULL,
-			kind TEXT NOT NULL,
+			rowid INTEGER PRIMARY KEY AUTOINCREMENT,
+			id INTEGER NOT NULL,
+			language TEXT,
 			name TEXT NOT NULL
 		);
-		CREATE TABLE geojson (
-			id INTEGER PRIMARY KEY,
-			body TEXT NOT NULL
-		);
 		CREATE TABLE ancestors (
-			rowid INTEGER PRIMARY KEY,
+			rowid INTEGER PRIMARY KEY AUTOINCREMENT,
 			id INTEGER NOT NULL,
 			ancestor_id INTEGER NOT NULL,
 			ancestor_placetype TEXT
 		);
 	`)
 
-	const insertPlace = db.prepare(`INSERT INTO places (id, parent_id, name, placetype, country) VALUES (?, ?, ?, ?, ?)`)
-	const insertName = db.prepare(`INSERT INTO names (place_id, language, kind, name) VALUES (?, ?, ?, ?)`)
-	const insertGeo = db.prepare(`INSERT INTO geojson (id, body) VALUES (?, ?)`)
+	const insertSpr = db.prepare(
+		`INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, is_current, is_deprecated)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, -1, 0)`
+	)
+	const insertName = db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`)
 	const insertAncestor = db.prepare(`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, ?)`)
 
 	for (const p of FIXTURE) {
-		insertPlace.run(p.id, p.parent_id, p.name, p.placetype, p.country)
-		insertGeo.run(
-			p.id,
-			JSON.stringify({
-				properties: { "geom:latitude": p.lat, "geom:longitude": p.lon },
-			})
-		)
+		insertSpr.run(p.id, p.parent_id, p.name, p.placetype, p.country, p.lat, p.lon)
 		for (const alt of p.alt_names ?? []) {
-			insertName.run(p.id, "und", "variant", alt)
+			insertName.run(p.id, "und", alt)
 		}
 		for (const aid of p.ancestor_ids ?? []) {
 			insertAncestor.run(p.id, aid, "ancestor")
@@ -292,7 +290,7 @@ describe("WofSqlitePlaceLookup against an inline WOF fixture", () => {
 		}
 		// After the using block: querying via the original db handle should still work because we
 		// don't own it.
-		const after = db.prepare(`SELECT COUNT(*) AS n FROM places`).get() as { n: number }
+		const after = db.prepare(`SELECT COUNT(*) AS n FROM spr`).get() as { n: number }
 		expect(after.n).toBe(FIXTURE.length)
 		db.close()
 	})

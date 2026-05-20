@@ -19,7 +19,7 @@ Three independent reasons:
 ## What's in scope for 4.2
 
 - New workspace at `resolver-wof-sqlite/` (flat, no `packages/` nesting per the operator's monorepo convention).
-- Typed Kysely `Database` schema for the WOF tables we'll touch: `places`, `names`, `geojson`, `ancestors`, `fts` (the FTS5 virtual table).
+- Typed Kysely `Database` schema for the WOF tables we'll touch: `spr`, `names`, `geojson`, `ancestors`, `place_search` (the FTS5 virtual table we build ourselves).
 - `PlaceLookup` interface (the public surface).
 - `WofSqlitePlaceLookup` implementation: FTS5 `MATCH` over name + name_alts, placetype + country filters, BM25 + boosts.
 - A small fixture SQLite DB built inline in tests (no checked-in binary; tests `CREATE TABLE` + seed a handful of WOF-shaped rows).
@@ -122,15 +122,17 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 The Geocode Earth WOF SQLite distributions ship these tables that matter to us:
 
-| Table              | Use                                                                                                | Notes                                                                                                                 |
-| ------------------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `places`           | Core lookup. PK `id`. Columns: `id, parent_id, name, placetype, country, ...`                      | Indexed on `(placetype, country)`.                                                                                    |
-| `names`            | Alternate names per locale (`Paris` / `París` / `パリ`). One row per `(place_id, language, kind)`. | We query for `kind IN ('preferred', 'colloquial', 'variant')`.                                                        |
-| `geojson`          | Source GeoJSON blob per place. Contains lat/lon in the centroid property.                          | We extract `properties.geom:latitude` / `geom:longitude` via JSON path.                                               |
-| `ancestors`        | Adjacency: ancestor relationships per place.                                                       | Used for `parentId` filter — descendant lookup is `WHERE wof_id IN (SELECT id FROM ancestors WHERE ancestor_id = ?)`. |
-| FTS5 virtual table | NOT in the upstream WOF SQLite distro — we build it once on first open.                            | `CREATE VIRTUAL TABLE place_search USING fts5(name, alt_names, content=...)`.                                         |
+| Table          | Use                                                                                             | Notes                                                                                                                                                                                                |
+| -------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `spr`          | Standard Places Response — the core lookup table. One row per place with all the lookup fields. | PK `id`. Carries `parent_id`, `name`, `placetype`, `country`, `latitude`, `longitude`, `min_*`/`max_*` bbox, and lifecycle flags. `is_current = -1` means "currently valid" (WOF's -1/0 convention). |
+| `names`        | Alternate names per place, keyed by BCP-47 language tag subfields.                              | Joins back to `spr.id` via `id` (NOT `place_id` — the column name is `id` on both tables, even though it's a FK on `names`). No `kind` column; FTS just concatenates ALL names.                      |
+| `geojson`      | Per-place GeoJSON blob.                                                                         | Not consulted by Phase 4.2 — lat/lon already live as `spr.latitude` / `spr.longitude`. Modeled in `schema.ts` for Phase 4.3+ where bbox or full geometry may be needed.                              |
+| `ancestors`    | Adjacency: ancestor relationships per place.                                                    | Used for `parentId` filter — descendant lookup is `WHERE spr.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?)`.                                                                                |
+| `place_search` | FTS5 virtual table. NOT in the upstream WOF distro — we build it.                               | `CREATE VIRTUAL TABLE place_search USING fts5(wof_id UNINDEXED, name, alt_names, ...)`. Built by `buildPlaceSearchFts()` lazily or by the `mailwoman-wof-build-fts` CLI ahead-of-time.               |
 
-The Kysely `Database` interface declared in `resolver-wof-sqlite/schema.ts` types the columns we touch. Tables we don't touch (e.g. `spr`, `concordances`) are not modeled — we don't want to pretend we understand schema we haven't read.
+The Kysely `Database` interface declared in `resolver-wof-sqlite/schema.ts` types the columns we touch. Tables we don't touch (e.g. `concordances`, `spr` sibling tables) are not modeled — we don't want to pretend we understand schema we haven't read.
+
+**Schema-discovery note (2026-05-20):** the initial Phase 4.2 ship assumed a `places` table with names joined on `place_id`. Real WOF has none of that — it uses `spr`, names join on `id`, and lat/lon are direct columns. Caught during the first run against real data; fixed in a same-day follow-up. The fixture tests were correctly green against the made-up schema; only the integration tests against actual WOF caught the mismatch. **Always validate against the real artifact** before declaring a data-integration done.
 
 ## Ranking
 
@@ -165,3 +167,4 @@ Integration tests against a real WOF distribution will be added in a follow-up o
 ## Changelog
 
 - **2026-05-20** — opened. Picks the public API surface; defers the integration tests to follow-up once WOF data download is authorized.
+- **2026-05-20** (same day) — WOF download authorized; schema-discovery fix needed (`places` → `spr`, `place_id` → `id`, no JSON-extract for lat/lon). 10 integration tests added against the real US admin shard. FTS5 build on the full shard (142k rows) completes in ~0.81s — much faster than the ~minutes estimate in the original plan. No popularity signal in the current ranking (documented limitation; bare `findPlace({text: "Paris"})` returns small-town US Parises in unspecified order); `country` / `placetype` / `parentId` filters all behave as designed.
