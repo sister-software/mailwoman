@@ -1,0 +1,334 @@
+# Interface Reference
+
+Every boundary in the system has an explicit TypeScript contract. Stick to these. If you need to extend, extend; do not silently widen.
+
+## Core types
+
+### `Span`
+
+Existing in Mailwoman. Documented here for completeness.
+
+```ts
+interface Span {
+	body: string // the text of this span
+	start: number // character offset (inclusive) in original input
+	end: number // character offset (exclusive) in original input
+	// ... (existing Mailwoman fields)
+}
+```
+
+### `Section` (existing) and `Word` / `Phrase` (existing)
+
+Refer to existing Mailwoman code in `core/`. Do not redefine in `neural/`.
+
+### `ComponentTag` and `BioLabel`
+
+See `reference/SCHEMA.md`.
+
+## Classifier interface
+
+### `ClassificationProposal`
+
+```ts
+// packages/core/src/types/classifier.ts
+
+export interface ClassificationProposal {
+	/** The span this proposal applies to. */
+	span: Span
+
+	/** Which component type the classifier thinks this span is. */
+	component: ComponentTag
+
+	/** Classifier's confidence, 0..1. Rule classifiers may use heuristic values. */
+	confidence: number
+
+	/** Where this proposal came from. */
+	source: "rule" | "neural" | "merged"
+
+	/**
+	 * Identifier of the specific classifier instance. Rule: 'house_number', 'postcode',
+	 * 'whos_on_first', etc. Neural: 'neural-v0.3.1-en-us', 'neural-v0.3.1-fr-fr', etc. Merged: a
+	 * synthetic ID like 'merged-rule+neural-v0.3.1' (rare; mostly for telemetry).
+	 */
+	source_id: string
+
+	/** Solver penalty for this proposal. Higher = less likely to appear in winning solution. */
+	penalty: number
+
+	/** Optional opaque metadata for debugging and telemetry. Never used by solver. */
+	metadata?: Record<string, unknown>
+}
+```
+
+### `Classifier` base interface
+
+```ts
+// packages/core/src/classifier.ts
+
+export interface Classifier {
+	/** Unique identifier. Used in source_id of emitted proposals. */
+	readonly id: string
+
+	/**
+	 * Which components this classifier may emit. Enforced — proposals for other components are
+	 * dropped with a warning.
+	 */
+	readonly emits: ReadonlyArray<ComponentTag>
+
+	/** Which locales this classifier is active for. Use `'*'` for locale-agnostic. */
+	readonly locales: ReadonlyArray<string | "*">
+
+	/**
+	 * Classify a section. Returns proposals for any spans within the section that this classifier
+	 * recognizes.
+	 */
+	classify(section: Section, context: ClassifierContext): Promise<ClassificationProposal[]>
+}
+
+export interface ClassifierContext {
+	/** Locale for this classification request, if known. */
+	locale?: string
+
+	/** Other classifier results so far (for composite classifiers). */
+	prior?: ClassificationProposal[]
+
+	/** Cancellation signal. */
+	signal?: AbortSignal
+}
+```
+
+### Adapting existing rule classifiers
+
+Existing rule classifiers produce ad-hoc shapes. They must be wrapped:
+
+```ts
+// packages/classifiers/src/adapter.ts
+
+export function wrapLegacyClassifier(legacy: LegacyClassifier): Classifier {
+	return {
+		id: legacy.name,
+		emits: legacy.componentTags,
+		locales: legacy.locales ?? ["*"],
+		async classify(section, context) {
+			const raw = await legacy.run(section)
+			return raw.map((r) => ({
+				span: r.span,
+				component: r.tag,
+				confidence: r.confidence ?? 1.0,
+				source: "rule" as const,
+				source_id: legacy.name,
+				penalty: r.penalty ?? 0,
+			}))
+		},
+	}
+}
+```
+
+Goal: a one-pass refactor wraps every existing rule classifier without changing rule logic.
+
+## Policy interface
+
+### `ClassifierPolicy`
+
+```ts
+// packages/core/src/policy.ts
+
+export type PolicyMode = "rule_only" | "neural_only" | "both" | "neural_preferred" | "rule_preferred"
+
+export interface ClassifierPolicy {
+	component: ComponentTag
+	mode: PolicyMode
+
+	/**
+	 * Minimum confidence for a proposal to be retained. Applied before solver, after classifier
+	 * emission.
+	 */
+	confidence_threshold?: number
+
+	/** Optional locale scope. If absent, applies to all locales. */
+	locale?: string
+}
+
+export interface PolicyRegistry {
+	/** Look up the policy for a (component, locale) pair. */
+	lookup(component: ComponentTag, locale?: string): ClassifierPolicy
+
+	/** Apply policy to a flat list of proposals. */
+	apply(proposals: ClassificationProposal[], locale?: string): ClassificationProposal[]
+}
+```
+
+Default policy table is in `packages/core/src/policy-defaults.ts`. Initial state: every component is `rule_only`. Migrations to other modes happen via explicit commits with accompanying metric evidence.
+
+## Locale interface
+
+### `LocaleProfile`
+
+```ts
+// packages/core/src/locale.ts
+
+export interface LocaleProfile {
+	/** IETF BCP-47 locale tag. */
+	locale: string
+
+	/** Npm package providing ONNX weights and tokenizer. */
+	weightsPackage?: string
+
+	/** Rule classifier IDs active in this locale. */
+	ruleClassifiers: string[]
+
+	/** Components this locale uses. Subset of COMPONENT_TAGS. */
+	componentsSupported: ComponentTag[]
+
+	/** Per-component policy overrides for this locale. */
+	policy: ClassifierPolicy[]
+}
+
+export interface LocaleRegistry {
+	register(profile: LocaleProfile): void
+	get(locale: string): LocaleProfile | undefined
+	list(): LocaleProfile[]
+}
+```
+
+## Neural classifier interface
+
+### `NeuralSequenceClassifier`
+
+```ts
+// packages/neural/src/sequence-classifier.ts
+
+export interface NeuralSequenceClassifierOptions {
+	/** Npm package with the ONNX model and tokenizer. */
+	weightsPackage: string
+
+	/** Locale this instance serves. */
+	locale: string
+
+	/** Components this model is allowed to emit. Defaults to model's training schema. */
+	components?: ComponentTag[]
+
+	/** Minimum per-token confidence before emitting a proposal. */
+	minConfidence?: number
+
+	/** Whether to warm up the model on construction. Default true. */
+	warmup?: boolean
+}
+
+export class NeuralSequenceClassifier implements Classifier {
+	readonly id: string
+	readonly emits: ReadonlyArray<ComponentTag>
+	readonly locales: ReadonlyArray<string>
+
+	constructor(opts: NeuralSequenceClassifierOptions)
+
+	classify(section: Section, context: ClassifierContext): Promise<ClassificationProposal[]>
+
+	/** Returns model metadata: version, training corpus, eval scores. */
+	modelCard(): ModelCard
+}
+
+export interface ModelCard {
+	version: string // 'v0.3.1'
+	locale: string
+	trainedOn: string // corpus version, e.g. 'corpus-v0.2.0'
+	exportedAt: string // ISO timestamp
+	evalScores: Record<ComponentTag, { f1: number; precision: number; recall: number }>
+	knownLimitations: string[]
+}
+```
+
+## Corpus interface
+
+### Canonical row
+
+```ts
+// packages/corpus/src/types.ts
+
+export interface CanonicalRow {
+	/** The full, rendered address as a user would type it. */
+	raw: string
+
+	/** Component name → text. Each component appears at most once unless it's intersections. */
+	components: Partial<Record<ComponentTag, string | string[]>>
+
+	/** ISO 3166-1 alpha-2 country code. */
+	country: string
+
+	/** BCP-47 locale of the rendered string. */
+	locale: string
+
+	/** Identifier of the upstream source ('osm', 'wof', 'ban', etc.). */
+	source: string
+
+	/** Stable identifier within that source (OSM node id, WOF id, etc.). */
+	source_id: string
+
+	/** Synthesis metadata, if this row was augmented from a base row. */
+	synth?: {
+		method: string // 'case_perturb', 'abbreviate', 'typo_inject'
+		base_source_id: string // points back to the unaugmented row
+	}
+
+	/** Licensing tag. Used by downstream filters. */
+	license: string // 'odbl', 'cc-by', 'public-domain', 'fair-use'
+}
+```
+
+### Adapter interface
+
+```ts
+// packages/corpus/src/adapter.ts
+
+export interface CorpusAdapter {
+	readonly id: string
+	readonly defaultLicense: string
+
+	/** Stream rows. Adapter handles file I/O, parsing, normalization. */
+	iterate(opts: AdapterOptions): AsyncIterable<CanonicalRow>
+}
+
+export interface AdapterOptions {
+	/** Path or URL to input data. Adapter-specific. */
+	input: string
+
+	/** Optional country filter — emit only rows from this country. */
+	country?: string
+
+	/** Optional row limit, for development. */
+	limit?: number
+}
+```
+
+### Labeled row (post-alignment)
+
+```ts
+// packages/corpus/src/labeled.ts
+
+export interface LabeledRow {
+	raw: string
+	tokens: string[] // SentencePiece tokens
+	labels: BioLabel[] // same length as tokens
+	country: string
+	locale: string
+	source: string
+	source_id: string
+	corpus_version: string
+	license: string
+}
+```
+
+## Why these specific shapes
+
+- `ClassificationProposal` mirrors Mailwoman's existing output shape with the addition of `source` and `source_id`. Backward compat for downstream consumers.
+- `Classifier.locales` and `Classifier.emits` are arrays known at construction time. Allows the solver to skip locale-incompatible classifiers entirely without running them.
+- `CanonicalRow.components` is `Partial<Record<…>>` because most rows lack most components. Coarse rows have only country/region/locality. Don't force `null` fills.
+- `LabeledRow.tokens` is the SentencePiece output, not raw words. This is the model's native input. Tokenization happens once, in the corpus stage, not at training time. Determinism.
+- Every row carries `license` so downstream consumers can filter for redistribution-safe data.
+
+## Forbidden patterns
+
+- ❌ Adding fields to `ClassificationProposal` without updating every wrapping adapter in the same commit.
+- ❌ Using `any` in interface definitions. If you don't know the type, write the type. If you can't, the abstraction is wrong.
+- ❌ Throwing exceptions from `Classifier.classify`. Return empty array on failure, log via the project's logger.
+- ❌ Synchronous classifier interfaces. Everything is `Promise`, even rule classifiers, because the solver's loop is async and we don't want sync/async ambiguity.

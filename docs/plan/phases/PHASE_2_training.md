@@ -1,0 +1,154 @@
+# Phase 2 — Model Training
+
+**Goal:** train a token-classification model on `corpus-v0.1.0+`, export to ONNX, quantize to int8, evaluate against the golden set. End state is shippable `neural-weights-en-us` + `neural-weights-fr-fr` weight packages ready for publishing.
+
+**Cadence (revised 2026-05-18):** ~3-7 days per iteration, multiple iterations rather than a single 2-week run. See [`reference/ARCHITECTURE.md` § "Training cadence vs. plan"](../reference/ARCHITECTURE.md) for the iteration history + roadmap. The original "2 weeks single run to >95% F1" framing has been superseded.
+
+**Branch:** ad-hoc per iteration (e.g. `feat/v0.2.0-shipping`, `feat/v0.3.0-stage2`), merged to main between iterations.
+
+**Depends on:** Phase 1 complete (corpus build pipeline running, golden set v0.1.0 in place).
+
+**Language:** Python in `packages/corpus-python/`. No TypeScript in this phase.
+
+## Iteration log (live)
+
+- **v0.1.0** (shipped 2026-05-18, PR #42) — first Stage 1 ship. F1 below targets (~0.03 macro) due to positional-heuristic overfit; calibration 0.337 in conf>0.9 bucket. Honest below-target ship with `v0.2.0 retrain recipe` in session-notes.
+- **v0.2.0** (shipped 2026-05-18, PR #53) — `source_weights` mechanism + relaxed coarse gate. 9× macro-F1 (0.037 → 0.335); calibration tightened 2.6× (0.337 → 0.882 in conf>0.9 bucket). Still below 95% target on country/region/locality but real, measurable, ship-worthy improvement.
+- **v0.3.0** (next — issue #43 follow-up) — Stage 2 label expansion (venue/street/house_number) + CRF decoder + corpus rebuild including NAD/OA-CA.
+
+## Pre-flight
+
+- [ ] `corpus-v0.1.0` exists at `/data/corpus/versioned/corpus-v0.1.0/`
+- [ ] Golden set v0.1.0 exists at `/data/eval/golden/v0.1.0/`
+- [ ] Python environment set up with PyTorch, Transformers, ONNX, ONNX Runtime, datasets, sentencepiece
+- [ ] GPU available (Phase 2 is GPU-bound). If lab has no GPU, document training time and proceed on CPU — the model is small.
+
+## Tasks
+
+### 1. Python project setup
+
+- [ ] `packages/corpus-python/pyproject.toml` with deps locked
+- [ ] `packages/corpus-python/src/mailwoman_train/` package
+- [ ] Subcommand CLI: `python -m mailwoman_train <command>`
+
+### 2. Data loading
+
+- [ ] `data_loader.py` — load Parquet shards via `datasets.load_dataset('parquet', ...)`. Lazy, streaming, memory-stable.
+- [ ] Stratified sampling: per-country weights to prevent imbalance. Configurable in YAML.
+- [ ] Length filtering: drop rows where token count > 128. Address text is short by nature; long rows are usually adapter bugs.
+- [ ] Verify tokenizer alignment: load `tokenizer-v0.1.0`, re-tokenize a sample of `raw` strings, assert the tokenization matches the stored `tokens` field. If it doesn't, the corpus is corrupt — stop and investigate.
+
+### 3. Model architecture
+
+- [ ] `model.py` — small encoder-only transformer
+  - Layers: 6
+  - Hidden: 256
+  - Attention heads: 4
+  - FF intermediate: 1024
+  - Max position: 128
+  - Vocab: from tokenizer v0.1.0
+  - Token classification head: linear → `|BIO_LABELS|` logits
+- [ ] Use HuggingFace `transformers` library: `BertConfig` + `BertForTokenClassification` with custom small config. Or `RoBERTa`. Pick one and stick with it.
+- [ ] From-scratch initialization (not pretrained). Address vocabulary is too small to benefit from English-internet pretraining.
+
+### 4. Training loop
+
+- [ ] `train.py`
+- [ ] Optimizer: AdamW, lr 5e-4, weight decay 0.01
+- [ ] LR schedule: linear warmup 1000 steps, then cosine decay
+- [ ] Batch size: 256 (lower if OOM)
+- [ ] Steps: ~50k for Stage 1 coarse-only. Eval every 2k steps on val set.
+- [ ] Mixed precision (fp16/bf16) on GPU
+- [ ] Save checkpoint every 5k steps to `/data/models/checkpoints/`
+- [ ] Track: train loss, val loss, val F1 per component, val full-parse exact match
+- [ ] Use Weights & Biases or TensorBoard or plain CSV — pick one and stick with it. Don't ship a logging refactor in the middle of training.
+
+### 5. Staged training plan
+
+#### Stage 1: Coarse-only (this phase)
+
+- [ ] Train only on rows where `country` and at least one of (`region`, `locality`, `postcode`) is present
+- [ ] Labels restricted to: `country`, `region`, `locality`, `dependent_locality`, `postcode`, `subregion`, `cedex`, `O`
+- [ ] Target: > 95% F1 per component on golden set
+- [ ] This is the v0.1.0 model.
+
+Stages 2 (street) and 3 (venue) are explicitly future phases. Do not attempt to train all stages in Phase 2.
+
+### 6. Evaluation
+
+- [ ] `eval.py` — load checkpoint, run inference on golden set, compute metrics
+- [ ] Metrics:
+  - Per-component F1, precision, recall
+  - Full-parse exact match (all components correct)
+  - Mean token confidence
+  - Calibration: bucket predictions by confidence, check accuracy per bucket
+- [ ] Output: a markdown report saved alongside the checkpoint
+- [ ] Compare against rule-based Mailwoman on the same golden set. Rule baseline numbers should be cached so this doesn't require running Mailwoman during training.
+
+### 7. ONNX export
+
+- [ ] `export_onnx.py`
+- [ ] Export with dynamic axes for batch and sequence length
+- [ ] Opset 17
+- [ ] Verify ONNX inference matches PyTorch inference within 1e-4 on a sample of 1000 inputs
+- [ ] Output: `/data/models/onnx/model-v0.1.0-en-us.onnx`, same for fr-fr
+
+⚠ If you trained a single multilingual model (recommended for Stage 1 — coarse is cheap to share), export it twice with the same weights, named per locale. Splitting into per-locale models is a Phase 3 decision based on size and load behavior.
+
+### 8. Quantization
+
+- [ ] `quantize.py` — int8 dynamic quantization via `onnxruntime.quantization`
+- [ ] Calibrate on 1000 val-set examples
+- [ ] Verify quantized model F1 on golden set drops by less than 0.5% from fp32. If it drops more, investigate (likely a quantization config issue, not a fundamental limit).
+- [ ] Output: `/data/models/quantized/model-v0.1.0-en-us-int8.onnx`
+
+### 9. Weights package preparation
+
+- [ ] `packages/neural-weights-en-us/` and `packages/neural-weights-fr-fr/`
+- [ ] Each contains:
+  - `model.onnx` (int8 quantized)
+  - `tokenizer.model` (SentencePiece)
+  - `model-card.json` (ModelCard per `reference/INTERFACES.md`)
+  - `package.json` with name, version, license
+  - `README.md` describing the model, training corpus, eval scores
+- [ ] These packages are data-only. No JS code. They are loaded by `@mailwoman/neural` at runtime.
+- [ ] Verify package size: aim for < 30MB int8 model. Tokenizer is ~1MB. Total package < 40MB.
+
+### 10. Model card
+
+- [ ] `ModelCard` filled in honestly
+- [ ] Include: training corpus version, training duration, hardware, eval scores per component on golden set + holdout splits, known failure modes (e.g., "underperforms on Hawaiian addresses", "confused by historical Paris arrondissement notation pre-1860")
+- [ ] This is a public document. Users will read it before adopting.
+
+## Success criteria checklist
+
+- [ ] Stage 1 model trained, checkpoint saved
+- [ ] ONNX export verified parity with PyTorch
+- [ ] Int8 quantized model meets eval threshold
+- [ ] `neural-weights-en-us@0.1.0` and `neural-weights-fr-fr@0.1.0` package directories complete
+- [ ] Model cards filled in
+- [ ] Eval reports committed to git (numbers, not models)
+- [ ] Beats rule-based Mailwoman on golden set for `country` and `region` components by at least 2 F1 points. If not, investigate before proceeding — the architecture is fine, the corpus is probably the issue.
+
+## When to ship vs train more (original framing — superseded by iteration cadence)
+
+If after the first training run, golden F1 is:
+
+- > 95% per coarse component → ship.
+- 90–95% → analyze failure modes. Likely fixable with corpus tweaks (more synthesis, deduplication, a missing source). One additional iteration is fine.
+- < 90% → stop and re-examine. Could be: tokenizer mismatch, label misalignment, schema bug, severely imbalanced training data. Do not "train longer" without diagnosing first.
+
+⚠ Resist the urge to add street-level components in this phase to "get more value." Stage 1 ships coarse. Stage 2 is its own phase. Mixing them blurs the metrics and slows iteration.
+
+### Revised (2026-05-18)
+
+The above original framing assumed a single training run. After v0.1.0 + v0.2.0, the actual cadence is:
+
+- **Each iteration ships an artifact**, target or no target. Below-target ships are OK if they're honest about it (model card + eval ledger entry) AND the Ship-of-Theseus coexistence model means the rule classifiers still run alongside.
+- **Per-iteration F1 floor** (not target): each iteration must improve over the prior one in at least one of: per-component F1, calibration tightness, or capability surface (new labels supported).
+- **Stage label expansion** (Stage 2 → venue+street+house_number; Stage 3 → organization/POI venue) happens as **iteration deltas within Phase 2**, not as separate phases. Same encoder, more head classes. Each lands in its own retrain.
+- **The eval ledger is the success record** — `evals/scores-by-version.json` with corpus + golden-set sha-pinning makes every iteration's delta empirically defensible.
+
+## When to call this phase done
+
+When the weights packages exist on disk, model cards are accurate, eval scores beat the rule baseline on coarse components, and the only remaining work for shipping is TypeScript integration (Phase 3).

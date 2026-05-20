@@ -1,0 +1,174 @@
+# Phase 3 — TypeScript Integration & Ship
+
+**Goal:** integrate the trained model into Mailwoman via `NeuralSequenceClassifier`, wire it through the policy system, publish `@mailwoman/neural@0.1.0` and weight packages to npm. End state: a user can `npm install @mailwoman/neural @mailwoman/neural-weights-en-us` and get neural classification for coarse components.
+
+**Duration estimate:** 1.5 weeks.
+
+**Branch:** `neural/phase-3-integration`
+
+**Depends on:** Phase 2 complete with weights packages on disk.
+
+## Pre-flight
+
+- [ ] Phase 2 weights packages exist and pass eval
+- [ ] You have npm publish access (or know how to coordinate with the maintainer for publishing)
+- [ ] `onnxruntime-node` installs cleanly in the dev environment
+
+## Tasks
+
+### 1. Package scaffolding
+
+- [ ] Create `packages/neural/` workspace
+- [ ] Dependencies: `onnxruntime-node`, SentencePiece WASM (pick one — `@bloomberg/sentencepiece` or a maintained alternative; verify and document in `DECISIONS.md`), `@mailwoman/core`
+- [ ] Strict TypeScript config
+
+### 2. SentencePiece tokenizer wrapper
+
+- [ ] `packages/neural/src/tokenizer.ts`
+- [ ] Loads the SentencePiece model from a weights package
+- [ ] Exposes `encode(text: string): { ids: number[]; tokens: string[]; offsets: [number, number][] }`
+- [ ] The `offsets` field is critical — it's how we map model output BIO labels back to character spans in the original input.
+
+⚠ **Tokenizer parity check** — the single most important test in this phase:
+
+- [ ] `packages/neural/test/tokenizer-parity.test.ts`
+- [ ] Loads 10k `(raw, tokens)` pairs from corpus-v0.1.0
+- [ ] Re-tokenizes each `raw` with the TS SentencePiece
+- [ ] Asserts byte-for-byte equality with the stored `tokens`
+- [ ] If a single example fails, the integration is broken. Fix before continuing.
+
+### 3. ONNX inference wrapper
+
+- [ ] `packages/neural/src/onnx-runner.ts`
+- [ ] Loads ONNX model via `onnxruntime-node`
+- [ ] Exposes `infer(tokenIds: number[]): Promise<number[][]>` returning logits per token
+- [ ] Handles batching (group multiple sections for one inference call)
+- [ ] Configurable execution provider (CPU default, CUDA via env var)
+- [ ] Lazy loading: model loads on first `infer` call, not on construction (unless `warmup: true`)
+
+### 4. BIO decoding
+
+- [ ] `packages/neural/src/decode.ts`
+- [ ] Input: logits per token, original token offsets
+- [ ] Output: list of `(span, component, confidence)` tuples
+- [ ] BIO decoding rules:
+  - `B-T` starts a new span
+  - `I-T` continues the previous span if it was `B-T` or `I-T`, else treat as `B-T` (graceful)
+  - `O` ends any open span
+- [ ] Confidence per span = mean softmax probability of the predicted label across the span's tokens
+- [ ] Test cases: well-formed BIO, ill-formed BIO (recovery), all-O input, single-token spans
+
+### 5. `NeuralSequenceClassifier`
+
+- [ ] `packages/neural/src/sequence-classifier.ts`
+- [ ] Implements `Classifier` from `@mailwoman/core`
+- [ ] Constructor takes `NeuralSequenceClassifierOptions`, resolves and loads the weights package
+- [ ] `classify(section, context)`:
+  1. Tokenize the section's text
+  2. Run ONNX inference
+  3. Decode BIO labels to spans
+  4. Filter by `minConfidence`
+  5. Map spans back to `Span` objects in the original input (use SentencePiece offsets, then translate to original-input offsets via section's start offset)
+  6. Emit `ClassificationProposal[]` with `source: 'neural'`, `source_id` from the model card version
+- [ ] Returns empty array if model fails to load (graceful degradation per `reference/OPERATIONS.md`)
+
+### 6. Weights package loader
+
+- [ ] `packages/neural/src/weights.ts`
+- [ ] `loadWeights(packageName: string): Promise<{ modelBytes, tokenizerBytes, modelCard }>`
+- [ ] Resolves package via Node module resolution
+- [ ] Reads files from package's distribution directory
+- [ ] Caches in memory across instances of `NeuralSequenceClassifier`
+
+### 7. Solver integration
+
+- [ ] In `packages/core/src/solver.ts` (or wherever the existing solver entry lives), add the neural classifier path:
+  - If a `LocaleProfile` has a `weightsPackage`, instantiate a `NeuralSequenceClassifier` for that locale
+  - Run it alongside rule classifiers during the classify phase
+  - All proposals flow through `PolicyRegistry.apply` before solving
+- [ ] No solver logic changes needed — the abstraction from Phase 0 was designed for this.
+
+### 8. Policy migration: `country` → `neural_preferred`
+
+The first Ship of Theseus step.
+
+- [ ] Update `packages/core/src/policy-defaults.ts`:
+  - `country`: from `rule_only` to `neural_preferred` with `confidence_threshold: 0.8`
+- [ ] Run the full test suite + golden set eval
+- [ ] Verify on the golden set that `country` accuracy improved (or held) and no other component regressed
+- [ ] If anything regresses, revert the policy change and investigate. The migration is gated on metrics, not on intent.
+
+▶ Repeat the same for `region` if Phase 2 metrics justify. Coarse components only. Do not migrate `locality` or below in Phase 3 — defer until Stage 2 trains.
+
+### 9. End-to-end test
+
+- [ ] `packages/neural/test/e2e.test.ts`
+- [ ] Test: `parse("123 Main St, Portland, OR 97215", { locale: 'en-US' })`
+  - Neural classifier emits `country: USA` (inferred even though "USA" is absent from input)
+  - Rule classifier still emits `postcode: 97215`
+  - Final solution has both
+  - `source` fields are correctly populated
+- [ ] Test: same with `locale: 'fr-FR'` and a French address
+- [ ] Test: missing weights package → graceful degradation, rule-only solution
+
+### 10. CLI surfacing
+
+- [ ] `npx mailwoman parse --locale en-US --neural ...` opts into neural classifier
+- [ ] `npx mailwoman parse --locale en-US --no-neural ...` opts out (rule-only)
+- [ ] Default: neural on if weights package is installed, off otherwise
+- [ ] Debug output: when neural is on, show which classifier produced each component in the output
+
+### 11. Documentation
+
+- [ ] `packages/neural/README.md` — installation, usage, configuration, the `LocaleProfile` extension point
+- [ ] Update root `README.md` with a new "Neural" section
+- [ ] Migration guide: how an existing Mailwoman user opts into the neural classifier
+- [ ] Performance numbers from the benchmark suite
+
+### 12. Performance & benchmarks
+
+- [ ] `packages/neural/bench/` with vitest-bench or simple scripts
+- [ ] Benchmark: cold load time, warm classification latency p50/p95/p99, throughput, memory footprint
+- [ ] All within budgets in `reference/OPERATIONS.md`
+- [ ] If neural is slower than budgeted: profile. Likely culprits: ONNX session not reused across calls, batching not enabled, SentencePiece WASM not warm.
+
+### 13. Publish
+
+- [ ] Final version bumps:
+  - `@mailwoman/core` → minor bump (added types)
+  - `@mailwoman/classifiers` → minor bump (adapter additions)
+  - `@mailwoman/neural@0.1.0` → new, marked beta
+  - `@mailwoman/neural-weights-en-us@0.1.0` → new, marked beta
+  - `@mailwoman/neural-weights-fr-fr@0.1.0` → new, marked beta
+- [ ] Check licenses on every package's `package.json` — AGPL-3.0 for code, weights packages need their own license decision (see Phase 6 license note)
+- [ ] `npm publish` each. Use `--access public` for scoped packages.
+- [ ] Verify install in a clean directory: `npm install @mailwoman/neural @mailwoman/neural-weights-en-us` and run a sample parse.
+
+⚠ Before publishing weights, settle the license question. OSM is ODbL (share-alike). WOF is CC0. BAN is Licence Ouverte. A model trained on ODbL data is arguably ODbL — talk to a lawyer or pick a clear license posture and document it.
+
+## Success criteria checklist
+
+- [ ] Tokenizer parity test green on 10k examples
+- [ ] End-to-end test green for en-US and fr-FR
+- [ ] Benchmarks within budget
+- [ ] Golden set: country F1 improved (or held), nothing regressed
+- [ ] `npx mailwoman parse` works with `--locale` and uses neural classifier when available
+- [ ] Packages published to npm
+- [ ] Documentation updated
+- [ ] Branch tagged `neural-phase-3-complete`
+- [ ] Blog post draft (optional but recommended) in `docs/blog/2026-...-neural-classifier.md`
+
+## When the human will want a check-in
+
+After Phase 3 ships, pause. The human (the project creator) should look at:
+
+- Real-world feedback from a couple of test deployments
+- The blog post draft
+- License decisions on weights packages
+- Whether to proceed to Stage 2 (street-level) or pause to gather usage data
+
+Do not begin Phase 4 (geocoder fusion) or even Stage 2 of Phase 1/2 (street-level training) without explicit confirmation. The point of shipping is to learn.
+
+## When to call this phase done
+
+When `npm install @mailwoman/neural @mailwoman/neural-weights-en-us` followed by a `parse()` call works on a clean machine and produces output with `source: 'neural'` proposals for the `country` component.
