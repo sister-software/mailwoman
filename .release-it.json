@@ -12,7 +12,8 @@
 				"mailwoman"
 			],
 			"publish": true,
-			"publishCommand": "node scripts/publish-workspace.mjs"
+			"publishCommand": "node scripts/publish-workspace.mjs",
+			"skipChecks": true
 		}
 	},
 	"npm": false,
