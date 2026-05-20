@@ -35,6 +35,35 @@ for (const c of candidates) {
 lookup.close()
 ```
 
+## Multi-shard (admin + postcode in one connection)
+
+Pass an array of paths to open multiple WOF shards on a single connection — each is opened as a
+separate SQLite schema via `ATTACH DATABASE`. Schema names auto-derive from filenames
+(`whosonfirst-data-admin-us-latest.db` → `admin_us`, `whosonfirst-data-postalcode-us-latest.db` →
+`postalcode_us`). Queries route by `placetype` — a `postalcode` query goes to the
+`postalcode_us` shard automatically, everything else hits main.
+
+```ts
+const lookup = new WofSqlitePlaceLookup({
+	databasePath: ["/data/wof/whosonfirst-data-admin-us-latest.db", "/data/wof/whosonfirst-data-postalcode-us-latest.db"],
+})
+
+await lookup.findPlace({ text: "Springfield", placetype: "locality" }) // → admin shard
+await lookup.findPlace({ text: "62701", placetype: "postalcode" }) // → postcode shard
+```
+
+Override schema names or routing explicitly when needed:
+
+```ts
+new WofSqlitePlaceLookup({
+	databasePath: ["/data/wof/admin.db", { path: "/data/oddly-named.db", schemaName: "pc", placetypes: ["postalcode"] }],
+})
+```
+
+Cross-shard `UNION` queries are not supported in one `findPlace` call — BM25 scores aren't
+comparable across separately-indexed corpora. Issue two `findPlace` calls and merge in your
+caller if you need that.
+
 ## Getting the WOF SQLite distribution
 
 The Geocode Earth team mirrors WOF SQLite distributions at <https://data.geocode.earth/wof/dist/sqlite/>. The two relevant shards for v1:
