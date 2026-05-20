@@ -25,6 +25,8 @@ export function proposalsToTree(raw: string, proposals: readonly ClassificationP
 		end: p.span.end,
 		confidence: p.confidence,
 		children: [],
+		source: p.source,
+		sourceId: p.source_id,
 	}))
 	roots.sort((a, b) => a.start - b.start)
 	return { raw, roots }
