@@ -57,6 +57,12 @@ export interface PlaceCandidate {
 	parent_id?: number
 	score: number
 	distanceKm?: number
+	/**
+	 * Population from WOF's `wof:population` property. Only present when the candidate has it on
+	 * record — WOF carries population for ~15% of localities (mostly larger ones). Absent does NOT
+	 * mean zero, just unknown.
+	 */
+	population?: number
 }
 
 /**

@@ -15,7 +15,14 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite"
 
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 
-import { buildPlaceSearchFts, PLACE_BBOX_TABLE, placeBboxExists, placeSearchFtsExists } from "./fts.js"
+import {
+	buildPlaceSearchFts,
+	PLACE_BBOX_TABLE,
+	PLACE_POPULATION_TABLE,
+	placeBboxExists,
+	placePopulationExists,
+	placeSearchFtsExists,
+} from "./fts.js"
 import { bboxAround, haversineKm } from "./geo.js"
 import type { WofDatabase } from "./schema.js"
 import { pickShardForPlacetype, resolveShards, type ResolvedShard, type ShardConfig } from "./sharding.js"
@@ -80,6 +87,20 @@ export interface RankingWeights {
 	proximityBoost: number
 	/** Distance (km) at which the proximity boost halves. Tune to the typical query radius. */
 	proximityScaleKm: number
+	/**
+	 * Magnitude of the population boost when the candidate has a known `wof:population`. The
+	 * contribution is `populationBoost * log10(1 + population) / populationScaleLog10`, capped at
+	 * `populationBoost`. WOF only carries population for ~15% of localities (mostly larger ones);
+	 * places without it get +0 (never a penalty). Default tuned so the famous Springfield, IL (pop
+	 * ~112k) gets ~0.42 boost — enough to nudge past tiny same-name peers.
+	 */
+	populationBoost: number
+	/**
+	 * Population (in log10) at which the boost reaches its full magnitude. Default 6 — i.e. a
+	 * population of 1,000,000 gives `populationBoost` exactly. Larger populations cap at the same
+	 * value (no compounding effect for megacities).
+	 */
+	populationScaleLog10: number
 }
 
 const DEFAULT_WEIGHTS: RankingWeights = {
@@ -91,6 +112,14 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 	lengthPenaltyWeight: 0.1,
 	proximityBoost: 0.8,
 	proximityScaleKm: 100,
+	// populationBoost is intentionally large — empirical tuning against real WOF showed BM25 gaps
+	// of 1.5-3.0 between famous places and tiny same-name peers (because the famous ones have
+	// hundreds of alt-name entries that hurt their FTS document score). To consistently surface
+	// "the famous one" for unambiguous queries like "New York" or "Chicago", the population signal
+	// needs to dominate. Callers wanting a more conservative balance can drop this in the
+	// RankingWeights override.
+	populationBoost: 4.0,
+	populationScaleLog10: 6,
 }
 
 interface RawSearchRow {
@@ -102,6 +131,7 @@ interface RawSearchRow {
 	rank: number // BM25 (lower = better in SQLite); we negate to get higher-is-better
 	lat: number | null
 	lon: number | null
+	population: number | null // from the place_population aux table; null when missing
 }
 
 export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
@@ -117,6 +147,12 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * Per-shard: a shard is only considered to have the bbox index if its own R*Tree table exists.
 	 */
 	readonly #hasBboxIndex: Map<string, boolean>
+	/**
+	 * Per-shard probe for the `place_population` aux table. When false, the LEFT JOIN is omitted from
+	 * the SELECT and population boost is 0 for every row — preserves compatibility with DBs built
+	 * before this feature shipped.
+	 */
+	readonly #hasPopulationIndex: Map<string, boolean>
 	/**
 	 * Resolved shard list. Always at least one entry; first is `main`. Multi-shard adds extras with
 	 * their own derived (or override) schema names.
@@ -161,20 +197,26 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		})
 		this.#weights = { ...DEFAULT_WEIGHTS, ...(weights ?? {}) }
 
-		// Probe each shard's bbox index presence — driven by per-shard `place_bbox` table existence.
+		// Probe each shard's aux-table presence — driven by per-shard table existence in
+		// sqlite_master. Cached at construction so findPlace doesn't query sqlite_master per call.
 		this.#hasBboxIndex = new Map()
+		this.#hasPopulationIndex = new Map()
 		for (const s of this.#shards) {
-			this.#hasBboxIndex.set(s.schemaName, this.#shardHasBbox(s.schemaName))
+			this.#hasBboxIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_BBOX_TABLE))
+			this.#hasPopulationIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_POPULATION_TABLE))
 		}
 	}
 
-	#shardHasBbox(schemaName: string): boolean {
-		// For main, the existing helper works directly. For attached shards we have to ask via the
+	#shardHasTable(schemaName: string, tableName: string): boolean {
+		// For main, the existing helpers work directly. For attached shards we have to ask via the
 		// schema-qualified `sqlite_master` view.
-		if (schemaName === "main") return placeBboxExists(this.#db)
+		if (schemaName === "main") {
+			if (tableName === PLACE_BBOX_TABLE) return placeBboxExists(this.#db)
+			if (tableName === PLACE_POPULATION_TABLE) return placePopulationExists(this.#db)
+		}
 		const row = this.#db
 			.prepare(`SELECT name FROM ${schemaName}.sqlite_master WHERE type = 'table' AND name = ?`)
-			.get(PLACE_BBOX_TABLE) as { name: string } | undefined
+			.get(tableName) as { name: string } | undefined
 		return Boolean(row)
 	}
 
@@ -230,6 +272,27 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			params.push(filterBox.maxLat, filterBox.minLat, filterBox.maxLon, filterBox.minLon)
 		}
 
+		// LEFT JOIN the population aux table when present. Missing-on-this-shard means the SELECT
+		// just doesn't include the population column; the post-scoring loop treats it as 0.
+		const shardHasPopulation = this.#hasPopulationIndex.get(sch) === true
+		const populationSelect = shardHasPopulation
+			? `${PLACE_POPULATION_TABLE}.population AS population`
+			: `NULL AS population`
+		const populationJoin = shardHasPopulation
+			? `LEFT JOIN ${sch}.${PLACE_POPULATION_TABLE} ON ${PLACE_POPULATION_TABLE}.id = spr.id`
+			: ""
+
+		// Push the population boost into the ORDER BY when the index is available, so famous places
+		// (whose long alt-name lists hurt BM25) actually make it into the over-fetch window. The TS
+		// post-scoring will still compute the same boost for the final score; this just ensures the
+		// candidate set is right.
+		//
+		// Formula: rank_adjusted = bm25 - populationBoost * min(1.0, log10(1 + pop) / scaleLog10)
+		// Lower rank_adjusted = better (matches SQLite's bm25 convention of "more negative = better").
+		const orderByExpr = shardHasPopulation
+			? `(bm25(place_search) - ? * MIN(1.0, COALESCE(log10(1.0 + ${PLACE_POPULATION_TABLE}.population), 0) / ?))`
+			: "bm25(place_search)"
+
 		// Schema-qualified FROM with bare-name MATCH — required syntax for FTS5 on attached schemas.
 		// See sharding.ts header for the gotcha that drove this design.
 		const stmt = this.#db.prepare(`
@@ -241,13 +304,18 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				spr.parent_id,
 				bm25(place_search) AS rank,
 				spr.latitude AS lat,
-				spr.longitude AS lon
+				spr.longitude AS lon,
+				${populationSelect}
 			FROM ${sch}.place_search
 			${joinClause}
+			${populationJoin}
 			WHERE ${where.join(" AND ")}
-			ORDER BY rank ASC
+			ORDER BY ${orderByExpr} ASC
 			LIMIT ?
 		`)
+		if (shardHasPopulation) {
+			params.push(this.#weights.populationBoost, this.#weights.populationScaleLog10)
+		}
 		params.push(ftsLimit)
 
 		const rawRows = stmt.all(...params) as unknown as RawSearchRow[]
@@ -285,6 +353,14 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				score += this.#weights.proximityBoost / (1 + distanceKm / this.#weights.proximityScaleKm)
 			}
 
+			// Population boost: capped at `populationBoost` magnitude at `10^populationScaleLog10`
+			// people. Missing population → no contribution. Never penalizes.
+			if (row.population !== null && row.population > 0 && this.#weights.populationScaleLog10 > 0) {
+				const popLog = Math.log10(1 + row.population)
+				const popFraction = Math.min(1, popLog / this.#weights.populationScaleLog10)
+				score += this.#weights.populationBoost * popFraction
+			}
+
 			const candidate: PlaceCandidate = {
 				id: row.id,
 				name: row.name,
@@ -296,6 +372,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				score,
 			}
 			if (distanceKm !== undefined) candidate.distanceKm = distanceKm
+			if (row.population !== null && row.population > 0) candidate.population = row.population
 			return candidate
 		})
 
