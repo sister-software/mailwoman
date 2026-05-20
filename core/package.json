@@ -32,6 +32,9 @@
 		"./filters": "./out/filters/index.js",
 		"./filters/*": "./out/filters/*"
 	},
+	"dependencies": {
+		"kysely": "^0.29.2"
+	},
 	"files": [
 		"out/**/*.js",
 		"out/**/*.js.map",
