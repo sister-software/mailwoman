@@ -3,7 +3,7 @@
 # What this catches: workspace breakage that local-only flows missed, such
 # as the 2.0.0 release where `workspace:*` deps shipped to npm. A green
 # test.yml is required before any PR can merge once branch protection is on.
-name: test
+name: Test
 
 on:
   pull_request:

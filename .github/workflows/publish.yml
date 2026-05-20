@@ -23,7 +23,7 @@
 # their package.json versions on disk (keeps monorepo versions in
 # sync) — only the npm publish is skipped. Use the local
 # `yarn release` flow when you want to cut a new weights release.
-name: publish
+name: NPM Publish
 
 on:
   workflow_dispatch:
