@@ -78,14 +78,16 @@ try {
 	}
 
 	// Step 2: npm publish <tarball> — npm CLI auto-detects OIDC environment
-	// in GitHub Actions and uses it for Trusted Publishing. --provenance opts
-	// into npm's package provenance attestation (also OIDC-driven).
+	// in GitHub Actions and uses it for Trusted Publishing.
 	const publishArgs = ["publish", tarballPath, "--tag", tag]
 	if (access) publishArgs.push("--access", access)
 	if (otp) publishArgs.push("--otp", otp)
-	// --provenance only works in CI under OIDC; npm CLI errors out otherwise.
-	// Auto-enable when GitHub Actions environment is detected.
-	if (process.env.GITHUB_ACTIONS === "true") publishArgs.push("--provenance")
+	// --provenance is opt-in via MAILWOMAN_NPM_PROVENANCE=1. The npm registry
+	// rejects --provenance on private source repositories with E422 because
+	// sigstore attestations link to source code that third parties can't
+	// verify. Trusted Publishing itself works fine without --provenance; flip
+	// the env var on once the repo goes public.
+	if (process.env.MAILWOMAN_NPM_PROVENANCE === "1") publishArgs.push("--provenance")
 
 	console.error(`publish-workspace: ${dryRun ? "[dry-run] " : ""}npm ${publishArgs.join(" ")}`)
 	if (dryRun) {
