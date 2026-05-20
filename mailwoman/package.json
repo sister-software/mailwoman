@@ -36,7 +36,6 @@
 		"@mailwoman/classifiers": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"change-case": "^5.4.4",
-		"core-js": "^3.49.0",
 		"express": "^5.0.1",
 		"geojson": "^0.5.0",
 		"ink": "^7.0.3",
@@ -75,9 +74,6 @@
 			"optional": true
 		},
 		"@mailwoman/resolver-wof-sqlite": {
-			"optional": true
-		},
-		"core-js": {
 			"optional": true
 		},
 		"ink": {

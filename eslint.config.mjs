@@ -10,11 +10,15 @@ import html from "eslint-plugin-html"
 // @ts-check
 
 /**
- * ESLint configuration for the Mailwoman repo
+ * ESLint configuration for the Mailwoman repo. The shared config's default ignores cover `**\/out`,
+ * `**\/node_modules`, etc. We extend with the Docusaurus build + cache dirs, which the shared
+ * config doesn't know about.
  */
 const MailwomanESLintConfig = createESLintPackageConfig({
 	packageTitle: "Mailwoman",
 	spdxLicenseIdentifier: "AGPL-3.0",
+
+	ignorePatterns: ["**/out", "**/node_modules", "docs/build", "docs/.docusaurus"],
 
 	overrides: {
 		plugins: { html },
