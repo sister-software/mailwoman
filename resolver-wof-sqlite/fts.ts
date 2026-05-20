@@ -98,8 +98,10 @@ export function buildPlaceSearchFts(db: DatabaseSync, opts: BuildPlaceSearchFtsO
 			);
 		`)
 		onProgress("populating")
-		// Excludes deprecated / superseded / non-current places. `is_current` uses a -1/0 convention
-		// in WOF — `-1` means "current"; anything else is historical.
+		// Excludes only definitively-not-current places. WOF's `is_current` carries TWO conventions:
+		// `-1` (modern Who's On First) and `1` (legacy Mapzen-era), both meaning "currently valid".
+		// Only `0` means "no longer current". Filtering on `= -1` strict (as Phase 4.2 did) excluded
+		// ~42% of admin-US and ~68% of postcode-US — see #91 for the diagnostic + magnitude.
 		db.exec(`
 			INSERT INTO ${PLACE_SEARCH_TABLE} (wof_id, name, alt_names)
 			SELECT
@@ -107,7 +109,7 @@ export function buildPlaceSearchFts(db: DatabaseSync, opts: BuildPlaceSearchFtsO
 				spr.name,
 				COALESCE((SELECT GROUP_CONCAT(name, ' ') FROM names WHERE names.id = spr.id), '')
 			FROM spr
-			WHERE spr.is_current = -1
+			WHERE spr.is_current != 0
 				AND spr.is_deprecated = 0
 				AND spr.name IS NOT NULL;
 		`)
@@ -146,7 +148,7 @@ export function buildPlaceSearchFts(db: DatabaseSync, opts: BuildPlaceSearchFtsO
 				spr.min_longitude,
 				spr.max_longitude
 			FROM spr
-			WHERE spr.is_current = -1
+			WHERE spr.is_current != 0
 				AND spr.is_deprecated = 0
 				AND spr.min_latitude IS NOT NULL
 				AND spr.max_latitude IS NOT NULL

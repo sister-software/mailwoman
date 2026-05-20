@@ -32,9 +32,10 @@ export interface PlaceSearchTable {
  * `spr` — the Who's On First "Standard Places Response": a denormalized lightweight summary of one
  * row per place. The resolver's main lookup table.
  *
- * Lifecycle flags use a `-1 / 0` convention (not the more common `1 / 0`): `is_current = -1` means
- * "currently valid", `0` means "no longer current". Filters in `lookup.ts` exclude `is_current !=
- * -1` and `is_deprecated != 0`.
+ * Lifecycle flags carry TWO conventions, both meaning "currently valid": `is_current = -1` (modern
+ * Who's On First) and `is_current = 1` (legacy Mapzen-era). Only `is_current = 0` means "not
+ * current". Filters in `lookup.ts` and `fts.ts` use `is_current != 0 AND is_deprecated = 0` — see
+ * #91 for the diagnostic that uncovered the mixed-convention reality.
  *
  * Lat/lon live directly on this row — no GeoJSON extraction needed for centroid resolution. `min_*`
  * / `max_*` form a bounding box if callers want one (Phase 4.3 candidate).

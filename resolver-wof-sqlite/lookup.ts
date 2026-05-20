@@ -140,8 +140,9 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		if (!ftsQuery) return []
 
 		// Filter out historical / superseded / deprecated places by default — they live in the same
-		// spr table but should never win a contemporary lookup.
-		const where: string[] = ["place_search MATCH ?", "spr.is_current = -1", "spr.is_deprecated = 0"]
+		// spr table but should never win a contemporary lookup. `is_current = 0` is the only WOF
+		// value that means "not current"; both `-1` (modern) and `1` (legacy) mean current. See #91.
+		const where: string[] = ["place_search MATCH ?", "spr.is_current != 0", "spr.is_deprecated = 0"]
 		const params: SQLInputValue[] = [ftsQuery]
 
 		if (placetypes && placetypes.length > 0) {
