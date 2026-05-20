@@ -42,6 +42,9 @@ export type WofPlacetype =
  * `id` is the WOF place id. It's named generically (not `wof_id`) so the shape stays structurally
  * compatible with `@mailwoman/core/resolver`'s `ResolvedPlace` — `WofSqlitePlaceLookup` satisfies
  * the generic `ResolverBackend` contract without an adapter shim.
+ *
+ * `distanceKm` is populated only when the query carried `near` (and the place has a centroid).
+ * Useful for downstream UIs that want to show "X km from you" alongside the result.
  */
 export interface PlaceCandidate {
 	id: number
@@ -53,6 +56,25 @@ export interface PlaceCandidate {
 	lon: number
 	parent_id?: number
 	score: number
+	distanceKm?: number
+}
+
+/**
+ * A WGS-84 lat/lon point. Used as a proximity hint for `FindPlaceQuery.near`.
+ */
+export interface GeoPoint {
+	lat: number
+	lon: number
+}
+
+/**
+ * A WGS-84 bounding box. Used as a hard filter via `FindPlaceQuery.bbox`.
+ */
+export interface GeoBbox {
+	minLat: number
+	maxLat: number
+	minLon: number
+	maxLon: number
 }
 
 /**
@@ -60,6 +82,15 @@ export interface PlaceCandidate {
  *
  * `text` is the only required field; everything else narrows the search. When `country` and
  * `parentId` are both set, `parentId` wins (it's more specific).
+ *
+ * `near` and `bbox` are independent. `near` is a soft signal — candidates close to the point get a
+ * ranking boost but distant candidates aren't dropped. `bbox` is a hard filter — only candidates
+ * whose bbox intersects the query bbox are returned (uses the package-built R*Tree index when
+ * present; if the index is missing the option is silently ignored to preserve backwards
+ * compatibility).
+ *
+ * `near` may carry `maxDistanceKm` to escalate from a boost to a hard filter — candidates further
+ * than that distance from the point are dropped at the SQL level via an R*Tree pre-filter.
  */
 export interface FindPlaceQuery {
 	text: string
@@ -68,6 +99,10 @@ export interface FindPlaceQuery {
 	country?: string
 	/** WOF place id — narrows to descendants of this place. */
 	parentId?: number
+	/** Proximity hint — candidates close to this point get a ranking boost. */
+	near?: GeoPoint & { maxDistanceKm?: number }
+	/** Bounding-box filter — only candidates whose bbox intersects this box are returned. */
+	bbox?: GeoBbox
 	/** Default 10. */
 	limit?: number
 }

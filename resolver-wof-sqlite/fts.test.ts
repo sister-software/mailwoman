@@ -14,7 +14,8 @@ import { buildPlaceSearchFts, PLACE_SEARCH_TABLE, placeSearchFtsExists } from ".
 
 function buildBaseSchema(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
-	// Mirror the real WOF SQLite schema subset that fts.ts queries.
+	// Mirror the real WOF SQLite schema subset that fts.ts queries. Includes the bbox columns
+	// (min_latitude/max_latitude/min_longitude/max_longitude) the R*Tree builder reads.
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY,
@@ -22,6 +23,12 @@ function buildBaseSchema(): DatabaseSync {
 			name TEXT,
 			placetype TEXT,
 			country TEXT,
+			latitude REAL,
+			longitude REAL,
+			min_latitude REAL,
+			max_latitude REAL,
+			min_longitude REAL,
+			max_longitude REAL,
 			is_current INTEGER,
 			is_deprecated INTEGER
 		);
@@ -31,9 +38,10 @@ function buildBaseSchema(): DatabaseSync {
 			language TEXT,
 			name TEXT NOT NULL
 		);
-		INSERT INTO spr VALUES (1, NULL, 'Paris', 'locality', 'FR', -1, 0);
-		INSERT INTO spr VALUES (2, NULL, 'Springfield', 'locality', 'US', -1, 0);
-		INSERT INTO spr VALUES (3, NULL, 'London', 'locality', 'GB', -1, 0);
+		-- (id, parent_id, name, placetype, country, lat, lon, minLat, maxLat, minLon, maxLon, is_current, is_deprecated)
+		INSERT INTO spr VALUES (1, NULL, 'Paris', 'locality', 'FR', 48.85, 2.34, 48.81, 48.90, 2.22, 2.46, -1, 0);
+		INSERT INTO spr VALUES (2, NULL, 'Springfield', 'locality', 'US', 39.78, -89.65, 39.70, 39.86, -89.74, -89.56, -1, 0);
+		INSERT INTO spr VALUES (3, NULL, 'London', 'locality', 'GB', 51.51, -0.13, 51.28, 51.69, -0.51, 0.33, -1, 0);
 		INSERT INTO names (id, language, name) VALUES (1, 'und', 'パリ');
 		INSERT INTO names (id, language, name) VALUES (1, 'und', 'París');
 	`)
@@ -70,7 +78,9 @@ describe("buildPlaceSearchFts", () => {
 		buildPlaceSearchFts(db)
 
 		// Add a new place but don't reindex yet — count should still be the original 3.
-		db.exec(`INSERT INTO spr VALUES (4, NULL, 'Tokyo', 'locality', 'JP', -1, 0);`)
+		db.exec(`
+			INSERT INTO spr VALUES (4, NULL, 'Tokyo', 'locality', 'JP', 35.68, 139.69, 35.50, 35.83, 139.34, 139.91, -1, 0);
+		`)
 		expect((db.prepare(`SELECT COUNT(*) AS n FROM ${PLACE_SEARCH_TABLE}`).get() as { n: number }).n).toBe(3)
 
 		const result = buildPlaceSearchFts(db, { drop: true })
@@ -118,16 +128,25 @@ describe("buildPlaceSearchFts", () => {
 		const db = buildBaseSchema()
 		const phases: string[] = []
 		buildPlaceSearchFts(db, { onProgress: (phase) => phases.push(phase) })
-		expect(phases).toEqual(["checking", "creating", "populating", "done"])
+		expect(phases).toEqual(["checking", "creating", "populating", "creating-bbox", "populating-bbox", "done"])
 		db.close()
 	})
 
-	test("invokes onProgress with the dropping phase when --drop is used", () => {
+	test("invokes onProgress with the dropping phase when --drop is used (twice — once per index)", () => {
 		const db = buildBaseSchema()
 		buildPlaceSearchFts(db)
 		const phases: string[] = []
 		buildPlaceSearchFts(db, { drop: true, onProgress: (phase) => phases.push(phase) })
-		expect(phases).toEqual(["checking", "dropping", "creating", "populating", "done"])
+		expect(phases).toEqual([
+			"checking",
+			"dropping", // place_search
+			"creating",
+			"populating",
+			"dropping", // place_bbox
+			"creating-bbox",
+			"populating-bbox",
+			"done",
+		])
 		db.close()
 	})
 
@@ -139,7 +158,19 @@ describe("buildPlaceSearchFts", () => {
 				if (phase === "done") doneDetail = detail
 			},
 		})
-		expect(doneDetail).toMatch(/3 rows indexed/)
+		expect(doneDetail).toMatch(/3 FTS rows/)
+		expect(doneDetail).toMatch(/3 bbox rows/)
+		db.close()
+	})
+
+	test("populates the R*Tree bbox table from spr.min_*/max_* columns", () => {
+		const db = buildBaseSchema()
+		buildPlaceSearchFts(db)
+		// Paris (id 1) bbox should be present and queryable.
+		const hits = db
+			.prepare(`SELECT id FROM place_bbox WHERE min_lat <= ? AND max_lat >= ? AND min_lon <= ? AND max_lon >= ?`)
+			.all(48.85, 48.85, 2.34, 2.34) as { id: number }[]
+		expect(hits.map((h) => h.id)).toContain(1)
 		db.close()
 	})
 })

@@ -69,9 +69,12 @@ The CLI:
 
 - Opens the DB read-write.
 - Creates the `place_search` FTS5 virtual table (with the same schema the lazy build uses).
-- Populates it from `places` + `names` (alternate-name concatenation included).
-- Reports progress to stderr per phase (`checking` → `creating` → `populating` → `done`).
-- Exits 0 with a no-op message if the index already exists.
+- Populates it from `spr` + `names` (alternate-name concatenation included).
+- Builds the `place_bbox` R*Tree virtual table from `spr.min\_*`/`spr.max\_\*` columns for the
+  proximity + bbox query support.
+- Reports progress to stderr per phase (`checking` → `creating` → `populating` → `creating-bbox`
+  → `populating-bbox` → `done`).
+- Exits 0 with a no-op message if both indexes already exist.
 
 ```bash
 # Refresh after pulling a newer WOF dump
@@ -103,7 +106,43 @@ The resolver scores candidates by:
 3. - `localityImplicitBoost` when no placetype filter is set and the candidate is a locality.
 4. - `countryMatchBoost` when the country filter matches.
 5. - `directChildBoost` / `descendantBoost` when `parentId` is set.
-6. − `lengthPenaltyWeight` × excess-length penalty (favors short matches over long matches on short queries).
+6. - `proximityBoost / (1 + distanceKm / proximityScaleKm)` when `near: {lat, lon}` is set — decays
+     smoothly with distance from the user's position. At distance 0 the boost is full magnitude; at
+     `proximityScaleKm` (default 100 km) it's half.
+7. − `lengthPenaltyWeight` × excess-length penalty (favors short matches over long matches on short
+   queries).
+
+## Geographic filters (Phase 4.3.x)
+
+Two query options use the package-built R\*Tree index over WOF's bounding boxes:
+
+```ts
+// Proximity boost (no hard filter — distant candidates aren't dropped, just ranked lower)
+lookup.findPlace({
+	text: "Springfield",
+	placetype: "locality",
+	near: { lat: 39.78, lon: -89.65 },
+})
+
+// Proximity boost + hard filter — drop anything beyond 200 km
+lookup.findPlace({
+	text: "Springfield",
+	placetype: "locality",
+	near: { lat: 39.78, lon: -89.65, maxDistanceKm: 200 },
+})
+
+// Bbox hard filter — only return candidates whose bbox intersects the box
+lookup.findPlace({
+	text: "Springfield",
+	placetype: "locality",
+	bbox: { minLat: 37, maxLat: 42.5, minLon: -91.5, maxLon: -87.5 },
+})
+```
+
+When the R*Tree index isn't present (DBs built before this feature), the bbox-hard-filter is
+silently dropped to preserve backwards compatibility. The proximity boost still works without the
+R*Tree because it computes haversine distance against the centroid columns directly. Rebuild with
+`mailwoman-wof-build-fts --drop <path>` to gain the bbox index.
 
 All weights are configurable via the second ctor argument:
 

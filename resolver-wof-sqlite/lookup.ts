@@ -15,7 +15,8 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite"
 
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 
-import { buildPlaceSearchFts, placeSearchFtsExists } from "./fts.js"
+import { buildPlaceSearchFts, PLACE_BBOX_TABLE, placeBboxExists, placeSearchFtsExists } from "./fts.js"
+import { bboxAround, haversineKm } from "./geo.js"
 import type { WofDatabase } from "./schema.js"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "./types.js"
 
@@ -53,6 +54,15 @@ export interface RankingWeights {
 	descendantBoost: number
 	/** Multiplier on the length-penalty term (penalizes much-longer-than-query names). */
 	lengthPenaltyWeight: number
+	/**
+	 * Magnitude of the proximity boost when the query carries `near`. The contribution is
+	 * `proximityBoost / (1 + distanceKm / proximityScaleKm)` — at distance 0 the boost is full
+	 * magnitude, at `proximityScaleKm` it's half, decaying further with distance. Default tuned so
+	 * proximity can overcome a typical FTS rank tie but not dominate a strong text match.
+	 */
+	proximityBoost: number
+	/** Distance (km) at which the proximity boost halves. Tune to the typical query radius. */
+	proximityScaleKm: number
 }
 
 const DEFAULT_WEIGHTS: RankingWeights = {
@@ -62,6 +72,8 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 	directChildBoost: 0.5,
 	descendantBoost: 0.2,
 	lengthPenaltyWeight: 0.1,
+	proximityBoost: 0.8,
+	proximityScaleKm: 100,
 }
 
 interface RawSearchRow {
@@ -80,6 +92,12 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #ownsDb: boolean
 	readonly #kysely: Kysely<WofDatabase>
 	readonly #weights: RankingWeights
+	/**
+	 * Cached at construction so we don't `sqlite_master` query on every findPlace call. Bbox + near-
+	 * with-radius queries fall back to no-filter when this is false, preserving compatibility with
+	 * DBs that were FTS-built before the R*Tree shipped.
+	 */
+	readonly #hasBboxIndex: boolean
 
 	constructor(opts: WofSqlitePlaceLookupOpts, weights?: Partial<RankingWeights>) {
 		if (opts.database && opts.databasePath) {
@@ -110,6 +128,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			dialect: new SqliteDialect({ database: this.#db }),
 		})
 		this.#weights = { ...DEFAULT_WEIGHTS, ...(weights ?? {}) }
+		this.#hasBboxIndex = placeBboxExists(this.#db)
 	}
 
 	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
@@ -138,6 +157,21 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			params.push(query.parentId, query.parentId)
 		}
 
+		// Bbox + near-with-radius are SQL-level filters via the R*Tree. We only emit the JOIN when
+		// the R*Tree is actually present; missing-but-requested is silently treated as no-bbox-filter
+		// so callers without the index don't crash. (Verbose mode could log here — defer.)
+		const useBboxJoin = (query.bbox || query.near?.maxDistanceKm !== undefined) && this.#hasBboxIndex
+		let joinClause = "JOIN spr ON spr.id = place_search.wof_id"
+		if (useBboxJoin) {
+			joinClause += ` JOIN ${PLACE_BBOX_TABLE} bbox ON bbox.id = spr.id`
+			// AABB intersection — both bbox sides must overlap. R*Tree handles this in O(log n).
+			const filterBox = query.bbox
+				? query.bbox
+				: bboxAround(query.near!.lat, query.near!.lon, query.near!.maxDistanceKm!)
+			where.push("bbox.min_lat <= ? AND bbox.max_lat >= ?", "bbox.min_lon <= ? AND bbox.max_lon >= ?")
+			params.push(filterBox.maxLat, filterBox.minLat, filterBox.maxLon, filterBox.minLon)
+		}
+
 		const stmt = this.#db.prepare(`
 			SELECT
 				spr.id AS id,
@@ -149,7 +183,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				spr.latitude AS lat,
 				spr.longitude AS lon
 			FROM place_search
-			JOIN spr ON spr.id = place_search.wof_id
+			${joinClause}
 			WHERE ${where.join(" AND ")}
 			ORDER BY rank ASC
 			LIMIT ?
@@ -182,7 +216,16 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			const extraLen = Math.max(0, row.name.length - queryLen - 3)
 			score -= (this.#weights.lengthPenaltyWeight * extraLen) / 10
 
-			return {
+			// Proximity boost: only applied when the query carries `near` AND the candidate has real
+			// coordinates. The formula decays smoothly with distance so close-but-not-exact hits
+			// still benefit; tunable via proximityBoost + proximityScaleKm.
+			let distanceKm: number | undefined
+			if (query.near && row.lat !== null && row.lon !== null && !(row.lat === 0 && row.lon === 0)) {
+				distanceKm = haversineKm(query.near.lat, query.near.lon, row.lat, row.lon)
+				score += this.#weights.proximityBoost / (1 + distanceKm / this.#weights.proximityScaleKm)
+			}
+
+			const candidate: PlaceCandidate = {
 				id: row.id,
 				name: row.name,
 				placetype: row.placetype as WofPlacetype,
@@ -192,6 +235,8 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				parent_id: row.parent_id ?? undefined,
 				score,
 			}
+			if (distanceKm !== undefined) candidate.distanceKm = distanceKm
+			return candidate
 		})
 
 		candidates.sort((a, b) => b.score - a.score)

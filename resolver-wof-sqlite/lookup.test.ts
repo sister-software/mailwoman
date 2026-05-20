@@ -171,6 +171,10 @@ function buildFixtureDb(): DatabaseSync {
 			country TEXT,
 			latitude REAL,
 			longitude REAL,
+			min_latitude REAL,
+			max_latitude REAL,
+			min_longitude REAL,
+			max_longitude REAL,
 			is_current INTEGER,
 			is_deprecated INTEGER
 		);
@@ -188,15 +192,37 @@ function buildFixtureDb(): DatabaseSync {
 		);
 	`)
 
+	// Fixture places store centroid lat/lon; for bbox tests we use a small ~10 km square around each
+	// centroid so R*Tree intersection queries have something realistic to bite on.
 	const insertSpr = db.prepare(
-		`INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, is_current, is_deprecated)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, -1, 0)`
+		`INSERT INTO spr (
+			id, parent_id, name, placetype, country,
+			latitude, longitude,
+			min_latitude, max_latitude, min_longitude, max_longitude,
+			is_current, is_deprecated
+		)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, -1, 0)`
 	)
 	const insertName = db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`)
 	const insertAncestor = db.prepare(`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, ?)`)
 
 	for (const p of FIXTURE) {
-		insertSpr.run(p.id, p.parent_id, p.name, p.placetype, p.country, p.lat, p.lon)
+		// ~0.05° padding around the centroid in each direction (≈ 5 km in latitude, varies with
+		// longitude) — tight enough that bbox intersection tests behave like point tests but real
+		// enough that the R*Tree gets exercised.
+		insertSpr.run(
+			p.id,
+			p.parent_id,
+			p.name,
+			p.placetype,
+			p.country,
+			p.lat,
+			p.lon,
+			p.lat - 0.05,
+			p.lat + 0.05,
+			p.lon - 0.05,
+			p.lon + 0.05
+		)
 		for (const alt of p.alt_names ?? []) {
 			insertName.run(p.id, "und", alt)
 		}
