@@ -23,6 +23,7 @@
 		{ "path": "./classifiers" },
 		{ "path": "./corpus" },
 		{ "path": "./neural" },
+		{ "path": "./resolver-wof-sqlite" },
 		{ "path": "./mailwoman" }
 	]
 }
