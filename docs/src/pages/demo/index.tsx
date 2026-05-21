@@ -46,8 +46,9 @@ export default function DemoPage(): React.ReactElement {
 // All heavy logic lives below this boundary — only loaded after Docusaurus hydrates on the client.
 
 function DemoApp(): React.ReactElement {
-	const [loadingProgress, setLoadingProgress] = React.useState<string>("Loading assets…")
+	const [loadingProgress, setLoadingProgress] = React.useState<string>("Loading neural model…")
 	const [classifier, setClassifier] = React.useState<MailwomanClassifierLike | null>(null)
+	const [lookupLoader, setLookupLoader] = React.useState<(() => Promise<MailwomanLookupLike>) | null>(null)
 	const [lookup, setLookup] = React.useState<MailwomanLookupLike | null>(null)
 	const [text, setText] = React.useState("1600 Pennsylvania Ave NW, Washington, DC 20500")
 	const [busy, setBusy] = React.useState(false)
@@ -57,32 +58,21 @@ function DemoApp(): React.ReactElement {
 	const mapRef = React.useRef<unknown>(null)
 	const markerRef = React.useRef<unknown>(null)
 
-	// Mount: load everything in parallel.
+	// Mount: load just the neural model + map up-front. The 35 MB WOF DB is deferred until first
+	// resolve — most visitors poke at the parse output without ever hitting "submit", and shipping
+	// 35 MB of zip-code geometries to a window-shopper is wasteful.
 	React.useEffect(() => {
 		let cancelled = false
 		void (async () => {
 			try {
-				setLoadingProgress("Loading neural model + WOF DB in parallel…")
-
-				const [neuralWeb, resolverWasm, maplibre] = await Promise.all([
-					import("@mailwoman/neural-web"),
-					import("@mailwoman/resolver-wof-wasm"),
-					import("maplibre-gl"),
-				])
+				const [neuralWeb, maplibre] = await Promise.all([import("@mailwoman/neural-web"), import("maplibre-gl")])
 
 				if (cancelled) return
-				setLoadingProgress("Initializing neural runtime…")
+				setLoadingProgress("Loading neural model (~25 MB)…")
 				const cls = await neuralWeb.loadNeuralClassifierFromUrls({
 					modelUrl: "/mailwoman/model.onnx",
 					tokenizerUrl: "/mailwoman/tokenizer.model",
 				})
-
-				if (cancelled) return
-				setLoadingProgress("Initializing WOF resolver…")
-				const { db } = await resolverWasm.loadSlimWofDatabase({
-					source: "/mailwoman/wof-hot.db",
-				})
-				const wofLookup = new resolverWasm.WofWasmPlaceLookup({ db })
 
 				if (cancelled) return
 				if (mapContainerRef.current) {
@@ -99,7 +89,15 @@ function DemoApp(): React.ReactElement {
 
 				if (cancelled) return
 				setClassifier(cls)
-				setLookup(wofLookup)
+				// Stash a one-shot factory that loads the WOF DB on demand. Captured in closure
+				// to avoid re-importing the wasm wrapper.
+				setLookupLoader(() => async () => {
+					const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
+					const { db } = await resolverWasm.loadSlimWofDatabase({
+						source: "/mailwoman/wof-hot.db",
+					})
+					return new resolverWasm.WofWasmPlaceLookup({ db })
+				})
 				setLoadingProgress("")
 			} catch (e) {
 				if (cancelled) return
@@ -112,10 +110,27 @@ function DemoApp(): React.ReactElement {
 		}
 	}, [])
 
+	// Resolve the WOF lookup on first submit (or any time we don't have it yet).
+	const ensureLookup = React.useCallback(async (): Promise<MailwomanLookupLike | null> => {
+		if (lookup) return lookup
+		if (!lookupLoader) return null
+		setLoadingProgress("Loading WOF locality DB (~35 MB)…")
+		try {
+			const l = await lookupLoader()
+			setLookup(l)
+			setLoadingProgress("")
+			return l
+		} catch (e) {
+			setLoadingProgress("")
+			setError((e as Error).message ?? String(e))
+			return null
+		}
+	}, [lookup, lookupLoader])
+
 	const onSubmit = React.useCallback(
 		async (e: React.FormEvent) => {
 			e.preventDefault()
-			if (!classifier || !lookup) return
+			if (!classifier) return
 			setBusy(true)
 			setError(null)
 			try {
@@ -125,6 +140,13 @@ function DemoApp(): React.ReactElement {
 				const stateNode = nodes.find((n) => n.tag === "region" || n.tag === "state")
 				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
+				// First submit: fetch the WOF DB. Subsequent submits reuse it.
+				const wofLookup = await ensureLookup()
+				if (!wofLookup) {
+					setResult({ tree, nodes, resolved: null, stateHint: stateNode?.value as string | undefined })
+					return
+				}
+
 				let resolved: ResolvedHit | null = null
 				const queryString =
 					(postcodeNode?.value as string | undefined) ?? (localityNode?.value as string | undefined) ?? text
@@ -133,7 +155,7 @@ function DemoApp(): React.ReactElement {
 					: localityNode
 						? "locality"
 						: undefined
-				const candidates = await lookup.findPlace({
+				const candidates = await wofLookup.findPlace({
 					text: queryString,
 					placetype,
 					country: "US",
@@ -180,10 +202,10 @@ function DemoApp(): React.ReactElement {
 				setBusy(false)
 			}
 		},
-		[classifier, lookup, text]
+		[classifier, ensureLookup, text]
 	)
 
-	const ready = classifier !== null && lookup !== null
+	const ready = classifier !== null && lookupLoader !== null
 
 	return (
 		<div className={styles.layout}>
