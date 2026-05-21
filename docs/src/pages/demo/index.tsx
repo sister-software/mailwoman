@@ -161,6 +161,14 @@ function DemoApp(): React.ReactElement {
 					country: "US",
 					limit: 5,
 				})
+				// Clear any stale marker from a prior submit before deciding whether to drop a new one —
+				// otherwise a "Pier 39" lookup followed by an unresolvable address would leave the SF
+				// marker hovering over a mismatched input.
+				if (markerRef.current) {
+					;(markerRef.current as { remove: () => void }).remove()
+					markerRef.current = null
+				}
+
 				if (candidates.length > 0) {
 					const best = candidates[0]!
 					resolved = {
@@ -171,7 +179,7 @@ function DemoApp(): React.ReactElement {
 						lon: best.lon,
 						score: best.score,
 					}
-					// Drop / move the marker.
+					// Drop a fresh marker + fly to the resolved coords.
 					const maplibre = await import("maplibre-gl")
 					if (mapRef.current && resolved) {
 						type MapLike = {
@@ -179,9 +187,6 @@ function DemoApp(): React.ReactElement {
 							getCenter: () => unknown
 						}
 						const map = mapRef.current as MapLike
-						if (markerRef.current) {
-							;(markerRef.current as { remove: () => void }).remove()
-						}
 						const marker = new maplibre.Marker({ color: "#e0367c" })
 							.setLngLat([resolved.lon, resolved.lat])
 							.addTo(map as unknown as maplibre.Map)
