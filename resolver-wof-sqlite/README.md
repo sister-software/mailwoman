@@ -112,6 +112,36 @@ npx mailwoman-wof-build-fts /path/to/wof.db --drop
 
 `--drop` rebuilds from scratch — useful after refreshing the `places` / `names` tables from a newer dump. Without `--drop` the CLI is a no-op when the index is already present.
 
+### `mailwoman-wof-build-slim` CLI
+
+Builds a trimmed WOF SQLite distribution sized for browser-side deployments (Path B of the demo plan). The full admin-US distribution is ~4 GB; a slim US bundle with the top-1k localities by population plus all postcodes lands at **~35 MB** — small enough to ship as a static asset.
+
+```bash
+# Defaults: --top 1000 localities, --countries US, drops geojson after building aux tables
+npx mailwoman-wof-build-slim \
+  --in /path/to/whosonfirst-data-admin-us-latest.db \
+  --in /path/to/whosonfirst-data-postalcode-us-latest.db \
+  --out /path/to/wof-hot.db
+
+# Tinier — top 100 localities only
+npx mailwoman-wof-build-slim --in admin-us.db --out wof-tiny.db --top 100
+
+# Multi-country
+npx mailwoman-wof-build-slim --in admin-na.db --out wof-na.db --countries US,CA,MX
+```
+
+What survives in the slim DB:
+
+- All ancestor placetypes (`country`, `region`, `county`, `borough`, `macroregion`) in scope
+- Top-K localities by `wof:population`
+- All postcodes in scope
+- All `names` rows for the selected place IDs
+- Fresh `place_search` (FTS5), `place_bbox` (R\*Tree), `place_population` aux tables
+
+What gets dropped: the `geojson` table, which is build-time only — `lookup.ts` never reads it at query time, and it accounts for ~95% of the on-disk size. The `place_population` aux table consumes `wof:population` from geojson before we drop it.
+
+`WofSqlitePlaceLookup` opens the slim DB without any code change. Out-of-set queries (a locality not in the top-K) correctly return zero hits.
+
 You can also build the index programmatically via the package's `./fts` subpath:
 
 ```ts
