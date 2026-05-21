@@ -5265,6 +5265,8 @@ __metadata:
     "@mailwoman/neural-web": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
     "@mdx-js/react": "npm:^3.1.1"
+    "@playwright/test": "npm:^1.49.0"
+    "@types/node": "npm:^24.0.0"
     "@types/react": "npm:^19.2.15"
     "@types/react-dom": "npm:^19.2.3"
     clsx: "npm:^2.1.1"
@@ -5276,6 +5278,17 @@ __metadata:
     typescript: "npm:^6.0.3"
   languageName: unknown
   linkType: soft
+
+"@playwright/test@npm:^1.49.0":
+  version: 1.60.0
+  resolution: "@playwright/test@npm:1.60.0"
+  dependencies:
+    playwright: "npm:1.60.0"
+  bin:
+    playwright: cli.js
+  checksum: 10/a13d369014e1934b0aa484c5d59537f5249af0fe006ac4ecbcbe14c673221412706193ea2d9cf3b2c0cc69e3ddbb4daddb006f0bedfdeb05f687776ed8c35f5f
+  languageName: node
+  linkType: hard
 
 "@pnpm/config.env-replace@npm:^1.1.0":
   version: 1.1.0
@@ -17595,7 +17608,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright@npm:^1.49.0":
+"playwright@npm:1.60.0, playwright@npm:^1.49.0":
   version: 1.60.0
   resolution: "playwright@npm:1.60.0"
   dependencies:
