@@ -88,7 +88,7 @@ function DemoApp(): React.ReactElement {
 				if (mapContainerRef.current) {
 					const map = new maplibre.Map({
 						container: mapContainerRef.current,
-						style: "https://tiles.sister.software/basemap.json",
+						style: buildMapStyle(),
 						center: [-95.7129, 37.0902],
 						zoom: 3,
 						attributionControl: false,
@@ -298,6 +298,83 @@ interface ResolvedHit {
 	lat: number
 	lon: number
 	score: number
+}
+
+/**
+ * Build a minimal MapLibre style document pointing at the Protomaps basemap vector tiles served by
+ * `tiles.sister.software`. The host endpoint exposes only TileJSON (data-source metadata), not a
+ * full MapLibre style — so we synthesize one here with the layers we care about for an address
+ * demo. Visual styling stays deliberately plain so the marker pops.
+ */
+function buildMapStyle(): unknown {
+	const tileUrl = "https://tiles.sister.software/basemap/{z}/{x}/{y}.mvt"
+	const attribution =
+		'<a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap contributors</a>'
+	return {
+		version: 8,
+		glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+		sources: {
+			protomaps: {
+				type: "vector",
+				tiles: [tileUrl],
+				maxzoom: 15,
+				attribution,
+			},
+		},
+		layers: [
+			{ id: "background", type: "background", paint: { "background-color": "#f7f5f0" } },
+			{
+				id: "earth",
+				type: "fill",
+				source: "protomaps",
+				"source-layer": "earth",
+				paint: { "fill-color": "#fafaf7" },
+			},
+			{
+				id: "water",
+				type: "fill",
+				source: "protomaps",
+				"source-layer": "water",
+				paint: { "fill-color": "#cfdfec" },
+			},
+			{
+				id: "landuse",
+				type: "fill",
+				source: "protomaps",
+				"source-layer": "landuse",
+				minzoom: 4,
+				paint: { "fill-color": "#eef0e3", "fill-opacity": 0.5 },
+			},
+			{
+				id: "roads-major",
+				type: "line",
+				source: "protomaps",
+				"source-layer": "roads",
+				minzoom: 5,
+				filter: ["in", "pmap:kind", "highway", "major_road"],
+				paint: { "line-color": "#d0c8b8", "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 14, 3] },
+			},
+			{
+				id: "roads-minor",
+				type: "line",
+				source: "protomaps",
+				"source-layer": "roads",
+				minzoom: 11,
+				paint: { "line-color": "#e0d8c8", "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.3, 16, 1.5] },
+			},
+			{
+				id: "boundaries",
+				type: "line",
+				source: "protomaps",
+				"source-layer": "boundaries",
+				paint: {
+					"line-color": "#9aa0a6",
+					"line-width": ["interpolate", ["linear"], ["zoom"], 0, 0.4, 6, 0.8],
+					"line-dasharray": [2, 2],
+				},
+			},
+		],
+	}
 }
 
 /** Walk the AddressTree, returning a flat list of leaf component nodes. */
