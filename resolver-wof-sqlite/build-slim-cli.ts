@@ -83,7 +83,7 @@ function parseArgs(argv: string[]): CliArgs {
 	return out
 }
 
-export function main(rawArgv: string[]): number {
+export async function main(rawArgv: string[]): Promise<number> {
 	let args: CliArgs
 	try {
 		args = parseArgs(rawArgv)
@@ -102,7 +102,7 @@ export function main(rawArgv: string[]): number {
 	}
 
 	try {
-		const result = buildSlimWofDatabase(opts)
+		const result = await buildSlimWofDatabase(opts)
 		const mb = (result.outputBytes / 1024 / 1024).toFixed(1)
 		stderr.write(
 			`\nBuilt ${result.outputPath} (${mb} MB)\n` +
@@ -122,5 +122,5 @@ export function main(rawArgv: string[]): number {
 
 // Run when invoked as a script (not when imported by tests).
 if (import.meta.url === `file://${process.argv[1]}`) {
-	exit(main(process.argv.slice(2)))
+	main(process.argv.slice(2)).then((code) => exit(code))
 }

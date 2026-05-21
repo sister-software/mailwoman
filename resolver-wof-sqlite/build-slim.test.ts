@@ -80,12 +80,12 @@ afterEach(async () => {
 })
 
 describe("buildSlimWofDatabase", () => {
-	test("keeps ancestors, top-K localities by population, and all postcodes", () => {
+	test("keeps ancestors, top-K localities by population, and all postcodes", async () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
 		buildFixtureWof(source)
 
-		const result = buildSlimWofDatabase({
+		const result = await buildSlimWofDatabase({
 			inputs: [source],
 			output,
 			topLocalitiesPerCountry: 2, // keeps Chicago + Springfield, drops Mascoutah
@@ -112,12 +112,12 @@ describe("buildSlimWofDatabase", () => {
 		}
 	})
 
-	test("preserves names + geojson only for selected IDs", () => {
+	test("preserves names + geojson only for selected IDs", async () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
 		buildFixtureWof(source)
 
-		buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 1 })
+		await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 1 })
 
 		const slim = new DatabaseSync(output, { readOnly: true })
 		try {
@@ -140,12 +140,12 @@ describe("buildSlimWofDatabase", () => {
 		}
 	})
 
-	test("builds the place_population aux table on the trimmed row set", () => {
+	test("builds the place_population aux table on the trimmed row set", async () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
 		buildFixtureWof(source)
 
-		buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 })
+		await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 })
 
 		const slim = new DatabaseSync(output, { readOnly: true })
 		try {
@@ -159,7 +159,7 @@ describe("buildSlimWofDatabase", () => {
 		}
 	})
 
-	test("merges rows across multiple input shards without duplicating", () => {
+	test("merges rows across multiple input shards without duplicating", async () => {
 		const adminSource = join(scratch, "admin.db")
 		const postcodeSource = join(scratch, "postcode.db")
 		const output = join(scratch, "slim.db")
@@ -168,7 +168,7 @@ describe("buildSlimWofDatabase", () => {
 		// postcode rows to verify INSERT OR IGNORE actually de-dupes on id).
 		buildFixtureWof(postcodeSource)
 
-		const result = buildSlimWofDatabase({
+		const result = await buildSlimWofDatabase({
 			inputs: [adminSource, postcodeSource],
 			output,
 			topLocalitiesPerCountry: 1,
