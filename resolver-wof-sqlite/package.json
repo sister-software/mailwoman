@@ -26,7 +26,8 @@
 		"README.md"
 	],
 	"bin": {
-		"mailwoman-wof-build-fts": "./out/build-fts-cli.js"
+		"mailwoman-wof-build-fts": "./out/build-fts-cli.js",
+		"mailwoman-wof-build-slim": "./out/build-slim-cli.js"
 	},
 	"publishConfig": {
 		"access": "public"
