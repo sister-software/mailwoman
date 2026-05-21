@@ -4430,6 +4430,7 @@ __metadata:
     kysely: "npm:^0.29.2"
   bin:
     mailwoman-wof-build-fts: ./out/build-fts-cli.js
+    mailwoman-wof-build-slim: ./out/build-slim-cli.js
   languageName: unknown
   linkType: soft
 
