@@ -45,18 +45,44 @@ export default function DemoPage(): React.ReactElement {
 
 // All heavy logic lives below this boundary — only loaded after Docusaurus hydrates on the client.
 
+/**
+ * Read the initial address from the URL `?q=` parameter so links like
+ * https://mailwoman.sister.software/demo/?q=1600+Pennsylvania+Ave land directly on a populated
+ * input. Decoded once at mount; further edits go through React state and update the URL via
+ * history.replaceState (no scroll / reload).
+ */
+const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
+function initialAddress(): string {
+	if (typeof window === "undefined") return DEFAULT_ADDRESS
+	const url = new URL(window.location.href)
+	return url.searchParams.get("q") ?? DEFAULT_ADDRESS
+}
+
 function DemoApp(): React.ReactElement {
 	const [loadingProgress, setLoadingProgress] = React.useState<string>("Loading neural model…")
 	const [classifier, setClassifier] = React.useState<MailwomanClassifierLike | null>(null)
 	const [lookupLoader, setLookupLoader] = React.useState<(() => Promise<MailwomanLookupLike>) | null>(null)
 	const [lookup, setLookup] = React.useState<MailwomanLookupLike | null>(null)
-	const [text, setText] = React.useState("1600 Pennsylvania Ave NW, Washington, DC 20500")
+	const [text, setText] = React.useState(initialAddress)
 	const [busy, setBusy] = React.useState(false)
 	const [result, setResult] = React.useState<DemoResult | null>(null)
 	const [error, setError] = React.useState<string | null>(null)
 	const mapContainerRef = React.useRef<HTMLDivElement>(null)
 	const mapRef = React.useRef<unknown>(null)
 	const markerRef = React.useRef<unknown>(null)
+
+	// Sync ?q= when the operator edits the address. replaceState avoids polluting back-button
+	// history with every keystroke; only the latest state lands in the URL.
+	React.useEffect(() => {
+		if (typeof window === "undefined") return
+		const url = new URL(window.location.href)
+		if (text === DEFAULT_ADDRESS) {
+			url.searchParams.delete("q")
+		} else {
+			url.searchParams.set("q", text)
+		}
+		window.history.replaceState(null, "", url.toString())
+	}, [text])
 
 	// Mount: load just the neural model + map up-front. The 35 MB WOF DB is deferred until first
 	// resolve — most visitors poke at the parse output without ever hitting "submit", and shipping
