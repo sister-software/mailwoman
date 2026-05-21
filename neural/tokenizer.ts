@@ -31,7 +31,6 @@
  */
 
 import { SentencePieceProcessor } from "@sctg/sentencepiece-js"
-import { promises as fs } from "node:fs"
 
 /** SentencePiece's word-boundary marker (U+2581 LOWER ONE EIGHTH BLOCK). */
 export const SPACE_SENTINEL = "▁"
@@ -63,9 +62,15 @@ export class MailwomanTokenizer {
 		return new MailwomanTokenizer(processor)
 	}
 
-	/** Load from a path to a `tokenizer.model` file on disk. Node-only convenience. */
+	/**
+	 * Load from a path to a `tokenizer.model` file on disk. **Node-only** — the dynamic `node:fs`
+	 * import keeps this method out of the static dependency graph so the rest of the tokenizer
+	 * bundles cleanly for the browser. Calling it in a browser throws at runtime; use
+	 * `loadFromBase64` (or the URL-fetching loaders in `@mailwoman/neural-web`) instead.
+	 */
 	static async loadFromFile(modelPath: string): Promise<MailwomanTokenizer> {
-		const buf = await fs.readFile(modelPath)
+		const { readFile } = await import(/* webpackIgnore: true */ "node:fs/promises")
+		const buf = await readFile(modelPath)
 		return MailwomanTokenizer.loadFromBase64(buf.toString("base64"))
 	}
 

@@ -20,9 +20,9 @@ import {
 	decodeAsXml,
 } from "@mailwoman/core/decoder"
 import { STAGE1_BIO_LABELS } from "./labels.js"
-import { type InferResult, OnnxRunner } from "./onnx-runner.js"
+import type { InferResult } from "./onnx-runner.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
-import { type ResolveWeightsOpts, resolveWeights } from "./weights.js"
+import type { ResolveWeightsOpts } from "./weights.js"
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `OnnxRunner`
@@ -53,8 +53,22 @@ export class NeuralAddressClassifier {
 	 *
 	 * Resolution order: explicit paths in `opts` → `@mailwoman/neural-weights-<locale>` package →
 	 * throws a single actionable error.
+	 *
+	 * **Node-only.** The dynamic imports keep `OnnxRunner` (onnxruntime-node) + `resolveWeights`
+	 * (uses Node fs) out of the static dependency graph, so this file can be bundled for the browser
+	 * by `@mailwoman/neural-web`. Calling this method in a browser will throw at runtime — use
+	 * `loadNeuralClassifierFromUrls` from `@mailwoman/neural-web` instead.
 	 */
 	static async loadFromWeights(opts: ResolveWeightsOpts = {}): Promise<NeuralAddressClassifier> {
+		// /* webpackIgnore: true */ tells webpack to leave the dynamic import statement intact —
+		// it becomes a runtime native ESM import that resolves in Node (which has onnxruntime-node
+		// + node:fs) and throws cleanly in a browser if called. Without the directive, webpack
+		// pulls onnx-runner / weights into the browser chunk graph + then chokes on the Node-only
+		// builtins they reference.
+		const [{ OnnxRunner }, { resolveWeights }] = await Promise.all([
+			import(/* webpackIgnore: true */ "./onnx-runner.js"),
+			import(/* webpackIgnore: true */ "./weights.js"),
+		])
 		const { modelPath, tokenizerPath } = resolveWeights(opts)
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(tokenizerPath),

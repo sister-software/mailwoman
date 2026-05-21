@@ -54,7 +54,10 @@ export interface LoadSlimOpts {
 export async function loadSlimWofDatabase(opts: LoadSlimOpts): Promise<{ db: Database; sqlite3: Sqlite3Static }> {
 	const bytes = typeof opts.source === "string" ? await fetchBytes(opts.source, opts.fetchImpl) : opts.source
 
-	const sqlite3 = await sqlite3InitModule({
+	// sqlite3InitModule's TS signature lies about its options bag — the runtime DOES accept the
+	// Emscripten-style {print, printErr, locateFile} options shown in the upstream docs. Cast to
+	// `any` for the call site rather than shadowing the typed wrapper for the entire file.
+	const sqlite3 = await (sqlite3InitModule as unknown as (opts: Record<string, unknown>) => Promise<Sqlite3Static>)({
 		print: () => {}, // suppress stdout from the WASM runtime
 		printErr: (msg: string) => console.error("[sqlite-wasm]", msg),
 		...(opts.wasmUrl ? { locateFile: (name: string) => (name.endsWith(".wasm") ? opts.wasmUrl! : name) } : {}),
