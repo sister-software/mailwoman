@@ -62,7 +62,8 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 		}
 
 		const sql =
-			`SELECT spr.id, spr.name, spr.placetype, spr.country, spr.latitude, spr.longitude, spr.parent_id, bm25(place_search) AS bm25 ` +
+			`SELECT spr.id, spr.name, spr.placetype, spr.country, spr.latitude, spr.longitude, spr.parent_id, ` +
+			`spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude, bm25(place_search) AS bm25 ` +
 			`FROM place_search JOIN spr ON spr.id = place_search.wof_id ` +
 			`WHERE ${conditions.join(" AND ")} ` +
 			`ORDER BY bm25(place_search) ASC ` +
@@ -77,6 +78,10 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 			latitude: number
 			longitude: number
 			parent_id: number | null
+			min_latitude: number | null
+			max_latitude: number | null
+			min_longitude: number | null
+			max_longitude: number | null
 			bm25: number
 		}>
 
@@ -88,6 +93,15 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 			lat: row.latitude,
 			lon: row.longitude,
 			parent_id: row.parent_id ?? undefined,
+			bbox:
+				row.min_latitude != null && row.max_latitude != null && row.min_longitude != null && row.max_longitude != null
+					? {
+							minLat: row.min_latitude,
+							maxLat: row.max_latitude,
+							minLon: row.min_longitude,
+							maxLon: row.max_longitude,
+						}
+					: undefined,
 			// BM25 is negative (better = more negative). Flip sign so higher = better, matching the
 			// PlaceLookup contract.
 			score: -row.bm25,
