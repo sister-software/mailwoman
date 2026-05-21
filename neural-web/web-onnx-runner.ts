@@ -22,7 +22,7 @@
  *   `@mailwoman/neural/onnx-runner` for the full export contract this file mirrors.
  */
 
-import type { InferResult, NeuralRunner } from "@mailwoman/neural"
+import type { InferResult, NeuralRunner } from "@mailwoman/neural/browser"
 import * as ort from "onnxruntime-web"
 
 export interface WebOnnxRunnerOpts {

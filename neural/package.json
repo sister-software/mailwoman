@@ -13,7 +13,8 @@
 		"./package.json": "./package.json",
 		".": "./out/index.js",
 		"./tokenizer": "./out/tokenizer.js",
-		"./weights": "./out/weights.js"
+		"./weights": "./out/weights.js",
+		"./browser": "./out/browser.js"
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
@@ -26,6 +27,7 @@
 		"out/**/*.d.ts",
 		"out/**/*.d.ts.map"
 	],
+	"sideEffects": false,
 	"publishConfig": {
 		"access": "public"
 	}

@@ -13,7 +13,7 @@
  *   files; for a static deploy, copy them into the public bundle and pass the resulting URLs.
  */
 
-import { MailwomanTokenizer, NeuralAddressClassifier } from "@mailwoman/neural"
+import { MailwomanTokenizer, NeuralAddressClassifier } from "@mailwoman/neural/browser"
 
 import { WebOnnxRunner, type WebOnnxRunnerOpts } from "./web-onnx-runner.js"
 

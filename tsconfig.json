@@ -23,7 +23,9 @@
 		{ "path": "./classifiers" },
 		{ "path": "./corpus" },
 		{ "path": "./neural" },
+		{ "path": "./neural-web" },
 		{ "path": "./resolver-wof-sqlite" },
+		{ "path": "./resolver-wof-wasm" },
 		{ "path": "./mailwoman" }
 	]
 }

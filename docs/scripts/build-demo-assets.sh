@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+#
+# Builds the static assets the /demo page needs:
+#   - docs/static/mailwoman/model.onnx        (from @mailwoman/neural-weights-en-us)
+#   - docs/static/mailwoman/tokenizer.model   (from @mailwoman/neural-weights-en-us)
+#   - docs/static/mailwoman/wof-hot.db        (slim WOF distribution; built via mailwoman-wof-build-slim)
+#
+# Run before `yarn build` if the assets are missing or stale. The Docusaurus build itself does NOT
+# regenerate these — they're heavy artifacts kept out of git.
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+DOCS_ROOT="$(pwd)"
+STATIC_DIR="${DOCS_ROOT}/static/mailwoman"
+REPO_ROOT="$(cd "${DOCS_ROOT}/.." && pwd)"
+WEIGHTS_PKG="${REPO_ROOT}/neural-weights-en-us"
+SLIM_CLI="${REPO_ROOT}/resolver-wof-sqlite/out/build-slim-cli.js"
+
+# WOF source paths. Override via env (PLAYPEN_WOF_ADMIN_DB / PLAYPEN_WOF_POSTCODE_DB) for non-host
+# environments.
+WOF_ADMIN_DB="${PLAYPEN_WOF_ADMIN_DB:-/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db}"
+WOF_POSTCODE_DB="${PLAYPEN_WOF_POSTCODE_DB:-/mnt/playpen/mailwoman-data/wof/whosonfirst-data-postalcode-us-latest.db}"
+
+mkdir -p "${STATIC_DIR}"
+
+echo "==> model.onnx (from ${WEIGHTS_PKG}/model.onnx)"
+if [[ ! -e "${WEIGHTS_PKG}/model.onnx" ]]; then
+    echo "ERROR: ${WEIGHTS_PKG}/model.onnx missing." >&2
+    echo "Run neural-weights-en-us/scripts/link-dev-weights.sh first or pass --weights." >&2
+    exit 1
+fi
+cp -L "${WEIGHTS_PKG}/model.onnx" "${STATIC_DIR}/model.onnx"
+
+echo "==> tokenizer.model (from ${WEIGHTS_PKG}/tokenizer.model)"
+cp -L "${WEIGHTS_PKG}/tokenizer.model" "${STATIC_DIR}/tokenizer.model"
+
+echo "==> wof-hot.db (slim WOF, top-1000 US localities + all postcodes)"
+if [[ ! -e "${SLIM_CLI}" ]]; then
+    echo "build-slim-cli not compiled — running yarn compile first."
+    (cd "${REPO_ROOT}" && yarn compile)
+fi
+node "${SLIM_CLI}" \
+    --in "${WOF_ADMIN_DB}" \
+    --in "${WOF_POSTCODE_DB}" \
+    --out "${STATIC_DIR}/wof-hot.db" \
+    --top "${SLIM_TOP_LOCALITIES:-1000}"
+
+echo
+echo "Done. Static assets:"
+ls -lh "${STATIC_DIR}/"
