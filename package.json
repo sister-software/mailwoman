@@ -77,6 +77,7 @@
 		"neural-weights-fr-fr",
 		"resolver-wof-sqlite",
 		"resolver-wof-sqlite/spike",
+		"resolver-wof-wasm",
 		"docs"
 	],
 	"resolutions": {

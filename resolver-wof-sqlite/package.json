@@ -12,7 +12,8 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": "./out/index.js",
-		"./fts": "./out/fts.js"
+		"./fts": "./out/fts.js",
+		"./build-slim": "./out/build-slim.js"
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",

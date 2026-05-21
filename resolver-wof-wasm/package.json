@@ -1,0 +1,31 @@
+{
+	"name": "@mailwoman/resolver-wof-wasm",
+	"version": "0.1.0",
+	"description": "Who's On First WASM resolver — browser-side PlaceLookup backed by @sqlite.org/sqlite-wasm. Drop-in replacement for @mailwoman/resolver-wof-sqlite when you need a static-asset deploy (Phase B of the demo plan).",
+	"license": "AGPL-3.0-only",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "resolver-wof-wasm"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@sqlite.org/sqlite-wasm": "^3.53.0-build1"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}
