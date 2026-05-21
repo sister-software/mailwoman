@@ -12,7 +12,8 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": "./out/index.js",
-		"./tokenizer": "./out/tokenizer.js"
+		"./tokenizer": "./out/tokenizer.js",
+		"./weights": "./out/weights.js"
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",

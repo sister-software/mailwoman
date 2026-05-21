@@ -20,13 +20,22 @@ import {
 	decodeAsXml,
 } from "@mailwoman/core/decoder"
 import { STAGE1_BIO_LABELS } from "./labels.js"
-import { OnnxRunner } from "./onnx-runner.js"
+import { type InferResult, OnnxRunner } from "./onnx-runner.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import { type ResolveWeightsOpts, resolveWeights } from "./weights.js"
 
+/**
+ * Structural type the classifier needs from a runner. Lets callers swap the Node-side `OnnxRunner`
+ * for a browser-side runner (e.g. `@mailwoman/neural-web`'s `WebOnnxRunner`) without inheritance —
+ * the classifier only ever calls `infer(ids)`.
+ */
+export interface NeuralRunner {
+	infer(tokenIds: number[]): Promise<InferResult>
+}
+
 export interface NeuralAddressClassifierConfig {
 	tokenizer: MailwomanTokenizer
-	runner: OnnxRunner
+	runner: NeuralRunner
 	/** Label vocabulary in the order the model emits them. Defaults to Stage 1 (v0.1.0/v0.2.0). */
 	labels?: readonly string[]
 }

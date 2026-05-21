@@ -73,6 +73,7 @@
 		"classifiers",
 		"corpus",
 		"neural",
+		"neural-web",
 		"neural-weights-en-us",
 		"neural-weights-fr-fr",
 		"resolver-wof-sqlite",
