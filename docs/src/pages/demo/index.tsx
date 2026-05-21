@@ -27,6 +27,7 @@ import Layout from "@theme/Layout"
 import "maplibre-gl/dist/maplibre-gl.css"
 import React from "react"
 
+import { buildMapStyle, currentMapTheme } from "./_cartography"
 import styles from "./styles.module.css"
 
 export default function DemoPage(): React.ReactElement {
@@ -105,7 +106,7 @@ function DemoApp(): React.ReactElement {
 
 				if (cancelled) return
 				if (mapContainerRef.current) {
-					const style = await buildMapStyle(currentMapTheme())
+					const style = buildMapStyle(currentMapTheme())
 					const map = new maplibre.Map({
 						container: mapContainerRef.current,
 						style: style as maplibre.StyleSpecification,
@@ -115,6 +116,15 @@ function DemoApp(): React.ReactElement {
 					})
 					map.addControl(new maplibre.AttributionControl({ compact: true }))
 					mapRef.current = map
+					// Wire 3D terrain once the style + DEM source are loaded.
+					map.on("load", () => {
+						try {
+							map.setTerrain({ source: "terrain", exaggeration: 1 })
+						} catch {
+							// Some browsers / WebGL contexts reject terrain (no GL_OES_element_index_uint, etc.);
+							// fall through to flat rendering rather than breaking the page.
+						}
+					})
 				}
 
 				if (cancelled) return
@@ -149,10 +159,7 @@ function DemoApp(): React.ReactElement {
 		const observer = new MutationObserver(() => {
 			const map = mapRef.current as MaplibreMapLike | null
 			if (!map?.setStyle) return
-			void (async () => {
-				const style = await buildMapStyle(currentMapTheme())
-				map.setStyle?.(style)
-			})()
+			map.setStyle(buildMapStyle(currentMapTheme()))
 		})
 		observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] })
 		return () => observer.disconnect()
@@ -425,47 +432,6 @@ interface ResolvedHit {
 	lon: number
 	score: number
 	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
-}
-
-type MapTheme = "light" | "dark"
-
-const SOURCE_NAME = "protomaps"
-const TILE_URL = "https://tiles.sister.software/basemap/{z}/{x}/{y}.mvt"
-const GLYPHS_URL = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf"
-const SPRITE_URL_BASE = "https://protomaps.github.io/basemaps-assets/sprites/v4"
-const ATTRIBUTION = '<a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap contributors</a>'
-
-/**
- * Build a full MapLibre style by composing the upstream protomaps-themes-base layers (which ship
- * city / state / road labels for free) over our own tile source. Returns a Promise because the
- * themes package is dynamically imported to keep the cold-path bundle small.
- */
-async function buildMapStyle(theme: MapTheme): Promise<unknown> {
-	const themes = await import("protomaps-themes-base")
-	const layers = themes.default(SOURCE_NAME, theme, "en")
-	return {
-		version: 8,
-		glyphs: GLYPHS_URL,
-		sprite: `${SPRITE_URL_BASE}/${theme}`,
-		sources: {
-			[SOURCE_NAME]: {
-				type: "vector",
-				tiles: [TILE_URL],
-				maxzoom: 15,
-				attribution: ATTRIBUTION,
-			},
-		},
-		layers,
-	}
-}
-
-/**
- * Read the current map theme from Docusaurus's `data-theme` attribute on <html>. Returns "light"
- * when unset / SSR — initial render matches the light default until the client hydrates.
- */
-function currentMapTheme(): MapTheme {
-	if (typeof document === "undefined") return "light"
-	return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"
 }
 
 const BBOX_SOURCE = "mailwoman-bbox"
