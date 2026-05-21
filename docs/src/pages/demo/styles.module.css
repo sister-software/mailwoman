@@ -54,7 +54,11 @@
 	opacity: 0.5;
 }
 
-.controls button {
+/* Scope the primary submit-button styling to the form so secondary buttons (example chips, debug
+ * toggle) keep their own visual weight. Without this scope, `.controls button` outranked the more
+ * specific `.exampleBtn` selector via SVN (0,1,1 vs 0,1,0) and example buttons rendered as
+ * filled primary buttons — misleading the visual hierarchy. */
+.controls form button {
 	padding: 0.5rem 0.75rem;
 	background: var(--ifm-color-primary);
 	color: white;
@@ -64,7 +68,7 @@
 	cursor: pointer;
 }
 
-.controls button:disabled {
+.controls form button:disabled {
 	background: var(--ifm-color-emphasis-400);
 	cursor: not-allowed;
 }
