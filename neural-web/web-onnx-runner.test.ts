@@ -19,15 +19,31 @@
 
 import { MailwomanTokenizer, NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { existsSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 import { describe, expect, test } from "vitest"
 
 import { WebOnnxRunner } from "./web-onnx-runner.js"
 
-describe("WebOnnxRunner", () => {
+// CI doesn't ship the v0.2.0 model files — they're operator-supplied via
+// `scripts/link-dev-weights.sh` after a training run. Skip the real-model tests when the weights
+// package's `model.onnx` isn't on disk; the runner's structural behavior still gets exercised by
+// the unit suite under neural/test/.
+function probeWeights(): { modelPath: string; tokenizerPath: string } | null {
+	try {
+		const r = resolveWeights({})
+		if (!existsSync(r.modelPath) || !existsSync(r.tokenizerPath)) return null
+		return r
+	} catch {
+		return null
+	}
+}
+const weights = probeWeights()
+const haveWeights = weights !== null
+
+describe.skipIf(!haveWeights)("WebOnnxRunner", () => {
 	test("loads a real model and produces logits of the expected shape", async () => {
-		const { modelPath } = resolveWeights({})
-		const modelBytes = new Uint8Array(await readFile(modelPath))
+		const modelBytes = new Uint8Array(await readFile(weights!.modelPath))
 		const runner = await WebOnnxRunner.fromBytes(modelBytes, { useWebGpu: false })
 		const tokenIds = [1, 2, 3, 4, 5] // arbitrary; the SP vocab assigns these to common pieces
 		const result = await runner.infer(tokenIds)
@@ -42,10 +58,9 @@ describe("WebOnnxRunner", () => {
 	})
 
 	test("classifier.parse() works with a WebOnnxRunner injected", async () => {
-		const { modelPath, tokenizerPath } = resolveWeights({})
-		const modelBytes = new Uint8Array(await readFile(modelPath))
+		const modelBytes = new Uint8Array(await readFile(weights!.modelPath))
 		const [tokenizer, runner] = await Promise.all([
-			MailwomanTokenizer.loadFromFile(tokenizerPath),
+			MailwomanTokenizer.loadFromFile(weights!.tokenizerPath),
 			WebOnnxRunner.fromBytes(modelBytes, { useWebGpu: false }),
 		])
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner })
