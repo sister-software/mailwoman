@@ -46,8 +46,9 @@ export default function DemoPage(): React.ReactElement {
 // All heavy logic lives below this boundary — only loaded after Docusaurus hydrates on the client.
 
 function DemoApp(): React.ReactElement {
-	const [loadingProgress, setLoadingProgress] = React.useState<string>("Loading assets…")
+	const [loadingProgress, setLoadingProgress] = React.useState<string>("Loading neural model…")
 	const [classifier, setClassifier] = React.useState<MailwomanClassifierLike | null>(null)
+	const [lookupLoader, setLookupLoader] = React.useState<(() => Promise<MailwomanLookupLike>) | null>(null)
 	const [lookup, setLookup] = React.useState<MailwomanLookupLike | null>(null)
 	const [text, setText] = React.useState("1600 Pennsylvania Ave NW, Washington, DC 20500")
 	const [busy, setBusy] = React.useState(false)
@@ -57,32 +58,21 @@ function DemoApp(): React.ReactElement {
 	const mapRef = React.useRef<unknown>(null)
 	const markerRef = React.useRef<unknown>(null)
 
-	// Mount: load everything in parallel.
+	// Mount: load just the neural model + map up-front. The 35 MB WOF DB is deferred until first
+	// resolve — most visitors poke at the parse output without ever hitting "submit", and shipping
+	// 35 MB of zip-code geometries to a window-shopper is wasteful.
 	React.useEffect(() => {
 		let cancelled = false
 		void (async () => {
 			try {
-				setLoadingProgress("Loading neural model + WOF DB in parallel…")
-
-				const [neuralWeb, resolverWasm, maplibre] = await Promise.all([
-					import("@mailwoman/neural-web"),
-					import("@mailwoman/resolver-wof-wasm"),
-					import("maplibre-gl"),
-				])
+				const [neuralWeb, maplibre] = await Promise.all([import("@mailwoman/neural-web"), import("maplibre-gl")])
 
 				if (cancelled) return
-				setLoadingProgress("Initializing neural runtime…")
+				setLoadingProgress("Loading neural model (~25 MB)…")
 				const cls = await neuralWeb.loadNeuralClassifierFromUrls({
 					modelUrl: "/mailwoman/model.onnx",
 					tokenizerUrl: "/mailwoman/tokenizer.model",
 				})
-
-				if (cancelled) return
-				setLoadingProgress("Initializing WOF resolver…")
-				const { db } = await resolverWasm.loadSlimWofDatabase({
-					source: "/mailwoman/wof-hot.db",
-				})
-				const wofLookup = new resolverWasm.WofWasmPlaceLookup({ db })
 
 				if (cancelled) return
 				if (mapContainerRef.current) {
@@ -99,7 +89,15 @@ function DemoApp(): React.ReactElement {
 
 				if (cancelled) return
 				setClassifier(cls)
-				setLookup(wofLookup)
+				// Stash a one-shot factory that loads the WOF DB on demand. Captured in closure
+				// to avoid re-importing the wasm wrapper.
+				setLookupLoader(() => async () => {
+					const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
+					const { db } = await resolverWasm.loadSlimWofDatabase({
+						source: "/mailwoman/wof-hot.db",
+					})
+					return new resolverWasm.WofWasmPlaceLookup({ db })
+				})
 				setLoadingProgress("")
 			} catch (e) {
 				if (cancelled) return
@@ -112,10 +110,27 @@ function DemoApp(): React.ReactElement {
 		}
 	}, [])
 
+	// Resolve the WOF lookup on first submit (or any time we don't have it yet).
+	const ensureLookup = React.useCallback(async (): Promise<MailwomanLookupLike | null> => {
+		if (lookup) return lookup
+		if (!lookupLoader) return null
+		setLoadingProgress("Loading WOF locality DB (~35 MB)…")
+		try {
+			const l = await lookupLoader()
+			setLookup(l)
+			setLoadingProgress("")
+			return l
+		} catch (e) {
+			setLoadingProgress("")
+			setError((e as Error).message ?? String(e))
+			return null
+		}
+	}, [lookup, lookupLoader])
+
 	const onSubmit = React.useCallback(
 		async (e: React.FormEvent) => {
 			e.preventDefault()
-			if (!classifier || !lookup) return
+			if (!classifier) return
 			setBusy(true)
 			setError(null)
 			try {
@@ -125,6 +140,13 @@ function DemoApp(): React.ReactElement {
 				const stateNode = nodes.find((n) => n.tag === "region" || n.tag === "state")
 				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
+				// First submit: fetch the WOF DB. Subsequent submits reuse it.
+				const wofLookup = await ensureLookup()
+				if (!wofLookup) {
+					setResult({ tree, nodes, resolved: null, stateHint: stateNode?.value as string | undefined })
+					return
+				}
+
 				let resolved: ResolvedHit | null = null
 				const queryString =
 					(postcodeNode?.value as string | undefined) ?? (localityNode?.value as string | undefined) ?? text
@@ -133,12 +155,20 @@ function DemoApp(): React.ReactElement {
 					: localityNode
 						? "locality"
 						: undefined
-				const candidates = await lookup.findPlace({
+				const candidates = await wofLookup.findPlace({
 					text: queryString,
 					placetype,
 					country: "US",
 					limit: 5,
 				})
+				// Clear any stale marker from a prior submit before deciding whether to drop a new one —
+				// otherwise a "Pier 39" lookup followed by an unresolvable address would leave the SF
+				// marker hovering over a mismatched input.
+				if (markerRef.current) {
+					;(markerRef.current as { remove: () => void }).remove()
+					markerRef.current = null
+				}
+
 				if (candidates.length > 0) {
 					const best = candidates[0]!
 					resolved = {
@@ -149,7 +179,7 @@ function DemoApp(): React.ReactElement {
 						lon: best.lon,
 						score: best.score,
 					}
-					// Drop / move the marker.
+					// Drop a fresh marker + fly to the resolved coords.
 					const maplibre = await import("maplibre-gl")
 					if (mapRef.current && resolved) {
 						type MapLike = {
@@ -157,9 +187,6 @@ function DemoApp(): React.ReactElement {
 							getCenter: () => unknown
 						}
 						const map = mapRef.current as MapLike
-						if (markerRef.current) {
-							;(markerRef.current as { remove: () => void }).remove()
-						}
 						const marker = new maplibre.Marker({ color: "#e0367c" })
 							.setLngLat([resolved.lon, resolved.lat])
 							.addTo(map as unknown as maplibre.Map)
@@ -180,10 +207,10 @@ function DemoApp(): React.ReactElement {
 				setBusy(false)
 			}
 		},
-		[classifier, lookup, text]
+		[classifier, ensureLookup, text]
 	)
 
-	const ready = classifier !== null && lookup !== null
+	const ready = classifier !== null && lookupLoader !== null
 
 	return (
 		<div className={styles.layout}>
@@ -202,6 +229,21 @@ function DemoApp(): React.ReactElement {
 						{busy ? "Parsing…" : "Parse + resolve"}
 					</button>
 				</form>
+				<div className={styles.examples}>
+					<span className={styles.examplesLabel}>Try:</span>
+					{EXAMPLE_ADDRESSES.map((ex) => (
+						<button
+							key={ex.label}
+							type="button"
+							className={styles.exampleBtn}
+							disabled={!ready || busy}
+							onClick={() => setText(ex.address)}
+							title={ex.address}
+						>
+							{ex.label}
+						</button>
+					))}
+				</div>
 				{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
 				{error ? <p className={styles.error}>{error}</p> : null}
 				{result ? <ResultPanel result={result} /> : null}
@@ -212,6 +254,16 @@ function DemoApp(): React.ReactElement {
 		</div>
 	)
 }
+
+/** Hand-picked examples that all hit the top-1k slim subset. */
+const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
+	{ label: "White House", address: "1600 Pennsylvania Ave NW, Washington, DC 20500" },
+	{ label: "Empire State", address: "350 5th Ave, New York, NY 10118" },
+	{ label: "Pier 39 SF", address: "Pier 39, San Francisco, CA 94133" },
+	{ label: "Wrigley Field", address: "1060 W Addison St, Chicago, IL 60613" },
+	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
+	{ label: "ZIP only", address: "90210" },
+]
 
 function ResultPanel({ result }: { result: DemoResult }): React.ReactElement {
 	return (

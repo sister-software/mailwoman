@@ -69,6 +69,42 @@
 	cursor: not-allowed;
 }
 
+.examples {
+	margin-top: 0.75rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: baseline;
+}
+
+.examplesLabel {
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600);
+	margin-right: 0.25rem;
+}
+
+.exampleBtn {
+	font-size: 0.8rem;
+	padding: 0.25rem 0.55rem;
+	background: var(--ifm-color-emphasis-100);
+	color: var(--ifm-color-emphasis-800);
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	font-weight: 500;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.exampleBtn:hover:not(:disabled) {
+	background: var(--ifm-color-emphasis-200);
+	border-color: var(--ifm-color-primary);
+}
+
+.exampleBtn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
 .status {
 	font-style: italic;
 	color: var(--ifm-color-emphasis-600);
@@ -126,15 +162,33 @@
 	font-family: var(--ifm-font-family-monospace);
 }
 
+/*
+ * Map container — explicit height (not min-height) + position:relative on the wrapper.
+ *
+ * MapLibre's canvas auto-resizes via ResizeObserver. If the wrapper's height is `min-height`
+ * (unbounded growth allowed), the canvas hits a feedback loop: canvas size → wrapper size →
+ * canvas size → ... until the GPU buffer allocation OOMs the tab. Pinning to an explicit pixel
+ * height bounds the loop on first paint. Reported by the front-end Deepseek monitor 2026-05-21.
+ *
+ * `position: absolute; inset: 0` on the inner .map sidesteps the secondary case where a parent
+ * grid track itself grows in response to canvas size — the absolute element is out of flow, so
+ * its dimensions don't feed back into grid track sizing.
+ */
 .mapWrap {
-	min-height: 600px;
+	position: relative;
+	height: 600px;
 	border-radius: 8px;
 	overflow: hidden;
 	border: 1px solid var(--ifm-color-emphasis-300);
 }
 
 .map {
-	width: 100%;
-	height: 100%;
-	min-height: 600px;
+	position: absolute;
+	inset: 0;
+}
+
+@media (max-width: 996px) {
+	.mapWrap {
+		height: 480px;
+	}
 }
