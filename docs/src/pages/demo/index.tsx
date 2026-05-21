@@ -463,6 +463,19 @@ const BBOX_LINE_LAYER = "mailwoman-bbox-line"
  * distribution ships bbox columns on `spr` but not the full polygon geometry — bbox is the best
  * outline we can render without re-shipping the 1.5 GB geojson table.
  */
+/**
+ * Run `fn` as soon as the map's style is fully loaded. addSource / addLayer / setTerrain /
+ * removeLayer / removeSource all throw "Style is not done loading" when invoked too early — funnel
+ * every state-mutating call through this gate so initial-load + post-setStyle paths never race.
+ */
+function whenStyleReady(map: MaplibreMapLike, fn: () => void): void {
+	if (map.isStyleLoaded?.()) {
+		fn()
+		return
+	}
+	map.once?.("styledata", () => whenStyleReady(map, fn))
+}
+
 function drawBbox(
 	map: MaplibreMapLike,
 	bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number }
@@ -484,30 +497,34 @@ function drawBbox(
 			},
 		],
 	}
-	const existing = map.getSource?.(BBOX_SOURCE)
-	if (existing && typeof (existing as { setData?: unknown }).setData === "function") {
-		;(existing as { setData: (g: unknown) => void }).setData(geojson)
-		return
-	}
-	map.addSource?.(BBOX_SOURCE, { type: "geojson", data: geojson })
-	map.addLayer?.({
-		id: BBOX_FILL_LAYER,
-		type: "fill",
-		source: BBOX_SOURCE,
-		paint: { "fill-color": "#e0367c", "fill-opacity": 0.12 },
-	})
-	map.addLayer?.({
-		id: BBOX_LINE_LAYER,
-		type: "line",
-		source: BBOX_SOURCE,
-		paint: { "line-color": "#e0367c", "line-width": 2 },
+	whenStyleReady(map, () => {
+		const existing = map.getSource?.(BBOX_SOURCE)
+		if (existing && typeof (existing as { setData?: unknown }).setData === "function") {
+			;(existing as { setData: (g: unknown) => void }).setData(geojson)
+			return
+		}
+		map.addSource?.(BBOX_SOURCE, { type: "geojson", data: geojson })
+		map.addLayer?.({
+			id: BBOX_FILL_LAYER,
+			type: "fill",
+			source: BBOX_SOURCE,
+			paint: { "fill-color": "#e0367c", "fill-opacity": 0.12 },
+		})
+		map.addLayer?.({
+			id: BBOX_LINE_LAYER,
+			type: "line",
+			source: BBOX_SOURCE,
+			paint: { "line-color": "#e0367c", "line-width": 2 },
+		})
 	})
 }
 
 function clearBbox(map: MaplibreMapLike): void {
-	if (map.getLayer?.(BBOX_FILL_LAYER)) map.removeLayer?.(BBOX_FILL_LAYER)
-	if (map.getLayer?.(BBOX_LINE_LAYER)) map.removeLayer?.(BBOX_LINE_LAYER)
-	if (map.getSource?.(BBOX_SOURCE)) map.removeSource?.(BBOX_SOURCE)
+	whenStyleReady(map, () => {
+		if (map.getLayer?.(BBOX_FILL_LAYER)) map.removeLayer?.(BBOX_FILL_LAYER)
+		if (map.getLayer?.(BBOX_LINE_LAYER)) map.removeLayer?.(BBOX_LINE_LAYER)
+		if (map.getSource?.(BBOX_SOURCE)) map.removeSource?.(BBOX_SOURCE)
+	})
 }
 
 interface MaplibreMapLike {
