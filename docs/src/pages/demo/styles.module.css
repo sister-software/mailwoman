@@ -127,6 +127,39 @@
 	letter-spacing: 0.05em;
 }
 
+.resultHeader {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+}
+
+.debugBtn {
+	font-size: 0.75rem;
+	padding: 0.2rem 0.5rem;
+	background: transparent;
+	color: var(--ifm-color-emphasis-700);
+	border: 1px solid var(--ifm-color-emphasis-400);
+	border-radius: 4px;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.debugBtn:hover {
+	color: var(--ifm-color-primary);
+	border-color: var(--ifm-color-primary);
+}
+
+.xml {
+	font-size: 0.75rem;
+	background: var(--ifm-code-background);
+	padding: 0.75rem;
+	border-radius: 4px;
+	max-height: 240px;
+	overflow: auto;
+	margin: 0 0 1rem 0;
+	white-space: pre;
+}
+
 .componentTable {
 	width: 100%;
 	font-size: 0.875rem;

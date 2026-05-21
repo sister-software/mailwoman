@@ -282,9 +282,31 @@ const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
 ]
 
 function ResultPanel({ result }: { result: DemoResult }): React.ReactElement {
+	const [showXml, setShowXml] = React.useState(false)
+	const [xml, setXml] = React.useState<string | null>(null)
+
+	// Lazy-load the XML serializer the first time the operator asks for debug output. Stripping it
+	// from the main bundle keeps the demo's cold-path payload down; tree-shaking can't drop it
+	// because the rest of the module re-exports from @mailwoman/core/decoder.
+	const onToggle = React.useCallback(async () => {
+		if (xml) {
+			setShowXml((v) => !v)
+			return
+		}
+		const { decodeAsXml } = await import("@mailwoman/core/decoder")
+		setXml(decodeAsXml(result.tree as Parameters<typeof decodeAsXml>[0]))
+		setShowXml(true)
+	}, [xml, result.tree])
+
 	return (
 		<div className={styles.resultPanel}>
-			<h2>Parsed components</h2>
+			<div className={styles.resultHeader}>
+				<h2>Parsed components</h2>
+				<button type="button" className={styles.debugBtn} onClick={onToggle}>
+					{showXml ? "Hide XML" : "Show XML"}
+				</button>
+			</div>
+			{showXml && xml ? <pre className={styles.xml}>{xml}</pre> : null}
 			<table className={styles.componentTable}>
 				<thead>
 					<tr>
