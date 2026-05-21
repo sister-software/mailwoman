@@ -1,5 +1,6 @@
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config, Plugin } from "@docusaurus/types"
+import { existsSync } from "node:fs"
 import { createRequire } from "node:module"
 import { dirname, resolve as resolvePath } from "node:path"
 import { themes as prismThemes } from "prism-react-renderer"
@@ -8,15 +9,32 @@ import webpack from "webpack"
 // This runs in Node.js — don't use client-side code here (browser APIs, JSX...)
 
 /**
- * Resolve a workspace package to its compiled `out/index.js` entry. Docusaurus's bundler trips on
- * yarn-workspace symlinks AND on the package-export indirection for our nested mailwoman packages —
- * alias straight to the compiled file. Sub-entrypoints (`./fts`, `./weights`, …) get their own
- * aliases below.
+ * Resolve a workspace package's entry file. Prefer the source `index.ts` so `yarn build` works
+ * standalone — without this fallback the alias points at `out/index.js`, which only exists after a
+ * root-level `yarn compile` (tsc -b). swc-loader transpiles the source files inline, so going
+ * direct to TS costs nothing at build time and removes the precompile dependency.
+ *
+ * `./fts`, `./weights`, etc. get their own per-subpath aliases below.
  */
 const requireFromDocs = createRequire(import.meta.url)
 function resolveWorkspaceEntry(packageName: string): string {
 	const pkgJson = requireFromDocs.resolve(`${packageName}/package.json`)
-	return resolvePath(dirname(pkgJson), "out", "index.js")
+	const dir = dirname(pkgJson)
+	const sourceEntry = resolvePath(dir, "index.ts")
+	if (existsSync(sourceEntry)) return sourceEntry
+	return resolvePath(dir, "out", "index.js")
+}
+/** Same fallback logic for sub-entrypoints (single-file). */
+function resolveWorkspaceFile(packageDir: string, sub: string): string {
+	const sourceEntry = resolvePath(packageDir, `${sub}.ts`)
+	if (existsSync(sourceEntry)) return sourceEntry
+	return resolvePath(packageDir, "out", `${sub}.js`)
+}
+/** Same fallback logic for directory-style sub-entrypoints (./sub/index.{ts,js}). */
+function resolveWorkspaceDir(packageDir: string, sub: string): string {
+	const sourceEntry = resolvePath(packageDir, sub, "index.ts")
+	if (existsSync(sourceEntry)) return sourceEntry
+	return resolvePath(packageDir, "out", sub, "index.js")
 }
 
 const workspaceAliases: Record<string, string> = {}
@@ -34,7 +52,7 @@ for (const pkg of ["@mailwoman/neural-web", "@mailwoman/resolver-wof-wasm", "@ma
 // onnxruntime-node into the browser bundle.
 try {
 	const neuralDir = dirname(requireFromDocs.resolve("@mailwoman/neural/package.json"))
-	workspaceAliases["@mailwoman/neural/browser"] = resolvePath(neuralDir, "out", "browser.js")
+	workspaceAliases["@mailwoman/neural/browser"] = resolveWorkspaceFile(neuralDir, "browser")
 } catch {
 	// neural not installed
 }
@@ -60,11 +78,11 @@ if (coreDir) {
 		"types",
 		"resources",
 	]) {
-		workspaceAliases[`@mailwoman/core/${sub}`] = resolvePath(coreDir, "out", sub, "index.js")
+		workspaceAliases[`@mailwoman/core/${sub}`] = resolveWorkspaceDir(coreDir, sub)
 	}
-	// File-style sub-entrypoints (export from `./out/<path>.js`). environment/load is a single file.
-	workspaceAliases["@mailwoman/core/environment/load"] = resolvePath(coreDir, "out", "environment", "load.js")
-	workspaceAliases["@mailwoman/core/kysley/dialect"] = resolvePath(coreDir, "out", "kysley", "dialect.js")
+	// File-style sub-entrypoints (single file). environment/load + kysley/dialect.
+	workspaceAliases["@mailwoman/core/environment/load"] = resolveWorkspaceFile(coreDir, "environment/load")
+	workspaceAliases["@mailwoman/core/kysley/dialect"] = resolveWorkspaceFile(coreDir, "kysley/dialect")
 }
 
 /** Webpack alias plugin so dynamic `import("@mailwoman/...")` from the demo page resolves. */
@@ -84,6 +102,12 @@ function workspaceAliasPlugin(): Plugin {
 				],
 				resolve: {
 					alias: workspaceAliases,
+					// Workspace TS sources use ESM-style `.js` import specifiers (e.g.
+					// `import "./lookup.js"`). When the alias points at a `.ts` file, webpack still
+					// resolves relative imports literally — it needs to know `.js` *might* mean `.ts`.
+					extensionAlias: {
+						".js": [".ts", ".js"],
+					},
 					// Stub Node-only built-ins for browser bundling. @sctg/sentencepiece-js +
 					// onnxruntime-web + @sqlite.org/sqlite-wasm all carry isomorphic code that branches
 					// on `typeof window` / `process` — the Node branch references `fs` / `path` / etc.
