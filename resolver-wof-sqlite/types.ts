@@ -63,6 +63,13 @@ export interface PlaceCandidate {
 	 * mean zero, just unknown.
 	 */
 	population?: number
+	/**
+	 * Bounding box from WOF's `spr.{min,max}_{latitude,longitude}` columns. Coarse outline for the
+	 * place — a city's bbox is the city's full extent, a postcode's is roughly the postcode polygon's
+	 * envelope. Optional because not all callers ask for it; implementations are free to omit when
+	 * the underlying schema lacks the columns.
+	 */
+	bbox?: GeoBbox
 }
 
 /**

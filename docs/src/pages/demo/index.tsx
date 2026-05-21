@@ -22,6 +22,9 @@
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import Layout from "@theme/Layout"
+// MapLibre's marker / control / popup positioning depends on the bundled stylesheet. Without it,
+// .maplibregl-marker collapses to a zero-sized inline element and the SVG never paints.
+import "maplibre-gl/dist/maplibre-gl.css"
 import React from "react"
 
 import styles from "./styles.module.css"
@@ -102,9 +105,10 @@ function DemoApp(): React.ReactElement {
 
 				if (cancelled) return
 				if (mapContainerRef.current) {
+					const style = await buildMapStyle(currentMapTheme())
 					const map = new maplibre.Map({
 						container: mapContainerRef.current,
-						style: buildMapStyle(currentMapTheme()),
+						style: style as maplibre.StyleSpecification,
 						center: [-95.7129, 37.0902],
 						zoom: 3,
 						attributionControl: false,
@@ -143,10 +147,12 @@ function DemoApp(): React.ReactElement {
 	React.useEffect(() => {
 		if (typeof document === "undefined") return
 		const observer = new MutationObserver(() => {
-			const map = mapRef.current as { setStyle?: (s: unknown) => void } | null
-			if (map?.setStyle) {
-				map.setStyle(buildMapStyle(currentMapTheme()))
-			}
+			const map = mapRef.current as MaplibreMapLike | null
+			if (!map?.setStyle) return
+			void (async () => {
+				const style = await buildMapStyle(currentMapTheme())
+				map.setStyle?.(style)
+			})()
 		})
 		observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] })
 		return () => observer.disconnect()
@@ -190,26 +196,19 @@ function DemoApp(): React.ReactElement {
 				}
 
 				let resolved: ResolvedHit | null = null
-				const queryString =
-					(postcodeNode?.value as string | undefined) ?? (localityNode?.value as string | undefined) ?? text
-				const placetype: "locality" | "postalcode" | undefined = postcodeNode
-					? "postalcode"
-					: localityNode
-						? "locality"
-						: undefined
-				const candidates = await wofLookup.findPlace({
-					text: queryString,
-					placetype,
-					country: "US",
-					limit: 5,
-				})
-				// Clear any stale marker from a prior submit before deciding whether to drop a new one —
-				// otherwise a "Pier 39" lookup followed by an unresolvable address would leave the SF
-				// marker hovering over a mismatched input.
+				// Cascade: postcode first (most precise), fall back to locality if the postcode hit lacks
+				// usable coords (WOF ships ~22% of US postcodes with placeholder lat=0/lon=0 — postcode
+				// 20500 is one of them, ironically the White House). Final fallback: the raw input string,
+				// which lets the FTS5 index pick up whatever placename it can.
+				const candidates = await runCascade(wofLookup, postcodeNode, localityNode, text)
+				// Clear any stale marker + bbox from a prior submit before deciding whether to draw a new
+				// one — otherwise a "Pier 39" lookup followed by an unresolvable address would leave the
+				// SF marker hovering over a mismatched input.
 				if (markerRef.current) {
 					;(markerRef.current as { remove: () => void }).remove()
 					markerRef.current = null
 				}
+				if (mapRef.current) clearBbox(mapRef.current as MaplibreMapLike)
 
 				if (candidates.length > 0) {
 					const best = candidates[0]!
@@ -220,20 +219,30 @@ function DemoApp(): React.ReactElement {
 						lat: best.lat,
 						lon: best.lon,
 						score: best.score,
+						bbox: best.bbox,
 					}
 					// Drop a fresh marker + fly to the resolved coords.
 					const maplibre = await import("maplibre-gl")
 					if (mapRef.current && resolved) {
-						type MapLike = {
-							flyTo: (opts: { center: [number, number]; zoom: number }) => void
-							getCenter: () => unknown
-						}
-						const map = mapRef.current as MapLike
-						const marker = new maplibre.Marker({ color: "#e0367c" })
-							.setLngLat([resolved.lon, resolved.lat])
-							.addTo(map as unknown as maplibre.Map)
+						const map = mapRef.current as MaplibreMapLike & maplibre.Map
+						const marker = new maplibre.Marker({ color: "#e0367c" }).setLngLat([resolved.lon, resolved.lat]).addTo(map)
 						markerRef.current = marker
-						map.flyTo({ center: [resolved.lon, resolved.lat], zoom: 10 })
+						// If the lookup returned a bbox AND it's non-trivial (postcodes can be tiny —
+						// fit-bounds zooms way too far in), use fitBounds so the operator sees the whole
+						// place extent. Otherwise just flyTo the centroid with a reasonable city-level zoom.
+						const b = resolved.bbox
+						if (b && Math.max(b.maxLat - b.minLat, b.maxLon - b.minLon) > 0.001) {
+							drawBbox(map, b)
+							map.fitBounds?.(
+								[
+									[b.minLon, b.minLat],
+									[b.maxLon, b.maxLat],
+								],
+								{ padding: 40 }
+							)
+						} else {
+							map.flyTo?.({ center: [resolved.lon, resolved.lat], zoom: 12 })
+						}
 					}
 				}
 
@@ -396,6 +405,7 @@ interface MailwomanLookupLike {
 			lat: number
 			lon: number
 			score: number
+			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		}>
 	>
 }
@@ -414,121 +424,159 @@ interface ResolvedHit {
 	lat: number
 	lon: number
 	score: number
+	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 }
 
-/**
- * Color palettes for the synthesized MapLibre style. Light + dark variants match Docusaurus's
- * data-theme; the page-level hook below swaps map.setStyle() when the operator toggles theme.
- */
-const MAP_PALETTES = {
-	light: {
-		background: "#f7f5f0",
-		earth: "#fafaf7",
-		water: "#cfdfec",
-		landuse: "#eef0e3",
-		roadsMajor: "#d0c8b8",
-		roadsMinor: "#e0d8c8",
-		boundaries: "#9aa0a6",
-	},
-	dark: {
-		background: "#1a1d22",
-		earth: "#23272d",
-		water: "#1d2a3a",
-		landuse: "#2a2e35",
-		roadsMajor: "#52576a",
-		roadsMinor: "#3a3f4a",
-		boundaries: "#6a7280",
-	},
-} as const
+type MapTheme = "light" | "dark"
 
-type MapTheme = keyof typeof MAP_PALETTES
+const SOURCE_NAME = "protomaps"
+const TILE_URL = "https://tiles.sister.software/basemap/{z}/{x}/{y}.mvt"
+const GLYPHS_URL = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf"
+const SPRITE_URL_BASE = "https://protomaps.github.io/basemaps-assets/sprites/v4"
+const ATTRIBUTION = '<a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap contributors</a>'
 
 /**
- * Build a minimal MapLibre style document pointing at the Protomaps basemap vector tiles served by
- * `tiles.sister.software`. The host endpoint exposes only TileJSON (data-source metadata), not a
- * full MapLibre style — so we synthesize one here with the layers we care about for an address
- * demo. Visual styling stays deliberately plain so the marker pops.
+ * Build a full MapLibre style by composing the upstream protomaps-themes-base layers (which ship
+ * city / state / road labels for free) over our own tile source. Returns a Promise because the
+ * themes package is dynamically imported to keep the cold-path bundle small.
  */
-function buildMapStyle(theme: MapTheme = "light"): unknown {
-	const p = MAP_PALETTES[theme]
-	const tileUrl = "https://tiles.sister.software/basemap/{z}/{x}/{y}.mvt"
-	const attribution =
-		'<a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap contributors</a>'
+async function buildMapStyle(theme: MapTheme): Promise<unknown> {
+	const themes = await import("protomaps-themes-base")
+	const layers = themes.default(SOURCE_NAME, theme, "en")
 	return {
 		version: 8,
-		glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+		glyphs: GLYPHS_URL,
+		sprite: `${SPRITE_URL_BASE}/${theme}`,
 		sources: {
-			protomaps: {
+			[SOURCE_NAME]: {
 				type: "vector",
-				tiles: [tileUrl],
+				tiles: [TILE_URL],
 				maxzoom: 15,
-				attribution,
+				attribution: ATTRIBUTION,
 			},
 		},
-		layers: [
-			{ id: "background", type: "background", paint: { "background-color": p.background } },
-			{
-				id: "earth",
-				type: "fill",
-				source: "protomaps",
-				"source-layer": "earth",
-				paint: { "fill-color": p.earth },
-			},
-			{
-				id: "water",
-				type: "fill",
-				source: "protomaps",
-				"source-layer": "water",
-				paint: { "fill-color": p.water },
-			},
-			{
-				id: "landuse",
-				type: "fill",
-				source: "protomaps",
-				"source-layer": "landuse",
-				minzoom: 4,
-				paint: { "fill-color": p.landuse, "fill-opacity": 0.5 },
-			},
-			{
-				id: "roads-major",
-				type: "line",
-				source: "protomaps",
-				"source-layer": "roads",
-				minzoom: 5,
-				filter: ["in", "pmap:kind", "highway", "major_road"],
-				paint: { "line-color": p.roadsMajor, "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 14, 3] },
-			},
-			{
-				id: "roads-minor",
-				type: "line",
-				source: "protomaps",
-				"source-layer": "roads",
-				minzoom: 11,
-				paint: { "line-color": p.roadsMinor, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.3, 16, 1.5] },
-			},
-			{
-				id: "boundaries",
-				type: "line",
-				source: "protomaps",
-				"source-layer": "boundaries",
-				paint: {
-					"line-color": p.boundaries,
-					"line-width": ["interpolate", ["linear"], ["zoom"], 0, 0.4, 6, 0.8],
-					"line-dasharray": [2, 2],
-				},
-			},
-		],
+		layers,
 	}
 }
 
 /**
- * Read the current map theme from Docusaurus's `data-theme` attribute on <html>. We can't use
- * `useColorMode` here because this file runs at module scope before any hook can be called; the
- * effect-driven swap below handles the dynamic side.
+ * Read the current map theme from Docusaurus's `data-theme` attribute on <html>. Returns "light"
+ * when unset / SSR — initial render matches the light default until the client hydrates.
  */
 function currentMapTheme(): MapTheme {
 	if (typeof document === "undefined") return "light"
 	return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"
+}
+
+const BBOX_SOURCE = "mailwoman-bbox"
+const BBOX_FILL_LAYER = "mailwoman-bbox-fill"
+const BBOX_LINE_LAYER = "mailwoman-bbox-line"
+
+/**
+ * Draw / update a rectangle showing the resolved place's bounding box on the map. The slim WOF
+ * distribution ships bbox columns on `spr` but not the full polygon geometry — bbox is the best
+ * outline we can render without re-shipping the 1.5 GB geojson table.
+ */
+function drawBbox(
+	map: MaplibreMapLike,
+	bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+): void {
+	const ring: Array<[number, number]> = [
+		[bbox.minLon, bbox.minLat],
+		[bbox.maxLon, bbox.minLat],
+		[bbox.maxLon, bbox.maxLat],
+		[bbox.minLon, bbox.maxLat],
+		[bbox.minLon, bbox.minLat],
+	]
+	const geojson = {
+		type: "FeatureCollection" as const,
+		features: [
+			{
+				type: "Feature" as const,
+				geometry: { type: "Polygon" as const, coordinates: [ring] },
+				properties: {},
+			},
+		],
+	}
+	const existing = map.getSource?.(BBOX_SOURCE)
+	if (existing && typeof (existing as { setData?: unknown }).setData === "function") {
+		;(existing as { setData: (g: unknown) => void }).setData(geojson)
+		return
+	}
+	map.addSource?.(BBOX_SOURCE, { type: "geojson", data: geojson })
+	map.addLayer?.({
+		id: BBOX_FILL_LAYER,
+		type: "fill",
+		source: BBOX_SOURCE,
+		paint: { "fill-color": "#e0367c", "fill-opacity": 0.12 },
+	})
+	map.addLayer?.({
+		id: BBOX_LINE_LAYER,
+		type: "line",
+		source: BBOX_SOURCE,
+		paint: { "line-color": "#e0367c", "line-width": 2 },
+	})
+}
+
+function clearBbox(map: MaplibreMapLike): void {
+	if (map.getLayer?.(BBOX_FILL_LAYER)) map.removeLayer?.(BBOX_FILL_LAYER)
+	if (map.getLayer?.(BBOX_LINE_LAYER)) map.removeLayer?.(BBOX_LINE_LAYER)
+	if (map.getSource?.(BBOX_SOURCE)) map.removeSource?.(BBOX_SOURCE)
+}
+
+interface MaplibreMapLike {
+	flyTo?: (opts: { center: [number, number]; zoom: number }) => void
+	fitBounds?: (bounds: [[number, number], [number, number]], opts?: { padding?: number }) => void
+	getSource?: (id: string) => unknown
+	addSource?: (id: string, source: unknown) => void
+	addLayer?: (layer: unknown) => void
+	removeLayer?: (id: string) => void
+	removeSource?: (id: string) => void
+	getLayer?: (id: string) => unknown
+	setStyle?: (style: unknown) => void
+	on?: (event: string, cb: () => void) => void
+}
+
+type ParsedNode = { tag: string; value?: unknown; confidence?: number }
+
+/**
+ * Try increasingly broad WOF queries until something with usable coords surfaces. Drops (lat=0,
+ * lon=0) hits — WOF carries placeholder zeros on ~22% of US postcodes (including 20500), so the raw
+ * "best BM25 hit" is sometimes geographically meaningless.
+ */
+async function runCascade(
+	lookup: MailwomanLookupLike,
+	postcodeNode: ParsedNode | undefined,
+	localityNode: ParsedNode | undefined,
+	rawText: string
+): Promise<Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>> {
+	const usable = (
+		cs: Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
+	): Awaited<ReturnType<MailwomanLookupLike["findPlace"]>> => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
+
+	if (postcodeNode?.value) {
+		const cs = usable(
+			await lookup.findPlace({
+				text: String(postcodeNode.value),
+				placetype: "postalcode",
+				country: "US",
+				limit: 5,
+			})
+		)
+		if (cs.length > 0) return cs
+	}
+	if (localityNode?.value) {
+		const cs = usable(
+			await lookup.findPlace({
+				text: String(localityNode.value),
+				placetype: "locality",
+				country: "US",
+				limit: 5,
+			})
+		)
+		if (cs.length > 0) return cs
+	}
+	return usable(await lookup.findPlace({ text: rawText, country: "US", limit: 5 }))
 }
 
 /** Walk the AddressTree, returning a flat list of leaf component nodes. */

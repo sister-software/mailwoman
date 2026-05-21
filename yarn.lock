@@ -5270,6 +5270,7 @@ __metadata:
     clsx: "npm:^2.1.1"
     maplibre-gl: "npm:^5.0.0"
     prism-react-renderer: "npm:^2.4.1"
+    protomaps-themes-base: "npm:^4.5.0"
     react: "npm:^19.2.6"
     react-dom: "npm:^19.2.6"
     typescript: "npm:^6.0.3"
@@ -18680,6 +18681,13 @@ __metadata:
   version: 2.0.2
   resolution: "protocols@npm:2.0.2"
   checksum: 10/031cc068eb800468a50eb7c1e1c528bf142fb8314f5df9b9ea3c3f9df1697a19f97b9915b1229cef694d156812393172d9c3051ef7878d26eaa8c6faa5cccec4
+  languageName: node
+  linkType: hard
+
+"protomaps-themes-base@npm:^4.5.0":
+  version: 4.5.0
+  resolution: "protomaps-themes-base@npm:4.5.0"
+  checksum: 10/9dc8a2089414494b43d62ccfb5ae641aeea8f31e4ceaab2cc2ba56c3d9b333374b05f0c428c6fff74abcfd0e452c3e1d1925beea44787857da8f525d71495a02
   languageName: node
   linkType: hard
 
