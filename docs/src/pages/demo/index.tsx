@@ -78,7 +78,7 @@ function DemoApp(): React.ReactElement {
 				if (mapContainerRef.current) {
 					const map = new maplibre.Map({
 						container: mapContainerRef.current,
-						style: buildMapStyle(),
+						style: buildMapStyle(currentMapTheme()),
 						center: [-95.7129, 37.0902],
 						zoom: 3,
 						attributionControl: false,
@@ -108,6 +108,22 @@ function DemoApp(): React.ReactElement {
 		return () => {
 			cancelled = true
 		}
+	}, [])
+
+	// Hot-swap the map style when the operator toggles Docusaurus's color mode. The page sets
+	// data-theme="dark" / "light" on <html>; a MutationObserver is the lightest dependency-free way
+	// to react without dragging in useColorMode (which would couple this file to a theme-internals
+	// hook that occasionally moves between Docusaurus versions).
+	React.useEffect(() => {
+		if (typeof document === "undefined") return
+		const observer = new MutationObserver(() => {
+			const map = mapRef.current as { setStyle?: (s: unknown) => void } | null
+			if (map?.setStyle) {
+				map.setStyle(buildMapStyle(currentMapTheme()))
+			}
+		})
+		observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] })
+		return () => observer.disconnect()
 	}, [])
 
 	// Resolve the WOF lookup on first submit (or any time we don't have it yet).
@@ -353,12 +369,40 @@ interface ResolvedHit {
 }
 
 /**
+ * Color palettes for the synthesized MapLibre style. Light + dark variants match Docusaurus's
+ * data-theme; the page-level hook below swaps map.setStyle() when the operator toggles theme.
+ */
+const MAP_PALETTES = {
+	light: {
+		background: "#f7f5f0",
+		earth: "#fafaf7",
+		water: "#cfdfec",
+		landuse: "#eef0e3",
+		roadsMajor: "#d0c8b8",
+		roadsMinor: "#e0d8c8",
+		boundaries: "#9aa0a6",
+	},
+	dark: {
+		background: "#1a1d22",
+		earth: "#23272d",
+		water: "#1d2a3a",
+		landuse: "#2a2e35",
+		roadsMajor: "#52576a",
+		roadsMinor: "#3a3f4a",
+		boundaries: "#6a7280",
+	},
+} as const
+
+type MapTheme = keyof typeof MAP_PALETTES
+
+/**
  * Build a minimal MapLibre style document pointing at the Protomaps basemap vector tiles served by
  * `tiles.sister.software`. The host endpoint exposes only TileJSON (data-source metadata), not a
  * full MapLibre style — so we synthesize one here with the layers we care about for an address
  * demo. Visual styling stays deliberately plain so the marker pops.
  */
-function buildMapStyle(): unknown {
+function buildMapStyle(theme: MapTheme = "light"): unknown {
+	const p = MAP_PALETTES[theme]
 	const tileUrl = "https://tiles.sister.software/basemap/{z}/{x}/{y}.mvt"
 	const attribution =
 		'<a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap contributors</a>'
@@ -374,20 +418,20 @@ function buildMapStyle(): unknown {
 			},
 		},
 		layers: [
-			{ id: "background", type: "background", paint: { "background-color": "#f7f5f0" } },
+			{ id: "background", type: "background", paint: { "background-color": p.background } },
 			{
 				id: "earth",
 				type: "fill",
 				source: "protomaps",
 				"source-layer": "earth",
-				paint: { "fill-color": "#fafaf7" },
+				paint: { "fill-color": p.earth },
 			},
 			{
 				id: "water",
 				type: "fill",
 				source: "protomaps",
 				"source-layer": "water",
-				paint: { "fill-color": "#cfdfec" },
+				paint: { "fill-color": p.water },
 			},
 			{
 				id: "landuse",
@@ -395,7 +439,7 @@ function buildMapStyle(): unknown {
 				source: "protomaps",
 				"source-layer": "landuse",
 				minzoom: 4,
-				paint: { "fill-color": "#eef0e3", "fill-opacity": 0.5 },
+				paint: { "fill-color": p.landuse, "fill-opacity": 0.5 },
 			},
 			{
 				id: "roads-major",
@@ -404,7 +448,7 @@ function buildMapStyle(): unknown {
 				"source-layer": "roads",
 				minzoom: 5,
 				filter: ["in", "pmap:kind", "highway", "major_road"],
-				paint: { "line-color": "#d0c8b8", "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 14, 3] },
+				paint: { "line-color": p.roadsMajor, "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 14, 3] },
 			},
 			{
 				id: "roads-minor",
@@ -412,7 +456,7 @@ function buildMapStyle(): unknown {
 				source: "protomaps",
 				"source-layer": "roads",
 				minzoom: 11,
-				paint: { "line-color": "#e0d8c8", "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.3, 16, 1.5] },
+				paint: { "line-color": p.roadsMinor, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.3, 16, 1.5] },
 			},
 			{
 				id: "boundaries",
@@ -420,13 +464,23 @@ function buildMapStyle(): unknown {
 				source: "protomaps",
 				"source-layer": "boundaries",
 				paint: {
-					"line-color": "#9aa0a6",
+					"line-color": p.boundaries,
 					"line-width": ["interpolate", ["linear"], ["zoom"], 0, 0.4, 6, 0.8],
 					"line-dasharray": [2, 2],
 				},
 			},
 		],
 	}
+}
+
+/**
+ * Read the current map theme from Docusaurus's `data-theme` attribute on <html>. We can't use
+ * `useColorMode` here because this file runs at module scope before any hook can be called; the
+ * effect-driven swap below handles the dynamic side.
+ */
+function currentMapTheme(): MapTheme {
+	if (typeof document === "undefined") return "light"
+	return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"
 }
 
 /** Walk the AddressTree, returning a flat list of leaf component nodes. */
