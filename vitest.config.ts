@@ -61,6 +61,11 @@ export default defineConfig({
 			"**/cypress/**",
 			"**/.{idea,git,cache,output,temp}/**",
 			"**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*",
+			// Playwright e2e specs live under docs/test/browser/. They use @playwright/test as the
+			// runner, not vitest, but vitest's default `*.spec.ts` glob would happily pick them up
+			// and crash on the unfamiliar `test.describe` API.
+			"**/docs/test/browser/**",
+			"**/docs/test/e2e/**",
 		],
 	},
 })
