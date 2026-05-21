@@ -69,6 +69,42 @@
 	cursor: not-allowed;
 }
 
+.examples {
+	margin-top: 0.75rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: baseline;
+}
+
+.examplesLabel {
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600);
+	margin-right: 0.25rem;
+}
+
+.exampleBtn {
+	font-size: 0.8rem;
+	padding: 0.25rem 0.55rem;
+	background: var(--ifm-color-emphasis-100);
+	color: var(--ifm-color-emphasis-800);
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	font-weight: 500;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.exampleBtn:hover:not(:disabled) {
+	background: var(--ifm-color-emphasis-200);
+	border-color: var(--ifm-color-primary);
+}
+
+.exampleBtn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
 .status {
 	font-style: italic;
 	color: var(--ifm-color-emphasis-600);

@@ -202,6 +202,21 @@ function DemoApp(): React.ReactElement {
 						{busy ? "Parsing…" : "Parse + resolve"}
 					</button>
 				</form>
+				<div className={styles.examples}>
+					<span className={styles.examplesLabel}>Try:</span>
+					{EXAMPLE_ADDRESSES.map((ex) => (
+						<button
+							key={ex.label}
+							type="button"
+							className={styles.exampleBtn}
+							disabled={!ready || busy}
+							onClick={() => setText(ex.address)}
+							title={ex.address}
+						>
+							{ex.label}
+						</button>
+					))}
+				</div>
 				{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
 				{error ? <p className={styles.error}>{error}</p> : null}
 				{result ? <ResultPanel result={result} /> : null}
@@ -212,6 +227,16 @@ function DemoApp(): React.ReactElement {
 		</div>
 	)
 }
+
+/** Hand-picked examples that all hit the top-1k slim subset. */
+const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
+	{ label: "White House", address: "1600 Pennsylvania Ave NW, Washington, DC 20500" },
+	{ label: "Empire State", address: "350 5th Ave, New York, NY 10118" },
+	{ label: "Pier 39 SF", address: "Pier 39, San Francisco, CA 94133" },
+	{ label: "Wrigley Field", address: "1060 W Addison St, Chicago, IL 60613" },
+	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
+	{ label: "ZIP only", address: "90210" },
+]
 
 function ResultPanel({ result }: { result: DemoResult }): React.ReactElement {
 	return (
