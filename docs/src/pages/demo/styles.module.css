@@ -162,15 +162,33 @@
 	font-family: var(--ifm-font-family-monospace);
 }
 
+/*
+ * Map container — explicit height (not min-height) + position:relative on the wrapper.
+ *
+ * MapLibre's canvas auto-resizes via ResizeObserver. If the wrapper's height is `min-height`
+ * (unbounded growth allowed), the canvas hits a feedback loop: canvas size → wrapper size →
+ * canvas size → ... until the GPU buffer allocation OOMs the tab. Pinning to an explicit pixel
+ * height bounds the loop on first paint. Reported by the front-end Deepseek monitor 2026-05-21.
+ *
+ * `position: absolute; inset: 0` on the inner .map sidesteps the secondary case where a parent
+ * grid track itself grows in response to canvas size — the absolute element is out of flow, so
+ * its dimensions don't feed back into grid track sizing.
+ */
 .mapWrap {
-	min-height: 600px;
+	position: relative;
+	height: 600px;
 	border-radius: 8px;
 	overflow: hidden;
 	border: 1px solid var(--ifm-color-emphasis-300);
 }
 
 .map {
-	width: 100%;
-	height: 100%;
-	min-height: 600px;
+	position: absolute;
+	inset: 0;
+}
+
+@media (max-width: 996px) {
+	.mapWrap {
+		height: 480px;
+	}
 }
