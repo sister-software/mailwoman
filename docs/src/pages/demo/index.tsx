@@ -116,15 +116,26 @@ function DemoApp(): React.ReactElement {
 					})
 					map.addControl(new maplibre.AttributionControl({ compact: true }))
 					mapRef.current = map
-					// Wire 3D terrain once the style + DEM source are loaded.
-					map.on("load", () => {
-						try {
-							map.setTerrain({ source: "terrain", exaggeration: 1 })
-						} catch {
-							// Some browsers / WebGL contexts reject terrain (no GL_OES_element_index_uint, etc.);
-							// fall through to flat rendering rather than breaking the page.
+					// Wire 3D terrain. setTerrain throws "Style is not done loading" if the style hasn't
+					// finished resolving its sources/sprites yet — `load` alone isn't sufficient because
+					// it fires when the *initial viewport* is rendered, before some style-level state
+					// (sources hydration, sprite atlas) is ready. Poll isStyleLoaded() via styledata
+					// events until it's truly ready, then call setTerrain. Best-effort: swallow errors
+					// so a missing terrain capability doesn't crash the page.
+					const wireTerrain = (): void => {
+						if (!map.isStyleLoaded()) {
+							map.once("styledata", wireTerrain)
+							return
 						}
-					})
+						try {
+							if (map.getSource("terrain")) {
+								map.setTerrain({ source: "terrain", exaggeration: 1 })
+							}
+						} catch {
+							// fall through to flat rendering
+						}
+					}
+					map.on("load", wireTerrain)
 				}
 
 				if (cancelled) return
@@ -157,9 +168,18 @@ function DemoApp(): React.ReactElement {
 	React.useEffect(() => {
 		if (typeof document === "undefined") return
 		const observer = new MutationObserver(() => {
-			const map = mapRef.current as MaplibreMapLike | null
+			const map = mapRef.current as (MaplibreMapLike & { once?: (e: string, cb: () => void) => void }) | null
 			if (!map?.setStyle) return
 			map.setStyle(buildMapStyle(currentMapTheme()))
+			// Re-wire terrain after the new style finishes loading. setStyle wipes all sources +
+			// terrain settings, so we have to re-establish them or the map ends up flat post-swap.
+			map.once?.("styledata", () => {
+				try {
+					map.setTerrain?.({ source: "terrain", exaggeration: 1 })
+				} catch {
+					// fall through to flat rendering
+				}
+			})
 		})
 		observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] })
 		return () => observer.disconnect()
@@ -500,7 +520,10 @@ interface MaplibreMapLike {
 	removeSource?: (id: string) => void
 	getLayer?: (id: string) => unknown
 	setStyle?: (style: unknown) => void
+	setTerrain?: (opts: { source: string; exaggeration?: number }) => void
 	on?: (event: string, cb: () => void) => void
+	once?: (event: string, cb: () => void) => void
+	isStyleLoaded?: () => boolean
 }
 
 type ParsedNode = { tag: string; value?: unknown; confidence?: number }
