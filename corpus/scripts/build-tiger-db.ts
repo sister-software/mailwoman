@@ -33,6 +33,8 @@
  *   (default: 8)
  */
 
+///<reference types="node" />
+
 import { execFileSync } from "node:child_process"
 import { createHash } from "node:crypto"
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync, writeFileSync } from "node:fs"

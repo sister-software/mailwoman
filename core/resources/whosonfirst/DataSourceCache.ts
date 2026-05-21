@@ -4,8 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import "core-js/actual/disposable-stack/index.js"
-
 import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
 import { mkdirSync } from "node:fs"
 import { setTimeout } from "node:timers/promises"

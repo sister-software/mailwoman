@@ -1,5 +1,5 @@
 {
-	"name": "@playpen/docs",
+	"name": "@mailwoman/docs",
 	"version": "0.0.0",
 	"description": "Docusaurus knowledge base for Mailwoman Geocoder",
 	"private": true,
@@ -17,6 +17,10 @@
 		"write-heading-ids": "docusaurus write-heading-ids",
 		"write-translations": "docusaurus write-translations"
 	},
+	"exports": {
+		"./components/*": "./src/components/*.tsx",
+		"./contexts/*": "./src/contexts/*.tsx"
+	},
 	"imports": {
 		"#e2e": "./test/e2e/index.ts",
 		"#e2e/*": "./test/e2e/*"
@@ -28,21 +32,24 @@
 		"@mailwoman/neural-web": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@mdx-js/react": "^3.1.1",
+		"classnames": "^2.5.1",
 		"clsx": "^2.1.1",
 		"maplibre-gl": "^5.0.0",
 		"prism-react-renderer": "^2.4.1",
-		"protomaps-themes-base": "^3.1.0",
+		"protomaps-themes-base": "^4.5.0",
 		"react": "^19.2.6",
-		"react-dom": "^19.2.6"
+		"react-dom": "^19.2.6",
+		"react-map-gl": "^8.1.1"
 	},
 	"devDependencies": {
 		"@docusaurus/module-type-aliases": "^3.10.1",
 		"@docusaurus/tsconfig": "^3.10.1",
 		"@docusaurus/types": "^3.10.1",
 		"@playwright/test": "^1.49.0",
-		"@types/node": "^24.0.0",
+		"@types/node": "^25.9.1",
 		"@types/react": "^19.2.15",
 		"@types/react-dom": "^19.2.3",
+		"@types/react-map-gl": "^6.1.8",
 		"typescript": "^6.0.3"
 	},
 	"engines": {

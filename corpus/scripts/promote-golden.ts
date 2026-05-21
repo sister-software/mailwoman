@@ -47,6 +47,8 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFi
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+///<reference types="node" />
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface GoldenEntry {

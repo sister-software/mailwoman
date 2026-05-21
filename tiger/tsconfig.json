@@ -1,0 +1,16 @@
+{
+	"extends": "@sister.software/tsconfig",
+	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"emitDecoratorMetadata": true,
+		"emitDeclarationOnly": false,
+		"allowImportingTsExtensions": false,
+		"experimentalDecorators": true
+	},
+	"exclude": ["./out/**/*"],
+	"references": [
+		// ---
+		{ "path": "../core" },
+		{ "path": "../spatial" }
+	]
+}

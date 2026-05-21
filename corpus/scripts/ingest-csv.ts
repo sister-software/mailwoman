@@ -26,9 +26,12 @@
  *   CREATE TABLE, but don't import
  */
 
+///<reference types="node" />
+
 import { createReadStream, existsSync, mkdirSync, writeFileSync } from "node:fs"
 import { basename, dirname, extname, join } from "node:path"
 import { createInterface } from "node:readline"
+import { SQLInputValue } from "node:sqlite"
 
 // ---------------------------------------------------------------------------
 // CLI arg parsing (minimal — no yargs dependency needed for a utility script)
@@ -298,7 +301,7 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 		}
 	}
 
-	const batch: unknown[][] = []
+	const batch: SQLInputValue[][] = []
 	const BATCH_SIZE = 10000
 
 	for await (const line of rl2) {

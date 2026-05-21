@@ -1,0 +1,22 @@
+{
+	"extends": "@sister.software/tsconfig",
+	"compilerOptions": {
+		"emitDeclarationOnly": false,
+		"allowImportingTsExtensions": false,
+		"allowSyntheticDefaultImports": true,
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"paths": {
+			"@mailwoman/mailwoman/sdk": ["./sdk/index"],
+			"@mailwoman/mailwoman/sdk/*": ["./sdk/*"]
+		}
+	},
+	"exclude": ["./out/**/*"],
+	"references": [
+		// ---
+		{ "path": "../core" },
+		{ "path": "../spatial" },
+		{ "path": "../tiger" },
+		{ "path": "../mailwoman" }
+	]
+}
