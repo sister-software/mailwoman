@@ -13,7 +13,7 @@
  *   join.
  *
  *   Salvaged 2026-05-17 from `isp-nexus/universe@6eeb7bd99643a6d62a8b8abbd50968a1e492b90b`
- *   `tiger/state.ts` (originally copyright OpenISP, Inc.; both projects are AGPL-3.0). isp-nexus
+ *   `tiger/state.ts` (originally copyright Sister Software; both projects are AGPL-3.0). isp-nexus
  *   ships these as TypeScript enums + a TypeORM-backed service layer; mailwoman only needs the flat
  *   lookup so the file is a plain `Record` plus a small helper.
  */

@@ -13,9 +13,10 @@
  *   "AVN", "AVNUE"]` — `AVE` is what the post office prints).
  *
  *   Salvaged 2026-05-17 from `isp-nexus/universe@6eeb7bd99643a6d62a8b8abbd50968a1e492b90b`
- *   `mailwoman/postal/suffix.ts` (originally copyright OpenISP, Inc.; both projects are AGPL-3.0).
- *   The dataset is verbatim; the helper API was reshaped to match mailwoman's synthesis registry
- *   (the original isp-nexus `lookupStreetSuffix` was geared toward parsing, not augmentation).
+ *   `mailwoman/postal/suffix.ts` (originally copyright Sister Software; both projects are
+ *   AGPL-3.0). The dataset is verbatim; the helper API was reshaped to match mailwoman's synthesis
+ *   registry (the original isp-nexus `lookupStreetSuffix` was geared toward parsing, not
+ *   augmentation).
  * @see {@link https://pe.usps.com/text/pub28/28apc_002.htm USPS Street Suffix Abbreviations}
  */
 

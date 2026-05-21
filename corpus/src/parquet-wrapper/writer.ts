@@ -13,8 +13,8 @@
  *   dispose calls don't race.
  *
  *   Salvaged 2026-05-17 from `isp-nexus/universe@6eeb7bd99643a6d62a8b8abbd50968a1e492b90b`
- *   `sdk/parquet/writer.ts` (originally copyright OpenISP, Inc.; both projects are AGPL-3.0). One
- *   trim relative to the original: dropped the `@isp.nexus/core/polyfills/promises/withResolvers`
+ *   `sdk/parquet/writer.ts` (originally copyright Sister Software; both projects are AGPL-3.0). One
+ *   trim relative to the original: dropped the `@mailwoman/core/polyfills/promises/withResolvers`
  *   import — Node 22 (mailwoman's runtime) has `Promise.withResolvers` natively.
  */
 

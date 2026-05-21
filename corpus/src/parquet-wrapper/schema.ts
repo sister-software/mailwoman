@@ -13,7 +13,7 @@
  *       `@dsnp/parquetjs`-shaped bloom-filter spec array.
  *
  *   Salvaged 2026-05-17 from `isp-nexus/universe@6eeb7bd99643a6d62a8b8abbd50968a1e492b90b`
- *   `sdk/parquet/schema.ts` (originally copyright OpenISP, Inc.; both projects are AGPL-3.0). Two
+ *   `sdk/parquet/schema.ts` (originally copyright Sister Software; both projects are AGPL-3.0). Two
  *   trims relative to the original: (a) `ParquetSchemaDefinitionCache`'s LRU generics use
  *   `ParquetRecordLike` instead of `any` to satisfy this project's eslint config; (b)
  *   `Symbol.dispose` is sync (the original was async, but `Disposable`'s contract is sync — async

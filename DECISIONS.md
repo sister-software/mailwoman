@@ -255,7 +255,7 @@ per the operator's "less Python the better" stance.
 `sdk/parquet/{index,schema,writer,reader}.ts` (252 LOC total, AGPL-3.0,
 same license as mailwoman → direct copy clean). Ported to
 `packages/corpus/src/parquet-wrapper/`. Two trims relative to the original:
-(a) dropped the `@isp.nexus/core/polyfills/promises/withResolvers` import
+(a) dropped the `@mailwoman/core/polyfills/promises/withResolvers` import
 since Node 22 has `Promise.withResolvers` natively; (b) replaced the
 `path-ts` `PathBuilderLike` on `openFile` with the plain `string | URL`
 the `@dsnp/parquetjs` envelope reader accepts directly.
