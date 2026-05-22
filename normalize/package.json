@@ -1,0 +1,25 @@
+{
+	"name": "@mailwoman/normalize",
+	"version": "2.1.0",
+	"description": "Stage 1 of the runtime pipeline — deterministic input preprocessing (Unicode NFC, punctuation, whitespace, abbreviation). Pure functions, no ML.",
+	"license": "AGPL-3.0-only",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "normalize"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}

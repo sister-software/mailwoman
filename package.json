@@ -79,6 +79,7 @@
 		"neural-web",
 		"neural-weights-en-us",
 		"neural-weights-fr-fr",
+		"normalize",
 		"query-shape",
 		"resolver-wof-sqlite",
 		"resolver-wof-sqlite/spike",

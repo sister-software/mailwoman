@@ -4580,6 +4580,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/normalize@workspace:normalize":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/normalize@workspace:normalize"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/query-shape@workspace:query-shape":
   version: 0.0.0-use.local
   resolution: "@mailwoman/query-shape@workspace:query-shape"
