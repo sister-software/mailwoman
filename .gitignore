@@ -84,3 +84,7 @@ packages/neural-weights-*/tokenizer.model
 # expand-golden.ts outputs — operator skims locally, then promotes to versioned dir
 data/eval/golden/candidates/
 
+# Local env files (R2 credentials, etc.) — keep out of git
+.env
+.env.*
+

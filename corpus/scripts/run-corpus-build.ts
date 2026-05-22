@@ -5,6 +5,8 @@
  * @author Teffen Ellis, et al.
  */
 
+///<reference types="node" />
+
 import { defaultAdapterRegistry } from "../src/adapter.js"
 import { buildCorpus } from "../src/build.js"
 // Import adapters so they self-register

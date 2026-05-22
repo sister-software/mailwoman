@@ -20,12 +20,16 @@
 	"include": [],
 	"references": [
 		{ "path": "./core" },
+		{ "path": "./spatial" },
+		{ "path": "./tiger" },
+		{ "path": "./cartographer" },
 		{ "path": "./classifiers" },
 		{ "path": "./corpus" },
 		{ "path": "./neural" },
 		{ "path": "./neural-web" },
 		{ "path": "./resolver-wof-sqlite" },
 		{ "path": "./resolver-wof-wasm" },
-		{ "path": "./mailwoman" }
+		{ "path": "./mailwoman" },
+		{ "path": "./tile-worker" }
 	]
 }

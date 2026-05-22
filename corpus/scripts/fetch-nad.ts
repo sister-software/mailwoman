@@ -52,6 +52,8 @@
  *   - `--end-oid <n>` (env `FS_END_OID`) — stop before this OID; default = total count
  */
 
+///<reference types="node" />
+
 import { createHash } from "node:crypto"
 import { existsSync, mkdirSync, statSync } from "node:fs"
 import { readFile, writeFile } from "node:fs/promises"

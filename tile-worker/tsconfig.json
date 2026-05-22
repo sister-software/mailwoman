@@ -1,0 +1,20 @@
+{
+	"extends": "@sister.software/tsconfig",
+	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"emitDecoratorMetadata": true,
+		"emitDeclarationOnly": false,
+		"noEmit": false,
+		"experimentalDecorators": true,
+		"allowImportingTsExtensions": false,
+		"types": ["@cloudflare/workers-types"],
+		"resolveJsonModule": true
+	},
+	"exclude": ["./out/**/*"],
+	"references": [
+		// ---
+		{ "path": "../core" },
+		{ "path": "../spatial" },
+		{ "path": "../cartographer" }
+	]
+}

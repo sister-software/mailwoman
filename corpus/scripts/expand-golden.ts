@@ -58,6 +58,8 @@
  *   - Does not retry hallucinated candidates. Cost of wasted tokens is trivial (~$0.0006/each).
  */
 
+///<reference types="node" />
+
 import { mkdir, writeFile } from "node:fs/promises"
 import { dirname } from "node:path"
 import { parseArgs } from "node:util"

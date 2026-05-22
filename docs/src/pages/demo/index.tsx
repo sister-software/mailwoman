@@ -7,28 +7,35 @@
  *
  *   - `@mailwoman/neural-web` (onnxruntime-web, WASM SIMD with WebGPU fallback) for the BIO classifier.
  *   - `@mailwoman/resolver-wof-wasm` (sqlite-wasm) for the WOF locality / postcode lookup.
- *   - MapLibre GL JS pointed at `https://tiles.sister.software/basemap.json` for the map.
+ *   - `@mailwoman/cartographer` `StyleSpecificationComposer` over the v3 protomaps basemap.
  *
- *   The static-asset bundle includes:
- *
- *   - `/mailwoman/model.onnx` — the v0.2.0 quantized BIO classifier (~25 MB).
- *   - `/mailwoman/tokenizer.model` — SentencePiece tokenizer (~470 KB).
- *   - `/mailwoman/wof-hot.db` — slim WOF distribution (top-1k US localities + all US postcodes, ~35
- *       MB).
- *
- *   Total cold-start asset budget: ~60 MB. After first load the browser caches everything; subsequent
- *   visits are instant.
+ *   Static-asset bundle (~60 MB cold): `/mailwoman/model.onnx`, `/mailwoman/tokenizer.model`,
+ *   `/mailwoman/wof-hot.db`. After first load the browser caches everything.
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
+import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
 import Layout from "@theme/Layout"
+import type { Map as MapLibreMap, StyleSpecification, VectorSourceSpecification } from "maplibre-gl"
 // MapLibre's marker / control / popup positioning depends on the bundled stylesheet. Without it,
 // .maplibregl-marker collapses to a zero-sized inline element and the SVG never paints.
 import "maplibre-gl/dist/maplibre-gl.css"
-import React from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 
-import { buildMapStyle, currentMapTheme } from "./_cartography"
 import styles from "./styles.module.css"
+
+const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
+
+const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
+	{ label: "White House", address: "1600 Pennsylvania Ave NW, Washington, DC 20500" },
+	{ label: "Empire State", address: "350 5th Ave, New York, NY 10118" },
+	{ label: "Pier 39 SF", address: "Pier 39, San Francisco, CA 94133" },
+	{ label: "Wrigley Field", address: "1060 W Addison St, Chicago, IL 60613" },
+	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
+	{ label: "ZIP only", address: "90210" },
+]
+
+const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v3.json"
 
 export default function DemoPage(): React.ReactElement {
 	return (
@@ -47,15 +54,8 @@ export default function DemoPage(): React.ReactElement {
 	)
 }
 
-// All heavy logic lives below this boundary — only loaded after Docusaurus hydrates on the client.
+// All heavy logic lives below the BrowserOnly boundary — only loaded after Docusaurus hydrates.
 
-/**
- * Read the initial address from the URL `?q=` parameter so links like
- * https://mailwoman.sister.software/demo/?q=1600+Pennsylvania+Ave land directly on a populated
- * input. Decoded once at mount; further edits go through React state and update the URL via
- * history.replaceState (no scroll / reload).
- */
-const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 function initialAddress(): string {
 	if (typeof window === "undefined") return DEFAULT_ADDRESS
 	const url = new URL(window.location.href)
@@ -63,21 +63,21 @@ function initialAddress(): string {
 }
 
 function DemoApp(): React.ReactElement {
-	const [loadingProgress, setLoadingProgress] = React.useState<string>("Loading neural model…")
-	const [classifier, setClassifier] = React.useState<MailwomanClassifierLike | null>(null)
-	const [lookupLoader, setLookupLoader] = React.useState<(() => Promise<MailwomanLookupLike>) | null>(null)
-	const [lookup, setLookup] = React.useState<MailwomanLookupLike | null>(null)
-	const [text, setText] = React.useState(initialAddress)
-	const [busy, setBusy] = React.useState(false)
-	const [result, setResult] = React.useState<DemoResult | null>(null)
-	const [error, setError] = React.useState<string | null>(null)
-	const mapContainerRef = React.useRef<HTMLDivElement>(null)
-	const mapRef = React.useRef<unknown>(null)
-	const markerRef = React.useRef<unknown>(null)
+	const [loadingProgress, setLoadingProgress] = useState<string>("Loading neural model…")
+	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
+	const [lookupLoader, setLookupLoader] = useState<(() => Promise<MailwomanLookupLike>) | null>(null)
+	const [lookup, setLookup] = useState<MailwomanLookupLike | null>(null)
+	const [text, setText] = useState(initialAddress)
+	const [busy, setBusy] = useState(false)
+	const [result, setResult] = useState<DemoResult | null>(null)
+	const [error, setError] = useState<string | null>(null)
+	const mapContainerRef = useRef<HTMLDivElement>(null)
+	const mapRef = useRef<MapLibreMap | null>(null)
+	const markerRef = useRef<{ remove: () => void } | null>(null)
 
 	// Sync ?q= when the operator edits the address. replaceState avoids polluting back-button
 	// history with every keystroke; only the latest state lands in the URL.
-	React.useEffect(() => {
+	useEffect(() => {
 		if (typeof window === "undefined") return
 		const url = new URL(window.location.href)
 		if (text === DEFAULT_ADDRESS) {
@@ -88,14 +88,17 @@ function DemoApp(): React.ReactElement {
 		window.history.replaceState(null, "", url.toString())
 	}, [text])
 
-	// Mount: load just the neural model + map up-front. The 35 MB WOF DB is deferred until first
-	// resolve — most visitors poke at the parse output without ever hitting "submit", and shipping
-	// 35 MB of zip-code geometries to a window-shopper is wasteful.
-	React.useEffect(() => {
+	// Mount: load the neural model + map up-front. The 35 MB WOF DB is deferred until first
+	// submit — most visitors poke at parse output without ever hitting "resolve".
+	useEffect(() => {
 		let cancelled = false
 		void (async () => {
 			try {
-				const [neuralWeb, maplibre] = await Promise.all([import("@mailwoman/neural-web"), import("maplibre-gl")])
+				const [neuralWeb, maplibre, basemapSource] = await Promise.all([
+					import("@mailwoman/neural-web"),
+					import("maplibre-gl"),
+					fetchBasemapV3Source(),
+				])
 
 				if (cancelled) return
 				setLoadingProgress("Loading neural model (~25 MB)…")
@@ -106,22 +109,26 @@ function DemoApp(): React.ReactElement {
 
 				if (cancelled) return
 				if (mapContainerRef.current) {
-					const style = buildMapStyle(currentMapTheme())
+					const composer = new StyleSpecificationComposer({
+						sources: { [MailwomanBaseTileSetID]: basemapSource },
+					})
+					const style = composer.toJSON() as StyleSpecification
 					const map = new maplibre.Map({
 						container: mapContainerRef.current,
-						style: style as maplibre.StyleSpecification,
+						style,
 						center: [-95.7129, 37.0902],
 						zoom: 3,
 						attributionControl: false,
 					})
 					map.addControl(new maplibre.AttributionControl({ compact: true }))
 					mapRef.current = map
-					// Wire 3D terrain. setTerrain throws "Style is not done loading" if the style hasn't
-					// finished resolving its sources/sprites yet — `load` alone isn't sufficient because
-					// it fires when the *initial viewport* is rendered, before some style-level state
-					// (sources hydration, sprite atlas) is ready. Poll isStyleLoaded() via styledata
-					// events until it's truly ready, then call setTerrain. Best-effort: swallow errors
-					// so a missing terrain capability doesn't crash the page.
+					// Expose for the playwright e2e harness; the suite reads styleLoaded /
+					// layers / source-layers off this.
+					Object.assign(window as unknown as Record<string, unknown>, { __mailwomanDemoMap: map })
+
+					// setTerrain throws "Style is not done loading" if invoked before the style's
+					// sources/sprites are hydrated. `load` fires when the initial viewport renders, but
+					// that's earlier than isStyleLoaded(). Poll via styledata until it's truly ready.
 					const wireTerrain = (): void => {
 						if (!map.isStyleLoaded()) {
 							map.once("styledata", wireTerrain)
@@ -140,8 +147,7 @@ function DemoApp(): React.ReactElement {
 
 				if (cancelled) return
 				setClassifier(cls)
-				// Stash a one-shot factory that loads the WOF DB on demand. Captured in closure
-				// to avoid re-importing the wasm wrapper.
+				// One-shot factory; captured in closure to avoid re-importing the wasm wrapper.
 				setLookupLoader(() => async () => {
 					const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
 					const { db } = await resolverWasm.loadSlimWofDatabase({
@@ -163,30 +169,40 @@ function DemoApp(): React.ReactElement {
 
 	// Hot-swap the map style when the operator toggles Docusaurus's color mode. The page sets
 	// data-theme="dark" / "light" on <html>; a MutationObserver is the lightest dependency-free way
-	// to react without dragging in useColorMode (which would couple this file to a theme-internals
-	// hook that occasionally moves between Docusaurus versions).
-	React.useEffect(() => {
+	// to react without coupling to useColorMode (which occasionally moves between Docusaurus versions).
+	useEffect(() => {
 		if (typeof document === "undefined") return
+		let lastTheme = currentDocusaurusTheme()
 		const observer = new MutationObserver(() => {
-			const map = mapRef.current as (MaplibreMapLike & { once?: (e: string, cb: () => void) => void }) | null
-			if (!map?.setStyle) return
-			map.setStyle(buildMapStyle(currentMapTheme()))
-			// Re-wire terrain after the new style finishes loading. setStyle wipes all sources +
-			// terrain settings, so we have to re-establish them or the map ends up flat post-swap.
-			map.once?.("styledata", () => {
-				try {
-					map.setTerrain?.({ source: "terrain", exaggeration: 1 })
-				} catch {
-					// fall through to flat rendering
-				}
+			const next = currentDocusaurusTheme()
+			if (next === lastTheme) return
+			lastTheme = next
+			// The cartographer theme is currently dark-only; both light + dark land on the same
+			// MailwomanBaseFlavor. Re-running setStyle still rebinds the canvas correctly when the
+			// operator toggles, and re-wires terrain after the style swap.
+			const map = mapRef.current
+			if (!map) return
+			void fetchBasemapV3Source().then((source) => {
+				const composer = new StyleSpecificationComposer({
+					sources: { [MailwomanBaseTileSetID]: source },
+				})
+				map.setStyle(composer.toJSON() as StyleSpecification)
+				map.once("styledata", () => {
+					try {
+						if (map.getSource("terrain")) {
+							map.setTerrain({ source: "terrain", exaggeration: 1 })
+						}
+					} catch {
+						// fall through
+					}
+				})
 			})
 		})
 		observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] })
 		return () => observer.disconnect()
 	}, [])
 
-	// Resolve the WOF lookup on first submit (or any time we don't have it yet).
-	const ensureLookup = React.useCallback(async (): Promise<MailwomanLookupLike | null> => {
+	const ensureLookup = useCallback(async (): Promise<MailwomanLookupLike | null> => {
 		if (lookup) return lookup
 		if (!lookupLoader) return null
 		setLoadingProgress("Loading WOF locality DB (~35 MB)…")
@@ -202,7 +218,7 @@ function DemoApp(): React.ReactElement {
 		}
 	}, [lookup, lookupLoader])
 
-	const onSubmit = React.useCallback(
+	const onSubmit = useCallback(
 		async (e: React.FormEvent) => {
 			e.preventDefault()
 			if (!classifier) return
@@ -215,28 +231,25 @@ function DemoApp(): React.ReactElement {
 				const stateNode = nodes.find((n) => n.tag === "region" || n.tag === "state")
 				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
-				// First submit: fetch the WOF DB. Subsequent submits reuse it.
 				const wofLookup = await ensureLookup()
 				if (!wofLookup) {
 					setResult({ tree, nodes, resolved: null, stateHint: stateNode?.value as string | undefined })
 					return
 				}
 
-				let resolved: ResolvedHit | null = null
-				// Cascade: postcode first (most precise), fall back to locality if the postcode hit lacks
-				// usable coords (WOF ships ~22% of US postcodes with placeholder lat=0/lon=0 — postcode
-				// 20500 is one of them, ironically the White House). Final fallback: the raw input string,
-				// which lets the FTS5 index pick up whatever placename it can.
+				// Cascade: postcode first (most precise), fall back to locality, then raw text.
+				// Drop (lat=0, lon=0) hits — WOF ships placeholder zeros on ~22% of US postcodes.
 				const candidates = await runCascade(wofLookup, postcodeNode, localityNode, text)
-				// Clear any stale marker + bbox from a prior submit before deciding whether to draw a new
-				// one — otherwise a "Pier 39" lookup followed by an unresolvable address would leave the
-				// SF marker hovering over a mismatched input.
+
+				// Clear any stale marker + bbox before deciding whether to draw a new one — otherwise
+				// an unresolvable address after a successful resolve leaves the previous marker on screen.
 				if (markerRef.current) {
-					;(markerRef.current as { remove: () => void }).remove()
+					markerRef.current.remove()
 					markerRef.current = null
 				}
-				if (mapRef.current) clearBbox(mapRef.current as MaplibreMapLike)
+				if (mapRef.current) clearBbox(mapRef.current)
 
+				let resolved: ResolvedHit | null = null
 				if (candidates.length > 0) {
 					const best = candidates[0]!
 					resolved = {
@@ -248,19 +261,15 @@ function DemoApp(): React.ReactElement {
 						score: best.score,
 						bbox: best.bbox,
 					}
-					// Drop a fresh marker + fly to the resolved coords.
 					const maplibre = await import("maplibre-gl")
-					if (mapRef.current && resolved) {
-						const map = mapRef.current as MaplibreMapLike & maplibre.Map
+					const map = mapRef.current
+					if (map && resolved) {
 						const marker = new maplibre.Marker({ color: "#e0367c" }).setLngLat([resolved.lon, resolved.lat]).addTo(map)
 						markerRef.current = marker
-						// If the lookup returned a bbox AND it's non-trivial (postcodes can be tiny —
-						// fit-bounds zooms way too far in), use fitBounds so the operator sees the whole
-						// place extent. Otherwise just flyTo the centroid with a reasonable city-level zoom.
 						const b = resolved.bbox
 						if (b && Math.max(b.maxLat - b.minLat, b.maxLon - b.minLon) > 0.001) {
 							drawBbox(map, b)
-							map.fitBounds?.(
+							map.fitBounds(
 								[
 									[b.minLon, b.minLat],
 									[b.maxLon, b.maxLat],
@@ -268,7 +277,7 @@ function DemoApp(): React.ReactElement {
 								{ padding: 40 }
 							)
 						} else {
-							map.flyTo?.({ center: [resolved.lon, resolved.lat], zoom: 12 })
+							map.flyTo({ center: [resolved.lon, resolved.lat], zoom: 12 })
 						}
 					}
 				}
@@ -279,8 +288,8 @@ function DemoApp(): React.ReactElement {
 					resolved,
 					stateHint: stateNode?.value as string | undefined,
 				})
-			} catch (e) {
-				setError((e as Error).message ?? String(e))
+			} catch (e2) {
+				setError((e2 as Error).message ?? String(e2))
 			} finally {
 				setBusy(false)
 			}
@@ -301,7 +310,7 @@ function DemoApp(): React.ReactElement {
 						value={text}
 						onChange={(e) => setText(e.target.value)}
 						disabled={!ready || busy}
-						placeholder="1600 Pennsylvania Ave NW, Washington, DC 20500"
+						placeholder={DEFAULT_ADDRESS}
 					/>
 					<button type="submit" disabled={!ready || busy}>
 						{busy ? "Parsing…" : "Parse + resolve"}
@@ -333,24 +342,11 @@ function DemoApp(): React.ReactElement {
 	)
 }
 
-/** Hand-picked examples that all hit the top-1k slim subset. */
-const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
-	{ label: "White House", address: "1600 Pennsylvania Ave NW, Washington, DC 20500" },
-	{ label: "Empire State", address: "350 5th Ave, New York, NY 10118" },
-	{ label: "Pier 39 SF", address: "Pier 39, San Francisco, CA 94133" },
-	{ label: "Wrigley Field", address: "1060 W Addison St, Chicago, IL 60613" },
-	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
-	{ label: "ZIP only", address: "90210" },
-]
-
 function ResultPanel({ result }: { result: DemoResult }): React.ReactElement {
-	const [showXml, setShowXml] = React.useState(false)
-	const [xml, setXml] = React.useState<string | null>(null)
+	const [showXml, setShowXml] = useState(false)
+	const [xml, setXml] = useState<string | null>(null)
 
-	// Lazy-load the XML serializer the first time the operator asks for debug output. Stripping it
-	// from the main bundle keeps the demo's cold-path payload down; tree-shaking can't drop it
-	// because the rest of the module re-exports from @mailwoman/core/decoder.
-	const onToggle = React.useCallback(async () => {
+	const onToggle = useCallback(async () => {
 		if (xml) {
 			setShowXml((v) => !v)
 			return
@@ -459,27 +455,19 @@ const BBOX_FILL_LAYER = "mailwoman-bbox-fill"
 const BBOX_LINE_LAYER = "mailwoman-bbox-line"
 
 /**
- * Draw / update a rectangle showing the resolved place's bounding box on the map. The slim WOF
- * distribution ships bbox columns on `spr` but not the full polygon geometry — bbox is the best
- * outline we can render without re-shipping the 1.5 GB geojson table.
+ * AddSource / addLayer / removeLayer / removeSource all throw "Style is not done loading" if called
+ * too early. Every state-mutating call funnels through here so the initial-load and post-setStyle
+ * paths never race.
  */
-/**
- * Run `fn` as soon as the map's style is fully loaded. addSource / addLayer / setTerrain /
- * removeLayer / removeSource all throw "Style is not done loading" when invoked too early — funnel
- * every state-mutating call through this gate so initial-load + post-setStyle paths never race.
- */
-function whenStyleReady(map: MaplibreMapLike, fn: () => void): void {
-	if (map.isStyleLoaded?.()) {
+function whenStyleReady(map: MapLibreMap, fn: () => void): void {
+	if (map.isStyleLoaded()) {
 		fn()
 		return
 	}
-	map.once?.("styledata", () => whenStyleReady(map, fn))
+	map.once("styledata", () => whenStyleReady(map, fn))
 }
 
-function drawBbox(
-	map: MaplibreMapLike,
-	bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number }
-): void {
+function drawBbox(map: MapLibreMap, bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number }): void {
 	const ring: Array<[number, number]> = [
 		[bbox.minLon, bbox.minLat],
 		[bbox.maxLon, bbox.minLat],
@@ -498,19 +486,19 @@ function drawBbox(
 		],
 	}
 	whenStyleReady(map, () => {
-		const existing = map.getSource?.(BBOX_SOURCE)
-		if (existing && typeof (existing as { setData?: unknown }).setData === "function") {
-			;(existing as { setData: (g: unknown) => void }).setData(geojson)
+		const existing = map.getSource(BBOX_SOURCE) as { setData?: (g: unknown) => void } | undefined
+		if (existing && typeof existing.setData === "function") {
+			existing.setData(geojson)
 			return
 		}
-		map.addSource?.(BBOX_SOURCE, { type: "geojson", data: geojson })
-		map.addLayer?.({
+		map.addSource(BBOX_SOURCE, { type: "geojson", data: geojson })
+		map.addLayer({
 			id: BBOX_FILL_LAYER,
 			type: "fill",
 			source: BBOX_SOURCE,
 			paint: { "fill-color": "#e0367c", "fill-opacity": 0.12 },
 		})
-		map.addLayer?.({
+		map.addLayer({
 			id: BBOX_LINE_LAYER,
 			type: "line",
 			source: BBOX_SOURCE,
@@ -519,37 +507,16 @@ function drawBbox(
 	})
 }
 
-function clearBbox(map: MaplibreMapLike): void {
+function clearBbox(map: MapLibreMap): void {
 	whenStyleReady(map, () => {
-		if (map.getLayer?.(BBOX_FILL_LAYER)) map.removeLayer?.(BBOX_FILL_LAYER)
-		if (map.getLayer?.(BBOX_LINE_LAYER)) map.removeLayer?.(BBOX_LINE_LAYER)
-		if (map.getSource?.(BBOX_SOURCE)) map.removeSource?.(BBOX_SOURCE)
+		if (map.getLayer(BBOX_FILL_LAYER)) map.removeLayer(BBOX_FILL_LAYER)
+		if (map.getLayer(BBOX_LINE_LAYER)) map.removeLayer(BBOX_LINE_LAYER)
+		if (map.getSource(BBOX_SOURCE)) map.removeSource(BBOX_SOURCE)
 	})
-}
-
-interface MaplibreMapLike {
-	flyTo?: (opts: { center: [number, number]; zoom: number }) => void
-	fitBounds?: (bounds: [[number, number], [number, number]], opts?: { padding?: number }) => void
-	getSource?: (id: string) => unknown
-	addSource?: (id: string, source: unknown) => void
-	addLayer?: (layer: unknown) => void
-	removeLayer?: (id: string) => void
-	removeSource?: (id: string) => void
-	getLayer?: (id: string) => unknown
-	setStyle?: (style: unknown) => void
-	setTerrain?: (opts: { source: string; exaggeration?: number }) => void
-	on?: (event: string, cb: () => void) => void
-	once?: (event: string, cb: () => void) => void
-	isStyleLoaded?: () => boolean
 }
 
 type ParsedNode = { tag: string; value?: unknown; confidence?: number }
 
-/**
- * Try increasingly broad WOF queries until something with usable coords surfaces. Drops (lat=0,
- * lon=0) hits — WOF carries placeholder zeros on ~22% of US postcodes (including 20500), so the raw
- * "best BM25 hit" is sometimes geographically meaningless.
- */
 async function runCascade(
 	lookup: MailwomanLookupLike,
 	postcodeNode: ParsedNode | undefined,
@@ -585,7 +552,6 @@ async function runCascade(
 	return usable(await lookup.findPlace({ text: rawText, country: "US", limit: 5 }))
 }
 
-/** Walk the AddressTree, returning a flat list of leaf component nodes. */
 function flattenTree(tree: unknown): Array<{ tag: string; value?: unknown; confidence?: number }> {
 	const out: Array<{ tag: string; value?: unknown; confidence?: number }> = []
 	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
@@ -602,4 +568,33 @@ function flattenTree(tree: unknown): Array<{ tag: string; value?: unknown; confi
 		}
 	}
 	return out.reverse() // depth-first appended in reverse; flip for source order
+}
+
+function currentDocusaurusTheme(): "light" | "dark" {
+	if (typeof document === "undefined") return "light"
+	return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"
+}
+
+async function fetchBasemapV3Source(): Promise<VectorSourceSpecification> {
+	const response = await fetch(BASEMAP_TILEJSON_URL)
+	if (!response.ok) {
+		throw new Error(`Failed to load basemap tilejson (${response.status})`)
+	}
+	const meta = (await response.json()) as {
+		scheme?: string
+		tiles: string[]
+		minzoom?: number
+		maxzoom?: number
+		attribution?: string
+		bounds?: [number, number, number, number]
+	}
+	return {
+		type: "vector",
+		scheme: meta.scheme as VectorSourceSpecification["scheme"],
+		tiles: meta.tiles,
+		minzoom: meta.minzoom,
+		maxzoom: meta.maxzoom,
+		attribution: meta.attribution,
+		bounds: meta.bounds,
+	}
 }

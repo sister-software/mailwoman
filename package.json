@@ -41,7 +41,7 @@
 		"@sister.software/tsconfig": "^8.0.1",
 		"@types/express": "^5.0.0",
 		"@types/geojson": "^7946.0.14",
-		"@types/node": "^24.0.0",
+		"@types/node": "^25.9.1",
 		"@types/pluralize": "^0.0.33",
 		"@types/react": "^19.2.0",
 		"@types/regenerate": "^1.4.3",
@@ -70,6 +70,9 @@
 	"workspaces": [
 		"mailwoman",
 		"core",
+		"spatial",
+		"tiger",
+		"cartographer",
 		"classifiers",
 		"corpus",
 		"neural",
@@ -79,6 +82,7 @@
 		"resolver-wof-sqlite",
 		"resolver-wof-sqlite/spike",
 		"resolver-wof-wasm",
+		"tile-worker",
 		"docs"
 	],
 	"resolutions": {
