@@ -308,3 +308,91 @@ describe("resolveTree", () => {
 		expect(findPlaceSpy).toHaveBeenCalledWith(expect.objectContaining({ limit: 3 }))
 	})
 })
+
+describe("resolveTree — alternatives (candidate-list API)", () => {
+	const AMBIG_PLACES: ResolvedPlace[] = [
+		// Three Springfields: same name, different states. The Springfield-class ambiguity.
+		{
+			id: 101727113,
+			name: "Springfield",
+			placetype: "locality",
+			country: "US",
+			parent_id: 85688541,
+			lat: 39.78,
+			lon: -89.65,
+			score: 8,
+		},
+		{
+			id: 101728010,
+			name: "Springfield",
+			placetype: "locality",
+			country: "US",
+			parent_id: 85688547,
+			lat: 37.21,
+			lon: -93.29,
+			score: 7,
+		},
+		{
+			id: 101729887,
+			name: "Springfield",
+			placetype: "locality",
+			country: "US",
+			parent_id: 85688549,
+			lat: 42.1,
+			lon: -72.59,
+			score: 6,
+		},
+	]
+
+	test("surfaces runner-up candidates on resolved node", async () => {
+		const backend = new FakeResolverBackend(AMBIG_PLACES)
+		const resolver = createWofResolver(backend)
+
+		const input = tree("Springfield", [node("locality", "Springfield", 0, 11)])
+		const result = await resolver.resolveTree(input)
+		const root = result.roots[0]!
+
+		// Top candidate (IL Springfield, score 8) wins for placeId/lat/lon.
+		expect(root.placeId).toBe("wof:101727113")
+		expect(root.lat).toBe(39.78)
+
+		// alternatives expose the remaining candidates in rank order.
+		expect(root.alternatives).toBeDefined()
+		const alts = root.alternatives as ResolvedPlace[]
+		expect(alts).toHaveLength(2)
+		expect(alts[0]?.id).toBe(101728010) // MO Springfield
+		expect(alts[1]?.id).toBe(101729887) // MA Springfield
+	})
+
+	test("alternatives is absent (not just empty) when only one candidate", async () => {
+		const backend = new FakeResolverBackend([AMBIG_PLACES[0]!])
+		const resolver = createWofResolver(backend)
+
+		const input = tree("Springfield", [node("locality", "Springfield", 0, 11)])
+		const result = await resolver.resolveTree(input)
+		expect(result.roots[0]?.alternatives).toBeUndefined()
+	})
+
+	test("alternatives is absent when no candidates resolved", async () => {
+		const backend = new FakeResolverBackend([])
+		const resolver = createWofResolver(backend)
+
+		const input = tree("Atlantis", [node("locality", "Atlantis", 0, 8)])
+		const result = await resolver.resolveTree(input)
+		expect(result.roots[0]?.alternatives).toBeUndefined()
+		expect(result.roots[0]?.placeId).toBeUndefined()
+	})
+
+	test("alternatives respects candidatesPerLookup (top + alternatives = limit)", async () => {
+		const backend = new FakeResolverBackend(AMBIG_PLACES)
+		const resolver = createWofResolver(backend)
+
+		const input = tree("Springfield", [node("locality", "Springfield", 0, 11)])
+		const result = await resolver.resolveTree(input, { candidatesPerLookup: 2 })
+		const root = result.roots[0]!
+
+		expect(root.placeId).toBe("wof:101727113") // top
+		const alts = root.alternatives as ResolvedPlace[]
+		expect(alts).toHaveLength(1) // limit 2 → top + 1 alternative
+	})
+})

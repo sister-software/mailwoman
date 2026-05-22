@@ -93,6 +93,17 @@ export interface AddressNode {
 	 * Never consulted by the decoder or serializers — debugging + downstream telemetry only.
 	 */
 	metadata?: Record<string, unknown>
+	/**
+	 * Top-k alternative resolutions for this node, ranked by score (highest first). The winning
+	 * candidate is reflected in `placeId` / `lat` / `lon` / `sourceId`. Surfaced for failure mode #8
+	 * (Springfield-class ambiguity) — callers needing disambiguation see the runners-up. Empty /
+	 * absent when the resolver returned a single candidate.
+	 *
+	 * Typed as `unknown[]` here to avoid a circular import on `ResolvedPlace`; resolver-emitting code
+	 * sets the concrete shape, consumers may cast to `ResolvedPlace[]` from
+	 * `@mailwoman/core/resolver`.
+	 */
+	alternatives?: ReadonlyArray<unknown>
 }
 
 /**

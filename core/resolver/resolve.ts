@@ -69,8 +69,11 @@ class WofResolver implements Resolver {
 		const placetype = state.placetypeMap[node.tag as ComponentTag]
 		let resolved: ResolvedPlace | null = null
 		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length > 0) {
-			resolved = await this.#lookupAndPick(node, placetype, parentResolved, state)
-			if (resolved) decorateNode(decorated, resolved)
+			const picked = await this.#lookupAndPick(node, placetype, parentResolved, state)
+			if (picked) {
+				resolved = picked.top
+				decorateNode(decorated, picked.top, picked.alternatives)
+			}
 		}
 
 		const carryParent = resolved ?? parentResolved
@@ -85,7 +88,7 @@ class WofResolver implements Resolver {
 		placetype: string,
 		parentResolved: ResolvedPlace | null,
 		state: ResolutionState
-	): Promise<ResolvedPlace | null> {
+	): Promise<{ top: ResolvedPlace; alternatives: ResolvedPlace[] } | null> {
 		state.lookupsRemaining--
 
 		const query: Parameters<ResolverBackend["findPlace"]>[0] = {
@@ -112,16 +115,18 @@ class WofResolver implements Resolver {
 		if (candidates.length === 0) return null
 		const top = candidates[0]!
 		if (top.score < state.minWinningScore) return null
-		return top
+		return { top, alternatives: candidates.slice(1) }
 	}
 }
 
 /**
  * Stamp a node with resolver-supplied attribution. Displaces any prior classifier `source` /
  * `sourceId` into `metadata.classifier_source` / `metadata.classifier_source_id` so debugging tools
- * can still see who made the original assertion.
+ * can still see who made the original assertion. Surfaces the runner-up candidates on
+ * `alternatives` so callers can disambiguate (Springfield-class failures, [#8 in the failure
+ * catalogue]).
  */
-function decorateNode(node: AddressNode, resolved: ResolvedPlace): void {
+function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: ResolvedPlace[]): void {
 	if (node.source !== undefined || node.sourceId !== undefined) {
 		const meta = { ...(node.metadata ?? {}) }
 		if (node.source !== undefined) meta["classifier_source"] = node.source
@@ -133,4 +138,7 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace): void {
 	node.lat = resolved.lat
 	node.lon = resolved.lon
 	node.placeId = `wof:${resolved.id}` // v1: only WOF resolvers; the URI scheme stays this simple
+	if (alternatives.length > 0) {
+		node.alternatives = alternatives
+	}
 }
