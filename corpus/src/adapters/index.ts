@@ -24,6 +24,7 @@ import type { CorpusAdapter } from "../types.js"
 import { banAdapter } from "./ban/adapter.js"
 import { fccBdcAdapter } from "./fcc-bdc/adapter.js"
 import { openaddressesAdapter } from "./openaddresses/adapter.js"
+import { stateHiSchoolsAdapter } from "./state-hi-schools/adapter.js"
 import { stateIaContractorsAdapter } from "./state-ia-contractors/adapter.js"
 import { stateNyNotariesAdapter } from "./state-ny-notaries/adapter.js"
 import { stateTxNotariesAdapter } from "./state-tx-notaries/adapter.js"
@@ -56,6 +57,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	stateIaContractorsAdapter,
 	stateTxNotariesAdapter,
 	stateNyNotariesAdapter,
+	stateHiSchoolsAdapter,
 ]
 
 for (const adapter of BUILTIN_ADAPTERS) {
@@ -71,6 +73,11 @@ export {
 	OPENADDRESSES_DEFAULT_LICENSE,
 	openaddressesAdapter,
 } from "./openaddresses/adapter.js"
+export {
+	STATE_HI_SCHOOLS_ADAPTER_ID,
+	STATE_HI_SCHOOLS_DEFAULT_LICENSE,
+	stateHiSchoolsAdapter,
+} from "./state-hi-schools/adapter.js"
 export {
 	STATE_IA_CONTRACTORS_ADAPTER_ID,
 	STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
