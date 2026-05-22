@@ -66,6 +66,9 @@ class TrainConfig:
     precision: str = "fp32"  # one of: fp32 | fp16 | bf16
     num_workers: int = 2
     csv_log_path: str = "{output_dir}/train_log.csv"
+    # Global-norm gradient clip. 0 disables clipping. Defaults to 1.0; the CRF NLL leg of
+    # Stage 2 emits sharp gradients during warmup and diverged at the LR peak without it.
+    grad_clip_norm: float = 1.0
 
 
 @dataclass

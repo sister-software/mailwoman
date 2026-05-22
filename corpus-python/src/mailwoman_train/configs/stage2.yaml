@@ -76,9 +76,15 @@ train:
   batch_size: 32
   eval_batch_size: 40
   grad_accum_steps: 4
-  learning_rate: 5.0e-4
+  # Dropped 5e-4 → 3e-4 vs Stage 1: the CRF NLL leg adds a second loss term whose
+  # gradient magnitude isn't bounded by softmax probabilities the way CE is. At 5e-4
+  # the v0.3.0 run diverged at step 1000 when warmup hit peak LR (train_loss 3 → 162
+  # in 250 steps). Clipping (grad_clip_norm=1.0, the default in train.py) is the
+  # primary defense; lower peak LR is the belt-and-braces follow-up.
+  learning_rate: 3.0e-4
   weight_decay: 0.01
   warmup_steps: 1000
+  grad_clip_norm: 1.0
   max_steps: 50000
   eval_every_steps: 250
   save_every_steps: 100

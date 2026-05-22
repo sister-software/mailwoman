@@ -37,8 +37,8 @@ export interface NeuralProposalClassifierConfig {
 	classifier: NeuralAddressClassifier
 	/**
 	 * Component tags this classifier may emit. Defaults to the Stage 2 tag set (coarse +
-	 * venue/street/house_number). v0.2.0 Stage 1 models never decode to the fine tags anyway, so
-	 * the broader default is forwards-compat without back-compat risk.
+	 * venue/street/house_number). v0.2.0 Stage 1 models never decode to the fine tags anyway, so the
+	 * broader default is forwards-compat without back-compat risk.
 	 */
 	emits?: readonly ComponentTag[]
 	/** Locales this classifier is active for. `["*"]` (locale-agnostic) by default. */

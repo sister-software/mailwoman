@@ -302,6 +302,14 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 micro_step += 1
                 if not is_accum_boundary:
                     continue
+                # Stage 2 ships CE + CRF NLL — the CRF leg can produce sharp gradients
+                # during warmup, especially under bf16. Clip global norm to 1.0 before
+                # stepping. The v0.2.0 (CE-only) Stage 1 run trained stably to 50k steps
+                # without clipping, but adding the CRF + label smoothing duo without a
+                # gradient guard diverged at step 1000 when warmup LR (5e-4) peaked.
+                grad_clip = float(getattr(cfg.train, "grad_clip_norm", 1.0))
+                if grad_clip > 0:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=grad_clip)
                 optim.step()
                 scheduler.step()
                 step += 1
