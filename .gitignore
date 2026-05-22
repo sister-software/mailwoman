@@ -25,6 +25,17 @@ test/oa
 .DS_Store
 ._*
 
+# Secrets / certs
+.env
+.env.*
+*.env
+*.p12
+*.pfx
+*.pem
+*.key
+*.crt
+certs/
+
 ## Logs
 logs
 *.log
