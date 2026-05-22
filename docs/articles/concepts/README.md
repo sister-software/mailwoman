@@ -12,15 +12,16 @@ This track has one article per concept. The articles are independent — read th
 A useful order if you want to follow the data and code from input to output:
 
 1. [What is an address?](./what-is-an-address.md) — the data model
-2. [Tokenization](./tokenization.md) — splitting strings into tokens
-3. [Rule-based classifiers](./rule-based-classifiers.md) — the Mailwoman v1 approach
-4. [BIO labels](./bio-labels.md) — how the neural model marks spans
-5. [Neural classification](./neural-classification.md) — what a transformer encoder does
-6. [CRF decoder](./crf-decoder.md) — fixing structurally-invalid label sequences
-7. [Training pipeline](./training-pipeline.md) — from corpus to model file
-8. [Corpus construction](./corpus-construction.md) — how the training data is built
-9. [ONNX runtime](./onnx-runtime.md) — running the model in production
-10. [Resolver and Who's On First](./resolver-and-wof.md) — turning labels into coordinates
+2. [Addresses that break geocoders](./addresses-that-break-geocoders.md) — failure modes worth knowing
+3. [Tokenization](./tokenization.md) — splitting strings into tokens
+4. [Rule-based classifiers](./rule-based-classifiers.md) — the Mailwoman v1 approach
+5. [BIO labels](./bio-labels.md) — how the neural model marks spans
+6. [Neural classification](./neural-classification.md) — what a transformer encoder does
+7. [CRF decoder](./crf-decoder.md) — fixing structurally-invalid label sequences
+8. [Training pipeline](./training-pipeline.md) — from corpus to model file
+9. [Corpus construction](./corpus-construction.md) — how the training data is built
+10. [ONNX runtime](./onnx-runtime.md) — running the model in production
+11. [Resolver and Who's On First](./resolver-and-wof.md) — turning labels into coordinates
 
 ## Dependency map
 
@@ -29,6 +30,7 @@ Some concepts assume others:
 ```mermaid
 flowchart TD
     A[what-is-an-address]
+    A --> K[addresses-that-break-geocoders]
     A --> B[tokenization]
     A --> C[rule-based-classifiers]
     B --> D[bio-labels]
