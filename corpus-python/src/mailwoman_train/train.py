@@ -31,7 +31,7 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from .config import Config, csv_log_path
 from .data_loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
-from .labels import STAGE1_BIO_LABELS
+from .labels import ACTIVE_BIO_LABELS
 from .model import build_model, force_math_sdpa, model_param_count
 from .tokenizer import Tokenizer
 
@@ -91,7 +91,7 @@ def _token_f1(
     precision = tp / (tp + fp + 1e-9)
     recall = tp / (tp + fn + 1e-9)
     f1 = 2 * precision * recall / (precision + recall + 1e-9)
-    per_label = {STAGE1_BIO_LABELS[c]: float(f1[c]) for c in range(num_labels)}
+    per_label = {ACTIVE_BIO_LABELS[c]: float(f1[c]) for c in range(num_labels)}
     macro = float(f1.mean())
     return {"macro_f1": macro, **{f"f1.{k}": v for k, v in per_label.items()}}
 
@@ -130,7 +130,7 @@ def _eval_val(
         return {"val_loss": float("nan"), "val_rows": 0, "macro_f1": 0.0}
     preds = torch.cat(all_preds, dim=0)
     labels = torch.cat(all_labels, dim=0)
-    metrics = _token_f1(preds, labels, num_labels=len(STAGE1_BIO_LABELS))
+    metrics = _token_f1(preds, labels, num_labels=len(ACTIVE_BIO_LABELS))
     metrics["val_loss"] = loss_total / seen_batches
     metrics["val_rows"] = rows_seen
     return metrics

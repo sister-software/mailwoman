@@ -36,7 +36,7 @@ import torch
 from torch import nn
 
 from .config import Config
-from .labels import ID_TO_LABEL, LABEL_TO_ID, STAGE1_BIO_LABELS
+from .labels import ID_TO_LABEL, LABEL_TO_ID, ACTIVE_BIO_LABELS
 
 
 def force_math_sdpa() -> None:
@@ -288,7 +288,7 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoa
         intermediate_size=cfg.model.intermediate_size,
         max_position_embeddings=cfg.model.max_position_embeddings,
         hidden_dropout_prob=cfg.model.hidden_dropout_prob,
-        num_labels=len(STAGE1_BIO_LABELS),
+        num_labels=len(ACTIVE_BIO_LABELS),
         pad_token_id=pad_token_id,
     )
 
