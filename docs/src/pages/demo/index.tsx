@@ -70,6 +70,7 @@ function DemoApp(): React.ReactElement {
 	const [text, setText] = useState(initialAddress)
 	const [busy, setBusy] = useState(false)
 	const [result, setResult] = useState<DemoResult | null>(null)
+	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
 	const [error, setError] = useState<string | null>(null)
 	const mapContainerRef = useRef<HTMLDivElement>(null)
 	const mapRef = useRef<MapLibreMap | null>(null)
@@ -202,6 +203,49 @@ function DemoApp(): React.ReactElement {
 		return () => observer.disconnect()
 	}, [])
 
+	// Marker + bbox + camera redraw effect — fires when the resolved candidate changes,
+	// either because a new submit landed (resolved[0] picked) or because the operator clicked
+	// a candidate in the picker. Centralised here so onSubmit doesn't carry maplibre lifecycle
+	// concerns AND the picker doesn't need a map ref.
+	useEffect(() => {
+		if (!result || result.candidates.length === 0) {
+			// Clear any stale marker/bbox from the previous resolve.
+			if (markerRef.current) {
+				markerRef.current.remove()
+				markerRef.current = null
+			}
+			if (mapRef.current) clearBbox(mapRef.current)
+			return
+		}
+		const candidate = result.candidates[selectedCandidateIndex] ?? result.candidates[0]
+		if (!candidate) return
+		void (async () => {
+			if (markerRef.current) {
+				markerRef.current.remove()
+				markerRef.current = null
+			}
+			const map = mapRef.current
+			if (!map) return
+			clearBbox(map)
+			const maplibre = await import("maplibre-gl")
+			const marker = new maplibre.Marker({ color: "#e0367c" }).setLngLat([candidate.lon, candidate.lat]).addTo(map)
+			markerRef.current = marker
+			const b = candidate.bbox
+			if (b && Math.max(b.maxLat - b.minLat, b.maxLon - b.minLon) > 0.001) {
+				drawBbox(map, b)
+				map.fitBounds(
+					[
+						[b.minLon, b.minLat],
+						[b.maxLon, b.maxLat],
+					],
+					{ padding: 40 }
+				)
+			} else {
+				map.flyTo({ center: [candidate.lon, candidate.lat], zoom: 12 })
+			}
+		})()
+	}, [result, selectedCandidateIndex])
+
 	const ensureLookup = useCallback(async (): Promise<MailwomanLookupLike | null> => {
 		if (lookup) return lookup
 		if (!lookupLoader) return null
@@ -233,59 +277,38 @@ function DemoApp(): React.ReactElement {
 
 				const wofLookup = await ensureLookup()
 				if (!wofLookup) {
-					setResult({ tree, nodes, resolved: null, stateHint: stateNode?.value as string | undefined })
+					setResult({
+						tree,
+						nodes,
+						resolved: null,
+						candidates: [],
+						stateHint: stateNode?.value as string | undefined,
+					})
 					return
 				}
 
 				// Cascade: postcode first (most precise), fall back to locality, then raw text.
 				// Drop (lat=0, lon=0) hits — WOF ships placeholder zeros on ~22% of US postcodes.
-				const candidates = await runCascade(wofLookup, postcodeNode, localityNode, text)
+				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNode, text)
+				const candidates: ResolvedHit[] = cascadeHits.map((c) => ({
+					id: c.id,
+					name: c.name,
+					placetype: c.placetype,
+					lat: c.lat,
+					lon: c.lon,
+					score: c.score,
+					bbox: c.bbox,
+				}))
 
-				// Clear any stale marker + bbox before deciding whether to draw a new one — otherwise
-				// an unresolvable address after a successful resolve leaves the previous marker on screen.
-				if (markerRef.current) {
-					markerRef.current.remove()
-					markerRef.current = null
-				}
-				if (mapRef.current) clearBbox(mapRef.current)
-
-				let resolved: ResolvedHit | null = null
-				if (candidates.length > 0) {
-					const best = candidates[0]!
-					resolved = {
-						id: best.id,
-						name: best.name,
-						placetype: best.placetype,
-						lat: best.lat,
-						lon: best.lon,
-						score: best.score,
-						bbox: best.bbox,
-					}
-					const maplibre = await import("maplibre-gl")
-					const map = mapRef.current
-					if (map && resolved) {
-						const marker = new maplibre.Marker({ color: "#e0367c" }).setLngLat([resolved.lon, resolved.lat]).addTo(map)
-						markerRef.current = marker
-						const b = resolved.bbox
-						if (b && Math.max(b.maxLat - b.minLat, b.maxLon - b.minLon) > 0.001) {
-							drawBbox(map, b)
-							map.fitBounds(
-								[
-									[b.minLon, b.minLat],
-									[b.maxLon, b.maxLat],
-								],
-								{ padding: 40 }
-							)
-						} else {
-							map.flyTo({ center: [resolved.lon, resolved.lat], zoom: 12 })
-						}
-					}
-				}
-
+				// Marker draw is centralised in the useEffect below — it reacts to result +
+				// selectedCandidateIndex changes. Just stash the candidates; the effect handles
+				// clearing stale marker/bbox AND rendering the new selection.
+				setSelectedCandidateIndex(0)
 				setResult({
 					tree,
 					nodes,
-					resolved,
+					resolved: candidates[0] ?? null,
+					candidates,
 					stateHint: stateNode?.value as string | undefined,
 				})
 			} catch (e2) {
@@ -334,7 +357,13 @@ function DemoApp(): React.ReactElement {
 				</div>
 				{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
 				{error ? <p className={styles.error}>{error}</p> : null}
-				{result ? <ResultPanel result={result} /> : null}
+				{result ? (
+					<ResultPanel
+						result={result}
+						selectedCandidateIndex={selectedCandidateIndex}
+						onSelectCandidate={setSelectedCandidateIndex}
+					/>
+				) : null}
 			</section>
 			<section className={styles.mapWrap}>
 				<div ref={mapContainerRef} className={styles.map} />
@@ -343,9 +372,18 @@ function DemoApp(): React.ReactElement {
 	)
 }
 
-function ResultPanel({ result }: { result: DemoResult }): React.ReactElement {
+function ResultPanel({
+	result,
+	selectedCandidateIndex,
+	onSelectCandidate,
+}: {
+	result: DemoResult
+	selectedCandidateIndex: number
+	onSelectCandidate: (index: number) => void
+}): React.ReactElement {
 	const [showXml, setShowXml] = useState(false)
 	const [xml, setXml] = useState<string | null>(null)
+	const selected = result.candidates[selectedCandidateIndex] ?? result.candidates[0] ?? null
 
 	const onToggle = useCallback(async () => {
 		if (xml) {
@@ -386,27 +424,75 @@ function ResultPanel({ result }: { result: DemoResult }): React.ReactElement {
 					))}
 				</tbody>
 			</table>
-			{result.resolved ? (
-				<div className={styles.resolved}>
-					<h2>Resolved place</h2>
-					<dl>
-						<dt>name</dt>
-						<dd>{result.resolved.name}</dd>
-						<dt>placetype</dt>
-						<dd>{result.resolved.placetype}</dd>
-						<dt>WOF id</dt>
-						<dd>{result.resolved.id}</dd>
-						<dt>coords</dt>
-						<dd>
-							{result.resolved.lat.toFixed(4)}, {result.resolved.lon.toFixed(4)}
-						</dd>
-						<dt>score</dt>
-						<dd>{result.resolved.score.toFixed(3)}</dd>
-					</dl>
-				</div>
+			{selected ? (
+				<>
+					<div className={styles.resolved}>
+						<h2>Resolved place</h2>
+						<dl>
+							<dt>name</dt>
+							<dd>{selected.name}</dd>
+							<dt>placetype</dt>
+							<dd>{selected.placetype}</dd>
+							<dt>WOF id</dt>
+							<dd>{selected.id}</dd>
+							<dt>coords</dt>
+							<dd>
+								{selected.lat.toFixed(4)}, {selected.lon.toFixed(4)}
+							</dd>
+							<dt>score</dt>
+							<dd>{selected.score.toFixed(3)}</dd>
+						</dl>
+					</div>
+					{result.candidates.length > 1 ? (
+						<CandidatePicker
+							candidates={result.candidates}
+							selectedIndex={selectedCandidateIndex}
+							onSelect={onSelectCandidate}
+						/>
+					) : null}
+				</>
 			) : (
 				<FailureDiagnostic nodes={result.nodes} />
 			)}
+		</div>
+	)
+}
+
+/**
+ * Lets the operator see WOF's runner-up hits and switch the rendered marker to any of them. Helpful
+ * when the parser found e.g. "Portland" and WOF returned both Portland-OR and Portland-ME with
+ * similar scores — picker disambiguates without re-typing the query.
+ */
+function CandidatePicker({
+	candidates,
+	selectedIndex,
+	onSelect,
+}: {
+	candidates: ResolvedHit[]
+	selectedIndex: number
+	onSelect: (index: number) => void
+}): React.ReactElement {
+	return (
+		<div className={styles.candidatePicker}>
+			<h2>Other candidates ({candidates.length - 1})</h2>
+			<ol className={styles.candidateList}>
+				{candidates.map((c, i) => (
+					<li key={`${c.id}-${i}`}>
+						<button
+							type="button"
+							className={`${styles.candidateBtn} ${i === selectedIndex ? styles.candidateBtnActive : ""}`}
+							onClick={() => onSelect(i)}
+							title={`${c.placetype} • WOF ${c.id} • score ${c.score.toFixed(3)}`}
+						>
+							<span className={styles.candidateRank}>#{i + 1}</span>
+							<span className={styles.candidateName}>{c.name}</span>
+							<span className={styles.candidateMeta}>
+								{c.placetype} · {c.score.toFixed(2)}
+							</span>
+						</button>
+					</li>
+				))}
+			</ol>
 		</div>
 	)
 }
@@ -547,7 +633,16 @@ interface MailwomanLookupLike {
 interface DemoResult {
 	tree: unknown
 	nodes: Array<{ tag: string; value?: unknown; confidence?: number }>
+	/**
+	 * Top candidate (alias of `candidates[0]` when non-empty). Kept for callers that don't care about
+	 * the picker UI.
+	 */
 	resolved: ResolvedHit | null
+	/**
+	 * Full candidate list returned by the cascade. Length 0 when nothing matched. Picker UI appears
+	 * when length > 1.
+	 */
+	candidates: ResolvedHit[]
 	stateHint?: string
 }
 

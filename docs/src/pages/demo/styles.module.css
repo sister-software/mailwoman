@@ -290,6 +290,71 @@
 	margin-top: 0.35rem;
 }
 
+/* Candidate picker — shown when the WOF cascade returns >1 hit. Each row is a clickable
+   button with rank + name + (placetype, score). Active row highlighted by border + bg
+   so the operator sees which candidate the map marker reflects. */
+.candidatePicker {
+	margin-top: 1rem;
+}
+
+.candidatePicker h2 {
+	font-size: 1rem;
+	margin: 0 0 0.5rem 0;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.candidateList {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.candidateBtn {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	width: 100%;
+	padding: 0.4rem 0.6rem;
+	text-align: left;
+	background: var(--ifm-color-emphasis-100);
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	font-family: inherit;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+
+.candidateBtn:hover {
+	background: var(--ifm-color-emphasis-200);
+	border-color: var(--ifm-color-primary);
+}
+
+.candidateBtnActive {
+	background: var(--ifm-color-primary-contrast-background, #eaf3ff);
+	border-color: var(--ifm-color-primary);
+	font-weight: 600;
+}
+
+.candidateRank {
+	font-family: var(--ifm-font-family-monospace);
+	color: var(--ifm-color-emphasis-600);
+	min-width: 2em;
+}
+
+.candidateName {
+	flex: 1;
+}
+
+.candidateMeta {
+	font-size: 0.75rem;
+	color: var(--ifm-color-emphasis-600);
+	font-family: var(--ifm-font-family-monospace);
+}
+
 /*
  * Map container — explicit height (not min-height) + position:relative on the wrapper.
  *
