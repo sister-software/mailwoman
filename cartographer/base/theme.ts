@@ -8,15 +8,16 @@ import { type Flavor } from "@protomaps/basemaps"
 import { TileSetSourceID } from "../styles/sources.js"
 
 /**
- * Identifier for the Mailwoman base tileset.
+ * Identifier for the Mailwoman base tileset. Matches the R2 object basename
+ * (`nexus-assets/tiles/basemap-v4.pmtiles`) — `tiles.sister.software/basemap-v4.json` returns its
+ * tilejson, `tiles.sister.software/basemap-v4/{z}/{x}/{y}.mvt` returns vector tiles.
  */
-export const MailwomanBaseTileSetID = TileSetSourceID("basemap-v3")
+export const MailwomanBaseTileSetID = TileSetSourceID("basemap-v4")
 
 /**
  * The Mailwoman theme for Protomaps via MapLibre. Keys follow `@protomaps/basemaps@5.x` which
- * targets the v4 tile schema (`["==","kind","..."]` filters). The tile server at
- * `tiles.sister.software/basemap-v3.json` still serves v3 schema (`pmap:kind`) — labels and roads
- * render blank until the upstream PMTiles are re-extracted to v4 (operator-handled R2 update).
+ * targets the v4 tile schema (`["==","kind","..."]` filters), matching the basemap-v4 PMTiles on
+ * R2.
  */
 export const MailwomanBaseFlavor: Flavor = {
 	//#region Base

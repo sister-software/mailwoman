@@ -7,7 +7,7 @@
  *
  *   - `@mailwoman/neural-web` (onnxruntime-web, WASM SIMD with WebGPU fallback) for the BIO classifier.
  *   - `@mailwoman/resolver-wof-wasm` (sqlite-wasm) for the WOF locality / postcode lookup.
- *   - `@mailwoman/cartographer` `StyleSpecificationComposer` over the v3 protomaps basemap.
+ *   - `@mailwoman/cartographer` `StyleSpecificationComposer` over the v4 protomaps basemap.
  *
  *   Static-asset bundle (~60 MB cold): `/mailwoman/model.onnx`, `/mailwoman/tokenizer.model`,
  *   `/mailwoman/wof-hot.db`. After first load the browser caches everything.
@@ -35,7 +35,7 @@ const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
 	{ label: "ZIP only", address: "90210" },
 ]
 
-const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v3.json"
+const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
 
 export default function DemoPage(): React.ReactElement {
 	return (
@@ -97,7 +97,7 @@ function DemoApp(): React.ReactElement {
 				const [neuralWeb, maplibre, basemapSource] = await Promise.all([
 					import("@mailwoman/neural-web"),
 					import("maplibre-gl"),
-					fetchBasemapV3Source(),
+					fetchBasemapSource(),
 				])
 
 				if (cancelled) return
@@ -182,7 +182,7 @@ function DemoApp(): React.ReactElement {
 			// operator toggles, and re-wires terrain after the style swap.
 			const map = mapRef.current
 			if (!map) return
-			void fetchBasemapV3Source().then((source) => {
+			void fetchBasemapSource().then((source) => {
 				const composer = new StyleSpecificationComposer({
 					sources: { [MailwomanBaseTileSetID]: source },
 				})
@@ -575,7 +575,7 @@ function currentDocusaurusTheme(): "light" | "dark" {
 	return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"
 }
 
-async function fetchBasemapV3Source(): Promise<VectorSourceSpecification> {
+async function fetchBasemapSource(): Promise<VectorSourceSpecification> {
 	const response = await fetch(BASEMAP_TILEJSON_URL)
 	if (!response.ok) {
 		throw new Error(`Failed to load basemap tilejson (${response.status})`)
