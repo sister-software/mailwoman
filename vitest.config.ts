@@ -40,6 +40,7 @@ export default defineConfig({
 			{ find: /^@mailwoman\/corpus$/, replacement: resolve(here, "corpus/src/index.ts") },
 			{ find: "@mailwoman/neural/tokenizer", replacement: resolve(here, "neural/tokenizer.ts") },
 			{ find: /^@mailwoman\/neural$/, replacement: resolve(here, "neural/index.ts") },
+			{ find: /^@mailwoman\/query-shape$/, replacement: resolve(here, "query-shape/index.ts") },
 			// `mailwoman` is the user-facing publishable workspace at /mailwoman.
 			{ find: "mailwoman/server", replacement: resolve(here, "mailwoman/server/index.ts") },
 			{ find: "mailwoman/sdk/test", replacement: resolve(here, "mailwoman/sdk/test/index.ts") },

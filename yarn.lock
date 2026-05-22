@@ -4580,6 +4580,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/query-shape@workspace:query-shape":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/query-shape@workspace:query-shape"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/resolver-wof-sqlite@workspace:*, @mailwoman/resolver-wof-sqlite@workspace:resolver-wof-sqlite":
   version: 0.0.0-use.local
   resolution: "@mailwoman/resolver-wof-sqlite@workspace:resolver-wof-sqlite"

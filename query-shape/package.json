@@ -1,0 +1,25 @@
+{
+	"name": "@mailwoman/query-shape",
+	"version": "2.1.0",
+	"description": "Cheap structural priors for the runtime pipeline: character class, segmentation, known-format detection. Pure functions, no ML.",
+	"license": "AGPL-3.0-only",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "query-shape"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}
