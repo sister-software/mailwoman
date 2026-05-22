@@ -330,6 +330,7 @@ function DemoApp(): React.ReactElement {
 							{ex.label}
 						</button>
 					))}
+					<PermalinkButton text={text} />
 				</div>
 				{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
 				{error ? <p className={styles.error}>{error}</p> : null}
@@ -378,7 +379,9 @@ function ResultPanel({ result }: { result: DemoResult }): React.ReactElement {
 						<tr key={i}>
 							<td>{n.tag}</td>
 							<td>{String(n.value ?? "")}</td>
-							<td>{n.confidence?.toFixed(2) ?? "—"}</td>
+							<td>
+								<ConfidenceCell confidence={n.confidence} />
+							</td>
 						</tr>
 					))}
 				</tbody>
@@ -402,10 +405,118 @@ function ResultPanel({ result }: { result: DemoResult }): React.ReactElement {
 					</dl>
 				</div>
 			) : (
-				<p>
-					<em>No WOF hit. Try a US locality name or ZIP code that&apos;s in the top-1k slim subset.</em>
-				</p>
+				<FailureDiagnostic nodes={result.nodes} />
 			)}
+		</div>
+	)
+}
+
+/**
+ * Render confidence as a horizontal bar (0–1 → 0–100% width) + numeric value. Color shifts from
+ * red→amber→green at .5 / .8 thresholds so eyeballing the table surfaces low-confidence predictions
+ * without reading every number.
+ */
+function ConfidenceCell({ confidence }: { confidence: number | undefined }): React.ReactElement {
+	if (confidence == null) return <span className={styles.confDash}>—</span>
+	const pct = Math.max(0, Math.min(1, confidence)) * 100
+	const tier = confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"
+	return (
+		<div className={styles.confCell}>
+			<div className={`${styles.confBar} ${styles[`conf_${tier}`]}`} style={{ width: `${pct}%` }} />
+			<span className={styles.confValue}>{confidence.toFixed(2)}</span>
+		</div>
+	)
+}
+
+/**
+ * Copy a `https://mailwoman.sister.software/demo/?q=<encoded>` link to clipboard. Falls back to a
+ * transient textarea hack on older browsers (Safari < 13.4 still misbehaves with the async
+ * Clipboard API in non-secure contexts). Visible feedback is a 1.5s checkmark swap so the operator
+ * knows the click landed.
+ */
+function PermalinkButton({ text }: { text: string }): React.ReactElement {
+	const [copied, setCopied] = useState(false)
+	const onClick = useCallback(async () => {
+		if (typeof window === "undefined") return
+		const url = new URL(window.location.href)
+		if (text) url.searchParams.set("q", text)
+		else url.searchParams.delete("q")
+		const href = url.toString()
+		try {
+			await navigator.clipboard.writeText(href)
+		} catch {
+			const ta = document.createElement("textarea")
+			ta.value = href
+			ta.style.position = "fixed"
+			ta.style.opacity = "0"
+			document.body.appendChild(ta)
+			ta.select()
+			try {
+				document.execCommand("copy")
+			} catch {
+				/* nothing more we can do; user can copy from address bar */
+			}
+			document.body.removeChild(ta)
+		}
+		setCopied(true)
+		window.setTimeout(() => setCopied(false), 1500)
+	}, [text])
+	return (
+		<button
+			type="button"
+			className={styles.permalinkBtn}
+			onClick={onClick}
+			title="Copy a shareable link to this address"
+		>
+			{copied ? "✓ Link copied" : "Copy link"}
+		</button>
+	)
+}
+
+/**
+ * Surfacing why the WOF cascade returned no hit — saves the operator from guessing whether the
+ * problem is the parser (didn't extract a locality / postcode), the WOF slim subset (entry not
+ * indexed), or a known data quirk (postcode in WOF's 22%-placeholder bucket). The hints are
+ * inferred from the parser output alone — no extra resolver round-trips.
+ */
+function FailureDiagnostic({
+	nodes,
+}: {
+	nodes: Array<{ tag: string; value?: unknown; confidence?: number }>
+}): React.ReactElement {
+	const hasLocality = nodes.some((n) => n.tag === "locality" || n.tag === "city")
+	const hasPostcode = nodes.some((n) => n.tag === "postcode" || n.tag === "postal_code")
+	const hasRegion = nodes.some((n) => n.tag === "region" || n.tag === "state")
+
+	const hints: string[] = []
+	if (!hasLocality && !hasPostcode) {
+		hints.push(
+			"Parser didn't find a city or ZIP code in this input. Try adding one — e.g. append ', Chicago, IL 60613'."
+		)
+	}
+	if (hasPostcode && !hasLocality) {
+		hints.push(
+			"Only a ZIP was extracted. WOF ships placeholder lat/lon (0, 0) for ~22% of US postcodes — known issue, the cascade drops those silently."
+		)
+	}
+	if (hasLocality && !hasRegion) {
+		hints.push(
+			"No state in the parse. Many US localities share names across states (Springfield, Portland, …) — add a state to disambiguate."
+		)
+	}
+	if (hints.length === 0) {
+		hints.push(
+			"The parsed components look reasonable, but the WOF slim subset (~35 MB, top-1k US localities + all postcodes) doesn't index this entry. The full WOF gazetteer (~1.5 GB) would likely resolve it."
+		)
+	}
+	return (
+		<div className={styles.failureDiagnostic}>
+			<h2>No WOF hit</h2>
+			<ul>
+				{hints.map((h, i) => (
+					<li key={i}>{h}</li>
+				))}
+			</ul>
 		</div>
 	)
 }

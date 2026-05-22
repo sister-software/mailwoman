@@ -109,6 +109,67 @@
 	cursor: not-allowed;
 }
 
+/* Permalink button — same chip-shape as example buttons but a different colour family so
+   it reads as an action rather than an example. Pinned right via margin-left:auto so it
+   floats to the end of the .examples row regardless of how many examples are listed. */
+.permalinkBtn {
+	font-size: 0.8rem;
+	padding: 0.25rem 0.55rem;
+	background: transparent;
+	color: var(--ifm-color-primary);
+	border: 1px solid var(--ifm-color-primary);
+	border-radius: 4px;
+	font-weight: 500;
+	cursor: pointer;
+	font-family: inherit;
+	margin-left: auto;
+}
+
+.permalinkBtn:hover {
+	background: var(--ifm-color-primary);
+	color: white;
+}
+
+/* Confidence-bar cell. Bar is positioned absolute behind the numeric value so the cell
+   reads as both a colour-coded fill AND a number. Width is set inline (0–100%) by the
+   render; tier colour is applied via .conf_high/_mid/_low classes. */
+.confCell {
+	position: relative;
+	display: block;
+	min-width: 5em;
+	height: 1.4em;
+	font-family: var(--ifm-font-family-monospace);
+}
+
+.confBar {
+	position: absolute;
+	inset: 0 auto 0 0;
+	border-radius: 2px;
+	opacity: 0.25;
+}
+
+.conf_high {
+	background: #1aa84d;
+}
+
+.conf_mid {
+	background: #e6a800;
+}
+
+.conf_low {
+	background: #d8504a;
+}
+
+.confValue {
+	position: relative;
+	display: inline-block;
+	padding: 0 0.25rem;
+}
+
+.confDash {
+	color: var(--ifm-color-emphasis-400);
+}
+
 .status {
 	font-style: italic;
 	color: var(--ifm-color-emphasis-600);
@@ -197,6 +258,36 @@
 .resolved dd {
 	margin: 0;
 	font-family: var(--ifm-font-family-monospace);
+}
+
+/* Failure diagnostic — friendlier than "no hit". Same visual weight as .resolved so the
+   user sees a structured panel either way; tinted yellow-ish so it reads as informational
+   rather than alarming-red. */
+.failureDiagnostic {
+	margin-top: 1rem;
+	padding: 0.75rem 1rem;
+	background: var(--ifm-color-warning-contrast-background, #fff8e1);
+	border-left: 3px solid var(--ifm-color-warning, #e6a800);
+	border-radius: 4px;
+}
+
+.failureDiagnostic h2 {
+	font-size: 1rem;
+	margin: 0 0 0.5rem 0;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--ifm-color-warning-darker, #b88500);
+}
+
+.failureDiagnostic ul {
+	margin: 0;
+	padding-left: 1.25rem;
+	font-size: 0.875rem;
+	color: var(--ifm-color-emphasis-800);
+}
+
+.failureDiagnostic li + li {
+	margin-top: 0.35rem;
 }
 
 /*
