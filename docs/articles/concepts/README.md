@@ -22,6 +22,7 @@ A useful order if you want to follow the data and code from input to output:
 9. [Corpus construction](./corpus-construction.md) — how the training data is built
 10. [ONNX runtime](./onnx-runtime.md) — running the model in production
 11. [Resolver and Who's On First](./resolver-and-wof.md) — turning labels into coordinates
+12. [The staged pipeline](./the-staged-pipeline.md) — synthesis: failures mapped to a six-stage runtime
 
 ## Dependency map
 
@@ -40,6 +41,8 @@ flowchart TD
     G --> H[corpus-construction]
     G --> I[onnx-runtime]
     A --> J[resolver-and-wof]
+    K --> L[the-staged-pipeline]
+    J --> L
 ```
 
 You can short-circuit: if you know what a transformer is, skip directly to [CRF decoder](./crf-decoder.md). If you want a tour of the training side, jump to [Training pipeline](./training-pipeline.md).
