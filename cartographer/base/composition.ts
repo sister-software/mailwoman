@@ -99,9 +99,8 @@ export class StyleSpecificationComposer {
 			// Sprite must match the basemap schema version — v4 sprites carry the icons referenced
 			// by the v4 theme spec. Currently upstream URLs; we mirror these to nexus-assets/{fonts,
 			// sprites/v4}/ for self-hosting, but no public route fronts that bucket yet.
-			glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
-			sprite: "https://protomaps.github.io/basemaps-assets/sprites/v4/light",
-
+			glyphs: "https://public.sister.software/protomaps/fonts/{fontstack}/{range}.pbf",
+			sprite: "https://public.sister.software/protomaps/sprites/v4/light",
 			light: createLightSpec(this.light),
 			sky: createSkySpec(this.sky),
 			terrain: this.terrain,
