@@ -47,6 +47,20 @@ for (const pkg of ["@mailwoman/neural-web", "@mailwoman/resolver-wof-wasm", "@ma
 		// Best-effort: missing aliases just fall back to default resolution.
 	}
 }
+// `@mailwoman/cartographer` has a heavy barrel (TIGER + BDC + HSPA pull shapefile-parser etc.,
+// which is Node-only). Alias only the browser-safe sub-entrypoints so importing the barrel by
+// accident fails loudly instead of dragging Node modules into the demo bundle.
+const cartographerDir = (() => {
+	try {
+		return dirname(requireFromDocs.resolve("@mailwoman/cartographer/package.json"))
+	} catch {
+		return null
+	}
+})()
+if (cartographerDir) {
+	workspaceAliases["@mailwoman/cartographer/base"] = resolveWorkspaceDir(cartographerDir, "base")
+	workspaceAliases["@mailwoman/cartographer/styles"] = resolveWorkspaceDir(cartographerDir, "styles")
+}
 // Map `@mailwoman/neural/browser` directly — the bare `@mailwoman/neural` import is intentionally
 // NOT aliased so anything that reaches for it accidentally fails loudly instead of pulling
 // onnxruntime-node into the browser bundle.

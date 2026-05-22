@@ -13,11 +13,19 @@ import { HillshadeTileSetID } from "./terrain.js"
 
 export const HillsLayerID = LayerID(HillshadeTileSetID, "hills")
 
-export const BaseLayers: LayerSpecification[] = [
-	...layers(MailwomanBaseTileSetID, MailwomanBaseFlavor, {
-		lang: "en",
-	}),
+/**
+ * Splits `layers()` into non-label + label groups so building footprints, water outlines, and
+ * hillshade sit between base geometry and labels. `@protomaps/basemaps@5.x` doesn't expose a
+ * `noLabels` helper — `labelsOnly: true` gives only the label layers; subtracting that set from the
+ * full list yields the non-label group.
+ */
+const allBaseLayers = layers(MailwomanBaseTileSetID, MailwomanBaseFlavor, { lang: "en" })
+const labelLayers = layers(MailwomanBaseTileSetID, MailwomanBaseFlavor, { lang: "en", labelsOnly: true })
+const labelLayerIDs = new Set(labelLayers.map((layer) => layer.id))
+const nonLabelLayers = allBaseLayers.filter((layer) => !labelLayerIDs.has(layer.id))
 
+export const BaseLayers: LayerSpecification[] = [
+	...nonLabelLayers,
 	{
 		id: LayerID(MailwomanBaseTileSetID, "water-outline"),
 		type: "line",
@@ -40,4 +48,5 @@ export const BaseLayers: LayerSpecification[] = [
 		},
 	},
 	...BuildingLayers,
+	...labelLayers,
 ]
