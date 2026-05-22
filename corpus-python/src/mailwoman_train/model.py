@@ -36,6 +36,7 @@ import torch
 from torch import nn
 
 from .config import Config
+from .crf import LinearChainCRF
 from .labels import ID_TO_LABEL, LABEL_TO_ID, ACTIVE_BIO_LABELS
 
 
@@ -140,11 +141,18 @@ class MailwomanCoarseEncoder(nn.Module):
         hidden_dropout_prob: float,
         num_labels: int,
         pad_token_id: int,
+        use_crf: bool = True,
+        label_smoothing: float = 0.1,
     ) -> None:
         super().__init__()
         self.pad_token_id = pad_token_id
         self.max_position_embeddings = max_position_embeddings
         self.num_labels = num_labels
+        # v0.3.0 additions: CRF decoder for structural validity + learned tag dynamics,
+        # label smoothing on the per-token CE leg for calibration. Both gate-able for
+        # ablation studies via the kwargs above.
+        self.use_crf = use_crf
+        self.label_smoothing = label_smoothing
 
         self.token_embeddings = nn.Embedding(
             vocab_size, hidden_size, padding_idx=pad_token_id
@@ -166,6 +174,12 @@ class MailwomanCoarseEncoder(nn.Module):
         )
         self.final_ln = nn.LayerNorm(hidden_size)
         self.classifier = nn.Linear(hidden_size, num_labels)
+
+        # CRF decoder (Stage 2 / v0.3.0 onwards). Adds ~num_labels² + 2·num_labels learned
+        # scalars (483 for 21 labels) — negligible vs the encoder's ~30M parameters.
+        # Disabled via use_crf=False for ablation studies or backwards compat with
+        # pre-v0.3.0 checkpoints.
+        self.crf: LinearChainCRF | None = LinearChainCRF(num_labels, ID_TO_LABEL) if use_crf else None
 
         self._init_weights()
 
@@ -225,12 +239,47 @@ class MailwomanCoarseEncoder(nn.Module):
 
         loss: torch.Tensor | None = None
         if labels is not None:
-            loss = nn.functional.cross_entropy(
+            ce_loss = nn.functional.cross_entropy(
                 logits.view(-1, self.num_labels),
                 labels.view(-1),
                 ignore_index=-100,
+                label_smoothing=self.label_smoothing,
             )
+            if self.crf is not None and attention_mask is not None:
+                # CRF NLL needs a (B, S) float mask. attention_mask is long-typed; cast.
+                # Replace IGNORE_INDEX positions in labels with 0 so gather doesn't OOB
+                # — those positions are zeroed by the mask anyway.
+                crf_mask = attention_mask.to(logits.dtype)
+                crf_loss = self.crf(emissions=logits, tags=labels.clamp(min=0), mask=crf_mask)
+                # Dual loss: CE keeps emissions discriminative at the token level + provides
+                # label-smoothing calibration; CRF NLL learns transitions + suppresses
+                # invalid sequences. Equal weight is a defensible default; tune if needed.
+                loss = ce_loss + crf_loss
+            else:
+                loss = ce_loss
         return _CoarseEncoderOutput(logits=logits, loss=loss)
+
+    @torch.no_grad()
+    def predict(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+    ) -> list[list[int]]:
+        """Best-path tag IDs per row. Returns variable-length lists (mask-trimmed).
+
+        Uses CRF Viterbi when the layer is present; falls back to per-token argmax
+        otherwise (the v0.2.0 behavior — kept for ablation / pre-CRF checkpoints).
+        """
+        out = self.forward(input_ids=input_ids, attention_mask=attention_mask)
+        if self.crf is not None:
+            return self.crf.viterbi_decode(out.logits, attention_mask.to(out.logits.dtype))
+        # Argmax fallback. Trim per row to mask length.
+        argmax_ids = out.logits.argmax(dim=-1)
+        results: list[list[int]] = []
+        for b in range(argmax_ids.size(0)):
+            length = int(attention_mask[b].sum().item())
+            results.append(argmax_ids[b, :length].tolist())
+        return results
 
     # ---- HuggingFace-compatible save/load helpers ----
 
@@ -249,6 +298,8 @@ class MailwomanCoarseEncoder(nn.Module):
             "hidden_dropout_prob": float(self.input_dropout.p),
             "num_labels": int(self.num_labels),
             "pad_token_id": int(self.pad_token_id),
+            "use_crf": bool(self.use_crf),
+            "label_smoothing": float(self.label_smoothing),
             "id2label": dict(ID_TO_LABEL),
             "label2id": dict(LABEL_TO_ID),
         }
@@ -268,6 +319,11 @@ class MailwomanCoarseEncoder(nn.Module):
             hidden_dropout_prob=cfg["hidden_dropout_prob"],
             num_labels=cfg["num_labels"],
             pad_token_id=cfg["pad_token_id"],
+            # v0.3.0+ fields. Default to v0.2.0 behavior (no CRF, no label smoothing)
+            # for backwards-compat with pre-v0.3.0 checkpoints whose config.json predates
+            # these keys.
+            use_crf=cfg.get("use_crf", False),
+            label_smoothing=cfg.get("label_smoothing", 0.0),
         )
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
         try:
@@ -290,6 +346,9 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoa
         hidden_dropout_prob=cfg.model.hidden_dropout_prob,
         num_labels=len(ACTIVE_BIO_LABELS),
         pad_token_id=pad_token_id,
+        # v0.3.0 defaults — surface in cfg.model if/when ablation studies need to vary.
+        use_crf=getattr(cfg.model, "use_crf", True),
+        label_smoothing=getattr(cfg.model, "label_smoothing", 0.1),
     )
 
 

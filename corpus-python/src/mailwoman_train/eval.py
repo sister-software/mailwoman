@@ -183,12 +183,21 @@ def run_eval(
         m = torch.tensor([attn], dtype=torch.long, device=device)
         logits = model(input_ids=x, attention_mask=m).logits[0]
         probs = torch.softmax(logits, dim=-1)
-        pred_ids = probs.argmax(dim=-1).tolist()
+        # Confidences come from emission softmax regardless of decoder. With CRF, the
+        # decoded sequence may diverge from per-token argmax — confidence here reflects
+        # the model's per-token belief, not the path's marginal likelihood. That's the
+        # historical eval semantic; calibration plots stay comparable across v0.2.0 +
+        # v0.3.0 with this read.
         pred_confs = probs.max(dim=-1).values.tolist()
 
-        # Trim to non-padding length (number of real pieces, capped at max_length).
+        # Trim to non-padding length first so the decoder sees the same length the model
+        # used. With CRF, predict() honors attention_mask + returns mask-trimmed lists.
         real_len = min(len(pieces), cfg.data.max_length)
-        pred_ids = pred_ids[:real_len]
+        if hasattr(model, "predict") and getattr(model, "crf", None) is not None:
+            decoded_batch = model.predict(input_ids=x, attention_mask=m)
+            pred_ids = decoded_batch[0][:real_len] if decoded_batch else []
+        else:
+            pred_ids = probs.argmax(dim=-1).tolist()[:real_len]
         pred_confs = pred_confs[:real_len]
         pieces = pieces[:real_len]
 
