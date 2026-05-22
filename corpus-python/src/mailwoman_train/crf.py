@@ -186,8 +186,11 @@ class LinearChainCRF(nn.Module):
             # broadcast: alpha (B, N, 1) + transitions (1, N, N) + emissions (B, 1, N)
             broadcast = alpha.unsqueeze(2) + masked_trans.unsqueeze(0) + emissions[:, t].unsqueeze(1)
             new_alpha = torch.logsumexp(broadcast, dim=1)  # (B, N)
-            mask_t = mask[:, t].unsqueeze(1)  # (B, 1)
-            alpha = new_alpha * mask_t + alpha * (1 - mask_t)
+            # alpha carries -inf for structurally invalid positions (e.g. starting on I-X);
+            # a multiplicative blend (`alpha * (1 - mask_t)`) would compute 0 * -inf = NaN
+            # whenever mask_t = 1 anywhere alpha is -inf. torch.where avoids the product.
+            keep_new = mask[:, t].unsqueeze(1).bool()
+            alpha = torch.where(keep_new, new_alpha, alpha)
 
         alpha = alpha + self.end_transitions.unsqueeze(0)
         return torch.logsumexp(alpha, dim=1)
@@ -225,8 +228,10 @@ class LinearChainCRF(nn.Module):
             broadcast = score.unsqueeze(2) + masked_trans.unsqueeze(0) + emissions[:, t].unsqueeze(1)
             best_prev = broadcast.argmax(dim=1)  # (B, N)
             best_score = broadcast.max(dim=1).values  # (B, N)
-            mask_t = mask[:, t].unsqueeze(1)
-            score = best_score * mask_t + score * (1 - mask_t)
+            # Same NaN trap as in _log_partition: score may carry -inf at structurally invalid
+            # positions (start_mask), and `0 * -inf = NaN`. Use where(), not multiplicative blend.
+            keep_new = mask[:, t].unsqueeze(1).bool()
+            score = torch.where(keep_new, best_score, score)
             history.append(best_prev)
 
         score = score + self.end_transitions.unsqueeze(0)
