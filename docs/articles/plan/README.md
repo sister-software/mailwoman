@@ -2,14 +2,15 @@
 
 The plan that drove the neural address parser work inside Mailwoman: TypeScript-first, deployed as a new classifier that progressively replaces rule-based classifiers as confidence metrics justify (Ship of Theseus).
 
-**Status (last edited at migration into mailwoman/docs/plan):** Phases 0 through 3 are substantially shipped:
+**Status (last edited 2026-05-22):** Phases 0 through 3 shipped; Stage 2 label expansion landed in v3.0.0; Phase 4 Resolver subphases through 4.3.x shipped.
 
-- `@mailwoman/neural` published to npm at v2.0.x
-- `mailwoman parse --neural --format json|tuple|xml` works end-to-end
-- Decoder + tokenizer + ONNX runtime + per-component policy registry all live
-- `neural-weights-en-us` / `neural-weights-fr-fr` weight packages publish at the same cadence
+- `@mailwoman/neural` published to npm (v2.x runtime).
+- `@mailwoman/neural-weights-{en-us,fr-fr}` at **v3.0.0** — Stage 2 vocabulary (21 BIO classes: O + 7 coarse × {B-,I-} + 3 fine × {B-,I-} for `venue` / `street` / `house_number`). Trained on `corpus-v0.3.0` (677M aligned rows; adds US DOT NAD as 57.9M structured 911-grade address points). Includes a linear-chain CRF decoder over a frozen BIO transition mask so orphan-`I-*` sequences (Saint Petersburg → Petersburg) are structurally impossible. Eval against golden v0.1.2 (4,535 entries): macro F1 0.32, `house_number` F1 0.78, `venue` F1 0.39, `street` F1 0.27, `postcode` F1 0.76, `region` F1 0.18, `locality` F1 0.27. Coarse F1 regressed vs v0.2.0's small-slice eval; v0.4.0 follow-up targets it (see PHASE_2_training.md iteration log).
+- `mailwoman parse --neural --format json|tuple|xml` works end-to-end against the v3.0.0 weights.
+- Decoder + tokenizer + ONNX runtime + per-component policy registry all live; `neural/labels.ts` knows the 21-label vocabulary.
+- Phase 4 Resolver: WOF SQLite path shipped through 4.3.x (FTS5 prefix, R\*Tree proximity, population-weighted ranking, multi-shard ATTACH). Browser-side path lives in `@mailwoman/neural-web` + `@mailwoman/resolver-wof-wasm` (the demo at https://mailwoman.sister.software/demo runs both client-side).
 
-What's described below as "next" or "future" should be read as the historical plan; the actual state is whatever this directory's most-recently-committed phase file says.
+What's described below as "next" or "future" should be read as the historical plan; the actual state is whatever this directory's most-recently-committed phase file says, plus `LOG.md` at the repo root for the live cadence.
 
 ## Read order
 
