@@ -19,7 +19,7 @@ import {
 	decodeAsTuples,
 	decodeAsXml,
 } from "@mailwoman/core/decoder"
-import { STAGE1_BIO_LABELS } from "./labels.js"
+import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import type { ResolveWeightsOpts } from "./weights.js"
@@ -36,7 +36,11 @@ export interface NeuralRunner {
 export interface NeuralAddressClassifierConfig {
 	tokenizer: MailwomanTokenizer
 	runner: NeuralRunner
-	/** Label vocabulary in the order the model emits them. Defaults to Stage 1 (v0.1.0/v0.2.0). */
+	/**
+	 * Label vocabulary in the order the model emits them. Defaults to Stage 2 (v0.3.0). Stage 2
+	 * strictly extends Stage 1 at the same indices, so a v0.2.0 Stage 1 model loaded with this
+	 * default still decodes correctly — its emissions only span the first 15 entries.
+	 */
 	labels?: readonly string[]
 }
 
@@ -44,7 +48,7 @@ export class NeuralAddressClassifier {
 	private readonly labels: readonly string[]
 
 	constructor(private readonly cfg: NeuralAddressClassifierConfig) {
-		this.labels = cfg.labels ?? STAGE1_BIO_LABELS
+		this.labels = cfg.labels ?? STAGE2_BIO_LABELS
 	}
 
 	/**

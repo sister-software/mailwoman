@@ -28,14 +28,18 @@ import type {
 	Section,
 } from "@mailwoman/core/types"
 import type { NeuralAddressClassifier } from "./classifier.js"
-import { STAGE1_COARSE_TAGS } from "./labels.js"
+import { STAGE2_TAGS } from "./labels.js"
 
 export interface NeuralProposalClassifierConfig {
 	/** Stable id surfaced as `source_id` on every proposal (e.g. `neural-v0.2.0-en-us`). */
 	id: string
 	/** The underlying neural classifier instance. */
 	classifier: NeuralAddressClassifier
-	/** Component tags this classifier may emit. Defaults to Stage 1 coarse tags. */
+	/**
+	 * Component tags this classifier may emit. Defaults to the Stage 2 tag set (coarse +
+	 * venue/street/house_number). v0.2.0 Stage 1 models never decode to the fine tags anyway, so
+	 * the broader default is forwards-compat without back-compat risk.
+	 */
 	emits?: readonly ComponentTag[]
 	/** Locales this classifier is active for. `["*"]` (locale-agnostic) by default. */
 	locales?: readonly (string | "*")[]
@@ -45,7 +49,7 @@ export interface NeuralProposalClassifierConfig {
 
 /** Build a `ProposalClassifier` backed by a `NeuralAddressClassifier`. */
 export function createNeuralProposalClassifier(cfg: NeuralProposalClassifierConfig): ProposalClassifier {
-	const emits = cfg.emits ?? STAGE1_COARSE_TAGS
+	const emits = cfg.emits ?? STAGE2_TAGS
 	const emitsSet = new Set<ComponentTag>(emits as readonly ComponentTag[])
 	const penalty = cfg.penalty ?? 0
 
