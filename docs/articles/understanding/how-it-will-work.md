@@ -9,7 +9,7 @@ This article describes where Mailwoman is heading. The work is tracked in GitHub
 
 ## The next iteration — v0.4.0
 
-The v0.3.0 ship (the current `@mailwoman/neural-weights-{en-us,fr-fr}@3.0.0` release) gave us a Stage 2 model — it can now emit `venue`, `street`, and `house_number` labels in addition to the four coarse components. But it shipped with two known issues: coarse F1 regressed against the v0.2.0 baseline, and the training loss was unstable enough that we stopped early at step 1,800 of a planned 50,000.
+The v0.3.0 ship (the current `@mailwoman/neural-weights-{en-us,fr-fr}@3.0.0` release) gave us a Tier 2 model — it can now emit `venue`, `street`, and `house_number` labels in addition to the four coarse components. But it shipped with two known issues: coarse F1 regressed against the v0.2.0 baseline, and the training loss was unstable enough that we stopped early at step 1,800 of a planned 50,000.
 
 v0.4.0 targets both. The plan is tracked in [issue #116](https://github.com/sister-software/mailwoman/issues/116) and broken into six work areas:
 
@@ -43,7 +43,7 @@ The implementation plan ([`plan/README.md`](../plan/README.md)) lays out six pha
 ```mermaid
 flowchart LR
     A["v0.4.0<br>recover coarse F1<br>JS-side Viterbi"]
-    B["v0.5.0<br>Stage 3 labels<br>(POI, attention, po_box)"]
+    B["v0.5.0<br>Tier 3 labels<br>(POI, attention, po_box)"]
     C["v0.6.0<br>top-k Resolver output<br>multi-candidate API"]
     D["Phase 5<br>Studio<br>(human correction UI)"]
     E["Phase 6<br>Japan locale<br>(architecture stress test)"]

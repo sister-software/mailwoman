@@ -10,11 +10,13 @@
 
 **Language:** Python in `packages/corpus-python/`. No TypeScript in this phase.
 
+**Terminology note (2026-05-22):** This document uses **"Tier"** for label-vocabulary expansion (Tier 1 = coarse, Tier 2 = +fine, Tier 3 = +POI). Historically called "Stage 1/2/3" — renamed to free the word "Stage" for runtime-pipeline stages (see [`concepts/the-staged-pipeline`](../../concepts/the-staged-pipeline.md)). Shipped artifacts (model cards, eval filenames like `stage2-step-001800-eval.md`, npm v3.0.0 releases) preserve the old "Stage" naming as historical record.
+
 ## Iteration log (live)
 
-- **v0.1.0** (shipped 2026-05-18, PR #42) — first Stage 1 ship. F1 below targets (~0.03 macro) due to positional-heuristic overfit; calibration 0.337 in conf>0.9 bucket. Honest below-target ship with `v0.2.0 retrain recipe` in session-notes.
+- **v0.1.0** (shipped 2026-05-18, PR #42) — first Tier 1 ship. F1 below targets (~0.03 macro) due to positional-heuristic overfit; calibration 0.337 in conf>0.9 bucket. Honest below-target ship with `v0.2.0 retrain recipe` in session-notes.
 - **v0.2.0** (shipped 2026-05-18, PR #53) — `source_weights` mechanism + relaxed coarse gate. 9× macro-F1 (0.037 → 0.335); calibration tightened 2.6× (0.337 → 0.882 in conf>0.9 bucket). Still below 95% target on country/region/locality but real, measurable, ship-worthy improvement.
-- **v0.3.0 → v3.0.0** (shipped 2026-05-22, PR #115; published as `@mailwoman/neural-weights-{en-us,fr-fr}@3.0.0` — major-bumped from npm's 2.0.6 line to signal the 15→21 BIO breaking change). Stage 2 label expansion (`venue` / `street` / `house_number` BIO classes), linear-chain CRF decoder over a frozen BIO transition mask, dual loss (CE + 0.05·CRF NLL), `corpus-v0.3.0` rebuild (677M aligned rows, adds `usgov-nad` at 57.9M with full venue+street+house_number coverage). Four hparam iterations converged on lr=1.5e-4 + grad_clip=1.0 + crf_loss_weight=0.05 + label_smoothing=0 (down from v0.2.0's lr=5e-4 CE-only — dual loss is far more LR-sensitive; see DECISIONS.md "v0.3.0 Stage 2 dual loss"). Early-stopped at step 1800 of 50K on val plateau. Eval against golden v0.1.2 (4,535 entries): macro F1 0.32; capability-surface win on the 3 new label classes (`house_number` F1 0.78 near #57's 0.8 target, `venue` 0.39, `street` 0.27 — both below floor; v0.4.0 targets); **coarse F1 regressed substantially** vs v0.2.0 (region 0.83 → 0.18, locality 0.65 → 0.27, postcode 0.86 → 0.76) — under-trained at step 1800 + expanded label space pulled prior mass off coarse predictions. CRF makes orphan-`I-*` decode structurally impossible (verified on the demo's "Saint Petersburg" case).
+- **v0.3.0 → v3.0.0** (shipped 2026-05-22, PR #115; published as `@mailwoman/neural-weights-{en-us,fr-fr}@3.0.0` — major-bumped from npm's 2.0.6 line to signal the 15→21 BIO breaking change). Tier 2 label expansion (`venue` / `street` / `house_number` BIO classes), linear-chain CRF decoder over a frozen BIO transition mask, dual loss (CE + 0.05·CRF NLL), `corpus-v0.3.0` rebuild (677M aligned rows, adds `usgov-nad` at 57.9M with full venue+street+house_number coverage). Four hparam iterations converged on lr=1.5e-4 + grad_clip=1.0 + crf_loss_weight=0.05 + label_smoothing=0 (down from v0.2.0's lr=5e-4 CE-only — dual loss is far more LR-sensitive; see DECISIONS.md "v0.3.0 Stage 2 dual loss"). Early-stopped at step 1800 of 50K on val plateau. Eval against golden v0.1.2 (4,535 entries): macro F1 0.32; capability-surface win on the 3 new label classes (`house_number` F1 0.78 near #57's 0.8 target, `venue` 0.39, `street` 0.27 — both below floor; v0.4.0 targets); **coarse F1 regressed substantially** vs v0.2.0 (region 0.83 → 0.18, locality 0.65 → 0.27, postcode 0.86 → 0.76) — under-trained at step 1800 + expanded label space pulled prior mass off coarse predictions. CRF makes orphan-`I-*` decode structurally impossible (verified on the demo's "Saint Petersburg" case).
 - **v0.4.0** (next — issue [#116](https://github.com/sister-software/mailwoman/issues/116)) — recover the coarse-F1 regression + meet issue #57 fine-label floors + harden the dual-loss training family. Six work areas: (1) per-token CRF NLL normalization (eliminates `crf_loss_weight` hand-tuning, matches AllenNLP/FLAIR defaults); (2) longer training — step-1800 is 3.6% of planned 50K; reach step-5000+ before judging val_macro_f1; (3) class-weighted CE biased toward coarse classes to compensate for the 21-label dilution; (4) source-weight rebalance away from NAD-heavy fine-label mix; (5) JS-side Viterbi decode in `@mailwoman/neural` (eval used Viterbi; runtime still per-token argmax — orphan-I drift) + label vocab loaded from `model-card.json` at runtime (silent-drop failure mode caught in v0.3.0); (6) reuse `corpus-v0.3.0` (no rebuild needed unless §4 source weights change significantly). Issue #116 has the full plan + success metrics + wall-clock estimate.
 
 ## Pre-flight
@@ -58,22 +60,22 @@
 - [ ] Optimizer: AdamW, lr 5e-4, weight decay 0.01
 - [ ] LR schedule: linear warmup 1000 steps, then cosine decay
 - [ ] Batch size: 256 (lower if OOM)
-- [ ] Steps: ~50k for Stage 1 coarse-only. Eval every 2k steps on val set.
+- [ ] Steps: ~50k for Tier 1 coarse-only. Eval every 2k steps on val set.
 - [ ] Mixed precision (fp16/bf16) on GPU
 - [ ] Save checkpoint every 5k steps to `/data/models/checkpoints/`
 - [ ] Track: train loss, val loss, val F1 per component, val full-parse exact match
 - [ ] Use Weights & Biases or TensorBoard or plain CSV — pick one and stick with it. Don't ship a logging refactor in the middle of training.
 
-### 5. Staged training plan
+### 5. Tiered training plan
 
-#### Stage 1: Coarse-only (this phase)
+#### Tier 1: Coarse-only (this phase)
 
 - [ ] Train only on rows where `country` and at least one of (`region`, `locality`, `postcode`) is present
 - [ ] Labels restricted to: `country`, `region`, `locality`, `dependent_locality`, `postcode`, `subregion`, `cedex`, `O`
 - [ ] Target: > 95% F1 per component on golden set
 - [ ] This is the v0.1.0 model.
 
-Stages 2 (street) and 3 (venue) are explicitly future phases. Do not attempt to train all stages in Phase 2.
+Tiers 2 (street) and 3 (venue) are explicitly future iterations. Do not attempt to train all tiers in Phase 2.
 
 ### 6. Evaluation
 
@@ -94,7 +96,7 @@ Stages 2 (street) and 3 (venue) are explicitly future phases. Do not attempt to 
 - [ ] Verify ONNX inference matches PyTorch inference within 1e-4 on a sample of 1000 inputs
 - [ ] Output: `/data/models/onnx/model-v0.1.0-en-us.onnx`, same for fr-fr
 
-⚠ If you trained a single multilingual model (recommended for Stage 1 — coarse is cheap to share), export it twice with the same weights, named per locale. Splitting into per-locale models is a Phase 3 decision based on size and load behavior.
+⚠ If you trained a single multilingual model (recommended for Tier 1 — coarse is cheap to share), export it twice with the same weights, named per locale. Splitting into per-locale models is a Phase 3 decision based on size and load behavior.
 
 ### 8. Quantization
 
@@ -123,7 +125,7 @@ Stages 2 (street) and 3 (venue) are explicitly future phases. Do not attempt to 
 
 ## Success criteria checklist
 
-- [ ] Stage 1 model trained, checkpoint saved
+- [ ] Tier 1 model trained, checkpoint saved
 - [ ] ONNX export verified parity with PyTorch
 - [ ] Int8 quantized model meets eval threshold
 - [ ] `neural-weights-en-us@0.1.0` and `neural-weights-fr-fr@0.1.0` package directories complete
@@ -139,7 +141,7 @@ If after the first training run, golden F1 is:
 - 90–95% → analyze failure modes. Likely fixable with corpus tweaks (more synthesis, deduplication, a missing source). One additional iteration is fine.
 - < 90% → stop and re-examine. Could be: tokenizer mismatch, label misalignment, schema bug, severely imbalanced training data. Do not "train longer" without diagnosing first.
 
-⚠ Resist the urge to add street-level components in this phase to "get more value." Stage 1 ships coarse. Stage 2 is its own phase. Mixing them blurs the metrics and slows iteration.
+⚠ Resist the urge to add street-level components in this phase to "get more value." Tier 1 ships coarse. Tier 2 is its own iteration. Mixing them blurs the metrics and slows iteration.
 
 ### Revised (2026-05-18)
 
@@ -147,7 +149,7 @@ The above original framing assumed a single training run. After v0.1.0 + v0.2.0,
 
 - **Each iteration ships an artifact**, target or no target. Below-target ships are OK if they're honest about it (model card + eval ledger entry) AND the Ship-of-Theseus coexistence model means the rule classifiers still run alongside.
 - **Per-iteration F1 floor** (not target): each iteration must improve over the prior one in at least one of: per-component F1, calibration tightness, or capability surface (new labels supported).
-- **Stage label expansion** (Stage 2 → venue+street+house_number; Stage 3 → organization/POI venue) happens as **iteration deltas within Phase 2**, not as separate phases. Same encoder, more head classes. Each lands in its own retrain.
+- **Vocabulary tier expansion** (Tier 2 → venue+street+house_number; Tier 3 → organization/POI venue) happens as **iteration deltas within Phase 2**, not as separate phases. Same encoder, more head classes. Each lands in its own retrain.
 - **The eval ledger is the success record** — `evals/scores-by-version.json` with corpus + golden-set sha-pinning makes every iteration's delta empirically defensible.
 
 ## When to call this phase done

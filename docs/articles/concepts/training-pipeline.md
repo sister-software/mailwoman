@@ -105,7 +105,7 @@ After training, the **eval** stage runs the model against the held-out golden se
 
 The output is a markdown report and a JSON dump under `docs/articles/evals/`. Per-component precision, recall, F1, plus an overall "exact match" rate and a calibration histogram (does confidence match accuracy?).
 
-The eval report is committed to git as part of the ship PR — see [the latest Stage 2 report](../evals/stage2-step-001800-eval.md) for the v3.0.0 numbers.
+The eval report is committed to git as part of the ship PR — see [the latest Tier 2 ship's eval report](../evals/stage2-step-001800-eval.md) for the v3.0.0 numbers (filename preserves the historical "stage2" naming).
 
 ## Stage 7 — Export to ONNX
 
@@ -142,7 +142,7 @@ packages/neural-weights-en-us/
 
 The `model-card.json` is the canonical record of what shipped: which corpus version, which checkpoint, what hparams, what eval metrics. `evals/scores-by-version.json` mirrors the same info but is keyed by run ID for cross-version comparison.
 
-Both packages (en-us, fr-fr) get bumped to a new npm version (v3.0.0 for the Stage 2 ship) and published.
+Both packages (en-us, fr-fr) get bumped to a new npm version (v3.0.0 for the Tier 2 ship) and published.
 
 ## See also
 

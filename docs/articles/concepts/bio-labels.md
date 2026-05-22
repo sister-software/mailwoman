@@ -66,7 +66,7 @@ const STAGE2_TAGS = [
 const STAGE2_BIO_LABELS = ["O", ...STAGE2_TAGS.flatMap((t) => [`B-${t}`, `I-${t}`])]
 ```
 
-(The first 7 tags — through `cedex` — are the original "Stage 1" coarse vocabulary; the last 3 are the "Stage 2" expansion added in v3.0.0.)
+(The first 7 tags — through `cedex` — are the original "Tier 1" coarse vocabulary; the last 3 are the "Tier 2" expansion added in v3.0.0. Historically called "Stage 1/2" — see PHASE_2_training.md for the terminology note.)
 
 ## The orphan-I problem
 

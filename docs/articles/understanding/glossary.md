@@ -45,13 +45,13 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **Encoder** — the part of a transformer that turns input tokens into contextualized vector representations. Mailwoman's encoder has 6 layers, 4 attention heads, 256 hidden dimensions. See [`concepts/neural-classification.md`](../concepts/neural-classification.md).
 
-**Eval / Evaluation** — running the model against a held-out golden dataset and computing per-component F1, exact-match, calibration, etc. The latest report is the [Stage 2 step-001800 eval](../evals/stage2-step-001800-eval.md).
+**Eval / Evaluation** — running the model against a held-out golden dataset and computing per-component F1, exact-match, calibration, etc. The latest report is the [Tier 2 step-001800 eval](../evals/stage2-step-001800-eval.md) (filename preserves the historical "stage2" naming).
 
 ## F
 
 **F1 score** — the harmonic mean of precision and recall, a single number between 0 and 1 summarizing how good a classifier is at a class. F1 = 2·P·R / (P + R).
 
-**Fine label** — in Mailwoman's vocabulary, the three Stage 2 labels added in v3.0.0: `venue`, `street`, `house_number`. As opposed to **coarse labels** (`country`, `region`, `locality`, `postcode`).
+**Fine label** — in Mailwoman's vocabulary, the three Tier 2 labels added in v3.0.0: `venue`, `street`, `house_number`. As opposed to **coarse labels** (`country`, `region`, `locality`, `postcode`).
 
 **fp32 / fp16** — 32-bit and 16-bit floating point formats. Mailwoman trains in bf16 (a 16-bit variant) and exports the ONNX model in int8 for size.
 
@@ -125,7 +125,9 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **Span** — a contiguous range of characters in the input string. The basic unit of address parsing.
 
-**Stage 1 / Stage 2** — internal versioning of which label classes the model emits. Stage 1 is the 4 coarse components (and a few near-coarse). Stage 2 adds `venue`, `street`, `house_number`. Stage 3 (future) would add `attention`, `po_box`, and POI venue subtyping.
+**Stage (runtime)** — one of the six dataflow stages in the runtime pipeline ([the-staged-pipeline](../concepts/the-staged-pipeline.md)): Normalize, Locale gate, Token classify, Sequence correct, Reconcile, Resolve. Distinct from **Tier** (vocabulary expansion across model versions).
+
+**Tier 1 / Tier 2 / Tier 3** — internal versioning of which label classes the model emits. Tier 1 is the coarse components (`country`, `region`, `locality`, `postcode`). Tier 2 adds `venue`, `street`, `house_number`. Tier 3 (future) would add `attention`, `po_box`, and POI venue subtyping. Historically called "Stage 1/2/3" before the runtime-pipeline naming made that ambiguous (renamed 2026-05-22); some shipped artifacts (npm v3.0.0 model card, `stage2-step-001800-eval.md`) preserve the old name.
 
 ## T
 

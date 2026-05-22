@@ -98,7 +98,7 @@ The first Ship of Theseus step.
 - [ ] Verify on the golden set that `country` accuracy improved (or held) and no other component regressed
 - [ ] If anything regresses, revert the policy change and investigate. The migration is gated on metrics, not on intent.
 
-▶ Repeat the same for `region` if Phase 2 metrics justify. Coarse components only. Do not migrate `locality` or below in Phase 3 — defer until Stage 2 trains.
+▶ Repeat the same for `region` if Phase 2 metrics justify. Coarse components only. Do not migrate `locality` or below in Phase 3 — defer until Tier 2 trains.
 
 ### 9. End-to-end test
 
@@ -165,9 +165,9 @@ After Phase 3 ships, pause. The human (the project creator) should look at:
 - Real-world feedback from a couple of test deployments
 - The blog post draft
 - License decisions on weights packages
-- Whether to proceed to Stage 2 (street-level) or pause to gather usage data
+- Whether to proceed to Tier 2 (street-level) or pause to gather usage data
 
-Do not begin Phase 4 (geocoder fusion) or even Stage 2 of Phase 1/2 (street-level training) without explicit confirmation. The point of shipping is to learn.
+Do not begin Phase 4 (geocoder fusion) or even Tier 2 of Phase 1/2 (street-level training) without explicit confirmation. The point of shipping is to learn.
 
 ## When to call this phase done
 
