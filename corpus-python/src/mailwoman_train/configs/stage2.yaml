@@ -65,6 +65,11 @@ model:
   # v0.3.0 toggles. build_model picks these up via getattr(cfg.model, ...).
   use_crf: true
   label_smoothing: 0.1
+  # CRF NLL is per-sequence + unbounded vs CE's per-token + log-num-classes-bounded.
+  # The two scales differ by ~10–100×, so equal-weight summing lets CRF dominate
+  # and destabilizes. First-attempt training at weight=1.0 (the previous unset
+  # default) plateaued + regressed val_macro_f1 from 0.26 → 0.17 by step 750.
+  crf_loss_weight: 0.1
 
 train:
   output_dir: /data/models/checkpoints/stage2

@@ -47,6 +47,10 @@ class ModelConfig:
     # Default False / 0.0 keeps v0.2.0 behavior for back-compat with older configs.
     use_crf: bool = False
     label_smoothing: float = 0.0
+    # Weight on the CRF NLL leg of the dual loss (CE + crf_loss_weight × CRF_NLL). The
+    # CRF NLL is per-sequence and unbounded (~10–100x CE's per-token magnitude); equal-
+    # weight summing destabilizes training. 0.1 keeps CRF as a structural regularizer.
+    crf_loss_weight: float = 0.1
 
 
 @dataclass
