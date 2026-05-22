@@ -12,8 +12,8 @@ import { buildCorpus } from "../src/build.js"
 // Import adapters so they self-register
 import "../src/adapters/index.js"
 
-const OUTPUT = "/mnt/playpen/mailwoman-data/corpus/versioned/v0.2.0"
-const CORPUS_VERSION = "0.2.0"
+const CORPUS_VERSION = "0.3.0"
+const OUTPUT = `/mnt/playpen/mailwoman-data/corpus/versioned/v${CORPUS_VERSION}`
 const ROOT = "/mnt/playpen/mailwoman-data/corpus/sources"
 
 const adapterInputs: Record<string, { inputPath: string; country?: string }> = {
@@ -24,16 +24,25 @@ const adapterInputs: Record<string, { inputPath: string; country?: string }> = {
 	"usgov-hrsa-fqhc": { inputPath: `${ROOT}/usgov-hrsa-fqhc/Health_Center_Service_Delivery_and_LookAlike_Sites.csv` },
 	"usgov-nppes": { inputPath: `${ROOT}/usgov-nppes/npidata_pfile_20050523-20260510.csv` },
 	"usgov-imls-pls": { inputPath: `${ROOT}/usgov-imls-pls/pls_fy23_outlet_pud23i.csv` },
+	// New in v0.3.0 — US DOT NAD (~97M structured 911-grade address points).
+	// Directory of NDJSON shards fetched by `scripts/fetch-nad.ts`.
+	"usgov-nad": { inputPath: `${ROOT}/usgov-nad/featureserver` },
 	"state-ia-contractors": {
 		inputPath: `${ROOT}/state-ia-contractors/IA_Active_Construction_Contractor_Registrations.csv`,
 	},
 	"state-ny-notaries": { inputPath: `${ROOT}/state-ny-notaries/NY_Commissioned_Notaries.csv` },
 	"state-tx-notaries": { inputPath: `${ROOT}/state-tx-notaries/TX_Notary_Public_Commissions.csv` },
+	// Deferred to v0.4.0:
+	//   - openaddresses (OA-CA): waiting on PR #56 per-row license filter
+	//   - usgov-samhsa-treatment-locator: bulk source broken per issue #33
+	//   - state-de-notaries / state-hi-lobbyists / state-hi-schools /
+	//     state-or-notaries / state-wa-health-providers: data on disk but no
+	//     adapter code yet (Phase 1.6.x cluster issues #35-#41)
 }
 
 async function main() {
 	const start = Date.now()
-	process.stderr.write("=== Corpus v0.2.0 build ===\n")
+	process.stderr.write(`=== Corpus v${CORPUS_VERSION} build ===\n`)
 	process.stderr.write(`Output: ${OUTPUT}\n`)
 	process.stderr.write(`Adapters: ${Object.keys(adapterInputs).join(", ")}\n\n`)
 
