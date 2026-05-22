@@ -9,4 +9,13 @@ export * from "./labels.js"
 export * from "./onnx-runner.js"
 export * from "./proposal-classifier.js"
 export * from "./tokenizer.js"
+export {
+	buildBioEndMask,
+	buildBioStartMask,
+	buildBioTransitionMask,
+	perTokenArgmax,
+	softmax,
+	viterbi,
+} from "./viterbi.js"
+export type { ViterbiInput, ViterbiResult } from "./viterbi.js"
 export * from "./weights.js"

@@ -101,9 +101,9 @@ export interface NormalizeOpts {
 export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput
 ```
 
-**Today.** Scattered across the tokenizer pre-processor and the corpus synthesis pass. No `@mailwoman/normalize` package; no public interface; no `NormalizedInput` type.
+**Today.** `@mailwoman/normalize` workspace shipped 2026-05-22 (Slice B of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.md)). Public `normalize()` function with NFC + punctuation + whitespace (always) + abbreviation expansion + case-fold (opt-in). Load-bearing `offsetMap` composed across transforms. Small en-US + fr-FR abbreviation dictionaries.
 
-**Future.** Extract into `@mailwoman/normalize` workspace. Share dictionaries with corpus synthesis (synthesis is the _inverse_ — canonical → variants; normalize is variants → canonical).
+**Future.** Share dictionaries with corpus synthesis (synthesis is the _inverse_ — canonical → variants; normalize is variants → canonical). Add per-locale case-folding edge cases (Turkish `İ`, Greek final sigma). Bidirectional offset lookup (`raw[i] → normalized[i]`).
 
 **Failure classes owned.** Tokenization and whitespace traps (#3); Unicode/transliteration encoding half (#6). See [`addresses-that-break-geocoders`](../../concepts/addresses-that-break-geocoders.md).
 
@@ -120,12 +120,14 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput
 **Interface.** Defined in [`QUERY_SHAPE.md`](./QUERY_SHAPE.md). The entry point:
 
 ```ts
-// packages/query-shape/src/compute.ts
+// query-shape/compute.ts
 
-export function computeQueryShape(input: NormalizedInput, locale?: LocaleTag): QueryShape
+export function computeQueryShape(input: string | NormalizedInputLite, opts?: ComputeQueryShapeOpts): QueryShape
 ```
 
 **Threading.** Once computed, `QueryShape` is threaded through every subsequent stage as additional context. It is not its own stage.
+
+**Today.** `@mailwoman/query-shape` workspace shipped 2026-05-22 (Slice A of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.md)). Pure functions, no ML, zero workspace dependencies. Detects character class, punctuation-bounded segments, known postcode formats (US ZIP/ZIP+4, UK, CA, JP + ambiguous 5-digit FR/DE/US), PO Box / BP. Hyphen / apostrophe / underscore are "connectors" so `"10118-1234"` and `"Saint-Denis"` stay one token. Accepts both `string` and `NormalizedInputLite` (structurally compatible with `@mailwoman/normalize`'s `NormalizedInput`).
 
 ## Stage 2 — Locale gate
 
@@ -268,7 +270,7 @@ export interface CrfDecoder {
 }
 ```
 
-**Today.** Used at training time and in the Python eval. JavaScript runtime still uses per-token argmax (v0.4.0 ships JS Viterbi).
+**Today.** Used at training time and in the Python eval. JavaScript runtime ships Viterbi (2026-05-22) with the BIO structural mask — orphan-`I-*` sequences are structurally impossible at runtime, even without learned CRF transitions in the model bundle. Learned transitions will compose on top once a future weights release ships them via `crf-transitions.json` or the model card.
 
 ### Stage 4b — Span re-reader (future)
 
