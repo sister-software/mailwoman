@@ -269,7 +269,7 @@
 					},
 					"locality": {
 						"f1": 0.2657,
-						"precision": 0.2330,
+						"precision": 0.233,
 						"recall": 0.3089,
 						"support": 3357
 					},
@@ -298,7 +298,7 @@
 						"support": 1101
 					},
 					"street": {
-						"f1": 0.2660,
+						"f1": 0.266,
 						"precision": 0.3326,
 						"recall": 0.2217,
 						"support": 2928

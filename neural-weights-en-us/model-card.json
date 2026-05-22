@@ -1,175 +1,175 @@
 {
-  "name": "neural-weights-en-us",
-  "version": "0.3.0",
-  "phase": "Stage 2 (coarse + venue/street/house_number)",
-  "license": "AGPL-3.0-only",
-  "locale": "en-us",
-  "training": {
-    "corpus_version": "0.3.0",
-    "tokenizer_version": "0.1.0",
-    "steps": 1800,
-    "hardware": "AMD Radeon 780M (gfx1103) bf16 ~14.6 GiB GTT",
-    "duration_seconds": 1067.0,
-    "started_at": null,
-    "completed_at": "2026-05-22T10:22:18.727364Z"
-  },
-  "components_supported": [
-    "country",
-    "region",
-    "locality",
-    "dependent_locality",
-    "postcode",
-    "subregion",
-    "cedex",
-    "venue",
-    "street",
-    "house_number"
-  ],
-  "eval": {
-    "n_entries": 4535,
-    "full_parse_exact_match": 0.1073869900771775,
-    "mean_token_confidence": 0.856554333787935,
-    "per_component": {
-      "country": {
-        "precision": 0.2954545454532025,
-        "recall": 0.2653061224478967,
-        "f1": 0.2795698919733611,
-        "support": 245
-      },
-      "region": {
-        "precision": 0.4411027568916778,
-        "recall": 0.10982839313569116,
-        "f1": 0.17586809860649805,
-        "support": 3205
-      },
-      "locality": {
-        "precision": 0.23303370786511615,
-        "recall": 0.3089067619897799,
-        "f1": 0.26565902346259507,
-        "support": 3357
-      },
-      "dependent_locality": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "support": 40
-      },
-      "postcode": {
-        "precision": 0.8426270136303831,
-        "recall": 0.684563758389032,
-        "f1": 0.7554156632710455,
-        "support": 2980
-      },
-      "subregion": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "support": 0
-      },
-      "cedex": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0.0,
-        "support": 1
-      },
-      "venue": {
-        "precision": 0.38622493461169466,
-        "recall": 0.4023614895545846,
-        "f1": 0.39412811337886233,
-        "support": 1101
-      },
-      "street": {
-        "precision": 0.3326499231161801,
-        "recall": 0.22165300546440517,
-        "f1": 0.2660381220860398,
-        "support": 2928
-      },
-      "house_number": {
-        "precision": 0.7315737051789185,
-        "recall": 0.8432835820890682,
-        "f1": 0.7834666661687646,
-        "support": 1742
-      }
-    },
-    "calibration": [
-      {
-        "low": 0.0,
-        "high": 0.1,
-        "n": 0,
-        "acc": 0.0
-      },
-      {
-        "low": 0.1,
-        "high": 0.2,
-        "n": 19,
-        "acc": 0.5789473684210527
-      },
-      {
-        "low": 0.2,
-        "high": 0.3,
-        "n": 316,
-        "acc": 0.3322784810126582
-      },
-      {
-        "low": 0.3,
-        "high": 0.4,
-        "n": 1213,
-        "acc": 0.37757625721352017
-      },
-      {
-        "low": 0.4,
-        "high": 0.5,
-        "n": 2754,
-        "acc": 0.34132171387073346
-      },
-      {
-        "low": 0.5,
-        "high": 0.6,
-        "n": 3647,
-        "acc": 0.35481217438990953
-      },
-      {
-        "low": 0.6,
-        "high": 0.7,
-        "n": 3659,
-        "acc": 0.3883574747198688
-      },
-      {
-        "low": 0.7,
-        "high": 0.8,
-        "n": 4610,
-        "acc": 0.40629067245119305
-      },
-      {
-        "low": 0.8,
-        "high": 0.9,
-        "n": 7716,
-        "acc": 0.43960601347848627
-      },
-      {
-        "low": 0.9,
-        "high": 1.0,
-        "n": 37314,
-        "acc": 0.5987564989012167
-      }
-    ]
-  },
-  "known_failure_modes": [
-    "underperforms on Hawaiian addresses (sparse in training corpus)",
-    "particle-honorific kryptonite (e.g. FR 'Saint-Just-Saint-Rambert') if not in synth set",
-    "non-Latin scripts (CJK, Cyrillic) fall through to byte-fallback tokens; F1 unknown"
-  ],
-  "notes": "Stage 2 v0.3.0 \u2014 same encoder geometry as v0.2.0 (8.87M params, 6L/256H/4-heads) plus a linear-chain CRF decoder (+~500 params with a frozen BIO transition mask), label smoothing 0.1 on the per-token CE leg, and a 21-label classifier head (was 15) that adds venue / street / house_number BIO classes. Trained on corpus-v0.3.0 which adds the US DOT NAD source (~97M structured 911-grade address points). The CRF transition mask makes orphan-I sequences (e.g. \"Saint Petersburg \u2192 Petersburg\" clipping visible on the v0.2.0 demo) structurally impossible. See evals/scores-by-version.json for the v0.2.0 \u2192 v0.3.0 deltas + the per-component F1 on the new fine labels.",
-  "format": {
-    "model": "ONNX int8 dynamic",
-    "tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=16000",
-    "max_sequence_length": 128,
-    "opset": 17
-  },
-  "files": {
-    "model": "model.onnx",
-    "tokenizer": "tokenizer.model",
-    "model_card": "model-card.json"
-  },
-  "base_relpath": "/data/models/checkpoints/stage2/step-001800"
+	"name": "neural-weights-en-us",
+	"version": "0.3.0",
+	"phase": "Stage 2 (coarse + venue/street/house_number)",
+	"license": "AGPL-3.0-only",
+	"locale": "en-us",
+	"training": {
+		"corpus_version": "0.3.0",
+		"tokenizer_version": "0.1.0",
+		"steps": 1800,
+		"hardware": "AMD Radeon 780M (gfx1103) bf16 ~14.6 GiB GTT",
+		"duration_seconds": 1067.0,
+		"started_at": null,
+		"completed_at": "2026-05-22T10:22:18.727364Z"
+	},
+	"components_supported": [
+		"country",
+		"region",
+		"locality",
+		"dependent_locality",
+		"postcode",
+		"subregion",
+		"cedex",
+		"venue",
+		"street",
+		"house_number"
+	],
+	"eval": {
+		"n_entries": 4535,
+		"full_parse_exact_match": 0.1073869900771775,
+		"mean_token_confidence": 0.856554333787935,
+		"per_component": {
+			"country": {
+				"precision": 0.2954545454532025,
+				"recall": 0.2653061224478967,
+				"f1": 0.2795698919733611,
+				"support": 245
+			},
+			"region": {
+				"precision": 0.4411027568916778,
+				"recall": 0.10982839313569116,
+				"f1": 0.17586809860649805,
+				"support": 3205
+			},
+			"locality": {
+				"precision": 0.23303370786511615,
+				"recall": 0.3089067619897799,
+				"f1": 0.26565902346259507,
+				"support": 3357
+			},
+			"dependent_locality": {
+				"precision": 0.0,
+				"recall": 0.0,
+				"f1": 0.0,
+				"support": 40
+			},
+			"postcode": {
+				"precision": 0.8426270136303831,
+				"recall": 0.684563758389032,
+				"f1": 0.7554156632710455,
+				"support": 2980
+			},
+			"subregion": {
+				"precision": 0.0,
+				"recall": 0.0,
+				"f1": 0.0,
+				"support": 0
+			},
+			"cedex": {
+				"precision": 0.0,
+				"recall": 0.0,
+				"f1": 0.0,
+				"support": 1
+			},
+			"venue": {
+				"precision": 0.38622493461169466,
+				"recall": 0.4023614895545846,
+				"f1": 0.39412811337886233,
+				"support": 1101
+			},
+			"street": {
+				"precision": 0.3326499231161801,
+				"recall": 0.22165300546440517,
+				"f1": 0.2660381220860398,
+				"support": 2928
+			},
+			"house_number": {
+				"precision": 0.7315737051789185,
+				"recall": 0.8432835820890682,
+				"f1": 0.7834666661687646,
+				"support": 1742
+			}
+		},
+		"calibration": [
+			{
+				"low": 0.0,
+				"high": 0.1,
+				"n": 0,
+				"acc": 0.0
+			},
+			{
+				"low": 0.1,
+				"high": 0.2,
+				"n": 19,
+				"acc": 0.5789473684210527
+			},
+			{
+				"low": 0.2,
+				"high": 0.3,
+				"n": 316,
+				"acc": 0.3322784810126582
+			},
+			{
+				"low": 0.3,
+				"high": 0.4,
+				"n": 1213,
+				"acc": 0.37757625721352017
+			},
+			{
+				"low": 0.4,
+				"high": 0.5,
+				"n": 2754,
+				"acc": 0.34132171387073346
+			},
+			{
+				"low": 0.5,
+				"high": 0.6,
+				"n": 3647,
+				"acc": 0.35481217438990953
+			},
+			{
+				"low": 0.6,
+				"high": 0.7,
+				"n": 3659,
+				"acc": 0.3883574747198688
+			},
+			{
+				"low": 0.7,
+				"high": 0.8,
+				"n": 4610,
+				"acc": 0.40629067245119305
+			},
+			{
+				"low": 0.8,
+				"high": 0.9,
+				"n": 7716,
+				"acc": 0.43960601347848627
+			},
+			{
+				"low": 0.9,
+				"high": 1.0,
+				"n": 37314,
+				"acc": 0.5987564989012167
+			}
+		]
+	},
+	"known_failure_modes": [
+		"underperforms on Hawaiian addresses (sparse in training corpus)",
+		"particle-honorific kryptonite (e.g. FR 'Saint-Just-Saint-Rambert') if not in synth set",
+		"non-Latin scripts (CJK, Cyrillic) fall through to byte-fallback tokens; F1 unknown"
+	],
+	"notes": "Stage 2 v0.3.0 \u2014 same encoder geometry as v0.2.0 (8.87M params, 6L/256H/4-heads) plus a linear-chain CRF decoder (+~500 params with a frozen BIO transition mask), label smoothing 0.1 on the per-token CE leg, and a 21-label classifier head (was 15) that adds venue / street / house_number BIO classes. Trained on corpus-v0.3.0 which adds the US DOT NAD source (~97M structured 911-grade address points). The CRF transition mask makes orphan-I sequences (e.g. \"Saint Petersburg \u2192 Petersburg\" clipping visible on the v0.2.0 demo) structurally impossible. See evals/scores-by-version.json for the v0.2.0 \u2192 v0.3.0 deltas + the per-component F1 on the new fine labels.",
+	"format": {
+		"model": "ONNX int8 dynamic",
+		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=16000",
+		"max_sequence_length": 128,
+		"opset": 17
+	},
+	"files": {
+		"model": "model.onnx",
+		"tokenizer": "tokenizer.model",
+		"model_card": "model-card.json"
+	},
+	"base_relpath": "/data/models/checkpoints/stage2/step-001800"
 }

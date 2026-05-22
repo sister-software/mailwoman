@@ -42,10 +42,10 @@ import { wofPostalcodeAdapter } from "./wof-postalcode-json/adapter.js"
  * global), then adversarial-source (FCC BDC US, HRSA FQHC US).
  *
  * The `usgov-samhsa-treatment-locator` adapter is intentionally absent from this list — the SAMHSA
- * Open Data Foundry bulk CSV the adapter was written against is no longer publicly distributed
- * (see issue #33, 2026-05-17 investigation). The factory + named export remain available so the
- * adapter can be hand-registered if an operator obtains a compatible CSV (FOIA, partner channel,
- * upstream restoration). Re-add it here once a stable public source returns.
+ * Open Data Foundry bulk CSV the adapter was written against is no longer publicly distributed (see
+ * issue #33, 2026-05-17 investigation). The factory + named export remain available so the adapter
+ * can be hand-registered if an operator obtains a compatible CSV (FOIA, partner channel, upstream
+ * restoration). Re-add it here once a stable public source returns.
  */
 export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	wofAdminAdapter,

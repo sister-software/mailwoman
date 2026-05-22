@@ -38,4 +38,3 @@ Stage 2 ships coarse (country / region / locality / dependent_locality / postcod
 ## Loader
 
 Loaded at runtime by `@mailwoman/neural`. This package contains no JS code.
-

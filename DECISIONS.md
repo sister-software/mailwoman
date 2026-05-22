@@ -1070,7 +1070,6 @@ checkpoint), it fast-forwards the scheduler by `resume_step` steps so the LR mat
 Save cadence dropped from `save_every_steps=5000` to `save_every_steps=2000` so the
 worst-case wasted work per crash is half an eval interval.
 
-
 ## 2026-05-22 — v0.3.0 Stage 2 dual loss: down-weight CRF + drop label smoothing + lower LR
 
 **Context:** Stage 2 (v0.3.0) adds a linear-chain CRF decoder + label smoothing 0.1 on top of
