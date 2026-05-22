@@ -1,0 +1,130 @@
+---
+sidebar_position: 9
+title: ONNX runtime
+---
+
+# ONNX runtime
+
+**ONNX** (Open Neural Network Exchange) is a standardized format for serializing trained neural networks. ONNX Runtime is the family of inference engines that consume those files. Mailwoman uses ONNX so the same trained model can run in Node.js, browsers, mobile devices, or anywhere else with an ONNX Runtime build.
+
+## Why ONNX and not PyTorch directly
+
+PyTorch is great for training. It is heavy for inference. A PyTorch install is ~700 MB of Python wheels and depends on a specific Python version, CUDA toolkit, and C++ runtime. Shipping that to a browser is not feasible. Shipping it to a serverless function is painful.
+
+ONNX is the lingua franca that decouples training framework from inference runtime. Mailwoman trains in PyTorch (because that is the easy path for the team), exports to ONNX (because that is the portable format), and ships ONNX files. Consumers pick the runtime that fits their environment:
+
+- `onnxruntime-node` — Node.js bindings. Used by `@mailwoman/neural` (the default Node SDK).
+- `onnxruntime-web` — WebAssembly + optional WebGPU. Used by `@mailwoman/neural-web` (the browser SDK).
+- `onnxruntime-mobile` — for iOS / Android (not currently shipped but architecturally supported).
+
+The same `model.onnx` file works in all three.
+
+## How the model file is structured
+
+An ONNX model is a graph of operations: matrix multiplies, attention computations, activations, layer normalisation, etc. Each operation has typed inputs and outputs. The graph is serialized as a Protocol Buffer.
+
+For Mailwoman's encoder, the export traces this kind of structure:
+
+```
+inputs:
+  input_ids:        int64[batch, seq]
+  attention_mask:   int64[batch, seq]
+
+graph:
+  embedding → position_add → layernorm → dropout
+  block_1 (attention + ln + ffn + ln)
+  block_2 (...)
+  ...
+  block_6
+  final_layernorm
+  classifier (linear: 256 → 21)
+
+outputs:
+  logits:           float32[batch, seq, 21]
+```
+
+The CRF is **not** part of the ONNX graph in v3.0.0. The Viterbi decode runs in JavaScript (or will, post-v0.4.0). The transition matrix gets exported as a separate tensor in the ONNX file but the algorithmic loop is not.
+
+## Inference in Node.js
+
+Loading and running the model on the server is straightforward:
+
+```ts
+import { InferenceSession } from "onnxruntime-node"
+import { readFileSync } from "node:fs"
+
+const session = await InferenceSession.create(readFileSync("model.onnx"))
+
+const inputIds = new BigInt64Array([
+	/* tokenized address */
+])
+const attentionMask = new BigInt64Array([
+	/* 1s for real tokens, 0s for padding */
+])
+
+const results = await session.run({
+	input_ids: new ort.Tensor("int64", inputIds, [1, seq_len]),
+	attention_mask: new ort.Tensor("int64", attentionMask, [1, seq_len]),
+})
+
+const logits = results.logits // float32[1, seq_len, 21]
+const labels = argmax(logits) // pick best label per token
+```
+
+The whole inference path — tokenize, run model, decode labels — takes ~5 ms on a modest CPU for a typical address. The session-creation step (loading the file, JIT-compiling the graph) takes ~30 ms and is amortized across many calls.
+
+## Inference in the browser
+
+The browser path uses `onnxruntime-web`, which is the same engine compiled to WebAssembly. Loading is a bit more involved because the WASM blob is several MB:
+
+```ts
+import * as ort from "onnxruntime-web"
+
+const session = await ort.InferenceSession.create("/mailwoman/model.onnx", {
+	executionProviders: ["wasm"], // or ["webgpu", "wasm"] for GPU acceleration
+})
+
+// Same API as the Node version
+const results = await session.run({ input_ids, attention_mask })
+```
+
+The browser path optionally uses **WebGPU** (where available) for GPU acceleration. WebGPU is enabled by default in modern Chrome and Edge; Firefox and Safari are catching up. When WebGPU is not available, the runtime falls back to WASM SIMD, which is roughly 2–3x slower but still fast enough for interactive use.
+
+`@mailwoman/neural-web` wraps this with the same API as `@mailwoman/neural` so consumer code rarely has to know whether it is running in Node or in the browser.
+
+## The size budget
+
+ONNX gives us portability. **int8 quantization** gives us a small enough file to ship to the browser.
+
+| representation            | model file size |
+| ------------------------- | --------------- |
+| PyTorch checkpoint (fp32) | 37 MB           |
+| ONNX fp32 export          | 37 MB           |
+| ONNX int8 quantized       | 25 MB           |
+
+25 MB is the number Mailwoman ships. Combined with the WOF SQLite slim distribution (~35 MB), the total cold-load for the browser demo is about 60 MB. The browser caches everything on first load; subsequent visits are instant.
+
+For context, a single high-resolution photo on a typical news site is 200 KB to 2 MB. A modern app bundle is 5–20 MB. 60 MB is large but not unreasonable for a one-time cold load.
+
+## The export caveats
+
+A few subtle issues come up during ONNX export:
+
+- **Dynamic axes.** The model needs to handle variable batch sizes and variable sequence lengths. Both are declared as "dynamic axes" during export. The exported model graph contains shape inference logic so the runtime can adapt at call time.
+- **Operations that have no ONNX equivalent.** Most PyTorch ops do. A few (some custom ROCm kernels, some experimental quantization ops) do not. Mailwoman avoids them.
+- **The `dynamo` exporter path.** PyTorch 2.x ships two ONNX exporters: the legacy TorchScript-based one and the newer `dynamo`-based one. The legacy path crashes on `transformers ≥ 5`'s attention masking implementation; we use the `dynamo` path with `onnxscript` post-processing.
+- **CPU-only export on this GPU.** ROCm + bf16 + ONNX tracing hangs on the lab's hardware. The model is moved to CPU before the export call. This is slow (a few minutes) but only runs at ship time, not per-iteration.
+
+## Where this lives in the code
+
+- **Export script:** `corpus-python/src/mailwoman_train/export_onnx.py`
+- **Quantization:** `corpus-python/src/mailwoman_train/quantize.py`
+- **Node runtime wrapper:** `neural/onnx-runner.ts`
+- **Web runtime wrapper:** `neural-web/web-onnx-runner.ts`
+- **Demo integration:** `docs/src/pages/demo/index.tsx`
+
+## See also
+
+- [Neural classification](./neural-classification.md) — what the ONNX graph implements
+- [Training pipeline](./training-pipeline.md) — where the ONNX file comes from
+- [CRF decoder](./crf-decoder.md) — the part that is _not_ in the ONNX graph (yet)

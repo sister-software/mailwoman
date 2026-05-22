@@ -1,0 +1,144 @@
+---
+sidebar_position: 3
+title: Rule-based classifiers
+---
+
+# Rule-based classifiers
+
+A rule classifier is a small piece of hand-written code that labels tokens. Pelias and Mailwoman v1 are built almost entirely on rule classifiers. Mailwoman v2 keeps them and adds the neural classifier alongside — see [How it works now](../understanding/how-it-works-now.md) for the hybrid.
+
+This article walks through how rule classifiers are structured and what they are good and bad at.
+
+## One classifier per component
+
+In Mailwoman's design, there is one rule classifier per address component type, and they all run in parallel. The interface a classifier conforms to looks roughly like:
+
+```ts
+interface RuleClassifier {
+	id: string // 'postcode', 'house_number', …
+	component: ComponentTag
+	classify(tokens: Token[], context: Context): ClassificationProposal[]
+}
+```
+
+Each classifier:
+
+- Looks at the full token sequence (so it has context — knowing the next or previous token matters).
+- Returns zero or more proposals (each saying "I think tokens i..j are a `postcode` with confidence 0.95").
+- Does not depend on what any other classifier returns. The merging happens in the solver.
+
+## A worked example — the postcode classifier
+
+Probably the simplest classifier. Postcodes are a regex problem, not a machine learning problem.
+
+```ts
+const US_POSTCODE = /^\d{5}(-\d{4})?$/  // 10118 or 10118-1234
+const FR_POSTCODE = /^\d{5}$/            // 75008
+const UK_POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i  // SW1A 1AA
+
+classify(tokens: Token[], context: Context): ClassificationProposal[] {
+	const out: ClassificationProposal[] = []
+	for (const token of tokens) {
+		if (US_POSTCODE.test(token.text)) {
+			out.push({
+				span: token.span,
+				component: "postcode",
+				confidence: 0.95,
+				source: "rule",
+				source_id: "rule:postcode:us",
+				penalty: 0,
+				metadata: { country_hint: "US" },
+			})
+		}
+		// FR + UK regexes similarly
+	}
+	return out
+}
+```
+
+Three things to notice:
+
+1. **Confidence is not 1.0** even though the regex matches. A 5-digit number could also be a house number (rare) or a year. The solver sees the high score but is allowed to reject it if a better story emerges from the other classifiers.
+2. **Country hint as metadata.** The classifier sets `country_hint: "US"` when the US pattern fires. The solver can use this to bias the country classification.
+3. **Multiple patterns coexist.** If the same token matches both US and UK regexes, the classifier emits two proposals. The solver picks.
+
+## A harder example — the locality classifier
+
+This one is harder because there is no regex for "is this word a city name?". The Mailwoman v1 locality classifier looks up the token (and short n-grams of consecutive tokens) in a [Who's On First](https://whosonfirst.org/) dictionary file. Pseudo-code:
+
+```ts
+const WOF_LOCALITIES: Set<string> = loadDictionary("wof/locality.txt")
+
+classify(tokens: Token[], context: Context): ClassificationProposal[] {
+	const out: ClassificationProposal[] = []
+	for (let i = 0; i < tokens.length; i++) {
+		// Try 1-, 2-, and 3-token spans
+		for (let len = 1; len <= 3; len++) {
+			const candidate = tokens.slice(i, i + len)
+			const text = candidate.map((t) => t.text).join(" ")
+			if (WOF_LOCALITIES.has(text)) {
+				out.push({
+					span: { start: candidate[0].span.start, end: candidate.at(-1)!.span.end },
+					component: "locality",
+					confidence: 0.6,
+					source: "rule",
+					source_id: "rule:whos_on_first:locality",
+					penalty: 0,
+				})
+			}
+		}
+	}
+	return out
+}
+```
+
+Notes:
+
+- **Confidence is moderate** (0.6) because dictionary hits can be misleading. "New" is the start of many city names, so a 1-token match on "New" is weaker than a 3-token match on "New York City".
+- **N-gram sweep** is how multi-word cities work. The classifier tries spans of length 1, 2, and 3 and emits a proposal for each match.
+- **No exclusion logic.** If "New York" matches as a locality and "New" matches as a different component, both proposals exist; the solver picks one self-consistent combination.
+
+## What rule classifiers are good at
+
+- **Determinism.** Same input, same output, every time. No retraining, no random initialization.
+- **Easy to fix.** A bug in a regex is one line. A bug in a neural model is a retraining run.
+- **No data required.** A rule classifier ships in code. The dictionary classifiers ship a few MB of dictionaries, not a multi-GB model.
+- **Fast.** Pattern matching is microseconds per address. The whole parse runs in milliseconds.
+- **Explainable.** Every proposal carries a `source_id`. A consumer that sees `rule:postcode:us` on a wrong proposal knows exactly where to look.
+
+## What rule classifiers are bad at
+
+- **The long tail.** Real-world inputs do not fit predictable patterns. For every regex you write, there are inputs the regex misses.
+- **Context.** A regex sees one token at a time. "Lincoln" might be a city, a person, or a venue. A regex cannot tell.
+- **Languages.** Every locale needs its own rules, hand-written, by someone who knows that language.
+- **Multi-word things.** N-gram sweeps work for 2- and 3-token cases. "Saint Petersburg, FL" is fine; "Mt Tabor Forest Preserve" (a 4-token venue) is harder.
+- **Negative evidence.** Rules can say "this looks like X". They cannot easily say "this looks like X but only in the absence of Y".
+
+These weaknesses are the motivation for the neural classifier. See [Neural classification](./neural-classification.md).
+
+## How rule classifiers and the neural classifier coexist
+
+In Mailwoman v2, both produce `ClassificationProposal`s in the same shape. The **policy registry** decides whose proposal wins for each component:
+
+```ts
+const policy: ClassifierPolicy[] = [
+	{ component: "postcode", mode: "rule_only" }, // regex wins, model not even consulted
+	{ component: "country", mode: "rule_preferred" }, // rule wins unless rule confidence is very low
+	{ component: "venue", mode: "neural_only" }, // rules can't classify venues at all
+	{ component: "house_number", mode: "neural_preferred" }, // model is stronger here in v3.0.0
+]
+```
+
+This is the Ship-of-Theseus pattern. The neural classifier earns each component one at a time. If a neural model regresses, flipping back to `rule_only` is one line of config.
+
+## Where this lives in the code
+
+- `core/classifiers/` (in the v1 tree) — every rule classifier
+- `core/policy/` — the per-component policy registry
+- `core/solver/` — the merger that picks self-consistent combinations
+
+## See also
+
+- [What is an address?](./what-is-an-address.md) — the components rule classifiers label
+- [Neural classification](./neural-classification.md) — the v2 alternative
+- [How it works now](../understanding/how-it-works-now.md) — the hybrid in action

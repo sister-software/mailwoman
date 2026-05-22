@@ -1,0 +1,141 @@
+---
+sidebar_position: 11
+title: Corpus construction
+---
+
+# Corpus construction
+
+The training corpus is the largest single source of leverage in the project. The model can only learn patterns that appear in the data. This article walks through how Mailwoman builds its corpus — what sources are in it, how rows are aligned to BIO labels, and how the synthesis step multiplies the effective size.
+
+A general overview of the training pipeline is in [Training pipeline](./training-pipeline.md). This article zooms into the corpus side (Stages 1–4 of that pipeline).
+
+## What "the corpus" is
+
+A corpus version is a frozen set of `(raw, tokens, BIO labels)` triples ready for training. The current version is `corpus-v0.3.0`:
+
+| metric                         | value                              |
+| ------------------------------ | ---------------------------------- |
+| total aligned rows             | 677 million                        |
+| quarantined rows               | 214,118 (0.03%)                    |
+| active source adapters         | 11                                 |
+| disk size (output)             | ~30 GB Parquet                     |
+| disk size (with intermediates) | ~430 GB                            |
+| wall-clock to build            | ~6.5 hours                         |
+| splits                         | train (90%) / val (5%) / test (5%) |
+
+The corpus is built once per ship. Re-running the build is idempotent; running incremental updates is not yet supported.
+
+## The data sources
+
+The corpus draws from many open data sources. Each one contributes a different kind of signal:
+
+| adapter                          | rows in v0.3.0            | what it contributes                                                          |
+| -------------------------------- | ------------------------- | ---------------------------------------------------------------------------- |
+| **WOF admin**                    | 4.2M                      | country / region / locality strings + their canonical names                  |
+| **WOF postalcode**               | 104K                      | postcode → locality mappings (US-heavy)                                      |
+| **BAN** (Base Adresse Nationale) | 27.1M                     | every French address, house-number level                                     |
+| **TIGER** (US Census)            | 23.3M                     | US street segments + place names                                             |
+| **NPPES**                        | 9.2M                      | US healthcare provider names + business addresses (venue + street level)     |
+| **HRSA-FQHC**                    | 19K                       | US federally-qualified health centres                                        |
+| **IMLS-PLS**                     | 18K                       | US public libraries (venue + address)                                        |
+| **NAD** (US DOT)                 | **57.9M** (new in v0.3.0) | structured 911-grade address points, full venue/street/house_number coverage |
+| **state-ny-notaries**            | 32K                       | NY notary names + business addresses                                         |
+| **state-tx-notaries**            | 511K                      | TX notary names + business addresses                                         |
+| **state-ia-contractors**         | 17K                       | Iowa contractor names + addresses                                            |
+
+Skipped in v0.3.0:
+
+- **openaddresses** — waiting on per-row licence filter (PR #56).
+- **fcc-bdc** — license incompatibility (CostQuest gray-copyright).
+- **usgov-samhsa-treatment-locator** — source bulk export went offline (PR #113 deferred the adapter).
+
+The diversity of sources matters more than the absolute count. NPPES contributes 9.2M rows but it is the single largest source of `venue + address` co-occurrence. Without it, the model would not have learned that a venue precedes a street more often than it follows one.
+
+## Stage 1 — Per-adapter row emission
+
+Each adapter is a TypeScript async generator that yields `CanonicalRow` objects. The contract is straightforward:
+
+```ts
+interface CorpusAdapter {
+	id: string // 'usgov-nppes'
+	defaultLicense: string // 'Public Domain'
+	description: string
+	rows(opts: AdapterOptions): AsyncIterable<CanonicalRow>
+}
+```
+
+The adapter does the locale-specific work: column name mapping, address composition (when the source has `street1` + `street2` instead of a single `street`), source-specific cleaning (NPPES drops the `Provider Other Last Name` column on output, BAN composes `numero + rep` for `house_number`, etc.).
+
+Output is streamed to `intermediate/<adapter>/raw.jsonl.gz`. Streaming matters — some adapters emit tens of millions of rows.
+
+## Stage 2 — Alignment
+
+The **alignment** step takes a `(raw, components)` pair and produces a `(raw, tokens, BIO labels)` row. Two cases:
+
+**Success case.** Every component value is found inside `raw`. The aligner tokenizes `raw`, marks the first token of each span as `B-tag`, the rest as `I-tag`, and the rest as `O`.
+
+**Failure case.** A component value cannot be located in `raw`. The row goes to **quarantine** with a reason: `component-not-found:locality`, `edit-distance-exceeded:postcode:7`, etc. Quarantined rows are written to `quarantine/<reason>.jsonl.gz` for later inspection but do not go to training.
+
+The aligner uses [`fastest-levenshtein`](https://www.npmjs.com/package/fastest-levenshtein) for fuzzy matching with a tunable threshold (default 2 edits). This catches "Pennsylvania" vs "Pennsylvana" but rejects more aggressive mismatches.
+
+## Stage 3 — Synthesis (the multiplier)
+
+Real-world addresses appear in many surface forms — abbreviated, capitalised, punctuated, separated. To make the model robust to these variations, Mailwoman runs a **synthesis** pass over the aligned rows.
+
+For each aligned row, synthesis generates several surface-form variants by applying combinations of:
+
+- **State abbreviation** (`California` ↔ `CA`)
+- **Comma drop** (`New York, NY 10118` → `New York NY 10118`)
+- **Casing changes** (upper, lower, mixed)
+- **Accent stripping** (`Île` → `Ile`)
+- **Whitespace normalisation** (collapse multiple spaces, add tab separators)
+- **Street suffix abbreviation** (`Avenue` ↔ `Ave`)
+
+The BIO labels are recomputed for each variant (because tokenisation may differ — `"NY"` is one token, `"New York"` is two). Variants whose alignment fails get quarantined.
+
+Synthesis is the reason v0.3.0's 677M aligned rows came from only ~120M source rows. The multiplier is about 5x.
+
+Synthesis is **on by default** but can be disabled (`synthesize: false` in the build options) for adapter debugging where you want clean per-adapter output.
+
+## Stage 4 — Splits
+
+Once aligned + synthesized, rows go through the **split** step. Three groups: train (~90%), val (a few percent for in-training eval), test (held out).
+
+The split is **locality-aware**: rows that share a locality stay in the same split. This is critical for honest evaluation. Without it, a model could memorize "Brooklyn = locality" from a training row and recover it on a val row, looking better than it really is.
+
+The split assignment is written to `SPLIT_MANIFEST.json` — every later step can reproduce which rows went where. If the same input goes through two different build runs, it ends up in the same split (deterministic hash on `source_id`).
+
+## Stage 5 — Sharding
+
+Final output is Parquet files with about 1 million rows per shard. Parquet is columnar — the training data loader streams one column group at a time without loading the whole file. Total v0.3.0 output: ~30 train shards + 1 val + 1 test = 32 files, ~30 GB.
+
+The training pipeline picks up from here. See [Training pipeline](./training-pipeline.md) for what happens next.
+
+## What corpus building is good at
+
+- **Reproducibility.** Same sources + same code = same corpus, byte for byte. Every aligned row's `source_id` makes it traceable back to the upstream row.
+- **Quarantine for diagnostics.** The quarantine pile makes data-quality issues visible. A spike in quarantine rate for a specific adapter is the first sign that the source's schema changed.
+- **Per-source weighting at training time.** The training data loader supports `source_weights` to oversample under-represented sources. v0.2.0 used this to fix a positional-heuristic overfit where the model had learned "first token = locality" because 75% of v0.1.0 corpus came from `wof-admin`.
+
+## What corpus building is bad at
+
+- **Incremental updates.** Today, adding a new source means a full rebuild. ~6 hours of wall-clock.
+- **Wall-clock cost scales with synthesis.** The 5x synthesis multiplier doubles the alignment + sharding time vs. a synth-off build. v0.3.0 added more sources without bumping max_steps, so the corpus is now under-utilized: a 50K-step training run sees only 6.4 million examples (~1% of the corpus per pass).
+- **Disk pressure.** The intermediate NDJSON dumps land at ~400 GB and stay until the next build. The host is on a 1 TB nvme; this is fine but tight.
+
+## Where this lives in the code
+
+- **Adapters:** `corpus/src/adapters/<source>/adapter.ts`
+- **Aligner:** `corpus/src/align.ts`
+- **Synthesis:** `corpus/src/synthesize.ts`
+- **Splitter:** `corpus/src/split.ts`
+- **Sharder:** `corpus/src/parquet.ts`
+- **Build orchestrator:** `corpus/src/build.ts` + `corpus/scripts/run-corpus-build.ts`
+- **Schema reference:** `corpus/src/types.ts` (`CanonicalRow`, `LabeledRow`, `QuarantinedRow`)
+- **Plan doc:** [PHASE_1_corpus.md](../plan/phases/PHASE_1_corpus.md)
+
+## See also
+
+- [Training pipeline](./training-pipeline.md) — what happens after corpus build
+- [BIO labels](./bio-labels.md) — what the alignment step outputs
+- [Tokenization](./tokenization.md) — how `raw` becomes `tokens`
