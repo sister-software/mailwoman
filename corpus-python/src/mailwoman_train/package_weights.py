@@ -25,6 +25,22 @@ from pathlib import Path
 
 import torch
 
+from .labels import ACTIVE_TAGS, STAGE1_COARSE_TAGS, STAGE2_FINE_TAGS, STAGE2_TAGS
+
+
+def _phase_label() -> str:
+    """Derive the ModelCard ``phase`` string from the active label set.
+
+    Single source of truth: ``labels.ACTIVE_TAGS``. When the ship-line moves
+    (e.g. ACTIVE bumps to a hypothetical STAGE3), this is the only place that
+    needs to learn the new name.
+    """
+    if ACTIVE_TAGS == STAGE2_TAGS:
+        return "Stage 2 (coarse + venue/street/house_number)"
+    if ACTIVE_TAGS == STAGE1_COARSE_TAGS:
+        return "Stage 1 (coarse)"
+    return f"Custom ({len(ACTIVE_TAGS)} tags)"
+
 
 def build_model_card(
     *,
@@ -43,7 +59,7 @@ def build_model_card(
     return {
         "name": f"neural-weights-{locale}",
         "version": package_version,
-        "phase": "Stage 1 (coarse)",
+        "phase": _phase_label(),
         "license": "AGPL-3.0-only",
         "locale": locale,
         "training": {
@@ -55,15 +71,7 @@ def build_model_card(
             "started_at": None,
             "completed_at": datetime.utcnow().isoformat() + "Z",
         },
-        "components_supported": [
-            "country",
-            "region",
-            "locality",
-            "dependent_locality",
-            "postcode",
-            "subregion",
-            "cedex",
-        ],
+        "components_supported": list(ACTIVE_TAGS),
         "eval": eval_report,
         "known_failure_modes": [
             "underperforms on Hawaiian addresses (sparse in training corpus)",
@@ -125,39 +133,69 @@ def render_package_json(locale: str, *, package_version: str = "0.1.0") -> dict:
     }
 
 
-_PHASE2_TARGETS = {
+# Per-component F1 floors. Coarse targets are the original Phase 2 §6 0.95 contract.
+# Stage 2 fine labels carry the v0.3.0 issue-spec floors: 0.6 venue, 0.7 street,
+# 0.8 house_number (issue #57 "per-iteration success metric"). Tags absent from
+# ACTIVE_TAGS are silently skipped at status-line time.
+_F1_TARGETS: dict[str, float] = {
     "country": 0.95,
     "region": 0.95,
     "locality": 0.95,
     "postcode": 0.95,
+    "venue": 0.60,
+    "street": 0.70,
+    "house_number": 0.80,
 }
 
 
-def _phase2_status_line(eval_report: dict) -> str:
-    """Honest one-liner about how this build measures up to the Phase 2 §6 95% F1 target."""
+def _target_status_line(eval_report: dict) -> str:
+    """Honest one-liner about how this build measures up to the per-tag F1 floors."""
     per = eval_report.get("per_component", {}) or {}
+    active_tags = set(ACTIVE_TAGS)
     components_at_target: list[str] = []
-    components_below: list[tuple[str, float]] = []
-    for tag, target in _PHASE2_TARGETS.items():
-        if tag not in per:
+    components_below: list[tuple[str, float, float]] = []
+    for tag, target in _F1_TARGETS.items():
+        if tag not in active_tags or tag not in per:
             continue
         f1 = float(per[tag].get("f1", 0.0))
         if f1 >= target:
             components_at_target.append(tag)
         else:
-            components_below.append((tag, f1))
+            components_below.append((tag, f1, target))
     if not components_below:
-        return "**✓ Meets Phase 2 §6 targets (≥95% F1) on every coarse component.**"
+        return "**✓ Meets per-component F1 targets on every active component.**"
     lines = [
-        "**⚠ Below Phase 2 §6 targets (≥95% F1):**",
+        "**⚠ Below per-component F1 targets:**",
         "",
     ]
-    for tag, f1 in components_below:
-        lines.append(f"- `{tag}` F1 = **{f1:.4f}** (target ≥0.95)")
+    for tag, f1, target in components_below:
+        lines.append(f"- `{tag}` F1 = **{f1:.4f}** (target ≥{target:.2f})")
     if components_at_target:
         lines.append("")
         lines.append("At target: " + ", ".join(f"`{t}`" for t in components_at_target))
     return "\n".join(lines)
+
+
+# Back-compat alias — older callers may still import the old name.
+_phase2_status_line = _target_status_line
+
+
+def _components_supported_blurb() -> str:
+    """One-line description of the active component set, derived from labels.ACTIVE_TAGS."""
+    if ACTIVE_TAGS == STAGE2_TAGS:
+        coarse = " / ".join(STAGE1_COARSE_TAGS)
+        fine = " / ".join(STAGE2_FINE_TAGS)
+        return (
+            f"Stage 2 ships coarse ({coarse}) plus fine-grained {fine}. "
+            "Token classifier emits 21 BIO labels."
+        )
+    if ACTIVE_TAGS == STAGE1_COARSE_TAGS:
+        return (
+            "Stage 1 ships coarse-only: " + " / ".join(STAGE1_COARSE_TAGS) + ". "
+            "Street- and venue-level components are explicit future phases."
+        )
+    tags = " / ".join(ACTIVE_TAGS)
+    return f"Components: {tags}."
 
 
 def render_readme(
@@ -169,6 +207,7 @@ def render_readme(
     training_hardware: str,
     smoke: bool,
 ) -> str:
+    phase = _phase_label()
     head = f"# @mailwoman/neural-weights-{locale}"
     if smoke:
         head += "\n\n> **⚠ SMOKE BUILD — NOT PRODUCTION WEIGHTS.** "
@@ -178,16 +217,16 @@ def render_readme(
     lines = [
         head,
         "",
-        "Phase 2 / Stage 1 (coarse) Mailwoman neural-classifier weights.",
+        f"{phase} Mailwoman neural-classifier weights.",
         "",
         f"- locale: **{locale}**",
         f"- corpus: **{corpus_version}**",
         f"- training steps: **{training_steps}**",
         f"- hardware: **{training_hardware}**",
         "",
-        "## Phase 2 §6 status",
+        "## Per-component F1 targets",
         "",
-        _phase2_status_line(eval_report),
+        _target_status_line(eval_report),
         "",
         "## Eval (golden set)",
         "",
@@ -197,8 +236,7 @@ def render_readme(
         "",
         "## Components supported",
         "",
-        "Stage 1 ships coarse-only: country / region / locality / dependent_locality / postcode "
-        "/ subregion / cedex. Street- and venue-level components are explicit future phases.",
+        _components_supported_blurb(),
         "",
         "## Files",
         "",

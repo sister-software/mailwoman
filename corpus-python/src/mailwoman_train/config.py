@@ -47,6 +47,10 @@ class ModelConfig:
     # Default False / 0.0 keeps v0.2.0 behavior for back-compat with older configs.
     use_crf: bool = False
     label_smoothing: float = 0.0
+    # Weight on the CRF NLL leg of the dual loss (CE + crf_loss_weight × CRF_NLL). The
+    # CRF NLL is per-sequence and unbounded (~10–100x CE's per-token magnitude); equal-
+    # weight summing destabilizes training. 0.1 keeps CRF as a structural regularizer.
+    crf_loss_weight: float = 0.1
 
 
 @dataclass
@@ -66,6 +70,9 @@ class TrainConfig:
     precision: str = "fp32"  # one of: fp32 | fp16 | bf16
     num_workers: int = 2
     csv_log_path: str = "{output_dir}/train_log.csv"
+    # Global-norm gradient clip. 0 disables clipping. Defaults to 1.0; the CRF NLL leg of
+    # Stage 2 emits sharp gradients during warmup and diverged at the LR peak without it.
+    grad_clip_norm: float = 1.0
 
 
 @dataclass

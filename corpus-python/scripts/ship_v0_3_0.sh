@@ -24,11 +24,15 @@ set -euo pipefail
 
 : "${CHECKPOINT:?set CHECKPOINT to the trained-model checkpoint directory}"
 CONFIG="${CONFIG:-src/mailwoman_train/configs/stage2.yaml}"
-GOLDEN_DIR="${GOLDEN_DIR:-../../data/eval/golden/v0.1.2}"
+# Paths below are relative to corpus-python/ (the expected CWD). The repo was flattened
+# in PR #69 (chore/repo-flatten — moved each workspace from packages/<ws>/ to <ws>/ at
+# repo root); ship_v0_2_0.sh predates the flatten and still ships the old ../../packages
+# defaults. v0.3.0 ships with the post-flatten ".." paths.
+GOLDEN_DIR="${GOLDEN_DIR:-../data/eval/golden/v0.1.2}"
 PACKAGE_VERSION="${PACKAGE_VERSION:-0.3.0}"
 CORPUS_VERSION="${CORPUS_VERSION:-0.3.0}"
 TOKENIZER_VERSION="${TOKENIZER_VERSION:-0.1.0}"
-PACKAGES_ROOT="${PACKAGES_ROOT:-../../packages}"
+PACKAGES_ROOT="${PACKAGES_ROOT:-..}"
 
 STEP_NAME=$(basename "$CHECKPOINT")
 TRAIN_SECONDS="${TRAIN_SECONDS:-0}"
@@ -52,7 +56,7 @@ mkdir -p /data/models/onnx /data/models/quantized
 echo "== Step 1/4: eval against golden set =="
 python -m mailwoman_train eval --config "$CONFIG" --checkpoint "$CHECKPOINT" --golden-dir "$GOLDEN_DIR"
 
-EVAL_MD_DST="../../docs/articles/evals/stage2-${STEP_NAME}-eval.md"
+EVAL_MD_DST="../docs/articles/evals/stage2-${STEP_NAME}-eval.md"
 mkdir -p "$(dirname "$EVAL_MD_DST")"
 cp "$CHECKPOINT/eval-report.md" "$EVAL_MD_DST"
 echo "wrote $EVAL_MD_DST"

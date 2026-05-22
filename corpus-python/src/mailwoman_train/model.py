@@ -143,6 +143,7 @@ class MailwomanCoarseEncoder(nn.Module):
         pad_token_id: int,
         use_crf: bool = True,
         label_smoothing: float = 0.1,
+        crf_loss_weight: float = 0.1,
     ) -> None:
         super().__init__()
         self.pad_token_id = pad_token_id
@@ -153,6 +154,13 @@ class MailwomanCoarseEncoder(nn.Module):
         # ablation studies via the kwargs above.
         self.use_crf = use_crf
         self.label_smoothing = label_smoothing
+        # CRF NLL is per-sequence (not per-token like CE), and unbounded — at random init
+        # it can be ~seq_len*log(num_tags) ≈ 128*3 = 380 vs CE's ~log(num_tags) ≈ 3 per token.
+        # Equal-weight summing lets CRF gradients drown out CE. 0.1 keeps CRF as a structural
+        # regularizer on the emissions without overwhelming the token-level discriminative
+        # signal. First-attempt training (weight=1.0) plateaued + then regressed val_macro_f1
+        # from 0.26 → 0.17 by step 750.
+        self.crf_loss_weight = crf_loss_weight
 
         self.token_embeddings = nn.Embedding(
             vocab_size, hidden_size, padding_idx=pad_token_id
@@ -251,10 +259,11 @@ class MailwomanCoarseEncoder(nn.Module):
                 # — those positions are zeroed by the mask anyway.
                 crf_mask = attention_mask.to(logits.dtype)
                 crf_loss = self.crf(emissions=logits, tags=labels.clamp(min=0), mask=crf_mask)
-                # Dual loss: CE keeps emissions discriminative at the token level + provides
-                # label-smoothing calibration; CRF NLL learns transitions + suppresses
-                # invalid sequences. Equal weight is a defensible default; tune if needed.
-                loss = ce_loss + crf_loss
+                # Dual loss: CE (per-token) keeps emissions discriminative; CRF NLL (per-
+                # sequence) is the structural regularizer. CRF magnitude is ~10–100x CE so
+                # equal weighting destabilizes — first-attempt training collapsed at
+                # weight=1.0. crf_loss_weight defaults to 0.1; tune via the kwarg.
+                loss = ce_loss + self.crf_loss_weight * crf_loss
             else:
                 loss = ce_loss
         return _CoarseEncoderOutput(logits=logits, loss=loss)
@@ -300,6 +309,7 @@ class MailwomanCoarseEncoder(nn.Module):
             "pad_token_id": int(self.pad_token_id),
             "use_crf": bool(self.use_crf),
             "label_smoothing": float(self.label_smoothing),
+            "crf_loss_weight": float(self.crf_loss_weight),
             "id2label": dict(ID_TO_LABEL),
             "label2id": dict(LABEL_TO_ID),
         }
@@ -324,6 +334,7 @@ class MailwomanCoarseEncoder(nn.Module):
             # these keys.
             use_crf=cfg.get("use_crf", False),
             label_smoothing=cfg.get("label_smoothing", 0.0),
+            crf_loss_weight=cfg.get("crf_loss_weight", 0.1),
         )
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
         try:
@@ -349,6 +360,7 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoa
         # v0.3.0 defaults — surface in cfg.model if/when ablation studies need to vary.
         use_crf=getattr(cfg.model, "use_crf", True),
         label_smoothing=getattr(cfg.model, "label_smoothing", 0.1),
+        crf_loss_weight=getattr(cfg.model, "crf_loss_weight", 0.1),
     )
 
 

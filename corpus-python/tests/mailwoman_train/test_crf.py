@@ -79,6 +79,33 @@ def test_log_likelihood_finite_and_negative_of_neg_log():
     assert nll.item() >= 0.0  # NLL is non-negative by construction
 
 
+def test_log_likelihood_finite_with_padding():
+    # Regression guard for the multiplicative-mask NaN trap. alpha carries -inf at
+    # structurally-invalid start positions (I-* tags), and the partition recurrence
+    # used to blend old vs new alpha with `alpha * (1 - mask_t)`, which evaluates
+    # `0 * -inf = NaN` whenever mask_t = 1. The torch.where blend preserves -inf
+    # cleanly. Exercise both the full-mask and partial-mask paths.
+    n = len(ACTIVE_BIO_LABELS)
+    crf = LinearChainCRF(n, ID_TO_LABEL)
+    torch.manual_seed(0)
+    emissions = torch.randn(2, 5, n)
+    b_locality = LABEL_TO_ID["B-locality"]
+    i_locality = LABEL_TO_ID["I-locality"]
+    o = LABEL_TO_ID["O"]
+    # Row 0 padded after 3 real tokens; row 1 full.
+    tags = torch.tensor(
+        [
+            [b_locality, i_locality, o, 0, 0],
+            [o, b_locality, i_locality, i_locality, o],
+        ],
+        dtype=torch.long,
+    )
+    mask = torch.tensor([[1, 1, 1, 0, 0], [1, 1, 1, 1, 1]], dtype=torch.float)
+    nll = crf(emissions=emissions, tags=tags, mask=mask)
+    assert torch.isfinite(nll)
+    assert nll.item() >= 0.0
+
+
 def test_viterbi_never_emits_orphan_i():
     n = len(ACTIVE_BIO_LABELS)
     crf = LinearChainCRF(n, ID_TO_LABEL)

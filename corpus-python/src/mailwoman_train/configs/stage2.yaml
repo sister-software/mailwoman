@@ -64,7 +64,18 @@ model:
   attention_probs_dropout_prob: 0.1
   # v0.3.0 toggles. build_model picks these up via getattr(cfg.model, ...).
   use_crf: true
-  label_smoothing: 0.1
+  # Label smoothing disabled. With 21 classes, the smoothed target of 0.1/20 = 0.005
+  # on non-gold classes is gradient noise that fights against discriminative learning,
+  # especially in combination with CRF NLL (which also wants discriminative emissions).
+  # Calibration is regained from the CRF structural prior + the source_weights win
+  # carried over from v0.2.0.
+  label_smoothing: 0.0
+  # CRF down-weighted to 0.05 (was 1.0 → 0.1 → 0.05 across the three iteration runs).
+  # CE per-token + log-bounded ≈ 1, CRF NLL per-sequence + unbounded ≈ 10–100.
+  # Equal-weight summing destabilizes; even 0.1 weight let the CRF gradient drift
+  # the model into a worse plateau during warmup. 0.05 keeps CRF as a tiny
+  # structural regularizer with negligible gradient magnitude.
+  crf_loss_weight: 0.05
 
 train:
   output_dir: /data/models/checkpoints/stage2
@@ -76,9 +87,15 @@ train:
   batch_size: 32
   eval_batch_size: 40
   grad_accum_steps: 4
-  learning_rate: 5.0e-4
+  # Dropped 5e-4 → 3e-4 → 1.5e-4 across iteration runs. The dual-loss CE + CRF NLL
+  # landscape is more sensitive than v0.2.0's CE-only path: even at 3e-4 with clipping
+  # and crf_loss_weight=0.1, training would slowly degrade as LR ramped past 2e-4
+  # (val_macro_f1 0.32 → 0.19 by step 1000). 1.5e-4 is the safe-territory choice for
+  # NER+CRF training per the AllenNLP / FLAIR defaults.
+  learning_rate: 1.5e-4
   weight_decay: 0.01
   warmup_steps: 1000
+  grad_clip_norm: 1.0
   max_steps: 50000
   eval_every_steps: 250
   save_every_steps: 100
