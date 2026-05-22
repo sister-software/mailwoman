@@ -1069,3 +1069,60 @@ checkpoint), it fast-forwards the scheduler by `resume_step` steps so the LR mat
 
 Save cadence dropped from `save_every_steps=5000` to `save_every_steps=2000` so the
 worst-case wasted work per crash is half an eval interval.
+
+
+## 2026-05-22 — v0.3.0 Stage 2 dual loss: down-weight CRF + drop label smoothing + lower LR
+
+**Context:** Stage 2 (v0.3.0) adds a linear-chain CRF decoder + label smoothing 0.1 on top of
+v0.2.0's Stage 1 CE-only training recipe. The v0.2.0 hparams (lr=5e-4, no grad clip,
+batch=32 grad_accum=4, bf16 + math SDPA on gfx1103) were proven over a successful 50k-step
+run. The first stab at Stage 2 reused those hparams + added the CRF + smoothing toggles
+with no other changes. It collapsed.
+
+**Failure modes observed across four iterative attempts:**
+
+1. Run 1 (lr=5e-4, no clip, crf_loss_weight implicit 1.0, label_smoothing 0.1) — catastrophic
+   divergence at step 1000 when warmup LR hit peak; train_loss 3 → 162 in 250 steps.
+2. Run 2 (added grad_clip_norm=1.0 + lr=3e-4, crf_w 1.0, ls 0.1) — slow drift: val_macro_f1
+   peaked 0.26 at step 500 then dropped to 0.17 by step 750.
+3. Run 3 (crf_loss_weight=0.1) — val_macro_f1 0.32 at step 500 then 0.19 at step 1000.
+   Better but still degraded.
+4. Run 4 (lr=1.5e-4, crf_w=0.05, label_smoothing=0.0) — cleared warmup peak; val_macro_f1
+   0.36 at step 1000 and still improving.
+
+**Options considered:**
+
+1. Increase warmup steps (e.g. 1000 → 5000) — slows ramp but doesn't change the
+   steady-state LR. Diagnostic but ineffective alone.
+2. Drop label smoothing — removes one variable. With 21 classes the smoothed target on
+   non-gold positions is 0.005, basically gradient noise.
+3. Down-weight CRF NLL — CE is per-token + log-bounded ≈ 3; CRF NLL is per-sequence +
+   unbounded ≈ 10–100. Equal-weight summing lets CRF gradients drown out CE.
+4. Lower peak LR — v0.2.0 worked at 5e-4 (CE only); the dual-loss landscape is more
+   sensitive. Standard NER+CRF practice (AllenNLP, FLAIR) is ~1e-4.
+5. Per-token-normalize the CRF NLL — normalizes magnitudes so equal weighting is honest.
+   Closer to first principles but adds a divide-by-zero risk at empty sequences.
+
+**Chosen:** combination of options 2, 3, and 4. Drop label_smoothing → 0, set
+crf_loss_weight → 0.05, peak LR → 1.5e-4. Add a defensive grad_clip_norm=1.0 in train.py
+for the warmup peak. Keep cosine decay + 1000-step warmup unchanged.
+
+**Rationale:**
+
+- Each fix removes a destabilizing variable independently confirmed against the v0.2.0
+  baseline (which had none of them).
+- crf_loss_weight=0.05 turns CRF NLL into a tiny structural regularizer on the emissions
+  rather than a co-equal loss term. The CRF Viterbi at eval time still benefits from the
+  learned transition mask (Viterbi gives the structural-validity win whether the loss
+  weighted CRF heavily or lightly).
+- Dropping label_smoothing trades a small calibration improvement for training stability.
+  CRF training already steers emissions to be CRF-decodable (low mass on would-be-orphan-I
+  labels), which gives calibration tightening from a different angle.
+- LR 1.5e-4 is on the conservative side of NER+CRF norms. v0.2.0 trained at 5e-4 because
+  CE is naturally bounded; Stage 2's joint loss is not.
+
+**Reversibility:** all three knobs are tunable via stage2.yaml. crf_loss_weight could
+re-up to ~0.1 if the CRF transition prior turns out to be under-trained at 0.05; raising
+LR to 2e-4 likely works with the lower CRF weight; turning label_smoothing back on for
+calibration ablation would need re-validation. Per-token normalization of CRF NLL is the
+principled future fix that would eliminate the need to hand-weight.
