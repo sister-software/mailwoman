@@ -43,6 +43,10 @@ class ModelConfig:
     type_vocab_size: int = 1
     hidden_dropout_prob: float = 0.1
     attention_probs_dropout_prob: float = 0.1
+    # v0.3.0+ training-time toggles. build_model passes these through to the encoder.
+    # Default False / 0.0 keeps v0.2.0 behavior for back-compat with older configs.
+    use_crf: bool = False
+    label_smoothing: float = 0.0
 
 
 @dataclass

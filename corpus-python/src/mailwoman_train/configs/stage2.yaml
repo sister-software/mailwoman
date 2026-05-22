@@ -1,0 +1,94 @@
+# Stage 2 config (v0.3.0, issue #57).
+#
+# Extends Stage 1 (country/region/locality/dependent_locality/postcode/subregion/cedex)
+# with three new label classes: venue / street / house_number. ACTIVE_BIO_LABELS in
+# labels.py auto-bumps to 21 entries; the model classifier head sizes off len(ACTIVE_*).
+#
+# Training-time additions (v0.3.0):
+#   - Linear-chain CRF decoder on top of emissions. Adds 21² + 2·21 = 483 learnable
+#     scalars + a frozen BIO-structural transition mask (rejects orphan-I-* sequences).
+#   - Label smoothing 0.1 on the per-token CE loss leg. Dual loss = CE_smoothed + CRF_NLL.
+#
+# Hand off:
+#   HSA_OVERRIDE_GFX_VERSION=11.0.0 CONFIG=src/mailwoman_train/configs/stage2.yaml \
+#     scripts/train_with_resume.sh
+#
+# Once training completes:
+#   CHECKPOINT=/data/models/checkpoints/stage2/step-050000 scripts/ship_v0_3_0.sh
+
+data:
+  # corpus-v0.3.0 — adds the US DOT NAD source (~97M structured 911-grade address
+  # points, "venue/house_number/street" fully populated). Other sources unchanged
+  # from v0.2.0; OA-CA + SAMHSA deferred (see run-corpus-build.ts header).
+  corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0
+  tokenizer_dir: /data/models/tokenizer/v0.1.0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  # Per-source oversampling weights. v0.3.0 keeps the v0.2.0 weights for existing
+  # sources + adds usgov-nad. NAD is unique in having full structured supervision
+  # at venue+street+house_number granularity for the entire US residential +
+  # commercial address space; weight=2.0 lifts it without overwhelming the
+  # geographic diversity of TIGER + the venue diversity of NPPES.
+  source_weights:
+    wof-admin: 1.0
+    wof-postalcode: 1.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 2.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+  train_rows_per_epoch: null
+  val_rows: 4096
+  # active_components_present (was coarse_components_present) — accepts rows with
+  # any ACTIVE tag, including fine-only rows (BAN's house_number+street, TIGER's
+  # street-only segments). Keeps the existing key for ↔config-loader compat; the
+  # implementation is the relaxed gate in labels.py.
+  coarse_filter: true
+
+model:
+  # Architecture unchanged from v0.2.0 — the CRF layer adds <500 scalars, negligible.
+  # Hidden size bump would be the v0.4.0 lever if F1 still bottlenecks.
+  hidden_size: 256
+  num_hidden_layers: 6
+  num_attention_heads: 4
+  intermediate_size: 1024
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  # v0.3.0 toggles. build_model picks these up via getattr(cfg.model, ...).
+  use_crf: true
+  label_smoothing: 0.1
+
+train:
+  output_dir: /data/models/checkpoints/stage2
+  seed: 42
+  # gfx1103 hardware envelope unchanged from v0.2.0: batch=32, grad_accum=4 → effective
+  # batch 128, ~4.5 steps/sec sustained, periodic firmware hangs auto-recovered by
+  # train_with_resume.sh. The CRF forward + Viterbi loops add ~5% per-step CPU but
+  # don't change the GPU-side picture.
+  batch_size: 32
+  eval_batch_size: 40
+  grad_accum_steps: 4
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  max_steps: 50000
+  eval_every_steps: 250
+  save_every_steps: 100
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 2
+  csv_log_path: "{output_dir}/train_log.csv"
+
+eval:
+  # Use golden v0.1.2 as the eval anchor (4535 entries, includes venue/street/
+  # house_number support — confirmed coverage check in v0.3.0 slice 2).
+  golden_dir: ""
+  val_jsonl: ""
