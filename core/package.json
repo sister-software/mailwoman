@@ -31,6 +31,7 @@
 		"./api": "./out/api/index.js",
 		"./logging": "./out/logging/index.js",
 		"./policy": "./out/policy/index.js",
+		"./pipeline": "./out/pipeline/index.js",
 		"./resolver": "./out/resolver/index.js",
 		"./kysley/client": "./out/kysley/client.js",
 		"./kysley/dialect": "./out/kysley/dialect.js",

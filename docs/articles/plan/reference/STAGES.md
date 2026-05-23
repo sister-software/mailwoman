@@ -382,9 +382,9 @@ export interface Resolution {
 }
 ```
 
-**Today.** Shipped through Phase 4.3.x. Returns single resolution per `resolveTree` call. The candidate list is built internally then collapsed.
+**Today.** Shipped through Phase 4.3.x. Each resolved `AddressNode` now carries `alternatives: ResolvedPlace[]` (added 2026-05-23) — the runner-up candidates the backend returned for that node. Surfaces failure mode #8 (Springfield-class ambiguity) without changing the `resolveTree` return type.
 
-**Future.** Change return type from `Resolution` to `Resolution[]`. Add `regionalPriorFromLanguage` and `regionalPriorFromUserLocation` factors (today's scoring uses only match + population). The internal candidate list already exists — this is API surface only.
+**Future.** Add `regionalPriorFromLanguage` and `regionalPriorFromUserLocation` factors (today's scoring uses only match + population).
 
 **Failure classes owned.** Administrative nightmares (#8).
 
@@ -396,7 +396,7 @@ export interface Resolution {
 
 ## The coordinator
 
-The orchestration function that composes all stages. Lives in `@mailwoman/core`.
+The orchestration function that composes all stages. Lives in `@mailwoman/core/pipeline` (shipped 2026-05-23). Generic over its stage implementations — each stage is structurally typed, injected via the `RuntimePipelineStages` record. Keeps core free of dependencies on the concrete neural / normalize / query-shape / resolver packages. The user-facing convenience factory `createRuntimePipeline()` lives in the `mailwoman` workspace and pre-wires the defaults.
 
 ```ts
 // packages/core/src/pipeline.ts

@@ -12,6 +12,8 @@
 		{ "path": "../classifiers" },
 		{ "path": "../corpus" },
 		{ "path": "../neural" },
+		{ "path": "../normalize" },
+		{ "path": "../query-shape" },
 		{ "path": "../resolver-wof-sqlite" }
 	]
 }

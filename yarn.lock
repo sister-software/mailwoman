@@ -4580,13 +4580,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/normalize@workspace:normalize":
+"@mailwoman/normalize@workspace:*, @mailwoman/normalize@workspace:normalize":
   version: 0.0.0-use.local
   resolution: "@mailwoman/normalize@workspace:normalize"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/query-shape@workspace:query-shape":
+"@mailwoman/query-shape@workspace:*, @mailwoman/query-shape@workspace:query-shape":
   version: 0.0.0-use.local
   resolution: "@mailwoman/query-shape@workspace:query-shape"
   languageName: unknown
@@ -16545,6 +16545,8 @@ __metadata:
     "@inkjs/ui": "npm:^2.0.0"
     "@mailwoman/classifiers": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/normalize": "workspace:*"
+    "@mailwoman/query-shape": "workspace:*"
     change-case: "npm:^5.4.4"
     express: "npm:^5.0.1"
     geojson: "npm:^0.5.0"

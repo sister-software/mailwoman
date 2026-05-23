@@ -35,6 +35,8 @@
 		"@inkjs/ui": "^2.0.0",
 		"@mailwoman/classifiers": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/normalize": "workspace:*",
+		"@mailwoman/query-shape": "workspace:*",
 		"change-case": "^5.4.4",
 		"express": "^5.0.1",
 		"geojson": "^0.5.0",
