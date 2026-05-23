@@ -2,6 +2,21 @@
 
 Open items not blocking the current ship. Promoted to issues / PRs as scope solidifies.
 
+## v0.5.0 fresh-slate threads (live)
+
+Per [Phase 8 — v0.5.0 fresh-slate](docs/articles/plan/phases/PHASE_8_v0_5_0_fresh_slate.md). Status at a glance:
+
+| Thread | Scope                                                         | Status                       |
+| ------ | ------------------------------------------------------------- | ---------------------------- |
+| A      | Tokenizer retrain — multi-script + adversarial coverage       | pending (blocked on B)       |
+| B      | Synthetic adversarial corpus expansion (corpus-v0.4.0)        | pending                      |
+| C      | Classifier with top-k output + phrase-prior conditioning      | pending (blocked on A, B, E) |
+| D      | Stage 5 reconcile — concordance matching via joint decoding   | pending (blocked on C, E)    |
+| E      | Stage 2.7 phrase grouper (rule-based first)                   | pending                      |
+| F      | Process improvements: verdict-smoke framework + sidecar audit | **shipped 2026-05-23**       |
+
+Thread F delivered: [`VERDICT_SMOKES.md`](docs/articles/plan/reference/VERDICT_SMOKES.md), `--smoke-mode constant\|long-tail` flag on `python -m mailwoman_train train` / `smoke`, sidecar audit (`corpus-audit`, `diagnose_regression.py`, decoder span-trim all verified in tree against `corpus-v0.3.0`), cross-links from [the knowledge ladder](docs/articles/concepts/the-knowledge-ladder.md) and PHASE_2 iteration log.
+
 ## CPU-bound work surfaced 2026-05-23 (parallel to v0.4.0 training window)
 
 Triaged during the v0.4.0 training prep — these can run while the GPU is occupied with
