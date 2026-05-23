@@ -109,9 +109,13 @@ describe("decodeAsXml (nested mixed-content)", () => {
 		const tokens: DecoderToken[] = [tok(raw, 0, raw.length, "B-locality")]
 		const tree = buildAddressTree(raw, tokens)
 		const xml = decodeAsXml(tree)
+		// @raw is untouched by the decoder — full input must escape.
 		expect(xml).toContain(`raw="&lt;dangerous &amp; &quot;quoted&quot;&gt;"`)
-		expect(xml).toContain(`>&lt;dangerous &amp; &quot;quoted&quot;&gt;<`)
 		expect(xml).not.toContain(`raw="<dangerous`)
+		// node.value is trimmed past the leading `<` and trailing `>` (boundary-trim in
+		// buildAddressTree), so the locality body is `dangerous & "quoted` — still contains `&` and
+		// `"`, exercising the in-body escaping path.
+		expect(xml).toContain(`>dangerous &amp; &quot;quoted<`)
 	})
 
 	test("respects opts: includeOffsets=false drops start/end attrs", () => {

@@ -49,11 +49,29 @@ function bioParts(label: BioLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag
 	return { prefix: label.slice(0, dash) as "B" | "I", tag: label.slice(dash + 1) as ComponentTag }
 }
 
+// Unicode-aware boundary trim: shrink (start, end) past leading/trailing chars that aren't letters
+// or numbers. Reason: BIO span boundaries from the model occasionally include a preceding comma+
+// space or trailing punctuation token (the "boundary slip" diagnosed in v0.4.0 — see PHASE_2's
+// v0.4.0 entry). The model's tag attribution is correct, only the boundary is fuzzy. Trimming
+// produces a clean canonical value AND clean start/end offsets so downstream consumers slicing
+// raw[start:end] get the same string as node.value.
+function trimBoundary(raw: string, start: number, end: number): { start: number; end: number } {
+	let s = start
+	let e = end
+	const isWordChar = (i: number): boolean => /[\p{L}\p{N}]/u.test(raw[i] ?? "")
+	while (s < e && !isWordChar(s)) s++
+	while (e > s && !isWordChar(e - 1)) e--
+	return { start: s, end: e }
+}
+
 function flush(open: OpenSpan | null, raw: string, out: AddressNode[], attribution: BuildTreeOpts): null {
 	if (!open) return null
-	const value = raw.slice(open.start, open.end)
+	const { start, end } = trimBoundary(raw, open.start, open.end)
+	// A span that trims to empty (all-punctuation) is meaningless — drop it. Confidence is moot.
+	if (start >= end) return null
+	const value = raw.slice(start, end)
 	const confidence = open.confidences.reduce((a, b) => a + b, 0) / open.confidences.length
-	const node: AddressNode = { tag: open.tag, start: open.start, end: open.end, value, confidence, children: [] }
+	const node: AddressNode = { tag: open.tag, start, end, value, confidence, children: [] }
 	if (attribution.source !== undefined) node.source = attribution.source
 	if (attribution.sourceId !== undefined) node.sourceId = attribution.sourceId
 	out.push(node)

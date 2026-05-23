@@ -106,6 +106,65 @@ describe("buildAddressTree", () => {
 	})
 })
 
+// Boundary-trim regression coverage. Samples sourced from v0.4.0's post-hoc regression
+// diagnostic (.playpen/control/drafts/v0_4_0-regression-diagnostic.md). The shipped v0.4.0 model
+// occasionally emits BIO spans with leading/trailing punctuation; the decoder now trims the span
+// boundary past non-word characters. start/end tighten in sync so consumers slicing raw[start:end]
+// get the same string as node.value.
+describe("buildAddressTree — boundary trim", () => {
+	test("strips leading comma+space from postcode span", () => {
+		// Simulates ", 7647" pred for the gold "76470" — the slip from the diagnostic.
+		const raw = ", 22220"
+		const tokens: DecoderToken[] = [tok(", 22220", 0, 7, "B-postcode")]
+		const tree = buildAddressTree(raw, tokens)
+		const postcode = findByTag(tree.roots, "postcode")!
+		expect(postcode.value).toBe("22220")
+		expect(postcode.start).toBe(2)
+		expect(postcode.end).toBe(7)
+		expect(raw.slice(postcode.start, postcode.end)).toBe(postcode.value)
+	})
+
+	test("strips trailing punctuation from postcode span", () => {
+		const raw = "Paris 75004,"
+		const tokens: DecoderToken[] = [tok("Paris", 0, 5, "B-locality"), tok("75004,", 6, 12, "B-postcode")]
+		const tree = buildAddressTree(raw, tokens)
+		const postcode = findByTag(tree.roots, "postcode")!
+		expect(postcode.value).toBe("75004")
+		expect(postcode.end).toBe(11)
+	})
+
+	test("drops a span that trims to empty (all-punctuation)", () => {
+		const raw = "350 5th Ave"
+		const tokens: DecoderToken[] = [
+			tok("350", 0, 3, "B-house_number"),
+			tok(" ", 3, 4, "B-postcode"), // pathological model emission
+			tok("5th", 4, 7, "B-street"),
+			tok("Ave", 8, 11, "I-street"),
+		]
+		const tree = buildAddressTree(raw, tokens)
+		expect(tree.roots.some((r) => r.tag === "postcode")).toBe(false)
+	})
+
+	test("preserves Unicode letters (accents, non-Latin) in span values", () => {
+		const raw = "Montréal, QC"
+		const tokens: DecoderToken[] = [
+			tok("Montréal", 0, 8, "B-locality"),
+			tok(",", 8, 9, "O"),
+			tok("QC", 10, 12, "B-region"),
+		]
+		const tree = buildAddressTree(raw, tokens)
+		const locality = findByTag(tree.roots, "locality")!
+		expect(locality.value).toBe("Montréal")
+	})
+
+	test("does not trim word-internal punctuation (hyphens, apostrophes)", () => {
+		const raw = "Sainte-Livrade-sur-Lot"
+		const tokens: DecoderToken[] = [tok("Sainte-Livrade-sur-Lot", 0, 22, "B-locality")]
+		const tree = buildAddressTree(raw, tokens)
+		expect(tree.roots[0]!.value).toBe("Sainte-Livrade-sur-Lot")
+	})
+})
+
 function findByTag(nodes: AddressNode[], tag: string): AddressNode | null {
 	for (const n of nodes) {
 		if (n.tag === tag) return n
