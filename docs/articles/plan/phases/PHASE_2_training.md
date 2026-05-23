@@ -53,6 +53,23 @@
 
   Only one clean improvement axis. §1 (per_token CRF) and §3 (class_weights) deferred to v0.4.1 after a corpus-side investigation of why the full recipe destabilizes past step 2000.
 
+  **Post-hoc regression diagnostic (categorized, 4535 entries, 1217 postcode FNs + 194 country FNs):**
+
+  | error class | postcode FN | country FN |
+  |---|---:|---:|
+  | empty_pred (model emits nothing) | 789 (65%) | 9 (5%) |
+  | non-Latin transliteration (v0.3.0 pre-existing) | 213 (18%) | **178 (92%)** |
+  | num_confused (house# picked instead of postcode) | 136 (11%) | n/a |
+  | bio_slip (boundary off ±1 sentencepiece) | 73 (6%) | small |
+  | other | 6 (0.5%) | ~5% |
+
+  Headline takeaways:
+    - The dominant postcode FN is **empty_pred (65%)** on mid-position / short-form postcodes (`Paris 75008`, `47110 Sainte-Livrade-sur-Lot`). v0.4.0's source rebalance traded structured-address postcode exposure for coarse-only `10118`-style forms.
+    - Country FN is **92% adversarial transliteration** (CJK/Cyrillic raw input → English country gold). This is a v0.3.0 pre-existing failure mode; after excluding adversarials, country FN drops 194 → ~16. **The country -0.07 F1 regression is mostly a golden-set adversarial-weighting artifact, not a real recipe regression.**
+    - Decoder span-trim sidecar (commit `c72ab4c`, no retrain required) addresses the 6% bio_slip slice + an unmeasured share of FP rate. Material impact on the headline numbers is smaller than the initial diagnostic suggested but the trim is still a correct decoder bug fix.
+
+  v0.4.1 implications: source-weight tweak alone partially addresses the 11% num_confused slice. The 65% empty_pred slice requires a different intervention (likely source-weight + synthesis pass over component-order permutations, or an aggressive `wof-postalcode` bump). Full v0.4.1 scope draft staged at `.playpen/control/drafts/v0_4_1-scope.md` on the i116 container.
+
 ## Pre-flight
 
 - [ ] `corpus-v0.1.0` exists at `/data/corpus/versioned/corpus-v0.1.0/`
