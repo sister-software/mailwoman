@@ -228,7 +228,10 @@ describe("runPipeline — fast-path routing", () => {
 		expect(classifier.parse).toHaveBeenCalled()
 	})
 
-	it("does not fast-path when resolver is absent", async () => {
+	it("fast-paths even when resolver is absent (fast-path tree is built from QueryShape alone)", async () => {
+		// Previously the coordinator required a resolver for fast-path to fire. As of the kind-
+		// classifier ship, the fast-path tree from QueryShape is useful standalone — a consumer who
+		// just wants the parsed structure for "10118" shouldn't be forced to pay for the classifier.
 		const classifier = fakeClassifier(fakeTree("10118"))
 		const stages: RuntimePipelineStages = {
 			computeQueryShape: () => postcodeShape,
@@ -237,8 +240,9 @@ describe("runPipeline — fast-path routing", () => {
 		}
 
 		const result = await runPipeline("10118", stages)
-		expect(result.path).toBe("full")
-		expect(classifier.parse).toHaveBeenCalled()
+		expect(result.path).toBe("fast-path")
+		expect(classifier.parse).not.toHaveBeenCalled()
+		expect(result.tree.roots[0]?.tag).toBe("postcode")
 	})
 })
 

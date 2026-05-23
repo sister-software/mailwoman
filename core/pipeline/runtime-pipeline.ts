@@ -189,19 +189,24 @@ export async function runPipeline(
 	const kind = await classifyKind(normalized, queryShape, locale)
 	timing["kind-classifier"] = performance.now() - tKind
 
-	// Fast-path: trivial inputs short-circuit stages 3-5.
-	if (canShortCircuit(kind, queryShape, opts) && stages.resolver) {
-		const fastTree = buildFastPathTree(normalized.normalized, kind, queryShape)
-		const tResolve = performance.now()
-		const resolved = await safeResolve(stages.resolver, fastTree, opts)
-		timing["resolve"] = performance.now() - tResolve
+	// Fast-path: trivial inputs short-circuit stages 3-5. The fast-path tree is built from
+	// QueryShape's format hits + kind alone — useful even without a wired resolver (a consumer
+	// who just wants the parsed structure for a bare postcode shouldn't be forced to pay for the
+	// classifier).
+	if (canShortCircuit(kind, queryShape, opts)) {
+		let tree = buildFastPathTree(normalized.normalized, kind, queryShape)
+		if (stages.resolver) {
+			const tResolve = performance.now()
+			tree = await safeResolve(stages.resolver, tree, opts)
+			timing["resolve"] = performance.now() - tResolve
+		}
 		return {
 			input: raw,
 			normalized,
 			queryShape,
 			locale,
 			kind,
-			tree: resolved,
+			tree,
 			timing,
 			path: "fast-path",
 		}
