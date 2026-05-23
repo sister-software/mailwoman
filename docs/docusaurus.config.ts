@@ -253,6 +253,11 @@ const config: Config = {
 			},
 			items: [
 				{
+					to: "/demo",
+					label: "Demo",
+					position: "left",
+				},
+				{
 					type: "docSidebar",
 					sidebarId: "tutorialSidebar",
 					position: "left",
@@ -274,10 +279,18 @@ const config: Config = {
 			style: "dark",
 			links: [
 				{
+					title: "Try it",
+					items: [
+						{ label: "Demo", to: "/demo" },
+						{ label: "Log", to: "/blog" },
+					],
+				},
+				{
 					title: "Docs",
 					items: [
 						{ label: "Plan", to: "/docs/plan" },
 						{ label: "Eval reports", to: "/docs/evals/stage1-coarse-v0.1.0-vs-golden-v0.1.2" },
+						{ label: "Retrospectives", to: "/docs/retrospectives" },
 					],
 				},
 				{
