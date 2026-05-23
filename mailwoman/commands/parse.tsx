@@ -93,6 +93,16 @@ const ParseConfigSchema = zod.object({
 				"Requires --resolve. Output format-dependent: json emits node.alternatives arrays, xml emits " +
 				"<alternative> child elements, tuple unchanged."
 		),
+	benchmark: zod.coerce
+		.number()
+		.int()
+		.min(1)
+		.max(10000)
+		.optional()
+		.describe(
+			"Run the pipeline N times against the input and emit per-stage p50/p95/p99 + total wall + heap delta. " +
+				"5-iteration warmup is excluded from the stats. Default path only (incompatible with --isolated / --policy)."
+		),
 })
 
 interface PolicyOverride {
@@ -129,6 +139,17 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 
 	useEffect(() => {
 		const input = args[0]!
+
+		if (options.benchmark !== undefined) {
+			if (options.isolated || (options.policy && options.policy.length > 0) || options.neural) {
+				setError("--benchmark requires the default runtime-pipeline path (incompatible with --isolated / --policy / --neural)")
+				return
+			}
+			runBenchmark(input, options, options.benchmark)
+				.then(setOutput)
+				.catch((err) => setError(err.message))
+			return
+		}
 
 		// --isolated: legacy rule-only path (the pre-pipeline default).
 		if (options.isolated) {
@@ -292,6 +313,124 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	return options.debug
 		? JSON.stringify(serializeResult(result, options.format), null, 2)
 		: serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
+}
+
+const BENCHMARK_WARMUP_ITERATIONS = 5
+
+function percentile(sortedAsc: ReadonlyArray<number>, p: number): number {
+	if (sortedAsc.length === 0) return 0
+	const idx = Math.min(sortedAsc.length - 1, Math.floor((p / 100) * sortedAsc.length))
+	return sortedAsc[idx]!
+}
+
+function formatMs(ms: number): string {
+	if (ms < 1) return `${(ms * 1000).toFixed(0)}µs`
+	if (ms < 10) return `${ms.toFixed(2)}ms`
+	if (ms < 100) return `${ms.toFixed(1)}ms`
+	return `${Math.round(ms)}ms`
+}
+
+function formatBytes(b: number): string {
+	const sign = b < 0 ? "-" : "+"
+	const abs = Math.abs(b)
+	if (abs < 1024) return `${sign}${abs}B`
+	if (abs < 1024 * 1024) return `${sign}${(abs / 1024).toFixed(1)}KB`
+	return `${sign}${(abs / 1024 / 1024).toFixed(1)}MB`
+}
+
+/**
+ * Run the runtime pipeline N times against a single input and report per-stage timing percentiles +
+ * heap delta. The first 5 iterations are warmup (excluded from stats) so JIT + lazy-imports settle
+ * before measurement. Useful for catching regressions when training models or coordinator changes
+ * affect inference cost.
+ */
+async function runBenchmark(
+	input: string,
+	options: zod.infer<typeof ParseConfigSchema>,
+	iterations: number
+): Promise<string> {
+	const classifier = options.noNeural ? undefined : await tryLoadNeural(options)
+
+	const runOne = async (pipeline: ReturnType<typeof createRuntimePipeline>): Promise<{ timing: Record<string, number>; total: number; path: string }> => {
+		const t0 = performance.now()
+		const result = await pipeline(input, { locale: options.locale })
+		const total = performance.now() - t0
+		return { timing: { ...result.timing }, total, path: result.path }
+	}
+
+	const collect = async (pipeline: ReturnType<typeof createRuntimePipeline>): Promise<{
+		stageRuns: Map<string, number[]>
+		totals: number[]
+		paths: Map<string, number>
+		heapDelta: number
+	}> => {
+		for (let i = 0; i < BENCHMARK_WARMUP_ITERATIONS; i++) await runOne(pipeline)
+
+		if (typeof global.gc === "function") global.gc()
+		const heapBefore = process.memoryUsage().heapUsed
+
+		const stageRuns = new Map<string, number[]>()
+		const totals: number[] = []
+		const paths = new Map<string, number>()
+		for (let i = 0; i < iterations; i++) {
+			const r = await runOne(pipeline)
+			totals.push(r.total)
+			paths.set(r.path, (paths.get(r.path) ?? 0) + 1)
+			for (const [stage, ms] of Object.entries(r.timing)) {
+				let arr = stageRuns.get(stage)
+				if (!arr) {
+					arr = []
+					stageRuns.set(stage, arr)
+				}
+				arr.push(ms)
+			}
+		}
+
+		const heapAfter = process.memoryUsage().heapUsed
+		return { stageRuns, totals, paths, heapDelta: heapAfter - heapBefore }
+	}
+
+	const collected = options.resolve
+		? await withResolver(options, (resolver) => collect(createRuntimePipeline({ classifier, resolver })))
+		: await collect(createRuntimePipeline({ classifier }))
+
+	const lines: string[] = []
+	lines.push(`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`)
+	lines.push(`input: ${JSON.stringify(input)}`)
+	lines.push(`classifier: ${classifier ? `loaded (${options.locale})` : "none"}    resolver: ${options.resolve ? "wired" : "none"}`)
+	const pathSummary = Array.from(collected.paths.entries())
+		.map(([p, n]) => `${p}=${n}`)
+		.join(" ")
+	lines.push(`path breakdown: ${pathSummary}`)
+	lines.push("")
+	lines.push("stage              p50       p95       p99       max")
+	lines.push("─────────────────  ────────  ────────  ────────  ────────")
+	for (const [stage, ms] of Array.from(collected.stageRuns.entries()).sort()) {
+		const sorted = [...ms].sort((a, b) => a - b)
+		lines.push(
+			[
+				stage.padEnd(17),
+				formatMs(percentile(sorted, 50)).padStart(8),
+				formatMs(percentile(sorted, 95)).padStart(8),
+				formatMs(percentile(sorted, 99)).padStart(8),
+				formatMs(sorted[sorted.length - 1] ?? 0).padStart(8),
+			].join("  ")
+		)
+	}
+	const totalsSorted = [...collected.totals].sort((a, b) => a - b)
+	lines.push("─────────────────  ────────  ────────  ────────  ────────")
+	lines.push(
+		[
+			"TOTAL".padEnd(17),
+			formatMs(percentile(totalsSorted, 50)).padStart(8),
+			formatMs(percentile(totalsSorted, 95)).padStart(8),
+			formatMs(percentile(totalsSorted, 99)).padStart(8),
+			formatMs(totalsSorted[totalsSorted.length - 1] ?? 0).padStart(8),
+		].join("  ")
+	)
+	lines.push("")
+	lines.push(`heap delta (post-warmup → post-bench): ${formatBytes(collected.heapDelta)}`)
+	return lines.join("\n")
 }
 
 /** Try to load the neural classifier; return undefined (with stderr note) if weights are absent. */
