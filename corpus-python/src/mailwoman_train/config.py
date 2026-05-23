@@ -110,7 +110,36 @@ def _merge(dst: Any, src: dict[str, Any]) -> None:
         if hasattr(cur, "__dataclass_fields__") and isinstance(v, dict):
             _merge(cur, v)
         else:
-            setattr(dst, k, v)
+            setattr(dst, k, _coerce(dst, k, v))
+
+
+def _coerce(dst: Any, key: str, value: Any) -> Any:
+    """Coerce ``value`` to the dataclass field's declared type when an obvious conversion
+    is safe. Targets one specific footgun: PyYAML's default loader parses ``5e-4`` as a
+    string (YAML 1.1 spec requires a dot for floats), so a YAML config that writes
+    ``learning_rate: 5e-4`` silently makes its way into ``AdamW(lr="5e-4")`` and crashes
+    with a confusing ``TypeError: '<=' not supported between instances of 'float' and 'str'``.
+    Defensive coercion here means the configs work regardless of whether the human used
+    YAML 1.1 or YAML 1.2 numeric syntax. Only fires when the declared type is ``float`` or
+    ``int`` and the source is a string that parses cleanly — leaves all other values alone.
+    """
+    fields = getattr(dst.__class__, "__dataclass_fields__", None)
+    if not fields or key not in fields:
+        return value
+    declared = fields[key].type
+    if not isinstance(value, str):
+        return value
+    if declared in (float, "float"):
+        try:
+            return float(value)
+        except ValueError:
+            return value
+    if declared in (int, "int"):
+        try:
+            return int(value)
+        except ValueError:
+            return value
+    return value
 
 
 def load_config(path: str | Path | None) -> Config:
