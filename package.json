@@ -82,6 +82,7 @@
 		"normalize",
 		"kind-classifier",
 		"locale-gate",
+		"phrase-grouper",
 		"query-shape",
 		"resolver-wof-sqlite",
 		"resolver-wof-sqlite/spike",

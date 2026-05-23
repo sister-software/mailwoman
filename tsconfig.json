@@ -30,6 +30,7 @@
 		{ "path": "./normalize" },
 		{ "path": "./kind-classifier" },
 		{ "path": "./locale-gate" },
+		{ "path": "./phrase-grouper" },
 		{ "path": "./query-shape" },
 		{ "path": "./resolver-wof-sqlite" },
 		{ "path": "./resolver-wof-wasm" },
