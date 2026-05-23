@@ -42,9 +42,16 @@ describe("--resolve schema validation", () => {
 })
 
 describe("npx mailwoman parse --resolve error paths", () => {
-	test("--resolve without --neural exits non-zero with a clear message", async () => {
-		await expect(exec("node", [cliBin, "parse", "--resolve", "123 Main St"])).rejects.toMatchObject({
-			stdout: expect.stringMatching(/--resolve requires --neural/),
+	test("--resolve without a WOF DB path exits non-zero with a clear message", async () => {
+		// As of the pipeline-default flip, --resolve works without --neural — the runtime pipeline
+		// handles classification + resolution end-to-end. The remaining error path is "no WOF SQLite
+		// distribution available".
+		await expect(
+			exec("node", [cliBin, "parse", "--resolve", "123 Main St"], {
+				env: { ...process.env, MAILWOMAN_WOF_DB: "" },
+			})
+		).rejects.toMatchObject({
+			stdout: expect.stringMatching(/needs a WOF SQLite path/),
 		})
 	})
 })

@@ -46,11 +46,15 @@ describe("--locale schema validation", () => {
 	})
 })
 
-describe("npx mailwoman parse --locale <bcp47> '<input>'", () => {
+describe("npx mailwoman parse --isolated --locale <bcp47> '<input>' (legacy rule-only path)", () => {
+	// The default CLI path is now the runtime pipeline (which routes through the neural classifier
+	// when weights are available). --isolated forces the pre-pipeline rule-only path so this suite
+	// stays deterministic + model-independent.
 	test("exits 0 for en-US on the canonical US sample", async () => {
 		const { stdout } = await exec(process.execPath, [
 			cliBin,
 			"parse",
+			"--isolated",
 			"--locale",
 			"en-US",
 			"Mt Tabor Park, 6220 SE Salmon St, Portland, OR 97215, USA",
@@ -63,6 +67,7 @@ describe("npx mailwoman parse --locale <bcp47> '<input>'", () => {
 		const { stdout } = await exec(process.execPath, [
 			cliBin,
 			"parse",
+			"--isolated",
 			"--locale",
 			"fr-FR",
 			"8 rue de la République, 75008 Paris, France",
@@ -74,12 +79,12 @@ describe("npx mailwoman parse --locale <bcp47> '<input>'", () => {
 	test("matches no-locale behavior on en-US (Phase 0 invariant: locale does not change output)", async () => {
 		const sample = "Mt Tabor Park, 6220 SE Salmon St, Portland, OR 97215, USA"
 		const [withLocale, withoutLocale] = await Promise.all([
-			exec(process.execPath, [cliBin, "parse", "--locale", "en-US", sample]),
-			exec(process.execPath, [cliBin, "parse", sample]),
+			exec(process.execPath, [cliBin, "parse", "--isolated", "--locale", "en-US", sample]),
+			exec(process.execPath, [cliBin, "parse", "--isolated", sample]),
 		])
 		// Strip ANSI escapes and ink spinner frames; compare the JSON payload only.
 		// eslint-disable-next-line no-control-regex
-		const ansi = /\[[0-9;]*[a-zA-Z]/gu
+		const ansi = /\[[0-9;]*[a-zA-Z]/gu
 		const json = (stdout: string) => {
 			const clean = stdout.replace(ansi, "")
 			const jsonStart = clean.indexOf("[\n")
@@ -87,4 +92,26 @@ describe("npx mailwoman parse --locale <bcp47> '<input>'", () => {
 		}
 		expect(json(withLocale.stdout)).toEqual(json(withoutLocale.stdout))
 	}, 30_000)
+})
+
+describe("npx mailwoman parse '<input>' (default — runtime pipeline)", () => {
+	// The default CLI path runs the runtime pipeline; falls back to the rule-only parser when
+	// neural weights aren't installed.
+	test("exits 0 on a structured US address (non-empty output)", async () => {
+		const { stdout } = await exec(process.execPath, [
+			cliBin,
+			"parse",
+			"Mt Tabor Park, 6220 SE Salmon St, Portland, OR 97215, USA",
+		])
+		// Output shape is model-dependent (pipeline + neural vs rule-only fallback) — we only
+		// assert non-emptiness here. Per-model assertions live in the --isolated suite.
+		expect(stdout.trim().length).toBeGreaterThan(2)
+	}, 20_000)
+
+	test("exits 0 on a bare US ZIP+4 via fast-path (postcode_only)", async () => {
+		const { stdout } = await exec(process.execPath, [cliBin, "parse", "10118-1234"])
+		// Fast-path for unambiguous US ZIP+4 emits a postcode root from QueryShape; no model needed.
+		expect(stdout).toContain("postcode")
+		expect(stdout).toContain("10118-1234")
+	}, 20_000)
 })

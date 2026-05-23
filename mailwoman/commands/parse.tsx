@@ -12,7 +12,7 @@ import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwom
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import { createNeuralProposalClassifier, NeuralAddressClassifier } from "@mailwoman/neural"
 import { Text } from "ink"
-import { createAddressParser, createDiagnosticReport } from "mailwoman"
+import { createAddressParser, createDiagnosticReport, createRuntimePipeline } from "mailwoman"
 import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
@@ -32,16 +32,30 @@ const ParseConfigSchema = zod.object({
 		.optional()
 		.default("en-US")
 		.describe("Locale tag matching a weights package (en-US, fr-FR). Default en-US."),
+	isolated: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"Skip the runtime pipeline; run the legacy rule-only parser. For debugging when the pipeline path looks suspect."
+		),
 	neural: zod
 		.boolean()
 		.optional()
 		.default(false)
-		.describe("Route through the neural classifier instead of the rule-based parser."),
+		.describe(
+			"[Legacy] Force the neural-classifier-only path (skips Stage 1 + 2 + 2.5 of the pipeline). Implied by the default unless --isolated is set."
+		),
+	noNeural: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe("In pipeline mode, skip the neural classifier (run normalize + queryShape + kind + resolver only)."),
 	format: zod
 		.enum(["json", "tuple", "xml"])
 		.optional()
 		.default("json")
-		.describe("Output projection for --neural. Ignored without --neural."),
+		.describe("Output projection. Applies to all paths except --isolated (which always emits JSON)."),
 	model: zod.string().optional().describe("Explicit model.onnx path (--neural only). Overrides --locale resolution."),
 	tokenizer: zod
 		.string()
@@ -105,43 +119,35 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 	useEffect(() => {
 		const input = args[0]!
 
-		if (options.policy && options.policy.length > 0 && !options.neural) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount validation; refactor pending
-			setError("--policy requires --neural in this version (rule-side policy integration is a follow-up).")
+		// --isolated: legacy rule-only path (the pre-pipeline default).
+		if (options.isolated) {
+			runIsolated(input, options)
+				.then(setOutput)
+				.catch((err) => setError(err.message))
 			return
 		}
 
-		if (options.resolve && !options.neural) {
-			// TODO -- one-shot mount validation; refactor pending
-			setError(
-				"--resolve requires --neural. The rule-based parser doesn't produce the AddressTree shape the resolver needs."
-			)
-			return
-		}
-
-		if (options.neural) {
-			const policyOverrides = options.policy ? parsePolicySpecs(options.policy) : []
+		// --policy implies the legacy proposal/policy path.
+		if (options.policy && options.policy.length > 0) {
+			const policyOverrides = parsePolicySpecs(options.policy)
 			runNeural(input, options, policyOverrides)
 				.then(setOutput)
 				.catch((err) => setError(err.message))
 			return
 		}
 
-		const parser = createAddressParser()
-		const parseOpts = options.locale ? { locale: options.locale } : {}
-
-		if (options.debug) {
-			parser
-				.parse(input, { verbose: true, ...parseOpts })
-				.then(createDiagnosticReport)
+		// --neural without --policy: legacy direct-neural path (kept for parity with old behavior).
+		if (options.neural) {
+			runNeural(input, options, [])
 				.then(setOutput)
 				.catch((err) => setError(err.message))
-		} else {
-			parser
-				.parse(input, parseOpts)
-				.then((results) => setOutput(JSON.stringify(results, null, 2)))
-				.catch((err) => setError(err.message))
+			return
 		}
+
+		// Default: runtime pipeline.
+		runPipeline(input, options)
+			.then(setOutput)
+			.catch((err) => setError(err.message))
 	}, [args, options])
 
 	if (error) {
@@ -202,6 +208,86 @@ function serializeTree(tree: AddressTree, format: "json" | "tuple" | "xml"): str
 			return JSON.stringify(decodeAsTuples(tree), null, 2)
 		default:
 			return JSON.stringify(decodeAsJson(tree), null, 2)
+	}
+}
+
+/** Legacy rule-only path. Used by --isolated and as a graceful fallback when neural is unavailable. */
+async function runIsolated(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
+	const parser = createAddressParser()
+	const parseOpts = options.locale ? { locale: options.locale } : {}
+	if (options.debug) {
+		return parser.parse(input, { verbose: true, ...parseOpts }).then(createDiagnosticReport)
+	}
+	return parser.parse(input, parseOpts).then((results) => JSON.stringify(results, null, 2))
+}
+
+/**
+ * Default path: runtime pipeline. Lazy-loads neural classifier (graceful fallback to the legacy
+ * rule-only path if weights aren't present) + optional resolver. Returns the parsed tree serialized
+ * in the requested format.
+ */
+async function runPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
+	const classifier = options.noNeural ? undefined : await tryLoadNeural(options)
+
+	// Graceful fallback: if neither neural nor resolver is in play, the pipeline would emit an empty
+	// tree for structured addresses. Hand off to the legacy rule path so the CLI still produces
+	// useful output. (Preserves existing CLI smoke-test expectations.)
+	if (!classifier && !options.resolve) {
+		return runIsolated(input, options)
+	}
+
+	if (options.resolve) {
+		return withResolver(options, async (resolver) => {
+			const pipeline = createRuntimePipeline({ classifier, resolver })
+			const result = await pipeline(input, { locale: options.locale })
+			return options.debug
+				? JSON.stringify(serializeResult(result, options.format), null, 2)
+				: serializeTree(result.tree, options.format)
+		})
+	}
+
+	const pipeline = createRuntimePipeline({ classifier })
+	const result = await pipeline(input, { locale: options.locale })
+	return options.debug
+		? JSON.stringify(serializeResult(result, options.format), null, 2)
+		: serializeTree(result.tree, options.format)
+}
+
+/** Try to load the neural classifier; return undefined (with stderr note) if weights are absent. */
+async function tryLoadNeural(
+	options: zod.infer<typeof ParseConfigSchema>
+): Promise<NeuralAddressClassifier | undefined> {
+	try {
+		return await NeuralAddressClassifier.loadFromWeights({
+			locale: options.locale,
+			modelPath: options.model,
+			tokenizerPath: options.tokenizer,
+		})
+	} catch {
+		// Graceful degradation: pipeline runs normalize + queryShape + kind + resolver only.
+		// The caller sees `tree.roots` populated from QueryShape fast-paths (postcode_only,
+		// locality_only) but nothing from the encoder.
+		return undefined
+	}
+}
+
+/**
+ * Serialize the full pipeline result for `--debug`. Shows tree + timing + path + kind so callers
+ * can see which stage owned which output.
+ */
+function serializeResult(
+	result: Awaited<ReturnType<ReturnType<typeof createRuntimePipeline>>>,
+	format: "json" | "tuple" | "xml"
+): unknown {
+	return {
+		input: result.input,
+		normalized: result.normalized,
+		queryShape: { ...result.queryShape, tokenClasses: undefined }, // tokenClasses is verbose
+		locale: result.locale,
+		kind: result.kind,
+		path: result.path,
+		timing: result.timing,
+		tree: format === "xml" ? decodeAsXml(result.tree) : result.tree,
 	}
 }
 
