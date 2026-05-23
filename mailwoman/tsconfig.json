@@ -11,6 +11,7 @@
 		{ "path": "../core" },
 		{ "path": "../classifiers" },
 		{ "path": "../corpus" },
+		{ "path": "../kind-classifier" },
 		{ "path": "../neural" },
 		{ "path": "../normalize" },
 		{ "path": "../query-shape" },

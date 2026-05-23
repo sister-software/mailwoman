@@ -1,0 +1,28 @@
+{
+	"name": "@mailwoman/kind-classifier",
+	"version": "2.1.0",
+	"description": "Stage 2.5 of the runtime pipeline — categorize inputs by query shape (postcode_only / locality_only / structured_address / intersection / po_box / landmark / vague). Rule-based for v1.",
+	"license": "AGPL-3.0-only",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "kind-classifier"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}

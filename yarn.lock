@@ -4548,6 +4548,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/kind-classifier@workspace:*, @mailwoman/kind-classifier@workspace:kind-classifier":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/kind-classifier@workspace:kind-classifier"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/neural-web@workspace:*, @mailwoman/neural-web@workspace:neural-web":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-web@workspace:neural-web"
@@ -16545,6 +16553,7 @@ __metadata:
     "@inkjs/ui": "npm:^2.0.0"
     "@mailwoman/classifiers": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     change-case: "npm:^5.4.4"

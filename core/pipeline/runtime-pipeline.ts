@@ -25,6 +25,29 @@ import type {
 	RuntimePipelineStages,
 } from "./types.js"
 
+/**
+ * Known QueryShape format strings that indicate "this token is a postcode". Mirrors the set in
+ *
+ * @mailwoman/kind-classifier — kept duplicated so core/pipeline has no dep on kind-classifier.
+ */
+const POSTCODE_FORMATS: ReadonlySet<string> = new Set([
+	"us_zip",
+	"us_zip4",
+	"uk_postcode",
+	"fr_postcode",
+	"de_postcode",
+	"ca_postcode",
+	"jp_postcode",
+])
+
+function isPostcodeFormat(format: string): boolean {
+	return POSTCODE_FORMATS.has(format)
+}
+
+function isPostcodeFormatHit(hit: { format: string }): boolean {
+	return isPostcodeFormat(hit.format)
+}
+
 /** Pass-through normalize used when no `normalize` stage is wired. */
 function identityNormalize(raw: string, opts?: { locale?: string }): NormalizedInputLite {
 	return { raw, normalized: raw, appliedLocale: opts?.locale }
@@ -72,7 +95,7 @@ function canShortCircuit(kind: QueryKindResult, shape: QueryShapeLite, opts?: Pi
 	if (opts?.forceFullPipeline) return false
 	if (kind.confidence < 0.95) return false
 	if (kind.kind === "postcode_only") {
-		return shape.knownFormats.some((f) => f.format.endsWith("_zip") || f.format.endsWith("_postcode"))
+		return shape.knownFormats.some(isPostcodeFormatHit)
 	}
 	if (kind.kind === "locality_only") {
 		return (shape.totalLength ?? Infinity) <= 30 && shape.characterClass === "alpha"
@@ -86,7 +109,7 @@ function canShortCircuit(kind: QueryKindResult, shape: QueryShapeLite, opts?: Pi
  */
 function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShapeLite): AddressTree {
 	if (kind.kind === "postcode_only") {
-		const hit = shape.knownFormats.find((f) => f.format.endsWith("_zip") || f.format.endsWith("_postcode"))
+		const hit = shape.knownFormats.find((f) => isPostcodeFormat(f.format))
 		if (hit) {
 			return {
 				raw: text,

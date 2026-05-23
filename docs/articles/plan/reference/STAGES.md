@@ -208,9 +208,9 @@ export interface KindClassifier {
 }
 ```
 
-**Today.** Absent.
+**Today.** `@mailwoman/kind-classifier` workspace shipped 2026-05-23. Rule-based, pure functions. Composes per-kind scorers (po_box, intersection, landmark, postcode_only, locality_only, structured_address, vague) and returns the top kind plus alternatives sorted by confidence. Wired in as the default `classifyKind` by `mailwoman/runtime-pipeline.ts::createRuntimePipeline`.
 
-**Future.** Hybrid rule + tiny model. Rule path: when `QueryShape.knownFormats` has a single high-confidence hit, emit the matching kind. Model path: when no format dominates, use a small classifier trained on `(QueryShape, label)` pairs from a labelled corpus slice (Phase 5 Studio is the source of those labels).
+**Future.** Hybrid rule + tiny model. Rule path is shipped; model path remains: when no format dominates, use a small classifier trained on `(QueryShape, label)` pairs from a labelled corpus slice (Phase 5 Studio is the source of those labels).
 
 **Failure classes owned.** Routes around the encoder for the trivial cases that don't need it (postcode-only, locality-only). Improves accuracy on intersection / PO box by routing to specialist heads when they exist (v0.6.0+).
 

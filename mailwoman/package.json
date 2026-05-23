@@ -35,6 +35,7 @@
 		"@inkjs/ui": "^2.0.0",
 		"@mailwoman/classifiers": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"change-case": "^5.4.4",

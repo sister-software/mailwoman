@@ -42,6 +42,7 @@ export default defineConfig({
 			{ find: /^@mailwoman\/neural$/, replacement: resolve(here, "neural/index.ts") },
 			{ find: /^@mailwoman\/query-shape$/, replacement: resolve(here, "query-shape/index.ts") },
 			{ find: /^@mailwoman\/normalize$/, replacement: resolve(here, "normalize/index.ts") },
+			{ find: /^@mailwoman\/kind-classifier$/, replacement: resolve(here, "kind-classifier/index.ts") },
 			// `mailwoman` is the user-facing publishable workspace at /mailwoman.
 			{ find: "mailwoman/server", replacement: resolve(here, "mailwoman/server/index.ts") },
 			{ find: "mailwoman/sdk/test", replacement: resolve(here, "mailwoman/sdk/test/index.ts") },

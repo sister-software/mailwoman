@@ -130,3 +130,79 @@ describe("createRuntimePipeline — wiring", () => {
 		expect(result.locale.source).toBe("detected")
 	})
 })
+
+describe("createRuntimePipeline — kind classifier defaults", () => {
+	it("classifies a bare US ZIP as postcode_only", async () => {
+		const pipeline = createRuntimePipeline({})
+		const result = await pipeline("10118")
+		expect(result.kind.kind).toBe("postcode_only")
+		expect(result.kind.confidence).toBeGreaterThan(0.5)
+	})
+
+	it("classifies a single-word input as locality_only", async () => {
+		const pipeline = createRuntimePipeline({})
+		const result = await pipeline("Paris")
+		expect(result.kind.kind).toBe("locality_only")
+	})
+
+	it("classifies a multi-segment address as structured_address", async () => {
+		const pipeline = createRuntimePipeline({})
+		const result = await pipeline("350 5th Ave, New York, NY 10118")
+		expect(result.kind.kind).toBe("structured_address")
+	})
+
+	it("classifies PO Box input as po_box", async () => {
+		const pipeline = createRuntimePipeline({})
+		const result = await pipeline("PO Box 1234")
+		expect(result.kind.kind).toBe("po_box")
+	})
+
+	it("classifies 'Behind the gas station' as landmark", async () => {
+		const pipeline = createRuntimePipeline({})
+		const result = await pipeline("Behind the gas station")
+		expect(result.kind.kind).toBe("landmark")
+	})
+
+	it("classifies '5th and Main' as intersection", async () => {
+		const pipeline = createRuntimePipeline({})
+		const result = await pipeline("5th and Main")
+		expect(result.kind.kind).toBe("intersection")
+	})
+
+	it("fast-paths unambiguous postcode (US ZIP+4) inputs to resolver, skipping classifier", async () => {
+		// US ZIP+4 is unambiguous (confidence 0.95 from QueryShape) — the kind classifier scores
+		// it as postcode_only with confidence > 0.95, clearing the fast-path threshold.
+		const classifier = fakeClassifier()
+		const resolver = passthroughResolver()
+		const pipeline = createRuntimePipeline({ classifier, resolver })
+		const result = await pipeline("10118-1234")
+		expect(result.path).toBe("fast-path")
+		expect(classifier.parse).not.toHaveBeenCalled()
+		expect(resolver.resolveTree).toHaveBeenCalled()
+	})
+
+	it("does NOT fast-path ambiguous 5-digit input (US/FR/DE overlap)", async () => {
+		// "10118" matches three postcode formats (US/FR/DE) with confidence 0.6 each — kind is
+		// postcode_only but confidence stays below the 0.95 fast-path threshold. Advisory-not-
+		// authoritative principle in action.
+		const classifier = fakeClassifier()
+		const resolver = passthroughResolver()
+		const pipeline = createRuntimePipeline({ classifier, resolver })
+		const result = await pipeline("10118")
+		expect(result.kind.kind).toBe("postcode_only")
+		expect(result.path).toBe("full")
+		expect(classifier.parse).toHaveBeenCalled()
+	})
+
+	it("custom classifyKind opt overrides the default", async () => {
+		const customKind = vi.fn(async () => ({
+			kind: "vague" as const,
+			confidence: 0.5,
+			alternatives: [],
+		}))
+		const pipeline = createRuntimePipeline({ classifyKind: customKind })
+		const result = await pipeline("Paris") // default would say locality_only
+		expect(customKind).toHaveBeenCalled()
+		expect(result.kind.kind).toBe("vague")
+	})
+})
