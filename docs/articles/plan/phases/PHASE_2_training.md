@@ -70,6 +70,17 @@
 
   v0.4.1 implications: source-weight tweak alone partially addresses the 11% num_confused slice. The 65% empty_pred slice requires a different intervention (likely source-weight + synthesis pass over component-order permutations, or an aggressive `wof-postalcode` bump). Full v0.4.1 scope draft staged at `.playpen/control/drafts/v0_4_1-scope.md` on the i116 container.
 
+- **v0.5.0 thread C-s — scaffold only** (shipped 2026-05-23, see [Phase 8 fresh-slate plan § Thread C](./PHASE_8_v0_5_0_fresh_slate.md)) — v0.4.1 was [explicitly skipped](./PHASE_8_v0_5_0_fresh_slate.md) in favor of a fresh-slate iteration. Thread C-s lands the **model code path** for the v0.5.0 architecture changes — _no training run_ as part of this ship; the training kicks off after Threads A (tokenizer retrain) and B (corpus-v0.4.0 with adversarial expansion) complete.
+
+  Architectural changes shipped in the scaffold:
+  - **Top-k inference (`predict_top_k`):** the encoder now emits the K most-probable tag sequences with calibrated log-probability scores (`crf.top_k_decode`, list-Viterbi over the structural mask). Default k=5. This is what Stage 5 reconcile (Thread D) consumes — the classifier becomes a candidate generator rather than a single-answer predictor. Argmax path (`predict`) unchanged for back-compat.
+  - **Phrase-prior input-layer conditioning:** when `model.use_phrase_priors=true`, the encoder takes a per-token feature tensor `(B, S, PHRASE_FEATURE_DIM=10)` carrying BIE markers (`phrase_start`/`phrase_mid`/`phrase_end`) + a 7-way one-hot over the `PhraseKind` taxonomy (NUMERIC, STREET_PHRASE, LOCALITY_PHRASE, REGION_ABBREVIATION, POSTCODE, VENUE_PHRASE, HYPHENATED_COMPOUND — mirrored from Thread E's TS contract). Features are concatenated onto the token+position embedding and projected back to `hidden_size` with a learned linear. Default `false` preserves v0.3.0/v0.4.0 behavior bit-identically — enables clean ablation of the phrase-prior contribution.
+  - **Hidden-size knob kept at v0.3.0/v0.4.0 baseline (256).** The plan doc mentions a 256 → 384 or 512 bump "likely paid for by rented GPU." For the scaffold, hold the bump — validate the new architecture trains cleanly at the current size first; bump becomes an orthogonal `v0_5_0-classifier-large.yaml` follow-up once the baseline lands clean.
+  - **Label vocab unchanged from v0.3.0** (21 BIO classes; see `mailwoman_train.labels.ACTIVE_BIO_LABELS`). POI taxonomy expansion is out of scope per the plan doc.
+  - **Recipe parked:** `configs/v0_5_0-classifier-smoke.yaml` defines the short verdict-smoke (constant-LR per Thread F's [VERDICT_SMOKES.md](../reference/VERDICT_SMOKES.md), `--smoke-mode constant`). Invocable once Threads A + B + F have all landed. NOT executed as part of this PR.
+
+  Forward-pass smoke (`tests/mailwoman_train/test_v0_5_0_forward_pass.py`, 14 cases) verifies wiring on stub batches in seconds — no loss.backward, no optimizer step. It is the integration check that decides whether the new architecture is ready for verdict-smoke training, not whether it converges.
+
 ## Pre-flight
 
 - [ ] `corpus-v0.1.0` exists at `/data/corpus/versioned/corpus-v0.1.0/`

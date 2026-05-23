@@ -18,7 +18,18 @@ const MailwomanESLintConfig = createESLintPackageConfig({
 	packageTitle: "Mailwoman",
 	spdxLicenseIdentifier: "AGPL-3.0",
 
-	ignorePatterns: ["**/out", "**/node_modules", "docs/build", "docs/.docusaurus"],
+	ignorePatterns: [
+		"**/out",
+		"**/node_modules",
+		"docs/build",
+		"docs/.docusaurus",
+		// Python venv + egg-info under corpus-python/. Already gitignored, but eslint walks
+		// them anyway and flags hundreds of style violations in vendored JS (e.g.
+		// `.venv/lib/.../torch/utils/model_dump/code.js`) that we don't own. Match anything
+		// directly under a `.venv` or `*.egg-info` segment.
+		"**/.venv/**",
+		"**/*.egg-info/**",
+	],
 
 	overrides: {
 		plugins: { html },
