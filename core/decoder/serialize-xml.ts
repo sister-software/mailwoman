@@ -45,6 +45,14 @@ export interface SerializeXmlOpts {
 	includeGeo?: boolean
 	/** Include `place` resolver-supplied normalized place URI when set. Default true. */
 	includePlace?: boolean
+	/**
+	 * Include `<alternative>` child elements for each runner-up resolver candidate on the node. When
+	 * set + node.alternatives is populated, each runner-up is emitted as a self-closing element with
+	 * `place`, `name`, `lat`, `lon`, `score` attributes. Default false — keeps output
+	 * libpostal-compat when not explicitly requested (Springfield-class disambiguation surfaces only
+	 * when the caller asks).
+	 */
+	includeAlternatives?: boolean
 }
 
 function escapeXml(s: string): string {
@@ -83,18 +91,50 @@ function attrs(node: AddressNode, opts: Required<SerializeXmlOpts>): string {
 	return parts.length === 0 ? "" : " " + parts.join(" ")
 }
 
+interface AlternativeLike {
+	id: number | string
+	name: string
+	placetype: string
+	lat: number
+	lon: number
+	score: number
+}
+
+function serializeAlternatives(node: AddressNode, indent: string): string {
+	if (!node.alternatives || node.alternatives.length === 0) return ""
+	const lines = node.alternatives.map((raw) => {
+		const alt = raw as AlternativeLike
+		const place = `wof:${alt.id}`
+		const parts = [
+			`place="${escapeXml(place)}"`,
+			`name="${escapeXml(alt.name)}"`,
+			`placetype="${escapeXml(alt.placetype)}"`,
+			`lat="${alt.lat.toFixed(GEO_PRECISION)}"`,
+			`lon="${alt.lon.toFixed(GEO_PRECISION)}"`,
+			`score="${alt.score.toFixed(3)}"`,
+		]
+		return `${indent}<alternative ${parts.join(" ")} />`
+	})
+	return lines.join("\n")
+}
+
 function serializeNode(node: AddressNode, indent: string, opts: Required<SerializeXmlOpts>): string {
 	const a = attrs(node, opts)
 	const text = escapeXml(node.value)
 	const nl = opts.pretty ? "\n" : ""
 	const childIndent = opts.pretty ? indent + "\t" : ""
 
-	if (node.children.length === 0) {
+	const altsBlock = opts.includeAlternatives ? serializeAlternatives(node, childIndent) : ""
+	const hasChildren = node.children.length > 0
+	const hasAlts = altsBlock.length > 0
+
+	if (!hasChildren && !hasAlts) {
 		return `${indent}<${node.tag}${a}>${text}</${node.tag}>`
 	}
 
-	const children = node.children.map((c) => serializeNode(c, childIndent, opts)).join(nl)
-	return `${indent}<${node.tag}${a}>${text}${nl}${children}${nl}${indent}</${node.tag}>`
+	const childrenStr = node.children.map((c) => serializeNode(c, childIndent, opts)).join(nl)
+	const inner = [childrenStr, altsBlock].filter(Boolean).join(nl)
+	return `${indent}<${node.tag}${a}>${text}${nl}${inner}${nl}${indent}</${node.tag}>`
 }
 
 /** Project an `AddressTree` to nested XML with optional confidence/offset attributes. */
@@ -106,6 +146,7 @@ export function decodeAsXml(tree: AddressTree, opts: SerializeXmlOpts = {}): str
 		includeSrc: opts.includeSrc ?? true,
 		includeGeo: opts.includeGeo ?? true,
 		includePlace: opts.includePlace ?? true,
+		includeAlternatives: opts.includeAlternatives ?? false,
 	}
 	const rawAttr = escapeXml(tree.raw)
 	const nl = full.pretty ? "\n" : ""

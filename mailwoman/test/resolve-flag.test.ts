@@ -95,7 +95,62 @@ describeIfWof(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		expect(result.stdout).not.toMatch(/src="resolver:/)
 		expect(result.stdout).not.toMatch(/place="wof:/)
 	}, 30_000)
+
+	test("--candidates surfaces runner-up resolutions in XML", async () => {
+		// "Springfield" with no region qualifier is the canonical ambiguous query — WOF returns
+		// multiple Springfields (IL, MA, MO, etc.). With --candidates 5 we expect at least one
+		// <alternative> element on the resolved node.
+		const result = await exec(
+			"node",
+			[cliBin, "parse", "--resolve", "--candidates", "5", "--format", "xml", "Springfield"],
+			{ env: { ...process.env, MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }, maxBuffer: 4 * 1024 * 1024 }
+		)
+		expect(result.stdout).toContain("<address raw=")
+		// At least one alternative element with a place attr.
+		expect(result.stdout).toMatch(/<alternative[^>]*place="wof:\d+"/)
+		expect(result.stdout).toMatch(/<alternative[^>]*name="/)
+		expect(result.stdout).toMatch(/<alternative[^>]*lat="-?\d+\.\d+"/)
+	}, 30_000)
+
+	test("--candidates surfaces runner-up resolutions in JSON (tree shape)", async () => {
+		const result = await exec(
+			"node",
+			[cliBin, "parse", "--resolve", "--candidates", "3", "--format", "json", "Springfield"],
+			{ env: { ...process.env, MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }, maxBuffer: 4 * 1024 * 1024 }
+		)
+		// JSON with --candidates dumps the full AddressTree, not the libpostal-flat projection.
+		// The tree carries `roots` with nodes that have `alternatives`.
+		const tree = JSON.parse(stripAnsiSpinner(result.stdout))
+		expect(tree).toHaveProperty("raw")
+		expect(tree).toHaveProperty("roots")
+		// At least one root should have alternatives (Springfield is ambiguous).
+		const hasAlternatives = (tree.roots as Array<{ alternatives?: unknown[] }>).some(
+			(r) => Array.isArray(r.alternatives) && r.alternatives.length > 0
+		)
+		expect(hasAlternatives).toBe(true)
+	}, 30_000)
+
+	test("without --candidates, JSON stays libpostal-flat (no tree shape leak)", async () => {
+		const result = await exec("node", [cliBin, "parse", "--resolve", "--format", "json", "Springfield"], {
+			env: { ...process.env, MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" },
+			maxBuffer: 4 * 1024 * 1024,
+		})
+		const out = JSON.parse(stripAnsiSpinner(result.stdout))
+		// Libpostal-compat is flat: no `raw` / `roots` top-level keys.
+		expect(out).not.toHaveProperty("raw")
+		expect(out).not.toHaveProperty("roots")
+	}, 30_000)
 })
+
+/** Strip ANSI escape sequences + ink spinner frames so JSON.parse can consume CLI stdout. */
+function stripAnsiSpinner(stdout: string): string {
+	// eslint-disable-next-line no-control-regex
+	const ansi = /\[[0-9;]*[a-zA-Z]/gu
+	const cleaned = stdout.replace(ansi, "").trim()
+	// Find the start of the JSON payload (`{` or `[`).
+	const objStart = cleaned.search(/[{[]/)
+	return objStart >= 0 ? cleaned.slice(objStart) : cleaned
+}
 
 if (!hasWofDb) {
 	describe.skip("--resolve end-to-end", () => {

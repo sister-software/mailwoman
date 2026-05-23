@@ -82,6 +82,17 @@ const ParseConfigSchema = zod.object({
 		.describe(
 			"Path to a WOF SQLite distribution for --resolve. Defaults to $MAILWOMAN_WOF_DB; errors if neither is set."
 		),
+	candidates: zod.coerce
+		.number()
+		.int()
+		.min(1)
+		.max(20)
+		.optional()
+		.describe(
+			"Surface up to N alternative resolutions per resolved node (Springfield-class disambiguation). " +
+				"Requires --resolve. Output format-dependent: json emits node.alternatives arrays, xml emits " +
+				"<alternative> child elements, tuple unchanged."
+		),
 })
 
 interface PolicyOverride {
@@ -173,6 +184,22 @@ function resolveWofPath(options: zod.infer<typeof ParseConfigSchema>): string {
 	return path
 }
 
+/**
+ * Tree → resolved tree via the WOF backend. When `options.candidates` is set, asks the resolver for
+ * top-(N+1) candidates per node so the runner-ups land on `AddressNode.alternatives` (where N is
+ * the requested alternative count; +1 because the top winner is also in the limit).
+ */
+async function resolveWithCandidates(
+	resolver: Resolver,
+	tree: AddressTree,
+	options: zod.infer<typeof ParseConfigSchema>
+): Promise<AddressTree> {
+	if (options.candidates !== undefined) {
+		return resolver.resolveTree(tree, { candidatesPerLookup: options.candidates + 1 })
+	}
+	return resolver.resolveTree(tree)
+}
+
 async function withResolver<T>(
 	options: zod.infer<typeof ParseConfigSchema>,
 	fn: (resolver: Resolver) => Promise<T>
@@ -200,14 +227,20 @@ async function withResolver<T>(
 	}
 }
 
-function serializeTree(tree: AddressTree, format: "json" | "tuple" | "xml"): string {
+function serializeTree(
+	tree: AddressTree,
+	format: "json" | "tuple" | "xml",
+	opts: { includeAlternatives?: boolean } = {}
+): string {
 	switch (format) {
 		case "xml":
-			return decodeAsXml(tree)
+			return decodeAsXml(tree, { includeAlternatives: opts.includeAlternatives })
 		case "tuple":
 			return JSON.stringify(decodeAsTuples(tree), null, 2)
 		default:
-			return JSON.stringify(decodeAsJson(tree), null, 2)
+			// JSON: when --candidates is requested, dump the full AddressTree (carries alternatives
+			// on each node). Otherwise stay libpostal-compat (flat tag→value).
+			return opts.includeAlternatives ? JSON.stringify(tree, null, 2) : JSON.stringify(decodeAsJson(tree), null, 2)
 	}
 }
 
@@ -236,21 +269,29 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 		return runIsolated(input, options)
 	}
 
+	const wantAlternatives = options.candidates !== undefined
+	const pipelineOpts: { locale?: string; resolveOpts?: { candidatesPerLookup?: number } } = {
+		locale: options.locale,
+	}
+	if (wantAlternatives) {
+		pipelineOpts.resolveOpts = { candidatesPerLookup: (options.candidates ?? 5) + 1 }
+	}
+
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
 			const pipeline = createRuntimePipeline({ classifier, resolver })
-			const result = await pipeline(input, { locale: options.locale })
+			const result = await pipeline(input, pipelineOpts)
 			return options.debug
 				? JSON.stringify(serializeResult(result, options.format), null, 2)
-				: serializeTree(result.tree, options.format)
+				: serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
 		})
 	}
 
 	const pipeline = createRuntimePipeline({ classifier })
-	const result = await pipeline(input, { locale: options.locale })
+	const result = await pipeline(input, pipelineOpts)
 	return options.debug
 		? JSON.stringify(serializeResult(result, options.format), null, 2)
-		: serializeTree(result.tree, options.format)
+		: serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
 }
 
 /** Try to load the neural classifier; return undefined (with stderr note) if weights are absent. */
@@ -341,10 +382,10 @@ async function runNeural(
 	}
 
 	if (options.resolve) {
-		tree = await withResolver(options, (resolver) => resolver.resolveTree(tree))
+		tree = await withResolver(options, (resolver) => resolveWithCandidates(resolver, tree, options))
 	}
 
-	return serializeTree(tree, options.format)
+	return serializeTree(tree, options.format, { includeAlternatives: options.candidates !== undefined })
 }
 
 export default ParseCommand

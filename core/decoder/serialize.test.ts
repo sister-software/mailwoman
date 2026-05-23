@@ -144,4 +144,48 @@ describe("decodeAsXml (nested mixed-content)", () => {
 		// Self-closing tags would shorten the closer list; we don't emit any, so they should match.
 		expect(openers.sort()).toEqual(closers.sort())
 	})
+
+	test("includeAlternatives=false by default (libpostal-compat preserved)", () => {
+		const raw = "Springfield"
+		const tokens: DecoderToken[] = [tok("Springfield", 0, 11, "B-locality")]
+		const tree = buildAddressTree(raw, tokens)
+		const root = tree.roots[0]!
+		root.alternatives = [
+			{ id: 101727113, name: "Springfield, IL", placetype: "locality", lat: 39.78, lon: -89.65, score: 8 },
+			{ id: 101728010, name: "Springfield, MO", placetype: "locality", lat: 37.21, lon: -93.29, score: 7 },
+		]
+		const xml = decodeAsXml(tree)
+		expect(xml).not.toContain("<alternative")
+		expect(xml).not.toContain("Springfield, IL")
+	})
+
+	test("includeAlternatives=true emits self-closing <alternative> per runner-up", () => {
+		const raw = "Springfield"
+		const tokens: DecoderToken[] = [tok("Springfield", 0, 11, "B-locality")]
+		const tree = buildAddressTree(raw, tokens)
+		const root = tree.roots[0]!
+		root.alternatives = [
+			{ id: 101727113, name: "Springfield, IL", placetype: "locality", lat: 39.78, lon: -89.65, score: 8 },
+			{ id: 101728010, name: "Springfield, MO", placetype: "locality", lat: 37.21, lon: -93.29, score: 7 },
+		]
+		const xml = decodeAsXml(tree, { includeAlternatives: true })
+		expect(xml).toContain("<alternative")
+		expect(xml).toContain('place="wof:101727113"')
+		expect(xml).toContain('name="Springfield, IL"')
+		expect(xml).toContain('placetype="locality"')
+		expect(xml).toContain('lat="39.780000"')
+		expect(xml).toContain('lon="-89.650000"')
+		expect(xml).toContain('score="8.000"')
+		expect(xml).toContain('place="wof:101728010"')
+		// Self-closing form (no </alternative> closer).
+		expect(xml).not.toContain("</alternative>")
+	})
+
+	test("includeAlternatives is a no-op when node has no alternatives", () => {
+		const tree = buildAddressTree(WHITE_HOUSE_RAW, WHITE_HOUSE_TOKENS)
+		const xml = decodeAsXml(tree, { includeAlternatives: true })
+		expect(xml).not.toContain("<alternative")
+		// Existing structure still well-formed.
+		expect(xml).toContain("<address raw=")
+	})
 })
