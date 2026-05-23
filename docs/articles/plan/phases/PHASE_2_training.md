@@ -45,7 +45,7 @@
 
   Macro F1 raw average: 0.357 vs 0.293. Mean token confidence: 0.806 vs 0.857. Full-parse exact match: 0.082 vs 0.107 (regression — better per-component agreement, worse full-address agreement).
 
-  Issue #116 asked for "clear progress on at least two of {coarse F1, fine F1, calibration, training stability}":
+  Issue #116 asked for "clear progress on at least two of (coarse F1, fine F1, calibration, training stability)":
     - coarse F1: NEGATIVE (country/postcode each -0.07)
     - fine F1: SMALL POSITIVE (street +0.03, house_number +0.01)
     - calibration: FLAT

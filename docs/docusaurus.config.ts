@@ -221,9 +221,19 @@ const config: Config = {
 					sidebarPath: "./sidebars.ts",
 					editUrl: "https://github.com/sister-software/mailwoman/tree/main/docs/",
 				},
-				// Blog is disabled until we have actual posts to ship; re-enable by passing
-				// `{ showReadingTime: true, ... }` once the changelog/post pipeline is real.
-				blog: false,
+				blog: {
+					path: "blog",
+					routeBasePath: "blog",
+					blogTitle: "Mailwoman log",
+					blogDescription: "Iteration notes, ship retrospectives, design log entries.",
+					showReadingTime: true,
+					postsPerPage: 10,
+					feedOptions: {
+						type: ["rss", "atom"],
+						title: "Mailwoman log",
+						copyright: `Copyright © ${new Date().getFullYear()} Sister Software.`,
+					},
+				},
 				theme: {
 					customCss: "./src/css/custom.css",
 				},
@@ -247,6 +257,11 @@ const config: Config = {
 					sidebarId: "tutorialSidebar",
 					position: "left",
 					label: "Docs",
+				},
+				{
+					to: "/blog",
+					label: "Log",
+					position: "left",
 				},
 				{
 					href: "https://github.com/sister-software/mailwoman",
