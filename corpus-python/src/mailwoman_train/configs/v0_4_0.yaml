@@ -112,7 +112,7 @@ train:
   # weights should let this run cleanly. If divergence recurs by step 2000, bisect
   # down to 3e-4 first; v0.3.0's 1.5e-4 was only safe because crf_loss_weight=0.05
   # masked the dual-loss instability.
-  learning_rate: 5e-4
+  learning_rate: 5.0e-4
   weight_decay: 0.01
   warmup_steps: 1000
   grad_clip_norm: 1.0
