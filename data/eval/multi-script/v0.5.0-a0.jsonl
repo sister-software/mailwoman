@@ -1,0 +1,43 @@
+{"raw":"東京都新宿区西新宿2-8-1","script":"cjk","country":"JP","notes":"Tokyo Metropolitan Government building"}
+{"raw":"〒100-0005 東京都千代田区丸の内","script":"cjk","country":"JP","notes":"Imperial Palace area with JP postcode marker 〒"}
+{"raw":"〒530-0001 大阪府大阪市北区梅田3-1-3","script":"cjk","country":"JP","notes":"Osaka Umeda with hyphenated chome-banchi-go"}
+{"raw":"北京市朝阳区建国门外大街1号","script":"cjk","country":"CN","notes":"Beijing Chaoyang district CITIC tower address"}
+{"raw":"上海市浦东新区世纪大道100号","script":"cjk","country":"CN","notes":"Shanghai Pudong Century Avenue"}
+{"raw":"广东省深圳市福田区福华路1号","script":"cjk","country":"CN","notes":"Shenzhen Futian district"}
+{"raw":"서울특별시 종로구 세종대로 175","script":"cjk","country":"KR","notes":"Seoul Jongno-gu Sejongno"}
+{"raw":"부산광역시 해운대구 우동 1411-3","script":"cjk","country":"KR","notes":"Busan Haeundae"}
+{"raw":"г. Москва, ул. Тверская, д. 1","script":"cyrillic","country":"RU","notes":"Moscow Tverskaya St 1"}
+{"raw":"Санкт-Петербург, Невский проспект 28","script":"cyrillic","country":"RU","notes":"Saint Petersburg Nevsky Prospekt 28"}
+{"raw":"Новосибирск, ул. Ленина 10, 630099","script":"cyrillic","country":"RU","notes":"Novosibirsk with RU postcode"}
+{"raw":"Київ, вул. Хрещатик, 22","script":"cyrillic","country":"UA","notes":"Kyiv Khreshchatyk St 22"}
+{"raw":"Львів, площа Ринок, 6","script":"cyrillic","country":"UA","notes":"Lviv Rynok Square 6"}
+{"raw":"Минск, проспект Независимости 11","script":"cyrillic","country":"BY","notes":"Minsk Independence Avenue 11"}
+{"raw":"Белград, улица Кнеза Михаила 42","script":"cyrillic","country":"RS","notes":"Belgrade Knez Mihailova 42 (Serbian Cyrillic)"}
+{"raw":"София, бул. Витоша 89","script":"cyrillic","country":"BG","notes":"Sofia Vitosha Boulevard 89"}
+{"raw":"Երևան, Աբովյան փողոց 5","script":"armenian","country":"AM","notes":"Yerevan Abovyan St 5"}
+{"raw":"Գյումրի, Ռիժկովի փողոց 12","script":"armenian","country":"AM","notes":"Gyumri Rizhkov St 12"}
+{"raw":"Երևան, Մաշտոցի պողոտա 28","script":"armenian","country":"AM","notes":"Yerevan Mashtots Avenue 28"}
+{"raw":"Αθήνα, οδός Ερμού 12","script":"greek","country":"GR","notes":"Athens Ermou St 12"}
+{"raw":"Θεσσαλονίκη, λεωφόρος Νίκης 21","script":"greek","country":"GR","notes":"Thessaloniki Nikis Avenue 21"}
+{"raw":"شارع الملك فهد، الرياض 11564","script":"arabic","country":"SA","notes":"King Fahd Road Riyadh with postcode"}
+{"raw":"شارع الجمهورية، القاهرة","script":"arabic","country":"EG","notes":"Republic St Cairo"}
+{"raw":"רחוב הרצל 50, תל אביב","script":"hebrew","country":"IL","notes":"Herzl St 50 Tel Aviv"}
+{"raw":"רחוב יפו 15, ירושלים","script":"hebrew","country":"IL","notes":"Jaffa Road 15 Jerusalem"}
+{"raw":"कनॉट प्लेस, नई दिल्ली 110001","script":"devanagari","country":"IN","notes":"Connaught Place New Delhi with IN postcode"}
+{"raw":"मुंबई, मरीन ड्राइव","script":"devanagari","country":"IN","notes":"Mumbai Marine Drive"}
+{"raw":"ถนนสุขุมวิท, กรุงเทพมหานคร 10110","script":"thai","country":"TH","notes":"Sukhumvit Road Bangkok with TH postcode"}
+{"raw":"1600 Pennsylvania Avenue NW, Washington, DC 20500","script":"latin","country":"US","notes":"Latin baseline: White House (well-formed US)"}
+{"raw":"15 Rue de Rivoli, 75004 Paris, France","script":"latin","country":"FR","notes":"Latin baseline: well-formed FR with accent in Rue"}
+{"raw":"München, Marienplatz 8, 80331","script":"latin","country":"DE","notes":"Latin baseline: German with umlaut"}
+{"raw":"København, Nyhavn 12, 1051","script":"latin","country":"DK","notes":"Latin baseline: Danish with ø"}
+{"raw":"Reykjavík, Laugavegur 50, 101","script":"latin","country":"IS","notes":"Latin baseline: Icelandic with þ-block letters and accented í"}
+{"raw":"Tórshavn, Niels Finsens gøta 21, 100","script":"latin","country":"FO","notes":"Latin baseline: Faroese with ó and ø"}
+{"raw":"Kraków, ul. Floriańska 41, 31-019","script":"latin","country":"PL","notes":"Latin baseline: Polish with diacritics, hyphenated PL postcode"}
+{"raw":"Praha 1, Václavské náměstí 28","script":"latin","country":"CZ","notes":"Latin baseline: Czech with háček + carons"}
+{"raw":"Budapest, Andrássy út 60, 1062","script":"latin","country":"HU","notes":"Latin baseline: Hungarian with accents"}
+{"raw":"Istanbul, İstiklal Caddesi 145","script":"latin","country":"TR","notes":"Latin baseline: Turkish with dotted/dotless I"}
+{"raw":"東京都港区六本木6-10-1 六本木ヒルズ","script":"cjk","country":"JP","notes":"Roppongi Hills (CJK with venue + Roman-digit chome-banchi-go)"}
+{"raw":"重庆市渝中区解放碑步行街","script":"cjk","country":"CN","notes":"Chongqing Yuzhong Jiefangbei pedestrian street"}
+{"raw":"г. Тбилиси, проспект Руставели 12","script":"cyrillic","country":"GE","notes":"Tbilisi Rustaveli Avenue 12 (Georgian addr written in Russian Cyrillic)"}
+{"raw":"თბილისი, რუსთაველის გამზირი 14","script":"other","country":"GE","notes":"Tbilisi Rustaveli Avenue 14 (Georgian/Mkhedruli script)"}
+{"raw":"제주특별자치도 제주시 첨단로 242","script":"cjk","country":"KR","notes":"Jeju Island Cheomdan-ro 242 (Hangul)"}

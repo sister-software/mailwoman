@@ -10,6 +10,8 @@ Subcommands:
 - ``smoke`` — run the entire pipeline at tiny scale on CPU. Validates the wiring; does
   NOT produce shippable weights.
 - ``verify-tokenizer`` — re-tokenize a sample of corpus rows and assert the SP encoder works.
+- ``tokenizer`` — train a versioned SentencePiece tokenizer from a corpus shard tree, with
+  byte-fallback measurement + model card. v0.5.0 Thread A harness.
 """
 
 from __future__ import annotations
@@ -336,6 +338,94 @@ def cmd_smoke(args: argparse.Namespace) -> int:
     return 0
 
 
+_CORPUS_VERSIONED_ROOT = Path("/data/corpus/versioned")
+
+
+def _resolve_corpus_dir(spec: str) -> Path:
+    """Resolve a ``--corpus`` argument into a concrete shard-tree path.
+
+    Accepts three forms:
+
+    1. ``vX.Y.Z`` (or ``X.Y.Z``) — looks under ``/data/corpus/versioned/vX.Y.Z/corpus-vX.Y.Z/``.
+    2. An absolute or relative path that already contains ``train/*.parquet``.
+    3. An absolute or relative path one level up (with ``corpus-v*`` child).
+    """
+    p = Path(spec)
+    if p.is_absolute() and (p / "train").is_dir():
+        return p
+    if p.exists() and (p / "train").is_dir():
+        return p.resolve()
+    # Path one level up — accept ``/data/corpus/versioned/v0.3.0`` and resolve inward.
+    if p.exists() and p.is_dir():
+        candidates = sorted(p.glob("corpus-v*"))
+        if len(candidates) == 1 and (candidates[0] / "train").is_dir():
+            return candidates[0].resolve()
+    # Version-string form: ``v0.3.0`` or ``0.3.0``.
+    ver = spec.lstrip("v")
+    candidate = _CORPUS_VERSIONED_ROOT / f"v{ver}" / f"corpus-v{ver}"
+    if (candidate / "train").is_dir():
+        return candidate
+    raise FileNotFoundError(
+        f"could not resolve --corpus={spec!r}; tried {candidate}/train and direct path forms"
+    )
+
+
+def cmd_tokenizer(args: argparse.Namespace) -> int:
+    """Train a SentencePiece tokenizer from a corpus version (v0.5.0 Thread A harness)."""
+    import logging
+
+    from .tokenizer_train import (
+        DEFAULT_USER_DEFINED_SYMBOLS,
+        TrainerConfig,
+        parse_user_defined_symbols_file,
+        train_tokenizer,
+    )
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+
+    corpus_dir = _resolve_corpus_dir(args.corpus)
+    output_dir = Path(args.output)
+    countries = tuple(c.strip() for c in args.countries.split(",") if c.strip())
+
+    uds: list[str] = []
+    if not args.no_default_user_defined_symbols:
+        uds.extend(DEFAULT_USER_DEFINED_SYMBOLS)
+    if args.user_defined_symbols_file:
+        uds.extend(parse_user_defined_symbols_file(Path(args.user_defined_symbols_file)))
+
+    cfg = TrainerConfig(
+        corpus_dir=corpus_dir,
+        output_dir=output_dir,
+        corpus_version=args.corpus_version or _infer_corpus_version(corpus_dir),
+        vocab_size=args.vocab,
+        character_coverage=args.character_coverage,
+        model_type=args.model_type,
+        byte_fallback=not args.no_byte_fallback,
+        split_digits=args.split_digits,
+        allow_whitespace_only_pieces=False,
+        per_country_sample=args.per_country_sample,
+        countries=countries,
+        mine_postcode_literals=args.mine_postcode_literals,
+        user_defined_symbols=tuple(uds),
+        eval_fixture=Path(args.eval_fixture) if args.eval_fixture else None,
+        seed=args.seed,
+    )
+    card = train_tokenizer(cfg)
+    print(json.dumps(card, indent=2))
+    return 0
+
+
+def _infer_corpus_version(corpus_dir: Path) -> str:
+    """Best-effort: pull ``v0.3.0`` out of ``.../v0.3.0/corpus-v0.3.0`` paths."""
+    name = corpus_dir.name
+    if name.startswith("corpus-"):
+        return name[len("corpus-"):]
+    return name
+
+
 def cmd_verify_tokenizer(args: argparse.Namespace) -> int:
     from .config import load_config
     from .data_loader import verify_tokenizer_alignment
@@ -413,6 +503,63 @@ def build_parser() -> argparse.ArgumentParser:
     common(p)
     p.add_argument("--sample", type=int, default=100)
     p.set_defaults(func=cmd_verify_tokenizer)
+
+    p = sub.add_parser(
+        "tokenizer",
+        help="Train a SentencePiece tokenizer from a corpus version (v0.5.0 Thread A).",
+    )
+    p.add_argument(
+        "--corpus",
+        required=True,
+        help='Corpus to train on. Accepts "v0.3.0" / "0.3.0" (resolves under '
+        '/data/corpus/versioned/vX.Y.Z/corpus-vX.Y.Z/) or an explicit shard-tree path '
+        "(parent of train/, val/, test/).",
+    )
+    p.add_argument(
+        "--corpus-version",
+        default=None,
+        help="Override the corpus_version stamp in the model card (auto-inferred from path).",
+    )
+    p.add_argument("--output", required=True, help="Output dir for tokenizer.model + model_card.json")
+    p.add_argument("--vocab", type=int, default=48000, help="Vocabulary size (v0.5.0 default 48000)")
+    p.add_argument(
+        "--character-coverage",
+        type=float,
+        default=0.9999,
+        help="SP character_coverage. v0.5.0 bumps to 0.9999 (from v0.1.0's 0.9995) for better non-Latin coverage.",
+    )
+    p.add_argument("--model-type", default="unigram", choices=["unigram", "bpe", "char", "word"])
+    p.add_argument("--no-byte-fallback", action="store_true", help="Disable SP byte_fallback (default: enabled)")
+    p.add_argument("--split-digits", action="store_true", help="Pass SP split_digits=true (default: false)")
+    p.add_argument(
+        "--countries",
+        default="US,FR",
+        help="Comma-separated country codes to sample raws from (default: US,FR)",
+    )
+    p.add_argument("--per-country-sample", type=int, default=500_000)
+    p.add_argument(
+        "--mine-postcode-literals",
+        type=int,
+        default=0,
+        help="If > 0, mine the top-N postcode literals from the corpus and add them as user_defined_symbols.",
+    )
+    p.add_argument(
+        "--user-defined-symbols-file",
+        default=None,
+        help="One literal per line (blank + ``#``-comments skipped). Appended to the default UDS list.",
+    )
+    p.add_argument(
+        "--no-default-user-defined-symbols",
+        action="store_true",
+        help="Skip the built-in DEFAULT_USER_DEFINED_SYMBOLS list (US states + country abbrevs + postal markers).",
+    )
+    p.add_argument(
+        "--eval-fixture",
+        default=None,
+        help="Path to a JSONL or text file of held-out lines. Used to compute the byte-fallback rate recorded in the model card.",
+    )
+    p.add_argument("--seed", type=int, default=42)
+    p.set_defaults(func=cmd_tokenizer)
 
     return parser
 
