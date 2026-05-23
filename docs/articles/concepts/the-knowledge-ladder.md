@@ -13,16 +13,16 @@ Read [The pipeline contract](./staged-pipeline-contract.md) first for the runtim
 
 Each layer adds one kind of knowledge the layers below it cannot easily derive:
 
-| Layer                    | Knows                                                         | Shipped today                                                   |
-| ------------------------ | ------------------------------------------------------------- | --------------------------------------------------------------- |
-| **1. Normalize**         | input preprocessing rules                                     | Yes                                                             |
-| **2. Locale gate**       | language / script family                                      | Yes (rule-based)                                                |
-| **2.5. Kind classifier** | overall query category (postcode_only, structured_address, …) | Yes (rule-based)                                                |
-| **2.7. Phrase grouper**  | **coherent input units (boundary discovery)**                 | **Yes (rule-based, v0.5.0; learned variant scoped for v0.5.1)** |
-| **3. Token classify**    | per-token semantic type                                       | Yes (neural)                                                    |
-| **4. Sequence correct**  | per-token BIO sequence validity                               | Yes (CRF with structural mask)                                  |
-| **5. Reconcile**         | **joint-coherent interpretation across candidates**           | **Partial — needs concordance work**                            |
-| **6. Resolve**           | world hierarchy (gazetteer)                                   | Yes (WOF SQLite)                                                |
+| Layer                    | Knows                                                         | Shipped today                                                     |
+| ------------------------ | ------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **1. Normalize**         | input preprocessing rules                                     | Yes                                                               |
+| **2. Locale gate**       | language / script family                                      | Yes (rule-based)                                                  |
+| **2.5. Kind classifier** | overall query category (postcode_only, structured_address, …) | Yes (rule-based)                                                  |
+| **2.7. Phrase grouper**  | **coherent input units (boundary discovery)**                 | **Yes (rule-based, v0.5.0; learned variant scoped for v0.5.1)**   |
+| **3. Token classify**    | per-token semantic type                                       | Yes (neural)                                                      |
+| **4. Sequence correct**  | per-token BIO sequence validity                               | Yes (CRF with structural mask)                                    |
+| **5. Reconcile**         | **joint-coherent interpretation across candidates**           | **Yes (joint-decoding path shipped in v0.5.0; mocks Thread C-s)** |
+| **6. Resolve**           | world hierarchy (gazetteer)                                   | Yes (WOF SQLite)                                                  |
 
 The two emphasized rows are the layers that v0.4.0's mixed result exposed as missing. They're complementary: the phrase grouper feeds cleaner spans IN to the classifier; the expanded reconciler picks coherent assignments OUT of the classifier's candidates.
 
@@ -79,31 +79,28 @@ The neural classifier. Per-token BIO tagging today. Knows distributions of token
 
 The CRF with frozen structural transition mask. Forbids orphan-`I-*` sequences (no `I-locality` without preceding `B-locality`), enforces the BIO grammar. Knows the structural rules of BIO; doesn't know about semantic coherence.
 
-### Reconcile — joint-coherent interpretation — PARTIAL
+### Reconcile — joint-coherent interpretation — SHIPPED (joint-decoding path, v0.5.0)
 
-**This layer exists in the contract but mostly sorts spans today.**
+**Joint-decoding path shipped in v0.5.0 Thread D (`core/pipeline/reconcile.ts`). The fallback "sort spans by start" path is still wired as the default in `runtime-pipeline.ts` until Thread C-s lands the classifier top-k contract — at which point joint decoding becomes the default.**
 
 Stage 5's purpose is cross-component reconciliation: take everything the upstream layers produced and pick the joint interpretation that maximizes coherence.
 
-Today the inputs to Stage 5 are:
+Stage 5's inputs in v0.5.0:
 
-- One tag sequence (Viterbi argmax from CRF)
-- A flat list of spans
+- **Top-k tag interpretations** from the classifier (Thread C-s contract, mocked in tests until it lands)
+- **Top-k span proposals** from the phrase grouper (Thread E `PhraseProposal[]`, shipped)
+- **Top-k resolver candidates** per (span, tag) from Stage 6 (WOF SQLite, shipped)
+- **Concordance constraints** — country / region / locality / dependent_locality assignments are coherent iff their `parent_id` chain agrees in the gazetteer
 
-What Stage 5 needs to be useful:
-
-- **Top-k tag interpretations** from the classifier (model's beliefs ranked)
-- **Top-k span proposals** from the phrase grouper (boundary candidates ranked)
-- **Top-k resolver candidates** per span from Stage 6 (world's beliefs ranked)
-- **Concordance constraints** — the country/region/locality hierarchy must be consistent
-
-A real Stage 5 does Viterbi over this richer state space. Just as the CRF picks the best BIO sequence under structural constraints, Stage 5 picks the best parse tree under semantic+hierarchical constraints.
+The implementation is beam search over `(span × tag × resolver)` with incremental concordance. The score per beam is `phrase_conf × classifier_score × resolver_score × concordance_bonus`; per-axis pruning (default `kSpan=3`, `kTag=3`, `kResolver=5`) keeps the search tight. A fully-consistent WOF parent chain contributes `+concordanceWeight` in log-space (default weight 1.0); an explicit contradiction is a hard veto.
 
 Concrete cases this addresses:
 
 - **"NY-NY Steakhouse, Houston, TX"** — classifier tags NY twice as region (it appears twice in the venue brand). Resolver can't find a hierarchy where Houston, TX coexists with NY as a region. Stage 5 reweights the NY tokens toward `venue` (the classifier's second-best interpretation) because that's the only interpretation that's joint-coherent.
-- **"Paris, Texas"** vs **"Paris, France"** — same locality classifier output, different hierarchy resolution. Stage 5's concordance scoring picks the one whose region matches.
-- **"Saint Petersburg"** — CRF prevents the orphan-I split. Stage 5 ensures the joint span resolves to the actual place.
+- **"Paris, Texas"** vs **"Paris, France"** — same locality classifier output, different hierarchy resolution. Stage 5's concordance scoring picks the Texas reading because the joint TX-region assignment matches Paris-TX's parent chain.
+- **"Saint Petersburg, FL"** — CRF prevents the orphan-I split; Stage 5 ensures the joint span resolves to St Pete, FL (not the Russian city), because FL is in St-Pete-FL's parent chain and Russia is not.
+
+Each case is asserted in `core/pipeline/reconcile.test.ts` (grep for `kryptonite catalogue —`).
 
 ### Resolve — world hierarchy
 

@@ -349,46 +349,62 @@ export interface SpanRereader {
 
 ## Stage 5 — Cross-component reconcile
 
-**Purpose.** Pick the best self-consistent set of components from the union of all classifier proposals.
+**Purpose.** Pick the best self-consistent parse tree from the union of phrase-grouper, classifier, and resolver candidates. Two paths coexist:
 
-**Interface.** The `PolicyRegistry` from [`INTERFACES.md`](./INTERFACES.md), plus the existing `ExclusiveCartesianSolver` from `@mailwoman/core`. The composition:
+- **Fallback path** (`runtime-pipeline.ts`'s default): keep classifier-emitted spans in source order. The same behavior pre-v0.5.0 shipped. Used when callers don't have top-k inputs from Stages 2.7 / 3 / 6.
+- **Joint-decoding path** (`reconcileSpans` in `core/pipeline/reconcile.ts`): Viterbi-style beam search over `(phrase_span × classifier_tag × resolver_place)` with concordance scoring on WOF parent_id chains. Opted into by callers wiring Stages 2.7 + 3 + 6 with top-k outputs.
+
+**Interface (joint-decoding path).**
 
 ```ts
-// packages/core/src/reconcile.ts
+// core/pipeline/reconcile.ts
 
-export interface Reconciler {
-	/**
-	 * Filter proposals through the policy, then solve for the best self-consistent set. Returns
-	 * components in canonical shape.
-	 */
-	reconcile(proposals: ClassificationProposal[], policy: PolicyRegistry, locale: LocaleHint): Promise<Components>
+export function reconcileSpans(inputs: ReconcileInputs): ParseTree
+
+export interface ReconcileInputs {
+	raw: string
+	phraseProposals: ReadonlyArray<PhraseProposal> // from Stage 2.7
+	classifierTopK: ReadonlyArray<ClassifierCandidate> // from Stage 3 (Thread C-s contract)
+	resolverCandidates?: ResolverCandidatesLookup // from Stage 6, (span, tag) → ResolvedPlace[]
+	parentChain?: ParentChainLookup // from Stage 6, place → ancestor list
+	opts?: ReconcileOpts
 }
 
-export interface Components {
-	/** Component tag → final value, with confidence + source attribution. */
-	[tag: string]: ComponentValue | undefined
+export interface ClassifierCandidate {
+	span: { start: number; end: number }
+	tag: ComponentTag
+	score: number // 0..1
 }
 
-export interface ComponentValue {
-	value: string
-	confidence: number
-	span: Span
-	source: "rule" | "neural" | "merged"
-	source_id: string
-	alternatives?: ComponentValue[] // top-k for this slot, when ambiguous
+export interface ReconcileOpts {
+	kSpan?: number // default 3 — top-k overlapping phrase proposals per start position
+	kTag?: number // default 3 — top-k classifier tag interpretations per span
+	kResolver?: number // default 5 — top-k resolver candidates per (span, tag)
+	concordanceWeight?: number // default 1.0 — full chain match adds +concordanceWeight in log-space
+	beamWidth?: number // default 16
+	runnersUp?: number // default 3
+}
+
+export interface ParseTree {
+	tree: AddressTree
+	confidence: number // softmaxed over the finalized beam
+	runnersUp: AddressTree[]
+	scoreBreakdown: { phrase: number; classifier: number; resolver: number; concordance: number; total: number }
 }
 ```
 
-**Today.** Solver shipped. `Components` shape doesn't fully exist — current code uses a flat dictionary. Promoting it to a typed shape with `alternatives` is a small refactor.
+Score per beam = `phrase_conf × classifier_score × resolver_score × concordance_bonus`. Concordance bonus is **+1** in log-space for a fully consistent WOF parent_id chain across all admin pairs in the assignment, **-Infinity** (hard veto) for an explicit chain contradiction, **0** when no admin signal is available. Per-axis pruning (kSpan / kTag / kResolver) keeps the search tight.
 
-**Future.** Add `alternatives` so the resolver can see runner-up candidates. Optional: replace the rule-based solver with a learned reranker (lower priority — current implementation is not the bottleneck).
+**Today.** Joint-decoding path shipped in v0.5.0 Thread D (`core/pipeline/reconcile.ts`, 2026-05-23). Closes the kryptonite catalogue — `NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg, FL`, `Buffalo Buffalo` — via the concordance bonus and hard-veto contradiction handling. Fallback path (sort spans by start) remains in `runtime-pipeline.ts` for callers without top-k inputs. The Thread C-s classifier top-k contract is mocked locally in tests; integration tests in `@mailwoman/neural` swap to real top-k output when Thread C-s lands.
 
-**Failure classes owned.** Consistency portion of numeric chaos (#5); the hybrid-policy decision in general.
+**Future.** Wire `reconcileSpans` into the `runPipeline` coordinator as a default Stage 5 once Thread C-s ships the classifier top-k contract. Add learned-reranker comparison once joint decoding has a kryptonite-eval baseline.
+
+**Failure classes owned.** Consistency portion of numeric chaos (#5); the hybrid-policy decision in general; cross-component coherence for the kryptonite catalogue.
 
 **Open questions.**
 
-- Should `Components` carry a "global confidence" (probability the whole parse is correct)? Recommend: yes — used by callers to gate downstream actions.
-- Solver replacement with learned reranker — when, if ever? Recommend: defer indefinitely; rule-based solver is explainable and fast.
+- Should `Components` carry a "global confidence" (probability the whole parse is correct)? Recommend: yes — `ParseTree.confidence` is the softmaxed equivalent; carry forward into the resolver.
+- Joint decoding wired as default vs opt-in? Recommend: default once Thread C-s lands, opt-in only for callers without a classifier.
 
 ## Stage 6 — Resolve with candidates
 
