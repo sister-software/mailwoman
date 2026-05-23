@@ -23,9 +23,14 @@
   **Training-stability findings (2026-05-23 ablation campaign, mid-flight):**
     1. The full §1+§3+§4 recipe **diverges at all three tested learning rates** (lr=5e-4 step 750, lr=3e-4 step 1000, lr=1.5e-4 step 2000). LR delays the divergence proportionally with diminishing returns — confirming the destabilizer is in the recipe itself, not the LR knob. Same train-loss-then-spike shape across all three: model finds confident-wrong degenerate minimum after ~500 post-warmup steps.
     2. At `lr=5e-4`, both single-knob ablations fail identically (ablate-§1 collapses 0.35 → 0.11 step 1000; ablate-§3 collapses 0.35 → 0.14 step 750). **`lr=5e-4` is structurally unreachable** for this codebase's dual-loss landscape regardless of which §1/§3 knob is active.
-    3. At `lr=1.5e-4` (v0.3.0-stable), the orthogonal matrix isolated **§4 source rebalance alone is benign** (verdict-smoke PASS: peak macro_f1 0.4190 step 2250, drift 0.005 across last 5 evals) — already +0.06 over v0.3.0's 0.36 final. §1-only and §3-only stable-LR smokes pending. Best held checkpoint across all v0.4.0 attempts so far: `v0_4_0-stableLR-source-only/step-002250` (macro_f1 0.419, val_loss 1.68).
+    3. At `lr=1.5e-4` (v0.3.0-stable), the orthogonal matrix isolated each v0.4.0 change individually:
+        - **source-only** (§4): PASS, peak macro_f1 0.4190 step 2250, drift 0.005 — +0.06 over v0.3.0.
+        - **cw-only** (§3+§4): PASS, peak macro_f1 **0.4279** step 2250, drift 0.0036 — **+0.07 over v0.3.0; current best**.
+        - **crf-only** (§1+§4): smoke pending.
+
+       Combined with the earlier finding that the full §1+§3+§4 recipe diverges at lr=1.5e-4 step 2000, the offender is either §1 alone or the §1+§3 interaction — crf-only verdict will disambiguate.
     4. **Math sanity-check** of `model.py` + `crf.py` found no implementation bug — `per_token` reduction is `nll.sum() / total_tokens.clamp(min=1)` (mathematically correct); class_weights enter via `cross_entropy(weight=...)` (PyTorch-standard). The destabilization is a real recipe interaction, not a coding artifact.
-    5. **Provisional v0.4.0 ship recipe** (subject to cw-only / crf-only smoke verdicts): v0.3.0 CRF (per_sequence + crf_loss_weight=0.05) + §4 source_weights + lr=1.5e-4 + max_steps=50000. Expected to top out around macro_f1 0.42-0.45 — fully meets the issue #57 fine-label floors with coarse F1 also recovered. §1 (per_token CRF) deferred to a future weights release after the magnitude-balance physics is re-derived; §3 (class_weights) likewise.
+    5. **Provisional v0.4.0 ship recipe** (subject to crf-only smoke verdict): v0.3.0 CRF (per_sequence + crf_loss_weight=0.05) + §3 class_weights + §4 source_weights + lr=1.5e-4 + max_steps=50000. Expected to top out around macro_f1 0.43-0.48 from the cw-only 0.428 peak with 47K steps still to run + cosine decay. §1 (per_token CRF) deferred to a future weights release after the magnitude-balance physics is re-derived.
 
 ## Pre-flight
 
