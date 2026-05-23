@@ -1,0 +1,105 @@
+# v0.4.0 smoke config — derivative of v0_4_0.yaml with tiny step counts.
+#
+# Purpose: 2-minute integration check before the full 6-10h training run. Catches:
+#   - CRF NaN under bf16 (regression guard for the v0.3.0 incident)
+#   - class_weights tensor dtype mismatch (new in v0.4.0)
+#   - per_token CRF reduction producing finite loss
+#   - source_weights sampler getting starved (all-zero weight bug)
+#   - Checkpoint save + resume round-trip
+#   - Output dir creation on first run
+#
+# Hand off:
+#   HSA_OVERRIDE_GFX_VERSION=11.0.0 \
+#     CONFIG=src/mailwoman_train/configs/v0_4_0-smoke.yaml \
+#     ~/training-venv/bin/python -m mailwoman_train train --config "$CONFIG"
+#
+# Expected: ~2 minutes wall, ~50 steps, train_log.csv shows finite + decreasing loss.
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0
+  tokenizer_dir: /data/models/tokenizer/v0.1.0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  # Same source rebalance as v0_4_0.yaml — smoke must exercise the same sampler path.
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+  # Cap rows per epoch so smoke doesn't accidentally pull a giant batch on resume.
+  train_rows_per_epoch: 10000
+  val_rows: 256
+  coarse_filter: true
+
+model:
+  # Same model geometry — the smoke exercises the actual encoder.
+  hidden_size: 256
+  num_hidden_layers: 6
+  num_attention_heads: 4
+  intermediate_size: 1024
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  label_smoothing: 0.0
+  # v0.4.0 levers — exercised so the smoke catches any bf16-x-class-weights or
+  # per_token-CRF integration issues.
+  crf_normalization: per_token
+  crf_loss_weight: 1.0
+  class_weights:
+    O: 1.0
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 2.0
+    I-region: 2.0
+    B-locality: 1.5
+    I-locality: 1.5
+    B-dependent_locality: 1.5
+    I-dependent_locality: 1.5
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 1.5
+    I-subregion: 1.5
+    B-cedex: 2.0
+    I-cedex: 2.0
+    B-venue: 0.5
+    I-venue: 0.5
+    B-street: 0.5
+    I-street: 0.5
+    B-house_number: 0.5
+    I-house_number: 0.5
+
+train:
+  # Separate output dir so smoke checkpoints don't collide with the real run.
+  output_dir: /data/models/checkpoints/v0_4_0-smoke
+  seed: 42
+  # Tiny batch so the smoke doesn't burn VRAM unnecessarily.
+  batch_size: 8
+  eval_batch_size: 16
+  grad_accum_steps: 1
+  learning_rate: 5e-4
+  weight_decay: 0.01
+  warmup_steps: 10
+  grad_clip_norm: 1.0
+  # Just enough steps to see the loss curve + exercise an eval + a checkpoint save.
+  max_steps: 50
+  eval_every_steps: 25
+  save_every_steps: 25
+  log_every_steps: 5
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/train_log.csv"
+
+eval:
+  golden_dir: ""
+  val_jsonl: ""
