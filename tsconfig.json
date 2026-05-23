@@ -29,6 +29,7 @@
 		{ "path": "./neural-web" },
 		{ "path": "./normalize" },
 		{ "path": "./kind-classifier" },
+		{ "path": "./locale-gate" },
 		{ "path": "./query-shape" },
 		{ "path": "./resolver-wof-sqlite" },
 		{ "path": "./resolver-wof-wasm" },

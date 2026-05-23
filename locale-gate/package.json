@@ -1,0 +1,28 @@
+{
+	"name": "@mailwoman/locale-gate",
+	"version": "2.1.0",
+	"description": "Stage 2 of the runtime pipeline — derive a LocaleHint from QueryShape (script + known-format hits). Rule-based v1; trained classifier deferred to v0.6.0.",
+	"license": "AGPL-3.0-only",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "locale-gate"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}

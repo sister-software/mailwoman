@@ -4558,6 +4558,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/locale-gate@workspace:*, @mailwoman/locale-gate@workspace:locale-gate":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/locale-gate@workspace:locale-gate"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/neural-web@workspace:*, @mailwoman/neural-web@workspace:neural-web":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-web@workspace:neural-web"
@@ -16556,6 +16564,7 @@ __metadata:
     "@mailwoman/classifiers": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
+    "@mailwoman/locale-gate": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     change-case: "npm:^5.4.4"

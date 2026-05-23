@@ -81,6 +81,7 @@
 		"neural-weights-fr-fr",
 		"normalize",
 		"kind-classifier",
+		"locale-gate",
 		"query-shape",
 		"resolver-wof-sqlite",
 		"resolver-wof-sqlite/spike",
