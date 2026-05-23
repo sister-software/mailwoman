@@ -11,16 +11,17 @@
  */
 
 import {
-	type AddressTree,
-	type ComponentTag,
-	type DecoderToken,
 	buildAddressTree,
 	decodeAsJson,
 	decodeAsTuples,
 	decodeAsXml,
+	type AddressTree,
+	type ComponentTag,
+	type DecoderToken,
 } from "@mailwoman/core/decoder"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
+import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import { buildBioEndMask, buildBioStartMask, buildBioTransitionMask, softmax, viterbi } from "./viterbi.js"
 import type { ResolveWeightsOpts } from "./weights.js"
@@ -115,24 +116,39 @@ export class NeuralAddressClassifier {
 	}
 
 	/** Tokenize → infer → Viterbi (or argmax) → decoder tree. */
-	async parse(text: string): Promise<AddressTree> {
+	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
 		if (text.length === 0) return { raw: text, roots: [] }
 
 		const { pieces, ids } = this.cfg.tokenizer.encode(text)
 		const { logits } = await this.cfg.runner.infer(ids)
 
+		// QueryShape soft prior: when the caller supplies a QueryShape (typically from
+		// `@mailwoman/query-shape`'s `computeQueryShape`), nudge per-token emissions toward the
+		// labels implied by known-format hits. Bounded magnitude — confident encoder predictions
+		// still win.
+		const emissions = opts?.queryShape
+			? addEmissionMatrix(
+					logits,
+					buildEmissionPriors(opts.queryShape, pieces, this.labels, {
+						biasScale: opts.queryShapeBiasScale ?? 1.0,
+					})
+				)
+			: logits
+
 		const labelIndices =
 			this.decodeMode === "viterbi"
 				? viterbi({
-						emissions: logits,
+						emissions,
 						transitions: this.transitions,
 						startTransitions: this.startTransitions,
 						endTransitions: this.endTransitions,
 					}).path
-				: logits.map((row) => argmaxSoftmax(row).idx)
+				: emissions.map((row) => argmaxSoftmax(row).idx)
 
 		const tokens: DecoderToken[] = pieces.map((p, i) => {
 			const idx = labelIndices[i]!
+			// Confidence reports the encoder's *raw* probability (no prior baked in) so callers see
+			// the model's own conviction, not the prior-augmented score.
 			const probs = softmax(logits[i]!)
 			return {
 				piece: p.piece,
@@ -146,17 +162,35 @@ export class NeuralAddressClassifier {
 		return buildAddressTree(text, tokens)
 	}
 
-	async parseJson(text: string): Promise<Partial<Record<ComponentTag, string>>> {
-		return decodeAsJson(await this.parse(text))
+	async parseJson(text: string, opts?: ParseOpts): Promise<Partial<Record<ComponentTag, string>>> {
+		return decodeAsJson(await this.parse(text, opts))
 	}
 
-	async parseTuples(text: string): Promise<Array<[ComponentTag, string]>> {
-		return decodeAsTuples(await this.parse(text))
+	async parseTuples(text: string, opts?: ParseOpts): Promise<Array<[ComponentTag, string]>> {
+		return decodeAsTuples(await this.parse(text, opts))
 	}
 
-	async parseXml(text: string, opts?: Parameters<typeof decodeAsXml>[1]): Promise<string> {
-		return decodeAsXml(await this.parse(text), opts)
+	async parseXml(text: string, opts?: ParseOpts & { xml?: Parameters<typeof decodeAsXml>[1] }): Promise<string> {
+		return decodeAsXml(await this.parse(text, opts), opts?.xml)
 	}
+}
+
+/**
+ * Per-call opts for `parse()`. Threading a precomputed `QueryShape` here turns on the soft-prior
+ * bias path in the Viterbi decoder (Stage 2.4 boundary → Stage 3 encoder integration).
+ */
+export interface ParseOpts {
+	/**
+	 * Precomputed `QueryShape` for this input (from `@mailwoman/query-shape`'s `computeQueryShape`).
+	 * Known-format hits in the shape produce additive emission biases toward the matching BIO label.
+	 * Typed structurally — no runtime dependency on `@mailwoman/query-shape`.
+	 */
+	queryShape?: QueryShapeLike
+	/**
+	 * Maximum bias magnitude in log-odds units. Default 1.0 — adds up to ~e^1 ≈ 2.7× odds to the
+	 * favored label. Confidence-scaled, so a 0.6-confidence format hit gets +0.6 max bias.
+	 */
+	queryShapeBiasScale?: number
 }
 
 function argmaxSoftmax(row: number[]): { idx: number; conf: number } {
