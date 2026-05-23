@@ -86,6 +86,13 @@ class TrainConfig:
     # Global-norm gradient clip. 0 disables clipping. Defaults to 1.0; the CRF NLL leg of
     # Stage 2 emits sharp gradients during warmup and diverged at the LR peak without it.
     grad_clip_norm: float = 1.0
+    # LR schedule after warmup. ``"cosine"`` = decay to 0 across max_steps (v0.4.0 default,
+    # right for full-length production runs). ``"constant"`` = hold ``learning_rate`` flat
+    # for the rest of the run after warmup — the smoke-window default per v0.5.0 process
+    # (see docs/articles/plan/reference/VERDICT_SMOKES.md). Cosine decay during a short
+    # smoke window masks divergence by collapsing LR before the loss curve shows it; the
+    # constant-LR mode keeps the signal visible. See the ref doc for when to pick which.
+    lr_schedule: str = "cosine"
 
 
 @dataclass

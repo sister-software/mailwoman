@@ -91,19 +91,21 @@ Six work areas, each with its own thread. Cross-thread dependencies noted.
 - **Blocks:** Thread C (classifier conditioning), Thread D (reconcile consumes proposals).
 - **Blocked by:** nothing — rule-based version can start immediately.
 
-### F. Process improvements landed during v0.4.0 to harden
+### F. Process improvements landed during v0.4.0 to harden — **SHIPPED**
 
+- **Status:** shipped 2026-05-23 (branch `feat/v0.5.0-thread-f-verdict-smokes`).
 - **What:** carry the v0.4.0 sidecars + diagnostic tools into the v0.5.0 process from day one.
-  - `corpus-audit` already in tree — use it to verify Thread B's corpus mix before tokenizer training and before classifier training.
-  - `diagnose_regression.py` already in tree — use it for v0.5.0 eval bucketing, not just post-hoc.
-  - Verdict-smoke framework redesigned: **constant LR for the smoke window**, OR `max_steps >= 10000` so the cosine tail doesn't dominate. Documented in a new `docs/articles/plan/reference/VERDICT_SMOKES.md`.
-  - Decoder span-trim sidecar (commit `c72ab4c`) stays in main — covers the long tail of bio_slip cases the phrase grouper might miss.
+  - `corpus-audit` already in tree (`corpus/scripts/audit.ts`) — runs cleanly against `corpus-v0.3.0`. Use it to verify Thread B's corpus mix before tokenizer training and before classifier training.
+  - `diagnose_regression.py` already in tree (`corpus-python/scripts/diagnose_regression.py`) — use it for v0.5.0 eval bucketing, not just post-hoc.
+  - Verdict-smoke framework redesigned: **constant LR for the smoke window**, OR `max_steps >= 10000` so the cosine tail doesn't dominate. Documented in [`VERDICT_SMOKES.md`](../reference/VERDICT_SMOKES.md). Code enforcement: `--smoke-mode constant|long-tail` on `python -m mailwoman_train train` and `smoke` subcommands; defaults to constant for end-to-end smokes.
+  - Decoder span-trim sidecar (commit `c72ab4c`, `core/decoder/build-tree.ts:58`) stays in main — covers the long tail of bio_slip cases the phrase grouper might miss.
 - **Why:** v0.4.0's process meta-bug (cosine LR masking divergence) cost real iteration cycles. Document the lesson so v0.5.0 doesn't repeat it.
-- **Output:** new `VERDICT_SMOKES.md` reference doc + updated TODO.md.
+- **Output:** new [`VERDICT_SMOKES.md`](../reference/VERDICT_SMOKES.md) + `--smoke-mode` CLI flag + updated TODO.md.
 
 ## Cross-thread execution order
 
 Critical path (must complete sequentially):
+
 ```
 B (corpus expansion) → A (tokenizer) → C (classifier)
                                           ↘
@@ -112,6 +114,7 @@ E (phrase grouper, rule-based)             → D (Stage 5 reconcile)
 ```
 
 Parallel-safe:
+
 - F (process improvements) ships independently throughout
 - E rule-based version can ship as a standalone improvement before A/C complete (slot it into the existing v0.4.0 pipeline as an opt-in stage; backward-compatible)
 

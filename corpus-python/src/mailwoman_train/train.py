@@ -62,6 +62,29 @@ def _cosine_with_warmup(optimizer: AdamW, warmup_steps: int, max_steps: int) -> 
     return LambdaLR(optimizer, lr_lambda)
 
 
+def _constant_with_warmup(optimizer: AdamW, warmup_steps: int) -> LambdaLR:
+    # Linear warmup → constant. The verdict-smoke mode per v0.5.0 (see
+    # docs/articles/plan/reference/VERDICT_SMOKES.md): cosine decay over a short window
+    # collapses the LR before divergence shows in the loss curve.
+    def lr_lambda(step: int) -> float:
+        if step < warmup_steps:
+            return float(step) / float(max(1, warmup_steps))
+        return 1.0
+
+    return LambdaLR(optimizer, lr_lambda)
+
+
+def _build_scheduler(optim: AdamW, cfg_train) -> LambdaLR:
+    schedule = getattr(cfg_train, "lr_schedule", "cosine")
+    if schedule == "constant":
+        return _constant_with_warmup(optim, cfg_train.warmup_steps)
+    if schedule == "cosine":
+        return _cosine_with_warmup(optim, cfg_train.warmup_steps, cfg_train.max_steps)
+    raise ValueError(
+        f"unknown train.lr_schedule={schedule!r}; expected 'cosine' or 'constant'"
+    )
+
+
 def _precision_to_dtype(precision: str, device: torch.device) -> torch.dtype | None:
     if precision == "fp16":
         return torch.float16 if device.type == "cuda" else None
@@ -211,7 +234,8 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         lr=cfg.train.learning_rate,
         weight_decay=cfg.train.weight_decay,
     )
-    scheduler = _cosine_with_warmup(optim, cfg.train.warmup_steps, cfg.train.max_steps)
+    scheduler = _build_scheduler(optim, cfg.train)
+    print(f"lr_schedule={getattr(cfg.train, 'lr_schedule', 'cosine')}")
     amp_dtype = _precision_to_dtype(cfg.train.precision, device)
     # On gfx1103 (Radeon 780M) autocast+bf16 has been observed to hang at batch≥64 with
     # nn.MultiheadAttention — the autocast fast-path picks a fused kernel that GPU hangs on.

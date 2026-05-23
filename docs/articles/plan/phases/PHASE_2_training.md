@@ -21,52 +21,52 @@
 - **v0.4.0** (shipped to packaged artifacts 2026-05-23, NOT npm-published — issue [#116](https://github.com/sister-software/mailwoman/issues/116)) — six planned work areas: (1) per-token CRF NLL normalization; (2) longer training (reach step-5000+ before judging); (3) class-weighted CE biased toward coarse classes; (4) source-weight rebalance away from NAD-heavy fine-label mix; (5) JS-side Viterbi decode + model-card label loading (landed 2026-05-22, see entry above); (6) reuse `corpus-v0.3.0`. **Shipped recipe is §4 + §5 only**; §1 and §3 deferred to v0.4.1 after destabilizing the dual-loss training.
 
   **Ablation campaign (2026-05-23, 5 divergence runs + 3 verdict smokes + 1 full 50K + 1 successful full run):**
-    1. The full §1+§3+§4 recipe diverged at **all three tested LRs** (lr=5e-4 step 750, lr=3e-4 step 1000, lr=1.5e-4 step 2000). LR delays divergence proportionally — destabilizer is in the recipe, not LR.
-    2. At `lr=5e-4`, both single-knob ablations failed identically (ablate-§1: 0.35 → 0.11; ablate-§3: 0.35 → 0.14). `lr=5e-4` is structurally unreachable for this codebase's dual-loss landscape regardless of which §1/§3 knob is active.
-    3. Switched to lr=1.5e-4 (v0.3.0-stable) verdict-smoke matrix at max_steps=3000:
-        - source-only (§4): PASS, peak 0.4190 step 2250
-        - cw-only (§3+§4): PASS, peak 0.4279 step 2250
-        - crf-only (§1+§4): FAIL, train_loss=1.24 at step 3000
-    4. **Verdict-smoke framework had a false-positive on cw-only**: the smoke's cosine LR decayed to ~0 by step 2750, masking sustained-peak-LR divergence. When promoted to the full 50K run, cw-only diverged at step 2250 (macro_f1 collapse 0.41 → 0.29). Process improvement for v0.4.1: verdict smokes should use a constant LR or much longer max_steps.
-    5. **Math sanity-check** of `model.py` + `crf.py` found no implementation bug — `per_token` reduction is `nll.sum() / total_tokens.clamp(min=1)`; class_weights enter via `cross_entropy(weight=...)`. Destabilization is a real recipe interaction, not a coding artifact.
-    6. **Shipped checkpoint**: `v0_4_0-stableLR-source-only/step-002200` — §4 source rebalance + v0.3.0 dual-loss base + lr=1.5e-4. Only recipe that stayed clean AND outperformed cw-only on golden v0.1.2 eval.
+  1. The full §1+§3+§4 recipe diverged at **all three tested LRs** (lr=5e-4 step 750, lr=3e-4 step 1000, lr=1.5e-4 step 2000). LR delays divergence proportionally — destabilizer is in the recipe, not LR.
+  2. At `lr=5e-4`, both single-knob ablations failed identically (ablate-§1: 0.35 → 0.11; ablate-§3: 0.35 → 0.14). `lr=5e-4` is structurally unreachable for this codebase's dual-loss landscape regardless of which §1/§3 knob is active.
+  3. Switched to lr=1.5e-4 (v0.3.0-stable) verdict-smoke matrix at max_steps=3000:
+     - source-only (§4): PASS, peak 0.4190 step 2250
+     - cw-only (§3+§4): PASS, peak 0.4279 step 2250
+     - crf-only (§1+§4): FAIL, train_loss=1.24 at step 3000
+  4. **Verdict-smoke framework had a false-positive on cw-only**: the smoke's cosine LR decayed to ~0 by step 2750, masking sustained-peak-LR divergence. When promoted to the full 50K run, cw-only diverged at step 2250 (macro_f1 collapse 0.41 → 0.29). Process improvement for v0.4.1: verdict smokes should use a constant LR or much longer max_steps. (Landed in v0.5.0 Thread F as `--smoke-mode constant|long-tail`; framework + decision matrix in [`VERDICT_SMOKES.md`](../reference/VERDICT_SMOKES.md).)
+  5. **Math sanity-check** of `model.py` + `crf.py` found no implementation bug — `per_token` reduction is `nll.sum() / total_tokens.clamp(min=1)`; class_weights enter via `cross_entropy(weight=...)`. Destabilization is a real recipe interaction, not a coding artifact.
+  6. **Shipped checkpoint**: `v0_4_0-stableLR-source-only/step-002200` — §4 source rebalance + v0.3.0 dual-loss base + lr=1.5e-4. Only recipe that stayed clean AND outperformed cw-only on golden v0.1.2 eval.
 
   **Golden v0.1.2 eval (4535 entries) — mixed result, issue #116 success metric NOT cleanly met:**
 
-  | tag | v0.4.0 shipped | v0.3.0 | Δ |
-  |---|---:|---:|---:|
-  | country | 0.21 | 0.28 | **-0.07 regression** |
-  | region | 0.19 | 0.18 | +0.01 |
-  | locality | 0.27 | 0.27 | flat |
-  | postcode | 0.69 | 0.76 | **-0.07 regression** |
-  | venue | 0.39 | 0.39 | flat |
-  | street | 0.30 | 0.27 | **+0.03 improvement** |
-  | house_number | 0.79 | 0.78 | +0.01 (issue #57 floor held) |
+  | tag          | v0.4.0 shipped | v0.3.0 |                            Δ |
+  | ------------ | -------------: | -----: | ---------------------------: |
+  | country      |           0.21 |   0.28 |         **-0.07 regression** |
+  | region       |           0.19 |   0.18 |                        +0.01 |
+  | locality     |           0.27 |   0.27 |                         flat |
+  | postcode     |           0.69 |   0.76 |         **-0.07 regression** |
+  | venue        |           0.39 |   0.39 |                         flat |
+  | street       |           0.30 |   0.27 |        **+0.03 improvement** |
+  | house_number |           0.79 |   0.78 | +0.01 (issue #57 floor held) |
 
   Macro F1 raw average: 0.357 vs 0.293. Mean token confidence: 0.806 vs 0.857. Full-parse exact match: 0.082 vs 0.107 (regression — better per-component agreement, worse full-address agreement).
 
   Issue #116 asked for "clear progress on at least two of (coarse F1, fine F1, calibration, training stability)":
-    - coarse F1: NEGATIVE (country/postcode each -0.07)
-    - fine F1: SMALL POSITIVE (street +0.03, house_number +0.01)
-    - calibration: FLAT
-    - training stability: NEGATIVE (recipe destabilization is the campaign's central finding)
+  - coarse F1: NEGATIVE (country/postcode each -0.07)
+  - fine F1: SMALL POSITIVE (street +0.03, house_number +0.01)
+  - calibration: FLAT
+  - training stability: NEGATIVE (recipe destabilization is the campaign's central finding)
 
   Only one clean improvement axis. §1 (per_token CRF) and §3 (class_weights) deferred to v0.4.1 after a corpus-side investigation of why the full recipe destabilizes past step 2000.
 
   **Post-hoc regression diagnostic (categorized, 4535 entries, 1217 postcode FNs + 194 country FNs):**
 
-  | error class | postcode FN | country FN |
-  |---|---:|---:|
-  | empty_pred (model emits nothing) | 789 (65%) | 9 (5%) |
-  | non-Latin transliteration (v0.3.0 pre-existing) | 213 (18%) | **178 (92%)** |
-  | num_confused (house# picked instead of postcode) | 136 (11%) | n/a |
-  | bio_slip (boundary off ±1 sentencepiece) | 73 (6%) | small |
-  | other | 6 (0.5%) | ~5% |
+  | error class                                      | postcode FN |    country FN |
+  | ------------------------------------------------ | ----------: | ------------: |
+  | empty_pred (model emits nothing)                 |   789 (65%) |        9 (5%) |
+  | non-Latin transliteration (v0.3.0 pre-existing)  |   213 (18%) | **178 (92%)** |
+  | num_confused (house# picked instead of postcode) |   136 (11%) |           n/a |
+  | bio_slip (boundary off ±1 sentencepiece)         |     73 (6%) |         small |
+  | other                                            |    6 (0.5%) |           ~5% |
 
   Headline takeaways:
-    - The dominant postcode FN is **empty_pred (65%)** on mid-position / short-form postcodes (`Paris 75008`, `47110 Sainte-Livrade-sur-Lot`). v0.4.0's source rebalance traded structured-address postcode exposure for coarse-only `10118`-style forms.
-    - Country FN is **92% adversarial transliteration** (CJK/Cyrillic raw input → English country gold). This is a v0.3.0 pre-existing failure mode; after excluding adversarials, country FN drops 194 → ~16. **The country -0.07 F1 regression is mostly a golden-set adversarial-weighting artifact, not a real recipe regression.**
-    - Decoder span-trim sidecar (commit `c72ab4c`, no retrain required) addresses the 6% bio_slip slice + an unmeasured share of FP rate. Material impact on the headline numbers is smaller than the initial diagnostic suggested but the trim is still a correct decoder bug fix.
+  - The dominant postcode FN is **empty_pred (65%)** on mid-position / short-form postcodes (`Paris 75008`, `47110 Sainte-Livrade-sur-Lot`). v0.4.0's source rebalance traded structured-address postcode exposure for coarse-only `10118`-style forms.
+  - Country FN is **92% adversarial transliteration** (CJK/Cyrillic raw input → English country gold). This is a v0.3.0 pre-existing failure mode; after excluding adversarials, country FN drops 194 → ~16. **The country -0.07 F1 regression is mostly a golden-set adversarial-weighting artifact, not a real recipe regression.**
+  - Decoder span-trim sidecar (commit `c72ab4c`, no retrain required) addresses the 6% bio_slip slice + an unmeasured share of FP rate. Material impact on the headline numbers is smaller than the initial diagnostic suggested but the trim is still a correct decoder bug fix.
 
   v0.4.1 implications: source-weight tweak alone partially addresses the 11% num_confused slice. The 65% empty_pred slice requires a different intervention (likely source-weight + synthesis pass over component-order permutations, or an aggressive `wof-postalcode` bump). Full v0.4.1 scope draft staged at `.playpen/control/drafts/v0_4_1-scope.md` on the i116 container.
 

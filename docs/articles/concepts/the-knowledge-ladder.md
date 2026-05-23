@@ -7,22 +7,22 @@ title: The knowledge ladder
 
 The staged pipeline is a contract for **decomposition by what each layer knows**. Every stage is the rightful home of a particular kind of information; pushing work to the wrong stage produces fragile systems that try to learn things from data that they could have looked up, or look up things that they could have learned. This article catalogues the layers, what each one knows, and the two layers we don't ship yet but should.
 
-Read [The pipeline contract](./staged-pipeline-contract.md) first for the runtime mechanics. This article is the conceptual companion — *why* the layers are arranged this way, and where the design has gaps.
+Read [The pipeline contract](./staged-pipeline-contract.md) first for the runtime mechanics. This article is the conceptual companion — _why_ the layers are arranged this way, and where the design has gaps.
 
 ## The full ladder
 
 Each layer adds one kind of knowledge the layers below it cannot easily derive:
 
-| Layer | Knows | Shipped today |
-|---|---|---|
-| **1. Normalize** | input preprocessing rules | Yes |
-| **2. Locale gate** | language / script family | Yes (rule-based) |
-| **2.5. Kind classifier** | overall query category (postcode_only, structured_address, …) | Yes (rule-based) |
-| **2.7. Phrase grouper** | **coherent input units (boundary discovery)** | **No — missing rung** |
-| **3. Token classify** | per-token semantic type | Yes (neural) |
-| **4. Sequence correct** | per-token BIO sequence validity | Yes (CRF with structural mask) |
-| **5. Reconcile** | **joint-coherent interpretation across candidates** | **Partial — needs concordance work** |
-| **6. Resolve** | world hierarchy (gazetteer) | Yes (WOF SQLite) |
+| Layer                    | Knows                                                         | Shipped today                        |
+| ------------------------ | ------------------------------------------------------------- | ------------------------------------ |
+| **1. Normalize**         | input preprocessing rules                                     | Yes                                  |
+| **2. Locale gate**       | language / script family                                      | Yes (rule-based)                     |
+| **2.5. Kind classifier** | overall query category (postcode_only, structured_address, …) | Yes (rule-based)                     |
+| **2.7. Phrase grouper**  | **coherent input units (boundary discovery)**                 | **No — missing rung**                |
+| **3. Token classify**    | per-token semantic type                                       | Yes (neural)                         |
+| **4. Sequence correct**  | per-token BIO sequence validity                               | Yes (CRF with structural mask)       |
+| **5. Reconcile**         | **joint-coherent interpretation across candidates**           | **Partial — needs concordance work** |
+| **6. Resolve**           | world hierarchy (gazetteer)                                   | Yes (WOF SQLite)                     |
 
 The two emphasized rows are the layers that v0.4.0's mixed result exposed as missing. They're complementary: the phrase grouper feeds cleaner spans IN to the classifier; the expanded reconciler picks coherent assignments OUT of the classifier's candidates.
 
@@ -38,7 +38,7 @@ Detects whether input is en-US, fr-FR, ja-JP, etc. Today this is a rule-based sc
 
 ### Kind classifier — overall query category
 
-Bare postcode? Single locality? Full structured address? PO box? Landmark? Intersection? This is a coarse taxonomy of input *shape* — bitter-lesson-safe (purely structural cues, no place-name dictionaries). The kind decision enables the fast-path routing in the coordinator. Knows the high-level question being asked; doesn't know the answer.
+Bare postcode? Single locality? Full structured address? PO box? Landmark? Intersection? This is a coarse taxonomy of input _shape_ — bitter-lesson-safe (purely structural cues, no place-name dictionaries). The kind decision enables the fast-path routing in the coordinator. Knows the high-level question being asked; doesn't know the answer.
 
 ### Phrase grouper — coherent input units (boundary discovery) — MISSING
 
@@ -52,7 +52,7 @@ The neural classifier (Stage 3) is asked to learn three things simultaneously vi
 
 These are coupled in BIO. A wrong boundary makes the type prediction wrong — even when the model "knew" the right type. v0.4.0's bio_slip cases (`", 22220"` for `22220`) are exactly this: type was right, boundary was off.
 
-A phrase grouper proposes coherent units with confidence *before* the classifier runs:
+A phrase grouper proposes coherent units with confidence _before_ the classifier runs:
 
 ```
 input:     "350 5th Ave, New York, NY 10118"
@@ -86,10 +86,12 @@ The CRF with frozen structural transition mask. Forbids orphan-`I-*` sequences (
 Stage 5's purpose is cross-component reconciliation: take everything the upstream layers produced and pick the joint interpretation that maximizes coherence.
 
 Today the inputs to Stage 5 are:
+
 - One tag sequence (Viterbi argmax from CRF)
 - A flat list of spans
 
 What Stage 5 needs to be useful:
+
 - **Top-k tag interpretations** from the classifier (model's beliefs ranked)
 - **Top-k span proposals** from the phrase grouper (boundary candidates ranked)
 - **Top-k resolver candidates** per span from Stage 6 (world's beliefs ranked)
@@ -126,11 +128,14 @@ The campaign's failure modes mapped almost cleanly to the missing layers:
 - **Several kryptonite cases** (`NY-NY Steakhouse`, `Paris, Texas`, `St. Petersburg`) — every one needs joint decoding across (input shape, classifier output, world hierarchy). Stage 5 reconcile is the layer.
 - **92% adversarial transliteration** on country FN — this is the tokenizer layer (different concern), not a missing rung.
 
-The missing rungs are *information layers*. We weren't doing the joint reasoning the architecture's contract implied we should.
+The missing rungs are _information layers_. We weren't doing the joint reasoning the architecture's contract implied we should.
+
+There was also a _process-side_ lesson — the verdict-smoke framework reported `cw-only` as stable when sustained-peak-LR would have diverged it, because the smoke's cosine schedule decayed LR before the loss curve showed the divergence. That's about reading the layers, not building them; the redesigned smoke framework that closes that gap lives in [`VERDICT_SMOKES.md`](../plan/reference/VERDICT_SMOKES.md).
 
 ## See also
 
 - [The pipeline contract](./staged-pipeline-contract.md) — runtime mechanics for integrators
 - [The staged pipeline](./the-staged-pipeline.md) — narrative framing
 - [`STAGES.md`](../plan/reference/STAGES.md) — formal per-stage type contracts
+- [`VERDICT_SMOKES.md`](../plan/reference/VERDICT_SMOKES.md) — the process-side companion: how to read smoke runs without the cosine-LR meta-bug
 - [v0.4.0 ablation campaign retrospective](../retrospectives/v0-4-0-ablation-campaign.md) — the failures that exposed the missing rungs

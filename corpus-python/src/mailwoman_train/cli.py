@@ -46,8 +46,37 @@ def cmd_train(args: argparse.Namespace) -> int:
         cfg.train.output_dir = args.output_dir
     if args.max_steps is not None:
         cfg.train.max_steps = args.max_steps
+    _apply_smoke_mode(args, cfg)
     train(cfg, resume_from=args.resume)
     return 0
+
+
+def _apply_smoke_mode(args: argparse.Namespace, cfg) -> None:
+    """Translate the operator-facing ``--smoke-mode`` flag into ``cfg.train.lr_schedule``.
+
+    Lives here (not in config.py) because the policy is CLI-shaped: ``constant`` overrides
+    any config schedule, ``long-tail`` is a no-op modifier (cosine stays, just warn if
+    ``max_steps`` is short enough for the cosine tail to dominate the visible window).
+    See docs/articles/plan/reference/VERDICT_SMOKES.md for the rationale.
+    """
+    mode = getattr(args, "smoke_mode", None)
+    if mode is None:
+        return
+    if mode == "constant":
+        cfg.train.lr_schedule = "constant"
+        return
+    if mode == "long-tail":
+        # Cosine schedule, but the recipe must have a long enough max_steps that the
+        # cosine tail doesn't dominate the smoke-visible portion. The threshold is
+        # advisory — the operator may know what they're doing — so warn, don't error.
+        if cfg.train.max_steps < 10000:
+            sys.stderr.write(
+                f"warning: --smoke-mode long-tail expects max_steps>=10000; got "
+                f"{cfg.train.max_steps}. Cosine tail may mask divergence. See "
+                "docs/articles/plan/reference/VERDICT_SMOKES.md.\n"
+            )
+        return
+    raise ValueError(f"unknown --smoke-mode={mode!r}")
 
 
 def cmd_eval(args: argparse.Namespace) -> int:
@@ -220,6 +249,12 @@ def cmd_smoke(args: argparse.Namespace) -> int:
     from .train import train as train_fn
 
     cfg = load_config(args.config)
+    # Smokes default to constant-LR per the v0.5.0 verdict-smoke framework
+    # (docs/articles/plan/reference/VERDICT_SMOKES.md). Operator may opt into
+    # ``--smoke-mode long-tail`` for tweaks on a known-stable baseline.
+    if getattr(args, "smoke_mode", None) is None:
+        args.smoke_mode = "constant"
+    _apply_smoke_mode(args, cfg)
     started = time.time()
     train_fn(cfg)
     # Pick the latest checkpoint.
@@ -365,6 +400,17 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help='Resume from this checkpoint dir, or pass "auto" to use the latest step-* under output_dir.',
     )
+    p.add_argument(
+        "--smoke-mode",
+        choices=("constant", "long-tail"),
+        default=None,
+        help=(
+            "Override LR schedule for a verdict-smoke run. 'constant' = flat LR after "
+            "warmup so divergence isn't masked by cosine decay (default for new recipes). "
+            "'long-tail' = keep cosine but expect max_steps>=10000 so the tail doesn't "
+            "dominate the smoke window. See docs/articles/plan/reference/VERDICT_SMOKES.md."
+        ),
+    )
     p.set_defaults(func=cmd_train)
 
     p = sub.add_parser("eval", help="Eval a checkpoint against the golden set")
@@ -407,6 +453,15 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("smoke", help="End-to-end smoke train + eval + export + quantize + package")
     common(p)
     p.add_argument("--golden-dir", default=None)
+    p.add_argument(
+        "--smoke-mode",
+        choices=("constant", "long-tail"),
+        default=None,
+        help=(
+            "LR schedule for the smoke train leg. Defaults to 'constant' per the v0.5.0 "
+            "verdict-smoke framework. See docs/articles/plan/reference/VERDICT_SMOKES.md."
+        ),
+    )
     p.set_defaults(func=cmd_smoke)
 
     p = sub.add_parser("verify-tokenizer", help="Re-tokenize a sample of corpus rows and assert OK")
