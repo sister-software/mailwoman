@@ -20,6 +20,17 @@
  */
 
 export { groupPhrases, groupPhrasesSync } from "./group.js"
+export {
+	scoreHyphenatedCompound,
+	scoreLocalityPhrase,
+	scoreNumeric,
+	scorePostcode,
+	scoreRegionAbbreviation,
+	scoreStreetPhrase,
+	scoreVenuePhrase,
+	tokenizeSegment,
+} from "./rules.js"
+export type { SegmentToken } from "./rules.js"
 export type {
 	GroupPhrasesOpts,
 	LocaleHint,

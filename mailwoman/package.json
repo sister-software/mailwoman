@@ -38,6 +38,7 @@
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/locale-gate": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
+		"@mailwoman/phrase-grouper": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"change-case": "^5.4.4",
 		"express": "^5.0.1",

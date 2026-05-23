@@ -13,16 +13,16 @@ Read [The pipeline contract](./staged-pipeline-contract.md) first for the runtim
 
 Each layer adds one kind of knowledge the layers below it cannot easily derive:
 
-| Layer                    | Knows                                                         | Shipped today                        |
-| ------------------------ | ------------------------------------------------------------- | ------------------------------------ |
-| **1. Normalize**         | input preprocessing rules                                     | Yes                                  |
-| **2. Locale gate**       | language / script family                                      | Yes (rule-based)                     |
-| **2.5. Kind classifier** | overall query category (postcode_only, structured_address, …) | Yes (rule-based)                     |
-| **2.7. Phrase grouper**  | **coherent input units (boundary discovery)**                 | **No — missing rung**                |
-| **3. Token classify**    | per-token semantic type                                       | Yes (neural)                         |
-| **4. Sequence correct**  | per-token BIO sequence validity                               | Yes (CRF with structural mask)       |
-| **5. Reconcile**         | **joint-coherent interpretation across candidates**           | **Partial — needs concordance work** |
-| **6. Resolve**           | world hierarchy (gazetteer)                                   | Yes (WOF SQLite)                     |
+| Layer                    | Knows                                                         | Shipped today                                                   |
+| ------------------------ | ------------------------------------------------------------- | --------------------------------------------------------------- |
+| **1. Normalize**         | input preprocessing rules                                     | Yes                                                             |
+| **2. Locale gate**       | language / script family                                      | Yes (rule-based)                                                |
+| **2.5. Kind classifier** | overall query category (postcode_only, structured_address, …) | Yes (rule-based)                                                |
+| **2.7. Phrase grouper**  | **coherent input units (boundary discovery)**                 | **Yes (rule-based, v0.5.0; learned variant scoped for v0.5.1)** |
+| **3. Token classify**    | per-token semantic type                                       | Yes (neural)                                                    |
+| **4. Sequence correct**  | per-token BIO sequence validity                               | Yes (CRF with structural mask)                                  |
+| **5. Reconcile**         | **joint-coherent interpretation across candidates**           | **Partial — needs concordance work**                            |
+| **6. Resolve**           | world hierarchy (gazetteer)                                   | Yes (WOF SQLite)                                                |
 
 The two emphasized rows are the layers that v0.4.0's mixed result exposed as missing. They're complementary: the phrase grouper feeds cleaner spans IN to the classifier; the expanded reconciler picks coherent assignments OUT of the classifier's candidates.
 
@@ -40,9 +40,9 @@ Detects whether input is en-US, fr-FR, ja-JP, etc. Today this is a rule-based sc
 
 Bare postcode? Single locality? Full structured address? PO box? Landmark? Intersection? This is a coarse taxonomy of input _shape_ — bitter-lesson-safe (purely structural cues, no place-name dictionaries). The kind decision enables the fast-path routing in the coordinator. Knows the high-level question being asked; doesn't know the answer.
 
-### Phrase grouper — coherent input units (boundary discovery) — MISSING
+### Phrase grouper — coherent input units (boundary discovery) — SHIPPED (rule-based, v0.5.0)
 
-**This layer doesn't exist today. v0.4.0 made the cost of its absence visible.**
+**Rule-based v1 shipped in v0.5.0 Thread E (`@mailwoman/phrase-grouper`); learned 1-2M-param span proposer scoped for v0.5.1. v0.4.0 made the cost of its absence visible — v0.5.0 closes that gap.**
 
 The neural classifier (Stage 3) is asked to learn three things simultaneously via BIO tagging:
 

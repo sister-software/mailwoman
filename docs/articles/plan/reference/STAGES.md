@@ -219,6 +219,48 @@ export interface KindClassifier {
 - Should `kind` be exclusive (one label) or distributional (probability over kinds)? Recommend: distributional via `alternatives` — graceful failure on ambiguous cases.
 - Specialist heads vs single multi-purpose encoder? Recommend: single encoder for v1; revisit when there's enough labelled `intersection` / `po_box` data to justify specialization.
 
+## Stage 2.7 — Phrase grouper
+
+**Purpose.** Propose coherent input units (boundary discovery) with a structural `PhraseKind` hypothesis + confidence — _before_ Stage 3 runs. Decouples boundary discovery from type classification so the classifier's job becomes "what type is this proposed span?" instead of jointly discovering boundaries and types. The reconciler (Stage 5) also consumes the proposals as boundary candidates for joint decoding.
+
+**Interface.**
+
+```ts
+// packages/phrase-grouper/src/types.ts
+
+export type PhraseKind =
+	| "NUMERIC"
+	| "STREET_PHRASE"
+	| "LOCALITY_PHRASE"
+	| "REGION_ABBREVIATION"
+	| "POSTCODE"
+	| "VENUE_PHRASE"
+	| "HYPHENATED_COMPOUND"
+
+export interface PhraseProposal {
+	span: Section // sub-Span of the tokenized input
+	kindHypothesis: PhraseKind
+	confidence: number // 0..1
+}
+
+export interface PhraseGrouper {
+	group(input: NormalizedInput, shape: QueryShape, locale: LocaleHint): Promise<PhraseProposal[]>
+}
+```
+
+Per "possibilities not constraints", the grouper emits overlapping proposals freely (e.g. `Saint Petersburg` surfaces as a single `LOCALITY_PHRASE` AND as two single-token `LOCALITY_PHRASE`s) — the reconciler picks the best non-overlapping subset.
+
+**Today.** `@mailwoman/phrase-grouper` workspace shipped 2026-05-23 (v0.5.0 Thread E). Rule-based: per-kind scorers over token-level structural cues (proximity, punctuation, capitalization, hyphenation, format-shape repetition from QueryShape). Bitter-lesson-safe — no place-name dictionaries. Wired as the default `groupPhrases` in `mailwoman/runtime-pipeline.ts::createRuntimePipeline` (hard dep in v0.5.0, not an opt-in shim — there are no v0.4.0 users to migrate). Result surfaced on `PipelineResult.phraseProposals`.
+
+**Future.** Learned 1-2M-param span proposer trained on segment-boundary labels derived from corpus-v0.4.0 + the kryptonite catalogue. Same `PhraseProposal[]` output contract; the consumers (Stages 3, 5) don't need to know which implementation produced the proposals. See [`PHASE_8_E_learned_span_proposer.md`](../phases/PHASE_8_E_learned_span_proposer.md) for the scope.
+
+**Failure classes owned.** Boundary discovery on mid-position postcodes (`Paris 75008`), hyphenated compounds (`NY-NY Steakhouse`), multi-word localities (`Saint Petersburg`), repetition tokens (`Buffalo Buffalo`). Addresses v0.4.0's bio_slip slice at source rather than via decoder post-trim.
+
+**Open questions.**
+
+- Should the grouper consume the classifier's prior beliefs as additional input (joint decoding)? Recommend: no — the grouper runs strictly before the classifier so it can be reused by Stage 5 reconcile when re-evaluating. Joint decoding lives in Stage 5.
+- Per-locale rule packs vs locale-agnostic rules? Recommend: locale-agnostic core (proximity, punctuation, hyphenation) + small per-locale dictionaries for street suffix + venue marker. The learned version subsumes both.
+
 ## Stage 3 — Token classify
 
 **Purpose.** Per-token BIO labelling. The current Mailwoman model (`@mailwoman/neural` + `@mailwoman/neural-weights-*`).
@@ -500,6 +542,7 @@ Each stage lives in its own workspace where possible. Existing workspaces extend
 | Boundary QueryShape            | `@mailwoman/query-shape`                                          | new                              |
 | 2 Locale gate                  | `@mailwoman/locale-gate` + `@mailwoman/locale-gate-weights`       | new                              |
 | 2.5 Kind classifier            | `@mailwoman/kind-classifier`                                      | new (small)                      |
+| 2.7 Phrase grouper             | `@mailwoman/phrase-grouper`                                       | shipped (rule-based v1)          |
 | 3 Token classify               | `@mailwoman/neural` + `@mailwoman/neural-weights-*`               | shipped                          |
 | 4 Sequence correct (CRF)       | `@mailwoman/neural` (sequence-correct submodule)                  | half-shipped                     |
 | 4 Sequence correct (re-reader) | `@mailwoman/neural` (span-rereader submodule)                     | new                              |

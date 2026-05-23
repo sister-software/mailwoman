@@ -4604,7 +4604,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/phrase-grouper@workspace:phrase-grouper":
+"@mailwoman/phrase-grouper@workspace:*, @mailwoman/phrase-grouper@workspace:phrase-grouper":
   version: 0.0.0-use.local
   resolution: "@mailwoman/phrase-grouper@workspace:phrase-grouper"
   dependencies:
@@ -16574,6 +16574,7 @@ __metadata:
     "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/locale-gate": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
+    "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     change-case: "npm:^5.4.4"
     express: "npm:^5.0.1"

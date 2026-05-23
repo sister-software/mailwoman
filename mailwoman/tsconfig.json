@@ -15,6 +15,7 @@
 		{ "path": "../locale-gate" },
 		{ "path": "../neural" },
 		{ "path": "../normalize" },
+		{ "path": "../phrase-grouper" },
 		{ "path": "../query-shape" },
 		{ "path": "../resolver-wof-sqlite" }
 	]

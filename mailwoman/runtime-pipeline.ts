@@ -21,6 +21,7 @@ import {
 } from "@mailwoman/core/pipeline"
 import { classifyKind as defaultClassifyKind } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"
+import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
 export interface CreateRuntimePipelineOpts {
@@ -40,6 +41,14 @@ export interface CreateRuntimePipelineOpts {
 	 * @see RuntimePipelineStages.classifyKind
 	 */
 	classifyKind?: RuntimePipelineStages["classifyKind"]
+	/**
+	 * Phrase grouper override (Stage 2.7). Defaults to the rule-based `@mailwoman/phrase-grouper`.
+	 * v0.5.0 wires this in as a required stage; callers should normally NOT override unless they have
+	 * a learned span proposer (planned for v0.5.1).
+	 *
+	 * @see RuntimePipelineStages.groupPhrases
+	 */
+	groupPhrases?: RuntimePipelineStages["groupPhrases"]
 }
 
 /**
@@ -60,6 +69,11 @@ export function createRuntimePipeline(
 		computeQueryShape,
 		// Default kind classifier: rule-based from @mailwoman/kind-classifier. Caller can override.
 		classifyKind: opts.classifyKind ?? defaultClassifyKind,
+		// Default phrase grouper: rule-based from @mailwoman/phrase-grouper. Hard dep in v0.5.0 —
+		// not an opt-in shim. The plan doc framed Stage 2.7 as backward-compatible-opt-in for the
+		// v0.4.0 pipeline; we have no current users to migrate, so v0.5.0 ships it as a required
+		// stage. Override only with a compatible alternative (e.g. v0.5.1's learned span proposer).
+		groupPhrases: opts.groupPhrases ?? defaultGroupPhrases,
 		classifier: opts.classifier,
 		resolver: opts.resolver,
 		detectLocale: opts.detectLocale,
@@ -73,6 +87,9 @@ export type {
 	AddressClassifier,
 	LocaleHint,
 	NormalizedInputLite,
+	PhraseGrouper,
+	PhraseKind,
+	PhraseProposal,
 	PipelineOpts,
 	PipelineResult,
 	PipelineTiming,
