@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mailwoman_train.labels import ACTIVE_TAGS, STAGE2_FINE_TAGS
+from mailwoman_train.labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS, STAGE2_FINE_TAGS
 from mailwoman_train.package_weights import (
     _components_supported_blurb,
     _phase_label,
@@ -45,6 +45,28 @@ def test_model_card_lists_all_active_components():
     # The three Stage 2 fine labels must surface.
     for tag in STAGE2_FINE_TAGS:
         assert tag in card["components_supported"], f"missing {tag!r}"
+
+
+def test_model_card_carries_bio_labels_in_emission_order():
+    # v0.4.0 issue #116 §5(a): the trained label vocabulary travels with the bundle so
+    # the JS-side classifier can read it at runtime instead of hardcoding STAGE2_BIO_LABELS.
+    # Order is load-bearing — emission logits map positionally onto this array.
+    card = build_model_card(
+        locale="en-us",
+        corpus_version="0.3.0",
+        tokenizer_version="0.1.0",
+        training_steps=50000,
+        eval_report={"per_component": {}, "n_entries": 0},
+        notes="",
+        training_hardware="cpu-test",
+        training_duration_seconds=0,
+        base_path=Path("/tmp/ck"),
+        package_version="0.3.0",
+    )
+    assert "labels" in card, "model card must carry the BIO label vocabulary"
+    assert card["labels"] == list(ACTIVE_BIO_LABELS)
+    # First label is `O` by construction across every stage.
+    assert card["labels"][0] == "O"
 
 
 def test_components_blurb_mentions_fine_tags():

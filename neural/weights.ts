@@ -22,7 +22,7 @@
  *   naming all the paths it tried.
  */
 
-import { existsSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { createRequire } from "node:module"
 import { dirname, resolve } from "node:path"
 
@@ -40,6 +40,12 @@ export interface ResolveWeightsOpts {
 export interface ResolvedWeights {
 	modelPath: string
 	tokenizerPath: string
+	/**
+	 * Path to `model-card.json` alongside the resolved model. `undefined` when the caller passed
+	 * explicit paths or when the package directory has no card on disk. Read by `loadFromWeights` to
+	 * thread the trained label vocabulary into the classifier — see {@link readLabelsFromModelCard}.
+	 */
+	modelCardPath?: string
 	/** "explicit" if both paths came from opts; "package:<name>" if resolved via require.resolve. */
 	source: string
 }
@@ -82,5 +88,45 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 		)
 	}
 
-	return { modelPath, tokenizerPath, source: `package:${packageName}` }
+	const modelCardCandidate = resolve(packageDir, "model-card.json")
+	const modelCardPath = existsSync(modelCardCandidate) ? modelCardCandidate : undefined
+
+	return { modelPath, tokenizerPath, modelCardPath, source: `package:${packageName}` }
+}
+
+/**
+ * Read the `labels` array from a `model-card.json` file. Returns `undefined` when the file is
+ * missing, unreadable, malformed, or has no `labels` field — callers should fall back to their
+ * compile-time default in that case (the loader contract: the JS-side default tracks the most
+ * recent shipped stage, so a card without `labels` is always a pre-v0.4.0 card whose label vocab
+ * matches that default by construction).
+ *
+ * Validates shape: must be a non-empty array of strings. Throws on a present-but-malformed `labels`
+ * field — a card that emits e.g. `labels: 21` rather than `labels: [...]` is a corrupted artifact
+ * and should be loud, not silently re-defaulted.
+ */
+export function readLabelsFromModelCard(modelCardPath: string | undefined): readonly string[] | undefined {
+	if (!modelCardPath || !existsSync(modelCardPath)) return undefined
+	let raw: string
+	try {
+		raw = readFileSync(modelCardPath, "utf8")
+	} catch {
+		return undefined
+	}
+	let parsed: unknown
+	try {
+		parsed = JSON.parse(raw)
+	} catch {
+		return undefined
+	}
+	if (typeof parsed !== "object" || parsed === null) return undefined
+	const labels = (parsed as { labels?: unknown }).labels
+	if (labels === undefined) return undefined
+	if (!Array.isArray(labels) || labels.length === 0 || !labels.every((l) => typeof l === "string")) {
+		throw new Error(
+			`model-card.json at ${modelCardPath} has a malformed \`labels\` field — ` +
+				`expected a non-empty array of strings, got ${JSON.stringify(labels)}.`
+		)
+	}
+	return Object.freeze(labels.slice()) as readonly string[]
 }

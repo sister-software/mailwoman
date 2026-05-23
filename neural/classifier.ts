@@ -24,7 +24,7 @@ import type { InferResult } from "./onnx-runner.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import { buildBioEndMask, buildBioStartMask, buildBioTransitionMask, softmax, viterbi } from "./viterbi.js"
-import type { ResolveWeightsOpts } from "./weights.js"
+import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `OnnxRunner`
@@ -103,16 +103,21 @@ export class NeuralAddressClassifier {
 		// + node:fs) and throws cleanly in a browser if called. Without the directive, webpack
 		// pulls onnx-runner / weights into the browser chunk graph + then chokes on the Node-only
 		// builtins they reference.
-		const [{ OnnxRunner }, { resolveWeights }] = await Promise.all([
+		const [{ OnnxRunner }, { resolveWeights, readLabelsFromModelCard }] = await Promise.all([
 			import(/* webpackIgnore: true */ "./onnx-runner.js"),
 			import(/* webpackIgnore: true */ "./weights.js"),
 		])
-		const { modelPath, tokenizerPath } = resolveWeights(opts)
+		const resolved: ResolvedWeights = resolveWeights(opts)
+		// Read the trained label vocabulary from the bundled model-card.json when present. Falls
+		// through to the constructor default (STAGE2_BIO_LABELS) for legacy bundles that predate
+		// the `labels` field — those are always Stage 2 cards by construction, so the default is
+		// the correct fallback. A future Stage 3 ship will require the card to carry the field.
+		const labels = readLabelsFromModelCard(resolved.modelCardPath)
 		const [tokenizer, runner] = await Promise.all([
-			MailwomanTokenizer.loadFromFile(tokenizerPath),
-			OnnxRunner.create(modelPath),
+			MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
+			OnnxRunner.create(resolved.modelPath),
 		])
-		return new NeuralAddressClassifier({ tokenizer, runner })
+		return new NeuralAddressClassifier({ tokenizer, runner, labels })
 	}
 
 	/** Tokenize → infer → Viterbi (or argmax) → decoder tree. */

@@ -10,8 +10,12 @@
  *   15 indices are identical, so reading a v0.2.0 (Stage 1) model with the Stage 2 label vocabulary
  *   stays correct; the extra entries are unused.
  *
- *   Plumbing the label set through `model-card.json` at load time is the long-term plan, but the
- *   Stage 1 → Stage 2 prefix-compat property means the simpler "default to latest" works today.
+ *   Runtime loading: as of v0.4.0 the trained label vocabulary is carried in `model-card.json`'s
+ *   `labels` field and read by `loadFromWeights` (see `weights.readLabelsFromModelCard`). These
+ *   constants remain the compile-time fallback for legacy bundles whose cards predate the field —
+ *   safe because such bundles are by construction Stage 1 or Stage 2, and Stage 2 prefix-extends
+ *   Stage 1. A future Stage 3 ship will not be safe under the fallback; the loader treats a missing
+ *   `labels` field as "you are loading a pre-v0.4.0 bundle" rather than "unknown stage".
  */
 
 import type { BioLabel } from "@mailwoman/core/decoder"

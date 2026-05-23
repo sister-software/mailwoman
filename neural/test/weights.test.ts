@@ -62,5 +62,8 @@ describe("resolveWeights — package auto-resolve", () => {
 		expect(r.source).toBe("package:@mailwoman/neural-weights-en-us")
 		expect(r.modelPath).toMatch(/neural-weights-en-us\/model\.onnx$/)
 		expect(r.tokenizerPath).toMatch(/neural-weights-en-us\/tokenizer\.model$/)
+		// v0.4.0: the resolver surfaces model-card.json so loadFromWeights can read
+		// the trained label vocabulary from it (issue #116 §5(a)).
+		expect(r.modelCardPath).toMatch(/neural-weights-en-us\/model-card\.json$/)
 	})
 })

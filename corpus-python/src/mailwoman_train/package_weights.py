@@ -25,7 +25,7 @@ from pathlib import Path
 
 import torch
 
-from .labels import ACTIVE_TAGS, STAGE1_COARSE_TAGS, STAGE2_FINE_TAGS, STAGE2_TAGS
+from .labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS, STAGE1_COARSE_TAGS, STAGE2_FINE_TAGS, STAGE2_TAGS
 
 
 def _phase_label() -> str:
@@ -72,6 +72,12 @@ def build_model_card(
             "completed_at": datetime.utcnow().isoformat() + "Z",
         },
         "components_supported": list(ACTIVE_TAGS),
+        # BIO label vocabulary in the exact order the model emits logits. The JS-side
+        # `@mailwoman/neural` loader reads this at runtime so it never has to guess
+        # the active stage's label space; missing field => loader falls back to its
+        # compile-time default (STAGE2_BIO_LABELS), preserving back-compat with the
+        # v3.0.0 published card which predates this field.
+        "labels": list(ACTIVE_BIO_LABELS),
         "eval": eval_report,
         "known_failure_modes": [
             "underperforms on Hawaiian addresses (sparse in training corpus)",
