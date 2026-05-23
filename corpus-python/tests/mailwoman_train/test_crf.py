@@ -79,6 +79,58 @@ def test_log_likelihood_finite_and_negative_of_neg_log():
     assert nll.item() >= 0.0  # NLL is non-negative by construction
 
 
+def test_per_token_reduction_matches_sum_over_tokens():
+    """v0.4.0 §1: per_token reduction = sum NLL across batch / total real tokens.
+
+    Verifies the new reduction mode produces a magnitude comparable to per-token CE,
+    distinct from the v0.3.0 per-sequence-mean. Tests both full-mask and partial-mask
+    paths (the latter is the regression-guard surface where the mask divisor matters).
+    """
+    n = len(ACTIVE_BIO_LABELS)
+    crf = LinearChainCRF(n, ID_TO_LABEL)
+    torch.manual_seed(0)
+    emissions = torch.randn(2, 5, n)
+    b_locality = LABEL_TO_ID["B-locality"]
+    i_locality = LABEL_TO_ID["I-locality"]
+    o = LABEL_TO_ID["O"]
+    tags = torch.tensor(
+        [
+            [b_locality, i_locality, o, 0, 0],
+            [o, b_locality, i_locality, i_locality, o],
+        ],
+        dtype=torch.long,
+    )
+    mask = torch.tensor([[1, 1, 1, 0, 0], [1, 1, 1, 1, 1]], dtype=torch.float)
+
+    nll_sum = crf(emissions=emissions, tags=tags, mask=mask, reduction="sum")
+    nll_per_token = crf(emissions=emissions, tags=tags, mask=mask, reduction="per_token")
+    nll_mean = crf(emissions=emissions, tags=tags, mask=mask, reduction="mean")
+
+    total_tokens = mask.sum()
+    assert torch.isfinite(nll_per_token)
+    # per_token = sum / total_tokens
+    assert torch.allclose(nll_per_token, nll_sum / total_tokens)
+    # mean (over 2 sequences) = sum / 2
+    assert torch.allclose(nll_mean, nll_sum / 2.0)
+    # And mean ≠ per_token whenever total_tokens != batch_size — verifies they're
+    # genuinely different reductions.
+    assert not torch.allclose(nll_mean, nll_per_token)
+
+
+def test_unknown_reduction_raises():
+    n = len(ACTIVE_BIO_LABELS)
+    crf = LinearChainCRF(n, ID_TO_LABEL)
+    emissions = torch.randn(1, 3, n)
+    tags = torch.zeros(1, 3, dtype=torch.long)
+    mask = torch.ones(1, 3)
+    try:
+        crf(emissions=emissions, tags=tags, mask=mask, reduction="bogus")
+    except ValueError as e:
+        assert "bogus" in str(e)
+        return
+    raise AssertionError("expected ValueError on unknown reduction")
+
+
 def test_log_likelihood_finite_with_padding():
     # Regression guard for the multiplicative-mask NaN trap. alpha carries -inf at
     # structurally-invalid start positions (I-* tags), and the partition recurrence

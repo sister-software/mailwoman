@@ -1,0 +1,133 @@
+# v0.4.0 config — issue #116. Direct follow-up to v0.3.0 (configs/stage2.yaml).
+#
+# Recovers the v0.3.0 coarse-F1 regression (region 0.83 → 0.18, locality 0.65 → 0.27)
+# without abandoning the Stage 2 label expansion. Four levers, all config-driven:
+#
+#   1. Per-token CRF NLL normalization      (model.crf_normalization=per_token)
+#   2. Class-weighted CE biased toward coarse  (model.class_weights=…)
+#   3. Source-weight rebalance               (data.source_weights=…)
+#   4. Longer training                       (train.max_steps=50000 + run-to-step-5000+)
+#
+# Item 5 of the issue plan (JS-side Viterbi + label vocab from model card) shipped
+# 2026-05-22 already; this config kicks off the Python-side retrain that wraps the work.
+#
+# Hand off:
+#   HSA_OVERRIDE_GFX_VERSION=11.0.0 CONFIG=src/mailwoman_train/configs/v0_4_0.yaml \
+#     scripts/train_with_resume.sh
+#
+# Once training completes:
+#   CHECKPOINT=/data/models/checkpoints/v0_4_0/step-050000 scripts/ship_v0_4_0.sh
+
+data:
+  # Reuses corpus-v0.3.0 — issue #116 §6 confirms the corpus need not be rebuilt
+  # unless §4 source weights change significantly. Source weights HAVE changed, but
+  # the underlying shards are unchanged; the loader's source_weights filter does
+  # the rebalancing at sampling time.
+  corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0
+  tokenizer_dir: /data/models/tokenizer/v0.1.0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  # v0.4.0 source-weight rebalance (issue #116 §4):
+  # - usgov-nad dropped 2.0 → 1.0 (its 57.9M-row volume + venue+street+house_number
+  #   coverage pushed the corpus into a fine-label-heavy mix; let it be 1× instead of 2×)
+  # - wof-admin + wof-postalcode bumped 1.0 → 2.0 (re-prioritize coarse-only rows)
+  # - ban + tiger unchanged (they carry both fine AND coarse signal)
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+  train_rows_per_epoch: null
+  val_rows: 4096
+  coarse_filter: true
+
+model:
+  # Architecture unchanged — v0.3.0 + 9M params is enough; the v0.4.0 levers are
+  # training-side. Hidden-size bump would be the v0.5.0 lever if F1 still bottlenecks.
+  hidden_size: 256
+  num_hidden_layers: 6
+  num_attention_heads: 4
+  intermediate_size: 1024
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  # Label smoothing stays off — 0.1/20 = 0.005 on 20 non-gold classes is gradient
+  # noise that fights against discriminative learning (v0.3.0 lesson).
+  label_smoothing: 0.0
+  # v0.4.0 §1: per-token CRF NLL normalization. CRF NLL is now scaled per-token,
+  # matching CE's natural magnitude — the dual loss is self-balancing. The
+  # ``crf_loss_weight`` knob below can be 1.0 cleanly; if training is stable, the
+  # hand-tuning saga from v0.3.0 (1.0 → 0.1 → 0.05) is over.
+  crf_normalization: per_token
+  crf_loss_weight: 1.0
+  # v0.4.0 §3: class-weighted CE biased toward coarse labels. The 21-label vocab
+  # pulled softmax mass off the coarse classes; weights here pull it back. Recipe
+  # per issue #116: (1/freq)**0.5, then fine_classes ×0.5. These numbers are rough
+  # first-pass; refine after the first v0.4.0 eval if coarse recovery is partial.
+  # The "O" class stays at 1.0 — most frequent, but we want it predicted accurately,
+  # not under-predicted.
+  class_weights:
+    O: 1.0
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 2.0
+    I-region: 2.0
+    B-locality: 1.5
+    I-locality: 1.5
+    B-dependent_locality: 1.5
+    I-dependent_locality: 1.5
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 1.5
+    I-subregion: 1.5
+    B-cedex: 2.0
+    I-cedex: 2.0
+    B-venue: 0.5
+    I-venue: 0.5
+    B-street: 0.5
+    I-street: 0.5
+    B-house_number: 0.5
+    I-house_number: 0.5
+
+train:
+  output_dir: /data/models/checkpoints/v0_4_0
+  seed: 42
+  # gfx1103 envelope: batch=32, grad_accum=4 → effective batch 128, ~4.5 steps/sec
+  # sustained, periodic firmware hangs auto-recovered by train_with_resume.sh.
+  batch_size: 32
+  eval_batch_size: 40
+  grad_accum_steps: 4
+  # v0.4.0 §2: lr back up to 5e-4 (v0.2.0 baseline). The per-token CRF norm + class
+  # weights should let this run cleanly. If divergence recurs by step 2000, bisect
+  # down to 3e-4 first; v0.3.0's 1.5e-4 was only safe because crf_loss_weight=0.05
+  # masked the dual-loss instability.
+  learning_rate: 5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  # Stays at 50000. v0.3.0 early-stopped at 1800 (3.6% of plan); v0.4.0 should make
+  # it past 5000 minimum before judging val_macro_f1 — that's the issue #116 floor.
+  max_steps: 50000
+  eval_every_steps: 250
+  save_every_steps: 100
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 2
+  csv_log_path: "{output_dir}/train_log.csv"
+
+eval:
+  # Use golden v0.1.2 as the eval anchor (4535 entries, includes venue/street/
+  # house_number support).
+  golden_dir: ""
+  val_jsonl: ""

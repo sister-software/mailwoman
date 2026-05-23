@@ -88,3 +88,4 @@ data/eval/golden/candidates/
 .env
 .env.*
 
+corpus-python/.pytest_cache/

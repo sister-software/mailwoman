@@ -123,13 +123,23 @@ class LinearChainCRF(nn.Module):
         emissions: torch.Tensor,
         tags: torch.Tensor,
         mask: torch.Tensor,
+        reduction: str = "mean",
     ) -> torch.Tensor:
-        """Return mean negative log-likelihood over the batch.
+        """Return negative log-likelihood, reduced over the batch.
 
         Args:
             emissions: ``(batch, seq, num_tags)`` per-token emission scores.
             tags: ``(batch, seq)`` gold label IDs. Padding positions are ignored via ``mask``.
             mask: ``(batch, seq)`` 1 = real token, 0 = padding. Same dtype as ``emissions``.
+            reduction: one of:
+
+                - ``"mean"`` (default, v0.3.0 behavior) — mean NLL over batch sequences.
+                  Per-sequence magnitude scales with sequence length; this is the form
+                  v0.3.0's dual loss hand-weighted via ``crf_loss_weight=0.05``.
+                - ``"per_token"`` (v0.4.0) — sum NLL across batch, divide by total real
+                  tokens. Self-balances against per-token CE, eliminating the need for
+                  ``crf_loss_weight`` tuning. Matches AllenNLP / FLAIR defaults.
+                - ``"sum"`` — sum over batch sequences. Internal use; callers normalize.
 
         ``mask[:, 0]`` MUST be all 1s (no leading padding) — callers control padding shape.
         """
@@ -142,8 +152,17 @@ class LinearChainCRF(nn.Module):
         numerator = self._score_sequence(emissions, safe_tags, mask)
         denominator = self._log_partition(emissions, mask)
         nll = denominator - numerator
-        # Mean over batch (token-level normalization is implicit in the per-sequence score).
-        return nll.mean()
+        if reduction == "mean":
+            return nll.mean()
+        if reduction == "sum":
+            return nll.sum()
+        if reduction == "per_token":
+            # Sum NLL across batch / total real tokens. Clamped to 1 to defend against
+            # empty-batch edge cases (all-padding batches shouldn't reach here in
+            # practice but the clamp keeps gradient well-defined).
+            total_tokens = mask.sum().clamp(min=1)
+            return nll.sum() / total_tokens
+        raise ValueError(f"unknown reduction: {reduction!r}; expected mean | sum | per_token")
 
     def _score_sequence(
         self,

@@ -47,10 +47,23 @@ class ModelConfig:
     # Default False / 0.0 keeps v0.2.0 behavior for back-compat with older configs.
     use_crf: bool = False
     label_smoothing: float = 0.0
-    # Weight on the CRF NLL leg of the dual loss (CE + crf_loss_weight × CRF_NLL). The
-    # CRF NLL is per-sequence and unbounded (~10–100x CE's per-token magnitude); equal-
-    # weight summing destabilizes training. 0.1 keeps CRF as a structural regularizer.
+    # Weight on the CRF NLL leg of the dual loss (CE + crf_loss_weight × CRF_NLL).
+    # With ``crf_normalization=per_sequence`` (v0.3.0 default), the CRF NLL is per-
+    # sequence and unbounded (~10–100x CE's per-token magnitude), so 0.05–0.1 is
+    # typical to keep CRF as a structural regularizer. With ``per_token`` (v0.4.0),
+    # the two losses are comparable in magnitude and the weight can be 1.0 cleanly.
     crf_loss_weight: float = 0.1
+    # v0.4.0: CRF NLL normalization. ``"per_sequence"`` = v0.3.0 mean-over-batch
+    # (preserves backward compat with old configs). ``"per_token"`` = sum NLL across
+    # batch / total real tokens — self-balances against per-token CE, eliminates
+    # ``crf_loss_weight`` hand-tuning, matches AllenNLP/FLAIR defaults.
+    crf_normalization: str = "per_sequence"
+    # v0.4.0: optional per-class CE weights, keyed on BIO label ("O", "B-locality", ...).
+    # ``None`` (default) = uniform weighting. Recipe per issue #116: derive from corpus
+    # label-frequency as ``(1 / class_freq) ** 0.5``, then halve fine-class weights
+    # (venue/street/house_number) to re-prioritize coarse-class recovery. See
+    # configs/v0_4_0.yaml for the worked example.
+    class_weights: dict[str, float] | None = None
 
 
 @dataclass
