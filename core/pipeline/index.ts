@@ -6,6 +6,16 @@
  *   Runtime pipeline coordinator — see `STAGES.md` for the full contract.
  */
 
+export { reconcileSpans } from "./reconcile.js"
+export type {
+	ClassifierCandidate,
+	ParentChainLookup,
+	ParseTree,
+	ReconcileInputs,
+	ReconcileOpts,
+	ResolverCandidatesLookup,
+	ScoreBreakdown,
+} from "./reconcile.js"
 export { runPipeline } from "./runtime-pipeline.js"
 export type {
 	AddressClassifier,
