@@ -35,6 +35,13 @@ class DataConfig:
 
 @dataclass
 class ModelConfig:
+    # Per-token embedding width and transformer body hidden dim. v0.3.0/v0.4.0 shipped at
+    # 256 on a 9M-param encoder; v0.5.0's Thread C scaffold preserves that baseline so the
+    # phrase-prior conditioning's contribution can be ablated cleanly against v0.4.0
+    # numerics. The Phase 8 plan recommends a 256 → 384 or 512 bump for the v0.5.0 full
+    # train ("likely paid for by rented GPU") but only after the new architecture is
+    # validated stable at the current size. Bump becomes a follow-up
+    # `v0_5_0-classifier-large.yaml` recipe once the baseline lands clean.
     hidden_size: int = 256
     num_hidden_layers: int = 6
     num_attention_heads: int = 4
@@ -64,6 +71,17 @@ class ModelConfig:
     # (venue/street/house_number) to re-prioritize coarse-class recovery. See
     # configs/v0_4_0.yaml for the worked example.
     class_weights: dict[str, float] | None = None
+    # v0.5.0 thread C: phrase-prior conditioning from Stage 2.7 (Thread E). When True, the
+    # encoder forward concatenates a per-token feature row (BIE markers + PhraseKind one-
+    # hot) onto the token+position embedding before the first transformer block, and
+    # projects back to ``hidden_size`` with a learned linear. Default False preserves
+    # v0.3.0/v0.4.0 numerics for ablation studies. See `phrase_priors.py` for the slot
+    # layout + ``the-knowledge-ladder.md`` § Phrase grouper for the design rationale.
+    use_phrase_priors: bool = False
+    # Per-token feature width. Determined by the phrase-priors taxonomy; surfaced as a
+    # config field so corpus-side feature shape and model-side projection width stay
+    # in lockstep through the model-card layer.
+    phrase_feature_dim: int = 10  # = PHRASE_BIE_DIM (3) + PHRASE_KIND_DIM (7)
 
 
 @dataclass

@@ -22,12 +22,32 @@ ONNX-export caveat: the forward / Viterbi loops use Python control flow over the
 dim, which `torch.onnx.export` traces but cannot symbolically vectorize. For the
 exported runtime we emit just the per-token emissions + transition tensors and run Viterbi
 on the TS side (see ``export_onnx.py``).
+
+v0.5.0 thread C: ``top_k_decode`` returns the K most-probable tag sequences (list-Viterbi
+over the same structural mask). Consumed by Stage 5 reconcile (Thread D) so it can
+disambiguate kryptonite cases like ``NY-NY Steakhouse, Houston, TX`` jointly across
+classifier candidates + resolver candidates + concordance score.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import torch
 from torch import nn
+
+
+@dataclass
+class TopKPath:
+    """One decoded tag sequence with its calibrated log-probability score.
+
+    ``score`` is ``path_log_score - log_partition`` — a valid log P(path | emissions) under
+    the CRF distribution, with ``sum_paths exp(score) <= 1``. Stage 5 reconcile uses these
+    as the classifier's belief over candidate parses.
+    """
+
+    sequence: list[int]
+    score: float
 
 
 def build_bio_transition_mask(id_to_label: dict[int, str]) -> torch.Tensor:
@@ -271,3 +291,158 @@ class LinearChainCRF(nn.Module):
             tags.reverse()
             results.append(tags)
         return results
+
+    @torch.no_grad()
+    def top_k_decode(
+        self,
+        emissions: torch.Tensor,
+        mask: torch.Tensor,
+        k: int = 5,
+    ) -> list[list[TopKPath]]:
+        """Top-K most-probable tag sequences per row, sorted by score descending.
+
+        List-Viterbi (k-best dynamic programming): for each (time, state) cell we keep
+        the K best path-scores ending at that state, with backpointers to (prev_state,
+        prev_rank). After processing the sequence, the K best paths are read off the
+        last column by sorting end-augmented scores and backtracking through ``(state,
+        rank)`` history.
+
+        Each path's score is converted to ``log P(path | emissions)`` by subtracting the
+        log-partition. The result is a calibrated belief over candidate parses — the
+        Stage 5 reconcile (Thread D) input.
+
+        Args:
+            emissions: ``(batch, seq, num_tags)`` per-token emission scores.
+            mask: ``(batch, seq)`` 1 = real token, 0 = padding. Same dtype as ``emissions``.
+            k: maximum number of paths to return per row. Returned list may be shorter
+               when fewer structurally-valid paths exist (e.g. ``num_tags ** length < k``
+               on a tiny sequence).
+
+        Returns:
+            Per-row list of ``TopKPath(sequence, score)`` items, sorted by score desc.
+            ``sequence`` length equals ``mask[row].sum()``; padding is dropped.
+
+        Complexity: ``O(B * T * N² * K * log(N * K))`` where N=num_tags, K=k, T=seq_len.
+        For N=21, K=5, T=128, B=32 this is ~10M ops — negligible compared to the encoder
+        forward pass. Implemented per-row on CPU after `.cpu()` to keep the topk + backtrack
+        readable; the call site is inference, not training, so GPU residency doesn't matter.
+        """
+        if k < 1:
+            raise ValueError(f"k must be >= 1, got {k}")
+        bsz, seq_len, num_tags = emissions.shape
+
+        # Compute log-partition once (per-row) so we can return calibrated log-probs.
+        log_partition = self._log_partition(emissions, mask)  # (B,)
+
+        masked_trans = self.masked_transitions().detach()  # (N, N)
+        start_trans = self.masked_start_transitions().detach()  # (N,)
+        end_trans = self.end_transitions.detach()  # (N,)
+
+        results: list[list[TopKPath]] = []
+        # Per-row decode. Lengths vary, structural masks introduce -inf, and the topk on
+        # the broadcast cube is cleanest one row at a time.
+        for b in range(bsz):
+            length = int(mask[b].sum().item())
+            if length == 0:
+                results.append([])
+                continue
+
+            em = emissions[b].detach()  # (S, N)
+            row_logZ = float(log_partition[b].item())
+            row_paths = _row_top_k(
+                emissions=em,
+                length=length,
+                num_tags=num_tags,
+                start_trans=start_trans,
+                end_trans=end_trans,
+                masked_trans=masked_trans,
+                k=k,
+                log_partition=row_logZ,
+            )
+            results.append(row_paths)
+        return results
+
+
+def _row_top_k(
+    *,
+    emissions: torch.Tensor,  # (S, N)
+    length: int,
+    num_tags: int,
+    start_trans: torch.Tensor,  # (N,)
+    end_trans: torch.Tensor,  # (N,)
+    masked_trans: torch.Tensor,  # (N, N)
+    k: int,
+    log_partition: float,
+) -> list[TopKPath]:
+    """Single-row k-best Viterbi. Pure-tensor; ``length`` trims padding."""
+    # score[t, j, r] = r-th best path-score ending at tag j at time t.
+    # backptr[t, j, r] = (prev_tag, prev_rank) of the predecessor for that path.
+    # Use -inf to flag "no path here yet" so structurally-invalid extensions stay invalid.
+    NEG_INF = float("-inf")
+
+    # t=0 init: only rank 0 is real; ranks 1..K-1 are -inf with no predecessor.
+    score = torch.full((num_tags, k), NEG_INF, dtype=emissions.dtype)
+    score[:, 0] = start_trans + emissions[0]
+    # backptr_tag[t][j, r] = prev_tag; backptr_rank[t][j, r] = prev_rank. Stored per-step.
+    backptr_tag: list[torch.Tensor] = []
+    backptr_rank: list[torch.Tensor] = []
+
+    for t in range(1, length):
+        # candidates[i, m, j] = score[t-1, i, m] + trans[i, j] + emit[j]
+        # Shape: (N, K, N). Reshape to (N*K, N) so topk-over-predecessors is a single dim.
+        candidates = (
+            score.unsqueeze(2)  # (N, K, 1)
+            + masked_trans.unsqueeze(1)  # (N, 1, N)
+            + emissions[t].unsqueeze(0).unsqueeze(0)  # (1, 1, N)
+        )  # (N, K, N)
+        # For each destination tag j, pick top-K predecessors from the N*K candidates.
+        flat = candidates.permute(2, 0, 1).reshape(num_tags, num_tags * k)  # (N_dest, N*K)
+        # k may exceed N*K only at t=1 (when previous step has K-1 -inf ranks); topk handles
+        # by returning -inf for over-budget ranks, which propagate as "no path."
+        kk = min(k, flat.size(1))
+        top_vals, top_idx = flat.topk(kk, dim=1)  # (N_dest, kk)
+        new_score = torch.full((num_tags, k), NEG_INF, dtype=emissions.dtype)
+        new_score[:, :kk] = top_vals
+        # Decode (prev_tag, prev_rank) from flat index = prev_tag * K + prev_rank.
+        prev_tag = (top_idx // k).long()  # (N_dest, kk)
+        prev_rank = (top_idx % k).long()  # (N_dest, kk)
+        tag_full = torch.full((num_tags, k), -1, dtype=torch.long)
+        rank_full = torch.full((num_tags, k), -1, dtype=torch.long)
+        tag_full[:, :kk] = prev_tag
+        rank_full[:, :kk] = prev_rank
+        backptr_tag.append(tag_full)
+        backptr_rank.append(rank_full)
+        score = new_score
+
+    # End-augment, flatten over (tag, rank), pick top-K overall.
+    final = score + end_trans.unsqueeze(1)  # (N, K)
+    flat_final = final.reshape(-1)  # (N*K,)
+    kk = min(k, flat_final.numel())
+    top_final_vals, top_final_idx = flat_final.topk(kk)
+    # Drop -inf entries — they correspond to invalid / nonexistent paths.
+    paths: list[TopKPath] = []
+    for v, idx in zip(top_final_vals.tolist(), top_final_idx.tolist()):
+        if v == NEG_INF or v != v:  # NaN guard
+            continue
+        end_tag = int(idx // k)
+        end_rank = int(idx % k)
+        # Backtrack.
+        seq = [end_tag]
+        cur_tag, cur_rank = end_tag, end_rank
+        for t in range(length - 1, 0, -1):
+            bt = backptr_tag[t - 1]
+            br = backptr_rank[t - 1]
+            prev_tag = int(bt[cur_tag, cur_rank].item())
+            prev_rank = int(br[cur_tag, cur_rank].item())
+            if prev_tag < 0:
+                # Hit an unfilled slot — path is shorter than ``length``; skip.
+                seq = []
+                break
+            seq.append(prev_tag)
+            cur_tag, cur_rank = prev_tag, prev_rank
+        if not seq:
+            continue
+        seq.reverse()
+        paths.append(TopKPath(sequence=seq, score=float(v) - log_partition))
+    # topk already returned in desc order; keep that property after filtering.
+    return paths

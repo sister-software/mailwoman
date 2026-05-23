@@ -36,8 +36,9 @@ import torch
 from torch import nn
 
 from .config import Config
-from .crf import LinearChainCRF
+from .crf import LinearChainCRF, TopKPath
 from .labels import ID_TO_LABEL, LABEL_TO_ID, ACTIVE_BIO_LABELS
+from .phrase_priors import PHRASE_FEATURE_DIM
 
 
 def force_math_sdpa() -> None:
@@ -146,11 +147,22 @@ class MailwomanCoarseEncoder(nn.Module):
         crf_loss_weight: float = 0.1,
         crf_normalization: str = "per_sequence",
         class_weights: torch.Tensor | None = None,
+        use_phrase_priors: bool = False,
+        phrase_feature_dim: int = PHRASE_FEATURE_DIM,
     ) -> None:
         super().__init__()
         self.pad_token_id = pad_token_id
         self.max_position_embeddings = max_position_embeddings
         self.num_labels = num_labels
+        # v0.5.0 thread C: phrase-prior input-layer features (from Stage 2.7 phrase grouper,
+        # Thread E). When ``use_phrase_priors`` is on, the encoder takes an additional
+        # ``(B, S, phrase_feature_dim)`` tensor at forward time, concatenates it onto the
+        # token+position embedding, and projects back to ``hidden_size``. The projection is
+        # the minimum addition needed to thread the structural prior through without bumping
+        # the encoder body's hidden dim — keeps the v0.5.0 baseline fair vs v0.3.0/v0.4.0
+        # so the phrase-prior contribution can be ablated cleanly.
+        self.use_phrase_priors = use_phrase_priors
+        self.phrase_feature_dim = int(phrase_feature_dim) if use_phrase_priors else 0
         # v0.3.0 additions: CRF decoder for structural validity + learned tag dynamics,
         # label smoothing on the per-token CE leg for calibration. Both gate-able for
         # ablation studies via the kwargs above.
@@ -188,6 +200,18 @@ class MailwomanCoarseEncoder(nn.Module):
         self.position_embeddings = nn.Embedding(max_position_embeddings, hidden_size)
         self.input_dropout = nn.Dropout(hidden_dropout_prob)
         self.input_ln = nn.LayerNorm(hidden_size)
+        # Linear projection ``(hidden + phrase_feature_dim) → hidden`` so the body's
+        # transformer stack keeps its declared ``hidden_size``. xavier_uniform_ init via
+        # ``_init_weights``; bias init zero. None when ``use_phrase_priors`` is off — the
+        # forward path skips the projection entirely in that case (keeps v0.4.0 numerics
+        # bit-identical for back-compat ablations).
+        self.phrase_input_projection: nn.Linear | None
+        if self.use_phrase_priors:
+            self.phrase_input_projection = nn.Linear(
+                hidden_size + self.phrase_feature_dim, hidden_size, bias=True
+            )
+        else:
+            self.phrase_input_projection = None
 
         self.blocks = nn.ModuleList(
             [
@@ -243,6 +267,7 @@ class MailwomanCoarseEncoder(nn.Module):
         input_ids: torch.Tensor,
         attention_mask: torch.Tensor | None = None,
         labels: torch.Tensor | None = None,
+        phrase_features: torch.Tensor | None = None,
     ) -> "_CoarseEncoderOutput":
         bsz, seq = input_ids.shape
         if seq > self.max_position_embeddings:
@@ -252,6 +277,34 @@ class MailwomanCoarseEncoder(nn.Module):
             )
         pos = torch.arange(seq, device=input_ids.device).unsqueeze(0).expand(bsz, seq)
         h = self.token_embeddings(input_ids) + self.position_embeddings(pos)
+        # v0.5.0 thread C: optional phrase-prior conditioning. ``phrase_features`` is the
+        # per-token BIE+kind one-hot from Stage 2.7. When the encoder was built with
+        # ``use_phrase_priors=True`` and features are supplied, concat them onto the embed
+        # and project back to hidden_size; absent features default to zeros (silently — a
+        # caller that opted into priors but didn't supply them gets the equivalent of "no
+        # phrase covers any token," which is a degraded but well-defined inference path).
+        if self.phrase_input_projection is not None:
+            if phrase_features is None:
+                phrase_features = torch.zeros(
+                    bsz, seq, self.phrase_feature_dim,
+                    dtype=h.dtype, device=h.device,
+                )
+            elif phrase_features.shape != (bsz, seq, self.phrase_feature_dim):
+                raise ValueError(
+                    f"phrase_features shape {tuple(phrase_features.shape)} != "
+                    f"({bsz}, {seq}, {self.phrase_feature_dim})"
+                )
+            else:
+                phrase_features = phrase_features.to(h.dtype)
+            h = self.phrase_input_projection(torch.cat([h, phrase_features], dim=-1))
+        elif phrase_features is not None:
+            # Caller passed features but the encoder wasn't built to use them. Surface this
+            # rather than silently ignoring — wiring drift is exactly the bug class the
+            # smoke test is designed to catch.
+            raise ValueError(
+                "phrase_features supplied but use_phrase_priors=False — rebuild the "
+                "encoder with use_phrase_priors=True or drop the features argument"
+            )
         h = self.input_dropout(self.input_ln(h))
 
         # nn.MultiheadAttention key_padding_mask: True = mask (ignore), False = keep.
@@ -309,13 +362,18 @@ class MailwomanCoarseEncoder(nn.Module):
         self,
         input_ids: torch.Tensor,
         attention_mask: torch.Tensor,
+        phrase_features: torch.Tensor | None = None,
     ) -> list[list[int]]:
         """Best-path tag IDs per row. Returns variable-length lists (mask-trimmed).
 
         Uses CRF Viterbi when the layer is present; falls back to per-token argmax
         otherwise (the v0.2.0 behavior — kept for ablation / pre-CRF checkpoints).
         """
-        out = self.forward(input_ids=input_ids, attention_mask=attention_mask)
+        out = self.forward(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            phrase_features=phrase_features,
+        )
         if self.crf is not None:
             return self.crf.viterbi_decode(out.logits, attention_mask.to(out.logits.dtype))
         # Argmax fallback. Trim per row to mask length.
@@ -325,6 +383,33 @@ class MailwomanCoarseEncoder(nn.Module):
             length = int(attention_mask[b].sum().item())
             results.append(argmax_ids[b, :length].tolist())
         return results
+
+    @torch.no_grad()
+    def predict_top_k(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor,
+        k: int = 5,
+        phrase_features: torch.Tensor | None = None,
+    ) -> list[list[TopKPath]]:
+        """Top-K tag sequences per row with calibrated log-prob scores.
+
+        v0.5.0 thread C: this is what Stage 5 reconcile (Thread D) consumes. Each row
+        gets up to ``k`` ``TopKPath`` items, sorted by score descending. Padding is
+        trimmed from each path's ``sequence``. Only works when the encoder was built with
+        ``use_crf=True`` — argmax-only encoders have no notion of path probability.
+        """
+        if self.crf is None:
+            raise RuntimeError(
+                "predict_top_k requires a CRF decoder; this encoder was built with "
+                "use_crf=False. Either rebuild with use_crf=True or use predict()."
+            )
+        out = self.forward(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            phrase_features=phrase_features,
+        )
+        return self.crf.top_k_decode(out.logits, attention_mask.to(out.logits.dtype), k=k)
 
     # ---- HuggingFace-compatible save/load helpers ----
 
@@ -354,6 +439,11 @@ class MailwomanCoarseEncoder(nn.Module):
                 if isinstance(self.class_weights, torch.Tensor)
                 else None
             ),
+            # v0.5.0 thread C: phrase-prior conditioning. False on v0.4.0/v0.3.0 weights;
+            # True on v0.5.0+. Loaders branch on this flag to materialize the
+            # ``phrase_input_projection`` layer.
+            "use_phrase_priors": bool(self.use_phrase_priors),
+            "phrase_feature_dim": int(self.phrase_feature_dim),
             "id2label": dict(ID_TO_LABEL),
             "label2id": dict(LABEL_TO_ID),
         }
@@ -391,6 +481,9 @@ class MailwomanCoarseEncoder(nn.Module):
             # v0.4.0+ fields. Default to v0.3.0 behavior (per_sequence, uniform CE).
             crf_normalization=cfg.get("crf_normalization", "per_sequence"),
             class_weights=cw_tensor,
+            # v0.5.0+ fields. Default to v0.4.0 behavior (no phrase priors).
+            use_phrase_priors=cfg.get("use_phrase_priors", False),
+            phrase_feature_dim=cfg.get("phrase_feature_dim", PHRASE_FEATURE_DIM),
         )
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
         try:
@@ -429,6 +522,9 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoa
         # v0.4.0 additions.
         crf_normalization=getattr(cfg.model, "crf_normalization", "per_sequence"),
         class_weights=cw_tensor,
+        # v0.5.0 thread C additions.
+        use_phrase_priors=getattr(cfg.model, "use_phrase_priors", False),
+        phrase_feature_dim=getattr(cfg.model, "phrase_feature_dim", PHRASE_FEATURE_DIM),
     )
 
 

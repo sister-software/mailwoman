@@ -194,3 +194,132 @@ def test_viterbi_respects_mask_length():
     decoded = crf.viterbi_decode(emissions, mask)
     assert len(decoded[0]) == 3  # mask cuts row 0 at length 3
     assert len(decoded[1]) == 5
+
+
+# --- v0.5.0 thread C: top-k decode ------------------------------------------------------
+
+
+def test_top_k_decode_returns_argmax_as_first_path():
+    """Top-1 of top-k must equal the standard Viterbi argmax — same DP backbone."""
+    n = len(ACTIVE_BIO_LABELS)
+    crf = LinearChainCRF(n, ID_TO_LABEL)
+    torch.manual_seed(7)
+    emissions = torch.randn(3, 8, n)
+    mask = torch.ones(3, 8)
+    argmax = crf.viterbi_decode(emissions, mask)
+    top_k = crf.top_k_decode(emissions, mask, k=5)
+    assert len(top_k) == 3
+    for row_argmax, row_paths in zip(argmax, top_k):
+        assert len(row_paths) >= 1
+        assert row_paths[0].sequence == row_argmax
+
+
+def test_top_k_decode_scores_sorted_desc():
+    n = len(ACTIVE_BIO_LABELS)
+    crf = LinearChainCRF(n, ID_TO_LABEL)
+    torch.manual_seed(3)
+    emissions = torch.randn(2, 10, n)
+    mask = torch.ones(2, 10)
+    top_k = crf.top_k_decode(emissions, mask, k=5)
+    for row in top_k:
+        scores = [p.score for p in row]
+        assert scores == sorted(scores, reverse=True)
+
+
+def test_top_k_decode_paths_are_distinct():
+    """The k paths returned must be different tag sequences — list-Viterbi guarantee."""
+    n = len(ACTIVE_BIO_LABELS)
+    crf = LinearChainCRF(n, ID_TO_LABEL)
+    torch.manual_seed(11)
+    emissions = torch.randn(1, 6, n)
+    mask = torch.ones(1, 6)
+    paths = crf.top_k_decode(emissions, mask, k=5)[0]
+    seen: set[tuple[int, ...]] = set()
+    for p in paths:
+        seq_tuple = tuple(p.sequence)
+        assert seq_tuple not in seen, f"duplicate path returned: {seq_tuple}"
+        seen.add(seq_tuple)
+
+
+def test_top_k_decode_respects_mask_length():
+    n = len(ACTIVE_BIO_LABELS)
+    crf = LinearChainCRF(n, ID_TO_LABEL)
+    torch.manual_seed(1)
+    emissions = torch.randn(2, 7, n)
+    mask = torch.tensor([[1, 1, 1, 1, 0, 0, 0], [1, 1, 1, 1, 1, 1, 1]], dtype=torch.float)
+    top_k = crf.top_k_decode(emissions, mask, k=3)
+    for p in top_k[0]:
+        assert len(p.sequence) == 4
+    for p in top_k[1]:
+        assert len(p.sequence) == 7
+
+
+def test_top_k_decode_never_emits_orphan_i():
+    """Same structural guarantee as argmax Viterbi — the BIO mask applies to every path."""
+    n = len(ACTIVE_BIO_LABELS)
+    crf = LinearChainCRF(n, ID_TO_LABEL)
+    # Adversarial emissions favoring I-locality everywhere.
+    i_locality = LABEL_TO_ID["I-locality"]
+    emissions = torch.full((1, 5, n), -10.0)
+    emissions[0, :, i_locality] = 10.0
+    mask = torch.ones(1, 5)
+    top_k = crf.top_k_decode(emissions, mask, k=5)[0]
+    assert len(top_k) >= 1
+    for path in top_k:
+        for idx, tag_id in enumerate(path.sequence):
+            label = ID_TO_LABEL[tag_id]
+            if not label.startswith("I-"):
+                continue
+            if idx == 0:
+                pytest.fail(f"top-k path starts with I-* (orphan): {label}")
+            prev = ID_TO_LABEL[path.sequence[idx - 1]]
+            assert prev.startswith(("B-", "I-")), (
+                f"orphan-I at {idx}: prev={prev}, curr={label}"
+            )
+            _, prev_tag = prev.split("-", 1)
+            _, curr_tag = label.split("-", 1)
+            assert prev_tag == curr_tag, (
+                f"cross-tag I at {idx}: prev={prev}, curr={label}"
+            )
+
+
+def test_top_k_decode_calibrated_scores_are_log_probs():
+    """Each path's score = log P(path | emissions). Sum of exp(score) over K paths <= 1."""
+    n = len(ACTIVE_BIO_LABELS)
+    crf = LinearChainCRF(n, ID_TO_LABEL)
+    torch.manual_seed(0)
+    emissions = torch.randn(1, 6, n)
+    mask = torch.ones(1, 6)
+    paths = crf.top_k_decode(emissions, mask, k=10)[0]
+    probs = [float(torch.tensor(p.score).exp()) for p in paths]
+    s = sum(probs)
+    # Allow a tiny slack for fp32 rounding; the strict invariant is sum <= 1.
+    assert s <= 1.0 + 1e-5, f"top-k probabilities sum to {s} > 1"
+    # All scores are finite (no -inf made it past the filter).
+    assert all(math_isfinite(p.score) for p in paths)
+
+
+def math_isfinite(x: float) -> bool:
+    return x == x and abs(x) != float("inf")
+
+
+def test_top_k_decode_k_one_matches_viterbi():
+    n = len(ACTIVE_BIO_LABELS)
+    crf = LinearChainCRF(n, ID_TO_LABEL)
+    torch.manual_seed(5)
+    emissions = torch.randn(2, 6, n)
+    mask = torch.ones(2, 6)
+    argmax = crf.viterbi_decode(emissions, mask)
+    top_1 = crf.top_k_decode(emissions, mask, k=1)
+    for row_argmax, row_paths in zip(argmax, top_1):
+        assert len(row_paths) == 1
+        assert row_paths[0].sequence == row_argmax
+
+
+def test_top_k_decode_bad_k_raises():
+    n = len(ACTIVE_BIO_LABELS)
+    crf = LinearChainCRF(n, ID_TO_LABEL)
+    emissions = torch.randn(1, 3, n)
+    mask = torch.ones(1, 3)
+    with pytest.raises(ValueError):
+        crf.top_k_decode(emissions, mask, k=0)
