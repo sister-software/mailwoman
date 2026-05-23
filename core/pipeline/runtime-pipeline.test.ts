@@ -278,6 +278,203 @@ describe("runPipeline — graceful degradation", () => {
 	})
 })
 
+describe("runPipeline — abort signal", () => {
+	it("throws AbortError when signal is already aborted before the call", async () => {
+		const controller = new AbortController()
+		controller.abort()
+		await expect(runPipeline("hello", {}, { signal: controller.signal })).rejects.toThrow()
+	})
+
+	it("aborts between normalize and queryShape if signaled", async () => {
+		const controller = new AbortController()
+		const computeQueryShape = vi.fn(() => ({ knownFormats: [] }))
+		const normalize = vi.fn((raw: string) => {
+			// Abort during normalize — coordinator catches it on the next checkpoint (before queryShape).
+			controller.abort()
+			return { raw, normalized: raw }
+		})
+
+		await expect(
+			runPipeline("hello", { normalize, computeQueryShape }, { signal: controller.signal })
+		).rejects.toThrow()
+		expect(normalize).toHaveBeenCalled()
+		expect(computeQueryShape).not.toHaveBeenCalled()
+	})
+
+	it("aborts between classifyKind and classifier if signaled", async () => {
+		const controller = new AbortController()
+		const classifier = fakeClassifier(fakeTree("hello"))
+		const resolver = fakeResolver((t) => t)
+		const classifyKind = vi.fn(async () => {
+			controller.abort()
+			return { kind: "structured_address" as const, confidence: 0, alternatives: [] }
+		})
+
+		await expect(
+			runPipeline("hello", { classifyKind, classifier, resolver }, { signal: controller.signal })
+		).rejects.toThrow()
+		expect(classifier.parse).not.toHaveBeenCalled()
+		expect(resolver.resolveTree).not.toHaveBeenCalled()
+	})
+
+	it("aborts between classifier and resolver if signaled", async () => {
+		const controller = new AbortController()
+		const classifier: AddressClassifier = {
+			parse: vi.fn(async (text) => {
+				controller.abort()
+				return fakeTree(text)
+			}),
+		}
+		const resolver = fakeResolver((t) => t)
+
+		await expect(runPipeline("hello", { classifier, resolver }, { signal: controller.signal })).rejects.toThrow()
+		expect(classifier.parse).toHaveBeenCalled()
+		expect(resolver.resolveTree).not.toHaveBeenCalled()
+	})
+
+	it("uses signal.reason when present (custom abort reason)", async () => {
+		const controller = new AbortController()
+		const customReason = new Error("custom abort reason")
+		controller.abort(customReason)
+
+		await expect(runPipeline("hello", {}, { signal: controller.signal })).rejects.toThrow("custom abort reason")
+	})
+
+	it("runs to completion when signal is provided but not aborted", async () => {
+		const controller = new AbortController()
+		const result = await runPipeline("hello", {}, { signal: controller.signal })
+		expect(result.tree).toBeDefined()
+	})
+})
+
+describe("runPipeline — timing budget shape", () => {
+	const postcodeShape: QueryShapeLite = {
+		knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
+		totalLength: 5,
+		characterClass: "numeric",
+	}
+	const postcodeOnlyKind: QueryKindResult = {
+		kind: "postcode_only",
+		confidence: 0.97,
+		alternatives: [],
+	}
+
+	it("full path with all stages: normalize / query-shape / locale-gate / kind-classifier / token-classify / resolve", async () => {
+		const classifier = fakeClassifier(fakeTree("hello"))
+		const resolver = fakeResolver((t) => t)
+		const result = await runPipeline("hello", { classifier, resolver })
+
+		expect(Object.keys(result.timing).sort()).toEqual(
+			["kind-classifier", "locale-gate", "normalize", "query-shape", "resolve", "token-classify"].sort()
+		)
+	})
+
+	it("fast-path with resolver wired: omits token-classify, includes resolve", async () => {
+		const classifier = fakeClassifier(fakeTree("10118"))
+		const resolver = fakeResolver((t) => t)
+		const result = await runPipeline("10118", {
+			computeQueryShape: () => postcodeShape,
+			classifyKind: async () => postcodeOnlyKind,
+			classifier,
+			resolver,
+		})
+
+		expect(result.path).toBe("fast-path")
+		expect(result.timing["token-classify"]).toBeUndefined()
+		expect(result.timing["resolve"]).toBeGreaterThanOrEqual(0)
+		expect(result.timing["normalize"]).toBeGreaterThanOrEqual(0)
+		expect(result.timing["kind-classifier"]).toBeGreaterThanOrEqual(0)
+	})
+
+	it("fast-path without resolver: omits both token-classify and resolve", async () => {
+		const result = await runPipeline("10118", {
+			computeQueryShape: () => postcodeShape,
+			classifyKind: async () => postcodeOnlyKind,
+		})
+
+		expect(result.path).toBe("fast-path")
+		expect(result.timing["token-classify"]).toBeUndefined()
+		expect(result.timing["resolve"]).toBeUndefined()
+	})
+
+	it("full path without resolver: includes token-classify, omits resolve", async () => {
+		const classifier = fakeClassifier(fakeTree("hello"))
+		const result = await runPipeline("hello", { classifier })
+
+		expect(result.path).toBe("full")
+		expect(result.timing["token-classify"]).toBeGreaterThanOrEqual(0)
+		expect(result.timing["resolve"]).toBeUndefined()
+	})
+
+	it("timing values are non-negative numbers", async () => {
+		const result = await runPipeline("hello", {})
+		for (const [stage, ms] of Object.entries(result.timing)) {
+			expect(ms, `${stage} timing must be finite + non-negative`).toBeGreaterThanOrEqual(0)
+			expect(Number.isFinite(ms), `${stage} timing must be finite`).toBe(true)
+		}
+	})
+})
+
+describe("runPipeline — non-graceful stage failures", () => {
+	// Contract: classifier + resolver are wrapped in safe* helpers (graceful). The pre-classifier
+	// stages — detectLocale, classifyKind — are NOT wrapped because their failure modes indicate a
+	// genuine contract violation (locale detector returning null, kind classifier crashing on its
+	// own rules), not external-data noise. These tests pin the asymmetry as a contract.
+
+	it("detectLocale throwing propagates (not swallowed)", async () => {
+		const detectLocale = vi.fn(async () => {
+			throw new Error("locale detector exploded")
+		})
+		await expect(runPipeline("hello", { detectLocale })).rejects.toThrow("locale detector exploded")
+	})
+
+	it("classifyKind throwing propagates (not swallowed)", async () => {
+		const classifyKind = vi.fn(async () => {
+			throw new Error("kind classifier exploded")
+		})
+		await expect(runPipeline("hello", { classifyKind })).rejects.toThrow("kind classifier exploded")
+	})
+
+	it("normalize throwing propagates (synchronous failure)", async () => {
+		const normalize = vi.fn(() => {
+			throw new Error("normalize exploded")
+		})
+		await expect(runPipeline("hello", { normalize })).rejects.toThrow("normalize exploded")
+	})
+
+	it("computeQueryShape throwing propagates (synchronous failure)", async () => {
+		const computeQueryShape = vi.fn(() => {
+			throw new Error("queryShape exploded")
+		})
+		await expect(runPipeline("hello", { computeQueryShape })).rejects.toThrow("queryShape exploded")
+	})
+
+	it("resolver throwing on fast-path returns the fast-path tree unchanged (graceful)", async () => {
+		// Fast-path uses safeResolve, so a resolver failure does NOT propagate. The fast-path tree
+		// built from QueryShape is the fallback.
+		const postcodeShape: QueryShapeLite = {
+			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
+			totalLength: 5,
+			characterClass: "numeric",
+		}
+		const resolver: Resolver = {
+			resolveTree: vi.fn(async () => {
+				throw new Error("resolver exploded")
+			}),
+		}
+
+		const result = await runPipeline("10118", {
+			computeQueryShape: () => postcodeShape,
+			classifyKind: async () => ({ kind: "postcode_only" as const, confidence: 0.97, alternatives: [] }),
+			resolver,
+		})
+
+		expect(result.path).toBe("fast-path")
+		expect(result.tree.roots[0]?.tag).toBe("postcode")
+		expect(result.tree.roots[0]?.value).toBe("10118")
+	})
+})
+
 describe("runPipeline — locale + opts threading", () => {
 	it("passes locale hint to detectLocale", async () => {
 		const detectLocale = vi.fn(

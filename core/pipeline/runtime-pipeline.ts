@@ -174,17 +174,21 @@ export async function runPipeline(
 	const detectLocale = stages.detectLocale ?? defaultDetectLocale
 	const classifyKind = stages.classifyKind ?? defaultClassifyKind
 
+	throwIfAborted(opts)
 	const normalized = normalize(raw, { locale: opts?.locale })
 	timing["normalize"] = performance.now() - t0
 
+	throwIfAborted(opts)
 	const tQs = performance.now()
 	const queryShape = computeQueryShape(normalized, { locale: opts?.locale })
 	timing["query-shape"] = performance.now() - tQs
 
+	throwIfAborted(opts)
 	const tLocale = performance.now()
 	const locale = await detectLocale(normalized, queryShape, { hint: opts?.locale })
 	timing["locale-gate"] = performance.now() - tLocale
 
+	throwIfAborted(opts)
 	const tKind = performance.now()
 	const kind = await classifyKind(normalized, queryShape, locale)
 	timing["kind-classifier"] = performance.now() - tKind
@@ -196,6 +200,7 @@ export async function runPipeline(
 	if (canShortCircuit(kind, queryShape, opts)) {
 		let tree = buildFastPathTree(normalized.normalized, kind, queryShape)
 		if (stages.resolver) {
+			throwIfAborted(opts)
 			const tResolve = performance.now()
 			tree = await safeResolve(stages.resolver, tree, opts)
 			timing["resolve"] = performance.now() - tResolve
@@ -215,12 +220,14 @@ export async function runPipeline(
 	// Full pipeline.
 	let tree: AddressTree = { raw: normalized.normalized, roots: [] }
 	if (stages.classifier) {
+		throwIfAborted(opts)
 		const tClassify = performance.now()
 		tree = await safeClassify(stages.classifier, normalized.normalized, queryShape)
 		timing["token-classify"] = performance.now() - tClassify
 	}
 
 	if (stages.resolver) {
+		throwIfAborted(opts)
 		const tResolve = performance.now()
 		tree = await safeResolve(stages.resolver, tree, opts)
 		timing["resolve"] = performance.now() - tResolve
@@ -235,6 +242,19 @@ export async function runPipeline(
 		tree,
 		timing,
 		path: "full",
+	}
+}
+
+/**
+ * Throws the signal's reason if aborted. Coarse-grained cancellation: we check between stages, so
+ * the longest cancellation latency is one stage's runtime. Fine-grained mid-stage cancellation
+ * requires plumbing `signal` into each stage's contract (`detectLocale`, `classifyKind`,
+ * `classifier.parse`, `resolver.resolveTree`) — a future enhancement once stage authors are ready
+ * for it. For now, in-flight stages always run to completion before the abort takes effect.
+ */
+function throwIfAborted(opts?: PipelineOpts): void {
+	if (opts?.signal?.aborted) {
+		throw opts.signal.reason ?? new DOMException("Pipeline aborted", "AbortError")
 	}
 }
 
