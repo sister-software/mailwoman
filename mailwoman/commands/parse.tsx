@@ -229,10 +229,15 @@ async function runIsolated(input: string, options: zod.infer<typeof ParseConfigS
 async function runPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
 	const classifier = options.noNeural ? undefined : await tryLoadNeural(options)
 
-	// Graceful fallback: if neither neural nor resolver is in play, the pipeline would emit an empty
-	// tree for structured addresses. Hand off to the legacy rule path so the CLI still produces
-	// useful output. (Preserves existing CLI smoke-test expectations.)
-	if (!classifier && !options.resolve) {
+	// Graceful fallback: if neither neural nor resolver is in play, the pipeline emits an empty tree
+	// for structured addresses (no encoder + no resolver = nothing to classify token-by-token). Hand
+	// off to the legacy rule path so the CLI still produces useful output. Two exceptions stay on the
+	// pipeline:
+	//   - `--debug`: the operator explicitly asked for the PipelineResult JSON shape; routing to the
+	//     legacy diagnostic report would silently change the output schema. Fast-path inputs
+	//     (postcode_only, locality_only) still produce a populated tree from QueryShape alone.
+	//   - future fast-path inputs once we add more rule-based kinds.
+	if (!classifier && !options.resolve && !options.debug) {
 		return runIsolated(input, options)
 	}
 
