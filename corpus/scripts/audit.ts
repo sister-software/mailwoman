@@ -147,6 +147,13 @@ const KNOWN_SOURCE_PREFIXES: ReadonlyArray<string> = [
 	"state-tx-notaries",
 	"state-ny-notaries",
 	"openaddresses",
+	// Synthetic adversarial sources (corpus-v0.4.0+, Thread B).
+	"deepseek-kryptonite",
+	"deepseek-translit-cyrl",
+	"deepseek-translit-jpan",
+	"deepseek-translit-hans",
+	"deepseek-translit-hang",
+	"deepseek-translit-armn",
 ]
 
 /** Extract the source-name prefix from a `first_source_id` value. */
