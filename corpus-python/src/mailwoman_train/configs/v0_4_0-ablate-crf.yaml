@@ -1,0 +1,101 @@
+# v0.4.0 ablation (a): isolate §1 per-token CRF NLL norm × crf_loss_weight=1.0.
+#
+# Three v0.4.0 candidate runs all diverged ~500 steps post-warmup at three different
+# LRs (5e-4 @ step 750, 3e-4 @ step 900-1000, 1.5e-4 @ step 1500). The destabilization
+# survived the v0.3.0-safe LR — so it's not the LR magnitude, it's a v0.4.0 change.
+#
+# This config rolls §1 back to the v0.3.0 dual-loss recipe (per_sequence CRF NLL +
+# crf_loss_weight=0.05 — the hand-weighted workaround) while keeping §3 class_weights
+# and §4 source_weights. lr=5e-4 (the §1 spec's target, matching v0.2.0 baseline).
+#
+# Result interpretation:
+#   - Trains stably to step ~2000+ at lr=5e-4 → §1 is the offender (per_token norm + weight=1.0
+#     is producing a CRF gradient that's still too large despite the normalization)
+#   - Also diverges → §1 isn't (only) the offender; pair with the §3 ablation
+#
+# Operator-gated: do NOT kick off without their go-ahead.
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0
+  tokenizer_dir: /data/models/tokenizer/v0.1.0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+  train_rows_per_epoch: null
+  val_rows: 4096
+  coarse_filter: true
+
+model:
+  hidden_size: 256
+  num_hidden_layers: 6
+  num_attention_heads: 4
+  intermediate_size: 1024
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  label_smoothing: 0.0
+  # §1 ablated: revert to v0.3.0 dual-loss recipe.
+  # - crf_normalization field omitted → defaults to "per_sequence" (v0.3.0 behavior)
+  # - crf_loss_weight=0.05 → v0.3.0's hand-weighted dual-loss balance
+  crf_loss_weight: 0.05
+  # §3 retained: same class_weights as v0_4_0.yaml.
+  class_weights:
+    O: 1.0
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 2.0
+    I-region: 2.0
+    B-locality: 1.5
+    I-locality: 1.5
+    B-dependent_locality: 1.5
+    I-dependent_locality: 1.5
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 1.5
+    I-subregion: 1.5
+    B-cedex: 2.0
+    I-cedex: 2.0
+    B-venue: 0.5
+    I-venue: 0.5
+    B-street: 0.5
+    I-street: 0.5
+    B-house_number: 0.5
+    I-house_number: 0.5
+
+train:
+  output_dir: /data/models/checkpoints/v0_4_0-ablate-crf
+  seed: 42
+  batch_size: 32
+  eval_batch_size: 40
+  grad_accum_steps: 4
+  # §1 ablation targets the original LR back at v0.2.0 baseline 5e-4.
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 50000
+  eval_every_steps: 250
+  save_every_steps: 100
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 2
+  csv_log_path: "{output_dir}/train_log.csv"
+
+eval:
+  golden_dir: ""
+  val_jsonl: ""
