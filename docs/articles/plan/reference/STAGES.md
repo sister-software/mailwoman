@@ -168,9 +168,9 @@ export interface LocaleGate {
 }
 ```
 
-**Today.** Absent. The consumer's API call specifies the locale; if missing, all locales' classifiers run.
+**Today.** `@mailwoman/locale-gate` workspace shipped 2026-05-23. Rule-based: caller-hint precedence at confidence 1.0; otherwise derived from `QueryShape.characterClass` (CJK → ja-JP, Cyrillic → ru-RU, Arabic → ar) + known-format hits (us_zip4 → en-US, uk_postcode → en-GB, ca_postcode → en-CA, jp_postcode → ja-JP). Ambiguous 5-digit → en-US at low confidence with FR/DE as alternatives. Always decisive (fallback en-US at 0.3). Wired as the default `detectLocale` in `mailwoman/runtime-pipeline.ts::createRuntimePipeline`.
 
-**Future.** Small character-level classifier (~100 KB) trained on the first 200 characters of input. Emits a locale tag + confidence + alternatives. Below the confidence floor, the gate signals an ensemble run downstream.
+**Future.** Replace the rule scorers with a small character-level classifier (~100 KB) trained on the first 200 characters of input. Per-locale corpus rows already carry the `locale` field — supervised training data is free. Below the confidence floor, the gate signals an ensemble run downstream.
 
 **Failure classes owned.** Unicode/transliteration script-handling (#6); language-switch hybrids (#7).
 
