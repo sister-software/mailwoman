@@ -270,6 +270,15 @@ function DemoApp(): React.ReactElement {
 			setBusy(true)
 			setError(null)
 			try {
+				// Stage 2.4 + 2.5: compute QueryShape + kind classification. Pure functions, ~µs.
+				// Surfaced in the UI so users see the staged pipeline working.
+				const [{ computeQueryShape }, { classifyKindSync }] = await Promise.all([
+					import("@mailwoman/query-shape"),
+					import("@mailwoman/kind-classifier"),
+				])
+				const queryShape = computeQueryShape(text)
+				const kindResult = classifyKindSync({ raw: text, normalized: text }, queryShape)
+
 				const tree = await classifier.parse(text)
 				const nodes = flattenTree(tree)
 				const localityNode = nodes.find((n) => n.tag === "locality" || n.tag === "city")
@@ -284,6 +293,7 @@ function DemoApp(): React.ReactElement {
 						resolved: null,
 						candidates: [],
 						stateHint: stateNode?.value as string | undefined,
+						kindResult,
 					})
 					return
 				}
@@ -311,6 +321,7 @@ function DemoApp(): React.ReactElement {
 					resolved: candidates[0] ?? null,
 					candidates,
 					stateHint: stateNode?.value as string | undefined,
+					kindResult,
 				})
 			} catch (e2) {
 				setError((e2 as Error).message ?? String(e2))
@@ -404,6 +415,7 @@ function ResultPanel({
 					{showXml ? "Hide XML" : "Show XML"}
 				</button>
 			</div>
+			{result.kindResult ? <KindBadge kindResult={result.kindResult} /> : null}
 			{showXml && xml ? <pre className={styles.xml}>{xml}</pre> : null}
 			<table className={styles.componentTable}>
 				<thead>
@@ -631,6 +643,37 @@ interface MailwomanLookupLike {
 	>
 }
 
+/**
+ * Compact display of the Stage 2.5 kind classifier's verdict. Shows the top kind + confidence as a
+ * pill; expands to show alternatives on hover/click. Helps users see the staged pipeline working —
+ * bare postcodes appear as `postcode_only`, single-word inputs as `locality_only`, multi-segment
+ * inputs as `structured_address`, etc.
+ */
+function KindBadge({
+	kindResult,
+}: {
+	kindResult: { kind: string; confidence: number; alternatives: ReadonlyArray<{ kind: string; confidence: number }> }
+}): React.ReactElement {
+	const pct = (n: number) => `${Math.round(n * 100)}%`
+	return (
+		<details className={styles.kindBadge ?? ""} style={{ marginBottom: "0.5rem", fontSize: "0.9rem" }}>
+			<summary style={{ cursor: "pointer", userSelect: "none" }}>
+				<strong>Kind:</strong> <code>{kindResult.kind}</code>{" "}
+				<span style={{ opacity: 0.7 }}>({pct(kindResult.confidence)})</span>
+			</summary>
+			{kindResult.alternatives.length > 0 ? (
+				<ul style={{ margin: "0.25rem 0 0 1rem", padding: 0, listStyle: "disc" }}>
+					{kindResult.alternatives.map((alt, i) => (
+						<li key={i}>
+							<code>{alt.kind}</code> <span style={{ opacity: 0.7 }}>({pct(alt.confidence)})</span>
+						</li>
+					))}
+				</ul>
+			) : null}
+		</details>
+	)
+}
+
 interface DemoResult {
 	tree: unknown
 	nodes: Array<{ tag: string; value?: unknown; confidence?: number }>
@@ -645,6 +688,16 @@ interface DemoResult {
 	 */
 	candidates: ResolvedHit[]
 	stateHint?: string
+	/**
+	 * Stage 2.5 result: the kind classifier's verdict on the input. Surfaced in the UI so users can
+	 * see the staged pipeline in action — bare postcodes show up as `postcode_only`, single-word
+	 * locality inputs as `locality_only`, etc.
+	 */
+	kindResult?: {
+		kind: string
+		confidence: number
+		alternatives: ReadonlyArray<{ kind: string; confidence: number }>
+	}
 }
 
 interface ResolvedHit {

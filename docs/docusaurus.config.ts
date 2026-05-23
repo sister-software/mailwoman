@@ -40,7 +40,13 @@ function resolveWorkspaceDir(packageDir: string, sub: string): string {
 const workspaceAliases: Record<string, string> = {}
 // Webpack's alias rules treat a bare key as a PREFIX match unless suffixed with `$` — without it,
 // `@mailwoman/core/decoder` would rewrite to `<alias>/decoder` and break. Use `$` for exact-only.
-for (const pkg of ["@mailwoman/neural-web", "@mailwoman/resolver-wof-wasm", "@mailwoman/core"]) {
+for (const pkg of [
+	"@mailwoman/neural-web",
+	"@mailwoman/resolver-wof-wasm",
+	"@mailwoman/core",
+	"@mailwoman/query-shape",
+	"@mailwoman/kind-classifier",
+]) {
 	try {
 		workspaceAliases[`${pkg}$`] = resolveWorkspaceEntry(pkg)
 	} catch {
