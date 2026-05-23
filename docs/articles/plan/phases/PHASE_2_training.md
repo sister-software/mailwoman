@@ -18,19 +18,40 @@
 - **v0.2.0** (shipped 2026-05-18, PR #53) — `source_weights` mechanism + relaxed coarse gate. 9× macro-F1 (0.037 → 0.335); calibration tightened 2.6× (0.337 → 0.882 in conf>0.9 bucket). Still below 95% target on country/region/locality but real, measurable, ship-worthy improvement.
 - **v0.3.0 → v3.0.0** (shipped 2026-05-22, PR #115; published as `@mailwoman/neural-weights-{en-us,fr-fr}@3.0.0` — major-bumped from npm's 2.0.6 line to signal the 15→21 BIO breaking change). Tier 2 label expansion (`venue` / `street` / `house_number` BIO classes), linear-chain CRF decoder over a frozen BIO transition mask, dual loss (CE + 0.05·CRF NLL), `corpus-v0.3.0` rebuild (677M aligned rows, adds `usgov-nad` at 57.9M with full venue+street+house_number coverage). Four hparam iterations converged on lr=1.5e-4 + grad_clip=1.0 + crf_loss_weight=0.05 + label_smoothing=0 (down from v0.2.0's lr=5e-4 CE-only — dual loss is far more LR-sensitive; see DECISIONS.md "v0.3.0 Stage 2 dual loss"). Early-stopped at step 1800 of 50K on val plateau. Eval against golden v0.1.2 (4,535 entries): macro F1 0.32; capability-surface win on the 3 new label classes (`house_number` F1 0.78 near #57's 0.8 target, `venue` 0.39, `street` 0.27 — both below floor; v0.4.0 targets); **coarse F1 regressed substantially** vs v0.2.0 (region 0.83 → 0.18, locality 0.65 → 0.27, postcode 0.86 → 0.76) — under-trained at step 1800 + expanded label space pulled prior mass off coarse predictions. CRF makes orphan-`I-*` decode structurally impossible (verified on the demo's "Saint Petersburg" case).
 - **JS Viterbi** (shipped 2026-05-22) — `neural/viterbi.ts` lands the Viterbi decoder + BIO structural transition mask. `NeuralAddressClassifier` defaults to Viterbi decode; orphan-`I-*` sequences are now structurally impossible at JS runtime (matching the eval-time path). Works on the v3.0.0 weights as-is — no model retraining required because the structural mask is built from the labels list. Learned CRF transitions will compose on top once a future weights release ships them.
-- **v0.4.0** (in progress 2026-05-23 — issue [#116](https://github.com/sister-software/mailwoman/issues/116)) — recover the coarse-F1 regression + meet issue #57 fine-label floors + harden the dual-loss training family. Six work areas: (1) per-token CRF NLL normalization (eliminates `crf_loss_weight` hand-tuning, matches AllenNLP/FLAIR defaults); (2) longer training — step-1800 is 3.6% of planned 50K; reach step-5000+ before judging val_macro_f1; (3) class-weighted CE biased toward coarse classes to compensate for the 21-label dilution; (4) source-weight rebalance away from NAD-heavy fine-label mix; (5) ~~JS-side Viterbi decode~~ (landed 2026-05-22; see entry above) + label vocab loaded from `model-card.json` at runtime (silent-drop failure mode caught in v0.3.0); (6) reuse `corpus-v0.3.0` (no rebuild needed unless §4 source weights change significantly).
+- **v0.4.0** (shipped to packaged artifacts 2026-05-23, NOT npm-published — issue [#116](https://github.com/sister-software/mailwoman/issues/116)) — six planned work areas: (1) per-token CRF NLL normalization; (2) longer training (reach step-5000+ before judging); (3) class-weighted CE biased toward coarse classes; (4) source-weight rebalance away from NAD-heavy fine-label mix; (5) JS-side Viterbi decode + model-card label loading (landed 2026-05-22, see entry above); (6) reuse `corpus-v0.3.0`. **Shipped recipe is §4 + §5 only**; §1 and §3 deferred to v0.4.1 after destabilizing the dual-loss training.
 
-  **Training-stability findings (2026-05-23 ablation campaign, mid-flight):**
-    1. The full §1+§3+§4 recipe **diverges at all three tested learning rates** (lr=5e-4 step 750, lr=3e-4 step 1000, lr=1.5e-4 step 2000). LR delays the divergence proportionally with diminishing returns — confirming the destabilizer is in the recipe itself, not the LR knob. Same train-loss-then-spike shape across all three: model finds confident-wrong degenerate minimum after ~500 post-warmup steps.
-    2. At `lr=5e-4`, both single-knob ablations fail identically (ablate-§1 collapses 0.35 → 0.11 step 1000; ablate-§3 collapses 0.35 → 0.14 step 750). **`lr=5e-4` is structurally unreachable** for this codebase's dual-loss landscape regardless of which §1/§3 knob is active.
-    3. At `lr=1.5e-4` (v0.3.0-stable), the orthogonal matrix isolated each v0.4.0 change individually:
-        - **source-only** (§4): PASS, peak macro_f1 0.4190 step 2250, drift 0.005 — +0.06 over v0.3.0.
-        - **cw-only** (§3+§4): PASS, peak macro_f1 **0.4279** step 2250, drift 0.0036 — **+0.07 over v0.3.0; current best**.
-        - **crf-only** (§1+§4): smoke pending.
+  **Ablation campaign (2026-05-23, 5 divergence runs + 3 verdict smokes + 1 full 50K + 1 successful full run):**
+    1. The full §1+§3+§4 recipe diverged at **all three tested LRs** (lr=5e-4 step 750, lr=3e-4 step 1000, lr=1.5e-4 step 2000). LR delays divergence proportionally — destabilizer is in the recipe, not LR.
+    2. At `lr=5e-4`, both single-knob ablations failed identically (ablate-§1: 0.35 → 0.11; ablate-§3: 0.35 → 0.14). `lr=5e-4` is structurally unreachable for this codebase's dual-loss landscape regardless of which §1/§3 knob is active.
+    3. Switched to lr=1.5e-4 (v0.3.0-stable) verdict-smoke matrix at max_steps=3000:
+        - source-only (§4): PASS, peak 0.4190 step 2250
+        - cw-only (§3+§4): PASS, peak 0.4279 step 2250
+        - crf-only (§1+§4): FAIL, train_loss=1.24 at step 3000
+    4. **Verdict-smoke framework had a false-positive on cw-only**: the smoke's cosine LR decayed to ~0 by step 2750, masking sustained-peak-LR divergence. When promoted to the full 50K run, cw-only diverged at step 2250 (macro_f1 collapse 0.41 → 0.29). Process improvement for v0.4.1: verdict smokes should use a constant LR or much longer max_steps.
+    5. **Math sanity-check** of `model.py` + `crf.py` found no implementation bug — `per_token` reduction is `nll.sum() / total_tokens.clamp(min=1)`; class_weights enter via `cross_entropy(weight=...)`. Destabilization is a real recipe interaction, not a coding artifact.
+    6. **Shipped checkpoint**: `v0_4_0-stableLR-source-only/step-002200` — §4 source rebalance + v0.3.0 dual-loss base + lr=1.5e-4. Only recipe that stayed clean AND outperformed cw-only on golden v0.1.2 eval.
 
-       Combined with the earlier finding that the full §1+§3+§4 recipe diverges at lr=1.5e-4 step 2000, the offender is either §1 alone or the §1+§3 interaction — crf-only verdict will disambiguate.
-    4. **Math sanity-check** of `model.py` + `crf.py` found no implementation bug — `per_token` reduction is `nll.sum() / total_tokens.clamp(min=1)` (mathematically correct); class_weights enter via `cross_entropy(weight=...)` (PyTorch-standard). The destabilization is a real recipe interaction, not a coding artifact.
-    5. **Provisional v0.4.0 ship recipe** (subject to crf-only smoke verdict): v0.3.0 CRF (per_sequence + crf_loss_weight=0.05) + §3 class_weights + §4 source_weights + lr=1.5e-4 + max_steps=50000. Expected to top out around macro_f1 0.43-0.48 from the cw-only 0.428 peak with 47K steps still to run + cosine decay. §1 (per_token CRF) deferred to a future weights release after the magnitude-balance physics is re-derived.
+  **Golden v0.1.2 eval (4535 entries) — mixed result, issue #116 success metric NOT cleanly met:**
+
+  | tag | v0.4.0 shipped | v0.3.0 | Δ |
+  |---|---:|---:|---:|
+  | country | 0.21 | 0.28 | **-0.07 regression** |
+  | region | 0.19 | 0.18 | +0.01 |
+  | locality | 0.27 | 0.27 | flat |
+  | postcode | 0.69 | 0.76 | **-0.07 regression** |
+  | venue | 0.39 | 0.39 | flat |
+  | street | 0.30 | 0.27 | **+0.03 improvement** |
+  | house_number | 0.79 | 0.78 | +0.01 (issue #57 floor held) |
+
+  Macro F1 raw average: 0.357 vs 0.293. Mean token confidence: 0.806 vs 0.857. Full-parse exact match: 0.082 vs 0.107 (regression — better per-component agreement, worse full-address agreement).
+
+  Issue #116 asked for "clear progress on at least two of {coarse F1, fine F1, calibration, training stability}":
+    - coarse F1: NEGATIVE (country/postcode each -0.07)
+    - fine F1: SMALL POSITIVE (street +0.03, house_number +0.01)
+    - calibration: FLAT
+    - training stability: NEGATIVE (recipe destabilization is the campaign's central finding)
+
+  Only one clean improvement axis. §1 (per_token CRF) and §3 (class_weights) deferred to v0.4.1 after a corpus-side investigation of why the full recipe destabilizes past step 2000.
 
 ## Pre-flight
 
