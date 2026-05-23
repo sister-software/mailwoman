@@ -18,6 +18,7 @@ import type {
 	LocaleHint,
 	LocaleTag,
 	NormalizedInputLite,
+	PhraseProposal,
 	PipelineOpts,
 	PipelineResult,
 	QueryKindResult,
@@ -211,6 +212,7 @@ export async function runPipeline(
 			queryShape,
 			locale,
 			kind,
+			phraseProposals: [],
 			tree,
 			timing,
 			path: "fast-path",
@@ -218,6 +220,16 @@ export async function runPipeline(
 	}
 
 	// Full pipeline.
+	// Stage 2.7 — phrase grouper. Optional injection; runs when wired. Proposals flow forward to
+	// stages 3 + 5 (today: surfaced on the result; tomorrow: passed in as classifier conditioning).
+	let phraseProposals: PhraseProposal[] = []
+	if (stages.groupPhrases) {
+		throwIfAborted(opts)
+		const tGroup = performance.now()
+		phraseProposals = await safeGroupPhrases(stages.groupPhrases, normalized, queryShape, locale)
+		timing["phrase-grouper"] = performance.now() - tGroup
+	}
+
 	let tree: AddressTree = { raw: normalized.normalized, roots: [] }
 	if (stages.classifier) {
 		throwIfAborted(opts)
@@ -239,6 +251,7 @@ export async function runPipeline(
 		queryShape,
 		locale,
 		kind,
+		phraseProposals,
 		tree,
 		timing,
 		path: "full",
@@ -268,6 +281,20 @@ async function safeClassify(
 		return await classifier.parse(text, { queryShape })
 	} catch {
 		return { raw: text, roots: [] }
+	}
+}
+
+/** Defensive wrapper: a grouper failure returns an empty proposal list rather than abort. */
+async function safeGroupPhrases(
+	groupPhrases: NonNullable<RuntimePipelineStages["groupPhrases"]>,
+	normalized: NormalizedInputLite,
+	shape: QueryShapeLite,
+	locale: LocaleHint
+): Promise<PhraseProposal[]> {
+	try {
+		return await groupPhrases(normalized, shape, locale)
+	} catch {
+		return []
 	}
 }
 
