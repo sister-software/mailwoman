@@ -1,0 +1,122 @@
+# Pre-defined tags for Mailwoman documentation.
+# Each tag listed here can be used in frontmatter as `tags: [key]`.
+# Tags NOT listed here will trigger the onInlineTags behavior (warn by default).
+
+# ── Category ──────────────────────────────────────────────
+domain:
+  label: Domain
+  description: Articles explaining the address-parsing problem space — why addresses are hard, how the postal system works, what users actually type.
+
+architecture:
+  label: Architecture
+  description: Articles describing Mailwoman's staged pipeline design, the Knowledge Ladder, and how the stages compose.
+
+concepts:
+  label: Concepts
+  description: Technical deep dives into specific components of Mailwoman's system.
+
+reference:
+  label: Reference
+  description: Glossaries, overviews, historical bridges, and implementation-plan material.
+
+hubris:
+  label: Geocoder hubris
+  description: Articles examining geocoder overconfidence — why 90% coverage isn't enough, why Google's API and geocode.earth have ceilings.
+
+falsehoods:
+  label: Address falsehoods
+  description: Articles cataloguing the falsehoods programmers believe about addresses, citing Michael Tandy's original catalogue.
+
+# ── Classification ─────────────────────────────────────────
+rule-based:
+  label: Rule-based classifiers
+  description: Articles about regex, dictionary, and heuristic classifiers inherited from Pelias and Mailwoman v1.
+
+neural:
+  label: Neural classifier
+  description: Articles about the encoder-only transformer model, BIO labeling, ONNX runtime, and training.
+
+hybrid:
+  label: Rule + neural hybrid
+  description: Articles about the coexistence of rule classifiers and the neural model through the policy registry.
+
+staged-pipeline:
+  label: Staged pipeline
+  description: Articles about the six-stage runtime pipeline and the Knowledge Ladder decomposition.
+
+resolver:
+  label: Resolver / WOF
+  description: Articles about the Who's On First gazetteer, concordance scoring, and resolver candidate ranking.
+
+# ── Infrastructure ─────────────────────────────────────────
+corpus:
+  label: Corpus pipeline
+  description: Articles about the training-data pipeline — adapters, alignment, synthesis, Parquet shards.
+
+training:
+  label: Model training
+  description: Articles about training runs, loss recipes, verdict smokes, and divergence diagnostics.
+
+tokenizer:
+  label: Tokenization
+  description: Articles about SentencePiece tokenization, byte-fallback, and multi-script handling.
+
+# ── Phrase kind / component ────────────────────────────────
+street:
+  label: Street components
+  description: Articles focused on street names, building numbers, street suffixes, and intersection addresses.
+
+locality:
+  label: Locality components
+  description: Articles focused on cities, towns, neighborhoods, boroughs, and administrative place names.
+
+postcode:
+  label: Postcode components
+  description: Articles focused on ZIP codes, postcodes, postal routing codes, and their formats.
+
+region:
+  label: Region components
+  description: Articles focused on states, provinces, départements, and first-level administrative divisions.
+
+country:
+  label: Country components
+  description: Articles focused on sovereign states, territories, and country-level addressing conventions.
+
+venue:
+  label: Venue / POI
+  description: Articles about venue names, points of interest, organizations, and the venue-vs-address ambiguity problem.
+
+intersection:
+  label: Intersection addresses
+  description: Articles about crossing-street addresses and street-pair location descriptions.
+
+# ── Locale ─────────────────────────────────────────────────
+en-us:
+  label: United States (en-US)
+  description: Articles with US-specific content — ZIP codes, USPS delivery, NAD, TIGER, state abbreviations.
+
+fr-fr:
+  label: France (fr-FR)
+  description: Articles with France-specific content — BAN, CEDEX, arrondissements, French addressing conventions.
+
+ja-jp:
+  label: Japan (ja-JP)
+  description: Articles discussing Japanese addressing — block-based numbering, no streets, chōme/banchi/gō, Phase 6 planning.
+
+international:
+  label: International
+  description: Articles about non-US addressing — comparative postcode systems, global gazetteers, locale-specific formats.
+
+# ── Language / script ──────────────────────────────────────
+multilingual:
+  label: Multilingual
+  description: Articles about addresses in multiple languages, mixed-language input, and locale detection.
+
+non-latin:
+  label: Non-Latin scripts
+  description: Articles about CJK, Cyrillic, Arabic, Hangul, and other non-Latin address formats.
+
+# ── Theme ──────────────────────────────────────────────────
+motivation:
+  label: Project motivation
+  description: Articles making the case for Mailwoman — why neural, why TypeScript, why a staged pipeline.
