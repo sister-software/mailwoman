@@ -1,0 +1,153 @@
+---
+slug: two-voices-arguing-in-a-model
+title: Two voices arguing inside a model — a beginner-friendly debugging story
+authors: [teffen]
+tags: [training, beginner, ai-debugging]
+---
+
+This is the third post in a series about a training problem we've been chasing. The [first two](/blog/v0-5-0-c-train-bisect) [were](/blog/v0-5-0-bisect-by-elimination) written for software engineers. This one is for someone who is just starting to learn about AI and machine learning — no jargon assumed, no math beyond high-school algebra. The point is to show you what real ML debugging looks like, using a problem we actually had this week.
+
+If you've been programming for a while but ML feels opaque, this post is for you. The core technique we used — figuring out which of two instructions our model was listening to — turns out to be much more like ordinary debugging than the field usually makes it sound.
+
+{/* truncate */}
+
+## What we're building, in one paragraph
+
+Mailwoman is a piece of software that reads address strings — `"350 5th Avenue, New York, NY 10118"` — and turns them into structured place information ("this is in Manhattan, here are the coordinates, here's the postcode, etc."). It uses a small AI model to do the parsing. "Small" by AI standards: about 9 million numbers inside it. (For comparison: GPT-4 is rumoured to have over a trillion.)
+
+We don't need a giant model because the task is narrow: addresses follow patterns, and we just need to identify which parts of a string are which (`350` is a house number, `5th Avenue` is a street, etc.).
+
+## What "training a model" actually looks like
+
+Forget everything you've seen about AI in movies. Training a model is, mechanically, this:
+
+1. You have a model with millions of numbers inside it (call them "weights"). At the start they're random.
+2. You have a pile of example data — addresses with the correct answers labelled, like flashcards.
+3. You show the model an address. It guesses what each part is.
+4. You compare the guess to the correct answer. The difference is a number called **loss** — low loss means a good guess, high loss means a bad guess.
+5. The training algorithm then tweaks the millions of internal numbers to make the loss a little bit smaller next time.
+6. Repeat thousands or millions of times.
+
+The "intelligence" of the model is just an enormous lookup table of patterns — refined slowly by 50,000 rounds of "you said it was a street name, but it was actually a postcode; here, nudge these specific numbers a tiny bit so you'll guess better next time."
+
+If you've ever debugged a function by running it, looking at the wrong output, and tweaking one parameter at a time until the output got right, you've done a single iteration of model training by hand.
+
+## The "loss curve" you keep hearing about
+
+People who train models stare at a chart called the loss curve all day. It looks like this:
+
+```
+loss
+ ^
+ |   X
+ |    X
+ |     X
+ |      XX
+ |        XXX
+ |           XXXXX
+ |                XXXXXXXXXX
+ +----------------------------> step
+   0      500      1000     1500
+```
+
+Each X is one round of training. Loss starts high (the model is randomly guessing) and decreases as the model learns. A good training run looks exactly like that — descending until it plateaus.
+
+Now here's our actual loss curve from one of nine training runs we did this month:
+
+```
+loss
+ ^                                  XXXX
+ |                                 X    X
+ |                                X      XX
+ |                               X         XX
+ |    X                         X            XX
+ |     X                       X                X
+ |      X                    XX                  X
+ |       XX                 X                     ...
+ |         XXX             X
+ |            XXXXX       X
+ |                 XXXXXXX
+ +----------------------------> step
+   0     500     800     1100
+```
+
+The model descends nicely for 500 steps (warmup), settles at a low loss for a bit — and then climbs back up. By the end, it's worse than when it started. We trained it on 50,000 examples and it got *worse*.
+
+Every training engineer's heart sinks at this curve. It means something is wrong, and the model isn't telling us what. There's no stack trace. There's no exception. There's just a chart that says "I learned, and then I unlearned."
+
+We saw this exact shape in nine different runs. Different learning speeds, different model sizes, different feature combinations. Every time: clean descent, then catastrophic climb.
+
+## The clue we'd been missing
+
+To find a bug in a program, you usually narrow it down by ruling out parts of the code one at a time. ML debugging works the same way — you change one thing, retrain, look at the curve. But each "retrain" takes hours and costs real money on a rented GPU. You learn to be careful about which experiments are worth running.
+
+For weeks we'd been ruling out hypotheses:
+- Maybe the learning rate is too high? (No — lowering it just delayed the climb.)
+- Maybe the model is too small? (No — we made it bigger and the same thing happened.)
+- Maybe a new feature we added is destabilising it? (No — we turned it off, same problem.)
+- Maybe the data has a bug? (Couldn't rule out, expensive to check.)
+
+Then somebody pointed out a thing we hadn't questioned: **we were training the model with two different goals at once.**
+
+The model has two scoring systems. We'll call them Voice A and Voice B.
+
+- **Voice A** says: "How good are your guesses for each individual word? Did you tag '350' correctly as a house number? Did you tag 'NY' correctly as a region?"
+- **Voice B** says: "How sensible is your overall pattern? Is your sequence of tags structurally valid? Does it look like a real address?"
+
+Both voices are useful. A working geocoder needs both per-word accuracy *and* sensible patterns. We'd been adding their feedback together (with Voice B's contribution scaled down to 5%) and using that combined signal to train the model.
+
+The question we'd never asked: **were Voice A and Voice B telling the model to do the same thing?**
+
+## The five-minute diagnostic
+
+Here's the part that surprised me about ML debugging — the technique we used could be explained to a curious teenager.
+
+When you train a model, every weight inside it gets nudged in a particular direction based on the combined loss. That nudge is called a **gradient**. If gradients are big, the weight moves a lot per step; if they're small, it moves a little.
+
+The two voices each contribute their own gradient. They get added together (with Voice B at 5%) to produce the final nudge.
+
+So we asked: at the moment just before the model starts unlearning, **which voice is doing most of the talking?** We took a saved snapshot of the model from that moment, fed it a few example addresses, and measured the size of each voice's contribution to the gradient separately.
+
+We expected the answer to be something like "Voice A is 20× louder than Voice B" — meaning Voice B was contributing almost nothing, which would mean the 5% scaling we'd set was actually appropriate.
+
+What we got instead: **Voice B's gradient was 16× LOUDER than Voice A's.**
+
+Wait. Voice B was supposed to be scaled to 5%. But the raw gradient was 16× larger than Voice A's. Multiply 5% by 16 and Voice B's effective contribution to the model's training was actually 80% of Voice A's. The hand-tuned scaling knob we'd been treating as "Voice B contributes lightly" was secretly producing "Voice B contributes nearly as much as Voice A."
+
+## The cooperative-vs-conflict picture
+
+Here's the framing that made it all click.
+
+Imagine you're a hiker on a foggy hill, trying to walk to the lowest point in the landscape. You can't see far, so you have two GPS devices that each tell you "go downhill, that way."
+
+- **At the top of the hill (high loss),** both GPSes agree: every direction is downhill, so they both point you roughly the same way. You make progress. Loss decreases.
+- **As you descend into a specific valley (loss gets lower),** the landscape becomes more detailed. Suddenly the two GPSes start disagreeing: Voice A says the valley floor is to the left; Voice B says it's to the right. They don't see the same valley.
+
+When that happens, your hiking direction is mostly determined by **whichever GPS is shouting louder**. With Voice B shouting 16× louder than Voice A, you stop following Voice A's instructions and start following Voice B's — even though Voice A was correct about where the valley floor actually was. You climb out of one valley toward a different point that Voice B prefers, and Voice A's loss (the per-word accuracy) gets worse.
+
+That's literally what happened to our model. Above loss 0.41 (high up on the hill), both voices agreed and the model descended cleanly. Below 0.41, they started disagreeing, and Voice B's louder gradient pulled the model away from the basin Voice A had been guiding it toward. The model's per-word accuracy got worse and worse — which we saw as loss climbing back up.
+
+## The fix
+
+Once you understand what's happening, the fix is mechanical: **silence Voice B during training**. Don't let it contribute to the gradient at all.
+
+But we still want Voice B's contribution somewhere, because it really does encode useful structural rules (no orphan tags, no invalid BIO sequences). So we keep Voice B for **inference** — the moment when we actually use the trained model to parse an address — but not during training.
+
+This is a one-line change in the code: when Voice B's weight is set to 0, don't even compute it. The training loop then runs purely on Voice A's gradient, which has been the well-behaved one all along.
+
+## What we tell ourselves we learned
+
+A few things stand out:
+
+1. **"Add two losses together with weights" sounds simple. It can be a disaster.** Two loss functions can have wildly different gradient magnitudes even when their loss *values* look comparable. Multiplicative scaling on the loss does NOT produce balanced contributions to the optimiser. Watching the loss values fooled us for nine training runs.
+2. **The five-minute diagnostic was more valuable than the previous month of retraining experiments.** Every "what if we change this knob and retrain" experiment cost hours. The gradient-norm probe cost five minutes and gave a sharper answer than any of them. It works because it asks a more fundamental question: not "what's the result," but "what's the model actually listening to?"
+3. **ML debugging is more like programming debugging than the field admits.** Once you have a vocabulary for what's happening, the techniques are familiar: bisect, isolate, instrument, hypothesise, test. The hard part is finding the right vocabulary for *what's actually happening inside the model*. Once you have it, the bug is usually findable.
+4. **Cheap experiments first.** A 5-minute probe should always run before a 25-hour retrain. We didn't think to run the probe earlier because nobody had told us it was a thing. Now we know.
+
+## Where to read more
+
+- [The original failure post](/blog/v0-5-0-c-train-bisect) — written for engineers, has the loss curves and recipe details.
+- [The bisect-by-elimination post](/blog/v0-5-0-bisect-by-elimination) — what we ruled out before the diagnostic.
+- [The technical writeup](/docs/concepts/dual-loss-curvature-conflict) — for engineers who want the gradient math and the cooperative-vs-conflict framing in detail.
+
+If you're starting out in ML and any of this was helpful — or if you'd like a future post to dive deeper into any specific term I used here — `contact@sister.software`. We'd genuinely like to hear what gaps the existing intro material isn't filling.
