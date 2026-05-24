@@ -13,12 +13,12 @@ After the LLM generates a row, the validator confirms that every annotated compo
 
 ```json
 {
-  "surface": "350 5th Avenue, New York, NY 10118",
-  "house_number": "350",
-  "street": "5th Avenue",
-  "locality": "New York",
-  "region": "NY",
-  "postcode": "10118"
+	"surface": "350 5th Avenue, New York, NY 10118",
+	"house_number": "350",
+	"street": "5th Avenue",
+	"locality": "New York",
+	"region": "NY",
+	"postcode": "10118"
 }
 ```
 
@@ -37,10 +37,10 @@ LLMs hallucinate around component boundaries. The B and B2 reject logs catalogue
 
 Reject rates from the two runs:
 
-| Run | Total generated | Rejected | Rate |
-|---|---|---|---|
-| B (kryptonite) | 4,872 | 101 | 2.1% |
-| B2 (transliteration) | 74,140 | 821 | 1.1% |
+| Run                  | Total generated | Rejected | Rate |
+| -------------------- | --------------- | -------- | ---- |
+| B (kryptonite)       | 4,872           | 101      | 2.1% |
+| B2 (transliteration) | 74,140          | 821      | 1.1% |
 
 Neither approaches zero. The 1–2% range is the **floor** for DeepSeek-as-corpus at the prompt quality we shipped with. Better prompting drops it further but does not eliminate it. The validator is permanent infrastructure.
 

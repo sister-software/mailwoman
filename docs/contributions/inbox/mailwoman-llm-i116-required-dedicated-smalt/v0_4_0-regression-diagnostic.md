@@ -11,17 +11,17 @@ reports counts.
 Heuristic: each error is classified into one of {`non_latin`, `case_only`,
 `bio_slip`, `empty_pred`, `num_confused`, `other`}. Order-sensitive — the first
 match wins, so `non_latin` (raw contains non-ASCII) over-attributes to its
-bucket; many `non_latin` entries are *also* bio_slip etc.
+bucket; many `non_latin` entries are _also_ bio_slip etc.
 
 ### country (245 supports, F1=0.21 vs v0.3.0's 0.28)
 
-| bucket | FP (187) | FN (194) |
-|---|---:|---:|
+| bucket                          |  FP (187) |  FN (194) |
+| ------------------------------- | --------: | --------: |
 | `non_latin` (raw has non-ASCII) | 139 (74%) | 178 (92%) |
-| `other` (positional / spurious) | 45 (24%) | — |
-| `empty_pred` | — | 13 (7%) |
-| `bio_slip` | 2 | 2 |
-| `case_only` | 1 | 1 |
+| `other` (positional / spurious) |  45 (24%) |         — |
+| `empty_pred`                    |         — |   13 (7%) |
+| `bio_slip`                      |         2 |         2 |
+| `case_only`                     |         1 |         1 |
 
 **Key insight**: ~92% of country FNs are adversarial transliteration entries
 (Cyrillic, Arabic, CJK names mixed with Latin-script country labels). The
@@ -36,13 +36,13 @@ ship-decision denominator) recovers most of the gap.
 
 ### postcode (2980 supports, F1=0.69 vs v0.3.0's 0.76)
 
-| bucket | FP (355) | FN (1217) |
-|---|---:|---:|
-| `empty_pred` (model emits nothing) | — | **789 (65%)** |
-| `num_confused` (predicts a house-num) | 136 (38%) | 136 (11%) |
-| `non_latin` | 113 (32%) | 213 (18%) |
-| `bio_slip` (boundary off ± 1 token) | 73 (21%) | 73 (6%) |
-| `other` | 33 (9%) | 6 (0.5%) |
+| bucket                                |  FP (355) |     FN (1217) |
+| ------------------------------------- | --------: | ------------: |
+| `empty_pred` (model emits nothing)    |         — | **789 (65%)** |
+| `num_confused` (predicts a house-num) | 136 (38%) |     136 (11%) |
+| `non_latin`                           | 113 (32%) |     213 (18%) |
+| `bio_slip` (boundary off ± 1 token)   |  73 (21%) |       73 (6%) |
+| `other`                               |   33 (9%) |      6 (0.5%) |
 
 **Key insight #1**: 789 of 1217 FNs (65%) are `empty_pred` — the model emits
 no postcode at all for the entry. Looking at samples:
@@ -70,6 +70,7 @@ If golden v0.1.2's non-Latin adversarial entries are excluded (since they were
 v0.3.0 known-failure-modes too, and aren't really a v0.4.0 regression):
 
 ### country, non-adversarial slice
+
 - FP: 187 − 139 = 48 errors, mostly `other` (model predicts "France"/"USA"
   when gold has empty country = training-data positional bias)
 - FN: 194 − 178 = 16 errors, mostly `empty_pred` (model misses some Latin
@@ -79,6 +80,7 @@ Real country regression vs v0.3.0 is small — most of the headline -0.07
 F1 delta is the adversarial transliteration share.
 
 ### postcode, non-adversarial slice
+
 - FP: 355 − 113 = 242 errors. Of these, `num_confused`=136 (56%), `bio_slip`=73
   (30%), `other`=33 (14%). Decoder span-trim closes ~30%; source-weight tweak
   closes ~56%; together ~86% of non-adversarial FP.
@@ -101,6 +103,7 @@ forms but the corpus mix lost the mid-position structured-address forms NAD
 contributed.
 
 Fix options:
+
 - Bump NAD back farther (1.0 → 1.7+) — but this contradicts §4's intent
 - Bump `wof-postalcode: 2.0 → 2.5` AND keep NAD at 1.0 — more aggressive
   coarse-pull
@@ -127,10 +130,10 @@ transliteration variants would have a big effect on the headline F1 numbers.
 
 ## Counts summary
 
-| | shipped v0.4.0 | v0.3.0 | Δ headline | Δ if non-Latin removed |
-|---|---:|---:|---:|---:|
-| country F1 | 0.21 | 0.28 | -0.07 | likely -0.01 to -0.02 |
-| postcode F1 | 0.69 | 0.76 | -0.07 | likely -0.04 to -0.05 |
+|             | shipped v0.4.0 | v0.3.0 | Δ headline | Δ if non-Latin removed |
+| ----------- | -------------: | -----: | ---------: | ---------------------: |
+| country F1  |           0.21 |   0.28 |      -0.07 |  likely -0.01 to -0.02 |
+| postcode F1 |           0.69 |   0.76 |      -0.07 |  likely -0.04 to -0.05 |
 
 After (1)+(2)+(3): postcode F1 plausibly recovers to 0.74-0.78 range. After
 (2)+(3): country F1 plausibly recovers to 0.27-0.30 range.

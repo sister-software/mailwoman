@@ -9,7 +9,7 @@ v0.5.0 was the **fresh-slate ship**: new tokenizer, expanded corpus, new archite
 
 This post walks through the four training attempts the v0.5.0 C-train made overnight, the bisect that ruled out three plausible explanations, and what we think the remaining culprit is. It's a sister piece to [the v0.4.0 retrospective](/blog/v0-4-0-ablation-campaign) — same shape of failure, different diagnostic ladder.
 
-{/* truncate */}
+{/_ truncate _/}
 
 ## What v0.5.0 shipped before the train started
 
@@ -70,11 +70,11 @@ The only thing that shifts between runs is **how deep the loss gets before the c
 
 We ran three knob-changes between v1 and h256-bisect, each motivated by a different hypothesis. None of them held.
 
-**Learning rate isn't it.** v0.4.0's bisect already showed that a factor-2 LR drop only buys a factor-1.3 step delay, ruling out "we picked too high an LR" as a full explanation. v1 → v2 confirmed the same shape: 1.5e-4 → 1e-4 moved the divergence from step 700 to step 1000. Same dynamic, just shifted later. The LR controls *when*, not *whether*.
+**Learning rate isn't it.** v0.4.0's bisect already showed that a factor-2 LR drop only buys a factor-1.3 step delay, ruling out "we picked too high an LR" as a full explanation. v1 → v2 confirmed the same shape: 1.5e-4 → 1e-4 moved the divergence from step 700 to step 1000. Same dynamic, just shifted later. The LR controls _when_, not _whether_.
 
 **Recipe knobs §1+§3 aren't it.** v0.4.0's retrospective concluded the destabilizer was in the recipe, not the LR, and shipped with §1 (per_token CRF) and §3 (class_weights) OFF. v3 reverted those knobs and dropped back to LR=1.5e-4 — the canonical v0.4.0-stable recipe. v3 trained better than v1/v2 (bottom of 0.41 vs 0.61/0.51), zero GPU hangs (vs v2's six), and still diverged at step 900.
 
-**Hidden size isn't it.** h256-bisect reverted the only architectural change still in the recipe: 384 → 256 hidden, 6 → 4 heads, 1536 → 1024 intermediate. With everything else at v0.4.0-shipped settings — eff_batch=128, LR=1.5e-4, §1+§3 OFF — this configuration is *identical to v0.4.0's shipped recipe*, except for two architectural pieces we haven't touched yet. h256-bisect was the best-performing run of the four (peak val_macro_f1=0.399, train_loss=0.31), and it diverged anyway.
+**Hidden size isn't it.** h256-bisect reverted the only architectural change still in the recipe: 384 → 256 hidden, 6 → 4 heads, 1536 → 1024 intermediate. With everything else at v0.4.0-shipped settings — eff_batch=128, LR=1.5e-4, §1+§3 OFF — this configuration is _identical to v0.4.0's shipped recipe_, except for two architectural pieces we haven't touched yet. h256-bisect was the best-performing run of the four (peak val_macro_f1=0.399, train_loss=0.31), and it diverged anyway.
 
 ## The remaining suspects
 
@@ -99,7 +99,7 @@ Two things had to change for the smoke to be a real predictor:
 - **Smoke length matters.** 50 steps captures only the warmup descent. The sustained-peak-LR regime where the recipe destabilises starts at step 500 in our schedule. Smokes need to be long enough to spend several hundred steps near peak LR — we ended up at 1500 steps as the floor.
 - **Effective batch must match the full run.** v3's smoke ran at batch_size=8 grad_accum=1 (eff_batch=8); the full run was eff_batch=128. The smoke said stable; the full diverged. **The recipe's stability is batch-geometry-dependent.** A smoke that doesn't reproduce the full-run gradient noise is a smoke that can't detect this class of failure.
 
-The constant-LR-mode discipline that landed in Thread F is still correct — it's what made the v0.5.0 destabilization observable at all instead of hiding under cosine decay. But the smoke configuration needs to mirror the full-run *throughput* characteristics, not just the LR schedule.
+The constant-LR-mode discipline that landed in Thread F is still correct — it's what made the v0.5.0 destabilization observable at all instead of hiding under cosine decay. But the smoke configuration needs to mirror the full-run _throughput_ characteristics, not just the LR schedule.
 
 Both lessons will land in `VERDICT_SMOKES.md` as a follow-up. The current text describes constant-LR mode as the gate but doesn't say "your smoke's eff_batch must match the full run." That's an obvious-in-hindsight footgun.
 

@@ -9,7 +9,7 @@ You don't have to take Mailwoman's pipeline as-is. The runtime coordinator (`cre
 
 This article is the practical "how do I plug in" companion to:
 
-- [The staged pipeline](./the-staged-pipeline.md) — the narrative for *why* the stages exist
+- [The staged pipeline](./the-staged-pipeline.md) — the narrative for _why_ the stages exist
 - [STAGES.md (reference)](../plan/reference/STAGES.md) — the full per-stage contract with type definitions, error semantics, and edge cases
 
 Read those first if you're new. Use this page when you already know the shape and want to ship a custom stage.
@@ -20,12 +20,12 @@ Read those first if you're new. Use this page when you already know the shape an
 import type { RuntimePipelineStages } from "@mailwoman/core/pipeline"
 
 interface RuntimePipelineStages {
-    normalize?:        (raw: string, opts?: { locale?: string }) => NormalizedInputLite
-    computeQueryShape?: (input: NormalizedInputLite | string, opts?: { locale?: string }) => QueryShapeLite
-    detectLocale?:     (input: NormalizedInputLite, shape: QueryShapeLite, opts?: { hint?: LocaleTag }) => Promise<LocaleHint>
-    classifyKind?:     (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<QueryKindResult>
-    classifier?:       { parse(text: string, opts?: { queryShape?: QueryShapeLite }): Promise<AddressTree> }
-    resolver?:         { resolveTree(tree: AddressTree, opts?: ResolveOpts): Promise<AddressTree> }
+	normalize?: (raw: string, opts?: { locale?: string }) => NormalizedInputLite
+	computeQueryShape?: (input: NormalizedInputLite | string, opts?: { locale?: string }) => QueryShapeLite
+	detectLocale?: (input: NormalizedInputLite, shape: QueryShapeLite, opts?: { hint?: LocaleTag }) => Promise<LocaleHint>
+	classifyKind?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<QueryKindResult>
+	classifier?: { parse(text: string, opts?: { queryShape?: QueryShapeLite }): Promise<AddressTree> }
+	resolver?: { resolveTree(tree: AddressTree, opts?: ResolveOpts): Promise<AddressTree> }
 }
 ```
 
@@ -37,15 +37,15 @@ Every stage is **optional**. When you omit one, the coordinator either substitut
 import { createRuntimePipeline } from "mailwoman"
 
 const myLocaleDetector = async (input, shape, opts) => {
-    if (opts?.hint) return { locale: opts.hint, confidence: 1.0, alternatives: [], source: "caller" }
-    // Your detection logic here — fastText, a CLD, an LLM, whatever.
-    const guess = await myModel.classify(input.normalized)
-    return { locale: guess.tag, confidence: guess.score, alternatives: [], source: "detected" }
+	if (opts?.hint) return { locale: opts.hint, confidence: 1.0, alternatives: [], source: "caller" }
+	// Your detection logic here — fastText, a CLD, an LLM, whatever.
+	const guess = await myModel.classify(input.normalized)
+	return { locale: guess.tag, confidence: guess.score, alternatives: [], source: "detected" }
 }
 
 const pipeline = createRuntimePipeline({
-    detectLocale: myLocaleDetector,
-    // Other stages default to the shipped implementations.
+	detectLocale: myLocaleDetector,
+	// Other stages default to the shipped implementations.
 })
 
 const result = await pipeline("8 rue Lafayette, Paris")
@@ -57,14 +57,14 @@ Same pattern for any stage. The defaults you don't override (e.g. `@mailwoman/no
 
 Not every stage failure is treated the same. The coordinator distinguishes **graceful** stages (failure produces a degraded but valid result) from **non-graceful** stages (failure surfaces to the caller).
 
-| Stage | If it throws |
-|---|---|
-| `normalize` | Propagates. Input preprocessing is a contract; a crash is a bug. |
-| `computeQueryShape` | Propagates. Same rationale. |
-| `detectLocale` | Propagates. A locale detector that crashes signals a real fault, not noise. |
-| `classifyKind` | Propagates. Kind classification runs on the QueryShape we just computed — there's nothing external that can poison it. |
-| `classifier.parse` | **Swallowed.** Returns an empty `AddressTree`; pipeline continues. The classifier runs against external weights / arbitrary user input; defensive. |
-| `resolver.resolveTree` | **Swallowed.** Returns the classifier's tree unchanged. Backend may be unavailable; we surface what we have rather than fail the whole call. |
+| Stage                  | If it throws                                                                                                                                       |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `normalize`            | Propagates. Input preprocessing is a contract; a crash is a bug.                                                                                   |
+| `computeQueryShape`    | Propagates. Same rationale.                                                                                                                        |
+| `detectLocale`         | Propagates. A locale detector that crashes signals a real fault, not noise.                                                                        |
+| `classifyKind`         | Propagates. Kind classification runs on the QueryShape we just computed — there's nothing external that can poison it.                             |
+| `classifier.parse`     | **Swallowed.** Returns an empty `AddressTree`; pipeline continues. The classifier runs against external weights / arbitrary user input; defensive. |
+| `resolver.resolveTree` | **Swallowed.** Returns the classifier's tree unchanged. Backend may be unavailable; we surface what we have rather than fail the whole call.       |
 
 This asymmetry is intentional. Stages 1, 2, 2.5 are pure functions over the input; if they crash, something is wrong with the request shape and the caller needs to know. Stages 3 and 6 are wrapped because their dependencies (ONNX model, SQLite database, network) are points where production failures legitimately happen and degrading gracefully beats taking the whole query down.
 
@@ -77,10 +77,10 @@ const controller = new AbortController()
 setTimeout(() => controller.abort(), 100)
 
 try {
-    const result = await pipeline("…", { signal: controller.signal })
+	const result = await pipeline("…", { signal: controller.signal })
 } catch (err) {
-    // err.name === "AbortError" if the coordinator caught the signal between stages.
-    // err is whatever you passed to controller.abort(reason) if you supplied a reason.
+	// err.name === "AbortError" if the coordinator caught the signal between stages.
+	// err is whatever you passed to controller.abort(reason) if you supplied a reason.
 }
 ```
 
@@ -92,14 +92,14 @@ Aborting before any stage runs throws immediately. Aborting between stages skips
 
 `PipelineResult.timing` records per-stage wall time in milliseconds. The keys present depend on the path the coordinator took:
 
-| Key | Always present | Notes |
-|---|---|---|
-| `normalize` | yes | |
-| `query-shape` | yes | |
-| `locale-gate` | yes | |
-| `kind-classifier` | yes | |
-| `token-classify` | full path only, when classifier wired | Absent on fast-path; absent when no classifier injected |
-| `resolve` | when resolver wired | Present on both full and fast-path |
+| Key               | Always present                        | Notes                                                   |
+| ----------------- | ------------------------------------- | ------------------------------------------------------- |
+| `normalize`       | yes                                   |                                                         |
+| `query-shape`     | yes                                   |                                                         |
+| `locale-gate`     | yes                                   |                                                         |
+| `kind-classifier` | yes                                   |                                                         |
+| `token-classify`  | full path only, when classifier wired | Absent on fast-path; absent when no classifier injected |
+| `resolve`         | when resolver wired                   | Present on both full and fast-path                      |
 
 The `path` field tells you which branch ran: `"full"` (stages 3-5 ran) or `"fast-path"` (kind classifier + QueryShape agreed on a trivial input, stages 3-5 skipped, tree built from QueryShape alone).
 

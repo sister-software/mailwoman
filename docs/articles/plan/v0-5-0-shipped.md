@@ -23,15 +23,15 @@ The "fresh-slate" framing is described in the operator's [sharpen-the-axe note](
 
 ## The six threads
 
-| Thread | Name | What it adds | PR |
-|---|---|---|---|
-| **A0** | Tokenizer harness + A0 weights | SentencePiece training pipeline; A0 trained on `corpus-v0.3.0` as a byte-fallback baseline. **A1** will retrain on `corpus-v0.4.0` once B + B2 are both in. | [#129](https://github.com/sister-software/mailwoman/pull/129) |
-| **B** | Kryptonite catalogue | 4,771 adversarial address rows generated via DeepSeek — `NY-NY Steakhouse`, `Paris, Texas`, `Saint Petersburg, FL`, etc. Each annotated with the correct parse. | [#130](https://github.com/sister-software/mailwoman/pull/130) |
-| **B2** | Transliteration pairs | (Still cooking — see below.) ~75K US/FR addresses transliterated into Cyrillic / Japanese / Hangul / Han / Armenian script, for the A1 multi-script tokenizer training. | — |
-| **C-s** | Classifier code path | Top-k inference (returns ranked sequences, not just argmax) + phrase-prior input features that condition on Stage 2.7's proposed spans. **No training run** in this PR — that lands once A1 + corpus-v0.4.0 are ready. | [#128](https://github.com/sister-software/mailwoman/pull/128) |
-| **D-s** | Stage 5 reconcile | `reconcile.ts` joint decoder — beam search over (span × tag × resolver candidate) with concordance scoring via WOF parent-id chains. Catches the kryptonite cases at runtime. | [#131](https://github.com/sister-software/mailwoman/pull/131) |
-| **E** | Phrase grouper | New `@mailwoman/phrase-grouper` workspace — Stage 2.7 proposes coherent input spans (street, postcode, locality, …) before Stage 3 runs. Rule-based v1 only; learned span proposer scoped for v0.5.1 ([PHASE_8_E](./phases/PHASE_8_E_learned_span_proposer.md)). | [#126](https://github.com/sister-software/mailwoman/pull/126) |
-| **F** | Verdict-smoke discipline | New [`VERDICT_SMOKES.md`](./reference/VERDICT_SMOKES.md) + `--smoke-mode {constant,long-tail}` flag, so the cosine-LR mask that hid v0.4.0's divergence cannot reoccur. | [#125](https://github.com/sister-software/mailwoman/pull/125) |
+| Thread  | Name                           | What it adds                                                                                                                                                                                                                                                     | PR                                                            |
+| ------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **A0**  | Tokenizer harness + A0 weights | SentencePiece training pipeline; A0 trained on `corpus-v0.3.0` as a byte-fallback baseline. **A1** will retrain on `corpus-v0.4.0` once B + B2 are both in.                                                                                                      | [#129](https://github.com/sister-software/mailwoman/pull/129) |
+| **B**   | Kryptonite catalogue           | 4,771 adversarial address rows generated via DeepSeek — `NY-NY Steakhouse`, `Paris, Texas`, `Saint Petersburg, FL`, etc. Each annotated with the correct parse.                                                                                                  | [#130](https://github.com/sister-software/mailwoman/pull/130) |
+| **B2**  | Transliteration pairs          | (Still cooking — see below.) ~75K US/FR addresses transliterated into Cyrillic / Japanese / Hangul / Han / Armenian script, for the A1 multi-script tokenizer training.                                                                                          | —                                                             |
+| **C-s** | Classifier code path           | Top-k inference (returns ranked sequences, not just argmax) + phrase-prior input features that condition on Stage 2.7's proposed spans. **No training run** in this PR — that lands once A1 + corpus-v0.4.0 are ready.                                           | [#128](https://github.com/sister-software/mailwoman/pull/128) |
+| **D-s** | Stage 5 reconcile              | `reconcile.ts` joint decoder — beam search over (span × tag × resolver candidate) with concordance scoring via WOF parent-id chains. Catches the kryptonite cases at runtime.                                                                                    | [#131](https://github.com/sister-software/mailwoman/pull/131) |
+| **E**   | Phrase grouper                 | New `@mailwoman/phrase-grouper` workspace — Stage 2.7 proposes coherent input spans (street, postcode, locality, …) before Stage 3 runs. Rule-based v1 only; learned span proposer scoped for v0.5.1 ([PHASE_8_E](./phases/PHASE_8_E_learned_span_proposer.md)). | [#126](https://github.com/sister-software/mailwoman/pull/126) |
+| **F**   | Verdict-smoke discipline       | New [`VERDICT_SMOKES.md`](./reference/VERDICT_SMOKES.md) + `--smoke-mode {constant,long-tail}` flag, so the cosine-LR mask that hid v0.4.0's divergence cannot reoccur.                                                                                          | [#125](https://github.com/sister-software/mailwoman/pull/125) |
 
 ## How the threads compose
 
@@ -73,15 +73,15 @@ The single biggest schedule reframe was **A0** — the plan originally said "A i
 
 That way A0 could ship in parallel with B + E + the scaffolds, instead of waiting for B + B2 to finish.
 
-The other parallel-friendly move was **C-s and D-s as scaffolds**. The plan had C and D as serial training/integration work that needed real classifier output to validate. We pulled the *code* portion to t0 (forward-pass tests against stub data, mocked top-k for Stage 5) and deferred only the actual training run. That left the only mandatory serial portion as `B → A1 → C-train`.
+The other parallel-friendly move was **C-s and D-s as scaffolds**. The plan had C and D as serial training/integration work that needed real classifier output to validate. We pulled the _code_ portion to t0 (forward-pass tests against stub data, mocked top-k for Stage 5) and deferred only the actual training run. That left the only mandatory serial portion as `B → A1 → C-train`.
 
 ## What is still cooking
 
-| Item | State | ETA |
-|---|---|---|
+| Item                              | State                                                                                                                                                           | ETA                                |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
 | **B2 transliteration generation** | Generator running (`PID 1102`, container `mailwoman-m-ship-v0-experienced-little-chrome`). Currently 520 / 1500 batches done — ~25,700 rows on disk at 5.5 rps. | ~2.5 hours from 2026-05-23T22:18Z. |
-| **A1 tokenizer retrain** | Blocked on B2. Same harness as A0 (PR #129) — just re-invoke against `corpus-v0.4.0`. Tokenizer training takes ~1-2 h. | After B2 lands. |
-| **C-train full classifier run** | Blocked on A1 + `corpus-v0.4.0`. Estimated single H100-day on rented compute per the plan. | After A1 lands. |
+| **A1 tokenizer retrain**          | Blocked on B2. Same harness as A0 (PR #129) — just re-invoke against `corpus-v0.4.0`. Tokenizer training takes ~1-2 h.                                          | After B2 lands.                    |
+| **C-train full classifier run**   | Blocked on A1 + `corpus-v0.4.0`. Estimated single H100-day on rented compute per the plan.                                                                      | After A1 lands.                    |
 
 Three smaller follow-ups carried over from postmortems:
 

@@ -9,15 +9,15 @@ the operator on return.
 PR / branch `issue-116-phase-2-x-v0-4-0` shipped v0.4.0 to packaged
 artifacts (no npm publish) with a mixed result on the golden v0.1.2 set:
 
-| tag | v0.4.0 ship | v0.3.0 | Δ |
-|---|---:|---:|---:|
-| country | 0.21 | 0.28 | **−0.07 regression** |
-| region | 0.19 | 0.18 | +0.01 |
-| locality | 0.27 | 0.27 | flat |
-| postcode | 0.69 | 0.76 | **−0.07 regression** |
-| venue | 0.39 | 0.39 | flat |
-| street | 0.30 | 0.27 | +0.03 win |
-| house_number | 0.79 | 0.78 | +0.01 |
+| tag          | v0.4.0 ship | v0.3.0 |                    Δ |
+| ------------ | ----------: | -----: | -------------------: |
+| country      |        0.21 |   0.28 | **−0.07 regression** |
+| region       |        0.19 |   0.18 |                +0.01 |
+| locality     |        0.27 |   0.27 |                 flat |
+| postcode     |        0.69 |   0.76 | **−0.07 regression** |
+| venue        |        0.39 |   0.39 |                 flat |
+| street       |        0.30 |   0.27 |            +0.03 win |
+| house_number |        0.79 |   0.78 |                +0.01 |
 
 Issue #116's success metric (clear progress on ≥ 2 of {coarse F1, fine F1,
 calibration, training stability}) is **NOT cleanly met**.
@@ -97,6 +97,7 @@ gradient spikes that the per-token-normalized CRF NLL still can't
 dampen.
 
 Concrete sub-work:
+
 1. ~~Build the `mailwoman corpus-audit` tool~~ — already shipped to `main`
    as `corpus/scripts/audit.ts` + `corpus/scripts/audit.test.ts` (per
    host-claude message 2026-05-23 07:42; not visible from this branch

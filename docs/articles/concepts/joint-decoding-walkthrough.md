@@ -31,12 +31,12 @@ The phrase grouper is the new layer at the top. Its job is **boundary discovery 
 
 For our input it produces (the actual scores come from [`phrase-grouper/kryptonite.test.ts`](https://github.com/sister-software/mailwoman/blob/main/phrase-grouper/kryptonite.test.ts)):
 
-| Span | Body | Hypothesis | Confidence |
-|---|---|---|---|
-| 0..5 | `NY-NY` | `HYPHENATED_COMPOUND` | 0.85 |
-| 0..16 | `NY-NY Steakhouse` | `VENUE_PHRASE` | 0.85 |
-| 18..25 | `Houston` | `LOCALITY_PHRASE` | 0.65 |
-| 27..29 | `TX` | `REGION_ABBREVIATION` | 0.95 |
+| Span   | Body               | Hypothesis            | Confidence |
+| ------ | ------------------ | --------------------- | ---------- |
+| 0..5   | `NY-NY`            | `HYPHENATED_COMPOUND` | 0.85       |
+| 0..16  | `NY-NY Steakhouse` | `VENUE_PHRASE`        | 0.85       |
+| 18..25 | `Houston`          | `LOCALITY_PHRASE`     | 0.65       |
+| 27..29 | `TX`               | `REGION_ABBREVIATION` | 0.95       |
 
 Three things to notice here:
 
@@ -52,13 +52,13 @@ Stage 3 is the neural classifier. Before v0.5.0 it returned a single best tag fo
 
 For the spans the phrase grouper proposed, Stage 3 returns:
 
-| Span | Body | Tag | Score |
-|---|---|---|---|
-| 0..5 | `NY-NY` | `region` | **0.70** (top-1) |
-| 0..5 | `NY-NY` | `venue` | 0.60 (top-2) |
-| 0..16 | `NY-NY Steakhouse` | `venue` | 0.55 |
-| 18..25 | `Houston` | `locality` | 0.85 |
-| 27..29 | `TX` | `region` | 0.95 |
+| Span   | Body               | Tag        | Score            |
+| ------ | ------------------ | ---------- | ---------------- |
+| 0..5   | `NY-NY`            | `region`   | **0.70** (top-1) |
+| 0..5   | `NY-NY`            | `venue`    | 0.60 (top-2)     |
+| 0..16  | `NY-NY Steakhouse` | `venue`    | 0.55             |
+| 18..25 | `Houston`          | `locality` | 0.85             |
+| 27..29 | `TX`               | `region`   | 0.95             |
 
 This is the moment where everything goes wrong if we stop here. The classifier's **argmax** for `NY-NY` is `region` (score 0.70) — because in the training data, `NY` is overwhelmingly the abbreviation for the New York region. The `venue` reading is second-best (0.60). A pre-v0.5.0 system would emit `region: NY-NY, region: TX` and the resolver would have no idea what to do.
 
@@ -127,11 +127,11 @@ One subtlety. The first version of the reconciler used a pure multiplicative sco
 
 Stage 6 takes the winning parse tree from Stage 5 and converts each typed span into a place row in WOF. For Interpretation Y:
 
-| Span | Tag | WOF lookup | Result |
-|---|---|---|---|
-| `NY-NY Steakhouse` | venue | (no lookup — venues are pass-through) | preserved as venue text |
-| `Houston` | locality | locality + region:TX hint | Houston, Texas (lat 29.76, lon -95.37) |
-| `TX` | region | region in US | Texas (lat 31, lon -100) |
+| Span               | Tag      | WOF lookup                            | Result                                 |
+| ------------------ | -------- | ------------------------------------- | -------------------------------------- |
+| `NY-NY Steakhouse` | venue    | (no lookup — venues are pass-through) | preserved as venue text                |
+| `Houston`          | locality | locality + region:TX hint             | Houston, Texas (lat 29.76, lon -95.37) |
+| `TX`               | region   | region in US                          | Texas (lat 31, lon -100)               |
 
 The country is inferred from the region's parent chain (`Texas → United States`).
 
@@ -141,12 +141,12 @@ The full v0.5.0 output for `NY-NY Steakhouse, Houston, TX` is:
 
 ```json
 {
-  "venue": "NY-NY Steakhouse",
-  "locality": "Houston",
-  "region": "TX",
-  "country": "US",
-  "coordinates": [29.76, -95.37],
-  "confidence": 0.42
+	"venue": "NY-NY Steakhouse",
+	"locality": "Houston",
+	"region": "TX",
+	"country": "US",
+	"coordinates": [29.76, -95.37],
+	"confidence": 0.42
 }
 ```
 

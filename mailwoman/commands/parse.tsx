@@ -142,7 +142,9 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 
 		if (options.benchmark !== undefined) {
 			if (options.isolated || (options.policy && options.policy.length > 0) || options.neural) {
-				setError("--benchmark requires the default runtime-pipeline path (incompatible with --isolated / --policy / --neural)")
+				setError(
+					"--benchmark requires the default runtime-pipeline path (incompatible with --isolated / --policy / --neural)"
+				)
 				return
 			}
 			runBenchmark(input, options, options.benchmark)
@@ -356,14 +358,18 @@ async function runBenchmark(
 ): Promise<string> {
 	const classifier = options.noNeural ? undefined : await tryLoadNeural(options)
 
-	const runOne = async (pipeline: ReturnType<typeof createRuntimePipeline>): Promise<{ timing: Record<string, number>; total: number; path: string }> => {
+	const runOne = async (
+		pipeline: ReturnType<typeof createRuntimePipeline>
+	): Promise<{ timing: Record<string, number>; total: number; path: string }> => {
 		const t0 = performance.now()
 		const result = await pipeline(input, { locale: options.locale })
 		const total = performance.now() - t0
 		return { timing: { ...result.timing }, total, path: result.path }
 	}
 
-	const collect = async (pipeline: ReturnType<typeof createRuntimePipeline>): Promise<{
+	const collect = async (
+		pipeline: ReturnType<typeof createRuntimePipeline>
+	): Promise<{
 		stageRuns: Map<string, number[]>
 		totals: number[]
 		paths: Map<string, number>
@@ -402,7 +408,9 @@ async function runBenchmark(
 	const lines: string[] = []
 	lines.push(`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`)
 	lines.push(`input: ${JSON.stringify(input)}`)
-	lines.push(`classifier: ${classifier ? `loaded (${options.locale})` : "none"}    resolver: ${options.resolve ? "wired" : "none"}`)
+	lines.push(
+		`classifier: ${classifier ? `loaded (${options.locale})` : "none"}    resolver: ${options.resolve ? "wired" : "none"}`
+	)
 	const pathSummary = Array.from(collected.paths.entries())
 		.map(([p, n]) => `${p}=${n}`)
 		.join(" ")

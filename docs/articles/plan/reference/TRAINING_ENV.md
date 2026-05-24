@@ -109,14 +109,14 @@ Without the override, kernel launches will fail with cryptic GPU errors. Persist
 
 ## Cost summary
 
-| Step | Time | Notes |
-|---|---|---|
-| GPU passthrough | < 1 min | Host-side, no container restart |
-| `uv venv` | < 5 sec | |
-| ROCm PyTorch wheel | 5-10 min | ~3 GB download |
-| `pip install -e .[train]` | 3-5 min | ~1 GB |
-| Verify GPU | < 5 sec | |
-| **Total** | **~15 min** | |
+| Step                      | Time        | Notes                           |
+| ------------------------- | ----------- | ------------------------------- |
+| GPU passthrough           | < 1 min     | Host-side, no container restart |
+| `uv venv`                 | < 5 sec     |                                 |
+| ROCm PyTorch wheel        | 5-10 min    | ~3 GB download                  |
+| `pip install -e .[train]` | 3-5 min     | ~1 GB                           |
+| Verify GPU                | < 5 sec     |                                 |
+| **Total**                 | **~15 min** |                                 |
 
 ## Why this isn't pre-baked
 

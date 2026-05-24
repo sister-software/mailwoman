@@ -21,10 +21,10 @@ balanced and so the file is small enough to keep in git.
 
 ```json
 {
-  "raw":     "<address text>",
-  "script":  "latin|cjk|cyrillic|armenian|greek|arabic|hebrew|devanagari|thai|other",
-  "country": "<ISO 3166-1 alpha-2>",
-  "notes":   "<free-form annotation>"
+	"raw": "<address text>",
+	"script": "latin|cjk|cyrillic|armenian|greek|arabic|hebrew|devanagari|thai|other",
+	"country": "<ISO 3166-1 alpha-2>",
+	"notes": "<free-form annotation>"
 }
 ```
 
@@ -35,7 +35,7 @@ authored value is for human readability.
 ## Rationale
 
 A0 trains on `corpus-v0.3.0`, which is en-US + fr-FR mass with effectively zero non-Latin
-content. **Byte-fallback on this fixture is expected to be high** — that's the *point*:
+content. **Byte-fallback on this fixture is expected to be high** — that's the _point_:
 the rate measured here is the A0 baseline, and the A1 retrain on `corpus-v0.4.0` (with
 Thread B's synthetic transliterations) should drive it down. The A0→A1 delta is the
 headline tokenizer KPI for v0.5.0.

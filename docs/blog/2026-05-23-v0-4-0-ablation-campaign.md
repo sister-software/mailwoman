@@ -9,7 +9,7 @@ tags: [training, retrospective, v0.4.0]
 
 This is a writeup of how the campaign went. We're publishing it for two reasons: to be honest about what the headline numbers mean, and because the way the failures stacked up is worth thinking about if you train your own NER-style models.
 
-{/* truncate */}
+{/_ truncate _/}
 
 ## What v0.4.0 was supposed to do
 
@@ -30,30 +30,30 @@ Five training runs. Three of them on different learning rates with the same full
 
 The collapse step shifted with the learning rate:
 
-| Learning rate  | Collapsed at step |
-|----------------|------------------:|
-| 5e-4 (target)  | 750               |
-| 3e-4           | 1000              |
-| 1.5e-4 (v0.3.0 LR) | 2000          |
+| Learning rate      | Collapsed at step |
+| ------------------ | ----------------: |
+| 5e-4 (target)      |               750 |
+| 3e-4               |              1000 |
+| 1.5e-4 (v0.3.0 LR) |              2000 |
 
 Three runs each at a different LR, each diverging in the same shape, with the divergence delayed proportionally — but only roughly. A factor-2 LR drop bought a factor-1.3 step delay, not factor-2. That ruled out "we just picked too high an LR" as the explanation. The destabilizer was in the recipe, not the learning rate.
 
 So we ran the ablations the issue had prescribed:
 
-| Ablation                | LR    | Result               |
-|-------------------------|-------|----------------------|
-| Drop §1 (CRF norm)      | 5e-4  | Diverged step 1000  |
-| Drop §3 (class weights) | 5e-4  | Diverged step 1000  |
+| Ablation                | LR   | Result             |
+| ----------------------- | ---- | ------------------ |
+| Drop §1 (CRF norm)      | 5e-4 | Diverged step 1000 |
+| Drop §3 (class weights) | 5e-4 | Diverged step 1000 |
 
 Identical failures. At lr=5e-4 neither single-knob revert was enough — meaning lr=5e-4 was structurally unreachable for the codebase's dual-loss landscape regardless of which knob we touched.
 
 We dropped back to the safe LR (1.5e-4, the same lr v0.3.0 had been forced down to) and ran a three-cell orthogonal matrix:
 
-| Recipe                   | Peak macro-F1 | Verdict |
-|--------------------------|--------------:|---------|
-| §4 only (source rebalance)         | 0.419         | Pass    |
-| §3 + §4 (class weights + source)   | 0.428         | **Best** — pass |
-| §1 + §4 (CRF norm + source)        | —             | Fail    |
+| Recipe                           | Peak macro-F1 | Verdict         |
+| -------------------------------- | ------------: | --------------- |
+| §4 only (source rebalance)       |         0.419 | Pass            |
+| §3 + §4 (class weights + source) |         0.428 | **Best** — pass |
+| §1 + §4 (CRF norm + source)      |             — | Fail            |
 
 The §3+§4 verdict-smoke peaked at 0.428 — better than v0.3.0's final 0.36 by a comfortable margin. So we promoted that recipe to the full 50K-step run.
 
@@ -61,7 +61,7 @@ It diverged at step 2250. Same fingerprint as the full §1+§3+§4 recipe at the
 
 ## The meta-bug in the smoke framework
 
-The verdict-smoke ran each ablation for 3000 steps with a cosine learning-rate schedule. With `max_steps=3000` and `warmup_steps=1000`, the LR peaks around step 1000 and is back near zero by step 2750. The smoke's "pass" criterion — macro-F1 stable across the last three evals past step 2000 — was actually measuring stability *under a near-zero learning rate*. The full 50K run kept the LR near its peak for thousands of steps. That sustained-peak exposure was where the destabilization happened.
+The verdict-smoke ran each ablation for 3000 steps with a cosine learning-rate schedule. With `max_steps=3000` and `warmup_steps=1000`, the LR peaks around step 1000 and is back near zero by step 2750. The smoke's "pass" criterion — macro-F1 stable across the last three evals past step 2000 — was actually measuring stability _under a near-zero learning rate_. The full 50K run kept the LR near its peak for thousands of steps. That sustained-peak exposure was where the destabilization happened.
 
 The smoke wasn't testing what we thought it was testing. By the time it would have noticed the divergence, its own LR schedule had already saved it.
 
@@ -77,15 +77,15 @@ The shipped checkpoint is `v0_4_0-stableLR-source-only/step-002200`. Architectur
 
 Per-tag F1 on golden v0.1.2 (4535 entries):
 
-| Tag           | v0.4.0  | v0.3.0  | Δ      |
-|---------------|--------:|--------:|-------:|
-| country       | 0.21    | 0.28    | **−0.07** |
-| region        | 0.19    | 0.18    | +0.01 |
-| locality      | 0.27    | 0.27    | flat  |
-| postcode      | 0.69    | 0.76    | **−0.07** |
-| venue         | 0.39    | 0.39    | flat  |
-| street        | 0.30    | 0.27    | +0.03 |
-| house_number  | 0.79    | 0.78    | +0.01 |
+| Tag          | v0.4.0 | v0.3.0 |         Δ |
+| ------------ | -----: | -----: | --------: |
+| country      |   0.21 |   0.28 | **−0.07** |
+| region       |   0.19 |   0.18 |     +0.01 |
+| locality     |   0.27 |   0.27 |      flat |
+| postcode     |   0.69 |   0.76 | **−0.07** |
+| venue        |   0.39 |   0.39 |      flat |
+| street       |   0.30 |   0.27 |     +0.03 |
+| house_number |   0.79 |   0.78 |     +0.01 |
 
 Macro raw average: 0.357 vs 0.293. Two regressions on coarse labels, two small improvements on fine labels.
 
@@ -105,12 +105,12 @@ These are v0.3.0's documented known-failure modes. The bytefallback tokenizer tr
 
 **Postcode false-negatives** split into four buckets:
 
-| Category | Share | Example |
-|---|---:|---|
-| Empty prediction | **65%** | `Paris 75008` → model emits nothing for postcode |
-| Non-Latin transliteration | 18% | Same v0.3.0 failure mode |
-| House number confused for postcode | 11% | `47110 Sainte-Livrade-sur-Lot, 22 Rue Jasmin` → predicts `22` |
-| BIO span boundary slip | 6% | `LE TRÉPORT, 76470` → predicts `", 7647"` |
+| Category                           |   Share | Example                                                       |
+| ---------------------------------- | ------: | ------------------------------------------------------------- |
+| Empty prediction                   | **65%** | `Paris 75008` → model emits nothing for postcode              |
+| Non-Latin transliteration          |     18% | Same v0.3.0 failure mode                                      |
+| House number confused for postcode |     11% | `47110 Sainte-Livrade-sur-Lot, 22 Rue Jasmin` → predicts `22` |
+| BIO span boundary slip             |      6% | `LE TRÉPORT, 76470` → predicts `", 7647"`                     |
 
 The empty-prediction slice is the real story. NAD's downweight was the most aggressive change in the §4 source rebalance — it carried a lot of "postcode comes first" patterns (`47110 Sainte-Livrade-sur-Lot`, `ND 58701, 44th Ave`) and reducing its share removed that positional exposure. The model now defaults to tagging mid-position numeric tokens as house_number instead of postcode.
 
@@ -123,6 +123,7 @@ The two destabilizers — §1 per-token CRF normalization and §3 class-weighted
 The leading hypothesis at the v0.4.0 boundary is that some adapter slice in `corpus-v0.3.0` is producing high-variance gradients that the per-token-normalized CRF still can't dampen. We built the `corpus-audit` tool during the campaign — it measures per-source shard distribution against the training config's source_weights, with concentration warnings — and the v0.4.1 starting point will be running gradient-norm probes per adapter to find what's causing the spike.
 
 Three orthogonal threads for v0.4.1:
+
 - Source-weight tweak (bump NAD partway back to recover positional exposure) + synthesis pass over component-order permutations.
 - Corpus-side investigation of which adapter slice destabilizes CRF gradients.
 - Schedule + class-weight ratio redesign (constant-LR smokes, milder weight ratios).

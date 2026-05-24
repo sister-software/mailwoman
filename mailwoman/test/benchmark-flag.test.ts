@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   CLI `--benchmark` flag tests. Validates the schema and exercises the runner end-to-end against
- *   the compiled CLI (no neural model load — uses --no-neural so the test is deterministic + fast).
+ *   the compiled CLI (no neural model load — uses --no-neural so the test is deterministic +
+ *   fast).
  */
 
 import { execFile } from "node:child_process"
@@ -64,15 +65,7 @@ describe("npx mailwoman parse --benchmark <N> --no-neural '<input>'", () => {
 	test("rejects --benchmark with --isolated", async () => {
 		let err: (Error & { stderr?: string; stdout?: string; code?: number }) | undefined
 		try {
-			await exec(process.execPath, [
-				cliBin,
-				"parse",
-				"--benchmark",
-				"5",
-				"--isolated",
-				"--no-neural",
-				"hello world",
-			])
+			await exec(process.execPath, [cliBin, "parse", "--benchmark", "5", "--isolated", "--no-neural", "hello world"])
 		} catch (e) {
 			err = e as Error & { stderr?: string; stdout?: string; code?: number }
 		}

@@ -9,36 +9,36 @@ A1 is the v0.5.0 plan ([`PHASE_8 §A`](../phases/PHASE_8_v0_5_0_fresh_slate.md))
 
 Trained 2026-05-24, single CPU host, 2.09 hours wall-clock (vs A0's 1.04h — wider country list + larger sample set). SentencePiece configuration unchanged from A0; sampling widened.
 
-| Knob | A0 | A1 |
-|---|---|---|
-| Corpus | corpus-v0.3.0 | corpus-v0.4.0 |
-| `vocab_size` | 48,000 | 48,000 |
-| `character_coverage` | 0.9999 | 0.9999 |
-| Countries | US, FR | US, FR, RU, JP, AM, KR, CN |
-| `per_country_sample` | 500,000 | 500,000 |
-| `training_lines` | 1,000,000 | 1,073,316 |
-| `user_defined_symbols` | 2,110 | 2,110 |
-| Wall-clock | 1.04 h | 2.09 h |
-| `model_sha256` | a864fde… | f8390fe1db77a3dd5a364dc950951cdb5b5b99cbab2b26eeaac385baa55d5b17 |
-| `git_commit` | 378a55d… | 51b77d5e1d86a48baea1f7ce9fa54dcd57c33919 |
+| Knob                   | A0            | A1                                                               |
+| ---------------------- | ------------- | ---------------------------------------------------------------- |
+| Corpus                 | corpus-v0.3.0 | corpus-v0.4.0                                                    |
+| `vocab_size`           | 48,000        | 48,000                                                           |
+| `character_coverage`   | 0.9999        | 0.9999                                                           |
+| Countries              | US, FR        | US, FR, RU, JP, AM, KR, CN                                       |
+| `per_country_sample`   | 500,000       | 500,000                                                          |
+| `training_lines`       | 1,000,000     | 1,073,316                                                        |
+| `user_defined_symbols` | 2,110         | 2,110                                                            |
+| Wall-clock             | 1.04 h        | 2.09 h                                                           |
+| `model_sha256`         | a864fde…      | f8390fe1db77a3dd5a364dc950951cdb5b5b99cbab2b26eeaac385baa55d5b17 |
+| `git_commit`           | 378a55d…      | 51b77d5e1d86a48baea1f7ce9fa54dcd57c33919                         |
 
 Fixture: same 43-line `data/eval/multi-script/v0.5.0-a0.jsonl` A0 used. Numbers are directly comparable.
 
 ## Headline byte-fallback table
 
-| Script | A0 | A1 | Δ vs A0 | v0.1.0 (leaky) | Δ vs v0.1.0 | Notes |
-|---|---|---|---|---|---|---|
-| **overall** | **36.7%** | **18.2%** | **−18.5 pt** | 18.0% | +0.2 pt | halved vs A0; lands on the v0.1.0 leakage floor honestly. Misses the plan's `<5%` target — pulled by thai + residual cjk. |
-| cjk | 80.0% | 45.2% | −34.8 pt | 51.6% | −6.4 pt | **stretch hit** — beats v0.1.0 leakage floor. Largest non-Latin script class; this is the headline win. |
-| cyrillic | 2.2% | 2.4% | +0.2 pt | 0.0% | +2.4 pt | within noise of A0. Eval fixture's Cyrillic slice is short / common-vocabulary; not enough surface for the B2 cyrl shard to move the needle. |
-| armenian | 21.3% | **0.0%** | −21.3 pt | 0.0% | 0.0 pt | **stretch hit** — matches v0.1.0 leakage floor. |
-| greek | 16.3% | 12.5% | −3.8 pt | 0.0% | +12.5 pt | B2 does not cover Greek — modest improvement is character-coverage spillover. |
-| arabic | 5.0% | 4.8% | −0.2 pt | 0.0% | +4.8 pt | B2 does not cover Arabic — essentially flat. |
-| hebrew | 10.0% | 10.0% | 0.0 pt | 0.0% | +10.0 pt | B2 does not cover Hebrew — flat. |
-| devanagari | 12.8% | **0.0%** | −12.8 pt | 0.0% | 0.0 pt | unexpected win — B2 does not cover Devanagari, but the wider corpus mix + 0.9999 char-coverage cleared all byte-fallback on the 2 fixture lines. Treat as fragile; expand fixture before banking on it. |
-| thai | 46.7% | 41.9% | −4.8 pt | 10.0% | +31.9 pt | B2 does not cover Thai — modest improvement only. |
-| latin | 5.8% | 3.4% | −2.4 pt | 0.0% | +3.4 pt | **anti-goal preserved** — Latin improved despite widening the sample. |
-| other | 34.3% | 25.7% | −8.6 pt | 0.0% | +25.7 pt | partial; the "other" bucket is Georgian Mkhedruli on this fixture. |
+| Script      | A0        | A1        | Δ vs A0      | v0.1.0 (leaky) | Δ vs v0.1.0 | Notes                                                                                                                                                                                                   |
+| ----------- | --------- | --------- | ------------ | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **overall** | **36.7%** | **18.2%** | **−18.5 pt** | 18.0%          | +0.2 pt     | halved vs A0; lands on the v0.1.0 leakage floor honestly. Misses the plan's `<5%` target — pulled by thai + residual cjk.                                                                               |
+| cjk         | 80.0%     | 45.2%     | −34.8 pt     | 51.6%          | −6.4 pt     | **stretch hit** — beats v0.1.0 leakage floor. Largest non-Latin script class; this is the headline win.                                                                                                 |
+| cyrillic    | 2.2%      | 2.4%      | +0.2 pt      | 0.0%           | +2.4 pt     | within noise of A0. Eval fixture's Cyrillic slice is short / common-vocabulary; not enough surface for the B2 cyrl shard to move the needle.                                                            |
+| armenian    | 21.3%     | **0.0%**  | −21.3 pt     | 0.0%           | 0.0 pt      | **stretch hit** — matches v0.1.0 leakage floor.                                                                                                                                                         |
+| greek       | 16.3%     | 12.5%     | −3.8 pt      | 0.0%           | +12.5 pt    | B2 does not cover Greek — modest improvement is character-coverage spillover.                                                                                                                           |
+| arabic      | 5.0%      | 4.8%      | −0.2 pt      | 0.0%           | +4.8 pt     | B2 does not cover Arabic — essentially flat.                                                                                                                                                            |
+| hebrew      | 10.0%     | 10.0%     | 0.0 pt       | 0.0%           | +10.0 pt    | B2 does not cover Hebrew — flat.                                                                                                                                                                        |
+| devanagari  | 12.8%     | **0.0%**  | −12.8 pt     | 0.0%           | 0.0 pt      | unexpected win — B2 does not cover Devanagari, but the wider corpus mix + 0.9999 char-coverage cleared all byte-fallback on the 2 fixture lines. Treat as fragile; expand fixture before banking on it. |
+| thai        | 46.7%     | 41.9%     | −4.8 pt      | 10.0%          | +31.9 pt    | B2 does not cover Thai — modest improvement only.                                                                                                                                                       |
+| latin       | 5.8%      | 3.4%      | −2.4 pt      | 0.0%           | +3.4 pt     | **anti-goal preserved** — Latin improved despite widening the sample.                                                                                                                                   |
+| other       | 34.3%     | 25.7%     | −8.6 pt      | 0.0%           | +25.7 pt    | partial; the "other" bucket is Georgian Mkhedruli on this fixture.                                                                                                                                      |
 
 ## How to read the numbers
 

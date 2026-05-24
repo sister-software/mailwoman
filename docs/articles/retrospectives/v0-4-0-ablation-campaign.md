@@ -18,6 +18,7 @@ This is the technical postmortem. For the public-facing narrative, see the corre
 - Hardware: gfx1103 Radeon 780M iGPU, batch=32, grad_accum=4 → effective 128, ~4.5 steps/sec sustained.
 
 The only intended differences from v0.3.0 were:
+
 - **§1** `model.crf_normalization: per_token` (was implicit `per_sequence`) + `crf_loss_weight: 1.0` (was 0.05).
 - **§3** `model.class_weights: {O: 1.0, B-country: 2.0, ..., B-venue: 0.5, ...}` (was uniform).
 - **§4** Source weights rebalanced: `usgov-nad: 2.0 → 1.0`; `wof-admin: 1.0 → 2.0`; `wof-postalcode: 1.0 → 2.0`.
@@ -42,7 +43,7 @@ Diverged step 1000. Same fingerprint. Step-750 checkpoint at macro_f1 0.37 prese
 
 `configs/v0_4_0-lr1.5e4.yaml`. By this point the bisect pattern was visible: 5e-4 → step 750, 3e-4 → step 1000. A pure-LR explanation predicted lr=1.5e-4 → step 1875 (linear) or ~step 2200 (proportional). It diverged at step 2000.
 
-A factor-3.3× LR drop bought a factor-2.7× step delay. Sub-linear — confirming that LR controls *when* the divergence appears but isn't the root cause. The destabilizer is in the recipe, not the LR knob. Step-1250 checkpoint at macro_f1 0.39 preserved.
+A factor-3.3× LR drop bought a factor-2.7× step delay. Sub-linear — confirming that LR controls _when_ the divergence appears but isn't the root cause. The destabilizer is in the recipe, not the LR knob. Step-1250 checkpoint at macro_f1 0.39 preserved.
 
 ### Runs 4 & 5 — ablations at lr=5e-4
 
@@ -56,11 +57,11 @@ Both diverged at step 1000, identically. At lr=5e-4 every single-knob revert beh
 
 Three orthogonal cells, `max_steps=3000` cosine schedule:
 
-| Run | Recipe                                  | Verdict | Peak macro_f1 | Drift (last 5 evals) |
-|-----|-----------------------------------------|---------|--------------:|---------------------:|
-| 6   | source-only (§4 only)                   | PASS    | 0.4190        | 0.005                |
-| 7   | cw-only (§3 + §4, v0.3.0 CRF base)      | PASS    | 0.4279        | 0.0036               |
-| 8   | crf-only (§1 + §4, no class_weights)    | FAIL    | n/a (train_loss=1.24 at step 3000) | n/a |
+| Run | Recipe                               | Verdict |                      Peak macro_f1 | Drift (last 5 evals) |
+| --- | ------------------------------------ | ------- | ---------------------------------: | -------------------: |
+| 6   | source-only (§4 only)                | PASS    |                             0.4190 |                0.005 |
+| 7   | cw-only (§3 + §4, v0.3.0 CRF base)   | PASS    |                             0.4279 |               0.0036 |
+| 8   | crf-only (§1 + §4, no class_weights) | FAIL    | n/a (train_loss=1.24 at step 3000) |                  n/a |
 
 cw-only looked like the clear winner — higher peak, lower drift, both under the 0.10 collapse threshold.
 
@@ -78,11 +79,12 @@ Survived. Peak macro_f1 0.42 at step ~2200; gradual cosine-decay decline through
 
 ## The meta-bug
 
-cw-only's smoke (3000 steps, cosine schedule) had its LR back near zero by step 2750. The "pass" criterion ("macro_f1 stable across the last three evals past step 2000") was measuring stability *under a decayed-to-near-zero LR*. The full 50K run kept the LR near its 1.5e-4 peak for thousands of steps. That sustained-peak exposure was where the destabilization happened in every other run too.
+cw-only's smoke (3000 steps, cosine schedule) had its LR back near zero by step 2750. The "pass" criterion ("macro_f1 stable across the last three evals past step 2000") was measuring stability _under a decayed-to-near-zero LR_. The full 50K run kept the LR near its 1.5e-4 peak for thousands of steps. That sustained-peak exposure was where the destabilization happened in every other run too.
 
 The smoke wasn't testing the same loss landscape as the full run. The cosine schedule's tail had been doing the heavy lifting of "stability" all along.
 
 **Process fix for future smokes**:
+
 - Constant LR for the verdict window, OR
 - max_steps large enough that the cosine tail doesn't dominate. With warmup=1000 + cosine=N, the LR is > 60% of peak roughly through step `warmup + N/3`. Picking max_steps so the verdict window sits in that range (e.g. 10000 keeps LR > 60% peak through step ~4300).
 
@@ -102,13 +104,13 @@ After shipping, we ran a categorized per-tag FP/FN analysis on the shipped check
 
 ### Postcode FN (1217 total)
 
-| Category | Count | Share | Pattern |
-|---|---:|---:|---|
-| empty_pred | 789 | 65% | `Paris 75008` → no postcode in output |
-| non_latin | 213 | 18% | `バー, 47110 サント` → byte-fallback noise |
-| num_confused | 136 | 11% | `47110 SLL, 22 Rue Jasmin` → predicts `22` |
-| bio_slip | 73 | 6% | `LE TRÉPORT, 76470` → `", 7647"` |
-| other | 6 | 0.5% | — |
+| Category     | Count | Share | Pattern                                    |
+| ------------ | ----: | ----: | ------------------------------------------ |
+| empty_pred   |   789 |   65% | `Paris 75008` → no postcode in output      |
+| non_latin    |   213 |   18% | `バー, 47110 サント` → byte-fallback noise |
+| num_confused |   136 |   11% | `47110 SLL, 22 Rue Jasmin` → predicts `22` |
+| bio_slip     |    73 |    6% | `LE TRÉPORT, 76470` → `", 7647"`           |
+| other        |     6 |  0.5% | —                                          |
 
 **Empty-pred dominates**. §4's NAD downweight (2.0 → 1.0) removed the dominant source of "postcode comes first" patterns (NAD's 57M structured 911-grade rows + many FR mid-position patterns from auxiliary sources). The model now treats mid-position numeric tokens as house_number by default.
 
@@ -132,11 +134,12 @@ The bio_slip slice (6% of postcode FN) is a decoder bug, not a model bug. The mo
 
 ```ts
 function trimBoundary(raw: string, start: number, end: number): { start: number; end: number } {
-    let s = start, e = end
-    const isWordChar = (i: number): boolean => /[\p{L}\p{N}]/u.test(raw[i] ?? "")
-    while (s < e && !isWordChar(s)) s++
-    while (e > s && !isWordChar(e - 1)) e--
-    return { start: s, end: e }
+	let s = start,
+		e = end
+	const isWordChar = (i: number): boolean => /[\p{L}\p{N}]/u.test(raw[i] ?? "")
+	while (s < e && !isWordChar(s)) s++
+	while (e > s && !isWordChar(e - 1)) e--
+	return { start: s, end: e }
 }
 ```
 
@@ -156,13 +159,13 @@ v0.4.1 thread proposals (drafted in [`PR i116 body`](https://github.com/sister-s
 
 Six items from the [TODO.md parallel-work list](https://github.com/sister-software/mailwoman/blob/main/TODO.md) shipped to `main` during the GPU-bound training windows (host-claude worked them in parallel):
 
-| Commit | What |
-|---|---|
-| `ceb2c1f` | `@mailwoman/locale-gate` workspace — Stage 2 of the runtime pipeline |
-| `58eee3b` | `mailwoman parse --candidates <N>` — Springfield-class disambiguation surface |
-| `5566cd2` | `corpus-audit` tool — shard distribution × source_weights diagnostic |
-| `150c7db` | runtime-pipeline test hardening (AbortSignal, timing-budget, non-graceful failure) |
-| `d94261b` | `mailwoman parse --benchmark <N>` — per-stage p50/p95/p99 |
+| Commit    | What                                                                                   |
+| --------- | -------------------------------------------------------------------------------------- |
+| `ceb2c1f` | `@mailwoman/locale-gate` workspace — Stage 2 of the runtime pipeline                   |
+| `58eee3b` | `mailwoman parse --candidates <N>` — Springfield-class disambiguation surface          |
+| `5566cd2` | `corpus-audit` tool — shard distribution × source_weights diagnostic                   |
+| `150c7db` | runtime-pipeline test hardening (AbortSignal, timing-budget, non-graceful failure)     |
+| `d94261b` | `mailwoman parse --benchmark <N>` — per-stage p50/p95/p99                              |
 | `c1f82ac` | `docs/articles/concepts/staged-pipeline-contract.md` — "how to plug in a custom stage" |
 
 Plus the decoder sidecar (`c72ab4c`) and the PHASE_2 iteration-log updates (`6ddc170` / `d499288` / `09d0d9f` / `404cceb`).
@@ -171,15 +174,15 @@ Plus the decoder sidecar (`c72ab4c`) and the PHASE_2 iteration-log updates (`6dd
 
 Final eval, shipped checkpoint vs v0.3.0, golden v0.1.2:
 
-| Tag           | v0.4.0 | v0.3.0 | Δ      | With adversarials excluded |
-|---------------|-------:|-------:|-------:|---------------------------:|
-| country       | 0.21   | 0.28   | −0.07  | ~−0.01 (nearly flat)       |
-| region        | 0.19   | 0.18   | +0.01  | similar                    |
-| locality      | 0.27   | 0.27   | flat   | similar                    |
-| postcode      | 0.69   | 0.76   | −0.07  | similar (the regression is real, NAD downweight) |
-| venue         | 0.39   | 0.39   | flat   | similar                    |
-| street        | 0.30   | 0.27   | +0.03  | similar                    |
-| house_number  | 0.79   | 0.78   | +0.01  | similar (issue #57 floor held) |
+| Tag          | v0.4.0 | v0.3.0 |     Δ |                       With adversarials excluded |
+| ------------ | -----: | -----: | ----: | -----------------------------------------------: |
+| country      |   0.21 |   0.28 | −0.07 |                             ~−0.01 (nearly flat) |
+| region       |   0.19 |   0.18 | +0.01 |                                          similar |
+| locality     |   0.27 |   0.27 |  flat |                                          similar |
+| postcode     |   0.69 |   0.76 | −0.07 | similar (the regression is real, NAD downweight) |
+| venue        |   0.39 |   0.39 |  flat |                                          similar |
+| street       |   0.30 |   0.27 | +0.03 |                                          similar |
+| house_number |   0.79 |   0.78 | +0.01 |                   similar (issue #57 floor held) |
 
 Macro F1 raw: 0.357 vs 0.293. Token confidence: 0.806 vs 0.857. Full-parse exact match: 0.082 vs 0.107.
 
