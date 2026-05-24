@@ -10,7 +10,7 @@
 
 **Language:** Python in `packages/corpus-python/`. No TypeScript in this phase.
 
-**Terminology note (2026-05-22):** This document uses **"Tier"** for label-vocabulary expansion (Tier 1 = coarse, Tier 2 = +fine, Tier 3 = +POI). Historically called "Stage 1/2/3" — renamed to free the word "Stage" for runtime-pipeline stages (see [`concepts/the-staged-pipeline`](../../concepts/the-staged-pipeline.md)). Shipped artifacts (model cards, eval filenames like `stage2-step-001800-eval.md`, npm v3.0.0 releases) preserve the old "Stage" naming as historical record.
+**Terminology note (2026-05-22):** This document uses **"Tier"** for label-vocabulary expansion (Tier 1 = coarse, Tier 2 = +fine, Tier 3 = +POI). Historically called "Stage 1/2/3" — renamed to free the word "Stage" for runtime-pipeline stages (see [`concepts/the-staged-pipeline`](../../understanding/the-staged-pipeline.md)). Shipped artifacts (model cards, eval filenames like `stage2-step-001800-eval.md`, npm v3.0.0 releases) preserve the old "Stage" naming as historical record.
 
 ## Iteration log (live)
 

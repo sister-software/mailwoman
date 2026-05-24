@@ -139,6 +139,6 @@ This is the Ship-of-Theseus pattern. The neural classifier earns each component 
 
 ## See also
 
-- [What is an address?](./what-is-an-address.md) — the components rule classifiers label
+- [What is an address?](../understanding/what-is-an-address.md) — the components rule classifiers label
 - [Neural classification](./neural-classification.md) — the v2 alternative
 - [How it works now](../understanding/how-it-works-now.md) — the hybrid in action

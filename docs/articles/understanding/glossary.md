@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 16
 title: Glossary
 ---
 
@@ -125,7 +125,7 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **Span** — a contiguous range of characters in the input string. The basic unit of address parsing.
 
-**Stage (runtime)** — one of the six dataflow stages in the runtime pipeline ([the-staged-pipeline](../concepts/the-staged-pipeline.md)): Normalize, Locale gate, Token classify, Sequence correct, Reconcile, Resolve. Distinct from **Tier** (vocabulary expansion across model versions).
+**Stage (runtime)** — one of the six dataflow stages in the runtime pipeline ([the-staged-pipeline](./the-staged-pipeline.md)): Normalize, Locale gate, Token classify, Sequence correct, Reconcile, Resolve. Distinct from **Tier** (vocabulary expansion across model versions).
 
 **Tier 1 / Tier 2 / Tier 3** — internal versioning of which label classes the model emits. Tier 1 is the coarse components (`country`, `region`, `locality`, `postcode`). Tier 2 adds `venue`, `street`, `house_number`. Tier 3 (future) would add `attention`, `po_box`, and POI venue subtyping. Historically called "Stage 1/2/3" before the runtime-pipeline naming made that ambiguous (renamed 2026-05-22); some shipped artifacts (npm v3.0.0 model card, `stage2-step-001800-eval.md`) preserve the old name.
 

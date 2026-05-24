@@ -2,7 +2,7 @@
 
 The formal contract for the six-stage runtime pipeline. Pairs with [`INTERFACES.md`](./INTERFACES.md) (classifier-level contracts) and [`SCHEMA.md`](./SCHEMA.md) (component vocabulary) — this document covers the **stage boundaries** that compose them into a working pipeline.
 
-For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`](../../concepts/the-staged-pipeline.md). For the bitter-lesson-safe sub-system used by stages 2 and 2.5, read [`QUERY_SHAPE.md`](./QUERY_SHAPE.md).
+For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`](../../understanding/the-staged-pipeline.md). For the bitter-lesson-safe sub-system used by stages 2 and 2.5, read [`QUERY_SHAPE.md`](./QUERY_SHAPE.md).
 
 ## Status
 
@@ -105,7 +105,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput
 
 **Future.** Share dictionaries with corpus synthesis (synthesis is the _inverse_ — canonical → variants; normalize is variants → canonical). Add per-locale case-folding edge cases (Turkish `İ`, Greek final sigma). Bidirectional offset lookup (`raw[i] → normalized[i]`).
 
-**Failure classes owned.** Tokenization and whitespace traps (#3); Unicode/transliteration encoding half (#6). See [`addresses-that-break-geocoders`](../../concepts/addresses-that-break-geocoders.md).
+**Failure classes owned.** Tokenization and whitespace traps (#3); Unicode/transliteration encoding half (#6). See [`addresses-that-break-geocoders`](../../understanding/addresses-that-break-geocoders.md).
 
 **Open questions.**
 
@@ -592,7 +592,7 @@ These don't belong to one stage; they affect composition.
 - [`SCHEMA.md`](./SCHEMA.md) defines the **component vocabulary** (`ComponentTag`, `BioLabel`). Both files key off it.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) describes the **existing system shape** narratively. Some of its diagrams predate this staging picture; reconcile gradually.
 - [`QUERY_SHAPE.md`](./QUERY_SHAPE.md) defines the **`QueryShape` sub-system** in detail. This file references it but does not duplicate.
-- [`concepts/the-staged-pipeline`](../../concepts/the-staged-pipeline.md) is the **public-facing narrative** version. This file is the implementer's contract.
+- [`concepts/the-staged-pipeline`](../../understanding/the-staged-pipeline.md) is the **public-facing narrative** version. This file is the implementer's contract.
 
 ## What's next
 
