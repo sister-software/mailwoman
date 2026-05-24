@@ -1,0 +1,84 @@
+---
+sidebar_position: 17
+title: Reconcile — why empty parses dominate without an inclusion bonus
+---
+
+# Reconcile — the multiplicative-score trap
+
+A short article on the one non-obvious knob inside Stage 5's joint decoder. If you skip it the reconciler converges on the empty parse for every input.
+
+The full walkthrough of what Stage 5 does and why is in [Joint decoding — a walkthrough](./joint-decoding-walkthrough.md). This article assumes you have read that one and only zooms in on the scoring formula.
+
+## The symptom
+
+Stage 5 picks a parse tree by beam search over `(span × tag × resolver candidate)` combinations. The score for each combination is:
+
+```
+score = phrase_confidence × classifier_confidence × resolver_score × concordance_bonus
+```
+
+All four factors are in `[0, 1]`. We multiply them.
+
+First implementation, all 14 contract tests passed. Then every kryptonite fixture failed with `expected … to be defined` — because the winning beam was **empty**. Not "incorrect parse" — _no parse at all_. The reconciler returned an empty tree.
+
+This took about 15 minutes to diagnose because the algorithm reads natural ("multiply the confidences"), and the bug is implicit in the multiplicative framing.
+
+## Why empty wins
+
+Each factor in `[0, 1]` strictly **lowers** the running product. Log-space makes the trap obvious:
+
+- `log(0.9) = -0.105`
+- `log(0.85) = -0.163`
+- `log(0.7) = -0.357`
+
+Every factor we multiply is a negative number in log-space. So accepting any slot _reduces_ the running log-score. The empty beam starts at log-score `0` (empty product = 1, log 1 = 0) and stays there. Every other beam goes negative the moment it accepts a slot.
+
+With `beamWidth = 1` (greedy), the empty beam dominates immediately and beam pruning keeps only it. With `beamWidth > 1`, the empty beam survives forever as the highest-scoring path and the search returns it as the winner.
+
+This is not specific to our use case — any joint decoder that composes confidences multiplicatively will hit it. It is what the reconciler is supposed to be doing (picking high-evidence interpretations), so the search needs a structural reason to _prefer_ accepting evidence over skipping it.
+
+## The fix — inclusion bonus
+
+Add a fixed log-bonus for each accepted slot. The bonus shifts the trade-off so accepting a high-confidence slot is net-positive in log-space.
+
+In `core/pipeline/reconcile.ts`:
+
+```ts
+const INCLUSION_LOG_BONUS = Math.log(2.5) // ≈ +0.916
+```
+
+What `log(2.5)` means: any slot whose **product of factors** exceeds `1/2.5 = 0.4` is net-positive in log-space and worth including. Slots below `0.4` aren't.
+
+Concretely: a slot with `phrase=0.85, classifier=0.7, resolver=0.9, concordance=0.95` has product `0.508`. With the bonus added, that slot's log-contribution is `log(0.508) + log(2.5) = log(1.27) > 0`. It is net-positive and will be accepted. Drop any factor below ~0.7 across the board and the slot becomes net-negative and gets skipped — the search prefers to leave it out, which is also the right answer when evidence is weak.
+
+The `2.5` is empirical. `e` (≈ 2.718) is the natural-log analogue, equivalent to "a slot with `product > 1/e` survives". We landed on 2.5 after the kryptonite fixtures rather than 2.718 — slightly more permissive, slightly easier to reason about as "factors averaging above 0.4". Future tuning should be driven by an eval corpus large enough to justify a change.
+
+## Why this knob is not public
+
+`INCLUSION_LOG_BONUS` is a **module-level constant**, not a configurable option. Reasons:
+
+- Exposing it as an opt invites callers to set it to `0`, which defeats the purpose of the reconciler — the empty parse comes back.
+- The sensible range is narrow. Below `log(2)` (≈ 0.693) the empty parse re-dominates on most inputs; above `log(4)` (≈ 1.386) the search starts accepting noise spans. Operators who want to tune this should be reading the reconciler's tests, not the public API.
+- A per-locale knob may justify itself later (Japanese vs English may have different "what counts as low-confidence evidence" floors). When the eval data exists to justify per-locale priors, we can expose this as a controlled knob. Today it would be premature.
+
+## Adjacent pitfall — `kSpan` as a global cap
+
+The same file had a parallel bug worth knowing about. The first impl applied `kSpan = 3` as a **global** "top-k phrase proposals by confidence" cap. That silently dropped `Houston` at 0.65 confidence in `NY-NY Steakhouse, Houston, TX` because three other proposals had higher confidence elsewhere in the input.
+
+The right semantic is **per-start-position**: top-k overlapping proposals at each anchor, not a global cap across the whole input. Phrase proposals at offset 0 and offset 18 are not competing for the same slot; pruning them together throws away independent information.
+
+This is the same shape of bug — a natural-reading parameter (`kSpan = 3`) that silently breaks the contract — and the same fix (anchor by structure, not by ranking).
+
+## Forward-looking — anywhere this pattern recurs
+
+Any future stage that composes confidences multiplicatively will need the same treatment:
+
+- The v0.5.1 learned span proposer ([`PHASE_8_E_learned_span_proposer.md`](../plan/phases/PHASE_8_E_learned_span_proposer.md)) will produce its own confidence distribution. If it feeds into a search with multiplicative scoring, the inclusion bonus needs to be applied again — adding a layer of factors does not change the trap.
+- The "optimal-cover" solver mentioned in earlier design notes (a candidate decoder that picks a non-overlapping set of spans to cover the input) is structurally identical. Same trap, same fix.
+- Any joint decoding over additional axes (e.g., `× alternative-language candidate`) needs the bonus scaled — the empty parse cost goes up as the axes multiply, so the bonus per accepted slot may need to grow with them.
+
+## See also
+
+- [Joint decoding — a walkthrough](./joint-decoding-walkthrough.md) — the full picture of what Stage 5 does on a kryptonite input
+- [`reconcile.ts`](https://github.com/sister-software/mailwoman/blob/main/core/pipeline/reconcile.ts) — the actual implementation
+- [v0.4.0 ablation campaign](../retrospectives/v0-4-0-ablation-campaign.md) — the campaign whose mixed results made the missing reconcile rung visible
