@@ -1,0 +1,82 @@
+---
+sidebar_position: 28
+title: Falsehoods about administrative hierarchy
+---
+
+# Falsehoods programmers believe about administrative hierarchy
+
+_This article is part of the [falsehoods-about-addresses](./falsehoods-about-addresses.md) series, expanding on Michael Tandy's [original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)._
+
+## The falsehoods
+
+Programmers consistently assume addresses have states, counties, and a single unambiguous city — modeled after the US Postal Service's preferred format. Most of the world does not.
+
+### "Every address includes a state."
+
+No address in the United Kingdom includes a state. No address in France, Germany, Japan, or China uses the concept. "State" is a US/Australia/Mexico/Brazil/India federal concept. Most of the world's countries are unitary states with no first-level administrative division that corresponds to a US "state."
+
+Even within federal countries that do have states, the state is sometimes omitted in informal addressing. A letter addressed to `Sydney, NSW 2000` and a letter addressed to `Sydney, 2000` are both deliverable in Australia — the postcode uniquely identifies the state. A parser that requires a state will reject the second form.
+
+Pelias's `whos_on_first` classifier handles states through WOF gazetteer lookup. If the token matches a known state or region abbreviation, it is classified as `region`. If no token matches, the field is left empty — no false positive. But Pelias does not learn that `2000` implies `NSW`; that inference is outside the parser's scope.
+
+### "Every address includes a county."
+
+The UK's Royal Mail stopped using postal counties in 1996. Belgium, Norway, the Netherlands, and most other European countries do not use counties in addresses. In the US, counties are rarely included in mailing addresses — they appear in government records and parcel data but not in the address as written by a human.
+
+Even where counties exist, they don't always align with postal delivery areas. The USPS does not use counties for routing — it uses ZIP codes and carrier routes. A county boundary can bisect a ZIP code. A geocoder that resolves county from the ZIP code will be wrong for the part of the ZIP code in the neighboring county.
+
+### "A city name is unique within a country."
+
+The UK has three Newports. The Netherlands has two cities called Eursinge — in the same province. The US has 34 Springfields. A parser that resolves `Springfield` to a coordinate without state or postcode context is guessing.
+
+This is where concordance scoring (Stage 5) is essential: the resolver returns all 34 Springfields, and the reconciler picks the one whose parent chain matches the rest of the address. If the address is `Springfield, IL`, the reconciler picks Springfield, IL because its parent is Illinois. If the address is just `Springfield`, the reconciler returns all 34 candidates and surfaces the ambiguity.
+
+### "A city is always a city."
+
+`Singapore` is a city-state. `Quebec` can mean the province or Quebec City. `Washington` can mean the state, the city (DC), or the university. `Mexico` can mean the country or Mexico City. `New York` can mean the city, the state, or the county (Manhattan).
+
+A parser that classifies `Quebec` as `region` will be wrong when the user means Quebec City. A parser that classifies `Washington` as `region` because it matches the state abbreviation `WA` will be wrong when the user means DC. The ambiguity cannot be resolved from the token alone — it requires context from the surrounding address.
+
+### "A locality is a municipality."
+
+`Brooklyn, NY` is not a municipality — it's a borough of New York City. USPS accepts it as a "preferred last line" city for many NYC ZIP codes. The legal municipality is New York. The postal city is Brooklyn. Both are correct in different contexts.
+
+`Hollywood, CA` is a neighborhood of Los Angeles, not an independent city. USPS accepts it. `Beverly Hills, CA 90210` is an independent city, but USPS allows "Los Angeles, CA 90210" as an alternate mailing city name. The same ZIP code can map to different municipal cities and different postal cities.
+
+### "Overseas territories are part of the parent country's postal system."
+
+The Falkland Islands share the postcode `FIQQ 1ZZ`. The British Virgin Islands have their own postcode system. French overseas territories use French postcodes but route through different postal hubs. `District de Kerguelen, Terres Australes et Antarctiques Françaises, via la Réunion, France` is a valid address — three administrative regions plus a routing indicator, all for one island in the Indian Ocean.
+
+### "Administrative boundaries don't change."
+
+Counties are created, dissolved, and renamed. Cities annex neighboring areas. Postcodes are split and merged. The county of Gwent, UK no longer exists. Lenin Street became something else in post-Soviet countries. A Douglas Perreault condo in Florida changed from Lutz to Tampa after a post office change — same physical location, different city.
+
+Geocoders that maintain their own administrative boundary snapshots go stale. The resolver must be updatable independently of the parser. Mailwoman's architecture supports this — the resolver is a separate stage that consumes a WOF SQLite distribution. Updating the resolver is a data operation, not a code change.
+
+## How traditional geocoders handled these
+
+**libpostal** handles administrative hierarchy through per-label classification. The CRF learns that a token after a locality and before a postcode is likely a region. The CRF does not know that `IL` is Illinois — it learns the statistical distribution of where region-shaped tokens appear. This works for structural identification but not for disambiguation: libpostal correctly identifies `region=IL` but cannot tell you whether `Springfield, IL` is a valid combination.
+
+**Pelias** uses WOF gazetteer lookup for the `whos_on_first` classifier. Tokens matching known administrative names are classified by placetype (country, region, locality, neighbourhood). Pelias also uses the Elasticsearch-backed resolver to find candidate places and score them by name match + population. But Pelias's parser and resolver are separate — the resolver cannot feed back into the parser to correct a misclassification. If the parser tags `Quebec` as `region` when the user meant Quebec City, the resolver searches for regions named Quebec and returns the province, not the city.
+
+**Google's API** handles most of these through its integrated model. `Brooklyn, NY` resolves to Kings County, New York City. `Springfield` alone returns the most-popular Springfield (IL) with a structured address that includes the state. But the user cannot inspect how Google disambiguated — the result is a single coordinate, not a candidate set.
+
+## What the neural approach changes
+
+**The classifier (Stage 3)** learns administrative name distributions from corpus co-occurrence. A token matching a known state abbreviation appearing after a locality and before a postcode is `region`. A token matching a known state abbreviation appearing at the start of the address without surrounding components is ambiguous. The model learns the positional distribution, not just the dictionary match.
+
+**The resolver (Stage 6)** returns top-K candidates per administrative span. `Springfield` returns 34 candidates. `Quebec` returns both the province and the city. The resolver does not pick one — it surfaces all of them.
+
+**The reconciler (Stage 5)** uses WOF parent chains to pick the coherent candidate. If the address is `Springfield, IL`, the reconciler picks the Springfield whose parent chain contains Illinois. If the address is just `Springfield`, the reconciler returns all candidates and lets the downstream application decide. This is the architectural win: the parser identifies components, the resolver returns possibilities, the reconciler picks the coherent one — and if no single candidate is coherent, the ambiguity is surfaced rather than hidden.
+
+## What Mailwoman still can't do
+
+- **Postal city vs. legal municipality.** The resolver uses WOF's administrative hierarchy, which reflects legal boundaries. `Brooklyn, NY` as a postal city is not in WOF's hierarchy — WOF has Kings County (legal) and New York City (legal), with Brooklyn as a neighbourhood. The reconciler can find that the ZIP code's parent chain includes Kings County, but it cannot return "Brooklyn" as the municipality name without an alias layer.
+- **Real-time administrative boundary updates.** WOF SQLite is a snapshot. When cities annex or counties dissolve, the snapshot drifts. The resolver can be updated independently, but the update must be triggered.
+- **City-state disambiguation without context.** `Singapore, Singapore` is unambiguous because the country IS the city. `Mexico` without context is ambiguous between the country and Mexico City. The resolver returns both candidates; the downstream application must decide which the user meant.
+
+## See also
+
+- [Falsehoods about postcodes](./falsehoods-postcodes.md) — the other half of the locality+postcode administrative pair
+- [What is a concordance?](./what-is-a-concordance.md) — how the reconciler validates administrative coherence
+- [The database fallacy](./the-database-fallacy.md) — why administrative boundaries drift

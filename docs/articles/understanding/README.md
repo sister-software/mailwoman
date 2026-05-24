@@ -51,7 +51,17 @@ These describe Mailwoman's design. Most existed before May 2026 and have been re
 
 21. **[Why not just use Google's API?](./why-not-google-api.md)** — pricing, terms, lock-in, and when renting is the right choice.
 22. **[Why not use geocode.earth?](./why-not-geocode-earth.md)** — the open-source hosted alternative and its Pelias parser ceiling.
-23. **[Falsehoods programmers believe about addresses](./falsehoods-programmers-believe-about-addresses.md)** — a curated catalogue of the assumptions that break parsers, validators, and form fields. Read this before you write an address validator.
+
+### Falsehoods about addresses
+
+_Inspired by and citing Michael Tandy's [original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/). Each article takes one category of falsehood, explains how traditional geocoders handled it, and what Mailwoman's neural approach changes._
+
+23. **[Overview](./falsehoods-about-addresses.md)** — the taxonomy and why it matters for Mailwoman.
+24. **[Numbers in addresses](./falsehoods-numbers.md)** — zero, negative, fractions, duplicates, ranges.
+25. **[Street names](./falsehoods-streets.md)** — missing suffixes, numbered streets, recurring names, no streets at all.
+26. **[Postcodes](./falsehoods-postcodes.md)** — leading zeros, multi-city, per-building, missing postcodes.
+27. **[Administrative hierarchy](./falsehoods-hierarchy.md)** — no states, no counties, duplicate cities, city-states.
+28. **[Address format](./falsehoods-format.md)** — non-ASCII, variable ordering, special characters, changing addresses.
 
 ## Reading order
 
