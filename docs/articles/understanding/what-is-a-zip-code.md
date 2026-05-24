@@ -1,0 +1,95 @@
+---
+sidebar_position: 9
+title: What is a ZIP Code?
+---
+
+# What is a ZIP Code and how is it structured?
+
+The US ZIP Code is the most influential postal code system in the world — not because it is the best, but because US-origin address data dominates geocoding training sets and shapes what parsers expect. Understanding its structure is essential for understanding why US-trained parsers fail on international addresses.
+
+## The full 11-digit code
+
+A ZIP Code is properly 11 digits. Most people know the 5-digit form. Most geocoders use the 5-digit form. The full structure:
+
+```
+1 2 3 4 5 - 6 7 8 9 10 11
+│ │ │ │ │   │ │ │ │  │  │
+│ │ │ │ │   │ │ │ │  │  └── Delivery point (last 2 digits of street number or PO box)
+│ │ │ │ │   │ │ │ │  └──── Delivery point
+│ │ │ │ │   │ └─┴──────── Delivery sector (block face, one building, small group)
+│ │ │ │ │   └─────────── Delivery sector
+│ └─┴─┴───────────────── Sectional center or post office
+└─────────────────────── National area (0=East, 9=West)
+```
+
+### The 5-digit ZIP (`12345`)
+
+- **Digit 1**: National area. `0` = Northeast (New England, Puerto Rico), `9` = West Coast, Pacific territories.
+- **Digits 2-3**: Sectional Center Facility (SCF). A regional processing center that sorts mail for a cluster of post offices. There are about 900 SCFs.
+- **Digits 4-5**: Delivery area within the SCF — typically a single post office, a group of post offices, or a large-city delivery zone.
+
+The 5-digit ZIP gets a letter to the right post office. That's all. It does not get it to the right street, building, or mailbox.
+
+### The +4 extension (`-6789`)
+
+- **Digits 6-7**: Delivery sector. In urban areas, this is a block face (one side of one street between two cross-streets). In large buildings, it's the building. In rural areas, it's a cluster of boxes or a segment of a rural route.
+- **Digits 8-9**: Delivery segment. A smaller unit within the sector — a few addresses on the block face, or a specific floor of a large building.
+
+The +4 narrows the delivery to roughly 10-20 addresses. It is not unique to a building — the Empire State Building has multiple +4 codes for different floors and tenants.
+
+### The delivery point code (`-67890`)
+
+- **Digits 10-11**: The last two digits of the street address or PO box number. `123 Main St, Apt 4B` with ZIP+4 `12345-6789` becomes delivery point `12345-6789-23` (from "123").
+
+The full 11-digit code uniquely identifies a delivery point. The USPS calls this the **DPBC** (Delivery Point Bar Code). It is what the OCR sprays on the envelope as a barcode. When the barcode is present, the letter does not need to be read again — it sorts automatically to the carrier's walk sequence.
+
+## ZIP code types
+
+Not all ZIP codes are geographic:
+
+| Type            | Description                                    | Example               | Geocoding implication                                            |
+| --------------- | ---------------------------------------------- | --------------------- | ---------------------------------------------------------------- |
+| **Standard**    | Street addresses                               | 90210 (Beverly Hills) | Resolves to a post office delivery area — approximate, not exact |
+| **PO Box only** | Serves only PO boxes at a specific post office | 10001 (part of NYC)   | Centroid at the post office, not at residents' locations         |
+| **Unique**      | Single high-volume mailer                      | 20260 (USPS HQ)       | Point location, correct                                          |
+| **Military**    | APO/FPO addresses                              | 09012 (APO AE)        | Not geographic — routing to military postal hub                  |
+
+A geocoder that treats a PO Box ZIP the same as a standard ZIP will place a pin on the post office building for every resident who uses a PO box. In small towns where the post office IS the center of town, this is approximately correct. In cities where thousands of people use PO boxes at one facility, it is catastrophically wrong.
+
+## What changes and how often
+
+The USPS changes approximately 5,000 ZIP codes per year:
+
+- **Additions**: When a growing area exceeds one post office's capacity, a new ZIP is assigned. The new ZIP typically splits an existing one.
+- **Deletions**: When a post office closes or routes consolidate, the ZIP is retired. Former residents get reassigned to a neighboring ZIP.
+- **Boundary adjustments**: When carrier routes redesign, ZIP boundaries shift. These are the most common and the hardest to track — the ZIP code didn't change, but the set of addresses it covers did.
+
+ZIP code changes are published in the USPS **ZIP+4 Product**, a monthly update file. Commercial address verification services subscribe to this. Open-source geocoders typically do not — they rely on annual or less-frequent snapshots.
+
+## The ZIP-to-place mapping problem
+
+There is no authoritative table of "ZIP code → city." The USPS publishes a **City State Product** that maps ZIP codes to "preferred" and "acceptable" city names. But:
+
+- A single ZIP code can map to multiple city names (the "preferred" name for the post office plus "acceptable" names for neighborhoods and adjacent municipalities served by the same post office).
+- A single city can have multiple ZIP codes. New York City has about 170.
+- The mapping changes with ZIP code boundary adjustments.
+
+This is why geocoders that maintain their own "ZIP to city" lookup tables go stale. The mapping is a living administrative artifact, not a fixed geographic fact.
+
+## What this means for a parser
+
+A parser trained primarily on US addresses will learn that a 5-digit number after a state abbreviation is a ZIP code. This is correct — for the US. When the parser encounters a 5-digit postcode in a different position (before the locality, as in French formatting) or a postcode that does not match the 5-digit pattern (Canadian A1A 1A1, UK SW1A 1AA), the learned expectation becomes a liability.
+
+The ZIP code format is not a universal postcode format. A parser that treats it as one will:
+
+- Mislabel non-5-digit postcodes as something else (house number, locality fragment).
+- Mislabel 5-digit numbers that are not postcodes (French postcodes before the locality, building numbers in non-US formats).
+- Fail silently on international addresses that use the same digit count for a different purpose.
+
+The staged pipeline addresses this through locale detection (Stage 2): before the classifier runs, the locale gate identifies the address as US or non-US and biases the classifier's expectations accordingly. A 5-digit number after a US state abbreviation is a postcode. A 5-digit number before a French locality name is also a postcode — just in a different position. The parser needs to know which context it is in before it classifies the token.
+
+## See also
+
+- [What is a postcode?](./what-is-a-postcode.md) — the general concept, international comparison
+- [How mail delivery actually works](./how-mail-delivery-works.md) — the system ZIP codes route through
+- [The database fallacy](./the-database-fallacy.md) — why ZIP-to-place mappings are never complete
