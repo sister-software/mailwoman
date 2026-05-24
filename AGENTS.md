@@ -15,6 +15,7 @@ Mailwoman is a postal-address parser shipped as one root npm package (`mailwoman
 | `neural/`               | `@mailwoman/neural`               | SentencePiece tokenizer + ONNX runtime + decoder wiring                                                                                                   |
 | `neural-weights-en-us/` | `@mailwoman/neural-weights-en-us` | Trained model bundle (en-us locale)                                                                                                                       |
 | `neural-weights-fr-fr/` | `@mailwoman/neural-weights-fr-fr` | Trained model bundle (fr-fr locale)                                                                                                                       |
+| `docs/`                 | N/A                               | Documentation, including the implementation plan that drove the neural classifier work. Published to https://mailwoman.sister.software                    |
 
 Source files live at each workspace's root (no `src/` nesting). The repo root holds workspace config + `scripts/` + `docs/` only.
 
