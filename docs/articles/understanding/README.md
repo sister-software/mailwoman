@@ -47,6 +47,12 @@ These describe Mailwoman's design. Most existed before May 2026 and have been re
 
 20. **[Glossary](./glossary.md)** — every technical term defined on first use.
 
+### Appendix
+
+21. **[Why not just use Google's API?](./why-not-google-api.md)** — pricing, terms, lock-in, and when renting is the right choice.
+22. **[Why not use geocode.earth?](./why-not-geocode-earth.md)** — the open-source hosted alternative and its Pelias parser ceiling.
+23. **[Falsehoods programmers believe about addresses](./falsehoods-programmers-believe-about-addresses.md)** — a curated catalogue of the assumptions that break parsers, validators, and form fields. Read this before you write an address validator.
+
 ## Reading order
 
 If you are **sceptical about the whole project**, read Tier 0 in order (articles 2–6). It should take about 45 minutes. If you are still sceptical after that, the project has failed to make its case — open an issue.

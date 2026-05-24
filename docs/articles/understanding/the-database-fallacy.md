@@ -107,3 +107,4 @@ A parser that tries to memorize addresses will be wrong on every address that ch
 - [The 90% trap](./the-90-percent-trap.md) — why 90% database coverage is deceptively expensive
 - [The tokenization tautology](./the-tokenization-tautology.md) — why traditional parsers fall into a related completeness trap
 - [What is an address?](./what-is-an-address.md) — the data model these databases attempt to capture
+- [Falsehoods programmers believe about addresses](./falsehoods-programmers-believe-about-addresses.md) — the concrete falsehoods that databases fail on

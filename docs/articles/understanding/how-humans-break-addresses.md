@@ -200,3 +200,4 @@ The postal system already works this way. The Remote Encoding Center operator se
 - [How mail delivery actually works](./how-mail-delivery-works.md) — the system these addresses enter
 - [Addresses that break geocoders](./addresses-that-break-geocoders.md) — concrete failure examples from the geocoding literature
 - [The database fallacy](./the-database-fallacy.md) — why there is no perfect reference set that fixes these problems
+- [Falsehoods programmers believe about addresses](./falsehoods-programmers-believe-about-addresses.md) — the full catalogue of address falsehoods
