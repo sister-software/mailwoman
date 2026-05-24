@@ -167,6 +167,55 @@ export class NeuralAddressClassifier {
 		return buildAddressTree(text, tokens)
 	}
 
+	/**
+	 * Like `parse`, but also returns the raw per-token logits and piece offsets needed for per-span
+	 * logit aggregation (Option C joint-reconcile integration).
+	 */
+	async parseWithLogits(text: string, opts?: ParseOpts): Promise<ParseWithLogitsResult> {
+		if (text.length === 0) {
+			return { tree: { raw: text, roots: [] }, logits: [], pieces: [] }
+		}
+		const { pieces, ids } = this.cfg.tokenizer.encode(text)
+		const { logits } = await this.cfg.runner.infer(ids)
+
+		const emissions = opts?.queryShape
+			? addEmissionMatrix(
+					logits,
+					buildEmissionPriors(opts.queryShape, pieces, this.labels, {
+						biasScale: opts.queryShapeBiasScale ?? 1.0,
+					})
+				)
+			: logits
+
+		const labelIndices =
+			this.decodeMode === "viterbi"
+				? viterbi({
+						emissions,
+						transitions: this.transitions,
+						startTransitions: this.startTransitions,
+						endTransitions: this.endTransitions,
+					}).path
+				: emissions.map((row) => argmaxSoftmax(row).idx)
+
+		const tokens: DecoderToken[] = pieces.map((p, i) => {
+			const idx = labelIndices[i]!
+			const probs = softmax(logits[i]!)
+			return {
+				piece: p.piece,
+				start: p.start,
+				end: p.end,
+				label: (this.labels[idx] ?? "O") as DecoderToken["label"],
+				confidence: probs[idx]!,
+			}
+		})
+
+		return {
+			tree: buildAddressTree(text, tokens),
+			logits,
+			pieces: pieces.map((p) => ({ start: p.start, end: p.end })),
+		}
+	}
+
 	async parseJson(text: string, opts?: ParseOpts): Promise<Partial<Record<ComponentTag, string>>> {
 		return decodeAsJson(await this.parse(text, opts))
 	}
@@ -178,6 +227,13 @@ export class NeuralAddressClassifier {
 	async parseXml(text: string, opts?: ParseOpts & { xml?: Parameters<typeof decodeAsXml>[1] }): Promise<string> {
 		return decodeAsXml(await this.parse(text, opts), opts?.xml)
 	}
+}
+
+/** Result of `parseWithLogits` — tree + raw material for per-span logit aggregation. */
+export interface ParseWithLogitsResult {
+	tree: AddressTree
+	logits: number[][]
+	pieces: Array<{ start: number; end: number }>
 }
 
 /**
