@@ -122,6 +122,76 @@ A few principles worth carrying forward beyond this specific sprint:
 - **Cheap diagnostics first.** A 5-minute gradient-norm probe answers more about the v0.5.0 divergence than a 25-hour retrain. Always exhaust the zero-GPU diagnostic ladder before any retrain.
 - **The integration test is the architectural test.** v0.5.0's thesis is that joint decoding beats argmax on kryptonite. That thesis can be measured today, against v0.4.0 weights, with zero GPU time. There is no good reason to defer it behind any training experiment.
 
+## Postscript — what the probe revealed (and how the plan changed)
+
+The gradient-norm ratio probe ran a few hours after this synthesis was written. The result falsified the dual-loss decoupling hypothesis at its centre — and falsified it in an unexpected direction.
+
+### The probe numbers
+
+Two v0.5.0-diverged checkpoints sampled, five batches each, eff_batch=128, same loader the production training uses:
+
+| Checkpoint | Training phase | `‖∇_CE‖` | `‖∇_CRF‖` | **ratio** |
+| --- | --- | --- | --- | --- |
+| `v3-ablation/step-500` | settled at loss 0.63, right before climb | 7.2–17.0 | 149–275 | **median 16.2** |
+| `phrase-off/step-1500` | deep in climb at loss 1.92 | 3.9–5.3 | 30–46 | **median 8.0** |
+
+DeepSeek's predicted signature: ratio drops below ~0.01 → CRF gradient has collapsed → CE-only training is the repair.
+
+**Reality**: ratio is 8–20× the other way. CRF gradient _dominates_ CE gradient by an order of magnitude at the inflection point, and is still 8× larger deep in the climb. The ratio shrinks during divergence (16 → 8) because CE grows relative to CRF — not because CRF weakens.
+
+### The refined picture (round-2 DeepSeek conversation)
+
+A second six-turn conversation reframed the diagnosis: not "dual-loss decoupling" but **"CRF as aggressor"**. The story that fits all the data:
+
+- **Cooperative regime, loss > 0.41.** Model starts at high entropy; both CE and CRF point downhill toward the same broad basin ("become less random"). Training descends cleanly.
+- **Conflict regime, loss < 0.41.** Model exits the high-entropy basin and enters fine-grained per-token decisions. CE and CRF now point in opposing directions on this data. CRF's 8–20× gradient magnitude wins. The optimiser follows CRF; CE is dragged uphill.
+
+The 0.41 boundary isn't a magic number — it's where the cooperative-vs-conflict transition happens on this specific architecture + corpus. The structure of the failure is the load-bearing observation, not the threshold.
+
+### Why standard repairs don't fix this
+
+- **Lowering `crf_loss_weight`** scales loss values, not gradient magnitudes. At `crf_loss_weight=0.05` with the observed ratio, the effective optimiser mix is still roughly 1:0.8 CE:CRF.
+- **Per-token CRF normalisation (§1)** made the _loss_ magnitudes comparable. The probe shows _gradient_ magnitudes are still wildly asymmetric.
+- **Global gradient clipping** preserves the relative dominance — CRF's 16× share survives clipping.
+
+Knobs that scale loss values cannot fix asymmetric curvature.
+
+### The actual repair
+
+Drop the CRF NLL loss term entirely during training. Keep the CRF as an inference-time structural decoder (frozen transition mask + Viterbi). The structural benefits that protect against orphan I-tags + BIO-invalid spans come from the **mask**, which is hand-encoded — not from the trained transition matrix. The training-side NLL was layered on as a learned refinement and that refinement is what fights with CE.
+
+One-line model.py change, gated on `crf_loss_weight > 0`. Backward-compatible: existing recipes ship CRF; the new behaviour activates only when a recipe explicitly sets `crf_loss_weight: 0.0`.
+
+This is the same destination DeepSeek's earlier review pointed at, with a sharper reason.
+
+### Promotion bar for CE-only
+
+- Loss stable past step 2000 (no climb &gt; 20% from basin minimum).
+- val_macro_F1 ≥ 0.35 at step 2000.
+- Per-tag F1 trajectory does not show single-tag collapse.
+
+If all three pass, promote to a full 50K-step CE-only training run. **Stability is the win**; any quality improvements come from recipe knobs (class weights, source rebalance, longer schedules) that were unsafe under dual-loss but become safe once the aggressive loss term is gone.
+
+### Updated 24-hour ordered plan
+
+Replaces the "validation sprint plan" earlier in this document.
+
+| Phase | Time | Action |
+| --- | --- | --- |
+| 1 (now, ~2 h, parallel) | t0 | WOF parent_id spot-check + model.py one-line gate + CE-only smoke YAML + launch CE-only smoke (~2 h on the iGPU) |
+| 2 (parallel with smoke) | t0 | Reconciler integration via per-span logit aggregation against v0.4.0 weights; eval against kryptonite ∪ golden via the ±15pp / ≤1pt matrix |
+| 3 (gate at smoke step 2000) | ~t+2 h | Read CE-only smoke result; both stability + quality gates pass → promote |
+| 4 (gated on Phase 3) | ~t+2 h | Full 50K-step CE-only C-train (~6–8 h); parallel: act on reconciler matrix result |
+| 4.1 (post-train) | ~t+10 h | Eval CE-only checkpoint against product-level matrix; if ≥2-axis improvement vs v0.4.0 → ship v0.5.0 |
+
+### Additional discipline note
+
+A fifth principle worth keeping with the four above:
+
+- **Hypotheses are tested in the direction the data points, not the direction you expected.** The probe predicted ratio &lt; 0.01 (CRF collapsed) and found ratio &gt; 8 (CRF dominant) — opposite direction, same repair. The original hypothesis was a useful scaffold for designing the experiment; falsifying it cleanly was more valuable than confirming it would have been. Build experiments around what would change your mind, not around what would confirm what you already believe.
+
+The full technical write-up of the diagnostic, the cooperative-vs-conflict regime model, and the repair is at [`docs/articles/concepts/dual-loss-curvature-conflict.md`](../articles/concepts/dual-loss-curvature-conflict.md).
+
 ## See also
 
 - [`./2026-05-24-codex-project-direction-review.md`](./2026-05-24-codex-project-direction-review.md) — the first independent review
