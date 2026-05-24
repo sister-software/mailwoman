@@ -24,6 +24,7 @@ These are not straw men. They are the architectures most production geocoders ac
 | [Regex-anchored fields](./simple-regex-fields.md)    | Extract the 3-4 fields you care about, ignore the rest                | The rest                                      |
 | [Locality-only](./simple-locality-only.md)           | Find the city, centroid it                                            | Street-level routing, delivery-point accuracy |
 | [Human-in-the-loop](./simple-human-in-the-loop.md)   | Don't parse — suggest, let the user confirm                           | Automation, scale                             |
+| [Close-enough](./simple-close-enough.md)             | Define your precision requirement, pick the cheapest approach, stop   | Everything below your requirement             |
 
 ## When simple is the right choice
 
