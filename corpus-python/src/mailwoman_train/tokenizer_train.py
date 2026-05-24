@@ -114,13 +114,42 @@ class TrainerConfig:
     extra_sp_kwargs: dict = field(default_factory=dict)
 
 
-def iter_raws_by_country(corpus_dir: Path, country: str) -> Iterable[str]:
-    """Yield ``raw`` strings from every train shard whose row matches ``country``."""
+def iter_train_shards(corpus_dir: Path) -> list[Path]:
+    """Resolve the train-split shard paths for ``corpus_dir``.
+
+    Source of truth is ``MANIFEST.json``'s ``shards[]`` (each entry carries an absolute
+    ``path``), which supports adapter-addition corpora composed across versions — e.g.
+    ``corpus-v0.4.0`` is logically ``corpus-v0.3.0`` base shards + new kryptonite +
+    transliteration shards, with the v0.3.0 shards left on disk under their original
+    versioned dir rather than re-emitted. Globbing ``<corpus>/train/`` would silently
+    miss those cross-version base shards.
+
+    Falls back to a glob over ``<corpus>/train/`` for backward-compat with corpora that
+    don't carry a manifest (e.g. ad-hoc test fixtures). Raises ``FileNotFoundError`` if
+    neither source yields shards.
+    """
+    manifest = corpus_dir / "MANIFEST.json"
+    if manifest.exists():
+        data = json.loads(manifest.read_text())
+        shards = [
+            Path(s["path"])
+            for s in data.get("shards", [])
+            if s.get("split") == "train"
+        ]
+        if shards:
+            return sorted(shards)
     train_dir = corpus_dir / "train"
     shards = sorted(train_dir.glob("*.parquet"))
     if not shards:
-        raise FileNotFoundError(f"no parquet shards under {train_dir}")
-    for shard in shards:
+        raise FileNotFoundError(
+            f"no parquet shards via MANIFEST.json or {train_dir}"
+        )
+    return shards
+
+
+def iter_raws_by_country(corpus_dir: Path, country: str) -> Iterable[str]:
+    """Yield ``raw`` strings from every train shard whose row matches ``country``."""
+    for shard in iter_train_shards(corpus_dir):
         # Column-projected read keeps RSS low.
         t = pq.read_table(shard, columns=["raw", "country"])
         raws = t["raw"]
@@ -178,12 +207,9 @@ def mine_postcode_literals(
     ``max_shards``: for unit tests; in production leave ``None`` to scan everything.
     """
     counter: Counter[str] = Counter()
-    train_dir = corpus_dir / "train"
-    shards = sorted(train_dir.glob("*.parquet"))
+    shards = iter_train_shards(corpus_dir)
     if max_shards is not None:
         shards = shards[:max_shards]
-    if not shards:
-        raise FileNotFoundError(f"no parquet shards under {train_dir}")
     for shard in shards:
         cols = ["tokens", "labels"]
         if countries is not None:
@@ -541,6 +567,7 @@ __all__ = [
     "TrainerConfig",
     "detect_script",
     "iter_raws_by_country",
+    "iter_train_shards",
     "load_fixture_lines",
     "measure_byte_fallback",
     "mine_postcode_literals",
