@@ -1,0 +1,136 @@
+---
+slug: v0-5-0-c-train-bisect
+title: Four training runs, zero shipped weights — bisecting v0.5.0's divergence
+authors: [teffen]
+tags: [training, retrospective, v0.5.0]
+---
+
+v0.5.0 was the **fresh-slate ship**: new tokenizer, expanded corpus, new architecture, new reconcile stage. The plan was to bundle several months of structural improvements into one big iteration and pay the cost once. Most of it landed clean. The classifier didn't.
+
+This post walks through the four training attempts the v0.5.0 C-train made overnight, the bisect that ruled out three plausible explanations, and what we think the remaining culprit is. It's a sister piece to [the v0.4.0 retrospective](/blog/v0-4-0-ablation-campaign) — same shape of failure, different diagnostic ladder.
+
+{/* truncate */}
+
+## What v0.5.0 shipped before the train started
+
+Six threads merged to `main` before the C-train attempts began:
+
+- **Thread A1** — sentencepiece tokenizer retrained on corpus-v0.4.0. Overall byte-fallback 36.7% → 18.2% on the multi-script eval; CJK 80% → 45.2%; Armenian / Devanagari to 0%. Halved on the eval fixture and validated against a real adversarial slice.
+- **Thread B + B2** — `corpus-v0.4.0` adds 4,771 kryptonite rows (NY-NY Steakhouse, Paris-Texas, Saint Petersburg FL) plus 73,316 transliteration pairs across CJK / Cyrillic / Hangul / Han / Armenian, all DeepSeek-generated and validated through a substring-match aligner that caught ~1.1% reject rate worth of misaligned LLM output.
+- **Thread C-s** — classifier code path with top-k inference and a phrase-prior input layer that condition on Stage 2.7's proposed spans. Forward-pass tested on stub data; no full train.
+- **Thread D-s** — `reconcile.ts` joint decoder. Beam search over (span × tag × resolver candidate) with concordance scoring via WOF parent_id chains. The empty-parse trap was caught early and fixed with an inclusion log-bonus.
+- **Thread E** — `@mailwoman/phrase-grouper` workspace. Rule-based span proposer feeding Stage 2.7.
+- **Thread F** — verdict-smoke discipline. New `--smoke-mode constant` flag so the cosine-LR mask that hid v0.4.0's divergence cannot reoccur.
+
+C-train was the experiment that actually used all of it together for the first time.
+
+## The recipe we tried first
+
+Going in we had a clean confirmation from the operator: hidden_size=384 (up from v0.4.0's 256), effective batch 128 via batch=16 grad_accum=8, constant LR, starting LR=1.5e-4 (the same lr v0.3.0 had to drop to), top-k inference and phrase-prior conditioning ON (PR #128). The corpus was A1 tokenizer + corpus-v0.4.0. Recipe knobs §1 (per_token CRF normalization) and §3 (class_weights) were carried over from the C-s scaffold — a host-side YAML-drafting decision, not an operator confirmation.
+
+The 50-step constant-LR smoke passed cleanly. val_macro_f1 climbed 0.121 → 0.187 across 50 steps. The recipe looked stable.
+
+Promoted to full. The full run diverged at step 1000.
+
+## Four attempts, one fingerprint
+
+The pattern repeated, with each variant getting marginally further before the same shape of failure took over. All four runs use the same constant-LR schedule (mode A per `VERDICT_SMOKES.md`) and the same effective batch of 128.
+
+```
+v1: h384, §1+§3 ON,  lr=1.5e-4
+  step  500: train_loss=0.69 (warmup end, LR plateau)
+  step  600: train_loss=0.61 (settled)
+  step  700: train_loss=1.49 (climb start)
+  step 1000: train_loss=3.29 (killed)
+
+v2: h384, §1+§3 ON,  lr=1e-4
+  step  500: train_loss=0.90 (warmup end)
+  step  900: train_loss=0.51 (best)
+  step 1000: train_loss=0.69 (climb start)
+  step 1200: train_loss=1.96 (killed)
+
+v3: h384, §1+§3 OFF, lr=1.5e-4  ← v0.4.0-stable recipe
+  step  500: train_loss=0.63 (warmup end)
+  step  700: train_loss=0.41 (best ever — better than v1/v2)
+  step  800: train_loss=1.21 (climb start)
+  step  900: train_loss=1.97 (killed)
+
+h256-bisect: h256, §1+§3 OFF, lr=1.5e-4, eff_batch=128
+  step  500: train_loss=0.67 + val_macro_f1=0.311
+  step 1000: train_loss=0.31 + val_macro_f1=0.399 (best ever)
+  step 1050: train_loss=0.42 (climb start)
+  step 1500: train_loss=1.85 + val_macro_f1=0.229 (killed)
+```
+
+The fingerprint is identical to v0.4.0's. Loss descends through warmup, settles for a few hundred steps near the bottom, then climbs back to its starting magnitude over 100-300 steps. val_macro_f1 (where we measured it) does the same: peaks around the time the loss bottoms out, then collapses.
+
+The only thing that shifts between runs is **how deep the loss gets before the climb starts**. v1 bottomed at 0.61, v2 at 0.51, v3 at 0.41, h256-bisect at 0.31. Each successive variant trained better for longer, and then collapsed in exactly the same way.
+
+## What the bisect ruled out
+
+We ran three knob-changes between v1 and h256-bisect, each motivated by a different hypothesis. None of them held.
+
+**Learning rate isn't it.** v0.4.0's bisect already showed that a factor-2 LR drop only buys a factor-1.3 step delay, ruling out "we picked too high an LR" as a full explanation. v1 → v2 confirmed the same shape: 1.5e-4 → 1e-4 moved the divergence from step 700 to step 1000. Same dynamic, just shifted later. The LR controls *when*, not *whether*.
+
+**Recipe knobs §1+§3 aren't it.** v0.4.0's retrospective concluded the destabilizer was in the recipe, not the LR, and shipped with §1 (per_token CRF) and §3 (class_weights) OFF. v3 reverted those knobs and dropped back to LR=1.5e-4 — the canonical v0.4.0-stable recipe. v3 trained better than v1/v2 (bottom of 0.41 vs 0.61/0.51), zero GPU hangs (vs v2's six), and still diverged at step 900.
+
+**Hidden size isn't it.** h256-bisect reverted the only architectural change still in the recipe: 384 → 256 hidden, 6 → 4 heads, 1536 → 1024 intermediate. With everything else at v0.4.0-shipped settings — eff_batch=128, LR=1.5e-4, §1+§3 OFF — this configuration is *identical to v0.4.0's shipped recipe*, except for two architectural pieces we haven't touched yet. h256-bisect was the best-performing run of the four (peak val_macro_f1=0.399, train_loss=0.31), and it diverged anyway.
+
+## The remaining suspects
+
+Only two architectural changes from the proven-stable v0.4.0 baseline remain:
+
+1. **Phrase-prior input features** (PR #128). The classifier's input embedding takes 10 extra per-token features encoding the phrase grouper's proposed spans — `is_phrase_start` / `is_phrase_mid` / `is_phrase_end` plus a one-hot for the proposed `PhraseKind`. New projection layer; new gradient pathway.
+
+2. **A1 tokenizer**. New 48K vocab (up from v0.1.0's 16K), trained on corpus-v0.4.0 including the transliteration adapter. The embedding table is sized to that vocab and the model has never trained against it before.
+
+Both are real architectural changes from v0.4.0. Either could plausibly produce a confident-wrong degenerate minimum that the loss bottoms out at and then escapes from. We can't tell from the curves alone — the shape is the same regardless.
+
+The cheapest next bisect is **phrase priors OFF** (revert PR #128's input-layer features, keep A1 tokenizer). One YAML knob change, ~15min smoke + a partial train if smoke passes. That isolates whether the destabilizer is the phrase-prior projection or the new tokenizer's interaction.
+
+If phrase-priors-off ALSO diverges, the next bisect is the A1 tokenizer itself — revert to v0.1.0's sentencepiece weights against the same corpus + recipe + h256. At that point we're back to v0.4.0's proven-stable shipping configuration; if even that diverges, the destabilizer is in `corpus-v0.4.0`'s composition (the transliteration shards' distribution might be the issue, not the tokenizer trained on them).
+
+## A discipline lesson worth keeping
+
+We caught a real bug in our verdict-smoke discipline along the way. The original 50-step smoke for v1 passed cleanly — train_loss descended, val_macro_f1 climbed, no NaN or spike. We promoted to full. Full diverged at step 1000 in a regime the smoke had never reached.
+
+Two things had to change for the smoke to be a real predictor:
+
+- **Smoke length matters.** 50 steps captures only the warmup descent. The sustained-peak-LR regime where the recipe destabilises starts at step 500 in our schedule. Smokes need to be long enough to spend several hundred steps near peak LR — we ended up at 1500 steps as the floor.
+- **Effective batch must match the full run.** v3's smoke ran at batch_size=8 grad_accum=1 (eff_batch=8); the full run was eff_batch=128. The smoke said stable; the full diverged. **The recipe's stability is batch-geometry-dependent.** A smoke that doesn't reproduce the full-run gradient noise is a smoke that can't detect this class of failure.
+
+The constant-LR-mode discipline that landed in Thread F is still correct — it's what made the v0.5.0 destabilization observable at all instead of hiding under cosine decay. But the smoke configuration needs to mirror the full-run *throughput* characteristics, not just the LR schedule.
+
+Both lessons will land in `VERDICT_SMOKES.md` as a follow-up. The current text describes constant-LR mode as the gate but doesn't say "your smoke's eff_batch must match the full run." That's an obvious-in-hindsight footgun.
+
+## What didn't get burned
+
+Most of the v0.5.0 fresh-slate work survives this episode intact:
+
+- **A1 tokenizer's byte-fallback wins are real.** Multi-script eval went from 36.7% to 18.2%, with B2's targeted scripts (CJK, Cyrillic, Hangul, Han, Armenian) all hitting or beating their v0.1.0 leakage baselines. That's a tokenizer that's actually fit for non-Latin addresses. It works fine for inference even though the classifier we'd train on top of it diverges.
+- **`corpus-v0.4.0` is sound.** corpus-audit passes; the substring-match validator caught the LLM's alignment failures; both adapter additions land cleanly via the new MANIFEST.json-driven harness. Whatever destabilises the train, it isn't a corpus integrity problem.
+- **Stage 5 reconcile + phrase grouper + verdict-smoke discipline** all shipped and live in `main`. They run on v0.4.0 weights right now and produce correct output on the kryptonite catalogue. They'll keep working when v0.5.0 weights land.
+- **`TRAINING_ENV.md`** documents the playpen container's ROCm bootstrap recipe so the next training spawn doesn't re-discover the wall. ~15min one-time setup that took us most of an hour to invent the first time.
+
+## The honest read
+
+We spent roughly four hours of GPU time on four diverging training runs, learned what isn't the destabilizer, and stopped before we burned a fifth shot at it. v0.5.0's classifier weights aren't shipping today.
+
+That's still a useful outcome. We have a smaller hypothesis space (two architectural pieces left to bisect), better infrastructure than we started with (TRAINING_ENV, MANIFEST harness fix, longer smoke discipline), and a concrete recommendation for v0.5.0.1's first move. The v0.4.0 model continues to ship in production; nothing downstream is blocked.
+
+## What we'd tell a future ourselves
+
+1. **Smoke geometry must match the full-run geometry.** Constant-LR isn't enough if eff_batch differs. Either match the full-run batch shape or run two smokes — one at the smaller geometry for fast iteration, one at the full geometry as the actual gate.
+2. **The "destabilizes a few hundred steps after warmup ends" fingerprint isn't unique to v0.4.0.** It's appearing in v0.5.0 too with a different recipe. Whatever it is, it's a deeper issue with the dual-loss landscape under sustained peak LR than either retrospective has so far named.
+3. **Plan for divergence retries in the time budget.** A single full-train shot is rarely the experiment that ships. v0.4.0 needed five runs; v0.5.0 has needed four so far with at least two more bisects ahead. Realistic v0.X.0 release cadence is probably 8-12 training runs per cycle, not one.
+4. **Operator-side and host-claude-side recipe knobs need to be distinguished early.** §1+§3 entered the v0.5.0 recipe by being in the C-s scaffold YAML — a host-claude inheritance decision, not an operator confirmation. That cost us v3 in the bisect ladder.
+
+## Where to look
+
+- [`docs/articles/plan/v0-5-0-shipped.md`](/docs/plan/v0-5-0-shipped) — what landed and what didn't in the v0.5.0 bundle
+- [`docs/articles/plan/reference/VERDICT_SMOKES.md`](/docs/plan/reference/VERDICT_SMOKES) — the smoke discipline (with the eff_batch lesson pending)
+- [`docs/articles/plan/reference/TRAINING_ENV.md`](/docs/plan/reference/TRAINING_ENV) — playpen container ROCm bootstrap
+- Diverged train CSVs at `c-train-full-{DIVERGED-lr1.5e4,v2-watchdog-DIVERGED-step1200,v3-DIVERGED-step900,h256-bisect}.csv`
+- [v0.4.0 retrospective](/blog/v0-4-0-ablation-campaign) — the sister piece
+
+Next: phrase-priors-off bisect. If that lands a stable train, we ship v0.5.0 weights without phrase-prior conditioning and pick up the priors as a v0.5.1 follow-up. If it doesn't, we revert the A1 tokenizer and confirm v0.4.0-shipped configuration trains cleanly on `corpus-v0.4.0` — which would isolate the destabilizer to corpus distribution effects from B2's transliteration mass.
