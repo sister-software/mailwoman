@@ -51,7 +51,19 @@ These describe Mailwoman's design. Most existed before May 2026 and have been re
 
 21. **[Why not just use Google's API?](./why-not-google-api.md)** — pricing, terms, lock-in, and when renting is the right choice.
 22. **[Why not use geocode.earth?](./why-not-geocode-earth.md)** — the open-source hosted alternative and its Pelias parser ceiling.
-23. **[The case for simple geocoders](./the-case-for-simple-geocoders.md)** — the strongest argument for the alternative: a regex, a dictionary, a gazetteer, and a willingness to be wrong 10% of the time.
+
+### The case for simple geocoders
+
+_Steel-manning the reasonably defensible compromises that work for most applications._
+
+23. **[Overview](./the-case-for-simple-geocoders.md)** — when simple is the right choice, and when it isn't.
+24. **[Normalize to match](./simple-normalize-to-match.md)** — strip, lowercase, fuzzy-match against a known database.
+25. **[Postcode-only](./simple-postcode-only.md)** — extract the postcode, centroid the result.
+26. **[Gazetteer-first](./simple-gazetteer-first.md)** — skip parsing, treat as information retrieval.
+27. **[Regex-anchored fields](./simple-regex-fields.md)** — extract the 3-4 fields you care about, ignore the rest.
+28. **[Locality-only](./simple-locality-only.md)** — find the city, centroid it.
+29. **[Human-in-the-loop](./simple-human-in-the-loop.md)** — don't parse, suggest, let the user confirm.
+30. **[The case for simple geocoders](./the-case-for-simple-geocoders.md)** — the strongest argument for the alternative: a regex, a dictionary, a gazetteer, and a willingness to be wrong 10% of the time.
 
 ### Falsehoods about addresses
 
