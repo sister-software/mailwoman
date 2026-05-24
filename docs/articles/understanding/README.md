@@ -63,18 +63,18 @@ _Steel-manning the reasonably defensible compromises that work for most applicat
 27. **[Regex-anchored fields](./simple-regex-fields.md)** — extract the 3-4 fields you care about, ignore the rest.
 28. **[Locality-only](./simple-locality-only.md)** — find the city, centroid it.
 29. **[Human-in-the-loop](./simple-human-in-the-loop.md)** — don't parse, suggest, let the user confirm.
-30. **[The case for simple geocoders](./the-case-for-simple-geocoders.md)** — the strongest argument for the alternative: a regex, a dictionary, a gazetteer, and a willingness to be wrong 10% of the time.
 
 ### Falsehoods about addresses
 
 _Inspired by and citing Michael Tandy's [original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/). Each article takes one category of falsehood, explains how traditional geocoders handled it, and what Mailwoman's neural approach changes._
 
-23. **[Overview](./falsehoods-about-addresses.md)** — the taxonomy and why it matters for Mailwoman.
-24. **[Numbers in addresses](./falsehoods-numbers.md)** — zero, negative, fractions, duplicates, ranges.
-25. **[Street names](./falsehoods-streets.md)** — missing suffixes, numbered streets, recurring names, no streets at all.
-26. **[Postcodes](./falsehoods-postcodes.md)** — leading zeros, multi-city, per-building, missing postcodes.
-27. **[Administrative hierarchy](./falsehoods-hierarchy.md)** — no states, no counties, duplicate cities, city-states.
-28. **[Address format](./falsehoods-format.md)** — non-ASCII, variable ordering, special characters, changing addresses.
+30. **[Overview](./falsehoods-about-addresses.md)** — the taxonomy and why it matters for Mailwoman.
+31. **[Numbers in addresses](./falsehoods-numbers.md)** — zero, negative, fractions, duplicates, ranges.
+32. **[Street names](./falsehoods-streets.md)** — missing suffixes, numbered streets, recurring names, no streets at all.
+33. **[Postcodes](./falsehoods-postcodes.md)** — leading zeros, multi-city, per-building, missing postcodes.
+34. **[Administrative hierarchy](./falsehoods-hierarchy.md)** — no states, no counties, duplicate cities, city-states.
+35. **[Address format](./falsehoods-format.md)** — non-ASCII, variable ordering, special characters, changing addresses.
+36. **[Shapes and dimensions](./falsehoods-shapes.md)** — not a point, not a polygon, not a building, not at ground level, not unique per coordinate.
 
 ## Reading order
 

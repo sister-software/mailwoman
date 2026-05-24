@@ -24,13 +24,14 @@ Mailwoman is not the first project to notice this. Deepparse (2020) showed that 
 
 Each article in this series takes one category of falsehood, explains what traditional geocoders assumed, what counterexamples broke those assumptions, and how Mailwoman's architecture addresses the class of problem rather than the individual counterexample.
 
-| Category  | Article                                                                | What it covers                                                                        |
-| --------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Numbers   | [Falsehoods about numbers in addresses](./falsehoods-numbers.md)       | Zero, negative, fractions, duplicates, ranges, names that are numbers                 |
-| Streets   | [Falsehoods about street names](./falsehoods-streets.md)               | Missing suffixes, numbered streets, recurring names, addresses with no streets at all |
-| Postcodes | [Falsehoods about postcodes](./falsehoods-postcodes.md)                | Leading zeros, multi-city postcodes, per-building postcodes, missing postcodes        |
-| Hierarchy | [Falsehoods about administrative hierarchy](./falsehoods-hierarchy.md) | No states, no counties, duplicate city names, city-states                             |
-| Format    | [Falsehoods about address format](./falsehoods-format.md)              | Punctuation, non-ASCII, variable ordering, mixed character sets, changing addresses   |
+| Category  | Article                                                                  | What it covers                                                                             |
+| --------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Numbers   | [Falsehoods about numbers in addresses](./falsehoods-numbers.md)         | Zero, negative, fractions, duplicates, ranges, names that are numbers                      |
+| Streets   | [Falsehoods about street names](./falsehoods-streets.md)                 | Missing suffixes, numbered streets, recurring names, addresses with no streets at all      |
+| Postcodes | [Falsehoods about postcodes](./falsehoods-postcodes.md)                  | Leading zeros, multi-city postcodes, per-building postcodes, missing postcodes             |
+| Hierarchy | [Falsehoods about administrative hierarchy](./falsehoods-hierarchy.md)   | No states, no counties, duplicate city names, city-states                                  |
+| Format    | [Falsehoods about address format](./falsehoods-format.md)                | Punctuation, non-ASCII, variable ordering, mixed character sets, changing addresses        |
+| Shapes    | [Falsehoods about address shapes and dimensions](./falsehoods-shapes.md) | Not a point, not a polygon, not a building, not at ground level, not unique per coordinate |
 
 ## The original
 
