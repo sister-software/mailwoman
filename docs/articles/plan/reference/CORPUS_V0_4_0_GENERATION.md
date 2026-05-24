@@ -22,7 +22,7 @@ Thread B's commit (`d8a6bae`), transliteration in this commit (Thread B2).
 
 The kryptonite slice is what unblocks Stage 5 reconcile (Thread D) and the Stage 2.5
 kind-classifier's joint-decoding test surface. Transliteration is what unblocks Thread A's
-<5% byte-fallback target on non-Latin scripts. See
+`<5%` byte-fallback target on non-Latin scripts. See
 [PHASE_8 §B](../phases/PHASE_8_v0_5_0_fresh_slate.md) for the threading rationale.
 
 PHASE_8 §B originally enumerated eight scripts (CJK + Cyrillic + Armenian + Greek + Arabic +
@@ -143,7 +143,7 @@ filename-prefix inference fallback.
 
 Quarantined rows (alignment failures) are logged to `quarantine-kryptonite.tsv`
 alongside the new shard. Surface-form validation already happens in the Python
-generator, so the alignment step should reject <1% — anything above 5% indicates a
+generator, so the alignment step should reject `<1%` — anything above 5% indicates a
 prompt or substring-match regression and should be investigated before commit.
 
 ## Split policy
@@ -233,7 +233,7 @@ the production 75K pass.
 DeepSeek-v4-flash with `reasoning_effort=low` still consumes a non-trivial reasoning budget
 on transliteration batches. Thread B2's first launch ran at `max_tokens=20000` (the same knob
 that worked for kryptonite) and saw 30/32 batches hit `finish_reason=length` because
-reasoning ate 12–15K of the 20K budget, leaving <5K for the 50-row JSONL output. Truncated
+reasoning ate 12–15K of the 20K budget, leaving `<5K` for the 50-row JSONL output. Truncated
 responses produced ~8 rows per batch instead of 50.
 
 The validated production knob is **`max_tokens=60000`**: empirically reasoning peaks around
