@@ -151,3 +151,9 @@ A few things stand out:
 - [The technical writeup](/docs/concepts/dual-loss-curvature-conflict) — for engineers who want the gradient math and the cooperative-vs-conflict framing in detail.
 
 If you're starting out in ML and any of this was helpful — or if you'd like a future post to dive deeper into any specific term I used here — `contact@sister.software`. We'd genuinely like to hear what gaps the existing intro material isn't filling.
+
+## Update — it worked
+
+We wrote this post while the CE-only experiment was still running. It passed. The model trained past step 2000 — the point where every prior run had diverged — with no loss climb at all. Final validation accuracy: 0.444, the best number any run in this project has ever produced. The full 50,000-step training run is now in progress.
+
+Without the competing voice, the model settled deeper into its basin than any prior run could before being dragged out.
