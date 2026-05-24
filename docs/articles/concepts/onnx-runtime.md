@@ -1,6 +1,10 @@
 ---
 sidebar_position: 10
 title: ONNX runtime
+tags:
+  - concepts
+  - neural
+  - architecture
 ---
 
 # ONNX runtime

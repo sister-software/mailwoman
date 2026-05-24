@@ -1,6 +1,11 @@
 ---
 sidebar_position: 8
 title: CRF decoder
+tags:
+  - concepts
+  - neural
+  - architecture
+  - staged-pipeline
 ---
 
 # CRF decoder

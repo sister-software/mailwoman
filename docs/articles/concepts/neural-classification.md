@@ -1,6 +1,10 @@
 ---
 sidebar_position: 7
 title: Neural classification
+tags:
+  - concepts
+  - neural
+  - architecture
 ---
 
 # Neural classification

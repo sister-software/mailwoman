@@ -1,6 +1,10 @@
 ---
-sidebar_position: 2
+sidebar_position: 13
 title: What is an address?
+tags:
+  - domain
+  - concepts
+  - reference
 ---
 
 # What is an address?

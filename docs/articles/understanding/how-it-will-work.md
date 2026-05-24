@@ -1,81 +1,104 @@
 ---
-sidebar_position: 5
+sidebar_position: 18
 title: How it will work
+tags:
+  - architecture
+  - reference
+  - neural
+  - hybrid
+  - training
+  - corpus
+  - tokenizer
+  - ja-jp
 ---
 
 # How it will work — the near future
 
-This article describes where Mailwoman is heading. The work is tracked in GitHub issues and the [`plan/`](../plan/README.md) directory; here we sketch the direction at a level that does not require reading source code.
+This article describes where Mailwoman is heading. The work is tracked in GitHub issues and the [`plan/`](../plan/README.md) directory. Status is current as of May 2026.
 
-## The next iteration — v0.4.0
+## What shipped: v0.4.0 through v0.5.0 scaffolding
 
-The v0.3.0 ship (the current `@mailwoman/neural-weights-{en-us,fr-fr}@3.0.0` release) gave us a Tier 2 model — it can now emit `venue`, `street`, and `house_number` labels in addition to the four coarse components. But it shipped with two known issues: coarse F1 regressed against the v0.2.0 baseline, and the training loss was unstable enough that we stopped early at step 1,800 of a planned 50,000.
+### v0.4.0 (shipped May 2026)
 
-v0.4.0 targets both. The plan is tracked in [issue #116](https://github.com/sister-software/mailwoman/issues/116) and broken into six work areas:
+The v0.4.0 ablation campaign attempted to combine three training improvements — per-token CRF normalization, class-weighted cross-entropy, and source-weight rebalance — into one release. Five of six training runs diverged. The shipped checkpoint (`v0_4_0-stableLR-source-only/step-002200`) uses only source-weight rebalance layered on v0.3.0's existing recipe.
 
-1. **Per-token CRF NLL normalization.** Today the dual loss term (cross-entropy + CRF negative-log-likelihood) requires a hand-tuned weight (`crf_loss_weight = 0.05`) to keep the two gradients comparable. Normalizing the CRF loss per token makes the two terms naturally comparable. This is what AllenNLP and FLAIR do by default.
-2. **Train longer.** Step 1,800 is 3.6% of the planned 50K. Many of the regressed metrics will recover on their own with more training.
-3. **Class-weighted cross-entropy.** The 21-label vocabulary pulled softmax mass off the four coarse classes. Weighting the CE loss toward coarse classes during training compensates.
-4. **Source-weight rebalance.** The US DOT National Address Database (NAD) adapter contributed 57.9 million rows of fine-label-heavy data. Rebalancing the per-source weights so coarse-rich sources are sampled more often re-prioritizes the coarse signal.
-5. **JS-side Viterbi decoding.** The CRF was used at training time and evaluation time; the production runtime still uses per-token argmax. Bringing Viterbi to the browser closes the eval-vs-production gap on multi-word components.
-6. **JS-side label vocabulary loaded from the model card.** Today the label list is hardcoded in JavaScript. Reading it from the model card removes a silent failure mode where a new model version's new labels would be misrouted.
+Key outcomes:
 
-All six are small, focused changes. The corpus does not need to be rebuilt unless source weights change significantly.
+- **Source rebalance works.** NAD downweight (2.0 → 1.0) and WOF promotion (1.0 → 2.0) trains stably.
+- **Fine labels improved slightly.** `street` 0.27 → 0.30, `house_number` 0.78 → 0.79.
+- **Postcode regressed.** 0.76 → 0.69, driven by NAD downweight removing "postcode-first" positional patterns from training.
+- **Country F1 regression is mostly an eval artifact.** 92% of country false-negatives are adversarial transliteration entries the model was never trained for.
+- **JS-side Viterbi decoder shipped.** CRF with frozen mask now runs in the browser.
+- **Verdict-smoke discipline hardened.** Constant-LR smokes and full-run effective-batch matching prevent the cosine-LR meta-bug that hid v0.4.0's divergence.
 
-## Aspirational targets for v0.4.0
+### v0.5.0 scaffolding (shipped May 2026)
 
-| Component                    | v3.0.0 | v0.4.0 target |
-| ---------------------------- | ------ | ------------- |
-| `region`                     | 0.18   | ≥ 0.6         |
-| `locality`                   | 0.27   | ≥ 0.5         |
-| `postcode`                   | 0.76   | ≥ 0.8         |
-| `venue`                      | 0.39   | ≥ 0.5         |
-| `street`                     | 0.27   | ≥ 0.4         |
-| `house_number`               | 0.78   | hold          |
-| confidence > 0.9 calibration | 0.60   | ≥ 0.75        |
+The v0.5.0 "fresh-slate" bundle shipped five of six planned threads to `main`:
 
-These are stretch targets, not pass-fail gates. The v0.4.0 ship metric is "clear progress on at least two of \{coarse F1, fine F1, calibration, training stability\}".
+| Thread | Component                                                             | Status                                                       |
+| ------ | --------------------------------------------------------------------- | ------------------------------------------------------------ |
+| A0     | Tokenizer harness + A0 baseline weights                               | Shipped                                                      |
+| A1     | Tokenizer retrain on corpus-v0.4.0                                    | Trained; not yet used in stable classifier                   |
+| B      | Kryptonite catalogue (4,771 adversarial rows)                         | Shipped                                                      |
+| B2     | Transliteration pairs (~73K US/FR → CJK/Cyrillic/Hangul/Han/Armenian) | Shipped                                                      |
+| C-s    | Classifier code path (top-k inference + phrase-prior conditioning)    | Scaffolded in `main`; full train (C-train) pending stability |
+| D-s    | Stage 5 reconcile (joint decoding with concordance scoring)           | Shipped, opt-in behind feature flag                          |
+| E      | Phrase grouper (Stage 2.7, rule-based)                                | Shipped as `@mailwoman/phrase-grouper`                       |
+| F      | Verdict-smoke discipline                                              | Shipped (`VERDICT_SMOKES.md`, `--smoke-mode constant`)       |
 
-## Beyond v0.4.0 — the longer arc
+The A1 tokenizer halved byte-fallback on multi-script addresses (36.7% → 18.2%). The phrase grouper and joint decoder close the two architectural gaps v0.4.0 exposed. The kryptonite catalogue gives the training pipeline an adversarial validation set.
 
-The implementation plan ([`plan/README.md`](../plan/README.md)) lays out six phases. Phases 0 through 4.3 have shipped substantially. The remaining direction:
+## What is in progress: training stability
 
-```mermaid
-flowchart LR
-    A["v0.4.0<br>recover coarse F1<br>JS-side Viterbi"]
-    B["v0.5.0<br>Tier 3 labels<br>(POI, attention, po_box)"]
-    C["v0.6.0<br>top-k Resolver output<br>multi-candidate API"]
-    D["Phase 5<br>Studio<br>(human correction UI)"]
-    E["Phase 6<br>Japan locale<br>(architecture stress test)"]
-    A --> B --> C --> D --> E
-```
+The C-train — the full classifier training run that would produce v0.5.0 weights — has not converged. Four training attempts using the v0.5.0 recipe all diverged with the same fingerprint seen in v0.4.0: loss descends through warmup, bottoms out, then climbs catastrophically under sustained peak learning rate.
 
-Each ship is small on purpose. We learned from v0.1.0 → v0.2.0 → v0.3.0 that "ship at every iteration, even if below targets, with the eval honestly reported" is a much better cadence than "wait for the perfect run".
+The May 2026 diagnostic work identified that the **CRF-NLL term dominates the CE term** by 8-20× in gradient magnitude. This is the opposite of what the v0.4.0 campaign assumed (it hypothesized CRF gradient collapse, not CRF gradient dominance). The current experiment is **CE-only training**: remove the CRF loss term entirely, train on cross-entropy alone, keep the CRF as an inference-time structural decoder with the frozen mask.
 
-## What stays the same
+Resolution path:
 
-Reading the implementation plan, you might notice we are not planning to:
+1. **CE-only smoke (in progress).** 2,000-step constant-LR run with `crf_loss_weight=0.0`. Gate: no loss climb past step 2,000 AND val_macro_f1 ≥ 0.35.
+2. **If CE-only stable → full 50K C-train.** Quality ceiling TBD — the win is stability, not quality. Quality gains come from recipe knobs (class weights, source weights, longer training) that were unsafe under dual-loss.
+3. **If CE-only diverges → bisect tokenizer/corpus.** A1 tokenizer + corpus-v0.4.0 vs v0.1 tokenizer + corpus-v0.4.0. Isolate the destabilizer.
+4. **Parallel: reconcile integration.** Wire joint decode as the default Stage 5 path behind a feature flag. Evaluate against kryptonite catalogue + golden v0.1.2. Gate: +15pp exact-match on kryptonite, ≤1pt macro_F1 regression on golden.
 
-- **Replace the rule classifiers.** They will stay. They are deterministic, fast, and reliable for the components they cover. The neural classifier earns each component one at a time.
-- **Build a giant model.** The transformer is staying small (9 million parameters, give or take). The win comes from better training data and better decoding, not from scaling the model up. Address parsing is not a problem where bigger LLMs help.
-- **Drop browser support.** The whole pipeline must remain browser-runnable. The 60 MB cold-load budget is a hard constraint.
-- **Tie the neural runtime to a specific Mailwoman-internal type.** The packages can ship standalone for users who want only the parser.
+## Beyond training: the integration horizon
 
-## What we are watching
+Once stable training is achieved, the next steps:
 
-A few risks the team is tracking:
+### Joint decode as default
 
-- **The Saint-Petersburg-class bugs.** Multi-word component spans are where rule classifiers fail and where the CRF helps. v0.4.0's JS-side Viterbi is the first proper fix on the runtime side.
-- **The training-data licence boundary.** Mailwoman trains on permissive open data only (public domain federal sources, Pelias-friendly licences). The corpus build pipeline filters by per-row licence on ingest. If a source's terms change, we drop it. See [`plan/reference/CONTEXT.md`](../plan/reference/CONTEXT.md) for the policy.
-- **Locale parity.** The fr-fr model has not had the focused attention en-us has had. Closing that gap is on the Phase 6 list, possibly sooner.
+The reconciler (Stage 5) currently operates behind an opt-in flag. Wiring it as the default path requires:
+
+- TS-side per-span logit aggregation (softmax over phrase-grouper spans) to feed top-K to the reconciler.
+- Evaluation against the kryptonite catalogue (NY-NY Steakhouse, Paris TX, St. Petersburg FL).
+- A/B comparison of joint-decode vs argmax fallback on golden v0.1.2.
+
+### v0.5.1 and beyond
+
+| Milestone              | What it adds                                                                                       |
+| ---------------------- | -------------------------------------------------------------------------------------------------- |
+| Learned phrase grouper | 1-2M-param span proposer trained on segment boundaries. Replaces the rule-based grouper.           |
+| Tier 3 label expansion | `attention`, `po_box`, richer POI taxonomy. Requires corpus adapter updates.                       |
+| top-k Resolver API     | Multi-candidate resolver output surfaced in CLI + demo. "Springfield" shows IL, MA, MO candidates. |
+| Phase 5 — Studio       | Web UI for human correction of parses. Corrections feed into retraining.                           |
+| Phase 6 — Japan        | Japanese address validation. Architecture stress test — no streets, block-based addressing.        |
+
+### What stays the same
+
+- **Rule classifiers are not replaced.** They stay deterministic, fast, and reliable. The neural classifier earns each component one at a time.
+- **The model stays small.** The transformer is staying at roughly 9 million parameters. The win comes from better architecture (phrase grouper, joint decode) and better training, not from scaling up.
+- **Browser support is a hard constraint.** The pipeline must stay under ~60MB cold load. The demo is the canary.
+- **Locale parity is tracked but not urgent.** The en-us model has had the most attention. fr-fr will catch up, ja-jp is the validation stress test.
 
 ## What we are not doing
 
-- **Multi-language understanding.** We are not training a model that can read prose in 50 languages. We are training one that can label tokens in addresses for the locales we ship.
-- **Generative output.** The neural classifier does not write text. It labels existing tokens.
-- **Replacing OpenStreetMap, Pelias, libpostal, or any upstream.** Mailwoman uses many of these as data sources or inspiration, and contributing improvements upstream where they fit is welcome.
+- **Multi-language understanding.** We are not training a model that reads prose in 50 languages. We are training one that labels tokens in addresses for the locales we ship.
+- **Generative output.** The neural classifier labels existing tokens. It does not write text.
+- **Replacing upstream projects.** Mailwoman uses Pelias, libpostal, OSM, WOF, and other open data as sources and inspiration. It is a complementary project, not a competitor.
 
-## Continue
+## See also
 
-- [Glossary](./glossary.md) — every technical term in one place
-- [`concepts/`](../concepts/README.md) — deeper, per-topic articles
+- [v0.4.0 blog post](/blog/v0-4-0-ablation-campaign) — the ablation campaign retrospective
+- [v0.5.0 blog post](/blog/v0-5-0-c-train-bisect) — the C-train divergence and bisect
+- [The knowledge ladder](./the-knowledge-ladder.md) — the staged decomposition design
+- [Implementation plan](../plan/README.md) — the full phase roadmap

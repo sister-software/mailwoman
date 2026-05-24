@@ -1,6 +1,10 @@
 ---
 sidebar_position: 19
 title: DeepSeek — max_tokens covers reasoning, not just output
+tags:
+  - concepts
+  - corpus
+  - training
 ---
 
 # DeepSeek — max_tokens covers reasoning, not just output

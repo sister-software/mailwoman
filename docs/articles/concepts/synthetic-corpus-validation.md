@@ -1,6 +1,10 @@
 ---
 sidebar_position: 18
 title: Synthetic corpus — alignment validation is load-bearing
+tags:
+  - concepts
+  - corpus
+  - training
 ---
 
 # Synthetic corpus — alignment validation is load-bearing
@@ -78,4 +82,4 @@ The cost is low (a few hundred lines of Python). The value is high (the corpus y
 
 - [`CORPUS_V0_4_0_GENERATION.md`](../plan/reference/CORPUS_V0_4_0_GENERATION.md) — the operational record for the v0.5.0 corpus generation, including the actual prompts used
 - [v0.5.0 — as shipped](../plan/v0-5-0-shipped.md) — context for where corpus-v0.4.0 fits
-- [The knowledge ladder](./the-knowledge-ladder.md) — why we keep generation honest at this layer rather than trying to fix it downstream
+- [The knowledge ladder](../understanding/the-knowledge-ladder.md) — why we keep generation honest at this layer rather than trying to fix it downstream

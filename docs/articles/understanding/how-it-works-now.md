@@ -1,59 +1,102 @@
 ---
-sidebar_position: 4
+sidebar_position: 17
 title: How it works now
+tags:
+  - architecture
+  - staged-pipeline
+  - neural
+  - hybrid
+  - rule-based
+  - resolver
 ---
 
-# How it works now — the hybrid
+# How it works now — the staged pipeline
 
-Mailwoman v2 (shipped through 2026) keeps **every rule classifier from v1** and adds a **neural classifier** that runs alongside them. Both kinds of classifier produce the same shape of output, and a small per-component **policy registry** decides whose vote wins for each address component.
+Mailwoman v2 (current as of May 2026) runs addresses through a **six-stage pipeline.** Each stage adds one kind of knowledge the stages below it cannot easily derive. Rule classifiers and a neural classifier coexist. A **policy registry** decides whose vote wins for each address component.
 
-This article assumes you have read [How it used to work](./how-it-used-to-work.md).
+This article assumes you have read [How it used to work](./how-it-used-to-work.md). For the design principles behind the staged decomposition, read [The knowledge ladder](./the-knowledge-ladder.md).
 
-## The two-track flow
+## The staged pipeline
 
 ```mermaid
 flowchart TD
     A["Input string<br>'350 5th Ave, New York, NY 10118'"]
-    A --> T["Tokenization"]
-    T --> R["Rule classifiers<br>(parallel)"]
-    T --> N["Neural classifier<br>(one model call)"]
-    R --> P["ClassificationProposals<br>(both shapes identical)"]
-    N --> P
-    P --> POL["Policy registry<br>(per-component choice)"]
-    POL --> S["Solver<br>(unchanged from v1)"]
-    S --> O["Ranked solutions"]
-    O --> RES["Resolver<br>(WOF lookup)"]
-    RES --> F["Final place"]
+    A --> S1["Stage 1: Normalize<br>Unicode, whitespace, case folding"]
+    S1 --> S2["Stage 2: Locale gate<br>Script class + postcode-format detection"]
+    S2 --> S25["Stage 2.5: Kind classifier<br>Query shape: postcode_only, structured_address, intersection"]
+    S25 --> S27["Stage 2.7: Phrase grouper<br>Coherent input spans (rule-based)"]
+    S27 --> S3["Stage 3: Token classify<br>Rule classifiers + neural classifier"]
+    S3 --> S4["Stage 4: Sequence correct<br>CRF with frozen structural mask"]
+    S4 --> S5["Stage 5: Reconcile<br>Joint-coherent interpretation (joint decoding)"]
+    S5 --> S6["Stage 6: Resolve<br>WOF SQLite gazetteer lookup"]
+    S6 --> F["Resolved place with candidates"]
 ```
 
-Both classifiers write into the same **`ClassificationProposal`** shape:
+## The stages in detail
 
-```ts
-interface ClassificationProposal {
-	span: Span // which characters in the input
-	component: ComponentTag // 'house_number' | 'street' | 'locality' | …
-	confidence: number // 0..1
-	source: "rule" | "neural" | "merged"
-	source_id: string // 'rule:postcode' or 'neural-v3-en-us'
-	penalty: number
-	metadata?: Record<string, unknown>
-}
+### Stage 1 — Normalize
+
+Unicode normalization (NFD-decomposed accents → composed), locale-aware case folding, whitespace collapsing. Knows nothing about address structure. Cleans bytes so downstream layers see canonical text.
+
+### Stage 2 — Locale gate
+
+Detects whether input is en-US, fr-FR, ja-JP, etc. Rule-based today: script-class detection (CJK → ja-JP, Cyrillic → ru, Arabic → ar) plus known-format hits (5-digit ZIP → en-US, FR postcode → fr-FR). The `@mailwoman/locale-gate` workspace ships the logic; it exists as a workspace but the factory default still falls back to caller-trust. Wiring it as the default is a near-term TODO.
+
+### Stage 2.5 — Kind classifier
+
+Classifies the query shape: bare postcode? single locality? full structured address? PO box? landmark? intersection? Pure structural cues — no place-name dictionaries. The kind decision enables fast-path routing (a bare postcode skips the neural classifier and goes straight to the resolver).
+
+### Stage 2.7 — Phrase grouper
+
+Proposes coherent input spans _before_ the classifier runs. Shipped in v0.5.0 as `@mailwoman/phrase-grouper` (rule-based, Thread E). The grouper uses structural cues — punctuation, capitalization, numeric patterns, token proximity — not dictionaries:
+
+```
+Input:  "350 5th Ave, New York, NY 10118"
+Spans:  [{text:"350", kind:NUMERIC}, {text:"5th Ave", kind:STREET_PHRASE},
+         {text:"New York", kind:LOCALITY_PHRASE}, {text:"NY", kind:REGION_ABBREVIATION},
+         {text:"10118", kind:POSTCODE}]
 ```
 
-The solver does not know or care whether a proposal came from a rule or from the neural model. This is what makes the hybrid safe: we can turn the neural classifier off for a single component by changing one policy line, and the system keeps working with only rules for that component.
+The grouper does not know what the spans _mean_. It only knows where the _boundaries_ are. This moves boundary discovery out of the classifier — the classifier now answers "what type is this proposed span?" instead of "where do spans start AND what type are they?"
 
-## What "neural classifier" means here
+A learned phrase-grouper variant (1-2M-param span proposer) is scoped for v0.5.1 or later.
 
-The neural classifier is a small **transformer** model. ("Transformer" is a kind of neural network architecture popularised by the 2017 paper _Attention Is All You Need_; we explain it in [`concepts/neural-classification.md`](../concepts/neural-classification.md).) Its job is the same as a rule classifier: look at the input and emit labelled spans.
+### Stage 3 — Token classify
 
-The current model has:
+Two kinds of classifier run in parallel:
 
-- About **9 million parameters** — small by 2026 standards, large enough to do this job well.
-- A **6-layer encoder** with 4 attention heads and 256 hidden dimensions.
-- A **21-class output head** that emits one BIO label per token. BIO labels are how the model marks span boundaries; see [`concepts/bio-labels.md`](../concepts/bio-labels.md).
-- A **linear-chain CRF decoder** on top that fixes up structurally-invalid label sequences (the "Saint Petersburg → Petersburg" clipping bug that v1 had). See [`concepts/crf-decoder.md`](../concepts/crf-decoder.md).
+**Rule classifiers** (from Mailwoman v1): `house_number`, `postcode`, `whos_on_first`, `street_prefix`, `street_suffix`, and others. Deterministic, dictionary/regex-based. Correct for the bounded cases they cover.
 
-The model ships as an **ONNX** file (a portable model format that runs in both Node.js and the browser). The full neural runtime — model + tokenizer + decoder — is about 25 MB compressed, small enough to ship in a web page. See [`concepts/onnx-runtime.md`](../concepts/onnx-runtime.md).
+**Neural classifier**: a 9-million-parameter encoder-only transformer trained from scratch on Mailwoman's corpus. Emits per-token BIO labels using a 21-class vocabulary (country, region, locality, postcode, street, house_number, venue, and associated `I-` and `B-` variants). See [Neural classification](../concepts/neural-classification.md).
+
+The v0.5.0 classifier (Thread C-s) adds two architectural changes gated behind config flags:
+
+- **Phrase-prior conditioning.** The input layer takes per-token features from the Stage 2.7 phrase grouper (BIE markers + `PhraseKind` one-hot), concatenated onto the token+position embedding. The classifier conditions on proposed boundaries rather than discovering them from scratch.
+- **Top-k inference.** The inference path emits the K most-probable tag sequences with calibrated log-probability scores, not just the argmax. Stage 5 reconcile consumes these as the classifier's belief over candidate parses.
+
+Both are scaffolded and tested in `main`. The full training run that exercises them (C-train) is in progress as of May 2026 — see the [v0.5.0 C-train blog post](/blog/v0-5-0-c-train-bisect).
+
+### Stage 4 — Sequence correct
+
+A CRF with a frozen structural transition mask enforces BIO sequence validity. The mask forbids orphan `I-*` sequences (no `I-locality` without preceding `B-locality` or `I-locality`). This is the fix for the "Saint Petersburg → Petersburg" clipping: the CRF transition `O → I-locality` is structurally impossible with the frozen mask.
+
+The CRF is applied at inference time via Viterbi decode (JS-side, shipped in v0.4.0). It was used at training time in v0.4.0's dual-loss recipe (CRF-NLL + CE). The May 2026 training experiments are testing whether removing the CRF loss term (CE-only training, CRF at inference only) stabilizes training — see [the v0.5.0 retrospective](/blog/v0-5-0-c-train-bisect).
+
+### Stage 5 — Reconcile
+
+Picks the joint-coherent interpretation from the classifier's top-K candidates. Shipped in v0.5.0 as `core/pipeline/reconcile.ts` (Thread D-s). The reconciler performs beam search over `(span × tag × resolver candidate)` triples, scoring each beam with:
+
+```
+score = phrase_conf × classifier_score × resolver_score × concordance_bonus
+```
+
+The concordance bonus rewards parent-chain consistency in the WOF gazetteer. A fully-consistent WOF parent chain contributes `+concordanceWeight` in log-space. An explicit contradiction (`region=NY` when the locality's parent is Illinois) is a hard veto.
+
+Joint decode is **opt-in** behind a feature flag in the runtime as of May 2026. The argmax fallback path (sort spans by start position) is still the default until the classifier's top-k contract lands. Wiring joint decode as the default is the next integration step — tracked in the v0.5.0 ship PR.
+
+### Stage 6 — Resolve
+
+Looks up parsed components against the WOF SQLite gazetteer. Returns place IDs, coordinates, parent chains, and alternate names. The resolver surfaces top-K candidates per administrative span (locality, region) so downstream systems can handle ambiguity.
 
 ## The Ship-of-Theseus dial
 
@@ -68,36 +111,23 @@ interface ClassifierPolicy {
 }
 ```
 
-Default mode is `rule_only`. The neural classifier is turned on for a component only after its golden-set metrics beat the rule classifier. This way, the migration is gradual and reversible. If a neural model regresses, flipping the policy back to `rule_only` is a one-line change with no retraining.
+Default mode is `rule_only`. The neural classifier earns each component one at a time, gated on golden-set metrics. If a neural model regresses, flipping back to `rule_only` is a one-line config change with no retraining.
 
-As of v3.0.0 (the current shipped weights), the neural classifier is strongest on `house_number` (F1 ≈ 0.78) and adds capability for `venue` and `street` that the rule classifiers do not provide. The coarse components (`country`, `region`, `locality`, `postcode`) are still better served by the rules because of a training-side regression we are recovering in v0.4.0 — see [How it will work](./how-it-will-work.md).
+As of the v0.4.0-shipped weights (the current production model), the neural classifier is strongest on `house_number` (F1 ≈ 0.79) and `street` (F1 ≈ 0.30). Coarse components (`country`, `region`, `locality`, `postcode`) are still better served by rules in practice.
 
 ## What the demo shows
 
 The live demo at [mailwoman.sister.software/demo](https://mailwoman.sister.software/demo) runs the **entire stack in the browser**:
 
-- The neural model (about 25 MB) loads via `@mailwoman/neural-web` on top of `onnxruntime-web`.
-- The Who's On First gazetteer (about 35 MB, a slim subset for the top 1,000 US localities + all US postcodes) loads via `@mailwoman/resolver-wof-wasm` on top of `sqlite-wasm`.
-- After the initial download (about 60 MB), the browser caches everything and subsequent visits are instant.
+- The neural model (~25 MB) loads via `@mailwoman/neural-web` on top of `onnxruntime-web`.
+- The Who's On First gazetteer (~35 MB) loads via `@mailwoman/resolver-wof-wasm` on top of `sqlite-wasm`.
+- After the initial download (~60 MB), the browser caches everything.
 
-This is a useful demonstration that the neural pipeline is small enough to be portable. It also means the demo has no server costs — it is a static site.
+## What is honest to admit about today (May 2026)
 
-## How a parse + resolve goes today
-
-Using the demo's `"Wrigley Field, 1060 W Addison St, Chicago, IL 60613"` example:
-
-1. **Tokenize.** Split into `[Wrigley, Field, 1060, W, Addison, St, Chicago, IL, 60613]`.
-2. **Rule classifiers** mark `1060` as `house_number` (high confidence), `IL` as `region` (high confidence), `60613` as `postcode` (very high confidence).
-3. **Neural classifier** runs once over the whole token sequence and emits BIO labels: `B-venue, I-venue, B-house_number, B-street, I-street, I-street, B-locality, B-region, B-postcode`.
-4. **Policy registry** merges: `house_number` from rules (higher confidence), `venue` from neural (rules have no `venue` classifier), `street` from neural, `locality`/`region`/`postcode` from whichever scored higher.
-5. **Solver** picks the best self-consistent combination.
-6. **Resolver** takes the resulting `locality + region + postcode` and looks up Chicago in WOF — returns ID, coordinates, and a bounding box.
-7. The demo renders a marker on the map at the resolved coordinates and shows the parse table to the side.
-
-## What is honest to admit about today
-
-- **Coarse F1 regressed in v3.0.0.** The neural classifier shipped with `region` F1 of 0.18 (down from v2.x's 0.83 on the same eval data). v0.4.0 is specifically targeting this. Today, the rule classifiers for the coarse components are doing most of the work in practice.
-- **JS-side decoder is per-token argmax, not Viterbi.** The CRF transition mask was used during training and during the evaluation script, but the production browser path does not run the CRF Viterbi loop yet. v0.4.0 will fix this. In the meantime, the visible improvement on "Saint Petersburg" comes from training, not from runtime decoding — close, but not the same.
+- **Coarse F1 is still regressed.** The v0.4.0-shipped model has `region` F1 of 0.19 and `country` F1 of 0.21. Rule classifiers are doing the heavy lifting on coarse components. The v0.5.0 fresh-slate work (new tokenizer, phrase grouper, joint decode) targets this structurally — but the C-train that would produce improved weights is not yet stable.
+- **Training divergence is the current blocker.** Both v0.4.0 and v0.5.0 training runs diverge under sustained peak learning rate. The leading hypothesis (as of May 2026) is that the CRF-NLL + CE dual loss has opposing curvature below a threshold loss value. CE-only training is the current experiment.
+- **Joint decode is opt-in.** The reconciler ships but is not the default path. The argmax fallback is wired until the classifier emits real top-K output and the integration is verified against the kryptonite catalogue.
 - **The model is small.** Nine million parameters is enough for the address-parsing task but not enough for free-text understanding. We are not building a chatbot.
 
-Continue with [How it will work](./how-it-will-work.md) for the near-future plan.
+Continue with [How it will work](./how-it-will-work.md) for the near-future roadmap.

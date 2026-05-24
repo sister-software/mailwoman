@@ -97,7 +97,7 @@ Three v0.4.0 diagnostic tools that should run against every v0.5.0 smoke / full-
 
 ## See also
 
-- [The knowledge ladder](../../concepts/the-knowledge-ladder.md) — why v0.4.0's failure modes mapped to missing pipeline rungs (the smoke meta-bug is the process-side companion).
+- [The knowledge ladder](../../understanding/the-knowledge-ladder.md) — why v0.4.0's failure modes mapped to missing pipeline rungs (the smoke meta-bug is the process-side companion).
 - [Phase 8 — v0.5.0 fresh-slate](../phases/PHASE_8_v0_5_0_fresh_slate.md) — Thread F lands this framework before B/C/E start training.
 - [Phase 2 — training](../phases/PHASE_2_training.md) iteration log — v0.4.0 entry has the original false-positive case.
 - [v0.4.0 ablation campaign retrospective](../../retrospectives/v0-4-0-ablation-campaign.md) — full incident write-up.

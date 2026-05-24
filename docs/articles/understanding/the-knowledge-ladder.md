@@ -1,6 +1,12 @@
 ---
-sidebar_position: 15
+sidebar_position: 19
 title: The knowledge ladder
+tags:
+  - architecture
+  - staged-pipeline
+  - reference
+  - neural
+  - resolver
 ---
 
 # The knowledge ladder
@@ -120,21 +126,36 @@ What we should compose: input shape priors (Stages 2, 2.5, 2.7), output coherenc
 
 ## What v0.4.0 taught us about the missing rungs
 
-The campaign's failure modes mapped almost cleanly to the missing layers:
+The v0.4.0 ablation campaign's failure modes mapped almost cleanly to two missing information layers. v0.5.0 closed both:
 
-- **65% empty_pred** on mid-position postcodes (`Paris 75008`) — the classifier doesn't have a boundary prior telling it `75008` is a coherent unit worth classifying. A phrase grouper would supply that.
-- **6% bio_slip** on `", 22220"` for `22220` — fixed retroactively by a decoder-side trim, but the right fix is to propose `22220` as a phrase boundary so the classifier doesn't tag the `, ` at all.
-- **Several kryptonite cases** (`NY-NY Steakhouse`, `Paris, Texas`, `St. Petersburg`) — every one needs joint decoding across (input shape, classifier output, world hierarchy). Stage 5 reconcile is the layer.
-- **92% adversarial transliteration** on country FN — this is the tokenizer layer (different concern), not a missing rung.
+| v0.4.0 failure                                                              | Missing layer                                                      | v0.5.0 fix                                                                              |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| **65% empty_pred** on mid-position postcodes (`Paris 75008`)                | Phrase grouper (Stage 2.7) — no boundary prior                     | `@mailwoman/phrase-grouper` proposes `75008` as a coherent unit before classification   |
+| **6% bio_slip** on `", 22220"` for `22220`                                  | Phrase grouper (Stage 2.7) — boundary-trimming is a downstream fix | Phrase grouper proposes `22220` as a span; the classifier never sees the `, `           |
+| **Kryptonite cases** (`NY-NY Steakhouse`, `Paris, Texas`, `St. Petersburg`) | Reconcile (Stage 5) — no joint-coherence check                     | `reconcile.ts` beam search with WOF concordance scoring catches joint-incoherent parses |
+| **92% adversarial transliteration** on country FN                           | Tokenizer (separate concern)                                       | A1 tokenizer halves byte-fallback on multi-script eval (36.7% → 18.2%)                  |
 
-The missing rungs are _information layers_. We weren't doing the joint reasoning the architecture's contract implied we should.
+The missing rungs were _information layers_. v0.4.0 wasn't doing the joint reasoning the architecture's contract implied it should. v0.5.0's scaffolding adds those rungs. The remaining work is training stable classifier weights that exercise them end-to-end.
 
-There was also a _process-side_ lesson — the verdict-smoke framework reported `cw-only` as stable when sustained-peak-LR would have diverged it, because the smoke's cosine schedule decayed LR before the loss curve showed the divergence. That's about reading the layers, not building them; the redesigned smoke framework that closes that gap lives in [`VERDICT_SMOKES.md`](../plan/reference/VERDICT_SMOKES.md).
+## What v0.5.0's training divergence is teaching us
+
+Both v0.4.0 and v0.5.0 training runs diverge in the same fingerprint: loss descends through warmup, bottoms out, then climbs catastrophically under sustained peak learning rate. The May 2026 diagnostic work identified that the **CRF-NLL gradient dominates the CE gradient by 8-20×** — the CRF is pulling the model toward a degenerate attractor that CE opposes.
+
+Resolution path:
+
+- **CE-only training** is the current experiment: remove CRF loss from training, keep CRF as inference-time structural decoder with frozen mask.
+- If CE-only trains stably, the knowledge ladder's "sequence correct" rung moves from "trained alongside classifier" to "applied at inference only" — a simpler architecture with the same structural guarantees.
+- If CE-only also diverges, the destabilizer is in the corpus or tokenizer, not the dual loss.
+
+The ladder architecture is sound. Whether the current training recipe can reach it is being answered in real time.
 
 ## See also
 
-- [The pipeline contract](./staged-pipeline-contract.md) — runtime mechanics for integrators
 - [The staged pipeline](./the-staged-pipeline.md) — narrative framing
+- [The staged pipeline contract](../concepts/staged-pipeline-contract.md) — runtime mechanics for integrators
+- [What is a concordance?](./what-is-a-concordance.md) — how Stage 5's concordance scoring works
+- [What is a postcode?](./what-is-a-postcode.md) — why the resolver can't treat postcodes as polygons
 - [`STAGES.md`](../plan/reference/STAGES.md) — formal per-stage type contracts
-- [`VERDICT_SMOKES.md`](../plan/reference/VERDICT_SMOKES.md) — the process-side companion: how to read smoke runs without the cosine-LR meta-bug
+- [`VERDICT_SMOKES.md`](../plan/reference/VERDICT_SMOKES.md) — the process-side companion
 - [v0.4.0 ablation campaign retrospective](../retrospectives/v0-4-0-ablation-campaign.md) — the failures that exposed the missing rungs
+- [v0.5.0 C-train blog post](/blog/v0-5-0-c-train-bisect) — the training divergence bisect

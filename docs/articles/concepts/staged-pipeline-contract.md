@@ -1,6 +1,11 @@
 ---
 sidebar_position: 14
 title: The pipeline contract
+tags:
+  - concepts
+  - architecture
+  - staged-pipeline
+  - reference
 ---
 
 # The pipeline contract
@@ -9,7 +14,7 @@ You don't have to take Mailwoman's pipeline as-is. The runtime coordinator (`cre
 
 This article is the practical "how do I plug in" companion to:
 
-- [The staged pipeline](./the-staged-pipeline.md) — the narrative for _why_ the stages exist
+- [The staged pipeline](../understanding/the-staged-pipeline.md) — the narrative for _why_ the stages exist
 - [STAGES.md (reference)](../plan/reference/STAGES.md) — the full per-stage contract with type definitions, error semantics, and edge cases
 
 Read those first if you're new. Use this page when you already know the shape and want to ship a custom stage.
@@ -131,5 +136,5 @@ You should **not** swap a stage to bypass it cheaply. If you want the pipeline w
 ## See also
 
 - [STAGES.md](../plan/reference/STAGES.md) — the full per-stage type contract
-- [The staged pipeline](./the-staged-pipeline.md) — why these stages exist
+- [The staged pipeline](../understanding/the-staged-pipeline.md) — why these stages exist
 - [QUERY_SHAPE.md](../plan/reference/QUERY_SHAPE.md) — the structural-prior sub-system feeding stages 2 and 2.5

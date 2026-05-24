@@ -1,11 +1,20 @@
 ---
 sidebar_position: 16
 title: A walkthrough — NY-NY Steakhouse, Houston, TX
+tags:
+  - concepts
+  - architecture
+  - staged-pipeline
+  - resolver
+  - neural
+  - venue
+  - locality
+  - region
 ---
 
 # Joint decoding — a walkthrough
 
-[The knowledge ladder](./the-knowledge-ladder.md) explains _why_ the v0.5.0 pipeline grew two new information layers (Stage 2.7 phrase grouper, expanded Stage 5 reconcile). This article walks through _what they actually do_ on one concrete input, end-to-end.
+[The knowledge ladder](../understanding/the-knowledge-ladder.md) explains _why_ the v0.5.0 pipeline grew two new information layers (Stage 2.7 phrase grouper, expanded Stage 5 reconcile). This article walks through _what they actually do_ on one concrete input, end-to-end.
 
 We use the operator's canonical kryptonite case:
 
@@ -13,7 +22,7 @@ We use the operator's canonical kryptonite case:
 
 This string breaks every previous version of Mailwoman. The token `NY` looks exactly like the abbreviation for New York (which is what a per-token classifier reads it as on its own), but the only interpretation that makes sense for the whole string is that `NY-NY` is part of a venue name, the city is Houston, and the region is Texas. No single layer can reach that conclusion alone. Joint decoding is the layer that can.
 
-If you have not read [The staged pipeline](./the-staged-pipeline.md), do that first — this article assumes you know the six stages by name.
+If you have not read [The staged pipeline](../understanding/the-staged-pipeline.md), do that first — this article assumes you know the six stages by name.
 
 ## Stage 1 + 2 + 2.5 (warm-up)
 
@@ -44,7 +53,7 @@ Three things to notice here:
 2. **`Houston` gets a lower confidence (0.65) than `TX` (0.95)**. The grouper sees `TX` at the very tail after a comma, which is a strong structural signal for a region abbreviation. `Houston` is a capitalised word that _could_ be a locality but the grouper has no dictionary — it only knows it looks like a `LOCALITY_PHRASE` structurally.
 3. **No span covers `,` or whitespace.** The grouper proposes only over real input tokens. The character offsets in the body column refer to the original input string.
 
-What the grouper does _not_ know: that `NY` is the abbreviation for New York, that Houston is in Texas, that "Steakhouse" suggests a venue. All of those are world knowledge, and the grouper deliberately stays away. It supplies structural priors only — this is the [bitter-lesson safety](./the-knowledge-ladder.md#why-this-decomposition-is-bitter-lesson-aligned) we want at this layer.
+What the grouper does _not_ know: that `NY` is the abbreviation for New York, that Houston is in Texas, that "Steakhouse" suggests a venue. All of those are world knowledge, and the grouper deliberately stays away. It supplies structural priors only — this is the [bitter-lesson safety](../understanding/the-knowledge-ladder.md#why-this-decomposition-is-bitter-lesson-aligned) we want at this layer.
 
 ## Stage 3 — classifier emits top-k tag sequences
 
@@ -162,12 +171,12 @@ The previous pipeline (v0.4.0 and earlier) had:
 
 Given those three constraints, `NY-NY Steakhouse, Houston, TX` returned `region: NY, locality: Houston, region: TX` and downstream code crashed trying to make sense of two regions. The fix had to live at the reconciler layer because none of the upstream stages can see the joint picture by design — they each look at their own slice.
 
-This is the [knowledge-ladder](./the-knowledge-ladder.md) point made concrete. Each stage knows its own kind of information; the joint decoder is what composes them. Removing the joint decoder is what makes geocoders fail on adversarial inputs. Adding it back is most of what v0.5.0 set out to do.
+This is the [knowledge-ladder](../understanding/the-knowledge-ladder.md) point made concrete. Each stage knows its own kind of information; the joint decoder is what composes them. Removing the joint decoder is what makes geocoders fail on adversarial inputs. Adding it back is most of what v0.5.0 set out to do.
 
 ## See also
 
-- [The knowledge ladder](./the-knowledge-ladder.md) — the conceptual frame for why these layers exist
-- [The staged pipeline](./the-staged-pipeline.md) — the six-stage runtime composition
+- [The knowledge ladder](../understanding/the-knowledge-ladder.md) — the conceptual frame for why these layers exist
+- [The staged pipeline](../understanding/the-staged-pipeline.md) — the six-stage runtime composition
 - [`STAGES.md`](../plan/reference/STAGES.md) — formal per-stage type contracts
 - [`reconcile-empty-parse-bonus.md`](./reconcile-empty-parse-bonus.md) — the multiplicative-score gotcha (link will resolve once Doc D lands)
 - [v0.5.0 — as shipped](../plan/v0-5-0-shipped.md) — what landed and when

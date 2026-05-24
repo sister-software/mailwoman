@@ -1,6 +1,10 @@
 ---
 sidebar_position: 5
 title: Tokenization
+tags:
+  - concepts
+  - tokenizer
+  - architecture
 ---
 
 # Tokenization
@@ -102,6 +106,6 @@ The byte fallback comes from SentencePiece's `byte_fallback: true` setting in th
 
 ## See also
 
-- [What is an address?](./what-is-an-address.md) — what tokens get labelled
+- [What is an address?](../understanding/what-is-an-address.md) — what tokens get labelled
 - [BIO labels](./bio-labels.md) — how subword-level labels become character-level spans
 - [Neural classification](./neural-classification.md) — what the model does with tokens

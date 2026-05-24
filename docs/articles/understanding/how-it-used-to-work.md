@@ -1,6 +1,10 @@
 ---
-sidebar_position: 3
+sidebar_position: 16
 title: How it used to work
+tags:
+  - architecture
+  - rule-based
+  - reference
 ---
 
 # How it used to work — Mailwoman v1

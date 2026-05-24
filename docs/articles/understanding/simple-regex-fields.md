@@ -1,0 +1,53 @@
+---
+sidebar_position: 34
+title: Regex-anchored fields
+tags:
+  - domain
+  - hubris
+  - rule-based
+  - street
+  - postcode
+  - en-us
+---
+
+# Regex-anchored fields
+
+Most applications don't need a full address parse. They need three or four fields: the postcode, the state, the street number, maybe the street name. Extract those with regexes. Ignore everything else. The unparsed tokens are "the rest" — available for display, label printing, and downstream processing, but not part of the geocoding decision.
+
+## The approach
+
+1. **Identify the fields you care about.** For a US e-commerce checkout: postcode (for tax calculation), state (for shipping zone), street number (for delivery point barcode), street name (for address validation). You don't need to identify the locality — the postcode implies it. You don't need to identify the country — it's always the US.
+2. **Write a regex for each field.** Postcode: `\d{5}(-\d{4})?` near the end of the address. State: a dictionary of 50 state names and abbreviations, matched against tokens after the postcode or before the end. Street number: `\d+[A-Za-z]?` at or near the start. Street name: everything between the street number and the state/postcode.
+3. **Anchor the regexes to position.** A US address has a predictable order: `[number] [street] [city] [state] [zip]`. Don't just search for the pattern anywhere — use the expected position to disambiguate. A 5-digit number at the end of the address is the postcode. A 5-digit number at the beginning is probably a street number (but could be a postcode in French formatting).
+4. **Extract and move on.** The extracted fields go to the downstream system. The unparsed tokens — the apartment number, the "Attn:" line, the company name — are preserved as raw text but not classified.
+
+This is not address parsing in the Mailwoman sense. It is field extraction with positional anchors. It works because US addresses have a highly regular structure that a few well-placed regexes can exploit.
+
+## When it works
+
+- **You work with structured, predictable address formats.** US addresses. USPS-standardized addresses from a database. Addresses from a form with separate fields that got concatenated. The format is predictable enough that positional regexes work.
+- **You need a small number of fields.** Postcode and state cover regional analysis. Street number and street name cover address validation. You don't need the locality because the postcode implies it. You don't need the venue because your addresses don't have venues.
+- **You're in a single country.** Positional regexes are per-country. A US regex expects `[number] [street] [city] [state] [zip]`. A French regex expects `[number] [street type] [street name] [postcode] [city]`. A Japanese regex expects `[postcode] [prefecture] [city] [ward] [district] [block] [lot]`. The regex set is small and per-locale, not learned.
+- **You can tolerate regex maintenance.** When a new state joins (unlikely), add one dictionary entry. When the postcode format changes (very unlikely in the US — it's been `\d{5}` since 1963), update one regex. The maintenance surface is small and well-defined.
+- **You need to ship today.** A few regexes, a state dictionary, a positional heuristic. A few hundred lines of code. Ship in an afternoon.
+
+## What you lose
+
+- **The unparsed tokens.** Everything between the street name and the state/postcode is "the rest." If the locality matters for your use case, you didn't extract it. If the apartment number matters, you didn't extract it. The system can display the raw text but cannot act on it structurally.
+- **Non-standard ordering.** `75008 Paris, 12 rue de la République` — the postcode is at the beginning, the street number is after the street type, the city is after the postcode. Every positional assumption is wrong. The regexes extract nothing or extract the wrong thing.
+- **Multi-word street names.** `Martin Luther King Jr Blvd, 123` — is "Jr" part of the street name or a suffix marker? Is "Blvd" the street type? The regex for "street name" is greedy — it grabs everything from the street number to the state/postcode. If the input has extra tokens in that span (a building name, a dependent street), the regex includes them in the street name.
+- **Venue-vs-address confusion.** `NY-NY Steakhouse, 123 Main St, Springfield, IL` — the regex sees "123" as the street number and extracts "Main St" as the street name. The venue name at the beginning is unparsed — the regex doesn't know it's there. This is correct for this input but wrong for `123 Main St, NY-NY Steakhouse` where the venue follows the address.
+- **No confidence signal.** The regex matched or it didn't. There is no "I'm 60% sure this 5-digit number near the end is a postcode" — there is only "the pattern matched at position 45" or "it didn't match at all." When the pattern matches in an unexpected position (a 5-digit number mid-input that looks like a postcode but isn't), the system has no way to flag the ambiguity.
+
+## Where Mailwoman fits
+
+Mailwoman's locale gate (Stage 2) and kind classifier (Stage 2.5) serve the same function as the positional anchor: "this is a US address in standard ordering." The difference is that Mailwoman learns the ordering from data rather than hardcoding it per country.
+
+A system that starts with regex-anchored field extraction can add Mailwoman as a **second pass for the extracted fields.** The regex extracts the street name; Mailwoman parses it into `street_prefix=W, street=Somerville, street_suffix=Ave`. The regex extracts the postcode; Mailwoman's resolver uses it as a search-space constraint. The regex does the heavy lifting on the structured parts; Mailwoman adds detail on the parts that need context.
+
+## See also
+
+- [Normalize to match](./simple-normalize-to-match.md) — when you don't need field extraction at all
+- [Postcode-only geocoding](./simple-postcode-only.md) — when you only need one field
+- [The tokenization tautology](./the-tokenization-tautology.md) — why positional regexes fail on non-Anglophone addresses
+- [How it used to work](./how-it-used-to-work.md) — Mailwoman v1's rule-based approach, which is essentially this with more rules

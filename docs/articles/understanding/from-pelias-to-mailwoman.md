@@ -1,6 +1,12 @@
 ---
-sidebar_position: 2
+sidebar_position: 15
 title: From Pelias to Mailwoman
+tags:
+  - architecture
+  - rule-based
+  - neural
+  - hybrid
+  - reference
 ---
 
 # From Pelias to Mailwoman
@@ -50,4 +56,4 @@ The Pelias side of the equation — the gazetteer + resolver — is also evolvin
 
 - [How it used to work](./how-it-used-to-work.md) — the rule-only era in detail
 - [How it works now](./how-it-works-now.md) — the hybrid
-- [What is an address?](../concepts/what-is-an-address.md) — the deep dive on the data model
+- [What is an address?](./what-is-an-address.md) — the deep dive on the data model
