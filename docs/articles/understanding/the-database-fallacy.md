@@ -17,13 +17,13 @@ The US Postal Service maintains the **Address Management System** (AMS), the clo
 
 ### National address gazetteers
 
-| Country | Gazetteer | Coverage | Currency |
-|---------|-----------|----------|----------|
-| France | BAN (Base Adresse Nationale) | ~25M addresses | Updated monthly, ~95% commune coverage |
-| UK | AddressBase Plus (Ordnance Survey) | ~40M addresses | Updated every 6 weeks, licensed |
-| Canada | National Address Database (NAD) | ~14M addresses | Incomplete — assembled from volunteer provincial contributions |
-| Japan | MLIT address data | ~30M addresses | Comprehensive but in Japanese only |
-| India | None | 0 | No national address database exists |
+| Country | Gazetteer                          | Coverage       | Currency                                                       |
+| ------- | ---------------------------------- | -------------- | -------------------------------------------------------------- |
+| France  | BAN (Base Adresse Nationale)       | ~25M addresses | Updated monthly, ~95% commune coverage                         |
+| UK      | AddressBase Plus (Ordnance Survey) | ~40M addresses | Updated every 6 weeks, licensed                                |
+| Canada  | National Address Database (NAD)    | ~14M addresses | Incomplete — assembled from volunteer provincial contributions |
+| Japan   | MLIT address data                  | ~30M addresses | Comprehensive but in Japanese only                             |
+| India   | None                               | 0              | No national address database exists                            |
 
 Each is built for a different purpose: postal delivery (USPS), land registration (AddressBase), census enumeration (MLIT), or navigation (OpenStreetMap). They disagree on what counts as an address. A French commune may have a BAN entry for every building but the postal service delivers to a subset. A UK address in AddressBase may have a UPRN (Unique Property Reference Number) that no other system uses. There is no universal key.
 
@@ -41,13 +41,13 @@ If you combine USPS AMS + OSM + BAN + NAD + WOF + OpenAddresses + TIGER + every 
 
 An address is a **social protocol for directing a human courier**, not a geographic coordinate. Multiple protocols coexist on the same building:
 
-| System | Address for 350 Fifth Avenue, New York |
-|--------|----------------------------------------|
-| USPS mailing | 350 5th Ave, New York, NY 10118 |
-| 911 emergency | 350 5th Ave, Manhattan, NY 10001 |
-| Utility billing (ConEd) | 350 5th Ave, New York, NY 10001-0001 |
-| Building management | Empire State Building, 350 Fifth Avenue |
-| What a tourist types | Empire State Building, NYC |
+| System                  | Address for 350 Fifth Avenue, New York  |
+| ----------------------- | --------------------------------------- |
+| USPS mailing            | 350 5th Ave, New York, NY 10118         |
+| 911 emergency           | 350 5th Ave, Manhattan, NY 10001        |
+| Utility billing (ConEd) | 350 5th Ave, New York, NY 10001-0001    |
+| Building management     | Empire State Building, 350 Fifth Avenue |
+| What a tourist types    | Empire State Building, NYC              |
 
 All five refer to the same physical building. A database that stores only the USPS form will not match a tourist query. A database that stores only the mailing address will misroute a 911 call. A database that tries to store all five forms needs a data model that treats them as equivalent — and that equivalence is a human judgment, not a database join.
 
@@ -77,13 +77,13 @@ A geocoder that treats all postcodes as polygons will produce different error ch
 
 Municipalities annex, de-annex, incorporate, dissolve, and rename themselves. Postcodes get split. Streets get renamed. The half-life of an address is about **5 years** in any urban area — after 5 years, roughly half of the addresses in a fast-growing city have changed in some administratively meaningful way.
 
-| What changes | How often | Example |
-|-------------|-----------|---------|
-| Municipality annexation | Annual | Austin, TX annexed ~50 sq mi between 2010-2020 |
-| Street renaming | Ongoing | "Malcolm X Boulevard" replaces "Reid Avenue" in Brooklyn |
-| Postcode split | As needed | 90210 split into 90210 and 90211 when volume exceeded capacity |
-| New construction | Continuous | ~1.4M new US housing units per year |
-| Building renumbering | Rare but impactful | Entire blocks renumbered when addressing standards change |
+| What changes            | How often          | Example                                                        |
+| ----------------------- | ------------------ | -------------------------------------------------------------- |
+| Municipality annexation | Annual             | Austin, TX annexed ~50 sq mi between 2010-2020                 |
+| Street renaming         | Ongoing            | "Malcolm X Boulevard" replaces "Reid Avenue" in Brooklyn       |
+| Postcode split          | As needed          | 90210 split into 90210 and 90211 when volume exceeded capacity |
+| New construction        | Continuous         | ~1.4M new US housing units per year                            |
+| Building renumbering    | Rare but impactful | Entire blocks renumbered when addressing standards change      |
 
 A database snapshot taken in 2024 is wrong in 2026 for some fraction of its entries. The error is not random — it concentrates in the places that are changing the most: growing cities, developing economies, regions with active administrative reform. These are exactly the places where geocoding accuracy matters most.
 

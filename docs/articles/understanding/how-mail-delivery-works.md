@@ -53,12 +53,12 @@ But usually, wrong addresses get handled earlier:
 
 The postal system has **four layers of ambiguity resolution**, escalating from cheapest to most expensive:
 
-| Layer | Mechanism | Cost | Success rate |
-|-------|-----------|------|-------------|
-| 1. OCR + delivery point barcode | Machine | Near zero | ~85-90% |
-| 2. Remote Encoding Center | Human typing | ~$0.03/piece | Most of the remaining ~10% |
-| 3. Carrier local knowledge | Human walking | ~$0.50/piece (amortized) | Most of the rest |
-| 4. Dead letter / return | Disposal | ~$1.00+ | The rest |
+| Layer                           | Mechanism     | Cost                     | Success rate               |
+| ------------------------------- | ------------- | ------------------------ | -------------------------- |
+| 1. OCR + delivery point barcode | Machine       | Near zero                | ~85-90%                    |
+| 2. Remote Encoding Center       | Human typing  | ~$0.03/piece             | Most of the remaining ~10% |
+| 3. Carrier local knowledge      | Human walking | ~$0.50/piece (amortized) | Most of the rest           |
+| 4. Dead letter / return         | Disposal      | ~$1.00+                  | The rest                   |
 
 A parser that returns **"I'm 70% sure this is Springfield IL, 25% Springfield MA, 5% Springfield MO"** is mimicking Layer 2 — human triage — before the letter ever leaves the sender's computer. It tells the downstream system: "you need more information before you can route this." That is _more honest_ than returning "Springfield IL" with 98% confidence because the gazetteer has a population-weighted default.
 

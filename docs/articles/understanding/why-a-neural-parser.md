@@ -21,10 +21,10 @@ Richard Sutton's 2019 essay "The Bitter Lesson" argues that over the history of 
 
 Applied to address parsing:
 
-| Approach | Short-term | Long-term |
-|----------|-----------|----------|
-| Rules | Fix one failure mode immediately with a regex or dictionary update | Accumulate rules that conflict, need maintenance, and ceiling at ~92% accuracy |
-| Neural | Spend time building corpus + training infrastructure before seeing any benefit | Learn the structure of addresses from data; improve with more data without adding rules |
+| Approach | Short-term                                                                     | Long-term                                                                               |
+| -------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| Rules    | Fix one failure mode immediately with a regex or dictionary update             | Accumulate rules that conflict, need maintenance, and ceiling at ~92% accuracy          |
+| Neural   | Spend time building corpus + training infrastructure before seeing any benefit | Learn the structure of addresses from data; improve with more data without adding rules |
 
 The rule-based approach won the first decade of geocoding (2008-2018) because the cost of training a neural model was high and the cost of writing one more regex was low. The neural approach wins now because the cost of training has dropped (HuggingFace Transformers, ONNX export, cloud GPUs) and the cost of maintaining rule sets has grown (international expansion, long-tail address formats, user-generated content).
 
@@ -82,9 +82,9 @@ The **policy registry** decides, per component, per locale, which classifier(s) 
 
 ```ts
 interface ClassifierPolicy {
-    component: ComponentTag
-    mode: "rule_only" | "neural_only" | "both" | "neural_preferred" | "rule_preferred"
-    confidence_threshold?: number
+	component: ComponentTag
+	mode: "rule_only" | "neural_only" | "both" | "neural_preferred" | "rule_preferred"
+	confidence_threshold?: number
 }
 ```
 

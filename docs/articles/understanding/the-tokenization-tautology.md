@@ -94,13 +94,13 @@ This is the confidence trap: **aggregating per-component confidence hides combin
 
 Every new address shape that combines tokens differently requires a new rule, a new penalty adjustment, or a new exception in the solver. The rule set grows without bound:
 
-| Address shape | Rule needed | Why the rule is fragile |
-|--------------|-------------|----------------------|
-| `Saint Petersburg, FL` | Multi-word locality patterns | What about "St. Petersburg"? "Saint Peter"? "San Juan"? |
-| `NY-NY Steakhouse, Houston TX` | Venue-before-address boundary detection | The comma is the only signal — no comma, no boundary |
-| `350 5th Ave, New York, NY 10118` | Number-as-house-number, not postcode | Positional assumption: first number is housenumber. Fails on `10118 350 5th Ave`. |
-| `47110 Sainte-Livrade-sur-Lot` | Postcode-first detection | Pattern match on 5-digit leading token. Fails on `90210 Beverly Hills` (postcode looks like ZIP, but context is different). |
-| `West 26th Street, New York` | Directional prefix detection | "West" is a directional, not a locality. But "West New York" is a town in NJ. |
+| Address shape                     | Rule needed                             | Why the rule is fragile                                                                                                     |
+| --------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `Saint Petersburg, FL`            | Multi-word locality patterns            | What about "St. Petersburg"? "Saint Peter"? "San Juan"?                                                                     |
+| `NY-NY Steakhouse, Houston TX`    | Venue-before-address boundary detection | The comma is the only signal — no comma, no boundary                                                                        |
+| `350 5th Ave, New York, NY 10118` | Number-as-house-number, not postcode    | Positional assumption: first number is housenumber. Fails on `10118 350 5th Ave`.                                           |
+| `47110 Sainte-Livrade-sur-Lot`    | Postcode-first detection                | Pattern match on 5-digit leading token. Fails on `90210 Beverly Hills` (postcode looks like ZIP, but context is different). |
+| `West 26th Street, New York`      | Directional prefix detection            | "West" is a directional, not a locality. But "West New York" is a town in NJ.                                               |
 
 Each rule works for the specific case it was written for. Each rule introduces false positives in cases that resemble the target but aren't. The rule set accretes, and the false-positive rate compounds. After enough rules, adding a new one fixes one address and breaks three others.
 

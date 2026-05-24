@@ -13,15 +13,15 @@ This article is an economic argument, not a technical one. It explains why 90% c
 
 Geocoder accuracy varies sharply by location type:
 
-| Location type | Typical geocoder accuracy | Share of US population |
-|--------------|--------------------------|----------------------|
-| Urban single-family | > 95% | ~25% |
-| Suburban single-family | > 92% | ~35% |
-| Urban multifamily (apartments) | ~80% | ~15% |
-| Rural routes | ~70% | ~15% |
-| PO boxes / general delivery | ~55% | ~3% |
-| Tribal lands / informal addressing | ~40% | ~2% |
-| New construction (last 2 years) | ~60% | ~5% |
+| Location type                      | Typical geocoder accuracy | Share of US population |
+| ---------------------------------- | ------------------------- | ---------------------- |
+| Urban single-family                | > 95%                     | ~25%                   |
+| Suburban single-family             | > 92%                     | ~35%                   |
+| Urban multifamily (apartments)     | ~80%                      | ~15%                   |
+| Rural routes                       | ~70%                      | ~15%                   |
+| PO boxes / general delivery        | ~55%                      | ~3%                    |
+| Tribal lands / informal addressing | ~40%                      | ~2%                    |
+| New construction (last 2 years)    | ~60%                      | ~5%                    |
 
 The 90% headline accuracy comes from the top two rows — urban and suburban single-family homes, which together are about 60% of the population. The other 40% of the population experiences accuracy that ranges from "mostly works" (urban multifamily at 80%) to "effectively broken" (rural routes at 70%, tribal lands at 40%).
 
@@ -38,26 +38,26 @@ This is the inverse of the Pareto principle: the **last 10% of coverage costs mo
 
 ### Google's Geocoding API
 
-| Factor | Cost |
-|--------|------|
-| Price | $5 per 1,000 requests |
-| Terms | Results cannot be cached beyond 30 days |
-| Coverage | Global, but variable per country |
-| Latency | ~50-200ms per request |
-| Privacy | Your queries are Google's data |
-| Customization | None — you get Google's ontology |
+| Factor        | Cost                                    |
+| ------------- | --------------------------------------- |
+| Price         | $5 per 1,000 requests                   |
+| Terms         | Results cannot be cached beyond 30 days |
+| Coverage      | Global, but variable per country        |
+| Latency       | ~50-200ms per request                   |
+| Privacy       | Your queries are Google's data          |
+| Customization | None — you get Google's ontology        |
 
 At $5/1K requests, geocoding 1 million addresses per month costs $5,000. That is not a large line item for a logistics company — $60,000/year. But the dependency is total: you cannot audit the results, you cannot fix failures, you cannot cache your own correctness corrections, and your query logs train Google's model, not yours. If Google changes its pricing (it has, multiple times) or its terms (it has), you have no alternative.
 
 ### geocode.earth / Pelias
 
-| Factor | Cost |
-|--------|------|
-| Price | Pay-as-you-go, ~$0.50/1K requests |
-| Terms | Open-source core, hosted service |
-| Coverage | Global, WOF + OpenStreetMap + OpenAddresses |
-| Customization | You can run your own instance |
-| Parser | The same rule-based engine Mailwoman forked |
+| Factor        | Cost                                        |
+| ------------- | ------------------------------------------- |
+| Price         | Pay-as-you-go, ~$0.50/1K requests           |
+| Terms         | Open-source core, hosted service            |
+| Coverage      | Global, WOF + OpenStreetMap + OpenAddresses |
+| Customization | You can run your own instance               |
+| Parser        | The same rule-based engine Mailwoman forked |
 
 geocode.earth is a better deal: the core is open-source, the licensing is more permissive, and you can run your own instance if the hosted service doesn't meet your needs. But the parser is the same Pelias rule engine that Mailwoman v1 was built on — it has the same tokenization-tautology ceiling. Running your own instance means you own the infrastructure but not the parser's failure modes.
 
