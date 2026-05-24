@@ -16,30 +16,30 @@ This article records the A0 numbers so the A1 delta is interpretable.
 
 A0 was trained 2026-05-23 on a single host (no rented compute), 1.04 hours wall-clock. SentencePiece configuration:
 
-| Knob | A0 | v0.1.0 (predecessor) |
-|---|---|---|
-| `model_type` | unigram | unigram |
-| `vocab_size` | 48,000 | 16,000 |
-| `character_coverage` | 0.9999 | 0.9995 |
-| `byte_fallback` | true | true |
-| `user_defined_symbols` | 2,110 | 0 |
-| Training corpus | corpus-v0.3.0, US + FR @ 500K each + 2K mined postcode literals | (historical) |
+| Knob                   | A0                                                              | v0.1.0 (predecessor) |
+| ---------------------- | --------------------------------------------------------------- | -------------------- |
+| `model_type`           | unigram                                                         | unigram              |
+| `vocab_size`           | 48,000                                                          | 16,000               |
+| `character_coverage`   | 0.9999                                                          | 0.9995               |
+| `byte_fallback`        | true                                                            | true                 |
+| `user_defined_symbols` | 2,110                                                           | 0                    |
+| Training corpus        | corpus-v0.3.0, US + FR @ 500K each + 2K mined postcode literals | (historical)         |
 
 Eval fixture: 43 hand-curated lines covering CJK / Cyrillic / Armenian / Greek / Arabic / Hebrew / Devanagari / Thai / Latin-with-diacritics. The fixture lives at `data/eval/multi-script/v0.5.0-a0.jsonl`.
 
-| Script | A0 byte-fallback | v0.1.0 baseline | Δ |
-|---|---|---|---|
-| **overall** | **36.7%** | 18.0% | **+18.7 pt** |
-| cjk | 80.0% | 51.6% | +28.4 pt |
-| cyrillic | 2.2% | 0.0% | +2.2 pt |
-| armenian | 21.3% | 0.0% | +21.3 pt |
-| greek | 16.3% | 0.0% | +16.3 pt |
-| arabic | 5.0% | 0.0% | +5.0 pt |
-| hebrew | 10.0% | 0.0% | +10.0 pt |
-| devanagari | 12.8% | 0.0% | +12.8 pt |
-| thai | 46.7% | 10.0% | +36.7 pt |
-| latin | 5.8% | 0.0% | +5.8 pt |
-| other | 34.3% | 0.0% | +34.3 pt |
+| Script      | A0 byte-fallback | v0.1.0 baseline | Δ            |
+| ----------- | ---------------- | --------------- | ------------ |
+| **overall** | **36.7%**        | 18.0%           | **+18.7 pt** |
+| cjk         | 80.0%            | 51.6%           | +28.4 pt     |
+| cyrillic    | 2.2%             | 0.0%            | +2.2 pt      |
+| armenian    | 21.3%            | 0.0%            | +21.3 pt     |
+| greek       | 16.3%            | 0.0%            | +16.3 pt     |
+| arabic      | 5.0%             | 0.0%            | +5.0 pt      |
+| hebrew      | 10.0%            | 0.0%            | +10.0 pt     |
+| devanagari  | 12.8%            | 0.0%            | +12.8 pt     |
+| thai        | 46.7%            | 10.0%           | +36.7 pt     |
+| latin       | 5.8%             | 0.0%            | +5.8 pt      |
+| other       | 34.3%            | 0.0%            | +34.3 pt     |
 
 **A0 is worse than v0.1.0 on every script.** This is not a bug. It is the expected outcome and it is the point of running A0.
 
@@ -69,9 +69,9 @@ A1 retrain is a single re-invocation of the A0 harness against `corpus-v0.4.0` �
 
 Three things:
 
-1. **The harness is validated.** A0 trained end-to-end on real data. Reservoir sampling, the user-defined-symbols normalisation step (see [`SP UDS whitespace gotcha`](../../projects/mailwoman/sentencepiece-uds-whitespace.md) — or, if you are reading on the published docs site, the version in the mailwoman repo at `corpus-python/src/mailwoman_train/tokenizer_train.py`), the model card writer, the byte-fallback eval — every piece worked. A1 has zero new code to write.
+1. **The harness is validated.** A0 trained end-to-end on real data. Reservoir sampling, the user-defined-symbols normalisation step (see [`SP UDS whitespace gotcha`](./sentencepiece-uds-whitespace.md) — or, if you are reading on the published docs site, the version in the mailwoman repo at `corpus-python/src/mailwoman_train/tokenizer_train.py`), the model card writer, the byte-fallback eval — every piece worked. A1 has zero new code to write.
 2. **The eval fixture is validated.** 43 hand-curated multi-script lines is small but the per-script breakdown is informative enough to tell us _where_ a retrain helped vs hurt. Future tokenizer iterations will use the same fixture and the same harness, so A0 / A1 / A2 numbers will be directly comparable.
-3. **The user-defined-symbols list is validated.** A0 has 2,110 UDS — US state codes, country abbreviations, postcode literal patterns (`5-digit ZIP`, `5-4 ZIP+4`, UK alphanumeric blocks, JP `100-0005`). The A0 harness substitutes ASCII space → U+2581 internally so SP's normalisation does not silently disable the UDS (the [SP UDS whitespace gotcha](../../projects/mailwoman/sentencepiece-uds-whitespace.md)). That substitution is now battle-tested.
+3. **The user-defined-symbols list is validated.** A0 has 2,110 UDS — US state codes, country abbreviations, postcode literal patterns (`5-digit ZIP`, `5-4 ZIP+4`, UK alphanumeric blocks, JP `100-0005`). The A0 harness substitutes ASCII space → U+2581 internally so SP's normalisation does not silently disable the UDS (the [SP UDS whitespace gotcha](./sentencepiece-uds-whitespace.md)). That substitution is now battle-tested.
 
 ## Model card schema
 
