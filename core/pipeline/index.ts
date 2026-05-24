@@ -7,6 +7,8 @@
  */
 
 export { reconcileSpans } from "./reconcile.js"
+export { aggregateSpanLogits } from "./span-logit-aggregation.js"
+export type { SpanBounds, TokenPiece } from "./span-logit-aggregation.js"
 export type {
 	ClassifierCandidate,
 	ParentChainLookup,
