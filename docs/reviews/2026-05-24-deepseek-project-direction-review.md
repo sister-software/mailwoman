@@ -1,0 +1,308 @@
+# Mailwoman project direction review — 2026-05-24 (DeepSeek synthesis)
+
+A third-party review synthesizing the project's documentation, blog posts, retrospectives, implementation plan, and the [Codex review](./2026-05-24-codex-project-direction-review.md) from the same date. This document flags points of agreement, adds hypotheses the Codex review did not surface, and proposes a combined operating plan.
+
+## Executive verdict
+
+Mailwoman is on the right strategic track. The strongest idea in the project is the Knowledge Ladder — a staged decomposition that assigns structural priors (phrase grouping, kind classification, locale detection) to cheap rule-based layers, semantic tagging to a small neural model, sequence validity to a CRF with a frozen structural transition mask, cross-component coherence to a joint-decoding reconciler, and world hierarchy to a WOF gazetteer. This is the correct line. It is better than "rules forever" or "one model does everything."
+
+The current work is a significant step forward as architecture and instrumentation, but the model-quality story is still unproven. The v0.5.0 scaffolding — QueryShape, kind classification, phrase grouper, JS Viterbi, resolver alternatives, top-k training support, and opt-in joint decoding — is the right shape. The expensive next step should not be "run the full fresh-slate train and hope." It should be a tighter validation program that proves the destabilizer, closes the top-k-to-Stage-5 integration gap, and establishes slice-level product gates before spending H100/LLM/human-labeling budget at scale.
+
+**Recommended posture: continue, but narrow the next cycle.** Treat the next spend as validation of the pipeline hypothesis, not as a release train.
+
+## Historical context
+
+The docs tell a coherent lineage:
+
+- **Pelias/libpostal** established the modern split: parse the string, then resolve against a gazetteer. libpostal gave the field a strong CRF baseline (C, ~2018, stagnant) but as a large C dependency with opaque retraining and no browser/edge path.
+- **Pelias Parser / Mailwoman v1** took the opposite approach: TypeScript rules, phrase graph, Cartesian solver, dictionary and regex classifiers. Debuggable and deployable, but long-tail ambiguity grew without bound. The operator's "Paris, Texas" talk at SotM framed the rule-ceiling problem succinctly: "A geocoder is a contextual parser + constraint solver. Not a tokenizer. Not a dumb database lookup."
+- **Mailwoman v2** keeps Pelias's operational shape while replacing the brittle center: rules remain for high-precision bounded problems (postcodes, state abbreviations, WOF dictionaries), while a small neural sequence model handles contextual ambiguity. Rule classifiers coexist with neural via a per-component policy registry — the Ship-of-Theseus migration.
+
+This is the correct historical synthesis. Geocoding has never been only NLP and never been only database lookup. Mailwoman is now building both halves in the same package family. No one has shipped a neural address parser as a library — libpostal is C-only, Deepparse is Python-only and academic, Pelias is rule-only. A TypeScript-first, browser-deployable neural parser would fill a real gap.
+
+## What is directionally strong
+
+### 1. The Knowledge Ladder decomposition
+
+The staged pipeline is the project's strongest intellectual contribution:
+
+| Layer                | What it knows                                                    | Shipped today                                            |
+| -------------------- | ---------------------------------------------------------------- | -------------------------------------------------------- |
+| 1. Normalize         | Unicode, whitespace, case folding, reversible offsets            | Yes                                                      |
+| 2. Locale gate       | Language / script family                                         | Yes (rule-based workspace; not wired as factory default) |
+| 2.5. Kind classifier | Overall query category (postcode-only, structured, intersection) | Yes (rule-based)                                         |
+| 2.7. Phrase grouper  | Coherent input units — boundary discovery                        | Yes (rule-based, v0.5.0)                                 |
+| 3. Token classify    | Per-token semantic type distribution                             | Yes (neural, 9M-param encoder + CRF)                     |
+| 4. Sequence correct  | BIO sequence validity (orphan-I veto)                            | Yes (CRF with frozen structural mask)                    |
+| 5. Reconcile         | Joint-coherent interpretation across candidates                  | Opt-in; mocked top-k in tests                            |
+| 6. Resolve           | World hierarchy — WOF gazetteer                                  | Yes (WOF SQLite)                                         |
+
+This decomposition is bitter-lesson-aligned in exactly the right way. The bitter lesson says "general methods that leverage computation win over hand-engineered domain knowledge." It does NOT say "make one model do everything." It says don't hand-engineer things the system could learn from data. Mailwoman decomposes where decomposition is correct (the gazetteer is a lookup, not a learning problem; boundary discovery is structural, not semantic) and learns where learning is correct (per-token type distribution). The important distinction is "learn distributions, look up the world, compose constraints."
+
+### 2. Parse/resolve split stays intact
+
+Keeping parser and resolver separate is the most important architectural decision. It avoids asking the model to memorize WOF/BAN/TIGER, and it gives the resolver room to return candidates instead of pretending one answer is certain. The `alternatives` field and `--candidates` CLI direction are aligned with graceful failure — this is where Mailwoman can be meaningfully better than old geocoders: not just "more correct top-1," but more honest about ambiguity.
+
+### 3. Small, TypeScript-first neural runtime
+
+The Python-training / ONNX-runtime / TypeScript-consumption split is sound. It respects the project audience and keeps inference deployable in Node and browser contexts. The browser demo constraint (60MB cold load, WOF + neural in-browser) is valuable as a forcing function: it prevents the project from drifting into a server-only research stack. The 9M-parameter encoder is a reasonable scale for address tagging. The docs are right that a large LLM would add cost and latency without solving the core task better.
+
+### 4. Ship-of-Theseus coexistence
+
+The policy registry and component-by-component migration are conservative in the best sense. Postcodes, state abbreviations, and bounded format rules should remain deterministic. Neural should earn authority by component and by locale. This is how to avoid replacing a debuggable rule parser with an opaque model that is worse in production.
+
+### 5. The corpus pipeline is a moat
+
+11 TypeScript adapters (WOF admin/postcode, BAN, TIGER, NAD, NPPES, HRSA, IMLS, three state sources), ~677M aligned rows at a 0.03% quarantine rate, locality-aware splits, Parquet shards with license tags, SNAPPY compression. The `CanonicalRow` → alignment → BIO labeling → Parquet sharding pipeline is industrial-scale data engineering. Reproducing it from scratch takes months.
+
+### 6. Diagnostics improved materially
+
+The v0.4.0 retrospective is strong engineering. It does not hide failure behind aggregate F1. It buckets false negatives (65% empty-prediction on postcodes, 92% adversarial transliteration on country, 11% house-number confusion, 6% BIO span boundary slip), identifies the cosine-LR smoke meta-bug, and separates real regressions from adversarial-eval artifacts. `VERDICT_SMOKES.md`, `corpus-audit`, and `diagnose_regression.py` are the right kind of infrastructure to build before spending more compute.
+
+## What is not yet proven
+
+### 1. Architecture is ahead of integration
+
+The docs describe a nearly complete v0.5.0 pipeline, but the runtime still does not use the strongest parts by default:
+
+- `reconcileSpans` is opt-in and uses mocked classifier top-k in tests.
+- `runPipeline` collects phrase proposals and passes QueryShape into the classifier, but does not feed phrase proposals into the classifier, does not receive real top-k from the TypeScript classifier, and does not call joint reconcile.
+- The architectural thesis — "candidate generation plus joint coherence beats per-stage argmax" — has not been proven end-to-end with real model output in the default runtime.
+
+This is the largest product risk. Before expensive validation, wire the real path behind a feature flag and run it against the kryptonite catalogue. If joint decode does not beat fallback on kryptonite without hurting normal slices, fix scoring before retraining.
+
+### 2. Training instability is the central technical blocker
+
+v0.4.0 and v0.5.0 both show the same fingerprint across **nine training runs**: loss descends through warmup, reaches a useful basin (train_loss 0.31–0.69), then climbs back to its starting magnitude (1.85–3.29) over 100–300 steps under sustained peak LR. Validation macro-F1 mirrors it — peaks when loss bottoms, collapses to random-baseline.
+
+The bisect has ruled out:
+
+- Learning rate (factor-2.3 change shifts collapse by factor-1.3 — controls when, not whether)
+- CRF per-token normalization (§1)
+- Class-weighted cross-entropy (§3)
+- Hidden size (384 vs 256 — same fingerprint)
+
+The remaining suspects in v0.5.0 are the **A1 tokenizer** (new 48K vocab) and **corpus-v0.4.0** composition (transliteration mass from B2). The h256-bisect run — identical to v0.4.0's shipped configuration except for tokenizer + phrase-prior features — was the best-performing run (peak val_macro_f1=0.399) and diverged anyway.
+
+### 3. The from-scratch training bet is unvalidated
+
+The plan explicitly rejects fine-tuning from pretrained BERT because "address vocabulary is too narrow and too unlike natural language for that pretraining to help." This is a reasonable intuition, but the empirical record of 9 diverging runs is evidence it needs testing. A `distilbert-base-uncased` checkpoint with a CRF head, fine-tuned on corpus-v0.3.0, costs ~2 GPU hours to set up and run. If it trains stably on the first try while the from-scratch model has diverged 9 times, the intuition was wrong — and the project saves months. If it diverges too, the problem is deeper and the from-scratch approach is vindicated.
+
+A secondary concern: 9M params for 21 BIO classes across 2 locales is aggressive. spaCy's `ja_core_news_trf` uses 110M for general Japanese NER. The divergence fingerprint — loss bottoms deep, then climbs to a confident-wrong degenerate minimum — resembles a model finding memorization more stable than generalization, which is a capacity-to-diversity signature.
+
+### 4. Eval evidence is still too weak for a large spend
+
+The model metrics are not yet a green light:
+
+- v0.3.0 gained `house_number`, `street`, and `venue` capability, but coarse labels regressed badly (region 0.83 → 0.18).
+- v0.4.0 produced small fine-label gains (street 0.27 → 0.30, house_number 0.78 → 0.79) but postcode regressed 0.76 → 0.69 and full-parse exact match fell 0.107 → 0.082.
+- Aggregate macro F1 improved in one framing, but the component-level story is mixed.
+- Confidence is reported mostly per token; product users need parse-level and candidate-level calibration.
+- Golden v0.1.2 (4,535 entries) includes adversarial transliteration rows the model was not trained for — useful as a stress test but misleading as a headline denominator unless separately weighted. The set is also small enough that adversarial weighting effects dominate eval deltas (92% of country FN from transliteration).
+
+### 5. Synthetic corpus validation catches alignment, not semantics
+
+The substring validator is correctly treated as load-bearing — it proves annotated values appear in raw strings. But it does not prove labels are complete, semantically correct, or distributionally sane. Given the v0.5.0 divergence, B2's ~73K DeepSeek-generated transliteration pairs need more scrutiny before they become a major training signal:
+
+- Cap synthetic mass as a controlled percentage of batches.
+- Stratify by template family and script.
+- Add near-duplicate detection.
+- Compare token length, component count, punctuation, and source distribution to real rows.
+- Run semantic spot checks on sampled batches.
+
+LLM data is useful for kryptonite cases, but it should enter as a weighted adversarial curriculum, not as an unexamined corpus expansion.
+
+### 6. Status docs drift enough to create planning risk
+
+Specific conflicts found:
+
+| Doc                            | Claims                                                | Reality                                                        |
+| ------------------------------ | ----------------------------------------------------- | -------------------------------------------------------------- |
+| `TODO.md`                      | v0.5.0 threads A–E are **pending**                    | `v0-5-0-shipped.md` says most **shipped** or partially shipped |
+| `STAGES.md` header             | Stages 1/2/2.5/candidate-list **unbuilt**             | Later sections say they **shipped**                            |
+| `ARCHITECTURE.md`              | Describes **47-label** schema, old `packages/` layout | Shipped uses **21-label** Tier 2 subset                        |
+| `runtime-pipeline.ts` comments | Locale gate/kind classifier are **stubbed**           | Kind is wired; locale-gate exists as workspace                 |
+| `tokenization.md`              | Describes v0.1 **16K** tokenizer as current           | v0.5.0 docs discuss **48K** A1 tokenizer                       |
+
+When next steps are expensive, stale status can burn GPU cycles on the wrong premise.
+
+## Comparison with Codex review
+
+The [Codex review](./2026-05-24-codex-project-direction-review.md) (same date) arrives at substantially the same conclusions. This section records the agreements and the two hypotheses this review adds.
+
+### Points of full agreement
+
+- Architecture is sound. Knowledge Ladder is the correct decomposition.
+- Training divergence is the central blocker. Nine runs, same fingerprint.
+- Joint reconcile isn't wired by default. This is the largest integration gap.
+- Status docs are stale. Specific conflicts exist in five files.
+- Next spend should be validation, not release. Preflight checklist before H100 hours.
+- Eval metrics must graduate to product-level gates: calibration, exact match, graceful failure, top-k resolver recall, per-failure-class breakdowns.
+- Synthetic data needs curriculum weights, not blind corpus expansion.
+- Ship-of-Theseus coexistence is correct.
+- TypeScript-first, Python-training split is correct.
+- Browser deployment is a differentiator.
+- Corpus pipeline is a moat.
+- Rule-based structural layers must stay bounded (the Codex review's "slippery slope" guardrail is important and should be adopted as an explicit principle).
+
+### Hypotheses this review adds
+
+**1. The from-scratch-vs-fine-tuning control experiment.** The Codex review does not mention fine-tuning from a pretrained checkpoint. This is the single highest-leverage unanswered question. The plan explicitly rejects pretrained BERT, but the empirical divergence record across 9 runs is evidence the hypothesis needs testing. A controlled experiment costs ~2 GPU hours and answers whether the capacity/diversity mismatch is the root cause.
+
+**2. The model capacity wall.** The Codex review describes the 9M-param model as "reasonable for address tagging." This review flags that the divergence fingerprint — loss bottoms deep, then climbs to a confident-wrong degenerate minimum — is consistent with a model hitting a capacity wall where memorization is more stable than generalization. spaCy's analogous Japanese NER model uses 110M params (12× larger). The task IS narrower, but the loss surface instability across 9 runs suggests the current capacity may be insufficient for stable training from scratch.
+
+Both hypotheses should be tested before the expensive validation run. Combined cost: ~4 GPU hours.
+
+## Combined operating plan
+
+### Step 0 — Freeze status and decision surface
+
+Create one operational page with the current state of every component:
+
+| Area             | State             | Default?             | Evidence          | Next action                    |
+| ---------------- | ----------------- | -------------------- | ----------------- | ------------------------------ |
+| QueryShape       | shipped           | yes                  | tests             | keep                           |
+| locale-gate      | workspace shipped | not wired in factory | tests             | wire or document stub          |
+| phrase-grouper   | shipped rule v1   | yes in factory       | kryptonite tests  | feed into classifier/reconcile |
+| top-k classifier | Python scaffold   | no TS runtime        | tests only        | runtime adapter                |
+| joint reconcile  | shipped opt-in    | no                   | mocked tests      | integrate behind flag          |
+| A1 tokenizer     | trained/evaluated | no stable classifier | byte fallback win | bisect corpus/tokenizer        |
+| v0.5 weights     | not shipped       | no                   | divergence        | isolate destabilizer           |
+
+Reconcile `TODO.md`, `STAGES.md`, `ARCHITECTURE.md`, `runtime-pipeline.ts` comments, and `tokenization.md` against this table.
+
+### Step 0.5 — Run a fine-tuning control experiment
+
+Before the bisect ladder, test the from-scratch hypothesis:
+
+- Take `distilbert-base-uncased` (66M params, or `bert-base-uncased` at 110M).
+- Add a CRF head with the frozen structural transition mask.
+- Fine-tune on corpus-v0.3.0 for 5,000 steps with constant LR at 1.5e-4, effective batch 128.
+- Document stability and eval numbers.
+
+Decision points:
+
+- If it trains stably on the first try and reaches useful eval numbers: the from-scratch approach is the wrong bet. Switch to fine-tuning + ONNX export for the v0.5.0 ship.
+- If it diverges with the same fingerprint: the problem is deeper than model initialization (likely corpus distribution or dual-loss interaction). The bisect ladder in Step 1 is the right next move.
+
+### Step 1 — Complete the v0.5.0 divergence bisect
+
+Run the next cheap-but-informative experiments before any full retrain:
+
+1. **A1 tokenizer + corpus-v0.3.0**, v0.4.0 stable recipe (h256, §1+§3 OFF, constant LR 1.5e-4, eff_batch 128).
+2. **v0.1 tokenizer + corpus-v0.4.0**, same recipe.
+3. **A1 tokenizer + corpus-v0.4.0 with B2 transliteration weight capped** at 5% of sampled batches.
+4. **Per-source gradient-norm probe**, especially B2 transliteration and kryptonite sources.
+5. **Embedding-frequency skew check** — does the 48K A1 vocab create a long tail of near-zero-frequency tokens that produces gradient spikes?
+
+Decision:
+
+- If A1 + v0.3.0 trains cleanly: ship tokenizer win without B2 mass; defer transliteration training.
+- If v0.1 + v0.4.0 diverges: corpus composition is the blocker. Stratify B2 rows and test per-family.
+- If only A1 diverges: investigate vocab/embedding frequency; consider reducing vocab or initializing from A0 differently.
+- If all combinations diverge: the destabilizer is the dual-loss interaction under sustained peak LR. Try CE-only training as a control.
+
+### Step 2 — Wire real joint decode behind a feature flag
+
+Target shape:
+
+```
+normalize → queryShape → locale → kind → phraseProposals
+  → classifierTopK
+  → resolverCandidates
+  → reconcileSpans
+  → resolved top-k output
+```
+
+Gate behind `forceJointReconcile` or similar. Run against:
+
+- Kryptonite catalogue (4,771 rows).
+- Golden v0.1.2 (4,535 entries).
+- Postcode-only / locality-only fast paths.
+- Browser demo fixture set.
+
+Compare to current fallback. If joint decode does not beat fallback on kryptonite without hurting normal slices, fix scoring before retraining.
+
+### Step 3 — Run a capacity-gradient experiment
+
+After Step 2 produces a measurable joint-decode delta on kryptonite, probe the capacity hypothesis:
+
+- Keep the validated recipe from Step 1.
+- Scale hidden size: 256 → 512 (or 384 → 512 if the A1 configuration is stable).
+- Run a constant-LR smoke at effective batch 128 for 1,500 steps.
+- Measure gradient-norm stability per layer and val_macro_f1 trajectory.
+
+If a larger model trains more stably (shallower loss basin, smaller gradient spikes), the capacity wall hypothesis is supported. If divergence is identical, capacity is not the bottleneck and the dual-loss interaction should be the focus.
+
+### Step 4 — Build an eval matrix that mirrors product claims
+
+The model should not be judged only as a tagger. Add a report that gives:
+
+| Metric                                                        | Purpose                |
+| ------------------------------------------------------------- | ---------------------- |
+| Component P/R/F1 by tag                                       | Baseline comparison    |
+| Full-parse exact match                                        | Structural correctness |
+| Parse-level calibration                                       | Confidence honesty     |
+| "Empty parse" rate                                            | Graceful degradation   |
+| Overconfident wrong rate                                      | Safety metric          |
+| Top-1 resolver accuracy                                       | Resolved correctness   |
+| Top-5 resolver recall                                         | Candidate coverage     |
+| Candidate ambiguity surfaced rate                             | Honesty metric         |
+| Per-source and per-failure-class breakdown                    | Diagnostic drill-down  |
+| Rule-only vs neural-only vs hybrid vs joint-decode comparison | Policy guidance        |
+
+This report becomes the release gate for any new weights.
+
+### Step 5 — Make synthetic data a curriculum
+
+Keep DeepSeek generation, but route it through explicit curriculum weights:
+
+- Start synthetic transliteration at a low batch share (e.g., 5%).
+- Keep kryptonite rows as high-value adversarial validation and a small training slice.
+- Preserve a clean non-synthetic control run for comparison.
+- Use source-specific gradient/loss dashboards during training.
+- Require semantic spot-check sampling before corpus promotion.
+
+### Step 6 — Spend only after preflight passes
+
+Before paying for a full expensive validation run (rented H100, LLM generation at scale, human labeling), require:
+
+- [ ] Docs/status freeze complete (Step 0).
+- [ ] Fine-tuning control experiment run and documented (Step 0.5).
+- [ ] Corpus-audit clean.
+- [ ] Constant-LR smoke at full effective batch survives beyond the known cliff window (≥2,500 steps).
+- [ ] Bisect identifies or clears tokenizer/corpus destabilizer (Step 1).
+- [ ] Real joint-decode path runs behind flag (Step 2).
+- [ ] Eval matrix produces baseline numbers for fallback and joint paths (Step 4).
+- [ ] Synthetic data has explicit curriculum weights (Step 5).
+
+Then spend on a full C-train. Not before.
+
+## Where Mailwoman should go
+
+The project should aim to become the **TypeScript-native open geocoding front end**: parser, structured candidate generator, and resolver interface that can run locally, in a browser, or next to Pelias-like services. It does not need rooftop precision or a universal world model to be valuable. It needs to be:
+
+- Easy to deploy (npm install, no C compilation).
+- Honest about ambiguity (candidate surfaces, calibration, graceful-failure signals).
+- Cheap enough for browsers and serverless (current ~60MB cold load is competitive).
+- Retrainable on open data (corpus pipeline is the moat).
+- Calibrated enough that downstream systems can decide when to ask for more context.
+
+That direction is coherent. The current architectural work supports it. The next proof must be **operational**: stable training, real top-k integration, joint reconcile in the default path, and evals that show the whole pipeline improves outcomes rather than only improving isolated components.
+
+## Bottom line
+
+Continue the project. Do not expand scope yet.
+
+The architecture is correct. The corpus is a moat. The training stability is the existing blocker. The divergence fingerprint across 9 runs is now the central technical question — and it has two unexamined hypotheses (from-scratch initialization, model capacity) that the current bisect ladder does not test. Run those control experiments before the next full train.
+
+The next investment should be a validation sprint:
+
+1. Freeze status docs.
+2. Run the fine-tuning control experiment (~2 GPU hours).
+3. Complete the v0.5.0 bisect with corpus/tokenizer forensics.
+4. Wire real top-k joint decoding behind a flag.
+5. Establish product-level eval gates.
+6. Run the expensive train only after the preflight checklist passes.
+
+The thesis is sound. The expensive part should wait until the pipeline can measure the thesis end-to-end.
