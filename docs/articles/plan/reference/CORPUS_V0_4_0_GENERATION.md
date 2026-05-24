@@ -12,19 +12,25 @@ corpus-v0.4.0 = corpus-v0.3.0 + DeepSeek-generated rows. The v0.3.0 shards are n
 re-emitted; the v0.4.0 MANIFEST points at the same on-disk parquet files plus the new
 kryptonite shard(s).
 
-Two row classes are in scope for the v0.5.0 plan. **Only the kryptonite class ships in
-this PR; the transliteration class is documented here and deferred to a follow-up.**
+Two row classes are in scope for the v0.5.0 plan. Both are now shipped — kryptonite in
+Thread B's commit (`d8a6bae`), transliteration in this commit (Thread B2).
 
-| Class           | Status (this PR)       | Target row count | Adapter `source` id        |
-| --------------- | ---------------------- | ---------------- | -------------------------- |
-| Kryptonite      | Shipped                | ~5,000           | `deepseek-kryptonite`      |
-| Transliteration | Deferred (design only) | ~50,000          | `deepseek-translit-<scrp>` |
+| Class           | Status (corpus-v0.4.0)               | Target row count | Adapter `source` id        |
+| --------------- | ------------------------------------ | ---------------- | -------------------------- |
+| Kryptonite      | Shipped (Thread B, commit `d8a6bae`) | ~5,000           | `deepseek-kryptonite`      |
+| Transliteration | Shipped (Thread B2)                  | ~50,000–75,000   | `deepseek-translit-<scrp>` |
 
 The kryptonite slice is what unblocks Stage 5 reconcile (Thread D) and the Stage 2.5
 kind-classifier's joint-decoding test surface. Transliteration is what unblocks Thread A's
-<5% byte-fallback target on non-Latin scripts — that work is separable from v0.5.0's
-first-run critical path. See [PHASE_8 §B](../phases/PHASE_8_v0_5_0_fresh_slate.md) for
-the threading rationale.
+<5% byte-fallback target on non-Latin scripts. See
+[PHASE_8 §B](../phases/PHASE_8_v0_5_0_fresh_slate.md) for the threading rationale.
+
+PHASE_8 §B originally enumerated eight scripts (CJK + Cyrillic + Armenian + Greek + Arabic +
+Hebrew + Devanagari + Thai). Thread B's smoke testing validated the prompt + alignment
+pipeline against five (`cyrl`, `jpan`, `hans`, `hang`, `armn`); those five ship in Thread B2.
+The remaining scripts (`grek`, `arab`, `hebr`, `deva`, `thai`) are additive — extending
+`TRANSLIT_SCRIPTS` + `KNOWN_SOURCE_PREFIXES` is sufficient — but the prompt + substring
+invariant should be re-smoked per-script before a production run, so they are deferred.
 
 ## Pipeline
 
@@ -164,9 +170,7 @@ weights. `deepseek-kryptonite` is now in `KNOWN_SOURCE_PREFIXES`. Expected:
 1 train shard with `source: "deepseek-kryptonite"`, sub-1% of total shards (the
 v0.3.0 baseline has 674 train shards; one more is noise at the audit level).
 
-## Transliteration design (deferred to follow-up PR)
-
-Documenting now so the follow-up PR picks up clean. Not implemented in this PR.
+## Transliteration generation (Thread B2)
 
 ### Goals
 
@@ -185,7 +189,7 @@ Documenting now so the follow-up PR picks up clean. Not implemented in this PR.
 
 ### Mode + invocation
 
-Already implemented in `generate_deepseek_corpus.py`:
+Implemented in `generate_deepseek_corpus.py`:
 
 ```bash
 python3 corpus-python/scripts/generate_deepseek_corpus.py \
@@ -196,6 +200,10 @@ python3 corpus-python/scripts/generate_deepseek_corpus.py \
   --scripts cyrl jpan hans hang armn \
   --batch-size 50 --concurrency 15
 ```
+
+The Thread B2 production run consumed the full seed pool (14,978 rows = 4,478 en-US +
+10,500 fr-FR). 5 scripts × 14,978 seeds = 74,890 planned rows. Wall-clock and rejection
+rate are pinned in the Changelog below.
 
 ### Prompt design
 
@@ -217,33 +225,59 @@ the production 75K pass.
 ### Cost + wall time estimate
 
 - 75K rows / 50 per batch = 1,500 batches.
-- ~12 rps observed for kryptonite; transliteration is similar size per batch.
-- Wall time at conc=15: ~1.5K batches × 12s / 15 ≈ 20 min.
-- Token budget per response: ~20K — typically ~50 lines × ~50-100 tokens = 2-5K used.
+- Per-batch latency is API-dominated; with reasoning headroom (see below), 30–60 s.
+- Wall time at conc=15: ~1,500 batches × 45 s / 15 ≈ 75 min on a clean run.
 
-### What the follow-up PR adds
+### `max_tokens` and the reasoning budget
 
-1. Run the transliteration generator end-to-end.
-2. New `build-transliteration-shard.ts` mirroring `build-kryptonite-shard.ts` — five
-   per-script source ids, one shard per script.
-3. Update [`address-data-sources.md`](./address-data-sources.md) with the five new
-   synthetic sources.
-4. Update `KNOWN_SOURCE_PREFIXES` in `audit.ts` — already done in this PR (the five
-   `deepseek-translit-*` slugs are present so the follow-up doesn't have to touch
-   audit.ts again).
-5. Bump corpus version to v0.4.1 or v0.5.0 depending on whether other Thread B-adjacent
-   work lands in between. The kryptonite shard from this PR carries forward unchanged.
+DeepSeek-v4-flash with `reasoning_effort=low` still consumes a non-trivial reasoning budget
+on transliteration batches. Thread B2's first launch ran at `max_tokens=20000` (the same knob
+that worked for kryptonite) and saw 30/32 batches hit `finish_reason=length` because
+reasoning ate 12–15K of the 20K budget, leaving <5K for the 50-row JSONL output. Truncated
+responses produced ~8 rows per batch instead of 50.
 
-### Risk: cross-script seed pollution
+The validated production knob is **`max_tokens=60000`**: empirically reasoning peaks around
+~15K and 50-row output uses ~5K, so 60K leaves comfortable headroom. The Thread B2 generator
+also marks `finish_reason=length` batches with a `!RETRY:` prefix so they don't checkpoint
+and get retried on subsequent runs — defence in depth for the rare batches that still
+truncate at 60K.
 
-If the seed pool is biased (e.g. all FR seeds are Île-de-France because the BAN
-sampling skewed there), the resulting transliterations would teach the tokenizer about
-that bias 5× over. Stratify seeds by region before sampling. The current staging
-files were sampled stratified by `source` only — the follow-up should add region
-stratification before kicking off the 75K run.
+This budget reasoning is transliteration-specific; the kryptonite mode at `max_tokens=20000`
+remains correct because English-only ASCII output uses ~1 token per row character and 50
+rows fit comfortably.
+
+### What Thread B2 adds
+
+1. Runs the transliteration generator end-to-end against the full seed pool.
+2. New [`build-transliteration-shard.ts`](../../../../corpus/scripts/build-transliteration-shard.ts)
+   mirroring `build-kryptonite-shard.ts` — buckets canonical rows by `source` and emits
+   one parquet shard per script (`train/part-translit-<slug>.parquet`).
+3. Composes the new MANIFEST as `(v0.3.0 base shards) + (Thread B kryptonite shard) +
+(Thread B2 translit-<slug> shards)`.
+4. Migrates v0.3.0 shard descriptors in MANIFEST from `/mnt/playpen/mailwoman-data/...`
+   to `/data/...`, the form that container loaders resolve at training time. The on-disk
+   bytes are unchanged; only the path strings in MANIFEST move. (Thread B's MANIFEST mixed
+   the two forms; this PR canonicalizes.)
+5. `KNOWN_SOURCE_PREFIXES` in `audit.ts` already contains the five `deepseek-translit-*`
+   slugs from Thread B — no audit.ts edit needed.
+
+### Known risks
+
+- **Cross-script seed pollution.** If the seed pool is biased (e.g. all FR seeds are
+  Île-de-France because the BAN sampling skewed there), the resulting transliterations
+  would teach the tokenizer about that bias 5× over. The current staging files were
+  sampled stratified by `source` only. Region stratification is deferred — accepted as
+  a known limitation of this pass; can be revisited if Thread A's byte-fallback eval
+  surfaces a regional skew.
+- **Whitespace-tokenizer interaction with CJK.** Alignment uses the whitespace tokenizer,
+  which treats space-less CJK as a single token. The substring invariant still holds
+  (raw and component values are space-matched verbatim), so alignment passes — but
+  per-character labelling at training time comes from the sentencepiece tokenizer
+  Thread A retrains, not from the corpus alignment.
 
 ## Changelog
 
-| Date       | Change                                                                  |
-| ---------- | ----------------------------------------------------------------------- |
-| 2026-05-23 | Initial doc + kryptonite slice generation (5K rows, deepseek-v4-flash). |
+| Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-23 | Initial doc + kryptonite slice generation (5K rows, deepseek-v4-flash).                                                                                                                                                                                                                                                                                                                                  |
+| 2026-05-24 | Transliteration slice generation shipped under Thread B2: 73,319 rows from 5 scripts × 14,978 seeds (en-US + fr-FR), `max_tokens=60000`, 5.2 rps sustained, ~234 min wall-clock at conc=15. 73,316 rows aligned (3 quarantined). 5 shards added: `part-translit-{armn,cyrl,hang,hans,jpan}.parquet`. v0.3.0 shard paths in MANIFEST canonicalized from `/mnt/playpen/mailwoman-data/...` to `/data/...`. |

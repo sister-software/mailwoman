@@ -394,7 +394,7 @@ def emit_transliteration(args: argparse.Namespace) -> None:
         try:
             resp = deepseek_call(body, api_key)
         except Exception as e:
-            return batch.batch_id, {"api_error": 1, "expected": len(batch.seeds)}
+            return f"!RETRY:{batch.batch_id}", {"api_error": 1, "expected": len(batch.seeds)}
         content = resp["choices"][0]["message"].get("content") or ""
         finish = resp["choices"][0].get("finish_reason")
         rows = parse_jsonl_response(content)
@@ -458,9 +458,17 @@ def emit_transliteration(args: argparse.Namespace) -> None:
                 "response_content": content,
             }, ensure_ascii=False) + "\n")
             rawlog_f.flush()
+        # When the completion truncates (finish_reason=='length'), prefix the returned id with
+        # "!RETRY:" so the checkpoint logic skips marking it done — the rows that DID parse are
+        # still persisted (deterministic source_id dedupes any re-emits on retry), but the batch
+        # is left pending so a subsequent run gets the missing rows.
+        if finish == "length":
+            return f"!RETRY:{batch.batch_id}", bstats
         return batch.batch_id, bstats
 
     def commit_done(bid: str) -> None:
+        if bid.startswith("!RETRY:"):
+            return
         with ck_lock:
             done.add(bid)
             if len(done) % 25 == 0:
@@ -477,10 +485,12 @@ def emit_transliteration(args: argparse.Namespace) -> None:
             if processed % 5 == 0 or processed == len(pending):
                 elapsed = time.time() - t0
                 rps = stats["ok"] / max(elapsed, 1)
+                truncated = sum(v for k, v in stats.items() if k == "finish:length")
                 print(
                     f"  [{processed}/{len(pending)}] ok={stats['ok']} "
                     f"reject={sum(v for k, v in stats.items() if k.startswith('reject') or k in ('api_error','bad-shape','index-out-of-range'))} "
-                    f"  elapsed={elapsed:.0f}s  rps={rps:.1f}",
+                    f"truncated={truncated} "
+                    f"elapsed={elapsed:.0f}s  rps={rps:.1f}",
                     flush=True,
                 )
 
