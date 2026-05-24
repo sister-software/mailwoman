@@ -13,6 +13,8 @@
  */
 
 import type { AddressTree } from "../decoder/types.js"
+import { reconcileSpans } from "./reconcile.js"
+import { aggregateSpanLogits } from "./span-logit-aggregation.js"
 import type {
 	AddressClassifier,
 	LocaleHint,
@@ -231,7 +233,60 @@ export async function runPipeline(
 	}
 
 	let tree: AddressTree = { raw: normalized.normalized, roots: [] }
-	if (stages.classifier) {
+
+	// Joint-reconcile path: when the flag is set AND we have phrase proposals AND the classifier
+	// exposes parseWithLogits, use per-span logit aggregation + reconcileSpans instead of argmax.
+	const useJointReconcile =
+		opts?.forceJointReconcile &&
+		phraseProposals.length > 0 &&
+		stages.classifier &&
+		"parseWithLogits" in stages.classifier
+
+	if (useJointReconcile) {
+		const classifierWithLogits = stages.classifier as AddressClassifier & {
+			parseWithLogits: (
+				text: string,
+				opts?: { queryShape?: QueryShapeLite }
+			) => Promise<{ tree: AddressTree; logits: number[][]; pieces: Array<{ start: number; end: number }> }>
+		}
+
+		throwIfAborted(opts)
+		const tClassify = performance.now()
+		const { tree: argmaxTree, logits, pieces } = await classifierWithLogits.parseWithLogits(
+			normalized.normalized,
+			{ queryShape }
+		)
+		timing["token-classify"] = performance.now() - tClassify
+
+		throwIfAborted(opts)
+		const tReconcile = performance.now()
+
+		// The classifier must expose its label vocabulary so the aggregation can strip BIO prefixes.
+		// NeuralAddressClassifier surfaces this as `cfg.labels` — extracted via structural typing here.
+		const labels: readonly string[] =
+			"labels" in classifierWithLogits
+				? (classifierWithLogits as unknown as { labels: readonly string[] }).labels
+				: []
+
+		const classifierTopK = aggregateSpanLogits(
+			logits,
+			pieces,
+			phraseProposals.map((p) => ({ start: p.span.start, end: p.span.end })),
+			{ labels }
+		)
+
+		if (classifierTopK.length > 0) {
+			const result = reconcileSpans({
+				raw: normalized.normalized,
+				phraseProposals,
+				classifierTopK,
+			})
+			tree = result.tree
+		} else {
+			tree = argmaxTree
+		}
+		timing["reconcile"] = performance.now() - tReconcile
+	} else if (stages.classifier) {
 		throwIfAborted(opts)
 		const tClassify = performance.now()
 		tree = await safeClassify(stages.classifier, normalized.normalized, queryShape)

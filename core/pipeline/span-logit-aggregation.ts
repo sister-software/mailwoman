@@ -19,10 +19,8 @@
  *   downstream contract.
  */
 
-import type { ClassifierCandidate } from "@mailwoman/core/pipeline/reconcile"
-import type { ComponentTag } from "@mailwoman/core/types/component"
-import { STAGE2_BIO_LABELS } from "./labels.js"
-import { softmax } from "./viterbi.js"
+import type { ComponentTag } from "../types/component.js"
+import type { ClassifierCandidate } from "./reconcile.js"
 
 /**
  * A token piece with character-level offsets into the original text.
@@ -54,16 +52,17 @@ export interface SpanBounds {
  * @param logits Per-token logits from ONNX inference, shape `[seqLen][numLabels]`.
  * @param pieces Token pieces with character-level offsets (from the tokenizer's `encode`).
  * @param spans Phrase-grouper span proposals in character offsets.
- * @param opts Options — `topK` (default 3), `labels` (default STAGE2_BIO_LABELS).
+ * @param opts Options — `topK` (default 3), `labels` (required — the BIO label vocabulary the
+ *   model emits, e.g. `["O", "B-locality", "I-locality", ...]`).
  */
 export function aggregateSpanLogits(
 	logits: number[][],
 	pieces: readonly TokenPiece[],
 	spans: readonly SpanBounds[],
-	opts?: { topK?: number; labels?: readonly string[] }
+	opts: { topK?: number; labels: readonly string[] }
 ): ClassifierCandidate[] {
-	const topK = opts?.topK ?? 3
-	const labels = opts?.labels ?? STAGE2_BIO_LABELS
+	const topK = opts.topK ?? 3
+	const labels = opts.labels
 
 	const candidates: ClassifierCandidate[] = []
 
@@ -120,4 +119,13 @@ function stripBioPrefix(label: string): string {
 	const dash = label.indexOf("-")
 	if (dash === -1) return label
 	return label.slice(dash + 1)
+}
+
+/** Numerically stable softmax over a row of logits. */
+function softmax(row: readonly number[]): number[] {
+	let max = row[0]!
+	for (let i = 1; i < row.length; i++) if (row[i]! > max) max = row[i]!
+	const exps = row.map((v) => Math.exp(v - max))
+	const sum = exps.reduce((a, b) => a + b, 0)
+	return exps.map((e) => e / sum)
 }
