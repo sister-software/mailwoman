@@ -79,7 +79,9 @@ dist
 # .model files are reproduced by `python -m mailwoman_train package`.
 packages/neural-weights-*/model.onnx
 packages/neural-weights-*/tokenizer.model
-.claude/
+
+.claude/settings.local.json
+CLAUDE.local.md
 
 # expand-golden.ts outputs — operator skims locally, then promotes to versioned dir
 data/eval/golden/candidates/
