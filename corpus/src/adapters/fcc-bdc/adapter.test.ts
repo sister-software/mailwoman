@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import Database from "better-sqlite3"
 import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
+import { DatabaseSync } from "node:sqlite"
 import { fileURLToPath } from "node:url"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { runAdapter } from "../../runner.js"
@@ -26,7 +26,7 @@ let dbPath: string
 async function buildFixtureDb(): Promise<string> {
 	const sql = await readFile(fixtureSqlPath, "utf8")
 	const path = join(scratch, "fcc-bdc-fixture.db")
-	const db = new Database(path)
+	const db = new DatabaseSync(path)
 	db.exec(sql)
 	db.close()
 	return path

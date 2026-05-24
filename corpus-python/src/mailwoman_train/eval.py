@@ -26,7 +26,7 @@ from typing import Iterable
 import torch
 
 from .config import Config
-from .labels import STAGE1_BIO_LABELS, STAGE1_COARSE_TAGS
+from .labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS
 from .tokenizer import Tokenizer
 
 
@@ -59,7 +59,7 @@ def load_golden_dir(golden_dir: Path) -> list[GoldenEntry]:
 
 
 def golden_to_bio_labels(entry: GoldenEntry, max_length: int, tokenizer: Tokenizer) -> tuple[list[int], list[int], list[int]]:
-    """Encode ``entry.raw`` and assign Stage 1 BIO labels via substring search.
+    """Encode ``entry.raw`` and assign ACTIVE BIO labels via substring search.
 
     Components whose values can't be located in ``raw`` are silently skipped — they are golden
     set rot the JS-side validator should have caught. We could log them, but eval should be
@@ -70,7 +70,7 @@ def golden_to_bio_labels(entry: GoldenEntry, max_length: int, tokenizer: Tokeniz
     pieces = tokenizer.encode_with_spans(entry.raw)
     char_labels = ["O"] * len(entry.raw)
     for tag, value in entry.components.items():
-        if tag not in STAGE1_COARSE_TAGS or not value:
+        if tag not in ACTIVE_TAGS or not value:
             continue
         # Greedy first-occurrence substring search.
         idx = entry.raw.find(value)
@@ -121,7 +121,7 @@ def decode_components(pieces, pred_label_ids: list[int], raw: str) -> dict[str, 
     current_begin: int = -1
     current_end: int = -1
     for i, (piece, lid) in enumerate(zip(pieces, pred_label_ids)):
-        label = STAGE1_BIO_LABELS[lid] if 0 <= lid < len(STAGE1_BIO_LABELS) else "O"
+        label = ACTIVE_BIO_LABELS[lid] if 0 <= lid < len(ACTIVE_BIO_LABELS) else "O"
         if label == "O":
             if current_tag is not None and current_tag not in out:
                 out[current_tag] = raw[current_begin:current_end].strip()
@@ -168,7 +168,7 @@ def run_eval(
     device = device or next(model.parameters()).device
     model.eval()
 
-    per_tag_counts = {tag: [0, 0, 0] for tag in STAGE1_COARSE_TAGS}
+    per_tag_counts = {tag: [0, 0, 0] for tag in ACTIVE_TAGS}
     full_match = 0
     confidences: list[float] = []
     confidence_correct: list[tuple[float, int]] = []
@@ -183,21 +183,30 @@ def run_eval(
         m = torch.tensor([attn], dtype=torch.long, device=device)
         logits = model(input_ids=x, attention_mask=m).logits[0]
         probs = torch.softmax(logits, dim=-1)
-        pred_ids = probs.argmax(dim=-1).tolist()
+        # Confidences come from emission softmax regardless of decoder. With CRF, the
+        # decoded sequence may diverge from per-token argmax — confidence here reflects
+        # the model's per-token belief, not the path's marginal likelihood. That's the
+        # historical eval semantic; calibration plots stay comparable across v0.2.0 +
+        # v0.3.0 with this read.
         pred_confs = probs.max(dim=-1).values.tolist()
 
-        # Trim to non-padding length (number of real pieces, capped at max_length).
+        # Trim to non-padding length first so the decoder sees the same length the model
+        # used. With CRF, predict() honors attention_mask + returns mask-trimmed lists.
         real_len = min(len(pieces), cfg.data.max_length)
-        pred_ids = pred_ids[:real_len]
+        if hasattr(model, "predict") and getattr(model, "crf", None) is not None:
+            decoded_batch = model.predict(input_ids=x, attention_mask=m)
+            pred_ids = decoded_batch[0][:real_len] if decoded_batch else []
+        else:
+            pred_ids = probs.argmax(dim=-1).tolist()[:real_len]
         pred_confs = pred_confs[:real_len]
         pieces = pieces[:real_len]
 
         predicted = decode_components(pieces, pred_ids, entry.raw)
-        gold = {k: v for k, v in entry.components.items() if k in STAGE1_COARSE_TAGS and v}
+        gold = {k: v for k, v in entry.components.items() if k in ACTIVE_TAGS and v}
 
         all_correct = True
         seen_tags: set[str] = set()
-        for tag in STAGE1_COARSE_TAGS:
+        for tag in ACTIVE_TAGS:
             seen_tags.add(tag)
             g = gold.get(tag, "")
             p = predicted.get(tag, "")
@@ -260,7 +269,7 @@ def render_report_markdown(report: EvalReport, header: str = "") -> str:
     lines.append("")
     lines.append("| tag | precision | recall | f1 | support |")
     lines.append("|---|---:|---:|---:|---:|")
-    for tag in STAGE1_COARSE_TAGS:
+    for tag in ACTIVE_TAGS:
         m = report.per_component[tag]
         lines.append(
             f"| {tag} | {m['precision']:.4f} | {m['recall']:.4f} | {m['f1']:.4f} | {int(m['support'])} |"

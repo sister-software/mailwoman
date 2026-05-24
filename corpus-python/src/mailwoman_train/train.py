@@ -31,7 +31,7 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from .config import Config, csv_log_path
 from .data_loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
-from .labels import STAGE1_BIO_LABELS
+from .labels import ACTIVE_BIO_LABELS
 from .model import build_model, force_math_sdpa, model_param_count
 from .tokenizer import Tokenizer
 
@@ -60,6 +60,29 @@ def _cosine_with_warmup(optimizer: AdamW, warmup_steps: int, max_steps: int) -> 
         return max(0.0, 0.5 * (1.0 + math.cos(math.pi * progress)))
 
     return LambdaLR(optimizer, lr_lambda)
+
+
+def _constant_with_warmup(optimizer: AdamW, warmup_steps: int) -> LambdaLR:
+    # Linear warmup → constant. The verdict-smoke mode per v0.5.0 (see
+    # docs/articles/plan/reference/VERDICT_SMOKES.md): cosine decay over a short window
+    # collapses the LR before divergence shows in the loss curve.
+    def lr_lambda(step: int) -> float:
+        if step < warmup_steps:
+            return float(step) / float(max(1, warmup_steps))
+        return 1.0
+
+    return LambdaLR(optimizer, lr_lambda)
+
+
+def _build_scheduler(optim: AdamW, cfg_train) -> LambdaLR:
+    schedule = getattr(cfg_train, "lr_schedule", "cosine")
+    if schedule == "constant":
+        return _constant_with_warmup(optim, cfg_train.warmup_steps)
+    if schedule == "cosine":
+        return _cosine_with_warmup(optim, cfg_train.warmup_steps, cfg_train.max_steps)
+    raise ValueError(
+        f"unknown train.lr_schedule={schedule!r}; expected 'cosine' or 'constant'"
+    )
 
 
 def _precision_to_dtype(precision: str, device: torch.device) -> torch.dtype | None:
@@ -91,7 +114,7 @@ def _token_f1(
     precision = tp / (tp + fp + 1e-9)
     recall = tp / (tp + fn + 1e-9)
     f1 = 2 * precision * recall / (precision + recall + 1e-9)
-    per_label = {STAGE1_BIO_LABELS[c]: float(f1[c]) for c in range(num_labels)}
+    per_label = {ACTIVE_BIO_LABELS[c]: float(f1[c]) for c in range(num_labels)}
     macro = float(f1.mean())
     return {"macro_f1": macro, **{f"f1.{k}": v for k, v in per_label.items()}}
 
@@ -130,7 +153,7 @@ def _eval_val(
         return {"val_loss": float("nan"), "val_rows": 0, "macro_f1": 0.0}
     preds = torch.cat(all_preds, dim=0)
     labels = torch.cat(all_labels, dim=0)
-    metrics = _token_f1(preds, labels, num_labels=len(STAGE1_BIO_LABELS))
+    metrics = _token_f1(preds, labels, num_labels=len(ACTIVE_BIO_LABELS))
     metrics["val_loss"] = loss_total / seen_batches
     metrics["val_rows"] = rows_seen
     return metrics
@@ -211,7 +234,8 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         lr=cfg.train.learning_rate,
         weight_decay=cfg.train.weight_decay,
     )
-    scheduler = _cosine_with_warmup(optim, cfg.train.warmup_steps, cfg.train.max_steps)
+    scheduler = _build_scheduler(optim, cfg.train)
+    print(f"lr_schedule={getattr(cfg.train, 'lr_schedule', 'cosine')}")
     amp_dtype = _precision_to_dtype(cfg.train.precision, device)
     # On gfx1103 (Radeon 780M) autocast+bf16 has been observed to hang at batch≥64 with
     # nn.MultiheadAttention — the autocast fast-path picks a fused kernel that GPU hangs on.
@@ -302,6 +326,14 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 micro_step += 1
                 if not is_accum_boundary:
                     continue
+                # Stage 2 ships CE + CRF NLL — the CRF leg can produce sharp gradients
+                # during warmup, especially under bf16. Clip global norm to 1.0 before
+                # stepping. The v0.2.0 (CE-only) Stage 1 run trained stably to 50k steps
+                # without clipping, but adding the CRF + label smoothing duo without a
+                # gradient guard diverged at step 1000 when warmup LR (5e-4) peaked.
+                grad_clip = float(getattr(cfg.train, "grad_clip_norm", 1.0))
+                if grad_clip > 0:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=grad_clip)
                 optim.step()
                 scheduler.step()
                 step += 1

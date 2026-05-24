@@ -1,0 +1,20 @@
+---
+title: SentencePiece UDS literals with ASCII space silently fail to match
+topic: gotcha
+project: mailwoman
+tags: [sentencepiece, tokenizer]
+written_at: 2026-05-23T18:09:47Z
+container: mailwoman-m-ship-v0-northern-constant-soap
+harvested_at: 2026-05-23T21:08:19.569Z
+source_sha: 378a55d64de58e24d6ddaabb14ec8f30a2422362
+---
+
+SP UDS are stored as the post-normalization form. SP normalizes ASCII spaces to U+2581 (▁) before matching against the UDS vocab, but the user-supplied string keeps the raw space.
+
+Symptom: pass `user_defined_symbols=['PO Box', 'SW1A 1AA']` to `spm.SentencePieceTrainer.train`. The trainer ACCEPTS the list (logs a warning about escaped chars in tokenizer.vocab, but doesn't fail). The output piece stream never emits 'PO Box' as a single piece — instead 'PO' decomposes to byte-fallback pieces (`<0x50>` `<0x4F>`) and the box decomposes into 'B' + byte-fallback chars.
+
+Fix: substitute ` ` → `▁` (U+2581 LOWER ONE EIGHTH BLOCK) in every UDS literal before passing to the trainer. Then the encoder matches: input 'Send to PO Box 1234' tokenizes to [..., '▁', 'PO▁Box', '▁', '1', '2', '3', '4'].
+
+Where this lives: corpus-python/src/mailwoman_train/tokenizer_train.py — `_normalize_uds_for_sp`. Test: corpus-python/tests/mailwoman_train/test_tokenizer_train.py::test_user_defined_postcode_kept_whole.
+
+Why it bites: there's no error log. SP just silently treats the UDS as never-matching, and byte-fallback eats the result. If you're measuring byte-fallback rate (or pulling postcode UDS for must-keep-whole guarantees) and the rate looks higher than expected, check this first.

@@ -23,6 +23,7 @@ import type { CorpusAdapter } from "../types.js"
 import { banAdapter } from "./ban/adapter.js"
 import { fccBdcAdapter } from "./fcc-bdc/adapter.js"
 import { openaddressesAdapter } from "./openaddresses/adapter.js"
+import { stateHiSchoolsAdapter } from "./state-hi-schools/adapter.js"
 import { stateIaContractorsAdapter } from "./state-ia-contractors/adapter.js"
 import { stateNyNotariesAdapter } from "./state-ny-notaries/adapter.js"
 import { stateTxNotariesAdapter } from "./state-tx-notaries/adapter.js"
@@ -31,14 +32,19 @@ import { usgovHrsaFqhcAdapter } from "./usgov-hrsa-fqhc/adapter.js"
 import { usgovImlsPlsAdapter } from "./usgov-imls-pls/adapter.js"
 import { usgovNadAdapter } from "./usgov-nad/adapter.js"
 import { usgovNppesAdapter } from "./usgov-nppes/adapter.js"
-import { usgovSamhsaTreatmentLocatorAdapter } from "./usgov-samhsa-treatment-locator/adapter.js"
 import { wofAdminAdapter } from "./wof-admin-json/adapter.js"
 import { wofPostalcodeAdapter } from "./wof-postalcode-json/adapter.js"
 
 /**
  * Built-in adapters. Order is significant: `corpus build` iterates this list to drive every adapter
  * in turn. Coarse-first (admin → postcode), then street-level (BAN FR, TIGER US, OpenAddresses
- * global), then adversarial-source (FCC BDC US, HRSA FQHC US, SAMHSA Treatment Locator US).
+ * global), then adversarial-source (FCC BDC US, HRSA FQHC US).
+ *
+ * The `usgov-samhsa-treatment-locator` adapter is intentionally absent from this list — the SAMHSA
+ * Open Data Foundry bulk CSV the adapter was written against is no longer publicly distributed (see
+ * issue #33, 2026-05-17 investigation). The factory + named export remain available so the adapter
+ * can be hand-registered if an operator obtains a compatible CSV (FOIA, partner channel, upstream
+ * restoration). Re-add it here once a stable public source returns.
  */
 export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	wofAdminAdapter,
@@ -48,13 +54,13 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	openaddressesAdapter,
 	fccBdcAdapter,
 	usgovHrsaFqhcAdapter,
-	usgovSamhsaTreatmentLocatorAdapter,
 	usgovNppesAdapter,
 	usgovNadAdapter,
 	usgovImlsPlsAdapter,
 	stateIaContractorsAdapter,
 	stateTxNotariesAdapter,
 	stateNyNotariesAdapter,
+	stateHiSchoolsAdapter,
 ]
 
 for (const adapter of BUILTIN_ADAPTERS) {
@@ -70,6 +76,11 @@ export {
 	OPENADDRESSES_DEFAULT_LICENSE,
 	openaddressesAdapter,
 } from "./openaddresses/adapter.js"
+export {
+	STATE_HI_SCHOOLS_ADAPTER_ID,
+	STATE_HI_SCHOOLS_DEFAULT_LICENSE,
+	stateHiSchoolsAdapter,
+} from "./state-hi-schools/adapter.js"
 export {
 	STATE_IA_CONTRACTORS_ADAPTER_ID,
 	STATE_IA_CONTRACTORS_DEFAULT_LICENSE,

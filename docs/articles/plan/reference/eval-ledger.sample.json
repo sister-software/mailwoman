@@ -1,0 +1,43 @@
+{
+	"schema_version": 1,
+	"runs": [
+		{
+			"run_id": "stage1-coarse-2026-05-18-rocm62",
+			"model_version": "0.1.0",
+			"model_path": "@mailwoman/neural-weights-en-us@0.1.0",
+			"corpus_version": "0.1.1",
+			"corpus_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+			"eval_set_version": "golden-v0.1.0",
+			"eval_set_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+			"trained_at": "2026-05-18T05:00:00Z",
+			"hardware": "AMD Radeon 780M (gfx1103), ROCm 6.2, torch 2.5.1+rocm6.2",
+			"training_steps": 50000,
+			"training_wall_clock_seconds": 36000,
+			"metrics": {
+				"overall": {
+					"macro_f1": 0.873,
+					"micro_f1": 0.891,
+					"exact_match": 0.804
+				},
+				"per_component": {
+					"country": { "f1": 0.987, "precision": 0.991, "recall": 0.984, "support": 4096 },
+					"region": { "f1": 0.954, "precision": 0.948, "recall": 0.96, "support": 4096 },
+					"locality": { "f1": 0.892, "precision": 0.885, "recall": 0.9, "support": 4096 },
+					"postcode": { "f1": 0.961, "precision": 0.965, "recall": 0.958, "support": 4096 }
+				},
+				"calibration_buckets": [
+					{ "min_conf": 0.95, "max_conf": 1.0, "observed_accuracy": 0.991, "sample_count": 12340 },
+					{ "min_conf": 0.8, "max_conf": 0.95, "observed_accuracy": 0.892, "sample_count": 8541 },
+					{ "min_conf": 0.5, "max_conf": 0.8, "observed_accuracy": 0.621, "sample_count": 2104 },
+					{ "min_conf": 0.0, "max_conf": 0.5, "observed_accuracy": 0.182, "sample_count": 543 }
+				],
+				"adversarial_set": {
+					"buffalo_buffalo": { "f1": 0.78, "sample_count": 50 },
+					"saint_petersburg": { "f1": 0.91, "sample_count": 30 },
+					"ny_ny_steakhouse": { "f1": 0.65, "sample_count": 40 }
+				}
+			},
+			"notes": "Stage 1 baseline. First Phase 2 production run. Calibration is the headline weakness — confidence buckets 0.5-0.8 are notably underconfident; consider temperature scaling."
+		}
+	]
+}

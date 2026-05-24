@@ -33,7 +33,7 @@ from typing import Iterable, Iterator, Sequence
 import pyarrow.parquet as pq
 
 from .config import Config, DataConfig
-from .labels import IGNORE_INDEX, coarse_components_present
+from .labels import IGNORE_INDEX, active_components_present
 from .tokenizer import Tokenizer, encode_row, whitespace_spans
 
 _REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country", "source")
@@ -124,7 +124,7 @@ def _shard_row_iter(
             bio_labels = labels_col[i].as_py()
             if coarse_filter:
                 keys = _row_components_keys(bio_labels)
-                if not coarse_components_present(keys):
+                if not active_components_present(keys):
                     continue
             yield {
                 "raw": raws[i].as_py(),

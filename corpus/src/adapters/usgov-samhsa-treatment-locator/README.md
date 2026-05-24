@@ -1,5 +1,13 @@
 # `usgov-samhsa-treatment-locator` adapter
 
+> **Status: DEFERRED (2026-05-22, issue #33).** The bulk CSV this adapter
+> was written against is no longer publicly available, and the adapter
+> is **not** registered in `BUILTIN_ADAPTERS` (`corpus/src/adapters/index.ts`).
+> The factory, named export, fixture, and test suite remain in-tree so
+> the adapter can be hand-registered the moment a compatible source
+> returns. See [Source availability (deferral)](#source-availability-deferral)
+> below for the investigation summary and revisit triggers.
+
 SAMHSA Behavioral Health Treatment Services Locator — public-domain,
 US, the third member of Phase 1.6's "adversarial sources" class.
 
@@ -20,10 +28,87 @@ The adapter joins them with `", "` into a single `street` component so
 the model sees the natural envelope-style surface form humans type into
 geocoders.
 
+## Source availability (deferral)
+
+The README originally pointed operators at "a CSV the operator
+pre-downloads from the SAMHSA Open Data Foundry." During Tier 0 corpus
+expansion (2026-05-17) we could not locate the export anywhere on the
+public web:
+
+- `findtreatment.gov/locator` is an interactive SPA — no "Download all"
+  control, no `exportsAsCsv` endpoint. Probing
+  `findtreatment.gov/locator/exportsAsCsv` and
+  `findtreatment.samhsa.gov/locator/exportsAsCsv` returns the SPA HTML
+  shell, not CSV.
+- `samhsa.gov/data/data-we-collect/n-sumhss-…` returns 403 on direct
+  HTTP fetch (Cloudflare-class blocking); accessible interactively only
+  after per-dataset EULA acceptance, and what it ships
+  (N-SUMHSS PUF — facility-survey microdata) is a different shape than
+  this adapter expects.
+- The `catalog.data.gov` substance-abuse-locator dataset entry lists
+  only the HTML locator URL, no CSV resource.
+- The "Open Data Foundry" itself was deprecated; the bulk-export story
+  appears to have migrated into N-SUMHSS without a venue+address
+  surface form.
+
+### Decision: defer, do not rewrite or delete
+
+- **Defer (chosen).** Remove from `BUILTIN_ADAPTERS`; keep the
+  factory, fixture, and test suite committed. The adapter does no harm
+  sitting idle, and reinstating it the day a compatible CSV reappears
+  is one one-line change to `corpus/src/adapters/index.ts`.
+- **Rewrite against N-SUMHSS PUF (rejected).** The PUF is
+  per-facility survey microdata (service mix, capacity, modalities),
+  not a venue-name + two-line postal-address record. Rewriting against
+  it would lose the only training signal this adapter exists to
+  contribute — the `street1` / `street2` narrative sub-tenant chaos
+  ("Suite C, behind main building") — and would just be a parallel,
+  weaker NPPES.
+- **Find via FOIA / SAMHSA dev channels (deferred, not chosen).**
+  The data exists (the locator UI is backed by it); the access path is
+  not in our hands on a useful timeline. Worth keeping on the
+  follow-up list but not blocking on.
+
+### Impact
+
+Per the issue triage: SAMHSA's distinct contribution is the **two-line
+address** shape. NPPES + HRSA together still cover ~95% of the
+venue+address training signal SAMHSA would have added (NPPES has
+two-line addresses for healthcare-provider venues; HRSA has venue +
+single-line addresses). The corpus loses an adversarial-source
+diversity check but no irreplaceable schema coverage.
+
+### Revisit triggers
+
+Re-register the adapter (re-add to `BUILTIN_ADAPTERS` in
+`corpus/src/adapters/index.ts`) when **any** of the following becomes
+true:
+
+1. A new public bulk export of the Treatment Locator with the original
+   column shape (`frid`, `name1`, `name2`, `street1`, `street2`, `city`,
+   `state`, `zip`) is published — through SAMHSA, data.gov, or a partner
+   distribution.
+2. An operator obtains a compatible CSV through FOIA / partnership and
+   wants to run a one-shot ingest. The CLI can still drive the adapter
+   via direct factory invocation without re-registering it; registering
+   is only needed for inclusion in default `corpus build` runs.
+3. The schema gap left by deferral becomes evidence-backed (eval set
+   shows the model failing on two-line narrative-suite addresses at a
+   rate the deferral can no longer justify) — in which case the
+   priority shifts to obtaining the data by any available channel.
+
+Related: #26 (Tier A licensing — applies when source is found), epic #15.
+
 ## Input
 
 A CSV file the operator pre-downloads from the SAMHSA Open Data
 Foundry. Streamed via `csv-parse`; no SQLite step needed.
+
+> **Source-availability caveat.** As of 2026-05-22 the Open Data Foundry
+> bulk CSV is no longer publicly distributed (see
+> [Source availability (deferral)](#source-availability-deferral)).
+> The column contract below remains the canonical input shape an
+> operator-supplied CSV must conform to.
 
 ### Expected columns
 

@@ -13,7 +13,7 @@
  *
  *   Drawn 2026-05-17 from the author's earlier draft
  *   `sdk/parquet/writer.ts` (implemented from the author's earlier draft concept). One
- *   trim relative to the original: dropped the `@earlier-draft/core/polyfills/promises/withResolvers`
+ *   trim relative to the original: dropped the `@mailwoman/core/polyfills/promises/withResolvers`
  *   import — Node 22 (mailwoman's runtime) has `Promise.withResolvers` natively.
  */
 

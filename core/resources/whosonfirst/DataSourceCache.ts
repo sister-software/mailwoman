@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import "core-js/actual/disposable-stack/index.js"
-
 import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
 import { mkdirSync } from "node:fs"
 import { setTimeout } from "node:timers/promises"

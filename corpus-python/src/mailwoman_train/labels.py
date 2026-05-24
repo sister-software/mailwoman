@@ -1,19 +1,32 @@
-"""Stage 1 coarse label set + helpers.
+"""Label set + helpers for the mailwoman neural classifier.
 
 Mirrors the JS-side ``COMPONENT_TAGS`` / ``BIO_LABELS`` in
-``packages/core/core/types/component.ts`` but restricted to the coarse subset Stage 1
-trains on. Any tag outside ``STAGE1_COARSE_TAGS`` is rewritten to ``O`` at data-load time
-(see ``data_loader.collapse_to_stage1``).
+``packages/core/core/types/component.ts``. Any tag outside ``ACTIVE_TAGS`` is rewritten
+to ``O`` at data-load time (see ``data_loader.collapse_to_active``).
 
-Drift check: keep this list in sync with the JS schema. If a new coarse tag lands in
-``component.ts``, add it here in the same commit.
+**Versioning** — the active set evolves across training rounds. Older constants are kept
+exportable so historical checkpoints + eval reports can be diffed against today's labels:
+
+- ``STAGE1_COARSE_TAGS`` (7 tags) / ``STAGE1_BIO_LABELS`` (15) — v0.1.0 + v0.2.0 ship.
+- ``STAGE2_TAGS`` (10 tags) / ``STAGE2_BIO_LABELS`` (21) — v0.3.0 ship (this file's active
+  set as of 2026-05-22). Adds ``venue`` / ``street`` / ``house_number`` BIO classes per
+  issue #57.
+
+``ACTIVE_TAGS`` / ``ACTIVE_BIO_LABELS`` always point at the *current* training round's
+vocabulary. Bump these together with a new STAGE-N constant when ship-line moves; never
+mutate an older STAGE-N constant.
+
+Drift check: keep ``ACTIVE_TAGS`` in sync with the JS ``ComponentTag`` union. If a new
+tag lands in ``component.ts``, decide whether it belongs in the next active set; if so,
+add it to a new STAGE-N constant in the same commit and shift ACTIVE_*.
 """
 
 from __future__ import annotations
 
 from typing import Final
 
-# Coarse tags Stage 1 trains on. Order is stable across runs so label IDs are reproducible.
+# --- Historical: v0.1.0 + v0.2.0 (coarse-only) ---------------------------------------
+
 STAGE1_COARSE_TAGS: Final[tuple[str, ...]] = (
     "country",
     "region",
@@ -24,13 +37,34 @@ STAGE1_COARSE_TAGS: Final[tuple[str, ...]] = (
     "cedex",
 )
 
-# BIO label vocabulary: O + (B-/I- per coarse tag). 1 + 14 = 15 labels.
 STAGE1_BIO_LABELS: Final[tuple[str, ...]] = (
     "O",
     *(prefix + tag for tag in STAGE1_COARSE_TAGS for prefix in ("B-", "I-")),
 )
 
-LABEL_TO_ID: Final[dict[str, int]] = {label: i for i, label in enumerate(STAGE1_BIO_LABELS)}
+# --- v0.3.0: coarse + fine (venue, street, house_number) -----------------------------
+
+# Fine tags added in Stage 2. Order is stable across runs so label IDs are reproducible
+# within a stage. NEVER reorder within a stage; ALWAYS append for a new stage.
+STAGE2_FINE_TAGS: Final[tuple[str, ...]] = (
+    "venue",
+    "street",
+    "house_number",
+)
+
+STAGE2_TAGS: Final[tuple[str, ...]] = STAGE1_COARSE_TAGS + STAGE2_FINE_TAGS
+
+STAGE2_BIO_LABELS: Final[tuple[str, ...]] = (
+    "O",
+    *(prefix + tag for tag in STAGE2_TAGS for prefix in ("B-", "I-")),
+)
+
+# --- Active set (points at the most-recent stage) ------------------------------------
+
+ACTIVE_TAGS: Final[tuple[str, ...]] = STAGE2_TAGS
+ACTIVE_BIO_LABELS: Final[tuple[str, ...]] = STAGE2_BIO_LABELS
+
+LABEL_TO_ID: Final[dict[str, int]] = {label: i for i, label in enumerate(ACTIVE_BIO_LABELS)}
 ID_TO_LABEL: Final[dict[int, str]] = {i: label for label, i in LABEL_TO_ID.items()}
 
 # Labels that mean "ignore" in cross-entropy. The HF Trainer treats ``-100`` as the sentinel.
@@ -38,36 +72,42 @@ IGNORE_INDEX: Final[int] = -100
 
 
 def collapse_label(bio_label: str) -> str:
-    """Rewrite a fine-grained BIO label to its Stage 1 equivalent, or ``O``.
+    """Rewrite a BIO label to its active-set equivalent, or ``O``.
 
-    ``B-house_number`` → ``O``; ``B-region`` → ``B-region``; unknown → ``O``.
+    Tags outside ``ACTIVE_TAGS`` (e.g. a future ``B-org`` that hasn't been added yet)
+    collapse to ``O``; unknown shapes (no ``-`` prefix, bad prefix) also collapse to ``O``.
     """
     if bio_label == "O":
         return "O"
     if "-" not in bio_label:
         return "O"
     prefix, tag = bio_label.split("-", 1)
-    if tag not in STAGE1_COARSE_TAGS or prefix not in ("B", "I"):
+    if tag not in ACTIVE_TAGS or prefix not in ("B", "I"):
         return "O"
     return bio_label
 
 
-def coarse_components_present(components_keys: list[str]) -> bool:
-    """True iff the row has at least one Stage 1 coarse tag.
+def active_components_present(components_keys: list[str]) -> bool:
+    """True iff the row has at least one ACTIVE tag.
 
-    Used to filter the training rows per Phase 2 §5.1.
+    Used to filter training rows per Phase 2 §5.1.
 
-    The original gate (v0.1.0) required a ``country`` tag plus one of
-    (region, locality, postcode), modeled on wof-admin's "Paris, France"-style rows.
-    That gate silently dropped every non-wof-admin source in corpus v0.2.0 — BAN,
-    TIGER, NPPES, IMLS, state-* all label house_number / street / postcode / locality /
-    region without a country token, because country is implicit in the data source's
-    geography. The strict gate is therefore the upstream cause of the v0.1.0
-    positional-heuristic overfit (PR #42, issue #43): pre-filter the training data was
-    ~73% wof-admin, post-filter it was ~100% wof-admin.
+    The v0.1.0 gate required ``country`` plus one of (region, locality, postcode),
+    modelled on wof-admin's "Paris, France"-style rows. That gate silently dropped every
+    non-wof-admin source in corpus v0.2.0 — BAN, TIGER, NPPES, IMLS, state-* all label
+    house_number / street / postcode / locality / region without a country token, because
+    country is implicit in the data source's geography. The strict gate was the upstream
+    cause of the v0.1.0 positional-heuristic overfit (PR #42, issue #43): pre-filter the
+    training data was ~73% wof-admin, post-filter ~100% wof-admin.
 
-    Relaxed gate: accept rows that carry at least one of the coarse tags. Rows whose
-    only tags are sub-coarse (``house_number``, ``street``, ``venue``) carry no
-    coarse-level supervision and are still dropped.
+    v0.2.0 relaxed the gate to "at least one coarse tag". v0.3.0 broadens further: "at
+    least one ACTIVE tag" — rows with only fine tags (e.g. BAN's house_number + street,
+    TIGER's street-only ADDRFEAT segments) now contribute. The gate's purpose is to drop
+    rows with no usable supervision at all, not to enforce a particular schema shape.
     """
-    return bool(set(components_keys) & set(STAGE1_COARSE_TAGS))
+    return bool(set(components_keys) & set(ACTIVE_TAGS))
+
+
+# Backwards-compat alias for callers that haven't migrated to the active-set naming.
+# Removed once the rename lands across data_loader / eval / train / model.
+coarse_components_present = active_components_present

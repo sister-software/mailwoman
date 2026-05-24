@@ -9,7 +9,7 @@
  *   Drawn 2026-05-17 from the author's earlier draft
  *   `sdk/parquet/reader.ts` (implemented from the author's earlier draft concept). Two
  *   trims relative to the original: (a) removed the
- *   `@earlier-draft/core/polyfills/promises/withResolvers` import — Node 22 has it native; (b) replaced
+ *   `@mailwoman/core/polyfills/promises/withResolvers` import — Node 22 has it native; (b) replaced
  *   the `PathBuilderLike` (path-ts) type on `openFile` with the plain `string | URL` the
  *   `@dsnp/parquetjs` envelope reader accepts directly.
  */

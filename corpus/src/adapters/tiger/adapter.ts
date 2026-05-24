@@ -36,7 +36,7 @@
  *   needed — every row in TIGER is the same license.
  */
 
-import Database from "better-sqlite3"
+import { DatabaseSync } from "node:sqlite"
 import { lookupFipsState } from "../../codex/us-fips-state.js"
 import { formatAddress, reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
@@ -141,15 +141,13 @@ export function createTigerAdapter(): CorpusAdapter {
 				throw new Error(`tiger adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const db = new Database(opts.inputPath, { readonly: true, fileMustExist: true })
+			const db = new DatabaseSync(opts.inputPath, { readOnly: true })
 			let emitted = 0
 			try {
-				const streetStmt = db.prepare<[], TigerStreetRow>(
-					`SELECT linearid, fullname, zipl, zipr, statefp FROM tiger_streets`
-				)
-				const placeStmt = db.prepare<[], TigerPlaceRow>(`SELECT geoid, name, statefp, lsad FROM tiger_places`)
+				const streetStmt = db.prepare(`SELECT linearid, fullname, zipl, zipr, statefp FROM tiger_streets`)
+				const placeStmt = db.prepare(`SELECT geoid, name, statefp, lsad FROM tiger_places`)
 
-				for (const row of streetStmt.iterate()) {
+				for (const row of streetStmt.iterate() as IterableIterator<TigerStreetRow>) {
 					if (opts.signal?.aborted) return
 					for (const variant of streetVariants(row)) {
 						if (opts.limit !== undefined && emitted >= opts.limit) return
@@ -172,7 +170,7 @@ export function createTigerAdapter(): CorpusAdapter {
 					}
 				}
 
-				for (const row of placeStmt.iterate()) {
+				for (const row of placeStmt.iterate() as IterableIterator<TigerPlaceRow>) {
 					if (opts.signal?.aborted) return
 					for (const variant of placeVariants(row)) {
 						if (opts.limit !== undefined && emitted >= opts.limit) return

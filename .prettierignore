@@ -5,6 +5,8 @@
 
 ## Build asset directories
 /build
+docs/build
+docs/.docusaurus
 coverage
 dist
 out
@@ -40,4 +42,8 @@ corpus/fixtures/**/*.ndgeojson
 ## inside one-line entries (e.g. `node_modules` → `node*modules`, `synth_*` → `synth*\*`),
 ## which corrupts already-shipped historical lines on every run. Keep these byte-for-byte.
 LOG.md
+
+## Operator-supplied review artefacts (pi-session HTML exports, raw .jsonl drops)
+pi-session-*.html
+review.jsonl
 

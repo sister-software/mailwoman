@@ -35,7 +35,11 @@
 		"@inkjs/ui": "^2.0.0",
 		"@mailwoman/classifiers": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"better-sqlite3": "^11.5.0",
+		"@mailwoman/kind-classifier": "workspace:*",
+		"@mailwoman/locale-gate": "workspace:*",
+		"@mailwoman/normalize": "workspace:*",
+		"@mailwoman/phrase-grouper": "workspace:*",
+		"@mailwoman/query-shape": "workspace:*",
 		"change-case": "^5.4.4",
 		"express": "^5.0.1",
 		"geojson": "^0.5.0",
@@ -45,13 +49,13 @@
 		"path-ts": "^1.0.5",
 		"piscina": "^4.7.0",
 		"pluralize": "^8.0.0",
+		"react": "^19.2.6",
 		"regenerate": "^1.4.2",
 		"spliterator": "^2.0.0",
 		"zod": "^4.1.12"
 	},
 	"peerDependencies": {
-		"core-js": "^3.49.0",
-		"react": "^19.2.6"
+		"@mailwoman/resolver-wof-sqlite": "workspace:*"
 	},
 	"files": [
 		"!out/test/**/*",
@@ -74,7 +78,7 @@
 		"@inkjs/ui": {
 			"optional": true
 		},
-		"core-js": {
+		"@mailwoman/resolver-wof-sqlite": {
 			"optional": true
 		},
 		"ink": {

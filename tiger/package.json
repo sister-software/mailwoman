@@ -1,0 +1,41 @@
+{
+	"name": "@mailwoman/tiger",
+	"version": "1.0.0",
+	"description": "US Census TIGER/Line data processing and analysis.",
+	"license": "AGPL-3.0",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"scripts": {
+		"test": "node ./out/sdk/TIGERService.test.js"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		"./schema/*.json": "./dist/schema/*.json",
+		"./scripts/*": "./out/scripts/*.js",
+		"./sdk": "./out/sdk/index.js",
+		".": "./out/index.js"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
+		"@turf/boolean-contains": "^7.0.0",
+		"shapefile-parser": "^1.0.3",
+		"type-fest": "^5.6.0"
+	},
+	"engines": {
+		"node": ">=22.5.1"
+	},
+	"keywords": [
+		"census",
+		"tiger",
+		"geospatial"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}

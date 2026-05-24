@@ -1,2 +1,11 @@
-yarn lint
-yarn ci:test
+#!/usr/bin/env sh
+
+# Only run the full lint + test gate when committing to main (merge commits).
+# Feature-branch commits skip the gate — CI on the PR is the real check.
+
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+
+if [ "$branch" = "main" ]; then
+  yarn lint
+  yarn ci:test
+fi

@@ -1,5 +1,7 @@
 node_modules
 
+.notes
+
 # ignore all of whosonfirst/dictionaries
 resources/whosonfirst/dictionaries/*/*.txt
 
@@ -24,6 +26,17 @@ test/oa
 # OS X
 .DS_Store
 ._*
+
+# Secrets / certs
+.env
+.env.*
+*.env
+*.p12
+*.pfx
+*.pem
+*.key
+*.crt
+certs/
 
 ## Logs
 logs
@@ -68,8 +81,15 @@ dist
 # .model files are reproduced by `python -m mailwoman_train package`.
 packages/neural-weights-*/model.onnx
 packages/neural-weights-*/tokenizer.model
-.claude/
+
+.claude/settings.local.json
+CLAUDE.local.md
 
 # expand-golden.ts outputs — operator skims locally, then promotes to versioned dir
 data/eval/golden/candidates/
 
+# Local env files (R2 credentials, etc.) — keep out of git
+.env
+.env.*
+
+corpus-python/.pytest_cache/

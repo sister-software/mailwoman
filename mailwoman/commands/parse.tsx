@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { Spinner } from "@inkjs/ui"
-import { decodeAsJson, decodeAsTuples, decodeAsXml, proposalsToTree } from "@mailwoman/core/decoder"
+import { type AddressTree, decodeAsJson, decodeAsTuples, decodeAsXml, proposalsToTree } from "@mailwoman/core/decoder"
 import { collectProposals, filterByPolicy } from "@mailwoman/core/parser"
 import { InMemoryPolicyRegistry, type PolicyMode } from "@mailwoman/core/policy"
+import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/core/resolver"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import { createNeuralProposalClassifier, NeuralAddressClassifier } from "@mailwoman/neural"
 import { Text } from "ink"
-import { createAddressParser, createDiagnosticReport } from "mailwoman"
+import { createAddressParser, createDiagnosticReport, createRuntimePipeline } from "mailwoman"
+import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
 import type { CommandComponent } from "../sdk/cli.js"
@@ -27,16 +29,30 @@ const ParseConfigSchema = zod.object({
 		.optional()
 		.default("en-US")
 		.describe("Locale tag matching a weights package (en-US, fr-FR). Default en-US."),
+	isolated: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"Skip the runtime pipeline; run the legacy rule-only parser. For debugging when the pipeline path looks suspect."
+		),
 	neural: zod
 		.boolean()
 		.optional()
 		.default(false)
-		.describe("Route through the neural classifier instead of the rule-based parser."),
+		.describe(
+			"[Legacy] Force the neural-classifier-only path (skips Stage 1 + 2 + 2.5 of the pipeline). Implied by the default unless --isolated is set."
+		),
+	noNeural: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe("In pipeline mode, skip the neural classifier (run normalize + queryShape + kind + resolver only)."),
 	format: zod
 		.enum(["json", "tuple", "xml"])
 		.optional()
 		.default("json")
-		.describe("Output projection for --neural. Ignored without --neural."),
+		.describe("Output projection. Applies to all paths except --isolated (which always emits JSON)."),
 	model: zod.string().optional().describe("Explicit model.onnx path (--neural only). Overrides --locale resolution."),
 	tokenizer: zod
 		.string()
@@ -49,6 +65,40 @@ const ParseConfigSchema = zod.object({
 			"Per-component policy override, repeatable. <component>=<mode> where mode is one of: " +
 				POLICY_MODES.join(", ") +
 				". Requires --neural."
+		),
+	resolve: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"Run the parsed tree through the WOF resolver (Phase 4.3) — decorates matched nodes with wof:<id> + lat/lon. Requires --neural."
+		),
+	resolveDb: zod
+		.string()
+		.optional()
+		.describe(
+			"Path to a WOF SQLite distribution for --resolve. Defaults to $MAILWOMAN_WOF_DB; errors if neither is set."
+		),
+	candidates: zod.coerce
+		.number()
+		.int()
+		.min(1)
+		.max(20)
+		.optional()
+		.describe(
+			"Surface up to N alternative resolutions per resolved node (Springfield-class disambiguation). " +
+				"Requires --resolve. Output format-dependent: json emits node.alternatives arrays, xml emits " +
+				"<alternative> child elements, tuple unchanged."
+		),
+	benchmark: zod.coerce
+		.number()
+		.int()
+		.min(1)
+		.max(10000)
+		.optional()
+		.describe(
+			"Run the pipeline N times against the input and emit per-stage p50/p95/p99 + total wall + heap delta. " +
+				"5-iteration warmup is excluded from the stats. Default path only (incompatible with --isolated / --policy)."
 		),
 })
 
@@ -76,47 +126,65 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 	const [error, setError] = useState<string>()
 
 	useEffect(() => {
+		if (error) {
+			// Render the error once, then exit non-zero so callers (scripts, CI) see the failure.
+			// Mirrors the pattern in corpus/run.tsx — setImmediate() yields so the React render flushes
+			// to stderr/stdout before the process tears down.
+			setImmediate().then(() => process.exit(1))
+		}
+	}, [error])
+
+	useEffect(() => {
 		const input = args[0]!
 
-		if (options.policy && options.policy.length > 0 && !options.neural) {
-			// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount validation; refactor pending
-			setError("--policy requires --neural in this version (rule-side policy integration is a follow-up).")
+		if (options.benchmark !== undefined) {
+			if (options.isolated || (options.policy && options.policy.length > 0) || options.neural) {
+				// Intentional: surface the validation error through the same render-then-exit pattern
+				// as the async setError paths below (see the useEffect on [error] above). The
+				// "cascading renders" the rule warns about are not a real cost here because the
+				// effect short-circuits with `return`.
+				// eslint-disable-next-line react-hooks/set-state-in-effect
+				setError(
+					"--benchmark requires the default runtime-pipeline path (incompatible with --isolated / --policy / --neural)"
+				)
+				return
+			}
+			runBenchmark(input, options, options.benchmark)
+				.then(setOutput)
+				.catch((err) => setError(err.message))
 			return
 		}
 
-		if (options.neural) {
-			const policyOverrides = options.policy ? parsePolicySpecs(options.policy) : []
+		// --isolated: legacy rule-only path (the pre-pipeline default).
+		if (options.isolated) {
+			runIsolated(input, options)
+				.then(setOutput)
+				.catch((err) => setError(err.message))
+			return
+		}
+
+		// --policy implies the legacy proposal/policy path.
+		if (options.policy && options.policy.length > 0) {
+			const policyOverrides = parsePolicySpecs(options.policy)
 			runNeural(input, options, policyOverrides)
 				.then(setOutput)
 				.catch((err) => setError(err.message))
 			return
 		}
 
-		const parser = createAddressParser()
-		const parseOpts = options.locale ? { locale: options.locale } : {}
-
-		if (options.debug) {
-			parser
-				.parse(input, { verbose: true, ...parseOpts })
-				.then(createDiagnosticReport)
+		// --neural without --policy: legacy direct-neural path (kept for parity with old behavior).
+		if (options.neural) {
+			runNeural(input, options, [])
 				.then(setOutput)
 				.catch((err) => setError(err.message))
-		} else {
-			parser
-				.parse(input, parseOpts)
-				.then((results) => setOutput(JSON.stringify(results, null, 2)))
-				.catch((err) => setError(err.message))
+			return
 		}
-	}, [
-		args,
-		options.debug,
-		options.locale,
-		options.neural,
-		options.format,
-		options.model,
-		options.tokenizer,
-		options.policy,
-	])
+
+		// Default: runtime pipeline.
+		runPipeline(input, options)
+			.then(setOutput)
+			.catch((err) => setError(err.message))
+	}, [args, options])
 
 	if (error) {
 		return <Text color="red">{error}</Text>
@@ -127,6 +195,295 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 	}
 
 	return <Text>{output}</Text>
+}
+
+function resolveWofPath(options: zod.infer<typeof ParseConfigSchema>): string {
+	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
+	if (!path) {
+		throw new Error(
+			"--resolve needs a WOF SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
+				"Download from https://data.geocode.earth/wof/dist/sqlite/ and pre-build the FTS5 index " +
+				"with `npx mailwoman-wof-build-fts <path>`."
+		)
+	}
+	return path
+}
+
+/**
+ * Tree → resolved tree via the WOF backend. When `options.candidates` is set, asks the resolver for
+ * top-(N+1) candidates per node so the runner-ups land on `AddressNode.alternatives` (where N is
+ * the requested alternative count; +1 because the top winner is also in the limit).
+ */
+async function resolveWithCandidates(
+	resolver: Resolver,
+	tree: AddressTree,
+	options: zod.infer<typeof ParseConfigSchema>
+): Promise<AddressTree> {
+	if (options.candidates !== undefined) {
+		return resolver.resolveTree(tree, { candidatesPerLookup: options.candidates + 1 })
+	}
+	return resolver.resolveTree(tree)
+}
+
+async function withResolver<T>(
+	options: zod.infer<typeof ParseConfigSchema>,
+	fn: (resolver: Resolver) => Promise<T>
+): Promise<T> {
+	// Dynamic import so `@mailwoman/resolver-wof-sqlite` stays a true optional peer dep — users who
+	// never set --resolve don't pay for kysely + the resolver bundle.
+	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
+	try {
+		mod = await import("@mailwoman/resolver-wof-sqlite")
+	} catch {
+		throw new Error(
+			"--resolve requires `@mailwoman/resolver-wof-sqlite` to be installed. " +
+				"Run `npm install @mailwoman/resolver-wof-sqlite` and try again."
+		)
+	}
+
+	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: resolveWofPath(options) })
+	try {
+		// PlaceLookup is structurally compatible with ResolverBackend — the cast is just to satisfy
+		// the type, no runtime conversion.
+		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+		return await fn(resolver)
+	} finally {
+		lookup.close()
+	}
+}
+
+function serializeTree(
+	tree: AddressTree,
+	format: "json" | "tuple" | "xml",
+	opts: { includeAlternatives?: boolean } = {}
+): string {
+	switch (format) {
+		case "xml":
+			return decodeAsXml(tree, { includeAlternatives: opts.includeAlternatives })
+		case "tuple":
+			return JSON.stringify(decodeAsTuples(tree), null, 2)
+		default:
+			// JSON: when --candidates is requested, dump the full AddressTree (carries alternatives
+			// on each node). Otherwise stay libpostal-compat (flat tag→value).
+			return opts.includeAlternatives ? JSON.stringify(tree, null, 2) : JSON.stringify(decodeAsJson(tree), null, 2)
+	}
+}
+
+/** Legacy rule-only path. Used by --isolated and as a graceful fallback when neural is unavailable. */
+async function runIsolated(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
+	const parser = createAddressParser()
+	const parseOpts = options.locale ? { locale: options.locale } : {}
+	if (options.debug) {
+		return parser.parse(input, { verbose: true, ...parseOpts }).then(createDiagnosticReport)
+	}
+	return parser.parse(input, parseOpts).then((results) => JSON.stringify(results, null, 2))
+}
+
+/**
+ * Default path: runtime pipeline. Lazy-loads neural classifier (graceful fallback to the legacy
+ * rule-only path if weights aren't present) + optional resolver. Returns the parsed tree serialized
+ * in the requested format.
+ */
+async function runPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
+	const classifier = options.noNeural ? undefined : await tryLoadNeural(options)
+
+	// Graceful fallback: if neither neural nor resolver is in play, the pipeline emits an empty tree
+	// for structured addresses (no encoder + no resolver = nothing to classify token-by-token). Hand
+	// off to the legacy rule path so the CLI still produces useful output. Two exceptions stay on the
+	// pipeline:
+	//   - `--debug`: the operator explicitly asked for the PipelineResult JSON shape; routing to the
+	//     legacy diagnostic report would silently change the output schema. Fast-path inputs
+	//     (postcode_only, locality_only) still produce a populated tree from QueryShape alone.
+	//   - future fast-path inputs once we add more rule-based kinds.
+	if (!classifier && !options.resolve && !options.debug) {
+		return runIsolated(input, options)
+	}
+
+	const wantAlternatives = options.candidates !== undefined
+	const pipelineOpts: { locale?: string; resolveOpts?: { candidatesPerLookup?: number } } = {
+		locale: options.locale,
+	}
+	if (wantAlternatives) {
+		pipelineOpts.resolveOpts = { candidatesPerLookup: (options.candidates ?? 5) + 1 }
+	}
+
+	if (options.resolve) {
+		return withResolver(options, async (resolver) => {
+			const pipeline = createRuntimePipeline({ classifier, resolver })
+			const result = await pipeline(input, pipelineOpts)
+			return options.debug
+				? JSON.stringify(serializeResult(result, options.format), null, 2)
+				: serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
+		})
+	}
+
+	const pipeline = createRuntimePipeline({ classifier })
+	const result = await pipeline(input, pipelineOpts)
+	return options.debug
+		? JSON.stringify(serializeResult(result, options.format), null, 2)
+		: serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
+}
+
+const BENCHMARK_WARMUP_ITERATIONS = 5
+
+function percentile(sortedAsc: ReadonlyArray<number>, p: number): number {
+	if (sortedAsc.length === 0) return 0
+	const idx = Math.min(sortedAsc.length - 1, Math.floor((p / 100) * sortedAsc.length))
+	return sortedAsc[idx]!
+}
+
+function formatMs(ms: number): string {
+	if (ms < 1) return `${(ms * 1000).toFixed(0)}µs`
+	if (ms < 10) return `${ms.toFixed(2)}ms`
+	if (ms < 100) return `${ms.toFixed(1)}ms`
+	return `${Math.round(ms)}ms`
+}
+
+function formatBytes(b: number): string {
+	const sign = b < 0 ? "-" : "+"
+	const abs = Math.abs(b)
+	if (abs < 1024) return `${sign}${abs}B`
+	if (abs < 1024 * 1024) return `${sign}${(abs / 1024).toFixed(1)}KB`
+	return `${sign}${(abs / 1024 / 1024).toFixed(1)}MB`
+}
+
+/**
+ * Run the runtime pipeline N times against a single input and report per-stage timing percentiles +
+ * heap delta. The first 5 iterations are warmup (excluded from stats) so JIT + lazy-imports settle
+ * before measurement. Useful for catching regressions when training models or coordinator changes
+ * affect inference cost.
+ */
+async function runBenchmark(
+	input: string,
+	options: zod.infer<typeof ParseConfigSchema>,
+	iterations: number
+): Promise<string> {
+	const classifier = options.noNeural ? undefined : await tryLoadNeural(options)
+
+	const runOne = async (
+		pipeline: ReturnType<typeof createRuntimePipeline>
+	): Promise<{ timing: Record<string, number>; total: number; path: string }> => {
+		const t0 = performance.now()
+		const result = await pipeline(input, { locale: options.locale })
+		const total = performance.now() - t0
+		return { timing: { ...result.timing }, total, path: result.path }
+	}
+
+	const collect = async (
+		pipeline: ReturnType<typeof createRuntimePipeline>
+	): Promise<{
+		stageRuns: Map<string, number[]>
+		totals: number[]
+		paths: Map<string, number>
+		heapDelta: number
+	}> => {
+		for (let i = 0; i < BENCHMARK_WARMUP_ITERATIONS; i++) await runOne(pipeline)
+
+		if (typeof global.gc === "function") global.gc()
+		const heapBefore = process.memoryUsage().heapUsed
+
+		const stageRuns = new Map<string, number[]>()
+		const totals: number[] = []
+		const paths = new Map<string, number>()
+		for (let i = 0; i < iterations; i++) {
+			const r = await runOne(pipeline)
+			totals.push(r.total)
+			paths.set(r.path, (paths.get(r.path) ?? 0) + 1)
+			for (const [stage, ms] of Object.entries(r.timing)) {
+				let arr = stageRuns.get(stage)
+				if (!arr) {
+					arr = []
+					stageRuns.set(stage, arr)
+				}
+				arr.push(ms)
+			}
+		}
+
+		const heapAfter = process.memoryUsage().heapUsed
+		return { stageRuns, totals, paths, heapDelta: heapAfter - heapBefore }
+	}
+
+	const collected = options.resolve
+		? await withResolver(options, (resolver) => collect(createRuntimePipeline({ classifier, resolver })))
+		: await collect(createRuntimePipeline({ classifier }))
+
+	const lines: string[] = []
+	lines.push(`mailwoman parse --benchmark: ${iterations} iterations + ${BENCHMARK_WARMUP_ITERATIONS} warmup`)
+	lines.push(`input: ${JSON.stringify(input)}`)
+	lines.push(
+		`classifier: ${classifier ? `loaded (${options.locale})` : "none"}    resolver: ${options.resolve ? "wired" : "none"}`
+	)
+	const pathSummary = Array.from(collected.paths.entries())
+		.map(([p, n]) => `${p}=${n}`)
+		.join(" ")
+	lines.push(`path breakdown: ${pathSummary}`)
+	lines.push("")
+	lines.push("stage              p50       p95       p99       max")
+	lines.push("─────────────────  ────────  ────────  ────────  ────────")
+	for (const [stage, ms] of Array.from(collected.stageRuns.entries()).sort()) {
+		const sorted = [...ms].sort((a, b) => a - b)
+		lines.push(
+			[
+				stage.padEnd(17),
+				formatMs(percentile(sorted, 50)).padStart(8),
+				formatMs(percentile(sorted, 95)).padStart(8),
+				formatMs(percentile(sorted, 99)).padStart(8),
+				formatMs(sorted[sorted.length - 1] ?? 0).padStart(8),
+			].join("  ")
+		)
+	}
+	const totalsSorted = [...collected.totals].sort((a, b) => a - b)
+	lines.push("─────────────────  ────────  ────────  ────────  ────────")
+	lines.push(
+		[
+			"TOTAL".padEnd(17),
+			formatMs(percentile(totalsSorted, 50)).padStart(8),
+			formatMs(percentile(totalsSorted, 95)).padStart(8),
+			formatMs(percentile(totalsSorted, 99)).padStart(8),
+			formatMs(totalsSorted[totalsSorted.length - 1] ?? 0).padStart(8),
+		].join("  ")
+	)
+	lines.push("")
+	lines.push(`heap delta (post-warmup → post-bench): ${formatBytes(collected.heapDelta)}`)
+	return lines.join("\n")
+}
+
+/** Try to load the neural classifier; return undefined (with stderr note) if weights are absent. */
+async function tryLoadNeural(
+	options: zod.infer<typeof ParseConfigSchema>
+): Promise<NeuralAddressClassifier | undefined> {
+	try {
+		return await NeuralAddressClassifier.loadFromWeights({
+			locale: options.locale,
+			modelPath: options.model,
+			tokenizerPath: options.tokenizer,
+		})
+	} catch {
+		// Graceful degradation: pipeline runs normalize + queryShape + kind + resolver only.
+		// The caller sees `tree.roots` populated from QueryShape fast-paths (postcode_only,
+		// locality_only) but nothing from the encoder.
+		return undefined
+	}
+}
+
+/**
+ * Serialize the full pipeline result for `--debug`. Shows tree + timing + path + kind so callers
+ * can see which stage owned which output.
+ */
+function serializeResult(
+	result: Awaited<ReturnType<ReturnType<typeof createRuntimePipeline>>>,
+	format: "json" | "tuple" | "xml"
+): unknown {
+	return {
+		input: result.input,
+		normalized: result.normalized,
+		queryShape: { ...result.queryShape, tokenClasses: undefined }, // tokenClasses is verbose
+		locale: result.locale,
+		kind: result.kind,
+		path: result.path,
+		timing: result.timing,
+		tree: format === "xml" ? decodeAsXml(result.tree) : result.tree,
+	}
 }
 
 async function runNeural(
@@ -140,8 +497,9 @@ async function runNeural(
 		tokenizerPath: options.tokenizer,
 	})
 
-	// Fast path: no policy → use the existing direct projection, preserves containment nesting.
-	if (policyOverrides.length === 0) {
+	// Fast path: no policy AND no resolve → preserve containment nesting via NeuralAddressClassifier
+	// 's direct projection helpers (returns the serialized string in one call).
+	if (policyOverrides.length === 0 && !options.resolve) {
 		switch (options.format) {
 			case "xml":
 				return neural.parseXml(input)
@@ -152,33 +510,36 @@ async function runNeural(
 		}
 	}
 
-	// Policy path: run the proposal pipeline so per-component overrides are honored. Containment
-	// nesting is lost in this projection — see proposals-to-tree.ts for why.
-	const proposalCls = createNeuralProposalClassifier({ id: `neural-cli-${options.locale}`, classifier: neural })
-	// Without rule classifiers in the CLI loop, the registry's default rule_only would drop every
-	// neural proposal and produce empty output. Default every component to neural_only when
-	// --neural --policy is used, then layer the user's overrides on top.
-	const policy = InMemoryPolicyRegistry.withDefaults()
-	for (const entry of policy.entries()) {
-		policy.set({ component: entry.component, mode: "neural_only" })
-	}
-	for (const o of policyOverrides) {
-		policy.set({ component: o.component, mode: o.mode })
+	// Slow paths build the tree explicitly so we can resolve / re-project before serialization.
+	let tree: AddressTree
+	if (policyOverrides.length > 0) {
+		// Policy path: containment nesting is lost — see proposals-to-tree.ts for why.
+		const proposalCls = createNeuralProposalClassifier({ id: `neural-cli-${options.locale}`, classifier: neural })
+		// Without rule classifiers in the CLI loop, the registry's default rule_only would drop every
+		// neural proposal and produce empty output. Default every component to neural_only when
+		// --neural --policy is used, then layer the user's overrides on top.
+		const policy = InMemoryPolicyRegistry.withDefaults()
+		for (const entry of policy.entries()) {
+			policy.set({ component: entry.component, mode: "neural_only" })
+		}
+		for (const o of policyOverrides) {
+			policy.set({ component: o.component, mode: o.mode })
+		}
+
+		const wholeInputSection = { body: input, start: 0, end: input.length } as unknown as Section
+		const proposals = await collectProposals([wholeInputSection], [proposalCls], { locale: options.locale })
+		const filtered = filterByPolicy(proposals, policy, options.locale)
+		tree = proposalsToTree(input, filtered)
+	} else {
+		// Resolve path without policy — keep containment by going through the decoder directly.
+		tree = await neural.parse(input)
 	}
 
-	const wholeInputSection = { body: input, start: 0, end: input.length } as unknown as Section
-	const proposals = await collectProposals([wholeInputSection], [proposalCls], { locale: options.locale })
-	const filtered = filterByPolicy(proposals, policy, options.locale)
-	const tree = proposalsToTree(input, filtered)
-
-	switch (options.format) {
-		case "xml":
-			return decodeAsXml(tree)
-		case "tuple":
-			return JSON.stringify(decodeAsTuples(tree), null, 2)
-		default:
-			return JSON.stringify(decodeAsJson(tree), null, 2)
+	if (options.resolve) {
+		tree = await withResolver(options, (resolver) => resolveWithCandidates(resolver, tree, options))
 	}
+
+	return serializeTree(tree, options.format, { includeAlternatives: options.candidates !== undefined })
 }
 
 export default ParseCommand

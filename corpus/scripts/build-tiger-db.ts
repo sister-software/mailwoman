@@ -32,6 +32,8 @@
  *   (default: 8)
  */
 
+///<reference types="node" />
+
 import { execFileSync } from "node:child_process"
 import { createHash } from "node:crypto"
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync, writeFileSync } from "node:fs"
@@ -543,9 +545,9 @@ async function buildDatabase(stateFipsList: string[]): Promise<void> {
 
 	// Build indexes
 	log("Building indexes...")
-	const Database = (await import("better-sqlite3")).default
-	const db = new Database(DB_PATH)
-	db.pragma("journal_mode = WAL")
+	const { DatabaseSync } = await import("node:sqlite")
+	const db = new DatabaseSync(DB_PATH)
+	db.exec("PRAGMA journal_mode = WAL")
 	db.exec("CREATE INDEX IF NOT EXISTS idx_tiger_streets_statefp ON tiger_streets(statefp)")
 	db.exec("CREATE INDEX IF NOT EXISTS idx_tiger_streets_linearid ON tiger_streets(linearid)")
 	try {

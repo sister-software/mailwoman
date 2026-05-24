@@ -12,9 +12,9 @@
  *   "AVN", "AVNUE"]` — `AVE` is what the post office prints).
  *
  *   Drawn 2026-05-17 from the author's earlier draft
- *   `mailwoman/postal/suffix.ts` (implemented from the author's earlier draft concept).
- *   The dataset is verbatim; the helper API was reshaped to match mailwoman's synthesis registry
- *   (the earlier draft's `lookupStreetSuffix` was geared toward parsing, not augmentation).
+ *   `mailwoman/postal/suffix.ts` (implemented from the author's earlier draft concept). The dataset is verbatim; the helper API was reshaped to match mailwoman's synthesis
+ *   registry (the earlier draft's `lookupStreetSuffix` was geared toward parsing, not
+ *   augmentation).
  * @see {@link https://pe.usps.com/text/pub28/28apc_002.htm USPS Street Suffix Abbreviations}
  */
 

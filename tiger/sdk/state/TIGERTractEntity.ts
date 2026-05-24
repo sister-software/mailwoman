@@ -1,0 +1,31 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+import { AdminLevel1Code, type FIPSCountyCode, type FIPSTractCode } from "@mailwoman/tiger"
+
+/**
+ * @internal
+ */
+export interface TIGERTractShapeAttributes {
+	/**
+	 * @title State FIPS Code
+	 */
+	STATEFP: AdminLevel1Code
+
+	/**
+	 * @title County FIPS Code
+	 * @minLength 3
+	 * @maxLength 3
+	 * @pattern ^\d{3}$
+	 */
+	COUNTYFP: FIPSCountyCode
+
+	/**
+	 * @title Tract FIPS Code
+	 *
+	 * @minLength 6
+	 * @maxLength 6
+	 * @pattern ^\d{6}$
+	 */
+	TRACTCE: FIPSTractCode
+}

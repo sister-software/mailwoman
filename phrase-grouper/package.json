@@ -1,0 +1,28 @@
+{
+	"name": "@mailwoman/phrase-grouper",
+	"version": "2.1.0",
+	"description": "Stage 2.7 of the runtime pipeline — propose coherent input units (boundary discovery) with a structural kind hypothesis + confidence. Rule-based v1 (port of v1 section/sub-section logic); learned 1-2M-param span proposer reserved for v0.5.1.",
+	"license": "AGPL-3.0-only",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "phrase-grouper"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}

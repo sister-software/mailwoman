@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # Re-fetch the state-level open-data sources tonight's adhoc download pulled
-# (NY/TX/DE/OR notaries, IA contractors, WA health providers, HI schools,
-# HI lobbyists). Reproducible recovery if /mnt/playpen/mailwoman-data is lost.
+# (NY/TX/DE/OR notaries, IA contractors, WA health providers, HI lobbyists).
+# Reproducible recovery if /mnt/playpen/mailwoman-data is lost.
+#
+# HI public schools is fetched separately by `fetch-state-hi-schools.sh` —
+# its upstream is an XLSX workbook that requires an openpyxl-driven
+# sheet-concatenation pre-step before the adapter can consume it.
 #
 # Each source lands in its own subdirectory of $OUT_ROOT/$source_slug/ along
 # with a MANIFEST.json recording origin URL + download timestamp + sha256 so
@@ -26,7 +30,6 @@ SOURCES=(
 	"state-ia-contractors|IA_Active_Construction_Contractor_Registrations.csv|https://data.iowa.gov/api/views/dpf3-iz94/rows.csv?accessType=DOWNLOAD"
 	"state-wa-health-providers|WA_Health_Care_Provider_Credential_Data.csv|https://data.wa.gov/api/views/qxh8-f4bd/rows.csv?accessType=DOWNLOAD"
 	"state-hi-lobbyists|HI_Lobbyist_Registration_Statements.csv|https://data.hawaii.gov/api/views/cm7c-skav/rows.csv?accessType=DOWNLOAD"
-	"state-hi-schools|HI_Public_Schools_List.xlsx|https://www.hawaiipublicschools.org/DOE%20Forms/SchoolList.xlsx"
 )
 
 fetched=0

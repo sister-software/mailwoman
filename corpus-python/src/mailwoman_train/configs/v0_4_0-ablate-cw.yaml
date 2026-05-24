@@ -1,0 +1,76 @@
+# v0.4.0 ablation (b): isolate §3 class_weights as the destabilizer.
+#
+# Three v0.4.0 candidate runs all diverged ~500 steps post-warmup across three LRs
+# (5e-4, 3e-4, 1.5e-4). With LR ruled out as the sole cause, this config strips §3
+# class_weights entirely and keeps §1 per_token CRF norm + crf_loss_weight=1.0 + §4
+# source_weights. lr=5e-4 (§1 spec's target).
+#
+# Result interpretation:
+#   - Trains stably to step ~2000+ → §3 was the offender (class_weights amplified
+#     gradients on rare labels enough to destabilize the loss landscape)
+#   - Also diverges → §3 isn't (only) the offender; pair with the §1 ablation result
+#
+# Operator-gated: do NOT kick off without their go-ahead.
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0
+  tokenizer_dir: /data/models/tokenizer/v0.1.0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+  train_rows_per_epoch: null
+  val_rows: 4096
+  coarse_filter: true
+
+model:
+  hidden_size: 256
+  num_hidden_layers: 6
+  num_attention_heads: 4
+  intermediate_size: 1024
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  label_smoothing: 0.0
+  # §1 retained: per_token CRF norm + weight=1.0.
+  crf_normalization: per_token
+  crf_loss_weight: 1.0
+  # §3 ablated: class_weights block removed entirely → uniform per-class weighting
+  # (config.py default is class_weights: None, which the encoder reads as uniform).
+
+train:
+  output_dir: /data/models/checkpoints/v0_4_0-ablate-cw
+  seed: 42
+  batch_size: 32
+  eval_batch_size: 40
+  grad_accum_steps: 4
+  # §3 ablation targets the original LR back at v0.2.0 baseline 5e-4.
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 50000
+  eval_every_steps: 250
+  save_every_steps: 100
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 2
+  csv_log_path: "{output_dir}/train_log.csv"
+
+eval:
+  golden_dir: ""
+  val_jsonl: ""

@@ -1,0 +1,31 @@
+{
+	"name": "@mailwoman/neural-web",
+	"version": "0.1.0",
+	"description": "Browser-side mailwoman neural runtime. Pairs the existing tokenizer + decoder with an onnxruntime-web inference path (WebGPU primary, WASM SIMD fallback). Drop-in for @mailwoman/neural when targeting a static-asset deploy (Phase B of the demo plan).",
+	"license": "AGPL-3.0-only",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "neural-web"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/neural": "workspace:*",
+		"onnxruntime-web": "^1.26.0"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}

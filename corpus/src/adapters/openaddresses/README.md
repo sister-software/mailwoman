@@ -48,6 +48,41 @@ adapter falls back to:
 Downstream training code can stratify or exclude by license via the
 `license` field on every row.
 
+## Share-alike filter (default-on)
+
+OpenAddresses includes a non-trivial fraction of **ODbL** and
+**CC-BY-SA** rows (notably parts of Canada and several European
+countries) that — per the licensing strategy in [#26][licensing] —
+must NOT enter the training corpus for the proprietary
+`@mailwoman/neural-weights-*` packages. Training on share-alike data
+would create a copyleft obligation on the weights themselves.
+
+The adapter drops rows whose `license` matches the share-alike pattern:
+
+- `ODbL` / `Open Database License` (any version suffix)
+- `CC-BY-SA-*` (any version)
+- `CC-SA-*`
+
+Filter is **on by default**. The adapter logs a one-line stderr summary
+of dropped vs. kept rows at end of run so operators can see how much
+data the filter excluded.
+
+To bypass — for operator-driven open-weights experiments — construct
+the adapter with `allowShareAlike: true`:
+
+```ts
+import { createOpenaddressesAdapter } from "@mailwoman/corpus"
+
+const adapter = createOpenaddressesAdapter({ allowShareAlike: true })
+```
+
+A CLI `--allow-share-alike` flag is **not yet wired through
+`mailwoman corpus run`** — it lands with the global corpus-build
+filter from [#26][licensing]. Until then, override via a custom
+build script that calls `createOpenaddressesAdapter()` directly.
+
+[licensing]: https://github.com/sister-software/mailwoman/issues/26
+
 ## Properties consumed
 
 | OA property             | Mailwoman component                            |
@@ -95,4 +130,6 @@ One `CanonicalRow` per usable Feature:
 `fixtures/openaddresses/sample-us.geojson` — 6 hand-crafted Features
 covering NY, OR, CA, WA, TX with a mix of per-row licenses (CC-BY-4.0,
 PDDL-1.0, CC0-1.0, CC-BY-SA-4.0) plus one row with no `LICENSE`
-property to exercise the default-fallback path.
+property to exercise the default-fallback path. The CC-BY-SA-4.0 row
+exercises the share-alike filter — it's absent from the default run and
+present when `allowShareAlike: true`.

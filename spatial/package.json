@@ -1,0 +1,44 @@
+{
+	"name": "@mailwoman/spatial",
+	"version": "1.0.0",
+	"description": "Spatial analysis, geocoding, and other geo-related utilities.",
+	"license": "AGPL-3.0",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		"./schema/*.json": "./dist/schema/*.json",
+		"./sdk": "./out/sdk/index.js",
+		".": "./out/index.js"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"geo-coordinates-parser": "^1.7.3",
+		"h3-js": "^4.1.0",
+		"wkx": "^0.5.0"
+	},
+	"devDependencies": {
+		"@googlemaps/google-maps-services-js": "^3.4.2",
+		"@types/google.maps": "^3.64.1",
+		"type-fest": "^5.6.0"
+	},
+	"optionalDependencies": {
+		"@googlemaps/google-maps-services-js": "^3.4.2",
+		"@types/google.maps": "^3.64.1"
+	},
+	"engines": {
+		"node": ">=22.5.1"
+	},
+	"keywords": [
+		"geo",
+		"spatial"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}

@@ -14,7 +14,7 @@
  *   -fx resources/whosonfirst
  */
 
-import sqlite from "better-sqlite3"
+import { DatabaseSync } from "node:sqlite"
 // import { Presets, SingleBar } from "cli-progress"
 import { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import { resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
@@ -51,9 +51,8 @@ if (process.argv.length !== 3) {
 const databasePath = process.argv[2]
 
 console.log(`Opening database... ${databasePath}`)
-const db = sqlite(databasePath, {
-	fileMustExist: true,
-	readonly: true,
+const db = new DatabaseSync(databasePath, {
+	readOnly: true,
 })
 
 console.log("Preparing statement...")
@@ -79,7 +78,7 @@ db.exec(/* sql */ `
 
 console.log("Preparing statement...")
 
-const stmt = db.prepare<[], WOFRow>(/* sql */ `
+const stmt = db.prepare(/* sql */ `
 	SELECT * FROM temp.introspection
 	WHERE (
 		fullkey IN (
@@ -105,7 +104,7 @@ const placetypeMap = new Map<string, PlacetypeData>()
 
 // const rowProgress = new SingleBar({}, Presets.shades_classic)
 
-for (const row of stmt.iterate()) {
+for (const row of stmt.iterate() as IterableIterator<WOFRow>) {
 	// rowProgress.increment()
 	// rowProgress.render()
 

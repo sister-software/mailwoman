@@ -11,10 +11,6 @@
  *   - `createBloomFilters<T>`: helper that takes a schema and a list of columns and returns the
  *       `@dsnp/parquetjs`-shaped bloom-filter spec array.
  *
- *   Drawn 2026-05-17 from the author's earlier draft
- *   `sdk/parquet/schema.ts` (implemented from the author's earlier draft concept). Two
- *   trims relative to the original: (a) `ParquetSchemaDefinitionCache`'s LRU generics use
- *   `ParquetRecordLike` instead of `any` to satisfy this project's eslint config; (b)
  *   `Symbol.dispose` is sync (the original was async, but `Disposable`'s contract is sync — async
  *   cleanup belongs on `AsyncDisposable`).
  */

@@ -7,5 +7,16 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./test/**/*", "./server/static/**"],
-	"references": [{ "path": "../core" }, { "path": "../classifiers" }, { "path": "../corpus" }, { "path": "../neural" }]
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../classifiers" },
+		{ "path": "../corpus" },
+		{ "path": "../kind-classifier" },
+		{ "path": "../locale-gate" },
+		{ "path": "../neural" },
+		{ "path": "../normalize" },
+		{ "path": "../phrase-grouper" },
+		{ "path": "../query-shape" },
+		{ "path": "../resolver-wof-sqlite" }
+	]
 }

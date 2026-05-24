@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 export * from "./collections.js"
-export * from "./db/index.js"
 export * from "./debugging.js"
 export * from "./fs.js"
 export * from "./git.js"

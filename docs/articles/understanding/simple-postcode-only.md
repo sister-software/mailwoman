@@ -1,0 +1,52 @@
+---
+sidebar_position: 32
+title: Postcode-only geocoding
+tags:
+  - domain
+  - hubris
+  - postcode
+  - en-us
+  - international
+---
+
+# Postcode-only geocoding
+
+The fastest geocoder extracts the postcode, looks it up in a postcode-to-coordinate table, and returns the centroid. It doesn't parse the street, the building number, or the locality. It doesn't need to. The postcode is the most machine-readable part of any address, and for many applications, postcode-level accuracy is sufficient.
+
+## The approach
+
+1. **Extract the postcode.** For US addresses, `\d{5}(-\d{4})?` near the end of the string. For UK, `[A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}`. For France, `\d{5}` in a specific position. One regex per country, or a small set of per-country patterns.
+2. **Look up the postcode.** A table mapping postcode → (lat, lon, city, state). For the US, the Census Bureau's ZIP Code Tabulation Area (ZCTA) file. For the UK, the ONS Postcode Directory. For France, the La Poste code postal database.
+3. **Return the centroid.** The postcode's representative coordinate. For a ZIP code covering 50 square miles, this is off by up to several miles. For a UK postcode covering ~15 addresses, this is off by ~50 meters. Precision varies by country.
+
+That's it. Three steps, each deterministic, each trivially updateable when a new postcode is assigned. The rest of the address — the street, the building number, the apartment — is for the delivery driver, not the geocoder.
+
+## When it works
+
+- **You need rough geographic distribution.** A marketing campaign targeting "customers in 90210." A delivery zone analysis. A regional sales territory assignment. Postcode-level accuracy is sufficient for statistical aggregation and regional routing.
+- **You're in a country with precise postcodes.** UK postcodes cover ~15 addresses on average. Irish Eircodes are unique per delivery point. Canadian postal codes cover one side of one block face. In these countries, postcode-only geocoding is nearly building-level.
+- **You're in the US and your use case is regional.** ZIP-level geocoding in Manhattan is off by a few blocks. ZIP-level geocoding in rural Montana is off by 10-15 miles. If your application needs "which state/county is this in?" not "which building is this at?", ZIP centroids work.
+- **You have the rest of the address for non-geographic use.** The street and building number are for printing shipping labels, not for geocoding. The geocoder only needs to answer "which delivery zone?" and the postcode answers that.
+- **You need speed.** A regex extraction + hash table lookup is microseconds per address. You can geocode millions of addresses on a laptop.
+
+## What you lose
+
+- **Everything finer than the postcode's resolution.** In rural US, this is miles. In dense urban areas, a ZIP code can cover multiple distinct neighborhoods with different demographic profiles. Aggregating by ZIP centroid loses the fine-grained signal.
+- **Addresses without postcodes.** Ireland before 2015 (Eircode launch). Hong Kong. Rural routes in developing countries. Military addresses (APO/FPO). The regex extracts nothing, the lookup returns nothing, the geocoder fails.
+- **Multi-city postcodes.** ZIP code 33334 covers Oakland Park, Wilton Manors, and Fort Lauderdale. The centroid is in one of them. The other two are wrong. The geocoder returns one city for a postcode that serves three.
+- **Postcodes that change.** USPS changes ~5,000 ZIP codes per year. A postcode-to-coordinate table built in 2024 has stale entries in 2026. The table must be updated continuously to stay current.
+- **No validation of the rest of the address.** The geocoder returns a coordinate for `90210` regardless of whether the street exists in Beverly Hills. `123 Fake St, Beverly Hills, CA 90210` geocodes to the 90210 centroid, silently accepting a nonexistent street.
+- **The user's expectation.** A user who types their full address and gets a coordinate expects sub-building accuracy. A ZIP centroid feels like a wrong answer even when it's the best the system can do. The geocoder has no way to signal "this is ZIP-level accuracy, not address-level."
+
+## Where Mailwoman fits
+
+Mailwoman's resolver treats the postcode as **supplementary evidence, not a primary locator.** When the postcode is present, the resolver limits gazetteer lookups to the postcode's rough administrative area — the same information the postcode-only approach uses. But Mailwoman also uses the parsed locality, region, and street to narrow the candidate set further. A postcode + locality + region match is more precise than a postcode alone.
+
+The postcode-only approach and Mailwoman are not competitors. A system that starts with postcode-only geocoding and later needs finer resolution can add Mailwoman as a **second pass**: postcode-only for the 90% of addresses where ZIP-level accuracy is sufficient, Mailwoman for the 10% where a specific building matters. The postcode extracted by the regex feeds directly into Mailwoman's locale gate and resolver constraints.
+
+## See also
+
+- [What is a postcode?](./what-is-a-postcode.md) — postcodes as routing instructions
+- [What is a ZIP Code and how is it structured?](./what-is-a-zip-code.md) — the US system in detail
+- [Falsehoods about postcodes](./falsehoods-postcodes.md) — the assumptions that break postcode-based geocoders
+- [Locality-only geocoding](./simple-locality-only.md) — the next step up in resolution

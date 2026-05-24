@@ -20,9 +20,21 @@
 	"include": [],
 	"references": [
 		{ "path": "./core" },
+		{ "path": "./spatial" },
+		{ "path": "./tiger" },
+		{ "path": "./cartographer" },
 		{ "path": "./classifiers" },
 		{ "path": "./corpus" },
 		{ "path": "./neural" },
-		{ "path": "./mailwoman" }
+		{ "path": "./neural-web" },
+		{ "path": "./normalize" },
+		{ "path": "./kind-classifier" },
+		{ "path": "./locale-gate" },
+		{ "path": "./phrase-grouper" },
+		{ "path": "./query-shape" },
+		{ "path": "./resolver-wof-sqlite" },
+		{ "path": "./resolver-wof-wasm" },
+		{ "path": "./mailwoman" },
+		{ "path": "./tile-worker" }
 	]
 }

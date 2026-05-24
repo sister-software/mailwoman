@@ -17,6 +17,12 @@
  *       parser availability.
  *
  *   See `containment.ts` for the parent-of mapping that drives nesting.
+ *
+ *   Phase 4.1 added optional `source` / `sourceId` on `AddressNode` so the XML serializer can emit
+ *   provenance via `src="<source>:<sourceId>"`. The neural pipeline stamps these via
+ *   `BuildTreeOpts`; the proposal-derived path threads them through from `ClassificationProposal`.
+ *   JSON / tuple projections deliberately do not surface provenance — libpostal compat is
+ *   load-bearing.
  */
 
 import type { BioLabel, ComponentTag } from "../types/component.js"
@@ -58,6 +64,45 @@ export interface AddressNode {
 	end: number
 	confidence: number
 	children: AddressNode[]
+	/**
+	 * Broad category of the assertion's origin. `"rule"` and `"neural"` come from classifier
+	 * proposals; `"resolver"` is set by Phase 4.3's resolver when it overwrites the classifier
+	 * attribution (the displaced classifier source lands in `metadata.classifier_source`).
+	 */
+	source?: string
+	/**
+	 * Specific identifier within `source`: a rule classifier id like `"whos_on_first"`, a neural
+	 * model card version like `"neural-v0.3.1-en-us"`, or a resolver-supplied place id like
+	 * `"wof-admin:101751119"`.
+	 */
+	sourceId?: string
+	/** Resolver-supplied centroid latitude (Phase 4.3). Optional — only set when a resolver wins. */
+	lat?: number
+	/** Resolver-supplied centroid longitude (Phase 4.3). Optional — only set when a resolver wins. */
+	lon?: number
+	/**
+	 * Resolver-supplied normalized place URI (Phase 4.3) — `"wof:101751119"` for a WOF place.
+	 * Distinct from `sourceId` (which includes the resolver vendor) so consumers that want the
+	 * canonical place id without the vendor prefix have one.
+	 */
+	placeId?: string
+	/**
+	 * Opaque per-node metadata bag. Phase 4.3 uses keys `classifier_source` and
+	 * `classifier_source_id` to preserve the displaced classifier attribution when a resolver wins.
+	 * Never consulted by the decoder or serializers — debugging + downstream telemetry only.
+	 */
+	metadata?: Record<string, unknown>
+	/**
+	 * Top-k alternative resolutions for this node, ranked by score (highest first). The winning
+	 * candidate is reflected in `placeId` / `lat` / `lon` / `sourceId`. Surfaced for failure mode #8
+	 * (Springfield-class ambiguity) — callers needing disambiguation see the runners-up. Empty /
+	 * absent when the resolver returned a single candidate.
+	 *
+	 * Typed as `unknown[]` here to avoid a circular import on `ResolvedPlace`; resolver-emitting code
+	 * sets the concrete shape, consumers may cast to `ResolvedPlace[]` from
+	 * `@mailwoman/core/resolver`.
+	 */
+	alternatives?: ReadonlyArray<unknown>
 }
 
 /**
