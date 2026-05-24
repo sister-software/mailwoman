@@ -79,7 +79,7 @@ Survived. Peak macro_f1 0.42 at step ~2200; gradual cosine-decay decline through
 
 ## The meta-bug
 
-cw-only's smoke (3000 steps, cosine schedule) had its LR back near zero by step 2750. The "pass" criterion ("macro_f1 stable across the last three evals past step 2000") was measuring stability _under a decayed-to-near-zero LR_. The full 50K run kept the LR near its 1.5e-4 peak for thousands of steps. That sustained-peak exposure was where the destabilization happened in every other run too.
+cw-only's smoke (3000 steps, cosine schedule) had its LR back near zero by step 2750. The "pass" criterion ("macro*f1 stable across the last three evals past step 2000") was measuring stability \_under a decayed-to-near-zero LR*. The full 50K run kept the LR near its 1.5e-4 peak for thousands of steps. That sustained-peak exposure was where the destabilization happened in every other run too.
 
 The smoke wasn't testing the same loss landscape as the full run. The cosine schedule's tail had been doing the heavy lifting of "stability" all along.
 

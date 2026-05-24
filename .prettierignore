@@ -43,3 +43,7 @@ corpus/fixtures/**/*.ndgeojson
 ## which corrupts already-shipped historical lines on every run. Keep these byte-for-byte.
 LOG.md
 
+## Operator-supplied review artefacts (pi-session HTML exports, raw .jsonl drops)
+pi-session-*.html
+review.jsonl
+

@@ -142,6 +142,11 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 
 		if (options.benchmark !== undefined) {
 			if (options.isolated || (options.policy && options.policy.length > 0) || options.neural) {
+				// Intentional: surface the validation error through the same render-then-exit pattern
+				// as the async setError paths below (see the useEffect on [error] above). The
+				// "cascading renders" the rule warns about are not a real cost here because the
+				// effect short-circuits with `return`.
+				// eslint-disable-next-line react-hooks/set-state-in-effect
 				setError(
 					"--benchmark requires the default runtime-pipeline path (incompatible with --isolated / --policy / --neural)"
 				)
