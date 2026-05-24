@@ -21,6 +21,7 @@ import sentencepiece as spm  # type: ignore[import-not-found]
 from mailwoman_train.tokenizer_train import (
     DEFAULT_USER_DEFINED_SYMBOLS,
     detect_script,
+    iter_train_shards,
     load_fixture_lines,
     measure_byte_fallback,
     parse_user_defined_symbols_file,
@@ -230,6 +231,71 @@ def test_measure_byte_fallback_empty_input(tmp_path: Path):
     assert r["overall"]["pieces"] == 0
     assert r["overall"]["byte_fallback_pieces"] == 0
     assert r["overall"]["rate"] == 0.0
+
+
+def test_iter_train_shards_prefers_manifest(tmp_path: Path):
+    """MANIFEST.json shards[] is the source of truth — absolute paths win over glob."""
+    # The manifest references a shard in a sibling dir that is *not* under <corpus>/train/,
+    # which is exactly the cross-version adapter-addition case (corpus-v0.4.0 → v0.3.0 base
+    # paths). The glob would never reach it.
+    sibling = tmp_path / "elsewhere"
+    sibling.mkdir()
+    cross_version_shard = sibling / "part-0000.parquet"
+    cross_version_shard.write_bytes(b"")  # contents unused; only path resolution is tested
+
+    corpus = tmp_path / "v0.4.0"
+    (corpus / "train").mkdir(parents=True)
+    # A local shard that the glob fallback *would* return; the manifest should beat it.
+    local_only = corpus / "train" / "part-local.parquet"
+    local_only.write_bytes(b"")
+
+    manifest = corpus / "MANIFEST.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "corpus_version": "0.4.0",
+                "shards": [
+                    {"split": "train", "path": str(cross_version_shard)},
+                    {"split": "test", "path": str(corpus / "test" / "part-0000.parquet")},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = iter_train_shards(corpus)
+    assert out == [cross_version_shard]
+
+
+def test_iter_train_shards_falls_back_to_glob_when_manifest_has_no_train_split(tmp_path: Path):
+    """A manifest with no train-split entries should not preempt the glob fallback."""
+    corpus = tmp_path / "v0.4.0"
+    (corpus / "train").mkdir(parents=True)
+    local = corpus / "train" / "part-0000.parquet"
+    local.write_bytes(b"")
+    (corpus / "MANIFEST.json").write_text(
+        json.dumps({"shards": [{"split": "test", "path": "/nowhere/test.parquet"}]}),
+        encoding="utf-8",
+    )
+    assert iter_train_shards(corpus) == [local]
+
+
+def test_iter_train_shards_falls_back_to_glob_when_manifest_missing(tmp_path: Path):
+    """Corpora without a MANIFEST (ad-hoc fixtures) keep working via the glob fallback."""
+    corpus = tmp_path / "ad-hoc"
+    (corpus / "train").mkdir(parents=True)
+    a = corpus / "train" / "part-0000.parquet"
+    b = corpus / "train" / "part-0001.parquet"
+    a.write_bytes(b"")
+    b.write_bytes(b"")
+    assert iter_train_shards(corpus) == [a, b]
+
+
+def test_iter_train_shards_raises_when_neither_source_yields_shards(tmp_path: Path):
+    """No manifest, no train/ shards → caller-visible FileNotFoundError, not silent empty."""
+    corpus = tmp_path / "empty"
+    (corpus / "train").mkdir(parents=True)
+    with pytest.raises(FileNotFoundError):
+        iter_train_shards(corpus)
 
 
 def test_committed_multi_script_fixture_loads_and_has_balanced_scripts():
