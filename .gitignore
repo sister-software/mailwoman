@@ -1,5 +1,7 @@
 node_modules
 
+.notes
+
 # ignore all of whosonfirst/dictionaries
 resources/whosonfirst/dictionaries/*/*.txt
 
