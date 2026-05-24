@@ -155,3 +155,4 @@ The direction is not in question. The question is whether the current training a
 - [Neural classification](../concepts/neural-classification.md) — the transformer architecture deep dive
 - [The knowledge ladder](./the-knowledge-ladder.md) — the staged pipeline decomposition
 - [The tokenization tautology](./the-tokenization-tautology.md) — why rules hit a ceiling
+- [The case for simple geocoders](./the-case-for-simple-geocoders.md) — the strongest argument for the alternative

@@ -100,3 +100,4 @@ The economic argument for owning your parser is not "it will be better than Goog
 - [The database fallacy](./the-database-fallacy.md) — why the 90% that works is built on partial data
 - [How mail delivery actually works](./how-mail-delivery-works.md) — the system that already handles ambiguity through human fallback
 - [Why a neural parser?](./why-a-neural-parser.md) — the technical argument for the neural approach
+- [The case for simple geocoders](./the-case-for-simple-geocoders.md) — the counterargument: when simple is the right choice

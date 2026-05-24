@@ -51,6 +51,7 @@ These describe Mailwoman's design. Most existed before May 2026 and have been re
 
 21. **[Why not just use Google's API?](./why-not-google-api.md)** — pricing, terms, lock-in, and when renting is the right choice.
 22. **[Why not use geocode.earth?](./why-not-geocode-earth.md)** — the open-source hosted alternative and its Pelias parser ceiling.
+23. **[The case for simple geocoders](./the-case-for-simple-geocoders.md)** — the strongest argument for the alternative: a regex, a dictionary, a gazetteer, and a willingness to be wrong 10% of the time.
 
 ### Falsehoods about addresses
 
