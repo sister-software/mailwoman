@@ -1,1 +1,0 @@
-../../../.agents/skills/run-docs/SKILL.md
