@@ -1,11 +1,14 @@
 ---
 sidebar_position: 25
 title: Falsehoods about numbers in addresses
+tags:
+  - domain
+  - falsehoods
+  - street
+  - international
 ---
 
 # Falsehoods programmers believe about numbers in addresses
-
-_This article is part of the [falsehoods-about-addresses](./falsehoods-about-addresses.md) series, expanding on Michael Tandy's [original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)._
 
 ## The falsehoods
 
@@ -75,8 +78,10 @@ The reconciler (Stage 5) helps with the "Ten Post Office Sq vs 10 Post Office Sq
 - **Negative numbers as part of street names.** "Minusone Priory Road" requires the model to learn that "Minusone" followed by "Priory Road" is a street name, not a building number. This is learnable from corpus co-occurrence, but the corpus must contain examples of word-prefix street names (which are rare in US address data).
 - **Leading-zero apartments.** The model can learn that `001` is a valid unit identifier if the corpus contains unit-tagged addresses with leading zeros. Without unit-level tagging in the training data, the model sees `001` as a number and may classify it as a house number rather than a unit.
 
-## See also
+## References
 
+- [Series overview: Falsehoods about addresses](./falsehoods-about-addresses.md)
+- [Michael Tandy's original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
 - [Falsehoods about street names](./falsehoods-streets.md) — the street-side of the number/street pair
 - [What is an intersection address?](./what-is-an-intersection.md) — why not all addresses have building numbers
 - [How can a building have two addresses?](./how-can-a-building-have-two-addresses.md) — why buildings change numbers

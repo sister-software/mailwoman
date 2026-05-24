@@ -1,6 +1,12 @@
 ---
 sidebar_position: 4
 title: The database fallacy
+tags:
+  - domain
+  - motivation
+  - postcode
+  - locality
+  - international
 ---
 
 # The database fallacy

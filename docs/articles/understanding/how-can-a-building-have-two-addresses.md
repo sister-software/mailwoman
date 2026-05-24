@@ -1,6 +1,13 @@
 ---
 sidebar_position: 12
 title: How can a building have two addresses?
+tags:
+  - domain
+  - concepts
+  - street
+  - locality
+  - postcode
+  - en-us
 ---
 
 # How can a building have two addresses?

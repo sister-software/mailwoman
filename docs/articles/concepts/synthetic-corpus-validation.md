@@ -1,6 +1,10 @@
 ---
 sidebar_position: 18
 title: Synthetic corpus — alignment validation is load-bearing
+tags:
+  - concepts
+  - corpus
+  - training
 ---
 
 # Synthetic corpus — alignment validation is load-bearing

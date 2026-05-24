@@ -1,6 +1,11 @@
 ---
 sidebar_position: 14
 title: The pipeline contract
+tags:
+  - concepts
+  - architecture
+  - staged-pipeline
+  - reference
 ---
 
 # The pipeline contract

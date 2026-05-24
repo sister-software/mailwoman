@@ -1,6 +1,15 @@
 ---
 sidebar_position: 18
 title: How it will work
+tags:
+  - architecture
+  - reference
+  - neural
+  - hybrid
+  - training
+  - corpus
+  - tokenizer
+  - ja-jp
 ---
 
 # How it will work — the near future

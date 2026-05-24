@@ -1,6 +1,13 @@
 ---
 sidebar_position: 17
 title: How it works now
+tags:
+  - architecture
+  - staged-pipeline
+  - neural
+  - hybrid
+  - rule-based
+  - resolver
 ---
 
 # How it works now — the staged pipeline

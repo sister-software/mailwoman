@@ -1,6 +1,17 @@
 ---
 sidebar_position: 14
 title: Addresses that break geocoders
+tags:
+  - domain
+  - concepts
+  - reference
+  - street
+  - locality
+  - postcode
+  - venue
+  - international
+  - multilingual
+  - non-latin
 ---
 
 # Addresses that break geocoders

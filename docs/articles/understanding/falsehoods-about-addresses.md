@@ -1,6 +1,13 @@
 ---
 sidebar_position: 24
 title: Falsehoods about addresses
+tags:
+  - domain
+  - falsehoods
+  - reference
+  - international
+  - multilingual
+  - non-latin
 ---
 
 # Falsehoods programmers believe about addresses

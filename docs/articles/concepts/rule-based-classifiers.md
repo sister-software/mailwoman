@@ -1,6 +1,11 @@
 ---
 sidebar_position: 4
 title: Rule-based classifiers
+tags:
+  - concepts
+  - rule-based
+  - architecture
+  - reference
 ---
 
 # Rule-based classifiers

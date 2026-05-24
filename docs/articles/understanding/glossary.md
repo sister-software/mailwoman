@@ -1,6 +1,8 @@
 ---
 sidebar_position: 21
 title: Glossary
+tags:
+  - reference
 ---
 
 # Glossary

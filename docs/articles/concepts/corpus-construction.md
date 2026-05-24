@@ -1,6 +1,10 @@
 ---
 sidebar_position: 12
 title: Corpus construction
+tags:
+  - concepts
+  - corpus
+  - training
 ---
 
 # Corpus construction

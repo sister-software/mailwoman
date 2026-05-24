@@ -1,6 +1,14 @@
 ---
 sidebar_position: 11
 title: Resolver and Who's On First
+tags:
+  - concepts
+  - resolver
+  - architecture
+  - locality
+  - region
+  - country
+  - international
 ---
 
 # Resolver and Who's On First

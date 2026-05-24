@@ -1,6 +1,13 @@
 ---
 sidebar_position: 8
 title: What is a postcode?
+tags:
+  - domain
+  - concepts
+  - postcode
+  - international
+  - en-us
+  - multilingual
 ---
 
 # What is a postcode?

@@ -1,6 +1,13 @@
 ---
 sidebar_position: 11
 title: What is an intersection address?
+tags:
+  - domain
+  - concepts
+  - intersection
+  - street
+  - ja-jp
+  - international
 ---
 
 # What is an intersection address?

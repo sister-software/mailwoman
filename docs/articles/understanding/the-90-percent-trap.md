@@ -1,6 +1,11 @@
 ---
 sidebar_position: 6
 title: The 90% trap
+tags:
+  - domain
+  - motivation
+  - hubris
+  - en-us
 ---
 
 # The 90% trap

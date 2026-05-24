@@ -1,6 +1,10 @@
 ---
 sidebar_position: 6
 title: BIO labels
+tags:
+  - concepts
+  - neural
+  - training
 ---
 
 # BIO labels

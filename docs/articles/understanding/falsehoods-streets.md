@@ -1,11 +1,15 @@
 ---
 sidebar_position: 26
 title: Falsehoods about street names
+tags:
+  - domain
+  - falsehoods
+  - street
+  - international
+  - ja-jp
 ---
 
 # Falsehoods programmers believe about street names
-
-_This article is part of the [falsehoods-about-addresses](./falsehoods-about-addresses.md) series, expanding on Michael Tandy's [original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)._
 
 ## The falsehoods
 
@@ -81,8 +85,10 @@ The staged pipeline addresses the falsehoods in layers:
 - **Street disambiguation without postcodes.** `10 High Street, London` is structurally ambiguous and the resolver cannot resolve it without a postcode or borough. The parser correctly identifies the components; the resolver correctly identifies the ambiguity. The downstream application must decide.
 - **Grid-based addressing.** Mannheim's `R 5, 6-13` requires block-and-row tags that Mailwoman's current schema does not have. Japan's `1-1-1` format is supported through the JP-specific tags (`district`, `block`, `sub_block`, `building_number`) but these are deferred to Phase 6.
 
-## See also
+## References
 
+- [Series overview: Falsehoods about addresses](./falsehoods-about-addresses.md)
+- [Michael Tandy's original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
 - [Falsehoods about numbers in addresses](./falsehoods-numbers.md) — the other half of the street+number pair
 - [What is an intersection address?](./what-is-an-intersection.md) — the street-based format that doesn't use building numbers
 - [The tokenization tautology](./the-tokenization-tautology.md) — why the Dutch `Gondel 2695` pattern breaks per-token classification

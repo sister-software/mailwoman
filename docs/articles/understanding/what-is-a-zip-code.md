@@ -1,6 +1,11 @@
 ---
 sidebar_position: 9
 title: What is a ZIP Code?
+tags:
+  - domain
+  - concepts
+  - postcode
+  - en-us
 ---
 
 # What is a ZIP Code and how is it structured?

@@ -1,6 +1,12 @@
 ---
 sidebar_position: 15
 title: From Pelias to Mailwoman
+tags:
+  - architecture
+  - rule-based
+  - neural
+  - hybrid
+  - reference
 ---
 
 # From Pelias to Mailwoman

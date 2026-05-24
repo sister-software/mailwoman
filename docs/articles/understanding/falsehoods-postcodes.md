@@ -1,11 +1,16 @@
 ---
 sidebar_position: 27
 title: Falsehoods about postcodes
+tags:
+  - domain
+  - falsehoods
+  - postcode
+  - international
+  - en-us
+  - multilingual
 ---
 
 # Falsehoods programmers believe about postcodes
-
-_This article is part of the [falsehoods-about-addresses](./falsehoods-about-addresses.md) series, expanding on Michael Tandy's [original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)._
 
 ## The falsehoods
 
@@ -77,8 +82,10 @@ Douglas Perreault's condo in Florida changed ZIP codes twice in a few years: `33
 - **Postcode changes in production.** The resolver's WOF SQLite distribution is a snapshot. When postcodes change (USPS monthly updates, UK Royal Mail monthly updates), the snapshot drifts. The resolver can be updated independently of the parser, but the update cadence must match the postal service's change cadence — weekly or monthly — for production use.
 - **Delivery point codes.** The full 11-digit USPS delivery point barcode is not present in any open gazetteer. The 5-digit ZIP is the finest resolution the resolver can achieve from open data. For delivery-point-level resolution, a commercial address verification service is required.
 
-## See also
+## References
 
+- [Series overview: Falsehoods about addresses](./falsehoods-about-addresses.md)
+- [Michael Tandy's original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
 - [What is a postcode?](./what-is-a-postcode.md) — postcodes as routing instructions, not geographic areas
 - [What is a ZIP Code and how is it structured?](./what-is-a-zip-code.md) — the US 11-digit system in detail
 - [The database fallacy](./the-database-fallacy.md) — why postcode-to-place mappings are never complete

@@ -1,6 +1,11 @@
 ---
 sidebar_position: 9
 title: Training pipeline
+tags:
+  - concepts
+  - training
+  - corpus
+  - neural
 ---
 
 # Training pipeline

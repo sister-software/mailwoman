@@ -1,6 +1,11 @@
 ---
 sidebar_position: 2
 title: How mail delivery actually works
+tags:
+  - domain
+  - motivation
+  - en-us
+  - international
 ---
 
 # How mail delivery actually works

@@ -1,6 +1,11 @@
 ---
 sidebar_position: 17
 title: Reconcile — why empty parses dominate without an inclusion bonus
+tags:
+  - concepts
+  - architecture
+  - staged-pipeline
+  - resolver
 ---
 
 # Reconcile — the multiplicative-score trap

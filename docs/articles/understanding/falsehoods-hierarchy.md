@@ -1,11 +1,16 @@
 ---
 sidebar_position: 28
 title: Falsehoods about administrative hierarchy
+tags:
+  - domain
+  - falsehoods
+  - locality
+  - region
+  - country
+  - international
 ---
 
 # Falsehoods programmers believe about administrative hierarchy
-
-_This article is part of the [falsehoods-about-addresses](./falsehoods-about-addresses.md) series, expanding on Michael Tandy's [original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)._
 
 ## The falsehoods
 
@@ -75,8 +80,10 @@ Geocoders that maintain their own administrative boundary snapshots go stale. Th
 - **Real-time administrative boundary updates.** WOF SQLite is a snapshot. When cities annex or counties dissolve, the snapshot drifts. The resolver can be updated independently, but the update must be triggered.
 - **City-state disambiguation without context.** `Singapore, Singapore` is unambiguous because the country IS the city. `Mexico` without context is ambiguous between the country and Mexico City. The resolver returns both candidates; the downstream application must decide which the user meant.
 
-## See also
+## References
 
+- [Series overview: Falsehoods about addresses](./falsehoods-about-addresses.md)
+- [Michael Tandy's original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
 - [Falsehoods about postcodes](./falsehoods-postcodes.md) — the other half of the locality+postcode administrative pair
 - [What is a concordance?](./what-is-a-concordance.md) — how the reconciler validates administrative coherence
 - [The database fallacy](./the-database-fallacy.md) — why administrative boundaries drift

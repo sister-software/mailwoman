@@ -1,6 +1,12 @@
 ---
 sidebar_position: 19
 title: The knowledge ladder
+tags:
+  - architecture
+  - staged-pipeline
+  - reference
+  - neural
+  - resolver
 ---
 
 # The knowledge ladder

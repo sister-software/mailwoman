@@ -1,6 +1,17 @@
 ---
 sidebar_position: 3
 title: How humans break addresses
+tags:
+  - domain
+  - motivation
+  - street
+  - locality
+  - postcode
+  - region
+  - country
+  - international
+  - multilingual
+  - non-latin
 ---
 
 # How humans break addresses

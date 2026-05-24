@@ -1,6 +1,12 @@
 ---
 sidebar_position: 22
 title: Why not just use Google's API?
+tags:
+  - domain
+  - hubris
+  - motivation
+  - en-us
+  - international
 ---
 
 # Why not just use Google's API?

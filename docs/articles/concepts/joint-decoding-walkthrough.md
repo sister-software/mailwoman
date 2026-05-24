@@ -1,6 +1,15 @@
 ---
 sidebar_position: 16
 title: A walkthrough — NY-NY Steakhouse, Houston, TX
+tags:
+  - concepts
+  - architecture
+  - staged-pipeline
+  - resolver
+  - neural
+  - venue
+  - locality
+  - region
 ---
 
 # Joint decoding — a walkthrough

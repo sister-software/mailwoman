@@ -1,6 +1,10 @@
 ---
 sidebar_position: 5
 title: Tokenization
+tags:
+  - concepts
+  - tokenizer
+  - architecture
 ---
 
 # Tokenization

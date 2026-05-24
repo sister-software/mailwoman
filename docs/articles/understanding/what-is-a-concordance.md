@@ -1,6 +1,14 @@
 ---
 sidebar_position: 10
 title: What is a concordance?
+tags:
+  - domain
+  - concepts
+  - architecture
+  - resolver
+  - staged-pipeline
+  - locality
+  - region
 ---
 
 # What is a concordance?

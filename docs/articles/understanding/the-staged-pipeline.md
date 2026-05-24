@@ -1,6 +1,10 @@
 ---
 sidebar_position: 20
 title: The staged pipeline
+tags:
+  - architecture
+  - staged-pipeline
+  - reference
 ---
 
 # The staged pipeline

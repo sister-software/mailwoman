@@ -1,6 +1,15 @@
 ---
 sidebar_position: 5
 title: The tokenization tautology
+tags:
+  - domain
+  - motivation
+  - architecture
+  - staged-pipeline
+  - rule-based
+  - neural
+  - street
+  - venue
 ---
 
 # The tokenization tautology

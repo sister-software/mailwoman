@@ -1,6 +1,12 @@
 ---
 sidebar_position: 23
 title: Why not use geocode.earth?
+tags:
+  - domain
+  - hubris
+  - motivation
+  - en-us
+  - international
 ---
 
 # Why not use geocode.earth?

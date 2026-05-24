@@ -1,11 +1,15 @@
 ---
 sidebar_position: 29
 title: Falsehoods about address format
+tags:
+  - domain
+  - falsehoods
+  - international
+  - multilingual
+  - non-latin
 ---
 
 # Falsehoods programmers believe about address format
-
-_This article is part of the [falsehoods-about-addresses](./falsehoods-about-addresses.md) series, expanding on Michael Tandy's [original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)._
 
 ## The falsehoods
 
@@ -87,8 +91,10 @@ Middlesex, Scunthorpe, Penistone, and many others are real English place names. 
 - **Character encoding recovery.** A parcel label where Cyrillic was mangled by the wrong character encoding (latin1 instead of UTF-8) produces garbage text. A Russian postal worker might reverse the mapping and deliver the parcel. A parser cannot — this is a pre-parsing input-quality problem.
 - **Addresses that have changed since the corpus was built.** The model learns from the training data's address formats. If an administrative region was renamed after the corpus freeze, the model will not recognize the new name — it will classify it based on structural features (position, surrounding tokens) rather than semantic knowledge. This is acceptable because the model's job is structural parsing, not gazetteer lookup.
 
-## See also
+## References
 
+- [Series overview: Falsehoods about addresses](./falsehoods-about-addresses.md)
+- [Michael Tandy's original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
 - [How humans break addresses](./how-humans-break-addresses.md) — the failure taxonomy organized by root cause
 - [What is a postcode?](./what-is-a-postcode.md) — why postcode formats vary by country
 - [The database fallacy](./the-database-fallacy.md) — why addresses change and databases don't keep up

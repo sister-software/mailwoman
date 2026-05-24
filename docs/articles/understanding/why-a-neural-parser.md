@@ -1,6 +1,13 @@
 ---
 sidebar_position: 7
 title: Why a neural parser?
+tags:
+  - domain
+  - motivation
+  - architecture
+  - neural
+  - hybrid
+  - rule-based
 ---
 
 # Why a neural parser?
