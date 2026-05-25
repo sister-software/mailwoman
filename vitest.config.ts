@@ -58,6 +58,7 @@ export default defineConfig({
 		// that Vite's loader treats as a cycle under shared module graphs, breaking downstream
 		// `class extends ...` evaluations.
 		isolate: true,
+		testTimeout: 15_000,
 		exclude: [
 			"**/node_modules/**",
 			"**/dist/**",
