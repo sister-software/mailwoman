@@ -88,13 +88,33 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Pull weight binaries from R2
+        if: ${{ inputs.release_weights }}
+        env:
+          RCLONE_S3_PROVIDER: Cloudflare
+          RCLONE_S3_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          RCLONE_S3_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          RCLONE_S3_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          RCLONE_S3_REGION: auto
+          RCLONE_S3_NO_CHECK_BUCKET: "true"
+        run: | # shell
+          # Install rclone
+          curl -sSL https://rclone.org/install.sh | sudo bash
+          # Pull model + tokenizer from the latest release path on R2
+          RELEASE_PATH="${MAILWOMAN_R2_RELEASE_PATH:-releases/v0.5.1}"
+          rclone copy ":s3:mailwoman-assets/${RELEASE_PATH}/model.onnx" neural-weights-en-us/
+          rclone copy ":s3:mailwoman-assets/${RELEASE_PATH}/tokenizer.model" neural-weights-en-us/
+          # fr-fr uses the same model for now (same training, locale-specific weights are future work)
+          cp neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx
+          cp neural-weights-en-us/tokenizer.model neural-weights-fr-fr/tokenizer.model
+          echo "Weights pulled from R2: $(ls -lh neural-weights-en-us/model.onnx)"
+
       - name: Guard — weights presence vs release_weights input
         if: ${{ inputs.release_weights }}
         run: | # shell
           if [ ! -f "neural-weights-en-us/model.onnx" ] || [ ! -f "neural-weights-fr-fr/model.onnx" ]; then
               echo "::error::release_weights=true but weight binaries are missing from the workspace dirs."
-              echo "::error::Most common next step: re-run this workflow with release_weights=false to publish just the code packages (mailwoman + @mailwoman/{core,classifiers,corpus,neural}). Weights stay at their last-published version."
-              echo "::error::Other options: cut weights releases from local (yarn release pulls them from /mnt/playpen/mailwoman-data/), or upload the binaries via a workflow artifact before this run."
+              echo "::error::R2 pull may have failed. Check R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_ENDPOINT secrets."
               exit 1
           fi
 
