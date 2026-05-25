@@ -2,53 +2,87 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ *   Piscina worker for WOF prepare — reads GeoJSON files, extracts structured
+ *   fields via pluckPlacetypeSpec, and upserts into PlacetypeDataSource (SQLite).
+ *
+ *   Receives a batch of file paths (not one at a time) to reduce IPC overhead.
+ *   Opens PlacetypeDataSource handles lazily per (placetype, languageCode) and
+ *   keeps them warm across the batch.
  */
 
-import { pluckPlacetypeSpec, ResourceMapCache, type WOFFeature } from "@mailwoman/core"
-import { Redis } from "ioredis"
+import { DataSourceCache, pluckPlacetypeSpec, type PlacetypeRecord, type WOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import { readFileSync } from "node:fs"
+import { PathBuilder } from "path-ts"
 
-class FeatureCache extends Redis implements AsyncDisposable {
-	public async [Symbol.asyncDispose]() {
-		await this.quit()
-	}
+const DATA_DIRECTORY = PathBuilder.from(process.env.WOF_DATA_DIR || "/tmp/wof-placetype-dbs")
+
+const cache = new DataSourceCache()
+
+export interface WorkerInput {
+	filePaths: string[]
 }
 
-const resourceIndex = new ResourceMapCache((key: string) => {
-	return new FeatureCache({
-		keyPrefix: key + ":",
-	})
-})
+export interface WorkerOutput {
+	processed: number
+	skipped: number
+}
 
-const WOFCache = resourceIndex.open("wof")
-const PlaceNameCache = resourceIndex.open("placename")
+async function processFiles(input: WorkerInput): Promise<WorkerOutput> {
+	let processed = 0
+	let skipped = 0
 
-async function insertRecord(filePath: string): Promise<void> {
-	const fileContent = readFileSync(filePath, "utf8")
+	for (const filePath of input.filePaths) {
+		const fileContent = readFileSync(filePath, "utf8")
+		const feature: WOFFeature = JSON.parse(fileContent)
 
-	const feature: WOFFeature = JSON.parse(fileContent)
-	const superseded_by = feature.properties["wof:superseded_by"]
-
-	if (superseded_by && superseded_by.length !== 0) {
-		return
-	}
-
-	// TODO: We could probably use the props as written since they're delimited by colons,
-	// just like the keys in the properties object.
-	// So we could just use the keys as the keys in the localizedPropMap.
-	const { localizedPropMap, placetype, ...props } = pluckPlacetypeSpec(feature.properties)
-
-	const placeTypeCache = resourceIndex.open(placetype)
-
-	for (const [languageCode, localizedPropsMap] of localizedPropMap) {
-		for (const [kind, value] of localizedPropsMap) {
-			await Promise.all([
-				WOFCache.sadd(placetype, value),
-				placeTypeCache.sadd(languageCode, value),
-				PlaceNameCache.sadd(value, kind),
-			])
+		const superseded_by = feature.properties["wof:superseded_by"]
+		if (superseded_by && superseded_by.length !== 0) {
+			skipped++
+			continue
 		}
+
+		const { localizedPropMap, placetype, ...props } = pluckPlacetypeSpec(feature.properties)
+
+		for (const [languageCode, nameKindMap] of localizedPropMap) {
+			const ds = cache.open({ placetype, languageCode, dataDirectory: DATA_DIRECTORY })
+
+			const record: PlacetypeRecord = {
+				id: props.id,
+				src: props.src,
+				parent_id: props.parent_id,
+				name: props.name,
+				preferred: nameKindMap.get("preferred") ?? null,
+				variant: nameKindMap.get("variant") ?? null,
+				colloquial: nameKindMap.get("colloquial") ?? null,
+				abbr: nameKindMap.get("abbr") ?? null,
+				short: nameKindMap.get("short") ?? null,
+			}
+
+			await ds.upsert(record)
+		}
+
+		// If no localized names at all, still insert the base record with the canonical name
+		if (localizedPropMap.size === 0) {
+			const ds = cache.open({ placetype, languageCode: "eng", dataDirectory: DATA_DIRECTORY })
+			const record: PlacetypeRecord = {
+				id: props.id,
+				src: props.src,
+				parent_id: props.parent_id,
+				name: props.name,
+				preferred: null,
+				variant: null,
+				colloquial: null,
+				abbr: null,
+				short: null,
+			}
+			await ds.upsert(record)
+		}
+
+		processed++
 	}
+
+	return { processed, skipped }
 }
 
-export default insertRecord
+export default processFiles
