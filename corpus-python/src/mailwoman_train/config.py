@@ -31,6 +31,10 @@ class DataConfig:
     val_rows: int | None = 4096
     # Filter: keep only rows with country + at least one of (region, locality, postcode).
     coarse_filter: bool = True
+    # Training augmentation: expand abbreviations to teach token equivalence.
+    # Probability (0-1) that each augmentation fires per row. 0 = disabled.
+    augment_directional_prob: float = 0.0
+    augment_region_prob: float = 0.0
 
 
 @dataclass
