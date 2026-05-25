@@ -18,6 +18,12 @@ This article is an economic argument, not a technical one. It explains why 90% c
 
 Geocoder accuracy varies sharply by location type:
 
+:::note About the numbers
+
+The accuracy figures below are **illustrative ranges** drawn from industry experience and published geocoder evaluations. They vary by provider, country, and evaluation methodology. The pattern — accuracy drops sharply for rural, multifamily, and informal-addressing populations — is well-documented; the exact percentages are approximate.
+
+:::
+
 | Location type                      | Typical geocoder accuracy | Share of US population |
 | ---------------------------------- | ------------------------- | ---------------------- |
 | Urban single-family                | > 95%                     | ~25%                   |

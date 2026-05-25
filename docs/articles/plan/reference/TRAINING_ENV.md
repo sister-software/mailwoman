@@ -3,6 +3,15 @@ sidebar_position: 15
 title: Training environment — playpen container setup
 ---
 
+# Training environment
+
+:::tip Audience
+
+🧪 **Operator documentation.** For contributors provisioning GPU training environments. If you want to use Mailwoman, see [Getting started](/docs/getting-started).
+
+:::
+---
+
 # Training environment — playpen container setup
 
 How to bring a fresh playpen container to the point where it can train a classifier or run a tokenizer build. Captures the gap that bit v0.5.0 Thread C-train.

@@ -5,6 +5,12 @@ authors: [teffen]
 tags: [resolver, geocoding]
 ---
 
+:::note If you found this via search
+
+**[Mailwoman](https://mailwoman.sister.software)** is an open-source address parser + geocoder that uses Who's On First as its gazetteer. This post is a practical reference on WOF's gotchas and the tooling we built to work around them. [Try the demo](/demo) or see [what ships today](/docs/status).
+
+:::
+
 Who's On First is the best open gazetteer we have. It's also one of the strangest datasets you'll encounter as a developer. This post is about what makes it hard to use, what makes it worth the effort, and the tooling we built inside Mailwoman to tame it.
 
 If you've ever tried to answer "what city is this address in?" programmatically — using open data, without paying a geocoding API — you've probably already run into WOF. And you probably had some questions.

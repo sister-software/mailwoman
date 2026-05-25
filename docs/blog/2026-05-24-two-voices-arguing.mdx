@@ -5,6 +5,14 @@ authors: [teffen]
 tags: [training, beginner]
 ---
 
+:::note If you found this via search
+
+**[Mailwoman](https://mailwoman.sister.software)** is an open-source address parser that runs in Node and the browser. It uses a small neural model to label address components ("350" = house number, "NY" = region, etc.). [Try the live demo.](/demo)
+
+This post is a beginner-friendly debugging story — no ML background needed. If you just want the project status, see [what ships today](/docs/status).
+
+:::
+
 This is the third post in a series about a training problem we've been chasing. The [first two](/blog/v0-5-0-c-train-bisect) [were](/blog/v0-5-0-bisect-by-elimination) written for software engineers. This one is for someone who is just starting to learn about AI and machine learning — no jargon assumed, no math beyond high-school algebra. The point is to show you what real ML debugging looks like, using a problem we actually had this week.
 
 If you've been programming for a while but ML feels opaque, this post is for you. The core technique we used — figuring out which of two instructions our model was listening to — turns out to be much more like ordinary debugging than the field usually makes it sound.
