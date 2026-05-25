@@ -21,6 +21,7 @@ import {
 	scorePostcodeOnly,
 	scoreStructuredAddress,
 	scoreVague,
+	scoreVenueLandmark,
 } from "./rules.js"
 import type { LocaleHint, NormalizedInputLite, QueryKind, QueryKindResult, QueryShapeLike } from "./types.js"
 
@@ -31,7 +32,7 @@ interface KindScorer {
 
 const SCORERS: ReadonlyArray<KindScorer> = [
 	{ kind: "po_box", score: scorePoBox },
-	{ kind: "landmark", score: scoreLandmark },
+	{ kind: "landmark", score: (i, s) => Math.max(scoreLandmark(i, s), scoreVenueLandmark(i, s)) },
 	{ kind: "intersection", score: scoreIntersection },
 	{ kind: "postcode_only", score: scorePostcodeOnly },
 	{ kind: "locality_only", score: scoreLocalityOnly },

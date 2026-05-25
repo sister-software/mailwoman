@@ -273,6 +273,103 @@ describe("classifyKind — landmark", () => {
 	})
 })
 
+describe("classifyKind — landmark (venue/named-place)", () => {
+	it("classifies 'Pier 39' as landmark", () => {
+		const result = classifyKindSync(
+			input("Pier 39"),
+			shape({
+				knownFormats: [],
+				characterClass: "alphanumeric",
+				totalLength: 7,
+				segments: [{ body: "Pier 39", index: 0 }],
+			})
+		)
+		expect(result.kind).toBe("landmark")
+	})
+
+	it("classifies 'Empire State Building' as landmark", () => {
+		const result = classifyKindSync(
+			input("Empire State Building"),
+			shape({
+				knownFormats: [],
+				characterClass: "alpha",
+				totalLength: 21,
+				segments: [{ body: "Empire State Building", index: 0 }],
+			})
+		)
+		expect(result.kind).toBe("landmark")
+	})
+
+	it("classifies 'Wrigley Field' as landmark", () => {
+		const result = classifyKindSync(
+			input("Wrigley Field"),
+			shape({
+				knownFormats: [],
+				characterClass: "alpha",
+				totalLength: 13,
+				segments: [{ body: "Wrigley Field", index: 0 }],
+			})
+		)
+		expect(result.kind).toBe("landmark")
+	})
+
+	it("classifies 'Grand Central Terminal' as landmark", () => {
+		const result = classifyKindSync(
+			input("Grand Central Terminal"),
+			shape({
+				knownFormats: [],
+				characterClass: "alpha",
+				totalLength: 22,
+				segments: [{ body: "Grand Central Terminal", index: 0 }],
+			})
+		)
+		expect(result.kind).toBe("landmark")
+	})
+
+	it("does NOT classify '350 5th Ave' as landmark (starts with number)", () => {
+		const result = classifyKindSync(
+			input("350 5th Ave"),
+			shape({
+				knownFormats: [],
+				characterClass: "alphanumeric",
+				totalLength: 11,
+				segments: [{ body: "350 5th Ave", index: 0 }],
+			})
+		)
+		expect(result.kind).not.toBe("landmark")
+	})
+
+	it("does NOT classify '123 Main St' as landmark (has street suffix)", () => {
+		const result = classifyKindSync(
+			input("123 Main St"),
+			shape({
+				knownFormats: [],
+				characterClass: "alphanumeric",
+				totalLength: 11,
+				segments: [{ body: "123 Main St", index: 0 }],
+			})
+		)
+		expect(result.kind).not.toBe("landmark")
+	})
+
+	it("does NOT classify a multi-segment address as landmark", () => {
+		const result = classifyKindSync(
+			input("Pier 39, San Francisco, CA 94133"),
+			shape({
+				knownFormats: [{ format: "us_zip", span: { start: 27, end: 32 }, confidence: 0.6 }],
+				characterClass: "alphanumeric",
+				totalLength: 32,
+				segments: [
+					{ body: "Pier 39", index: 0 },
+					{ body: "San Francisco", index: 1 },
+					{ body: "CA 94133", index: 2 },
+				],
+			})
+		)
+		expect(result.kind).not.toBe("landmark")
+	})
+})
+
 describe("classifyKind — alternatives + confidence ordering", () => {
 	it("returns alternatives sorted descending by confidence", () => {
 		const result = classifyKindSync(

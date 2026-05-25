@@ -69,6 +69,87 @@ export function scoreLandmark(input: NormalizedInputLite, _shape: QueryShapeLike
 	return 0
 }
 
+/** Street-suffix tokens that indicate an address, not a venue name. */
+const STREET_SUFFIXES = new Set([
+	"st",
+	"street",
+	"ave",
+	"avenue",
+	"blvd",
+	"boulevard",
+	"rd",
+	"road",
+	"dr",
+	"drive",
+	"ln",
+	"lane",
+	"ct",
+	"court",
+	"pl",
+	"place",
+	"way",
+	"pkwy",
+	"parkway",
+	"hwy",
+	"highway",
+	"cir",
+	"circle",
+])
+
+/**
+ * `landmark` rule (venue/named-place variant): short capitalized input with no street suffixes, no
+ * postcode hits, and no region abbreviations. Captures "Pier 39", "Empire State Building", "Wrigley
+ * Field", "Grand Central Terminal".
+ *
+ * Fires at moderate confidence (0.65) — below structured_address (0.9) so addresses always win, but
+ * above vague (0.3) so the pipeline can route landmark queries to the venue resolver.
+ */
+export function scoreVenueLandmark(input: NormalizedInputLite, shape: QueryShapeLike): number {
+	const text = input.normalized.trim()
+	const len = text.length
+	if (len === 0 || len > 50) return 0
+
+	// Must have at least one capitalized word.
+	if (!/[A-Z]/.test(text)) return 0
+
+	// Reject if any known postcode format hit exists.
+	if (shape.knownFormats.length > 0) return 0
+
+	// Reject if it looks like a multi-segment structured address (City, ST ZIP).
+	const segCount = shape.segments?.length ?? 1
+	if (segCount > 2) return 0
+
+	// Reject if any word is a street suffix.
+	const words = text.split(/[\s,]+/)
+	for (const w of words) {
+		if (STREET_SUFFIXES.has(w.toLowerCase())) return 0
+	}
+
+	// Reject if the first token is a pure number (house-number-leading pattern).
+	if (/^\d+\s/.test(text)) return 0
+
+	// Boost if the input has a number NOT at the start (venue-style: "Pier 39", "Terminal 5").
+	const hasInternalNumber = /\s\d+/.test(text) && !/^\d/.test(text)
+
+	// Check if every word starts with uppercase (proper-noun pattern).
+	const allProperCase = words.length > 1 && words.every((w) => /^[A-Z]/.test(w))
+
+	// Boost for short single-segment capitalized phrases (2-4 words).
+	const wordCount = words.length
+	if (wordCount >= 2 && wordCount <= 4 && segCount === 1) {
+		if (hasInternalNumber) return 0.88
+		if (allProperCase) return 0.88
+		return 0.65
+	}
+
+	// Longer single-segment capitalized phrases get moderate confidence.
+	if (wordCount <= 6 && segCount === 1 && allProperCase) {
+		return 0.75
+	}
+
+	return 0
+}
+
 /** Known QueryShape format strings that indicate "this token is a postcode". */
 const POSTCODE_FORMATS: ReadonlySet<string> = new Set([
 	"us_zip",
