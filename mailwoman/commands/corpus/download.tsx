@@ -18,7 +18,7 @@ import { $ } from "zx"
 import zod from "zod"
 import type { CommandComponent } from "../../sdk/cli.js"
 
-const DEFAULT_BUCKET = "mailwoman-corpus"
+const DEFAULT_BUCKET = "mailwoman-assets"
 
 const OptionsSchema = zod.object({
 	bucket: zod.string().optional().default(DEFAULT_BUCKET).describe("R2 bucket name"),
