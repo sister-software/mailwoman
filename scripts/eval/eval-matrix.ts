@@ -279,16 +279,29 @@ function createRuleOnlyRunner(): ModeRunner {
 	}
 }
 
-async function createNeuralArgmaxRunner(): Promise<ModeRunner> {
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+interface WeightsOpts {
+	modelPath?: string
+	tokenizerPath?: string
+}
+
+async function loadClassifier(opts: WeightsOpts): Promise<NeuralAddressClassifier> {
+	return NeuralAddressClassifier.loadFromWeights({
+		locale: "en-US",
+		...(opts.modelPath ? { modelPath: opts.modelPath } : {}),
+		...(opts.tokenizerPath ? { tokenizerPath: opts.tokenizerPath } : {}),
+	})
+}
+
+async function createNeuralArgmaxRunner(opts: WeightsOpts): Promise<ModeRunner> {
+	const classifier = await loadClassifier(opts)
 	return async (row) => {
 		const tree = await classifier.parse(row.raw)
 		return { components: treeToComponents(tree), confidence: averageConfidence(tree) }
 	}
 }
 
-async function createHybridRunner(): Promise<ModeRunner> {
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+async function createHybridRunner(opts: WeightsOpts): Promise<ModeRunner> {
+	const classifier = await loadClassifier(opts)
 	const pipeline = createRuntimePipeline({ classifier })
 	return async (row) => {
 		const result = await pipeline(row.raw)
@@ -296,8 +309,8 @@ async function createHybridRunner(): Promise<ModeRunner> {
 	}
 }
 
-async function createHybridJointRunner(): Promise<ModeRunner> {
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+async function createHybridJointRunner(opts: WeightsOpts): Promise<ModeRunner> {
+	const classifier = await loadClassifier(opts)
 	const pipeline = createRuntimePipeline({ classifier })
 	return async (row) => {
 		const result = await pipeline(row.raw, { forceJointReconcile: true })
@@ -375,9 +388,15 @@ function formatMarkdown(reports: ModeReport[]): string {
 async function main() {
 	const goldenDir = process.argv.find((a) => a.startsWith("--golden-dir="))?.split("=")[1]
 		?? resolve("data/eval/golden/v0.1.2")
+	const modelPath = process.argv.find((a) => a.startsWith("--model-path="))?.split("=")[1]
+	const tokenizerPath = process.argv.find((a) => a.startsWith("--tokenizer-path="))?.split("=")[1]
+
+	const weightsOpts: WeightsOpts = { modelPath, tokenizerPath }
 
 	const rows = loadGolden(goldenDir)
 	console.error(`loaded ${rows.length} golden rows`)
+	if (modelPath) console.error(`using custom model: ${modelPath}`)
+	if (tokenizerPath) console.error(`using custom tokenizer: ${tokenizerPath}`)
 
 	// Build runners
 	console.error("building runners...")
@@ -387,13 +406,13 @@ async function main() {
 	runners.push({ mode: "rule-only", run: createRuleOnlyRunner() })
 
 	console.error("  neural-argmax...")
-	runners.push({ mode: "neural-argmax", run: await createNeuralArgmaxRunner() })
+	runners.push({ mode: "neural-argmax", run: await createNeuralArgmaxRunner(weightsOpts) })
 
 	console.error("  hybrid...")
-	runners.push({ mode: "hybrid", run: await createHybridRunner() })
+	runners.push({ mode: "hybrid", run: await createHybridRunner(weightsOpts) })
 
 	console.error("  hybrid-joint...")
-	runners.push({ mode: "hybrid-joint", run: await createHybridJointRunner() })
+	runners.push({ mode: "hybrid-joint", run: await createHybridJointRunner(weightsOpts) })
 
 	const reports: ModeReport[] = []
 
