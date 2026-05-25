@@ -26,6 +26,8 @@ Every review — from three different models across two dates — converges on t
 
 These are docs-only changes that reduce status confusion immediately. They unlock every subsequent phase by ensuring contributors and reviewers share a single picture of what's shipped.
 
+**Owner: human (docs track). Issues filed separately as needed.**
+
 #### A1. Create `/docs/status`
 
 **Single page. Sidebar position: first after "Start here."** Contents:
@@ -120,6 +122,8 @@ In `the-90-percent-trap.md`, the geocoder accuracy table by housing type, and an
 
 ### Phase B — Architecture validation (this week, zero GPU, ~200 lines of TypeScript)
 
+**[→ #153](https://github.com/sister-software/mailwoman/issues/153)** — Wire joint-reconcile end-to-end with real model output
+
 This closes the integration gap. It proves (or disproves) the architectural thesis independently of training stability.
 
 #### B1. Expose per-token logits in the TypeScript runtime
@@ -166,6 +170,8 @@ Decision matrix (from the Claude×DeepSeek follow-up):
 
 ### Phase C — Training resolution (this week, gated on CE-only full run)
 
+**[→ #154](https://github.com/sister-software/mailwoman/issues/154)** — CE-only training: validate stability, ship v0.5.0 weights or bisect
+
 #### C1. If CE-only full 50K run converges
 
 - **Ship v0.5.0 weights** with explicit caveats in the model card
@@ -192,6 +198,8 @@ Before any future training run that includes LLM-generated data:
 ---
 
 ### Phase D — Product-level evals (next 1-2 weeks)
+
+**[→ #155](https://github.com/sister-software/mailwoman/issues/155)** — Product-level eval matrix: comparison script as release gate
 
 #### D1. Build eval matrix script
 
