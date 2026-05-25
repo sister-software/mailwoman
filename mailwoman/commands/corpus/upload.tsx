@@ -13,8 +13,8 @@
 
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
-import { $ } from "zx"
 import zod from "zod"
+import { $ } from "zx"
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const DEFAULT_BUCKET = "mailwoman-assets"

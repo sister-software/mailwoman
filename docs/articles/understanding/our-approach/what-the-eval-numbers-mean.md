@@ -11,18 +11,18 @@ Mailwoman evaluates itself by running against a set of 4,535 hand-labelled addre
 
 Mailwoman can parse addresses in four different ways. Each one uses a different combination of tools:
 
-| Mode | What it uses | Analogy |
-|---|---|---|
-| **Rule-only** | Hand-written rules, pattern matching, dictionaries | A postmaster who memorises the rulebook |
-| **Neural** | The AI model's best guess, decoded with structural constraints | A student who writes their first instinct, checked for grammar |
-| **Hybrid** | Rules + AI model working together | The postmaster and the student collaborating |
+| Mode             | What it uses                                                    | Analogy                                                                              |
+| ---------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **Rule-only**    | Hand-written rules, pattern matching, dictionaries              | A postmaster who memorises the rulebook                                              |
+| **Neural**       | The AI model's best guess, decoded with structural constraints  | A student who writes their first instinct, checked for grammar                       |
+| **Hybrid**       | Rules + AI model working together                               | The postmaster and the student collaborating                                         |
 | **Hybrid-joint** | Rules + AI + a "sanity checker" that rejects incoherent guesses | The collaboration, plus an editor who crosses out answers that contradict each other |
 
 These are simplifications of the same [staged pipeline](./the-staged-pipeline.md) — each "mode" is a different composition of the same underlying stages, not four separate parsers.
 
 ## The metrics
 
-**Exact match** — did the parser get *every single component* of the address right? House number, street, city, region, postcode — all must match the human-labelled answer exactly. This is harsh. Getting 4 out of 5 components right scores zero.
+**Exact match** — did the parser get _every single component_ of the address right? House number, street, city, region, postcode — all must match the human-labelled answer exactly. This is harsh. Getting 4 out of 5 components right scores zero.
 
 **Macro F1** — a softer measure that balances two questions per component type: did you find it when it was there? (recall) and did you make it up when it wasn't? (precision). The score averages the balance across all component types. A parser that's great at postcodes but bad at venues gets partial credit.
 
@@ -32,12 +32,12 @@ These are simplifications of the same [staged pipeline](./the-staged-pipeline.md
 
 ## The v0.5.0 results
 
-| Mode | Exact Match | Macro F1 | Empty Parse | Overconf Wrong |
-|---|---|---|---|---|
-| Rule-only | **30.8%** | 22.0% | 6.3% | 2.4% |
-| Neural | 0.1% | 7.3% | 0.3% | **54.5%** |
-| Hybrid | 0.1% | 7.3% | 0.3% | 54.5% |
-| Hybrid-joint | 6.0% | 16.6% | **0.0%** | **0.1%** |
+| Mode         | Exact Match | Macro F1 | Empty Parse | Overconf Wrong |
+| ------------ | ----------- | -------- | ----------- | -------------- |
+| Rule-only    | **30.8%**   | 22.0%    | 6.3%        | 2.4%           |
+| Neural       | 0.1%        | 7.3%     | 0.3%        | **54.5%**      |
+| Hybrid       | 0.1%        | 7.3%     | 0.3%        | 54.5%          |
+| Hybrid-joint | 6.0%        | 16.6%    | **0.0%**    | **0.1%**       |
 
 ## What this tells us
 
@@ -61,13 +61,14 @@ In hybrid mode, the neural model's overconfidence drowns out the rules entirely 
 
 Hybrid-joint mode (the reconciler) drops overconfident-wrong from 54.5% to 0.1%. How? By checking whether the parsed components form a consistent real-world hierarchy. "Is there actually a city called Houston in a state called NY?" If not, the parse is rejected or rewritten.
 
-The reconciler also eliminates empty parses entirely (0.0%) — it always produces *something*, even if conservative.
+The reconciler also eliminates empty parses entirely (0.0%) — it always produces _something_, even if conservative.
 
 The trade-off: exact match drops from 30.8% (rule-only) to 6.0% (hybrid-joint). The reconciler is more honest but less precise on well-formed addresses. This is a calibration-vs-accuracy trade-off that the next iteration will address by re-adding class weights to the training recipe.
 
 ### The architecture is working, the quality isn't there yet
 
 The staged pipeline — rules for structure, neural for ambiguity, reconciler for honesty — is producing the behaviour it was designed for. Each layer adds value:
+
 - Rules contribute high precision on common patterns.
 - Neural contributes coverage on unusual inputs (0% empty parse vs rules' 6.3%).
 - Reconciler contributes honesty (0.1% overconfident-wrong vs 54.5%).

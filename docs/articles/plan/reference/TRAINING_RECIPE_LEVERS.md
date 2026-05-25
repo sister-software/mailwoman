@@ -15,11 +15,11 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What it does.** The width of every hidden representation in the transformer encoder. Every token is a vector of this many numbers. Wider = more capacity to represent distinctions between address components.
 
-| Value | Where we used it | What happened |
-|---|---|---|
-| 256 | v0.3.0, v0.4.0, v0.5.0 | Stable. val_macro_f1=0.605 at 50K. The baseline. |
-| 384 | v0.5.0 bisect (h384 + dual-loss) | Diverged at step 700-1050 in all attempts. |
-| 384 | v0.5.1 (h384 + CE-only) | Stable. val_macro_f1=0.633 at 55K. Peak before overfitting. |
+| Value | Where we used it                 | What happened                                               |
+| ----- | -------------------------------- | ----------------------------------------------------------- |
+| 256   | v0.3.0, v0.4.0, v0.5.0           | Stable. val_macro_f1=0.605 at 50K. The baseline.            |
+| 384   | v0.5.0 bisect (h384 + dual-loss) | Diverged at step 700-1050 in all attempts.                  |
+| 384   | v0.5.1 (h384 + CE-only)          | Stable. val_macro_f1=0.633 at 55K. Peak before overfitting. |
 
 **How we got to 384.** The operator chose it as the v0.5.0 target. The plan doc described 256→384 as "paid for by rented GPU." The h384 bisect during the divergence campaign appeared to show h384 was a destabilizer — but it was actually the dual-loss interaction that was unstable at every size. Once CE-only fixed the training, h384 worked on the first try.
 
@@ -32,9 +32,9 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 **What it does.** How many independent "perspectives" each transformer layer uses when deciding which tokens attend to which. Convention: head_dim = hidden_size / num_heads = 64.
 
 | hidden_size | num_heads | head_dim |
-|---|---|---|
-| 256 | 4 | 64 |
-| 384 | 6 | 64 |
+| ----------- | --------- | -------- |
+| 256         | 4         | 64       |
+| 384         | 6         | 64       |
 
 **How we got here.** Following the standard 64-dim-per-head convention from BERT. No experimentation on head count — it's always derived from hidden_size.
 
@@ -50,10 +50,10 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What it does.** When enabled, the encoder concatenates a per-token feature vector from the phrase grouper (Stage 2.7) onto the token embeddings before the first transformer layer. The feature encodes "is this token at the start/middle/end of a proposed phrase?" and "what kind of phrase does the grouper think this is?" (numeric, street, locality, etc.).
 
-| Value | Where | What happened |
-|---|---|---|
+| Value | Where                              | What happened                                  |
+| ----- | ---------------------------------- | ---------------------------------------------- |
 | false | v0.5.0, v0.5.0 bisect (phrase-off) | Diverged (dual-loss issue, not phrase-priors). |
-| true | v0.5.1 (h384 + CE-only) | Stable. val_macro_f1=0.633 at 55K. |
+| true  | v0.5.1 (h384 + CE-only)            | Stable. val_macro_f1=0.633 at 55K.             |
 
 **How we got here.** Phrase priors were the headline architectural contribution of v0.5.0 Thread E (phrase grouper) + Thread C (classifier conditioning). They were turned off during the bisect campaign because we couldn't afford to test each variable on slow hardware. The v0.5.1 "unchained" run turned them back on. They're stable under CE-only.
 
@@ -67,11 +67,11 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What it does.** Multiplier on the CRF NLL term in the dual-loss: `loss = CE + crf_loss_weight × CRF_NLL`. At 0.0, the CRF NLL is not computed during training (CE-only). The CRF at inference (structural BIO mask + Viterbi decode) is always active regardless.
 
-| Value | Where | What happened |
-|---|---|---|
-| 1.0 | v0.5.0 threads v1-v2 (§1 ON) | Diverged step 700-1000. |
-| 0.05 | v0.3.0, v0.4.0, v0.5.0 threads v3 + bisects | v0.3.0/v0.4.0: stable. v0.5.0: diverged. |
-| **0.0** | v0.5.0 CE-only, v0.5.1 | Stable. Best results. |
+| Value   | Where                                       | What happened                            |
+| ------- | ------------------------------------------- | ---------------------------------------- |
+| 1.0     | v0.5.0 threads v1-v2 (§1 ON)                | Diverged step 700-1000.                  |
+| 0.05    | v0.3.0, v0.4.0, v0.5.0 threads v3 + bisects | v0.3.0/v0.4.0: stable. v0.5.0: diverged. |
+| **0.0** | v0.5.0 CE-only, v0.5.1                      | Stable. Best results.                    |
 
 **How we got to 0.0.** The gradient-norm ratio probe (2026-05-24) revealed CRF gradient dominates CE by 8-20× at the divergence inflection point. Even at weight=0.05, the effective optimization mix was ~1:0.8 CE:CRF. Below loss 0.41, CE and CRF develop opposing curvature — the CRF pulls the model off its CE-preferred basin. See [dual-loss curvature conflict](../../concepts/dual-loss-curvature-conflict.md).
 
@@ -83,16 +83,16 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What it does.** Per-tag multiplier on the cross-entropy loss. Tags with weight > 1.0 cost more when mislabeled; tags with weight < 1.0 cost less. Used to steer the model's attention toward underperforming or hallucination-prone tags.
 
-| Tag | v0.5.0 weight | v0.5.1 weight | Rationale |
-|---|---|---|---|
-| O | 1.0 | 0.5 | O is the majority class (~60% of tokens). Downweight to give real tags more gradient signal. |
-| B/I-street | 0.5 | 2.0 | v0.5.0 had street F1=0.1% on golden. Upweight to force the model to learn streets. |
-| B/I-locality | 1.5 | 2.0 | Coarse label regression from v0.3.0. Upweight. |
-| B/I-country | 2.0 | 2.0 | Carried from v0.4.0. |
-| B/I-dependent_locality | 1.5 | **0.3** | 956 FPs in v0.5.0 eval. Model hallucinates this tag. Downweight to make hallucination cheap → model stops emitting it. |
-| B/I-subregion | 1.5 | **0.3** | 272 FPs with 0 TPs. Same hallucination pattern. |
-| B/I-venue | 0.5 | 1.5 | Underperforming. Upweight. |
-| B/I-house_number | 0.5 | 1.5 | Underperforming on golden. Upweight. |
+| Tag                    | v0.5.0 weight | v0.5.1 weight | Rationale                                                                                                              |
+| ---------------------- | ------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| O                      | 1.0           | 0.5           | O is the majority class (~60% of tokens). Downweight to give real tags more gradient signal.                           |
+| B/I-street             | 0.5           | 2.0           | v0.5.0 had street F1=0.1% on golden. Upweight to force the model to learn streets.                                     |
+| B/I-locality           | 1.5           | 2.0           | Coarse label regression from v0.3.0. Upweight.                                                                         |
+| B/I-country            | 2.0           | 2.0           | Carried from v0.4.0.                                                                                                   |
+| B/I-dependent_locality | 1.5           | **0.3**       | 956 FPs in v0.5.0 eval. Model hallucinates this tag. Downweight to make hallucination cheap → model stops emitting it. |
+| B/I-subregion          | 1.5           | **0.3**       | 272 FPs with 0 TPs. Same hallucination pattern.                                                                        |
+| B/I-venue              | 0.5           | 1.5           | Underperforming. Upweight.                                                                                             |
+| B/I-house_number       | 0.5           | 1.5           | Underperforming on golden. Upweight.                                                                                   |
 
 **How we got here.** The v0.5.0 eval matrix showed the 956 dependent_locality FPs and 272 subregion FPs as the most concrete failure. Setting their weight to 0.3 makes mislabeling a token as dependent_locality cheap — the model has no incentive to emit it. Meanwhile upweighting street, locality, venue, and house_number pulls the model's attention toward the tags that matter for exact-match accuracy.
 
@@ -114,12 +114,12 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What it does.** How large a step the optimizer takes per gradient update. Too high = overshoots optima (divergence). Too low = converges too slowly or gets stuck.
 
-| Value | Where | What happened |
-|---|---|---|
-| 5e-4 | v0.4.0 runs 1-2 | Diverged step 750-1000. |
-| 3e-4 | v0.4.0 run 3 | Diverged step 1000. |
+| Value  | Where                              | What happened                    |
+| ------ | ---------------------------------- | -------------------------------- |
+| 5e-4   | v0.4.0 runs 1-2                    | Diverged step 750-1000.          |
+| 3e-4   | v0.4.0 run 3                       | Diverged step 1000.              |
 | 1.5e-4 | v0.3.0, v0.4.0 §4-only, all v0.5.x | Stable everywhere under CE-only. |
-| 1e-4 | v0.5.0 LR-drop attempt | Diverged (dual-loss, not LR). |
+| 1e-4   | v0.5.0 LR-drop attempt             | Diverged (dual-loss, not LR).    |
 
 **How we got to 1.5e-4.** v0.3.0 empirically found it as the stable LR for this architecture + corpus. v0.4.0 tried higher (5e-4, 3e-4) but the bisect showed divergence was recipe-driven, not LR-driven. 1.5e-4 has been the constant since.
 
@@ -129,12 +129,12 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What it does.** How many examples the optimizer sees before updating weights. Larger = smoother gradients (less noise), but each step covers more wall-clock time.
 
-| Effective batch | How | Where | What happened |
-|---|---|---|---|
-| 128 | batch=32 × ga=4 | v0.3.0, v0.4.0 (local iGPU, h256) | Stable. |
-| 128 | batch=16 × ga=8 | v0.5.0 (local iGPU, h256) | Stable. |
-| 8 | batch=8 × ga=1 | v0.5.0 smoke tests | **Falsely passed** — eff_batch=8 hides the curvature conflict. |
-| **128** | **batch=128 × ga=1** | **v0.5.1 (A100, h384)** | **Stable. 15-30× faster per step.** |
+| Effective batch | How                  | Where                             | What happened                                                  |
+| --------------- | -------------------- | --------------------------------- | -------------------------------------------------------------- |
+| 128             | batch=32 × ga=4      | v0.3.0, v0.4.0 (local iGPU, h256) | Stable.                                                        |
+| 128             | batch=16 × ga=8      | v0.5.0 (local iGPU, h256)         | Stable.                                                        |
+| 8               | batch=8 × ga=1       | v0.5.0 smoke tests                | **Falsely passed** — eff_batch=8 hides the curvature conflict. |
+| **128**         | **batch=128 × ga=1** | **v0.5.1 (A100, h384)**           | **Stable. 15-30× faster per step.**                            |
 
 **How we got to batch=128 direct.** The A100 has 40 GB VRAM; the h384 model uses ~4 GB. No need for gradient accumulation. Direct batch=128 gives cleaner gradients (no micro-batch noise) and much higher throughput (120 sps vs 6.9 sps).
 
@@ -144,10 +144,10 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What it does.** Number of steps over which the learning rate ramps linearly from 0 to its target. Prevents large gradient updates on a randomly initialized model.
 
-| Value | Where | Notes |
-|---|---|---|
-| 500 | v0.5.0 (50K total) | 1% of training. |
-| 1000 | v0.5.1 (100K total) | 1% of training. Proportional scaling. |
+| Value | Where               | Notes                                 |
+| ----- | ------------------- | ------------------------------------- |
+| 500   | v0.5.0 (50K total)  | 1% of training.                       |
+| 1000  | v0.5.1 (100K total) | 1% of training. Proportional scaling. |
 
 **How we got here.** Convention: 1% of total steps. No experimentation. Shorter warmup risks early instability; longer warmup wastes steps at low LR that could be learning.
 
@@ -155,9 +155,9 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **What it does.** How the learning rate changes after warmup. Cosine decays to near-zero; constant stays at peak.
 
-| Value | Where | What happened |
-|---|---|---|
-| cosine | v0.3.0, v0.4.0 | Standard. But masked divergence in v0.4.0 smokes. |
+| Value        | Where          | What happened                                                 |
+| ------------ | -------------- | ------------------------------------------------------------- |
+| cosine       | v0.3.0, v0.4.0 | Standard. But masked divergence in v0.4.0 smokes.             |
 | **constant** | v0.5.0, v0.5.1 | Used per VERDICT_SMOKES.md mode A — new recipe = constant LR. |
 
 **How we got to constant.** v0.4.0's cosine-LR smoke passed a recipe that diverged in the full run. Constant LR keeps the model at sustained peak LR for the entire training window — divergence surfaces immediately if the recipe is unstable. See [VERDICT_SMOKES.md](./VERDICT_SMOKES.md).
@@ -172,14 +172,14 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 Current values are carried from v0.4.0's §4 source rebalance (the only recipe lever that shipped clean in v0.4.0):
 
-| Source | Weight | Why |
-|---|---|---|
-| tiger | 4.0 | TIGER carries structured US address patterns. Highest weight to compensate for its small raw shard count. |
-| ban | 3.0 | French address patterns. Second-highest weight. |
-| wof-admin | 2.0 | WOF admin names (locality, region, country). |
-| wof-postalcode | 2.0 | Postcode patterns. |
-| usgov-nad | 1.0 | NAD was previously at 2.0 but dominated the sample (52% of shards). v0.4.0 dropped it to 1.0 to recover postcode positional exposure from other sources. |
-| state-* | 1.5-2.0 | State-level government sources (Iowa contractors, Texas/NY notaries). |
+| Source         | Weight  | Why                                                                                                                                                      |
+| -------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| tiger          | 4.0     | TIGER carries structured US address patterns. Highest weight to compensate for its small raw shard count.                                                |
+| ban            | 3.0     | French address patterns. Second-highest weight.                                                                                                          |
+| wof-admin      | 2.0     | WOF admin names (locality, region, country).                                                                                                             |
+| wof-postalcode | 2.0     | Postcode patterns.                                                                                                                                       |
+| usgov-nad      | 1.0     | NAD was previously at 2.0 but dominated the sample (52% of shards). v0.4.0 dropped it to 1.0 to recover postcode positional exposure from other sources. |
+| state-\*       | 1.5-2.0 | State-level government sources (Iowa contractors, Texas/NY notaries).                                                                                    |
 
 **How we got here.** v0.4.0's postcode regression (F1 0.76 → 0.69) was traced to NAD's downweight removing "postcode comes first" positional patterns. The current weights are a compromise. Not re-validated since v0.4.0 — the corpus-v0.4.0 additions (kryptonite + transliteration) may shift the optimal mix.
 

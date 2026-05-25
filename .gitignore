@@ -93,3 +93,4 @@ data/eval/golden/candidates/
 .env.*
 
 corpus-python/.pytest_cache/
+output/

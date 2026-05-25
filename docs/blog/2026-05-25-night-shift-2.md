@@ -7,7 +7,7 @@ tags: [training, infrastructure, modal, night-shift]
 
 The second night shift ran from roughly 2am to 2pm UTC on May 25th, 2026. It started with a GPU that wouldn't stop crashing and ended with a trained model, an ONNX export, and a full evaluation report. This is the story of how infrastructure choices turned a hardware problem into a non-issue.
 
-{/* truncate */}
+{/_ truncate _/}
 
 ## The hardware wall
 
@@ -48,12 +48,12 @@ For context: v0.4.0 shipped at macro_f1 = 0.36. This is a 68% relative improveme
 
 After the model shipped, we ran the full product-level evaluation — four pipeline modes compared on 4,535 hand-curated golden addresses:
 
-| Mode | Exact Match | Macro F1 | Empty Parse | Overconf Wrong |
-|---|---|---|---|---|
-| Rule-only | **30.8%** | 22.0% | 6.3% | 2.4% |
-| Neural | 0.1% | 7.3% | 0.3% | **54.5%** |
-| Hybrid | 0.1% | 7.3% | 0.3% | 54.5% |
-| Hybrid-joint (reconciler) | 6.0% | 16.6% | **0.0%** | **0.1%** |
+| Mode                      | Exact Match | Macro F1 | Empty Parse | Overconf Wrong |
+| ------------------------- | ----------- | -------- | ----------- | -------------- |
+| Rule-only                 | **30.8%**   | 22.0%    | 6.3%        | 2.4%           |
+| Neural                    | 0.1%        | 7.3%     | 0.3%        | **54.5%**      |
+| Hybrid                    | 0.1%        | 7.3%     | 0.3%        | 54.5%          |
+| Hybrid-joint (reconciler) | 6.0%        | 16.6%    | **0.0%**    | **0.1%**       |
 
 A few things jump out:
 

@@ -6,23 +6,27 @@
  *   `mailwoman corpus download` — pull corpus + tokenizer from Cloudflare R2 via rclone.
  *
  *   Intended for GPU provider instances: pulls the versioned corpus, tokenizer, and training code
- *   from R2 at datacenter speed (~1-10 Gbps depending on provider locality). Also works locally
- *   for syncing a fresh checkout.
+ *   from R2 at datacenter speed (~1-10 Gbps depending on provider locality). Also works locally for
+ *   syncing a fresh checkout.
  *
  *   Requires RCLONE_S3_* env vars (Cloudflare R2 credentials).
  */
 
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
-import { $ } from "zx"
 import zod from "zod"
+import { $ } from "zx"
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
 
 const OptionsSchema = zod.object({
 	bucket: zod.string().optional().default(DEFAULT_BUCKET).describe("R2 bucket name"),
-	outDir: zod.string().optional().default("/data").describe("Local output root (corpus lands at <outDir>/corpus/, tokenizer at <outDir>/models/tokenizer/)"),
+	outDir: zod
+		.string()
+		.optional()
+		.default("/data")
+		.describe("Local output root (corpus lands at <outDir>/corpus/, tokenizer at <outDir>/models/tokenizer/)"),
 	dryRun: zod.boolean().optional().default(false).describe("Show what would be downloaded without downloading"),
 })
 

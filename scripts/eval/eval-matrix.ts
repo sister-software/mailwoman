@@ -5,18 +5,20 @@
  *
  *   Product-level eval matrix — comparison script as release gate.
  *
- *   Runs multiple pipeline modes against golden v0.1.2 + kryptonite catalogue and emits a
- *   structured report (JSON + human-readable Markdown table). Designed to be the release gate
- *   for all future weights: every `@mailwoman/neural-weights-*` publish must produce a dated
- *   matrix report under `docs/articles/evals/`.
+ *   Runs multiple pipeline modes against golden v0.1.2 + kryptonite catalogue and emits a structured
+ *   report (JSON + human-readable Markdown table). Designed to be the release gate for all future
+ *   weights: every `@mailwoman/neural-weights-*` publish must produce a dated matrix report under
+ *   `docs/articles/evals/`.
  *
  *   Modes compared:
- *   - rule-only       (legacy v1 parser, no neural classifier)
- *   - neural        (neural classifier, Viterbi with structural BIO mask, no rules)
- *   - hybrid          (current default — rule + neural per policy registry)
- *   - hybrid-joint    (hybrid + forceJointReconcile flag with real top-K)
+ *
+ *   - Rule-only (legacy v1 parser, no neural classifier)
+ *   - Neural (neural classifier, Viterbi with structural BIO mask, no rules)
+ *   - Hybrid (current default — rule + neural per policy registry)
+ *   - Hybrid-joint (hybrid + forceJointReconcile flag with real top-K)
  *
  *   Metrics per mode:
+ *
  *   - Per-component P/R/F1
  *   - Full-parse exact match
  *   - Parse-level calibration (4 confidence buckets)
@@ -24,16 +26,15 @@
  *   - Overconfident-wrong rate (conf > 0.9 but parse wrong)
  *   - Per-failure-class breakdown (from golden notes tags)
  *
- *   Usage:
- *     npx tsx scripts/eval/eval-matrix.ts [--golden-dir data/eval/golden/v0.1.2]
+ *   Usage: npx tsx scripts/eval/eval-matrix.ts [--golden-dir data/eval/golden/v0.1.2]
  *
  *   Outputs JSON report to stdout, human-readable summary to stderr.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createAddressParser, createRuntimePipeline } from "mailwoman"
+import { readFileSync, writeFileSync } from "node:fs"
+import { resolve } from "node:path"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -155,7 +156,12 @@ function averageConfidence(tree: { roots: Array<{ confidence?: number }> }): num
 
 function computeMetrics(
 	mode: string,
-	results: Array<{ predicted: Record<string, string>; expected: Record<string, string>; confidence: number; failureClasses: string[] }>
+	results: Array<{
+		predicted: Record<string, string>
+		expected: Record<string, string>
+		confidence: number
+		failureClasses: string[]
+	}>
 ): ModeReport {
 	const totalRows = results.length
 
@@ -181,7 +187,13 @@ function computeMetrics(
 	for (const r of results) {
 		const isCorrect = exactMatch(r.predicted, r.expected)
 		const bucket =
-			r.confidence > 0.9 ? "conf>0.9" : r.confidence > 0.7 ? "conf:0.7-0.9" : r.confidence > 0.5 ? "conf:0.5-0.7" : "conf<0.5"
+			r.confidence > 0.9
+				? "conf>0.9"
+				: r.confidence > 0.7
+					? "conf:0.7-0.9"
+					: r.confidence > 0.5
+						? "conf:0.5-0.7"
+						: "conf<0.5"
 		buckets[bucket]!.total++
 		if (isCorrect) buckets[bucket]!.correct++
 
@@ -205,7 +217,9 @@ function computeMetrics(
 	let tagCount = 0
 
 	for (const tag of allTags) {
-		let tp = 0, fp = 0, fn = 0
+		let tp = 0,
+			fp = 0,
+			fn = 0
 		for (const r of results) {
 			const pred = normalizeComponent(r.predicted[tag])
 			const gold = normalizeComponent(r.expected[tag])
@@ -386,8 +400,8 @@ function formatMarkdown(reports: ModeReport[]): string {
 // ---------------------------------------------------------------------------
 
 async function main() {
-	const goldenDir = process.argv.find((a) => a.startsWith("--golden-dir="))?.split("=")[1]
-		?? resolve("data/eval/golden/v0.1.2")
+	const goldenDir =
+		process.argv.find((a) => a.startsWith("--golden-dir="))?.split("=")[1] ?? resolve("data/eval/golden/v0.1.2")
 	const modelPath = process.argv.find((a) => a.startsWith("--model-path="))?.split("=")[1]
 	const tokenizerPath = process.argv.find((a) => a.startsWith("--tokenizer-path="))?.split("=")[1]
 
@@ -418,7 +432,12 @@ async function main() {
 
 	for (const { mode, run } of runners) {
 		console.error(`\nrunning ${mode}...`)
-		const results: Array<{ predicted: Record<string, string>; expected: Record<string, string>; confidence: number; failureClasses: string[] }> = []
+		const results: Array<{
+			predicted: Record<string, string>
+			expected: Record<string, string>
+			confidence: number
+			failureClasses: string[]
+		}> = []
 		let processed = 0
 
 		for (const row of rows) {
@@ -446,7 +465,9 @@ async function main() {
 		const report = computeMetrics(mode, results)
 		reports.push(report)
 
-		console.error(`  ${mode}: exact_match=${(report.exactMatchRate * 100).toFixed(1)}% macro_f1=${(report.macroF1 * 100).toFixed(1)}% empty=${(report.emptyParseRate * 100).toFixed(1)}%`)
+		console.error(
+			`  ${mode}: exact_match=${(report.exactMatchRate * 100).toFixed(1)}% macro_f1=${(report.macroF1 * 100).toFixed(1)}% empty=${(report.emptyParseRate * 100).toFixed(1)}%`
+		)
 	}
 
 	// Markdown report to stderr
