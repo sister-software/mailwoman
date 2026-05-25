@@ -5,7 +5,6 @@
  */
 
 import { ProgressBar } from "@inkjs/ui"
-import { takeInParallel } from "@mailwoman/core"
 import { formatMinutes, formatQuantity, takeAsync, tallyPatternCount } from "@mailwoman/core/resources"
 import FastGlob from "fast-glob"
 import { Box, Text } from "ink"
@@ -13,21 +12,21 @@ import { availableParallelism } from "node:os"
 import { setImmediate } from "node:timers/promises"
 import { PathBuilder } from "path-ts"
 import { Piscina } from "piscina"
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import zod from "zod"
 import type { PositionalCommandComponent } from "../../../sdk/cli.js"
+import type { WorkerInput, WorkerOutput } from "./_app_worker.mjs"
 
-type PluckDefaultExport<T> = T extends { default: infer U } ? U : never
-type InferPiscina<T> = T extends (...args: never) => unknown ? Piscina<Parameters<T>[0], ReturnType<T>> : never
-
-type PiscinaRunner<T> = InferPiscina<PluckDefaultExport<T>>
-
-const piscina: PiscinaRunner<typeof import("./_app_worker.mjs")> = new Piscina({
+const piscina = new Piscina<WorkerInput, WorkerOutput>({
 	filename: PathBuilder.from(import.meta.dirname, "_app_worker.mjs").href,
 	idleTimeout: 1000 * 10,
+	env: {
+		WOF_DATA_DIR: process.env.WOF_DATA_DIR || "/tmp/wof-placetype-dbs",
+	},
 })
 
-const BATCH_SIZE = availableParallelism()
+const WORKER_COUNT = availableParallelism()
+const FILES_PER_BATCH = 500
 
 const ArgumentsSchema = zod.array(zod.string().describe("Path to the Who's On First data directory"))
 export { ArgumentsSchema as args }
@@ -38,7 +37,7 @@ const WOFPrepare: PositionalCommandComponent<typeof ArgumentsSchema> = ({ args: 
 	const [throughput, setThroughput] = useState(0)
 	const [recordCount, setRecordCount] = useState(-1)
 	const percentage = recordCount === -1 ? 0 : (insertionCount / recordCount) * 100
-	// eslint-disable-next-line react-hooks/purity -- progress UI re-derives elapsed each render; refactor to interval-timer state pending
+	// eslint-disable-next-line react-hooks/purity -- progress UI re-derives elapsed each render
 	const elapsed = performance.now() - startTime
 
 	const eta = Number.isFinite(throughput) ? (recordCount - insertionCount) / throughput : NaN
@@ -51,36 +50,6 @@ const WOFPrepare: PositionalCommandComponent<typeof ArgumentsSchema> = ({ args: 
 		})
 	}, [percentage])
 
-	const delegateInsertion = useCallback(async (filePath: string | Buffer) => {
-		if (Date.now()) {
-			await piscina.run(filePath.toString())
-
-			return
-		}
-		return fetch("http://localhost:3000/admin/wof", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				filePath: filePath.toString(),
-			}),
-		}).then(async (response) => {
-			if (response.ok) {
-				performance.mark("insertion")
-				return
-			}
-
-			const body = await response.json().catch(() => null)
-
-			if (body) {
-				throw new Error(`Failed to insert record: ${JSON.stringify(body)}`)
-			}
-
-			throw new Error(`Failed to insert record: ${response.statusText}`)
-		})
-	}, [])
-
 	useEffect(() => {
 		tallyPatternCount(["*.geojson"], wofDataAdminDirectory!).then(setRecordCount)
 	}, [wofDataAdminDirectory])
@@ -92,37 +61,35 @@ const WOFPrepare: PositionalCommandComponent<typeof ArgumentsSchema> = ({ args: 
 				absolute: true,
 			})
 
-			for await (const fileNames of takeAsync(matchStream, BATCH_SIZE)) {
-				// console.log("Inserting", fileNames.length, "records")
-				// const batchStartTime = performance.now()
-				const batchIterator = takeInParallel(fileNames, BATCH_SIZE, delegateInsertion)
+			// Batch filenames and send each batch to a worker as a single Piscina task.
+			// Reduces IPC overhead vs dispatching one file per task.
+			const tasks: Promise<void>[] = []
 
-				await Array.fromAsync(batchIterator)
-				// const batchEndTime = performance.now()
+			for await (const fileNames of takeAsync(matchStream, FILES_PER_BATCH)) {
+				const filePaths = fileNames.map((f) => f.toString())
 
-				// console.log(`Batch took ${batchEndTime - batchStartTime}s`)
-				setInsertionCount((count) => count + fileNames.length)
+				// Cap concurrent tasks to WORKER_COUNT — Piscina queues the rest.
+				const task = piscina.run({ filePaths }).then((result) => {
+					setInsertionCount((count) => count + result.processed)
+				})
+
+				tasks.push(task)
 			}
+
+			await Promise.all(tasks)
 		})()
-	}, [delegateInsertion, wofDataAdminDirectory])
+	}, [wofDataAdminDirectory])
 
 	useEffect(() => {
 		const refreshStats = () => {
 			const now = performance.now()
-
-			const insertionMark = performance.getEntriesByName("insertion", "mark")
-			const nextThroughput = insertionMark.length / (now / 1000 / 60)
-
-			performance.clearMarks()
-			setThroughput(nextThroughput)
+			const elapsedMin = now / 1000 / 60
+			setThroughput(insertionCount / Math.max(elapsedMin, 0.001))
 		}
 
 		const interval = setInterval(refreshStats, 1000)
-
-		return () => {
-			clearInterval(interval)
-		}
-	}, [])
+		return () => clearInterval(interval)
+	}, [insertionCount])
 
 	if (percentage >= 100) {
 		return (
