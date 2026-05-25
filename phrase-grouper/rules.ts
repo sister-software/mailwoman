@@ -122,45 +122,99 @@ function isStreetSuffix(token: string): boolean {
 }
 
 /**
- * Venue-marker nouns. Same caveat as STREET_SUFFIXES — universal markers, not a places dictionary.
- * Used to upgrade a capitalized run to `VENUE_PHRASE` confidence.
+ * Venue-marker nouns with per-term confidence weights. Same caveat as STREET_SUFFIXES — universal
+ * structural markers, not a places dictionary. Higher weight = stronger venue signal.
  */
-const VENUE_MARKERS: ReadonlySet<string> = new Set([
-	"steakhouse",
-	"hotel",
-	"motel",
-	"inn",
-	"restaurant",
-	"bar",
-	"cafe",
-	"café",
-	"grill",
-	"diner",
-	"bistro",
-	"tavern",
-	"pub",
-	"lounge",
-	"market",
-	"mall",
-	"plaza",
-	"tower",
-	"theater",
-	"theatre",
-	"cinema",
-	"stadium",
-	"arena",
-	"hospital",
-	"university",
-	"college",
-	"school",
-	"church",
-	"library",
-	"museum",
-	"park",
+const VENUE_MARKERS: ReadonlyMap<string, number> = new Map([
+	// Dining (0.90 — unambiguous venue markers)
+	["steakhouse", 0.90],
+	["restaurant", 0.90],
+	["bistro", 0.90],
+	["diner", 0.85],
+	["cafe", 0.85],
+	["café", 0.85],
+	["grill", 0.80],
+	["pizzeria", 0.90],
+	["bakery", 0.85],
+	["brewery", 0.85],
+	["winery", 0.85],
+	["tavern", 0.80],
+	["pub", 0.75],
+	["bar", 0.70],
+	// Lodging
+	["hotel", 0.90],
+	["motel", 0.90],
+	["inn", 0.75],
+	["resort", 0.85],
+	["lodge", 0.75],
+	["hostel", 0.85],
+	// Entertainment / culture
+	["theater", 0.85],
+	["theatre", 0.85],
+	["cinema", 0.85],
+	["stadium", 0.90],
+	["arena", 0.85],
+	["museum", 0.85],
+	["gallery", 0.75],
+	["casino", 0.85],
+	["lounge", 0.70],
+	// Retail / commercial
+	["market", 0.70],
+	["mall", 0.80],
+	["plaza", 0.70],
+	["tower", 0.65],
+	["center", 0.60],
+	["centre", 0.60],
+	// Medical / institutional
+	["hospital", 0.90],
+	["clinic", 0.85],
+	["pharmacy", 0.85],
+	// Education
+	["university", 0.90],
+	["college", 0.85],
+	["school", 0.80],
+	["academy", 0.80],
+	// Civic / religious
+	["church", 0.80],
+	["temple", 0.80],
+	["mosque", 0.80],
+	["synagogue", 0.85],
+	["cathedral", 0.85],
+	["chapel", 0.75],
+	["library", 0.85],
+	// Outdoor
+	["park", 0.60],
+	["gardens", 0.65],
+	["ranch", 0.70],
+	["farm", 0.65],
 ])
 
-function hasVenueMarker(tokens: ReadonlyArray<SegmentToken>): boolean {
-	return tokens.some((t) => VENUE_MARKERS.has(t.body.toLowerCase()))
+/**
+ * Unit-designator tokens that gate the venue-by-exclusion heuristic. When any token in a segment
+ * matches one of these, the segment is likely a unit/suite line, not a venue name.
+ */
+const UNIT_MARKERS: ReadonlySet<string> = new Set([
+	"apt", "apt.", "apartment",
+	"unit",
+	"ste", "ste.", "suite",
+	"room", "rm", "rm.",
+	"floor", "fl", "fl.",
+	"bldg", "bldg.", "building",
+	"dept", "dept.", "department",
+	"#",
+])
+
+function venueMarkerWeight(tokens: ReadonlyArray<SegmentToken>): number {
+	let maxWeight = 0
+	for (const t of tokens) {
+		const w = VENUE_MARKERS.get(t.body.toLowerCase())
+		if (w !== undefined && w > maxWeight) maxWeight = w
+	}
+	return maxWeight
+}
+
+function hasUnitMarker(tokens: ReadonlyArray<SegmentToken>): boolean {
+	return tokens.some((t) => UNIT_MARKERS.has(t.body.toLowerCase()))
 }
 
 /**
@@ -359,10 +413,18 @@ export function scoreLocalityPhrase(
  *
  * The shape "NY-NY Steakhouse" — the kryptonite case the reconciler eventually needs to lift the NY
  * tokens off REGION — surfaces here as a `VENUE_PHRASE` proposal at moderate-high confidence.
+ *
+ * Also includes a venue-by-exclusion positional prior: multi-word capitalized run in the first
+ * segment with no street suffix, no house number, and no unit marker → weak VENUE_PHRASE at
+ * 0.50-0.55. The idea: if we can't identify what something IS, but it's in the venue slot
+ * (first segment) and doesn't look like any other component, it might be a venue name.
  */
-export function scoreVenuePhrase(tokens: ReadonlyArray<SegmentToken>, text: string): PhraseProposal[] {
+export function scoreVenuePhrase(
+	tokens: ReadonlyArray<SegmentToken>,
+	text: string,
+	segmentIsFirst?: boolean
+): PhraseProposal[] {
 	const out: PhraseProposal[] = []
-	// Single-segment scan: find capitalized runs and check for venue markers / hyphenated compounds.
 	let i = 0
 	while (i < tokens.length) {
 		if (!startsCapitalized(tokens[i]!.body)) {
@@ -374,19 +436,33 @@ export function scoreVenuePhrase(tokens: ReadonlyArray<SegmentToken>, text: stri
 			j++
 		}
 		const run = tokens.slice(i, j + 1)
-		const hasMarker = hasVenueMarker(run)
+		const markerWeight = venueMarkerWeight(run)
 		const hasHyphenCompound = run.some((t) => /[^-]-[^-]/.test(t.body))
-		if (hasMarker || (hasHyphenCompound && run.length >= 2)) {
+
+		if (markerWeight > 0 || (hasHyphenCompound && run.length >= 2)) {
 			const startTok = run[0]!
 			const endTok = run[run.length - 1]!
-			// Venue-marker presence scores higher than hyphen-compound-only.
-			const confidence = hasMarker ? 0.85 : 0.65
+			const confidence = markerWeight > 0 ? markerWeight : 0.65
 			out.push({
 				span: makeSection(text, startTok.start, endTok.end),
 				kindHypothesis: "VENUE_PHRASE",
 				confidence,
 			})
+		} else if (segmentIsFirst && run.length >= 2) {
+			const hasStreet = run.some((t) => isStreetSuffix(t.body))
+			const hasLeadingNum = isAllDigit(run[0]!.body)
+			const hasUnit = hasUnitMarker(run)
+			if (!hasStreet && !hasLeadingNum && !hasUnit) {
+				const startTok = run[0]!
+				const endTok = run[run.length - 1]!
+				out.push({
+					span: makeSection(text, startTok.start, endTok.end),
+					kindHypothesis: "VENUE_PHRASE",
+					confidence: run.length >= 3 ? 0.55 : 0.50,
+				})
+			}
 		}
+
 		i = j + 1
 	}
 	return out

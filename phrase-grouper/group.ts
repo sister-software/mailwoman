@@ -31,7 +31,10 @@ import type { GroupPhrasesOpts, LocaleHint, NormalizedInputLite, PhraseProposal,
  * whole input as a single segment when QueryShape didn't supply segmentation (e.g. callers wiring
  * the grouper into a path that bypasses QueryShape).
  */
-function tokensPerSegment(text: string, shape: QueryShapeLike): Array<{ tokens: SegmentToken[]; isLast: boolean }> {
+function tokensPerSegment(
+	text: string,
+	shape: QueryShapeLike
+): Array<{ tokens: SegmentToken[]; isFirst: boolean; isLast: boolean }> {
 	const segs = shape.segments
 	if (segs && segs.length > 0) {
 		return segs.map((s, idx) => {
@@ -39,11 +42,12 @@ function tokensPerSegment(text: string, shape: QueryShapeLike): Array<{ tokens: 
 			const end = s.span?.end ?? text.length
 			return {
 				tokens: tokenizeSegment(text.slice(start, end), start),
+				isFirst: idx === 0,
 				isLast: idx === segs.length - 1,
 			}
 		})
 	}
-	return [{ tokens: tokenizeSegment(text, 0), isLast: true }]
+	return [{ tokens: tokenizeSegment(text, 0), isFirst: true, isLast: true }]
 }
 
 /**
@@ -71,14 +75,14 @@ export function groupPhrasesSync(
 	proposals.push(...scorePostcode(shape, text))
 
 	// Per-segment rules.
-	for (const { tokens, isLast } of tokensPerSegment(text, shape)) {
+	for (const { tokens, isFirst, isLast } of tokensPerSegment(text, shape)) {
 		if (tokens.length === 0) continue
 		proposals.push(...scoreNumeric(tokens, text))
 		proposals.push(...scoreRegionAbbreviation(tokens, text, isLast))
 		proposals.push(...scoreHyphenatedCompound(tokens, text))
 		proposals.push(...scoreStreetPhrase(tokens, text))
 		proposals.push(...scoreLocalityPhrase(tokens, text, isLast))
-		proposals.push(...scoreVenuePhrase(tokens, text))
+		proposals.push(...scoreVenuePhrase(tokens, text, isFirst))
 	}
 
 	// Sort: descending confidence, ties broken by span start (left-to-right). Downstream Stage 5
