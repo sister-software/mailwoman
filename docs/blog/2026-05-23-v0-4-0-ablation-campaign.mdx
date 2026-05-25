@@ -2,7 +2,7 @@
 slug: v0-4-0-ablation-campaign
 title: Five training runs, one shipped checkpoint — what we learned from v0.4.0
 authors: [teffen]
-tags: [training, retrospective, v0.4.0]
+tags: [training, retrospective]
 ---
 
 `@mailwoman/neural-weights-en-us@v0.4.0` (and the fr-fr sibling) shipped today as packaged artifacts (the npm publish is a separate step we do by hand). It is a mixed-result release: one clear win on fine-grained labels, two regressions on coarse labels that turned out to be mostly artifacts of how we measured. Almost everything we set out to do — combine three orthogonal training improvements into one ship — was empirically falsified by a divergence pattern we hadn't seen before.
