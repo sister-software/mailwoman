@@ -1,0 +1,158 @@
+---
+sidebar_position: 7
+title: Why a neural parser?
+tags:
+  - domain
+  - motivation
+  - architecture
+  - neural
+  - hybrid
+  - rule-based
+---
+
+# Why a neural parser?
+
+The first five articles in this track established the problem:
+
+- [How mail delivery works](../the-problem/how-mail-delivery-works.md): the postal system is already fuzzy. It tolerates ambiguity.
+- [How humans break addresses](../why-its-hard/how-humans-break-addresses.md): real input is messier than any database expects.
+- [The database fallacy](../why-its-hard/the-database-fallacy.md): there is no master list of correct addresses.
+- [The tokenization tautology](../why-its-hard/the-tokenization-tautology.md): traditional parsers hit a structural ceiling.
+- [The 90% trap](../why-its-hard/the-90-percent-trap.md): the tail of failures is the expensive part.
+
+This article explains why a neural approach addresses these problems better than rules can — and what "neural" specifically means in Mailwoman.
+
+## The bitter lesson, applied to addresses
+
+Richard Sutton's 2019 essay "The Bitter Lesson" argues that over the history of AI, general methods that leverage computation have consistently outperformed hand-crafted domain-specific approaches. The lesson is bitter because the short-term win — encode your knowledge into rules — almost always loses to the long-term win — build a system that learns from data.
+
+Applied to address parsing:
+
+| Approach | Short-term                                                                     | Long-term                                                                               |
+| -------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| Rules    | Fix one failure mode immediately with a regex or dictionary update             | Accumulate rules that conflict, need maintenance, and ceiling at ~92% accuracy          |
+| Neural   | Spend time building corpus + training infrastructure before seeing any benefit | Learn the structure of addresses from data; improve with more data without adding rules |
+
+The rule-based approach won the first decade of geocoding (2008-2018) because the cost of training a neural model was high and the cost of writing one more regex was low. The neural approach wins now because the cost of training has dropped (HuggingFace Transformers, ONNX export, cloud GPUs) and the cost of maintaining rule sets has grown (international expansion, long-tail address formats, user-generated content).
+
+Mailwoman is not the first project to notice this. Deepparse (a 2020 academic project from Université Laval) showed that a BiLSTM encoder-decoder could match libpostal's accuracy on structured addresses. The academic literature since has confirmed that transformers beat CRFs on noisy and multilingual address data. What Mailwoman adds is **productization**: a TypeScript-first runtime, browser deployability, per-component policy migration, and a corpus pipeline designed for retraining rather than one-shot publication.
+
+## What "neural" means: a small transformer, not a large one
+
+Mailwoman's neural classifier is a **9-million-parameter encoder-only transformer** trained from scratch on address data. It is about the same size as a 2018 BERT-mini, not a 2026 GPT-6. This is deliberate.
+
+### Why small
+
+Address parsing is a narrow task. The vocabulary is small (street names, city names, state abbreviations, country names — tens of thousands of tokens, not hundreds of thousands). The grammar is simple (ordered components, limited nesting). The output space is 21 BIO labels. A general-purpose language model that can write poetry and debug JavaScript is vast overkill.
+
+A small model is:
+
+- **Fast.** ~10ms per address on CPU.
+- **Browser-deployable.** The full ONNX bundle is ~25MB compressed.
+- **Cheap to train.** A full training run is ~6 hours on a consumer GPU.
+- **Cheap to retrain.** When you add training data for a new failure mode, you can retrain in hours, not days.
+
+### Why from scratch
+
+The model is trained from scratch on Mailwoman's corpus, not fine-tuned from a pretrained general-English model. This is an explicit choice that is currently under empirical validation as of May 2026 — the training stability experiments described in the [v0.5.0 blog post](pathname:///blog/2026-05-24-v0-5-0-c-train-bisect) are testing whether this choice is correct.
+
+The argument for training from scratch: address text is unlike natural language. Street names are not sentences. Postcodes are not words. The co-occurrence statistics that a general-English BERT learns from Wikipedia and BookCorpus ("'bank' appears near 'river' and 'money'") are not useful for distinguishing "Saint" (street prefix) from "Saint" (part of a locality name). Training from scratch lets the model learn co-occurrence patterns that are specific to addresses.
+
+The argument against: a pretrained model already knows what a token IS — how characters form subwords, how subwords form words, how punctuation structures phrases. That knowledge transfers even when the domain vocabulary is different. The empirical question is whether this transfer benefit outweighs the domain-mismatch cost. The answer will come from the v0.5.0 training experiments.
+
+### What the model actually does
+
+The model takes a tokenized address string and produces, for each token, a probability distribution over 21 BIO labels (B-country, I-country, B-region, I-region, ..., O). The labels mark span boundaries: a contiguous sequence of `B-venue, I-venue, I-venue` means "this three-token span is a venue name."
+
+The model does **not**:
+
+- Generate text. It is not a chatbot. It labels existing tokens.
+- Look up gazetteers. It does not know that "Portland" is in Oregon. That is the resolver's job.
+- Memorize addresses. It learns the _structure_ of addresses — what ordering patterns are likely, what tokens co-occur with what labels — not the contents of any specific database.
+
+The model is the **contextual parser** half of a "contextual parser + constraint solver" system. The resolver is the constraint solver half. This split is the most important architectural decision in Mailwoman.
+
+## Why rules still exist
+
+Rules are not being replaced. They are being **augmented**.
+
+Mailwoman v2 keeps every rule classifier from v1:
+
+- `house_number` — regex patterns for "number, possibly with letter suffix."
+- `postcode` — country-specific format patterns (US 5-digit, FR 5-digit, UK outward code).
+- `whos_on_first` — gazetteer lookup for country, region, locality, and neighbourhood names.
+- `street_prefix` / `street_suffix` — dictionaries of known directionals and street types.
+
+These classifiers are deterministic, fast, and correct for the cases they cover. A US 5-digit postcode IS a postcode — a model gains nothing by re-learning that pattern.
+
+The **policy registry** decides, per component, per locale, which classifier(s) get authority:
+
+```ts
+interface ClassifierPolicy {
+	component: ComponentTag
+	mode: "rule_only" | "neural_only" | "both" | "neural_preferred" | "rule_preferred"
+	confidence_threshold?: number
+}
+```
+
+Default mode is `rule_only`. The neural classifier earns each component one at a time, gated on golden-set metrics. If the neural model regresses, flipping back to `rule_only` is a one-line config change with no retraining.
+
+This is the **Ship of Theseus** migration: replace the planks one at a time, keep sailing the whole time.
+
+## What changes with neural
+
+The neural classifier changes three things that rules could never do:
+
+### 1. Context-dependent classification
+
+Rule classifiers see one token at a time. The neural classifier sees the full input simultaneously. This is the difference between:
+
+```
+Token: "NY" → street_prefix: 0.05, region: 0.85, venue: 0.02
+```
+
+and:
+
+```
+Input: "NY-NY Steakhouse, Houston, TX"
+Model: (sees full input) → first "NY" part of venue, second "NY" part of venue
+```
+
+The model conditions on the surrounding tokens because the transformer's self-attention mechanism gives every token access to every other token's representation. "NY" next to "Steakhouse" is venue. "NY" next to "10001" is region. The model learns this distinction from corpus co-occurrence patterns.
+
+### 2. Multi-word span coherence
+
+Rule classifiers can identify that "Saint" looks like a street prefix and "Petersburg" looks like a locality. They cannot identify that "Saint Petersburg" is a single multi-word locality — the dictionaries don't contain multi-word entries for every combination, and the combinatorial explosion of possible multi-word place names is too large for explicit enumeration.
+
+The neural model learns that tokens labeled `B-locality, I-locality` tend to co-occur when the sequence forms a known place-name pattern. It does not memorize "Saint Petersburg" — it learns that adjacent capitalized tokens in a certain position relative to a region abbreviation are likely a multi-word locality.
+
+### 3. Graceful degradation
+
+Rules either match or don't — binary. The neural model outputs probabilities. When the input is ambiguous (missing components, unfamiliar format, mixed scripts), the model's per-token confidence drops. The downstream system can use that signal:
+
+- **High confidence on all components** → route automatically.
+- **High confidence on locality/region, low confidence on street** → partial route with ambiguity flag.
+- **Low confidence everywhere** → escalate to manual review.
+
+This is the **graceful failure** that the operator's Paris, Texas talk described as the target behavior: "The mail carrier squinting at bad handwriting and figuring it out anyway." The model doesn't figure it out. It tells you it can't — and that honesty is more useful than a confident wrong answer.
+
+## What the neural parser doesn't change
+
+- **The tokenizer is still deterministic.** SentencePiece is a trained subword tokenizer, but it produces the same output for the same input every time.
+- **The resolver is still a lookup.** The model emits labels; the resolver turns labels into coordinates via a gazetteer. The resolver does not use the model.
+- **The solver is still a constraint system.** The reconciler picks coherent interpretations from the model's candidates. The model proposes; the solver disposes.
+- **You can still debug failures.** When the model misclassifies a span, you can examine the per-token confidence distribution, the phrase grouper's boundary proposals, and the reconciler's alternative candidates. The system is more opaque than a rule set but more inspectable than a black-box LLM.
+
+## The path forward
+
+As of May 2026, Mailwoman is actively working through training stability challenges described in the [v0.5.0 retrospective](pathname:///blog/2026-05-24-v0-5-0-c-train-bisect). The architecture — the Knowledge Ladder, the phrase grouper, the reconciler, the staged pipeline — is in place. The training recipe is being refined to produce stable model weights on the expanded corpus.
+
+The direction is not in question. The question is whether the current training approach can reach the architecture's potential — and that is an empirical question being answered right now in the training log.
+
+## See also
+
+- [How it works now](./how-it-works-now.md) — the current rule + neural hybrid in detail
+- [Neural classification](../../concepts/neural-classification.md) — the transformer architecture deep dive
+- [The knowledge ladder](./the-knowledge-ladder.md) — the staged pipeline decomposition
+- [The tokenization tautology](../why-its-hard/the-tokenization-tautology.md) — why rules hit a ceiling
+- [The case for simple geocoders](../alternatives/the-case-for-simple-geocoders.md) — the strongest argument for the alternative

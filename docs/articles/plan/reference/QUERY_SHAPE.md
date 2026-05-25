@@ -1,13 +1,13 @@
 # Query Shape — Cheap Structural Priors
 
-Captures the design intent for the `QueryShape` sub-system, a stage 2 + 2.5 addition to the runtime pipeline ([the-staged-pipeline](../../understanding/the-staged-pipeline.md)). Bitter-lesson-safe because it recognizes _what shape an input has_, not _which strings are localities_.
+Captures the design intent for the `QueryShape` sub-system, a stage 2 + 2.5 addition to the runtime pipeline ([the-staged-pipeline](../../understanding/our-approach/the-staged-pipeline.md)). Bitter-lesson-safe because it recognizes _what shape an input has_, not _which strings are localities_.
 
 ## Status
 
 - **Conceived:** 2026-05-22 design conversation.
 - **Decision:** commit to the sub-system; bundle as `@mailwoman/query-shape`. Pure functions, no ML.
 - **Implementation phase:** not yet opened. Will land alongside Stage 2 + Stage 2.5 work in the staged-pipeline rollout.
-- **Cross-references:** [`concepts/the-staged-pipeline`](../../understanding/the-staged-pipeline.md), [`concepts/addresses-that-break-geocoders`](../../understanding/addresses-that-break-geocoders.md), [`reference/ARCHITECTURE`](./ARCHITECTURE.md).
+- **Cross-references:** [`concepts/the-staged-pipeline`](../../understanding/our-approach/the-staged-pipeline.md), [`concepts/addresses-that-break-geocoders`](../../understanding/why-its-hard/addresses-that-break-geocoders.md), [`reference/ARCHITECTURE`](./ARCHITECTURE.md).
 
 ## The bitter-lesson framing test
 
@@ -204,7 +204,7 @@ These are decisions to make when the implementation phase opens; recording so th
 
 ## See also
 
-- [`concepts/the-staged-pipeline`](../../understanding/the-staged-pipeline.md) — the runtime stages this slots into
-- [`concepts/addresses-that-break-geocoders`](../../understanding/addresses-that-break-geocoders.md) — the failure-mode catalogue that motivated this
+- [`concepts/the-staged-pipeline`](../../understanding/our-approach/the-staged-pipeline.md) — the runtime stages this slots into
+- [`concepts/addresses-that-break-geocoders`](../../understanding/why-its-hard/addresses-that-break-geocoders.md) — the failure-mode catalogue that motivated this
 - [`reference/CONTEXT.md`](./CONTEXT.md) — the bitter-lesson framing and the "possibilities not constraints" principle
 - [`reference/ARCHITECTURE.md`](./ARCHITECTURE.md) — the broader system shape; QueryShape fits between tokenization and classification

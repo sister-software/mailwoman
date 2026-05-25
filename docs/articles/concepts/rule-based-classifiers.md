@@ -10,7 +10,7 @@ tags:
 
 # Rule-based classifiers
 
-A rule classifier is a small piece of hand-written code that labels tokens. Pelias and Mailwoman v1 are built almost entirely on rule classifiers. Mailwoman v2 keeps them and adds the neural classifier alongside — see [How it works now](../understanding/how-it-works-now.md) for the hybrid.
+A rule classifier is a small piece of hand-written code that labels tokens. Pelias and Mailwoman v1 are built almost entirely on rule classifiers. Mailwoman v2 keeps them and adds the neural classifier alongside — see [How it works now](../understanding/our-approach/how-it-works-now.md) for the hybrid.
 
 This article walks through how rule classifiers are structured and what they are good and bad at.
 
@@ -144,6 +144,6 @@ This is the Ship-of-Theseus pattern. The neural classifier earns each component 
 
 ## See also
 
-- [What is an address?](../understanding/what-is-an-address.md) — the components rule classifiers label
+- [What is an address?](../understanding/the-problem/what-is-an-address.md) — the components rule classifiers label
 - [Neural classification](./neural-classification.md) — the v2 alternative
-- [How it works now](../understanding/how-it-works-now.md) — the hybrid in action
+- [How it works now](../understanding/our-approach/how-it-works-now.md) — the hybrid in action

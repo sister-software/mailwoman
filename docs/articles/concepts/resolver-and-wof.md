@@ -105,5 +105,5 @@ Mailwoman's resolver drops any candidate whose coordinates are `(0, 0)` from res
 
 ## See also
 
-- [What is an address?](../understanding/what-is-an-address.md) — the components the resolver receives
-- [How it works now](../understanding/how-it-works-now.md) — where the resolver fits in the live demo flow
+- [What is an address?](../understanding/the-problem/what-is-an-address.md) — the components the resolver receives
+- [How it works now](../understanding/our-approach/how-it-works-now.md) — where the resolver fits in the live demo flow

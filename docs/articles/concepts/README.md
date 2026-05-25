@@ -31,10 +31,10 @@ Additional articles:
 
 Articles moved to [`understanding/`](../understanding/README.md) in May 2026:
 
-- [What is an address?](../understanding/what-is-an-address.md) — now at Tier 1 position 8
-- [Addresses that break geocoders](../understanding/addresses-that-break-geocoders.md) — now at Tier 1 position 9
-- [The knowledge ladder](../understanding/the-knowledge-ladder.md) — now at Tier 1 position 14
-- [The staged pipeline](../understanding/the-staged-pipeline.md) — now at Tier 1 position 15
+- [What is an address?](../understanding/the-problem/what-is-an-address.md) — now at Tier 1 position 8
+- [Addresses that break geocoders](../understanding/why-its-hard/addresses-that-break-geocoders.md) — now at Tier 1 position 9
+- [The knowledge ladder](../understanding/our-approach/the-knowledge-ladder.md) — now at Tier 1 position 14
+- [The staged pipeline](../understanding/our-approach/the-staged-pipeline.md) — now at Tier 1 position 15
 
 ## Dependency map
 

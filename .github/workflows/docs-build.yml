@@ -1,0 +1,52 @@
+# Validate docs build on PRs that touch docs/ or blog content.
+#
+# Catches broken links, MDX parse errors, and Docusaurus build failures
+# before they reach main and silently break the production docs site.
+name: Docs Build
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "*.md"
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "*.md"
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+concurrency:
+  group: docs-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  docs-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Compile workspaces
+        run: yarn compile
+
+      - name: Build docs
+        run: cd docs && npm run build
