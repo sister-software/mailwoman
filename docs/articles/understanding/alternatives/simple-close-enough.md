@@ -1,0 +1,72 @@
+---
+sidebar_position: 38
+title: Close-enough geocoding
+tags:
+  - domain
+  - hubris
+  - locality
+  - venue
+---
+
+# Close-enough geocoding
+
+Not every application needs sub-meter accuracy. For most applications, "in the right city" is close enough. A geocode that places a customer in the correct metropolitan area is sufficient for market analysis, sales territory assignment, and regional logistics. The coordinate doesn't need to be correct — it needs to be useful.
+
+## The approach
+
+1. **Define your precision requirement.** Not "as accurate as possible." A specific distance that is sufficient for your use case. Market analysis: within the correct city. Sales territory: within the correct ZIP code. Regional logistics: within the correct metro area. Last-mile delivery: within the correct block.
+2. **Choose the cheapest geocoder that meets the requirement.** City-level accuracy → locality-only geocoding (free, a few hundred lines of code). ZIP-level accuracy → postcode-only geocoding plus a ZIP-to-centroid table (free, trivially updateable). Block-level accuracy → a geocoding API (Google, geocode.earth — costs money but requires zero infrastructure).
+3. **Stop.** Don't optimize past your requirement. A geocode that is accurate to 5 meters when your application needs 5 kilometers is wasted engineering effort. The last 10% of accuracy costs 90% of the infrastructure.
+
+This is the economic argument for "close enough" — the cost of higher precision is not linear, and the value of higher precision drops off sharply after you meet your application's requirement.
+
+## When it works
+
+- **Statistical aggregation.** You're counting customers by city, not delivering packages to them. A geocode that places 1,000 customers in the Los Angeles metro area is statistically useful even if every individual coordinate is off by miles. The aggregate is correct even if the individuals are not.
+- **Market analysis.** You're deciding where to open a new store. You need to know which ZIP codes have high customer density, not which buildings they're in. ZIP-level geocoding answers this.
+- **Regional routing.** A package bound for "Springfield" goes to the Springfield distribution center. The street address is for the last-mile carrier, not the regional sort. The regional sort only needs city-level accuracy.
+- **You have a known address universe.** A utility company with 500,000 service addresses. The addresses are already in a database. You don't need to geocode them — you need to verify that an input address matches one in the database. Normalize-to-match handles this.
+- **You can't get finer data anyway.** WOF's coordinate for a rural locality may be the best data available. The building doesn't exist in any gazetteer. The street is not mapped. The locality centroid is the closest approximation that exists. Spending engineering effort on higher precision would require new data collection, not better algorithms.
+
+## What you lose
+
+- **The last mile.** A package placed at the ZIP centroid in rural Montana is 15 miles from the actual delivery point. The regional sort correctly routes it to the right post office. The carrier who delivers it knows the route. The geocode was wrong but the package arrived — because the postal system's last mile is human, not algorithmic.
+- **The false confidence of high precision.** A coordinate with 8 decimal places looks authoritative. It implies sub-millimeter accuracy. The consumer trusts it. A coordinate with 1 decimal place (10-kilometer precision) looks approximate. The consumer treats it accordingly. The high-precision coordinate may be less accurate than the low-precision one — the extra digits are noise, not signal — but the consumer trusts the precise-looking one more.
+- **The misuse case.** You built a geocoder for market analysis. Someone uses it for delivery routing. The geocoder was "close enough" for its intended use case. It is catastrophically wrong for the unintended one. The geocoder has no way to signal its intended precision level. The consumer has no way to know.
+- **The concentrated tail.** 90% of your addresses geocode to within acceptable precision. The 10% that don't are in rural areas, new construction, and informal settlements — the populations where precision matters most. "Close enough" for the average is "not close at all" for the edge.
+- **The changing requirement.** You built a geocoder for statistical aggregation. Two years later, the business wants delivery routing. The geocoder that was "close enough" is now wrong by an order of magnitude. Retooling to higher precision requires rebuilding the geocoding infrastructure.
+
+## The precision spectrum
+
+Your application lives somewhere on this spectrum. Know where.
+
+| Precision            | Use case                   | Cheapest approach                                      |
+| -------------------- | -------------------------- | ------------------------------------------------------ |
+| Country-level        | Global market sizing       | IP geolocation (free, built into every web framework)  |
+| State/province-level | Regional sales territories | State name → centroid lookup (a 50-row CSV)            |
+| County-level         | US county-level statistics | ZIP → county crosswalk (free from Census)              |
+| City-level           | Metro-area market analysis | Locality-only geocoding (gazetteer lookup, ~200K rows) |
+| ZIP-level            | Delivery zone assignment   | Postcode-only geocoding (regex + centroid table)       |
+| Block-level          | Last-mile delivery routing | Geocoding API (Google, geocode.earth)                  |
+| Building-level       | Address verification       | Commercial service (SmartyStreets, Melissa Data)       |
+| Entrance-level       | Emergency dispatch         | Proprietary, expensive, jurisdiction-specific          |
+
+Each step down the spectrum costs roughly 10× more in infrastructure and engineering than the step above it. City-level geocoding is a few hundred lines of code. Building-level geocoding requires a commercial API or a neural parser plus a gazetteer. Entrance-level geocoding requires proprietary data that doesn't exist for most of the world.
+
+Pick the cheapest level that meets your requirement. Don't spend entrance-level money on a city-level problem.
+
+## Where Mailwoman fits
+
+Mailwoman targets the block-to-building level of the spectrum. The parser extracts street and building number components. The resolver matches them against WOF and OSM data to return building-level coordinates where available, and street-segment coordinates where not.
+
+Mailwoman is not the right choice for city-level or ZIP-level geocoding. Those problems are solved by simpler, cheaper approaches. Mailwoman is the right choice when you need finer precision than a locality centroid and can't or won't pay for a commercial API.
+
+Mailwoman is also the right choice when you need to **improve your precision over time.** The corpus pipeline accepts new training data. The resolver can be swapped for a better gazetteer. The parser improves with more data without changes to the downstream system. "Close enough" today at the block level can become building-level tomorrow with the same infrastructure.
+
+## See also
+
+- [The case for simple geocoders](./the-case-for-simple-geocoders.md) — the series overview
+- [Locality-only geocoding](./simple-locality-only.md) — the city-level approach
+- [Postcode-only geocoding](./simple-postcode-only.md) — the ZIP-level approach
+- [Falsehoods about geocoded precision and frontages](../why-its-hard/falsehoods-proximity.md) — the precision assumptions that break geocoders
+- [The 90% trap](../why-its-hard/the-90-percent-trap.md) — why the 10% tail costs more than the 90%

@@ -19,7 +19,7 @@ The [v0.4.0 ablation campaign retrospective](../retrospectives/v0-4-0-ablation-c
 
 Patching each ceiling individually meant three medium iterations. v0.5.0 bundles them into one **fresh-slate** ship — pay the cost once, clear all three at once.
 
-The "fresh-slate" framing is described in the operator's [sharpen-the-axe note](../understanding/the-knowledge-ladder.md#what-v040-taught-us-about-the-missing-rungs) — it is the right shape when several improvements share a common cost (a retrain, an interface change) and bundling avoids paying that cost three times.
+The "fresh-slate" framing is described in the operator's [sharpen-the-axe note](../understanding/our-approach/the-knowledge-ladder.md#what-v040-taught-us-about-the-missing-rungs) — it is the right shape when several improvements share a common cost (a retrain, an interface change) and bundling avoids paying that cost three times.
 
 ## The six threads
 
@@ -93,8 +93,8 @@ Three smaller follow-ups carried over from postmortems:
 
 If you are catching up on the architecture, read in this order:
 
-1. [The knowledge ladder](../understanding/the-knowledge-ladder.md) — the conceptual framing for why the two new layers (Stage 2.7 phrase grouper, expanded Stage 5 reconcile) exist.
-2. [The staged pipeline](../understanding/the-staged-pipeline.md) — the runtime composition end-to-end.
+1. [The knowledge ladder](../understanding/our-approach/the-knowledge-ladder.md) — the conceptual framing for why the two new layers (Stage 2.7 phrase grouper, expanded Stage 5 reconcile) exist.
+2. [The staged pipeline](../understanding/our-approach/the-staged-pipeline.md) — the runtime composition end-to-end.
 3. [`STAGES.md`](./reference/STAGES.md) — formal per-stage type contracts.
 4. [`VERDICT_SMOKES.md`](./reference/VERDICT_SMOKES.md) — the process discipline that kept v0.5.0 from repeating v0.4.0's cosine-LR mask bug.
 

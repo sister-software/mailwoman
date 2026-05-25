@@ -1,0 +1,133 @@
+---
+sidebar_position: 17
+title: How it works now
+tags:
+  - architecture
+  - staged-pipeline
+  - neural
+  - hybrid
+  - rule-based
+  - resolver
+---
+
+# How it works now — the staged pipeline
+
+Mailwoman v2 (current as of May 2026) runs addresses through a **six-stage pipeline.** Each stage adds one kind of knowledge the stages below it cannot easily derive. Rule classifiers and a neural classifier coexist. A **policy registry** decides whose vote wins for each address component.
+
+This article assumes you have read [How it used to work](./how-it-used-to-work.md). For the design principles behind the staged decomposition, read [The knowledge ladder](./the-knowledge-ladder.md).
+
+## The staged pipeline
+
+```mermaid
+flowchart TD
+    A["Input string<br>'350 5th Ave, New York, NY 10118'"]
+    A --> S1["Stage 1: Normalize<br>Unicode, whitespace, case folding"]
+    S1 --> S2["Stage 2: Locale gate<br>Script class + postcode-format detection"]
+    S2 --> S25["Stage 2.5: Kind classifier<br>Query shape: postcode_only, structured_address, intersection"]
+    S25 --> S27["Stage 2.7: Phrase grouper<br>Coherent input spans (rule-based)"]
+    S27 --> S3["Stage 3: Token classify<br>Rule classifiers + neural classifier"]
+    S3 --> S4["Stage 4: Sequence correct<br>CRF with frozen structural mask"]
+    S4 --> S5["Stage 5: Reconcile<br>Joint-coherent interpretation (joint decoding)"]
+    S5 --> S6["Stage 6: Resolve<br>WOF SQLite gazetteer lookup"]
+    S6 --> F["Resolved place with candidates"]
+```
+
+## The stages in detail
+
+### Stage 1 — Normalize
+
+Unicode normalization (NFD-decomposed accents → composed), locale-aware case folding, whitespace collapsing. Knows nothing about address structure. Cleans bytes so downstream layers see canonical text.
+
+### Stage 2 — Locale gate
+
+Detects whether input is en-US, fr-FR, ja-JP, etc. Rule-based today: script-class detection (CJK → ja-JP, Cyrillic → ru, Arabic → ar) plus known-format hits (5-digit ZIP → en-US, FR postcode → fr-FR). The `@mailwoman/locale-gate` workspace ships the logic; it exists as a workspace but the factory default still falls back to caller-trust. Wiring it as the default is a near-term TODO.
+
+### Stage 2.5 — Kind classifier
+
+Classifies the query shape: bare postcode? single locality? full structured address? PO box? landmark? intersection? Pure structural cues — no place-name dictionaries. The kind decision enables fast-path routing (a bare postcode skips the neural classifier and goes straight to the resolver).
+
+### Stage 2.7 — Phrase grouper
+
+Proposes coherent input spans _before_ the classifier runs. Shipped in v0.5.0 as `@mailwoman/phrase-grouper` (rule-based, Thread E). The grouper uses structural cues — punctuation, capitalization, numeric patterns, token proximity — not dictionaries:
+
+```
+Input:  "350 5th Ave, New York, NY 10118"
+Spans:  [{text:"350", kind:NUMERIC}, {text:"5th Ave", kind:STREET_PHRASE},
+         {text:"New York", kind:LOCALITY_PHRASE}, {text:"NY", kind:REGION_ABBREVIATION},
+         {text:"10118", kind:POSTCODE}]
+```
+
+The grouper does not know what the spans _mean_. It only knows where the _boundaries_ are. This moves boundary discovery out of the classifier — the classifier now answers "what type is this proposed span?" instead of "where do spans start AND what type are they?"
+
+A learned phrase-grouper variant (1-2M-param span proposer) is scoped for v0.5.1 or later.
+
+### Stage 3 — Token classify
+
+Two kinds of classifier run in parallel:
+
+**Rule classifiers** (from Mailwoman v1): `house_number`, `postcode`, `whos_on_first`, `street_prefix`, `street_suffix`, and others. Deterministic, dictionary/regex-based. Correct for the bounded cases they cover.
+
+**Neural classifier**: a 9-million-parameter encoder-only transformer trained from scratch on Mailwoman's corpus. Emits per-token BIO labels using a 21-class vocabulary (country, region, locality, postcode, street, house_number, venue, and associated `I-` and `B-` variants). See [Neural classification](../../concepts/neural-classification.md).
+
+The v0.5.0 classifier (Thread C-s) adds two architectural changes gated behind config flags:
+
+- **Phrase-prior conditioning.** The input layer takes per-token features from the Stage 2.7 phrase grouper (BIE markers + `PhraseKind` one-hot), concatenated onto the token+position embedding. The classifier conditions on proposed boundaries rather than discovering them from scratch.
+- **Top-k inference.** The inference path emits the K most-probable tag sequences with calibrated log-probability scores, not just the argmax. Stage 5 reconcile consumes these as the classifier's belief over candidate parses.
+
+Both are scaffolded and tested in `main`. The full training run that exercises them (C-train) is in progress as of May 2026 — see the [v0.5.0 C-train blog post](pathname:///blog/2026-05-24-v0-5-0-c-train-bisect).
+
+### Stage 4 — Sequence correct
+
+A CRF with a frozen structural transition mask enforces BIO sequence validity. The mask forbids orphan `I-*` sequences (no `I-locality` without preceding `B-locality` or `I-locality`). This is the fix for the "Saint Petersburg → Petersburg" clipping: the CRF transition `O → I-locality` is structurally impossible with the frozen mask.
+
+The CRF is applied at inference time via Viterbi decode (JS-side, shipped in v0.4.0). It was used at training time in v0.4.0's dual-loss recipe (CRF-NLL + CE). The May 2026 training experiments are testing whether removing the CRF loss term (CE-only training, CRF at inference only) stabilizes training — see [the v0.5.0 retrospective](pathname:///blog/2026-05-24-v0-5-0-c-train-bisect).
+
+### Stage 5 — Reconcile
+
+Picks the joint-coherent interpretation from the classifier's top-K candidates. Shipped in v0.5.0 as `core/pipeline/reconcile.ts` (Thread D-s). The reconciler performs beam search over `(span × tag × resolver candidate)` triples, scoring each beam with:
+
+```
+score = phrase_conf × classifier_score × resolver_score × concordance_bonus
+```
+
+The concordance bonus rewards parent-chain consistency in the WOF gazetteer. A fully-consistent WOF parent chain contributes `+concordanceWeight` in log-space. An explicit contradiction (`region=NY` when the locality's parent is Illinois) is a hard veto.
+
+Joint decode is **opt-in** behind a feature flag in the runtime as of May 2026. The argmax fallback path (sort spans by start position) is still the default until the classifier's top-k contract lands. Wiring joint decode as the default is the next integration step — tracked in the v0.5.0 ship PR.
+
+### Stage 6 — Resolve
+
+Looks up parsed components against the WOF SQLite gazetteer. Returns place IDs, coordinates, parent chains, and alternate names. The resolver surfaces top-K candidates per administrative span (locality, region) so downstream systems can handle ambiguity.
+
+## The Ship-of-Theseus dial
+
+Each address component has a policy:
+
+```ts
+interface ClassifierPolicy {
+	component: ComponentTag
+	mode: "rule_only" | "neural_only" | "both" | "neural_preferred" | "rule_preferred"
+	confidence_threshold?: number
+	locale?: string
+}
+```
+
+Default mode is `rule_only`. The neural classifier earns each component one at a time, gated on golden-set metrics. If a neural model regresses, flipping back to `rule_only` is a one-line config change with no retraining.
+
+As of the v0.4.0-shipped weights (the current production model), the neural classifier is strongest on `house_number` (F1 ≈ 0.79) and `street` (F1 ≈ 0.30). Coarse components (`country`, `region`, `locality`, `postcode`) are still better served by rules in practice.
+
+## What the demo shows
+
+The live demo at [mailwoman.sister.software/demo](https://mailwoman.sister.software/demo) runs the **entire stack in the browser**:
+
+- The neural model (~25 MB) loads via `@mailwoman/neural-web` on top of `onnxruntime-web`.
+- The Who's On First gazetteer (~35 MB) loads via `@mailwoman/resolver-wof-wasm` on top of `sqlite-wasm`.
+- After the initial download (~60 MB), the browser caches everything.
+
+## What is honest to admit about today (May 2026)
+
+- **Coarse F1 is still regressed.** The v0.4.0-shipped model has `region` F1 of 0.19 and `country` F1 of 0.21. Rule classifiers are doing the heavy lifting on coarse components. The v0.5.0 fresh-slate work (new tokenizer, phrase grouper, joint decode) targets this structurally — but the C-train that would produce improved weights is not yet stable.
+- **Training divergence is the current blocker.** Both v0.4.0 and v0.5.0 training runs diverge under sustained peak learning rate. The leading hypothesis (as of May 2026) is that the CRF-NLL + CE dual loss has opposing curvature below a threshold loss value. CE-only training is the current experiment.
+- **Joint decode is opt-in.** The reconciler ships but is not the default path. The argmax fallback is wired until the classifier emits real top-K output and the integration is verified against the kryptonite catalogue.
+- **The model is small.** Nine million parameters is enough for the address-parsing task but not enough for free-text understanding. We are not building a chatbot.
+
+Continue with [How it will work](./how-it-will-work.md) for the near-future roadmap.
