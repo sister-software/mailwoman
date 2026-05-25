@@ -84,7 +84,7 @@ San Francisco, CA
 New York, NY
 ```
 
-A parser that labels one token at a time has to decide that "Saint" and "Petersburg" go together. The first version of Mailwoman's neural classifier (v0.2.0) got "Saint Petersburg" wrong because the second token's label was independent of the first — see [BIO labels](./bio-labels.md) for the fix.
+A parser that labels one token at a time has to decide that "Saint" and "Petersburg" go together. The first version of Mailwoman's neural classifier (v0.2.0) got "Saint Petersburg" wrong because the second token's label was independent of the first — see [BIO labels](../concepts/bio-labels.md) for the fix.
 
 **4. Spelling, capitalization, and punctuation vary.**
 
@@ -125,6 +125,6 @@ The neural classifier is trained against these cases (synthesized variations end
 
 ## See also
 
-- [Tokenization](./tokenization.md) — how strings become tokens before parsing
-- [BIO labels](./bio-labels.md) — how the neural classifier marks component boundaries
-- [Resolver and Who's On First](./resolver-and-wof.md) — turning parsed components into coordinates
+- [Tokenization](../concepts/tokenization.md) — how strings become tokens before parsing
+- [BIO labels](../concepts/bio-labels.md) — how the neural classifier marks component boundaries
+- [Resolver and Who's On First](../concepts/resolver-and-wof.md) — turning parsed components into coordinates

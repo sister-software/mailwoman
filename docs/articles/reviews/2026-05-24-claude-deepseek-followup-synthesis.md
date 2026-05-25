@@ -57,9 +57,9 @@ Two gates, applied after running joint-reconcile against the kryptonite catalogu
 | Kryptonite Δ exact-match | Golden Δ macro_F1 | Verdict                                                                                                                           |
 | ------------------------ | ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | ≥ +15pp                  | ≤ −1pt            | **Go**. Architecture validated. Train v0.5.0 weights to beat this.                                                                |
-| ≥ +15pp                  | > −1pt            | Golden regression. Concordance scoring is hot or resolver gives wrong parent_id chains for normal addresses. Fix scoring, retest. |
-| < +15pp                  | ≤ −1pt            | Architecture isn't earning its complexity. Revisit scoring/algorithm before any training experiments.                             |
-| < +15pp                  | > −1pt            | Both broken. Step back and diagnose why before any further work.                                                                  |
+| ≥ +15pp                  | &gt; −1pt         | Golden regression. Concordance scoring is hot or resolver gives wrong parent_id chains for normal addresses. Fix scoring, retest. |
+| &lt; +15pp               | ≤ −1pt            | Architecture isn't earning its complexity. Revisit scoring/algorithm before any training experiments.                             |
+| &lt; +15pp               | &gt; −1pt         | Both broken. Step back and diagnose why before any further work.                                                                  |
 
 **Why kryptonite exact-match is the primary signal:** the 4,771 rows were built for exactly the cases argmax gets wrong (`NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg, FL`). If joint decode doesn't lift exact-match by at least 15 absolute percentage points there, the architectural complexity isn't earning its keep.
 
@@ -73,15 +73,15 @@ Real risks that would have bitten the validation sprint if executed without miti
 
 ### 1. WOF parent_id chain correctness
 
-The concordance bonus in `reconcileSpans` scores parses against the gazetteer's parent-id chain. WOF SQLite is a copy of a copy of a copy. If `parent_id` chains are incorrect for even a small percentage of records, the concordance bonus will both punish correct parses AND reward wrong ones — and the failure mode is "<+15pp on kryptonite, you blame the algorithm, the real cause is bad data."
+The concordance bonus in `reconcileSpans` scores parses against the gazetteer's parent-id chain. WOF SQLite is a copy of a copy of a copy. If `parent_id` chains are incorrect for even a small percentage of records, the concordance bonus will both punish correct parses AND reward wrong ones — and the failure mode is "&lt; +15pp on kryptonite, you blame the algorithm, the real cause is bad data."
 
-**Mitigation:** before evaluating reconciler output, spot-check 20 resolvable `(locality, region)` pairs against WOF's REST API as ground truth. If >1 mismatch, the concordance scoring is evaluating against bad data.
+**Mitigation:** before evaluating reconciler output, spot-check 20 resolvable `(locality, region)` pairs against WOF's REST API as ground truth. If &gt;1 mismatch, the concordance scoring is evaluating against bad data.
 
 ### 2. v0.4.0 weights may be too weak to surface the reconciler's value
 
 The reconciler works by re-ranking — it takes the classifier's top-K, then concordance-scoring picks the coherent one. If the classifier's top-3 per-token are all wrong on kryptonite (e.g. `NY → region` ranked top-1, top-2, top-3), no amount of reconciler scoring fixes a broken input. The reconciler needs the **right answer to exist in the candidate set**.
 
-**Mitigation:** if kryptonite Δ < +15pp, before concluding "reconciler broken," audit each failed example. Was the correct tag in the classifier's top-3? If no, the bottleneck is classifier quality (need new weights), not reconciler algorithm. That's a different conclusion entirely.
+**Mitigation:** if kryptonite Δ &gt; +15pp, before concluding "reconciler broken," audit each failed example. Was the correct tag in the classifier's top-3? If no, the bottleneck is classifier quality (need new weights), not reconciler algorithm. That's a different conclusion entirely.
 
 ### 3. Golden v0.1.2 is too small to be a trustworthy regression guard
 
@@ -130,10 +130,10 @@ The gradient-norm ratio probe ran a few hours after this synthesis was written. 
 
 Two v0.5.0-diverged checkpoints sampled, five batches each, eff_batch=128, same loader the production training uses:
 
-| Checkpoint | Training phase | `‖∇_CE‖` | `‖∇_CRF‖` | **ratio** |
-| --- | --- | --- | --- | --- |
-| `v3-ablation/step-500` | settled at loss 0.63, right before climb | 7.2–17.0 | 149–275 | **median 16.2** |
-| `phrase-off/step-1500` | deep in climb at loss 1.92 | 3.9–5.3 | 30–46 | **median 8.0** |
+| Checkpoint             | Training phase                           | `‖∇_CE‖` | `‖∇_CRF‖` | **ratio**       |
+| ---------------------- | ---------------------------------------- | -------- | --------- | --------------- |
+| `v3-ablation/step-500` | settled at loss 0.63, right before climb | 7.2–17.0 | 149–275   | **median 16.2** |
+| `phrase-off/step-1500` | deep in climb at loss 1.92               | 3.9–5.3  | 30–46     | **median 8.0**  |
 
 DeepSeek's predicted signature: ratio drops below ~0.01 → CRF gradient has collapsed → CE-only training is the repair.
 
@@ -143,8 +143,8 @@ DeepSeek's predicted signature: ratio drops below ~0.01 → CRF gradient has col
 
 A second six-turn conversation reframed the diagnosis: not "dual-loss decoupling" but **"CRF as aggressor"**. The story that fits all the data:
 
-- **Cooperative regime, loss > 0.41.** Model starts at high entropy; both CE and CRF point downhill toward the same broad basin ("become less random"). Training descends cleanly.
-- **Conflict regime, loss < 0.41.** Model exits the high-entropy basin and enters fine-grained per-token decisions. CE and CRF now point in opposing directions on this data. CRF's 8–20× gradient magnitude wins. The optimiser follows CRF; CE is dragged uphill.
+- **Cooperative regime, loss &gt; 0.41.** Model starts at high entropy; both CE and CRF point downhill toward the same broad basin ("become less random"). Training descends cleanly.
+- **Conflict regime, loss &gt; 0.41.** Model exits the high-entropy basin and enters fine-grained per-token decisions. CE and CRF now point in opposing directions on this data. CRF's 8–20× gradient magnitude wins. The optimiser follows CRF; CE is dragged uphill.
 
 The 0.41 boundary isn't a magic number — it's where the cooperative-vs-conflict transition happens on this specific architecture + corpus. The structure of the failure is the load-bearing observation, not the threshold.
 
@@ -176,13 +176,13 @@ If all three pass, promote to a full 50K-step CE-only training run. **Stability 
 
 Replaces the "validation sprint plan" earlier in this document.
 
-| Phase | Time | Action |
-| --- | --- | --- |
-| 1 (now, ~2 h, parallel) | t0 | WOF parent_id spot-check + model.py one-line gate + CE-only smoke YAML + launch CE-only smoke (~2 h on the iGPU) |
-| 2 (parallel with smoke) | t0 | Reconciler integration via per-span logit aggregation against v0.4.0 weights; eval against kryptonite ∪ golden via the ±15pp / ≤1pt matrix |
-| 3 (gate at smoke step 2000) | ~t+2 h | Read CE-only smoke result; both stability + quality gates pass → promote |
-| 4 (gated on Phase 3) | ~t+2 h | Full 50K-step CE-only C-train (~6–8 h); parallel: act on reconciler matrix result |
-| 4.1 (post-train) | ~t+10 h | Eval CE-only checkpoint against product-level matrix; if ≥2-axis improvement vs v0.4.0 → ship v0.5.0 |
+| Phase                       | Time    | Action                                                                                                                                     |
+| --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 (now, ~2 h, parallel)     | t0      | WOF parent_id spot-check + model.py one-line gate + CE-only smoke YAML + launch CE-only smoke (~2 h on the iGPU)                           |
+| 2 (parallel with smoke)     | t0      | Reconciler integration via per-span logit aggregation against v0.4.0 weights; eval against kryptonite ∪ golden via the ±15pp / ≤1pt matrix |
+| 3 (gate at smoke step 2000) | ~t+2 h  | Read CE-only smoke result; both stability + quality gates pass → promote                                                                   |
+| 4 (gated on Phase 3)        | ~t+2 h  | Full 50K-step CE-only C-train (~6–8 h); parallel: act on reconciler matrix result                                                          |
+| 4.1 (post-train)            | ~t+10 h | Eval CE-only checkpoint against product-level matrix; if ≥2-axis improvement vs v0.4.0 → ship v0.5.0                                       |
 
 ### Additional discipline note
 
@@ -190,12 +190,12 @@ A fifth principle worth keeping with the four above:
 
 - **Hypotheses are tested in the direction the data points, not the direction you expected.** The probe predicted ratio &lt; 0.01 (CRF collapsed) and found ratio &gt; 8 (CRF dominant) — opposite direction, same repair. The original hypothesis was a useful scaffold for designing the experiment; falsifying it cleanly was more valuable than confirming it would have been. Build experiments around what would change your mind, not around what would confirm what you already believe.
 
-The full technical write-up of the diagnostic, the cooperative-vs-conflict regime model, and the repair is at [`docs/articles/concepts/dual-loss-curvature-conflict.md`](../articles/concepts/dual-loss-curvature-conflict.md).
+The full technical write-up of the diagnostic, the cooperative-vs-conflict regime model, and the repair is at [`docs/articles/concepts/dual-loss-curvature-conflict.md`](../concepts/dual-loss-curvature-conflict.md).
 
 ## See also
 
 - [`./2026-05-24-codex-project-direction-review.md`](./2026-05-24-codex-project-direction-review.md) — the first independent review
 - [`./2026-05-24-deepseek-project-direction-review.md`](./2026-05-24-deepseek-project-direction-review.md) — the synthesis review this conversation continues from
-- [`docs/articles/plan/v0-5-0-shipped.md`](../articles/plan/v0-5-0-shipped.md) — as-shipped state of v0.5.0
-- [`docs/articles/plan/reference/VERDICT_SMOKES.md`](../articles/plan/reference/VERDICT_SMOKES.md) — the verdict-smoke discipline doc (pending update with the eff_batch lesson + ratio-probe lesson)
-- [`docs/blog/2026-05-24-v0-5-0-c-train-bisect.md`](../blog/2026-05-24-v0-5-0-c-train-bisect.md) and [`docs/blog/2026-05-24-bisect-by-elimination.md`](../blog/2026-05-24-bisect-by-elimination.md) — the public retrospectives the reviews respond to
+- [`docs/articles/plan/v0-5-0-shipped.md`](../../articles/plan/v0-5-0-shipped.md) — as-shipped state of v0.5.0
+- [`docs/articles/plan/reference/VERDICT_SMOKES.md`](../../articles/plan/reference/VERDICT_SMOKES.md) — the verdict-smoke discipline doc (pending update with the eff_batch lesson + ratio-probe lesson)
+- [`docspathname:///blog/2026-05-24-v0-5-0-c-train-bisect.md`](pathname:///blog/2026-05-24-v0-5-0-c-train-bisect) and [`docspathname:///blog/2026-05-24-bisect-by-elimination.md`](pathname:///blog/2026-05-24-bisect-by-elimination) — the public retrospectives the reviews respond to

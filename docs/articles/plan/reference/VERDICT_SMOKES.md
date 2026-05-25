@@ -103,7 +103,7 @@ Two hard-won additions from the v0.5.0 C-train bisect campaign. Both were footgu
 
 The v0.5.0 ablation-smoke at `batch_size=8, grad_accum=1` (eff_batch=8) passed cleanly — loss descended, val_macro_f1 climbed, no divergence through 1500 steps. The full train at `batch_size=16, grad_accum=8` (eff_batch=128) diverged at step 800.
 
-**The recipe's stability is batch-geometry-dependent.** A smoke that doesn't reproduce the full-run's gradient noise characteristics is a smoke that can't detect this class of failure. The gradient noise at eff_batch=8 is ~4× larger per-step than at eff_batch=128 (more stochastic), which paradoxically *stabilises* training against the curvature-conflict instability (the model can't settle deep enough into the basin where the conflict manifests).
+**The recipe's stability is batch-geometry-dependent.** A smoke that doesn't reproduce the full-run's gradient noise characteristics is a smoke that can't detect this class of failure. The gradient noise at eff*batch=8 is ~4× larger per-step than at eff_batch=128 (more stochastic), which paradoxically \_stabilises* training against the curvature-conflict instability (the model can't settle deep enough into the basin where the conflict manifests).
 
 **Rule:** smoke `batch_size` × `grad_accum_steps` must equal the full-run's product. If the full run uses eff_batch=128, the smoke must too — even if that means fewer steps per wall-clock minute. The smoke's job is to reproduce the full run's dynamics, not to be fast.
 
@@ -127,8 +127,9 @@ ratio = crf_norm / max(ce_norm, 1e-12)
 ```
 
 **Reading the ratio:**
-- Ratio >> 1 (v0.5.0 observed 8–20×): CRF gradient dominates. The model is being pulled by the louder loss term. Repair: reduce `crf_loss_weight` drastically or drop CRF NLL entirely (CE-only training, CRF retained at inference via frozen mask).
-- Ratio << 0.01: CRF gradient has collapsed. The model has decoupled the two objectives. Repair: same — CE-only, or decouple optimisers.
+
+- Ratio &gt;&gt; 1 (v0.5.0 observed 8–20×): CRF gradient dominates. The model is being pulled by the louder loss term. Repair: reduce `crf_loss_weight` drastically or drop CRF NLL entirely (CE-only training, CRF retained at inference via frozen mask).
+- Ratio &lt;&lt; 0.01: CRF gradient has collapsed. The model has decoupled the two objectives. Repair: same — CE-only, or decouple optimisers.
 - Ratio ≈ 0.5–2: losses are reasonably balanced. Divergence cause is elsewhere (capacity, data, LR schedule).
 
 This probe takes 5 minutes against an existing checkpoint and answers "which loss is the aggressor?" more precisely than any 25-hour retrain could. Run it before spending GPU time on the next hypothesis.
@@ -137,7 +138,7 @@ Full technical write-up: [`docs/articles/concepts/dual-loss-curvature-conflict.m
 
 ## See also
 
-- [The knowledge ladder](../../concepts/the-knowledge-ladder.md) — why v0.4.0's failure modes mapped to missing pipeline rungs (the smoke meta-bug is the process-side companion).
+- [The knowledge ladder](../../understanding/the-knowledge-ladder.md) — why v0.4.0's failure modes mapped to missing pipeline rungs (the smoke meta-bug is the process-side companion).
 - [Phase 8 — v0.5.0 fresh-slate](../phases/PHASE_8_v0_5_0_fresh_slate.md) — Thread F lands this framework before B/C/E start training.
 - [Phase 2 — training](../phases/PHASE_2_training.md) iteration log — v0.4.0 entry has the original false-positive case.
 - [v0.4.0 ablation campaign retrospective](../../retrospectives/v0-4-0-ablation-campaign.md) — full incident write-up.

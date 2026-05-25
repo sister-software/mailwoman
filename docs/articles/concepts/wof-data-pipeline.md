@@ -179,6 +179,6 @@ In priority order:
 ## See also
 
 - [Resolver and Who's On First](./resolver-and-wof.md) — the runtime resolver that consumes this data
-- [The knowledge ladder](./the-knowledge-ladder.md) — Stage 6 in the pipeline decomposition
+- [The knowledge ladder](../../articles/understanding/the-knowledge-ladder.md) — Stage 6 in the pipeline decomposition
 - [Joint decoding — a walkthrough](./joint-decoding-walkthrough.md) — how the reconciler uses resolver candidates + parent chains
 - [`STAGES.md`](../plan/reference/STAGES.md) — formal per-stage type contracts

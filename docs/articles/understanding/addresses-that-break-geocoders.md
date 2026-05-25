@@ -95,7 +95,7 @@ Behind gas station
 
 What breaks: regex-based house-number classifiers expect `\d+`. They miss `One`, `12½`, `12 1/2`, `4-6-8`. Leading zeros (`0007`) may match a postcode regex by accident. "No Fixed Address" and "Behind gas station" are legitimate inputs in some workflows but are not addresses at all — they describe locations.
 
-Mailwoman's defence: the subword tokenizer ([Tokenization](./tokenization.md)) does not require numeric tokens; the neural classifier can learn that `"One"` in `"One Infinite Loop"` is a `B-house_number`. The "Corner of 5th and Main" case maps to the `intersection_a` / `intersection_b` tags in the component vocabulary ([What is an address?](./what-is-an-address.md#the-data-model)). The "Behind gas station" landmark case has no good answer — that is reverse-geocoding territory, not parsing territory.
+Mailwoman's defence: the subword tokenizer ([Tokenization](../concepts/tokenization.md)) does not require numeric tokens; the neural classifier can learn that `"One"` in `"One Infinite Loop"` is a `B-house_number`. The "Corner of 5th and Main" case maps to the `intersection_a` / `intersection_b` tags in the component vocabulary ([What is an address?](./what-is-an-address.md#the-data-model)). The "Behind gas station" landmark case has no good answer — that is reverse-geocoding territory, not parsing territory.
 
 ## 4. Street/locality collisions
 
@@ -116,7 +116,7 @@ Quebec Grill, Quebec City
 
 What breaks: a dictionary-based locality classifier (the standard Pelias approach) fires on `"London"` in `"London Drugs"` and on `"Paris"` in `"Paris Cafe"`. Now the parser has two locality proposals — one for the venue's name and one for the actual locality — and the solver may pick the wrong one.
 
-This is the bitter-lesson case for address parsing. A rule classifier cannot tell the difference; it needs context. A transformer encoder ([Neural classification](./neural-classification.md)) sees the whole sentence and can learn that `"Paris"` followed by `"Cafe"` is part of a `venue` span, while `"Paris"` preceded by a comma and followed by `"Ontario"` is a `locality` span. The "Buffalo, NY / Buffalo Wild Wings, Buffalo, NY" pair is in Mailwoman's adversarial eval set for exactly this reason.
+This is the bitter-lesson case for address parsing. A rule classifier cannot tell the difference; it needs context. A transformer encoder ([Neural classification](../concepts/neural-classification.md)) sees the whole sentence and can learn that `"Paris"` followed by `"Cafe"` is part of a `venue` span, while `"Paris"` preceded by a comma and followed by `"Ontario"` is a `locality` span. The "Buffalo, NY / Buffalo Wild Wings, Buffalo, NY" pair is in Mailwoman's adversarial eval set for exactly this reason.
 
 ## 5. Numeric chaos
 
@@ -170,7 +170,7 @@ What breaks:
 - **Dual scripts.** `"Beograd / Белград"` is the same place written twice. WOF (and Mailwoman's resolver) carries multi-language names so both spellings resolve to the same WOF ID.
 - **Right-to-left scripts.** Arabic addresses written in RTL plus mixed Latin numerals create renderer and tokenizer headaches even when the underlying data is clean.
 
-Mailwoman's defence: the subword tokenizer falls back to byte-level encoding for unknown characters ([Tokenization](./tokenization.md#byte-fallback)), so the pipeline does not crash. But the model was trained on en-US + fr-FR data; non-Latin scripts pass through the tokenizer but the model has no signal to label them. Per-locale weights packages are how this scales — Japan and Korea each need their own training run.
+Mailwoman's defence: the subword tokenizer falls back to byte-level encoding for unknown characters ([Tokenization](../concepts/tokenization.md#byte-fallback)), so the pipeline does not crash. But the model was trained on en-US + fr-FR data; non-Latin scripts pass through the tokenizer but the model has no signal to label them. Per-locale weights packages are how this scales — Japan and Korea each need their own training run.
 
 ## 7. Language-switch hybrids
 
@@ -251,6 +251,6 @@ A geocoder that handles half of these well is already useful. A geocoder that ha
 ## See also
 
 - [What is an address?](./what-is-an-address.md) — the data model these failure modes operate against
-- [Rule-based classifiers](./rule-based-classifiers.md) — what regex-and-dictionary approaches can and cannot do
-- [Neural classification](./neural-classification.md) — why a transformer encoder helps with the context-dependent cases
-- [Resolver and Who's On First](./resolver-and-wof.md) — how the candidate-search side handles ambiguity
+- [Rule-based classifiers](../concepts/rule-based-classifiers.md) — what regex-and-dictionary approaches can and cannot do
+- [Neural classification](../concepts/neural-classification.md) — why a transformer encoder helps with the context-dependent cases
+- [Resolver and Who's On First](../concepts/resolver-and-wof.md) — how the candidate-search side handles ambiguity

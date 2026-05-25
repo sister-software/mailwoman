@@ -7,7 +7,7 @@ title: Dual-loss curvature conflict — when CRF is the aggressor
 
 A specific failure mode of CE + CRF dual-loss training that surfaced across nine of mailwoman's v0.5.0 attempts. Documented here because the diagnostic technique generalises and the fix is simple once you know what's happening.
 
-If you haven't read [the v0.4.0 ablation retrospective](../retrospectives/v0-4-0-ablation-campaign.md) and the [bisect-by-elimination blog post](/blog/v0-5-0-bisect-by-elimination), do those first — they set up the failure pattern this article diagnoses.
+If you haven't read [the v0.4.0 ablation retrospective](../retrospectives/v0-4-0-ablation-campaign.md) and the [bisect-by-elimination blog post](pathname:///blog/2026-05-24-bisect-by-elimination), do those first — they set up the failure pattern this article diagnoses.
 
 ## The failure fingerprint
 
@@ -46,10 +46,10 @@ The whole probe runs in a few minutes against an existing checkpoint. No retrain
 
 Two checkpoints sampled — one at the inflection point (loss settled at 0.63, about to climb) and one deep in the climb (loss 1.92):
 
-| Checkpoint | Phase | `‖∇_CE‖` | `‖∇_CRF‖` | **ratio** |
-|---|---|---|---|---|
-| v3-ablation step-500 | settled, about to climb | 7-17 | 149-275 | **median 16.2** |
-| phrase-off step-1500 | deep in climb | 4-5 | 30-46 | **median 8.0** |
+| Checkpoint           | Phase                   | `‖∇_CE‖` | `‖∇_CRF‖` | **ratio**       |
+| -------------------- | ----------------------- | -------- | --------- | --------------- |
+| v3-ablation step-500 | settled, about to climb | 7-17     | 149-275   | **median 16.2** |
+| phrase-off step-1500 | deep in climb           | 4-5      | 30-46     | **median 8.0**  |
 
 Two conclusions, both unexpected before the probe:
 
@@ -73,10 +73,10 @@ The "below 0.41" boundary isn't a magic constant — it's the level at which the
 Several recipe knobs that ought to address this all failed in mailwoman's v0.5.0 attempts:
 
 - **Lowering `crf_loss_weight`** from 0.1 to 0.05 produced the v0.4.0-shipped weights, which still showed early signs of the same fingerprint (postcode regressed, full-parse exact match fell). The gradient-norm asymmetry is large enough that lowering the weight knob doesn't keep up — at `crf_loss_weight=0.05`, CRF still contributes 0.05 × 16 = 0.8× CE in optimization.
-- **Per-token CRF normalisation** (§1) — was meant to make CRF NLL magnitude comparable to per-token CE. The probe shows the *gradient* magnitudes are still wildly different even when *loss* magnitudes were normalised. Loss-magnitude balance does not imply gradient-magnitude balance.
-- **Global gradient clipping** to norm 1.0 — applied to the combined gradient after the dual-loss sum. Doesn't address the *relative* dominance; CRF's 16× share of the budget is preserved through clipping.
+- **Per-token CRF normalisation** (§1) — was meant to make CRF NLL magnitude comparable to per-token CE. The probe shows the _gradient_ magnitudes are still wildly different even when _loss_ magnitudes were normalised. Loss-magnitude balance does not imply gradient-magnitude balance.
+- **Global gradient clipping** to norm 1.0 — applied to the combined gradient after the dual-loss sum. Doesn't address the _relative_ dominance; CRF's 16× share of the budget is preserved through clipping.
 
-The pattern: knobs that *scale* loss values don't fix asymmetric *curvature*. Below the cooperative-regime boundary, CRF NLL has a loss surface where small parameter changes produce large gradients on this data — and no amount of multiplicative weighting will rebalance that against CE's gentler surface.
+The pattern: knobs that _scale_ loss values don't fix asymmetric _curvature_. Below the cooperative-regime boundary, CRF NLL has a loss surface where small parameter changes produce large gradients on this data — and no amount of multiplicative weighting will rebalance that against CE's gentler surface.
 
 ## The repair
 
@@ -123,7 +123,7 @@ The bug shape is symmetric — it could be the auxiliary loss dominating (mailwo
 ## See also
 
 - [v0.4.0 ablation campaign retrospective](../retrospectives/v0-4-0-ablation-campaign.md) — first appearance of the divergence fingerprint, before the diagnostic was named
-- [Bisect-by-elimination blog post](/blog/v0-5-0-bisect-by-elimination) — the bisect ladder that narrowed the suspects before the probe ran
-- [Synthesis review](../../reviews/2026-05-24-claude-deepseek-followup-synthesis.md) — the multi-agent conversation that produced both the dual-loss hypothesis and its falsification
+- [Bisect-by-elimination blog post](pathname:///blog/2026-05-24-bisect-by-elimination) — the bisect ladder that narrowed the suspects before the probe ran
+- [Synthesis review](../reviews/2026-05-24-claude-deepseek-followup-synthesis.md) — the multi-agent conversation that produced both the dual-loss hypothesis and its falsification
 - [`VERDICT_SMOKES.md`](../plan/reference/VERDICT_SMOKES.md) — the smoke discipline that catches this class of divergence (constant-LR, full-eff-batch)
 - [CRF decoder](./crf-decoder.md) — the frozen-mask Viterbi the runtime keeps using even when training drops the NLL
