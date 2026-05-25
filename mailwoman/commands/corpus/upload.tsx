@@ -17,7 +17,7 @@ import { $ } from "zx"
 import zod from "zod"
 import type { CommandComponent } from "../../sdk/cli.js"
 
-const DEFAULT_BUCKET = "mailwoman-corpus"
+const DEFAULT_BUCKET = "mailwoman-assets"
 const DEFAULT_CORPUS_DIR = "/data/corpus/versioned"
 const DEFAULT_TOKENIZER_DIR = "/data/models/tokenizer"
 
