@@ -60,6 +60,17 @@ export interface KnownFormatHit {
 }
 
 /**
+ * A detected region abbreviation (e.g., "DC", "NY", "CA"). Used by the locality soft prior to bias
+ * preceding place-name tokens toward `B-locality`.
+ */
+export interface RegionAbbreviationHit {
+	/** Character offset into the normalized input. */
+	start: number
+	/** The abbreviation text (e.g., "DC", "NY"). */
+	span: string
+}
+
+/**
  * Structural snapshot of an input string, computed once at the boundary between Stage 1 and Stage 2
  * of the runtime pipeline. Microseconds-cheap. Consumed by stages 2, 2.5, 3 (optional), and 6 as
  * additional context.
@@ -72,6 +83,11 @@ export interface QueryShape {
 	tokenClasses: TokenClass[]
 	segments: Segment[]
 	knownFormats: KnownFormatHit[]
+	/**
+	 * Region abbreviation hits detected in the input. The locality soft prior uses these to bias
+	 * preceding place-name tokens toward `B-locality` / `I-locality` during Viterbi decoding.
+	 */
+	regionAbbreviations: RegionAbbreviationHit[]
 	totalLength: number
 	whitespacePattern: WhitespacePattern
 }
