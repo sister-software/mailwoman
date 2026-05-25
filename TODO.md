@@ -2,20 +2,28 @@
 
 Open items not blocking the current ship. Promoted to issues / PRs as scope solidifies.
 
-## v0.5.0 fresh-slate threads (live)
+## v0.5.0 fresh-slate threads
 
-Per [Phase 8 — v0.5.0 fresh-slate](docs/articles/plan/phases/PHASE_8_v0_5_0_fresh_slate.md). Status at a glance:
+Per [Phase 8 — v0.5.0 fresh-slate](docs/articles/plan/phases/PHASE_8_v0_5_0_fresh_slate.md). Status frozen 2026-05-25.
 
-| Thread | Scope                                                         | Status                       |
-| ------ | ------------------------------------------------------------- | ---------------------------- |
-| A      | Tokenizer retrain — multi-script + adversarial coverage       | pending (blocked on B)       |
-| B      | Synthetic adversarial corpus expansion (corpus-v0.4.0)        | pending                      |
-| C      | Classifier with top-k output + phrase-prior conditioning      | pending (blocked on A, B, E) |
-| D      | Stage 5 reconcile — concordance matching via joint decoding   | pending (blocked on C, E)    |
-| E      | Stage 2.7 phrase grouper (rule-based first)                   | pending                      |
-| F      | Process improvements: verdict-smoke framework + sidecar audit | **shipped 2026-05-23**       |
+| Thread  | Scope                                                       | Status                                                                |
+| ------- | ----------------------------------------------------------- | --------------------------------------------------------------------- |
+| A0      | Tokenizer harness + A0 baseline on corpus-v0.3.0            | **shipped** PR #129                                                   |
+| A1      | Tokenizer retrain on corpus-v0.4.0 (byte-fallback 18.2%)    | **shipped** PR #138                                                   |
+| B       | Kryptonite catalogue (4,771 adversarial rows)               | **shipped** PR #130                                                   |
+| B2      | Transliteration pairs (73,316 rows × 5 scripts)             | **shipped** PR #136                                                   |
+| C-s     | Classifier scaffold (top-k + phrase-prior input layer)       | **shipped** PR #128                                                   |
+| C-train | CE-only full classifier train (h256, LR=1.5e-4, 50K steps)  | **in-flight** step 6800/50K, val_macro_f1=0.496; ETA Mon evening UTC  |
+| D-s     | Stage 5 reconcile scaffold (joint decoding)                 | **shipped** PR #131                                                   |
+| D-wire  | Wire reconcileSpans as default in runPipeline               | **shipped** PR #145 (behind `forceJointReconcile` flag)               |
+| E       | Stage 2.7 phrase grouper (rule-based)                       | **shipped** PR #126                                                   |
+| F       | Verdict-smoke framework + sidecar audit                     | **shipped** PR #125                                                   |
 
-Thread F delivered: [`VERDICT_SMOKES.md`](docs/articles/plan/reference/VERDICT_SMOKES.md), `--smoke-mode constant\|long-tail` flag on `python -m mailwoman_train train` / `smoke`, sidecar audit (`corpus-audit`, `diagnose_regression.py`, decoder span-trim all verified in tree against `corpus-v0.3.0`), cross-links from [the knowledge ladder](docs/articles/concepts/the-knowledge-ladder.md) and PHASE_2 iteration log.
+### Key findings from the C-train campaign
+
+- **CRF NLL is the training destabilizer** — gradient-norm probe showed CRF dominates CE by 8-20× in the conflict regime below loss 0.41. Nine dual-loss runs diverged; CE-only (crf_loss_weight=0) trains stably past 6800 steps with val_macro_f1=0.496 (best ever). See [`dual-loss-curvature-conflict.md`](docs/articles/concepts/dual-loss-curvature-conflict.md).
+- **Smokes must match full-run effective batch.** Smoke at eff_batch=8 passed; full at eff_batch=128 diverged. Added to [`VERDICT_SMOKES.md`](docs/articles/plan/reference/VERDICT_SMOKES.md).
+- **Reconciler eval against v0.4.0 weights: zero delta** — classifier too weak to put correct tag in top-3. Waiting for CE-only weights to re-eval. Script at `scripts/eval-joint-reconcile.ts`.
 
 ## CPU-bound work surfaced 2026-05-23 (parallel to v0.4.0 training window)
 

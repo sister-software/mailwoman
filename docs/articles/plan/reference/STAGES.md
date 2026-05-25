@@ -7,8 +7,12 @@ For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`]
 ## Status
 
 - **Source of truth:** this file is the canonical interface contract for the runtime pipeline. Any stage implementation must conform.
-- **Last edited:** 2026-05-22.
-- **Implementation state:** stages 3, half of 4, the solver portion of 5, and a thin 6 ship today. Stages 1, 2, 2.5, the span-re-reader piece of 4, and the candidate-list API on 6 are unbuilt. Each stage's section below has a **Today / Future** breakdown.
+- **Last edited:** 2026-05-25.
+- **Implementation state (frozen 2026-05-25):**
+  - **Shipped and wired as default:** Stage 1 (normalize), Stage 2.5 (kind classifier), Stage 2.7 (phrase grouper, rule-based), Stage 3 (neural classifier + CRF Viterbi), Stage 4a (CRF structural mask), Stage 5 (reconcile, behind `forceJointReconcile` flag), Stage 6 (WOF SQLite resolver).
+  - **Shipped but not wired as factory default:** Stage 2 (locale gate workspace exists, not in `createRuntimePipeline` factory).
+  - **Scaffold only:** Stage 4b (span re-reader — unbuilt), candidate-list API on Stage 6 (designed, not implemented).
+  - **In-flight:** CE-only C-train producing new Stage 3 weights (step 6800/50K, val_macro_f1=0.496).
 
 ## The pipeline
 

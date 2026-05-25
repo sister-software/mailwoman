@@ -46,12 +46,15 @@ Why subwords? Two reasons:
 
 Mailwoman uses [SentencePiece](https://github.com/google/sentencepiece), an open-source subword tokenizer library originally from Google. The specific algorithm is **unigram language model** tokenization, which tends to produce slightly more linguistically-aware splits than the BPE alternative.
 
-Mailwoman's tokenizer was trained from scratch on the corpus:
+Mailwoman's tokenizer was trained from scratch on the corpus. The current shipping version is **v0.1.0** (16K vocab); a new **A1 tokenizer** (48K vocab, multi-script) is validated and waiting for the CE-only classifier train to complete.
 
-- **Vocabulary size:** 16,000 pieces
-- **Character coverage:** 99.95% (so rare characters get a byte-fallback)
-- **Training data:** 1 million US + 1 million French rows sampled from `corpus-v0.1.1`
+| Version | Vocab | Character coverage | Training data | Status |
+|---|---|---|---|---|
+| v0.1.0 (shipping) | 16,000 | 99.95% | 1M US + 1M FR from `corpus-v0.1.1` | In production |
+| A1 (validated) | 48,000 | 99.99% | 500K US + 500K FR + 73K multi-script from `corpus-v0.4.0` | Trained; byte-fallback 36.7%→18.2%; pending classifier weights |
+
 - **Special tokens:** `[UNK]` (unknown), `[PAD]` (padding), `[BOS]` / `[EOS]` (beginning/end of sequence)
+- **A1 additions:** 2,110 user-defined symbols (US state codes, postcode literal formats, country abbreviations) to prevent byte-fallback on known address tokens. See [`tokenizer-a0-baseline.md`](../plan/reference/tokenizer-a0-baseline.md) for the A0→A1 measurement story.
 
 ```mermaid
 flowchart LR
