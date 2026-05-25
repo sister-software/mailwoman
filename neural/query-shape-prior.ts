@@ -25,6 +25,12 @@
  */
 export interface QueryShapeLike {
 	knownFormats: ReadonlyArray<KnownFormatHitLike>
+	regionAbbreviations?: ReadonlyArray<RegionAbbreviationHitLike>
+}
+
+export interface RegionAbbreviationHitLike {
+	start: number
+	span: string
 }
 
 export interface KnownFormatHitLike {
@@ -61,6 +67,12 @@ export interface BuildPriorsOpts {
 	 * favored label. Confidence-scaled, so a 0.6-confidence format hit gets +0.6 max bias.
 	 */
 	biasScale?: number
+
+	/**
+	 * Bias magnitude for the locality soft prior (in log-odds units). Default 2.0 — adds ~e^2 ≈ 7.4×
+	 * odds to B-locality / I-locality for tokens preceding a detected region abbreviation.
+	 */
+	localityBiasScale?: number
 }
 
 /**
@@ -85,11 +97,13 @@ export function buildEmissionPriors(
 	const matrix: number[][] = []
 	for (let t = 0; t < T; t++) matrix.push(new Array<number>(L).fill(0))
 
-	if (shape.knownFormats.length === 0) return matrix
-
 	// Index label → column for fast lookup.
 	const labelToCol = new Map<string, number>()
 	for (let k = 0; k < labels.length; k++) labelToCol.set(labels[k]!, k)
+
+	if (shape.knownFormats.length === 0 && (!shape.regionAbbreviations || shape.regionAbbreviations.length === 0)) {
+		return matrix
+	}
 
 	for (const hit of shape.knownFormats) {
 		const targetLabel = FORMAT_TO_LABEL.get(hit.format)
@@ -105,7 +119,79 @@ export function buildEmissionPriors(
 		}
 	}
 
+	// Locality soft prior: when a region abbreviation is detected (e.g., "DC", "NY"), bias
+	// preceding alphabetic tokens toward B-locality / I-locality. This counters the WOF
+	// bare-name frequency dominance that makes the model over-emit B-region on ambiguous
+	// place names like "Washington" or "New York".
+	applyLocalityBias(matrix, shape, tokens, labelToCol, opts.localityBiasScale ?? 2.0)
+
 	return matrix
+}
+
+/**
+ * Apply locality bias to tokens preceding a detected region abbreviation.
+ *
+ * For "Washington, DC" — "DC" is the region abbreviation; "Washington" gets biased toward
+ * B-locality. For "New York, NY" — "New" gets B-locality and "York" gets I-locality.
+ *
+ * Constraint: only bias tokens that appear BEFORE the abbreviation's character offset and are
+ * alphabetic (start with uppercase). Tokens that are part of a known postcode format or are
+ * themselves region abbreviations are skipped.
+ */
+function applyLocalityBias(
+	matrix: number[][],
+	shape: QueryShapeLike,
+	tokens: ReadonlyArray<TokenLike>,
+	labelToCol: Map<string, number>,
+	localityBias: number
+): void {
+	const abbrevs = shape.regionAbbreviations
+	if (!abbrevs || abbrevs.length === 0) return
+
+	const bLocCol = labelToCol.get("B-locality")
+	const iLocCol = labelToCol.get("I-locality")
+	if (bLocCol === undefined) return
+
+	for (const abbrev of abbrevs) {
+		// Walk backward from the abbreviation collecting preceding tokens. The first token must be
+		// within 4 chars of the abbreviation (accounts for ", " separator). Subsequent tokens must
+		// be within 2 chars of each other (normal word spacing).
+		const candidates: number[] = []
+		let prevStart = abbrev.start
+
+		for (let t = tokens.length - 1; t >= 0; t--) {
+			const tok = tokens[t]!
+			if (tok.end > abbrev.start) continue
+
+			const gap = prevStart - tok.end
+			if (candidates.length === 0 && gap > 4) break
+			if (candidates.length > 0 && gap > 2) break
+
+			let isPostcode = false
+			for (const fmt of shape.knownFormats) {
+				if (overlaps(tok, fmt.span)) {
+					isPostcode = true
+					break
+				}
+			}
+			if (isPostcode) break
+
+			candidates.push(t)
+			prevStart = tok.start
+		}
+
+		if (candidates.length === 0) continue
+
+		// candidates is in reverse order (closest to abbreviation first). Reverse to get text order.
+		candidates.reverse()
+
+		for (let i = 0; i < candidates.length; i++) {
+			const t = candidates[i]!
+			const col = i === 0 ? bLocCol : iLocCol
+			if (col === undefined) continue
+			matrix[t]![col] = Math.max(matrix[t]![col]!, localityBias)
+		}
+	}
 }
 
 function overlaps(a: { start: number; end: number }, b: { start: number; end: number }): boolean {

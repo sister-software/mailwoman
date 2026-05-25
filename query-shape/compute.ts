@@ -6,6 +6,7 @@
 
 import { classifyToken, foldInputClass, tokenizeForClass } from "./character-class.js"
 import { detectKnownFormats } from "./known-formats.js"
+import { detectRegionAbbreviations } from "./region-abbreviations.js"
 import { segment } from "./segmentation.js"
 import type { ComputeQueryShapeOpts, NormalizedInputLite, QueryShape, TokenClass, WhitespacePattern } from "./types.js"
 
@@ -52,6 +53,7 @@ export function computeQueryShape(input: string | NormalizedInputLite, opts?: Co
 
 	const segments = segment(text, locale)
 	const knownFormats = detectKnownFormats(text, tokenClasses)
+	const regionAbbreviations = detectRegionAbbreviations(tokenClasses, segments)
 	const characterClass = foldInputClass(tokenClasses)
 	const whitespacePattern = detectWhitespacePattern(text)
 
@@ -60,6 +62,7 @@ export function computeQueryShape(input: string | NormalizedInputLite, opts?: Co
 		tokenClasses: Object.freeze(tokenClasses) as TokenClass[],
 		segments: Object.freeze(segments) as typeof segments,
 		knownFormats: Object.freeze(knownFormats) as typeof knownFormats,
+		regionAbbreviations: Object.freeze(regionAbbreviations) as typeof regionAbbreviations,
 		totalLength: text.length,
 		whitespacePattern,
 	}) satisfies QueryShape

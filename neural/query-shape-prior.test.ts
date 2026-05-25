@@ -114,6 +114,98 @@ describe("buildEmissionPriors", () => {
 	})
 })
 
+describe("buildEmissionPriors — locality bias", () => {
+	const FULL_LABELS = [
+		"O",
+		"B-country",
+		"I-country",
+		"B-region",
+		"I-region",
+		"B-locality",
+		"I-locality",
+		"B-postcode",
+		"I-postcode",
+	]
+
+	it("biases preceding token toward B-locality when region abbreviation detected", () => {
+		// "Washington, DC" — token "Washington" at [0,10], comma at [10,11], space, "DC" at [12,14]
+		const shape: QueryShapeLike = {
+			knownFormats: [],
+			regionAbbreviations: [{ start: 12, span: "DC" }],
+		}
+		// Token for "Washington" ends at 10; abbreviation starts at 12 (gap = 2 for ", ")
+		const toks = tokens([0, 10], [12, 14])
+		const m = buildEmissionPriors(shape, toks, FULL_LABELS)
+		const bLocCol = FULL_LABELS.indexOf("B-locality")
+		expect(m[0]?.[bLocCol]).toBe(2.0)
+		// The abbreviation token itself should NOT get locality bias
+		expect(m[1]?.[bLocCol]).toBe(0)
+	})
+
+	it("biases multi-word locality with B- and I- correctly", () => {
+		// "New York, NY" — "New" at [0,3], "York" at [4,8], "NY" at [10,12]
+		const shape: QueryShapeLike = {
+			knownFormats: [],
+			regionAbbreviations: [{ start: 10, span: "NY" }],
+		}
+		const toks = tokens([0, 3], [4, 8], [10, 12])
+		const m = buildEmissionPriors(shape, toks, FULL_LABELS)
+		const bLocCol = FULL_LABELS.indexOf("B-locality")
+		const iLocCol = FULL_LABELS.indexOf("I-locality")
+		// "New" should get B-locality, "York" should get I-locality
+		expect(m[0]?.[bLocCol]).toBe(2.0)
+		expect(m[1]?.[iLocCol]).toBe(2.0)
+		// Abbreviation token gets nothing
+		expect(m[2]?.[bLocCol]).toBe(0)
+	})
+
+	it("does not bias when no region abbreviations present", () => {
+		const shape: QueryShapeLike = {
+			knownFormats: [],
+			regionAbbreviations: [],
+		}
+		const m = buildEmissionPriors(shape, tokens([0, 5], [6, 10]), FULL_LABELS)
+		const bLocCol = FULL_LABELS.indexOf("B-locality")
+		expect(m[0]?.[bLocCol]).toBe(0)
+		expect(m[1]?.[bLocCol]).toBe(0)
+	})
+
+	it("does not bias tokens that are too far from the abbreviation", () => {
+		// Token at [0,5], abbreviation at [50,52] — gap of 45 chars
+		const shape: QueryShapeLike = {
+			knownFormats: [],
+			regionAbbreviations: [{ start: 50, span: "DC" }],
+		}
+		const m = buildEmissionPriors(shape, tokens([0, 5], [50, 52]), FULL_LABELS)
+		const bLocCol = FULL_LABELS.indexOf("B-locality")
+		expect(m[0]?.[bLocCol]).toBe(0)
+	})
+
+	it("respects custom localityBiasScale", () => {
+		const shape: QueryShapeLike = {
+			knownFormats: [],
+			regionAbbreviations: [{ start: 12, span: "DC" }],
+		}
+		const toks = tokens([0, 10], [12, 14])
+		const m = buildEmissionPriors(shape, toks, FULL_LABELS, { localityBiasScale: 3.0 })
+		const bLocCol = FULL_LABELS.indexOf("B-locality")
+		expect(m[0]?.[bLocCol]).toBe(3.0)
+	})
+
+	it("skips tokens overlapping a known postcode format", () => {
+		// "10118, NY" — "10118" overlaps a postcode hit, should NOT get locality bias
+		const shape: QueryShapeLike = {
+			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.6 }],
+			regionAbbreviations: [{ start: 7, span: "NY" }],
+		}
+		const toks = tokens([0, 5], [7, 9])
+		const m = buildEmissionPriors(shape, toks, FULL_LABELS)
+		const bLocCol = FULL_LABELS.indexOf("B-locality")
+		// Token 0 is a postcode — should NOT get locality bias
+		expect(m[0]?.[bLocCol]).toBe(0)
+	})
+})
+
 describe("addEmissionMatrix", () => {
 	it("returns emissions unchanged when priors are empty", () => {
 		const e = [

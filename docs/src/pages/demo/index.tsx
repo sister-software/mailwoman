@@ -279,7 +279,7 @@ function DemoApp(): React.ReactElement {
 				const queryShape = computeQueryShape(text)
 				const kindResult = classifyKindSync({ raw: text, normalized: text }, queryShape)
 
-				const tree = await classifier.parse(text)
+				const tree = await classifier.parse(text, { queryShape })
 				const nodes = flattenTree(tree)
 				const localityNode = nodes.find((n) => n.tag === "locality" || n.tag === "city")
 				const stateNode = nodes.find((n) => n.tag === "region" || n.tag === "state")
