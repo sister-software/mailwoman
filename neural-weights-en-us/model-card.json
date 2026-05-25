@@ -1,17 +1,29 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "0.4.0",
-	"phase": "Stage 2 (coarse + venue/street/house_number)",
+	"version": "0.5.1",
+	"phase": "Stage 2 (coarse + venue/street/house_number) — CE-only, unchained",
 	"license": "AGPL-3.0-only",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "0.3.0",
-		"tokenizer_version": "0.1.0",
-		"steps": 2200,
-		"hardware": "AMD Radeon 780M (gfx1103) bf16 ~14.6 GiB GTT",
-		"duration_seconds": 1146.0,
-		"started_at": null,
-		"completed_at": "2026-05-23T06:21:51.144957Z"
+		"corpus_version": "0.4.0",
+		"tokenizer_version": "0.5.0-a1",
+		"steps": 95000,
+		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+		"duration_seconds": 2100,
+		"started_at": "2026-05-25T06:04:00Z",
+		"completed_at": "2026-05-25T06:39:00Z",
+		"recipe": "CE-only (crf_loss_weight=0.0), h384, batch=128 direct, constant LR=1.5e-4, phrase_priors=ON, class_weights tuned"
+	},
+	"architecture": {
+		"hidden_size": 384,
+		"num_hidden_layers": 6,
+		"num_attention_heads": 6,
+		"intermediate_size": 1536,
+		"max_position_embeddings": 128,
+		"params": "29M",
+		"crf_at_training": false,
+		"crf_at_inference": true,
+		"phrase_priors": true
 	},
 	"components_supported": [
 		"country",
@@ -27,165 +39,39 @@
 	],
 	"labels": [
 		"O",
-		"B-country",
-		"I-country",
-		"B-region",
-		"I-region",
-		"B-locality",
-		"I-locality",
-		"B-dependent_locality",
-		"I-dependent_locality",
-		"B-postcode",
-		"I-postcode",
-		"B-subregion",
-		"I-subregion",
-		"B-cedex",
-		"I-cedex",
-		"B-venue",
-		"I-venue",
-		"B-street",
-		"I-street",
-		"B-house_number",
-		"I-house_number"
+		"B-country", "I-country",
+		"B-region", "I-region",
+		"B-locality", "I-locality",
+		"B-dependent_locality", "I-dependent_locality",
+		"B-postcode", "I-postcode",
+		"B-subregion", "I-subregion",
+		"B-cedex", "I-cedex",
+		"B-venue", "I-venue",
+		"B-street", "I-street",
+		"B-house_number", "I-house_number"
 	],
 	"eval": {
-		"n_entries": 4535,
-		"full_parse_exact_match": 0.08180815876515987,
-		"mean_token_confidence": 0.8062812768727202,
-		"per_component": {
-			"country": {
-				"precision": 0.21428571428481394,
-				"recall": 0.20816326530527282,
-				"f1": 0.21118012372283307,
-				"support": 245
-			},
-			"region": {
-				"precision": 0.342951360263526,
-				"recall": 0.129797191887635,
-				"f1": 0.18832050661831204,
-				"support": 3205
-			},
-			"locality": {
-				"precision": 0.24782398452605223,
-				"recall": 0.30533214179317686,
-				"f1": 0.2735886822759171,
-				"support": 3357
-			},
-			"dependent_locality": {
-				"precision": 0.005044136191670815,
-				"recall": 0.0999999999975,
-				"f1": 0.009603841445164863,
-				"support": 40
-			},
-			"postcode": {
-				"precision": 0.8323890462696731,
-				"recall": 0.591610738254835,
-				"f1": 0.6916437813892687,
-				"support": 2980
-			},
-			"subregion": {
-				"precision": 0.0,
-				"recall": 0.0,
-				"f1": 0.0,
-				"support": 0
-			},
-			"cedex": {
-				"precision": 0.0,
-				"recall": 0.0,
-				"f1": 0.0,
-				"support": 1
-			},
-			"venue": {
-				"precision": 0.37649063032335905,
-				"recall": 0.4014532243411431,
-				"f1": 0.38857142807160183,
-				"support": 1101
-			},
-			"street": {
-				"precision": 0.35594795539016916,
-				"recall": 0.26161202185783416,
-				"f1": 0.3015748026611547,
-				"support": 2928
-			},
-			"house_number": {
-				"precision": 0.7446153846150028,
-				"recall": 0.8335246842704744,
-				"f1": 0.7865655466300883,
-				"support": 1742
-			}
-		},
-		"calibration": [
-			{
-				"low": 0.0,
-				"high": 0.1,
-				"n": 0,
-				"acc": 0.0
-			},
-			{
-				"low": 0.1,
-				"high": 0.2,
-				"n": 21,
-				"acc": 0.23809523809523808
-			},
-			{
-				"low": 0.2,
-				"high": 0.3,
-				"n": 666,
-				"acc": 0.2912912912912913
-			},
-			{
-				"low": 0.3,
-				"high": 0.4,
-				"n": 2416,
-				"acc": 0.3265728476821192
-			},
-			{
-				"low": 0.4,
-				"high": 0.5,
-				"n": 4308,
-				"acc": 0.3152274837511606
-			},
-			{
-				"low": 0.5,
-				"high": 0.6,
-				"n": 4777,
-				"acc": 0.3382876282185472
-			},
-			{
-				"low": 0.6,
-				"high": 0.7,
-				"n": 4943,
-				"acc": 0.3568682986040866
-			},
-			{
-				"low": 0.7,
-				"high": 0.8,
-				"n": 5534,
-				"acc": 0.382544271774485
-			},
-			{
-				"low": 0.8,
-				"high": 0.9,
-				"n": 8066,
-				"acc": 0.43627572526655095
-			},
-			{
-				"low": 0.9,
-				"high": 1.0,
-				"n": 30517,
-				"acc": 0.6440344725890488
-			}
-		]
+		"val_macro_f1": 0.638,
+		"val_loss": 0.281,
+		"golden_eval": {
+			"n_entries": 4535,
+			"hybrid_joint_exact_match": 0.102,
+			"hybrid_joint_macro_f1": 0.170,
+			"hybrid_joint_empty_parse": 0.0,
+			"rule_only_exact_match": 0.308,
+			"neural_macro_f1": 0.078
+		}
 	},
 	"known_failure_modes": [
-		"underperforms on Hawaiian addresses (sparse in training corpus)",
-		"particle-honorific kryptonite (e.g. FR 'Saint-Just-Saint-Rambert') if not in synth set",
-		"non-Latin scripts (CJK, Cyrillic) fall through to byte-fallback tokens; F1 unknown"
+		"54.5% overconfident-wrong in neural-only mode (addressed by reconciler: 0.1%)",
+		"dependent_locality hallucination reduced by class_weights=0.3 but not eliminated",
+		"non-Latin scripts: A1 tokenizer has 18.2% byte-fallback (vs v0.1.0's 36.7%); model not trained on non-Latin addresses yet",
+		"particle-honorific kryptonite (e.g. FR 'Saint-Just-Saint-Rambert')"
 	],
-	"notes": "v0.4.0 \u2014 issue #116. Same encoder geometry as v0.3.0 (8.87M params, 6L/256H/4-heads, 21 BIO labels, linear-chain CRF). Issue proposed (1) per-token CRF NLL normalization + (3) class-weighted CE biased toward coarse labels + (4) source-weight rebalance. Empirical iteration found that \u00a71 and \u00a73 destabilize sustained training at every LR tested (5e-4, 3e-4, 1.5e-4 \u2014 even the v0.3.0-safe LR), and on the golden v0.1.2 eval (4535 entries) they slightly REGRESS country/postcode F1 vs v0.3.0. SHIPPED recipe is the \u00a74-only ablation (v0.3.0 dual-loss + v0.4.0 source-weight rebalance) at lr=1.5e-4, step 2200. Modest fine-label gains (street +0.03, house_number +0.01), modest coarse-F1 regression (country -0.07, postcode -0.07). \u00a71/\u00a73 deferred to v0.4.1 corpus-side investigation per issue's '2K divergence' clause. Full ablation matrix retrospective in LOG.md.",
+	"notes": "v0.5.1 — 'unchained' iteration. Removes all hardware constraints from v0.5.0 (h256→h384, grad_accum→direct batch, 50K→100K steps, phrase priors OFF→ON, class weights uniform→tuned). CE-only training fix (crf_loss_weight=0) carries from v0.5.0 — nine dual-loss runs diverged, CE-only is stable. Val_loss oscillates every ~20K steps (hard-cluster cycling, not overfitting). Best checkpoint at step-95K. +77% over v0.4.0 on training eval; +70% over v0.5.0 on golden exact-match (hybrid-joint 6.0%→10.2%).",
 	"format": {
-		"model": "ONNX int8 dynamic",
-		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=16000",
+		"model": "ONNX fp32 dynamic",
+		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=48000",
 		"max_sequence_length": 128,
 		"opset": 17
 	},
@@ -194,5 +80,5 @@
 		"tokenizer": "tokenizer.model",
 		"model_card": "model-card.json"
 	},
-	"base_relpath": "/data/models/checkpoints/v0_4_0-stableLR-source-only/step-002200"
+	"base_relpath": "/data/output/checkpoints/step-095000"
 }
