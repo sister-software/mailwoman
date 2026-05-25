@@ -117,7 +117,7 @@ function extractFailureClasses(row: GoldenRow): string[] {
 	const classes: string[] = []
 
 	if (/kryptonite/i.test(notes)) {
-		const match = notes.match(/kryptonite\/([a-z\-]+)/i)
+		const match = notes.match(/kryptonite\/([a-z-]+)/i)
 		if (match) classes.push(`kryptonite/${match[1]}`)
 		else classes.push("kryptonite/general")
 	}
