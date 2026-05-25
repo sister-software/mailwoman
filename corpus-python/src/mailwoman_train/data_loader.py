@@ -32,6 +32,7 @@ from typing import Iterable, Iterator, Sequence
 
 import pyarrow.parquet as pq
 
+from .augment import augment_row
 from .config import Config, DataConfig
 from .labels import IGNORE_INDEX, active_components_present
 from .tokenizer import Tokenizer, encode_row, whitespace_spans
@@ -277,6 +278,8 @@ def iter_rows(
     source_weights: dict[str, float] | None = None,
     coarse_filter: bool,
     row_limit: int | None = None,
+    augment_directional_prob: float = 0.0,
+    augment_region_prob: float = 0.0,
     shuffle_buffer: int = 131072,
 ) -> Iterator[dict]:
     """Yield rows from parquet shards, filtered + shuffled.
@@ -325,22 +328,32 @@ def iter_rows(
             buf.append(next(upstream))
     except StopIteration:
         pass
+    do_augment = augment_directional_prob > 0 or augment_region_prob > 0
+
+    def _emit(row: dict) -> Iterator[dict]:
+        if do_augment:
+            yield from augment_row(row, rng, augment_directional_prob, augment_region_prob)
+        else:
+            yield row
+
     # Stream out: every time we yield, pull the next from upstream into the freed slot.
     for row in upstream:
         j = rng.randrange(len(buf))
         out = buf[j]
         buf[j] = row
-        yield out
-        yielded += 1
-        if row_limit is not None and yielded >= row_limit:
-            return
+        for emitted in _emit(out):
+            yield emitted
+            yielded += 1
+            if row_limit is not None and yielded >= row_limit:
+                return
     # Drain whatever remains in the buffer.
     rng.shuffle(buf)
     for out in buf:
-        yield out
-        yielded += 1
-        if row_limit is not None and yielded >= row_limit:
-            return
+        for emitted in _emit(out):
+            yield emitted
+            yielded += 1
+            if row_limit is not None and yielded >= row_limit:
+                return
 
 
 def iter_encoded(
@@ -365,6 +378,8 @@ def iter_encoded(
         source_weights=cfg_data.source_weights,
         coarse_filter=cfg_data.coarse_filter,
         row_limit=row_limit,
+        augment_directional_prob=cfg_data.augment_directional_prob,
+        augment_region_prob=cfg_data.augment_region_prob,
     ):
         enc = encode_row(
             tokenizer,
