@@ -40,6 +40,6 @@ POI queries are the next frontier for Mailwoman after address parsing stabilizes
 
 ## See also
 
-- [What is an address?](./the-problem/what-is-an-address.md) — the boundary between addresses and POIs
-- [Why a neural parser?](./our-approach/why-a-neural-parser.md) — the architecture that could handle both
-- [The knowledge ladder](./our-approach/the-knowledge-ladder.md) — where query-type classification fits in the pipeline
+- [What is an address?](../the-problem/what-is-an-address.md) — the boundary between addresses and POIs
+- [Why a neural parser?](../our-approach/why-a-neural-parser.md) — the architecture that could handle both
+- [The knowledge ladder](../our-approach/the-knowledge-ladder.md) — where query-type classification fits in the pipeline

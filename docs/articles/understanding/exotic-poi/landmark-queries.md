@@ -80,4 +80,4 @@ The parser handles landmark queries as venue queries: a query with no address-fo
 - [Amenity queries](./amenity-queries.md) — the generic-category version
 - [Transit queries](./transit-queries.md) — transit stations as landmarks
 - [Exotic POI overview](./exotic-point-of-interest-queries.md) — the series index
-- [Resolver and Who's On First](../concepts/resolver-and-wof.md) — the gazetteer that stores landmarks
+- [Resolver and Who's On First](../../concepts/resolver-and-wof.md) — the gazetteer that stores landmarks
