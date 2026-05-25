@@ -128,6 +128,11 @@ jobs:
           # npm publish is skipped.
           MAILWOMAN_SKIP_WEIGHTS_COPY: ${{ !inputs.release_weights && '1' || '' }}
           MAILWOMAN_SKIP_WEIGHTS: ${{ !inputs.release_weights && '1' || '' }}
+          # When release_weights=true AND R2 already placed the files:
+          # point copy-weights at the already-present binaries so it
+          # doesn't try to read from /mnt/playpen/ (which doesn't exist on CI).
+          MAILWOMAN_PUBLISH_MODEL: ${{ inputs.release_weights && 'neural-weights-en-us/model.onnx' || '' }}
+          MAILWOMAN_PUBLISH_TOKENIZER: ${{ inputs.release_weights && 'neural-weights-en-us/tokenizer.model' || '' }}
         run: | # shell
           set -euo pipefail
           ARGS=(--ci --increment="${{ inputs.version }}")
