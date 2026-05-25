@@ -243,7 +243,7 @@ def export_onnx():
     from mailwoman_train.tokenizer import Tokenizer
 
     import torch
-    ck_dir = Path("/data/output/checkpoints/step-050000")
+    ck_dir = Path("/data/output/checkpoints/step-095000")
     tokenizer = Tokenizer(Path("/data/models/tokenizer/v0.5.0-a1/tokenizer.model"))
 
     # Load on CPU — checkpoint was saved from CUDA, export function has no GPU
