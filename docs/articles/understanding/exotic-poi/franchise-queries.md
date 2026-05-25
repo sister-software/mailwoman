@@ -1,0 +1,87 @@
+---
+sidebar_position: 3
+title: Franchise and brand queries
+tags:
+  - domain
+  - venue
+  - international
+  - multilingual
+---
+
+# Franchise and brand queries
+
+A franchise query names a specific chain or brand. The user doesn't want the nearest restaurant — they want the nearest **McDonalds**. The brand name is the query, and the geocoder's job is to resolve it to one or more specific locations.
+
+## What franchise queries look like
+
+| Query | Implicit meaning |
+|-------|-----------------|
+| `Walmart` | Nearest Walmart store |
+| `McDonalds` | Nearest McDonalds restaurant |
+| `Hilton` | Nearest Hilton hotel |
+| `Starbucks` | Nearest Starbucks coffee shop |
+| `7-Eleven` | Nearest 7-Eleven convenience store |
+| `Home Depot near Springfield, IL` | Nearest Home Depot to a specific place |
+| `Walmart Supercenter vs Walmart Neighborhood Market` | A specific sub-brand of the franchise |
+| `McDonalds with PlayPlace` | A franchise location with a specific amenity |
+
+Franchise queries have three components: a **brand name**, an optional **sub-brand** or **feature filter**, and an optional **location constraint**. The brand name is the hard part — it may not match what the franchise calls itself, and it varies by region.
+
+## The brand-name problem
+
+"McDonalds" is the official brand name. Users also search for:
+
+- `McDonalds` (correct spelling)
+- `McDonald's` (possessive, correct per corporate branding)
+- `Mcdonalds` (incorrect but common)
+- `Mickey D's` (slang, US)
+- `Macca's` (slang, Australia)
+- `マクドナルド` (makudonarudo, Japan — full name)
+- `マクド` (makudo, Japan — abbreviated, Kansai region)
+- `McDo` (abbreviated, France/Quebec)
+- `Mek` (abbreviated, German-speaking countries)
+
+A geocoder that only matches "McDonald's" against an exact-string index will miss every slang and regional variant. A geocoder that matches all variants requires an **alias table** mapping user-facing terms to brand identifiers.
+
+The alias table is not a translation table. "Macca's" is not a translation of "McDonald's" — it's a colloquial name used by millions of people. The geocoder doesn't need to translate. It needs to know they refer to the same brand.
+
+## The sub-brand problem
+
+Franchises have sub-brands that differ in meaningful ways:
+
+- **Walmart** has Walmart Supercenter (full grocery), Walmart Discount Store (general merchandise, no grocery), Walmart Neighborhood Market (grocery-only, smaller footprint), and Sam's Club (warehouse membership).
+- **Hilton** has Hilton Hotels & Resorts (full-service), Hilton Garden Inn (mid-scale), Hampton by Hilton (budget), Homewood Suites (extended stay), and several others.
+- **Starbucks** has company-operated stores, licensed stores (in airports, hotels, grocery stores), and Starbucks Reserve Roastery (premium, limited locations).
+
+A query for `Walmart` could mean any of the sub-brands. A query for `Walmart Supercenter` is specific. The geocoder should return the nearest Supercenter for the specific query and the nearest any-Walmart for the generic query. This requires the POI index to include sub-brand classification.
+
+## The location-constraint problem
+
+`Walmart near Springfield, IL` requires two operations:
+
+1. Resolve the location constraint (`Springfield, IL`) to coordinates or an area.
+2. Find the nearest Walmart to that location.
+
+The location constraint is an address or place name — the kind of query Mailwoman already handles. The franchise lookup is new. The composition of "parse the location constraint, then query the franchise index near that location" is a **two-stage resolver** query: resolve the place, then find POIs near it.
+
+This is the same pattern as "gas station near Springfield, IL" (amenity + location constraint) but with a named brand instead of a generic category.
+
+## How traditional geocoders handle franchise queries
+
+**Google's Places API** handles franchise queries through Google's place database. A search for "McDonalds" returns McDonalds locations ranked by proximity and prominence. Google's database includes franchise locations globally, with sub-brand classification (Walmart Supercenter vs Walmart Neighborhood Market) and user-contributed attributes (PlayPlace, drive-through, 24-hour). Google handles spelling variants and some slang through its search model.
+
+**Nominatim** handles franchise queries by matching the brand name against OSM's `name` and `brand` tags. OSM has good coverage of franchise locations in well-mapped areas. However, OSM's brand tagging is inconsistent: some locations are tagged `brand=McDonald's`, others `name=McDonald's`, and the relationship between franchise brand and individual location name varies by mapper. Nominatim does not handle slang or regional variants — `Macca's` returns nothing unless an Australian mapper tagged a location with `alt_name=Macca's`.
+
+**Pelias** indexes franchise locations as part of its OSM and OpenAddresses gazetteers. The same OSM tagging inconsistency applies. Pelias's search treats "McDonalds" as a text token and matches it against name fields. Slang and variants don't match. Sub-brand classification is not modeled.
+
+## What Mailwoman does today
+
+Mailwoman's parser will see `Walmart` and try to classify it as an address component. A lone brand name with no other tokens is a one-token address — the parser may classify it as `locality` (there are towns named Walmart) or `venue` (the venue classifier exists but is weak). The resolver will search WOF for "Walmart" and return nothing — WOF does not index franchise locations as venues.
+
+**Franchise queries are out of scope for Mailwoman's current architecture**, for the same reasons as amenity queries: they require a POI index and a brand alias table. The address parser can handle the location-constraint part (`near Springfield, IL`) but the franchise lookup requires different infrastructure.
+
+## See also
+
+- [Amenity queries](./amenity-queries.md) — the generic-category version
+- [Regional variant queries](./regional-variant-queries.md) — when the same brand has different local names
+- [Exotic POI overview](./exotic-point-of-interest-queries.md) — the series index

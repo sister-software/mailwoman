@@ -1,0 +1,83 @@
+---
+sidebar_position: 5
+title: Landmark queries
+tags:
+  - domain
+  - venue
+  - international
+---
+
+# Landmark queries
+
+A landmark query names a specific, usually unique, place. The user doesn't want the nearest instance of a category — they want **the** Eiffel Tower, **the** Golden Gate Bridge, **the** Empire State Building. The geocoder's job is to recognize the landmark name and resolve it to a single coordinate or small candidate set.
+
+## What landmark queries look like
+
+| Query | Type |
+|-------|------|
+| Eiffel Tower | Named landmark — globally unique |
+| Golden Gate Bridge | Named landmark — unique, but spans a distance |
+| Empire State Building | Named landmark — unique, has a street address |
+| Taj Mahal | Named landmark — unique, well-known |
+| Sydney Opera House | Named landmark — unique, well-known |
+| the White House | Named landmark — unique, politically sensitive |
+| Wrigley Field | Named venue — unique, has a street address |
+| Grand Central Terminal | Named transit + landmark — unique, transit hub |
+| Central Park | Named area — large, multiple entrances |
+| The High Line | Named linear feature — spans a distance |
+| The Las Vegas Strip | Named area — not a single point, not a polygon |
+| Stonehenge | Named landmark — remote, well-known |
+| Mount Everest | Natural feature — summit vs base camp are different locations |
+
+Landmark queries differ from address queries in that the user knows the name of the place but not (or doesn't care about) its address. The geocoder must map the name to a coordinate without the structured components (`street`, `city`, `state`) that address queries provide.
+
+## The landmark taxonomy
+
+### Named structures
+
+Buildings, bridges, towers, monuments: Eiffel Tower, Empire State Building, Big Ben, Colosseum, CN Tower. These are the easiest landmarks to geocode — they typically exist in gazetteers (WOF, OSM, GeoNames) with a single name and coordinate.
+
+The complication: some named structures have the same name in multiple cities. There are replica Eiffel Towers in Las Vegas, Paris (Texas), and Tokyo. The user searching for "Eiffel Tower" from Paris, France wants the real one. The user in Las Vegas wants the replica. The geocoder needs a **prominence signal** — the original Eiffel Tower is more prominent than the replica, and users searching without a location constraint probably mean the prominent one.
+
+### Named natural features
+
+Mountains, rivers, lakes, forests: Mount Everest, the Amazon, Lake Tahoe, Central Park. These are areas or linear features, not points. A geocode for "Central Park" could be the park's centroid, the main entrance, or the Park's visitor center — all different coordinates. A geocode for "the Amazon" is meaningless as a point — the Amazon rainforest spans 5.5 million square kilometers across 9 countries.
+
+The geocoder should return the feature's centroid for map display and the most relevant entrance or access point for navigation. Which one to return depends on the use case, and the geocoder cannot know the use case from the query alone.
+
+### Named venues
+
+Stadiums, theaters, museums, arenas: Wrigley Field, Sydney Opera House, the Louvre, Madison Square Garden. These are easier — they are buildings with street addresses, and gazetteers typically have them. But a venue may have multiple entrances (main entrance, box office, VIP entrance, loading dock), and the geocoder's single coordinate is an implicit choice about which entrance matters.
+
+### Named areas
+
+Neighborhoods, districts, informal regions: SoHo, Shibuya, the French Quarter, Silicon Valley. These are areas, not points, with fuzzy boundaries that change over time and vary by who you ask. A geocode for "SoHo" places a pin at an arbitrary point within a neighborhood whose boundaries are contested.
+
+WOF models neighborhoods as `neighbourhood` placetypes with a representative coordinate and a parent chain (Soho → Manhattan → New York City → New York → United States). The coordinate is approximate. The boundary is not modeled. This is acceptable for most use cases — "find SoHo on a map" — but not for use cases that need boundary-level precision (delivery zones, real estate searches, neighborhood statistics).
+
+### Named linear features
+
+Trails, parkways, pedestrian paths: the High Line, the Appalachian Trail, Route 66, the Las Vegas Strip. These are paths, not points. A geocode at the midpoint of the High Line places the pin in the middle of the park — useful for map display, useless for navigation (the nearest entrance might be a mile away). Linear features need a **point-set representation** (the path as a polyline) and a way to answer "where is the nearest access point?"
+
+## How traditional geocoders handle landmark queries
+
+**Google's Places API** handles landmark queries through its place database. Landmarks are a `type` in the Places taxonomy. Google's results include a `location` (coordinate), `viewport` (bounding box for area landmarks), and `types` (what kind of landmark). Google handles disambiguation through user context (the user searching from Paris gets the real Eiffel Tower; the user in Las Vegas gets the replica).
+
+**Nominatim** handles landmarks through OSM's tagging. Named buildings (`building=yes` + `name=Eiffel Tower`), monuments (`historic=monument`), parks (`leisure=park`), and natural features (`natural=peak`) all appear in OSM. Nominatim's search matches the landmark name against OSM's name tags and returns the best match. The limitation is OSM coverage — well-known landmarks in well-mapped areas are covered; lesser-known landmarks in unmapped areas are not.
+
+**Pelias** indexes WOF venues and landmarks. WOF has good coverage of globally prominent landmarks (Eiffel Tower, Taj Mahal) but spotty coverage of local landmarks (the neighborhood park, the local statue). Pelias's search matches the landmark name against WOF's name fields and returns the best placetype match.
+
+## What Mailwoman does today
+
+Mailwoman's resolver indexes WOF administrative places plus a limited set of WOF venues. Well-known landmarks that exist in WOF as `venue` or `neighbourhood` records are resolvable. Lesser-known landmarks are not.
+
+The parser handles landmark queries as venue queries: a query with no address-format tokens (no numbers, no street suffixes, no state abbreviations) and a known venue name is classified as `kind=venue` and routed to the venue resolver. The venue classifier is weak (F1 ≈ 0.39 in v0.4.0) and improving it is part of the v0.5.0+ roadmap.
+
+**Landmark queries are partially in scope.** The architecture supports them through the venue classifier and WOF venue records. The limitation is data coverage (WOF's venue catalogue is not comprehensive) and classifier quality (the venue classifier needs more training data). Both are being addressed in the current development cycle.
+
+## See also
+
+- [Amenity queries](./amenity-queries.md) — the generic-category version
+- [Transit queries](./transit-queries.md) — transit stations as landmarks
+- [Exotic POI overview](./exotic-point-of-interest-queries.md) — the series index
+- [Resolver and Who's On First](../concepts/resolver-and-wof.md) — the gazetteer that stores landmarks
