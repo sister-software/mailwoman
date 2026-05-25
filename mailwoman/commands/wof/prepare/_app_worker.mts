@@ -3,15 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Piscina worker for WOF prepare — reads GeoJSON files, extracts structured
- *   fields via pluckPlacetypeSpec, and upserts into PlacetypeDataSource (SQLite).
+ *   Piscina worker for WOF prepare — reads GeoJSON files, extracts structured fields via
+ *   pluckPlacetypeSpec, and upserts into PlacetypeDataSource (SQLite).
  *
- *   Receives a batch of file paths (not one at a time) to reduce IPC overhead.
- *   Opens PlacetypeDataSource handles lazily per (placetype, languageCode) and
- *   keeps them warm across the batch.
+ *   Receives a batch of file paths (not one at a time) to reduce IPC overhead. Opens
+ *   PlacetypeDataSource handles lazily per (placetype, languageCode) and keeps them warm across the
+ *   batch.
  */
 
-import { DataSourceCache, pluckPlacetypeSpec, type PlacetypeRecord, type WOFFeature } from "@mailwoman/core/resources/whosonfirst"
+import {
+	DataSourceCache,
+	pluckPlacetypeSpec,
+	type PlacetypeRecord,
+	type WOFFeature,
+} from "@mailwoman/core/resources/whosonfirst"
 import { readFileSync } from "node:fs"
 import { PathBuilder } from "path-ts"
 
