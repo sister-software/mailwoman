@@ -1,0 +1,289 @@
+# Documentation review — audience, structure, and direction
+
+**Date:** 2026-05-25
+**Scope:** All documentation under `docs/` — articles, blog posts, reviews, and site structure. Does not evaluate code quality or model accuracy except where docs reference them.
+
+---
+
+## Executive summary
+
+The Mailwoman documentation is **genuinely strong in depth** but **confused about who it's for and what state it's in**. The domain-education articles (Tier 0, the falsehoods, the alternatives) are thoughtful and well-structured. The blog posts are unusually honest and readable. The architecture documentation (the Knowledge Ladder, the staged pipeline, the Ship of Theseus migration) is the project's best intellectual contribution.
+
+But the docs oscillate between beginning-friendly explainers and dense operator-internal logs, with no clear boundary between the two. Status information is scattered across a dozen files with contradictory markers. The naming conventions — Tier vs Stage vs Phase vs Thread — require a decoder ring to follow. And the blog posts, while individually strong, form a narrative that only makes sense if read in sequence by someone already immersed in the project.
+
+The fix is not to rewrite everything. It's to add **curatorial structure**: a status page, clearer audience segmentation, terminology reconciliation, and three specific new pages that bridge the gap between "I just found this project" and "I understand the deep-dive articles."
+
+---
+
+## What is strong
+
+### 1. The domain-education material (Tier 0 / Tier 0.5)
+
+The "Understanding Mailwoman" track opens with articles that establish the problem before proposing the solution. This is the correct order. The six Tier 0 articles — from "How mail delivery actually works" through "The 90% trap" — build a careful economic and structural case for why address parsing is harder than it looks and why a neural approach is justified. The "case for simple geocoders" appendix is especially well done: it steel-mans the alternatives rather than dismissing them, which gives the project intellectual credibility.
+
+The Tier 0.5 postal concept articles (postcode, ZIP code, concordance, intersection, dual-address) add domain grounding that most geocoding documentation skips. These are concrete, well-exemplified, and genuinely educational.
+
+### 2. The Knowledge Ladder / staged pipeline
+
+The six-stage decomposition — normalize → locale gate → kind classifier → phrase grouper → token classify → sequence correct → reconcile → resolve — is the best design artifact in the project. It maps cleanly to the "learn distributions, look up the world, compose constraints" principle. The Knowledge Ladder article (`the-knowledge-ladder.md`) explains not just what each stage does but _why it belongs there and not somewhere else_. This is valuable for both implementers and architecture reviewers.
+
+### 3. Ship of Theseus coexistence
+
+The policy registry — per-component, per-locale authority with explicit fallback modes — is conservative in the best sense. The docs explain why postcodes should stay deterministic, why the CRF mask is hand-encoded rather than learned, and why the neural model earns authority one component at a time. This is how to avoid replacing a debuggable rule parser with an opaque model that regresses in production.
+
+### 4. The blog posts
+
+The five blog posts are an unusually honest public engineering log. The v0.4.0 retrospective doesn't hide the regressions behind aggregate metrics — it buckets false negatives, identifies the cosine-LR meta-bug, and separates real regressions from adversarial eval artifacts. The "two voices arguing" post is the best piece of beginner-friendly ML communication in the repository — it explains gradient dominance, dual-loss conflict, and bisect-by-elimination debugging in terms a curious software engineer can follow.
+
+The "taming WOF" post fills a genuine gap: there is no other developer-facing guide to the practical gotchas of using Who's On First as a geocoder component. It's the kind of content that attracts inbound traffic from search.
+
+### 5. Browser-first constraint as a forcing function
+
+The ~60MB cold-load budget is used as an architectural guardrail throughout the docs. It prevents scope creep into server-only research territory and keeps the model size modest. The live demo at `mailwoman.sister.software/demo` is the project's best proof-of-work, and the docs reference it consistently.
+
+### 6. The schema-as-contract discipline
+
+`SCHEMA.md` as the single source of truth for `ComponentTag`, with the "written rationale in commit" rule, is excellent infrastructure hygiene. The forward-compatibility listing of JP tags forces the type system to handle future expansion without a rewrite. The BIO labeling explanation is clear and complete.
+
+---
+
+## What needs work
+
+### 1. There is no canonical status page
+
+A reader arriving at the docs has no way to answer "what actually works right now?" The information exists but is scattered across:
+
+- `plan/README.md` — says "Phases 0-3 shipped" but the status list is a bullet-point blob
+- `v0-5-0-shipped.md` — detailed but buried in the plan directory
+- `how-it-works-now.md` — says what the pipeline looks like, but mixes shipped and in-progress features
+- `how-it-will-work.md` — lists what's in progress, some of which contradicts `how-it-works-now.md`
+- Several blog posts — written from a specific moment, not maintained
+- `TRAINING_ENV.md`, `VERDICT_SMOKES.md`, `STAGES.md` — each with its own status header, some stale
+
+**Fix: Create one operational status page** (`/docs/status`) that tells a reader in 60 seconds:
+
+- What ships in the npm packages today
+- What model weights exist and what their F1 limits are
+- What works in the browser demo
+- What is behind a feature flag
+- What is scaffold-only with no training run
+- What is in active experimentation
+- What is planned but not started
+
+This page should be the first thing linked from the "Docs" navbar. It replaces the scattered status fragments and becomes the single place to update when something ships or regresses.
+
+### 2. Audience segmentation is unclear
+
+The docs mix at least four distinct audiences without clear boundaries:
+
+| Audience                           | What they need                                                                                 | Where they find it now                                                                    |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Curious software engineer**      | Understand the problem, see if the approach is credible, maybe try the demo                    | Tier 0 + blog posts (works well, but the blog assumes serial reading)                     |
+| **Potential integrator**           | Know what ships, what the API looks like, what accuracy to expect, how to install              | Nowhere consolidated. `how-it-works-now.md` is closest but doesn't give API surface.      |
+| **ML practitioner / peer project** | Architecture decisions, training methodology, corpus pipeline, eval discipline                 | Plan/reference docs + concept articles (good depth, but status confusion hurts)           |
+| **Operator / contributor**         | Training recipes, smoke discipline, corpus build commands, GPU provisioning, release checklist | `OPERATIONS.md`, `TRAINING_ENV.md`, `VERDICT_SMOKES.md`, phase files — good but scattered |
+
+The current structure — `understanding/`, `concepts/`, `plan/`, `evals/`, `retrospectives/` — maps loosely to these audiences but doesn't signpost the mapping. A reader in the "potential integrator" bucket has to read `SCHEMA.md` and `VERDICT_SMOKES.md` to find the npm install command.
+
+**Fix:** Add audience signposts at the top of each top-level section. Something like:
+
+> **Who this is for:** ML engineers evaluating the training approach. If you want to install the parser, see [Getting started](/docs/getting-started).
+
+### 3. Naming conventions are a decoder ring
+
+The project uses **Tier**, **Stage**, **Phase**, and **Thread** as organizational concepts. A reader encounters all four within the first 20 minutes of reading:
+
+- **Stage** — a runtime pipeline stage (Stage 1: Normalize, Stage 2: Locale gate, ...)
+- **Tier** — a model vocabulary expansion (Tier 1 = coarse labels, Tier 2 adds street/venue/house_number, Tier 3 future = attention/po_box)
+- **Phase** — a plan milestone (Phase 0: Foundation, Phase 1: Corpus, Phase 2: Training, ...)
+- **Thread** — a v0.5.0 parallel workstream (Thread A1: tokenizer retrain, Thread B: kryptonite catalogue, ...)
+
+The docs acknowledge this problem — the glossary notes the Stage/Tier rename occurred on 2026-05-22 — but the old usage persists in shipped filenames (`stage2-step-001800-eval.md`, `PHASE_2_training.md` referencing "Stage 2" in the old sense). The `STAGES.md` document still bears a header that says "stages 1/2/2.5/candidate-list are unbuilt" while later sections say they shipped.
+
+A first-time reader reading about the "staged pipeline" (six runtime stages) and then encountering "Stage 2 label expansion" (Tier 2 model vocabulary) in the plan docs has no way to resolve the conflict except by finding the rename note buried in the glossary.
+
+**Fix:** A terminology reconciliation sweep. Pick one namespace and stick to it everywhere that isn't a historical artifact with a date stamp. Rename the eval filenames. Update `STAGES.md` header. Add a prominent note in `plan/README.md` about the old naming.
+
+### 4. The blog posts are a serial narrative, not standalone articles
+
+Each blog post assumes the reader has read the previous one. This works for a dedicated subscriber but is hostile to search-driven traffic. A reader who lands on "two voices arguing" from a "machine learning debugging for beginners" search gets:
+
+- References to "the v0.4.0 campaign" and "the v0.5.0 C-train" without definition
+- Assumptions that the reader knows what a "training run," "divergence," and "smoke test" mean in this project's context
+- Links forward and backward in a chain without a clear "start here" anchor
+
+The content itself is strong — the "two voices" post in particular could be a standout piece of ML communication. But it needs a standalone preamble for readers who found it via search.
+
+**Fix:** Add a 2-3 sentence "If you found this via search" preamble to each post, linking to a glossary or the project home. Something like:
+
+> **If you're new here:** Mailwoman is an open-source address parser. This post is about a training problem we debugged. The TL;DR is that two competing objectives inside the model were fighting each other. You don't need to know the project to follow the debugging story. Jump to [What we're building](#what-were-building-in-one-paragraph) for the 1-paragraph version.
+
+### 5. The blog vs docs boundary is blurred
+
+Several blog posts contain substantive technical explanations that belong in the docs:
+
+- The v0.4.0 retrospective contains the definitive explanation of the cosine-LR meta-bug, the NAD source-rebalance effect, and the false-negative bucketing methodology — all referenced from `how-it-works-now.md` via external links
+- The "taming WOF" post is the project's best explanation of Who's On First's structural gotchas, but it lives in the blog, not in the concepts articles
+- The "two voices" post contains the clearest explanation of dual-loss gradient dominance, which the concepts articles reference but don't fully replicate
+
+This means the most accessible and well-written versions of key technical explanations are in a part of the site (the blog) that readers don't treat as reference material.
+
+**Fix:** Either promote the blog posts' technical sections into the concept articles, or add prominent "this is covered in more detail in [blog post]" links from concept articles. The "taming WOF" post in particular should have a companion concept article in `concepts/` that extracts the factual content (schema, gotchas, access patterns) without the narrative framing.
+
+### 6. The plan/reference docs are operator-internal material published as public docs
+
+The `plan/reference/` directory contains documents (`OPERATIONS.md`, `TRAINING_ENV.md`, `VERDICT_SMOKES.md`, `ARCHITECTURE.md`) that are written for someone operating the training pipeline — GPU provisioning, container bootstrap, smoke discipline, release checklists. These are valuable to have, but publishing them alongside user-facing docs creates confusion:
+
+- A potential integrator reading `ARCHITECTURE.md` gets a detailed monorepo layout, ONNX quantization strategy, and Python training pyramid — none of which helps them install the parser
+- The `ARCHITECTURE.md` still describes a 47-label schema and old `packages/` layout that doesn't match the shipped products
+- The spaCy comparison in `ARCHITECTURE.md` is interesting to ML practitioners but bewildering to a software engineer evaluating the project
+
+**Fix:** Add a clear "Who this is for" header to each reference doc. Consider tagging them with a `🧪 operator` sidebar badge. Update `ARCHITECTURE.md` to reflect the current shipped state (or add a dated status header at the top noting what's outdated).
+
+### 7. The review/retrospective layer is voluminous and overlapping
+
+Three full project-direction reviews were written on 2026-05-24 — by Codex, DeepSeek, and a Claude×DeepSeek follow-up — plus a v0.4.0 ablation retrospective and articles on specific regressions. Together they represent ~60KB of analysis on training divergence. The content is strong, but the volume is hard to navigate:
+
+- The Codex review covers architecture evaluation, status doc drift, and a validation sprint plan
+- The DeepSeek review covers the same territory with a different emphasis, plus adds the capacity-wall hypothesis
+- The Claude×DeepSeek follow-up refines four points from both reviews, adds three blind spots, and records the gradient-norm probe result that falsified the dual-loss decoupling hypothesis
+- The v0.4.0 ablation retrospective covers the same training divergence from a different angle
+- The blog posts cover the same events in narrative form
+
+A reader trying to understand "what went wrong with v0.4.0/v0.5.0 training" has five entry points with overlapping but different information.
+
+**Fix:** Consolidate into a single "training divergence investigation" document that references the blog posts and the reviews as historical artifacts but presents the current understanding in one place. The reviews can remain as-is with date stamps — they're useful as a record of the thinking — but add a README in `reviews/` that says "start here for the current state of understanding."
+
+### 8. Missing pages
+
+There are several pages a new reader would expect that don't exist:
+
+- **Getting started / Installation.** There's no page that says "here's how to install Mailwoman and parse your first address." The npm package is referenced (`@mailwoman/neural-weights-en-us`) but the actual install command and a 5-line code example are nowhere in the docs.
+- **API reference.** The staged pipeline contract and schema are documented, but there's no page that says "here's the `parse()` function signature, here's the return type, here's what `AddressNode` contains."
+- **What you can use today.** A reader evaluating the project needs to know: can I install this and parse US addresses right now? What accuracy should I expect? What doesn't work? The answer is "yes, with caveats" — but that answer isn't clearly stated anywhere.
+- **Demo explanation.** The demo page (`/demo`) runs in the browser with no explanation of what it's doing, what model it's using, or what the confidence numbers mean. A short "About this demo" section would bridge the gap.
+
+**Fix:** Add these four pages. They're the top four things a potential user wants.
+
+---
+
+## Specific document-by-document notes
+
+### `understanding/README.md`
+
+- **Good:** The reading-order guidance ("if you are sceptical about the whole project, read Tier 0") is excellent onboarding.
+- **Issue:** The article numbering is fragile — numbers 1-38 will need updating every time an article is added or reordered.
+- **Issue:** Article 13 "What is an address?" is listed as "moved from concepts" but the reader doesn't benefit from knowing the editorial history.
+
+### `understanding/glossary.md`
+
+- **Good:** Comprehensive, well-cross-referenced, defines terms on first non-obvious use.
+- **Issue:** Doesn't list "Tier," "Phase," or "Thread" — the three terms most likely to confuse a reader.
+- **Issue:** The Tier/Stage rename is noted under "**Tier 1 / Tier 2 / Tier 3**" but the heading is still "T" — a reader browsing alphabetically won't find it.
+
+### `concepts/README.md`
+
+- **Good:** The dependency map (mermaid flowchart) is useful.
+- **Issue:** Several articles described as "Suggested reading order" entries are flagged as "moved to understanding/" — the gap in numbering is confusing.
+- **Issue:** Article shape description (5-10 minutes, motivation, explanation, diagram, code example, source pointers, see also) is a good template but not consistently followed.
+
+### `plan/README.md`
+
+- **Good:** The hard constraints (TypeScript-first, coexistence not replacement, locale scope) are clear and well-reasoned.
+- **Issue:** The status block is dense and mixes shipped, in-progress, and planned items without visual distinction.
+- **Issue:** The "What failure looks like" section is under-specified — "Tokenizer drift" is a good risk to name but the doc doesn't say how drift is detected or prevented.
+
+### `v0-5-0-shipped.md`
+
+- **Good:** The thread table with PR links is the cleanest status artifact in the docs.
+- **Issue:** Buried at `plan/phases/v0-5-0-shipped.md` — a reader has to know it exists.
+- **Issue:** Still references B2 as "still cooking" (2600+ rows expected at time of writing). That's now stale.
+
+### `ARCHITECTURE.md`
+
+- **Good:** The "Anti-patterns to avoid" section is valuable infrastructure hygiene.
+- **Issue:** Describes the torch shape as "Encoder-only + classification head" with 47 BIO labels and 16K tokenizer — the shipped product uses 21 labels and an A1 tokenizer context. The headnote says "training run that exercises them (C-train) is in progress" — that's now a known-diverged state.
+- **Issue:** The spaCy comparison, multi-head extension, and casual descriptions sections are ~60% of the document but will be read by almost nobody who needs to understand the architecture.
+
+### `SCHEMA.md`
+
+- **Good:** The rationale for specific choices (why `dependent_locality`, why split `street_prefix`/`street_prefix_particle`) is exactly the kind of documentation that prevents future mistakes.
+- **Issue:** The "47-label schema" comment in the BIO section doesn't match the 21-label shipped vocabulary. Both numbers should be documented with a note about which is which.
+
+### Blog posts — collective notes
+
+- **Good:** The writing quality is high. The voice is honest (the v0.4.0 retrospective explicitly says we shipped with regressions and here's why). The technical explanations don't condescend.
+- **Issue:** Posts use internal shorthand (`§1`, `§3`, `Thread C-s`, `kryptonite catalogue`) without defining these references in each post. The "bisect-by-elimination" post references "yesterday's post" — the narrative chain is serial.
+- **Issue:** The blog feed page shows all five in reverse chronological order with no grouping or "start here" marker. A "Featured" or "Start here" post would help.
+- **Issue:** The tags system (`tags.yml`) is elaborate (29 tags for 5 posts) but underused — many tags apply to only one post and don't enable useful filtering.
+
+### Review documents — collective notes
+
+- **Good:** The Codex and DeepSeek reviews are unusually thorough. Publishing them is honest and useful for anyone evaluating the project's self-awareness.
+- **Issue:** The three 2026-05-24 reviews (Codex, DeepSeek, follow-up) cover overlapping territory. The follow-up is the most current but references both predecessors — a reader needs to read all three to follow the thread.
+- **Issue:** The reviews reference specific blog posts, concept articles, plan docs, and code files by relative path — fragile if the docs are reorganized.
+
+---
+
+## Recommended next steps
+
+### Immediate (this week)
+
+1. **Create `/docs/status`** — the single operational status page. Use the thread table from `v0-5-0-shipped.md` as the template. Include:
+   - npm packages and versions
+   - Model weight versions and known F1 limits
+   - Browser demo capability
+   - Feature flag status (opt-in, default, scaffold-only, not started)
+   - Active experimentation
+   - Known regressions with honest severity ratings
+
+2. **Reconcile terminology** in the top-level docs:
+   - Rename eval filenames from `stage2-*` to `tier2-*`
+   - Update `STAGES.md` header to remove stale status
+   - Add "Tier," "Phase," "Thread" to glossary
+   - Add a "Naming conventions" section to `plan/README.md`
+
+3. **Add "Who this is for" headers** to:
+   - `ARCHITECTURE.md`
+   - `OPERATIONS.md`
+   - `TRAINING_ENV.md`
+   - `VERDICT_SMOKES.md`
+   - `STAGES.md`
+
+4. **Add search-engine preambles** to the top 3 blog posts (v0.4.0 ablation, two-voices, taming-wof)
+
+### Short-term (next 2 weeks)
+
+5. **Create `/docs/getting-started`** — installation, 5-line code example, pointer to demo, pointer to API reference, honest accuracy notes
+
+6. **Create `/docs/api`** — `parse()` signature, return type, `AddressNode` shape, configuration options, locale selection
+
+7. **Extract "taming WOF" content** into a `concepts/whosonfirst-gotchas.md` article
+
+8. **Consolidate training divergence story** into a single `concepts/training-divergence-investigation.md` that references the blog posts and reviews as historical artifacts
+
+9. **Add an "About this demo" section** to `/demo` — what model, what browser is doing, what the colors mean
+
+### Medium-term (next month)
+
+10. **Group blog posts** on the blog index page — a "Start here" featured post, chronological otherwise
+
+11. **Trim review/retrospective overlap** — archive the earlier reviews, keep the follow-up synthesis as the canonical version
+
+12. **Audit all status markers** across the docs and align them with the status page
+
+13. **Consider a separate "operator" docs section** — move `TRAINING_ENV.md`, `OPERATIONS.md`, `VERDICT_SMOKES.md`, and the phase files into a dedicated section with its own sidebar and audience tag
+
+---
+
+## One meta-observation
+
+The most honest sentence in the entire documentation is in `CONTEXT.md`:
+
+> "The gap: there is no widely adopted neural address parser shipped as a library. Everyone either uses 2018-era CRF (libpostal) or rolls their own."
+
+That gap is the project's reason to exist. The docs should make this sentence louder — it's the answer to the first question every visitor has: "why should I care about this project?"
+
+The second question is "can I use it today?" The docs should answer that honestly too: "yes, with these caveats, and here's what's coming." The status page is the vehicle for that answer.
+
+The third question is "should I bet on this?" The Knowledge Ladder architecture, the Ship of Theseus migration, the honest retrospectives, and the browser-first constraint all make a strong case. The docs just need to present that case more directly to someone who isn't already inside the project's reasoning.
