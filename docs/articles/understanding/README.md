@@ -13,35 +13,35 @@ This track is for readers who want to understand **why** Mailwoman exists, **wha
 
 These six articles establish the domain. If you are sceptical that address parsing needs a neural model, start here.
 
-1. **[How mail delivery actually works](./how-mail-delivery-works.md)** — the postal system is already fuzzy. It tolerates ambiguity through human intervention.
-2. **[How humans break addresses](./how-humans-break-addresses.md)** — the failure taxonomy. Real input is messier than any database expects.
-3. **[The database fallacy](./the-database-fallacy.md)** — why "just store all addresses" is economically infeasible and geometrically wrong.
-4. **[The tokenization tautology](./the-tokenization-tautology.md)** — why traditional rule-based parsers hit a structural ceiling.
-5. **[The 90% trap](./the-90-percent-trap.md)** — why 90% geocoder coverage is deceptively expensive.
-6. **[Why a neural parser?](./why-a-neural-parser.md)** — the bitter-lesson argument applied to address parsing. Bridges Tier 0 → Tier 1.
+1. **[How mail delivery actually works](./the-problem/how-mail-delivery-works.md)** — the postal system is already fuzzy. It tolerates ambiguity through human intervention.
+2. **[How humans break addresses](./why-its-hard/how-humans-break-addresses.md)** — the failure taxonomy. Real input is messier than any database expects.
+3. **[The database fallacy](./why-its-hard/the-database-fallacy.md)** — why "just store all addresses" is economically infeasible and geometrically wrong.
+4. **[The tokenization tautology](./why-its-hard/the-tokenization-tautology.md)** — why traditional rule-based parsers hit a structural ceiling.
+5. **[The 90% trap](./why-its-hard/the-90-percent-trap.md)** — why 90% geocoder coverage is deceptively expensive.
+6. **[Why a neural parser?](./our-approach/why-a-neural-parser.md)** — the bitter-lesson argument applied to address parsing. Bridges Tier 0 → Tier 1.
 
 ### Tier 0.5 — Postal address concepts (articles 8–12)
 
 These five articles explain the fundamental concepts of postal addressing — the things a parser actually parses and a resolver actually resolves. New as of May 2026.
 
-7. **[What is a postcode?](./what-is-a-postcode.md)** — postcodes are routing instructions, not geographic areas. International comparison.
-8. **[What is a ZIP Code and how is it structured?](./what-is-a-zip-code.md)** — the US 11-digit system in detail. Why US-trained parsers fail on non-US postcodes.
-9. **[What is a concordance?](./what-is-a-concordance.md)** — how the resolver validates that parsed components form a coherent real-world place.
-10. **[What is an intersection address?](./what-is-an-intersection.md)** — crossing streets as locations. Why not all addresses have building numbers.
-11. **[How can a building have two addresses?](./how-can-a-building-have-two-addresses.md)** — mailing vs 911 vs utility vs management. An address is a protocol, not a property.
+7. **[What is a postcode?](./the-problem/what-is-a-postcode.md)** — postcodes are routing instructions, not geographic areas. International comparison.
+8. **[What is a ZIP Code and how is it structured?](./the-problem/what-is-a-zip-code.md)** — the US 11-digit system in detail. Why US-trained parsers fail on non-US postcodes.
+9. **[What is a concordance?](./the-problem/what-is-a-concordance.md)** — how the resolver validates that parsed components form a coherent real-world place.
+10. **[What is an intersection address?](./the-problem/what-is-an-intersection.md)** — crossing streets as locations. Why not all addresses have building numbers.
+11. **[How can a building have two addresses?](./the-problem/how-can-a-building-have-two-addresses.md)** — mailing vs 911 vs utility vs management. An address is a protocol, not a property.
 
 ### Tier 1 — The architecture (articles 13–20)
 
 These describe Mailwoman's design. Most existed before May 2026 and have been reordered to follow the domain articles.
 
-12. **[What is an address?](./what-is-an-address.md)** — the data model, moved from concepts.
-13. **[Addresses that break geocoders](./addresses-that-break-geocoders.md)** — concrete failure examples, moved from concepts.
-14. **[From Pelias to Mailwoman](./from-pelias-to-mailwoman.md)** — the short historical bridge.
-15. **[How it used to work](./how-it-used-to-work.md)** — Mailwoman v1 (rule-based) in detail.
-16. **[How it works now](./how-it-works-now.md)** — the current rule + neural hybrid.
-17. **[How it will work](./how-it-will-work.md)** — the near-future roadmap.
-18. **[The knowledge ladder](./the-knowledge-ladder.md)** — the decomposition principle behind the staged pipeline.
-19. **[The staged pipeline](./the-staged-pipeline.md)** — the Mailwoman runtime end-to-end.
+12. **[What is an address?](./the-problem/what-is-an-address.md)** — the data model, moved from concepts.
+13. **[Addresses that break geocoders](./why-its-hard/addresses-that-break-geocoders.md)** — concrete failure examples, moved from concepts.
+14. **[From Pelias to Mailwoman](./our-approach/from-pelias-to-mailwoman.md)** — the short historical bridge.
+15. **[How it used to work](./our-approach/how-it-used-to-work.md)** — Mailwoman v1 (rule-based) in detail.
+16. **[How it works now](./our-approach/how-it-works-now.md)** — the current rule + neural hybrid.
+17. **[How it will work](./our-approach/how-it-will-work.md)** — the near-future roadmap.
+18. **[The knowledge ladder](./our-approach/the-knowledge-ladder.md)** — the decomposition principle behind the staged pipeline.
+19. **[The staged pipeline](./our-approach/the-staged-pipeline.md)** — the Mailwoman runtime end-to-end.
 
 ### Reference
 
@@ -49,42 +49,42 @@ These describe Mailwoman's design. Most existed before May 2026 and have been re
 
 ### Appendix
 
-21. **[Why not just use Google's API?](./why-not-google-api.md)** — pricing, terms, lock-in, and when renting is the right choice.
-22. **[Why not use geocode.earth?](./why-not-geocode-earth.md)** — the open-source hosted alternative and its Pelias parser ceiling.
+21. **[Why not just use Google's API?](./alternatives/why-not-google-api.md)** — pricing, terms, lock-in, and when renting is the right choice.
+22. **[Why not use geocode.earth?](./alternatives/why-not-geocode-earth.md)** — the open-source hosted alternative and its Pelias parser ceiling.
 
 ### The case for simple geocoders
 
 _Steel-manning the reasonably defensible compromises that work for most applications._
 
-23. **[Overview](./the-case-for-simple-geocoders.md)** — when simple is the right choice, and when it isn't.
-24. **[Normalize to match](./simple-normalize-to-match.md)** — strip, lowercase, fuzzy-match against a known database.
-25. **[Postcode-only](./simple-postcode-only.md)** — extract the postcode, centroid the result.
-26. **[Gazetteer-first](./simple-gazetteer-first.md)** — skip parsing, treat as information retrieval.
-27. **[Regex-anchored fields](./simple-regex-fields.md)** — extract the 3-4 fields you care about, ignore the rest.
-28. **[Locality-only](./simple-locality-only.md)** — find the city, centroid it.
-29. **[Human-in-the-loop](./simple-human-in-the-loop.md)** — don't parse, suggest, let the user confirm.
-30. **[Close-enough](./simple-close-enough.md)** — define your precision requirement, pick the cheapest approach, stop.
+23. **[Overview](./alternatives/the-case-for-simple-geocoders.md)** — when simple is the right choice, and when it isn't.
+24. **[Normalize to match](./alternatives/simple-normalize-to-match.md)** — strip, lowercase, fuzzy-match against a known database.
+25. **[Postcode-only](./alternatives/simple-postcode-only.md)** — extract the postcode, centroid the result.
+26. **[Gazetteer-first](./alternatives/simple-gazetteer-first.md)** — skip parsing, treat as information retrieval.
+27. **[Regex-anchored fields](./alternatives/simple-regex-fields.md)** — extract the 3-4 fields you care about, ignore the rest.
+28. **[Locality-only](./alternatives/simple-locality-only.md)** — find the city, centroid it.
+29. **[Human-in-the-loop](./alternatives/simple-human-in-the-loop.md)** — don't parse, suggest, let the user confirm.
+30. **[Close-enough](./alternatives/simple-close-enough.md)** — define your precision requirement, pick the cheapest approach, stop.
 
 ### Falsehoods about addresses
 
 _Inspired by and citing Michael Tandy's [original catalogue](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/). Each article takes one category of falsehood, explains how traditional geocoders handled it, and what Mailwoman's neural approach changes._
 
-31. **[Overview](./falsehoods-about-addresses.md)** — the taxonomy and why it matters for Mailwoman.
-32. **[Numbers in addresses](./falsehoods-numbers.md)** — zero, negative, fractions, duplicates, ranges.
-33. **[Street names](./falsehoods-streets.md)** — missing suffixes, numbered streets, recurring names, no streets at all.
-34. **[Postcodes](./falsehoods-postcodes.md)** — leading zeros, multi-city, per-building, missing postcodes.
-35. **[Administrative hierarchy](./falsehoods-hierarchy.md)** — no states, no counties, duplicate cities, city-states.
-36. **[Address format](./falsehoods-format.md)** — non-ASCII, variable ordering, special characters, changing addresses.
-37. **[Shapes and dimensions](./falsehoods-shapes.md)** — not a point, not a polygon, not a building, not at ground level, not unique per coordinate.
-38. **[Precision and frontages](./falsehoods-proximity.md)** — not one correct coordinate, not always "close enough," not necessarily the front door.
+31. **[Overview](./why-its-hard/falsehoods-about-addresses.md)** — the taxonomy and why it matters for Mailwoman.
+32. **[Numbers in addresses](./why-its-hard/falsehoods-numbers.md)** — zero, negative, fractions, duplicates, ranges.
+33. **[Street names](./why-its-hard/falsehoods-streets.md)** — missing suffixes, numbered streets, recurring names, no streets at all.
+34. **[Postcodes](./why-its-hard/falsehoods-postcodes.md)** — leading zeros, multi-city, per-building, missing postcodes.
+35. **[Administrative hierarchy](./why-its-hard/falsehoods-hierarchy.md)** — no states, no counties, duplicate cities, city-states.
+36. **[Address format](./why-its-hard/falsehoods-format.md)** — non-ASCII, variable ordering, special characters, changing addresses.
+37. **[Shapes and dimensions](./why-its-hard/falsehoods-shapes.md)** — not a point, not a polygon, not a building, not at ground level, not unique per coordinate.
+38. **[Precision and frontages](./why-its-hard/falsehoods-proximity.md)** — not one correct coordinate, not always "close enough," not necessarily the front door.
 
 ## Reading order
 
 If you are **sceptical about the whole project**, read Tier 0 in order (articles 2–6). It should take about 45 minutes. If you are still sceptical after that, the project has failed to make its case — open an issue.
 
-If you are **new to geocoding but curious**, start with [What is an address?](./what-is-an-address.md) (article 13), then read Tier 0. The data-model article grounds the domain arguments.
+If you are **new to geocoding but curious**, start with [What is an address?](./the-problem/what-is-an-address.md) (article 13), then read Tier 0. The data-model article grounds the domain arguments.
 
-If you are **from the Pelias world**, read [From Pelias to Mailwoman](./from-pelias-to-mailwoman.md) (article 14), then [How it works now](./how-it-works-now.md) (article 16). Those two articles bridge your existing knowledge to the current system.
+If you are **from the Pelias world**, read [From Pelias to Mailwoman](./our-approach/from-pelias-to-mailwoman.md) (article 14), then [How it works now](./our-approach/how-it-works-now.md) (article 16). Those two articles bridge your existing knowledge to the current system.
 
 If you want to **go deeper**, see the [`concepts/`](../concepts/README.md) track — per-topic deep dives into tokenization, BIO labels, the CRF decoder, ONNX runtime, training pipeline, corpus construction, and more.
 

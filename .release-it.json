@@ -31,9 +31,8 @@
 	},
 	"hooks": {
 		"before:init": [
-			"echo 'Pre-flight: compile + test + copy-weights'",
+			"echo 'Pre-flight: compile + copy-weights (tests skipped — PR CI already validated)'",
 			"yarn compile",
-			"yarn ci:test",
 			"node scripts/copy-weights.mjs"
 		],
 		"after:bump": "yarn prettier --write --log-level warn -u package.json '**/package.json'",

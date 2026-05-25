@@ -2,7 +2,8 @@
 # Each tag listed here can be used in frontmatter as `tags: [key]`.
 # Tags NOT listed here will trigger the onInlineTags behavior (warn by default).
 
-# ── Category ──────────────────────────────────────────────
+#region Category
+
 domain:
   label: Domain
   description: Articles explaining the address-parsing problem space — why addresses are hard, how the postal system works, what users actually type.
@@ -27,7 +28,28 @@ falsehoods:
   label: Address falsehoods
   description: Articles cataloguing the falsehoods programmers believe about addresses, citing Michael Tandy's original catalogue.
 
-# ── Classification ─────────────────────────────────────────
+retrospective:
+  label: Retrospective
+  description: Post-mortems of incidents, bugs, and failures — what happened, why, and how it was fixed.
+
+geocoding:
+  label: Geocoding
+  description: Articles about geocoding — the process of turning parsed addresses into lat/lon coordinates.
+
+
+
+beginner:
+  label: Beginner-friendly
+  description: Articles that assume no prior knowledge of AI, machine learning, or geocoding — ideal for newcomers.
+
+advanced:
+  label: Advanced
+  description: Articles that dive deep into technical details, diagnostics, and design decisions — ideal for experienced practitioners.
+
+#endregion
+
+#region Classification
+
 rule-based:
   label: Rule-based classifiers
   description: Articles about regex, dictionary, and heuristic classifiers inherited from Pelias and Mailwoman v1.
@@ -48,7 +70,10 @@ resolver:
   label: Resolver / WOF
   description: Articles about the Who's On First gazetteer, concordance scoring, and resolver candidate ranking.
 
-# ── Infrastructure ─────────────────────────────────────────
+#endregion
+
+#region Infrastructure
+
 corpus:
   label: Corpus pipeline
   description: Articles about the training-data pipeline — adapters, alignment, synthesis, Parquet shards.
@@ -61,7 +86,10 @@ tokenizer:
   label: Tokenization
   description: Articles about SentencePiece tokenization, byte-fallback, and multi-script handling.
 
-# ── Phrase kind / component ────────────────────────────────
+#endregion
+
+#region Phrase
+
 street:
   label: Street components
   description: Articles focused on street names, building numbers, street suffixes, and intersection addresses.
@@ -90,7 +118,10 @@ intersection:
   label: Intersection addresses
   description: Articles about crossing-street addresses and street-pair location descriptions.
 
-# ── Locale ─────────────────────────────────────────────────
+#endregion
+
+#region Locale
+
 en-us:
   label: United States (en-US)
   description: Articles with US-specific content — ZIP codes, USPS delivery, NAD, TIGER, state abbreviations.
@@ -107,7 +138,10 @@ international:
   label: International
   description: Articles about non-US addressing — comparative postcode systems, global gazetteers, locale-specific formats.
 
-# ── Language / script ──────────────────────────────────────
+#endregion
+
+#region Language
+
 multilingual:
   label: Multilingual
   description: Articles about addresses in multiple languages, mixed-language input, and locale detection.
@@ -116,7 +150,12 @@ non-latin:
   label: Non-Latin scripts
   description: Articles about CJK, Cyrillic, Arabic, Hangul, and other non-Latin address formats.
 
-# ── Theme ──────────────────────────────────────────────────
+#endregion
+
+#region Theme
+
 motivation:
   label: Project motivation
   description: Articles making the case for Mailwoman — why neural, why TypeScript, why a staged pipeline.
+
+#endregion

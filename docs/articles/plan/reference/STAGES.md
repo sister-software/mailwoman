@@ -2,13 +2,19 @@
 
 The formal contract for the six-stage runtime pipeline. Pairs with [`INTERFACES.md`](./INTERFACES.md) (classifier-level contracts) and [`SCHEMA.md`](./SCHEMA.md) (component vocabulary) — this document covers the **stage boundaries** that compose them into a working pipeline.
 
-For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`](../../understanding/the-staged-pipeline.md). For the bitter-lesson-safe sub-system used by stages 2 and 2.5, read [`QUERY_SHAPE.md`](./QUERY_SHAPE.md).
+For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`](../../understanding/our-approach/the-staged-pipeline.md). For the bitter-lesson-safe sub-system used by stages 2 and 2.5, read [`QUERY_SHAPE.md`](./QUERY_SHAPE.md).
 
 ## Status
 
 - **Source of truth:** this file is the canonical interface contract for the runtime pipeline. Any stage implementation must conform.
-- **Last edited:** 2026-05-22.
-- **Implementation state:** stages 3, half of 4, the solver portion of 5, and a thin 6 ship today. Stages 1, 2, 2.5, the span-re-reader piece of 4, and the candidate-list API on 6 are unbuilt. Each stage's section below has a **Today / Future** breakdown.
+- **Last edited:** 2026-05-25.
+- **Implementation state (frozen 2026-05-25):**
+  - **Shipped and wired as default:** Stage 1 (normalize), Stage 2.5 (kind classifier), Stage 2.7 (phrase grouper, rule-based), Stage 3 (neural classifier + CRF Viterbi), Stage 4a (CRF structural mask), Stage 6 (WOF SQLite resolver).
+  - **Shipped, opt-in behind feature flag:** Stage 5 (joint reconcile — requires `forceJointReconcile` flag and classifier with `parseWithLogits`).
+  - **Shipped but not wired as factory default:** Stage 2 (locale gate workspace exists, not in `createRuntimePipeline` factory).
+  - **Scaffold only:** Stage 4b (span re-reader — unbuilt).
+  - **In-flight:** CE-only C-train producing new Stage 3 weights (step 6800/50K, val_macro_f1=0.496).
+  - **In-flight:** CE-only C-train producing new Stage 3 weights (step 6800/50K, val_macro_f1=0.496).
 
 ## The pipeline
 
@@ -105,7 +111,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput
 
 **Future.** Share dictionaries with corpus synthesis (synthesis is the _inverse_ — canonical → variants; normalize is variants → canonical). Add per-locale case-folding edge cases (Turkish `İ`, Greek final sigma). Bidirectional offset lookup (`raw[i] → normalized[i]`).
 
-**Failure classes owned.** Tokenization and whitespace traps (#3); Unicode/transliteration encoding half (#6). See [`addresses-that-break-geocoders`](../../understanding/addresses-that-break-geocoders.md).
+**Failure classes owned.** Tokenization and whitespace traps (#3); Unicode/transliteration encoding half (#6). See [`addresses-that-break-geocoders`](../../understanding/why-its-hard/addresses-that-break-geocoders.md).
 
 **Open questions.**
 
@@ -168,7 +174,7 @@ export interface LocaleGate {
 }
 ```
 
-**Today.** `@mailwoman/locale-gate` workspace shipped 2026-05-23. Rule-based: caller-hint precedence at confidence 1.0; otherwise derived from `QueryShape.characterClass` (CJK → ja-JP, Cyrillic → ru-RU, Arabic → ar) + known-format hits (us_zip4 → en-US, uk_postcode → en-GB, ca_postcode → en-CA, jp_postcode → ja-JP). Ambiguous 5-digit → en-US at low confidence with FR/DE as alternatives. Always decisive (fallback en-US at 0.3). Wired as the default `detectLocale` in `mailwoman/runtime-pipeline.ts::createRuntimePipeline`.
+**Today.** `@mailwoman/locale-gate` workspace shipped 2026-05-23. Rule-based: caller-hint precedence at confidence 1.0; otherwise derived from `QueryShape.characterClass` (CJK → ja-JP, Cyrillic → ru-RU, Arabic → ar) + known-format hits (us_zip4 → en-US, uk_postcode → en-GB, ca_postcode → en-CA, jp_postcode → ja-JP). Ambiguous 5-digit → en-US at low confidence with FR/DE as alternatives. Always decisive (fallback en-US at 0.3). Not yet wired as default in `createRuntimePipeline` — callers must pass `detectLocale` explicitly. The coordinator falls back to caller-trust stub.
 
 **Future.** Replace the rule scorers with a small character-level classifier (~100 KB) trained on the first 200 characters of input. Per-locale corpus rows already carry the `locale` field — supervised training data is free. Below the confidence floor, the gate signals an ensemble run downstream.
 
@@ -592,7 +598,7 @@ These don't belong to one stage; they affect composition.
 - [`SCHEMA.md`](./SCHEMA.md) defines the **component vocabulary** (`ComponentTag`, `BioLabel`). Both files key off it.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) describes the **existing system shape** narratively. Some of its diagrams predate this staging picture; reconcile gradually.
 - [`QUERY_SHAPE.md`](./QUERY_SHAPE.md) defines the **`QueryShape` sub-system** in detail. This file references it but does not duplicate.
-- [`concepts/the-staged-pipeline`](../../understanding/the-staged-pipeline.md) is the **public-facing narrative** version. This file is the implementer's contract.
+- [`concepts/the-staged-pipeline`](../../understanding/our-approach/the-staged-pipeline.md) is the **public-facing narrative** version. This file is the implementer's contract.
 
 ## What's next
 

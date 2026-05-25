@@ -59,5 +59,5 @@ The reconciler weighs phrase proposals against classifier proposals against reso
 ## See also
 
 - [`PHASE_8_v0_5_0_fresh_slate.md`](./PHASE_8_v0_5_0_fresh_slate.md) — the v0.5.0 master plan
-- [`the-knowledge-ladder.md`](../../understanding/the-knowledge-ladder.md) — where Stage 2.7 sits in the layered decomposition
+- [`the-knowledge-ladder.md`](../../understanding/our-approach/the-knowledge-ladder.md) — where Stage 2.7 sits in the layered decomposition
 - [`STAGES.md`](../reference/STAGES.md) — the formal pipeline contract

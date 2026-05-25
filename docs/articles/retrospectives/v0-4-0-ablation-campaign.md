@@ -7,7 +7,7 @@ title: v0.4.0 ablation campaign
 
 **Iteration window**: 2026-05-23, ~9 hours wall-clock, single Radeon 780M iGPU. **Outcome**: shipped a smaller subset of the planned recipe than intended; identified one process meta-bug; deferred two of three training-side improvements to v0.4.1.
 
-This is the technical postmortem. For the public-facing narrative, see the corresponding [blog post](/blog/v0-4-0-ablation-campaign). For the line-by-line iteration log entry, see [PHASE_2_training.md's v0.4.0 entry](../plan/phases/PHASE_2_training.md).
+This is the technical postmortem. For the public-facing narrative, see the corresponding [blog post](pathname:///blog/2026-05-24-bisect-by-elimination). For the line-by-line iteration log entry, see [PHASE_2_training.md's v0.4.0 entry](../plan/phases/PHASE_2_training.md).
 
 ## Setup
 
@@ -190,7 +190,7 @@ Issue #116's "≥2 of 4 axes improved" metric: only fine F1 cleanly improved (st
 
 ## See also
 
-- [Blog post](/blog/v0-4-0-ablation-campaign) — public-facing writeup
+- [Blog post](pathname:///blog/2026-05-23-v0-4-0-ablation-campaign) — public-facing writeup
 - [`PHASE_2_training.md` v0.4.0 entry](../plan/phases/PHASE_2_training.md) — canonical iteration log
 - [Issue #116](https://github.com/sister-software/mailwoman/issues/116) — original work plan
 - `corpus-python/scripts/diagnose_regression.py` — categorized FP/FN bucketer (in v0.4.0 branch)

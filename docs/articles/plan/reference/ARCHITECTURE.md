@@ -1,5 +1,18 @@
 # Architecture
 
+:::info Historical planning document
+
+Written for Phase 2 planning (2026-05-18). Some details are outdated:
+
+- **Label count:** describes a 47-label schema; shipped weights use 21 BIO labels (Tier 2)
+- **Tokenizer:** describes 16K vocab; the A1 48K tokenizer exists but is not yet used in a stable classifier
+- **Repo layout:** references a `packages/` directory; the current repo uses root workspaces
+- **Model config:** 6-layer/256d/4-head is accurate for current shipped weights
+
+**See [`/docs/status`](/docs/status) for current shipped state.**
+
+:::
+
 ## System shape
 
 ```

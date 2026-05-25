@@ -1,0 +1,256 @@
+---
+sidebar_position: 14
+title: Addresses that break geocoders
+tags:
+  - domain
+  - concepts
+  - reference
+  - street
+  - locality
+  - postcode
+  - venue
+  - international
+  - multilingual
+  - non-latin
+---
+
+# Addresses that break geocoders
+
+[What is an address?](../the-problem/what-is-an-address.md) covered the data model. This article goes the other way: a tour of address shapes that consistently break parsers and resolvers, with concrete examples for each. If you are building or evaluating a geocoder, this is the failure-mode catalogue worth keeping next to your test suite.
+
+The categories overlap — many real-world addresses hit two or three at once. That compounding is part of the difficulty.
+
+## 1. Ambiguous locality names
+
+Many city names are reused across regions. The string `"Paris"` could plausibly mean Paris, France or Paris, Texas. Without a region or country signal, no parser can disambiguate; without a population prior, no resolver can either.
+
+```
+Paris, Texas
+Shanghai, Illinois
+Lebanon, Kansas
+Moscow, Idaho
+Ontario, California
+Georgia, Vermont
+Mexico, New York
+Jordan, Minnesota
+Cairo, Georgia
+Rome, Georgia
+Palestine, Texas
+Delhi, New York
+Peru, Indiana
+Norway, Maine
+Athens, Texas
+Manchester, Vermont
+Dublin, Ohio
+Hollywood, Florida
+Memphis, Texas
+Birmingham, Michigan
+```
+
+What breaks: the parser may correctly identify `"Paris"` as a locality but the resolver, lacking the `"Texas"` qualifier or trained without a "US bias", will return Paris, France.
+
+Mailwoman's defence: the parser does not resolve. It hands `locality=Paris, region=Texas` to the resolver, which scores candidates with `(locality match) × (region agreement) × (population prior)`. Paris, Texas wins because the region matches even though Paris, France has a higher population. The risk is when the region is missing — `"Paris"` alone resolves to France because population dominates.
+
+## 2. Repeated admin names
+
+A subclass of #1: the locality and one of its parent admins share a name. Often legitimate (the city is the namesake of the country/state/province), but it confuses both regex-based parsers and naive resolvers that deduplicate by string match.
+
+```
+New York, New York
+Luxembourg, Luxembourg
+Singapore, Singapore
+Panama City, Panama
+Quebec, Quebec
+Kuwait City, Kuwait
+Oklahoma City, Oklahoma
+Guatemala City, Guatemala
+Ho Chi Minh City, Ho Chi Minh
+Tunis, Tunis
+```
+
+What breaks: a parser that deduplicates "this token is already labelled" may drop the second `"New York"` because it already saw the first. A resolver that joins `locality + region` for ranking may double-count.
+
+Mailwoman's defence: both rule and neural classifiers can emit multiple proposals on the same token sequence — the solver expects spans, not unique strings. `B-locality I-locality , B-region I-region` is the BIO sequence that handles this.
+
+## 3. Tokenization and whitespace traps
+
+Strings that look like one token to a human but multiple tokens to a tokenizer (or vice versa).
+
+```
+12 1/2 Main St
+12½ Main St
+0007 Bond St
+One Infinite Loop
+4-6-8 King Rd
+101A½ Elm St
+Apt #000B
+Basement Rear Unit C
+Rear Rear House
+Lot 0 County Road 00
+No Fixed Address
+Corner of 5th and Main
+Opposite old post office
+Behind gas station
+```
+
+What breaks: regex-based house-number classifiers expect `\d+`. They miss `One`, `12½`, `12 1/2`, `4-6-8`. Leading zeros (`0007`) may match a postcode regex by accident. "No Fixed Address" and "Behind gas station" are legitimate inputs in some workflows but are not addresses at all — they describe locations.
+
+Mailwoman's defence: the subword tokenizer ([Tokenization](../../concepts/tokenization.md)) does not require numeric tokens; the neural classifier can learn that `"One"` in `"One Infinite Loop"` is a `B-house_number`. The "Corner of 5th and Main" case maps to the `intersection_a` / `intersection_b` tags in the component vocabulary ([What is an address?](../the-problem/what-is-an-address.md#the-data-model)). The "Behind gas station" landmark case has no good answer — that is reverse-geocoding territory, not parsing territory.
+
+## 4. Street/locality collisions
+
+A string that contains a famous locality name but is being used as part of a venue or street name, not as the locality itself.
+
+```
+New York, New York Steakhouse, Las Vegas
+Paris Cafe, Paris, Ontario
+London Drugs, Calgary
+Berlin Cafe, Berlin, Connecticut
+Tokyo Sushi, Sydney
+Manhattan Apartments, Kansas City
+Broadway at Times Square Apartments, Reno
+Chinatown Mall, Mexico City
+Oxford Commons, Oxford, Mississippi
+Quebec Grill, Quebec City
+```
+
+What breaks: a dictionary-based locality classifier (the standard Pelias approach) fires on `"London"` in `"London Drugs"` and on `"Paris"` in `"Paris Cafe"`. Now the parser has two locality proposals — one for the venue's name and one for the actual locality — and the solver may pick the wrong one.
+
+This is the bitter-lesson case for address parsing. A rule classifier cannot tell the difference; it needs context. A transformer encoder ([Neural classification](../../concepts/neural-classification.md)) sees the whole sentence and can learn that `"Paris"` followed by `"Cafe"` is part of a `venue` span, while `"Paris"` preceded by a comma and followed by `"Ontario"` is a `locality` span. The "Buffalo, NY / Buffalo Wild Wings, Buffalo, NY" pair is in Mailwoman's adversarial eval set for exactly this reason.
+
+## 5. Numeric chaos
+
+House numbers and street numbers that violate the assumptions baked into regex classifiers.
+
+```
+1 Infinite Loop
+0 Avenue des Champs-Élysées
+00 County Road 000
+404 Not Found Ln
+65535 State Hwy 65535
+12345 123rd St
+7 Seven St
+42 Wallaby Way
+1600 Pennsylvania Ave NW
+221B Baker St
+742 Evergreen Terrace
+```
+
+What breaks:
+
+- `0`, `00`, `0000` — many house-number classifiers reject zero, but `"0 Avenue des Champs-Élysées"` is the literal address of the Place de la Concorde end of the avenue.
+- `221B` — the trailing letter throws off `^\d+$` regexes.
+- `12345 123rd St` — five-digit numbers are postcode-shaped; this address would have a postcode classifier fire on the house number.
+- `65535 State Hwy 65535` — the same five-digit number appears twice, in two different roles.
+- `404 Not Found Ln` — a real street name that happens to be a software meme; tokenizers and downstream consumers should not treat it as an error code.
+
+Mailwoman's defence: rule classifiers emit proposals with confidence; the solver picks self-consistent combinations. A `"12345 123rd St"` with the postcode classifier firing on `"12345"` AND `"123rd"` will lose to the solution where `"12345"` is the house number and `"123rd St"` is the street, because the latter is more internally consistent.
+
+## 6. Unicode and transliteration traps
+
+Non-Latin scripts, diacritics, and mixed encodings. These break tokenizers that assume ASCII and resolvers that compare strings without normalisation.
+
+```
+ul. Łódzka 12, Łódź
+Straße des 17. Juni, Berlin
+İstanbul Cd. No:1, İzmir
+São João del-Rei
+Nguyễn Huệ, Hồ Chí Minh City
+Kraków, Małopolskie
+Beograd / Белград
+東京駅1-9-1
+서울특별시 중구 세종대로 110
+دبي، شارع الشيخ زايد
+```
+
+What breaks:
+
+- **Case folding.** `"İstanbul"` lowercased in Turkish locale gives `"i̇stanbul"` (with a combining dot above); in en-US locale it gives `"i̇stanbul"` as well, but a naive `String.toLowerCase()` may strip the dot. A resolver comparing the lowercased input to its index may miss the match.
+- **NFC vs NFD normalisation.** `"São"` can be encoded as one codepoint (`S + ã + o`) or two (`S + a + ̃ + o`). Same string, different bytes. Resolvers that index in one form and query in the other miss matches.
+- **Dual scripts.** `"Beograd / Белград"` is the same place written twice. WOF (and Mailwoman's resolver) carries multi-language names so both spellings resolve to the same WOF ID.
+- **Right-to-left scripts.** Arabic addresses written in RTL plus mixed Latin numerals create renderer and tokenizer headaches even when the underlying data is clean.
+
+Mailwoman's defence: the subword tokenizer falls back to byte-level encoding for unknown characters ([Tokenization](../../concepts/tokenization.md#byte-fallback)), so the pipeline does not crash. But the model was trained on en-US + fr-FR data; non-Latin scripts pass through the tokenizer but the model has no signal to label them. Per-locale weights packages are how this scales — Japan and Korea each need their own training run.
+
+## 7. Language-switch hybrids
+
+Addresses that mix two languages mid-string. Often because of translation artifacts, sometimes because of bilingual cities (Montreal, Brussels), sometimes because of expat communities re-translating.
+
+```
+Calle Ocho Street
+Rue de Main Street
+Avenida Avenue 9
+Via Roma Road
+Strada Street 5
+улица Pushkin 10
+Avenida de la Constitución Blvd
+Rue King George
+Callejón Dead End Rd
+طريق الملك Fahd Rd
+```
+
+What breaks: `"Calle Ocho Street"` has both `"Calle"` (street prefix in Spanish) and `"Street"` (street suffix in English). A street classifier that looks for either may emit two overlapping proposals; one that requires exactly one may emit none. `"улица Pushkin 10"` mixes Cyrillic prefix + Latin street name + numeric.
+
+Mailwoman's defence: the neural classifier sees the whole string and can learn that the pattern `[street-prefix] [proper-noun] [street-suffix]` is a single `street` span regardless of language. In practice this requires training examples in the corpus; today's en-US + fr-FR coverage handles English/French hybrids reasonably but not Spanish/English or Arabic/English.
+
+## 8. Administrative nightmares
+
+Place names that are popular enough to exist in dozens of jurisdictions. Even with a region qualifier, ambiguity often remains.
+
+```
+Springfield
+San José
+Santa Maria
+Georgetown
+Franklin
+Fairview
+Mount Pleasant
+Clifton
+Salem
+Newport
+```
+
+What breaks: there are 41 Springfields in the United States alone. `"Springfield"` with no qualifier is undecidable. `"Springfield, MA"` narrows it to one but `"Springfield, IL"` or `"Springfield, MO"` are equally valid. Famously the running joke of The Simpsons is that the show's Springfield is never identified by state.
+
+A resolver that picks the most populous candidate when no region is provided will pick Springfield, MO (~170K residents). That may not be what the consumer wanted. There is no honest fix without more context (IP geolocation, user-supplied country, prior place mentions).
+
+## How these failure modes compound
+
+```mermaid
+flowchart TD
+    A["Real-world input"] --> B{"Disambiguating context<br>present?"}
+    B -->|"Yes"| C["Most parsers + resolvers cope"]
+    B -->|"No"| D["Failure mode cascade"]
+    D --> E["Parser splits wrong"]
+    E --> F["Resolver picks high-population<br>candidate"]
+    F --> G["Wrong country / region returned"]
+    G --> H["Consumer plots marker<br>5,000 miles off"]
+```
+
+The compounding is what makes geocoding hard. A small parser error becomes a large resolver error because the resolver has many places to choose from. A small resolver error becomes a large consumer-visible error because coordinates are precise.
+
+Geocoders that report their failures honestly — surface low confidence, return candidate lists instead of a single answer, expose the disambiguating context they used — are easier to work with than ones that always return a confident point. Mailwoman's demo includes a `FailureDiagnostic` panel that surfaces "why is this empty / wrong" precisely because the alternative is silent miss.
+
+## Summary — what mostly defeats geocoders
+
+| Failure class                           | Pattern                         | Mailwoman's situation today                                          |
+| --------------------------------------- | ------------------------------- | -------------------------------------------------------------------- |
+| Locality/business ambiguity             | "Paris Cafe in Paris"           | neural classifier learns context; needs more training                |
+| Duplicate names across countries/states | "Springfield"                   | unfixable without context; honest answer is a candidate list         |
+| Multilingual scripts                    | CJK, Arabic, Cyrillic           | byte-fallback prevents crash; per-locale weights needed for accuracy |
+| Inconsistent abbreviations              | "Avenue" vs "Ave" vs "Av"       | synthesis pass in corpus build covers common cases                   |
+| Whitespace/punctuation variance         | "12 1/2 Main St"                | subword tokenizer is robust; CRF helps span recovery                 |
+| Unofficial landmarks                    | "Behind gas station"            | out of scope for parsing; reverse-geocoding only                     |
+| Nested POI names                        | "New York, New York Steakhouse" | neural classifier can learn; rule classifiers cannot                 |
+| Missing admin hierarchy                 | "Springfield" alone             | resolver returns top-k; consumer disambiguates                       |
+| Unicode normalisation                   | NFC vs NFD                      | resolver normalises before lookup                                    |
+| Transliteration drift                   | "Beograd / Белград"             | WOF carries multi-language names; resolves to same ID                |
+
+A geocoder that handles half of these well is already useful. A geocoder that handles all of them does not exist.
+
+## See also
+
+- [What is an address?](../the-problem/what-is-an-address.md) — the data model these failure modes operate against
+- [Rule-based classifiers](../../concepts/rule-based-classifiers.md) — what regex-and-dictionary approaches can and cannot do
+- [Neural classification](../../concepts/neural-classification.md) — why a transformer encoder helps with the context-dependent cases
+- [Resolver and Who's On First](../../concepts/resolver-and-wof.md) — how the candidate-search side handles ambiguity

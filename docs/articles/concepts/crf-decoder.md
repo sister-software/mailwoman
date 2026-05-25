@@ -111,17 +111,11 @@ The v3.0.0 fix was to hand-weight the CRF NLL down: `loss = ce + 0.05 × crf_nll
 
 v0.4.0 ([issue #116](https://github.com/sister-software/mailwoman/issues/116)) replaces the hand-weight with **per-token CRF NLL normalization** — dividing the CRF loss by the sequence length. The two terms then have comparable magnitudes naturally, and the hand-tuning goes away.
 
-## The runtime gap (and why it's only half a fix today)
+## The runtime gap (resolved in v0.4.0)
 
-The CRF is used during training and during the evaluation script. Both run in Python with PyTorch. The production runtime is JavaScript, and JavaScript currently does **per-token argmax**, not Viterbi.
+Originally, the CRF was used during training and in the Python evaluation script, but the JavaScript production runtime used per-token argmax — not Viterbi. This meant the model's emissions improved from CRF-aware training, but the runtime couldn't exploit the trained transition matrix.
 
-This means:
-
-- The model's emissions (the per-token probabilities) are better than they would be without the CRF, because the encoder was trained to produce emissions that work well with the CRF.
-- But the runtime is not exploiting the trained transition matrix.
-- The "Saint Petersburg" win on the live demo is partial — better than v0.2.0 (because emissions improved) but not as good as a Viterbi decode would be.
-
-v0.4.0 ports the Viterbi loop to JavaScript and exports the transition matrix as part of the ONNX bundle. This is one of the simpler items in the v0.4.0 plan but it has outsized impact for the visible behaviour.
+As of v0.4.0 (shipped 2026-05-23), the Viterbi decoder has been ported to JavaScript: `neural/viterbi.ts` with a frozen BIO structural transition mask. The mask is hand-encoded from the label vocabulary — no retraining required. This makes orphan-I sequences (like `Saint → Petersburg` being split) structurally impossible at the JavaScript runtime, regardless of which weights are loaded. Composes additively with learned CRF transitions when a future weights release ships them.
 
 ## Where this lives in the code
 
@@ -129,7 +123,8 @@ v0.4.0 ports the Viterbi loop to JavaScript and exports the transition matrix as
 - **Transition mask construction:** `build_bio_transition_mask` in the same file
 - **Training-time use:** `corpus-python/src/mailwoman_train/model.py` (`MailwomanCoarseEncoder.forward` computes both CE and CRF NLL when in training mode)
 - **Inference-time use (Python):** `MailwomanCoarseEncoder.predict` calls `crf.viterbi_decode`
-- **Inference-time use (JavaScript):** not yet — see v0.4.0
+- **Inference-time use (JavaScript):** `neural/viterbi.ts` — shipped v0.4.0 (2026-05-23) with frozen BIO structural mask
+- **Future:** learned CRF transitions from a future weights release, composable with the existing structural mask
 
 ## See also
 

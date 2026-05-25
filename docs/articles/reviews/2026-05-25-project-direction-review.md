@@ -1,0 +1,221 @@
+# Project direction review — 2026-05-25
+
+**Scope:** Evaluates Mailwoman's strategic direction, technical decisions, and next steps. Complements [the docs/audience review](./2026-05-25-docs-audience-review.md) which focuses on documentation structure and presentation.
+
+---
+
+## The project, in one paragraph
+
+Mailwoman is a TypeScript-first address parser that runs in Node and the browser. It combines rule-based classifiers (postcodes, state abbreviations, dictionary lookups) with a small neural model (9M-parameter encoder-only transformer) that handles contextual ambiguity. A staged pipeline — normalize, locale/kind classify, phrase group, token classify, sequence correct, reconcile, resolve — decomposes the problem by knowledge layer. Rule and neural classifiers coexist via a per-component policy registry; the neural model earns authority one component at a time (Ship of Theseus). The gazetteer is Who's On First, delivered as a SQLite database queried through a browser-compatible WASM runtime.
+
+---
+
+## What is strong
+
+### The architecture is genuinely well-decomposed
+
+The Knowledge Ladder — "learn distributions, look up the world, compose constraints" — is the correct decomposition for address parsing. The line between what the model should learn (per-token semantic type distributions, contextual disambiguation) and what should be looked up (world hierarchy, place IDs, parent chains) is drawn in the right place. The phrase grouper (boundary discovery as a pre-classification stage) closes a structural weakness in BIO-only tagging that most NER systems in this domain don't address.
+
+The reconciliation stage (joint decoding over classifier top-K, phrase proposals, and resolver candidates with concordance scoring) is the architectural idea with the highest ceiling. If it works, it solves the kryptonite cases (NY-NY Steakhouse, Paris Texas, Saint Petersburg FL) that no per-stage argmax pipeline can handle. The fact that it was designed as additive — it only re-ranks existing candidates, never deletes them — is the right safety property for a system that must degrade gracefully.
+
+### The Ship of Theseus coexistence model is wise risk management
+
+Neural models for address parsing are unproven in production. Shipping a policy registry that defaults to `rule_only` and lets the neural model earn authority per-component, per-locale, gated on golden-set metrics, is the correct migration strategy. It means the model can ship below parity (which it currently is on several components) without breaking anything.
+
+The explicit refusal to replace rule classifiers that are already correct (postcode regex, state abbreviation dictionaries) is also correct. The bitter lesson says "don't hand-engineer what you can learn," not "learn things that are already solved."
+
+### The bilingual US + FR scope is realistic
+
+Starting with English (US) and French addresses constrains the problem in useful ways: both use Latin script, both have strong open government address data, and together they exercise the pipeline's locality-handling (FR has `de la`/`du`/`des` street particles, CEDEX postal routing, arrondissements) without requiring the tokenizer to handle CJK or RTL scripts. The plan to validate the architecture against Japanese (Phase 6) as a stress test — block-based addressing, no streets, different administrative hierarchy — is the right way to prove generality without over-scoping v1.
+
+### The browser-first constraint is a forcing function
+
+Shipping the entire parser (25MB model + 35MB gazetteer) as an in-browser demo with zero server dependency is the strongest possible argument that this is not a research project. It forces the model to stay small, the resolver to stay efficient, and the runtime to stay library-shaped rather than service-shaped.
+
+### The training infrastructure is industrial-scale
+
+The corpus pipeline — 11 TypeScript adapters, 677M aligned rows, 0.03% quarantine rate, locality-aware splits, Parquet shards with license tags, source-weight balancing — is serious data engineering. The decision to train in Python (HuggingFace + PyTorch) and export to ONNX for TypeScript inference uses each ecosystem for what it's best at. The `operational-status` block in `plan/README.md` is the right framing for iteration cadence.
+
+### The retrospective and diagnostic culture is strong
+
+The v0.4.0 retrospective doesn't hide failure behind aggregate F1. It buckets false negatives, identifies the cosine-LR smoke meta-bug, and separates real regressions from adversarial eval artifacts. The May 2026 training divergence investigation — gradient-norm probe, bisect-by-elimination, the cooperative-vs-conflict regime model — is the kind of systematic debugging that ML projects need and rarely do in public. The `VERDICT_SMOKES.md` discipline doc is process infrastructure that will pay off in every future training cycle.
+
+---
+
+## What is unproven or concerning
+
+### Architecture is ahead of integration
+
+The docs describe a nearly complete v0.5.0 pipeline, but the runtime's default path does not use the strongest parts:
+
+- `reconcileSpans` (Stage 5 joint decoding) is opt-in and tested only with mocked classifier top-K
+- Phrase proposals from Stage 2.7 are collected but not fed into the classifier
+- The classifier does not emit real top-K candidates in the TypeScript runtime
+- The Locale gate exists as a workspace but is not wired as the factory default
+
+The architectural thesis — "candidate generation + joint coherence beats per-stage argmax" — has not been proven end-to-end with real model output. This is the largest product risk. Until the reconcile path runs against real classifier output and demonstrates a measurable improvement on the kryptonite catalogue, the project is shipping architectural scaffolding without validating its core hypothesis.
+
+### Training instability is the central blocker and is not yet resolved
+
+Across two model versions (v0.4.0, v0.5.0), nine training runs have diverged with the same fingerprint: loss descends through warmup, bottoms out at a useful basin (train_loss 0.31–0.69), then climbs catastrophically under sustained peak learning rate. The gradient-norm probe revealed that the CRF-NLL gradient dominates the CE gradient by 8–20× at the inflection point — the CRF is pulling the model toward a degenerate attractor that CE opposes.
+
+The CE-only repair (drop CRF loss from training, keep CRF as inference-time structural decoder) is the current experiment. The "two voices arguing" blog post reports that the CE-only experiment passed its initial smoke — the model trained past step 2000 without divergence, achieving the project's best validation accuracy to date (0.444). The full 50K-step run is in progress.
+
+If CE-only trains stably to completion, the training instability is resolved and the focus shifts to quality — class weights, source weights, longer schedules, all of which were unsafe under dual-loss. If CE-only also diverges at higher step counts, the investigation shifts to the corpus/tokenizer pair (A1 tokenizer + corpus-v0.4.0 transliteration data).
+
+### Model quality is not yet at production level
+
+The shipped v0.4.0 model has:
+
+| Component    | F1   | Assessment                                                |
+| ------------ | ---- | --------------------------------------------------------- |
+| house_number | 0.79 | Usable                                                    |
+| postcode     | 0.69 | Marginal (regressed vs v0.3.0's 0.76)                     |
+| venue        | 0.39 | Low                                                       |
+| street       | 0.30 | Low                                                       |
+| locality     | 0.27 | Low (rule classifiers carry this in practice)             |
+| country      | 0.21 | Low (mostly adversarial transliteration evaluation noise) |
+| region       | 0.19 | Low                                                       |
+
+Full parse exact match on 4,535 golden entries is ~0.08 — meaning the model gets every component right on only 8% of addresses. In practice, the hybrid system (rule classifiers carrying coarse components, neural on house_number and street) performs better than these per-tag neural numbers suggest, but the neural model alone is nowhere near production-quality on most components.
+
+This is not a fatal observation — the project is early-stage and the architecture is additive. But it means the project's "what you can use today" story is limited, and that limitation is not clearly communicated in the docs.
+
+### The v0.5.0 scope bundle was too many variables
+
+v0.5.0 combined five architectural changes (new tokenizer, expanded corpus with 78K LLM-generated rows, phrase-prior input layer, hidden-size bump, and the reconcile stage) into one release. The training divergence forced a bisect to isolate which change was the destabilizer — exactly the "one change at a time" lesson the v0.4.0 retrospective itself recommended. The project learned this lesson in v0.4.0, acknowledged it in the retrospective, and then repeated the pattern in v0.5.0.
+
+To be fair: the v0.5.0 threads were designed to be parallel where possible, and the scaffolds (C-s, D-s) were correctly pulled out as code-only changes that don't affect training. But the training-side changes — tokenizer + corpus + phrase priors + hidden size — were tested together before any of them were proven safe individually. The resulting bisect ladder cost four GPU-hours and delayed the CE-only experiment that would have been cheaper to run first.
+
+### Synthetic corpus validation catches alignment but not semantics
+
+The substring-match validator (which caught ~1.1% of LLM-generated transliteration rows as misaligned) is correctly treated as load-bearing. But it only proves annotated values appear in raw strings — it does not prove labels are complete, semantically correct, or distributionally sane. The ~73K DeepSeek-generated transliteration pairs are the most likely destabilizer in the v0.5.0 training divergence (they're the one remaining untested variable in the bisect), and they entered the corpus with only alignment validation, not semantic spot-checking.
+
+LLM data is useful for adversarial cases and transliteration coverage, but it should enter as a controlled curriculum with explicit batch-weight caps, source-specific gradient monitoring, and semantic spot-check sampling — not as 73K rows mixed uniformly into the training distribution.
+
+---
+
+## Technical decision assessment
+
+### Keep
+
+- TypeScript-first runtime with Python-only training
+- ONNX + SentencePiece model packaging
+- Locale-specific weight packages
+- Parse/resolve separation
+- WOF resolver with top-K alternatives
+- Component schema as guarded contract (`SCHEMA.md`)
+- Rule/neural policy registry (Ship of Theseus)
+- JS Viterbi structural mask
+- QueryShape as cheap structural prior
+- Phrase grouper as boundary-discovery stage
+- Constant-LR verdict smokes with full-run batch matching
+- Corpus quarantine, source manifests, eval ledgers
+
+### Change or tighten
+
+- **Scope bundling discipline.** v0.4.0's retrospective said "one change at a time." v0.5.0 repeated the mistake. Each future release should ship one training-side change, with a bisect plan documented before the run starts.
+- **Synthetic data as curriculum, not expansion.** DeepSeek-generated data should enter with explicit batch-weight caps, source-specific gradient dashboards, and semantic spot-check sampling before corpus promotion.
+- **Integration gate before training gate.** The reconcile path should be proven against v0.4.0 weights before any new training run is promoted. If joint decode doesn't beat argmax on the kryptonite catalogue with existing weights, retraining won't fix it.
+- **Status page as gate.** No new training run should begin until the status page reflects the current state. Stale docs produce stale decisions.
+
+### Defer (until training stabilizes)
+
+- Learned phrase grouper (v0.5.1 scope)
+- Span re-reader (v0.6.0 scope)
+- Hidden-size bump
+- Tier 3 label expansion (attention, po_box, POI venue subtyping)
+- Japan locale validation (Phase 6)
+- New resolver backends beyond WOF
+
+These are all reasonable future work, but they multiply variables before the current training instability is fully resolved.
+
+---
+
+## What the project should be
+
+Mailwoman should aim to be the **TypeScript-native open geocoding front-end**: a parser, structured candidate generator, and resolver interface that can run locally, in a browser, or next to Pelias-like services. It does not need rooftop precision or a universal world model to be valuable. It needs to be:
+
+- **Easy to deploy.** `npm install @mailwoman/neural-weights-en-us` should work.
+- **Honest about ambiguity.** "Springfield" should return candidates, not a confident wrong answer.
+- **Cheap enough for browsers and serverless.** The 60MB cold-load budget is the right constraint.
+- **Retrainable on open data.** The corpus pipeline makes this possible already.
+- **Calibrated enough that downstream systems can decide when to ask for more context.**
+
+This direction is coherent. The architecture supports it. The project's primary risk is not that the architecture is wrong — it's that the training instability consumes enough iteration cycles that the integration gap (reconcile as default, real top-K, end-to-end measurement) never closes.
+
+---
+
+## Recommended next steps
+
+### 1. Resolve the training instability (in progress)
+
+The CE-only training experiment is the right next step. If it converges:
+
+- Ship CE-only v0.5.0 weights
+- Then explore quality knobs (class weights, source rebalance, longer schedules) that were unsafe under dual-loss
+
+If it diverges:
+
+- Bisect corpus-v0.4.0 (revert to v0.3.0, keep A1 tokenizer)
+- If that trains cleanly, the transliteration data is the destabilizer — cap it at low batch weight and retry
+
+### 2. Wire the reconcile path end-to-end
+
+This is the most important architectural validation. Using v0.4.0 weights:
+
+- Expose per-token logits from ONNX (currently discarded after argmax)
+- Aggregate softmax over phrase-grouper spans for per-span top-K
+- Feed (span, tag, score) triples into reconcileSpans
+- Evaluate against kryptonite catalogue + golden v0.1.2
+- Gate: +15pp kryptonite exact-match AND ≤1pt golden macro_F1 regression
+
+This is ~100 lines of TypeScript, zero GPU, runnable today. It validates the architectural thesis independently of training stability.
+
+### 3. Establish product-level eval gates
+
+The model should not be judged only as a tagger. Before any new weights ship, the eval report should include:
+
+- Per-component P/R/F1
+- Full parse exact match
+- Parse-level calibration
+- "Empty parse" rate
+- Overconfident-wrong rate
+- Top-1 resolver accuracy vs top-5 recall
+- Rule-only vs neural-only vs hybrid vs joint-decode comparison
+- Per-failure-class breakdown from the failure taxonomy
+
+### 4. Make the docs serve the current state of the project
+
+See the [docs/audience review](./2026-05-25-docs-audience-review.md) for the detailed plan. The highest-leverage items are:
+
+- Status page
+- Getting started guide
+- Audience signposts on each doc section
+- Terminology reconciliation
+- Blog post search-engine preambles
+
+### 5. Spend only after preflight passes
+
+Before paying for a rented-GPU or large-LLM validation run:
+
+- CE-only local GPU smoke must pass the divergence gate
+- The reconcile path must run end-to-end against real model output
+- The eval matrix must produce baseline numbers for both fallback and joint paths
+- The status page must reflect current state
+
+Then spend on the next training run. Not before.
+
+---
+
+## Bottom line
+
+**Continue the project. Narrow the next cycle.**
+
+The thesis is sound. The architecture is the best version of this idea that exists in open-source geocoding. The corpus pipeline and diagnostic infrastructure are industrial-strength. The blog posts are unusually honest and readable.
+
+The project's primary risk is not architectural — it's that five things changed at once, training destabilized, and the integration that would validate the architecture got deferred behind the training problem. The fix is mechanical: stabilize training, wire the pipeline end-to-end, measure the architectural thesis, then expand scope.
+
+The thing to protect is the decomposition: rules for high-precision bounded problems, a small neural model for contextual ambiguity, structural priors from the phrase grouper, joint coherence from the reconciler, world hierarchy from the gazetteer. That decomposition is correct, and nothing in the current evidence contradicts it.
+
+The thing to fix is scope bundling. Ship one training-side change per release, validate it end-to-end before accepting more variables, and document what you know and don't know in a status page that everyone can find.

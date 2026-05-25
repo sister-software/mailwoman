@@ -18,11 +18,14 @@ function HomepageHeader(): ReactNode {
 				</Heading>
 				<p className={styles.heroSubtitle}>{siteConfig.tagline}</p>
 				<div className={styles.heroButtons}>
-					<Link className="button button--primary button--lg" to="/docs/plan">
-						Read the plan
+					<Link className="button button--primary button--lg" to="/demo">
+						Try the demo
 					</Link>
-					<Link className="button button--secondary button--lg" href="https://github.com/sister-software/mailwoman">
-						Source on GitHub
+					<Link className="button button--secondary button--lg" to="/docs/getting-started">
+						Get started
+					</Link>
+					<Link className="button button--secondary button--lg" to="/docs/plan">
+						Read the plan
 					</Link>
 				</div>
 			</div>

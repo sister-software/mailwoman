@@ -1,5 +1,11 @@
 # Operations
 
+:::tip Audience
+
+🧪 **Operator documentation.** For contributors running corpus builds, training experiments, and releases. If you want to use Mailwoman, see [Getting started](/docs/getting-started).
+
+:::
+
 ## Working norms
 
 You are an autonomous agent. Optimize for **legibility to a human checking in once a day**, not for clever one-shot completions.

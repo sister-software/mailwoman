@@ -47,9 +47,19 @@ class EncodedExample:
 
 
 def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
+    """Resolve train/val/test shard paths via MANIFEST.json (adapter-addition corpora)
+    or legacy glob fallback (monolithic corpora)."""
+    import json
+    manifest = corpus_dir / "MANIFEST.json"
+    if manifest.exists():
+        data = json.loads(manifest.read_text())
+        shards = [Path(s["path"]) for s in data.get("shards", []) if s.get("split") == split]
+        if shards:
+            return sorted(shards)
+    # legacy fallback
     paths = sorted((corpus_dir / split).glob("*.parquet"))
     if not paths:
-        raise FileNotFoundError(f"no parquet shards under {corpus_dir / split}")
+        raise FileNotFoundError(f"no shards via MANIFEST or {corpus_dir / split}")
     return paths
 
 

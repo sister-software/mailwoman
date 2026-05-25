@@ -1,0 +1,111 @@
+# v0.5.1 classifier — "unchained" iteration.
+#
+# Removes every hardware constraint from v0.5.0:
+#   - hidden_size: 256 → 384 (operator's original call, deferred by thermal issues)
+#   - batch_size: 16 → 128 directly (no grad accumulation — A100 has 40GB)
+#   - grad_accum_steps: 8 → 1 (direct large-batch, cleaner gradient signal)
+#   - max_steps: 50K → 100K (double training budget, $10 on A100)
+#   - use_phrase_priors: true (the architectural thesis — phrase-prior conditioning)
+#   - class_weights: tuned to penalize dependent_locality/subregion hallucination
+#   - crf_loss_weight: 0.0 (CE-only stability fix carries forward)
+#
+# Recipe rationale:
+#   - h384 + phrase priors = the model the v0.5.0 architecture was designed around
+#   - Class weights address the 956 dependent_locality FP problem directly
+#   - Direct batch=128 eliminates gradient accumulation noise
+#   - 100K steps gives the larger model more time to converge
+#   - Constant LR per VERDICT_SMOKES.md mode A (new recipe = constant LR)
+#
+# Expected wall: ~2-3h on A100 at ~4 sps (h384 is ~2x slower per step than h256)
+# Expected cost: ~$8-12 of A100 time (covered by Modal free credits)
+#
+# Launch:
+#   modal run scripts/modal/train_remote.py --config v0_5_1-classifier-unchained.yaml
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0
+  tokenizer_dir: /data/models/tokenizer/v0.5.0-a1
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+  train_rows_per_epoch: 1000000
+  val_rows: 2048
+  coarse_filter: true
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  label_smoothing: 0.0
+  crf_normalization: per_sequence
+  crf_loss_weight: 0.0
+  # Class weights: penalize hallucination of rare tags (dependent_locality, subregion)
+  # and pull attention toward underperforming coarse tags (country, locality).
+  # Weights below 1.0 = model pays LESS for mislabeling that tag (common tags it's already good at).
+  # Weights above 1.0 = model pays MORE (rare/hallucinated tags it needs to stop emitting).
+  class_weights:
+    O: 0.5
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 100000
+  eval_every_steps: 5000
+  save_every_steps: 5000
+  log_every_steps: 100
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+
+eval:
+  golden_dir: ""
+  val_jsonl: ""

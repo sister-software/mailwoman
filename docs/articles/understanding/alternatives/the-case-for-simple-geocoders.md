@@ -1,0 +1,57 @@
+---
+sidebar_position: 30
+title: The case for simple geocoders
+tags:
+  - domain
+  - hubris
+  - motivation
+  - rule-based
+---
+
+# The case for simple geocoders
+
+Not every geocoding problem needs a neural parser. This series steel-mans the reasonably defensible compromises that work for most applications — the architectures that ship in days, cover 90% of addresses, and cost nothing to maintain. Each article describes one approach, when it works, what it loses, and where Mailwoman fits (or doesn't).
+
+These are not straw men. They are the architectures most production geocoders actually use, and for many applications they are the right choice. Mailwoman exists for the applications where they are not.
+
+## The compromises
+
+| Compromise                                           | What you do                                                           | What you lose                                 |
+| ---------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------- |
+| [Normalize-to-match](./simple-normalize-to-match.md) | Strip, lowercase, abbreviate, fuzzy-match against a known database    | Understanding of what anything _means_        |
+| [Postcode-only](./simple-postcode-only.md)           | Parse the postcode, centroid the result                               | Everything finer than ~1 mile                 |
+| [Gazetteer-first](./simple-gazetteer-first.md)       | Skip parsing, treat as IR — try every token against a placename index | Streets, building numbers, venue names        |
+| [Regex-anchored fields](./simple-regex-fields.md)    | Extract the 3-4 fields you care about, ignore the rest                | The rest                                      |
+| [Locality-only](./simple-locality-only.md)           | Find the city, centroid it                                            | Street-level routing, delivery-point accuracy |
+| [Human-in-the-loop](./simple-human-in-the-loop.md)   | Don't parse — suggest, let the user confirm                           | Automation, scale                             |
+| [Close-enough](./simple-close-enough.md)             | Define your precision requirement, pick the cheapest approach, stop   | Everything below your requirement             |
+
+## When simple is the right choice
+
+The simple architectures win when:
+
+- You are geocoding US addresses only.
+- You need administrative-level accuracy (city, state, postcode), not street-level.
+- Your volume is under 1 million addresses per month.
+- You can fall back to a paid API or manual review for failures.
+- You have a week, not a year.
+- You do not need graceful degradation — a confident wrong answer is acceptable if it's rare enough.
+
+These conditions describe most geocoding use cases. The simple architectures are not the wrong choice for most applications. They are the right choice. Mailwoman exists for the applications where they are not.
+
+## When to choose Mailwoman
+
+Mailwoman is the right choice when:
+
+- You need street-level or venue-level parsing.
+- You serve international users with non-Anglophone address formats.
+- Your volume makes fallback costs material.
+- You cannot use a third-party API for privacy, regulatory, or cost reasons.
+- You need honest confidence — ambiguous inputs should surface their ambiguity, not produce a confident wrong answer.
+- You are willing to invest in infrastructure for long-term accuracy gains.
+
+## See also
+
+- [Why a neural parser?](../our-approach/why-a-neural-parser.md) — the affirmative case
+- [The 90% trap](../why-its-hard/the-90-percent-trap.md) — the economic argument for going past 90%
+- [Falsehoods about addresses](../why-its-hard/falsehoods-about-addresses.md) — the counterexamples that break simple architectures

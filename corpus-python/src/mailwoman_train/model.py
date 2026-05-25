@@ -333,7 +333,7 @@ class MailwomanCoarseEncoder(nn.Module):
                 labels.view(-1),
                 **ce_kwargs,
             )
-            if self.crf is not None and attention_mask is not None:
+            if self.crf is not None and attention_mask is not None and self.crf_loss_weight > 0:
                 # CRF NLL needs a (B, S) float mask. attention_mask is long-typed; cast.
                 # Replace IGNORE_INDEX positions in labels with 0 so gather doesn't OOB
                 # — those positions are zeroed by the mask anyway.

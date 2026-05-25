@@ -163,7 +163,7 @@ Different from v0.4.0's "≥2 of 4 axes" frame, because v0.5.0 is changing the a
 
 ## See also
 
-- [The knowledge ladder](../../understanding/the-knowledge-ladder.md) — conceptual framing for what the missing rungs do
+- [The knowledge ladder](../../understanding/our-approach/the-knowledge-ladder.md) — conceptual framing for what the missing rungs do
 - [The pipeline contract](../../concepts/staged-pipeline-contract.md) — runtime mechanics
 - [v0.4.0 ablation campaign retrospective](../../retrospectives/v0-4-0-ablation-campaign.md) — what made the fresh-slate decision necessary
 - [Issue #116](https://github.com/sister-software/mailwoman/issues/116) — v0.4.0's original work plan
