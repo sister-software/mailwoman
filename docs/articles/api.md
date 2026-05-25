@@ -16,11 +16,11 @@ The recommended entry point. Returns a one-call pipeline function that runs all 
 import { createRuntimePipeline } from "mailwoman"
 
 function createRuntimePipeline(opts?: {
-	classifier?: AddressClassifier       // Stage 3 — typically NeuralAddressClassifier
-	resolver?: Resolver                   // Stage 6 — typically createWofResolver(...)
-	detectLocale?: LocaleDetector         // Stage 2 override (caller-trust stub by default)
-	classifyKind?: KindClassifier         // Stage 2.5 override (rule-based by default)
-	groupPhrases?: PhraseGrouper          // Stage 2.7 override (rule-based by default)
+	classifier?: AddressClassifier // Stage 3 — typically NeuralAddressClassifier
+	resolver?: Resolver // Stage 6 — typically createWofResolver(...)
+	detectLocale?: LocaleDetector // Stage 2 override (caller-trust stub by default)
+	classifyKind?: KindClassifier // Stage 2.5 override (rule-based by default)
+	groupPhrases?: PhraseGrouper // Stage 2.7 override (rule-based by default)
 }): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult>
 ```
 
@@ -44,9 +44,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({
 const tree: AddressTree = await classifier.parse("350 5th Ave, New York, NY 10118")
 
 // Parse with logits exposed (for downstream joint-reconcile)
-const { tree, logits, pieces } = await classifier.parseWithLogits(
-	"350 5th Ave, New York, NY 10118"
-)
+const { tree, logits, pieces } = await classifier.parseWithLogits("350 5th Ave, New York, NY 10118")
 ```
 
 ### `createWofResolver(opts)`
@@ -85,13 +83,13 @@ A single parsed component.
 
 ```ts
 interface AddressNode {
-	tag: ComponentTag          // "locality", "street", "house_number", "postcode", etc.
-	value: string              // The raw text span, e.g. "New York"
-	span: Span                 // { start: number, end: number } character offsets
-	confidence: number         // 0..1, mean per-token softmax probability
-	source: "rule" | "neural"  // Which classifier produced this node
-	children: AddressNode[]    // Nested components (e.g. street contains street_prefix)
-	alternatives?: AddressAlternative[]  // Resolver candidates when --candidates is set
+	tag: ComponentTag // "locality", "street", "house_number", "postcode", etc.
+	value: string // The raw text span, e.g. "New York"
+	span: Span // { start: number, end: number } character offsets
+	confidence: number // 0..1, mean per-token softmax probability
+	source: "rule" | "neural" // Which classifier produced this node
+	children: AddressNode[] // Nested components (e.g. street contains street_prefix)
+	alternatives?: AddressAlternative[] // Resolver candidates when --candidates is set
 }
 ```
 
@@ -101,13 +99,13 @@ A resolver candidate for an ambiguous component.
 
 ```ts
 interface AddressAlternative {
-	placeId: number            // WOF ID
-	name: string               // Canonical name
-	placetype: string          // "locality", "region", "country", etc.
+	placeId: number // WOF ID
+	name: string // Canonical name
+	placetype: string // "locality", "region", "country", etc.
 	lat: number
 	lon: number
-	parentId?: number          // WOF parent_id for hierarchy traversal
-	score: number              // Match × population ranking score
+	parentId?: number // WOF parent_id for hierarchy traversal
+	score: number // Match × population ranking score
 }
 ```
 
@@ -118,14 +116,14 @@ The full output from `createRuntimePipeline`.
 ```ts
 interface PipelineResult {
 	input: string
-	normalized: NormalizedInputLite   // NFC-normalized text + offset map
-	queryShape: QueryShapeLite        // Script class, postcode format hits, token classes
-	locale: LocaleHint                // Detected or caller-provided locale
-	kind: QueryKindResult             // postcode_only | structured_address | intersection | ...
+	normalized: NormalizedInputLite // NFC-normalized text + offset map
+	queryShape: QueryShapeLite // Script class, postcode format hits, token classes
+	locale: LocaleHint // Detected or caller-provided locale
+	kind: QueryKindResult // postcode_only | structured_address | intersection | ...
 	phraseProposals: PhraseProposal[] // Stage 2.7 span boundary proposals
-	tree: AddressTree                 // Parsed + (optionally) resolved output
-	timing: Record<string, number>    // Per-stage wall-clock in ms
-	path: "fast-path" | "full"        // Whether the pipeline took the fast-path shortcut
+	tree: AddressTree // Parsed + (optionally) resolved output
+	timing: Record<string, number> // Per-stage wall-clock in ms
+	path: "fast-path" | "full" // Whether the pipeline took the fast-path shortcut
 }
 ```
 
@@ -133,12 +131,12 @@ interface PipelineResult {
 
 ```ts
 interface PipelineOpts {
-	locale?: string                    // BCP-47 tag, e.g. "en-US". Default: caller-trust stub
-	signal?: AbortSignal               // Cancel the pipeline between stages
+	locale?: string // BCP-47 tag, e.g. "en-US". Default: caller-trust stub
+	signal?: AbortSignal // Cancel the pipeline between stages
 	resolveOpts?: {
-		candidatesPerLookup?: number   // How many alternatives to surface (default: 1)
+		candidatesPerLookup?: number // How many alternatives to surface (default: 1)
 	}
-	forceJointReconcile?: boolean      // Use joint decoding instead of argmax fallback
+	forceJointReconcile?: boolean // Use joint decoding instead of argmax fallback
 }
 ```
 
@@ -150,28 +148,28 @@ interface PipelineOpts {
 mailwoman parse [options] <address string>
 ```
 
-| Flag | Description |
-|---|---|
-| `--locale <tag>` | BCP-47 locale (default: `en-US`) |
-| `--format json\|tuple\|xml` | Output format (default: `json`) |
-| `--resolve` | Run resolver against WOF SQLite |
-| `--resolve-db <path>` | Path to WOF SQLite distribution |
-| `--candidates <n>` | Surface up to `n` alternative resolutions per node |
-| `--debug` | Emit full `PipelineResult` as JSON |
-| `--no-neural` | Skip neural classifier (normalize + queryShape + resolver only) |
-| `--isolated` | Legacy rule-only parser (bypasses the pipeline) |
-| `--benchmark <n>` | Run pipeline `n` times and emit per-stage p50/p95/p99 |
-| `--policy <c>=<m>` | Per-component policy override (repeatable). e.g. `--policy postcode=rule_only` |
+| Flag                        | Description                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------ |
+| `--locale <tag>`            | BCP-47 locale (default: `en-US`)                                               |
+| `--format json\|tuple\|xml` | Output format (default: `json`)                                                |
+| `--resolve`                 | Run resolver against WOF SQLite                                                |
+| `--resolve-db <path>`       | Path to WOF SQLite distribution                                                |
+| `--candidates <n>`          | Surface up to `n` alternative resolutions per node                             |
+| `--debug`                   | Emit full `PipelineResult` as JSON                                             |
+| `--no-neural`               | Skip neural classifier (normalize + queryShape + resolver only)                |
+| `--isolated`                | Legacy rule-only parser (bypasses the pipeline)                                |
+| `--benchmark <n>`           | Run pipeline `n` times and emit per-stage p50/p95/p99                          |
+| `--policy <c>=<m>`          | Per-component policy override (repeatable). e.g. `--policy postcode=rule_only` |
 
 ### Policy modes
 
-| Mode | Behavior |
-|---|---|
-| `rule_only` | Use only the rule classifier for this component |
-| `neural_only` | Use only the neural classifier |
-| `both` | Run both, solver picks the best |
+| Mode               | Behavior                                                   |
+| ------------------ | ---------------------------------------------------------- |
+| `rule_only`        | Use only the rule classifier for this component            |
+| `neural_only`      | Use only the neural classifier                             |
+| `both`             | Run both, solver picks the best                            |
 | `neural_preferred` | Prefer neural, fall back to rule if confidence < threshold |
-| `rule_preferred` | Prefer rule, fall back to neural if confidence < threshold |
+| `rule_preferred`   | Prefer rule, fall back to neural if confidence < threshold |
 
 ## Browser imports
 
@@ -192,24 +190,24 @@ The browser path mirrors the Node API. `classifier.parse()` and `classifier.pars
 
 The full `ComponentTag` union (source of truth: `core/types/component.ts`):
 
-| Tag | Description | Example |
-|---|---|---|
-| `country` | Sovereign state | `USA` |
-| `region` | First-level admin | `OR` |
-| `locality` | City, town | `Portland` |
-| `dependent_locality` | Sub-locality | `Brooklyn` |
-| `postcode` | Postal code | `97215` |
-| `subregion` | County-level admin | `Multnomah County` |
-| `house_number` | Building number | `6220` |
-| `street` | Street name | `Salmon St` |
-| `street_prefix` | Directional prefix | `SE` |
-| `street_suffix` | Street type | `Street` |
-| `venue` | Named place | `Mt Tabor Park` |
-| `unit` | Apartment/suite | `Apt 4B` |
-| `intersection_a` | First crossing street | `5th Ave` |
-| `intersection_b` | Second crossing street | `42nd St` |
-| `attention` | Care-of line | `c/o Jane Doe` |
-| `po_box` | Post office box | `PO Box 1234` |
-| `cedex` | FR postal routing | `CEDEX 08` |
+| Tag                  | Description            | Example            |
+| -------------------- | ---------------------- | ------------------ |
+| `country`            | Sovereign state        | `USA`              |
+| `region`             | First-level admin      | `OR`               |
+| `locality`           | City, town             | `Portland`         |
+| `dependent_locality` | Sub-locality           | `Brooklyn`         |
+| `postcode`           | Postal code            | `97215`            |
+| `subregion`          | County-level admin     | `Multnomah County` |
+| `house_number`       | Building number        | `6220`             |
+| `street`             | Street name            | `Salmon St`        |
+| `street_prefix`      | Directional prefix     | `SE`               |
+| `street_suffix`      | Street type            | `Street`           |
+| `venue`              | Named place            | `Mt Tabor Park`    |
+| `unit`               | Apartment/suite        | `Apt 4B`           |
+| `intersection_a`     | First crossing street  | `5th Ave`          |
+| `intersection_b`     | Second crossing street | `42nd St`          |
+| `attention`          | Care-of line           | `c/o Jane Doe`     |
+| `po_box`             | Post office box        | `PO Box 1234`      |
+| `cedex`              | FR postal routing      | `CEDEX 08`         |
 
 The current neural model (v0.4.0) emits 10 of these: country, region, locality, dependent_locality, postcode, subregion, cedex, venue, street, house_number. The remaining tags are rule-classifier-only.

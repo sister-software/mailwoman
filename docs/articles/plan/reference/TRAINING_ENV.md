@@ -9,8 +9,7 @@ title: Training environment — playpen container setup
 
 🧪 **Operator documentation.** For contributors provisioning GPU training environments. If you want to use Mailwoman, see [Getting started](/docs/getting-started).
 
-:::
----
+## :::
 
 # Training environment — playpen container setup
 

@@ -1,5 +1,5 @@
 ---
-sidebar_position: 19
+sidebar_position: 15
 title: Eval discipline — reading the numbers honestly
 tags:
   - concepts
@@ -15,14 +15,14 @@ Mailwoman's eval methodology learned its most important lessons the hard way —
 
 Per-component F1 scores are the standard metric for sequence-labelling models. A table like this looks authoritative:
 
-| Component    | v0.4.0 | v0.3.0 | Δ |
-|---|---|---|---|
-| country      | 0.21 | 0.28 | **−0.07** |
-| region       | 0.19 | 0.18 | +0.01 |
-| locality     | 0.27 | 0.27 | flat |
-| postcode     | 0.69 | 0.76 | **−0.07** |
-| street       | 0.30 | 0.27 | +0.03 |
-| house_number | 0.79 | 0.78 | +0.01 |
+| Component    | v0.4.0 | v0.3.0 | Δ         |
+| ------------ | ------ | ------ | --------- |
+| country      | 0.21   | 0.28   | **−0.07** |
+| region       | 0.19   | 0.18   | +0.01     |
+| locality     | 0.27   | 0.27   | flat      |
+| postcode     | 0.69   | 0.76   | **−0.07** |
+| street       | 0.30   | 0.27   | +0.03     |
+| house_number | 0.79   | 0.78   | +0.01     |
 
 The easy reading: v0.4.0 regressed on country and postcode. Ship the previous version.
 
