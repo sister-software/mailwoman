@@ -12,7 +12,7 @@
  *
  *   Modes compared:
  *   - rule-only       (legacy v1 parser, no neural classifier)
- *   - neural-argmax   (neural classifier, per-token argmax via Viterbi, no rules)
+ *   - neural        (neural classifier, Viterbi with structural BIO mask, no rules)
  *   - hybrid          (current default — rule + neural per policy registry)
  *   - hybrid-joint    (hybrid + forceJointReconcile flag with real top-K)
  *
@@ -405,8 +405,8 @@ async function main() {
 	console.error("  rule-only...")
 	runners.push({ mode: "rule-only", run: createRuleOnlyRunner() })
 
-	console.error("  neural-argmax...")
-	runners.push({ mode: "neural-argmax", run: await createNeuralArgmaxRunner(weightsOpts) })
+	console.error("  neural...")
+	runners.push({ mode: "neural", run: await createNeuralArgmaxRunner(weightsOpts) })
 
 	console.error("  hybrid...")
 	runners.push({ mode: "hybrid", run: await createHybridRunner(weightsOpts) })
