@@ -13,7 +13,7 @@ tags:
 
 The staged pipeline is a contract for **decomposition by what each layer knows**. Every stage is the rightful home of a particular kind of information; pushing work to the wrong stage produces fragile systems that try to learn things from data that they could have looked up, or look up things that they could have learned. This article catalogues the layers, what each one knows, and the two layers we don't ship yet but should.
 
-Read [The pipeline contract](./staged-pipeline-contract.md) first for the runtime mechanics. This article is the conceptual companion — _why_ the layers are arranged this way, and where the design has gaps.
+Read [The pipeline contract](../concepts/staged-pipeline-contract.md) first for the runtime mechanics. This article is the conceptual companion — _why_ the layers are arranged this way, and where the design has gaps.
 
 ## The full ladder
 
@@ -158,4 +158,4 @@ The ladder architecture is sound. Whether the current training recipe can reach 
 - [`STAGES.md`](../plan/reference/STAGES.md) — formal per-stage type contracts
 - [`VERDICT_SMOKES.md`](../plan/reference/VERDICT_SMOKES.md) — the process-side companion
 - [v0.4.0 ablation campaign retrospective](../retrospectives/v0-4-0-ablation-campaign.md) — the failures that exposed the missing rungs
-- [v0.5.0 C-train blog post](/blog/v0-5-0-c-train-bisect) — the training divergence bisect
+- [v0.5.0 C-train blog post](pathname:///blog/2026-05-24-v0-5-0-c-train-bisect) — the training divergence bisect

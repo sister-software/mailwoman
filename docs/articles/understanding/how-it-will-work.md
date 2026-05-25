@@ -98,7 +98,7 @@ The reconciler (Stage 5) currently operates behind an opt-in flag. Wiring it as 
 
 ## See also
 
-- [v0.4.0 blog post](/blog/v0-4-0-ablation-campaign) — the ablation campaign retrospective
-- [v0.5.0 blog post](/blog/v0-5-0-c-train-bisect) — the C-train divergence and bisect
+- [v0.4.0 blog post](pathname:///blog/2026-05-23-v0-4-0-ablation-campaign) — the ablation campaign retrospective
+- [v0.5.0 blog post](pathname:///blog/2026-05-24-v0-5-0-c-train-bisect) — the C-train divergence and bisect
 - [The knowledge ladder](./the-knowledge-ladder.md) — the staged decomposition design
 - [Implementation plan](../plan/README.md) — the full phase roadmap

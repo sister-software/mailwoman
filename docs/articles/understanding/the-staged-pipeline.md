@@ -62,7 +62,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 ## Stage 3 — Token classify (transformer encoder)
 
-**What it does.** The current Mailwoman model. Subword tokenizer + 6-layer transformer encoder + 21 BIO output head per token. Detailed in [Neural classification](./neural-classification.md).
+**What it does.** The current Mailwoman model. Subword tokenizer + 6-layer transformer encoder + 21 BIO output head per token. Detailed in [Neural classification](../concepts/neural-classification.md).
 
 **Failures it owns.**
 
@@ -76,7 +76,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 **What it does.** Two sub-pieces:
 
-- **CRF** ([CRF decoder](./crf-decoder.md)) — enforces BIO structural validity at decode time. Today.
+- **CRF** ([CRF decoder](../concepts/crf-decoder.md)) — enforces BIO structural validity at decode time. Today.
 - **Span re-reader** — when stage 3 emits a span with low confidence, or two overlapping high-confidence proposals, re-run the encoder on that span alone with extra structural conditioning (the neighbouring labels as additional context). Adds new alternatives rather than narrowing existing ones — graceful-failure-friendly. Future.
 
 **Failures it owns.**
@@ -96,7 +96,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 **Failures it owns.**
 
 - The consistency portion of numeric chaos ([#5](./addresses-that-break-geocoders.md#5-numeric-chaos)) — when `"12345"` could be a house number or a postcode, the solver picks based on what makes the rest of the sequence consistent.
-- The hybrid-policy decision in general ([Rule-based classifiers](./rule-based-classifiers.md#how-rule-classifiers-and-the-neural-classifier-coexist)) — for each component, the policy registry says whose proposal wins.
+- The hybrid-policy decision in general ([Rule-based classifiers](../concepts/rule-based-classifiers.md#how-rule-classifiers-and-the-neural-classifier-coexist)) — for each component, the policy registry says whose proposal wins.
 
 **Today.** Hand-coded in TypeScript, lives in the v1 solver. Works fine.
 
@@ -110,7 +110,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 - Administrative nightmares ([#8](./addresses-that-break-geocoders.md#8-administrative-nightmares)) — `"Springfield"` with no region produces 41 candidates. The honest answer is to surface the list, not pretend one is correct.
 
-**Today.** [Resolver and Who's On First](./resolver-and-wof.md) decorates each resolved `AddressNode` with the top candidate (placeId / lat / lon) AND surfaces runner-ups via the new `alternatives` field — shipped 2026-05-23. Springfield-class disambiguation is now visible to consumers without changing the `resolveTree` return type.
+**Today.** [Resolver and Who's On First](../concepts/resolver-and-wof.md) decorates each resolved `AddressNode` with the top candidate (placeId / lat / lon) AND surfaces runner-ups via the new `alternatives` field — shipped 2026-05-23. Springfield-class disambiguation is now visible to consumers without changing the `resolveTree` return type.
 
 **Future.** Add language-prior + user-location-prior factors to the candidate scoring (today's scoring is match × population only). `regionalPriorFromLanguage` + `regionalPriorFromUserLocation` slots reserved in the scoreBreakdown.
 

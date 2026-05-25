@@ -6,18 +6,18 @@ Open items not blocking the current ship. Promoted to issues / PRs as scope soli
 
 Per [Phase 8 — v0.5.0 fresh-slate](docs/articles/plan/phases/PHASE_8_v0_5_0_fresh_slate.md). Status frozen 2026-05-25.
 
-| Thread  | Scope                                                       | Status                                                                |
-| ------- | ----------------------------------------------------------- | --------------------------------------------------------------------- |
-| A0      | Tokenizer harness + A0 baseline on corpus-v0.3.0            | **shipped** PR #129                                                   |
-| A1      | Tokenizer retrain on corpus-v0.4.0 (byte-fallback 18.2%)    | **shipped** PR #138                                                   |
-| B       | Kryptonite catalogue (4,771 adversarial rows)               | **shipped** PR #130                                                   |
-| B2      | Transliteration pairs (73,316 rows × 5 scripts)             | **shipped** PR #136                                                   |
-| C-s     | Classifier scaffold (top-k + phrase-prior input layer)       | **shipped** PR #128                                                   |
-| C-train | CE-only full classifier train (h256, LR=1.5e-4, 50K steps)  | **in-flight** step 6800/50K, val_macro_f1=0.496; ETA Mon evening UTC  |
-| D-s     | Stage 5 reconcile scaffold (joint decoding)                 | **shipped** PR #131                                                   |
-| D-wire  | Wire reconcileSpans as default in runPipeline               | **shipped** PR #145 (behind `forceJointReconcile` flag)               |
-| E       | Stage 2.7 phrase grouper (rule-based)                       | **shipped** PR #126                                                   |
-| F       | Verdict-smoke framework + sidecar audit                     | **shipped** PR #125                                                   |
+| Thread  | Scope                                                      | Status                                                               |
+| ------- | ---------------------------------------------------------- | -------------------------------------------------------------------- |
+| A0      | Tokenizer harness + A0 baseline on corpus-v0.3.0           | **shipped** PR #129                                                  |
+| A1      | Tokenizer retrain on corpus-v0.4.0 (byte-fallback 18.2%)   | **shipped** PR #138                                                  |
+| B       | Kryptonite catalogue (4,771 adversarial rows)              | **shipped** PR #130                                                  |
+| B2      | Transliteration pairs (73,316 rows × 5 scripts)            | **shipped** PR #136                                                  |
+| C-s     | Classifier scaffold (top-k + phrase-prior input layer)     | **shipped** PR #128                                                  |
+| C-train | CE-only full classifier train (h256, LR=1.5e-4, 50K steps) | **in-flight** step 6800/50K, val_macro_f1=0.496; ETA Mon evening UTC |
+| D-s     | Stage 5 reconcile scaffold (joint decoding)                | **shipped** PR #131                                                  |
+| D-wire  | Wire reconcileSpans as default in runPipeline              | **shipped** PR #145 (behind `forceJointReconcile` flag)              |
+| E       | Stage 2.7 phrase grouper (rule-based)                      | **shipped** PR #126                                                  |
+| F       | Verdict-smoke framework + sidecar audit                    | **shipped** PR #125                                                  |
 
 ### Key findings from the C-train campaign
 

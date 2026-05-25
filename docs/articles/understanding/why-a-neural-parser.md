@@ -54,7 +54,7 @@ A small model is:
 
 ### Why from scratch
 
-The model is trained from scratch on Mailwoman's corpus, not fine-tuned from a pretrained general-English model. This is an explicit choice that is currently under empirical validation as of May 2026 — the training stability experiments described in the [v0.5.0 blog post](/blog/v0-5-0-c-train-bisect) are testing whether this choice is correct.
+The model is trained from scratch on Mailwoman's corpus, not fine-tuned from a pretrained general-English model. This is an explicit choice that is currently under empirical validation as of May 2026 — the training stability experiments described in the [v0.5.0 blog post](pathname:///blog/2026-05-24-v0-5-0-c-train-bisect) are testing whether this choice is correct.
 
 The argument for training from scratch: address text is unlike natural language. Street names are not sentences. Postcodes are not words. The co-occurrence statistics that a general-English BERT learns from Wikipedia and BookCorpus ("'bank' appears near 'river' and 'money'") are not useful for distinguishing "Saint" (street prefix) from "Saint" (part of a locality name). Training from scratch lets the model learn co-occurrence patterns that are specific to addresses.
 
@@ -145,7 +145,7 @@ This is the **graceful failure** that the operator's Paris, Texas talk described
 
 ## The path forward
 
-As of May 2026, Mailwoman is actively working through training stability challenges described in the [v0.5.0 retrospective](/blog/v0-5-0-c-train-bisect). The architecture — the Knowledge Ladder, the phrase grouper, the reconciler, the staged pipeline — is in place. The training recipe is being refined to produce stable model weights on the expanded corpus.
+As of May 2026, Mailwoman is actively working through training stability challenges described in the [v0.5.0 retrospective](pathname:///blog/2026-05-24-v0-5-0-c-train-bisect). The architecture — the Knowledge Ladder, the phrase grouper, the reconciler, the staged pipeline — is in place. The training recipe is being refined to produce stable model weights on the expanded corpus.
 
 The direction is not in question. The question is whether the current training approach can reach the architecture's potential — and that is an empirical question being answered right now in the training log.
 

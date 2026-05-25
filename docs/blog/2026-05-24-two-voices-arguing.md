@@ -9,7 +9,7 @@ This is the third post in a series about a training problem we've been chasing. 
 
 If you've been programming for a while but ML feels opaque, this post is for you. The core technique we used — figuring out which of two instructions our model was listening to — turns out to be much more like ordinary debugging than the field usually makes it sound.
 
-{/* truncate */}
+{/_ truncate _/}
 
 ## What we're building, in one paragraph
 
@@ -71,7 +71,7 @@ loss
    0     500     800     1100
 ```
 
-The model descends nicely for 500 steps (warmup), settles at a low loss for a bit — and then climbs back up. By the end, it's worse than when it started. We trained it on 50,000 examples and it got *worse*.
+The model descends nicely for 500 steps (warmup), settles at a low loss for a bit — and then climbs back up. By the end, it's worse than when it started. We trained it on 50,000 examples and it got _worse_.
 
 Every training engineer's heart sinks at this curve. It means something is wrong, and the model isn't telling us what. There's no stack trace. There's no exception. There's just a chart that says "I learned, and then I unlearned."
 
@@ -82,6 +82,7 @@ We saw this exact shape in nine different runs. Different learning speeds, diffe
 To find a bug in a program, you usually narrow it down by ruling out parts of the code one at a time. ML debugging works the same way — you change one thing, retrain, look at the curve. But each "retrain" takes hours and costs real money on a rented GPU. You learn to be careful about which experiments are worth running.
 
 For weeks we'd been ruling out hypotheses:
+
 - Maybe the learning rate is too high? (No — lowering it just delayed the climb.)
 - Maybe the model is too small? (No — we made it bigger and the same thing happened.)
 - Maybe a new feature we added is destabilising it? (No — we turned it off, same problem.)
@@ -94,7 +95,7 @@ The model has two scoring systems. We'll call them Voice A and Voice B.
 - **Voice A** says: "How good are your guesses for each individual word? Did you tag '350' correctly as a house number? Did you tag 'NY' correctly as a region?"
 - **Voice B** says: "How sensible is your overall pattern? Is your sequence of tags structurally valid? Does it look like a real address?"
 
-Both voices are useful. A working geocoder needs both per-word accuracy *and* sensible patterns. We'd been adding their feedback together (with Voice B's contribution scaled down to 5%) and using that combined signal to train the model.
+Both voices are useful. A working geocoder needs both per-word accuracy _and_ sensible patterns. We'd been adding their feedback together (with Voice B's contribution scaled down to 5%) and using that combined signal to train the model.
 
 The question we'd never asked: **were Voice A and Voice B telling the model to do the same thing?**
 
@@ -139,9 +140,9 @@ This is a one-line change in the code: when Voice B's weight is set to 0, don't 
 
 A few things stand out:
 
-1. **"Add two losses together with weights" sounds simple. It can be a disaster.** Two loss functions can have wildly different gradient magnitudes even when their loss *values* look comparable. Multiplicative scaling on the loss does NOT produce balanced contributions to the optimiser. Watching the loss values fooled us for nine training runs.
+1. **"Add two losses together with weights" sounds simple. It can be a disaster.** Two loss functions can have wildly different gradient magnitudes even when their loss _values_ look comparable. Multiplicative scaling on the loss does NOT produce balanced contributions to the optimiser. Watching the loss values fooled us for nine training runs.
 2. **The five-minute diagnostic was more valuable than the previous month of retraining experiments.** Every "what if we change this knob and retrain" experiment cost hours. The gradient-norm probe cost five minutes and gave a sharper answer than any of them. It works because it asks a more fundamental question: not "what's the result," but "what's the model actually listening to?"
-3. **ML debugging is more like programming debugging than the field admits.** Once you have a vocabulary for what's happening, the techniques are familiar: bisect, isolate, instrument, hypothesise, test. The hard part is finding the right vocabulary for *what's actually happening inside the model*. Once you have it, the bug is usually findable.
+3. **ML debugging is more like programming debugging than the field admits.** Once you have a vocabulary for what's happening, the techniques are familiar: bisect, isolate, instrument, hypothesise, test. The hard part is finding the right vocabulary for _what's actually happening inside the model_. Once you have it, the bug is usually findable.
 4. **Cheap experiments first.** A 5-minute probe should always run before a 25-hour retrain. We didn't think to run the probe earlier because nobody had told us it was a thing. Now we know.
 
 ## Where to read more

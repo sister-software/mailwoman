@@ -9,15 +9,15 @@ Who's On First is the best open gazetteer we have. It's also one of the stranges
 
 If you've ever tried to answer "what city is this address in?" programmatically — using open data, without paying a geocoding API — you've probably already run into WOF. And you probably had some questions.
 
-{/* truncate */}
+{/_ truncate _/}
 
 ## What Who's On First actually is
 
-WOF is a gazetteer — a structured database of places. Not addresses, not roads, not buildings. *Places*: countries, regions, counties, cities, neighbourhoods, venues. Each one gets a stable numeric ID, a parent-child hierarchy, multilingual name variants, and a polygon geometry.
+WOF is a gazetteer — a structured database of places. Not addresses, not roads, not buildings. _Places_: countries, regions, counties, cities, neighbourhoods, venues. Each one gets a stable numeric ID, a parent-child hierarchy, multilingual name variants, and a polygon geometry.
 
 It was created by Mapzen (RIP, 2018) as the successor to GeoPlanet (Yahoo's gazetteer, also RIP). The data lives on GitHub as approximately 100 repositories under the `whosonfirst-data` org, totalling several million individual GeoJSON files. Geocode Earth maintains the canonical SQLite distributions at `data.geocode.earth`.
 
-The key thing WOF gives you that no other open dataset does: **a consistent hierarchy with stable IDs**. You can take a locality (`Houston`, id `85922029`), follow its `parent_id` to a region (`Texas`, id `85688753`), follow *that* to a country (`United States`, id `85633793`), and know the chain is consistent. OpenStreetMap doesn't give you this. GeoNames gives you a partial version. WOF gives you the whole thing, with an opinion on how the world's administrative boundaries nest.
+The key thing WOF gives you that no other open dataset does: **a consistent hierarchy with stable IDs**. You can take a locality (`Houston`, id `85922029`), follow its `parent_id` to a region (`Texas`, id `85688753`), follow _that_ to a country (`United States`, id `85633793`), and know the chain is consistent. OpenStreetMap doesn't give you this. GeoNames gives you a partial version. WOF gives you the whole thing, with an opinion on how the world's administrative boundaries nest.
 
 ## What makes it hard
 
@@ -33,30 +33,30 @@ A WOF GeoJSON feature's properties object looks like this:
 
 ```json
 {
-  "wof:id": 85830005,
-  "wof:name": "Lawrence Corner",
-  "wof:placetype": "neighbourhood",
-  "wof:parent_id": 1729442683,
-  "wof:country": "US",
-  "wof:hierarchy": [
-    {
-      "continent_id": 102191575,
-      "country_id": 85633793,
-      "county_id": 102085493,
-      "localadmin_id": 404477193,
-      "locality_id": 1729442683,
-      "neighbourhood_id": 85830005,
-      "region_id": 85688689
-    }
-  ],
-  "name:eng_x_preferred": ["Lawrence Corner"],
-  "name:eng_x_variant": ["Lawrence Cor"],
-  "src:geom": "quattroshapes",
-  "edtf:inception": "uuuu",
-  "edtf:cessation": "uuuu",
-  "geom:area": 0.000047,
-  "geom:bbox": "-74.73,40.08,-74.72,40.09",
-  "mz:hierarchy_label": 1
+	"wof:id": 85830005,
+	"wof:name": "Lawrence Corner",
+	"wof:placetype": "neighbourhood",
+	"wof:parent_id": 1729442683,
+	"wof:country": "US",
+	"wof:hierarchy": [
+		{
+			"continent_id": 102191575,
+			"country_id": 85633793,
+			"county_id": 102085493,
+			"localadmin_id": 404477193,
+			"locality_id": 1729442683,
+			"neighbourhood_id": 85830005,
+			"region_id": 85688689
+		}
+	],
+	"name:eng_x_preferred": ["Lawrence Corner"],
+	"name:eng_x_variant": ["Lawrence Cor"],
+	"src:geom": "quattroshapes",
+	"edtf:inception": "uuuu",
+	"edtf:cessation": "uuuu",
+	"geom:area": 0.000047,
+	"geom:bbox": "-74.73,40.08,-74.72,40.09",
+	"mz:hierarchy_label": 1
 }
 ```
 
@@ -125,7 +125,7 @@ Processing 120K GeoJSON files into these DBs is an embarrassingly-parallel probl
 
 1. Reads a GeoJSON file.
 2. Calls `pluckPlacetypeSpec` to extract the structured fields + all name variants per language.
-3. *(Should)* upsert into the appropriate `PlacetypeDataSource`.
+3. _(Should)_ upsert into the appropriate `PlacetypeDataSource`.
 
 Step 3 currently targets Redis (a leftover from an earlier prototype). The migration to SQLite is documented but not yet complete. The design intent was in-memory SQLite per worker (zero disk I/O during the hot path) with a consolidation step at the end — but that never got past the design stage.
 

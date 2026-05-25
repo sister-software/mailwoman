@@ -8,23 +8,21 @@
  *   Runs the pipeline twice per golden row — once with `forceJointReconcile: true`, once without —
  *   and computes exact-match rates for both. Applies the DeepSeek synthesis decision matrix:
  *
- *   | Kryptonite Δ exact-match | Golden Δ macro_F1 | Verdict                           |
- *   |--------------------------|-------------------|-----------------------------------|
- *   | ≥ +15pp                  | ≤ −1pt            | Go. Architecture validated.       |
- *   | ≥ +15pp                  | > −1pt            | Golden regression. Fix scoring.   |
- *   | < +15pp                  | ≤ −1pt            | Not earning complexity. Revisit.  |
- *   | < +15pp                  | > −1pt            | Both broken. Step back.           |
+ *   | Kryptonite Δ exact-match | Golden Δ macro_F1 | Verdict |
+ *   |--------------------------|-------------------|-----------------------------------| | ≥ +15pp
+ *   | ≤ −1pt | Go. Architecture validated. | | ≥ +15pp | > −1pt | Golden regression. Fix scoring. |
+ *   | < +15pp | ≤ −1pt | Not earning complexity. Revisit. | | < +15pp | > −1pt | Both broken. Step
+ *   back. |
  *
- *   Usage:
- *     npx tsx scripts/eval-joint-reconcile.ts
+ *   Usage: npx tsx scripts/eval-joint-reconcile.ts
  *
  *   Outputs a JSON report to stdout; human-readable summary to stderr.
  */
 
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createRuntimePipeline } from "mailwoman"
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 
 interface GoldenRow {
 	raw: string
@@ -94,7 +92,9 @@ function macroF1(results: EvalResult[], useReconciled: boolean): number {
 	let tagCount = 0
 
 	for (const tag of tags) {
-		let tp = 0, fp = 0, fn = 0
+		let tp = 0,
+			fp = 0,
+			fn = 0
 		for (const r of results) {
 			const pred = useReconciled ? r.reconciled[tag] : r.argmax[tag]
 			const gold = r.expected[tag]
@@ -162,12 +162,10 @@ async function main() {
 	const normal = results.filter((r) => !r.isKryptonite)
 	const all = results
 
-	const krypArgmaxEM = kryptonite.length > 0
-		? kryptonite.filter((r) => r.argmaxExactMatch).length / kryptonite.length
-		: 0
-	const krypReconEM = kryptonite.length > 0
-		? kryptonite.filter((r) => r.reconciledExactMatch).length / kryptonite.length
-		: 0
+	const krypArgmaxEM =
+		kryptonite.length > 0 ? kryptonite.filter((r) => r.argmaxExactMatch).length / kryptonite.length : 0
+	const krypReconEM =
+		kryptonite.length > 0 ? kryptonite.filter((r) => r.reconciledExactMatch).length / kryptonite.length : 0
 	const krypDelta = (krypReconEM - krypArgmaxEM) * 100
 
 	const goldenArgmaxF1 = macroF1(all, false)
@@ -215,11 +213,15 @@ async function main() {
 	console.error(`\nKryptonite exact-match:`)
 	console.error(`  argmax:     ${(krypArgmaxEM * 100).toFixed(1)}%`)
 	console.error(`  reconciled: ${(krypReconEM * 100).toFixed(1)}%`)
-	console.error(`  Δ:          ${krypDelta >= 0 ? "+" : ""}${krypDelta.toFixed(1)}pp (threshold: ≥+15pp) ${krypDelta >= 15 ? "✓" : "✗"}`)
+	console.error(
+		`  Δ:          ${krypDelta >= 0 ? "+" : ""}${krypDelta.toFixed(1)}pp (threshold: ≥+15pp) ${krypDelta >= 15 ? "✓" : "✗"}`
+	)
 	console.error(`\nGolden macro_F1:`)
 	console.error(`  argmax:     ${(goldenArgmaxF1 * 100).toFixed(1)}%`)
 	console.error(`  reconciled: ${(goldenReconF1 * 100).toFixed(1)}%`)
-	console.error(`  Δ:          ${goldenDelta >= 0 ? "+" : ""}${goldenDelta.toFixed(1)}pp (threshold: ≥−1pp) ${goldenDelta >= -1 ? "✓" : "✗"}`)
+	console.error(
+		`  Δ:          ${goldenDelta >= 0 ? "+" : ""}${goldenDelta.toFixed(1)}pp (threshold: ≥−1pp) ${goldenDelta >= -1 ? "✓" : "✗"}`
+	)
 	console.error(`\nVERDICT: ${verdict}`)
 	console.error("=".repeat(70))
 

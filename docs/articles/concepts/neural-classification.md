@@ -9,7 +9,7 @@ tags:
 
 # Neural classification
 
-The neural classifier is a small **transformer encoder** that reads an address as a sequence of tokens and emits one [BIO label](./bio-labels.md) for each token. This article explains what a transformer encoder is, what makes Mailwoman's specific model the shape it is, and what the model is and is not capable of.
+The neural classifier is a small **transformer encoder** that reads an address as a sequence of tokens and emits one [BIO label](../concepts/bio-labels.md) for each token. This article explains what a transformer encoder is, what makes Mailwoman's specific model the shape it is, and what the model is and is not capable of.
 
 ## What a transformer encoder does
 

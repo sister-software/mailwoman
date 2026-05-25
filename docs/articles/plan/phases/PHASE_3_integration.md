@@ -156,7 +156,7 @@ The first Ship of Theseus step.
 - [ ] Packages published to npm
 - [ ] Documentation updated
 - [ ] Branch tagged `neural-phase-3-complete`
-- [ ] Blog post draft (optional but recommended) in `docs/blog/2026-...-neural-classifier.md`
+- [ ] Blog post draft (optional but recommended) in `docspathname:///blog/2026-...-neural-classifier.md`
 
 ## When the human will want a check-in
 
