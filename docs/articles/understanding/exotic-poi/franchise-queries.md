@@ -72,7 +72,7 @@ This is the same pattern as "gas station near Springfield, IL" (amenity + locati
 
 **Nominatim** handles franchise queries by matching the brand name against OSM's `name` and `brand` tags. OSM has good coverage of franchise locations in well-mapped areas. However, OSM's brand tagging is inconsistent: some locations are tagged `brand=McDonald's`, others `name=McDonald's`, and the relationship between franchise brand and individual location name varies by mapper. Nominatim does not handle slang or regional variants — `Macca's` returns nothing unless an Australian mapper tagged a location with `alt_name=Macca's`.
 
-**Pelias** indexes franchise locations as part of its OSM and OpenAddresses gazetteers. The same OSM tagging inconsistency applies. Pelias's search treats "McDonalds" as a text token and matches it against name fields. Slang and variants don't match. Sub-brand classification is not modeled.
+**Pelias** indexes franchise locations as part of its OSM and OpenAddresses gazetteers. The same OSM tagging inconsistency applies. Pelias's search matches "McDonalds" against name and brand fields, and its `categories` parameter can filter by broad types (e.g., `food`), but it has no brand-alias resolution — slang and variants don't match unless the exact text appears in the data. Sub-brand classification is not modeled.
 
 ## What Mailwoman does today
 

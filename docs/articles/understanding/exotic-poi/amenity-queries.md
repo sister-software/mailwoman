@@ -46,7 +46,7 @@ The limitation: Nominatim only searches OSM. If a gas station is not in OSM, it 
 
 **Google's Places API** handles amenity queries through Google's proprietary place taxonomy. The API accepts a `type` parameter (e.g., `gas_station`, `atm`, `pharmacy`) and returns ranked results. Google's taxonomy is larger and more consistent than OSM's, but it is proprietary — you cannot inspect how a category is defined, add new categories, or correct misclassifications.
 
-**Pelias** has limited amenity support. Pelias indexes OSM amenities as part of its gazetteer, but the parser does not distinguish between address queries and amenity queries. A search for `gas station` tokenizes to `[gas] [station]` and searches for those tokens in the gazetteer. If OSM has a place named "Gas Station" (a business name, not a category tag), it matches. If no business is named "Gas Station," the search returns nothing. Pelias does not map category labels to OSM tags.
+**Pelias** has partial amenity support. Pelias indexes OSM amenities as part of its gazetteer and exposes a `/v1/search` endpoint with a `categories` parameter that maps to OSM tags (e.g., `categories=food` filters to amenity=restaurant/cafe/fast_food). For queries without the explicit parameter, Pelias tokenizes to `[gas] [station]` and searches the gazetteer by text — this works when an OSM feature's name or category text matches, but misses when the user's term differs from OSM's taxonomy. The category endpoint is the right idea but limited to a fixed set of mappings that doesn't cover regional variants or slang.
 
 ## What Mailwoman does today
 
