@@ -78,9 +78,15 @@ The local iGPU still has a role: smoke tests, gradient probes, quick 50-step exp
 
 ## What's next
 
-The calibration gap is the clear next target. The model is good at identifying address components (val_macro_f1 = 0.605 on the training eval) but bad at matching the strict exact-match criterion on the hand-curated golden set. Class-weighted cross-entropy — which pulls the model's attention toward underperforming tags — was the v0.4.0 recipe lever that couldn't safely be tested because it destabilized the dual-loss training. Now that CE-only training is proven stable, class weights become safe to experiment with again.
+Now that we have cloud GPU access at $5 per full training run, several decisions we made for the local hardware no longer apply. The v0.5.0 model was trained with constraints that made sense on a thermal-limited iGPU but don't make sense on an A100:
 
-The reconciler is also proven useful: it eliminates the model's overconfidence problem by refusing to commit to parses that don't form coherent hierarchies. Wiring it as the default path (rather than behind a feature flag) is the next architectural step.
+- **Hidden size 256** — we wanted 384 but fell back when it wouldn't train locally. The A100 has 40 GB of VRAM; 384 or 512 are trivial.
+- **Effective batch 128 via gradient accumulation** (batch=16, accumulate 8 steps) — a workaround for limited GPU memory. The A100 can do batch 128 directly, which changes the gradient noise characteristics and potentially the training dynamics.
+- **50,000 steps** — sized for "affordable locally." At 6.9 steps/second on the A100, 100K steps costs $10. We might be undertrained.
+- **Phrase-prior conditioning disabled** — turned off during debugging and never turned back on. The architectural thesis was built around it.
+- **Class-weighted cross-entropy disabled** — the v0.4.0 recipe lever that addresses the 956-FP hallucination problem is now safe to use.
+
+The next iteration removes all of these constraints at once: h384, direct large-batch, phrase priors on, class weights on, longer schedule. Same corpus, same tokenizer, same CE-only stability fix — just the model the architecture was designed to produce. One A100 run, a few hours, covered by free credits.
 
 ## Where to look
 
