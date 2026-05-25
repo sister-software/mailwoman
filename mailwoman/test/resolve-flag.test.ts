@@ -144,7 +144,6 @@ describeIfWof(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 
 /** Strip ANSI escape sequences + ink spinner frames so JSON.parse can consume CLI stdout. */
 function stripAnsiSpinner(stdout: string): string {
-	// eslint-disable-next-line no-control-regex
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu
 	const cleaned = stdout.replace(ansi, "").trim()
 	// Find the start of the JSON payload (`{` or `[`).

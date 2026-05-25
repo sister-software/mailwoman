@@ -83,7 +83,6 @@ describe("npx mailwoman parse --isolated --locale <bcp47> '<input>' (legacy rule
 			exec(process.execPath, [cliBin, "parse", "--isolated", sample]),
 		])
 		// Strip ANSI escapes and ink spinner frames; compare the JSON payload only.
-		// eslint-disable-next-line no-control-regex
 		const ansi = /\[[0-9;]*[a-zA-Z]/gu
 		const json = (stdout: string) => {
 			const clean = stdout.replace(ansi, "")

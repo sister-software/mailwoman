@@ -24,7 +24,6 @@ const cliBin = resolve(repoRoot, "out", "cli.js")
 
 /** Strip ANSI escapes + ink spinner frames; isolate the JSON payload. */
 function extractJson(stdout: string): unknown {
-	// eslint-disable-next-line no-control-regex
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu
 	const cleaned = stdout.replace(ansi, "").trim()
 	// Find the outermost JSON object (debug mode emits an object — non-debug emits an array).

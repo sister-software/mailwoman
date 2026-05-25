@@ -57,8 +57,9 @@ const CorpusDownload: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 			try {
 				await $`rclone sync ${rcloneBase}/corpus/v0.3.0/ ${out}/corpus/versioned/v0.3.0/corpus-v0.3.0/ --progress --transfers 8 --checkers 16 ${dryFlag}`.quiet()
 				updateStep(0, { status: "done" })
-			} catch (e: any) {
-				updateStep(0, { status: "error", detail: String(e.stderr ?? e.message).slice(0, 100) })
+			} catch (_e: unknown) {
+				const e = _e as Record<string, unknown>
+				updateStep(0, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
 				return
 			}
 
@@ -67,8 +68,9 @@ const CorpusDownload: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 			try {
 				await $`rclone sync ${rcloneBase}/corpus/v0.4.0/ ${out}/corpus/versioned/v0.4.0/corpus-v0.4.0/ --progress --transfers 4 ${dryFlag}`.quiet()
 				updateStep(1, { status: "done" })
-			} catch (e: any) {
-				updateStep(1, { status: "error", detail: String(e.stderr ?? e.message).slice(0, 100) })
+			} catch (_e: unknown) {
+				const e = _e as Record<string, unknown>
+				updateStep(1, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
 				return
 			}
 
@@ -77,8 +79,9 @@ const CorpusDownload: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 			try {
 				await $`rclone sync ${rcloneBase}/models/tokenizer/ ${out}/models/tokenizer/ --progress ${dryFlag}`.quiet()
 				updateStep(2, { status: "done" })
-			} catch (e: any) {
-				updateStep(2, { status: "error", detail: String(e.stderr ?? e.message).slice(0, 100) })
+			} catch (_e: unknown) {
+				const e = _e as Record<string, unknown>
+				updateStep(2, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
 				return
 			}
 
@@ -87,8 +90,9 @@ const CorpusDownload: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 			try {
 				await $`rclone sync ${rcloneBase}/corpus-python/ ./corpus-python/ --progress ${dryFlag}`.quiet()
 				updateStep(3, { status: "done" })
-			} catch (e: any) {
-				updateStep(3, { status: "error", detail: String(e.stderr ?? e.message).slice(0, 100) })
+			} catch (_e: unknown) {
+				const e = _e as Record<string, unknown>
+				updateStep(3, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
 				return
 			}
 		}
@@ -99,7 +103,7 @@ const CorpusDownload: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 	return (
 		<Box flexDirection="column">
 			<Text bold>Corpus Download ← R2 ({options.bucket})</Text>
-			{options.dryRun && <Text color="yellow">DRY RUN — no files will be transferred</Text>}
+			{Boolean(options.dryRun) && <Text color="yellow">DRY RUN — no files will be transferred</Text>}
 			<Text> </Text>
 			{steps.map((step, i) => (
 				<Box key={i}>
