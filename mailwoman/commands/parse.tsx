@@ -14,7 +14,7 @@ import { createNeuralProposalClassifier, NeuralAddressClassifier } from "@mailwo
 import { Text } from "ink"
 import { createAddressParser, createDiagnosticReport, createRuntimePipeline } from "mailwoman"
 import { setImmediate } from "node:timers/promises"
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import zod from "zod"
 import type { CommandComponent } from "../sdk/cli.js"
 
