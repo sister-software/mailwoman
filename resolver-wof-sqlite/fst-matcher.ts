@@ -103,10 +103,15 @@ export class FstMatcher {
 		}
 	}
 
-	/**
-	 * Create an FstMatcher from the builder's node array. This is the in-process path — no
-	 * serialization. For the binary format, see fst-serialize.ts (future).
-	 */
+	get nodeCount(): number {
+		return this.nodes.length
+	}
+
+	/** Expose the internal node array for serialization. */
+	toNodes(): readonly FstNode[] {
+		return this.nodes
+	}
+
 	static fromNodes(nodes: FstNode[]): FstMatcher {
 		return new FstMatcher(nodes)
 	}
