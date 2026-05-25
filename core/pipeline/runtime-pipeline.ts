@@ -252,10 +252,11 @@ export async function runPipeline(
 
 		throwIfAborted(opts)
 		const tClassify = performance.now()
-		const { tree: argmaxTree, logits, pieces } = await classifierWithLogits.parseWithLogits(
-			normalized.normalized,
-			{ queryShape }
-		)
+		const {
+			tree: argmaxTree,
+			logits,
+			pieces,
+		} = await classifierWithLogits.parseWithLogits(normalized.normalized, { queryShape })
 		timing["token-classify"] = performance.now() - tClassify
 
 		throwIfAborted(opts)
@@ -264,9 +265,7 @@ export async function runPipeline(
 		// The classifier must expose its label vocabulary so the aggregation can strip BIO prefixes.
 		// NeuralAddressClassifier surfaces this as `cfg.labels` — extracted via structural typing here.
 		const labels: readonly string[] =
-			"labels" in classifierWithLogits
-				? (classifierWithLogits as unknown as { labels: readonly string[] }).labels
-				: []
+			"labels" in classifierWithLogits ? (classifierWithLogits as unknown as { labels: readonly string[] }).labels : []
 
 		const classifierTopK = aggregateSpanLogits(
 			logits,
