@@ -40,7 +40,7 @@ The CE-only model (which drops the problematic CRF loss term that caused nine pr
 - **val_macro_f1: 0.605** (final), 0.621 (peak at step 35K)
 - **Train loss: 0.068** (final)
 - **Zero divergence** across all 50,000 steps
-- **ONNX export: 66 MB**
+- **ONNX export: 66 MB** (full-precision training artifact; the shipped weights are quantized to ~25 MB for the npm package, and smaller still for the browser demo)
 
 For context: v0.4.0 shipped at macro_f1 = 0.36. This is a 68% relative improvement on the same evaluation set.
 
@@ -48,15 +48,22 @@ For context: v0.4.0 shipped at macro_f1 = 0.36. This is a 68% relative improveme
 
 After the model shipped, we ran the full product-level evaluation — four pipeline modes compared on 4,535 hand-curated golden addresses:
 
-| Mode | Exact Match | Overconfident-Wrong |
-|---|---|---|
-| Rule-only | **30.8%** | 2.4% |
-| Neural-argmax | 0.1% | **54.5%** |
-| Hybrid-joint (reconciler) | 6.0% | **0.1%** |
+| Mode | Exact Match | Macro F1 | Empty Parse | Overconf Wrong |
+|---|---|---|---|---|
+| Rule-only | **30.8%** | 22.0% | 6.3% | 2.4% |
+| Neural | 0.1% | 7.3% | 0.3% | **54.5%** |
+| Hybrid | 0.1% | 7.3% | 0.3% | 54.5% |
+| Hybrid-joint (reconciler) | 6.0% | 16.6% | **0.0%** | **0.1%** |
 
-The headline finding: the neural model has a calibration problem (54.5% overconfident-wrong means it says "I'm sure" when it shouldn't be), but the reconciler fixes it (0.1% overconfident-wrong by checking whether parsed components form a coherent real-world hierarchy).
+A few things jump out:
 
-The rule-only parser still wins on exact match (30.8% vs 6.0%) because it has perfect precision on the patterns it knows. The gap is the neural model's per-component accuracy — addressable in the next training iteration via class-weighted cross-entropy, which is now safe to use because the dual-loss instability is resolved.
+**The neural model hallucinates components it shouldn't.** On the golden set, it invented a `dependent_locality` — a sub-city neighborhood — 956 times where none existed. That's not a calibration problem (it's not just overconfident, it's wrong), and it's not a decode problem (Viterbi with structural mask is already running). It's a training problem: cross-entropy treats every mislabeling equally, so the model never learned that `dependent_locality` is rare and should be emitted sparingly. Class-weighted CE — which was blocked in v0.4.0 because it destabilized the dual-loss training — puts a thumb on the scale: mislabeling a rare tag costs more. Now that CE-only training is proven stable, this lever is unlocked.
+
+**Hybrid mode shows identical numbers to neural alone.** The hybrid mode fuses rule classifications with neural output, but in this iteration the raw neural decoder's overconfidence drowns out the rules — hence the identical numbers. The reconciler (hybrid-joint) is the mode that actually disciplines the merge.
+
+**The reconciler fixes the honesty problem.** It drops overconfident-wrong from 54.5% to 0.1% by checking whether parsed components form a coherent real-world hierarchy. It also eliminates empty parses entirely (0.0% vs rules' 6.3%) — it always produces something, even if conservative.
+
+**The rules are a ceiling. The neural model is a ramp.** Rule-only at 30.8% exact match is a mature system, hand-tuned over years. Each additional percentage point costs engineering time. The neural model at 6.0% (hybrid-joint) after one stable training run is learning from data, which means each new training run can improve across every component and every locale simultaneously. The 68% improvement from v0.4.0 to v0.5.0 is the trend that matters — and the ramp just proved it can climb.
 
 ## The infrastructure lesson
 
@@ -77,6 +84,8 @@ The reconciler is also proven useful: it eliminates the model's overconfidence p
 
 ## Where to look
 
+- [Getting started](/docs/getting-started) — 5-minute install + first parse
+- [Project status](/docs/status) — what ships today, per package
 - [Eval matrix report](/docs/evals/2026-05-25-v0.5.0-ce-only-eval-matrix) — full per-component breakdown
 - [What the eval numbers mean](/docs/understanding/our-approach/what-the-eval-numbers-mean) — plain-English interpretation
 - [Modal training wrapper](https://github.com/sister-software/mailwoman/blob/main/scripts/modal/train_remote.py) — the 250-line script that runs the whole thing

@@ -14,15 +14,17 @@ Mailwoman can parse addresses in four different ways. Each one uses a different 
 | Mode | What it uses | Analogy |
 |---|---|---|
 | **Rule-only** | Hand-written rules, pattern matching, dictionaries | A postmaster who memorises the rulebook |
-| **Neural-argmax** | The AI model's best single guess per token | A student who always writes their first instinct |
+| **Neural** | The AI model's best guess, decoded with structural constraints | A student who writes their first instinct, checked for grammar |
 | **Hybrid** | Rules + AI model working together | The postmaster and the student collaborating |
 | **Hybrid-joint** | Rules + AI + a "sanity checker" that rejects incoherent guesses | The collaboration, plus an editor who crosses out answers that contradict each other |
+
+These are simplifications of the same [staged pipeline](./the-staged-pipeline.md) — each "mode" is a different composition of the same underlying stages, not four separate parsers.
 
 ## The metrics
 
 **Exact match** — did the parser get *every single component* of the address right? House number, street, city, region, postcode — all must match the human-labelled answer exactly. This is harsh. Getting 4 out of 5 components right scores zero.
 
-**Macro F1** — a softer measure. For each component type (street, city, etc.), it measures how often the parser got that type right across all addresses, then averages. A parser that's great at postcodes but bad at venues gets partial credit.
+**Macro F1** — a softer measure that balances two questions per component type: did you find it when it was there? (recall) and did you make it up when it wasn't? (precision). The score averages the balance across all component types. A parser that's great at postcodes but bad at venues gets partial credit.
 
 **Empty-parse rate** — how often does the parser give up entirely and return nothing? Lower is better. A parser that always guesses something (even if wrong) scores 0% here.
 
@@ -33,7 +35,7 @@ Mailwoman can parse addresses in four different ways. Each one uses a different 
 | Mode | Exact Match | Macro F1 | Empty Parse | Overconf Wrong |
 |---|---|---|---|---|
 | Rule-only | **30.8%** | 22.0% | 6.3% | 2.4% |
-| Neural-argmax | 0.1% | 7.3% | 0.3% | **54.5%** |
+| Neural | 0.1% | 7.3% | 0.3% | **54.5%** |
 | Hybrid | 0.1% | 7.3% | 0.3% | 54.5% |
 | Hybrid-joint | 6.0% | 16.6% | **0.0%** | **0.1%** |
 
@@ -45,16 +47,15 @@ Mailwoman can parse addresses in four different ways. Each one uses a different 
 
 The rule parser's weakness: 6.3% empty-parse rate (gives up on some inputs entirely) and only 22% macro F1 (meaning it's good at some component types but bad at others — venue detection is particularly weak at 24% F1).
 
-### The neural model has a calibration problem
+### The neural model learned to spell words but not write sentences
 
 The v0.5.0 neural model achieved val_macro_f1=0.605 during training — which sounds good. But on the eval matrix it scores 0.1% exact match and 54.5% overconfident-wrong. What happened?
 
-Two things are measured differently:
+Training eval asks "did the model label each word correctly?" — a local question. The golden eval asks "did the parser produce a correct address?" — a global question. These are different. The model can score 0.605 on the first and 0.001 on the second because correct per-token labeling doesn't guarantee correct parses — one wrong token cascades into a structurally invalid address.
 
-1. **Training eval** measures per-token BIO label accuracy on addresses drawn from the same distribution as the training data. The model learns the common patterns in its training set well.
-2. **The golden set** contains hand-curated addresses specifically chosen to be challenging — adversarial examples, unusual formats, edge cases. It's a harder test by design.
+The concrete smoking gun: the model invented a `dependent_locality` (a sub-city neighborhood) **956 times** where none existed in the golden labels. It wasn't just overconfident — it was actively hallucinating a component it hadn't learned to distinguish. Cross-entropy treats every mislabeling equally, so the model never learned that `dependent_locality` is rare and should be emitted sparingly.
 
-The 54.5% overconfident-wrong rate means the model hasn't learned to say "I don't know." When it sees an address it can't parse well, it still produces high-confidence output. This is the calibration gap — the model's confidence doesn't reflect its actual accuracy.
+In hybrid mode, the neural model's overconfidence drowns out the rules entirely — when the neural decoder says "this token is a dependent_locality" at 95% confidence and the rule parser disagrees, the neural vote wins. This is why hybrid and neural show identical numbers: the rules never get a say.
 
 ### The reconciler fixes the honesty problem
 
