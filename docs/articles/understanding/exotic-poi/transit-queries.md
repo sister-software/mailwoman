@@ -13,19 +13,19 @@ A transit query names a station, stop, airport, terminal, or interchange. The us
 
 ## What transit queries look like
 
-| Query | Type |
-|-------|------|
-| Grand Central Terminal | Named station — unique, well-known |
-| Shibuya Station | Named station — major hub, multiple exits |
-| Heathrow Airport | Named airport — large area, multiple terminals |
-| bus stop #4521 | Numbered stop — not a name, a route identifier |
-| Metro Center (DC Metro) | Named station — multiple cities have a "Metro Center" |
-| Tokyo Station | Named station — massive complex, underground city |
-| Port Authority Bus Terminal | Named terminal — multiple carriers, multiple levels |
-| ferry terminal | Generic — which one? |
-| JFK | Airport code — three letters, globally unique |
-| LHR T5 | Airport code + terminal — specific part of a larger facility |
-| the train station | Implicit — "the" train station where the user is |
+| Query                       | Type                                                         |
+| --------------------------- | ------------------------------------------------------------ |
+| Grand Central Terminal      | Named station — unique, well-known                           |
+| Shibuya Station             | Named station — major hub, multiple exits                    |
+| Heathrow Airport            | Named airport — large area, multiple terminals               |
+| bus stop #4521              | Numbered stop — not a name, a route identifier               |
+| Metro Center (DC Metro)     | Named station — multiple cities have a "Metro Center"        |
+| Tokyo Station               | Named station — massive complex, underground city            |
+| Port Authority Bus Terminal | Named terminal — multiple carriers, multiple levels          |
+| ferry terminal              | Generic — which one?                                         |
+| JFK                         | Airport code — three letters, globally unique                |
+| LHR T5                      | Airport code + terminal — specific part of a larger facility |
+| the train station           | Implicit — "the" train station where the user is             |
 
 Transit queries have more structural variety than amenity queries. They can be named (Grand Central), coded (JFK), numbered (bus stop #4521), or implicit ("the train station"). The geocoder must handle all of these forms.
 

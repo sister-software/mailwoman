@@ -20,43 +20,43 @@ Regional variants fall into several categories:
 
 ### Amenity variants
 
-| Standard term | Regional variant | Region |
-|--------------|-----------------|--------|
-| gas station | servo | Australia |
-| gas station | petrol station | UK, Ireland, Commonwealth |
-| convenience store | bodega | NYC, parts of US Northeast |
-| convenience store | corner shop | UK |
-| convenience store | depanneur (dépanneur) | Quebec |
-| convenience store | milk bar | Australia (declining) |
-| liquor store | off-licence | UK, Ireland |
-| liquor store | bottle shop | Australia |
-| liquor store | package store (packie) | New England, US |
-| pharmacy | chemist | UK, Australia |
-| pharmacy | apothecary | Historical, some US regions |
-| restaurant (delivery only) | takeaway | UK, Australia |
-| restaurant (delivery only) | takeout | US, Canada |
-| public restroom | loo | UK |
-| public restroom | washroom | Canada |
-| garbage can | rubbish bin | UK, Australia |
-| garbage can | dustbin | UK (older) |
-| residential building | flat | UK |
-| residential building | apartment | US |
-| elevator | lift | UK |
+| Standard term              | Regional variant      | Region                      |
+| -------------------------- | --------------------- | --------------------------- |
+| gas station                | servo                 | Australia                   |
+| gas station                | petrol station        | UK, Ireland, Commonwealth   |
+| convenience store          | bodega                | NYC, parts of US Northeast  |
+| convenience store          | corner shop           | UK                          |
+| convenience store          | depanneur (dépanneur) | Quebec                      |
+| convenience store          | milk bar              | Australia (declining)       |
+| liquor store               | off-licence           | UK, Ireland                 |
+| liquor store               | bottle shop           | Australia                   |
+| liquor store               | package store         | New England, US             |
+| pharmacy                   | chemist               | UK, Australia               |
+| pharmacy                   | apothecary            | Historical, some US regions |
+| restaurant (delivery only) | takeaway              | UK, Australia               |
+| restaurant (delivery only) | takeout               | US, Canada                  |
+| public restroom            | loo                   | UK                          |
+| public restroom            | washroom              | Canada                      |
+| garbage can                | rubbish bin           | UK, Australia               |
+| garbage can                | dustbin               | UK (older)                  |
+| residential building       | flat                  | UK                          |
+| residential building       | apartment             | US                          |
+| elevator                   | lift                  | UK                          |
 
 ### Brand variants
 
-| Brand | Regional variant | Region |
-|-------|-----------------|--------|
-| McDonald's | Macca's | Australia |
-| McDonald's | マクド (makudo) | Kansai, Japan |
-| McDonald's | マック (makku) | Kantō, Japan |
-| McDonald's | McDo | France, Quebec |
-| McDonald's | Mek | Germany, Austria |
-| McDonald's | Mickey D's | US (slang) |
-| KFC | PFK (Poulet Frit Kentucky) | Quebec (legal name) |
-| Burger King | Hungry Jack's | Australia (trademark issue) |
-| 7-Eleven | セブンイレブン (sebun irebun) | Japan |
-| Starbucks | スタバ (sutaba) | Japan (slang) |
+| Brand       | Regional variant              | Region                      |
+| ----------- | ----------------------------- | --------------------------- |
+| McDonald's  | Macca's                       | Australia                   |
+| McDonald's  | マクド (makudo)               | Kansai, Japan               |
+| McDonald's  | マック (makku)                | Kantō, Japan                |
+| McDonald's  | McDo                          | France, Quebec              |
+| McDonald's  | Mek                           | Germany, Austria            |
+| McDonald's  | Mickey D's                    | US (slang)                  |
+| KFC         | PFK (Poulet Frit Kentucky)    | Quebec (legal name)         |
+| Burger King | Hungry Jack's                 | Australia (trademark issue) |
+| 7-Eleven    | セブンイレブン (sebun irebun) | Japan                       |
+| Starbucks   | スタバ (sutaba)               | Japan (slang)               |
 
 ### Japanese brand abbreviation patterns
 
@@ -86,7 +86,7 @@ This is the right approach for a global-scale geocoder with query log data. It d
 
 2. **A locale signal.** The geocoder needs to know where the user is to disambiguate variants. "Chemist" means pharmacy in the UK and Australia but not in the US. The locale gate (Stage 2) provides this signal for Mailwoman — it detects the script and format of the query, which is a proxy for the user's region.
 
-3. **Fuzzy matching.** Some variants are informal and appear nowhere in formal databases. "Mickey D's" for McDonalds, "packie" for liquor store. Exact alias matching won't catch these. A fuzzy-matching layer that handles common informal variants requires training data — either query logs or hand-curated examples.
+3. **Fuzzy matching.** Some variants are informal and appear nowhere in formal databases. "Mickey D's" for McDonalds, regional colloquialisms for common amenities. Exact alias matching won't catch these. A fuzzy-matching layer that handles common informal variants requires training data — either query logs or hand-curated examples.
 
 ## What Mailwoman does today
 

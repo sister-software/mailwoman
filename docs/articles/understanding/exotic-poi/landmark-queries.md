@@ -13,21 +13,21 @@ A landmark query names a specific, usually unique, place. The user doesn't want 
 
 ## What landmark queries look like
 
-| Query | Type |
-|-------|------|
-| Eiffel Tower | Named landmark — globally unique |
-| Golden Gate Bridge | Named landmark — unique, but spans a distance |
-| Empire State Building | Named landmark — unique, has a street address |
-| Taj Mahal | Named landmark — unique, well-known |
-| Sydney Opera House | Named landmark — unique, well-known |
-| the White House | Named landmark — unique, politically sensitive |
-| Wrigley Field | Named venue — unique, has a street address |
-| Grand Central Terminal | Named transit + landmark — unique, transit hub |
-| Central Park | Named area — large, multiple entrances |
-| The High Line | Named linear feature — spans a distance |
-| The Las Vegas Strip | Named area — not a single point, not a polygon |
-| Stonehenge | Named landmark — remote, well-known |
-| Mount Everest | Natural feature — summit vs base camp are different locations |
+| Query                  | Type                                                          |
+| ---------------------- | ------------------------------------------------------------- |
+| Eiffel Tower           | Named landmark — globally unique                              |
+| Golden Gate Bridge     | Named landmark — unique, but spans a distance                 |
+| Empire State Building  | Named landmark — unique, has a street address                 |
+| Taj Mahal              | Named landmark — unique, well-known                           |
+| Sydney Opera House     | Named landmark — unique, well-known                           |
+| the White House        | Named landmark — unique, politically sensitive                |
+| Wrigley Field          | Named venue — unique, has a street address                    |
+| Grand Central Terminal | Named transit + landmark — unique, transit hub                |
+| Central Park           | Named area — large, multiple entrances                        |
+| The High Line          | Named linear feature — spans a distance                       |
+| The Las Vegas Strip    | Named area — not a single point, not a polygon                |
+| Stonehenge             | Named landmark — remote, well-known                           |
+| Mount Everest          | Natural feature — summit vs base camp are different locations |
 
 Landmark queries differ from address queries in that the user knows the name of the place but not (or doesn't care about) its address. The geocoder must map the name to a coordinate without the structured components (`street`, `city`, `state`) that address queries provide.
 

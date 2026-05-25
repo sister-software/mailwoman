@@ -13,20 +13,20 @@ An amenity query asks for the nearest instance of a generic category. The user d
 
 ## What amenity queries look like
 
-| Query | Category | Implicit constraints |
-|-------|----------|---------------------|
-| `gas station` | `amenity=fuel` | Nearest to user's location |
-| `water fountain` | `amenity=drinking_water` | Nearest, publicly accessible |
-| `ATM` | `amenity=atm` | Nearest, preferably in-network |
-| `restroom` | `amenity=toilets` | Nearest, publicly accessible, open |
-| `mailbox` | `amenity=post_box` | Nearest, collection time not passed |
-| `playground` | `leisure=playground` | Nearest, open to public |
-| `pharmacy` | `amenity=pharmacy` | Nearest, open now |
-| `hospital` | `amenity=hospital` | Nearest, emergency department |
-| `bicycle parking` | `amenity=bicycle_parking` | Nearest, secure |
+| Query                 | Category                   | Implicit constraints                |
+| --------------------- | -------------------------- | ----------------------------------- |
+| `gas station`         | `amenity=fuel`             | Nearest to user's location          |
+| `water fountain`      | `amenity=drinking_water`   | Nearest, publicly accessible        |
+| `ATM`                 | `amenity=atm`              | Nearest, preferably in-network      |
+| `restroom`            | `amenity=toilets`          | Nearest, publicly accessible, open  |
+| `mailbox`             | `amenity=post_box`         | Nearest, collection time not passed |
+| `playground`          | `leisure=playground`       | Nearest, open to public             |
+| `pharmacy`            | `amenity=pharmacy`         | Nearest, open now                   |
+| `hospital`            | `amenity=hospital`         | Nearest, emergency department       |
+| `bicycle parking`     | `amenity=bicycle_parking`  | Nearest, secure                     |
 | `EV charging station` | `amenity=charging_station` | Nearest, compatible plug, available |
-| `pho near me` | `cuisine=vietnamese` | Nearest Vietnamese restaurant |
-| `coffee shop` | `amenity=cafe` | Nearest, open |
+| `pho near me`         | `cuisine=vietnamese`       | Nearest Vietnamese restaurant       |
+| `coffee shop`         | `amenity=cafe`             | Nearest, open                       |
 
 The query has two parts: a **category** (what kind of thing) and an **implicit location constraint** (near where the user is, or near a specified place). The category is the hard part — the geocoder must map the user's words to a category taxonomy.
 

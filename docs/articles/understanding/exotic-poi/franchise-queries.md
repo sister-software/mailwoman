@@ -14,16 +14,16 @@ A franchise query names a specific chain or brand. The user doesn't want the nea
 
 ## What franchise queries look like
 
-| Query | Implicit meaning |
-|-------|-----------------|
-| `Walmart` | Nearest Walmart store |
-| `McDonalds` | Nearest McDonalds restaurant |
-| `Hilton` | Nearest Hilton hotel |
-| `Starbucks` | Nearest Starbucks coffee shop |
-| `7-Eleven` | Nearest 7-Eleven convenience store |
-| `Home Depot near Springfield, IL` | Nearest Home Depot to a specific place |
-| `Walmart Supercenter vs Walmart Neighborhood Market` | A specific sub-brand of the franchise |
-| `McDonalds with PlayPlace` | A franchise location with a specific amenity |
+| Query                                                | Implicit meaning                             |
+| ---------------------------------------------------- | -------------------------------------------- |
+| `Walmart`                                            | Nearest Walmart store                        |
+| `McDonalds`                                          | Nearest McDonalds restaurant                 |
+| `Hilton`                                             | Nearest Hilton hotel                         |
+| `Starbucks`                                          | Nearest Starbucks coffee shop                |
+| `7-Eleven`                                           | Nearest 7-Eleven convenience store           |
+| `Home Depot near Springfield, IL`                    | Nearest Home Depot to a specific place       |
+| `Walmart Supercenter vs Walmart Neighborhood Market` | A specific sub-brand of the franchise        |
+| `McDonalds with PlayPlace`                           | A franchise location with a specific amenity |
 
 Franchise queries have three components: a **brand name**, an optional **sub-brand** or **feature filter**, and an optional **location constraint**. The brand name is the hard part — it may not match what the franchise calls itself, and it varies by region.
 

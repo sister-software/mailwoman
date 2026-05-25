@@ -18,13 +18,13 @@ This series catalogues the categories of POI queries, how traditional geocoders 
 
 ## The categories
 
-| Query type | Example | What the user wants |
-|-----------|---------|-------------------|
-| [Amenities](./amenity-queries.md) | water fountain, gas station, ATM, restroom | The nearest instance of a generic category |
-| [Franchises and brands](./franchise-queries.md) | Walmart, McDonalds, Hilton, Starbucks | The nearest or all locations of a named chain |
-| [Regional variants](./regional-variant-queries.md) | servo, bodega, マクド, off-licence, chemist | The same thing as an amenity or brand, but using local terminology |
-| [Landmarks](./landmark-queries.md) | Eiffel Tower, Golden Gate Bridge, Empire State Building | A specific named place, usually unique or nearly unique |
-| [Transit](./transit-queries.md) | subway station, bus stop, airport, train station | A transit facility, named or unnamed |
+| Query type                                         | Example                                                 | What the user wants                                                |
+| -------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------ |
+| [Amenities](./amenity-queries.md)                  | water fountain, gas station, ATM, restroom              | The nearest instance of a generic category                         |
+| [Franchises and brands](./franchise-queries.md)    | Walmart, McDonalds, Hilton, Starbucks                   | The nearest or all locations of a named chain                      |
+| [Regional variants](./regional-variant-queries.md) | servo, bodega, マクド, off-licence, chemist             | The same thing as an amenity or brand, but using local terminology |
+| [Landmarks](./landmark-queries.md)                 | Eiffel Tower, Golden Gate Bridge, Empire State Building | A specific named place, usually unique or nearly unique            |
+| [Transit](./transit-queries.md)                    | subway station, bus stop, airport, train station        | A transit facility, named or unnamed                               |
 
 ## Why this matters for Mailwoman
 
