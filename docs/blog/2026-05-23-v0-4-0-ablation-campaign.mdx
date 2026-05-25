@@ -5,6 +5,12 @@ authors: [teffen]
 tags: [training, retrospective]
 ---
 
+:::note If you found this via search
+
+**[Mailwoman](https://mailwoman.sister.software)** is an open-source address parser. This post is a historical retrospective on the v0.4.0 training campaign (May 2026). For current project status, see [what ships today](/docs/status).
+
+:::
+
 `@mailwoman/neural-weights-en-us@v0.4.0` (and the fr-fr sibling) shipped today as packaged artifacts (the npm publish is a separate step we do by hand). It is a mixed-result release: one clear win on fine-grained labels, two regressions on coarse labels that turned out to be mostly artifacts of how we measured. Almost everything we set out to do — combine three orthogonal training improvements into one ship — was empirically falsified by a divergence pattern we hadn't seen before.
 
 This is a writeup of how the campaign went. We're publishing it for two reasons: to be honest about what the headline numbers mean, and because the way the failures stacked up is worth thinking about if you train your own NER-style models.

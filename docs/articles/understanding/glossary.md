@@ -103,6 +103,8 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **Pelias** — an open-source geocoder, Mailwoman's spiritual predecessor. See [From Pelias to Mailwoman](./our-approach/from-pelias-to-mailwoman.md).
 
+**Phase** — a milestone in the implementation plan (`plan/README.md`). Phases 0–3 shipped (Foundation → Corpus → Training → Integration), Phases 4–6 are forward-looking. Distinct from **Stage** (runtime pipeline) and **Tier** (model vocabulary).
+
 **Per-token argmax** — picking the highest-probability label at each position independently. Fast and simple but can produce structurally invalid sequences. The opposite of Viterbi.
 
 **Postcode** — the country-specific postal code (US ZIP, FR code postal, etc.). Mailwoman handles postcode parsing entirely by rule classifier — it is a regex problem, not an ML problem.
@@ -127,7 +129,7 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **Span** — a contiguous range of characters in the input string. The basic unit of address parsing.
 
-**Stage (runtime)** — one of the six dataflow stages in the runtime pipeline ([the-staged-pipeline](./our-approach/the-staged-pipeline.md)): Normalize, Locale gate, Token classify, Sequence correct, Reconcile, Resolve. Distinct from **Tier** (vocabulary expansion across model versions).
+**Stage (runtime)** — one of the six dataflow stages in the runtime pipeline ([the-staged-pipeline](./our-approach/the-staged-pipeline.md)): Normalize, Locale gate, Kind classify, Phrase group, Token classify, Sequence correct, Reconcile, Resolve. Distinct from **Tier** (vocabulary expansion across model versions).
 
 **Tier 1 / Tier 2 / Tier 3** — internal versioning of which label classes the model emits. Tier 1 is the coarse components (`country`, `region`, `locality`, `postcode`). Tier 2 adds `venue`, `street`, `house_number`. Tier 3 (future) would add `attention`, `po_box`, and POI venue subtyping. Historically called "Stage 1/2/3" before the runtime-pipeline naming made that ambiguous (renamed 2026-05-22); some shipped artifacts (npm v3.0.0 model card, `stage2-step-001800-eval.md`) preserve the old name.
 
@@ -136,6 +138,8 @@ Every technical term used in this documentation, defined once. Skim it before re
 **Token** — one word or subword in the tokenized input. For the neural classifier, tokens come from SentencePiece (subword units). For the rule classifiers, tokens are whitespace-and-punctuation-separated words.
 
 **Tokenizer** — the component that splits an input string into tokens. The neural classifier ships its own (SentencePiece, learned from the corpus); the rule classifiers use Mailwoman's hand-written word tokenizer.
+
+**Thread** — a parallel workstream within a release. v0.5.0 was organized as six threads (A–F): tokenizer retrain, kryptonite catalogue, classifier code path, reconcile, phrase grouper, verdict-smoke discipline. Threads compose; they are not sequential milestones like **Phases**.
 
 **Transformer** — a neural network architecture invented in 2017 ("Attention Is All You Need"). The basis of every modern NLP model from BERT to GPT-4. Mailwoman uses a small, encoder-only transformer. See [`concepts/neural-classification.md`](../concepts/neural-classification.md).
 

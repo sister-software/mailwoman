@@ -127,7 +127,7 @@ The live demo at [mailwoman.sister.software/demo](https://mailwoman.sister.softw
 
 - **Coarse F1 is still regressed.** The v0.4.0-shipped model has `region` F1 of 0.19 and `country` F1 of 0.21. Rule classifiers are doing the heavy lifting on coarse components. The v0.5.0 fresh-slate work (new tokenizer, phrase grouper, joint decode) targets this structurally — but the C-train that would produce improved weights is not yet stable.
 - **Training divergence is the current blocker.** Both v0.4.0 and v0.5.0 training runs diverge under sustained peak learning rate. The leading hypothesis (as of May 2026) is that the CRF-NLL + CE dual loss has opposing curvature below a threshold loss value. CE-only training is the current experiment.
-- **Joint decode is opt-in.** The reconciler ships but is not the default path. The argmax fallback is wired until the classifier emits real top-K output and the integration is verified against the kryptonite catalogue.
+- **Joint decode is opt-in.** The reconciler code ships in `runtime-pipeline.ts` with `parseWithLogits` + `aggregateSpanLogits` + `reconcileSpans`, but requires the `forceJointReconcile` flag. The argmax fallback is the default path. End-to-end validation against the kryptonite catalogue with real model output is tracked in [#153](https://github.com/sister-software/mailwoman/issues/153).
 - **The model is small.** Nine million parameters is enough for the address-parsing task but not enough for free-text understanding. We are not building a chatbot.
 
 Continue with [How it will work](./how-it-will-work.md) for the near-future roadmap.

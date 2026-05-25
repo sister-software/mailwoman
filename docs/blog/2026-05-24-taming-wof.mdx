@@ -5,6 +5,12 @@ authors: [teffen]
 tags: [resolver, geocoding]
 ---
 
+:::note If you found this via search
+
+**[Mailwoman](https://mailwoman.sister.software)** is an open-source address parser + geocoder that uses Who's On First as its gazetteer. This post is a practical reference on WOF's gotchas and the tooling we built to work around them. [Try the demo](/demo) or see [what ships today](/docs/status).
+
+:::
+
 Who's On First is the best open gazetteer we have. It's also one of the strangest datasets you'll encounter as a developer. This post is about what makes it hard to use, what makes it worth the effort, and the tooling we built inside Mailwoman to tame it.
 
 If you've ever tried to answer "what city is this address in?" programmatically — using open data, without paying a geocoding API — you've probably already run into WOF. And you probably had some questions.
@@ -162,6 +168,7 @@ If you're building a geocoder or any location-aware system and you need hierarch
 - [Who's On First on GitHub](https://github.com/whosonfirst-data) — the source repos
 - [Geocode Earth WOF distributions](https://data.geocode.earth/wof/dist/sqlite/) — pre-built SQLite files
 - [Spelunker](https://spelunker.whosonfirst.org/) — the official WOF browser/explorer
+- [`docs/articles/concepts/whosonfirst-gotchas.md`](/docs/concepts/whosonfirst-gotchas) — the stable reference version of this article (data model, gotchas, tooling architecture)
 - [`docs/articles/concepts/wof-data-pipeline.md`](/docs/concepts/wof-data-pipeline) — our internal architecture doc for the ingest pipeline
 - [`docs/articles/concepts/resolver-and-wof.md`](/docs/concepts/resolver-and-wof) — how the runtime resolver queries WOF
 - [`core/resources/whosonfirst/`](https://github.com/sister-software/mailwoman/tree/main/core/resources/whosonfirst) — the TypeScript tooling source

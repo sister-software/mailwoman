@@ -5,6 +5,12 @@ authors: [teffen]
 tags: [training, retrospective]
 ---
 
+:::note If you found this via search
+
+**[Mailwoman](https://mailwoman.sister.software)** is an open-source address parser. This post is a training log entry from May 2026 documenting the v0.5.0 divergence investigation. For current project status, see [what ships today](/docs/status).
+
+:::
+
 v0.5.0 was the **fresh-slate ship**: new tokenizer, expanded corpus, new architecture, new reconcile stage. The plan was to bundle several months of structural improvements into one big iteration and pay the cost once. Most of it landed clean. The classifier didn't.
 
 This post walks through the four training attempts the v0.5.0 C-train made overnight, the bisect that ruled out three plausible explanations, and what we think the remaining culprit is. It's a sister piece to [the v0.4.0 retrospective](/blog/v0-4-0-ablation-campaign) — same shape of failure, different diagnostic ladder.

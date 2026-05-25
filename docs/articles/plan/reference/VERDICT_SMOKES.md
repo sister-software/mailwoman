@@ -1,5 +1,11 @@
 # Verdict-smoke framework
 
+:::tip Audience
+
+🧪 **Operator documentation.** For contributors designing and running training experiments. If you want to use Mailwoman, see [Getting started](/docs/getting-started).
+
+:::
+
 A **verdict smoke** is a short (few-hundred-to-few-thousand-step) training run whose only job is to decide whether a full-length training run is worth launching. The full run is expensive (rented GPU, ~6–10h); the smoke runs in minutes and is supposed to surface divergence, NaN, sampler starvation, and other recipe-level bugs before they cost a full-run.
 
 This document captures the v0.4.0 meta-bug that made the framework unreliable, and the redesigned framework v0.5.0 (and onward) uses.

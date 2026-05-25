@@ -9,9 +9,11 @@ For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`]
 - **Source of truth:** this file is the canonical interface contract for the runtime pipeline. Any stage implementation must conform.
 - **Last edited:** 2026-05-25.
 - **Implementation state (frozen 2026-05-25):**
-  - **Shipped and wired as default:** Stage 1 (normalize), Stage 2.5 (kind classifier), Stage 2.7 (phrase grouper, rule-based), Stage 3 (neural classifier + CRF Viterbi), Stage 4a (CRF structural mask), Stage 5 (reconcile, behind `forceJointReconcile` flag), Stage 6 (WOF SQLite resolver).
+  - **Shipped and wired as default:** Stage 1 (normalize), Stage 2.5 (kind classifier), Stage 2.7 (phrase grouper, rule-based), Stage 3 (neural classifier + CRF Viterbi), Stage 4a (CRF structural mask), Stage 6 (WOF SQLite resolver).
+  - **Shipped, opt-in behind feature flag:** Stage 5 (joint reconcile — requires `forceJointReconcile` flag and classifier with `parseWithLogits`).
   - **Shipped but not wired as factory default:** Stage 2 (locale gate workspace exists, not in `createRuntimePipeline` factory).
-  - **Scaffold only:** Stage 4b (span re-reader — unbuilt), candidate-list API on Stage 6 (designed, not implemented).
+  - **Scaffold only:** Stage 4b (span re-reader — unbuilt).
+  - **In-flight:** CE-only C-train producing new Stage 3 weights (step 6800/50K, val_macro_f1=0.496).
   - **In-flight:** CE-only C-train producing new Stage 3 weights (step 6800/50K, val_macro_f1=0.496).
 
 ## The pipeline
@@ -172,7 +174,7 @@ export interface LocaleGate {
 }
 ```
 
-**Today.** `@mailwoman/locale-gate` workspace shipped 2026-05-23. Rule-based: caller-hint precedence at confidence 1.0; otherwise derived from `QueryShape.characterClass` (CJK → ja-JP, Cyrillic → ru-RU, Arabic → ar) + known-format hits (us_zip4 → en-US, uk_postcode → en-GB, ca_postcode → en-CA, jp_postcode → ja-JP). Ambiguous 5-digit → en-US at low confidence with FR/DE as alternatives. Always decisive (fallback en-US at 0.3). Wired as the default `detectLocale` in `mailwoman/runtime-pipeline.ts::createRuntimePipeline`.
+**Today.** `@mailwoman/locale-gate` workspace shipped 2026-05-23. Rule-based: caller-hint precedence at confidence 1.0; otherwise derived from `QueryShape.characterClass` (CJK → ja-JP, Cyrillic → ru-RU, Arabic → ar) + known-format hits (us_zip4 → en-US, uk_postcode → en-GB, ca_postcode → en-CA, jp_postcode → ja-JP). Ambiguous 5-digit → en-US at low confidence with FR/DE as alternatives. Always decisive (fallback en-US at 0.3). Not yet wired as default in `createRuntimePipeline` — callers must pass `detectLocale` explicitly. The coordinator falls back to caller-trust stub.
 
 **Future.** Replace the rule scorers with a small character-level classifier (~100 KB) trained on the first 200 characters of input. Per-locale corpus rows already carry the `locale` field — supervised training data is free. Below the confidence floor, the gate signals an ensemble run downstream.
 
