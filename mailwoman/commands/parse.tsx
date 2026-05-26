@@ -212,6 +212,22 @@ function resolveWofPath(options: zod.infer<typeof ParseConfigSchema>): string {
 	return path
 }
 
+async function tryBuildFst(
+	options: zod.infer<typeof ParseConfigSchema>
+): Promise<import("@mailwoman/resolver-wof-sqlite/fst-matcher").FstMatcher | undefined> {
+	const dbPath = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
+	if (!dbPath) return undefined
+	try {
+		const { existsSync } = await import("node:fs")
+		if (!existsSync(dbPath)) return undefined
+		const { buildFstFromWof } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
+		const { matcher } = buildFstFromWof({ dbPath })
+		return matcher
+	} catch {
+		return undefined
+	}
+}
+
 /**
  * Tree → resolved tree via the WOF backend. When `options.candidates` is set, asks the resolver for
  * top-(N+1) candidates per node so the runner-ups land on `AddressNode.alternatives` (where N is
@@ -312,7 +328,8 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
-			const pipeline = createRuntimePipeline({ classifier, resolver })
+			const fst = await tryBuildFst(options)
+			const pipeline = createRuntimePipeline({ classifier, resolver, fst })
 			const result = await pipeline(input, pipelineOpts)
 			return options.debug
 				? JSON.stringify(serializeResult(result, options.format), null, 2)
@@ -320,7 +337,8 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 		})
 	}
 
-	const pipeline = createRuntimePipeline({ classifier })
+	const fst = await tryBuildFst(options)
+	const pipeline = createRuntimePipeline({ classifier, fst })
 	const result = await pipeline(input, pipelineOpts)
 	return options.debug
 		? JSON.stringify(serializeResult(result, options.format), null, 2)

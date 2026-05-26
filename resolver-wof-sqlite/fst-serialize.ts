@@ -36,7 +36,7 @@
  *     chainLen       u8       0..8
  *     _pad           u16
  *     nameIdx        u32      index into string table
- *     population     u32
+ *     importance     f32      Wikipedia importance [0,1] (V2); was population u32 (V1)
  *     lat            f32
  *     lon            f32
  *     chain          [u32; 8] parent chain (unused slots = 0)
@@ -47,7 +47,7 @@ import { FstMatcher } from "./fst-matcher.js"
 import type { PlaceEntry, PlacetypeId } from "./fst-types.js"
 
 const MAGIC = Buffer.from("FST\0", "ascii")
-const VERSION = 1
+const VERSION = 2
 const HEADER_SIZE = 32
 const STATE_ENTRY_SIZE = 12
 const EDGE_ENTRY_SIZE = 8
@@ -183,7 +183,7 @@ export function serializeFst(matcher: FstMatcher): Buffer {
 			buf.writeUInt8(chainLen, pp + 5)
 			buf.writeUInt16LE(0, pp + 6) // pad
 			buf.writeUInt32LE(intern(place.name), pp + 8)
-			buf.writeUInt32LE(place.population, pp + 12)
+			buf.writeFloatLE(place.importance, pp + 12)
 			buf.writeFloatLE(place.lat, pp + 16)
 			buf.writeFloatLE(place.lon, pp + 20)
 			for (let ci = 0; ci < MAX_CHAIN_LEN; ci++) {
@@ -201,7 +201,8 @@ export function deserializeFst(buf: Buffer): FstMatcher {
 	if (buf.length < HEADER_SIZE) throw new Error("FST buffer too small for header")
 	if (!buf.subarray(0, 4).equals(MAGIC)) throw new Error("FST magic mismatch")
 	const version = buf.readUInt16LE(4)
-	if (version !== VERSION) throw new Error(`FST version ${version} unsupported (expected ${VERSION})`)
+	if (version < 1 || version > VERSION) throw new Error(`FST version ${version} unsupported (expected 1..${VERSION})`)
+	const isV2 = version >= 2
 
 	const stateCount = buf.readUInt32LE(8)
 	const edgeCount = buf.readUInt32LE(12)
@@ -256,11 +257,14 @@ export function deserializeFst(buf: Buffer): FstMatcher {
 			for (let ci = 0; ci < chainLen; ci++) {
 				parentChain.push(buf.readUInt32LE(pp + 24 + ci * 4))
 			}
+			const rawImportance = isV2
+				? buf.readFloatLE(pp + 12)
+				: Math.min(1.0, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)
 			places[pi] = {
 				wofId: buf.readUInt32LE(pp),
 				placetype: PLACETYPE_ORDER[buf.readUInt8(pp + 4)] ?? "locality",
 				name: strings[buf.readUInt32LE(pp + 8)]!,
-				population: buf.readUInt32LE(pp + 12),
+				importance: rawImportance,
 				lat: buf.readFloatLE(pp + 16),
 				lon: buf.readFloatLE(pp + 20),
 				parentChain,

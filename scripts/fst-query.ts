@@ -49,13 +49,13 @@ for (const query of queries) {
 	console.log(`  State: ${q.stateId}, Accepting: ${q.accepting.length} interpretations`)
 
 	if (q.accepting.length > 0) {
-		const sorted = [...q.accepting].sort((a, b) => b.population - a.population)
+		const sorted = [...q.accepting].sort((a, b) => b.importance - a.importance)
 		const shown = sorted.slice(0, maxResults)
-		console.log(`  Top by population:`)
+		console.log(`  Top by importance:`)
 		for (const p of shown) {
-			const pop = p.population > 0 ? ` pop ${p.population.toLocaleString()}` : ""
+			const imp = p.importance > 0 ? ` imp ${p.importance.toFixed(4)}` : ""
 			const chain = p.parentChain.length > 0 ? ` chain=[${p.parentChain.join("→")}]` : ""
-			console.log(`    ${p.placetype.padEnd(12)} ${p.name.padEnd(20)}${pop}${chain}  wof:${p.wofId}`)
+			console.log(`    ${p.placetype.padEnd(12)} ${p.name.padEnd(20)}${imp}${chain}  wof:${p.wofId}`)
 		}
 		if (sorted.length > maxResults) {
 			console.log(`    ... and ${sorted.length - maxResults} more`)

@@ -46,7 +46,7 @@ describe.skipIf(!HAS_WOF)("buildFstFromWof — integration", () => {
 
 	it("finds NYC with correct parent chain", () => {
 		const q = matcher.query("New York")
-		const nyc = q.accepting.find((p) => p.placetype === "locality" && p.population > 1_000_000)
+		const nyc = q.accepting.find((p) => p.placetype === "locality" && p.wofId === 85977539)
 		expect(nyc).toBeDefined()
 		expect(nyc!.wofId).toBe(85977539)
 		expect(nyc!.parentChain).toContain(85688543)
@@ -57,8 +57,8 @@ describe.skipIf(!HAS_WOF)("buildFstFromWof — integration", () => {
 		expect(q.accepting.length).toBeGreaterThanOrEqual(2)
 		const localities = q.accepting.filter((p) => p.placetype === "locality")
 		expect(localities.length).toBeGreaterThanOrEqual(2)
-		const sorted = localities.sort((a, b) => b.population - a.population)
-		expect(sorted[0]!.population).toBeGreaterThan(500_000)
+		const sorted = localities.sort((a, b) => b.importance - a.importance)
+		expect(sorted[0]!.importance).toBeGreaterThan(0)
 	})
 
 	it("provides continuations after 'New'", () => {

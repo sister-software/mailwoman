@@ -35,7 +35,7 @@ export interface FstMatchLike {
 
 export interface FstPlaceEntryLike {
 	placetype: string
-	population: number
+	importance: number
 }
 
 export interface FstMatcherLike {
@@ -64,8 +64,13 @@ interface WordGroup {
 	pieceIndices: number[]
 }
 
+const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house_number", "I-house_number", "B-venue"]
+
 export interface FstPriorOpts {
 	biasScale?: number
+	/** Maximum bias magnitude (logits). Prevents large-population places from overriding the model. Default 3.0. */
+	maxBias?: number
+	suppressionScale?: number
 }
 
 /**
@@ -83,6 +88,8 @@ export function buildFstEmissionPriors(
 	const T = pieces.length
 	const L = labels.length
 	const biasScale = opts.biasScale ?? 1.0
+	const maxBias = opts.maxBias ?? 3.0
+	const suppressionScale = opts.suppressionScale ?? 1.5
 	const matrix: number[][] = []
 	for (let t = 0; t < T; t++) matrix.push(new Array<number>(L).fill(0))
 
@@ -100,7 +107,7 @@ export function buildFstEmissionPriors(
 		if (!match) continue
 
 		if (match.accepted) {
-			applyBias(matrix, labelToCol, fst.accepting(match.stateId), [group], biasScale)
+			applyBias(matrix, labelToCol, fst.accepting(match.stateId), [group], biasScale, maxBias, suppressionScale)
 		}
 
 		let current = match
@@ -113,7 +120,7 @@ export function buildFstEmissionPriors(
 
 			if (next.accepted) {
 				const matchedGroups = wordGroups.slice(start, end + 1).filter((g) => g.fstToken !== "")
-				applyBias(matrix, labelToCol, fst.accepting(next.stateId), matchedGroups, biasScale)
+				applyBias(matrix, labelToCol, fst.accepting(next.stateId), matchedGroups, biasScale, maxBias, suppressionScale)
 			}
 
 			current = next
@@ -176,25 +183,46 @@ function applyBias(
 	labelToCol: Map<string, number>,
 	entries: ReadonlyArray<FstPlaceEntryLike>,
 	groups: WordGroup[],
-	biasScale: number
+	biasScale: number,
+	maxBias: number,
+	suppressionScale: number
 ): void {
-	const seenTags = new Set<string>()
+	const seenTags = new Map<string, number>()
 
 	for (const entry of entries) {
 		const bioTag = PLACETYPE_TO_BIO.get(entry.placetype)
-		if (!bioTag || seenTags.has(bioTag)) continue
-		seenTags.add(bioTag)
+		if (!bioTag) continue
+		const impBias = entry.importance * biasScale * maxBias
+		const existing = seenTags.get(bioTag) ?? 0
+		if (impBias > existing) seenTags.set(bioTag, impBias)
+	}
 
+	if (seenTags.size === 0) return
+
+	const allPieceIndices: number[] = []
+	for (const group of groups) {
+		for (const pi of group.pieceIndices) allPieceIndices.push(pi)
+	}
+
+	for (const [bioTag, bias] of seenTags) {
 		const bCol = labelToCol.get(`B-${bioTag}`)
 		const iCol = labelToCol.get(`I-${bioTag}`)
 		if (bCol === undefined) continue
 
-		let isFirst = true
-		for (const group of groups) {
-			for (const pi of group.pieceIndices) {
-				const col = isFirst ? bCol : iCol ?? bCol
-				matrix[pi]![col] = Math.max(matrix[pi]![col]!, biasScale)
-				isFirst = false
+		for (let k = 0; k < allPieceIndices.length; k++) {
+			const pi = allPieceIndices[k]!
+			const col = k === 0 ? bCol : iCol ?? bCol
+			matrix[pi]![col] = Math.max(matrix[pi]![col]!, bias)
+		}
+	}
+
+	if (suppressionScale > 0) {
+		for (const pi of allPieceIndices) {
+			for (const label of SUPPRESS_WHEN_PLACE) {
+				const col = labelToCol.get(label)
+				if (col !== undefined) {
+					matrix[pi]![col] = Math.min(matrix[pi]![col]!, -suppressionScale)
+				}
 			}
 		}
 	}
