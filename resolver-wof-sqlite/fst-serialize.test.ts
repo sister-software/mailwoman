@@ -5,7 +5,7 @@
  */
 
 import { existsSync } from "node:fs"
-import { describe, expect, it } from "vitest"
+import { beforeAll, describe, expect, it } from "vitest"
 import { buildFstFromWof } from "./fst-builder.js"
 import { FstMatcher, normalizeTokens, type FstNode } from "./fst-matcher.js"
 import { deserializeFst, serializeFst } from "./fst-serialize.js"
@@ -129,18 +129,24 @@ const WOF_DB = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest
 const HAS_WOF = existsSync(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () => {
-	const { matcher: original } = buildFstFromWof({
-		dbPath: WOF_DB,
-		countries: ["US"],
-		placetypes: ["country", "region", "county", "locality"],
-		languages: ["eng", ""],
-		onProgress: (phase, detail) => {
-			if (phase === "done") console.log(`  ${phase}: ${detail}`)
-		},
-	})
+	let original: FstMatcher
+	let buf: Buffer
+	let restored: FstMatcher
 
-	const buf = serializeFst(original)
-	const restored = deserializeFst(buf)
+	beforeAll(() => {
+		const { matcher } = buildFstFromWof({
+			dbPath: WOF_DB,
+			countries: ["US"],
+			placetypes: ["country", "region", "county", "locality"],
+			languages: ["eng", ""],
+			onProgress: (phase, detail) => {
+				if (phase === "done") console.log(`  ${phase}: ${detail}`)
+			},
+		})
+		original = matcher
+		buf = serializeFst(original)
+		restored = deserializeFst(buf)
+	}, 30_000)
 
 	it("roundtrips state count", () => {
 		expect(restored.stateCount).toBe(original.stateCount)

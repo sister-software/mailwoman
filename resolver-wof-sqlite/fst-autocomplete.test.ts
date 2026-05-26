@@ -5,23 +5,29 @@
  */
 
 import { existsSync } from "node:fs"
-import { describe, expect, it } from "vitest"
+import { beforeAll, describe, expect, it } from "vitest"
 import { autocomplete } from "./fst-autocomplete.js"
 import { buildFstFromWof } from "./fst-builder.js"
+import type { FstMatcher } from "./fst-matcher.js"
 
 const WOF_DB = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
 const HAS_WOF = existsSync(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
-	const { matcher } = buildFstFromWof({
-		dbPath: WOF_DB,
-		countries: ["US"],
-		placetypes: ["country", "region", "county", "locality"],
-		languages: ["eng", ""],
-		onProgress: (phase, detail) => {
-			if (phase === "done") console.log(`  ${phase}: ${detail}`)
-		},
-	})
+	let matcher: FstMatcher
+
+	beforeAll(() => {
+		const built = buildFstFromWof({
+			dbPath: WOF_DB,
+			countries: ["US"],
+			placetypes: ["country", "region", "county", "locality"],
+			languages: ["eng", ""],
+			onProgress: (phase, detail) => {
+				if (phase === "done") console.log(`  ${phase}: ${detail}`)
+			},
+		})
+		matcher = built.matcher
+	}, 30_000)
 
 	it("returns suggestions for 'New'", () => {
 		const result = autocomplete(matcher, "New", { maxSuggestions: 5 })
