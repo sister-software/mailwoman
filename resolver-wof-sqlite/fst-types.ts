@@ -9,7 +9,7 @@
  */
 
 export interface PlaceEntry {
-	wofId: number
+	wofID: number
 	placetype: PlacetypeId
 	name: string
 	parentChain: number[]

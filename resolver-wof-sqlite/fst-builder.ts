@@ -72,8 +72,8 @@ export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; resu
 	progress("spr", `Loaded ${sprRows.length} places`)
 
 	// Phase 2: Build a lookup for parent chain resolution.
-	const sprById = new Map<number, SprRow>()
-	for (const row of sprRows) sprById.set(row.id, row)
+	const sprByID = new Map<number, SprRow>()
+	for (const row of sprRows) sprByID.set(row.id, row)
 
 	// Also load parent rows that might be outside our placetype filter (e.g., country for region).
 	const parentStmt = db.prepare("SELECT id, name, placetype, parent_id, latitude, longitude FROM spr WHERE id = ?")
@@ -95,7 +95,7 @@ export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; resu
 	}
 
 	function resolveParentChain(id: number): number[] {
-		const row = sprById.get(id)
+		const row = sprByID.get(id)
 		if (!row) return []
 
 		// If parent_id is a sentinel (≤ 0), use ancestors table.
@@ -111,12 +111,12 @@ export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; resu
 		while (current > 0 && !seen.has(current)) {
 			seen.add(current)
 			chain.push(current)
-			let parentRow = sprById.get(current)
+			let parentRow = sprByID.get(current)
 			if (!parentRow) {
 				const fetched = parentStmt.get(current) as unknown as SprRow | undefined
 				if (!fetched) break
 				parentRow = fetched
-				sprById.set(current, parentRow)
+				sprByID.set(current, parentRow)
 			}
 			if (parentRow.parent_id > 0 && parentRow.parent_id !== current) {
 				current = parentRow.parent_id
@@ -190,9 +190,9 @@ export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; resu
 			}
 			stateId = next
 		}
-		// Deduplicate: don't add the same wofId twice at the same state.
+		// Deduplicate: don't add the same wofID twice at the same state.
 		const existing = nodes[stateId]!.places
-		if (!existing.some((p) => p.wofId === entry.wofId && p.placetype === entry.placetype)) {
+		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
 			existing.push(entry)
 		}
 	}
@@ -201,7 +201,7 @@ export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; resu
 	for (const row of sprRows) {
 		const parentChain = resolveParentChain(row.id)
 		const entry: PlaceEntry = {
-			wofId: row.id,
+			wofID: row.id,
 			placetype: row.placetype as PlacetypeId,
 			name: row.name,
 			parentChain,

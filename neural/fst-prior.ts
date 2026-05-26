@@ -34,7 +34,7 @@ export interface FstMatchLike {
 }
 
 export interface FstPlaceEntryLike {
-	wofId: number
+	wofID: number
 	placetype: string
 	importance: number
 }
@@ -92,7 +92,7 @@ export function buildFstEmissionPriors(
 	const T = pieces.length
 	const L = labels.length
 	const biasScale = opts.biasScale ?? 1.0
-	const seenWofIds = new Set<number>()
+	const seenWOFIDs = new Set<number>()
 	const maxBias = opts.maxBias ?? 3.0
 	const suppressionScale = opts.suppressionScale ?? 1.5
 	const matrix: number[][] = []
@@ -112,7 +112,7 @@ export function buildFstEmissionPriors(
 		if (!match) continue
 
 		if (match.accepted) {
-			applyBias(matrix, labelToCol, fst.accepting(match.stateId), [group], biasScale, maxBias, suppressionScale, seenWofIds)
+			applyBias(matrix, labelToCol, fst.accepting(match.stateId), [group], biasScale, maxBias, suppressionScale, seenWOFIDs)
 		}
 
 		let current = match
@@ -125,7 +125,7 @@ export function buildFstEmissionPriors(
 
 			if (next.accepted) {
 				const matchedGroups = wordGroups.slice(start, end + 1).filter((g) => g.fstToken !== "")
-				applyBias(matrix, labelToCol, fst.accepting(next.stateId), matchedGroups, biasScale, maxBias, suppressionScale, seenWofIds)
+				applyBias(matrix, labelToCol, fst.accepting(next.stateId), matchedGroups, biasScale, maxBias, suppressionScale, seenWOFIDs)
 			}
 
 			current = next
@@ -191,13 +191,13 @@ function applyBias(
 	biasScale: number,
 	maxBias: number,
 	suppressionScale: number,
-	seenWofIds: Set<number>
+	seenWOFIDs: Set<number>
 ): void {
 	const seenTags = new Map<string, number>()
 
 	for (const entry of entries) {
-		if (seenWofIds.has(entry.wofId)) continue
-		seenWofIds.add(entry.wofId)
+		if (seenWOFIDs.has(entry.wofID)) continue
+		seenWOFIDs.add(entry.wofID)
 		const bioTag = PLACETYPE_TO_BIO.get(entry.placetype)
 		if (!bioTag) continue
 		const impBias = entry.importance * biasScale * maxBias

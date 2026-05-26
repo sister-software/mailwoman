@@ -56,7 +56,7 @@ for (const query of queries) {
 		for (const p of shown) {
 			const imp = p.importance > 0 ? ` imp ${p.importance.toFixed(4)}` : ""
 			const chain = p.parentChain.length > 0 ? ` chain=[${p.parentChain.join("→")}]` : ""
-			console.log(`    ${p.placetype.padEnd(12)} ${p.name.padEnd(20)}${imp}${chain}  wof:${p.wofId}`)
+			console.log(`    ${p.placetype.padEnd(12)} ${p.name.padEnd(20)}${imp}${chain}  wof:${p.wofID}`)
 		}
 		if (sorted.length > maxResults) {
 			console.log(`    ... and ${sorted.length - maxResults} more`)

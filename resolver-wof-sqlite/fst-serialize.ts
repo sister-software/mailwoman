@@ -18,7 +18,7 @@
  *
  *   EDGE TABLE [edgeCount × 8 bytes] stringIdx u32 index into string table targetState u32
  *
- *   PLACE TABLE [placeCount × 56 bytes] wofId u32 placetypeIdx u8 index into PLACETYPE_ORDER chainLen
+ *   PLACE TABLE [placeCount × 56 bytes] wofID u32 placetypeIdx u8 index into PLACETYPE_ORDER chainLen
  *   u8 0..8 _pad u16 nameIdx u32 index into string table importance f32 Wikipedia importance [0,1]
  *   (V2); was population u32 (V1) lat f32 lon f32 chain [u32; 8] parent chain (unused slots = 0)
  */
@@ -159,7 +159,7 @@ export function serializeFst(matcher: FstMatcher): Buffer {
 			// Filter out WOF sentinel parent IDs (negative values like -1, -4).
 			const validChain = place.parentChain.filter((id) => id > 0)
 			const chainLen = Math.min(validChain.length, MAX_CHAIN_LEN)
-			buf.writeUInt32LE(place.wofId, pp)
+			buf.writeUInt32LE(place.wofID, pp)
 			buf.writeUInt8(placetypeToIdx.get(place.placetype) ?? 0, pp + 4)
 			buf.writeUInt8(chainLen, pp + 5)
 			buf.writeUInt16LE(0, pp + 6) // pad
@@ -242,7 +242,7 @@ export function deserializeFst(buf: Buffer): FstMatcher {
 				? buf.readFloatLE(pp + 12)
 				: Math.min(1.0, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)
 			places[pi] = {
-				wofId: buf.readUInt32LE(pp),
+				wofID: buf.readUInt32LE(pp),
 				placetype: PLACETYPE_ORDER[buf.readUInt8(pp + 4)] ?? "locality",
 				name: strings[buf.readUInt32LE(pp + 8)]!,
 				importance: rawImportance,

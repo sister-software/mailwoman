@@ -21,7 +21,7 @@ export interface AutocompleteSuggestion {
 	name: string
 	placetype: string
 	importance: number
-	wofId: number
+	wofID: number
 	parentChain: number[]
 	matchDepth: number
 	completionTokens: string[]
@@ -40,7 +40,7 @@ export interface AutocompleteOpts {
  * 1. Walk the FST with the normalized prefix tokens
  * 2. Collect all accepting entries at the current state (exact matches)
  * 3. BFS-expand continuations up to `maxExpansionDepth` to find nearby completions
- * 4. Deduplicate by wofId, rank by importance
+ * 4. Deduplicate by wofID, rank by importance
  */
 export function autocomplete(fst: FstMatcher, query: string, opts: AutocompleteOpts = {}): AutocompleteResult {
 	const maxSuggestions = opts.maxSuggestions ?? 10
@@ -62,7 +62,7 @@ export function autocomplete(fst: FstMatcher, query: string, opts: AutocompleteO
 				name: e.name,
 				placetype: e.placetype,
 				importance: e.importance,
-				wofId: e.wofId,
+				wofID: e.wofID,
 				parentChain: e.parentChain,
 				matchDepth: partial.path.length,
 				completionTokens: [],
@@ -117,13 +117,13 @@ function addSuggestion(
 	matchDepth: number,
 	completionTokens: string[]
 ): void {
-	const existing = seen.get(entry.wofId)
+	const existing = seen.get(entry.wofID)
 	if (existing && existing.matchDepth <= matchDepth) return
-	seen.set(entry.wofId, {
+	seen.set(entry.wofID, {
 		name: entry.name,
 		placetype: entry.placetype,
 		importance: entry.importance,
-		wofId: entry.wofId,
+		wofID: entry.wofID,
 		parentChain: entry.parentChain,
 		matchDepth,
 		completionTokens: [...completionTokens],

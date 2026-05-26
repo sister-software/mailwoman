@@ -148,15 +148,15 @@ async function main() {
 		const parts = line.split("\t")
 		if (parts.length < 5) continue
 
-		const importance = parseFloat(parts[3]!)
-		const wikidataId = parts[4]!
+		const importance = Number(parts[3]!)
+		const wikidataID = parts[4]!
 
-		if (!wikidataId || !concordances.has(wikidataId)) continue
+		if (!wikidataID || !concordances.has(wikidataID)) continue
 		if (isNaN(importance)) continue
 
-		const existing = importanceMap.get(wikidataId) ?? 0
+		const existing = importanceMap.get(wikidataID) ?? 0
 		if (importance > existing) {
-			importanceMap.set(wikidataId, importance)
+			importanceMap.set(wikidataID, importance)
 		}
 	}
 
@@ -171,11 +171,11 @@ async function main() {
 	let importanceCount = 0
 
 	db.exec("BEGIN TRANSACTION")
-	for (const [wikidataId, importance] of importanceMap) {
-		const wofIds = concordances.get(wikidataId)
-		if (!wofIds) continue
-		for (const wofId of wofIds) {
-			insertStmt.run(wofId, importance)
+	for (const [wikidataID, importance] of importanceMap) {
+		const wofIDs = concordances.get(wikidataID)
+		if (!wofIDs) continue
+		for (const wofID of wofIDs) {
+			insertStmt.run(wofID, importance)
 			importanceCount++
 		}
 	}
