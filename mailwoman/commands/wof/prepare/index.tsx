@@ -34,7 +34,10 @@ const ArgumentsSchema = zod.array(zod.string().describe("Path to the Who's On Fi
 export { ArgumentsSchema as args }
 
 const OptionsSchema = zod.object({
-	unifiedDb: zod.string().optional().describe("Path to write a unified SQLite database for the FST builder and resolver."),
+	unifiedDb: zod
+		.string()
+		.optional()
+		.describe("Path to write a unified SQLite database for the FST builder and resolver."),
 })
 export { OptionsSchema as options }
 

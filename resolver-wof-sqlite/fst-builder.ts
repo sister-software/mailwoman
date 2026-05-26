@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build an FST (finite-state transducer) from a WOF SQLite database. The FST maps normalized
- *   token sequences to PlaceEntry arrays, pre-computing the valid interpretations for every
- *   prefix of every place name in the gazetteer.
+ *   Build an FST (finite-state transducer) from a WOF SQLite database. The FST maps normalized token
+ *   sequences to PlaceEntry arrays, pre-computing the valid interpretations for every prefix of
+ *   every place name in the gazetteer.
  *
- *   Build pipeline: open WOF DB → query spr + names → normalize names → insert into trie →
- *   attach PlaceEntry at terminals → return FstMatcher.
+ *   Build pipeline: open WOF DB → query spr + names → normalize names → insert into trie → attach
+ *   PlaceEntry at terminals → return FstMatcher.
  */
 
 import { DatabaseSync } from "node:sqlite"
@@ -16,7 +16,15 @@ import type { FstNode } from "./fst-matcher.js"
 import { FstMatcher, normalizeTokens } from "./fst-matcher.js"
 import type { BuildFstOpts, BuildFstResult, PlaceEntry, PlacetypeId } from "./fst-types.js"
 
-const DEFAULT_PLACETYPES: PlacetypeId[] = ["country", "region", "county", "locality", "localadmin", "borough", "neighbourhood"]
+const DEFAULT_PLACETYPES: PlacetypeId[] = [
+	"country",
+	"region",
+	"county",
+	"locality",
+	"localadmin",
+	"borough",
+	"neighbourhood",
+]
 const DEFAULT_COUNTRIES = ["US"]
 const DEFAULT_LANGUAGES = ["eng", ""]
 

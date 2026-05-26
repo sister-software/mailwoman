@@ -11,20 +11,20 @@ Phases 1-2 shipped in v0.5.2 ([#170](https://github.com/sister-software/mailwoma
 
 **Goal:** Pre-compute a finite-state transducer from the WOF SQLite gazetteer that maps token sequences → `(placetype, wof_id, parent_chain, importance)` entries. Use it as an emission prior in the neural Viterbi decoder, as a CLI introspection tool, and as the autocomplete backend.
 
-**Principle:** Pay down the combinatorial cross-product of "all valid place-name paths through the WOF hierarchy" at build time. At query time, walking the FST is O(depth), not O(gazetteer\_size).
+**Principle:** Pay down the combinatorial cross-product of "all valid place-name paths through the WOF hierarchy" at build time. At query time, walking the FST is O(depth), not O(gazetteer_size).
 
 ### Shipped metrics (US admin)
 
-| Metric | Value |
-|--------|-------|
-| FST states | 114,214 |
-| Name insertions | 163,271 |
-| Binary size | 5.57 MB |
-| Load time | ~10 ms |
-| Build time (from unified SQLite) | 2.7 s |
-| Build time (unified SQLite from 293K GeoJSON) | 43 s |
-| Wikipedia importance matches | 47,348 places |
-| Population fallback | 108,111 places |
+| Metric                                        | Value          |
+| --------------------------------------------- | -------------- |
+| FST states                                    | 114,214        |
+| Name insertions                               | 163,271        |
+| Binary size                                   | 5.57 MB        |
+| Load time                                     | ~10 ms         |
+| Build time (from unified SQLite)              | 2.7 s          |
+| Build time (unified SQLite from 293K GeoJSON) | 43 s           |
+| Wikipedia importance matches                  | 47,348 places  |
+| Population fallback                           | 108,111 places |
 
 ---
 
@@ -95,12 +95,12 @@ The FST prior gets STRONGER as the prefix grows longer — a "wedge that tighten
 
 ### The WFST analogy to speech recognition
 
-| Speech recognition | Address parsing |
-|---|---|
-| Acoustic model (DNN) | Neural classifier (transformer) |
-| Pronunciation lexicon (L) | FST (token sequences → place entries) |
-| Language model (G) | Address grammar (valid component sequences) |
-| Shallow fusion at decode time | Additive emission biases at Viterbi time |
+| Speech recognition            | Address parsing                             |
+| ----------------------------- | ------------------------------------------- |
+| Acoustic model (DNN)          | Neural classifier (transformer)             |
+| Pronunciation lexicon (L)     | FST (token sequences → place entries)       |
+| Language model (G)            | Address grammar (valid component sequences) |
+| Shallow fusion at decode time | Additive emission biases at Viterbi time    |
 
 The neural model handles non-gazetteer components (streets, venues, house numbers, typos). The FST handles gazetteer components (countries, regions, localities). They compose via shallow fusion — same as modern ASR systems.
 
@@ -150,12 +150,12 @@ Example output:
 
 **Per-locale FSTs (recommended for v1).** One FST per locale: `fst-en-US.bin`, `fst-fr-FR.bin`. Filter by country during build. Names in all languages are included (a user typing "Munich" in an en-US context won't match — and that's correct, Munich isn't in the US).
 
-| Locale | Places | FST size |
-|---|---|---|
-| en-US | ~30K | ~8 MB |
-| fr-FR | ~36K (communes) | ~10 MB |
-| ja-JP | ~1,800 | ~5 MB |
-| en-GB | ~20K | ~6 MB |
+| Locale | Places          | FST size |
+| ------ | --------------- | -------- |
+| en-US  | ~30K            | ~8 MB    |
+| fr-FR  | ~36K (communes) | ~10 MB   |
+| ja-JP  | ~1,800          | ~5 MB    |
+| en-GB  | ~20K            | ~6 MB    |
 
 ### Why not combined+filter
 
@@ -206,7 +206,7 @@ A single FST with per-edge locale bitsets is space-efficient but query-slower. F
 
 2. **Wikipedia importance-weighted bias when ambiguous.** Each place carries a [0,1] importance score derived from Wikipedia link count ([Nominatim methodology](https://nominatim.org/release-docs/latest/customize/Importance/)). "New York" biases both locality (0.95) and region (0.85) proportionally. Washington DC locality (0.815) correctly outranks Washington state (0.764) despite lower population. Formula: `importance × biasScale × maxBias` (linear, capped at 3.0 logits).
 
-3. **Negative suppression on non-place labels.** When the FST matches a place name, B-street, I-street, B-house\_number, I-house\_number, and B-venue receive -1.5 logit suppression. This narrows the gap between place-tag and non-place-tag logits without overriding the model.
+3. **Negative suppression on non-place labels.** When the FST matches a place name, B-street, I-street, B-house_number, I-house_number, and B-venue receive -1.5 logit suppression. This narrows the gap between place-tag and non-place-tag logits without overriding the model.
 
 4. **Negative evidence is free.** When a token doesn't extend any FST path, that's a strong signal it's NOT an admin component — the neural model handles it alone. This is how "Buffalo Health Clinic" gets correctly NOT-biased toward locality.
 

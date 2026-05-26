@@ -395,9 +395,7 @@ function grouperAudit(tree: AddressTree, proposals: PhraseProposal[], text: stri
 		const pStart = proposal.span.start
 		const pEnd = pStart + proposal.span.body.length
 
-		const covered = roots.some(
-			(node) => node.start < pEnd && pStart < node.end
-		)
+		const covered = roots.some((node) => node.start < pEnd && pStart < node.end)
 		if (covered) continue
 
 		const provisionalNode: AddressNode = {

@@ -19,9 +19,9 @@ import {
 	type ComponentTag,
 	type DecoderToken,
 } from "@mailwoman/core/decoder"
+import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
-import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import { buildBioEndMask, buildBioStartMask, buildBioTransitionMask, softmax, viterbi } from "./viterbi.js"
@@ -267,7 +267,10 @@ export interface ParseOpts {
 	 * favored label. Confidence-scaled, so a 0.6-confidence format hit gets +0.6 max bias.
 	 */
 	queryShapeBiasScale?: number
-	/** Pre-built FST gazetteer matcher. When provided, gazetteer matches produce additive emission biases. */
+	/**
+	 * Pre-built FST gazetteer matcher. When provided, gazetteer matches produce additive emission
+	 * biases.
+	 */
 	fst?: FstMatcherLike
 	/** Bias magnitude for FST gazetteer matches. Default 1.0. */
 	fstBiasScale?: number

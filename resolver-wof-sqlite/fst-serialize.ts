@@ -5,41 +5,22 @@
  *
  *   Binary serialization for the FST gazetteer. Format:
  *
- *   HEADER (32 bytes)
- *     magic          [u8; 4]  "FST\0"
- *     version        u16      1
- *     flags          u16      0 (reserved)
- *     stateCount     u32
- *     edgeCount      u32      total edges across all states
- *     placeCount     u32      total place entries across all states
- *     stringCount    u32      unique strings in string table
- *     stringBytes    u32      total bytes of string data
- *     _reserved      u32
+ *   HEADER (32 bytes) magic [u8; 4] "FST\0" version u16 1 flags u16 0 (reserved) stateCount u32
+ *   edgeCount u32 total edges across all states placeCount u32 total place entries across all
+ *   states stringCount u32 unique strings in string table stringBytes u32 total bytes of string
+ *   data _reserved u32
  *
- *   STRING TABLE
- *     offsets        [u32; stringCount + 1]  byte offset into data (last = sentinel)
- *     data           [u8; stringBytes]       concatenated UTF-8
+ *   STRING TABLE offsets [u32; stringCount + 1] byte offset into data (last = sentinel) data [u8;
+ *   stringBytes] concatenated UTF-8
  *
- *   STATE TABLE     [stateCount × 12 bytes]
- *     edgeStart      u32      index into edge table
- *     placeStart     u32      index into place table
- *     edgeCount      u16
- *     placeCount     u16
+ *   STATE TABLE [stateCount × 12 bytes] edgeStart u32 index into edge table placeStart u32 index into
+ *   place table edgeCount u16 placeCount u16
  *
- *   EDGE TABLE      [edgeCount × 8 bytes]
- *     stringIdx      u32      index into string table
- *     targetState    u32
+ *   EDGE TABLE [edgeCount × 8 bytes] stringIdx u32 index into string table targetState u32
  *
- *   PLACE TABLE     [placeCount × 56 bytes]
- *     wofId          u32
- *     placetypeIdx   u8       index into PLACETYPE_ORDER
- *     chainLen       u8       0..8
- *     _pad           u16
- *     nameIdx        u32      index into string table
- *     importance     f32      Wikipedia importance [0,1] (V2); was population u32 (V1)
- *     lat            f32
- *     lon            f32
- *     chain          [u32; 8] parent chain (unused slots = 0)
+ *   PLACE TABLE [placeCount × 56 bytes] wofId u32 placetypeIdx u8 index into PLACETYPE_ORDER chainLen
+ *   u8 0..8 _pad u16 nameIdx u32 index into string table importance f32 Wikipedia importance [0,1]
+ *   (V2); was population u32 (V1) lat f32 lon f32 chain [u32; 8] parent chain (unused slots = 0)
  */
 
 import type { FstNode } from "./fst-matcher.js"

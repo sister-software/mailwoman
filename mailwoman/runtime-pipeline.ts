@@ -31,7 +31,10 @@ export interface CreateRuntimePipelineOpts {
 	classifier?: RuntimePipelineStages["classifier"]
 	/** The Stage 6 resolver — typically a `WofResolver` from `@mailwoman/resolver-wof-sqlite`. */
 	resolver?: RuntimePipelineStages["resolver"]
-	/** Pre-built FST gazetteer matcher. Produces additive emission biases during neural classification. */
+	/**
+	 * Pre-built FST gazetteer matcher. Produces additive emission biases during neural
+	 * classification.
+	 */
 	fst?: RuntimePipelineStages["fst"]
 	/**
 	 * Locale gate override — when shipped, replaces the default caller-trust stub.

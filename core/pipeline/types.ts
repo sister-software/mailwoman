@@ -135,10 +135,16 @@ export interface PhraseGrouper {
  * `@mailwoman/neural`'s `NeuralAddressClassifier`, a rule-based classifier, or a fake for tests
  * satisfies this.
  */
-/** Structural type for the FST gazetteer matcher, compatible with @mailwoman/resolver-wof-sqlite's FstMatcher. */
+/**
+ * Structural type for the FST gazetteer matcher, compatible with @mailwoman/resolver-wof-sqlite's
+ * FstMatcher.
+ */
 export interface FstMatcherLike {
 	walk(tokens: string[]): { stateId: number; accepted: boolean; depth: number } | null
-	walkFrom(prev: { stateId: number; depth: number }, token: string): { stateId: number; accepted: boolean; depth: number } | null
+	walkFrom(
+		prev: { stateId: number; depth: number },
+		token: string
+	): { stateId: number; accepted: boolean; depth: number } | null
 	accepting(stateId: number): Array<{ placetype: string; importance: number }>
 }
 
@@ -170,7 +176,10 @@ export interface RuntimePipelineStages {
 	 */
 	groupPhrases?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<PhraseProposal[]>
 	classifier?: AddressClassifier
-	/** Pre-built FST gazetteer matcher. When provided, gazetteer matches produce additive emission biases during classification. */
+	/**
+	 * Pre-built FST gazetteer matcher. When provided, gazetteer matches produce additive emission
+	 * biases during classification.
+	 */
 	fst?: FstMatcherLike
 	resolver?: Resolver
 }

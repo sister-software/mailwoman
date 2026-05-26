@@ -3,24 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a unified WOF SQLite database from cloned GeoJSON repos. Produces the same schema
- *   as geocode.earth's pre-built distributions so the FST builder and resolver work unchanged.
+ *   Build a unified WOF SQLite database from cloned GeoJSON repos. Produces the same schema as
+ *   geocode.earth's pre-built distributions so the FST builder and resolver work unchanged.
  *
- *   Uses spliterator's asyncParallelIterator for bounded-concurrency file reads — the 293K
- *   GeoJSON files are 50/50 I/O and CPU bound, so pipelining async reads with synchronous
- *   parse+INSERT gives ~2x throughput over fully sequential.
+ *   Uses spliterator's asyncParallelIterator for bounded-concurrency file reads — the 293K GeoJSON
+ *   files are 50/50 I/O and CPU bound, so pipelining async reads with synchronous parse+INSERT
+ *   gives ~2x throughput over fully sequential.
  *
- *   Usage:
- *     UV_THREADPOOL_SIZE=8 npx tsx scripts/build-unified-wof.ts \
- *       --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-admin-us/data \
- *       --output /mnt/playpen/mailwoman-data/wof/wof-admin-us-unified.db
+ *   Usage: UV_THREADPOOL_SIZE=8 npx tsx scripts/build-unified-wof.ts\
+ *   --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-admin-us/data\
+ *   --output /mnt/playpen/mailwoman-data/wof/wof-admin-us-unified.db
  */
 
+import { createUnifiedIndexes, createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import FastGlob from "fast-glob"
 import { readFile } from "node:fs/promises"
 import { DatabaseSync } from "node:sqlite"
 import { asyncParallelIterator } from "spliterator"
-import FastGlob from "fast-glob"
-import { createUnifiedSchema, createUnifiedIndexes } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 
 interface Args {
 	dataDir: string
@@ -44,7 +43,9 @@ function parseArgs(): Args {
 	}
 
 	if (!dataDir || !outputPath) {
-		console.error("Usage: npx tsx scripts/build-unified-wof.ts --data <wof-data-dir> --output <output.db> [--concurrency 64] [--batch 500]")
+		console.error(
+			"Usage: npx tsx scripts/build-unified-wof.ts --data <wof-data-dir> --output <output.db> [--concurrency 64] [--batch 500]"
+		)
 		process.exit(1)
 	}
 
@@ -52,8 +53,15 @@ function parseArgs(): Args {
 }
 
 const ADMIN_PLACETYPES = new Set([
-	"country", "region", "county", "locality", "localadmin",
-	"borough", "neighbourhood", "macroregion", "macrocounty",
+	"country",
+	"region",
+	"county",
+	"locality",
+	"localadmin",
+	"borough",
+	"neighbourhood",
+	"macroregion",
+	"macrocounty",
 ])
 
 interface ParsedFeature {
@@ -146,9 +154,7 @@ async function main() {
 	const concordancesInsert = db.prepare(
 		`INSERT INTO concordances (id, other_id, other_source, lastmodified) VALUES (?, ?, ?, ?)`
 	)
-	const populationInsert = db.prepare(
-		`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`
-	)
+	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
 
 	let processed = 0
 	let skipped = 0
@@ -170,11 +176,7 @@ async function main() {
 
 	console.error(`Processing with concurrency=${concurrency}, batch commit every ${batchCommitSize} files...`)
 
-	const readResults = asyncParallelIterator(
-		filePaths,
-		concurrency,
-		(filePath) => readFile(filePath, "utf8"),
-	)
+	const readResults = asyncParallelIterator(filePaths, concurrency, (filePath) => readFile(filePath, "utf8"))
 
 	for await (const text of readResults) {
 		const feature = parseFeature(text)
@@ -186,10 +188,19 @@ async function main() {
 		beginIfNeeded()
 
 		sprInsert.run(
-			feature.id, feature.parent_id, feature.name, feature.placetype,
-			feature.country, feature.latitude, feature.longitude,
-			feature.isCurrent, feature.isDeprecated, feature.isCeased,
-			feature.isSuperseded, feature.isSuperseding, feature.lastmodified
+			feature.id,
+			feature.parent_id,
+			feature.name,
+			feature.placetype,
+			feature.country,
+			feature.latitude,
+			feature.longitude,
+			feature.isCurrent,
+			feature.isDeprecated,
+			feature.isCeased,
+			feature.isSuperseded,
+			feature.isSuperseding,
+			feature.lastmodified
 		)
 
 		for (const n of feature.names) {
@@ -211,7 +222,9 @@ async function main() {
 			const elapsed = (performance.now() - t0) / 1000
 			const rate = processed / elapsed
 			const eta = (filePaths.length - processed - skipped) / rate
-			console.error(`  ${processed.toLocaleString()} processed, ${skipped.toLocaleString()} skipped (${rate.toFixed(0)}/s, ETA ${eta.toFixed(0)}s)`)
+			console.error(
+				`  ${processed.toLocaleString()} processed, ${skipped.toLocaleString()} skipped (${rate.toFixed(0)}/s, ETA ${eta.toFixed(0)}s)`
+			)
 		}
 	}
 

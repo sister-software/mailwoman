@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   In-memory FST matcher. Built by `fst-builder.ts`, queried at runtime for emission priors
- *   and CLI introspection. The structure is a deterministic trie over normalized tokens with
- *   PlaceEntry arrays at accepting states.
+ *   In-memory FST matcher. Built by `fst-builder.ts`, queried at runtime for emission priors and CLI
+ *   introspection. The structure is a deterministic trie over normalized tokens with PlaceEntry
+ *   arrays at accepting states.
  */
 
 import type { FstContinuation, FstMatchResult, FstQueryResult, PlaceEntry } from "./fst-types.js"

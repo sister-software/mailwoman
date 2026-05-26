@@ -128,7 +128,8 @@ export function pluckPlacetypeSpec({
 
 	if (!src) throw new Error(`No source found for placetype ${placetype} with ID ${id}`)
 
-	const population = typeof wofPopulation === "number" ? wofPopulation : typeof gnPopulation === "number" ? gnPopulation : undefined
+	const population =
+		typeof wofPopulation === "number" ? wofPopulation : typeof gnPopulation === "number" ? gnPopulation : undefined
 	const isCurrent = mzIsCurrent === undefined ? undefined : mzIsCurrent !== 0 && mzIsCurrent !== "0"
 
 	return {

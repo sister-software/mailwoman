@@ -136,9 +136,9 @@ export function buildEmissionPriors(
  * For "Washington, DC" — "DC" is the region abbreviation; "Washington" gets biased toward
  * B-locality. For "New York, NY" — "New" gets B-locality and "York" gets I-locality.
  *
- * Guard: if the preceding text matches the full name of the region that the abbreviation
- * represents (e.g., "Washington" before "WA"), the locality bias is NOT applied — the text
- * IS the region, not a locality within it.
+ * Guard: if the preceding text matches the full name of the region that the abbreviation represents
+ * (e.g., "Washington" before "WA"), the locality bias is NOT applied — the text IS the region, not
+ * a locality within it.
  *
  * Constraint: only bias tokens that appear BEFORE the abbreviation's character offset and are
  * alphabetic (start with uppercase). Tokens that are part of a known postcode format or are

@@ -78,9 +78,7 @@ describe("buildFstEmissionPriors", () => {
 	})
 
 	it("biases matched locality tokens proportional to importance", () => {
-		const fst = mockFst(
-			new Map([["portland", [{ placetype: "locality", importance: 0.72 }]]])
-		)
+		const fst = mockFst(new Map([["portland", [{ placetype: "locality", importance: 0.72 }]]]))
 		const pieces = makePieces("Portland")
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.72 * 3.0, 2)
@@ -110,18 +108,14 @@ describe("buildFstEmissionPriors", () => {
 	})
 
 	it("low importance produces proportionally lower bias", () => {
-		const fst = mockFst(
-			new Map([["hamlet", [{ placetype: "locality", importance: 0.05 }]]])
-		)
+		const fst = mockFst(new Map([["hamlet", [{ placetype: "locality", importance: 0.05 }]]]))
 		const pieces = makePieces("Hamlet")
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.15, 2)
 	})
 
 	it("does not bias unmapped placetypes (county)", () => {
-		const fst = mockFst(
-			new Map([["cook", [{ placetype: "county", importance: 0.88 }]]])
-		)
+		const fst = mockFst(new Map([["cook", [{ placetype: "county", importance: 0.88 }]]]))
 		const pieces = makePieces("Cook")
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 		for (const row of matrix) {
@@ -130,9 +124,7 @@ describe("buildFstEmissionPriors", () => {
 	})
 
 	it("handles subword pieces correctly", () => {
-		const fst = mockFst(
-			new Map([["springfield", [{ placetype: "locality", importance: 0.45 }]]])
-		)
+		const fst = mockFst(new Map([["springfield", [{ placetype: "locality", importance: 0.45 }]]]))
 		const pieces = [
 			{ piece: "▁Spring", start: 0, end: 6 },
 			{ piece: "field", start: 6, end: 11 },
@@ -143,9 +135,7 @@ describe("buildFstEmissionPriors", () => {
 	})
 
 	it("skips punctuation-only tokens", () => {
-		const fst = mockFst(
-			new Map([["washington", [{ placetype: "locality", importance: 0.85 }]]])
-		)
+		const fst = mockFst(new Map([["washington", [{ placetype: "locality", importance: 0.85 }]]]))
 		const pieces = [
 			{ piece: "▁Washington", start: 0, end: 10 },
 			{ piece: ",", start: 10, end: 11 },

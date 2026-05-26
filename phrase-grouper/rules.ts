@@ -127,23 +127,23 @@ function isStreetSuffix(token: string): boolean {
  */
 const VENUE_MARKERS: ReadonlyMap<string, number> = new Map([
 	// Dining (0.90 — unambiguous venue markers)
-	["steakhouse", 0.90],
-	["restaurant", 0.90],
-	["bistro", 0.90],
+	["steakhouse", 0.9],
+	["restaurant", 0.9],
+	["bistro", 0.9],
 	["diner", 0.85],
 	["cafe", 0.85],
 	["café", 0.85],
-	["grill", 0.80],
-	["pizzeria", 0.90],
+	["grill", 0.8],
+	["pizzeria", 0.9],
 	["bakery", 0.85],
 	["brewery", 0.85],
 	["winery", 0.85],
-	["tavern", 0.80],
+	["tavern", 0.8],
 	["pub", 0.75],
-	["bar", 0.70],
+	["bar", 0.7],
 	// Lodging
-	["hotel", 0.90],
-	["motel", 0.90],
+	["hotel", 0.9],
+	["motel", 0.9],
 	["inn", 0.75],
 	["resort", 0.85],
 	["lodge", 0.75],
@@ -152,40 +152,40 @@ const VENUE_MARKERS: ReadonlyMap<string, number> = new Map([
 	["theater", 0.85],
 	["theatre", 0.85],
 	["cinema", 0.85],
-	["stadium", 0.90],
+	["stadium", 0.9],
 	["arena", 0.85],
 	["museum", 0.85],
 	["gallery", 0.75],
 	["casino", 0.85],
-	["lounge", 0.70],
+	["lounge", 0.7],
 	// Retail / commercial
-	["market", 0.70],
-	["mall", 0.80],
-	["plaza", 0.70],
+	["market", 0.7],
+	["mall", 0.8],
+	["plaza", 0.7],
 	["tower", 0.65],
-	["center", 0.60],
-	["centre", 0.60],
+	["center", 0.6],
+	["centre", 0.6],
 	// Medical / institutional
-	["hospital", 0.90],
+	["hospital", 0.9],
 	["clinic", 0.85],
 	["pharmacy", 0.85],
 	// Education
-	["university", 0.90],
+	["university", 0.9],
 	["college", 0.85],
-	["school", 0.80],
-	["academy", 0.80],
+	["school", 0.8],
+	["academy", 0.8],
 	// Civic / religious
-	["church", 0.80],
-	["temple", 0.80],
-	["mosque", 0.80],
+	["church", 0.8],
+	["temple", 0.8],
+	["mosque", 0.8],
 	["synagogue", 0.85],
 	["cathedral", 0.85],
 	["chapel", 0.75],
 	["library", 0.85],
 	// Outdoor
-	["park", 0.60],
+	["park", 0.6],
 	["gardens", 0.65],
-	["ranch", 0.70],
+	["ranch", 0.7],
 	["farm", 0.65],
 ])
 
@@ -194,13 +194,25 @@ const VENUE_MARKERS: ReadonlyMap<string, number> = new Map([
  * matches one of these, the segment is likely a unit/suite line, not a venue name.
  */
 const UNIT_MARKERS: ReadonlySet<string> = new Set([
-	"apt", "apt.", "apartment",
+	"apt",
+	"apt.",
+	"apartment",
 	"unit",
-	"ste", "ste.", "suite",
-	"room", "rm", "rm.",
-	"floor", "fl", "fl.",
-	"bldg", "bldg.", "building",
-	"dept", "dept.", "department",
+	"ste",
+	"ste.",
+	"suite",
+	"room",
+	"rm",
+	"rm.",
+	"floor",
+	"fl",
+	"fl.",
+	"bldg",
+	"bldg.",
+	"building",
+	"dept",
+	"dept.",
+	"department",
 	"#",
 ])
 
@@ -416,8 +428,8 @@ export function scoreLocalityPhrase(
  *
  * Also includes a venue-by-exclusion positional prior: multi-word capitalized run in the first
  * segment with no street suffix, no house number, and no unit marker → weak VENUE_PHRASE at
- * 0.50-0.55. The idea: if we can't identify what something IS, but it's in the venue slot
- * (first segment) and doesn't look like any other component, it might be a venue name.
+ * 0.50-0.55. The idea: if we can't identify what something IS, but it's in the venue slot (first
+ * segment) and doesn't look like any other component, it might be a venue name.
  */
 export function scoreVenuePhrase(
 	tokens: ReadonlyArray<SegmentToken>,
@@ -458,7 +470,7 @@ export function scoreVenuePhrase(
 				out.push({
 					span: makeSection(text, startTok.start, endTok.end),
 					kindHypothesis: "VENUE_PHRASE",
-					confidence: run.length >= 3 ? 0.55 : 0.50,
+					confidence: run.length >= 3 ? 0.55 : 0.5,
 				})
 			}
 		}

@@ -7,7 +7,7 @@
 import { existsSync } from "node:fs"
 import { beforeAll, describe, expect, it } from "vitest"
 import { buildFstFromWof } from "./fst-builder.js"
-import { FstMatcher, normalizeTokens, type FstNode } from "./fst-matcher.js"
+import { FstMatcher, type FstNode } from "./fst-matcher.js"
 import { deserializeFst, serializeFst } from "./fst-serialize.js"
 
 // --- Unit tests with a synthetic trie ---

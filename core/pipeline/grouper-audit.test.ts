@@ -33,7 +33,7 @@ describe("grouper-audit pass", () => {
 					{
 						span: Span.from("Buffalo", { start: 23 }),
 						kindHypothesis: "LOCALITY_PHRASE",
-						confidence: 0.70,
+						confidence: 0.7,
 					},
 					{
 						span: Span.from("NY", { start: 32 }),
@@ -71,7 +71,7 @@ describe("grouper-audit pass", () => {
 					{
 						span: Span.from("Portland", { start: 0 }),
 						kindHypothesis: "LOCALITY_PHRASE",
-						confidence: 0.70,
+						confidence: 0.7,
 					},
 				] as PhraseProposal[]
 			},
@@ -84,7 +84,7 @@ describe("grouper-audit pass", () => {
 							value: "Portland",
 							start: 0,
 							end: 8,
-							confidence: 0.90,
+							confidence: 0.9,
 							children: [],
 						},
 					],

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Schema for the unified WOF SQLite database produced by wof/prepare --unified-db.
- *   Matches geocode.earth conventions so the FST builder and resolver work unchanged.
+ *   Schema for the unified WOF SQLite database produced by wof/prepare --unified-db. Matches
+ *   geocode.earth conventions so the FST builder and resolver work unchanged.
  */
 
 import { DatabaseSync } from "node:sqlite"

@@ -3,25 +3,22 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the `place_importance` table in a WOF SQLite database from Nominatim's Wikipedia
- *   importance data. Downloads wikimedia-importance.csv.gz, joins through the concordances table,
- *   and writes importance scores for each WOF place with a Wikidata mapping.
+ *   Build the `place_importance` table in a WOF SQLite database from Nominatim's Wikipedia importance
+ *   data. Downloads wikimedia-importance.csv.gz, joins through the concordances table, and writes
+ *   importance scores for each WOF place with a Wikidata mapping.
  *
- *   Usage:
- *     npx tsx scripts/build-importance.ts --db /path/to/wof.db
- *     npx tsx scripts/build-importance.ts --db /path/to/wof.db --tsv /path/to/wikimedia-importance.csv.gz
+ *   Usage: npx tsx scripts/build-importance.ts --db /path/to/wof.db npx tsx
+ *   scripts/build-importance.ts --db /path/to/wof.db --tsv /path/to/wikimedia-importance.csv.gz
  */
 
-import { createReadStream, existsSync } from "node:fs"
+import { createReadStream, existsSync, writeFileSync } from "node:fs"
 import { get as httpsGet } from "node:https"
-import { createInterface } from "node:readline"
-import { DatabaseSync } from "node:sqlite"
-import { createGunzip } from "node:zlib"
-import { Writable } from "node:stream"
-import { pipeline } from "node:stream/promises"
-import { writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { createInterface } from "node:readline"
+import { DatabaseSync } from "node:sqlite"
+import { Writable } from "node:stream"
+import { createGunzip } from "node:zlib"
 
 const IMPORTANCE_URL = "https://nominatim.org/data/wikimedia-importance.csv.gz"
 
@@ -118,7 +115,7 @@ async function main() {
 			concordances.set(row.other_id, existing)
 		}
 		console.error(`  ${concordances.size} unique Wikidata IDs from ${rows.length} concordance rows`)
-	} catch (e) {
+	} catch (error) {
 		console.error("No concordances table found. Run wof/prepare first.")
 		process.exit(1)
 	}

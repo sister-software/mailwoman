@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Quick comparison of demo presets between two models.
- *   Usage: npx tsx scripts/eval/demo-preset-compare.ts [--model-path output/v052-model.onnx]
+ *   Quick comparison of demo presets between two models. Usage: npx tsx
+ *   scripts/eval/demo-preset-compare.ts [--model-path output/v052-model.onnx]
  */
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"

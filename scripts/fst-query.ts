@@ -1,8 +1,7 @@
 /**
- * Quick CLI for querying the FST. Run with:
- *   npx tsx scripts/fst-query.ts "New York"
- *   npx tsx scripts/fst-query.ts --db /path/to/wof.db "Portland"
- *   npx tsx scripts/fst-query.ts --show-continuations "New"
+ * Quick CLI for querying the FST. Run with: npx tsx scripts/fst-query.ts "New York" npx tsx
+ * scripts/fst-query.ts --db /path/to/wof.db "Portland" npx tsx scripts/fst-query.ts
+ * --show-continuations "New"
  */
 
 import { buildFstFromWof } from "../resolver-wof-sqlite/fst-builder.js"
@@ -40,7 +39,9 @@ const { matcher, result } = buildFstFromWof({
 	languages: ["eng", ""],
 })
 const elapsed = ((performance.now() - start) / 1000).toFixed(1)
-console.error(`Built: ${result.stateCount} states, ${result.placeCount} places, ${result.edgeCount} edges (${elapsed}s)\n`)
+console.error(
+	`Built: ${result.stateCount} states, ${result.placeCount} places, ${result.edgeCount} edges (${elapsed}s)\n`
+)
 
 for (const query of queries) {
 	const q = matcher.query(query)
@@ -63,9 +64,7 @@ for (const query of queries) {
 	}
 
 	if (showContinuations && q.continuations.length > 0) {
-		const shown = q.continuations
-			.sort((a, b) => b.acceptingCount - a.acceptingCount)
-			.slice(0, 15)
+		const shown = q.continuations.sort((a, b) => b.acceptingCount - a.acceptingCount).slice(0, 15)
 		console.log(`  Continuations (${q.continuations.length} total):`)
 		for (const c of shown) {
 			const acc = c.acceptingCount > 0 ? ` → ${c.acceptingCount} places` : ""

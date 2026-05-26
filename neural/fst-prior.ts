@@ -7,15 +7,15 @@
  *   sequence matches a known place name (e.g., "New York" → locality + region), this module
  *   produces additive biases that nudge the Viterbi decoder toward the matching BIO labels.
  *
- *   Composes with the QueryShape prior via addEmissionMatrix — same integration point, same
- *   additive semantics.
+ *   Composes with the QueryShape prior via addEmissionMatrix — same integration point, same additive
+ *   semantics.
  *
- *   SentencePiece ↔ FST bridge: SentencePiece pieces are grouped into whitespace words (by the
- *   ▁ sentinel), normalized through the same pipeline as FST edges (NFKC, lowercase, strip
+ *   SentencePiece ↔ FST bridge: SentencePiece pieces are grouped into whitespace words (by the ▁
+ *   sentinel), normalized through the same pipeline as FST edges (NFKC, lowercase, strip
  *   non-alnum), and walked through the FST as contiguous subpaths.
  *
  *   Uses structural typing for the FST input so this module has zero dependencies on
- *   @mailwoman/resolver-wof-sqlite — consumers pass an FstMatcher instance, but this file only
+ * @mailwoman/resolver-wof-sqlite — consumers pass an FstMatcher instance, but this file only
  *   consumes the shape.
  */
 
@@ -68,7 +68,10 @@ const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house
 
 export interface FstPriorOpts {
 	biasScale?: number
-	/** Maximum bias magnitude (logits). Prevents large-population places from overriding the model. Default 3.0. */
+	/**
+	 * Maximum bias magnitude (logits). Prevents large-population places from overriding the model.
+	 * Default 3.0.
+	 */
 	maxBias?: number
 	suppressionScale?: number
 }
@@ -76,8 +79,8 @@ export interface FstPriorOpts {
 /**
  * Build a `[seqLen][numLabels]` bias matrix from FST gazetteer matches.
  *
- * Walks all contiguous subpaths of the reconstructed whitespace-token sequence through the FST.
- * For each accepting state, biases the corresponding BIO labels on the matched pieces.
+ * Walks all contiguous subpaths of the reconstructed whitespace-token sequence through the FST. For
+ * each accepting state, biases the corresponding BIO labels on the matched pieces.
  */
 export function buildFstEmissionPriors(
 	fst: FstMatcherLike,
@@ -211,7 +214,7 @@ function applyBias(
 
 		for (let k = 0; k < allPieceIndices.length; k++) {
 			const pi = allPieceIndices[k]!
-			const col = k === 0 ? bCol : iCol ?? bCol
+			const col = k === 0 ? bCol : (iCol ?? bCol)
 			matrix[pi]![col] = Math.max(matrix[pi]![col]!, bias)
 		}
 	}

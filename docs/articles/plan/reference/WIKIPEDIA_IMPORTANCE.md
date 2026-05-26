@@ -29,11 +29,11 @@ wikimedia-importance.csv.gz (19M rows, ~250 MB compressed)
 
 ## Coverage (US admin)
 
-| Source | Places |
-|--------|--------|
-| Wikipedia importance (via Wikidata concordance) | 47,348 |
-| Population fallback | 108,111 |
-| **Total in place\_importance** | **155,459** |
+| Source                                          | Places      |
+| ----------------------------------------------- | ----------- |
+| Wikipedia importance (via Wikidata concordance) | 47,348      |
+| Population fallback                             | 108,111     |
+| **Total in place_importance**                   | **155,459** |
 
 ## How scores flow into the FST
 
@@ -44,10 +44,10 @@ wikimedia-importance.csv.gz (19M rows, ~250 MB compressed)
 
 ## Why not population
 
-| Signal | Washington DC | Washington state | Winner |
-|--------|--------------|-----------------|--------|
-| Population | 678K | 7.6M | State (wrong for bare "Washington") |
-| Wikipedia importance | 0.815 | 0.764 | DC (correct — more culturally prominent) |
+| Signal               | Washington DC | Washington state | Winner                                   |
+| -------------------- | ------------- | ---------------- | ---------------------------------------- |
+| Population           | 678K          | 7.6M             | State (wrong for bare "Washington")      |
+| Wikipedia importance | 0.815         | 0.764            | DC (correct — more culturally prominent) |
 
 Population is an administrative headcount. Wikipedia importance captures actual cultural prominence — how often the place is referenced, linked to, and discussed across languages.
 

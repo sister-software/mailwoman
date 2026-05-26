@@ -35,8 +35,7 @@ export function wellKnownGeometryToGeoJSON<T = GeometryLiteral>(input: Buffer | 
  * Given a GeoJSON geometry object, convert it to an well-known binary (EWKB) buffer.
  *
  * @category Geo
- * @returns A hex-encoded string representing the EWKB.
- * @returns A buffer representing the WKB.
+ * @returns A hex-encoded EWKB string or WKB buffer.
  */
 export function geometryToWKB(geometry: GeometryLiteral | GeometryCollection) {
 	return wkx.Geometry.parseGeoJSON(geometry).toWkb()

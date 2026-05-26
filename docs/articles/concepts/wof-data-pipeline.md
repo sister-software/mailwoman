@@ -34,7 +34,7 @@ WOF GitHub repos                     Per-placetype SQLite DBs
 
 - **sync** works end-to-end. Clones WOF repos, filters via `--repos`, calls `Placetype.prepare()` to load the hierarchy.
 - **prepare** writes to per-placetype SQLite mini-DBs via `PlacetypeDataSource`. The Redis target was removed.
-- **build-unified-wof** ([#176](https://github.com/sister-software/mailwoman/pull/176)) — standalone script that reads 293K GeoJSON files from cloned repos and produces a unified SQLite (spr, names, concordances, place\_population tables) in 43 seconds. Uses `spliterator`'s `asyncParallelIterator` for bounded-concurrency file reads. This unified SQLite replaces the geocode.earth pre-built download as the FST builder and resolver input.
+- **build-unified-wof** ([#176](https://github.com/sister-software/mailwoman/pull/176)) — standalone script that reads 293K GeoJSON files from cloned repos and produces a unified SQLite (spr, names, concordances, place_population tables) in 43 seconds. Uses `spliterator`'s `asyncParallelIterator` for bounded-concurrency file reads. This unified SQLite replaces the geocode.earth pre-built download as the FST builder and resolver input.
 - **build-importance** — post-processing step that downloads Nominatim's `wikimedia-importance.csv.gz`, joins through WOF concordances, and writes a `place_importance` table into the unified SQLite.
 
 ## Layer by layer
