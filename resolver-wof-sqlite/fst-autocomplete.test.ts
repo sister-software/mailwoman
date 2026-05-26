@@ -45,11 +45,11 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 		expect(types).toContain("region")
 	})
 
-	it("ranks by population (NYC before small towns)", () => {
+	it("ranks by importance (prominent places first)", () => {
 		const result = autocomplete(matcher, "New York", { maxSuggestions: 5 })
 		const localities = result.suggestions.filter((s) => s.placetype === "locality")
 		if (localities.length >= 2) {
-			expect(localities[0]!.population).toBeGreaterThan(localities[1]!.population)
+			expect(localities[0]!.importance).toBeGreaterThanOrEqual(localities[1]!.importance)
 		}
 	})
 

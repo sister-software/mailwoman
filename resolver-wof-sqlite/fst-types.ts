@@ -13,7 +13,7 @@ export interface PlaceEntry {
 	placetype: PlacetypeId
 	name: string
 	parentChain: number[]
-	population: number
+	importance: number
 	lat: number
 	lon: number
 }

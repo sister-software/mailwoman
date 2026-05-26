@@ -145,7 +145,7 @@ export interface PhraseGrouper {
 export interface FstMatcherLike {
 	walk(tokens: string[]): { stateId: number; accepted: boolean; depth: number } | null
 	walkFrom(prev: { stateId: number; depth: number }, token: string): { stateId: number; accepted: boolean; depth: number } | null
-	accepting(stateId: number): Array<{ placetype: string; population: number }>
+	accepting(stateId: number): Array<{ placetype: string; importance: number }>
 }
 
 export interface ClassifierOpts {

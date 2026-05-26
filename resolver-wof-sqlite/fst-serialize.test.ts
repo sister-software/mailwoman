@@ -24,7 +24,7 @@ function buildSyntheticFst(): FstMatcher {
 					placetype: "locality",
 					name: "New York City",
 					parentChain: [85688543, 85633793],
-					population: 8_804_000,
+					importance: 0.95,
 					lat: 40.7128,
 					lon: -74.006,
 				},
@@ -33,7 +33,7 @@ function buildSyntheticFst(): FstMatcher {
 					placetype: "region",
 					name: "New York",
 					parentChain: [85633793],
-					population: 20_200_000,
+					importance: 0.85,
 					lat: 42.1657,
 					lon: -74.9481,
 				},
@@ -47,7 +47,7 @@ function buildSyntheticFst(): FstMatcher {
 					placetype: "locality",
 					name: "Portland",
 					parentChain: [85688513, 85633793],
-					population: 665_000,
+					importance: 0.72,
 					lat: 45.5152,
 					lon: -122.6784,
 				},
@@ -91,7 +91,7 @@ describe("FST binary serialization — unit (synthetic)", () => {
 		expect(restNyc.wofId).toBe(origNyc.wofId)
 		expect(restNyc.placetype).toBe(origNyc.placetype)
 		expect(restNyc.name).toBe(origNyc.name)
-		expect(restNyc.population).toBe(origNyc.population)
+		expect(restNyc.importance).toBeCloseTo(origNyc.importance, 5)
 		expect(restNyc.parentChain).toEqual(origNyc.parentChain)
 		expect(restNyc.lat).toBeCloseTo(origNyc.lat, 3)
 		expect(restNyc.lon).toBeCloseTo(origNyc.lon, 3)
@@ -167,7 +167,7 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 
 	it("NYC parent chain survives roundtrip", () => {
 		const rest = restored.query("New York")
-		const nyc = rest.accepting.find((p) => p.placetype === "locality" && p.population > 1_000_000)
+		const nyc = rest.accepting.find((p) => p.placetype === "locality" && p.wofId === 85977539)
 		expect(nyc).toBeDefined()
 		expect(nyc!.wofId).toBe(85977539)
 		expect(nyc!.parentChain).toContain(85688543)

@@ -35,7 +35,7 @@ export interface FstMatchLike {
 
 export interface FstPlaceEntryLike {
 	placetype: string
-	population: number
+	importance: number
 }
 
 export interface FstMatcherLike {
@@ -192,9 +192,9 @@ function applyBias(
 	for (const entry of entries) {
 		const bioTag = PLACETYPE_TO_BIO.get(entry.placetype)
 		if (!bioTag) continue
-		const popBias = Math.min(biasScale * Math.log2(1 + entry.population / 1000), maxBias)
+		const impBias = entry.importance * biasScale * maxBias
 		const existing = seenTags.get(bioTag) ?? 0
-		if (popBias > existing) seenTags.set(bioTag, popBias)
+		if (impBias > existing) seenTags.set(bioTag, impBias)
 	}
 
 	if (seenTags.size === 0) return

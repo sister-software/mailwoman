@@ -77,13 +77,13 @@ describe("buildFstEmissionPriors", () => {
 		}
 	})
 
-	it("biases matched locality tokens, capped at maxBias", () => {
+	it("biases matched locality tokens proportional to importance", () => {
 		const fst = mockFst(
-			new Map([["portland", [{ placetype: "locality", population: 665_000 }]]])
+			new Map([["portland", [{ placetype: "locality", importance: 0.72 }]]])
 		)
 		const pieces = makePieces("Portland")
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
-		expect(matrix[0]![labelCol("B-locality")]).toBe(3.0)
+		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.72 * 3.0, 2)
 		expect(matrix[0]![labelCol("B-street")]).toBeLessThan(0)
 	})
 
@@ -94,8 +94,8 @@ describe("buildFstEmissionPriors", () => {
 				[
 					"new york",
 					[
-						{ placetype: "locality", population: 8_800_000 },
-						{ placetype: "region", population: 20_200_000 },
+						{ placetype: "locality", importance: 0.95 },
+						{ placetype: "region", importance: 0.85 },
 					],
 				],
 			])
@@ -103,25 +103,24 @@ describe("buildFstEmissionPriors", () => {
 		const pieces = makePieces("New York")
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 
-		expect(matrix[0]![labelCol("B-locality")]).toBe(3.0)
-		expect(matrix[1]![labelCol("I-locality")]).toBe(3.0)
-		expect(matrix[0]![labelCol("B-region")]).toBe(3.0)
-		expect(matrix[1]![labelCol("I-region")]).toBe(3.0)
+		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.95 * 3.0, 2)
+		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.95 * 3.0, 2)
+		expect(matrix[0]![labelCol("B-region")]).toBeCloseTo(0.85 * 3.0, 2)
+		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(matrix[0]![labelCol("B-region")]!)
 	})
 
-	it("small populations produce proportionally lower bias", () => {
+	it("low importance produces proportionally lower bias", () => {
 		const fst = mockFst(
-			new Map([["hamlet", [{ placetype: "locality", population: 200 }]]])
+			new Map([["hamlet", [{ placetype: "locality", importance: 0.05 }]]])
 		)
 		const pieces = makePieces("Hamlet")
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
-		expect(matrix[0]![labelCol("B-locality")]).toBeLessThan(1.0)
-		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(0)
+		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.15, 2)
 	})
 
 	it("does not bias unmapped placetypes (county)", () => {
 		const fst = mockFst(
-			new Map([["cook", [{ placetype: "county", population: 5_200_000 }]]])
+			new Map([["cook", [{ placetype: "county", importance: 0.88 }]]])
 		)
 		const pieces = makePieces("Cook")
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
@@ -132,20 +131,20 @@ describe("buildFstEmissionPriors", () => {
 
 	it("handles subword pieces correctly", () => {
 		const fst = mockFst(
-			new Map([["springfield", [{ placetype: "locality", population: 116_000 }]]])
+			new Map([["springfield", [{ placetype: "locality", importance: 0.45 }]]])
 		)
 		const pieces = [
 			{ piece: "▁Spring", start: 0, end: 6 },
 			{ piece: "field", start: 6, end: 11 },
 		]
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
-		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(0)
-		expect(matrix[1]![labelCol("I-locality")]).toBeGreaterThan(0)
+		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.45 * 3.0, 2)
+		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.45 * 3.0, 2)
 	})
 
 	it("skips punctuation-only tokens", () => {
 		const fst = mockFst(
-			new Map([["washington", [{ placetype: "locality", population: 678_000 }]]])
+			new Map([["washington", [{ placetype: "locality", importance: 0.85 }]]])
 		)
 		const pieces = [
 			{ piece: "▁Washington", start: 0, end: 10 },
@@ -153,7 +152,7 @@ describe("buildFstEmissionPriors", () => {
 			{ piece: "▁DC", start: 12, end: 14 },
 		]
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
-		expect(matrix[0]![labelCol("B-locality")]).toBe(3.0)
+		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.85 * 3.0, 2)
 		expect(matrix[1]!.every((v) => v === 0)).toBe(true)
 	})
 })

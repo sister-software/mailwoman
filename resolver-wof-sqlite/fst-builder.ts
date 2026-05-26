@@ -119,15 +119,26 @@ export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; resu
 		return chain
 	}
 
-	// Phase 3: Load population data.
-	progress("population", "Loading population data")
-	const popMap = new Map<number, number>()
+	// Phase 3: Load importance data (Wikipedia-based, falls back to population-scaled).
+	progress("importance", "Loading importance data")
+	const importanceMap = new Map<number, number>()
 	try {
-		const popStmt = db.prepare("SELECT id, population FROM place_population")
-		const popRows = popStmt.all() as unknown as PopulationRow[]
-		for (const row of popRows) popMap.set(row.id, row.population)
+		const impStmt = db.prepare("SELECT id, importance FROM place_importance")
+		const impRows = impStmt.all() as unknown as Array<{ id: number; importance: number }>
+		for (const row of impRows) importanceMap.set(row.id, row.importance)
+		progress("importance", `Loaded ${importanceMap.size} importance scores`)
 	} catch {
-		progress("population", "No place_population table — using 0 for all")
+		progress("importance", "No place_importance table — falling back to population")
+		try {
+			const popStmt = db.prepare("SELECT id, population FROM place_population")
+			const popRows = popStmt.all() as unknown as PopulationRow[]
+			for (const row of popRows) {
+				const normalized = row.population > 0 ? Math.min(1.0, Math.log2(1 + row.population / 1000) / 14) : 0
+				importanceMap.set(row.id, normalized)
+			}
+		} catch {
+			progress("importance", "No place_population either — using 0 for all")
+		}
 	}
 
 	// Phase 4: Load names for matching places.
@@ -186,7 +197,7 @@ export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; resu
 			placetype: row.placetype as PlacetypeId,
 			name: row.name,
 			parentChain,
-			population: popMap.get(row.id) ?? 0,
+			importance: importanceMap.get(row.id) ?? 0,
 			lat: row.latitude,
 			lon: row.longitude,
 		}
