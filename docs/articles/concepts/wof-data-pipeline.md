@@ -30,11 +30,12 @@ WOF GitHub repos                     Per-placetype SQLite DBs
                         └──────────────────┘
 ```
 
-**Status:**
+**Status (updated 2026-05-26):**
 
 - **sync** works end-to-end. Clones WOF repos, filters via `--repos`, calls `Placetype.prepare()` to load the hierarchy.
-- **prepare** has the globbing + Piscina parallelism + GeoJSON parsing working, but writes to the **wrong target** (Redis) instead of `PlacetypeDataSource` (SQLite). The pipeline stalls at the storage boundary.
-- **PlacetypeDataSource** schema is correct and has working `upsert` + `find` methods, but nobody calls `upsert` in the production data path.
+- **prepare** writes to per-placetype SQLite mini-DBs via `PlacetypeDataSource`. The Redis target was removed.
+- **build-unified-wof** ([#176](https://github.com/sister-software/mailwoman/pull/176)) — standalone script that reads 293K GeoJSON files from cloned repos and produces a unified SQLite (spr, names, concordances, place\_population tables) in 43 seconds. Uses `spliterator`'s `asyncParallelIterator` for bounded-concurrency file reads. This unified SQLite replaces the geocode.earth pre-built download as the FST builder and resolver input.
+- **build-importance** — post-processing step that downloads Nominatim's `wikimedia-importance.csv.gz`, joins through WOF concordances, and writes a `place_importance` table into the unified SQLite.
 
 ## Layer by layer
 
@@ -70,7 +71,7 @@ interface ParsedWOFPlacetype {
 
 The `localizedPropMap` is the multilingual name-variant surface — for each language code (ISO 639-3b), it carries `preferred`, `variant`, `colloquial`, `abbr`, and `short` forms. This is exactly what `PlacetypeDataSource.records` expects in its columns.
 
-**Where it stalls:** the worker currently targets Redis (`ioredis` sadd per placetype/language/name-kind) — an earlier iteration where the pipeline was backed by a Redis instance. The rest of the codebase has since moved to SQLite via `PlacetypeDataSource`. The worker needs to write to SQLite instead.
+The worker writes to `PlacetypeDataSource` (per-placetype SQLite mini-DBs). An earlier iteration targeted Redis; that was replaced in v0.5.0.
 
 ### The incomplete "send batches of filenames" design
 

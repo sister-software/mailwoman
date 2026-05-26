@@ -24,11 +24,13 @@ Each layer adds one kind of knowledge the layers below it cannot easily derive:
 | **1. Normalize**         | input preprocessing rules                                     | Yes                                                               |
 | **2. Locale gate**       | language / script family                                      | Yes (rule-based)                                                  |
 | **2.5. Kind classifier** | overall query category (postcode_only, structured_address, …) | Yes (rule-based)                                                  |
-| **2.7. Phrase grouper**  | **coherent input units (boundary discovery)**                 | **Yes (rule-based, v0.5.0; learned variant scoped for v0.5.1)**   |
-| **3. Token classify**    | per-token semantic type                                       | Yes (neural)                                                      |
+| **2.7. Phrase grouper**  | **coherent input units (boundary discovery)**                 | **Yes (rule-based, v0.5.0; 57 venue markers, unit gate, positional prior)** |
+| **3. Token classify**    | per-token semantic type                                       | Yes (neural, v0.5.2)                                              |
+| **3.5. FST prior**       | **gazetteer-derived emission biases**                         | **Yes (Wikipedia importance-weighted, v0.5.2; [#173](https://github.com/sister-software/mailwoman/pull/173))** |
 | **4. Sequence correct**  | per-token BIO sequence validity                               | Yes (CRF with structural mask)                                    |
-| **5. Reconcile**         | **joint-coherent interpretation across candidates**           | **Yes (joint-decoding path shipped in v0.5.0; mocks Thread C-s)** |
-| **6. Resolve**           | world hierarchy (gazetteer)                                   | Yes (WOF SQLite)                                                  |
+| **4.5. Grouper audit**   | **provisional nodes for all-O spans**                         | **Yes (injects venue/locality from grouper proposals; [#170](https://github.com/sister-software/mailwoman/pull/170))** |
+| **5. Reconcile**         | **joint-coherent interpretation across candidates**           | Yes (joint-decoding path shipped in v0.5.0; opt-in via `forceJointReconcile`) |
+| **6. Resolve**           | world hierarchy (gazetteer)                                   | Yes (WOF SQLite, unified builder in [#176](https://github.com/sister-software/mailwoman/pull/176)) |
 
 The two emphasized rows are the layers that v0.4.0's mixed result exposed as missing. They're complementary: the phrase grouper feeds cleaner spans IN to the classifier; the expanded reconciler picks coherent assignments OUT of the classifier's candidates.
 
