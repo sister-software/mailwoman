@@ -73,6 +73,8 @@ export interface BuildPriorsOpts {
 	 * odds to B-locality / I-locality for tokens preceding a detected region abbreviation.
 	 */
 	localityBiasScale?: number
+	/** Raw input text for region-name matching in the locality bias guard. */
+	inputText?: string
 }
 
 /**
@@ -123,7 +125,7 @@ export function buildEmissionPriors(
 	// preceding alphabetic tokens toward B-locality / I-locality. This counters the WOF
 	// bare-name frequency dominance that makes the model over-emit B-region on ambiguous
 	// place names like "Washington" or "New York".
-	applyLocalityBias(matrix, shape, tokens, labelToCol, opts.localityBiasScale ?? 2.0)
+	applyLocalityBias(matrix, shape, tokens, labelToCol, opts.localityBiasScale ?? 2.0, opts.inputText)
 
 	return matrix
 }
@@ -134,6 +136,10 @@ export function buildEmissionPriors(
  * For "Washington, DC" — "DC" is the region abbreviation; "Washington" gets biased toward
  * B-locality. For "New York, NY" — "New" gets B-locality and "York" gets I-locality.
  *
+ * Guard: if the preceding text matches the full name of the region that the abbreviation
+ * represents (e.g., "Washington" before "WA"), the locality bias is NOT applied — the text
+ * IS the region, not a locality within it.
+ *
  * Constraint: only bias tokens that appear BEFORE the abbreviation's character offset and are
  * alphabetic (start with uppercase). Tokens that are part of a known postcode format or are
  * themselves region abbreviations are skipped.
@@ -141,9 +147,10 @@ export function buildEmissionPriors(
 function applyLocalityBias(
 	matrix: number[][],
 	shape: QueryShapeLike,
-	tokens: ReadonlyArray<TokenLike>,
+	tokens: ReadonlyArray<TokenLike & { piece?: string }>,
 	labelToCol: Map<string, number>,
-	localityBias: number
+	localityBias: number,
+	inputText?: string
 ): void {
 	const abbrevs = shape.regionAbbreviations
 	if (!abbrevs || abbrevs.length === 0) return
@@ -153,9 +160,6 @@ function applyLocalityBias(
 	if (bLocCol === undefined) return
 
 	for (const abbrev of abbrevs) {
-		// Walk backward from the abbreviation collecting preceding tokens. The first token must be
-		// within 4 chars of the abbreviation (accounts for ", " separator). Subsequent tokens must
-		// be within 2 chars of each other (normal word spacing).
 		const candidates: number[] = []
 		let prevStart = abbrev.start
 
@@ -181,9 +185,15 @@ function applyLocalityBias(
 		}
 
 		if (candidates.length === 0) continue
-
-		// candidates is in reverse order (closest to abbreviation first). Reverse to get text order.
 		candidates.reverse()
+
+		if (inputText) {
+			const firstTok = tokens[candidates[0]!]!
+			const lastTok = tokens[candidates[candidates.length - 1]!]!
+			const candidateText = inputText.slice(firstTok.start, lastTok.end).toLowerCase()
+			const regionNames = ABBREV_TO_REGION.get(abbrev.span)
+			if (regionNames?.some((name) => candidateText === name)) continue
+		}
 
 		for (let i = 0; i < candidates.length; i++) {
 			const t = candidates[i]!
@@ -193,6 +203,65 @@ function applyLocalityBias(
 		}
 	}
 }
+
+const ABBREV_TO_REGION: ReadonlyMap<string, string[]> = new Map([
+	["AL", ["alabama"]],
+	["AK", ["alaska"]],
+	["AZ", ["arizona"]],
+	["AR", ["arkansas"]],
+	["CA", ["california"]],
+	["CO", ["colorado"]],
+	["CT", ["connecticut"]],
+	["DE", ["delaware"]],
+	["DC", ["district of columbia"]],
+	["FL", ["florida"]],
+	["GA", ["georgia"]],
+	["HI", ["hawaii"]],
+	["ID", ["idaho"]],
+	["IL", ["illinois"]],
+	["IN", ["indiana"]],
+	["IA", ["iowa"]],
+	["KS", ["kansas"]],
+	["KY", ["kentucky"]],
+	["LA", ["louisiana"]],
+	["ME", ["maine"]],
+	["MD", ["maryland"]],
+	["MA", ["massachusetts"]],
+	["MI", ["michigan"]],
+	["MN", ["minnesota"]],
+	["MS", ["mississippi"]],
+	["MO", ["missouri"]],
+	["MT", ["montana"]],
+	["NE", ["nebraska"]],
+	["NV", ["nevada"]],
+	["NH", ["new hampshire"]],
+	["NJ", ["new jersey"]],
+	["NM", ["new mexico"]],
+	["NY", ["new york"]],
+	["NC", ["north carolina"]],
+	["ND", ["north dakota"]],
+	["OH", ["ohio"]],
+	["OK", ["oklahoma"]],
+	["OR", ["oregon"]],
+	["PA", ["pennsylvania"]],
+	["RI", ["rhode island"]],
+	["SC", ["south carolina"]],
+	["SD", ["south dakota"]],
+	["TN", ["tennessee"]],
+	["TX", ["texas"]],
+	["UT", ["utah"]],
+	["VT", ["vermont"]],
+	["VA", ["virginia"]],
+	["WA", ["washington"]],
+	["WV", ["west virginia"]],
+	["WI", ["wisconsin"]],
+	["WY", ["wyoming"]],
+	["AS", ["american samoa"]],
+	["GU", ["guam"]],
+	["MP", ["northern mariana islands"]],
+	["PR", ["puerto rico"]],
+	["VI", ["virgin islands"]],
+])
 
 function overlaps(a: { start: number; end: number }, b: { start: number; end: number }): boolean {
 	return a.start < b.end && b.start < a.end

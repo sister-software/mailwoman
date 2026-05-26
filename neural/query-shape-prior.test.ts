@@ -192,6 +192,44 @@ describe("buildEmissionPriors — locality bias", () => {
 		expect(m[0]?.[bLocCol]).toBe(3.0)
 	})
 
+	it("does not bias when preceding text matches the region name (Washington, WA)", () => {
+		// "Washington, WA" — "Washington" IS the region name for WA, should NOT get locality bias
+		const shape: QueryShapeLike = {
+			knownFormats: [],
+			regionAbbreviations: [{ start: 12, span: "WA" }],
+		}
+		const toks = tokens([0, 10], [12, 14])
+		const m = buildEmissionPriors(shape, toks, FULL_LABELS, { inputText: "Washington, WA" })
+		const bLocCol = FULL_LABELS.indexOf("B-locality")
+		expect(m[0]?.[bLocCol]).toBe(0)
+	})
+
+	it("still biases when text does NOT match region name (Washington, DC)", () => {
+		// "Washington, DC" — DC's region name is "District of Columbia", NOT "Washington"
+		const shape: QueryShapeLike = {
+			knownFormats: [],
+			regionAbbreviations: [{ start: 12, span: "DC" }],
+		}
+		const toks = tokens([0, 10], [12, 14])
+		const m = buildEmissionPriors(shape, toks, FULL_LABELS, { inputText: "Washington, DC" })
+		const bLocCol = FULL_LABELS.indexOf("B-locality")
+		expect(m[0]?.[bLocCol]).toBe(2.0)
+	})
+
+	it("does not bias New York before NY (region name match)", () => {
+		// "New York, NY" — "New York" IS the region name for NY
+		const shape: QueryShapeLike = {
+			knownFormats: [],
+			regionAbbreviations: [{ start: 10, span: "NY" }],
+		}
+		const toks = tokens([0, 3], [4, 8], [10, 12])
+		const m = buildEmissionPriors(shape, toks, FULL_LABELS, { inputText: "New York, NY" })
+		const bLocCol = FULL_LABELS.indexOf("B-locality")
+		const iLocCol = FULL_LABELS.indexOf("I-locality")
+		expect(m[0]?.[bLocCol]).toBe(0)
+		expect(m[1]?.[iLocCol]).toBe(0)
+	})
+
 	it("skips tokens overlapping a known postcode format", () => {
 		// "10118, NY" — "10118" overlaps a postcode hit, should NOT get locality bias
 		const shape: QueryShapeLike = {

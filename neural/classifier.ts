@@ -133,6 +133,7 @@ export class NeuralAddressClassifier {
 					logits,
 					buildEmissionPriors(opts.queryShape, pieces, this.labels, {
 						biasScale: opts.queryShapeBiasScale ?? 1.0,
+						inputText: text,
 					})
 				)
 			: logits
@@ -187,6 +188,7 @@ export class NeuralAddressClassifier {
 					logits,
 					buildEmissionPriors(opts.queryShape, pieces, this.labels, {
 						biasScale: opts.queryShapeBiasScale ?? 1.0,
+						inputText: text,
 					})
 				)
 			: logits
