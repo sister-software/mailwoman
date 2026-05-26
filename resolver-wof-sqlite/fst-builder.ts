@@ -60,7 +60,7 @@ export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; resu
 		   AND country IN (${placeholders(countries)})
 		   AND placetype IN (${placeholders(placetypes)})`
 	)
-	const sprRows = sprStmt.all(...countries, ...placetypes) as SprRow[]
+	const sprRows = sprStmt.all(...countries, ...placetypes) as unknown as SprRow[]
 	progress("spr", `Loaded ${sprRows.length} places`)
 
 	// Phase 2: Build a lookup for parent chain resolution.
@@ -92,7 +92,7 @@ export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; resu
 
 		// If parent_id is a sentinel (≤ 0), use ancestors table.
 		if (row.parent_id <= 0 && ancestorStmt) {
-			const ancestors = ancestorStmt.all(id) as Array<{ ancestor_id: number }>
+			const ancestors = ancestorStmt.all(id) as unknown as Array<{ ancestor_id: number }>
 			return ancestors.map((a) => a.ancestor_id).filter((aid) => aid !== id)
 		}
 
@@ -105,7 +105,7 @@ export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; resu
 			chain.push(current)
 			let parentRow = sprById.get(current)
 			if (!parentRow) {
-				const fetched = parentStmt.get(current) as SprRow | undefined
+				const fetched = parentStmt.get(current) as unknown as SprRow | undefined
 				if (!fetched) break
 				parentRow = fetched
 				sprById.set(current, parentRow)
@@ -124,7 +124,7 @@ export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; resu
 	const popMap = new Map<number, number>()
 	try {
 		const popStmt = db.prepare("SELECT id, population FROM place_population")
-		const popRows = popStmt.all() as PopulationRow[]
+		const popRows = popStmt.all() as unknown as PopulationRow[]
 		for (const row of popRows) popMap.set(row.id, row.population)
 	} catch {
 		progress("population", "No place_population table — using 0 for all")
@@ -145,7 +145,7 @@ export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; resu
 			 WHERE id IN (${idPlaceholders})
 			   AND language IN (${langPlaceholders})`
 		)
-		const nameRows = nameStmt.all(...chunk, ...languages) as NameRow[]
+		const nameRows = nameStmt.all(...chunk, ...languages) as unknown as NameRow[]
 		for (const row of nameRows) {
 			const existing = namesByPlace.get(row.id) ?? []
 			if (!existing.includes(row.name)) existing.push(row.name)
