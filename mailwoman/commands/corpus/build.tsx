@@ -18,7 +18,7 @@ import { buildCorpus, defaultAdapterRegistry, type BuildStage } from "@mailwoman
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { Box, Text } from "ink"
 import { setImmediate } from "node:timers/promises"
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import zod from "zod"
 import type { CommandComponent } from "../../sdk/cli.js"
 

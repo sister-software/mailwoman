@@ -12,7 +12,7 @@
  */
 
 import { Box, Text } from "ink"
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import zod from "zod"
 import { $ } from "zx"
 import type { CommandComponent } from "../../sdk/cli.js"
