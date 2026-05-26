@@ -3,11 +3,28 @@ sidebar_position: 18
 title: FST gazetteer language model
 ---
 
-# FST Gazetteer LM — Design Document
+# FST Gazetteer LM
 
-**Goal:** Pre-compute a finite-state transducer from the WOF SQLite gazetteer that maps token sequences → `(placetype, wof_id, parent_chain)` entries. Use it as an emission prior in the neural Viterbi decoder, as a CLI introspection tool, and as the autocomplete backend.
+:::info Shipped
+Phases 1-2 shipped in v0.5.2 ([#170](https://github.com/sister-software/mailwoman/pull/170), [#173](https://github.com/sister-software/mailwoman/pull/173)). Wikipedia importance integration in [#173](https://github.com/sister-software/mailwoman/pull/173). Unified SQLite builder in [#176](https://github.com/sister-software/mailwoman/pull/176). Phase 3 (autocomplete) partially shipped. Phase 4 (browser) not yet started.
+:::
 
-**Principle:** Pay down the combinatorial cross-product of "all valid place-name paths through the WOF hierarchy" at build time. At query time, walking the FST is O(depth), not O(gazetteer_size).
+**Goal:** Pre-compute a finite-state transducer from the WOF SQLite gazetteer that maps token sequences → `(placetype, wof_id, parent_chain, importance)` entries. Use it as an emission prior in the neural Viterbi decoder, as a CLI introspection tool, and as the autocomplete backend.
+
+**Principle:** Pay down the combinatorial cross-product of "all valid place-name paths through the WOF hierarchy" at build time. At query time, walking the FST is O(depth), not O(gazetteer\_size).
+
+### Shipped metrics (US admin)
+
+| Metric | Value |
+|--------|-------|
+| FST states | 114,214 |
+| Name insertions | 163,271 |
+| Binary size | 5.57 MB |
+| Load time | ~10 ms |
+| Build time (from unified SQLite) | 2.7 s |
+| Build time (unified SQLite from 293K GeoJSON) | 43 s |
+| Wikipedia importance matches | 47,348 places |
+| Population fallback | 108,111 places |
 
 ---
 
@@ -156,35 +173,30 @@ A single FST with per-edge locale bitsets is space-efficient but query-slower. F
 
 ## Implementation phases
 
-### Phase 1: FST builder + CLI (Week 1)
+### Phase 1: FST builder + CLI — shipped (#170)
 
-New files:
-- `resolver-wof-sqlite/fst-builder.ts` — `buildFstFromWof(db, opts): FstBinary`
-- `resolver-wof-sqlite/fst-loader.ts` — `FstMatcher` class (walk, accepting, continuations)
-- `resolver-wof-sqlite/fst-builder.test.ts`
-- `mailwoman/commands/fst/build.tsx`
-- `mailwoman/commands/fst/query.tsx`
+- `resolver-wof-sqlite/fst-builder.ts`, `fst-matcher.ts`, `fst-types.ts`
+- `resolver-wof-sqlite/fst-serialize.ts` (binary format, VERSION 2)
+- `scripts/fst-query.ts` (interactive CLI)
+- 24 integration tests against WOF US admin data
 
-### Phase 2: Neural emission prior (Week 2)
+### Phase 2: Neural emission prior — shipped (#170, #173)
 
-Modified files:
-- `neural/query-shape-prior.ts` — add `buildFstEmissionPriors()`
-- `neural/classifier.ts` — add `fst?: FstMatcher` to config, compose in `parse()`
+- `neural/fst-prior.ts` — `buildFstEmissionPriors()` with Wikipedia importance weighting
+- `neural/classifier.ts` — FST threaded through `ParseOpts.fst`
+- `core/pipeline/runtime-pipeline.ts` — FST threaded through `RuntimePipelineStages`
+- Wikipedia importance ETL: `scripts/build-importance.ts`
+- Region-aware locality bias guard: `neural/query-shape-prior.ts` (#174)
 
-New files:
-- `neural/fst-prior.test.ts`
+### Phase 3: Autocomplete prototype — partially shipped (#170)
 
-### Phase 3: Autocomplete prototype (Week 3)
+- `resolver-wof-sqlite/fst-autocomplete.ts` — prefix walk + BFS expansion
+- CLI not yet wired (standalone script only)
 
-New files:
-- `resolver-wof-sqlite/fst-autocomplete.ts`
-- `mailwoman/commands/fst/autocomplete.tsx`
+### Phase 4: Browser deployment — not started
 
-### Phase 4: Browser deployment (Week 4)
-
-Modified files:
-- `resolver-wof-wasm/fst.ts` — browser-compatible FstMatcher (ArrayBuffer)
-- `docs/src/pages/demo/index.tsx` — load FST, typeahead UI
+- Browser-compatible FstMatcher (ArrayBuffer) not yet implemented
+- `/demo` page does not use FST prior
 
 ---
 
@@ -192,9 +204,9 @@ Modified files:
 
 1. **FST is an emission PRIOR, not a replacement.** The neural model remains the authority for non-gazetteer components. The FST handles what the model can't: knowing which place names exist and their hierarchies.
 
-2. **Population-weighted bias when ambiguous.** "New York" with two interpretations biases both proportionally to population. The neural model's context breaks the tie.
+2. **Wikipedia importance-weighted bias when ambiguous.** Each place carries a [0,1] importance score derived from Wikipedia link count ([Nominatim methodology](https://nominatim.org/release-docs/latest/customize/Importance/)). "New York" biases both locality (0.95) and region (0.85) proportionally. Washington DC locality (0.815) correctly outranks Washington state (0.764) despite lower population. Formula: `importance × biasScale × maxBias` (linear, capped at 3.0 logits).
 
-3. **Full bias when deterministic.** When the FST narrows to one interpretation (e.g., "Portland" + "OR"), the bias is maximal.
+3. **Negative suppression on non-place labels.** When the FST matches a place name, B-street, I-street, B-house\_number, I-house\_number, and B-venue receive -1.5 logit suppression. This narrows the gap between place-tag and non-place-tag logits without overriding the model.
 
 4. **Negative evidence is free.** When a token doesn't extend any FST path, that's a strong signal it's NOT an admin component — the neural model handles it alone. This is how "Buffalo Health Clinic" gets correctly NOT-biased toward locality.
 
