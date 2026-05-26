@@ -46,9 +46,9 @@ describe.skipIf(!HAS_WOF)("buildFstFromWof — integration", () => {
 
 	it("finds NYC with correct parent chain", () => {
 		const q = matcher.query("New York")
-		const nyc = q.accepting.find((p) => p.placetype === "locality" && p.wofId === 85977539)
+		const nyc = q.accepting.find((p) => p.placetype === "locality" && p.wofID === 85977539)
 		expect(nyc).toBeDefined()
-		expect(nyc!.wofId).toBe(85977539)
+		expect(nyc!.wofID).toBe(85977539)
 		expect(nyc!.parentChain).toContain(85688543)
 	})
 

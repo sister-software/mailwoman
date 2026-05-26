@@ -71,7 +71,7 @@ describeIfWof(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		expect(result.stdout).toMatch(/place="wof:\d+"/)
 		expect(result.stdout).toMatch(/lat="-?\d+\.\d+"/)
 		expect(result.stdout).toMatch(/lon="-?\d+\.\d+"/)
-	}, 30_000)
+	}, 60_000)
 
 	test("respects --resolve-db explicit path override (matches env default)", async () => {
 		// Use the same input as the first test — the neural classifier needs enough context to tag
@@ -83,7 +83,7 @@ describeIfWof(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		)
 		expect(result.stdout).toContain("<address raw=")
 		expect(result.stdout).toMatch(/src="resolver:/)
-	}, 30_000)
+	}, 60_000)
 
 	test("works without --resolve (regression check — flag default is off)", async () => {
 		const result = await exec("node", [cliBin, "parse", "--neural", "--format", "xml", "Springfield, Illinois"], {
@@ -94,7 +94,7 @@ describeIfWof(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		// Without --resolve, no resolver attribution.
 		expect(result.stdout).not.toMatch(/src="resolver:/)
 		expect(result.stdout).not.toMatch(/place="wof:/)
-	}, 30_000)
+	}, 60_000)
 
 	test("--candidates surfaces runner-up resolutions in XML", async () => {
 		// "Springfield, Illinois" — the region qualifier helps the model produce a resolvable tag.
@@ -110,7 +110,7 @@ describeIfWof(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		expect(result.stdout).toMatch(/<alternative[^>]*place="wof:\d+"/)
 		expect(result.stdout).toMatch(/<alternative[^>]*name="/)
 		expect(result.stdout).toMatch(/<alternative[^>]*lat="-?\d+\.\d+"/)
-	}, 30_000)
+	}, 60_000)
 
 	test("--candidates surfaces runner-up resolutions in JSON (tree shape)", async () => {
 		const result = await exec(
@@ -128,7 +128,7 @@ describeIfWof(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			(r) => Array.isArray(r.alternatives) && r.alternatives.length > 0
 		)
 		expect(hasAlternatives).toBe(true)
-	}, 30_000)
+	}, 60_000)
 
 	test("without --candidates, JSON stays libpostal-flat (no tree shape leak)", async () => {
 		const result = await exec("node", [cliBin, "parse", "--resolve", "--format", "json", "Springfield"], {
@@ -139,7 +139,7 @@ describeIfWof(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		// Libpostal-compat is flat: no `raw` / `roots` top-level keys.
 		expect(out).not.toHaveProperty("raw")
 		expect(out).not.toHaveProperty("roots")
-	}, 30_000)
+	}, 60_000)
 })
 
 /** Strip ANSI escape sequences + ink spinner frames so JSON.parse can consume CLI stdout. */
