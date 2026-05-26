@@ -12,7 +12,8 @@
  *   Implementation contract per `docs/articles/plan/reference/STAGES.md`.
  */
 
-import type { AddressTree } from "../decoder/types.js"
+import type { AddressNode, AddressTree } from "../decoder/types.js"
+import type { ComponentTag } from "../types/component.js"
 import { reconcileSpans } from "./reconcile.js"
 import { aggregateSpanLogits } from "./span-logit-aggregation.js"
 import type {
@@ -292,6 +293,12 @@ export async function runPipeline(
 		timing["token-classify"] = performance.now() - tClassify
 	}
 
+	if (phraseProposals.length > 0 && tree.roots.length >= 0) {
+		const tAudit = performance.now()
+		tree = grouperAudit(tree, phraseProposals, normalized.normalized)
+		timing["grouper-audit"] = performance.now() - tAudit
+	}
+
 	if (stages.resolver) {
 		throwIfAborted(opts)
 		const tResolve = performance.now()
@@ -350,6 +357,62 @@ async function safeGroupPhrases(
 	} catch {
 		return []
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Grouper-audit pass
+// ---------------------------------------------------------------------------
+
+const GROUPER_TYPING_PENALTY = 0.55
+
+const PHRASE_KIND_TO_TAG: ReadonlyMap<string, ComponentTag> = new Map([
+	["VENUE_PHRASE", "venue"],
+	["LOCALITY_PHRASE", "locality"],
+	["REGION_ABBREVIATION", "region"],
+	["POSTCODE", "postcode"],
+	["STREET_PHRASE", "street"],
+	["NUMERIC", "house_number"],
+])
+
+/**
+ * Post-classification audit: for each phrase-grouper proposal whose span is entirely unlabeled
+ * (all-O) in the classifier output, inject a provisional node using the grouper's structural
+ * hypothesis. This rescues spans the neural model couldn't type — primarily venue text.
+ */
+function grouperAudit(tree: AddressTree, proposals: PhraseProposal[], text: string): AddressTree {
+	if (proposals.length === 0) return tree
+
+	const roots = [...tree.roots]
+
+	for (const proposal of proposals) {
+		const tag = PHRASE_KIND_TO_TAG.get(proposal.kindHypothesis)
+		if (!tag) continue
+
+		const pStart = proposal.span.start
+		const pEnd = pStart + proposal.span.body.length
+
+		const covered = roots.some(
+			(node) => node.start < pEnd && pStart < node.end
+		)
+		if (covered) continue
+
+		const provisionalNode: AddressNode = {
+			tag,
+			value: text.slice(pStart, pEnd),
+			start: pStart,
+			end: pEnd,
+			confidence: proposal.confidence * GROUPER_TYPING_PENALTY,
+			children: [],
+			source: "grouper-audit",
+			sourceId: `grouper:${proposal.kindHypothesis}`,
+		}
+
+		roots.push(provisionalNode)
+	}
+
+	roots.sort((a, b) => a.start - b.start)
+
+	return { raw: tree.raw, roots }
 }
 
 /** Defensive wrapper: a resolver failure leaves the classifier tree intact. */
