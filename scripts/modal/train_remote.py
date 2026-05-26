@@ -174,11 +174,13 @@ def train(
     cfg = Config()
     _merge(cfg, yaml.safe_load(open(config_path)))
 
-    # Override output dir to write to the volume
-    cfg.train.output_dir = f"{OUTPUT_DIR}/checkpoints"
-    cfg.train.csv_log_path = f"{OUTPUT_DIR}/train_log.csv"
+    # Use config's output_dir if it has one, otherwise default
+    run_output = cfg.train.output_dir if cfg.train.output_dir.startswith("/data/") else f"{OUTPUT_DIR}/checkpoints"
+    run_base = os.path.dirname(run_output)
+    cfg.train.output_dir = run_output
+    cfg.train.csv_log_path = cfg.train.csv_log_path.replace("{output_dir}", run_output) if "{output_dir}" in cfg.train.csv_log_path else f"{run_base}/train_log.csv"
 
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs(run_base, exist_ok=True)
 
     if resume == "auto":
         run_train(cfg, resume_from="auto")
@@ -260,3 +262,61 @@ def export_onnx():
 
     vol.commit()
     print("Committed to volume.")
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=300,
+)
+def diagnose_corpus():
+    """Check which corpus shards the data loader actually sees on the Modal volume."""
+    import json
+    import sys
+    from collections import Counter
+    from pathlib import Path
+
+    sys.path.insert(0, "/data/corpus-python/src")
+
+    corpus_dir = Path("/data/corpus/versioned/v0.4.0/corpus-v0.4.0")
+    manifest = corpus_dir / "MANIFEST.json"
+
+    print(f"Corpus dir: {corpus_dir}")
+    print(f"Manifest exists: {manifest.exists()}")
+
+    if manifest.exists():
+        data = json.loads(manifest.read_text())
+        train_shards = [s for s in data.get("shards", []) if s.get("split") == "train"]
+        print(f"MANIFEST: {len(train_shards)} train shards, {sum(s['rows'] for s in train_shards):,} rows")
+
+        existing = sum(1 for s in train_shards if Path(s["path"]).exists())
+        missing = len(train_shards) - existing
+        print(f"Train shard files: {existing} exist, {missing} missing")
+        if missing > 0:
+            for s in train_shards:
+                if not Path(s["path"]).exists():
+                    print(f"  MISSING: {s['path']}")
+                    break
+
+    from mailwoman_train.data_loader import _shard_paths, _shard_first_source
+
+    paths = _shard_paths(corpus_dir, "train")
+    print(f"\n_shard_paths returned {len(paths)} train shards")
+
+    by_source: Counter[str] = Counter()
+    errors = 0
+    for p in paths:
+        if not p.exists():
+            errors += 1
+            continue
+        try:
+            src = _shard_first_source(p)
+            by_source[src] += 1
+        except Exception as exc:
+            errors += 1
+            if errors <= 3:
+                print(f"  ERROR reading {p}: {exc}")
+
+    print(f"\nSource index ({errors} errors, {sum(by_source.values())} readable):")
+    for src, count in by_source.most_common():
+        print(f"  {src:35s} {count:4d} shards")

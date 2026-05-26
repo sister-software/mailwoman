@@ -1,0 +1,114 @@
+# v0.5.3 classifier — "diagnostic" iteration.
+#
+# Purpose: identify WHY v0.5.2 only emits region/O despite training on 673M structured
+# addresses. This run keeps v0.5.2's architecture but fixes observability:
+#
+# Changes from v0.5.2:
+#   - golden_dir wired to /data/eval/golden/v0.1.2 (per-tag F1 at every eval step)
+#   - eval_every_steps: 5000 → 2000 (more frequent checkpoints for loss-curve diagnosis)
+#   - save_every_steps: 5000 → 2000 (aligned with eval)
+#   - label_smoothing: 0.1 → 0.05 (suspected over-smoothing causing tag collapse)
+#   - dependent_locality class_weight: 0.3 → 1.0 (0.3 may cause model to avoid the tag)
+#   - subregion class_weight: 0.3 → 1.0 (same concern)
+#   - max_steps: 100000 → 50000 (shorter run, faster iteration — extend if curves healthy)
+#   - log_every_steps: 100 → 50 (denser loss curve)
+#
+# Unchanged from v0.5.2:
+#   - h384, batch=128 direct, CE-only, phrase priors ON
+#   - cosine LR, wof-admin: 0.3, ban: 3.0, tiger: 4.0
+#   - v0.5.0-a1 tokenizer (48K vocab)
+#
+# Launch:
+#   modal run scripts/modal/train_remote.py --config v0_5_3-classifier-diagnostic.yaml
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0
+  tokenizer_dir: /data/models/tokenizer/v0.5.0-a1
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  source_weights:
+    wof-admin: 0.3
+    wof-postalcode: 1.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    deepseek-translit-armn: 0.5
+    deepseek-translit-cyrl: 0.5
+    deepseek-translit-hang: 0.5
+    deepseek-translit-hans: 0.5
+    deepseek-translit-jpan: 0.5
+  train_rows_per_epoch: 1000000
+  val_rows: 2048
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  label_smoothing: 0.05
+  crf_normalization: per_sequence
+  crf_loss_weight: 0.0
+  class_weights:
+    O: 0.5
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 1.0
+    I-dependent_locality: 1.0
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 1.0
+    I-subregion: 1.0
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v053/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 50000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: cosine
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

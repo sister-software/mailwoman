@@ -25,10 +25,13 @@ Per Phase 2 §2:
 
 from __future__ import annotations
 
+import logging
 import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Iterator, Sequence
+
+logger = logging.getLogger(__name__)
 
 import pyarrow.parquet as pq
 
@@ -216,17 +219,41 @@ def _raw_row_stream(
     shard_paths = _shard_paths(corpus_dir, split)
     max_weight = max(country_weights.values())
 
+    logger.info("Indexing %d shards by source...", len(shard_paths))
     by_source: dict[str, list[Path]] = {}
+    skipped_shards: list[tuple[Path, str]] = []
     for s in shard_paths:
-        src = _shard_first_source(s)
+        if not s.exists():
+            skipped_shards.append((s, "file not found"))
+            continue
+        try:
+            src = _shard_first_source(s)
+        except Exception as exc:
+            skipped_shards.append((s, str(exc)))
+            continue
         by_source.setdefault(src, []).append(s)
 
+    if skipped_shards:
+        logger.warning(
+            "Skipped %d shards (missing or unreadable):\n  %s",
+            len(skipped_shards),
+            "\n  ".join(f"{p}: {reason}" for p, reason in skipped_shards[:10]),
+        )
+
+    logger.info(
+        "Shard index: %s",
+        ", ".join(f"{src}={len(shards)}" for src, shards in sorted(by_source.items())),
+    )
+
     if source_weights is not None:
+        dropped = {src for src in by_source if source_weights.get(src, 0) <= 0}
         by_source = {
             src: shards
             for src, shards in by_source.items()
             if source_weights.get(src, 0) > 0
         }
+        if dropped:
+            logger.info("Dropped %d zero-weighted sources: %s", len(dropped), dropped)
         if not by_source:
             raise ValueError(
                 "no shards remain after applying source_weights — every shard's source "
