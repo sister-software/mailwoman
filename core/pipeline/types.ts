@@ -29,15 +29,9 @@ export interface PipelineOpts {
 	/** Disable fast-path shortcuts; always run the full pipeline. */
 	forceFullPipeline?: boolean
 	/**
-	 * Enable the joint-reconcile path (Stage 5 beam search over candidates). When set, the pipeline:
-	 *
-	 * 1. Aggregates per-token logits over phrase-grouper spans (per-span top-K tag candidates).
-	 * 2. Feeds candidates into `reconcileSpans` for joint-coherence scoring.
-	 * 3. Returns the reconciled tree instead of the argmax tree.
-	 *
-	 * Requires both a phrase grouper AND a classifier that exposes raw logits (the standard
-	 * `NeuralAddressClassifier` does via its `parseWithLogits` method). Falls back to argmax if
-	 * either is missing.
+	 * Enable the joint-reconcile path (Stage 5 beam search). Opt-in until phrase-grouper proposal
+	 * quality supports multi-word streets/localities — currently produces single-token spans.
+	 * Requires phrase grouper + classifier with `parseWithLogits`.
 	 */
 	forceJointReconcile?: boolean
 	/** Hard cap on lookups the resolver may issue; passed through. */

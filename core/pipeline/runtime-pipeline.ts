@@ -237,8 +237,9 @@ export async function runPipeline(
 
 	let tree: AddressTree = { raw: normalized.normalized, roots: [] }
 
-	// Joint-reconcile path: when the flag is set AND we have phrase proposals AND the classifier
-	// exposes parseWithLogits, use per-span logit aggregation + reconcileSpans instead of argmax.
+	// Joint-reconcile path: opt-in until phrase-grouper proposal quality supports it as default.
+	// The reconciler produces single-token spans when phrase proposals don't cover multi-word
+	// streets/localities — needs grouper improvements before becoming the default path.
 	const useJointReconcile =
 		opts?.forceJointReconcile &&
 		phraseProposals.length > 0 &&
