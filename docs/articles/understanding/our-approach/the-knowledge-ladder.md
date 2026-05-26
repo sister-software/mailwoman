@@ -19,18 +19,18 @@ Read [The pipeline contract](../../concepts/staged-pipeline-contract.md) first f
 
 Each layer adds one kind of knowledge the layers below it cannot easily derive:
 
-| Layer                    | Knows                                                         | Shipped today                                                     |
-| ------------------------ | ------------------------------------------------------------- | ----------------------------------------------------------------- |
-| **1. Normalize**         | input preprocessing rules                                     | Yes                                                               |
-| **2. Locale gate**       | language / script family                                      | Yes (rule-based)                                                  |
-| **2.5. Kind classifier** | overall query category (postcode_only, structured_address, …) | Yes (rule-based)                                                  |
-| **2.7. Phrase grouper**  | **coherent input units (boundary discovery)**                 | **Yes (rule-based, v0.5.0; 57 venue markers, unit gate, positional prior)** |
-| **3. Token classify**    | per-token semantic type                                       | Yes (neural, v0.5.2)                                              |
-| **3.5. FST prior**       | **gazetteer-derived emission biases**                         | **Yes (Wikipedia importance-weighted, v0.5.2; [#173](https://github.com/sister-software/mailwoman/pull/173))** |
-| **4. Sequence correct**  | per-token BIO sequence validity                               | Yes (CRF with structural mask)                                    |
+| Layer                    | Knows                                                         | Shipped today                                                                                                          |
+| ------------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **1. Normalize**         | input preprocessing rules                                     | Yes                                                                                                                    |
+| **2. Locale gate**       | language / script family                                      | Yes (rule-based)                                                                                                       |
+| **2.5. Kind classifier** | overall query category (postcode_only, structured_address, …) | Yes (rule-based)                                                                                                       |
+| **2.7. Phrase grouper**  | **coherent input units (boundary discovery)**                 | **Yes (rule-based, v0.5.0; 57 venue markers, unit gate, positional prior)**                                            |
+| **3. Token classify**    | per-token semantic type                                       | Yes (neural, v0.5.2)                                                                                                   |
+| **3.5. FST prior**       | **gazetteer-derived emission biases**                         | **Yes (Wikipedia importance-weighted, v0.5.2; [#173](https://github.com/sister-software/mailwoman/pull/173))**         |
+| **4. Sequence correct**  | per-token BIO sequence validity                               | Yes (CRF with structural mask)                                                                                         |
 | **4.5. Grouper audit**   | **provisional nodes for all-O spans**                         | **Yes (injects venue/locality from grouper proposals; [#170](https://github.com/sister-software/mailwoman/pull/170))** |
-| **5. Reconcile**         | **joint-coherent interpretation across candidates**           | Yes (joint-decoding path shipped in v0.5.0; opt-in via `forceJointReconcile`) |
-| **6. Resolve**           | world hierarchy (gazetteer)                                   | Yes (WOF SQLite, unified builder in [#176](https://github.com/sister-software/mailwoman/pull/176)) |
+| **5. Reconcile**         | **joint-coherent interpretation across candidates**           | Yes (joint-decoding path shipped in v0.5.0; opt-in via `forceJointReconcile`)                                          |
+| **6. Resolve**           | world hierarchy (gazetteer)                                   | Yes (WOF SQLite, unified builder in [#176](https://github.com/sister-software/mailwoman/pull/176))                     |
 
 The two emphasized rows are the layers that v0.4.0's mixed result exposed as missing. They're complementary: the phrase grouper feeds cleaner spans IN to the classifier; the expanded reconciler picks coherent assignments OUT of the classifier's candidates.
 
@@ -116,6 +116,33 @@ Each case is asserted in `core/pipeline/reconcile.test.ts` (grep for `kryptonite
 
 WOF SQLite today (Phase 4.3). Knows place IDs, parent_id chains, placetypes, lat/lon. Returns candidates with scores. Does not know the input syntax; doesn't try.
 
+## Positional constraint propagation
+
+There's an internet-classic video about missile guidance systems: "The missile knows where it is at all times. It knows this because it knows where it isn't." The reasoning sounds tautological, but it works.
+
+Address classification has the same structure. A span knows what it is by knowing what the spans around it _cannot_ be. An address is an ordered hierarchy:
+
+```
+house_number → street → [unit | venue] → locality → region → country → postcode
+```
+
+When the resolver confirms "Chicago" as a locality at position N, the constraint propagates backward: whatever precedes it cannot be a region, country, or postcode. It must be a street, house number, unit, or venue. The classification space for the unconfirmed span collapses from 15 possible tags to 4 — without examining the span itself.
+
+This principle is not a single feature. It runs through every layer of the architecture:
+
+| Layer               | Mechanism                                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| CRF transition mask | `B-locality → I-street` is `-inf`. Viterbi cannot sequence a street after a locality.                                                      |
+| QueryShape prior    | Region abbreviation at position N → tokens at N-k get +2.0 toward `B-locality`. The abbreviation constrains what preceded it.              |
+| FST prior           | Place name matched → `B-street` suppressed by -1.5. If the FST says this is a place, it cannot also be a street.                           |
+| Grouper-audit       | All-O span between confirmed components → phrase grouper's structural hypothesis applied. Position + surface form jointly narrow the type. |
+
+Each layer enforces the same constraint through different mechanisms — soft priors, structural masks, post-hoc corrections — but the principle is identical: the classification of a span is partially determined by the spans that come after it, because the address hierarchy forbids certain sequences.
+
+Where it breaks down: inverted orderings ("NY, New York" puts region before locality), missing components (no postcode detected, so the constraint chain has a gap), and international formats (Japan writes region → locality → street, reversing the propagation direction — which is why v0's position penalties are locale-gated).
+
+For the full treatment — the right-to-left scan model, sequence elasticity, and the locale ordering registry — see [Positional constraint propagation](../../concepts/positional-constraint-propagation.md).
+
 ## Why this decomposition is bitter-lesson aligned
 
 Bitter lesson says "general methods that leverage computation" win in the long run. It does NOT say "make one model do everything." It says don't hand-engineer domain knowledge in places where the system could learn it from data.
@@ -139,17 +166,11 @@ The v0.4.0 ablation campaign's failure modes mapped almost cleanly to two missin
 
 The missing rungs were _information layers_. v0.4.0 wasn't doing the joint reasoning the architecture's contract implied it should. v0.5.0's scaffolding adds those rungs. The remaining work is training stable classifier weights that exercise them end-to-end.
 
-## What v0.5.0's training divergence is teaching us
+## Training: CE-only resolved the divergence
 
-Both v0.4.0 and v0.5.0 training runs diverge in the same fingerprint: loss descends through warmup, bottoms out, then climbs catastrophically under sustained peak learning rate. The May 2026 diagnostic work identified that the **CRF-NLL gradient dominates the CE gradient by 8-20×** — the CRF is pulling the model toward a degenerate attractor that CE opposes.
+Both v0.4.0 and v0.5.0 training runs diverged under dual loss (CRF-NLL + CE). The CRF-NLL gradient dominated CE by 8-20x, pulling the model toward a degenerate attractor. CE-only training (`crf_loss_weight: 0.0`) resolved this — the CRF is now an inference-time structural decoder with a frozen mask, not a training objective.
 
-Resolution path:
-
-- **CE-only training** is the current experiment: remove CRF loss from training, keep CRF as inference-time structural decoder with frozen mask.
-- If CE-only trains stably, the knowledge ladder's "sequence correct" rung moves from "trained alongside classifier" to "applied at inference only" — a simpler architecture with the same structural guarantees.
-- If CE-only also diverges, the destabilizer is in the corpus or tokenizer, not the dual loss.
-
-The ladder architecture is sound. Whether the current training recipe can reach it is being answered in real time.
+v0.5.2 shipped from a stable 100K-step CE-only run. v0.5.3 is in progress with improved diagnostics (per-tag F1 at every 2K steps, reduced label smoothing, rebalanced class weights). The knowledge ladder's "sequence correct" rung is now cleanly separated: the model learns per-token type distributions (Stage 3), the CRF enforces BIO validity (Stage 4) — no competing gradients.
 
 ## See also
 

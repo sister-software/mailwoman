@@ -16,15 +16,22 @@ import {
 	type PlacetypeRecord,
 	type WOFFeature,
 } from "@mailwoman/core/resources/whosonfirst"
-import { DatabaseSync } from "node:sqlite"
 import { readFileSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
 import { PathBuilder } from "path-ts"
 
 const DATA_DIRECTORY = PathBuilder.from(process.env.WOF_DATA_DIR || "/tmp/wof-placetype-dbs")
 
 const ADMIN_PLACETYPES = new Set([
-	"country", "region", "county", "locality", "localadmin",
-	"borough", "neighbourhood", "macroregion", "macrocounty",
+	"country",
+	"region",
+	"county",
+	"locality",
+	"localadmin",
+	"borough",
+	"neighbourhood",
+	"macroregion",
+	"macrocounty",
 ])
 
 const cache = new DataSourceCache()
@@ -181,7 +188,11 @@ async function processFiles(input: WorkerInput): Promise<WorkerOutput> {
 		if (unifiedDb) unifiedDb.exec("COMMIT")
 	} catch (err) {
 		if (unifiedDb) {
-			try { unifiedDb.exec("ROLLBACK") } catch {}
+			try {
+				unifiedDb.exec("ROLLBACK")
+			} catch (_e) {
+				// Rollback may fail if no transaction is active
+			}
 		}
 		throw err
 	}
