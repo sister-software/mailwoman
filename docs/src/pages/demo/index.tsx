@@ -44,8 +44,8 @@ export default function DemoPage(): React.ReactElement {
 				<header className={styles.header}>
 					<h1>Mailwoman geocoder demo</h1>
 					<p>
-						Type a US address. The neural classifier (~25 MB ONNX) and WOF locality DB (~35 MB SQLite) run entirely in
-						your browser — no server round-trips after the initial asset load.
+						Type a US address. The neural classifier (~17 MB ONNX, int8 quantized) and WOF locality DB (~35 MB SQLite)
+						run entirely in your browser — no server round-trips after the initial asset load.
 					</p>
 				</header>
 				<BrowserOnly fallback={<p>Loading…</p>}>{() => <DemoApp />}</BrowserOnly>

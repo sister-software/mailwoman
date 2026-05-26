@@ -29,8 +29,10 @@ interface RuntimePipelineStages {
 	computeQueryShape?: (input: NormalizedInputLite | string, opts?: { locale?: string }) => QueryShapeLite
 	detectLocale?: (input: NormalizedInputLite, shape: QueryShapeLite, opts?: { hint?: LocaleTag }) => Promise<LocaleHint>
 	classifyKind?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<QueryKindResult>
-	classifier?: { parse(text: string, opts?: { queryShape?: QueryShapeLite }): Promise<AddressTree> }
-	resolver?: { resolveTree(tree: AddressTree, opts?: ResolveOpts): Promise<AddressTree> }
+	groupPhrases?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise&lt;PhraseProposal[]&gt;
+	classifier?: { parse(text: string, opts?: ClassifierOpts): Promise&lt;AddressTree&gt; }
+	fst?: FstMatcherLike  // FST gazetteer matcher — produces emission biases during classification
+	resolver?: { resolveTree(tree: AddressTree, opts?: ResolveOpts): Promise&lt;AddressTree&gt; }
 }
 ```
 

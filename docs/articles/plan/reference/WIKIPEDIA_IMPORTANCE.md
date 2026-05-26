@@ -1,0 +1,67 @@
+---
+sidebar_position: 19
+title: Wikipedia importance scores
+---
+
+# Wikipedia Importance Scores
+
+Place importance scores derived from Wikipedia link count, replacing raw population as the FST emission prior weight. Shipped in [#173](https://github.com/sister-software/mailwoman/pull/173).
+
+## Source
+
+[Nominatim's wikimedia-importance.csv.gz](https://nominatim.org/release-docs/latest/customize/Importance/) — 19M rows mapping Wikidata IDs to importance scores. The score is `log(total_links) / log(max_links)` where `total_links` = internal links + cross-language links to the Wikipedia article. Normalized to \[0, 1\] where the United States article (5.2M links) = 1.0.
+
+## ETL pipeline
+
+```
+wikimedia-importance.csv.gz (19M rows, ~250 MB compressed)
+         │
+         ▼
+  scripts/build-importance.ts
+         │
+         ├─ Load WOF concordances (other_source='wd:id') → Set of needed Wikidata IDs
+         ├─ Stream-decompress TSV, filter to matching IDs only
+         ├─ Collapse duplicates by MAX(importance) per Wikidata ID
+         ├─ JOIN: wof_id → concordance wikidata_id → importance score
+         ├─ Write place_importance(id, importance) table
+         └─ Population fallback: min(1.0, log2(1+pop/1000)/14) for places without Wikidata
+```
+
+## Coverage (US admin)
+
+| Source | Places |
+|--------|--------|
+| Wikipedia importance (via Wikidata concordance) | 47,348 |
+| Population fallback | 108,111 |
+| **Total in place\_importance** | **155,459** |
+
+## How scores flow into the FST
+
+1. `build-importance.ts` writes `place_importance` table into the WOF SQLite
+2. `fst-builder.ts` reads `place_importance` (falls back to `place_population` → pseudo-importance)
+3. `PlaceEntry.importance` carries the score through serialization (Float32 in the binary FST)
+4. `fst-prior.ts` computes bias: `importance × biasScale × maxBias` (linear, capped at 3.0 logits)
+
+## Why not population
+
+| Signal | Washington DC | Washington state | Winner |
+|--------|--------------|-----------------|--------|
+| Population | 678K | 7.6M | State (wrong for bare "Washington") |
+| Wikipedia importance | 0.815 | 0.764 | DC (correct — more culturally prominent) |
+
+Population is an administrative headcount. Wikipedia importance captures actual cultural prominence — how often the place is referenced, linked to, and discussed across languages.
+
+## Regeneration
+
+Run after any WOF data refresh:
+
+```bash
+node scripts/build-importance.js --db /path/to/wof-unified.db [--tsv /path/to/wikimedia-importance.csv.gz]
+```
+
+The TSV is cached at `/tmp/wikimedia-importance.csv.gz` after first download. Pass `--tsv` to skip the download.
+
+## See also
+
+- [FST Gazetteer LM](./FST_GAZETTEER_LM.md) — the FST architecture this feeds into
+- [Nominatim importance docs](https://nominatim.org/release-docs/latest/customize/Importance/) — upstream methodology
