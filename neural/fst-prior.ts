@@ -68,6 +68,8 @@ const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house
 
 export interface FstPriorOpts {
 	biasScale?: number
+	/** Maximum bias magnitude (logits). Prevents large-population places from overriding the model. Default 3.0. */
+	maxBias?: number
 	suppressionScale?: number
 }
 
@@ -86,6 +88,7 @@ export function buildFstEmissionPriors(
 	const T = pieces.length
 	const L = labels.length
 	const biasScale = opts.biasScale ?? 1.0
+	const maxBias = opts.maxBias ?? 3.0
 	const suppressionScale = opts.suppressionScale ?? 1.5
 	const matrix: number[][] = []
 	for (let t = 0; t < T; t++) matrix.push(new Array<number>(L).fill(0))
@@ -104,7 +107,7 @@ export function buildFstEmissionPriors(
 		if (!match) continue
 
 		if (match.accepted) {
-			applyBias(matrix, labelToCol, fst.accepting(match.stateId), [group], biasScale, suppressionScale)
+			applyBias(matrix, labelToCol, fst.accepting(match.stateId), [group], biasScale, maxBias, suppressionScale)
 		}
 
 		let current = match
@@ -117,7 +120,7 @@ export function buildFstEmissionPriors(
 
 			if (next.accepted) {
 				const matchedGroups = wordGroups.slice(start, end + 1).filter((g) => g.fstToken !== "")
-				applyBias(matrix, labelToCol, fst.accepting(next.stateId), matchedGroups, biasScale, suppressionScale)
+				applyBias(matrix, labelToCol, fst.accepting(next.stateId), matchedGroups, biasScale, maxBias, suppressionScale)
 			}
 
 			current = next
@@ -181,6 +184,7 @@ function applyBias(
 	entries: ReadonlyArray<FstPlaceEntryLike>,
 	groups: WordGroup[],
 	biasScale: number,
+	maxBias: number,
 	suppressionScale: number
 ): void {
 	const seenTags = new Map<string, number>()
@@ -188,7 +192,7 @@ function applyBias(
 	for (const entry of entries) {
 		const bioTag = PLACETYPE_TO_BIO.get(entry.placetype)
 		if (!bioTag) continue
-		const popBias = biasScale * Math.log2(1 + entry.population / 1000)
+		const popBias = Math.min(biasScale * Math.log2(1 + entry.population / 1000), maxBias)
 		const existing = seenTags.get(bioTag) ?? 0
 		if (popBias > existing) seenTags.set(bioTag, popBias)
 	}

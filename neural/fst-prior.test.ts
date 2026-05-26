@@ -77,13 +77,13 @@ describe("buildFstEmissionPriors", () => {
 		}
 	})
 
-	it("biases matched locality tokens with population weight", () => {
+	it("biases matched locality tokens, capped at maxBias", () => {
 		const fst = mockFst(
 			new Map([["portland", [{ placetype: "locality", population: 665_000 }]]])
 		)
 		const pieces = makePieces("Portland")
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
-		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(5)
+		expect(matrix[0]![labelCol("B-locality")]).toBe(3.0)
 		expect(matrix[0]![labelCol("B-street")]).toBeLessThan(0)
 	})
 
@@ -103,20 +103,20 @@ describe("buildFstEmissionPriors", () => {
 		const pieces = makePieces("New York")
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 
-		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(5)
-		expect(matrix[1]![labelCol("I-locality")]).toBeGreaterThan(5)
-		expect(matrix[0]![labelCol("B-region")]).toBeGreaterThan(matrix[0]![labelCol("B-locality")]!)
-		expect(matrix[1]![labelCol("I-region")]).toBeGreaterThan(matrix[1]![labelCol("I-locality")]!)
+		expect(matrix[0]![labelCol("B-locality")]).toBe(3.0)
+		expect(matrix[1]![labelCol("I-locality")]).toBe(3.0)
+		expect(matrix[0]![labelCol("B-region")]).toBe(3.0)
+		expect(matrix[1]![labelCol("I-region")]).toBe(3.0)
 	})
 
-	it("respects biasScale", () => {
+	it("small populations produce proportionally lower bias", () => {
 		const fst = mockFst(
-			new Map([["chicago", [{ placetype: "locality", population: 2_700_000 }]]])
+			new Map([["hamlet", [{ placetype: "locality", population: 200 }]]])
 		)
-		const pieces = makePieces("Chicago")
-		const at1 = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS, { biasScale: 1.0 })
-		const at2 = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS, { biasScale: 2.0 })
-		expect(at2[0]![labelCol("B-locality")]).toBeCloseTo(at1[0]![labelCol("B-locality")]! * 2, 1)
+		const pieces = makePieces("Hamlet")
+		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
+		expect(matrix[0]![labelCol("B-locality")]).toBeLessThan(1.0)
+		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(0)
 	})
 
 	it("does not bias unmapped placetypes (county)", () => {
@@ -153,7 +153,7 @@ describe("buildFstEmissionPriors", () => {
 			{ piece: "▁DC", start: 12, end: 14 },
 		]
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
-		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(5)
+		expect(matrix[0]![labelCol("B-locality")]).toBe(3.0)
 		expect(matrix[1]!.every((v) => v === 0)).toBe(true)
 	})
 })
