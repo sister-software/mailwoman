@@ -39,6 +39,7 @@ export function createUnifiedSchema(db: DatabaseSync): void {
 			placetype TEXT NOT NULL DEFAULT '',
 			country TEXT NOT NULL DEFAULT '',
 			language TEXT NOT NULL DEFAULT '',
+			privateuse TEXT NOT NULL DEFAULT '',
 			lastmodified INTEGER NOT NULL DEFAULT 0
 		)
 	`)
