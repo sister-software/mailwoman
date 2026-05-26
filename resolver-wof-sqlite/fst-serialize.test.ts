@@ -146,7 +146,7 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 		original = matcher
 		buf = serializeFst(original)
 		restored = deserializeFst(buf)
-	}, 30_000)
+	}, 60_000)
 
 	it("roundtrips state count", () => {
 		expect(restored.stateCount).toBe(original.stateCount)

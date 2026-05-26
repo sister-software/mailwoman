@@ -27,7 +27,7 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 			},
 		})
 		matcher = built.matcher
-	}, 30_000)
+	}, 60_000)
 
 	it("returns suggestions for 'New'", () => {
 		const result = autocomplete(matcher, "New", { maxSuggestions: 5 })

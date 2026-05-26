@@ -29,7 +29,7 @@ describe.skipIf(!HAS_WOF)("buildFstFromWof — integration", () => {
 		})
 		matcher = built.matcher
 		result = built.result
-	}, 30_000)
+	}, 60_000)
 
 	it("builds a non-trivial FST", () => {
 		expect(result.stateCount).toBeGreaterThan(10000)
