@@ -61,6 +61,7 @@
 		"prettier-plugin-packagejson": "^3.0.2",
 		"react": "^19.2.6",
 		"release-it": "^19",
+		"spliterator": "^2.0.0",
 		"tap-difflet": "^0.7.2",
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.59.3",

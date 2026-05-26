@@ -6,15 +6,17 @@
 
 import { ProgressBar } from "@inkjs/ui"
 import { formatMinutes, formatQuantity, takeAsync, tallyPatternCount } from "@mailwoman/core/resources"
+import { createUnifiedIndexes, createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import FastGlob from "fast-glob"
 import { Box, Text } from "ink"
 import { availableParallelism } from "node:os"
+import { DatabaseSync } from "node:sqlite"
 import { setImmediate } from "node:timers/promises"
 import { PathBuilder } from "path-ts"
 import { Piscina } from "piscina"
 import { useEffect, useState } from "react"
 import zod from "zod"
-import type { PositionalCommandComponent } from "../../../sdk/cli.js"
+import type { CommandComponent } from "../../../sdk/cli.js"
 import type { WorkerInput, WorkerOutput } from "./_app_worker.mjs"
 
 const piscina = new Piscina<WorkerInput, WorkerOutput>({
@@ -30,9 +32,19 @@ const FILES_PER_BATCH = 500
 
 const ArgumentsSchema = zod.array(zod.string().describe("Path to the Who's On First data directory"))
 export { ArgumentsSchema as args }
+
+const OptionsSchema = zod.object({
+	unifiedDb: zod.string().optional().describe("Path to write a unified SQLite database for the FST builder and resolver."),
+})
+export { OptionsSchema as options }
+
 const startTime = performance.now()
 
-const WOFPrepare: PositionalCommandComponent<typeof ArgumentsSchema> = ({ args: [wofDataAdminDirectory] }) => {
+const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({
+	args: [wofDataAdminDirectory],
+	options,
+}) => {
+	const unifiedDbPath = options.unifiedDb
 	const [insertionCount, setInsertionCount] = useState(0)
 	const [throughput, setThroughput] = useState(0)
 	const [recordCount, setRecordCount] = useState(-1)
@@ -56,20 +68,23 @@ const WOFPrepare: PositionalCommandComponent<typeof ArgumentsSchema> = ({ args: 
 
 	useEffect(() => {
 		;(async () => {
+			if (unifiedDbPath) {
+				const db = new DatabaseSync(unifiedDbPath, { open: true })
+				createUnifiedSchema(db)
+				db.close()
+			}
+
 			const matchStream = FastGlob.stream(["**/*.geojson"], {
 				cwd: wofDataAdminDirectory!,
 				absolute: true,
 			})
 
-			// Batch filenames and send each batch to a worker as a single Piscina task.
-			// Reduces IPC overhead vs dispatching one file per task.
 			const tasks: Promise<void>[] = []
 
 			for await (const fileNames of takeAsync(matchStream, FILES_PER_BATCH)) {
 				const filePaths = fileNames.map((f) => f.toString())
 
-				// Cap concurrent tasks to WORKER_COUNT — Piscina queues the rest.
-				const task = piscina.run({ filePaths }).then((result) => {
+				const task = piscina.run({ filePaths, unifiedDbPath }).then((result) => {
 					setInsertionCount((count) => count + result.processed)
 				})
 
@@ -77,6 +92,12 @@ const WOFPrepare: PositionalCommandComponent<typeof ArgumentsSchema> = ({ args: 
 			}
 
 			await Promise.all(tasks)
+
+			if (unifiedDbPath) {
+				const db = new DatabaseSync(unifiedDbPath, { open: true })
+				createUnifiedIndexes(db)
+				db.close()
+			}
 		})()
 	}, [wofDataAdminDirectory])
 
