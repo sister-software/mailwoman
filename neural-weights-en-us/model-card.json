@@ -1,18 +1,18 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "0.5.2",
-	"phase": "Stage 2 (coarse + venue/street/house_number) — CE-only, data-rebalanced",
+	"version": "0.5.1",
+	"phase": "Stage 2 (coarse + venue/street/house_number) — CE-only, unchained",
 	"license": "AGPL-3.0-only",
 	"locale": "en-us",
 	"training": {
 		"corpus_version": "0.4.0",
 		"tokenizer_version": "0.5.0-a1",
-		"steps": 100000,
+		"steps": 95000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"duration_seconds": 2400,
+		"duration_seconds": 2100,
 		"started_at": "2026-05-25T06:04:00Z",
-		"completed_at": "2026-05-25T06:44:00Z",
-		"recipe": "CE-only (crf_loss_weight=0.0), h384, batch=128 direct, wof-admin 2.0→0.3, directional+region augmentation 30%, label_smoothing=0.1, cosine LR decay"
+		"completed_at": "2026-05-25T06:39:00Z",
+		"recipe": "CE-only (crf_loss_weight=0.0), h384, batch=128 direct, constant LR=1.5e-4, phrase_priors=ON, class_weights tuned"
 	},
 	"architecture": {
 		"hidden_size": 384,
@@ -65,23 +65,22 @@
 		"val_loss": 0.281,
 		"golden_eval": {
 			"n_entries": 4535,
-			"hybrid_joint_exact_match": 0.06,
-			"hybrid_joint_macro_f1": 0.169,
+			"hybrid_joint_exact_match": 0.102,
+			"hybrid_joint_macro_f1": 0.17,
 			"hybrid_joint_empty_parse": 0.0,
 			"rule_only_exact_match": 0.308,
-			"neural_macro_f1": 0.073
+			"neural_macro_f1": 0.078
 		}
 	},
 	"known_failure_modes": [
-		"56.7% overconfident-wrong in neural-only mode (addressed by reconciler: 0.2%)",
+		"54.5% overconfident-wrong in neural-only mode (addressed by reconciler: 0.1%)",
 		"dependent_locality hallucination reduced by class_weights=0.3 but not eliminated",
-		"non-Latin scripts: A1 tokenizer has 18.2% byte-fallback; model not trained on non-Latin addresses yet",
-		"particle-honorific kryptonite (e.g. FR 'Saint-Just-Saint-Rambert')",
-		"locality/region confusion on ambiguous names (Washington, New York) — FST emission prior designed to address this"
+		"non-Latin scripts: A1 tokenizer has 18.2% byte-fallback (vs v0.1.0's 36.7%); model not trained on non-Latin addresses yet",
+		"particle-honorific kryptonite (e.g. FR 'Saint-Just-Saint-Rambert')"
 	],
-	"notes": "v0.5.2 — data-rebalanced iteration. Changes from v0.5.1: wof-admin weight 2.0→0.3 (reduces bare-name frequency dominance), directional+region augmentation at 30%, label_smoothing=0.1, cosine LR decay, 100K steps (vs 95K). Demo presets improved: San Francisco correctly labeled as locality (was 'Pier'), NW correctly part of street (was 'locality'). Tokenizer updated from v0.1.0 to v0.5.0-a1 (48K vocab).",
+	"notes": "v0.5.1 — 'unchained' iteration. Removes all hardware constraints from v0.5.0 (h256→h384, grad_accum→direct batch, 50K→100K steps, phrase priors OFF→ON, class weights uniform→tuned). CE-only training fix (crf_loss_weight=0) carries from v0.5.0 — nine dual-loss runs diverged, CE-only is stable. Val_loss oscillates every ~20K steps (hard-cluster cycling, not overfitting). Best checkpoint at step-95K. +77% over v0.4.0 on training eval; +70% over v0.5.0 on golden exact-match (hybrid-joint 6.0%→10.2%).",
 	"format": {
-		"model": "ONNX int8 dynamic (quantized from fp32)",
+		"model": "ONNX fp32 dynamic",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=48000",
 		"max_sequence_length": 128,
 		"opset": 17
@@ -91,5 +90,5 @@
 		"tokenizer": "tokenizer.model",
 		"model_card": "model-card.json"
 	},
-	"base_relpath": "/data/output/checkpoints/step-100000"
+	"base_relpath": "/data/output/checkpoints/step-095000"
 }

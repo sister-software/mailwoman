@@ -13,8 +13,8 @@
 set -euo pipefail
 
 PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SRC_MODEL="${MAILWOMAN_DEV_MODEL:-/mnt/playpen/mailwoman-data/models/quantized/model-v052-step-100000-int8.onnx}"
-SRC_TOKENIZER="${MAILWOMAN_DEV_TOKENIZER:-/mnt/playpen/mailwoman-data/models/tokenizer/v0.5.0-a1/tokenizer.model}"
+SRC_MODEL="${MAILWOMAN_DEV_MODEL:-/mnt/playpen/mailwoman-data/models/quantized/model-stage2-step-001800-int8.onnx}"
+SRC_TOKENIZER="${MAILWOMAN_DEV_TOKENIZER:-/mnt/playpen/mailwoman-data/models/tokenizer/v0.1.0/tokenizer.model}"
 
 if [ ! -f "$SRC_MODEL" ]; then
 	echo "missing source model: $SRC_MODEL" >&2
