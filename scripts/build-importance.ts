@@ -147,11 +147,12 @@ async function main() {
 
 	for await (const line of rl) {
 		totalRows++
+		if (totalRows === 1 && line.startsWith("language")) continue
 		const parts = line.split("\t")
-		if (parts.length < 4) continue
+		if (parts.length < 5) continue
 
-		const importance = parseFloat(parts[2]!)
-		const wikidataId = parts[3]!
+		const importance = parseFloat(parts[3]!)
+		const wikidataId = parts[4]!
 
 		if (!wikidataId || !concordances.has(wikidataId)) continue
 		if (isNaN(importance)) continue
@@ -172,6 +173,7 @@ async function main() {
 	const insertStmt = db.prepare("INSERT INTO place_importance (id, importance) VALUES (?, ?)")
 	let importanceCount = 0
 
+	db.exec("BEGIN TRANSACTION")
 	for (const [wikidataId, importance] of importanceMap) {
 		const wofIds = concordances.get(wikidataId)
 		if (!wofIds) continue
@@ -180,23 +182,16 @@ async function main() {
 			importanceCount++
 		}
 	}
+	db.exec("COMMIT")
 
 	// Step 5: Population fallback for places without Wikipedia data
 	console.error("Adding population fallback for unmatched places...")
-	const matchedIds = new Set<number>()
-	for (const wofIds of concordances.values()) {
-		for (const id of wofIds) {
-			if (importanceMap.has([...concordances.entries()].find(([, ids]) => ids.includes(id))?.[0] ?? "")) {
-				matchedIds.add(id)
-			}
-		}
-	}
-
 	let fallbackCount = 0
 	try {
 		const popStmt = db.prepare("SELECT id, population FROM place_population")
 		const fallbackInsert = db.prepare("INSERT OR IGNORE INTO place_importance (id, importance) VALUES (?, ?)")
 		const popRows = popStmt.all() as unknown as Array<{ id: number; population: number }>
+		db.exec("BEGIN TRANSACTION")
 		for (const row of popRows) {
 			if (row.population > 0) {
 				const pseudoImportance = Math.min(1.0, Math.log2(1 + row.population / 1000) / 14)
@@ -204,6 +199,7 @@ async function main() {
 				fallbackCount++
 			}
 		}
+		db.exec("COMMIT")
 	} catch {
 		console.error("  No place_population table — skipping fallback")
 	}
