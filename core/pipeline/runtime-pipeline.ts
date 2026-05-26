@@ -18,6 +18,8 @@ import { reconcileSpans } from "./reconcile.js"
 import { aggregateSpanLogits } from "./span-logit-aggregation.js"
 import type {
 	AddressClassifier,
+	ClassifierOpts,
+	FstMatcherLike,
 	LocaleHint,
 	LocaleTag,
 	NormalizedInputLite,
@@ -247,7 +249,7 @@ export async function runPipeline(
 		const classifierWithLogits = stages.classifier as AddressClassifier & {
 			parseWithLogits: (
 				text: string,
-				opts?: { queryShape?: QueryShapeLite }
+				opts?: ClassifierOpts
 			) => Promise<{ tree: AddressTree; logits: number[][]; pieces: Array<{ start: number; end: number }> }>
 		}
 
@@ -257,7 +259,7 @@ export async function runPipeline(
 			tree: argmaxTree,
 			logits,
 			pieces,
-		} = await classifierWithLogits.parseWithLogits(normalized.normalized, { queryShape })
+		} = await classifierWithLogits.parseWithLogits(normalized.normalized, { queryShape, fst: stages.fst })
 		timing["token-classify"] = performance.now() - tClassify
 
 		throwIfAborted(opts)
@@ -289,7 +291,7 @@ export async function runPipeline(
 	} else if (stages.classifier) {
 		throwIfAborted(opts)
 		const tClassify = performance.now()
-		tree = await safeClassify(stages.classifier, normalized.normalized, queryShape)
+		tree = await safeClassify(stages.classifier, normalized.normalized, queryShape, stages.fst)
 		timing["token-classify"] = performance.now() - tClassify
 	}
 
@@ -336,10 +338,11 @@ function throwIfAborted(opts?: PipelineOpts): void {
 async function safeClassify(
 	classifier: AddressClassifier,
 	text: string,
-	queryShape: QueryShapeLite
+	queryShape: QueryShapeLite,
+	fst?: FstMatcherLike
 ): Promise<AddressTree> {
 	try {
-		return await classifier.parse(text, { queryShape })
+		return await classifier.parse(text, { queryShape, fst })
 	} catch {
 		return { raw: text, roots: [] }
 	}

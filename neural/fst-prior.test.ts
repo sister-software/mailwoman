@@ -77,13 +77,14 @@ describe("buildFstEmissionPriors", () => {
 		}
 	})
 
-	it("biases matched locality tokens", () => {
+	it("biases matched locality tokens with population weight", () => {
 		const fst = mockFst(
 			new Map([["portland", [{ placetype: "locality", population: 665_000 }]]])
 		)
 		const pieces = makePieces("Portland")
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
-		expect(matrix[0]![labelCol("B-locality")]).toBe(1.0)
+		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(5)
+		expect(matrix[0]![labelCol("B-street")]).toBeLessThan(0)
 	})
 
 	it("biases multi-word place names with B/I convention", () => {
@@ -102,10 +103,10 @@ describe("buildFstEmissionPriors", () => {
 		const pieces = makePieces("New York")
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 
-		expect(matrix[0]![labelCol("B-locality")]).toBe(1.0)
-		expect(matrix[1]![labelCol("I-locality")]).toBe(1.0)
-		expect(matrix[0]![labelCol("B-region")]).toBe(1.0)
-		expect(matrix[1]![labelCol("I-region")]).toBe(1.0)
+		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(5)
+		expect(matrix[1]![labelCol("I-locality")]).toBeGreaterThan(5)
+		expect(matrix[0]![labelCol("B-region")]).toBeGreaterThan(matrix[0]![labelCol("B-locality")]!)
+		expect(matrix[1]![labelCol("I-region")]).toBeGreaterThan(matrix[1]![labelCol("I-locality")]!)
 	})
 
 	it("respects biasScale", () => {
@@ -113,8 +114,9 @@ describe("buildFstEmissionPriors", () => {
 			new Map([["chicago", [{ placetype: "locality", population: 2_700_000 }]]])
 		)
 		const pieces = makePieces("Chicago")
-		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS, { biasScale: 2.0 })
-		expect(matrix[0]![labelCol("B-locality")]).toBe(2.0)
+		const at1 = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS, { biasScale: 1.0 })
+		const at2 = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS, { biasScale: 2.0 })
+		expect(at2[0]![labelCol("B-locality")]).toBeCloseTo(at1[0]![labelCol("B-locality")]! * 2, 1)
 	})
 
 	it("does not bias unmapped placetypes (county)", () => {
@@ -137,8 +139,8 @@ describe("buildFstEmissionPriors", () => {
 			{ piece: "field", start: 6, end: 11 },
 		]
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
-		expect(matrix[0]![labelCol("B-locality")]).toBe(1.0)
-		expect(matrix[1]![labelCol("I-locality")]).toBe(1.0)
+		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(0)
+		expect(matrix[1]![labelCol("I-locality")]).toBeGreaterThan(0)
 	})
 
 	it("skips punctuation-only tokens", () => {
@@ -151,7 +153,7 @@ describe("buildFstEmissionPriors", () => {
 			{ piece: "▁DC", start: 12, end: 14 },
 		]
 		const matrix = buildFstEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
-		expect(matrix[0]![labelCol("B-locality")]).toBe(1.0)
+		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(5)
 		expect(matrix[1]!.every((v) => v === 0)).toBe(true)
 	})
 })

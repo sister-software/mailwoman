@@ -31,6 +31,8 @@ export interface CreateRuntimePipelineOpts {
 	classifier?: RuntimePipelineStages["classifier"]
 	/** The Stage 6 resolver — typically a `WofResolver` from `@mailwoman/resolver-wof-sqlite`. */
 	resolver?: RuntimePipelineStages["resolver"]
+	/** Pre-built FST gazetteer matcher. Produces additive emission biases during neural classification. */
+	fst?: RuntimePipelineStages["fst"]
 	/**
 	 * Locale gate override — when shipped, replaces the default caller-trust stub.
 	 *
@@ -77,6 +79,7 @@ export function createRuntimePipeline(
 		// stage. Override only with a compatible alternative (e.g. v0.5.1's learned span proposer).
 		groupPhrases: opts.groupPhrases ?? defaultGroupPhrases,
 		classifier: opts.classifier,
+		fst: opts.fst,
 		resolver: opts.resolver,
 		// Default locale gate: rule-based from @mailwoman/locale-gate. Derives locale from
 		// QueryShape character class (CJK→ja-JP, Cyrillic→ru-RU, Arabic→ar) + known-format
@@ -90,6 +93,8 @@ export function createRuntimePipeline(
 // Re-export the types so consumers don't need to import from both `mailwoman` and `@mailwoman/core/pipeline`.
 export type {
 	AddressClassifier,
+	ClassifierOpts,
+	FstMatcherLike,
 	LocaleHint,
 	NormalizedInputLite,
 	PhraseGrouper,
