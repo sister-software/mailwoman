@@ -22,6 +22,17 @@ export interface WOFBaseProperties {
 	"wof:placetype": WhosOnFirstPlacetype
 	"wof:parent_id": number
 	"wof:superseded_by"?: number[]
+	"wof:supersedes"?: number[]
+	"wof:country"?: string
+	"wof:concordances"?: Record<string, string | number>
+	"wof:population"?: number
+	"wof:lastmodified"?: number
+	"geom:latitude"?: number
+	"geom:longitude"?: number
+	"gn:population"?: number
+	"mz:is_current"?: number | string
+	"edtf:deprecated"?: string
+	"edtf:cessation"?: string
 }
 
 export const WOFNameKinds = ["preferred", "variant", "colloquial", "abbr", "short"] as const
@@ -45,6 +56,17 @@ export interface ParsedWOFPlacetype {
 	src: string
 	placetype: WhosOnFirstPlacetype
 	localizedPropMap: Map<Alpha3bLanguageCode, LocalizedPlacetypePropMap>
+	country?: string
+	latitude?: number
+	longitude?: number
+	population?: number
+	concordances?: Record<string, string | number>
+	isCurrent?: boolean
+	isDeprecated?: boolean
+	isCeased?: boolean
+	isSuperseded?: boolean
+	isSuperseding?: boolean
+	lastmodified?: number
 }
 
 const langPattern = new RegExp(`:([a-z0-9\\-_]{2,3})_x_(${WOFNameKinds.join("|")})`)
@@ -65,6 +87,17 @@ export function pluckPlacetypeSpec({
 	"wof:parent_id": parent_id,
 	"wof:placetype": placetype,
 	"wof:superseded_by": superseded_by,
+	"wof:supersedes": supersedes,
+	"wof:country": country,
+	"wof:concordances": concordances,
+	"wof:population": wofPopulation,
+	"wof:lastmodified": lastmodified,
+	"geom:latitude": latitude,
+	"geom:longitude": longitude,
+	"gn:population": gnPopulation,
+	"mz:is_current": mzIsCurrent,
+	"edtf:deprecated": edtfDeprecated,
+	"edtf:cessation": edtfCessation,
 	...props
 }: WOFProperties): ParsedWOFPlacetype {
 	const localizedPropMap = new Map<Alpha3bLanguageCode, LocalizedPlacetypePropMap>()
@@ -95,6 +128,9 @@ export function pluckPlacetypeSpec({
 
 	if (!src) throw new Error(`No source found for placetype ${placetype} with ID ${id}`)
 
+	const population = typeof wofPopulation === "number" ? wofPopulation : typeof gnPopulation === "number" ? gnPopulation : undefined
+	const isCurrent = mzIsCurrent === undefined ? undefined : mzIsCurrent !== 0 && mzIsCurrent !== "0"
+
 	return {
 		id,
 		name,
@@ -102,6 +138,17 @@ export function pluckPlacetypeSpec({
 		parent_id,
 		placetype,
 		localizedPropMap,
+		country: country || undefined,
+		latitude: typeof latitude === "number" ? latitude : undefined,
+		longitude: typeof longitude === "number" ? longitude : undefined,
+		population,
+		concordances: concordances && Object.keys(concordances).length > 0 ? concordances : undefined,
+		isCurrent,
+		isDeprecated: !!edtfDeprecated,
+		isCeased: !!edtfCessation,
+		isSuperseded: !!(superseded_by && superseded_by.length > 0),
+		isSuperseding: !!(supersedes && supersedes.length > 0),
+		lastmodified: typeof lastmodified === "number" ? lastmodified : undefined,
 	}
 }
 
