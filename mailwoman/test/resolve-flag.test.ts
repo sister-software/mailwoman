@@ -97,12 +97,12 @@ describeIfWof(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 	}, 30_000)
 
 	test("--candidates surfaces runner-up resolutions in XML", async () => {
-		// "Springfield" with no region qualifier is the canonical ambiguous query — WOF returns
-		// multiple Springfields (IL, MA, MO, etc.). With --candidates 5 we expect at least one
-		// <alternative> element on the resolved node.
+		// "Springfield, Illinois" — the region qualifier helps the model produce a resolvable tag.
+		// WOF returns multiple Springfields (OR, PA, MA, etc.). With --candidates 5 we expect at
+		// least one <alternative> element on the resolved node.
 		const result = await exec(
 			"node",
-			[cliBin, "parse", "--resolve", "--candidates", "5", "--format", "xml", "Springfield"],
+			[cliBin, "parse", "--resolve", "--candidates", "5", "--format", "xml", "Springfield, Illinois"],
 			{ env: { ...process.env, MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }, maxBuffer: 4 * 1024 * 1024 }
 		)
 		expect(result.stdout).toContain("<address raw=")
@@ -115,7 +115,7 @@ describeIfWof(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 	test("--candidates surfaces runner-up resolutions in JSON (tree shape)", async () => {
 		const result = await exec(
 			"node",
-			[cliBin, "parse", "--resolve", "--candidates", "3", "--format", "json", "Springfield"],
+			[cliBin, "parse", "--resolve", "--candidates", "3", "--format", "json", "Springfield, Illinois"],
 			{ env: { ...process.env, MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }, maxBuffer: 4 * 1024 * 1024 }
 		)
 		// JSON with --candidates dumps the full AddressTree, not the libpostal-flat projection.
