@@ -24,6 +24,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import styles from "./styles.module.css"
 
+const ASSET_VERSION = "v0.5.3"
+
 const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
@@ -107,8 +109,8 @@ function DemoApp(): React.ReactElement {
 				if (cancelled) return
 				setLoadingProgress("Loading neural model (~25 MB) + FST gazetteer (~9 MB)…")
 				const cls = await neuralWeb.loadNeuralClassifierFromUrls({
-					modelUrl: "/mailwoman/model.onnx",
-					tokenizerUrl: "/mailwoman/tokenizer.model",
+					modelUrl: `/mailwoman/model.onnx?v=${ASSET_VERSION}`,
+					tokenizerUrl: `/mailwoman/tokenizer.model?v=${ASSET_VERSION}`,
 				})
 
 				if (cancelled) return
@@ -849,7 +851,7 @@ function currentDocusaurusTheme(): "light" | "dark" {
 async function loadFstGazetteer(): Promise<FstMatcherLike> {
 	const [fstModule, fstBinary] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/fst-deserialize-web"),
-		fetch("/mailwoman/fst-en-US.bin").then((r) => {
+		fetch(`/mailwoman/fst-en-US.bin?v=${ASSET_VERSION}`).then((r) => {
 			if (!r.ok) throw new Error(`FST fetch failed (${r.status})`)
 			return r.arrayBuffer()
 		}),

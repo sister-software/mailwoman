@@ -101,14 +101,17 @@ def build_model_card(
     }
 
 
-def export_crf_transitions(model: "torch.nn.Module") -> dict | None:
+def export_crf_transitions(model: "torch.nn.Module", *, crf_loss_weight: float = 0.0) -> dict | None:
     """Extract learned CRF transition parameters from a trained model.
 
     Returns None if the model has no CRF module (CE-only training) or if
-    crf_loss_weight was 0.0 (CRF present but untrained — parameters are noise).
+    crf_loss_weight was 0.0 (CRF present but untrained — parameters are noise
+    from random initialization and would add nondeterministic bias to Viterbi).
     """
     crf = getattr(model, "crf", None)
     if crf is None:
+        return None
+    if crf_loss_weight == 0.0:
         return None
     transitions = crf.transitions.detach().cpu().float().numpy().tolist()
     start = crf.start_transitions.detach().cpu().float().numpy().tolist()
