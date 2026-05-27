@@ -148,7 +148,7 @@ function DemoApp(): React.ReactElement {
 				}
 
 				if (cancelled) return
-				setClassifier(cls)
+				setClassifier(cls as unknown as MailwomanClassifierLike)
 				// One-shot factory; captured in closure to avoid re-importing the wasm wrapper.
 				setLookupLoader(() => async () => {
 					const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
@@ -621,7 +621,7 @@ function FailureDiagnostic({
 }
 
 interface MailwomanClassifierLike {
-	parse: (text: string) => Promise<unknown>
+	parse: (text: string, opts?: { queryShape?: unknown; fst?: unknown }) => Promise<unknown>
 }
 
 interface MailwomanLookupLike {
