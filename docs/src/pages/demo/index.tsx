@@ -25,12 +25,28 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import styles from "./styles.module.css"
 
-const ASSET_VERSION = "v0.5.3"
-const ASSET_LOCALE = "en-us"
+const DEFAULT_LOCALE = "en-us"
 const HF_BUCKET_RESOLVE_URL = "https://huggingface.co/buckets/sister-software/mailwoman/resolve/"
 
-function assetUrl(filename: string): string {
-	return `${HF_BUCKET_RESOLVE_URL}${ASSET_LOCALE}/${ASSET_VERSION}/${filename}`
+function assetUrl(locale: string, version: string, filename: string): string {
+	return `${HF_BUCKET_RESOLVE_URL}${locale}/${version}/${filename}`
+}
+
+interface ReleaseInfo {
+	version: string
+	label: string
+	description: string
+	modelSize: string
+	tokenizerVocab: number
+	steps: number
+	hasFst: boolean
+	hasWofDb: boolean
+}
+
+interface ReleasesManifest {
+	locale: string
+	defaultVersion: string
+	releases: ReleaseInfo[]
 }
 
 const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
@@ -53,9 +69,8 @@ export default function DemoPage(): React.ReactElement {
 				<header className={styles.header}>
 					<h1>Mailwoman geocoder demo</h1>
 					<p>
-						Type a US address. The neural classifier (~25 MB ONNX, int8 quantized), FST gazetteer (~9 MB, 94K US
-						places), and WOF locality DB (~35 MB SQLite) run entirely in your browser — no server round-trips after the
-						initial asset load.
+						Type a US address. The neural classifier and supporting data run entirely in your browser — no server
+						round-trips after the initial asset load.
 					</p>
 				</header>
 				<BrowserOnly fallback={<p>Loading…</p>}>{() => <DemoApp />}</BrowserOnly>
@@ -73,7 +88,9 @@ function initialAddress(): string {
 }
 
 function DemoApp(): React.ReactElement {
-	const [loadingProgress, setLoadingProgress] = useState<string>("Loading neural model…")
+	const [manifest, setManifest] = useState<ReleasesManifest | null>(null)
+	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
+	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
 	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
 	const [fstMatcher, setFstMatcher] = useState<FstMatcherLike | null>(null)
 	const [fstProvenance, setFstProvenance] = useState<FstProvenanceLike | null>(null)
@@ -101,27 +118,25 @@ function DemoApp(): React.ReactElement {
 		window.history.replaceState(null, "", url.toString())
 	}, [text])
 
-	// Mount: load the neural model + map up-front. The 35 MB WOF DB is deferred until first
-	// submit — most visitors poke at parse output without ever hitting "resolve".
+	// Mount: fetch the releases manifest + set up the map.
 	useEffect(() => {
 		let cancelled = false
 		void (async () => {
 			try {
-				const [neuralWeb, maplibre, basemapSource, fstResult] = await Promise.all([
-					import("@mailwoman/neural-web"),
+				const [manifestRes, maplibre, basemapSource] = await Promise.all([
+					fetch(assetUrl(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases")).then((r) =>
+						r.ok ? (r.json() as Promise<ReleasesManifest>) : null
+					),
 					import("maplibre-gl"),
 					fetchBasemapSource(),
-					loadFstGazetteer().catch(() => null),
 				])
 
 				if (cancelled) return
-				setLoadingProgress("Loading neural model (~25 MB) + FST gazetteer (~9 MB)…")
-				const cls = await neuralWeb.loadNeuralClassifierFromUrls({
-					modelUrl: assetUrl("model.onnx"),
-					tokenizerUrl: assetUrl("tokenizer.model"),
-				})
+				if (manifestRes) {
+					setManifest(manifestRes)
+					setSelectedVersion(manifestRes.defaultVersion)
+				}
 
-				if (cancelled) return
 				if (mapContainerRef.current) {
 					const composer = new StyleSpecificationComposer({
 						sources: { [MailwomanBaseTileSetID]: basemapSource },
@@ -137,13 +152,7 @@ function DemoApp(): React.ReactElement {
 					map.addControl(new maplibre.AttributionControl({ compact: true }))
 					map.addControl(new LayerToggleControl(), "top-right")
 					mapRef.current = map
-					// Expose for the playwright e2e harness; the suite reads styleLoaded /
-					// layers / source-layers off this.
 					Object.assign(window as unknown as Record<string, unknown>, { __mailwomanDemoMap: map })
-
-					// setTerrain throws "Style is not done loading" if invoked before the style's
-					// sources/sprites are hydrated. `load` fires when the initial viewport renders, but
-					// that's earlier than isStyleLoaded(). Poll via styledata until it's truly ready.
 					const wireTerrain = (): void => {
 						if (!map.isStyleLoaded()) {
 							map.once("styledata", wireTerrain)
@@ -154,27 +163,11 @@ function DemoApp(): React.ReactElement {
 								map.setTerrain({ source: "terrain", exaggeration: 1 })
 							}
 						} catch {
-							// fall through to flat rendering
+							// fall through
 						}
 					}
 					map.on("load", wireTerrain)
 				}
-
-				if (cancelled) return
-				if (fstResult) {
-					setFstMatcher(fstResult.matcher)
-					if (fstResult.provenance) setFstProvenance(fstResult.provenance)
-				}
-				setClassifier(cls as unknown as MailwomanClassifierLike)
-				// One-shot factory; captured in closure to avoid re-importing the wasm wrapper.
-				setLookupLoader(() => async () => {
-					const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
-					const { db } = await resolverWasm.loadSlimWofDatabase({
-						source: assetUrl("wof-hot.db"),
-					})
-					return new resolverWasm.WofWasmPlaceLookup({ db })
-				})
-				setLoadingProgress("")
 			} catch (e) {
 				if (cancelled) return
 				setError((e as Error).message ?? String(e))
@@ -185,6 +178,62 @@ function DemoApp(): React.ReactElement {
 			cancelled = true
 		}
 	}, [])
+
+	// Load the model + FST + WOF DB when the selected version changes.
+	useEffect(() => {
+		if (!selectedVersion) return
+		let cancelled = false
+		const release = manifest?.releases.find((r) => r.version === selectedVersion)
+		void (async () => {
+			try {
+				setClassifier(null)
+				setFstMatcher(null)
+				setFstProvenance(null)
+				setLookup(null)
+				setLookupLoader(null)
+				setResult(null)
+				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
+
+				const neuralWeb = await import("@mailwoman/neural-web")
+				const cls = await neuralWeb.loadNeuralClassifierFromUrls({
+					modelUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
+					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
+				})
+
+				if (cancelled) return
+
+				if (release?.hasFst) {
+					try {
+						const fstResult = await loadFstGazetteer(DEFAULT_LOCALE, selectedVersion)
+						setFstMatcher(fstResult.matcher)
+						if (fstResult.provenance) setFstProvenance(fstResult.provenance)
+					} catch {
+						// FST not available for this version
+					}
+				}
+
+				if (release?.hasWofDb) {
+					setLookupLoader(() => async () => {
+						const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
+						const { db } = await resolverWasm.loadSlimWofDatabase({
+							source: assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"),
+						})
+						return new resolverWasm.WofWasmPlaceLookup({ db })
+					})
+				}
+
+				setClassifier(cls as unknown as MailwomanClassifierLike)
+				setLoadingProgress("")
+			} catch (e) {
+				if (cancelled) return
+				setError((e as Error).message ?? String(e))
+				setLoadingProgress("")
+			}
+		})()
+		return () => {
+			cancelled = true
+		}
+	}, [selectedVersion, manifest])
 
 	// Hot-swap the map style when the operator toggles Docusaurus's color mode. The page sets
 	// data-theme="dark" / "light" on <html>; a MutationObserver is the lightest dependency-free way
@@ -353,58 +402,87 @@ function DemoApp(): React.ReactElement {
 		[classifier, fstMatcher, ensureLookup, text]
 	)
 
-	const ready = classifier !== null && lookupLoader !== null
+	const ready = classifier !== null
+	const currentRelease = manifest?.releases.find((r) => r.version === selectedVersion)
 
 	return (
-		<div className={styles.layout}>
-			<section className={styles.controls}>
-				<form onSubmit={onSubmit}>
-					<label htmlFor="addr-input">Address</label>
-					<input
-						id="addr-input"
-						type="text"
-						value={text}
-						onChange={(e) => setText(e.target.value)}
-						disabled={!ready || busy}
-						placeholder={DEFAULT_ADDRESS}
-					/>
-					<button type="submit" disabled={!ready || busy}>
-						{busy ? "Parsing…" : "Parse + resolve"}
-					</button>
-				</form>
-				<div className={styles.examples}>
-					<span className={styles.examplesLabel}>Try:</span>
-					{EXAMPLE_ADDRESSES.map((ex) => (
-						<button
-							key={ex.label}
-							type="button"
-							className={styles.exampleBtn}
+		<>
+			{currentRelease ? (
+				<p style={{ fontSize: "0.9rem", opacity: 0.8, margin: "0 0 1rem" }}>
+					<strong>{currentRelease.version}</strong> — {currentRelease.description} ({currentRelease.modelSize},{" "}
+					{currentRelease.tokenizerVocab.toLocaleString()} vocab, {currentRelease.steps.toLocaleString()} steps)
+				</p>
+			) : null}
+			<div className={styles.layout}>
+				<section className={styles.controls}>
+					{manifest && manifest.releases.length > 1 ? (
+						<div style={{ marginBottom: "0.75rem" }}>
+							<label htmlFor="version-select" style={{ display: "block", marginBottom: "0.25rem", fontWeight: 600 }}>
+								Model version
+							</label>
+							<select
+								id="version-select"
+								value={selectedVersion ?? ""}
+								onChange={(e) => setSelectedVersion(e.target.value)}
+								disabled={busy}
+								style={{ width: "100%", padding: "0.4rem" }}
+							>
+								{manifest.releases.map((r) => (
+									<option key={r.version} value={r.version}>
+										{r.label}
+									</option>
+								))}
+							</select>
+						</div>
+					) : null}
+					<form onSubmit={onSubmit}>
+						<label htmlFor="addr-input">Address</label>
+						<input
+							id="addr-input"
+							type="text"
+							value={text}
+							onChange={(e) => setText(e.target.value)}
 							disabled={!ready || busy}
-							onClick={() => {
-								setText(ex.address)
-								setResult(null)
-							}}
-							title={ex.address}
-						>
-							{ex.label}
+							placeholder={DEFAULT_ADDRESS}
+						/>
+						<button type="submit" disabled={!ready || busy}>
+							{busy ? "Parsing…" : "Parse + resolve"}
 						</button>
-					))}
-					<PermalinkButton text={text} />
-				</div>
-				{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
-				{error ? <p className={styles.error}>{error}</p> : null}
-				{result ? (
-					<ResultPanel
-						result={result}
-						selectedCandidateIndex={selectedCandidateIndex}
-						onSelectCandidate={setSelectedCandidateIndex}
-					/>
-				) : null}
-			</section>
-			<section className={styles.mapWrap}>
-				<div ref={mapContainerRef} className={styles.map} />
-			</section>
-		</div>
+					</form>
+					<div className={styles.examples}>
+						<span className={styles.examplesLabel}>Try:</span>
+						{EXAMPLE_ADDRESSES.map((ex) => (
+							<button
+								key={ex.label}
+								type="button"
+								className={styles.exampleBtn}
+								disabled={!ready || busy}
+								onClick={() => {
+									setText(ex.address)
+									setResult(null)
+								}}
+								title={ex.address}
+							>
+								{ex.label}
+							</button>
+						))}
+						<PermalinkButton text={text} />
+					</div>
+					{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
+					{error ? <p className={styles.error}>{error}</p> : null}
+					{result ? (
+						<ResultPanel
+							result={result}
+							selectedCandidateIndex={selectedCandidateIndex}
+							onSelectCandidate={setSelectedCandidateIndex}
+						/>
+					) : null}
+				</section>
+				<section className={styles.mapWrap}>
+					<div ref={mapContainerRef} className={styles.map} />
+				</section>
+			</div>
+		</>
 	)
 }
 
@@ -453,7 +531,6 @@ function ResultPanel({
 							<li>Built: {new Date(result.fstProvenance.builtAt).toLocaleDateString()}</li>
 							<li>States: {result.fstProvenance.stateCount.toLocaleString()}</li>
 							<li>Importance matches: {result.fstProvenance.importanceMatches.toLocaleString()}</li>
-							<li>Model: {ASSET_VERSION}</li>
 						</ul>
 					) : null}
 				</details>
@@ -884,10 +961,13 @@ function currentDocusaurusTheme(): "light" | "dark" {
 	return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"
 }
 
-async function loadFstGazetteer(): Promise<{ matcher: FstMatcherLike; provenance?: FstProvenanceLike }> {
+async function loadFstGazetteer(
+	locale: string,
+	version: string
+): Promise<{ matcher: FstMatcherLike; provenance?: FstProvenanceLike }> {
 	const [fstModule, fstBinary] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/fst-deserialize-web"),
-		fetch(assetUrl("fst-en-US.bin")).then((r) => {
+		fetch(assetUrl(locale, version, "fst-en-US.bin")).then((r) => {
 			if (!r.ok) throw new Error(`FST fetch failed (${r.status})`)
 			return r.arrayBuffer()
 		}),
