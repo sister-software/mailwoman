@@ -5,7 +5,7 @@ title: Training environment — playpen container setup
 
 # Training environment
 
-:::tip Audience
+:::tip[Audience]
 
 🧪 **Operator documentation.** For contributors provisioning GPU training environments. If you want to use Mailwoman, see [Getting started](/docs/getting-started).
 

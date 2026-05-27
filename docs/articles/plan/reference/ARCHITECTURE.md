@@ -1,6 +1,6 @@
 # Architecture
 
-:::info Historical planning document
+:::info[Historical planning document]
 
 Written for Phase 2 planning (2026-05-18). Some details are outdated:
 
