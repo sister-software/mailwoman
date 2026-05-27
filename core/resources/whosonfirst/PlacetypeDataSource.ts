@@ -119,7 +119,7 @@ export class PlacetypeDataSource implements Disposable {
 	}
 
 	constructor(databasePath: PathBuilderLike, dbOptions?: DatabaseSyncOptions) {
-		this.#db = new DatabaseSync(databasePath.toString(), dbOptions)
+		this.#db = dbOptions ? new DatabaseSync(databasePath.toString(), dbOptions) : new DatabaseSync(databasePath.toString())
 
 		// node:sqlite has no .pragma() helper; pragmas are executed as plain SQL.
 		this.#db.exec("PRAGMA busy_timeout = 10000")
