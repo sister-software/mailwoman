@@ -98,6 +98,8 @@ docs/static/mailwoman/*.bin
 
 .claude/settings.local.json
 CLAUDE.local.md
+.claude/scheduled_tasks.lock
+.claude/scheduled_tasks.json
 
 # expand-golden.ts outputs — operator skims locally, then promotes to versioned dir
 data/eval/golden/candidates/
