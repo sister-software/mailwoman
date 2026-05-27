@@ -1,0 +1,89 @@
+---
+sidebar_position: 40
+title: "onnxruntime-web: the two WebGPU providers"
+---
+
+# onnxruntime-web ships two WebGPU backends. You're probably using the wrong one.
+
+If your ONNX model produces correct results via WASM but garbage via WebGPU — especially on Safari — you're likely importing the old JSEP backend instead of the native WebGPU execution provider. The fix is one import path change.
+
+## Symptoms
+
+You'll see all of these at once:
+
+- Model inference produces near-uniform or collapsed outputs (e.g., every token gets the same classification)
+- Confidence scores are low (0.2–0.4) when they should be 0.9+
+- Toggling to WASM (`executionProviders: ["wasm"]`) produces correct results immediately
+- The problem is worse on Safari (macOS and iOS) than Chrome, or only appears on Safari
+- Playwright / headless CI tests pass because they have no GPU and fall back to WASM
+
+## Root cause
+
+onnxruntime-web (as of v1.25–1.26) ships two distinct WebGPU execution providers in the same package:
+
+| Import path              | Bundle                               | WebGPU EP                   | Int8 QDQ status                    |
+| ------------------------ | ------------------------------------ | --------------------------- | ---------------------------------- |
+| `onnxruntime-web`        | `ort.bundle.min.mjs` (405 KB)        | **JSEP** (JavaScript-based) | Broken — slice kernel bug on Metal |
+| `onnxruntime-web/webgpu` | `ort.webgpu.bundle.min.mjs` (113 KB) | **Native**                  | Correct on all backends            |
+
+The default import resolves to the JSEP bundle. The JSEP has a known bug ([microsoft/onnxruntime#25227](https://github.com/microsoft/onnxruntime/issues/25227)) where a slice operation used to reverse a tensor on a specific axis produces wrong results. This manifests as incorrect dequantization of int8 weights, which corrupts every downstream layer.
+
+Chrome's WebGPU implementation (Dawn/Vulkan) happens to mask the bug in some cases. Safari's WebGPU implementation (Metal) exposes it reliably.
+
+## The fix
+
+```diff
+- import * as ort from "onnxruntime-web"
++ import * as ort from "onnxruntime-web/webgpu"
+```
+
+That's it. The rest of your code stays the same — `InferenceSession.create()`, tensor I/O, and execution provider selection all work identically.
+
+If you're dynamically importing:
+
+```typescript
+const ort = await import("onnxruntime-web/webgpu")
+```
+
+## Why CI never catches this
+
+Headless Chromium (Playwright, Puppeteer, Selenium) does not expose a WebGPU adapter. When you request `executionProviders: ["webgpu", "wasm"]`, the WebGPU probe fails silently and falls back to WASM. WASM handles int8 QDQ ops correctly, so your tests pass.
+
+This means any test suite that runs in headless mode will never exercise the WebGPU code path. The bug only manifests on real browsers with real GPUs.
+
+To catch GPU-specific issues, you need either:
+
+- A real browser test (Playwright with `--headed` on a GPU-equipped machine)
+- A WebGPU-specific smoke test that checks for `navigator.gpu` and skips if absent, but flags the skip visibly
+
+## Diagnostic checklist
+
+If you suspect you're hitting this bug:
+
+1. **Force WASM** — add `executionProviders: ["wasm"]` and check if results become correct. If yes, the problem is GPU-side.
+2. **Check your import** — `grep -r "from.*onnxruntime-web" src/` and verify you're importing from `onnxruntime-web/webgpu`, not the bare package.
+3. **Check the bundle size** — the JSEP bundle is ~405 KB, the native bundle is ~113 KB. If your chunk is closer to 400 KB, you have the wrong one.
+4. **Log the backend** — after session creation, the session object doesn't expose which EP was used. Track it yourself based on which code path succeeded.
+5. **Test on Safari** — if Chrome works but Safari doesn't, you're almost certainly on the JSEP. The native EP works on both.
+
+## Bundler notes
+
+Webpack, Vite, and esbuild all resolve `onnxruntime-web/webgpu` correctly via the package's `exports` field. No special configuration needed.
+
+If you're using a CDN:
+
+```html
+<script type="importmap">
+	{
+		"imports": {
+			"onnxruntime-web": "https://cdn.jsdelivr.net/npm/onnxruntime-web@dev/dist/ort.webgpu.min.mjs"
+		}
+	}
+</script>
+```
+
+## References
+
+- [microsoft/onnxruntime#25227](https://github.com/microsoft/onnxruntime/issues/25227) — upstream bug report (slice kernel in JSEP)
+- [huggingface/transformers.js#1512](https://github.com/huggingface/transformers.js/issues/1512) — same bug, confirmed fixed by native EP
+- [huggingface/transformers.js#1382](https://github.com/huggingface/transformers.js/pull/1382) — Transformers.js V4 migration to native EP

@@ -1,0 +1,75 @@
+---
+title: "Our model worked in CI but broke on every real device"
+description: "A one-line import change fixed a WebGPU inference bug that took hours to diagnose. The root cause: onnxruntime-web ships two WebGPU backends, and the default one is broken."
+authors: [teffen]
+tags: [neural, browser, infrastructure]
+---
+
+We shipped a browser-based address parser that runs a 29 MB ONNX model entirely client-side. The Playwright tests showed perfect results. Chrome desktop looked great. Then someone opened it on an iPhone.
+
+{/* truncate */}
+
+## What we saw
+
+Every address component was classified as "locality" with 0.2–0.4 confidence. "400 Broad St, Seattle, WA 98109" became three locality spans with no street, no region, no postcode. The model was producing near-uniform logits — as if it hadn't been trained at all.
+
+Toggling to the WASM backend in our debug UI produced perfect results immediately. Same model bytes, same tokenizer, same input. The GPU path was the problem.
+
+## The wrong hypotheses
+
+We burned hours on each of these before finding the real cause:
+
+**Stale browser cache.** We'd recently updated the model from 25 MB (old tokenizer) to 29 MB (new tokenizer). The old model with the wrong tokenizer produces exactly this symptom — garbage output. We added cache-busting query params, migrated assets to a CDN, and verified file sizes. The files were correct.
+
+**Tokenizer mismatch.** The v0.5.3 model uses a 48K-vocab tokenizer but an older 24K-vocab tokenizer was briefly deployed. We verified hashes. The tokenizer was correct.
+
+**Model version drift.** We have four model versions on the CDN. Maybe the wrong one was being loaded. We added a version selector to the demo page and confirmed v0.5.3 was selected. The model was correct.
+
+**Browser-specific WASM numerics.** Maybe Safari's WASM implementation handles int8 quantization differently. We tested WASM on Safari — it worked perfectly. The problem was WebGPU-specific.
+
+## Why Playwright couldn't catch it
+
+Every automated test we ran passed. The reason: headless Chromium does not have a WebGPU adapter. When you request `executionProviders: ["webgpu", "wasm"]`, the runtime silently falls back to WASM. WASM handles int8 correctly, so the test passes.
+
+We had a `verify` skill that launched a real headless browser, navigated to the live demo, typed an address, and checked the parse output. It ran after every deployment. It passed every time. And it was useless for catching this bug, because it could never exercise the code path that was broken.
+
+## The real cause
+
+onnxruntime-web ships two WebGPU execution providers in the same npm package:
+
+```
+onnxruntime-web          → ort.bundle.min.mjs     → JSEP (old, broken)
+onnxruntime-web/webgpu   → ort.webgpu.bundle.min.mjs → Native EP (fixed)
+```
+
+The JSEP (JavaScript-based execution provider) has a [slice kernel bug](https://github.com/microsoft/onnxruntime/issues/25227) that produces incorrect results when reversing a tensor on a specific axis. This corrupts the dequantization of int8 weights. The bug is worse on Safari's Metal backend than Chrome's Dawn/Vulkan backend — Chrome happened to mask it in our case.
+
+The native WebGPU EP handles the same operations correctly on all backends.
+
+## The fix
+
+```diff
+- import * as ort from "onnxruntime-web"
++ import * as ort from "onnxruntime-web/webgpu"
+```
+
+One line. The API is identical. Session creation, tensor I/O, and provider fallback all work the same way. The native bundle is also smaller (113 KB vs 405 KB).
+
+After this change, the model produces correct results on Chrome, Safari macOS, and iOS Safari — all via WebGPU, no WASM fallback needed.
+
+## What we should have done differently
+
+The diagnostic path that would have saved hours:
+
+1. Force WASM. If results become correct, the problem is GPU-side.
+2. Check which execution provider is actually active. We didn't have this instrumentation — we've since added a backend indicator to the demo page.
+3. Check the import path. `grep "onnxruntime-web"` in your source. If you're importing the bare package, you're on the JSEP.
+4. Test on Safari. If it fails on Safari but works on Chrome, the JSEP is the prime suspect.
+
+The deeper lesson: test infrastructure that lacks GPU access will never catch GPU-specific bugs. Headless browsers are not real browsers when it comes to hardware acceleration. If your product runs on GPUs, you need at least one test that exercises the GPU path on a device that has one.
+
+## References
+
+- [Technical reference: the two WebGPU providers](/docs/understanding/onnxruntime-web-webgpu-gotcha)
+- [microsoft/onnxruntime#25227](https://github.com/microsoft/onnxruntime/issues/25227)
+- [huggingface/transformers.js#1512](https://github.com/huggingface/transformers.js/issues/1512)
