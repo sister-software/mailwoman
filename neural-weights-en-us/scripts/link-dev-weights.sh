@@ -13,7 +13,7 @@
 set -euo pipefail
 
 PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SRC_MODEL="${MAILWOMAN_DEV_MODEL:-/mnt/playpen/mailwoman-data/models/quantized/model-v052-step-100000-int8.onnx}"
+SRC_MODEL="${MAILWOMAN_DEV_MODEL:-/mnt/playpen/mailwoman-data/models/quantized/model-v053-step-028000-int8.onnx}"
 SRC_TOKENIZER="${MAILWOMAN_DEV_TOKENIZER:-/mnt/playpen/mailwoman-data/models/tokenizer/v0.5.0-a1/tokenizer.model}"
 
 if [ ! -f "$SRC_MODEL" ]; then
