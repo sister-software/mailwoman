@@ -7,12 +7,12 @@
  *   fst-en-US.bin, wof-hot.db) and the workspace webpack aliases needed to bundle @mailwoman/*
  *   packages for the browser.
  *
- *   Replaces the previous build-demo-assets.sh script + inline workspaceAliasPlugin. All heavy
- *   binary artifacts are derived from the neural-weights-en-us model-card.json (source of truth
- *   for version + expected sizes), so a tokenizer/model mismatch is caught at build time.
+ *   Replaces the previous build-demo-assets.sh script + inline workspaceAliasPlugin. All heavy binary
+ *   artifacts are derived from the neural-weights-en-us model-card.json (source of truth for
+ *   version + expected sizes), so a tokenizer/model mismatch is caught at build time.
  *
- *   Asset staging runs in loadContent() — before webpack — so both `yarn start` (dev) and
- *   `yarn build` (prod) get correct artifacts without a separate pre-build step.
+ *   Asset staging runs in loadContent() — before webpack — so both `yarn start` (dev) and `yarn
+ *   build` (prod) get correct artifacts without a separate pre-build step.
  */
 
 import { existsSync, mkdirSync, statSync } from "node:fs"
@@ -29,6 +29,7 @@ import {
 
 /**
  * @param {import("@docusaurus/types").LoadContext} context
+ *
  * @returns {import("@docusaurus/types").Plugin}
  */
 export default function demoAssetsPlugin(context) {

@@ -22,7 +22,9 @@ const requireFromPlugin = createRequire(import.meta.url)
 
 /**
  * Locate a workspace package's root directory via its package.json.
+ *
  * @param {string} packageName
+ *
  * @returns {string | null}
  */
 export function resolveWorkspaceDir(packageName) {
@@ -36,7 +38,9 @@ export function resolveWorkspaceDir(packageName) {
 /**
  * Resolve a workspace package's entry file. Prefers the source `.ts` file so Docusaurus's
  * swc-loader can transpile it inline — avoids requiring a pre-compile step.
+ *
  * @param {string} packageName
+ *
  * @returns {string}
  */
 export function resolveWorkspaceEntry(packageName) {
@@ -49,8 +53,10 @@ export function resolveWorkspaceEntry(packageName) {
 
 /**
  * Resolve a single-file sub-entrypoint within a workspace directory.
+ *
  * @param {string} workspaceDir
  * @param {string} sub
+ *
  * @returns {string}
  */
 export function resolveWorkspaceFile(workspaceDir, sub) {
@@ -61,8 +67,10 @@ export function resolveWorkspaceFile(workspaceDir, sub) {
 
 /**
  * Resolve a directory-style sub-entrypoint (./sub/index.{ts,js}).
+ *
  * @param {string} workspaceDir
  * @param {string} sub
+ *
  * @returns {string}
  */
 export function resolveWorkspaceDirEntry(workspaceDir, sub) {
@@ -78,6 +86,7 @@ export function resolveWorkspaceDirEntry(workspaceDir, sub) {
 /**
  * Build the full workspace alias map for webpack. Centralises the alias logic that was previously
  * inlined in docusaurus.config.ts.
+ *
  * @returns {Record<string, string>}
  */
 export function buildWorkspaceAliases() {
@@ -149,7 +158,8 @@ export function buildWorkspaceAliases() {
 
 /**
  * Read the model-card.json from the weights package to get version metadata.
- * @returns {{ version: string, modelSize: number, tokenizerVocab: number, step: string } | null}
+ *
+ * @returns {{ version: string; modelSize: number; tokenizerVocab: number; step: string } | null}
  */
 export function readModelCard() {
 	const weightsDir = resolveWorkspaceDir("@mailwoman/neural-weights-en-us")
@@ -164,9 +174,11 @@ export function readModelCard() {
 }
 
 /**
- * Resolve a binary artifact from the weights package, dereferencing symlinks.
- * Returns the real path to the file (following symlinks from link-dev-weights.sh).
- * @param {string} filename - e.g. "model.onnx" or "tokenizer.model"
+ * Resolve a binary artifact from the weights package, dereferencing symlinks. Returns the real path
+ * to the file (following symlinks from link-dev-weights.sh).
+ *
+ * @param {string} filename - E.g. "model.onnx" or "tokenizer.model"
+ *
  * @returns {string | null}
  */
 export function resolveWeightsArtifact(filename) {
@@ -186,10 +198,12 @@ export function resolveWeightsArtifact(filename) {
 
 /**
  * Copy a file to the static directory, but only if it differs (by size) from what's already there.
+ *
  * @param {string} sourcePath
  * @param {string} destPath
- * @param {string} label - for logging
- * @returns {boolean} true if the file was copied
+ * @param {string} label - For logging
+ *
+ * @returns {boolean} True if the file was copied
  */
 export function syncArtifact(sourcePath, destPath, label) {
 	if (!existsSync(sourcePath)) {
@@ -215,11 +229,13 @@ export function syncArtifact(sourcePath, destPath, label) {
 
 /**
  * Build the FST binary from the WOF admin SQLite database.
- * @param {string} fstPath - destination path for the binary
+ *
+ * @param {string} fstPath - Destination path for the binary
  * @param {object} opts
  * @param {string} opts.repoRoot
- * @param {string} [opts.wofDb] - path to WOF admin DB
- * @returns {boolean} true if built successfully
+ * @param {string} [opts.wofDb] - Path to WOF admin DB
+ *
+ * @returns {boolean} True if built successfully
  */
 export function buildFstBinary(fstPath, opts) {
 	const wofDb =
@@ -268,18 +284,18 @@ export function buildFstBinary(fstPath, opts) {
 
 /**
  * Build the slim WOF database for the browser resolver.
+ *
  * @param {string} destPath
  * @param {object} opts
  * @param {string} opts.repoRoot
+ *
  * @returns {boolean}
  */
 export function buildSlimWofDb(destPath, opts) {
 	const adminDb =
-		process.env.PLAYPEN_WOF_ADMIN_DB ??
-		"/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
+		process.env.PLAYPEN_WOF_ADMIN_DB ?? "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
 	const postcodeDb =
-		process.env.PLAYPEN_WOF_POSTCODE_DB ??
-		"/mnt/playpen/mailwoman-data/wof/whosonfirst-data-postalcode-us-latest.db"
+		process.env.PLAYPEN_WOF_POSTCODE_DB ?? "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-postalcode-us-latest.db"
 
 	if (!existsSync(adminDb) || !existsSync(postcodeDb)) {
 		console.warn("[demo-assets] wof-hot.db: WOF source DBs not found — skipping slim build")
@@ -293,11 +309,11 @@ export function buildSlimWofDb(destPath, opts) {
 	}
 
 	console.log("[demo-assets] wof-hot.db: building slim DB")
-	const result = spawnSync(
-		"node",
-		[slimCli, "--in", adminDb, "--in", postcodeDb, "--out", destPath, "--top", "1000"],
-		{ cwd: opts.repoRoot, stdio: "inherit", timeout: 300_000 }
-	)
+	const result = spawnSync("node", [slimCli, "--in", adminDb, "--in", postcodeDb, "--out", destPath, "--top", "1000"], {
+		cwd: opts.repoRoot,
+		stdio: "inherit",
+		timeout: 300_000,
+	})
 
 	return result.status === 0
 }
