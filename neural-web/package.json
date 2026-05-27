@@ -16,7 +16,7 @@
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
-		"onnxruntime-web": "^1.26.0"
+		"onnxruntime-web": "1.25.0-dev.20260327-722743c0e2"
 	},
 	"files": [
 		"out/**/*.js",

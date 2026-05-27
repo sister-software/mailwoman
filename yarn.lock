@@ -4572,7 +4572,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural": "workspace:*"
-    onnxruntime-web: "npm:^1.26.0"
+    onnxruntime-web: "npm:1.25.0-dev.20260327-722743c0e2"
   languageName: unknown
   linkType: soft
 
@@ -18481,6 +18481,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"onnxruntime-common@npm:1.24.0-dev.20251116-b39e144322":
+  version: 1.24.0-dev.20251116-b39e144322
+  resolution: "onnxruntime-common@npm:1.24.0-dev.20251116-b39e144322"
+  checksum: 10/9a028b8ead839b5cecf97da168a338e68b9ebe58f1051d3c169785606f972960af6ac7f5bcb86c634551f6e36da4f4980219ba7c8ded00cc3a9dd3f6ca2a22db
+  languageName: node
+  linkType: hard
+
 "onnxruntime-common@npm:1.26.0":
   version: 1.26.0
   resolution: "onnxruntime-common@npm:1.26.0"
@@ -18500,17 +18507,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"onnxruntime-web@npm:^1.26.0":
-  version: 1.26.0
-  resolution: "onnxruntime-web@npm:1.26.0"
+"onnxruntime-web@npm:1.25.0-dev.20260327-722743c0e2":
+  version: 1.25.0-dev.20260327-722743c0e2
+  resolution: "onnxruntime-web@npm:1.25.0-dev.20260327-722743c0e2"
   dependencies:
     flatbuffers: "npm:^25.1.24"
     guid-typescript: "npm:^1.0.9"
     long: "npm:^5.2.3"
-    onnxruntime-common: "npm:1.26.0"
+    onnxruntime-common: "npm:1.24.0-dev.20251116-b39e144322"
     platform: "npm:^1.3.6"
     protobufjs: "npm:^7.2.4"
-  checksum: 10/fc1fb3a8eaf19ef02d664037b4fd6cb3c4dfc7fe43d7feef36a2ec6f746df1a9db8233764276f534f170a1e2dd51aae5a4cd6c974f6560db845b97f3f9bf3382
+  checksum: 10/6114124386c6991e168baebf7a07d16fb10ab16f33c09edbf829e9a947768fff2e7ea26b1a84a1196b576c4f0c0d0ca63290fd34fbabe6ea0ec3f8fdbc032dd8
   languageName: node
   linkType: hard
 

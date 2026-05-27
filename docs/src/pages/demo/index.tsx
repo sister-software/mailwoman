@@ -94,6 +94,8 @@ function DemoApp(): React.ReactElement {
 	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
 	const [fstMatcher, setFstMatcher] = useState<FstMatcherLike | null>(null)
 	const [fstProvenance, setFstProvenance] = useState<FstProvenanceLike | null>(null)
+	const [forceWasm, setForceWasm] = useState(false)
+	const [activeBackend, setActiveBackend] = useState<string>("")
 	const [lookupLoader, setLookupLoader] = useState<(() => Promise<MailwomanLookupLike>) | null>(null)
 	const [lookup, setLookup] = useState<MailwomanLookupLike | null>(null)
 	const [text, setText] = useState(initialAddress)
@@ -198,8 +200,9 @@ function DemoApp(): React.ReactElement {
 				const cls = await neuralWeb.loadNeuralClassifierFromUrls({
 					modelUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
 					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
-					runner: { useWebGpu: false },
+					runner: { useWebGpu: !forceWasm },
 				})
+				setActiveBackend(forceWasm ? "wasm" : typeof navigator !== "undefined" && navigator.gpu ? "webgpu" : "wasm")
 
 				if (cancelled) return
 
@@ -234,7 +237,7 @@ function DemoApp(): React.ReactElement {
 		return () => {
 			cancelled = true
 		}
-	}, [selectedVersion, manifest])
+	}, [selectedVersion, manifest, forceWasm])
 
 	// Hot-swap the map style when the operator toggles Docusaurus's color mode. The page sets
 	// data-theme="dark" / "light" on <html>; a MutationObserver is the lightest dependency-free way
@@ -436,6 +439,25 @@ function DemoApp(): React.ReactElement {
 							</select>
 						</div>
 					) : null}
+					<div
+						style={{
+							display: "flex",
+							alignItems: "center",
+							gap: "0.75rem",
+							marginBottom: "0.75rem",
+							fontSize: "0.85rem",
+						}}
+					>
+						{activeBackend ? (
+							<span style={{ opacity: 0.7 }}>
+								Backend: <code>{activeBackend}</code>
+							</span>
+						) : null}
+						<label style={{ display: "flex", alignItems: "center", gap: "0.25rem", cursor: "pointer", opacity: 0.7 }}>
+							<input type="checkbox" checked={forceWasm} onChange={(e) => setForceWasm(e.target.checked)} />
+							Force WASM
+						</label>
+					</div>
 					<form onSubmit={onSubmit}>
 						<label htmlFor="addr-input">Address</label>
 						<input
