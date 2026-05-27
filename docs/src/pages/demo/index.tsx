@@ -15,6 +15,7 @@
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
+import CodeBlock from "@theme/CodeBlock"
 import Layout from "@theme/Layout"
 import type { IControl, Map as MapLibreMap, StyleSpecification, VectorSourceSpecification } from "maplibre-gl"
 // MapLibre's marker / control / popup positioning depends on the bundled stylesheet. Without it,
@@ -451,12 +452,7 @@ function ResultPanel({
 					) : null}
 				</details>
 			) : null}
-			{showXml && xml ? (
-				<div style={{ position: "relative" }}>
-					<CopyButton text={xml} />
-					<pre className={styles.xml}>{xml}</pre>
-				</div>
-			) : null}
+			{showXml && xml ? <CodeBlock language="xml">{xml}</CodeBlock> : null}
 			<table className={styles.componentTable}>
 				<thead>
 					<tr>
@@ -608,36 +604,6 @@ function PermalinkButton({ text }: { text: string }): React.ReactElement {
 			title="Copy a shareable link to this address"
 		>
 			{copied ? "✓ Link copied" : "Copy link"}
-		</button>
-	)
-}
-
-function CopyButton({ text }: { text: string }): React.ReactElement {
-	const [copied, setCopied] = useState(false)
-	return (
-		<button
-			type="button"
-			onClick={async () => {
-				try {
-					await navigator.clipboard.writeText(text)
-				} catch {
-					/* fallback: user can select manually */
-				}
-				setCopied(true)
-				window.setTimeout(() => setCopied(false), 1500)
-			}}
-			style={{
-				position: "absolute",
-				top: 4,
-				right: 4,
-				fontSize: "0.75rem",
-				padding: "2px 8px",
-				cursor: "pointer",
-				opacity: 0.7,
-			}}
-			title="Copy to clipboard"
-		>
-			{copied ? "Copied" : "Copy"}
 		</button>
 	)
 }
