@@ -1,0 +1,53 @@
+---
+title: "FST gazetteer ships to the browser"
+description: "The v0.5.3 model now runs with a 9 MB finite-state transducer in the browser — 94K US admin places as an emission prior for the neural classifier."
+authors: [teffen]
+tags: [neural, browser, fst, demo]
+---
+
+The `/demo` page now loads a 9 MB FST (finite-state transducer) gazetteer alongside the 29 MB ONNX model. 94,000 US admin places with Wikipedia importance scores feed directly into the neural classifier's Viterbi decoder as emission priors — the same pipeline that runs server-side now runs entirely in the browser.
+
+{/* truncate */}
+
+## What changed
+
+The FST binary encodes every US admin place name from Who's On First as a trie: `"new york"` walks to a state with 7 interpretations (NYC locality, NY state region, New York County, etc.). At query time, the classifier receives additive logit biases proportional to each place's Wikipedia importance — Washington DC (importance 0.815) correctly outranks Washington state (0.764).
+
+The browser integration required a new deserializer (`fst-deserialize-web.ts`) that uses `DataView` + `TextDecoder` instead of Node's `Buffer`. Same binary format, zero Node dependencies. The FST loads in parallel with the ONNX model — no added latency on the critical path.
+
+## The tokenizer incident
+
+While wiring the FST, we discovered the live demo was serving the **wrong tokenizer**. The v0.5.3 model (48K vocab, 29 MB) was paired with the old v0.1.0 tokenizer (24K vocab, 474 KB). This produced garbage output — every span labeled as locality with sub-0.5 confidence. Nobody noticed because the demo was "working" (it showed results), just badly.
+
+The root cause: `docs/static/mailwoman/` was manually managed. Model and tokenizer were copied independently, and the tokenizer copy was missed during the v0.5.3 update.
+
+The fix is a Docusaurus plugin (`docs/plugins/demo-assets/`) that stages all binary assets from the `neural-weights-en-us` package at build time. Model card version is the source of truth. The tokenizer/model mismatch can't recur because both come from the same source.
+
+## What we fixed along the way
+
+The night shift addressed every recommendation from the [v0.5.3 training review](/docs/evals/2026-05-27-v0.5.3-diagnostic-training-review):
+
+- **Per-tag F1 in training CSV.** The macro F1 comparison that caused hours of wrong analysis in the v0.5.3 session (0.579 vs 0.638 across different tokenizers) is now impossible — per-tag breakdown logged at every eval step.
+- **Grouper-audit fix.** The audit was checking only top-level tree roots for coverage, missing nested children in containment trees. "400 Broad St, Seattle, WA 98109" was getting `locality=Broad` injected because the audit didn't see `street=Broad St` nested inside `locality=Seattle`.
+- **Phrase grouper hardening.** "Pennsylvania" was proposed as `LOCALITY_PHRASE` on "1600 Pennsylvania Ave NW" because any capitalized word matched. Now penalized -0.20 when the word is a US state name in a non-tail position. "Paris, Texas" is preserved (tail position).
+- **CRF transition export pipeline.** The Python training side can now export learned CRF transition scores to `crf-transitions.json`. The TypeScript classifier loads and composes them with the structural BIO mask. Not yet trained (v0.5.4 will be the first model to use this).
+
+## Browser verification
+
+Playwright headless test against the live site:
+
+```
+400 Broad St, Seattle, WA 98109
+
+  house_number: "400"    (0.97)
+  street:       "Broad St"   (0.98)
+  locality:     "Seattle"    (0.98)
+  region:       "WA"         (0.98)
+  postcode:     "98109"      (0.96)
+```
+
+6/6 demo presets correct, zero grouper-audit nodes. The model works.
+
+## Try it
+
+[mailwoman.sister.software/demo](https://mailwoman.sister.software/demo/) — type any US address. The neural classifier, FST gazetteer, and WOF locality resolver all run in your browser. No server round-trips after the initial ~75 MB asset load.

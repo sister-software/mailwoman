@@ -47,8 +47,8 @@ export interface ResolvedWeights {
 	 */
 	modelCardPath?: string
 	/**
-	 * Path to `crf-transitions.json` alongside the resolved model. `undefined` when the file
-	 * doesn't exist (pre-v0.6.0 bundles or CE-only training).
+	 * Path to `crf-transitions.json` alongside the resolved model. `undefined` when the file doesn't
+	 * exist (pre-v0.6.0 bundles or CE-only training).
 	 */
 	crfTransitionsPath?: string
 	/** "explicit" if both paths came from opts; "package:<name>" if resolved via require.resolve. */
