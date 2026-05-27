@@ -1,8 +1,21 @@
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
+import { execSync } from "node:child_process"
 import { themes as prismThemes } from "prism-react-renderer"
 
+const gitHash = (() => {
+	try {
+		return execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
+	} catch {
+		return "unknown"
+	}
+})()
+
 const config: Config = {
+	customFields: {
+		buildCommit: gitHash,
+		buildTime: new Date().toISOString(),
+	},
 	title: "Mailwoman",
 	tagline: "TypeScript-first address parser + geocoder. Runs in Node and the browser.",
 	favicon: "img/favicon.ico",

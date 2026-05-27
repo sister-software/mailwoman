@@ -15,11 +15,13 @@ on:
     branches: [main]
     paths:
       - "docs/**"
+      - "neural-web/**"
       - "*.md"
   push:
     branches: [main]
     paths:
       - "docs/**"
+      - "neural-web/**"
       - "*.md"
 
 permissions:

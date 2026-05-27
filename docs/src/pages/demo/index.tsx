@@ -14,6 +14,7 @@
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
 import CodeBlock from "@theme/CodeBlock"
 import Layout from "@theme/Layout"
@@ -63,6 +64,10 @@ const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
 const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
 
 export default function DemoPage(): React.ReactElement {
+	const { siteConfig } = useDocusaurusContext()
+	const buildCommit = (siteConfig.customFields?.buildCommit as string) ?? "?"
+	const buildTime = (siteConfig.customFields?.buildTime as string) ?? "?"
+
 	return (
 		<Layout title="Demo" description="Client-side address geocoder demo for mailwoman.">
 			<main className={styles.demoRoot}>
@@ -74,6 +79,11 @@ export default function DemoPage(): React.ReactElement {
 					</p>
 				</header>
 				<BrowserOnly fallback={<p>Loading…</p>}>{() => <DemoApp />}</BrowserOnly>
+				<footer
+					style={{ marginTop: "2rem", padding: "1rem 0", opacity: 0.4, fontSize: "0.75rem", textAlign: "center" }}
+				>
+					Build {buildCommit} · {new Date(buildTime).toLocaleString()}
+				</footer>
 			</main>
 		</Layout>
 	)
