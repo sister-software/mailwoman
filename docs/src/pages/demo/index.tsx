@@ -198,6 +198,7 @@ function DemoApp(): React.ReactElement {
 				const cls = await neuralWeb.loadNeuralClassifierFromUrls({
 					modelUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
 					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
+					runner: { useWebGpu: false },
 				})
 
 				if (cancelled) return
