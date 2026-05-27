@@ -16,6 +16,7 @@
 	},
 	"scripts": {
 		"ci:test": "vitest --run",
+		"ci:test:fast": "vitest --run --exclude './mailwoman/test/**' --exclude './resolver-wof-sqlite/fst-serialize.test.ts' --exclude './resolver-wof-sqlite/fst-builder.test.ts' --exclude './resolver-wof-sqlite/fst-autocomplete.test.ts'",
 		"compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
 		"compile:clean": "tsc -b --clean",
 		"lint": "run-s lint:prettier:check lint:eslint:check",
