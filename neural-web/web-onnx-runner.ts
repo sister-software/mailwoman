@@ -55,8 +55,14 @@ function configureWasmPaths(root: string | undefined): void {
 	ort.env.wasm.wasmPaths = root
 }
 
+export interface WebOnnxRunnerDiagnostics {
+	backend: "webgpu" | "wasm"
+	modelBytes: number
+}
+
 export class WebOnnxRunner implements NeuralRunner {
 	public readonly fixedSeqLen: number
+	public diagnostics: WebOnnxRunnerDiagnostics | null = null
 	#session: ort.InferenceSession | null = null
 	#loadPromise: Promise<ort.InferenceSession> | null = null
 
@@ -86,28 +92,27 @@ export class WebOnnxRunner implements NeuralRunner {
 		if (this.#session) return this.#session
 		if (!this.#loadPromise) {
 			this.#loadPromise = (async () => {
-				const providers: ort.InferenceSession.SessionOptions["executionProviders"] =
-					this.opts.useWebGpu === false ? ["wasm"] : ["webgpu", "wasm"]
-				try {
-					const session = await ort.InferenceSession.create(this.modelBytes, {
-						executionProviders: providers,
-						graphOptimizationLevel: "all",
-					})
-					this.#session = session
-					return session
-				} catch (err) {
-					// WebGPU probe failed (no adapter, unsupported runtime, etc.) — try plain WASM
-					// before giving up so a transient absence of WebGPU doesn't break first-paint.
-					if (providers.includes("webgpu" as never)) {
+				const wantWebGpu = this.opts.useWebGpu !== false
+				if (wantWebGpu) {
+					try {
 						const session = await ort.InferenceSession.create(this.modelBytes, {
-							executionProviders: ["wasm"],
+							executionProviders: ["webgpu", "wasm"],
 							graphOptimizationLevel: "all",
 						})
 						this.#session = session
+						this.diagnostics = { backend: "webgpu", modelBytes: this.modelBytes.byteLength }
 						return session
+					} catch {
+						// WebGPU probe failed — fall through to WASM
 					}
-					throw err
 				}
+				const session = await ort.InferenceSession.create(this.modelBytes, {
+					executionProviders: ["wasm"],
+					graphOptimizationLevel: "all",
+				})
+				this.#session = session
+				this.diagnostics = { backend: "wasm", modelBytes: this.modelBytes.byteLength }
+				return session
 			})()
 		}
 		return this.#loadPromise

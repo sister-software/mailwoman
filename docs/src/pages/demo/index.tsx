@@ -197,12 +197,16 @@ function DemoApp(): React.ReactElement {
 				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
 
 				const neuralWeb = await import("@mailwoman/neural-web")
-				const cls = await neuralWeb.loadNeuralClassifierFromUrls({
+				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromUrls({
 					modelUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
 					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
 					runner: { useWebGpu: !forceWasm },
 				})
-				setActiveBackend(forceWasm ? "wasm" : typeof navigator !== "undefined" && navigator.gpu ? "webgpu" : "wasm")
+				setActiveBackend(
+					diagnostics
+						? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)`
+						: "unknown"
+				)
 
 				if (cancelled) return
 

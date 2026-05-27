@@ -15,7 +15,14 @@
 
 import { MailwomanTokenizer, NeuralAddressClassifier } from "@mailwoman/neural/browser"
 
-import { WebOnnxRunner, type WebOnnxRunnerOpts } from "./web-onnx-runner.js"
+import { WebOnnxRunner, type WebOnnxRunnerDiagnostics, type WebOnnxRunnerOpts } from "./web-onnx-runner.js"
+
+export type { WebOnnxRunnerDiagnostics }
+
+export interface LoadResult {
+	classifier: NeuralAddressClassifier
+	diagnostics: WebOnnxRunnerDiagnostics | null
+}
 
 export interface LoadFromUrlsOpts {
 	/** URL to the ONNX model file (e.g. `/static/mailwoman/model.onnx`). */
@@ -33,7 +40,7 @@ export interface LoadFromUrlsOpts {
  * tokenizer is loaded via the existing `loadFromBase64` path so this file shares zero Node-only
  * code with `@mailwoman/neural/classifier`'s `loadFromWeights`.
  */
-export async function loadNeuralClassifierFromUrls(opts: LoadFromUrlsOpts): Promise<NeuralAddressClassifier> {
+export async function loadNeuralClassifierFromUrls(opts: LoadFromUrlsOpts): Promise<LoadResult> {
 	const fetchImpl = opts.fetchImpl ?? globalThis.fetch
 	if (!fetchImpl) {
 		throw new Error("no fetch implementation available — pass fetchImpl in non-fetch environments")
@@ -49,7 +56,9 @@ export async function loadNeuralClassifierFromUrls(opts: LoadFromUrlsOpts): Prom
 		WebOnnxRunner.fromBytes(modelBytes, opts.runner),
 	])
 
-	return new NeuralAddressClassifier({ tokenizer, runner })
+	const classifier = new NeuralAddressClassifier({ tokenizer, runner })
+	await runner.infer([0])
+	return { classifier, diagnostics: runner.diagnostics }
 }
 
 async function fetchBytes(url: string, fetchImpl: typeof fetch): Promise<Uint8Array> {
