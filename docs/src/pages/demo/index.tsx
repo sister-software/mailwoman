@@ -69,6 +69,7 @@ function DemoApp(): React.ReactElement {
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading neural model…")
 	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
 	const [fstMatcher, setFstMatcher] = useState<FstMatcherLike | null>(null)
+	const [fstProvenance, setFstProvenance] = useState<FstProvenanceLike | null>(null)
 	const [lookupLoader, setLookupLoader] = useState<(() => Promise<MailwomanLookupLike>) | null>(null)
 	const [lookup, setLookup] = useState<MailwomanLookupLike | null>(null)
 	const [text, setText] = useState(initialAddress)
@@ -153,7 +154,10 @@ function DemoApp(): React.ReactElement {
 				}
 
 				if (cancelled) return
-				if (fstResult) setFstMatcher(fstResult as FstMatcherLike)
+				if (fstResult) {
+					setFstMatcher(fstResult.matcher)
+					if (fstResult.provenance) setFstProvenance(fstResult.provenance)
+				}
 				setClassifier(cls as unknown as MailwomanClassifierLike)
 				// One-shot factory; captured in closure to avoid re-importing the wasm wrapper.
 				setLookupLoader(() => async () => {
@@ -301,6 +305,7 @@ function DemoApp(): React.ReactElement {
 						stateHint: stateNode?.value as string | undefined,
 						kindResult,
 						fstActive: fstMatcher !== null,
+						fstProvenance,
 					})
 					return
 				}
@@ -330,6 +335,7 @@ function DemoApp(): React.ReactElement {
 					stateHint: stateNode?.value as string | undefined,
 					kindResult,
 					fstActive: fstMatcher !== null,
+					fstProvenance,
 				})
 			} catch (e2) {
 				setError((e2 as Error).message ?? String(e2))
@@ -367,7 +373,10 @@ function DemoApp(): React.ReactElement {
 							type="button"
 							className={styles.exampleBtn}
 							disabled={!ready || busy}
-							onClick={() => setText(ex.address)}
+							onClick={() => {
+								setText(ex.address)
+								setResult(null)
+							}}
 							title={ex.address}
 						>
 							{ex.label}
@@ -425,12 +434,29 @@ function ResultPanel({
 			</div>
 			{result.kindResult ? <KindBadge kindResult={result.kindResult} /> : null}
 			{result.fstActive ? (
-				<div style={{ marginBottom: "0.5rem", fontSize: "0.9rem" }}>
-					<strong>FST prior:</strong> <code>active</code>{" "}
-					<span style={{ opacity: 0.7 }}>(94K US places, Wikipedia importance-weighted)</span>
+				<details style={{ marginBottom: "0.5rem", fontSize: "0.9rem" }}>
+					<summary style={{ cursor: "pointer", userSelect: "none" }}>
+						<strong>FST prior:</strong> <code>active</code>{" "}
+						<span style={{ opacity: 0.7 }}>
+							({result.fstProvenance ? `${result.fstProvenance.placeCount.toLocaleString()} places` : "94K US places"})
+						</span>
+					</summary>
+					{result.fstProvenance ? (
+						<ul style={{ margin: "0.25rem 0 0 1rem", padding: 0, listStyle: "disc", opacity: 0.7 }}>
+							<li>Built: {new Date(result.fstProvenance.builtAt).toLocaleDateString()}</li>
+							<li>States: {result.fstProvenance.stateCount.toLocaleString()}</li>
+							<li>Importance matches: {result.fstProvenance.importanceMatches.toLocaleString()}</li>
+							<li>Model: {ASSET_VERSION}</li>
+						</ul>
+					) : null}
+				</details>
+			) : null}
+			{showXml && xml ? (
+				<div style={{ position: "relative" }}>
+					<CopyButton text={xml} />
+					<pre className={styles.xml}>{xml}</pre>
 				</div>
 			) : null}
-			{showXml && xml ? <pre className={styles.xml}>{xml}</pre> : null}
 			<table className={styles.componentTable}>
 				<thead>
 					<tr>
@@ -586,6 +612,36 @@ function PermalinkButton({ text }: { text: string }): React.ReactElement {
 	)
 }
 
+function CopyButton({ text }: { text: string }): React.ReactElement {
+	const [copied, setCopied] = useState(false)
+	return (
+		<button
+			type="button"
+			onClick={async () => {
+				try {
+					await navigator.clipboard.writeText(text)
+				} catch {
+					/* fallback: user can select manually */
+				}
+				setCopied(true)
+				window.setTimeout(() => setCopied(false), 1500)
+			}}
+			style={{
+				position: "absolute",
+				top: 4,
+				right: 4,
+				fontSize: "0.75rem",
+				padding: "2px 8px",
+				cursor: "pointer",
+				opacity: 0.7,
+			}}
+			title="Copy to clipboard"
+		>
+			{copied ? "Copied" : "Copy"}
+		</button>
+	)
+}
+
 /**
  * Surfacing why the WOF cascade returned no hit — saves the operator from guessing whether the
  * problem is the parser (didn't extract a locality / postcode), the WOF slim subset (entry not
@@ -632,6 +688,13 @@ function FailureDiagnostic({
 			</ul>
 		</div>
 	)
+}
+
+interface FstProvenanceLike {
+	builtAt: string
+	stateCount: number
+	placeCount: number
+	importanceMatches: number
 }
 
 interface FstMatcherLike {
@@ -711,6 +774,7 @@ interface DemoResult {
 		alternatives: ReadonlyArray<{ kind: string; confidence: number }>
 	}
 	fstActive: boolean
+	fstProvenance?: FstProvenanceLike | null
 }
 
 interface ResolvedHit {
@@ -848,7 +912,7 @@ function currentDocusaurusTheme(): "light" | "dark" {
 	return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"
 }
 
-async function loadFstGazetteer(): Promise<FstMatcherLike> {
+async function loadFstGazetteer(): Promise<{ matcher: FstMatcherLike; provenance?: FstProvenanceLike }> {
 	const [fstModule, fstBinary] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/fst-deserialize-web"),
 		fetch(`/mailwoman/fst-en-US.bin?v=${ASSET_VERSION}`).then((r) => {
@@ -856,7 +920,14 @@ async function loadFstGazetteer(): Promise<FstMatcherLike> {
 			return r.arrayBuffer()
 		}),
 	])
-	return fstModule.deserializeFstWeb(fstBinary) as FstMatcherLike
+	const matcher = fstModule.deserializeFstWeb(fstBinary) as FstMatcherLike
+	let provenance: FstProvenanceLike | undefined
+	try {
+		provenance = fstModule.readFstProvenanceWeb(fstBinary) as FstProvenanceLike | undefined
+	} catch {
+		/* V2 binary — no provenance */
+	}
+	return { matcher, provenance }
 }
 
 async function fetchBasemapSource(): Promise<VectorSourceSpecification> {
