@@ -44,8 +44,9 @@ export default function DemoPage(): React.ReactElement {
 				<header className={styles.header}>
 					<h1>Mailwoman geocoder demo</h1>
 					<p>
-						Type a US address. The neural classifier (~17 MB ONNX, int8 quantized) and WOF locality DB (~35 MB SQLite)
-						run entirely in your browser — no server round-trips after the initial asset load.
+						Type a US address. The neural classifier (~25 MB ONNX, int8 quantized), FST gazetteer (~9 MB, 94K US
+						places), and WOF locality DB (~35 MB SQLite) run entirely in your browser — no server round-trips after
+						the initial asset load.
 					</p>
 				</header>
 				<BrowserOnly fallback={<p>Loading…</p>}>{() => <DemoApp />}</BrowserOnly>
@@ -65,6 +66,7 @@ function initialAddress(): string {
 function DemoApp(): React.ReactElement {
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading neural model…")
 	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
+	const [fstMatcher, setFstMatcher] = useState<FstMatcherLike | null>(null)
 	const [lookupLoader, setLookupLoader] = useState<(() => Promise<MailwomanLookupLike>) | null>(null)
 	const [lookup, setLookup] = useState<MailwomanLookupLike | null>(null)
 	const [text, setText] = useState(initialAddress)
@@ -95,14 +97,15 @@ function DemoApp(): React.ReactElement {
 		let cancelled = false
 		void (async () => {
 			try {
-				const [neuralWeb, maplibre, basemapSource] = await Promise.all([
+				const [neuralWeb, maplibre, basemapSource, fstResult] = await Promise.all([
 					import("@mailwoman/neural-web"),
 					import("maplibre-gl"),
 					fetchBasemapSource(),
+					loadFstGazetteer().catch(() => null),
 				])
 
 				if (cancelled) return
-				setLoadingProgress("Loading neural model (~25 MB)…")
+				setLoadingProgress("Loading neural model (~25 MB) + FST gazetteer (~9 MB)…")
 				const cls = await neuralWeb.loadNeuralClassifierFromUrls({
 					modelUrl: "/mailwoman/model.onnx",
 					tokenizerUrl: "/mailwoman/tokenizer.model",
@@ -148,6 +151,7 @@ function DemoApp(): React.ReactElement {
 				}
 
 				if (cancelled) return
+				if (fstResult) setFstMatcher(fstResult as FstMatcherLike)
 				setClassifier(cls as unknown as MailwomanClassifierLike)
 				// One-shot factory; captured in closure to avoid re-importing the wasm wrapper.
 				setLookupLoader(() => async () => {
@@ -279,7 +283,7 @@ function DemoApp(): React.ReactElement {
 				const queryShape = computeQueryShape(text)
 				const kindResult = classifyKindSync({ raw: text, normalized: text }, queryShape)
 
-				const tree = await classifier.parse(text, { queryShape })
+				const tree = await classifier.parse(text, { queryShape, fst: fstMatcher ?? undefined })
 				const nodes = flattenTree(tree)
 				const localityNode = nodes.find((n) => n.tag === "locality" || n.tag === "city")
 				const stateNode = nodes.find((n) => n.tag === "region" || n.tag === "state")
@@ -294,6 +298,7 @@ function DemoApp(): React.ReactElement {
 						candidates: [],
 						stateHint: stateNode?.value as string | undefined,
 						kindResult,
+						fstActive: fstMatcher !== null,
 					})
 					return
 				}
@@ -322,6 +327,7 @@ function DemoApp(): React.ReactElement {
 					candidates,
 					stateHint: stateNode?.value as string | undefined,
 					kindResult,
+					fstActive: fstMatcher !== null,
 				})
 			} catch (e2) {
 				setError((e2 as Error).message ?? String(e2))
@@ -329,7 +335,7 @@ function DemoApp(): React.ReactElement {
 				setBusy(false)
 			}
 		},
-		[classifier, ensureLookup, text]
+		[classifier, fstMatcher, ensureLookup, text]
 	)
 
 	const ready = classifier !== null && lookupLoader !== null
@@ -416,6 +422,12 @@ function ResultPanel({
 				</button>
 			</div>
 			{result.kindResult ? <KindBadge kindResult={result.kindResult} /> : null}
+			{result.fstActive ? (
+				<div style={{ marginBottom: "0.5rem", fontSize: "0.9rem" }}>
+					<strong>FST prior:</strong> <code>active</code>{" "}
+					<span style={{ opacity: 0.7 }}>(94K US places, Wikipedia importance-weighted)</span>
+				</div>
+			) : null}
 			{showXml && xml ? <pre className={styles.xml}>{xml}</pre> : null}
 			<table className={styles.componentTable}>
 				<thead>
@@ -620,8 +632,19 @@ function FailureDiagnostic({
 	)
 }
 
+interface FstMatcherLike {
+	walk(tokens: string[]): { stateId: number; accepted: boolean; depth: number } | null
+	walkFrom(
+		prev: { stateId: number; accepted: boolean; depth: number },
+		token: string
+	): { stateId: number; accepted: boolean; depth: number } | null
+	accepting(stateId: number): Array<{ wofID: number; placetype: string; importance: number }>
+	readonly stateCount: number
+	readonly placeCount: number
+}
+
 interface MailwomanClassifierLike {
-	parse: (text: string, opts?: { queryShape?: unknown; fst?: unknown }) => Promise<unknown>
+	parse: (text: string, opts?: { queryShape?: unknown; fst?: FstMatcherLike }) => Promise<unknown>
 }
 
 interface MailwomanLookupLike {
@@ -677,27 +700,15 @@ function KindBadge({
 interface DemoResult {
 	tree: unknown
 	nodes: Array<{ tag: string; value?: unknown; confidence?: number }>
-	/**
-	 * Top candidate (alias of `candidates[0]` when non-empty). Kept for callers that don't care about
-	 * the picker UI.
-	 */
 	resolved: ResolvedHit | null
-	/**
-	 * Full candidate list returned by the cascade. Length 0 when nothing matched. Picker UI appears
-	 * when length > 1.
-	 */
 	candidates: ResolvedHit[]
 	stateHint?: string
-	/**
-	 * Stage 2.5 result: the kind classifier's verdict on the input. Surfaced in the UI so users can
-	 * see the staged pipeline in action — bare postcodes show up as `postcode_only`, single-word
-	 * locality inputs as `locality_only`, etc.
-	 */
 	kindResult?: {
 		kind: string
 		confidence: number
 		alternatives: ReadonlyArray<{ kind: string; confidence: number }>
 	}
+	fstActive: boolean
 }
 
 interface ResolvedHit {
@@ -833,6 +844,17 @@ function flattenTree(tree: unknown): Array<{ tag: string; value?: unknown; confi
 function currentDocusaurusTheme(): "light" | "dark" {
 	if (typeof document === "undefined") return "light"
 	return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"
+}
+
+async function loadFstGazetteer(): Promise<FstMatcherLike> {
+	const [fstModule, fstBinary] = await Promise.all([
+		import("@mailwoman/resolver-wof-sqlite/fst-deserialize-web"),
+		fetch("/mailwoman/fst-en-US.bin").then((r) => {
+			if (!r.ok) throw new Error(`FST fetch failed (${r.status})`)
+			return r.arrayBuffer()
+		}),
+	])
+	return fstModule.deserializeFstWeb(fstBinary) as FstMatcherLike
 }
 
 async function fetchBasemapSource(): Promise<VectorSourceSpecification> {

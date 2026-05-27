@@ -6,7 +6,7 @@ title: FST gazetteer language model
 # FST Gazetteer LM
 
 :::info Shipped
-Phases 1-2 shipped in v0.5.2 ([#170](https://github.com/sister-software/mailwoman/pull/170), [#173](https://github.com/sister-software/mailwoman/pull/173)). Wikipedia importance integration in [#173](https://github.com/sister-software/mailwoman/pull/173). Unified SQLite builder in [#176](https://github.com/sister-software/mailwoman/pull/176). Phase 3 (autocomplete) partially shipped. Phase 4 (browser) not yet started.
+Phases 1-2 shipped in v0.5.2 ([#170](https://github.com/sister-software/mailwoman/pull/170), [#173](https://github.com/sister-software/mailwoman/pull/173)). Wikipedia importance integration in [#173](https://github.com/sister-software/mailwoman/pull/173). Unified SQLite builder in [#176](https://github.com/sister-software/mailwoman/pull/176). Phase 3 (autocomplete) partially shipped. Phase 4 (browser) shipped — the `/demo` page loads a 9 MB FST binary and passes it as an emission prior to the neural classifier.
 :::
 
 **Goal:** Pre-compute a finite-state transducer from the WOF SQLite gazetteer that maps token sequences → `(placetype, wof_id, parent_chain, importance)` entries. Use it as an emission prior in the neural Viterbi decoder, as a CLI introspection tool, and as the autocomplete backend.
@@ -193,10 +193,12 @@ A single FST with per-edge locale bitsets is space-efficient but query-slower. F
 - `resolver-wof-sqlite/fst-autocomplete.ts` — prefix walk + BFS expansion
 - CLI not yet wired (standalone script only)
 
-### Phase 4: Browser deployment — not started
+### Phase 4: Browser deployment — shipped
 
-- Browser-compatible FstMatcher (ArrayBuffer) not yet implemented
-- `/demo` page does not use FST prior
+- `resolver-wof-sqlite/fst-deserialize-web.ts` — browser-compatible deserializer using DataView + TextDecoder (no Node Buffer dependency)
+- `/demo` page loads `fst-en-US.bin` (~9 MB) and passes it to `classifier.parse()` as `opts.fst`
+- FST module import, binary fetch, and deserialization happen in parallel with ONNX model load
+- Graceful degradation: if the FST fails to load, the demo runs without it
 
 ---
 
