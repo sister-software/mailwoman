@@ -31,7 +31,7 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from .config import Config, csv_log_path
 from .data_loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
-from .labels import ACTIVE_BIO_LABELS
+from .labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS
 from .model import build_model, force_math_sdpa, model_param_count
 from .tokenizer import Tokenizer
 
@@ -98,7 +98,12 @@ def _token_f1(
     labels: torch.Tensor,
     num_labels: int,
 ) -> dict[str, float]:
-    """Compute macro/per-class token-level F1 over a batch. Ignores ``IGNORE_INDEX`` positions."""
+    """Compute macro/per-class token-level F1 over a batch. Ignores ``IGNORE_INDEX`` positions.
+
+    Returns ``macro_f1`` plus per-BIO-label F1 (``f1.B-locality``, ``f1.I-locality``, …) AND
+    collapsed per-tag F1 (``f1_tag.locality``, …) computed as (B + I) / 2. The per-tag columns
+    are what the CSV log writes; the per-BIO columns are available for fine-grained debugging.
+    """
     mask = labels != IGNORE_INDEX
     p = preds[mask]
     y = labels[mask]
@@ -116,7 +121,12 @@ def _token_f1(
     f1 = 2 * precision * recall / (precision + recall + 1e-9)
     per_label = {ACTIVE_BIO_LABELS[c]: float(f1[c]) for c in range(num_labels)}
     macro = float(f1.mean())
-    return {"macro_f1": macro, **{f"f1.{k}": v for k, v in per_label.items()}}
+    result = {"macro_f1": macro, **{f"f1.{k}": v for k, v in per_label.items()}}
+    for tag in ACTIVE_TAGS:
+        b_f1 = per_label.get(f"B-{tag}", 0.0)
+        i_f1 = per_label.get(f"I-{tag}", 0.0)
+        result[f"f1_tag.{tag}"] = (b_f1 + i_f1) / 2.0
+    return result
 
 
 @torch.no_grad()
@@ -274,6 +284,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     csv_mode = "a" if resume_step > 0 and csv_path.is_file() else "w"
     csv_fh = csv_path.open(csv_mode, encoding="utf-8", newline="")
     csv_writer = csv.writer(csv_fh)
+    per_tag_cols = [f"f1.{tag}" for tag in ACTIVE_TAGS]
     if csv_mode == "w":
         csv_writer.writerow(
             [
@@ -283,6 +294,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 "lr",
                 "val_loss",
                 "val_macro_f1",
+                *per_tag_cols,
             ]
         )
 
@@ -349,17 +361,22 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                         f"  train_loss={avg:.4f}  lr={lr:.6f}"
                         f"  rate={step/elapsed:.2f} steps/s"
                     )
-                    csv_writer.writerow([step, f"{elapsed:.1f}", f"{avg:.6f}", f"{lr:.8f}", "", ""])
+                    csv_writer.writerow([step, f"{elapsed:.1f}", f"{avg:.6f}", f"{lr:.8f}", "", ""] + [""] * len(per_tag_cols))
                     csv_fh.flush()
 
                 if step % cfg.train.eval_every_steps == 0:
                     val = _eval_val(cfg, tokenizer, model, device, max_rows=cfg.data.val_rows)
+                    tag_summary = "  ".join(
+                        f"{t}={val.get(f'f1_tag.{t}', 0.0):.3f}" for t in ("locality", "region", "street", "house_number", "postcode")
+                    )
                     print(
                         f"  [eval] val_loss={val.get('val_loss', float('nan')):.4f}"
                         f"  macro_f1={val.get('macro_f1', 0.0):.4f}"
                         f"  val_rows={val.get('val_rows', 0)}"
+                        f"\n         {tag_summary}"
                     )
                     elapsed = time.time() - started
+                    tag_f1_values = [f"{val.get(f'f1_tag.{tag}', 0.0):.6f}" for tag in ACTIVE_TAGS]
                     csv_writer.writerow(
                         [
                             step,
@@ -368,6 +385,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                             "",
                             f"{val.get('val_loss', float('nan')):.6f}",
                             f"{val.get('macro_f1', 0.0):.6f}",
+                            *tag_f1_values,
                         ]
                     )
                     csv_fh.flush()
