@@ -23,7 +23,7 @@ function makeStages(overrides: Partial<RuntimePipelineStages> = {}): RuntimePipe
 describe("grouper-audit pass", () => {
 	it("injects provisional venue node when classifier produces empty tree", async () => {
 		const stages = makeStages({
-			groupPhrases: async (input) => {
+			groupPhrases: async () => {
 				return [
 					{
 						span: Span.from("Buffalo Health Clinic", { start: 0 }),

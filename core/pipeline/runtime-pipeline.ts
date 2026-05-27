@@ -33,8 +33,7 @@ import type {
 
 /**
  * Known QueryShape format strings that indicate "this token is a postcode". Mirrors the set in
- *
- * @mailwoman/kind-classifier — kept duplicated so core/pipeline has no dep on kind-classifier.
+ * `@mailwoman/kind-classifier` — kept duplicated so core/pipeline has no dep on kind-classifier.
  */
 const POSTCODE_FORMATS: ReadonlySet<string> = new Set([
 	"us_zip",

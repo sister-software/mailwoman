@@ -15,7 +15,7 @@
  *   non-alnum), and walked through the FST as contiguous subpaths.
  *
  *   Uses structural typing for the FST input so this module has zero dependencies on
- * @mailwoman/resolver-wof-sqlite — consumers pass an FstMatcher instance, but this file only
+ *   `@mailwoman/resolver-wof-sqlite` — consumers pass an FstMatcher instance, but this file only
  *   consumes the shape.
  */
 

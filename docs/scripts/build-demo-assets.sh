@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 #
+# DEPRECATED — use the demo-assets Docusaurus plugin instead.
+# The plugin (docs/plugins/demo-assets/) stages all assets automatically during `yarn build`.
+# It reads model-card.json for version validation, builds the FST binary, and copies from
+# neural-weights-en-us. This script is kept for manual intervention only.
+#
 # Builds the static assets the /demo page needs:
 #   - docs/static/mailwoman/model.onnx        (from @mailwoman/neural-weights-en-us)
 #   - docs/static/mailwoman/tokenizer.model   (from @mailwoman/neural-weights-en-us)

@@ -52,8 +52,9 @@ export interface SpanBounds {
  * @param logits Per-token logits from ONNX inference, shape `[seqLen][numLabels]`.
  * @param pieces Token pieces with character-level offsets (from the tokenizer's `encode`).
  * @param spans Phrase-grouper span proposals in character offsets.
- * @param opts Options — `topK` (default 3), `labels` (required — the BIO label vocabulary the model
- *   emits, e.g. `["O", "B-locality", "I-locality", ...]`).
+ * @param opts Options bag.
+ * @param opts.topK Number of top-scoring tags to return per span (default 3).
+ * @param opts.labels The BIO label vocabulary the model emits, e.g. `["O", "B-locality", ...]`.
  */
 export function aggregateSpanLogits(
 	logits: number[][],

@@ -102,7 +102,7 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 				db.close()
 			}
 		})()
-	}, [wofDataAdminDirectory])
+	}, [wofDataAdminDirectory, unifiedDbPath])
 
 	useEffect(() => {
 		const refreshStats = () => {

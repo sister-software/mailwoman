@@ -115,7 +115,7 @@ async function main() {
 			concordances.set(row.other_id, existing)
 		}
 		console.error(`  ${concordances.size} unique Wikidata IDs from ${rows.length} concordance rows`)
-	} catch (error) {
+	} catch (_error) {
 		console.error("No concordances table found. Run wof/prepare first.")
 		process.exit(1)
 	}
