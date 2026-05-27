@@ -89,6 +89,13 @@ test-results
 packages/neural-weights-*/model.onnx
 packages/neural-weights-*/tokenizer.model
 
+# Docs static binaries — large build artifacts (ONNX model, WOF DB, FST gazetteer)
+# staged by the demo-assets plugin at build time. Not committed.
+docs/static/mailwoman/*.onnx
+docs/static/mailwoman/*.model
+docs/static/mailwoman/*.db
+docs/static/mailwoman/*.bin
+
 .claude/settings.local.json
 CLAUDE.local.md
 
