@@ -98,6 +98,62 @@ describe("grouper-audit pass", () => {
 		expect(localities[0]!.source).toBeUndefined()
 	})
 
+	it("is a no-op when classifier covers all proposal spans (v0.5.3 pattern)", async () => {
+		const stages = makeStages({
+			groupPhrases: async () => {
+				return [
+					{ span: Span.from("400", { start: 0 }), kindHypothesis: "NUMERIC", confidence: 0.9 },
+					{ span: Span.from("Broad St", { start: 4 }), kindHypothesis: "STREET_PHRASE", confidence: 0.8 },
+					{ span: Span.from("Seattle", { start: 14 }), kindHypothesis: "LOCALITY_PHRASE", confidence: 0.85 },
+					{ span: Span.from("WA", { start: 23 }), kindHypothesis: "REGION_ABBREVIATION", confidence: 0.9 },
+					{ span: Span.from("98109", { start: 26 }), kindHypothesis: "POSTCODE", confidence: 0.95 },
+				] as PhraseProposal[]
+			},
+			classifier: {
+				parse: async (text) => ({
+					raw: text,
+					roots: [
+						{
+							tag: "region",
+							value: "WA",
+							start: 23,
+							end: 25,
+							confidence: 0.98,
+							children: [
+								{
+									tag: "locality",
+									value: "Seattle",
+									start: 14,
+									end: 21,
+									confidence: 0.98,
+									children: [
+										{
+											tag: "street",
+											value: "Broad St",
+											start: 4,
+											end: 12,
+											confidence: 0.98,
+											children: [
+												{ tag: "house_number", value: "400", start: 0, end: 3, confidence: 0.97, children: [] },
+											],
+										},
+										{ tag: "postcode", value: "98109", start: 26, end: 31, confidence: 0.96, children: [] },
+									],
+								},
+							],
+						},
+					],
+				}),
+			},
+		})
+
+		const result = await runPipeline("400 Broad St, Seattle, WA 98109", stages, {})
+		const auditNodes = result.tree.roots.filter((n) => n.source === "grouper-audit")
+		expect(auditNodes.length).toBe(0)
+		expect(result.tree.roots.length).toBe(1)
+		expect(result.tree.roots[0]!.tag).toBe("region")
+	})
+
 	it("does not inject for unmapped phrase kinds", async () => {
 		const stages = makeStages({
 			groupPhrases: async () => {
