@@ -119,15 +119,19 @@ describeIfWof(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			{ env: { ...process.env, MAILWOMAN_WOF_DB: wofPath, NODE_NO_WARNINGS: "1" }, maxBuffer: 4 * 1024 * 1024 }
 		)
 		// JSON with --candidates dumps the full AddressTree, not the libpostal-flat projection.
-		// The tree carries `roots` with nodes that have `alternatives`.
+		// The tree carries `roots` with nodes that have `alternatives` (possibly on nested children
+		// in containment-nesting trees like region → locality).
 		const tree = JSON.parse(stripAnsiSpinner(result.stdout))
 		expect(tree).toHaveProperty("raw")
 		expect(tree).toHaveProperty("roots")
-		// At least one root should have alternatives (Springfield is ambiguous).
-		const hasAlternatives = (tree.roots as Array<{ alternatives?: unknown[] }>).some(
-			(r) => Array.isArray(r.alternatives) && r.alternatives.length > 0
-		)
-		expect(hasAlternatives).toBe(true)
+		type TreeNode = { alternatives?: unknown[]; children?: TreeNode[] }
+		const findAlternatives = (nodes: TreeNode[]): boolean =>
+			nodes.some(
+				(n) =>
+					(Array.isArray(n.alternatives) && n.alternatives.length > 0) ||
+					(Array.isArray(n.children) && findAlternatives(n.children))
+			)
+		expect(findAlternatives(tree.roots as TreeNode[])).toBe(true)
 	}, 60_000)
 
 	test("without --candidates, JSON stays libpostal-flat (no tree shape leak)", async () => {

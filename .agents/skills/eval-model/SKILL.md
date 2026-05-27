@@ -6,6 +6,7 @@ description: Demo preset release gate. Runs 6 addresses through neural-only and 
 ## Purpose
 
 Release gate for model changes. Catches:
+
 - Tag collapse (all-locality, all-O)
 - Tokenizer/model mismatch (garbage output)
 - Grouper-audit overrides (audit injecting where model should cover)
@@ -14,6 +15,7 @@ Release gate for model changes. Catches:
 ## Invocation
 
 Run the compiled CLI against the 6 demo presets in both modes:
+
 1. **Neural-only** (`--neural`): raw model output, no pipeline enhancements
 2. **Full pipeline** (default): neural + QueryShape + FST + grouper-audit
 
@@ -48,14 +50,14 @@ done
 
 ## v0.5.3 baseline (6/6 correct)
 
-| Preset | house_number | street | locality | region | postcode |
-|--------|-------------|--------|----------|--------|----------|
-| White House | 1600 | Pennsylvania Ave NW | Washington | DC | 20500 |
-| Empire State | 350 | 5th Ave | New York | NY | 10118 |
-| Pier 39 | — | Pier 39 | San Francisco | CA | 94133 |
-| Wrigley Field | 1060 | W Addison St | Chicago | IL | 60613 |
-| Space Needle | 400 | Broad St | Seattle | WA | 98109 |
-| ZIP only | — | — | — | — | 90210 |
+| Preset        | house_number | street              | locality      | region | postcode |
+| ------------- | ------------ | ------------------- | ------------- | ------ | -------- |
+| White House   | 1600         | Pennsylvania Ave NW | Washington    | DC     | 20500    |
+| Empire State  | 350          | 5th Ave             | New York      | NY     | 10118    |
+| Pier 39       | —            | Pier 39             | San Francisco | CA     | 94133    |
+| Wrigley Field | 1060         | W Addison St        | Chicago       | IL     | 60613    |
+| Space Needle  | 400          | Broad St            | Seattle       | WA     | 98109    |
+| ZIP only      | —            | —                   | —             | —      | 90210    |
 
 ## What to check
 
