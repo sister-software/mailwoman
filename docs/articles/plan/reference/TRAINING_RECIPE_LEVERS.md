@@ -183,6 +183,16 @@ Current values are carried from v0.4.0's §4 source rebalance (the only recipe l
 
 **How we got here.** v0.4.0's postcode regression (F1 0.76 → 0.69) was traced to NAD's downweight removing "postcode comes first" positional patterns. The current weights are a compromise. Not re-validated since v0.4.0 — the corpus-v0.4.0 additions (kryptonite + transliteration) may shift the optimal mix.
 
+**v0.5.2 planned change:** Drop `wof-admin` from 2.0 → 0.3. Root cause of the locality/region confusion in demo presets: WOF bare-name entries (which carry no positional context) outnumber OSM full-address entries for ambiguous place names like "Washington." The model learns the frequency-dominant pattern (region) rather than the positionally-correct pattern (locality when preceding a region abbreviation). See [`DEMO_PRESET_DIAGNOSIS.md`](./DEMO_PRESET_DIAGNOSIS.md).
+
+### Training augmentation (v0.5.2 planned)
+
+**Directional expansion.** Train on both raw and expanded forms of directional abbreviations: "NW" and "Northwest" with identical BIO labels. Teaches the model both forms without requiring inference-time normalization. ~30 lines in corpus pipeline.
+
+**Region-abbreviation expansion.** Train on both "NY" → `B-region` and "New York" → `B-region I-region`. Only expand where unambiguous. Teaches token equivalence. ~30 lines.
+
+**Not done:** Inference-time normalization. SentencePiece vocabulary learned from raw corpus; feeding normalized forms at inference creates train/test distribution mismatch. All augmentation is training-side only.
+
 ### `country_weights`
 
 **What it does.** Per-country acceptance probability in the data loader. Only US and FR are weighted (1.0 each) — these are the two locales with trained weights.

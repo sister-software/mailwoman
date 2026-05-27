@@ -28,15 +28,9 @@ export interface PipelineOpts {
 	/** Disable fast-path shortcuts; always run the full pipeline. */
 	forceFullPipeline?: boolean
 	/**
-	 * Enable the joint-reconcile path (Stage 5 beam search over candidates). When set, the pipeline:
-	 *
-	 * 1. Aggregates per-token logits over phrase-grouper spans (per-span top-K tag candidates).
-	 * 2. Feeds candidates into `reconcileSpans` for joint-coherence scoring.
-	 * 3. Returns the reconciled tree instead of the argmax tree.
-	 *
-	 * Requires both a phrase grouper AND a classifier that exposes raw logits (the standard
-	 * `NeuralAddressClassifier` does via its `parseWithLogits` method). Falls back to argmax if
-	 * either is missing.
+	 * Enable the joint-reconcile path (Stage 5 beam search). Opt-in until phrase-grouper proposal
+	 * quality supports multi-word streets/localities — currently produces single-token spans.
+	 * Requires phrase grouper + classifier with `parseWithLogits`.
 	 */
 	forceJointReconcile?: boolean
 	/** Hard cap on lookups the resolver may issue; passed through. */
@@ -140,8 +134,27 @@ export interface PhraseGrouper {
  * `@mailwoman/neural`'s `NeuralAddressClassifier`, a rule-based classifier, or a fake for tests
  * satisfies this.
  */
+/**
+ * Structural type for the FST gazetteer matcher, compatible with @mailwoman/resolver-wof-sqlite's
+ * FstMatcher.
+ */
+export interface FstMatcherLike {
+	walk(tokens: string[]): { stateId: number; accepted: boolean; depth: number } | null
+	walkFrom(
+		prev: { stateId: number; depth: number },
+		token: string
+	): { stateId: number; accepted: boolean; depth: number } | null
+	accepting(stateId: number): Array<{ wofID: number; placetype: string; importance: number }>
+}
+
+export interface ClassifierOpts {
+	queryShape?: QueryShapeLite
+	fst?: FstMatcherLike
+	fstBiasScale?: number
+}
+
 export interface AddressClassifier {
-	parse(text: string, opts?: { queryShape?: QueryShapeLite }): Promise<AddressTree>
+	parse(text: string, opts?: ClassifierOpts): Promise<AddressTree>
 }
 
 /**
@@ -162,6 +175,11 @@ export interface RuntimePipelineStages {
 	 */
 	groupPhrases?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<PhraseProposal[]>
 	classifier?: AddressClassifier
+	/**
+	 * Pre-built FST gazetteer matcher. When provided, gazetteer matches produce additive emission
+	 * biases during classification.
+	 */
+	fst?: FstMatcherLike
 	resolver?: Resolver
 }
 

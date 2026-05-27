@@ -78,6 +78,17 @@ _Inspired by and citing Michael Tandy's [original catalogue](https://www.mjt.me.
 37. **[Shapes and dimensions](./why-its-hard/falsehoods-shapes.md)** — not a point, not a polygon, not a building, not at ground level, not unique per coordinate.
 38. **[Precision and frontages](./why-its-hard/falsehoods-proximity.md)** — not one correct coordinate, not always "close enough," not necessarily the front door.
 
+### Exotic point-of-interest queries
+
+_Not every geocoder query is an address. A large fraction of real-world searches ask for points of interest — named places, categories, brands, landmarks, and transit infrastructure._
+
+39. **[Overview](./exotic-poi/exotic-point-of-interest-queries.md)** — what counts as a POI query vs an address query.
+40. **[Amenity queries](./exotic-poi/amenity-queries.md)** — water fountain, gas station, ATM, pharmacy.
+41. **[Franchise and brand queries](./exotic-poi/franchise-queries.md)** — Walmart, McDonalds, Hilton, Starbucks.
+42. **[Regional variants](./exotic-poi/regional-variant-queries.md)** — servo, bodega, マクド, off-licence, chemist.
+43. **[Landmark queries](./exotic-poi/landmark-queries.md)** — Eiffel Tower, Golden Gate Bridge, Empire State Building.
+44. **[Transit queries](./exotic-poi/transit-queries.md)** — subway station, bus stop, airport, train station.
+
 ## Reading order
 
 If you are **sceptical about the whole project**, read Tier 0 in order (articles 2–6). It should take about 45 minutes. If you are still sceptical after that, the project has failed to make its case — open an issue.

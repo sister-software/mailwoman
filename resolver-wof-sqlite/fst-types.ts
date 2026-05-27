@@ -1,0 +1,64 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   Types for the FST gazetteer language model. The FST maps token sequences (place names) to
+ *   (placetype, wof_id, parent_chain) entries — pre-computing the valid interpretations for each
+ *   prefix of every place name in the gazetteer.
+ */
+
+export interface PlaceEntry {
+	wofID: number
+	placetype: PlacetypeId
+	name: string
+	parentChain: number[]
+	importance: number
+	lat: number
+	lon: number
+}
+
+export type PlacetypeId =
+	| "country"
+	| "region"
+	| "county"
+	| "locality"
+	| "localadmin"
+	| "borough"
+	| "neighbourhood"
+	| "postalcode"
+	| "campus"
+	| "dependency"
+
+export interface FstMatchResult {
+	stateId: number
+	accepted: boolean
+	depth: number
+}
+
+export interface FstContinuation {
+	token: string
+	targetState: number
+	acceptingCount: number
+}
+
+export interface FstQueryResult {
+	path: string[]
+	stateId: number
+	accepting: PlaceEntry[]
+	continuations: FstContinuation[]
+}
+
+export interface BuildFstOpts {
+	dbPath: string
+	countries?: string[]
+	placetypes?: PlacetypeId[]
+	languages?: string[]
+	onProgress?: (phase: string, detail?: string) => void
+}
+
+export interface BuildFstResult {
+	stateCount: number
+	placeCount: number
+	edgeCount: number
+	tokenCount: number
+}

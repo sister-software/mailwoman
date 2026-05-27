@@ -25,13 +25,17 @@ Per Phase 2 §2:
 
 from __future__ import annotations
 
+import logging
 import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Iterator, Sequence
 
+logger = logging.getLogger(__name__)
+
 import pyarrow.parquet as pq
 
+from .augment import augment_row
 from .config import Config, DataConfig
 from .labels import IGNORE_INDEX, active_components_present
 from .tokenizer import Tokenizer, encode_row, whitespace_spans
@@ -215,17 +219,41 @@ def _raw_row_stream(
     shard_paths = _shard_paths(corpus_dir, split)
     max_weight = max(country_weights.values())
 
+    logger.info("Indexing %d shards by source...", len(shard_paths))
     by_source: dict[str, list[Path]] = {}
+    skipped_shards: list[tuple[Path, str]] = []
     for s in shard_paths:
-        src = _shard_first_source(s)
+        if not s.exists():
+            skipped_shards.append((s, "file not found"))
+            continue
+        try:
+            src = _shard_first_source(s)
+        except Exception as exc:
+            skipped_shards.append((s, str(exc)))
+            continue
         by_source.setdefault(src, []).append(s)
 
+    if skipped_shards:
+        logger.warning(
+            "Skipped %d shards (missing or unreadable):\n  %s",
+            len(skipped_shards),
+            "\n  ".join(f"{p}: {reason}" for p, reason in skipped_shards[:10]),
+        )
+
+    logger.info(
+        "Shard index: %s",
+        ", ".join(f"{src}={len(shards)}" for src, shards in sorted(by_source.items())),
+    )
+
     if source_weights is not None:
+        dropped = {src for src in by_source if source_weights.get(src, 0) <= 0}
         by_source = {
             src: shards
             for src, shards in by_source.items()
             if source_weights.get(src, 0) > 0
         }
+        if dropped:
+            logger.info("Dropped %d zero-weighted sources: %s", len(dropped), dropped)
         if not by_source:
             raise ValueError(
                 "no shards remain after applying source_weights — every shard's source "
@@ -277,6 +305,8 @@ def iter_rows(
     source_weights: dict[str, float] | None = None,
     coarse_filter: bool,
     row_limit: int | None = None,
+    augment_directional_prob: float = 0.0,
+    augment_region_prob: float = 0.0,
     shuffle_buffer: int = 131072,
 ) -> Iterator[dict]:
     """Yield rows from parquet shards, filtered + shuffled.
@@ -325,22 +355,32 @@ def iter_rows(
             buf.append(next(upstream))
     except StopIteration:
         pass
+    do_augment = augment_directional_prob > 0 or augment_region_prob > 0
+
+    def _emit(row: dict) -> Iterator[dict]:
+        if do_augment:
+            yield from augment_row(row, rng, augment_directional_prob, augment_region_prob)
+        else:
+            yield row
+
     # Stream out: every time we yield, pull the next from upstream into the freed slot.
     for row in upstream:
         j = rng.randrange(len(buf))
         out = buf[j]
         buf[j] = row
-        yield out
-        yielded += 1
-        if row_limit is not None and yielded >= row_limit:
-            return
+        for emitted in _emit(out):
+            yield emitted
+            yielded += 1
+            if row_limit is not None and yielded >= row_limit:
+                return
     # Drain whatever remains in the buffer.
     rng.shuffle(buf)
     for out in buf:
-        yield out
-        yielded += 1
-        if row_limit is not None and yielded >= row_limit:
-            return
+        for emitted in _emit(out):
+            yield emitted
+            yielded += 1
+            if row_limit is not None and yielded >= row_limit:
+                return
 
 
 def iter_encoded(
@@ -365,6 +405,8 @@ def iter_encoded(
         source_weights=cfg_data.source_weights,
         coarse_filter=cfg_data.coarse_filter,
         row_limit=row_limit,
+        augment_directional_prob=cfg_data.augment_directional_prob,
+        augment_region_prob=cfg_data.augment_region_prob,
     ):
         enc = encode_row(
             tokenizer,

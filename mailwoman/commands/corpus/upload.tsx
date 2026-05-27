@@ -54,7 +54,7 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			try {
 				await $`rclone mkdir ${rcloneBase} ${dryFlag}`.quiet()
 				updateStep(0, { status: "done" })
-			} catch (e: any) {
+			} catch {
 				updateStep(0, { status: "done", detail: "bucket may already exist" })
 			}
 
@@ -64,8 +64,9 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 				const result =
 					await $`rclone sync ${options.corpusDir}/v0.3.0/corpus-v0.3.0/ ${rcloneBase}/corpus/v0.3.0/ --progress --transfers 8 --checkers 16 ${dryFlag}`.quiet()
 				updateStep(1, { status: "done", detail: "v0.3.0 synced" })
-			} catch (e: any) {
-				updateStep(1, { status: "error", detail: String(e.stderr ?? e.message).slice(0, 100) })
+			} catch (_e: unknown) {
+				const e = _e as Record<string, unknown>
+				updateStep(1, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
 				return
 			}
 
@@ -74,8 +75,9 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			try {
 				await $`rclone sync ${options.corpusDir}/v0.4.0/corpus-v0.4.0/ ${rcloneBase}/corpus/v0.4.0/ --progress --transfers 4 ${dryFlag}`.quiet()
 				updateStep(2, { status: "done", detail: "v0.4.0 synced" })
-			} catch (e: any) {
-				updateStep(2, { status: "error", detail: String(e.stderr ?? e.message).slice(0, 100) })
+			} catch (_e: unknown) {
+				const e = _e as Record<string, unknown>
+				updateStep(2, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
 				return
 			}
 
@@ -84,8 +86,9 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			try {
 				await $`rclone sync ${options.tokenizerDir}/ ${rcloneBase}/models/tokenizer/ --progress ${dryFlag}`.quiet()
 				updateStep(3, { status: "done", detail: "tokenizer synced" })
-			} catch (e: any) {
-				updateStep(3, { status: "error", detail: String(e.stderr ?? e.message).slice(0, 100) })
+			} catch (_e: unknown) {
+				const e = _e as Record<string, unknown>
+				updateStep(3, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
 				return
 			}
 
@@ -94,8 +97,9 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			try {
 				await $`rclone sync ./corpus-python/ ${rcloneBase}/corpus-python/ --exclude '.venv/**' --exclude '__pycache__/**' --exclude '*.egg-info/**' --progress ${dryFlag}`.quiet()
 				updateStep(4, { status: "done", detail: "training code synced" })
-			} catch (e: any) {
-				updateStep(4, { status: "error", detail: String(e.stderr ?? e.message).slice(0, 100) })
+			} catch (_e: unknown) {
+				const e = _e as Record<string, unknown>
+				updateStep(4, { status: "error", detail: String(e.stderr ?? e.message ?? _e).slice(0, 100) })
 				return
 			}
 		}
@@ -106,7 +110,7 @@ const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	return (
 		<Box flexDirection="column">
 			<Text bold>Corpus Upload → R2 ({options.bucket})</Text>
-			{options.dryRun && <Text color="yellow">DRY RUN — no files will be transferred</Text>}
+			{Boolean(options.dryRun) && <Text color="yellow">DRY RUN — no files will be transferred</Text>}
 			<Text> </Text>
 			{steps.map((step, i) => (
 				<Box key={i}>

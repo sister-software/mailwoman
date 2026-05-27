@@ -70,6 +70,13 @@ dist
 !.yarn/sdks
 !.yarn/versions
 
+# Coverage
+coverage
+playwright-report
+playwright-traces
+test-results
+*.lcov
+
 # Python artifacts (packages/corpus-python)
 **/.venv/
 **/__pycache__/

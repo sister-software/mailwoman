@@ -185,6 +185,22 @@ packages/query-shape/
 
 Zero ML. Zero npm dependencies beyond what `@mailwoman/core` already pulls. Tiny (< 100 KB compiled). Reusable in browser and Node.
 
+## Locality soft prior (v0.5.2 extension)
+
+Added 2026-05-25 after diagnosing demo preset locality/region confusion ([`DEMO_PRESET_DIAGNOSIS.md`](./DEMO_PRESET_DIAGNOSIS.md)).
+
+The existing `buildEmissionPriors` path applies logit boosts for known-format hits (e.g., postcode regex → `B-postcode`). The locality soft prior extends this: when an unambiguous 2-letter region abbreviation is detected (e.g., `DC`, `NY`, `CA`), preceding tokens that match a WOF locality entry at the detected locale receive a `+2.0` logit boost toward `B-locality` / `I-locality`.
+
+New field on `QueryShape`:
+
+```ts
+regionAbbreviations?: Array<{ start: number; span: string }>
+```
+
+Detection is a single regex per locale (`/,\s*[A-Z]{2}\b/` for en-us), same cost as postcode-format detection. The WOF verification is the safety constraint — only bias tokens that are verified localities, not every preceding token.
+
+This passes the bitter-lesson framing test: the regex is locale-bounded, not a gazetteer. The WOF check is a safety rail that prevents over-biasing non-locality tokens like "Pennsylvania" (street) in the same address.
+
 ## Open questions for implementation
 
 These are decisions to make when the implementation phase opens; recording so they aren't re-derived from scratch.

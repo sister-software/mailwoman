@@ -125,9 +125,10 @@ The live demo at [mailwoman.sister.software/demo](https://mailwoman.sister.softw
 
 ## What is honest to admit about today (May 2026)
 
-- **Coarse F1 is still regressed.** The v0.4.0-shipped model has `region` F1 of 0.19 and `country` F1 of 0.21. Rule classifiers are doing the heavy lifting on coarse components. The v0.5.0 fresh-slate work (new tokenizer, phrase grouper, joint decode) targets this structurally — but the C-train that would produce improved weights is not yet stable.
-- **Training divergence is the current blocker.** Both v0.4.0 and v0.5.0 training runs diverge under sustained peak learning rate. The leading hypothesis (as of May 2026) is that the CRF-NLL + CE dual loss has opposing curvature below a threshold loss value. CE-only training is the current experiment.
-- **Joint decode is opt-in.** The reconciler code ships in `runtime-pipeline.ts` with `parseWithLogits` + `aggregateSpanLogits` + `reconcileSpans`, but requires the `forceJointReconcile` flag. The argmax fallback is the default path. End-to-end validation against the kryptonite catalogue with real model output is tracked in [#153](https://github.com/sister-software/mailwoman/issues/153).
-- **The model is small.** Nine million parameters is enough for the address-parsing task but not enough for free-text understanding. We are not building a chatbot.
+- **CE-only training resolved the divergence problem.** The v0.5.2 model ships from a stable 100K-step CE-only training run on an A100. The dual-loss CRF-NLL + CE divergence that blocked v0.4.0 and v0.5.0 was resolved by setting `crf_loss_weight: 0.0` — CRF is used at inference only, not training. v0.5.3 diagnostic training is in progress with per-tag F1 visibility.
+- **The FST gazetteer prior is shipped but not yet in the browser.** The FST builder, Wikipedia importance scoring, and emission prior compose with the QueryShape soft prior in the Node.js pipeline. The browser `/demo` page runs the neural classifier directly without the FST — it would need a browser-compatible FST loader (Phase 4).
+- **Joint decode is still opt-in.** The reconciler produces single-token spans when phrase-grouper proposals don't cover multi-word streets/localities. It stays behind `forceJointReconcile` until the grouper proposes multi-word phrases.
+- **Locality/region confusion persists on some inputs.** "New York, NY" is fixed (region-aware guard). "Washington, DC" is partially fixed (FST correctly biases locality) but the model's high B-street confidence for "Washington" after a street phrase resists the prior. Fix is in training data, not more priors.
+- **The model is small.** 29M parameters (h384, 6 layers, 6 heads). Runs in ~10ms per address on CPU via ONNX Runtime. The int8 quantized model is 17 MB.
 
 Continue with [How it will work](./how-it-will-work.md) for the near-future roadmap.

@@ -15,6 +15,7 @@
 export { classifyCodepoint, classifyToken, foldInputClass } from "./character-class.js"
 export { computeQueryShape } from "./compute.js"
 export { detectKnownFormats } from "./known-formats.js"
+export { detectRegionAbbreviations } from "./region-abbreviations.js"
 export { segment } from "./segmentation.js"
 export type {
 	CharacterClass,
@@ -23,6 +24,7 @@ export type {
 	KnownFormatHit,
 	NormalizedInputLite,
 	QueryShape,
+	RegionAbbreviationHit,
 	Segment,
 	SegmentSeparator,
 	SpanRange,

@@ -1,0 +1,71 @@
+{
+	"schema_version": 1,
+	"runs": [
+		{
+			"run_id": "v0.5.1-unchained",
+			"model_version": "0.5.1",
+			"model_path": "neural-weights-en-us/model.onnx",
+			"corpus_version": "0.4.0",
+			"eval_set_version": "golden-v0.1.2",
+			"trained_at": "2026-05-25T06:04:00Z",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 95000,
+			"training_wall_clock_seconds": 2100,
+			"metrics": {
+				"rule_only": {
+					"exact_match": 0.308,
+					"macro_f1": 0.22,
+					"empty_parse": 0.063,
+					"overconfident_wrong": 0.024
+				},
+				"neural": {
+					"exact_match": 0.001,
+					"macro_f1": 0.078,
+					"empty_parse": 0.002,
+					"overconfident_wrong": 0.545
+				},
+				"hybrid_joint": {
+					"exact_match": 0.102,
+					"macro_f1": 0.17,
+					"empty_parse": 0.0,
+					"overconfident_wrong": 0.001
+				},
+				"val_macro_f1": 0.638,
+				"val_loss": 0.281
+			},
+			"notes": "CE-only (crf_loss_weight=0.0), h384, batch=128 direct, constant LR=1.5e-4, phrase priors ON, class weights tuned. Unchained iteration — removed all hardware constraints from v0.5.0."
+		},
+		{
+			"run_id": "v0.5.2-rebalanced",
+			"model_version": "0.5.2",
+			"model_path": "neural-weights-en-us/model.onnx",
+			"corpus_version": "0.4.0",
+			"eval_set_version": "golden-v0.1.2",
+			"trained_at": "2026-05-25T06:04:00Z",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 100000,
+			"training_wall_clock_seconds": 2400,
+			"metrics": {
+				"rule_only": {
+					"exact_match": 0.308,
+					"macro_f1": 0.22,
+					"empty_parse": 0.063,
+					"overconfident_wrong": 0.024
+				},
+				"neural": {
+					"exact_match": 0.001,
+					"macro_f1": 0.073,
+					"empty_parse": 0.002,
+					"overconfident_wrong": 0.567
+				},
+				"hybrid_joint": {
+					"exact_match": 0.06,
+					"macro_f1": 0.169,
+					"empty_parse": 0.0,
+					"overconfident_wrong": 0.002
+				}
+			},
+			"notes": "Data-rebalanced: wof-admin 2.0→0.3, directional+region augmentation 30%, label_smoothing=0.1, cosine LR decay. Tokenizer updated v0.1.0→v0.5.0-a1 (48K vocab). Demo preset improvements: San Francisco locality fix, NW→street fix."
+		}
+	]
+}
