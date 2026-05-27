@@ -94,7 +94,17 @@ try {
 		process.exit(0)
 	}
 
-	const publishResult = spawnSync("npm", publishArgs, { stdio: "inherit" })
+	const publishResult = spawnSync("npm", publishArgs, { stdio: ["inherit", "inherit", "pipe"] })
+	const stderr = publishResult.stderr?.toString() ?? ""
+
+	if (publishResult.status !== 0 && /cannot publish over the previously published version/i.test(stderr)) {
+		console.error(
+			`publish-workspace: ${workspacePath} already published at this version — skipping (tolerate-republish)`
+		)
+		process.exit(0)
+	}
+
+	if (stderr) process.stderr.write(stderr)
 	process.exit(publishResult.status ?? 1)
 } finally {
 	rmSync(tmpDir, { recursive: true, force: true })
