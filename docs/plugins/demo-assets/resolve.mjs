@@ -252,12 +252,12 @@ export function buildFstBinary(fstPath, opts) {
 		import { buildFstFromWof } from '@mailwoman/resolver-wof-sqlite/fst-builder'
 		import { serializeFst } from '@mailwoman/resolver-wof-sqlite/fst-serialize'
 		import { writeFileSync } from 'node:fs'
-		const { matcher } = buildFstFromWof({
+		const { matcher, provenance } = buildFstFromWof({
 			dbPath: ${JSON.stringify(wofDb)},
 			countries: ['US'],
 			onProgress: (phase, msg) => process.stderr.write(phase + ': ' + msg + '\\n'),
 		})
-		const buf = serializeFst(matcher)
+		const buf = serializeFst(matcher, provenance)
 		writeFileSync(${JSON.stringify(fstPath)}, buf)
 		process.stderr.write('FST binary: ' + (buf.length / 1024 / 1024).toFixed(2) + ' MB\\n')
 	`

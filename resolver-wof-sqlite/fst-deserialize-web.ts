@@ -12,7 +12,7 @@
 
 import type { FstNode } from "./fst-matcher.js"
 import { FstMatcher } from "./fst-matcher.js"
-import type { PlaceEntry, PlacetypeId } from "./fst-types.js"
+import type { FstProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
 
 const HEADER_SIZE = 32
 const STATE_ENTRY_SIZE = 12
@@ -128,4 +128,23 @@ export function deserializeFstWeb(input: ArrayBuffer | Uint8Array): FstMatcher {
 	}
 
 	return FstMatcher.fromNodes(nodes)
+}
+
+export function readFstProvenanceWeb(input: ArrayBuffer | Uint8Array): FstProvenance | undefined {
+	const bytes = input instanceof ArrayBuffer ? new Uint8Array(input) : input
+	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+	const decoder = new TextDecoder("utf-8")
+
+	if (bytes.byteLength < HEADER_SIZE) return undefined
+	const version = view.getUint16(4, true)
+	if (version < 3) return undefined
+	const provenanceOffset = view.getUint32(28, true)
+	if (provenanceOffset === 0 || provenanceOffset >= bytes.byteLength) return undefined
+	try {
+		const jsonLen = view.getUint32(provenanceOffset, true)
+		const jsonStr = decoder.decode(bytes.subarray(provenanceOffset + 4, provenanceOffset + 4 + jsonLen))
+		return JSON.parse(jsonStr) as FstProvenance
+	} catch {
+		return undefined
+	}
 }

@@ -25,10 +25,10 @@
 
 import type { FstNode } from "./fst-matcher.js"
 import { FstMatcher } from "./fst-matcher.js"
-import type { PlaceEntry, PlacetypeId } from "./fst-types.js"
+import type { FstProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
 
 const MAGIC = Buffer.from("FST\0", "ascii")
-const VERSION = 2
+const VERSION = 3
 const HEADER_SIZE = 32
 const STATE_ENTRY_SIZE = 12
 const EDGE_ENTRY_SIZE = 8
@@ -53,7 +53,7 @@ for (let i = 0; i < PLACETYPE_ORDER.length; i++) {
 	placetypeToIdx.set(PLACETYPE_ORDER[i]!, i)
 }
 
-export function serializeFst(matcher: FstMatcher): Buffer {
+export function serializeFst(matcher: FstMatcher, provenance?: FstProvenance): Buffer {
 	const nodes = matcher.toNodes() as FstNode[]
 
 	// --- String interning ---
@@ -91,7 +91,10 @@ export function serializeFst(matcher: FstMatcher): Buffer {
 	const stateTableSize = nodes.length * STATE_ENTRY_SIZE
 	const edgeTableSize = totalEdges * EDGE_ENTRY_SIZE
 	const placeTableSize = totalPlaces * PLACE_ENTRY_SIZE
-	const totalSize = HEADER_SIZE + stringTableSize + stateTableSize + edgeTableSize + placeTableSize
+	const provenanceJson = provenance ? Buffer.from(JSON.stringify(provenance), "utf8") : null
+	const provenanceSize = provenanceJson ? 4 + provenanceJson.length : 0
+	const binarySize = HEADER_SIZE + stringTableSize + stateTableSize + edgeTableSize + placeTableSize
+	const totalSize = binarySize + provenanceSize
 	const buf = Buffer.alloc(totalSize)
 	let pos = 0
 
@@ -112,7 +115,7 @@ export function serializeFst(matcher: FstMatcher): Buffer {
 	pos += 4
 	buf.writeUInt32LE(stringBytes, pos)
 	pos += 4
-	buf.writeUInt32LE(0, pos)
+	buf.writeUInt32LE(provenanceJson ? binarySize : 0, pos)
 	pos += 4
 
 	// --- String table ---
@@ -172,6 +175,12 @@ export function serializeFst(matcher: FstMatcher): Buffer {
 			}
 			placeIdx++
 		}
+	}
+
+	if (provenanceJson) {
+		const trailerStart = binarySize
+		buf.writeUInt32LE(provenanceJson.length, trailerStart)
+		provenanceJson.copy(buf, trailerStart + 4)
 	}
 
 	return buf
@@ -256,4 +265,20 @@ export function deserializeFst(buf: Buffer): FstMatcher {
 	}
 
 	return FstMatcher.fromNodes(nodes)
+}
+
+export function readFstProvenance(buf: Buffer): FstProvenance | undefined {
+	if (buf.length < HEADER_SIZE) return undefined
+	if (!buf.subarray(0, 4).equals(MAGIC)) return undefined
+	const version = buf.readUInt16LE(4)
+	if (version < 3) return undefined
+	const provenanceOffset = buf.readUInt32LE(28)
+	if (provenanceOffset === 0 || provenanceOffset >= buf.length) return undefined
+	try {
+		const jsonLen = buf.readUInt32LE(provenanceOffset)
+		const jsonStr = buf.toString("utf8", provenanceOffset + 4, provenanceOffset + 4 + jsonLen)
+		return JSON.parse(jsonStr) as FstProvenance
+	} catch {
+		return undefined
+	}
 }

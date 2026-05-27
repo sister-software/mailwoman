@@ -14,7 +14,7 @@
 import { DatabaseSync } from "node:sqlite"
 import type { FstNode } from "./fst-matcher.js"
 import { FstMatcher, normalizeTokens } from "./fst-matcher.js"
-import type { BuildFstOpts, BuildFstResult, PlaceEntry, PlacetypeId } from "./fst-types.js"
+import type { BuildFstOpts, BuildFstResult, FstProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
 
 const DEFAULT_PLACETYPES: PlacetypeId[] = [
 	"country",
@@ -49,7 +49,11 @@ interface PopulationRow {
 	population: number
 }
 
-export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; result: BuildFstResult } {
+export function buildFstFromWof(opts: BuildFstOpts): {
+	matcher: FstMatcher
+	provenance: FstProvenance
+	result: BuildFstResult
+} {
 	const countries = opts.countries ?? DEFAULT_COUNTRIES
 	const placetypes = opts.placetypes ?? DEFAULT_PLACETYPES
 	const languages = opts.languages ?? DEFAULT_LANGUAGES
@@ -230,13 +234,25 @@ export function buildFstFromWof(opts: BuildFstOpts): { matcher: FstMatcher; resu
 	db.close()
 	progress("done", `Built trie: ${nodes.length} states, ${insertCount} name insertions`)
 
+	const edgeCount = nodes.reduce((sum, n) => sum + n.edges.size, 0)
 	const matcher = FstMatcher.fromNodes(nodes)
+	const provenance: FstProvenance = {
+		builtAt: new Date().toISOString(),
+		countries,
+		stateCount: nodes.length,
+		placeCount: sprRows.length,
+		edgeCount,
+		nameInsertions: insertCount,
+		importanceMatches: importanceMap.size,
+		sourceDb: opts.dbPath,
+	}
 	return {
 		matcher,
+		provenance,
 		result: {
 			stateCount: nodes.length,
 			placeCount: sprRows.length,
-			edgeCount: nodes.reduce((sum, n) => sum + n.edges.size, 0),
+			edgeCount,
 			tokenCount: insertCount,
 		},
 	}

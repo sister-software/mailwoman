@@ -49,6 +49,18 @@ export interface FstQueryResult {
 	continuations: FstContinuation[]
 }
 
+export interface FstProvenance {
+	builtAt: string
+	countries: string[]
+	stateCount: number
+	placeCount: number
+	edgeCount: number
+	nameInsertions: number
+	importanceMatches: number
+	sourceDb?: string
+	modelCardVersion?: string
+}
+
 export interface BuildFstOpts {
 	dbPath: string
 	countries?: string[]
