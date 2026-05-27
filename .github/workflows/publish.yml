@@ -100,8 +100,12 @@ jobs:
         run: | # shell
           # Install rclone
           curl -sSL https://rclone.org/install.sh | sudo bash
-          # Pull model + tokenizer from the latest release path on R2
-          RELEASE_PATH="${MAILWOMAN_R2_RELEASE_PATH:-releases/v0.5.3}"
+          # Derive the R2 release path from the model card (source of truth).
+          # Falls back to env override for manual intervention.
+          MODEL_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('neural-weights-en-us/model-card.json','utf8')).version)")
+          RELEASE_PATH="${MAILWOMAN_R2_RELEASE_PATH:-releases/v${MODEL_VERSION}}"
+          echo "Model card version: ${MODEL_VERSION}"
+          echo "R2 release path: ${RELEASE_PATH}"
           rclone copy ":s3:mailwoman-assets/${RELEASE_PATH}/model.onnx" neural-weights-en-us/
           rclone copy ":s3:mailwoman-assets/${RELEASE_PATH}/tokenizer.model" neural-weights-en-us/
           # fr-fr uses the same model for now (same training, locale-specific weights are future work)
