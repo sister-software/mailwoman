@@ -26,6 +26,12 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 import styles from "./styles.module.css"
 
 const ASSET_VERSION = "v0.5.3"
+const ASSET_LOCALE = "en-us"
+const HF_BUCKET_RESOLVE_URL = "https://huggingface.co/buckets/sister-software/mailwoman/resolve/"
+
+function assetUrl(filename: string): string {
+	return `${HF_BUCKET_RESOLVE_URL}${ASSET_LOCALE}/${ASSET_VERSION}/${filename}`
+}
 
 const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
@@ -111,8 +117,8 @@ function DemoApp(): React.ReactElement {
 				if (cancelled) return
 				setLoadingProgress("Loading neural model (~25 MB) + FST gazetteer (~9 MB)…")
 				const cls = await neuralWeb.loadNeuralClassifierFromUrls({
-					modelUrl: `/mailwoman/model.onnx?v=${ASSET_VERSION}`,
-					tokenizerUrl: `/mailwoman/tokenizer.model?v=${ASSET_VERSION}`,
+					modelUrl: assetUrl("model.onnx"),
+					tokenizerUrl: assetUrl("tokenizer.model"),
 				})
 
 				if (cancelled) return
@@ -164,7 +170,7 @@ function DemoApp(): React.ReactElement {
 				setLookupLoader(() => async () => {
 					const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
 					const { db } = await resolverWasm.loadSlimWofDatabase({
-						source: "/mailwoman/wof-hot.db",
+						source: assetUrl("wof-hot.db"),
 					})
 					return new resolverWasm.WofWasmPlaceLookup({ db })
 				})
@@ -881,7 +887,7 @@ function currentDocusaurusTheme(): "light" | "dark" {
 async function loadFstGazetteer(): Promise<{ matcher: FstMatcherLike; provenance?: FstProvenanceLike }> {
 	const [fstModule, fstBinary] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/fst-deserialize-web"),
-		fetch(`/mailwoman/fst-en-US.bin?v=${ASSET_VERSION}`).then((r) => {
+		fetch(assetUrl("fst-en-US.bin")).then((r) => {
 			if (!r.ok) throw new Error(`FST fetch failed (${r.status})`)
 			return r.arrayBuffer()
 		}),
