@@ -5,7 +5,7 @@ title: FST gazetteer language model
 
 # FST Gazetteer LM
 
-:::info Shipped
+:::info[Shipped]
 Phases 1-2 shipped in v0.5.2 ([#170](https://github.com/sister-software/mailwoman/pull/170), [#173](https://github.com/sister-software/mailwoman/pull/173)). Wikipedia importance integration in [#173](https://github.com/sister-software/mailwoman/pull/173). Unified SQLite builder in [#176](https://github.com/sister-software/mailwoman/pull/176). Phase 3 (autocomplete) partially shipped. Phase 4 (browser) shipped — the `/demo` page loads a 9 MB FST binary and passes it as an emission prior to the neural classifier.
 :::
 
