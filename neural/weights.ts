@@ -46,6 +46,11 @@ export interface ResolvedWeights {
 	 * thread the trained label vocabulary into the classifier — see {@link readLabelsFromModelCard}.
 	 */
 	modelCardPath?: string
+	/**
+	 * Path to `crf-transitions.json` alongside the resolved model. `undefined` when the file
+	 * doesn't exist (pre-v0.6.0 bundles or CE-only training).
+	 */
+	crfTransitionsPath?: string
 	/** "explicit" if both paths came from opts; "package:<name>" if resolved via require.resolve. */
 	source: string
 }
@@ -91,7 +96,10 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	const modelCardCandidate = resolve(packageDir, "model-card.json")
 	const modelCardPath = existsSync(modelCardCandidate) ? modelCardCandidate : undefined
 
-	return { modelPath, tokenizerPath, modelCardPath, source: `package:${packageName}` }
+	const crfCandidate = resolve(packageDir, "crf-transitions.json")
+	const crfTransitionsPath = existsSync(crfCandidate) ? crfCandidate : undefined
+
+	return { modelPath, tokenizerPath, modelCardPath, crfTransitionsPath, source: `package:${packageName}` }
 }
 
 /**
@@ -129,4 +137,42 @@ export function readLabelsFromModelCard(modelCardPath: string | undefined): read
 		)
 	}
 	return Object.freeze(labels.slice()) as readonly string[]
+}
+
+export interface CrfTransitions {
+	transitions: number[][]
+	startTransitions: number[]
+	endTransitions: number[]
+}
+
+/**
+ * Read learned CRF transition parameters from `crf-transitions.json`. Returns `undefined` when the
+ * file is missing or malformed — callers fall back to the structural BIO mask only.
+ */
+export function readCrfTransitions(crfPath: string | undefined): CrfTransitions | undefined {
+	if (!crfPath || !existsSync(crfPath)) return undefined
+	let raw: string
+	try {
+		raw = readFileSync(crfPath, "utf8")
+	} catch {
+		return undefined
+	}
+	let parsed: unknown
+	try {
+		parsed = JSON.parse(raw)
+	} catch {
+		return undefined
+	}
+	if (typeof parsed !== "object" || parsed === null) return undefined
+	const obj = parsed as Record<string, unknown>
+	const transitions = obj.transitions
+	const start = obj.start_transitions
+	const end = obj.end_transitions
+	if (!Array.isArray(transitions) || !Array.isArray(start) || !Array.isArray(end)) return undefined
+	if (transitions.length === 0 || start.length === 0 || end.length === 0) return undefined
+	return {
+		transitions: transitions as number[][],
+		startTransitions: start as number[],
+		endTransitions: end as number[],
+	}
 }

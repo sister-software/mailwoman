@@ -95,8 +95,29 @@ def build_model_card(
             "model": "model.onnx",
             "tokenizer": "tokenizer.model",
             "model_card": "model-card.json",
+            "crf_transitions": "crf-transitions.json",
         },
         "base_relpath": str(base_path) if base_path else "",
+    }
+
+
+def export_crf_transitions(model: "torch.nn.Module") -> dict | None:
+    """Extract learned CRF transition parameters from a trained model.
+
+    Returns None if the model has no CRF module (CE-only training) or if
+    crf_loss_weight was 0.0 (CRF present but untrained — parameters are noise).
+    """
+    crf = getattr(model, "crf", None)
+    if crf is None:
+        return None
+    transitions = crf.transitions.detach().cpu().float().numpy().tolist()
+    start = crf.start_transitions.detach().cpu().float().numpy().tolist()
+    end = crf.end_transitions.detach().cpu().float().numpy().tolist()
+    return {
+        "labels": list(ACTIVE_BIO_LABELS),
+        "transitions": transitions,
+        "start_transitions": start,
+        "end_transitions": end,
     }
 
 
@@ -108,6 +129,7 @@ def write_package(
     model_card: dict,
     package_json: dict,
     readme_md: str,
+    crf_transitions: dict | None = None,
 ) -> Path:
     """Write a single weights package directory. Idempotent: overwrites contents."""
     package_dir.mkdir(parents=True, exist_ok=True)
@@ -120,6 +142,10 @@ def write_package(
         json.dumps(package_json, indent=2) + "\n", encoding="utf-8"
     )
     (package_dir / "README.md").write_text(readme_md, encoding="utf-8")
+    if crf_transitions is not None:
+        (package_dir / "crf-transitions.json").write_text(
+            json.dumps(crf_transitions, indent=2) + "\n", encoding="utf-8"
+        )
     return package_dir
 
 
@@ -132,7 +158,7 @@ def render_package_json(locale: str, *, package_version: str = "0.1.0") -> dict:
             f"Mailwoman neural-classifier weights for locale '{locale}'. "
             "Data-only package — loaded by @mailwoman/neural at runtime."
         ),
-        "files": ["model.onnx", "tokenizer.model", "model-card.json", "README.md"],
+        "files": ["model.onnx", "tokenizer.model", "model-card.json", "crf-transitions.json", "README.md"],
         "publishConfig": {"access": "public"},
         "repository": {"type": "git", "url": "https://github.com/sister-software/mailwoman"},
         "private": False,
