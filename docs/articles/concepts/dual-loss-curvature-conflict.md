@@ -7,7 +7,7 @@ title: Dual-loss curvature conflict — when CRF is the aggressor
 
 :::tip No ML background needed
 
-If you're a software engineer curious about what went wrong but you don't have machine learning experience, start with the **[Beginner's companion](#beginners-companion-the-cooperative-vs-conflict-model)** below — it explains the problem using a two-GPSes-on-a-foggy-hill metaphor, no math required.
+If you're a software engineer curious about what went wrong but you don't have machine learning experience, start with the **[Beginner's companion](#beginners-companion--the-cooperative-vs-conflict-model)** below — it explains the problem using a two-GPSes-on-a-foggy-hill metaphor, no math required.
 
 :::
 

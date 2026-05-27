@@ -116,7 +116,7 @@ The content itself is strong — the "two voices" post in particular could be a 
 
 **Fix:** Add a 2-3 sentence "If you found this via search" preamble to each post, linking to a glossary or the project home. Something like:
 
-> **If you're new here:** Mailwoman is an open-source address parser. This post is about a training problem we debugged. The TL;DR is that two competing objectives inside the model were fighting each other. You don't need to know the project to follow the debugging story. Jump to [What we're building](#what-were-building-in-one-paragraph) for the 1-paragraph version.
+> **If you're new here:** Mailwoman is an open-source address parser. This post is about a training problem we debugged. The TL;DR is that two competing objectives inside the model were fighting each other. You don't need to know the project to follow the debugging story. Jump to [What we're building](pathname:///blog/2026-05-24-two-voices-arguing#what-were-building-in-one-paragraph) for the 1-paragraph version.
 
 ### 5. The blog vs docs boundary is blurred
 
