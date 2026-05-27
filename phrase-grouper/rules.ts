@@ -31,6 +31,15 @@ export interface SegmentToken {
 
 const WHITESPACE = /\s+/
 
+const US_REGION_NAMES: ReadonlySet<string> = new Set([
+	"alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut",
+	"delaware", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa",
+	"kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan",
+	"minnesota", "mississippi", "missouri", "montana", "nebraska", "nevada", "ohio",
+	"oklahoma", "oregon", "pennsylvania", "tennessee", "texas", "utah", "vermont",
+	"virginia", "washington", "wisconsin", "wyoming",
+])
+
 /**
  * Split a segment body into whitespace-separated tokens. Offsets are absolute into the original
  * input (caller supplies the segment's `start` offset).
@@ -402,8 +411,11 @@ export function scoreLocalityPhrase(
 		for (let len = 1; len <= maxLen; len++) {
 			const startTok = tokens[i]!
 			const endTok = tokens[i + len - 1]!
+			const spanText = text.slice(startTok.start, endTok.end)
+			const isRegionName = len === 1 && US_REGION_NAMES.has(spanText.toLowerCase())
 			const atTail = i + len - 1 === tokens.length - 1
 			let confidence = 0.55 + (len === 2 ? 0.15 : 0) + (len === 3 ? 0.1 : 0)
+			if (isRegionName && !atTail) confidence -= 0.20
 			if (atTail && segmentIsLast) confidence += 0.1
 			if (atTail) confidence += 0.05
 			out.push({

@@ -211,6 +211,21 @@ describe("scoreLocalityPhrase", () => {
 		const out = scoreLocalityPhrase(tokenizeSegment("NY foo", 0), "NY foo", true)
 		expect(out.find((p) => p.span.body === "NY")).toBeUndefined()
 	})
+
+	it("penalizes single-word US state names in non-tail position", () => {
+		const tokens = tokenizeSegment("Washington DC", 0)
+		const out = scoreLocalityPhrase(tokens, "Washington DC", false)
+		const washConf = out.find((p) => p.span.body === "Washington")?.confidence ?? 0
+		const springTokens = tokenizeSegment("Springfield IL", 0)
+		const springOut = scoreLocalityPhrase(springTokens, "Springfield IL", false)
+		const springConf = springOut.find((p) => p.span.body === "Springfield")!.confidence
+		expect(washConf).toBeLessThan(springConf)
+	})
+
+	it("still emits multi-word runs containing a state name (New York)", () => {
+		const out = scoreLocalityPhrase(tokenizeSegment("New York", 0), "New York", true)
+		expect(out.find((p) => p.span.body === "New York")).toBeDefined()
+	})
 })
 
 describe("scoreVenuePhrase", () => {
