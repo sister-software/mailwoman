@@ -245,17 +245,15 @@ def export_onnx():
     from mailwoman_train.tokenizer import Tokenizer
 
     import torch
-    ck_dir = Path("/data/output/checkpoints/step-100000")
+    ck_dir = Path("/data/output-v053/checkpoints/step-028000")
     tokenizer = Tokenizer(Path("/data/models/tokenizer/v0.5.0-a1/tokenizer.model"))
 
-    # Load on CPU — checkpoint was saved from CUDA, export function has no GPU
-    # Monkey-patch torch.load to force CPU before from_pretrained calls it
     _orig_load = torch.load
     torch.load = lambda *a, **kw: _orig_load(*a, **{**kw, "map_location": "cpu"})
     model = MailwomanCoarseEncoder.from_pretrained(ck_dir)
     torch.load = _orig_load
 
-    out_path = Path("/data/output/model.onnx")
+    out_path = Path("/data/output-v053/model.onnx")
     print(f"Exporting {ck_dir} → {out_path}")
     export_to_onnx(model, out_path, opset=17, max_length=128, pad_token_id=tokenizer.pad_id)
     print(f"ONNX exported: {out_path} ({out_path.stat().st_size / 1e6:.1f} MB)")

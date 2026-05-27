@@ -112,7 +112,16 @@ export function buildFstEmissionPriors(
 		if (!match) continue
 
 		if (match.accepted) {
-			applyBias(matrix, labelToCol, fst.accepting(match.stateId), [group], biasScale, maxBias, suppressionScale, seenWOFIDs)
+			applyBias(
+				matrix,
+				labelToCol,
+				fst.accepting(match.stateId),
+				[group],
+				biasScale,
+				maxBias,
+				suppressionScale,
+				seenWOFIDs
+			)
 		}
 
 		let current = match
@@ -125,7 +134,16 @@ export function buildFstEmissionPriors(
 
 			if (next.accepted) {
 				const matchedGroups = wordGroups.slice(start, end + 1).filter((g) => g.fstToken !== "")
-				applyBias(matrix, labelToCol, fst.accepting(next.stateId), matchedGroups, biasScale, maxBias, suppressionScale, seenWOFIDs)
+				applyBias(
+					matrix,
+					labelToCol,
+					fst.accepting(next.stateId),
+					matchedGroups,
+					biasScale,
+					maxBias,
+					suppressionScale,
+					seenWOFIDs
+				)
 			}
 
 			current = next
