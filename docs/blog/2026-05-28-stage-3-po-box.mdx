@@ -1,9 +1,8 @@
 ---
 title: "PO Box Boîte Postale Apartado: Stage 3 ships with 6 new tags"
-description: "v0.6.0 expands the schema from 10 to 16 component tags. Synthesizing 50K PO box training rows with locale-aware templates was the last piece."
+description: "v0.6.0 expands the schema from 10 to 16 component tags. PO box recognition: 0% → 51.9% in one training run."
 authors: [teffen]
 tags: [neural, training, stage-3]
-draft: true
 ---
 
 For its first six versions, Mailwoman emitted ten BIO tags. The model could pick `street` out of a row but not `street_prefix`, `street_suffix`, `unit`, or `po_box`. Real addresses are messier than that. The golden eval set has known examples — `6220 SE Salmon St, Portland, OR 97215` (Stage 2 collapses prefix+name+suffix), `123 Main St Apt 4B, Springfield, IL 62701` (loses the apartment), `PO Box 123, Burlington, VT 05401` (treats it as a malformed street).
@@ -95,6 +94,44 @@ Test data matters as much as training data. The golden v0.1.2 set had 1 PO box e
 
 ## Results
 
-<!-- TODO: fill in after v0.6.0 training completes -->
+v0.6.0 trained 100K steps on a Modal A100 (CE-only — `crf_loss_weight: 0` after two NaN attempts with CRF training enabled; the 33×33 transition table + bf16 was numerically unstable. Inference-time CRF still active via the structural mask. v0.6.1 will investigate).
 
-[Per-tag breakdown table comparing v0.5.4 → v0.6.0]
+Demo presets: 11/11 parse (6 canonical addresses + 5 Stage 3 variants).
+
+Per-tag golden eval (4,561 entries):
+
+| Tag | v0.5.4 recall | v0.6.0 recall |
+|-----|---------------|---------------|
+| postcode | 75.7% | 76.0% |
+| house_number | 78.7% | 79.0% |
+| region | 65.0% | 65.0% |
+| locality | 39.4% | 39.7% |
+| street | 28.0% | 27.9% |
+| venue | 29.4% | 29.2% |
+| **po_box** | **0.0%** | **51.9%** |
+| street_prefix | 0.0% | 0.0% |
+| street_suffix | 0.0% | 0.0% |
+| unit | 0.0% | 0.0% |
+| intersection_a/b | 0.0% | 0.0% |
+
+PO box recognition went from impossible to functional in one training run. Sample:
+
+```
+"PO Box 123, Burlington, VT 05401"
+→ { region: "VT", locality: "Burlington",
+    po_box: "PO Box 123", postcode: "05401" }
+```
+
+Stage 2 metrics held flat — the new tags didn't displace the old ones, just extended the schema.
+
+## What's deferred
+
+The other Stage 3 tags (street_prefix, street_suffix, unit, intersection) stayed at 0% recall because the TIGER/NAD/BAN adapter changes that emit them haven't been baked into a corpus rebuild yet. The training data still has monolithic `street` spans like "SE Salmon St" instead of decomposed `street_prefix: "SE", street: "Salmon", street_suffix: "St"`. v0.6.1 needs a fresh corpus build to surface those.
+
+CRF learned transitions are also deferred. Two NaN attempts (`crf_loss_weight: 0.5` then `0.1`) both diverged post-warmup. The hypothesis: bf16 + the doubled transition table (33×33 vs 21×21) is numerically unstable. v0.6.1 will try fp32 precision for the CRF parameters specifically, or a gradient-clipped warmup-only schedule.
+
+## What this proves
+
+The pattern works. A new tag in the canonical schema + a focused synthesis source + a one-line corpus config change + 100K training steps = working tag recognition. Total elapsed time tonight: ~6 hours from "no PO box training data exists" to a 28 MB model that hits PO box correctly more than half the time on a hostile eval set.
+
+The same recipe scales to street decomposition, intersection, unit, and the JP-specific Phase 6 tags. The schema is already declared. Each new tag is the same shape of work as PO box was tonight.
