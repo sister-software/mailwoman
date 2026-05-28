@@ -66,7 +66,7 @@ const WOFSync: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = 
 	const allow = useMemo(() => parseReposFilter(options.repos), [options.repos])
 
 	useEffect(() => {
-		const discovered = $.sync`gh repo list ${WOF_REPO_OWNER} --no-archived --json 'name' --json 'url'`
+		const discovered = $.sync`gh repo list ${WOF_REPO_OWNER} --no-archived --limit 1000 --json 'name' --json 'url'`
 			.json<Omit<RepositorySource, "owner">[]>()
 			.map((entry): RepositorySource => ({ ...entry, owner: WOF_REPO_OWNER }))
 
