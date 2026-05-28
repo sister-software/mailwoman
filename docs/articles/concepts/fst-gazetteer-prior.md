@@ -6,40 +6,121 @@ tags:
   - neural
   - fst
   - architecture
+  - resolver
+  - gazetteer
 ---
 
 # FST gazetteer prior
 
-The FST (finite-state transducer) gazetteer prior is a pre-computed lookup structure that tells the neural classifier which token sequences are known place names. Where the [QueryShape soft prior](./neural-classification.md) says "this 5-digit token is probably a postcode" (structural pattern), the FST prior says "this token sequence matches 'New York' which is either locality WOF:85977539 or region WOF:85688543" (factual knowledge from the gazetteer).
+The FST (finite-state transducer) gazetteer prior is the structure that lets the neural classifier benefit from everything Who's On First already knows. The neural model knows grammar; the gazetteer knows places. The FST is the bridge — pre-computed at build time so the classifier can consult it at inference time without paying gazetteer-lookup costs per token.
 
-Both are additive emission biases in the Viterbi CRF decoder. Neither overrides the neural model — they nudge uncertain predictions toward the structurally or factually implied label.
+This article explains the idea behind it, the build-time vs query-time split that makes it cheap, and how it slots into the rest of the pipeline.
 
-## How it works
+## "If you knew this, you'd know that..."
 
-At build time, the FST builder reads every admin place from a WOF SQLite database and inserts its normalized name tokens into a trie. Accepting states carry all valid interpretations for that token sequence — placetype, WOF ID, parent chain, and a Wikipedia-derived importance score.
+Most of what's hard about address parsing is that any given span is ambiguous in isolation. `Paris` is a city in France, a town in Texas, and a town in Ontario. `Washington` is a state, a federal district, and twenty-something cities. The model can't decide what `Paris` *is* until it knows what's around it.
 
-At inference time, the FST prior:
+But the gazetteer has a structural shortcut: places live in a hierarchy. If you know a token sequence matches a known city, you also know the country, the region, and (often) the county that contains it. That's a chain of implications you can compute once, write down, and look up later.
 
-1. Groups SentencePiece subword tokens into whitespace words
-2. Walks all contiguous subpaths through the FST
-3. For each matching path, adds an importance-weighted logit bias to the corresponding BIO labels (B-locality, I-locality, B-region, etc.)
-4. Suppresses non-place labels (B-street, B-house_number) by -1.5 logits when a place match is found
+```mermaid
+flowchart LR
+    A["Token: 'Paris'"] --> B{"Match in WOF?"}
+    B -->|yes| C["WOF: 101751119<br>placetype: locality<br>name: Paris"]
+    C --> D["...which implies its parents:<br>région Île-de-France<br>country France"]
+    D --> E["...which implies its neighbors are likely:<br>French postal codes (5 digits)<br>French street types (rue, avenue, boulevard)<br>NOT US state abbreviations"]
+```
 
-## Wikipedia importance
+That last step — "which implies its neighbors are likely" — is the payoff. The neural model sees a single token and predicts a tag from local context. The FST gives it a *prior* that says "if `Paris` is the city in France, then the next thing is much more likely to be `France` than `TX`." Confident model predictions stay confident. Uncertain ones get nudged toward the gazetteer-consistent reading.
 
-Raw population is a poor proxy for place importance — Washington state (7.6M) outranks Washington DC (678K) despite DC being the overwhelmingly more common referent. The FST uses Wikipedia importance scores from [Nominatim's methodology](https://nominatim.org/release-docs/latest/customize/Importance/): `log(total_links) / log(max_links)`, normalized to \[0, 1\].
+Read the same diagram the other way — from a *less specific* span to its plausible *children* — and you get the second framing of the idea:
 
-| Place                    | Population | Wikipedia importance |
-| ------------------------ | ---------- | -------------------- |
-| Washington DC (locality) | 678K       | 0.815                |
-| Washington (state)       | 7.6M       | 0.764                |
-| New York City (locality) | 8.8M       | 0.950                |
+```mermaid
+flowchart LR
+    A["Span: 'France'"] --> B["WOF: country FR"]
+    B --> C["...which contains:<br>~36k communes<br>13 régions<br>~5k postcodes"]
+    C --> D["...so if the surrounding tokens are<br>'Île-de-France' or 'Paris' or '75008',<br>they are coherent with this reading"]
+    C --> E["...and 'NY' or '10118' would be<br>incoherent with this reading"]
+```
 
-The bias formula is linear: `importance × biasScale × maxBias`, capped at 3.0 logits. This nudges the Viterbi decoder without overriding confident model predictions.
+Both directions are the same fact: WOF stores hierarchy edges, and that hierarchy constrains the joint reading of an address. The FST is the data structure that makes those constraints cheap to query.
 
-## Composition with QueryShape
+## Two clocks: build time and query time
 
-The FST prior composes additively with the existing QueryShape soft prior:
+The trick of the FST is that it splits the work into two clocks. The expensive clock runs once. The cheap clock runs per address.
+
+```mermaid
+flowchart TB
+    subgraph BUILD["Build time — once per gazetteer update"]
+        B1["WOF GeoJSON (~293k US admin records)"] --> B2["Unified SQLite<br>spr + names + ancestors"]
+        B2 --> B3["Walk every place,<br>tokenize every name + alt_name,<br>insert into trie"]
+        B3 --> B4["Attach PlaceEntry at each terminal:<br>wof_id, placetype, parent_chain, importance"]
+        B4 --> B5["Determinize + minimize"]
+        B5 --> B6[("fst-en-US.bin (~5.6 MB)")]
+    end
+
+    subgraph QUERY["Query time — per address, ~ms"]
+        Q1["Address tokens"] --> Q2["Walk FST with each contiguous subpath"]
+        Q2 --> Q3["Collect PlaceEntries at matching states"]
+        Q3 --> Q4["Add importance-weighted logit bias"]
+        Q4 --> Q5["Viterbi decode"]
+    end
+
+    B6 -.loaded once at process start.-> Q2
+```
+
+The asymmetry is deliberate. Build time pays the cost of "enumerate every valid place-name path through the hierarchy." Query time is just trie walking — O(tokens × branching), not O(gazetteer size). The FST encodes the cross-product so the runtime doesn't have to compute it.
+
+Shipped numbers for the US admin FST:
+
+| Stage                              | Cost            |
+| ---------------------------------- | --------------- |
+| Build (from unified SQLite)        | 2.7 s           |
+| Build (from raw GeoJSON, 293k recs)| 43 s            |
+| Binary size                        | 5.57 MB         |
+| Load at startup                    | ~10 ms          |
+| Query per address                  | sub-millisecond |
+
+The binary is small enough to ship to a browser. The `/demo` page loads a 9 MB FST in parallel with the ONNX model and uses both at inference time — no server-side gazetteer call.
+
+## What's inside the FST
+
+Each accepting state — a state where a complete place name ends — carries one or more `PlaceEntry` records. Multiple entries per state are the norm, not the exception: `"New York"` accepts as *both* the city and the state.
+
+```mermaid
+flowchart LR
+    S0["start"] -->|"new"| S1["s1"]
+    S1 -->|"york"| S2["s2 (accepting)"]
+    S2 -.entries.-> E1["PlaceEntry<br>wof_id: 85977539<br>placetype: locality<br>parent_chain: [US, NY-state]<br>importance: 0.95<br>population: 8.8M"]
+    S2 -.entries.-> E2["PlaceEntry<br>wof_id: 85688543<br>placetype: region<br>parent_chain: [US]<br>importance: 0.85<br>population: 20.2M"]
+    S2 -->|"city"| S3["s3 (accepting)"]
+    S3 -.entries.-> E3["PlaceEntry<br>wof_id: 85977539<br>placetype: locality<br>parent_chain: [US, NY-state]<br>importance: 0.95"]
+```
+
+The FST never picks between interpretations. It hands the neural model and the Viterbi decoder *all* of them, weighted by importance, and lets the joint decode resolve the ambiguity using surrounding context.
+
+The `parent_chain` is the load-bearing piece of structure. It's how a match on `"Brooklyn"` becomes evidence that the next token *should* be one of `{New York, NY, US, 11201, 11202, ...}` — anything coherent with that chain — rather than an unrelated place like `Houston`.
+
+## How the prior composes with the rest of the pipeline
+
+The FST does not replace the neural classifier. It composes with it as an additive bias on the emission logits, alongside the QueryShape structural prior. The decoder is still Viterbi; the FST just changes the numbers it sees.
+
+```mermaid
+sequenceDiagram
+    participant Tok as Tokenizer
+    participant NN as Neural encoder
+    participant QS as QueryShape prior
+    participant FST as FST prior
+    participant V as Viterbi decoder
+    participant Out as Tagged spans
+
+    Tok->>NN: subword tokens
+    NN->>V: raw logits per token per BIO label
+    QS->>V: + structural bias<br>(digits→postcode, abbrev→region, ...)
+    FST->>V: + gazetteer bias<br>(matched name→{locality,region,...} + importance)
+    V->>Out: best BIO sequence under joint score
+```
+
+The math is the unsurprising sum:
 
 ```
 finalEmissions[t][label] = rawLogits[t][label]
@@ -47,12 +128,118 @@ finalEmissions[t][label] = rawLogits[t][label]
                          + fstBias[t][label]
 ```
 
-For "Washington, DC": the QueryShape prior detects "DC" as a region abbreviation and adds +2.0 to B-locality on preceding tokens. The FST prior adds +2.45 to B-locality (DC importance 0.815 × 3.0). Together: +4.45 logit advantage for the correct interpretation.
+Two design choices matter here:
 
-The QueryShape prior includes a region-aware guard: it skips the locality bias when the preceding text matches the region's full name (e.g., "Washington" before "WA" gets no locality bias, because Washington IS the state).
+1. **Additive, not multiplicative.** A confident model prediction (large positive logit) drowns out a weak prior. A weak model prediction (near-zero logit) is where the prior gets to vote. This is the same shallow-fusion idea modern speech recognizers use to blend an acoustic model with a language model.
+2. **Capped at 3.0 logits.** Even with a 1.0 Wikipedia importance score, the bias can't move the decoder more than ~3 logits. The model can always overrule the gazetteer when the input clearly contradicts it ("Paris, TX" overrides the France prior on `Paris` because the context makes it obvious).
+
+### Worked example: "Washington, DC"
+
+This is the case the prior was originally designed to fix. Per-token argmax used to mislabel `Washington` as `B-region` because the model had seen `Washington (state)` more often than `Washington (DC)` in training.
+
+| Signal                          | Bias on B-locality for `Washington`  |
+| ------------------------------- | ------------------------------------ |
+| Raw neural logit                | (small, uncertain)                   |
+| QueryShape: `DC` is a region abbreviation, so the preceding span should be a locality | +2.0 |
+| FST: `Washington` matches locality WOF:85633793, importance 0.815 | +0.815 × 3.0 = +2.45 |
+| **Sum**                         | **+4.45 over B-region**              |
+
+The Viterbi decoder now has overwhelming evidence to pick the locality reading. None of the model's parameters changed — the prior just supplied the world knowledge the model was missing.
+
+## Negative evidence is the second payoff
+
+The FST's most underappreciated property is what happens when a token *doesn't* match. Walking off a prefix is a strong signal that the token is **not** an admin component.
+
+```mermaid
+flowchart LR
+    T1["'Buffalo'"] -->|matches| F1["14 places<br>(locality Buffalo NY is top)"]
+    T2["'Health'"] -->|no match| F2["NOT an admin component<br>→ likely venue / street / category"]
+    T3["'Clinic'"] -->|no match| F3["NOT an admin component<br>→ likely venue / street / category"]
+    T4["'Buffalo'"] -->|matches| F4["same 14 places again"]
+```
+
+For `"Buffalo Health Clinic, Buffalo"`, the FST quietly tells the decoder: the first `Buffalo` *could* be a locality, but the next two tokens *can't* be. That's enough for the decoder to read the whole `Buffalo Health Clinic` span as a venue, with the trailing `Buffalo` as the actual locality.
+
+This is information the gazetteer always had. Before the FST, the model had to learn it from corpus statistics. Now it's an explicit emission bias the model gets for free.
+
+## The corpus side: hierarchy chains as training data
+
+The FST is the *inference-time* expression of the idea. The *training-time* expression is in the corpus pipeline. The same WOF hierarchy that becomes the FST's `parent_chain` field is also what `corpus/src/wof-json.ts` consumes via `buildAncestryIndex`, and what `corpus/src/adapters/wof-admin-json/adapter.ts` uses to emit training rows.
+
+```mermaid
+flowchart LR
+    W[("WOF GeoJSON")] --> A["buildAncestryIndex"]
+    A --> H["Map&lt;wof_id, ancestors[]&gt;"]
+    H --> S["Per record, emit one training row per<br>(name-variant × hierarchy-variant) pair"]
+    S --> S1["'Saint Petersburg, FL'<br>'Saint Petersburg, Florida'<br>'St. Petersburg, FL'<br>'St. Petersburg, Florida'<br>..."]
+    S1 --> C[("Training corpus")]
+    C --> M["Neural model<br>(learns the joint shape)"]
+    H --> F["fst-builder.ts"]
+    F --> FST[("fst-en-US.bin<br>(serves the prior at inference)")]
+    FST --> M2["Neural model decode<br>(consults the prior)"]
+```
+
+The same upfront enumeration of hierarchy chains feeds both sides. The corpus side bakes the chain into the training distribution so the model sees plausible (city, region, country) tuples in their canonical forms. The FST side keeps the chain accessible at inference for the cases the model can't memorize. Build-time work; query-time payoff; train-time payoff.
+
+## Wikipedia importance, not population
+
+Inside the `PlaceEntry`, the `importance` field is what scales each match's logit bias. Using raw population would give the wrong answer for some of the most common queries: Washington state (7.6M) would outrank Washington DC (678K) despite DC being overwhelmingly the more common referent of "Washington" in addresses.
+
+The FST uses Wikipedia importance scores from [Nominatim's methodology](https://nominatim.org/release-docs/latest/customize/Importance/): `log(total_links) / log(max_links)`, normalized to \[0, 1\].
+
+| Place                    | Population | Wikipedia importance |
+| ------------------------ | ---------- | -------------------- |
+| Washington DC (locality) | 678K       | 0.815                |
+| Washington (state)       | 7.6M       | 0.764                |
+| New York City (locality) | 8.8M       | 0.950                |
+
+The importance scores are computed once, in a separate ETL pass, and joined into the unified SQLite before the FST builder runs. The two-signal split (importance for ranking, population for tie-breaking and resolver scoring) has its own [dedicated article](./importance-vs-population.md).
+
+## Where this fits in the bigger picture
+
+```mermaid
+flowchart TB
+    subgraph BUILD[Build-time artifacts]
+        WG["WOF GeoJSON"]
+        WG --> UF["unified WOF SQLite"]
+        UF --> FB["fst-en-US.bin (5.6 MB)"]
+        UF --> CB["corpus training rows"]
+        IM["Wikipedia importance ETL"] --> FB
+    end
+
+    subgraph TRAIN[Training time]
+        CB --> T["Neural classifier training"]
+    end
+
+    subgraph INFER[Inference time]
+        IN["Address string"] --> TK["Tokenize"]
+        TK --> NN["Neural encoder"]
+        NN --> EM["Emissions"]
+        TK --> QS["QueryShape prior"]
+        TK --> FP["FST prior"]
+        FB -.loaded.-> FP
+        QS --> EM
+        FP --> EM
+        EM --> V["Viterbi"]
+        V --> OUT["Tagged spans"]
+    end
+
+    T -.weights.-> NN
+```
+
+The FST is one node in a longer pipeline of cached work. The unified SQLite is a cache of the GeoJSON repos. The FST is a cache of the SQLite. The Wikipedia importance file is a cache of dump statistics. Each cache turns a slow operation done many times into a fast operation done once. The reason the runtime is small enough to ship to a browser is that none of those upfront costs are paid in the hot path.
+
+## What the FST does not do
+
+- **It does not resolve.** It tells the classifier which spans *could* be places. Producing a single canonical place ID + coordinates is the resolver's job (see [Resolver and Who's On First](./resolver-and-wof.md)).
+- **It does not handle streets.** v1 ships admin-only (countries, regions, localities, postcodes). Streets would add ~3-5M unique names and require metro-area sharding for the browser; tracked as Phase 2+ in [`FST_GAZETTEER_LM.md`](../plan/reference/FST_GAZETTEER_LM.md).
+- **It does not override the model.** The bias is additive and capped. If the model is confident the input says "Paris, TX," the FST prior on French Paris doesn't change the outcome.
 
 ## See also
 
-- [FST Gazetteer LM (reference)](../plan/reference/FST_GAZETTEER_LM.md) — full design document with metrics and implementation phases
-- [Neural classification](./neural-classification.md) — the transformer + CRF Viterbi decoder
-- [WOF data pipeline](./wof-data-pipeline.md) — how the unified SQLite is built from GeoJSON repos
+- [FST gazetteer LM (reference)](../plan/reference/FST_GAZETTEER_LM.md) — implementation phases, design decisions, locale strategy, size estimates
+- [Resolver and Who's On First](./resolver-and-wof.md) — the parser/resolver split and the WOF SQLite distribution this is built from
+- [Importance vs population](./importance-vs-population.md) — why Wikipedia importance, not population, is the right weighting signal
+- [Neural classification](./neural-classification.md) — the transformer + Viterbi decoder the prior plugs into
+- [BIO labels](./bio-labels.md) — the per-token label space the prior biases
+- [WOF data pipeline](./wof-data-pipeline.md) — how the unified SQLite the FST is built from comes together
