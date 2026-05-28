@@ -31,7 +31,7 @@ One import path change: `onnxruntime-web` → `onnxruntime-web/webgpu`. WebGPU n
 
 Headless CI cannot catch GPU-specific bugs. The `verify` skill's Playwright tests were passing while every real user saw garbage. Added diagnostics (backend indicator, force-WASM toggle, build stamp) to make this class of issue visible.
 
-Reference: [Technical doc](/docs/understanding/onnxruntime-web-webgpu-gotcha), [Blog post](/blog/2026-05-27-webgpu-safari-bug)
+Reference: [Technical doc](/docs/understanding/onnxruntime-web-webgpu-gotcha). Blog post: "Our model worked in CI but broke on every real device".
 
 ## Infrastructure migration
 
@@ -81,7 +81,7 @@ v0.6.0-a0 tokenizer trained on 2.19M multi-script WOF names:
 | Thai | 30% | **0%** |
 | Aggregate | 36.6% | **0.0%** |
 
-Issue #120 target was <5%. Hit 0%. Same 48K vocab, 28 seconds to train.
+Issue #120 target was less than 5%. Hit 0%. Same 48K vocab, 28 seconds to train.
 
 ### Global FST
 
@@ -159,7 +159,7 @@ All three priority adapters now emit `street_prefix`, `street_suffix`, `unit` fr
 
 ### Japanese WOF adapter prototype
 
-`wof-admin-jp` walks the global SQLite parent chain for every 丁目 (chome) in the JP repo. Produces **6,373 synthetic JP training rows** across 47 prefectures, 269 localities. Top: 東京 (Tokyo) 2,251 rows. Blog post: [Why Japanese addresses break Western parsers](/blog/2026-05-28-japanese-address-hierarchy).
+`wof-admin-jp` walks the global SQLite parent chain for every 丁目 (chome) in the JP repo. Produces **6,373 synthetic JP training rows** across 47 prefectures, 269 localities. Top: 東京 (Tokyo) 2,251 rows. See the blog post "Why Japanese addresses break Western parsers".
 
 ### Per-locale FSTs on HF
 

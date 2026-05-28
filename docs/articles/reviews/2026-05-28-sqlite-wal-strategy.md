@@ -416,13 +416,13 @@ This is the fix for the database lock bug that blocked the current `wof/prepare`
 - **Current builder:** `scripts/build-unified-wof.ts`.
 - **Current schema helper:** `resolver-wof-sqlite/unified-schema.ts`.
 - **Downstream resolver contract:** `resolver-wof-sqlite/schema.ts`, `resolver-wof-sqlite/lookup.ts`, `resolver-wof-sqlite/fts.ts`.
-- **WOF official SQLite bundles:** <https://dist.whosonfirst.org/sqlite/> or <https://www.whosonfirst.org/download/>. Download one and run `.schema` on it.
-- **`whosonfirst/go-whosonfirst-sqlite-features`:** <https://github.com/whosonfirst/go-whosonfirst-sqlite-features>. Reference schema/table builders.
-- **Node.js `node:sqlite` docs:** <https://nodejs.org/api/sqlite.html>.
-- **SQLite WAL docs:** <https://sqlite.org/wal.html>.
-- **SQLite PRAGMA reference:** <https://sqlite.org/pragma.html>.
-- **SQLite `VACUUM INTO` docs:** <https://sqlite.org/lang_vacuum.html>.
-- **Piscina:** <https://github.com/piscinajs/piscina>.
+- **WOF official SQLite bundles:** [https://dist.whosonfirst.org/sqlite/](https://dist.whosonfirst.org/sqlite/) or [https://www.whosonfirst.org/download/](https://www.whosonfirst.org/download/). Download one and run `.schema` on it.
+- **`whosonfirst/go-whosonfirst-sqlite-features`:** [https://github.com/whosonfirst/go-whosonfirst-sqlite-features](https://github.com/whosonfirst/go-whosonfirst-sqlite-features). Reference schema/table builders.
+- **Node.js `node:sqlite` docs:** [https://nodejs.org/api/sqlite.html](https://nodejs.org/api/sqlite.html).
+- **SQLite WAL docs:** [https://sqlite.org/wal.html](https://sqlite.org/wal.html).
+- **SQLite PRAGMA reference:** [https://sqlite.org/pragma.html](https://sqlite.org/pragma.html).
+- **SQLite `VACUUM INTO` docs:** [https://sqlite.org/lang_vacuum.html](https://sqlite.org/lang_vacuum.html).
+- **Piscina:** [https://github.com/piscinajs/piscina](https://github.com/piscinajs/piscina).
 
 ---
 

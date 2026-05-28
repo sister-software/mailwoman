@@ -11,10 +11,25 @@ const gitHash = (() => {
 	}
 })()
 
+const buildDate = new Date()
+const buildTime = buildDate.toISOString()
+// Locale-stable display format: "2026-05-28 02:42 UTC". Same string on server and client,
+// so no React hydration mismatch.
+const buildTimeDisplay = (() => {
+	const pad = (n: number) => String(n).padStart(2, "0")
+	const Y = buildDate.getUTCFullYear()
+	const M = pad(buildDate.getUTCMonth() + 1)
+	const D = pad(buildDate.getUTCDate())
+	const h = pad(buildDate.getUTCHours())
+	const m = pad(buildDate.getUTCMinutes())
+	return `${Y}-${M}-${D} ${h}:${m} UTC`
+})()
+
 const config: Config = {
 	customFields: {
 		buildCommit: gitHash,
-		buildTime: new Date().toISOString(),
+		buildTime,
+		buildTimeDisplay,
 	},
 	title: "Mailwoman",
 	tagline: "TypeScript-first address parser + geocoder. Runs in Node and the browser.",

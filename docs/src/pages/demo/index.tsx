@@ -66,7 +66,7 @@ const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
 export default function DemoPage(): React.ReactElement {
 	const { siteConfig } = useDocusaurusContext()
 	const buildCommit = (siteConfig.customFields?.buildCommit as string) ?? "?"
-	const buildTime = (siteConfig.customFields?.buildTime as string) ?? "?"
+	const buildTimeDisplay = (siteConfig.customFields?.buildTimeDisplay as string) ?? "?"
 
 	return (
 		<Layout title="Demo" description="Client-side address geocoder demo for mailwoman.">
@@ -82,7 +82,7 @@ export default function DemoPage(): React.ReactElement {
 				<footer
 					style={{ marginTop: "2rem", padding: "1rem 0", opacity: 0.4, fontSize: "0.75rem", textAlign: "center" }}
 				>
-					Build {buildCommit} · {new Date(buildTime).toLocaleString()}
+					Build {buildCommit} · {buildTimeDisplay}
 				</footer>
 			</main>
 		</Layout>
