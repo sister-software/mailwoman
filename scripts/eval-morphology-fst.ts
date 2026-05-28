@@ -59,6 +59,17 @@ interface Args {
 	outJson?: string
 	/** Optional human-readable name written into the JSON output's `name` field. Defaults to the model basename. */
 	evalName?: string
+	/**
+	 * When set, fold the neural model's Stage 3 component tags back to Stage 2 conventions
+	 * before comparing against the golden set. The v0.1.2 golden set uses Stage 2's single
+	 * "street" spans (e.g. golden street = "Main St", not separate street + street_suffix).
+	 * Without the fold, a Stage 3 model that correctly decomposes "Main St" → street="Main"
+	 * + street_suffix="St" is counted as a `street` boundary error PLUS a `street_suffix`
+	 * hallucination — a double penalty for legitimate decomposition. The fold combines
+	 * street_prefix + street_prefix_particle + street + street_suffix into a single
+	 * `street` value (space-joined in document order, matching the original raw text).
+	 */
+	stage3Fold?: boolean
 }
 
 function parseArgs(): Args {
@@ -75,6 +86,7 @@ function parseArgs(): Args {
 	let dependentLocalityPenalty: number | undefined
 	let outJson: string | undefined
 	let evalName: string | undefined
+	let stage3Fold = false
 
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
@@ -90,6 +102,7 @@ function parseArgs(): Args {
 		else if (a === "--dep-locality-penalty" && args[i + 1]) dependentLocalityPenalty = Number(args[++i])
 		else if (a === "--out-json" && args[i + 1]) outJson = args[++i]
 		else if (a === "--name" && args[i + 1]) evalName = args[++i]
+		else if (a === "--stage3-fold") stage3Fold = true
 	}
 
 	if (!modelPath || !tokenizerPath || !modelCardPath || !goldenDir) {
@@ -112,7 +125,51 @@ function parseArgs(): Args {
 		dependentLocalityPenalty,
 		outJson,
 		evalName,
+		stage3Fold,
 	}
+}
+
+/**
+ * Fold the neural classifier's Stage 3 component tags down to Stage 2 conventions for
+ * comparison against the v0.1.2 golden set. See {@linkcode Args.stage3Fold} for the
+ * full rationale.
+ *
+ * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` →
+ *   single `street` value (space-joined in declared order; the underlying tree spans are
+ *   character-adjacent so the joined string approximates the original raw substring).
+ * - `intersection_a` + `intersection_b` → folded to `street` (golden encodes
+ *   intersections as a single street span per the v0 rule-based parser's convention).
+ *
+ * Returns a flat record consumable by the existing comparison loop.
+ */
+function foldStage3ToStage2(
+	flat: Partial<Record<ComponentTag, string>>
+): Partial<Record<ComponentTag, string>> {
+	const out: Partial<Record<ComponentTag, string>> = { ...flat }
+	const streetParts: string[] = []
+	for (const tag of ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const) {
+		const v = out[tag]
+		if (v) streetParts.push(v)
+	}
+	if (streetParts.length > 0) {
+		out.street = streetParts.join(" ")
+		delete out.street_prefix
+		delete out.street_prefix_particle
+		delete out.street_suffix
+	}
+	if (out.intersection_a || out.intersection_b) {
+		const xs: string[] = []
+		if (out.intersection_a) xs.push(out.intersection_a)
+		if (out.intersection_b) xs.push(out.intersection_b)
+		// Combine into street if there's no existing street; otherwise leave intersection_a/b alone
+		// since the golden uses a single street value per address.
+		if (!out.street && xs.length > 0) {
+			out.street = xs.join(" & ")
+		}
+		delete out.intersection_a
+		delete out.intersection_b
+	}
+	return out
 }
 
 function loadGolden(dir: string): GoldenEntry[] {
@@ -233,7 +290,8 @@ async function main() {
 	for (const entry of golden) {
 		total++
 		const tree = await classifier.parse(entry.raw, parseOpts as Parameters<typeof classifier.parse>[1])
-		const predicted = decodeAsJson(tree)
+		const rawPredicted = decodeAsJson(tree)
+		const predicted = args.stage3Fold ? foldStage3ToStage2(rawPredicted) : rawPredicted
 		const expected = entry.components
 
 		let allCorrect = true
