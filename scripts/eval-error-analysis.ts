@@ -82,6 +82,18 @@ async function main() {
 
 	const tagConfusion = new Map<string, Map<string, number>>()
 
+	// Per-tag stats: { tag → { expected_count, correct_count, missed_count, boundary_count, confused_count } }
+	type TagStats = { expected: number; correct: number; missed: number; boundary: number; confused: number; hallucinated: number }
+	const perTag = new Map<string, TagStats>()
+	function tagStat(tag: string): TagStats {
+		let s = perTag.get(tag)
+		if (!s) {
+			s = { expected: 0, correct: 0, missed: 0, boundary: 0, confused: 0, hallucinated: 0 }
+			perTag.set(tag, s)
+		}
+		return s
+	}
+
 	console.error("Running eval...")
 	const t0 = performance.now()
 
@@ -95,9 +107,11 @@ async function main() {
 
 		for (const [tag, value] of Object.entries(expected)) {
 			const predValue = predicted[tag as keyof typeof predicted]
+			tagStat(tag).expected++
 
 			if (!predValue) {
 				missed.total++
+				tagStat(tag).missed++
 				if (missed.examples.length < 10) {
 					missed.examples.push({ raw: entry.raw, detail: `missing ${tag}="${value}"` })
 				}
@@ -107,6 +121,7 @@ async function main() {
 				const expNorm = value.toLowerCase().trim()
 				if (predNorm.includes(expNorm) || expNorm.includes(predNorm)) {
 					boundaryErrors.total++
+					tagStat(tag).boundary++
 					if (boundaryErrors.examples.length < 10) {
 						boundaryErrors.examples.push({
 							raw: entry.raw,
@@ -115,6 +130,7 @@ async function main() {
 					}
 				} else {
 					confused.total++
+					tagStat(tag).confused++
 					if (confused.examples.length < 10) {
 						confused.examples.push({
 							raw: entry.raw,
@@ -123,12 +139,15 @@ async function main() {
 					}
 				}
 				allCorrect = false
+			} else {
+				tagStat(tag).correct++
 			}
 		}
 
 		for (const [tag] of Object.entries(predicted)) {
 			if (!(tag in expected)) {
 				hallucinated.total++
+				tagStat(tag).hallucinated++
 				if (hallucinated.examples.length < 10) {
 					hallucinated.examples.push({
 						raw: entry.raw,
@@ -165,6 +184,20 @@ async function main() {
 	console.log(`| Boundary errors | ${boundaryErrors.total} | — |`)
 	console.log(`| Confused tags | ${confused.total} | — |`)
 	console.log(`| Hallucinated tags | ${hallucinated.total} | — |`)
+	console.log("")
+
+	// Per-tag breakdown
+	console.log("## Per-tag breakdown")
+	console.log("")
+	console.log("| Tag | Expected | Correct | Missed | Boundary | Confused | Hallucinated | Recall |")
+	console.log("|-----|----------|---------|--------|----------|----------|--------------|--------|")
+	const sortedTags = [...perTag.entries()].sort((a, b) => b[1].expected - a[1].expected)
+	for (const [tag, s] of sortedTags) {
+		const recall = s.expected > 0 ? ((100 * s.correct) / s.expected).toFixed(1) + "%" : "—"
+		console.log(
+			`| ${tag} | ${s.expected} | ${s.correct} | ${s.missed} | ${s.boundary} | ${s.confused} | ${s.hallucinated} | ${recall} |`
+		)
+	}
 	console.log("")
 
 	for (const [name, stats] of [
