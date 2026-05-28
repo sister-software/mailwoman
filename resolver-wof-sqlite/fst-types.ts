@@ -29,6 +29,7 @@ export type PlacetypeId =
 	| "postalcode"
 	| "campus"
 	| "dependency"
+	| "street_affix"
 
 export interface FstMatchResult {
 	stateId: number
