@@ -1,0 +1,108 @@
+---
+sidebar_position: 38
+title: "Pre-publish 2D eval gate"
+---
+
+# Pre-publish 2D eval gate
+
+Mechanical guard that runs before any neural-weights release lands on the default HF channel.
+Compares a candidate model's per-tag eval output against a baseline (typically the current
+default), applies a two-dimensional threshold, and exits non-zero if any tag violates either
+dimension.
+
+The shape of the gate is the lesson the
+[2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.md) and the
+[Layer 1 eval](2026-05-28-layer-1-morphology-fst.md) both pointed at: a recall-only gate
+would have **passed** v0.6.1 (no tag regressed > 2pp in recall on tags where the model
+already had > 10% baseline), letting the 1066 `dependent_locality` hallucinations through.
+The two-dimensional gate catches both halves.
+
+## The 2D rule
+
+```
+FAIL if  (recall drop > recall_threshold_pp  AND  baseline_recall > recall_min_baseline_pct)
+      OR (hallucination spike > hall_abs_threshold
+          AND new_hallucination_rate > hall_rate_threshold_pct)
+```
+
+Defaults:
+
+| Threshold | Default | Why |
+|---|---|---|
+| `recall_threshold_pp` | 2 | A drop smaller than 2pp is noise on aggregated golden-set runs |
+| `recall_min_baseline_pct` | 10 | Drops on already-low-recall tags don't move user-visible quality much |
+| `hall_abs_threshold` | 100 | Below this is plausibly normal training drift |
+| `hall_rate_threshold_pct` | 20 | A tag hallucinating more than 20% of its expected count is a structural failure |
+
+Each dimension stands alone but they compose: a regression has to clear BOTH gates to ship.
+
+## Why both dimensions matter — the v0.6.1 retroactive check
+
+Running the gate against v0.6.0 → v0.6.1 produces:
+
+```
+GATE FAILED: 3 violation(s).
+- locality (recall) — recall 39.7% → 31.1% (Δ -8.6pp; baseline > 10%)
+- house_number (recall) — recall 79.0% → 75.9% (Δ -3.1pp; baseline > 10%)
+- dependent_locality (hallucination) — hallucinated 0 → 1066 (Δ +1066; new rate 2665.0%)
+```
+
+The first two would be caught by a recall-only gate. The third — `dependent_locality`
+going 0 → 1066 — would NOT be caught by a recall-only gate (recall there actually
+*improved*, 0% → 30%). That's the v0.6.1 failure pattern from the postmortem encoded as a
+mechanical check: a tag silently exploding in false-positive count even as nominal recall
+holds up.
+
+## Workflow
+
+1. **Score the baseline:**
+
+   ```bash
+   node --experimental-strip-types scripts/eval-morphology-fst.ts \
+     --model /mnt/playpen/.../model-v060.onnx \
+     --tokenizer /mnt/playpen/.../v0.6.0-a0/tokenizer.model \
+     --model-card neural-weights-en-us/model-card.json \
+     --admin-fst /mnt/playpen/.../fst-en-us.bin \
+     --golden data/eval/golden/v0.1.2 \
+     --name v0.6.0-default \
+     --out-json /tmp/eval-v060.json
+   ```
+
+2. **Score the candidate** (same eval, new weights).
+
+3. **Run the gate:**
+
+   ```bash
+   node --experimental-strip-types scripts/eval-gate.ts \
+     --baseline /tmp/eval-v060.json \
+     --candidate /tmp/eval-v062.json \
+     --out-md /tmp/gate-report.md
+   ```
+
+   Exit 0 → safe to promote. Exit 1 → block the release-it dispatch.
+
+The gate is reusable forever — it doesn't know about specific tags or specific models, only
+about the threshold contract. v0.7+ models with `dependent_street`, `unit_designator`, JP
+tags will be measured the same way.
+
+## What the gate does NOT replace
+
+- The [v0-vs-neural harness](2026-05-28-v0-vs-neural-harness.md) (per-locale + per-file
+  pass rates across 376 hand-tuned assertions). The gate works on aggregate golden-set
+  metrics; the harness works on the legacy rule-based pipeline's harsh acceptance criteria.
+  Both should be green.
+- Manual demo-preset eval. The `/eval-model` skill remains the human-eyeballs gate before
+  any push to default.
+- Falsehoods catalog regression check
+  ([`data/eval/falsehoods/streets.jsonl`](2026-05-28-v0-vs-neural-harness.md#falsehoods-extension)).
+
+The gate is one slice of the pre-publish protocol, not the whole thing.
+
+## See also
+
+- [Layer 1 eval](2026-05-28-layer-1-morphology-fst.md) — the eval-script's `--out-json` flag
+  emits the format this gate consumes
+- [v0-vs-neural harness](2026-05-28-v0-vs-neural-harness.md) — the complementary breadth
+  metric
+- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.md) — DeepSeek-turn-1
+  rubric this gate operationalizes

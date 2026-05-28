@@ -28,7 +28,8 @@ import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { buildStreetMorphologyFst } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
-import { readFileSync } from "node:fs"
+import { readFileSync, writeFileSync } from "node:fs"
+import { basename as pathBasename } from "node:path"
 import { resolve, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -54,6 +55,10 @@ interface Args {
 	maxAffixBias?: number
 	maxNeighbourStreetBias?: number
 	dependentLocalityPenalty?: number
+	/** Optional JSON output path. When set, emits structured per-tag stats consumable by `eval-gate.ts`. */
+	outJson?: string
+	/** Optional human-readable name written into the JSON output's `name` field. Defaults to the model basename. */
+	evalName?: string
 }
 
 function parseArgs(): Args {
@@ -68,6 +73,8 @@ function parseArgs(): Args {
 	let maxAffixBias: number | undefined
 	let maxNeighbourStreetBias: number | undefined
 	let dependentLocalityPenalty: number | undefined
+	let outJson: string | undefined
+	let evalName: string | undefined
 
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
@@ -81,6 +88,8 @@ function parseArgs(): Args {
 		else if (a === "--max-affix-bias" && args[i + 1]) maxAffixBias = Number(args[++i])
 		else if (a === "--max-neighbour-street-bias" && args[i + 1]) maxNeighbourStreetBias = Number(args[++i])
 		else if (a === "--dep-locality-penalty" && args[i + 1]) dependentLocalityPenalty = Number(args[++i])
+		else if (a === "--out-json" && args[i + 1]) outJson = args[++i]
+		else if (a === "--name" && args[i + 1]) evalName = args[++i]
 	}
 
 	if (!modelPath || !tokenizerPath || !modelCardPath || !goldenDir) {
@@ -101,6 +110,8 @@ function parseArgs(): Args {
 		maxAffixBias,
 		maxNeighbourStreetBias,
 		dependentLocalityPenalty,
+		outJson,
+		evalName,
 	}
 }
 
@@ -299,6 +310,36 @@ async function main() {
 		console.log(
 			`| ${tag} | ${s.expected} | ${s.correct} | ${s.missed} | ${s.boundary} | ${s.confused} | ${s.hallucinated} | ${recall} |`
 		)
+	}
+
+	if (args.outJson) {
+		// Normalized eval-result JSON. The shape is the contract `scripts/eval-gate.ts` reads.
+		// Keep field names stable; gates from older releases must be diffable against newer ones.
+		const out = {
+			name: args.evalName ?? pathBasename(args.modelPath).replace(/\.onnx$/, ""),
+			golden_set: total,
+			exact_match_pct: (100 * exactMatch) / total,
+			model: args.modelPath,
+			admin_fst: args.adminFstPath ?? null,
+			morphology_enabled: args.morphologyEnabled,
+			per_tag: Object.fromEntries(
+				sortedTags.map(([tag, s]) => [
+					tag,
+					{
+						expected: s.expected,
+						correct: s.correct,
+						missed: s.missed,
+						boundary: s.boundary,
+						confused: s.confused,
+						hallucinated: s.hallucinated,
+						recall_pct: s.expected > 0 ? (100 * s.correct) / s.expected : 0,
+						hallucination_rate_pct: s.expected > 0 ? (100 * s.hallucinated) / s.expected : 0,
+					},
+				])
+			),
+		}
+		writeFileSync(args.outJson, JSON.stringify(out, null, 2))
+		console.error(`Wrote eval JSON to ${args.outJson}`)
 	}
 }
 
