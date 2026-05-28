@@ -82,24 +82,63 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 				absolute: true,
 			})
 
+			let unifiedDb: DatabaseSync | null = null
+			let sprInsert: ReturnType<DatabaseSync["prepare"]> | null = null
+			let namesInsert: ReturnType<DatabaseSync["prepare"]> | null = null
+			let concordancesInsert: ReturnType<DatabaseSync["prepare"]> | null = null
+			let populationInsert: ReturnType<DatabaseSync["prepare"]> | null = null
+
+			if (unifiedDbPath) {
+				unifiedDb = new DatabaseSync(unifiedDbPath)
+				unifiedDb.exec("PRAGMA journal_mode = WAL")
+				unifiedDb.exec("PRAGMA synchronous = NORMAL")
+				unifiedDb.exec("PRAGMA busy_timeout = 30000")
+				sprInsert = unifiedDb.prepare(
+					"INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+				)
+				namesInsert = unifiedDb.prepare(
+					"INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, ?, ?, ?, ?)"
+				)
+				concordancesInsert = unifiedDb.prepare(
+					"INSERT INTO concordances (id, other_id, other_source, lastmodified) VALUES (?, ?, ?, ?)"
+				)
+				populationInsert = unifiedDb.prepare("INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)")
+			}
+
 			const tasks: Promise<void>[] = []
+			let batchCount = 0
 
 			for await (const fileNames of takeAsync(matchStream, FILES_PER_BATCH)) {
 				const filePaths = fileNames.map((f) => f.toString())
 
-				const task = piscina.run({ filePaths, unifiedDbPath }).then((result) => {
-					setInsertionCount((count) => count + result.processed)
+				const task = piscina.run({ filePaths }).then((result: WorkerOutput) => {
+					if (unifiedDb && result.places.length > 0) {
+						unifiedDb.exec("BEGIN TRANSACTION")
+						for (const p of result.places) {
+							sprInsert!.run(p.id, p.parent_id, p.name, p.placetype, p.country, p.latitude, p.longitude, p.isCurrent, p.isDeprecated, p.isCeased, p.isSuperseded, p.isSuperseding, p.lastmodified)
+							for (const n of p.names) {
+								if (n.preferred) namesInsert!.run(p.id, n.preferred, p.placetype, p.country, n.language, p.lastmodified)
+								if (n.variant && n.variant !== n.preferred) namesInsert!.run(p.id, n.variant, p.placetype, p.country, n.language, p.lastmodified)
+							}
+							for (const [source, value] of Object.entries(p.concordances)) {
+								concordancesInsert!.run(p.id, value, source, p.lastmodified)
+							}
+							if (p.population > 0) populationInsert!.run(p.id, p.population)
+						}
+						unifiedDb.exec("COMMIT")
+					}
+					setInsertionCount((count) => count + result.places.length)
 				})
 
 				tasks.push(task)
 			}
 
-			await Promise.all(tasks)
+			await Promise.allSettled(tasks)
+			await piscina.destroy()
 
-			if (unifiedDbPath) {
-				const db = new DatabaseSync(unifiedDbPath, { open: true })
-				createUnifiedIndexes(db)
-				db.close()
+			if (unifiedDb) {
+				createUnifiedIndexes(unifiedDb)
+				unifiedDb.close()
 			}
 		})()
 	}, [wofDataAdminDirectory, unifiedDbPath])

@@ -15,7 +15,6 @@ import { FstMatcher } from "./fst-matcher.js"
 import type { FstProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
 
 const HEADER_SIZE = 32
-const STATE_ENTRY_SIZE = 12
 const EDGE_ENTRY_SIZE = 8
 const PLACE_ENTRY_SIZE = 56
 const MAGIC_BYTES = [0x46, 0x53, 0x54, 0x00] // "FST\0"
@@ -80,18 +79,19 @@ export function deserializeFstWeb(input: ArrayBuffer | Uint8Array): FstMatcher {
 	pos += stringBytes
 
 	// --- State table ---
+	const stateEntrySize = version >= 4 ? 16 : 12
 	const stateTableStart = pos
-	const edgeTableStart = stateTableStart + stateCount * STATE_ENTRY_SIZE
+	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
 	const placeTableStart = edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
 
 	const nodes: FstNode[] = new Array(stateCount)
 
 	for (let si = 0; si < stateCount; si++) {
-		const sp = stateTableStart + si * STATE_ENTRY_SIZE
+		const sp = stateTableStart + si * stateEntrySize
 		const edgeStart = view.getUint32(sp, true)
 		const placeStart = view.getUint32(sp + 4, true)
-		const edgeCountForState = view.getUint16(sp + 8, true)
-		const placeCountForState = view.getUint16(sp + 10, true)
+		const edgeCountForState = version >= 4 ? view.getUint32(sp + 8, true) : view.getUint16(sp + 8, true)
+		const placeCountForState = version >= 4 ? view.getUint32(sp + 12, true) : view.getUint16(sp + 10, true)
 
 		const edges = new Map<string, number>()
 		for (let ei = 0; ei < edgeCountForState; ei++) {

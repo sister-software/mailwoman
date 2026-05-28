@@ -28,9 +28,9 @@ import { FstMatcher } from "./fst-matcher.js"
 import type { FstProvenance, PlaceEntry, PlacetypeId } from "./fst-types.js"
 
 const MAGIC = Buffer.from("FST\0", "ascii")
-const VERSION = 3
+const VERSION = 4
 const HEADER_SIZE = 32
-const STATE_ENTRY_SIZE = 12
+const STATE_ENTRY_SIZE = 16
 const EDGE_ENTRY_SIZE = 8
 const PLACE_ENTRY_SIZE = 56
 const MAX_CHAIN_LEN = 8
@@ -147,8 +147,8 @@ export function serializeFst(matcher: FstMatcher, provenance?: FstProvenance): B
 
 		buf.writeUInt32LE(edgeIdx, sp)
 		buf.writeUInt32LE(placeIdx, sp + 4)
-		buf.writeUInt16LE(node.edges.size, sp + 8)
-		buf.writeUInt16LE(node.places.length, sp + 10)
+		buf.writeUInt32LE(node.edges.size, sp + 8)
+		buf.writeUInt32LE(node.places.length, sp + 12)
 
 		for (const [token, target] of node.edges) {
 			const ep = edgeTableStart + edgeIdx * EDGE_ENTRY_SIZE
@@ -218,18 +218,19 @@ export function deserializeFst(buf: Buffer): FstMatcher {
 	pos += stringBytes
 
 	// --- State table ---
+	const stateEntrySize = version >= 4 ? 16 : 12
 	const stateTableStart = pos
-	const edgeTableStart = stateTableStart + stateCount * STATE_ENTRY_SIZE
+	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
 	const placeTableStart = edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
 
 	const nodes: FstNode[] = new Array(stateCount)
 
 	for (let si = 0; si < stateCount; si++) {
-		const sp = stateTableStart + si * STATE_ENTRY_SIZE
+		const sp = stateTableStart + si * stateEntrySize
 		const edgeStart = buf.readUInt32LE(sp)
 		const placeStart = buf.readUInt32LE(sp + 4)
-		const edgeCountForState = buf.readUInt16LE(sp + 8)
-		const placeCountForState = buf.readUInt16LE(sp + 10)
+		const edgeCountForState = version >= 4 ? buf.readUInt32LE(sp + 8) : buf.readUInt16LE(sp + 8)
+		const placeCountForState = version >= 4 ? buf.readUInt32LE(sp + 12) : buf.readUInt16LE(sp + 10)
 
 		const edges = new Map<string, number>()
 		for (let ei = 0; ei < edgeCountForState; ei++) {

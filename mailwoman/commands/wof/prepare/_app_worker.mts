@@ -4,23 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   Piscina worker for WOF prepare — reads GeoJSON files, extracts structured fields via
- *   pluckPlacetypeSpec, and upserts into PlacetypeDataSource (SQLite) for classifier mini-DBs.
+ *   pluckPlacetypeSpec, and returns parsed data to the main thread. The main thread handles
+ *   all SQLite writes (both mini-DBs and unified DB) to avoid concurrent writer locks.
  *
- *   When `unifiedDbPath` is set, also writes to a unified SQLite (spr, names, concordances,
- *   place_population) for the FST builder and resolver.
+ *   Per the WAL + Freeze design brief (docs/articles/reviews/2026-05-28-sqlite-wal-strategy.md):
+ *   "Workers return parsed data to a single main-thread writer."
  */
 
-import {
-	DataSourceCache,
-	pluckPlacetypeSpec,
-	type PlacetypeRecord,
-	type WOFFeature,
-} from "@mailwoman/core/resources/whosonfirst"
+import { pluckPlacetypeSpec, type WOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import { readFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { PathBuilder } from "path-ts"
-
-const DATA_DIRECTORY = PathBuilder.from(process.env.WOF_DATA_DIR || "/tmp/wof-placetype-dbs")
 
 const ADMIN_PLACETYPES = new Set([
 	"country",
@@ -34,170 +26,115 @@ const ADMIN_PLACETYPES = new Set([
 	"macrocounty",
 ])
 
-const cache = new DataSourceCache()
-
-let unifiedDb: DatabaseSync | null = null
-let sprInsert: ReturnType<DatabaseSync["prepare"]> | null = null
-let namesInsert: ReturnType<DatabaseSync["prepare"]> | null = null
-let concordancesInsert: ReturnType<DatabaseSync["prepare"]> | null = null
-let populationInsert: ReturnType<DatabaseSync["prepare"]> | null = null
-
-function ensureUnifiedDb(path: string): void {
-	if (unifiedDb) return
-	unifiedDb = new DatabaseSync(path, { open: true })
-	unifiedDb.exec("PRAGMA journal_mode = WAL")
-	unifiedDb.exec("PRAGMA busy_timeout = 10000")
-	unifiedDb.exec("PRAGMA synchronous = OFF")
-
-	sprInsert = unifiedDb.prepare(`
-		INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`)
-	namesInsert = unifiedDb.prepare(`
-		INSERT INTO names (id, name, placetype, country, language, lastmodified)
-		VALUES (?, ?, ?, ?, ?, ?)
-	`)
-	concordancesInsert = unifiedDb.prepare(`
-		INSERT INTO concordances (id, other_id, other_source, lastmodified)
-		VALUES (?, ?, ?, ?)
-	`)
-	populationInsert = unifiedDb.prepare(`
-		INSERT OR REPLACE INTO place_population (id, population)
-		VALUES (?, ?)
-	`)
-}
-
 export interface WorkerInput {
 	filePaths: string[]
-	unifiedDbPath?: string
+}
+
+export interface ParsedPlace {
+	id: number
+	parent_id: number
+	name: string
+	placetype: string
+	country: string
+	latitude: number
+	longitude: number
+	population: number
+	isCurrent: number
+	isDeprecated: number
+	isCeased: number
+	isSuperseded: number
+	isSuperseding: number
+	lastmodified: number
+	concordances: Record<string, string>
+	names: Array<{ language: string; preferred: string | null; variant: string | null; colloquial: string | null; abbr: string | null; short: string | null }>
+	src: string
 }
 
 export interface WorkerOutput {
-	processed: number
+	places: ParsedPlace[]
 	skipped: number
 }
 
 async function processFiles(input: WorkerInput): Promise<WorkerOutput> {
-	let processed = 0
+	const places: ParsedPlace[] = []
 	let skipped = 0
 
-	if (input.unifiedDbPath) {
-		ensureUnifiedDb(input.unifiedDbPath)
-	}
-
-	if (unifiedDb) unifiedDb.exec("BEGIN TRANSACTION")
-
-	try {
-		for (const filePath of input.filePaths) {
-			if (filePath.includes("-alt-")) {
-				skipped++
-				continue
-			}
-
-			const fileContent = readFileSync(filePath, "utf8")
-			const feature: WOFFeature = JSON.parse(fileContent)
-
-			const superseded_by = feature.properties["wof:superseded_by"]
-			if (superseded_by && superseded_by.length !== 0) {
-				skipped++
-				continue
-			}
-
-			const { localizedPropMap, placetype, ...props } = pluckPlacetypeSpec(feature.properties)
-
-			// --- Mini-DB path (unchanged) ---
-			for (const [languageCode, nameKindMap] of localizedPropMap) {
-				const ds = cache.open({ placetype, languageCode, dataDirectory: DATA_DIRECTORY })
-
-				const record: PlacetypeRecord = {
-					id: props.id,
-					src: props.src,
-					parent_id: props.parent_id,
-					name: props.name,
-					preferred: nameKindMap.get("preferred") ?? null,
-					variant: nameKindMap.get("variant") ?? null,
-					colloquial: nameKindMap.get("colloquial") ?? null,
-					abbr: nameKindMap.get("abbr") ?? null,
-					short: nameKindMap.get("short") ?? null,
-				}
-
-				await ds.upsert(record)
-			}
-
-			if (localizedPropMap.size === 0) {
-				const ds = cache.open({ placetype, languageCode: "eng", dataDirectory: DATA_DIRECTORY })
-				const record: PlacetypeRecord = {
-					id: props.id,
-					src: props.src,
-					parent_id: props.parent_id,
-					name: props.name,
-					preferred: null,
-					variant: null,
-					colloquial: null,
-					abbr: null,
-					short: null,
-				}
-				await ds.upsert(record)
-			}
-
-			// --- Unified DB path ---
-			if (unifiedDb && ADMIN_PLACETYPES.has(placetype)) {
-				const lm = props.lastmodified ?? 0
-
-				sprInsert!.run(
-					props.id,
-					props.parent_id,
-					props.name,
-					placetype,
-					props.country ?? "",
-					props.latitude ?? 0,
-					props.longitude ?? 0,
-					props.isCurrent === false ? 0 : 1,
-					props.isDeprecated ? 1 : 0,
-					props.isCeased ? 1 : 0,
-					props.isSuperseded ? 1 : 0,
-					props.isSuperseding ? 1 : 0,
-					lm
-				)
-
-				for (const [languageCode, nameKindMap] of localizedPropMap) {
-					const preferred = nameKindMap.get("preferred")
-					if (preferred) {
-						namesInsert!.run(props.id, preferred, placetype, props.country ?? "", languageCode, lm)
-					}
-					const variant = nameKindMap.get("variant")
-					if (variant && variant !== preferred) {
-						namesInsert!.run(props.id, variant, placetype, props.country ?? "", languageCode, lm)
-					}
-				}
-
-				if (props.concordances) {
-					for (const [source, value] of Object.entries(props.concordances)) {
-						concordancesInsert!.run(props.id, String(value), source, lm)
-					}
-				}
-
-				if (props.population && props.population > 0) {
-					populationInsert!.run(props.id, props.population)
-				}
-			}
-
-			processed++
+	for (const filePath of input.filePaths) {
+		if (filePath.includes("-alt-")) {
+			skipped++
+			continue
 		}
 
-		if (unifiedDb) unifiedDb.exec("COMMIT")
-	} catch (err) {
-		if (unifiedDb) {
-			try {
-				unifiedDb.exec("ROLLBACK")
-			} catch {
-				// Rollback may fail if no transaction is active
+		let fileContent: string
+		try {
+			fileContent = readFileSync(filePath, "utf8")
+		} catch {
+			skipped++
+			continue
+		}
+
+		let feature: WOFFeature
+		try {
+			feature = JSON.parse(fileContent)
+		} catch {
+			skipped++
+			continue
+		}
+
+		const superseded_by = feature.properties["wof:superseded_by"]
+		if (superseded_by && superseded_by.length !== 0) {
+			skipped++
+			continue
+		}
+
+		const { localizedPropMap, placetype, ...props } = pluckPlacetypeSpec(feature.properties)
+
+		if (!ADMIN_PLACETYPES.has(placetype)) {
+			skipped++
+			continue
+		}
+
+		const names: ParsedPlace["names"] = []
+		for (const [languageCode, nameKindMap] of localizedPropMap) {
+			names.push({
+				language: languageCode,
+				preferred: nameKindMap.get("preferred") ?? null,
+				variant: nameKindMap.get("variant") ?? null,
+				colloquial: nameKindMap.get("colloquial") ?? null,
+				abbr: nameKindMap.get("abbr") ?? null,
+				short: nameKindMap.get("short") ?? null,
+			})
+		}
+
+		const concordances: Record<string, string> = {}
+		if (props.concordances) {
+			for (const [source, value] of Object.entries(props.concordances)) {
+				concordances[source] = String(value)
 			}
 		}
-		throw err
+
+		places.push({
+			id: props.id,
+			parent_id: props.parent_id,
+			name: props.name,
+			placetype,
+			country: props.country ?? "",
+			latitude: props.latitude ?? 0,
+			longitude: props.longitude ?? 0,
+			population: props.population ?? 0,
+			isCurrent: props.isCurrent === false ? 0 : 1,
+			isDeprecated: props.isDeprecated ? 1 : 0,
+			isCeased: props.isCeased ? 1 : 0,
+			isSuperseded: props.isSuperseded ? 1 : 0,
+			isSuperseding: props.isSuperseding ? 1 : 0,
+			lastmodified: props.lastmodified ?? 0,
+			concordances,
+			names,
+			src: props.src,
+		})
 	}
 
-	return { processed, skipped }
+	return { places, skipped }
 }
 
 export default processFiles
