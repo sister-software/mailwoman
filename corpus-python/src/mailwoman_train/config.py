@@ -69,6 +69,11 @@ class ModelConfig:
     # batch / total real tokens — self-balances against per-token CE, eliminates
     # ``crf_loss_weight`` hand-tuning, matches AllenNLP/FLAIR defaults.
     crf_normalization: str = "per_sequence"
+    # v0.6.2 diagnostic flag: force the CRF forward to compute in fp32 while the rest of
+    # the model continues in bf16. Tests the 2026-05-28 postmortem's hypothesis that the
+    # 33×33 transition table with masked -inf entries is numerically unstable under bf16's
+    # 7-bit mantissa. Default False keeps existing configs bit-identical.
+    crf_fp32: bool = False
     # v0.4.0: optional per-class CE weights, keyed on BIO label ("O", "B-locality", ...).
     # ``None`` (default) = uniform weighting. Recipe per issue #116: derive from corpus
     # label-frequency as ``(1 / class_freq) ** 0.5``, then halve fine-class weights
