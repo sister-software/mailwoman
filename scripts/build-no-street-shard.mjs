@@ -32,17 +32,18 @@ import { alignRow, stableSourceId, synthesizeNoStreetRow } from "@mailwoman/corp
 
 function parseArgs() {
 	const args = process.argv.slice(2)
-	const out = { variants: 1, seed: Date.now() }
+	const out = { variants: 1, seed: Date.now(), source: "synth-no-street" }
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 		if (a === "--input") out.input = args[++i]
 		else if (a === "--output") out.output = args[++i]
 		else if (a === "--variants") out.variants = parseInt(args[++i], 10)
 		else if (a === "--seed") out.seed = parseInt(args[++i], 10)
+		else if (a === "--source-name") out.source = args[++i]
 	}
 	if (!out.input || !out.output) {
 		console.error(
-			"Usage: build-no-street-shard.mjs --input <tuples.jsonl> --output <labeled.jsonl> [--variants 1] [--seed N]"
+			"Usage: build-no-street-shard.mjs --input <tuples.jsonl> --output <labeled.jsonl> [--variants 1] [--seed N] [--source-name <s>]"
 		)
 		process.exit(1)
 	}
@@ -98,7 +99,7 @@ async function main() {
 
 			templateCounts[synth.template] = (templateCounts[synth.template] ?? 0) + 1
 
-			const sourceId = stableSourceId("synth-no-street", {
+			const sourceId = stableSourceId(opts.source, {
 				locality: tuple.locality,
 				region: tuple.region,
 				postcode: tuple.postcode,
@@ -112,7 +113,7 @@ async function main() {
 				components: synth.components,
 				country: tuple.country,
 				locale: synth.locale,
-				source: "synth-no-street",
+				source: opts.source,
 				source_id: sourceId,
 				corpus_version: "0.4.0",
 				license: "Synthetic — derived from CC-BY / public-domain input tuples",
