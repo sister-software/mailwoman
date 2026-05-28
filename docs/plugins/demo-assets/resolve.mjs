@@ -238,15 +238,18 @@ export function syncArtifact(sourcePath, destPath, label) {
  * @returns {boolean} True if built successfully
  */
 export function buildFstBinary(fstPath, opts) {
-	const wofDb =
-		opts.wofDb ??
-		process.env.PLAYPEN_WOF_ADMIN_DB ??
-		"/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
+	const globalDb = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
+	const usDb = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
+	const wofDb = opts.wofDb ?? process.env.PLAYPEN_WOF_ADMIN_DB ?? (existsSync(globalDb) ? globalDb : usDb)
 
 	if (!existsSync(wofDb)) {
 		console.warn(`[demo-assets] FST: WOF admin DB not found at ${wofDb} — skipping FST build`)
 		return false
 	}
+
+	const isGlobal = wofDb.includes("global")
+	const countries = isGlobal ? "['US', 'FR', 'JP', 'CN', 'KR', 'DE', 'GB']" : "['US']"
+	const languages = isGlobal ? "['*']" : "['eng', '']"
 
 	const script = `
 		import { buildFstFromWof } from '@mailwoman/resolver-wof-sqlite/fst-builder'
@@ -254,7 +257,8 @@ export function buildFstBinary(fstPath, opts) {
 		import { writeFileSync } from 'node:fs'
 		const { matcher, provenance } = buildFstFromWof({
 			dbPath: ${JSON.stringify(wofDb)},
-			countries: ['US'],
+			countries: ${countries},
+			languages: ${languages},
 			onProgress: (phase, msg) => process.stderr.write(phase + ': ' + msg + '\\n'),
 		})
 		const buf = serializeFst(matcher, provenance)
@@ -292,8 +296,9 @@ export function buildFstBinary(fstPath, opts) {
  * @returns {boolean}
  */
 export function buildSlimWofDb(destPath, opts) {
-	const adminDb =
-		process.env.PLAYPEN_WOF_ADMIN_DB ?? "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
+	const globalDb = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
+	const usAdminDb = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
+	const adminDb = process.env.PLAYPEN_WOF_ADMIN_DB ?? (existsSync(globalDb) ? globalDb : usAdminDb)
 	const postcodeDb =
 		process.env.PLAYPEN_WOF_POSTCODE_DB ?? "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-postalcode-us-latest.db"
 
