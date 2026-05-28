@@ -63,7 +63,12 @@ model:
   use_crf: true
   label_smoothing: 0.0
   crf_normalization: per_sequence
-  crf_loss_weight: 0.5
+  # crf_loss_weight reduced from 0.5 → 0.1 after v0.6.0 NaN at step 950.
+  # Per DeepSeek: combined with lr drop 1.5e-4 → 1.0e-4, this is the minimal
+  # fix that addresses the root cause (CRF gradient at warmup peak amplified
+  # by the new 33-label transition table). Raise incrementally in future
+  # versions once stable.
+  crf_loss_weight: 0.1
   class_weights:
     O: 0.5
     B-country: 2.0
@@ -107,7 +112,7 @@ train:
   batch_size: 128
   eval_batch_size: 128
   grad_accum_steps: 1
-  learning_rate: 1.5e-4
+  learning_rate: 1.0e-4
   weight_decay: 0.01
   warmup_steps: 1000
   grad_clip_norm: 1.0
