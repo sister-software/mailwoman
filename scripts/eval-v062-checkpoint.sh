@@ -30,10 +30,14 @@
 
 set -euo pipefail
 
-STEP="${1:?missing step number — usage: $0 <STEP>}"
+STEP="${1:?missing step number — usage: $0 <STEP> [OUTPUT_DIR_TAG]}"
+# Optional second arg: training output dir tag (defaults to 'v062').
+# E.g. './scripts/eval-v062-checkpoint.sh 20000 v063' evaluates the v0.6.3 step-20K
+# checkpoint at /data/output-v063/checkpoints/step-020000.
+TAG="${2:-v062}"
 # Training writes checkpoint dirs zero-padded to 6 digits (step-020000, step-100000, ...).
 STEP_PADDED=$(printf "%06d" "$STEP")
-WORK_DIR="/tmp/v062-eval-step-${STEP}"
+WORK_DIR="/tmp/${TAG}-eval-step-${STEP}"
 BASELINE_JSON="/tmp/eval-v060-true-baseline.json"
 
 if [ ! -f "$BASELINE_JSON" ]; then
@@ -56,15 +60,15 @@ echo "=== v0.6.2 step ${STEP} eval — work dir $WORK_DIR ==="
 # Modal volume has the checkpoint at /data/output-v062/checkpoints/step-${STEP}/.
 # train_remote.py's export_onnx function reads MAILWOMAN_EXPORT_* env vars to know which
 # checkpoint to grab. We use modal run --env to pass them through.
-echo "[1/6] Exporting ONNX on Modal (checkpoint step-${STEP_PADDED})..."
+echo "[1/6] Exporting ONNX on Modal (output-${TAG}/checkpoints/step-${STEP_PADDED})..."
 modal run scripts/modal/train_remote.py::export_onnx \
-  --output-dir=/data/output-v062 \
+  --output-dir=/data/output-${TAG} \
   --step="${STEP_PADDED}" \
   --tokenizer-path=/data/models/tokenizer/v0.6.0-a0/tokenizer.model 2>&1 | tail -5
 
 # --- 2. Pull the exported ONNX + model-card to local ----------------------------------------
 echo "[2/6] Downloading ONNX + model-card from Modal volume..."
-modal volume get mailwoman-training output-v062/model.onnx "$WORK_DIR/model.onnx" --force 2>&1 | tail -1
+modal volume get mailwoman-training output-${TAG}/model.onnx "$WORK_DIR/model.onnx" --force 2>&1 | tail -1
 # Modal export_onnx doesn't ship a model card; reuse v0.6.0's (Stage 3 labels are identical).
 cp neural-weights-en-us/model-card.json "$WORK_DIR/model-card.json"
 
@@ -82,7 +86,7 @@ node --experimental-strip-types scripts/eval-morphology-fst.ts \
   --admin-fst /mnt/playpen/mailwoman-data/wof/fst-per-locale/fst-en-us.bin \
   --golden data/eval/golden/v0.1.2 \
   --stage3-fold \
-  --name "v0.6.2-step-${STEP}" \
+  --name "${TAG}-step-${STEP}" \
   --out-json "$WORK_DIR/eval-morphology.json" \
   > "$WORK_DIR/eval-morphology.md" 2>&1
 tail -20 "$WORK_DIR/eval-morphology.md"
