@@ -31,6 +31,7 @@ import { createReadStream } from "node:fs"
 import { stableSourceId } from "../../adapter.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
+import { decomposeFrStreet } from "./street-decompose.js"
 
 export const BAN_ADAPTER_ID = "ban"
 
@@ -112,9 +113,12 @@ export function createBanAdapter(): CorpusAdapter {
 					if (!street || !locality) continue
 					if (!house && !postcode) continue
 
+					const decomposed = decomposeFrStreet(street)
+
 					const components: CanonicalRow["components"] = {}
 					if (house) components.house_number = house
-					if (street) components.street = street
+					if (decomposed.prefix) components.street_prefix = decomposed.prefix
+					if (decomposed.street) components.street = decomposed.street
 					if (postcode) components.postcode = postcode
 					if (locality) components.locality = locality
 

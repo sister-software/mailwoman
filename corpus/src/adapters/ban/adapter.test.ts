@@ -62,7 +62,8 @@ describe("ban adapter against fixture sample.csv", () => {
 		expect(rivoli?.raw).toBe("1 Rue de Rivoli, 75001 Paris")
 		expect(rivoli?.components).toEqual({
 			house_number: "1",
-			street: "Rue de Rivoli",
+			street_prefix: "Rue",
+			street: "de Rivoli",
 			postcode: "75001",
 			locality: "Paris",
 		})
