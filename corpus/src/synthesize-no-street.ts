@@ -107,13 +107,15 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
  * Street, Highway, Lane, Drive, Court, Plaza, Park, ...) but are themselves venues, not streets.
  * The model must learn that these are venues despite the street-typing tokens.
  *
- * Real world: "Wall Street Journal", "5th Avenue Theatre", "Lane Bryant", "Highway 61 Records",
- * "Park Avenue Dental".
+ * **No leading digit+ordinal venues** (e.g. "5th Avenue Theatre", "7th Street Bistro"). The
+ * v0.6.2 2026-05-29 step-20K eval showed that synthesized rows starting with
+ * `<digits><ordinal>` confused the model about house_number recognition — tokens like "5th"
+ * (which should be `B-house_number` in real addresses) were being labeled `B-venue` because
+ * adversarial venues placed them in venue position. v0.6.3 omits these patterns; the
+ * `synth-house-venue` shard separately teaches that house_number and venue coexist.
  */
 const ADVERSARIAL_VENUES: ReadonlyArray<string> = [
 	"Wall Street Industries",
-	"5th Avenue Theatre",
-	"7th Street Bistro",
 	"Highway 61 Diner",
 	"Lane Bryant",
 	"Park Avenue Dental",
@@ -142,6 +144,18 @@ const ADVERSARIAL_VENUES: ReadonlyArray<string> = [
 	"Beach Boulevard Diner",
 	"Garden Lane Florist",
 ]
+
+// Compile-time guard: every venue must NOT start with the digit+ordinal pattern that
+// confuses house_number recognition. If a future contributor adds a "5th Avenue Theatre"-
+// style entry, this assertion will fire at module load time.
+for (const v of ADVERSARIAL_VENUES) {
+	if (/^\d+(st|nd|rd|th)\b/i.test(v)) {
+		throw new Error(
+			`ADVERSARIAL_VENUES entry "${v}" starts with digit+ordinal; this pattern confuses ` +
+				`house_number recognition (see v0.6.3 eval doc). Use a non-numeric venue name.`
+		)
+	}
+}
 
 const COUNTRY_NAMES = new Map<string, ReadonlyArray<string>>([
 	["US", ["United States", "USA", "U.S.A.", "United States of America"]],
