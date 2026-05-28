@@ -44,6 +44,7 @@ data:
     deepseek-translit-hang: 0.5
     deepseek-translit-hans: 0.5
     deepseek-translit-jpan: 0.5
+    synth-po-box: 1.5
   train_rows_per_epoch: 1000000
   val_rows: 2048
   coarse_filter: true

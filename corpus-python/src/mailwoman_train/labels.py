@@ -85,8 +85,8 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 # Bump to STAGE3 when training with v0.6.0 corpus. Until then, STAGE2 is active so
 # existing v0.5.x models keep working.
 
-ACTIVE_TAGS: Final[tuple[str, ...]] = STAGE2_TAGS
-ACTIVE_BIO_LABELS: Final[tuple[str, ...]] = STAGE2_BIO_LABELS
+ACTIVE_TAGS: Final[tuple[str, ...]] = STAGE3_TAGS
+ACTIVE_BIO_LABELS: Final[tuple[str, ...]] = STAGE3_BIO_LABELS
 
 LABEL_TO_ID: Final[dict[str, int]] = {label: i for i, label in enumerate(ACTIVE_BIO_LABELS)}
 ID_TO_LABEL: Final[dict[int, str]] = {i: label for label, i in LABEL_TO_ID.items()}
