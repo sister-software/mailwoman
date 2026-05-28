@@ -1,0 +1,107 @@
+/* Confidence-bar cell. Bar is positioned absolute behind the numeric value so the cell
+   reads as both a colour-coded fill AND a number. Width is set inline (0–100%) by the
+   render; tier colour is applied via .conf_high/_mid/_low classes. */
+.confCell {
+	position: relative;
+	display: block;
+	min-width: 5em;
+	height: 1.4em;
+	font-family: var(--ifm-font-family-monospace);
+}
+
+.confBar {
+	position: absolute;
+	inset: 0 auto 0 0;
+	border-radius: 2px;
+	opacity: 0.25;
+}
+
+.conf_high {
+	background: #1aa84d;
+}
+
+.conf_mid {
+	background: #e6a800;
+}
+
+.conf_low {
+	background: #d8504a;
+}
+
+.confValue {
+	position: relative;
+	display: inline-block;
+	padding: 0 0.25rem;
+}
+
+.confDash {
+	color: var(--ifm-color-emphasis-400);
+}
+
+.resultPanel {
+	margin-top: 1.5rem;
+}
+
+.resultPanel h2 {
+	font-size: 1rem;
+	margin: 1rem 0 0.5rem 0;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.resultHeader {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+}
+
+.debugBtn {
+	font-size: 0.75rem;
+	padding: 0.2rem 0.5rem;
+	background: transparent;
+	color: var(--ifm-color-emphasis-700);
+	border: 1px solid var(--ifm-color-emphasis-400);
+	border-radius: 4px;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.debugBtn:hover {
+	color: var(--ifm-color-primary);
+	border-color: var(--ifm-color-primary);
+}
+
+.componentTable {
+	width: 100%;
+	font-size: 0.875rem;
+	border-collapse: collapse;
+}
+
+.componentTable th,
+.componentTable td {
+	text-align: left;
+	padding: 0.25rem 0.5rem;
+	border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.componentTable th {
+	font-weight: 600;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.resolved dl {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 0.25rem 1rem;
+	margin: 0;
+}
+
+.resolved dt {
+	font-weight: 600;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.resolved dd {
+	margin: 0;
+	font-family: var(--ifm-font-family-monospace);
+}

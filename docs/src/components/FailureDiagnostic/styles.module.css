@@ -1,0 +1,29 @@
+/* Failure diagnostic — friendlier than "no hit". Same visual weight as .resolved so the
+  user sees a structured panel either way; tinted yellow-ish so it reads as informational
+   rather than alarming-red. */
+.failureDiagnostic {
+	margin-top: 1rem;
+	padding: 0.75rem 1rem;
+	background: var(--ifm-color-warning-contrast-background, #fff8e1);
+	border-left: 3px solid var(--ifm-color-warning, #e6a800);
+	border-radius: 4px;
+}
+
+.failureDiagnostic h2 {
+	font-size: 1rem;
+	margin: 0 0 0.5rem 0;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--ifm-color-warning-darker, #b88500);
+}
+
+.failureDiagnostic ul {
+	margin: 0;
+	padding-left: 1.25rem;
+	font-size: 0.875rem;
+	color: var(--ifm-color-emphasis-800);
+}
+
+.failureDiagnostic li + li {
+	margin-top: 0.35rem;
+}

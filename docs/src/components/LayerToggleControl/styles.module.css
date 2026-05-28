@@ -1,0 +1,45 @@
+/* Layer-toggle control — a stack of checkboxes pinned in the map's top-right corner.
+   Debug-leaning UI: dense, monospace, no fluff. Width caps at ~14em so it doesn't crowd
+   the map when expanded with longer group labels. */
+.layerToggleCtrl {
+	background: rgba(20, 20, 25, 0.85);
+	color: #f0f0f5;
+	padding: 0.5rem 0.6rem;
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.75rem;
+	min-width: 11em;
+	max-width: 14em;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.layerToggleHeading {
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-bottom: 0.35rem;
+	padding-bottom: 0.25rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+	color: #cfcfdb;
+}
+
+.layerToggleRow {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.1rem 0;
+	cursor: pointer;
+	user-select: none;
+}
+
+.layerToggleRow:hover {
+	color: #ffffff;
+}
+
+.layerToggleRow input[type="checkbox"] {
+	margin: 0;
+	cursor: pointer;
+}
+
+.layerToggleLabel {
+	flex: 1;
+}
