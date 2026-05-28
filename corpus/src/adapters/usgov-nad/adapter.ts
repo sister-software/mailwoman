@@ -165,13 +165,29 @@ function composeHouseNumber(r: NadRecord): string | undefined {
 	return [pre, num, suf].filter(Boolean).join(" ").trim() || undefined
 }
 
-function composeStreet(r: NadRecord): string | undefined {
+interface DecomposedNadStreet {
+	prefix?: string
+	street?: string
+	suffix?: string
+	full: string
+}
+
+function decomposeNadStreet(r: NadRecord): DecomposedNadStreet | undefined {
+	const name = (r.St_Name ?? "").toString().trim()
+	if (name) {
+		const preDir = (r.St_PreDir ?? "").toString().trim()
+		const preTyp = (r.St_PreTyp ?? "").toString().trim()
+		const preSep = (r.St_PreSep ?? "").toString().trim()
+		const posTyp = (r.St_PosTyp ?? "").toString().trim()
+		const posDir = (r.St_PosDir ?? "").toString().trim()
+		const prefix = [preDir, preTyp, preSep].filter(Boolean).join(" ") || undefined
+		const suffix = [posTyp, posDir].filter(Boolean).join(" ") || undefined
+		const full = [prefix, name, suffix].filter(Boolean).join(" ")
+		return { prefix, street: name, suffix, full }
+	}
 	const full = (r.StNam_Full ?? "").toString().trim()
-	if (full) return full
-	const parts = [r.St_PreMod, r.St_PreDir, r.St_PreTyp, r.St_PreSep, r.St_Name, r.St_PosTyp, r.St_PosDir, r.St_PosMod]
-		.map((p) => (p ?? "").toString().trim())
-		.filter(Boolean)
-	return parts.length ? parts.join(" ") : undefined
+	if (full) return { full, street: full }
+	return undefined
 }
 
 function composeLocality(r: NadRecord): string | undefined {
@@ -189,11 +205,12 @@ function composeRaw(parts: {
 	venue?: string
 	houseNumber?: string
 	street?: string
+	unit?: string
 	locality: string
 	region: string
 	postcode: string
 }): string {
-	const streetLine = [parts.houseNumber, parts.street].filter(Boolean).join(" ").trim()
+	const streetLine = [parts.houseNumber, parts.street, parts.unit].filter(Boolean).join(" ").trim()
 	const tail = `${parts.locality}, ${parts.region} ${parts.postcode}`
 	return [parts.venue, streetLine || undefined, tail].filter(Boolean).join(", ")
 }
@@ -243,20 +260,32 @@ export function createUsgovNadAdapter(): CorpusAdapter {
 						const postcode = composePostcode(record)
 						if (!postcode) continue
 
-						const street = composeStreet(record)
+						const decomposed = decomposeNadStreet(record)
 						const houseNumber = composeHouseNumber(record)
 						const venue = nonEmpty(record.LandmkName)
+						const unit = nonEmpty(record.Unit, record.Building, record.Floor, record.Room)
 
 						const components: CanonicalRow["components"] = {
 							...(venue ? { venue } : {}),
 							...(houseNumber ? { house_number: houseNumber } : {}),
-							...(street ? { street } : {}),
+							...(decomposed?.prefix ? { street_prefix: decomposed.prefix } : {}),
+							...(decomposed?.street ? { street: decomposed.street } : {}),
+							...(decomposed?.suffix ? { street_suffix: decomposed.suffix } : {}),
+							...(unit ? { unit } : {}),
 							locality,
 							region: state,
 							postcode,
 						}
 
-						const raw = composeRaw({ venue, houseNumber, street, locality, region: state, postcode })
+						const raw = composeRaw({
+							venue,
+							houseNumber,
+							street: decomposed?.full,
+							unit,
+							locality,
+							region: state,
+							postcode,
+						})
 						if (!raw) continue
 
 						const aligned = reconcileComponents(components, raw)

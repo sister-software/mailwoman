@@ -41,6 +41,7 @@ import { DatabaseSync } from "node:sqlite"
 import { lookupFipsState } from "../../codex/us-fips-state.js"
 import { formatAddress, reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
+import { decomposeStreet } from "./street-decompose.js"
 
 export const TIGER_ADAPTER_ID = "tiger"
 export const TIGER_DEFAULT_LICENSE = "Public Domain"
@@ -77,18 +78,22 @@ function* streetVariants(row: TigerStreetRow): Iterable<{
 	components: CanonicalRow["components"]
 	variantKey: string
 }> {
-	const street = row.fullname.trim()
-	if (!street) return
+	const fullname = row.fullname.trim()
+	if (!fullname) return
 	const state = lookupFipsState(row.statefp)
 	if (!state) return
 
 	const zipl = row.zipl?.trim() ?? ""
 	const zipr = row.zipr?.trim() ?? ""
 
+	const decomposed = decomposeStreet(fullname)
+
 	const baseComponents: CanonicalRow["components"] = {
-		street,
 		region: state.abbreviation,
+		street: decomposed.street,
 	}
+	if (decomposed.prefix) baseComponents.street_prefix = decomposed.prefix
+	if (decomposed.suffix) baseComponents.street_suffix = decomposed.suffix
 
 	if (!zipl && !zipr) {
 		yield { components: baseComponents, variantKey: "no-zip" }

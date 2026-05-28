@@ -76,7 +76,13 @@ describe("tiger adapter against fixture.sql", () => {
 		const rows = await loadRows()
 		const salmon = rows.find((r) => r.source_id === "tiger-st-110000001-zip-97215")
 		expect(salmon).toBeDefined()
-		expect(salmon!.components).toMatchObject({ street: "SE Salmon St", region: "OR", postcode: "97215" })
+		expect(salmon!.components).toMatchObject({
+			street_prefix: "SE",
+			street: "Salmon",
+			street_suffix: "St",
+			region: "OR",
+			postcode: "97215",
+		})
 		expect(salmon!.raw).toContain("SE Salmon St")
 		expect(salmon!.raw).toContain("OR")
 		expect(salmon!.raw).toContain("97215")
