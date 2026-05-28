@@ -134,3 +134,45 @@ Running on Modal A100 with:
 - **#120**: Tokenizer retrain (0% byte-fallback achieved)
 - **#98**: Phase B browser demo (closed previous session)
 - **#47**: Phase 3.x browser demo (closed previous session)
+
+## Night shift addendum (02:00–02:40 UTC)
+
+### v0.5.4 shipped
+
+- Training completed (100K steps, A100, ~2.5h)
+- Export → fp32 117 MB → int8 28.1 MB
+- Demo presets: 6/6 correct on int8
+- Error analysis: 17.0% exact match on 4535 golden entries (cross-tokenizer comparison invalid per eval protocol — schema mismatch dominates; Stage 3 will close most boundary errors)
+- Uploaded to HF `en-us/v0.5.4/` with model.onnx, tokenizer.model, fst-en-US.bin, model-card.json
+- `en-us/releases.json` updated, `defaultVersion: v0.5.4`
+- `neural-weights-en-us` package version bumped to 0.5.4
+
+### Stage 3 corpus adapters shipped
+
+All three priority adapters now emit `street_prefix`, `street_suffix`, `unit` from existing structured input — no rescraping needed.
+
+- **TIGER**: `decomposeStreet()` parses FULLNAME using libpostal/en directionals + street_types. 8 unit tests pass.
+- **NAD**: Uses NAD's structured `St_PreDir`/`St_PreTyp`/`St_PosTyp`/`St_PosDir` fields directly. `Unit`/`Building`/`Floor`/`Room` chain into `unit` tag.
+- **BAN**: French street types are leading words (`Rue`, `Avenue`, `Boulevard`). `decomposeFrStreet()` uses libpostal/fr/street_types. 6 unit tests pass.
+
+`ACTIVE_TAGS` remains STAGE2 — bump to STAGE3 when v0.6.0 training is ready.
+
+### Japanese WOF adapter prototype
+
+`wof-admin-jp` walks the global SQLite parent chain for every 丁目 (chome) in the JP repo. Produces **6,373 synthetic JP training rows** across 47 prefectures, 269 localities. Top: 東京 (Tokyo) 2,251 rows. Blog post: [Why Japanese addresses break Western parsers](/blog/2026-05-28-japanese-address-hierarchy).
+
+### Per-locale FSTs on HF
+
+Seven locale FSTs uploaded to `hf://buckets/sister-software/mailwoman/fst/`:
+
+| Locale | Size | States |
+|--------|------|--------|
+| en-US | 20.9 MB | 160K |
+| en-GB | 3.7 MB | 33K |
+| fr-FR | 10.2 MB | 72K |
+| ja-JP | 13.0 MB | 116K |
+| ko-KR | 7.1 MB | 55K |
+| zh-CN | 92.5 MB | 589K |
+| de-DE | 8.1 MB | 70K |
+
+CJK queries (東京, 北京, 서울) now resolve correctly. Deep demo wiring (locale detection → dynamic FST swap) deferred — out of scope for tonight.
