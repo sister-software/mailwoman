@@ -117,12 +117,12 @@ export class FstMatcher {
 	}
 }
 
-/** Normalize text into FST tokens: lowercase, NFKC, strip non-alphanumeric, split on whitespace. */
+/** Normalize text into FST tokens: lowercase, NFKC, strip punctuation, split on whitespace. */
 export function normalizeTokens(text: string): string[] {
 	return text
 		.normalize("NFKC")
 		.toLowerCase()
-		.replace(/[^a-z0-9\s]/g, "")
+		.replace(/[\p{P}\p{S}]/gu, "")
 		.split(/\s+/)
 		.filter((t) => t.length > 0)
 }

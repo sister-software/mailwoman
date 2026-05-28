@@ -158,17 +158,16 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 	const placeIds = sprRows.map((r) => r.id)
 	const namesByPlace = new Map<number, string[]>()
 
-	// Batch query names (SQLite has a limit on placeholders, chunk at 500).
+	const allLanguages = languages.includes("*")
 	for (let i = 0; i < placeIds.length; i += 500) {
 		const chunk = placeIds.slice(i, i + 500)
-		const langPlaceholders = languages.map(() => "?").join(",")
 		const idPlaceholders = chunk.map(() => "?").join(",")
-		const nameStmt = db.prepare(
-			`SELECT id, name, language, privateuse FROM names
-			 WHERE id IN (${idPlaceholders})
-			   AND language IN (${langPlaceholders})`
-		)
-		const nameRows = nameStmt.all(...chunk, ...languages) as unknown as NameRow[]
+		const nameStmt = allLanguages
+			? db.prepare(`SELECT id, name, language, privateuse FROM names WHERE id IN (${idPlaceholders})`)
+			: db.prepare(
+					`SELECT id, name, language, privateuse FROM names WHERE id IN (${idPlaceholders}) AND language IN (${languages.map(() => "?").join(",")})`
+				)
+		const nameRows = (allLanguages ? nameStmt.all(...chunk) : nameStmt.all(...chunk, ...languages)) as unknown as NameRow[]
 		for (const row of nameRows) {
 			const existing = namesByPlace.get(row.id) ?? []
 			if (!existing.includes(row.name)) existing.push(row.name)
