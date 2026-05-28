@@ -1,0 +1,92 @@
+{
+	"name": "neural-weights-en-us",
+	"version": "0.6.2",
+	"phase": "Stage 3 — corpus rebalance: synth-no-street counter-distribution",
+	"license": "AGPL-3.0-only",
+	"locale": "en-us",
+	"training": {
+		"corpus_version": "0.4.0+stage3+nostreet",
+		"tokenizer_version": "0.6.0-a0",
+		"steps": 100000,
+		"best_step": "TBD-from-train-log",
+		"hardware": "NVIDIA A100 80GB PCIe (Modal cloud)",
+		"recipe": "v0.6.0/v0.6.1 base + corpus rebalance: synth-street weight 2.0→0.5, NEW synth-no-street source @ 1.0 (122K rows: 112K US + 10K DE/GB, 35% venue-adversarial). CE-only (CRF deferred to v0.6.3 per NaN protocol; fp32-CRF diagnostic 2026-05-28 confirmed bf16 NaN fix). lr=1.5e-4 constant, warmup=1000."
+	},
+	"architecture": {
+		"hidden_size": 384,
+		"num_hidden_layers": 6,
+		"num_attention_heads": 6,
+		"intermediate_size": 1536,
+		"max_position_embeddings": 128,
+		"vocab_size": 48000,
+		"num_labels": 33,
+		"params": "29.3M (29M encoder + 9M embedding from 48K vocab)",
+		"crf_at_training": false,
+		"crf_at_inference": true,
+		"phrase_priors": true
+	},
+	"labels": [
+		"O",
+		"B-country",
+		"I-country",
+		"B-region",
+		"I-region",
+		"B-locality",
+		"I-locality",
+		"B-dependent_locality",
+		"I-dependent_locality",
+		"B-postcode",
+		"I-postcode",
+		"B-subregion",
+		"I-subregion",
+		"B-cedex",
+		"I-cedex",
+		"B-venue",
+		"I-venue",
+		"B-street",
+		"I-street",
+		"B-house_number",
+		"I-house_number",
+		"B-street_prefix",
+		"I-street_prefix",
+		"B-street_suffix",
+		"I-street_suffix",
+		"B-unit",
+		"I-unit",
+		"B-po_box",
+		"I-po_box",
+		"B-intersection_a",
+		"I-intersection_a",
+		"B-intersection_b",
+		"I-intersection_b"
+	],
+	"inference": {
+		"admin_fst": "recommended (fst-en-us.bin or fst-global-priority.bin)",
+		"street_morphology_fst": "recommended (fst-street-morphology.bin; ~1707 libpostal affix canonicals)",
+		"viterbi_decode": true,
+		"query_shape_prior": true
+	},
+	"eval": {
+		"golden_v0.1.2": {
+			"exact_match_pct": "TBD-from-eval-pipeline",
+			"per_tag_summary": "see docs/articles/evals/v0.6.2-eval.md"
+		},
+		"v0_vs_neural_harness": {
+			"pass_rate_pct": "TBD-from-harness",
+			"baseline_v0.6.0_pct": 14.4,
+			"target_band": "≥25% promotion, 15-24% experimental, ≤14.4% hold"
+		},
+		"gate_vs_v0.6.0": {
+			"verdict": "TBD-from-eval-gate",
+			"recall_threshold_pp": 2,
+			"hall_abs_threshold": 100
+		}
+	},
+	"upstream_changes_from_v0.6.0": [
+		"Reduced synth-street source weight 2.0 → 0.5 to suppress decompose-mode bias.",
+		"Added synth-no-street source @ weight 1.0 — 122K rows (112K US + 10K DE/GB).",
+		"35% of synth-no-street rows are 'venue-adversarial': venues whose names contain street-typing tokens (e.g. '5th Avenue Theatre', 'Wall Street Industries'), with explicit B-venue labels on tokens like 'Street'/'Avenue'/'Drive'.",
+		"Bilingual slice (DE/GB) gives non-US anti-decompose signal. Synthetic plausible postcodes; model trains on shape, not on locality↔postcode geocoder-truth."
+	],
+	"intended_use": "US, FR, and US/GB/DE address parsing. Non-US locales beyond GB/DE/FR still have coverage gaps — see v0-vs-neural-harness eval for per-locale pass rates."
+}
