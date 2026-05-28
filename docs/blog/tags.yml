@@ -36,7 +36,9 @@ geocoding:
   label: Geocoding
   description: Articles about geocoding — the process of turning parsed addresses into lat/lon coordinates.
 
-
+infrastructure:
+  label: Infrastructure
+  description: Articles about the training-data pipeline, model training, tokenization, and other non-model components.
 
 beginner:
   label: Beginner-friendly
@@ -45,6 +47,10 @@ beginner:
 advanced:
   label: Advanced
   description: Articles that dive deep into technical details, diagnostics, and design decisions — ideal for experienced practitioners.
+
+night-shift:
+  label: Night shift
+  description: Articles about the night shift debugging sessions — Problems. Process. Outcomes.
 
 #endregion
 

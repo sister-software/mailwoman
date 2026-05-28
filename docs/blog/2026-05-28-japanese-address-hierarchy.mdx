@@ -1,0 +1,129 @@
+---
+title: "Why Japanese addresses break Western parsers"
+description: "Japanese addresses run backwards: prefecture, then city, then block, then number. They have no street names. We just pulled 6,373 of them from Who's On First."
+authors: [teffen]
+tags: [neural, training, japan, locale]
+---
+
+In Tokyo, the address of Tokyo Tower is `〒105-0011 東京都港区芝公園4-2-8`.
+
+In English: "4-2-8 Shibakōen, Minato City, Tokyo 105-0011".
+
+The Japanese form runs **right-to-left** compared to the English form. The prefecture (都道府県) comes first, then the city or ward (市区町村), then a district (丁目) and a block-number-style locator. There's no street name — just a grid.
+
+This is why every rule-based address parser written for Western addresses breaks on Japan.
+
+{/* truncate */}
+
+## The hierarchy
+
+Who's On First ships Japan's admin hierarchy as one repo with 62,896 GeoJSON files. After pulling it into our unified SQLite, the placetype distribution looks like this:
+
+| Placetype (English) | Japanese | Count |
+|---------------------|----------|-------|
+| country | 国 | 1 |
+| region (prefecture) | 都道府県 | 47 |
+| county (city) | 郡 | 2,287 |
+| locality (ward/town) | 市区町村 | 43,886 |
+| neighbourhood (chome) | 丁目 | 7,736 |
+
+47 prefectures. The whole country. Every chome (city block district) tagged with a name like `１丁目` (1-chome), `２丁目` (2-chome).
+
+## Reversed ordering
+
+Western address: `[house_number] [street] [unit?], [locality], [region] [postcode]`.
+
+Japanese address: `〒[postcode]? [region][locality][chome][block]-[sub-block]-[house_number]`.
+
+The order matters for parsers because we use position as a feature. A model trained on "1600 Pennsylvania Avenue NW, Washington, DC 20500" expects digits at the start, region near the end. A Japanese address inverts this entirely. Walking the parent chain in the WOF database confirms the inversion:
+
+```
+neighbourhood   jpn=１丁目      eng=１丁目
+locality        jpn=世田谷区     eng=Setagaya
+county          jpn=世田谷区     eng=Setagaya
+region          jpn=東京        eng=Tokyo
+country         jpn=日本        eng=Japan
+```
+
+To synthesize a JP address you concatenate the parent chain top-to-bottom: `東京 + 世田谷区 + １丁目 → 東京世田谷区１丁目`.
+
+## No street names
+
+Western addresses identify locations by street + number. "1600 Pennsylvania Avenue NW" picks a specific building because Pennsylvania Avenue is a known line and 1600 is a known offset along that line.
+
+Japan uses block addressing instead. `4-2-8` in `芝公園` doesn't mean "the 4th, 2nd, or 8th building on the 芝公園 street." It means: chome 4, block 2, building 8 in the 芝公園 district. The grid is the addressing primitive, not the line.
+
+Implications for the parser:
+
+- `street_prefix` and `street_suffix` don't apply (no street).
+- `house_number` becomes a hyphenated triple: `4-2-8`.
+- The "丁目" suffix is a categorical marker, not a street type.
+
+For now we map chome to `dependent_locality` since it's the closest existing tag. A proper JP locale would introduce `block` and `sub_block` tags per the schema in `core/types/component.ts` (declared but unused until JP ships).
+
+## Prefix postcode
+
+Japanese addresses prefix the postcode with `〒`, the postal mark. Format: `〒NNN-NNNN`. Examples:
+
+- `〒100-0005` — Tokyo Marunouchi
+- `〒530-0001` — Osaka Umeda
+- `〒810-0001` — Fukuoka Tenjin
+
+A parser needs to know that `〒` is not part of the number — it's a categorical marker indicating the following 7 digits + dash form a postcode. SentencePiece tokenizes `〒` as a separate piece. Our new v0.6.0-a0 multi-script tokenizer handles this cleanly (0% byte-fallback on the `〒` character).
+
+## What we shipped today
+
+The `wof-admin-jp` adapter prototype walks the WOF parent chain for every 丁目 in the Japanese repo and synthesizes a training row. Output:
+
+```json
+{
+  "raw": "東京港区芝公園",
+  "components": {
+    "region": "東京",
+    "locality": "港区",
+    "dependent_locality": "芝公園",
+    "country": "JP"
+  }
+}
+```
+
+**6,373 rows from 47 prefectures and 269 localities** — that's training data we didn't have yesterday. Top prefectures by row count:
+
+| Prefecture | Rows |
+|-----------|------|
+| 東京 (Tokyo) | 2,251 |
+| 神奈川 (Kanagawa) | 888 |
+| 大阪 (Osaka) | 460 |
+| 千葉 (Chiba) | 380 |
+| 埼玉 (Saitama) | 263 |
+
+Tokyo dominates because of its density of named neighborhoods — every chome of every ward is tagged. Smaller prefectures have fewer registered neighborhoods.
+
+## What's still missing
+
+Real JP addresses include house numbers (`4-2-8`) which WOF doesn't track. To complete a Stage 3 JP corpus we need a separate source — the [MLIT national address database](https://www.mlit.go.jp/) or [JapanPost postcode CSVs](https://www.post.japanpost.jp/zipcode/download.html). Both are public.
+
+Once those land, the JP corpus becomes a 100K+ row source with full Stage 3 + Phase 6 tags (`block`, `sub_block`, `house_number`). v0.6.0 trains on US/FR. v0.7.0 could ship JP if the data pipeline holds.
+
+## Schema readiness
+
+The infrastructure is already in place. `core/types/component.ts` declares JP-specific Phase 6 tags:
+
+```ts
+// JP-specific (Phase 6 — declared but unused until then)
+"prefecture",
+"municipality",
+"district",
+"block",
+"sub_block",
+"building_number",
+"building_name",
+```
+
+The schema, formatting, runtime pipeline, and now the corpus prototype are ready. The blockers are: (1) the missing house-number data source, and (2) training time on a JP-aware recipe.
+
+## Why this matters
+
+Every address parser written for Western input fails on Japan in a specific, predictable way: it parses the prefecture as a country, then runs out of tokens. The locality and chome get lumped into a single span. The block-number triple gets parsed as a postcode or dropped entirely.
+
+Mailwoman's transformer architecture is locale-agnostic at the BIO level. The same model can learn `region → locality → chome` ordering if it sees enough examples. The 6,373 rows we generated today are the first batch.

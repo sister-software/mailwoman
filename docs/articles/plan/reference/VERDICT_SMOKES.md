@@ -1,6 +1,6 @@
 # Verdict-smoke framework
 
-:::tip Audience
+:::tip[Audience]
 
 🧪 **Operator documentation.** For contributors designing and running training experiments. If you want to use Mailwoman, see [Getting started](/docs/getting-started).
 

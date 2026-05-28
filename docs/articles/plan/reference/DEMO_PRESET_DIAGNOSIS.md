@@ -5,7 +5,7 @@ title: Demo preset diagnosis
 
 # Demo Preset Diagnosis — v0.5.1 Locality/Region Confusion
 
-:::info Fixes shipped
+:::info[Fixes shipped]
 
 - **"New York, NY"**: Fixed by the region-aware locality bias guard ([#174](https://github.com/sister-software/mailwoman/pull/174)). The QueryShape prior now skips locality bias when the preceding text matches the region's full name.
 - **FST importance weighting**: Washington DC locality (0.815) correctly outranks Washington state (0.764) via Wikipedia importance ([#173](https://github.com/sister-software/mailwoman/pull/173)).

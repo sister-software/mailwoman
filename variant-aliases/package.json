@@ -1,0 +1,26 @@
+{
+	"name": "@mailwoman/variant-aliases",
+	"version": "0.1.0",
+	"description": "Regional variant alias table — local terms for amenities/brands gated by locale. 'servo' → fuel (en-AU), 'マクド' → McDonald's (ja-JP), 'PFK' → KFC (fr-CA).",
+	"license": "AGPL-3.0-only",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "variant-aliases"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"data/**/*.json"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}

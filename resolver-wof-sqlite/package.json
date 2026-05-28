@@ -19,6 +19,7 @@
 		"./fst-serialize": "./out/fst-serialize.js",
 		"./fst-autocomplete": "./out/fst-autocomplete.js",
 		"./fst-types": "./out/fst-types.js",
+		"./fst-deserialize-web": "./out/fst-deserialize-web.js",
 		"./unified-schema": "./out/unified-schema.js"
 	},
 	"dependencies": {

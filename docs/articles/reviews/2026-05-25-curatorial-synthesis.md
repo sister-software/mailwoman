@@ -87,7 +87,7 @@ The five contradictions the Codex review identified as "now a docs bug class":
 
 #### A6. Add audience headers
 
-Add `:::info Who this is for` blocks to:
+Add `:::info[Who this is for` blocks to:]
 
 - `plan/README.md` — "Contributors and operators running training experiments"
 - `ARCHITECTURE.md` — "ML engineers evaluating the design; historical planning doc. See `/docs/status` for current shipped state."

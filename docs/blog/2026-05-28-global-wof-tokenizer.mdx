@@ -1,0 +1,75 @@
+---
+title: "Zero byte-fallback: a multi-script tokenizer from WOF-earth"
+description: "We pulled Who's On First data for 7 countries, trained a new tokenizer on 2.19M multi-script place names, and eliminated CJK byte-fallback entirely."
+authors: [teffen]
+tags: [neural, training, infrastructure]
+---
+
+The v0.5.0-a1 tokenizer had a dirty secret: it was trained exclusively on US and French addresses. When it encountered Chinese, Japanese, Korean, Thai, or Arabic text, it fell back to encoding individual bytes — 50-75% of tokens for CJK scripts. Every byte-fallback token is a lost opportunity for the model to learn meaningful subword patterns.
+
+Today we fixed that.
+
+{/* truncate */}
+
+## The data
+
+Who's On First ships one GitHub repo per country, each containing GeoJSON files for every administrative place. Every place carries localized name variants — "New York" has a `name:zho` of "纽约", a `name:jpn` of "ニューヨーク", a `name:kor` of "뉴욕", and dozens more.
+
+We cloned 7 priority countries (US, FR, JP, CN, KR, DE, GB) — 1.74 million GeoJSON files — and built them into a unified SQLite database using our WAL + Freeze pipeline:
+
+| Country | GeoJSON files | Time |
+|---------|--------------|------|
+| CN | 680K | - |
+| US | 449K | - |
+| FR | 231K | - |
+| DE | 189K | - |
+| GB | 73K | - |
+| JP | 63K | - |
+| KR | 54K | - |
+| **Total** | **1.74M** | **3 min** |
+
+The result: 1.29 million places with 10.2 million name variants in 20+ languages. 768K Chinese names, 184K Japanese, 264K French, 261K German, 285K Arabic.
+
+## The tokenizer
+
+We extracted a balanced multi-script training set (2.19M lines) from the global WOF names table, shuffled across script groups:
+
+- 500K Latin (English, French, German, Spanish, ...)
+- 500K Chinese
+- 468K Cyrillic (Russian, Ukrainian, ...)
+- 285K Arabic
+- 183K Japanese
+- 94K Korean
+- 160K other (Thai, Hindi, Hebrew, Greek, ...)
+
+SentencePiece trained in 28 seconds. Same 48K vocab size as before, same user-defined symbols (US state abbreviations, postcode formats). The difference: the vocab now allocates subword pieces for CJK characters, Hangul syllables, Thai consonant clusters, and Arabic word fragments — instead of wasting slots on Latin-only subwords that the old training data biased toward.
+
+## The result
+
+| Script | v0.5.0-a1 (old) | v0.6.0-a0 (new) |
+|--------|----------------|-----------------|
+| Chinese | 50-75% byte-fallback | **0%** |
+| Japanese | 58-60% | **0%** |
+| Korean | 41% | **0%** |
+| Thai | 30% | **0%** |
+| Arabic | 0% | 0% |
+| Latin | 0% | 0% |
+| **Aggregate** | **36.6%** | **0.0%** |
+
+Issue [#120](https://github.com/sister-software/mailwoman/issues/120) targeted less than 5% byte-fallback. We hit zero.
+
+The tokenizer also produces fewer pieces per input. "北京市朝阳区建国路79号" (Beijing address) went from 19 pieces (63% byte-fallback) to 11 pieces (0% byte-fallback). That means more of the 128-token sequence budget is available for actual content instead of being consumed by byte encoding.
+
+## What's training
+
+v0.5.4 is now running on a Modal A100 with the new tokenizer. It uses the v0.5.1 proven recipe (the one that achieved 0.638 F1) but with the multi-script tokenizer. If the model learns CJK address patterns as well as it learns Latin ones, this is the foundation for JP/CN/KR locale support.
+
+## The pipeline
+
+The global WOF build pipeline follows the [WAL + Freeze design brief](/docs/reviews/2026-05-28-sqlite-wal-strategy):
+
+1. **Enumerate**: glob `**/data/**/*.geojson` across all country repos
+2. **Ingest**: WAL mode, parallel file reads (asyncParallelIterator), single-thread writer, batched transactions
+3. **Freeze**: WAL checkpoint, journal_mode=DELETE, create indexes, ANALYZE, VACUUM INTO
+
+The frozen artifact is a clean 1.09 GB SQLite with no sidecars, verified read-only, integrity-checked. It's available for download from the [Hugging Face bucket](https://huggingface.co/buckets/sister-software/mailwoman).

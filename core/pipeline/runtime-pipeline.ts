@@ -32,8 +32,7 @@ import type {
 
 /**
  * Known QueryShape format strings that indicate "this token is a postcode". Mirrors the set in
- *
- * @mailwoman/kind-classifier — kept duplicated so core/pipeline has no dep on kind-classifier.
+ * `@mailwoman/kind-classifier` — kept duplicated so core/pipeline has no dep on kind-classifier.
  */
 const POSTCODE_FORMATS: ReadonlySet<string> = new Set([
 	"us_zip",
@@ -387,6 +386,15 @@ function grouperAudit(tree: AddressTree, proposals: PhraseProposal[], text: stri
 
 	const roots = [...tree.roots]
 
+	const allNodes: Array<{ start: number; end: number }> = []
+	const collectNodes = (nodes: typeof roots): void => {
+		for (const n of nodes) {
+			allNodes.push({ start: n.start, end: n.end })
+			if (n.children) collectNodes(n.children as typeof roots)
+		}
+	}
+	collectNodes(roots)
+
 	for (const proposal of proposals) {
 		const tag = PHRASE_KIND_TO_TAG.get(proposal.kindHypothesis)
 		if (!tag) continue
@@ -394,7 +402,7 @@ function grouperAudit(tree: AddressTree, proposals: PhraseProposal[], text: stri
 		const pStart = proposal.span.start
 		const pEnd = pStart + proposal.span.body.length
 
-		const covered = roots.some((node) => node.start < pEnd && pStart < node.end)
+		const covered = allNodes.some((node) => node.start < pEnd && pStart < node.end)
 		if (covered) continue
 
 		const provisionalNode: AddressNode = {

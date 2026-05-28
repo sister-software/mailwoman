@@ -1,6 +1,6 @@
 # Operations
 
-:::tip Audience
+:::tip[Audience]
 
 🧪 **Operator documentation.** For contributors running corpus builds, training experiments, and releases. If you want to use Mailwoman, see [Getting started](/docs/getting-started).
 

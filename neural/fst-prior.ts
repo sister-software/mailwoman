@@ -14,7 +14,7 @@
  *   non-alnum), and walked through the FST as contiguous subpaths.
  *
  *   Uses structural typing for the FST input so this module has zero dependencies on
- * @mailwoman/resolver-wof-sqlite — consumers pass an FstMatcher instance, but this file only
+ *   `@mailwoman/resolver-wof-sqlite` — consumers pass an FstMatcher instance, but this file only
  *   consumes the shape.
  */
 
@@ -163,7 +163,7 @@ function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): WordGro
 
 	for (let i = 0; i < pieces.length; i++) {
 		const p = pieces[i]!
-		const hasAlnum = /[a-zA-Z0-9]/.test(p.piece)
+		const hasAlnum = /[\p{L}\p{N}]/u.test(p.piece)
 
 		if (p.piece.startsWith(SPACE_SENTINEL) || i === 0 || !hasAlnum) {
 			if (current) groups.push(current)
@@ -196,7 +196,7 @@ function normalizeFstToken(s: string): string {
 	const cleaned = s
 		.normalize("NFKC")
 		.toLowerCase()
-		.replace(/[^a-z0-9]/g, "")
+		.replace(/[\p{P}\p{S}]/gu, "")
 	return cleaned.length > 0 ? cleaned : ""
 }
 

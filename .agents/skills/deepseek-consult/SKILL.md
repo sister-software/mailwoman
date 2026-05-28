@@ -57,12 +57,44 @@ Turn 6: "Last turn — synthesize into a concrete plan."
 - Operator may inject mid-conversation with additional context — incorporate into next turn
 - When operator says "N turns" — that's a budget, honor it
 
+## Evidence checklist (required for model/training consultations)
+
+Before sending any prompt about model quality, training results, or recipe changes, include ALL of:
+
+1. **Functional test output** — demo preset results (6 addresses, JSON or XML). Aggregate metrics without functional evidence are insufficient to conclude.
+2. **Tokenizer version** — state explicitly when comparing models. Different tokenizers invalidate F1 comparisons.
+3. **Raw BIO output** — not just `decodeAsJson` (which drops all-O spans). Use XML format to show coverage gaps.
+4. **What-changed matrix** — for multi-variable comparisons, list each parameter that changed between the two configs.
+
+### Verify-before-concluding guard
+
+Add a penultimate turn to every model-quality session:
+
+> "Before concluding — did we verify against functional tests? Do metrics and functional tests agree? If not, which do we trust?"
+
+This prevents the "do not ship" verdict that was wrong for v0.5.3 — DeepSeek recommended reverting based on the same invalid F1 comparison.
+
 ## Failure modes
 
 - **Hangs:** API key may have expired. Check `.env.host`.
+- **Empty response:** DeepSeek occasionally returns zero-byte output. Retry with a shorter prompt. On repeated failures, check API key validity: `curl -s https://api.deepseek.com/v1/models -H "Authorization: Bearer $DEEPSEEK_API_KEY" | head -1`
 - **Truncated start:** `--print` sometimes clips first lines. Use `--continue` to ask for restatement.
 - **Generic answers:** Prompt lacked code context. Add file paths, types, and the specific constraint that makes this non-trivial.
 - **Timeout:** For very long prompts, use `run_in_background: true` and check output file when notified.
+
+## Cross-session continuity
+
+DeepSeek has no memory across conversations. When a session produces important conclusions, save them to a reference file that the next session can include:
+
+```bash
+# After a productive session, save key conclusions:
+echo "## DeepSeek session $(date +%Y-%m-%d) — <topic>
+- Conclusion 1
+- Conclusion 2
+" >> docs/articles/evals/deepseek-session-notes.md
+```
+
+Then include the file content in the next session's first prompt.
 
 ## Output handling
 

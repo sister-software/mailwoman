@@ -245,15 +245,20 @@ def export_onnx():
     from mailwoman_train.tokenizer import Tokenizer
 
     import torch
-    ck_dir = Path("/data/output-v053/checkpoints/step-028000")
-    tokenizer = Tokenizer(Path("/data/models/tokenizer/v0.5.0-a1/tokenizer.model"))
+    import os
+    output_dir = os.environ.get("MAILWOMAN_EXPORT_OUTPUT_DIR", "/data/output-v054")
+    step = os.environ.get("MAILWOMAN_EXPORT_STEP", "100000")
+    tokenizer_path = os.environ.get("MAILWOMAN_EXPORT_TOKENIZER", "/data/models/tokenizer/v0.6.0-a0/tokenizer.model")
+
+    ck_dir = Path(f"{output_dir}/checkpoints/step-{step}")
+    tokenizer = Tokenizer(Path(tokenizer_path))
 
     _orig_load = torch.load
     torch.load = lambda *a, **kw: _orig_load(*a, **{**kw, "map_location": "cpu"})
     model = MailwomanCoarseEncoder.from_pretrained(ck_dir)
     torch.load = _orig_load
 
-    out_path = Path("/data/output-v053/model.onnx")
+    out_path = Path(f"{output_dir}/model.onnx")
     print(f"Exporting {ck_dir} → {out_path}")
     export_to_onnx(model, out_path, opset=17, max_length=128, pad_token_id=tokenizer.pad_id)
     print(f"ONNX exported: {out_path} ({out_path.stat().st_size / 1e6:.1f} MB)")
