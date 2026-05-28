@@ -18,7 +18,7 @@ This article explains the idea behind it, the build-time vs query-time split tha
 
 ## "If you knew this, you'd know that..."
 
-Most of what's hard about address parsing is that any given span is ambiguous in isolation. `Paris` is a city in France, a town in Texas, and a town in Ontario. `Washington` is a state, a federal district, and twenty-something cities. The model can't decide what `Paris` *is* until it knows what's around it.
+Most of what's hard about address parsing is that any given span is ambiguous in isolation. `Paris` is a city in France, a town in Texas, and a town in Ontario. `Washington` is a state, a federal district, and twenty-something cities. The model can't decide what `Paris` _is_ until it knows what's around it.
 
 But the gazetteer has a structural shortcut: places live in a hierarchy. If you know a token sequence matches a known city, you also know the country, the region, and (often) the county that contains it. That's a chain of implications you can compute once, write down, and look up later.
 
@@ -30,9 +30,9 @@ flowchart LR
     D --> E["...which implies its neighbors are likely:<br>French postal codes (5 digits)<br>French street types (rue, avenue, boulevard)<br>NOT US state abbreviations"]
 ```
 
-That last step — "which implies its neighbors are likely" — is the payoff. The neural model sees a single token and predicts a tag from local context. The FST gives it a *prior* that says "if `Paris` is the city in France, then the next thing is much more likely to be `France` than `TX`." Confident model predictions stay confident. Uncertain ones get nudged toward the gazetteer-consistent reading.
+That last step — "which implies its neighbors are likely" — is the payoff. The neural model sees a single token and predicts a tag from local context. The FST gives it a _prior_ that says "if `Paris` is the city in France, then the next thing is much more likely to be `France` than `TX`." Confident model predictions stay confident. Uncertain ones get nudged toward the gazetteer-consistent reading.
 
-Read the same diagram the other way — from a *less specific* span to its plausible *children* — and you get the second framing of the idea:
+Read the same diagram the other way — from a _less specific_ span to its plausible _children_ — and you get the second framing of the idea:
 
 ```mermaid
 flowchart LR
@@ -72,19 +72,19 @@ The asymmetry is deliberate. Build time pays the cost of "enumerate every valid 
 
 Shipped numbers for the US admin FST:
 
-| Stage                              | Cost            |
-| ---------------------------------- | --------------- |
-| Build (from unified SQLite)        | 2.7 s           |
-| Build (from raw GeoJSON, 293k recs)| 43 s            |
-| Binary size                        | 5.57 MB         |
-| Load at startup                    | ~10 ms          |
-| Query per address                  | sub-millisecond |
+| Stage                               | Cost            |
+| ----------------------------------- | --------------- |
+| Build (from unified SQLite)         | 2.7 s           |
+| Build (from raw GeoJSON, 293k recs) | 43 s            |
+| Binary size                         | 5.57 MB         |
+| Load at startup                     | ~10 ms          |
+| Query per address                   | sub-millisecond |
 
 The binary is small enough to ship to a browser. The `/demo` page loads a 9 MB FST in parallel with the ONNX model and uses both at inference time — no server-side gazetteer call.
 
 ## What's inside the FST
 
-Each accepting state — a state where a complete place name ends — carries one or more `PlaceEntry` records. Multiple entries per state are the norm, not the exception: `"New York"` accepts as *both* the city and the state.
+Each accepting state — a state where a complete place name ends — carries one or more `PlaceEntry` records. Multiple entries per state are the norm, not the exception: `"New York"` accepts as _both_ the city and the state.
 
 ```mermaid
 flowchart LR
@@ -96,9 +96,9 @@ flowchart LR
     S3 -.entries.-> E3["PlaceEntry<br>wof_id: 85977539<br>placetype: locality<br>parent_chain: [US, NY-state]<br>importance: 0.95"]
 ```
 
-The FST never picks between interpretations. It hands the neural model and the Viterbi decoder *all* of them, weighted by importance, and lets the joint decode resolve the ambiguity using surrounding context.
+The FST never picks between interpretations. It hands the neural model and the Viterbi decoder _all_ of them, weighted by importance, and lets the joint decode resolve the ambiguity using surrounding context.
 
-The `parent_chain` is the load-bearing piece of structure. It's how a match on `"Brooklyn"` becomes evidence that the next token *should* be one of `{New York, NY, US, 11201, 11202, ...}` — anything coherent with that chain — rather than an unrelated place like `Houston`.
+The `parent_chain` is the load-bearing piece of structure. It's how a match on `"Brooklyn"` becomes evidence that the next token _should_ be one of `{New York, NY, US, 11201, 11202, ...}` — anything coherent with that chain — rather than an unrelated place like `Houston`.
 
 ## How the prior composes with the rest of the pipeline
 
@@ -137,18 +137,18 @@ Two design choices matter here:
 
 This is the case the prior was originally designed to fix. Per-token argmax used to mislabel `Washington` as `B-region` because the model had seen `Washington (state)` more often than `Washington (DC)` in training.
 
-| Signal                          | Bias on B-locality for `Washington`  |
-| ------------------------------- | ------------------------------------ |
-| Raw neural logit                | (small, uncertain)                   |
-| QueryShape: `DC` is a region abbreviation, so the preceding span should be a locality | +2.0 |
-| FST: `Washington` matches locality WOF:85633793, importance 0.815 | +0.815 × 3.0 = +2.45 |
-| **Sum**                         | **+4.45 over B-region**              |
+| Signal                                                                                | Bias on B-locality for `Washington` |
+| ------------------------------------------------------------------------------------- | ----------------------------------- |
+| Raw neural logit                                                                      | (small, uncertain)                  |
+| QueryShape: `DC` is a region abbreviation, so the preceding span should be a locality | +2.0                                |
+| FST: `Washington` matches locality WOF:85633793, importance 0.815                     | +0.815 × 3.0 = +2.45                |
+| **Sum**                                                                               | **+4.45 over B-region**             |
 
 The Viterbi decoder now has overwhelming evidence to pick the locality reading. None of the model's parameters changed — the prior just supplied the world knowledge the model was missing.
 
 ## Negative evidence is the second payoff
 
-The FST's most underappreciated property is what happens when a token *doesn't* match. Walking off a prefix is a strong signal that the token is **not** an admin component.
+The FST's most underappreciated property is what happens when a token _doesn't_ match. Walking off a prefix is a strong signal that the token is **not** an admin component.
 
 ```mermaid
 flowchart LR
@@ -158,13 +158,13 @@ flowchart LR
     T4["'Buffalo'"] -->|matches| F4["same 14 places again"]
 ```
 
-For `"Buffalo Health Clinic, Buffalo"`, the FST quietly tells the decoder: the first `Buffalo` *could* be a locality, but the next two tokens *can't* be. That's enough for the decoder to read the whole `Buffalo Health Clinic` span as a venue, with the trailing `Buffalo` as the actual locality.
+For `"Buffalo Health Clinic, Buffalo"`, the FST quietly tells the decoder: the first `Buffalo` _could_ be a locality, but the next two tokens _can't_ be. That's enough for the decoder to read the whole `Buffalo Health Clinic` span as a venue, with the trailing `Buffalo` as the actual locality.
 
 This is information the gazetteer always had. Before the FST, the model had to learn it from corpus statistics. Now it's an explicit emission bias the model gets for free.
 
 ## The corpus side: hierarchy chains as training data
 
-The FST is the *inference-time* expression of the idea. The *training-time* expression is in the corpus pipeline. The same WOF hierarchy that becomes the FST's `parent_chain` field is also what `corpus/src/wof-json.ts` consumes via `buildAncestryIndex`, and what `corpus/src/adapters/wof-admin-json/adapter.ts` uses to emit training rows.
+The FST is the _inference-time_ expression of the idea. The _training-time_ expression is in the corpus pipeline. The same WOF hierarchy that becomes the FST's `parent_chain` field is also what `corpus/src/wof-json.ts` consumes via `buildAncestryIndex`, and what `corpus/src/adapters/wof-admin-json/adapter.ts` uses to emit training rows.
 
 ```mermaid
 flowchart LR
@@ -231,7 +231,7 @@ The FST is one node in a longer pipeline of cached work. The unified SQLite is a
 
 ## What the FST does not do
 
-- **It does not resolve.** It tells the classifier which spans *could* be places. Producing a single canonical place ID + coordinates is the resolver's job (see [Resolver and Who's On First](./resolver-and-wof.md)).
+- **It does not resolve.** It tells the classifier which spans _could_ be places. Producing a single canonical place ID + coordinates is the resolver's job (see [Resolver and Who's On First](./resolver-and-wof.md)).
 - **It does not handle streets.** v1 ships admin-only (countries, regions, localities, postcodes). Streets would add ~3-5M unique names and require metro-area sharding for the browser; tracked as Phase 2+ in [`FST_GAZETTEER_LM.md`](../plan/reference/FST_GAZETTEER_LM.md).
 - **It does not override the model.** The bias is additive and capped. If the model is confident the input says "Paris, TX," the FST prior on French Paris doesn't change the outcome.
 
