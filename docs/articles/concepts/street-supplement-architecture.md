@@ -236,11 +236,22 @@ Applied to span-level confidence scores only. Zero contamination of emission or 
 
 | Phase | Layers | Time horizon |
 |---|---|---|
-| v0.6.x polish | Layer 1 build + golden-set eval | 1 shift |
-| v0.6.x continued | Layer 1.5 if Layer 1 leaves residual hallucinations | 1 shift |
+| v0.6.x polish | Layer 1 build + golden-set eval | 1 shift (done) |
+| v0.6.2 retrain | Negative-example corpus augmentation + Layer 1 prior at inference | 1-2 shifts |
+| v0.6.x continued | Layer 1.5 if v0.6.2 leaves residual hallucinations | 1 shift |
 | v0.7.0 | Locality-conditional gating + JP activation + Layer 2 NYC POC | 3-4 shifts |
 | v0.7.x | Layer 2 metro expansion, Layer 4 brand FST | per-metro / per-brand |
 | v0.8+ | Mannheim grid, Nicaragua landmarks, dependent_street | scope work |
+
+**Important caveat from the 2026-05-28 Layer 1 eval:** Layer 1 alone, applied as a decoder-only
+fix on v0.6.1 weights, does NOT suppress v0.6.1's 1066 dep_locality hallucinations. The
+mechanism works monotonically (hallucinations drop as the dep_locality penalty is strengthened)
+but the model's overconfidence on synth-street-induced predictions is too high for any practical
+decoder-time bias to flip. **Layer 1's correct deployment is alongside a v0.6.2 retrain that
+includes O-tagged street slots in the corpus** — the prior provides additive inference-time
+anchoring on a better-trained backbone. The infrastructure landed in v0.6.x polish is the right
+scaffolding for that retrain. Full eval data:
+[Layer 1 eval (2026-05-28)](../evals/2026-05-28-layer-1-morphology-fst.md).
 
 The intersection restructure is a free win — orthogonal to layers, can land any shift.
 

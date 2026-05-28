@@ -38,11 +38,17 @@ describe("buildStreetMorphologyFst", () => {
 		expect(avenue.accepting[0]!.placetype).toBe("street_affix")
 		expect(avenue.accepting[0]!.name).toBe("avenue")
 
-		// Variants 'av' and 'ave' should resolve to the same canonical's wofID.
-		const av = matcher.query("av")
+		// Variants 'ave' and 'aven' should resolve to the same canonical's wofID. (The 2-char
+		// abbreviation 'av' is filtered out by the default `minVariantLength: 3` to avoid
+		// state-abbreviation collisions — see the builder's docstring.)
 		const ave = matcher.query("ave")
-		expect(av.accepting[0]?.wofID).toBe(avenue.accepting[0]!.wofID)
+		const aven = matcher.query("aven")
 		expect(ave.accepting[0]?.wofID).toBe(avenue.accepting[0]!.wofID)
+		expect(aven.accepting[0]?.wofID).toBe(avenue.accepting[0]!.wofID)
+
+		// Demonstrate the length filter — 'av' should NOT match under default opts.
+		const av = matcher.query("av")
+		expect(av.accepting.length).toBe(0)
 	})
 
 	it("recognises French 'rue' and German 'straße' canonicals", () => {

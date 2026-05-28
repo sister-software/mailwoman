@@ -44,6 +44,18 @@ export interface BuildStreetMorphologyFstOpts {
 	dictionariesDir: string
 	/** Optional locale filter — only ingest these locale subfolders. Defaults to all that have a `street_types.txt`. */
 	locales?: string[]
+	/**
+	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into
+	 * the trie. Defaults to 3.
+	 *
+	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations
+	 * (`a`, `b`, `av`, `bd`, `br`, ...) that collide with non-affix tokens at parse time —
+	 * notably US state abbreviations (`OR`, `CA`, `ND`, `NY`), single-letter unit designators,
+	 * and arbitrary short tokens. Empirically these collisions push the morphology prior to
+	 * mis-tag state abbreviations as `street_suffix`. A minimum length of 3 retains useful forms
+	 * (`ave`, `blvd`, `rue`, `str`) while filtering out the noise.
+	 */
+	minVariantLength?: number
 	/** Optional progress callback. */
 	onProgress?: (phase: string, detail?: string) => void
 }
@@ -73,6 +85,7 @@ function parseLine(line: string): { canonical: string; variants: string[] } | nu
 
 export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): BuildStreetMorphologyFstResult {
 	const progress = opts.onProgress ?? (() => {})
+	const minVariantLength = opts.minVariantLength ?? 3
 
 	// Discover locales — either provided explicitly, or all directories containing street_types.txt.
 	let locales: string[]
@@ -158,6 +171,10 @@ export function buildStreetMorphologyFst(opts: BuildStreetMorphologyFstOpts): Bu
 		for (const variant of variants) {
 			const tokens = normalizeTokens(variant)
 			if (tokens.length === 0) continue
+			// Filter out collision-prone short surface forms — see `minVariantLength` docstring.
+			// We measure against the joined token form (no spaces) since FST keys are token sequences.
+			const joined = tokens.join("")
+			if (joined.length < minVariantLength) continue
 			insertName(tokens, entry)
 			insertCount++
 			variantCount++

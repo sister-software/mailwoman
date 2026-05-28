@@ -13,6 +13,7 @@
 		"./package.json": "./package.json",
 		".": "./out/index.js",
 		"./tokenizer": "./out/tokenizer.js",
+		"./onnx-runner": "./out/onnx-runner.js",
 		"./weights": "./out/weights.js",
 		"./browser": "./out/browser.js"
 	},
