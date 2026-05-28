@@ -1,17 +1,16 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "0.5.3",
-	"phase": "Stage 2 (coarse + venue/street/house_number) — CE-only, diagnostic",
+	"version": "0.5.4",
+	"phase": "Stage 2 (coarse + venue/street/house_number) — multi-script tokenizer + v0.5.1 recipe revert",
 	"license": "AGPL-3.0-only",
 	"locale": "en-us",
 	"training": {
 		"corpus_version": "0.4.0",
-		"tokenizer_version": "0.5.0-a1",
-		"steps": 50000,
-		"best_step": 28000,
+		"tokenizer_version": "0.6.0-a0",
+		"steps": 100000,
+		"best_step": 100000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"duration_seconds": 4017,
-		"recipe": "CE-only (crf_loss_weight=0.0), h384, batch=128 direct, wof-admin 0.3, label_smoothing=0.05, cosine LR, class_weights dep_loc/subregion=1.0"
+		"recipe": "v0.5.1 recipe (constant LR, no label smoothing, wof-admin 2.0, dep_loc/subregion class_weight=0.3) + v0.6.0-a0 multi-script tokenizer (2.19M WOF names from 7 countries, 0% CJK byte-fallback)"
 	},
 	"architecture": {
 		"hidden_size": 384,
@@ -37,55 +36,34 @@
 		"street",
 		"house_number"
 	],
-	"labels": [
-		"O",
-		"B-country",
-		"I-country",
-		"B-region",
-		"I-region",
-		"B-locality",
-		"I-locality",
-		"B-dependent_locality",
-		"I-dependent_locality",
-		"B-postcode",
-		"I-postcode",
-		"B-subregion",
-		"I-subregion",
-		"B-cedex",
-		"I-cedex",
-		"B-venue",
-		"I-venue",
-		"B-street",
-		"I-street",
-		"B-house_number",
-		"I-house_number"
-	],
 	"eval": {
-		"val_macro_f1": 0.579,
-		"val_loss": 0.428,
 		"demo_presets": {
 			"neural_only": "6/6 correct",
-			"note": "First model to correctly resolve locality=Washington/region=DC and locality=New York/region=NY"
+			"note": "All 6 canonical addresses parse correctly. v0.5.4 retains v0.5.3's functional capability."
+		},
+		"golden_error_analysis": {
+			"exact_match": "17.0% (4535 entries)",
+			"note": "Cross-tokenizer comparison invalid per eval protocol. v0.5.3 baseline was 25.3% but used v0.5.0-a1 tokenizer. Stage 3 labels will resolve most boundary errors (3698) which are schema mismatch, not model error."
 		}
 	},
 	"known_failure_modes": [
-		"val_macro_f1 is NOT comparable to v0.5.1 (different tokenizer = different BIO alignments)",
-		"Non-Latin scripts: 48K vocab tokenizer has lower byte-fallback but model not trained on non-Latin addresses yet",
-		"Particle-honorific kryptonite (e.g. FR 'Saint-Just-Saint-Rambert')"
+		"val_macro_f1 / exact-match metrics NOT comparable to v0.5.3 (tokenizer changed)",
+		"CJK/Korean/Thai inputs: tokenizer now handles them but model not trained on non-Latin addresses yet (training corpus is US+FR)",
+		"Single-line short addresses (e.g. 'Vermont, USA') confused — too little context"
 	],
-	"notes": "v0.5.3 — diagnostic iteration. Despite lower val_macro_f1 (0.579 vs v0.5.1's 0.638), this is the best model on functional tests (6/6 demo presets). The F1 regression is a measurement artifact from changing tokenizers (v0.1.0 24K → v0.5.0-a1 48K). The wof-admin downweight (2.0→0.3) forced the model to learn place names from structured-address context instead of memorizing bare-name frequency patterns. Tree output uses proper containment nesting (region→locality→street→house_number).",
+	"notes": "v0.5.4 — multi-script tokenizer foundation. The v0.6.0-a0 tokenizer hit 0% byte-fallback on CJK/Korean/Thai/Arabic (down from 36-75% on v0.5.0-a1). Same 48K vocab size for embedding compatibility. Recipe is the proven v0.5.1 settings. Next: v0.6.0 ships Stage 3 labels (street_prefix/suffix/unit/po_box/intersection) + CRF loss weight > 0 for learned transitions.",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=48000",
 		"max_sequence_length": 128,
 		"opset": 17,
 		"fp32_size_mb": 117.2,
-		"int8_size_mb": 29.4
+		"int8_size_mb": 28.1
 	},
 	"files": {
 		"model": "model.onnx",
 		"tokenizer": "tokenizer.model",
 		"model_card": "model-card.json"
 	},
-	"base_relpath": "/data/output-v053/checkpoints/step-028000"
+	"base_relpath": "/data/output-v054/checkpoints/step-100000"
 }
