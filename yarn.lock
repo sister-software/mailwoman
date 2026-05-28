@@ -4733,6 +4733,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/variant-aliases@workspace:variant-aliases":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/variant-aliases@workspace:variant-aliases"
+  languageName: unknown
+  linkType: soft
+
 "@mapbox/jsonlint-lines-primitives@npm:^2.0.2, @mapbox/jsonlint-lines-primitives@npm:~2.0.2":
   version: 2.0.2
   resolution: "@mapbox/jsonlint-lines-primitives@npm:2.0.2"
