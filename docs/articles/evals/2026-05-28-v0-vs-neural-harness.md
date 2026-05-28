@@ -142,6 +142,48 @@ This is the "honest assessment" the postmortem called for. The implications:
    the picture for cluster #3 specifically; whether that looser bar is acceptable is a
    product decision.
 
+## Falsehoods extension
+
+The harness also accepts a `--falsehoods <dir>` argument for JSONL files of structured rows.
+`data/eval/falsehoods/streets.jsonl` lands the catalog from
+[`falsehoods-streets.md`](../understanding/why-its-hard/falsehoods-streets.md) as 22 explicit
+test rows — Piccadilly, rue de Rivoli, Plein 1944, Avenue Road, Gondel 2695, the
+A1-as-composite-street, dependent streets, Japanese block addressing, rural routes, Mannheim
+grid. Each row carries `falsehood` (the category) and `expected_failure` (whether this is a
+known gap rather than a regression vector).
+
+With the falsehoods rows added the picture is:
+
+| Parser | Pass | Rate |
+|---|---|---|
+| v0 (rule-based) | 385 / 398 | 96.7% |
+| Neural | 56 / 398 | 14.1% |
+
+| Category | Count | Rate |
+|---|---|---|
+| Both pass | 54 | 13.6% |
+| v0 only | 331 | 83.2% |
+| **Neural only** | **2** | **0.5%** |
+| Both fail | 11 | 2.8% |
+
+**Two neural-only wins** appear once the falsehoods are in play — cases where the neural
+parser succeeds and the rule-based pipeline fails:
+
+1. `8 Seven Gardens Burgh, WOODBRIDGE, IP13 6SU` — number-in-street-name. v0's
+   HouseNumberClassifier grabs the leading `8` then mis-tags the rest; neural reads it as a
+   single street span correctly.
+2. `R 5, 6-13, D-68161 Mannheim` — grid address with no street. v0's classifiers force a
+   street-shaped reading that doesn't fit; neural correctly produces just locality + postcode.
+
+The pattern: **neural is sometimes BETTER on formats it has truly never seen**, because v0's
+hand-tuned rules actively misclassify them. The "ambiguous-but-common" cases (rue de Rivoli,
+Broadway, place de la Concorde, Avenue Road) is where v0's rules dominate — neural lacks the
+training distribution.
+
+V0 also fails 13 of 22 falsehoods — Piccadilly, Hauptstraße 5, Plein 1944, Gondel 2695, 6 Elm
+Avenue, Japanese block addressing, and rural routes are unsolved by both parsers. The
+falsehoods catalog is the right capability-boundary regression suite for any future release.
+
 ## Reproducing
 
 ```bash
