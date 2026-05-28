@@ -5,93 +5,54 @@
  *
  *   Decompose a US street name into Stage 3 components: street_prefix, street, street_suffix.
  *
+ *   Sources directionals and street types from the curated libpostal/en dictionaries
+ *   (`core/data/libpostal/dictionaries/en/{directionals,street_types}.txt`). These are the
+ *   same dictionaries the runtime classifiers (StreetPrefixClassifier, StreetSuffixClassifier)
+ *   use, so corpus labels and runtime classifications agree on the vocabulary.
+ *
  *   Examples:
  *     "N Main St" → { prefix: "N", street: "Main", suffix: "St" }
  *     "Pennsylvania Avenue NW" → { prefix: null, street: "Pennsylvania", suffix: "Avenue NW" }
  *     "Salmon St" → { prefix: null, street: "Salmon", suffix: "St" }
  *     "SE Hawthorne Blvd" → { prefix: "SE", street: "Hawthorne", suffix: "Blvd" }
- *     "5th Ave" → { prefix: null, street: "5th", suffix: "Ave" }
- *
- *   Compiled-in directional + street-type sets (subset of libpostal/en). Sufficient for
- *   TIGER FULLNAME values which use a constrained vocabulary.
  */
 
-const DIRECTIONALS = new Set([
-	"n",
-	"s",
-	"e",
-	"w",
-	"ne",
-	"nw",
-	"se",
-	"sw",
-	"north",
-	"south",
-	"east",
-	"west",
-	"northeast",
-	"northwest",
-	"southeast",
-	"southwest",
-])
+import { readFileSync } from "node:fs"
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 
-const STREET_TYPES = new Set([
-	"st",
-	"street",
-	"ave",
-	"avenue",
-	"blvd",
-	"boulevard",
-	"rd",
-	"road",
-	"dr",
-	"drive",
-	"ln",
-	"lane",
-	"way",
-	"ct",
-	"court",
-	"pl",
-	"place",
-	"pkwy",
-	"parkway",
-	"ter",
-	"terrace",
-	"cir",
-	"circle",
-	"hwy",
-	"highway",
-	"trl",
-	"trail",
-	"sq",
-	"square",
-	"plz",
-	"plaza",
-	"path",
-	"pike",
-	"row",
-	"crescent",
-	"loop",
-	"alley",
-	"aly",
-	"cv",
-	"cove",
-	"glen",
-	"grove",
-	"run",
-	"walk",
-	"bend",
-	"point",
-	"pt",
-	"ridge",
-	"crest",
-	"crossing",
-	"xing",
-	"mews",
-	"esplanade",
-	"promenade",
-	"broadway",
-])
+const moduleDir = dirname(fileURLToPath(import.meta.url))
+
+function loadDictionary(filename: string): Set<string> {
+	// Resolve via the @mailwoman/core data directory.
+	const candidates = [
+		resolve(moduleDir, "../../../../core/data/libpostal/dictionaries/en", filename),
+		resolve(moduleDir, "../../../../../core/data/libpostal/dictionaries/en", filename),
+		resolve(process.cwd(), "core/data/libpostal/dictionaries/en", filename),
+	]
+	for (const path of candidates) {
+		try {
+			const text = readFileSync(path, "utf8")
+			const set = new Set<string>()
+			for (const line of text.split("\n")) {
+				const trimmed = line.trim()
+				if (!trimmed || trimmed.startsWith("#")) continue
+				// libpostal format: canonical|abbr|abbr|... — index all forms
+				for (const form of trimmed.split("|")) {
+					const f = form.trim().toLowerCase()
+					if (f) set.add(f)
+				}
+			}
+			return set
+		} catch {
+			// try next candidate
+		}
+	}
+	throw new Error(`Could not load libpostal dictionary: ${filename}`)
+}
+
+const DIRECTIONALS = loadDictionary("directionals.txt")
+const STREET_TYPES = loadDictionary("street_types.txt")
 
 export interface DecomposedStreet {
 	prefix: string | null
@@ -112,38 +73,37 @@ export function decomposeStreet(fullname: string): DecomposedStreet {
 	const tokens = trimmed.split(/\s+/)
 	if (tokens.length === 1) return { prefix: null, street: trimmed, suffix: null }
 
+	const norm = (s: string) => s.toLowerCase().replace(/\.$/, "")
+
 	let prefix: string | null = null
 	let suffix: string | null = null
 	let startIdx = 0
 	let endIdx = tokens.length
 
 	// Leading directional prefix
-	const first = tokens[0]!.toLowerCase().replace(/\./g, "")
-	if (DIRECTIONALS.has(first) && tokens.length >= 2) {
+	if (DIRECTIONALS.has(norm(tokens[0]!)) && tokens.length >= 2) {
 		prefix = tokens[0]!
 		startIdx = 1
 	}
 
-	// Trailing post-directional (e.g. "Pennsylvania Ave NW")
-	const last = tokens[endIdx - 1]!.toLowerCase().replace(/\./g, "")
-	const secondLast = endIdx >= 2 ? tokens[endIdx - 2]!.toLowerCase().replace(/\./g, "") : ""
+	// Trailing post-directional combined with street type (e.g. "Pennsylvania Ave NW")
+	const last = norm(tokens[endIdx - 1]!)
+	const secondLast = endIdx >= 2 ? norm(tokens[endIdx - 2]!) : ""
 
 	if (DIRECTIONALS.has(last) && STREET_TYPES.has(secondLast)) {
-		// "<type> <directional>" pattern → suffix = "type directional"
 		suffix = tokens.slice(endIdx - 2, endIdx).join(" ")
 		endIdx -= 2
 	} else if (STREET_TYPES.has(last) && endIdx - startIdx >= 2) {
 		suffix = tokens[endIdx - 1]!
 		endIdx -= 1
 	} else if (DIRECTIONALS.has(last) && endIdx - startIdx >= 2) {
-		// Post-directional without type: "5th St N" handled above; "Broadway N" → suffix = "N"
+		// Post-directional without type
 		suffix = tokens[endIdx - 1]!
 		endIdx -= 1
 	}
 
 	const street = tokens.slice(startIdx, endIdx).join(" ").trim()
 	if (!street) {
-		// All tokens consumed — degenerate case, return original
 		return { prefix: null, street: trimmed, suffix: null }
 	}
 
