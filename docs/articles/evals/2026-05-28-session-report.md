@@ -1,0 +1,136 @@
+---
+sidebar_position: 32
+title: "2026-05-28 session report"
+---
+
+# Session Report — 2026-05-28
+
+## Summary
+
+Two major infrastructure shifts: (1) migrated from self-hosted docs to GitHub Pages + HF Bucket for model assets, and (2) expanded WOF data from US-only to 7-country global coverage with a multi-script tokenizer retrain.
+
+## WebGPU debugging arc
+
+### The bug
+
+The demo's ONNX model produced correct results via WASM but garbage via WebGPU on Safari/iOS. All-locality output with 0.2-0.4 confidence. Playwright tests (headless, no GPU) always passed — masking the bug entirely.
+
+### Root cause
+
+onnxruntime-web ships two WebGPU execution providers in the same package:
+- `import "onnxruntime-web"` → JSEP (old, broken slice kernel on Metal)
+- `import "onnxruntime-web/webgpu"` → Native EP (correct on all backends)
+
+The default import uses JSEP. Chrome's Dawn/Vulkan masked the bug; Safari's Metal exposed it.
+
+### Fix
+
+One import path change: `onnxruntime-web` → `onnxruntime-web/webgpu`. WebGPU now works on Chrome, Safari macOS, and iOS Safari — verified on real devices.
+
+### Takeaway
+
+Headless CI cannot catch GPU-specific bugs. The `verify` skill's Playwright tests were passing while every real user saw garbage. Added diagnostics (backend indicator, force-WASM toggle, build stamp) to make this class of issue visible.
+
+Reference: [Technical doc](/docs/understanding/onnxruntime-web-webgpu-gotcha), [Blog post](/blog/2026-05-27-webgpu-safari-bug)
+
+## Infrastructure migration
+
+### GitHub Pages + HF Bucket
+
+Replaced the playpen nginx + rsync deployment with:
+- **GitHub Pages**: Docusaurus builds and deploys via Actions on push to main
+- **HF Bucket**: model.onnx, tokenizer.model, fst-en-US.bin, wof-hot.db served from CDN
+- **Version selector**: demo page fetches `releases.json` manifest, lets users switch between v0.5.3, v0.5.2, v0.4.0, v0.1.0
+- **Cache-busting**: `stale-while-revalidate` on HTML, version-qualified asset URLs
+
+### Demo improvements
+
+- Build stamp footer (commit hash + timestamp)
+- Backend indicator (webgpu/wasm + model size)
+- Force WASM toggle
+- CodeBlock for XML output (syntax highlighting + copy)
+- Example buttons clear stale results
+- FST provenance metadata (expandable details)
+
+## Global WOF expansion
+
+### Data pipeline
+
+Built a unified SQLite from 7 priority countries (US, FR, JP, CN, KR, DE, GB):
+
+| Metric | Value |
+|--------|-------|
+| GeoJSON files | 1.74M |
+| Admin places | 1,288,749 |
+| Name variants | 10,233,886 |
+| Languages | 20+ |
+| Build time | 185s (3 min) |
+| Frozen DB | 1.09 GB |
+
+Pipeline implements the WAL + Freeze design brief: WAL during ingest, checkpoint + journal_mode=DELETE + indexes + ANALYZE + VACUUM INTO for the frozen artifact.
+
+### Tokenizer retrain
+
+v0.6.0-a0 tokenizer trained on 2.19M multi-script WOF names:
+
+| Script | v0.5.0-a1 (old) | v0.6.0-a0 (new) |
+|--------|----------------|-----------------|
+| Chinese | 50-75% byte-fallback | **0%** |
+| Japanese | 58-60% | **0%** |
+| Korean | 41% | **0%** |
+| Thai | 30% | **0%** |
+| Aggregate | 36.6% | **0.0%** |
+
+Issue #120 target was <5%. Hit 0%. Same 48K vocab, 28 seconds to train.
+
+### Global FST
+
+Multi-language FST with Unicode-aware normalization:
+
+| Metric | US-only (old) | Global (new) |
+|--------|--------------|-------------|
+| States | 60K | 2.08M |
+| Places | 94K | 1.25M |
+| Name insertions | 128K | 4.16M |
+| Binary size | 9 MB | 302 MB |
+| CJK queries | Impossible | Working |
+
+"東京" → Tokyo, "北京" → Beijing, "서울" → Seoul, "大阪" → Osaka.
+
+### CJK normalization fixes
+
+Three files needed Unicode-aware regexes:
+1. `fst-matcher.ts`: `normalizeTokens()` — `[^a-z0-9\s]` → `[\p{P}\p{S}]`
+2. `fst-builder.ts`: `languages: ["*"]` support for all-language indexing
+3. `fst-prior.ts`: `hasAlnum` check and `normalizeFstToken()` — ASCII → Unicode property escapes
+
+### Piscina lock fix
+
+The `wof/prepare` CLI command's Piscina workers were opening concurrent SQLite connections, causing `SQLITE_BUSY`. Fixed per the design brief: workers return `ParsedPlace[]` to the main thread, main thread handles all DB writes in batched transactions.
+
+### FST V4 format
+
+The global FST's root state has 488K edges — overflowed the u16 `edgeCount` field. Bumped to V4 with u32 edge/place counts per state (STATE_ENTRY_SIZE 12 → 16). Backwards compatible.
+
+## v0.5.4 training
+
+Running on Modal A100 with:
+- v0.6.0-a0 tokenizer (multi-script, 0% CJK byte-fallback)
+- v0.5.1 recipe (wof-admin: 2.0, constant LR, no label smoothing, 100K steps)
+- Per-tag F1 logging
+- Step 48000/100000 at time of writing
+
+## HF Bucket inventory
+
+| Path | Size | Description |
+|------|------|-------------|
+| `en-us/v0.5.3/*` | ~75 MB | Current model release (4 versions available) |
+| `tokenizer/v0.6.0-a0/*` | 1.9 MB | Multi-script tokenizer |
+| `wof/admin-global-priority-7country.db` | 1.09 GB | Global admin DB |
+| `wof/fst-global-7country-all-langs.bin` | 302 MB | Global multi-language FST |
+
+## Issues closed
+
+- **#120**: Tokenizer retrain (0% byte-fallback achieved)
+- **#98**: Phase B browser demo (closed previous session)
+- **#47**: Phase 3.x browser demo (closed previous session)
