@@ -45,6 +45,40 @@ Discovers WOF data repos via `gh repo list whosonfirst-data --no-archived`, opti
 
 The `--repos` filter exists because the corpus build only needs a handful of repos (admin-us, admin-fr, postalcode-us, postalcode-fr) and cloning all ~100 WOF repos is 2.9 GB of git for no benefit.
 
+### `commands/wof/mermaid.tsx` — render the placetype hierarchy
+
+Once `sync` has populated the local clone of `whosonfirst-placetypes`, `wof mermaid` renders the hierarchy (any subtree of it) as a Mermaid flowchart. Output goes to stdout by default, or to a file with `--output`. The `--roles` flag filters descendants by `common`, `common_optional`, and/or `optional` so you can keep charts readable when the optional tail of the tree gets noisy.
+
+```bash
+# Full tree from the root, piped to a file
+node mailwoman/out/cli.js wof mermaid <localRepoDir> planet > planet.mmd
+
+# Common-only subtree rooted at "country"
+node mailwoman/out/cli.js wof mermaid <localRepoDir> country \
+  --roles common,common_optional --output country.mmd
+
+# Swap the color palette for any d3-scale-chromatic sequential interpolator
+node mailwoman/out/cli.js wof mermaid <localRepoDir> planet --interpolator viridis
+```
+
+Edges are colored by their depth from the root so lineage paths (`planet → continent → country → …`) trace a smooth gradient down the chart. The default gradient is `interpolateViridis` (perceptually uniform, colorblind-friendly); override with `--interpolator <name>` to use any other `d3-scale-chromatic` `interpolate*` function (`turbo`, `plasma`, `cool`, `magma`, etc.). Node fills always use the hand-tuned blue/green/yellow role palette regardless — sampled gradients carry less semantic weight than the hand-tuned colors for the three categorical roles, so the gradient lives on the edges only. Cyclic interpolators (`rainbow`, `sinebow`) work too but sample to similar colors at the gradient endpoints.
+
+The renderer is `generateMermaidMarkup` in `core/resources/whosonfirst/placetypes/mermaid.ts`, applied to whatever `Placetype.find(<name>)` returns from the static cache loaded by `Placetype.prepare()`. The traversal is a recursive `findChildren` walk (the same one [`wof tree`](#commandswoftreetsx--emit-a-nested-json-tree) uses) — every emitted edge is a real direct-parent → direct-child relationship colored by the child's role, so ELK gets a clean DAG to lay out instead of a hairball of root → every-descendant star edges. Leaf children of the root (e.g. `custom`, `ocean`, `timezone` under `planet`) sit alongside their real siblings instead of being flung to the periphery. Long `classDef` / `linkStyle` lines are written to stdout directly (bypassing Ink's `<Text>` renderer) so the output stays valid Mermaid when redirected.
+
+### `commands/wof/tree.tsx` — emit a nested JSON tree
+
+The JSON-shaped sibling to `wof mermaid`. Same inputs (`<localRepoDir> <placetype>`, optional `--roles` filter, optional `--output` path) but produces a `PlacetypeTreeNode` — `{ name, id, role, children }` recursively — for downstream consumers that want to traverse the hierarchy programmatically. `--compact` switches off pretty-printing for one-line JSON.
+
+```bash
+# Pretty tree from "country" filtered to common roles
+node mailwoman/out/cli.js wof tree <localRepoDir> country --roles common
+
+# Compact, written to file
+node mailwoman/out/cli.js wof tree <localRepoDir> planet --compact --output planet-tree.json
+```
+
+The renderer is `generatePlacetypeTree` in `core/resources/whosonfirst/placetypes/tree.ts`. Unlike `generateMermaidMarkup` (which mixes `findDescendants` star edges with per-descendant child edges), this walk is a pure recursive `findChildren(roles)` traversal. Because WOF placetypes form a DAG rather than a strict tree (e.g. `borough` is a direct child of both `country` and `macroregion`), the same descendant can appear under multiple branches; that repetition is expected.
+
 ### `commands/wof/prepare/index.tsx` — batch GeoJSON processing
 
 The heavy-lift command. Designed to process 100K+ individual `.geojson` files (one per WOF feature) using Piscina worker threads.
@@ -127,6 +161,8 @@ CREATE TABLE records (
 In-memory hierarchy built from the `whosonfirst-placetypes` codex (a JSON spec defining the parent/child/sibling graph of all WOF placetypes). `Placetype.prepare()` reads the JSON files from the cloned repo and populates static maps (`#byID`, `#byName`, `#childrenOfParentName`).
 
 This is NOT the per-record parent_id chain — it's the **placetype-level** hierarchy (country → region → county → locality → neighbourhood). The per-record `parent_id` chain lives in `PlacetypeDataSource`.
+
+To eyeball this hierarchy, use [`wof mermaid`](#commandswofmermaidtsx--render-the-placetype-hierarchy) for a flowchart view or [`wof tree`](#commandswoftreetsx--emit-a-nested-json-tree) for a programmatic JSON view — both pull from the same in-memory cache.
 
 ### `WOFPlacenameCache` + `loader.ts` — the GeoJSON-direct index
 
