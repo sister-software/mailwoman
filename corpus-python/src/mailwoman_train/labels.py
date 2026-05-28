@@ -59,7 +59,31 @@ STAGE2_BIO_LABELS: Final[tuple[str, ...]] = (
     *(prefix + tag for tag in STAGE2_TAGS for prefix in ("B-", "I-")),
 )
 
+# --- v0.6.0: Stage 3 — street decomposition + PO box + intersection -----------------
+
+# Fine tags added in Stage 3. Extends Stage 2 by decomposing the monolithic `street` tag
+# into prefix/suffix and adding unit/po_box/intersection. The golden eval set already has
+# these tags; corpus adapters need to emit them for training. The schema, formatting, and
+# runtime pipeline are already Stage 3-ready (core/types/component.ts).
+STAGE3_FINE_TAGS: Final[tuple[str, ...]] = (
+    "street_prefix",
+    "street_suffix",
+    "unit",
+    "po_box",
+    "intersection_a",
+    "intersection_b",
+)
+
+STAGE3_TAGS: Final[tuple[str, ...]] = STAGE2_TAGS + STAGE3_FINE_TAGS
+
+STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
+    "O",
+    *(prefix + tag for tag in STAGE3_TAGS for prefix in ("B-", "I-")),
+)
+
 # --- Active set (points at the most-recent stage) ------------------------------------
+# Bump to STAGE3 when training with v0.6.0 corpus. Until then, STAGE2 is active so
+# existing v0.5.x models keep working.
 
 ACTIVE_TAGS: Final[tuple[str, ...]] = STAGE2_TAGS
 ACTIVE_BIO_LABELS: Final[tuple[str, ...]] = STAGE2_BIO_LABELS

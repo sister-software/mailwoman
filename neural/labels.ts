@@ -58,3 +58,19 @@ export const STAGE2_BIO_LABELS: readonly BioLabel[] = Object.freeze([
 	"O" as BioLabel,
 	...STAGE2_TAGS.flatMap((tag) => [`B-${tag}` as BioLabel, `I-${tag}` as BioLabel]),
 ])
+
+export const STAGE3_FINE_TAGS = [
+	"street_prefix",
+	"street_suffix",
+	"unit",
+	"po_box",
+	"intersection_a",
+	"intersection_b",
+] as const
+
+export const STAGE3_TAGS = [...STAGE2_TAGS, ...STAGE3_FINE_TAGS] as const
+
+export const STAGE3_BIO_LABELS: readonly BioLabel[] = Object.freeze([
+	"O" as BioLabel,
+	...STAGE3_TAGS.flatMap((tag) => [`B-${tag}` as BioLabel, `I-${tag}` as BioLabel]),
+])
