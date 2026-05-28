@@ -17,16 +17,16 @@ Who's On First ships one GitHub repo per country, each containing GeoJSON files 
 
 We cloned 7 priority countries (US, FR, JP, CN, KR, DE, GB) — 1.74 million GeoJSON files — and built them into a unified SQLite database using our WAL + Freeze pipeline:
 
-| Country | GeoJSON files | Time |
-|---------|--------------|------|
-| CN | 680K | - |
-| US | 449K | - |
-| FR | 231K | - |
-| DE | 189K | - |
-| GB | 73K | - |
-| JP | 63K | - |
-| KR | 54K | - |
-| **Total** | **1.74M** | **3 min** |
+| Country   | GeoJSON files | Time      |
+| --------- | ------------- | --------- |
+| CN        | 680K          | -         |
+| US        | 449K          | -         |
+| FR        | 231K          | -         |
+| DE        | 189K          | -         |
+| GB        | 73K           | -         |
+| JP        | 63K           | -         |
+| KR        | 54K           | -         |
+| **Total** | **1.74M**     | **3 min** |
 
 The result: 1.29 million places with 10.2 million name variants in 20+ languages. 768K Chinese names, 184K Japanese, 264K French, 261K German, 285K Arabic.
 
@@ -46,15 +46,15 @@ SentencePiece trained in 28 seconds. Same 48K vocab size as before, same user-de
 
 ## The result
 
-| Script | v0.5.0-a1 (old) | v0.6.0-a0 (new) |
-|--------|----------------|-----------------|
-| Chinese | 50-75% byte-fallback | **0%** |
-| Japanese | 58-60% | **0%** |
-| Korean | 41% | **0%** |
-| Thai | 30% | **0%** |
-| Arabic | 0% | 0% |
-| Latin | 0% | 0% |
-| **Aggregate** | **36.6%** | **0.0%** |
+| Script        | v0.5.0-a1 (old)      | v0.6.0-a0 (new) |
+| ------------- | -------------------- | --------------- |
+| Chinese       | 50-75% byte-fallback | **0%**          |
+| Japanese      | 58-60%               | **0%**          |
+| Korean        | 41%                  | **0%**          |
+| Thai          | 30%                  | **0%**          |
+| Arabic        | 0%                   | 0%              |
+| Latin         | 0%                   | 0%              |
+| **Aggregate** | **36.6%**            | **0.0%**        |
 
 Issue [#120](https://github.com/sister-software/mailwoman/issues/120) targeted less than 5% byte-fallback. We hit zero.
 

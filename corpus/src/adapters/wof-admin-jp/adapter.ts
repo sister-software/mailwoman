@@ -5,34 +5,28 @@
  *
  *   `wof-admin-jp`: Japanese admin-hierarchy adapter.
  *
- *   PROTOTYPE — not yet wired into the Stage 3 training corpus. Demonstrates the JP address
- *   shape and synthesizes BIO-labeled training rows from the global WOF SQLite.
+ *   PROTOTYPE — not yet wired into the Stage 3 training corpus. Demonstrates the JP address shape and
+ *   synthesizes BIO-labeled training rows from the global WOF SQLite.
  *
  *   JP addresses differ from US/EU in three ways:
  *
- *   1. **Reversed ordering** — region → county → locality → block → house_number
- *      "東京都世田谷区南町1-2-3" not "1-2-3 Minamicho, Setagaya, Tokyo"
- *
- *   2. **No street names** — most JP addresses use a block/sub-block grid system. The
- *      "neighbourhood" placetype (丁目) is the closest analog to a street but is actually a
- *      grid cell.
- *
+ *   1. **Reversed ordering** — region → county → locality → block → house_number "東京都世田谷区南町1-2-3" not
+ *        "1-2-3 Minamicho, Setagaya, Tokyo"
+ *   2. **No street names** — most JP addresses use a block/sub-block grid system. The "neighbourhood"
+ *        placetype (丁目) is the closest analog to a street but is actually a grid cell.
  *   3. **Postcode-first convention** — addresses are often prefixed with `〒NNN-NNNN`.
  *
  *   Schema mapping to ComponentTags (subset of Stage 3 + JP-specific Phase 6 tags):
  *
- *   | JP concept      | WOF placetype      | ComponentTag (Phase 6) |
- *   |-----------------|--------------------|-----------------------|
- *   | 都道府県 (prefecture) | region          | region (or prefecture) |
- *   | 市区町村 (city/ward)  | county/locality | locality (or municipality) |
- *   | 丁目 (chome)         | neighbourhood   | block (Phase 6 tag) |
- *   | 番地 (banchi)        | (synth)         | sub_block |
- *   | 号 (gō)              | (synth)         | house_number |
- *   | 〒 (postcode prefix) | —               | postcode |
+ *   | JP concept | WOF placetype | ComponentTag (Phase 6) |
+ *   |-----------------|--------------------|-----------------------| | 都道府県 (prefecture) | region |
+ *   region (or prefecture) | | 市区町村 (city/ward) | county/locality | locality (or municipality) | |
+ *   丁目 (chome) | neighbourhood | block (Phase 6 tag) | | 番地 (banchi) | (synth) | sub_block | | 号
+ *   (gō) | (synth) | house_number | | 〒 (postcode prefix) | — | postcode |
  *
- *   This adapter currently emits only the admin chain (region → locality → block). House
- *   numbers and sub-blocks require a different data source (JP postcode database or
- *   real-world address dumps from MLIT/JapanPost).
+ *   This adapter currently emits only the admin chain (region → locality → block). House numbers and
+ *   sub-blocks require a different data source (JP postcode database or real-world address dumps
+ *   from MLIT/JapanPost).
  */
 
 import { DatabaseSync } from "node:sqlite"
@@ -80,7 +74,10 @@ function pickName(row: PlaceRow, jpnNames: Map<number, string>): string {
  *
  * No house numbers yet — needs MLIT data.
  */
-export function synthesizeJpAddress(chain: PlaceRow[], jpnNames: Map<number, string>): {
+export function synthesizeJpAddress(
+	chain: PlaceRow[],
+	jpnNames: Map<number, string>
+): {
 	raw: string
 	components: CanonicalRow["components"]
 } | null {
@@ -107,8 +104,8 @@ export function synthesizeJpAddress(chain: PlaceRow[], jpnNames: Map<number, str
 }
 
 /**
- * Build the JP adapter. Reads from the unified global WOF SQLite, walks admin chains starting
- * from neighbourhoods, and yields canonical rows.
+ * Build the JP adapter. Reads from the unified global WOF SQLite, walks admin chains starting from
+ * neighbourhoods, and yields canonical rows.
  */
 export function createWofAdminJpAdapter(): CorpusAdapter {
 	return {
@@ -129,9 +126,9 @@ export function createWofAdminJpAdapter(): CorpusAdapter {
 					if (!jpnNames.has(row.id)) jpnNames.set(row.id, row.name)
 				}
 
-				const seeds = db
-					.prepare(`SELECT id FROM spr WHERE country='JP' AND placetype='neighbourhood'`)
-					.all() as { id: number }[]
+				const seeds = db.prepare(`SELECT id FROM spr WHERE country='JP' AND placetype='neighbourhood'`).all() as {
+					id: number
+				}[]
 
 				let emitted = 0
 				for (const seed of seeds) {

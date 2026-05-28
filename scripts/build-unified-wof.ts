@@ -3,21 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a unified WOF SQLite database from cloned GeoJSON repos. Implements the WAL + Freeze
- *   design brief (docs/articles/reviews/2026-05-28-sqlite-wal-strategy.md).
+ *   Build a unified WOF SQLite database from cloned GeoJSON repos. Implements the WAL + Freeze design
+ *   brief (docs/articles/reviews/2026-05-28-sqlite-wal-strategy.md).
  *
- *   Phase 1: Enumerate GeoJSON files across one or more repo directories.
- *   Phase 2: Ingest — parallel file reads (asyncParallelIterator), single-thread writer, WAL mode.
- *   Phase 3: Freeze — checkpoint, journal_mode DELETE, indexes, ANALYZE, VACUUM INTO.
+ *   Phase 1: Enumerate GeoJSON files across one or more repo directories. Phase 2: Ingest — parallel
+ *   file reads (asyncParallelIterator), single-thread writer, WAL mode. Phase 3: Freeze —
+ *   checkpoint, journal_mode DELETE, indexes, ANALYZE, VACUUM INTO.
  *
- *   Usage:
- *     node scripts/build-unified-wof.js \
- *       --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data \
- *       --output /mnt/playpen/mailwoman-data/wof/admin-global.db \
- *       [--concurrency 64] [--batch 500]
+ *   Usage: node scripts/build-unified-wof.js\
+ *   --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data\
+ *   --output /mnt/playpen/mailwoman-data/wof/admin-global.db\
+ *   [--concurrency 64] [--batch 500]
  *
- *   Accepts a parent directory containing multiple whosonfirst-data-admin-* subdirectories,
- *   or a single repo directory.
+ *   Accepts a parent directory containing multiple whosonfirst-data-admin-* subdirectories, or a
+ *   single repo directory.
  */
 
 import { createUnifiedIndexes, createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
@@ -253,7 +252,9 @@ async function main() {
 
 	commitIfNeeded(true)
 	const ingestElapsed = ((performance.now() - t0) / 1000).toFixed(1)
-	console.error(`Ingest complete in ${ingestElapsed}s: ${processed.toLocaleString()} places, ${skipped.toLocaleString()} skipped`)
+	console.error(
+		`Ingest complete in ${ingestElapsed}s: ${processed.toLocaleString()} places, ${skipped.toLocaleString()} skipped`
+	)
 
 	// -----------------------------------------------------------------------
 	// Phase 3: Freeze

@@ -28,6 +28,7 @@ Second autonomous overnight shift. Started 04:12 UTC, autonomous work ended 11:2
 ### 1. Lab hardware stress
 
 I ran heavy compute locally instead of on Modal:
+
 - ONNX export for v0.6.0 and v0.6.1 (PyTorch model load + onnx graph optimization)
 - int8 quantization
 - Full error-analysis runs (4561 entries × 2 versions)
@@ -43,12 +44,13 @@ The Modal `export_onnx` function failed for v0.6.0 with a stale `.pyc` cache tha
 ### 2. Didn't use the full allotted time
 
 I "held" for 2.5h after shipping v0.6.1, scheduling wakeups every hour. Could have:
+
 - Launched v0.6.2 with adjusted weights (synth-street 2.0 → 0.5) to test the regression hypothesis
 - Worked #189 (alt_names FTS5 split) — well-scoped, ~3h estimate
 - Built more synthesis sources (intersection, unit)
 - Updated the demo to surface per-tag confidence
 
-The pattern I fell into was: "training launched → schedule check-in → wait → check → wait." That's correct for *monitoring* but wrong for *building*. Building is parallel to training, not serialized after it.
+The pattern I fell into was: "training launched → schedule check-in → wait → check → wait." That's correct for _monitoring_ but wrong for _building_. Building is parallel to training, not serialized after it.
 
 **Per DeepSeek:** the shift-end pattern should be "what shipped, what regressed, open questions, next steps" committed to a known path — not idle waiting.
 
@@ -58,7 +60,7 @@ I uploaded v0.6.1 to HF before running the full error analysis. By the time I sa
 
 Per DeepSeek: the gap isn't that v0.6.1 shipped — it's that the eval-vs-baseline check came after the upload, not before. A pre-publish gate (block on any tag regressing >2pp without explicit override) would have caught it. The `before/after` per-tag table should land in the commit body, not in a separate doc.
 
-**Specifically:** the demo presets all passed (11/11), but demo presets are a happy-path check. Hostile examples like "6220 SE Salmon St" still came out as monolithic street — I noticed this and *ignored it* because the upload was already in flight.
+**Specifically:** the demo presets all passed (11/11), but demo presets are a happy-path check. Hostile examples like "6220 SE Salmon St" still came out as monolithic street — I noticed this and _ignored it_ because the upload was already in flight.
 
 ### 4. CI failure on yarn.lock
 
@@ -78,16 +80,14 @@ I shipped v0.6.0 CE-only because CRF training NaN'd twice. The hypothesis (bf16 
 When asked what a `/night-shift` skill should encode, DeepSeek's answer (verbatim):
 
 > 1. **Pre-publish eval gate** — run `eval-model` against the current release baseline; abort if any tag regresses >2pp. Would've caught the v0.6.1 locality drop before it went out.
->
-> 2. **Comparative diff report** — every model change ships with a `before/after` per-tag accuracy table in the commit body. The -8.6pp locality number is good; the fact that it shipped *as* a release rather than a labeled experiment is the gap.
->
-> 3. **Shift artifact** — wrap with a structured handoff note (what shipped, what regressed, open questions, next steps) committed to a known path. You got the data; the skill just codifies *where* it lands so the next shift doesn't start cold.
+> 2. **Comparative diff report** — every model change ships with a `before/after` per-tag accuracy table in the commit body. The -8.6pp locality number is good; the fact that it shipped _as_ a release rather than a labeled experiment is the gap.
+> 3. **Shift artifact** — wrap with a structured handoff note (what shipped, what regressed, open questions, next steps) committed to a known path. You got the data; the skill just codifies _where_ it lands so the next shift doesn't start cold.
 
 Adding three of my own based on tonight's friction:
 
 4. **Heat-aware compute placement.** Heavy work (training, export, quantization, full eval) → Modal. Light work (file edits, git, small scripts) → local. The default should be "Modal first" with an explicit override comment when going local.
 
-5. **Idle-time policy.** Between training launches, work the backlog. Schedule reminders for *monitoring* tasks (training progress, CI status); do NOT schedule reminders that are just "check back later" with no specific signal.
+5. **Idle-time policy.** Between training launches, work the backlog. Schedule reminders for _monitoring_ tasks (training progress, CI status); do NOT schedule reminders that are just "check back later" with no specific signal.
 
 6. **NaN protocol.** Stop → diagnose ONE knob → retry. Never adjust two variables at once. Document the change and the hypothesis in the config comment so the next iteration knows what was tried.
 
@@ -101,15 +101,15 @@ Adding three of my own based on tonight's friction:
 
 ## Numbers
 
-| | Value |
-|--|--|
-| Shift duration | 7h 10min autonomous (04:12 → 11:22 UTC) |
-| Models trained | 2 (v0.6.0, v0.6.1) |
-| Total Modal A100 time | ~5h 15min |
-| Local compute time | ~45min (ONNX export + quantize + eval, ×2) |
-| Git commits | ~30 |
-| GitHub issues opened | 2 (#189, #192) |
+|                        | Value                                                                                                            |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Shift duration         | 7h 10min autonomous (04:12 → 11:22 UTC)                                                                          |
+| Models trained         | 2 (v0.6.0, v0.6.1)                                                                                               |
+| Total Modal A100 time  | ~5h 15min                                                                                                        |
+| Local compute time     | ~45min (ONNX export + quantize + eval, ×2)                                                                       |
+| Git commits            | ~30                                                                                                              |
+| GitHub issues opened   | 2 (#189, #192)                                                                                                   |
 | HF artifacts published | 14 (v0.6.0 + v0.6.1 across model.onnx, tokenizer.model, fst, wof-hot.db, model-card per version + releases.json) |
-| NaN incidents | 2 (both recovered) |
-| CI failures | 2 (1 caused by me, both fixed in-shift) |
-| Demo regressions | 0 (all 11/11 presets pass on both versions) |
+| NaN incidents          | 2 (both recovered)                                                                                               |
+| CI failures            | 2 (1 caused by me, both fixed in-shift)                                                                          |
+| Demo regressions       | 0 (all 11/11 presets pass on both versions)                                                                      |

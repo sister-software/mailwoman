@@ -5,19 +5,21 @@
  *
  *   PO box / PMB / Apartado / Boîte Postale synthesizer.
  *
- *   Generates BIO-labeled corpus rows where the delivery line is a PO box (mutually exclusive
- *   with street + house_number per USPS Pub 28 / DMM 508). Locale-aware: emits idiomatic forms
- *   for en-US, en-CA, en-GB, en-AU, fr-FR, fr-CA, es-ES, es-MX, es-AR.
+ *   Generates BIO-labeled corpus rows where the delivery line is a PO box (mutually exclusive with
+ *   street + house_number per USPS Pub 28 / DMM 508). Locale-aware: emits idiomatic forms for
+ *   en-US, en-CA, en-GB, en-AU, fr-FR, fr-CA, es-ES, es-MX, es-AR.
  *
  *   Per-DeepSeek design:
- *   - PMB ("Private Mailbox" — at CMRAs like UPS Store) shares the `po_box` tag with USPS PO
- *     Box. Disambiguation is a downstream heuristic (presence of a street line).
+ *
+ *   - PMB ("Private Mailbox" — at CMRAs like UPS Store) shares the `po_box` tag with USPS PO Box.
+ *       Disambiguation is a downstream heuristic (presence of a street line).
  *   - Whole-phrase span ("PO Box 123") not number-only ("123"). Matches existing golden eval.
- *   - 10% of outputs receive number-format noise (commas, dashes, embedded spaces) to harden
- *     against real-world OCR/transcription input.
+ *   - 10% of outputs receive number-format noise (commas, dashes, embedded spaces) to harden against
+ *       real-world OCR/transcription input.
  *   - PO boxes drop street/house_number/unit/street_prefix/street_suffix from input components.
  *
  *   References:
+ *
  *   - USPS Pub 28 §28C2.040 — Private Mailbox formatting
  *   - USPS DMM 508 §4.1.4 / §4.5.4 — PO Box and street-addressed PO Box
  */
@@ -82,8 +84,8 @@ const LOCALE_TEMPLATES: ReadonlyArray<LocaleTemplate> = [
 const LEADERS_BY_LOCALE = new Map<string, LocaleTemplate>(LOCALE_TEMPLATES.map((t) => [t.locale, t]))
 
 /**
- * Inject number-format noise into a box number string. Returns the noisy variant or the
- * original (10% probability of noise per the design).
+ * Inject number-format noise into a box number string. Returns the noisy variant or the original
+ * (10% probability of noise per the design).
  */
 export function maybeNoisifyBoxNumber(num: string, random: () => number): string {
 	if (random() > 0.1) return num
@@ -102,8 +104,8 @@ export function maybeNoisifyBoxNumber(num: string, random: () => number): string
 /**
  * Compose a PO box phrase like "PO Box 123" or "PMB 200".
  *
- * Returns both the phrase and the canonical leader+number so the BIO aligner can mark the
- * entire span as `po_box`.
+ * Returns both the phrase and the canonical leader+number so the BIO aligner can mark the entire
+ * span as `po_box`.
  */
 export function composePoBoxPhrase(leader: string, number: string): string {
 	return `${leader} ${number}`
@@ -136,8 +138,8 @@ function defaultPickNumber(random: () => number): string {
 
 /**
  * Generate one PO box row for a base (locality, region, postcode, country) tuple. Picks a
- * locale-appropriate leader and number. Optionally generates a PMB variant when the base
- * tuple includes a street.
+ * locale-appropriate leader and number. Optionally generates a PMB variant when the base tuple
+ * includes a street.
  */
 export function synthesizePoBoxRow(
 	base: PoBoxBaseTuple & { street?: string; houseNumber?: string },
@@ -195,8 +197,8 @@ export function synthesizePoBoxRow(
 }
 
 /**
- * Map a country code (ISO-3166-1 alpha-2 or alpha-3, or country display name) to the
- * locale code we have a PO box template for.
+ * Map a country code (ISO-3166-1 alpha-2 or alpha-3, or country display name) to the locale code we
+ * have a PO box template for.
  */
 export function countryToLocale(country: string): string {
 	const c = country.trim().toUpperCase()

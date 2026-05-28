@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Piscina worker for WOF prepare — reads GeoJSON files, extracts structured fields via
- *   pluckPlacetypeSpec, and returns parsed data to the main thread. The main thread handles
- *   all SQLite writes (both mini-DBs and unified DB) to avoid concurrent writer locks.
+ *   pluckPlacetypeSpec, and returns parsed data to the main thread. The main thread handles all
+ *   SQLite writes (both mini-DBs and unified DB) to avoid concurrent writer locks.
  *
  *   Per the WAL + Freeze design brief (docs/articles/reviews/2026-05-28-sqlite-wal-strategy.md):
  *   "Workers return parsed data to a single main-thread writer."
@@ -46,7 +46,14 @@ export interface ParsedPlace {
 	isSuperseding: number
 	lastmodified: number
 	concordances: Record<string, string>
-	names: Array<{ language: string; preferred: string | null; variant: string | null; colloquial: string | null; abbr: string | null; short: string | null }>
+	names: Array<{
+		language: string
+		preferred: string | null
+		variant: string | null
+		colloquial: string | null
+		abbr: string | null
+		short: string | null
+	}>
 	src: string
 }
 

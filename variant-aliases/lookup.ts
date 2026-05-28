@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Regional variant alias lookup. Given a token (or short phrase) and a detected locale,
- *   return the canonical amenity category or brand it refers to.
+ *   Regional variant alias lookup. Given a token (or short phrase) and a detected locale, return the
+ *   canonical amenity category or brand it refers to.
  *
- *   This is the data-side foundation for #166 (variant alias table + locale-gated category
- *   matching). The runtime integration into the kind classifier is v0.6.0+ work.
+ *   This is the data-side foundation for #166 (variant alias table + locale-gated category matching).
+ *   The runtime integration into the kind classifier is v0.6.0+ work.
  */
 
 import { readFileSync } from "node:fs"
@@ -37,9 +37,9 @@ function loadTable(): VariantAliasTable {
 const TABLE = loadTable()
 
 /**
- * Indexed by lowercased variant string for O(1) lookup. Multiple entries can share the same
- * variant key (e.g. ambiguous "takeaway" only matches GB but not AU if both list it differently),
- * so each entry is an array of all aliases that share the key.
+ * Indexed by lowercased variant string for O(1) lookup. Multiple entries can share the same variant
+ * key (e.g. ambiguous "takeaway" only matches GB but not AU if both list it differently), so each
+ * entry is an array of all aliases that share the key.
  */
 const INDEX: ReadonlyMap<string, ReadonlyArray<VariantAlias>> = (() => {
 	const map = new Map<string, VariantAlias[]>()
@@ -56,13 +56,14 @@ const INDEX: ReadonlyMap<string, ReadonlyArray<VariantAlias>> = (() => {
  * Match a query token against the variant alias table, gated by detected locale.
  *
  * Confidence:
+ *
  * - `1.0` when the detected locale (e.g. `en-AU`) is in the alias's `locales` list.
- * - `0.5` when only the language part matches (e.g. detected `en-IE`, alias supports `en-AU`).
- *   This is intentionally weaker because regional variants are by definition regional.
+ * - `0.5` when only the language part matches (e.g. detected `en-IE`, alias supports `en-AU`). This
+ *   is intentionally weaker because regional variants are by definition regional.
  * - No match when neither holds.
  *
- * Returns ALL matches sorted by confidence descending. Multi-locale variants (like "petrol
- * station" → en-GB/en-AU/en-NZ/en-ZA) return one entry per locale list — the caller picks.
+ * Returns ALL matches sorted by confidence descending. Multi-locale variants (like "petrol station"
+ * → en-GB/en-AU/en-NZ/en-ZA) return one entry per locale list — the caller picks.
  */
 export function lookupVariantAliases(text: string, locale: string): AliasLookupResult[] {
 	const norm = text.trim().toLowerCase()

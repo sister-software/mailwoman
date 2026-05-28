@@ -4,21 +4,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a JSONL of synthetic PO box training rows. Reads (locality, region, postcode,
- *   country) tuples from an input JSONL stream (extracted upstream from existing corpus
- *   shards or any other source) and emits aligned LabeledRow JSONL ready for the parquet
- *   sharding step.
+ *   Build a JSONL of synthetic PO box training rows. Reads (locality, region, postcode, country)
+ *   tuples from an input JSONL stream (extracted upstream from existing corpus shards or any other
+ *   source) and emits aligned LabeledRow JSONL ready for the parquet sharding step.
  *
  *   This is the TS-side glue between:
- *     1. Tuple extraction (Python: read parquet → JSONL)
- *     2. PO box synthesis (this script: JSONL → labeled rows)
- *     3. Parquet sharding (Python: labeled JSONL → parquet)
  *
- *   Usage:
- *     node scripts/build-po-box-shard.mjs \
- *       --input /tmp/tuples.jsonl \
- *       --output /tmp/po-box-labeled.jsonl \
- *       --variants 3 --pmb-ratio 0.15 --seed 42
+ *   1. Tuple extraction (Python: read parquet → JSONL)
+ *   2. PO box synthesis (this script: JSONL → labeled rows)
+ *   3. Parquet sharding (Python: labeled JSONL → parquet)
+ *
+ *   Usage: node scripts/build-po-box-shard.mjs\
+ *   --input /tmp/tuples.jsonl\
+ *   --output /tmp/po-box-labeled.jsonl\
+ *   --variants 3 --pmb-ratio 0.15 --seed 42
  */
 
 import { createReadStream, createWriteStream } from "node:fs"
@@ -38,7 +37,9 @@ function parseArgs() {
 		else if (a === "--seed") out.seed = parseInt(args[++i], 10)
 	}
 	if (!out.input || !out.output) {
-		console.error("Usage: build-po-box-shard.mjs --input <tuples.jsonl> --output <labeled.jsonl> [--variants 1] [--pmb-ratio 0.15] [--seed N]")
+		console.error(
+			"Usage: build-po-box-shard.mjs --input <tuples.jsonl> --output <labeled.jsonl> [--variants 1] [--pmb-ratio 0.15] [--seed N]"
+		)
 		process.exit(1)
 	}
 	return out

@@ -4,11 +4,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Verify the FTS5 weighted-column fix (bm25(place_search, 10.0, 1.0)) ranks famous places
- *   above same-name impostors. Targeted at wof-hot.db (the slim browser-resolver artifact).
+ *   Verify the FTS5 weighted-column fix (bm25(place_search, 10.0, 1.0)) ranks famous places above
+ *   same-name impostors. Targeted at wof-hot.db (the slim browser-resolver artifact).
  *
- *   Usage:
- *     node resolver-wof-sqlite/spike/verify-weights.mjs /path/to/wof-hot.db
+ *   Usage: node resolver-wof-sqlite/spike/verify-weights.mjs /path/to/wof-hot.db
  */
 
 import { DatabaseSync } from "node:sqlite"
@@ -61,10 +60,8 @@ check(`Q1: "new york" → top is "New York"`, query('"new york"', "locality"), (
 
 // Q2: "springfield" — top should be a real Springfield (population proxy: must not be a tiny one)
 const springfields = query('"springfield"', "locality")
-check(
-	`Q2: "springfield" → top is a major Springfield (not random tiny one)`,
-	springfields,
-	(r) => ["Springfield"].includes(r.name)
+check(`Q2: "springfield" → top is a major Springfield (not random tiny one)`, springfields, (r) =>
+	["Springfield"].includes(r.name)
 )
 
 // Q3: "big apple" → NYC via alt_names

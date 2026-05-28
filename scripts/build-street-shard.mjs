@@ -4,14 +4,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a JSONL of synthetic street-decomposition training rows for Stage 3.
- *   Pipeline: tuples JSONL → synthesizeStreetRow → alignRow → LabeledRow JSONL.
+ *   Build a JSONL of synthetic street-decomposition training rows for Stage 3. Pipeline: tuples JSONL
+ *   → synthesizeStreetRow → alignRow → LabeledRow JSONL.
  *
- *   Usage:
- *     node scripts/build-street-shard.mjs \
- *       --input /tmp/tuples.jsonl \
- *       --output /tmp/street-labeled.jsonl \
- *       --variants 1 --seed 42
+ *   Usage: node scripts/build-street-shard.mjs\
+ *   --input /tmp/tuples.jsonl\
+ *   --output /tmp/street-labeled.jsonl\
+ *   --variants 1 --seed 42
  */
 
 import { createReadStream, createWriteStream } from "node:fs"
@@ -31,7 +30,9 @@ function parseArgs() {
 		else if (a === "--house-number-prob") out.includeHouseNumberProb = parseFloat(args[++i])
 	}
 	if (!out.input || !out.output) {
-		console.error("Usage: build-street-shard.mjs --input <tuples.jsonl> --output <labeled.jsonl> [--variants 1] [--seed N]")
+		console.error(
+			"Usage: build-street-shard.mjs --input <tuples.jsonl> --output <labeled.jsonl> [--variants 1] [--seed N]"
+		)
 		process.exit(1)
 	}
 	return out

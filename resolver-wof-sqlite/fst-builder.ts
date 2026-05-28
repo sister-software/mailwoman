@@ -168,7 +168,9 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 			: db.prepare(
 					`SELECT id, name, language, privateuse FROM names WHERE id IN (${idPlaceholders}) AND language IN (${languages.map(() => "?").join(",")})`
 				)
-		const nameRows = (allLanguages ? nameStmt.all(...chunk) : nameStmt.all(...chunk, ...languages)) as unknown as NameRow[]
+		const nameRows = (allLanguages
+			? nameStmt.all(...chunk)
+			: nameStmt.all(...chunk, ...languages)) as unknown as NameRow[]
 		for (const row of nameRows) {
 			const existing = namesByPlace.get(row.id) ?? []
 			if (!existing.includes(row.name)) existing.push(row.name)

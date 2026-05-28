@@ -1,23 +1,23 @@
 ---
 license: agpl-3.0
 language:
-- en
+  - en
 library_name: onnxruntime
 pipeline_tag: token-classification
 tags:
-- address-parsing
-- ner
-- token-classification
-- sequence-tagging
-- onnx
-- mailwoman
+  - address-parsing
+  - ner
+  - token-classification
+  - sequence-tagging
+  - onnx
+  - mailwoman
 datasets:
-- openaddresses
-- whosonfirst
-- tiger-line
+  - openaddresses
+  - whosonfirst
+  - tiger-line
 metrics:
-- f1
-- accuracy
+  - f1
+  - accuracy
 base_model: mailwoman-en-us
 ---
 
@@ -36,7 +36,9 @@ Open-source neural address parser that runs entirely in the browser via ONNX Run
 import * as ort from "onnxruntime-web/webgpu"
 
 // Load the model
-const session = await ort.InferenceSession.create("https://huggingface.co/sister-software/mailwoman-en-us/resolve/main/model.onnx")
+const session = await ort.InferenceSession.create(
+	"https://huggingface.co/sister-software/mailwoman-en-us/resolve/main/model.onnx"
+)
 
 // Tokenize with the bundled SentencePiece tokenizer (see @mailwoman/neural for the wrapper)
 // Run inference → 21 BIO labels per token
@@ -46,16 +48,16 @@ For a high-level API see the [`mailwoman` npm package](https://www.npmjs.com/pac
 
 ## Model details
 
-| Field | Value |
-|-------|-------|
-| Architecture | Transformer encoder (h384, 6L, 6H) |
-| Parameters | 38M (29M encoder + 9M embedding) |
-| Vocabulary | 48,000 (SentencePiece unigram, byte-fallback) |
-| Max sequence length | 128 |
-| Output labels | 21 (1 `O` + 10 BIO tags × 2) |
-| Quantization | int8 dynamic (28 MB) |
-| FP32 size | 117 MB |
-| ONNX opset | 17 |
+| Field               | Value                                         |
+| ------------------- | --------------------------------------------- |
+| Architecture        | Transformer encoder (h384, 6L, 6H)            |
+| Parameters          | 38M (29M encoder + 9M embedding)              |
+| Vocabulary          | 48,000 (SentencePiece unigram, byte-fallback) |
+| Max sequence length | 128                                           |
+| Output labels       | 21 (1 `O` + 10 BIO tags × 2)                  |
+| Quantization        | int8 dynamic (28 MB)                          |
+| FP32 size           | 117 MB                                        |
+| ONNX opset          | 17                                            |
 
 ## Labels (Stage 2)
 
@@ -68,13 +70,13 @@ Stage 3 (street decomposition + unit + po_box + intersection) is planned for v0.
 
 ## Training
 
-| Field | Value |
-|-------|-------|
-| Corpus version | 0.4.0 |
-| Tokenizer version | 0.6.0-a0 (multi-script, 0% CJK byte-fallback) |
-| Steps | 100,000 |
-| Hardware | NVIDIA A100-SXM4-40GB |
-| Recipe | v0.5.1 (constant LR, no smoothing, wof-admin: 2.0) |
+| Field             | Value                                              |
+| ----------------- | -------------------------------------------------- |
+| Corpus version    | 0.4.0                                              |
+| Tokenizer version | 0.6.0-a0 (multi-script, 0% CJK byte-fallback)      |
+| Steps             | 100,000                                            |
+| Hardware          | NVIDIA A100-SXM4-40GB                              |
+| Recipe            | v0.5.1 (constant LR, no smoothing, wof-admin: 2.0) |
 
 Training data sources:
 
@@ -85,10 +87,10 @@ Training data sources:
 
 ## Evaluation
 
-| Test | Result |
-|------|--------|
-| Demo presets (6 canonical addresses) | 6/6 correct |
-| Golden eval exact match (4,535 entries) | 17.0% |
+| Test                                    | Result      |
+| --------------------------------------- | ----------- |
+| Demo presets (6 canonical addresses)    | 6/6 correct |
+| Golden eval exact match (4,535 entries) | 17.0%       |
 
 Note: exact-match metrics are not comparable across tokenizer versions. The v0.5.3 baseline (25.3%) used a different tokenizer and most "failures" are schema mismatch (golden set expects Stage 3 tags the model doesn't emit).
 

@@ -7,15 +7,16 @@ Time: 17.4s
 
 ## Summary
 
-| Metric | Count | Rate |
-|--------|-------|------|
-| Exact match | 1147 | 25.3% |
-| Missed entities | 1770 | — |
-| Boundary errors | 3690 | — |
-| Confused tags | 1538 | — |
-| Hallucinated tags | 1319 | — |
+| Metric            | Count | Rate  |
+| ----------------- | ----- | ----- |
+| Exact match       | 1147  | 25.3% |
+| Missed entities   | 1770  | —     |
+| Boundary errors   | 3690  | —     |
+| Confused tags     | 1538  | —     |
+| Hallucinated tags | 1319  | —     |
 
 ## Missed entities (1770) — top categories
+
 - street_prefix (e.g. "SE", "N") — not in Stage 2 vocab
 - street_suffix (e.g. "St", "Ave") — not in Stage 2 vocab
 - po_box — not in Stage 2 vocab
@@ -23,6 +24,7 @@ Time: 17.4s
 - intersection_a/b — not in Stage 2 vocab
 
 ## Boundary errors (3690) — top patterns
+
 - street: golden expects "Salmon" got "SE Salmon St" (Stage 2 merges prefix+name+suffix)
 - street: golden expects "main st" got "main st portland" (locality boundary leak)
 

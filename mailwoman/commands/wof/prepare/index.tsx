@@ -115,10 +115,25 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 					if (unifiedDb && result.places.length > 0) {
 						unifiedDb.exec("BEGIN TRANSACTION")
 						for (const p of result.places) {
-							sprInsert!.run(p.id, p.parent_id, p.name, p.placetype, p.country, p.latitude, p.longitude, p.isCurrent, p.isDeprecated, p.isCeased, p.isSuperseded, p.isSuperseding, p.lastmodified)
+							sprInsert!.run(
+								p.id,
+								p.parent_id,
+								p.name,
+								p.placetype,
+								p.country,
+								p.latitude,
+								p.longitude,
+								p.isCurrent,
+								p.isDeprecated,
+								p.isCeased,
+								p.isSuperseded,
+								p.isSuperseding,
+								p.lastmodified
+							)
 							for (const n of p.names) {
 								if (n.preferred) namesInsert!.run(p.id, n.preferred, p.placetype, p.country, n.language, p.lastmodified)
-								if (n.variant && n.variant !== n.preferred) namesInsert!.run(p.id, n.variant, p.placetype, p.country, n.language, p.lastmodified)
+								if (n.variant && n.variant !== n.preferred)
+									namesInsert!.run(p.id, n.variant, p.placetype, p.country, n.language, p.lastmodified)
 							}
 							for (const [source, value] of Object.entries(p.concordances)) {
 								concordancesInsert!.run(p.id, value, source, p.lastmodified)

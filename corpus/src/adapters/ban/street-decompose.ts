@@ -3,15 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Decompose a French street name into Stage 3 components. French convention puts the
- *   street type as a leading word: "Rue de Rivoli", "Avenue des Champs-Élysées", "Bd Voltaire".
+ *   Decompose a French street name into Stage 3 components. French convention puts the street type as
+ *   a leading word: "Rue de Rivoli", "Avenue des Champs-Élysées", "Bd Voltaire".
  *
  *   The street type becomes street_prefix in our schema. The remaining tokens form the street name.
  *
- *   Examples:
- *     "Rue de Rivoli" → { prefix: "Rue", street: "de Rivoli" }
- *     "Avenue des Champs-Élysées" → { prefix: "Avenue", street: "des Champs-Élysées" }
- *     "Boulevard Voltaire" → { prefix: "Boulevard", street: "Voltaire" }
+ *   Examples: "Rue de Rivoli" → { prefix: "Rue", street: "de Rivoli" } "Avenue des Champs-Élysées" →
+ *   { prefix: "Avenue", street: "des Champs-Élysées" } "Boulevard Voltaire" → { prefix:
+ *   "Boulevard", street: "Voltaire" }
  *
  *   Sources street types from `core/data/libpostal/dictionaries/fr/street_types.txt`.
  */
@@ -58,9 +57,8 @@ export interface DecomposedFrStreet {
 /**
  * Decompose a French street name into prefix (leading type word) and street name.
  *
- * If the first 1-2 tokens match a known street type (allowing for multi-word like "ancien
- * chemin"), they become the prefix. Returns `{ prefix: null, street: original }` if no
- * match.
+ * If the first 1-2 tokens match a known street type (allowing for multi-word like "ancien chemin"),
+ * they become the prefix. Returns `{ prefix: null, street: original }` if no match.
  */
 export function decomposeFrStreet(fullname: string): DecomposedFrStreet {
 	const trimmed = fullname.trim()

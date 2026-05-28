@@ -6,15 +6,14 @@
  *   Decompose a US street name into Stage 3 components: street_prefix, street, street_suffix.
  *
  *   Sources directionals and street types from the curated libpostal/en dictionaries
- *   (`core/data/libpostal/dictionaries/en/{directionals,street_types}.txt`). These are the
- *   same dictionaries the runtime classifiers (StreetPrefixClassifier, StreetSuffixClassifier)
- *   use, so corpus labels and runtime classifications agree on the vocabulary.
+ *   (`core/data/libpostal/dictionaries/en/{directionals,street_types}.txt`). These are the same
+ *   dictionaries the runtime classifiers (StreetPrefixClassifier, StreetSuffixClassifier) use, so
+ *   corpus labels and runtime classifications agree on the vocabulary.
  *
- *   Examples:
- *     "N Main St" → { prefix: "N", street: "Main", suffix: "St" }
- *     "Pennsylvania Avenue NW" → { prefix: null, street: "Pennsylvania", suffix: "Avenue NW" }
- *     "Salmon St" → { prefix: null, street: "Salmon", suffix: "St" }
- *     "SE Hawthorne Blvd" → { prefix: "SE", street: "Hawthorne", suffix: "Blvd" }
+ *   Examples: "N Main St" → { prefix: "N", street: "Main", suffix: "St" } "Pennsylvania Avenue NW" →
+ *   { prefix: null, street: "Pennsylvania", suffix: "Avenue NW" } "Salmon St" → { prefix: null,
+ *   street: "Salmon", suffix: "St" } "SE Hawthorne Blvd" → { prefix: "SE", street: "Hawthorne",
+ *   suffix: "Blvd" }
  */
 
 import { readFileSync } from "node:fs"
@@ -63,8 +62,8 @@ export interface DecomposedStreet {
 /**
  * Decompose a US street name into prefix/name/suffix components.
  *
- * Conservative — only emits prefix/suffix when there's a clear directional or street-type
- * keyword. Returns the original as `street` if nothing matches.
+ * Conservative — only emits prefix/suffix when there's a clear directional or street-type keyword.
+ * Returns the original as `street` if nothing matches.
  */
 export function decomposeStreet(fullname: string): DecomposedStreet {
 	const trimmed = fullname.trim()

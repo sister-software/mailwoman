@@ -5,19 +5,19 @@
  *
  *   `synth-po-box`: PO box / PMB / Apartado / BP synthesizer adapter.
  *
- *   Consumes a JSONL stream of (locality, region, postcode, country) tuples — typically
- *   extracted from existing corpus output (TIGER/NAD/BAN/WOF) — and emits synthetic PO box
- *   training rows. See `../../synthesize-po-box.ts` for the per-locale templates and
- *   number-noise logic.
+ *   Consumes a JSONL stream of (locality, region, postcode, country) tuples — typically extracted
+ *   from existing corpus output (TIGER/NAD/BAN/WOF) — and emits synthetic PO box training rows. See
+ *   `../../synthesize-po-box.ts` for the per-locale templates and number-noise logic.
  *
  *   Why an adapter and not an augmenter:
- *   - Per USPS Pub 28 / DMM 508, a PO box delivery line is mutually exclusive with a street
- *     line. Synthesizing PO boxes by mutating a street row would teach the model an
- *     invalid pattern. The clean shape is: read just (locality, region, postcode, country)
- *     and produce a fresh PO-box-shaped row.
- *   - Per-DeepSeek (3-turn consult, 2026-05-28): PMB rows that COMBINE a street line with a
- *     PMB number ARE valid (CMRA addresses). Those are produced when `pmbRatio > 0` AND the
- *     input tuple carries a `street` field.
+ *
+ *   - Per USPS Pub 28 / DMM 508, a PO box delivery line is mutually exclusive with a street line.
+ *       Synthesizing PO boxes by mutating a street row would teach the model an invalid pattern.
+ *       The clean shape is: read just (locality, region, postcode, country) and produce a fresh
+ *       PO-box-shaped row.
+ *   - Per-DeepSeek (3-turn consult, 2026-05-28): PMB rows that COMBINE a street line with a PMB number
+ *       ARE valid (CMRA addresses). Those are produced when `pmbRatio > 0` AND the input tuple
+ *       carries a `street` field.
  */
 
 import { createReadStream } from "node:fs"
@@ -36,13 +36,13 @@ export interface PoBoxInputRow extends PoBoxBaseTuple {
 
 export interface SynthPoBoxAdapterOptions {
 	/**
-	 * How many PO box variants to emit per input tuple. Each variant picks a different leader
-	 * (and possibly a different number / noise level). Default 1.
+	 * How many PO box variants to emit per input tuple. Each variant picks a different leader (and
+	 * possibly a different number / noise level). Default 1.
 	 */
 	variantsPerInput?: number
 	/**
-	 * Probability (0..1) of emitting a PMB-with-street variant when both the input has a street
-	 * and the locale supports PMB. Default 0.15.
+	 * Probability (0..1) of emitting a PMB-with-street variant when both the input has a street and
+	 * the locale supports PMB. Default 0.15.
 	 */
 	pmbRatio?: number
 	/**

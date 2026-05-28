@@ -3,23 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Error analysis framework for the neural address parser. Runs the model against
- *   the golden eval set and produces a categorized failure report.
+ *   Error analysis framework for the neural address parser. Runs the model against the golden eval
+ *   set and produces a categorized failure report.
  *
  *   Categories (per DeepSeek taxonomy):
+ *
  *   1. Span-boundary errors — tag is correct but boundaries are off
  *   2. Missed entities — ground-truth span has zero correct tokens
  *   3. Hallucinated entities — predicted span overlaps no ground truth
  *   4. Near-class confusion — city↔state, street↔venue swaps
  *   5. Structural violations — illegal BIO transitions (I after O)
  *
- *   Usage:
- *     node --experimental-strip-types scripts/eval-error-analysis.ts \
- *       --golden data/eval/golden/v0.1.2
+ *   Usage: node --experimental-strip-types scripts/eval-error-analysis.ts\
+ *   --golden data/eval/golden/v0.1.2
  */
 
-import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
@@ -83,7 +83,14 @@ async function main() {
 	const tagConfusion = new Map<string, Map<string, number>>()
 
 	// Per-tag stats: { tag → { expected_count, correct_count, missed_count, boundary_count, confused_count } }
-	type TagStats = { expected: number; correct: number; missed: number; boundary: number; confused: number; hallucinated: number }
+	type TagStats = {
+		expected: number
+		correct: number
+		missed: number
+		boundary: number
+		confused: number
+		hallucinated: number
+	}
 	const perTag = new Map<string, TagStats>()
 	function tagStat(tag: string): TagStats {
 		let s = perTag.get(tag)
@@ -162,7 +169,7 @@ async function main() {
 
 		if (total % 500 === 0) {
 			const elapsed = (performance.now() - t0) / 1000
-			console.error(`  ${total}/${golden.length} (${(elapsed).toFixed(1)}s)`)
+			console.error(`  ${total}/${golden.length} (${elapsed.toFixed(1)}s)`)
 		}
 	}
 
@@ -179,7 +186,7 @@ async function main() {
 	console.log("")
 	console.log(`| Metric | Count | Rate |`)
 	console.log(`|--------|-------|------|`)
-	console.log(`| Exact match | ${correct} | ${(100 * correct / total).toFixed(1)}% |`)
+	console.log(`| Exact match | ${correct} | ${((100 * correct) / total).toFixed(1)}% |`)
 	console.log(`| Missed entities | ${missed.total} | — |`)
 	console.log(`| Boundary errors | ${boundaryErrors.total} | — |`)
 	console.log(`| Confused tags | ${confused.total} | — |`)

@@ -4,20 +4,19 @@
  * @author Teffen Ellis, et al.
  *
  *   Street-decomposition synthesizer for Stage 3 training. Generates address rows where
- *   `street_prefix`, `street`, and `street_suffix` are emitted as separate BIO spans
- *   (instead of monolithic `street`). Mirrors the PO box synthesizer pattern.
+ *   `street_prefix`, `street`, and `street_suffix` are emitted as separate BIO spans (instead of
+ *   monolithic `street`). Mirrors the PO box synthesizer pattern.
  *
- *   Why this exists: TIGER/NAD/BAN adapter changes (committed earlier tonight) emit
- *   decomposed components from raw source data, but the v0.4.0 parquet shards on Modal
- *   were built BEFORE those changes. Rebuilding the full corpus requires downloading
- *   raw TIGER/NAD/BAN data and re-running adapters end-to-end — out of scope for a
- *   single night shift. This synthesizer takes (locality, region, postcode) tuples and
- *   produces freshly-decomposed Stage 3 training rows, same shape as the PO box
- *   pipeline.
+ *   Why this exists: TIGER/NAD/BAN adapter changes (committed earlier tonight) emit decomposed
+ *   components from raw source data, but the v0.4.0 parquet shards on Modal were built BEFORE those
+ *   changes. Rebuilding the full corpus requires downloading raw TIGER/NAD/BAN data and re-running
+ *   adapters end-to-end — out of scope for a single night shift. This synthesizer takes (locality,
+ *   region, postcode) tuples and produces freshly-decomposed Stage 3 training rows, same shape as
+ *   the PO box pipeline.
  *
- *   Note: uses the SAME decomposition logic as TIGER's `decomposeStreet()` so the
- *   synthetic distribution matches what the model would see if/when TIGER shards are
- *   rebuilt with the new adapter.
+ *   Note: uses the SAME decomposition logic as TIGER's `decomposeStreet()` so the synthetic
+ *   distribution matches what the model would see if/when TIGER shards are rebuilt with the new
+ *   adapter.
  */
 
 import { decomposeStreet } from "./adapters/tiger/street-decompose.js"
@@ -27,32 +26,128 @@ import type { CanonicalRow } from "./types.js"
 // from US Census TIGER 2024 top-1000 by occurrence count. Keep ~50 entries so the
 // synthesis distribution doesn't overfit to a tiny vocabulary.
 const STREET_NAMES = [
-	"Main", "Oak", "Maple", "Pine", "Cedar", "Elm", "Washington", "Lincoln", "Jefferson",
-	"Park", "Lake", "Hill", "Spring", "Center", "Church", "Mill", "School", "River",
-	"Highland", "Sunset", "Forest", "Meadow", "Ridge", "Valley", "Lakeview", "Hillcrest",
-	"1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th",
-	"Adams", "Madison", "Monroe", "Jackson", "Franklin", "Kennedy", "Roosevelt",
-	"Broadway", "Market", "Commerce", "Industrial", "Airport", "Hospital",
-	"Sherman", "Grant", "Lee", "Custer", "Lewis", "Clark",
+	"Main",
+	"Oak",
+	"Maple",
+	"Pine",
+	"Cedar",
+	"Elm",
+	"Washington",
+	"Lincoln",
+	"Jefferson",
+	"Park",
+	"Lake",
+	"Hill",
+	"Spring",
+	"Center",
+	"Church",
+	"Mill",
+	"School",
+	"River",
+	"Highland",
+	"Sunset",
+	"Forest",
+	"Meadow",
+	"Ridge",
+	"Valley",
+	"Lakeview",
+	"Hillcrest",
+	"1st",
+	"2nd",
+	"3rd",
+	"4th",
+	"5th",
+	"6th",
+	"7th",
+	"8th",
+	"9th",
+	"10th",
+	"Adams",
+	"Madison",
+	"Monroe",
+	"Jackson",
+	"Franklin",
+	"Kennedy",
+	"Roosevelt",
+	"Broadway",
+	"Market",
+	"Commerce",
+	"Industrial",
+	"Airport",
+	"Hospital",
+	"Sherman",
+	"Grant",
+	"Lee",
+	"Custer",
+	"Lewis",
+	"Clark",
 ] as const
 
 const STREET_SUFFIXES = [
-	"St", "Street", "Ave", "Avenue", "Rd", "Road", "Blvd", "Boulevard",
-	"Dr", "Drive", "Ln", "Lane", "Way", "Ct", "Court", "Pl", "Place",
-	"Pkwy", "Parkway", "Ter", "Terrace", "Cir", "Circle", "Hwy", "Highway",
+	"St",
+	"Street",
+	"Ave",
+	"Avenue",
+	"Rd",
+	"Road",
+	"Blvd",
+	"Boulevard",
+	"Dr",
+	"Drive",
+	"Ln",
+	"Lane",
+	"Way",
+	"Ct",
+	"Court",
+	"Pl",
+	"Place",
+	"Pkwy",
+	"Parkway",
+	"Ter",
+	"Terrace",
+	"Cir",
+	"Circle",
+	"Hwy",
+	"Highway",
 ] as const
 
 const DIRECTIONAL_PREFIXES = [
-	"", "", "", "", "", // 5 empty entries → 50% no prefix
-	"N", "S", "E", "W",
-	"NE", "NW", "SE", "SW",
-	"North", "South", "East", "West",
+	"",
+	"",
+	"",
+	"",
+	"", // 5 empty entries → 50% no prefix
+	"N",
+	"S",
+	"E",
+	"W",
+	"NE",
+	"NW",
+	"SE",
+	"SW",
+	"North",
+	"South",
+	"East",
+	"West",
 ] as const
 
 const TRAILING_DIRECTIONALS = [
-	"", "", "", "", "", "", "", "", // 8 empty → 80% no trailing
-	"N", "S", "E", "W",
-	"NE", "NW", "SE", "SW",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"",
+	"", // 8 empty → 80% no trailing
+	"N",
+	"S",
+	"E",
+	"W",
+	"NE",
+	"NW",
+	"SE",
+	"SW",
 ] as const
 
 export interface StreetBaseTuple {
@@ -89,10 +184,9 @@ function randomHouseNumber(random: () => number): string {
 }
 
 /**
- * Synthesize a US street address with decomposed Stage 3 components. The street is built
- * from PREFIX + NAME + SUFFIX, then passed through the same `decomposeStreet()` utility
- * the TIGER adapter uses — guarantees the synthetic distribution matches the canonical
- * decomposition logic.
+ * Synthesize a US street address with decomposed Stage 3 components. The street is built from
+ * PREFIX + NAME + SUFFIX, then passed through the same `decomposeStreet()` utility the TIGER
+ * adapter uses — guarantees the synthetic distribution matches the canonical decomposition logic.
  */
 export function synthesizeStreetRow(
 	base: StreetBaseTuple,
