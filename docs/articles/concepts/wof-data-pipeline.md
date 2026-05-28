@@ -67,17 +67,31 @@ The renderer is `generateMermaidMarkup` in `core/resources/whosonfirst/placetype
 
 ### `commands/wof/tree.tsx` — emit a nested JSON tree
 
-The JSON-shaped sibling to `wof mermaid`. Same inputs (`<localRepoDir> <placetype>`, optional `--roles` filter, optional `--output` path) but produces a `PlacetypeTreeNode` — `{ name, id, role, children }` recursively — for downstream consumers that want to traverse the hierarchy programmatically. `--compact` switches off pretty-printing for one-line JSON.
+Same inputs as `wof mermaid` (`<localRepoDir> <placetype>`, optional `--roles`, optional `--output`) but produces a `PlacetypeTreeNode` — `{ name, id, role, children }` recursively — for consumers that expect a nested tree (e.g. `d3-hierarchy`). `--compact` switches off pretty-printing.
 
 ```bash
 # Pretty tree from "country" filtered to common roles
 node mailwoman/out/cli.js wof tree <localRepoDir> country --roles common
 
 # Compact, written to file
-node mailwoman/out/cli.js wof tree <localRepoDir> planet --compact --output planet-tree.json
+node mailwoman/out/cli.js wof tree <localRepoDir> locality --compact --output locality-tree.json
 ```
 
-The renderer is `generatePlacetypeTree` in `core/resources/whosonfirst/placetypes/tree.ts`. Unlike `generateMermaidMarkup` (which mixes `findDescendants` star edges with per-descendant child edges), this walk is a pure recursive `findChildren(roles)` traversal. Because WOF placetypes form a DAG rather than a strict tree (e.g. `borough` is a direct child of both `country` and `macroregion`), the same descendant can appear under multiple branches; that repetition is expected.
+The renderer is `generatePlacetypeTree` in `core/resources/whosonfirst/placetypes/tree.ts` — a recursive `findChildren(roles)` walk. **Heads-up**: WOF placetypes are a DAG with heavy descendant sharing (e.g. `installation` is a leaf reachable from many parents), and a tree projection duplicates every shared subtree under every parent path. For shallow / sparse roots like `country` or `locality` the tree is tiny; for `planet` it explodes to ~174 MB. Use [`wof graph`](#commandswofgraphtsx--emit-a-node-link-json-graph) for those instead.
+
+### `commands/wof/graph.tsx` — emit a node-link JSON graph
+
+The flat sibling to `wof tree`. Emits `{ root, nodes: [...], links: [{ source, target }] }` — each node and each parent→child edge appears exactly once, regardless of DAG topology. `planet` is 9.4 KB in this shape vs 174 MB nested. Field names follow d3-force / react-flow / cytoscape conventions so the output drops straight into common HTML graph viewers.
+
+```bash
+# Full planet graph, compact JSON, ~9 KB
+node mailwoman/out/cli.js wof graph <localRepoDir> planet --compact --output planet-graph.json
+
+# Common-only subgraph rooted at "country"
+node mailwoman/out/cli.js wof graph <localRepoDir> country --roles common
+```
+
+The renderer is `generatePlacetypeGraph` in `core/resources/whosonfirst/placetypes/graph.ts`. Same recursive `findChildren(roles)` walk, but tracks visited nodes and emitted (parent, child) pairs in sets so duplication is impossible. Stays O(nodes + edges) for any root.
 
 ### `commands/wof/prepare/index.tsx` — batch GeoJSON processing
 
@@ -162,7 +176,7 @@ In-memory hierarchy built from the `whosonfirst-placetypes` codex (a JSON spec d
 
 This is NOT the per-record parent_id chain — it's the **placetype-level** hierarchy (country → region → county → locality → neighbourhood). The per-record `parent_id` chain lives in `PlacetypeDataSource`.
 
-To eyeball this hierarchy, use [`wof mermaid`](#commandswofmermaidtsx--render-the-placetype-hierarchy) for a flowchart view or [`wof tree`](#commandswoftreetsx--emit-a-nested-json-tree) for a programmatic JSON view — both pull from the same in-memory cache.
+To eyeball this hierarchy, use [`wof mermaid`](#commandswofmermaidtsx--render-the-placetype-hierarchy) for a flowchart view, [`wof graph`](#commandswofgraphtsx--emit-a-node-link-json-graph) for a flat node-link JSON, or [`wof tree`](#commandswoftreetsx--emit-a-nested-json-tree) for a nested form (small subtrees only). All three pull from the same in-memory cache.
 
 ### `WOFPlacenameCache` + `loader.ts` — the GeoJSON-direct index
 
