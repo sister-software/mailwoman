@@ -234,8 +234,18 @@ def main(
     image=training_image,
     timeout=600,
 )
-def export_onnx():
-    """Export the step-050000 checkpoint to ONNX."""
+def export_onnx(
+    output_dir: str = "",
+    step: str = "",
+    tokenizer_path: str = "",
+):
+    """Export a checkpoint to ONNX.
+
+    Parameters accepted via ``modal run scripts/modal/train_remote.py::export_onnx
+    --output-dir=/data/output-v062 --step=20000``. Env-var fallbacks
+    (MAILWOMAN_EXPORT_OUTPUT_DIR / MAILWOMAN_EXPORT_STEP / MAILWOMAN_EXPORT_TOKENIZER)
+    are kept for back-compat with prior workflows; CLI params take precedence when set.
+    """
     import sys
     from pathlib import Path
     sys.path.insert(0, "/data/corpus-python/src")
@@ -246,9 +256,11 @@ def export_onnx():
 
     import torch
     import os
-    output_dir = os.environ.get("MAILWOMAN_EXPORT_OUTPUT_DIR", "/data/output-v054")
-    step = os.environ.get("MAILWOMAN_EXPORT_STEP", "100000")
-    tokenizer_path = os.environ.get("MAILWOMAN_EXPORT_TOKENIZER", "/data/models/tokenizer/v0.6.0-a0/tokenizer.model")
+    output_dir = output_dir or os.environ.get("MAILWOMAN_EXPORT_OUTPUT_DIR", "/data/output-v054")
+    step = step or os.environ.get("MAILWOMAN_EXPORT_STEP", "100000")
+    tokenizer_path = tokenizer_path or os.environ.get(
+        "MAILWOMAN_EXPORT_TOKENIZER", "/data/models/tokenizer/v0.6.0-a0/tokenizer.model"
+    )
 
     ck_dir = Path(f"{output_dir}/checkpoints/step-{step}")
     tokenizer = Tokenizer(Path(tokenizer_path))
