@@ -34,6 +34,35 @@ const config: Config = {
 	title: "Mailwoman",
 	tagline: "TypeScript-first address parser + geocoder. Runs in Node and the browser.",
 	favicon: "img/favicon.ico",
+	headTags: [
+		{
+			tagName: "meta",
+			attributes: {
+				"theme-color": "#00093b",
+			},
+		},
+		{
+			tagName: "link",
+			attributes: {
+				rel: "preconnect",
+				href: "https://public.sister.software",
+			},
+		},
+		{
+			tagName: "link",
+			attributes: {
+				rel: "preconnect",
+				href: "https://tiles.sister.software",
+			},
+		},
+		{
+			tagName: "link",
+			attributes: {
+				rel: "preconnect",
+				href: "https://elevation-tiles-prod.s3.amazonaws.com",
+			},
+		},
+	],
 
 	future: {
 		v4: true,
@@ -92,7 +121,15 @@ const config: Config = {
 					},
 				},
 				theme: {
-					customCss: "./src/css/custom.css",
+					customCss: [
+						// ---
+						"./src/css/fonts/IosevkaNexus.css",
+						"./src/css/fonts/IosevkaNexusMono.css",
+						"./src/css/theme-light.css",
+						// "./src/css/theme-dark.css",
+						"./src/css/markdown.css",
+						"./src/css/custom.css",
+					],
 				},
 			} satisfies Preset.Options,
 		],
