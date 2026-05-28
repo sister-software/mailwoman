@@ -369,16 +369,45 @@ If durability across power loss matters on macOS, consider `PRAGMA fullfsync = O
 
 ---
 
-## 7. Design decisions to resolve before implementation
+## 7. Design decisions — resolved 2026-05-28
 
-These are the remaining choices. Do not let the implementer silently choose a schema that breaks the resolver.
+Reviewed with DeepSeek, grounded in existing codebase behavior and downstream consumer contracts.
 
-1. **Exact table contract.** Minimum viable artifact must support current resolver/FST paths: `spr`, `names`, `concordances`, and whatever `buildPlaceSearchFts()` needs. If `geojson`, `ancestors`, bbox columns, or `geometries` are missing, document which downstream features are intentionally unavailable.
-2. **Body storage.** Keep `geojson.body` when population extraction, slim builds, or future geometry work need it. Dropping it is only safe for a lookup-only artifact.
-3. **Sharding.** Existing resolver supports multi-shard attach. Decide whether this builder emits one monolithic DB, one DB per WOF repo/country/placetype, or both.
-4. **Alt geometries.** Either mirror official WOF `geometries` semantics or skip alt geometries explicitly. Do not encode them with a nullable primary-key component.
-5. **Resumability.** Simplest robust behavior is rebuild-from-scratch into a temp path, then freeze. Manifest-based resume is optional; `INSERT OR REPLACE` alone is not enough if the schema includes derived indexes built later.
-6. **Worker responsibility.** Preferred first implementation: workers parse, then write short batches. If contention remains high, switch to workers returning parsed batches and a single main-thread writer.
+### 1. Table contract
+
+**Ship: `spr`, `names`, `concordances`, `place_population`, `ancestors`. `geojson` ephemeral only. No `geometries`.**
+
+`ancestors` is required — the FST builder's parent-chain resolution (`fst-builder.ts:88`) falls back to the ancestors table when `spr.parent_id` is a sentinel (-1, -4). The `geojson` table (raw `body TEXT`) is needed during build for `wof:population` extraction via `json_extract()`, but is dropped before VACUUM — it accounts for ~95% of DB size and is never read at query time. A separate `geometries` table adds no resolver value since bounding boxes and centroids already live in `spr`.
+
+### 2. Body storage
+
+**Yes during build, dropped before freeze.**
+
+The `geojson.body` column is the only way to extract `wof:population` (used by `build-importance.ts` population fallback and `fts.ts::buildPlaceSearchFts` population aux table). After extraction into `place_population`, the table is dropped. The frozen artifact never contains raw GeoJSON text.
+
+### 3. Sharding
+
+**Both — per-country shards as canonical, monolith as convenience.**
+
+The resolver already supports multi-shard ATTACH (`sharding.ts`, `multi-shard.test.ts`). Per-country shards give clean separation, independent update cadences, and smaller downloads. The monolith is a rollup (ATTACH + INSERT SELECT + VACUUM) for consumers that don't want to manage multiple files. Build per-country in parallel, merge on demand.
+
+### 4. Alt geometries
+
+**Skip.**
+
+The existing builder already excludes `-alt-*` GeoJSON files. Alt geometries are alternate polygon representations for the same WOF ID — useful for cartography but irrelevant for address parsing. Including them would add duplicate rows or clobber the primary lat/lon/bbox via INSERT OR REPLACE.
+
+### 5. Resumability
+
+**Manifest-based for GeoJSON ingestion; rebuild-from-scratch for aux tables.**
+
+For ~1M global files, a lightweight manifest (JSONL: `{path, wof_id, mtime, status}`) lets resumed builds skip already-processed files. The manifest maps to the existing spliterator batching pipeline — glob emits candidates, manifest filters completed ones. Aux tables (FTS5, R\*Tree, population) are always rebuilt from scratch since they depend on final `spr` state.
+
+### 6. Worker responsibility
+
+**Workers return parsed data to a single main-thread writer.**
+
+This is the fix for the database lock bug that blocked the current `wof/prepare` command. Workers read files + parse JSON in parallel, return `ParsedFeature` structs to the main thread. The main thread runs INSERTs in batched transactions (~500 rows). WAL mode allows concurrent readers during writes, but concurrent writers still serialize — lean into that constraint. The bottleneck is file I/O, not SQLite writes.
 
 ---
 
