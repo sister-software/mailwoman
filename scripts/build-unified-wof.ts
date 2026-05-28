@@ -3,20 +3,26 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a unified WOF SQLite database from cloned GeoJSON repos. Produces the same schema as
- *   geocode.earth's pre-built distributions so the FST builder and resolver work unchanged.
+ *   Build a unified WOF SQLite database from cloned GeoJSON repos. Implements the WAL + Freeze
+ *   design brief (docs/articles/reviews/2026-05-28-sqlite-wal-strategy.md).
  *
- *   Uses spliterator's asyncParallelIterator for bounded-concurrency file reads — the 293K GeoJSON
- *   files are 50/50 I/O and CPU bound, so pipelining async reads with synchronous parse+INSERT
- *   gives ~2x throughput over fully sequential.
+ *   Phase 1: Enumerate GeoJSON files across one or more repo directories.
+ *   Phase 2: Ingest — parallel file reads (asyncParallelIterator), single-thread writer, WAL mode.
+ *   Phase 3: Freeze — checkpoint, journal_mode DELETE, indexes, ANALYZE, VACUUM INTO.
  *
- *   Usage: UV_THREADPOOL_SIZE=8 npx tsx scripts/build-unified-wof.ts\
- *   --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-admin-us/data\
- *   --output /mnt/playpen/mailwoman-data/wof/wof-admin-us-unified.db
+ *   Usage:
+ *     node scripts/build-unified-wof.js \
+ *       --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data \
+ *       --output /mnt/playpen/mailwoman-data/wof/admin-global.db \
+ *       [--concurrency 64] [--batch 500]
+ *
+ *   Accepts a parent directory containing multiple whosonfirst-data-admin-* subdirectories,
+ *   or a single repo directory.
  */
 
 import { createUnifiedIndexes, createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import FastGlob from "fast-glob"
+import { existsSync, statSync, unlinkSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 import { DatabaseSync } from "node:sqlite"
 import { asyncParallelIterator } from "spliterator"
@@ -44,7 +50,7 @@ function parseArgs(): Args {
 
 	if (!dataDir || !outputPath) {
 		console.error(
-			"Usage: npx tsx scripts/build-unified-wof.ts --data <wof-data-dir> --output <output.db> [--concurrency 64] [--batch 500]"
+			"Usage: node scripts/build-unified-wof.js --data <wof-repos-dir> --output <output.db> [--concurrency 64] [--batch 500]"
 		)
 		process.exit(1)
 	}
@@ -132,17 +138,34 @@ function parseFeature(text: string): ParsedFeature | null {
 async function main() {
 	const { dataDir, outputPath, concurrency, batchCommitSize } = parseArgs()
 	const t0 = performance.now()
+	const ingestPath = outputPath + ".ingest"
 
+	if (existsSync(ingestPath)) unlinkSync(ingestPath)
+
+	// -----------------------------------------------------------------------
+	// Phase 1: Enumerate
+	// -----------------------------------------------------------------------
 	console.error(`Scanning ${dataDir} for GeoJSON files...`)
-	const filePaths = await FastGlob("**/*.geojson", {
+	const filePaths = await FastGlob("**/data/**/*.geojson", {
 		cwd: dataDir,
 		absolute: true,
 		ignore: ["**/*-alt-*"],
 	})
 	console.error(`  Found ${filePaths.length.toLocaleString()} files (excluding -alt- variants)`)
 
-	console.error(`Creating ${outputPath}...`)
-	const db = new DatabaseSync(outputPath, { open: true })
+	// -----------------------------------------------------------------------
+	// Phase 2: Ingest (WAL mode, single-thread writer, parallel file reads)
+	// -----------------------------------------------------------------------
+	console.error(`Creating ingest DB at ${ingestPath}...`)
+	const db = new DatabaseSync(ingestPath)
+	db.exec(`
+		PRAGMA page_size = 8192;
+		PRAGMA journal_mode = WAL;
+		PRAGMA synchronous = NORMAL;
+		PRAGMA busy_timeout = 30000;
+		PRAGMA temp_store = MEMORY;
+		PRAGMA cache_size = -200000;
+	`)
 	createUnifiedSchema(db)
 
 	const sprInsert = db.prepare(
@@ -174,7 +197,7 @@ async function main() {
 		}
 	}
 
-	console.error(`Processing with concurrency=${concurrency}, batch commit every ${batchCommitSize} files...`)
+	console.error(`Ingesting with concurrency=${concurrency}, batch commit every ${batchCommitSize} files...`)
 
 	const readResults = asyncParallelIterator(filePaths, concurrency, (filePath) => readFile(filePath, "utf8"))
 
@@ -218,7 +241,7 @@ async function main() {
 		processed++
 		commitIfNeeded()
 
-		if (processed % 10000 === 0) {
+		if (processed % 25000 === 0) {
 			const elapsed = (performance.now() - t0) / 1000
 			const rate = processed / elapsed
 			const eta = (filePaths.length - processed - skipped) / rate
@@ -229,16 +252,70 @@ async function main() {
 	}
 
 	commitIfNeeded(true)
+	const ingestElapsed = ((performance.now() - t0) / 1000).toFixed(1)
+	console.error(`Ingest complete in ${ingestElapsed}s: ${processed.toLocaleString()} places, ${skipped.toLocaleString()} skipped`)
 
-	console.error("Creating indexes...")
+	// -----------------------------------------------------------------------
+	// Phase 3: Freeze
+	// -----------------------------------------------------------------------
+	console.error("Freezing...")
+
+	const checkpoint = db.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get() as {
+		busy: number
+		log: number
+		checkpointed: number
+	}
+	if (checkpoint.busy !== 0) {
+		throw new Error(`WAL checkpoint did not finish: ${JSON.stringify(checkpoint)}`)
+	}
+	console.error("  WAL checkpoint complete")
+
+	const mode = db.prepare("PRAGMA journal_mode = DELETE").get() as { journal_mode: string }
+	if (mode.journal_mode !== "delete") {
+		throw new Error(`journal_mode switch failed; still ${mode.journal_mode}`)
+	}
+	console.error("  journal_mode = delete")
+
+	console.error("  Creating indexes...")
 	createUnifiedIndexes(db)
 
-	db.close()
+	console.error("  ANALYZE...")
+	db.exec("ANALYZE")
+	db.exec("PRAGMA optimize")
 
-	const elapsed = ((performance.now() - t0) / 1000).toFixed(1)
-	console.error(`\nDone in ${elapsed}s:`)
-	console.error(`  Processed: ${processed.toLocaleString()} admin places`)
-	console.error(`  Skipped:   ${skipped.toLocaleString()} (non-admin, superseded, alt-geometry)`)
+	const integrity = db.prepare("PRAGMA integrity_check").get() as { integrity_check: string }
+	if (integrity.integrity_check !== "ok") {
+		throw new Error(`integrity_check failed: ${integrity.integrity_check}`)
+	}
+	console.error("  integrity_check = ok")
+
+	if (existsSync(outputPath)) {
+		const s = statSync(outputPath)
+		if (s.size > 0) unlinkSync(outputPath)
+	}
+	db.prepare("VACUUM INTO ?").run(outputPath)
+	console.error(`  VACUUM INTO ${outputPath}`)
+
+	db.close()
+	unlinkSync(ingestPath)
+	for (const sidecar of [ingestPath + "-wal", ingestPath + "-shm"]) {
+		if (existsSync(sidecar)) unlinkSync(sidecar)
+	}
+
+	// Verify frozen artifact
+	const frozen = new DatabaseSync(outputPath, { readOnly: true })
+	const frozenMode = frozen.prepare("PRAGMA journal_mode").get() as { journal_mode: string }
+	frozen.close()
+	if (frozenMode.journal_mode !== "delete") {
+		throw new Error(`frozen DB journal_mode=${frozenMode.journal_mode}`)
+	}
+
+	const finalSize = (statSync(outputPath).size / 1024 / 1024).toFixed(1)
+	const totalElapsed = ((performance.now() - t0) / 1000).toFixed(1)
+	console.error(`\nDone in ${totalElapsed}s:`)
+	console.error(`  Places:  ${processed.toLocaleString()}`)
+	console.error(`  Skipped: ${skipped.toLocaleString()}`)
+	console.error(`  Output:  ${outputPath} (${finalSize} MB)`)
 }
 
 main().catch((err) => {
