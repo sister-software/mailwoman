@@ -60,7 +60,7 @@ const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 // Internals
 // ---------------------------------------------------------------------------
 
-interface WordGroup {
+export interface WordGroup {
 	fstToken: string
 	pieceIndices: number[]
 }
@@ -157,8 +157,12 @@ export function buildFstEmissionPriors(
  * Group SentencePiece pieces into whitespace-delimited words. Each word's literal text is
  * reconstructed by concatenating pieces (minus leading ▁), then normalized through the same
  * pipeline the FST builder uses.
+ *
+ * Exported (alongside {@linkcode normalizeFstToken} and the {@linkcode WordGroup} type) so the
+ * street-morphology prior can reuse the same piece-grouping/normalization pipeline without
+ * duplication. Internal helper signature; not part of the public neural API.
  */
-function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): WordGroup[] {
+export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): WordGroup[] {
 	const groups: WordGroup[] = []
 	let current: WordGroup | null = null
 

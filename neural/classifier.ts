@@ -23,6 +23,10 @@ import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
+import {
+	buildStreetMorphologyEmissionPriors,
+	type StreetMorphologyPriorOpts,
+} from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import { buildBioEndMask, buildBioStartMask, buildBioTransitionMask, softmax, viterbi } from "./viterbi.js"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
@@ -153,6 +157,18 @@ export class NeuralAddressClassifier {
 			)
 		}
 
+		if (opts?.fstStreetMorphology) {
+			emissions = addEmissionMatrix(
+				emissions,
+				buildStreetMorphologyEmissionPriors(
+					opts.fstStreetMorphology,
+					pieces,
+					this.labels,
+					opts.fstStreetMorphologyOpts ?? {}
+				)
+			)
+		}
+
 		const labelIndices =
 			this.decodeMode === "viterbi"
 				? viterbi({
@@ -207,6 +223,18 @@ export class NeuralAddressClassifier {
 				buildFstEmissionPriors(opts.fst, pieces, this.labels, {
 					biasScale: opts.fstBiasScale ?? 1.0,
 				})
+			)
+		}
+
+		if (opts?.fstStreetMorphology) {
+			emissions = addEmissionMatrix(
+				emissions,
+				buildStreetMorphologyEmissionPriors(
+					opts.fstStreetMorphology,
+					pieces,
+					this.labels,
+					opts.fstStreetMorphologyOpts ?? {}
+				)
 			)
 		}
 
@@ -305,6 +333,16 @@ export interface ParseOpts {
 	fst?: FstMatcherLike
 	/** Bias magnitude for FST gazetteer matches. Default 1.0. */
 	fstBiasScale?: number
+	/**
+	 * Pre-built street-morphology FST matcher. When provided, street-type affixes (Avenue, rue,
+	 * Calle, Straße, …) produce additive emission biases toward `street_prefix`/`street_suffix`
+	 * on the matched tokens AND toward `street` / away from `dependent_locality` on the adjacent
+	 * name tokens. Closes the v0.6.1 dependent_locality vacuum; see
+	 * `docs/articles/concepts/street-supplement-architecture.md` for the layered design.
+	 */
+	fstStreetMorphology?: FstMatcherLike
+	/** Override bias magnitudes for the morphology prior. */
+	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
 }
 
 function argmaxSoftmax(row: number[]): { idx: number; conf: number } {
