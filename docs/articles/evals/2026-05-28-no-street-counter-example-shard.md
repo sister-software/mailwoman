@@ -1,0 +1,116 @@
+---
+sidebar_position: 37
+title: "2026-05-28 No-street counter-example corpus shard"
+---
+
+# No-street counter-example corpus shard — 2026-05-28
+
+The corpus-side fix for v0.6.1's `dependent_locality` regression. Per the
+[2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.md) and the
+[Layer 1 morphology FST eval](2026-05-28-layer-1-morphology-fst.md): the
+morphology FST as a decoder-only fix is insufficient because the model is too
+overconfident on its synth-street-induced dep_loc predictions. The recipe per
+DeepSeek's turn 2 consult is to add explicit counter-distribution training data:
+addresses where the model should NOT emit street labels at all.
+
+This eval doc captures the new synthesizer + pipeline glue that produces that
+counter-distribution shard.
+
+## What lands
+
+- `corpus/src/synthesize-no-street.ts` — six-template synthesizer:
+  - `venue-adversarial` (35% weight) — venues whose names contain street-typing
+    tokens (`Wall Street Industries`, `5th Avenue Theatre`, `Park Avenue Dental`,
+    `Highway 61 Diner`, etc.). The load-bearing slice: these are exactly the rows
+    that v0.6.1's "decompose mode" mis-tags. Explicit B-venue / I-venue labels
+    on tokens like `Street`/`Avenue`/`Highway` teach the model to suppress
+    street-side predictions when the surrounding context is venue-shaped.
+  - `venue-plain` (25%) — venues without street-typing tokens.
+  - `locality-region-postcode` (20%) — `"Boston, MA 02101"`.
+  - `locality-region` (12%) — `"Boston, MA"`.
+  - `postcode-only` (6%) — `"02101"`.
+  - `country-only` (2%) — `"United States"`.
+- `corpus/src/synthesize-no-street.test.ts` — 8 unit tests covering each
+  template, including a 500-iteration "never emits any street-side tag"
+  contract check and a 1000-iteration template-distribution sanity check.
+- `scripts/build-no-street-shard.mjs` — mirrors `build-po-box-shard.mjs`:
+  reads `{locality, region, postcode, country}` tuples from JSONL stdin and
+  emits aligned `LabeledRow` JSONL ready for the parquet sharding step.
+- `corpus/src/index.ts` — exports the new synthesizer.
+
+## Verified end-to-end
+
+Smoke test with 5 base tuples (US, FR, DE) and `--variants 4`:
+
+```
+read 5 tuples, emitted 20 rows, skipped 0
+template distribution:
+  venue-plain:           8 (40.0%)
+  locality-region:       5 (25.0%)
+  venue-adversarial:     4 (20.0%)
+  postcode-only:         2 (10.0%)
+  country-only:          1 (5.0%)
+```
+
+Critical check — **0 street-side BIO labels across all 20 synthesized rows**. The
+contract holds.
+
+Sample of the load-bearing adversarial output:
+
+```
+raw: 7th Street Bistro, Boston, MA 02101
+  tokens: ['7th', 'Street', 'Bistro', 'Boston', 'MA', '02101']
+  labels: ['B-venue', 'I-venue', 'I-venue', 'B-locality', 'B-region', 'B-postcode']
+
+raw: Memorial Drive Medical Center, München, Bayern 80331
+  tokens: ['Memorial', 'Drive', 'Medical', 'Center', 'München', 'Bayern', '80331']
+  labels: ['B-venue', 'I-venue', 'I-venue', 'I-venue', 'B-locality', 'B-region', 'B-postcode']
+
+raw: South Park Children's Center, München, Bayern 80331
+  tokens: ['South', 'Park', "Children's", 'Center', 'München', 'Bayern', '80331']
+  labels: ['B-venue', 'I-venue', 'I-venue', 'I-venue', 'B-locality', 'B-region', 'B-postcode']
+```
+
+The tokens `Street`, `Drive`, `Park` carry explicit `B-venue` / `I-venue` labels
+— the model sees direct evidence that these tokens are NOT street components in
+this surrounding context.
+
+## v0.6.2 recipe (proposed)
+
+With this shard landed, the full v0.6.2 retrain recipe per DeepSeek turn 2 is
+runnable:
+
+1. **Reduce synth-street weight** 2.0 → 0.5
+2. **Add synth-no-street shard** at weight 1.0, 50K–100K rows, US-primary with
+   FR + DE + GB locales sprinkled in proportion to the base tuple availability.
+3. **Enable Layer 1 morphology FST at inference** (infrastructure already
+   landed). Provides additive anchoring on top of the corpus-side fix.
+4. **2D pre-publish eval gate** before promoting:
+   - `(recall drop >2pp AND baseline >10%)` OR
+   - `(hallucination spike >100 AND rate >20% of golden occurrences)`
+5. **Re-run v0-vs-neural harness** post-train and target the failure clusters
+   surfaced by [the harness eval](2026-05-28-v0-vs-neural-harness.md).
+
+## What this doesn't fix
+
+- **Non-US locale gap.** The harness showed neural at 0% on most non-US/non-FR
+  locales. This shard helps with US/FR/DE/GB venue-vs-street confusion but does
+  not fix the locale-distribution gap. Per-locale corpus expansion is a v0.7+
+  topic.
+- **Unit designator schema gap.** The Australian unit-notation tests
+  (`Unit 12/345`, `Apt 12`) fail because the Stage 3 schema has no
+  `unit_designator` tag. This is a schema change requiring a separate retrain,
+  not a corpus tweak.
+- **Tokenization on non-ASCII.** Czech, Portuguese diacritics are destroying
+  span boundaries in the harness output. Independent of the corpus path.
+
+## See also
+
+- [v0-vs-neural harness eval](2026-05-28-v0-vs-neural-harness.md) — establishes
+  the failure clusters this shard addresses
+- [Layer 1 morphology FST eval](2026-05-28-layer-1-morphology-fst.md) — proves
+  the decoder-only fix is insufficient and the corpus side is required
+- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.md) — original
+  postmortem driving the v0.6.2 recipe
+- [Street-supplement architecture](../concepts/street-supplement-architecture.md)
+  — the layered design context
