@@ -1,6 +1,6 @@
 {
   "name": "@mailwoman/neural-weights-en-us",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "description": "Mailwoman neural-classifier weights for locale 'en-us'. Data-only package — loaded by @mailwoman/neural at runtime.",
   "license": "AGPL-3.0-only",
   "repository": {

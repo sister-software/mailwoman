@@ -1,16 +1,16 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "0.5.4",
-	"phase": "Stage 2 (coarse + venue/street/house_number) — multi-script tokenizer + v0.5.1 recipe revert",
+	"version": "0.6.0",
+	"phase": "Stage 3 — street decomposition + PO box + intersection",
 	"license": "AGPL-3.0-only",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "0.4.0",
+		"corpus_version": "0.4.0+stage3",
 		"tokenizer_version": "0.6.0-a0",
 		"steps": 100000,
 		"best_step": 100000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v0.5.1 recipe (constant LR, no label smoothing, wof-admin 2.0, dep_loc/subregion class_weight=0.3) + v0.6.0-a0 multi-script tokenizer (2.19M WOF names from 7 countries, 0% CJK byte-fallback)"
+		"recipe": "v0.5.1 base + STAGE3 (33 BIO labels) + synth-po-box source @ 1.5x. CE-only (crf_loss_weight=0.0 after two NaN attempts with crf>0; the 33x33 transition table + bf16 was numerically unstable). lr=1.5e-4 constant, warmup=1000."
 	},
 	"architecture": {
 		"hidden_size": 384,
@@ -19,45 +19,43 @@
 		"intermediate_size": 1536,
 		"max_position_embeddings": 128,
 		"vocab_size": 48000,
-		"params": "38M (29M encoder + 9M embedding from 48K vocab)",
+		"num_labels": 33,
+		"params": "29.3M (29M encoder + 9M embedding from 48K vocab)",
 		"crf_at_training": false,
 		"crf_at_inference": true,
 		"phrase_priors": true
 	},
+	"labels": [
+		"O",
+		"B-country", "I-country",
+		"B-region", "I-region",
+		"B-locality", "I-locality",
+		"B-dependent_locality", "I-dependent_locality",
+		"B-postcode", "I-postcode",
+		"B-subregion", "I-subregion",
+		"B-cedex", "I-cedex",
+		"B-venue", "I-venue",
+		"B-street", "I-street",
+		"B-house_number", "I-house_number",
+		"B-street_prefix", "I-street_prefix",
+		"B-street_suffix", "I-street_suffix",
+		"B-unit", "I-unit",
+		"B-po_box", "I-po_box",
+		"B-intersection_a", "I-intersection_a",
+		"B-intersection_b", "I-intersection_b"
+	],
 	"components_supported": [
-		"country",
-		"region",
-		"locality",
-		"dependent_locality",
-		"postcode",
-		"subregion",
-		"cedex",
-		"venue",
-		"street",
-		"house_number"
+		"country", "region", "locality", "dependent_locality", "postcode", "subregion", "cedex",
+		"venue", "street", "house_number",
+		"street_prefix", "street_suffix", "unit", "po_box", "intersection_a", "intersection_b"
 	],
-	"eval": {
-		"demo_presets": {
-			"neural_only": "6/6 correct",
-			"note": "All 6 canonical addresses parse correctly. v0.5.4 retains v0.5.3's functional capability."
-		},
-		"golden_error_analysis": {
-			"exact_match": "17.0% (4535 entries)",
-			"note": "Cross-tokenizer comparison invalid per eval protocol. v0.5.3 baseline was 25.3% but used v0.5.0-a1 tokenizer. Stage 3 labels will resolve most boundary errors (3698) which are schema mismatch, not model error."
-		}
-	},
-	"known_failure_modes": [
-		"val_macro_f1 / exact-match metrics NOT comparable to v0.5.3 (tokenizer changed)",
-		"CJK/Korean/Thai inputs: tokenizer now handles them but model not trained on non-Latin addresses yet (training corpus is US+FR)",
-		"Single-line short addresses (e.g. 'Vermont, USA') confused — too little context"
-	],
-	"notes": "v0.5.4 — multi-script tokenizer foundation. The v0.6.0-a0 tokenizer hit 0% byte-fallback on CJK/Korean/Thai/Arabic (down from 36-75% on v0.5.0-a1). Same 48K vocab size for embedding compatibility. Recipe is the proven v0.5.1 settings. Next: v0.6.0 ships Stage 3 labels (street_prefix/suffix/unit/po_box/intersection) + CRF loss weight > 0 for learned transitions.",
+	"notes": "v0.6.0 — Stage 3 ships. Schema expanded from 10 to 16 tags / 21 to 33 BIO labels. STAGE2 label IDs preserved exactly (new tags at IDs 21-32). TIGER, NAD, and BAN adapters now emit street_prefix/street/street_suffix/unit from existing structured input. New synth-po-box corpus source provides 50K PO box training examples across en-US/CA/GB/AU, fr-FR/CA, es-ES/MX/AR.",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=48000",
 		"max_sequence_length": 128,
 		"opset": 17,
-		"fp32_size_mb": 117.2,
+		"fp32_size_mb": 111.8,
 		"int8_size_mb": 28.1
 	},
 	"files": {
@@ -65,5 +63,5 @@
 		"tokenizer": "tokenizer.model",
 		"model_card": "model-card.json"
 	},
-	"base_relpath": "/data/output-v054/checkpoints/step-100000"
+	"base_relpath": "/data/output-v060/checkpoints/step-100000"
 }
