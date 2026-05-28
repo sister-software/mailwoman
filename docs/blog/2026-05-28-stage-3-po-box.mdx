@@ -1,0 +1,100 @@
+---
+title: "PO Box Boîte Postale Apartado: Stage 3 ships with 6 new tags"
+description: "v0.6.0 expands the schema from 10 to 16 component tags. Synthesizing 50K PO box training rows with locale-aware templates was the last piece."
+authors: [teffen]
+tags: [neural, training, stage-3]
+draft: true
+---
+
+For its first six versions, Mailwoman emitted ten BIO tags. The model could pick `street` out of a row but not `street_prefix`, `street_suffix`, `unit`, or `po_box`. Real addresses are messier than that. The golden eval set has known examples — `6220 SE Salmon St, Portland, OR 97215` (Stage 2 collapses prefix+name+suffix), `123 Main St Apt 4B, Springfield, IL 62701` (loses the apartment), `PO Box 123, Burlington, VT 05401` (treats it as a malformed street).
+
+v0.6.0 adds six tags: `street_prefix`, `street_suffix`, `unit`, `po_box`, `intersection_a`, `intersection_b`. The model is the same h384/6L/6H transformer. The recipe is the same v0.5.1 settings. The tokenizer is the same v0.6.0-a0 multi-script bundle. The only structural change is the output head: 21 BIO labels → 33.
+
+{/* truncate */}
+
+## The schema was already there
+
+`core/types/component.ts` has declared the canonical `ComponentTag` union since Phase 0, including all six new tags plus seven JP-specific ones (Phase 6). The schema was forward-declared. The runtime pipeline, the formatter, the golden eval, and even the rule classifiers (`StreetPrefixClassifier`, `StreetSuffixClassifier`) all knew about these tags. Only one constant was missing: the active training label set.
+
+```python
+# corpus-python/src/mailwoman_train/labels.py
+
+# Old:
+ACTIVE_TAGS: Final[tuple[str, ...]] = STAGE2_TAGS  # 10 tags
+
+# New:
+ACTIVE_TAGS: Final[tuple[str, ...]] = STAGE3_TAGS  # 16 tags
+```
+
+The label IDs are stable: STAGE3 appends to STAGE2 without reordering. Old parquet shards work unchanged — they just don't emit the new tags. Models trained on STAGE2 IDs would still decode correctly against a STAGE3 classifier head; the new logit slots just never get picked.
+
+## Where the data comes from
+
+For street decomposition, the data was already there too. Three existing adapters got Stage 3 enhancements:
+
+- **TIGER** (`corpus/src/adapters/tiger/`) — `FULLNAME` like "SE Salmon St" gets decomposed via `decomposeStreet()`, which uses the curated libpostal/en directional + street-type dictionaries (same dictionaries that back the runtime `StreetPrefixClassifier`).
+- **NAD** (`corpus/src/adapters/usgov-nad/`) — NAD already has structured `St_PreDir`, `St_PreTyp`, `St_Name`, `St_PosTyp`, `St_PosDir` fields. The adapter now emits them as separate components instead of joining into one monolithic `street`. `Unit`/`Building`/`Floor`/`Room` chain into the new `unit` tag.
+- **BAN** (`corpus/src/adapters/ban/`) — French street types are leading words: "Rue de Rivoli", "Avenue des Champs-Élysées". `decomposeFrStreet()` uses libpostal/fr/street_types.txt to pick off the leading type word as `street_prefix`.
+
+These changes immediately give the model thousands of correctly-labeled Stage 3 examples per adapter without retraining the upstream data.
+
+## PO box: the synthesis case
+
+PO boxes are different. No corpus adapter has explicit `po_box` data — TIGER is street segments, NAD has buildings, BAN is street-level addresses, WOF is the admin hierarchy. We need synthesis.
+
+The good news: PO boxes are highly templated. USPS Pub 28 §28C2.040 and DMM 508 §4.1.4/§4.5.4 specify the allowed forms. Multi-locale extension is similarly bounded:
+
+| Locale | Leaders |
+|--------|---------|
+| en-US | PO Box, P.O. Box, POB, Post Office Box, PMB, Box, # |
+| en-CA | PO Box, P.O. Box, POB |
+| en-GB | PO Box, P.O. Box, Post Office Box |
+| en-AU | PO Box, GPO Box, Locked Bag |
+| fr-FR | BP, B.P., Boîte Postale |
+| fr-CA | CP, C.P., Case Postale, BP |
+| es-ES | Apdo., Apartado, Apartado de Correos |
+| es-MX | Apdo., Apartado Postal, AP |
+| es-AR | Casilla, Casilla de Correo, CC |
+
+`corpus/src/synthesize-po-box.ts` ships these templates plus three design decisions from a DeepSeek consultation:
+
+1. **PMB shares the `po_box` tag**. USPS treats PMB as a PO Box alias in CASS processing; downstream code can distinguish via "is a street line also present?" without needing a separate label.
+2. **Whole-phrase spans** ("PO Box 123" as one `po_box` span, not "123" alone). Matches the existing golden eval convention.
+3. **10% number-format noise** (commas, dashes, embedded spaces). Real OCR'd input is lousy with "Box 1,234" and "PMB-200" — the parser ships with that as native input.
+
+## The pipeline
+
+```
+WOF SQLite (1.29M places, 7 countries)
+  ↓  scripts/extract-tuples.py
+50K (locality, region, postcode, country) tuples
+  ↓  scripts/build-po-box-shard.mjs
+50K LabeledRow JSONL with B-po_box/I-po_box spans
+  ↓  scripts/jsonl-to-parquet.py
+3 MB Parquet shard → Modal volume
+  ↓
+v0.6.0 training (source_weight: 1.5)
+```
+
+Sample output:
+```
+P.O. Box 9, Bancroft, ID 83603
+  tokens: ['P', 'O', 'Box', '9', 'Bancroft', 'ID', '83603']
+  labels: ['B-po_box', 'I-po_box', 'I-po_box', 'I-po_box', 'B-locality', 'B-region', 'B-postcode']
+```
+
+Five tokens get `po_box` (the whole "P.O. Box 9" phrase including the `.` punctuation). The model learns the span shape, the leader vocabulary, and the locale-to-template mapping all at once.
+
+## Golden eval expansion
+
+Test data matters as much as training data. The golden v0.1.2 set had 1 PO box entry — not enough to fail meaningfully, let alone measure progress. We added 26:
+
+- 20 US variants across all leader forms (PO Box, P.O. Box, P. O. Box, POB, POBOX, Post Office Box, Box, P.O.Box) and number ranges (single-digit to 7-digit)
+- 3 PMB variants ("100 Main St PMB 200", "1234 Wilshire Blvd #500")
+- 6 FR/CA variants (BP, B.P., Boîte Postale, Case Postale, CP)
+
+## Results
+
+<!-- TODO: fill in after v0.6.0 training completes -->
+
+[Per-tag breakdown table comparing v0.5.4 → v0.6.0]
