@@ -118,6 +118,10 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 	// "the famous one" for unambiguous queries like "New York" or "Chicago", the population signal
 	// needs to dominate. Callers wanting a more conservative balance can drop this in the
 	// RankingWeights override.
+	//
+	// Note: this resolver uses `place_population` directly. The separate `place_importance` table
+	// (Wikipedia-derived) is consumed by the FST layer, not here. See
+	// docs/articles/concepts/importance-vs-population.md for the two-signal contract.
 	populationBoost: 4.0,
 	populationScaleLog10: 6,
 }

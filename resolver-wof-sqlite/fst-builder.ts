@@ -132,6 +132,7 @@ export function buildFstFromWof(opts: BuildFstOpts): {
 	}
 
 	// Phase 3: Load importance data (Wikipedia-based, falls back to population-scaled).
+	// See docs/articles/concepts/importance-vs-population.md for the two-signal contract.
 	progress("importance", "Loading importance data")
 	const importanceMap = new Map<number, number>()
 	try {
