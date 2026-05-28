@@ -1,0 +1,176 @@
+# v0.6.4 — synth-no-street weight bump (0.5 → 0.75) to counter dilution.
+#
+# Recipe per DeepSeek turn 10 (2026-05-29) following the v0.6.3 step-20K
+# diagnostic. v0.6.3 successfully delivered house_number recovery (75.0%
+# → 77.3% at step 20K) but locality hallucinations rose 526 → 777 (rate
+# 23.0%, above gate threshold).
+#
+# DeepSeek's diagnosis: dilution of anti-decompose signal. v0.6.3 added
+# 32K rows of synth-house-venue-v063 at weight 1.0 alongside the 122K
+# synth-no-street-v063 rows at weight 0.5. The effective anti-decompose
+# (synth-no-street) : decompose-companion (synth-house-venue) ratio went
+# from 122:0 in v0.6.2 to 61:32 (1.9:1) in v0.6.3. The relative
+# anti-decompose mass dropped, producing more decompose-mode leakage into
+# locality hallucinations.
+#
+# Pre-100K diagnostic (2026-05-29) confirmed dilution > positional
+# mechanism: locality-hallucination rate on venue-leading addresses
+# (79.6%) vs non-venue-leading (72.7%) → ratio 1.10×, well under the 1.5×
+# positional-mechanism threshold.
+#
+# v0.6.4's single-variable change:
+#
+#   synth-no-street-v063: 0.5 → **0.75**
+#
+# This bumps the anti-decompose:house-venue ratio from 61:32 (1.9:1) to
+# 91.5:32 (2.86:1) — restoring v0.6.2's dominance without sacrificing
+# house_number recovery. All other knobs held constant.
+#
+# Expected outcome at 100K (if dilution hypothesis is correct):
+#   - locality hallucinations: 777 → ≤ 526 (back to baseline)
+#   - house_number recall: ≥ 77% (preserved from v0.6.3)
+#   - dep_loc hallucinations: 0 (preserved)
+#   - street recall: ≥ 27% (recovers from mid-training dip like v0.6.2 did)
+#
+# Discriminator: if v0.6.4's locality recovers AND house_number holds, the
+# dilution hypothesis is confirmed and v0.6.5 considers Layer 1.5 / Layer 2
+# work. If locality DOESN'T recover, the positional mechanism is dominant
+# after all, and v0.6.5 drops the venue-before-street template.
+#
+# All other knobs (CRF disabled, synth-street 0.5, training dynamics) same
+# as v0.6.3. NaN protocol: one variable at a time.
+#
+# Promotion decision tree at 100K:
+#
+#   | Gate eval | harness pass | Action                       |
+#   | --------- | ------------ | ---------------------------- |
+#   | Pass      | ≥ 25%        | Promote to default (HF)      |
+#   | Pass      | 15-24%       | Ship as experimental         |
+#   | Pass      | ≤ 14.4%      | HOLD (sidegrade not release) |
+#   | Fail      | any          | HOLD                         |
+#
+# Cost: ~1h45min on A100 80GB.
+#
+# Launch:
+#   modal run -d scripts/modal/train_remote.py --config v0_6_4-rebalance-no-street.yaml
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    deepseek-translit-armn: 0.5
+    deepseek-translit-cyrl: 0.5
+    deepseek-translit-hang: 0.5
+    deepseek-translit-hans: 0.5
+    deepseek-translit-jpan: 0.5
+    synth-po-box: 1.5
+    # === v0.6.3 corpus changes ===
+    # synth-street unchanged from v0.6.2 (the dep_loc fix doesn't need this dial).
+    synth-street: 0.5
+    # synth-no-street-v063 at 0.75 (bumped from v0.6.3's 0.5 — counters dilution
+    # per the 20K diagnostic). Source name distinct from v0.6.2's
+    # `synth-no-street` so the two shards coexist on the volume — the v062
+    # source is intentionally omitted from source_weights → dropped per
+    # data_loader's inclusion semantics.
+    synth-no-street-v063: 0.75
+    # NEW: 32K-row companion shard with house_number + venue + street ALL
+    # coexisting. Recovers the house_number signal that synth-no-street's
+    # distributional shift cost in v0.6.2. Weight 1.0 = full inclusion.
+    synth-house-venue-v063: 1.0
+  train_rows_per_epoch: 1000000
+  val_rows: 2048
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  label_smoothing: 0.0
+  crf_normalization: per_sequence
+  # CE-only per NaN protocol. The fp32-CRF diagnostic (2026-05-28) confirmed
+  # the precision hypothesis — enabling CRF here would confound the corpus
+  # change. Defer learned CRF transitions to v0.6.3 with crf_fp32=true.
+  crf_loss_weight: 0.0
+  class_weights:
+    O: 0.5
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v064/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 100000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""
