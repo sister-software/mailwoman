@@ -44,6 +44,7 @@ export default defineConfig({
 			{ find: /^@mailwoman\/normalize$/, replacement: resolve(here, "normalize/index.ts") },
 			{ find: /^@mailwoman\/kind-classifier$/, replacement: resolve(here, "kind-classifier/index.ts") },
 			{ find: /^@mailwoman\/locale-gate$/, replacement: resolve(here, "locale-gate/index.ts") },
+			{ find: /^@mailwoman\/variant-aliases$/, replacement: resolve(here, "variant-aliases/index.ts") },
 			{ find: /^@mailwoman\/phrase-grouper$/, replacement: resolve(here, "phrase-grouper/index.ts") },
 			// `mailwoman` is the user-facing publishable workspace at /mailwoman.
 			{ find: "mailwoman/server", replacement: resolve(here, "mailwoman/server/index.ts") },

@@ -86,6 +86,7 @@
 		"normalize",
 		"kind-classifier",
 		"locale-gate",
+		"variant-aliases",
 		"phrase-grouper",
 		"query-shape",
 		"resolver-wof-sqlite",

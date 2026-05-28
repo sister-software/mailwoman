@@ -36,7 +36,11 @@ describe("usgov-nad adapter", () => {
 		expect(wh!.components.locality).toBe("Washington")
 		expect(wh!.components.region).toBe("DC")
 		expect(wh!.components.postcode).toBe("20500")
-		expect(wh!.components.street).toBe("Pennsylvania Avenue NW")
+		// Stage 3 decomposition: NAD's structured St_PreDir/St_Name/St_PosTyp/St_PosDir
+		// become street_prefix/street/street_suffix. Pennsylvania Avenue NW has no prefix —
+		// "Avenue" is St_PosTyp and "NW" is St_PosDir, both → street_suffix.
+		expect(wh!.components.street).toBe("Pennsylvania")
+		expect(wh!.components.street_suffix).toBe("Avenue NW")
 		expect(wh!.components.house_number).toBe("1600")
 		expect(wh!.raw).toBe("The White House, 1600 Pennsylvania Avenue NW, Washington, DC 20500")
 	})
@@ -63,7 +67,8 @@ describe("usgov-nad adapter", () => {
 		const rows = await collect()
 		const nyc = rows.find((r) => r.components.house_number === "40-12")
 		expect(nyc).toBeDefined()
-		expect(nyc!.components.street).toBe("Bell Blvd")
+		expect(nyc!.components.street).toBe("Bell")
+		expect(nyc!.components.street_suffix).toBe("Blvd")
 		expect(nyc!.components.locality).toBe("Bayside")
 	})
 
@@ -74,12 +79,13 @@ describe("usgov-nad adapter", () => {
 		expect(vt!.components.house_number).toBe("99 B")
 	})
 
-	it("falls back to composed street parts when StNam_Full is null", async () => {
+	it("decomposes St_PreDir + St_Name + St_PosTyp into Stage 3 components", async () => {
 		const rows = await collect()
 		const vt = rows.find((r) => r.components.region === "VT")
 		expect(vt).toBeDefined()
-		// Composed from St_PreDir=N + St_Name=Maple + St_PosTyp=St
-		expect(vt!.components.street).toBe("N Maple St")
+		expect(vt!.components.street_prefix).toBe("N")
+		expect(vt!.components.street).toBe("Maple")
+		expect(vt!.components.street_suffix).toBe("St")
 	})
 
 	it("accepts PR territory", async () => {
