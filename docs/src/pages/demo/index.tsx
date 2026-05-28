@@ -225,6 +225,7 @@ const DemoApp: React.FC = () => {
 				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromUrls({
 					modelUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
 					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
+					modelCardUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model-card.json"),
 					runner: { useWebGpu: !forceWasm },
 				})
 				setActiveBackend(

@@ -132,6 +132,8 @@ export class NeuralAddressClassifier {
 		const { pieces, ids } = this.cfg.tokenizer.encode(text)
 		const { logits } = await this.cfg.runner.infer(ids)
 
+		this.assertEmissionWidth(logits)
+
 		let emissions = opts?.queryShape
 			? addEmissionMatrix(
 					logits,
@@ -186,6 +188,8 @@ export class NeuralAddressClassifier {
 		}
 		const { pieces, ids } = this.cfg.tokenizer.encode(text)
 		const { logits } = await this.cfg.runner.infer(ids)
+
+		this.assertEmissionWidth(logits)
 
 		let emissions = opts?.queryShape
 			? addEmissionMatrix(
@@ -245,6 +249,29 @@ export class NeuralAddressClassifier {
 
 	async parseXml(text: string, opts?: ParseOpts & { xml?: Parameters<typeof decodeAsXml>[1] }): Promise<string> {
 		return decodeAsXml(await this.parse(text, opts), opts?.xml)
+	}
+
+	/**
+	 * Guard against a silent label/emission shape overrun. When the model emits MORE logits per token
+	 * than the configured label vocabulary (e.g. a Stage 3 bundle loaded with the default Stage 2
+	 * labels), viterbi indexes past the transition matrix and dies with an opaque `Cannot read
+	 * properties of undefined (reading '0')`. Fail fast here with a message that names the contract
+	 * the caller violated.
+	 *
+	 * The opposite shape (model narrower than labels) is intentionally permitted — STAGE2_BIO_LABELS
+	 * prefix-extends STAGE1_BIO_LABELS so a Stage 1 model loaded with Stage 2 labels decodes
+	 * correctly via the first 15 logits. See labels.ts for the contract.
+	 */
+	private assertEmissionWidth(logits: readonly number[][]): void {
+		if (logits.length === 0) return
+		const width = logits[0]!.length
+		if (width > this.labels.length) {
+			throw new Error(
+				`Label/emission mismatch: model emits ${width} logits per token but the classifier was ` +
+					`configured with only ${this.labels.length} labels. Did you load a Stage 3 bundle without ` +
+					`passing its model-card labels? See loadFromWeights / loadNeuralClassifierFromUrls.`
+			)
+		}
 	}
 }
 
