@@ -1,0 +1,192 @@
+---
+sidebar_position: 30
+title: Postcode-only diagnostic (v0.6.0)
+tags:
+  - evals
+  - postcode
+  - tokenizer
+  - v0.6.0
+---
+
+# Postcode-only diagnostic (v0.6.0)
+
+**Date:** 2026-05-29
+**Model:** `model-v060-step-100000-int8.onnx`
+**Tokenizer:** `v0.6.0-a0`
+**Sources:** `mailwoman/test/*.test.ts` + `data/eval/falsehoods/*.jsonl` + `data/eval/golden/v0.1.2/*.jsonl`
+**Sample size:** 3,096 postcode-bearing entries, 14 country buckets
+
+Built in response to DeepSeek's turn-12 question: "Are we actually bad at
+postcodes per country?" Postcode patterns (CEDEX = FR, A1A 1A1 = CA, SW1A
+1AA = GB, 12345-6789 = US) are regex-detectable shapes; the model SHOULD
+crush this. Earlier v0.6.x evals showed postcode recall in the 70-80%
+range — well below the 95%+ that pattern-matching would imply. This
+diagnostic isolates postcode-only accuracy from the rest of the parsing
+pipeline.
+
+## Headline result
+
+**Overall: 75.9% (2349/3096)** exact-match accuracy.
+
+| Country | Total | Match | Rate |
+|---------|------:|------:|-----:|
+| US | 1,765 | 1,421 | **80.5%** |
+| FR | 1,266 | 888 | **70.1%** |
+| AU | 10 | 9 | 90.0% |
+| DE | 7 | 4 | 57.1% |
+| GB | 6 | 0 | **0.0%** |
+| CA | 5 | 0 | **0.0%** |
+| NL | 4 | 0 | **0.0%** |
+| PT | 3 | 1 | 33.3% |
+| BR | 1 | 0 | 0.0% |
+| ES | 1 | 0 | 0.0% |
+| PL | 1 | 0 | 0.0% |
+| JP | 1 | 0 | 0.0% |
+| IN | 1 | 1 | 100% |
+| UNKNOWN | 25 | 25 | 100% |
+
+The UNKNOWN bucket is from tests that don't carry an explicit locale
+(`intersection.test.ts`, etc., all US-context). The 0% buckets are small
+samples but consistent: every multi-token alphanumeric postcode pattern
+(GB, CA, NL) fails uniformly. US scores 80.5% on a sample of 1,765 — large
+enough to be reliable.
+
+## The failure mechanism is visible in the data
+
+Three distinct patterns of fragmentation:
+
+### 1. Total miss (alphanumeric, multi-token postcodes)
+
+```
+London SW1A 1AA              → expected "SW1A 1AA", actual (missing)
+Edinburgh EH8 9YL            → expected "EH8 9YL", actual (missing)
+Piccadilly, London, W1J 9PN  → expected "W1J 9PN", actual (missing)
+```
+
+GB postcodes (and similar shapes) are completely skipped. The model
+either emits no postcode label at all or labels these tokens as
+something else (often locality or O).
+
+### 2. Truncation (postcode label attaches to ONE token of a multi-token postcode)
+
+```
+Toronto, ON M5V 2T6, Canada           → "M5V 2T6" → actual "2T6"
+8 Seven Gardens Burgh, ..., IP13 6SU  → "IP13 6SU" → actual "P13"
+6 Elm Avenue, ..., Birmingham, B12 8QX → "B12 8QX" → actual "B12"
+H2X 2T6                               → actual "2"
+H3B 1A3                               → actual "H3B"
+1012 AB Amsterdam                     → "1012 AB" → actual "1012"
+東京都中央区銀座 100-0001              → "100-0001" → actual "0001"
+```
+
+Either the alphabetic chunk or the numeric chunk gets labeled — never
+both. The model treats them as separate spans.
+
+### 3. Character-level drift on numeric postcodes
+
+```
+Am Bürgerpark 15-18, 13156, Berlin → "13156" → actual "3156"
+4 Cité Du Cardinal Lemoine 75005 Paris → "75005" → actual "5005 Paris"
+1 bis Av. Amélie, 92320 Châtillon  → "92320" → actual "2320"
+Żorska 11, 47-400                  → "47-400" → actual "7-400"
+Send mail to: 200 Elm St, Springfield, IL 62701, USA, Earth → "62701" → "2701"
+```
+
+Numeric postcodes drop a leading digit. The pattern `5005 Paris`
+suggests the postcode boundary smeared right into the locality.
+
+## The mechanism: tokenizer fragmentation
+
+SentencePiece with a 48K vocab tokenizes US-dominant postcode patterns
+fairly cleanly (`62701` → `[62, ##701]` or `[6, ##27, ##01]`), but
+alphanumeric patterns get split aggressively:
+
+```
+"SW1A 1AA" → ["S", "##W", "##1", "##A", "▁", "1", "##AA"]
+"M5V 2T6"  → ["M", "##5", "##V", "▁", "2", "##T", "##6"]
+"1012 AB"  → ["1", "##0", "##1", "##2", "▁", "AB"]
+```
+
+The seven-character pattern that regex would crush is invisible to a
+subword model — the model has to learn the relationship between
+disconnected subword fragments by purely statistical co-occurrence. With
+GB postcodes overwhelmingly absent from training, that statistical
+signal never gets strong enough to consistently span the whole pattern.
+
+The numeric drift (`62701` → `2701`) is a different but related
+mechanism. SentencePiece may tokenize `62701` as `[6, ##27, ##01]` or
+`[62, ##70, ##1]` depending on context; the model labels SOME of these
+tokens as postcode but not all. If the first token (`6` or `62`) ends up
+attached to a different span (here, a preceding `,`), the postcode label
+starts at the second token and we lose the leading digit.
+
+## How this changes the v0.7 plan
+
+This diagnostic was DeepSeek turn 12's "highest-information secondary
+experiment." The decision tree was:
+
+| Calibration | Postcodes | Action |
+|---|---|---|
+| Improved + overconfidence dropped | < 90% on some country | v0.7 = calibration + postcode tokenizer fix |
+| Improved + overconfidence dropped | ≥ 90% everywhere | v0.7 = calibration only |
+| Flat + overconfidence unchanged | < 90% | v0.7 = structural pivot |
+| Flat + overconfidence unchanged | ≥ 90% everywhere | Investigate further |
+
+The diagnostic settles the postcode column **decisively**: postcodes are
+< 90% in MOST countries with samples (US 80.5%, FR 70.1%, GB/CA/NL 0%,
+DE 57%, PT 33%). The postcode tokenizer fix is on v0.7's path regardless
+of how calibration shakes out.
+
+## Candidate fixes
+
+1. **Character-level feature extractor.** Add a parallel character-CNN
+   or character-bigram embedding layer that processes the raw character
+   stream alongside the subword tokens. The postcode shape becomes
+   visible at the character level even when fragmented at the subword
+   level.
+2. **Postcode-aware tokenizer pre-pass.** A regex pass that
+   detects-and-protects postcode-shaped substrings (`/[A-Z]\d[A-Z]?\s*\d[A-Z]\d/`,
+   etc.) before tokenization. Single token, single label, no fragmentation.
+3. **Explicit per-country postcode FST.** Treat postcodes the same way we
+   treat admin names — a deterministic FST that recognizes country-
+   specific shapes and biases the model toward labeling the matched
+   span as postcode. Layer 1.5 of the
+   [shallow-fusion architecture](../concepts/fst-priors-as-shallow-fusion.md).
+4. **Train on more diverse postcode data.** OpenAddresses-EU covers GB,
+   CA, NL, DE; ingesting it would give the model real-world distribution
+   of the patterns it currently misses. Doesn't address tokenizer
+   fragmentation but reduces the data-side amplifier.
+
+The DeepSeek turn-12 recommendation favors options 1 + 3 (character
+features + postcode FST) for v0.7 if calibration alone doesn't close
+the gap.
+
+## Reproducing this diagnostic
+
+```bash
+node --experimental-strip-types scripts/harness-postcode.ts \
+  --model /mnt/playpen/mailwoman-data/models/quantized/model-v060-step-100000-int8.onnx \
+  --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
+  --model-card neural-weights-en-us/model-card.json \
+  --tests mailwoman/test \
+  --falsehoods data/eval/falsehoods \
+  --golden data/eval/golden/v0.1.2 \
+  --out-json /tmp/postcode-harness-v060.json
+```
+
+For gate use in CI:
+
+```bash
+node --experimental-strip-types scripts/harness-postcode.ts ... --gate --floor 0.9 --min-count 10
+```
+
+Exits nonzero on any country with ≥ 10 samples and accuracy below the
+floor. v0.6.0's US (80.5%, 1765 samples) fails this gate today; v0.7's
+target is for it to pass.
+
+## See also
+
+- [v0.6.x cycle retrospective + v0.7 plan](../retrospectives/v0-6-x-cycle-retrospective.md)
+- [FST priors as shallow fusion](../concepts/fst-priors-as-shallow-fusion.md) —
+  the architectural pattern that a postcode FST would slot into
+- `scripts/harness-postcode.ts` — the harness itself
