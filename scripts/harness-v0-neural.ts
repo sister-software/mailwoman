@@ -56,11 +56,12 @@ interface Args {
 	morphologyEnabled: boolean
 	morphologyBinPath?: string
 	falsehoodsDir?: string
+	postcodeRepair: boolean
 }
 
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
-	const out: Partial<Args> = { morphologyEnabled: true }
+	const out: Partial<Args> = { morphologyEnabled: true, postcodeRepair: false }
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 		if (a === "--tests" && args[i + 1]) out.testsDir = args[++i]
@@ -72,6 +73,7 @@ function parseArgs(): Args {
 		else if (a === "--morphology-fst" && args[i + 1]) out.morphologyBinPath = args[++i]
 		else if (a === "--no-morphology") out.morphologyEnabled = false
 		else if (a === "--falsehoods" && args[i + 1]) out.falsehoodsDir = args[++i]
+		else if (a === "--postcode-repair") out.postcodeRepair = true
 	}
 	if (!out.testsDir) {
 		console.error("Usage: scripts/harness-v0-neural.ts --tests <dir> [--out-json <path>] [...]")
@@ -589,6 +591,7 @@ async function main(): Promise<void> {
 	const parseOpts = {
 		...(adminFst ? { fst: adminFst as never } : {}),
 		...(morphologyFst ? { fstStreetMorphology: morphologyFst as never } : {}),
+		postcodeRepair: args.postcodeRepair,
 	} as Parameters<NeuralAddressClassifier["parse"]>[1]
 
 	console.error("Running harness...")
