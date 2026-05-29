@@ -108,7 +108,7 @@ describe("runPipeline — stage composition", () => {
 			computeQueryShape: () => shape,
 			classifier,
 		})
-		expect(classifier.parse).toHaveBeenCalledWith("10118", { queryShape: shape })
+		expect(classifier.parse).toHaveBeenCalledWith("10118", { queryShape: shape, postcodeRepair: true })
 	})
 
 	it("skips resolver when not wired", async () => {
