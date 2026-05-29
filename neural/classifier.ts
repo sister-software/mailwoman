@@ -22,6 +22,7 @@ import {
 import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
+import { repairPostcodeLabels } from "./postcode-repair.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
 import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
@@ -176,7 +177,7 @@ export class NeuralAddressClassifier {
 					}).path
 				: emissions.map((row) => argmaxSoftmax(row).idx)
 
-		const tokens: DecoderToken[] = pieces.map((p, i) => {
+		let tokens: DecoderToken[] = pieces.map((p, i) => {
 			const idx = labelIndices[i]!
 			const probs = softmax(logits[i]!)
 			return {
@@ -187,6 +188,10 @@ export class NeuralAddressClassifier {
 				confidence: probs[idx]!,
 			}
 		})
+
+		if (opts?.postcodeRepair) {
+			tokens = repairPostcodeLabels(text, tokens).tokens
+		}
 
 		return buildAddressTree(text, tokens)
 	}
@@ -340,6 +345,14 @@ export interface ParseOpts {
 	fstStreetMorphology?: FstMatcherLike
 	/** Override bias magnitudes for the morphology prior. */
 	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
+	/**
+	 * When true, run the deterministic postcode regex repair pass (v0.7 #35) on the decoded label
+	 * sequence before tree-building. Detects postcode-shaped substrings (GB/CA/NL/US/FR/… patterns)
+	 * and snaps/adds the postcode span to the matched shape, fixing the SentencePiece-fragmentation
+	 * failures catalogued in the 2026-05-29 postcode diagnostic. Off by default — opt-in until the
+	 * v0.7 gate confirms it. See `./postcode-repair.ts`.
+	 */
+	postcodeRepair?: boolean
 }
 
 function argmaxSoftmax(row: number[]): { idx: number; conf: number } {

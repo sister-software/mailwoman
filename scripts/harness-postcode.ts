@@ -64,11 +64,12 @@ interface Args {
 	gate: boolean
 	floor: number
 	minCount: number
+	postcodeRepair: boolean
 }
 
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
-	const out: Partial<Args> = { gate: false, floor: 0.9, minCount: 10 }
+	const out: Partial<Args> = { gate: false, floor: 0.9, minCount: 10, postcodeRepair: false }
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 		if (a === "--model" && args[i + 1]) out.modelPath = args[++i]
@@ -82,10 +83,11 @@ function parseArgs(): Args {
 		else if (a === "--gate") out.gate = true
 		else if (a === "--floor" && args[i + 1]) out.floor = Number(args[++i])
 		else if (a === "--min-count" && args[i + 1]) out.minCount = Number(args[++i])
+		else if (a === "--postcode-repair") out.postcodeRepair = true
 	}
 	if (!out.modelPath || !out.tokenizerPath || !out.modelCardPath) {
 		console.error(
-			"Usage: harness-postcode.ts --model <onnx> --tokenizer <spm> --model-card <json> [--tests <dir>] [--falsehoods <dir>] [--golden <dir>] [--admin-fst <bin>] [--out-json <path>] [--gate] [--floor 0.9] [--min-count 10]"
+			"Usage: harness-postcode.ts --model <onnx> --tokenizer <spm> --model-card <json> [--tests <dir>] [--falsehoods <dir>] [--golden <dir>] [--admin-fst <bin>] [--out-json <path>] [--gate] [--floor 0.9] [--min-count 10] [--postcode-repair]"
 		)
 		process.exit(1)
 	}
@@ -394,6 +396,7 @@ async function main(): Promise<void> {
 		"Gate:            ",
 		args.gate ? `enabled (floor=${args.floor}, min-count=${args.minCount})` : "disabled"
 	)
+	console.error("Postcode repair: ", args.postcodeRepair ? "ENABLED (#35 regex pre-pass)" : "disabled")
 
 	console.error("Loading samples...")
 	const fromTests = args.testsDir ? discoverFromTests(args.testsDir) : []
@@ -418,9 +421,10 @@ async function main(): Promise<void> {
 		console.error("Loading admin FST:", args.adminFstPath)
 		adminFst = deserializeFst(readFileSync(args.adminFstPath))
 	}
-	const parseOpts = adminFst
-		? ({ fst: adminFst as never } as Parameters<NeuralAddressClassifier["parse"]>[1])
-		: undefined
+	const parseOpts = {
+		...(adminFst ? { fst: adminFst as never } : {}),
+		postcodeRepair: args.postcodeRepair,
+	} as Parameters<NeuralAddressClassifier["parse"]>[1]
 
 	console.error("Running harness...")
 	const t0 = performance.now()
@@ -447,6 +451,7 @@ async function main(): Promise<void> {
 		const summary = {
 			model: args.modelPath,
 			tokenizer: args.tokenizerPath,
+			postcodeRepair: args.postcodeRepair,
 			overall: {
 				total: results.length,
 				pass: results.filter((r) => r.pass).length,
