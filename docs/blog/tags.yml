@@ -72,6 +72,10 @@ staged-pipeline:
   label: Staged pipeline
   description: Articles about the six-stage runtime pipeline and the Knowledge Ladder decomposition.
 
+stage-3:
+  label: Stage 3 (extended schema)
+  description: Articles about Knowledge Ladder Stage 3 — the 33-label extended schema (PO box, unit, street affixes, intersections).
+
 resolver:
   label: Resolver / WOF
   description: Articles about the Who's On First gazetteer, concordance scoring, and resolver candidate ranking.
@@ -139,6 +143,14 @@ fr-fr:
 ja-jp:
   label: Japan (ja-JP)
   description: Articles discussing Japanese addressing — block-based numbering, no streets, chōme/banchi/gō, Phase 6 planning.
+
+japan:
+  label: Japan
+  description: Articles discussing Japanese addressing conventions — block numbering, chōme/banchi/gō, and the no-street grid.
+
+locale:
+  label: Locale-specific
+  description: Articles about locale-specific addressing conventions and the per-country rules that shape parsing.
 
 international:
   label: International

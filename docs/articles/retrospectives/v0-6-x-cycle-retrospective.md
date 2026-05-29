@@ -223,7 +223,7 @@ the speculative-architecture work (per-locale routing) to v0.8.
 
 **P1 — Postcode fix** (depends on diagnostic + calibration result)
 
-The diagnostic confirms postcode <90% on most countries (US 80.5%, FR
+The diagnostic confirms postcode `<90%` on most countries (US 80.5%, FR
 70.1%, GB/CA/NL 0%). Three approaches in priority order:
 
 1. **Character-level feature extractor** — parallel char-CNN or
@@ -249,7 +249,7 @@ upward, the tokenizer fix becomes smaller-scope.
 If postcode accuracy is still < 90% after calibration + tokenizer fix,
 the locale-router approach becomes the next lever. Recommended
 architecture: lexical-feature classifier (regex + char n-grams → tiny
-MLP), <0.1ms latency, <100KB serialized. 99% accuracy on
+MLP), `<0.1ms` latency, `<100KB` serialized. 99% accuracy on
 postcode-bearing inputs is achievable via postcode-pattern features
 alone.
 
