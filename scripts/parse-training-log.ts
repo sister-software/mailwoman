@@ -48,6 +48,8 @@ interface TrainPoint {
 	val_loss?: number
 	macro_f1?: number
 	val_rows?: number
+	// Per-tag F1 values from the CSV's f1.<tag> columns. Sparse — only eval rows have them.
+	[per_tag: `f1.${string}`]: number | string | undefined
 }
 
 interface Args {
@@ -96,6 +98,13 @@ function parseCsv(text: string, runName: string): TrainPoint[] {
 	const valLossIdx = header.indexOf("val_loss")
 	const macroF1Idx = header.indexOf("val_macro_f1")
 	const lrIdx = header.indexOf("lr")
+	// Identify per-tag F1 columns dynamically — schema has `f1.<tag>` columns whose set
+	// depends on Stage 1 vs Stage 2 vs Stage 3. Index them once.
+	const perTagIdx: Array<{ key: string; idx: number }> = []
+	for (let i = 0; i < header.length; i++) {
+		if (header[i]!.startsWith("f1.")) perTagIdx.push({ key: header[i]!, idx: i })
+	}
+
 	const out: TrainPoint[] = []
 	for (let i = 1; i < lines.length; i++) {
 		const cells = lines[i]!.split(",")
@@ -110,6 +119,10 @@ function parseCsv(text: string, runName: string): TrainPoint[] {
 		if (mf) point.macro_f1 = parseFloat(mf)
 		const lr = lrIdx >= 0 ? cells[lrIdx] : ""
 		if (lr) point.lr = parseFloat(lr)
+		for (const { key, idx } of perTagIdx) {
+			const v = cells[idx]
+			if (v) point[key as `f1.${string}`] = parseFloat(v)
+		}
 		out.push(point)
 	}
 	return out

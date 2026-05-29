@@ -30,12 +30,12 @@ import { readFileSync, writeFileSync } from "node:fs"
 interface TrainPoint {
 	run: string
 	step: number
-	train_loss?: number
-	val_loss?: number
-	macro_f1?: number
+	[metric: string]: number | string | undefined
 }
 
-type Metric = "val_loss" | "macro_f1" | "train_loss"
+// Metric name accepted as a string. Stage-3 per-tag F1 columns use the `f1.<tag>` form
+// (e.g. `f1.locality`); plus the four canonical aggregate metrics.
+type Metric = string
 
 interface Args {
 	inputs: string[]
@@ -82,7 +82,7 @@ function loadAndGroup(args: Args): RunSeries[] {
 	for (const path of args.inputs) {
 		const data: TrainPoint[] = JSON.parse(readFileSync(path, "utf8"))
 		for (const p of data) {
-			const v = p[args.metric]
+			const v = p[args.metric] as number | string | undefined
 			if (typeof v !== "number") continue
 			let arr = byRun.get(p.run)
 			if (!arr) {
@@ -178,8 +178,8 @@ function renderSVG(args: Args, series: RunSeries[]): string {
 		)
 	}
 
-	// Axis labels.
-	const metricLabel = args.metric === "val_loss" ? "val_loss" : args.metric === "macro_f1" ? "macro_f1" : "train_loss"
+	// Axis labels — the metric name itself is the label.
+	const metricLabel = args.metric
 	parts.push(
 		`<text x="${padding.left + plotW / 2}" y="${H - 12}" text-anchor="middle" font-size="12">training step</text>`
 	)
