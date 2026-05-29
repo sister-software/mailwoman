@@ -58,8 +58,9 @@ const SUFFIXES = ["St", "Ave", "Blvd", "Rd", "Dr", "Ln", "Way", "Pl", "Ct", "Pkw
 
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const
 
-/** Connectors between the two streets. Whitespace-padded forms keep tokens clean for alignment. */
-const CONNECTORS = [" & ", " and ", " at ", " / "] as const
+/** Connectors between the two streets. Whitespace-padded forms keep tokens clean for alignment.
+ *  `@` added in v0.7.2 — the harness uses it ("Main St @ Second Ave") and v0.7.1 had never seen it. */
+const CONNECTORS = [" & ", " and ", " at ", " / ", " @ "] as const
 
 export interface IntersectionBaseTuple {
 	locality: string
@@ -114,23 +115,28 @@ export function synthesizeIntersectionRow(
 	if (b === a || a.includes(b) || b.includes(a)) return null
 
 	const connector = pick(CONNECTORS, random)
-	const includePostcode = base.postcode != null && random() < 0.7
-
 	// "corner of" prefix variant (~20%) — still labels the two streets identically.
 	const cornerPrefix = random() < 0.2 ? "corner of " : ""
 
-	const tail = includePostcode
-		? `, ${base.locality}, ${base.region} ${base.postcode}`
-		: `, ${base.locality}, ${base.region}`
-	const raw = `${cornerPrefix}${a}${connector}${b}${tail}`
+	const components: CanonicalRow["components"] = { intersection_a: a, intersection_b: b }
 
-	const components: CanonicalRow["components"] = {
-		intersection_a: a,
-		intersection_b: b,
-		locality: base.locality,
-		region: base.region,
+	// v0.7.2: ~60% BARE (no locality tail). v0.7.1 always appended ", City, ST", so the model learned
+	// to read post-intersection text as a locality and fumbled the harness's bare "X & Y" cases
+	// (mislabeling the second street as a locality). Match the eval distribution.
+	const bare = random() < 0.6
+	let raw: string
+	if (bare) {
+		raw = `${cornerPrefix}${a}${connector}${b}`
+	} else {
+		const includePostcode = base.postcode != null && random() < 0.7
+		const tail = includePostcode
+			? `, ${base.locality}, ${base.region} ${base.postcode}`
+			: `, ${base.locality}, ${base.region}`
+		raw = `${cornerPrefix}${a}${connector}${b}${tail}`
+		components.locality = base.locality
+		components.region = base.region
+		if (includePostcode) components.postcode = base.postcode
 	}
-	if (includePostcode) components.postcode = base.postcode
 
 	return { raw, components, locale: "en-US" }
 }

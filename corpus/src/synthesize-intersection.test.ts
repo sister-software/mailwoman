@@ -42,7 +42,19 @@ describe("synthesizeIntersectionRow", () => {
 		expect(row.raw).toContain(row.components.intersection_a!)
 		expect(row.raw).toContain(row.components.intersection_b!)
 		expect(row.components.intersection_a).not.toBe(row.components.intersection_b)
-		expect(row.components.locality).toBe("New York")
+	})
+
+	it("produces a meaningful fraction of BARE intersections (no locality tail) — v0.7.2", () => {
+		// The harness's intersection assertions are bare "X & Y"; v0.7.1 fumbled them because every
+		// synthetic row had a ", City, ST" tail. Verify ~60% are now tail-less.
+		const rows = generateIntersectionRows(400, DEFAULT_US_BASES, { random: mulberry32(99) })
+		const bare = rows.filter((r) => r.components.locality == null)
+		expect(bare.length).toBeGreaterThan(rows.length * 0.4)
+		// Bare rows still carry both intersection tags.
+		for (const r of bare.slice(0, 20)) {
+			expect(r.components.intersection_a).toBeTruthy()
+			expect(r.components.intersection_b).toBeTruthy()
+		}
 	})
 
 	it("aligns to BIO with B-intersection_a before B-intersection_b", () => {
