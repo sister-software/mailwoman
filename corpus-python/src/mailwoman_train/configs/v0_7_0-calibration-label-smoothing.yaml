@@ -1,0 +1,150 @@
+# v0.7.0 calibration experiment — label smoothing on the v0.6.0 base recipe.
+#
+# Task #31 (v0.7 P0). The v0.6.x retrospective traced the cycle's failures to
+# OVERCONFIDENCE: the model emits high-probability hallucinations (locality/
+# dep_locality) that survive decoding. The 2026-05-29 postcode diagnostic and
+# the harness-vs-per-tag divergence both point at calibration, not corpus recipe,
+# as the binding constraint.
+#
+# SINGLE-VARIABLE CHANGE vs v0_6_0-stage3.yaml:
+#
+#     model.label_smoothing: 0.0 → **0.1**
+#
+# Everything else is byte-identical to v0.6.0 (same corpus v0.4.0, same source/
+# class weights, same CE-only/CRF-disabled setup per the NaN protocol, same LR
+# schedule, same 100K steps, same tokenizer v0.6.0-a0). This makes the comparison
+# against the v0.6.0 baseline (model-v060-step-100000) a clean attribution: any
+# delta is the label-smoothing effect, nothing else.
+#
+# HYPOTHESIS / EXPECTED OUTCOME:
+#   - Overconfidence (share of >0.9-confidence predictions) drops markedly
+#     (plan target: ~81% → ~50%).
+#   - Harness pass rate (PRIMARY release metric) improves as overconfident
+#     hallucinations soften and lose decode arguments.
+#   - Per-tag recall on the held-out TEST split stays within 2pp of v0.6.0
+#     (calibration should not cost recall; label smoothing is a regularizer,
+#     not a capacity change).
+#
+# EARLY-KILL GATE (NaN protocol / budget stewardship): checkpoints land every
+# 2K steps. Inspect step-20000 (~20 min). If overconfidence has NOT dropped and
+# harness has NOT improved by 20K, kill — calibration is not the lever and v0.7
+# pivots to structural (#41 char-level + larger model). This is recipe-tuning
+# iteration 1 of the 2-iteration cap.
+#
+# label_smoothing is a benign regularizer (will not NaN); CRF stays disabled so
+# this does not confound with the CRF precision question.
+#
+# Launch:
+#   modal run -d scripts/modal/train_remote.py --config v0_7_0-calibration-label-smoothing.yaml --resume none
+#
+# Authoritative eval is run LOCALLY post-training on data/eval/golden/v0.1.2/test
+# (the held-out split from task #34), read exactly once — see the v0.7 plan.
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    deepseek-translit-armn: 0.5
+    deepseek-translit-cyrl: 0.5
+    deepseek-translit-hang: 0.5
+    deepseek-translit-hans: 0.5
+    deepseek-translit-jpan: 0.5
+    synth-po-box: 1.5
+  train_rows_per_epoch: 1000000
+  val_rows: 2048
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  # === THE SINGLE VARIABLE: 0.0 → 0.1 ===
+  label_smoothing: 0.1
+  crf_normalization: per_sequence
+  # CE-only per NaN protocol (matches v0.6.0 baseline exactly — see v0_6_0-stage3.yaml
+  # for the three CRF divergence attempts). CRF still ACTIVE at inference (Viterbi +
+  # structural mask); only the learned-transition LOSS is disabled.
+  crf_loss_weight: 0.0
+  class_weights:
+    O: 0.5
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v070-calib/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 100000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""
