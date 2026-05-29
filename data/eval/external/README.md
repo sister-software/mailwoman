@@ -29,9 +29,22 @@ PO-box variety (Apartado, A.A., Postfach/Packstation, BP/CEDEX, Private Bag,
 GPO Box, alphanumeric `PO Box HM 100`).
 
 Fields per row: `{raw, country, edge_class, standardized, source}`.
-**Note:** these are RAW (no per-component ground truth yet). Labeling into
-`{input, expected components}` (DeepSeek-assisted + spot-checked) is the next
-step before they're runnable through the harness.
+
+### `postal-cases.jsonl` (38 labeled, in-scope subset)
+The labeled, runnable cut of the catalog: the 38 in-scope English-Latin
+addresses (US/GB/CA/AU/NZ/IE — excludes the non-Latin/RTL/Japan-block rows,
+which are out of the en-US/fr-FR model's scope, and the USPS `##` format
+templates, which aren't real addresses). Labeled into our schema
+DeepSeek-assisted then spot-checked: every surface form is verified verbatim
+against `raw`, and the tricky calls (military APO/region mapping,
+unit-before-number `6-123`, county-as-region `CO. ARMAGH`, district-as-
+dependent_locality `HIGH PEAK`) were reviewed by hand. Personal recipient
+names are intentionally unlabeled (no schema tag). Fields:
+`{input, locale, expected, edge_class, country, source}`.
+
+**v0 baseline (model-independent, 2026-05-30):** v0 26% overall — wins on
+canonical/intl-format/secondary-unit (29–43%, its rule turf), **0% on military
+APO/FPO, PO-box, rural-route, directional** (coverage gaps shared with neural).
 
 Gaps: USPS Pub 28 worked examples are JPG images (need OCR); Canada Post are SVG
 images; Royal Mail PDF 403'd. The US/UK/CA filled examples here come from
@@ -58,10 +71,29 @@ to `{input, expected}` with a tag remap:
 Compare case-insensitively (libpostal lowercases/normalizes components). The
 archive.org bulk TSV (88 countries, ~1.2 GB) is the heavyweight option for scale.
 
-## Next steps
+## Running the arenas
 
-1. Harvest `libpostal/test/test_parser.c` → remap → runnable `{input, expected}`.
-2. Label the postal-standards catalog into components (DeepSeek + spot-check).
-3. Run both through `harness-v0-neural` → the three-bucket capability table
-   (neural-only wins / both / v0-only) by edge-class — the eval our current
-   suite structurally can't produce.
+All three arenas run through one push-button script:
+
+```bash
+yarn compile   # harness resolves @mailwoman/neural to its compiled out/ tree
+# default shipped weights:
+scripts/eval/external-arenas.sh
+# against a fresh export (e.g. v0.7.2 int8):
+MODEL=/path/model.int8.onnx TOKENIZER=/path/tokenizer.model \
+  MODELCARD=/path/model-card.json scripts/eval/external-arenas.sh
+```
+
+It regenerates the perturbation arena, runs each arena with `--symmetric-match
+--postcode-repair`, and prints the three-bucket table (neural-only / both /
+v0-only / both-fail) per arena plus a by-edge_class breakdown for the postal
+arena (`scripts/eval/summarize-arenas.py`).
+
+## Done / next
+
+1. ✅ Harvested `libpostal/test/test_parser.c` → `libpostal-cases.jsonl` (69).
+2. ✅ Labeled the in-scope catalog subset → `postal-cases.jsonl` (38).
+3. ✅ Push-button runner (`external-arenas.sh`) + three-bucket summarizer.
+4. ⏳ Re-run all three against the v0.7.2 model for the final capability table
+   (the default shipped weights are the stale v0.5.3 bundle — neural numbers
+   from a default run are not representative).
