@@ -342,7 +342,8 @@ async function safeClassify(
 	fst?: FstMatcherLike
 ): Promise<AddressTree> {
 	try {
-		return await classifier.parse(text, { queryShape, fst })
+		// Postcode regex repair on by default (v0.7 #35, operator-signed).
+		return await classifier.parse(text, { queryShape, fst, postcodeRepair: true })
 	} catch {
 		return { raw: text, roots: [] }
 	}

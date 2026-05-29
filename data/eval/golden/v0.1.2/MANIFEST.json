@@ -8,12 +8,14 @@
 			"sha256": "90b4b61355bdc7283917940edc9fd75b53f0660e04251a20c5f8430525070742"
 		},
 		"fr.jsonl": {
-			"entries": 1545,
-			"sha256": "9c6609e0d7c56cbc4b337523f2e8dd211d9b4384ab7df8e6e14a90701a39a113"
+			"entries": 1551,
+			"sha256": "29d72dcd34ea2a576459b78be57ba3c0febd353d4b88bf801772ccdb415f46f6"
 		},
 		"us.jsonl": {
-			"entries": 2936,
-			"sha256": "fe9e4bb5cbd492b04ae5936fbbbef6d50b453f00bd0714208ce3d33b7d9ddef3"
+			"entries": 2956,
+			"sha256": "8cad55caed20e4998543e1bf09faf8da5d6dec8bcc9e4384805da760f950e50f"
 		}
-	}
+	},
+	"manifest_refreshed_at": "2026-05-29",
+	"manifest_refreshed_note": "Counts/shas re-synced to the current files (us/fr were expanded after the original 2026-05-18 promotion); promoted_at/from preserve the original provenance."
 }
