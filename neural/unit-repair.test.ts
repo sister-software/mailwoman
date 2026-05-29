@@ -96,6 +96,24 @@ describe("repairUnitLabels", () => {
 		expect(unitValue(text, out)).toBe("#104")
 	})
 
+	it("reclaims a bare unit the model mislabeled as locality (Flat 2 → unit)", () => {
+		// The v0.7.2 failure mode: "Flat 2  14 Smith St" → model labels "Flat 2" as locality.
+		const text = "Flat 2  14 Smith St"
+		const tokens = [
+			tok("Flat", 0, 4, "B-locality"),
+			tok("2", 5, 6, "I-locality"),
+			tok("14", 8, 10, "B-house_number"),
+			tok("Smith", 11, 16, "B-street"),
+			tok("St", 17, 19, "I-street"),
+		]
+		const { tokens: out, changed } = repairUnitLabels(text, tokens)
+		expect(changed).toBeGreaterThan(0)
+		expect(unitValue(text, out)).toBe("Flat 2")
+		// the house_number/street must be untouched.
+		expect(out[2]!.label).toBe("B-house_number")
+		expect(out[3]!.label).toBe("B-street")
+	})
+
 	it("does NOT add over a structural tag (Apt where the number is a confident house_number)", () => {
 		const text = "Apt 4"
 		// pathological: model labeled "4" as house_number. ADD must be blocked.

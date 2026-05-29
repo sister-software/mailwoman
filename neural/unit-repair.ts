@@ -71,6 +71,19 @@ const UNIT_B = "B-unit" as DecoderToken["label"]
 const UNIT_I = "I-unit" as DecoderToken["label"]
 const OUTSIDE = "O" as DecoderToken["label"]
 
+/**
+ * Tags a unit span is allowed to overwrite on the ADD path. The v0.7.2 arena
+ * showed the dominant failure for bare designator-led units ("Flat 2  14 Smith
+ * St", "APT 2 …") is the model labeling the WHOLE designator+identifier run as
+ * `locality` — not leaving it `O`. An explicit designator + identifier is a
+ * high-confidence "this is a unit" shape (a real locality/suburb name never has
+ * that form), so — exactly like postcode-repair's ADD_OVER_TAGS — we let it
+ * reclaim a `locality`/`dependent_locality` span. Structural tags
+ * (house_number, street*, postcode, po_box, region, country, venue) stay off the
+ * list so a confident parse is never clobbered. (`O` is always eligible.)
+ */
+const ADD_OVER_TAGS = new Set<string>(["locality", "dependent_locality"])
+
 function isUnitLabel(label: string): boolean {
 	return label === "B-unit" || label === "I-unit"
 }
@@ -133,9 +146,14 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 
 		const hasUnit = overlap.some((i) => isUnitLabel(tokens[i]!.label))
 		if (!hasUnit) {
-			// ADD path — explicit designators are high-confidence, but only ever over O.
-			// (Never clobber a confident house_number/street/postcode/po_box/container.)
-			const safe = overlap.every((i) => tagOf(tokens[i]!.label) === null)
+			// ADD path — explicit designators are high-confidence, but only ever over O or a
+			// geographic-container tag (locality/dependent_locality — the tags the model
+			// mislabels bare units as). Never clobber a confident house_number/street/postcode/
+			// po_box/region/country/venue.
+			const safe = overlap.every((i) => {
+				const tag = tagOf(tokens[i]!.label)
+				return tag === null || ADD_OVER_TAGS.has(tag)
+			})
 			if (!safe) continue
 		}
 
