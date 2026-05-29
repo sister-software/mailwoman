@@ -26,7 +26,7 @@
  *   [--falsehoods data/eval/falsehoods] # extra JSONL row files to include
  */
 
-import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
+import { type ComponentTag, decodeAsJson, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -323,6 +323,8 @@ interface AssertionResult {
 	neural_pass: boolean
 	neural_actual: ClassificationRecord
 	neural_dropped: Partial<Record<ComponentTag, string>>
+	neural_tree_valid: boolean
+	neural_tree_violations: TreeViolation[]
 }
 
 /**
@@ -371,6 +373,7 @@ async function runAssertion(
 	const flat = decodeAsJson(tree)
 	const { record: neuralRecord, dropped } = neuralTreeToV0Record(flat)
 	const neuralPass = anyExpectedMatches(a.expected, neuralRecord)
+	const treeValidity = validateTree(tree) // #37 — structural coherence of the neural parse
 
 	return {
 		file: a.file,
@@ -382,6 +385,8 @@ async function runAssertion(
 		neural_pass: neuralPass,
 		neural_actual: neuralRecord,
 		neural_dropped: dropped,
+		neural_tree_valid: treeValidity.valid,
+		neural_tree_violations: treeValidity.violations,
 	}
 }
 
@@ -437,6 +442,8 @@ function printReport(results: AssertionResult[]): void {
 	const total = results.length
 	const v0Pass = results.filter((r) => r.v0_pass).length
 	const neuralPass = results.filter((r) => r.neural_pass).length
+	const treeValid = results.filter((r) => r.neural_tree_valid).length
+	const passAndValid = results.filter((r) => r.neural_pass && r.neural_tree_valid).length
 	const bothPass = results.filter((r) => r.v0_pass && r.neural_pass).length
 	const onlyV0 = results.filter((r) => r.v0_pass && !r.neural_pass).length
 	const onlyNeural = results.filter((r) => !r.v0_pass && r.neural_pass).length
@@ -470,6 +477,8 @@ function printReport(results: AssertionResult[]): void {
 	console.log(`|--------|------|------|`)
 	console.log(`| v0 (rule-based) | ${v0Pass} | ${((100 * v0Pass) / total).toFixed(1)}% |`)
 	console.log(`| Neural | ${neuralPass} | ${((100 * neuralPass) / total).toFixed(1)}% |`)
+	console.log(`| Neural tree structurally valid (#37) | ${treeValid} | ${((100 * treeValid) / total).toFixed(1)}% |`)
+	console.log(`| Neural pass AND structurally valid | ${passAndValid} | ${((100 * passAndValid) / total).toFixed(1)}% |`)
 	console.log("")
 	console.log(`| Category | Count | Rate |`)
 	console.log(`|----------|-------|------|`)
