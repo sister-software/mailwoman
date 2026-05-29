@@ -140,6 +140,11 @@ def train(
     import sys
     import torch
 
+    # Fetch the latest committed volume state. Without this, a container mounts a stale
+    # snapshot and never sees shards added via `modal volume put` after deploy — which silently
+    # trains on the old corpus (the v0.7.1 intersection-shard trap, night-3 2026-05-29).
+    vol.reload()
+
     # Add training code to path
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
 
@@ -291,6 +296,7 @@ def diagnose_corpus():
     from collections import Counter
     from pathlib import Path
 
+    vol.reload()  # see shards added via `modal volume put` after deploy
     sys.path.insert(0, "/data/corpus-python/src")
 
     corpus_dir = Path("/data/corpus/versioned/v0.4.0/corpus-v0.4.0")
