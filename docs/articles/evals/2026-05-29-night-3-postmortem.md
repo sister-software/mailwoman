@@ -128,6 +128,13 @@ to inform the fork:
   65 failing intersection cases** — it never learned the tag (corpus gap).
 - Only 9/321 failures are structurally invalid → failures are coherent-but-
   incomplete, not garbled.
+- **Intersection root-cause (logit probe):** the `intersection_a/b` labels exist
+  (indices 29–32) and the decode mask permits them, but on canonical
+  intersections ("Broadway & W 42nd St", "Market St and Castro St") the model
+  assigns intersection labels a **max probability of ~0.0001–0.004 across all
+  tokens** — it never learned the tag (Stage 3 added the labels without enough
+  corpus support). Not a decode bug; a corpus gap. No calibration or tokenizer
+  change can recover a label the model assigns ~0 probability.
 
 **Implication for the fork.** Calibration softens confidence on labels the model
 *does* emit; it cannot create the missing street / intersection / foreign-locale
