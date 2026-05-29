@@ -110,10 +110,7 @@ The priors are **additive logit biases** capped at 3.0 logits, composed with
 the encoder's emissions via `addEmissionMatrix`:
 
 ```ts
-final_emissions = encoder_logits
-                + queryShape_bias
-                + admin_fst_bias
-                + morphology_fst_bias
+final_emissions = encoder_logits + queryShape_bias + admin_fst_bias + morphology_fst_bias
 ```
 
 This is the shallow-fusion architecture. The encoder is the "acoustic model."

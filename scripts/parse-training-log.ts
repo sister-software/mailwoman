@@ -3,10 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Parser for mailwoman training-run logs. Reads either a Modal app's log output (via
- *   `modal app logs <app-id>` piped through this script) or a saved local log file, and
- *   emits structured `{step, train_loss?, val_loss?, macro_f1?, throughput?}` tuples as
- *   JSON.
+ *   Parser for mailwoman training-run logs. Reads either a Modal app's log output (via `modal app
+ *   logs <app-id>` piped through this script) or a saved local log file, and emits structured
+ *   `{step, train_loss?, val_loss?, macro_f1?, throughput?}` tuples as JSON.
  *
  *   Feeds `scripts/training-chart.ts` for visualization.
  *
@@ -15,26 +14,29 @@
  *   ```
  *   step 10000/100000  train_loss=0.0420  lr=0.000150  rate=12.41 steps/s
  *   [eval] val_loss=0.2511  macro_f1=0.4072  val_rows=2048
- *   ```
+ * ```
  *
- *   Train-loss snapshots are emitted per step line. Eval results are paired to the most
- *   recent step. Output is a JSON array on stdout:
+ *   Train-loss snapshots are emitted per step line. Eval results are paired to the most recent step.
+ *   Output is a JSON array on stdout:
  *
  *   ```json
  *   [
  *     {"step": 10000, "train_loss": 0.0420, "lr": 0.00015, "rate": 12.41},
  *     {"step": 10000, "val_loss": 0.2511, "macro_f1": 0.4072, "val_rows": 2048}
  *   ]
- *   ```
+ * ```
  *
  *   Usage:
- *     # From a modal app id (limited to last 100 log entries by default):
- *     modal app logs ap-XXX | node --experimental-strip-types scripts/parse-training-log.ts \
- *       --run-name v0.6.3 > /tmp/v063.json
  *
- *     # From a saved log file:
- *     node --experimental-strip-types scripts/parse-training-log.ts \
- *       --input /tmp/v063-run.log --run-name v0.6.3 --out /tmp/v063.json
+ *   # From a modal app id (limited to last 100 log entries by default):
+ *
+ *   Modal app logs ap-XXX | node --experimental-strip-types scripts/parse-training-log.ts\
+ *   --run-name v0.6.3 > /tmp/v063.json
+ *
+ *   # From a saved log file:
+ *
+ *   Node --experimental-strip-types scripts/parse-training-log.ts\
+ *   --input /tmp/v063-run.log --run-name v0.6.3 --out /tmp/v063.json
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
@@ -83,11 +85,11 @@ function readInput(args: Args): string {
 	return readFileSync("/dev/stdin", "utf8")
 }
 
-/** Parse the structured training-log CSV that the training loop writes via
- * `csv_log_path`. Schema:
- *   step, wall_seconds, train_loss, lr, val_loss, val_macro_f1, f1.<tag>...
- * Train-only rows have val_loss/val_macro_f1 empty; eval rows fill them in.
- * One row per record (no need to pair train + eval lines like in the modal-log case).
+/**
+ * Parse the structured training-log CSV that the training loop writes via `csv_log_path`. Schema:
+ * step, wall_seconds, train_loss, lr, val_loss, val_macro_f1, f1.<tag>... Train-only rows have
+ * val_loss/val_macro_f1 empty; eval rows fill them in. One row per record (no need to pair train +
+ * eval lines like in the modal-log case).
  */
 function parseCsv(text: string, runName: string): TrainPoint[] {
 	const lines = text.split("\n").filter((l) => l.trim())

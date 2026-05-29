@@ -4,14 +4,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a JSONL of synthetic no-street counter-example training rows. Reads
- *   (locality, region, postcode, country) tuples from an input JSONL stream and emits aligned
- *   `LabeledRow` JSONL ready for the parquet sharding step.
+ *   Build a JSONL of synthetic no-street counter-example training rows. Reads (locality, region,
+ *   postcode, country) tuples from an input JSONL stream and emits aligned `LabeledRow` JSONL ready
+ *   for the parquet sharding step.
  *
  *   This shard is the corpus-side counterweight to the synth-street shard that drove v0.6.1's
- *   `dependent_locality` regression. The synthesizer produces venue+admin and admin-only rows
- *   with explicit absence of any street-side component — see
- *   `corpus/src/synthesize-no-street.ts` for the template design and rationale.
+ *   `dependent_locality` regression. The synthesizer produces venue+admin and admin-only rows with
+ *   explicit absence of any street-side component — see `corpus/src/synthesize-no-street.ts` for
+ *   the template design and rationale.
  *
  *   Pipeline parity with `build-po-box-shard.mjs`:
  *
@@ -20,9 +20,9 @@
  *   3. Parquet sharding (Python: labeled JSONL → parquet, manifest update)
  *
  *   Usage: node scripts/build-no-street-shard.mjs\
- *     --input /tmp/tuples.jsonl\
- *     --output /tmp/no-street-labeled.jsonl\
- *     --variants 2 --seed 42
+ *   --input /tmp/tuples.jsonl\
+ *   --output /tmp/no-street-labeled.jsonl\
+ *   --variants 2 --seed 42
  */
 
 import { createReadStream, createWriteStream } from "node:fs"

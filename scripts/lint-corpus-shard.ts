@@ -3,51 +3,42 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Corpus linter. Compares a new shard against pre-computed corpus statistics and flags
- *   patterns that would cause the class of failure we hit with v0.6.2's "5th Avenue Theatre"
- *   adversarial venue templates.
+ *   Corpus linter. Compares a new shard against pre-computed corpus statistics and flags patterns
+ *   that would cause the class of failure we hit with v0.6.2's "5th Avenue Theatre" adversarial
+ *   venue templates.
  *
  *   Per DeepSeek turn 9 design (2026-05-29). v1 checks:
  *
- *   1. **Token-label distribution outliers.** For each token in the new shard, compare the
- *      shard's majority label to the corpus's majority label. Flag when the corpus has a
- *      confidently-established majority (>66%) AND the shard's majority differs AND both
- *      have non-trivial counts (shard ≥ 50, corpus ≥ 200).
+ *   1. **Token-label distribution outliers.** For each token in the new shard, compare the shard's
+ *        majority label to the corpus's majority label. Flag when the corpus has a
+ *        confidently-established majority (>66%) AND the shard's majority differs AND both have
+ *        non-trivial counts (shard ≥ 50, corpus ≥ 200).
+ *   2. **Label-vacuum tokens.** Token labeled with a tag that has ZERO instances in the corpus for that
+ *        token, despite the token being well-represented in the corpus. Stronger signal than #1 —
+ *        we're introducing a novel association, not shifting a distribution.
+ *   3. **Bigram-label collisions.** Identical (token_bigram, label_bigram) appears in shard while the
+ *        same token_bigram has a DIFFERENT majority label_bigram in the corpus. The "5th Avenue"
+ *        with [B-venue, I-venue] vs corpus's [B-house_number, I-street] case.
+ *   4. **Common-form anti-pattern rules.** Applies `lint-rules.json` — token-regex → forbidden-labels
+ *        mappings — flagging matches.
+ *   5. **Basic sanity.** Truncated rows (tokens.length !== labels.length), all-O rows >90% of shard.
  *
- *   2. **Label-vacuum tokens.** Token labeled with a tag that has ZERO instances in the
- *      corpus for that token, despite the token being well-represented in the corpus.
- *      Stronger signal than #1 — we're introducing a novel association, not shifting a
- *      distribution.
+ *   Output: markdown report on stdout, optional JSON sidecar via `--out-json`. Exits 0 if no errors,
+ *   1 if any errors (warnings don't gate). Per the design, the MANIFEST entry for a flagged shard
+ *   should require `lint_acknowledged: true` before training consumes it.
  *
- *   3. **Bigram-label collisions.** Identical (token_bigram, label_bigram) appears in shard
- *      while the same token_bigram has a DIFFERENT majority label_bigram in the corpus. The
- *      "5th Avenue" with [B-venue, I-venue] vs corpus's [B-house_number, I-street] case.
- *
- *   4. **Common-form anti-pattern rules.** Applies `lint-rules.json` — token-regex →
- *      forbidden-labels mappings — flagging matches.
- *
- *   5. **Basic sanity.** Truncated rows (tokens.length !== labels.length), all-O rows >90%
- *      of shard.
- *
- *   Output: markdown report on stdout, optional JSON sidecar via `--out-json`. Exits 0 if
- *   no errors, 1 if any errors (warnings don't gate). Per the design, the MANIFEST entry
- *   for a flagged shard should require `lint_acknowledged: true` before training consumes
- *   it.
- *
- *   Usage:
- *     node --experimental-strip-types scripts/lint-corpus-shard.ts \
- *       --shard <new-shard.parquet> \
- *       --stats <corpus-stats.json> \
- *       [--rules scripts/lint-rules.json] \
- *       [--out-md /tmp/lint-report.md] \
- *       [--out-json /tmp/lint-report.json]
+ *   Usage: node --experimental-strip-types scripts/lint-corpus-shard.ts\
+ *   --shard <new-shard.parquet>\
+ *   --stats <corpus-stats.json>\
+ *   [--rules scripts/lint-rules.json]\
+ *   [--out-md /tmp/lint-report.md]\
+ *   [--out-json /tmp/lint-report.json]
  */
 
 import { execSync } from "node:child_process"
 import { readFileSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
-import { dirname } from "node:path"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -84,7 +75,9 @@ function parseArgs(): Args {
 		else if (a === "--out-json" && args[i + 1]) out.outJson = args[++i]
 	}
 	if (!out.shardPath || !out.statsPath) {
-		console.error("Usage: lint-corpus-shard.ts --shard <parquet> --stats <stats.json> [--rules <rules.json>] [--out-md <path>] [--out-json <path>]")
+		console.error(
+			"Usage: lint-corpus-shard.ts --shard <parquet> --stats <stats.json> [--rules <rules.json>] [--out-md <path>] [--out-json <path>]"
+		)
 		process.exit(2)
 	}
 	out.rulesPath = out.rulesPath ?? resolve(__dirname, "lint-rules.json")
@@ -358,7 +351,9 @@ function renderReport(args: Args, shard: ShardStats, flags: Flag[]): string {
 	lines.push(`- **Unique tokens:** ${shard.tokens.size}`)
 	lines.push(`- **Unique bigrams:** ${shard.bigrams.size}`)
 	lines.push("")
-	lines.push(`**Errors:** ${errors.length} (gates the shard's inclusion unless MANIFEST sets \`lint_acknowledged: true\`)`)
+	lines.push(
+		`**Errors:** ${errors.length} (gates the shard's inclusion unless MANIFEST sets \`lint_acknowledged: true\`)`
+	)
 	lines.push(`**Warnings:** ${warns.length} (advisory)`)
 	lines.push("")
 	if (flags.length === 0) {
@@ -389,7 +384,9 @@ function main(): void {
 	const args = parseArgs()
 	console.error(`Reading corpus stats from ${args.statsPath}...`)
 	const corpus: CorpusStats = JSON.parse(readFileSync(args.statsPath, "utf8"))
-	console.error(`  ${corpus.row_count} rows from ${corpus.shard_paths.length} shard(s); ${Object.keys(corpus.tokens).length} tokens, ${Object.keys(corpus.bigrams).length} bigrams`)
+	console.error(
+		`  ${corpus.row_count} rows from ${corpus.shard_paths.length} shard(s); ${Object.keys(corpus.tokens).length} tokens, ${Object.keys(corpus.bigrams).length} bigrams`
+	)
 
 	console.error(`Reading shard from ${args.shardPath}...`)
 	const rows = readShard(args.shardPath)
@@ -417,7 +414,19 @@ function main(): void {
 	if (args.outJson) {
 		writeFileSync(
 			args.outJson,
-			JSON.stringify({ shard: args.shardPath, stats: args.statsPath, flags, summary: { errors: flags.filter((f) => f.severity === "error").length, warnings: flags.filter((f) => f.severity === "warn").length } }, null, 2)
+			JSON.stringify(
+				{
+					shard: args.shardPath,
+					stats: args.statsPath,
+					flags,
+					summary: {
+						errors: flags.filter((f) => f.severity === "error").length,
+						warnings: flags.filter((f) => f.severity === "warn").length,
+					},
+				},
+				null,
+				2
+			)
 		)
 	}
 

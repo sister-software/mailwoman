@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Unit tests for the street-morphology emission bias function. Asserts the two-pass behaviour:
- *   matched affix tokens get positive bias on street_prefix/street_suffix; adjacent name tokens
- *   get positive bias on street AND negative bias on dependent_locality.
+ *   matched affix tokens get positive bias on street_prefix/street_suffix; adjacent name tokens get
+ *   positive bias on street AND negative bias on dependent_locality.
  */
 
 import { describe, expect, it } from "vitest"

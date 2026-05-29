@@ -4,21 +4,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a JSONL of synthetic house_number+venue+street co-occurrence training rows for
- *   v0.6.3. Companion to `build-no-street-shard.mjs`. Reads
- *   `(locality, region, postcode, country, street?, houseNumber?)` tuples from JSONL stdin
- *   and emits aligned `LabeledRow` JSONL ready for the parquet sharding step.
+ *   Build a JSONL of synthetic house_number+venue+street co-occurrence training rows for v0.6.3.
+ *   Companion to `build-no-street-shard.mjs`. Reads `(locality, region, postcode, country, street?,
+ *   houseNumber?)` tuples from JSONL stdin and emits aligned `LabeledRow` JSONL ready for the
+ *   parquet sharding step.
  *
- *   This shard is the v0.6.3 corrective for the v0.6.2 house_number regression. The
- *   synth-no-street shard's distributional shift (adding ~122K rows with no house_number)
- *   trained the model to under-emit house_number; synth-house-venue restores the signal by
- *   producing rows where house_number AND venue coexist in the same address. See
- *   `corpus/src/synthesize-house-venue.ts` for the template design + rationale.
+ *   This shard is the v0.6.3 corrective for the v0.6.2 house_number regression. The synth-no-street
+ *   shard's distributional shift (adding ~122K rows with no house_number) trained the model to
+ *   under-emit house_number; synth-house-venue restores the signal by producing rows where
+ *   house_number AND venue coexist in the same address. See `corpus/src/synthesize-house-venue.ts`
+ *   for the template design + rationale.
  *
- *   Usage: node scripts/build-house-venue-shard.mjs \
- *     --input /tmp/tuples.jsonl \
- *     --output /tmp/house-venue-labeled.jsonl \
- *     --variants 2 --seed 42
+ *   Usage: node scripts/build-house-venue-shard.mjs\
+ *   --input /tmp/tuples.jsonl\
+ *   --output /tmp/house-venue-labeled.jsonl\
+ *   --variants 2 --seed 42
  */
 
 import { createReadStream, createWriteStream } from "node:fs"

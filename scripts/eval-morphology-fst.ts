@@ -5,18 +5,17 @@
  *
  *   Eval the v0.6.x neural classifier against the golden set with the optional Layer 1
  *   street-morphology FST enabled. Produces a per-tag error-analysis report in the same shape as
- *   `scripts/eval-error-analysis.ts` so the rows can be diffed against the existing v0.6.0 /
- *   v0.6.1 baselines in `docs/articles/evals/`.
+ *   `scripts/eval-error-analysis.ts` so the rows can be diffed against the existing v0.6.0 / v0.6.1
+ *   baselines in `docs/articles/evals/`.
  *
- *   Usage:
- *     node --experimental-strip-types scripts/eval-morphology-fst.ts \
- *       --model /mnt/playpen/.../model-v061-step-100000-int8.onnx \
- *       --tokenizer /mnt/playpen/.../v0.6.0-a0/tokenizer.model \
- *       --model-card neural-weights-en-us/model-card.json \
- *       --admin-fst /mnt/playpen/.../fst-en-us.bin \
- *       --golden data/eval/golden/v0.1.2 \
- *       [--no-morphology]    # disable the morphology FST (baseline run)
- *       [--morphology-bin <path>]    # use an already-serialized morphology FST
+ *   Usage: node --experimental-strip-types scripts/eval-morphology-fst.ts\
+ *   --model /mnt/playpen/.../model-v061-step-100000-int8.onnx\
+ *   --tokenizer /mnt/playpen/.../v0.6.0-a0/tokenizer.model\
+ *   --model-card neural-weights-en-us/model-card.json\
+ *   --admin-fst /mnt/playpen/.../fst-en-us.bin\
+ *   --golden data/eval/golden/v0.1.2\
+ *   [--no-morphology] # disable the morphology FST (baseline run) [--morphology-bin <path>] # use an
+ *   already-serialized morphology FST
  *
  *   If neither --morphology-bin nor --no-morphology is given, the script builds the FST in-process
  *   from `core/data/libpostal/dictionaries/`.
@@ -24,13 +23,12 @@
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { buildStreetMorphologyFst } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
 import { readFileSync, writeFileSync } from "node:fs"
-import { basename as pathBasename } from "node:path"
-import { resolve, dirname } from "node:path"
+import { dirname, basename as pathBasename, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const __filename = fileURLToPath(import.meta.url)
@@ -55,19 +53,22 @@ interface Args {
 	maxAffixBias?: number
 	maxNeighbourStreetBias?: number
 	dependentLocalityPenalty?: number
-	/** Optional JSON output path. When set, emits structured per-tag stats consumable by `eval-gate.ts`. */
+	/** Optional JSON output path. When set, emits structured per-tag stats consumable by
+`eval-gate.ts`. */
 	outJson?: string
-	/** Optional human-readable name written into the JSON output's `name` field. Defaults to the model basename. */
+	/** Optional human-readable name written into the JSON output's `name` field. Defaults to the model
+basename. */
 	evalName?: string
 	/**
-	 * When set, fold the neural model's Stage 3 component tags back to Stage 2 conventions
-	 * before comparing against the golden set. The v0.1.2 golden set uses Stage 2's single
-	 * "street" spans (e.g. golden street = "Main St", not separate street + street_suffix).
-	 * Without the fold, a Stage 3 model that correctly decomposes "Main St" → street="Main"
-	 * + street_suffix="St" is counted as a `street` boundary error PLUS a `street_suffix`
-	 * hallucination — a double penalty for legitimate decomposition. The fold combines
-	 * street_prefix + street_prefix_particle + street + street_suffix into a single
-	 * `street` value (space-joined in document order, matching the original raw text).
+	 * When set, fold the neural model's Stage 3 component tags back to Stage 2 conventions before
+	 * comparing against the golden set. The v0.1.2 golden set uses Stage 2's single "street" spans
+	 * (e.g. golden street = "Main St", not separate street + street_suffix). Without the fold, a
+	 * Stage 3 model that correctly decomposes "Main St" → street="Main"
+	 *
+	 * - Street_suffix="St" is counted as a `street` boundary error PLUS a `street_suffix` hallucination
+	 *   — a double penalty for legitimate decomposition. The fold combines street_prefix +
+	 *   street_prefix_particle + street + street_suffix into a single `street` value (space-joined in
+	 *   document order, matching the original raw text).
 	 */
 	stage3Fold?: boolean
 }
@@ -130,21 +131,18 @@ function parseArgs(): Args {
 }
 
 /**
- * Fold the neural classifier's Stage 3 component tags down to Stage 2 conventions for
- * comparison against the v0.1.2 golden set. See {@linkcode Args.stage3Fold} for the
- * full rationale.
+ * Fold the neural classifier's Stage 3 component tags down to Stage 2 conventions for comparison
+ * against the v0.1.2 golden set. See {@linkcode Args.stage3Fold} for the full rationale.
  *
- * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` →
- *   single `street` value (space-joined in declared order; the underlying tree spans are
- *   character-adjacent so the joined string approximates the original raw substring).
- * - `intersection_a` + `intersection_b` → folded to `street` (golden encodes
- *   intersections as a single street span per the v0 rule-based parser's convention).
+ * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` → single `street` value
+ *   (space-joined in declared order; the underlying tree spans are character-adjacent so the joined
+ *   string approximates the original raw substring).
+ * - `intersection_a` + `intersection_b` → folded to `street` (golden encodes intersections as a
+ *   single street span per the v0 rule-based parser's convention).
  *
  * Returns a flat record consumable by the existing comparison loop.
  */
-function foldStage3ToStage2(
-	flat: Partial<Record<ComponentTag, string>>
-): Partial<Record<ComponentTag, string>> {
+function foldStage3ToStage2(flat: Partial<Record<ComponentTag, string>>): Partial<Record<ComponentTag, string>> {
 	const out: Partial<Record<ComponentTag, string>> = { ...flat }
 	const streetParts: string[] = []
 	for (const tag of ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const) {
@@ -269,15 +267,22 @@ async function main() {
 	const morphologyOpts: Record<string, number> = {}
 	if (args.maxAffixBias !== undefined) morphologyOpts.maxAffixBias = args.maxAffixBias
 	if (args.maxNeighbourStreetBias !== undefined) morphologyOpts.maxNeighbourStreetBias = args.maxNeighbourStreetBias
-	if (args.dependentLocalityPenalty !== undefined) morphologyOpts.dependentLocalityPenalty = args.dependentLocalityPenalty
+	if (args.dependentLocalityPenalty !== undefined)
+		morphologyOpts.dependentLocalityPenalty = args.dependentLocalityPenalty
 
 	const parseOpts = {
-		...(adminFst ? { fst: adminFst as unknown as Parameters<typeof classifier.parse>[1] extends infer T ? T extends { fst?: infer F } ? F : never : never } : {}),
+		...(adminFst
+			? {
+					fst: adminFst as unknown as Parameters<typeof classifier.parse>[1] extends infer T
+						? T extends { fst?: infer F }
+							? F
+							: never
+						: never,
+				}
+			: {}),
 		...(morphologyFst
 			? {
-					fstStreetMorphology: morphologyFst as unknown as Parameters<
-						typeof classifier.parse
-					>[1] extends infer T
+					fstStreetMorphology: morphologyFst as unknown as Parameters<typeof classifier.parse>[1] extends infer T
 						? T extends { fstStreetMorphology?: infer F }
 							? F
 							: never

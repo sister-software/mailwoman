@@ -29,13 +29,13 @@ to the negative-example corpus.
 
 ## Results
 
-| Configuration | dep_loc hall. | street_suffix hall. | street_prefix hall. | locality recall | street recall | exact match |
-|---|---|---|---|---|---|---|
-| v0.6.1 neural-only (on record) | 1066 | 198 | 31 | 31.1% | 27.5% | 18.8% |
-| v0.6.1 + admin FST only | 1063 | 204 | 32 | 31.2% | 27.5% | 18.8% |
-| + morphology, defaults | 1050 | **332** ❌ | 40 | 31.2% | 26.2% | **18.2%** ❌ |
-| + morphology, length≥3 filter | 1058 | 238 | 32 | 31.2% | 27.1% | — |
-| + morphology, low bias + −6.0 pen | **1044** | 213 | 32 | 31.3% | 27.5% | — |
+| Configuration                     | dep_loc hall. | street_suffix hall. | street_prefix hall. | locality recall | street recall | exact match  |
+| --------------------------------- | ------------- | ------------------- | ------------------- | --------------- | ------------- | ------------ |
+| v0.6.1 neural-only (on record)    | 1066          | 198                 | 31                  | 31.1%           | 27.5%         | 18.8%        |
+| v0.6.1 + admin FST only           | 1063          | 204                 | 32                  | 31.2%           | 27.5%         | 18.8%        |
+| + morphology, defaults            | 1050          | **332** ❌          | 40                  | 31.2%           | 26.2%         | **18.2%** ❌ |
+| + morphology, length≥3 filter     | 1058          | 238                 | 32                  | 31.2%           | 27.1%         | —            |
+| + morphology, low bias + −6.0 pen | **1044**      | 213                 | 32                  | 31.3%           | 27.5%         | —            |
 
 Defaults: `maxAffixBias=3.0`, `maxNeighbourStreetBias=2.0`, `dependentLocalityPenalty=2.0`.
 Tuned: `maxAffixBias=1.0`, `maxNeighbourStreetBias=1.0`, `dependentLocalityPenalty=6.0`.

@@ -23,10 +23,7 @@ import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
-import {
-	buildStreetMorphologyEmissionPriors,
-	type StreetMorphologyPriorOpts,
-} from "./street-morphology-prior.js"
+import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import { buildBioEndMask, buildBioStartMask, buildBioTransitionMask, softmax, viterbi } from "./viterbi.js"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
@@ -335,9 +332,9 @@ export interface ParseOpts {
 	fstBiasScale?: number
 	/**
 	 * Pre-built street-morphology FST matcher. When provided, street-type affixes (Avenue, rue,
-	 * Calle, Straße, …) produce additive emission biases toward `street_prefix`/`street_suffix`
-	 * on the matched tokens AND toward `street` / away from `dependent_locality` on the adjacent
-	 * name tokens. Closes the v0.6.1 dependent_locality vacuum; see
+	 * Calle, Straße, …) produce additive emission biases toward `street_prefix`/`street_suffix` on
+	 * the matched tokens AND toward `street` / away from `dependent_locality` on the adjacent name
+	 * tokens. Closes the v0.6.1 dependent_locality vacuum; see
 	 * `docs/articles/concepts/street-supplement-architecture.md` for the layered design.
 	 */
 	fstStreetMorphology?: FstMatcherLike

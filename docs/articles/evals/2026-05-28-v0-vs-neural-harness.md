@@ -36,47 +36,47 @@ v0.6.2's corpus augmentation is "try something and hope." With it, augmentation 
 
 ## Result
 
-| Parser | Pass | Rate |
-|---|---|---|
-| v0 (rule-based) | 376 | **100.0%** |
-| Neural | 54 | **14.4%** |
+| Parser          | Pass | Rate       |
+| --------------- | ---- | ---------- |
+| v0 (rule-based) | 376  | **100.0%** |
+| Neural          | 54   | **14.4%**  |
 
-| Category | Count | Rate |
-|---|---|---|
-| Both pass | 54 | 14.4% |
-| v0 only | **322** | **85.6%** |
-| Neural only | 0 | 0.0% |
-| Both fail | 0 | 0.0% |
+| Category    | Count   | Rate      |
+| ----------- | ------- | --------- |
+| Both pass   | 54      | 14.4%     |
+| v0 only     | **322** | **85.6%** |
+| Neural only | 0       | 0.0%      |
+| Both fail   | 0       | 0.0%      |
 
 **Zero neural-only wins.** Every assertion the neural passes is also passed by v0. The
 rule-based pipeline strictly dominates the neural pipeline on its own test suite.
 
 ## Per-file breakdown
 
-| File | Total | Neural % | Comment |
-|---|---|---|---|
-| address.usa.test.ts | 73 | 23% | Heaviest training distribution; still 56/73 missing |
-| intersection.test.ts | 65 | **0%** | Total failure mode; `Main St & 5th Ave`-style inputs |
-| functional.test.ts | 34 | 3% | Cross-cutting cases |
-| address.fra.test.ts | 33 | 24% | Some French in training |
-| address.nld.test.ts | 22 | 9% | NL compact addresses largely unhandled |
-| address.nzd.test.ts | 22 | **0%** | NZ format |
-| addressit.usa.test.ts | 21 | **81%** | Autocomplete-style — best performer |
-| address.deu.test.ts | 17 | **0%** | German format entirely missed |
-| place.fra.test.ts | 13 | **0%** | French place lookups |
-| addressit.aus.test.ts | 11 | 64% | Australian autocomplete |
-| address.aus.test.ts | 9 | **0%** | Australian unit notation (`Unit 12/345`) |
-| address.nor.test.ts | 9 | **0%** | Norwegian |
-| address.prt.test.ts | 8 | **0%** | Portuguese |
-| address.pol.test.ts | 6 | **0%** | Polish |
-| venue.usa.test.ts | 6 | **0%** | Venue-only inputs |
-| address.rom.test.ts | 5 | 20% | Romanian |
-| address.swe.test.ts | 4 | **0%** | Swedish |
-| compound_street.test.ts | 4 | **0%** | Compound street tests |
-| address.cze.test.ts | 3 | **0%** | Czech |
-| address.gbr.test.ts | 3 | **0%** | UK format |
-| (other locales) | 1-2 each | **0%** | bra, esp, hrv, ind, svk, transit |
-| libpostal.test.ts | 1 | 100% | Single passing fixture |
+| File                    | Total    | Neural % | Comment                                              |
+| ----------------------- | -------- | -------- | ---------------------------------------------------- |
+| address.usa.test.ts     | 73       | 23%      | Heaviest training distribution; still 56/73 missing  |
+| intersection.test.ts    | 65       | **0%**   | Total failure mode; `Main St & 5th Ave`-style inputs |
+| functional.test.ts      | 34       | 3%       | Cross-cutting cases                                  |
+| address.fra.test.ts     | 33       | 24%      | Some French in training                              |
+| address.nld.test.ts     | 22       | 9%       | NL compact addresses largely unhandled               |
+| address.nzd.test.ts     | 22       | **0%**   | NZ format                                            |
+| addressit.usa.test.ts   | 21       | **81%**  | Autocomplete-style — best performer                  |
+| address.deu.test.ts     | 17       | **0%**   | German format entirely missed                        |
+| place.fra.test.ts       | 13       | **0%**   | French place lookups                                 |
+| addressit.aus.test.ts   | 11       | 64%      | Australian autocomplete                              |
+| address.aus.test.ts     | 9        | **0%**   | Australian unit notation (`Unit 12/345`)             |
+| address.nor.test.ts     | 9        | **0%**   | Norwegian                                            |
+| address.prt.test.ts     | 8        | **0%**   | Portuguese                                           |
+| address.pol.test.ts     | 6        | **0%**   | Polish                                               |
+| venue.usa.test.ts       | 6        | **0%**   | Venue-only inputs                                    |
+| address.rom.test.ts     | 5        | 20%      | Romanian                                             |
+| address.swe.test.ts     | 4        | **0%**   | Swedish                                              |
+| compound_street.test.ts | 4        | **0%**   | Compound street tests                                |
+| address.cze.test.ts     | 3        | **0%**   | Czech                                                |
+| address.gbr.test.ts     | 3        | **0%**   | UK format                                            |
+| (other locales)         | 1-2 each | **0%**   | bra, esp, hrv, ind, svk, transit                     |
+| libpostal.test.ts       | 1        | 100%     | Single passing fixture                               |
 
 ## Failure clusters
 
@@ -154,17 +154,17 @@ known gap rather than a regression vector).
 
 With the falsehoods rows added the picture is:
 
-| Parser | Pass | Rate |
-|---|---|---|
+| Parser          | Pass      | Rate  |
+| --------------- | --------- | ----- |
 | v0 (rule-based) | 385 / 398 | 96.7% |
-| Neural | 56 / 398 | 14.1% |
+| Neural          | 56 / 398  | 14.1% |
 
-| Category | Count | Rate |
-|---|---|---|
-| Both pass | 54 | 13.6% |
-| v0 only | 331 | 83.2% |
+| Category        | Count | Rate     |
+| --------------- | ----- | -------- |
+| Both pass       | 54    | 13.6%    |
+| v0 only         | 331   | 83.2%    |
 | **Neural only** | **2** | **0.5%** |
-| Both fail | 11 | 2.8% |
+| Both fail       | 11    | 2.8%     |
 
 **Two neural-only wins** appear once the falsehoods are in play — cases where the neural
 parser succeeds and the rule-based pipeline fails:

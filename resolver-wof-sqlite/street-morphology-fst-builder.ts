@@ -3,25 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a street-morphology FST from libpostal's street_types dictionaries. The morphology FST
- *   maps street-typing affixes (Street/Avenue/rue/Calle/Straße/...) to a single synthetic
- *   placetype `"street_affix"` — distinct from the admin FST in source data, intent, and binary
- *   artifact.
+ *   Build a street-morphology FST from libpostal's street_types dictionaries. The morphology FST maps
+ *   street-typing affixes (Street/Avenue/rue/Calle/Straße/...) to a single synthetic placetype
+ *   `"street_affix"` — distinct from the admin FST in source data, intent, and binary artifact.
  *
- *   The morphology FST closes the inference-time vacuum identified by the v0.6.1 postmortem:
- *   street tokens have no admin-FST anchor, so synth-street training pushed the model toward
- *   over-emitting `dependent_locality` on subcomponents. With the morphology FST, the neural
- *   decoder gets positive evidence for street-typing affixes and the adjacent name tokens, plus
- *   negative evidence away from `dependent_locality` on the same neighbours.
+ *   The morphology FST closes the inference-time vacuum identified by the v0.6.1 postmortem: street
+ *   tokens have no admin-FST anchor, so synth-street training pushed the model toward over-emitting
+ *   `dependent_locality` on subcomponents. With the morphology FST, the neural decoder gets
+ *   positive evidence for street-typing affixes and the adjacent name tokens, plus negative
+ *   evidence away from `dependent_locality` on the same neighbours.
  *
  *   Design rationale + the four-layer street-supplement architecture lives in
  *   `docs/articles/concepts/street-supplement-architecture.md`.
  *
- *   Source: `core/data/libpostal/dictionaries/{locale}/street_types.txt`. Each line is
- *   pipe-delimited surface forms with the canonical form first:
- *     avenue|av|ave|aven|avenu|avn|avnu|avnue
+ *   Source: `core/data/libpostal/dictionaries/{locale}/street_types.txt`. Each line is pipe-delimited
+ *   surface forms with the canonical form first: avenue|av|ave|aven|avenu|avn|avnu|avnue
  *
- *   Output: an `FstMatcher` ready to serialize via `serializeFst` to e.g. `fst-street-morphology.bin`.
+ *   Output: an `FstMatcher` ready to serialize via `serializeFst` to e.g.
+ *   `fst-street-morphology.bin`.
  */
 
 import { readdirSync, readFileSync, statSync } from "node:fs"
@@ -32,8 +31,8 @@ import type { FstProvenance, PlaceEntry } from "./fst-types.js"
 
 /**
  * Reserved synthetic wofID base for street-morphology entries. 32-bit unsigned, well above any
- * realistic WOF allocation. Reusing the same base across rebuilds keeps IDs stable for any
- * consumer that caches them. See [[project-schema-storage-decision]] for the reserved range policy.
+ * realistic WOF allocation. Reusing the same base across rebuilds keeps IDs stable for any consumer
+ * that caches them. See [[project-schema-storage-decision]] for the reserved range policy.
  */
 const STREET_AFFIX_WOFID_BASE = 1_900_000_000
 
@@ -42,18 +41,19 @@ const STREET_TYPES_FILENAME = "street_types.txt"
 export interface BuildStreetMorphologyFstOpts {
 	/** Path to the `core/data/libpostal/dictionaries` directory containing per-locale subfolders. */
 	dictionariesDir: string
-	/** Optional locale filter — only ingest these locale subfolders. Defaults to all that have a `street_types.txt`. */
+	/** Optional locale filter — only ingest these locale subfolders. Defaults to all that have a
+`street_types.txt`. */
 	locales?: string[]
 	/**
-	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into
-	 * the trie. Defaults to 3.
+	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into the
+	 * trie. Defaults to 3.
 	 *
-	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations
-	 * (`a`, `b`, `av`, `bd`, `br`, ...) that collide with non-affix tokens at parse time —
-	 * notably US state abbreviations (`OR`, `CA`, `ND`, `NY`), single-letter unit designators,
-	 * and arbitrary short tokens. Empirically these collisions push the morphology prior to
-	 * mis-tag state abbreviations as `street_suffix`. A minimum length of 3 retains useful forms
-	 * (`ave`, `blvd`, `rue`, `str`) while filtering out the noise.
+	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations (`a`, `b`,
+	 * `av`, `bd`, `br`, ...) that collide with non-affix tokens at parse time — notably US state
+	 * abbreviations (`OR`, `CA`, `ND`, `NY`), single-letter unit designators, and arbitrary short
+	 * tokens. Empirically these collisions push the morphology prior to mis-tag state abbreviations
+	 * as `street_suffix`. A minimum length of 3 retains useful forms (`ave`, `blvd`, `rue`, `str`)
+	 * while filtering out the noise.
 	 */
 	minVariantLength?: number
 	/** Optional progress callback. */
@@ -78,7 +78,10 @@ export interface BuildStreetMorphologyFstResult {
 function parseLine(line: string): { canonical: string; variants: string[] } | null {
 	const trimmed = line.trim()
 	if (trimmed.length === 0 || trimmed.startsWith("#")) return null
-	const parts = trimmed.split("|").map((s) => s.trim()).filter((s) => s.length > 0)
+	const parts = trimmed
+		.split("|")
+		.map((s) => s.trim())
+		.filter((s) => s.length > 0)
 	if (parts.length === 0) return null
 	return { canonical: parts[0]!, variants: parts }
 }

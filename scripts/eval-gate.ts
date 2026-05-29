@@ -8,29 +8,28 @@
  *
  *   ```
  *   FAIL if  (recall drop > recall_threshold_pp  AND baseline_recall > recall_min_baseline_pct)
- *         OR (hallucination spike > hall_abs_threshold
- *             AND new_hallucination_rate > hall_rate_threshold_pct)
- *   ```
+ *       OR (hallucination spike > hall_abs_threshold
+ *           AND new_hallucination_rate > hall_rate_threshold_pct)
+ * ```
  *
- *   The two-dimensional shape is critical. A recall-only gate (DeepSeek turn 1 "v0.6.1 would
- *   sail through") misses the case where a tag's recall holds steady but its hallucination
- *   count explodes — exactly what happened to v0.6.1's `dependent_locality` (0 → 1066).
- *   A hallucination-only gate misses the case where a tag silently stops being emitted but
- *   recall on it was already low.
+ *   The two-dimensional shape is critical. A recall-only gate (DeepSeek turn 1 "v0.6.1 would sail
+ *   through") misses the case where a tag's recall holds steady but its hallucination count
+ *   explodes — exactly what happened to v0.6.1's `dependent_locality` (0 → 1066). A
+ *   hallucination-only gate misses the case where a tag silently stops being emitted but recall on
+ *   it was already low.
  *
- *   Both dimensions must guard. The thresholds match the
- *   [Layer 1 eval doc's "what v0.6.2 needs"](../docs/articles/evals/2026-05-28-layer-1-morphology-fst.md):
- *   2pp recall, 100 absolute hallucination spike, 20% hallucination-rate ceiling.
+ *   Both dimensions must guard. The thresholds match the [Layer 1 eval doc's "what v0.6.2
+ *   needs"](../docs/articles/evals/2026-05-28-layer-1-morphology-fst.md): 2pp recall, 100 absolute
+ *   hallucination spike, 20% hallucination-rate ceiling.
  *
- *   Usage:
- *     node --experimental-strip-types scripts/eval-gate.ts \
- *       --baseline /tmp/eval-v0.6.1.json \
- *       --candidate /tmp/eval-v0.6.2.json \
- *       [--recall-threshold-pp 2] \
- *       [--recall-min-baseline-pct 10] \
- *       [--hall-abs-threshold 100] \
- *       [--hall-rate-threshold-pct 20] \
- *       [--out-md /tmp/gate-report.md]
+ *   Usage: node --experimental-strip-types scripts/eval-gate.ts\
+ *   --baseline /tmp/eval-v0.6.1.json\
+ *   --candidate /tmp/eval-v0.6.2.json\
+ *   [--recall-threshold-pp 2]\
+ *   [--recall-min-baseline-pct 10]\
+ *   [--hall-abs-threshold 100]\
+ *   [--hall-rate-threshold-pct 20]\
+ *   [--out-md /tmp/gate-report.md]
  *
  *   Exit: 0 on PASS, 1 on FAIL. Always prints a per-tag diff table to stdout.
  */
@@ -181,10 +180,16 @@ function buildReport(
 	const verdict = violations.length === 0 ? "**PASS** ✓" : "**FAIL** ✗"
 	lines.push(`# Eval Gate: ${verdict}`)
 	lines.push("")
-	lines.push(`- **Baseline:** \`${baseline.name}\` — ${baseline.golden_set} entries, ${baseline.exact_match_pct.toFixed(1)}% exact-match`)
-	lines.push(`- **Candidate:** \`${candidate.name}\` — ${candidate.golden_set} entries, ${candidate.exact_match_pct.toFixed(1)}% exact-match`)
+	lines.push(
+		`- **Baseline:** \`${baseline.name}\` — ${baseline.golden_set} entries, ${baseline.exact_match_pct.toFixed(1)}% exact-match`
+	)
+	lines.push(
+		`- **Candidate:** \`${candidate.name}\` — ${candidate.golden_set} entries, ${candidate.exact_match_pct.toFixed(1)}% exact-match`
+	)
 	lines.push("")
-	lines.push(`**Thresholds:** recall drop > ${args.recallThresholdPp}pp on tags with baseline > ${args.recallMinBaselinePct}% recall, OR hallucination spike > ${args.hallAbsThreshold} with new rate > ${args.hallRateThresholdPct}% of expected occurrences.`)
+	lines.push(
+		`**Thresholds:** recall drop > ${args.recallThresholdPp}pp on tags with baseline > ${args.recallMinBaselinePct}% recall, OR hallucination spike > ${args.hallAbsThreshold} with new rate > ${args.hallRateThresholdPct}% of expected occurrences.`
+	)
 	lines.push("")
 	if (violations.length > 0) {
 		lines.push(`## Violations (${violations.length})`)

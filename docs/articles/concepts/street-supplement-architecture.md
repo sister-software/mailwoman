@@ -38,13 +38,13 @@ flowchart TB
 
 Each layer's contribution is additive and non-overlapping. Examples:
 
-| Input string | Layer 1 (morphology) | Layer 1.5 (candidacy) | Layer 2 (identity) |
-|---|---|---|---|
-| `Elm Avenue` | matches "Avenue" affix → adjacent "Elm" → street | "elm_avenue" has high locality co-occurrence | (not needed) |
-| `Piccadilly Lane` (novel) | matches "Lane" affix → "Piccadilly" → street | "piccadilly_lane" has moderate co-occurrence | (not in OSM) |
-| `Piccadilly` (no suffix) | no signal | "piccadilly" has London co-occurrence | direct match in London FST |
-| `Plein 1944` | no signal | "plein_1944" has Nijmegen co-occurrence | direct match in NL FST |
-| `Health Clinic` | matches no street affix | zero locality co-occurrence → strongly NOT street | (not in OSM as a street) |
+| Input string              | Layer 1 (morphology)                             | Layer 1.5 (candidacy)                             | Layer 2 (identity)         |
+| ------------------------- | ------------------------------------------------ | ------------------------------------------------- | -------------------------- |
+| `Elm Avenue`              | matches "Avenue" affix → adjacent "Elm" → street | "elm_avenue" has high locality co-occurrence      | (not needed)               |
+| `Piccadilly Lane` (novel) | matches "Lane" affix → "Piccadilly" → street     | "piccadilly_lane" has moderate co-occurrence      | (not in OSM)               |
+| `Piccadilly` (no suffix)  | no signal                                        | "piccadilly" has London co-occurrence             | direct match in London FST |
+| `Plein 1944`              | no signal                                        | "plein_1944" has Nijmegen co-occurrence           | direct match in NL FST     |
+| `Health Clinic`           | matches no street affix                          | zero locality co-occurrence → strongly NOT street | (not in OSM as a street)   |
 
 Layer 4 (brand FST for franchise venues) is parallel, not subordinate. Layer 5 (locality-conditional hierarchy gating) is meta — it modulates which layers are active per country.
 
@@ -66,10 +66,10 @@ When tooling needs WOF-format output (the `wof tree` command, external consumers
 
 ```ts
 function toWofPlacetypeProjection(tag: ComponentTag): {
-  wof_id: number          // Mailwoman-reserved 2_000_000_000+ range
-  wof_name: string
-  wof_role: PlacetypeRole // common / common_optional / optional
-  wof_parent_ids: number[]
+	wof_id: number // Mailwoman-reserved 2_000_000_000+ range
+	wof_name: string
+	wof_role: PlacetypeRole // common / common_optional / optional
+	wof_parent_ids: number[]
 }
 ```
 
@@ -122,19 +122,19 @@ The admin FST already resolves country at Viterbi time — `PlaceEntry.parentCha
 
 ```json
 {
-  "JP": {
-    "primary_tags": ["prefecture", "municipality", "district", "block", "sub_block"],
-    "street_tags": [],
-    "building_tags": ["building_number", "building_name"],
-    "postcode_position": "before_city"
-  },
-  "US": {
-    "primary_tags": ["street", "house_number"],
-    "street_tags": ["street_prefix", "street", "street_suffix"],
-    "building_tags": ["unit"],
-    "postcode_position": "after_state"
-  },
-  "default": "..."
+	"JP": {
+		"primary_tags": ["prefecture", "municipality", "district", "block", "sub_block"],
+		"street_tags": [],
+		"building_tags": ["building_number", "building_name"],
+		"postcode_position": "before_city"
+	},
+	"US": {
+		"primary_tags": ["street", "house_number"],
+		"street_tags": ["street_prefix", "street", "street_suffix"],
+		"building_tags": ["unit"],
+		"postcode_position": "after_state"
+	},
+	"default": "..."
 }
 ```
 
@@ -184,6 +184,7 @@ Country-level granularity is the right v0.7 scope. Within-country variations (US
 ### Layer 2: Street identity FST
 
 **Data source:** OSM way names. First POC is NYC-only (~50K street names) to validate the pipeline:
+
 - OSM way → `(name, parent_locality_id)` pair extraction
 - Dedup across boroughs (Brooklyn vs Manhattan have streets with the same name)
 - Parent-chain assignment from WOF locality IDs
@@ -234,14 +235,14 @@ Applied to span-level confidence scores only. Zero contamination of emission or 
 
 ## Sequencing
 
-| Phase | Layers | Time horizon |
-|---|---|---|
-| v0.6.x polish | Layer 1 build + golden-set eval | 1 shift (done) |
-| v0.6.2 retrain | Negative-example corpus augmentation + Layer 1 prior at inference | 1-2 shifts |
-| v0.6.x continued | Layer 1.5 if v0.6.2 leaves residual hallucinations | 1 shift |
-| v0.7.0 | Locality-conditional gating + JP activation + Layer 2 NYC POC | 3-4 shifts |
-| v0.7.x | Layer 2 metro expansion, Layer 4 brand FST | per-metro / per-brand |
-| v0.8+ | Mannheim grid, Nicaragua landmarks, dependent_street | scope work |
+| Phase            | Layers                                                            | Time horizon          |
+| ---------------- | ----------------------------------------------------------------- | --------------------- |
+| v0.6.x polish    | Layer 1 build + golden-set eval                                   | 1 shift (done)        |
+| v0.6.2 retrain   | Negative-example corpus augmentation + Layer 1 prior at inference | 1-2 shifts            |
+| v0.6.x continued | Layer 1.5 if v0.6.2 leaves residual hallucinations                | 1 shift               |
+| v0.7.0           | Locality-conditional gating + JP activation + Layer 2 NYC POC     | 3-4 shifts            |
+| v0.7.x           | Layer 2 metro expansion, Layer 4 brand FST                        | per-metro / per-brand |
+| v0.8+            | Mannheim grid, Nicaragua landmarks, dependent_street              | scope work            |
 
 **Important caveat from the 2026-05-28 Layer 1 eval:** Layer 1 alone, applied as a decoder-only
 fix on v0.6.1 weights, does NOT suppress v0.6.1's 1066 dep_locality hallucinations. The

@@ -104,11 +104,11 @@ globally-best valid choice.
 
 `123 Main St`:
 
-| Position | Token | Per-token argmax | Argmax score | Viterbi pick |
-|---|---|---|---|---|
-| 0 | `123` | `B-house_number` (0.95) | 0.95 | `B-house_number` |
-| 1 | `Main` | `I-locality` (0.4) | 0.4 | `B-street` (next-best, 0.35) |
-| 2 | `St` | `I-street` (0.85) | 0.85 | `I-street` |
+| Position | Token  | Per-token argmax        | Argmax score | Viterbi pick                 |
+| -------- | ------ | ----------------------- | ------------ | ---------------------------- |
+| 0        | `123`  | `B-house_number` (0.95) | 0.95         | `B-house_number`             |
+| 1        | `Main` | `I-locality` (0.4)      | 0.4          | `B-street` (next-best, 0.35) |
+| 2        | `St`   | `I-street` (0.85)       | 0.85         | `I-street`                   |
 
 The per-token argmax for `Main` was `I-locality` — but that violates
 BIO because `I-locality` can't follow `B-house_number`. Viterbi rejects
@@ -172,11 +172,11 @@ CRF buys soft transition preferences that the encoder didn't pick up
 strongly from training data. Examples:
 
 - `B-house_number` is almost always followed by `B-street` or `O,
-  B-street`. CRF can encode this preference.
+B-street`. CRF can encode this preference.
 - `B-postcode` rarely precedes anything (it's usually the last
   component). CRF can encode "B-postcode → O" preference.
 - `B-street_prefix → B-street` is common; `B-street_prefix →
-  B-locality` is rare. CRF can rank these.
+B-locality` is rare. CRF can rank these.
 
 CRF doesn't buy:
 

@@ -5,28 +5,27 @@
  *
  *   House-number + venue + street co-occurrence synthesizer. The v0.6.3 corrective shard.
  *
- *   The v0.6.2 step-20K diagnostic showed that adding synth-no-street counter-distribution
- *   regressed house_number recall by ~4-5pp. DeepSeek's turn-8 root-cause:
+ *   The v0.6.2 step-20K diagnostic showed that adding synth-no-street counter-distribution regressed
+ *   house_number recall by ~4-5pp. DeepSeek's turn-8 root-cause:
  *
- *   1. Direct: `5th Avenue Theatre`-style adversarial venues teach the model that tokens like
- *      "5th" belong to venues, not house_numbers. (Fixed in `synthesize-no-street.ts` by
- *      removing digit+ordinal venue patterns.)
+ *   1. Direct: `5th Avenue Theatre`-style adversarial venues teach the model that tokens like "5th"
+ *        belong to venues, not house_numbers. (Fixed in `synthesize-no-street.ts` by removing
+ *        digit+ordinal venue patterns.)
+ *   2. Distributional dilution: synth-no-street adds 122K rows where house_number is absent. The model's
+ *        training distribution shifts toward "house_number is rare," and it under-emits the tag at
+ *        inference.
  *
- *   2. Distributional dilution: synth-no-street adds 122K rows where house_number is absent.
- *      The model's training distribution shifts toward "house_number is rare," and it
- *      under-emits the tag at inference.
- *
- *   This synthesizer fixes #2 directly. Each emitted row has ALL of: house_number, street,
- *   venue, locality, region, postcode — a counter-example to "house_number is rare." Used as a
- *   companion shard to synth-no-street; the v0.6.3 config weights synth-no-street at 0.5 and
+ *   This synthesizer fixes #2 directly. Each emitted row has ALL of: house_number, street, venue,
+ *   locality, region, postcode — a counter-example to "house_number is rare." Used as a companion
+ *   shard to synth-no-street; the v0.6.3 config weights synth-no-street at 0.5 and
  *   synth-house-venue at 1.0 to recover the lost house_number signal.
  *
- *   Real-world shape: business cards, mailing labels, store directories — `"123 Main St,
- *   Sunrise Bakery, Springfield, IL 62701"` is a perfectly ordinary address form.
+ *   Real-world shape: business cards, mailing labels, store directories — `"123 Main St, Sunrise
+ *   Bakery, Springfield, IL 62701"` is a perfectly ordinary address form.
  *
- *   Venue pool: PLAIN_VENUES from `synthesize-no-street.ts` (re-exported here). Adversarial
- *   venues are deliberately NOT used here — the point is to teach co-occurrence, not to
- *   re-introduce decompose-mode pressure.
+ *   Venue pool: PLAIN_VENUES from `synthesize-no-street.ts` (re-exported here). Adversarial venues
+ *   are deliberately NOT used here — the point is to teach co-occurrence, not to re-introduce
+ *   decompose-mode pressure.
  */
 
 import type { CanonicalRow } from "./types.js"
@@ -183,9 +182,9 @@ export function synthesizeHouseVenueRow(
 }
 
 /**
- * Contract: every synthesized row carries BOTH house_number AND venue (the co-occurrence
- * signal that synth-no-street's distributional shift cost the model). Used by tests +
- * downstream consumers.
+ * Contract: every synthesized row carries BOTH house_number AND venue (the co-occurrence signal
+ * that synth-no-street's distributional shift cost the model). Used by tests + downstream
+ * consumers.
  */
 export function hasHouseNumberAndVenue(components: CanonicalRow["components"]): boolean {
 	return components.house_number !== undefined && components.venue !== undefined

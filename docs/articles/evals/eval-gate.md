@@ -27,12 +27,12 @@ FAIL if  (recall drop > recall_threshold_pp  AND  baseline_recall > recall_min_b
 
 Defaults:
 
-| Threshold | Default | Why |
-|---|---|---|
-| `recall_threshold_pp` | 2 | A drop smaller than 2pp is noise on aggregated golden-set runs |
-| `recall_min_baseline_pct` | 10 | Drops on already-low-recall tags don't move user-visible quality much |
-| `hall_abs_threshold` | 100 | Below this is plausibly normal training drift |
-| `hall_rate_threshold_pct` | 20 | A tag hallucinating more than 20% of its expected count is a structural failure |
+| Threshold                 | Default | Why                                                                             |
+| ------------------------- | ------- | ------------------------------------------------------------------------------- |
+| `recall_threshold_pp`     | 2       | A drop smaller than 2pp is noise on aggregated golden-set runs                  |
+| `recall_min_baseline_pct` | 10      | Drops on already-low-recall tags don't move user-visible quality much           |
+| `hall_abs_threshold`      | 100     | Below this is plausibly normal training drift                                   |
+| `hall_rate_threshold_pct` | 20      | A tag hallucinating more than 20% of its expected count is a structural failure |
 
 Each dimension stands alone but they compose: a regression has to clear BOTH gates to ship.
 
@@ -49,7 +49,7 @@ GATE FAILED: 3 violation(s).
 
 The first two would be caught by a recall-only gate. The third — `dependent_locality`
 going 0 → 1066 — would NOT be caught by a recall-only gate (recall there actually
-*improved*, 0% → 30%). That's the v0.6.1 failure pattern from the postmortem encoded as a
+_improved_, 0% → 30%). That's the v0.6.1 failure pattern from the postmortem encoded as a
 mechanical check: a tag silently exploding in false-positive count even as nominal recall
 holds up.
 

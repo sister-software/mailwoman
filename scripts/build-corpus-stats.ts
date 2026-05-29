@@ -6,12 +6,12 @@
  *   Pre-compute corpus-wide token + bigram label distributions for the corpus linter.
  *
  *   Reads one or more Parquet shards, builds per-(token, label) and per-(bigram, label-bigram)
- *   histograms, and serializes them as JSON. The output file is consumed by
- *   `lint-corpus-shard.ts` as the baseline against which a new shard is compared.
+ *   histograms, and serializes them as JSON. The output file is consumed by `lint-corpus-shard.ts`
+ *   as the baseline against which a new shard is compared.
  *
- *   Stats are cheap to compute (~5–30s per 100K rows) but expensive enough that we cache
- *   them between linter invocations. Re-run this script whenever the corpus changes
- *   substantially (a new mainline shard added, a source-pool re-weighted, etc.).
+ *   Stats are cheap to compute (~5–30s per 100K rows) but expensive enough that we cache them between
+ *   linter invocations. Re-run this script whenever the corpus changes substantially (a new
+ *   mainline shard added, a source-pool re-weighted, etc.).
  *
  *   Output schema:
  *
@@ -24,17 +24,16 @@
  *     // token_bigram = "tok1tok2" (US sep), label_bigram = "lab1lab2"
  *     // For memory: only keep bigrams with count >= MIN_BIGRAM_COUNT (2).
  *   }
- *   ```
+ * ```
  *
- *   Usage:
- *     node --experimental-strip-types scripts/build-corpus-stats.ts \
- *       --shards <glob-pattern-or-dir> \
- *       --output <stats.json>
+ *   Usage: node --experimental-strip-types scripts/build-corpus-stats.ts\
+ *   --shards <glob-pattern-or-dir>\
+ *   --output <stats.json>
  *
- *   For a quick local-corpus baseline (limited but useful for linter testing):
- *     node --experimental-strip-types scripts/build-corpus-stats.ts \
- *       --shards /mnt/playpen/mailwoman-data/corpus/versioned/v0.4.0/corpus-v0.4.0/train/ \
- *       --output /tmp/corpus-stats-local.json
+ *   For a quick local-corpus baseline (limited but useful for linter testing): node
+ *   --experimental-strip-types scripts/build-corpus-stats.ts\
+ *   --shards /mnt/playpen/mailwoman-data/corpus/versioned/v0.4.0/corpus-v0.4.0/train/\
+ *   --output /tmp/corpus-stats-local.json
  */
 
 import { execSync } from "node:child_process"
@@ -79,9 +78,9 @@ function discoverShards(shardsArg: string): string[] {
 }
 
 /**
- * Use a Python subprocess to read parquet (pyarrow is heavier than parquet-wasm but
- * already on the path here, and we have nothing in the JS ecosystem that reads parquet
- * cleanly at this scale). Emits one JSON object per line: `{tokens: [...], labels: [...]}`.
+ * Use a Python subprocess to read parquet (pyarrow is heavier than parquet-wasm but already on the
+ * path here, and we have nothing in the JS ecosystem that reads parquet cleanly at this scale).
+ * Emits one JSON object per line: `{tokens: [...], labels: [...]}`.
  */
 function streamShardRows(shardPath: string, limit?: number): Array<{ tokens: string[]; labels: string[] }> {
 	// Pipe the python script via stdin instead of `-c` to preserve newlines verbatim
@@ -142,7 +141,9 @@ function main(): void {
 				}
 			}
 		}
-		console.error(`  ${rows.length} rows; running totals: ${tokenStats.size} unique tokens, ${bigramStats.size} unique bigrams`)
+		console.error(
+			`  ${rows.length} rows; running totals: ${tokenStats.size} unique tokens, ${bigramStats.size} unique bigrams`
+		)
 	}
 
 	// Prune bigrams below MIN_BIGRAM_COUNT to keep the output file size sane. Token stats
@@ -174,7 +175,9 @@ function main(): void {
 
 	writeFileSync(args.outputPath, JSON.stringify(out))
 	const sizeMB = (Buffer.byteLength(JSON.stringify(out)) / 1024 / 1024).toFixed(1)
-	console.error(`Wrote ${args.outputPath} (${sizeMB} MB) — ${totalRows} rows, ${tokenStats.size} tokens, ${bigramStats.size} bigrams`)
+	console.error(
+		`Wrote ${args.outputPath} (${sizeMB} MB) — ${totalRows} rows, ${tokenStats.size} tokens, ${bigramStats.size} bigrams`
+	)
 }
 
 main()

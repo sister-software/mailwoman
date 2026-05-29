@@ -3,23 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Street-morphology emission bias — Layer 1 of the four-layer street-supplement architecture
- *   (see `docs/articles/concepts/street-supplement-architecture.md`).
+ *   Street-morphology emission bias — Layer 1 of the four-layer street-supplement architecture (see
+ *   `docs/articles/concepts/street-supplement-architecture.md`).
  *
- *   This module composes with {@linkcode buildFstEmissionPriors} (admin FST) and the QueryShape
- *   prior via {@linkcode addEmissionMatrix} — same shape, same additive semantics. Where the admin
- *   FST biases admin BIO labels (`B/I-locality`, `B/I-region`, ...), the morphology FST biases:
+ *   This module composes with {@linkcode buildFstEmissionPriors} (admin FST) and the QueryShape prior
+ *   via {@linkcode addEmissionMatrix} — same shape, same additive semantics. Where the admin FST
+ *   biases admin BIO labels (`B/I-locality`, `B/I-region`, ...), the morphology FST biases:
  *
- *   - **Affix-token (the matched span):** toward `B/I-street_prefix` AND `B/I-street_suffix`
- *     (position unknown — let the model + context disambiguate).
+ *   - **Affix-token (the matched span):** toward `B/I-street_prefix` AND `B/I-street_suffix` (position
+ *       unknown — let the model + context disambiguate).
  *   - **Adjacent token (one before AND one after each match):** toward `B/I-street`, AWAY from
- *     `B/I-dependent_locality`. The negative bias on `dependent_locality` is the load-bearing
- *     piece — it closes the inference-time vacuum that caused v0.6.1's 1066 dep_locality
- *     hallucinations (see [[project-v061-failure-mechanism]]).
+ *       `B/I-dependent_locality`. The negative bias on `dependent_locality` is the load-bearing
+ *       piece — it closes the inference-time vacuum that caused v0.6.1's 1066 dep_locality
+ *       hallucinations (see [[project-v061-failure-mechanism]]).
  *
- *   The morphology FST itself is built by
- *   `resolver-wof-sqlite/street-morphology-fst-builder.ts` and ships as a separate binary
- *   (`fst-street-morphology.bin`) loaded into a second `FstMatcher` instance.
+ *   The morphology FST itself is built by `resolver-wof-sqlite/street-morphology-fst-builder.ts` and
+ *   ships as a separate binary (`fst-street-morphology.bin`) loaded into a second `FstMatcher`
+ *   instance.
  */
 
 import { groupPiecesIntoWords, type FstMatcherLike, type WordGroup } from "./fst-prior.js"
@@ -29,9 +29,9 @@ export interface StreetMorphologyPriorOpts {
 	/** Multiplier on the base bias before {@linkcode maxBias} is applied. Default 1.0. */
 	biasScale?: number
 	/**
-	 * Maximum bias magnitude (logits) on the affix span itself. Default 3.0 — same as the admin
-	 * FST. The morphology signal is structurally less ambiguous than admin names (`Avenue` is
-	 * almost never anything but street-typing), so equal magnitude is justified.
+	 * Maximum bias magnitude (logits) on the affix span itself. Default 3.0 — same as the admin FST.
+	 * The morphology signal is structurally less ambiguous than admin names (`Avenue` is almost never
+	 * anything but street-typing), so equal magnitude is justified.
 	 */
 	maxAffixBias?: number
 	/**

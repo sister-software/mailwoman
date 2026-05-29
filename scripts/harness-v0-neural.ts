@@ -3,36 +3,36 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   v0-vs-neural test harness. Reads the 30+ `mailwoman/test/address.*.test.ts` files (and
- *   sibling intersection/venue/compound_street tests), extracts every `assert(input, ...expected)`
- *   call via TS AST, and runs each input through BOTH the legacy rule-based parser
- *   (`createAddressParser`) and the neural parser (`NeuralAddressClassifier`).
+ *   V0-vs-neural test harness. Reads the 30+ `mailwoman/test/address.*.test.ts` files (and sibling
+ *   intersection/venue/compound_street tests), extracts every `assert(input, ...expected)` call via
+ *   TS AST, and runs each input through BOTH the legacy rule-based parser (`createAddressParser`)
+ *   and the neural parser (`NeuralAddressClassifier`).
  *
- *   Reports per-file / per-locale / per-tag pass rates, side-by-side. This is the "honest
- *   assessment" mentioned in the [Layer 1 eval doc](../docs/articles/evals/2026-05-28-layer-1-morphology-fst.md)
- *   — the neural classifier has never been measured against the rule-based pipeline's hand-tuned
- *   acceptance criteria, and that gap is exactly what drives v0.6.2's recipe.
+ *   Reports per-file / per-locale / per-tag pass rates, side-by-side. This is the "honest assessment"
+ *   mentioned in the [Layer 1 eval
+ *   doc](../docs/articles/evals/2026-05-28-layer-1-morphology-fst.md) — the neural classifier has
+ *   never been measured against the rule-based pipeline's hand-tuned acceptance criteria, and that
+ *   gap is exactly what drives v0.6.2's recipe.
  *
- *   Output: a markdown report on stdout + a JSON sidecar (`--out-json`) per-assertion containing
- *   `{ file, locale, input, expected, v0_pass, neural_pass, v0_actual, neural_actual }` so
- *   downstream scripts can cluster failures by tag/locale/address-shape.
+ *   Output: a markdown report on stdout + a JSON sidecar (`--out-json`) per-assertion containing `{
+ *   file, locale, input, expected, v0_pass, neural_pass, v0_actual, neural_actual }` so downstream
+ *   scripts can cluster failures by tag/locale/address-shape.
  *
- *   Usage:
- *     node --experimental-strip-types scripts/harness-v0-neural.ts \
- *       --tests mailwoman/test \
- *       --out-json /tmp/harness.json \
- *       [--model <onnx>] [--tokenizer <spm>] [--model-card <json>] \
- *       [--admin-fst <bin>] [--morphology-fst <bin> | --no-morphology] \
- *       [--falsehoods data/eval/falsehoods]    # extra JSONL row files to include
+ *   Usage: node --experimental-strip-types scripts/harness-v0-neural.ts\
+ *   --tests mailwoman/test\
+ *   --out-json /tmp/harness.json\
+ *   [--model <onnx>] [--tokenizer <spm>] [--model-card <json>]\
+ *   [--admin-fst <bin>] [--morphology-fst <bin> | --no-morphology]\
+ *   [--falsehoods data/eval/falsehoods] # extra JSONL row files to include
  */
 
 import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
-import { type ClassificationRecord, createAddressParser } from "mailwoman"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { buildStreetMorphologyFst } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
+import { type ClassificationRecord, createAddressParser } from "mailwoman"
 import { readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -98,8 +98,8 @@ function localeFromFilename(file: string): string {
 
 /**
  * Recursively unwrap a literal object expression like `{ street: ["Main St"] }` into a plain JS
- * object. Returns `null` for anything that isn't a literal-of-literals (we intentionally don't
- * try to evaluate variables or computed properties — none of the test files use those).
+ * object. Returns `null` for anything that isn't a literal-of-literals (we intentionally don't try
+ * to evaluate variables or computed properties — none of the test files use those).
  */
 function objectLiteralToRecord(node: ts.ObjectLiteralExpression): ClassificationRecord | null {
 	const out: Record<string, string[]> = {}
@@ -191,10 +191,9 @@ function discoverAssertions(testsDir: string): ExtractedAssertion[] {
 // -------------------------------------------------------------------------------------------------
 
 /**
- * Visible classification labels in the v0 rule-based parser's solution model.
- * `country, dependency, house_number, level_designator, level, locality, postcode, region,
- * street, unit_designator, unit, venue`. Anything outside this set is invisible to the v0
- * comparison and gets folded or dropped.
+ * Visible classification labels in the v0 rule-based parser's solution model. `country, dependency,
+ * house_number, level_designator, level, locality, postcode, region, street, unit_designator, unit,
+ * venue`. Anything outside this set is invisible to the v0 comparison and gets folded or dropped.
  */
 const V0_VISIBLE = new Set([
 	"country",
@@ -212,17 +211,17 @@ const V0_VISIBLE = new Set([
 ])
 
 /**
- * Fold the neural classifier's Stage 3 component tags into the v0 visible classification set.
- * The fold is principled but lossy:
+ * Fold the neural classifier's Stage 3 component tags into the v0 visible classification set. The
+ * fold is principled but lossy:
  *
  * - `street_prefix` + `street_prefix_particle` + `street` + `street_suffix` → `street` (concat in
  *   document order, preserving inter-token spacing implicitly via concatenation).
- * - `intersection_a` + `intersection_b` → `street` (two separate values, matching v0's
- *   `{street: ["Main St", "Second Ave"]}` shape for intersections).
+ * - `intersection_a` + `intersection_b` → `street` (two separate values, matching v0's `{street:
+ *   ["Main St", "Second Ave"]}` shape for intersections).
  * - `house_number`, `unit`, `venue`, `country`, `region`, `locality`, `postcode` → identity.
- * - `dependent_locality`, `subregion`, `attention`, `po_box`, `cedex`, JP-specific tags → dropped
- *   (no v0 equivalent). The dropped tags are surfaced in the per-assertion report so the
- *   harness consumer can see what was lost.
+ * - `dependent_locality`, `subregion`, `attention`, `po_box`, `cedex`, JP-specific tags → dropped (no
+ *   v0 equivalent). The dropped tags are surfaced in the per-assertion report so the harness
+ *   consumer can see what was lost.
  */
 function neuralTreeToV0Record(flat: Partial<Record<ComponentTag, string>>): {
 	record: ClassificationRecord
@@ -277,8 +276,8 @@ function normalize(s: string): string {
 /**
  * Pass if every tag in `expected` is present in `actual` AND the actual value (string-equality,
  * case-folded, trimmed) contains the expected value. We accept `actual` being a superset because
- * the neural parser may emit extra components the test doesn't pin down (e.g. it labels a
- * country when the test only asserted street).
+ * the neural parser may emit extra components the test doesn't pin down (e.g. it labels a country
+ * when the test only asserted street).
  */
 function expectedMatchesActual(expected: ClassificationRecord, actual: ClassificationRecord): boolean {
 	for (const [tag, expectedValues] of Object.entries(expected)) {
@@ -325,9 +324,9 @@ interface AssertionResult {
 }
 
 /**
- * Strict deep-equality on `ClassificationRecord`s, mirroring vitest's `toEqual`. v0's assert
- * uses `toEqual` per solution position, so the v0 path of the harness has to match exactly to
- * stay consistent with the existing test semantics.
+ * Strict deep-equality on `ClassificationRecord`s, mirroring vitest's `toEqual`. v0's assert uses
+ * `toEqual` per solution position, so the v0 path of the harness has to match exactly to stay
+ * consistent with the existing test semantics.
  */
 function classificationsEqual(a: ClassificationRecord, b: ClassificationRecord): boolean {
 	const aKeys = Object.keys(a).sort()

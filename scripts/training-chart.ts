@@ -3,26 +3,29 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   SVG line-chart generator for training-run metrics. Reads one or more parsed
- *   training-log JSON files (from `scripts/parse-training-log.ts`) and emits a comparison
- *   chart suitable for embedding in markdown docs.
+ *   SVG line-chart generator for training-run metrics. Reads one or more parsed training-log JSON
+ *   files (from `scripts/parse-training-log.ts`) and emits a comparison chart suitable for
+ *   embedding in markdown docs.
  *
- *   No dependencies — generates raw SVG via template strings. Renders in Docusaurus, GitHub
- *   markdown preview, and any standalone HTML/markdown viewer.
+ *   No dependencies — generates raw SVG via template strings. Renders in Docusaurus, GitHub markdown
+ *   preview, and any standalone HTML/markdown viewer.
  *
  *   Usage:
- *     # Single run, val_loss curve:
- *     node --experimental-strip-types scripts/training-chart.ts \
- *       --input /tmp/v063.json --metric val_loss --output /tmp/v063-loss.svg
  *
- *     # Multi-run overlay (the operator's "same noise pattern" case):
- *     node --experimental-strip-types scripts/training-chart.ts \
- *       --input /tmp/v062.json --input /tmp/v062b.json --input /tmp/v063.json \
- *       --metric val_loss --title "v0.6.x training val_loss" \
- *       --output /tmp/v06x-loss-comparison.svg
+ *   # Single run, val_loss curve:
  *
- *   The output SVG sets viewBox to be width-responsive when embedded; default width 720
- *   for in-page layout.
+ *   Node --experimental-strip-types scripts/training-chart.ts\
+ *   --input /tmp/v063.json --metric val_loss --output /tmp/v063-loss.svg
+ *
+ *   # Multi-run overlay (the operator's "same noise pattern" case):
+ *
+ *   Node --experimental-strip-types scripts/training-chart.ts\
+ *   --input /tmp/v062.json --input /tmp/v062b.json --input /tmp/v063.json\
+ *   --metric val_loss --title "v0.6.x training val_loss"\
+ *   --output /tmp/v06x-loss-comparison.svg
+ *
+ *   The output SVG sets viewBox to be width-responsive when embedded; default width 720 for in-page
+ *   layout.
  */
 
 import { readFileSync, writeFileSync } from "node:fs"

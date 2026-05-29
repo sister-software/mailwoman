@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Smoke tests for the street-morphology FST builder. Walks the shipped libpostal dictionaries
- *   in `core/data/libpostal/dictionaries/` and asserts:
+ *   Smoke tests for the street-morphology FST builder. Walks the shipped libpostal dictionaries in
+ *   `core/data/libpostal/dictionaries/` and asserts:
  *
  *   - Build completes without error
  *   - Trie contains the canonical English/French/German affixes we expect
  *   - Variants resolve to the same PlaceEntry as their canonical
  *   - Serialize → deserialize round-trips with the new `street_affix` placetype
  */
-import { fileURLToPath } from "node:url"
 import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
 import { deserializeFst, readFstProvenance, serializeFst } from "./fst-serialize.js"
 import { buildStreetMorphologyFst } from "./street-morphology-fst-builder.js"

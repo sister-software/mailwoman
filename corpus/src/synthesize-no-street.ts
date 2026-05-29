@@ -8,25 +8,25 @@
  *   street_prefix, NO street_suffix, NO intersection — only some subset of {venue, locality,
  *   region, postcode, country}.
  *
- *   Rationale: the [2026-05-28 night-2 postmortem](../../docs/articles/evals/2026-05-28-night-2-postmortem.md)
- *   and the [layer-1 eval](../../docs/articles/evals/2026-05-28-layer-1-morphology-fst.md) showed
- *   that synth-street pushed the model into a high-confidence "decompose mode" that leaked into
- *   `dependent_locality`. Per DeepSeek's turn-2 recipe, the model needs explicit counter-examples:
- *   addresses where the model should NOT emit street labels. This synthesizer is that source.
+ *   Rationale: the [2026-05-28 night-2
+ *   postmortem](../../docs/articles/evals/2026-05-28-night-2-postmortem.md) and the [layer-1
+ *   eval](../../docs/articles/evals/2026-05-28-layer-1-morphology-fst.md) showed that synth-street
+ *   pushed the model into a high-confidence "decompose mode" that leaked into `dependent_locality`.
+ *   Per DeepSeek's turn-2 recipe, the model needs explicit counter-examples: addresses where the
+ *   model should NOT emit street labels. This synthesizer is that source.
  *
  *   Six row templates, each producing a {raw, components} pair with no street-side tags:
  *
- *   1. **Plain venue + locality + region + postcode**
- *      `"Bob's Pizza, Boston, MA 02101"`
- *   2. **Adversarial venue (containing street-typing words)**
- *      `"Wall Street Industries, NY 10005"`, `"5th Avenue Theater, Seattle, WA"`,
- *      `"Highway 61 Diner, Memphis TN"`. These are the rows that v0.6.1's decompose-mode
- *      would mis-tag as street_prefix/suffix; explicit negative training kills that signal.
+ *   1. **Plain venue + locality + region + postcode** `"Bob's Pizza, Boston, MA 02101"`
+ *   2. **Adversarial venue (containing street-typing words)** `"Wall Street Industries, NY 10005"`,
+ *        `"5th Avenue Theater, Seattle, WA"`, `"Highway 61 Diner, Memphis TN"`. These are the rows
+ *        that v0.6.1's decompose-mode would mis-tag as street_prefix/suffix; explicit negative
+ *        training kills that signal.
  *   3. **Locality + region + postcode (minimal)** — `"Boston, MA 02101"`
  *   4. **Locality + region** — `"Boston, MA"`
  *   5. **Postcode-only** — `"02101"`
- *   6. **Country-only** — `"United States"`, `"France"` (rare in real data, but the model has
- *      seen these and should not hallucinate streets on them).
+ *   6. **Country-only** — `"United States"`, `"France"` (rare in real data, but the model has seen these
+ *        and should not hallucinate streets on them).
  *
  *   Output is a `CanonicalRow` with no street-side components. Alignment will produce BIO labels
  *   where every token is one of {`B-venue`, `I-venue`, `B-locality`, `I-locality`, `B-region`,
@@ -76,8 +76,8 @@ export interface SynthesizedNoStreetRow {
 // -------------------------------------------------------------------------------------------------
 
 /**
- * Plain venue names — businesses without street-typing words in the name. Used as the
- * easy-mode positive class for venue detection.
+ * Plain venue names — businesses without street-typing words in the name. Used as the easy-mode
+ * positive class for venue detection.
  */
 const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Bob's Pizza",
@@ -103,16 +103,16 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 ]
 
 /**
- * Adversarial venue names — businesses whose names contain street-typing tokens (Avenue,
- * Street, Highway, Lane, Drive, Court, Plaza, Park, ...) but are themselves venues, not streets.
- * The model must learn that these are venues despite the street-typing tokens.
+ * Adversarial venue names — businesses whose names contain street-typing tokens (Avenue, Street,
+ * Highway, Lane, Drive, Court, Plaza, Park, ...) but are themselves venues, not streets. The model
+ * must learn that these are venues despite the street-typing tokens.
  *
- * **No leading digit+ordinal venues** (e.g. "5th Avenue Theatre", "7th Street Bistro"). The
- * v0.6.2 2026-05-29 step-20K eval showed that synthesized rows starting with
- * `<digits><ordinal>` confused the model about house_number recognition — tokens like "5th"
- * (which should be `B-house_number` in real addresses) were being labeled `B-venue` because
- * adversarial venues placed them in venue position. v0.6.3 omits these patterns; the
- * `synth-house-venue` shard separately teaches that house_number and venue coexist.
+ * **No leading digit+ordinal venues** (e.g. "5th Avenue Theatre", "7th Street Bistro"). The v0.6.2
+ * 2026-05-29 step-20K eval showed that synthesized rows starting with `<digits><ordinal>` confused
+ * the model about house_number recognition — tokens like "5th" (which should be `B-house_number` in
+ * real addresses) were being labeled `B-venue` because adversarial venues placed them in venue
+ * position. v0.6.3 omits these patterns; the `synth-house-venue` shard separately teaches that
+ * house_number and venue coexist.
  */
 const ADVERSARIAL_VENUES: ReadonlyArray<string> = [
 	"Wall Street Industries",
@@ -289,8 +289,8 @@ export function synthesizeNoStreetRow(
 }
 
 /**
- * Template weights chosen so that the venue-* templates dominate (they're the counter-example
- * shape that matters), with the minimal templates as long-tail noise.
+ * Template weights chosen so that the venue-* templates dominate (they're the counter-example shape
+ * that matters), with the minimal templates as long-tail noise.
  */
 function pickTemplate(random: () => number): NoStreetTemplate {
 	const r = random()
@@ -303,8 +303,8 @@ function pickTemplate(random: () => number): NoStreetTemplate {
 }
 
 /**
- * Convenience: assert at type-level that a synthesized row carries no street-side components.
- * Used by tests + downstream consumers who want to verify the contract at runtime.
+ * Convenience: assert at type-level that a synthesized row carries no street-side components. Used
+ * by tests + downstream consumers who want to verify the contract at runtime.
  */
 export const STREET_SIDE_TAGS = [
 	"street",

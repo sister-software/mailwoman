@@ -5,11 +5,7 @@
  */
 
 import { describe, expect, it } from "vitest"
-import {
-	type HouseVenueBaseTuple,
-	hasHouseNumberAndVenue,
-	synthesizeHouseVenueRow,
-} from "./synthesize-house-venue.js"
+import { type HouseVenueBaseTuple, hasHouseNumberAndVenue, synthesizeHouseVenueRow } from "./synthesize-house-venue.js"
 
 function seededRandom(seed: number): () => number {
 	let s = seed

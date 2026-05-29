@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the no-street synthesizer. Verifies that every emitted row has NO street-side tags
- *   — this is the contract that makes the rows useful as counter-distribution training data.
+ *   Tests for the no-street synthesizer. Verifies that every emitted row has NO street-side tags —
+ *   this is the contract that makes the rows useful as counter-distribution training data.
  */
 
 import { describe, expect, it } from "vitest"

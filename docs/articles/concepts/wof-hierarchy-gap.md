@@ -75,7 +75,7 @@ The omission is principled, not an oversight:
 3. **Streets are owned by different authorities.** Administrative places are governed by census bureaus, statistical offices, and political entities. Streets are governed by highway departments, postal services, and municipal planning. WOF concords with administrative authorities; street data lives elsewhere.
 4. **Streets compose differently across locales.** US street grammars assume `[number] [name] [type]`. French addresses are `[number] [type] [name]`. Japanese addresses [skip streets entirely](../understanding/why-its-hard/falsehoods-streets.md#addresses-have-a-street-at-all). Mannheim uses a grid. A single hierarchical slot can't encode this.
 
-WOF's decision to stop at `neighbourhood → address` is correct *for a place gazetteer*. It just leaves a gap *for an address parser*.
+WOF's decision to stop at `neighbourhood → address` is correct _for a place gazetteer_. It just leaves a gap _for an address parser_.
 
 ## What mailwoman's tag schema promises
 
@@ -89,7 +89,7 @@ Venue-level:         venue / attention / po_box
 JP-specific:         prefecture / municipality / district / block / sub_block / building_number / building_name
 ```
 
-And the containment rules (`core/decoder/containment.ts`) wire those tags into a tree that *does* have streets:
+And the containment rules (`core/decoder/containment.ts`) wire those tags into a tree that _does_ have streets:
 
 ```mermaid
 flowchart TB
@@ -128,7 +128,7 @@ The FST gazetteer prior ([concept doc](./fst-gazetteer-prior.md)) gives the neur
 - **Positive evidence:** matched token sequence biases toward `B/I-{placetype}` for the matched placetype.
 - **Negative evidence:** a token that walks off the FST trie tells the decoder "this is NOT an admin component" — likely a venue, street, or unrecognized name.
 
-For administrative tags (`country`, `region`, `locality`, `postcode`), both kinds of evidence are present and the model uses them. For street tags (`street`, `street_prefix`, `street_suffix`), only the *negative* signal is available — and only in the form "this token is not an admin place." There is no positive evidence that says "this token *is* a street," because the FST has no street placetypes to match.
+For administrative tags (`country`, `region`, `locality`, `postcode`), both kinds of evidence are present and the model uses them. For street tags (`street`, `street_prefix`, `street_suffix`), only the _negative_ signal is available — and only in the form "this token is not an admin place." There is no positive evidence that says "this token _is_ a street," because the FST has no street placetypes to match.
 
 The empirical consequence shows up in [v0.6.1's error analysis](../evals/v0.6.1-error-analysis.md). When training added a 100K-row synthetic street-decomposition corpus, the model learned to decompose subcomponents — but with no inference-time anchor for "this is a street," the decomposition energy leaked into `dependent_locality` (the schema's only labeled "below locality" slot). `dependent_locality` hallucinated 1066 times where v0.6.0 emitted zero.
 
@@ -170,7 +170,7 @@ flowchart TB
     LAYER3 -.JP activation first, Mannheim/Nicaragua v0.8+.-> COVERAGE3["Closes the non-Western hierarchy gap"]
 ```
 
-**Layer 1 (street-morphology FST)** handles the falsehoods that are *morphological* — `Avenue`, `rue`, `Calle`, `Straße`. It does NOT handle Piccadilly (no suffix), Plein 1944 (number in name), or Mannheim grid (no street at all). For those, you need Layer 1.5 or Layer 2.
+**Layer 1 (street-morphology FST)** handles the falsehoods that are _morphological_ — `Avenue`, `rue`, `Calle`, `Straße`. It does NOT handle Piccadilly (no suffix), Plein 1944 (number in name), or Mannheim grid (no street at all). For those, you need Layer 1.5 or Layer 2.
 
 **Layer 1.5 (street candidacy)** sits between morphology and identity. Pre-compute over the corpus: for each n-gram, how many distinct localities does it appear adjacent to? `"Elm Avenue"` co-occurs with hundreds of localities → strong street-candidacy signal. `"Health Clinic"` co-occurs with zero → strong non-street signal. `"Piccadilly"` co-occurs with London-area postcodes consistently → moderate street-candidacy signal even without an affix. ~1MB compact lookup table. Solves suffix-less streets that morphology misses, without committing to OSM extraction.
 
@@ -179,6 +179,7 @@ flowchart TB
 **Layer 3 (schema extensions)** addresses the cases where the hierarchy itself differs. Japan's chōme/banchi/gō chain, Mannheim's grid, Nicaragua's landmark-relative addressing. Mailwoman's JP-specific tags exist as placeholders (`block`, `sub_block`, `building_number`) and just need activation — corpus adapter, golden-set additions, JP model bundle. Mannheim and Nicaragua need new tags; v0.8+.
 
 **The layers don't substitute — they compose.** A novel street like `"Piccadilly Lane"` gets:
+
 - Layer 1 catches `"Lane"` as affix → bias adjacent `"Piccadilly"` toward `street`
 - Layer 1.5 sees `"Piccadilly Lane"` co-occurs with London-adjacent tokens → reinforces street candidacy even if the full string isn't in OSM
 - Layer 2 (if `"Piccadilly Lane"` exists in OSM) supplies parent_chain evidence directly

@@ -59,12 +59,12 @@ Default is `False` — every existing config remains bit-identical to its prior 
 
 `configs/v0_6_2-crf-fp32-diagnostic.yaml`. Identical to v0.6.1-stage3-streets EXCEPT:
 
-| Field             | v0.6.1 | Diagnostic |
-| ----------------- | ------ | ---------- |
-| `crf_loss_weight` | 0.0    | **0.5**    |
-| `crf_fp32`        | n/a    | **true**   |
-| `max_steps`       | 100000 | **3000**   |
-| `eval_every_steps`| 2000   | **500**    |
+| Field              | v0.6.1 | Diagnostic |
+| ------------------ | ------ | ---------- |
+| `crf_loss_weight`  | 0.0    | **0.5**    |
+| `crf_fp32`         | n/a    | **true**   |
+| `max_steps`        | 100000 | **3000**   |
+| `eval_every_steps` | 2000   | **500**    |
 
 3000 steps clears both observed NaN windows (step 950 + step 1700) with margin. ~30 min
 on A100.
@@ -73,18 +73,18 @@ on A100.
 
 Training reached step 3000 with no NaN. Loss curve:
 
-| Step  | train_loss | val_loss | macro_f1 |
-| ----- | ---------- | -------- | -------- |
-| 25    | 43.81      | —        | —        |
-| 100   | 32.21      | —        | —        |
-| 500   | (warmup)   | —        | —        |
-| 950   | **1.5647** | —        | —        |
-| 1000  | 1.5375     | 4.3418   | 0.2235   |
-| 1500  | 0.9044     | 3.8535   | 0.2589   |
-| **1700** | **0.8934** | —        | —        |
-| 2000  | 0.6809     | (next eval) | —     |
-| 2500  | 0.5927     | 3.6348   | 0.2979   |
-| 2825  | 0.4913     | —        | —        |
+| Step     | train_loss | val_loss    | macro_f1 |
+| -------- | ---------- | ----------- | -------- |
+| 25       | 43.81      | —           | —        |
+| 100      | 32.21      | —           | —        |
+| 500      | (warmup)   | —           | —        |
+| 950      | **1.5647** | —           | —        |
+| 1000     | 1.5375     | 4.3418      | 0.2235   |
+| 1500     | 0.9044     | 3.8535      | 0.2589   |
+| **1700** | **0.8934** | —           | —        |
+| 2000     | 0.6809     | (next eval) | —        |
+| 2500     | 0.5927     | 3.6348      | 0.2979   |
+| 2825     | 0.4913     | —           | —        |
 
 Both previously-NaN'd steps (bold) cleared cleanly. macro_f1 climbing monotonically:
 0.2235 → 0.2589 → 0.2979. val_loss dropping: 4.34 → 3.85 → 3.63.

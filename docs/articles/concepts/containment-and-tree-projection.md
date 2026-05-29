@@ -38,6 +38,7 @@ flowchart TB
 ```
 
 Five `AddressNode`s with these relationships:
+
 - `region` parents nothing (root in this address)
 - `locality` parents to `region`
 - `street` parents to `locality`
@@ -54,30 +55,30 @@ preferred parents in priority order. Excerpt:
 
 ```ts
 export const PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = {
-  // Universal coarse — geographic granularity
-  region: ["country"],
-  subregion: ["region", "country"],
-  locality: ["subregion", "region", "country"],
-  dependent_locality: ["locality"],
-  postcode: ["locality", "subregion", "region", "country"],
-  cedex: ["postcode", "locality"],
+	// Universal coarse — geographic granularity
+	region: ["country"],
+	subregion: ["region", "country"],
+	locality: ["subregion", "region", "country"],
+	dependent_locality: ["locality"],
+	postcode: ["locality", "subregion", "region", "country"],
+	cedex: ["postcode", "locality"],
 
-  // Street-level
-  street: ["dependent_locality", "locality", "subregion", "region"],
-  street_prefix: ["street"],
-  street_suffix: ["street"],
-  house_number: ["street"],
-  unit: ["street", "house_number"],
+	// Street-level
+	street: ["dependent_locality", "locality", "subregion", "region"],
+	street_prefix: ["street"],
+	street_suffix: ["street"],
+	house_number: ["street"],
+	unit: ["street", "house_number"],
 
-  // Venue / mailing
-  venue: ["street", "locality"],
-  po_box: ["locality", "subregion", "region"],
+	// Venue / mailing
+	venue: ["street", "locality"],
+	po_box: ["locality", "subregion", "region"],
 
-  // JP-specific
-  prefecture: ["country"],
-  block: ["district"],
-  sub_block: ["block"],
-  building_number: ["sub_block", "block"],
+	// JP-specific
+	prefecture: ["country"],
+	block: ["district"],
+	sub_block: ["block"],
+	building_number: ["sub_block", "block"],
 }
 ```
 

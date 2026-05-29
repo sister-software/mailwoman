@@ -3,33 +3,32 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Per-token confidence-distribution probe. Compares two model checkpoints on the same golden
- *   set: extracts the softmax probability of each predicted label, splits by correct/wrong vs
- *   golden, and emits histograms for visual + statistical comparison.
+ *   Per-token confidence-distribution probe. Compares two model checkpoints on the same golden set:
+ *   extracts the softmax probability of each predicted label, splits by correct/wrong vs golden,
+ *   and emits histograms for visual + statistical comparison.
  *
- *   Purpose: investigate whether v0.6.2's val_loss volatility is overconfidence drift (which
- *   would show as a bimodal high-confidence distribution where wrong predictions also have high
+ *   Purpose: investigate whether v0.6.2's val_loss volatility is overconfidence drift (which would
+ *   show as a bimodal high-confidence distribution where wrong predictions also have high
  *   probabilities) or just per-batch sampling noise (which would show similar confidence
  *   distributions across models).
  *
- *   Uses `classifier.parseWithLogits()` (already shipped) to get raw logits per token. Softmax
- *   on the chosen label gives the model's confidence in its argmax prediction. Comparison
- *   against the golden's expected component → bucketize as "matched any expected" / "did not."
+ *   Uses `classifier.parseWithLogits()` (already shipped) to get raw logits per token. Softmax on the
+ *   chosen label gives the model's confidence in its argmax prediction. Comparison against the
+ *   golden's expected component → bucketize as "matched any expected" / "did not."
  *
- *   Usage:
- *     node --experimental-strip-types scripts/probe-confidence.ts \
- *       --model-a /tmp/v062-eval-step-20000/model.onnx --name-a v0.6.2 \
- *       --model-b /tmp/v062b-eval-step-20000/model.onnx --name-b v0.6.2b \
- *       --tokenizer /mnt/playpen/.../v0.6.0-a0/tokenizer.model \
- *       --model-card neural-weights-en-us/model-card.json \
- *       --golden data/eval/golden/v0.1.2 \
- *       --limit 1000
+ *   Usage: node --experimental-strip-types scripts/probe-confidence.ts\
+ *   --model-a /tmp/v062-eval-step-20000/model.onnx --name-a v0.6.2\
+ *   --model-b /tmp/v062b-eval-step-20000/model.onnx --name-b v0.6.2b\
+ *   --tokenizer /mnt/playpen/.../v0.6.0-a0/tokenizer.model\
+ *   --model-card neural-weights-en-us/model-card.json\
+ *   --golden data/eval/golden/v0.1.2\
+ *   --limit 1000
  */
 
 // Confidence probe only needs raw logits; no tree decode required.
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
@@ -263,9 +262,7 @@ async function main(): Promise<void> {
 	const histBC = histogram(bucketsB.correct, bins)
 	const histBW = histogram(bucketsB.wrong, bins)
 	for (let i = 0; i < bins.length; i++) {
-		console.log(
-			`| ${bins[i]!.toFixed(2)} | ${histAC[i]} | ${histAW[i]} | ${histBC[i]} | ${histBW[i]} |`
-		)
+		console.log(`| ${bins[i]!.toFixed(2)} | ${histAC[i]} | ${histAW[i]} | ${histBC[i]} | ${histBW[i]} |`)
 	}
 	console.log(``)
 

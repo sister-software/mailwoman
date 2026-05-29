@@ -69,11 +69,11 @@ is structurally consistent with the region interpretation.
 
 Address parsing requires global coherence. Consider:
 
-| Input | First-token reading |
-|---|---|
-| `Portland, OR 97215` | `Portland` = locality |
-| `Portland Trail Blazers, Phoenix, AZ 85003` | `Portland` = venue (team name) |
-| `5th Portland Street, Boston, MA 02101` | `Portland` = part of street name |
+| Input                                       | First-token reading              |
+| ------------------------------------------- | -------------------------------- |
+| `Portland, OR 97215`                        | `Portland` = locality            |
+| `Portland Trail Blazers, Phoenix, AZ 85003` | `Portland` = venue (team name)   |
+| `5th Portland Street, Boston, MA 02101`     | `Portland` = part of street name |
 
 The same first token (`Portland`) gets three different labels. The
 discriminator is what comes AFTER. A unidirectional model (left-to-right

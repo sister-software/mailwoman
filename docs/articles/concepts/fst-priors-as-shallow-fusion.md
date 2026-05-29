@@ -49,22 +49,19 @@ model can't disambiguate alone.
 
 ## The mailwoman mapping
 
-| Speech recognition | Mailwoman |
-|---|---|
-| Acoustic model (DNN over audio) | Neural encoder (transformer over tokens) |
-| Pronunciation lexicon (FST) | Admin FST (token sequences → WOF placetypes) |
-| Language model (n-gram or RNN) | Morphology FST (street affixes → BIO labels) |
-| Shallow fusion at decode time | Additive emission biases at Viterbi time |
+| Speech recognition              | Mailwoman                                    |
+| ------------------------------- | -------------------------------------------- |
+| Acoustic model (DNN over audio) | Neural encoder (transformer over tokens)     |
+| Pronunciation lexicon (FST)     | Admin FST (token sequences → WOF placetypes) |
+| Language model (n-gram or RNN)  | Morphology FST (street affixes → BIO labels) |
+| Shallow fusion at decode time   | Additive emission biases at Viterbi time     |
 
 The math is the same. Per-token emissions from the encoder get additive
 logit biases from each prior, then Viterbi decodes the combined
 distribution:
 
 ```ts
-final_emissions = encoder_logits
-                + queryShape_bias
-                + admin_fst_bias
-                + morphology_fst_bias
+final_emissions = encoder_logits + queryShape_bias + admin_fst_bias + morphology_fst_bias
 viterbi_path = viterbi(final_emissions, transitions_mask)
 ```
 
@@ -101,6 +98,7 @@ those same tokens (`B-street`, `B-house_number`, `B-venue`).
 
 The full design is in
 [FST gazetteer prior](./fst-gazetteer-prior.md). Key constants:
+
 - 3.0 logit cap
 - Suppression on `B/I-street`, `B/I-house_number`, `B/I-venue` for matched admin tokens
 - Suppression scale 1.5x
