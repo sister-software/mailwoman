@@ -57,11 +57,12 @@ interface Args {
 	morphologyBinPath?: string
 	falsehoodsDir?: string
 	postcodeRepair: boolean
+	symmetricMatch: boolean
 }
 
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
-	const out: Partial<Args> = { morphologyEnabled: true, postcodeRepair: false }
+	const out: Partial<Args> = { morphologyEnabled: true, postcodeRepair: false, symmetricMatch: false }
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 		if (a === "--tests" && args[i + 1]) out.testsDir = args[++i]
@@ -74,6 +75,7 @@ function parseArgs(): Args {
 		else if (a === "--no-morphology") out.morphologyEnabled = false
 		else if (a === "--falsehoods" && args[i + 1]) out.falsehoodsDir = args[++i]
 		else if (a === "--postcode-repair") out.postcodeRepair = true
+		else if (a === "--symmetric-match") out.symmetricMatch = true
 	}
 	if (!out.testsDir) {
 		console.error("Usage: scripts/harness-v0-neural.ts --tests <dir> [--out-json <path>] [...]")
@@ -350,18 +352,28 @@ async function runAssertion(
 	a: ExtractedAssertion,
 	v0Parser: ReturnType<typeof createAddressParser>,
 	neuralClassifier: NeuralAddressClassifier,
-	parseOpts: Parameters<NeuralAddressClassifier["parse"]>[1]
+	parseOpts: Parameters<NeuralAddressClassifier["parse"]>[1],
+	symmetricMatch: boolean
 ): Promise<AssertionResult> {
-	// v0 — vitest semantics: expected[i] deep-equals solutions[i].classifications. All N
-	// expected solutions must match position-for-position; pass only if all of them do.
 	const solutions = await v0Parser.parse(a.input)
 	const v0Records: ClassificationRecord[] = solutions.map((s) => s.classifications as ClassificationRecord)
-	let v0Pass = solutions.length >= a.expected.length
-	if (v0Pass) {
-		for (let i = 0; i < a.expected.length; i++) {
-			if (!classificationsEqual(a.expected[i]!, v0Records[i]!)) {
-				v0Pass = false
-				break
+	let v0Pass: boolean
+	if (symmetricMatch) {
+		// Fair cross-architecture mode (external-lineage corpora, e.g. libpostal): score v0 with the
+		// SAME loose subset matcher as neural — pass if any v0 solution matches an expected record.
+		// The default exact-match (classificationsEqual) assumes COMPLETE v0-vocab expected records,
+		// which remapped external cases (with dropped/unmappable tags) don't have → unfair to v0.
+		v0Pass = v0Records.some((r) => anyExpectedMatches(a.expected, r))
+	} else {
+		// v0 — vitest semantics: expected[i] deep-equals solutions[i].classifications. All N
+		// expected solutions must match position-for-position; pass only if all of them do.
+		v0Pass = solutions.length >= a.expected.length
+		if (v0Pass) {
+			for (let i = 0; i < a.expected.length; i++) {
+				if (!classificationsEqual(a.expected[i]!, v0Records[i]!)) {
+					v0Pass = false
+					break
+				}
 			}
 		}
 	}
@@ -610,7 +622,7 @@ async function main(): Promise<void> {
 	for (const a of all) {
 		i++
 		try {
-			results.push(await runAssertion(a, v0Parser, neural, parseOpts))
+			results.push(await runAssertion(a, v0Parser, neural, parseOpts, args.symmetricMatch))
 		} catch (err) {
 			console.error(`[harness] WARN: error on assertion ${i} (${a.input}): ${(err as Error).message}`)
 		}
