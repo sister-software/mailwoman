@@ -5,45 +5,44 @@
  *
  *   Postcode-only regression harness, per-country.
  *
- *   Built to answer DeepSeek's turn-12 question: "Are we actually bad at postcodes per
- *   country?" Postcode patterns (CEDEX = FR, A1A 1A1 = CA, SW1A 1AA = GB, 12345-6789 = US)
- *   are regex-detectable shapes; the model SHOULD crush this. The v0.6.x evals show
- *   postcode recall in the 70-80% range — well below what pattern-matching would imply.
- *   This script settles whether tokenizer fragmentation / data imbalance is the binding
- *   constraint, and creates the regression fence for v0.7+ releases.
+ *   Built to answer DeepSeek's turn-12 question: "Are we actually bad at postcodes per country?"
+ *   Postcode patterns (CEDEX = FR, A1A 1A1 = CA, SW1A 1AA = GB, 12345-6789 = US) are
+ *   regex-detectable shapes; the model SHOULD crush this. The v0.6.x evals show postcode recall in
+ *   the 70-80% range — well below what pattern-matching would imply. This script settles whether
+ *   tokenizer fragmentation / data imbalance is the binding constraint, and creates the regression
+ *   fence for v0.7+ releases.
  *
  *   Sources:
- *     1. `mailwoman/test/*.test.ts` — extracted via TS AST. Locale derived from filename
- *        (e.g. `address.gbr.test.ts` → GB).
- *     2. `data/eval/falsehoods/*.jsonl` — explicit `locale` field per row.
- *     3. `data/eval/golden/v0.1.2/*.jsonl` — explicit `country` field per row.
+ *
+ *   1. `mailwoman/test/*.test.ts` — extracted via TS AST. Locale derived from filename (e.g.
+ *        `address.gbr.test.ts` → GB).
+ *   2. `data/eval/falsehoods/*.jsonl` — explicit `locale` field per row.
+ *   3. `data/eval/golden/v0.1.2/*.jsonl` — explicit `country` field per row.
  *
  *   Filtering: keep only entries whose expected shape includes a `postcode` value.
  *
- *   Matching: case-insensitive, trimmed exact match. If the row has multiple expected
- *   solutions (test assertions can list alternatives), pass if ANY solution's postcode
- *   matches the model's output.
+ *   Matching: case-insensitive, trimmed exact match. If the row has multiple expected solutions (test
+ *   assertions can list alternatives), pass if ANY solution's postcode matches the model's output.
  *
- *   Gate: with `--gate`, exit nonzero if any country with >`--min-count` (default 10)
- *   entries has postcode accuracy below `--floor` (default 0.9).
+ *   Gate: with `--gate`, exit nonzero if any country with >`--min-count` (default 10) entries has
+ *   postcode accuracy below `--floor` (default 0.9).
  *
- *   Usage:
- *     node --experimental-strip-types scripts/harness-postcode.ts \
- *       --model /mnt/playpen/mailwoman-data/models/quantized/model-v060-step-100000-int8.onnx \
- *       --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
- *       --model-card neural-weights-en-us/model-card.json \
- *       --tests mailwoman/test \
- *       --falsehoods data/eval/falsehoods \
- *       --golden data/eval/golden/v0.1.2 \
- *       [--admin-fst /mnt/playpen/mailwoman-data/wof/fst-global-priority.bin] \
- *       [--out-json /tmp/postcode-harness.json] \
- *       [--gate] [--floor 0.9] [--min-count 10]
+ *   Usage: node --experimental-strip-types scripts/harness-postcode.ts\
+ *   --model /mnt/playpen/mailwoman-data/models/quantized/model-v060-step-100000-int8.onnx\
+ *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model-card neural-weights-en-us/model-card.json\
+ *   --tests mailwoman/test\
+ *   --falsehoods data/eval/falsehoods\
+ *   --golden data/eval/golden/v0.1.2\
+ *   [--admin-fst /mnt/playpen/mailwoman-data/wof/fst-global-priority.bin]\
+ *   [--out-json /tmp/postcode-harness.json]\
+ *   [--gate] [--floor 0.9] [--min-count 10]
  */
 
 import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
@@ -85,7 +84,9 @@ function parseArgs(): Args {
 		else if (a === "--min-count" && args[i + 1]) out.minCount = Number(args[++i])
 	}
 	if (!out.modelPath || !out.tokenizerPath || !out.modelCardPath) {
-		console.error("Usage: harness-postcode.ts --model <onnx> --tokenizer <spm> --model-card <json> [--tests <dir>] [--falsehoods <dir>] [--golden <dir>] [--admin-fst <bin>] [--out-json <path>] [--gate] [--floor 0.9] [--min-count 10]")
+		console.error(
+			"Usage: harness-postcode.ts --model <onnx> --tokenizer <spm> --model-card <json> [--tests <dir>] [--falsehoods <dir>] [--golden <dir>] [--admin-fst <bin>] [--out-json <path>] [--gate] [--floor 0.9] [--min-count 10]"
+		)
 		process.exit(1)
 	}
 	return out as Args
@@ -97,10 +98,10 @@ function parseArgs(): Args {
 
 /**
  * Test files use ISO 3166 alpha-3 codes in filenames (`address.gbr.test.ts`); falsehoods use
- * BCP-47-ish `en-GB` codes; golden v0.1.2 uses bare alpha-2. We normalize everything to
- * alpha-2 for grouping. `nzd` in test filenames is a non-standard alias for NZ (New Zealand
- * dollar code mistakenly used as country code). Mapping covers all locales present in the
- * tree as of 2026-05-29.
+ * BCP-47-ish `en-GB` codes; golden v0.1.2 uses bare alpha-2. We normalize everything to alpha-2 for
+ * grouping. `nzd` in test filenames is a non-standard alias for NZ (New Zealand dollar code
+ * mistakenly used as country code). Mapping covers all locales present in the tree as of
+ * 2026-05-29.
  */
 const ALPHA3_TO_ALPHA2: Record<string, string> = {
 	aus: "AU",
@@ -312,10 +313,7 @@ interface SampleResult {
 	pass: boolean
 }
 
-function evaluate(
-	sample: Sample,
-	flat: Partial<Record<ComponentTag, string>>,
-): SampleResult {
+function evaluate(sample: Sample, flat: Partial<Record<ComponentTag, string>>): SampleResult {
 	const actual = flat.postcode ?? null
 	let pass = false
 	if (actual) {
@@ -351,7 +349,9 @@ function printReport(results: SampleResult[]): {
 	console.log("# Postcode-Only Harness Report")
 	console.log("")
 	console.log(`**Total entries:** ${overall.total}`)
-	console.log(`**Overall postcode exact-match:** ${overall.pass}/${overall.total} (${((100 * overall.pass) / overall.total).toFixed(1)}%)`)
+	console.log(
+		`**Overall postcode exact-match:** ${overall.pass}/${overall.total} (${((100 * overall.pass) / overall.total).toFixed(1)}%)`
+	)
 	console.log("")
 	console.log("## Per-country")
 	console.log("")
@@ -371,7 +371,9 @@ function printReport(results: SampleResult[]): {
 		console.log("")
 		for (const f of failures) {
 			console.log(`- ${f.country} [${f.source}] \`${f.input}\``)
-			console.log(`  - expected: ${JSON.stringify(f.expectedPostcodes)}, actual: \`${f.actualPostcode ?? "(missing)"}\``)
+			console.log(
+				`  - expected: ${JSON.stringify(f.expectedPostcodes)}, actual: \`${f.actualPostcode ?? "(missing)"}\``
+			)
 		}
 		console.log("")
 	}
@@ -388,14 +390,19 @@ async function main(): Promise<void> {
 	console.error("--- harness-postcode.ts ---")
 	console.error("Model:           ", args.modelPath)
 	console.error("Tokenizer:       ", args.tokenizerPath)
-	console.error("Gate:            ", args.gate ? `enabled (floor=${args.floor}, min-count=${args.minCount})` : "disabled")
+	console.error(
+		"Gate:            ",
+		args.gate ? `enabled (floor=${args.floor}, min-count=${args.minCount})` : "disabled"
+	)
 
 	console.error("Loading samples...")
 	const fromTests = args.testsDir ? discoverFromTests(args.testsDir) : []
 	const fromFalsehoods = args.falsehoodsDir ? loadFalsehoods(args.falsehoodsDir) : []
 	const fromGolden = args.goldenDir ? loadGolden(args.goldenDir) : []
 	const all = [...fromTests, ...fromFalsehoods, ...fromGolden]
-	console.error(`  ${fromTests.length} from tests, ${fromFalsehoods.length} from falsehoods, ${fromGolden.length} from golden, ${all.length} total`)
+	console.error(
+		`  ${fromTests.length} from tests, ${fromFalsehoods.length} from falsehoods, ${fromGolden.length} from golden, ${all.length} total`
+	)
 
 	console.error("Loading neural classifier...")
 	const modelCard = JSON.parse(readFileSync(args.modelCardPath, "utf8"))
@@ -411,7 +418,9 @@ async function main(): Promise<void> {
 		console.error("Loading admin FST:", args.adminFstPath)
 		adminFst = deserializeFst(readFileSync(args.adminFstPath))
 	}
-	const parseOpts = adminFst ? ({ fst: adminFst as never } as Parameters<NeuralAddressClassifier["parse"]>[1]) : undefined
+	const parseOpts = adminFst
+		? ({ fst: adminFst as never } as Parameters<NeuralAddressClassifier["parse"]>[1])
+		: undefined
 
 	console.error("Running harness...")
 	const t0 = performance.now()
@@ -455,7 +464,9 @@ async function main(): Promise<void> {
 			if (s.total < args.minCount) continue
 			const rate = s.pass / s.total
 			if (rate < args.floor) {
-				violations.push(`${country}: ${(100 * rate).toFixed(1)}% (${s.pass}/${s.total}) below floor ${(100 * args.floor).toFixed(0)}%`)
+				violations.push(
+					`${country}: ${(100 * rate).toFixed(1)}% (${s.pass}/${s.total}) below floor ${(100 * args.floor).toFixed(0)}%`
+				)
 			}
 		}
 		if (violations.length > 0) {

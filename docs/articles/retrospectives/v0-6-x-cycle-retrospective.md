@@ -27,14 +27,14 @@ golden set). The cycle's goal: restore v0.6.0's quality without losing
 the v0.6.1 street-decomposition signal that motivated the synth-street
 weight bump in the first place.
 
-| Run | Recipe change | dep_loc halls | locality recall | house_number recall | Harness % | Verdict |
-|-----|---------------|--------------:|----------------:|--------------------:|----------:|---------|
-| v0.6.0 | (baseline) | 0 | 40.0% | 79.0% | 14.4% | shipped |
-| v0.6.1 | synth-street weight 2.0 | **1066** ❌ | 31.1% | 75.9% | (similar) | regressed, held |
-| v0.6.2 | + synth-no-street 1.0 | 0 ✓ | 41.0% | **74.0%** ❌ | 14.0% | 1 violation, hold |
-| v0.6.2b | synth-no-street 0.5 (parallel) | 0 ✓ | 41.1% (20K) | 77.3% (20K) | 14.7% (20K) | 2 violations at 20K |
-| v0.6.3 | + house-venue 1.0, no-street 0.5 | **844** ❌ | **34.7%** ❌ | 77.0% ✓ | **12.5%** ❌ | 3 violations, hold |
-| v0.6.4 (not launched) | no-street 0.75 to fix dilution | TBD | TBD | TBD | TBD | held |
+| Run                   | Recipe change                    | dep_loc halls | locality recall | house_number recall |    Harness % | Verdict             |
+| --------------------- | -------------------------------- | ------------: | --------------: | ------------------: | -----------: | ------------------- |
+| v0.6.0                | (baseline)                       |             0 |           40.0% |               79.0% |        14.4% | shipped             |
+| v0.6.1                | synth-street weight 2.0          |   **1066** ❌ |           31.1% |               75.9% |    (similar) | regressed, held     |
+| v0.6.2                | + synth-no-street 1.0            |           0 ✓ |           41.0% |        **74.0%** ❌ |        14.0% | 1 violation, hold   |
+| v0.6.2b               | synth-no-street 0.5 (parallel)   |           0 ✓ |     41.1% (20K) |         77.3% (20K) |  14.7% (20K) | 2 violations at 20K |
+| v0.6.3                | + house-venue 1.0, no-street 0.5 |    **844** ❌ |    **34.7%** ❌ |             77.0% ✓ | **12.5%** ❌ | 3 violations, hold  |
+| v0.6.4 (not launched) | no-street 0.75 to fix dilution   |           TBD |             TBD |                 TBD |          TBD | held                |
 
 The pattern: every change addresses one regression at the cost of
 another. v0.6.2 fixed dep_loc but cost house_number. v0.6.3 recovered
@@ -49,7 +49,7 @@ infrastructure layer that v0.7 will sit on top of:
 - **2D pre-publish eval gate**
   ([`scripts/eval-gate.ts`](https://github.com/sister-software/mailwoman))
   — `(recall drop > 2pp AND baseline > 10%) OR (hallucination spike >
-  100 AND rate > 20%)`. Retro-validated against v0.6.0 → v0.6.1 — catches
+100 AND rate > 20%)`. Retro-validated against v0.6.0 → v0.6.1 — catches
   the regression with 3 violations including dep_loc rate at 2665%.
 - **v0-vs-neural harness**
   ([`scripts/harness-v0-neural.ts`](https://github.com/sister-software/mailwoman))
@@ -200,13 +200,13 @@ the speculative-architecture work (per-locale routing) to v0.8.
 
 ### 5.1 Binding-constraint tier list
 
-| Constraint | Evidence | v0.7 priority |
-|---|---|---|
-| Overconfidence (81% wrong @ ≥ 0.9 conf) | Measured | **P0** |
-| Postcode tokenizer fragmentation | Diagnostic-confirmed | **P1** |
-| Data imbalance (US-dominant corpus) | Measured via harness zeros | **P1** |
-| System-multiplicity / schema mismatch | Real but not cause of measured failures | **P2 (v0.8)** |
-| Model capacity (29.3M params) | Untested | **P2 (v0.8)** |
+| Constraint                              | Evidence                                | v0.7 priority |
+| --------------------------------------- | --------------------------------------- | ------------- |
+| Overconfidence (81% wrong @ ≥ 0.9 conf) | Measured                                | **P0**        |
+| Postcode tokenizer fragmentation        | Diagnostic-confirmed                    | **P1**        |
+| Data imbalance (US-dominant corpus)     | Measured via harness zeros              | **P1**        |
+| System-multiplicity / schema mismatch   | Real but not cause of measured failures | **P2 (v0.8)** |
+| Model capacity (29.3M params)           | Untested                                | **P2 (v0.8)** |
 
 ### 5.2 Three parallel workstreams
 
@@ -270,12 +270,12 @@ This is the entry point for v0.8's system-multiplicity work
 
 ### 5.4 Decision-tree on calibration results
 
-| Calibration | Postcode | Action |
-|---|---|---|
-| Improved + overconfidence dropped | < 90% (current state) | v0.7 = calibration + postcode tokenizer fix |
-| Improved + overconfidence dropped | ≥ 90% everywhere | v0.7 = calibration only; pre-classifier → v0.8 |
-| Flat + overconfidence unchanged | < 90% | v0.7 pivots to structural; hybrid arch becomes focus |
-| Flat + overconfidence unchanged | ≥ 90% everywhere | Investigate further; calibration symptom not cause |
+| Calibration                       | Postcode              | Action                                               |
+| --------------------------------- | --------------------- | ---------------------------------------------------- |
+| Improved + overconfidence dropped | < 90% (current state) | v0.7 = calibration + postcode tokenizer fix          |
+| Improved + overconfidence dropped | ≥ 90% everywhere      | v0.7 = calibration only; pre-classifier → v0.8       |
+| Flat + overconfidence unchanged   | < 90%                 | v0.7 pivots to structural; hybrid arch becomes focus |
+| Flat + overconfidence unchanged   | ≥ 90% everywhere      | Investigate further; calibration symptom not cause   |
 
 The diagnostic settles the postcode column as `< 90%`, so the v0.7
 action set is anchored on the top row unless calibration unexpectedly

@@ -28,22 +28,22 @@ pipeline.
 
 **Overall: 75.9% (2349/3096)** exact-match accuracy.
 
-| Country | Total | Match | Rate |
-|---------|------:|------:|-----:|
-| US | 1,765 | 1,421 | **80.5%** |
-| FR | 1,266 | 888 | **70.1%** |
-| AU | 10 | 9 | 90.0% |
-| DE | 7 | 4 | 57.1% |
-| GB | 6 | 0 | **0.0%** |
-| CA | 5 | 0 | **0.0%** |
-| NL | 4 | 0 | **0.0%** |
-| PT | 3 | 1 | 33.3% |
-| BR | 1 | 0 | 0.0% |
-| ES | 1 | 0 | 0.0% |
-| PL | 1 | 0 | 0.0% |
-| JP | 1 | 0 | 0.0% |
-| IN | 1 | 1 | 100% |
-| UNKNOWN | 25 | 25 | 100% |
+| Country | Total | Match |      Rate |
+| ------- | ----: | ----: | --------: |
+| US      | 1,765 | 1,421 | **80.5%** |
+| FR      | 1,266 |   888 | **70.1%** |
+| AU      |    10 |     9 |     90.0% |
+| DE      |     7 |     4 |     57.1% |
+| GB      |     6 |     0 |  **0.0%** |
+| CA      |     5 |     0 |  **0.0%** |
+| NL      |     4 |     0 |  **0.0%** |
+| PT      |     3 |     1 |     33.3% |
+| BR      |     1 |     0 |      0.0% |
+| ES      |     1 |     0 |      0.0% |
+| PL      |     1 |     0 |      0.0% |
+| JP      |     1 |     0 |      0.0% |
+| IN      |     1 |     1 |      100% |
+| UNKNOWN |    25 |    25 |      100% |
 
 The UNKNOWN bucket is from tests that don't carry an explicit locale
 (`intersection.test.ts`, etc., all US-context). The 0% buckets are small
@@ -125,12 +125,12 @@ starts at the second token and we lose the leading digit.
 This diagnostic was DeepSeek turn 12's "highest-information secondary
 experiment." The decision tree was:
 
-| Calibration | Postcodes | Action |
-|---|---|---|
+| Calibration                       | Postcodes             | Action                                      |
+| --------------------------------- | --------------------- | ------------------------------------------- |
 | Improved + overconfidence dropped | < 90% on some country | v0.7 = calibration + postcode tokenizer fix |
-| Improved + overconfidence dropped | ≥ 90% everywhere | v0.7 = calibration only |
-| Flat + overconfidence unchanged | < 90% | v0.7 = structural pivot |
-| Flat + overconfidence unchanged | ≥ 90% everywhere | Investigate further |
+| Improved + overconfidence dropped | ≥ 90% everywhere      | v0.7 = calibration only                     |
+| Flat + overconfidence unchanged   | < 90%                 | v0.7 = structural pivot                     |
+| Flat + overconfidence unchanged   | ≥ 90% everywhere      | Investigate further                         |
 
 The diagnostic settles the postcode column **decisively**: postcodes are
 < 90% in MOST countries with samples (US 80.5%, FR 70.1%, GB/CA/NL 0%,
