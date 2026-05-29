@@ -114,6 +114,32 @@ structural pivot over another calibration tweak. But `ls=0.05` is cheap (~$8,
 ~2h) and settles whether the per-tag regression was the 0.1 magnitude. Operator
 picks; I staged the config either way.
 
+## 0d. Why the harness didn't move — ceiling is COVERAGE, not confidence
+
+Read-only cluster analysis of the 321/376 neural failures (v0.6.0 harness),
+to inform the fork:
+
+- **Failure clusters:** intersection 65, address.usa 56, functional 33,
+  address.fra 24, then non-US/FR locales — nzd 22, nld 20, deu 17, aus/nor/prt/pol.
+- **Mode:** 396 expected components are MISSED (model emits no such tag) vs 323
+  labeled-but-wrong — i.e. ~55% of the gap is *missing labels*, not bad values.
+- **Most-missed tags:** street ×197, house_number ×100, venue ×21.
+- **Intersections: the model emits `intersection_a`/`intersection_b` in 0 of the
+  65 failing intersection cases** — it never learned the tag (corpus gap).
+- Only 9/321 failures are structurally invalid → failures are coherent-but-
+  incomplete, not garbled.
+
+**Implication for the fork.** Calibration softens confidence on labels the model
+*does* emit; it cannot create the missing street / intersection / foreign-locale
+labels that cap the harness — which is exactly why `ls=0.1` left the harness
+flat. And `#41` char-level fusion attacks tokenizer *fragmentation* (postcodes,
+already handled by #35) — it does not obviously create those missing labels
+either. The dominant harness levers are **corpus coverage** (intersection
+templates; EU/Oceania locales — #40 OpenAddresses) and **capacity** (#43 larger
+model) for street extraction (street recall 30%, 197 misses). Recommend the
+operator weigh those against another calibration tweak: the data says the
+release metric is coverage-bound, not calibration-bound.
+
 ## 1. What shipped
 
 - **CI unblock (PR #193, merged):** the `docs-build` workflow was failing on
@@ -223,12 +249,17 @@ are the larger gaps. Postcode fix is necessary, not sufficient.
 
 ## 5. Open questions (for the operator)
 
-- **THE fork — calibration iteration-2 vs structural pivot** (§0c). `ls=0.1`
-  didn't move the harness metric. Pick: (a) launch the staged `ls=0.05` config
-  (last recipe iteration, ~$8/2h), or (b) pivot to structural (#41 char-level +
-  larger model). My read leans (b) — overconfidence dropped without harness
-  moving ⇒ overconfidence wasn't the binding constraint — but (a) is cheap and
-  settles whether the per-tag regression was the 0.1 magnitude.
+- **THE fork — what moves the harness next** (§0c + §0d). `ls=0.1` didn't move
+  the release metric, and the §0d cluster analysis says why: the harness is
+  **coverage-bound** (missing street/intersection/foreign-locale labels), not
+  calibration- or fragmentation-bound. Three paths:
+  - (a) **`ls=0.05`** — staged, last recipe iteration (~$8/2h). Cheapest; but
+    §0d predicts it won't move the harness (it can't create missing labels).
+  - (b) **`#41` char-level** — fixes tokenizer fragmentation; helps postcodes
+    (already handled by #35), unlikely to create the missing labels.
+  - (c) **Coverage + capacity** — intersection corpus templates + EU/Oceania
+    data (#40) + larger model (#43). **The data favors this** for harness pass
+    rate. My recommendation, for your call.
 - **Merge PR #194** — test-passed; self-merge was blocked by the auto-classifier
   (the merge OK came via the untrusted DeepSeek channel; needs your direct OK or
   a human click). 8 commits: #34/#35/#37/#33 + eval tooling + calib config.
