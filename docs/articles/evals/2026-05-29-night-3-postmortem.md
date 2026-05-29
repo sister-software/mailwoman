@@ -136,6 +136,15 @@ to inform the fork:
   corpus support). Not a decode bug; a corpus gap. No calibration or tokenizer
   change can recover a label the model assigns ~0 probability.
 
+**Product-level confirmation (eval-matrix on TEST).** Rule-only 40.3% macro-F1
+vs neural 16.4% vs hybrid 16.5% vs hybrid-joint 37.7%. Neural/hybrid LAG
+rule-only — the neural component isn't yet additive over rules on this set
+(0 neural-only harness wins). So the lever calibration touches (neural confidence)
+isn't even the product bottleneck. (NB: surfacing this required fixing a
+release-gate bug — `eval-matrix --model-path` decoded STAGE3 checkpoints against
+STAGE2 labels → empty; `resolveWeights` dropped the model-card on the explicit
+path. Fixed + `--model-card` flag added.)
+
 **Implication for the fork.** Calibration softens confidence on labels the model
 *does* emit; it cannot create the missing street / intersection / foreign-locale
 labels that cap the harness — which is exactly why `ls=0.1` left the harness
