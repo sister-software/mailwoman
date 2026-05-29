@@ -57,12 +57,13 @@ interface Args {
 	morphologyBinPath?: string
 	falsehoodsDir?: string
 	postcodeRepair: boolean
+	unitRepair: boolean
 	symmetricMatch: boolean
 }
 
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
-	const out: Partial<Args> = { morphologyEnabled: true, postcodeRepair: false, symmetricMatch: false }
+	const out: Partial<Args> = { morphologyEnabled: true, postcodeRepair: false, unitRepair: false, symmetricMatch: false }
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 		if (a === "--tests" && args[i + 1]) out.testsDir = args[++i]
@@ -75,6 +76,7 @@ function parseArgs(): Args {
 		else if (a === "--no-morphology") out.morphologyEnabled = false
 		else if (a === "--falsehoods" && args[i + 1]) out.falsehoodsDir = args[++i]
 		else if (a === "--postcode-repair") out.postcodeRepair = true
+		else if (a === "--unit-repair") out.unitRepair = true
 		else if (a === "--symmetric-match") out.symmetricMatch = true
 	}
 	if (!out.testsDir) {
@@ -613,6 +615,7 @@ async function main(): Promise<void> {
 		...(adminFst ? { fst: adminFst as never } : {}),
 		...(morphologyFst ? { fstStreetMorphology: morphologyFst as never } : {}),
 		postcodeRepair: args.postcodeRepair,
+		unitRepair: args.unitRepair,
 	} as Parameters<NeuralAddressClassifier["parse"]>[1]
 
 	console.error("Running harness...")

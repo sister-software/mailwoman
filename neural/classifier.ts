@@ -23,6 +23,7 @@ import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
 import { repairPostcodeLabels } from "./postcode-repair.js"
+import { repairUnitLabels } from "./unit-repair.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
 import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
@@ -192,6 +193,9 @@ export class NeuralAddressClassifier {
 		if (opts?.postcodeRepair) {
 			tokens = repairPostcodeLabels(text, tokens).tokens
 		}
+		if (opts?.unitRepair) {
+			tokens = repairUnitLabels(text, tokens).tokens
+		}
 
 		return buildAddressTree(text, tokens)
 	}
@@ -353,6 +357,14 @@ export interface ParseOpts {
 	 * v0.7 gate confirms it. See `./postcode-repair.ts`.
 	 */
 	postcodeRepair?: boolean
+	/**
+	 * When true, run the deterministic secondary-unit regex repair pass on the decoded label
+	 * sequence before tree-building. Detects designator-shaped substrings ("Apt 4B", "Ste 12",
+	 * "Unit 9400", bare "#104", …) and snaps/adds the unit span, fixing the unit-drop weakness the
+	 * three-arena capability eval surfaced (postal secondary-unit 0% neural). Off by default —
+	 * opt-in until the v0.7.2 arena re-run quantifies its delta. See `./unit-repair.ts`.
+	 */
+	unitRepair?: boolean
 }
 
 function argmaxSoftmax(row: number[]): { idx: number; conf: number } {
