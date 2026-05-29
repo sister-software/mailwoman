@@ -296,6 +296,7 @@ function createRuleOnlyRunner(): ModeRunner {
 interface WeightsOpts {
 	modelPath?: string
 	tokenizerPath?: string
+	modelCardPath?: string
 }
 
 async function loadClassifier(opts: WeightsOpts): Promise<NeuralAddressClassifier> {
@@ -303,6 +304,8 @@ async function loadClassifier(opts: WeightsOpts): Promise<NeuralAddressClassifie
 		locale: "en-US",
 		...(opts.modelPath ? { modelPath: opts.modelPath } : {}),
 		...(opts.tokenizerPath ? { tokenizerPath: opts.tokenizerPath } : {}),
+		// Without the card, a custom STAGE3 model decodes against STAGE2 labels → empty parses.
+		...(opts.modelCardPath ? { modelCardPath: opts.modelCardPath } : {}),
 	})
 }
 
@@ -404,13 +407,15 @@ async function main() {
 		process.argv.find((a) => a.startsWith("--golden-dir="))?.split("=")[1] ?? resolve("data/eval/golden/v0.1.2")
 	const modelPath = process.argv.find((a) => a.startsWith("--model-path="))?.split("=")[1]
 	const tokenizerPath = process.argv.find((a) => a.startsWith("--tokenizer-path="))?.split("=")[1]
+	const modelCardPath = process.argv.find((a) => a.startsWith("--model-card="))?.split("=")[1]
 
-	const weightsOpts: WeightsOpts = { modelPath, tokenizerPath }
+	const weightsOpts: WeightsOpts = { modelPath, tokenizerPath, modelCardPath }
 
 	const rows = loadGolden(goldenDir)
 	console.error(`loaded ${rows.length} golden rows`)
 	if (modelPath) console.error(`using custom model: ${modelPath}`)
 	if (tokenizerPath) console.error(`using custom tokenizer: ${tokenizerPath}`)
+	if (modelCardPath) console.error(`using custom model-card: ${modelCardPath}`)
 
 	// Build runners
 	console.error("building runners...")

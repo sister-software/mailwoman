@@ -1,0 +1,37 @@
+{
+	"created_at": "2026-05-29T03:01:08.273Z",
+	"method": "per-file stratified 90/10, mulberry32 + Fisher-Yates, seeded",
+	"seed": 20260529,
+	"test_ratio": 0.1,
+	"totals": {
+		"dev": 4105,
+		"test": 456,
+		"all": 4561
+	},
+	"files": {
+		"adversarial.jsonl": {
+			"total": 54,
+			"dev": 49,
+			"test": 5,
+			"dev_sha256": "aaa290942ef6726b1102391b14e7ad9886c19799100a296bdb82fc3400cea23e",
+			"test_sha256": "fb78fb4f36780a595215c35314eeea89996b876507d32b2b5727a9e71470e686",
+			"source_sha256": "90b4b61355bdc7283917940edc9fd75b53f0660e04251a20c5f8430525070742"
+		},
+		"fr.jsonl": {
+			"total": 1551,
+			"dev": 1396,
+			"test": 155,
+			"dev_sha256": "10cc66131f1cc29bdf3f68f924d16f230376f1289abf117cff59d4b89d224fe9",
+			"test_sha256": "b02addc783e83d7a243b8e68598c50e4f97098db39ab69e6129379083460ea96",
+			"source_sha256": "29d72dcd34ea2a576459b78be57ba3c0febd353d4b88bf801772ccdb415f46f6"
+		},
+		"us.jsonl": {
+			"total": 2956,
+			"dev": 2660,
+			"test": 296,
+			"dev_sha256": "c83388663ee03418d0d126f823d3ccc4af6ab4dd7f7c4f2be0597674b547b9de",
+			"test_sha256": "386ed5a549b82a23b446b331e8c33ae8421df5c74107122a7a8f92886db83e6c",
+			"source_sha256": "8cad55caed20e4998543e1bf09faf8da5d6dec8bcc9e4384805da760f950e50f"
+		}
+	}
+}
