@@ -152,6 +152,8 @@ export interface ClassifierOpts {
 	queryShape?: QueryShapeLite
 	fst?: FstMatcherLike
 	fstBiasScale?: number
+	/** Run the deterministic postcode regex repair pass (v0.7 #35) on the decoded labels. */
+	postcodeRepair?: boolean
 }
 
 export interface AddressClassifier {

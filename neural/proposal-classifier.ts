@@ -54,7 +54,9 @@ export function createNeuralProposalClassifier(cfg: NeuralProposalClassifierConf
 	const penalty = cfg.penalty ?? 0
 
 	async function classify(section: Section, _ctx: ClassifierContext): Promise<ClassificationProposal[]> {
-		const tree = await cfg.classifier.parse(section.body)
+		// Postcode regex repair on by default (v0.7 #35, operator-signed): +135/0 on the postcode
+		// harness, model-independent. Fixes the SentencePiece-fragmentation misses (GB/CA/NL/…).
+		const tree = await cfg.classifier.parse(section.body, { postcodeRepair: true })
 		const proposals: ClassificationProposal[] = []
 		const sectionOffset = section.start
 
