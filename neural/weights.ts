@@ -35,15 +35,24 @@ export interface ResolveWeightsOpts {
 	modelPath?: string
 	/** Explicit tokenizer.model path; takes precedence over package auto-resolve. */
 	tokenizerPath?: string
+	/**
+	 * Explicit `model-card.json` path (for the label vocab) on the explicit model+tokenizer path.
+	 * When omitted, falls back to a `model-card.json` co-located with `modelPath`. Without a card,
+	 * labels default to `STAGE2_BIO_LABELS` — which silently mis-decodes a STAGE3 (33-label) model
+	 * into empty/garbage parses. Pass this (or co-locate the card) when evaluating a custom STAGE3
+	 * checkpoint via explicit paths.
+	 */
+	modelCardPath?: string
 }
 
 export interface ResolvedWeights {
 	modelPath: string
 	tokenizerPath: string
 	/**
-	 * Path to `model-card.json` alongside the resolved model. `undefined` when the caller passed
-	 * explicit paths or when the package directory has no card on disk. Read by `loadFromWeights` to
-	 * thread the trained label vocabulary into the classifier — see {@link readLabelsFromModelCard}.
+	 * Path to `model-card.json` for the resolved model. On the package path, the card co-located in
+	 * the package dir. On the explicit path, `opts.modelCardPath` or a card co-located with
+	 * `modelPath`. `undefined` only when no card is found. Read by `loadFromWeights` to thread the
+	 * trained label vocabulary into the classifier — see {@link readLabelsFromModelCard}.
 	 */
 	modelCardPath?: string
 	/**
@@ -61,7 +70,12 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	if (opts.modelPath && opts.tokenizerPath) {
 		if (!existsSync(opts.modelPath)) throw new Error(`Explicit modelPath does not exist: ${opts.modelPath}`)
 		if (!existsSync(opts.tokenizerPath)) throw new Error(`Explicit tokenizerPath does not exist: ${opts.tokenizerPath}`)
-		return { modelPath: opts.modelPath, tokenizerPath: opts.tokenizerPath, source: "explicit" }
+		// Resolve a model-card for the label vocab: explicit opt first, else one co-located with the
+		// model. Omitting it makes the classifier fall back to STAGE2_BIO_LABELS, which mis-decodes a
+		// STAGE3 (33-label) checkpoint into empty parses — the trap that broke eval-matrix --model-path.
+		const coLocatedCard = resolve(dirname(opts.modelPath), "model-card.json")
+		const modelCardPath = opts.modelCardPath ?? (existsSync(coLocatedCard) ? coLocatedCard : undefined)
+		return { modelPath: opts.modelPath, tokenizerPath: opts.tokenizerPath, modelCardPath, source: "explicit" }
 	}
 
 	// Package names follow the all-lowercase BCP-47 convention (`neural-weights-en-us`,
