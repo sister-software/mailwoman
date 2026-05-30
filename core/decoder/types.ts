@@ -117,4 +117,26 @@ export interface AddressTree {
 	/** The original raw input text — preserved for round-trip and XML root @raw attribute. */
 	raw: string
 	roots: AddressNode[]
+	/**
+	 * The addressing SYSTEM this tree was decoded under, which selects the containment hierarchy
+	 * (`containmentFor(system)` in `./containment.ts`). Absent means the default Western hierarchy
+	 * (`house_number → street → locality → …`).
+	 *
+	 * This is forward-compat insurance, not yet a behavioral switch: every system currently resolves
+	 * to the same map, so an absent or present `system` produces identical trees today. It exists so
+	 * that when a genuinely distinct system lands (e.g. Japanese block addressing, where
+	 * `building_number` nests under `sub_block`/`block` with no `street` parent), consumers and the
+	 * tree builder already carry the discriminator — no `AddressTree` shape change later. A locale
+	 * pre-classifier (Phase 6+) is the intended source of this value.
+	 */
+	system?: AddressSystem
 }
+
+/**
+ * The addressing system a tree was decoded under — selects the containment hierarchy. Western
+ * covers US/EU/most-Latin-script street addressing (`house_number → street → locality`). `japanese`
+ * is declared for forward-compat (block addressing: `building_number → sub_block → block →
+ * district`, no street); it currently shares the Western map until Phase 6 gives it a distinct one.
+ * Open string union so a new system can be added without a breaking enum change.
+ */
+export type AddressSystem = "western" | "japanese" | (string & {})

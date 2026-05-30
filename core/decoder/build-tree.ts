@@ -22,8 +22,8 @@
  */
 
 import type { BioLabel, ComponentTag } from "../types/component.js"
-import { PARENT_OF } from "./containment.js"
-import type { AddressNode, AddressTree, DecoderToken } from "./types.js"
+import { containmentFor } from "./containment.js"
+import type { AddressNode, AddressSystem, AddressTree, DecoderToken } from "./types.js"
 
 /**
  * Optional caller-supplied attribution stamped on every emitted node. The BIO stream comes from a
@@ -34,6 +34,13 @@ import type { AddressNode, AddressTree, DecoderToken } from "./types.js"
 export interface BuildTreeOpts {
 	source?: string
 	sourceId?: string
+	/**
+	 * Addressing system to decode under — selects the containment hierarchy via `containmentFor`.
+	 * Stamped onto the returned `AddressTree.system`. Omit for the default Western hierarchy. Today
+	 * all systems share one map, so this only records intent + threads the discriminator; it becomes
+	 * behavioral when a system-specific map lands (Phase 6 JP). See `containment.ts`.
+	 */
+	system?: AddressSystem
 }
 
 interface OpenSpan {
@@ -111,8 +118,12 @@ function distance(a: AddressNode, b: AddressNode): number {
 	return 0
 }
 
-function findParent(span: AddressNode, all: AddressNode[]): AddressNode | null {
-	const candidates = PARENT_OF[span.tag] ?? []
+function findParent(
+	span: AddressNode,
+	all: AddressNode[],
+	parentOf: Partial<Record<ComponentTag, ComponentTag[]>>
+): AddressNode | null {
+	const candidates = parentOf[span.tag] ?? []
 	for (const parentTag of candidates) {
 		const matches = all.filter((s) => s !== span && s.tag === parentTag)
 		if (matches.length === 0) continue
@@ -138,13 +149,16 @@ function sortByStart(nodes: AddressNode[]): void {
 export function buildAddressTree(raw: string, tokens: DecoderToken[], opts: BuildTreeOpts = {}): AddressTree {
 	const spans = emitSpans(raw, tokens, opts)
 	const roots: AddressNode[] = []
+	const parentOf = containmentFor(opts.system)
 
 	for (const span of spans) {
-		const parent = findParent(span, spans)
+		const parent = findParent(span, spans, parentOf)
 		if (parent) parent.children.push(span)
 		else roots.push(span)
 	}
 
 	sortByStart(roots)
-	return { raw, roots }
+	const tree: AddressTree = { raw, roots }
+	if (opts.system !== undefined) tree.system = opts.system
+	return tree
 }
