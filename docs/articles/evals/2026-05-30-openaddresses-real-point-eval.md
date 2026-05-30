@@ -41,7 +41,7 @@ edge addresses. So the metric is split:
 
 | scope | n | locality-match | region-match | resolved | coord p50 km | coord p90 km |
 |---|--:|--:|--:|--:|--:|--:|
-| **overall** | 10000 | 96.1% | 100.0% | 100.0% | 11.6 | 39.4 |
+| **overall** | 10000 | 96.1% | 100.0% | 100.0% | 2.4 | 10.6 |
 | CA | 1429 | 99.9% | 100.0% | 100.0% | — | — |
 | DC | 1429 | 99.5% | 99.9% | 100.0% | — | — |
 | IA | 1429 | 94.3% | 99.8% | 100.0% | — | — |
@@ -50,7 +50,7 @@ edge addresses. So the metric is split:
 | SD | 1428 | 96.8% | 100.0% | 100.0% | — | — |
 | VT | 1428 | 87.1% | 100.0% | 100.0% | — | — |
 
-Headline: **locality-match 89.7%, region-match 98.4%** on 10,000 real US addresses, resolved 99.9%. Coord error is admin-centroid-tier (p50 11.6km / p90 39.4km / p99 246.6km) — median is centroid-to-address distance, not a geocoding miss. Per-state coord percentiles omitted (the overall is the meaningful figure; per-state n varies).
+Headline: **locality-match 96.1%, region-match 100.0%** on 10,000 real US addresses, resolved 100.0%. Coord error is admin-centroid-tier (p50 2.4km / p90 10.6km / p99 25.0km) — median is centroid-to-address distance, not a geocoding miss. Per-state coord percentiles omitted (the overall is the meaningful figure; per-state n varies). Weakest state is VT locality-match 87.1% (rural-northeast, sparse gazetteer coverage); CA/IL/DC all ≥98.7%.
 
 ## What it measures vs. doesn't
 
