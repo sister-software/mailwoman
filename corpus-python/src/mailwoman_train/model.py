@@ -441,6 +441,43 @@ class MailwomanCoarseEncoder(nn.Module):
 
     # ---- HuggingFace-compatible save/load helpers ----
 
+    def forward_mlm(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor | None = None,
+        mlm_labels: torch.Tensor | None = None,
+    ) -> "_CoarseEncoderOutput":
+        """Masked-language-model forward for self-supervised PRE-training (see pretrain.py).
+
+        Mirrors ``forward``'s encoder body, then projects hidden states through the TIED token-
+        embedding matrix (no new parameters -> the pretrain checkpoint's ``state_dict`` is identical
+        to a supervised model's, so it loads via ``from_pretrained`` for fine-tuning). The classifier
+        / CRF heads are untouched here — they stay at init through pretraining and are trained in the
+        later supervised fine-tune. Phrase priors are intentionally not threaded (pretraining runs on
+        raw text only).
+        """
+        bsz, seq = input_ids.shape
+        pos = torch.arange(seq, device=input_ids.device).unsqueeze(0).expand(bsz, seq)
+        h = self.token_embeddings(input_ids) + self.position_embeddings(pos)
+        h = self.input_dropout(self.input_ln(h))
+        kpm: torch.Tensor | None = None
+        if attention_mask is not None:
+            kpm = attention_mask == 0
+        for block in self.blocks:
+            h = block(h, key_padding_mask=kpm)
+        h = self.final_ln(h)
+        # Tied head: (B, S, hidden) @ (hidden, vocab) -> (B, S, vocab).
+        vocab_size = self.token_embeddings.num_embeddings
+        lm_logits = h @ self.token_embeddings.weight.t()
+        loss: torch.Tensor | None = None
+        if mlm_labels is not None:
+            loss = nn.functional.cross_entropy(
+                lm_logits.view(-1, vocab_size),
+                mlm_labels.view(-1),
+                ignore_index=-100,
+            )
+        return _CoarseEncoderOutput(lm_logits, loss)
+
     def save_pretrained(self, output_dir: Path | str) -> None:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
