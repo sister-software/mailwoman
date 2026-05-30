@@ -1,0 +1,150 @@
+# Self-supervised pre-training for the mailwoman encoder — experiment spec (2026-05-30)
+
+**Status: SPEC ONLY — not launched.** This documents the design, objective choice,
+cost, and success criteria for adding a self-supervised pre-training phase to the
+neural parser. The operator asked to spec it before committing GPU.
+
+## The problem it targets
+
+The encoder is trained **from scratch on labeled synthetic data only** — there is
+no self-supervised pre-training. Two diagnosed pathologies are the *known
+signature* of exactly that:
+
+1. **Overconfidence** — 81% of the model's *wrong* predictions are emitted at
+   ≥0.9 confidence. Hendrycks et al. (ICML 2019) show "networks trained from
+   scratch exhibit overconfidence ... pre-training improves model calibration"
+   even when it doesn't change accuracy. Desai & Durrett (EMNLP 2020) found
+   pre-trained transformers have out-of-domain calibration error up to **3.5×
+   lower** than from-scratch baselines.
+2. **Format / delimiter over-reliance** — the model leans on comma cues and
+   degrades on non-canonical input. Pre-trained transformers show "substantially
+   smaller" degradation under distribution shift than from-scratch models
+   (Hendrycks et al., arXiv 2004.06100).
+
+Both point to the same missing ingredient. Two prior recipe cycles (v0.6.x held,
+v0.7.x calibration null) failed to move these because they tuned the *labeled*
+corpus mixture — not the thing that's actually absent.
+
+## The crucial property: pre-training adds ZERO bytes to the shipped model
+
+This is a **training-time phase, not a runtime component.** The lifecycle changes
+from one phase to two:
+
+```
+today:  labeled synthetic → [train encoder + CRF from scratch] → int8 ONNX (~25MB)
+
+with:   Phase 1 (NEW): unlabeled address strings → [self-supervised pre-train the
+                        SAME 6L/256h encoder] → encoder weights
+        Phase 2:       labeled data + Phase-1 weights → [fine-tune encoder + CRF]
+                        → int8 ONNX (~25MB, byte-identical architecture)
+```
+
+The exported artifact is the **same size and shape** — same 6 layers, 256 hidden,
+~25MB int8. Pre-training only changes the *initialization* the fine-tune starts
+from (a learned prior instead of random noise). For **ELECTRA specifically**, the
+extra "generator" network used during Phase 1 is **discarded** after
+pre-training — only the discriminator (= our encoder) is kept. Nothing new ships.
+It is fully reversible: if it doesn't help, we keep shipping the current model.
+
+## Objective choice: MLM-40% vs ELECTRA-RTD vs biphasic CLM→MLM
+
+Two research passes (2026-05-30) converged. For a **bidirectional tagger** where
+the whole sequence is available at inference, the objective must be bidirectional.
+
+| Objective | Verdict for a 29M offline BIO tagger |
+| --- | --- |
+| **ELECTRA replaced-token-detection (RTD)** | **Primary recommendation.** Best-documented sample/compute efficiency at our exact scale — ELECTRA-Small (14M, ~our architecture: 12L/256h/4head/1024-FFN) reached 79.9 GLUE on 1 GPU × 4 days, beating BERT-Small (75.1) and GPT at ~45× less compute. Loss is over *all* tokens (denser signal than masked-only). RTD's discrimination objective is plausibly less overconfidence-inducing than token-prediction. |
+| **MLM at ~40% mask rate** | **Safe runner-up.** What every strong small NER encoder (BERT, RoBERTa, GLiNER's DeBERTa, NuNER) is built on; simpler than RTD's generator+discriminator. 40% (not the classic 15%) is optimal at small scale per Wettig et al. (EACL 2023): more predictions = better optimization. SpanBERT-style span masking is a close variant, well-matched to multi-token spans (BIO). |
+| **Pure CLM (GPT-style, causal)** | **Wrong default for a tagger.** BERT's own ablation: a left-to-right variant scored 77.8 vs 88.5 F1 on the token-level SQuAD task. LLM2Vec confirms causal models must be *converted back to bidirectional* to encode well. |
+| **Biphasic CLM→MLM** | **Only if a generative head joins the roadmap.** The ICLR-2026 controlled study (Gisserot-Boukhlef et al., arXiv 2507.00994, 15k+ runs) found CLM is *more data-efficient and fine-tuning-stable*, ties-or-slightly-beats MLM on **token classification specifically**, and that a CLM→MLM two-stage protocol (≈25–50% CLM steps, then MLM) captures both. **Caveat:** the "CLM ≥ MLM on TC" result is contested by the paper's own author thread as a possible weak-backbone (EuroBERT) artifact, and all their models are 210M–1B — none at our 29M scale. |
+
+### The CLM question, answered directly
+
+Is there a real case for CLM here? **A partial, conditional one.** Pure CLM is the
+wrong default — a tagger consumes the full sequence bidirectionally, and CLM
+trails on every task family except (contestedly) token classification. The *only*
+scenario where CLM earns a place is if mailwoman later wants a **generative repair
+/ rewrite / canonicalization head** — the AddrLLM pattern (JD Logistics combined
+address *parsing* + *rewriting* in one model, cutting parcel re-routing ~43%). If
+that lands on the roadmap, adopt the biphasic CLM→MLM recipe rather than pure CLM:
+early CLM data-efficiency + a bidirectional MLM/RTD finish. For pure BIO tagging
+today, that's speculative future-proofing, not a current need.
+
+**Note on calibration specifically:** no study isolates CLM-vs-MLM *downstream
+calibration* — the calibration win is from *pre-training presence*, not the
+objective. The objective-independent calibration lever is **label smoothing +
+temperature scaling** (already partially explored in v0.7.0). So: pre-train (any
+bidirectional objective) **and** keep label smoothing in the fine-tune.
+
+## The experiment (cheapest-signal-first)
+
+**Stage A — TAPT probe (lowest risk, do first).** Take the address strings we
+already template, strip the labels, and run **whole-word MLM at ~40%** on the
+existing 29M architecture + the **frozen existing 16k SentencePiece tokenizer**
+for a few hours on one A100 — even just the ~10M strings we can cheaply assemble.
+Then fine-tune the BIO head from those weights with a **low LR + label smoothing**
+(ideally keeping a small auxiliary MLM loss to resist catastrophic forgetting,
+which otherwise erases the calibration benefit — Tao et al. arXiv 2305.19249).
+
+Why from-scratch domain MLM and not continue-pretraining a general model:
+addresses are vocabulary-distinct and terse; PubMedBERT (arXiv 2007.15779) showed
+from-scratch + in-domain vocab beats continued general-model pretraining for a
+narrow domain — and it lets us keep our existing custom 16k vocab and tiny size.
+
+**Stage B — scale to RTD (only if Stage A moves the needles).** ELECTRA-RTD
+pre-training on 50–100M strings, still ~1 GPU-day.
+
+### Recipe (Stage A)
+- Mask rate ~40% (small-model optimum; not the classic 15%).
+- Seq len 128 (matches the model's max); AdamW; peak LR ~5e-4, ~6% warmup, linear
+  decay; large batch.
+- **Tokenizer frozen and shared** between pre-train and fine-tune — a vocab swap
+  invalidates transfer. (This is the single most important do-not-break rule.)
+- Fine-tune from the pre-trained weights with low LR + label smoothing.
+
+### Cost
+- ~1 GPU-day on Modal A100, **~$3–5**. MosaicBERT-Base (137M) reached 79.6 GLUE in
+  ~1.1h on 8×A100 (~$22); a 29M model on a narrow corpus is far cheaper.
+
+### Success criteria (compare pre-trained-then-fine-tuned vs from-scratch baseline)
+1. **Calibration** — fraction-of-wrong-predictions-at-≥0.9 (the 81% number) and
+   ECE. *Primary* — this is the pathology we're attacking.
+2. **OOD robustness** — accuracy on a comma-stripped / non-canonical held-out set.
+3. **Resolver end-to-end Acc@1** — the product metric (must not regress; ideally
+   improves via fewer confident-wrong parses).
+4. Harness pass-rate as a regression gate (not the promote bar — see the
+   harness-lineage doc).
+
+### Pre-registered revert
+If Stage A does not improve calibration (the ≥0.9-wrong fraction) **and** resolver
+Acc@1 doesn't move ≥1.5pp, stop — the from-scratch model stands and we've learned
+pre-training isn't the lever at this scale.
+
+## Interleaving with the resolver-depth track
+
+**Parallel — touches zero resolver code.** The resolver consumes the parser's BIO
+output; pre-training changes only the encoder weights behind that interface.
+Convergence point: land the OpenAddresses real-point eval first so both tracks
+share one honest scoreboard, and **re-run the arbiter eval after any new model**
+(a better-calibrated parser may change the arbiter's win margin).
+
+## Sources
+
+- Hendrycks et al., "Using Pre-Training Can Improve Model Robustness and
+  Uncertainty" (ICML 2019) — arXiv 1901.09960
+- Desai & Durrett, "Calibration of Pre-trained Transformers" (EMNLP 2020) —
+  arXiv 2003.07892 / aclanthology 2020.emnlp-main.21
+- Hendrycks et al., "Pretrained Transformers Improve Out-of-Distribution
+  Robustness" (ACL 2020) — arXiv 2004.06100
+- Clark et al., "ELECTRA" (ICLR 2020) — arXiv 2003.10555
+- Wettig et al., "Should You Mask 15% in MLM?" (EACL 2023) — aclanthology
+  2023.eacl-main.217
+- Gisserot-Boukhlef et al., "Should We Still Pretrain Encoders with MLM?"
+  (ICLR 2026) — arXiv 2507.00994
+- Gururangan et al., "Don't Stop Pretraining" (DAPT/TAPT, ACL 2020) —
+  aclanthology 2020.acl-main.740
+- Gu et al., "PubMedBERT" / domain-specific from-scratch (2020) — arXiv 2007.15779
+- Tao et al., calibration-preserving fine-tuning — arXiv 2305.19249
+- G2PTL (Cainiao, address pre-training, MLM+HTC+geocoding) — arXiv 2304.01559;
+  GeoBERT — MDPI Applied Sciences 12/24/12942; deepparse — arXiv 2006.16152
+- AddrLLM (generative address rewriting, JD Logistics) — arXiv 2411.13584
