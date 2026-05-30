@@ -3,32 +3,45 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   OpenAddresses real-point resolver eval (Direction-C resolver-depth, plan item 3) — the
- *   NON-CIRCULAR accuracy track. Unlike the WOF-bootstrap eval (which renders WOF places back into
- *   strings and resolves WOF→WOF), every row here is a REAL US address with a REAL government
- *   lat/lon from OpenAddresses, independent of the WOF gazetteer the resolver consults. So the
- *   great-circle error from the resolved admin centroid to OA's point is an honest, un-gamed signal.
+ *   OpenAddresses real-point resolver eval (Direction-C resolver-depth) — the NON-CIRCULAR accuracy
+ *   track, and the head-to-head vs the Pelias parser. Unlike the WOF-bootstrap eval (which renders
+ *   WOF places back into strings and resolves WOF→WOF), every row here is a REAL US address with a
+ *   REAL government lat/lon from OpenAddresses, independent of the WOF gazetteer the resolver
+ *   consults. So the great-circle error from the resolved admin centroid to OA's point is an
+ *   honest, un-gamed signal.
+ *
+ *   Scores BOTH parsers through the same resolver: the neural classifier AND `v0` (our TypeScript
+ *   port of the Pelias parser, via the flat→tree adapter). So "neural vs v0" here IS "mailwoman's
+ *   neural parser vs the Pelias parser" on real addresses — no Docker Pelias stack needed, since v0
+ *   already is that parser.
+ *
+ *   SELF-REPORTING (eval-integrity safeguard): pass `--out-md <path>` and the runner WRITES its own
+ *   markdown table from the computed aggregates. Eval figures must never be hand-typed into docs —
+ *   generate them here and include/commit the output verbatim.
  *
  *   Two-tier metric (per the DeepSeek resolver consult — a sub-10km coord bar is impossible for
  *   ADMIN-CENTROID resolution, since a city centroid is legitimately tens of km from edge
  *   addresses):
- *     1. Admin-match Acc@1 — did we resolve to the expected locality (and/or region), by name? This
- *        is the granularity-independent resolver-quality number.
- *     2. Coord error p50/p90 — reported separately as the admin-centroid tier; the street-level tier
+ *
+ *   1. Admin-match Acc@1 — did we resolve to the expected locality (and/or region), by name? This is the
+ *        granularity-independent resolver-quality number.
+ *   2. Coord error p50/p90 — reported separately as the admin-centroid tier; the street-level tier
  *        (TIGER) will own the sub-km bar later.
  *
- *   Run:
- *     node --experimental-strip-types scripts/eval/oa-resolver-eval.ts \
- *       --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000 \
- *       --model /tmp/v072-eval/model.onnx \
- *       --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
- *       --model-card /tmp/v072-eval/model-card.json \
- *       --wof /mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postalcode-us.db
+ *   Run: node --experimental-strip-types scripts/eval/oa-resolver-eval.ts\
+ *   --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000\
+ *   --model /tmp/v072-eval/model.onnx\
+ *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model-card /tmp/v072-eval/model-card.json\
+ *   --wof
+ *   /mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postalcode-us.db
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/core/resolver"
+import { type ClassificationRecord, createAddressParser } from "mailwoman"
 import { readFileSync, writeFileSync } from "node:fs"
+import { v0RecordToTree } from "./v0-tree-adapter.ts"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
@@ -104,15 +117,57 @@ const norm = (s: string | undefined): string => (s ?? "").toLowerCase().trim()
 // region-match compares like-for-like. Embedded inline (not imported from @mailwoman/corpus, which
 // has no exports map → fragile subpath import for a standalone script).
 const STATE_NAME_TO_ABBR: Record<string, string> = {
-	alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA", colorado: "CO",
-	connecticut: "CT", delaware: "DE", "district of columbia": "DC", florida: "FL", georgia: "GA",
-	hawaii: "HI", idaho: "ID", illinois: "IL", indiana: "IN", iowa: "IA", kansas: "KS", kentucky: "KY",
-	louisiana: "LA", maine: "ME", maryland: "MD", massachusetts: "MA", michigan: "MI", minnesota: "MN",
-	mississippi: "MS", missouri: "MO", montana: "MT", nebraska: "NE", nevada: "NV", "new hampshire": "NH",
-	"new jersey": "NJ", "new mexico": "NM", "new york": "NY", "north carolina": "NC", "north dakota": "ND",
-	ohio: "OH", oklahoma: "OK", oregon: "OR", pennsylvania: "PA", "rhode island": "RI",
-	"south carolina": "SC", "south dakota": "SD", tennessee: "TN", texas: "TX", utah: "UT", vermont: "VT",
-	virginia: "VA", washington: "WA", "west virginia": "WV", wisconsin: "WI", wyoming: "WY",
+	alabama: "AL",
+	alaska: "AK",
+	arizona: "AZ",
+	arkansas: "AR",
+	california: "CA",
+	colorado: "CO",
+	connecticut: "CT",
+	delaware: "DE",
+	"district of columbia": "DC",
+	florida: "FL",
+	georgia: "GA",
+	hawaii: "HI",
+	idaho: "ID",
+	illinois: "IL",
+	indiana: "IN",
+	iowa: "IA",
+	kansas: "KS",
+	kentucky: "KY",
+	louisiana: "LA",
+	maine: "ME",
+	maryland: "MD",
+	massachusetts: "MA",
+	michigan: "MI",
+	minnesota: "MN",
+	mississippi: "MS",
+	missouri: "MO",
+	montana: "MT",
+	nebraska: "NE",
+	nevada: "NV",
+	"new hampshire": "NH",
+	"new jersey": "NJ",
+	"new mexico": "NM",
+	"new york": "NY",
+	"north carolina": "NC",
+	"north dakota": "ND",
+	ohio: "OH",
+	oklahoma: "OK",
+	oregon: "OR",
+	pennsylvania: "PA",
+	"rhode island": "RI",
+	"south carolina": "SC",
+	"south dakota": "SD",
+	tennessee: "TN",
+	texas: "TX",
+	utah: "UT",
+	vermont: "VT",
+	virginia: "VA",
+	washington: "WA",
+	"west virginia": "WV",
+	wisconsin: "WI",
+	wyoming: "WY",
 	"puerto rico": "PR",
 }
 
@@ -153,6 +208,10 @@ async function main(): Promise<void> {
 	])
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 
+	// v0 = our TypeScript port of the Pelias parser. Scoring it through the same resolver makes this a
+	// real "neural vs Pelias parser" head-to-head on non-circular addresses.
+	const v0 = createAddressParser()
+
 	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const backend = new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
 	const resolver = createWofResolver(backend as never)
@@ -168,8 +227,7 @@ async function main(): Promise<void> {
 		resolved: number
 		errs: number[]
 	}
-	const byState = new Map<string, Agg>()
-	const overall: Agg = { n: 0, localityMatch: 0, regionMatch: 0, resolved: 0, errs: [] }
+	const newAgg = (): Agg => ({ n: 0, localityMatch: 0, regionMatch: 0, resolved: 0, errs: [] })
 	const bump = (a: Agg, locMatch: boolean, regMatch: boolean, resolved: boolean, err: number | null): void => {
 		a.n++
 		if (locMatch) a.localityMatch++
@@ -178,62 +236,121 @@ async function main(): Promise<void> {
 		if (err !== null) a.errs.push(err)
 	}
 
+	/** Resolve one tree, return the admin-match flags + coord error vs OA's ground-truth point. */
+	const scoreTree = (
+		row: OaRow,
+		resolved: Resolved[]
+	): { locMatch: boolean; regMatch: boolean; resolved: boolean; err: number | null } => {
+		const best = mostSpecific(resolved)
+		// Admin-match is by NAME (OA carries no WOF id): a row matches if a resolved locality's
+		// canonical gazetteer name equals OA's expected locality; region is name-or-abbrev tolerant.
+		const locName = norm(resolved.find((r) => r.placetype === "locality")?.name)
+		const regResolved = resolved.find((r) => r.placetype === "region")
+		return {
+			locMatch: !!row.expected.locality && locName === norm(row.expected.locality),
+			regMatch: regionMatches(regResolved?.name, row.expected.region),
+			resolved: !!best,
+			err: best ? haversineKm(best.lat, best.lon, row.lat, row.lon) : null,
+		}
+	}
+
+	// Two parsers, each with its own overall + per-state aggregates.
+	const agg = {
+		neural: { overall: newAgg(), byState: new Map<string, Agg>() },
+		v0: { overall: newAgg(), byState: new Map<string, Agg>() },
+	}
+	const record = (
+		who: "neural" | "v0",
+		row: OaRow,
+		s: { locMatch: boolean; regMatch: boolean; resolved: boolean; err: number | null }
+	): void => {
+		const st = row.state || "??"
+		const m = agg[who].byState
+		if (!m.has(st)) m.set(st, newAgg())
+		bump(m.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
+		bump(agg[who].overall, s.locMatch, s.regMatch, s.resolved, s.err)
+	}
+
 	let i = 0
 	for (const row of rows) {
 		i++
 		if (i % 500 === 0) console.error(`  ${i}/${rows.length}`)
-		let resolved: Resolved[] = []
+
+		// neural
+		let nResolved: Resolved[] = []
 		try {
-			resolved = collectResolved(await resolver.resolveTree(await neural.parse(row.input, parseOpts), resolveOpts))
+			nResolved = collectResolved(await resolver.resolveTree(await neural.parse(row.input, parseOpts), resolveOpts))
 		} catch {
 			/* unresolved */
 		}
-		const best = mostSpecific(resolved)
-		// Admin-match: by NAME (OA has no WOF id). A locality row matches if any resolved locality's
-		// name equals the expected locality; region likewise. Name comes from the gazetteer via the
-		// resolved node; fall back to the node's own value when the resolver didn't stamp a name.
-		const locName = norm(resolved.find((r) => r.placetype === "locality")?.name)
-		const regResolved = resolved.find((r) => r.placetype === "region")
-		const locMatch = !!row.expected.locality && locName === norm(row.expected.locality)
-		// Region match is name-or-abbrev tolerant (expected.region is the USPS abbrev like "CA").
-		const regMatch = regionMatches(regResolved?.name, row.expected.region)
-		const err = best ? haversineKm(best.lat, best.lon, row.lat, row.lon) : null
+		record("neural", row, scoreTree(row, nResolved))
 
-		const st = row.state || "??"
-		if (!byState.has(st)) byState.set(st, { n: 0, localityMatch: 0, regionMatch: 0, resolved: 0, errs: [] })
-		bump(byState.get(st)!, locMatch, regMatch, !!best, err)
-		bump(overall, locMatch, regMatch, !!best, err)
+		// v0 (Pelias parser) via the flat→tree adapter
+		let vResolved: Resolved[] = []
+		try {
+			const sol = await v0.parse(row.input)
+			const rec = (sol[0]?.classifications ?? {}) as ClassificationRecord
+			const tree = v0RecordToTree(row.input, rec).tree as AddressTree
+			vResolved = collectResolved(await resolver.resolveTree(tree, resolveOpts))
+		} catch {
+			/* unresolved */
+		}
+		record("v0", row, scoreTree(row, vResolved))
 	}
 
+	// ---- report (self-emitted; eval figures are NEVER hand-typed into docs) ----
 	const pct = (x: number, n: number): string => (n ? `${((100 * x) / n).toFixed(1)}%` : "—")
-	console.log(`# OpenAddresses real-point resolver eval (${overall.n} rows, non-circular)\n`)
-	console.log(`Model: ${arg("model") || "(shipped weights)"} | WOF shards: ${wofPaths.length}\n`)
-	console.log(`| scope | n | locality-match | region-match | resolved | coord p50 (km) | coord p90 (km) |`)
-	console.log(`|---|--:|--:|--:|--:|--:|--:|`)
-	const printAgg = (label: string, a: Agg): void => {
-		console.log(
-			`| ${label} | ${a.n} | ${pct(a.localityMatch, a.n)} | ${pct(a.regionMatch, a.n)} | ${pct(a.resolved, a.n)} | ${percentile(a.errs, 50)?.toFixed(1) ?? "—"} | ${percentile(a.errs, 90)?.toFixed(1) ?? "—"} |`
+	const p = (xs: number[], q: number): string => percentile(xs, q)?.toFixed(1) ?? "—"
+	const lines: string[] = []
+	lines.push(`# OpenAddresses real-point resolver eval (${agg.neural.overall.n} rows, non-circular)`)
+	lines.push("")
+	lines.push(`Model: ${arg("model") || "(shipped weights)"} | WOF shards: ${wofPaths.length}`)
+	lines.push("")
+	lines.push(`## Head-to-head — neural vs v0 (Pelias parser), both through the same resolver`)
+	lines.push("")
+	lines.push(`| parser | locality-match | region-match | resolved | coord p50 km | coord p90 km | p99 km |`)
+	lines.push(`|---|--:|--:|--:|--:|--:|--:|`)
+	const overallRow = (label: string, a: Agg): string =>
+		`| ${label} | ${pct(a.localityMatch, a.n)} | ${pct(a.regionMatch, a.n)} | ${pct(a.resolved, a.n)} | ${p(a.errs, 50)} | ${p(a.errs, 90)} | ${p(a.errs, 99)} |`
+	lines.push(overallRow("**neural**", agg.neural.overall))
+	lines.push(overallRow("v0 (Pelias)", agg.v0.overall))
+	lines.push("")
+	lines.push(`## Neural per-state (locality-match)`)
+	lines.push("")
+	lines.push(`| state | n | neural loc | v0 loc | neural reg | v0 reg |`)
+	lines.push(`|---|--:|--:|--:|--:|--:|`)
+	for (const st of [...agg.neural.byState.keys()].sort()) {
+		const nn = agg.neural.byState.get(st)!
+		const vv = agg.v0.byState.get(st) ?? newAgg()
+		lines.push(
+			`| ${st} | ${nn.n} | ${pct(nn.localityMatch, nn.n)} | ${pct(vv.localityMatch, vv.n)} | ${pct(nn.regionMatch, nn.n)} | ${pct(vv.regionMatch, vv.n)} |`
 		)
 	}
-	printAgg("**overall**", overall)
-	for (const st of [...byState.keys()].sort()) printAgg(st, byState.get(st)!)
-
-	console.log(
-		`\nCoord error is the ADMIN-CENTROID tier (locality/region centroid → OA's real address point);` +
+	lines.push("")
+	lines.push(
+		`Coord error is the ADMIN-CENTROID tier (locality/region centroid → OA's real address point);` +
 			` a city centroid is legitimately tens of km from edge addresses, so the headline is the` +
 			` admin-MATCH rate, not the coord error. Street-level (TIGER) will own a sub-km tier later.`
 	)
+	const report = lines.join("\n")
+	console.log(report)
 
+	if (arg("out-md")) {
+		writeFileSync(arg("out-md"), report + "\n")
+		console.error(`wrote markdown → ${arg("out-md")}`)
+	}
 	if (arg("out-json")) {
-		writeFileSync(
-			arg("out-json"),
-			JSON.stringify(
-				{ overall, byState: Object.fromEntries([...byState].map(([k, v]) => [k, { ...v, errs: undefined }])) },
-				null,
-				2
-			)
-		)
-		console.error(`wrote → ${arg("out-json")}`)
+		const dump = (g: { overall: Agg; byState: Map<string, Agg> }) => ({
+			overall: { ...g.overall, errs: undefined, errN: g.overall.errs.length },
+			coord: {
+				p50: percentile(g.overall.errs, 50),
+				p90: percentile(g.overall.errs, 90),
+				p99: percentile(g.overall.errs, 99),
+			},
+			byState: Object.fromEntries([...g.byState].map(([k, v]) => [k, { ...v, errs: undefined }])),
+		})
+		writeFileSync(arg("out-json"), JSON.stringify({ neural: dump(agg.neural), v0: dump(agg.v0) }, null, 2))
+		console.error(`wrote json → ${arg("out-json")}`)
 	}
 }
 

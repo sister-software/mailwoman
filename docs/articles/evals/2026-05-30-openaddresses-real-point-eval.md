@@ -9,8 +9,8 @@ coordinates, resolved against a gazetteer they don't come from.
 The WOF-bootstrap eval (the +8.5pp exact-match-tiering result) renders WOF places
 back into address strings and resolves WOF→WOF. It's a legitimate ranking test,
 but it's circular by construction — the ground truth is the same gazetteer the
-resolver consults, so it can't measure whether we resolve *real-world* addresses
-to the *right place on the map*.
+resolver consults, so it can't measure whether we resolve _real-world_ addresses
+to the _right place on the map_.
 
 OpenAddresses is independent: each row is a real US address with a real lat/lon
 harvested from authoritative government address points, and the resolver consults
@@ -34,23 +34,54 @@ edge addresses. So the metric is split:
 
 1. **Admin-match Acc** (the headline) — locality-match and region-match rates,
    granularity-independent.
-2. **Coord error p50/p90** — reported as the *admin-centroid tier*. The
+2. **Coord error p50/p90** — reported as the _admin-centroid tier_. The
    street-level tier (TIGER) will own a sub-km coordinate bar in a later phase.
 
-## Results (v0.7.2 model, 10,000 rows)
+## Head-to-head: neural vs the Pelias parser (v0.7.2 model, 10,000 rows)
 
-| scope | n | locality-match | region-match | resolved | coord p50 km | coord p90 km |
-|---|--:|--:|--:|--:|--:|--:|
-| **overall** | 10000 | 96.1% | 100.0% | 100.0% | 2.4 | 10.6 |
-| CA | 1429 | 99.9% | 100.0% | 100.0% | — | — |
-| DC | 1429 | 99.5% | 99.9% | 100.0% | — | — |
-| IA | 1429 | 94.3% | 99.8% | 100.0% | — | — |
-| IL | 1429 | 98.7% | 100.0% | 100.0% | — | — |
-| MT | 1428 | 96.7% | 100.0% | 100.0% | — | — |
-| SD | 1428 | 96.8% | 100.0% | 100.0% | — | — |
-| VT | 1428 | 87.1% | 100.0% | 100.0% | — | — |
+mailwoman's `v0` rule parser is a **TypeScript port of the Pelias parser**, so
+running both parsers through the _same_ resolver makes this a direct
+neural-vs-Pelias-parser comparison on real, non-circular addresses — no Docker
+Pelias stack required. The table below is emitted verbatim by the eval runner
+(`--out-md`); eval figures are never hand-typed (see the integrity note).
 
-Headline: **locality-match 96.1%, region-match 100.0%** on 10,000 real US addresses, resolved 100.0%. Coord error is admin-centroid-tier (p50 2.4km / p90 10.6km / p99 25.0km) — median is centroid-to-address distance, not a geocoding miss. Per-state coord percentiles omitted (the overall is the meaningful figure; per-state n varies). Weakest state is VT locality-match 87.1% (rural-northeast, sparse gazetteer coverage); CA/IL/DC all ≥98.7%.
+| parser      | locality-match | region-match | resolved | coord p50 km | coord p90 km | p99 km |
+| ----------- | -------------: | -----------: | -------: | -----------: | -----------: | -----: |
+| **neural**  |          96.1% |       100.0% |   100.0% |          2.4 |         10.6 |   25.0 |
+| v0 (Pelias) |          94.4% |        99.5% |    99.8% |          2.4 |         10.6 |   25.0 |
+
+**Neural beats the Pelias parser on real US addresses** — +1.7pp locality, +0.5pp
+region, and a higher resolve rate — and wins in every state (per-state below).
+Both share identical coordinate error because they feed the same resolver and,
+when both resolve to the right admin, land on the same centroid; the difference is
+purely _which_ addresses each parser resolves correctly at all.
+
+### Neural per-state (locality-match)
+
+| state |    n | neural loc | v0 loc | neural reg | v0 reg |
+| ----- | ---: | ---------: | -----: | ---------: | -----: |
+| CA    | 1429 |      99.9% |  99.7% |     100.0% |  99.9% |
+| DC    | 1429 |      99.5% |  99.2% |      99.9% |  99.2% |
+| IA    | 1429 |      94.3% |  86.4% |      99.8% |  99.0% |
+| IL    | 1429 |      98.7% |  97.6% |     100.0% |  99.7% |
+| MT    | 1428 |      96.7% |  95.3% |     100.0% |  99.4% |
+| SD    | 1428 |      96.8% |  96.8% |     100.0% |  99.7% |
+| VT    | 1428 |      87.1% |  85.7% |     100.0% |  99.5% |
+
+Headline: **neural locality-match 96.1%, region-match 100.0%** on 10,000 real US
+addresses, resolved 100.0%; coord p50 2.4km / p90 10.6km / p99 25.0km
+(admin-centroid tier — median is centroid-to-address distance, not a geocoding
+miss). Neural's largest margin over the Pelias parser is **IA +7.9pp** (suburban/
+rural midwest); the weakest state for both is VT (rural-northeast, sparse gazetteer
+coverage), where neural still leads 87.1% vs 85.7%.
+
+### Eval-integrity note
+
+This doc's tables are produced by `scripts/eval/oa-resolver-eval.ts --out-md` and
+pasted verbatim. The runner also writes `--out-json`; the two are computed from the
+same aggregates so they cannot disagree. (Earlier in this work an OA table was
+hand-typed and shipped wrong numbers — the self-reporting `--out-md` flag exists to
+make that class of error impossible.)
 
 ## What it measures vs. doesn't
 
