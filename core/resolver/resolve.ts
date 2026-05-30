@@ -37,6 +37,7 @@ interface ResolutionState {
 	minWinningScore: number
 	candidatesPerLookup: number
 	defaultCountry?: string
+	parentFallback: boolean
 }
 
 class WofResolver implements Resolver {
@@ -55,6 +56,7 @@ class WofResolver implements Resolver {
 			minWinningScore: opts.minWinningScore ?? 0,
 			candidatesPerLookup: opts.candidatesPerLookup ?? 5,
 			defaultCountry: opts.defaultCountry,
+			parentFallback: opts.parentFallback ?? true,
 		}
 
 		const newRoots: AddressNode[] = []
@@ -110,6 +112,16 @@ class WofResolver implements Resolver {
 		let candidates: ResolvedPlace[]
 		try {
 			candidates = await this.#backend.findPlace(query)
+			// Parent soft-gating: `parentId` is a HARD descendant filter in the backend, which wrongly
+			// zeroes the result when the parent resolved wrong OR the gazetteer hierarchy is incomplete
+			// (a real locality whose `ancestors` chain is missing its region). Rather than turn a
+			// resolvable node into an unresolved one, retry once WITHOUT the parent constraint — we
+			// prefer a parent-scoped hit but never sacrifice recall. The country constraint is kept, so
+			// this still can't wander to a foreign place. Same logical resolution → no extra budget.
+			if (candidates.length === 0 && state.parentFallback && query.parentId !== undefined) {
+				delete query.parentId
+				candidates = await this.#backend.findPlace(query)
+			}
 		} catch {
 			// Defensive: a backend failure should not abort the whole tree walk. Leave the node with
 			// its classifier attribution intact.

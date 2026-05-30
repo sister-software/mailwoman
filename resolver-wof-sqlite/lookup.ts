@@ -101,6 +101,29 @@ export interface RankingWeights {
 	 * value (no compounding effect for megacities).
 	 */
 	populationScaleLog10: number
+	/**
+	 * Tier candidates with an EXACT name/alias match above candidates that only match partially,
+	 * BEFORE the weighted-sum score is consulted. Default true.
+	 *
+	 * Why this is needed (and why it ALIGNS with — rather than overrides — the population/importance
+	 * signal): the weighted sum adds population as a large additive boost (`populationBoost`, up to
+	 * +4) so that famous places surface for unambiguous full-name queries. But population is a
+	 * *prominence prior* — its job is to break ties among candidates that match the query EQUALLY
+	 * WELL (e.g. "Springfield" → Springfield IL over Springfield MA, both exact name matches). It was
+	 * never meant to promote a place that matches the query WORSE. For a 2-letter region abbreviation
+	 * that backfires: querying "ME" returns Maine (which has the exact alias `ME`) AND Missouri/
+	 * Michigan/etc. (which do not), and Missouri's larger population (+4) overcomes Maine's bm25 edge
+	 * — so "Portland, ME" resolves its region to Missouri and the locality then cascades to the wrong
+	 * state. Tiering restores the intended ordering: **match quality is the primary key, prominence
+	 * (population) the secondary key WITHIN a tier.** Springfield-IL-over-MA still works (both exact →
+	 * same tier → population decides); ME→Maine now works (only Maine is exact → higher tier →
+	 * population never gets to override it). See docs/articles/evals/2026-05-30-resolver-exact-match.md.
+	 *
+	 * Note: tiering re-ranks within the over-fetched candidate window (`limit * 4`); a pathological
+	 * exact match that falls outside that window is not rescued. For the region-abbrev case the window
+	 * is comfortably sufficient (a handful of states match a 2-letter query).
+	 */
+	exactMatchTiering: boolean
 }
 
 const DEFAULT_WEIGHTS: RankingWeights = {
@@ -124,6 +147,10 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 	// docs/articles/concepts/importance-vs-population.md for the two-signal contract.
 	populationBoost: 4.0,
 	populationScaleLog10: 6,
+	// Exact name/alias match outranks partial match before the weighted sum (incl. population) is
+	// consulted — keeps population as an intra-tier prominence tiebreaker, not a cross-tier promoter.
+	// Fixes the 2-letter-region-abbrev bug ("ME" → Maine, not the more-populous Missouri).
+	exactMatchTiering: true,
 }
 
 interface RawSearchRow {
@@ -380,8 +407,51 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			return candidate
 		})
 
+		// Exact-match tiering: a candidate whose name OR any alias equals the query text (case-folded)
+		// ranks above any partial match, with the weighted-sum score (incl. population) breaking ties
+		// WITHIN a tier. See the RankingWeights.exactMatchTiering docstring for why this aligns the
+		// population prior rather than overriding it. One cheap indexed lookup over the candidate ids.
+		if (this.#weights.exactMatchTiering && candidates.length > 1) {
+			const exactIds = this.#exactMatchIds(
+				sch,
+				candidates.map((c) => c.id as number),
+				query.text
+			)
+			if (exactIds.size > 0 && exactIds.size < candidates.length) {
+				candidates.sort((a, b) => {
+					const ax = exactIds.has(a.id as number) ? 1 : 0
+					const bx = exactIds.has(b.id as number) ? 1 : 0
+					return bx - ax || b.score - a.score
+				})
+				return Promise.resolve(candidates.slice(0, limit))
+			}
+		}
+
 		candidates.sort((a, b) => b.score - a.score)
 		return Promise.resolve(candidates.slice(0, limit))
+	}
+
+	/**
+	 * Among `ids`, return the subset whose name OR any alias equals `text` case-insensitively — the
+	 * exact-match tier for ranking. One indexed query over `<schema>.names`. Returns an empty set when
+	 * the shard has no `names` table (e.g. a postcode-only shard), so tiering silently no-ops there.
+	 */
+	#exactMatchIds(schemaName: string, ids: number[], text: string): Set<number> {
+		const out = new Set<number>()
+		const trimmed = text.trim()
+		if (ids.length === 0 || !trimmed) return out
+		try {
+			const placeholders = ids.map(() => "?").join(", ")
+			const rows = this.#db
+				.prepare(
+					`SELECT DISTINCT id FROM ${schemaName}.names WHERE id IN (${placeholders}) AND name = ? COLLATE NOCASE`
+				)
+				.all(...ids, trimmed) as Array<{ id: number }>
+			for (const r of rows) out.add(r.id)
+		} catch {
+			// Shard without a `names` table → no exact-match tier. Falls back to weighted-sum order.
+		}
+		return out
 	}
 
 	close(): void {
