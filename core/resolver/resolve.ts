@@ -154,9 +154,11 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 	node.lat = resolved.lat
 	node.lon = resolved.lon
 	node.placeId = `wof:${resolved.id}` // v1: only WOF resolvers; the URI scheme stays this simple
-	// Record the resolver's ranking score so downstream consumers — the resolver-as-arbiter routing
-	// layer and the end-to-end eval — can compare how confidently each parse resolved.
-	node.metadata = { ...(node.metadata ?? {}), resolver_score: resolved.score }
+	// Record the resolver's ranking score AND the resolved place's CANONICAL name. The name is the
+	// gazetteer's truth for the place we picked — distinct from `node.value` (the raw input span). It
+	// lets consumers display the canonical name and lets the end-to-end eval check the resolver chose
+	// the right PLACE (gazetteer-name vs ground-truth) rather than merely echoing the parser's text.
+	node.metadata = { ...(node.metadata ?? {}), resolver_score: resolved.score, resolver_name: resolved.name }
 	if (alternatives.length > 0) {
 		node.alternatives = alternatives
 	}
