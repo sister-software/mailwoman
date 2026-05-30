@@ -52,15 +52,36 @@ class EncodedExample:
 
 def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
     """Resolve train/val/test shard paths via MANIFEST.json (adapter-addition corpora)
-    or legacy glob fallback (monolithic corpora)."""
+    or legacy glob fallback (monolithic corpora).
+
+    The MANIFEST stores ABSOLUTE paths from the machine that built the corpus (e.g.
+    ``/mnt/playpen/.../v0.3.0/corpus-v0.3.0/train/part-0000.parquet``). Those don't exist when
+    the same corpus is mounted elsewhere — notably the Modal volume at ``/data/...``. So we
+    RE-ROOT each manifest entry under the actual ``corpus_dir``: take the ``<split>/<basename>``
+    tail and join it to ``corpus_dir``. This keeps the manifest's split assignment + shard list
+    authoritative while making the paths portable. If a manifest path doesn't contain the split
+    segment (unexpected layout), fall back to its basename under ``corpus_dir/split``."""
     import json
     manifest = corpus_dir / "MANIFEST.json"
     if manifest.exists():
         data = json.loads(manifest.read_text())
-        shards = [Path(s["path"]) for s in data.get("shards", []) if s.get("split") == split]
-        if shards:
-            return sorted(shards)
-    # legacy fallback
+        rerooted: list[Path] = []
+        for s in data.get("shards", []):
+            if s.get("split") != split:
+                continue
+            raw = Path(s["path"])
+            parts = raw.parts
+            # Re-root at corpus_dir from the split segment onward (…/<split>/<file> -> corpus_dir/<split>/<file>).
+            if split in parts:
+                tail = Path(*parts[parts.index(split):])
+                rerooted.append(corpus_dir / tail)
+            else:
+                rerooted.append(corpus_dir / split / raw.name)
+        if rerooted:
+            # If the re-rooted paths exist, use them; else (corpus laid out differently) fall through to glob.
+            if any(p.exists() for p in rerooted):
+                return sorted(rerooted)
+    # legacy fallback (monolithic corpora, or manifest paths that don't resolve here)
     paths = sorted((corpus_dir / split).glob("*.parquet"))
     if not paths:
         raise FileNotFoundError(f"no shards via MANIFEST or {corpus_dir / split}")
