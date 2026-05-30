@@ -85,7 +85,7 @@ for every v0-involving baseline.
    retrain on decay.
 
 **Follow-on (parallel, droppable):** OpenAddresses eval track (~10k real US
-{address, lat/lon} points) → independent great-circle coordinate-error number
+`{address, lat/lon}` points) → independent great-circle coordinate-error number
 for external credibility. Not on the gate's critical path.
 
 ## First PR scope (Phase 1, steps 1–2)
