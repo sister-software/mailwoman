@@ -10,11 +10,12 @@ Pelias parser + addressit** (`addressit.usa.test.ts` is the verbatim addressit
 en-US corpus; `address.*.test.ts` mirror `pelias/parser`'s `test/address.*`).
 Our `v0` rule parser is itself Pelias-derived. So "v0 scores 100% on its tests"
 is close to tautological, and that suite **cannot reveal v0's deficiencies** —
-it shares v0's lineage. We need test cases from *different* lineages.
+it shares v0's lineage. We need test cases from _different_ lineages.
 
 ## Contents
 
 ### `postal-standards-catalog.json` (104 examples, 36 countries)
+
 Verbatim example addresses published by postal authorities, tagged by
 `edge_class` (intl-format 46, po-box 18, canonical 15, secondary-unit 13,
 non-latin 4, military-apofpo 3, rural-route 3, directional 2) and `source`.
@@ -31,6 +32,7 @@ GPO Box, alphanumeric `PO Box HM 100`).
 Fields per row: `{raw, country, edge_class, standardized, source}`.
 
 ### `postal-cases.jsonl` (38 labeled, in-scope subset)
+
 The labeled, runnable cut of the catalog: the 38 in-scope English-Latin
 addresses (US/GB/CA/AU/NZ/IE — excludes the non-Latin/RTL/Japan-block rows,
 which are out of the en-US/fr-FR model's scope, and the USPS `##` format
@@ -52,24 +54,133 @@ Frank's guide / UPU instead.
 
 ## The highest-value runnable benchmark: libpostal
 
-`openvenues/libpostal` (MIT) — the canonical *statistical* address parser, a
+`openvenues/libpostal` (MIT) — the canonical _statistical_ address parser, a
 genuinely different architecture from Pelias. Its `test/test_parser.c` (~60
 hand-curated, deliberately adversarial cases: house-number ranges `912-914`,
 `92-10`; `Mc Carroll` splits; `apt. 3a`/`#104`/`6th Floor` sub-premise;
 venue+org prefixes; multilingual) is NOT in our suite and converts mechanically
 to `{input, expected}` with a tag remap:
 
-| libpostal | ours |
-| --- | --- |
-| road | street |
-| city | locality |
-| state | region |
-| house | venue |
-| house_number, unit, po_box, postcode, country | (same) |
+| libpostal                                         | ours                       |
+| ------------------------------------------------- | -------------------------- |
+| road                                              | street                     |
+| city                                              | locality                   |
+| state                                             | region                     |
+| house                                             | venue                      |
+| house_number, unit, po_box, postcode, country     | (same)                     |
 | city_district, suburb, level, staircase, entrance | no clean 1:1 — fold/ignore |
 
 Compare case-insensitively (libpostal lowercases/normalizes components). The
 archive.org bulk TSV (88 countries, ~1.2 GB) is the heavyweight option for scale.
+
+## `openaddresses-us-sample.jsonl` (10,000 US records, 7 states) — the OA track
+
+The **coordinate ground-truth** set for the resolver/geocoder end-to-end eval
+("OA track" of Direction C). Each record is a real US address with a real
+lat/lon harvested from **OpenAddresses (OA)** — an aggregation of authoritative
+government address points. This set is _independent of the WOF gazetteer_ the
+resolver consults, so it can measure the great-circle error from the resolver's
+admin centroid to OA's real point without circularity.
+
+Built by [`scripts/eval/ingest-openaddresses.mjs`](../../../scripts/eval/ingest-openaddresses.mjs).
+Gathered 2026-05-30. Regenerate with:
+
+```bash
+node scripts/eval/ingest-openaddresses.mjs \
+  --out data/eval/external/openaddresses-us-sample.jsonl \
+  --cache /tmp/oa-cache --target 10000 --per-state 1500 --seed 42
+```
+
+A machine-readable provenance/quality report (per-source read/kept/dropped
+counts + the packaged-license string from each zip's `README.txt`) is written
+next to the data as `openaddresses-us-sample.report.json`.
+
+### Row schema
+
+```json
+{
+	"input": "5210 South Ingleside Avenue, Chicago, IL 60615",
+	"lat": 41.8004427,
+	"lon": -87.6031768,
+	"expected": { "locality": "Chicago", "region": "IL", "postcode": "60615" },
+	"state": "IL",
+	"source": "openaddresses:us/il/cook"
+}
+```
+
+`input` is a human-style address string rendered as
+`"{number} {street}, {city}, {region} {postcode}"` from the OA components
+(all-caps / all-lower city & street are title-cased; the harness matcher is
+case-insensitive anyway). `lat`/`lon` are OA's point coordinate (the ground
+truth). `expected` carries only the **admin-level** fields the resolver
+produces — `locality`/`region`/`postcode` (no street geometry).
+
+### Sampling method
+
+- Only a **handful of specific OA source files** are downloaded (NOT the
+  multi-GB US collection), stratified across dense-urban / suburban / rural so
+  no single state dominates.
+- Each source is streamed out of its zip (`unzip -p`, no full extraction),
+  normalized, then **filtered**: drop rows missing city OR postcode (resolver
+  is admin-level), drop a house-number-with-no-street, drop streets that are
+  purely numeric, drop points outside a US lat/lon sanity box, and require a
+  house number in the rendered string. Postcodes are normalized to 5-digit ZIP
+  (a stray `.0` float suffix is stripped; ZIP+4 is truncated to ZIP).
+- **Dedup** within a source on `(number, street, city, postcode)`.
+- **Stratified reservoir sample** (deterministic, seeded mulberry32 PRNG) to
+  `--per-state` survivors per state, then a round-robin trim to `--target`
+  total — yielding ~1,429 records per state at the 10k/7-state default.
+
+### Sources used (OpenAddresses "latest run" aggregates)
+
+Canonical host:
+`https://results.openaddresses.io/latest/run/<country>/<state>/<source>.zip`
+(302-redirects to `data.openaddresses.io` → Cloudflare R2). Each zip holds a
+CSV with header `LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HASH`.
+
+| Source key (`openaddresses:<key>`) | State | Tier                   | zip size | Upstream authority                               | Packaged license                                                    |
+| ---------------------------------- | ----- | ---------------------- | -------- | ------------------------------------------------ | ------------------------------------------------------------------- |
+| `us/ca/berkeley`                   | CA    | dense-urban            | 0.7 MB   | City of Berkeley open data                       | (Unknown in zip; CA open gov)                                       |
+| `us/ca/marin`                      | CA    | suburban-west          | 2.9 MB   | Marin County GIS                                 | (Unknown in zip; CA open gov)                                       |
+| `us/il/cook`                       | IL    | dense-urban            | 34 MB    | Cook County (Chicago metro) GIS                  | (Unknown in zip; IL open gov)                                       |
+| `us/dc/statewide`                  | DC    | urban-district         | 3.8 MB   | DCGIS                                            | https://dc.gov/page/terms-and-conditions-use-district-data          |
+| `us/ia/statewide`                  | IA    | suburban/rural midwest | 54 MB    | Iowa county GIS (aggregate)                      | (Unknown in zip; per-county open gov)                               |
+| `us/mt/statewide`                  | MT    | rural-west             | 17 MB    | Montana State Library + county GIS               | (Unknown in zip; MT open gov)                                       |
+| `us/vt/statewide`                  | VT    | rural-northeast        | 11 MB    | Vermont Center for Geographic Information (VCGI) | http://vcgi.vermont.gov/.../VCGI_Warranty_Copyright_Notice_2013.pdf |
+| `us/sd/statewide`                  | SD    | rural-plains           | 8 MB     | South Dakota county GIS                          | (Unknown in zip; SD open gov)                                       |
+
+**Rejected (documented in the script's `SOURCES` comment):** `us/ca/san_francisco`
+and `us/wy/statewide` carry NO city/place column — every row drops on the city
+filter — so SF was replaced by Berkeley+Marin and Wyoming was omitted.
+
+### License / attribution
+
+OpenAddresses aggregates **open government data**; the OA collection itself is
+distributed under permissive terms (predominantly public-domain / CC-BY /
+attribution). Per-source licenses vary by upstream authority — the
+authoritative string is in each source's definition at
+`github.com/openaddresses/openaddresses/sources/...` and the packaged
+`README.txt` inside each zip (captured verbatim in the `.report.json`, e.g. DC →
+dc.gov terms, VT → VCGI warranty notice). This sample is for an **internal
+eval only** (not redistributed and not used for training), but if any derived
+artifact is ever published, attribute **OpenAddresses** and the upstream
+authorities listed above (e.g. "Address data © OpenAddresses contributors and
+the respective US government agencies").
+
+### Manual download (if egress is blocked)
+
+The ingest script uses `curl -L`; if the environment blocks it, fetch the zips
+by hand into the cache dir and re-run with `--offline`:
+
+```bash
+for kv in us/ca/berkeley us/ca/marin us/il/cook us/dc/statewide \
+          us/ia/statewide us/mt/statewide us/vt/statewide us/sd/statewide; do
+  ! curl -sSL -o "/tmp/oa-cache/$(echo "$kv" | sed 's#/#__#g').zip" \
+      "https://results.openaddresses.io/latest/run/$kv.zip"
+done
+node scripts/eval/ingest-openaddresses.mjs --offline \
+  --out data/eval/external/openaddresses-us-sample.jsonl --cache /tmp/oa-cache
+```
 
 ## Running the arenas
 
@@ -94,6 +205,9 @@ arena (`scripts/eval/summarize-arenas.py`).
 1. ✅ Harvested `libpostal/test/test_parser.c` → `libpostal-cases.jsonl` (69).
 2. ✅ Labeled the in-scope catalog subset → `postal-cases.jsonl` (38).
 3. ✅ Push-button runner (`external-arenas.sh`) + three-bucket summarizer.
-4. ⏳ Re-run all three against the v0.7.2 model for the final capability table
-   (the default shipped weights are the stale v0.5.3 bundle — neural numbers
-   from a default run are not representative).
+4. ✅ Wired `openaddresses-us-sample.jsonl` into the resolver end-to-end eval
+   (`scripts/eval/resolver-eval.ts` + the OA admin-match runner): resolve each
+   `input` → admin centroid, great-circle error to `lat`/`lon` by state.
+5. ⏳ Re-run all three arenas against the v0.7.2 model for the final capability
+   table (the default shipped weights are the stale v0.5.3 bundle — neural
+   numbers from a default run are not representative).

@@ -1,0 +1,115 @@
+{
+	"generatedAt": "2026-05-30T02:18:16.308Z",
+	"seed": 42,
+	"target": 10000,
+	"perState": 1500,
+	"emitted": 10000,
+	"byState": {
+		"CA": 1429,
+		"IL": 1429,
+		"DC": 1429,
+		"IA": 1429,
+		"MT": 1428,
+		"VT": 1428,
+		"SD": 1428
+	},
+	"sources": [
+		{
+			"source": "us/ca/berkeley",
+			"state": "CA",
+			"packagedLicense": "Unknown",
+			"read": 28805,
+			"kept": 26412,
+			"droppedNoCityOrPost": 0,
+			"droppedBadGeo": 0,
+			"droppedBadStreet": 0,
+			"droppedDup": 2393,
+			"sampled": 1500
+		},
+		{
+			"source": "us/ca/marin",
+			"state": "CA",
+			"packagedLicense": "Unknown",
+			"read": 109165,
+			"kept": 90862,
+			"droppedNoCityOrPost": 0,
+			"droppedBadGeo": 0,
+			"droppedBadStreet": 0,
+			"droppedDup": 18303,
+			"sampled": 1500
+		},
+		{
+			"source": "us/il/cook",
+			"state": "IL",
+			"packagedLicense": "Unknown",
+			"read": 1337277,
+			"kept": 1333518,
+			"droppedNoCityOrPost": 26,
+			"droppedBadGeo": 0,
+			"droppedBadStreet": 9,
+			"droppedDup": 3724,
+			"sampled": 1500
+		},
+		{
+			"source": "us/dc/statewide",
+			"state": "DC",
+			"packagedLicense": "https://dc.gov/page/terms-and-conditions-use-district-data",
+			"read": 147867,
+			"kept": 146578,
+			"droppedNoCityOrPost": 21,
+			"droppedBadGeo": 0,
+			"droppedBadStreet": 0,
+			"droppedDup": 1268,
+			"sampled": 1500
+		},
+		{
+			"source": "us/ia/statewide",
+			"state": "IA",
+			"packagedLicense": "Unknown",
+			"read": 1467757,
+			"kept": 1168742,
+			"droppedNoCityOrPost": 162745,
+			"droppedBadGeo": 12,
+			"droppedBadStreet": 58,
+			"droppedDup": 136200,
+			"sampled": 1500
+		},
+		{
+			"source": "us/mt/statewide",
+			"state": "MT",
+			"packagedLicense": "Unknown",
+			"read": 656003,
+			"kept": 520402,
+			"droppedNoCityOrPost": 18175,
+			"droppedBadGeo": 0,
+			"droppedBadStreet": 14957,
+			"droppedDup": 102469,
+			"sampled": 1500
+		},
+		{
+			"source": "us/vt/statewide",
+			"state": "VT",
+			"packagedLicense": "http://vcgi.vermont.gov/sites/vcgi/files/warehouse/VCGI_Warranty_Copyright_Notice_2013.pdf",
+			"read": 343119,
+			"kept": 325895,
+			"droppedNoCityOrPost": 102,
+			"droppedBadGeo": 0,
+			"droppedBadStreet": 0,
+			"droppedDup": 17122,
+			"sampled": 1500
+		},
+		{
+			"source": "us/sd/statewide",
+			"state": "SD",
+			"packagedLicense": "Unknown",
+			"read": 306148,
+			"kept": 305636,
+			"droppedNoCityOrPost": 0,
+			"droppedBadGeo": 0,
+			"droppedBadStreet": 17,
+			"droppedDup": 495,
+			"sampled": 1500
+		}
+	],
+	"blocked": []
+}

@@ -36,6 +36,7 @@ interface ResolutionState {
 	placetypeMap: PlacetypeMap
 	minWinningScore: number
 	candidatesPerLookup: number
+	defaultCountry?: string
 }
 
 class WofResolver implements Resolver {
@@ -53,6 +54,7 @@ class WofResolver implements Resolver {
 			placetypeMap: opts.placetypeMap ?? DEFAULT_PLACETYPE_MAP,
 			minWinningScore: opts.minWinningScore ?? 0,
 			candidatesPerLookup: opts.candidatesPerLookup ?? 5,
+			defaultCountry: opts.defaultCountry,
 		}
 
 		const newRoots: AddressNode[] = []
@@ -96,12 +98,14 @@ class WofResolver implements Resolver {
 			placetype,
 			limit: state.candidatesPerLookup,
 		}
-		// Pass the inherited parent constraint to the backend when available — both `parentId` and
-		// `country` are valid narrowing hints depending on what the parent resolved to.
-		if (parentResolved) {
-			if (typeof parentResolved.id === "number") query.parentId = parentResolved.id
-			if (parentResolved.country) query.country = parentResolved.country
-		}
+		// Pass the inherited parent constraint to the backend when available — `parentId` scopes to
+		// the resolved parent's descendants. For `country`: a resolved parent's country wins, else
+		// fall back to the caller's `defaultCountry`. Without this top-level hint a bare "IL" over a
+		// multi-country gazetteer fuzzy-matches a foreign place (e.g. a French region) — see the
+		// Direction-C resolver eval.
+		if (parentResolved && typeof parentResolved.id === "number") query.parentId = parentResolved.id
+		const country = parentResolved?.country ?? state.defaultCountry
+		if (country) query.country = country
 
 		let candidates: ResolvedPlace[]
 		try {
@@ -138,6 +142,9 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 	node.lat = resolved.lat
 	node.lon = resolved.lon
 	node.placeId = `wof:${resolved.id}` // v1: only WOF resolvers; the URI scheme stays this simple
+	// Record the resolver's ranking score so downstream consumers — the resolver-as-arbiter routing
+	// layer and the end-to-end eval — can compare how confidently each parse resolved.
+	node.metadata = { ...(node.metadata ?? {}), resolver_score: resolved.score }
 	if (alternatives.length > 0) {
 		node.alternatives = alternatives
 	}
