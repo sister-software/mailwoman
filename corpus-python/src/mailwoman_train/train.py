@@ -298,6 +298,12 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
             ]
         )
 
+    # Optional Trackio mirror of the CSV metrics (no-op unless cfg.train.trackio_enabled).
+    # Defined before the try/ below so the finally block can always call tracker.finish().
+    from .trackio_logging import init_tracker
+
+    tracker = init_tracker(cfg)
+
     step = resume_step
     micro_step = 0
     started = time.time()
@@ -363,6 +369,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     )
                     csv_writer.writerow([step, f"{elapsed:.1f}", f"{avg:.6f}", f"{lr:.8f}", "", ""] + [""] * len(per_tag_cols))
                     csv_fh.flush()
+                    tracker.log({"train_loss": avg, "lr": lr, "wall_seconds": elapsed}, step=step)
 
                 if step % cfg.train.eval_every_steps == 0:
                     val = _eval_val(cfg, tokenizer, model, device, max_rows=cfg.data.val_rows)
@@ -389,6 +396,14 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                         ]
                     )
                     csv_fh.flush()
+                    eval_metrics: dict[str, float] = {
+                        "val_loss": float(val.get("val_loss", float("nan"))),
+                        "val_macro_f1": float(val.get("macro_f1", 0.0)),
+                        "wall_seconds": elapsed,
+                    }
+                    for tag in ACTIVE_TAGS:
+                        eval_metrics[f"f1.{tag}"] = float(val.get(f"f1_tag.{tag}", 0.0))
+                    tracker.log(eval_metrics, step=step)
 
                 if step % cfg.train.save_every_steps == 0:
                     extras = {
@@ -417,3 +432,4 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         save_checkpoint(model, output_dir, step, extras, optim=optim, scheduler=scheduler)
     finally:
         csv_fh.close()
+        tracker.finish()
