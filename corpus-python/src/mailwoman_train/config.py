@@ -120,6 +120,19 @@ class TrainConfig:
     # smoke window masks divergence by collapsing LR before the loss curve shows it; the
     # constant-LR mode keeps the signal visible. See the ref doc for when to pick which.
     lr_schedule: str = "cosine"
+    # Training objective. "supervised" = the BIO token-classification loss (CE + optional CRF, the
+    # default and only historical mode). "mlm" = self-supervised masked-language-model PRE-training
+    # on the corpus text (BIO labels ignored): masks `mlm_mask_prob` of attended tokens and predicts
+    # them via the tied token-embedding head, producing an encoder checkpoint a later supervised run
+    # fine-tunes from (`init_from`). See pretrain.py. Off the supervised path entirely.
+    objective: str = "supervised"
+    # Fraction of attended (non-pad) tokens masked for the MLM objective. 0.15 is BERT-classic; the
+    # small-encoder literature favors ~0.4 — tune per experiment. Ignored unless objective == "mlm".
+    mlm_mask_prob: float = 0.15
+    # Initialize MODEL weights from this checkpoint dir at the start of a SUPERVISED run, WITHOUT
+    # loading optimizer/scheduler/step (unlike resume). This is how a fine-tune run starts from an
+    # MLM-pretrained encoder. Empty = fresh init. Ignored when resuming (resume takes precedence).
+    init_from: str = ""
     # Trackio experiment tracking (Hugging Face). Off by default so existing configs and
     # plain/CI runs stay bit-identical and never depend on the optional 'trackio' package.
     # When enabled, the metrics written to train_log.csv are also streamed to a Trackio

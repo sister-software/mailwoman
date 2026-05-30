@@ -212,6 +212,13 @@ def find_latest_checkpoint(output_dir: Path) -> Path | None:
 
 def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     _set_seed(cfg.train.seed)
+    # MLM pre-training is a different objective + loop; route there (lazy import avoids a
+    # train<->pretrain module cycle). pretrain() writes from_pretrained-loadable checkpoints.
+    if getattr(cfg.train, "objective", "supervised") == "mlm":
+        from .pretrain import pretrain
+
+        pretrain(cfg, resume_from=resume_from)
+        return
     # Mandatory on gfx1103 — flash/mem-efficient SDPA paths crash bf16 on this GPU.
     force_math_sdpa()
     output_dir = Path(cfg.train.output_dir)
@@ -234,6 +241,15 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         model = MailwomanCoarseEncoder.from_pretrained(resume_from)
     else:
         model = build_model(cfg, vocab_size=tokenizer.vocab_size, pad_token_id=tokenizer.pad_id)
+        # Fine-tune from a pre-trained encoder: load MODEL weights only (no optimizer/scheduler/
+        # step, unlike resume), so the supervised run starts fresh on the MLM-pretrained encoder.
+        # The pretrain checkpoint's state_dict is key-identical (tied MLM head adds no params), so
+        # this loads cleanly; strict=False surfaces any head mismatch instead of raising.
+        init_from = getattr(cfg.train, "init_from", "")
+        if init_from:
+            sd = torch.load(Path(init_from) / "pytorch_model.bin", map_location="cpu", weights_only=True)
+            missing, unexpected = model.load_state_dict(sd, strict=False)
+            print(f"[init_from] loaded encoder from {init_from} (missing={len(missing)} unexpected={len(unexpected)})")
     model.to(device)
 
     print(f"device={device} param_count={model_param_count(model):,}")
