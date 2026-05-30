@@ -1,8 +1,10 @@
 # OpenAddresses real-point resolver eval — the non-circular accuracy track (2026-05-30)
 
-Direction-C resolver-depth, plan item 3. The first **non-circular** end-to-end
-accuracy number for the resolver: real US addresses with real government
-coordinates, resolved against a gazetteer they don't come from.
+Direction-C resolver-depth. The first **non-circular** end-to-end accuracy number
+for the resolver — real US addresses with real government coordinates, resolved
+against a gazetteer they don't come from — and, because `v0` is a TypeScript port
+of the Pelias parser, the **neural-vs-Pelias-parser head-to-head** at the same
+time (the parser axis of "beat Pelias", with no Docker Pelias stack needed).
 
 ## Why this is the honest scoreboard
 
