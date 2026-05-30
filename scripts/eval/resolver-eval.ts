@@ -155,12 +155,20 @@ async function main(): Promise<void> {
 	}
 	const v0 = createAddressParser()
 	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const backend = new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
+	// PR1 A/B flags: `--exact-tiering false` / `--parent-fallback false` restore the pre-PR1 baseline
+	// so the before/after table is one toggle apart.
+	const exactTiering = arg("exact-tiering", "true") !== "false"
+	const parentFallback = arg("parent-fallback", "true") !== "false"
+	const backend = new WofSqlitePlaceLookup(
+		{ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths },
+		{ exactMatchTiering: exactTiering }
+	)
 	const resolver = createWofResolver(backend as never)
 
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
 	const country = arg("country", "US")
-	const resolveOpts = { defaultCountry: country }
+	const resolveOpts = { defaultCountry: country, parentFallback }
+	console.error(`exactMatchTiering=${exactTiering} parentFallback=${parentFallback}`)
 	const results: RowResult[] = []
 	let i = 0
 	for (const row of rows) {
@@ -229,6 +237,36 @@ async function main(): Promise<void> {
 	console.log(
 		`coord error km (arbiter):     p50=${percentile(errArb, 50)?.toFixed(1)} p90=${percentile(errArb, 90)?.toFixed(1)}`
 	)
+	console.log(
+		`(coord error is the ADMIN-CENTROID tier: a city centroid is legitimately tens of km from edge ` +
+			`addresses, so a sub-10km bar belongs to a future street-level tier — not this one)`
+	)
+
+	// Two-tier failure attribution: separate PARSER-side errors (produced nothing resolvable) from
+	// RESOLVER-side errors (resolved to a place, but the wrong one). PR1's exact-match tiering targets
+	// the resolver-side bucket — wrong-state cascades from a mis-resolved 2-letter region abbrev.
+	const attribution = (pick: (r: RowResult) => RowResult["neural"]) => {
+		let matched = 0
+		let unresolved = 0
+		let wrong = 0
+		for (const r of results) {
+			const x = pick(r)
+			if (x.matched) matched++
+			else if (!x.resolved) unresolved++
+			else wrong++
+		}
+		return { matched, unresolved, wrong }
+	}
+	console.log(`\n## Failure attribution (parser vs resolver)`)
+	console.log(`| baseline | matched | unresolved (parser) | resolved-but-wrong (resolver) |`)
+	console.log(`|---|--:|--:|--:|`)
+	for (const [name, pick] of [
+		["neural", (r: RowResult) => r.neural],
+		["v0-via-adapter", (r: RowResult) => r.v0],
+	] as const) {
+		const a = attribution(pick)
+		console.log(`| ${name} | ${a.matched} | ${a.unresolved} | ${a.wrong} |`)
+	}
 
 	// kill/continue gate
 	const acc = (sub: keyof typeof subsets, b: keyof typeof baselines) =>
