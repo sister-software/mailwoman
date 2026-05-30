@@ -120,6 +120,24 @@ class TrainConfig:
     # smoke window masks divergence by collapsing LR before the loss curve shows it; the
     # constant-LR mode keeps the signal visible. See the ref doc for when to pick which.
     lr_schedule: str = "cosine"
+    # Trackio experiment tracking (Hugging Face). Off by default so existing configs and
+    # plain/CI runs stay bit-identical and never depend on the optional 'trackio' package.
+    # When enabled, the metrics written to train_log.csv are also streamed to a Trackio
+    # project (see trackio_logging.py). All tracking is best-effort: a failure degrades to
+    # CSV-only and never aborts the run.
+    trackio_enabled: bool = False
+    trackio_project: str = "mailwoman"
+    # HF Space id for the hosted dashboard, e.g. "sister-software/mailwoman-trackio".
+    # The Space is auto-created on first run if it doesn't exist. Empty = local-only
+    # dashboard (~/.cache/huggingface/trackio), no HF upload.
+    trackio_space: str = ""
+    # Optional human-readable run name. Empty = derive a stable name from output_dir so
+    # a resumed run (resume="auto") continues the same dashboard run instead of forking.
+    trackio_run_name: str = ""
+    # Make the dashboard Space private (visible to org members only). Defaults True so
+    # in-progress training metrics aren't published publicly by accident. Ignored if the
+    # Space already exists.
+    trackio_private: bool = True
 
 
 @dataclass

@@ -48,6 +48,9 @@ training_image = (
         "onnxruntime>=1.18",
         "onnxscript>=0.1",
         "tqdm>=4.66",
+        # Optional experiment tracking — streamed to a Hugging Face Space dashboard when
+        # the run config sets train.trackio_enabled (best-effort, see trackio_logging.py).
+        "trackio",
     )
 )
 
@@ -73,6 +76,31 @@ def _load_r2_env() -> dict[str, str]:
     return env
 
 r2_secret = modal.Secret.from_dict(_load_r2_env())
+
+
+# HF token for Trackio's Hugging Face Space upload. Reads HF_TOKEN (or the
+# HUGGING_FACE_HUB_TOKEN alias) from the local .env at deploy time, falling back to
+# os.environ. Empty when unset — Trackio logging then degrades to CSV-only (the upload
+# 401s and trackio_logging.py swallows it), so a token is only needed to push the
+# dashboard to a Space.
+def _load_hf_env() -> dict[str, str]:
+    env: dict[str, str] = {}
+    env_file = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
+    if os.path.isfile(env_file):
+        with open(env_file) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, _, val = line.partition("=")
+                    if key in ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"):
+                        env[key] = val
+    for key in ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"):
+        if key in os.environ:
+            env[key] = os.environ[key]
+    return env
+
+
+hf_secret = modal.Secret.from_dict(_load_hf_env())
 
 BUCKET = "mailwoman-assets"
 VOL_MOUNT = "/data"
@@ -128,6 +156,7 @@ def sync_corpus():
 @app.function(
     image=training_image,
     volumes={VOL_MOUNT: vol},
+    secrets=[hf_secret],  # HF_TOKEN for optional Trackio Space upload (empty/no-op when unset)
     gpu="A100",
     timeout=14400,  # 4h max (training should take ~1h)
     memory=32768,  # 32GB RAM
@@ -135,8 +164,15 @@ def sync_corpus():
 def train(
     config_name: str = "v0_5_0-classifier-ce-only-full.yaml",
     resume: str = "auto",
+    trackio: bool = False,
+    trackio_space: str = "",
 ):
-    """Run the CE-only classifier training on an A100."""
+    """Run the CE-only classifier training on an A100.
+
+    Pass ``--trackio`` (and optionally ``--trackio-space org/space``) to mirror metrics
+    to a Hugging Face Space dashboard. These override the YAML config's trackio fields;
+    omit them to honor whatever the config sets (default: tracking off).
+    """
     import sys
     import torch
 
@@ -179,6 +215,14 @@ def train(
     cfg = Config()
     _merge(cfg, yaml.safe_load(open(config_path)))
 
+    # CLI overrides for experiment tracking (take precedence over the YAML config).
+    if trackio:
+        cfg.train.trackio_enabled = True
+    if trackio_space:
+        cfg.train.trackio_space = trackio_space
+    if cfg.train.trackio_enabled:
+        print(f"Trackio: enabled (space={cfg.train.trackio_space or '(local)'})")
+
     # Use config's output_dir if it has one, otherwise default
     run_output = cfg.train.output_dir if cfg.train.output_dir.startswith("/data/") else f"{OUTPUT_DIR}/checkpoints"
     run_base = os.path.dirname(run_output)
@@ -212,13 +256,17 @@ def main(
     sync: bool = False,
     config: str = "v0_5_0-classifier-ce-only-full.yaml",
     resume: str = "auto",
+    trackio: bool = False,
+    trackio_space: str = "",
 ):
     """
     Run the mailwoman training pipeline on Modal.
 
-    --sync     Pull corpus from R2 first (only needed once)
-    --config   Training config YAML filename
-    --resume   Resume mode: 'auto' (find latest checkpoint) or 'none'
+    --sync           Pull corpus from R2 first (only needed once)
+    --config         Training config YAML filename
+    --resume         Resume mode: 'auto' (find latest checkpoint) or 'none'
+    --trackio        Mirror metrics to a Hugging Face Space dashboard (Trackio)
+    --trackio-space  HF Space id for the dashboard, e.g. sister-software/mailwoman-trackio
     """
     if sync:
         print("Syncing corpus from R2 into Modal volume...")
@@ -228,8 +276,8 @@ def main(
         print(f"  modal run scripts/modal/train_remote.py --config {config}")
         return
 
-    print(f"Training with config={config}, resume={resume}...")
-    train.remote(config_name=config, resume=resume)
+    print(f"Training with config={config}, resume={resume}, trackio={trackio}...")
+    train.remote(config_name=config, resume=resume, trackio=trackio, trackio_space=trackio_space)
     print("\nTraining complete!")
     print(f"\nDownload results with:\n  modal volume get mailwoman-training /output/ ./output/")
 
