@@ -19,7 +19,7 @@
  *   single repo directory.
  */
 
-import { createUnifiedIndexes, createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { createUnifiedIndexes, createUnifiedSchema, populateAncestors } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import FastGlob from "fast-glob"
 import { existsSync, statSync, unlinkSync } from "node:fs"
 import { readFile } from "node:fs/promises"
@@ -31,6 +31,9 @@ interface Args {
 	outputPath: string
 	concurrency: number
 	batchCommitSize: number
+	/** Override the ingested placetype set (comma-separated). Defaults to ADMIN_PLACETYPES; pass
+	 *  `--placetypes postalcode` to build the postcode shard from whosonfirst-data-postalcode-* repos. */
+	placetypes?: string[]
 }
 
 function parseArgs(): Args {
@@ -39,22 +42,24 @@ function parseArgs(): Args {
 	let outputPath: string | undefined
 	let concurrency = 64
 	let batchCommitSize = 500
+	let placetypes: string[] | undefined
 
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === "--data" && args[i + 1]) dataDir = args[++i]
 		else if (args[i] === "--output" && args[i + 1]) outputPath = args[++i]
 		else if (args[i] === "--concurrency" && args[i + 1]) concurrency = parseInt(args[++i]!, 10)
 		else if (args[i] === "--batch" && args[i + 1]) batchCommitSize = parseInt(args[++i]!, 10)
+		else if (args[i] === "--placetypes" && args[i + 1]) placetypes = args[++i]!.split(",").map((s) => s.trim()).filter(Boolean)
 	}
 
 	if (!dataDir || !outputPath) {
 		console.error(
-			"Usage: node scripts/build-unified-wof.js --data <wof-repos-dir> --output <output.db> [--concurrency 64] [--batch 500]"
+			"Usage: node scripts/build-unified-wof.js --data <wof-repos-dir> --output <output.db> [--concurrency 64] [--batch 500] [--placetypes postalcode]"
 		)
 		process.exit(1)
 	}
 
-	return { dataDir, outputPath, concurrency, batchCommitSize }
+	return { dataDir, outputPath, concurrency, batchCommitSize, placetypes }
 }
 
 const ADMIN_PLACETYPES = new Set([
@@ -77,6 +82,10 @@ interface ParsedFeature {
 	country: string
 	latitude: number
 	longitude: number
+	minLatitude: number
+	minLongitude: number
+	maxLatitude: number
+	maxLongitude: number
 	population: number
 	isCurrent: number
 	isDeprecated: number
@@ -88,7 +97,7 @@ interface ParsedFeature {
 	names: Array<{ name: string; language: string }>
 }
 
-function parseFeature(text: string): ParsedFeature | null {
+function parseFeature(text: string, placetypes: Set<string>): ParsedFeature | null {
 	const feature = JSON.parse(text)
 	const props = feature.properties
 	if (!props) return null
@@ -97,9 +106,22 @@ function parseFeature(text: string): ParsedFeature | null {
 	if (supersededBy && supersededBy.length > 0) return null
 
 	const placetype = props["wof:placetype"]
-	if (!ADMIN_PLACETYPES.has(placetype)) return null
+	if (!placetypes.has(placetype)) return null
 
 	const mzIsCurrent = props["mz:is_current"]
+
+	const lat = typeof props["geom:latitude"] === "number" ? props["geom:latitude"] : 0
+	const lon = typeof props["geom:longitude"] === "number" ? props["geom:longitude"] : 0
+	// WOF `geom:bbox` is "minLon,minLat,maxLon,maxLat". Fall back to the centroid (a point bbox) when
+	// absent — still correct for point-in-box proximity, the resolver's main bbox use.
+	let [minLon, minLat, maxLon, maxLat] = [lon, lat, lon, lat]
+	const bboxStr = props["geom:bbox"]
+	if (typeof bboxStr === "string") {
+		const parts = bboxStr.split(",").map(Number)
+		if (parts.length === 4 && parts.every((n) => Number.isFinite(n))) {
+			;[minLon, minLat, maxLon, maxLat] = parts as [number, number, number, number]
+		}
+	}
 
 	const names: Array<{ name: string; language: string }> = []
 	for (const [key, value] of Object.entries(props)) {
@@ -120,8 +142,12 @@ function parseFeature(text: string): ParsedFeature | null {
 		name: props["wof:name"] ?? "",
 		placetype,
 		country: props["wof:country"] ?? "",
-		latitude: typeof props["geom:latitude"] === "number" ? props["geom:latitude"] : 0,
-		longitude: typeof props["geom:longitude"] === "number" ? props["geom:longitude"] : 0,
+		latitude: lat,
+		longitude: lon,
+		minLatitude: minLat,
+		minLongitude: minLon,
+		maxLatitude: maxLat,
+		maxLongitude: maxLon,
 		population: props["wof:population"] ?? props["gn:population"] ?? 0,
 		isCurrent: mzIsCurrent === 0 || mzIsCurrent === "0" ? 0 : 1,
 		isDeprecated: props["edtf:deprecated"] ? 1 : 0,
@@ -135,7 +161,9 @@ function parseFeature(text: string): ParsedFeature | null {
 }
 
 async function main() {
-	const { dataDir, outputPath, concurrency, batchCommitSize } = parseArgs()
+	const { dataDir, outputPath, concurrency, batchCommitSize, placetypes } = parseArgs()
+	const activePlacetypes = placetypes ? new Set(placetypes) : ADMIN_PLACETYPES
+	console.error(`Ingesting placetypes: ${[...activePlacetypes].join(", ")}`)
 	const t0 = performance.now()
 	const ingestPath = outputPath + ".ingest"
 
@@ -168,7 +196,7 @@ async function main() {
 	createUnifiedSchema(db)
 
 	const sprInsert = db.prepare(
-		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	)
 	const namesInsert = db.prepare(
 		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, ?, ?, ?, ?)`
@@ -201,7 +229,7 @@ async function main() {
 	const readResults = asyncParallelIterator(filePaths, concurrency, (filePath) => readFile(filePath, "utf8"))
 
 	for await (const text of readResults) {
-		const feature = parseFeature(text)
+		const feature = parseFeature(text, activePlacetypes)
 		if (!feature) {
 			skipped++
 			continue
@@ -217,6 +245,10 @@ async function main() {
 			feature.country,
 			feature.latitude,
 			feature.longitude,
+			feature.minLatitude,
+			feature.minLongitude,
+			feature.maxLatitude,
+			feature.maxLongitude,
 			feature.isCurrent,
 			feature.isDeprecated,
 			feature.isCeased,
@@ -276,6 +308,10 @@ async function main() {
 		throw new Error(`journal_mode switch failed; still ${mode.journal_mode}`)
 	}
 	console.error("  journal_mode = delete")
+
+	console.error("  Building ancestors (parent_id closure)...")
+	const ancestorRows = populateAncestors(db)
+	console.error(`  ancestors: ${ancestorRows} rows`)
 
 	console.error("  Creating indexes...")
 	createUnifiedIndexes(db)

@@ -58,9 +58,14 @@ function resolveWofPaths(): string[] {
 			.map((p) => p.trim())
 			.filter(Boolean)
 	}
+	// Canonical gazetteer is our CUSTOM-built unified DBs (from cloned WOF GeoJSON repos via
+	// scripts/build-unified-wof.ts) — never the off-the-shelf geocode.earth dumps (different WOF
+	// ids; see the feedback-custom-wof-db-only memory + scripts/wof-build-manifest.json). Multi-shard:
+	// admin (7 priority countries) + US postcodes; the resolver routes postalcode queries to the
+	// postcode shard. Override with MAILWOMAN_WOF_DB.
 	const candidates = [
-		"/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db",
-		"/mnt/playpen/mailwoman-data/wof/whosonfirst-data-postalcode-us-latest.db",
+		"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db",
+		"/mnt/playpen/mailwoman-data/wof/postalcode-us.db",
 	]
 	return candidates.filter((p) => existsSync(p))
 }

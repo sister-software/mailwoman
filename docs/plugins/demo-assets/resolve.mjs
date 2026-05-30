@@ -238,9 +238,9 @@ export function syncArtifact(sourcePath, destPath, label) {
  * @returns {boolean} True if built successfully
  */
 export function buildFstBinary(fstPath, opts) {
+	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
 	const globalDb = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
-	const usDb = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
-	const wofDb = opts.wofDb ?? process.env.PLAYPEN_WOF_ADMIN_DB ?? (existsSync(globalDb) ? globalDb : usDb)
+	const wofDb = opts.wofDb ?? process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDb
 
 	if (!existsSync(wofDb)) {
 		console.warn(`[demo-assets] FST: WOF admin DB not found at ${wofDb} — skipping FST build`)
@@ -296,14 +296,15 @@ export function buildFstBinary(fstPath, opts) {
  * @returns {boolean}
  */
 export function buildSlimWofDb(destPath, opts) {
+	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
 	const globalDb = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
-	const usAdminDb = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
-	const adminDb = process.env.PLAYPEN_WOF_ADMIN_DB ?? (existsSync(globalDb) ? globalDb : usAdminDb)
-	const postcodeDb =
-		process.env.PLAYPEN_WOF_POSTCODE_DB ?? "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-postalcode-us-latest.db"
+	const adminDb = process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDb
+	// Postcodes: the custom build is admin-only today. Set PLAYPEN_WOF_POSTCODE_DB once a custom
+	// postcode DB exists; until then the slim build runs admin-only.
+	const postcodeDb = process.env.PLAYPEN_WOF_POSTCODE_DB ?? ""
 
-	if (!existsSync(adminDb) || !existsSync(postcodeDb)) {
-		console.warn("[demo-assets] wof-hot.db: WOF source DBs not found — skipping slim build")
+	if (!existsSync(adminDb)) {
+		console.warn("[demo-assets] wof-hot.db: WOF admin DB not found — skipping slim build")
 		return false
 	}
 
