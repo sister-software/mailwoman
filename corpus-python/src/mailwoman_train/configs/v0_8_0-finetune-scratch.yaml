@@ -1,0 +1,132 @@
+# v0.8.0 — supervised fine-tune FROM SCRATCH (arm B of the decisive A/B; the honest baseline).
+#
+# Random encoder init (no init_from), IDENTICAL recipe to v0_8_0-finetune-pretrained.yaml. This is
+# the fair baseline: the ONLY difference between the two arms is the encoder initialization, so any
+# delta is attributable to MLM pretraining (not the recipe). DeepSeek-signed recipe
+# (2026-05-31, session-notes-2026-05-31-mlm-finetune.md).
+#
+# RECIPE NOTES (differs from shipped v0.7.2 on purpose — both arms here are internally consistent):
+#   - lr 5e-5 cosine->0 over 40k, 2k warmup: 3x lower than v0.7.2's constant 1.5e-4 to avoid washing
+#     out the pretrained features (catastrophic forgetting); shorter (40k vs 100k) because a
+#     pretrained encoder adapts fast.
+#   - label_smoothing 0.1: shared calibration lever on BOTH arms.
+#   - CRF OFF (crf_loss_weight 0.0): matches what trained stably; avoids the CRF-under-bf16 NaN.
+#   - corpus v0.4.0 + source_weights + augmentation: the v0.7.2 supervised recipe (the labeled task),
+#     so the comparison reflects the parser the product actually uses.
+#
+# Launch:
+#   modal run -d scripts/modal/train_remote.py \
+#     --config v0_8_0-finetune-scratch.yaml --resume none \
+#     --trackio --trackio-space sister-software/mailwoman-trackio
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    deepseek-translit-armn: 0.5
+    deepseek-translit-cyrl: 0.5
+    deepseek-translit-hang: 0.5
+    deepseek-translit-hans: 0.5
+    deepseek-translit-jpan: 0.5
+    synth-po-box: 1.5
+    synth-intersection: 0.2
+  train_rows_per_epoch: 1000000
+  val_rows: 2048
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  # CRF OFF via zero weight — the head exists (geometry parity with the pretrained ckpt) but does not
+  # contribute to the loss. Avoids the CRF-under-bf16 NaN that disabled it in v0.7.2.
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  # Shared calibration lever (both arms). v0.7.2 used 0.0.
+  label_smoothing: 0.1
+  class_weights:
+    O: 0.5
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  # No init_from — random encoder init (the scratch baseline arm).
+  output_dir: /data/output-v080-ft-scratch-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 5.0e-5
+  weight_decay: 0.01
+  warmup_steps: 2000
+  grad_clip_norm: 1.0
+  max_steps: 40000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: cosine
+  trackio_project: mailwoman
+  trackio_run_name: v0.8.0-ft-scratch-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""
