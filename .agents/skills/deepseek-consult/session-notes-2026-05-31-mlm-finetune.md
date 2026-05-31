@@ -36,3 +36,22 @@ and compare vs from-scratch, to judge whether pretraining helps. Full transcript
 - Drop pretraining ONLY if all metrics flat/worse AFTER the 100k pretrain attempt.
 - (Supersedes the earlier 'harness<22% AND Acc@1 gain<1.5pp → drop' — that was too quick to abandon
   an under-trained pretrain.)
+
+## RESULTS (turn 4, 2026-05-31) — INCONCLUSIVE-POSITIVE; fine-tune recipe was the bottleneck
+Both arms 40k/5e-5-cosine/ls0.1/CRF-off, seed 42, init-only variable. Held-out:
+                       A-pretrained  B-scratch  shipped-v0.7.2(100k/1.5e-4-const/ls0)
+  calib wrong@>=0.9       47.7%        49.7%      81%      (A better by 2.0pp; ls explains the big drop)
+  harness pass           14.2%         9.4%      19.8%     (A better by 4.8pp)
+  resolver locality      48.0%        50.6%      96.1%     (BOTH catastrophically under-trained)
+- Pretraining signal is REAL + consistent on calib + harness (A>B). But BOTH arms under-trained the
+  supervised task to ~50% resolver vs shipped 96.1% — the 40k/5e-5 recipe is the bottleneck, NOT init.
+- DeepSeek turn-4 call: FIX THE FINE-TUNE RECIPE first (not scale pretrain). Re-run both arms at the
+  v0.7.2-proven recipe: lr 1.5e-4 CONSTANT, 100k steps, 1k warmup, ls 0.1, CRF off, bf16. One seed each,
+  ONE decisive round. KILL POINT: if pretrained doesn't reach >= scratch resolver (within 0.5pp) AND
+  calib/harness gains vanish -> drop pretraining. If pretrained matches/slightly beats resolver AND keeps
+  the calib+harness gains -> ship WITH pretraining (secondary benefits ~free). If pretrained beats
+  resolver by >=1pp -> scale pretrain to 100k.
+- Artifacts: /tmp/{oaA,oaB}.json (resolver), /tmp/{hA,hB}.log (harness), /tmp/probe.txt (calibration).
+  ONNX exports: /tmp/ftA/model.onnx, /tmp/ftB/model.onnx. Checkpoints on volume:
+  output-v080-ft-{pretrained,scratch}-s42/checkpoints/step-040000.
+- NOTHING promoted: both arms far below shipped v0.7.2 on the product metric. v0.7.2 stays the default.

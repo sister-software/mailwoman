@@ -1,0 +1,36 @@
+## Turn 3 Answers: Decisive Call on MLM Track
+
+### 1. Fix the fine‑tune recipe first, then scale pretrain if needed.
+
+**Yes.** The 40k/5e‑5 recipe is the bottleneck – it under‑trains both arms to ~50% resolver. Scaling pretrain to 100k will not help if the fine‑tune cannot reach the task ceiling. The pre‑registered “positive signal → scale pretrain” branch was made before we knew the fine‑tune was broken. Now we know: fix the fine‑tune recipe first, then judge pretraining at competitive performance.
+
+### 2. Concrete fine‑tune recipe for the next comparison.
+
+Run both arms (pretrained‑init from 20k MLM vs scratch‑init) with:
+
+- **LR**: constant `1.5e-4` (identical to v0.7.2)
+- **Steps**: `100,000`
+- **Warmup**: `1,000` steps
+- **Label smoothing**: `0.1` (keep it for fairness; both arms)
+- **CRF**: off (`crf_loss_weight=0.0`)
+- **bf16**: yes
+- **Batch size / seq length**: match v0.7.2
+
+This recipe is **known to reach ~96% resolver** from scratch (v0.7.2 without LS). Adding label smoothing 0.1 may cost <1pp but keeps calibration fair. If scratch cannot reach ≥94% under this recipe, then something else is wrong (e.g., data different) – but with the same corpus it should.
+
+**Run one seed of each arm first** (seed 42). If pretrained shows any improvement (resolver, harness, calibration) over scratch, then scale pretrain to 100k and repeat. If pretrained is worse or equal, decide per Q3.
+
+### 3. Is it worth more compute? Kill point.
+
+**Yes, it is worth one more round** (2 runs × 100k steps ≈ 2–3 A100 hours) because:
+
+- The secondary benefits (calibration +2pp, harness +4.8pp) are consistent and meaningful for a production system.
+- The product metric under‑training is an artefact of a bad recipe, not of pretraining.
+- The false‑negative risk – concluding “pretraining doesn’t help” when it might at ceiling – is high if we stop now.
+
+**Kill point after this round:**  
+- If pretrained **does not achieve equal or better resolver** than scratch (within ±0.5pp) **and** the harness and calibration gains disappear or reverse → drop pretraining.  
+- If pretrained **matches or slightly beats** scratch on resolver (even by 0.3pp) **and** retains the calibration/harness gains → ship with pretraining (the secondary benefits are valuable and cost free).  
+- If pretrained **beats** scratch on resolver by ≥1pp → scale pretrain to 100k immediately.
+
+Execute this single decisive round. No more exploratory recipes.
