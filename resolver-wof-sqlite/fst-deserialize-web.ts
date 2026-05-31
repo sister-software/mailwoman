@@ -30,6 +30,7 @@ const PLACETYPE_ORDER: readonly PlacetypeId[] = [
 	"postalcode",
 	"campus",
 	"dependency",
+	"street_affix",
 ]
 
 export function deserializeFstWeb(input: ArrayBuffer | Uint8Array): FstMatcher {

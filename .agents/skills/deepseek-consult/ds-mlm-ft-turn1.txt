@@ -1,0 +1,77 @@
+# Fine-Tune Recipe & Experiment Design — Turn 1
+
+## 1. LR + Schedule
+
+**Primary: `5e-5` constant, 500-step warmup, 100k steps.** (~1/3 of the from-scratch 1.5e-4.) Rationale:
+
+- The encoder is no longer random — it's in a meaningful basin. Standard fine-tuning rule: 1/5 to 1/10 of the from-scratch LR. I'm going slightly higher (1/3) because this is only 20k pretrain steps on a 29M model — the pretrained features are real but shallow, not deeply baked. You can afford a moderately higher LR without washing them out.
+- 500-step warmup is plenty. The encoder isn't starting from noise; only the classifier + CRF heads are random-init. Warmup is just a safety rail against early gradient spikes on the random heads.
+- 100k steps for comparability with the baseline. The heads need the steps even if the encoder converges faster — check validation loss every ~5k steps and be prepared to use the best checkpoint, not necessarily the final one.
+- Constant schedule keeps it comparable to v0.7.2. But honestly, **cosine decay to near-zero (e.g., `1e-7`) would be better for calibration** — it prevents the late-training collapse into overconfidence that Hendrycks et al. describe. That's the calibration-preserving move.
+
+**Fallback: `5e-5` with cosine decay to `1e-7` over 100k steps, 500 warmup.** Better for calibration, slightly different from the baseline recipe, but defensible as the "correct" fine-tune recipe independent of the comparison question.
+
+> **Metadata note:** I'd also consider *discriminative LR* — `5e-5` for the encoder, `1.5e-4` for the heads — but that adds a tuning dimension. Save it for the scaling run.
+
+---
+
+## 2. Auxiliary MLM Loss During Fine-Tuning
+
+**Primary: CE-only for this run. Ship the clean experiment.** The question is "does pretraining help at all?" — not "does pretraining + aux-MLM + label-smoothing + every calibration trick help?" One variable at a time. If calibration *doesn't* improve from pretraining alone, then:
+
+1. Re-run with aux-MLM (weight 0.05–0.1) as a rescue experiment — Desai-Durrett is strong enough that this is the first knob to turn.
+2. Only if aux-MLM also fails do you conclude pretraining didn't pay.
+
+**Fallback: Run label smoothing (`0.1`) on the CE-only fine-tune.** Label smoothing is *trivial to add* (one flag), directly attacks overconfidence (it prevents the model from driving `p → 1.0` on the gold label), and is orthogonal to pretraining — it doesn't confound the init comparison since both the pretrained and from-scratch runs would use it. If you're going to add one thing beyond the clean experiment, make it label smoothing, not aux-MLM. It's simpler and hits the primary target (calibration) more directly.
+
+---
+
+## 3. Fairness — How to Keep the Comparison Honest
+
+This is the hardest question. Two clean answers, and the right one depends on what hypothesis you're testing:
+
+**Hypothesis A (narrow):** "Given the same training recipe, does pretrained init outperform random init?" → **Re-run from-scratch at 5e-5 constant, 100k steps, same seed, same everything.** This isolates `init_from` as the ONLY variable.
+
+**Hypothesis B (product):** "Does the best pretrained recipe beat the best known from-scratch recipe?" → **Compare pretrained fine-tune at 5e-5 against v0.7.2 at 1.5e-4.** Two variables (init + LR) but answers the product question directly.
+
+**Primary recommendation: Run BOTH.** It's one extra training run and you get both answers:
+
+| Run | Init | LR | Compare against | Answers |
+|-----|------|----|-----------------|---------|
+| Pretrained | pretrain ckpt | 5e-5 | — | — |
+| Control | random | 5e-5 | Pretrained | Hypothesis A |
+| v0.7.2 | random | 1.5e-4 | Both above | Hypothesis B |
+
+Three runs total. The control run at 5e-5 from-scratch will likely underperform v0.7.2 — that's fine, it's not competing, it's isolating the variable. If the pretrained run beats *both* the 5e-5 control AND v0.7.2, you've got an unassailable result. If it beats the control but loses to v0.7.2, then pretraining helps but the recipe gap (1.5e-4 vs 5e-5) swallows the gain — and you tune LR up on the pretrained run in round 2.
+
+**Fallback: Skip the 5e-5 from-scratch control and compare only against v0.7.2.** Least experimental hygiene, but cheapest. I don't recommend it — the control run costs one Modal job and prevents a week of arguing about fairness.
+
+---
+
+## 4. Is 20k Pretrain Steps Enough?
+
+**No, it's not converged — but that's OK for THIS experiment.** MLM loss (`4.58` and still descending) on a 48k vocab means the model has learned substantial token-level structure but is far from done. (For reference: random init `≈ ln(48000) = 10.78`; a well-pretrained BERT drops to `~1.5` on its vocab.)
+
+**Primary recommendation: Set the revert criterion to "inconclusive — scale pretrain" rather than "drop pretraining."** Specifically:
+
+| Fine-tune outcome | Conclusion |
+|---|---|
+| Calibration *improves* (any amount) | Pretraining helps. Next step: scale to 100k pretrain steps, re-evaluate. |
+| No change (`±2pp` on fraction-wrong-at-≥0.9) | Inconclusive. 20k pretrain may simply be too short. Scale to 100k pretrain, re-evaluate. |
+| Calibration *worsens* | Recipe problem (LR washing out features, heads not converged) OR pretraining genuinely doesn't transfer. Debug recipe first; then drop if re-run confirms. |
+
+The key insight: a *null* result at 20k pretrain steps does NOT falsify the pretraining hypothesis. It only falsifies "20k steps is enough." Don't let a null result kill the approach — it should trigger a scale-up, not a kill decision.
+
+---
+
+## Summary — What to Nail in Turn 2
+
+I need to pin down the concrete run card:
+
+1. **Batch size** — must match baseline (what was v0.7.2's batch size?) or change and justify.
+2. **CRF loss weight** — v0.7.2 used `0.0` because of bf16 NaN. Do we try CRF again with a NaN mitigation (gradient clipping, loss scaling, or fp32 CRF fallback)? The CRF is structurally helpful for the BIO constraint and the 33-label tag space.
+3. **Data** — same v0.3.0 corpus as v0.7.2? No augmentation? The corpus-recipe cycles (v0.6.x, v0.7.x) failed; is the training data itself part of the problem? The research says over-reliance on comma/format cues comes from the data distribution — should fine-tune data be augmented (drop punctuation, lowercasing, whitespace noise)?
+4. **Seeds & eval protocol** — 1 seed = noise. At minimum 3 seeds (42, 123, 456) for both pretrained and control. Report mean ± std on the primary metric (fraction-wrong-at-≥0.9).
+5. **Checkpoint selection** — best validation CE, not final step. Calibration can degrade late in training even as loss improves.
+
+State which of these you want me to opine on, or give me all of them and I'll design the complete run card in turn 2.

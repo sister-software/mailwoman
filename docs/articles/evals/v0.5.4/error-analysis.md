@@ -1,15 +1,16 @@
 Loaded 4535 golden entries
 Loading model...
 Running eval...
-  500/4535 (2.5s)
-  1000/4535 (4.8s)
-  1500/4535 (7.1s)
-  2000/4535 (9.4s)
-  2500/4535 (11.7s)
-  3000/4535 (14.1s)
-  3500/4535 (16.4s)
-  4000/4535 (18.7s)
-  4500/4535 (21.1s)
+500/4535 (2.5s)
+1000/4535 (4.8s)
+1500/4535 (7.1s)
+2000/4535 (9.4s)
+2500/4535 (11.7s)
+3000/4535 (14.1s)
+3500/4535 (16.4s)
+4000/4535 (18.7s)
+4500/4535 (21.1s)
+
 # Error Analysis Report
 
 **Golden set:** 4535 entries
@@ -18,13 +19,13 @@ Running eval...
 
 ## Summary
 
-| Metric | Count | Rate |
-|--------|-------|------|
-| Exact match | 771 | 17.0% |
-| Missed entities | 2684 | — |
-| Boundary errors | 3698 | — |
-| Confused tags | 1474 | — |
-| Hallucinated tags | 2381 | — |
+| Metric            | Count | Rate  |
+| ----------------- | ----- | ----- |
+| Exact match       | 771   | 17.0% |
+| Missed entities   | 2684  | —     |
+| Boundary errors   | 3698  | —     |
+| Confused tags     | 1474  | —     |
+| Hallucinated tags | 2381  | —     |
 
 ## Missed entities (2684)
 
@@ -57,4 +58,3 @@ Running eval...
 - `12345 Mt Tabor Park, Portland, OR 97215` — hallucinated street="Mt Tabor Park"
 - `Vermont, USA` — hallucinated dependent_locality="Vermont"
 - `05764 Finel Hollow Road, VT` — hallucinated house_number="0576"
-

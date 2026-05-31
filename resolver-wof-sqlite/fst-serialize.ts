@@ -45,6 +45,7 @@ const PLACETYPE_ORDER: readonly PlacetypeId[] = [
 	"postalcode",
 	"campus",
 	"dependency",
+	"street_affix",
 ]
 
 const placetypeToIdx = new Map<string, number>()

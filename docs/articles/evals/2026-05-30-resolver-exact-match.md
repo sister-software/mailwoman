@@ -1,0 +1,116 @@
+# Resolver ranking: exact-match tiering + parent fallback (2026-05-30)
+
+Direction-C resolver-depth PR1. Two ranking fixes that attack the verified
+dominant failure mode of the end-to-end resolver — **wrong-admin cascades from a
+mis-resolved region** — measured on the 2406-row WOF-bootstrap eval.
+
+## The bug, root-caused
+
+The end-to-end resolver eval ceiling was 68.9% Acc@1 with a p90 coordinate error
+of 1090 km. Decomposing the failures pinned the cause precisely:
+
+- Of neural's 749 eval failures, **100% resolved to a place — just the wrong
+  one** (0% were unresolved). So the ceiling is a **resolver-ranking** problem,
+  not a parser-coverage problem.
+- **77% of the wrong resolutions are >100 km off** (median wrong-error 333 km,
+  p90 2624 km) — distances that mean *wrong state*, not a local near-miss.
+
+Tracing the wrong-state cases exposed the mechanism. For `Portland, ME` the
+resolver resolved the *region* "ME" to **Missouri**, then correctly scoped the
+locality to its (wrong) parent → Portland, MO. The `findPlace("ME", region, US)`
+candidate list:
+
+```
+ME  →  Missouri  score 6.83  pop 6.2M   ← won
+       Maine     score 6.04  pop 1.4M   ← exact alias `ME`, but lost
+Maine → Maine    score 23.2             (full-name match scores ~17 higher)
+```
+
+Maine is the **only** US region with the alias `ME` (verified in the gazetteer's
+`names` table; Missouri's alias is `MO`). It still lost — because the ranking adds
+**population as a large additive boost** (`populationBoost`, up to +4), and
+Missouri's larger population overcame Maine's bm25 edge on the 2-letter query.
+
+## Fix 1 — exact-match tiering (the aligned fix)
+
+**The principle (and why it aligns with population/importance rather than
+overriding it):** population is a *prominence prior*. Its job is to break ties
+among candidates that match the query **equally well** — e.g. "Springfield" →
+Springfield IL over Springfield MA, both exact name matches, population correctly
+picks the bigger. It was never meant to promote a candidate that matches the query
+*worse*. The additive scheme accidentally let it do exactly that, because +4 of
+population exceeds the bm25 gap between an exact alias match and a non-match.
+
+The fix makes ranking **two-keyed**: match quality is the primary key, prominence
+(population) the secondary key **within a tier**. A candidate whose name or any
+alias equals the query (case-folded) ranks above any partial match; the existing
+weighted sum — including population — orders candidates *within* a tier.
+
+- `Springfield, IL` still works: both IL and MA Springfields are exact name
+  matches → same tier → population decides → IL (bigger). **Unchanged.**
+- `Portland, ME` now works: only Maine has the exact alias `ME` → higher tier →
+  population never gets to override it → Maine.
+
+So population/importance keeps doing exactly what it was tuned for (surfacing the
+famous Springfield/New York/Chicago among equally-good name matches); it simply
+no longer leaks across match-quality tiers. Implemented in
+`resolver-wof-sqlite/lookup.ts` (`RankingWeights.exactMatchTiering`, default true,
+one cheap indexed lookup over `<schema>.names` for the over-fetched candidate ids).
+
+**Known limitation:** tiering re-ranks within the over-fetched window (`limit*4`).
+An exact match that falls outside that window isn't rescued. For the region-abbrev
+case the window is comfortably sufficient (a handful of states match a 2-letter
+query); pushing the exact-match term into the SQL `ORDER BY` is a follow-up if a
+wider case ever needs it.
+
+## Fix 2 — parent fallback
+
+`parentId` is a **hard descendant filter** in the backend. If a parent resolves
+wrong, or the gazetteer hierarchy is incomplete (a real locality whose `ancestors`
+chain is missing its region), the filtered lookup returns nothing and the node
+goes unresolved. Fix: when a parent-constrained lookup returns zero, retry once
+**without** the parent constraint (keeping the country constraint, so resolution
+still can't wander cross-border). Prefers a parent-scoped hit; never sacrifices
+recall. `core/resolver/resolve.ts` (`ResolveOpts.parentFallback`, default true).
+
+## Results (2406-row WOF-bootstrap, v0.7.2 model)
+
+One toggle apart (`--exact-tiering`/`--parent-fallback` off vs on), same model, same gazetteer:
+
+| metric | baseline (off) | both fixes (on) | Δ |
+| --- | --: | --: | --: |
+| neural-only Acc@1 — all | 68.9% | **77.4%** | **+8.5pp** |
+| neural-only — canonical | 77.1% | 88.0% | +10.9pp |
+| neural-only — perturbed | 64.8% | 72.1% | +7.3pp |
+| v0-via-adapter — all | 63.7% | 70.0% | +6.3pp |
+| arbiter — all | 72.0% | 80.0% | +8.0pp |
+| oracle — all | 77.9% | 86.4% | +8.5pp |
+| coord error p90 (km) | 1090 | **211** | 5.2× lower |
+| neural resolved-but-wrong | 749 | 544 | −205 (−27%) |
+
+The headline: **+8.5pp end-to-end Acc@1 and a 5.2× cut in p90 coordinate error**
+(1090 km → 211 km — the cross-state tail collapses, exactly as the "ME → Missouri"
+root cause predicted). Every baseline improves; the gains are largest on the
+canonical subset (+10.9pp) where clean two-letter region codes are most common.
+Failure attribution confirms the mechanism: neural's resolver-side errors drop
+from 749 to 544 (−27%) with parser-side errors still at 0 — the fix moved
+wrong-state resolutions into correct ones, not coverage.
+
+The 211 km p90 that *remains* is the genuine admin-centroid tail (large rural
+counties / sprawling metros whose centroid is far from the labeled point) plus a
+residual same-state ambiguity — the target for the learned re-ranker and the
+street-level tier, not for this PR.
+
+## Reproduce
+
+```bash
+# baseline (both fixes off) vs both on — one toggle apart:
+node --experimental-strip-types scripts/eval/resolver-eval.ts \
+  --eval /tmp/wof-bootstrap/eval.jsonl --country US \
+  --exact-tiering {true|false} --parent-fallback {true|false} \
+  --model <v0.7.2.onnx> --tokenizer <v0.6.0-a0> --model-card <card> \
+  --wof admin-global-priority.db,postalcode-us.db
+```
+
+Both fixes are A/B flags (default on) so the change is one toggle from the prior
+behaviour and can be reverted per-call.

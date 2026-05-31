@@ -7,9 +7,11 @@
  *   Two passes:
  *
  *   1. Span emission — walk the token stream, group `B-X` followed by `I-X*` into one span. Lenient on
- *        hanging `I-X` (treat as new span). Span `value` is sliced from `raw` by [start, end), NOT
- *        concatenated from `piece` — this avoids SentencePiece's synthetic leading-space markers in
- *        the output.
+ *        hanging `I-X` (treat as new span). A `B-X` that is whitespace-adjacent to an already-open
+ *        `X` span is also folded in (spurious-boundary repair for multi-word values the model
+ *        fragments, e.g. "Saint Paul" → B-locality B-locality); a comma/separator between them keeps
+ *        them distinct. Span `value` is sliced from `raw` by [start, end), NOT concatenated from
+ *        `piece` — this avoids SentencePiece's synthetic leading-space markers in the output.
  *   2. Parent attachment — for each span, find the nearest labeled span whose tag is the
  *        highest-priority entry in this span's `PARENT_OF` list. Distance is the tiebreaker only.
  *        Spans with no found parent become roots.
@@ -21,8 +23,8 @@
  */
 
 import type { BioLabel, ComponentTag } from "../types/component.js"
-import { PARENT_OF } from "./containment.js"
-import type { AddressNode, AddressTree, DecoderToken } from "./types.js"
+import { containmentFor } from "./containment.js"
+import type { AddressNode, AddressSystem, AddressTree, DecoderToken } from "./types.js"
 
 /**
  * Optional caller-supplied attribution stamped on every emitted node. The BIO stream comes from a
@@ -33,6 +35,13 @@ import type { AddressNode, AddressTree, DecoderToken } from "./types.js"
 export interface BuildTreeOpts {
 	source?: string
 	sourceId?: string
+	/**
+	 * Addressing system to decode under — selects the containment hierarchy via `containmentFor`.
+	 * Stamped onto the returned `AddressTree.system`. Omit for the default Western hierarchy. Today
+	 * all systems share one map, so this only records intent + threads the discriminator; it becomes
+	 * behavioral when a system-specific map lands (Phase 6 JP). See `containment.ts`.
+	 */
+	system?: AddressSystem
 }
 
 interface OpenSpan {
@@ -85,11 +94,32 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 		const { prefix, tag } = bioParts(tok.label)
 
 		if (prefix === "O") {
+			// A zero-width or whitespace-only `O` piece is a tokenizer artifact — SentencePiece emits a
+			// standalone `▁` word-boundary marker between words and the model labels it `O` (e.g.
+			// "Saint Paul" → "▁Saint"[B-loc], "▁"[O, zero-width], "Paul"[B-loc]). It is NOT a real
+			// component boundary, so it must not flush the open span; keeping the span alive lets the
+			// following same-tag `B-` token merge in (see the spurious-boundary repair below). A
+			// non-whitespace `O` (comma, slash, …) is a genuine separator and still flushes.
+			if (open !== null && /^\s*$/.test(raw.slice(tok.start, tok.end))) continue
 			open = flush(open, raw, out, attribution)
 			continue
 		}
 
 		if (prefix === "B" || open === null || open.tag !== tag) {
+			// Spurious-boundary repair: a `B-X` token that is whitespace-adjacent to an already-open
+			// `X` span is the model fragmenting a multi-word value — e.g. "Saint Paul" emitted as
+			// B-locality B-locality instead of B-locality I-locality (a real, decode-agnostic
+			// emission bug; see scripts/diag-saintalbans.ts). Fold it into the open span.
+			//
+			// Guard: only merge when the text in `raw` between the two spans is whitespace-only. A
+			// comma or any other separator keeps them distinct, and an intervening O/different-tag
+			// token already nulls/replaces `open` above — so two genuinely separate same-tag spans
+			// (e.g. "Springfield, Chicago") are never merged.
+			if (prefix === "B" && open !== null && open.tag === tag && /^\s*$/.test(raw.slice(open.end, tok.start))) {
+				open.end = tok.end
+				open.confidences.push(tok.confidence)
+				continue
+			}
 			open = flush(open, raw, out, attribution)
 			open = { tag: tag!, start: tok.start, end: tok.end, confidences: [tok.confidence] }
 			continue
@@ -110,8 +140,12 @@ function distance(a: AddressNode, b: AddressNode): number {
 	return 0
 }
 
-function findParent(span: AddressNode, all: AddressNode[]): AddressNode | null {
-	const candidates = PARENT_OF[span.tag] ?? []
+function findParent(
+	span: AddressNode,
+	all: AddressNode[],
+	parentOf: Partial<Record<ComponentTag, ComponentTag[]>>
+): AddressNode | null {
+	const candidates = parentOf[span.tag] ?? []
 	for (const parentTag of candidates) {
 		const matches = all.filter((s) => s !== span && s.tag === parentTag)
 		if (matches.length === 0) continue
@@ -137,13 +171,16 @@ function sortByStart(nodes: AddressNode[]): void {
 export function buildAddressTree(raw: string, tokens: DecoderToken[], opts: BuildTreeOpts = {}): AddressTree {
 	const spans = emitSpans(raw, tokens, opts)
 	const roots: AddressNode[] = []
+	const parentOf = containmentFor(opts.system)
 
 	for (const span of spans) {
-		const parent = findParent(span, spans)
+		const parent = findParent(span, spans, parentOf)
 		if (parent) parent.children.push(span)
 		else roots.push(span)
 	}
 
 	sortByStart(roots)
-	return { raw, roots }
+	const tree: AddressTree = { raw, roots }
+	if (opts.system !== undefined) tree.system = opts.system
+	return tree
 }

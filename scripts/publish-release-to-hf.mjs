@@ -3,37 +3,37 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Publish a model release to the HF Bucket (en-us/<version>/) AND to the standalone HF model
- *   repo (sister-software/mailwoman-<locale>). Verifies every required artifact is uploaded
- *   before exiting so the demo never 404s on a missing file.
+ *   Publish a model release to the HF Bucket (en-us/<version>/) AND to the standalone HF model repo
+ *   (sister-software/mailwoman-<locale>). Verifies every required artifact is uploaded before
+ *   exiting so the demo never 404s on a missing file.
  *
  *   Required artifacts per release:
- *     - model.onnx          — int8-quantized classifier
- *     - tokenizer.model     — SentencePiece tokenizer
- *     - model-card.json     — training provenance
- *     - fst-en-US.bin       — FST gazetteer (or whatever locale)
- *     - wof-hot.db          — slim WOF database for browser resolver
+ *
+ *   - Model.onnx — int8-quantized classifier
+ *   - Tokenizer.model — SentencePiece tokenizer
+ *   - Model-card.json — training provenance
+ *   - Fst-en-US.bin — FST gazetteer (or whatever locale)
+ *   - Wof-hot.db — slim WOF database for browser resolver
  *
  *   After upload, releases.json is updated in-place and re-uploaded.
  *
- *   Usage:
- *     HF_TOKEN=... node scripts/publish-release-to-hf.mjs \
- *       --version v0.5.4 \
- *       --locale en-us \
- *       --model /path/to/model-int8.onnx \
- *       --tokenizer /path/to/tokenizer.model \
- *       --model-card /path/to/model-card.json \
- *       --fst /path/to/fst-en-US.bin \
- *       --wof-hot /path/to/wof-hot.db \
- *       --label "v0.5.4 — multi-script tokenizer" \
- *       --description "Multi-script tokenizer..." \
- *       --set-default
+ *   Usage: HF_TOKEN=... node scripts/publish-release-to-hf.mjs\
+ *   --version v0.5.4\
+ *   --locale en-us\
+ *   --model /path/to/model-int8.onnx\
+ *   --tokenizer /path/to/tokenizer.model\
+ *   --model-card /path/to/model-card.json\
+ *   --fst /path/to/fst-en-US.bin\
+ *   --wof-hot /path/to/wof-hot.db\
+ *   --label "v0.5.4 — multi-script tokenizer"\
+ *   --description "Multi-script tokenizer..."\
+ *   --set-default
  */
 
-import { execSync, spawnSync } from "node:child_process"
-import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { spawnSync } from "node:child_process"
+import { existsSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
+import { resolve } from "node:path"
 
 const REQUIRED_FILES = [
 	{ flag: "--model", remoteName: "model.onnx", description: "ONNX classifier" },
@@ -93,8 +93,15 @@ async function main() {
 	if (!args.label) fail("--label required")
 	if (!args.description) fail("--description required")
 
-	// Adapt remote FST filename to the locale
-	const fstRemoteName = `fst-${args.locale.toUpperCase().replace(/-/g, "-")}.bin`.replace("-US", "-US")
+	// Adapt remote FST filename to the locale, in BCP-47 casing (lowercase language subtag,
+	// uppercase region subtag): "en-us" -> "en-US" -> "fst-en-US.bin". This MUST match the exact
+	// name the demo fetches (docs/src/shared/resources.tsx → "fst-en-US.bin"); a casing mismatch
+	// 404s the gazetteer at runtime. (Previously `locale.toUpperCase()` produced "fst-EN-US.bin".)
+	const bcp47 = args.locale
+		.split("-")
+		.map((part, i) => (i === 0 ? part.toLowerCase() : part.toUpperCase()))
+		.join("-")
+	const fstRemoteName = `fst-${bcp47}.bin`
 	REQUIRED_FILES[3].remoteName = fstRemoteName
 
 	console.error(`Publishing ${args.version} (${args.locale}) to HF Bucket...`)

@@ -1,0 +1,75 @@
+## Answer to Turn 2: Implementation Reality, Calibration Protocol, and Seed Variance
+
+### (A) Aux-MLM-During-Fine-Tune: Skip for This First Decisive Run
+
+**Primary recommendation:**  
+Yes – skip aux MLM. Run both the pretrained-init and scratch-init fine‑tunes as pure CE (with label smoothing 0.1, same recipe). This is the cleanest attribution: only the encoder initialization differs. Adding aux MLM would require a second forward and introduce a confound (the scratch run cannot fairly include it without a pretrained LM head, or would need its own randomly initialized LM head, which changes the recipe).  
+
+The risk of a false negative from skipping aux MLM is **low** given:  
+- You are using label smoothing (0.1) on both runs, which already mitigates overconfidence.  
+- The primary hypothesis is that a pretrained encoder **by itself** improves calibration and accuracy. If a 20k-step pretrained encoder cannot show any benefit in a plain CE fine‑tune, then the pretraining is too weak to matter even with aux MLM.  
+- The pre‑registered revert criterion (any positive signal → scale pretrain) will catch even small gains; aux MLM would only amplify them, not create them from zero.
+
+**Fallback:**  
+If the pretrained run shows *no improvement* (or worse) on both calibration and resolver Acc@1, then in a second round run an augmented comparison with aux MLM (weight 0.1) on both pretrained and scratch (scratch gets a randomly initialized LM head from the architecture). This isolates whether aux MLM is necessary to realize pretraining benefit.
+
+### (B) Calibration Measurement: Keep Label Smoothing, Report ECE + Fraction‑Wrong‑at‑0.9
+
+**Primary recommendation:**  
+Keep label smoothing 0.1 on both runs. Measure calibration with **both**:
+- **Expected Calibration Error (ECE)** with 10 bins (primary)
+- **Fraction‑wrong‑at‑≥0.9 confidence** (secondary, to align with the original metric)
+
+The delta between pretrained and scratch on *both* metrics is the honest signal. Label smoothing will lower the absolute fraction‑wrong for both, but the relative improvement attributable to pretraining remains interpretable. Do **not** drop label smoothing, because without it the scratch run would be more overconfident, inflating the apparent benefit of pretraining – which is unfair to the scratch baseline.
+
+**Fallback:**  
+If ECE implementation is non‑trivial in your codebase, rely on fraction‑wrong‑at‑≥0.9 alone, but compute it from the **raw logits** before applying label smoothing (the model’s actual confidence). Label smoothing only affects the loss, not the forward pass probabilities. So the metric is clean regardless.
+
+**Concrete protocol:**  
+- For both runs, after training, freeze model and compute softmax scores on the validation set (415‑assertion harness or a separate calibration set).  
+- Report: ECE, fraction‑wrong‑at‑≥0.9, and the full reliability diagram if possible.  
+- The comparison is *pretrained_vs_scratch under identical smoothing* – that delta is the answer.
+
+### (C) Seed Variance: Run 2 Seeds for Each Condition (4 Runs Total) – Worth the Cost
+
+**Primary recommendation:**  
+Use **2 independent seeds** for both pretrained-init and scratch-init fine‑tunes (4 runs total).  
+- Total A100 time: ~4 hours (40k steps × ~15 sec/step? Actually 40k steps at 1h per run = 4h). Acceptable.  
+- For the harness pass rate (fixed assertion set) a single seed is sufficient because the metric is deterministic given the weights; but we need 2 training seeds to confirm generalization.  
+- For resolver Acc@1 (real OpenAddresses 10k test set), the metric is deterministic given the model, but the model itself varies with seed. Two seeds let you estimate mean and range.
+
+**Decision rule with 2 seeds:**  
+- If the **mean** resolver Acc@1 gain (pretrained minus scratch) is ≥0.5 percentage points **and** both seeds show gains in the same direction, that is clear signal.  
+- If mean gain is between 0.3 and 0.5pp, consider it positive but weak – proceed to 100k pretrain.  
+- If mean gain is ≤0.3pp or both seeds disagree, then no signal – do not scale pretrain.
+
+**Fallback (cost‑constrained):**  
+If only 1 seed per condition is feasible, require a **minimum Acc@1 gain of 1.0pp** to avoid false positives from noise. This is conservative but still achievable if pretraining is valuable.
+
+### What’s Left for Turn 3 (Execution Punch List + Go/No‑Go)
+
+After you have the 2‑seed results for both init conditions, **Turn 3** will consist of:
+
+1. **Compute aggregated metrics:**  
+   - Mean + range for resolver Acc@1, harness pass rate, ECE, fraction‑wrong‑at‑0.9.  
+   - Compare against the new scratch baseline (not v0.7.2).  
+
+2. **Apply the updated revert rule:**  
+   - If **any** of: (a) mean Acc@1 gain > 0, (b) mean harness rate > scratch baseline, (c) mean ECE lower → **scale pretrain to 100k steps**.  
+   - If **all** metrics are flat or worse → drop pretraining.  
+
+3. **If scaling:**  
+   - Continue pretraining from the existing 20k checkpoint for another 80k steps (same hyperparameters: mask prob 0.15, lr 1e-4 constant, warmup 1000, bf16).  
+   - Then repeat the fine‑tune (same recipe) from the 100k checkpoint vs a fresh scratch baseline (again 2 seeds each).  
+
+4. **Deliver final verdict:** is pretraining worth it?  
+
+**Concrete punch list for Turn 2 (you):**  
+- Implement recipe: 5e-5 cosine decay, 2k linear warmup, 40k steps, label smoothing 0.1, no aux MLM.  
+- Set up two random seeds (e.g., 42 and 1234).  
+- Run pretrained-init fine‑tune (seed0, seed1).  
+- Run scratch-init fine‑tune (seed0, seed1).  
+- Collect metrics on the 415‑assertion harness and 10k OpenAddresses test set.  
+- Report results as per the protocol above.  
+
+There is no further design decision after this; Turn 3 is purely execution.

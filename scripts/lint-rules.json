@@ -1,0 +1,63 @@
+{
+	"_comment": "Common-form anti-pattern rules for the corpus linter. Each rule encodes a (regex, label) constraint: tokens matching the regex either MUST be one of `allowed_labels` (anything else is flagged), or MUST NOT be any of `forbidden_labels`. Add patterns here as new failure modes surface. Severity: 'error' blocks unless acknowledged; 'warn' surfaces in report but doesn't gate.",
+	"rules": [
+		{
+			"id": "digit-ordinal-not-housenumber-or-O",
+			"pattern": "^\\d+(?:st|nd|rd|th)$",
+			"pattern_case_sensitive": false,
+			"forbidden_labels": [
+				"B-venue",
+				"I-venue",
+				"B-locality",
+				"I-locality",
+				"B-region",
+				"I-region",
+				"B-country",
+				"I-country"
+			],
+			"message": "Digit+ordinal token (5th, 12th) labeled as a non-house-number non-street tag. This is the 5th Avenue Theatre failure mode — synth-no-street v0.6.2 included 'venue-adversarial' templates starting with these tokens, which confused the model about house_number recognition. Legitimate uses: B-house_number, I-street (as part of '5th Avenue'), B-street, O.",
+			"severity": "error"
+		},
+		{
+			"id": "two-char-uppercase-admin-only",
+			"pattern": "^[A-Z]{2}$",
+			"pattern_case_sensitive": true,
+			"forbidden_labels": [
+				"B-venue",
+				"I-venue",
+				"B-street",
+				"I-street",
+				"B-street_prefix",
+				"I-street_prefix",
+				"B-street_suffix",
+				"I-street_suffix",
+				"B-house_number"
+			],
+			"message": "Two-char all-caps token (CA, NY, MA, OR, ND) labeled as a non-admin tag. These are almost always US region abbreviations or alphanumeric postcode prefixes. Misclassification is a signal of confused training data.",
+			"severity": "warn"
+		},
+		{
+			"id": "five-digit-not-postcode",
+			"pattern": "^\\d{5}$",
+			"pattern_case_sensitive": false,
+			"forbidden_labels": [
+				"B-venue",
+				"I-venue",
+				"B-locality",
+				"I-locality",
+				"B-region",
+				"I-region",
+				"B-country",
+				"I-country",
+				"B-street",
+				"I-street",
+				"B-street_prefix",
+				"I-street_prefix",
+				"B-street_suffix",
+				"I-street_suffix"
+			],
+			"message": "Five-digit token (potential US ZIP) labeled as non-postcode non-house_number. Allowed: B-postcode, I-postcode, B-house_number (for cases like '12345 Main St'), O.",
+			"severity": "warn"
+		}
+	]
+}

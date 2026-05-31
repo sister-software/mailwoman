@@ -31,6 +31,9 @@ train = [
     "onnx>=1.16",
     "onnxruntime>=1.18",
     "tqdm>=4.66",
+    # Optional experiment tracking. Logging is best-effort and guarded at runtime
+    # (see mailwoman_train/trackio_logging.py) so its absence never breaks a train run.
+    "trackio",
 ]
 
 [build-system]

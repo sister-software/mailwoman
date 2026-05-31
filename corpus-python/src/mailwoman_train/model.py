@@ -146,6 +146,7 @@ class MailwomanCoarseEncoder(nn.Module):
         label_smoothing: float = 0.1,
         crf_loss_weight: float = 0.1,
         crf_normalization: str = "per_sequence",
+        crf_fp32: bool = False,
         class_weights: torch.Tensor | None = None,
         use_phrase_priors: bool = False,
         phrase_feature_dim: int = PHRASE_FEATURE_DIM,
@@ -183,6 +184,14 @@ class MailwomanCoarseEncoder(nn.Module):
                 f"crf_normalization must be 'per_sequence' or 'per_token', got {crf_normalization!r}"
             )
         self.crf_normalization = crf_normalization
+        # v0.6.2 diagnostic flag: force the CRF forward (NLL + transition-table forward pass)
+        # to compute in fp32 even when the surrounding autocast region is bf16. The 2026-05-28
+        # postmortem's hypothesis for v0.6.0's twin NaN failures was numerical instability of
+        # the 33×33 transition matrix with masked `-inf` entries under bf16. Wrapping just the
+        # CRF call in `torch.autocast(enabled=False)` keeps the rest of the model in bf16 for
+        # throughput while isolating the suspect math. Default False to keep all existing
+        # configs bit-identical to their prior runs.
+        self.crf_fp32 = crf_fp32
         # v0.4.0: per-class CE weights as a buffer. Registered as a buffer so it follows
         # the model to GPU + serializes with state_dict. None disables (uniform weights).
         if class_weights is not None:
@@ -337,22 +346,41 @@ class MailwomanCoarseEncoder(nn.Module):
                 # CRF NLL needs a (B, S) float mask. attention_mask is long-typed; cast.
                 # Replace IGNORE_INDEX positions in labels with 0 so gather doesn't OOB
                 # — those positions are zeroed by the mask anyway.
-                crf_mask = attention_mask.to(logits.dtype)
                 # v0.4.0: pass crf_normalization through — "per_token" mode produces a
                 # loss comparable in magnitude to per-token CE, letting the two be
                 # summed without crf_loss_weight tuning.
                 crf_reduction = "per_token" if self.crf_normalization == "per_token" else "mean"
-                crf_loss = self.crf(
-                    emissions=logits,
-                    tags=labels.clamp(min=0),
-                    mask=crf_mask,
-                    reduction=crf_reduction,
-                )
+                if self.crf_fp32:
+                    # v0.6.2 diagnostic path: disable autocast for the CRF forward and upcast
+                    # emissions + mask to fp32. The transition-table forward pass operates on
+                    # masked-`-inf` entries that lose precision under bf16's 7-bit mantissa,
+                    # which the postmortem fingered as the likely v0.6.0 NaN cause. fp32 has
+                    # 23-bit mantissa — enough headroom for `logsumexp` over -1e30 sentinels.
+                    device_type = logits.device.type
+                    with torch.autocast(device_type=device_type, enabled=False):
+                        emissions_fp32 = logits.float()
+                        crf_mask = attention_mask.to(emissions_fp32.dtype)
+                        crf_loss = self.crf(
+                            emissions=emissions_fp32,
+                            tags=labels.clamp(min=0),
+                            mask=crf_mask,
+                            reduction=crf_reduction,
+                        )
+                else:
+                    crf_mask = attention_mask.to(logits.dtype)
+                    crf_loss = self.crf(
+                        emissions=logits,
+                        tags=labels.clamp(min=0),
+                        mask=crf_mask,
+                        reduction=crf_reduction,
+                    )
                 # Dual loss: CE (per-token) keeps emissions discriminative; CRF NLL is
                 # the structural regularizer. Under per_sequence normalization (v0.3.0),
                 # crf_loss_weight=0.05–0.1 is typical to balance magnitudes. Under
                 # per_token (v0.4.0), crf_loss_weight can be 1.0 cleanly.
-                loss = ce_loss + self.crf_loss_weight * crf_loss
+                # Cast crf_loss back to ce_loss's dtype before summing — the optimizer sees
+                # one consistent loss tensor regardless of which path produced it.
+                loss = ce_loss + self.crf_loss_weight * crf_loss.to(ce_loss.dtype)
             else:
                 loss = ce_loss
         return _CoarseEncoderOutput(logits=logits, loss=loss)
@@ -412,6 +440,43 @@ class MailwomanCoarseEncoder(nn.Module):
         return self.crf.top_k_decode(out.logits, attention_mask.to(out.logits.dtype), k=k)
 
     # ---- HuggingFace-compatible save/load helpers ----
+
+    def forward_mlm(
+        self,
+        input_ids: torch.Tensor,
+        attention_mask: torch.Tensor | None = None,
+        mlm_labels: torch.Tensor | None = None,
+    ) -> "_CoarseEncoderOutput":
+        """Masked-language-model forward for self-supervised PRE-training (see pretrain.py).
+
+        Mirrors ``forward``'s encoder body, then projects hidden states through the TIED token-
+        embedding matrix (no new parameters -> the pretrain checkpoint's ``state_dict`` is identical
+        to a supervised model's, so it loads via ``from_pretrained`` for fine-tuning). The classifier
+        / CRF heads are untouched here — they stay at init through pretraining and are trained in the
+        later supervised fine-tune. Phrase priors are intentionally not threaded (pretraining runs on
+        raw text only).
+        """
+        bsz, seq = input_ids.shape
+        pos = torch.arange(seq, device=input_ids.device).unsqueeze(0).expand(bsz, seq)
+        h = self.token_embeddings(input_ids) + self.position_embeddings(pos)
+        h = self.input_dropout(self.input_ln(h))
+        kpm: torch.Tensor | None = None
+        if attention_mask is not None:
+            kpm = attention_mask == 0
+        for block in self.blocks:
+            h = block(h, key_padding_mask=kpm)
+        h = self.final_ln(h)
+        # Tied head: (B, S, hidden) @ (hidden, vocab) -> (B, S, vocab).
+        vocab_size = self.token_embeddings.num_embeddings
+        lm_logits = h @ self.token_embeddings.weight.t()
+        loss: torch.Tensor | None = None
+        if mlm_labels is not None:
+            loss = nn.functional.cross_entropy(
+                lm_logits.view(-1, vocab_size),
+                mlm_labels.view(-1),
+                ignore_index=-100,
+            )
+        return _CoarseEncoderOutput(lm_logits, loss)
 
     def save_pretrained(self, output_dir: Path | str) -> None:
         output_dir = Path(output_dir)
@@ -480,6 +545,9 @@ class MailwomanCoarseEncoder(nn.Module):
             crf_loss_weight=cfg.get("crf_loss_weight", 0.1),
             # v0.4.0+ fields. Default to v0.3.0 behavior (per_sequence, uniform CE).
             crf_normalization=cfg.get("crf_normalization", "per_sequence"),
+            # v0.6.2 diagnostic. Inference-time loading ignores crf_fp32 because the
+            # CRF call only fires when crf_loss_weight > 0 (training only).
+            crf_fp32=cfg.get("crf_fp32", False),
             class_weights=cw_tensor,
             # v0.5.0+ fields. Default to v0.4.0 behavior (no phrase priors).
             use_phrase_priors=cfg.get("use_phrase_priors", False),
@@ -521,6 +589,8 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoa
         crf_loss_weight=getattr(cfg.model, "crf_loss_weight", 0.1),
         # v0.4.0 additions.
         crf_normalization=getattr(cfg.model, "crf_normalization", "per_sequence"),
+        # v0.6.2 diagnostic.
+        crf_fp32=getattr(cfg.model, "crf_fp32", False),
         class_weights=cw_tensor,
         # v0.5.0 thread C additions.
         use_phrase_priors=getattr(cfg.model, "use_phrase_priors", False),

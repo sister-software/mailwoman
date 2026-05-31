@@ -1,0 +1,99 @@
+---
+sidebar_position: 26
+title: Training-run charts
+tags:
+  - concepts
+  - tooling
+  - viz
+---
+
+# Training-run charts
+
+The v0.6.x eval reports keep claiming things like "same noise pattern across
+runs" or "macro_f1 stable despite val_loss volatility." This article shows
+those claims visually and documents the tooling.
+
+## The v0.6.2 vs v0.6.2b comparison
+
+Both runs trained on the v0.4.0 corpus with synth-no-street added. v0.6.2 had
+`synth-no-street: 1.0`; v0.6.2b dropped it to `0.5`. Other knobs identical.
+
+**val_loss over training steps:**
+
+![v0.6.2 vs v0.6.2b val_loss](../evals/charts/v06x-val-loss.svg)
+
+Both runs spike into the 0.4–0.7 range periodically. Initially I read this as
+overconfidence drift on v0.6.2; the
+[v0.6.2 confidence probe](../evals/2026-05-29-v0.6.2-100k-eval.md) walked that
+back — the per-token confidence distributions on the two runs are essentially
+identical (81.2% vs 81.8% of wrong predictions land at ≥0.9 confidence). The
+val_loss bouncing is per-batch sample variance, not a model-level signal.
+
+**val macro_f1 over training steps:**
+
+![v0.6.2 vs v0.6.2b macro_f1](../evals/charts/v06x-macro-f1.svg)
+
+Despite the val_loss volatility, macro_f1 stays within the 0.39–0.42 band for
+both runs from step ~10K onward. This is the signal that confirms the
+val_loss spikes are batch-specific: a metric that aggregates over the val
+set's true-positive/false-positive structure doesn't move, while a metric
+that's sensitive to specific token-level probability assignments does.
+
+## How the charts are built
+
+Two scripts, no library dependency:
+
+```bash
+# 1. Pull a training-log CSV (committed when the training run ends):
+modal volume get mailwoman-training output-v062/train_log.csv /tmp/v062.csv
+
+# 2. Parse into structured JSON:
+node --experimental-strip-types scripts/parse-training-log.ts \
+  --input /tmp/v062.csv --run-name v0.6.2 --out /tmp/v062.json
+
+# 3. Generate the chart:
+node --experimental-strip-types scripts/training-chart.ts \
+  --input /tmp/v062.json --input /tmp/v062b.json \
+  --metric val_loss --title "v0.6.2 vs v0.6.2b val_loss" \
+  --output docs/articles/evals/charts/v06x-val-loss.svg
+```
+
+The parser auto-detects CSV vs modal-log format. The chart generator accepts
+multiple `--input` arguments for overlay. Metrics supported: `val_loss`,
+`macro_f1`, `train_loss`. Output is raw SVG (no JS, embeds in
+Docusaurus/GitHub/anywhere).
+
+## When to read which chart
+
+- **val_loss** — short-term reading is noisy; the trend matters more than any
+  single eval. If a val_loss SPIKE persists across 5+ consecutive evals AND
+  macro_f1 starts dropping, that's a real divergence signal.
+- **macro_f1** — the steady-state quality signal. v0.6.x runs land around
+  0.40–0.42 by step 20K and don't move much from there. A meaningful
+  improvement looks like sustained higher band, not a single high reading.
+- **train_loss** — diagnostic only. Always drops monotonically (with
+  small wiggle); a NaN or step-function shows up here first.
+
+The v0.6.x training cadence writes eval rows every 2K steps and train_loss
+rows every 50 steps. A 100K-step run produces ~50 eval points and ~2000
+train-loss points.
+
+## Limitations
+
+- Multi-run charts only work for runs whose CSVs have been pulled to local
+  (and have been committed to the Modal volume). The volume's
+  `vol.commit()` happens at end of training in the current pipeline; during
+  a run, the in-progress CSV is not visible on the volume.
+- Modal app logs only return the last 100 lines by default — enough to see
+  recent progress, not enough for a full chart.
+- Charts are SVG, not interactive. For interactive exploration of a single
+  run, open the CSV directly in your tool of choice.
+
+## See also
+
+- `scripts/parse-training-log.ts` — log → JSON converter
+- `scripts/training-chart.ts` — JSON → SVG renderer
+- [v0.6.2 step 100K eval](../evals/2026-05-29-v0.6.2-100k-eval.md) — embeds
+  these charts in context
+- [How the model reasons](./how-the-model-reasons.md) — the architecture
+  context for what these metrics measure

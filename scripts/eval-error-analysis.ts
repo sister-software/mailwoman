@@ -2,23 +2,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Error analysis framework for the neural address parser. Runs the model against
- *   the golden eval set and produces a categorized failure report.
+ *   Error analysis framework for the neural address parser. Runs the model against the golden eval
+ *   set and produces a categorized failure report.
  *
  *   Categories (per DeepSeek taxonomy):
+ *
  *   1. Span-boundary errors — tag is correct but boundaries are off
  *   2. Missed entities — ground-truth span has zero correct tokens
  *   3. Hallucinated entities — predicted span overlaps no ground truth
  *   4. Near-class confusion — city↔state, street↔venue swaps
  *   5. Structural violations — illegal BIO transitions (I after O)
  *
- *   Usage:
- *     node --experimental-strip-types scripts/eval-error-analysis.ts \
- *       --golden data/eval/golden/v0.1.2
+ *   Usage: node --experimental-strip-types scripts/eval-error-analysis.ts\
+ *   --golden data/eval/golden/v0.1.2
  */
 
-import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
@@ -34,17 +36,38 @@ interface CategoryStats {
 	examples: Array<{ raw: string; detail: string }>
 }
 
-function parseArgs(): { goldenDir: string } {
+interface Args {
+	goldenDir: string
+	modelPath?: string
+	tokenizerPath?: string
+	modelCardPath?: string
+	postcodeRepair: boolean
+}
+
+function parseArgs(): Args {
 	const args = process.argv.slice(2)
-	let goldenDir: string | undefined
+	const out: Partial<Args> = { postcodeRepair: false }
 	for (let i = 0; i < args.length; i++) {
-		if (args[i] === "--golden" && args[i + 1]) goldenDir = args[++i]
+		const a = args[i]
+		if (a === "--golden" && args[i + 1]) out.goldenDir = args[++i]
+		else if (a === "--model" && args[i + 1]) out.modelPath = args[++i]
+		else if (a === "--tokenizer" && args[i + 1]) out.tokenizerPath = args[++i]
+		else if (a === "--model-card" && args[i + 1]) out.modelCardPath = args[++i]
+		else if (a === "--postcode-repair") out.postcodeRepair = true
 	}
-	if (!goldenDir) {
-		console.error("Usage: node scripts/eval-error-analysis.ts --golden <golden-dir>")
+	if (!out.goldenDir) {
+		console.error(
+			"Usage: node scripts/eval-error-analysis.ts --golden <golden-dir> " +
+				"[--model <onnx> --tokenizer <spm> --model-card <json>] [--postcode-repair]"
+		)
 		process.exit(1)
 	}
-	return { goldenDir }
+	// --model requires the tokenizer + card to build a non-default classifier.
+	if (out.modelPath && (!out.tokenizerPath || !out.modelCardPath)) {
+		console.error("--model requires --tokenizer and --model-card")
+		process.exit(1)
+	}
+	return out as Args
 }
 
 function loadGolden(dir: string): GoldenEntry[] {
@@ -65,12 +88,21 @@ function loadGolden(dir: string): GoldenEntry[] {
 }
 
 async function main() {
-	const { goldenDir } = parseArgs()
-	const golden = loadGolden(goldenDir)
+	const args = parseArgs()
+	const golden = loadGolden(args.goldenDir)
 	console.error(`Loaded ${golden.length} golden entries`)
 
 	console.error("Loading model...")
-	const classifier = await NeuralAddressClassifier.loadFromWeights()
+	const parseOpts = args.postcodeRepair
+		? ({ postcodeRepair: true } as Parameters<NeuralAddressClassifier["parse"]>[1])
+		: undefined
+	const classifier = args.modelPath
+		? new NeuralAddressClassifier({
+				tokenizer: await MailwomanTokenizer.loadFromFile(args.tokenizerPath!),
+				runner: await OnnxRunner.create(args.modelPath),
+				labels: JSON.parse(readFileSync(args.modelCardPath!, "utf8")).labels,
+			})
+		: await NeuralAddressClassifier.loadFromWeights()
 
 	const missed: CategoryStats = { total: 0, examples: [] }
 	const hallucinated: CategoryStats = { total: 0, examples: [] }
@@ -82,7 +114,14 @@ async function main() {
 	const tagConfusion = new Map<string, Map<string, number>>()
 
 	// Per-tag stats: { tag → { expected_count, correct_count, missed_count, boundary_count, confused_count } }
-	type TagStats = { expected: number; correct: number; missed: number; boundary: number; confused: number; hallucinated: number }
+	type TagStats = {
+		expected: number
+		correct: number
+		missed: number
+		boundary: number
+		confused: number
+		hallucinated: number
+	}
 	const perTag = new Map<string, TagStats>()
 	function tagStat(tag: string): TagStats {
 		let s = perTag.get(tag)
@@ -98,7 +137,7 @@ async function main() {
 
 	for (const entry of golden) {
 		total++
-		const tree = await classifier.parse(entry.raw)
+		const tree = await classifier.parse(entry.raw, parseOpts)
 		const predicted = decodeAsJson(tree)
 		const expected = entry.components
 
@@ -161,7 +200,7 @@ async function main() {
 
 		if (total % 500 === 0) {
 			const elapsed = (performance.now() - t0) / 1000
-			console.error(`  ${total}/${golden.length} (${(elapsed).toFixed(1)}s)`)
+			console.error(`  ${total}/${golden.length} (${elapsed.toFixed(1)}s)`)
 		}
 	}
 
@@ -171,14 +210,14 @@ async function main() {
 	console.log("# Error Analysis Report")
 	console.log("")
 	console.log(`**Golden set:** ${golden.length} entries`)
-	console.log(`**Model:** ${classifier.constructor.name}`)
+	console.log(`**Model:** ${args.modelPath ?? "default weights"}${args.postcodeRepair ? " (+postcode-repair)" : ""}`)
 	console.log(`**Time:** ${elapsed}s`)
 	console.log("")
 	console.log("## Summary")
 	console.log("")
 	console.log(`| Metric | Count | Rate |`)
 	console.log(`|--------|-------|------|`)
-	console.log(`| Exact match | ${correct} | ${(100 * correct / total).toFixed(1)}% |`)
+	console.log(`| Exact match | ${correct} | ${((100 * correct) / total).toFixed(1)}% |`)
 	console.log(`| Missed entities | ${missed.total} | — |`)
 	console.log(`| Boundary errors | ${boundaryErrors.total} | — |`)
 	console.log(`| Confused tags | ${confused.total} | — |`)

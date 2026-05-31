@@ -25,8 +25,12 @@ SLIM_CLI="${REPO_ROOT}/resolver-wof-sqlite/out/build-slim-cli.js"
 
 # WOF source paths. Override via env (PLAYPEN_WOF_ADMIN_DB / PLAYPEN_WOF_POSTCODE_DB) for non-host
 # environments.
-WOF_ADMIN_DB="${PLAYPEN_WOF_ADMIN_DB:-/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db}"
-WOF_POSTCODE_DB="${PLAYPEN_WOF_POSTCODE_DB:-/mnt/playpen/mailwoman-data/wof/whosonfirst-data-postalcode-us-latest.db}"
+# Canonical custom-built gazetteer (never the off-the-shelf geocode.earth dumps — see the
+# feedback-custom-wof-db-only memory + scripts/wof-build-manifest.json). Admin-only today.
+WOF_ADMIN_DB="${PLAYPEN_WOF_ADMIN_DB:-/mnt/playpen/mailwoman-data/wof/admin-global-priority.db}"
+# Postcodes: no custom postcode DB yet (the off-the-shelf postalcode dump was deleted). Set
+# PLAYPEN_WOF_POSTCODE_DB once a custom postcode DB is built to re-enable the postcode slice.
+WOF_POSTCODE_DB="${PLAYPEN_WOF_POSTCODE_DB:-}"
 
 mkdir -p "${STATIC_DIR}"
 

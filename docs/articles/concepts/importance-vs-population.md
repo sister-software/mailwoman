@@ -9,10 +9,10 @@ Two signals in the resolver/FST distinguish "the famous one" from "the tiny same
 
 ## Quick reference
 
-| Signal | Table | Unit | Source | Coverage | Where used |
-|--------|-------|------|--------|----------|-----------|
-| Population | `place_population` | raw count of people | WOF `wof:population` or `gn:population` GeoJSON property | ~15% of localities | Resolver `populationBoost`; FST builder fallback |
-| Importance | `place_importance` | float [0, 1] | Nominatim's `wikimedia-importance.csv.gz` joined via WOF concordances | Places with Wikipedia articles (varies by country) | FST builder primary signal |
+| Signal     | Table              | Unit                | Source                                                                | Coverage                                           | Where used                                       |
+| ---------- | ------------------ | ------------------- | --------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------ |
+| Population | `place_population` | raw count of people | WOF `wof:population` or `gn:population` GeoJSON property              | ~15% of localities                                 | Resolver `populationBoost`; FST builder fallback |
+| Importance | `place_importance` | float [0, 1]        | Nominatim's `wikimedia-importance.csv.gz` joined via WOF concordances | Places with Wikipedia articles (varies by country) | FST builder primary signal                       |
 
 ## Build pipeline
 

@@ -4491,8 +4491,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/core@workspace:core"
   dependencies:
+    "@types/d3-color": "npm:^3.1.3"
+    "@types/d3-scale-chromatic": "npm:^3.1.0"
     axios: "npm:^1.16.1"
     axios-cache-interceptor: "npm:^1.12.0"
+    d3-color: "npm:^3.1.0"
+    d3-scale-chromatic: "npm:^3.1.0"
     http-status-codes: "npm:^2.3.0"
     json-colorizer: "npm:^3.0.1"
     kysely: "npm:^0.29.2"
@@ -6873,7 +6877,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3-color@npm:*":
+"@types/d3-color@npm:*, @types/d3-color@npm:^3.1.3":
   version: 3.1.3
   resolution: "@types/d3-color@npm:3.1.3"
   checksum: 10/1cf0f512c09357b25d644ab01b54200be7c9b15c808333b0ccacf767fff36f17520b2fcde9dad45e1bd7ce84befad39b43da42b4fded57680fa2127006ca3ece
@@ -10721,7 +10725,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3-color@npm:1 - 3, d3-color@npm:3":
+"d3-color@npm:1 - 3, d3-color@npm:3, d3-color@npm:^3.1.0":
   version: 3.1.0
   resolution: "d3-color@npm:3.1.0"
   checksum: 10/536ba05bfd9f4fcd6fa289b5974f5c846b21d186875684637e22bf6855e6aba93e24a2eb3712985c6af3f502fbbfa03708edb72f58142f626241a8a17258e545

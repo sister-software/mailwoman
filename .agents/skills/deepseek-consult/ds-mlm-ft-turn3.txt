@@ -1,0 +1,5 @@
+1. **Yes** – CRF off (crf_loss_weight=0.0) for both arms avoids NaN risk and keeps the only variable being the encoder init.
+
+2. **Yes** – 40k cosine decay is correct; fine-tuning from pretrained weights should use a shorter schedule with decay, not a constant long run.
+
+3. **Yes** – run 1 seed first; if the resolver Acc@1 delta (pretrained minus scratch) is >1.0pp or clearly negative, stop. If between 0.3–1.0pp, run the second seed for a defensible mean.

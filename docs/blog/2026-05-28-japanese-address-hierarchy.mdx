@@ -19,13 +19,13 @@ This is why every rule-based address parser written for Western addresses breaks
 
 Who's On First ships Japan's admin hierarchy as one repo with 62,896 GeoJSON files. After pulling it into our unified SQLite, the placetype distribution looks like this:
 
-| Placetype (English) | Japanese | Count |
-|---------------------|----------|-------|
-| country | 国 | 1 |
-| region (prefecture) | 都道府県 | 47 |
-| county (city) | 郡 | 2,287 |
-| locality (ward/town) | 市区町村 | 43,886 |
-| neighbourhood (chome) | 丁目 | 7,736 |
+| Placetype (English)   | Japanese | Count  |
+| --------------------- | -------- | ------ |
+| country               | 国       | 1      |
+| region (prefecture)   | 都道府県 | 47     |
+| county (city)         | 郡       | 2,287  |
+| locality (ward/town)  | 市区町村 | 43,886 |
+| neighbourhood (chome) | 丁目     | 7,736  |
 
 47 prefectures. The whole country. Every chome (city block district) tagged with a name like `１丁目` (1-chome), `２丁目` (2-chome).
 
@@ -77,25 +77,25 @@ The `wof-admin-jp` adapter prototype walks the WOF parent chain for every 丁目
 
 ```json
 {
-  "raw": "東京港区芝公園",
-  "components": {
-    "region": "東京",
-    "locality": "港区",
-    "dependent_locality": "芝公園",
-    "country": "JP"
-  }
+	"raw": "東京港区芝公園",
+	"components": {
+		"region": "東京",
+		"locality": "港区",
+		"dependent_locality": "芝公園",
+		"country": "JP"
+	}
 }
 ```
 
 **6,373 rows from 47 prefectures and 269 localities** — that's training data we didn't have yesterday. Top prefectures by row count:
 
-| Prefecture | Rows |
-|-----------|------|
-| 東京 (Tokyo) | 2,251 |
-| 神奈川 (Kanagawa) | 888 |
-| 大阪 (Osaka) | 460 |
-| 千葉 (Chiba) | 380 |
-| 埼玉 (Saitama) | 263 |
+| Prefecture        | Rows  |
+| ----------------- | ----- |
+| 東京 (Tokyo)      | 2,251 |
+| 神奈川 (Kanagawa) | 888   |
+| 大阪 (Osaka)      | 460   |
+| 千葉 (Chiba)      | 380   |
+| 埼玉 (Saitama)    | 263   |
 
 Tokyo dominates because of its density of named neighborhoods — every chome of every ward is tagged. Smaller prefectures have fewer registered neighborhoods.
 

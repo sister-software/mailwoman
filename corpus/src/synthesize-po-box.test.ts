@@ -2,7 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { describe, expect, it } from "vitest"
-import { composePoBoxPhrase, countryToLocale, maybeNoisifyBoxNumber, supportedLocales, synthesizePoBoxRow } from "./synthesize-po-box.js"
+import {
+	composePoBoxPhrase,
+	countryToLocale,
+	maybeNoisifyBoxNumber,
+	supportedLocales,
+	synthesizePoBoxRow,
+} from "./synthesize-po-box.js"
 
 // Deterministic RNG for reproducible tests.
 function seededRandom(seed: number): () => number {

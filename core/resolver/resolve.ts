@@ -35,6 +35,8 @@ interface ResolutionState {
 	placetypeMap: PlacetypeMap
 	minWinningScore: number
 	candidatesPerLookup: number
+	defaultCountry?: string
+	parentFallback: boolean
 }
 
 class WofResolver implements Resolver {
@@ -52,6 +54,8 @@ class WofResolver implements Resolver {
 			placetypeMap: opts.placetypeMap ?? DEFAULT_PLACETYPE_MAP,
 			minWinningScore: opts.minWinningScore ?? 0,
 			candidatesPerLookup: opts.candidatesPerLookup ?? 5,
+			defaultCountry: opts.defaultCountry,
+			parentFallback: opts.parentFallback ?? true,
 		}
 
 		const newRoots: AddressNode[] = []
@@ -95,16 +99,28 @@ class WofResolver implements Resolver {
 			placetype,
 			limit: state.candidatesPerLookup,
 		}
-		// Pass the inherited parent constraint to the backend when available — both `parentId` and
-		// `country` are valid narrowing hints depending on what the parent resolved to.
-		if (parentResolved) {
-			if (typeof parentResolved.id === "number") query.parentId = parentResolved.id
-			if (parentResolved.country) query.country = parentResolved.country
-		}
+		// Pass the inherited parent constraint to the backend when available — `parentId` scopes to
+		// the resolved parent's descendants. For `country`: a resolved parent's country wins, else
+		// fall back to the caller's `defaultCountry`. Without this top-level hint a bare "IL" over a
+		// multi-country gazetteer fuzzy-matches a foreign place (e.g. a French region) — see the
+		// Direction-C resolver eval.
+		if (parentResolved && typeof parentResolved.id === "number") query.parentId = parentResolved.id
+		const country = parentResolved?.country ?? state.defaultCountry
+		if (country) query.country = country
 
 		let candidates: ResolvedPlace[]
 		try {
 			candidates = await this.#backend.findPlace(query)
+			// Parent soft-gating: `parentId` is a HARD descendant filter in the backend, which wrongly
+			// zeroes the result when the parent resolved wrong OR the gazetteer hierarchy is incomplete
+			// (a real locality whose `ancestors` chain is missing its region). Rather than turn a
+			// resolvable node into an unresolved one, retry once WITHOUT the parent constraint — we
+			// prefer a parent-scoped hit but never sacrifice recall. The country constraint is kept, so
+			// this still can't wander to a foreign place. Same logical resolution → no extra budget.
+			if (candidates.length === 0 && state.parentFallback && query.parentId !== undefined) {
+				delete query.parentId
+				candidates = await this.#backend.findPlace(query)
+			}
 		} catch {
 			// Defensive: a backend failure should not abort the whole tree walk. Leave the node with
 			// its classifier attribution intact.
@@ -137,6 +153,11 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 	node.lat = resolved.lat
 	node.lon = resolved.lon
 	node.placeId = `wof:${resolved.id}` // v1: only WOF resolvers; the URI scheme stays this simple
+	// Record the resolver's ranking score AND the resolved place's CANONICAL name. The name is the
+	// gazetteer's truth for the place we picked — distinct from `node.value` (the raw input span). It
+	// lets consumers display the canonical name and lets the end-to-end eval check the resolver chose
+	// the right PLACE (gazetteer-name vs ground-truth) rather than merely echoing the parser's text.
+	node.metadata = { ...(node.metadata ?? {}), resolver_score: resolved.score, resolver_name: resolved.name }
 	if (alternatives.length > 0) {
 		node.alternatives = alternatives
 	}

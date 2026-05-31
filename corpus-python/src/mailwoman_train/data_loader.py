@@ -52,15 +52,46 @@ class EncodedExample:
 
 def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
     """Resolve train/val/test shard paths via MANIFEST.json (adapter-addition corpora)
-    or legacy glob fallback (monolithic corpora)."""
+    or legacy glob fallback (monolithic corpora).
+
+    The MANIFEST lists per-shard absolute ``path`` + ``split``. Two realities complicate this:
+
+    1. **Overlay corpora.** An overlay (e.g. v0.4.0 = synth shards layered on v0.3.0's base) keeps
+       a manifest whose base-shard paths deliberately point into the OTHER corpus dir
+       (``/data/.../v0.3.0/...``). Those are correct and must be used VERBATIM — re-rooting them to
+       ``corpus_dir`` would point at files that don't exist (v0.4.0 only has the overlay shards).
+    2. **Portability.** A non-overlay manifest stores absolute paths from the BUILD machine
+       (``/mnt/playpen/...``) that don't exist when the corpus is mounted elsewhere (Modal volume
+       at ``/data/...``).
+
+    So per shard: use the manifest path AS-IS when it exists; otherwise RE-ROOT it under
+    ``corpus_dir`` (take the ``<split>/<basename>`` tail). This serves both cases — overlay
+    cross-dir refs are preserved when valid, build-machine paths are re-rooted when stale — and is
+    why v0.7.2 (v0.4.0 overlay → v0.3.0 base) trained fine: its manifest paths resolve as-is on the
+    volume. Falls back to a glob over ``corpus_dir/split`` only when the manifest yields nothing
+    usable."""
     import json
     manifest = corpus_dir / "MANIFEST.json"
     if manifest.exists():
         data = json.loads(manifest.read_text())
-        shards = [Path(s["path"]) for s in data.get("shards", []) if s.get("split") == split]
-        if shards:
-            return sorted(shards)
-    # legacy fallback
+        resolved: list[Path] = []
+        for s in data.get("shards", []):
+            if s.get("split") != split:
+                continue
+            raw = Path(s["path"])
+            if raw.exists():
+                # Path is valid as-is (overlay cross-dir ref, or corpus on its build machine).
+                resolved.append(raw)
+                continue
+            # Stale absolute path (corpus moved): re-root the <split>/<file> tail under corpus_dir.
+            parts = raw.parts
+            tail = Path(*parts[parts.index(split):]) if split in parts else Path(split) / raw.name
+            cand = corpus_dir / tail
+            if cand.exists():
+                resolved.append(cand)
+        if resolved:
+            return sorted(resolved)
+    # legacy fallback (monolithic corpora, or manifest yielded no resolvable shards)
     paths = sorted((corpus_dir / split).glob("*.parquet"))
     if not paths:
         raise FileNotFoundError(f"no shards via MANIFEST or {corpus_dir / split}")

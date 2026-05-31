@@ -43,17 +43,17 @@ PO boxes are different. No corpus adapter has explicit `po_box` data — TIGER i
 
 The good news: PO boxes are highly templated. USPS Pub 28 §28C2.040 and DMM 508 §4.1.4/§4.5.4 specify the allowed forms. Multi-locale extension is similarly bounded:
 
-| Locale | Leaders |
-|--------|---------|
-| en-US | PO Box, P.O. Box, POB, Post Office Box, PMB, Box, # |
-| en-CA | PO Box, P.O. Box, POB |
-| en-GB | PO Box, P.O. Box, Post Office Box |
-| en-AU | PO Box, GPO Box, Locked Bag |
-| fr-FR | BP, B.P., Boîte Postale |
-| fr-CA | CP, C.P., Case Postale, BP |
-| es-ES | Apdo., Apartado, Apartado de Correos |
-| es-MX | Apdo., Apartado Postal, AP |
-| es-AR | Casilla, Casilla de Correo, CC |
+| Locale | Leaders                                             |
+| ------ | --------------------------------------------------- |
+| en-US  | PO Box, P.O. Box, POB, Post Office Box, PMB, Box, # |
+| en-CA  | PO Box, P.O. Box, POB                               |
+| en-GB  | PO Box, P.O. Box, Post Office Box                   |
+| en-AU  | PO Box, GPO Box, Locked Bag                         |
+| fr-FR  | BP, B.P., Boîte Postale                             |
+| fr-CA  | CP, C.P., Case Postale, BP                          |
+| es-ES  | Apdo., Apartado, Apartado de Correos                |
+| es-MX  | Apdo., Apartado Postal, AP                          |
+| es-AR  | Casilla, Casilla de Correo, CC                      |
 
 `corpus/src/synthesize-po-box.ts` ships these templates plus three design decisions from a DeepSeek consultation:
 
@@ -76,6 +76,7 @@ v0.6.0 training (source_weight: 1.5)
 ```
 
 Sample output:
+
 ```
 P.O. Box 9, Bancroft, ID 83603
   tokens: ['P', 'O', 'Box', '9', 'Bancroft', 'ID', '83603']
@@ -100,19 +101,19 @@ Demo presets: 11/11 parse (6 canonical addresses + 5 Stage 3 variants).
 
 Per-tag golden eval (4,561 entries):
 
-| Tag | v0.5.4 recall | v0.6.0 recall |
-|-----|---------------|---------------|
-| postcode | 75.7% | 76.0% |
-| house_number | 78.7% | 79.0% |
-| region | 65.0% | 65.0% |
-| locality | 39.4% | 39.7% |
-| street | 28.0% | 27.9% |
-| venue | 29.4% | 29.2% |
-| **po_box** | **0.0%** | **51.9%** |
-| street_prefix | 0.0% | 0.0% |
-| street_suffix | 0.0% | 0.0% |
-| unit | 0.0% | 0.0% |
-| intersection_a/b | 0.0% | 0.0% |
+| Tag              | v0.5.4 recall | v0.6.0 recall |
+| ---------------- | ------------- | ------------- |
+| postcode         | 75.7%         | 76.0%         |
+| house_number     | 78.7%         | 79.0%         |
+| region           | 65.0%         | 65.0%         |
+| locality         | 39.4%         | 39.7%         |
+| street           | 28.0%         | 27.9%         |
+| venue            | 29.4%         | 29.2%         |
+| **po_box**       | **0.0%**      | **51.9%**     |
+| street_prefix    | 0.0%          | 0.0%          |
+| street_suffix    | 0.0%          | 0.0%          |
+| unit             | 0.0%          | 0.0%          |
+| intersection_a/b | 0.0%          | 0.0%          |
 
 PO box recognition went from impossible to functional in one training run. Sample:
 

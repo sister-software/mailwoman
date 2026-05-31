@@ -79,6 +79,22 @@ export interface ResolveOpts {
 	 */
 	candidatesPerLookup?: number
 	/**
+	 * Default ISO-3166 alpha-2 country to constrain top-level lookups to, when no resolved parent has
+	 * supplied a country yet. Without it, a bare component over a multi-country gazetteer (e.g. "IL")
+	 * can fuzzy-match a foreign place. Callers should set this from the detected locale (the
+	 * pipeline's locale-gate). A resolved parent's country still overrides it deeper in the tree.
+	 */
+	defaultCountry?: string
+	/**
+	 * When a resolved parent constrains a child lookup (`parentId` is passed to the backend as a hard
+	 * descendant filter) and that filtered lookup returns NOTHING, retry the lookup once without the
+	 * parent constraint. Guards against an incomplete gazetteer hierarchy (a real locality whose
+	 * ancestor chain is missing its region) or a mis-resolved parent silently turning a resolvable
+	 * node unresolved. The country constraint is retained on the retry, so resolution still can't
+	 * wander cross-border. Default true. Set false to measure the strict-parent baseline.
+	 */
+	parentFallback?: boolean
+	/**
 	 * Override the default ComponentTag → resolver-placetype mapping. When set, this map FULLY
 	 * REPLACES `DEFAULT_PLACETYPE_MAP` — start from the default by spreading it (`{
 	 * ...DEFAULT_PLACETYPE_MAP, ... }`) if you want to extend rather than replace. The fully-

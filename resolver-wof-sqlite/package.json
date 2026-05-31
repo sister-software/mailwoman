@@ -15,6 +15,7 @@
 		"./fts": "./out/fts.js",
 		"./build-slim": "./out/build-slim.js",
 		"./fst-builder": "./out/fst-builder.js",
+		"./street-morphology-fst-builder": "./out/street-morphology-fst-builder.js",
 		"./fst-matcher": "./out/fst-matcher.js",
 		"./fst-serialize": "./out/fst-serialize.js",
 		"./fst-autocomplete": "./out/fst-autocomplete.js",

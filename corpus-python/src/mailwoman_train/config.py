@@ -69,6 +69,11 @@ class ModelConfig:
     # batch / total real tokens — self-balances against per-token CE, eliminates
     # ``crf_loss_weight`` hand-tuning, matches AllenNLP/FLAIR defaults.
     crf_normalization: str = "per_sequence"
+    # v0.6.2 diagnostic flag: force the CRF forward to compute in fp32 while the rest of
+    # the model continues in bf16. Tests the 2026-05-28 postmortem's hypothesis that the
+    # 33×33 transition table with masked -inf entries is numerically unstable under bf16's
+    # 7-bit mantissa. Default False keeps existing configs bit-identical.
+    crf_fp32: bool = False
     # v0.4.0: optional per-class CE weights, keyed on BIO label ("O", "B-locality", ...).
     # ``None`` (default) = uniform weighting. Recipe per issue #116: derive from corpus
     # label-frequency as ``(1 / class_freq) ** 0.5``, then halve fine-class weights
@@ -115,6 +120,37 @@ class TrainConfig:
     # smoke window masks divergence by collapsing LR before the loss curve shows it; the
     # constant-LR mode keeps the signal visible. See the ref doc for when to pick which.
     lr_schedule: str = "cosine"
+    # Training objective. "supervised" = the BIO token-classification loss (CE + optional CRF, the
+    # default and only historical mode). "mlm" = self-supervised masked-language-model PRE-training
+    # on the corpus text (BIO labels ignored): masks `mlm_mask_prob` of attended tokens and predicts
+    # them via the tied token-embedding head, producing an encoder checkpoint a later supervised run
+    # fine-tunes from (`init_from`). See pretrain.py. Off the supervised path entirely.
+    objective: str = "supervised"
+    # Fraction of attended (non-pad) tokens masked for the MLM objective. 0.15 is BERT-classic; the
+    # small-encoder literature favors ~0.4 — tune per experiment. Ignored unless objective == "mlm".
+    mlm_mask_prob: float = 0.15
+    # Initialize MODEL weights from this checkpoint dir at the start of a SUPERVISED run, WITHOUT
+    # loading optimizer/scheduler/step (unlike resume). This is how a fine-tune run starts from an
+    # MLM-pretrained encoder. Empty = fresh init. Ignored when resuming (resume takes precedence).
+    init_from: str = ""
+    # Trackio experiment tracking (Hugging Face). Off by default so existing configs and
+    # plain/CI runs stay bit-identical and never depend on the optional 'trackio' package.
+    # When enabled, the metrics written to train_log.csv are also streamed to a Trackio
+    # project (see trackio_logging.py). All tracking is best-effort: a failure degrades to
+    # CSV-only and never aborts the run.
+    trackio_enabled: bool = False
+    trackio_project: str = "mailwoman"
+    # HF Space id for the hosted dashboard, e.g. "sister-software/mailwoman-trackio".
+    # The Space is auto-created on first run if it doesn't exist. Empty = local-only
+    # dashboard (~/.cache/huggingface/trackio), no HF upload.
+    trackio_space: str = ""
+    # Optional human-readable run name. Empty = derive a stable name from output_dir so
+    # a resumed run (resume="auto") continues the same dashboard run instead of forking.
+    trackio_run_name: str = ""
+    # Make the dashboard Space private (visible to org members only). Defaults True so
+    # in-progress training metrics aren't published publicly by accident. Ignored if the
+    # Space already exists.
+    trackio_private: bool = True
 
 
 @dataclass

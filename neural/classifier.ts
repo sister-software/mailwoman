@@ -21,7 +21,10 @@ import {
 import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
+import { repairPostcodeLabels } from "./postcode-repair.js"
+import { repairUnitLabels } from "./unit-repair.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
+import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import { buildBioEndMask, buildBioStartMask, buildBioTransitionMask, softmax, viterbi } from "./viterbi.js"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
@@ -131,6 +134,8 @@ export class NeuralAddressClassifier {
 		const { pieces, ids } = this.cfg.tokenizer.encode(text)
 		const { logits } = await this.cfg.runner.infer(ids)
 
+		this.assertEmissionWidth(logits)
+
 		let emissions = opts?.queryShape
 			? addEmissionMatrix(
 					logits,
@@ -150,6 +155,18 @@ export class NeuralAddressClassifier {
 			)
 		}
 
+		if (opts?.fstStreetMorphology) {
+			emissions = addEmissionMatrix(
+				emissions,
+				buildStreetMorphologyEmissionPriors(
+					opts.fstStreetMorphology,
+					pieces,
+					this.labels,
+					opts.fstStreetMorphologyOpts ?? {}
+				)
+			)
+		}
+
 		const labelIndices =
 			this.decodeMode === "viterbi"
 				? viterbi({
@@ -160,7 +177,7 @@ export class NeuralAddressClassifier {
 					}).path
 				: emissions.map((row) => argmaxSoftmax(row).idx)
 
-		const tokens: DecoderToken[] = pieces.map((p, i) => {
+		let tokens: DecoderToken[] = pieces.map((p, i) => {
 			const idx = labelIndices[i]!
 			const probs = softmax(logits[i]!)
 			return {
@@ -171,6 +188,13 @@ export class NeuralAddressClassifier {
 				confidence: probs[idx]!,
 			}
 		})
+
+		if (opts?.postcodeRepair) {
+			tokens = repairPostcodeLabels(text, tokens).tokens
+		}
+		if (opts?.unitRepair) {
+			tokens = repairUnitLabels(text, tokens).tokens
+		}
 
 		return buildAddressTree(text, tokens)
 	}
@@ -185,6 +209,8 @@ export class NeuralAddressClassifier {
 		}
 		const { pieces, ids } = this.cfg.tokenizer.encode(text)
 		const { logits } = await this.cfg.runner.infer(ids)
+
+		this.assertEmissionWidth(logits)
 
 		let emissions = opts?.queryShape
 			? addEmissionMatrix(
@@ -202,6 +228,18 @@ export class NeuralAddressClassifier {
 				buildFstEmissionPriors(opts.fst, pieces, this.labels, {
 					biasScale: opts.fstBiasScale ?? 1.0,
 				})
+			)
+		}
+
+		if (opts?.fstStreetMorphology) {
+			emissions = addEmissionMatrix(
+				emissions,
+				buildStreetMorphologyEmissionPriors(
+					opts.fstStreetMorphology,
+					pieces,
+					this.labels,
+					opts.fstStreetMorphologyOpts ?? {}
+				)
 			)
 		}
 
@@ -245,6 +283,29 @@ export class NeuralAddressClassifier {
 	async parseXml(text: string, opts?: ParseOpts & { xml?: Parameters<typeof decodeAsXml>[1] }): Promise<string> {
 		return decodeAsXml(await this.parse(text, opts), opts?.xml)
 	}
+
+	/**
+	 * Guard against a silent label/emission shape overrun. When the model emits MORE logits per token
+	 * than the configured label vocabulary (e.g. a Stage 3 bundle loaded with the default Stage 2
+	 * labels), viterbi indexes past the transition matrix and dies with an opaque `Cannot read
+	 * properties of undefined (reading '0')`. Fail fast here with a message that names the contract
+	 * the caller violated.
+	 *
+	 * The opposite shape (model narrower than labels) is intentionally permitted — STAGE2_BIO_LABELS
+	 * prefix-extends STAGE1_BIO_LABELS so a Stage 1 model loaded with Stage 2 labels decodes
+	 * correctly via the first 15 logits. See labels.ts for the contract.
+	 */
+	private assertEmissionWidth(logits: readonly number[][]): void {
+		if (logits.length === 0) return
+		const width = logits[0]!.length
+		if (width > this.labels.length) {
+			throw new Error(
+				`Label/emission mismatch: model emits ${width} logits per token but the classifier was ` +
+					`configured with only ${this.labels.length} labels. Did you load a Stage 3 bundle without ` +
+					`passing its model-card labels? See loadFromWeights / loadNeuralClassifierFromUrls.`
+			)
+		}
+	}
 }
 
 /** Result of `parseWithLogits` — tree + raw material for per-span logit aggregation. */
@@ -277,6 +338,32 @@ export interface ParseOpts {
 	fst?: FstMatcherLike
 	/** Bias magnitude for FST gazetteer matches. Default 1.0. */
 	fstBiasScale?: number
+	/**
+	 * Pre-built street-morphology FST matcher. When provided, street-type affixes (Avenue, rue,
+	 * Calle, Straße, …) produce additive emission biases toward `street_prefix`/`street_suffix` on
+	 * the matched tokens AND toward `street` / away from `dependent_locality` on the adjacent name
+	 * tokens. Closes the v0.6.1 dependent_locality vacuum; see
+	 * `docs/articles/concepts/street-supplement-architecture.md` for the layered design.
+	 */
+	fstStreetMorphology?: FstMatcherLike
+	/** Override bias magnitudes for the morphology prior. */
+	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
+	/**
+	 * When true, run the deterministic postcode regex repair pass (v0.7 #35) on the decoded label
+	 * sequence before tree-building. Detects postcode-shaped substrings (GB/CA/NL/US/FR/… patterns)
+	 * and snaps/adds the postcode span to the matched shape, fixing the SentencePiece-fragmentation
+	 * failures catalogued in the 2026-05-29 postcode diagnostic. Off by default — opt-in until the
+	 * v0.7 gate confirms it. See `./postcode-repair.ts`.
+	 */
+	postcodeRepair?: boolean
+	/**
+	 * When true, run the deterministic secondary-unit regex repair pass on the decoded label
+	 * sequence before tree-building. Detects designator-shaped substrings ("Apt 4B", "Ste 12",
+	 * "Unit 9400", bare "#104", …) and snaps/adds the unit span, fixing the unit-drop weakness the
+	 * three-arena capability eval surfaced (postal secondary-unit 0% neural). Off by default —
+	 * opt-in until the v0.7.2 arena re-run quantifies its delta. See `./unit-repair.ts`.
+	 */
+	unitRepair?: boolean
 }
 
 function argmaxSoftmax(row: number[]): { idx: number; conf: number } {
