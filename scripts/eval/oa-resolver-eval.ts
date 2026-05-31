@@ -240,17 +240,29 @@ async function main(): Promise<void> {
 	const scoreTree = (
 		row: OaRow,
 		resolved: Resolved[]
-	): { locMatch: boolean; regMatch: boolean; resolved: boolean; err: number | null } => {
+	): {
+		locMatch: boolean
+		regMatch: boolean
+		resolved: boolean
+		err: number | null
+		resolvedLoc?: string
+		resolvedReg?: string
+	} => {
 		const best = mostSpecific(resolved)
 		// Admin-match is by NAME (OA carries no WOF id): a row matches if a resolved locality's
 		// canonical gazetteer name equals OA's expected locality; region is name-or-abbrev tolerant.
-		const locName = norm(resolved.find((r) => r.placetype === "locality")?.name)
+		const locRaw = resolved.find((r) => r.placetype === "locality")?.name
+		const locName = norm(locRaw)
 		const regResolved = resolved.find((r) => r.placetype === "region")
 		return {
 			locMatch: !!row.expected.locality && locName === norm(row.expected.locality),
 			regMatch: regionMatches(regResolved?.name, row.expected.region),
 			resolved: !!best,
 			err: best ? haversineKm(best.lat, best.lon, row.lat, row.lon) : null,
+			// Raw resolved names for the --errors-json per-row dump: a present-but-wrong resolvedLoc
+			// => resolver ranking/disambiguation miss; an absent one => coverage/parse miss.
+			resolvedLoc: locRaw,
+			resolvedReg: regResolved?.name,
 		}
 	}
 
@@ -271,6 +283,12 @@ async function main(): Promise<void> {
 		bump(agg[who].overall, s.locMatch, s.regMatch, s.resolved, s.err)
 	}
 
+	// Per-row failure dump (--errors-json): one record per row where neural OR v0 missed locality,
+	// carrying each parser's resolved admin names so failures can be bucketed offline (resolve-wrong
+	// vs unresolved vs neural-only vs v0-only). Aggregates are unaffected.
+	const collectErrors = !!arg("errors-json")
+	const errorRows: Record<string, unknown>[] = []
+
 	let i = 0
 	for (const row of rows) {
 		i++
@@ -283,7 +301,8 @@ async function main(): Promise<void> {
 		} catch {
 			/* unresolved */
 		}
-		record("neural", row, scoreTree(row, nResolved))
+		const ns = scoreTree(row, nResolved)
+		record("neural", row, ns)
 
 		// v0 (Pelias parser) via the flat→tree adapter
 		let vResolved: Resolved[] = []
@@ -295,7 +314,22 @@ async function main(): Promise<void> {
 		} catch {
 			/* unresolved */
 		}
-		record("v0", row, scoreTree(row, vResolved))
+		const vs = scoreTree(row, vResolved)
+		record("v0", row, vs)
+
+		if (collectErrors && (!ns.locMatch || !vs.locMatch)) {
+			errorRows.push({
+				input: row.input,
+				state: row.state ?? "??",
+				expected: row.expected,
+				neural: { locMatch: ns.locMatch, resolved: ns.resolved, resolvedLoc: ns.resolvedLoc, resolvedReg: ns.resolvedReg, errKm: ns.err },
+				v0: { locMatch: vs.locMatch, resolved: vs.resolved, resolvedLoc: vs.resolvedLoc, resolvedReg: vs.resolvedReg, errKm: vs.err },
+			})
+		}
+	}
+	if (collectErrors) {
+		writeFileSync(arg("errors-json"), JSON.stringify(errorRows, null, 2))
+		console.error(`wrote ${errorRows.length} failure rows → ${arg("errors-json")}`)
 	}
 
 	// ---- report (self-emitted; eval figures are NEVER hand-typed into docs) ----
