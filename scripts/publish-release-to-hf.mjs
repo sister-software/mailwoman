@@ -94,8 +94,15 @@ async function main() {
 	if (!args.label) fail("--label required")
 	if (!args.description) fail("--description required")
 
-	// Adapt remote FST filename to the locale
-	const fstRemoteName = `fst-${args.locale.toUpperCase().replace(/-/g, "-")}.bin`.replace("-US", "-US")
+	// Adapt remote FST filename to the locale, in BCP-47 casing (lowercase language subtag,
+	// uppercase region subtag): "en-us" -> "en-US" -> "fst-en-US.bin". This MUST match the exact
+	// name the demo fetches (docs/src/shared/resources.tsx → "fst-en-US.bin"); a casing mismatch
+	// 404s the gazetteer at runtime. (Previously `locale.toUpperCase()` produced "fst-EN-US.bin".)
+	const bcp47 = args.locale
+		.split("-")
+		.map((part, i) => (i === 0 ? part.toLowerCase() : part.toUpperCase()))
+		.join("-")
+	const fstRemoteName = `fst-${bcp47}.bin`
 	REQUIRED_FILES[3].remoteName = fstRemoteName
 
 	console.error(`Publishing ${args.version} (${args.locale}) to HF Bucket...`)
