@@ -40,14 +40,25 @@ The eval has been *underselling* the resolver. Examples from (A): `Butte`→`But
 
 ## Recommended next PRs, ranked by ROI
 
-1. **Eval name-match fidelity (HIGH ROI, low risk) — but do it via the gazetteer, not ad-hoc
-   string loosening.** Match OA's expected name against WOF's **alias/altname** set for the
-   resolved place (Saint/St, Mt/Mount, Mc/Mac spacing, consolidated city-county names,
-   township/city/village/center suffixes) instead of a single canonical string. This is
-   *correctness*, not gaming: these resolutions are right. Risk if done naively (blanket
-   substring/loosening) is masking real errors — so anchor on WOF altnames + a tight
-   suffix/abbreviation list, and keep bucket (B)'s genuine errors failing. Expected effect:
-   measured neural locality 94.9% → ~97.6%, and a *truer* delta vs v0.
+1. **Eval name-match fidelity (HIGH ROI) — ✅ SHIPPED IN THIS PR.** Match OA's expected name
+   against the resolved place's full WOF **`names` altname set** (normalized), not a single
+   canonical string, plus a tight abbreviation layer (St→Saint, Mt→Mount, Ft→Fort, Mc-despace,
+   diacritics/punct). Deliberately **no civic-suffix stripping** — `Barre City` and `Barre Town`
+   are distinct VT municipalities. This is *correctness*, not gaming: WOF records these as the
+   same place.
+
+   **Result (1500 OA rows, real v0.7.2):**
+
+   | parser | locality BEFORE | locality AFTER | Δ |
+   |--------|----------------:|---------------:|---:|
+   | **neural**  | 94.9% | **97.1%** | +2.2 |
+   | v0 (Pelias) | 93.7% | 95.3% | +1.6 |
+
+   Both parsers rise (the matcher is parser-agnostic), and neural's lead over Pelias **widens
+   to +1.8pp**. 32 neural misses credited — all legitimate (`Saint↔St. Johnsbury`,
+   `Mt↔Mount Pleasant`, `Butte↔Butte-Silver Bow`, `Rutland City↔Rutland`). **Guard verified:**
+   all 4 `Saint Albans → St. Johnsbury` genuine errors still fail (0 wrongly credited) — the
+   matcher trusts disjoint WOF ids, so real ranking bugs stay visible for PR #2.
 
 2. **Resolver disambiguation — the `Saint Albans Town/City → St. Johnsbury` cluster (4 rows).**
    A genuine ranking bug: for "Saint Albans, VT" the resolver picks the wrong VT town. Check

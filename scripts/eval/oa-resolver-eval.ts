@@ -41,6 +41,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/core/resolver"
 import { type ClassificationRecord, createAddressParser } from "mailwoman"
 import { readFileSync, writeFileSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
 
 function arg(name: string, fallback = ""): string {
@@ -111,6 +112,30 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 }
 
 const norm = (s: string | undefined): string => (s ?? "").toLowerCase().trim()
+
+/**
+ * Aggressive name normalization for gazetteer-alias locality matching. Lowercases, strips
+ * diacritics + punctuation, expands the universal US place abbreviations (St→Saint, Mt→Mount,
+ * Ft→Fort, Ste→Sainte), and de-spaces "Mc X" → "McX". Deliberately does NOT strip civic
+ * suffixes (City/Town/Township/Village): in New England "Barre City" and "Barre Town" are
+ * DISTINCT municipalities, so collapsing them would over-credit genuine wrong-place misses.
+ * Pair with the WOF altname set (a place's own recorded variants) rather than loosening here.
+ */
+const ABBR: Record<string, string> = { st: "saint", ste: "sainte", mt: "mount", ft: "fort" }
+const normName = (s: string | undefined): string => {
+	if (!s) return ""
+	const x = s
+		.toLowerCase()
+		.normalize("NFD")
+			.replace(/[\u0300-\u036f]/g, "") // drop diacritics
+		.replace(/[^a-z0-9]+/g, " ") // punctuation/hyphens → space (Butte-Silver Bow → butte silver bow)
+		.trim()
+	const toks = x
+		.split(" ")
+		.filter(Boolean)
+		.map((t) => ABBR[t] ?? t)
+	return toks.join(" ").replace(/\bmc (\w)/g, "mc$1").replace(/\s+/g, " ").trim()
+}
 
 // Resolved region names are the gazetteer's CANONICAL full names ("California", "District of
 // Columbia"); OA's expected.region is the USPS abbreviation ("CA", "DC"). Map full name → abbrev so
@@ -216,6 +241,35 @@ async function main(): Promise<void> {
 	const backend = new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
 	const resolver = createWofResolver(backend as never)
 
+	// Gazetteer-alias locality matching. A resolved place counts as a locality match if OA's
+	// expected name equals ANY of that place's WOF `names` rows (normalized) — not just its
+	// single canonical name. This credits forms WOF records as the SAME place (Butte ↔
+	// Butte-Silver Bow, Saint ↔ St. Johnsbury, Mt ↔ Mount Pleasant) WITHOUT loosening genuine
+	// wrong-place misses: different WOF ids carry disjoint name sets, so Saint Albans never
+	// matches St. Johnsbury. The admin db (shard 0) is opened read-only; `names` is indexed on
+	// id, and lookups are cached + only fire on a near-miss, so the cost is negligible.
+	const adminDb = new DatabaseSync(wofPaths[0]!, { readOnly: true })
+	const namesStmt = adminDb.prepare("SELECT name FROM names WHERE id = ?")
+	const altCache = new Map<number, Set<string>>()
+	const altNamesFor = (id: number): Set<string> => {
+		let set = altCache.get(id)
+		if (!set) {
+			set = new Set<string>()
+			for (const r of namesStmt.all(id) as { name: string }[]) {
+				const n = normName(r.name)
+				if (n) set.add(n)
+			}
+			altCache.set(id, set)
+		}
+		return set
+	}
+	const localityMatches = (expected: string | undefined, locNode: Resolved | undefined): boolean => {
+		if (!expected || !locNode) return false
+		const e = normName(expected)
+		if (!e) return false
+		return normName(locNode.name) === e || altNamesFor(locNode.id).has(e)
+	}
+
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
 	const resolveOpts = { defaultCountry: "US" }
 
@@ -249,13 +303,14 @@ async function main(): Promise<void> {
 		resolvedReg?: string
 	} => {
 		const best = mostSpecific(resolved)
-		// Admin-match is by NAME (OA carries no WOF id): a row matches if a resolved locality's
-		// canonical gazetteer name equals OA's expected locality; region is name-or-abbrev tolerant.
-		const locRaw = resolved.find((r) => r.placetype === "locality")?.name
-		const locName = norm(locRaw)
+		// Admin-match is by NAME (OA carries no WOF id): a row matches if OA's expected locality
+		// equals the resolved place's canonical name OR any of its WOF altnames (see
+		// localityMatches); region is name-or-abbrev tolerant.
+		const locNode = resolved.find((r) => r.placetype === "locality")
+		const locRaw = locNode?.name
 		const regResolved = resolved.find((r) => r.placetype === "region")
 		return {
-			locMatch: !!row.expected.locality && locName === norm(row.expected.locality),
+			locMatch: localityMatches(row.expected.locality, locNode),
 			regMatch: regionMatches(regResolved?.name, row.expected.region),
 			resolved: !!best,
 			err: best ? haversineKm(best.lat, best.lon, row.lat, row.lon) : null,
