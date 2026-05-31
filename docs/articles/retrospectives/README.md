@@ -13,3 +13,4 @@ The blog ([`/blog`](/blog)) carries lighter narrative writeups for a general aud
 
 - [v0.4.0 ablation campaign — the verdict-smoke meta-bug and what we shipped instead](./v0-4-0-ablation-campaign.md) — five training divergences, one decoder sidecar, three deferred work areas. 2026-05-23.
 - [v0.6.x cycle retrospective + v0.7 plan](./v0-6-x-cycle-retrospective.md) — three corpus-recipe iterations couldn't find a stable configuration; the deeper finding (calibration crisis + wrong release metric + postcode tokenizer fragmentation) reframes v0.7. 2026-05-29.
+- [v0.7–v0.8: the neural parser vs the rules baseline (two scoreboards)](./v0-7-v0-8-neural-vs-rules-retrospective.md) — why neural scores 20.7% on our Pelias-lineage harness yet beats Pelias 97.3% vs 95.8% on real addresses; the three-arena decomposition; the MLM pre-training negative result; forward plan ranked (street-level geometry first). 2026-05-31.

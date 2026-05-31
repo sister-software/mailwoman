@@ -1,0 +1,99 @@
+---
+slug: two-scoreboards
+title: "Our parser fails 80% of our own tests. We shipped it anyway."
+description: "A neural address parser that scores 20% on our test suite and beats Pelias on real addresses. Both numbers are true — here's why we trust the second one."
+authors: [teffen]
+tags: [neural, rule-based, resolver, geocoding, advanced]
+---
+
+Our neural address parser passes **20.7%** of our test suite. The rule-based parser it's
+meant to replace passes **93.7%**. By that scoreboard, we should delete the neural model and
+go home.
+
+We shipped the neural model instead. Here's why both numbers are true — and why the one that
+matters says the opposite.
+
+{/* truncate */}
+
+## Two parsers, one bench
+
+Mailwoman carries two address parsers. `v0` is a hand-written rule engine — a TypeScript port
+of the [Pelias](https://github.com/pelias/parser) parser, all regexes and dictionaries and
+heuristics. The other is a 29M-parameter encoder-only transformer that tags each token (street,
+locality, postcode, …) and was trained on synthetic and real corpora. The whole bet of the
+neural model is that it generalizes to messy real-world input where rules brittle-fail.
+
+To check the bet, we run both through the same 415-assertion test suite. The rules parser wins
+in a landslide: 93.7% to 20.7%.
+
+## The catch: the bench was built by the opponent
+
+Look one level down, at the per-file results, and something jumps out: **`v0` passes 100% of
+every functional file.** Not 99%. Every single one.
+
+That's not skill — it's lineage. Those 415 assertions were ported from the test suites of
+Pelias and `addressit`. And `v0` *is* our port of Pelias. So the suite is grading a parser
+against its own author's answer key. It cannot, even in principle, catch `v0` being wrong,
+because `v0`'s output **is** the definition of correct.
+
+So "neural scores 20.7%" doesn't mean "neural is wrong 80% of the time." It means **neural
+disagrees with Pelias's exact conventions 80% of the time** — where to split a multi-word
+street, where a venue ends and a locality begins, the dozens of micro-decisions addressit
+happened to encode. Useful as a *regression gate* (did a retrain break something we used to
+match?). Useless as a verdict on which parser is better.
+
+## Decomposing the 20%
+
+To judge quality fairly we need benches drawn from *outside* the Pelias lineage. We score both
+parsers on three:
+
+| arena | what it is | n | v0 | neural |
+|-------|-----------|--:|---:|-------:|
+| **libpostal** | clean, canonical strings | 69 | **29%** | 16% |
+| **perturb** | noisy, abbreviated, reordered | 398 | 39% | **61%** |
+| **postal** | edge formats (PO box, military…) | 38 | **26%** | 8% |
+
+Three different stories:
+
+- **Clean input → rules win.** Canonical strings are exactly what hand-tuned regexes are for.
+  This is also the *entire* harness — all canonical, all Pelias-convention — which is why
+  neural looks worst there.
+- **Messy input → neural wins, decisively** (61% vs 39%) — and this is the biggest bench by
+  far (398 cases), built by perturbing real addresses: dropped commas, abbreviations,
+  reordering, weird casing. It's the closest proxy we have to what people actually type, and
+  it's the whole reason the neural model exists.
+- **Edge formats → both are bad.** PO boxes, military APO/FPO, and rural routes are **0% for
+  both** parsers. Neither was built for them.
+
+## The scoreboard that matters
+
+A geocoder's job isn't to match a tagging convention — it's to put a real address on the map.
+So the honest test is end-to-end: take 10,000 real US addresses with real government
+coordinates, run each parser through the *same* resolver, and ask which one lands on the right
+city.
+
+| parser | locality match (10k real addresses) |
+|--------|------------------------------------:|
+| **neural** | **97.3%** |
+| v0 (Pelias) | 95.8% |
+
+On the metric that matches the product — real addresses, end to end — **the neural parser
+beats the rules parser.** The 20.7% and the 97.3% are measuring two completely different
+things: agreement with Pelias's answer key, versus getting real addresses right.
+
+## The lesson
+
+If you port your test suite from the system you're trying to beat, that system scores 100% by
+construction, and your challenger will always look broken. The suite isn't lying — it's
+faithfully measuring *agreement with the incumbent*. Just don't mistake that for quality.
+
+Measure on the distribution you actually serve. For us that's messy, abbreviated, real-world
+addresses — and there, the learned model is ahead.
+
+---
+
+The full breakdown — every arena, the genuine neural deficits (it does truncate
+`Belle Fourche` to `Belle`), a masked-LM pre-training experiment that turned into a clean
+negative result, and what's next (street-level geometry, to go from "right city" to "right
+spot") — is in the
+[v0.7–v0.8 retrospective](/docs/retrospectives/v0-7-v0-8-neural-vs-rules-retrospective).
