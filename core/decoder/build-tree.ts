@@ -8,9 +8,11 @@
  *   Two passes:
  *
  *   1. Span emission — walk the token stream, group `B-X` followed by `I-X*` into one span. Lenient on
- *        hanging `I-X` (treat as new span). Span `value` is sliced from `raw` by [start, end), NOT
- *        concatenated from `piece` — this avoids SentencePiece's synthetic leading-space markers in
- *        the output.
+ *        hanging `I-X` (treat as new span). A `B-X` that is whitespace-adjacent to an already-open
+ *        `X` span is also folded in (spurious-boundary repair for multi-word values the model
+ *        fragments, e.g. "Saint Paul" → B-locality B-locality); a comma/separator between them keeps
+ *        them distinct. Span `value` is sliced from `raw` by [start, end), NOT concatenated from
+ *        `piece` — this avoids SentencePiece's synthetic leading-space markers in the output.
  *   2. Parent attachment — for each span, find the nearest labeled span whose tag is the
  *        highest-priority entry in this span's `PARENT_OF` list. Distance is the tiebreaker only.
  *        Spans with no found parent become roots.
@@ -93,11 +95,32 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 		const { prefix, tag } = bioParts(tok.label)
 
 		if (prefix === "O") {
+			// A zero-width or whitespace-only `O` piece is a tokenizer artifact — SentencePiece emits a
+			// standalone `▁` word-boundary marker between words and the model labels it `O` (e.g.
+			// "Saint Paul" → "▁Saint"[B-loc], "▁"[O, zero-width], "Paul"[B-loc]). It is NOT a real
+			// component boundary, so it must not flush the open span; keeping the span alive lets the
+			// following same-tag `B-` token merge in (see the spurious-boundary repair below). A
+			// non-whitespace `O` (comma, slash, …) is a genuine separator and still flushes.
+			if (open !== null && /^\s*$/.test(raw.slice(tok.start, tok.end))) continue
 			open = flush(open, raw, out, attribution)
 			continue
 		}
 
 		if (prefix === "B" || open === null || open.tag !== tag) {
+			// Spurious-boundary repair: a `B-X` token that is whitespace-adjacent to an already-open
+			// `X` span is the model fragmenting a multi-word value — e.g. "Saint Paul" emitted as
+			// B-locality B-locality instead of B-locality I-locality (a real, decode-agnostic
+			// emission bug; see scripts/diag-saintalbans.ts). Fold it into the open span.
+			//
+			// Guard: only merge when the text in `raw` between the two spans is whitespace-only. A
+			// comma or any other separator keeps them distinct, and an intervening O/different-tag
+			// token already nulls/replaces `open` above — so two genuinely separate same-tag spans
+			// (e.g. "Springfield, Chicago") are never merged.
+			if (prefix === "B" && open !== null && open.tag === tag && /^\s*$/.test(raw.slice(open.end, tok.start))) {
+				open.end = tok.end
+				open.confidences.push(tok.confidence)
+				continue
+			}
 			open = flush(open, raw, out, attribution)
 			open = { tag: tag!, start: tok.start, end: tok.end, confidences: [tok.confidence] }
 			continue

@@ -165,6 +165,102 @@ describe("buildAddressTree — boundary trim", () => {
 	})
 })
 
+// Spurious-boundary repair. The neural model fragments some multi-word locality values into two
+// B-locality spans ("Saint Paul" → B-locality "Saint" + B-locality "Paul") — a real, decode-
+// agnostic emission bug (argmax == viterbi; see scripts/diag-saintalbans.ts). A `B-X` token that is
+// whitespace-adjacent to an open `X` span is folded in; a comma/separator keeps spans distinct.
+describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", () => {
+	function localitySpans(nodes: AddressNode[]): AddressNode[] {
+		const out: AddressNode[] = []
+		const walk = (n: AddressNode): void => {
+			if (n.tag === "locality") out.push(n)
+			for (const c of n.children) walk(c)
+		}
+		for (const n of nodes) walk(n)
+		return out
+	}
+
+	test("folds whitespace-adjacent B-locality B-locality into one span", () => {
+		// "Saint Paul, MN" — model emits B-locality on BOTH "Saint" and "Paul".
+		const raw = "Saint Paul, MN"
+		const tokens: DecoderToken[] = [
+			tok("Saint", 0, 5, "B-locality"),
+			tok("Paul", 6, 10, "B-locality"),
+			tok(",", 10, 11, "O"),
+			tok("MN", 12, 14, "B-region"),
+		]
+		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
+		expect(locs.length).toBe(1)
+		expect(locs[0]!.value).toBe("Saint Paul")
+		expect(locs[0]!.start).toBe(0)
+		expect(locs[0]!.end).toBe(10)
+	})
+
+	test("folds across a zero-width whitespace-only O artifact (real SentencePiece stream)", () => {
+		// Exact stream observed from the model (scripts/diag-saintalbans.ts): SentencePiece emits a
+		// standalone zero-width "▁" marker between the words, labeled O. It must not break the span.
+		const raw = "Saint Paul, MN"
+		const tokens: DecoderToken[] = [
+			tok("▁Saint", 0, 5, "B-locality"),
+			tok("▁", 6, 6, "O"),
+			tok("Paul", 6, 10, "B-locality"),
+			tok(",", 10, 11, "O"),
+			tok("▁", 12, 12, "O"),
+			tok("MN", 12, 14, "B-region"),
+		]
+		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
+		expect(locs.length).toBe(1)
+		expect(locs[0]!.value).toBe("Saint Paul")
+	})
+
+	test("merges within a full address too (St + Albans → one locality)", () => {
+		// "22 Brigham Rd, Saint Albans, VT 05478"
+		const raw = "22 Brigham Rd, Saint Albans, VT 05478"
+		const tokens: DecoderToken[] = [
+			tok("22", 0, 2, "B-house_number"),
+			tok("Brigham", 3, 10, "B-street"),
+			tok("Rd", 11, 13, "I-street"),
+			tok(",", 13, 14, "O"),
+			tok("Saint", 15, 20, "B-locality"),
+			tok("Albans", 21, 27, "B-locality"),
+			tok(",", 27, 28, "O"),
+			tok("VT", 29, 31, "B-region"),
+			tok("05478", 32, 37, "B-postcode"),
+		]
+		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
+		expect(locs.length).toBe(1)
+		expect(locs[0]!.value).toBe("Saint Albans")
+	})
+
+	test("GUARD: comma between same-tag spans keeps them distinct (no merge)", () => {
+		// Two genuinely separate localities, comma in the gap (no intervening O token).
+		const raw = "Dallas, Austin"
+		const tokens: DecoderToken[] = [tok("Dallas", 0, 6, "B-locality"), tok("Austin", 8, 14, "B-locality")]
+		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
+		expect(locs.length).toBe(2)
+		expect(locs.map((l) => l.value).sort()).toEqual(["Austin", "Dallas"])
+	})
+
+	test("GUARD: intervening O token keeps same-tag spans distinct", () => {
+		const raw = "Dallas , Austin"
+		const tokens: DecoderToken[] = [
+			tok("Dallas", 0, 6, "B-locality"),
+			tok(",", 7, 8, "O"),
+			tok("Austin", 9, 15, "B-locality"),
+		]
+		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
+		expect(locs.length).toBe(2)
+	})
+
+	test("merged span confidence is the mean across all folded tokens", () => {
+		const raw = "Saint Paul"
+		const tokens: DecoderToken[] = [tok("Saint", 0, 5, "B-locality", 0.9), tok("Paul", 6, 10, "B-locality", 0.5)]
+		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
+		expect(locs.length).toBe(1)
+		expect(locs[0]!.confidence).toBeCloseTo(0.7, 5)
+	})
+})
+
 function findByTag(nodes: AddressNode[], tag: string): AddressNode | null {
 	for (const n of nodes) {
 		if (n.tag === tag) return n
