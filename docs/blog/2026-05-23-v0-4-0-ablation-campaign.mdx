@@ -28,11 +28,11 @@ v0.3.0 had shipped with a known regression on coarse labels (country, region, lo
 5. **JS-side Viterbi decoder** + label vocabulary loading from `model-card.json` — runtime cleanup.
 6. **Reuse `corpus-v0.3.0`** — no rebuild needed.
 
-Items 5 and 6 were pure engineering; they landed cleanly the day before training started. The contested ones were 1, 3, and 4 — the recipe changes that actually touch the loss surface.
+Items 5 and 6 were pure engineering; they landed cleanly the day before training started. The contested ones were 1, 3, and 4: the recipe changes that actually touch the loss surface.
 
 ## What actually happened
 
-Five training runs. Three of them on different learning rates with the same full recipe; two of them as ablations dropping one item at a time. All five diverged. The fingerprint was distinctive: training loss dropped monotonically through a long warmup, plateaued at the bottom for several hundred steps, then spiked back up to its starting magnitude over 50-150 steps. Validation macro-F1 mirrored the train loss — it climbed to a peak around the LR's peak step, then collapsed to roughly the random-output baseline.
+Five training runs. Three of them on different learning rates with the same full recipe; two of them as ablations dropping one item at a time. All five diverged. The fingerprint was distinctive: training loss dropped monotonically through a long warmup, plateaued at the bottom for several hundred steps, then spiked back up to its starting magnitude over 50-150 steps. Validation macro-F1 mirrored the train loss: it climbed to a peak around the LR's peak step, then collapsed to roughly the random-output baseline.
 
 The collapse step shifted with the learning rate:
 
@@ -51,7 +51,7 @@ So we ran the ablations the issue had prescribed:
 | Drop §1 (CRF norm)      | 5e-4 | Diverged step 1000 |
 | Drop §3 (class weights) | 5e-4 | Diverged step 1000 |
 
-Identical failures. At lr=5e-4 neither single-knob revert was enough — meaning lr=5e-4 was structurally unreachable for the codebase's dual-loss landscape regardless of which knob we touched.
+Identical failures. At lr=5e-4 neither single-knob revert was enough, meaning lr=5e-4 was structurally unreachable for the codebase's dual-loss landscape regardless of which knob we touched.
 
 We dropped back to the safe LR (1.5e-4, the same lr v0.3.0 had been forced down to) and ran a three-cell orthogonal matrix:
 
@@ -67,7 +67,7 @@ It diverged at step 2250. Same fingerprint as the full §1+§3+§4 recipe at the
 
 ## The meta-bug in the smoke framework
 
-The verdict-smoke ran each ablation for 3000 steps with a cosine learning-rate schedule. With `max_steps=3000` and `warmup_steps=1000`, the LR peaks around step 1000 and is back near zero by step 2750. The smoke's "pass" criterion — macro-F1 stable across the last three evals past step 2000 — was actually measuring stability _under a near-zero learning rate_. The full 50K run kept the LR near its peak for thousands of steps. That sustained-peak exposure was where the destabilization happened.
+The verdict-smoke ran each ablation for 3000 steps with a cosine learning-rate schedule. With `max_steps=3000` and `warmup_steps=1000`, the LR peaks around step 1000 and is back near zero by step 2750. The smoke's "pass" criterion (macro-F1 stable across the last three evals past step 2000) was actually measuring stability _under a near-zero learning rate_. The full 50K run kept the LR near its peak for thousands of steps. That sustained-peak exposure was where the destabilization happened.
 
 The smoke wasn't testing what we thought it was testing. By the time it would have noticed the divergence, its own LR schedule had already saved it.
 
@@ -107,7 +107,7 @@ The picture changes meaningfully:
 France, Lozère, ՍԵՆՏ-ԱԼԲԱՆ-ՍՅՈՒՐ-ԼԻՄԱՆՅՈԼ              →  pred: "" (empty)
 ```
 
-These are v0.3.0's documented known-failure modes. The bytefallback tokenizer treats non-Latin scripts as the same opaque sequence, and the model gives up on the prefix. We have known v0.3.0 was bad at these — the v0.4.0 weights didn't change anything about this slice, so it isn't a real recipe regression. After excluding adversarial inputs, country FN drops from 194 to roughly 16. The −0.07 country regression is mostly a golden-set adversarial-weighting artifact.
+These are v0.3.0's documented known-failure modes. The bytefallback tokenizer treats non-Latin scripts as the same opaque sequence, and the model gives up on the prefix. We have known v0.3.0 was bad at these. The v0.4.0 weights didn't change anything about this slice, so it isn't a real recipe regression. After excluding adversarial inputs, country FN drops from 194 to roughly 16. The −0.07 country regression is mostly a golden-set adversarial-weighting artifact.
 
 **Postcode false-negatives** split into four buckets:
 
@@ -118,15 +118,15 @@ These are v0.3.0's documented known-failure modes. The bytefallback tokenizer tr
 | House number confused for postcode |     11% | `47110 Sainte-Livrade-sur-Lot, 22 Rue Jasmin` → predicts `22` |
 | BIO span boundary slip             |      6% | `LE TRÉPORT, 76470` → predicts `", 7647"`                     |
 
-The empty-prediction slice is the real story. NAD's downweight was the most aggressive change in the §4 source rebalance — it carried a lot of "postcode comes first" patterns (`47110 Sainte-Livrade-sur-Lot`, `ND 58701, 44th Ave`) and reducing its share removed that positional exposure. The model now defaults to tagging mid-position numeric tokens as house_number instead of postcode.
+The empty-prediction slice is the real story. NAD's downweight was the most aggressive change in the §4 source rebalance: it carried a lot of "postcode comes first" patterns (`47110 Sainte-Livrade-sur-Lot`, `ND 58701, 44th Ave`) and reducing its share removed that positional exposure. The model now defaults to tagging mid-position numeric tokens as house_number instead of postcode.
 
-That's a real fix that v0.4.1 should target. It is not the same problem as the headline regression number suggests. The 6% boundary-slip slice is a different bug — the model gets the tag right but emits a span that includes the preceding comma+space. That's a decoder fix, no retraining required, and it has already landed on `main` as commit `c72ab4c` — the decoder now trims spans past leading/trailing non-word characters.
+That's a real fix that v0.4.1 should target. It is not the same problem as the headline regression number suggests. The 6% boundary-slip slice is a different bug — the model gets the tag right but emits a span that includes the preceding comma+space. That's a decoder fix, no retraining required, and it has already landed on `main` as commit `c72ab4c`. The decoder now trims spans past leading/trailing non-word characters.
 
 ## What didn't get fixed (the v0.4.1 list)
 
-The two destabilizers — §1 per-token CRF normalization and §3 class-weighted cross-entropy — are deferred. Both individually look like reasonable training-side improvements; both, at this LR + this loss landscape, made the model find a confident-wrong degenerate minimum after several hundred post-warmup steps. The sanity-check pass over `model.py` and `crf.py` ruled out implementation bugs — the `per_token` reduction is mathematically `nll.sum() / total_tokens.clamp(min=1)`, and class_weights enters via PyTorch-standard `cross_entropy(weight=...)`. The destabilization is a real recipe interaction.
+The two destabilizers — §1 per-token CRF normalization and §3 class-weighted cross-entropy — are deferred. Both individually look like reasonable training-side improvements; both, at this LR + this loss landscape, made the model find a confident-wrong degenerate minimum after several hundred post-warmup steps. The sanity-check pass over `model.py` and `crf.py` ruled out implementation bugs: the `per_token` reduction is mathematically `nll.sum() / total_tokens.clamp(min=1)`, and class_weights enters via PyTorch-standard `cross_entropy(weight=...)`. The destabilization is a real recipe interaction.
 
-The leading hypothesis at the v0.4.0 boundary is that some adapter slice in `corpus-v0.3.0` is producing high-variance gradients that the per-token-normalized CRF still can't dampen. We built the `corpus-audit` tool during the campaign — it measures per-source shard distribution against the training config's source_weights, with concentration warnings — and the v0.4.1 starting point will be running gradient-norm probes per adapter to find what's causing the spike.
+The leading hypothesis at the v0.4.0 boundary is that some adapter slice in `corpus-v0.3.0` is producing high-variance gradients that the per-token-normalized CRF still can't dampen. We built the `corpus-audit` tool during the campaign (it measures per-source shard distribution against the training config's source_weights, with concentration warnings), and the v0.4.1 starting point will be running gradient-norm probes per adapter to find what's causing the spike.
 
 Three orthogonal threads for v0.4.1:
 

@@ -51,7 +51,7 @@ To synthesize a JP address you concatenate the parent chain top-to-bottom: `東�
 
 Western addresses identify locations by street + number. "1600 Pennsylvania Avenue NW" picks a specific building because Pennsylvania Avenue is a known line and 1600 is a known offset along that line.
 
-Japan uses block addressing instead. `4-2-8` in `芝公園` doesn't mean "the 4th, 2nd, or 8th building on the 芝公園 street." It means: chome 4, block 2, building 8 in the 芝公園 district. The grid is the addressing primitive, not the line.
+Japan uses block addressing instead. Read `4-2-8` in `芝公園` as chome 4, block 2, building 8 within the 芝公園 district. There's no "芝公園 street" for the number to sit on; the grid is the addressing primitive, not the line.
 
 Implications for the parser:
 
@@ -69,7 +69,7 @@ Japanese addresses prefix the postcode with `〒`, the postal mark. Format: `〒
 - `〒530-0001` — Osaka Umeda
 - `〒810-0001` — Fukuoka Tenjin
 
-A parser needs to know that `〒` is not part of the number — it's a categorical marker indicating the following 7 digits + dash form a postcode. SentencePiece tokenizes `〒` as a separate piece. Our new v0.6.0-a0 multi-script tokenizer handles this cleanly (0% byte-fallback on the `〒` character).
+A parser needs to know that `〒` is a categorical marker, not part of the number: the following 7 digits + dash form the postcode. SentencePiece tokenizes `〒` as a separate piece. Our new v0.6.0-a0 multi-script tokenizer handles this cleanly (0% byte-fallback on the `〒` character).
 
 ## What we shipped today
 
@@ -122,7 +122,7 @@ The infrastructure is already in place. `core/types/component.ts` declares JP-sp
 
 The schema, formatting, runtime pipeline, and now the corpus prototype are ready. The blockers are: (1) the missing house-number data source, and (2) training time on a JP-aware recipe.
 
-## Why this matters
+## Where rules fail and learning wins
 
 Every address parser written for Western input fails on Japan in a specific, predictable way: it parses the prefecture as a country, then runs out of tokens. The locality and chome get lumped into a single span. The block-number triple gets parsed as a postcode or dropped entirely.
 
