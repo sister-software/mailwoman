@@ -11,7 +11,7 @@ The second night shift ran from roughly 2am to 2pm UTC on May 25th, 2026. It sta
 
 ## The hardware wall
 
-The lab runs on a small form factor desktop with an AMD Radeon 780M integrated GPU. For short bursts — a 2-minute smoke test, a 10-minute diagnostic probe — it works fine. For sustained multi-hour training at 98% GPU utilization, it overheats. The firmware detects thermal stress and resets the GPU, killing whatever process was running on it.
+The lab runs on a small form factor desktop with an AMD Radeon 780M integrated GPU. For short bursts (a 2-minute smoke test, a 10-minute diagnostic probe), it works fine. For sustained multi-hour training at 98% GPU utilization, it overheats. The firmware detects thermal stress and resets the GPU, killing whatever process was running on it.
 
 During this session, the GPU hit 22 resets before we stopped counting. Every 60-90 minutes of training, the hardware would fault. A watchdog script would wait 15 minutes for the chassis to cool, then restart from the last checkpoint. Net progress: about 8,800 training steps out of a target 50,000.
 
@@ -57,11 +57,11 @@ After the model shipped, we ran the full product-level evaluation — four pipel
 
 A few things jump out:
 
-**The neural model hallucinates components it shouldn't.** On the golden set, it invented a `dependent_locality` — a sub-city neighborhood — 956 times where none existed. That's not a calibration problem (it's not just overconfident, it's wrong), and it's not a decode problem (Viterbi with structural mask is already running). It's a training problem: cross-entropy treats every mislabeling equally, so the model never learned that `dependent_locality` is rare and should be emitted sparingly. Class-weighted CE — which was blocked in v0.4.0 because it destabilized the dual-loss training — puts a thumb on the scale: mislabeling a rare tag costs more. Now that CE-only training is proven stable, this lever is unlocked.
+**The neural model hallucinates components it shouldn't.** On the golden set, it invented a `dependent_locality` — a sub-city neighborhood — 956 times where none existed. Two explanations look tempting, and both lead nowhere. Calibration? These predictions come out at high confidence — the model is confidently wrong, not hedging. Decoding? Viterbi with the structural mask is already running. What's left is training: cross-entropy treats every mislabeling equally, so the model never learned that `dependent_locality` is rare and should be emitted sparingly. Class-weighted CE — which was blocked in v0.4.0 because it destabilized the dual-loss training — puts a thumb on the scale: mislabeling a rare tag costs more. Now that CE-only training is proven stable, this lever is unlocked.
 
-**Hybrid mode shows identical numbers to neural alone.** The hybrid mode fuses rule classifications with neural output, but in this iteration the raw neural decoder's overconfidence drowns out the rules — hence the identical numbers. The reconciler (hybrid-joint) is the mode that actually disciplines the merge.
+**Hybrid mode shows identical numbers to neural alone.** The hybrid mode fuses rule classifications with neural output, but in this iteration the raw neural decoder's overconfidence drowns out the rules, hence the identical numbers. The reconciler (hybrid-joint) is the mode that actually disciplines the merge.
 
-**The reconciler fixes the honesty problem.** It drops overconfident-wrong from 54.5% to 0.1% by checking whether parsed components form a coherent real-world hierarchy. It also eliminates empty parses entirely (0.0% vs rules' 6.3%) — it always produces something, even if conservative.
+**The reconciler fixes the honesty problem.** It drops overconfident-wrong from 54.5% to 0.1% by checking whether parsed components form a coherent real-world hierarchy. It also eliminates empty parses entirely (0.0% vs rules' 6.3%): it always produces something, even if conservative.
 
 **The rules are a ceiling. The neural model is a ramp.** Rule-only at 30.8% exact match is a mature system, hand-tuned over years. Each additional percentage point costs engineering time. The neural model at 6.0% (hybrid-joint) after one stable training run is learning from data, which means each new training run can improve across every component and every locale simultaneously. The 68% improvement from v0.4.0 to v0.5.0 is the trend that matters — and the ramp just proved it can climb.
 
@@ -72,7 +72,7 @@ The overnight session could have been a write-off. A GPU that crashes every 90 m
 - **Corpus on R2** means any GPU provider can pull it at datacenter speed. Upload once, train anywhere.
 - **Modal's per-second billing** means we paid $0 for data upload, $0 for debugging, and ~$5 for the actual GPU compute.
 - **Checkpoints every 500 steps** on the Modal Volume means even if a Modal preemption happened (it didn't), we'd lose at most 7 minutes of work.
-- **The same training script** ran locally (for smoke tests) and remotely (for the full run) without modification — the config just points at `/data/` which is either the local mount or the Modal Volume.
+- **The same training script** ran locally (for smoke tests) and remotely (for the full run) without modification: the config just points at `/data/`, which is either the local mount or the Modal Volume.
 
 The local iGPU still has a role: smoke tests, gradient probes, quick 50-step experiments. The expensive runs go to the cloud. The separation happened naturally once we accepted that the hardware wall was real and not worth engineering around.
 
