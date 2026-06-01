@@ -42,7 +42,7 @@ The letter arrives at the destination post office, sorted into trays by carrier 
 
 Carriers possess **local knowledge** that no database has. They know that the blue house on Elm Street is 142 Elm, even though the mailbox says 140. They know that the new apartment building at the end of the block uses the address of the demolished warehouse that stood there before, because USPS hasn't updated the delivery sequence yet. They know that the occupant of 15 Main Street moved to Florida six months ago and mail should be forwarded.
 
-This is the deepest layer of the postal system's fuzziness: the human at the end of the chain who overrides the machine's decisions. It is not an edge case — it is how the system works every day.
+This is the deepest layer of the postal system's fuzziness: the human at the end of the chain who overrides the machine's decisions. It is how the system works every day, not an edge case.
 
 ## Step 5 — What happens when the address is wrong
 

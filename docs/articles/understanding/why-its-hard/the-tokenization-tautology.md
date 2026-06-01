@@ -147,14 +147,14 @@ The **neural classifier** (Stage 3) then types each proposed span. Because the c
 
 The classifier can disagree with the grouper's boundaries (it can merge or split spans) but it starts from a better prior than token-level independent classification.
 
-The **reconciler** (Stage 5) then picks the joint interpretation that maximizes coherence — not just per-span correctness, but cross-component consistency. This is where the `NY-NY Steakhouse` problem gets solved: the reconciler sees that labeling the first "NY" as `region` and the second "NY" as `region` produces a joint parse with two regions for different places, which the resolver's hierarchy cannot reconcile. The alternative interpretation — the "NY" tokens are part of a `venue` name — produces a joint-consistent parse. The reconciler switches.
+The **reconciler** (Stage 5) then picks the joint interpretation that maximizes coherence — cross-component consistency on top of per-span correctness. This is where the `NY-NY Steakhouse` problem gets solved: the reconciler sees that labeling the first "NY" as `region` and the second "NY" as `region` produces a joint parse with two regions for different places, which the resolver's hierarchy cannot reconcile. The alternative interpretation — the "NY" tokens are part of a `venue` name — produces a joint-consistent parse. The reconciler switches.
 
 ## What this doesn't solve
 
 The staged pipeline doesn't eliminate ambiguity. It moves the ambiguity to where the model has the most information:
 
 - The grouper can still propose wrong boundaries. But it's cheap to improve (rule-based, fast iteration) and wrong boundaries are upstream of classification rather than downstream of it.
-- The classifier can still mis-type a span. But it has the full context of the input, not just one token.
+- The classifier can still mis-type a span. But it has the full context of the input, rather than one token in isolation.
 - The reconciler can still pick a wrong joint interpretation. But it has resolver feedback — the world hierarchy is a constraint the traditional solver never had.
 
 The point is not that Mailwoman is perfect. The point is that the traditional pipeline has a structural ceiling: **context-free decisions that context-sensitive decisions downstream cannot reverse.** Mailwoman moves the context-sensitive decisions upstream, where they belong.

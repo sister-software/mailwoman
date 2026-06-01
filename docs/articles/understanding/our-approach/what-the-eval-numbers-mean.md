@@ -53,7 +53,7 @@ The v0.5.0 neural model achieved val_macro_f1=0.605 during training — which so
 
 Training eval asks "did the model label each word correctly?" — a local question. The golden eval asks "did the parser produce a correct address?" — a global question. These are different. The model can score 0.605 on the first and 0.001 on the second because correct per-token labeling doesn't guarantee correct parses — one wrong token cascades into a structurally invalid address.
 
-The concrete smoking gun: the model invented a `dependent_locality` (a sub-city neighborhood) **956 times** where none existed in the golden labels. It wasn't just overconfident — it was actively hallucinating a component it hadn't learned to distinguish. Cross-entropy treats every mislabeling equally, so the model never learned that `dependent_locality` is rare and should be emitted sparingly.
+The concrete failure: the model invented a `dependent_locality` (a sub-city neighborhood) **956 times** where none existed in the golden labels. The model was actively hallucinating a component it hadn't learned to distinguish, not merely being overconfident. Cross-entropy treats every mislabeling equally, so the model never learned that `dependent_locality` is rare and should be emitted sparingly.
 
 In hybrid mode, the neural model's overconfidence drowns out the rules entirely — when the neural decoder says "this token is a dependent_locality" at 95% confidence and the rule parser disagrees, the neural vote wins. This is why hybrid and neural show identical numbers: the rules never get a say.
 

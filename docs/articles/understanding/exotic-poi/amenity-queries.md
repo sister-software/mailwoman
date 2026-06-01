@@ -36,7 +36,7 @@ The query has two parts: a **category** (what kind of thing) and an **implicit l
 
 The problem compounds across languages: `ガソリンスタンド` (gasorin sutando, Japanese), `加油站` (jiāyóuzhàn, Chinese), `Tankstelle` (German), `station-service` (French). Every language has its own word for "gas station." A geocoder that only recognizes English amenity names is useless for most of the world's population.
 
-This is not a translation problem — it's an **alias** problem. The geocoder doesn't need to translate "gas station" to French. It needs to know that `station-service` is the same category as `amenity=fuel`. The category taxonomy is language-independent; the labels for each category are language-dependent.
+This is an **alias** problem, not a translation problem. The geocoder doesn't need to translate "gas station" to French. It needs to know that `station-service` is the same category as `amenity=fuel`. The category taxonomy is language-independent; the labels for each category are language-dependent.
 
 ## How traditional geocoders handle amenity queries
 

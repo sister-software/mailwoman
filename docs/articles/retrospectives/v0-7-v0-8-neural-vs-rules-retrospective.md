@@ -5,11 +5,16 @@ title: "v0.7–v0.8: the neural parser vs the rules baseline (two scoreboards)"
 
 # v0.7–v0.8: the neural parser vs the rules baseline
 
-**Window:** 2026-05-29 → 2026-05-31. **Question this answers:** how is the neural
-parser actually doing against `v0` (our TypeScript port of the Pelias rule parser), on
-*parsing*? **Short answer:** it depends entirely on which scoreboard you read, and our
-headline test suite is biased against the neural model by construction. On the scoreboard
-that matches the product — real addresses, end to end — the neural parser is **ahead**.
+**When:** 2026-05-29 → 2026-05-31.
+
+This retrospective asks three questions. Is the neural parser ready to replace `v0` (our
+TypeScript port of the Pelias rule engine)? If so, why does our own headline test suite say
+it's nowhere close? And when those two answers disagree, which one should we believe?
+
+Well… it depends on how we're keeping score. On our in-house suite the rules parser wins in
+a landslide, 93.7% to 20.7%. On the scoreboard that matches the product — real addresses,
+resolved end to end — the neural parser comes out ahead, 97.3% to 95.8%. Both numbers are
+real; they're just counting different things.
 
 This is the deep-dive companion to the blog post
 ([_Our parser fails 80% of our own tests_](/blog/two-scoreboards)). It pins down the
@@ -24,45 +29,44 @@ comparisons are valid. `v0` is the rule parser, scored through the same machiner
 The regression gate is `scripts/harness-v0-neural.ts`: 415 tag-level assertions ported
 from the Pelias / `addressit` test suites. Current standings:
 
-| parser | pass | rate |
-|--------|-----:|-----:|
-| v0 (rule-based) | 389 | **93.7%** |
-| neural | 86 | **20.7%** |
-| both pass | 76 | 18.3% |
-| **v0 only** | 313 | **75.4%** |
-| neural only | 10 | 2.4% |
-| both fail | 16 | 3.9% |
+| parser          | pass |      rate |
+| --------------- | ---: | --------: |
+| v0 (rule-based) |  389 | **93.7%** |
+| neural          |   86 | **20.7%** |
+| both pass       |   76 |     18.3% |
+| **v0 only**     |  313 | **75.4%** |
+| neural only     |   10 |      2.4% |
+| both fail       |   16 |      3.9% |
 
-Taken at face value this says the rules parser is dramatically better. But look at the
-per-file breakdown: **v0 passes 100% of every functional file** (usa, intersection,
-functional, fra, nld, nzd…). That is the tell. These assertions *are* Pelias / addressit's
-own expected outputs, and `v0` is our port of Pelias — so it passes **by construction**.
-The suite cannot, even in principle, show `v0` being wrong on these cases; it encodes
-Pelias's tagging conventions as ground truth.
+On paper the rules parser wins in a walk. Then look at the per-file breakdown: **v0 passes
+100% of every functional file** (usa, intersection, functional, fra, nld, nzd…). Naturally —
+`v0` is our port of Pelias, and these assertions _are_ Pelias / addressit's own expected
+outputs, so it passes **by construction**. The suite cannot, even in principle, show `v0`
+being wrong on these cases; it encodes Pelias's tagging conventions as ground truth.
 
-So "neural scores 20.7%" does not mean "neural parses 4.5× worse." It means **neural
-disagrees with Pelias's exact tagging conventions 75% of the time** — different
-tokenization of multi-word streets, different venue/locality boundaries, different
-handling of the cases addressit happened to encode. The harness is a faithful
-*regression gate* (it catches when a retrain breaks a convention we previously matched),
-but it is not a parsing-quality verdict. Treating it as one is the
+So "neural scores 20.7%" measures one thing: **how often neural disagrees with Pelias's
+exact tagging conventions** — 75% of the time, on different tokenization of multi-word
+streets, different venue/locality boundaries, and the cases addressit happened to encode.
+It says nothing about whether neural is _wrong_. The harness is a faithful
+_regression gate_ (it catches when a retrain breaks a convention we previously matched),
+but not a parsing-quality verdict. Treating it as one is the
 [harness-lineage trap](../evals/2026-05-30-harness-lineage-and-the-resolver-scoreboard.md).
 
 ## Decomposing the 20% — three unbiased arenas
 
 To see where neural actually earns its keep, we score both parsers on three arenas drawn
-from *outside* the Pelias lineage (`scripts/eval/external-arenas.sh`, all `--symmetric-match`):
+from _outside_ the Pelias lineage (`scripts/eval/external-arenas.sh`, all `--symmetric-match`):
 
-| arena | n | v0 | neural | both | neural-only | v0-only | both-fail |
-|-------|--:|---:|-------:|-----:|------------:|--------:|----------:|
-| **libpostal** (clean / canonical) | 69 | **29%** | 16% | 9% | 7% | 20% | 64% |
-| **perturb** (noisy / degraded) | 398 | 39% | **61%** | 32% | 29% | 7% | 32% |
-| **postal** (edge formats) | 38 | **26%** | 8% | 5% | 3% | 21% | 71% |
+| arena                             |   n |      v0 |  neural | both | neural-only | v0-only | both-fail |
+| --------------------------------- | --: | ------: | ------: | ---: | ----------: | ------: | --------: |
+| **libpostal** (clean / canonical) |  69 | **29%** |     16% |   9% |          7% |     20% |       64% |
+| **perturb** (noisy / degraded)    | 398 |     39% | **61%** |  32% |         29% |      7% |       32% |
+| **postal** (edge formats)         |  38 | **26%** |      8% |   5% |          3% |     21% |       71% |
 
 Three different stories:
 
 - **Clean, canonical input → rules win** (29% vs 16%). libpostal-style strings are exactly
-  what hand-tuned rules are built for. This also explains the harness: it is *all* canonical,
+  what hand-tuned rules are built for. This also explains the harness: it is _all_ canonical,
   Pelias-convention input, so it is the arena where neural is weakest, sampled 415 times.
 - **Noisy, degraded, reordered input → neural wins, decisively** (61% vs 39%) — and this is
   the **largest** arena (398 cases), generated by perturbing golden addresses (dropped
@@ -72,15 +76,15 @@ Three different stories:
 - **Edge formats → both are bad**, v0 marginally ahead (26% vs 8%). The `edge_class`
   breakdown of the postal arena:
 
-  | edge_class | n | v0 | neural |
-  |------------|--:|---:|-------:|
-  | canonical | 14 | 36% | 7% |
-  | intl-format | 7 | 43% | 29% |
-  | secondary-unit | 7 | 29% | 0% |
-  | directional | 2 | 0% | 0% |
-  | military-apofpo | 3 | 0% | 0% |
-  | po-box | 4 | 0% | 0% |
-  | rural-route | 1 | 0% | 0% |
+  | edge_class      |   n |  v0 | neural |
+  | --------------- | --: | --: | -----: |
+  | canonical       |  14 | 36% |     7% |
+  | intl-format     |   7 | 43% |    29% |
+  | secondary-unit  |   7 | 29% |     0% |
+  | directional     |   2 |  0% |     0% |
+  | military-apofpo |   3 |  0% |     0% |
+  | po-box          |   4 |  0% |     0% |
+  | rural-route     |   1 |  0% |     0% |
 
   PO boxes, military APO/FPO, and rural routes are **0% for both** — neither parser was
   built or trained for them.
@@ -90,26 +94,26 @@ Three different stories:
 The product is a geocoder, not a tag-matcher. The honest, non-circular metric is the
 [OpenAddresses real-point eval](../evals/2026-05-30-openaddresses-real-point-eval.md):
 every row is a real US address with a real government lat/lon, and we score whether each
-parser, run through the *same* WOF resolver, lands on the right locality. On 10,000 rows:
+parser, run through the _same_ WOF resolver, lands on the right locality. On 10,000 rows:
 
-| parser | locality match | region match | resolved |
-|--------|---------------:|-------------:|---------:|
-| **neural** | **97.3%** | 99.9% | 100.0% |
-| v0 (Pelias) | 95.8% | 99.5% | 99.8% |
+| parser      | locality match | region match | resolved |
+| ----------- | -------------: | -----------: | -------: |
+| **neural**  |      **97.3%** |        99.9% |   100.0% |
+| v0 (Pelias) |          95.8% |        99.5% |    99.8% |
 
 **On the metric that matches the product, neural beats the rules parser** (+1.5pp
 locality, on real addresses). The north-star claim — "a parser superior to Pelias's
 regex/rules system" — is demonstrated here, not merely asserted.
 
 (Coordinate accuracy is still admin-centroid tier: p50 2.4 km, p90 10.6 km. That is the
-*geometry* gap, not a parsing gap — addressed in the roadmap below.)
+_geometry_ gap, not a parsing gap — addressed in the roadmap below.)
 
 ## Where neural is genuinely worse at parsing — and why
 
 Stripping out the harness bias, the real neural deficits are:
 
 1. **Clean canonical forms** (libpostal 29 vs 16). Rules encode the exact pattern; neural
-   has no inherent edge there, and its documented overconfidence (≈81% of *wrong*
+   has no inherent edge there, and its documented overconfidence (≈81% of _wrong_
    predictions emitted at ≥0.9 confidence) plus reliance on comma/format cues can
    mis-segment an otherwise tidy string.
 2. **Edge / postal formats** — PO box, military, rural route (0% both); secondary-unit
@@ -137,16 +141,16 @@ from ~2 historically) are the leading edge of the same effect.
 
 We spent part of this window testing whether **masked-language-model pre-training** of the
 encoder would lift the model (attacking the overconfidence + format-reliance pathologies).
-A 40k-step fine-tune from a pre-trained encoder *looked* like a win (+4.8pp harness, a
+A 40k-step fine-tune from a pre-trained encoder _looked_ like a win (+4.8pp harness, a
 calibration edge). But running the
 [decisive A/B at the full v0.7.2 recipe](../evals/2026-05-31-v0.8.1-mlm-decisive.md) — both
 arms to the task ceiling, single variable = encoder init — the gains **vanished**:
 
-| metric | pretrained | scratch | Δ |
-|--------|-----------:|--------:|--:|
-| resolver locality (10k) | 97.3% | 97.5% | −0.20 (0.9σ, tie) |
-| harness | 19.04% | 20.72% | −1.69 |
-| wrong-pred conf p90 | 0.949 | 0.949 | 0.00 |
+| metric                  | pretrained | scratch |                 Δ |
+| ----------------------- | ---------: | ------: | ----------------: |
+| resolver locality (10k) |      97.3% |   97.5% | −0.20 (0.9σ, tie) |
+| harness                 |     19.04% |  20.72% |             −1.69 |
+| wrong-pred conf p90     |      0.949 |   0.949 |              0.00 |
 
 The 40k "gains" were an **under-training artifact**: a pre-trained init is simply ahead
 before a scratch encoder catches up; given 100k steps it does. Per a pre-registered
@@ -169,7 +173,7 @@ possible future larger model — the negative result is specific to this 29M-par
 ## Forward plan (DeepSeek turn-5, ranked)
 
 1. **Street-level geometry** (TIGER/Line + house-number interpolation). We win on
-   *locality* but coordinates are admin-centroid only (p50 2.4 km). This is the km →
+   _locality_ but coordinates are admin-centroid only (p50 2.4 km). This is the km →
    tens-of-meters jump that makes "production geocoder" literally true. Gate: **p50 ≤ 200 m,
    p90 ≤ 1 km** on a 1,000-point ground-truth set. ⚠ Requires geometry we don't yet have
    (our `tiger.db` is street-name + ZIP only) — a new data pipeline, not a wiring job.

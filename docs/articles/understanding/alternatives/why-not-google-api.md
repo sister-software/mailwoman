@@ -101,7 +101,7 @@ Owning your parser is the right choice when:
 - **You need a specific address model.** If your downstream systems use ISO 19160 address components or a custom schema, translating Google's components is a recurring development cost.
 - **You handle protected addresses.** If privacy regulations or internal policy prohibit sending addresses to third-party APIs, you need an in-house solution.
 
-Mailwoman targets the "own your parser" niche. It is not a Google competitor — it is an alternative for applications where Google's terms, pricing, or opacity make the API unsuitable.
+Mailwoman targets the "own your parser" niche — an alternative for applications where Google's terms, pricing, or opacity make the API unsuitable, not a Google competitor.
 
 ## See also
 

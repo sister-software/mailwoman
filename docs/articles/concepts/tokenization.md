@@ -84,7 +84,7 @@ The character offsets:
 'Ave'  → chars 8..11
 ```
 
-If the model labels `'▁5'` and `'th'` both as `B-house_number`, the consumer needs to know that the combined span covers characters 4..7 of the original string, not just one of them.
+If the model labels `'▁5'` and `'th'` both as `B-house_number`, the consumer needs to know the combined span covers all of characters 4..7 of the original string, not either piece on its own.
 
 Mailwoman's tokenizer wrapper handles this with `EncodeAsImmutableProto` (a SentencePiece API that returns piece-by-piece spans), then walks the pieces in order to compute the character range each label covers. The result is the consumer sees character spans, never has to know subword pieces exist.
 

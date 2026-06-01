@@ -63,7 +63,7 @@ When the parser emits `locality=Springfield, region=TX`, the resolver finds no S
 
 ## The joint decoding loop
 
-Concordance is not checked after parsing — it is part of the parsing decision itself. Mailwoman's **reconciler** (Stage 5) performs beam search over `(span × tag × resolver candidate)` triples, scoring each beam with:
+Concordance is part of the parsing decision itself, not a separate check applied afterward. Mailwoman's **reconciler** (Stage 5) performs beam search over `(span × tag × resolver candidate)` triples, scoring each beam with:
 
 ```
 score = phrase_conf × classifier_score × resolver_score × concordance_bonus

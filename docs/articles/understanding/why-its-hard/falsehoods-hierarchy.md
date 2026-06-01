@@ -44,7 +44,7 @@ A parser that classifies `Quebec` as `region` will be wrong when the user means 
 
 ### "A locality is a municipality."
 
-`Brooklyn, NY` is not a municipality — it's a borough of New York City. USPS accepts it as a "preferred last line" city for many NYC ZIP codes. The legal municipality is New York. The postal city is Brooklyn. Both are correct in different contexts.
+`Brooklyn, NY` is a borough of New York City, not a municipality. USPS accepts it as a "preferred last line" city for many NYC ZIP codes. The legal municipality is New York. The postal city is Brooklyn. Both are correct in different contexts.
 
 `Hollywood, CA` is a neighborhood of Los Angeles, not an independent city. USPS accepts it. `Beverly Hills, CA 90210` is an independent city, but USPS allows "Los Angeles, CA 90210" as an alternate mailing city name. The same ZIP code can map to different municipal cities and different postal cities.
 
@@ -68,7 +68,7 @@ Geocoders that maintain their own administrative boundary snapshots go stale. Th
 
 ## What the neural approach changes
 
-**The classifier (Stage 3)** learns administrative name distributions from corpus co-occurrence. A token matching a known state abbreviation appearing after a locality and before a postcode is `region`. A token matching a known state abbreviation appearing at the start of the address without surrounding components is ambiguous. The model learns the positional distribution, not just the dictionary match.
+**The classifier (Stage 3)** learns administrative name distributions from corpus co-occurrence. A token matching a known state abbreviation appearing after a locality and before a postcode is `region`. A token matching a known state abbreviation appearing at the start of the address without surrounding components is ambiguous. The model learns the positional distribution on top of the dictionary match.
 
 **The resolver (Stage 6)** returns top-K candidates per administrative span. `Springfield` returns 34 candidates. `Quebec` returns both the province and the city. The resolver does not pick one — it surfaces all of them.
 

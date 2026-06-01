@@ -174,7 +174,7 @@ CREATE TABLE records (
 
 In-memory hierarchy built from the `whosonfirst-placetypes` codex (a JSON spec defining the parent/child/sibling graph of all WOF placetypes). `Placetype.prepare()` reads the JSON files from the cloned repo and populates static maps (`#byID`, `#byName`, `#childrenOfParentName`).
 
-This is NOT the per-record parent_id chain — it's the **placetype-level** hierarchy (country → region → county → locality → neighbourhood). The per-record `parent_id` chain lives in `PlacetypeDataSource`.
+This is the **placetype-level** hierarchy (country → region → county → locality → neighbourhood), not the per-record parent_id chain. The per-record `parent_id` chain lives in `PlacetypeDataSource`.
 
 To eyeball this hierarchy, use [`wof mermaid`](#commandswofmermaidtsx--render-the-placetype-hierarchy) for a flowchart view, [`wof graph`](#commandswofgraphtsx--emit-a-node-link-json-graph) for a flat node-link JSON, or [`wof tree`](#commandswoftreetsx--emit-a-nested-json-tree) for a nested form (small subtrees only). All three pull from the same in-memory cache.
 

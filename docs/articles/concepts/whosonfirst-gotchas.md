@@ -81,7 +81,7 @@ WOF IDs are issued by a service called [Brooklyn Integers](https://brooklyninteg
 
 ### Supersession chains
 
-Places get deprecated — a neighbourhood is absorbed by a neighbouring one, a county boundary changes, a locality is merged. WOF tracks this via `wof:superseded_by` arrays. A query that doesn't check supersession may return a place that hasn't existed since 2015. Every consumer needs to follow the supersession chain to the current record.
+Places get deprecated: a neighbourhood is absorbed by a neighbouring one, a county boundary changes, a locality is merged. WOF tracks this via `wof:superseded_by` arrays. A query that doesn't check supersession may return a place that hasn't existed since 2015. Every consumer needs to follow the supersession chain to the current record.
 
 ### Parent ID holes
 
@@ -136,7 +136,7 @@ When the data arrives as a single bulk NDJSON dump rather than individual files,
 
 For full details on the ingest pipeline, see [WOF data pipeline](./wof-data-pipeline.md).
 
-## Why this matters for geocoding
+## So why put up with WOF?
 
 Every geocoder needs a gazetteer. The options are:
 

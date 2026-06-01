@@ -43,7 +43,7 @@ Franchise queries have three components: a **brand name**, an optional **sub-bra
 
 A geocoder that only matches "McDonald's" against an exact-string index will miss every slang and regional variant. A geocoder that matches all variants requires an **alias table** mapping user-facing terms to brand identifiers.
 
-The alias table is not a translation table. "Macca's" is not a translation of "McDonald's" — it's a colloquial name used by millions of people. The geocoder doesn't need to translate. It needs to know they refer to the same brand.
+The alias table is not a translation table. "Macca's" is a colloquial name for "McDonald's" used by millions of people, not a translation. The geocoder doesn't need to translate. It needs to know they refer to the same brand.
 
 ## The sub-brand problem
 
