@@ -87,7 +87,7 @@ A building at the corner of Main St and Elm St might have address `123 Main St` 
 
 ## What the neural approach changes
 
-**The resolver (Stage 6) returns candidates with placetypes, not just coordinates.** A WOF record has a `placetype` (country, region, locality, neighbourhood, venue) and optionally a bounding box. The resolver returns the placetype alongside the coordinate, so the downstream system knows whether it received a point for a building, a centroid for a city, or an approximate coordinate for a postcode.
+**The resolver (Stage 6) returns each candidate's placetype alongside its coordinates.** A WOF record has a `placetype` (country, region, locality, neighbourhood, venue) and optionally a bounding box. The resolver returns the placetype alongside the coordinate, so the downstream system knows whether it received a point for a building, a centroid for a city, or an approximate coordinate for a postcode.
 
 **The resolver returns top-K candidates, not a single coordinate.** `Springfield` returns 34 candidates, each with a coordinate and placetype. The downstream system can display them on a map, offer a selection UI, or aggregate them statistically. The resolver does not pretend that there is one correct coordinate for an ambiguous address.
 

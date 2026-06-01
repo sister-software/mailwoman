@@ -106,7 +106,7 @@ The output is `AddressTree { raw, roots: AddressNode[] }`. Each
 `AddressNode` carries `tag`, `start`, `end`, `value`, `confidence`,
 `children`.
 
-## Why this matters
+## What the projection buys you
 
 ### It's deterministic, given the labels
 

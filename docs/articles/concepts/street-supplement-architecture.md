@@ -57,7 +57,7 @@ Mailwoman's tag schema lives in two files:
 
 **This stays the source of truth.** A tempting alternative is to store our extensions in WOF placetype JSON format (`wof:id`, `wof:name`, `wof:role`, `wof:parent`) so tooling that already consumes WOF placetypes works transparently. That alternative is rejected:
 
-1. **Ontology mismatch.** WOF placetypes answer "what kind of geographical feature is this?" Mailwoman component tags answer "what role does this span play in an address?" `street` is not a placetype — it's a linear feature with no WOF identity. `house_number` is not a place at all. `unit` is a building subdivision, not a feature.
+1. **Ontology mismatch.** WOF placetypes answer "what kind of geographical feature is this?" Mailwoman component tags answer "what role does this span play in an address?" `street` is a linear feature with no WOF identity, not a placetype. `house_number` is not a place at all. `unit` is a building subdivision, not a feature.
 2. **ID-space fragility.** WOF issue #246 explored adding `lane`, `block`, `parish`. Any "private" ID range is a latent collision with a future WOF allocation.
 3. **TypeScript exhaustiveness.** The `ComponentTag` discriminated union forces the compiler to flag every code path that doesn't handle every tag. Runtime-loaded JSON has no such guard, and the schema will evolve.
 4. **DAG direction.** WOF's `wof:parent_id` and mailwoman's `PARENT_OF` both encode child→parent, but WOF format has no native "valid children" field — you'd compute it from parents anyway, which is what `PARENT_OF` already does.

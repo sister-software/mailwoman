@@ -23,7 +23,7 @@ Across every recipe variant tried — different learning rates, hidden sizes, wi
 2. **Brief plateau near loss 0.41** (the deepest point any run reached).
 3. **Sharp climb back to the starting magnitude** over the next 100-300 steps.
 
-Validation macro-F1 mirrored the train loss curve — peaked when loss bottomed, collapsed to roughly random-baseline as loss climbed. The collapse step shifted with learning rate (lower LR → later collapse), but a factor-2 LR drop only delayed the collapse by ~1.3× — too sub-linear for "we just picked too high an LR" to explain.
+Validation macro-F1 mirrored the train loss curve: peaked when loss bottomed, collapsed to roughly random-baseline as loss climbed. The collapse step shifted with learning rate (lower LR → later collapse), but a factor-2 LR drop only delayed the collapse by ~1.3× — too sub-linear for "we just picked too high an LR" to explain.
 
 The bisect ruled out: learning rate, per-token CRF normalisation (§1), class-weighted cross-entropy (§3), hidden size (h384 vs h256), phrase-prior input features. That left two suspects — the tokenizer / corpus pair — and one we hadn't named: the dual loss itself.
 
@@ -72,7 +72,7 @@ The probe results are consistent with a specific story about why dual-loss train
 
 The optimiser follows whichever loss has the larger gradient. With CRF at 16× CE magnitude, the CRF wins. The model gets dragged off its CE-preferred basin toward a CRF-preferred attractor that CE actively disagrees with. CE loss climbs as collateral damage.
 
-The "below 0.41" boundary isn't a magic constant — it's the level at which the cooperative-vs-conflict transition happens on this specific data and architecture. Different corpora, different label spaces, different model sizes would shift it. The structure of the failure is the load-bearing observation.
+The "below 0.41" boundary is specific to this data and architecture: it marks the level where the cooperative-vs-conflict transition happens. Different corpora, label spaces, or model sizes would shift it. The structure of the failure is the load-bearing observation.
 
 ## Why the standard repairs don't help
 
@@ -159,7 +159,7 @@ Voice B pulled the model away from the basin Voice A was guiding it toward. Voic
 
 This is a one-line configuration change: `crf_loss_weight = 0.0`. The structural guarantees come from the hand-encoded mask, not from training the transition matrix. Training the transition matrix is what was fighting with Voice A.
 
-### Why this matters beyond Mailwoman
+### Three lessons that generalise
 
 Three lessons that generalise:
 

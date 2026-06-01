@@ -12,7 +12,7 @@ tags:
 
 # How can a building have two addresses?
 
-A single physical building can have multiple valid addresses. This is not an edge case — it is the normal state of affairs for commercial buildings, multifamily housing, corner properties, and any structure that touches more than one administrative system. A parser that assumes "one building = one address" will fail silently on a large fraction of real-world queries.
+A single physical building can have multiple valid addresses. For commercial buildings, multifamily housing, corner properties, and any structure that touches more than one administrative system, that is the normal state of affairs. A parser that assumes "one building = one address" will fail silently on a large fraction of real-world queries.
 
 ## The address is a protocol, not a property
 
