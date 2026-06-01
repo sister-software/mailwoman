@@ -69,7 +69,7 @@ Japanese addresses prefix the postcode with `〒`, the postal mark. Format: `〒
 - `〒530-0001` — Osaka Umeda
 - `〒810-0001` — Fukuoka Tenjin
 
-A parser needs to know that `〒` is a categorical marker, not part of the number: the following 7 digits + dash form the postcode. SentencePiece tokenizes `〒` as a separate piece. Our new v0.6.0-a0 multi-script tokenizer handles this cleanly (0% byte-fallback on the `〒` character).
+A parser needs to read `〒` as a categorical marker: the postal mark that flags the following 7 digits + dash as a postcode. SentencePiece tokenizes `〒` as a separate piece. Our new v0.6.0-a0 multi-script tokenizer handles this cleanly (0% byte-fallback on the `〒` character).
 
 ## What we shipped today
 
