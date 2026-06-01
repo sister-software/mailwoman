@@ -135,6 +135,17 @@ def _run_config(cfg: Any) -> dict[str, Any]:
     """
     t, m, d = cfg.train, cfg.model, cfg.data
     return {
+        # Human-readable legend shown in the run's config panel — so a viewer who isn't
+        # steeped in the metrics knows how to read the charts (esp. the blank/gap ones).
+        "_legend": (
+            "f1.<tag> = token-level F1 for that address component on the val set (higher is better). "
+            "support.<tag> = how many val examples contain that component. A MISSING/BLANK f1.<tag> "
+            "chart means support.<tag> = 0 — the val sample has no examples of that tag, so F1 is "
+            "undefined; it is NOT a model failure (these are coverage gaps, tracked separately). "
+            "val_macro_f1 = average F1 across only the components that have support (excludes 'O' and "
+            "absent tags). val_tags_with_support = how many of the 16 components the val set covers. "
+            "train_loss/val_loss lower is better; lr = learning rate; wall_seconds = elapsed time."
+        ),
         "max_steps": t.max_steps,
         "batch_size": t.batch_size,
         "learning_rate": t.learning_rate,
