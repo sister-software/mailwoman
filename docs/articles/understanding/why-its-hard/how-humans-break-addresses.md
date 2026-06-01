@@ -18,7 +18,7 @@ tags:
 
 Users do not type addresses the way gazetteers store them. They type what they know, in the order they think of it, with the spellings their keyboard supports, trusting autocomplete suggestions they didn't verify. A parser that only handles well-formed addresses fails on real input.
 
-This article catalogs the failure modes by root cause, not by symptom. The point is that **none of these are user errors** — not that humans are careless. They are system-design failures. The human provided enough information for a knowledgeable local to find the right place. The parser couldn't because it was designed for addresses, not for people.
+This article catalogs the failure modes by root cause, not by symptom. **None of these are user errors.** They are system-design failures. The human provided enough information for a knowledgeable local to find the right place. The parser couldn't because it was designed for addresses, not for people.
 
 ## I. They use the wrong name for places
 
@@ -53,7 +53,7 @@ The human typed what they think of as "the metro area." The gazetteer disagrees.
 | Peking     | Beijing          |
 | Kiev       | Kyiv             |
 
-These are valid names used by millions of people, not errors. The speaker's choice of name often carries political or generational information. A parser that rejects `Bombay` is rejecting real usage. A parser that silently converts `Bombay → Mumbai` is making a political choice the user didn't ask for. The correct behavior is to recognize both and surface the ambiguity.
+Both names in each pair are legitimate, used by millions; the speaker's choice between them often carries political or generational weight. A parser that rejects `Bombay` is rejecting real usage. A parser that silently converts `Bombay → Mumbai` is making a political choice the user didn't ask for. The correct behavior is to recognize both and surface the ambiguity.
 
 ### Postal city ≠ municipal city
 
