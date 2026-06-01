@@ -100,9 +100,12 @@ def _token_f1(
 ) -> dict[str, float]:
     """Compute macro/per-class token-level F1 over a batch. Ignores ``IGNORE_INDEX`` positions.
 
-    Returns ``macro_f1`` plus per-BIO-label F1 (``f1.B-locality``, ``f1.I-locality``, …) AND
-    collapsed per-tag F1 (``f1_tag.locality``, …) computed as (B + I) / 2. The per-tag columns
-    are what the CSV log writes; the per-BIO columns are available for fine-grained debugging.
+    Returns ``macro_f1`` plus per-BIO-label F1 (``f1.B-locality``, ``f1.I-locality``, …),
+    collapsed per-tag F1 (``f1_tag.locality``, …) computed as (B + I) / 2, AND per-tag support
+    (``support_tag.locality`` = # true B+I instances in the val sample). The per-tag F1 + support
+    columns are what the CSV log / dashboard write; the per-BIO columns are for fine-grained
+    debugging. ``macro_f1`` averages only component labels (excludes "O") that have support > 0,
+    so a tag absent from the val sample doesn't drag it down (see the support-aware comment below).
     """
     mask = labels != IGNORE_INDEX
     p = preds[mask]
@@ -116,16 +119,29 @@ def _token_f1(
         tp[c] = (pred_c & true_c).sum().float()
         fp[c] = (pred_c & ~true_c).sum().float()
         fn[c] = (~pred_c & true_c).sum().float()
+    support = tp + fn  # number of true instances of each label in the val set
     precision = tp / (tp + fp + 1e-9)
     recall = tp / (tp + fn + 1e-9)
     f1 = 2 * precision * recall / (precision + recall + 1e-9)
     per_label = {ACTIVE_BIO_LABELS[c]: float(f1[c]) for c in range(num_labels)}
-    macro = float(f1.mean())
+    per_label_support = {ACTIVE_BIO_LABELS[c]: int(support[c]) for c in range(num_labels)}
+
+    # Support-aware macro: average F1 only over COMPONENT labels (exclude "O") that actually
+    # occur in the val sample. A zero-support label (a tag the val sample happens not to contain —
+    # e.g. po_box/cedex in a US-primary sample) otherwise pins F1 at 0 and drags the macro down;
+    # that's a val-coverage artifact, not model quality. Excluding "O" also stops its huge-support,
+    # ~1.0 F1 from inflating the average. See val-set stratification (Layer 2) for the coverage fix.
+    supported = [c for c in range(num_labels) if ACTIVE_BIO_LABELS[c] != "O" and support[c] > 0]
+    macro = sum(float(f1[c]) for c in supported) / len(supported) if supported else 0.0
+
     result = {"macro_f1": macro, **{f"f1.{k}": v for k, v in per_label.items()}}
     for tag in ACTIVE_TAGS:
         b_f1 = per_label.get(f"B-{tag}", 0.0)
         i_f1 = per_label.get(f"I-{tag}", 0.0)
         result[f"f1_tag.{tag}"] = (b_f1 + i_f1) / 2.0
+        # Per-tag support (B + I true instances). 0 ⇒ the tag is absent from the val sample, so its
+        # F1 is undefined — callers log it as a gap rather than a misleading flat-zero.
+        result[f"support_tag.{tag}"] = per_label_support.get(f"B-{tag}", 0) + per_label_support.get(f"I-{tag}", 0)
     return result
 
 
@@ -399,7 +415,12 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                         f"\n         {tag_summary}"
                     )
                     elapsed = time.time() - started
-                    tag_f1_values = [f"{val.get(f'f1_tag.{tag}', 0.0):.6f}" for tag in ACTIVE_TAGS]
+                    # CSV: per-tag F1, but a blank cell ("") for tags with no val support so readers
+                    # see NaN rather than a misleading 0.0.
+                    tag_f1_values = [
+                        (f"{val.get(f'f1_tag.{tag}', 0.0):.6f}" if int(val.get(f"support_tag.{tag}", 0)) > 0 else "")
+                        for tag in ACTIVE_TAGS
+                    ]
                     csv_writer.writerow(
                         [
                             step,
@@ -417,8 +438,19 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                         "val_macro_f1": float(val.get("macro_f1", 0.0)),
                         "wall_seconds": elapsed,
                     }
+                    # Log per-tag support alongside F1. A blank/missing `f1.<tag>` chart is then
+                    # self-explaining: `support.<tag>` = 0 means the val sample contains no examples
+                    # of that tag (a coverage gap — see Layer 2), NOT that the model scored zero. We
+                    # OMIT `f1.<tag>` when support is 0 so the dashboard draws a gap, not a flat-zero
+                    # line that reads as a model failure.
+                    tags_with_support = 0
                     for tag in ACTIVE_TAGS:
-                        eval_metrics[f"f1.{tag}"] = float(val.get(f"f1_tag.{tag}", 0.0))
+                        sup = int(val.get(f"support_tag.{tag}", 0))
+                        eval_metrics[f"support.{tag}"] = sup
+                        if sup > 0:
+                            eval_metrics[f"f1.{tag}"] = float(val.get(f"f1_tag.{tag}", 0.0))
+                            tags_with_support += 1
+                    eval_metrics["val_tags_with_support"] = tags_with_support
                     tracker.log(eval_metrics, step=step)
 
                 if step % cfg.train.save_every_steps == 0:
