@@ -11,10 +11,10 @@
 
 import { describe, expect, it } from "vitest"
 import { alignRow } from "./align.js"
-import { type GermanBaseTuple, synthesizeGermanRow } from "./synthesize-german.js"
+import { type LocaleBaseTuple, synthesizeGermanRow, synthesizeLocaleRow } from "./synthesize-german.js"
 import type { CanonicalRow } from "./types.js"
 
-const BERLIN: GermanBaseTuple = {
+const BERLIN: LocaleBaseTuple = {
 	house_number: "27",
 	street: "Straußstraße",
 	locality: "Berlin",
@@ -50,5 +50,24 @@ describe("synthesizeGermanRow", () => {
 		expect(firstOf("street")).toBeGreaterThanOrEqual(0)
 		expect(firstOf("house_number")).toBeGreaterThan(firstOf("street"))
 		expect(firstOf("locality")).toBeGreaterThan(firstOf("postcode"))
+	})
+})
+
+describe("synthesizeLocaleRow (generic)", () => {
+	it("ES renders Spanish order (house after street, postcode before city) and tags the locale", () => {
+		const madrid: LocaleBaseTuple = { house_number: "12", street: "Calle Mayor", locality: "Madrid", postcode: "28013" }
+		const row = synthesizeLocaleRow(madrid, "ES", { random: keepAll })!
+		expect(row).not.toBeNull()
+		expect(row.locale).toBe("es-ES")
+		// ES renders "Calle Mayor, 12, 28013 Madrid" — house AFTER street (a comma between them,
+		// unlike German), postcode BEFORE city. The order is what the recipe teaches.
+		expect(row.raw.indexOf("Calle Mayor")).toBeLessThan(row.raw.indexOf("12"))
+		expect(row.raw).toContain("28013 Madrid")
+	})
+
+	it("synthesizeGermanRow is the DE wrapper", () => {
+		const row = synthesizeGermanRow(BERLIN, { random: keepAll })!
+		expect(row.locale).toBe("de-DE")
+		expect(synthesizeLocaleRow(BERLIN, "DE", { random: keepAll })!.raw).toBe(row.raw)
 	})
 })
