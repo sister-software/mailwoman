@@ -116,10 +116,10 @@ const norm = (s: string | undefined): string => (s ?? "").toLowerCase().trim()
 /**
  * Aggressive name normalization for gazetteer-alias locality matching. Lowercases, strips
  * diacritics + punctuation, expands the universal US place abbreviations (St→Saint, Mt→Mount,
- * Ft→Fort, Ste→Sainte), and de-spaces "Mc X" → "McX". Deliberately does NOT strip civic
- * suffixes (City/Town/Township/Village): in New England "Barre City" and "Barre Town" are
- * DISTINCT municipalities, so collapsing them would over-credit genuine wrong-place misses.
- * Pair with the WOF altname set (a place's own recorded variants) rather than loosening here.
+ * Ft→Fort, Ste→Sainte), and de-spaces "Mc X" → "McX". Deliberately does NOT strip civic suffixes
+ * (City/Town/Township/Village): in New England "Barre City" and "Barre Town" are DISTINCT
+ * municipalities, so collapsing them would over-credit genuine wrong-place misses. Pair with the
+ * WOF altname set (a place's own recorded variants) rather than loosening here.
  */
 const ABBR: Record<string, string> = { st: "saint", ste: "sainte", mt: "mount", ft: "fort" }
 const normName = (s: string | undefined): string => {
@@ -127,14 +127,18 @@ const normName = (s: string | undefined): string => {
 	const x = s
 		.toLowerCase()
 		.normalize("NFD")
-			.replace(/[\u0300-\u036f]/g, "") // drop diacritics
+		.replace(/[\u0300-\u036f]/g, "") // drop diacritics
 		.replace(/[^a-z0-9]+/g, " ") // punctuation/hyphens → space (Butte-Silver Bow → butte silver bow)
 		.trim()
 	const toks = x
 		.split(" ")
 		.filter(Boolean)
 		.map((t) => ABBR[t] ?? t)
-	return toks.join(" ").replace(/\bmc (\w)/g, "mc$1").replace(/\s+/g, " ").trim()
+	return toks
+		.join(" ")
+		.replace(/\bmc (\w)/g, "mc$1")
+		.replace(/\s+/g, " ")
+		.trim()
 }
 
 // Resolved region names are the gazetteer's CANONICAL full names ("California", "District of
@@ -382,8 +386,20 @@ async function main(): Promise<void> {
 				input: row.input,
 				state: row.state ?? "??",
 				expected: row.expected,
-				neural: { locMatch: ns.locMatch, resolved: ns.resolved, resolvedLoc: ns.resolvedLoc, resolvedReg: ns.resolvedReg, errKm: ns.err },
-				v0: { locMatch: vs.locMatch, resolved: vs.resolved, resolvedLoc: vs.resolvedLoc, resolvedReg: vs.resolvedReg, errKm: vs.err },
+				neural: {
+					locMatch: ns.locMatch,
+					resolved: ns.resolved,
+					resolvedLoc: ns.resolvedLoc,
+					resolvedReg: ns.resolvedReg,
+					errKm: ns.err,
+				},
+				v0: {
+					locMatch: vs.locMatch,
+					resolved: vs.resolved,
+					resolvedLoc: vs.resolvedLoc,
+					resolvedReg: vs.resolvedReg,
+					errKm: vs.err,
+				},
 			})
 		}
 	}

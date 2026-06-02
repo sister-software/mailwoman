@@ -15,10 +15,9 @@
  *
  *   Politeness: 3s backoff between cases (Nominatim's usage policy is ≤1 req/s + a UA header).
  *
- *   Usage:
- *     node --experimental-strip-types scripts/eval/fullstack-compare.ts \
- *       --harness /tmp/v072-eval/harness.json \
- *       --out-md /tmp/fullstack-compare.md --out-json /tmp/fullstack-compare.json
+ *   Usage: node --experimental-strip-types scripts/eval/fullstack-compare.ts\
+ *   --harness /tmp/v072-eval/harness.json\
+ *   --out-md /tmp/fullstack-compare.md --out-json /tmp/fullstack-compare.json
  *
  *   Optional: --geocode-earth-key <key> also queries api.geocode.earth (real Pelias) per case.
  */
@@ -42,7 +41,10 @@ function parseArgs(): Args {
 		else if (a[i] === "--geocode-earth-key" && a[i + 1]) out.geocodeEarthKey = a[++i]
 		else if (a[i] === "--backoff-ms" && a[i + 1]) out.backoffMs = Number(a[++i])
 	}
-	if (!out.harnessPath) { console.error("--harness <harness.json> required"); process.exit(1) }
+	if (!out.harnessPath) {
+		console.error("--harness <harness.json> required")
+		process.exit(1)
+	}
 	return out as Args
 }
 
@@ -53,7 +55,8 @@ const norm = (s: string | undefined) => (s ?? "").toLowerCase().trim()
 /** Lenient: did the stack produce a value matching expected (substring either way), per tag? */
 function tagHit(expected: string, actual: string | undefined): boolean {
 	if (!actual) return false
-	const e = norm(expected), x = norm(actual)
+	const e = norm(expected),
+		x = norm(actual)
 	return e === x || e.includes(x) || x.includes(e)
 }
 
@@ -136,10 +139,10 @@ async function main(): Promise<void> {
 		if (args.geocodeEarthKey) {
 			// The compare-tool demo key is origin-locked to pelias.github.io; send the same
 			// Referer/Origin a browser does (Node's fetch allows these; browsers forbid them).
-			geRaw = await fetchJson(
-				`https://api.geocode.earth/v1/search?text=${q}&size=1&api_key=${args.geocodeEarthKey}`,
-				{ Referer: "https://pelias.github.io/compare/", Origin: "https://pelias.github.io" }
-			)
+			geRaw = await fetchJson(`https://api.geocode.earth/v1/search?text=${q}&size=1&api_key=${args.geocodeEarthKey}`, {
+				Referer: "https://pelias.github.io/compare/",
+				Origin: "https://pelias.github.io",
+			})
 		}
 
 		const photon = mapPhoton(photonRaw?.features?.[0]?.properties)
@@ -156,13 +159,19 @@ async function main(): Promise<void> {
 			locale: c.locale,
 			input: c.input,
 			expected,
-			photon, photonScore: score(photon), photonRaw: photonRaw?.features?.[0]?.properties ?? photonRaw,
-			nominatim, nominatimScore: score(nominatim), nominatimRaw: nomRaw?.[0]?.address ?? nomRaw,
+			photon,
+			photonScore: score(photon),
+			photonRaw: photonRaw?.features?.[0]?.properties ?? photonRaw,
+			nominatim,
+			nominatimScore: score(nominatim),
+			nominatimRaw: nomRaw?.[0]?.address ?? nomRaw,
 			...(geocodeEarth ? { geocodeEarth, geocodeEarthScore: score(geocodeEarth) } : {}),
 		}
 		results.push(row)
 		console.error(`  [${i + 1}/${bothFail.length}] ${c.input}`)
-		console.error(`       photon ${row.photonScore.hits}/${row.photonScore.total}  nominatim ${row.nominatimScore.hits}/${row.nominatimScore.total}`)
+		console.error(
+			`       photon ${row.photonScore.hits}/${row.photonScore.total}  nominatim ${row.nominatimScore.hits}/${row.nominatimScore.total}`
+		)
 		if (i < bothFail.length - 1) await sleep(args.backoffMs)
 	}
 
@@ -174,19 +183,28 @@ async function main(): Promise<void> {
 	md.push("Not a fair head-to-head — a capability ceiling: what a gazetteer stack can recover.\n")
 	const tot = results.length
 	const pSolved = results.filter((r) => r.photonScore.hits === r.photonScore.total && r.photonScore.total > 0).length
-	const nSolved = results.filter((r) => r.nominatimScore.hits === r.nominatimScore.total && r.nominatimScore.total > 0).length
+	const nSolved = results.filter(
+		(r) => r.nominatimScore.hits === r.nominatimScore.total && r.nominatimScore.total > 0
+	).length
 	const eitherStreet = results.filter((r) => {
 		if (!r.expected.street) return false
 		return tagHit(r.expected.street, r.photon.street) || tagHit(r.expected.street, r.nominatim.street)
 	}).length
 	const withStreet = results.filter((r) => r.expected.street).length
 	md.push(`**Fully recovered (all expected tags, lenient):** Photon ${pSolved}/${tot} · Nominatim ${nSolved}/${tot}`)
-	md.push(`**Street kept whole (the fragmentation we fail on):** ${eitherStreet}/${withStreet} cases with an expected street\n`)
+	md.push(
+		`**Street kept whole (the fragmentation we fail on):** ${eitherStreet}/${withStreet} cases with an expected street\n`
+	)
 	md.push("| Locale | Input | Expected | Photon (mapped) | Nominatim (mapped) | P | N |")
 	md.push("|---|---|---|---|---|--:|--:|")
 	for (const r of results) {
-		const fmt = (o: Rec) => Object.entries(o).map(([k, v]) => `${k}=${v}`).join(", ") || "—"
-		md.push(`| ${r.locale} | \`${r.input}\` | ${fmt(r.expected)} | ${fmt(r.photon)} | ${fmt(r.nominatim)} | ${r.photonScore.hits}/${r.photonScore.total} | ${r.nominatimScore.hits}/${r.nominatimScore.total} |`)
+		const fmt = (o: Rec) =>
+			Object.entries(o)
+				.map(([k, v]) => `${k}=${v}`)
+				.join(", ") || "—"
+		md.push(
+			`| ${r.locale} | \`${r.input}\` | ${fmt(r.expected)} | ${fmt(r.photon)} | ${fmt(r.nominatim)} | ${r.photonScore.hits}/${r.photonScore.total} | ${r.nominatimScore.hits}/${r.nominatimScore.total} |`
+		)
 	}
 	const mdText = md.join("\n") + "\n"
 	if (args.outMd) writeFileSync(args.outMd, mdText)
@@ -195,4 +213,7 @@ async function main(): Promise<void> {
 	console.error(`\nWrote ${args.outMd ?? "(no md)"} / ${args.outJson ?? "(no json)"}`)
 }
 
-main().catch((e) => { console.error(e); process.exit(1) })
+main().catch((e) => {
+	console.error(e)
+	process.exit(1)
+})

@@ -58,12 +58,11 @@
  *
  *   ## FLAGS
  *
- *   --out <path> output JSONL (default data/eval/external/openaddresses-us-sample.jsonl) --cache
- *   <dir> where source zips are cached (default /tmp/oa-cache) --target <n> overall cap on emitted
- *   records (default 10000) --per-state <n> per-state cap before the overall trim (default 1500)
- *   --seed <n> PRNG seed for reproducible sampling (default 42) --offline do not download; only use
- *   zips already in --cache --sources a,b,c restrict to a comma list of source keys (e.g.
- *   "us/dc/statewide,us/wy/statewide")
+ *   --out <path> output JSONL (default data/eval/external/openaddresses-us-sample.jsonl) --cache<dir> where source zips are cached (default /tmp/oa-cache) --target <n> overall cap on emitted
+ * records (default 10000) --per-state <n> per-state cap before the overall trim (default 1500)
+ * --seed <n> PRNG seed for reproducible sampling (default 42) --offline do not download; only use
+ * zips already in --cache --sources a,b,c restrict to a comma list of source keys (e.g.
+ * "us/dc/statewide,us/wy/statewide")
  */
 
 import { spawnSync } from "node:child_process"

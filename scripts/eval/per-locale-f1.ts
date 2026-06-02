@@ -6,29 +6,29 @@
  *   Per-locale held-out F1 TRIPWIRE.
  *
  *   The golden v0.1.2 dev set is already split by country (`dev/us.jsonl`, `dev/fr.jsonl`,
- *   `dev/adversarial.jsonl`). This script loads the neural classifier ONCE and scores each
- *   country file SEPARATELY, then reports per-locale component-F1, exact-match, and — the point of
- *   the exercise — the SPREAD of macro-F1 across locales.
+ *   `dev/adversarial.jsonl`). This script loads the neural classifier ONCE and scores each country
+ *   file SEPARATELY, then reports per-locale component-F1, exact-match, and — the point of the
+ *   exercise — the SPREAD of macro-F1 across locales.
  *
  *   Why it exists (DeepSeek consult 2026-06-02, measurement #1): the multi-locale-interference risk
- *   is theorized, never observed. Before building any locale-conditioning architecture we must first
- *   measure whether US and FR already diverge on the SAME model. Equal per-locale F1 ⇒ no current
- *   interference ⇒ conditioning is premature. A gap ⇒ interference is real and conditioning earns its
- *   keep. Run again after adding any new locale: if an existing locale's F1 drops, that's the
- *   interference tripwire firing.
+ *   is theorized, never observed. Before building any locale-conditioning architecture we must
+ *   first measure whether US and FR already diverge on the SAME model. Equal per-locale F1 ⇒ no
+ *   current interference ⇒ conditioning is premature. A gap ⇒ interference is real and conditioning
+ *   earns its keep. Run again after adding any new locale: if an existing locale's F1 drops, that's
+ *   the interference tripwire firing.
  *
  *   Scoring mirrors `harness-v0-neural.ts`: flatten the AddressTree via `decodeAsJson`, fold the
- *   Stage-3 street parts (`street_prefix`/`street`/`street_suffix` → `street`, `intersection_a`/`_b`
- *   → `street`) into the golden component vocab, then compare case-folded strings per tag.
+ *   Stage-3 street parts (`street_prefix`/`street`/`street_suffix` → `street`,
+ *   `intersection_a`/`_b` → `street`) into the golden component vocab, then compare case-folded
+ *   strings per tag.
  *
- *   Usage:
- *     node --experimental-strip-types scripts/eval/per-locale-f1.ts \
- *       --golden-dir data/eval/golden/v0.1.2/dev \
- *       --model /tmp/v072-eval/model.onnx \
- *       --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
- *       --model-card /tmp/v072-eval/model-card.json \
- *       --files us.jsonl,fr.jsonl,adversarial.jsonl \
- *       --out-json /tmp/per-locale-f1.json
+ *   Usage: node --experimental-strip-types scripts/eval/per-locale-f1.ts\
+ *   --golden-dir data/eval/golden/v0.1.2/dev\
+ *   --model /tmp/v072-eval/model.onnx\
+ *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model-card /tmp/v072-eval/model-card.json\
+ *   --files us.jsonl,fr.jsonl,adversarial.jsonl\
+ *   --out-json /tmp/per-locale-f1.json
  */
 
 import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
@@ -53,11 +53,17 @@ interface Args {
 
 function parseArgs(): Args {
 	const argv = process.argv.slice(2)
-	const out: Partial<Args> = { goldenDir: "data/eval/golden/v0.1.2/dev", files: ["us.jsonl", "fr.jsonl", "adversarial.jsonl"] }
+	const out: Partial<Args> = {
+		goldenDir: "data/eval/golden/v0.1.2/dev",
+		files: ["us.jsonl", "fr.jsonl", "adversarial.jsonl"],
+	}
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i]
 		if (a === "--golden-dir" && argv[i + 1]) out.goldenDir = argv[++i]
-		else if (a === "--files" && argv[i + 1]) out.files = argv[++i]!.split(",").map((s) => s.trim()).filter(Boolean)
+		else if (a === "--files" && argv[i + 1])
+			out.files = argv[++i]!.split(",")
+				.map((s) => s.trim())
+				.filter(Boolean)
 		else if (a === "--model" && argv[i + 1]) out.modelPath = argv[++i]
 		else if (a === "--tokenizer" && argv[i + 1]) out.tokenizerPath = argv[++i]
 		else if (a === "--model-card" && argv[i + 1]) out.modelCardPath = argv[++i]
@@ -93,9 +99,14 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<s
 
 	for (const [tag, value] of Object.entries(flat) as Array<[ComponentTag, string]>) {
 		if (
-			tag === "street_prefix" || tag === "street_prefix_particle" || tag === "street" || tag === "street_suffix" ||
-			tag === "intersection_a" || tag === "intersection_b"
-		) continue
+			tag === "street_prefix" ||
+			tag === "street_prefix_particle" ||
+			tag === "street" ||
+			tag === "street_suffix" ||
+			tag === "intersection_a" ||
+			tag === "intersection_b"
+		)
+			continue
 		if (value) out[tag] = value
 	}
 	return out
@@ -113,7 +124,14 @@ function exactMatch(pred: Record<string, string>, gold: Record<string, string>):
 // Per-file metrics
 // -------------------------------------------------------------------------------------------------
 
-interface TagMetric { tp: number; fp: number; fn: number; p: number; r: number; f1: number }
+interface TagMetric {
+	tp: number
+	fp: number
+	fn: number
+	p: number
+	r: number
+	f1: number
+}
 interface FileReport {
 	file: string
 	n: number
@@ -131,11 +149,16 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 
 	const perTag: Record<string, TagMetric> = {}
 	let f1Sum = 0
-	let microTp = 0, microFp = 0, microFn = 0
+	let microTp = 0,
+		microFp = 0,
+		microFn = 0
 	for (const tag of tags) {
-		let tp = 0, fp = 0, fn = 0
+		let tp = 0,
+			fp = 0,
+			fn = 0
 		for (let i = 0; i < rows.length; i++) {
-			const pred = norm(preds[i]![tag]), gold = norm(rows[i]!.components[tag])
+			const pred = norm(preds[i]![tag]),
+				gold = norm(rows[i]!.components[tag])
 			if (pred && gold && pred === gold) tp++
 			else if (pred && (!gold || pred !== gold)) fp++
 			if (gold && (!pred || pred !== gold)) fn++
@@ -145,7 +168,9 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 		const f1 = p + r > 0 ? (2 * p * r) / (p + r) : 0
 		perTag[tag] = { tp, fp, fn, p, r, f1 }
 		f1Sum += f1
-		microTp += tp; microFp += fp; microFn += fn
+		microTp += tp
+		microFp += fp
+		microFn += fn
 	}
 	const microP = microTp / Math.max(microTp + microFp, 1)
 	const microR = microTp / Math.max(microTp + microFn, 1)
@@ -193,7 +218,10 @@ async function main(): Promise<void> {
 		const path = resolve(args.goldenDir, file)
 		let rows: GoldenRow[]
 		try {
-			rows = readFileSync(path, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
+			rows = readFileSync(path, "utf8")
+				.split("\n")
+				.filter(Boolean)
+				.map((l) => JSON.parse(l))
 		} catch (err) {
 			console.error(`  skip ${file}: ${(err as Error).message}`)
 			continue
@@ -206,7 +234,9 @@ async function main(): Promise<void> {
 		}
 		const rep = scoreFile(basename(file, ".jsonl"), rows, preds)
 		reports.push(rep)
-		console.error(`  ${file}: n=${rep.n} macroF1=${(100 * rep.macroF1).toFixed(1)}% in ${((performance.now() - t0) / 1000).toFixed(1)}s`)
+		console.error(
+			`  ${file}: n=${rep.n} macroF1=${(100 * rep.macroF1).toFixed(1)}% in ${((performance.now() - t0) / 1000).toFixed(1)}s`
+		)
 	}
 
 	// Report
@@ -218,7 +248,9 @@ async function main(): Promise<void> {
 	console.log("| Locale | n | Macro-F1 | Micro-F1 | Exact-match |")
 	console.log("|---|--:|--:|--:|--:|")
 	for (const r of reports) {
-		console.log(`| ${r.file} | ${r.n} | ${(100 * r.macroF1).toFixed(1)}% | ${(100 * r.microF1).toFixed(1)}% | ${(100 * r.exactRate).toFixed(1)}% |`)
+		console.log(
+			`| ${r.file} | ${r.n} | ${(100 * r.macroF1).toFixed(1)}% | ${(100 * r.microF1).toFixed(1)}% | ${(100 * r.exactRate).toFixed(1)}% |`
+		)
 	}
 	console.log("")
 	console.log(`**Cross-locale macro-F1 spread (interference signal):** ${(100 * spread).toFixed(1)}pp`)
@@ -234,7 +266,9 @@ async function main(): Promise<void> {
 		const cells = localeReports.map((r) => r.perTag[tag])
 		const f1s = cells.map((c) => (c ? c.f1 : 0))
 		const delta = f1s.length > 1 ? Math.max(...f1s) - Math.min(...f1s) : 0
-		console.log(`| ${tag} | ${cells.map((c) => (c ? (100 * c.f1).toFixed(1) + "%" : "—")).join(" | ")} | ${(100 * delta).toFixed(1)}pp |`)
+		console.log(
+			`| ${tag} | ${cells.map((c) => (c ? (100 * c.f1).toFixed(1) + "%" : "—")).join(" | ")} | ${(100 * delta).toFixed(1)}pp |`
+		)
 	}
 	console.log("")
 
