@@ -271,7 +271,12 @@ async function main(): Promise<void> {
 	}
 
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
-	const resolveOpts = { defaultCountry: "US" }
+	// `defaultCountry` is the hard country filter applied to admin lookups when the parse carries no
+	// resolved country node. It MUST match the dataset's locale — hardcoding "US" silently filters a
+	// non-US eval to US places (a German "Berlin" then loses to a tiny US Berlin). Settable via
+	// `--default-country <ISO|none>`; `none` disables the filter so ranking alone decides.
+	const dc = arg("default-country", "US")
+	const resolveOpts = dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}
 
 	// Per-state aggregation so no single dense state (Cook County / Chicago) dominates the headline.
 	interface Agg {
