@@ -60,9 +60,44 @@ function tagHit(expected: string, actual: string | undefined): boolean {
 	return e === x || e.includes(x) || x.includes(e)
 }
 
+/** A geocoder property bag — we only ever read string fields off it. */
+type Props = Record<string, string | undefined>
+/** Photon / geocode.earth GeoJSON-ish response (only the bits we read). */
+interface FeatureResp {
+	features?: Array<{ properties?: Props }>
+}
+/** Nominatim response: array of results, each with an `address` bag. */
+type NominatimResp = Array<{ address?: Props }>
+/** One extracted assertion from the harness JSON sidecar. */
+interface HarnessRow {
+	v0_pass: boolean
+	neural_pass: boolean
+	input: string
+	locale: string
+	expected: Array<Record<string, string[]>>
+}
+interface ScoreResult {
+	hits: number
+	total: number
+	hitTags: string[]
+}
+interface ResultRow {
+	locale: string
+	input: string
+	expected: Rec
+	photon: Rec
+	photonScore: ScoreResult
+	photonRaw: unknown
+	nominatim: Rec
+	nominatimScore: ScoreResult
+	nominatimRaw: unknown
+	geocodeEarth?: Rec
+	geocodeEarthScore?: ScoreResult
+}
+
 // ---- mappers: each geocoder's response → our component schema --------------------------------
 
-function mapPhoton(p: any): Rec {
+function mapPhoton(p: Props | undefined): Rec {
 	if (!p) return {}
 	const out: Rec = {}
 	if (p.housenumber) out.house_number = p.housenumber
@@ -76,7 +111,7 @@ function mapPhoton(p: any): Rec {
 	if (!out.street && !out.house_number && p.name) out.venue = p.name // POI fallback
 	return out
 }
-function mapNominatim(a: any): Rec {
+function mapNominatim(a: Props | undefined): Rec {
 	if (!a) return {}
 	const out: Rec = {}
 	if (a.house_number) out.house_number = a.house_number
@@ -88,7 +123,7 @@ function mapNominatim(a: any): Rec {
 	if (a.country) out.country = a.country
 	return out
 }
-function mapGeocodeEarth(props: any): Rec {
+function mapGeocodeEarth(props: Props | undefined): Rec {
 	if (!props) return {}
 	const out: Rec = {}
 	if (props.housenumber) out.house_number = props.housenumber
@@ -101,7 +136,7 @@ function mapGeocodeEarth(props: any): Rec {
 	return out
 }
 
-async function fetchJson(url: string, headers: Record<string, string> = {}): Promise<any | null> {
+async function fetchJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
 	try {
 		const res = await fetch(url, { headers, signal: AbortSignal.timeout(15000) })
 		if (!res.ok) return { __error: `HTTP ${res.status}` }
@@ -113,13 +148,13 @@ async function fetchJson(url: string, headers: Record<string, string> = {}): Pro
 
 async function main(): Promise<void> {
 	const args = parseArgs()
-	const harness = JSON.parse(readFileSync(args.harnessPath, "utf8"))
-	const bothFail = harness.filter((r: any) => !r.v0_pass && !r.neural_pass)
+	const harness = JSON.parse(readFileSync(args.harnessPath, "utf8")) as HarnessRow[]
+	const bothFail = harness.filter((r) => !r.v0_pass && !r.neural_pass)
 	console.error(`Both-fail cases: ${bothFail.length}`)
 	console.error(`Geocoders: Photon, Nominatim${args.geocodeEarthKey ? ", geocode.earth(Pelias)" : ""}`)
 
 	const UA = "mailwoman-eval/0.1 (teffen@sister.software)"
-	const results: any[] = []
+	const results: ResultRow[] = []
 
 	for (let i = 0; i < bothFail.length; i++) {
 		const c = bothFail[i]
@@ -130,24 +165,26 @@ async function main(): Promise<void> {
 			expected[k] = Array.isArray(v) ? v.join(" ") : String(v)
 		}
 
-		const photonRaw = await fetchJson(`https://photon.komoot.io/api/?q=${q}&limit=1`)
-		const nomRaw = await fetchJson(
+		const photonRaw = (await fetchJson(`https://photon.komoot.io/api/?q=${q}&limit=1`)) as FeatureResp | null
+		const nomRaw = (await fetchJson(
 			`https://nominatim.openstreetmap.org/search?q=${q}&format=jsonv2&addressdetails=1&limit=1`,
-			{ "User-Agent": UA }
-		)
-		let geRaw: any = null
+			{
+				"User-Agent": UA,
+			}
+		)) as NominatimResp | null
+		let geRaw: FeatureResp | null = null
 		if (args.geocodeEarthKey) {
 			// The compare-tool demo key is origin-locked to pelias.github.io; send the same
 			// Referer/Origin a browser does (Node's fetch allows these; browsers forbid them).
-			geRaw = await fetchJson(`https://api.geocode.earth/v1/search?text=${q}&size=1&api_key=${args.geocodeEarthKey}`, {
+			geRaw = (await fetchJson(`https://api.geocode.earth/v1/search?text=${q}&size=1&api_key=${args.geocodeEarthKey}`, {
 				Referer: "https://pelias.github.io/compare/",
 				Origin: "https://pelias.github.io",
-			})
+			})) as FeatureResp | null
 		}
 
 		const photon = mapPhoton(photonRaw?.features?.[0]?.properties)
 		const nominatim = mapNominatim(nomRaw?.[0]?.address)
-		const geocodeEarth = geRaw ? mapGeocodeEarth(geRaw?.features?.[0]?.properties) : undefined
+		const geocodeEarth = geRaw ? mapGeocodeEarth(geRaw.features?.[0]?.properties) : undefined
 
 		// Lenient per-tag recovery against our expected, per stack.
 		const score = (mapped: Rec) => {
