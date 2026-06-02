@@ -8,13 +8,14 @@ addresses per locale sorts them into three groups.
 
 ## The map
 
-| locale | convention                                         | what the parser does                                                                       | the fix                          |
-| ------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------- |
-| DE     | house after street, postcode before city           | `Hauptstraße 5` → street=`Hauptstraße 5` (house swallowed)                                 | order shard (done)               |
-| ES     | house after street, postcode before city           | `Calle Mayor 12` → street=`Calle Mayor 12`                                                 | **same order shard**             |
-| IT     | house after street, postcode before city           | `Via Roma 12` → street=`Via Roma 12`                                                       | **same order shard**             |
-| NL     | house after street, `1012 LM` postcode before city | `Damrak 70, 1012 LM Amsterdam` → street tagged venue, `locality: "LM Amsterdam"`           | order shard + Dutch postcode     |
-| GB     | house **first**, alphanumeric postcode last        | `10 Downing Street, London SW1A 2AA` → house+street correct, `locality: "London SW1A 2AA"` | postcode coverage, **not** order |
+| locale | convention                                          | what the parser does                                                                                                                    | the fix                                             |
+| ------ | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| DE     | house after street, postcode before city            | `Hauptstraße 5` → street=`Hauptstraße 5` (house swallowed)                                                                              | order shard (done)                                  |
+| ES     | house after street, postcode before city            | `Calle Mayor 12` → street=`Calle Mayor 12`                                                                                              | **same order shard**                                |
+| IT     | house after street, postcode before city            | `Via Roma 12` → street=`Via Roma 12`                                                                                                    | **same order shard**                                |
+| NL     | house after street, `1012 LM` postcode before city  | `Damrak 70, 1012 LM Amsterdam` → street tagged venue, `locality: "LM Amsterdam"`                                                        | order shard + Dutch postcode                        |
+| GB     | house **first**, alphanumeric postcode last         | `10 Downing Street, London SW1A 2AA` → house+street correct, `locality: "London SW1A 2AA"`                                              | postcode coverage, **not** order                    |
+| FR     | house first, postcode before city (already trained) | region/venue/po_box weak, but the failing rows are multi-script (`Шом, Creuse`) + coarse `région, France` queries, not street addresses | multi-script + coarse-query coverage, **not** order |
 
 ## What this means for the recipe
 
@@ -35,6 +36,14 @@ model was trained on, so it tags house and street correctly. What it cannot do i
 `SW1A 2AA` as a postcode, so the postcode lands inside the locality. An order shard would do nothing
 for GB. It needs postcode coverage, which is closer to the existing postcode-repair work than to the
 German order shard.
+
+FR is already in the model's training and mostly works on canonical street addresses, so it is not a
+recipe candidate at all. Its weak tags (region 28%, venue and po_box near zero) come from the eval's
+harder rows rather than from order: checking the FR golden, every expected field is verbatim in the
+raw, but the rows that carry a region are coarse `Île-de-France, France` queries and multi-script
+kryptonite (`Шом, Creuse`, permuted to `France, Шом, Creuse`). So the FR lever is the broader
+multi-script and permutation robustness plus coarse region+country queries, and the German order
+shard touches none of it.
 
 ## The tokenizer is not the wall, for any script
 
