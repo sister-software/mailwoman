@@ -42,6 +42,7 @@ function parseArgs() {
 		else if (a === "--count") out.count = parseInt(args[++i], 10)
 		else if (a === "--seed") out.seed = parseInt(args[++i], 10)
 		else if (a === "--source-name") out.source = args[++i]
+		else if (a === "--golden") out.golden = true
 	}
 	if (!out.output) {
 		console.error("Usage: build-german-shard.mjs --output <labeled.jsonl> [--count 4000] [--seed N]")
@@ -148,6 +149,13 @@ async function main() {
 		const synth = synthesizeGermanRow(base, { random })
 		if (!synth) {
 			skipped++
+			continue
+		}
+		// --golden: emit per-locale-f1 eval rows ({raw, components}) instead of aligned BIO. Use a
+		// different --seed than the training shard so the eval set is held out from training.
+		if (opts.golden) {
+			outStream.write(JSON.stringify({ raw: synth.raw, components: synth.components, country: "DE" }) + "\n")
+			emitted++
 			continue
 		}
 		const sourceId = stableSourceId(opts.source, {
