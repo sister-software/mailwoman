@@ -1,9 +1,60 @@
 # Night shift 2026-06-02 — multi-locale (German) coverage
 
-**Headline: the German coverage path is fully built, baselined, and staged — and the one expensive,
-irreversible step (the training launch) is parked for an operator yes, because launching it mutates
-the shared training corpus manifest.** Everything else shipped. This is a one-approval handoff, not a
-debugging session.
+**Headline (updated after the run): the operator authorized the German train mid-shift, it ran to
+step-140000, and the eval is in. The verdict is REVERT — do not promote.** The order hypothesis is
+*validated* — a 5,000-row order shard roughly doubled German street (19.1→41.2) and house_number
+(14.6→30.9). But the continue-train recipe destabilized span boundaries: German locality and postcode
+collapsed, the resolver fell with them, and US/FR slipped just past the 1pp tripwire. The recipe is
+rejected; the mechanism it exposed is the prize. Details below.
+
+## RESULTS — German train completed + evaluated (REVERT)
+
+The German continue-train (v0.7.2 → step-140000, `synth-german: 0.2`) finished cleanly (no NaN, app
+`ap-yAGjteLajPnRJEdH5XrpST`). Exported fp32, evaluated against the pre-registered test. Baseline
+reproduced to the decimal first, so the harness has no drift.
+
+### Before/after (held-out German golden, US/FR interference, resolver)
+
+| metric                         | v0.7.2 baseline | v0.8.0-german | Δ           |
+| ------------------------------ | --------------: | ------------: | ----------- |
+| German **street** F1           |           19.1% |     **41.2%** | **+22.1pp** |
+| German **house_number** F1     |           14.6% |     **30.9%** | **+16.3pp** |
+| German locality F1             |           72.5% |         35.2% | −37.3pp     |
+| German postcode F1             |           89.0% |         31.3% | −57.7pp     |
+| US micro-F1 (interference)     |           76.2% |         74.9% | −1.3pp      |
+| FR micro-F1 (interference)     |           62.8% |         61.7% | −1.1pp      |
+| resolver neural locality-match |           77.4% |         43.3% | −34.1pp     |
+| resolver coord p90 (km)        |            67.4 |         291.5 | +224 km     |
+
+Pre-registered verdict: *revert if any existing locale drops > 1pp*. US −1.3 and FR −1.1 both trip it,
+and German itself nets worse (the resolver, the product-level metric, went 77.4 → 43.3). **Not
+promoted. No HF upload, no default change. ES/IT/NL extension is held** — the recipe didn't prove
+useful, so replicating it would replicate the damage.
+
+### The mechanism (why it's worth more than the verdict)
+
+A side-by-side raw-span dump (baseline vs v0.8.0 on five real German addresses, via a German-flavored
+`scripts/diag-saintalbans.ts`) shows this is *not* catastrophic forgetting — it's the same Saint Paul
+span-fragmentation pathology, re-triggered at end-of-string by the order shard:
+
+- **The order signal lands.** `Prenzlauer Allee 36, 10405 Berlin` → baseline mis-tags `36` as
+  `postcode`; v0.8.0 correctly tags it `house_number` and keeps locality + postcode. That single row
+  is the whole thesis working.
+- **But multi-digit house numbers fragment.** `Straußstraße 27` → street keeps `…2`, `house_number="7"`.
+  `Münchner Straße 14` → `house_number="4"`. The model learned "a trailing digit is a house number"
+  but splits the number instead of taking the whole run.
+- **And the trailing city's leading characters get eaten.** `Berlin` → dropped entirely; `Leipzig` →
+  `ipzig`; `München` → `chen`. That span-start damage is what tanked locality F1, and the resolver
+  collapse is downstream of it (no city span → no WOF hit → p90 211→291 km).
+- **postcode loss is over-application:** the model now grabs numbers as `house_number` so eagerly that
+  on some golden rows it cannibalizes the postcode.
+
+So the lever is real and the failure is a known, nameable boundary bug, not a dead end. The next
+attempt needs the order signal *without* the boundary damage — candidates: (a) the Saint-Albans
+span-merge decoder fix applied to house_number/locality spans, (b) a larger/cleaner shard so the model
+sees complete multi-digit house numbers and complete trailing city names, (c) train fresh-with-German
+rather than continue-train (the continue-train is what destabilized the boundaries). That decision is
+the operator's; this shift stops at the diagnosis rather than spending more GPU on a rejected recipe.
 
 ## What shipped (branch `eval/multi-locale-de`, 10 commits ahead of main)
 
@@ -91,27 +142,36 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
 
 ## Open questions for the operator
 
-1. Approve the German train (the 4 commands above)? Or adjust (fresh run vs continue, step count, weight)?
-2. Merge `eval/multi-locale-de` to main? It's tested + linted; the German config is inert until launched.
-3. The de golden eval is synthetic (real OA tuples, German-order rendered). Good enough as the German
-   parser eval, or do you want a hand-curated German set?
+1. **Which fix for the next German attempt?** The order signal works; the boundary fragmentation is
+   the blocker. Three candidates, in rough cost order: (a) span-merge decoder fix (cheap, no GPU, but
+   it's the "one more rule" lever you've pushed back on — though here it's a decode-time span join, not
+   a hand-written parse rule); (b) bigger/cleaner shard + retrain; (c) fresh-with-German run instead of
+   continue-train. My read: (c) is the cleanest test of whether continue-train caused the boundary
+   damage, but it's the most GPU. Your call before any more spend.
+2. Merge `eval/multi-locale-de` to main? It's tested + linted; the German config trained inert and is
+   now a rejected recipe — keep it in-tree as the documented negative result, or strip the config?
+3. The de golden eval is synthetic (real OA tuples, German-order rendered). It cleanly separated the
+   order win from the boundary loss, so it did its job — but a hand-curated German set would harden the
+   next round's verdict.
 
 ## Concrete next steps
 
-- (operator) Run the 4-command launch, or hand it back with a tweak.
-- (next session) After the train: `scripts/eval-de-coverage.sh` on the export → fill the before/after.
-- (next session) FR is the other weak locale (micro 62.8%); the same synth-from-real-OA recipe applies
-  (`synthesize-french.ts` + an FR bbox + `FR` already weighted).
-- (cheap follow-up) CITY-column cleaning in `build-german-shard.mjs`.
+- (operator) Pick the fix direction for German round 2 (open question 1) before any more GPU spend.
+- (done this shift) Train launched + run to step-140000 + `scripts/eval-de-coverage.sh` before/after
+  filled in → REVERT. Artifacts at `/tmp/v080-de/` (model + both eval logs); not promoted.
+- (held) ES/IT/NL extension — same recipe would replicate the boundary damage; gated behind the German
+  round-2 fix landing.
+- (cheap follow-up, still valid) CITY-column cleaning in `build-german-shard.mjs` — the OA `CITY`
+  noise (`Rabenau Sachs`) dirties locality labels and may have widened the locality collapse.
 
 ## Numbers
 
-|                      |                                          |
-| -------------------- | ---------------------------------------- |
-| shift window         | 03:19 UTC → 14:00 UTC                    |
-| models trained       | 0 (training gated on operator approval)  |
-| Modal spend          | $0 (no training launched)                |
-| commits              | 10 on `eval/multi-locale-de`             |
-| NaN incidents        | 0                                        |
-| CI failures          | 0                                        |
-| classifier gates hit | 1 (shared MANIFEST mutation — respected) |
+|                      |                                                         |
+| -------------------- | ------------------------------------------------------- |
+| shift window         | 03:19 UTC → 14:00 UTC                                   |
+| models trained       | 1 (v0.7.2 → step-140000, German order shard)            |
+| Modal spend          | ~$3–4 (40k continue-train + fp32 export, A100)          |
+| model promoted       | 0 — REVERT verdict, recipe rejected                     |
+| NaN incidents        | 0                                                       |
+| CI failures          | 0                                                       |
+| classifier gates hit | 1 (shared MANIFEST mutation — respected, then approved) |
