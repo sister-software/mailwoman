@@ -58,12 +58,11 @@
  *
  *   ## FLAGS
  *
- *   --out <path> output JSONL (default data/eval/external/openaddresses-us-sample.jsonl) --cache
- *   <dir> where source zips are cached (default /tmp/oa-cache) --target <n> overall cap on emitted
- *   records (default 10000) --per-state <n> per-state cap before the overall trim (default 1500)
- *   --seed <n> PRNG seed for reproducible sampling (default 42) --offline do not download; only use
- *   zips already in --cache --sources a,b,c restrict to a comma list of source keys (e.g.
- *   "us/dc/statewide,us/wy/statewide")
+ *   --out <path> output JSONL (default data/eval/external/openaddresses-us-sample.jsonl) --cache<dir> where source zips are cached (default /tmp/oa-cache) --target <n> overall cap on emitted
+ * records (default 10000) --per-state <n> per-state cap before the overall trim (default 1500)
+ * --seed <n> PRNG seed for reproducible sampling (default 42) --offline do not download; only use
+ * zips already in --cache --sources a,b,c restrict to a comma list of source keys (e.g.
+ * "us/dc/statewide,us/wy/statewide")
  */
 
 import { spawnSync } from "node:child_process"
@@ -77,7 +76,14 @@ import { dirname, join, resolve } from "node:path"
 // `tier` is informational (stratification rationale); sampling is per-state regardless.
 // `license` / `attribution` are recorded for the README; OA US sources are open government data.
 // Sizes are the compressed-zip sizes observed 2026-05-30 (for the operator's egress budgeting).
+//
+// `bbox` is the per-source geo-sanity box for the projection/garbage-point filter. US sources omit
+// it and default to the continental-US box; NON-US sources MUST set it or their (legitimately
+// non-US) points are dropped wholesale. Fields: { minLat, maxLat, minLon, maxLon }.
 // ---------------------------------------------------------------------------
+const US_BBOX = { minLat: 15, maxLat: 72, minLon: -180, maxLon: -60 }
+const DE_BBOX = { minLat: 47, maxLat: 56, minLon: 5, maxLon: 16 }
+
 const SOURCES = [
 	// NOTE: us/ca/san_francisco and us/wy/statewide were evaluated and REJECTED for this eval:
 	// the SF source carries NO city/place column (every row dropped by the city filter), and the
@@ -147,6 +153,36 @@ const SOURCES = [
 		zipBytes: 8_002_724,
 		license: "South Dakota county open-data sources — open use.",
 		attribution: "South Dakota county GIS, via OpenAddresses",
+	},
+	// --- Germany (Latin-script non-US locale probe, 2026-06-02). Select via --sources. The global
+	// WOF resolver (admin-global-priority.db) covers DE admin. CITY/POSTCODE columns are populated;
+	// German postcodes are 5-digit so the US-shaped cleanPostcode accepts them. Each needs DE_BBOX.
+	{
+		key: "de/berlin",
+		state: "Berlin",
+		tier: "de-city-state",
+		zipBytes: 8_824_426,
+		bbox: DE_BBOX,
+		license: "Geoportal Berlin / Berlin open data — open use.",
+		attribution: "Land Berlin, via OpenAddresses",
+	},
+	{
+		key: "de/nw/statewide",
+		state: "Nordrhein-Westfalen",
+		tier: "de-populous-multi-city",
+		zipBytes: 120_000_000,
+		bbox: DE_BBOX,
+		license: "Land NRW / Geobasis NRW — open use (dl-de/by-2-0).",
+		attribution: "Geobasis NRW, via OpenAddresses",
+	},
+	{
+		key: "de/sn/statewide",
+		state: "Sachsen",
+		tier: "de-multi-city",
+		zipBytes: 40_000_000,
+		bbox: DE_BBOX,
+		license: "GeoSN Sachsen — open use.",
+		attribution: "Staatsbetrieb Geobasisinformation und Vermessung Sachsen, via OpenAddresses",
 	},
 ]
 
@@ -384,8 +420,10 @@ function processSource(source, zipPath, rng, perState) {
 			droppedBadGeo++
 			continue
 		}
-		// Continental US-ish sanity box (incl. AK/HI margins) to drop projection/garbage points.
-		if (lat < 15 || lat > 72 || lon < -180 || lon > -60) {
+		// Per-source geo-sanity box (US sources default to the continental-US box; non-US sources set
+		// their own `bbox`). Drops projection/garbage points.
+		const box = source.bbox ?? US_BBOX
+		if (lat < box.minLat || lat > box.maxLat || lon < box.minLon || lon > box.maxLon) {
 			droppedBadGeo++
 			continue
 		}
