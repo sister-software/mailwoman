@@ -33,9 +33,9 @@ useful, so replicating it would replicate the damage.
 
 ### The mechanism (why it's worth more than the verdict)
 
-A side-by-side raw-span dump (baseline vs v0.8.0 on five real German addresses) shows this is *not*
-catastrophic forgetting — it's the [Saint Paul span-fragmentation pathology][saintalbans] re-triggered
-at end-of-string by the order shard:
+A side-by-side raw-span dump (baseline vs v0.8.0 on five real German addresses, via a German-flavored
+`scripts/diag-saintalbans.ts`) shows this is *not* catastrophic forgetting — it's the same Saint Paul
+span-fragmentation pathology, re-triggered at end-of-string by the order shard:
 
 - **The order signal lands.** `Prenzlauer Allee 36, 10405 Berlin` → baseline mis-tags `36` as
   `postcode`; v0.8.0 correctly tags it `house_number` and keeps locality + postcode. That single row
@@ -55,8 +55,6 @@ span-merge decoder fix applied to house_number/locality spans, (b) a larger/clea
 sees complete multi-digit house numbers and complete trailing city names, (c) train fresh-with-German
 rather than continue-train (the continue-train is what destabilized the boundaries). That decision is
 the operator's; this shift stops at the diagnosis rather than spending more GPU on a rejected recipe.
-
-[saintalbans]: ../../../scripts/diag-saintalbans.ts
 
 ## What shipped (branch `eval/multi-locale-de`, 10 commits ahead of main)
 
