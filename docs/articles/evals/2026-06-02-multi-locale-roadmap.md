@@ -36,6 +36,24 @@ model was trained on, so it tags house and street correctly. What it cannot do i
 for GB. It needs postcode coverage, which is closer to the existing postcode-repair work than to the
 German order shard.
 
+## The tokenizer is not the wall, for any script
+
+A reasonable worry is that the harder locales fail because the tokenizer can't represent their
+scripts, which would mean a tokenizer change (a bigger, more expensive lever) instead of coverage.
+Checked directly across ten scripts with `diag-tokenizer-multiscript.ts`, that worry doesn't hold.
+
+The v0.6.0-a0 SentencePiece tokenizer round-trips every script losslessly, which is expected given
+byte_fallback. The telling number is fragmentation, and there is almost none: zero byte-fallback
+pieces across Cyrillic, Greek, Japanese, Chinese, Korean, Arabic, Thai, and Devanagari, all sitting
+at roughly 0.5 to 1.1 pieces per character, the same range as Latin. The 48K vocab carries real
+subword pieces (and for CJK, per-character pieces) for all of them, not raw byte soup.
+
+So the non-Latin collapse measured earlier is not the tokenizer shredding the script. The pieces
+exist; their embeddings are just under-trained, because the corpus is almost entirely Latin. That is
+the same diagnosis as German: coverage, not tokenizer. The synth-from-real-OA recipe therefore reaches
+past the Latin scripts, and the expensive option of swapping in a multilingual encoder is less
+necessary than it looked, since the vocabulary is already multilingual enough to learn from.
+
 ## Sequencing
 
 Hold all of this behind the German result. If the German train lifts street and house_number without
