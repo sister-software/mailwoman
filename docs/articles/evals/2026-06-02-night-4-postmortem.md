@@ -1,11 +1,11 @@
 # Night shift 2026-06-02 — multi-locale (German) coverage
 
-**Headline (updated after the run): the operator authorized the German train mid-shift, it ran to
-step-140000, and the eval is in. The verdict is REVERT — do not promote.** The order hypothesis is
-*validated* — a 5,000-row order shard roughly doubled German street (19.1→41.2) and house_number
-(14.6→30.9). But the continue-train recipe destabilized span boundaries: German locality and postcode
-collapsed, the resolver fell with them, and US/FR slipped just past the 1pp tripwire. The recipe is
-rejected; the mechanism it exposed is the prize. Details below.
+**Headline: the operator authorized the German train mid-shift, it ran to step-140000, and the eval is
+in. The verdict is REVERT, do not promote.** The order hypothesis came out *validated*: a 5,000-row
+order shard roughly doubled German street (19.1→41.2) and house_number (14.6→30.9). But the
+continue-train recipe destabilized span boundaries. German locality and postcode collapsed, the resolver
+fell with them, and US/FR slipped just past the 1pp tripwire. The recipe is rejected; the mechanism it
+exposed is the prize. Details below.
 
 ## RESULTS — German train completed + evaluated (REVERT)
 
@@ -28,14 +28,15 @@ reproduced to the decimal first, so the harness has no drift.
 
 Pre-registered verdict: *revert if any existing locale drops > 1pp*. US −1.3 and FR −1.1 both trip it,
 and German itself nets worse (the resolver, the product-level metric, went 77.4 → 43.3). **Not
-promoted. No HF upload, no default change. ES/IT/NL extension is held** — the recipe didn't prove
+promoted. No HF upload, no default change. ES/IT/NL extension is held.** The recipe didn't prove
 useful, so replicating it would replicate the damage.
 
 ### The mechanism (why it's worth more than the verdict)
 
 A side-by-side raw-span dump (baseline vs v0.8.0 on five real German addresses, via a German-flavored
-`scripts/diag-saintalbans.ts`) shows this is *not* catastrophic forgetting — it's the same Saint Paul
-span-fragmentation pathology, re-triggered at end-of-string by the order shard:
+`scripts/diag-saintalbans.ts`) shows the same Saint Paul span-fragmentation pathology we have seen
+before, re-triggered at end-of-string by the order shard. The cities were not forgotten; their span
+boundaries came apart:
 
 - **The order signal lands.** `Prenzlauer Allee 36, 10405 Berlin` → baseline mis-tags `36` as
   `postcode`; v0.8.0 correctly tags it `house_number` and keeps locality + postcode. That single row
@@ -49,12 +50,12 @@ span-fragmentation pathology, re-triggered at end-of-string by the order shard:
 - **postcode loss is over-application:** the model now grabs numbers as `house_number` so eagerly that
   on some golden rows it cannibalizes the postcode.
 
-So the lever is real and the failure is a known, nameable boundary bug, not a dead end. The next
-attempt needs the order signal *without* the boundary damage — candidates: (a) the Saint-Albans
-span-merge decoder fix applied to house_number/locality spans, (b) a larger/cleaner shard so the model
-sees complete multi-digit house numbers and complete trailing city names, (c) train fresh-with-German
-rather than continue-train (the continue-train is what destabilized the boundaries). That decision is
-the operator's; this shift stops at the diagnosis rather than spending more GPU on a rejected recipe.
+So the lever is real, and the failure is a known, nameable boundary bug rather than a dead end. The next
+attempt needs the order signal *without* the boundary damage. Candidates: (a) the Saint-Albans span-merge
+decoder fix applied to house_number/locality spans, (b) a larger/cleaner shard so the model sees complete
+multi-digit house numbers and complete trailing city names, (c) train fresh-with-German rather than
+continue-train (the continue-train is what destabilized the boundaries). That decision is the operator's;
+this shift stops at the diagnosis rather than spending more GPU on a rejected recipe.
 
 ## What shipped (branch `eval/multi-locale-de`, 10 commits ahead of main)
 
@@ -66,8 +67,9 @@ the operator's; this shift stops at the diagnosis rather than spending more GPU 
    renders REAL OpenAddresses Berlin/Saxony tuples in idiomatic German order via the OpenCage `DE`
    template, teaching house-number-after-street + postcode-before-city. `build-german-shard.mjs`
    pools 1.2M real DE tuples → a 5,000-row labeled shard. (commit `08f85f1`)
-3. **DE-3 prep (staged, NOT run).** `v0_8_0-german.yaml` continue-trains v0.7.2 (+40k → step-140000,
-   `synth-german: 0.2`, `DE: 1.0`). The parquet is uploaded to the volume. (commit `ac571ca`)
+3. **DE-3 — config + shard (staged, then run on approval).** `v0_8_0-german.yaml` continue-trained
+   v0.7.2 (+40k → step-140000, `synth-german: 0.2`, `DE: 1.0`). The parquet went to the volume. (commit
+   `ac571ca`)
 4. **DE-4/5 — eval harness + held-out golden.** `scripts/eval-de-coverage.sh` runs the whole
    before/after; `openaddresses-de-golden.jsonl` is the held-out German set. (commit `e43400a`)
 5. **Earlier this session (the day's work, also on this branch):** the `--default-country` flag, the
@@ -75,12 +77,12 @@ the operator's; this shift stops at the diagnosis rather than spending more GPU 
 6. **Docs:** the multi-locale write-up (`2026-06-02-multi-locale-german-coverage.md`) and the German
    section of the external-eval README. (commits `2e96b35`, `233e652`)
 
-## The one thing that needs your hands: launch the German train
+## How the train got launched (and the gate it cleared)
 
-The auto-classifier gated the in-place mutation of the **shared** corpus `MANIFEST.json` — correctly,
-because my own plan flagged DE-3 as needing your sign-off, and "wide berth" is general autonomy, not
-specific authorization to mutate shared training infra. The MANIFEST entry is staged at
-`/tmp/MANIFEST.json` (and re-derivable). To launch:
+The auto-classifier gated the in-place mutation of the **shared** corpus `MANIFEST.json`, correctly:
+my own plan flagged DE-3 as needing your sign-off, and "wide berth" is general autonomy, not specific
+authorization to mutate shared training infra. The MANIFEST entry was staged at `/tmp/MANIFEST.json`
+(and re-derivable). The launch sequence, once you approved it, was:
 
 ```bash
 # 1. register the shard (the gated step):
@@ -100,7 +102,7 @@ scripts/eval-de-coverage.sh <model.onnx> <tokenizer.model> <model-card.json>
 The parquet sha256 is `962a277c7c54d7f96d2c652e488b7af849c740865e47fa8e0958d03dd92f7c89` (5000 rows,
 275,662 bytes), already in the staged MANIFEST entry.
 
-## The pre-registered test (decide before you read the numbers)
+## The pre-registered test (set before the numbers came in)
 
 v0.7.2 baseline on the held-out German golden: **street 19.1%, house_number 14.6%**, locality 72.5%,
 postcode 89.0%. US/FR baseline (the interference tripwire): US 76.2% / FR 62.8% micro-F1. German
@@ -127,8 +129,8 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
 - I reached for the wrong tool earlier in the session (the remote `/schedule` skill) before realizing
   the night shift is a local workflow. Corrected, memory written.
 - The German shard inherits some noise from the OA `CITY` column (e.g. `Rabenau Sachs`,
-  `Weißwasser /O.L.` — Kreis/region suffixes glued to the city). It doesn't hurt the order signal
-  (street/house position), but it dirties locality labels. A `CITY`-cleaning pass is a cheap follow-up.
+  `Weißwasser /O.L.`, where Kreis/region suffixes are glued to the city). It leaves the order signal
+  (street/house position) intact but dirties locality labels. A `CITY`-cleaning pass is a cheap follow-up.
 
 ## Decisions made autonomously
 
@@ -143,15 +145,15 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
 ## Open questions for the operator
 
 1. **Which fix for the next German attempt?** The order signal works; the boundary fragmentation is
-   the blocker. Three candidates, in rough cost order: (a) span-merge decoder fix (cheap, no GPU, but
-   it's the "one more rule" lever you've pushed back on — though here it's a decode-time span join, not
-   a hand-written parse rule); (b) bigger/cleaner shard + retrain; (c) fresh-with-German run instead of
+   the blocker. Three candidates, in rough cost order: (a) span-merge decoder fix (cheap, no GPU, though
+   it's the "one more rule" lever you've pushed back on; here it's a decode-time span join rather than a
+   hand-written parse rule); (b) bigger/cleaner shard + retrain; (c) fresh-with-German run instead of
    continue-train. My read: (c) is the cleanest test of whether continue-train caused the boundary
-   damage, but it's the most GPU. Your call before any more spend.
+   damage, though it's the most GPU. Your call before any more spend.
 2. Merge `eval/multi-locale-de` to main? It's tested + linted; the German config trained inert and is
-   now a rejected recipe — keep it in-tree as the documented negative result, or strip the config?
+   now a rejected recipe; keep it in-tree as the documented negative result, or strip the config?
 3. The de golden eval is synthetic (real OA tuples, German-order rendered). It cleanly separated the
-   order win from the boundary loss, so it did its job — but a hand-curated German set would harden the
+   order win from the boundary loss, so it did its job, though a hand-curated German set would harden the
    next round's verdict.
 
 ## Concrete next steps
@@ -159,9 +161,9 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
 - (operator) Pick the fix direction for German round 2 (open question 1) before any more GPU spend.
 - (done this shift) Train launched + run to step-140000 + `scripts/eval-de-coverage.sh` before/after
   filled in → REVERT. Artifacts at `/tmp/v080-de/` (model + both eval logs); not promoted.
-- (held) ES/IT/NL extension — same recipe would replicate the boundary damage; gated behind the German
+- (held) ES/IT/NL extension: same recipe would replicate the boundary damage; gated behind the German
   round-2 fix landing.
-- (cheap follow-up, still valid) CITY-column cleaning in `build-german-shard.mjs` — the OA `CITY`
+- (cheap follow-up, still valid) CITY-column cleaning in `build-german-shard.mjs`: the OA `CITY`
   noise (`Rabenau Sachs`) dirties locality labels and may have widened the locality collapse.
 
 ## Numbers
@@ -170,8 +172,8 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
 | -------------------- | ------------------------------------------------------- |
 | shift window         | 03:19 UTC → 14:00 UTC                                   |
 | models trained       | 1 (v0.7.2 → step-140000, German order shard)            |
-| Modal spend          | ~$3–4 (40k continue-train + fp32 export, A100)          |
-| model promoted       | 0 — REVERT verdict, recipe rejected                     |
+| Modal spend          | ~$3-4 (40k continue-train + fp32 export, A100)          |
+| model promoted       | 0 (REVERT verdict, recipe rejected)                     |
 | NaN incidents        | 0                                                       |
 | CI failures          | 0                                                       |
 | classifier gates hit | 1 (shared MANIFEST mutation — respected, then approved) |
