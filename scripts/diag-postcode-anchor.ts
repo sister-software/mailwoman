@@ -26,8 +26,10 @@ const SHARDS = [
 
 const INPUTS = [
 	"8 Rue du Faubourg Saint-Honoré, 75008 Paris", // FR, single-country, placed
-	"Straußstraße 27, 12623 Berlin", // DE, parent-borrowed centroid
+	"Straußstraße 27, 12623 Berlin", // DE, GeoNames centroid
 	"123 Market St, San Francisco, CA 94105", // US, own centroid
+	"Calle de Alcalá 1, 28014 Madrid", // ES, GeoNames centroid
+	"Via Roma 1, 20121 Milano", // IT, GeoNames centroid (corrects WOF's bad Milan→Liguria link)
 	"75001 Paris", // FR + US (Addison, TX) — ambiguous → moderate confidence
 	"Apartment 99999, Nowhere", // regex-shaped, in no gazetteer → confidence 0
 	"10 Downing Street, London SW1A 2AA", // GB — not in our shards → graceful 0
