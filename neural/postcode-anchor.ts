@@ -29,6 +29,7 @@
  *       1.0.
  */
 
+import { isGermanStreetToken } from "@mailwoman/codex/de"
 import { isStreetSuffixToken, isUsStateAbbreviation } from "@mailwoman/codex/us"
 import { collectMatches } from "./postcode-repair.js"
 
@@ -153,10 +154,9 @@ function confidenceFromCountryCount(k: number): number {
 const HOUSE_NUMBER_PENALTY = 0.2
 
 /**
- * Non-US street-type words the USPS codex does not cover: locales that write the type as its own
- * word (FR/ES/IT). German/Dutch agglutinative compounds (`Straußstraße`, `Stationsstraat`) are
- * matched by the suffix list below. US suffixes come from `@mailwoman/codex/us` (the full USPS
- * Pub-28 table) so this set never needs a US entry.
+ * Standalone street-type words for locales that write the type as its own word (FR/ES/IT). US comes
+ * from `@mailwoman/codex/us` and German from `@mailwoman/codex/de`; the Dutch compound suffixes are
+ * still inline below until a `codex/nl` slice exists.
  */
 const NON_US_STREET_WORDS = new Set([
 	// French
@@ -189,41 +189,31 @@ const NON_US_STREET_WORDS = new Set([
 	"contrada",
 ])
 
-/** Compound street suffixes for agglutinative locales — matched against a token's tail. */
-const NON_US_STREET_SUFFIXES = [
-	"straße",
-	"strasse",
-	"weg",
-	"platz",
-	"gasse",
-	"allee",
-	"damm",
-	"chaussee",
-	"steig", // German
-	"straat",
-	"laan",
-	"plein",
-	"gracht",
-	"kade",
-	"dijk",
-	"steeg",
-	"dreef", // Dutch
-]
+/** Dutch compound street suffixes — matched against a token's tail (pending a `codex/nl` slice). */
+const NL_STREET_SUFFIXES = ["straat", "laan", "plein", "gracht", "kade", "dijk", "steeg", "dreef"]
 
 /**
- * True when a token denotes a street. US suffixes are taken from the USPS Pub-28 table in
+ * True when a token denotes a street. US suffixes come from the USPS Pub-28 table in
  * `@mailwoman/codex/us` (complete, so `Trl`/`Holw`/`Xing` all match), EXCEPT the abbreviations that
- * collide with a state code — `KY` (Key vs Kentucky), `PR` (Prairie vs Puerto Rico) — because those
- * appear in the postcode's own `City, ST ZIP` segment, where treating them as a street word would
- * wrongly flag a real ZIP as a house number. Non-US locales fall back to the inline word/suffix
- * lists.
+ * collide with a state code — `KY` (Key vs Kentucky), `PR` (Prairie vs Puerto Rico) — which sit in
+ * the postcode's own `City, ST ZIP` segment. German compounds come from `@mailwoman/codex/de`
+ * ({@link isGermanStreetToken}), whose suffix set already excludes the place-name endings (`-berg`,
+ * `-burg`, `-dorf`) that would otherwise flag a city token. FR/ES/IT and Dutch fall back to the
+ * inline lists.
+ *
+ * Suffix vocabularies collide across locales (German `-ring` matches English `spring`). That stays
+ * harmless because the caller only tests tokens inside the postcode's OWN comma-segment, which
+ * holds the city/state, not a street — and a misfire only scales confidence, which the consumer's
+ * floor absorbs. A locale-conditioned check is the cleaner long-term fix once the anchor carries a
+ * locale.
  */
 function looksLikeStreetWord(token: string): boolean {
 	const t = token.toLowerCase().replace(/[^\p{L}]/gu, "")
 	if (t.length < 2) return false
 	if (isStreetSuffixToken(t) && !isUsStateAbbreviation(t)) return true
+	if (isGermanStreetToken(t)) return true
 	if (NON_US_STREET_WORDS.has(t)) return true
-	return NON_US_STREET_SUFFIXES.some((s) => t.length > s.length && t.endsWith(s))
+	return NL_STREET_SUFFIXES.some((s) => t.length > s.length && t.endsWith(s))
 }
 
 /**
