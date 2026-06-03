@@ -37,7 +37,7 @@ from torch import nn
 
 from .config import Config
 from .crf import LinearChainCRF, TopKPath
-from .labels import ID_TO_LABEL, LABEL_TO_ID, ACTIVE_BIO_LABELS
+from .labels import ID_TO_LABEL, LABEL_TO_ID, ACTIVE_BIO_LABELS, IGNORE_INDEX, NUM_LOCALES
 from .phrase_priors import PHRASE_FEATURE_DIM
 
 
@@ -64,11 +64,19 @@ class _CoarseEncoderOutput:
     to the bert-style call signature the trainer and exporter expect.
     """
 
-    __slots__ = ("loss", "logits")
+    __slots__ = ("loss", "logits", "locale_logits")
 
-    def __init__(self, logits: torch.Tensor, loss: torch.Tensor | None) -> None:
+    def __init__(
+        self,
+        logits: torch.Tensor,
+        loss: torch.Tensor | None,
+        locale_logits: torch.Tensor | None = None,
+    ) -> None:
         self.logits = logits
         self.loss = loss
+        # PR3 self-conditioning: ``(batch, num_locales)`` locale posterior logits from the aux
+        # head, or None when the encoder was built without ``use_locale_conditioning``.
+        self.locale_logits = locale_logits
 
 
 class EncoderBlock(nn.Module):
@@ -150,11 +158,20 @@ class MailwomanCoarseEncoder(nn.Module):
         class_weights: torch.Tensor | None = None,
         use_phrase_priors: bool = False,
         phrase_feature_dim: int = PHRASE_FEATURE_DIM,
+        use_locale_conditioning: bool = False,
+        num_locales: int = NUM_LOCALES,
+        locale_loss_weight: float = 0.0,
     ) -> None:
         super().__init__()
         self.pad_token_id = pad_token_id
         self.max_position_embeddings = max_position_embeddings
         self.num_labels = num_labels
+        # PR3 self-conditioning: an auxiliary locale head over the pooled sequence + a FiLM
+        # modulation of the per-token reps by the inferred locale. See forward() for the data
+        # flow and the design doc (2026-06-04-pr3-self-conditioned-retrain.md) for the why.
+        self.use_locale_conditioning = use_locale_conditioning
+        self.num_locales = int(num_locales)
+        self.locale_loss_weight = float(locale_loss_weight)
         # v0.5.0 thread C: phrase-prior input-layer features (from Stage 2.7 phrase grouper,
         # Thread E). When ``use_phrase_priors`` is on, the encoder takes an additional
         # ``(B, S, phrase_feature_dim)`` tensor at forward time, concatenates it onto the
@@ -242,6 +259,23 @@ class MailwomanCoarseEncoder(nn.Module):
         # pre-v0.3.0 checkpoints.
         self.crf: LinearChainCRF | None = LinearChainCRF(num_labels, ID_TO_LABEL) if use_crf else None
 
+        # PR3 self-conditioning modules. ``locale_head`` maps the pooled (mean over real tokens)
+        # representation to the locale posterior — the aux supervised signal AND the exported
+        # LocalePosterior. ``locale_film`` produces a (scale, shift) pair from the same pooled
+        # vector that FiLM-modulates the per-token reps feeding the BIO head. ``locale_film`` is
+        # zero-initialized in _init_weights so the model starts as the EXACT identity of an
+        # unconditioned encoder (gamma=0, beta=0 → h unchanged) and only learns to modulate as the
+        # aux gradient flows — this is the de-risking move against the CRF-style from-scratch
+        # divergence (one new behaviour, introduced gently, not a cold-start architecture shock).
+        self.locale_head: nn.Linear | None
+        self.locale_film: nn.Linear | None
+        if self.use_locale_conditioning:
+            self.locale_head = nn.Linear(hidden_size, self.num_locales)
+            self.locale_film = nn.Linear(hidden_size, 2 * hidden_size)
+        else:
+            self.locale_head = None
+            self.locale_film = None
+
         self._init_weights()
 
     def _init_weights(self) -> None:
@@ -270,6 +304,12 @@ class MailwomanCoarseEncoder(nn.Module):
         if self.token_embeddings.padding_idx is not None:
             with torch.no_grad():
                 self.token_embeddings.weight[self.token_embeddings.padding_idx].zero_()
+        # PR3: zero-init the FiLM projection so conditioning starts as a no-op (gamma=0, beta=0).
+        # The blanket xavier loop above gave it real weights; reset them so the from-scratch model
+        # begins identical to an unconditioned encoder and learns to modulate gradually.
+        if self.locale_film is not None:
+            nn.init.zeros_(self.locale_film.weight)
+            nn.init.zeros_(self.locale_film.bias)
 
     def forward(
         self,
@@ -277,6 +317,7 @@ class MailwomanCoarseEncoder(nn.Module):
         attention_mask: torch.Tensor | None = None,
         labels: torch.Tensor | None = None,
         phrase_features: torch.Tensor | None = None,
+        locale_ids: torch.Tensor | None = None,
     ) -> "_CoarseEncoderOutput":
         bsz, seq = input_ids.shape
         if seq > self.max_position_embeddings:
@@ -325,6 +366,29 @@ class MailwomanCoarseEncoder(nn.Module):
             h = block(h, key_padding_mask=kpm)
 
         h = self.final_ln(h)
+
+        # PR3 self-conditioning: infer a locale posterior from the WHOLE sequence, then let it
+        # reshape the per-token reps before the BIO head. This is the "globally, before per-token
+        # labels" step the design calls for — and the reason it earns its keep is the probe: the
+        # postcode alone settles the country <50% of the time, so the model has to read the city
+        # and street to know where it is, then condition on that. Runs at inference too (predict()
+        # routes through here), so the conditioning shapes real emissions, not just the loss.
+        locale_logits: torch.Tensor | None = None
+        if self.use_locale_conditioning and self.locale_head is not None and self.locale_film is not None:
+            # Mean-pool over real (non-pad) tokens. fp32 reduction on principle — the v0.6.0 CRF
+            # NaN was a bf16-reduction failure, and we keep every new reduction in fp32.
+            if attention_mask is not None:
+                m = attention_mask.to(torch.float32).unsqueeze(-1)  # (B, S, 1)
+                pooled = (h.float() * m).sum(dim=1) / m.sum(dim=1).clamp(min=1.0)  # (B, hidden)
+            else:
+                pooled = h.float().mean(dim=1)
+            pooled = pooled.to(h.dtype)
+            locale_logits = self.locale_head(pooled)  # (B, num_locales)
+            # FiLM modulation: scale by (1 + gamma) and shift by beta, both predicted from the
+            # pooled locale rep. gamma/beta start at 0 (zero-init film) so this begins as identity.
+            gamma, beta = self.locale_film(pooled).chunk(2, dim=-1)  # each (B, hidden)
+            h = (1.0 + gamma).unsqueeze(1) * h + beta.unsqueeze(1)
+
         logits = self.classifier(h)
 
         loss: torch.Tensor | None = None
@@ -383,7 +447,28 @@ class MailwomanCoarseEncoder(nn.Module):
                 loss = ce_loss + self.crf_loss_weight * crf_loss.to(ce_loss.dtype)
             else:
                 loss = ce_loss
-        return _CoarseEncoderOutput(logits=logits, loss=loss)
+
+        # PR3: auxiliary locale cross-entropy. Supervises the locale head against the row's
+        # country so the pooled representation (and therefore the FiLM conditioning) actually
+        # encodes "which country". fp32 CE over the small locale vocabulary. Rows whose country
+        # is unmapped carry IGNORE_INDEX and are skipped; a batch with no mapped row contributes
+        # nothing (guards the all-ignored 0/0 → NaN edge).
+        if (
+            self.use_locale_conditioning
+            and locale_logits is not None
+            and locale_ids is not None
+            and self.locale_loss_weight > 0
+            and bool((locale_ids != IGNORE_INDEX).any())
+        ):
+            locale_ce = nn.functional.cross_entropy(
+                locale_logits.float(),
+                locale_ids,
+                ignore_index=IGNORE_INDEX,
+            )
+            locale_term = self.locale_loss_weight * locale_ce
+            loss = locale_term if loss is None else loss + locale_term.to(loss.dtype)
+
+        return _CoarseEncoderOutput(logits=logits, loss=loss, locale_logits=locale_logits)
 
     @torch.no_grad()
     def predict(
@@ -509,6 +594,11 @@ class MailwomanCoarseEncoder(nn.Module):
             # ``phrase_input_projection`` layer.
             "use_phrase_priors": bool(self.use_phrase_priors),
             "phrase_feature_dim": int(self.phrase_feature_dim),
+            # PR3 self-conditioning. False/0 on pre-PR3 weights; loaders branch on the flag to
+            # materialize locale_head / locale_film at the persisted num_locales width.
+            "use_locale_conditioning": bool(self.use_locale_conditioning),
+            "num_locales": int(self.num_locales),
+            "locale_loss_weight": float(self.locale_loss_weight),
             "id2label": dict(ID_TO_LABEL),
             "label2id": dict(LABEL_TO_ID),
         }
@@ -552,6 +642,10 @@ class MailwomanCoarseEncoder(nn.Module):
             # v0.5.0+ fields. Default to v0.4.0 behavior (no phrase priors).
             use_phrase_priors=cfg.get("use_phrase_priors", False),
             phrase_feature_dim=cfg.get("phrase_feature_dim", PHRASE_FEATURE_DIM),
+            # PR3 fields. Default off for back-compat with pre-PR3 checkpoints.
+            use_locale_conditioning=cfg.get("use_locale_conditioning", False),
+            num_locales=cfg.get("num_locales", NUM_LOCALES),
+            locale_loss_weight=cfg.get("locale_loss_weight", 0.0),
         )
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
         try:
@@ -595,6 +689,11 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoa
         # v0.5.0 thread C additions.
         use_phrase_priors=getattr(cfg.model, "use_phrase_priors", False),
         phrase_feature_dim=getattr(cfg.model, "phrase_feature_dim", PHRASE_FEATURE_DIM),
+        # PR3 self-conditioning. num_locales is derived from labels.NUM_LOCALES (single source of
+        # truth), never from the yaml, so the head width and the aux-target vocabulary can't drift.
+        use_locale_conditioning=getattr(cfg.model, "use_locale_conditioning", False),
+        num_locales=NUM_LOCALES,
+        locale_loss_weight=getattr(cfg.model, "locale_loss_weight", 0.0),
     )
 
 

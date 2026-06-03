@@ -37,7 +37,7 @@ import pyarrow.parquet as pq
 
 from .augment import augment_row
 from .config import Config, DataConfig
-from .labels import IGNORE_INDEX, active_components_present
+from .labels import IGNORE_INDEX, active_components_present, locale_id
 from .tokenizer import Tokenizer, encode_row, whitespace_spans
 
 _REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country", "source")
@@ -48,6 +48,10 @@ class EncodedExample:
     input_ids: list[int]
     attention_mask: list[int]
     labels: list[int]
+    # PR3 self-conditioning: the row's locale class id (from its ``country``), or IGNORE_INDEX
+    # when unmapped. The aux locale head's per-row target. Defaults to IGNORE_INDEX so encoders
+    # built without locale conditioning are unaffected.
+    locale_id: int = IGNORE_INDEX
 
 
 def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
@@ -456,6 +460,7 @@ def iter_encoded(
             input_ids=enc["input_ids"],
             attention_mask=enc["attention_mask"],
             labels=enc["labels"],
+            locale_id=locale_id(row.get("country")),
         )
 
 
@@ -465,6 +470,7 @@ def collate(batch: list[EncodedExample]) -> dict:
         "input_ids": [ex.input_ids for ex in batch],
         "attention_mask": [ex.attention_mask for ex in batch],
         "labels": [ex.labels for ex in batch],
+        "locale_ids": [ex.locale_id for ex in batch],
     }
 
 

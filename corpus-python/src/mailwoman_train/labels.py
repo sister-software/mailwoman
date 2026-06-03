@@ -94,6 +94,33 @@ ID_TO_LABEL: Final[dict[int, str]] = {i: label for label, i in LABEL_TO_ID.items
 # Labels that mean "ignore" in cross-entropy. The HF Trainer treats ``-100`` as the sentinel.
 IGNORE_INDEX: Final[int] = -100
 
+# --- Locale conditioning (PR3 / self-conditioning) -----------------------------------
+# Country (ISO 3166-1 alpha-2) → locale class id for the auxiliary self-conditioning head.
+# The head predicts which country an address belongs to from the POOLED sequence; that
+# posterior conditions the per-token labeling (model.py FiLM) and is the LocalePosterior the
+# resolver consumes. The probe behind PR3 showed the postcode alone pins the country only
+# 28–44% of the time, so the model must infer it from the whole string — this map is the
+# aux head's target vocabulary.
+#
+# Stable order: NEVER reorder, only APPEND, so a checkpoint's locale-head ids stay
+# reproducible (same discipline as the BIO STAGE-N constants above). A row whose ``country``
+# is absent from this map maps to IGNORE_INDEX and contributes nothing to the aux loss —
+# graceful for locales the head wasn't trained on. The head still carries a slot for every
+# entry here, so the pilot (US/FR/DE) can grow to the others without a geometry change.
+LOCALE_COUNTRIES: Final[tuple[str, ...]] = (
+    "US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL",
+)
+LOCALE_TO_ID: Final[dict[str, int]] = {c: i for i, c in enumerate(LOCALE_COUNTRIES)}
+ID_TO_LOCALE: Final[dict[int, str]] = {i: c for c, i in LOCALE_TO_ID.items()}
+NUM_LOCALES: Final[int] = len(LOCALE_COUNTRIES)
+
+
+def locale_id(country: str | None) -> int:
+    """Country (ISO-2, case-insensitive) → locale class id, or IGNORE_INDEX if unmapped."""
+    if not country:
+        return IGNORE_INDEX
+    return LOCALE_TO_ID.get(country.strip().upper(), IGNORE_INDEX)
+
 
 def collapse_label(bio_label: str) -> str:
     """Rewrite a BIO label to its active-set equivalent, or ``O``.
