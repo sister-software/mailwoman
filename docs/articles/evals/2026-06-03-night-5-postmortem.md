@@ -1,7 +1,8 @@
 # Night shift 2026-06-03 — the postcode anchor
 
 **Headline: the postcode anchor (#240, the anchor-based-parsing lead) is built, tested, and shipped for
-US, NL, FR, and DE across four feature PRs — zero GPU, all from our own WOF data. And it already pays off:
+US, NL, FR, and DE across five feature PRs, on both the Node (SQLite) and browser (binary) paths — zero
+GPU, all from our own WOF data. And it already pays off:
 on the same 3,000 German addresses, a regex plus a gazetteer lookup geolocates to a 2.8 km median, where
 the full neural-parser-plus-resolver pipeline lands at 10 km.** That is the anchor-first thesis working:
 when the neural parser is out of distribution on a locale, a structured signal carries the address anyway.
@@ -23,6 +24,12 @@ when the neural parser is out of distribution on a locale, a structured signal c
   a 100%-placed locale (371,628 codes, no backfill needed; a normalize tweak strips the space in the Dutch
   `1012 LM` → `1012LM` form). The survey also confirmed ES (64% orphans) and IT (73% orphans) are
   WOF-unplaceable.
+- **#253 — the browser resolver, dual-target complete.** `PostcodeBinaryResolver` in `@mailwoman/neural`:
+  a pure-JS binary-search over a compact flat binary, so the anchor runs in the WASM/browser parser behind
+  the same `lookup()` seam as the SQLite resolver. `build-postcode-binary.ts` emits per-country `.bin`
+  files (US 1.8 MB, NL 3.9 MB, FR/DE ~0.3 MB). DeepSeek picked this with the operator's delegated authority
+  as the highest-ROI tail work, since it unblocks the pilot's anchor-wiring. Verified loading the real
+  `.bin`: `1012 LM Amsterdam` → NL Amsterdam centroid, `12623 Berlin` → DE Berlin centroid.
 - **The gazetteer.** `postalcode-intl.db` (NL+FR+DE, IT membership-only) built with the existing
   `build-unified-wof --placetypes postalcode`, centroid-backfilled from the admin hierarchy. A volume
   artifact, rebuilt by the pipeline; the git PRs ship the code. Per-locale placement: US (own) ~100%, NL
@@ -70,15 +77,22 @@ when the neural parser is out of distribution on a locale, a structured signal c
   84% placed but loosens the median from 2.8 km to 7.5 km. Rather than bake one operating point in, the
   `--repos` flag is the knob and both numbers are documented.
 - **Ship US/NL/FR/DE; let the data decide the rest.** NL got added once the survey showed it was clean;
-  ES and IT were left as membership-only once the survey showed they were not. The browser FST artifact and
-  the parser-side `[POSTCODE-ANCHOR]` conditioning channel wait for the de-risk pilot (#242), since the
-  channel needs the self-conditioning architecture that pilot exists to build.
+  ES and IT were left as membership-only once the survey showed they were not. The parser-side
+  `[POSTCODE-ANCHOR]` conditioning channel waits for the de-risk pilot (#242), since it needs the
+  self-conditioning architecture that pilot exists to build.
+- **Used the long tail well, via the delegated-authority consult.** Once the primary work was done with
+  hours left, DeepSeek (carrying the operator's night-shift authority) settled the WOF-pure ceiling
+  question (OA centroid aggregation is allowed because it keeps our own WOF ids) and picked the browser
+  resolver over ES/IT placement and the self-conditioning scaffold. I built the browser resolver and held
+  ES/IT (low value until the parser covers those locales).
 
 ## Open questions for the operator
 
-1. **The WOF-pure ceiling.** About a third of DE postcodes are unplaceable from WOF alone (bare stubs).
-   Closing that needs a non-WOF centroid source such as OpenAddresses point aggregation. Hold the WOF-pure
-   line and accept ~66% DE, or allow OA aggregation for the stub third?
+1. **The WOF-pure ceiling — provisionally settled, ratify when back.** About a third of DE postcodes
+   (and most of ES/IT) are unplaceable from WOF alone. The delegated-authority consult cleared OA point
+   aggregation for _centroids_ on the grounds that it keeps our own WOF ids and so does not touch the
+   eval-integrity reason behind the custom-WOF rule. Nothing was built on it tonight (low value for now).
+   Confirm or overrule that reading.
 2. **Coarse fallback in production.** Should the shipped `postalcode-intl.db` use the `--repos` ancestor
    fallback (84% placed at 7.5 km) or stay precise-only (34% at 2.8 km)? My lean is fallback-on, since the
    country posterior is the primary signal and a coarse centroid still places the right region.
@@ -89,11 +103,12 @@ when the neural parser is out of distribution on a locale, a structured signal c
 ## Concrete next steps
 
 - (operator) Decide the WOF-pure ceiling policy and the fallback default (open questions 1 and 2).
-- IT and ES placement is blocked on WOF postcode data quality (orphans and wrong parents), not on tooling.
-  They need a non-WOF centroid source (OpenAddresses point aggregation), which ties back to open question 1.
-- The browser FST + packed-record artifact for the WASM target (DeepSeek's deferred scope cut).
-- The parser-side conditioning channel lands with the pilot (#242).
-- `scripts/eval/postcode-anchor-accuracy.ts` extends to FR once an FR OpenAddresses sample with
+- ES/IT placement via OA centroid aggregation is now **authorized** (the delegated-authority consult
+  cleared the WOF-pure question for centroids), but deferred as low value until the parser covers those
+  locales. The build path is documented; pick it up when ES/IT become parse targets.
+- The parser-side `[POSTCODE-ANCHOR]` conditioning channel lands with the pilot (#242); the browser
+  resolver shipped tonight (#253) unblocks its anchor-wiring.
+- `scripts/eval/postcode-anchor-accuracy.ts` extends to FR/NL once an OpenAddresses sample with
   coordinates is ingested (none on disk tonight).
 
 ## Numbers
@@ -101,12 +116,13 @@ when the neural parser is out of distribution on a locale, a structured signal c
 |                      |                                                              |
 | -------------------- | ------------------------------------------------------------ |
 | shift window         | 03:16 UTC → 14:00 UTC                                        |
-| primary goal         | postcode anchor (#240) — shipped US/FR/DE                    |
-| PRs merged           | 6 (#238, #246 carried over; #247-#250 new)                   |
-| locales placed       | US, NL, FR, DE (IT membership-only)                          |
+| primary goal         | postcode anchor (#240) — shipped US/NL/FR/DE, Node + browser |
+| PRs merged           | 9 (2 carried over; #247-#253) + this postmortem update       |
+| feature PRs          | 5 (#247-#250, #253)                                          |
+| locales placed       | US, NL, FR, DE (IT/ES membership-only)                       |
 | models trained       | 0 (zero-GPU lane, heat-safe)                                 |
 | Modal spend          | $0                                                           |
-| new tests            | 22 (postcode suite all green)                                |
+| new tests            | 29 (46 in the postcode suite, all green)                     |
 | geolocation (anchor) | US p50 2.4 km, DE p50 2.8 km, vs 10 km neural+resolver on DE |
 | NaN incidents        | 0                                                            |
 | CI failures          | 0                                                            |
