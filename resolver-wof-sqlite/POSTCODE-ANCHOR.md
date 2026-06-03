@@ -33,6 +33,13 @@ So a real single-country code scores 1.0, a real two-country code about 0.70, an
 that is in no gazetteer scores 0 — the last case is what keeps a bare `99999` or a 5-digit house number
 from being treated as a postcode.
 
+Pass `{ fuzzy: true }` to absorb typos and OCR slips. When an exact lookup finds nothing, the anchor
+retries class-aware edit-distance-1 variants (digit↔digit, letter↔letter substitutions, plus deletions,
+insertions, and adjacent transpositions), tags the result `matchType: "fuzzy"`, and multiplies the
+confidence by a 0.6 penalty. A mistyped `12624` recovers its real neighbour `12623` at low confidence,
+leaving the parser's city tokens to confirm it. Fuzzy is off by default so existing callers keep
+exact-match behaviour.
+
 ## Building the shards
 
 The shards come from the operator's own WOF build, never a prebuilt third-party dump. US already ships as
