@@ -4,6 +4,7 @@
 		"@release-it-plugins/workspaces": {
 			"workspaces": [
 				"core",
+				"codex",
 				"classifiers",
 				"corpus",
 				"neural",

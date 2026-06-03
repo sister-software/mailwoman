@@ -24,9 +24,9 @@
  *   most useful at training time, not corpus build time.
  */
 
+import { US_STREET_SUFFIX_PREFERRED_ABBR, matchCase, matchTrailingSuffix } from "@mailwoman/codex/us"
 import type { BioLabel, ComponentTag } from "@mailwoman/core/types"
 import { alignRow } from "./align.js"
-import { US_STREET_SUFFIX_PREFERRED_ABBR, matchCase, matchTrailingSuffix } from "./codex/us-street-suffix.js"
 import { whitespaceTokenizer, type Tokenizer } from "./tokenize.js"
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "./types.js"
 

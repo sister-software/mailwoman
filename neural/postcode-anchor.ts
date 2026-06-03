@@ -29,6 +29,7 @@
  *       1.0.
  */
 
+import { isStreetSuffixToken, isUsStateAbbreviation } from "@mailwoman/codex/us"
 import { collectMatches } from "./postcode-repair.js"
 
 /** A gazetteer hit for a postcode string. `lat`/`lon` of 0 means "known postcode, no centroid yet". */
@@ -68,6 +69,14 @@ export interface PostcodeAnchor {
 	 * likely typo / OCR slip), so the confidence carries a penalty; `none` — in no gazetteer.
 	 */
 	matchType: "exact" | "fuzzy" | "none"
+	/**
+	 * Structural house-number prior in [0, 1]: `1` for a code that cannot be a house number, and
+	 * below `1` for a digit-only code sharing its comma-delimited segment with a street word (so it
+	 * reads as a house number rather than a postcode). Already folded into {@link confidence}; exposed
+	 * so a consumer can rank competing spans, or see why one was down-weighted, without re-deriving
+	 * it.
+	 */
+	positionFactor: number
 }
 
 export interface ExtractPostcodeAnchorsOpts {
@@ -133,6 +142,110 @@ function confidenceFromCountryCount(k: number): number {
 }
 
 /**
+ * Confidence scale for a digit-only code that shares its segment with a street word. A house number
+ * and a 5-digit postcode are the same shape, so membership alone can't separate `12345 Main St`
+ * (house number that happens to be a real ZIP elsewhere) from `San Francisco 94105` (postcode). The
+ * structural tell is cheap and locale-general: house numbers sit beside the street, postcodes
+ * beside the city. We scale rather than zero — the gazetteer still vouches for the shape, so a lone
+ * code in a street-only line stays usable; the penalty just lets a real trailing postcode out-rank
+ * it.
+ */
+const HOUSE_NUMBER_PENALTY = 0.2
+
+/**
+ * Non-US street-type words the USPS codex does not cover: locales that write the type as its own
+ * word (FR/ES/IT). German/Dutch agglutinative compounds (`Straußstraße`, `Stationsstraat`) are
+ * matched by the suffix list below. US suffixes come from `@mailwoman/codex/us` (the full USPS
+ * Pub-28 table) so this set never needs a US entry.
+ */
+const NON_US_STREET_WORDS = new Set([
+	// French
+	"rue",
+	"bd",
+	"impasse",
+	"chemin",
+	"quai",
+	"allée",
+	"allee",
+	"cours",
+	"passage",
+	// Spanish
+	"calle",
+	"avenida",
+	"avda",
+	"plaza",
+	"paseo",
+	"camino",
+	"carrera",
+	"ronda",
+	// Italian
+	"via",
+	"viale",
+	"piazza",
+	"corso",
+	"largo",
+	"vicolo",
+	"strada",
+	"contrada",
+])
+
+/** Compound street suffixes for agglutinative locales — matched against a token's tail. */
+const NON_US_STREET_SUFFIXES = [
+	"straße",
+	"strasse",
+	"weg",
+	"platz",
+	"gasse",
+	"allee",
+	"damm",
+	"chaussee",
+	"steig", // German
+	"straat",
+	"laan",
+	"plein",
+	"gracht",
+	"kade",
+	"dijk",
+	"steeg",
+	"dreef", // Dutch
+]
+
+/**
+ * True when a token denotes a street. US suffixes are taken from the USPS Pub-28 table in
+ * `@mailwoman/codex/us` (complete, so `Trl`/`Holw`/`Xing` all match), EXCEPT the abbreviations that
+ * collide with a state code — `KY` (Key vs Kentucky), `PR` (Prairie vs Puerto Rico) — because those
+ * appear in the postcode's own `City, ST ZIP` segment, where treating them as a street word would
+ * wrongly flag a real ZIP as a house number. Non-US locales fall back to the inline word/suffix
+ * lists.
+ */
+function looksLikeStreetWord(token: string): boolean {
+	const t = token.toLowerCase().replace(/[^\p{L}]/gu, "")
+	if (t.length < 2) return false
+	if (isStreetSuffixToken(t) && !isUsStateAbbreviation(t)) return true
+	if (NON_US_STREET_WORDS.has(t)) return true
+	return NON_US_STREET_SUFFIXES.some((s) => t.length > s.length && t.endsWith(s))
+}
+
+/**
+ * Position-aware confidence factor for a postcode span: `1` for anything that cannot be confused
+ * with a house number, and {@link HOUSE_NUMBER_PENALTY} for a digit-only code sharing its
+ * comma-delimited segment with a street word. This is the structural prior that lets the anchor
+ * tell a leading `12345 Main St` house number from a trailing `San Francisco 94105` postcode with
+ * no model in the loop — and lets a consumer pick the right span by confidence instead of by raw
+ * position.
+ */
+function positionFactor(text: string, start: number, normalized: string): number {
+	if (!/^\d+$/.test(normalized)) return 1 // only digit-only codes collide with house numbers
+	const segStart = text.lastIndexOf(",", start - 1) + 1
+	let segEnd = text.indexOf(",", start)
+	if (segEnd < 0) segEnd = text.length
+	for (const token of text.slice(segStart, segEnd).split(/\s+/)) {
+		if (looksLikeStreetWord(token)) return HOUSE_NUMBER_PENALTY
+	}
+	return 1
+}
+
+/**
  * Extract postcode anchors from raw text. For each postcode-shaped span, resolve it against the
  * gazetteer and emit a soft anchor (country posterior + confidence). Spans that match a shape but
  * exist in no gazetteer are still returned, with an empty posterior and confidence 0 — an explicit
@@ -178,7 +291,8 @@ export function extractPostcodeAnchors(
 			if (placed) candidates.push(placed)
 		}
 
-		const confidence = confidenceFromCountryCount(k) * (matchType === "fuzzy" ? FUZZY_PENALTY : 1)
+		const position = positionFactor(text, match.start, normalized)
+		const confidence = confidenceFromCountryCount(k) * (matchType === "fuzzy" ? FUZZY_PENALTY : 1) * position
 
 		anchors.push({
 			span: { text: spanText, start: match.start, end: match.end },
@@ -187,6 +301,7 @@ export function extractPostcodeAnchors(
 			posterior,
 			confidence,
 			matchType,
+			positionFactor: position,
 		})
 	}
 

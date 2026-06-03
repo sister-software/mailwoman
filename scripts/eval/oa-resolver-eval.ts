@@ -311,26 +311,36 @@ async function main(): Promise<void> {
 		postcodeLookup = new WofPostcodeLookup(shards)
 		extractAnchors = (await import("@mailwoman/neural/postcode-anchor")).extractPostcodeAnchors
 	}
+	// Minimum anchor confidence to trust the anchor's coordinate over the resolver's. A penalized
+	// house-number span scores ~0.2 (single-country × house-number penalty); a genuinely ambiguous
+	// real code scores ≥0.52 (valid in ≤3 countries). The 0.5 floor keeps the latter and rejects the
+	// former, so a span the position prior flags as a house number falls back to the resolver coordinate
+	// (the right city centroid) instead of placing the address at a far-away same-shaped ZIP.
+	const anchorMinConf = Number(arg("anchor-min-conf", "0.5"))
 	/** The postcode anchor's centroid for a raw address, preferring the eval's country (`dc`). */
 	const anchorCoordFor = (input: string): { lat: number; lon: number } | null => {
 		if (!postcodeLookup || !extractAnchors) return null
 		const prefer = (dc && dc.toLowerCase() !== "none" ? dc : "").toUpperCase()
-		// Take the LAST postcode-shaped span with a usable candidate. In a rendered address the real
-		// postcode trails the locality (`… City, ST 90210`), so the last span is the postcode while an
-		// earlier 5-digit is a house number that merely shares a ZIP's shape (`12345 Main St`). Choosing
-		// last is the position signal the anchor's own confidence does not yet encode (a production
-		// refinement); here it isolates the centroid accuracy from span-selection.
-		let result: { lat: number; lon: number } | null = null
+		// Pick the placed span with the HIGHEST position-aware confidence, above the trust floor. The
+		// anchor down-weights a digit-only code that shares its segment with a street word (`12345 Main
+		// St` reads as a house number, not a postcode), so a real trailing postcode (`… City, ST 90210`)
+		// out-ranks an earlier house number on its own merit — no "take the last span" crutch needed.
+		// Ties break toward the later span (the postcode trails the locality in a rendered address).
+		let best: { lat: number; lon: number; conf: number; start: number } | null = null
 		for (const a of extractAnchors(input, postcodeLookup)) {
+			if (a.confidence < anchorMinConf) continue
 			const placed = a.candidates.filter((c) => c.lat !== 0 || c.lon !== 0)
 			if (placed.length === 0) continue
 			// When the eval fixes a country, accept ONLY a placed candidate from it — never fall back to
 			// another country's centroid (a US ZIP that is coordless here but a valid 5-digit shape in
 			// DE/FR/IT must not borrow Europe's point). With no country fixed, take the first placed.
 			const pick = prefer ? placed.find((c) => c.country.toUpperCase() === prefer) : placed[0]
-			if (pick) result = { lat: pick.lat, lon: pick.lon }
+			if (!pick) continue
+			if (!best || a.confidence > best.conf || (a.confidence === best.conf && a.span.start >= best.start)) {
+				best = { lat: pick.lat, lon: pick.lon, conf: a.confidence, start: a.span.start }
+			}
 		}
-		return result
+		return best ? { lat: best.lat, lon: best.lon } : null
 	}
 
 	// Per-state aggregation so no single dense state (Cook County / Chicago) dominates the headline.

@@ -110,6 +110,48 @@ describe("extractPostcodeAnchors", () => {
 	})
 })
 
+describe("extractPostcodeAnchors — position-aware confidence (house-number disambiguation)", () => {
+	// A gazetteer where 12345 and 90210 are both real US codes, so membership alone cannot tell a
+	// code-shaped house number from a real postcode — only position can.
+	const R = new FakeResolver({
+		"12345": [{ country: "US", lat: 42.1, lon: -72.6 }],
+		"90210": [{ country: "US", lat: 34.1, lon: -118.4 }],
+		"SW1A 1AA": [{ country: "GB", lat: 51.5, lon: -0.12 }],
+	})
+
+	it("down-weights a real-code-shaped span sharing a street segment (likely a house number)", () => {
+		const [a] = extractPostcodeAnchors("12345 Main Street, Springfield", R)
+		expect(a!.matchType).toBe("exact") // the gazetteer still vouches for the shape
+		expect(a!.positionFactor).toBeLessThan(1)
+		expect(a!.confidence).toBeCloseTo(0.2, 5) // 1.0 (single country) × house-number penalty
+	})
+
+	it("keeps full confidence for the same code in a city segment (a real postcode)", () => {
+		const [a] = extractPostcodeAnchors("Springfield, MA 12345", R)
+		expect(a!.positionFactor).toBe(1)
+		expect(a!.confidence).toBe(1)
+	})
+
+	it("ranks the city-segment postcode above a street-segment house number in one address", () => {
+		const anchors = extractPostcodeAnchors("12345 Main Street, Anytown, CA 90210", R)
+		expect(anchors).toHaveLength(2)
+		expect(anchors[0]!.normalized).toBe("12345") // the leading house number
+		expect(anchors[1]!.normalized).toBe("90210") // the trailing postcode
+		expect(anchors[0]!.confidence).toBeLessThan(anchors[1]!.confidence)
+	})
+
+	it("never penalizes an alphanumeric code — letters cannot be a house number", () => {
+		const [a] = extractPostcodeAnchors("10 Downing Street, London SW1A 1AA", R)
+		expect(a!.positionFactor).toBe(1)
+		expect(a!.confidence).toBe(1)
+	})
+
+	it("matches an agglutinative compound street (German Straße) by suffix", () => {
+		const [a] = extractPostcodeAnchors("Straußstraße 12345, Berlin", R)
+		expect(a!.positionFactor).toBeLessThan(1) // 12345 shares its segment with Straußstraße
+	})
+})
+
 describe("editDistance1Variants", () => {
 	it("covers deletions, same-class substitutions, insertions, and transpositions", () => {
 		const v = new Set(editDistance1Variants("75"))
