@@ -13,7 +13,8 @@
 		"./package.json": "./package.json",
 		".": "./out/index.js",
 		"./us": "./out/us/index.js",
-		"./de": "./out/de/index.js"
+		"./de": "./out/de/index.js",
+		"./fr": "./out/fr/index.js"
 	},
 	"dependencies": {
 		"type-fest": "^5.6.0"

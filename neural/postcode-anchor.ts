@@ -30,6 +30,7 @@
  */
 
 import { isGermanStreetToken } from "@mailwoman/codex/de"
+import { isFrenchStreetWord } from "@mailwoman/codex/fr"
 import { isStreetSuffixToken, isUsStateAbbreviation } from "@mailwoman/codex/us"
 import { collectMatches } from "./postcode-repair.js"
 
@@ -154,21 +155,11 @@ function confidenceFromCountryCount(k: number): number {
 const HOUSE_NUMBER_PENALTY = 0.2
 
 /**
- * Standalone street-type words for locales that write the type as its own word (FR/ES/IT). US comes
- * from `@mailwoman/codex/us` and German from `@mailwoman/codex/de`; the Dutch compound suffixes are
- * still inline below until a `codex/nl` slice exists.
+ * Standalone street-type words for the locales without a codex slice yet (ES/IT). US comes from
+ * `@mailwoman/codex/us`, German from `@mailwoman/codex/de`, French from `@mailwoman/codex/fr`; the
+ * Dutch compound suffixes are still inline below pending a `codex/nl` slice.
  */
 const NON_US_STREET_WORDS = new Set([
-	// French
-	"rue",
-	"bd",
-	"impasse",
-	"chemin",
-	"quai",
-	"allée",
-	"allee",
-	"cours",
-	"passage",
 	// Spanish
 	"calle",
 	"avenida",
@@ -198,8 +189,9 @@ const NL_STREET_SUFFIXES = ["straat", "laan", "plein", "gracht", "kade", "dijk",
  * collide with a state code — `KY` (Key vs Kentucky), `PR` (Prairie vs Puerto Rico) — which sit in
  * the postcode's own `City, ST ZIP` segment. German compounds come from `@mailwoman/codex/de`
  * ({@link isGermanStreetToken}), whose suffix set already excludes the place-name endings (`-berg`,
- * `-burg`, `-dorf`) that would otherwise flag a city token. FR/ES/IT and Dutch fall back to the
- * inline lists.
+ * `-burg`, `-dorf`) that would otherwise flag a city token. French voie words come from
+ * `@mailwoman/codex/fr` ({@link isFrenchStreetWord}). ES/IT and Dutch fall back to the inline
+ * lists.
  *
  * Suffix vocabularies collide across locales (German `-ring` matches English `spring`). That stays
  * harmless because the caller only tests tokens inside the postcode's OWN comma-segment, which
@@ -212,6 +204,7 @@ function looksLikeStreetWord(token: string): boolean {
 	if (t.length < 2) return false
 	if (isStreetSuffixToken(t) && !isUsStateAbbreviation(t)) return true
 	if (isGermanStreetToken(t)) return true
+	if (isFrenchStreetWord(t)) return true
 	if (NON_US_STREET_WORDS.has(t)) return true
 	return NL_STREET_SUFFIXES.some((s) => t.length > s.length && t.endsWith(s))
 }
