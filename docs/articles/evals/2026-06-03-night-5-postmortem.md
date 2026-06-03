@@ -8,10 +8,10 @@ when the neural parser is out of distribution on a locale, a structured signal c
 
 ## What shipped
 
-- **#247 — the anchor.** `@mailwoman/neural/postcode-anchor` (`extractPostcodeAnchors`) + the production
-  `WofPostcodeLookup` (`@mailwoman/resolver-wof-sqlite`) + the centroid backfill + a functional diagnostic
-  - 13 tests. Uniform country posterior; confidence combines gazetteer membership with country ambiguity
-    (`exists ? 1 - log2(k)/log2(10) : 0`).
+- **#247 — the anchor.** `@mailwoman/neural/postcode-anchor` (`extractPostcodeAnchors`), the production
+  `WofPostcodeLookup` (`@mailwoman/resolver-wof-sqlite`), the centroid backfill, a functional diagnostic,
+  and 13 tests. Uniform country posterior; confidence combines gazetteer membership with country ambiguity
+  (`exists ? 1 - log2(k)/log2(10) : 0`).
 - **#248 — coverage + measurement.** An optional ancestor-fallback pass in the backfill (county/region
   borrow for city-states like Berlin) and `postcode-anchor-accuracy.ts`, which produced the numbers below.
 - **#249 — fuzzy typo tolerance.** Opt-in `{ fuzzy: true }` retries class-aware edit-distance-1 variants
