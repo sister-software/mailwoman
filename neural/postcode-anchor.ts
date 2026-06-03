@@ -116,7 +116,8 @@ export function editDistance1Variants(s: string): string[] {
  */
 export function normalizePostcode(raw: string): string {
 	let s = raw.trim().toUpperCase().replace(/\s+/g, " ")
-	if (/^D-\d{5}$/.test(s)) s = s.slice(2)
+	if (/^D-\d{5}$/.test(s)) s = s.slice(2) // German courtesy prefix: D-68161 → 68161
+	if (/^\d{4} [A-Z]{2}$/.test(s)) s = s.replace(" ", "") // Dutch: gazetteer stores 1012LM, not 1012 LM
 	return s
 }
 

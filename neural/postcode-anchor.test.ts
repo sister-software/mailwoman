@@ -45,6 +45,11 @@ describe("normalizePostcode", () => {
 		expect(normalizePostcode("D-68161")).toBe("68161")
 		expect(normalizePostcode("75008")).toBe("75008")
 	})
+
+	it("removes the space in a Dutch postcode so it matches the gazetteer key", () => {
+		expect(normalizePostcode("1012 LM")).toBe("1012LM")
+		expect(normalizePostcode("1012lm")).toBe("1012LM")
+	})
 })
 
 describe("extractPostcodeAnchors", () => {
