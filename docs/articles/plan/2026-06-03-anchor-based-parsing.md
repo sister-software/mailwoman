@@ -2,7 +2,7 @@
 
 **Direction D.** Some tokens in an address carry far more geographic information than others. The
 postcode is the clearest case, with distinctive streets and landmarks close behind. Treat those as
-*first-class structured anchors* that condition (or bypass) the neural parser, rather than flattening
+_first-class structured anchors_ that condition (or bypass) the neural parser, rather than flattening
 them into just-another-BIO-tag. Around that sits a single self-conditioned model per **script** shard, a
 tiny always-resident coarse placer for graceful abstention, and a strict soft-prior discipline that
 keeps anchors from laundering errors. DeepSeek-signed across two consults (German conditioning:
@@ -12,18 +12,18 @@ keeps anchors from laundering errors. DeepSeek-signed across two consults (Germa
 ## Why now
 
 The v0.8.0 German order-shard experiment ([postmortem](../evals/2026-06-02-night-4-postmortem.md))
-taught two things at once. The order *is* learnable cheaply: a 5,000-row shard roughly doubled German
+taught two things at once. The order _is_ learnable cheaply: a 5,000-row shard roughly doubled German
 street and house-number F1. But the continue-train re-triggered the Saint-Albans span-fragmentation bug
 at end-of-string. The model bled the postcode span into the adjacent city (`München` → `chen`, `Berlin`
 → absorbed into the postcode run), which collapsed locality and postcode and dragged the resolver down
 with it. The collapse is **emission-level**: raw per-token argmax already fragments, so no decoder
 span-merge or CRF-transition table can repair it (both sit downstream of emissions, and the error is
-*cross-tag*, a city's lead piece leaking into `postcode` rather than a same-tag split).
+_cross-tag_, a city's lead piece leaking into `postcode` rather than a same-tag split).
 
 The mechanism reframes the whole roadmap. Think about what a postcode actually encodes: a US ZIP runs
 northeast to west by its first digit, a UK postcode plus a house number nearly identifies a single
 building, and German PLZ and French codes are zone-hierarchical. It is the most information-dense token
-in an address, and we were asking a sequence labeler to find it *and* to know where it stops, in one
+in an address, and we were asking a sequence labeler to find it _and_ to know where it stops, in one
 pass, with nothing telling it the postcode is a different kind of thing from the city sitting beside it.
 That framing is the bug. Lift the postcode out with a dedicated high-precision extractor, resolve it,
 and feed it back as a conditioning anchor, and the model never gets the chance to make the cross-tag
@@ -37,7 +37,7 @@ one a regex can catch.
 
 ## The anchor layer
 
-An anchor is a span the system can identify with high precision *outside* the neural tagger, one that
+An anchor is a span the system can identify with high precision _outside_ the neural tagger, one that
 carries strong geographic information. We extract anchors in a cheap pre-pass and feed them to the
 parser as a **soft, confidence-weighted channel** that nudges rather than overrides. The raw text stays
 authoritative.
@@ -56,7 +56,7 @@ authoritative.
   centroid, confidence). The raw tokens stay untouched, so the model can see, and recover from, a
   mistyped or out-of-gazetteer code.
 - **Anchor-dropout ~20%** during training (replace with a learned `[NO-ANCHOR]` embedding) so the model
-  never *depends* on the anchor. This keeps it a soft prior and closes the circularity (anchor conditions
+  never _depends_ on the anchor. This keeps it a soft prior and closes the circularity (anchor conditions
   the parse, parse feeds the resolver) without laundering errors.
 
 ### Where position fits in
@@ -67,7 +67,7 @@ collision is narrow (only purely-numeric-postcode countries, and house numbers u
 but real. `12345` is at once a valid US ZIP (Schenectady) and a plausible house number, so gazetteer
 membership alone does not always decide. So the extractor does not try to win that call. An ambiguous
 candidate carries low confidence, the anchor channel propagates the doubt, and the parser plus its
-surrounding context makes the final decision. The extractor's job is high-*recall* candidate generation
+surrounding context makes the final decision. The extractor's job is high-_recall_ candidate generation
 with calibrated confidence, well short of a high-precision hard ruling.
 
 ### Generalized anchors: distinctive streets, landmarks, districts
@@ -75,11 +75,11 @@ with calibrated confidence, well short of a high-precision hard ruling.
 The same mechanism, with a salience-weighted place gazetteer + fuzzy/alias matching in place of a regex.
 Three pipeline placements, decided by the **router** (see coarse placer), by query type:
 
-| Query type | Example | Pipeline placement |
-| --- | --- | --- |
-| Bare landmark / POI | `Empire State Building`, `Shibuya 109`, `Odori Park` | **Skip the parser** and resolve directly as a venue. Running BIO on it hallucinates spans. |
-| Distinctive street in an address | `350 Fifth Avenue`, `10 Downing Street` | Anchor **conditions** the parser (strong city/country prior); parser still runs. |
-| Distinctive district / component | `Ginza`, `2-Chōme` | Locality/neighbourhood anchor; conditions parser + resolver. |
+| Query type                       | Example                                              | Pipeline placement                                                                         |
+| -------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Bare landmark / POI              | `Empire State Building`, `Shibuya 109`, `Odori Park` | **Skip the parser** and resolve directly as a venue. Running BIO on it hallucinates spans. |
+| Distinctive street in an address | `350 Fifth Avenue`, `10 Downing Street`              | Anchor **conditions** the parser (strong city/country prior); parser still runs.           |
+| Distinctive district / component | `Ginza`, `2-Chōme`                                   | Locality/neighbourhood anchor; conditions parser + resolver.                               |
 
 **Guardrails (these are load-bearing):**
 
@@ -98,14 +98,14 @@ Three pipeline placements, decided by the **router** (see coarse placer), by que
 
 ### Script routes; address-system conditions within
 
-Routing has to be cheap *and* reliable, and **script** is both: a Unicode-block regex, free and exact.
-Address-system similarity is the *right* clustering for the model's job (UK and US share a script but
+Routing has to be cheap _and_ reliable, and **script** is both: a Unicode-block regex, free and exact.
+Address-system similarity is the _right_ clustering for the model's job (UK and US share a script but
 differ in system; DE and AT share a system across a language border), yet it is **not detectable
 pre-parse**, since knowing the system is most of the parse, which makes routing on it circular. So the
 Pareto-optimal point is to **route by script and specialize by address-system inside each shard via
 conditioning.** One Latin shard (US, UK, DE, FR, ES, IT, NL, BR, MX… as conditioned locales), one CJK+
 shard (JP/KR/CN share descending-locality structure), one Arabic, one Indic. Awkward cases (UK,
-tri-lingual CH, ES-Spain vs ES-LatAm) are locales *within* the Latin shard.
+tri-lingual CH, ES-Spain vs ES-LatAm) are locales _within_ the Latin shard.
 
 The two axes have different jobs: **script routes; address-system subdivides a shard only on capacity
 overflow** (see the cross-pollution metric). That is why both came up. They operate at different layers.
@@ -113,10 +113,10 @@ overflow** (see the cross-pollution metric). That is why both came up. They oper
 ### Self-conditioning over a hard locale token
 
 In production we usually receive a raw string with no reliable country hint, and detecting the country
-*before* parsing is most of what the parser exists to do, so a hard external `[locale]` token comes close
+_before_ parsing is most of what the parser exists to do, so a hard external `[locale]` token comes close
 to assuming the answer. Instead the model reads the whole sequence, infers a soft locale posterior, and
 conditions its own per-token labeling on it (layernorm modulation, or posterior-as-feature). That
-resolves the ambiguity *globally*, before per-token labels, which is the step the implicit mixing in
+resolves the ambiguity _globally_, before per-token labels, which is the step the implicit mixing in
 v0.8.0 skipped. When a postcode anchor is present it is the strongest input to that posterior; when
 absent, the model falls back to text-only self-conditioning. An optional 15-20% locale-token-dropout
 lets an external hint help without becoming a dependency.
@@ -135,7 +135,7 @@ whole-world footprint).
 ### Does conditioning really isolate, or just paper over?
 
 A conditioned shared model is modulated, not hard-isolated: its FFN and attention weights are shared. The
-DeepSeek read is that conditioning *functionally* specializes up to ~20-30 locales per shard at ≥300-dim
+DeepSeek read is that conditioning _functionally_ specializes up to ~20-30 locales per shard at ≥300-dim
 hidden (we have 384), so our 15-20 target sits inside the safe regime, and the German collapse was a
 training-schedule artifact rather than a shared-weights limit. **Treat the capacity numbers as directional
 estimates, not gospel** (the same source over-called the tokenizer wall, which our own
@@ -145,7 +145,7 @@ estimates, not gospel** (the same source over-called the tokenizer wall, which o
 
 - **No promotion on parser-F1 alone.** The resolver is the judge. German's pre-experiment resolver
   locality-match was already 77.4% (v0 79.4%), a weak parser that the resolver absorbed, so a from-scratch
-  retrain for German *alone* is not justified. Keep v0.7.2 and **batch** the locale expansion.
+  retrain for German _alone_ is not justified. Keep v0.7.2 and **batch** the locale expansion.
 - **Retrain trigger (resolver terms):** a locale's resolver utility falls below ~80% city match, or
   adding a locale drops an existing one's resolver utility by more than 2pp (the 77→43 collapse).
 - **Cross-pollution / capacity tripwire:** per-locale, the rate of city-start tokens mis-tagged as
@@ -161,14 +161,22 @@ estimates, not gospel** (the same source over-called the tokenizer wall, which o
    CRF-transition ideas for German (the diagnostic killed both).
 2. **This week, no GPU, highest ROI — the postcode anchor.** Build (a) a postcode → country-posterior +
    region + centroid gazetteer for the target locales from OpenAddresses (US already exists:
-   `postalcode-us.db`, 42,319 codes; the global admin DB currently has *zero* postcodes), and (b) the
-   regex + fuzzy extractor with calibrated confidence. It helps the resolver *today* and becomes the
+   `postalcode-us.db`, 42,319 codes; the global admin DB currently has _zero_ postcodes), and (b) the
+   regex + fuzzy extractor with calibrated confidence. It helps the resolver _today_ and becomes the
    parser's strongest conditioning channel. In parallel: stage ES/IT/NL order shards (same
    synth-from-real-OA recipe) and clean the OpenAddresses CITY noise.
+
+   **Status (2026-06-03): the anchor shipped for US, NL, FR, and DE** (PRs #247-#250). The gazetteer came
+   from the WOF postcode repos via `build-unified-wof --placetypes postalcode`, not OpenAddresses
+   aggregation — the operator's "extend the custom WOF build" rule, and WOF carries the centroids (or an
+   admin ancestor to borrow one). A data-quality survey showed ES/IT are orphan-heavy in WOF and stay
+   membership-only until a non-WOF source is approved. See `resolver-wof-sqlite/POSTCODE-ANCHOR.md` and
+   `docs/articles/evals/2026-06-03-night-5-postmortem.md`.
+
 3. **De-risk pilot (~$3-8).** From-scratch US/FR/DE with self-conditioning + the postcode-anchor channel +
    dropout on both signals, stopped at the 20k gate (cross-boundary error under 1%, DE locality F1 ≥70%
    and rising, US/FR within 1pp, anchor/token-free degradation ≤5pp). It validates the architecture before
-   any scale spend. Test the postcode anchor and self-conditioning *together*.
+   any scale spend. Test the postcode anchor and self-conditioning _together_.
 4. **Real run.** One from-scratch, balanced, self-conditioned run once the pilot passes and 4-5 locales
    are staged.
 5. **Global.** Script-shard collection + the coarse-placer tier; the generalized place-anchor gazetteer
