@@ -147,8 +147,8 @@ estimates, not gospel** (the same source over-called the tokenizer wall, which o
 - **No promotion on parser-F1 alone.** The resolver is the judge. German's pre-experiment resolver
   locality-match was already 77.4% (v0 79.4%) — a weak parser the resolver absorbed — so a from-scratch
   retrain for German *alone* is not justified. Keep v0.7.2; **batch** the locale expansion.
-- **Retrain trigger (resolver terms):** a locale's resolver utility falls below threshold (~<80% city
-  match), OR adding a locale drops an existing one's resolver utility >2pp (the 77→43 collapse).
+- **Retrain trigger (resolver terms):** a locale's resolver utility falls below ~80% city match, OR
+  adding a locale drops an existing one's resolver utility by more than 2pp (the 77→43 collapse).
 - **Cross-pollution / capacity tripwire:** per-locale, the rate of city-start tokens mis-tagged as
   postcode must fall below 1% by 20k steps with balanced data and conditioning present. If it will not
   clear 1%, that shard has hit its interference ceiling → split it **by address-system** (not by more
@@ -167,9 +167,9 @@ estimates, not gospel** (the same source over-called the tokenizer wall, which o
    parser's strongest conditioning channel. In parallel: stage ES/IT/NL order shards (same
    synth-from-real-OA recipe) and clean the OpenAddresses CITY noise.
 3. **De-risk pilot (~$3–8).** From-scratch US/FR/DE with self-conditioning + the postcode-anchor channel
-   + dropout on both signals, stopped at the 20k gate (cross-boundary error <1%, DE locality F1 ≥70% and
-   rising, US/FR within 1pp, anchor/token-free degradation ≤5pp). Validates the architecture before any
-   scale spend. Test the postcode anchor and self-conditioning *together*.
+   + dropout on both signals, stopped at the 20k gate (cross-boundary error under 1%, DE locality F1 ≥70%
+   and rising, US/FR within 1pp, anchor/token-free degradation ≤5pp). Validates the architecture before
+   any scale spend. Test the postcode anchor and self-conditioning *together*.
 4. **Real run.** One from-scratch, balanced, self-conditioned run once the pilot passes and 4–5 locales
    are staged.
 5. **Global.** Script-shard collection + the coarse-placer tier; the generalized place-anchor gazetteer
