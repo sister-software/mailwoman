@@ -10,6 +10,7 @@
 
 import { describe, expect, it } from "vitest"
 import {
+	editDistance1Variants,
 	extractPostcodeAnchors,
 	normalizePostcode,
 	type PostcodePlace,
@@ -96,5 +97,56 @@ describe("extractPostcodeAnchors", () => {
 		const anchors = extractPostcodeAnchors("94105 ... 75001", RESOLVER)
 		expect(anchors).toHaveLength(2)
 		expect(anchors.map((a) => a.normalized).sort()).toEqual(["75001", "94105"])
+	})
+
+	it("tags an exact hit with matchType 'exact'", () => {
+		const [a] = extractPostcodeAnchors("94105", RESOLVER)
+		expect(a!.matchType).toBe("exact")
+	})
+})
+
+describe("editDistance1Variants", () => {
+	it("covers deletions, same-class substitutions, insertions, and transpositions", () => {
+		const v = new Set(editDistance1Variants("75"))
+		expect(v.has("7")).toBe(true) // deletion
+		expect(v.has("5")).toBe(true) // deletion
+		expect(v.has("57")).toBe(true) // transposition
+		expect(v.has("76")).toBe(true) // substitution (digit→digit)
+		expect(v.has("750")).toBe(true) // insertion
+		expect(v.has("75")).toBe(false) // never the original
+	})
+
+	it("keeps substitutions within the character class (digits stay digits)", () => {
+		for (const variant of editDistance1Variants("75")) {
+			// every variant is digits-only (no letters introduced for a numeric postcode)
+			expect(/^[0-9]*$/.test(variant)).toBe(true)
+		}
+	})
+})
+
+describe("extractPostcodeAnchors — fuzzy fallback", () => {
+	it("is off by default: a one-typo postcode is a non-member at confidence 0", () => {
+		const [a] = extractPostcodeAnchors("94155 Somewhere", RESOLVER) // 94155 is edit-1 of 94105
+		expect(a!.matchType).toBe("none")
+		expect(a!.confidence).toBe(0)
+	})
+
+	it("with fuzzy on, a one-typo postcode resolves to the real code with a confidence penalty", () => {
+		const [a] = extractPostcodeAnchors("94155 Somewhere", RESOLVER, { fuzzy: true })
+		expect(a!.matchType).toBe("fuzzy")
+		expect(a!.posterior).toEqual({ US: 1 }) // recovered 94105 → US
+		expect(a!.confidence).toBeCloseTo(0.6, 5) // 1.0 (single country) × fuzzy penalty
+	})
+
+	it("recovers a transposed postcode", () => {
+		const [a] = extractPostcodeAnchors("94015 Somewhere", RESOLVER, { fuzzy: true }) // 1↔0 swap of 94105
+		expect(a!.matchType).toBe("fuzzy")
+		expect(a!.posterior).toEqual({ US: 1 })
+	})
+
+	it("an exact match never triggers the fuzzy path", () => {
+		const [a] = extractPostcodeAnchors("94105", RESOLVER, { fuzzy: true })
+		expect(a!.matchType).toBe("exact")
+		expect(a!.confidence).toBe(1)
 	})
 })

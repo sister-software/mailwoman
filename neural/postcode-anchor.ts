@@ -63,6 +63,19 @@ export interface PostcodeAnchor {
 	posterior: Record<string, number>
 	/** `1 - normalizedEntropy(posterior)` when the postcode exists; `0` when it is in no gazetteer. */
 	confidence: number
+	/**
+	 * `exact` — the string is a real postcode; `fuzzy` — only an edit-distance-1 variant exists (a
+	 * likely typo / OCR slip), so the confidence carries a penalty; `none` — in no gazetteer.
+	 */
+	matchType: "exact" | "fuzzy" | "none"
+}
+
+export interface ExtractPostcodeAnchorsOpts {
+	/**
+	 * When an exact lookup finds nothing, retry Damerau–Levenshtein ≤1 variants to absorb typos and
+	 * OCR slips (`75OO8` → `75008`). Off by default so existing callers keep exact-match behaviour.
+	 */
+	fuzzy?: boolean
 }
 
 /**
@@ -70,6 +83,31 @@ export interface PostcodeAnchor {
  * k=10.
  */
 const MAX_COUNTRIES = 10
+
+/** A fuzzy (typo-corrected) match is less certain than an exact one — scale its confidence down. */
+const FUZZY_PENALTY = 0.6
+
+/**
+ * Class-aware edit-distance-1 variants of a postcode string: deletions, same-class substitutions
+ * (digit↔digit, letter↔letter), same-class insertions, and adjacent transpositions. Restricting
+ * substitutions/insertions to the character's class mirrors how humans mistype or OCR a postcode (a
+ * digit becomes another digit, not a letter) and keeps the candidate set small.
+ */
+export function editDistance1Variants(s: string): string[] {
+	const classOf = (ch: string): string =>
+		/[0-9]/.test(ch) ? "0123456789" : /[A-Z]/.test(ch) ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ" : ""
+	const variants = new Set<string>()
+	for (let i = 0; i < s.length; i++) variants.add(s.slice(0, i) + s.slice(i + 1)) // deletions
+	for (let i = 0; i < s.length; i++) {
+		for (const c of classOf(s[i]!)) if (c !== s[i]) variants.add(s.slice(0, i) + c + s.slice(i + 1)) // substitutions
+	}
+	for (let i = 0; i <= s.length; i++) {
+		for (const c of classOf(s[i] ?? s[i - 1] ?? "")) variants.add(s.slice(0, i) + c + s.slice(i)) // insertions
+	}
+	for (let i = 0; i + 1 < s.length; i++) variants.add(s.slice(0, i) + s[i + 1] + s[i] + s.slice(i + 2)) // transpositions
+	variants.delete(s)
+	return [...variants]
+}
 
 /**
  * Normalize a shaped span to the canonical gazetteer key: uppercase, collapse internal whitespace
@@ -100,13 +138,30 @@ function confidenceFromCountryCount(k: number): number {
  * "looks like a postcode, but isn't one" so the caller can see the extractor fired and chose not to
  * anchor.
  */
-export function extractPostcodeAnchors(text: string, resolver: PostcodeResolver): PostcodeAnchor[] {
+export function extractPostcodeAnchors(
+	text: string,
+	resolver: PostcodeResolver,
+	opts: ExtractPostcodeAnchorsOpts = {}
+): PostcodeAnchor[] {
 	const anchors: PostcodeAnchor[] = []
 
 	for (const match of collectMatches(text)) {
 		const spanText = text.slice(match.start, match.end)
 		const normalized = normalizePostcode(spanText)
-		const hits = resolver.lookup(normalized)
+
+		// Exact first; fall back to edit-distance-1 variants only when exact finds nothing.
+		let hits = resolver.lookup(normalized)
+		let matchType: PostcodeAnchor["matchType"] = hits.length > 0 ? "exact" : "none"
+		if (matchType === "none" && opts.fuzzy) {
+			const fuzzyHits: PostcodePlace[] = []
+			for (const variant of editDistance1Variants(normalized)) {
+				for (const h of resolver.lookup(variant)) fuzzyHits.push(h)
+			}
+			if (fuzzyHits.length > 0) {
+				hits = fuzzyHits
+				matchType = "fuzzy"
+			}
+		}
 
 		// Membership: distinct countries the postcode exists in (regardless of whether we have a centroid).
 		const countries = [...new Set(hits.map((h) => h.country))].sort()
@@ -122,12 +177,15 @@ export function extractPostcodeAnchors(text: string, resolver: PostcodeResolver)
 			if (placed) candidates.push(placed)
 		}
 
+		const confidence = confidenceFromCountryCount(k) * (matchType === "fuzzy" ? FUZZY_PENALTY : 1)
+
 		anchors.push({
 			span: { text: spanText, start: match.start, end: match.end },
 			normalized,
 			candidates,
 			posterior,
-			confidence: confidenceFromCountryCount(k),
+			confidence,
+			matchType,
 		})
 	}
 
