@@ -29,6 +29,7 @@
  *       1.0.
  */
 
+import { candidateSystemsForPostcode } from "@mailwoman/codex"
 import { isGermanStreetToken } from "@mailwoman/codex/de"
 import { isFrenchStreetWord } from "@mailwoman/codex/fr"
 import { isStreetSuffixToken, isUsStateAbbreviation } from "@mailwoman/codex/us"
@@ -193,20 +194,22 @@ const NL_STREET_SUFFIXES = ["straat", "laan", "plein", "gracht", "kade", "dijk",
  * `@mailwoman/codex/fr` ({@link isFrenchStreetWord}). ES/IT and Dutch fall back to the inline
  * lists.
  *
- * Suffix vocabularies collide across locales (German `-ring` matches English `spring`). That stays
- * harmless because the caller only tests tokens inside the postcode's OWN comma-segment, which
- * holds the city/state, not a street — and a misfire only scales confidence, which the consumer's
- * floor absorbs. A locale-conditioned check is the cleaner long-term fix once the anchor carries a
- * locale.
+ * `systems` GATES which vocabularies are consulted — only the systems the postcode plausibly
+ * belongs to (its gazetteer membership, e.g. a US-only ZIP gates to `{us}` and never checks the
+ * German or French vocab). This is what lets the check scale to 15-20 systems without a
+ * cross-locale collision (German `-ring` vs English `spring`): an unrelated system's vocabulary is
+ * simply never asked. The gate carries lowercase system/locale tags (`us`, `de`, `fr`, `es`, `it`,
+ * `nl`).
  */
-function looksLikeStreetWord(token: string): boolean {
+function looksLikeStreetWord(token: string, systems: ReadonlySet<string>): boolean {
 	const t = token.toLowerCase().replace(/[^\p{L}]/gu, "")
 	if (t.length < 2) return false
-	if (isStreetSuffixToken(t) && !isUsStateAbbreviation(t)) return true
-	if (isGermanStreetToken(t)) return true
-	if (isFrenchStreetWord(t)) return true
-	if (NON_US_STREET_WORDS.has(t)) return true
-	return NL_STREET_SUFFIXES.some((s) => t.length > s.length && t.endsWith(s))
+	if (systems.has("us") && isStreetSuffixToken(t) && !isUsStateAbbreviation(t)) return true
+	if (systems.has("de") && isGermanStreetToken(t)) return true
+	if (systems.has("fr") && isFrenchStreetWord(t)) return true
+	if ((systems.has("es") || systems.has("it")) && NON_US_STREET_WORDS.has(t)) return true
+	if (systems.has("nl")) return NL_STREET_SUFFIXES.some((s) => t.length > s.length && t.endsWith(s))
+	return false
 }
 
 /**
@@ -216,14 +219,17 @@ function looksLikeStreetWord(token: string): boolean {
  * tell a leading `12345 Main St` house number from a trailing `San Francisco 94105` postcode with
  * no model in the loop — and lets a consumer pick the right span by confidence instead of by raw
  * position.
+ *
+ * `systems` narrows the street vocabularies to the ones this code plausibly belongs to (its
+ * gazetteer membership, or — for a code in no gazetteer — the format-shape candidates from codex).
  */
-function positionFactor(text: string, start: number, normalized: string): number {
+function positionFactor(text: string, start: number, normalized: string, systems: ReadonlySet<string>): number {
 	if (!/^\d+$/.test(normalized)) return 1 // only digit-only codes collide with house numbers
 	const segStart = text.lastIndexOf(",", start - 1) + 1
 	let segEnd = text.indexOf(",", start)
 	if (segEnd < 0) segEnd = text.length
 	for (const token of text.slice(segStart, segEnd).split(/\s+/)) {
-		if (looksLikeStreetWord(token)) return HOUSE_NUMBER_PENALTY
+		if (looksLikeStreetWord(token, systems)) return HOUSE_NUMBER_PENALTY
 	}
 	return 1
 }
@@ -274,7 +280,14 @@ export function extractPostcodeAnchors(
 			if (placed) candidates.push(placed)
 		}
 
-		const position = positionFactor(text, match.start, normalized)
+		// Gate the street-word check to the systems this code plausibly belongs to: its gazetteer
+		// membership when known (precise — a US-only ZIP never checks the German vocab), else the
+		// format-shape candidates from codex (for a code in no gazetteer; its confidence is 0 anyway).
+		const systems =
+			countries.length > 0
+				? new Set(countries.map((c) => c.toLowerCase()))
+				: new Set<string>(candidateSystemsForPostcode(normalized))
+		const position = positionFactor(text, match.start, normalized, systems)
 		const confidence = confidenceFromCountryCount(k) * (matchType === "fuzzy" ? FUZZY_PENALTY : 1) * position
 
 		anchors.push({
