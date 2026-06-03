@@ -14,7 +14,10 @@
 		".": "./out/index.js",
 		"./us": "./out/us/index.js",
 		"./de": "./out/de/index.js",
-		"./fr": "./out/fr/index.js"
+		"./fr": "./out/fr/index.js",
+		"./ca": "./out/ca/index.js",
+		"./gb": "./out/gb/index.js",
+		"./jp": "./out/jp/index.js"
 	},
 	"dependencies": {
 		"type-fest": "^5.6.0"
