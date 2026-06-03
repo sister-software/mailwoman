@@ -5,39 +5,36 @@
  *
  *   Postcode regex repair pass — v0.7 task #35 ("postcode regex pre-pass").
  *
- *   The 2026-05-29 postcode diagnostic showed the neural model fragments
- *   alphanumeric postcodes at the SentencePiece layer (GB/CA/NL at 0%, US 80.5%,
- *   FR 70.1%). Three failure modes were visible in the data:
+ *   The 2026-05-29 postcode diagnostic showed the neural model fragments alphanumeric postcodes at
+ *   the SentencePiece layer (GB/CA/NL at 0%, US 80.5%, FR 70.1%). Three failure modes were visible
+ *   in the data:
  *
- *     1. Total miss     — "London SW1A 1AA" → (no postcode label)
- *     2. Truncation     — "M5V 2T6" → "2T6";  "B12 8QX" → "B12"
- *     3. Char-drift     — "75008" → "5008";   "62701" → "2701"  (and smear:
- *                          "1200-030 Lisboa" → "200-030 Lis")
+ *   1. Total miss — "London SW1A 1AA" → (no postcode label)
+ *   2. Truncation — "M5V 2T6" → "2T6"; "B12 8QX" → "B12"
+ *   3. Char-drift — "75008" → "5008"; "62701" → "2701" (and smear: "1200-030 Lisboa" → "200-030 Lis")
  *
- *   This pass runs AFTER the model's per-token BIO labels are decoded but BEFORE
- *   `buildAddressTree`. It detects postcode-shaped substrings with per-country
- *   regexes and repairs the label sequence so the postcode span matches the
- *   detected shape. The model is untouched — this is a deterministic decoder-side
- *   correction, the "lowest risk" lever in the v0.7 plan (vs. #36's soft FST
- *   shallow-fusion or #41's char-level encoder).
+ *   This pass runs AFTER the model's per-token BIO labels are decoded but BEFORE `buildAddressTree`.
+ *   It detects postcode-shaped substrings with per-country regexes and repairs the label sequence
+ *   so the postcode span matches the detected shape. The model is untouched — this is a
+ *   deterministic decoder-side correction, the "lowest risk" lever in the v0.7 plan (vs. #36's soft
+ *   FST shallow-fusion or #41's char-level encoder).
  *
  *   PRECISION GUARDS (so we never regress the countries already passing):
- *     - Alphanumeric shapes (GB/CA/NL/DE-prefixed) are high-confidence "this IS a
- *       postcode" patterns → eligible to ADD a span where the model emitted none,
- *       but only over non-structural labels (never over house_number/street/etc.).
- *     - Numeric shapes (\d{5}, ZIP+4, JP, PT, PL) are ambiguous (a bare 5-digit
- *       could be a house number) → SNAP-only: they expand/clip an EXISTING
- *       postcode span, never create one from scratch.
- *     - Smear cleanup is LOCAL: only postcode tokens immediately flanking a
- *       snapped span are cleared. We never globally clear unmatched postcode
- *       tokens — that would regress shapes we don't pattern-match (AU 4-digit,
- *       IN 6-digit, …).
+ *
+ *   - Alphanumeric shapes (GB/CA/NL/DE-prefixed) are high-confidence "this IS a postcode" patterns →
+ *       eligible to ADD a span where the model emitted none, but only over non-structural labels
+ *       (never over house_number/street/etc.).
+ *   - Numeric shapes (\d{5}, ZIP+4, JP, PT, PL) are ambiguous (a bare 5-digit could be a house number)
+ *       → SNAP-only: they expand/clip an EXISTING postcode span, never create one from scratch.
+ *   - Smear cleanup is LOCAL: only postcode tokens immediately flanking a snapped span are cleared. We
+ *       never globally clear unmatched postcode tokens — that would regress shapes we don't
+ *       pattern-match (AU 4-digit, IN 6-digit, …).
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
 /** A detected postcode-shaped substring with its char range and confidence class. */
-interface PostcodeMatch {
+export interface PostcodeMatch {
 	start: number
 	end: number
 	/** "alnum" shapes may ADD; "numeric" shapes may only SNAP an existing span. */
@@ -47,11 +44,11 @@ interface PostcodeMatch {
 }
 
 /**
- * Per-country postcode shape patterns, ordered most-specific → least. Alphanumeric
- * patterns require uppercase letters (postcodes are conventionally uppercase, and the
- * eval data has them uppercase) — this keeps them from matching ordinary lowercase prose.
+ * Per-country postcode shape patterns, ordered most-specific → least. Alphanumeric patterns require
+ * uppercase letters (postcodes are conventionally uppercase, and the eval data has them uppercase)
+ * — this keeps them from matching ordinary lowercase prose.
  */
-const POSTCODE_PATTERNS: Array<{ label: string; kind: "alnum" | "numeric"; re: RegExp }> = [
+export const POSTCODE_PATTERNS: Array<{ label: string; kind: "alnum" | "numeric"; re: RegExp }> = [
 	// --- Alphanumeric (eligible to ADD) ---
 	// GB: outward + space + inward, e.g. SW1A 1AA, EH8 9YL, W1J 9PN, IP13 6SU, B12 8QX
 	{ label: "GB", kind: "alnum", re: /\b[A-Z]{1,2}\d[A-Z\d]?\s+\d[A-Z]{2}\b/g },
@@ -71,11 +68,11 @@ const POSTCODE_PATTERNS: Array<{ label: string; kind: "alnum" | "numeric"; re: R
 ]
 
 /**
- * Labels a postcode span is allowed to overwrite when the model emitted no postcode
- * at all (ADD path). These are the geographic-container tags postcodes get confused
- * with per the diagnostic ("often labeled as locality or O"). Structural tags
- * (house_number, street*, unit, po_box, venue, …) are intentionally absent so we
- * never clobber a confidently-labeled street/number with a false postcode.
+ * Labels a postcode span is allowed to overwrite when the model emitted no postcode at all (ADD
+ * path). These are the geographic-container tags postcodes get confused with per the diagnostic
+ * ("often labeled as locality or O"). Structural tags (house_number, street*, unit, po_box, venue,
+ * …) are intentionally absent so we never clobber a confidently-labeled street/number with a false
+ * postcode.
  */
 const ADD_OVER_TAGS = new Set<string>(["locality", "dependent_locality", "region", "subregion", "country"])
 
@@ -93,7 +90,7 @@ function tagOf(label: string): string | null {
 }
 
 /** Collect non-overlapping postcode matches, preferring more-specific (earlier) patterns. */
-function collectMatches(text: string): PostcodeMatch[] {
+export function collectMatches(text: string): PostcodeMatch[] {
 	const candidates: PostcodeMatch[] = []
 	POSTCODE_PATTERNS.forEach((pat, priority) => {
 		pat.re.lastIndex = 0
@@ -120,8 +117,8 @@ export interface RepairResult {
 }
 
 /**
- * Repair postcode label spans in a decoded token sequence using per-country regexes.
- * Returns a NEW token array (inputs are not mutated) plus a change count.
+ * Repair postcode label spans in a decoded token sequence using per-country regexes. Returns a NEW
+ * token array (inputs are not mutated) plus a change count.
  */
 export function repairPostcodeLabels(text: string, input: readonly DecoderToken[]): RepairResult {
 	const matches = collectMatches(text)

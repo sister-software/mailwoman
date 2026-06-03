@@ -10,6 +10,8 @@ export type { AncestorsTable, GeojsonTable, NamesTable, PlaceSearchTable, SprTab
 
 export { WofSqlitePlaceLookup, type RankingWeights, type WofSqlitePlaceLookupOpts } from "./lookup.js"
 
+export { WofPostcodeLookup, type PostcodePlace } from "./postcode-point-lookup.js"
+
 export {
 	PLACE_BBOX_TABLE,
 	PLACE_SEARCH_TABLE,
