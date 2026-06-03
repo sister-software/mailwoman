@@ -17,4 +17,5 @@
  *   other systems land here as the multi-locale push needs them.
  */
 
+export * as de from "./de/index.js"
 export * as us from "./us/index.js"
