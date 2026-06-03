@@ -18,4 +18,5 @@
  */
 
 export * as de from "./de/index.js"
+export * as fr from "./fr/index.js"
 export * as us from "./us/index.js"

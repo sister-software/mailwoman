@@ -44,6 +44,7 @@
  */
 
 import { lookupGermanState } from "@mailwoman/codex/de"
+import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/core/resolver"
 import { type ClassificationRecord, createAddressParser } from "mailwoman"
@@ -217,9 +218,14 @@ const STATE_NAME_TO_ABBR: Record<string, string> = {
  * 3. DE — the resolver returns WOF's ENGLISH exonym (`Saxony`) while OA's expected is the German name
  *    (`Sachsen`); `lookupGermanState` folds code / German name / English name → one ISO 3166-2:DE
  *    code on BOTH sides. Strict: distinct states (Bavaria vs Saxony) still miss, so this corrects
- *    the cross-language mismatch without loosening a genuine wrong-region. The two code spaces
- *    don't overlap on real inputs (a USPS abbrev is never a German state name, and vice versa), so
- *    trying both is safe regardless of the row's country.
+ *    the cross-language mismatch without loosening a genuine wrong-region.
+ * 4. FR — `lookupFrenchRegion` folds an ISO 3166-2:FR code or a région name (accents optional) to one
+ *    code on both sides, the same diacritic-insensitive fix for `Île-de-France` vs
+ *    `Ile-de-France`.
+ *
+ * The code spaces don't overlap on real inputs (a USPS abbrev is never a German or French region
+ * name, and the German/French names are disjoint), so trying all of them is safe regardless of the
+ * row's country.
  */
 function regionMatches(resolvedName: string | undefined, expected: string | undefined): boolean {
 	if (!resolvedName || !expected) return false
@@ -228,8 +234,9 @@ function regionMatches(resolvedName: string | undefined, expected: string | unde
 	if (got === exp) return true
 	if (STATE_NAME_TO_ABBR[got]?.toLowerCase() === exp) return true
 	const gotDe = lookupGermanState(resolvedName)
-	const expDe = lookupGermanState(expected)
-	return gotDe !== null && gotDe === expDe
+	if (gotDe !== null && gotDe === lookupGermanState(expected)) return true
+	const gotFr = lookupFrenchRegion(resolvedName)
+	return gotFr !== null && gotFr === lookupFrenchRegion(expected)
 }
 
 function percentile(xs: number[], p: number): number | null {
