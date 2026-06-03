@@ -26,6 +26,9 @@ export default defineConfig({
 			},
 			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolve(here, "../core/$1/index.ts") },
 			{ find: /^@mailwoman\/core$/, replacement: resolve(here, "../core/index.ts") },
+			// @mailwoman/codex resolves to source too (per-address-system postal reference data).
+			{ find: /^@mailwoman\/codex\/(.+)$/, replacement: resolve(here, "../codex/$1/index.ts") },
+			{ find: /^@mailwoman\/codex$/, replacement: resolve(here, "../codex/index.ts") },
 		],
 	},
 	test: {

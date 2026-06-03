@@ -5,18 +5,19 @@
  *
  *   USPS Publication 28, Appendix C — Postal Service Standard Suffix Abbreviations.
  *
- *   This module exposes the codex (the dataset itself) plus a small set of pure helpers used by the
- *   synthesis layer's `us-street-suffix-abbreviate` / `us-street-suffix-expand` augmentations.
- *
  *   For each canonical suffix the value lists every recognized variant in USPS-published order; the
  *   first variant is the preferred USPS abbreviation (e.g. `AVENUE → ["AVE", "AV", "AVEN", "AVENU",
  *   "AVN", "AVNUE"]` — `AVE` is what the post office prints).
  *
- *   Salvaged 2026-05-17 from `isp-nexus/universe@6eeb7bd99643a6d62a8b8abbd50968a1e492b90b`
- *   `mailwoman/postal/suffix.ts` (originally copyright Sister Software; both projects are
- *   AGPL-3.0). The dataset is verbatim; the helper API was reshaped to match mailwoman's synthesis
- *   registry (the original isp-nexus `lookupStreetSuffix` was geared toward parsing, not
- *   augmentation).
+ *   This module is the single home for the USPS suffix table. It carries both the synthesis-layer
+ *   helpers (`US_STREET_SUFFIX_PREFERRED_ABBR`, `matchCase`, `matchTrailingSuffix` — used by
+ *   `@mailwoman/corpus`) and the richer branded-type lookup (`StreetSuffix`, `lookupStreetSuffix`,
+ *   `isStreetSuffix`) salvaged from the original isp-nexus `postal/suffix.ts`. The data is verbatim
+ *   USPS Pub-28; the two APIs share one underlying record.
+ *
+ *   Salvaged 2026-05-17 (data) / 2026-06-03 (types) from
+ *   `isp-nexus/universe@6eeb7bd99643a6d62a8b8abbd50968a1e492b90b` `mailwoman/postal/suffix.ts`
+ *   (originally copyright Sister Software; both projects are AGPL-3.0).
  * @see {@link https://pe.usps.com/text/pub28/28apc_002.htm USPS Street Suffix Abbreviations}
  */
 
@@ -236,10 +237,9 @@ export const US_STREET_SUFFIX_VARIANTS = {
 export type UsStreetSuffix = keyof typeof US_STREET_SUFFIX_VARIANTS
 
 /**
- * Inverse lookup: every variant abbreviation OR full canonical word → its canonical key.
- *
- * Built once at module load. `STREET` → `"STREET"`, `ST` → `"STREET"`, `STRT` → `"STREET"`, etc.
- * Built lowercase-keyed for case-insensitive matching.
+ * Inverse lookup: every variant abbreviation OR full canonical word → its canonical key. Built once
+ * at module load, lowercase-keyed for case-insensitive matching (`street` → `"STREET"`, `st` →
+ * `"STREET"`, `strt` → `"STREET"`, …).
  */
 export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, UsStreetSuffix> = (() => {
 	const out = new Map<string, UsStreetSuffix>()
@@ -247,8 +247,8 @@ export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, UsStreetSuffix> = (() 
 		out.set(canonical.toLowerCase(), canonical)
 		for (const variant of US_STREET_SUFFIX_VARIANTS[canonical]) {
 			// Don't overwrite — first canonical that claims a variant wins (matches USPS Pub-28's
-			// ordering). E.g. "WALK" and "WALKS" both list "WALK" as a variant; "WALK" wins because
-			// it sorts first in `Object.keys`.
+			// ordering). E.g. "WALK" and "WALKS" both list "WALK" as a variant; "WALK" wins because it
+			// sorts first in `Object.keys`.
 			if (!out.has(variant.toLowerCase())) out.set(variant.toLowerCase(), canonical)
 		}
 	}
@@ -286,4 +286,59 @@ export function matchTrailingSuffix(street: string): { canonical: UsStreetSuffix
 	const canonical = US_STREET_SUFFIX_LOOKUP.get(last.toLowerCase())
 	if (!canonical) return null
 	return { canonical, matched: last }
+}
+
+// ── Branded-type lookup (salvaged from isp-nexus postal/suffix.ts) ───────────────────────────────
+// The record above is the data; the types below give callers a precise StreetSuffix / abbreviation
+// vocabulary and a type-safe lookup, without a second copy of the table.
+
+/**
+ * The USPS suffix record, under its original isp-nexus name. Aliases
+ * {@link US_STREET_SUFFIX_VARIANTS}.
+ */
+export const StreetSuffixAbbreviationRecord = US_STREET_SUFFIX_VARIANTS
+export type StreetSuffixAbbreviationRecord = typeof US_STREET_SUFFIX_VARIANTS
+
+/** A canonical USPS street suffix, i.e. "STREET", "AVENUE", "BOULEVARD". Aliases
+{@link UsStreetSuffix}. */
+export type StreetSuffix = UsStreetSuffix
+
+/** A standardized USPS street suffix abbreviation (the preferred form), i.e. "ST", "AVE", "BLVD". */
+export type USPSStandardSuffixAbbreviation = StreetSuffixAbbreviationRecord[StreetSuffix][0]
+
+/** Any USPS-recognized suffix variant or abbreviation. */
+export type StreetSuffixAbbreviation = StreetSuffixAbbreviationRecord[StreetSuffix][number]
+
+/** Result of a successful USPS street suffix lookup. */
+export interface StreetSuffixMatch<S extends StreetSuffix = StreetSuffix> {
+	/** The matched canonical USPS street suffix, i.e. "STREET", "AVENUE". */
+	suffix: S
+	/** The preferred USPS street suffix abbreviation, i.e. "ST", "AVE". */
+	abbreviation: StreetSuffixAbbreviationRecord[S][0]
+}
+
+/**
+ * Look up a USPS street suffix (by canonical word, abbreviation, or any variant) and its preferred
+ * abbreviation.
+ */
+export function lookupStreetSuffix<S extends StreetSuffix>(suffix: S): StreetSuffixMatch<S>
+export function lookupStreetSuffix(input: string | null | undefined): StreetSuffixMatch | null
+export function lookupStreetSuffix(input: string | null | undefined): StreetSuffixMatch | null {
+	if (!input || typeof input !== "string") return null
+	const suffix = US_STREET_SUFFIX_LOOKUP.get(input.trim().toLowerCase())
+	if (!suffix) return null
+	return { suffix, abbreviation: US_STREET_SUFFIX_VARIANTS[suffix][0] }
+}
+
+/** Type-predicate: is the input a canonical USPS street suffix (uppercase full word, e.g. "STREET")? */
+export function isStreetSuffix(input: unknown): input is StreetSuffix {
+	return typeof input === "string" && Object.hasOwn(US_STREET_SUFFIX_VARIANTS, input)
+}
+
+/**
+ * True when a token is any USPS street suffix or abbreviation (case-insensitive) — `"St"`,
+ * `"BLVD"`, `"trail"`.
+ */
+export function isStreetSuffixToken(input: unknown): boolean {
+	return typeof input === "string" && US_STREET_SUFFIX_LOOKUP.has(input.trim().toLowerCase())
 }
