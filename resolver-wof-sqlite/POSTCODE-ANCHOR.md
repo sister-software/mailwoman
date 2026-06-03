@@ -48,12 +48,16 @@ git clone --depth 1 https://github.com/whosonfirst-data/whosonfirst-data-postalc
 node --experimental-strip-types scripts/build-unified-wof.ts \
   --data <repos-dir> --output /mnt/playpen/mailwoman-data/wof/postalcode-intl.db --placetypes postalcode
 
-# 3. backfill centroids from the admin hierarchy (see below)
+# 3. backfill centroids from the admin hierarchy. --repos turns on the coarse ancestor
+#    fallback (see below): broader coverage, looser centroids.
 node --experimental-strip-types scripts/backfill-postcode-centroids.ts \
-  --db /mnt/playpen/mailwoman-data/wof/postalcode-intl.db
+  --db /mnt/playpen/mailwoman-data/wof/postalcode-intl.db \
+  --repos /mnt/playpen/mailwoman-data/wof/repos
 
-# 4. functional check
+# 4. functional check + accuracy
 node --experimental-strip-types scripts/diag-postcode-anchor.ts
+node --experimental-strip-types scripts/eval/postcode-anchor-accuracy.ts \
+  --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
 ```
 
 ### Why the centroid backfill exists
@@ -61,19 +65,48 @@ node --experimental-strip-types scripts/diag-postcode-anchor.ts
 The WOF postcode repos vary in quality. US and ~22% of FR records carry their own `geom:latitude/longitude`.
 The rest ship as coordinate-less stubs that only reference their admin parent by `wof:parent_id`. A
 postcode with no centroid cannot anchor anything geographically, so `backfill-postcode-centroids.ts`
-borrows the parent locality's centroid from the admin gazetteer. Every coordinate still comes from our own
-WOF admin DB.
+borrows a centroid from the admin gazetteer in two passes:
+
+1. **Parent-borrow** (always): copy the parent locality's centroid. Tight, town-level placement.
+2. **Ancestor fallback** (`--repos`): for postcodes whose parent locality is missing from the admin DB
+   (common for city-states like Berlin, whose locality node we never imported), read the GeoJSON
+   hierarchy and borrow the finest available ancestor, preferring county over region. Broader coverage at
+   a looser centroid.
+
+Every coordinate still comes from our own WOF admin DB.
+
+### Coverage and accuracy
+
+Measured against 3,000 OpenAddresses German points (`postcode-anchor-accuracy.ts`). The `--repos`
+fallback trades precision for coverage, so it is a knob, not a default:
+
+| Backfill           | DE placed (Berlin/Saxony sample) | distance to true address |
+| ------------------ | -------------------------------- | ------------------------ |
+| parent-borrow only | 34%                              | p50 2.8 km, 93% ≤ 10 km  |
+| with `--repos`     | 84%                              | p50 7.5 km, 98% ≤ 25 km  |
+
+Membership (the country posterior) is 100% either way — every German postcode in the sample is in the
+gazetteer; only the centroid varies. When the anchor places a postcode it lands in the right town; the
+fallback extends that to the right region for the city-state and large-Land postcodes the parent-borrow
+misses.
+
+### The WOF-pure ceiling
+
+Roughly a third of German postcode records are bare stubs with neither coordinates nor a usable hierarchy
+(no county or region ancestor). Nothing in the admin DB can place those. Closing that last gap would need
+a non-WOF centroid source such as OpenAddresses point aggregation, which crosses the "extend the custom
+WOF build" line, so it is a deliberate policy call rather than a code fix.
 
 ### Per-country status
 
-| Country | Shard                | Placement                                 |
-| ------- | -------------------- | ----------------------------------------- |
-| US      | `postalcode-us.db`   | own centroids (existing)                  |
-| FR      | `postalcode-intl.db` | 86% placed (own + parent-borrow)          |
-| DE      | `postalcode-intl.db` | 65% placed (parent-borrow)                |
-| IT      | `postalcode-intl.db` | membership only — admin-it repo not built |
-| ES      | not built            | orphan stubs (no parent) — needs admin-es |
-| NL, GB  | not built            | deferred (NL admin-repo sprint; GB ~8 GB) |
+| Country | Shard                | Placement                                   |
+| ------- | -------------------- | ------------------------------------------- |
+| US      | `postalcode-us.db`   | own centroids (existing)                    |
+| FR      | `postalcode-intl.db` | 91% placed (own + parent-borrow + ancestor) |
+| DE      | `postalcode-intl.db` | 66% placed (parent-borrow + ancestor)       |
+| IT      | `postalcode-intl.db` | membership only — admin-it repo not built   |
+| ES      | not built            | orphan stubs (no parent) — needs admin-es   |
+| NL, GB  | not built            | deferred (NL admin-repo sprint; GB ~8 GB)   |
 
-IT, ES, and NL reach full placement once their `whosonfirst-data-admin-<cc>` repos are cloned and built
-into the admin gazetteer so the parent-borrow can resolve. That is the next sprint for this lane.
+IT, ES, and NL reach placement once their `whosonfirst-data-admin-<cc>` repos are cloned and built into
+the admin gazetteer so the borrow can resolve. That is the next sprint for this lane.
