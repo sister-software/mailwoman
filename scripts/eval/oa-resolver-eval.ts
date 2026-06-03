@@ -28,6 +28,12 @@
  *   2. Coord error p50/p90 — reported separately as the admin-centroid tier; the street-level tier
  *        (TIGER) will own the sub-km bar later.
  *
+ *   `--postcode-anchor` adds a `neural+anchor` row: neural's admin match, but the COORDINATE taken
+ *   from the postcode anchor's own centroid (`@mailwoman/neural/postcode-anchor` over the
+ *   postalcode shards, `--postcode-shards`). On German this drops coord p50 9.9 km → 1.2 km (p99
+ *   318 → 11 km) with admin match unchanged — the postcode tier between admin-centroid and
+ *   street-level.
+ *
  *   Run: node --experimental-strip-types scripts/eval/oa-resolver-eval.ts\
  *   --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000\
  *   --model /tmp/v072-eval/model.onnx\
@@ -282,6 +288,51 @@ async function main(): Promise<void> {
 	const dc = arg("default-country", "US")
 	const resolveOpts = dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}
 
+	// Postcode-anchor fusion (opt-in via `--postcode-anchor`). The resolver supplies the admin/place
+	// identity, but its coordinate is the place CENTROID — legitimately tens of km from edge addresses.
+	// The postcode anchor supplies the postcode's OWN centroid, the finer tier between admin-centroid and
+	// street. The `neural+anchor` row keeps neural's admin match but takes the COORDINATE from the anchor
+	// when it has a placed candidate for the eval's country, else falls back to the resolver coord. So the
+	// row isolates exactly what the anchor sharpens: where, not which place.
+	const useAnchor = process.argv.includes("--postcode-anchor")
+	let postcodeLookup: {
+		lookup(pc: string): Array<{ country: string; lat: number; lon: number }>
+		close(): void
+	} | null = null
+	let extractAnchors: typeof import("@mailwoman/neural/postcode-anchor").extractPostcodeAnchors | null = null
+	if (useAnchor) {
+		const shards = arg(
+			"postcode-shards",
+			"/mnt/playpen/mailwoman-data/wof/postalcode-us.db,/mnt/playpen/mailwoman-data/wof/postalcode-intl.db"
+		)
+			.split(",")
+			.map((s) => s.trim())
+		const { WofPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
+		postcodeLookup = new WofPostcodeLookup(shards)
+		extractAnchors = (await import("@mailwoman/neural/postcode-anchor")).extractPostcodeAnchors
+	}
+	/** The postcode anchor's centroid for a raw address, preferring the eval's country (`dc`). */
+	const anchorCoordFor = (input: string): { lat: number; lon: number } | null => {
+		if (!postcodeLookup || !extractAnchors) return null
+		const prefer = (dc && dc.toLowerCase() !== "none" ? dc : "").toUpperCase()
+		// Take the LAST postcode-shaped span with a usable candidate. In a rendered address the real
+		// postcode trails the locality (`… City, ST 90210`), so the last span is the postcode while an
+		// earlier 5-digit is a house number that merely shares a ZIP's shape (`12345 Main St`). Choosing
+		// last is the position signal the anchor's own confidence does not yet encode (a production
+		// refinement); here it isolates the centroid accuracy from span-selection.
+		let result: { lat: number; lon: number } | null = null
+		for (const a of extractAnchors(input, postcodeLookup)) {
+			const placed = a.candidates.filter((c) => c.lat !== 0 || c.lon !== 0)
+			if (placed.length === 0) continue
+			// When the eval fixes a country, accept ONLY a placed candidate from it — never fall back to
+			// another country's centroid (a US ZIP that is coordless here but a valid 5-digit shape in
+			// DE/FR/IT must not borrow Europe's point). With no country fixed, take the first placed.
+			const pick = prefer ? placed.find((c) => c.country.toUpperCase() === prefer) : placed[0]
+			if (pick) result = { lat: pick.lat, lon: pick.lon }
+		}
+		return result
+	}
+
 	// Per-state aggregation so no single dense state (Cook County / Chicago) dominates the headline.
 	interface Agg {
 		n: number
@@ -335,6 +386,9 @@ async function main(): Promise<void> {
 		neural: { overall: newAgg(), byState: new Map<string, Agg>() },
 		v0: { overall: newAgg(), byState: new Map<string, Agg>() },
 	}
+	// `neural+anchor`: neural's admin flags, but the coordinate replaced by the postcode-anchor centroid
+	// when available. Only the coord error column differs from `neural`.
+	const neuralAnchorAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
 	const record = (
 		who: "neural" | "v0",
 		row: OaRow,
@@ -367,6 +421,16 @@ async function main(): Promise<void> {
 		}
 		const ns = scoreTree(row, nResolved)
 		record("neural", row, ns)
+
+		// neural + postcode-anchor: same admin flags, coordinate from the anchor centroid when it has one.
+		if (useAnchor) {
+			const ac = anchorCoordFor(row.input)
+			const fusedErr = ac ? haversineKm(ac.lat, ac.lon, row.lat, row.lon) : ns.err
+			const st = row.state || "??"
+			if (!neuralAnchorAgg.byState.has(st)) neuralAnchorAgg.byState.set(st, newAgg())
+			bump(neuralAnchorAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, fusedErr)
+			bump(neuralAnchorAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, fusedErr)
+		}
 
 		// v0 (Pelias parser) via the flat→tree adapter
 		let vResolved: Resolved[] = []
@@ -424,6 +488,7 @@ async function main(): Promise<void> {
 		`| ${label} | ${pct(a.localityMatch, a.n)} | ${pct(a.regionMatch, a.n)} | ${pct(a.resolved, a.n)} | ${p(a.errs, 50)} | ${p(a.errs, 90)} | ${p(a.errs, 99)} |`
 	lines.push(overallRow("**neural**", agg.neural.overall))
 	lines.push(overallRow("v0 (Pelias)", agg.v0.overall))
+	if (useAnchor) lines.push(overallRow("**neural+anchor**", neuralAnchorAgg.overall))
 	lines.push("")
 	lines.push(`## Neural per-state (locality-match)`)
 	lines.push("")
@@ -438,9 +503,11 @@ async function main(): Promise<void> {
 	}
 	lines.push("")
 	lines.push(
-		`Coord error is the ADMIN-CENTROID tier (locality/region centroid → OA's real address point);` +
-			` a city centroid is legitimately tens of km from edge addresses, so the headline is the` +
-			` admin-MATCH rate, not the coord error. Street-level (TIGER) will own a sub-km tier later.`
+		`Coord error for **neural**/**v0** is the ADMIN-CENTROID tier (locality/region centroid → OA's real` +
+			` address point); a city centroid is legitimately tens of km from edge addresses, so the admin-MATCH` +
+			` rate is the headline there, not the coord. **neural+anchor** swaps in the postcode anchor's own` +
+			` centroid for the coordinate (admin match unchanged) — the finer postcode tier between admin-centroid` +
+			` and street-level (TIGER), which will own the sub-km tier later.`
 	)
 	const report = lines.join("\n")
 	console.log(report)
@@ -462,6 +529,8 @@ async function main(): Promise<void> {
 		writeFileSync(arg("out-json"), JSON.stringify({ neural: dump(agg.neural), v0: dump(agg.v0) }, null, 2))
 		console.error(`wrote json → ${arg("out-json")}`)
 	}
+
+	postcodeLookup?.close()
 }
 
 main().catch((e) => {
