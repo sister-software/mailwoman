@@ -104,16 +104,36 @@ Roughly a third of German postcode records are bare stubs with neither coordinat
 a non-WOF centroid source such as OpenAddresses point aggregation, which crosses the "extend the custom
 WOF build" line, so it is a deliberate policy call rather than a code fix.
 
+### WOF postcode data quality, by locale
+
+Whether a locale is placeable from WOF alone depends entirely on its postcode repo's data quality. A
+sample survey (orphan = no `wof:parent_id`; region = a usable `wof:hierarchy` ancestor):
+
+| locale | own coords | orphans | region ancestor | net placeable        |
+| ------ | ---------: | ------: | --------------: | -------------------- |
+| NL     |       100% |      0% |            100% | ~100% (own)          |
+| FR     |        39% |     39% |             61% | ~91%                 |
+| DE     |         0% |     27% |             73% | ~66%                 |
+| ES     |         0% |     64% |             36% | ~36%                 |
+| IT     |         0% |     73% |             27% | ~27% (+ wrong links) |
+
+US, NL, and FR carry enough of their own geometry (or clean ancestry) to place well. DE leans on the
+ancestor fallback. ES and IT are orphan-heavy and effectively WOF-unplaceable — IT also carries wrong
+links (Milan's `20121` points at a Liguria village), which is why it ships membership-only. Closing the
+ES/IT gap needs a non-WOF centroid source such as OpenAddresses point aggregation, a deliberate policy
+call rather than a code fix.
+
 ### Per-country status
 
-| Country | Shard                | Placement                                   |
-| ------- | -------------------- | ------------------------------------------- |
-| US      | `postalcode-us.db`   | own centroids (existing)                    |
-| FR      | `postalcode-intl.db` | 91% placed (own + parent-borrow + ancestor) |
-| DE      | `postalcode-intl.db` | 66% placed (parent-borrow + ancestor)       |
-| IT      | `postalcode-intl.db` | membership only — admin-it repo not built   |
-| ES      | not built            | orphan stubs (no parent) — needs admin-es   |
-| NL, GB  | not built            | deferred (NL admin-repo sprint; GB ~8 GB)   |
+| Country | Shard                | Placement                                            |
+| ------- | -------------------- | ---------------------------------------------------- |
+| US      | `postalcode-us.db`   | own centroids (existing)                             |
+| NL      | `postalcode-intl.db` | 100% placed (own centroids; PC6 stored as `1012LM`)  |
+| FR      | `postalcode-intl.db` | 91% placed (own + parent-borrow + ancestor)          |
+| DE      | `postalcode-intl.db` | 66% placed (parent-borrow + ancestor)                |
+| IT      | `postalcode-intl.db` | membership only — 73% orphans + wrong parents in WOF |
+| ES      | not built            | 64% orphans — WOF-unplaceable, needs OA aggregation  |
+| GB      | not built            | deferred — postcode-not-order locale, ~8 GB repo     |
 
-IT, ES, and NL reach placement once their `whosonfirst-data-admin-<cc>` repos are cloned and built into
-the admin gazetteer so the borrow can resolve. That is the next sprint for this lane.
+NL postcodes are stored space-less (`1012LM`), so the anchor normalizes `1012 LM` → `1012LM` before
+lookup. ES and IT need a non-WOF centroid source rather than another admin-repo build.
