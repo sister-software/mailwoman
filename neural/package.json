@@ -13,6 +13,7 @@
 		"./package.json": "./package.json",
 		".": "./out/index.js",
 		"./postcode-anchor": "./out/postcode-anchor.js",
+		"./postcode-binary-resolver": "./out/postcode-binary-resolver.js",
 		"./tokenizer": "./out/tokenizer.js",
 		"./onnx-runner": "./out/onnx-runner.js",
 		"./weights": "./out/weights.js",
