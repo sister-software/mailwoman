@@ -43,6 +43,7 @@
  *   /mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postalcode-us.db
  */
 
+import { lookupGermanState } from "@mailwoman/codex/de"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/core/resolver"
 import { type ClassificationRecord, createAddressParser } from "mailwoman"
@@ -206,12 +207,29 @@ const STATE_NAME_TO_ABBR: Record<string, string> = {
 	"puerto rico": "PR",
 }
 
-/** True if the resolved region (full name OR already an abbrev) matches the expected USPS abbrev. */
-function regionMatches(resolvedName: string | undefined, expectedAbbr: string | undefined): boolean {
-	if (!resolvedName || !expectedAbbr) return false
-	const exp = norm(expectedAbbr)
+/**
+ * True if the resolved region matches the expected one, comparing like-for-like across the surface
+ * forms each side uses. Three paths, tried in order:
+ *
+ * 1. Verbatim — both already the same string (US `Berlin`==`Berlin`, or two identical abbrevs).
+ * 2. US — the resolver returns a state's CANONICAL full name (`California`) while OA's expected is the
+ *    USPS abbrev (`CA`); map full name → abbrev so they compare.
+ * 3. DE — the resolver returns WOF's ENGLISH exonym (`Saxony`) while OA's expected is the German name
+ *    (`Sachsen`); `lookupGermanState` folds code / German name / English name → one ISO 3166-2:DE
+ *    code on BOTH sides. Strict: distinct states (Bavaria vs Saxony) still miss, so this corrects
+ *    the cross-language mismatch without loosening a genuine wrong-region. The two code spaces
+ *    don't overlap on real inputs (a USPS abbrev is never a German state name, and vice versa), so
+ *    trying both is safe regardless of the row's country.
+ */
+function regionMatches(resolvedName: string | undefined, expected: string | undefined): boolean {
+	if (!resolvedName || !expected) return false
+	const exp = norm(expected)
 	const got = norm(resolvedName)
-	return got === exp || STATE_NAME_TO_ABBR[got]?.toLowerCase() === exp
+	if (got === exp) return true
+	if (STATE_NAME_TO_ABBR[got]?.toLowerCase() === exp) return true
+	const gotDe = lookupGermanState(resolvedName)
+	const expDe = lookupGermanState(expected)
+	return gotDe !== null && gotDe === expDe
 }
 
 function percentile(xs: number[], p: number): number | null {

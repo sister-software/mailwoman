@@ -20,16 +20,24 @@ the address at a far-away same-shaped ZIP.
 
 ```
 | parser | locality-match | region-match | resolved | coord p50 km | coord p90 km | p99 km |
-| **neural** | 77.4% | 0.1% | 99.3% | 9.9 | 66.8 | 318.2 |
-| v0 (Pelias) | 79.3% | 50.0% | 99.3% | 7.0 | 16.9 | 106.8 |
-| **neural+anchor** | 77.4% | 0.1% | 99.3% | 1.3 | 5.7 | 13.5 |
+| **neural** | 77.4% | 43.8% | 99.3% | 9.9 | 66.8 | 318.2 |
+| v0 (Pelias) | 79.3% | 99.3% | 99.3% | 7.0 | 16.9 | 106.8 |
+| **neural+anchor** | 77.4% | 43.8% | 99.3% | 1.3 | 5.7 | 13.5 |
 ```
 
 The anchor drops coord p50 from 9.9 km to **1.3 km** (p90 66.8 → 5.7, p99 318 → 13.5), admin-match
-unchanged. The German parser is out of distribution (locality 77%, region near zero), so the resolver
-lands on a coarse admin centroid; the postcode anchor — a regex plus a gazetteer, no model in the loop —
-carries the coordinate to the postcode's own point. It also beats the Pelias parser (v0) on coordinate by
-a wide margin (1.3 vs 7.0 km).
+unchanged. The German parser is out of distribution (locality 77%), so the resolver lands on a coarse
+admin centroid; the postcode anchor — a regex plus a gazetteer, no model in the loop — carries the
+coordinate to the postcode's own point. It also beats the Pelias parser (v0) on coordinate by a wide
+margin (1.3 vs 7.0 km).
+
+(The region-match figures here come from the codex-aware matcher: the resolver returns WOF's English
+exonym `Saxony` while OA's expected is the German `Sachsen`, so the eval folds both through
+`@mailwoman/codex/de`'s `lookupGermanState` to one ISO 3166-2:DE code before comparing. Before that fix
+both parsers read ~0% on Saxony purely from the language mismatch. The remaining neural gap is real and
+concentrated in the Berlin city-state: per-state, neural emits a resolvable region for Saxony 87.5% of
+the time but for Berlin only 0.1% — `Berlin, Berlin` collapses region into locality and the OOD parser
+drops the duplicate. v0 reaches 99.3% because it emits the region in both.)
 
 ## US — the resolver already loads `postalcode-us.db`
 
