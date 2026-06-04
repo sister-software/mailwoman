@@ -10,6 +10,17 @@ export type { AncestorsTable, GeojsonTable, NamesTable, PlaceSearchTable, SprTab
 
 export { WofSqlitePlaceLookup, type RankingWeights, type WofSqlitePlaceLookupOpts } from "./lookup.js"
 
+export {
+	SeedConventionSource,
+	WORLD_DEFAULT,
+	mergeConventions,
+	resolveConvention,
+	type Convention,
+	type ConventionSource,
+	type ScoringWeights,
+	type Strategy,
+} from "./convention.js"
+
 export { WofPostcodeLookup, type PostcodePlace } from "./postcode-point-lookup.js"
 
 export {
