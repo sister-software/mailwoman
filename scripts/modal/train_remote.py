@@ -335,11 +335,23 @@ def export_onnx(
 @app.function(
     volumes={VOL_MOUNT: vol},
     image=training_image,
-    timeout=300,
+    timeout=600,
 )
-def diagnose_corpus():
-    """Check which corpus shards the data loader actually sees on the Modal volume."""
+def diagnose_corpus(
+    corpus_dir: str = "/data/corpus/versioned/v0.4.0/corpus-v0.4.0",
+    verify_country: str = "",
+    verify_source: str = "",
+):
+    """Check which corpus shards the data loader actually sees on the Modal volume.
+
+    Pass ``--corpus-dir`` to point at an overlay (e.g. the v0.4.1-de pilot corpus). Pass
+    ``--verify-country DE --verify-source synth-german`` to additionally PULL a few rows through the
+    real filter and confirm they survive — the night-4 trap was a German shard whose rows were all
+    filtered out, so the run trained on nothing. This is the pre-launch "verify the loader sees the
+    shard, THEN launch" gate.
+    """
     import json
+    import random
     import sys
     from collections import Counter
     from pathlib import Path
@@ -347,7 +359,7 @@ def diagnose_corpus():
     vol.reload()  # see shards added via `modal volume put` after deploy
     sys.path.insert(0, "/data/corpus-python/src")
 
-    corpus_dir = Path("/data/corpus/versioned/v0.4.0/corpus-v0.4.0")
+    corpus_dir = Path(corpus_dir)
     manifest = corpus_dir / "MANIFEST.json"
 
     print(f"Corpus dir: {corpus_dir}")
@@ -389,3 +401,20 @@ def diagnose_corpus():
     print(f"\nSource index ({errors} errors, {sum(by_source.values())} readable):")
     for src, count in by_source.most_common():
         print(f"  {src:35s} {count:4d} shards")
+
+    # Pre-launch verification: do rows of the target country/source actually survive the filter?
+    if verify_country or verify_source:
+        from mailwoman_train.data_loader import iter_rows
+        from mailwoman_train.labels import locale_id
+
+        cw = {c: 1.0 for c in (verify_country.split(",") if verify_country else ["US", "FR", "DE"])}
+        sw = {verify_source: 1.0} if verify_source else None
+        rows = list(iter_rows(
+            corpus_dir, "train", rng=random.Random(0),
+            country_weights=cw, source_weights=sw, coarse_filter=True, row_limit=5,
+        ))
+        print(f"\n[verify] rows passing filter (country={cw}, source={sw}): {len(rows)}")
+        for r in rows[:3]:
+            print(f"  country={r['country']} locale_id={locale_id(r['country'])} raw={r['raw'][:60]}")
+        if not rows:
+            print("  !! ZERO rows — the run would train on nothing. Do NOT launch.")
