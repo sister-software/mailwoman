@@ -19,22 +19,31 @@
 # If the gate holds, a follow-up extends to a full 100k run; if it fails, stop and diagnose ONE
 # knob (NaN protocol).
 #
-# ⚠ DATA DEPENDENCY (pre-launch): the from-scratch corpus must INCLUDE German rows. The v0.4.0
-# base below is US/FR; the German OA adapter (DE-1) exists but its shards must be merged into the
-# corpus the trainer reads, and the German source given a weight, before this launches. Until then
-# DE: 1.0 below filters to zero rows. Finalize corpus_dir + the DE source weight at launch.
+# CORPUS: v0.4.1-de — the v0.4.0 (US/FR) base overlaid with a German synth-german shard (200K train
+# + 4K val rows, real OpenAddresses Berlin/Saxony tuples rendered German-order via build-german-shard.mjs,
+# 40x the v0.8.0 continue-train supplement so a FROM-SCRATCH model can actually learn German). Assembled
+# 2026-06-04. Reproduce + deploy to the Modal volume:
+#   node scripts/build-german-shard.mjs --output /tmp/german-train.jsonl --count 200000 --seed 42
+#   node scripts/build-german-shard.mjs --output /tmp/german-val.jsonl   --count 4000   --seed 99
+#   python3 scripts/jsonl-to-parquet.py --input /tmp/german-train.jsonl --output /tmp/part-german-train.parquet
+#   python3 scripts/jsonl-to-parquet.py --input /tmp/german-val.jsonl   --output /tmp/part-german-val.parquet
+#   # then the overlay MANIFEST (v0.4.0 shards + the 2 German shards) — see the build-log doc — and:
+#   modal volume put mailwoman-training /tmp/part-german-train.parquet corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/train/part-german-train.parquet
+#   modal volume put mailwoman-training /tmp/part-german-val.parquet   corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/val/part-german-val.parquet
+#   modal volume put mailwoman-training <MANIFEST.json>                corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/MANIFEST.json
 #
-# Launch (after the corpus is DE-inclusive):
+# Launch:
 #   modal run -d scripts/modal/train_remote.py \
 #     --config v0.9.0-pilot-selfcond.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
 data:
-  # TODO(launch): point at a DE-inclusive corpus (v0.4.0 base + German shards merged).
-  corpus_dir: /data/corpus/versioned/v0.4.0/corpus-v0.4.0
+  corpus_dir: /data/corpus/versioned/v0.4.1-de/corpus-v0.4.1-de
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
   max_length: 128
-  # US/FR/DE balanced — the three-way pilot. DE requires the corpus dependency above.
+  # US/FR/DE — the three-way pilot. FR comes from the `ban` source (Base Adresse Nationale),
+  # DE from `synth-german`. country_weights is an acceptance filter, not a count balancer; the MIX
+  # is steered by source_weights below.
   country_weights:
     US: 1.0
     FR: 1.0
@@ -54,9 +63,12 @@ data:
     deepseek-kryptonite: 3.0
     synth-po-box: 1.5
     synth-intersection: 0.2
-    # TODO(launch): add the German OA adapter's source id + weight (e.g. oa-de: 3.0).
+    # German at ~18% of the mix (6.0 of a ~34 total) — enough for a from-scratch model to learn it,
+    # while staying within the synthesis-as-supplement guideline. THE key tunable: raise it if DE
+    # locality F1 lags the 70% gate, lower it if US/FR slip past the 1pp tripwire.
+    synth-german: 6.0
   train_rows_per_epoch: 1000000
-  val_rows: 4096 # bumped vs v0.8.1 so the per-locale cross_pollution tripwire has DE support
+  val_rows: 4096 # the per-locale cross_pollution tripwire now has DE val support (the 4K German val shard)
   coarse_filter: true
   augment_directional_prob: 0.3
   augment_region_prob: 0.3
