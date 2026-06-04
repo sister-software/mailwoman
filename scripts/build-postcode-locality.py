@@ -106,11 +106,14 @@ def main():
     print(f"  {len(postcodes)} {args.country} postcode centroids")
 
     out = sqlite3.connect(args.output)
-    out.execute("DROP TABLE IF EXISTS postcode_locality")
-    out.execute("""CREATE TABLE postcode_locality (
+    # Accumulate per country into one shared DB (the resolver attaches a SINGLE postcode_locality
+    # shard and country-filters at query time). CREATE-IF-NOT-EXISTS + DELETE-this-country makes each
+    # --country run idempotent, so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
+    out.execute("""CREATE TABLE IF NOT EXISTS postcode_locality (
         postcode TEXT NOT NULL, country TEXT NOT NULL, locality_id INTEGER NOT NULL,
         locality_name TEXT NOT NULL, aliases TEXT, distance_km REAL NOT NULL,
         is_containing INTEGER NOT NULL)""")
+    out.execute("DELETE FROM postcode_locality WHERE country = ?", (args.country,))
 
     rows, n_contained = 0, 0
     for (pc, plat, plon) in postcodes:
@@ -142,7 +145,7 @@ def main():
             out.execute("INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)",
                         (pc, args.country, l["id"], l["name"], "|".join(l["aliases"]), round(d, 3), isc))
             rows += 1
-    out.execute("CREATE INDEX postcode_locality_by_pc ON postcode_locality(postcode, country)")
+    out.execute("CREATE INDEX IF NOT EXISTS postcode_locality_by_pc ON postcode_locality(postcode, country)")
     out.commit()
     print(f"  wrote {rows} rows ({n_contained}/{len(postcodes)} postcodes have a containing locality) → {args.output}")
     out.close()
