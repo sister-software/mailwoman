@@ -53,9 +53,9 @@ python3 scripts/build-postcode-locality.py --output .../postcode-locality-intl.d
 
 | country | rows | postcodes with a containing locality | notes |
 |---|--:|--:|---|
-| DE | 92,689 | 24,443 | resolver-validated, DE 77→93% PIP-containment |
-| FR | 121,628 | 24,455 | validated; Paris arrondissements handled like Berlin Ortsteile |
-| NL | 1,842,253 | 370,222 (99.6%) | strong coverage — inert until NL localities are in the admin DB |
+| DE | 92,689 | 24,443 | resolver PIP-containment **92.6%** (Berlin+Saxony OA sample) |
+| FR | 121,628 | 24,455 | resolver PIP-containment **84.0%** (national BAN OA sample; lower than DE because the national set includes the rural commune tail where WOF locality coverage thins) |
+| NL | 1,842,253 | 370,222 (99.6%) | resolver PIP-containment **94.9%** (national BAG OA sample) — excellent even though the model is OOD on Dutch, because coordinate-first leans on the regex-extractable postcode + NL's near-complete coverage |
 | GB | 7,630,560 | 1,626,691 | unit postcodes; **~34% of GB postcodes get no candidate** (WOF GB locality coverage is incomplete) |
 | ES | 27,111 | 3,273 (28.9%) | WOF orphan-heavy — sparse; inert until ES localities are in the admin DB |
 | IT | 18,349 | 2,081 (42.2%) | WOF orphan-heavy — sparse; inert until IT localities are in the admin DB |

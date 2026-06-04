@@ -83,6 +83,8 @@ import { dirname, join, resolve } from "node:path"
 // ---------------------------------------------------------------------------
 const US_BBOX = { minLat: 15, maxLat: 72, minLon: -180, maxLon: -60 }
 const DE_BBOX = { minLat: 47, maxLat: 56, minLon: 5, maxLon: 16 }
+const FR_BBOX = { minLat: 41, maxLat: 51.5, minLon: -5.5, maxLon: 9.7 } // metropolitan France
+const NL_BBOX = { minLat: 50.7, maxLat: 53.6, minLon: 3.3, maxLon: 7.3 }
 
 const SOURCES = [
 	// NOTE: us/ca/san_francisco and us/wy/statewide were evaluated and REJECTED for this eval:
@@ -183,6 +185,29 @@ const SOURCES = [
 		bbox: DE_BBOX,
 		license: "GeoSN Sachsen — open use.",
 		attribution: "Staatsbetrieb Geobasisinformation und Vermessung Sachsen, via OpenAddresses",
+	},
+	// FR national (BAN). In-distribution for the model (trained on US/FR). 5-digit postcodes pass the
+	// US-shaped cleanPostcode. Used to quantify FR coordinate-first PIP-containment like DE's 92.6%.
+	{
+		key: "fr/countrywide",
+		state: "France",
+		tier: "fr-national",
+		zipBytes: 900_000_000,
+		bbox: FR_BBOX,
+		license: "Base Adresse Nationale (BAN) — Licence Ouverte / Etalab.",
+		attribution: "Base Adresse Nationale, via OpenAddresses",
+	},
+	// NL national (BAG). CAVEAT: the model is OOD on Dutch (no NL training) AND NL postcodes are 4+2
+	// alphanumeric ("1011 AB") — the US-shaped cleanPostcode may not preserve them, so the NL number
+	// reflects parser-OOD + postcode handling, not just the resolver. Read it with that asterisk.
+	{
+		key: "nl/countrywide",
+		state: "Netherlands",
+		tier: "nl-national",
+		zipBytes: 500_000_000,
+		bbox: NL_BBOX,
+		license: "BAG (Kadaster) — public domain (CC0).",
+		attribution: "Kadaster BAG, via OpenAddresses",
 	},
 ]
 
