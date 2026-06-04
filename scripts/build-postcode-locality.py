@@ -59,15 +59,57 @@ def aliases_for(props, canonical):
     out.discard(canonical)
     return sorted(out)
 
+def finalize(output):
+    """Freeze the accumulated table into a self-contained, read-only, distributable sqlite asset (the
+    same shape as our other WOF tables): a provenance/license `meta` table, query-planner stats, an
+    integrity check, a rollback (non-WAL) journal mode so there's no sidecar, and a VACUUM to compact."""
+    import datetime
+    db = sqlite3.connect(output)
+    counts = db.execute(
+        "SELECT country, COUNT(*), SUM(is_containing) FROM postcode_locality GROUP BY country ORDER BY country"
+    ).fetchall()
+    summary = {c: {"rows": n, "containing": int(con or 0)} for (c, n, con) in counts}
+    db.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
+    meta = {
+        "name": "mailwoman-postcode-locality",
+        "description": "postcode → containing + nearby WOF locality candidates (coordinate-first resolution)",
+        "schema_version": "1",
+        "built_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+        "source": "Who's On First (whosonfirst.org) — admin locality polygons + postalcode centroids; built from source GeoJSON, not a prebuilt dump",
+        "license": "CC-BY 4.0 (Who's On First) — attribution required on redistribution",
+        "attribution": "Contains data from Who's On First, © Who's On First contributors, CC-BY 4.0",
+        "method": "point-in-polygon of each postcode centroid against WOF locality polygons (+ a ~10km nearby candidate set with alt-name aliases)",
+        "countries": json.dumps(summary, sort_keys=True),
+    }
+    db.executemany("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)", list(meta.items()))
+    db.commit()
+    db.execute("PRAGMA journal_mode = DELETE")  # no -wal/-shm sidecar; the .db is self-contained
+    db.execute("ANALYZE")
+    ok = db.execute("PRAGMA integrity_check").fetchone()[0]
+    if ok != "ok":
+        raise SystemExit(f"integrity_check failed: {ok}")
+    db.commit()
+    db.execute("VACUUM")
+    db.close()
+    print(f"finalized {output}: integrity=ok, countries={summary}")
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--country", required=True)
-    ap.add_argument("--admin-repo", required=True)
-    ap.add_argument("--postcode-db", required=True)
+    ap.add_argument("--country")
+    ap.add_argument("--admin-repo")
+    ap.add_argument("--postcode-db")
     ap.add_argument("--output", required=True)
     ap.add_argument("--radius-km", type=float, default=10.0)
     ap.add_argument("--max-candidates", type=int, default=4)
+    ap.add_argument("--finalize", action="store_true",
+                    help="freeze the accumulated table into a read-only distributable asset (meta + VACUUM + integrity); no rebuild")
     args = ap.parse_args()
+
+    if args.finalize:
+        finalize(args.output)
+        return
+    if not (args.country and args.admin_repo and args.postcode_db):
+        raise SystemExit("build mode needs --country, --admin-repo, --postcode-db (or pass --finalize)")
 
     print(f"loading {args.country} locality polygons from source GeoJSON…")
     locs = []  # dict: id, name, aliases, clat, clon, bbox, geom
@@ -93,10 +135,19 @@ def main():
             pass
     print(f"  {len(locs)} localities")
 
-    # grid index (0.1° cells ≈ 11km) over locality centroids for the radius candidate set.
+    # Two 0.1°-cell (~11km) grid indexes. `grid` (by centroid) drives the radius candidate set; `bgrid`
+    # (by bbox-spanned cells — a locality is registered in every cell its bounding box overlaps) drives
+    # the containing-PIP, so it checks only the localities whose bbox could cover the point instead of a
+    # linear scan over all of them. At GB scale (2.7M postcodes × 11.7K localities) that's the
+    # difference between minutes and ~an hour.
     grid = collections.defaultdict(list)
+    bgrid = collections.defaultdict(list)
     for idx, l in enumerate(locs):
         grid[(round(l["clon"]*10), round(l["clat"]*10))].append(idx)
+        minx, miny, maxx, maxy = l["bbox"]
+        for cx in range(int(math.floor(minx*10)), int(math.floor(maxx*10)) + 1):
+            for cy in range(int(math.floor(miny*10)), int(math.floor(maxy*10)) + 1):
+                bgrid[(cx, cy)].append(idx)
 
     con = sqlite3.connect(args.postcode_db)
     postcodes = con.execute(
@@ -118,9 +169,10 @@ def main():
     rows, n_contained = 0, 0
     for (pc, plat, plon) in postcodes:
         if plat is None or plon is None: continue
-        # containing locality via bbox-prefiltered PIP
+        # containing locality via bbox-grid-prefiltered PIP (only localities whose bbox spans this cell)
         containing_idx = None
-        for idx, l in enumerate(locs):
+        for idx in bgrid.get((int(math.floor(plon*10)), int(math.floor(plat*10))), ()):
+            l = locs[idx]
             minx, miny, maxx, maxy = l["bbox"]
             if minx <= plon <= maxx and miny <= plat <= maxy and in_geom(plon, plat, l["geom"]):
                 containing_idx = idx; break
