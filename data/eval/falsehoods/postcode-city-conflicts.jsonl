@@ -17,3 +17,7 @@
 {"input": "M1 1AE Bristol", "locale": "en-GB", "components": {"locality": "Bristol", "postcode": "M1 1AE"}, "falsehood": "Manchester postcode on a Bristol address", "conflict": true, "expect_flag": true}
 {"input": "SW1A 1AA London", "locale": "en-GB", "components": {"locality": "London", "postcode": "SW1A 1AA"}, "falsehood": "control — correct London postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}
 {"input": "EH1 1AA Edinburgh", "locale": "en-GB", "components": {"locality": "Edinburgh", "postcode": "EH1 1AA"}, "falsehood": "control — correct Edinburgh postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}
+{"input": "1026 Rotterdam", "locale": "nl-NL", "components": {"locality": "Rotterdam", "postcode": "1026"}, "falsehood": "Amsterdam postcode on a Rotterdam address", "conflict": true, "expect_flag": true}
+{"input": "5624CL Utrecht", "locale": "nl-NL", "components": {"locality": "Utrecht", "postcode": "5624CL"}, "falsehood": "Eindhoven postcode on a Utrecht address", "conflict": true, "expect_flag": true}
+{"input": "1026 Amsterdam", "locale": "nl-NL", "components": {"locality": "Amsterdam", "postcode": "1026"}, "falsehood": "control — correct Amsterdam postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}
+{"input": "5624CL Eindhoven", "locale": "nl-NL", "components": {"locality": "Eindhoven", "postcode": "5624CL"}, "falsehood": "control — correct Eindhoven postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}

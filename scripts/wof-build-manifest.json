@@ -11,13 +11,17 @@
     { "name": "whosonfirst-data-admin-gb", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-gb", "commit": "574b9aab754d75349b7c4740e9557901ddf00c95", "geojson_files": 72674 },
     { "name": "whosonfirst-data-admin-jp", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-jp", "commit": "6ac4e1339705ddb8e99d3d85d5837a23b0cca09b", "geojson_files": 62896 },
     { "name": "whosonfirst-data-admin-kr", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-kr", "commit": "132b675fea1e062f92bbdb0ebf5704f1acf895c0", "geojson_files": 54034 },
-    { "name": "whosonfirst-data-admin-us", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-us", "commit": "c4e4f9b2233c4b29a6f7124278b635e270d0b87d", "geojson_files": 448570 }
+    { "name": "whosonfirst-data-admin-us", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-us", "commit": "c4e4f9b2233c4b29a6f7124278b635e270d0b87d", "geojson_files": 448570 },
+    { "name": "whosonfirst-data-admin-es", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-es", "commit": "148ad222206ca465e346eab6364bc369b6f0f938", "geojson_files": 63175, "_added": "2026-06-04 for the coordinate-first postcode→locality work" },
+    { "name": "whosonfirst-data-admin-it", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-it", "commit": "c0e2aef6a38f0580acb78815866b0f6b15722558", "geojson_files": 89728, "_added": "2026-06-04 for the coordinate-first postcode→locality work" },
+    { "name": "whosonfirst-data-admin-nl", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-nl", "commit": "f7b35802f907eb1eb010f51586586bfaac5bb7e5", "geojson_files": 26349, "_added": "2026-06-04 for the coordinate-first postcode→locality work (NL coord-first now resolves)" }
   ],
-  "total_geojson_files": 1738443,
+  "total_geojson_files": 1917695,
   "expected_output": {
-    "total_places": 1288749,
-    "localities": 1027616,
-    "by_country": { "CN": 678311, "US": 258543, "FR": 114655, "DE": 87074, "JP": 54488, "KR": 52967, "GB": 42711 },
+    "_comment": "Rebuilt 2026-06-04 to add ES/IT/NL (coordinate-first). DE/FR/GB locality counts unchanged (12657/57260/16813); DE PIP-containment held at 92.6%.",
+    "total_places": 1422101,
+    "localities": 1034447,
+    "by_country_localities": { "CN": 676736, "US": 169799, "IT": 62588, "FR": 57260, "KR": 50465, "JP": 43886, "ES": 31321, "GB": 16813, "DE": 12657, "NL": 7358 },
     "tables": ["spr", "names", "concordances", "place_population", "ancestors", "place_search", "place_bbox"],
     "spr_has_bbox_columns": true
   },
@@ -30,9 +34,24 @@
     "expected_output": { "total_places": 42319, "tables": ["spr", "names", "place_population", "ancestors", "place_search", "place_bbox"] },
     "resolver_wiring": "ResolveRouter + WofSqlitePlaceLookup take both DBs (admin-global-priority.db, postalcode-us.db); postalcode queries route to the postcode shard."
   },
+  "postcode_build_gb": {
+    "_comment": "GB postcodes for the coordinate-first postcode→locality table (acquired from source 2026-06-04). 2.72M unit postcodes; geojson is committed directly (only meta CSVs are LFS).",
+    "artifact": "postalcode-gb.db",
+    "build_command": "node --experimental-strip-types scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-postalcode-gb --output /mnt/playpen/mailwoman-data/wof/postalcode-gb.db --placetypes postalcode",
+    "repo": { "name": "whosonfirst-data-postalcode-gb", "url": "https://github.com/whosonfirst-data/whosonfirst-data-postalcode-gb", "commit": "0bf2e994c3369cb37dbf82c5eae23bea45d3b8c8", "geojson_files": 2719772 },
+    "expected_output": { "total_places": 2719772 }
+  },
+  "postcode_locality_asset": {
+    "_comment": "Coordinate-first candidate table (postcode → containing + nearby WOF localities). Read-only distributable asset; see resolver-wof-sqlite/POSTCODE-LOCALITY.md.",
+    "artifact": "postcode-locality-intl.db",
+    "build": "scripts/build-postcode-locality.py --country <CC> --admin-repo <admin-<cc>> --postcode-db <postalcode source> --output postcode-locality-intl.db  (per country), then --finalize",
+    "countries": ["DE", "ES", "FR", "GB", "IT", "NL"],
+    "postcode_sources": { "DE/ES/FR/IT/NL": "postalcode-intl.db", "GB": "postalcode-gb.db" }
+  },
   "notes": [
     "admin-fr was missing from the cloned repos when this manifest was created (only the built admin-fr.db artifact remained); re-cloned 2026-05-30 at the commit above.",
     "Clones are shallow (git clone --depth 1) for the data; the commit hash still pins the snapshot.",
-    "Postcodes: US only so far. Other priority countries' postcodes need their whosonfirst-data-postalcode-<cc> repos cloned + the same --placetypes postalcode build."
+    "Postcodes: US (admin shard) + GB (postcode-build-gb) + DE/ES/FR/IT/NL (postalcode-intl.db) for the coordinate-first table.",
+    "2026-06-04: rebuilt admin-global-priority.db to add ES/IT/NL localities (NL coord-first now resolves). DE/FR/GB unchanged + DE PIP-containment held at 92.6% (no regression). Prior DB backed up as admin-global-priority.db.pre-nl-bak."
   ]
 }
