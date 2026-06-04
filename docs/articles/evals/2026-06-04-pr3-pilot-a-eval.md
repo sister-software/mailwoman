@@ -100,22 +100,34 @@ Two blind spots let training look healthy to the dashboard while German was brea
 ## Decisions made
 
 - **Did not promote** the pilot to `releases.json` / HF. Gate failed by ~45pp on the headline metric; the model is not on disk anywhere a consumer would pick it up.
-- **Did not launch the 100k follow-up.** That was conditional on the gate passing. At 25.6% (vs a 70% bar) with no evidence of "rising," extending to 100k is not justified by this data.
+- **Did not launch the 100k follow-up.** That was conditional on the gate passing. At 25.6% (vs a 70% bar), and with the 10k-vs-20k slope flat (German locality pinned — see above), extending to 100k would not cross the bar. Not justified by this data.
 - **Did not launch another from-scratch German pilot autonomously.** This is the 2nd reproduction of the same end-of-string locality collapse via a *new* mechanism (v0.8.0 continue-train was the 1st), on correct data. The evidence now points away from recipe/conditioning tweaks. The next direction is the operator's call.
+
+## The slope: flat, not rising — the recipe is not salvageable by more steps
+
+Exported step-10000 and re-ran the same DE evals to test whether German locality is climbing across steps. It is not:
+
+| metric | step-10000 | step-20000 | Δ |
+|---|--:|--:|--:|
+| DE resolver locality-match | 25.5% | 25.6% | +0.1 |
+| DE parse locality F1 | 35.4% | 34.8% | −0.6 |
+| Berlin locality | 34.2% | 34.2% | 0.0 |
+| Sachsen locality | 16.8% | 16.9% | +0.1 |
+
+Doubling the training moved German locality essentially zero — Berlin is pinned at 34.2% at *both* checkpoints. The collapse is a **converged failure mode** the model settled into by step-10000 and stays in, not an undertraining artifact. A 100k run of this recipe would not cross the 70% bar. So "just train longer" is off the table, and the fix has to be structural.
 
 ## Open questions for the operator
 
-1. **Is the collapse rising or flat?** Checkpoints exist at every 2k steps; exporting step-10000 and re-running the DE eval would show whether German locality is climbing (a 100k run might cross the bar) or stuck. Not run here — the gate is "≥70% **and rising**" and 25.6% at the gate step misses regardless of slope, but the slope informs whether the recipe is salvageable.
-2. **Structural vs. statistical fix.** A FiLM scale/shift can't enforce structure. Candidates that can: a trained CRF transition prior (was off here — the bf16 NaN history), a positional "last content token is rarely O" constraint, or the **anchor-based parsing direction** (DeepSeek-signed, `project-anchor-based-parsing-direction`) — postcode-as-anchor → country posterior → soft channel — which doesn't depend on the parser recovering locality from raw spans at all. The last is the standing LEAD.
-3. **Does the resolver already paper over this?** With the postcode anchor pinning coordinates at p50 1.3 km even when locality-match is 25.6%, how much does the dropped city actually cost a production lookup? Worth quantifying before deciding how hard to chase the parser fix.
+1. **Structural vs. statistical fix.** A FiLM scale/shift can't enforce structure. Candidates that can: a trained CRF transition prior (was off here — the bf16 NaN history), a positional "last content token is rarely O" constraint, or the **anchor-based parsing direction** (DeepSeek-signed, `project-anchor-based-parsing-direction`) — postcode-as-anchor → country posterior → soft channel — which doesn't depend on the parser recovering locality from raw spans at all. The last is the standing LEAD.
+2. **Does the resolver already paper over this?** With the postcode anchor pinning coordinates at p50 1.3 km even when locality-match is 25.6%, how much does the dropped city actually cost a production lookup? Worth quantifying before deciding how hard to chase the parser fix.
 
 ## Numbers
 
 | | |
 |---|--:|
 | Modal spend (pilot train, prior session) | ~$2–3 |
-| Modal spend (2 ONNX exports this session) | ~$0.30 |
-| Local eval compute | ~12 min (CPU ONNX) |
+| Modal spend (3 ONNX exports this session) | ~$0.45 |
+| Local eval compute | ~18 min (CPU ONNX) |
 | Models promoted | 0 |
 | Bugs fixed | 1 (FiLM chunk→Split export) |
 | NaN incidents | 0 |
