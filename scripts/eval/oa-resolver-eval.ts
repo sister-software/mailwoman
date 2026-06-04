@@ -395,6 +395,7 @@ async function main(): Promise<void> {
 		resolved: boolean
 		err: number | null
 		resolvedLoc?: string
+		resolvedLocId?: number
 		resolvedReg?: string
 	} => {
 		const best = mostSpecific(resolved)
@@ -412,6 +413,7 @@ async function main(): Promise<void> {
 			// Raw resolved names for the --errors-json per-row dump: a present-but-wrong resolvedLoc
 			// => resolver ranking/disambiguation miss; an absent one => coverage/parse miss.
 			resolvedLoc: locRaw,
+			resolvedLocId: locNode?.id,
 			resolvedReg: regResolved?.name,
 		}
 	}
@@ -442,6 +444,13 @@ async function main(): Promise<void> {
 	const collectErrors = !!arg("errors-json")
 	const errorRows: Record<string, unknown>[] = []
 
+	// `--out-resolved <path>`: per-row dump for the PIP-containment metric (scripts/eval/pip-containment.py).
+	// Carries the gold OA point + the neural-resolved locality's WOF id, so an offline pass can test
+	// whether the gold point lies INSIDE the resolved locality's polygon — a name-surface-independent
+	// truth check (the "Plauen" vs gold "Plauen Vogtl" name-match artifact, see the coordinate-first plan).
+	const collectResolvedDump = !!arg("out-resolved")
+	const resolvedRows: Record<string, unknown>[] = []
+
 	let i = 0
 	for (const row of rows) {
 		i++
@@ -456,6 +465,19 @@ async function main(): Promise<void> {
 		}
 		const ns = scoreTree(row, nResolved)
 		record("neural", row, ns)
+
+		if (collectResolvedDump) {
+			resolvedRows.push({
+				input: row.input,
+				lat: row.lat,
+				lon: row.lon,
+				state: row.state,
+				expectedLoc: row.expected.locality,
+				neuralLocId: ns.resolvedLocId ?? null,
+				neuralLoc: ns.resolvedLoc ?? null,
+				nameMatch: ns.locMatch,
+			})
+		}
 
 		// neural + postcode-anchor: same admin flags, coordinate from the anchor centroid when it has one.
 		if (useAnchor) {
@@ -505,6 +527,10 @@ async function main(): Promise<void> {
 	if (collectErrors) {
 		writeFileSync(arg("errors-json"), JSON.stringify(errorRows, null, 2))
 		console.error(`wrote ${errorRows.length} failure rows → ${arg("errors-json")}`)
+	}
+	if (collectResolvedDump) {
+		writeFileSync(arg("out-resolved"), JSON.stringify(resolvedRows))
+		console.error(`wrote ${resolvedRows.length} resolved rows → ${arg("out-resolved")}`)
 	}
 
 	// ---- report (self-emitted; eval figures are NEVER hand-typed into docs) ----
