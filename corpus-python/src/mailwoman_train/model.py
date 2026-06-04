@@ -165,6 +165,7 @@ class MailwomanCoarseEncoder(nn.Module):
         super().__init__()
         self.pad_token_id = pad_token_id
         self.max_position_embeddings = max_position_embeddings
+        self.hidden_size = hidden_size
         self.num_labels = num_labels
         # PR3 self-conditioning: an auxiliary locale head over the pooled sequence + a FiLM
         # modulation of the per-token reps by the inferred locale. See forward() for the data
@@ -386,7 +387,13 @@ class MailwomanCoarseEncoder(nn.Module):
             locale_logits = self.locale_head(pooled)  # (B, num_locales)
             # FiLM modulation: scale by (1 + gamma) and shift by beta, both predicted from the
             # pooled locale rep. gamma/beta start at 0 (zero-init film) so this begins as identity.
-            gamma, beta = self.locale_film(pooled).chunk(2, dim=-1)  # each (B, hidden)
+            # Split via two slices rather than ``.chunk(2)``: chunk exports to an opset-18
+            # ``Split(num_outputs=2)`` node that onnxruntime-node (and the WASM/WebGPU web runtime)
+            # reject as "Unrecognized attribute: num_outputs"; explicit slicing emits plain Slice
+            # ops every runtime accepts. Mathematically identical — same trained weights.
+            film = self.locale_film(pooled)
+            gamma = film[..., : self.hidden_size]  # (B, hidden)
+            beta = film[..., self.hidden_size :]  # (B, hidden)
             h = (1.0 + gamma).unsqueeze(1) * h + beta.unsqueeze(1)
 
         logits = self.classifier(h)
