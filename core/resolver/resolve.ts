@@ -179,6 +179,10 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 	// lets consumers display the canonical name and lets the end-to-end eval check the resolver chose
 	// the right PLACE (gazetteer-name vs ground-truth) rather than merely echoing the parser's text.
 	node.metadata = { ...(node.metadata ?? {}), resolver_score: resolved.score, resolver_name: resolved.name }
+	// The postcode/locality conflict flag (the falsehood differentiator): the postcode pointed to a
+	// geographically different place than the parsed city name. Surface it so callers can warn rather
+	// than silently trust the resolved point.
+	if (resolved.mismatch) node.metadata["postcode_city_mismatch"] = true
 	if (alternatives.length > 0) {
 		node.alternatives = alternatives
 	}

@@ -35,7 +35,9 @@ function buildDb(): DatabaseSync {
 	spr.run(1, 0, "Berlin", "locality", "DE", 52.52, 13.4, 52.3, 52.7, 13.0, 13.8)
 	spr.run(2, 1, "Koepenick", "locality", "DE", 52.44, 13.58, 52.4, 52.5, 13.5, 13.7)
 	spr.run(3, 0, "Plauen", "locality", "DE", 50.49, 12.14, 50.4, 50.6, 12.0, 12.3)
+	spr.run(4, 0, "Muenchen", "locality", "DE", 48.14, 11.58, 48.0, 48.3, 11.4, 11.8) // ~500 km from Berlin
 	db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`).run(1, 3_600_000)
+	db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`).run(4, 1_500_000)
 	const pl = db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`)
 	pl.run("10115", "DE", 2, "Koepenick", "", 0.0, 1) // a Berlin postcode's centroid lands in the Ortsteil
 	pl.run("08523", "DE", 3, "Plauen", "", 0.0, 1) // Plauen's postcode → Plauen
@@ -67,5 +69,19 @@ describe("coordinate-first locality resolution", () => {
 		// exact match — exact-name tiering keeps Berlin ahead of the coordinate-only borough.
 		const r = await lookup.findPlace({ text: "Berlin", placetype: "locality", postcode: "10115", country: "DE" })
 		expect(r[0]?.name).toBe("Berlin")
+	})
+
+	it("flags a postcode/city conflict (wrong-for-the-city postcode) but still returns the named city", async () => {
+		// "10115" is a Berlin postcode, but the parsed city is München (~500 km away) — a transposed or
+		// wrong postcode. The name wins (München), but the mismatch flag fires.
+		const r = await lookup.findPlace({ text: "Muenchen", placetype: "locality", postcode: "10115", country: "DE" })
+		expect(r[0]?.name).toBe("Muenchen")
+		expect(r[0]?.mismatch).toBe(true)
+	})
+
+	it("does NOT flag a city-state Ortsteil as a conflict (the city is near its own borough)", async () => {
+		// Berlin chosen over its borough Koepenick (~15 km) — close, so no false conflict.
+		const r = await lookup.findPlace({ text: "Berlin", placetype: "locality", postcode: "10115", country: "DE" })
+		expect(r[0]?.mismatch).toBeFalsy()
 	})
 })
