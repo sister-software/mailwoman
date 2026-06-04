@@ -165,6 +165,63 @@ interface RawSearchRow {
 	population: number | null // from the place_population aux table; null when missing
 }
 
+/** The coordinate-first candidate table (scripts/build-postcode-locality.py): postcode → containing +
+ * nearby localities with WOF alt-name aliases. */
+const POSTCODE_LOCALITY_TABLE = "postcode_locality"
+
+/** Soft-score weights for the coordinate-first locality path. `Score = PC·S_pc + NAME·S_name +
+ * POP·S_pop`, each S in [0,1]. Postcode-proximity weighted highest (it's the strongest single signal
+ * when the name-match misses a small town), name next, population a tiebreak. The conflict flag fires
+ * when |S_pc − S_name| exceeds MISMATCH_DELTA. PC_DECAY_KM sets how fast S_pc falls with distance. */
+const CF_PC = 0.6
+const CF_NAME = 0.3
+const CF_POP = 0.1
+const CF_PC_DECAY_KM = 8
+const CF_MISMATCH_DELTA = 0.5
+
+/** Case-fold + strip diacritics + collapse punctuation — for the coord-first soft name match. */
+function cfNormalize(s: string): string {
+	return s
+		.toLowerCase()
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "") // combining diacritical marks
+		.replace(/[^a-z0-9]+/g, " ")
+		.trim()
+}
+
+/** Padded character-trigram set (a leading/trailing space pads short tokens). */
+function trigrams(s: string): Set<string> {
+	const t = ` ${s} `
+	const out = new Set<string>()
+	for (let i = 0; i + 3 <= t.length; i++) out.add(t.slice(i, i + 3))
+	return out
+}
+
+/** Character-trigram Jaccard ∈ [0,1] — tolerant of the swallowed-leading-char fragments ("auen" vs
+ * "plauen") and minor misspellings without a heavyweight edit-distance pass. */
+function trigramJaccard(a: string, b: string): number {
+	const A = trigrams(a)
+	const B = trigrams(b)
+	if (A.size === 0 || B.size === 0) return 0
+	let inter = 0
+	for (const x of A) if (B.has(x)) inter++
+	return inter / (A.size + B.size - inter)
+}
+
+/** Soft name-match score ∈ [0,1]: exact (normalized) name/alias → 1, else best trigram-Jaccard. */
+function softNameScore(text: string, name: string, aliases: readonly string[]): number {
+	const q = cfNormalize(text)
+	if (!q) return 0
+	let best = 0
+	for (const raw of [name, ...aliases]) {
+		const n = cfNormalize(raw)
+		if (!n) continue
+		if (n === q) return 1
+		best = Math.max(best, trigramJaccard(q, n))
+	}
+	return best
+}
+
 export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #db: DatabaseSync
 	readonly #ownsDb: boolean
@@ -184,6 +241,12 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * before this feature shipped.
 	 */
 	readonly #hasPopulationIndex: Map<string, boolean>
+	/**
+	 * Per-shard probe for the `postcode_locality` table (the coordinate-first candidate table, built by
+	 * scripts/build-postcode-locality.py). Cached at construction; null'd out when absent so the
+	 * coord-first path silently no-ops on a deployment that didn't ship the table.
+	 */
+	readonly #postcodeLocalityShard: string | null
 	/**
 	 * Resolved shard list. Always at least one entry; first is `main`. Multi-shard adds extras with
 	 * their own derived (or override) schema names.
@@ -236,6 +299,10 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			this.#hasBboxIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_BBOX_TABLE))
 			this.#hasPopulationIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_POPULATION_TABLE))
 		}
+		// The postcode_locality table can live on any attached shard (typically its own
+		// `postcode-locality-<cc>.db`). Find the first shard that has it; null = coord-first disabled.
+		this.#postcodeLocalityShard =
+			this.#shards.find((s) => this.#shardHasTable(s.schemaName, POSTCODE_LOCALITY_TABLE))?.schemaName ?? null
 	}
 
 	#shardHasTable(schemaName: string, tableName: string): boolean {
@@ -252,6 +319,15 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	}
 
 	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
+		// Coordinate-first locality path. Strictly gated: a sibling postcode AND a postcode_locality
+		// table AND a locality query. Injects postcode-proximal candidates (which the name-match FTS
+		// can't generate for an under-indexed small town) and soft-scores the union. Returns null to
+		// fall through to the unchanged FTS path when the postcode isn't in the table.
+		if (query.postcode && this.#postcodeLocalityShard && this.#isLocalityQuery(query)) {
+			const cf = await this.#findLocalityCoordFirst(query, this.#postcodeLocalityShard)
+			if (cf) return cf
+		}
+
 		const limit = query.limit ?? 10
 		const ftsLimit = limit * 4 // over-fetch so post-scoring has room to re-rank
 
@@ -429,6 +505,96 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 		candidates.sort((a, b) => b.score - a.score)
 		return Promise.resolve(candidates.slice(0, limit))
+	}
+
+	#isLocalityQuery(query: FindPlaceQuery): boolean {
+		const pts = normalizePlacetypes(query.placetype)
+		return !pts || pts.includes("locality")
+	}
+
+	/**
+	 * Coordinate-first locality resolution. The postcode_locality table maps the sibling postcode to the
+	 * locality whose polygon contains the postcode centroid (+ a few nearby ones for the abutting-
+	 * postcode case). We union those COORDINATE candidates with the FTS NAME candidates and soft-score
+	 * the union `0.6·S_pc + 0.3·S_name + 0.1·S_pop` — so a small town the name-match never finds is
+	 * recovered by the postcode, while an unambiguous name (Berlin) still wins on name + population.
+	 * Returns null when the postcode isn't in the table (→ caller falls back to the FTS path).
+	 */
+	async #findLocalityCoordFirst(query: FindPlaceQuery, sch: string): Promise<PlaceCandidate[] | null> {
+		const pc = query.postcode!.trim()
+		const pcWhere = query.country ? "postcode = ? AND country = ?" : "postcode = ?"
+		const pcParams: SQLInputValue[] = query.country ? [pc, query.country] : [pc]
+		const pcRows = this.#db
+			.prepare(
+				`SELECT locality_id AS id, aliases, distance_km AS dist, is_containing AS containing
+				 FROM ${sch}.${POSTCODE_LOCALITY_TABLE} WHERE ${pcWhere}`
+			)
+			.all(...pcParams) as unknown as Array<{ id: number; aliases: string | null; dist: number; containing: number }>
+		if (pcRows.length === 0) return null
+
+		const limit = query.limit ?? 10
+		// Name-match candidates via the normal FTS path (postcode cleared → no recursion).
+		const ftsCands = await this.findPlace({ ...query, postcode: undefined, limit: Math.max(limit, 10) })
+
+		const pcInfo = new Map<number, { dist: number; containing: boolean; aliases: string[] }>()
+		for (const r of pcRows) {
+			pcInfo.set(r.id, { dist: r.dist, containing: r.containing === 1, aliases: r.aliases ? r.aliases.split("|") : [] })
+		}
+
+		const merged = new Map<number, PlaceCandidate>()
+		for (const c of ftsCands) merged.set(c.id as number, c)
+		const missing = [...pcInfo.keys()].filter((id) => !merged.has(id))
+		for (const row of this.#fetchLocalitiesById(missing)) merged.set(row.id, row)
+
+		const scored: Array<PlaceCandidate & { exact: boolean }> = []
+		for (const cand of merged.values()) {
+			const info = pcInfo.get(cand.id as number)
+			const sPc = info ? (info.containing ? 1 : Math.exp(-info.dist / CF_PC_DECAY_KM)) : 0
+			const sName = softNameScore(query.text, cand.name, info?.aliases ?? [])
+			const sPop = cand.population && cand.population > 0 ? Math.min(1, Math.log10(1 + cand.population) / 6) : 0
+			scored.push({ ...cand, score: CF_PC * sPc + CF_NAME * sName + CF_POP * sPop, exact: sName >= 1 })
+		}
+		// Exact-name tiering (same philosophy as the FTS path): an EXACT name/alias match tiers above
+		// coordinate-only candidates, with the soft-score breaking ties WITHIN a tier. This keeps an
+		// unambiguous city ("Berlin", exact + huge population) ahead of the fine-grained Ortsteil its
+		// postcode centroid lands in, while a small town the name-match never finds (no exact tier) is
+		// still recovered by its postcode's containing locality.
+		scored.sort((a, b) => Number(b.exact) - Number(a.exact) || b.score - a.score)
+		return scored.slice(0, limit).map(({ exact, ...c }) => {
+			void exact
+			return c
+		})
+	}
+
+	/** Fetch locality spr rows (from main) for the postcode-injected candidate ids the FTS set missed. */
+	#fetchLocalitiesById(ids: number[]): PlaceCandidate[] {
+		if (ids.length === 0) return []
+		const hasPop = this.#hasPopulationIndex.get("main") === true
+		const popSelect = hasPop ? `pp.population AS population` : `NULL AS population`
+		const popJoin = hasPop ? `LEFT JOIN main.${PLACE_POPULATION_TABLE} pp ON pp.id = s.id` : ""
+		const ph = ids.map(() => "?").join(", ")
+		const rows = this.#db
+			.prepare(
+				`SELECT s.id AS id, s.name AS name, s.country AS country, s.parent_id AS parent_id,
+				        s.latitude AS lat, s.longitude AS lon, ${popSelect}
+				 FROM main.spr s ${popJoin}
+				 WHERE s.id IN (${ph}) AND s.is_current != 0`
+			)
+			.all(...ids) as unknown as Array<RawSearchRow>
+		return rows.map((row) => {
+			const c: PlaceCandidate = {
+				id: row.id,
+				name: row.name,
+				placetype: "locality",
+				country: row.country ?? "",
+				lat: row.lat ?? 0,
+				lon: row.lon ?? 0,
+				parent_id: row.parent_id ?? undefined,
+				score: 0,
+			}
+			if (row.population !== null && row.population > 0) c.population = row.population
+			return c
+		})
 	}
 
 	/**

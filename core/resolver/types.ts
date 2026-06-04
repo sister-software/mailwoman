@@ -55,6 +55,13 @@ export interface ResolverBackend {
 		placetype?: string | string[]
 		country?: string
 		parentId?: number | string
+		/**
+		 * Sibling postcode string, when the address carries one. A coordinate-first backend uses it to
+		 * inject postcode-proximal locality candidates (the postcode→locality table) and soft-score
+		 * them against the parsed name — recovering localities the name-match alone misses. Backends
+		 * without postcode support ignore it.
+		 */
+		postcode?: string
 		limit?: number
 	}): Promise<ResolvedPlace[]>
 }
