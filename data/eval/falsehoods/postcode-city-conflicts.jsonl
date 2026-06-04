@@ -12,3 +12,8 @@
 {"input": "13001 Bordeaux", "locale": "fr-FR", "components": {"locality": "Bordeaux", "postcode": "13001"}, "falsehood": "Marseille postcode on a Bordeaux address", "conflict": true, "expect_flag": true}
 {"input": "75001 Paris", "locale": "fr-FR", "components": {"locality": "Paris", "postcode": "75001"}, "falsehood": "control — correct Paris postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}
 {"input": "69001 Lyon", "locale": "fr-FR", "components": {"locality": "Lyon", "postcode": "69001"}, "falsehood": "control — correct Lyon postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}
+{"input": "SW1A 1AA Edinburgh", "locale": "en-GB", "components": {"locality": "Edinburgh", "postcode": "SW1A 1AA"}, "falsehood": "London postcode on an Edinburgh address — wrong city for postcode", "conflict": true, "expect_flag": true}
+{"input": "EH1 1AA London", "locale": "en-GB", "components": {"locality": "London", "postcode": "EH1 1AA"}, "falsehood": "Edinburgh postcode on a London address", "conflict": true, "expect_flag": true}
+{"input": "M1 1AE Bristol", "locale": "en-GB", "components": {"locality": "Bristol", "postcode": "M1 1AE"}, "falsehood": "Manchester postcode on a Bristol address", "conflict": true, "expect_flag": true}
+{"input": "SW1A 1AA London", "locale": "en-GB", "components": {"locality": "London", "postcode": "SW1A 1AA"}, "falsehood": "control — correct London postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}
+{"input": "EH1 1AA Edinburgh", "locale": "en-GB", "components": {"locality": "Edinburgh", "postcode": "EH1 1AA"}, "falsehood": "control — correct Edinburgh postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}
