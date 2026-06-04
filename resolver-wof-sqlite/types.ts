@@ -112,6 +112,13 @@ export interface FindPlaceQuery {
 	country?: string
 	/** WOF place id — narrows to descendants of this place. */
 	parentId?: number
+	/**
+	 * Sibling postcode. When set on a `locality` query AND a `postcode_locality` table is present,
+	 * triggers the coordinate-first soft-score path: postcode→candidate localities are injected and
+	 * scored `0.6·S_pc + 0.3·S_name + 0.1·S_pop` against the FTS name-match set, recovering small
+	 * localities the name-match alone misses. Ignored when no postcode_locality shard is present.
+	 */
+	postcode?: string
 	/** Proximity hint — candidates close to this point get a ranking boost. */
 	near?: GeoPoint & { maxDistanceKm?: number }
 	/** Bounding-box filter — only candidates whose bbox intersects this box are returned. */
