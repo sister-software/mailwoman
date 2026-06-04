@@ -78,6 +78,8 @@ const ADD_OVER_TAGS = new Set<string>(["locality", "dependent_locality", "region
 
 const POSTCODE_B = "B-postcode" as DecoderToken["label"]
 const POSTCODE_I = "I-postcode" as DecoderToken["label"]
+const LOCALITY_B = "B-locality" as DecoderToken["label"]
+const LOCALITY_I = "I-locality" as DecoderToken["label"]
 const OUTSIDE = "O" as DecoderToken["label"]
 
 function isPostcodeLabel(label: string): boolean {
@@ -156,10 +158,33 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		// SNAP/ADD: relabel the matched run as a single postcode span.
 		overlap.forEach((i, k) => setLabel(i, k === 0 ? POSTCODE_B : POSTCODE_I))
 
-		// Local smear clip: clear postcode tokens immediately flanking the snapped run.
+		// Leading smear clip: postcode tokens immediately BEFORE the snapped run are noise (e.g. a
+		// house-number digit the model over-labeled) — clear to O as before.
 		for (let j = overlap[0]! - 1; j >= 0 && isPostcodeLabel(tokens[j]!.label); j--) setLabel(j, OUTSIDE)
+
+		// Trailing smear: the model over-extended the postcode to the RIGHT. In postcode-before-city
+		// locales (DE/FR/ES/IT, "08523 Plauen") this swallows the leading characters of the city, which
+		// the historical clip-to-O then DISCARDED ("08523 Pl|auen Vogtl" → postcode "08523" + O +
+		// locality "auen Vogtl", dropping the "Pl"). When the smear connects to a following locality run,
+		// hand those characters BACK to the city — reassign them to locality and demote the city's
+		// leading B so the prefix + city form ONE span ("Pl"+"auen"+"Vogtl" → "Plauen Vogtl"). A
+		// standalone neighbour with no following locality (a country, "Paris 75008 France") keeps the
+		// historical clip-to-O. This is the decoder-side repair for the cross-tag postcode→city
+		// absorption diagnosed in the PR3 Pilot A postmortem (+36pp DE exact-locality, no-op on US,
+		// where the postcode sits at the end with nothing to trim).
+		const trailing: number[] = []
 		for (let j = overlap[overlap.length - 1]! + 1; j < tokens.length && isPostcodeLabel(tokens[j]!.label); j++) {
-			setLabel(j, OUTSIDE)
+			trailing.push(j)
+		}
+		if (trailing.length > 0) {
+			const after = trailing[trailing.length - 1]! + 1
+			const connectsToCity = after < tokens.length && tagOf(tokens[after]!.label) === "locality"
+			if (connectsToCity) {
+				trailing.forEach((j, k) => setLabel(j, k === 0 ? LOCALITY_B : LOCALITY_I))
+				if (tokens[after]!.label === "B-locality") setLabel(after, LOCALITY_I)
+			} else {
+				for (const j of trailing) setLabel(j, OUTSIDE)
+			}
 		}
 	}
 
