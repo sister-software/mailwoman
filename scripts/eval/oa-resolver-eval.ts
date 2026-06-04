@@ -38,9 +38,12 @@
  *   --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000\
  *   --model /tmp/v072-eval/model.onnx\
  *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
- *   --model-card /tmp/v072-eval/model-card.json\
- *   --wof
- *   /mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postalcode-us.db
+ *   --model-card /tmp/v072-eval/model-card.json
+ *
+ *   `--wof` defaults to `admin-global-priority.db,postcode-locality-intl.db` — coordinate-first locality
+ *   resolution is ON by default (no-op where the candidate table has no rows, e.g. US). Pass `--wof
+ *   <admin.db>` alone for the admin-only baseline, or append a postcode shard (postalcode-*.db) to also
+ *   resolve the postcode node.
  */
 
 import { lookupGermanState } from "@mailwoman/codex/de"
@@ -248,7 +251,14 @@ function percentile(xs: number[], p: number): number | null {
 async function main(): Promise<void> {
 	const evalPath = arg("eval", "data/eval/external/openaddresses-us-sample.jsonl")
 	const limit = Number(arg("limit", "0")) || Infinity
-	const wofPaths = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
+	// Default attaches the coordinate-first candidate shard (postcode-locality-intl.db) alongside the
+	// admin gazetteer, so locality resolution is coordinate-first by default for the locales it covers
+	// (DE/FR/GB/NL functional). It no-ops where the table has no rows (e.g. US), so US stays unchanged.
+	// Override `--wof` to measure the admin-only baseline.
+	const wofPaths = arg(
+		"wof",
+		"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db"
+	)
 		.split(",")
 		.map((s) => s.trim())
 

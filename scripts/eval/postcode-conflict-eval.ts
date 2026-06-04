@@ -13,9 +13,8 @@
  *   eval isolates the RESOLVER's conflict detection, independent of the parser.
  *
  *   Run: node --experimental-strip-types scripts/eval/postcode-conflict-eval.ts \
- *     --eval data/eval/falsehoods/postcode-city-conflicts.jsonl \
- *     --wof /mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-de.db \
- *     [--out-md <path>]
+ *     --eval data/eval/falsehoods/postcode-city-conflicts.jsonl [--out-md <path>]
+ *   (`--wof` defaults to admin-global-priority.db + postcode-locality-intl.db — coord-first on.)
  */
 import { createWofResolver } from "@mailwoman/core/resolver"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -56,7 +55,10 @@ const rows: Row[] = readFileSync(arg("eval", "data/eval/falsehoods/postcode-city
 	.filter(Boolean)
 	.map((l) => JSON.parse(l))
 
-const wofPaths = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db").split(",")
+const wofPaths = arg(
+	"wof",
+	"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db"
+).split(",")
 const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 const backend = new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
 const resolver = createWofResolver(backend as never)
