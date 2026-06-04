@@ -7,3 +7,8 @@
 {"input": "01069 Dresden", "locale": "de-DE", "components": {"locality": "Dresden", "postcode": "01069"}, "falsehood": "control — correct Dresden postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}
 {"input": "80333 München", "locale": "de-DE", "components": {"locality": "München", "postcode": "80333"}, "falsehood": "control — correct München postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}
 {"input": "02699 Königswartha", "locale": "de-DE", "components": {"locality": "Königswartha", "postcode": "02699"}, "falsehood": "control — abutting postcode (centroid in neighbouring Neschwitz); the named town wins, NOT a conflict", "conflict": false, "expect_flag": false}
+{"input": "75001 Lyon", "locale": "fr-FR", "components": {"locality": "Lyon", "postcode": "75001"}, "falsehood": "Paris postcode on a Lyon address — wrong city for postcode", "conflict": true, "expect_flag": true}
+{"input": "69001 Paris", "locale": "fr-FR", "components": {"locality": "Paris", "postcode": "69001"}, "falsehood": "Lyon postcode on a Paris address", "conflict": true, "expect_flag": true}
+{"input": "13001 Bordeaux", "locale": "fr-FR", "components": {"locality": "Bordeaux", "postcode": "13001"}, "falsehood": "Marseille postcode on a Bordeaux address", "conflict": true, "expect_flag": true}
+{"input": "75001 Paris", "locale": "fr-FR", "components": {"locality": "Paris", "postcode": "75001"}, "falsehood": "control — correct Paris postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}
+{"input": "69001 Lyon", "locale": "fr-FR", "components": {"locality": "Lyon", "postcode": "69001"}, "falsehood": "control — correct Lyon postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}

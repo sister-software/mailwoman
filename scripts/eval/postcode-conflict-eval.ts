@@ -28,6 +28,7 @@ function arg(name: string, fallback = ""): string {
 
 interface Row {
 	input: string
+	locale?: string
 	components: { locality?: string; postcode?: string }
 	falsehood: string
 	conflict: boolean
@@ -65,7 +66,9 @@ for (const row of rows) {
 	const roots: AddressNode[] = []
 	if (row.components.locality) roots.push(node("locality", row.components.locality))
 	if (row.components.postcode) roots.push(node("postcode", row.components.postcode))
-	const resolved = await resolver.resolveTree({ raw: row.input, roots }, { defaultCountry: "DE" })
+	// Country from the row's locale tag ("de-DE" → "DE") so the test set can mix locales.
+	const defaultCountry = (row.locale?.split("-")[1] ?? "").toUpperCase() || undefined
+	const resolved = await resolver.resolveTree({ raw: row.input, roots }, { defaultCountry })
 	const flag = flagged(resolved)
 	results.push({ row, flag, ok: flag === row.expect_flag })
 }
