@@ -230,5 +230,8 @@ def test_pilot_config_loads_and_matches_scope():
     assert cfg.model.crf_loss_weight == 0.0  # CRF off — single variable
     assert cfg.model.label_smoothing == 0.1  # v0.7.2 recipe held
     assert set(cfg.data.country_weights) == {"US", "FR", "DE"}  # the three-way pilot
+    # The DE corpus is wired: the overlay dir + the German source weight (no longer a launch TODO).
+    assert "v0.4.1-de" in cfg.data.corpus_dir
+    assert (cfg.data.source_weights or {}).get("synth-german", 0) > 0
     assert cfg.train.max_steps == 20000  # stop at the early gate
     assert cfg.train.lr_schedule == "constant"
