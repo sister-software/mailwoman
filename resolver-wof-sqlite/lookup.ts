@@ -177,6 +177,12 @@ const CF_PC = 0.6
 const CF_NAME = 0.3
 const CF_POP = 0.1
 const CF_PC_DECAY_KM = 8
+/** The chosen locality must be within this distance of the postcode's containing locality, else the
+ * postcode and the parsed city name are judged to disagree (a transposed / wrong-for-the-city
+ * postcode) and the `mismatch` flag fires. Generous enough that a city-state Ortsteil (~15km from the
+ * city centroid) and an abutting town (~few km) are NOT flagged, tight enough to catch a wrong city
+ * (hundreds of km). */
+const CF_MISMATCH_KM = 50
 const CF_MISMATCH_DELTA = 0.5
 
 /** Case-fold + strip diacritics + collapse punctuation — for the coord-first soft name match. */
@@ -560,6 +566,25 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// postcode centroid lands in, while a small town the name-match never finds (no exact tier) is
 		// still recovered by its postcode's containing locality.
 		scored.sort((a, b) => Number(b.exact) - Number(a.exact) || b.score - a.score)
+
+		// Conflict flag: if the chosen locality is NOT the postcode's containing locality and sits far
+		// from it, the postcode and the city name disagree (a transposed / wrong-for-the-city postcode).
+		// We keep the name-chosen locality but flag it — the falsehood signal a BM25 geocoder can't give.
+		const top = scored[0]
+		if (top) {
+			// The postcode's geographic anchor: among the postcode's candidate localities that actually
+			// resolved (some — e.g. unnamed Ortsteile — are in the postcode table but not the admin DB),
+			// prefer the containing one, else the nearest. Postcodes whose centroid falls just outside
+			// every locality polygon still anchor to the closest town.
+			const anchorRow = pcRows
+				.filter((r) => merged.has(r.id))
+				.sort((a, b) => b.containing - a.containing || a.dist - b.dist)[0]
+			const anchor = anchorRow ? merged.get(anchorRow.id) : undefined
+			if (anchor && (top.id as number) !== anchorRow!.id) {
+				if (haversineKm(top.lat, top.lon, anchor.lat, anchor.lon) > CF_MISMATCH_KM) top.mismatch = true
+			}
+		}
+
 		return scored.slice(0, limit).map(({ exact, ...c }) => {
 			void exact
 			return c

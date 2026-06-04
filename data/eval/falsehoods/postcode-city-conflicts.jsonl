@@ -1,0 +1,9 @@
+{"input": "80331 Berlin", "locale": "de-DE", "components": {"locality": "Berlin", "postcode": "80331"}, "falsehood": "München postcode on a Berlin address — wrong city for postcode", "conflict": true, "expect_flag": true}
+{"input": "10115 München", "locale": "de-DE", "components": {"locality": "München", "postcode": "10115"}, "falsehood": "Berlin postcode on a München address", "conflict": true, "expect_flag": true}
+{"input": "50667 Hamburg", "locale": "de-DE", "components": {"locality": "Hamburg", "postcode": "50667"}, "falsehood": "Köln postcode on a Hamburg address", "conflict": true, "expect_flag": true}
+{"input": "20095 Dresden", "locale": "de-DE", "components": {"locality": "Dresden", "postcode": "20095"}, "falsehood": "Hamburg postcode on a Dresden address", "conflict": true, "expect_flag": true}
+{"input": "01067 Köln", "locale": "de-DE", "components": {"locality": "Köln", "postcode": "01067"}, "falsehood": "Dresden postcode on a Köln address", "conflict": true, "expect_flag": true}
+{"input": "10117 Berlin", "locale": "de-DE", "components": {"locality": "Berlin", "postcode": "10117"}, "falsehood": "control — correct Berlin postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}
+{"input": "01069 Dresden", "locale": "de-DE", "components": {"locality": "Dresden", "postcode": "01069"}, "falsehood": "control — correct Dresden postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}
+{"input": "80333 München", "locale": "de-DE", "components": {"locality": "München", "postcode": "80333"}, "falsehood": "control — correct München postcode + city (must NOT flag)", "conflict": false, "expect_flag": false}
+{"input": "02699 Königswartha", "locale": "de-DE", "components": {"locality": "Königswartha", "postcode": "02699"}, "falsehood": "control — abutting postcode (centroid in neighbouring Neschwitz); the named town wins, NOT a conflict", "conflict": false, "expect_flag": false}
