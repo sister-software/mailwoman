@@ -3,20 +3,20 @@
 **Date:** 2026-06-05
 **Status:** design, signed off (operator + DeepSeek 3-turn consult)
 **Provenance:** Japan cheap-probe (`scripts/diag-japan-parse.ts`) + DeepSeek consult (`.agents/skills/deepseek-consult/session-notes-2026-06-05-japan-resolver-architecture.md`)
-**Sibling:** Direction D / epic #239 — that one is the *parser* (anchor-based parsing); this one is the *resolver* (what happens after the parse).
+**Sibling:** Direction D / epic #239 — that one is the _parser_ (anchor-based parsing); this one is the _resolver_ (what happens after the parse).
 
 ## Where this came from
 
 We went looking at Japan to learn what the non-Latin story costs us, and the probe split the problem in two so cleanly that the whole design falls out of it. Run a real Japanese address through the current v0.7.2 universal parser and you see two failures that are nothing alike:
 
-- **(A) The model is out-of-distribution.** Romaji in Western order parses almost correctly (`1-1-1 Ginza, Chuo-ku, Tokyo 104-0061` → house_number / street / locality / postcode, all roughly right). Native kanji scatters the labels. This is a coverage problem — trainable — and in the meantime the postcode is a clean regex hit in *every* sample, so coordinate-first resolution carries Japan exactly the way it carried out-of-distribution Dutch to 94.9%. The coarse win needs no parser change at all.
-- **(B) The schema cannot represent the address.** There is no tag for 丁目/番/号 — chōme/banchi/gō, the district/block/building *coordinates* that most of Japan uses instead of streets. The model jams them into `house_number`/`street`/`postcode` because those are the only slots that exist. A *perfectly* trained model still couldn't emit a correct structure. Training can never fix this; it's a vocabulary gap.
+- **(A) The model is out-of-distribution.** Romaji in Western order parses almost correctly (`1-1-1 Ginza, Chuo-ku, Tokyo 104-0061` → house_number / street / locality / postcode, all roughly right). Native kanji scatters the labels. This is a coverage problem — trainable — and in the meantime the postcode is a clean regex hit in _every_ sample, so coordinate-first resolution carries Japan exactly the way it carried out-of-distribution Dutch to 94.9%. The coarse win needs no parser change at all.
+- **(B) The schema cannot represent the address.** There is no tag for 丁目/番/号 — chōme/banchi/gō, the district/block/building _coordinates_ that most of Japan uses instead of streets. The model jams them into `house_number`/`street`/`postcode` because those are the only slots that exist. A _perfectly_ trained model still couldn't emit a correct structure. Training can never fix this; it's a vocabulary gap.
 
 That distinction is the spine of everything below. (A) lives in the resolver. (B) is the one thing that has to change in the parser — and we're going to change it the smallest way that works.
 
 ## The thesis
 
-The machinery after the parse is not one monolithic resolver, and it is not a Matryoshka of nested resolver *objects* either (orthogonal concerns — grid morphology vs postal schema vs alias lists — don't fit a single inheritance tree, and adding a city shouldn't mean a code deploy). It's a flat **Geographic Rule Engine**:
+The machinery after the parse is not one monolithic resolver, and it is not a Matryoshka of nested resolver _objects_ either (orthogonal concerns — grid morphology vs postal schema vs alias lists — don't fit a single inheritance tree, and adding a city shouldn't mean a code deploy). It's a flat **Geographic Rule Engine**:
 
 > A `convention` table keyed by Who's-On-First polygon id, deep-merged up the ancestor chain (Sapporo's row inherits Hokkaidō's inherits Japan's), that dispatches a short ordered sequence of named **strategy functions**. The data carries the routing and parameters; the strategies are a small registry of code primitives. "Plug in and out as needed" means a row in a table plus a pick from existing primitives — new code only for a genuinely novel spatial system.
 
@@ -25,11 +25,11 @@ Two things fall out for free:
 - **The dispatch chicken-and-egg dissolves.** To pick Sapporo's rules you must know you're in Sapporo — but `postcode → WOF locality → ancestors` already hands you the entire admin chain in the coarse pass we run today. Convention selection rides on it at zero cost.
 - **The two audiences are one pipeline at two depths.** Our need (postcode → region/locality, for training gold and coarse geocode) and a user's need (a specific address down to a building) are the same machine stopped at different depths, not two systems. The 2025 Digital Address code is just an early-exit pure-lookup strategy at the front.
 
-This also retires an older open question. Direction D imagined a coarse-placer that decides *which locale model to reach for* (#244/#245). With the rule engine, one universal parser plus a geography-keyed convention table replaces the model router for every Latin locale and every locale the postcode can anchor. We mostly don't need to reach for a different model.
+This also retires an older open question. Direction D imagined a coarse-placer that decides _which locale model to reach for_ (#244/#245). With the rule engine, one universal parser plus a geography-keyed convention table replaces the model router for every Latin locale and every locale the postcode can anchor. We mostly don't need to reach for a different model.
 
 ## The one foundational decision
 
-The seductive idea is to throw out the semantic tags and have the parser emit positional levels (`L0…Ln`) that the convention names per locale. It's elegant and would serve every future country. It is also the highest-regret move on the board: it detonates four working locales, forces a from-scratch retrain plus a resolver-contract rewrite, with NL's 94.9% to re-earn from zero — and it breaks on partial queries, where the level *index* of a bare "Berlin" is undefined until you've already resolved the country. We are **not** doing that, and Phase 3 below exists only to record the tripwire that would ever reopen it.
+The seductive idea is to throw out the semantic tags and have the parser emit positional levels (`L0…Ln`) that the convention names per locale. It's elegant and would serve every future country. It is also the highest-regret move on the board: it detonates four working locales, forces a from-scratch retrain plus a resolver-contract rewrite, with NL's 94.9% to re-earn from zero — and it breaks on partial queries, where the level _index_ of a bare "Berlin" is undefined until you've already resolved the country. We are **not** doing that, and Phase 3 below exists only to record the tripwire that would ever reopen it.
 
 The additive cut that buys ~80% of the value with zero regression risk: keep every existing semantic tag, and add exactly one new multi-valued tag — **`locator[]`** — for sub-locality spatial units that aren't a Western street + number (chōme/banchi/gō, grid coordinates, block numbers). Street-based countries never emit it; block-based countries never emit `street`; the convention maps `locator[]` per locale. DE/FR/GB/NL never reference it, so they cannot regress.
 
@@ -37,13 +37,15 @@ The additive cut that buys ~80% of the value with zero regression risk: keep eve
 
 Building only for Japan would bake Japanese quirks into something we'd call "general." So the design is validated against **three** CJK block-style systems at once — Japan (chōme/banchi/gō), South Korea (도로명 road-name and 지번 lot systems), Taiwan (段/巷/弄/號). If the convention table + `locator[]` + the strategy registry express all three without per-country code beyond data, the abstraction has earned the word "general."
 
+> **Update (2026-06-05) — the CJK coarse build is a name-match, not PIP.** Phase-1 implementation surfaced a structural finding (confirmed across JP/KR/TW): WOF admin geometry is **point-based at the municipality level** — there are no municipality polygons — so the European point-in-polygon coordinate-first build is inapplicable to CJK (it gives ~25% JP coverage). CJK resolves by **authoritative name-match** instead: postcode → national-postal-authority municipality NAME (JP = KEN_ALL) + GeoNames point → cross-placetype match (`locality`+`county`+`localadmin`+`borough`) → WOF id, written to the _same_ `postcode_locality` table so the _same_ `postcode_area_resolution` strategy consumes it. This is the convention engine earning its keep exactly as designed — a different build for a different data shape, feeding one unchanged resolver. Japan: 94.9% built, 93.9% resolved (independent gold). PIP-containment is replaced by name-agreement as the CJK metric. Full write-up: [`docs/articles/evals/2026-06-05-cjk-arena.md`](../evals/2026-06-05-cjk-arena.md).
+
 ## Sequencing (reversible-first)
 
-**Phase 1 — resolver-side, additive, reversible, no parser change.** This is largely *reshaping what we already have* — `addressing-conventions.json` is a primitive convention table, and coordinate-first *is* `postcode_area_resolution` — into the general form, then adding rows for JP/KR/TW. Delivers coarse locality geocoding off the postcode alone, the same trick that got Dutch-OOD NL to 94.9%. Pure resolver work, the part of the stack that has never bitten us.
+**Phase 1 — resolver-side, additive, reversible, no parser change.** This is largely _reshaping what we already have_ — `addressing-conventions.json` is a primitive convention table, and coordinate-first _is_ `postcode_area_resolution` — into the general form, then adding rows for JP/KR/TW. Delivers coarse locality geocoding off the postcode alone, the same trick that got Dutch-OOD NL to 94.9%. Pure resolver work, the part of the stack that has never bitten us.
 
 **Phase 2 — parser-side, additive, gated.** Teach the parser to emit `locator[]` from a handful of JP/KR/TW examples. Existing tags untouched, model rollback-able. This inherits every retrain fragility we've hit (the German end-of-string collapse, the PR3 negative), so it's gated on per-locale-F1 + resolver utility exactly like every other retrain, and Phase 1 must prove the engine first.
 
-**Phase 3 — deferred, decision-only.** Revisit `L0…Ln` *only* if onboarding more systems (India, China, …) proves the additive scheme genuinely insufficient — by then with real data and a mature engine, as a migration rather than a leap.
+**Phase 3 — deferred, decision-only.** Revisit `L0…Ln` _only_ if onboarding more systems (India, China, …) proves the additive scheme genuinely insufficient — by then with real data and a mature engine, as a migration rather than a leap.
 
 The coarse/fine split maps onto a safe/risky split: Phase 1 is cheap and near-certain; building-level precision (Phase 2+) is a separate, genuinely harder bet, and we may live on Phase 1 for a good while.
 
@@ -51,14 +53,14 @@ The coarse/fine split maps onto a safe/risky split: Phase 1 is cheap and near-ce
 
 Heterogeneous authoritative sources sit behind the uniform strategy interface; the resolver never cares which source answered. Built from source, never a prebuilt dump — same discipline as every other table we ship.
 
-| Dataset | Primitive | Tier |
-| --- | --- | --- |
+| Dataset                                                                   | Primitive                                                                                | Tier            |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | --------------- |
 | KEN_ALL (JP postal authority: 7-digit ↔ prefecture/municipality/district) | `postcode_area_resolution` (+ `block_area_lookup` once block polygons are georeferenced) | coarse (+ fine) |
-| JIGYOSYO (JP large-org / PO-box codes) | `org_code_lookup` | fine |
-| Digital Address 2025 (JP 7-char code → registered building) | `digital_code_lookup` (early-exit) | fine |
-| 도로명주소 / 지번 (KR) | `postcode_area_resolution` + `named_linear_feature_with_offset` | coarse + fine |
-| TW postal + 段/巷/弄/號 | `postcode_area_resolution` + `block_area_lookup` | coarse + fine |
-| WOF admin polygons (already shipped) | ancestor walk for convention selection | all |
+| JIGYOSYO (JP large-org / PO-box codes)                                    | `org_code_lookup`                                                                        | fine            |
+| Digital Address 2025 (JP 7-char code → registered building)               | `digital_code_lookup` (early-exit)                                                       | fine            |
+| 도로명주소 / 지번 (KR)                                                    | `postcode_area_resolution` + `named_linear_feature_with_offset`                          | coarse + fine   |
+| TW postal + 段/巷/弄/號                                                   | `postcode_area_resolution` + `block_area_lookup`                                         | coarse + fine   |
+| WOF admin polygons (already shipped)                                      | ancestor walk for convention selection                                                   | all             |
 
 Seed strategy registry: `postcode_area_resolution`, `block_area_lookup`, `intersection_resolver`, `named_linear_feature_with_offset`, `alias_normalisation`, `transliterate_reorder` (pre-parse), `digital_code_lookup`, `org_code_lookup`, `fallback_fuzzy_name_match`.
 
@@ -67,4 +69,4 @@ Seed strategy registry: `postcode_area_resolution`, `block_area_lookup`, `inters
 - **Phase 1 promotion:** a locale ships when postcode-route PIP-containment clears ~85% on a real OA sample, with no regression to DE/FR/GB/NL (the existing coordinate-first numbers are byte-stable).
 - **Phase 2 gate:** the `locator[]` fine-tune promotes only on per-locale-F1 + resolver utility, and never if it drops an existing locale >2pp. Default to not promoting; live on Phase 1's coarse win.
 - **The `locator[]` shape, the first-ship scope, and the convention-asset format are open forks** to settle at Phase 1 kickoff (plain ordered slot vs typed; JP-only branch vs general refactor; WOF-id-keyed read-only sqlite asset like `postcode-locality-intl.db`).
-- **Phase 3 tripwire (the only thing that reopens `L0…Ln`):** the additive `locator[]` scheme fails to express a newly-onboarded system *as data* and forces per-country parser-output post-processing in ≥2 locales.
+- **Phase 3 tripwire (the only thing that reopens `L0…Ln`):** the additive `locator[]` scheme fails to express a newly-onboarded system _as data_ and forces per-country parser-output post-processing in ≥2 locales.
