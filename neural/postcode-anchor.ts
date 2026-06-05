@@ -68,10 +68,12 @@ export interface PostcodeAnchor {
 	/** `1 - normalizedEntropy(posterior)` when the postcode exists; `0` when it is in no gazetteer. */
 	confidence: number
 	/**
-	 * `exact` — the string is a real postcode; `fuzzy` — only an edit-distance-1 variant exists (a
-	 * likely typo / OCR slip), so the confidence carries a penalty; `none` — in no gazetteer.
+	 * `exact` — the string is a real postcode; `outward` — a GB unit (`SO4 3RX`) resolved to its
+	 * outward district (`SO4`), the granularity the GB gazetteer is aggregated at (no penalty — it is
+	 * a real, confident GB match); `fuzzy` — only an edit-distance-1 variant exists (a likely typo /
+	 * OCR slip), so the confidence carries a penalty; `none` — in no gazetteer.
 	 */
-	matchType: "exact" | "fuzzy" | "none"
+	matchType: "exact" | "outward" | "fuzzy" | "none"
 	/**
 	 * Structural house-number prior in [0, 1]: `1` for a code that cannot be a house number, and
 	 * below `1` for a digit-only code sharing its comma-delimited segment with a street word (so it
@@ -131,6 +133,19 @@ export function normalizePostcode(raw: string): string {
 	if (/^D-\d{5}$/.test(s)) s = s.slice(2) // German courtesy prefix: D-68161 → 68161
 	if (/^\d{4} [A-Z]{2}$/.test(s)) s = s.replace(" ", "") // Dutch: gazetteer stores 1012LM, not 1012 LM
 	return s
+}
+
+/**
+ * The GB outward code of a normalized unit postcode — the part before the space when the inward
+ * half is `\d[A-Z]{2}` (`SO4 3RX` → `SO4`). The GB gazetteer is aggregated to outward codes (2.7M
+ * units is too large + too fine for an anchor), so the extractor retries the outward code when a
+ * full GB unit misses. Returns `null` for any string that isn't a GB unit postcode (so it never
+ * fires elsewhere).
+ */
+export function gbOutwardCode(normalized: string): string | null {
+	const sp = normalized.indexOf(" ")
+	if (sp < 1) return null
+	return /^\d[A-Z]{2}$/.test(normalized.slice(sp + 1)) ? normalized.slice(0, sp) : null
 }
 
 /**
@@ -252,9 +267,19 @@ export function extractPostcodeAnchors(
 		const spanText = text.slice(match.start, match.end)
 		const normalized = normalizePostcode(spanText)
 
-		// Exact first; fall back to edit-distance-1 variants only when exact finds nothing.
+		// Exact first; then the GB outward fallback (structural, not a guess); then edit-distance-1.
 		let hits = resolver.lookup(normalized)
 		let matchType: PostcodeAnchor["matchType"] = hits.length > 0 ? "exact" : "none"
+		if (matchType === "none") {
+			const outward = gbOutwardCode(normalized)
+			if (outward) {
+				const outwardHits = resolver.lookup(outward)
+				if (outwardHits.length > 0) {
+					hits = outwardHits
+					matchType = "outward"
+				}
+			}
+		}
 		if (matchType === "none" && opts.fuzzy) {
 			const fuzzyHits: PostcodePlace[] = []
 			for (const variant of editDistance1Variants(normalized)) {
