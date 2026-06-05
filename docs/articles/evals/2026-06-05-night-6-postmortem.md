@@ -69,7 +69,7 @@
 
 ## Concrete next steps
 
-- **bare-street follow-up (cheap):** weight 0.2 over-shifted (usa +7pp but golden street −2.8pp). Retry at **0.1** — likely keeps the US gain with less golden regression. And investigate _why_ the functional cluster didn't move (2/34→1/34) despite the shard — possibly a tree-structure check, not just the bare-format label.
+- **bare-street follow-up (cheap, diagnosed):** the functional cluster didn't move because the model _still_ labels pure bare streets (`main pl`, `10th ave`) as `locality` — and the cause is a flaw in my shard: `includeHouseNumberProb=0.85`, so 85% of the bare rows carried a house number (`62 NW Lakeview Cir E`). The with-number case improved (usa +7pp) but the **no-number** case (the functional pattern, `10th Ave` alone) stayed undertrained. The fix is a bare-street shard with **`includeHouseNumberProb` ~0.3–0.5** (many pure `Main St` / `10th Ave` rows) at a **lower weight (0.1)** to avoid the golden-street regression. One-config retry.
 - **KR coarse** once a romanized authoritative source is in hand (`build-postcode-locality-cjk.py` already generalizes via `--country`).
 - **TW:** admin-DB rebuild to add `admin-tw` (clone on disk) + a TW national postal source.
 - **#305** design decision → careful PR with the full EU resolver-eval guard.
