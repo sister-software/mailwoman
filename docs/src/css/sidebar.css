@@ -1,0 +1,105 @@
+:root {
+	--mm-menu-item-color: var(--ifm-color-emphasis-300);
+	--mm-menu-item-color-active: var(--ifm-color-primary);
+	--mm-menu-item-color-hover: var(--ifm-color-primary-dark);
+	--mm-menu-item-border-width: 0.5px;
+	--mm-menu-item-color-hover-active: var(--ifm-color-emphasis-400);
+}
+
+.theme-doc-sidebar-container {
+	background-color: var(--ifm-menu-background-color);
+}
+
+.theme-doc-sidebar-item-category {
+	.menu__list-item-collapsible > .menu__link {
+		font-weight: var(--ifm-font-weight-bold);
+	}
+
+	/* Level-2 section heads: amber. Good contrast on the blue slab. */
+	&.theme-doc-sidebar-item-category-level-2 > .menu__list-item-collapsible > .menu__link.menu__link--sublist {
+		--ifm-menu-color: var(--ifm-color-secondary);
+	}
+
+	/* Level-3 section heads. FIX: full-saturation cyan hsl(183 100% 50%) was
+	   thin on the blue slab — lifted to a pale cyan for a clean AA read. */
+	&.theme-doc-sidebar-item-category-level-3 > .menu__list-item-collapsible > .menu__link.menu__link--sublist {
+		--ifm-menu-color: hsl(184deg 100% 78%);
+	}
+}
+
+.theme-doc-sidebar-menu {
+	.menu__link,
+	.menu__caret,
+	.menu__list-item-collapsible {
+		border-radius: 0 !important;
+	}
+}
+
+.theme-doc-sidebar-item-link.theme-doc-sidebar-item-link-level-1.menu__list-item,
+.theme-doc-sidebar-item-category-level-1 {
+	font-weight: 600;
+	border-top-color: var(--ifm-category-color, var(--ifm-menu-color-background-active));
+	border-radius: 0;
+}
+
+.theme-doc-sidebar-menu {
+	.menu__link,
+	.menu__caret,
+	.menu__list-item-collapsible {
+		border-radius: 0 !important;
+	}
+
+	.menu__list-item {
+		position: relative;
+
+		&:not(:first-child) {
+			margin-block-start: 0;
+		}
+	}
+	.menu__list .menu__list {
+		margin-block-start: 0;
+	}
+
+	.menu__list .menu__list-item {
+		padding-inline-start: calc(0.2rem);
+		margin: 0;
+	}
+
+	.theme-doc-sidebar-item-link:has(.menu__link--active) {
+		--mm-menu-item-border-width: 2px;
+		--mm-menu-item-border-color: var(--mm-menu-item-color-active);
+	}
+
+	.theme-doc-sidebar-item-category {
+		& > .menu__list .menu__list-item::before {
+			content: "";
+			position: absolute;
+			inset-inline-start: calc(0.2rem);
+			inset-block: 0;
+			width: 0;
+			pointer-events: none;
+			transition-property: border-color;
+			transition-timing-function: var(--ifm-transition-timing-default);
+			transition-duration: 200ms;
+			border-inline-start: var(--mm-menu-item-border-width) solid
+				var(--mm-menu-item-border-color, var(--mm-menu-item-color));
+		}
+
+		&:has(.menu__link--active):hover {
+			--mm-menu-item-border-color: var(--mm-menu-item-color-hover-active);
+		}
+
+		.menu__list:not(:has(.menu__link--active)) {
+			--mm-menu-item-border-color: var(--mm-menu-item-color);
+		}
+	}
+
+	.theme-doc-sidebar-item-link:hover,
+	.theme-doc-sidebar-item-category:has(> .menu__list-item-collapsible:hover) .menu__list {
+		--mm-menu-item-border-color: var(--mm-menu-item-color-hover);
+	}
+
+	.menu__link.menu__link--active {
+		background-color: transparent;
+	}
+}

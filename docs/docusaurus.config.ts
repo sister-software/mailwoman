@@ -128,6 +128,8 @@ const config: Config = {
 						"./src/css/theme-light.css",
 						"./src/css/theme-dark.css",
 						"./src/css/markdown.css",
+						"./src/css/sidebar.css",
+						"./src/css/toc-mobile.css",
 						"./src/css/custom.css",
 					],
 				},

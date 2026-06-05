@@ -9,15 +9,23 @@
    ============================================================================ */
 :root {
 	/* === Brand anchors (canonical — match the design tokens) =============== */
-	--mw-magenta: hsl(318.62deg 100% 50%);   /* #ff00b0 — primary brand        */
-	--mw-blue:    hsl(249.43deg 100% 50%);   /* #1a00ff — link + sidebar slab  */
-	--mw-navy:    hsl(230.21deg 100% 11.41%);/* #00093a — navbar chrome        */
-	--mw-amber:   hsl(39deg 100% 50%);       /* secondary accent              */
-	--mw-teal:    hsl(167deg 70% 42%);       /* success / positive accent     */
+	--mw-magenta: hsl(318.62deg 100% 50%); /* #ff00b0 — primary brand        */
+	--mw-blue: hsl(249.43deg 100% 50%); /* #1a00ff — link + sidebar slab  */
+	--mw-navy: hsl(230.21deg 100% 11.41%); /* #00093a — navbar chrome        */
+	--mw-amber: hsl(39deg 100% 50%); /* secondary accent              */
+	--mw-teal: hsl(97.78deg 100% 50%); /* success / positive accent     */
+	--mw-line: #b9d8ec; /* cool hairline borders on the page             */
+	--mw-line-strong: #21201c; /* hard ink rule (header underline, boxes) */
 
 	--ifm-background-color: hsl(200.59deg 100% 92%);
 	--ifm-color-primary: var(--mw-magenta);
-	--ifm-color-secondary: var(--mw-amber);
+	--ifm-color-primary-light: hsl(318.62deg 100% 63%);
+	--ifm-color-primary-lighter: hsl(318.62deg 100% 66%);
+	--ifm-color-primary-lightest: hsl(318.62deg 100% 74%);
+	--ifm-color-primary-dark: hsl(318.62deg 100% 52%);
+	--ifm-color-primary-darker: hsl(318.62deg 100% 48%);
+	--ifm-color-primary-darkest: hsl(318.62deg 100% 40%);
+	--ifm-color-secondary: var(--mw-teal);
 
 	--ifm-color-white: #fff;
 	--ifm-color-black: #000;
@@ -32,6 +40,7 @@
 	--ifm-color-gray-800: hsl(42 8% 29%);
 	--ifm-color-gray-900: hwb(43 11% 87%);
 	--ifm-color-gray-1000: var(--ifm-color-black);
+	--ifm-color-content-secondary: rebeccapurple;
 
 	--ifm-global-border-width: 1px;
 	--ifm-global-radius: 0.4rem;
@@ -44,11 +53,11 @@
 	/* FIX: list the *exact* production families first; fall back to the
 	   open-source Iosevka (loaded via ../colors_and_type.css) then system. */
 	--ifm-font-family-base:
-		"Iosevka Nexus Web", "Iosevka", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell,
-		Noto Sans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+		"Iosevka Nexus Web", "Iosevka", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans,
+		sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 	--ifm-font-family-monospace:
-		"Iosevka Nexus Mono Web", "Iosevka", "SF Mono", "Roboto Mono", "Segoe UI Mono", "Courier New",
-		"Courier", "monospace";
+		"Iosevka Nexus Mono Web", "Iosevka", "SF Mono", "Roboto Mono", "Segoe UI Mono", "Courier New", "Courier",
+		"monospace";
 
 	--ifm-font-size-base: 100%;
 	--ifm-font-weight-light: 300;
@@ -117,8 +126,10 @@
 	--ifm-table-cell-padding: 0.75rem;
 	--ifm-table-background: transparent;
 	--ifm-table-stripe-background: rgba(0, 0, 0, 0.03);
-	--ifm-table-border-width: 1px;                          /* FIX: 0.5px renders inconsistently */
-	--ifm-table-border-color: var(--ifm-color-emphasis-300);/* FIX: was primary-dark (loud magenta rule) */
+	--ifm-table-border-width: 1px; /* FIX: 0.5px renders inconsistently */
+	--ifm-table-border-color: var(
+		--mw-line
+	); /* FIX: emphasis-300 is a warm gray that vanishes on the cyan page; cool hairline reads cleanly */
 	--ifm-table-head-background: inherit;
 	--ifm-table-head-color: inherit;
 	--ifm-table-head-font-weight: var(--ifm-font-weight-bold);
@@ -173,7 +184,9 @@
 	--ifm-breadcrumb-border-radius: 1.5rem;
 	--ifm-breadcrumb-spacing: 0.5rem;
 	--ifm-breadcrumb-color-active: var(--ifm-color-primary);
-	--ifm-breadcrumb-item-background-active: hsl(318.62deg 100% 50% / 12%); /* FIX: was warm-gray overlay; now a faint magenta tint so the active pill reads */
+	--ifm-breadcrumb-item-background-active: hsl(
+		318.62deg 100% 50% / 12%
+	); /* FIX: was warm-gray overlay; now a faint magenta tint so the active pill reads */
 	--ifm-breadcrumb-padding-horizontal: 0.8rem;
 	--ifm-breadcrumb-padding-vertical: 0.4rem;
 	--ifm-breadcrumb-size-multiplier: 1;
@@ -254,7 +267,7 @@
 	--ifm-navbar-padding-vertical: calc(var(--ifm-spacing-vertical) * 0.5);
 	--ifm-navbar-shadow: var(--ifm-global-shadow-lw);
 
-	--ifm-navbar-search-input-background-color: rgb(255 255 255 / 12%);   /* FIX: emphasis-200 was near-black on navy */
+	--ifm-navbar-search-input-background-color: rgb(255 255 255 / 12%); /* FIX: emphasis-200 was near-black on navy */
 	--ifm-navbar-search-input-color: #fff;
 	--ifm-navbar-search-input-placeholder-color: hsl(220deg 30% 75%);
 	--ifm-navbar-search-input-icon: url('data:image/svg+xml;utf8,<svg fill="rgba(255,255,255,0.8)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" height="16px" width="16px"><path d="M6.02945,10.20327a4.17382,4.17382,0,1,1,4.17382-4.17382A4.15609,4.15609,0,0,1,6.02945,10.20327Zm9.69195,4.2199L10.8989,9.59979A5.88021,5.88021,0,0,0,12.058,6.02856,6.00467,6.00467,0,1,0,9.59979,10.8989l4.82338,4.82338a.89729.89729,0,0,0,1.29912,0,.89749.89749,0,0,0-.00087-1.29909Z" /></svg>');

@@ -17,13 +17,13 @@
    ============================================================================ */
 [data-theme="dark"] {
 	/* === Brand ramp — magenta primary, COHERENT shades ==================== */
-	--ifm-color-primary: hsl(318.62deg 100% 58%);          /* slightly lifted for dark bg */
+	--ifm-color-primary: hsl(318.62deg 100% 58%); /* slightly lifted for dark bg */
 	--ifm-color-primary-light: hsl(318.62deg 100% 63%);
 	--ifm-color-primary-lighter: hsl(318.62deg 100% 66%);
 	--ifm-color-primary-lightest: hsl(318.62deg 100% 74%);
-	--ifm-color-primary-dark: hsl(318.62deg 100% 52%);     /* FIX: was teal */
-	--ifm-color-primary-darker: hsl(318.62deg 100% 48%);   /* FIX: was teal */
-	--ifm-color-primary-darkest: hsl(318.62deg 100% 40%);  /* FIX: was teal */
+	--ifm-color-primary-dark: hsl(318.62deg 100% 52%);
+	--ifm-color-primary-darker: hsl(318.62deg 100% 48%);
+	--ifm-color-primary-darkest: hsl(318.62deg 100% 40%);
 
 	/* Teal is the design system's dark-mode positive/success accent. It lives
 	   here now (not masquerading as a primary shade). */
@@ -31,12 +31,12 @@
 	--ifm-color-secondary: hsl(39deg 100% 56%);
 
 	/* === Text hierarchy — neutral, correctly ordered ====================== */
-	--ifm-color-content: hsl(225deg 14% 96%);              /* FIX: was pale pink #ffd…  */
-	--ifm-color-content-secondary: hsl(222deg 9% 74%);     /* FIX: was pure white (too bright) */
+	--ifm-color-content: hsl(225deg 14% 96%); /* FIX: was pale pink #ffd…  */
+	--ifm-color-content-secondary: hsl(222deg 9% 74%); /* FIX: was pure white (too bright) */
 
 	/* === Links — lightened so they read on near-black ===================== */
-	--ifm-link-color: hsl(225deg 100% 73%);                /* FIX: was inherited #1a00ff (invisible) */
-	--ifm-link-hover-color: var(--ifm-color-success);      /* teal hover, on-brand */
+	--ifm-link-color: hsl(225deg 100% 73%); /* FIX: was inherited #1a00ff (invisible) */
+	--ifm-link-hover-color: var(--ifm-color-success); /* teal hover, on-brand */
 
 	--docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.06);
 
@@ -91,10 +91,11 @@
 	--ifm-scrollbar-thumb-background-color: #4a4a4d;
 	--ifm-scrollbar-thumb-hover-background-color: #5d5d61;
 	--ifm-table-stripe-background: rgba(255, 255, 255, 0.05);
-	--ifm-table-border-color: var(--ifm-color-emphasis-300);
+	--mw-line: hsl(230deg 20% 26%); /* subtle cool hairline on the dark page */
+	--mw-line-strong: hsl(225deg 14% 70%); /* light ink for the header underline */
+	--ifm-table-border-color: var(--mw-line);
 	--ifm-toc-border-color: var(--ifm-color-emphasis-200);
 
-	/* Admonition / alert contrast pairs (unchanged — these were already fine) */
 	--ifm-color-primary-contrast-background: rgb(16, 36, 69);
 	--ifm-color-primary-contrast-foreground: rgb(235, 242, 252);
 	--ifm-color-secondary-contrast-background: rgb(71, 71, 72);
