@@ -5,9 +5,32 @@
 .heroBanner {
 	padding: 5rem 0 4rem;
 	text-align: center;
-	background: linear-gradient(135deg, var(--ifm-color-primary) 0%, var(--ifm-color-primary-dark) 100%);
+	/* Brand gradient: magenta → electric blue. Same in both themes — this is the
+	   hero surface, not chrome, so it stays full-saturation regardless of mode. */
+	background: linear-gradient(135deg, hsl(318.62deg 100% 50%) 0%, hsl(249.43deg 100% 50%) 100%);
 	color: #fff;
 	overflow: hidden;
+}
+
+.heroBanner :global(.button--primary) {
+	background-color: #fff;
+	border-color: #fff;
+	color: hsl(230.21deg 100% 11.41%);
+}
+.heroBanner :global(.button--primary:hover) {
+	background-color: hsl(220deg 40% 95%);
+	border-color: hsl(220deg 40% 95%);
+	color: hsl(230.21deg 100% 11.41%);
+}
+.heroBanner :global(.button--secondary) {
+	background-color: hsl(39deg 100% 50%);
+	border-color: hsl(39deg 100% 50%);
+	color: hsl(230.21deg 100% 11.41%);
+}
+.heroBanner :global(.button--secondary:hover) {
+	background-color: hsl(39deg 100% 55%);
+	border-color: hsl(39deg 100% 55%);
+	color: hsl(230.21deg 100% 11.41%);
 }
 
 .heroTitle {

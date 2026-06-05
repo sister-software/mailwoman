@@ -1,7 +1,23 @@
+/* ============================================================================
+   MAILWOMAN — theme-light.css  (RECONCILED)
+   Docusaurus / Infima light-theme overrides, reconciled with the Mailwoman
+   design system (see ../colors_and_type.css). Structure & variable names are
+   unchanged so this drops straight into your Docusaurus `src/css`.
+
+   Lines tagged "FIX:" are the contrast/consistency repairs. Everything else
+   is your original, preserved. Summary of fixes is in ./README.md.
+   ============================================================================ */
 :root {
+	/* === Brand anchors (canonical — match the design tokens) =============== */
+	--mw-magenta: hsl(318.62deg 100% 50%);   /* #ff00b0 — primary brand        */
+	--mw-blue:    hsl(249.43deg 100% 50%);   /* #1a00ff — link + sidebar slab  */
+	--mw-navy:    hsl(230.21deg 100% 11.41%);/* #00093a — navbar chrome        */
+	--mw-amber:   hsl(39deg 100% 50%);       /* secondary accent              */
+	--mw-teal:    hsl(167deg 70% 42%);       /* success / positive accent     */
+
 	--ifm-background-color: hsl(200.59deg 100% 92%);
-	--ifm-color-primary: hsl(318.62deg 100% 50%);
-	--ifm-color-secondary: hsl(39, 100%, 50%);
+	--ifm-color-primary: var(--mw-magenta);
+	--ifm-color-secondary: var(--mw-amber);
 
 	--ifm-color-white: #fff;
 	--ifm-color-black: #000;
@@ -24,13 +40,15 @@
 	--ifm-font-color-base: var(--ifm-color-content);
 	--ifm-font-color-base-inverse: var(--ifm-color-content-inverse);
 	--ifm-font-color-secondary: var(--ifm-color-content-secondary);
+
+	/* FIX: list the *exact* production families first; fall back to the
+	   open-source Iosevka (loaded via ../colors_and_type.css) then system. */
 	--ifm-font-family-base:
-		"Iosevka Nexus Web", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif,
-		BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-		"Segoe UI Symbol";
+		"Iosevka Nexus Web", "Iosevka", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell,
+		Noto Sans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 	--ifm-font-family-monospace:
-		"Iosevka Nexus Mono Web", "Fira Code", "SF Mono", "Roboto Mono", "Segoe UI Mono", "Courier New", "Courier",
-		"monospace";
+		"Iosevka Nexus Mono Web", "Iosevka", "SF Mono", "Roboto Mono", "Segoe UI Mono", "Courier New",
+		"Courier", "monospace";
 
 	--ifm-font-size-base: 100%;
 	--ifm-font-weight-light: 300;
@@ -99,16 +117,16 @@
 	--ifm-table-cell-padding: 0.75rem;
 	--ifm-table-background: transparent;
 	--ifm-table-stripe-background: rgba(0, 0, 0, 0.03);
-	--ifm-table-border-width: 0.5px;
-	--ifm-table-border-color: var(--ifm-color-primary-dark);
+	--ifm-table-border-width: 1px;                          /* FIX: 0.5px renders inconsistently */
+	--ifm-table-border-color: var(--ifm-color-emphasis-300);/* FIX: was primary-dark (loud magenta rule) */
 	--ifm-table-head-background: inherit;
 	--ifm-table-head-color: inherit;
 	--ifm-table-head-font-weight: var(--ifm-font-weight-bold);
 	--ifm-table-cell-color: inherit;
 
-	--ifm-link-color: hsl(249.43deg 100% 50%);
+	--ifm-link-color: var(--mw-blue);
 	--ifm-link-decoration: none;
-	--ifm-link-hover-color: hsl(249.43deg 100% 55%);
+	--ifm-link-hover-color: hsl(249.43deg 100% 60%);
 	--ifm-link-hover-decoration: underline;
 
 	--ifm-paragraph-margin-bottom: var(--ifm-leading);
@@ -155,14 +173,15 @@
 	--ifm-breadcrumb-border-radius: 1.5rem;
 	--ifm-breadcrumb-spacing: 0.5rem;
 	--ifm-breadcrumb-color-active: var(--ifm-color-primary);
-	--ifm-breadcrumb-item-background-active: var(--ifm-hover-overlay);
+	--ifm-breadcrumb-item-background-active: hsl(318.62deg 100% 50% / 12%); /* FIX: was warm-gray overlay; now a faint magenta tint so the active pill reads */
 	--ifm-breadcrumb-padding-horizontal: 0.8rem;
 	--ifm-breadcrumb-padding-vertical: 0.4rem;
 	--ifm-breadcrumb-size-multiplier: 1;
-	--ifm-breadcrumb-separator: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" viewBox="0 0 256 256"><g><g><polygon points="79.093,0 48.907,30.187 146.72,128 48.907,225.813 79.093,256 207.093,128"/></g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g></svg>');
+	--ifm-breadcrumb-separator: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" viewBox="0 0 256 256"><g><g><polygon points="79.093,0 48.907,30.187 146.72,128 48.907,225.813 79.093,256 207.093,128"/></g></g></svg>');
 	--ifm-breadcrumb-separator-filter: none;
 	--ifm-breadcrumb-separator-size: 0.5rem;
 	--ifm-breadcrumb-separator-size-multiplier: 1.25;
+
 	--ifm-button-background-color: inherit;
 	--ifm-button-border-color: var(--ifm-button-background-color);
 	--ifm-button-border-width: var(--ifm-global-border-width);
@@ -202,42 +221,43 @@
 
 	--ifm-hero-background-color: var(--ifm-background-surface-color);
 	--ifm-hero-text-color: var(--ifm-color-emphasis-800);
-	/* --ifm-menu-color: var(--ifm-color-emphasis-700); */
-	/* --ifm-menu-color: #124be8; */
 
-	--ifm-menu-background-color: #1a00ff;
-
-	--ifm-menu-color: hsl(105.18deg 100% 90.21%);
-	--ifm-menu-color-active: var(--ifm-color-primary);
-	--ifm-menu-color-background-active: var(--ifm-hover-overlay);
-	--ifm-menu-color-background-hover: var(--ifm-hover-overlay);
+	/* === Sidebar menu (the electric-blue slab) ============================= */
+	--ifm-menu-background-color: var(--mw-blue);
+	/* FIX: base text was pale acid-green (hsl 105) — off-brand + low contrast.
+	   Pale lavender-white reads cleanly on the #1a00ff slab (AA pass). */
+	--ifm-menu-color: hsl(231deg 100% 92%);
+	/* FIX: active text was magenta directly on blue (vibrates, fails AA).
+	   White text + a solid darker-blue active background (rescued by custom.css
+	   which also adds the magenta inset bar for the brand accent). */
+	--ifm-menu-color-active: #fff;
+	--ifm-menu-color-background-active: hsl(249.43deg 100% 38%);
+	--ifm-menu-color-background-hover: rgb(255 255 255 / 10%); /* FIX: warm-gray overlay was invisible on blue */
 	--ifm-menu-link-padding-horizontal: 0.75rem;
 	--ifm-menu-link-padding-vertical: 0.375rem;
-	--ifm-menu-link-sublist-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 24 24"><path fill="rgba(0,0,0,0.5)" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path></svg>');
+	--ifm-menu-link-sublist-icon: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 24 24"><path fill="rgba(255,255,255,0.8)" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path></svg>'); /* FIX: was black @50% — invisible on blue; now white */
 	--ifm-menu-link-sublist-icon-filter: none;
 
-	--ifm-navbar-background-color: hsl(230.21deg 100% 11.41%);
-	--ifm-navbar-link-color: hsl(65, 100%, 47%);
-	--ifm-navbar-link-active-color: hsl(38.8deg 100% 50%);
-	--ifm-navbar-link-hover-color: hsl(38.8deg 100% 50%);
+	/* === Navbar (navy chrome) ============================================= */
+	/* FIX: collapsed the conflicting duplicate declarations into one clean set.
+	   Base = pale slate (AA on navy); hover = white; active = magenta (passes
+	   on navy). Removes the old blue-active-on-navy failure + acid-green base. */
+	--ifm-navbar-background-color: var(--mw-navy);
+	--ifm-navbar-link-color: hsl(220deg 40% 90%);
+	--ifm-navbar-link-hover-color: #fff;
+	--ifm-navbar-link-active-color: var(--ifm-color-primary);
 
-	/* --ifm-navbar-background-color: var(--ifm-background-surface-color); */
 	--ifm-navbar-height: 3.75rem;
 	--ifm-navbar-item-padding-horizontal: 0.75rem;
 	--ifm-navbar-item-padding-vertical: 0.25rem;
-	--ifm-navbar-link-color: var(--ifm-font-color-base-inverse);
-	--ifm-navbar-link-hover-color: var(--ifm-color-primary);
-	--ifm-navbar-link-active-color: var(--ifm-link-color);
-
 	--ifm-navbar-padding-horizontal: var(--ifm-spacing-horizontal);
 	--ifm-navbar-padding-vertical: calc(var(--ifm-spacing-vertical) * 0.5);
-
 	--ifm-navbar-shadow: var(--ifm-global-shadow-lw);
 
-	--ifm-navbar-search-input-background-color: var(--ifm-color-emphasis-200);
-	--ifm-navbar-search-input-color: var(--ifm-color-emphasis-800);
-	--ifm-navbar-search-input-placeholder-color: var(--ifm-color-emphasis-500);
-	--ifm-navbar-search-input-icon: url('data:image/svg+xml;utf8,<svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" height="16px" width="16px"><path d="M6.02945,10.20327a4.17382,4.17382,0,1,1,4.17382-4.17382A4.15609,4.15609,0,0,1,6.02945,10.20327Zm9.69195,4.2199L10.8989,9.59979A5.88021,5.88021,0,0,0,12.058,6.02856,6.00467,6.00467,0,1,0,9.59979,10.8989l4.82338,4.82338a.89729.89729,0,0,0,1.29912,0,.89749.89749,0,0,0-.00087-1.29909Z" /></svg>');
+	--ifm-navbar-search-input-background-color: rgb(255 255 255 / 12%);   /* FIX: emphasis-200 was near-black on navy */
+	--ifm-navbar-search-input-color: #fff;
+	--ifm-navbar-search-input-placeholder-color: hsl(220deg 30% 75%);
+	--ifm-navbar-search-input-icon: url('data:image/svg+xml;utf8,<svg fill="rgba(255,255,255,0.8)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" height="16px" width="16px"><path d="M6.02945,10.20327a4.17382,4.17382,0,1,1,4.17382-4.17382A4.15609,4.15609,0,0,1,6.02945,10.20327Zm9.69195,4.2199L10.8989,9.59979A5.88021,5.88021,0,0,0,12.058,6.02856,6.00467,6.00467,0,1,0,9.59979,10.8989l4.82338,4.82338a.89729.89729,0,0,0,1.29912,0,.89749.89749,0,0,0-.00087-1.29909Z" /></svg>');
 	--ifm-navbar-sidebar-width: 83vw;
 
 	--ifm-pagination-border-radius: var(--ifm-global-radius);

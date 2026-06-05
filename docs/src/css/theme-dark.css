@@ -1,21 +1,46 @@
-/* For readability concerns, you should choose a lighter palette in dark mode. */
+/* ============================================================================
+   MAILWOMAN — theme-dark.css  (RECONCILED / REBUILT)
+   Docusaurus / Infima dark-theme overrides, reconciled with the Mailwoman
+   design system (see ../colors_and_type.css).
+
+   The previous dark theme had four structural problems, all fixed here:
+     1. primary was magenta but primary-dark/darker/darkest were TEAL
+        → anything using a primary shade jumped magenta→teal. Now a coherent
+          magenta ramp; teal is reassigned to --ifm-color-success.
+     2. body text (--ifm-color-content) was pale PINK → now neutral light.
+     3. secondary text was pure WHITE (brighter than primary = inverted
+        hierarchy) → now a dimmer gray, correctly below primary.
+     4. links inherited light's electric blue (invisible on near-black) and the
+        navbar/menu used acid-green/orange/magenta-on-blue → unified with the
+        light treatment, lightened for dark.
+   See ./README.md for the full diff.
+   ============================================================================ */
 [data-theme="dark"] {
-	--ifm-navbar-background-color: hsl(230.21deg 100% 11.41%);
-	--ifm-navbar-link-color: hsl(65, 100%, 47%);
-	--ifm-navbar-link-active-color: hsl(38.8deg 100% 50%);
-	--ifm-navbar-link-hover-color: hsl(38.8deg 100% 50%);
+	/* === Brand ramp — magenta primary, COHERENT shades ==================== */
+	--ifm-color-primary: hsl(318.62deg 100% 58%);          /* slightly lifted for dark bg */
+	--ifm-color-primary-light: hsl(318.62deg 100% 63%);
+	--ifm-color-primary-lighter: hsl(318.62deg 100% 66%);
+	--ifm-color-primary-lightest: hsl(318.62deg 100% 74%);
+	--ifm-color-primary-dark: hsl(318.62deg 100% 52%);     /* FIX: was teal */
+	--ifm-color-primary-darker: hsl(318.62deg 100% 48%);   /* FIX: was teal */
+	--ifm-color-primary-darkest: hsl(318.62deg 100% 40%);  /* FIX: was teal */
 
-	--ifm-menu-color: hsl(324.37deg 100% 60.66%);
+	/* Teal is the design system's dark-mode positive/success accent. It lives
+	   here now (not masquerading as a primary shade). */
+	--ifm-color-success: hsl(167deg 64% 50%);
+	--ifm-color-secondary: hsl(39deg 100% 56%);
 
-	--ifm-color-primary: hsl(325.94deg 100% 50%);
-	--ifm-color-primary-dark: hsl(166.9deg 68.27% 40.78%);
-	--ifm-color-primary-darker: hsl(167.01deg 68.37% 38.43%);
-	--ifm-color-primary-darkest: hsl(166.91deg 67.9% 31.76%);
-	--ifm-color-primary-light: hsl(167.09deg 67.72% 49.8%);
-	--ifm-color-primary-lighter: hsl(166.99deg 68.03% 52.16%);
-	--ifm-color-primary-lightest: hsl(167.32deg 67.62% 58.82%);
-	--docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+	/* === Text hierarchy — neutral, correctly ordered ====================== */
+	--ifm-color-content: hsl(225deg 14% 96%);              /* FIX: was pale pink #ffd…  */
+	--ifm-color-content-secondary: hsl(222deg 9% 74%);     /* FIX: was pure white (too bright) */
 
+	/* === Links — lightened so they read on near-black ===================== */
+	--ifm-link-color: hsl(225deg 100% 73%);                /* FIX: was inherited #1a00ff (invisible) */
+	--ifm-link-hover-color: var(--ifm-color-success);      /* teal hover, on-brand */
+
+	--docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.06);
+
+	/* Infima emphasis remap (unchanged — light text on dark) */
 	--ifm-color-emphasis-0: var(--ifm-color-gray-1000);
 	--ifm-color-emphasis-100: var(--ifm-color-gray-900);
 	--ifm-color-emphasis-200: var(--ifm-color-gray-800);
@@ -25,24 +50,51 @@
 	--ifm-color-emphasis-600: var(--ifm-color-gray-400);
 	--ifm-color-emphasis-700: var(--ifm-color-gray-300);
 	--ifm-color-emphasis-800: var(--ifm-color-gray-200);
-	--ifm-color-emphasis-900: var(--ifm-color-gray-100); /* Default text color */
+	--ifm-color-emphasis-900: var(--ifm-color-gray-100);
 	--ifm-color-emphasis-1000: var(--ifm-color-gray-0);
 
-	--ifm-background-color: hsl(180deg 11.11% 7.06%);
+	/* FIX: was hsl(220 6% 11%), a near-neutral dark gray that read as a different
+	   surface from the navy navbar. Lift the saturation and pull the hue toward
+	   the brand navy so the page feels like the same family as the chrome
+	   without losing dark-mode legibility. */
+	--ifm-background-color: hsl(230deg 30% 9%);
 	--ifm-background-surface-color: #242526;
-	--ifm-hover-overlay: rgba(255, 255, 255, 0.05);
-	--ifm-color-content: hsl(341.97deg 100% 91.85%);
-	/* --ifm-color-content: red; */
+	--ifm-hover-overlay: rgba(255, 255, 255, 0.06);
 
-	--ifm-color-content-secondary: rgba(255, 255, 255, 1);
+	/* FIX: inline + block code surfaces were unset, so they inherited light's
+	   near-white fill — chips read as blank redaction bars on near-black. Dark
+	   chip on a hairline border matches the boxy/terminal aesthetic. */
+	--ifm-code-background: hsl(220deg 8% 16%);
+	--ifm-pre-background: hsl(220deg 8% 14%);
+
+	/* === Sidebar menu (electric-blue slab, dark) ========================== */
+	/* The slab stays #1a00ff in dark too (it's a brand surface). FIX: text was
+	   magenta-on-blue; now the same pale lavender + white-active as light. */
+	--ifm-menu-color: hsl(231deg 100% 92%);
+	--ifm-menu-color-active: #fff;
+	--ifm-menu-color-background-active: hsl(249.43deg 100% 38%);
+	--ifm-menu-color-background-hover: rgb(255 255 255 / 10%);
+
+	/* === Navbar — unified with light (navy chrome both themes) ============ */
+	/* FIX: was acid-green links + orange hover. Now pale → white → magenta. */
+	--ifm-navbar-background-color: hsl(230.21deg 100% 11.41%);
+	--ifm-navbar-link-color: hsl(220deg 40% 90%);
+	--ifm-navbar-link-hover-color: #fff;
+	--ifm-navbar-link-active-color: var(--ifm-color-primary);
+
+	--ifm-breadcrumb-color-active: var(--ifm-color-primary);
+	--ifm-breadcrumb-item-background-active: hsl(318.62deg 100% 58% / 16%);
 	--ifm-breadcrumb-separator-filter: invert(64%) sepia(11%) saturate(0%) hue-rotate(149deg) brightness(99%)
 		contrast(95%);
-	/* --ifm-code-background: red; */
-	--ifm-scrollbar-track-background-color: #444444;
-	--ifm-scrollbar-thumb-background-color: #686868;
-	--ifm-scrollbar-thumb-hover-background-color: #7a7a7a;
-	--ifm-table-stripe-background: rgba(255, 255, 255, 0.07);
+
+	--ifm-scrollbar-track-background-color: #2a2a2c;
+	--ifm-scrollbar-thumb-background-color: #4a4a4d;
+	--ifm-scrollbar-thumb-hover-background-color: #5d5d61;
+	--ifm-table-stripe-background: rgba(255, 255, 255, 0.05);
+	--ifm-table-border-color: var(--ifm-color-emphasis-300);
 	--ifm-toc-border-color: var(--ifm-color-emphasis-200);
+
+	/* Admonition / alert contrast pairs (unchanged — these were already fine) */
 	--ifm-color-primary-contrast-background: rgb(16, 36, 69);
 	--ifm-color-primary-contrast-foreground: rgb(235, 242, 252);
 	--ifm-color-secondary-contrast-background: rgb(71, 71, 72);

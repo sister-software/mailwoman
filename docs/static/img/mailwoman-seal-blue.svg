@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Mailwoman">
+  <rect x="8" y="8" width="104" height="104" rx="18" fill="#1a00ff"></rect>
+  <g fill="#ffffff">
+    <rect x="30" y="36" width="60" height="12" rx="2"></rect>
+    <rect x="30" y="56" width="60" height="12" rx="2"></rect>
+    <rect x="54" y="56" width="12" height="28" rx="2"></rect>
+  </g>
+</svg>

@@ -33,7 +33,7 @@ const config: Config = {
 	},
 	title: "Mailwoman",
 	tagline: "TypeScript-first address parser + geocoder. Runs in Node and the browser.",
-	favicon: "img/favicon.ico",
+	favicon: "img/favicon-32.png",
 	headTags: [
 		{
 			tagName: "meta",
@@ -126,7 +126,7 @@ const config: Config = {
 						"./src/css/fonts/IosevkaNexus.css",
 						"./src/css/fonts/IosevkaNexusMono.css",
 						"./src/css/theme-light.css",
-						// "./src/css/theme-dark.css",
+						"./src/css/theme-dark.css",
 						"./src/css/markdown.css",
 						"./src/css/custom.css",
 					],
@@ -142,8 +142,11 @@ const config: Config = {
 		navbar: {
 			title: "Mailwoman",
 			logo: {
-				alt: "Mailwoman Logo",
-				src: "img/logo.svg",
+				alt: "Mailwoman 〒 hanko seal",
+				// Magenta seal on the navy navbar in both themes — the design system
+				// brief calls magenta the primary mark; navy/blue alts ship under
+				// /img for use on lighter surfaces.
+				src: "img/mailwoman-seal-magenta.svg",
 			},
 			items: [
 				{

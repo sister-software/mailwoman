@@ -1,13 +1,12 @@
 /**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
+ * Any CSS included here will be global. The classic template bundles Infima.
+ * RECONCILED with the Mailwoman design system — see ./README.md.
  */
 
 html {
 	-webkit-font-smoothing: antialiased;
 	font-smoothing: antialiased;
-	text-rendering: optimizelegibility;
+	text-rendering: optimizeLegibility; /* FIX: was "optimizelegibility" (invalid casing → ignored) */
 }
 
 .theme-doc-sidebar-container {
@@ -19,17 +18,27 @@ html {
 		font-weight: var(--ifm-font-weight-bold);
 	}
 
+	/* Level-2 section heads: amber. Good contrast on the blue slab. */
 	&.theme-doc-sidebar-item-category-level-2 > .menu__list-item-collapsible > .menu__link.menu__link--sublist {
 		--ifm-menu-color: var(--ifm-color-secondary);
 	}
 
+	/* Level-3 section heads. FIX: full-saturation cyan hsl(183 100% 50%) was
+	   thin on the blue slab — lifted to a pale cyan for a clean AA read. */
 	&.theme-doc-sidebar-item-category-level-3 > .menu__list-item-collapsible > .menu__link.menu__link--sublist {
-		--ifm-menu-color: hsl(183.53deg 100% 50%);
+		--ifm-menu-color: hsl(184deg 100% 78%);
 	}
 }
+
+/* FIX: the core light-theme failure lived here — active link was painted
+   magenta (var(--ifm-color-primary)) directly on the #1a00ff slab, which
+   vibrates and fails AA. Now: white text on the solid darker-blue active
+   background (set in the theme files) + a magenta inset bar so the brand
+   accent survives while the label stays legible. */
 .menu__link--active {
-	color: var(--ifm-color-primary);
+	color: var(--ifm-menu-color-active);
 	font-weight: var(--ifm-font-weight-bold);
+	box-shadow: inset 3px 0 0 var(--ifm-color-primary);
 }
 
 .theme-doc-sidebar-menu.menu__list .theme-doc-sidebar-item-category-level-1 > .menu__list {
@@ -38,4 +47,29 @@ html {
 
 .footer--dark {
 	--ifm-footer-background-color: var(--ifm-color-gray-900);
+}
+
+/* FIX: the colorMode (sun/moon) toggle inherits Infima's default colors —
+   currentColor for the icon, --ifm-color-emphasis-200 for the hover overlay.
+   On the navy navbar both wash out: the icon reads as a dim half-disc and the
+   hover bg is invisible. Pin the icon to the navbar link color (pale slate ↔
+   white on hover) and use a translucent-white hover pad that survives the dark
+   chrome in both themes. */
+.navbar [class*="colorModeToggle"] .clean-btn,
+.navbar .clean-btn[class*="colorModeToggle"] {
+	color: var(--ifm-navbar-link-color);
+	transition:
+		color var(--ifm-transition-fast) var(--ifm-transition-timing-default),
+		background-color var(--ifm-transition-fast) var(--ifm-transition-timing-default);
+}
+.navbar [class*="colorModeToggle"] .clean-btn:hover,
+.navbar [class*="colorModeToggle"] .clean-btn:focus-visible,
+.navbar .clean-btn[class*="colorModeToggle"]:hover,
+.navbar .clean-btn[class*="colorModeToggle"]:focus-visible {
+	background-color: rgb(255 255 255 / 12%);
+	color: #fff;
+}
+.navbar [class*="colorModeToggle"] svg {
+	width: 1.25rem;
+	height: 1.25rem;
 }
