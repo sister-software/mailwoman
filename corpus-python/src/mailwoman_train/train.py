@@ -54,7 +54,37 @@ def _to_tensor_batch(batch: dict, device: torch.device) -> dict:
     # ignores it unless built with use_locale_conditioning.
     if "locale_ids" in batch:
         tb["locale_ids"] = torch.tensor(batch["locale_ids"], dtype=torch.long, device=device)
+    # Postcode-anchor channel (#239/#240): per-piece features + confidence. Present only when an
+    # anchor lookup is configured; the model ignores them unless built with use_postcode_anchor.
+    if "anchor_features" in batch:
+        tb["anchor_features"] = torch.tensor(batch["anchor_features"], dtype=torch.float32, device=device)
+        tb["anchor_confidence"] = torch.tensor(batch["anchor_confidence"], dtype=torch.float32, device=device)
     return tb
+
+
+# Anchor-confidence robustness curriculum (#239/#240, DeepSeek 2026-06-05): the model sees the full
+# anchor early (break the German collapse, build the basin), then a ramped perturbation so it can't
+# launder the anchor. No discrete [NO-ANCHOR] mode — "absent" is the c=0 tail of a continuum.
+ANCHOR_CURRICULUM_START_FRAC = 0.25  # ≤ this fraction of max_steps: no perturbation
+ANCHOR_CURRICULUM_RAMP_FRAC = 0.50   # by this fraction: full perturbation
+ANCHOR_ZERO_OUT_MAX = 0.15           # peak per-row zero-out probability
+
+
+def perturb_anchor_confidence(conf: torch.Tensor, step: int, max_steps: int) -> torch.Tensor:
+    """Curriculum-perturb the per-token anchor confidence ``(B, S)`` by training step.
+
+    0 → 25% of max_steps: untouched. 25% → 50%: ramp in per-token multiplicative noise α∼U(0.8,1.2)
+    and per-ROW zero-out (prob → ANCHOR_ZERO_OUT_MAX). 50%+: hold. Per-row (not per-token) zero-out
+    keeps an "absent anchor" coherent across a postcode's sub-tokens.
+    """
+    start = ANCHOR_CURRICULUM_START_FRAC * max_steps
+    if step < start:
+        return conf
+    ramp = min(1.0, (step - start) / max(1.0, (ANCHOR_CURRICULUM_RAMP_FRAC - ANCHOR_CURRICULUM_START_FRAC) * max_steps))
+    alpha = 0.8 + 0.4 * torch.rand_like(conf)  # per-token U(0.8, 1.2)
+    out = (conf * alpha).clamp(0.0, 1.0)
+    row_zero = (torch.rand(conf.shape[0], device=conf.device) < ANCHOR_ZERO_OUT_MAX * ramp).unsqueeze(1)
+    return out.masked_fill(row_zero, 0.0)
 
 
 def _cosine_with_warmup(optimizer: AdamW, warmup_steps: int, max_steps: int) -> LambdaLR:
@@ -420,6 +450,12 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                     break
                 model.train()
                 tb = _to_tensor_batch(batch, device)
+                # Postcode-anchor confidence curriculum (#239/#240): perturb by optimizer step so the
+                # model can't launder the anchor (no-op until 25% of max_steps).
+                if "anchor_confidence" in tb:
+                    tb["anchor_confidence"] = perturb_anchor_confidence(
+                        tb["anchor_confidence"], step, cfg.train.max_steps
+                    )
                 # Optimizer step happens every ``accum`` micro-batches; gradients accumulate
                 # across the micro-batches in between. ``step`` counts *optimizer* steps,
                 # not micro-steps, so it lines up with the cfg.train.max_steps budget.

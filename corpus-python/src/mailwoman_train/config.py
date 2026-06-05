@@ -35,6 +35,10 @@ class DataConfig:
     # Probability (0-1) that each augmentation fires per row. 0 = disabled.
     augment_directional_prob: float = 0.0
     augment_region_prob: float = 0.0
+    # Postcode-anchor lookup (#239/#240). Path to the JSON {postcode: [posterior, lat, lon]} table
+    # (built by scripts/build-pilot-anchor-lookup.py). When set AND model.use_postcode_anchor is on,
+    # the loader projects per-piece anchor features onto each row. None → no anchor features.
+    anchor_lookup_path: str | None = None
 
 
 @dataclass

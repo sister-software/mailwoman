@@ -269,11 +269,17 @@ def encode_row(
     tokens: Sequence[str],
     labels: Sequence[str],
     max_length: int,
-) -> dict[str, list[int]]:
+    anchor_lookup: "dict[str, tuple[dict[str, float], float, float]] | None" = None,
+) -> dict[str, list]:
     """Encode a single row into ``input_ids`` + ``attention_mask`` + ``label_ids``.
 
     Truncates to ``max_length`` SP pieces. Pads to ``max_length`` with the SP ``pad_id`` and
     fills the label tail with ``IGNORE_INDEX`` so cross-entropy ignores the padding.
+
+    When ``anchor_lookup`` is supplied (the postcode-anchor pilot, #239/#240), also returns
+    ``anchor_features`` ``(max_length, ANCHOR_FEATURE_DIM)`` and ``anchor_confidence``
+    ``(max_length,)``, projected onto the SAME pieces as the labels (so a postcode anchor lands on
+    exactly its sub-tokens) and zero-padded. Absent → those keys are omitted (back-compat).
     """
     spans = tokenizer.encode_with_spans(raw)
     bio_labels = realign_labels_to_pieces(raw, tokens, labels, spans)
@@ -285,4 +291,16 @@ def encode_row(
         ids.extend([tokenizer.pad_id] * pad_needed)
         attention.extend([0] * pad_needed)
         label_ids.extend([IGNORE_INDEX] * pad_needed)
-    return {"input_ids": ids, "attention_mask": attention, "labels": label_ids}
+    out: dict[str, list] = {"input_ids": ids, "attention_mask": attention, "labels": label_ids}
+
+    if anchor_lookup is not None:
+        feats, confs = realign_anchor_to_pieces(raw, tokens, labels, list(spans), anchor_lookup)
+        feats = feats[:max_length]
+        confs = confs[:max_length]
+        zero = [0.0] * ANCHOR_FEATURE_DIM
+        if pad_needed > 0:
+            feats = feats + [zero] * pad_needed
+            confs = confs + [0.0] * pad_needed
+        out["anchor_features"] = feats
+        out["anchor_confidence"] = confs
+    return out
