@@ -16,6 +16,7 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite"
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 
 import {
+	ADDRESS_CONVENTION_TABLE,
 	resolveConvention,
 	SeedConventionSource,
 	type Convention,
@@ -34,6 +35,7 @@ import {
 import { bboxAround, haversineKm } from "./geo.js"
 import type { WofDatabase } from "./schema.js"
 import { pickShardForPlacetype, resolveShards, type ResolvedShard, type ShardConfig } from "./sharding.js"
+import { SqliteConventionSource } from "./sqlite-convention-source.js"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "./types.js"
 
 export interface WofSqlitePlaceLookupOpts {
@@ -183,7 +185,8 @@ interface RawSearchRow {
 
 /**
  * The coordinate-first candidate table (scripts/build-postcode-locality.py): postcode → containing
- * + nearby localities with WOF alt-name aliases.
+ *
+ * - Nearby localities with WOF alt-name aliases.
  */
 const POSTCODE_LOCALITY_TABLE = "postcode_locality"
 
@@ -290,6 +293,8 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #conventionSource: ConventionSource
 	readonly #strategies: Map<string, Strategy>
 	readonly #countryWofIdCache = new Map<string, number | null>()
+	/** Strategy names already warned about — so an unknown name surfaces once, not once per query. */
+	readonly #warnedUnknownStrategies = new Set<string>()
 
 	constructor(opts: WofSqlitePlaceLookupOpts, weights?: Partial<RankingWeights>) {
 		if (opts.database && opts.databasePath) {
@@ -342,14 +347,21 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		this.#postcodeLocalityShard =
 			this.#shards.find((s) => this.#shardHasTable(s.schemaName, POSTCODE_LOCALITY_TABLE))?.schemaName ?? null
 
-		// The Geographic Rule Engine. Source defaults empty (EU rides WORLD_DEFAULT); callers inject
-		// per-WOF-polygon profiles via `opts.conventions` (#290 wires a sqlite-backed source, JP/KR/TW add
-		// rows). The registry binds strategy NAMES to the SQL-bound primitives below — adding a strategy
-		// is registering it here.
-		this.#conventionSource =
-			opts.conventions && "get" in opts.conventions && typeof opts.conventions.get === "function"
+		// The Geographic Rule Engine convention source. Precedence: an explicit `opts.conventions`
+		// (a ready source or a seed map) wins; else the build-from-source convention asset if one is
+		// attached (auto-detected, like the postcode_locality shard — adding conventions.db to
+		// databasePath enables it; queried on demand, not paged into memory); else empty, so EU rides
+		// WORLD_DEFAULT. The registry binds strategy NAMES to the SQL-bound primitives — adding a
+		// strategy is registering it here.
+		const conventionShard =
+			this.#shards.find((s) => this.#shardHasTable(s.schemaName, ADDRESS_CONVENTION_TABLE))?.schemaName ?? null
+		this.#conventionSource = opts.conventions
+			? "get" in opts.conventions && typeof opts.conventions.get === "function"
 				? opts.conventions
-				: new SeedConventionSource((opts.conventions as Record<number, Convention>) ?? {})
+				: new SeedConventionSource(opts.conventions as Record<number, Convention>)
+			: conventionShard
+				? new SqliteConventionSource(this.#db, conventionShard)
+				: new SeedConventionSource()
 		this.#strategies = new Map<string, Strategy>([
 			["postcode_area_resolution", (q, c) => this.#postcodeAreaResolution(q, c)],
 			["fallback_fuzzy_name_match", (q) => this.#fuzzyNameMatch(q)],
@@ -379,11 +391,31 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		const convention = this.#conventionFor(query)
 		for (const name of convention.candidateStrategies) {
 			const strategy = this.#strategies.get(name)
-			if (!strategy) continue
+			if (!strategy) {
+				this.#warnUnknownStrategy(name)
+				continue
+			}
 			const result = await strategy(query, convention)
 			if (result !== null) return result
 		}
 		return []
+	}
+
+	/**
+	 * Surface an unknown strategy name LOUDLY (once per name) rather than swallowing it silently — an
+	 * invisible no-op is exactly the load-bearing-trivia failure mode we avoid (see the no-trivia
+	 * design value). We warn rather than throw so a convention asset built against a newer code
+	 * revision (one that adds a strategy) degrades gracefully on an older build instead of taking
+	 * down resolution.
+	 */
+	#warnUnknownStrategy(name: string): void {
+		if (this.#warnedUnknownStrategies.has(name)) return
+		this.#warnedUnknownStrategies.add(name)
+		console.warn(
+			`WofSqlitePlaceLookup: a convention names strategy "${name}", which this build does not register ` +
+				`(known: ${[...this.#strategies.keys()].join(", ")}). Skipping it. If the convention asset was built ` +
+				`against a newer code revision, rebuild the asset for this one.`
+		)
 	}
 
 	/**

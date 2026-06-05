@@ -23,8 +23,10 @@
 
 import type { FindPlaceQuery, PlaceCandidate } from "./types.js"
 
-/** Soft-scoring weights for the `postcode_area_resolution` strategy: `pc·S_pc + name·S_name +
-pop·S_pop`. */
+/**
+ * Soft-scoring weights for the `postcode_area_resolution` strategy: `pc·S_pc + name·S_name +
+ * pop·S_pop`.
+ */
 export interface ScoringWeights {
 	pc: number
 	name: number
@@ -68,13 +70,28 @@ export const WORLD_DEFAULT: ResolvedConvention = {
 }
 
 /**
+ * The strategy names the backend registers. The single source of truth shared by the dispatch
+ * registry and the build-time validator, so an authored convention that names a non-existent
+ * strategy is caught at build (loud) rather than silently skipped at runtime.
+ */
+export const BUILTIN_STRATEGY_NAMES = ["postcode_area_resolution", "fallback_fuzzy_name_match"] as const
+
+/**
+ * Table name for the convention asset (#290). Carried here so the build script, the runtime source,
+ * and the shard auto-detect all agree.
+ */
+export const ADDRESS_CONVENTION_TABLE = "address_convention"
+
+/**
  * A named resolution primitive. Returns `null` to abstain (gate unmet / no data) → the dispatcher
  * tries the next strategy; returns an array (possibly empty) to claim the result.
  */
 export type Strategy = (query: FindPlaceQuery, convention: ResolvedConvention) => Promise<PlaceCandidate[] | null>
 
-/** Look up a convention record by WOF polygon id. Returns `undefined` when the polygon has no
-override. */
+/**
+ * Look up a convention record by WOF polygon id. Returns `undefined` when the polygon has no
+ * override.
+ */
 export interface ConventionSource {
 	get(wofId: number): Convention | undefined
 }
