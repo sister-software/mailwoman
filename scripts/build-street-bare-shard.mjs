@@ -22,7 +22,7 @@ import { alignRow, DEFAULT_US_BASES, stableSourceId, synthesizeStreetRow } from 
 
 function parseArgs() {
 	const args = process.argv.slice(2)
-	const out = { count: 3000, seed: 42, source: "synth-street-bare", bareProb: 0.6 }
+	const out = { count: 3000, seed: 42, source: "synth-street-bare", bareProb: 0.6, hnProb: 0.85 }
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 		if (a === "--output") out.output = args[++i]
@@ -30,6 +30,7 @@ function parseArgs() {
 		else if (a === "--seed") out.seed = parseInt(args[++i], 10)
 		else if (a === "--source-name") out.source = args[++i]
 		else if (a === "--bare-prob") out.bareProb = parseFloat(args[++i])
+		else if (a === "--hn-prob") out.hnProb = parseFloat(args[++i])
 	}
 	if (!out.output) {
 		console.error("Usage: node scripts/build-street-bare-shard.mjs --output <jsonl> [--count 3000] [--seed 42] [--bare-prob 0.6]")
@@ -61,7 +62,7 @@ async function main() {
 	let guard = 0
 	while (emitted < opts.count && guard++ < opts.count * 5) {
 		const base = DEFAULT_US_BASES[emitted % DEFAULT_US_BASES.length]
-		const synth = synthesizeStreetRow(base, { random, bareProb: opts.bareProb })
+		const synth = synthesizeStreetRow(base, { random, bareProb: opts.bareProb, includeHouseNumberProb: opts.hnProb })
 		if (!synth) {
 			skipped++
 			continue
