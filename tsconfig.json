@@ -23,6 +23,7 @@
 		{ "path": "./spatial" },
 		{ "path": "./tiger" },
 		{ "path": "./cartographer" },
+		{ "path": "./codex" },
 		{ "path": "./classifiers" },
 		{ "path": "./corpus" },
 		{ "path": "./neural" },

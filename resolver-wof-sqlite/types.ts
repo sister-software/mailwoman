@@ -70,6 +70,14 @@ export interface PlaceCandidate {
 	 * the underlying schema lacks the columns.
 	 */
 	bbox?: GeoBbox
+	/**
+	 * Set by the coordinate-first path when the chosen locality and the sibling postcode's containing
+	 * locality are geographically far apart — the postcode and the parsed city name disagree (a
+	 * transposed / wrong-for-the-city postcode). The candidate is still returned (the name wins for the
+	 * locality), but the flag lets callers lower confidence / surface the conflict rather than silently
+	 * mislocate. A retrieval/BM25 geocoder can't raise this — it's the falsehood-detection differentiator.
+	 */
+	mismatch?: boolean
 }
 
 /**
@@ -112,6 +120,13 @@ export interface FindPlaceQuery {
 	country?: string
 	/** WOF place id — narrows to descendants of this place. */
 	parentId?: number
+	/**
+	 * Sibling postcode. When set on a `locality` query AND a `postcode_locality` table is present,
+	 * triggers the coordinate-first soft-score path: postcode→candidate localities are injected and
+	 * scored `0.6·S_pc + 0.3·S_name + 0.1·S_pop` against the FTS name-match set, recovering small
+	 * localities the name-match alone misses. Ignored when no postcode_locality shard is present.
+	 */
+	postcode?: string
 	/** Proximity hint — candidates close to this point get a ranking boost. */
 	near?: GeoPoint & { maxDistanceKm?: number }
 	/** Bounding-box filter — only candidates whose bbox intersects this box are returned. */

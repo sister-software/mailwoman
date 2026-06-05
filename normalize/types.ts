@@ -17,6 +17,7 @@ export type NormalizationTransform =
 	| { kind: "expand_abbreviation"; from: string; to: string; at: SpanRange }
 	| { kind: "collapse_whitespace"; runs: number }
 	| { kind: "normalize_punctuation"; replacements: number }
+	| { kind: "normalize_cjk"; folded: number; stripped: number }
 
 /**
  * Result of running `normalize()` on a raw input string.

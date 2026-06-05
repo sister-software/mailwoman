@@ -38,6 +38,25 @@ function postcodeValue(text: string, tokens: DecoderToken[]): string | null {
 	return start === -1 ? null : text.slice(start, end)
 }
 
+/** The contiguous locality value implied by the repaired labels (first B-…I-locality run). */
+function localityValue(text: string, tokens: DecoderToken[]): string | null {
+	let start = -1
+	let end = -1
+	for (const t of tokens) {
+		if (t.label === "B-locality") {
+			if (start === -1) {
+				start = t.start
+				end = t.end
+			} else break
+		} else if (t.label === "I-locality" && start !== -1) {
+			end = t.end
+		} else if (start !== -1) {
+			break
+		}
+	}
+	return start === -1 ? null : text.slice(start, end)
+}
+
 describe("repairPostcodeLabels", () => {
 	it("ADDs an alphanumeric postcode the model missed (GB), over O/locality", () => {
 		const text = "London SW1A 1AA"
@@ -85,6 +104,20 @@ describe("repairPostcodeLabels", () => {
 		const { tokens: out } = repairPostcodeLabels(text, tokens)
 		expect(postcodeValue(text, out)).toBe("75008")
 		expect(out.find((t) => t.piece === "France")!.label).toBe("O")
+	})
+
+	it("hands a trailing over-extension BACK to the city (DE postcode→city absorption)", () => {
+		// The model swallowed the city's leading "Pl" into the postcode span ("08523 Pl|auen").
+		const text = "08523 Plauen"
+		const tokens = [
+			tok("08523", 0, 5, "B-postcode"),
+			tok("Pl", 6, 8, "I-postcode"), // over-extension: the city's first chars
+			tok("auen", 8, 12, "B-locality"), // the city remainder
+		]
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("08523")
+		// "Pl" is reassigned to locality and merged with "auen" into one span → "Plauen".
+		expect(localityValue(text, out)).toBe("Plauen")
 	})
 
 	it("does NOT add a numeric postcode from scratch (a bare 5-digit could be a house number)", () => {

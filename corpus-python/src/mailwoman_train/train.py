@@ -31,7 +31,7 @@ from torch.optim.lr_scheduler import LambdaLR
 
 from .config import Config, csv_log_path
 from .data_loader import IGNORE_INDEX, iter_batches, verify_tokenizer_alignment
-from .labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS
+from .labels import ACTIVE_BIO_LABELS, ACTIVE_TAGS, ID_TO_LOCALE, LABEL_TO_ID
 from .model import build_model, force_math_sdpa, model_param_count
 from .tokenizer import Tokenizer
 
@@ -44,11 +44,17 @@ def _set_seed(seed: int) -> None:
 
 
 def _to_tensor_batch(batch: dict, device: torch.device) -> dict:
-    return {
+    tb = {
         "input_ids": torch.tensor(batch["input_ids"], dtype=torch.long, device=device),
         "attention_mask": torch.tensor(batch["attention_mask"], dtype=torch.long, device=device),
         "labels": torch.tensor(batch["labels"], dtype=torch.long, device=device),
     }
+    # PR3: per-row locale target for the self-conditioning aux head. Present whenever the data
+    # loader emitted it (always, post-PR3); guarded so a pre-PR3 batch dict still works. The model
+    # ignores it unless built with use_locale_conditioning.
+    if "locale_ids" in batch:
+        tb["locale_ids"] = torch.tensor(batch["locale_ids"], dtype=torch.long, device=device)
+    return tb
 
 
 def _cosine_with_warmup(optimizer: AdamW, warmup_steps: int, max_steps: int) -> LambdaLR:
@@ -145,6 +151,45 @@ def _token_f1(
     return result
 
 
+def _cross_pollution(
+    preds: torch.Tensor,
+    labels: torch.Tensor,
+    row_locale_ids: torch.Tensor | None,
+) -> dict[str, float]:
+    """The Saint-Albans collapse tripwire: rate at which gold city/region-START tokens
+    (``B-locality`` / ``B-region``) are predicted as a POSTCODE label (``B-`` / ``I-postcode``).
+
+    Overall, plus per-locale when ``row_locale_ids`` (one id per sequence) is supplied. The
+    pre-registered PR3 gate wants this under 1% per locale by 20k steps — it is the direct readout
+    of a city's lead token bleeding into the postcode span, the failure self-conditioning exists to
+    stop. Returns an empty dict when the val sample contains no city/region-start tokens.
+    """
+    start = torch.zeros_like(labels, dtype=torch.bool)
+    for name in ("B-locality", "B-region"):
+        start |= labels == LABEL_TO_ID[name]
+    pc = torch.zeros_like(preds, dtype=torch.bool)
+    for name in ("B-postcode", "I-postcode"):
+        pc |= preds == LABEL_TO_ID[name]
+    polluted = start & pc
+
+    def _rate(mask_start: torch.Tensor, mask_poll: torch.Tensor) -> float:
+        denom = int(mask_start.sum())
+        return float(int(mask_poll.sum()) / denom) if denom > 0 else 0.0
+
+    if int(start.sum()) == 0:
+        return {}
+    out: dict[str, float] = {"cross_pollution": _rate(start, polluted)}
+    if row_locale_ids is not None:
+        tok_locale = row_locale_ids.unsqueeze(1).expand_as(labels)
+        for lid in torch.unique(row_locale_ids).tolist():
+            if lid not in ID_TO_LOCALE:  # IGNORE_INDEX / unmapped country
+                continue
+            sel = tok_locale == lid
+            if int((start & sel).sum()) > 0:
+                out[f"cross_pollution.{ID_TO_LOCALE[lid]}"] = _rate(start & sel, polluted & sel)
+    return out
+
+
 @torch.no_grad()
 def _eval_val(
     cfg: Config,
@@ -153,12 +198,15 @@ def _eval_val(
     device: torch.device,
     max_rows: int | None,
 ) -> dict[str, float]:
-    """Streaming val-set eval. Returns mean val loss + token-level macro F1."""
+    """Streaming val-set eval. Returns mean val loss + token-level macro F1 + (PR3) the
+    cross-pollution tripwire and the aux locale-head accuracy when self-conditioning is on."""
     model.eval()
     loss_total = 0.0
     seen_batches = 0
     all_preds: list[torch.Tensor] = []
     all_labels: list[torch.Tensor] = []
+    all_locale_ids: list[torch.Tensor] = []
+    all_locale_preds: list[torch.Tensor] = []
     rows_seen = 0
     for batch in iter_batches(
         cfg,
@@ -175,6 +223,10 @@ def _eval_val(
         rows_seen += tb["input_ids"].shape[0]
         all_preds.append(out.logits.argmax(dim=-1).detach().cpu())
         all_labels.append(tb["labels"].detach().cpu())
+        if "locale_ids" in tb:
+            all_locale_ids.append(tb["locale_ids"].detach().cpu())
+        if getattr(out, "locale_logits", None) is not None:
+            all_locale_preds.append(out.locale_logits.argmax(dim=-1).detach().cpu())
     if seen_batches == 0:
         return {"val_loss": float("nan"), "val_rows": 0, "macro_f1": 0.0}
     preds = torch.cat(all_preds, dim=0)
@@ -182,6 +234,14 @@ def _eval_val(
     metrics = _token_f1(preds, labels, num_labels=len(ACTIVE_BIO_LABELS))
     metrics["val_loss"] = loss_total / seen_batches
     metrics["val_rows"] = rows_seen
+    # PR3 tripwire + aux-head accuracy.
+    row_locale = torch.cat(all_locale_ids, dim=0) if all_locale_ids else None
+    metrics.update(_cross_pollution(preds, labels, row_locale))
+    if all_locale_preds and row_locale is not None:
+        locale_pred = torch.cat(all_locale_preds, dim=0)
+        valid = row_locale != IGNORE_INDEX
+        if int(valid.sum()) > 0:
+            metrics["locale_acc"] = float((locale_pred[valid] == row_locale[valid]).float().mean())
     return metrics
 
 
@@ -414,6 +474,18 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                         f"  val_rows={val.get('val_rows', 0)}"
                         f"\n         {tag_summary}"
                     )
+                    # PR3 tripwire: city/region-start → postcode rate (gate < 1% per locale), plus
+                    # the aux locale-head accuracy. Only prints when self-conditioning is active.
+                    if "cross_pollution" in val:
+                        xpoll = "  ".join(
+                            f"{k.split('.', 1)[1]}={val[k] * 100:.2f}%"
+                            for k in sorted(val)
+                            if k.startswith("cross_pollution.")
+                        )
+                        print(
+                            f"         [pr3] cross_pollution={val['cross_pollution'] * 100:.2f}%"
+                            f"  ({xpoll})  locale_acc={val.get('locale_acc', float('nan')):.3f}"
+                        )
                     elapsed = time.time() - started
                     # CSV: per-tag F1, but a blank cell ("") for tags with no val support so readers
                     # see NaN rather than a misleading 0.0.
@@ -451,6 +523,11 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                             eval_metrics[f"f1.{tag}"] = float(val.get(f"f1_tag.{tag}", 0.0))
                             tags_with_support += 1
                     eval_metrics["val_tags_with_support"] = tags_with_support
+                    # PR3: stream the cross-pollution tripwire (overall + per-locale) and the aux
+                    # locale-head accuracy to the dashboard, so the 20k gate is watchable live.
+                    for k, v in val.items():
+                        if k.startswith("cross_pollution") or k == "locale_acc":
+                            eval_metrics[k] = float(v)
                     tracker.log(eval_metrics, step=step)
 
                 if step % cfg.train.save_every_steps == 0:

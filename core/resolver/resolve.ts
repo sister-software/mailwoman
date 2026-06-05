@@ -38,6 +38,21 @@ interface ResolutionState {
 	candidatesPerLookup: number
 	defaultCountry?: string
 	parentFallback: boolean
+	/** The address's postcode string, extracted once up front, passed to locality lookups so a
+	 * coordinate-first backend can inject postcode-proximal locality candidates. */
+	postcode?: string
+}
+
+/** Find the first postcode value anywhere in the tree (a one-shot pre-scan; postcode and locality are
+ * siblings, so the top-down walk wouldn't otherwise let the locality lookup see it). */
+function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
+	const stack = [...roots]
+	while (stack.length > 0) {
+		const n = stack.pop()!
+		if (n.tag === "postcode" && n.value.trim().length > 0) return n.value.trim()
+		stack.push(...n.children)
+	}
+	return undefined
 }
 
 class WofResolver implements Resolver {
@@ -57,6 +72,7 @@ class WofResolver implements Resolver {
 			candidatesPerLookup: opts.candidatesPerLookup ?? 5,
 			defaultCountry: opts.defaultCountry,
 			parentFallback: opts.parentFallback ?? true,
+			postcode: firstPostcodeValue(tree.roots),
 		}
 
 		const newRoots: AddressNode[] = []
@@ -108,6 +124,10 @@ class WofResolver implements Resolver {
 		if (parentResolved && typeof parentResolved.id === "number") query.parentId = parentResolved.id
 		const country = parentResolved?.country ?? state.defaultCountry
 		if (country) query.country = country
+		// Coordinate-first: hand the sibling postcode to locality lookups so the backend can inject
+		// postcode-proximal candidates the name-match would miss. Only for locality (the placetype both
+		// `locality` and `dependent_locality` map to); other placetypes ignore it.
+		if (placetype === "locality" && state.postcode) query.postcode = state.postcode
 
 		let candidates: ResolvedPlace[]
 		try {
@@ -159,6 +179,10 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 	// lets consumers display the canonical name and lets the end-to-end eval check the resolver chose
 	// the right PLACE (gazetteer-name vs ground-truth) rather than merely echoing the parser's text.
 	node.metadata = { ...(node.metadata ?? {}), resolver_score: resolved.score, resolver_name: resolved.name }
+	// The postcode/locality conflict flag (the falsehood differentiator): the postcode pointed to a
+	// geographically different place than the parsed city name. Surface it so callers can warn rather
+	// than silently trust the resolved point.
+	if (resolved.mismatch) node.metadata["postcode_city_mismatch"] = true
 	if (alternatives.length > 0) {
 		node.alternatives = alternatives
 	}

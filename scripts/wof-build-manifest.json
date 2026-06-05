@@ -1,38 +1,163 @@
 {
-  "_comment": "Reproducibility manifest for the CUSTOM WOF gazetteer (admin-global-priority.db). We NEVER use the off-the-shelf geocode.earth prebuilt dumps (different WOF ids; deleted 2026-05-30). See the feedback-custom-wof-db-only memory + docs/articles/concepts/wof-data-pipeline.md. This file pins the exact build inputs so the artifact is reproducible — the gap that bit us (the admin-fr repo was deleted and never pinned, so the canonical 7-country DB couldn't be rebuilt) is closed by recording the commits below.",
-  "artifact": "admin-global-priority.db",
-  "build_command": "node --experimental-strip-types scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data --output /mnt/playpen/mailwoman-data/wof/admin-global-priority.db",
-  "post_build": "node resolver-wof-sqlite/out/build-fts-cli.js /mnt/playpen/mailwoman-data/wof/admin-global-priority.db   (builds place_search FTS5 + place_bbox R*Tree; ancestors + bbox columns are produced by the build itself)",
-  "priority_countries": ["US", "FR", "JP", "CN", "KR", "DE", "GB"],
-  "repos": [
-    { "name": "whosonfirst-data-admin-cn", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-cn", "commit": "7686704c083730d9f6c5af646602cff30629f3db", "geojson_files": 680051 },
-    { "name": "whosonfirst-data-admin-de", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-de", "commit": "d9a323b08fcadfc27d8cb245ba038c5329171ba6", "geojson_files": 189489 },
-    { "name": "whosonfirst-data-admin-fr", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-fr", "commit": "774d8460de802d36ff19b4f76d64d26e7fef4348", "geojson_files": 230729 },
-    { "name": "whosonfirst-data-admin-gb", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-gb", "commit": "574b9aab754d75349b7c4740e9557901ddf00c95", "geojson_files": 72674 },
-    { "name": "whosonfirst-data-admin-jp", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-jp", "commit": "6ac4e1339705ddb8e99d3d85d5837a23b0cca09b", "geojson_files": 62896 },
-    { "name": "whosonfirst-data-admin-kr", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-kr", "commit": "132b675fea1e062f92bbdb0ebf5704f1acf895c0", "geojson_files": 54034 },
-    { "name": "whosonfirst-data-admin-us", "url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-us", "commit": "c4e4f9b2233c4b29a6f7124278b635e270d0b87d", "geojson_files": 448570 }
-  ],
-  "total_geojson_files": 1738443,
-  "expected_output": {
-    "total_places": 1288749,
-    "localities": 1027616,
-    "by_country": { "CN": 678311, "US": 258543, "FR": 114655, "DE": 87074, "JP": 54488, "KR": 52967, "GB": 42711 },
-    "tables": ["spr", "names", "concordances", "place_population", "ancestors", "place_search", "place_bbox"],
-    "spr_has_bbox_columns": true
-  },
-  "postcode_build": {
-    "_comment": "US postcodes live in a SEPARATE shard DB (the resolver routes postalcode queries to it via multi-shard ATTACH). Built with the same build-unified-wof.ts using --placetypes postalcode.",
-    "artifact": "postalcode-us.db",
-    "build_command": "node --experimental-strip-types scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-postalcode-us --output /mnt/playpen/mailwoman-data/wof/postalcode-us.db --placetypes postalcode",
-    "post_build": "node resolver-wof-sqlite/out/build-fts-cli.js /mnt/playpen/mailwoman-data/wof/postalcode-us.db",
-    "repo": { "name": "whosonfirst-data-postalcode-us", "url": "https://github.com/whosonfirst-data/whosonfirst-data-postalcode-us", "commit": "f382dc496", "geojson_files": 42322 },
-    "expected_output": { "total_places": 42319, "tables": ["spr", "names", "place_population", "ancestors", "place_search", "place_bbox"] },
-    "resolver_wiring": "ResolveRouter + WofSqlitePlaceLookup take both DBs (admin-global-priority.db, postalcode-us.db); postalcode queries route to the postcode shard."
-  },
-  "notes": [
-    "admin-fr was missing from the cloned repos when this manifest was created (only the built admin-fr.db artifact remained); re-cloned 2026-05-30 at the commit above.",
-    "Clones are shallow (git clone --depth 1) for the data; the commit hash still pins the snapshot.",
-    "Postcodes: US only so far. Other priority countries' postcodes need their whosonfirst-data-postalcode-<cc> repos cloned + the same --placetypes postalcode build."
-  ]
+	"_comment": "Reproducibility manifest for the CUSTOM WOF gazetteer (admin-global-priority.db). We NEVER use the off-the-shelf geocode.earth prebuilt dumps (different WOF ids; deleted 2026-05-30). See the feedback-custom-wof-db-only memory + docs/articles/concepts/wof-data-pipeline.md. This file pins the exact build inputs so the artifact is reproducible — the gap that bit us (the admin-fr repo was deleted and never pinned, so the canonical 7-country DB couldn't be rebuilt) is closed by recording the commits below.",
+	"artifact": "admin-global-priority.db",
+	"build_command": "node --experimental-strip-types scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data --output /mnt/playpen/mailwoman-data/wof/admin-global-priority.db",
+	"post_build": "node resolver-wof-sqlite/out/build-fts-cli.js /mnt/playpen/mailwoman-data/wof/admin-global-priority.db   (builds place_search FTS5 + place_bbox R*Tree; ancestors + bbox columns are produced by the build itself)",
+	"priority_countries": ["US", "FR", "JP", "CN", "KR", "DE", "GB"],
+	"repos": [
+		{
+			"name": "whosonfirst-data-admin-cn",
+			"url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-cn",
+			"commit": "7686704c083730d9f6c5af646602cff30629f3db",
+			"geojson_files": 680051
+		},
+		{
+			"name": "whosonfirst-data-admin-de",
+			"url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-de",
+			"commit": "d9a323b08fcadfc27d8cb245ba038c5329171ba6",
+			"geojson_files": 189489
+		},
+		{
+			"name": "whosonfirst-data-admin-fr",
+			"url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-fr",
+			"commit": "774d8460de802d36ff19b4f76d64d26e7fef4348",
+			"geojson_files": 230729
+		},
+		{
+			"name": "whosonfirst-data-admin-gb",
+			"url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-gb",
+			"commit": "574b9aab754d75349b7c4740e9557901ddf00c95",
+			"geojson_files": 72674
+		},
+		{
+			"name": "whosonfirst-data-admin-jp",
+			"url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-jp",
+			"commit": "6ac4e1339705ddb8e99d3d85d5837a23b0cca09b",
+			"geojson_files": 62896
+		},
+		{
+			"name": "whosonfirst-data-admin-kr",
+			"url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-kr",
+			"commit": "132b675fea1e062f92bbdb0ebf5704f1acf895c0",
+			"geojson_files": 54034
+		},
+		{
+			"name": "whosonfirst-data-admin-us",
+			"url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-us",
+			"commit": "c4e4f9b2233c4b29a6f7124278b635e270d0b87d",
+			"geojson_files": 448570
+		},
+		{
+			"name": "whosonfirst-data-admin-es",
+			"url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-es",
+			"commit": "148ad222206ca465e346eab6364bc369b6f0f938",
+			"geojson_files": 63175,
+			"_added": "2026-06-04 for the coordinate-first postcode→locality work"
+		},
+		{
+			"name": "whosonfirst-data-admin-it",
+			"url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-it",
+			"commit": "c0e2aef6a38f0580acb78815866b0f6b15722558",
+			"geojson_files": 89728,
+			"_added": "2026-06-04 for the coordinate-first postcode→locality work"
+		},
+		{
+			"name": "whosonfirst-data-admin-nl",
+			"url": "https://github.com/whosonfirst-data/whosonfirst-data-admin-nl",
+			"commit": "f7b35802f907eb1eb010f51586586bfaac5bb7e5",
+			"geojson_files": 26349,
+			"_added": "2026-06-04 for the coordinate-first postcode→locality work (NL coord-first now resolves)"
+		}
+	],
+	"total_geojson_files": 1917695,
+	"expected_output": {
+		"_comment": "Rebuilt 2026-06-04 to add ES/IT/NL (coordinate-first). DE/FR/GB locality counts unchanged (12657/57260/16813); DE PIP-containment held at 92.6%.",
+		"total_places": 1422101,
+		"localities": 1034447,
+		"by_country_localities": {
+			"CN": 676736,
+			"US": 169799,
+			"IT": 62588,
+			"FR": 57260,
+			"KR": 50465,
+			"JP": 43886,
+			"ES": 31321,
+			"GB": 16813,
+			"DE": 12657,
+			"NL": 7358
+		},
+		"tables": ["spr", "names", "concordances", "place_population", "ancestors", "place_search", "place_bbox"],
+		"spr_has_bbox_columns": true
+	},
+	"postcode_build": {
+		"_comment": "US postcodes live in a SEPARATE shard DB (the resolver routes postalcode queries to it via multi-shard ATTACH). Built with the same build-unified-wof.ts using --placetypes postalcode.",
+		"artifact": "postalcode-us.db",
+		"build_command": "node --experimental-strip-types scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-postalcode-us --output /mnt/playpen/mailwoman-data/wof/postalcode-us.db --placetypes postalcode",
+		"post_build": "node resolver-wof-sqlite/out/build-fts-cli.js /mnt/playpen/mailwoman-data/wof/postalcode-us.db",
+		"repo": {
+			"name": "whosonfirst-data-postalcode-us",
+			"url": "https://github.com/whosonfirst-data/whosonfirst-data-postalcode-us",
+			"commit": "f382dc496",
+			"geojson_files": 42322
+		},
+		"expected_output": {
+			"total_places": 42319,
+			"tables": ["spr", "names", "place_population", "ancestors", "place_search", "place_bbox"]
+		},
+		"resolver_wiring": "ResolveRouter + WofSqlitePlaceLookup take both DBs (admin-global-priority.db, postalcode-us.db); postalcode queries route to the postcode shard."
+	},
+	"postcode_build_gb": {
+		"_comment": "GB postcodes for the coordinate-first postcode→locality table (acquired from source 2026-06-04). 2.72M unit postcodes; geojson is committed directly (only meta CSVs are LFS).",
+		"artifact": "postalcode-gb.db",
+		"build_command": "node --experimental-strip-types scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-postalcode-gb --output /mnt/playpen/mailwoman-data/wof/postalcode-gb.db --placetypes postalcode",
+		"repo": {
+			"name": "whosonfirst-data-postalcode-gb",
+			"url": "https://github.com/whosonfirst-data/whosonfirst-data-postalcode-gb",
+			"commit": "0bf2e994c3369cb37dbf82c5eae23bea45d3b8c8",
+			"geojson_files": 2719772
+		},
+		"expected_output": {
+			"total_places": 2719772
+		}
+	},
+	"postcode_locality_asset": {
+		"_comment": "Coordinate-first candidate table (postcode → containing + nearby WOF localities). Read-only distributable asset; see resolver-wof-sqlite/POSTCODE-LOCALITY.md.",
+		"artifact": "postcode-locality-intl.db",
+		"build": "scripts/build-postcode-locality.py --country <CC> --admin-repo <admin-<cc>> --postcode-db <postalcode source> --output postcode-locality-intl.db  (per country), then --finalize",
+		"countries": ["DE", "ES", "FR", "GB", "IT", "NL", "JP"],
+		"postcode_sources": {
+			"DE/ES/FR/IT/NL": "postalcode-intl.db",
+			"GB": "postalcode-gb.db",
+			"JP": "KEN_ALL_ROME (Japan Post) — name-match, see postcode_locality_cjk"
+		}
+	},
+	"notes": [
+		"admin-fr was missing from the cloned repos when this manifest was created (only the built admin-fr.db artifact remained); re-cloned 2026-05-30 at the commit above.",
+		"Clones are shallow (git clone --depth 1) for the data; the commit hash still pins the snapshot.",
+		"Postcodes: US (admin shard) + GB (postcode-build-gb) + DE/ES/FR/IT/NL (postalcode-intl.db) for the coordinate-first table.",
+		"2026-06-04: rebuilt admin-global-priority.db to add ES/IT/NL localities (NL coord-first now resolves). DE/FR/GB unchanged + DE PIP-containment held at 92.6% (no regression). Prior DB backed up as admin-global-priority.db.pre-nl-bak."
+	],
+	"postcode_locality_cjk": {
+		"_comment": "CJK postcode→locality via authoritative NAME-MATCH (not PIP — WOF CJK has no municipality polygons). Same postcode_locality table, consumed by the same postcode_area_resolution strategy. See resolver-wof-sqlite/POSTCODE-LOCALITY.md (CJK section) + docs/articles/evals/2026-06-05-cjk-arena.md.",
+		"artifact": "postcode-locality-intl.db (JP rows merged in)",
+		"build": "scripts/build-postcode-locality-cjk.py --country JP --postal-names KEN_ALL_ROME.CSV --geonames geonames/JP.txt --admin-db admin-global-priority.db --output postcode-locality-jp.db ; then merge into postcode-locality-intl.db",
+		"repos": {
+			"whosonfirst-data-admin-jp": "6ac4e1339705",
+			"whosonfirst-data-admin-kr": "132b675fea1e",
+			"whosonfirst-data-admin-tw": "61ed8eebf6dc",
+			"whosonfirst-data-postalcode-jp": "6fa7f0d87f0e"
+		},
+		"postal_authority": {
+			"JP": "KEN_ALL_ROME.zip (Japan Post, romanized) — CP932/Shift-JIS. Japan Post BLOCKS programmatic download (JS/geo-gated); fetch manually via browser: download.html → /zipcode/dl/roman-zip.html → roman/KEN_ALL_ROME.zip",
+			"KR": "deferred — Juso.go.kr / Korea Post (login/geo-walled); GeoNames KR is Hangul vs WOF romaji",
+			"TW": "deferred — no GeoNames postal; TW not yet in admin DB (admin-tw clone present)"
+		},
+		"points_source": "GeoNames postal (geonames/JP.txt, geonames/KR.txt) — already an in-project source for DE/ES/IT/NL",
+		"expected_output": {
+			"JP_rows": 297874,
+			"JP_name_matched": 114154,
+			"JP_match_rate": "94.9%",
+			"JP_resolver_independent": "93.9% (GeoNames cross-check)"
+		}
+	}
 }

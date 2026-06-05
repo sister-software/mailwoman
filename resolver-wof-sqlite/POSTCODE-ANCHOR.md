@@ -47,23 +47,28 @@ exact-match behaviour.
 
 ## Building the shards
 
-The shards come from the operator's own WOF build, never a prebuilt third-party dump. US already ships as
-`postalcode-us.db`. For another country, clone its WOF postcode repo and run the existing builder with the
-`postalcode` placetype, then backfill centroids:
+The WOF postcode records (and their ids) come from the operator's own WOF build; coordinates come from
+the priority chain below (own → GeoNames → WOF admin). US already ships as `postalcode-us.db`. For another
+country, clone its WOF postcode repo, build the shard, then backfill:
 
 ```bash
-# 1. clone the WOF postcode repo (small for most countries; GB is ~8 GB and deferred)
+# 1. clone the WOF postcode repo (small for most; GB is ~8 GB and deferred)
 git clone --depth 1 https://github.com/whosonfirst-data/whosonfirst-data-postalcode-fr.git \
   /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-postalcode-fr
+
+# 1b. (for GeoNames-filled locales) fetch the GeoNames postal dump (CC-BY 4.0)
+curl -sL https://download.geonames.org/export/zip/ES.zip -o /tmp/ES.zip && unzip -o /tmp/ES.zip ES.txt \
+  -d /mnt/playpen/mailwoman-data/geonames
 
 # 2. build the spr shard (point --data at a dir of the repos you want combined)
 node --experimental-strip-types scripts/build-unified-wof.ts \
   --data <repos-dir> --output /mnt/playpen/mailwoman-data/wof/postalcode-intl.db --placetypes postalcode
 
-# 3. backfill centroids from the admin hierarchy. --repos turns on the coarse ancestor
-#    fallback (see below): broader coverage, looser centroids.
+# 3. backfill centroids: GeoNames first (the postcode's own centroid), then the WOF admin parent-borrow
+#    + --repos ancestor fallback for what GeoNames misses.
 node --experimental-strip-types scripts/backfill-postcode-centroids.ts \
   --db /mnt/playpen/mailwoman-data/wof/postalcode-intl.db \
+  --geonames /mnt/playpen/mailwoman-data/geonames \
   --repos /mnt/playpen/mailwoman-data/wof/repos
 
 # 4. functional check + accuracy
@@ -72,73 +77,56 @@ node --experimental-strip-types scripts/eval/postcode-anchor-accuracy.ts \
   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
 ```
 
-### Why the centroid backfill exists
+### The centroid backfill: three priority passes
 
-The WOF postcode repos vary in quality. US and ~22% of FR records carry their own `geom:latitude/longitude`.
-The rest ship as coordinate-less stubs that only reference their admin parent by `wof:parent_id`. A
-postcode with no centroid cannot anchor anything geographically, so `backfill-postcode-centroids.ts`
-borrows a centroid from the admin gazetteer in two passes:
+The WOF postcode repos vary in quality (see the survey below), so `backfill-postcode-centroids.ts` fills
+a coordinate for every coordinate-less postcode, in priority order:
 
-1. **Parent-borrow** (always): copy the parent locality's centroid. Tight, town-level placement.
-2. **Ancestor fallback** (`--repos`): for postcodes whose parent locality is missing from the admin DB
-   (common for city-states like Berlin, whose locality node we never imported), read the GeoJSON
-   hierarchy and borrow the finest available ancestor, preferring county over region. Broader coverage at
-   a looser centroid.
+1. **Own coordinate** — the record's own `geom:latitude/longitude` from the build (US/NL, ~22% of FR). Most authoritative.
+2. **GeoNames postal** (`--geonames <dir>`) — the postcode's OWN centroid, matched by string from the GeoNames `zip` dump (CC-BY 4.0, ~80+ countries). The cleanest fill for ES/IT and ~half of DE; it is _finer_ than the WOF parent-borrow (the postcode's point, not a borrowed locality's), and it corrects WOF's mis-linked Italian parents (`20121` → central Milan, not a Liguria village). WOF ids stay the spine; only the coordinate comes from GeoNames.
+3. **WOF parent-borrow / ancestor fallback** (`--admin`, `--repos`) — a coarse "which city/region" approximation from the admin hierarchy, last resort for postcodes GeoNames does not cover.
 
-Every coordinate still comes from our own WOF admin DB.
+Postcodes neither GeoNames nor WOF can place keep `latitude=0` (membership only — the country posterior still works). **Licensing:** a shard shipping GeoNames-sourced coordinates must attribute "GeoNames (CC-BY 4.0)".
 
 ### Coverage and accuracy
 
-Measured against 3,000 OpenAddresses German points (`postcode-anchor-accuracy.ts`). The `--repos`
-fallback trades precision for coverage, so it is a knob, not a default:
+Per-country placement after the full chain, plus DE accuracy against 3,000 OpenAddresses German points (`postcode-anchor-accuracy.ts`):
 
-| Backfill           | DE placed (Berlin/Saxony sample) | distance to true address |
-| ------------------ | -------------------------------- | ------------------------ |
-| parent-borrow only | 34%                              | p50 2.8 km, 93% ≤ 10 km  |
-| with `--repos`     | 84%                              | p50 7.5 km, 98% ≤ 25 km  |
+| locale | placed | source                                  |
+| ------ | -----: | --------------------------------------- |
+| NL     |   100% | own PC6 coords                          |
+| ES     |    95% | GeoNames                                |
+| FR     |    91% | own + WOF borrow                        |
+| IT     |    90% | GeoNames (and it fixes WOF's bad links) |
+| DE     |    82% | GeoNames + WOF borrow                   |
 
-Membership (the country posterior) is 100% either way — every German postcode in the sample is in the
-gazetteer; only the centroid varies. When the anchor places a postcode it lands in the right town; the
-fallback extends that to the right region for the city-state and large-Land postcodes the parent-borrow
-misses.
+DE accuracy jumped once GeoNames supplied the postcode's own centroid: **p50 1.2 km, 99.9% placed, 100% within 25 km** (max 15.8 km), versus the WOF parent-borrow's 2.8–7.5 km median with 489 km tail outliers. GeoNames is both broader and tighter, because it places the postcode itself rather than borrowing a parent.
 
-### The WOF-pure ceiling
+### WOF postcode data quality, by locale (why GeoNames was needed)
 
-Roughly a third of German postcode records are bare stubs with neither coordinates nor a usable hierarchy
-(no county or region ancestor). Nothing in the admin DB can place those. Closing that last gap would need
-a non-WOF centroid source such as OpenAddresses point aggregation, which crosses the "extend the custom
-WOF build" line, so it is a deliberate policy call rather than a code fix.
+WOF-alone placeability, from a sample survey (orphan = no `wof:parent_id`; region = a usable `wof:hierarchy` ancestor), and what GeoNames adds:
 
-### WOF postcode data quality, by locale
+| locale | own coords | orphans | region ancestor |            WOF alone | with GeoNames                      |
+| ------ | ---------: | ------: | --------------: | -------------------: | ---------------------------------- |
+| NL     |       100% |      0% |            100% |                ~100% | WOF wins (GeoNames is coarser PC4) |
+| FR     |        39% |     39% |             61% |                 ~91% | ~91%                               |
+| DE     |         0% |     27% |             73% |                 ~66% | **82%**                            |
+| ES     |         0% |     64% |             36% |                 ~36% | **95%**                            |
+| IT     |         0% |     73% |             27% | ~27% (+ wrong links) | **90%** (links fixed)              |
 
-Whether a locale is placeable from WOF alone depends entirely on its postcode repo's data quality. A
-sample survey (orphan = no `wof:parent_id`; region = a usable `wof:hierarchy` ancestor):
-
-| locale | own coords | orphans | region ancestor | net placeable        |
-| ------ | ---------: | ------: | --------------: | -------------------- |
-| NL     |       100% |      0% |            100% | ~100% (own)          |
-| FR     |        39% |     39% |             61% | ~91%                 |
-| DE     |         0% |     27% |             73% | ~66%                 |
-| ES     |         0% |     64% |             36% | ~36%                 |
-| IT     |         0% |     73% |             27% | ~27% (+ wrong links) |
-
-US, NL, and FR carry enough of their own geometry (or clean ancestry) to place well. DE leans on the
-ancestor fallback. ES and IT are orphan-heavy and effectively WOF-unplaceable — IT also carries wrong
-links (Milan's `20121` points at a Liguria village), which is why it ships membership-only. Closing the
-ES/IT gap needs a non-WOF centroid source such as OpenAddresses point aggregation, a deliberate policy
-call rather than a code fix.
+WOF is a strong _admin_ gazetteer but a weak _postcode_ one outside a few countries: ES/IT are orphan-heavy and IT carries wrong links. GeoNames postal closes those gaps cleanly and keeps the WOF id as the key, so eval integrity holds. NL stays on WOF (its PC6 is finer than GeoNames' PC4). The wider supplement landscape is catalogued in `docs/articles/plan/reference/address-data-sources.md` ("Gazetteer / resolver coordinate sources").
 
 ### Per-country status
 
-| Country | Shard                | Placement                                            |
-| ------- | -------------------- | ---------------------------------------------------- |
-| US      | `postalcode-us.db`   | own centroids (existing)                             |
-| NL      | `postalcode-intl.db` | 100% placed (own centroids; PC6 stored as `1012LM`)  |
-| FR      | `postalcode-intl.db` | 91% placed (own + parent-borrow + ancestor)          |
-| DE      | `postalcode-intl.db` | 66% placed (parent-borrow + ancestor)                |
-| IT      | `postalcode-intl.db` | membership only — 73% orphans + wrong parents in WOF |
-| ES      | not built            | 64% orphans — WOF-unplaceable, needs OA aggregation  |
-| GB      | not built            | deferred — postcode-not-order locale, ~8 GB repo     |
+| Country | Shard                | Placement                                        |
+| ------- | -------------------- | ------------------------------------------------ |
+| US      | `postalcode-us.db`   | own centroids                                    |
+| NL      | `postalcode-intl.db` | 100% (own PC6 `1012LM`)                          |
+| ES      | `postalcode-intl.db` | 95% (GeoNames)                                   |
+| FR      | `postalcode-intl.db` | 91% (own + WOF borrow)                           |
+| IT      | `postalcode-intl.db` | 90% (GeoNames; WOF's bad links corrected)        |
+| DE      | `postalcode-intl.db` | 82% (GeoNames + WOF borrow)                      |
+| GB      | not built            | deferred — postcode-not-order locale, ~8 GB repo |
 
 NL postcodes are stored space-less (`1012LM`), so the anchor normalizes `1012 LM` → `1012LM` before
-lookup. ES and IT need a non-WOF centroid source rather than another admin-repo build.
+lookup.

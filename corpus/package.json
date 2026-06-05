@@ -18,6 +18,7 @@
 	"dependencies": {
 		"@dsnp/parquetjs": "1.7.0",
 		"@fragaria/address-formatter": "^6.3.0",
+		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"csv-parse": "^5.5.6",
 		"fastest-levenshtein": "^1.0.16",

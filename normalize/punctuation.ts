@@ -14,8 +14,10 @@ const REPLACEMENTS = new Map<string, string>([
 	["’", "'"], // ’
 	["“", '"'], // “
 	["”", '"'], // ”
-	["–", "-"], // –
-	["—", "-"], // —
+	["–", "-"], // – en dash
+	["—", "-"], // — em dash
+	["−", "-"], // − U+2212 minus sign — Japanese IMEs emit this as the block separator (1−2−3)
+	["―", "-"], // ― U+2015 horizontal bar — another common JP block separator
 	["…", "..."], // … expands; tracked specially
 	[" ", " "], // non-breaking space
 ])

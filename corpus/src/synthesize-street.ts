@@ -167,6 +167,15 @@ export interface StreetSynthesisOpts {
 	random?: () => number
 	/** Probability of emitting house_number alongside the street. Default 0.85. */
 	includeHouseNumberProb?: number
+	/**
+	 * Probability of emitting the street BARE — no `, City, ST ZIP` tail and no region/locality/
+	 * postcode components (just `street_prefix`/`street`/`street_suffix` + optional `house_number`).
+	 * Default 0 (preserves the original full-address behavior exactly, including the RNG sequence).
+	 * Set >0 to teach the model that a bare `10th Ave` / `Main St` is a STREET, not a locality — the
+	 * functional-test failure cluster (bare streets mislabeled `locality`), the bare-format analogue of
+	 * the v0.7.x intersection-bare fix.
+	 */
+	bareProb?: number
 }
 
 function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
@@ -213,11 +222,18 @@ export function synthesizeStreetRow(
 	// string, and the aligner's fuzzy match (edit distance 2) will spuriously match
 	// "US" against any 2-char token (e.g. a house number "45" is exactly 2 substitutions
 	// from "US"). The PO box synthesizer skips country for the same reason.
-	const components: CanonicalRow["components"] = {
-		region: base.region,
-		locality: base.locality,
-		postcode: base.postcode,
-	}
+	// Bare mode is guarded by `> 0` so the default (bareProb=0) consumes no RNG and reproduces the
+	// original full-address output byte-for-byte.
+	const bareProb = opts.bareProb ?? 0
+	const bare = bareProb > 0 && random() < bareProb
+
+	const components: CanonicalRow["components"] = bare
+		? {}
+		: {
+				region: base.region,
+				locality: base.locality,
+				postcode: base.postcode,
+			}
 	if (decomposed.prefix) components.street_prefix = decomposed.prefix
 	if (decomposed.street) components.street = decomposed.street
 	if (decomposed.suffix) components.street_suffix = decomposed.suffix
@@ -226,9 +242,9 @@ export function synthesizeStreetRow(
 	if (random() < includeHN) {
 		const hn = randomHouseNumber(random)
 		components.house_number = hn
-		raw = `${hn} ${fullStreet}, ${base.locality}, ${base.region} ${base.postcode}`
+		raw = bare ? `${hn} ${fullStreet}` : `${hn} ${fullStreet}, ${base.locality}, ${base.region} ${base.postcode}`
 	} else {
-		raw = `${fullStreet}, ${base.locality}, ${base.region} ${base.postcode}`
+		raw = bare ? fullStreet : `${fullStreet}, ${base.locality}, ${base.region} ${base.postcode}`
 	}
 
 	return { raw, components, locale: "en-US" }
