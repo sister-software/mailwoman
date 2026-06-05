@@ -1,0 +1,38 @@
+# The better posterior was confidently wrong
+
+**Date:** 2026-06-05
+**Scope:** the postcode anchor's country posterior (#240) — uniform vs a de-biased Bayesian weighting, decided on held-out real collisions before changing a line of shipped code.
+
+The postcode anchor turns a code like `75001` into a distribution over the countries it could belong to. The shipped version uses a **uniform** posterior: `1/k` over the countries a code exists in. `75001` is in both France and the US, so it comes back `{FR: 0.5, US: 0.5}` — an honest shrug that leaves the disambiguation to the parser and the resolver.
+
+That shrug throws away real information, and we knew it. The _true_ posterior is `P(country | postcode) ∝ N_c(x)` — the actual address-count ratio. `75001` is the 1st arrondissement of Paris, dense and central; it is also Addison, Texas, a quiet suburb. Those don't have equal address counts, so the honest answer isn't 50/50. A de-biased Bayesian posterior — within-country frequency times a real-world address-volume prior — targets that ratio directly, and on paper it's the more correct shape. So we went to adopt it. Then we did the thing our earlier postcode-country investigation was entirely about: we measured the load-bearing assumption before building on it.
+
+## The measurement
+
+We A/B'd three posteriors on the canonical collision — **US ↔ FR**, the literal `75001` case, and the one pair where we have rich frequency data on both sides:
+
+- **`f̂` (train):** corpus v0.1.0 — 4.4M real addresses — counting `(country, postcode)`.
+- **candidate set:** the 13,186 five-digit postcodes that exist in _both_ the US and FR postal gazetteers.
+- **test (held-out):** `openaddresses-{us,fr}-sample.jsonl` — a different extraction, so `f̂` is never graded on the data it was fit to.
+
+Three posteriors, scored per true country and **balanced** (so a US-leaning prior can't win by exploiting that US collisions outnumber FR in the test):
+
+| posterior                   | balanced logloss | balanced top-1 | high-conf errors (true-FR) |
+| --------------------------- | ---------------: | -------------: | -------------------------: |
+| **uniform** (shipped)       |       **0.6931** |          50.0% |                   **0.0%** |
+| naive-count                 |           0.7555 |          39.4% |                       0.0% |
+| de-biased (the "smart" one) |           2.2292 |          51.6% |                  **96.9%** |
+
+De-biased is **three times worse-calibrated** than the shrug, and **confidently wrong about the minority country 97% of the time.** Its one bragging point — `+1.6pp` top-1 — is pure test-imbalance arbitrage: it nails the abundant US cases and immolates the FR ones. naive-count, the control, comes in worse than uniform too, exactly as the raw-count skeptics warned.
+
+## Why — and it isn't the math
+
+The de-biasing math is sound. The data underneath it is half-broken. `f̂` needs per-country address _frequency_ on both sides of a collision, and we only have it on one. France arrives as 1.13M real street addresses (`ban`, the national address base), so a busy Paris postcode genuinely shows up thousands of times. The US arrives as 58k rows from `wof-postalcode` — essentially a _membership list_, one row per code, no frequency signal at all (97.5% of v0.1.0's US rows are `wof-admin` places that carry no postcode). So `f̂_US` is estimated off a tiny, flat denominator and comes out systematically inflated; multiply by a US-favoring volume prior and the posterior screams "US" at nearly every collision, right or wrong.
+
+Feed sound math a lopsided `f̂` and you don't get a slightly-off posterior — you get a _confidently_ wrong one. And a confidently-wrong soft prior is the single thing that corrupts the resolver re-rank we're building toward: uniform's honest 0.5 gets gated out when the resolver is already sure, but a 0.97-to-the-wrong-country prior sails through the confidence gate and flips a correct answer. The shrug is worse on paper and far safer in practice.
+
+## Verdict
+
+**Uniform stays.** Not because de-biasing is the wrong idea, but because we can't feed it. This is a data-availability finding wearing a posterior-design costume: the day we have balanced per-country address frequency — bulk OpenAddresses for the US, or census ZIP-population weights, neither on disk today — it's worth re-measuring, because the _shape_ it targets really is the correct one. Until then, weighting the guess makes it worse.
+
+The measurement is `scripts/eval/postcode-posterior-ab.py`; re-run it when the data changes. It cost an afternoon and saved us from shipping a posterior that is wrong with conviction — which is the only kind of wrong a soft anchor can't afford to be.
