@@ -30,7 +30,11 @@ from typing import Iterable, Sequence
 
 import sentencepiece as spm  # type: ignore[import-not-found]
 
-from .labels import IGNORE_INDEX, LABEL_TO_ID, collapse_label
+from .labels import IGNORE_INDEX, LABEL_TO_ID, LOCALE_TO_ID, NUM_LOCALES, collapse_label
+
+# Anchor feature width: a uniform country posterior over the locale set + a 2-d normalized centroid.
+# Must equal the model's ``anchor_feature_dim`` default (NUM_LOCALES + 2) — single source of truth.
+ANCHOR_FEATURE_DIM = NUM_LOCALES + 2
 
 
 @dataclass(frozen=True)
@@ -179,6 +183,84 @@ def realign_labels_to_pieces(
             out.append(f"B-{tag}")
         prev_tag = tag
     return out
+
+
+def anchor_feature_vector(posterior: dict[str, float], lat: float, lon: float) -> list[float]:
+    """Build the fixed-width anchor feature vector: a uniform country posterior over the locale set
+    (0 for countries outside it, renormalized over the in-set mass) + a normalized centroid
+    (lat/90, lon/180 ∈ [-1, 1]). Width = ANCHOR_FEATURE_DIM."""
+    vec = [0.0] * NUM_LOCALES
+    total = 0.0
+    for country, weight in posterior.items():
+        idx = LOCALE_TO_ID.get(country.strip().upper())
+        if idx is not None:
+            vec[idx] = float(weight)
+            total += float(weight)
+    if total > 0:
+        vec = [v / total for v in vec]
+    vec.append(max(-1.0, min(1.0, lat / 90.0)))
+    vec.append(max(-1.0, min(1.0, lon / 180.0)))
+    return vec
+
+
+def realign_anchor_to_pieces(
+    raw: str,
+    tokens: Sequence[str],
+    labels: Sequence[str],
+    pieces: Sequence[PieceSpan],
+    anchor_lookup: "dict[str, tuple[dict[str, float], float, float]]",
+) -> tuple[list[list[float]], list[float]]:
+    """Project gold postcode-span anchor features onto SP pieces (de-risk pilot #239/#240).
+
+    Mirrors {@linkcode realign_labels_to_pieces} EXACTLY — same char→piece projection (each piece
+    inherits the value of the first non-whitespace char it covers) — so the anchor lands on precisely
+    the sub-tokens the postcode labels do. That char-based reuse is what guarantees the alignment can't
+    drift (the off-by-one DeepSeek flagged as the silent run-killer).
+
+    Gold-span: the postcode span is read from the row's own ``B/I-postcode`` labels. Each contiguous
+    postcode entity's surface is normalized and looked up in ``anchor_lookup`` (postcode →
+    ({country: weight}, lat, lon)); a hit yields a confidence-1.0 anchor on those chars, a miss yields
+    no anchor (confidence 0). Returns ``(features[n_pieces][ANCHOR_FEATURE_DIM], confidence[n_pieces])``.
+    """
+    zero = [0.0] * ANCHOR_FEATURE_DIM
+    # Per-char anchor: feature vector + confidence for chars inside a looked-up postcode entity.
+    char_feat: list[list[float]] = [zero] * len(raw)
+    char_conf: list[float] = [0.0] * len(raw)
+    spans = whitespace_spans(raw, tokens)
+    i = 0
+    while i < len(labels):
+        if labels[i].endswith("-postcode") and labels[i].startswith("B"):
+            # Gather this contiguous postcode entity (B then any I-postcode).
+            j = i + 1
+            while j < len(labels) and labels[j] == "I-postcode":
+                j += 1
+            begin = spans[i][0]
+            end = spans[j - 1][1]
+            postcode = raw[begin:end].replace(" ", "").upper()
+            hit = anchor_lookup.get(postcode)
+            if hit is not None:
+                posterior, lat, lon = hit
+                feat = anchor_feature_vector(posterior, lat, lon)
+                for c in range(begin, end):
+                    char_feat[c] = feat
+                    char_conf[c] = 1.0
+            i = j
+        else:
+            i += 1
+
+    feats: list[list[float]] = []
+    confs: list[float] = []
+    for piece in pieces:
+        chosen_feat = zero
+        chosen_conf = 0.0
+        for c in range(piece.char_begin, piece.char_end):
+            if c < len(raw) and not raw[c].isspace():
+                chosen_feat = char_feat[c]
+                chosen_conf = char_conf[c]
+                break
+        feats.append(chosen_feat)
+        confs.append(chosen_conf)
+    return feats, confs
 
 
 def encode_row(
