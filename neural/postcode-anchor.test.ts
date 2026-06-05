@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest"
 import {
 	editDistance1Variants,
 	extractPostcodeAnchors,
+	gbOutwardCode,
 	normalizePostcode,
 	type PostcodePlace,
 	type PostcodeResolver,
@@ -206,5 +207,39 @@ describe("extractPostcodeAnchors — fuzzy fallback", () => {
 		const [a] = extractPostcodeAnchors("94105", RESOLVER, { fuzzy: true })
 		expect(a!.matchType).toBe("exact")
 		expect(a!.confidence).toBe(1)
+	})
+})
+
+describe("gbOutwardCode", () => {
+	it("returns the outward code of a GB unit postcode", () => {
+		expect(gbOutwardCode("SO4 3RX")).toBe("SO4")
+		expect(gbOutwardCode("SW1A 2AA")).toBe("SW1A")
+	})
+	it("returns null for non-GB shapes (never fires elsewhere)", () => {
+		expect(gbOutwardCode("75001")).toBeNull() // numeric
+		expect(gbOutwardCode("1012LM")).toBeNull() // no space
+		expect(gbOutwardCode("ABC DEF")).toBeNull() // inward isn't \d[A-Z]{2}
+	})
+})
+
+describe("extractPostcodeAnchors — GB outward fallback", () => {
+	// The GB gazetteer is aggregated to outward codes; a unit postcode resolves via its outward.
+	const GB = new FakeResolver({ SW1A: [{ country: "GB", lat: 51.501, lon: -0.142 }] })
+
+	it("resolves a GB unit to its outward district, tagged matchType 'outward', full confidence", () => {
+		const [a] = extractPostcodeAnchors("221B Baker St, London SW1A 2AA", GB)
+		expect(a!.matchType).toBe("outward")
+		expect(a!.posterior).toEqual({ GB: 1 })
+		expect(a!.candidates[0]!.country).toBe("GB")
+		expect(a!.confidence).toBeGreaterThan(0.9) // a real GB match, no fuzzy penalty
+	})
+
+	it("prefers an exact hit over the outward fallback when the full code exists", () => {
+		const both = new FakeResolver({
+			"SW1A 2AA": [{ country: "GB", lat: 51.5, lon: -0.14 }],
+			SW1A: [{ country: "GB", lat: 51.501, lon: -0.142 }],
+		})
+		const [a] = extractPostcodeAnchors("SW1A 2AA", both)
+		expect(a!.matchType).toBe("exact")
 	})
 })
