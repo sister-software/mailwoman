@@ -18,6 +18,7 @@ const CARD = "/tmp/v072-release/model-card.json"
 const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
 const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
+const { normalize } = await import("@mailwoman/normalize")
 const modelCard = JSON.parse(readFileSync(CARD, "utf8"))
 const labels: string[] = modelCard.labels
 const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(MODEL)])
@@ -67,6 +68,13 @@ for (const { label, text } of inputs) {
 	console.log(`\n=== ${label} ===`)
 	console.log(`  input: ${text}`)
 	console.log(`  raw BIO : ${await rawBio(text)}`)
+	// #291: show the parse AFTER the CJK normalizer (〒 strip + full-width fold). The pipeline runs
+	// normalize() before classify, so this is what the model actually sees in production.
+	const norm = normalize(text).normalized
+	if (norm !== text) {
+		console.log(`  norm    : ${norm}`)
+		console.log(`  BIO+norm: ${await rawBio(norm)}`)
+	}
 	console.log(`  tree    : ${dumpTree(await neural.parse(text, { postcodeRepair: true } as any))}`)
 	const sol = await v0.parse(text)
 	const rec = (sol[0]?.classifications ?? {}) as ClassificationRecord
