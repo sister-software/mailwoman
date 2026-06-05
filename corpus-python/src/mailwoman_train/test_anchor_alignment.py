@@ -71,3 +71,20 @@ def test_collision_posterior_is_uniform_and_renormalized():
     assert vec[LOCALE_TO_ID["FR"]] == pytest.approx(0.5)
     assert vec[LOCALE_TO_ID["US"]] == pytest.approx(0.5)
     assert sum(vec[:NUM_LOCALES]) == pytest.approx(1.0)
+
+
+def test_confidence_curriculum_no_op_early_perturbs_late():
+    """The robustness curriculum is a no-op before 25% of max_steps, then perturbs downward + zeros
+    whole rows after — never above 1.0, never a discrete regime (#239/#240)."""
+    torch = pytest.importorskip("torch")
+    from mailwoman_train.train import perturb_anchor_confidence
+
+    conf = torch.ones(128, 6)
+    assert torch.equal(perturb_anchor_confidence(conf, 0, 20000), conf)  # 0% → untouched
+    assert torch.equal(perturb_anchor_confidence(conf, 4999, 20000), conf)  # <25% → untouched
+    torch.manual_seed(0)
+    late = perturb_anchor_confidence(conf, 15000, 20000)  # >50% → full perturbation
+    assert not torch.equal(late, conf)
+    assert float(late.max()) <= 1.0 and float(late.min()) >= 0.0
+    zeroed_rows = int((late.sum(dim=1) == 0).sum().item())
+    assert 0 < zeroed_rows < 128  # some rows fully zeroed (anchor "absent"), not all

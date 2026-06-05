@@ -418,3 +418,81 @@ def diagnose_corpus(
             print(f"  country={r['country']} locale_id={locale_id(r['country'])} raw={r['raw'][:60]}")
         if not rows:
             print("  !! ZERO rows — the run would train on nothing. Do NOT launch.")
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=900,
+)
+def eval_de(
+    output_dir: str,
+    step: str,
+    anchor_lookup: str = "",
+    anchor_off: bool = False,
+    val_path: str = "/data/corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/val/part-german-val.parquet",
+    tokenizer_path: str = "/data/models/tokenizer/v0.6.0-a0/tokenizer.model",
+    max_rows: int = 4000,
+):
+    """DE-locality readout for the anchor pilot (#239/#240): per-tag PARSER F1 on the German val for
+    one checkpoint. The German collapse shows as a low locality/postcode F1 (with street/house# up);
+    the anchor fix as a recovered locality. ``anchor_lookup`` set → feed the real anchor;
+    ``anchor_off=True`` → feed the features but force confidence 0 (the anchor-free degradation gate).
+    Forwards + argmax (CRF weight is 0, so the trained signal is in the emissions)."""
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, "/data/corpus-python/src")
+    import torch
+    import pyarrow.parquet as pq
+
+    from mailwoman_train.model import MailwomanCoarseEncoder
+    from mailwoman_train.tokenizer import Tokenizer, encode_row
+    from mailwoman_train.train import _token_f1
+    from mailwoman_train.data_loader import load_anchor_lookup
+    from mailwoman_train.labels import ACTIVE_BIO_LABELS
+
+    ck = Path(f"{output_dir}/checkpoints/step-{step}")
+    tok = Tokenizer(Path(tokenizer_path))
+    _orig = torch.load
+    torch.load = lambda *a, **kw: _orig(*a, **{**kw, "map_location": "cpu"})
+    model = MailwomanCoarseEncoder.from_pretrained(ck).eval()
+    torch.load = _orig
+    lookup = load_anchor_lookup(anchor_lookup) if anchor_lookup else None
+
+    rows = pq.read_table(val_path).to_pylist()[:max_rows]
+    all_preds, all_labels = [], []
+    B = 128
+    for i in range(0, len(rows), B):
+        chunk = rows[i : i + B]
+        ids, masks, labs, afeats, aconfs = [], [], [], [], []
+        for r in chunk:
+            enc = encode_row(tok, r["raw"], r["tokens"], r["labels"], 128, anchor_lookup=lookup)
+            ids.append(enc["input_ids"])
+            masks.append(enc["attention_mask"])
+            labs.append(enc["labels"])
+            if lookup:
+                afeats.append(enc["anchor_features"])
+                aconfs.append([0.0] * 128 if anchor_off else enc["anchor_confidence"])
+        kw = {}
+        if lookup:
+            kw = {
+                "anchor_features": torch.tensor(afeats, dtype=torch.float32),
+                "anchor_confidence": torch.tensor(aconfs, dtype=torch.float32),
+            }
+        with torch.no_grad():
+            out = model(torch.tensor(ids), attention_mask=torch.tensor(masks), **kw)
+        all_preds.append(out.logits.argmax(-1))
+        all_labels.append(torch.tensor(labs))
+
+    preds = torch.cat(all_preds)
+    labels = torch.cat(all_labels)
+    m = _token_f1(preds, labels, num_labels=len(ACTIVE_BIO_LABELS))
+    g = lambda t: m.get(f"f1_tag.{t}", float("nan"))
+    mode = "anchor-OFF" if (anchor_off or not lookup) else "anchor-ON "
+    print(
+        f"[DE eval] {ck.name} {mode}: locality={g('locality'):.3f}  postcode={g('postcode'):.3f}  "
+        f"region={g('region'):.3f}  street={g('street'):.3f}  house_number={g('house_number'):.3f}  "
+        f"macro_f1={m.get('macro_f1', float('nan')):.3f}  (n={len(rows)})"
+    )

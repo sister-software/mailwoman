@@ -25,6 +25,7 @@ Per Phase 2 §2:
 
 from __future__ import annotations
 
+import json
 import logging
 import random
 from dataclasses import dataclass
@@ -52,6 +53,23 @@ class EncodedExample:
     # when unmapped. The aux locale head's per-row target. Defaults to IGNORE_INDEX so encoders
     # built without locale conditioning are unaffected.
     locale_id: int = IGNORE_INDEX
+    # Postcode-anchor channel (#239/#240). Per-piece ``(max_length, ANCHOR_FEATURE_DIM)`` features +
+    # ``(max_length,)`` confidence, or None when no anchor lookup is configured (back-compat).
+    anchor_features: list[list[float]] | None = None
+    anchor_confidence: list[float] | None = None
+
+
+def load_anchor_lookup(path: str) -> dict[str, tuple[dict[str, float], float, float]]:
+    """Load the postcode→anchor lookup (#239/#240) from JSON, once at loader init.
+
+    Format: ``{normalized_postcode: [posterior_dict, lat, lon]}`` where ``posterior_dict`` is
+    ``{country: weight}`` (uniform over the countries the code exists in). Returns the tuple form
+    ``realign_anchor_to_pieces`` consumes. Built offline by ``scripts/build-pilot-anchor-lookup.py``
+    so the training loop carries no gazetteer dependency.
+    """
+    with open(path, encoding="utf-8") as fh:
+        raw = json.load(fh)
+    return {pc: (post, float(lat), float(lon)) for pc, (post, lat, lon) in raw.items()}
 
 
 def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
@@ -432,6 +450,9 @@ def iter_encoded(
     bugs (per Phase 2 §2.3). Cap at the model's ``max_position_embeddings``.
     """
     rng = rng or random.Random(0)
+    # Postcode-anchor lookup (#239/#240): loaded once, passed to every encode_row. None → no anchor
+    # features produced (back-compat). See load_anchor_lookup.
+    anchor_lookup = load_anchor_lookup(cfg_data.anchor_lookup_path) if cfg_data.anchor_lookup_path else None
     for row in iter_rows(
         Path(cfg_data.corpus_dir),
         split,
@@ -449,6 +470,7 @@ def iter_encoded(
             row["tokens"],
             row["labels"],
             max_length=cfg_data.max_length,
+            anchor_lookup=anchor_lookup,
         )
         # Drop rows whose non-padding length exceeds max_length (length filter §2).
         non_pad = sum(enc["attention_mask"])
@@ -461,17 +483,26 @@ def iter_encoded(
             attention_mask=enc["attention_mask"],
             labels=enc["labels"],
             locale_id=locale_id(row.get("country")),
+            anchor_features=enc.get("anchor_features"),
+            anchor_confidence=enc.get("anchor_confidence"),
         )
 
 
 def collate(batch: list[EncodedExample]) -> dict:
     """Stack a list of ``EncodedExample`` into batched lists. Caller wraps in torch tensors."""
-    return {
+    out = {
         "input_ids": [ex.input_ids for ex in batch],
         "attention_mask": [ex.attention_mask for ex in batch],
         "labels": [ex.labels for ex in batch],
         "locale_ids": [ex.locale_id for ex in batch],
     }
+    # Postcode-anchor channel (#239/#240): only present when every example carries anchor features
+    # (i.e. an anchor lookup is configured). Absent → omitted, so the trainer's tensor-conversion
+    # skips it and the model runs anchor-free (back-compat).
+    if batch and batch[0].anchor_features is not None:
+        out["anchor_features"] = [ex.anchor_features for ex in batch]
+        out["anchor_confidence"] = [ex.anchor_confidence for ex in batch]
+    return out
 
 
 def iter_batches(
