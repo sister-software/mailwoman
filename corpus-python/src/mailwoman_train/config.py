@@ -104,6 +104,13 @@ class ModelConfig:
     # unsupervised, which is rarely what you want); a value like 0.3 keeps the locale signal a
     # genuine but secondary objective behind the per-token BIO task.
     locale_loss_weight: float = 0.0
+    # Postcode-anchor conditioning channel (#239/#240 de-risk pilot). When True, the encoder takes a
+    # per-token ``(B, S, NUM_LOCALES+2)`` anchor-feature tensor (uniform country posterior + centroid)
+    # and a ``(B, S)`` confidence scalar, and injects ``c·(W·features + v_ANCHOR)`` at the input
+    # embedding — a position-local hard cue at the postcode span (the property self-conditioning's
+    # global FiLM lacked). Robustness is the confidence curriculum applied corpus-side (see the data
+    # loader). Default False keeps existing numerics. Composes with ``use_locale_conditioning``.
+    use_postcode_anchor: bool = False
 
 
 @dataclass
