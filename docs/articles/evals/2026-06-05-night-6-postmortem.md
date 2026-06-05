@@ -6,6 +6,7 @@
 
 - **#292 — Japan coarse resolution (PR #303, merged).** The first CJK locale, and it validated the whole arena architecture. WOF has no municipality polygons in CJK (point geometry, confirmed JP/KR/TW), so the European point-in-polygon build is inapplicable (~25% JP). Pivoted to an authoritative **name-match** build (KEN*ALL romanized municipality + GeoNames point → cross-placetype WOF match) feeding the \_same* `postcode_area_resolution` strategy with zero new resolver code. **Build 94.9%, end-to-end resolver 98.5% (KEN_ALL gold) / 93.9% (independent GeoNames cross-check)**, all above the 85% bar. EU (DE/FR/GB/NL) byte-identical after the merge.
 - **CJK arena eval report (PR #304, merged)** — `docs/articles/evals/2026-06-05-cjk-arena.md`, plus the Direction-E design-doc correction (it had assumed PIP was uniform).
+- **#293 — Korea coarse resolution (PR #312, merged; EXPERIMENTAL, not promoted).** The second CJK locale, and the real test of "less special": Korea's data _inverts_ Japan's, so the build inverts. GeoNames postal KR already carries `postcode → (place_name, province, lat, lon)` (Hangul names), and WOF's `names` table holds Hangul (`kor` + `und`) — so KR is **point-primary** (nearest WOF locality by coordinate, Hangul name as a confirmation signal), feeding the _same_ `postcode_area_resolution` strategy with zero resolver code changed. Province + coordinate land at **100%** (p50 0.96 km); the name tier is **26.3%** (vs JP's 94.9%) — a WOF-data ceiling (ri-granularity offset + no 구 urban-district localities), not an architecture limit. Caught and fixed a homonym bug (global name-match landed 500 km away → proximity-constrained). Honest writeup: `docs/articles/evals/2026-06-05-kr-point-primary.md`. **TW (#294) confirmed blocked one rung lower** — GeoNames postal TW is a hard 404 upstream (no postcode→point input at all), so even point-primary can't run; `admin-tw.db` is unbuilt but building it is premature without the postal source (Chunghwa Post, a deliberate acquisition).
 - **CJK provenance in the build manifest (PR #307)** — pinned the JP WOF repo commits + KEN_ALL fetch chain + GeoNames points source (reproducibility / build-from-source discipline).
 - **Two v0.8.0 training experiments** (configs #306 ls=0.05, #308 bare-street + the `bareProb` corpus feature) — run, evaluated, **neither promoted** (verdict below). The durable wins: the harness failure analysis (143 targetable vs 175 blocked) and the reusable `bareProb` synthesizer.
 - **Issues:** filed #305 (the exact-tier/conflict-flag design question); logged KR (#293) + TW (#294) data blockers; groomed #14 (Japan milestone).
@@ -75,19 +76,19 @@
 ## Concrete next steps
 
 - **bare-street follow-up (cheap, diagnosed):** the functional cluster didn't move because the model _still_ labels pure bare streets (`main pl`, `10th ave`) as `locality` — and the cause is a flaw in my shard: `includeHouseNumberProb=0.85`, so 85% of the bare rows carried a house number (`62 NW Lakeview Cir E`). The with-number case improved (usa +7pp) but the **no-number** case (the functional pattern, `10th Ave` alone) stayed undertrained. The fix is a bare-street shard with **`includeHouseNumberProb` ~0.3–0.5** (many pure `Main St` / `10th Ave` rows) at a **lower weight (0.1)** to avoid the golden-street regression. One-config retry.
-- **KR coarse** once a romanized authoritative source is in hand (`build-postcode-locality-cjk.py` already generalizes via `--country`).
-- **TW:** admin-DB rebuild to add `admin-tw` (clone on disk) + a TW national postal source.
+- **KR name tier (the real follow-up):** Korea shipped experimental at 26% name-confirmed; the path to a JP-grade tier is the Juso / 도로명주소 road-name database (carries 구/동 natively), which is government-key-walled — a deliberate acquisition, not a scrape. The point-primary build (`build-postcode-locality-kr.py`) is in place and waiting for it.
+- **TW:** needs a national postal source first — GeoNames postal TW is a confirmed 404, so there's no postcode→point input. Chunghwa Post zip data is the acquisition; `admin-tw.db` (WOF repo on disk, 19.7k features) is a one-command build _after_ that, not before.
 - **#305** design decision → careful PR with the full EU resolver-eval guard.
 
 ## Numbers
 
-|                      |                                                                                          |
-| -------------------- | ---------------------------------------------------------------------------------------- |
-| shift window         | 04:18 → (ongoing) UTC                                                                    |
-| PRs merged           | #303 (JP), #304 (CJK report), #306 (ls=0.05 config), #307 (manifest), #308 (bare-street) |
-| issues filed/updated | #305 filed; #293/#294/#14 commented                                                      |
-| models trained       | 2 (ls=0.05, bare-street) — **neither promoted; v0.7.2 stays default**                    |
-| Modal cost           | ~$13 / $15 (2× A100 ~1.8h each + 3 exports)                                              |
-| NaN incidents        | 0                                                                                        |
-| CI failures          | 1 (transient registry-network flake on #304, re-ran green)                               |
-| regressions shipped  | 0 (EU byte-identical; nothing promoted)                                                  |
+|                      |                                                                                                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| shift window         | 04:18 → 14:00 UTC (substantive work wrapped ~11:10)                                                                                                                |
+| PRs merged           | #303 (JP), #304 (CJK report), #306 (ls=0.05), #307 (manifest), #308 (bare-street v1), #309 (postmortem), #310 (bare-street v2), #311 (v2 result), #312 (KR coarse) |
+| issues filed/updated | #305 filed; #293 advanced (KR shipped experimental); #294 confirmed-blocked (postal 404); #14 commented                                                            |
+| models trained       | 2 (ls=0.05, bare-street) — **neither promoted; v0.7.2 stays default**                                                                                              |
+| Modal cost           | ~$13 / $15 (2× A100 ~1.8h each + 3 exports)                                                                                                                        |
+| NaN incidents        | 0                                                                                                                                                                  |
+| CI failures          | 1 (transient registry-network flake on #304, re-ran green)                                                                                                         |
+| regressions shipped  | 0 (EU byte-identical; nothing promoted)                                                                                                                            |
