@@ -161,6 +161,8 @@ class MailwomanCoarseEncoder(nn.Module):
         use_locale_conditioning: bool = False,
         num_locales: int = NUM_LOCALES,
         locale_loss_weight: float = 0.0,
+        use_postcode_anchor: bool = False,
+        anchor_feature_dim: int = NUM_LOCALES + 2,
     ) -> None:
         super().__init__()
         self.pad_token_id = pad_token_id
@@ -182,6 +184,19 @@ class MailwomanCoarseEncoder(nn.Module):
         # so the phrase-prior contribution can be ablated cleanly.
         self.use_phrase_priors = use_phrase_priors
         self.phrase_feature_dim = int(phrase_feature_dim) if use_phrase_priors else 0
+        # Postcode-anchor conditioning channel (de-risk pilot, #239/#240; DeepSeek 2026-06-05).
+        # A per-token additive injection at the postcode span: a_i = c_i · (W·anchor_features +
+        # v_ANCHOR), added to the token+position embedding. anchor_features is a fixed-width
+        # ``(B, S, anchor_feature_dim)`` vector — a uniform country posterior over the NUM_LOCALES
+        # locale set (0 outside member countries) plus a 2-d centroid — and ``anchor_confidence`` is
+        # the per-token ``(B, S)`` confidence scalar (0 outside any postcode span). Robustness is the
+        # confidence CURRICULUM applied UPSTREAM (data loader perturbs the scalar by training step);
+        # the model is perturbation-agnostic, so absent / zero-confidence anchors are just the c=0
+        # tail of a continuum — no discrete [NO-ANCHOR] embedding, no regime switch. Position-local
+        # by construction: this is the property self-conditioning's global FiLM lacked (it composes
+        # with that FiLM cleanly — anchor at the INPUT, FiLM on the hidden states after the blocks).
+        self.use_postcode_anchor = use_postcode_anchor
+        self.anchor_feature_dim = int(anchor_feature_dim) if use_postcode_anchor else 0
         # v0.3.0 additions: CRF decoder for structural validity + learned tag dynamics,
         # label smoothing on the per-token CE leg for calibration. Both gate-able for
         # ablation studies via the kwargs above.
@@ -239,6 +254,17 @@ class MailwomanCoarseEncoder(nn.Module):
             )
         else:
             self.phrase_input_projection = None
+
+        # Postcode-anchor projection W ((k+2)→hidden) + the shared learned v_ANCHOR cue. None when
+        # the channel is off (forward skips it → bit-identical to a no-anchor encoder).
+        self.anchor_projection: nn.Linear | None
+        self.anchor_token_embedding: nn.Parameter | None
+        if self.use_postcode_anchor:
+            self.anchor_projection = nn.Linear(self.anchor_feature_dim, hidden_size, bias=True)
+            self.anchor_token_embedding = nn.Parameter(torch.zeros(hidden_size))
+        else:
+            self.anchor_projection = None
+            self.anchor_token_embedding = None
 
         self.blocks = nn.ModuleList(
             [
@@ -319,6 +345,8 @@ class MailwomanCoarseEncoder(nn.Module):
         labels: torch.Tensor | None = None,
         phrase_features: torch.Tensor | None = None,
         locale_ids: torch.Tensor | None = None,
+        anchor_features: torch.Tensor | None = None,
+        anchor_confidence: torch.Tensor | None = None,
     ) -> "_CoarseEncoderOutput":
         bsz, seq = input_ids.shape
         if seq > self.max_position_embeddings:
@@ -356,6 +384,30 @@ class MailwomanCoarseEncoder(nn.Module):
                 "phrase_features supplied but use_phrase_priors=False — rebuild the "
                 "encoder with use_phrase_priors=True or drop the features argument"
             )
+
+        # Postcode-anchor injection (#239/#240). Per-token additive: a_i = c_i · (W·features +
+        # v_ANCHOR), added to the input embedding. anchor_confidence carries the curriculum-perturbed
+        # confidence (0 outside any postcode span / absent postcode), so c=0 tokens get a_i=0 with no
+        # regime switch. Absent features default to zeros — the well-defined "no anchor" inference path.
+        if self.anchor_projection is not None and self.anchor_token_embedding is not None:
+            if anchor_features is None or anchor_confidence is None:
+                anchor_features = torch.zeros(
+                    bsz, seq, self.anchor_feature_dim, dtype=h.dtype, device=h.device
+                )
+                anchor_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
+            elif anchor_features.shape != (bsz, seq, self.anchor_feature_dim):
+                raise ValueError(
+                    f"anchor_features shape {tuple(anchor_features.shape)} != "
+                    f"({bsz}, {seq}, {self.anchor_feature_dim})"
+                )
+            anchor_vec = self.anchor_projection(anchor_features.to(h.dtype)) + self.anchor_token_embedding
+            h = h + anchor_confidence.to(h.dtype).unsqueeze(-1) * anchor_vec
+        elif anchor_features is not None:
+            raise ValueError(
+                "anchor_features supplied but use_postcode_anchor=False — rebuild the "
+                "encoder with use_postcode_anchor=True or drop the anchor arguments"
+            )
+
         h = self.input_dropout(self.input_ln(h))
 
         # nn.MultiheadAttention key_padding_mask: True = mask (ignore), False = keep.
@@ -606,6 +658,10 @@ class MailwomanCoarseEncoder(nn.Module):
             "use_locale_conditioning": bool(self.use_locale_conditioning),
             "num_locales": int(self.num_locales),
             "locale_loss_weight": float(self.locale_loss_weight),
+            # Postcode-anchor channel (#239/#240). False/0 on pre-anchor weights; loaders branch on
+            # the flag to materialize anchor_projection / anchor_token_embedding at the feature width.
+            "use_postcode_anchor": bool(self.use_postcode_anchor),
+            "anchor_feature_dim": int(self.anchor_feature_dim),
             "id2label": dict(ID_TO_LABEL),
             "label2id": dict(LABEL_TO_ID),
         }
@@ -653,6 +709,9 @@ class MailwomanCoarseEncoder(nn.Module):
             use_locale_conditioning=cfg.get("use_locale_conditioning", False),
             num_locales=cfg.get("num_locales", NUM_LOCALES),
             locale_loss_weight=cfg.get("locale_loss_weight", 0.0),
+            # Postcode-anchor fields. Default off for back-compat with pre-anchor checkpoints.
+            use_postcode_anchor=cfg.get("use_postcode_anchor", False),
+            anchor_feature_dim=cfg.get("anchor_feature_dim", NUM_LOCALES + 2),
         )
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
         try:
@@ -701,6 +760,10 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoa
         use_locale_conditioning=getattr(cfg.model, "use_locale_conditioning", False),
         num_locales=NUM_LOCALES,
         locale_loss_weight=getattr(cfg.model, "locale_loss_weight", 0.0),
+        # Postcode-anchor channel (#239/#240). anchor_feature_dim derived from NUM_LOCALES (posterior
+        # over the locale set) + 2 (centroid) — single source of truth, can't drift from the loader.
+        use_postcode_anchor=getattr(cfg.model, "use_postcode_anchor", False),
+        anchor_feature_dim=NUM_LOCALES + 2,
     )
 
 
