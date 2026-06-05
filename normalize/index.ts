@@ -14,6 +14,7 @@
  */
 
 export { expandAbbreviations } from "./abbreviations.js"
+export { applyCjkNormalization, type CjkResult } from "./cjk.js"
 export { normalize } from "./compute.js"
 export { applyNfc } from "./nfc.js"
 export { composeMaps, identityMap } from "./offset-map.js"

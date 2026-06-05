@@ -8,6 +8,7 @@
  */
 
 import { expandAbbreviations } from "./abbreviations.js"
+import { applyCjkNormalization } from "./cjk.js"
 import { applyNfc } from "./nfc.js"
 import { composeMaps, identityMap } from "./offset-map.js"
 import { applyPunctuation } from "./punctuation.js"
@@ -25,6 +26,18 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 		text = r.text
 		map = composeMaps(map, r.map)
 		transforms.push({ kind: "nfc", changed: r.changed })
+	}
+
+	// 1.5 CJK normalization — strip the postal mark 〒 (byte-fallback OOV that poisons the postcode
+	// parse) and fold full-width ASCII + the ideographic space. Runs after NFC so it sees composed
+	// forms, before punctuation/whitespace so any gap left by 〒 is then collapsed. No-op off-script.
+	{
+		const r = applyCjkNormalization(text)
+		if (r.folded > 0 || r.stripped > 0) {
+			text = r.text
+			map = composeMaps(map, r.map)
+			transforms.push({ kind: "normalize_cjk", folded: r.folded, stripped: r.stripped })
+		}
 	}
 
 	// 2. Punctuation
