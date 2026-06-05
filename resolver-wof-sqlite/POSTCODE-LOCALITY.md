@@ -51,14 +51,34 @@ python3 scripts/build-postcode-locality.py --output .../postcode-locality-intl.d
 
 ## Coverage (built 2026-06-04)
 
-| country | rows | postcodes with a containing locality | notes |
-|---|--:|--:|---|
-| DE | 92,689 | 24,443 | resolver PIP-containment **92.6%** (Berlin+Saxony OA sample) |
-| FR | 121,628 | 24,455 | resolver PIP-containment **84.0%** (national BAN OA sample; lower than DE because the national set includes the rural commune tail where WOF locality coverage thins) |
-| NL | 1,842,253 | 370,222 (99.6%) | resolver PIP-containment **94.9%** (national BAG OA sample) — excellent even though the model is OOD on Dutch, because coordinate-first leans on the regex-extractable postcode + NL's near-complete coverage |
-| GB | 7,630,560 | 1,626,691 | unit postcodes; **~34% of GB postcodes get no candidate** (WOF GB locality coverage is incomplete) |
-| ES | 27,111 | 3,273 (28.9%) | WOF orphan-heavy — sparse; inert until ES localities are in the admin DB |
-| IT | 18,349 | 2,081 (42.2%) | WOF orphan-heavy — sparse; inert until IT localities are in the admin DB |
+| country |      rows | postcodes with a containing locality | notes                                                                                                                                                                                                         |
+| ------- | --------: | -----------------------------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DE      |    92,689 |                               24,443 | resolver PIP-containment **92.6%** (Berlin+Saxony OA sample)                                                                                                                                                  |
+| FR      |   121,628 |                               24,455 | resolver PIP-containment **84.0%** (national BAN OA sample; lower than DE because the national set includes the rural commune tail where WOF locality coverage thins)                                         |
+| NL      | 1,842,253 |                      370,222 (99.6%) | resolver PIP-containment **94.9%** (national BAG OA sample) — excellent even though the model is OOD on Dutch, because coordinate-first leans on the regex-extractable postcode + NL's near-complete coverage |
+| GB      | 7,630,560 |                            1,626,691 | unit postcodes; **~34% of GB postcodes get no candidate** (WOF GB locality coverage is incomplete)                                                                                                            |
+| ES      |    27,111 |                        3,273 (28.9%) | WOF orphan-heavy — sparse; inert until ES localities are in the admin DB                                                                                                                                      |
+| IT      |    18,349 |                        2,081 (42.2%) | WOF orphan-heavy — sparse; inert until IT localities are in the admin DB                                                                                                                                      |
+| JP      |   297,874 |              114,154 matched (94.9%) | **name-match build, NOT PIP** — see below. End-to-end resolver **98.5%** vs KEN_ALL, **93.9%** vs independent GeoNames gold                                                                                   |
+
+## CJK: a different build (name-match, not PIP) — `build-postcode-locality-cjk.py`
+
+WOF admin geometry in CJK (JP/KR/TW) is **point-based at the municipality/locality level** — there are no
+municipality POLYGONS — so the point-in-polygon build above is structurally inapplicable (it gives only
+~25% JP coverage, at the wrong granularity). CJK uses an authoritative **name-match** instead, producing the
+same `postcode_locality` table so the same `postcode_area_resolution` resolver strategy consumes it:
+
+```
+postcode --(national postal authority, e.g. KEN_ALL/Japan Post, romanized)--> municipality NAME
+postcode --(GeoNames postal)--> point
+municipality name + point --(cross-placetype name+proximity match ≤15km)--> WOF place id (is_containing=1)
+```
+
+The match searches **all** the municipality-ish placetypes (`locality`+`county`+`localadmin`+`borough`)
+because CJK municipalities are split across them (regular cities → locality, wards → county/localadmin,
+Tokyo special wards → borough). Matching a single placetype caps at ~52–60%; cross-placetype is **94.9%**.
+KEN_ALL is fetched manually (Japan Post blocks programmatic download — see the build script header for the
+live URL chain); it's CP932/Shift-JIS, the romanized col 6 (`SAPPORO SHI CHUO KU`) is the gold.
 
 ## Caveats / follow-ups
 
