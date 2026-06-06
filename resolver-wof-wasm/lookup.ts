@@ -27,11 +27,38 @@ export interface WofWasmPlaceLookupOpts {
 	db: Database
 }
 
+/**
+ * Population-boost tunables, mirroring `resolver-wof-sqlite/lookup.ts` defaults. The boost is
+ * `POPULATION_BOOST * min(1, log10(1 + pop) / POPULATION_SCALE_LOG10)`, subtracted from bm25 (lower =
+ * better, matching SQLite's convention). A 1M-population city earns the full boost — enough to
+ * surface the famous same-name place ("New York" over "West New York") without steamrolling a
+ * clearly-better text match, because exact-name tiering is consulted FIRST.
+ */
+const POPULATION_BOOST = 4.0
+const POPULATION_SCALE_LOG10 = 6.0
+
+/** Normalize a name/query for exact-match tiering: lowercase, trim, collapse internal whitespace. */
+function normalizeName(s: string): string {
+	return s.toLowerCase().trim().replace(/\s+/g, " ")
+}
+
 export class WofWasmPlaceLookup implements PlaceLookup {
 	readonly #db: Database
+	#hasPopulationCache?: boolean
 
 	constructor(opts: WofWasmPlaceLookupOpts) {
 		this.#db = opts.db
+	}
+
+	/** Lazily probe (once) whether the slim DB carries the `place_population` aux table. */
+	#hasPopulation(): boolean {
+		if (this.#hasPopulationCache === undefined) {
+			const r = this.#db.selectObjects(
+				`SELECT 1 FROM sqlite_master WHERE type='table' AND name='place_population' LIMIT 1`
+			)
+			this.#hasPopulationCache = r.length > 0
+		}
+		return this.#hasPopulationCache
 	}
 
 	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
@@ -43,11 +70,8 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 
 		const limit = Math.max(1, query.limit ?? 10)
 
-		// v1 query: FTS5 MATCH on place_search joined to spr. BM25 ordering. Placetype + country
-		// filters are pushed into the WHERE clause because they reduce candidate count cheaply.
-		// Boosts (placetype-match boost, locality implicit boost, population weighting) deliberately
-		// omitted — they need the same ranking weights / constants as lookup.ts and that's a shared
-		// query-builder PR away.
+		// FTS5 MATCH on place_search joined to spr. Placetype + country filters are pushed into the
+		// WHERE clause because they reduce candidate count cheaply.
 		const conditions: string[] = ["place_search MATCH ?", "spr.is_current != 0", "spr.is_deprecated = 0"]
 		const params: Array<string | number> = [ftsQuery]
 
@@ -61,14 +85,24 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 			params.push(query.country.toUpperCase())
 		}
 
+		// Over-fetch a pool ordered by raw BM25, then re-rank in JS (exact-name tier, then
+		// population-weighted bm25). The over-fetch is load-bearing: a famous place can sit a few rows
+		// below a tiny same-name town on raw BM25 ("New York" loses to "West New York" by a hair), so a
+		// tight LIMIT on bm25 alone would truncate it before the re-rank could pull it up. This mirrors
+		// the post-scoring tier + population boost in resolver-wof-sqlite/lookup.ts. (v1 issued pure
+		// bm25, which is why the demo targeted West New York for "New York, NY".)
+		const hasPop = this.#hasPopulation()
+		const pool = Math.max(limit, 50)
 		const sql =
 			`SELECT spr.id, spr.name, spr.placetype, spr.country, spr.latitude, spr.longitude, spr.parent_id, ` +
-			`spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude, bm25(place_search) AS bm25 ` +
+			`spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude, ` +
+			`${hasPop ? "pp.population" : "NULL"} AS population, bm25(place_search) AS bm25 ` +
 			`FROM place_search JOIN spr ON spr.id = place_search.wof_id ` +
+			`${hasPop ? "LEFT JOIN place_population pp ON pp.id = spr.id " : ""}` +
 			`WHERE ${conditions.join(" AND ")} ` +
 			`ORDER BY bm25(place_search) ASC ` +
 			`LIMIT ?`
-		params.push(limit)
+		params.push(pool)
 
 		const rows = this.#db.selectObjects(sql, params) as Array<{
 			id: number
@@ -82,30 +116,48 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 			max_latitude: number | null
 			min_longitude: number | null
 			max_longitude: number | null
+			population: number | null
 			bm25: number
 		}>
 
-		return rows.map((row) => ({
-			id: row.id,
-			name: row.name,
-			placetype: row.placetype as WofPlacetype,
-			country: row.country,
-			lat: row.latitude,
-			lon: row.longitude,
-			parent_id: row.parent_id ?? undefined,
-			bbox:
-				row.min_latitude != null && row.max_latitude != null && row.min_longitude != null && row.max_longitude != null
-					? {
-							minLat: row.min_latitude,
-							maxLat: row.max_latitude,
-							minLon: row.min_longitude,
-							maxLon: row.max_longitude,
-						}
-					: undefined,
-			// BM25 is negative (better = more negative). Flip sign so higher = better, matching the
-			// PlaceLookup contract.
-			score: -row.bm25,
-		}))
+		const normQuery = normalizeName(text)
+		return rows
+			.map((row) => {
+				const exactTier = normalizeName(row.name) === normQuery ? 0 : 1
+				const popBoost =
+					row.population && row.population > 0
+						? POPULATION_BOOST * Math.min(1, Math.log10(1 + row.population) / POPULATION_SCALE_LOG10)
+						: 0
+				// Lower adjScore = better, matching SQLite's bm25 convention (more negative = better).
+				const adjScore = row.bm25 - popBoost
+				return { row, exactTier, adjScore }
+			})
+			.sort((a, b) => a.exactTier - b.exactTier || a.adjScore - b.adjScore)
+			.slice(0, limit)
+			.map(({ row, adjScore }) => ({
+				id: row.id,
+				name: row.name,
+				placetype: row.placetype as WofPlacetype,
+				country: row.country,
+				lat: row.latitude,
+				lon: row.longitude,
+				parent_id: row.parent_id ?? undefined,
+				bbox:
+					row.min_latitude != null &&
+					row.max_latitude != null &&
+					row.min_longitude != null &&
+					row.max_longitude != null
+						? {
+								minLat: row.min_latitude,
+								maxLat: row.max_latitude,
+								minLon: row.min_longitude,
+								maxLon: row.max_longitude,
+							}
+						: undefined,
+				// Flip sign so higher = better (PlaceLookup contract). The adjusted, population-aware
+				// score is what we sorted by, so callers see the same ordering they're shown.
+				score: -adjScore,
+			}))
 	}
 
 	close(): void {
