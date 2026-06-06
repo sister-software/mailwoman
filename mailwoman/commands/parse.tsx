@@ -32,6 +32,15 @@ const ParseConfigSchema = zod.object({
 		.optional()
 		.default("en-US")
 		.describe("Locale tag matching a weights package (en-US, fr-FR). Default en-US."),
+	defaultCountry: zod
+		.string()
+		.optional()
+		.describe(
+			"ISO-3166 country to scope the WOF resolver when the parse carries no resolved country node — " +
+				"e.g. 'US' so a bare 'NY' resolves to the US state, not a higher-priority foreign homonym. " +
+				"Requires --resolve. Defaults from --locale's region subtag (en-US → US); pass 'none' to disable " +
+				"the filter and let ranking alone decide."
+		),
 	isolated: zod
 		.boolean()
 		.optional()
@@ -200,6 +209,34 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 	return <Text>{output}</Text>
 }
 
+/**
+ * ISO-3166 country for the resolver's `defaultCountry`, inferred from a BCP-47 locale's region subtag
+ * (en-US → US, fr-FR → FR, de-DE → DE). Returns `undefined` when the locale carries no 2-letter region
+ * subtag (so the resolver stays global rather than guessing from a language alone). Script subtags
+ * (`Hant`, `Latn`) are ignored.
+ */
+export function localeToCountry(locale: string | undefined): string | undefined {
+	if (!locale) return undefined
+	const parts = locale.split("-")
+	const region = parts.length > 1 ? parts[parts.length - 1] : undefined
+	return region && /^[A-Za-z]{2}$/.test(region) ? region.toUpperCase() : undefined
+}
+
+/**
+ * The resolver's `defaultCountry` for this invocation: the explicit `--default-country` if set (with
+ * `none` meaning "no filter"), otherwise inferred from `--locale`. Without it, a bare region
+ * abbreviation (`NY`) resolves to whatever the gazetteer ranks highest globally — often a foreign
+ * homonym (a Scottish locality) rather than the US state. The demo passes `country: "US"`; this gives
+ * the CLI parity.
+ */
+export function resolverDefaultCountry(options: {
+	defaultCountry?: string
+	locale?: string
+}): string | undefined {
+	if (options.defaultCountry === "none") return undefined
+	return options.defaultCountry ?? localeToCountry(options.locale)
+}
+
 function resolveWofPath(options: zod.infer<typeof ParseConfigSchema>): string {
 	const path = options.resolveDb ?? process.env["MAILWOMAN_WOF_DB"]
 	if (!path) {
@@ -238,10 +275,11 @@ async function resolveWithCandidates(
 	tree: AddressTree,
 	options: zod.infer<typeof ParseConfigSchema>
 ): Promise<AddressTree> {
-	if (options.candidates !== undefined) {
-		return resolver.resolveTree(tree, { candidatesPerLookup: options.candidates + 1 })
-	}
-	return resolver.resolveTree(tree)
+	const opts: { candidatesPerLookup?: number; defaultCountry?: string } = {}
+	if (options.candidates !== undefined) opts.candidatesPerLookup = options.candidates + 1
+	const dc = resolverDefaultCountry(options)
+	if (dc) opts.defaultCountry = dc
+	return resolver.resolveTree(tree, opts)
 }
 
 async function withResolver<T>(
@@ -319,11 +357,20 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	}
 
 	const wantAlternatives = options.candidates !== undefined
-	const pipelineOpts: { locale?: string; resolveOpts?: { candidatesPerLookup?: number } } = {
+	const resolveOpts: { candidatesPerLookup?: number; defaultCountry?: string } = {}
+	if (wantAlternatives) resolveOpts.candidatesPerLookup = (options.candidates ?? 5) + 1
+	// Scope the resolver so a bare region abbreviation (`NY`) resolves to the intended country's place
+	// rather than a higher-priority foreign homonym. Inferred from --locale unless --default-country
+	// overrides (or is `none`). Only meaningful on the --resolve path; harmless otherwise.
+	if (options.resolve) {
+		const dc = resolverDefaultCountry(options)
+		if (dc) resolveOpts.defaultCountry = dc
+	}
+	const pipelineOpts: { locale?: string; resolveOpts?: { candidatesPerLookup?: number; defaultCountry?: string } } = {
 		locale: options.locale,
 	}
-	if (wantAlternatives) {
-		pipelineOpts.resolveOpts = { candidatesPerLookup: (options.candidates ?? 5) + 1 }
+	if (resolveOpts.candidatesPerLookup !== undefined || resolveOpts.defaultCountry !== undefined) {
+		pipelineOpts.resolveOpts = resolveOpts
 	}
 
 	if (options.resolve) {
