@@ -1,0 +1,91 @@
+# We fed the parser its postcode. German came halfway back.
+
+**Date:** 2026-06-06
+**Scope:** the de-risk pilot for the postcode-anchor conditioning channel (#239/#240) — does feeding the parser a structured postcode signal break the German end-of-string collapse that self-conditioning alone couldn't?
+
+> **Update (same day):** most of the collapse this pilot fights turned out to be an eval artifact. Our German de-sample renders addresses in US word order; the model trained on German order. Re-rendered in native German order, this same anchor-on checkpoint scores **83.8% locality and beats v0/Pelias (78.7%)**. The Correction section at the end revises the "gated by postcode ambiguity" reading below it — keep reading; the pilot story stands as the record of what we believed at the time.
+
+The hypothesis was sharp: the German collapse — trailing city → `O`, locality and postcode fragmenting at end-of-string — is a _local_ emission failure, and self-conditioning's _global_ soft locale posterior was always going to miss it (it did, twice). A postcode anchor is local, near-hard, and sits right at the collapse site. So we built it, end to end, and ran the A/B.
+
+## What's done and proven
+
+The whole training-side pipeline works, validated on a live GPU run: the per-token anchor injection at the postcode span (composing with the existing self-conditioning FiLM), the gold-span → sub-token alignment that reuses the label projection so it can't drift, the JSON gazetteer lookup, and the confidence curriculum (no `[NO-ANCHOR]` token — "absent" is the `c=0` tail of a continuum). A 20k-step from-scratch run trained clean — no NaN, no destabilization. Everything from the DeepSeek design to the model code to the tests to Modal is connected and runs.
+
+## The collapse is real (the premise is locked)
+
+We confirmed the failure exists for _this_ exact code and seed, on real OpenAddresses German addresses through the resolver:
+
+| model (DE locality-match, real OA)      |      result |
+| --------------------------------------- | ----------: |
+| **control @3k** (self-cond, anchor-off) |   **29.3%** |
+| anchor-on @20k, **anchor not fed**      |       35.9% |
+| v0 (Pelias) / the target                | ~83% / ~77% |
+
+The control sits squarely on the established collapse (~25.6%). No A/B drift — the recipe collapses, as designed, so the anchor has something real to fix.
+
+## The verdict: the anchor is real, and partial
+
+We then built the inference-side channel — ONNX export with the anchor inputs, `OnnxRunner` + `NeuralAddressClassifier` feeding them, and a TS feature builder whose layout is pinned to the Python training function by a cross-language test — and ran the DE resolver A/B with the anchor fed:
+
+| DE locality-match (real OA)        |       result |
+| ---------------------------------- | -----------: |
+| control @3k (anchor-off)           |        29.3% |
+| anchor-on @20k, anchor **not fed** |        35.9% |
+| **anchor-on @20k, anchor fed**     |    **45.8%** |
+| v0 (Pelias) / target               | 83.4% / ~77% |
+
+The clean, unconfounded number is the **same checkpoint with the anchor off vs on**: `35.9% → 45.8%`, **+9.9pp purely from feeding the anchor**, nothing else changed. The model genuinely leans on the signal — the architecture's premise holds, end to end.
+
+It is a **partial** fix. 45.8% is well short of ~77%, so the anchor helps real and measurably but doesn't fully reverse the collapse at this pilot scale.
+
+**The per-state split is the mechanism — and points at the next lever.** Sachsen (postcodes `01xxx–09xxx`, little US collision) jumps `37.1% → 54.9%` (+17.8pp); Berlin (`10xxx`, colliding hard with US ZIPs) barely moves, `34.7% → 36.7%` (+2pp). The anchor's recovery is **gated by postcode ambiguity**: where the code pins the country it works strongly; where the posterior is a DE/US collision the uniform distribution can't decide and the model stays collapsed. Disambiguating the colliding ranges is where a full fix lives.
+
+## Correction: most of the "collapse" was us measuring German in the wrong order
+
+Here's the part that stings. We spent this pilot fighting a collapse, and a good chunk of it was our own eval handing the model German addresses in an order Germans don't write.
+
+Our OpenAddresses German de-sample renders every row US-style: `27 Straußstraße, Berlin, Berlin 12623`, house number first, postcode trailing after the city. The model trained on the German convention, `Straußstraße 27, 12623 Berlin`, street then house number, postcode before the city. So when the eval said "locality 45%," it was partly grading the model on a layout it had every reason never to expect.
+
+So we re-rendered the exact same 3,000 addresses (same components, same resolver, same anchor-on checkpoint) into native German order and ran it again:
+
+| same 3,000 DE addresses, same model | neural locality | v0 (Pelias) | neural resolved |
+| ----------------------------------- | --------------: | ----------: | --------------: |
+| US order (how our de-sample ships)  |           45.5% |       82.6% |           67.5% |
+| **native German order**             |       **83.8%** |       78.7% |           99.9% |
+
+Only the word order changed. The model jumps +38pp and clears Pelias. Watch Pelias drift the other way, `82.6% → 78.7%`: it's a US-lineage parser too, so native German order costs it a little. In the order German addresses actually arrive, our neural parser reads them better than the rules system we've been chasing.
+
+The per-state split is where the old story comes apart. The verdict above pinned Berlin's failure on postcode ambiguity: `10xxx` collides with real US ZIPs, the uniform `{DE,US}` posterior can't choose, the model stalls. Then you re-render, and:
+
+| neural locality      | US order | native German order |
+| -------------------- | -------: | ------------------: |
+| Berlin (`10xxx`)     |    36.1% |          **100.0%** |
+| Sachsen (`01–09xxx`) |    54.9% |               67.6% |
+
+Berlin's postcodes still collide with US ZIPs in German order. Nothing about the ambiguity changed, and the model gets the city right every single time. The collision was never what held Berlin back; the layout was. Once the city sits where German puts it, the model knows it's a city, ZIP-shaped postcode or not.
+
+### So what was the anchor actually fixing?
+
+We should be honest about what this does to the +9.9pp. The anchor's win was measured entirely on US-order German, the broken rendering, and it was real: same weights, off versus on, nothing else moved. It genuinely helped the model survive an order it wasn't trained for. But its value in the order that matters is now an open question we haven't measured. The 83.8% run had the anchor fed throughout, and we never ran native-order anchor-off to isolate it. The anchor earns its place elsewhere — the resolver-side centroid already cut coord p99 from 330 to 46 km — yet "the anchor recovers German" needs re-testing against an eval that isn't rendering the language wrong.
+
+### Premodel or training?
+
+Both, and naming the layers is the fix.
+
+The "collapse" headline is a measurement bug, premodel, living in the eval. We render German in an order it doesn't use, then grade the model down for it. Point the eval at native order (ideally both) and most of the collapse evaporates: 83.8%, beating Pelias.
+
+Order _robustness_ is a training problem. A production geocoder really does see German both ways: native from German sources, US-ish from international feeds like the OpenAddresses dump we eval on. The fix is data. Render the German training shard in both orders for the same components, so the model learns a German address can land either way. No new architecture, no anchor required for this part. The German synthesizer (`synthesizeLocaleRow`) now takes an `order: "native" | "international"` switch and the shard builder mixes the two.
+
+Cheapest first: fix the eval (done, that's the table above), then ship the both-order shard and retrain. Measuring first is what kept us from scaling an anchor to chase a number that was partly a rendering artifact of our own making.
+
+### What it means for multi-locale
+
+It un-blocks it. The German "wall" that survived three retrains — the order-shard collapse, two self-conditioning attempts, and this anchor pilot — was substantially a mirror: our eval reflecting a layout we built. The parser reads native German better than Pelias, which is the north-star target, hit in the locale we'd written off as our worst. The honest caveat is that native order is the easy direction; international-order German, the genuinely out-of-distribution case, is still 45%, and the both-order retrain is what closes it. The ceiling sits far higher than the collapse let us see.
+
+## Next levers
+
+- **Fix the eval, then retrain on both orders** — the de-sample renders German US-style; test native order (the Correction table) and most of the collapse is gone. Then ship the both-order shard (`synthesizeLocaleRow({ order })`) and retrain so the model handles either layout. This is the real fix; the items below are now secondary.
+- **Re-isolate the anchor on a correct eval** — the +9.9pp was measured on US-order German. Run native-order anchor-off vs anchor-on to learn what the anchor is worth once the eval isn't rendering the language wrong.
+- **Strategic check** — the resolver already does German at ~83% (v0 parse → resolver), and the neural parser now beats it in native order. The parser-anchor (multi-locale universal parser) and the resolver-side centroid (already cut coord p99 330 → 46 km) remain separable bets.
+
+Artifacts: configs `v0.9.1-pilot-anchor-{off,on}.yaml`; `eval_de` + `export_onnx` (Modal); lookup `scripts/build-pilot-anchor-lookup.py`; the both-order synthesizer switch lands in the follow-up `synthesizeLocaleRow({ order })`; consult notes `.agents/skills/deepseek-consult/session-notes-2026-06-05-anchor-pilot.md`.
