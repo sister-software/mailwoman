@@ -50,6 +50,7 @@ const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
 	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
 	{ label: "ZIP only", address: "90210" },
 	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin" },
+	{ label: "Paris (street fall-through)", address: "14, Rue des Écouffes, Paris" },
 ]
 
 const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
@@ -442,7 +443,7 @@ const DemoApp: React.FC = () => {
 				const tree = await classifier.parse(text, { queryShape, fst: fstMatcher ?? undefined })
 				const tClassify = performance.now()
 				const nodes = flattenTree(tree)
-				const localityNode = nodes.find((n) => n.tag === "locality" || n.tag === "city")
+				const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
 				const stateNode = nodes.find((n) => n.tag === "region" || n.tag === "state")
 				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
@@ -467,7 +468,7 @@ const DemoApp: React.FC = () => {
 				// Drop (lat=0, lon=0) hits — WOF ships placeholder zeros on ~22% of US postcodes.
 				// Timed from here so the one-time DB load above doesn't skew the resolve number.
 				const tBeforeResolve = performance.now()
-				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNode, stateNode, text)
+				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNodes, stateNode, text)
 				const tResolve = performance.now()
 				const candidates: ResolvedHit[] = cascadeHits.map((c) => ({
 					id: c.id,
@@ -735,16 +736,36 @@ function clearBbox(map: MapLibreMap): void {
 
 type ParsedNode = { tag: string; value?: unknown; confidence?: number }
 
+const normName = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
+
 async function runCascade(
 	lookup: MailwomanLookupLike,
 	postcodeNode: ParsedNode | undefined,
-	localityNode: ParsedNode | undefined,
+	localityNodes: ParsedNode[],
 	stateNode: ParsedNode | undefined,
 	rawText: string
 ): Promise<Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>> {
-	const usable = (
-		cs: Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
-	): Awaited<ReturnType<MailwomanLookupLike["findPlace"]>> => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
+	type Hits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
+	const usable = (cs: Hits): Hits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
+
+	// Failure mode for a mis-tagged span. The model can label a street as a locality ("Rue des
+	// Écouffes") and emit several locality spans alongside the real city ("Paris"). Resolve them in
+	// source order (specific → general) and prefer a hypothesis whose top hit is an EXACT name match
+	// — a real place actually called this — over a fuzzy token match ("Rue des Écouffes" → "Des
+	// Moines" via the shared "des" token). So when the specific line isn't a real place, we fall
+	// through to the one that is: the city. A fuzzy hit is kept only as a last-resort backstop.
+	const resolveLocality = async (regionBbox: Hits[number]["bbox"]): Promise<Hits> => {
+		let fuzzy: Hits = []
+		for (const node of localityNodes) {
+			const text = String(node.value ?? "").trim()
+			if (!text) continue
+			const cs = usable(await lookup.findPlace({ text, placetype: "locality", bbox: regionBbox, limit: 5 }))
+			if (cs.length === 0) continue
+			if (cs.some((c) => normName(c.name) === normName(text))) return cs
+			if (fuzzy.length === 0) fuzzy = cs
+		}
+		return fuzzy
+	}
 
 	// Use the geography the parser found. Country is NOT hardcoded to US — a global search plus the
 	// resolver's population ranking surfaces the famous same-name place ("Berlin" → Berlin, DE 3.7M,
@@ -764,12 +785,9 @@ async function runCascade(
 		)
 		if (cs.length > 0) return cs
 	}
-	if (localityNode?.value) {
-		const cs = usable(
-			await lookup.findPlace({ text: String(localityNode.value), placetype: "locality", bbox: regionBbox, limit: 5 })
-		)
-		if (cs.length > 0) return cs
-	}
+
+	const localityHits = await resolveLocality(regionBbox)
+	if (localityHits.length > 0) return localityHits
 
 	return usable(await lookup.findPlace({ text: rawText, bbox: regionBbox, limit: 5 }))
 }
