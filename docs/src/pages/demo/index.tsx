@@ -113,6 +113,12 @@ function initialAddress(): string {
 }
 
 const DemoApp: React.FC = () => {
+	// The resolver DBs are served SAME-ORIGIN from the Pages deploy (staged there from HF at build
+	// time by the demo-assets plugin) so they can be range-loaded — Pages/Fastly is range-capable +
+	// redirect-free, and same-origin sidesteps CORS. baseUrl is "/" in prod, so this is
+	// "/mailwoman/wof-hot.db". The model/tokenizer/fst/postcodes stay on HF (one-shot full-fetch).
+	const { siteConfig } = useDocusaurusContext()
+	const sameOriginDbUrl = (file: string) => `${siteConfig.baseUrl}mailwoman/${file}`
 	const [manifest, setManifest] = useState<ReleasesManifest | null>(null)
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
@@ -272,7 +278,7 @@ const DemoApp: React.FC = () => {
 					setLookupLoader(() => async () => {
 						const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
 						const { db } = await resolverWasm.loadSlimWofDatabase({
-							source: assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"),
+							source: sameOriginDbUrl("wof-hot.db"),
 						})
 						return new resolverWasm.WofWasmPlaceLookup({ db })
 					})
@@ -365,7 +371,7 @@ const DemoApp: React.FC = () => {
 			if (release?.hasPolygons && selectedVersion && candidate.id) {
 				try {
 					if (!polygonDbRef.current) {
-						polygonDbRef.current = loadPolygonDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"))
+						polygonDbRef.current = loadPolygonDb(sameOriginDbUrl("wof-polygons.db"))
 					}
 					const geom = (await polygonDbRef.current).get(candidate.id)
 					if (geom) {

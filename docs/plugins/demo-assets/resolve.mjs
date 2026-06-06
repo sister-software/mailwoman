@@ -10,9 +10,48 @@
  */
 
 import { spawnSync } from "node:child_process"
-import { copyFileSync, existsSync, lstatSync, readFileSync, readlinkSync, statSync } from "node:fs"
+import { copyFileSync, existsSync, lstatSync, readFileSync, readlinkSync, statSync, writeFileSync } from "node:fs"
 import { createRequire } from "node:module"
 import { dirname, resolve } from "node:path"
+
+const HF_BUCKET_RESOLVE = "https://huggingface.co/buckets/sister-software/mailwoman/resolve"
+
+/**
+ * Fetch a release artifact from the public HF bucket into `destPath`. This is how big binaries
+ * (the resolver DBs) land in the Pages deploy: CI has no /mnt/playpen to build them, so the docs
+ * build pulls them from HF at build time — HF stays the source-of-truth store, GitHub Pages becomes
+ * the same-origin runtime CDN (range-capable + redirect-free, which HF's per-request-redirect
+ * `resolve/` URL is not). Skips the download when a correctly-sized file is already staged (local
+ * re-runs); delete the file to force a refresh.
+ *
+ * @param {string} filename - E.g. "wof-hot.db"
+ * @param {string} destPath
+ * @param {object} opts
+ * @param {string} opts.version - HF version dir, e.g. "v4.0.0"
+ * @param {string} [opts.locale]
+ * @returns {Promise<boolean>} True if downloaded
+ */
+export async function fetchArtifactFromHf(filename, destPath, { version, locale = "en-us" }) {
+	if (existsSync(destPath) && statSync(destPath).size > 0) {
+		console.log(`[demo-assets] ${filename}: already staged (${(statSync(destPath).size / 1024 / 1024).toFixed(1)} MB)`)
+		return false
+	}
+	const url = `${HF_BUCKET_RESOLVE}/${locale}/${version}/${filename}`
+	console.log(`[demo-assets] ${filename}: fetching from HF → ${url}`)
+	const res = await fetch(url)
+	if (!res.ok) {
+		console.warn(`[demo-assets] ${filename}: HF fetch failed (${res.status}) — demo will fall back to the HF URL`)
+		return false
+	}
+	const buf = Buffer.from(await res.arrayBuffer())
+	if (buf.length === 0) {
+		console.warn(`[demo-assets] ${filename}: HF returned 0 bytes — skipping`)
+		return false
+	}
+	writeFileSync(destPath, buf)
+	console.log(`[demo-assets] ${filename}: fetched ${(buf.length / 1024 / 1024).toFixed(1)} MB`)
+	return true
+}
 
 // ---------------------------------------------------------------------------
 // Workspace resolution helpers
