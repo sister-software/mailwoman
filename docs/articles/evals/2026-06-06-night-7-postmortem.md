@@ -80,12 +80,15 @@ _Draft, written as the shift runs. Numbers self-emitted; the v0.9.2 result lands
 
 ## Open questions for the operator
 
-- **THE fork (#327):** the corpus lever is exhausted for the anchor-on international gap (both-order, then
-  region-tail, both no-op on locality; the anchor's positional structure is the ceiling). Next is
-  architectural — either **v0.9.4 dual-injection anchor** (designed, ready, a training-code change) OR
-  reconsider whether a trained-in _always-on_ anchor is right at all (it's +35pp native, −4pp intl; an
-  order-conditioned anchor is the alternative). **Staged, not taken.** Neither v0.9.2 nor v0.9.3 promotes;
-  v0.6.0 stays production.
+- **THE fork (#327) — now data-decided, the strategic choice is yours.** Three retrains — both-order corpus
+  (v0.9.2), region tail (v0.9.3), **and the architectural fix, dual-injection (v0.9.4)** — ALL left the
+  anchor-on international number immovable at ~44% (gap to native ~40pp). The anchor's native-help (+35) /
+  international-hurt (−4) asymmetry is **fundamental** — not corpus, not region, not injection position. The
+  experiments have mapped the ground; what's left is strategic: **(a)** order-conditioned anchor, **(b)**
+  accept the asymmetry (native German is excellent — 83.5%, beats Pelias, 96.3% PIP-containment — and that's
+  what production ships), or **(c)** drop the always-on anchor. Cross-cutting: it gates the multi-locale
+  retrain program (the anchor-intl issue recurs per locale). None of v0.9.2/3/4 promote; v0.6.0 stays
+  production. I stopped rather than auto-launch a 5th experiment.
 - **FR (#330):** the FR gap is venue (0%) + region (19%) — convention gaps, not basics. Worth a targeted FR
   venue+region corpus supplement on the next multi-locale push?
 - The 19 high + 1 critical dependabot alerts (vitest dev-scope) — bump in a dedicated `chore(deps)` pass?
@@ -104,12 +107,11 @@ _Draft, written as the shift runs. Numbers self-emitted; the v0.9.2 result lands
 | metric | value |
 | --- | --- |
 | Shift window | 04:16 UTC → 14:00 UTC |
-| PRs merged | 6 — #323, #324, #325, #326, #328, #329 |
-| Issues filed / groomed | #327 (v0.9.4 fork), #330 (FR gap) / #239, #241 |
-| Models trained | 2 (v0.9.2 + v0.9.3, 20k each) |
-| Modal spend | ~$6 of $15 _(2 runs)_ |
+| PRs merged | 11 — #323-326, #328, #329, #331-335 |
+| Issues filed / groomed | #327 (anchor fork), #330 (FR gap) / #239, #241 |
+| Models trained | 3 (v0.9.2 both-order, v0.9.3 region-tail, v0.9.4 dual-injection — all 20k, all negative) |
+| Modal spend | ~$12 of $15 _(3 runs)_ |
 | DeepSeek consults | 1 (2 turns, + the posterior-ablation diagnostic it prescribed) |
 | NaN incidents | 0 |
 | CI failures | 0 |
 | Demo regressions | 0 (v0.9.x research line; v0.6.0 production untouched) |
-| Demo regressions | 0 _(parser 6/6 on demo presets pre-flight)_ |
