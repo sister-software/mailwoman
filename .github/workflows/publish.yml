@@ -98,8 +98,10 @@ jobs:
           MODEL_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('neural-weights-en-us/model-card.json','utf8')).version)")
           BASE="https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-us/v${MODEL_VERSION}"
           echo "Fetching weights for v${MODEL_VERSION} from ${BASE}"
-          curl -fSL "${BASE}/model.onnx" -o neural-weights-en-us/model.onnx
-          curl -fSL "${BASE}/tokenizer.model" -o neural-weights-en-us/tokenizer.model
+          # --retry-all-errors covers HF's transient 429 throttling of the public bucket on CI.
+          CURL="curl -fSL --retry 6 --retry-delay 5 --retry-all-errors"
+          $CURL "${BASE}/model.onnx" -o neural-weights-en-us/model.onnx
+          $CURL "${BASE}/tokenizer.model" -o neural-weights-en-us/tokenizer.model
           # fr-fr shares the en-us model for now (locale-specific weights are future work).
           cp neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx
           cp neural-weights-en-us/tokenizer.model neural-weights-fr-fr/tokenizer.model
