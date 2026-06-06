@@ -115,6 +115,12 @@ class ModelConfig:
     # global FiLM lacked). Robustness is the confidence curriculum applied corpus-side (see the data
     # loader). Default False keeps existing numerics. Composes with ``use_locale_conditioning``.
     use_postcode_anchor: bool = False
+    # Dual-injection (#327, v0.9.4): when the anchor is on, ALSO inject the pooled postcode anchor at
+    # position 0 — an order-INDEPENDENT global cue the locality can attend back to regardless of where
+    # the postcode sits. Fixes the anchor's positional harm on international word order (postcode AFTER
+    # the city), where the per-token-only injection fired on the wrong side of the locality. Default
+    # False (no change); requires use_postcode_anchor.
+    inject_first_token: bool = False
 
 
 @dataclass
