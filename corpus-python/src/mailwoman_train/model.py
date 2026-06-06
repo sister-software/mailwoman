@@ -163,6 +163,7 @@ class MailwomanCoarseEncoder(nn.Module):
         locale_loss_weight: float = 0.0,
         use_postcode_anchor: bool = False,
         anchor_feature_dim: int = NUM_LOCALES + 2,
+        inject_first_token: bool = False,
     ) -> None:
         super().__init__()
         self.pad_token_id = pad_token_id
@@ -197,6 +198,9 @@ class MailwomanCoarseEncoder(nn.Module):
         # with that FiLM cleanly — anchor at the INPUT, FiLM on the hidden states after the blocks).
         self.use_postcode_anchor = use_postcode_anchor
         self.anchor_feature_dim = int(anchor_feature_dim) if use_postcode_anchor else 0
+        # Dual-injection (#327): also place the pooled anchor at position 0. Only meaningful with the
+        # anchor on; harmlessly ignored otherwise.
+        self.inject_first_token = bool(inject_first_token) and use_postcode_anchor
         # v0.3.0 additions: CRF decoder for structural validity + learned tag dynamics,
         # label smoothing on the per-token CE leg for calibration. Both gate-able for
         # ablation studies via the kwargs above.
@@ -402,6 +406,21 @@ class MailwomanCoarseEncoder(nn.Module):
                 )
             anchor_vec = self.anchor_projection(anchor_features.to(h.dtype)) + self.anchor_token_embedding
             h = h + anchor_confidence.to(h.dtype).unsqueeze(-1) * anchor_vec
+            if self.inject_first_token:
+                # Dual-injection (#327, v0.9.4): ALSO inject the pooled anchor at position 0 — an
+                # order-INDEPENDENT global cue the locality can attend back to regardless of where the
+                # postcode sits. Pool each sequence by its max-confidence token (the postcode span) via
+                # gather (ONNX-clean), scale by that confidence so an all-zero (no-anchor) sequence stays
+                # the EXACT c=0 identity, and add it only at position 0 (functional cat, no in-place).
+                conf = anchor_confidence.to(h.dtype)
+                max_conf, max_idx = conf.max(dim=1)  # (B,), (B,)
+                idx = max_idx.view(bsz, 1, 1).expand(bsz, 1, h.shape[-1])  # (B, 1, hidden)
+                pooled_vec = anchor_vec.gather(1, idx).squeeze(1)  # (B, hidden) — the postcode token's anchor_vec
+                pos0_add = (max_conf.unsqueeze(-1) * pooled_vec).unsqueeze(1)  # (B, 1, hidden)
+                # Place it ONLY at position 0 via a position-0 indicator broadcast — avoids a dynamic
+                # `seq-1` cat that trips the ONNX opset version-converter. (1, S, 1) × (B, 1, hidden).
+                pos_indicator = (torch.arange(seq, device=h.device) == 0).to(h.dtype).view(1, seq, 1)
+                h = h + pos0_add * pos_indicator
         elif anchor_features is not None:
             raise ValueError(
                 "anchor_features supplied but use_postcode_anchor=False — rebuild the "
@@ -662,6 +681,7 @@ class MailwomanCoarseEncoder(nn.Module):
             # the flag to materialize anchor_projection / anchor_token_embedding at the feature width.
             "use_postcode_anchor": bool(self.use_postcode_anchor),
             "anchor_feature_dim": int(self.anchor_feature_dim),
+            "inject_first_token": bool(self.inject_first_token),
             "id2label": dict(ID_TO_LABEL),
             "label2id": dict(LABEL_TO_ID),
         }
@@ -712,6 +732,7 @@ class MailwomanCoarseEncoder(nn.Module):
             # Postcode-anchor fields. Default off for back-compat with pre-anchor checkpoints.
             use_postcode_anchor=cfg.get("use_postcode_anchor", False),
             anchor_feature_dim=cfg.get("anchor_feature_dim", NUM_LOCALES + 2),
+            inject_first_token=cfg.get("inject_first_token", False),
         )
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
         try:
@@ -764,6 +785,7 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoa
         # over the locale set) + 2 (centroid) — single source of truth, can't drift from the loader.
         use_postcode_anchor=getattr(cfg.model, "use_postcode_anchor", False),
         anchor_feature_dim=NUM_LOCALES + 2,
+        inject_first_token=getattr(cfg.model, "inject_first_token", False),
     )
 
 
