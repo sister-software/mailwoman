@@ -102,7 +102,7 @@ card's `training.tokenizer_version` is the source of truth (mismatches have ship
 
 `.github/workflows/publish.yml` exposes the same flow from the GitHub Actions UI. Auth uses **npm Trusted Publishing** (OIDC) — no `NPM_TOKEN` secret in the repo, no auth token in `~/.npmrc`. npmjs.com is configured to accept publishes from this exact workflow file path.
 
-1. **One-time setup on the npm side** (already done): each `@mailwoman/*` package + `mailwoman` has a Trusted Publisher configured pointing at `sister-software/mailwoman` repo + workflow file `.github/workflows/publish.yml`. If you move/rename that file, update the npm side too.
+1. **One-time setup on the npm side** (done for the original packages): each already-published `@mailwoman/*` package + `mailwoman` has a Trusted Publisher configured pointing at `sister-software/mailwoman` repo + workflow file `.github/workflows/publish.yml`. If you move/rename that file, update the npm side too. **A package added since then must have its publisher configured before CI can publish it** — see "Adding a NEW package" below. _(As of 4.0.0, the six packages first-published by hand — codex + the five new deps — still need their Trusted Publishers set up.)_
 2. **Run a release** — Actions tab → `publish` workflow → Run workflow.
    - `version` — `patch` / `minor` / `major` / specific semver like `2.1.0`. Default `patch`.
    - `dry_run` — boolean. Default false. Set true to preview without publishing.
@@ -112,6 +112,30 @@ card's `training.tokenizer_version` is the source of truth (mismatches have ship
    (next section).
 
 The workflow checks out main, installs, runs `yarn release --ci --increment=<version>`. release-it's pre-flight hooks (compile + test + copy-weights) run as usual. Per-workspace publish uses `yarn pack -o <tmpfile>` (translates `workspace:*` → concrete versions) followed by `npm publish <tmpfile>` (the npm CLI auto-detects the OIDC environment and authenticates via Trusted Publishing; `--provenance` is auto-enabled).
+
+### Adding a NEW package: it can't be first-published from CI
+
+npm Trusted Publishing (OIDC) **cannot create a package that doesn't exist yet** — the registry returns `E404` (`PUT https://registry.npmjs.org/@scope%2Fpkg — Not found`) because there's no package, and therefore no Trusted Publisher, to authorize against. So a brand-new `@mailwoman/*` workspace needs a **one-time manual first publish with a token** before CI can ever touch it. This bit the 4.0.0 release: `@mailwoman/codex` plus the five new `mailwoman` runtime deps (`kind-classifier`, `locale-gate`, `normalize`, `phrase-grouper`, `query-shape`) all failed OIDC and had to be bootstrapped by hand.
+
+The bootstrap (on a machine with `npm login` rights to the `@mailwoman` scope — note the **lab host has no npm credentials**, so this is the operator's machine):
+
+```bash
+git checkout main && git pull   # main already carries the release commit's versions
+for ws in <new-workspace-dirs>; do
+  RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE=./$ws \
+  RELEASE_IT_WORKSPACES_TAG=latest RELEASE_IT_WORKSPACES_ACCESS=public \
+  node scripts/publish-workspace.mjs || break
+done
+```
+
+Then, on npmjs.com, **configure each new package's Trusted Publisher** (repo `sister-software/mailwoman`, workflow `.github/workflows/publish.yml`). After that, OIDC publishes it like every other package and you never touch it manually again.
+
+Two traps that wasted time during 4.0.0, worth knowing:
+
+- **`npm view <pkg> version` caches for minutes** and will report `UNPUBLISHED` right after a successful publish. Verify against the registry directly: `curl -s https://registry.npmjs.org/@mailwoman%2F<pkg>` (HTTP 200 + a `dist-tags.latest` = published).
+- **npm rate-limits new-package creation.** The bootstrap loop above published the first package then bounced (the `|| break` stopped it); waiting a minute and re-running walked through the rest. A `402`/`403` instead means the token lacks publish rights on the scope — a different problem.
+
+If a release fails partway like this (tag + some packages already out), don't re-dispatch the full CI workflow — release-it will trip on the existing tag. Use the per-workspace bootstrap loop above to publish the stragglers (`--tolerate-republish` makes already-out versions a no-op), then configure their publishers. See also "Recovering from a partial release" below.
 
 ### Models on Hugging Face, then everything publishes from CI
 
