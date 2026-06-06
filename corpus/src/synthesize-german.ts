@@ -46,9 +46,27 @@ export type SynthesizedGermanRow = SynthesizedLocaleRow
 
 export interface LocaleSynthesisOpts {
 	random?: () => number
+	/**
+	 * Rendering order for the SAME components. `"native"` (default) uses the country's own template
+	 * (DE → house-AFTER-street, postcode-BEFORE-city). `"international"` renders house-FIRST,
+	 * postcode-AFTER-city — the US/GB layout that international feeds, US-centric systems, and our own
+	 * OpenAddresses de-sample impose on non-US addresses. Training both teaches the model that a
+	 * German address can arrive either way, so the eval's US-order rendering stops reading as a
+	 * collapse. See `docs/articles/evals/2026-06-06-anchor-pilot.md` (the order-artifact correction).
+	 */
+	order?: "native" | "international"
 }
 /** @deprecated Alias — use LocaleSynthesisOpts. */
 export type GermanSynthesisOpts = LocaleSynthesisOpts
+
+/**
+ * House-first, postcode-after-city templates for the `"international"` order. Both are real OpenCage
+ * country templates that happen to render any component dict house-number-first with the postcode
+ * trailing the city — exactly the US/feed layout a native-order-trained model never saw. We keep two
+ * so the international rendering isn't a single memorizable layout (US carries a region slot, GB
+ * doesn't).
+ */
+const INTERNATIONAL_ORDER_TEMPLATES = ["US", "GB"] as const
 
 /** ISO-3166 alpha-2 → BCP-47 tag for the emitted rows (primary language per country). */
 const LOCALE_TAG: Record<string, string> = {
@@ -82,6 +100,10 @@ function tokenPresent(raw: string, value: string): boolean {
  *
  * Region is intentionally omitted: these templates absorb the admin region into the postcode/city
  * line, so it rarely renders verbatim, and including it would break BIO alignment.
+ *
+ * Pass `opts.order: "international"` to render the same components house-first / postcode-after-city
+ * instead (see {@link LocaleSynthesisOpts.order}) — the layout international feeds impose on foreign
+ * addresses, and the one a native-order-trained model treats as a "collapse."
  */
 export function synthesizeLocaleRow(
 	base: LocaleBaseTuple,
@@ -89,6 +111,7 @@ export function synthesizeLocaleRow(
 	opts: LocaleSynthesisOpts = {}
 ): SynthesizedLocaleRow | null {
 	const random = opts.random ?? Math.random
+	const order = opts.order ?? "native"
 	if (!base.street || !base.locality) return null
 
 	const components: CanonicalRow["components"] = { street: base.street, locality: base.locality }
@@ -97,7 +120,15 @@ export function synthesizeLocaleRow(
 	// ~85% keep the postcode.
 	if (base.postcode && random() < 0.85) components.postcode = base.postcode
 
-	const raw = formatAddress(components, country, { separator: ", " })
+	// Native order uses the address's own country template; international order borrows a house-first /
+	// postcode-after-city template (US or GB) while keeping the address's own locale tag. The extra
+	// `random()` draw is consumed ONLY on the international branch, so native rendering preserves the
+	// RNG sequence existing callers/tests depend on.
+	const renderCountry =
+		order === "international"
+			? INTERNATIONAL_ORDER_TEMPLATES[Math.floor(random() * INTERNATIONAL_ORDER_TEMPLATES.length)]!
+			: country
+	const raw = formatAddress(components, renderCountry, { separator: ", " })
 	if (!raw) return null
 
 	// Every component must align — drop the row if the template didn't surface one verbatim, or a
