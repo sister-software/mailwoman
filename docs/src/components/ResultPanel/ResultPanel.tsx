@@ -4,6 +4,9 @@ import { DemoResult } from "../../shared/resources.tsx"
 import { CandidatePicker } from "../CandidatePicker/CandidatePicker.tsx"
 import { FailureDiagnostic } from "../FailureDiagnostic/FailureDiagnostic.tsx"
 import { KindBadge } from "../KindBadge/KindBadge.tsx"
+import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
+import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
+import { TreeView } from "../TreeView/TreeView.tsx"
 
 import styles from "./styles.module.css"
 
@@ -37,6 +40,7 @@ export interface ResultPanelProps {
 export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandidateIndex, onSelectCandidate }) => {
 	const [showXml, setShowXml] = useState(false)
 	const [xml, setXml] = useState<string | null>(null)
+	const [copied, setCopied] = useState(false)
 	const selected = result.candidates[selectedCandidateIndex] ?? result.candidates[0] ?? null
 
 	const onToggle = useCallback(async () => {
@@ -49,13 +53,62 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 		setShowXml(true)
 	}, [xml, result.tree])
 
+	// Copy the parse + resolve as a clean JSON object — the thing a developer actually wants to paste
+	// into an issue or a test. Mirrors PermalinkButton's clipboard-with-textarea-fallback + 1.5s tick.
+	const onCopy = useCallback(async () => {
+		const payload = {
+			input: result.input,
+			components: result.nodes.map((n) => ({
+				tag: n.tag,
+				value: n.value ?? null,
+				confidence: n.confidence ?? null,
+				start: n.start ?? null,
+				end: n.end ?? null,
+			})),
+			resolved: selected
+				? {
+						name: selected.name,
+						placetype: selected.placetype,
+						id: selected.id,
+						lat: selected.lat,
+						lon: selected.lon,
+						score: selected.score,
+					}
+				: null,
+		}
+		const json = JSON.stringify(payload, null, 2)
+		try {
+			await navigator.clipboard.writeText(json)
+		} catch {
+			const ta = document.createElement("textarea")
+			ta.value = json
+			ta.style.position = "fixed"
+			ta.style.opacity = "0"
+			document.body.appendChild(ta)
+			ta.select()
+			try {
+				document.execCommand("copy")
+			} catch {
+				/* nothing more we can do */
+			}
+			document.body.removeChild(ta)
+		}
+		setCopied(true)
+		window.setTimeout(() => setCopied(false), 1500)
+	}, [result, selected])
+
 	return (
 		<div className={styles.resultPanel}>
 			<div className={styles.resultHeader}>
 				<h2>Parsed components</h2>
-				<button type="button" className={styles.debugBtn} onClick={onToggle}>
-					{showXml ? "Hide XML" : "Show XML"}
-				</button>
+				<div className={styles.resultActions}>
+					<button type="button" className={styles.debugBtn} onClick={onCopy}>
+						{copied ? "✓ Copied" : "Copy JSON"}
+					</button>
+					<button type="button" className={styles.debugBtn} onClick={onToggle}>
+						{showXml ? "Hide XML" : "Show XML"}
+					</button>
+				</div>
 			</div>
 			{result.kindResult ? <KindBadge kindResult={result.kindResult} /> : null}
 			{result.fstActive ? (
@@ -76,6 +129,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 				</details>
 			) : null}
 			{showXml && xml ? <CodeBlock language="xml">{xml}</CodeBlock> : null}
+			<SpanHighlight input={result.input} nodes={result.nodes} />
 			<table className={styles.componentTable}>
 				<thead>
 					<tr>
@@ -96,6 +150,13 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 					))}
 				</tbody>
 			</table>
+			{result.timing ? <TimingPanel timing={result.timing} /> : null}
+			{(result.tree as { roots?: unknown[] } | null)?.roots?.length ? (
+				<details className={styles.hierarchyDetails}>
+					<summary>Hierarchy</summary>
+					<TreeView tree={result.tree} />
+				</details>
+			) : null}
 			{selected ? (
 				<>
 					<div className={styles.resolved}>

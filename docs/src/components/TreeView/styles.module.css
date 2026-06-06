@@ -1,0 +1,62 @@
+/* Containment tree for the parse — nested lists with a guide rail per level. Tag tint mirrors
+   ResultPanel's .conf_high/_mid/_low (confidence), value + score in monospace. */
+
+.treeView {
+	margin: 0.5rem 0 0 0;
+}
+
+.children {
+	list-style: none;
+	margin: 0;
+	padding-left: 1.1rem;
+}
+
+/* Nested levels get a guide rail; the outermost list sits flush. */
+.children .children {
+	border-left: 1px solid var(--ifm-color-emphasis-300);
+	margin-left: 0.3rem;
+}
+
+.node {
+	margin: 0.15rem 0;
+}
+
+.row {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	font-size: 0.85rem;
+}
+
+.tag {
+	font-weight: 600;
+	padding: 0 0.3rem;
+	border-radius: 3px;
+	border-bottom: 2px solid transparent;
+}
+
+.value {
+	font-family: var(--ifm-font-family-monospace);
+}
+
+.conf {
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.75rem;
+	color: var(--ifm-color-emphasis-600);
+}
+
+/* Tier tints — keep in sync with ResultPanel .conf_high/_mid/_low. */
+.high {
+	background: rgba(26, 168, 77, 0.18);
+	border-bottom-color: #1aa84d;
+}
+
+.mid {
+	background: rgba(230, 168, 0, 0.18);
+	border-bottom-color: #e6a800;
+}
+
+.low {
+	background: rgba(216, 80, 74, 0.18);
+	border-bottom-color: #d8504a;
+}

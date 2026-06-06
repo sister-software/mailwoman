@@ -48,6 +48,7 @@ const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
 	{ label: "Wrigley Field", address: "1060 W Addison St, Chicago, IL 60613" },
 	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
 	{ label: "ZIP only", address: "90210" },
+	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin" },
 ]
 
 const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
@@ -61,6 +62,8 @@ interface ReleaseInfo {
 	steps: number
 	hasFst: boolean
 	hasWofDb: boolean
+	/** Anchor-trained bundle (#239/#240) — ships postcode-*.bin so the demo feeds the postcode anchor. */
+	hasAnchor?: boolean
 }
 
 interface ReleasesManifest {
@@ -226,6 +229,16 @@ const DemoApp: React.FC = () => {
 					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
 					modelCardUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model-card.json"),
 					runner: { useWebGpu: !forceWasm },
+					// Anchor-trained bundles (v4.0.0+) ship postcode binaries so the demo feeds the postcode
+					// anchor — US + DE cover the demo's example set (incl. the native-order Berlin case).
+					...(release?.hasAnchor
+						? {
+								postcodeBinaryUrls: [
+									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-us.bin"),
+									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-de.bin"),
+								],
+							}
+						: {}),
 				})
 				setActiveBackend(
 					diagnostics
@@ -382,10 +395,13 @@ const DemoApp: React.FC = () => {
 					import("@mailwoman/query-shape"),
 					import("@mailwoman/kind-classifier"),
 				])
+				const tStart = performance.now()
 				const queryShape = computeQueryShape(text)
 				const kindResult = classifyKindSync({ raw: text, normalized: text }, queryShape)
+				const tShape = performance.now()
 
 				const tree = await classifier.parse(text, { queryShape, fst: fstMatcher ?? undefined })
+				const tClassify = performance.now()
 				const nodes = flattenTree(tree)
 				const localityNode = nodes.find((n) => n.tag === "locality" || n.tag === "city")
 				const stateNode = nodes.find((n) => n.tag === "region" || n.tag === "state")
@@ -394,6 +410,7 @@ const DemoApp: React.FC = () => {
 				const wofLookup = await ensureLookup()
 				if (!wofLookup) {
 					setResult({
+						input: text,
 						tree,
 						nodes,
 						resolved: null,
@@ -402,13 +419,17 @@ const DemoApp: React.FC = () => {
 						kindResult,
 						fstActive: fstMatcher !== null,
 						fstProvenance,
+						timing: { shape: tShape - tStart, classify: tClassify - tShape },
 					})
 					return
 				}
 
 				// Cascade: postcode first (most precise), fall back to locality, then raw text.
 				// Drop (lat=0, lon=0) hits — WOF ships placeholder zeros on ~22% of US postcodes.
+				// Timed from here so the one-time DB load above doesn't skew the resolve number.
+				const tBeforeResolve = performance.now()
 				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNode, text)
+				const tResolve = performance.now()
 				const candidates: ResolvedHit[] = cascadeHits.map((c) => ({
 					id: c.id,
 					name: c.name,
@@ -424,6 +445,7 @@ const DemoApp: React.FC = () => {
 				// clearing stale marker/bbox AND rendering the new selection.
 				setSelectedCandidateIndex(0)
 				setResult({
+					input: text,
 					tree,
 					nodes,
 					resolved: candidates[0] ?? null,
@@ -432,6 +454,7 @@ const DemoApp: React.FC = () => {
 					kindResult,
 					fstActive: fstMatcher !== null,
 					fstProvenance,
+					timing: { shape: tShape - tStart, classify: tClassify - tShape, resolve: tResolve - tBeforeResolve },
 				})
 			} catch (parsingError) {
 				console.error("Error parsing input", parsingError)
@@ -650,18 +673,29 @@ async function runCascade(
 	return usable(await lookup.findPlace({ text: rawText, country: "US", limit: 5 }))
 }
 
-function flattenTree(tree: unknown): Array<{ tag: string; value?: unknown; confidence?: number }> {
-	const out: Array<{ tag: string; value?: unknown; confidence?: number }> = []
+type TreeNode = {
+	tag?: string
+	value?: unknown
+	confidence?: number
+	start?: number
+	end?: number
+	children?: unknown[]
+}
+
+function flattenTree(
+	tree: unknown
+): Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> {
+	const out: Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> = []
 	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
-	const stack = [...(roots as Array<{ tag?: string; value?: unknown; confidence?: number; children?: unknown[] }>)]
+	const stack = [...(roots as TreeNode[])]
 	while (stack.length) {
 		const n = stack.pop()!
 		if (typeof n.tag === "string") {
-			out.push({ tag: n.tag, value: n.value, confidence: n.confidence })
+			out.push({ tag: n.tag, value: n.value, confidence: n.confidence, start: n.start, end: n.end })
 		}
 		if (Array.isArray(n.children)) {
 			for (const c of n.children) {
-				stack.push(c as { tag?: string; value?: unknown; confidence?: number; children?: unknown[] })
+				stack.push(c as TreeNode)
 			}
 		}
 	}

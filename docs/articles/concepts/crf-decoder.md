@@ -74,7 +74,7 @@ graph LR
 
 ## What the CRF learns
 
-On top of the frozen structural mask, the CRF has **learnable** transition scores. These are not yes/no — they are real-valued. The model learns patterns like:
+On top of the frozen structural mask, the CRF has **learnable** transition scores. These are real-valued, not yes/no. The model learns patterns like:
 
 - `B-postcode` after `B-region` is common in US addresses (`"NY 10118"`).
 - `B-locality` after `B-locality` is rare unless separated by `O` (a comma).

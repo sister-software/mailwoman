@@ -98,9 +98,8 @@ production rules. The model learns:
 - "When a token matches a libpostal street-typing affix (Ave, St, Rd), the
   adjacent name token's interpretation should consider street."
 
-These aren't rules the model is given. They're patterns the attention
-weights learn to express, distilled from the training distribution's
-co-occurrence statistics.
+Nobody hand-writes these rules. The attention weights learn the patterns,
+distilled from the training distribution's co-occurrence statistics.
 
 ## What this CAN'T do (compositional limits)
 

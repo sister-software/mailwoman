@@ -1,0 +1,98 @@
+/* displaCy-style span ribbon. Each tagged span is a column: the raw text on top (tinted by the
+   confidence tier — colours mirror ResultPanel's .conf_high/_mid/_low) and the tag label beneath.
+   Gaps (delimiters, unparsed chars) fall through as plain inline text so a dropped span is visible
+   as a literal break in the colour. */
+
+.spanHighlight {
+	margin: 0.5rem 0 1rem 0;
+}
+
+.legend {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--ifm-color-emphasis-600);
+	margin-bottom: 0.5rem;
+}
+
+.swatch {
+	display: inline-block;
+	width: 0.8rem;
+	height: 0.8rem;
+	border-radius: 2px;
+	margin-left: 0.4rem;
+}
+
+.track {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	row-gap: 1.5rem;
+	padding: 0.5rem 0.6rem;
+	border: 1px solid var(--ifm-color-emphasis-200);
+	border-radius: 6px;
+	background: var(--ifm-background-surface-color);
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.9rem;
+	line-height: 1.4;
+}
+
+.seg {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: stretch;
+}
+
+.segText {
+	padding: 0.05rem 0.1rem;
+	border-bottom: 2px solid transparent;
+	white-space: pre;
+}
+
+.segTag {
+	margin-top: 0.15rem;
+	font-size: 0.6rem;
+	line-height: 1;
+	text-align: center;
+	letter-spacing: 0.02em;
+	color: var(--ifm-color-emphasis-600);
+	white-space: nowrap;
+}
+
+.gap {
+	display: inline-flex;
+	align-items: flex-start;
+	white-space: pre;
+	color: var(--ifm-color-emphasis-500);
+}
+
+/* Tier tints — keep in sync with ResultPanel .conf_high/_mid/_low. */
+.high .segText {
+	background: rgba(26, 168, 77, 0.18);
+	border-bottom-color: #1aa84d;
+}
+
+.mid .segText {
+	background: rgba(230, 168, 0, 0.18);
+	border-bottom-color: #e6a800;
+}
+
+.low .segText {
+	background: rgba(216, 80, 74, 0.18);
+	border-bottom-color: #d8504a;
+}
+
+.swatch.high {
+	background: #1aa84d;
+}
+
+.swatch.mid {
+	background: #e6a800;
+}
+
+.swatch.low {
+	background: #d8504a;
+}

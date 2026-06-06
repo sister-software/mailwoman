@@ -9,7 +9,7 @@ tags:
 
 # Synthetic corpus — alignment validation is load-bearing
 
-Both v0.5.0 corpus threads (B kryptonite and B2 transliteration) used an LLM (DeepSeek) to generate annotated training rows. Both surfaced the same lesson: **the substring-match alignment check is not a quality filter you can drop later — it is structural infrastructure.** This article explains why.
+Both v0.5.0 corpus threads (B kryptonite and B2 transliteration) used an LLM (DeepSeek) to generate annotated training rows. Both surfaced the same lesson: **the substring-match alignment check is structural infrastructure, not a quality filter you can drop later.** This article explains why.
 
 ## What alignment validation does
 
@@ -48,7 +48,7 @@ Reject rates from the two runs:
 
 Neither approaches zero. The 1–2% range is the **floor** for DeepSeek-as-corpus at the prompt quality we shipped with. Better prompting drops it further but does not eliminate it. The validator is permanent infrastructure.
 
-## Why this matters more for synthetic data than for real data
+## Synthetic data needs this more than real data
 
 For corpora harvested from real sources (NPPES, NAD, WOF, BAN), alignment problems are bugs in the harvester or in the source — rare, deterministic, fixable by a one-line ETL patch. A 0.01% reject rate is plausible.
 

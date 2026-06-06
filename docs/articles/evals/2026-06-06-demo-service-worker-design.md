@@ -1,0 +1,169 @@
+# Demo service-worker cache (S38) — design notes before we build
+
+_Written during night-7 as the groundwork for the operator's "service worker cache" ask. We did **not**
+ship a service worker this shift: the investigation below turned up enough cross-origin sharp edges that a
+blind end-of-shift implementation would have been the wrong call. This is the map so the next session starts
+with the gotchas already paid for, not a from-scratch spike._
+
+## What you actually want
+
+The demo's heavy assets — `model.onnx`, `tokenizer.model`, `wof-hot.db`, `fst-en-US.bin` (~60 MB cold) — are
+HTTP-cache-only today. The header comment in `src/pages/demo/index.tsx` says it plainly: _"After first load the
+browser caches everything."_ That's fragile. There's no offline story, no version awareness, and the HTTP
+cache can be evicted under pressure with no say from us. You want a service worker that **precaches the bundle,
+keyed by the selected model version, and evicts the old version's blobs when you switch.**
+
+## The thing the header comment gets wrong (and why S38 is non-trivial)
+
+That same comment implies the assets live at same-origin paths (`/mailwoman/model.onnx`). Half true. The
+`demo-assets` Docusaurus plugin (`plugins/demo-assets/plugin.mjs`) **does** stage a same-origin copy into
+`static/mailwoman/` at build time — but that's the build's default-version artifact. At **runtime**, the demo
+fetches by version from Hugging Face, cross-origin:
+
+```ts
+// src/shared/resources.tsx
+const HF_BUCKET_RESOLVE_URL = "https://huggingface.co/buckets/sister-software/mailwoman/resolve/"
+export function assetUrl(locale, version, filename) {
+	return `${HF_BUCKET_RESOLVE_URL}${locale}/${version}/${filename}`
+}
+// index.tsx: modelUrl / tokenizerUrl / wof-hot.db source all go through assetUrl(locale, selectedVersion, …)
+```
+
+So the requests a service worker has to cache are **cross-origin to `huggingface.co`**, not same-origin. That
+single fact is most of the design.
+
+### Sharp edge 1 — HF answers with a 302 to an expiring signed CDN URL
+
+A `GET` to the HF bucket URL doesn't return the bytes. It returns a **302** to a signed
+`cas-bridge.xethub.hf.co` URL whose query string carries an expiry — measured this shift,
+`X-Amz-Expires=3600` (one hour) and a `Policy`/`Signature` pair. Concretely:
+
+```
+GET huggingface.co/buckets/.../v0.6.0/model-card.json
+  → 302  location: https://cas-bridge.xethub.hf.co/...?Expires=…&X-Amz-Expires=3600&Signature=…
+  → 200  (the bytes)
+```
+
+Implications for the cache:
+
+- **Cache under the stable HF URL, never the signed one.** The signed CDN URL is different on every request
+  and dead within the hour — caching it by key is useless. The service worker must intercept the original
+  `huggingface.co/...` request, `fetch(request, { redirect: "follow" })`, and store the **final 200 body**
+  under the original request as key. (`cache.put(originalRequest, finalResponse)` does the right thing as long
+  as you don't key on the redirected URL.)
+- **A cache hit must short-circuit before the redirect.** Once cached, serve the stored body directly so you
+  never touch the expiring signed URL again — that's the whole point (offline + no re-fetch).
+
+### Sharp edge 2 — CORS lives on the HF leg; the CDN leg is unconfirmed
+
+The HF 302 carries `access-control-allow-origin: https://huggingface.co`. The final signed CDN `200`, probed
+with `HEAD` this shift, did **not** visibly carry an `access-control-allow-origin` header — but a `HEAD` is not
+authoritative for `GET` CORS, and the demo demonstrably reads these bytes today, so the browser is getting a
+readable (CORS-clean) response on the real `GET` somehow. **Verify in a browser before building**, because the
+answer forks the design:
+
+- **If the final GET is CORS-clean** (most likely, since the demo works): cache normal (non-opaque) responses.
+  You get `response.ok`, a real `content-length`, and integrity you can check against the model card's expected
+  sizes (the plugin already treats those sizes as source of truth).
+- **If it's opaque** (`mode: "no-cors"` fallback): you can still `cache.put` it, but the response is opaque —
+  no status, no readable size, and it counts a **padded** size against quota. That makes version eviction and
+  the ~60 MB quota math much harder. Don't design for this case unless the browser check forces it.
+
+### Sharp edge 3 — version-keyed eviction is the actual feature
+
+The point isn't "cache forever," it's "cache **this** version and drop the last one when the user switches in
+the release picker." Name the cache by locale + version:
+
+```
+const CACHE = `mailwoman-assets-${locale}-${version}`   // e.g. mailwoman-assets-en-us-v0.6.0
+```
+
+On version switch, the page posts the new version to the SW (`navigator.serviceWorker.controller.postMessage`),
+and the SW deletes every `mailwoman-assets-*` cache that isn't the current one. Doing eviction on an explicit
+message (not only in `activate`) matters because the SW doesn't reactivate on an in-page version switch.
+
+## plugin-pwa vs hand-rolled
+
+`@docusaurus/plugin-pwa` is **not** installed. It's the conventional choice and gives you the manifest +
+registration plumbing, but its Workbox precache manifest is built for **same-origin, build-time-known** assets.
+Our heavy assets are **cross-origin and version-dynamic** (chosen at runtime from the release picker), which is
+exactly what a Workbox precache manifest can't enumerate. You'd end up writing a custom `runtimeCaching` route
+for `huggingface.co` anyway.
+
+**Recommendation: hand-rolled Cache API service worker**, registered by a small Docusaurus client module (or
+folded into the existing `demo-assets` plugin's client entry). It's less magic, and every hard part here (the
+redirect-follow, the version-keyed eviction, the cross-origin route) is custom regardless. Reach for plugin-pwa
+only if you later want an installable PWA manifest for the docs site as a whole — a different goal.
+
+## Sketch
+
+```js
+// static/mailwoman-sw.js  (served same-origin so it can control the /demo scope)
+const HF = "https://huggingface.co/buckets/sister-software/mailwoman/resolve/"
+const isHeavyAsset = (url) => url.startsWith(HF) && /\.(onnx|model|db|bin)$/.test(new URL(url).pathname)
+
+self.addEventListener("fetch", (event) => {
+	const { url } = event.request
+	if (!isHeavyAsset(url)) return // let everything else hit the network normally
+	event.respondWith(
+		(async () => {
+			// cache key = the stable HF request, NOT the signed redirect target
+			const caches_ = await caches.keys()
+			for (const name of caches_) {
+				if (!name.startsWith("mailwoman-assets-")) continue
+				const hit = await caches.open(name).then((c) => c.match(event.request))
+				if (hit) return hit
+			}
+			const res = await fetch(event.request, { redirect: "follow" })
+			if (res.ok) {
+				const version = currentVersionForUrl(url) // parse /resolve/<locale>/<version>/<file>
+				const cache = await caches.open(`mailwoman-assets-${version}`)
+				cache.put(event.request, res.clone())
+			}
+			return res
+		})()
+	)
+})
+
+self.addEventListener("message", async (event) => {
+	if (event.data?.type !== "set-version") return
+	const keep = `mailwoman-assets-${event.data.version}`
+	for (const name of await caches.keys())
+		if (name.startsWith("mailwoman-assets-") && name !== keep) await caches.delete(name)
+})
+```
+
+(`currentVersionForUrl` keys the cache by the `locale/version` segment already present in the path, so each
+version's blobs land in their own named cache and eviction is a name comparison.)
+
+## Storage & quota
+
+~60 MB per version. Browser quota is typically generous (hundreds of MB to GB on desktop), but iOS Safari is
+stingier and evicts under pressure. Keep **one** version cached at a time (the eviction-on-switch above), and
+consider `navigator.storage.persist()` to opt out of best-effort eviction. The `wof-hot.db` blob is the
+biggest single asset — this overlaps **S39** (OPFS/IndexedDB persistence for the DB), so decide up front
+whether the DB lives in the SW cache (simple, one mechanism) or in OPFS (lets sql.js mmap it, faster warm
+parse). Don't cache it in both.
+
+## Test plan (this is why we didn't ship blind)
+
+A service worker's whole value is in behaviors you can only see across loads and network states, and none of
+them are visible to `tsc` or a single-page render:
+
+1. **Cold load** — assets fetched from network, populate the cache. (`100-demo-cold-load.spec.ts` covers the
+   page render; extend it to assert the cache got populated.)
+2. **Warm load** — second visit serves from cache; assert **zero** network requests to `huggingface.co`.
+3. **Version switch** — pick a different release; assert the old `mailwoman-assets-*` cache is deleted and the
+   new one populated.
+4. **Offline** — `context.setOffline(true)` after a warm load; the demo still parses.
+5. **Signed-URL expiry** — the cached path must never re-hit the expiring CDN URL (covered by #2, but worth an
+   explicit assertion that the SW served the body without a redirect).
+
+Playwright drives all five with a real Chromium + service-worker support; that's the gate this feature needs,
+and it's a session's worth of careful work, not an end-of-shift add-on.
+
+## Recommendation
+
+Hand-rolled Cache API SW, registered for the `/demo` scope, version-keyed caches with message-driven eviction,
+non-opaque responses (pending the one browser CORS check), `wof-hot.db` in **one** store (coordinate with S39).
+Land it behind a flag, prove the five behaviors in Playwright, then enable. Budget it a focused session.

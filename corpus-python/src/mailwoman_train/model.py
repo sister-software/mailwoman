@@ -37,7 +37,7 @@ from torch import nn
 
 from .config import Config
 from .crf import LinearChainCRF, TopKPath
-from .labels import ID_TO_LABEL, LABEL_TO_ID, ACTIVE_BIO_LABELS
+from .labels import ID_TO_LABEL, LABEL_TO_ID, ACTIVE_BIO_LABELS, IGNORE_INDEX, NUM_LOCALES
 from .phrase_priors import PHRASE_FEATURE_DIM
 
 
@@ -64,11 +64,19 @@ class _CoarseEncoderOutput:
     to the bert-style call signature the trainer and exporter expect.
     """
 
-    __slots__ = ("loss", "logits")
+    __slots__ = ("loss", "logits", "locale_logits")
 
-    def __init__(self, logits: torch.Tensor, loss: torch.Tensor | None) -> None:
+    def __init__(
+        self,
+        logits: torch.Tensor,
+        loss: torch.Tensor | None,
+        locale_logits: torch.Tensor | None = None,
+    ) -> None:
         self.logits = logits
         self.loss = loss
+        # PR3 self-conditioning: ``(batch, num_locales)`` locale posterior logits from the aux
+        # head, or None when the encoder was built without ``use_locale_conditioning``.
+        self.locale_logits = locale_logits
 
 
 class EncoderBlock(nn.Module):
@@ -150,11 +158,24 @@ class MailwomanCoarseEncoder(nn.Module):
         class_weights: torch.Tensor | None = None,
         use_phrase_priors: bool = False,
         phrase_feature_dim: int = PHRASE_FEATURE_DIM,
+        use_locale_conditioning: bool = False,
+        num_locales: int = NUM_LOCALES,
+        locale_loss_weight: float = 0.0,
+        use_postcode_anchor: bool = False,
+        anchor_feature_dim: int = NUM_LOCALES + 2,
+        inject_first_token: bool = False,
     ) -> None:
         super().__init__()
         self.pad_token_id = pad_token_id
         self.max_position_embeddings = max_position_embeddings
+        self.hidden_size = hidden_size
         self.num_labels = num_labels
+        # PR3 self-conditioning: an auxiliary locale head over the pooled sequence + a FiLM
+        # modulation of the per-token reps by the inferred locale. See forward() for the data
+        # flow and the design doc (2026-06-04-pr3-self-conditioned-retrain.md) for the why.
+        self.use_locale_conditioning = use_locale_conditioning
+        self.num_locales = int(num_locales)
+        self.locale_loss_weight = float(locale_loss_weight)
         # v0.5.0 thread C: phrase-prior input-layer features (from Stage 2.7 phrase grouper,
         # Thread E). When ``use_phrase_priors`` is on, the encoder takes an additional
         # ``(B, S, phrase_feature_dim)`` tensor at forward time, concatenates it onto the
@@ -164,6 +185,22 @@ class MailwomanCoarseEncoder(nn.Module):
         # so the phrase-prior contribution can be ablated cleanly.
         self.use_phrase_priors = use_phrase_priors
         self.phrase_feature_dim = int(phrase_feature_dim) if use_phrase_priors else 0
+        # Postcode-anchor conditioning channel (de-risk pilot, #239/#240; DeepSeek 2026-06-05).
+        # A per-token additive injection at the postcode span: a_i = c_i · (W·anchor_features +
+        # v_ANCHOR), added to the token+position embedding. anchor_features is a fixed-width
+        # ``(B, S, anchor_feature_dim)`` vector — a uniform country posterior over the NUM_LOCALES
+        # locale set (0 outside member countries) plus a 2-d centroid — and ``anchor_confidence`` is
+        # the per-token ``(B, S)`` confidence scalar (0 outside any postcode span). Robustness is the
+        # confidence CURRICULUM applied UPSTREAM (data loader perturbs the scalar by training step);
+        # the model is perturbation-agnostic, so absent / zero-confidence anchors are just the c=0
+        # tail of a continuum — no discrete [NO-ANCHOR] embedding, no regime switch. Position-local
+        # by construction: this is the property self-conditioning's global FiLM lacked (it composes
+        # with that FiLM cleanly — anchor at the INPUT, FiLM on the hidden states after the blocks).
+        self.use_postcode_anchor = use_postcode_anchor
+        self.anchor_feature_dim = int(anchor_feature_dim) if use_postcode_anchor else 0
+        # Dual-injection (#327): also place the pooled anchor at position 0. Only meaningful with the
+        # anchor on; harmlessly ignored otherwise.
+        self.inject_first_token = bool(inject_first_token) and use_postcode_anchor
         # v0.3.0 additions: CRF decoder for structural validity + learned tag dynamics,
         # label smoothing on the per-token CE leg for calibration. Both gate-able for
         # ablation studies via the kwargs above.
@@ -222,6 +259,17 @@ class MailwomanCoarseEncoder(nn.Module):
         else:
             self.phrase_input_projection = None
 
+        # Postcode-anchor projection W ((k+2)→hidden) + the shared learned v_ANCHOR cue. None when
+        # the channel is off (forward skips it → bit-identical to a no-anchor encoder).
+        self.anchor_projection: nn.Linear | None
+        self.anchor_token_embedding: nn.Parameter | None
+        if self.use_postcode_anchor:
+            self.anchor_projection = nn.Linear(self.anchor_feature_dim, hidden_size, bias=True)
+            self.anchor_token_embedding = nn.Parameter(torch.zeros(hidden_size))
+        else:
+            self.anchor_projection = None
+            self.anchor_token_embedding = None
+
         self.blocks = nn.ModuleList(
             [
                 EncoderBlock(
@@ -241,6 +289,23 @@ class MailwomanCoarseEncoder(nn.Module):
         # Disabled via use_crf=False for ablation studies or backwards compat with
         # pre-v0.3.0 checkpoints.
         self.crf: LinearChainCRF | None = LinearChainCRF(num_labels, ID_TO_LABEL) if use_crf else None
+
+        # PR3 self-conditioning modules. ``locale_head`` maps the pooled (mean over real tokens)
+        # representation to the locale posterior — the aux supervised signal AND the exported
+        # LocalePosterior. ``locale_film`` produces a (scale, shift) pair from the same pooled
+        # vector that FiLM-modulates the per-token reps feeding the BIO head. ``locale_film`` is
+        # zero-initialized in _init_weights so the model starts as the EXACT identity of an
+        # unconditioned encoder (gamma=0, beta=0 → h unchanged) and only learns to modulate as the
+        # aux gradient flows — this is the de-risking move against the CRF-style from-scratch
+        # divergence (one new behaviour, introduced gently, not a cold-start architecture shock).
+        self.locale_head: nn.Linear | None
+        self.locale_film: nn.Linear | None
+        if self.use_locale_conditioning:
+            self.locale_head = nn.Linear(hidden_size, self.num_locales)
+            self.locale_film = nn.Linear(hidden_size, 2 * hidden_size)
+        else:
+            self.locale_head = None
+            self.locale_film = None
 
         self._init_weights()
 
@@ -270,6 +335,12 @@ class MailwomanCoarseEncoder(nn.Module):
         if self.token_embeddings.padding_idx is not None:
             with torch.no_grad():
                 self.token_embeddings.weight[self.token_embeddings.padding_idx].zero_()
+        # PR3: zero-init the FiLM projection so conditioning starts as a no-op (gamma=0, beta=0).
+        # The blanket xavier loop above gave it real weights; reset them so the from-scratch model
+        # begins identical to an unconditioned encoder and learns to modulate gradually.
+        if self.locale_film is not None:
+            nn.init.zeros_(self.locale_film.weight)
+            nn.init.zeros_(self.locale_film.bias)
 
     def forward(
         self,
@@ -277,6 +348,9 @@ class MailwomanCoarseEncoder(nn.Module):
         attention_mask: torch.Tensor | None = None,
         labels: torch.Tensor | None = None,
         phrase_features: torch.Tensor | None = None,
+        locale_ids: torch.Tensor | None = None,
+        anchor_features: torch.Tensor | None = None,
+        anchor_confidence: torch.Tensor | None = None,
     ) -> "_CoarseEncoderOutput":
         bsz, seq = input_ids.shape
         if seq > self.max_position_embeddings:
@@ -314,6 +388,45 @@ class MailwomanCoarseEncoder(nn.Module):
                 "phrase_features supplied but use_phrase_priors=False — rebuild the "
                 "encoder with use_phrase_priors=True or drop the features argument"
             )
+
+        # Postcode-anchor injection (#239/#240). Per-token additive: a_i = c_i · (W·features +
+        # v_ANCHOR), added to the input embedding. anchor_confidence carries the curriculum-perturbed
+        # confidence (0 outside any postcode span / absent postcode), so c=0 tokens get a_i=0 with no
+        # regime switch. Absent features default to zeros — the well-defined "no anchor" inference path.
+        if self.anchor_projection is not None and self.anchor_token_embedding is not None:
+            if anchor_features is None or anchor_confidence is None:
+                anchor_features = torch.zeros(
+                    bsz, seq, self.anchor_feature_dim, dtype=h.dtype, device=h.device
+                )
+                anchor_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
+            elif anchor_features.shape != (bsz, seq, self.anchor_feature_dim):
+                raise ValueError(
+                    f"anchor_features shape {tuple(anchor_features.shape)} != "
+                    f"({bsz}, {seq}, {self.anchor_feature_dim})"
+                )
+            anchor_vec = self.anchor_projection(anchor_features.to(h.dtype)) + self.anchor_token_embedding
+            h = h + anchor_confidence.to(h.dtype).unsqueeze(-1) * anchor_vec
+            if self.inject_first_token:
+                # Dual-injection (#327, v0.9.4): ALSO inject the pooled anchor at position 0 — an
+                # order-INDEPENDENT global cue the locality can attend back to regardless of where the
+                # postcode sits. Pool each sequence by its max-confidence token (the postcode span) via
+                # gather (ONNX-clean), scale by that confidence so an all-zero (no-anchor) sequence stays
+                # the EXACT c=0 identity, and add it only at position 0 (functional cat, no in-place).
+                conf = anchor_confidence.to(h.dtype)
+                max_conf, max_idx = conf.max(dim=1)  # (B,), (B,)
+                idx = max_idx.view(bsz, 1, 1).expand(bsz, 1, h.shape[-1])  # (B, 1, hidden)
+                pooled_vec = anchor_vec.gather(1, idx).squeeze(1)  # (B, hidden) — the postcode token's anchor_vec
+                pos0_add = (max_conf.unsqueeze(-1) * pooled_vec).unsqueeze(1)  # (B, 1, hidden)
+                # Place it ONLY at position 0 via a position-0 indicator broadcast — avoids a dynamic
+                # `seq-1` cat that trips the ONNX opset version-converter. (1, S, 1) × (B, 1, hidden).
+                pos_indicator = (torch.arange(seq, device=h.device) == 0).to(h.dtype).view(1, seq, 1)
+                h = h + pos0_add * pos_indicator
+        elif anchor_features is not None:
+            raise ValueError(
+                "anchor_features supplied but use_postcode_anchor=False — rebuild the "
+                "encoder with use_postcode_anchor=True or drop the anchor arguments"
+            )
+
         h = self.input_dropout(self.input_ln(h))
 
         # nn.MultiheadAttention key_padding_mask: True = mask (ignore), False = keep.
@@ -325,6 +438,35 @@ class MailwomanCoarseEncoder(nn.Module):
             h = block(h, key_padding_mask=kpm)
 
         h = self.final_ln(h)
+
+        # PR3 self-conditioning: infer a locale posterior from the WHOLE sequence, then let it
+        # reshape the per-token reps before the BIO head. This is the "globally, before per-token
+        # labels" step the design calls for — and the reason it earns its keep is the probe: the
+        # postcode alone settles the country <50% of the time, so the model has to read the city
+        # and street to know where it is, then condition on that. Runs at inference too (predict()
+        # routes through here), so the conditioning shapes real emissions, not just the loss.
+        locale_logits: torch.Tensor | None = None
+        if self.use_locale_conditioning and self.locale_head is not None and self.locale_film is not None:
+            # Mean-pool over real (non-pad) tokens. fp32 reduction on principle — the v0.6.0 CRF
+            # NaN was a bf16-reduction failure, and we keep every new reduction in fp32.
+            if attention_mask is not None:
+                m = attention_mask.to(torch.float32).unsqueeze(-1)  # (B, S, 1)
+                pooled = (h.float() * m).sum(dim=1) / m.sum(dim=1).clamp(min=1.0)  # (B, hidden)
+            else:
+                pooled = h.float().mean(dim=1)
+            pooled = pooled.to(h.dtype)
+            locale_logits = self.locale_head(pooled)  # (B, num_locales)
+            # FiLM modulation: scale by (1 + gamma) and shift by beta, both predicted from the
+            # pooled locale rep. gamma/beta start at 0 (zero-init film) so this begins as identity.
+            # Split via two slices rather than ``.chunk(2)``: chunk exports to an opset-18
+            # ``Split(num_outputs=2)`` node that onnxruntime-node (and the WASM/WebGPU web runtime)
+            # reject as "Unrecognized attribute: num_outputs"; explicit slicing emits plain Slice
+            # ops every runtime accepts. Mathematically identical — same trained weights.
+            film = self.locale_film(pooled)
+            gamma = film[..., : self.hidden_size]  # (B, hidden)
+            beta = film[..., self.hidden_size :]  # (B, hidden)
+            h = (1.0 + gamma).unsqueeze(1) * h + beta.unsqueeze(1)
+
         logits = self.classifier(h)
 
         loss: torch.Tensor | None = None
@@ -383,7 +525,28 @@ class MailwomanCoarseEncoder(nn.Module):
                 loss = ce_loss + self.crf_loss_weight * crf_loss.to(ce_loss.dtype)
             else:
                 loss = ce_loss
-        return _CoarseEncoderOutput(logits=logits, loss=loss)
+
+        # PR3: auxiliary locale cross-entropy. Supervises the locale head against the row's
+        # country so the pooled representation (and therefore the FiLM conditioning) actually
+        # encodes "which country". fp32 CE over the small locale vocabulary. Rows whose country
+        # is unmapped carry IGNORE_INDEX and are skipped; a batch with no mapped row contributes
+        # nothing (guards the all-ignored 0/0 → NaN edge).
+        if (
+            self.use_locale_conditioning
+            and locale_logits is not None
+            and locale_ids is not None
+            and self.locale_loss_weight > 0
+            and bool((locale_ids != IGNORE_INDEX).any())
+        ):
+            locale_ce = nn.functional.cross_entropy(
+                locale_logits.float(),
+                locale_ids,
+                ignore_index=IGNORE_INDEX,
+            )
+            locale_term = self.locale_loss_weight * locale_ce
+            loss = locale_term if loss is None else loss + locale_term.to(loss.dtype)
+
+        return _CoarseEncoderOutput(logits=logits, loss=loss, locale_logits=locale_logits)
 
     @torch.no_grad()
     def predict(
@@ -509,6 +672,16 @@ class MailwomanCoarseEncoder(nn.Module):
             # ``phrase_input_projection`` layer.
             "use_phrase_priors": bool(self.use_phrase_priors),
             "phrase_feature_dim": int(self.phrase_feature_dim),
+            # PR3 self-conditioning. False/0 on pre-PR3 weights; loaders branch on the flag to
+            # materialize locale_head / locale_film at the persisted num_locales width.
+            "use_locale_conditioning": bool(self.use_locale_conditioning),
+            "num_locales": int(self.num_locales),
+            "locale_loss_weight": float(self.locale_loss_weight),
+            # Postcode-anchor channel (#239/#240). False/0 on pre-anchor weights; loaders branch on
+            # the flag to materialize anchor_projection / anchor_token_embedding at the feature width.
+            "use_postcode_anchor": bool(self.use_postcode_anchor),
+            "anchor_feature_dim": int(self.anchor_feature_dim),
+            "inject_first_token": bool(self.inject_first_token),
             "id2label": dict(ID_TO_LABEL),
             "label2id": dict(LABEL_TO_ID),
         }
@@ -552,6 +725,14 @@ class MailwomanCoarseEncoder(nn.Module):
             # v0.5.0+ fields. Default to v0.4.0 behavior (no phrase priors).
             use_phrase_priors=cfg.get("use_phrase_priors", False),
             phrase_feature_dim=cfg.get("phrase_feature_dim", PHRASE_FEATURE_DIM),
+            # PR3 fields. Default off for back-compat with pre-PR3 checkpoints.
+            use_locale_conditioning=cfg.get("use_locale_conditioning", False),
+            num_locales=cfg.get("num_locales", NUM_LOCALES),
+            locale_loss_weight=cfg.get("locale_loss_weight", 0.0),
+            # Postcode-anchor fields. Default off for back-compat with pre-anchor checkpoints.
+            use_postcode_anchor=cfg.get("use_postcode_anchor", False),
+            anchor_feature_dim=cfg.get("anchor_feature_dim", NUM_LOCALES + 2),
+            inject_first_token=cfg.get("inject_first_token", False),
         )
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
         try:
@@ -595,6 +776,16 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoa
         # v0.5.0 thread C additions.
         use_phrase_priors=getattr(cfg.model, "use_phrase_priors", False),
         phrase_feature_dim=getattr(cfg.model, "phrase_feature_dim", PHRASE_FEATURE_DIM),
+        # PR3 self-conditioning. num_locales is derived from labels.NUM_LOCALES (single source of
+        # truth), never from the yaml, so the head width and the aux-target vocabulary can't drift.
+        use_locale_conditioning=getattr(cfg.model, "use_locale_conditioning", False),
+        num_locales=NUM_LOCALES,
+        locale_loss_weight=getattr(cfg.model, "locale_loss_weight", 0.0),
+        # Postcode-anchor channel (#239/#240). anchor_feature_dim derived from NUM_LOCALES (posterior
+        # over the locale set) + 2 (centroid) — single source of truth, can't drift from the loader.
+        use_postcode_anchor=getattr(cfg.model, "use_postcode_anchor", False),
+        anchor_feature_dim=NUM_LOCALES + 2,
+        inject_first_token=getattr(cfg.model, "inject_first_token", False),
     )
 
 

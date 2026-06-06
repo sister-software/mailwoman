@@ -27,15 +27,26 @@
  *   2. Coord error p50/p90 — reported separately as the admin-centroid tier; the street-level tier
  *        (TIGER) will own the sub-km bar later.
  *
+ *   `--postcode-anchor` adds a `neural+anchor` row: neural's admin match, but the COORDINATE taken
+ *   from the postcode anchor's own centroid (`@mailwoman/neural/postcode-anchor` over the
+ *   postalcode shards, `--postcode-shards`). On German this drops coord p50 9.9 km → 1.2 km (p99
+ *   318 → 11 km) with admin match unchanged — the postcode tier between admin-centroid and
+ *   street-level.
+ *
  *   Run: node --experimental-strip-types scripts/eval/oa-resolver-eval.ts\
  *   --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000\
  *   --model /tmp/v072-eval/model.onnx\
  *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
- *   --model-card /tmp/v072-eval/model-card.json\
- *   --wof
- *   /mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postalcode-us.db
+ *   --model-card /tmp/v072-eval/model-card.json
+ *
+ *   `--wof` defaults to `admin-global-priority.db,postcode-locality-intl.db` — coordinate-first locality
+ *   resolution is ON by default (no-op where the candidate table has no rows, e.g. US). Pass `--wof
+ *   <admin.db>` alone for the admin-only baseline, or append a postcode shard (postalcode-*.db) to also
+ *   resolve the postcode node.
  */
 
+import { lookupGermanState } from "@mailwoman/codex/de"
+import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/core/resolver"
 import { type ClassificationRecord, createAddressParser } from "mailwoman"
@@ -115,10 +126,10 @@ const norm = (s: string | undefined): string => (s ?? "").toLowerCase().trim()
 /**
  * Aggressive name normalization for gazetteer-alias locality matching. Lowercases, strips
  * diacritics + punctuation, expands the universal US place abbreviations (St→Saint, Mt→Mount,
- * Ft→Fort, Ste→Sainte), and de-spaces "Mc X" → "McX". Deliberately does NOT strip civic
- * suffixes (City/Town/Township/Village): in New England "Barre City" and "Barre Town" are
- * DISTINCT municipalities, so collapsing them would over-credit genuine wrong-place misses.
- * Pair with the WOF altname set (a place's own recorded variants) rather than loosening here.
+ * Ft→Fort, Ste→Sainte), and de-spaces "Mc X" → "McX". Deliberately does NOT strip civic suffixes
+ * (City/Town/Township/Village): in New England "Barre City" and "Barre Town" are DISTINCT
+ * municipalities, so collapsing them would over-credit genuine wrong-place misses. Pair with the
+ * WOF altname set (a place's own recorded variants) rather than loosening here.
  */
 const ABBR: Record<string, string> = { st: "saint", ste: "sainte", mt: "mount", ft: "fort" }
 const normName = (s: string | undefined): string => {
@@ -126,14 +137,18 @@ const normName = (s: string | undefined): string => {
 	const x = s
 		.toLowerCase()
 		.normalize("NFD")
-			.replace(/[\u0300-\u036f]/g, "") // drop diacritics
+		.replace(/[\u0300-\u036f]/g, "") // drop diacritics
 		.replace(/[^a-z0-9]+/g, " ") // punctuation/hyphens → space (Butte-Silver Bow → butte silver bow)
 		.trim()
 	const toks = x
 		.split(" ")
 		.filter(Boolean)
 		.map((t) => ABBR[t] ?? t)
-	return toks.join(" ").replace(/\bmc (\w)/g, "mc$1").replace(/\s+/g, " ").trim()
+	return toks
+		.join(" ")
+		.replace(/\bmc (\w)/g, "mc$1")
+		.replace(/\s+/g, " ")
+		.trim()
 }
 
 // Resolved region names are the gazetteer's CANONICAL full names ("California", "District of
@@ -195,12 +210,35 @@ const STATE_NAME_TO_ABBR: Record<string, string> = {
 	"puerto rico": "PR",
 }
 
-/** True if the resolved region (full name OR already an abbrev) matches the expected USPS abbrev. */
-function regionMatches(resolvedName: string | undefined, expectedAbbr: string | undefined): boolean {
-	if (!resolvedName || !expectedAbbr) return false
-	const exp = norm(expectedAbbr)
+/**
+ * True if the resolved region matches the expected one, comparing like-for-like across the surface
+ * forms each side uses. Three paths, tried in order:
+ *
+ * 1. Verbatim — both already the same string (US `Berlin`==`Berlin`, or two identical abbrevs).
+ * 2. US — the resolver returns a state's CANONICAL full name (`California`) while OA's expected is the
+ *    USPS abbrev (`CA`); map full name → abbrev so they compare.
+ * 3. DE — the resolver returns WOF's ENGLISH exonym (`Saxony`) while OA's expected is the German name
+ *    (`Sachsen`); `lookupGermanState` folds code / German name / English name → one ISO 3166-2:DE
+ *    code on BOTH sides. Strict: distinct states (Bavaria vs Saxony) still miss, so this corrects
+ *    the cross-language mismatch without loosening a genuine wrong-region.
+ * 4. FR — `lookupFrenchRegion` folds an ISO 3166-2:FR code or a région name (accents optional) to one
+ *    code on both sides, the same diacritic-insensitive fix for `Île-de-France` vs
+ *    `Ile-de-France`.
+ *
+ * The code spaces don't overlap on real inputs (a USPS abbrev is never a German or French region
+ * name, and the German/French names are disjoint), so trying all of them is safe regardless of the
+ * row's country.
+ */
+function regionMatches(resolvedName: string | undefined, expected: string | undefined): boolean {
+	if (!resolvedName || !expected) return false
+	const exp = norm(expected)
 	const got = norm(resolvedName)
-	return got === exp || STATE_NAME_TO_ABBR[got]?.toLowerCase() === exp
+	if (got === exp) return true
+	if (STATE_NAME_TO_ABBR[got]?.toLowerCase() === exp) return true
+	const gotDe = lookupGermanState(resolvedName)
+	if (gotDe !== null && gotDe === lookupGermanState(expected)) return true
+	const gotFr = lookupFrenchRegion(resolvedName)
+	return gotFr !== null && gotFr === lookupFrenchRegion(expected)
 }
 
 function percentile(xs: number[], p: number): number | null {
@@ -212,7 +250,14 @@ function percentile(xs: number[], p: number): number | null {
 async function main(): Promise<void> {
 	const evalPath = arg("eval", "data/eval/external/openaddresses-us-sample.jsonl")
 	const limit = Number(arg("limit", "0")) || Infinity
-	const wofPaths = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
+	// Default attaches the coordinate-first candidate shard (postcode-locality-intl.db) alongside the
+	// admin gazetteer, so locality resolution is coordinate-first by default for the locales it covers
+	// (DE/FR/GB/NL functional). It no-ops where the table has no rows (e.g. US), so US stays unchanged.
+	// Override `--wof` to measure the admin-only baseline.
+	const wofPaths = arg(
+		"wof",
+		"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db"
+	)
 		.split(",")
 		.map((s) => s.trim())
 
@@ -230,7 +275,15 @@ async function main(): Promise<void> {
 		MailwomanTokenizer.loadFromFile(arg("tokenizer")),
 		OnnxRunner.create(arg("model")),
 	])
-	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
+	// Model-side postcode anchor (#239/#240): feed the parser per-piece anchor features from the same
+	// lookup it trained on. Only for anchor models (ONNX exported with the anchor inputs). The verdict
+	// run: `--model-anchor-lookup /path/pilot-anchor-lookup.json` on the anchor-on model.
+	const modelAnchorPath = arg("model-anchor-lookup", "")
+	const postcodeAnchorLookup = modelAnchorPath
+		? (await import("@mailwoman/neural")).parseAnchorLookup(JSON.parse(readFileSync(modelAnchorPath, "utf8")))
+		: undefined
+	if (modelAnchorPath) console.error(`[model-anchor] feeding anchor from ${modelAnchorPath} (${postcodeAnchorLookup!.size} codes)`)
+	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels, postcodeAnchorLookup })
 
 	// v0 = our TypeScript port of the Pelias parser. Scoring it through the same resolver makes this a
 	// real "neural vs Pelias parser" head-to-head on non-circular addresses.
@@ -270,7 +323,67 @@ async function main(): Promise<void> {
 	}
 
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
-	const resolveOpts = { defaultCountry: "US" }
+	// `defaultCountry` is the hard country filter applied to admin lookups when the parse carries no
+	// resolved country node. It MUST match the dataset's locale — hardcoding "US" silently filters a
+	// non-US eval to US places (a German "Berlin" then loses to a tiny US Berlin). Settable via
+	// `--default-country <ISO|none>`; `none` disables the filter so ranking alone decides.
+	const dc = arg("default-country", "US")
+	const resolveOpts = dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}
+
+	// Postcode-anchor fusion (opt-in via `--postcode-anchor`). The resolver supplies the admin/place
+	// identity, but its coordinate is the place CENTROID — legitimately tens of km from edge addresses.
+	// The postcode anchor supplies the postcode's OWN centroid, the finer tier between admin-centroid and
+	// street. The `neural+anchor` row keeps neural's admin match but takes the COORDINATE from the anchor
+	// when it has a placed candidate for the eval's country, else falls back to the resolver coord. So the
+	// row isolates exactly what the anchor sharpens: where, not which place.
+	const useAnchor = process.argv.includes("--postcode-anchor")
+	let postcodeLookup: {
+		lookup(pc: string): Array<{ country: string; lat: number; lon: number }>
+		close(): void
+	} | null = null
+	let extractAnchors: typeof import("@mailwoman/neural/postcode-anchor").extractPostcodeAnchors | null = null
+	if (useAnchor) {
+		const shards = arg(
+			"postcode-shards",
+			"/mnt/playpen/mailwoman-data/wof/postalcode-us.db,/mnt/playpen/mailwoman-data/wof/postalcode-intl.db"
+		)
+			.split(",")
+			.map((s) => s.trim())
+		const { WofPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
+		postcodeLookup = new WofPostcodeLookup(shards)
+		extractAnchors = (await import("@mailwoman/neural/postcode-anchor")).extractPostcodeAnchors
+	}
+	// Minimum anchor confidence to trust the anchor's coordinate over the resolver's. A penalized
+	// house-number span scores ~0.2 (single-country × house-number penalty); a genuinely ambiguous
+	// real code scores ≥0.52 (valid in ≤3 countries). The 0.5 floor keeps the latter and rejects the
+	// former, so a span the position prior flags as a house number falls back to the resolver coordinate
+	// (the right city centroid) instead of placing the address at a far-away same-shaped ZIP.
+	const anchorMinConf = Number(arg("anchor-min-conf", "0.5"))
+	/** The postcode anchor's centroid for a raw address, preferring the eval's country (`dc`). */
+	const anchorCoordFor = (input: string): { lat: number; lon: number } | null => {
+		if (!postcodeLookup || !extractAnchors) return null
+		const prefer = (dc && dc.toLowerCase() !== "none" ? dc : "").toUpperCase()
+		// Pick the placed span with the HIGHEST position-aware confidence, above the trust floor. The
+		// anchor down-weights a digit-only code that shares its segment with a street word (`12345 Main
+		// St` reads as a house number, not a postcode), so a real trailing postcode (`… City, ST 90210`)
+		// out-ranks an earlier house number on its own merit — no "take the last span" crutch needed.
+		// Ties break toward the later span (the postcode trails the locality in a rendered address).
+		let best: { lat: number; lon: number; conf: number; start: number } | null = null
+		for (const a of extractAnchors(input, postcodeLookup)) {
+			if (a.confidence < anchorMinConf) continue
+			const placed = a.candidates.filter((c) => c.lat !== 0 || c.lon !== 0)
+			if (placed.length === 0) continue
+			// When the eval fixes a country, accept ONLY a placed candidate from it — never fall back to
+			// another country's centroid (a US ZIP that is coordless here but a valid 5-digit shape in
+			// DE/FR/IT must not borrow Europe's point). With no country fixed, take the first placed.
+			const pick = prefer ? placed.find((c) => c.country.toUpperCase() === prefer) : placed[0]
+			if (!pick) continue
+			if (!best || a.confidence > best.conf || (a.confidence === best.conf && a.span.start >= best.start)) {
+				best = { lat: pick.lat, lon: pick.lon, conf: a.confidence, start: a.span.start }
+			}
+		}
+		return best ? { lat: best.lat, lon: best.lon } : null
+	}
 
 	// Per-state aggregation so no single dense state (Cook County / Chicago) dominates the headline.
 	interface Agg {
@@ -299,6 +412,7 @@ async function main(): Promise<void> {
 		resolved: boolean
 		err: number | null
 		resolvedLoc?: string
+		resolvedLocId?: number
 		resolvedReg?: string
 	} => {
 		const best = mostSpecific(resolved)
@@ -316,6 +430,7 @@ async function main(): Promise<void> {
 			// Raw resolved names for the --errors-json per-row dump: a present-but-wrong resolvedLoc
 			// => resolver ranking/disambiguation miss; an absent one => coverage/parse miss.
 			resolvedLoc: locRaw,
+			resolvedLocId: locNode?.id,
 			resolvedReg: regResolved?.name,
 		}
 	}
@@ -325,6 +440,9 @@ async function main(): Promise<void> {
 		neural: { overall: newAgg(), byState: new Map<string, Agg>() },
 		v0: { overall: newAgg(), byState: new Map<string, Agg>() },
 	}
+	// `neural+anchor`: neural's admin flags, but the coordinate replaced by the postcode-anchor centroid
+	// when available. Only the coord error column differs from `neural`.
+	const neuralAnchorAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
 	const record = (
 		who: "neural" | "v0",
 		row: OaRow,
@@ -343,6 +461,13 @@ async function main(): Promise<void> {
 	const collectErrors = !!arg("errors-json")
 	const errorRows: Record<string, unknown>[] = []
 
+	// `--out-resolved <path>`: per-row dump for the PIP-containment metric (scripts/eval/pip-containment.py).
+	// Carries the gold OA point + the neural-resolved locality's WOF id, so an offline pass can test
+	// whether the gold point lies INSIDE the resolved locality's polygon — a name-surface-independent
+	// truth check (the "Plauen" vs gold "Plauen Vogtl" name-match artifact, see the coordinate-first plan).
+	const collectResolvedDump = !!arg("out-resolved")
+	const resolvedRows: Record<string, unknown>[] = []
+
 	let i = 0
 	for (const row of rows) {
 		i++
@@ -357,6 +482,29 @@ async function main(): Promise<void> {
 		}
 		const ns = scoreTree(row, nResolved)
 		record("neural", row, ns)
+
+		if (collectResolvedDump) {
+			resolvedRows.push({
+				input: row.input,
+				lat: row.lat,
+				lon: row.lon,
+				state: row.state,
+				expectedLoc: row.expected.locality,
+				neuralLocId: ns.resolvedLocId ?? null,
+				neuralLoc: ns.resolvedLoc ?? null,
+				nameMatch: ns.locMatch,
+			})
+		}
+
+		// neural + postcode-anchor: same admin flags, coordinate from the anchor centroid when it has one.
+		if (useAnchor) {
+			const ac = anchorCoordFor(row.input)
+			const fusedErr = ac ? haversineKm(ac.lat, ac.lon, row.lat, row.lon) : ns.err
+			const st = row.state || "??"
+			if (!neuralAnchorAgg.byState.has(st)) neuralAnchorAgg.byState.set(st, newAgg())
+			bump(neuralAnchorAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, fusedErr)
+			bump(neuralAnchorAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, fusedErr)
+		}
 
 		// v0 (Pelias parser) via the flat→tree adapter
 		let vResolved: Resolved[] = []
@@ -376,14 +524,30 @@ async function main(): Promise<void> {
 				input: row.input,
 				state: row.state ?? "??",
 				expected: row.expected,
-				neural: { locMatch: ns.locMatch, resolved: ns.resolved, resolvedLoc: ns.resolvedLoc, resolvedReg: ns.resolvedReg, errKm: ns.err },
-				v0: { locMatch: vs.locMatch, resolved: vs.resolved, resolvedLoc: vs.resolvedLoc, resolvedReg: vs.resolvedReg, errKm: vs.err },
+				neural: {
+					locMatch: ns.locMatch,
+					resolved: ns.resolved,
+					resolvedLoc: ns.resolvedLoc,
+					resolvedReg: ns.resolvedReg,
+					errKm: ns.err,
+				},
+				v0: {
+					locMatch: vs.locMatch,
+					resolved: vs.resolved,
+					resolvedLoc: vs.resolvedLoc,
+					resolvedReg: vs.resolvedReg,
+					errKm: vs.err,
+				},
 			})
 		}
 	}
 	if (collectErrors) {
 		writeFileSync(arg("errors-json"), JSON.stringify(errorRows, null, 2))
 		console.error(`wrote ${errorRows.length} failure rows → ${arg("errors-json")}`)
+	}
+	if (collectResolvedDump) {
+		writeFileSync(arg("out-resolved"), JSON.stringify(resolvedRows))
+		console.error(`wrote ${resolvedRows.length} resolved rows → ${arg("out-resolved")}`)
 	}
 
 	// ---- report (self-emitted; eval figures are NEVER hand-typed into docs) ----
@@ -402,6 +566,7 @@ async function main(): Promise<void> {
 		`| ${label} | ${pct(a.localityMatch, a.n)} | ${pct(a.regionMatch, a.n)} | ${pct(a.resolved, a.n)} | ${p(a.errs, 50)} | ${p(a.errs, 90)} | ${p(a.errs, 99)} |`
 	lines.push(overallRow("**neural**", agg.neural.overall))
 	lines.push(overallRow("v0 (Pelias)", agg.v0.overall))
+	if (useAnchor) lines.push(overallRow("**neural+anchor**", neuralAnchorAgg.overall))
 	lines.push("")
 	lines.push(`## Neural per-state (locality-match)`)
 	lines.push("")
@@ -416,9 +581,11 @@ async function main(): Promise<void> {
 	}
 	lines.push("")
 	lines.push(
-		`Coord error is the ADMIN-CENTROID tier (locality/region centroid → OA's real address point);` +
-			` a city centroid is legitimately tens of km from edge addresses, so the headline is the` +
-			` admin-MATCH rate, not the coord error. Street-level (TIGER) will own a sub-km tier later.`
+		`Coord error for **neural**/**v0** is the ADMIN-CENTROID tier (locality/region centroid → OA's real` +
+			` address point); a city centroid is legitimately tens of km from edge addresses, so the admin-MATCH` +
+			` rate is the headline there, not the coord. **neural+anchor** swaps in the postcode anchor's own` +
+			` centroid for the coordinate (admin match unchanged) — the finer postcode tier between admin-centroid` +
+			` and street-level (TIGER), which will own the sub-km tier later.`
 	)
 	const report = lines.join("\n")
 	console.log(report)
@@ -440,6 +607,8 @@ async function main(): Promise<void> {
 		writeFileSync(arg("out-json"), JSON.stringify({ neural: dump(agg.neural), v0: dump(agg.v0) }, null, 2))
 		console.error(`wrote json → ${arg("out-json")}`)
 	}
+
+	postcodeLookup?.close()
 }
 
 main().catch((e) => {

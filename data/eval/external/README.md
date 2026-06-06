@@ -182,6 +182,32 @@ node scripts/eval/ingest-openaddresses.mjs --offline \
   --out data/eval/external/openaddresses-us-sample.jsonl --cache /tmp/oa-cache
 ```
 
+## German (DE) — multi-locale probe (2026-06-02)
+
+Two German sets from OpenAddresses Berlin + Saxony support the multi-locale work:
+
+- **`openaddresses-de-sample.jsonl`** (3,000 records) is the _resolver_ eval set
+  (admin-level: `expected` carries `locality`/`region`/`postcode`). Built by the
+  same `ingest-openaddresses.mjs`, selected with `--sources de/berlin,de/sn/statewide`.
+- **`openaddresses-de-golden.jsonl`** (1,500 records, held-out seed 7) is the
+  _parser_ eval set (`{raw, components}` with street + house_number), rendered in
+  idiomatic German order. Built by `build-german-shard.mjs --golden`.
+
+Two changes make non-US OpenAddresses usable here:
+
+1. **Per-source `bbox`** in the ingest `SOURCES` registry. The geo-sanity filter
+   defaulted to a continental-US box (lon −180..−60), which silently dropped every
+   German point. Non-US sources now set their own `bbox` (DE: lat 47..56, lon 5..16).
+2. **`--default-country`** on `oa-resolver-eval.ts`. The resolver applies the
+   default as a HARD country filter, so hardcoding `"US"` sent every German address
+   to a US namesake (`Berlin` resolved to a 20k-pop US Berlin, coord ~5,940 km). Pass
+   `--default-country DE` (or `none`) for non-US data and the coord drops to ~10 km.
+
+The German _training_ shard (`synth-german`, `corpus/src/synthesize-german.ts`)
+renders these real DE tuples in German order via the OpenCage `DE` template, so the
+model learns house-number-after-street and postcode-before-city. Run the German
+before/after with `scripts/eval-de-coverage.sh <model> <tokenizer> <model-card>`.
+
 ## Running the arenas
 
 All three arenas run through one push-button script:

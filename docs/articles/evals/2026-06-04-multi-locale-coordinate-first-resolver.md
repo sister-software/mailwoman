@@ -1,0 +1,63 @@
+# The locality resolver works in four languages, and the parser only speaks two
+
+**Date:** 2026-06-04
+**Scope:** coordinate-first locality resolution across DE, FR, GB, NL — metric, results, design, and the limits.
+
+We started this stretch trying to teach a neural parser to read German. We're ending it with a resolver that places Dutch addresses correctly without the parser understanding a word of Dutch. That inversion is the whole story, so let's tell it in order.
+
+## Where this came from
+
+The German parser was stuck. A from-scratch self-conditioned retrain (PR3 Pilot A) came back at **25.6% locality resolver-match** against v0.7.2's 77.4% — the model learned German street order and then dropped the trailing city, the same end-of-string collapse that killed the v0.8.0 order-shard. We chased it into the decoder too: a postcode-boundary trim that produced string-perfect parses (`auen Vogtl` → `Plauen Vogtl`) and moved the resolver **zero**.
+
+That zero was the tell. The parse was right and the resolver still missed, because the resolver name-matched the parsed locality against Who's On First, and OpenAddresses' gold carries region suffixes WOF doesn't store (`Plauen Vogtl` vs WOF's `Plauen`). We'd been polishing the wrong surface. **German was never a parser problem; it was a resolver problem, and the resolver was matching on names when it should have been matching on coordinates.** That's the reframe the whole multi-locale program is built on.
+
+## The metric: point-in-polygon containment
+
+A name-match metric is the thing that misled us, so we replaced it with one that can't. A locality is resolved correctly if the real OpenAddresses per-address point lies **inside the polygon** of the WOF locality the resolver picked — `ST_Within(gold_point, resolved_polygon)`. Containment, not centroid distance (distance is gameable in a dense metro), and scored against the genuine OA point, never the postcode centroid the resolver itself consumed.
+
+Running that metric on the *existing* resolver first was the cheap move that paid off twice: it confirmed German was a real gap (77.1% containment agreed with the 77.4% name-match, killing the comfortable "it's just a name artifact" hypothesis), and it became the honest yardstick for everything that followed.
+
+## What we built
+
+Coordinate-first candidate generation, soft-scored. We precompute a `postcode → containing + nearby WOF localities` table — point-in-polygon each postcode centroid against the locality polygons, offline, from the WOF source GeoJSON. At resolve time the parser's job shrinks to one reliable thing: extract the postcode. The resolver looks it up, gets the coordinate candidate the name-match could never generate for an under-indexed small town, and soft-scores the union against the parsed name:
+
+```
+Score = 0.6·S_pc + 0.3·S_name + 0.1·S_pop
+```
+
+with exact-name tiering on top, so an unambiguous city (`Berlin`, exact + huge population) stays ahead of the fine-grained Ortsteil its postcode centroid happens to land in, while a small town the name-match never finds is carried entirely by its postcode. The parser is never touched, and there's no Elasticsearch anywhere.
+
+## Results
+
+PIP-containment, n=3000 per locale, coordinate-first on:
+
+| locale | sample | PIP-containment | name-match baseline |
+| ------ | ------ | --------------: | ------------------: |
+| DE | Berlin + Saxony OA | **92.6%** | 77.1% |
+| FR | national BAN OA (from 24.7M points) | **84.0%** | 83.5% |
+| NL | national BAG OA (from 9.1M points) | **94.9%** | 97.0% |
+| GB | — | conflict-validated; ~66% WOF coverage | — |
+
+German went from a stuck 77% to **92.6%** — Saxony alone moved 54.3% → 89.3% (+35pp) once the small Saxon towns the FTS missed got generated from their postcodes; Berlin held at 95.9%.
+
+France lands at **84.0%**, and the gap from DE is honest rather than alarming: this is the *whole country*, BAN's full 25 million points including the long rural-commune tail where WOF's locality polygons thin out. DE's 92.6% was two dense regions. On comparable density FR sits near DE.
+
+The Netherlands is the result that proves the thesis. **94.9% — and the model is out-of-distribution on Dutch.** v0.7.2 was trained on US and French addresses; it has never seen `Dignahoeve 71, 1187LM Amstelveen`. A name-matching or BM25 resolver fed an un-parsed Dutch string would crater. Ours didn't move, because coordinate-first resolves off the postcode, and a postcode is language-agnostic — a regex finds `1187LM` whether or not the model understands the street around it. NL's near-complete 99.6% postcode→locality coverage does the rest. **The architecture's whole point is that the parser can be wrong about the language and the resolver is still right about the place.**
+
+## The part a search box can't do
+
+Pelias, Nominatim, Airmail — the retrieval geocoders — absorb a wrong field by ranking. Hand them `10 Main St, 90210, Los Angeles` and BM25 quietly returns Beverly Hills if a Main Street exists there. They have no signal that says "these two fields disagree." A parse-then-resolve pipeline does: the postcode-derived locality and the name-derived locality are independent, and when they point to places far apart, that's a transposed or wrong-for-the-city postcode, caught instead of laundered.
+
+We surface it as `postcode_city_mismatch` on the resolved node when the chosen city sits more than 50 km from the postcode's anchor locality — generous enough to ignore city-state Ortsteile (~15 km) and abutting border towns (a few km), tight enough to catch a genuinely wrong city. Across DE + FR + GB + NL the conflict eval runs **92% recall (12/13), 100% specificity (10/10)**: every wrong-for-the-city postcode flags, no correct or abutting address false-flags. `80331 Berlin`, `75001 Lyon`, `1026 Rotterdam`, `SW1A 1AA Edinburgh` — all raised. The lone miss is a GB postcode that simply isn't in the table, not a logic failure. That conflict signal is the concrete differentiator over a retrieval system: we don't just resolve the address, we tell you when it can't be trusted.
+
+## One asset, read-only, from source
+
+All of it ships as a single self-contained `postcode-locality-intl.db` — DE/ES/FR/GB/IT/NL in one country-filtered table, with a provenance/license `meta` row, `journal_mode=DELETE` (no sidecar), integrity-checked and VACUUM'd. Built from the WOF source GeoJSON, never a prebuilt dump, with every source repo commit pinned in the build manifest. You could hand someone the file and they'd have coordinate-first resolution for four working locales.
+
+## What it doesn't do yet
+
+The limits are real and worth naming plainly. GB resolves out of the box, but WOF's GB locality coverage is only ~66% — a third of UK unit postcodes fall outside any WOF locality polygon and get no coordinate candidate; closing that needs a finer or non-WOF British source. ES and IT are in the gazetteer but WOF is orphan-heavy there (29% / 42% postcode coverage), so they're data-limited until a richer source lands. And there's a few-point city-state residual in Berlin / Paris / London where a postcode centroid lands in an unnamed Ortsteil — cosmetic, on the table for a later tune. None of these are architectural; they're all the upstream gazetteer running out of data, which is exactly where you'd want the remaining work to live.
+
+## Where this leaves the parser
+
+Untouched, and that was the point. Every locale above was added without retraining the model, without an anchor-conditioning pipeline baked into it, without an Elasticsearch cluster. The parser stays a clean universal token tagger; the resolver carries the locale-specific intelligence and the falsehood detection. German started this as a parser crisis and ended it as four working locales and a shippable asset — by moving the work to where it belonged.

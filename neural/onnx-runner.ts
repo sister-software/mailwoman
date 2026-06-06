@@ -15,6 +15,8 @@
 import { promises as fs } from "node:fs"
 import ort from "onnxruntime-node"
 
+import { ANCHOR_FEATURE_DIM } from "./anchor-inference.js"
+
 export interface OnnxRunnerOpts {
 	/** If true, load the model immediately in `create()`. Default false. */
 	warmup?: boolean
@@ -87,8 +89,15 @@ export class OnnxRunner {
 	 * back to the actual input length.
 	 *
 	 * @param tokenIds The id sequence produced by the tokenizer (no special tokens added).
+	 * @param anchor Optional postcode-anchor channel (#239/#240). When supplied (only for anchor
+	 *   models — exported with the `anchor_features`/`anchor_confidence` inputs), per-piece features
+	 *   `(seqLen × dim)` + confidence `(seqLen,)` are fed, zero-padded to `fixedSeqLen`. Omit for
+	 *   plain models, whose ONNX has no anchor inputs.
 	 */
-	async infer(tokenIds: number[]): Promise<InferResult> {
+	async infer(
+		tokenIds: number[],
+		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+	): Promise<InferResult> {
 		const session = await this.ensureSession()
 		const seqLen = Math.min(tokenIds.length, this.fixedSeqLen)
 		const padded = new BigInt64Array(this.fixedSeqLen)
@@ -101,6 +110,29 @@ export class OnnxRunner {
 		const feeds: Record<string, ort.Tensor> = {
 			input_ids: new ort.Tensor("int64", padded, [1, this.fixedSeqLen]),
 			attention_mask: new ort.Tensor("int64", mask, [1, this.fixedSeqLen]),
+		}
+
+		if (anchor) {
+			const dim = anchor.features[0]?.length ?? 0
+			const af = new Float32Array(this.fixedSeqLen * dim)
+			const ac = new Float32Array(this.fixedSeqLen)
+			for (let i = 0; i < seqLen; i++) {
+				ac[i] = anchor.confidence[i] ?? 0
+				const row = anchor.features[i]
+				if (row) for (let d = 0; d < dim; d++) af[i * dim + d] = row[d] ?? 0
+			}
+			feeds.anchor_features = new ort.Tensor("float32", af, [1, this.fixedSeqLen, dim])
+			feeds.anchor_confidence = new ort.Tensor("float32", ac, [1, this.fixedSeqLen])
+		} else if (session.inputNames.includes("anchor_features")) {
+			// Anchor-trained model (its ONNX declares the anchor inputs as mandatory) but no anchor data
+			// was supplied: feed zeros. That's the `confidence = 0` identity — the model's anchor-off
+			// behavior. Without it the session throws on the missing required inputs.
+			feeds.anchor_features = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * ANCHOR_FEATURE_DIM), [
+				1,
+				this.fixedSeqLen,
+				ANCHOR_FEATURE_DIM,
+			])
+			feeds.anchor_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
 		const output = await session.run(feeds)

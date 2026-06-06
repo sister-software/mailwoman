@@ -49,7 +49,7 @@ For our input it produces (the actual scores come from [`phrase-grouper/kryptoni
 
 Three things to notice here:
 
-1. **`NY-NY` and `NY-NY Steakhouse` both appear**, with overlapping start positions. The grouper does not pick — it proposes both and lets Stage 5 decide. A `HYPHENATED_COMPOUND` is one structural unit; a `VENUE_PHRASE` ending in a known venue marker (`Steakhouse`) is another. Both are coherent ways to read the same prefix.
+1. **`NY-NY` and `NY-NY Steakhouse` both appear**, with overlapping start positions. The grouper does not pick. It proposes both and lets Stage 5 decide. A `HYPHENATED_COMPOUND` is one structural unit; a `VENUE_PHRASE` ending in a known venue marker (`Steakhouse`) is another. Both are coherent ways to read the same prefix.
 2. **`Houston` gets a lower confidence (0.65) than `TX` (0.95)**. The grouper sees `TX` at the very tail after a comma, which is a strong structural signal for a region abbreviation. `Houston` is a capitalised word that _could_ be a locality but the grouper has no dictionary — it only knows it looks like a `LOCALITY_PHRASE` structurally.
 3. **No span covers `,` or whitespace.** The grouper proposes only over real input tokens. The character offsets in the body column refer to the original input string.
 

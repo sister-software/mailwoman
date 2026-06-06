@@ -46,6 +46,56 @@ For maximum licensing safety on published model weights, restrict to US-federal 
 
 ---
 
+## Gazetteer / resolver coordinate sources (companion layer)
+
+Everything below this section is **corpus** material — address _strings_ and name/address pairs to train the BIO parser. This section is the other half: the **gazetteer** the resolver and the postcode anchor consume — the datasets that turn a parsed span into a place + coordinate. Different shopping list, and it's where WOF's gaps actually bite (see `resolver-wof-sqlite/POSTCODE-ANCHOR.md` and the 2026-06-03 postcode-anchor postmortem).
+
+WOF is an excellent **admin** gazetteer (the in-DB hierarchy + ancestors table is our Elasticsearch-free differentiator), and it's **CC0**, which is half of why it came naturally. But it was never complete for every token type: no street node (neighbourhood → address directly), thin and uneven postcode geometry outside a few countries (US/NL carry own coords; DE ~66% placeable via ancestor-borrow; ES/IT orphan-heavy and effectively unplaceable), and limited POI/venue coverage. The canonical fix is the rest of the Pelias four-layer stack — **WOF** (admin) + **OpenAddresses** (addresses/postcodes) + **OpenStreetMap** (streets/POIs) + **GeoNames** (places/postcodes) — supplemented per gap.
+
+### By gap layer
+
+- **Postcode → centroid.** **GeoNames postal** (`download.geonames.org/export/zip`, CC-BY 4.0, ~80+ countries) is a ready-made postcode → place + admin + lat/lon table, the cheapest fill for the DE/ES/IT gap with no point-cloud math (coarser than OA in places, often locality-level). **OpenAddresses** point aggregation (median centroid per postcode) is higher-fidelity where we have the points. National authorities are the gold standard but fragmented: UK **Code-Point Open** (OS, OGL), France **BAN**, NL via PDOK.
+- **Street / rooftop coords.** **OpenAddresses** (primary), **OSM** `addr:*` on buildings (great in DE/NL, patchy elsewhere), national registries — France **BAN**, Australia **G-NAF** (CC-BY; backlog #31).
+- **POIs / landmarks / salience** (the generalized-anchor and exotic-POI layer). **OSM** is the richest open POI source. **Wikidata / Wikipedia** is the right home for the data-driven _salience_ signal the anchor guardrail demands (notability + coordinates + multilingual names), and we already pull `wikimedia-importance.csv` in `build-importance`, so the path has precedent.
+- **Admin (the spine).** Keep WOF. Alternatives if it is ever reconsidered: GeoNames admin, **Overture Divisions**, geoBoundaries.
+
+### Probe: GeoNames vs the WOF postcode gap (2026-06-03)
+
+Measured GeoNames postal against the WOF shard's actual gap (the postcodes WOF carries as membership but cannot place). GeoNames carries coordinates for **100%** of its DE/ES/IT records:
+
+| locale | WOF placement              | GeoNames closes                                                 | result                                                                                                       |
+| ------ | -------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| IT     | 0% (orphans + wrong links) | **4,447 / 4,936 (90%)**                                         | and it _fixes_ the bad links — Milan `20121` → 45.46, 9.19 (correct), where WOF pointed at a Liguria village |
+| DE     | 66% (ancestor-borrow)      | **4,819 / 10,061 unplaced (~48%)**                              | would lift DE to ~82%                                                                                        |
+| ES     | not built (orphan-heavy)   | ~full (11,150 codes, all with coords)                           | the clean way to add ES at all                                                                               |
+| NL     | 100% (own PC6 coords)      | no help — GeoNames is PC4-level (4,086), coarser than WOF's PC6 | keep WOF                                                                                                     |
+
+So GeoNames postal is the cheap, CC-BY fill for ES/IT (and roughly half of DE's remaining gap), and it corrects WOF's Italian mis-links as a side effect. Integration stays clean under the discipline above: match on the postcode string, keep the WOF id, write the GeoNames lat/lon as the centroid. (Overture was not probed — for _postcodes_ it folds in OpenAddresses, which we already use, so its differential value is the POI layer; that probe wants a DuckDB + S3-parquet setup and is the right next step for the generalized-anchor work, not for postcodes.)
+
+### The modern entrant: Overture Maps
+
+The Meta/Microsoft/AWS/TomTom consortium (2023+, post-dates the corpus catalog below). Its **Places** theme is a large open POI dataset and its **Addresses** theme folds in OpenAddresses, so it covers two of our three gaps in one source, with stable **GERS** entity IDs. Distributed as cloud parquet (DuckDB/S3). The one to probe before committing to per-source OSM imports.
+
+### Licensing gradient (the real selection axis)
+
+For an AGPL product, license terms decide more than coverage does:
+
+| Source        | License                 | Friction for a shipped DB                                                            |
+| ------------- | ----------------------- | ------------------------------------------------------------------------------------ |
+| WOF           | CC0                     | none (public domain)                                                                 |
+| OpenAddresses | per-source, mostly open | per-source attribution tracking (we already do this)                                 |
+| GeoNames      | CC-BY 4.0               | attribution                                                                          |
+| Overture      | CDLA-Permissive 2.0     | attribution                                                                          |
+| OpenStreetMap | ODbL                    | attribution + share-alike on derived databases — the spicy one; can pull copyleft on |
+
+So the gradient argues for **GeoNames + Overture + OpenAddresses** as the supplements, and treating OSM carefully (derived signals, not the shipped DB).
+
+### Integrity discipline
+
+Attach supplemental data as **attributes on WOF-keyed entities** (a centroid here, a popularity score there), not as imported foreign-id entities. WOF stays the spine and the eval keys; the coordinates and the long tail come from elsewhere. Mixing in Overture's GERS ids (or any parallel id space) as primary keys is what would quietly break the WOF-id-keyed resolver evals, which is the reason behind the "extend the custom WOF build, never a prebuilt dump" rule. OA centroid aggregation passes this test because the postcode keeps its WOF id; only its coordinate comes from OA.
+
+---
+
 ## Education
 
 ### Federal aggregators

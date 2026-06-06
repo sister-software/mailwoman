@@ -14,7 +14,7 @@ tags:
 
 This article series is inspired by and cites Michael Tandy's [excellent, exhaustive original](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/) — the canonical catalogue of address falsehoods, maintained since 2013. Tandy's article is a taxonomy of assumptions that break parsers, validators, and databases. This series expands on that taxonomy, adding historical context on how geocoders have handled (or failed to handle) each category, and what Mailwoman's neural approach changes.
 
-## Why this matters for Mailwoman
+## The falsehoods are the central cases
 
 Tandy's falsehoods are not edge cases. They are the central cases that rule-based geocoders fail on. Each falsehood is a place where a human can see what's happening ("that's a building number, even though it's a fraction") but a regex cannot. The thesis of Mailwoman's neural approach is that a model trained on diverse address data can learn to handle these cases without explicit rules — and more importantly, can handle combinations of falsehoods that no rule set could enumerate.
 

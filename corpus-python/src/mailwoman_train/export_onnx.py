@@ -39,8 +39,22 @@ def export_to_onnx(
     dummy_ids[0, 0] = 1  # ensure at least one non-pad slot
     dummy_mask = torch.ones((1, max_length), dtype=torch.long)
 
+    # Postcode-anchor channel (#239/#240): when the model carries it, export the anchor inputs so the
+    # inference runtime can FEED the anchor (without them the ONNX would be hard-wired anchor-free, the
+    # c=0 identity — which is exactly the "anchor not fed" path, not the channel under test).
+    has_anchor = bool(getattr(model_cpu, "use_postcode_anchor", False))
+    anchor_dim = int(getattr(model_cpu, "anchor_feature_dim", 0))
+
     # ONNX exporter prefers plain-tensor outputs; wrap the model so forward returns just logits.
     class _LogitsOnly(nn.Module):
+        def __init__(self, inner: nn.Module) -> None:
+            super().__init__()
+            self.inner = inner
+
+        def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
+            return self.inner(input_ids=input_ids, attention_mask=attention_mask).logits
+
+    class _LogitsOnlyAnchor(nn.Module):
         def __init__(self, inner: nn.Module) -> None:
             super().__init__()
             self.inner = inner
@@ -49,10 +63,39 @@ def export_to_onnx(
             self,
             input_ids: torch.Tensor,
             attention_mask: torch.Tensor,
+            anchor_features: torch.Tensor,
+            anchor_confidence: torch.Tensor,
         ) -> torch.Tensor:
-            return self.inner(input_ids=input_ids, attention_mask=attention_mask).logits
+            return self.inner(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                anchor_features=anchor_features,
+                anchor_confidence=anchor_confidence,
+            ).logits
 
-    export_model = _LogitsOnly(model_cpu).eval()
+    if has_anchor:
+        export_model = _LogitsOnlyAnchor(model_cpu).eval()
+        args = (
+            dummy_ids,
+            dummy_mask,
+            torch.zeros((1, max_length, anchor_dim), dtype=torch.float32),
+            torch.zeros((1, max_length), dtype=torch.float32),
+        )
+        input_names = ["input_ids", "attention_mask", "anchor_features", "anchor_confidence"]
+        dynamic_shapes = {
+            "input_ids": {0: "batch", 1: "sequence"},
+            "attention_mask": {0: "batch", 1: "sequence"},
+            "anchor_features": {0: "batch", 1: "sequence"},  # dim 2 (anchor_feature_dim) is fixed
+            "anchor_confidence": {0: "batch", 1: "sequence"},
+        }
+    else:
+        export_model = _LogitsOnly(model_cpu).eval()
+        args = (dummy_ids, dummy_mask)
+        input_names = ["input_ids", "attention_mask"]
+        dynamic_shapes = {
+            "input_ids": {0: "batch", 1: "sequence"},
+            "attention_mask": {0: "batch", 1: "sequence"},
+        }
 
     # Use the dynamo exporter (``dynamo=True``). The legacy TorchScript path hits
     # ``IndexError: tuple index out of range`` inside transformers ≥5's ``masking_utils``
@@ -60,15 +103,12 @@ def export_to_onnx(
     # The dynamo path traces through correctly via FX.
     torch.onnx.export(
         export_model,
-        (dummy_ids, dummy_mask),
+        args,
         str(output_path),
-        input_names=["input_ids", "attention_mask"],
+        input_names=input_names,
         output_names=["logits"],
         opset_version=opset,
-        dynamic_shapes={
-            "input_ids": {0: "batch", 1: "sequence"},
-            "attention_mask": {0: "batch", 1: "sequence"},
-        },
+        dynamic_shapes=dynamic_shapes,
         dynamo=True,
         external_data=False,
     )

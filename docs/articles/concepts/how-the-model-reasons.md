@@ -16,10 +16,10 @@ locality=Boston, region=MA, postcode=02101`, what's the chain of reasoning behin
 each label?
 
 This doc lays out the central theory in one place. It exists because the answer
-is genuinely interesting and surprisingly hard to pin down — it's not a
-context-free grammar, not a context-sensitive grammar, not pure pattern matching,
-not "the model just figures it out." It's a layered transducer with soft-fusion
-priors, and that distinction has practical consequences for everything from
+is genuinely interesting and surprisingly hard to pin down. The model is a layered
+transducer with soft-fusion priors — not a context-free grammar, not a
+context-sensitive grammar, not pure pattern matching, and not "the model just
+figures it out." That distinction has practical consequences for everything from
 training-corpus design to inference performance.
 
 ## Pipeline at a glance

@@ -89,7 +89,7 @@ This is the most common architecture: call Google/geocode.earth for the 90% that
 
 Manual address correction costs between $0.50 and $5.00 per address depending on the complexity (a call center agent, a field visit, a returned package). If the geocoder fails on 10% of 1 million addresses, that is 100,000 manual corrections at $0.50-$5.00 each — $50,000 to $500,000 per month. The API cost for the 90% is $4,500 per month (at Google's rate). The fallback cost is 10-100× the API cost.
 
-Reducing the failure rate from 10% to 5% halves the manual-correction cost. Reducing it from 10% to 2% reduces it by 80%. The value is not in parsing more addresses correctly — it is in reducing the number of addresses that need human intervention. Every percentage point of parser accuracy past 90% is worth thousands of dollars per month in avoided manual work.
+Reducing the failure rate from 10% to 5% halves the manual-correction cost. Reducing it from 10% to 2% reduces it by 80%. The payoff is measured in manual reviews avoided. Every percentage point of parser accuracy past 90% shrinks the pile of addresses a human has to touch — which is where the thousands of dollars per month actually come from.
 
 ## What Mailwoman's approach means for this problem
 

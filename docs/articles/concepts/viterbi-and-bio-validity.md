@@ -116,7 +116,7 @@ that sequence and picks the next-best valid option: `B-street` with
 score 0.35. The total `B-house_number + B-street + I-street` sequence
 scores higher than any alternative valid sequence.
 
-## Why structural validity matters downstream
+## Why the tree builder needs valid BIO
 
 The
 [tree builder](https://github.com/sister-software/mailwoman/blob/main/core/decoder/build-tree.ts)

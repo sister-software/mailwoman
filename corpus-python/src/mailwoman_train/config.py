@@ -35,6 +35,10 @@ class DataConfig:
     # Probability (0-1) that each augmentation fires per row. 0 = disabled.
     augment_directional_prob: float = 0.0
     augment_region_prob: float = 0.0
+    # Postcode-anchor lookup (#239/#240). Path to the JSON {postcode: [posterior, lat, lon]} table
+    # (built by scripts/build-pilot-anchor-lookup.py). When set AND model.use_postcode_anchor is on,
+    # the loader projects per-piece anchor features onto each row. None → no anchor features.
+    anchor_lookup_path: str | None = None
 
 
 @dataclass
@@ -91,6 +95,32 @@ class ModelConfig:
     # config field so corpus-side feature shape and model-side projection width stay
     # in lockstep through the model-card layer.
     phrase_feature_dim: int = 10  # = PHRASE_BIE_DIM (3) + PHRASE_KIND_DIM (7)
+    # PR3: self-conditioning. When True, the encoder pools its output into a locale posterior
+    # (an auxiliary head over the labels.LOCALE_COUNTRIES vocabulary, trained on the corpus
+    # ``country`` field) and FiLM-modulates the per-token representations by it before the BIO
+    # head — the model infers "which country" globally, then conditions its own labeling on it.
+    # The head is exported as the LocalePosterior the resolver consumes. Default False keeps
+    # v0.8.x numerics for back-compat. ``num_locales`` is NOT a yaml knob — build_model derives
+    # it from labels.NUM_LOCALES so the head width and the target vocabulary can never drift.
+    use_locale_conditioning: bool = False
+    # Weight on the auxiliary locale cross-entropy leg (loss = BIO_CE + crf + locale_loss_weight ×
+    # locale_CE). 0.0 disables the aux loss even when conditioning is on (the FiLM path still runs
+    # unsupervised, which is rarely what you want); a value like 0.3 keeps the locale signal a
+    # genuine but secondary objective behind the per-token BIO task.
+    locale_loss_weight: float = 0.0
+    # Postcode-anchor conditioning channel (#239/#240 de-risk pilot). When True, the encoder takes a
+    # per-token ``(B, S, NUM_LOCALES+2)`` anchor-feature tensor (uniform country posterior + centroid)
+    # and a ``(B, S)`` confidence scalar, and injects ``c·(W·features + v_ANCHOR)`` at the input
+    # embedding — a position-local hard cue at the postcode span (the property self-conditioning's
+    # global FiLM lacked). Robustness is the confidence curriculum applied corpus-side (see the data
+    # loader). Default False keeps existing numerics. Composes with ``use_locale_conditioning``.
+    use_postcode_anchor: bool = False
+    # Dual-injection (#327, v0.9.4): when the anchor is on, ALSO inject the pooled postcode anchor at
+    # position 0 — an order-INDEPENDENT global cue the locality can attend back to regardless of where
+    # the postcode sits. Fixes the anchor's positional harm on international word order (postcode AFTER
+    # the city), where the per-token-only injection fired on the wrong side of the locality. Default
+    # False (no change); requires use_postcode_anchor.
+    inject_first_token: bool = False
 
 
 @dataclass

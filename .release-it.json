@@ -4,6 +4,12 @@
 		"@release-it-plugins/workspaces": {
 			"workspaces": [
 				"core",
+				"normalize",
+				"query-shape",
+				"kind-classifier",
+				"locale-gate",
+				"phrase-grouper",
+				"codex",
 				"classifiers",
 				"corpus",
 				"neural",

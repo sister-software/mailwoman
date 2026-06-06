@@ -7,5 +7,5 @@
 	},
 	"include": ["./src/**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./fixtures/**/*"],
-	"references": [{ "path": "../core" }]
+	"references": [{ "path": "../core" }, { "path": "../codex" }]
 }

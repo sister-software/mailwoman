@@ -36,7 +36,7 @@ Mailwoman models an address as a **bag of typed components**. Each component is 
 
 The full canonical vocabulary lives in `core/types/component.ts`. Adding a tag requires a written rationale because everything downstream is keyed off this list.
 
-A parsed result is therefore not a tree — it is a **flat dictionary** with optional repeated tags (rare; usually each tag appears at most once). The exact shape:
+A parsed result is therefore a **flat dictionary** with optional repeated tags (rare; usually each tag appears at most once), not a tree. The exact shape:
 
 ```ts
 interface ParsedAddress {

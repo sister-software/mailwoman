@@ -1,6 +1,7 @@
 {
 	"name": "neural-weights-fr-fr",
-	"version": "0.4.0",
+	"version": "4.0.0",
+	"model_lineage": "shares the en-us Stage 3 / step 100000 model (formerly v0.6.0) — relabeled to the unified 4.0.0 release version; tokenizer 0.6.0-a0",
 	"phase": "Stage 2 (coarse + venue/street/house_number)",
 	"license": "AGPL-3.0-only",
 	"locale": "fr-fr",

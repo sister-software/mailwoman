@@ -74,7 +74,7 @@ A rear-access building in a dense urban area may have a street address on the fr
 
 A geocoder can return a coordinate with 8 decimal places (sub-millimeter precision) that is accurate to within 5 kilometers. The precision is a property of the floating-point representation. The accuracy is a property of the data source and algorithm. Consumers see "37.422387, -122.084084" and assume the coordinate is precise to the digit. It isn't.
 
-Google's Geocoding API returns a `location_type` with each result: `ROOFTOP`, `RANGE_INTERPOLATED`, `GEOMETRIC_CENTER`, or `APPROXIMATE`. This is the right taxonomy — it tells the consumer the accuracy, not just the precision. Most geocoders don't expose this. They return a coordinate and a confidence score, and the consumer assumes the confidence score maps to spatial accuracy. It doesn't.
+Google's Geocoding API returns a `location_type` with each result: `ROOFTOP`, `RANGE_INTERPOLATED`, `GEOMETRIC_CENTER`, or `APPROXIMATE`. This is the right taxonomy — it tells the consumer the accuracy rather than the precision. Most geocoders don't expose this. They return a coordinate and a confidence score, and the consumer assumes the confidence score maps to spatial accuracy. It doesn't.
 
 ### "Two geocodes at the same coordinate are the same address."
 

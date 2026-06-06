@@ -13,7 +13,7 @@ tags: [resolver, geocoding]
 
 Who's On First is the best open gazetteer we have. It's also one of the strangest datasets you'll encounter as a developer. This post is about what makes it hard to use, what makes it worth the effort, and the tooling we built inside Mailwoman to tame it.
 
-If you've ever tried to answer "what city is this address in?" programmatically — using open data, without paying a geocoding API — you've probably already run into WOF. And you probably had some questions.
+If you've ever tried to answer "what city is this address in?" programmatically, using open data without paying a geocoding API, you've probably already run into WOF. And you probably had some questions.
 
 {/* truncate */}
 
@@ -75,15 +75,15 @@ There are a few things to notice:
 
 ### Brooklyn Integers
 
-WOF IDs are issued by a service called Brooklyn Integers — a distributed ID generator that guarantees uniqueness across the dataset. The IDs are not sequential, not geographically meaningful, and not sortable. They're just unique numbers. This is fine for lookup but means you can't reason about "nearby" places by ID proximity.
+WOF IDs are issued by a service called Brooklyn Integers, a distributed ID generator that guarantees uniqueness across the dataset. The IDs are not sequential, not geographically meaningful, and not sortable. They're just unique numbers. This is fine for lookup but means you can't reason about "nearby" places by ID proximity.
 
 ### Supersession chains
 
-Places get deprecated — a neighbourhood is absorbed by a neighbouring one, a county boundary changes, a locality is merged. WOF tracks this via `wof:superseded_by` arrays. A query that doesn't check supersession may return a place that hasn't existed since 2015.
+Places get deprecated: a neighbourhood is absorbed by a neighbouring one, a county boundary changes, a locality is merged. WOF tracks this via `wof:superseded_by` arrays. A query that doesn't check supersession may return a place that hasn't existed since 2015.
 
 ### Parent ID = -1
 
-A `parent_id` of -1 means "we don't know the parent." A `parent_id` of 0 means "no parent (this is a continent or Earth itself)." The first French postalcode dataset was ingested with `parent_id: -1` for every record — making hierarchy traversal useless until someone manually assigned parents. Some of those records still have `-1`.
+A `parent_id` of -1 means "we don't know the parent." A `parent_id` of 0 means "no parent (this is a continent or Earth itself)." The first French postalcode dataset was ingested with `parent_id: -1` for every record, making hierarchy traversal useless until someone manually assigned parents. Some of those records still have `-1`.
 
 ## What we built to tame it
 
@@ -123,7 +123,7 @@ CREATE TABLE records (
 );
 ```
 
-One row per name variant. "Saint Petersburg" and "St. Petersburg" and "St Petersburg" are three rows for the same `id`, different `name`/`variant`/`short` columns. The reconciler can query any variant form and get the same `parent_id` chain — which is what solves the "not found" problem we hit in testing.
+One row per name variant. "Saint Petersburg" and "St. Petersburg" and "St Petersburg" are three rows for the same `id`, different `name`/`variant`/`short` columns. The reconciler can query any variant form and get the same `parent_id` chain, which is what solves the "not found" problem we hit in testing.
 
 ### The Piscina pipeline (stalled, documented)
 
@@ -153,7 +153,7 @@ Three things, in priority order:
 2. **Wire PlacetypeDataSource into the reconciler.** The concordance scoring currently uses the raw WOF `spr` SQLite table (from Geocode Earth's distribution). It should use our per-placetype/per-language DBs, which carry the name variants the raw table doesn't expose. This fixes the "Saint Petersburg not found" class of lookup failures.
 3. **Benchmark the in-memory-then-consolidate pattern.** If 120K individual writes to the same few DB files from N concurrent workers bottlenecks on SQLite's WAL writer (likely), the in-memory-SQLite-per-worker → ATTACH-and-merge pattern is the escape hatch. Whether it's actually needed depends on whether step 1 is fast enough without it.
 
-## Why this matters for geocoding
+## So why put up with WOF?
 
 Every geocoder needs a gazetteer. The choice is: pay for one (Google, HERE, Mapbox), use an open one (WOF, GeoNames, OSM Nominatim), or build your own from government sources (BAN, NAD, TIGER).
 

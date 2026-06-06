@@ -104,8 +104,8 @@ the cost of another. The pattern is reproducible:
   to 0.5:1.0. dep_loc came back gradually (1 at 20K → 844 at 100K).
 
 The recipe-knob story is wrong because it treats synthetic data as a
-different MIXTURE of the same distribution. It isn't — it's a different
-DISTRIBUTION. Every synthetic template imports a distributional
+different MIXTURE of the same distribution. It's a different
+DISTRIBUTION entirely. Every synthetic template imports a distributional
 assumption that doesn't exist in real addresses; weight tuning addresses
 the magnitude of the mismatch but not its structure.
 

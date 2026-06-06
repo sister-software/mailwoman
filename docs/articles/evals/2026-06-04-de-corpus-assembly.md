@@ -1,0 +1,40 @@
+# DE-inclusive corpus assembly (2026-06-04)
+
+The data step that gates the PR3 self-conditioning pilot ([plan](../plan/2026-06-04-pr3-self-conditioned-retrain.md)). The Pilot A config wanted a US/FR/**DE** corpus from scratch; v0.4.0 is US/FR only. This records how the German rows were added and how to deploy them.
+
+## What was built
+
+A new overlay corpus, **v0.4.1-de**: v0.4.0's 684 base shards (US/FR, referenced verbatim by their Modal `/data` paths) plus two new German shards.
+
+| shard                       | split |    rows | source       |
+| --------------------------- | ----- | ------: | ------------ |
+| `part-german-train.parquet` | train | 200,000 | synth-german |
+| `part-german-val.parquet`   | val   |   4,000 | synth-german |
+
+The German rows are real OpenAddresses Berlin + Saxony tuples (~1.2M unique, cached on disk) rendered in **German order** (house-number after street, postcode before city) by `synthesize-german.ts`, then aligned to BIO. The build reuses the v0.8.0 `scripts/build-german-shard.mjs` precedent — but at **200K rows, 40× the v0.8.0 supplement**, because that run was a _continue-train_ supplement (0.2 weight on an already-trained model) while this is a _from-scratch_ pilot that has to learn German from zero. Align pass rate was ~99.9% (186 skipped of 200K).
+
+## Why this is the right data for the pilot, not a repeat of v0.8.0
+
+The v0.8.0 German order-shard [failed](2026-06-02-night-4-postmortem.md) — German street/house-number F1 jumped (+22/+16pp), but locality and postcode F1 _collapsed_ (−37/−58pp) via end-of-string span fragmentation, and US/FR slipped past the 1pp tripwire. That collapse is exactly the failure self-conditioning is designed to prevent: a model that has resolved "this is a German address" globally, before per-token labels, shouldn't bleed a city's lead token into the postcode span. So this corpus + the PR3 architecture is the test of that hypothesis, and the `cross_pollution` tripwire (now with the 4K German val shard for support) is the live readout of whether it holds.
+
+## The mix knob
+
+In `v0.9.0-pilot-selfcond.yaml`, `synth-german` is weighted 6.0 of a ~34 source-weight total — German at ~18% of the mix. Enough for a from-scratch model to learn it, inside the synthesis-as-supplement guideline. It is **the key tunable**: raise it if DE locality F1 lags the 70% gate, lower it if US/FR slip past the 1pp tripwire.
+
+## Reproduce + deploy
+
+Built locally at `/mnt/playpen/mailwoman-data/corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/`. Validated: the data loader reads `country=DE` / `locale_id=2` rows from both splits. To deploy to the Modal volume the trainer reads:
+
+```bash
+node scripts/build-german-shard.mjs --output /tmp/german-train.jsonl --count 200000 --seed 42
+node scripts/build-german-shard.mjs --output /tmp/german-val.jsonl   --count 4000   --seed 99
+python3 scripts/jsonl-to-parquet.py --input /tmp/german-train.jsonl --output <NEW>/train/part-german-train.parquet
+python3 scripts/jsonl-to-parquet.py --input /tmp/german-val.jsonl   --output <NEW>/val/part-german-val.parquet
+python3 scripts/assemble-de-overlay-manifest.py --base <v0.4.0 MANIFEST> --new-dir <NEW> \
+  --modal-root /data/corpus/versioned/v0.4.1-de/corpus-v0.4.1-de
+modal volume put mailwoman-training <NEW>/train/part-german-train.parquet corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/train/part-german-train.parquet
+modal volume put mailwoman-training <NEW>/val/part-german-val.parquet     corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/val/part-german-val.parquet
+modal volume put mailwoman-training <NEW>/MANIFEST.json                    corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/MANIFEST.json
+```
+
+After the upload, Pilot A is a one-command launch (`modal run -d scripts/modal/train_remote.py --config v0.9.0-pilot-selfcond.yaml --resume none --trackio`), against a tripwire already wired to report at 20k whether self-conditioning earns the full run.

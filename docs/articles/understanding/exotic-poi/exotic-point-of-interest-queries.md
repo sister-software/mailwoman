@@ -26,7 +26,7 @@ This series catalogues the categories of POI queries, how traditional geocoders 
 | [Landmarks](./landmark-queries.md)                 | Eiffel Tower, Golden Gate Bridge, Empire State Building | A specific named place, usually unique or nearly unique            |
 | [Transit](./transit-queries.md)                    | subway station, bus stop, airport, train station        | A transit facility, named or unnamed                               |
 
-## Why this matters for Mailwoman
+## Why POI queries break the parser
 
 Mailwoman's parser is designed for address strings. Its output is `{house_number: 123, street: Main St, locality: Springfield, region: IL}` — structured address components. A POI query like `gas station` has none of these components. The parser will try to classify `gas` and `station` as address components (street? locality? venue?) and produce a low-confidence parse.
 

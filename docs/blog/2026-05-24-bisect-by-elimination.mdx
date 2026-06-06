@@ -7,7 +7,7 @@ tags: [training]
 
 This is a follow-up to [yesterday's post about the v0.5.0 C-train failures](/blog/v0-5-0-c-train-bisect). Yesterday we ran four attempts and ruled out three suspects. Today we ran a fifth and ruled out a fourth. We're now down to one remaining hypothesis — and the way we got here is a kind of debugging that translates pretty cleanly from software engineering, so this post is pitched at engineers who haven't run a training campaign before.
 
-If you've ever bisected a regression in a piece of software — used `git bisect`, narrowed a test failure by reverting changes one at a time, taken a known-good build and a known-broken build and asked which of the changes between them caused the breakage — then you already understand the core move. The rest is vocabulary.
+If you've ever bisected a regression in a piece of software (used `git bisect`, narrowed a test failure by reverting changes one at a time, taken a known-good build and a known-broken build and asked which of the changes between them caused the breakage), then you already understand the core move. The rest is vocabulary.
 
 {/* truncate */}
 
@@ -53,13 +53,13 @@ Five attempts now, each varying one knob from the previous:
 
 The bisect-phrase-off run is the new one (today). The previous post covered v1 through bisect-h256.
 
-What every bisect attempt has in common: **the model is provably learning something useful for several hundred iterations** (the loss decreases, validation accuracy climbs), and **then it falls off a cliff**. This means the model isn't fundamentally broken — it can fit the data. It just can't _stay_ fit. Something is pushing it off the cliff.
+What every bisect attempt has in common: **the model is provably learning something useful for several hundred iterations** (the loss decreases, validation accuracy climbs), and **then it falls off a cliff**. This means the model isn't fundamentally broken. It can fit the data, it just can't _stay_ fit. Something is pushing it off the cliff.
 
 Each bisect tested a different "is this the cliff?" hypothesis:
 
 - **v2 tested "is the learning rate too high?"** No. Lowering LR delayed the climb but didn't stop it.
 - **v3 tested "are the new loss-side weighting knobs destabilising?"** No. v0.4.0's known-stable loss settings still produce the cliff.
-- **bisect-h256 tested "is the bigger model the problem?"** No. We reverted hidden size to v0.4.0's value and got the cleanest training so far — best validation macro-F1 we've ever measured — and the cliff still happened.
+- **bisect-h256 tested "is the bigger model the problem?"** No. We reverted hidden size to v0.4.0's value and got the cleanest training so far (best validation macro-F1 we've ever measured), and the cliff still happened.
 - **bisect-phrase-off (today) tested "is the phrase-prior input layer the problem?"** No. We turned off the phrase-prior feature concatenation entirely and the cliff is still there, in the same shape, at almost the same step.
 
 Five attempts, five identical fingerprints, four hypotheses eliminated. **Exactly one architectural change from the known-stable v0.4.0 setup is still in play**: the tokenizer + corpus pair.
@@ -81,7 +81,7 @@ This is the next bisect. If it trains cleanly, we'll know the synthetic data —
 - **Investigate why the transliteration data destabilises**. The honest hypothesis is that the LLM-generated rows have systematically different gradient signatures than human-validated address data — they might be _too_ structured, or have repetitive patterns the model overfits to and then explodes on. We have tooling (`corpus-audit`) that can quantify this.
 - **Ship A1 (tokenizer wins) + corpus-v0.3.0 model (proven-stable)** for v0.5.0, defer transliteration training to v0.5.1.
 
-If the corpus-revert bisect also fails, we're left with the A1 tokenizer itself as the destabiliser. That's a stranger answer — tokenizer training is mostly orthogonal from classifier training — but not impossible. New vocabulary means a fresh embedding table the model has never seen; unusual sub-piece frequencies could in principle produce unusual gradient norms.
+If the corpus-revert bisect also fails, we're left with the A1 tokenizer itself as the destabiliser. That's a stranger answer (tokenizer training is mostly orthogonal from classifier training), but not impossible. New vocabulary means a fresh embedding table the model has never seen; unusual sub-piece frequencies could in principle produce unusual gradient norms.
 
 ## What we'd tell a software engineer reading this
 
@@ -104,4 +104,4 @@ Either way the bisect ladder is short now. Five experiments in, one hypothesis l
 - [The v0.4.0 retrospective](/blog/v0-4-0-ablation-campaign) (the original "destabilisation fingerprint" we recognised in v0.5.0)
 - `VERDICT_SMOKES.md` — discipline doc for the smoke-test framework we built during v0.4.0 to catch divergences early
 
-If you do ML work and have ideas about what classes of corpus distribution shift could produce a "trains fine for a thousand steps then catastrophically diverges" pattern, we'd love to hear them — `contact@sister.software`.
+If you do ML work and have ideas about what classes of corpus distribution shift could produce a "trains fine for a thousand steps then catastrophically diverges" pattern, the mailbox is open: `contact@sister.software`.

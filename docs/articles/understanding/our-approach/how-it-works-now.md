@@ -72,7 +72,7 @@ Two kinds of classifier run in parallel:
 The v0.5.0 classifier (Thread C-s) adds two architectural changes gated behind config flags:
 
 - **Phrase-prior conditioning.** The input layer takes per-token features from the Stage 2.7 phrase grouper (BIE markers + `PhraseKind` one-hot), concatenated onto the token+position embedding. The classifier conditions on proposed boundaries rather than discovering them from scratch.
-- **Top-k inference.** The inference path emits the K most-probable tag sequences with calibrated log-probability scores, not just the argmax. Stage 5 reconcile consumes these as the classifier's belief over candidate parses.
+- **Top-k inference.** The inference path emits the K most-probable tag sequences with calibrated log-probability scores, rather than the single argmax. Stage 5 reconcile consumes these as the classifier's belief over candidate parses.
 
 Both are scaffolded and tested in `main`. The full training run that exercises them (C-train) is in progress as of May 2026 — see the [v0.5.0 C-train blog post](pathname:///blog/2026-05-24-v0-5-0-c-train-bisect).
 

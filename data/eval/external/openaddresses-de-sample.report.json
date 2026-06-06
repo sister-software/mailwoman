@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-06-02T01:34:34.769Z",
+  "seed": 42,
+  "target": 3000,
+  "perState": 1500,
+  "emitted": 3000,
+  "byState": {
+    "Berlin": 1500,
+    "Sachsen": 1500
+  },
+  "sources": [
+    {
+      "source": "de/berlin",
+      "state": "Berlin",
+      "packagedLicense": "Nutzungsbestimmungen Geoportal Berlin (http://www.stadtentwicklung.berlin.de/geoinformation/download/nutzIII.pdf)",
+      "read": 375340,
+      "kept": 375138,
+      "droppedNoCityOrPost": 201,
+      "droppedBadGeo": 0,
+      "droppedBadStreet": 0,
+      "droppedDup": 1,
+      "sampled": 1500
+    },
+    {
+      "source": "de/sn/statewide",
+      "state": "Sachsen",
+      "packagedLicense": "dl-de/by-2-0 (https://www.govdata.de/dl-de/by-2-0)",
+      "read": 962816,
+      "kept": 842297,
+      "droppedNoCityOrPost": 0,
+      "droppedBadGeo": 0,
+      "droppedBadStreet": 0,
+      "droppedDup": 120519,
+      "sampled": 1500
+    }
+  ],
+  "blocked": []
+}

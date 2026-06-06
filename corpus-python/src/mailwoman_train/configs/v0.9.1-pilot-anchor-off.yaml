@@ -1,0 +1,159 @@
+# Anchor pilot — ANCHOR-OFF CONTROL (#239/#240): self-cond + German collapse recipe, anchor OFF, 3k steps.
+# Confirms the collapse still appears with THIS code+corpus (early-kill: P(B-locality|after postcode)<0.3).
+# Byte-identical to v0.9.0-pilot-selfcond except max_steps; anchor channel is default-off. The A/B control.
+#
+# Tests ONE hypothesis: a model that infers the country from the whole address (an auxiliary
+# locale head over the pooled sequence) and FiLM-conditions its own per-token labeling on it
+# parses better and stops the Saint-Albans cross-tag collapse — WITHOUT regressing US/FR. The
+# probe behind PR3 (docs/articles/plan/2026-06-04-pr3-self-conditioned-retrain.md) showed the
+# postcode alone pins the country only 28-44% of the time, so the city/street evidence the model
+# reads is genuinely load-bearing.
+#
+# SINGLE VARIABLE: this is the v0.7.2-PROVEN recipe (1.5e-4 constant / 1k warmup, ls 0.1, CRF off,
+# bf16) with self-conditioning the ONLY addition. Any delta is attributable to the conditioning,
+# not the recipe — the same A/B discipline as the v0.8.x MLM arms.
+#
+# STOP AT 20k (the early gate). Pre-registered, from the design doc:
+#   - cross_pollution < 1% per locale (the live tripwire — watch it on the dashboard)
+#   - DE locality F1 >= 70% and rising
+#   - US/FR within ~1pp of v0.7.2 (no-regression on the incumbents)
+#   - locale_acc climbing (the aux head is actually learning "which country")
+# If the gate holds, a follow-up extends to a full 100k run; if it fails, stop and diagnose ONE
+# knob (NaN protocol).
+#
+# CORPUS: v0.4.1-de — the v0.4.0 (US/FR) base overlaid with a German synth-german shard (200K train
+# + 4K val rows, real OpenAddresses Berlin/Saxony tuples rendered German-order via build-german-shard.mjs,
+# 40x the v0.8.0 continue-train supplement so a FROM-SCRATCH model can actually learn German). Assembled
+# 2026-06-04. Reproduce + deploy to the Modal volume:
+#   node scripts/build-german-shard.mjs --output /tmp/german-train.jsonl --count 200000 --seed 42
+#   node scripts/build-german-shard.mjs --output /tmp/german-val.jsonl   --count 4000   --seed 99
+#   python3 scripts/jsonl-to-parquet.py --input /tmp/german-train.jsonl --output /tmp/part-german-train.parquet
+#   python3 scripts/jsonl-to-parquet.py --input /tmp/german-val.jsonl   --output /tmp/part-german-val.parquet
+#   # then the overlay MANIFEST (v0.4.0 shards + the 2 German shards) — see the build-log doc — and:
+#   modal volume put mailwoman-training /tmp/part-german-train.parquet corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/train/part-german-train.parquet
+#   modal volume put mailwoman-training /tmp/part-german-val.parquet   corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/val/part-german-val.parquet
+#   modal volume put mailwoman-training <MANIFEST.json>                corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/MANIFEST.json
+#
+# Launch:
+#   modal run -d scripts/modal/train_remote.py \
+#     --config v0.9.0-pilot-selfcond.yaml --resume none \
+#     --trackio --trackio-space sister-software/mailwoman-trackio
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.4.1-de/corpus-v0.4.1-de
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  # US/FR/DE — the three-way pilot. FR comes from the `ban` source (Base Adresse Nationale),
+  # DE from `synth-german`. country_weights is an acceptance filter, not a count balancer; the MIX
+  # is steered by source_weights below.
+  country_weights:
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-po-box: 1.5
+    synth-intersection: 0.2
+    # German at ~18% of the mix (6.0 of a ~34 total) — enough for a from-scratch model to learn it,
+    # while staying within the synthesis-as-supplement guideline. THE key tunable: raise it if DE
+    # locality F1 lags the 70% gate, lower it if US/FR slip past the 1pp tripwire.
+    synth-german: 6.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096 # the per-locale cross_pollution tripwire now has DE val support (the 4K German val shard)
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  # CRF off via zero weight — head exists (parity) but contributes no loss. Avoids the
+  # CRF-under-bf16 NaN; keeps self-conditioning the only new behaviour in the loss.
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  # PR3: the headline change. Self-conditioning on; the aux locale loss is a genuine but
+  # secondary objective behind the per-token BIO task. num_locales is derived from labels, not set
+  # here (it can't drift from the aux-target vocabulary).
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  class_weights:
+    O: 0.5
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v091-anchor-off-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  # Stop at the 20k early gate. Extend to 100k in a follow-up config only if the gate holds.
+  max_steps: 3000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  trackio_project: mailwoman
+  trackio_run_name: v0.9.1-anchor-off-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

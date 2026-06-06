@@ -54,7 +54,7 @@ Airport codes (JFK, LHR, NRT, CDG, DXB) are globally unique three-letter IATA co
 
 ## The implicit-station problem
 
-"The train station" without a city name implies "the train station where the user is." The geocoder needs the user's location to resolve this. This is not a parsing problem — it's a context problem. The parser correctly identifies "train station" as a transit query. The resolver needs a location to search near. Without one, the query is unresolvable.
+"The train station" without a city name implies "the train station where the user is." The geocoder needs the user's location to resolve this. The parser does its job here, correctly identifying "train station" as a transit query; the missing piece is contextual — the resolver needs a place to search near, and without one the query is unresolvable.
 
 "Subway station near me" is the same pattern: transit category + implicit location. The geocoder needs the user's location to answer it.
 

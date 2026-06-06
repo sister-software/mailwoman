@@ -1,0 +1,75 @@
+# Postcode anchor through the resolver eval (2026-06-03)
+
+The postcode anchor (#240) is wired into the OpenAddresses real-point resolver eval as a `neural+anchor`
+row (`--postcode-anchor`). The neural parse and the resolver supply the admin/place identity as before;
+the **coordinate** is taken from the postcode anchor's own centroid. So the row isolates exactly what the
+anchor sharpens: where, not which place. The tables below are emitted verbatim by
+`scripts/eval/oa-resolver-eval.ts` (eval figures are never hand-typed).
+
+The anchor now carries a **position-aware confidence**: a digit-only code that shares its comma-segment
+with a street word reads as a house number, not a postcode (house numbers sit beside the street,
+postcodes beside the city), so its confidence is scaled down. The street vocabulary is the full USPS
+Pub-28 suffix table from `@mailwoman/codex/us` — minus the abbreviations that collide with a state code
+(`KY` is both Key and Kentucky, `PR` both Prairie and Puerto Rico), since those appear in the postcode's
+own `City, ST ZIP` segment. The eval then picks the highest-confidence span above a trust floor, with no
+"take the last span" crutch: a real trailing postcode out-ranks a leading house number on its own merit,
+and a span the prior flags as a house number falls back to the resolver coordinate rather than placing
+the address at a far-away same-shaped ZIP.
+
+## German — the resolver carries admin only, no German postcodes
+
+```
+| parser | locality-match | region-match | resolved | coord p50 km | coord p90 km | p99 km |
+| **neural** | 77.4% | 43.8% | 99.3% | 9.9 | 66.8 | 318.2 |
+| v0 (Pelias) | 79.3% | 99.3% | 99.3% | 7.0 | 16.9 | 106.8 |
+| **neural+anchor** | 77.4% | 43.8% | 99.3% | 1.3 | 5.7 | 13.5 |
+```
+
+The anchor drops coord p50 from 9.9 km to **1.3 km** (p90 66.8 → 5.7, p99 318 → 13.5), admin-match
+unchanged. The German parser is out of distribution (locality 77%), so the resolver lands on a coarse
+admin centroid; the postcode anchor — a regex plus a gazetteer, no model in the loop — carries the
+coordinate to the postcode's own point. It also beats the Pelias parser (v0) on coordinate by a wide
+margin (1.3 vs 7.0 km).
+
+(The region-match figures here come from the codex-aware matcher: the resolver returns WOF's English
+exonym `Saxony` while OA's expected is the German `Sachsen`, so the eval folds both through
+`@mailwoman/codex/de`'s `lookupGermanState` to one ISO 3166-2:DE code before comparing. Before that fix
+both parsers read ~0% on Saxony purely from the language mismatch. The remaining neural gap is real and
+concentrated in the Berlin city-state: per-state, neural emits a resolvable region for Saxony 87.5% of
+the time but for Berlin only 0.1% — `Berlin, Berlin` collapses region into locality and the OOD parser
+drops the duplicate. v0 reaches 99.3% because it emits the region in both.)
+
+## US — the resolver already loads `postalcode-us.db`
+
+```
+| parser | locality-match | region-match | resolved | coord p50 km | coord p90 km | p99 km |
+| **neural** | 97.3% | 99.9% | 100.0% | 3.3 | 11.0 | 277.4 |
+| v0 (Pelias) | 95.3% | 99.4% | 99.7% | 3.3 | 11.7 | 368.6 |
+| **neural+anchor** | 97.3% | 99.9% | 100.0% | 2.8 | 11.2 | 25.7 |
+```
+
+Even where the resolver already resolves ZIPs, the anchor helps on the tail: p50 tightens 3.3 → 2.8 km
+and the p99 collapses from **277 km to 25.7 km**. The tail is the handful of addresses whose neural parse
+resolves to the wrong admin centroid; the postcode is a more reliable coordinate than a mis-resolved
+city, so swapping it in caps the error at ZIP granularity. (Getting here meant closing the house-number
+trap: a leading 5-digit that is a valid ZIP in another state — `32147 Bio Station Lane, Polson, MT 59860`
+— must not win over the real trailing ZIP. The position prior plus the trust floor handle it; before
+them, that trap put the US p99 at 889 km.)
+
+## Takeaway
+
+The fusion is a clean win in both directions: it supplies postcode-level coordinates for the locales
+whose postcodes the resolver's shards do not carry (DE/ES/IT/NL/FR), and it tightens the tail even where
+they do (US), because a real postcode out-resolves a mis-parsed admin centroid. It is the postcode tier
+the eval's own note promised, between the admin-centroid tier and the future street-level (TIGER) tier —
+and the position-aware confidence means it runs on the anchor's own judgment, not an eval-side crutch.
+
+Reproduce:
+
+```bash
+node --experimental-strip-types scripts/eval/oa-resolver-eval.ts \
+  --eval data/eval/external/openaddresses-de-sample.jsonl --limit 1500 --default-country DE \
+  --model <onnx> --tokenizer <tok> --model-card <card> \
+  --wof /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
+  --postcode-shards <us.db>,<intl.db> --postcode-anchor
+```

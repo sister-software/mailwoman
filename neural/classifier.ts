@@ -18,14 +18,15 @@ import {
 	type ComponentTag,
 	type DecoderToken,
 } from "@mailwoman/core/decoder"
+import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.js"
 import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
 import { repairPostcodeLabels } from "./postcode-repair.js"
-import { repairUnitLabels } from "./unit-repair.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
 import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
+import { repairUnitLabels } from "./unit-repair.js"
 import { buildBioEndMask, buildBioStartMask, buildBioTransitionMask, softmax, viterbi } from "./viterbi.js"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
 
@@ -35,7 +36,10 @@ import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
  * the classifier only ever calls `infer(ids)`.
  */
 export interface NeuralRunner {
-	infer(tokenIds: number[]): Promise<InferResult>
+	infer(
+		tokenIds: number[],
+		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+	): Promise<InferResult>
 }
 
 export interface NeuralAddressClassifierConfig {
@@ -66,6 +70,13 @@ export interface NeuralAddressClassifierConfig {
 	startTransitions?: number[]
 	/** Optional learned end-of-sequence transition scores per label. */
 	endTransitions?: number[]
+	/**
+	 * Optional postcode-anchor lookup (#239/#240). When set, `parse` builds per-piece anchor features
+	 * from the text + this lookup and feeds them to the runner — for models trained with the anchor
+	 * channel (exported with the `anchor_features`/`anchor_confidence` ONNX inputs). Omit for plain
+	 * models. Load via `loadAnchorLookup` from `./anchor-inference.js`.
+	 */
+	postcodeAnchorLookup?: AnchorLookup
 }
 
 export class NeuralAddressClassifier {
@@ -100,7 +111,9 @@ export class NeuralAddressClassifier {
 	 * by `@mailwoman/neural-web`. Calling this method in a browser will throw at runtime — use
 	 * `loadNeuralClassifierFromUrls` from `@mailwoman/neural-web` instead.
 	 */
-	static async loadFromWeights(opts: ResolveWeightsOpts = {}): Promise<NeuralAddressClassifier> {
+	static async loadFromWeights(
+		opts: ResolveWeightsOpts & { postcodeAnchorLookup?: AnchorLookup } = {}
+	): Promise<NeuralAddressClassifier> {
 		// /* webpackIgnore: true */ tells webpack to leave the dynamic import statement intact —
 		// it becomes a runtime native ESM import that resolves in Node (which has onnxruntime-node
 		// + node:fs) and throws cleanly in a browser if called. Without the directive, webpack
@@ -124,6 +137,7 @@ export class NeuralAddressClassifier {
 			transitions: crf?.transitions,
 			startTransitions: crf?.startTransitions,
 			endTransitions: crf?.endTransitions,
+			...(opts.postcodeAnchorLookup ? { postcodeAnchorLookup: opts.postcodeAnchorLookup } : {}),
 		})
 	}
 
@@ -132,7 +146,12 @@ export class NeuralAddressClassifier {
 		if (text.length === 0) return { raw: text, roots: [] }
 
 		const { pieces, ids } = this.cfg.tokenizer.encode(text)
-		const { logits } = await this.cfg.runner.infer(ids)
+		// Postcode-anchor channel (#239/#240): build per-piece anchor features from the same lookup the
+		// model trained on, fed alongside the ids. No-op when no lookup is configured.
+		const anchor = this.cfg.postcodeAnchorLookup
+			? buildAnchorFeatures(text, pieces, this.cfg.postcodeAnchorLookup)
+			: undefined
+		const { logits } = await this.cfg.runner.infer(ids, anchor)
 
 		this.assertEmissionWidth(logits)
 
@@ -208,7 +227,12 @@ export class NeuralAddressClassifier {
 			return { tree: { raw: text, roots: [] }, logits: [], pieces: [] }
 		}
 		const { pieces, ids } = this.cfg.tokenizer.encode(text)
-		const { logits } = await this.cfg.runner.infer(ids)
+		// Postcode-anchor channel (#239/#240): build per-piece anchor features from the same lookup the
+		// model trained on, fed alongside the ids. No-op when no lookup is configured.
+		const anchor = this.cfg.postcodeAnchorLookup
+			? buildAnchorFeatures(text, pieces, this.cfg.postcodeAnchorLookup)
+			: undefined
+		const { logits } = await this.cfg.runner.infer(ids, anchor)
 
 		this.assertEmissionWidth(logits)
 
@@ -357,11 +381,11 @@ export interface ParseOpts {
 	 */
 	postcodeRepair?: boolean
 	/**
-	 * When true, run the deterministic secondary-unit regex repair pass on the decoded label
-	 * sequence before tree-building. Detects designator-shaped substrings ("Apt 4B", "Ste 12",
-	 * "Unit 9400", bare "#104", …) and snaps/adds the unit span, fixing the unit-drop weakness the
-	 * three-arena capability eval surfaced (postal secondary-unit 0% neural). Off by default —
-	 * opt-in until the v0.7.2 arena re-run quantifies its delta. See `./unit-repair.ts`.
+	 * When true, run the deterministic secondary-unit regex repair pass on the decoded label sequence
+	 * before tree-building. Detects designator-shaped substrings ("Apt 4B", "Ste 12", "Unit 9400",
+	 * bare "#104", …) and snaps/adds the unit span, fixing the unit-drop weakness the three-arena
+	 * capability eval surfaced (postal secondary-unit 0% neural). Off by default — opt-in until the
+	 * v0.7.2 arena re-run quantifies its delta. See `./unit-repair.ts`.
 	 */
 	unitRepair?: boolean
 }

@@ -5,7 +5,7 @@ authors: [teffen]
 tags: [neural, training, night-shift, advanced]
 ---
 
-We spent a night trying to make our neural address parser less cocky. We ended it having learned something more useful: the model wasn't failing because it was *wrong with confidence* — it was failing because it had **never been shown** whole categories of address.
+We spent a night trying to make our neural address parser less cocky. We ended it having learned something more useful. The model wasn't cocky — it was uninformed. It had **never been shown** whole categories of address.
 
 This is the story of chasing the wrong number, and the diagnostics that pointed at the right one.
 
@@ -13,13 +13,13 @@ This is the story of chasing the wrong number, and the diagnostics that pointed 
 
 ## The hypothesis: it's overconfident
 
-Across the v0.6.x training cycle, one pattern kept surfacing: when the model was wrong, it was *confidently* wrong. On a held-out test set, **86% of its incorrect predictions were made at ≥0.9 confidence** — and most of those at a flat 1.00. A model that hedged appropriately would, we reasoned, stop steamrolling good answers with bad high-confidence ones.
+Across the v0.6.x training cycle, one pattern kept surfacing: when the model was wrong, it was _confidently_ wrong. On a held-out test set, **86% of its incorrect predictions were made at ≥0.9 confidence** — and most of those at a flat 1.00. A model that hedged appropriately would, we reasoned, stop steamrolling good answers with bad high-confidence ones.
 
-The standard tool for that is **label smoothing**: instead of training toward a one-hot target (1.0 for the right tag, 0 for the rest), you train toward something softer (0.9 / spread-the-rest). It caps how peaked the model's outputs can get. So we ran a clean, single-variable experiment — the v0.6.0 recipe plus `label_smoothing=0.1`, nothing else changed — and measured.
+The standard tool for that is **label smoothing**: instead of training toward a one-hot target (1.0 for the right tag, 0 for the rest), you train toward something softer (0.9 / spread-the-rest). It caps how peaked the model's outputs can get. So we ran a clean, single-variable experiment (the v0.6.0 recipe plus `label_smoothing=0.1`, nothing else changed) and measured.
 
 It worked, exactly as advertised. Overconfidence-on-wrong dropped **86% → 67%**; the mass at 1.00 confidence vanished, capped around 0.95. Postcode recall even ticked up.
 
-And the metric we actually ship on — **harness pass rate** — didn't move. 14.6% → 13.8%. If anything, slightly down. Two tags (house numbers, streets) *regressed*.
+And the metric we actually ship on — **harness pass rate** — didn't move. 14.6% → 13.8%. If anything, slightly down. Two tags (house numbers, streets) _regressed_.
 
 ## Following the evidence
 
@@ -27,39 +27,39 @@ A well-calibrated model that's no better at the job is a clue, not a victory. So
 
 We categorized every failure. The answer reframed the whole project:
 
-- **55% of the gap was missing labels** — the model emitted *no tag at all* where one belonged. Not a wrong value, not a fuzzy boundary. Silence.
+- **55% of the gap was missing labels** — the model emitted _no tag at all_ where one belonged. Not a wrong value, not a fuzzy boundary. Silence.
 - The most-missed tags were `street` (×197) and `house_number` (×100).
 - One cluster stood out: **intersections** — addresses like `Broadway & W 42nd St`. They're 17% of our harness, and the model scored **0%** on them.
 
-Calibration softens the confidence of labels the model *does* emit. It is structurally incapable of conjuring a label the model never produces. That's why it left the harness flat: we'd been sharpening the model's aim at targets it wasn't even shooting at.
+Calibration softens the confidence of labels the model _does_ emit. It is structurally incapable of conjuring a label the model never produces. That's why it left the harness flat: we'd been sharpening the model's aim at targets it wasn't even shooting at.
 
-## The smoking gun
+## The probe
 
 We ran a single probe on a canonical intersection. For every token in `Broadway & W 42nd St`, we read off the probability the model assigned to the `intersection_a` / `intersection_b` tags.
 
 The maximum, across every token, was **~0.0001**.
 
-That's not a model that's unsure about intersections. That's a model that has *no representation of them whatsoever*. The labels existed in its output vocabulary; it had simply never learned to use them.
+Uncertainty doesn't look like that. A model that's merely unsure still puts _some_ probability on the right tag; ~0.0001 means the model has _no representation of intersections whatsoever_. The labels existed in its output vocabulary; it had simply never learned to use them.
 
 Why? We checked the corpus pipeline. There are synthesizers for streets, no-street venues, PO boxes, house+venue combinations… and **nothing that generates intersections**. The real-world adapters don't emit them in that form either. The training signal for intersections was, to a very good approximation, zero. The model never saw one — so it never learned one. No loss function, no calibration trick, no bigger model recovers a category that isn't in the data.
 
 ## A different coverage gap, a different fix
 
-Calibration's one genuine win — a small postcode bump — pointed at a *second* coverage story, this one about tokenization.
+Calibration's one genuine win (a small postcode bump) pointed at a _second_ coverage story, this one about tokenization.
 
 Alphanumeric postcodes (`SW1A 1AA`, `M5V 2T6`) get shredded by the subword tokenizer into fragments like `["S","##W","##1","##A", "1","##AA"]`. The seven-character shape a regex would trivially recognize is invisible to a model reasoning over disconnected pieces. The result: GB/CA/NL postcodes at 0%.
 
-Here the fix wasn't more training at all — it was a **deterministic regex repair** that runs *after* the model decodes: detect a postcode-shaped substring, and snap the label span to it. On the postcode harness that single pass fixed **135 cases and regressed zero**, taking GB/CA/DE/PT to 100%. Sometimes the right tool is a retrain. Sometimes it's eight lines of pattern-matching and a careful "longest-match-wins" rule so a US ZIP+4 doesn't get mistaken for a Dutch postcode.
+Here the fix wasn't training at all. A **deterministic regex repair** runs _after_ the model decodes: detect a postcode-shaped substring, and snap the label span to it. On the postcode harness that single pass fixed **135 cases and regressed zero**, taking GB/CA/DE/PT to 100%. Sometimes the right tool is a retrain. Sometimes it's eight lines of pattern-matching and a careful "longest-match-wins" rule so a US ZIP+4 doesn't get mistaken for a Dutch postcode.
 
 ## What we actually learned
 
 A few lessons we're keeping:
 
-- **Pick a metric that can't be gamed by the thing you're optimizing.** Per-tag F1 looked fine while the product was stuck; harness pass rate (does the *whole* address come out right?) told the truth.
+- **Pick a metric that can't be gamed by the thing you're optimizing.** Per-tag F1 looked fine while the product was stuck; harness pass rate (does the _whole_ address come out right?) told the truth.
 - **A confident-wrong model and an ignorant model need opposite fixes.** We assumed the former; the data showed the latter. Calibration for one, coverage for the other.
 - **Structural validity is its own signal.** A checker that flags incoherent parses — a house number with no street, an orphaned unit — caught a mid-training regression that the headline accuracy number completely hid.
 - **You can't learn what you never see.** The most expensive-sounding problem of the night had the cheapest root cause: a missing synthesizer.
 
-So the fix for intersections isn't a cleverer model. It's a couple thousand synthetic `X & Y St` examples, labeled, dropped into the corpus as a small targeted supplement — and a retrain that finally gives the model something to learn from. That run is training as we publish this.
+So the real fix for intersections is mundane: a couple thousand synthetic `X & Y St` examples, labeled and dropped into the corpus as a small targeted supplement, plus a retrain that finally gives the model something to learn from. That run is training as we publish this.
 
 We'll report what the model does once it has, for the first time, actually seen an intersection.

@@ -1,0 +1,29 @@
+/* FIX: the mobile "On this page" TOC collapsible inherits its background from
+   --ifm-menu-color-background-active (the darker electric-blue slab), but its
+   button label, chevron, and TOC links render in the normal dark body-text
+   color — dark-on-blue, failing contrast (see mobile screenshot). Treat it like
+   the desktop electric-blue sidebar: pale-lavender links, white label + chevron,
+   white active link with the magenta inset accent bar. */
+.theme-doc-toc-mobile {
+	border-color: transparent;
+}
+.theme-doc-toc-mobile button {
+	color: #fff;
+	font-weight: var(--ifm-font-weight-bold);
+}
+.theme-doc-toc-mobile button svg path {
+	stroke: #fff;
+	fill: #fff;
+}
+.theme-doc-toc-mobile .table-of-contents__link {
+	color: hsl(231deg 100% 92%);
+}
+.theme-doc-toc-mobile .table-of-contents__link:hover,
+.theme-doc-toc-mobile .table-of-contents__link--active,
+.theme-doc-toc-mobile .table-of-contents__link:hover code,
+.theme-doc-toc-mobile .table-of-contents__link--active code {
+	color: #fff;
+}
+.theme-doc-toc-mobile .table-of-contents__link--active {
+	font-weight: var(--ifm-font-weight-bold);
+}

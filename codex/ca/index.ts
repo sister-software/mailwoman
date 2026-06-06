@@ -1,0 +1,11 @@
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ *   The Canadian address system (Canada Post / ISO 3166-2:CA): bilingual street types, alphanumeric
+ *   postal codes, and the provinces and territories.
+ */
+
+export * from "./postal-code.js"
+export * from "./province.js"
+export * from "./street-type.js"
