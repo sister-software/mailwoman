@@ -72,30 +72,46 @@ describe("synthesizeLocaleRow (generic)", () => {
 	})
 })
 
+const DRESDEN: LocaleBaseTuple = {
+	house_number: "14",
+	street: "Goetheallee",
+	locality: "Dresden",
+	region: "Sachsen",
+	postcode: "01309",
+}
+
 describe("synthesizeLocaleRow order option (order-robustness)", () => {
-	it("international order renders house-FIRST, postcode-AFTER-city — the inverse of native", () => {
-		// keepAll = 0.5 keeps house# + postcode and picks GB (Math.floor(0.5 * 2) = 1) → a house-first,
-		// postcode-trailing layout, e.g. "27 Straußstraße, Berlin, 12623".
+	it("international order renders house-FIRST, postcode-AFTER-city, region IN THE TAIL", () => {
+		// keepAll = 0.5 keeps house# + postcode; international uses the US template + the region tail →
+		// "27 Straußstraße, Berlin, Berlin 12623" (the layout the eval feeds; v0.9.3 / #327).
 		const row = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, order: "international" })!
 		expect(row).not.toBeNull()
 		expect(row.raw.indexOf("27")).toBeLessThan(row.raw.indexOf("Straußstraße")) // house BEFORE street
 		expect(row.raw.indexOf("12623")).toBeGreaterThan(row.raw.indexOf("Berlin")) // postcode AFTER city
+		expect(row.components.region).toBe("Berlin") // region carried for international (dropped for native)
+	})
+
+	it("region tail renders with a DISTINCT region (City, Region Postcode)", () => {
+		const row = synthesizeLocaleRow(DRESDEN, "DE", { random: keepAll, order: "international" })!
+		expect(row.raw).toBe("14 Goetheallee, Dresden, Sachsen 01309")
+		expect(row.components.region).toBe("Sachsen")
 	})
 
 	it("keeps the address's own locale tag — only the surface layout changes", () => {
 		const row = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, order: "international" })!
-		expect(row.locale).toBe("de-DE") // the render template is US/GB, but it's still a German address
+		expect(row.locale).toBe("de-DE") // the render template is US, but it's still a German address
 	})
 
-	it("aligns to international-order BIO: house_number before street, postcode after locality", () => {
-		const row = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, order: "international" })!
+	it("aligns to international-order BIO: house# before street, region after locality, postcode last", () => {
+		const row = synthesizeLocaleRow(DRESDEN, "DE", { random: keepAll, order: "international" })!
 		const canonical = { ...row, country: "DE", source: "synth-german", source_id: "synth-german:intl" } as CanonicalRow
 		const aligned = alignRow(canonical)
 		expect(aligned.kind).toBe("labeled")
 		const labels = aligned.row!.labels
 		const firstOf = (tag: string) => labels.findIndex((l) => l.includes(tag))
 		expect(firstOf("house_number")).toBeLessThan(firstOf("street")) // inverse of the native test
-		expect(firstOf("postcode")).toBeGreaterThan(firstOf("locality"))
+		expect(firstOf("region")).toBeGreaterThan(firstOf("locality")) // region in the tail, after the city
+		expect(firstOf("postcode")).toBeGreaterThan(firstOf("region")) // postcode last
 	})
 
 	it("native order is unchanged and consumes no extra RNG draw (default stays default)", () => {

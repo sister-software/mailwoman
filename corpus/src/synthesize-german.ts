@@ -59,15 +59,6 @@ export interface LocaleSynthesisOpts {
 /** @deprecated Alias — use LocaleSynthesisOpts. */
 export type GermanSynthesisOpts = LocaleSynthesisOpts
 
-/**
- * House-first, postcode-after-city templates for the `"international"` order. Both are real OpenCage
- * country templates that happen to render any component dict house-number-first with the postcode
- * trailing the city — exactly the US/feed layout a native-order-trained model never saw. We keep two
- * so the international rendering isn't a single memorizable layout (US carries a region slot, GB
- * doesn't).
- */
-const INTERNATIONAL_ORDER_TEMPLATES = ["US", "GB"] as const
-
 /** ISO-3166 alpha-2 → BCP-47 tag for the emitted rows (primary language per country). */
 const LOCALE_TAG: Record<string, string> = {
 	DE: "de-DE",
@@ -98,8 +89,10 @@ function tokenPresent(raw: string, value: string): boolean {
  * postcode some of the time). Returns `null` when the tuple is too thin or a component wouldn't
  * align cleanly.
  *
- * Region is intentionally omitted: these templates absorb the admin region into the postcode/city
- * line, so it rarely renders verbatim, and including it would break BIO alignment.
+ * Region handling is order-dependent: NATIVE order omits it (the native template absorbs the admin
+ * region into the postcode/city line, so it rarely renders verbatim and would break BIO alignment),
+ * while INTERNATIONAL order includes it in the tail ("City, Region Postcode" — the US/feed layout the
+ * eval uses; v0.9.3 / #327).
  *
  * Pass `opts.order: "international"` to render the same components house-first / postcode-after-city
  * instead (see {@link LocaleSynthesisOpts.order}) — the layout international feeds impose on foreign
@@ -119,15 +112,17 @@ export function synthesizeLocaleRow(
 	if (base.house_number && random() < 0.8) components.house_number = base.house_number
 	// ~85% keep the postcode.
 	if (base.postcode && random() < 0.85) components.postcode = base.postcode
+	// International order carries the REGION in the tail ("City, Region Postcode") — the layout real
+	// US/feed renderings (and our OA eval) use. v0.9.2 rendered international order WITHOUT the region,
+	// so the model never learned to segment the tail and mangled it at eval (region absorbed into the
+	// locality / locality dropped); v0.9.3 closes that gap (#327). Native order still drops the region
+	// (the native template absorbs it into the city line, which would break verbatim alignment).
+	if (order === "international" && base.region) components.region = base.region
 
-	// Native order uses the address's own country template; international order borrows a house-first /
-	// postcode-after-city template (US or GB) while keeping the address's own locale tag. The extra
-	// `random()` draw is consumed ONLY on the international branch, so native rendering preserves the
-	// RNG sequence existing callers/tests depend on.
-	const renderCountry =
-		order === "international"
-			? INTERNATIONAL_ORDER_TEMPLATES[Math.floor(random() * INTERNATIONAL_ORDER_TEMPLATES.length)]!
-			: country
+	// Native order uses the address's own country template; international order uses the US template —
+	// house-first, postcode-after-city, with a region slot for the tail. Neither branch consumes a
+	// `random()` draw for the template, so the RNG sequence existing callers/tests depend on is stable.
+	const renderCountry = order === "international" ? "US" : country
 	const raw = formatAddress(components, renderCountry, { separator: ", " })
 	if (!raw) return null
 

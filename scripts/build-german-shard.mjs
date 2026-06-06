@@ -35,9 +35,12 @@ import { createWriteStream } from "node:fs"
 
 import { alignRow, stableSourceId, synthesizeGermanRow } from "@mailwoman/corpus"
 
+// `region` is the Bundesland the source covers. OA's REGION column is empty for DE, but the region is
+// implied by the per-state file — and the international order needs it for the "City, Region Postcode"
+// tail (v0.9.3 / #327). berlin.csv → Berlin (a city-state, region==locality); sn/statewide → Sachsen.
 const SOURCES = [
-	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv" },
-	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv" },
+	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", region: "Berlin" },
+	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", region: "Sachsen" },
 ]
 
 function parseArgs() {
@@ -126,7 +129,8 @@ function readTuples(source) {
 		if (!street || !locality) continue
 		const house_number = get(cells, iNum)
 		const postcode = get(cells, iPost)
-		const region = get(cells, iRegion)
+		// OA's REGION column is empty for DE — fall back to the source's Bundesland (set per file).
+		const region = get(cells, iRegion) || source.region || ""
 		const key = `${house_number}|${street}|${locality}|${postcode}`.toLowerCase()
 		if (seen.has(key)) continue
 		seen.add(key)
