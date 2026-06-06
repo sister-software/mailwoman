@@ -80,15 +80,21 @@ _Draft, written as the shift runs. Numbers self-emitted; the v0.9.2 result lands
 
 ## Open questions for the operator
 
-- **THE fork (#327) — now data-decided, the strategic choice is yours.** Three retrains — both-order corpus
-  (v0.9.2), region tail (v0.9.3), **and the architectural fix, dual-injection (v0.9.4)** — ALL left the
-  anchor-on international number immovable at ~44% (gap to native ~40pp). The anchor's native-help (+35) /
-  international-hurt (−4) asymmetry is **fundamental** — not corpus, not region, not injection position. The
-  experiments have mapped the ground; what's left is strategic: **(a)** order-conditioned anchor, **(b)**
-  accept the asymmetry (native German is excellent — 83.5%, beats Pelias, 96.3% PIP-containment — and that's
-  what production ships), or **(c)** drop the always-on anchor. Cross-cutting: it gates the multi-locale
-  retrain program (the anchor-intl issue recurs per locale). None of v0.9.2/3/4 promote; v0.6.0 stays
-  production. I stopped rather than auto-launch a 5th experiment.
+- **THE fork (#327) — RESOLVED by DeepSeek (delegated authority), ~11:50 UTC → (b) accept the asymmetry.**
+  Three retrains — both-order corpus (v0.9.2), region tail (v0.9.3), **and the architectural fix,
+  dual-injection (v0.9.4)** — ALL left the anchor-on international number immovable at ~44% (gap to native
+  ~40pp). The anchor's native-help (+35) / international-hurt (−4) asymmetry is **fundamental** — not corpus,
+  not region, not injection position. With the operator away, the third DeepSeek turn made the call: **(b)** —
+  the native gain is large/robust/generalizing (US 96.4, FR 84.9 hold), the intl penalty small/stable, and
+  anchor-off intl already ~48% (the `c=0` path serves international order), so burn no more GPU. The turn's
+  mechanistic read reframes the multi-locale plan: the anchor's direction is **learned per locale** from the
+  dominant training order (US trains postcode-after-city → anchor looks left → never hurt US; German native is
+  postcode-before-city → looks right; one shared vector can't serve both). The plan is constrained, not dead —
+  the documented next thread is a **country-conditioned anchor vector** (a future iteration with its own gate),
+  plus a no-GPU operational lever: route international-order inputs to the `c=0` path via a lightweight
+  order check. None of v0.9.2/3/4 promote; v0.6.0 stays production. The operator can revisit the next-thread
+  choice; the shift's experimental arc is closed. _(Decision record: `2026-06-06-v0.9.2-eval.md`, §"accept the
+  asymmetry"; #327.)_
 - **FR (#330):** the FR gap is venue (0%) + region (19%) — convention gaps, not basics. Worth a targeted FR
   venue+region corpus supplement on the next multi-locale push?
 - The 19 high + 1 critical dependabot alerts (vitest dev-scope) — bump in a dedicated `chore(deps)` pass?
