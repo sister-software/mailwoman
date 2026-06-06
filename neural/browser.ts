@@ -13,6 +13,10 @@
 export * from "./classifier.js"
 export * from "./labels.js"
 export * from "./tokenizer.js"
+// Browser-safe anchor channel (#239/#240): the pure-JS feature builder + the postcode binary resolver
+// (zero-dep) the demo wires together to feed the anchor at inference.
+export * from "./anchor-inference.js"
+export * from "./postcode-binary-resolver.js"
 // Type-only re-export so callers can still type `InferResult` from the browser entry without
 // the implementation module being pulled into the bundle.
 export type { InferResult } from "./onnx-runner.js"

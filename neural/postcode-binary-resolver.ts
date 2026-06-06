@@ -24,6 +24,7 @@
  *   convention.
  */
 
+import type { AnchorLookup } from "./anchor-inference.js"
 import type { PostcodePlace } from "./postcode-anchor.js"
 
 const MAGIC = 0x31_42_43_50 // "PCB1" little-endian (P=0x50 C=0x43 B=0x42 1=0x31)
@@ -159,6 +160,64 @@ export class PostcodeBinaryResolver {
 				lat: this.#view.getInt16(base + 1, true) / LAT_Q,
 				lon: this.#view.getInt16(base + 3, true) / LON_Q,
 			})
+		}
+		return out
+	}
+
+	/**
+	 * Decode the whole binary into an {@link AnchorLookup} (`Map<postcode, AnchorEntry>`) for the
+	 * neural anchor channel (#239/#240): each postcode → a uniform posterior over its member
+	 * countries
+	 *
+	 * - The mean of its non-zero centroids. This is the browser-side equivalent of the pilot
+	 *   postcode→anchor lookup the model trained against, built live from the shipped binary instead
+	 *   of a precomputed JSON. Records are stored sorted by (postcode, country), so equal keys are
+	 *   contiguous.
+	 */
+	toAnchorLookup(): AnchorLookup {
+		const out: AnchorLookup = new Map()
+		let i = 0
+		while (i < this.#count) {
+			// Decode this record's postcode key (ASCII, 0x00-right-padded).
+			const keyBase = this.#recBase + i * this.#recSize
+			let postcode = ""
+			for (let j = 0; j < this.#keyWidth; j++) {
+				const c = this.#buf[keyBase + j]!
+				if (c === 0) break
+				postcode += String.fromCharCode(c)
+			}
+			// Walk the contiguous run of records sharing this key (one per member country).
+			const posterior: Record<string, number> = {}
+			let latSum = 0
+			let lonSum = 0
+			let centroidCount = 0
+			let k = i
+			for (; k < this.#count; k++) {
+				const base = this.#recBase + k * this.#recSize
+				let same = true
+				for (let j = 0; j < this.#keyWidth; j++) {
+					if (this.#buf[base + j] !== this.#buf[keyBase + j]) {
+						same = false
+						break
+					}
+				}
+				if (!same) break
+				const tail = base + this.#keyWidth
+				posterior[this.#countries[this.#buf[tail]!]!] = 1 // uniform — anchorFeatureVector renormalizes
+				const lat = this.#view.getInt16(tail + 1, true) / LAT_Q
+				const lon = this.#view.getInt16(tail + 3, true) / LON_Q
+				if (lat !== 0 || lon !== 0) {
+					latSum += lat
+					lonSum += lon
+					centroidCount++
+				}
+			}
+			out.set(postcode, {
+				posterior,
+				lat: centroidCount ? latSum / centroidCount : 0,
+				lon: centroidCount ? lonSum / centroidCount : 0,
+			})
+			i = k
 		}
 		return out
 	}
