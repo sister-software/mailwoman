@@ -131,6 +131,14 @@ async function main() {
 		if (!existsSync(localPath) || statSync(localPath).size === 0) fail(`postcode binary ${localPath} missing/empty`)
 	}
 
+	// Optional crisp-polygon DB (build-wof-polygons.mjs): a single --polygons path. Uploaded as
+	// wof-polygons.db; the demo draws the real admin boundary instead of the bbox when `hasPolygons`
+	// is set. Sibling of wof-hot.db, keyed by the same WOF ids.
+	const polygonsDb = args.polygons || null
+	if (polygonsDb && (!existsSync(polygonsDb) || statSync(polygonsDb).size === 0)) {
+		fail(`polygon DB ${polygonsDb} missing/empty`)
+	}
+
 	// --- Phase 2: upload to bucket ---
 	const remoteBase = `${args.locale}/${args.version}`
 	for (const f of REQUIRED_FILES) {
@@ -145,6 +153,11 @@ async function main() {
 		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
 		console.error(`  → ${dst}`)
 		run("hf", ["buckets", "cp", localPath, dst])
+	}
+	if (polygonsDb) {
+		const dst = `${BUCKET_PATH}/${remoteBase}/wof-polygons.db`
+		console.error(`  → ${dst}`)
+		run("hf", ["buckets", "cp", polygonsDb, dst])
 	}
 
 	// --- Phase 3: verify each artifact is reachable via the resolve URL ---
@@ -172,6 +185,7 @@ async function main() {
 		hasFst: true,
 		hasWofDb: true,
 		hasAnchor: postcodeBins.length > 0,
+		hasPolygons: !!polygonsDb,
 	}
 
 	releases.releases = [newEntry, ...releases.releases.filter((r) => r.version !== args.version)]

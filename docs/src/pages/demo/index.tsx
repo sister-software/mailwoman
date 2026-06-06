@@ -65,6 +65,8 @@ interface ReleaseInfo {
 	hasWofDb: boolean
 	/** Anchor-trained bundle (#239/#240) — ships postcode-*.bin so the demo feeds the postcode anchor. */
 	hasAnchor?: boolean
+	/** Ships a `wof-polygons.db` sibling — the demo draws the crisp admin boundary instead of the bbox. */
+	hasPolygons?: boolean
 }
 
 interface ReleasesManifest {
@@ -128,6 +130,10 @@ const DemoApp: React.FC = () => {
 	const mapContainerRef = useRef<HTMLDivElement>(null)
 	const mapRef = useRef<MapLibreMap | null>(null)
 	const markerRef = useRef<{ remove: () => void } | null>(null)
+	// Lazily-loaded crisp-polygon DB (id → simplified admin geometry). Loaded once per version on the
+	// first resolve, reset when the selected version changes. Held as the in-flight promise so concurrent
+	// resolves share one fetch.
+	const polygonDbRef = useRef<Promise<PolygonDb> | null>(null)
 
 	// Sync ?q= when the operator edits the address. replaceState avoids polluting back-button
 	// history with every keystroke; only the latest state lands in the URL.
@@ -221,6 +227,7 @@ const DemoApp: React.FC = () => {
 				setFstProvenance(null)
 				setLookup(null)
 				setLookupLoader(null)
+				polygonDbRef.current = null
 				setResult(null)
 				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
 
@@ -348,6 +355,37 @@ const DemoApp: React.FC = () => {
 			const maplibre = await import("maplibre-gl")
 			const marker = new maplibre.Marker({ color: "#e0367c" }).setLngLat([candidate.lon, candidate.lat]).addTo(map)
 			markerRef.current = marker
+
+			// Prefer the crisp admin polygon (lazily-loaded sibling DB) over the bbox rectangle. The points
+			// DB only carries min/max lat-lon, so without this the map draws a box around the place; the
+			// polygon DB ships the real, simplified boundary keyed by the same WOF id.
+			const release = manifest?.releases.find((r) => r.version === selectedVersion)
+			if (release?.hasPolygons && selectedVersion && candidate.id) {
+				try {
+					if (!polygonDbRef.current) {
+						polygonDbRef.current = loadPolygonDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"))
+					}
+					const geom = (await polygonDbRef.current).get(candidate.id)
+					if (geom) {
+						drawPlaceGeometry(map, geom)
+						const gb = geomBounds(geom)
+						map.fitBounds(
+							[
+								[gb.minLon, gb.minLat],
+								[gb.maxLon, gb.maxLat],
+							],
+							{ padding: 40 }
+						)
+						return
+					}
+				} catch (err) {
+					// Postcodes (point geometry) and any id absent from the polygon DB land here — fall
+					// through to the bbox. Null the ref so a transient fetch failure can retry next resolve.
+					console.error("Crisp polygon unavailable; falling back to bbox", err)
+					polygonDbRef.current = null
+				}
+			}
+
 			const b = candidate.bbox
 			if (b && Math.max(b.maxLat - b.minLat, b.maxLon - b.minLon) > 0.001) {
 				drawBbox(map, b)
@@ -362,7 +400,7 @@ const DemoApp: React.FC = () => {
 				map.flyTo({ center: [candidate.lon, candidate.lat], zoom: 12 })
 			}
 		})()
-	}, [result, selectedCandidateIndex])
+	}, [result, selectedCandidateIndex, selectedVersion, manifest])
 
 	const ensureLookup = useCallback(async (): Promise<MailwomanLookupLike | null> => {
 		if (lookup) return lookup
@@ -588,23 +626,19 @@ function whenStyleReady(map: MapLibreMap, fn: () => void): void {
 	map.once("styledata", () => whenStyleReady(map, fn))
 }
 
-function drawBbox(map: MapLibreMap, bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number }): void {
-	const ring: Array<[number, number]> = [
-		[bbox.minLon, bbox.minLat],
-		[bbox.maxLon, bbox.minLat],
-		[bbox.maxLon, bbox.maxLat],
-		[bbox.minLon, bbox.maxLat],
-		[bbox.minLon, bbox.minLat],
-	]
+/** A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place outline. */
+type PlaceGeometry =
+	| { type: "Polygon"; coordinates: number[][][] }
+	| { type: "MultiPolygon"; coordinates: number[][][][] }
+
+/**
+ * Shared source/layer plumbing for the resolved-place outline. Both the bbox rectangle and the crisp
+ * admin polygon funnel through here so they reuse one source (`setData` swaps the geometry in place).
+ */
+function setPlaceOutline(map: MapLibreMap, geometry: PlaceGeometry): void {
 	const geojson = {
 		type: "FeatureCollection" as const,
-		features: [
-			{
-				type: "Feature" as const,
-				geometry: { type: "Polygon" as const, coordinates: [ring] },
-				properties: {},
-			},
-		],
+		features: [{ type: "Feature" as const, geometry, properties: {} }],
 	}
 	whenStyleReady(map, () => {
 		const existing = map.getSource(BBOX_SOURCE) as { setData?: (g: unknown) => void } | undefined
@@ -626,6 +660,69 @@ function drawBbox(map: MapLibreMap, bbox: { minLat: number; maxLat: number; minL
 			paint: { "line-color": "#e0367c", "line-width": 2 },
 		})
 	})
+}
+
+function drawBbox(map: MapLibreMap, bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number }): void {
+	const ring: number[][] = [
+		[bbox.minLon, bbox.minLat],
+		[bbox.maxLon, bbox.minLat],
+		[bbox.maxLon, bbox.maxLat],
+		[bbox.minLon, bbox.maxLat],
+		[bbox.minLon, bbox.minLat],
+	]
+	setPlaceOutline(map, { type: "Polygon", coordinates: [ring] })
+}
+
+/** Draw the crisp admin polygon straight from the polygon DB's GeoJSON geometry. */
+function drawPlaceGeometry(map: MapLibreMap, geometry: PlaceGeometry): void {
+	setPlaceOutline(map, geometry)
+}
+
+/** Bounding box of a Polygon / MultiPolygon, for fitBounds. Walks the nested coordinate arrays. */
+function geomBounds(geometry: PlaceGeometry): { minLon: number; minLat: number; maxLon: number; maxLat: number } {
+	let minLon = Infinity
+	let minLat = Infinity
+	let maxLon = -Infinity
+	let maxLat = -Infinity
+	const visit = (node: unknown): void => {
+		if (Array.isArray(node) && typeof node[0] === "number") {
+			const [lon, lat] = node as number[]
+			if (lon < minLon) minLon = lon
+			if (lon > maxLon) maxLon = lon
+			if (lat < minLat) minLat = lat
+			if (lat > maxLat) maxLat = lat
+			return
+		}
+		if (Array.isArray(node)) for (const child of node) visit(child)
+	}
+	visit(geometry.coordinates)
+	return { minLon, minLat, maxLon, maxLat }
+}
+
+/** id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. */
+interface PolygonDb {
+	get(id: number): PlaceGeometry | null
+}
+
+/**
+ * Open the crisp-polygon DB (a normal SQLite, built by scripts/build-wof-polygons.mjs) in sqlite-wasm
+ * and expose an id → geometry lookup. Reuses the resolver's loader — the file is just bytes to
+ * deserialize, with no schema coupling to the WOF resolver tables.
+ */
+async function loadPolygonDb(url: string): Promise<PolygonDb> {
+	const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
+	const { db } = await resolverWasm.loadSlimWofDatabase({ source: url })
+	return {
+		get(id: number): PlaceGeometry | null {
+			const rows = db.selectObjects("SELECT geom FROM polygons WHERE id = ?", [id]) as Array<{ geom: string }>
+			if (rows.length === 0) return null
+			try {
+				return JSON.parse(rows[0].geom) as PlaceGeometry
+			} catch {
+				return null
+			}
+		},
+	}
 }
 
 function clearBbox(map: MapLibreMap): void {
