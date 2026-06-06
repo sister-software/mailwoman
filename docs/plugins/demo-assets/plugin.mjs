@@ -22,6 +22,7 @@ import {
 	buildFstBinary,
 	buildSlimWofDb,
 	buildWorkspaceAliases,
+	fetchArtifactFromHf,
 	readModelCard,
 	resolveWeightsArtifact,
 	syncArtifact,
@@ -73,14 +74,24 @@ export default function demoAssetsPlugin(context) {
 				buildFstBinary(fstDest, { repoRoot })
 			}
 
-			// --- WOF slim DB ---
+			// --- Resolver DBs (served same-origin from Pages for sql.js-httpvfs range loading) ---
+			// Pulled from HF at build time: CI has no /mnt/playpen to build them, and serving them from
+			// the same Pages origin as the demo is what makes range-loading work (same-origin → no CORS;
+			// Pages/Fastly → range-capable + redirect-free, unlike HF's per-request-redirect resolve URL).
+			// The local buildSlimWofDb path stays as a fallback for offline dev with playpen mounted.
+			const hfVersion = `v${version}`
 			const wofDest = resolve(staticDir, "wof-hot.db")
 			if (!existsSync(wofDest)) {
-				buildSlimWofDb(wofDest, { repoRoot })
+				const fetched = await fetchArtifactFromHf("wof-hot.db", wofDest, { version: hfVersion })
+				if (!fetched && !existsSync(wofDest)) buildSlimWofDb(wofDest, { repoRoot })
+			}
+			const polyDest = resolve(staticDir, "wof-polygons.db")
+			if (!existsSync(polyDest)) {
+				await fetchArtifactFromHf("wof-polygons.db", polyDest, { version: hfVersion })
 			}
 
 			// --- Report ---
-			const assets = ["model.onnx", "tokenizer.model", "fst-en-US.bin", "wof-hot.db"]
+			const assets = ["model.onnx", "tokenizer.model", "fst-en-US.bin", "wof-hot.db", "wof-polygons.db"]
 			/** @type {Record<string, number>} */
 			const manifest = {}
 			for (const name of assets) {
