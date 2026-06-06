@@ -5,9 +5,16 @@
  * @author Teffen Ellis, et al.
  *
  *   Build the German coverage shard (night-shift 2026-06-02, DE-2). Reads REAL OpenAddresses German
- *   tuples (Berlin + Saxony, cached zips), renders each in idiomatic German order via
- *   `synthesizeGermanRow` (house-number-AFTER-street, postcode-BEFORE-city — the convention the
- *   US/FR-trained model never saw), aligns to BIO, and writes a labeled JSONL ready for parquet.
+ *   tuples (Berlin + Saxony, cached zips), renders each via `synthesizeGermanRow`, aligns to BIO, and
+ *   writes a labeled JSONL ready for parquet.
+ *
+ *   ORDER ROBUSTNESS (2026-06-06): the shard now mixes TWO renderings of the same tuples —
+ *   `--intl-fraction` (default 0.4) of rows in international order (house-number-FIRST,
+ *   postcode-AFTER-city: `27 Straußstraße, Berlin, 12623`), the rest in idiomatic German order
+ *   (house-AFTER-street, postcode-BEFORE-city: `Straußstraße 27, 12623 Berlin`). A native-only shard
+ *   taught the model German order so well it traded away the US/feed order our own OA eval renders —
+ *   making a healthy parser read as a "collapse." Teaching both layouts removes the trade.
+ *   See `docs/articles/evals/2026-06-06-anchor-pilot.md` (the order-artifact correction).
  *
  *   Pipeline (mirrors build-intersection-shard.mjs):
  *
@@ -35,14 +42,19 @@ const SOURCES = [
 
 function parseArgs() {
 	const args = process.argv.slice(2)
-	const out = { count: 4000, seed: 42, source: "synth-german" }
+	const out = { count: 4000, seed: 42, source: "synth-german", intlFraction: 0.4 }
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 		if (a === "--output") out.output = args[++i]
 		else if (a === "--count") out.count = parseInt(args[++i], 10)
 		else if (a === "--seed") out.seed = parseInt(args[++i], 10)
 		else if (a === "--source-name") out.source = args[++i]
+		else if (a === "--intl-fraction") out.intlFraction = parseFloat(args[++i])
 		else if (a === "--golden") out.golden = true
+	}
+	if (!(out.intlFraction >= 0 && out.intlFraction <= 1)) {
+		console.error(`--intl-fraction must be in [0, 1], got ${out.intlFraction}`)
+		process.exit(1)
 	}
 	if (!out.output) {
 		console.error("Usage: build-german-shard.mjs --output <labeled.jsonl> [--count 4000] [--seed N]")
@@ -143,18 +155,25 @@ async function main() {
 	let emitted = 0
 	let skipped = 0
 	let guard = 0
+	const orderCounts = { native: 0, international: 0 }
 	const N = pool.length
 	while (emitted < opts.count && guard++ < opts.count * 6) {
 		const base = pool[Math.floor(random() * N)]
-		const synth = synthesizeGermanRow(base, { random })
+		// Per-row order: `--intl-fraction` of rows render house-first / postcode-after-city (the US/feed
+		// layout), the rest in idiomatic German order. Same components either way — only the surface
+		// layout (and thus the BIO ordering the model learns) changes.
+		const order = random() < opts.intlFraction ? "international" : "native"
+		const synth = synthesizeGermanRow(base, { random, order })
 		if (!synth) {
 			skipped++
 			continue
 		}
 		// --golden: emit per-locale-f1 eval rows ({raw, components}) instead of aligned BIO. Use a
-		// different --seed than the training shard so the eval set is held out from training.
+		// different --seed than the training shard so the eval set is held out from training. `order`
+		// rides along so the eval can stratify native vs international.
 		if (opts.golden) {
-			outStream.write(JSON.stringify({ raw: synth.raw, components: synth.components, country: "DE" }) + "\n")
+			outStream.write(JSON.stringify({ raw: synth.raw, components: synth.components, country: "DE", order }) + "\n")
+			orderCounts[order]++
 			emitted++
 			continue
 		}
@@ -172,20 +191,24 @@ async function main() {
 			source: opts.source,
 			source_id: sourceId,
 			corpus_version: "0.4.0",
-			license: "OpenAddresses DE (Berlin/Saxony) tuples, rendered German-order — see ingest SOURCES",
+			license: `OpenAddresses DE (Berlin/Saxony) tuples, rendered ${order}-order — see ingest SOURCES`,
 		}
 		const aligned = alignRow(canonical)
 		if (aligned.kind !== "labeled" || !aligned.row) {
 			skipped++
 			continue
 		}
-		outStream.write(JSON.stringify({ ...aligned.row, synth_method: "german", synth_base_id: null }) + "\n")
+		outStream.write(JSON.stringify({ ...aligned.row, synth_method: "german", synth_order: order, synth_base_id: null }) + "\n")
+		orderCounts[order]++
 		emitted++
 	}
 
 	outStream.end()
 	await new Promise((resolve) => outStream.on("finish", resolve))
-	console.error(`Done: emitted ${emitted} German rows, skipped ${skipped} (pool ${pool.length}). → ${opts.output}`)
+	console.error(
+		`Done: emitted ${emitted} German rows (${orderCounts.native} native, ${orderCounts.international} international), ` +
+			`skipped ${skipped} (pool ${pool.length}). → ${opts.output}`
+	)
 }
 
 main().catch((err) => {

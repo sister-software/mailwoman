@@ -71,3 +71,42 @@ describe("synthesizeLocaleRow (generic)", () => {
 		expect(synthesizeLocaleRow(BERLIN, "DE", { random: keepAll })!.raw).toBe(row.raw)
 	})
 })
+
+describe("synthesizeLocaleRow order option (order-robustness)", () => {
+	it("international order renders house-FIRST, postcode-AFTER-city — the inverse of native", () => {
+		// keepAll = 0.5 keeps house# + postcode and picks GB (Math.floor(0.5 * 2) = 1) → a house-first,
+		// postcode-trailing layout, e.g. "27 Straußstraße, Berlin, 12623".
+		const row = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, order: "international" })!
+		expect(row).not.toBeNull()
+		expect(row.raw.indexOf("27")).toBeLessThan(row.raw.indexOf("Straußstraße")) // house BEFORE street
+		expect(row.raw.indexOf("12623")).toBeGreaterThan(row.raw.indexOf("Berlin")) // postcode AFTER city
+	})
+
+	it("keeps the address's own locale tag — only the surface layout changes", () => {
+		const row = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, order: "international" })!
+		expect(row.locale).toBe("de-DE") // the render template is US/GB, but it's still a German address
+	})
+
+	it("aligns to international-order BIO: house_number before street, postcode after locality", () => {
+		const row = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll, order: "international" })!
+		const canonical = { ...row, country: "DE", source: "synth-german", source_id: "synth-german:intl" } as CanonicalRow
+		const aligned = alignRow(canonical)
+		expect(aligned.kind).toBe("labeled")
+		const labels = aligned.row!.labels
+		const firstOf = (tag: string) => labels.findIndex((l) => l.includes(tag))
+		expect(firstOf("house_number")).toBeLessThan(firstOf("street")) // inverse of the native test
+		expect(firstOf("postcode")).toBeGreaterThan(firstOf("locality"))
+	})
+
+	it("native order is unchanged and consumes no extra RNG draw (default stays default)", () => {
+		// Same seeded sequence must yield the identical native render whether or not `order` is passed.
+		const seq = () => {
+			let i = 0
+			const vals = [0.1, 0.2, 0.3, 0.4]
+			return () => vals[i++ % vals.length]!
+		}
+		const withoutOpt = synthesizeLocaleRow(BERLIN, "DE", { random: seq() })!
+		const withNative = synthesizeLocaleRow(BERLIN, "DE", { random: seq(), order: "native" })!
+		expect(withNative.raw).toBe(withoutOpt.raw)
+	})
+})
