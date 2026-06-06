@@ -22,7 +22,7 @@
  *   `@mailwoman/neural/onnx-runner` for the full export contract this file mirrors.
  */
 
-import type { InferResult, NeuralRunner } from "@mailwoman/neural/browser"
+import { ANCHOR_FEATURE_DIM, type InferResult, type NeuralRunner } from "@mailwoman/neural/browser"
 import * as ort from "onnxruntime-web/webgpu"
 
 export interface WebOnnxRunnerOpts {
@@ -118,7 +118,10 @@ export class WebOnnxRunner implements NeuralRunner {
 		return this.#loadPromise
 	}
 
-	async infer(tokenIds: number[]): Promise<InferResult> {
+	async infer(
+		tokenIds: number[],
+		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+	): Promise<InferResult> {
 		const session = await this.#ensureSession()
 		const seqLen = Math.min(tokenIds.length, this.fixedSeqLen)
 		const padded = new BigInt64Array(this.fixedSeqLen)
@@ -131,6 +134,30 @@ export class WebOnnxRunner implements NeuralRunner {
 		const feeds: Record<string, ort.Tensor> = {
 			input_ids: new ort.Tensor("int64", padded, [1, this.fixedSeqLen]),
 			attention_mask: new ort.Tensor("int64", mask, [1, this.fixedSeqLen]),
+		}
+
+		// Anchor channel (#239/#240) — mirror of the node OnnxRunner. Feed the per-piece anchor when the
+		// caller supplies it; otherwise, for anchor-trained models (whose ONNX declares the inputs as
+		// mandatory), feed zeros — the confidence=0 identity / anchor-off path. Without this the session
+		// throws on the missing required inputs.
+		if (anchor) {
+			const dim = anchor.features[0]?.length ?? 0
+			const af = new Float32Array(this.fixedSeqLen * dim)
+			const ac = new Float32Array(this.fixedSeqLen)
+			for (let i = 0; i < seqLen; i++) {
+				ac[i] = anchor.confidence[i] ?? 0
+				const row = anchor.features[i]
+				if (row) for (let d = 0; d < dim; d++) af[i * dim + d] = row[d] ?? 0
+			}
+			feeds.anchor_features = new ort.Tensor("float32", af, [1, this.fixedSeqLen, dim])
+			feeds.anchor_confidence = new ort.Tensor("float32", ac, [1, this.fixedSeqLen])
+		} else if (session.inputNames.includes("anchor_features")) {
+			feeds.anchor_features = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * ANCHOR_FEATURE_DIM), [
+				1,
+				this.fixedSeqLen,
+				ANCHOR_FEATURE_DIM,
+			])
+			feeds.anchor_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
 		const output = await session.run(feeds)

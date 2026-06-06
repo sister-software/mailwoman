@@ -49,6 +49,7 @@ const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
 	{ label: "Wrigley Field", address: "1060 W Addison St, Chicago, IL 60613" },
 	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
 	{ label: "ZIP only", address: "90210" },
+	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin" },
 ]
 
 const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
@@ -62,6 +63,8 @@ interface ReleaseInfo {
 	steps: number
 	hasFst: boolean
 	hasWofDb: boolean
+	/** Anchor-trained bundle (#239/#240) — ships postcode-*.bin so the demo feeds the postcode anchor. */
+	hasAnchor?: boolean
 }
 
 interface ReleasesManifest {
@@ -227,6 +230,16 @@ const DemoApp: React.FC = () => {
 					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
 					modelCardUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model-card.json"),
 					runner: { useWebGpu: !forceWasm },
+					// Anchor-trained bundles (v4.0.0+) ship postcode binaries so the demo feeds the postcode
+					// anchor — US + DE cover the demo's example set (incl. the native-order Berlin case).
+					...(release?.hasAnchor
+						? {
+								postcodeBinaryUrls: [
+									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-us.bin"),
+									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-de.bin"),
+								],
+							}
+						: {}),
 				})
 				setActiveBackend(
 					diagnostics

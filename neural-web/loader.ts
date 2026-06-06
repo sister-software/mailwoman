@@ -13,7 +13,12 @@
  *   files; for a static deploy, copy them into the public bundle and pass the resulting URLs.
  */
 
-import { MailwomanTokenizer, NeuralAddressClassifier } from "@mailwoman/neural/browser"
+import {
+	type AnchorLookup,
+	MailwomanTokenizer,
+	NeuralAddressClassifier,
+	PostcodeBinaryResolver,
+} from "@mailwoman/neural/browser"
 
 import { WebOnnxRunner, type WebOnnxRunnerDiagnostics, type WebOnnxRunnerOpts } from "./web-onnx-runner.js"
 
@@ -46,8 +51,42 @@ export interface LoadFromUrlsOpts {
 	modelCardUrl?: string
 	/** Runner options (WebGPU toggle, fixed sequence length, WASM path override). */
 	runner?: WebOnnxRunnerOpts
+	/**
+	 * URLs to one or more PCB1 postcode binaries (`postcode-<cc>.bin`). For anchor-trained models
+	 * (#239/#240) these are decoded + merged into the postcode→anchor lookup the classifier feeds at
+	 * inference, so the demo runs the model with the anchor on. Pass the locales the model handles
+	 * (e.g. US + DE). Omit for plain models — the runner then feeds the anchor-off identity.
+	 */
+	postcodeBinaryUrls?: readonly string[]
 	/** Optional fetch override. Defaults to `globalThis.fetch`. */
 	fetchImpl?: typeof fetch
+}
+
+/** Merge per-binary anchor lookups: union the country posteriors per postcode, mean the centroids. */
+function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
+	if (lookups.length === 1) return lookups[0]!
+	const merged: AnchorLookup = new Map()
+	for (const lookup of lookups) {
+		for (const [postcode, entry] of lookup) {
+			const existing = merged.get(postcode)
+			if (!existing) {
+				merged.set(postcode, { posterior: { ...entry.posterior }, lat: entry.lat, lon: entry.lon })
+				continue
+			}
+			for (const country of Object.keys(entry.posterior)) existing.posterior[country] = 1
+			// Average a real centroid in; ignore (0,0) placeholders.
+			if (entry.lat !== 0 || entry.lon !== 0) {
+				if (existing.lat === 0 && existing.lon === 0) {
+					existing.lat = entry.lat
+					existing.lon = entry.lon
+				} else {
+					existing.lat = (existing.lat + entry.lat) / 2
+					existing.lon = (existing.lon + entry.lon) / 2
+				}
+			}
+		}
+	}
+	return merged
 }
 
 /**
@@ -67,15 +106,23 @@ export async function loadNeuralClassifierFromUrls(opts: LoadFromUrlsOpts): Prom
 		opts.modelCardUrl ? fetchLabelsFromModelCard(opts.modelCardUrl, fetchImpl) : Promise.resolve(null),
 	])
 
-	const [tokenizer, runner] = await Promise.all([
+	const [tokenizer, runner, postcodeAnchorLookup] = await Promise.all([
 		MailwomanTokenizer.loadFromBase64(toBase64(tokenizerBytes)),
 		WebOnnxRunner.fromBytes(modelBytes, opts.runner),
+		opts.postcodeBinaryUrls?.length
+			? Promise.all(
+					opts.postcodeBinaryUrls.map(async (url) =>
+						new PostcodeBinaryResolver(await fetchBytes(url, fetchImpl)).toAnchorLookup()
+					)
+				).then(mergeAnchorLookups)
+			: Promise.resolve<AnchorLookup | undefined>(undefined),
 	])
 
 	const classifier = new NeuralAddressClassifier({
 		tokenizer,
 		runner,
 		...(labels ? { labels } : {}),
+		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 	})
 	await runner.infer([0])
 	return { classifier, diagnostics: runner.diagnostics, labels }

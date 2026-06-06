@@ -118,12 +118,31 @@ async function main() {
 		console.error(`  ✓ ${f.remoteName}: ${localPath} (${(size / 1024 / 1024).toFixed(1)} MB)`)
 	}
 
+	// Optional postcode binaries for the anchor channel (#240): comma-separated --postcodes paths
+	// (e.g. postcode-us.bin,postcode-de.bin). Uploaded under the version dir by basename; the demo
+	// fetches them when the release's `hasAnchor` flag is set.
+	const postcodeBins = args.postcodes
+		? args.postcodes
+				.split(",")
+				.map((s) => s.trim())
+				.filter(Boolean)
+		: []
+	for (const localPath of postcodeBins) {
+		if (!existsSync(localPath) || statSync(localPath).size === 0) fail(`postcode binary ${localPath} missing/empty`)
+	}
+
 	// --- Phase 2: upload to bucket ---
 	const remoteBase = `${args.locale}/${args.version}`
 	for (const f of REQUIRED_FILES) {
 		const flagKey = f.flag.slice(2).replace(/-./g, (m) => m[1].toUpperCase())
 		const localPath = args[flagKey]
 		const dst = `${BUCKET_PATH}/${remoteBase}/${f.remoteName}`
+		console.error(`  → ${dst}`)
+		run("hf", ["buckets", "cp", localPath, dst])
+	}
+	for (const localPath of postcodeBins) {
+		const remoteName = localPath.split("/").pop()
+		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
 		console.error(`  → ${dst}`)
 		run("hf", ["buckets", "cp", localPath, dst])
 	}
@@ -152,6 +171,7 @@ async function main() {
 		steps: args.steps ? parseInt(args.steps, 10) : 100000,
 		hasFst: true,
 		hasWofDb: true,
+		hasAnchor: postcodeBins.length > 0,
 	}
 
 	releases.releases = [newEntry, ...releases.releases.filter((r) => r.version !== args.version)]
