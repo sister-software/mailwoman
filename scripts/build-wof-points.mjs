@@ -147,6 +147,14 @@ for (const pc of POSTCODE_SOURCES) copyFrom(pc, { postcodes: true })
 
 console.error(`spr=${out.prepare("SELECT count(*) n FROM spr").get().n}, building FTS + bbox...`)
 buildPlaceSearchFts(out, { drop: true })
+
+// `names` (every alt-name, ~1.5M rows) is the SOURCE the FTS index is built from — place_search is a
+// self-contained FTS5 (no external `content=`), so once it's built the names table + its index are
+// dead weight at query time (the resolver hits place_search + spr + place_population, never names).
+// Dropping it is the single biggest size win: ~90 MB off, taking US+DE+FR from 144 MB → ~53 MB, under
+// GitHub Pages' 100 MB/file ceiling. If a future consumer needs raw alt-names at runtime, keep them in
+// a separate shard rather than re-bloating the hot DB.
+out.exec(`DROP TABLE IF EXISTS names;`)
 out.exec(`VACUUM;`)
 const counts = {
 	spr: out.prepare("SELECT count(*) n FROM spr").get().n,
