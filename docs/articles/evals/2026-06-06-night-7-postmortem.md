@@ -56,8 +56,8 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
   fine; it's the raw CNIG schema rather than OA-conformed, so the builder gained a per-part `conform` map —
   street = join(`tipo_vial`, `nombre_via`), region = `comunidad_autonoma`. A 2k smoke build renders both orders
   with the region tail carried, e.g. `2 CALLE JACINTO, Lepe, Andalucía 21440`.)_
-- **Demo-refinement tier (#338 / #339 / #340)** — the operator's "visualizer breakdown + polish" ask, shipped
-  in three additive demo PRs once GPU was off the table:
+- **Demo-refinement tier (#338 / #339 / #340 / #343, + the S38 design doc #342)** — the operator's "visualizer
+  breakdown + polish" ask, shipped as four additive demo PRs once GPU was off the table:
   - **#338 (S34) — span-highlight visualizer.** The raw input rendered as a displaCy-style ribbon, each tagged
     span tinted by its confidence (the table's red→amber→green tiering) with the tag labelled beneath; dropped
     spans read as literal colour gaps. The decoder already carried char offsets — `flattenTree` was dropping
@@ -67,6 +67,13 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
     the one-time DB load excluded so resolve isn't skewed.
   - **#340 (S40) — copy-result-as-JSON.** A "Copy JSON" button that yields a clean paste-into-an-issue object
     (input + components with offsets + resolved place). Enter-submit and the loading splash already existed.
+  - **#343 (S35) — containment hierarchy tree.** The parse as the tree it actually is —
+    `region ⊃ locality ⊃ {street ⊃ house_number, postcode}` — in a collapsed `<details>`, read straight from
+    `result.tree.roots` (the nesting the flat table throws away).
+  - **#342 (S38 design doc)** — the service-worker cache groundwork. We did NOT ship a SW: the heavy assets are
+    fetched cross-origin from HF by version, HF 302s to an hourly-expiring signed CDN URL, so a blind cache
+    would store a dead redirect. Documented the gotchas + a hand-rolled Cache-API sketch + a 5-behavior
+    Playwright gate, so a focused session starts fast instead of half-shipping at the shift tail.
 
 ## What went well
 
@@ -171,15 +178,15 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 
 ## Numbers
 
-| metric                  | value                                                                                     |
-| ----------------------- | ----------------------------------------------------------------------------------------- |
-| Shift window            | 04:16 UTC → 14:00 UTC                                                                     |
-| PRs merged              | 18 — #321-326, #328-329, #331-340 (3 demo: #338 S34, #339 S37, #340 S40)                  |
-| Issues filed / resolved | #327 anchor fork **RESOLVED** (b, DeepSeek delegated authority), #330 FR gap / #239, #241 |
-| Models trained          | 3 (v0.9.2 both-order, v0.9.3 region-tail, v0.9.4 dual-injection — all 20k, all negative)  |
-| Modal spend             | ~$12 of $15 _(3 runs; GPU called off after v0.9.4)_                                       |
-| DeepSeek consults       | 1 session, 3 turns (turn 3 = the delegated-authority decision) + the posterior diagnostic |
-| Data acquired           | Italy OA countrywide (468 MB); DE/NL/FR/IT shard-ready                                    |
-| NaN incidents           | 0                                                                                         |
-| CI failures             | 0                                                                                         |
-| Demo regressions        | 0 (v0.9.x research line + additive demo tier; v0.6.0 production untouched)                |
+| metric                  | value                                                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------------------- |
+| Shift window            | 04:16 UTC → 14:00 UTC                                                                             |
+| PRs merged              | 22 — #321-326, #328-329, #331-344 (4 demo: #338 S34, #339 S37, #340 S40, #343 S35 + #342 S38 doc) |
+| Issues filed / resolved | #327 anchor fork **RESOLVED** (b, DeepSeek delegated authority), #330 FR gap / #239, #241         |
+| Models trained          | 3 (v0.9.2 both-order, v0.9.3 region-tail, v0.9.4 dual-injection — all 20k, all negative)          |
+| Modal spend             | ~$12 of $15 _(3 runs; GPU called off after v0.9.4)_                                               |
+| DeepSeek consults       | 1 session, 3 turns (turn 3 = the delegated-authority decision) + the posterior diagnostic         |
+| Data acquired           | Italy (468 MB) + Spain (451 MB) OA countrywide; **DE/NL/FR/IT/ES all shard-ready**                |
+| NaN incidents           | 0                                                                                                 |
+| CI failures             | 0                                                                                                 |
+| Demo regressions        | 0 (v0.9.x research line + additive demo tier; v0.6.0 production untouched)                        |
