@@ -70,6 +70,20 @@ const LOCALE_TAG: Record<string, string> = {
 	US: "en-US",
 }
 
+/**
+ * Canonicalize a postcode to the form the country's template renders, so the stored component aligns
+ * verbatim against `raw`. NL is the case that needs it: OA stores `1011AB` but the OpenCage NL template
+ * emits the conventional spaced `1011 AB` (4 digits + space + 2 letters), which otherwise fails verbatim
+ * alignment and drops the row. Other countries pass through unchanged.
+ */
+function normalizePostcode(postcode: string, country: string): string {
+	if (country === "NL") {
+		const m = /^(\d{4})\s*([A-Za-z]{2})$/.exec(postcode)
+		if (m) return `${m[1]} ${m[2]!.toUpperCase()}`
+	}
+	return postcode
+}
+
 /** True when `value` appears verbatim AND as a standalone token (so BIO alignment lands cleanly). */
 function tokenPresent(raw: string, value: string): boolean {
 	if (!raw.includes(value)) return false
@@ -110,8 +124,8 @@ export function synthesizeLocaleRow(
 	const components: CanonicalRow["components"] = { street: base.street, locality: base.locality }
 	// ~80% keep the house number (the rest are street-only forms, also idiomatic).
 	if (base.house_number && random() < 0.8) components.house_number = base.house_number
-	// ~85% keep the postcode.
-	if (base.postcode && random() < 0.85) components.postcode = base.postcode
+	// ~85% keep the postcode (canonicalized to the country's rendered form — NL spaces it).
+	if (base.postcode && random() < 0.85) components.postcode = normalizePostcode(base.postcode, country)
 	// International order carries the REGION in the tail ("City, Region Postcode") — the layout real
 	// US/feed renderings (and our OA eval) use. v0.9.2 rendered international order WITHOUT the region,
 	// so the model never learned to segment the tail and mangled it at eval (region absorbed into the

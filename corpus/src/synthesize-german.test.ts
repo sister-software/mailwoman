@@ -126,3 +126,17 @@ describe("synthesizeLocaleRow order option (order-robustness)", () => {
 		expect(withNative.raw).toBe(withoutOpt.raw)
 	})
 })
+
+describe("NL postcode normalization", () => {
+	const NL: LocaleBaseTuple = { house_number: "105", street: "De Ruijterkade", locality: "Amsterdam", postcode: "1011AB" }
+	it("canonicalizes the NL postcode to the spaced form so native order aligns (was rejected)", () => {
+		const row = synthesizeLocaleRow(NL, "NL", { random: keepAll, order: "native" })!
+		expect(row).not.toBeNull() // previously NULL — the template's "1011 AB" didn't match unspaced "1011AB"
+		expect(row.components.postcode).toBe("1011 AB")
+		expect(row.raw).toContain("1011 AB")
+	})
+	it("leaves other countries' postcodes untouched", () => {
+		const de = synthesizeLocaleRow(BERLIN, "DE", { random: keepAll })!
+		expect(de.components.postcode).toBe("12623")
+	})
+})

@@ -20,8 +20,8 @@
  *          the countrywide file spans all départements, so the international rows render WITHOUT a region
  *          tail until a postcode→région mapping is added (follow-up; less critical than DE since the FR
  *          eval differs).
- *     NL — countrywide; INTERNATIONAL order only for now — the NL template reformats `1011AB`→`1011 AB`,
- *          so native-order rows reject on verbatim alignment. Needs postcode normalization (follow-up).
+ *     NL — countrywide; works both orders (postcode canonicalized to the spaced `1011 AB` form so the
+ *          template aligns; OA's REGION column IS populated for NL, so the international tail carries it).
  *     ES/IT — no cached OA yet (fetch + add to COUNTRY_SOURCES to enable).
  *
  *   Pipeline (mirrors build-german-shard.mjs):
