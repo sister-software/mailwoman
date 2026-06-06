@@ -9,15 +9,19 @@
  *   git (gitignored model.onnx + tokenizer.model); this script materializes the binaries at release
  *   time.
  *
- *   Source paths default to /mnt/playpen/mailwoman-data — override via env vars:
+ *   The source model + tokenizer paths come from `release.config.json` (`weights.dataRoot` +
+ *   `weights.model` / `weights.tokenizer`) so the version-bearing filenames live in one place
+ *   rather than hardcoded here. Override at release time via env vars:
  *
- *   - MAILWOMAN_PUBLISH_MODEL: path to the int8 quantized model.onnx
- *   - MAILWOMAN_PUBLISH_TOKENIZER: path to the v0.1.0 tokenizer.model
+ *   - MAILWOMAN_DATA_ROOT: override `weights.dataRoot` (the machine's data dir)
+ *   - MAILWOMAN_PUBLISH_MODEL: absolute path to the int8 quantized model.onnx (wins outright)
+ *   - MAILWOMAN_PUBLISH_TOKENIZER: absolute path to the matching tokenizer.model (wins outright)
  *
- *   Idempotent. Used by .release-it.json's before:release hook.
+ *   Idempotent. Used by .release-it.json's before:init hook.
  * @import {PathLike} from "node:fs"
  */
 
+import { readFileSync } from "node:fs"
 import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -25,13 +29,12 @@ import { fileURLToPath } from "node:url"
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(here, "..")
 
-const SOURCE_MODEL =
-	process.env.MAILWOMAN_PUBLISH_MODEL ??
-	"/mnt/playpen/mailwoman-data/models/quantized/model-stage1-coarse-step-050000-int8.onnx"
-const SOURCE_TOKENIZER =
-	process.env.MAILWOMAN_PUBLISH_TOKENIZER ?? "/mnt/playpen/mailwoman-data/models/tokenizer/v0.1.0/tokenizer.model"
+const config = JSON.parse(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
+const dataRoot = process.env.MAILWOMAN_DATA_ROOT ?? config.weights.dataRoot
+const SOURCE_MODEL = process.env.MAILWOMAN_PUBLISH_MODEL ?? resolve(dataRoot, config.weights.model)
+const SOURCE_TOKENIZER = process.env.MAILWOMAN_PUBLISH_TOKENIZER ?? resolve(dataRoot, config.weights.tokenizer)
 
-const TARGETS = ["neural-weights-en-us", "neural-weights-fr-fr"]
+const TARGETS = config.locales.map((locale) => `neural-weights-${locale}`)
 
 /**
  * @param {PathLike} path
