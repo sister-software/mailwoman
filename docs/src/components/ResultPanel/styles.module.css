@@ -55,6 +55,11 @@
 	justify-content: space-between;
 }
 
+.resultActions {
+	display: flex;
+	gap: 0.4rem;
+}
+
 .debugBtn {
 	font-size: 0.75rem;
 	padding: 0.2rem 0.5rem;
