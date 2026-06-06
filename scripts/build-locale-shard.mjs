@@ -5,32 +5,36 @@
  * @author Teffen Ellis, et al.
  *
  *   Build a per-locale coverage shard — the multi-locale generalization of build-german-shard.mjs
- *   (the "make it less special" mandate). Reads REAL OpenAddresses tuples for a `--country`, renders
- *   each via `synthesizeLocaleRow` in BOTH orders (`--intl-fraction`, default 0.4 = ~40% house-first /
- *   postcode-after-city international layout, the rest country-native), aligns to BIO, and writes a
- *   labeled JSONL ready for parquet. Order robustness is the point: a native-only shard teaches one
- *   layout so well it trades away the other (docs/articles/evals/2026-06-06-anchor-pilot.md).
+ *   (the "make it less special" mandate). Reads REAL OpenAddresses tuples for a `--country`,
+ *   renders each via `synthesizeLocaleRow` in BOTH orders (`--intl-fraction`, default 0.4 = ~40%
+ *   house-first / postcode-after-city international layout, the rest country-native), aligns to
+ *   BIO, and writes a labeled JSONL ready for parquet. Order robustness is the point: a native-only
+ *   shard teaches one layout so well it trades away the other
+ *   (docs/articles/evals/2026-06-06-anchor-pilot.md).
  *
- *   readTuples STREAMS each CSV (`unzip -p | readline`) and reservoir-samples to {@link RESERVOIR_CAP},
- *   so FR/US-countrywide (~2.5 GB, ~25M rows) work in bounded memory — no buffer overflow, no OOM.
+ *   ReadTuples STREAMS each CSV (`unzip -p | readline`) and reservoir-samples to
+ *   {@link RESERVOIR_CAP}, so FR/US-countrywide (~2.5 GB, ~25M rows) work in bounded memory — no
+ *   buffer overflow, no OOM.
  *
- *   Country support (gated on cached OA data + clean verbatim alignment):
- *     DE — Berlin/Saxony; works (5-digit postcode; region from the per-state file, OA's column is empty).
- *     FR — countrywide; works (streamed + reservoir-sampled). OA's REGION column is empty for FR too, and
- *          the countrywide file spans all départements, so the international rows render WITHOUT a region
- *          tail until a postcode→région mapping is added (follow-up; less critical than DE since the FR
- *          eval differs).
- *     NL — countrywide; works both orders (postcode canonicalized to the spaced `1011 AB` form so the
- *          template aligns; OA's REGION column IS populated for NL, so the international tail carries it).
- *     IT — countrywide; works (streamed + reservoir-sampled; OA REGION populated → international tail
- *          carries the regione, like NL). Acquired 2026-06-06.
- *     ES — no OA countrywide aggregate (404; ES is organized per-region — needs the source keys
- *          discovered + added before it can be fetched).
+ *   Country support (gated on cached OA data + clean verbatim alignment): DE — Berlin/Saxony; works
+ *   (5-digit postcode; region from the per-state file, OA's column is empty). FR — countrywide;
+ *   works (streamed + reservoir-sampled). OA's REGION column is empty for FR too, and the
+ *   countrywide file spans all départements, so the international rows render WITHOUT a region tail
+ *   until a postcode→région mapping is added (follow-up; less critical than DE since the FR eval
+ *   differs). NL — countrywide; works both orders (postcode canonicalized to the spaced `1011 AB`
+ *   form so the template aligns; OA's REGION column IS populated for NL, so the international tail
+ *   carries it). IT — countrywide; works (streamed + reservoir-sampled; OA REGION populated →
+ *   international tail carries the regione, like NL). Acquired 2026-06-06. ES — countrywide; works
+ *   via a per-part `conform` map. The OA-conformed output isn't hosted (the
+ *   results.../latest/run/es path 404s), but the source's cached RAW upstream (CNIG/IGN, CC BY 4.0)
+ *   IS — 451 MB / 3.56 GB CSV. We apply the conform inline (street = join(tipo_vial, nombre_via),
+ *   region = comunidad_autonoma, POPULATED → carries the international tail). Acquired 2026-06-06.
  *
- *   Pipeline (mirrors build-german-shard.mjs):
- *     node scripts/build-locale-shard.mjs --country FR --output /tmp/fr-train.jsonl --count 200000 --seed 42
- *     python3 scripts/jsonl-to-parquet.py --input /tmp/fr-train.jsonl --output <NEW>/train/part-fr-train.parquet
- *     # then assemble the overlay manifest + modal volume put, as for v0.4.2-de-bothorder.
+ *   Pipeline (mirrors build-german-shard.mjs): node scripts/build-locale-shard.mjs --country FR
+ *   --output /tmp/fr-train.jsonl --count 200000 --seed 42 python3 scripts/jsonl-to-parquet.py
+ *   --input /tmp/fr-train.jsonl --output <NEW>/train/part-fr-train.parquet
+ *
+ *   # then assemble the overlay manifest + modal volume put, as for v0.4.2-de-bothorder.
  */
 
 import { spawn } from "node:child_process"
@@ -40,36 +44,59 @@ import { createInterface } from "node:readline"
 import { alignRow, stableSourceId, synthesizeLocaleRow } from "@mailwoman/corpus"
 
 /**
- * Per-country OA sources (cached zips) + the source name used in the corpus. Each `{ zip, csv }` part
- * may carry a `region` fallback (the admin region the file covers) for countries whose OA REGION column
- * is empty — DE's is, so the international-order tail needs it set per-state (#327). FR/NL leave it unset
- * (their REGION column is populated, used per-row). Add ES/IT here once their OA dumps are fetched.
+ * Per-country OA sources (cached zips) + the source name used in the corpus. Each `{ zip, csv }`
+ * part may carry a `region` fallback (the admin region the file covers) for countries whose OA
+ * REGION column is empty — DE's is, so the international-order tail needs it set per-state (#327).
+ * FR/NL leave it unset (their REGION column is populated, used per-row). A part may also carry a
+ * `conform` map ({number, street, city, region, postcode} → raw column names; `street` as an array
+ * space-joins) for an upstream that isn't OA-conformed — ES uses it (the raw CNIG schema).
  */
 const COUNTRY_SOURCES = {
-	DE: { source: "synth-german", parts: [
-		{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", region: "Berlin" },
-		{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", region: "Sachsen" },
-	] },
-	FR: { source: "synth-fr", parts: [
-		{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" },
-	] },
-	NL: { source: "synth-nl", parts: [
-		{ zip: "/tmp/oa-cache/nl__countrywide.zip", csv: "nl/countrywide.csv" },
-	] },
+	DE: {
+		source: "synth-german",
+		parts: [
+			{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", region: "Berlin" },
+			{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", region: "Sachsen" },
+		],
+	},
+	FR: { source: "synth-fr", parts: [{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }] },
+	NL: { source: "synth-nl", parts: [{ zip: "/tmp/oa-cache/nl__countrywide.zip", csv: "nl/countrywide.csv" }] },
 	// IT acquired 2026-06-06 from OpenAddresses (results.openaddresses.io/latest/run/it/countrywide.zip,
 	// 468 MB / 1.48 GB CSV / 13.7M rows) — streamed + reservoir-sampled like FR. 5-digit postcode (no
 	// NL-style reformat); OA REGION column IS populated (the regione, e.g. "MARCHE"), so international
 	// rows carry the "City, Regione Postcode" tail. Both orders build cleanly.
-	IT: { source: "synth-it", parts: [
-		{ zip: "/tmp/oa-cache/it__countrywide.zip", csv: "it/countrywide.csv" },
-	] },
+	IT: { source: "synth-it", parts: [{ zip: "/tmp/oa-cache/it__countrywide.zip", csv: "it/countrywide.csv" }] },
+	// ES acquired 2026-06-06 from OpenAddresses' cached upstream (data.openaddresses.io/cache/uploads/
+	// .../es_addresses.csv.zip, 451 MB zip / 3.56 GB CSV) — the CNIG/IGN national set, CC BY 4.0. NOTE: this
+	// is the RAW upstream schema, NOT OA-conformed (results.openaddresses.io/latest/run/es is not hosted —
+	// 404), so it carries a `conform` map: street = join(tipo_vial, nombre_via); region = comunidad_autonoma
+	// (POPULATED → international "City, Comunidad Postcode" tail, like NL/IT). Streamed + reservoir-sampled
+	// (FR-scale). Quality caveats for the next builder pass: region names are bilingual ("País Vasco/Euskadi",
+	// "Araba/Álava"), and a slice of rows are carretera kilometre-points (tipo=PK, street like "A-4136")
+	// rather than urban streets — fine as addresses, worth a spot-check before a real shard.
+	ES: {
+		source: "synth-es",
+		parts: [
+			{
+				zip: "/tmp/oa-cache/es__countrywide.zip",
+				csv: "es_addresses.csv",
+				conform: {
+					number: "numero",
+					street: ["tipo_vial", "nombre_via"],
+					city: "municipio",
+					region: "comunidad_autonoma",
+					postcode: "cod_postal",
+				},
+			},
+		],
+	},
 }
 
 /**
- * Per-part reservoir cap. Streaming + Algorithm-R reservoir sampling to this size keeps memory bounded
- * (~CAP × ~0.2 KB ≈ 240 MB at 1.2M) regardless of source size, where buffering the whole CSV (the old
- * spawnSync path) OOMs / overflows the 1 GB buffer on FR/US-countrywide (~2.5 GB, ~25M rows). DE/NL-scale
- * sources (≤ ~1.2M) fit entirely, so they're sampled losslessly.
+ * Per-part reservoir cap. Streaming + Algorithm-R reservoir sampling to this size keeps memory
+ * bounded (~CAP × ~0.2 KB ≈ 240 MB at 1.2M) regardless of source size, where buffering the whole
+ * CSV (the old spawnSync path) OOMs / overflows the 1 GB buffer on FR/US-countrywide (~2.5 GB, ~25M
+ * rows). DE/NL-scale sources (≤ ~1.2M) fit entirely, so they're sampled losslessly.
  */
 const RESERVOIR_CAP = 1_200_000
 
@@ -87,11 +114,15 @@ function parseArgs() {
 		else if (a === "--golden") out.golden = true
 	}
 	if (!out.output) {
-		console.error("Usage: build-locale-shard.mjs --country <DE|FR|NL> --output <labeled.jsonl> [--count N] [--seed N] [--intl-fraction 0.4]")
+		console.error(
+			"Usage: build-locale-shard.mjs --country <DE|FR|NL> --output <labeled.jsonl> [--count N] [--seed N] [--intl-fraction 0.4]"
+		)
 		process.exit(1)
 	}
 	if (!COUNTRY_SOURCES[out.country]) {
-		console.error(`No OA sources registered for --country ${out.country}. Known: ${Object.keys(COUNTRY_SOURCES).join(", ")}.`)
+		console.error(
+			`No OA sources registered for --country ${out.country}. Known: ${Object.keys(COUNTRY_SOURCES).join(", ")}.`
+		)
 		process.exit(1)
 	}
 	if (!(out.intlFraction >= 0 && out.intlFraction <= 1)) {
@@ -139,12 +170,12 @@ function splitCsv(line) {
 }
 
 /**
- * Stream real tuples out of a cached OA zip and reservoir-sample to {@link RESERVOIR_CAP}. Reads the CSV
- * line-by-line via `unzip -p | readline` (bounded memory) and keeps a uniform random sample (Algorithm R)
- * seeded by `rng` — separate from the emit loop's PRNG, so the sample is reproducible and doesn't perturb
- * the emit draws. NO global dedup: a 25M-key Set would OOM, and OA rows are near-unique so reservoir
- * dupes are negligible. OA's columns are stable across countries; the region falls back to `part.region`
- * when the row's REGION cell is empty (DE).
+ * Stream real tuples out of a cached OA zip and reservoir-sample to {@link RESERVOIR_CAP}. Reads the
+ * CSV line-by-line via `unzip -p | readline` (bounded memory) and keeps a uniform random sample
+ * (Algorithm R) seeded by `rng` — separate from the emit loop's PRNG, so the sample is reproducible
+ * and doesn't perturb the emit draws. NO global dedup: a 25M-key Set would OOM, and OA rows are
+ * near-unique so reservoir dupes are negligible. OA's columns are stable across countries; the
+ * region falls back to `part.region` when the row's REGION cell is empty (DE).
  */
 function readTuples(part, rng) {
 	return new Promise((resolve) => {
@@ -152,31 +183,48 @@ function readTuples(part, rng) {
 		const rl = createInterface({ input: child.stdout, crlfDelay: Infinity })
 		const get = (cells, i) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 		const reservoir = []
-		let iNum, iStreet, iCity, iRegion, iPost
+		let cols = null
 		let header = null
 		let seen = 0
 		rl.on("line", (line) => {
 			if (!line) return
 			if (header === null) {
 				header = splitCsv(line).map((h) => h.trim().toLowerCase())
-				const ix = (name) => header.indexOf(name)
-				iNum = ix("number")
-				iStreet = ix("street")
-				iCity = ix("city")
-				iRegion = ix("region")
-				iPost = ix("postcode")
+				const ix = (name) => header.indexOf(String(name).toLowerCase())
+				// OA-standard columns (IT/FR/NL/DE), unless the part carries a `conform` map for a raw
+				// upstream schema (ES — CNIG columns, street split across `tipo_vial` + `nombre_via`).
+				const c = part.conform
+				cols = c
+					? {
+							num: ix(c.number),
+							streetParts: (Array.isArray(c.street) ? c.street : [c.street]).map(ix),
+							city: ix(c.city),
+							region: c.region ? ix(c.region) : -1,
+							post: ix(c.postcode),
+						}
+					: {
+							num: ix("number"),
+							streetParts: [ix("street")],
+							city: ix("city"),
+							region: ix("region"),
+							post: ix("postcode"),
+						}
 				return
 			}
 			const cells = splitCsv(line)
-			const street = get(cells, iStreet)
-			const locality = get(cells, iCity)
+			const street = cols.streetParts
+				.map((i) => get(cells, i))
+				.filter(Boolean)
+				.join(" ")
+				.trim()
+			const locality = get(cells, cols.city)
 			if (!street || !locality) return
 			const tuple = {
-				house_number: get(cells, iNum),
+				house_number: get(cells, cols.num),
 				street,
 				locality,
-				region: get(cells, iRegion) || part.region || "",
-				postcode: get(cells, iPost),
+				region: get(cells, cols.region) || part.region || "",
+				postcode: get(cells, cols.post),
 			}
 			seen++
 			if (reservoir.length < RESERVOIR_CAP) {
@@ -230,7 +278,9 @@ async function main() {
 			continue
 		}
 		if (opts.golden) {
-			outStream.write(JSON.stringify({ raw: synth.raw, components: synth.components, country: opts.country, order }) + "\n")
+			outStream.write(
+				JSON.stringify({ raw: synth.raw, components: synth.components, country: opts.country, order }) + "\n"
+			)
 			orderCounts[order]++
 			emitted++
 			continue
@@ -256,7 +306,9 @@ async function main() {
 			skipped++
 			continue
 		}
-		outStream.write(JSON.stringify({ ...aligned.row, synth_method: opts.source, synth_order: order, synth_base_id: null }) + "\n")
+		outStream.write(
+			JSON.stringify({ ...aligned.row, synth_method: opts.source, synth_order: order, synth_base_id: null }) + "\n"
+		)
 		orderCounts[order]++
 		emitted++
 	}
