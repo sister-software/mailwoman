@@ -276,7 +276,15 @@ async function main(): Promise<void> {
 		MailwomanTokenizer.loadFromFile(arg("tokenizer")),
 		OnnxRunner.create(arg("model")),
 	])
-	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
+	// Model-side postcode anchor (#239/#240): feed the parser per-piece anchor features from the same
+	// lookup it trained on. Only for anchor models (ONNX exported with the anchor inputs). The verdict
+	// run: `--model-anchor-lookup /path/pilot-anchor-lookup.json` on the anchor-on model.
+	const modelAnchorPath = arg("model-anchor-lookup", "")
+	const postcodeAnchorLookup = modelAnchorPath
+		? (await import("@mailwoman/neural")).parseAnchorLookup(JSON.parse(readFileSync(modelAnchorPath, "utf8")))
+		: undefined
+	if (modelAnchorPath) console.error(`[model-anchor] feeding anchor from ${modelAnchorPath} (${postcodeAnchorLookup!.size} codes)`)
+	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels, postcodeAnchorLookup })
 
 	// v0 = our TypeScript port of the Pelias parser. Scoring it through the same resolver makes this a
 	// real "neural vs Pelias parser" head-to-head on non-circular addresses.

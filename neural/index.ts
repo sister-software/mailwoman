@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+export * from "./anchor-inference.js"
 export * from "./classifier.js"
 export * from "./labels.js"
 export * from "./onnx-runner.js"
