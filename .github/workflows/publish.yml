@@ -13,18 +13,17 @@
 #
 # GITHUB_TOKEN is provided automatically by the runtime.
 #
-# ⚠ This workflow publishes the CODE packages only. The
-# neural-weights-{en-us,fr-fr} workspaces ship real model.onnx +
-# tokenizer.model binaries that live at /mnt/playpen on the operator's
-# host (not in git, not fetchable from CI), so weights are always cut
-# LOCALLY via `yarn release` + scripts/copy-weights.mjs (see
-# RELEASING.md). Here, copy-weights short-circuits and
-# publish-workspace.mjs exits 0 for the weights workspaces; the plugin
-# still bumps their package.json versions on disk so the monorepo stays
-# version-synced, and the local weights publish picks up that version.
-# (A prior R2 weights-pull lived here; it was the training-data bucket,
-# never reliably shipped a model, and was removed — the model store is
-# Hugging Face, published via scripts/publish-release-to-hf.mjs.)
+# Publishes ALL packages — code AND the neural-weights-* — entirely from
+# CI via OIDC, so no npm credentials live anywhere. The weights workspaces
+# ship real model.onnx + tokenizer.model binaries; the "Fetch weight
+# binaries from Hugging Face" step below pulls them from the PUBLIC HF
+# bucket (the same files the demo loads, no auth) before publish, so the
+# binaries don't need to be on the runner. Prerequisite for a real run:
+# the model for this version must already be staged on HF — push it with
+# scripts/publish-release-to-hf.mjs (HF token, run on the operator's host)
+# first. (A prior R2 weights-pull lived here; mailwoman-assets is the
+# training-data bucket, the pull never reliably shipped a model, and it
+# was removed. The model store is Hugging Face.)
 name: NPM Publish
 
 on:
@@ -85,17 +84,39 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      # Fetch the weight binaries from the PUBLIC Hugging Face bucket (the same
+      # files the demo loads at runtime — no auth needed). This replaces the old
+      # R2 pull and means the whole release, weights included, publishes from CI
+      # via OIDC: no npm credentials anywhere. Requires the model to already be
+      # staged on HF for this version (push it with scripts/publish-release-to-hf.mjs
+      # before dispatching a real run). Skipped on dry runs so a preview doesn't
+      # depend on HF staging.
+      - name: Fetch weight binaries from Hugging Face
+        if: ${{ !inputs.dry_run }}
+        run: | # shell
+          set -euo pipefail
+          MODEL_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('neural-weights-en-us/model-card.json','utf8')).version)")
+          BASE="https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-us/v${MODEL_VERSION}"
+          echo "Fetching weights for v${MODEL_VERSION} from ${BASE}"
+          curl -fSL "${BASE}/model.onnx" -o neural-weights-en-us/model.onnx
+          curl -fSL "${BASE}/tokenizer.model" -o neural-weights-en-us/tokenizer.model
+          # fr-fr shares the en-us model for now (locale-specific weights are future work).
+          cp neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx
+          cp neural-weights-en-us/tokenizer.model neural-weights-fr-fr/tokenizer.model
+          for f in neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx; do
+              [ -s "$f" ] || { echo "::error::missing/empty $f — is v${MODEL_VERSION} staged on HF?"; exit 1; }
+          done
+          ls -lh neural-weights-en-us/model.onnx
+
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Code-only release. Skip copy-weights (its /mnt/playpen source
-          # paths don't exist on CI) and tell publish-workspace.mjs to
-          # exit 0 for the neural-weights-* workspaces. The plugin still
-          # bumps their package.json versions on disk so the monorepo
-          # stays version-synced; the actual weights npm publish is cut
-          # locally (RELEASING.md), where copy-weights has the binaries.
+          # copy-weights is always skipped (its /mnt/playpen source paths don't
+          # exist on CI) — the binaries are placed by the HF fetch step above.
+          # On a real run we DO publish the weights packages (binaries present);
+          # on a dry run we skip them (no binaries fetched, nothing to publish).
           MAILWOMAN_SKIP_WEIGHTS_COPY: "1"
-          MAILWOMAN_SKIP_WEIGHTS: "1"
+          MAILWOMAN_SKIP_WEIGHTS: ${{ inputs.dry_run && '1' || '' }}
         run: | # shell
           set -euo pipefail
           ARGS=(--ci --increment="${{ inputs.version }}")

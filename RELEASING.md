@@ -113,26 +113,35 @@ card's `training.tokenizer_version` is the source of truth (mismatches have ship
 
 The workflow checks out main, installs, runs `yarn release --ci --increment=<version>`. release-it's pre-flight hooks (compile + test + copy-weights) run as usual. Per-workspace publish uses `yarn pack -o <tmpfile>` (translates `workspace:*` → concrete versions) followed by `npm publish <tmpfile>` (the npm CLI auto-detects the OIDC environment and authenticates via Trusted Publishing; `--provenance` is auto-enabled).
 
-### Weights + models: cut locally, store on Hugging Face
+### Models on Hugging Face, then everything publishes from CI
 
-Weight binaries (`model.onnx`, `tokenizer.model`) live at `/mnt/playpen/mailwoman-data/` on the operator's host
-and aren't fetchable from CI. So the split is:
+The model store is Hugging Face — the **public** `sister-software/mailwoman` bucket, which is also what the demo
+fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release runs from CI via OIDC, with
+**no npm credentials anywhere**. The order is:
 
-- **Code packages → CI** (`publish.yml`). `copy-weights.mjs` is skipped (`MAILWOMAN_SKIP_WEIGHTS_COPY=1`) and
-  `publish-workspace.mjs` exits 0 for the weights workspaces (`MAILWOMAN_SKIP_WEIGHTS=1`). The plugin still bumps
-  the weights `package.json` versions in the release commit, so when you publish them locally they carry the same
-  synced version.
-- **`neural-weights-*` packages → local.** After the code release lands, pull the release commit and publish the
-  two weights workspaces locally — `copy-weights.mjs` materializes the real binaries (paths from
-  `release.config.json`), then `npm publish` each. See "Recovering from a partial release" for the per-workspace
-  invocation; it's the same mechanism.
-- **The model artifacts (for the demo) → Hugging Face**, via `scripts/publish-release-to-hf.mjs` (pushes
-  `model.onnx` + `tokenizer.model` + `model-card.json` + `fst-*.bin` + `wof-hot.db` to the HF bucket and updates
-  `releases.json`). The demo loads from HF.
+1. **Stage the model on HF first** (operator's host — needs only the HF token, no npm auth):
+
+   ```bash
+   HF_TOKEN=$(cat ~/.cache/huggingface/token) node scripts/publish-release-to-hf.mjs \
+     --version v<version> --locale en-us \
+     --model <model.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json \
+     --fst <fst-en-US.bin> --wof-hot <wof-hot.db> --set-default
+   ```
+
+   This pushes `model.onnx` + `tokenizer.model` + `model-card.json` + `fst-en-US.bin` + `wof-hot.db` to
+   `…/resolve/en-us/v<version>/`, updates `releases.json`, and (with `--set-default`) re-points the live demo —
+   no docs rebuild needed. For a relabel of an existing model, the `fst-en-US.bin` + `wof-hot.db` are unchanged;
+   copy them from the previous version's bucket path.
+
+2. **Publish all packages from CI** — `publish.yml` at the same version. The "Fetch weight binaries from Hugging
+   Face" step pulls `model.onnx` + `tokenizer.model` from the public bucket (no auth) into the `neural-weights-*`
+   workspaces, and the run publishes every package — code and weights — over OIDC. `copy-weights.mjs` stays
+   skipped on CI (its `/mnt/playpen` paths aren't there); it's the local-dev path. A real run therefore requires
+   the model to already be on HF for that version (step 1).
 
 > A previous version of this workflow pulled weights from a Cloudflare R2 bucket (`mailwoman-assets`). That
 > bucket is the **training-data** store (corpus + tokenizer for Modal), not a release store; the pull was
-> unreliable and never shipped a model, and it's been removed. The model store is Hugging Face.
+> unreliable and never shipped a model, and it's been removed.
 
 ## What's NOT automated yet
 
