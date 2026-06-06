@@ -60,6 +60,20 @@
 	gap: 0.4rem;
 }
 
+.hierarchyDetails {
+	margin: 0.5rem 0 1rem 0;
+	font-size: 0.9rem;
+}
+
+.hierarchyDetails > summary {
+	cursor: pointer;
+	user-select: none;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	font-size: 0.8rem;
+	color: var(--ifm-color-emphasis-700);
+}
+
 .debugBtn {
 	font-size: 0.75rem;
 	padding: 0.2rem 0.5rem;
