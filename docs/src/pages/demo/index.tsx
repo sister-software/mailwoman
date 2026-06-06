@@ -6,11 +6,11 @@
  *   Mailwoman geocoder demo — fully client-side. Combines:
  *
  *   - `@mailwoman/neural-web` (onnxruntime-web, WASM SIMD with WebGPU fallback) for the BIO classifier.
- *   - sql.js-httpvfs (../../shared/httpvfs-resolver) range-loading the same-origin WOF + polygon DBs.
+ *   - `@mailwoman/resolver-wof-wasm` (sqlite-wasm) for the WOF locality / postcode lookup.
  *   - `@mailwoman/cartographer` `StyleSpecificationComposer` over the v4 protomaps basemap.
  *
- *   The model/tokenizer/fst come from HF (one-shot full-fetch); the resolver DBs are served
- *   same-origin from `/mailwoman/` and range-loaded, so a session fetches a few MB of them, not 70+.
+ *   Static-asset bundle (~60 MB cold): `/mailwoman/model.onnx`, `/mailwoman/tokenizer.model`,
+ *   `/mailwoman/wof-hot.db`. After first load the browser caches everything.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -276,10 +276,11 @@ const DemoApp: React.FC = () => {
 
 				if (release?.hasWofDb) {
 					setLookupLoader(() => async () => {
-						// Range-load the same-origin DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
-						const { loadHttpvfsDb, WofHttpvfsPlaceLookup } = await import("../../shared/httpvfs-resolver")
-						const worker = await loadHttpvfsDb(sameOriginDbUrl("wof-hot.db"), `${siteConfig.baseUrl}mailwoman/sqljs`)
-						return new WofHttpvfsPlaceLookup(worker)
+						const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
+						const { db } = await resolverWasm.loadSlimWofDatabase({
+							source: sameOriginDbUrl("wof-hot.db"),
+						})
+						return new resolverWasm.WofWasmPlaceLookup({ db })
 					})
 				}
 
@@ -370,12 +371,9 @@ const DemoApp: React.FC = () => {
 			if (release?.hasPolygons && selectedVersion && candidate.id) {
 				try {
 					if (!polygonDbRef.current) {
-						polygonDbRef.current = loadPolygonDb(
-							sameOriginDbUrl("wof-polygons.db"),
-							`${siteConfig.baseUrl}mailwoman/sqljs`
-						)
+						polygonDbRef.current = loadPolygonDb(sameOriginDbUrl("wof-polygons.db"))
 					}
-					const geom = await (await polygonDbRef.current).get(candidate.id)
+					const geom = (await polygonDbRef.current).get(candidate.id)
 					if (geom) {
 						drawPlaceGeometry(map, geom)
 						const gb = geomBounds(geom)
@@ -709,22 +707,29 @@ function geomBounds(geometry: PlaceGeometry): { minLon: number; minLat: number; 
 	return { minLon, minLat, maxLon, maxLat }
 }
 
-/** id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. Async (range-loaded). */
+/** id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. */
 interface PolygonDb {
-	get(id: number): Promise<PlaceGeometry | null>
+	get(id: number): PlaceGeometry | null
 }
 
 /**
- * Open the crisp-polygon DB (built by scripts/build-wof-polygons.mjs) via sql.js-httpvfs — a single
- * `SELECT geom WHERE id=?` touches ~1 page, so the browser fetches a few KB of the 19 MB file rather
- * than the whole thing. Same range-load path as the resolver DB.
+ * Open the crisp-polygon DB (a normal SQLite, built by scripts/build-wof-polygons.mjs) in sqlite-wasm
+ * and expose an id → geometry lookup. Reuses the resolver's loader — the file is just bytes to
+ * deserialize, with no schema coupling to the WOF resolver tables.
  */
-async function loadPolygonDb(url: string, sqljsBaseUrl: string): Promise<PolygonDb> {
-	const { loadHttpvfsDb, makeHttpvfsPolygonLookup } = await import("../../shared/httpvfs-resolver")
-	const worker = await loadHttpvfsDb(url, sqljsBaseUrl)
-	const lookup = makeHttpvfsPolygonLookup(worker)
+async function loadPolygonDb(url: string): Promise<PolygonDb> {
+	const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
+	const { db } = await resolverWasm.loadSlimWofDatabase({ source: url })
 	return {
-		get: (id: number) => lookup.get(id) as Promise<PlaceGeometry | null>,
+		get(id: number): PlaceGeometry | null {
+			const rows = db.selectObjects("SELECT geom FROM polygons WHERE id = ?", [id]) as Array<{ geom: string }>
+			if (rows.length === 0) return null
+			try {
+				return JSON.parse(rows[0].geom) as PlaceGeometry
+			} catch {
+				return null
+			}
+		},
 	}
 }
 
