@@ -55,9 +55,15 @@ export interface ResultNode {
 	tag: string
 	value?: unknown
 	confidence?: number
+	/** Inclusive start char offset into `DemoResult.input`, when the decoder emits one. */
+	start?: number
+	/** Exclusive end char offset into the raw input. */
+	end?: number
 }
 
 export interface DemoResult {
+	/** The raw text handed to the parser — the offsets in `nodes[].start/end` index into this string. */
+	input: string
 	tree: unknown
 	nodes: ResultNode[]
 	resolved: ResolvedHit | null

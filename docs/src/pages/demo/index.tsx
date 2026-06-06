@@ -395,6 +395,7 @@ const DemoApp: React.FC = () => {
 				const wofLookup = await ensureLookup()
 				if (!wofLookup) {
 					setResult({
+						input: text,
 						tree,
 						nodes,
 						resolved: null,
@@ -425,6 +426,7 @@ const DemoApp: React.FC = () => {
 				// clearing stale marker/bbox AND rendering the new selection.
 				setSelectedCandidateIndex(0)
 				setResult({
+					input: text,
 					tree,
 					nodes,
 					resolved: candidates[0] ?? null,
@@ -651,18 +653,29 @@ async function runCascade(
 	return usable(await lookup.findPlace({ text: rawText, country: "US", limit: 5 }))
 }
 
-function flattenTree(tree: unknown): Array<{ tag: string; value?: unknown; confidence?: number }> {
-	const out: Array<{ tag: string; value?: unknown; confidence?: number }> = []
+type TreeNode = {
+	tag?: string
+	value?: unknown
+	confidence?: number
+	start?: number
+	end?: number
+	children?: unknown[]
+}
+
+function flattenTree(
+	tree: unknown
+): Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> {
+	const out: Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> = []
 	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
-	const stack = [...(roots as Array<{ tag?: string; value?: unknown; confidence?: number; children?: unknown[] }>)]
+	const stack = [...(roots as TreeNode[])]
 	while (stack.length) {
 		const n = stack.pop()!
 		if (typeof n.tag === "string") {
-			out.push({ tag: n.tag, value: n.value, confidence: n.confidence })
+			out.push({ tag: n.tag, value: n.value, confidence: n.confidence, start: n.start, end: n.end })
 		}
 		if (Array.isArray(n.children)) {
 			for (const c of n.children) {
-				stack.push(c as { tag?: string; value?: unknown; confidence?: number; children?: unknown[] })
+				stack.push(c as TreeNode)
 			}
 		}
 	}

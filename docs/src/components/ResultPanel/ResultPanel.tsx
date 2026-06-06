@@ -4,6 +4,7 @@ import { DemoResult } from "../../shared/resources.tsx"
 import { CandidatePicker } from "../CandidatePicker/CandidatePicker.tsx"
 import { FailureDiagnostic } from "../FailureDiagnostic/FailureDiagnostic.tsx"
 import { KindBadge } from "../KindBadge/KindBadge.tsx"
+import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
 
 import styles from "./styles.module.css"
 
@@ -76,6 +77,7 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 				</details>
 			) : null}
 			{showXml && xml ? <CodeBlock language="xml">{xml}</CodeBlock> : null}
+			<SpanHighlight input={result.input} nodes={result.nodes} />
 			<table className={styles.componentTable}>
 				<thead>
 					<tr>
