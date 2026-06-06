@@ -61,6 +61,16 @@ export interface ResultNode {
 	end?: number
 }
 
+/** Per-stage wall-clock for one parse (ms). `resolve` is absent when the lookup is skipped. */
+export interface StageTiming {
+	/** QueryShape + kind classification (pure, ~µs). */
+	shape: number
+	/** Neural BIO classify + tree decode — the model inference. */
+	classify: number
+	/** WOF cascade lookup. Excludes the one-time DB load. */
+	resolve?: number
+}
+
 export interface DemoResult {
 	/** The raw text handed to the parser — the offsets in `nodes[].start/end` index into this string. */
 	input: string
@@ -70,6 +80,8 @@ export interface DemoResult {
 	candidates: ResolvedHit[]
 	stateHint?: string
 	kindResult?: KindResult
+	/** Per-stage timing for the breakdown panel; absent on older render paths. */
+	timing?: StageTiming
 	fstActive: boolean
 	fstProvenance?: FstProvenanceLike | null
 }

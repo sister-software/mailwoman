@@ -1,0 +1,76 @@
+/* Per-stage timing breakdown — a stacked bar sized by each stage's wall-clock, plus a legend.
+   Stage colours are distinct hues (NOT the confidence red/amber/green — these encode pipeline
+   stage, not quality). */
+
+.timingPanel {
+	margin: 1rem 0;
+	font-size: 0.8rem;
+}
+
+.heading {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--ifm-color-emphasis-700);
+	margin-bottom: 0.35rem;
+}
+
+.total {
+	font-family: var(--ifm-font-family-monospace);
+	text-transform: none;
+	letter-spacing: 0;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.bar {
+	display: flex;
+	width: 100%;
+	height: 0.7rem;
+	border-radius: 4px;
+	overflow: hidden;
+	background: var(--ifm-color-emphasis-200);
+}
+
+.seg {
+	height: 100%;
+}
+
+.legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 1rem;
+	margin-top: 0.4rem;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.legendItem {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.legendMs {
+	font-family: var(--ifm-font-family-monospace);
+	color: var(--ifm-color-emphasis-600);
+}
+
+.swatch {
+	display: inline-block;
+	width: 0.7rem;
+	height: 0.7rem;
+	border-radius: 2px;
+}
+
+.shape {
+	background: #3578e5;
+}
+
+.classify {
+	background: #8b5cf6;
+}
+
+.resolve {
+	background: #14b8a6;
+}
