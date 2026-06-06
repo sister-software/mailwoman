@@ -22,7 +22,10 @@
  *          eval differs).
  *     NL — countrywide; works both orders (postcode canonicalized to the spaced `1011 AB` form so the
  *          template aligns; OA's REGION column IS populated for NL, so the international tail carries it).
- *     ES/IT — no cached OA yet (fetch + add to COUNTRY_SOURCES to enable).
+ *     IT — countrywide; works (streamed + reservoir-sampled; OA REGION populated → international tail
+ *          carries the regione, like NL). Acquired 2026-06-06.
+ *     ES — no OA countrywide aggregate (404; ES is organized per-region — needs the source keys
+ *          discovered + added before it can be fetched).
  *
  *   Pipeline (mirrors build-german-shard.mjs):
  *     node scripts/build-locale-shard.mjs --country FR --output /tmp/fr-train.jsonl --count 200000 --seed 42
@@ -52,6 +55,13 @@ const COUNTRY_SOURCES = {
 	] },
 	NL: { source: "synth-nl", parts: [
 		{ zip: "/tmp/oa-cache/nl__countrywide.zip", csv: "nl/countrywide.csv" },
+	] },
+	// IT acquired 2026-06-06 from OpenAddresses (results.openaddresses.io/latest/run/it/countrywide.zip,
+	// 468 MB / 1.48 GB CSV / 13.7M rows) — streamed + reservoir-sampled like FR. 5-digit postcode (no
+	// NL-style reformat); OA REGION column IS populated (the regione, e.g. "MARCHE"), so international
+	// rows carry the "City, Regione Postcode" tail. Both orders build cleanly.
+	IT: { source: "synth-it", parts: [
+		{ zip: "/tmp/oa-cache/it__countrywide.zip", csv: "it/countrywide.csv" },
 	] },
 }
 
