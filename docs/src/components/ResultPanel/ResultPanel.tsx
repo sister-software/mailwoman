@@ -6,6 +6,7 @@ import { FailureDiagnostic } from "../FailureDiagnostic/FailureDiagnostic.tsx"
 import { KindBadge } from "../KindBadge/KindBadge.tsx"
 import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
 import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
+import { TreeView } from "../TreeView/TreeView.tsx"
 
 import styles from "./styles.module.css"
 
@@ -150,6 +151,12 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 				</tbody>
 			</table>
 			{result.timing ? <TimingPanel timing={result.timing} /> : null}
+			{(result.tree as { roots?: unknown[] } | null)?.roots?.length ? (
+				<details className={styles.hierarchyDetails}>
+					<summary>Hierarchy</summary>
+					<TreeView tree={result.tree} />
+				</details>
+			) : null}
 			{selected ? (
 				<>
 					<div className={styles.resolved}>
