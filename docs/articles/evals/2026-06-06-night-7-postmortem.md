@@ -49,9 +49,13 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
   `2026-06-06-v0.9.2-eval.md` §"accept the asymmetry".
 - **Multi-locale tooling (#332 / #333 / #335)** — `build-locale-shard.mjs` rebuilt registry-driven, with a
   streaming Algorithm-R reservoir so FR/US-scale OA CSVs (2.5 GB+) sample without OOM; NL postcode
-  normalization; and **Italy OA data acquired** (468 MB countrywide, durable backup on `/mnt/playpen`). DE / NL
-  / FR / IT are shard-ready. ES has no clean OA countrywide aggregate (the `es/countrywide` _source_ exists but
-  its built results 404; the rest is per-municipality numeric keys) → a documented follow-up, not a clean win.
+  normalization; and **Italy + Spain OA data acquired** (IT 468 MB, ES 451 MB, durable backups on
+  `/mnt/playpen`). **DE / NL / FR / IT / ES are all shard-ready.** _(Correction: an earlier note here called ES
+  "no clean countrywide aggregate." That was wrong — I'd only checked the `results.../latest/run/es` path, which
+  404s. The `es/countrywide` source points to a cached upstream CSV on `data.openaddresses.io` that downloads
+  fine; it's the raw CNIG schema rather than OA-conformed, so the builder gained a per-part `conform` map —
+  street = join(`tipo_vial`, `nombre_via`), region = `comunidad_autonoma`. A 2k smoke build renders both orders
+  with the region tail carried, e.g. `2 CALLE JACINTO, Lepe, Andalucía 21440`.)_
 - **Demo-refinement tier (#338 / #339 / #340)** — the operator's "visualizer breakdown + polish" ask, shipped
   in three additive demo PRs once GPU was off the table:
   - **#338 (S34) — span-highlight visualizer.** The raw input rendered as a displaCy-style ribbon, each tagged
@@ -158,8 +162,9 @@ tier the operator asked for once DeepSeek (delegated authority) called "no more 
 - **Country-conditioned anchor (#327):** a per-locale anchor direction (DE specializes on postcode-before-city,
   US on postcode-after-city), so no shared vector is forced to compromise. Its own gate via `de-order-eval.sh`.
   The interim no-GPU lever (order-check → `c=0` route) is the cheap first move.
-- **Multi-locale shards:** DE / NL / FR / IT are shard-ready via `build-locale-shard.mjs`. ES needs the OA
-  `es/` source-key index discovered first (no clean countrywide aggregate; `es/countrywide` results 404).
+- **Multi-locale shards:** DE / NL / FR / IT / **ES** are all shard-ready via `build-locale-shard.mjs` (ES via
+  a per-part `conform` map on the raw CNIG upstream). The gate before any retrain is the country-conditioned
+  anchor (#327), not the data.
 - **Demo S38 — service-worker precache** for the ~60 MB bundle, keyed by `selectedVersion` (see above).
 - **FR (#330):** assemble a venue+region FR shard (real OSM/WOF POIs + FR région forms), measure with
   `per-locale-f1.ts`.
