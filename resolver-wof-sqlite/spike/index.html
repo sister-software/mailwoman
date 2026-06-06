@@ -6,6 +6,9 @@
 	</head>
 	<body>
 		<pre id="log">loading…</pre>
+		<!-- sql.js-httpvfs ships a webpack UMD bundle (not ESM), so load it as a classic script — it
+		     assigns `createDbWorker` onto window — then the module below reads it off window. -->
+		<script src="/node_modules/sql.js-httpvfs/dist/index.js"></script>
 		<script type="module" src="/client.mjs"></script>
 	</body>
 </html>
