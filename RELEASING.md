@@ -1,6 +1,12 @@
 # Releasing
 
-Mailwoman publishes 7 npm packages from this monorepo in a single coordinated release:
+Mailwoman publishes a coordinated set of npm packages: the `mailwoman` CLI plus its full transitive
+`@mailwoman/*` runtime closure. That closure is declared in `.release-it.json` and **must stay in sync with
+the dependency graph** — if `mailwoman` (or any published package) gains a new `@mailwoman/*` runtime
+dependency, it has to join that list, or the published `mailwoman` won't install (its dep 404s on npm). As
+of 4.0.0 the set is 13 workspaces: `mailwoman` + `@mailwoman/{core, normalize, query-shape, kind-classifier,
+locale-gate, phrase-grouper, codex, classifiers, corpus, neural, neural-weights-en-us, neural-weights-fr-fr}`,
+all published at one synced version (the model too — see Versioning policy). The core ones:
 
 | Package                           | Workspace dir           | Notes                                                                                                                  |
 | --------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
@@ -30,8 +36,10 @@ yarn release --dry-run
 
 This will:
 
-1. Compile + test (`yarn compile` then `yarn ci:test` — the latter runs all tests without watch mode)
-2. Materialize trained weights into `neural-weights-{en-us,fr-fr}/` via `scripts/copy-weights.mjs`
+1. Compile (`yarn compile`). The pre-flight **does not run tests** — PR CI already validated them; see the
+   `before:init` hook in `.release-it.json`.
+2. Materialize trained weights into `neural-weights-{en-us,fr-fr}/` via `scripts/copy-weights.mjs` (paths from
+   `release.config.json`)
 3. Show the proposed version bump for each workspace
 4. Stage the would-be tag + GitHub release + npm publishes — without executing them
 
@@ -54,21 +62,31 @@ Prompts for the version (or pass `--patch` / `--minor` / `--major` / `--ci`). Th
 
 ## Source data for the weights packages
 
-`copy-weights.mjs` copies the trained binaries from `/mnt/playpen/mailwoman-data/` by default. Override via env vars when releasing from a different machine:
+`copy-weights.mjs` reads the trained-binary paths from **`release.config.json`** (`weights.dataRoot` +
+`weights.model` / `weights.tokenizer`) — the single place the version-bearing filenames live. Bump the model
+there when a new model ships; the script resolves and copies the real artifacts. Override per-run via env:
 
 ```bash
-MAILWOMAN_PUBLISH_MODEL=/path/to/model.onnx \
+MAILWOMAN_DATA_ROOT=/some/other/root          # override weights.dataRoot
+MAILWOMAN_PUBLISH_MODEL=/path/to/model.onnx \  # absolute path, wins outright
 MAILWOMAN_PUBLISH_TOKENIZER=/path/to/tokenizer.model \
   yarn release
 ```
 
-The binaries are gitignored in the workspace dirs (`neural-weights-*/.gitignore`) and exist only between `copy-weights` and the post-publish cleanup.
+The binaries are gitignored in the workspace dirs (`neural-weights-*/.gitignore`) and exist only between
+`copy-weights` and the post-publish cleanup. **Always confirm the tokenizer matches the model** — the model
+card's `training.tokenizer_version` is the source of truth (mismatches have shipped before).
 
 ## Versioning policy
 
-- **Sync mode** — all 7 packages share the same version number per release. The workspaces plugin enforces this.
-- **First release after restructure**: bump `mailwoman` 1.0.0 → 2.0.0 (major; new layout, scope-introduction). Other workspaces follow.
-- **Weights packages** carry their own versioning aligned to the underlying model. Don't bump them in sync with the code — release them separately when a new model trains and the runtime is unchanged. (TODO: split the release config into two flows; currently sync mode means weights bump too.)
+- **Full sync** — every package in `.release-it.json` shares one version per release, the model included. The
+  workspaces plugin enforces it, so don't fight it. `release.config.json#version` carries that number; the model
+  card's `version` and the demo's `releases.json` are bumped to match.
+- **The model version follows the release**, not the other way around. The underlying trained artifact keeps its
+  own identity (filename, training step, tokenizer) under `release.config.json#weights` and in the model card's
+  `model_lineage`; the published `version` is just the unified release number (e.g. the Stage-3 / step-100000
+  model shipped as `4.0.0`). This replaces the old "weights versioned to the model" scheme, which the sync-mode
+  plugin could never actually express — that mismatch is what produced the version drift before 4.0.0.
 
 ## Common failures
 
@@ -87,22 +105,49 @@ The binaries are gitignored in the workspace dirs (`neural-weights-*/.gitignore`
 1. **One-time setup on the npm side** (already done): each `@mailwoman/*` package + `mailwoman` has a Trusted Publisher configured pointing at `sister-software/mailwoman` repo + workflow file `.github/workflows/publish.yml`. If you move/rename that file, update the npm side too.
 2. **Run a release** — Actions tab → `publish` workflow → Run workflow.
    - `version` — `patch` / `minor` / `major` / specific semver like `2.1.0`. Default `patch`.
-   - `release_weights` — boolean. Default **false**. See below.
    - `dry_run` — boolean. Default false. Set true to preview without publishing.
+
+   The CI workflow is **code-only**: it publishes every workspace except the two `neural-weights-*`, which it
+   version-bumps in git but skips on npm (their binaries aren't on the runner). Cut the weights publish locally
+   (next section).
 
 The workflow checks out main, installs, runs `yarn release --ci --increment=<version>`. release-it's pre-flight hooks (compile + test + copy-weights) run as usual. Per-workspace publish uses `yarn pack -o <tmpfile>` (translates `workspace:*` → concrete versions) followed by `npm publish <tmpfile>` (the npm CLI auto-detects the OIDC environment and authenticates via Trusted Publishing; `--provenance` is auto-enabled).
 
-### CI weights handling
+### Models on Hugging Face, then everything publishes from CI
 
-Weight binaries (`model.onnx`, `tokenizer.model`) live at `/mnt/playpen/mailwoman-data/` on your host and aren't fetchable from CI runners. The release workflow has two modes:
+The model store is Hugging Face — the **public** `sister-software/mailwoman` bucket, which is also what the demo
+fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release runs from CI via OIDC, with
+**no npm credentials anywhere**. The order is:
 
-- **`release_weights=false` (default)** — bumps + publishes only the code workspaces (`mailwoman`, `@mailwoman/{core,classifiers,corpus,neural}`). `@mailwoman/neural-weights-*` are excluded from this release; they stay at whatever their last-published version is. `copy-weights.mjs` is skipped via `MAILWOMAN_SKIP_WEIGHTS_COPY=1`; `publish-workspace.mjs` skips the actual publish via `MAILWOMAN_SKIP_WEIGHTS=1`. The bump phase still touches their `package.json` versions on disk (keeps monorepo in sync) — only the npm publish is skipped.
-- **`release_weights=true`** — requires `neural-weights-{en-us,fr-fr}/model.onnx` already present in the workspace (uploaded as a workflow artifact before this run, etc.). Otherwise the workflow's pre-publish guard fails fast.
+1. **Stage the model on HF first** (operator's host — needs only the HF token, no npm auth):
 
-In practice: cut code releases from CI, cut weights releases from local. Closes the version-drift gap that the sync-mode workspaces plugin would otherwise force.
+   ```bash
+   HF_TOKEN=$(cat ~/.cache/huggingface/token) node scripts/publish-release-to-hf.mjs \
+     --version v<version> --locale en-us \
+     --model <model.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json \
+     --fst <fst-en-US.bin> --wof-hot <wof-hot.db> --set-default
+   ```
+
+   This pushes `model.onnx` + `tokenizer.model` + `model-card.json` + `fst-en-US.bin` + `wof-hot.db` to
+   `…/resolve/en-us/v<version>/`, updates `releases.json`, and (with `--set-default`) re-points the live demo —
+   no docs rebuild needed. For a relabel of an existing model, the `fst-en-US.bin` + `wof-hot.db` are unchanged;
+   copy them from the previous version's bucket path.
+
+2. **Publish all packages from CI** — `publish.yml` at the same version. The "Fetch weight binaries from Hugging
+   Face" step pulls `model.onnx` + `tokenizer.model` from the public bucket (no auth) into the `neural-weights-*`
+   workspaces, and the run publishes every package — code and weights — over OIDC. `copy-weights.mjs` stays
+   skipped on CI (its `/mnt/playpen` paths aren't there); it's the local-dev path. A real run therefore requires
+   the model to already be on HF for that version (step 1).
+
+> A previous version of this workflow pulled weights from a Cloudflare R2 bucket (`mailwoman-assets`). That
+> bucket is the **training-data** store (corpus + tokenizer for Modal), not a release store; the pull was
+> unreliable and never shipped a model, and it's been removed.
 
 ## What's NOT automated yet
 
-- **Weights fetched from cloud storage** — release_weights=true currently requires the binaries to be pre-staged in the workspace dirs. A natural next step is fetching from S3 / a GitHub Release asset / etc. before the publish step.
-- **Independent versioning for weights packages** — see "Versioning policy" above; the CI workflow's `release_weights=false` mode is the operational workaround until the release config is split.
+- **Weights publish from CI** — the `neural-weights-*` npm publish is local-only (the binaries aren't on the
+  runner). A future step could have CI fetch them from Hugging Face before publishing, mirroring what the demo
+  already does at runtime.
+- **`publish-release-to-hf.mjs` is still hand-invoked** — staging the model to HF (and bumping `releases.json`)
+  is a separate manual command after the npm release, not part of `yarn release`.
 - **Changelog generation** — release-it can emit one via the `@release-it/conventional-changelog` plugin. Not configured yet because commit messages haven't standardized on Conventional Commits.

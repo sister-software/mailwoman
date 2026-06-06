@@ -13,16 +13,17 @@
 #
 # GITHUB_TOKEN is provided automatically by the runtime.
 #
-# ⚠ Weights packages — the neural-weights-{en-us,fr-fr} workspaces
-# need real model.onnx + tokenizer.model binaries before publish.
-# Those binaries live at /mnt/playpen/mailwoman-data/ on the
-# operator's host and aren't checked into git. Default behavior
-# (`release_weights=false`) skips the weights publish step entirely:
-# scripts/copy-weights.mjs short-circuits, and publish-workspace.mjs
-# detects weights workspaces and exits 0. The plugin still bumps
-# their package.json versions on disk (keeps monorepo versions in
-# sync) — only the npm publish is skipped. Use the local
-# `yarn release` flow when you want to cut a new weights release.
+# Publishes ALL packages — code AND the neural-weights-* — entirely from
+# CI via OIDC, so no npm credentials live anywhere. The weights workspaces
+# ship real model.onnx + tokenizer.model binaries; the "Fetch weight
+# binaries from Hugging Face" step below pulls them from the PUBLIC HF
+# bucket (the same files the demo loads, no auth) before publish, so the
+# binaries don't need to be on the runner. Prerequisite for a real run:
+# the model for this version must already be staged on HF — push it with
+# scripts/publish-release-to-hf.mjs (HF token, run on the operator's host)
+# first. (A prior R2 weights-pull lived here; mailwoman-assets is the
+# training-data bucket, the pull never reliably shipped a model, and it
+# was removed. The model store is Hugging Face.)
 name: NPM Publish
 
 on:
@@ -33,11 +34,6 @@ on:
         required: true
         default: patch
         type: string
-      release_weights:
-        description: "Include @mailwoman/neural-weights-* in this release?"
-        required: false
-        default: false
-        type: boolean
       dry_run:
         description: "Dry run — show what would happen, don't actually publish"
         required: false
@@ -88,54 +84,39 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Pull weight binaries from R2
-        if: ${{ inputs.release_weights }}
-        env:
-          RCLONE_S3_PROVIDER: Cloudflare
-          RCLONE_S3_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          RCLONE_S3_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          RCLONE_S3_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
-          RCLONE_S3_REGION: auto
-          RCLONE_S3_NO_CHECK_BUCKET: "true"
+      # Fetch the weight binaries from the PUBLIC Hugging Face bucket (the same
+      # files the demo loads at runtime — no auth needed). This replaces the old
+      # R2 pull and means the whole release, weights included, publishes from CI
+      # via OIDC: no npm credentials anywhere. Requires the model to already be
+      # staged on HF for this version (push it with scripts/publish-release-to-hf.mjs
+      # before dispatching a real run). Skipped on dry runs so a preview doesn't
+      # depend on HF staging.
+      - name: Fetch weight binaries from Hugging Face
+        if: ${{ !inputs.dry_run }}
         run: | # shell
-          # Install rclone
-          curl -sSL https://rclone.org/install.sh | sudo bash
-          # Derive the R2 release path from the model card (source of truth).
-          # Falls back to env override for manual intervention.
+          set -euo pipefail
           MODEL_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('neural-weights-en-us/model-card.json','utf8')).version)")
-          RELEASE_PATH="${MAILWOMAN_R2_RELEASE_PATH:-releases/v${MODEL_VERSION}}"
-          echo "Model card version: ${MODEL_VERSION}"
-          echo "R2 release path: ${RELEASE_PATH}"
-          rclone copy ":s3:mailwoman-assets/${RELEASE_PATH}/model.onnx" neural-weights-en-us/
-          rclone copy ":s3:mailwoman-assets/${RELEASE_PATH}/tokenizer.model" neural-weights-en-us/
-          # fr-fr uses the same model for now (same training, locale-specific weights are future work)
+          BASE="https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-us/v${MODEL_VERSION}"
+          echo "Fetching weights for v${MODEL_VERSION} from ${BASE}"
+          curl -fSL "${BASE}/model.onnx" -o neural-weights-en-us/model.onnx
+          curl -fSL "${BASE}/tokenizer.model" -o neural-weights-en-us/tokenizer.model
+          # fr-fr shares the en-us model for now (locale-specific weights are future work).
           cp neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx
           cp neural-weights-en-us/tokenizer.model neural-weights-fr-fr/tokenizer.model
-          echo "Weights pulled from R2: $(ls -lh neural-weights-en-us/model.onnx)"
-
-      - name: Guard — weights presence vs release_weights input
-        if: ${{ inputs.release_weights }}
-        run: | # shell
-          if [ ! -f "neural-weights-en-us/model.onnx" ] || [ ! -f "neural-weights-fr-fr/model.onnx" ]; then
-              echo "::error::release_weights=true but weight binaries are missing from the workspace dirs."
-              echo "::error::R2 pull may have failed. Check R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_ENDPOINT secrets."
-              exit 1
-          fi
+          for f in neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx; do
+              [ -s "$f" ] || { echo "::error::missing/empty $f — is v${MODEL_VERSION} staged on HF?"; exit 1; }
+          done
+          ls -lh neural-weights-en-us/model.onnx
 
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # When release_weights=false (default): skip copy-weights AND
-          # tell publish-workspace.mjs to skip the neural-weights-*
-          # workspaces. The plugin still bumps their package.json
-          # versions on disk (keeping the monorepo in sync) — only the
-          # npm publish is skipped.
-          # Skip copy-weights entirely — files are either already placed
-          # by the R2 pull step (release_weights=true) or not needed
-          # (release_weights=false). Either way, copy-weights.mjs's
-          # default /mnt/playpen/ paths don't exist on CI.
+          # copy-weights is always skipped (its /mnt/playpen source paths don't
+          # exist on CI) — the binaries are placed by the HF fetch step above.
+          # On a real run we DO publish the weights packages (binaries present);
+          # on a dry run we skip them (no binaries fetched, nothing to publish).
           MAILWOMAN_SKIP_WEIGHTS_COPY: "1"
-          MAILWOMAN_SKIP_WEIGHTS: ${{ !inputs.release_weights && '1' || '' }}
+          MAILWOMAN_SKIP_WEIGHTS: ${{ inputs.dry_run && '1' || '' }}
         run: | # shell
           set -euo pipefail
           ARGS=(--ci --increment="${{ inputs.version }}")
