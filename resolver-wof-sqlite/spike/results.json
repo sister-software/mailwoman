@@ -1,0 +1,484 @@
+{
+  "dbPath": "/tmp/wof-httpvfs.db",
+  "dbSizeBytes": 150200320,
+  "wallClockMs": 857,
+  "workerReadyMs": 188,
+  "dbFetchCount": 38,
+  "dbBytesFetched": 3735552,
+  "assetBytes": 1336772,
+  "queries": [
+    {
+      "phase": "query",
+      "label": "exact: New York",
+      "ms": 54,
+      "rows": 9,
+      "error": null
+    },
+    {
+      "phase": "query",
+      "label": "exact: Springfield",
+      "ms": 25,
+      "rows": 10,
+      "error": null
+    },
+    {
+      "phase": "query",
+      "label": "prefix: 902*",
+      "ms": 7,
+      "rows": 10,
+      "error": null
+    },
+    {
+      "phase": "query",
+      "label": "ranked: New York by population",
+      "ms": 6,
+      "rows": 9,
+      "error": null
+    },
+    {
+      "phase": "query",
+      "label": "bbox: Illinois bounding box",
+      "ms": 1,
+      "rows": 0,
+      "error": "SQLite: no such module: rtree"
+    },
+    {
+      "phase": "query",
+      "label": "proximity: near Springfield IL",
+      "ms": 0,
+      "rows": 0,
+      "error": "SQLite: no such module: rtree"
+    },
+    {
+      "phase": "query",
+      "label": "warm: New York repeat",
+      "ms": 1,
+      "rows": 9,
+      "error": null
+    },
+    {
+      "phase": "query",
+      "label": "warm: Springfield repeat",
+      "ms": 1,
+      "rows": 10,
+      "error": null
+    }
+  ],
+  "serverEvents": [
+    {
+      "ts": 1780781079103,
+      "kind": "ready",
+      "port": 8765,
+      "root": "/tmp/claude-1000/mailwoman-spike-PugERs"
+    },
+    {
+      "ts": 1780781079410,
+      "kind": "full",
+      "url": "/index.html",
+      "bytes": 487
+    },
+    {
+      "ts": 1780781079447,
+      "kind": "full",
+      "url": "/node_modules/sql.js-httpvfs/dist/index.js",
+      "bytes": 7920
+    },
+    {
+      "ts": 1780781079447,
+      "kind": "full",
+      "url": "/client.mjs",
+      "bytes": 5065
+    },
+    {
+      "ts": 1780781079456,
+      "kind": "full",
+      "url": "/node_modules/sql.js-httpvfs/dist/sqlite.worker.js",
+      "bytes": 83728
+    },
+    {
+      "ts": 1780781079469,
+      "kind": "full",
+      "url": "/node_modules/sql.js-httpvfs/dist/sql-wasm.wasm",
+      "bytes": 1239572
+    },
+    {
+      "ts": 1780781079487,
+      "kind": "full",
+      "url": "/wof.db",
+      "bytes": 150200320
+    },
+    {
+      "ts": 1780781079612,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 0,
+      "end": 65535,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079648,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 108068864,
+      "end": 108134399,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079652,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 106627072,
+      "end": 106692607,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079658,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 114294784,
+      "end": 114360319,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079660,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 109445120,
+      "end": 109510655,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079662,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 109707264,
+      "end": 109772799,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079664,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 110886912,
+      "end": 110952447,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079666,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 110755840,
+      "end": 110821375,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079669,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 116588544,
+      "end": 116654079,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079672,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 114688000,
+      "end": 114753535,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079673,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 1703936,
+      "end": 1769471,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079675,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 65536,
+      "end": 131071,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079676,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 116981760,
+      "end": 117047295,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079677,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 327680,
+      "end": 393215,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079679,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 117047296,
+      "end": 117178367,
+      "bytes": 131072
+    },
+    {
+      "ts": 1780781079682,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 117178368,
+      "end": 117440511,
+      "bytes": 262144
+    },
+    {
+      "ts": 1780781079685,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 136904704,
+      "end": 136970239,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079688,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 137101312,
+      "end": 137166847,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079689,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 1966080,
+      "end": 2031615,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079691,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 140181504,
+      "end": 140247039,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079694,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 2228224,
+      "end": 2293759,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079698,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 110362624,
+      "end": 110428159,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079700,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 115933184,
+      "end": 115998719,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079702,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 196608,
+      "end": 262143,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079704,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 116129792,
+      "end": 116195327,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079705,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 262144,
+      "end": 393215,
+      "bytes": 131072
+    },
+    {
+      "ts": 1780781079707,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 116850688,
+      "end": 116916223,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079708,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 393216,
+      "end": 655359,
+      "bytes": 262144
+    },
+    {
+      "ts": 1780781079711,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 117440512,
+      "end": 117506047,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079713,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 117506048,
+      "end": 117637119,
+      "bytes": 131072
+    },
+    {
+      "ts": 1780781079715,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 117637120,
+      "end": 117899263,
+      "bytes": 262144
+    },
+    {
+      "ts": 1780781079717,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 118685696,
+      "end": 118751231,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079718,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 117899264,
+      "end": 118423551,
+      "bytes": 524288
+    },
+    {
+      "ts": 1780781079723,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 107544576,
+      "end": 107610111,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079725,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 140705792,
+      "end": 140771327,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079727,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 4784128,
+      "end": 4849663,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079731,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 106430464,
+      "end": 106495999,
+      "bytes": 65536
+    },
+    {
+      "ts": 1780781079733,
+      "kind": "range",
+      "url": "/wof.db",
+      "start": 142868480,
+      "end": 142934015,
+      "bytes": 65536
+    }
+  ],
+  "consoleEvents": [
+    {
+      "phase": "init",
+      "note": "constructing worker"
+    },
+    {
+      "phase": "worker-ready",
+      "ms": 188
+    },
+    {
+      "phase": "query",
+      "label": "exact: New York",
+      "ms": 54,
+      "rows": 9,
+      "error": null
+    },
+    {
+      "phase": "query",
+      "label": "exact: Springfield",
+      "ms": 25,
+      "rows": 10,
+      "error": null
+    },
+    {
+      "phase": "query",
+      "label": "prefix: 902*",
+      "ms": 7,
+      "rows": 10,
+      "error": null
+    },
+    {
+      "phase": "query",
+      "label": "ranked: New York by population",
+      "ms": 6,
+      "rows": 9,
+      "error": null
+    },
+    {
+      "phase": "query",
+      "label": "bbox: Illinois bounding box",
+      "ms": 1,
+      "rows": 0,
+      "error": "SQLite: no such module: rtree"
+    },
+    {
+      "phase": "query",
+      "label": "proximity: near Springfield IL",
+      "ms": 0,
+      "rows": 0,
+      "error": "SQLite: no such module: rtree"
+    },
+    {
+      "phase": "query",
+      "label": "warm: New York repeat",
+      "ms": 1,
+      "rows": 9,
+      "error": null
+    },
+    {
+      "phase": "query",
+      "label": "warm: Springfield repeat",
+      "ms": 1,
+      "rows": 10,
+      "error": null
+    },
+    {
+      "phase": "done"
+    }
+  ]
+}
