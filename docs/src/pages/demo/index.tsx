@@ -239,12 +239,13 @@ const DemoApp: React.FC = () => {
 					modelCardUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model-card.json"),
 					runner: { useWebGpu: !forceWasm },
 					// Anchor-trained bundles (v4.0.0+) ship postcode binaries so the demo feeds the postcode
-					// anchor — US + DE cover the demo's example set (incl. the native-order Berlin case).
+					// anchor — US + DE + FR cover the demo's example set (native-order Berlin, French ZIPs).
 					...(release?.hasAnchor
 						? {
 								postcodeBinaryUrls: [
 									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-us.bin"),
 									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-de.bin"),
+									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-fr.bin"),
 								],
 							}
 						: {}),
