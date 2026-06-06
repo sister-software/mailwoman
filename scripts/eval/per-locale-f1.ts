@@ -32,7 +32,7 @@
  */
 
 import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { NeuralAddressClassifier, parseAnchorLookup } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { readFileSync, writeFileSync } from "node:fs"
@@ -48,6 +48,7 @@ interface Args {
 	modelPath?: string
 	tokenizerPath?: string
 	modelCardPath?: string
+	modelAnchorLookupPath?: string
 	outJson?: string
 }
 
@@ -67,6 +68,9 @@ function parseArgs(): Args {
 		else if (a === "--model" && argv[i + 1]) out.modelPath = argv[++i]
 		else if (a === "--tokenizer" && argv[i + 1]) out.tokenizerPath = argv[++i]
 		else if (a === "--model-card" && argv[i + 1]) out.modelCardPath = argv[++i]
+		// Feed the postcode anchor for a 4-input anchor-trained model (else inference errors on the
+		// missing anchor inputs). Mirrors oa-resolver-eval's --model-anchor-lookup.
+		else if (a === "--model-anchor-lookup" && argv[i + 1]) out.modelAnchorLookupPath = argv[++i]
 		else if (a === "--out-json" && argv[i + 1]) out.outJson = argv[++i]
 	}
 	return out as Args
@@ -208,7 +212,10 @@ async function main(): Promise<void> {
 			MailwomanTokenizer.loadFromFile(args.tokenizerPath),
 			OnnxRunner.create(args.modelPath),
 		])
-		neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels })
+		const postcodeAnchorLookup = args.modelAnchorLookupPath
+			? parseAnchorLookup(JSON.parse(readFileSync(args.modelAnchorLookupPath, "utf8")))
+			: undefined
+		neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels, postcodeAnchorLookup })
 	} else {
 		neural = await NeuralAddressClassifier.loadFromWeights()
 	}
