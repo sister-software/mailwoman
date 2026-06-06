@@ -467,7 +467,7 @@ const DemoApp: React.FC = () => {
 				// Drop (lat=0, lon=0) hits — WOF ships placeholder zeros on ~22% of US postcodes.
 				// Timed from here so the one-time DB load above doesn't skew the resolve number.
 				const tBeforeResolve = performance.now()
-				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNode, text)
+				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNode, stateNode, text)
 				const tResolve = performance.now()
 				const candidates: ResolvedHit[] = cascadeHits.map((c) => ({
 					id: c.id,
@@ -739,36 +739,39 @@ async function runCascade(
 	lookup: MailwomanLookupLike,
 	postcodeNode: ParsedNode | undefined,
 	localityNode: ParsedNode | undefined,
+	stateNode: ParsedNode | undefined,
 	rawText: string
 ): Promise<Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>> {
 	const usable = (
 		cs: Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
 	): Awaited<ReturnType<MailwomanLookupLike["findPlace"]>> => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
 
+	// Use the geography the parser found. Country is NOT hardcoded to US — a global search plus the
+	// resolver's population ranking surfaces the famous same-name place ("Berlin" → Berlin, DE 3.7M,
+	// not Berlin, NH 9k). A parsed region/state is resolved to its bbox and used to constrain the
+	// postcode + locality lookups, which disambiguates same-name US localities ("Roseville, Michigan"
+	// → the Roseville inside Michigan's bounds, not the larger Roseville, CA the population boost
+	// would otherwise pick).
+	let regionBbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | undefined
+	if (stateNode?.value) {
+		const regions = await lookup.findPlace({ text: String(stateNode.value), placetype: "region", limit: 1 })
+		regionBbox = regions[0]?.bbox
+	}
+
 	if (postcodeNode?.value) {
 		const cs = usable(
-			await lookup.findPlace({
-				text: String(postcodeNode.value),
-				placetype: "postalcode",
-				country: "US",
-				limit: 5,
-			})
+			await lookup.findPlace({ text: String(postcodeNode.value), placetype: "postalcode", bbox: regionBbox, limit: 5 })
 		)
 		if (cs.length > 0) return cs
 	}
 	if (localityNode?.value) {
 		const cs = usable(
-			await lookup.findPlace({
-				text: String(localityNode.value),
-				placetype: "locality",
-				country: "US",
-				limit: 5,
-			})
+			await lookup.findPlace({ text: String(localityNode.value), placetype: "locality", bbox: regionBbox, limit: 5 })
 		)
 		if (cs.length > 0) return cs
 	}
 
-	return usable(await lookup.findPlace({ text: rawText, country: "US", limit: 5 }))
+	return usable(await lookup.findPlace({ text: rawText, bbox: regionBbox, limit: 5 }))
 }
 
 type TreeNode = {

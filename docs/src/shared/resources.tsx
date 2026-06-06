@@ -29,8 +29,10 @@ export interface MailwomanClassifierLike {
 export interface MailwomanLookupLike {
 	findPlace: (q: {
 		text: string
-		placetype?: "locality" | "postalcode" | undefined
+		placetype?: "locality" | "postalcode" | "region" | undefined
 		country?: string
+		/** Point-in-bbox filter — constrains candidates to a parsed region/state's bounds. */
+		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		limit?: number
 	}) => Promise<
 		Array<{
