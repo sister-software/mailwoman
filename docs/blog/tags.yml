@@ -177,15 +177,3 @@ motivation:
   description: Articles making the case for Mailwoman — why neural, why TypeScript, why a staged pipeline.
 
 #endregion
-
-browser:
-  label: Browser
-  description: Articles about running Mailwoman entirely in the browser — WASM, WebGPU, sql.js-httpvfs, and the client-side demo.
-
-fst:
-  label: FST
-  description: Articles about the finite-state-transducer gazetteer that ships to the browser for fast locality matching.
-
-demo:
-  label: Demo
-  description: Articles about the public client-side geocoder demo and the assets that power it.
