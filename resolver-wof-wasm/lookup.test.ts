@@ -140,6 +140,24 @@ describe("WofWasmPlaceLookup", () => {
 		}
 	})
 
+	test("bbox filter constrains same-name localities to a region's bounds", async () => {
+		const { db } = await loadSlimWofDatabase({ source: slimBytes })
+		const lookup = new WofWasmPlaceLookup({ db })
+		try {
+			// Both Greenvilles match by name, but only id 210 (34.85,-82.39) sits in this box — the
+			// 'Roseville, Michigan' disambiguation path (constrain a locality to a parsed region's bbox).
+			const matches = await lookup.findPlace({
+				text: "Greenville",
+				placetype: "locality",
+				bbox: { minLat: 34, maxLat: 35, minLon: -83, maxLon: -82 },
+				limit: 5,
+			})
+			expect(matches.map((m) => m.id)).toEqual([210])
+		} finally {
+			lookup.close()
+		}
+	})
+
 	test("country filter rejects out-of-scope matches", async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })

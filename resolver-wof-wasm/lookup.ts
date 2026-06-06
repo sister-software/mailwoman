@@ -84,6 +84,13 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 			conditions.push("spr.country = ?")
 			params.push(query.country.toUpperCase())
 		}
+		// Point-in-bbox filter. Used to constrain a locality lookup to a parsed region/state's bounds
+		// (e.g. "Roseville, Michigan" → only the Roseville whose centroid sits in Michigan's bbox),
+		// which the broken-in-the-slim-DB parent_id chain can't do via descendant filtering.
+		if (query.bbox) {
+			conditions.push("spr.latitude BETWEEN ? AND ?", "spr.longitude BETWEEN ? AND ?")
+			params.push(query.bbox.minLat, query.bbox.maxLat, query.bbox.minLon, query.bbox.maxLon)
+		}
 
 		// Over-fetch a pool ordered by raw BM25, then re-rank in JS (exact-name tier, then
 		// population-weighted bm25). The over-fetch is load-bearing: a famous place can sit a few rows
