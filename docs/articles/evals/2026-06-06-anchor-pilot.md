@@ -1,4 +1,4 @@
-# We built the postcode anchor. The verdict is one wire away.
+# We fed the parser its postcode. German came halfway back.
 
 **Date:** 2026-06-06
 **Scope:** the de-risk pilot for the postcode-anchor conditioning channel (#239/#240) — does feeding the parser a structured postcode signal break the German end-of-string collapse that self-conditioning alone couldn't?
@@ -21,16 +21,27 @@ We confirmed the failure exists for _this_ exact code and seed, on real OpenAddr
 
 The control sits squarely on the established collapse (~25.6%). No A/B drift — the recipe collapses, as designed, so the anchor has something real to fix.
 
-## Why there's no verdict yet — and it's the honest kind of gap
+## The verdict: the anchor is real, and partial
 
-The headline question is still open, for a precise reason. The collapse is a _resolver-on-real-OA_ phenomenon, and our training val is the _synthetic_ order-shard — in-distribution, ~0.97 locality for both arms, so the synth val can't show it. And the model evaluated _without the anchor fed_ is still collapsed (35.9%, and even that delta is confounded by 20k vs 3k steps). That last number is the tell: if the anchor is the load-bearing signal, the model leans on it, and pulling it at inference drops it back toward the collapse — which is exactly what we see.
+We then built the inference-side channel — ONNX export with the anchor inputs, `OnnxRunner` + `NeuralAddressClassifier` feeding them, and a TS feature builder whose layout is pinned to the Python training function by a cross-language test — and ran the DE resolver A/B with the anchor fed:
 
-So the verdict — _does feeding the anchor at inference recover DE locality toward ~77%?_ — genuinely cannot be read from anything we have. It needs the **inference-side anchor channel**: ONNX export with the anchor inputs, the `OnnxRunner` / `NeuralAddressClassifier` accepting anchor tensors, and the extractor computing the anchor per address into the resolver eval. The inference mirror of the training channel we just built.
+| DE locality-match (real OA)        |       result |
+| ---------------------------------- | -----------: |
+| control @3k (anchor-off)           |        29.3% |
+| anchor-on @20k, anchor **not fed** |        35.9% |
+| **anchor-on @20k, anchor fed**     |    **45.8%** |
+| v0 (Pelias) / target               | 83.4% / ~77% |
 
-This is a clean de-risk outcome, not a failure. The risky, uncertain parts — does the architecture train, does the alignment hold, does the channel destabilize — are all answered. What remains is wiring, and a single resolver A/B once it's in: control 29.3% vs anchor-on-**with**-anchor.
+The clean, unconfounded number is the **same checkpoint with the anchor off vs on**: `35.9% → 45.8%`, **+9.9pp purely from feeding the anchor**, nothing else changed. The model genuinely leans on the signal — the architecture's premise holds, end to end.
 
-## Next
+It is a **partial** fix. 45.8% is well short of ~77%, so the anchor helps real and measurably but doesn't fully reverse the collapse at this pilot scale.
 
-Build the inference-side anchor channel, then re-run the DE resolver A/B feeding the anchor. That number is the verdict.
+**The per-state split is the mechanism — and points at the next lever.** Sachsen (postcodes `01xxx–09xxx`, little US collision) jumps `37.1% → 54.9%` (+17.8pp); Berlin (`10xxx`, colliding hard with US ZIPs) barely moves, `34.7% → 36.7%` (+2pp). The anchor's recovery is **gated by postcode ambiguity**: where the code pins the country it works strongly; where the posterior is a DE/US collision the uniform distribution can't decide and the model stays collapsed. Disambiguating the colliding ranges is where a full fix lives.
+
+## Next levers
+
+- **Extend to a 100k run** — the 20k gate passed (the anchor helps); does the effect grow with training?
+- **Disambiguate the colliding ranges** — fuse the anchor into the self-conditioning posterior so an ambiguous code (`10115`) and a decisive city token (`Berlin`) sharpen each other.
+- **Strategic check** — the resolver already does German at 83% (v0 parse → resolver), so weigh the parser-anchor (the multi-locale universal-parser bet) against resolver-side gains (the anchor centroid alone already cut coord p99 330 → 46 km).
 
 Artifacts: configs `v0.9.1-pilot-anchor-{off,on}.yaml`; `eval_de` + `export_onnx` (Modal); lookup `scripts/build-pilot-anchor-lookup.py`; consult notes `.agents/skills/deepseek-consult/session-notes-2026-06-05-anchor-pilot.md`.
