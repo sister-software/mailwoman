@@ -25,6 +25,7 @@ import {
 	fetchArtifactFromHf,
 	readModelCard,
 	resolveWeightsArtifact,
+	stageSqlJsHttpvfs,
 	syncArtifact,
 } from "./resolve.mjs"
 
@@ -89,6 +90,11 @@ export default function demoAssetsPlugin(context) {
 			if (!existsSync(polyDest)) {
 				await fetchArtifactFromHf("wof-polygons.db", polyDest, { version: hfVersion })
 			}
+
+			// --- sql.js-httpvfs runtime assets (worker + wasm + UMD), for range-loading the DBs ---
+			const sqljsDir = resolve(staticDir, "sqljs")
+			mkdirSync(sqljsDir, { recursive: true })
+			stageSqlJsHttpvfs(sqljsDir)
 
 			// --- Report ---
 			const assets = ["model.onnx", "tokenizer.model", "fst-en-US.bin", "wof-hot.db", "wof-polygons.db"]
