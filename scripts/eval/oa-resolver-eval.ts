@@ -367,14 +367,16 @@ async function main(): Promise<void> {
 	// non-US eval to US places (a German "Berlin" then loses to a tiny US Berlin). Settable via
 	// `--default-country <ISO|none>`; `none` disables the filter so ranking alone decides.
 	const dc = arg("default-country", "US")
-	// `--city-state-fallback` (#387): recover the locality the parser drops in a city-state layout
-	// (`…, Berlin, Berlin <PC>` — city == region). Opt-in, default-off, so by default this eval's
-	// numbers are byte-identical; pass it to measure the Berlin/Hamburg/Bremen before/after. Applied to
-	// BOTH the neural and rules resolve paths (they share `resolveOpts`), so the comparison stays fair.
-	const cityStateFallback = process.argv.includes("--city-state-fallback")
+	// `--hierarchy-completion` (#405, generalizes #387's `--city-state-fallback`): recover the locality
+	// the parser drops for a DUAL-ROLE place (city-state or capital-seat province), via the precomputed
+	// coincident-roles relation (#403). Opt-in, default-off → by default this eval is byte-identical;
+	// pass it to measure the before/after. Applied to BOTH the neural and rules resolve paths (they
+	// share `resolveOpts`), so the comparison stays fair. `--city-state-fallback` kept as an alias.
+	const hierarchyCompletion =
+		process.argv.includes("--hierarchy-completion") || process.argv.includes("--city-state-fallback")
 	const resolveOpts = {
 		...(dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}),
-		...(cityStateFallback ? { cityStateFallback: true } : {}),
+		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
 	}
 
 	// Postcode-anchor fusion (opt-in via `--postcode-anchor`). The resolver supplies the admin/place

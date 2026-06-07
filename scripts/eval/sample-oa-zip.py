@@ -14,13 +14,26 @@ import argparse, csv, io, json, random, zipfile
 BBOX = {
     "FR": (41.0, 51.5, -5.5, 9.7),
     "NL": (50.7, 53.6, 3.3, 7.3),
+    "IT": (35.0, 47.2, 6.5, 18.6),
+    "ES": (27.5, 43.9, -18.3, 4.4),  # mainland + Balearics + Canaries
 }
+# Normalize a raw CSV row to the OA-standard column names. Most national OA exports already use
+# NUMBER/STREET/CITY/POSTCODE/REGION/LAT/LON; Spain ships the CartoCiudad schema (X/Y, nombre_via,
+# poblacion, provincia, …) so we remap it. STREET folds in the Spanish street-type (CALLE/AVENIDA).
+def normalize_row(country, r):
+    if country == "ES":
+        via = f"{(r.get('tipo_vial') or '').strip()} {(r.get('nombre_via') or '').strip()}".strip()
+        return {"LAT": r.get("Y"), "LON": r.get("X"), "NUMBER": (r.get("numero") or "").strip(),
+                "STREET": via, "CITY": (r.get("poblacion") or "").strip(),
+                "POSTCODE": (r.get("cod_postal") or "").strip(), "REGION": (r.get("provincia") or "").strip()}
+    return r
+
 # Render order per locale (the raw string the parser sees).
 def render(country, r):
     num, street, pc, city = r["NUMBER"].strip(), r["STREET"].strip(), r["POSTCODE"].strip(), r["CITY"].strip()
     if country == "FR":  # "12 Rue de Rivoli, 75001 Paris"
         return f"{num} {street}, {pc} {city}".strip(", ")
-    if country == "NL":  # "Damrak 1, 1012 LG Amsterdam"
+    if country in ("NL", "IT", "ES"):  # number after street: "Via Roma 12, 20121 Milano" / "Calle de Alcalá 1, 28014 Madrid"
         return f"{street} {num}, {pc} {city}".strip(", ")
     return f"{num} {street}, {pc} {city}"
 
@@ -40,7 +53,8 @@ def main():
     reservoir, seen = [], 0
     with z.open(csv_name) as raw:
         reader = csv.DictReader(io.TextIOWrapper(raw, encoding="utf-8", errors="replace"))
-        for r in reader:
+        for raw_row in reader:
+            r = normalize_row(args.country, raw_row)
             try:
                 lat, lon = float(r["LAT"]), float(r["LON"])
             except (ValueError, KeyError, TypeError):
