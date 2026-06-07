@@ -1,0 +1,37 @@
+---
+sidebar_position: 12
+title: Dual-role places and hierarchy completion
+tags:
+  - concepts
+  - resolver
+  - locality
+  - region
+---
+
+# Dual-role places and hierarchy completion
+
+Some places are two things at once. Berlin is a city and a federal state. Milano is a comune and the province named after it. Bristol is a city and a unitary authority. Utrecht is a city and a province. A census of our gazetteer found about **122 of these across nine countries** — Italy alone has 70 (its provinces are nearly all named after their capital), then Spain (14), the UK (12), Japan (10), Korea (7), and a handful each for France, Germany, the Netherlands, and China.
+
+These cause a specific failure. In international order — `5 Hauptstraße, Berlin, Berlin 10115` — the city and the state are the same word, and the parser often labels one `Berlin` as the region and drops the other entirely. The resolved tree then carries a region but no locality, and the resolver has nothing to place: on a 1,500-row Berlin eval, 955 rows resolved to nothing.
+
+## Completing the hierarchy
+
+When the parser drops the locality of a dual-role place, the gazetteer still knows what it was — the region and the locality are two linked records with the same name and a coincident centroid. So the resolver can finish the job. With `hierarchyCompletion` enabled, after the walk, if a region resolved and the tree has no locality node, the resolver looks the region up in a precomputed **coincident-roles relation** and synthesizes the missing locality from it.
+
+The relation is the important part. Rather than a hardcoded list of city-states or a magic distance threshold, it's derived from the gazetteer's own structure at build time: a region and a locality are recorded as a pair when they share a name, the locality descends from the region in the `ancestors` table, and their centroids fall within a relative tolerance (a fraction of the region's bounding-box diagonal, so a large Italian province admits a city tens of kilometres from its centroid while a tiny city-state stays tight). At runtime the resolver does an O(1) membership lookup — no distance maths, no constant to tune. Build the table once with `mailwoman-wof-build-coincident-roles`; it ships in the admin gazetteer.
+
+Each completion carries a `relationship_type` (`city-state`, `capital-seat`, or `consolidated-county`) on `metadata.relationship_type`, and the synthesized node is marked `metadata.resolver_synthesized = true` — it has no span in the raw input, so a consumer can tell it apart from a parsed component.
+
+## Picking the right city
+
+A few admins map to more than one same-name locality, so completion has to choose. The rule is population first: the principal city is the populous one, and it can sit farther from the admin centroid than a tiny same-name hamlet — Niigata prefecture's centroid is dragged out to sea, so the real Niigata city is 41 km away while a 0-population point is closer. Nearest centroid breaks a population tie. When two candidates tie on both, completion abstains rather than guess, because a wrong locality is worse than a missing one.
+
+The whole thing is off by default. Turn it on and a Berlin address that used to resolve to nothing comes back with its locality; leave it off and resolution is byte-for-byte what it was.
+
+## Attaching the lineage
+
+A related option, `includeAncestors`, stamps each resolved node's full containment chain — county, region, country, nearest-first — onto `metadata.ancestors`. This is the move Pelias and Nominatim make as a matter of course: a single resolved place comes back carrying its whole admin ladder. It's the same gazetteer `ancestors` data the coincident-roles relation is built from, and it's also off by default.
+
+## Where this sits
+
+Hierarchy completion lives in the resolve stage as a post-walk pass. The cleaner long-term home is the [reconcile stage](./joint-decoding-walkthrough.md), whose concordance scoring already ranks parses by how well their resolved places agree in the admin hierarchy — exactly the signal that says "the region Berlin and the locality Berlin are the same place." Until joint decoding is the default decode path, the relation-driven completion bridges the gap: it recovers the dropped locality from the gazetteer without needing the classifier to have surfaced it. The coincident-roles relation and the lineage attachment are both substrates that a future concordance default would score against.
