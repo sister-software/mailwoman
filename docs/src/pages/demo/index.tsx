@@ -50,7 +50,7 @@ const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
 	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
 	{ label: "ZIP only", address: "90210" },
 	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin" },
-	{ label: "Paris (street fall-through)", address: "14, Rue des Écouffes, Paris" },
+	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris" },
 ]
 
 const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
@@ -754,11 +754,11 @@ async function runCascade(
 	type Hits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
 	const usable = (cs: Hits): Hits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
 
-	// Failure mode for a mis-tagged span. The model can label a street as a locality ("Rue des
-	// Écouffes") and emit several locality spans alongside the real city ("Paris"). Resolve them in
+	// Failure mode for a mis-tagged span. The model can label a street as a locality ("Rue du
+	// Chevaleret") and emit several locality spans alongside the real city ("Paris"). Resolve them in
 	// source order (specific → general) and prefer a hypothesis whose top hit is an EXACT name match
-	// — a real place actually called this — over a fuzzy token match ("Rue des Écouffes" → "Des
-	// Moines" via the shared "des" token). So when the specific line isn't a real place, we fall
+	// — a real place actually called this — over a fuzzy token match (a street name can token-collide
+	// with an unrelated same-named town). So when the specific line isn't a real place, we fall
 	// through to the one that is: the city. A fuzzy hit is kept only as a last-resort backstop.
 	const resolveLocality = async (regionBbox: Hits[number]["bbox"]): Promise<Hits> => {
 		let fuzzy: Hits = []
