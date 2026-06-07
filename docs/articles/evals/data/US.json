@@ -1,0 +1,20 @@
+{
+  "eval": "data/eval/external/openaddresses-us-sample.jsonl",
+  "n": 500,
+  "argmax": {
+    "localityMatch": 0.988,
+    "regionMatch": 0.994,
+    "latP50": 14.347609999999804,
+    "latP99": 45.87068199999885
+  },
+  "joint": {
+    "localityMatch": 0.992,
+    "regionMatch": 0.994,
+    "latP50": 16.24265899999955,
+    "latP99": 61.034627
+  },
+  "regressionRate": 0.004,
+  "improvementRate": 0.004,
+  "accuracyDeltaPp": 0.2,
+  "latencyP99Multiplier": 1.3305803257950586
+}
