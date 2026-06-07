@@ -6,11 +6,11 @@
  *   Mailwoman geocoder demo — fully client-side. Combines:
  *
  *   - `@mailwoman/neural-web` (onnxruntime-web, WASM SIMD with WebGPU fallback) for the BIO classifier.
- *   - `@mailwoman/resolver-wof-wasm` (sqlite-wasm) for the WOF locality / postcode lookup.
+ *   - sql.js-httpvfs (../../shared/httpvfs-resolver) range-loading the same-origin WOF + polygon DBs.
  *   - `@mailwoman/cartographer` `StyleSpecificationComposer` over the v4 protomaps basemap.
  *
- *   Static-asset bundle (~60 MB cold): `/mailwoman/model.onnx`, `/mailwoman/tokenizer.model`,
- *   `/mailwoman/wof-hot.db`. After first load the browser caches everything.
+ *   The model/tokenizer/fst come from HF (one-shot full-fetch); the resolver DBs are served
+ *   same-origin from `/mailwoman/` and range-loaded, so a session fetches a few MB of them, not 70+.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -113,12 +113,13 @@ function initialAddress(): string {
 }
 
 const DemoApp: React.FC = () => {
-	// The resolver DBs are served SAME-ORIGIN from the Pages deploy (staged there from HF at build
-	// time by the demo-assets plugin) so they can be range-loaded — Pages/Fastly is range-capable +
-	// redirect-free, and same-origin sidesteps CORS. baseUrl is "/" in prod, so this is
-	// "/mailwoman/wof-hot.db". The model/tokenizer/fst/postcodes stay on HF (one-shot full-fetch).
+	// Asset hosting split: the DBs + model + everything else come from R2 (assetUrl → the
+	// public.sister.software bucket — raw ranges, CORS, free egress). The sql.js-httpvfs WORKER must
+	// stay SAME-ORIGIN though — browsers block cross-origin `new Worker()` — so the worker + wasm are
+	// staged into the Pages deploy at `/mailwoman/sqljs/` by the demo-assets plugin and loaded from
+	// there, while the DB the worker range-reads lives on R2 (cross-origin, CORS-allowed).
 	const { siteConfig } = useDocusaurusContext()
-	const sameOriginDbUrl = (file: string) => `${siteConfig.baseUrl}mailwoman/${file}`
+	const sqljsBaseUrl = `${siteConfig.baseUrl}mailwoman/sqljs`
 	const [manifest, setManifest] = useState<ReleasesManifest | null>(null)
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
@@ -276,11 +277,13 @@ const DemoApp: React.FC = () => {
 
 				if (release?.hasWofDb) {
 					setLookupLoader(() => async () => {
-						const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
-						const { db } = await resolverWasm.loadSlimWofDatabase({
-							source: sameOriginDbUrl("wof-hot.db"),
-						})
-						return new resolverWasm.WofWasmPlaceLookup({ db })
+						// Range-load the same-origin DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
+						const { loadHttpvfsDb, WofHttpvfsPlaceLookup } = await import("../../shared/httpvfs-resolver")
+						const worker = await loadHttpvfsDb(
+							assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"),
+							sqljsBaseUrl
+						)
+						return new WofHttpvfsPlaceLookup(worker)
 					})
 				}
 
@@ -371,9 +374,12 @@ const DemoApp: React.FC = () => {
 			if (release?.hasPolygons && selectedVersion && candidate.id) {
 				try {
 					if (!polygonDbRef.current) {
-						polygonDbRef.current = loadPolygonDb(sameOriginDbUrl("wof-polygons.db"))
+						polygonDbRef.current = loadPolygonDb(
+							assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"),
+							sqljsBaseUrl
+						)
 					}
-					const geom = (await polygonDbRef.current).get(candidate.id)
+					const geom = await (await polygonDbRef.current).get(candidate.id)
 					if (geom) {
 						drawPlaceGeometry(map, geom)
 						const gb = geomBounds(geom)
@@ -707,29 +713,22 @@ function geomBounds(geometry: PlaceGeometry): { minLon: number; minLat: number; 
 	return { minLon, minLat, maxLon, maxLat }
 }
 
-/** id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. */
+/** id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. Async (range-loaded). */
 interface PolygonDb {
-	get(id: number): PlaceGeometry | null
+	get(id: number): Promise<PlaceGeometry | null>
 }
 
 /**
- * Open the crisp-polygon DB (a normal SQLite, built by scripts/build-wof-polygons.mjs) in sqlite-wasm
- * and expose an id → geometry lookup. Reuses the resolver's loader — the file is just bytes to
- * deserialize, with no schema coupling to the WOF resolver tables.
+ * Open the crisp-polygon DB (built by scripts/build-wof-polygons.mjs) via sql.js-httpvfs — a single
+ * `SELECT geom WHERE id=?` touches ~1 page, so the browser fetches a few KB of the 19 MB file rather
+ * than the whole thing. Same range-load path as the resolver DB.
  */
-async function loadPolygonDb(url: string): Promise<PolygonDb> {
-	const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
-	const { db } = await resolverWasm.loadSlimWofDatabase({ source: url })
+async function loadPolygonDb(url: string, sqljsBaseUrl: string): Promise<PolygonDb> {
+	const { loadHttpvfsDb, makeHttpvfsPolygonLookup } = await import("../../shared/httpvfs-resolver")
+	const worker = await loadHttpvfsDb(url, sqljsBaseUrl)
+	const lookup = makeHttpvfsPolygonLookup(worker)
 	return {
-		get(id: number): PlaceGeometry | null {
-			const rows = db.selectObjects("SELECT geom FROM polygons WHERE id = ?", [id]) as Array<{ geom: string }>
-			if (rows.length === 0) return null
-			try {
-				return JSON.parse(rows[0].geom) as PlaceGeometry
-			} catch {
-				return null
-			}
-		},
+		get: (id: number) => lookup.get(id) as Promise<PlaceGeometry | null>,
 	}
 }
 
