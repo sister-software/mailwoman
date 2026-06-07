@@ -162,7 +162,7 @@ class WofResolver implements Resolver {
 			lat: loc.lat,
 			lon: loc.lon,
 			confidence: 0,
-			metadata: { relationship_type: loc.relationshipType, resolver_completed: true },
+			metadata: { relationship_type: loc.relationshipType, resolver_completed: true, resolver_name: loc.name },
 		}
 		regionNode.interpretations = [...(regionNode.interpretations ?? []), interpretation]
 	}
