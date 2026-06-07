@@ -15,19 +15,10 @@
  *   build` (prod) get correct artifacts without a separate pre-build step.
  */
 
-import { existsSync, mkdirSync, statSync } from "node:fs"
+import { mkdirSync } from "node:fs"
 import { resolve } from "node:path"
 import webpack from "webpack"
-import {
-	buildFstBinary,
-	buildSlimWofDb,
-	buildWorkspaceAliases,
-	fetchArtifactFromHf,
-	readModelCard,
-	resolveWeightsArtifact,
-	stageSqlJsHttpvfs,
-	syncArtifact,
-} from "./resolve.mjs"
+import { buildWorkspaceAliases, stageSqlJsHttpvfs } from "./resolve.mjs"
 
 /**
  * @param {import("@docusaurus/types").LoadContext} context
@@ -36,7 +27,6 @@ import {
  */
 export default function demoAssetsPlugin(context) {
 	const docsDir = context.siteDir
-	const repoRoot = resolve(docsDir, "..")
 	const staticDir = resolve(docsDir, "static", "mailwoman")
 	const emptyShim = resolve(docsDir, "src", "empty-shim.js")
 
@@ -44,75 +34,16 @@ export default function demoAssetsPlugin(context) {
 		name: "demo-assets",
 
 		async loadContent() {
+			// Every asset the demo loads at runtime — model, tokenizer, fst, postcodes, the resolver DBs,
+			// releases.json — is served from the R2 bucket (see docs/src/shared/resources.tsx). The ONLY
+			// asset that must be same-origin is the sql.js-httpvfs worker (browsers block cross-origin
+			// `new Worker()`), so we stage its runtime files (worker + wasm + UMD) into the Pages deploy
+			// at `/mailwoman/sqljs/`. Nothing else lands in the Pages deploy.
 			mkdirSync(staticDir, { recursive: true })
-
-			const modelCard = readModelCard()
-			const version = modelCard?.version ?? "unknown"
-
-			console.log(`[demo-assets] Model card version: ${version}`)
-
-			// --- Model ONNX ---
-			const modelSource = resolveWeightsArtifact("model.onnx")
-			const modelDest = resolve(staticDir, "model.onnx")
-			if (modelSource) {
-				syncArtifact(modelSource, modelDest, "model.onnx")
-			} else if (!existsSync(modelDest)) {
-				console.warn("[demo-assets] model.onnx: not found in weights package and not in static/")
-			}
-
-			// --- Tokenizer ---
-			const tokenizerSource = resolveWeightsArtifact("tokenizer.model")
-			const tokenizerDest = resolve(staticDir, "tokenizer.model")
-			if (tokenizerSource) {
-				syncArtifact(tokenizerSource, tokenizerDest, "tokenizer.model")
-			} else if (!existsSync(tokenizerDest)) {
-				console.warn("[demo-assets] tokenizer.model: not found in weights package and not in static/")
-			}
-
-			// --- FST gazetteer ---
-			const fstDest = resolve(staticDir, "fst-en-US.bin")
-			if (!existsSync(fstDest)) {
-				buildFstBinary(fstDest, { repoRoot })
-			}
-
-			// --- Resolver DBs (served same-origin from Pages for sql.js-httpvfs range loading) ---
-			// Pulled from HF at build time: CI has no /mnt/playpen to build them, and serving them from
-			// the same Pages origin as the demo is what makes range-loading work (same-origin → no CORS;
-			// Pages/Fastly → range-capable + redirect-free, unlike HF's per-request-redirect resolve URL).
-			// The local buildSlimWofDb path stays as a fallback for offline dev with playpen mounted.
-			const hfVersion = `v${version}`
-			const wofDest = resolve(staticDir, "wof-hot.db")
-			if (!existsSync(wofDest)) {
-				const fetched = await fetchArtifactFromHf("wof-hot.db", wofDest, { version: hfVersion })
-				if (!fetched && !existsSync(wofDest)) buildSlimWofDb(wofDest, { repoRoot })
-			}
-			const polyDest = resolve(staticDir, "wof-polygons.db")
-			if (!existsSync(polyDest)) {
-				await fetchArtifactFromHf("wof-polygons.db", polyDest, { version: hfVersion })
-			}
-
-			// --- sql.js-httpvfs runtime assets (worker + wasm + UMD), for range-loading the DBs ---
 			const sqljsDir = resolve(staticDir, "sqljs")
 			mkdirSync(sqljsDir, { recursive: true })
 			stageSqlJsHttpvfs(sqljsDir)
-
-			// --- Report ---
-			const assets = ["model.onnx", "tokenizer.model", "fst-en-US.bin", "wof-hot.db", "wof-polygons.db"]
-			/** @type {Record<string, number>} */
-			const manifest = {}
-			for (const name of assets) {
-				const p = resolve(staticDir, name)
-				if (existsSync(p)) {
-					manifest[name] = statSync(p).size
-				}
-			}
-
-			console.log("[demo-assets] Staged assets:")
-			for (const [name, size] of Object.entries(manifest)) {
-				console.log(`  ${name}: ${(size / 1024 / 1024).toFixed(1)} MB`)
-			}
-
-			return { version, manifest }
+			return {}
 		},
 
 		async contentLoaded({ content, actions }) {
