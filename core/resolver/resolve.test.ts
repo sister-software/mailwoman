@@ -12,7 +12,7 @@ import { describe, expect, test, vi } from "vitest"
 import { decodeAsXml } from "../decoder/serialize-xml.js"
 import type { AddressNode, AddressTree, ComponentTag } from "../decoder/types.js"
 import { createWofResolver } from "./resolve.js"
-import type { CoincidentLocality, ResolvedPlace, ResolverBackend } from "./types.js"
+import type { Ancestor, CoincidentLocality, ResolvedPlace, ResolverBackend } from "./types.js"
 
 function node(
 	tag: ComponentTag,
@@ -37,10 +37,16 @@ class FakeResolverBackend implements ResolverBackend {
 	readonly calls: Array<Parameters<ResolverBackend["findPlace"]>[0]> = []
 	readonly #places: ResolvedPlace[]
 	readonly #coincident: Map<number, CoincidentLocality[]>
+	readonly #ancestors: Map<number, Ancestor[]>
 
-	constructor(places: ResolvedPlace[], coincident?: Map<number, CoincidentLocality[]>) {
+	constructor(
+		places: ResolvedPlace[],
+		coincident?: Map<number, CoincidentLocality[]>,
+		ancestors?: Map<number, Ancestor[]>
+	) {
 		this.#places = places
 		this.#coincident = coincident ?? new Map()
+		this.#ancestors = ancestors ?? new Map()
 	}
 
 	async findPlace(query: Parameters<ResolverBackend["findPlace"]>[0]): Promise<ResolvedPlace[]> {
@@ -57,6 +63,10 @@ class FakeResolverBackend implements ResolverBackend {
 
 	coincidentLocalitiesFor(adminId: number | string): CoincidentLocality[] {
 		return this.#coincident.get(Number(adminId)) ?? []
+	}
+
+	ancestors(id: number | string): Ancestor[] {
+		return this.#ancestors.get(Number(id)) ?? []
 	}
 }
 
@@ -589,5 +599,40 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(localities).toHaveLength(1)
 		expect(localities[0]!.value).toBe("Some Town")
 		expect(localities[0]!.metadata?.["resolver_synthesized"]).toBeUndefined()
+	})
+
+	// Ancestor-lineage attachment (#404). Opt-in enrichment: stamp each resolved node's containment
+	// chain onto metadata.ancestors. Off by default → byte-stable.
+	const LINEAGE = new Map<number, Ancestor[]>([
+		[
+			101727113,
+			[
+				{ id: 85688541, placetype: "region", name: "Illinois" },
+				{ id: 85633147, placetype: "country", name: "United States" },
+			],
+		],
+	])
+
+	test("includeAncestors stamps the lineage onto a resolved node (#404)", async () => {
+		const backend = new FakeResolverBackend(FIXTURE_PLACES, undefined, LINEAGE)
+		const input = tree("Illinois, Springfield", [
+			node("region", "Illinois", 0, 8, [node("locality", "Springfield", 10, 21)]),
+		])
+		const result = await createWofResolver(backend).resolveTree(input, { includeAncestors: true })
+		const locality = result.roots[0]?.children[0]
+		expect(locality?.placeId).toBe("wof:101727113")
+		expect(locality?.metadata?.["ancestors"]).toEqual([
+			{ id: 85688541, placetype: "region", name: "Illinois" },
+			{ id: 85633147, placetype: "country", name: "United States" },
+		])
+	})
+
+	test("includeAncestors is OFF by default — no ancestors metadata (#404)", async () => {
+		const backend = new FakeResolverBackend(FIXTURE_PLACES, undefined, LINEAGE)
+		const input = tree("Illinois, Springfield", [
+			node("region", "Illinois", 0, 8, [node("locality", "Springfield", 10, 21)]),
+		])
+		const result = await createWofResolver(backend).resolveTree(input)
+		expect(result.roots[0]?.children[0]?.metadata?.["ancestors"]).toBeUndefined()
 	})
 })

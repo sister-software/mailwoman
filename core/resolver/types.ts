@@ -79,6 +79,20 @@ export interface ResolverBackend {
 	 * no-ops. Synchronous: it's an in-memory map lookup once the relation is loaded.
 	 */
 	coincidentLocalitiesFor?(adminId: number | string): CoincidentLocality[]
+	/**
+	 * The ancestor lineage of a resolved place — its containment chain (county → region → country),
+	 * nearest-first. Backs {@link ResolveOpts.includeAncestors} (#404): the Pelias/Nominatim
+	 * "always-attach-the-hierarchy" enrichment. OPTIONAL — backends without it omit it, and the
+	 * attachment is skipped. Synchronous: a memoized read of the gazetteer's `ancestors` table.
+	 */
+	ancestors?(id: number | string): Ancestor[]
+}
+
+/** One link in a resolved place's containment lineage ({@link ResolverBackend.ancestors}, #404). */
+export interface Ancestor {
+	id: number | string
+	placetype: string
+	name: string
 }
 
 /**
@@ -87,8 +101,10 @@ export interface ResolverBackend {
  * disambiguates on.
  */
 export interface CoincidentLocality extends ResolvedPlace {
-	/** `city-state` / `capital-seat` / `consolidated-county` — surfaced as
-`metadata.relationship_type`. */
+	/**
+	 * `city-state` / `capital-seat` / `consolidated-county` — surfaced as
+	 * `metadata.relationship_type`.
+	 */
 	relationshipType: string
 	/** Locality population (0 when unknown) — the PRIMARY disambiguator when an admin has several. */
 	population: number
@@ -184,6 +200,15 @@ export interface ResolveOpts {
 	hierarchyCompletion?: boolean
 	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */
 	cityStateFallback?: boolean
+	/**
+	 * Attach each resolved node's ancestor lineage (#404) — the containment chain (county → region →
+	 * country) the backend's {@link ResolverBackend.ancestors} returns — onto `metadata.ancestors`.
+	 * The Pelias/Nominatim "always-attach-the-hierarchy" enrichment, so a consumer gets the full
+	 * admin ladder from a single resolved place. OFF by default: omit it and resolution is
+	 * byte-identical (and there's no extra query). Only attaches to nodes the resolver actually
+	 * resolved.
+	 */
+	includeAncestors?: boolean
 }
 
 /**

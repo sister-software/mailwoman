@@ -35,15 +35,19 @@ beforeEach(() => {
 			min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated)
 			VALUES (?, NULL, ?, ?, 'DE', ?, ?, ?, ?, ?, ?, 1, 0)`
 	)
-	// Berlin: region 910 + coincident locality 911 (city-state). Brandenburg: region 920 + far town 921.
+	// Germany 900 ⊃ Berlin region 910 ⊃ coincident locality 911 (city-state). Brandenburg: 920 + far town 921.
+	spr.run(900, "Germany", "country", 51.1, 10.4, 47.3, 5.9, 55.1, 15.0)
 	spr.run(910, "Berlin", "region", 52.52, 13.4, 52.22, 13.1, 52.82, 13.7)
 	spr.run(911, "Berlin", "locality", 52.52, 13.4, 52.42, 13.3, 52.62, 13.5)
 	spr.run(920, "Brandenburg", "region", 52.4, 13.0, 51.2, 11.8, 53.6, 14.2)
 	spr.run(921, "Brandenburg", "locality", 52.41, 11.9, 52.36, 11.85, 52.46, 11.95)
 	db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`).run(911, 3_600_000)
-	const anc = db.prepare(`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, 'region')`)
-	anc.run(911, 910)
-	anc.run(921, 920)
+	const anc = db.prepare(`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype) VALUES (?, ?, ?)`)
+	// Berlin locality 911's lineage: region 910 then country 900 (nearest-first expected).
+	anc.run(911, 910, "region")
+	anc.run(911, 900, "country")
+	anc.run(910, 900, "country")
+	anc.run(921, 920, "region")
 
 	buildCoincidentRoles(db)
 	lookup = new WofSqlitePlaceLookup({ database: db, buildFts: true })
@@ -73,6 +77,14 @@ describe("WofSqlitePlaceLookup.coincidentLocalitiesFor", () => {
 
 	test("returns [] for an unknown admin id", () => {
 		expect(lookup.coincidentLocalitiesFor(99999)).toHaveLength(0)
+	})
+
+	test("ancestors() returns the lineage nearest-first, joined with spr (#404)", () => {
+		expect(lookup.ancestors(911)).toEqual([
+			{ id: 910, placetype: "region", name: "Berlin" },
+			{ id: 900, placetype: "country", name: "Germany" },
+		])
+		expect(lookup.ancestors(99999)).toHaveLength(0)
 	})
 
 	test("returns [] gracefully when the relation table is absent", () => {

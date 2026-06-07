@@ -15,7 +15,7 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite"
 
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 
-import type { CoincidentLocality } from "@mailwoman/core/resolver"
+import type { Ancestor, CoincidentLocality } from "@mailwoman/core/resolver"
 import {
 	ADDRESS_CONVENTION_TABLE,
 	resolveConvention,
@@ -298,9 +298,13 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #countryWofIdCache = new Map<string, number | null>()
 	/** Strategy names already warned about — so an unknown name surfaces once, not once per query. */
 	readonly #warnedUnknownStrategies = new Set<string>()
-	/** Lazily-built `admin_id → coincident localities` map from the #403 relation (null until first
-use). */
+	/**
+	 * Lazily-built `admin_id → coincident localities` map from the #403 relation (null until first
+	 * use).
+	 */
 	#coincidentRolesCache: Map<number, CoincidentLocality[]> | null = null
+	/** Per-id memoized ancestor lineages (#404) — a hot chain is queried once. */
+	readonly #ancestorsCache = new Map<number, Ancestor[]>()
 
 	constructor(opts: WofSqlitePlaceLookupOpts, weights?: Partial<RankingWeights>) {
 		if (opts.database && opts.databasePath) {
@@ -460,6 +464,34 @@ use). */
 			this.#coincidentRolesCache = map
 		}
 		return this.#coincidentRolesCache.get(id) ?? []
+	}
+
+	/**
+	 * The ancestor lineage of a place — its containment chain joined with `spr` for canonical names,
+	 * ordered NEAREST-FIRST (localadmin → county → region → … → country). Backs
+	 * {@link ResolveOpts.includeAncestors} (#404). Self is excluded; memoized per id. Returns `[]`
+	 * when the place has no recorded ancestry.
+	 */
+	ancestors(id: number | string): Ancestor[] {
+		const pid = typeof id === "number" ? id : Number(id)
+		if (!Number.isFinite(pid)) return []
+		const cached = this.#ancestorsCache.get(pid)
+		if (cached) return cached
+		// Nearest-first: rank by placetype specificity (descending). Unknown placetypes sort last.
+		const rows = this.#db
+			.prepare(
+				`SELECT a.ancestor_id AS id, a.ancestor_placetype AS placetype, s.name AS name
+				FROM ancestors a JOIN spr s ON s.id = a.ancestor_id
+				WHERE a.id = ? AND a.ancestor_id != a.id
+				ORDER BY CASE a.ancestor_placetype
+					WHEN 'localadmin' THEN 6 WHEN 'borough' THEN 6 WHEN 'county' THEN 5
+					WHEN 'macrocounty' THEN 4 WHEN 'region' THEN 3 WHEN 'macroregion' THEN 2
+					WHEN 'country' THEN 1 ELSE 0 END DESC`
+			)
+			.all(pid) as unknown as Array<{ id: number; placetype: string; name: string }>
+		const lineage: Ancestor[] = rows.map((r) => ({ id: r.id, placetype: r.placetype, name: r.name }))
+		this.#ancestorsCache.set(pid, lineage)
+		return lineage
 	}
 
 	/**

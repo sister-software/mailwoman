@@ -62,6 +62,12 @@ const resolver = await createWofResolver({
 
 // Resolve a parsed tree
 const resolvedTree: AddressTree = await resolver.resolveTree(tree)
+
+// Opt-in resolver enrichments (both off by default → byte-stable):
+//   hierarchyCompletion — recover the dropped locality of a dual-role place (Berlin, Milano)
+//   includeAncestors    — stamp each resolved node's containment chain onto metadata.ancestors
+// See concepts/dual-role-places.md.
+const enriched = await resolver.resolveTree(tree, { hierarchyCompletion: true, includeAncestors: true })
 ```
 
 ## Output types
