@@ -37,4 +37,4 @@ The through-line: the joint path was being asked to type spans the rule layer co
 
 So Phase II did its job and then some. The question Phase I left open — "can the phrase grouper ever cover multi-word spans well enough to flip?" — now has a measured yes, and the residual is a short, named list rather than a 34% cliff.
 
-_Harness: `scripts/eval/joint-vs-argmax.ts` (regression rows dumped via `MW_DUMP_REGRESSIONS=1`). Per-locale JSON under [`./data/`](./data/)._
+_Harness: `scripts/eval/joint-vs-argmax.ts` (regression rows dumped via `MW_DUMP_REGRESSIONS=1`). Per-locale JSON under `docs/articles/evals/data/`._
