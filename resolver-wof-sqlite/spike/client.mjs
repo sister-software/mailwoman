@@ -7,7 +7,13 @@
  * `/node_modules/sql.js-httpvfs/dist/...` (relative paths from the server root).
  */
 
-import { createDbWorker } from "/node_modules/sql.js-httpvfs/dist/index.js"
+// sql.js-httpvfs@0.8.x ships a webpack UMD bundle, not an ES module — index.html loads it as a
+// classic script that assigns `createDbWorker` onto window. (A bare ESM `import` from the dist
+// fails with "does not provide an export named 'createDbWorker'".)
+const { createDbWorker } = /** @type {{ createDbWorker: Function }} */ (window)
+if (typeof createDbWorker !== "function") {
+	throw new Error("createDbWorker not on window — sql.js-httpvfs UMD bundle failed to load")
+}
 
 const logEl = document.getElementById("log")
 const lines = []

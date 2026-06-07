@@ -40,10 +40,10 @@ export interface ResolvedPlace {
 	 */
 	score: number
 	/**
-	 * Set when the resolver detected that the address's postcode and its parsed locality name point to
-	 * geographically different places (a transposed / wrong-for-the-city postcode). Surfaced onto the
-	 * resolved node's metadata as `postcode_city_mismatch` so callers can lower confidence or flag the
-	 * conflict instead of silently mislocating.
+	 * Set when the resolver detected that the address's postcode and its parsed locality name point
+	 * to geographically different places (a transposed / wrong-for-the-city postcode). Surfaced onto
+	 * the resolved node's metadata as `postcode_city_mismatch` so callers can lower confidence or
+	 * flag the conflict instead of silently mislocating.
 	 */
 	mismatch?: boolean
 }
@@ -70,6 +70,45 @@ export interface ResolverBackend {
 		postcode?: string
 		limit?: number
 	}): Promise<ResolvedPlace[]>
+	/**
+	 * The dual-role locality (or localities) coincident with an admin place id, from the precomputed
+	 * coincident-roles relation (#403). Drives {@link ResolveOpts.hierarchyCompletion}: when the parse
+	 * drops the locality of a city-state / capital-seat region, the resolver completes it from here
+	 * instead of re-querying. OPTIONAL — backends without the relation omit it, and completion
+	 * no-ops. Synchronous: it's an in-memory map lookup once the relation is loaded.
+	 */
+	coincidentLocalitiesFor?(adminId: number | string): CoincidentLocality[]
+	/**
+	 * The ancestor lineage of a resolved place — its containment chain (county → region → country),
+	 * nearest-first. Backs {@link ResolveOpts.includeAncestors} (#404): the Pelias/Nominatim
+	 * "always-attach-the-hierarchy" enrichment. OPTIONAL — backends without it omit it, and the
+	 * attachment is skipped. Synchronous: a memoized read of the gazetteer's `ancestors` table.
+	 */
+	ancestors?(id: number | string): Ancestor[]
+}
+
+/** One link in a resolved place's containment lineage ({@link ResolverBackend.ancestors}, #404). */
+export interface Ancestor {
+	id: number | string
+	placetype: string
+	name: string
+}
+
+/**
+ * A dual-role locality returned by {@link ResolverBackend.coincidentLocalitiesFor} — a resolved
+ * place (so it can decorate a node directly) plus the relation metadata the completion step
+ * disambiguates on.
+ */
+export interface CoincidentLocality extends ResolvedPlace {
+	/**
+	 * `city-state` / `capital-seat` / `consolidated-county` — surfaced as
+	 * `metadata.relationship_type`.
+	 */
+	relationshipType: string
+	/** Locality population (0 when unknown) — the PRIMARY disambiguator when an admin has several. */
+	population: number
+	/** Centroid distance (km) admin↔locality from the relation — the population tiebreak. */
+	distanceKm: number
 }
 
 /**
@@ -122,6 +161,55 @@ export interface ResolveOpts {
 	 * break when locale-aware resolvers land in 4.4+.
 	 */
 	locale?: string
+	/**
+	 * Optional postcode-anchor country posterior (#369) — a `{ countryCode: probability }` map
+	 * derived from the address's postcode (e.g. `@mailwoman/neural`'s `extractPostcodeAnchors`). When
+	 * provided, LOCALITY candidates are re-ranked by `score + anchorWeight *
+	 * posterior[candidate.country]` before the top is picked, so a postcode that pins the country can
+	 * pull the right-country place over a higher-BM25 foreign namesake (the "Berlin DE vs Berlin US"
+	 * class the #59 anchor→resolver harness measured). OFF by default — omit it and resolution is
+	 * byte-identical. Country signal only, so it touches locality lookups only; admin parents already
+	 * carry country via `parentId`.
+	 */
+	anchorPosterior?: Record<string, number>
+	/**
+	 * Weight on the anchor's country posterior in the locality re-rank (#369). Default 2.0 (the value
+	 * the harness swept). Only consulted when `anchorPosterior` is set.
+	 */
+	anchorWeight?: number
+	/**
+	 * Recover the dropped locality in a DUAL-ROLE-place address (#405, epic #402). Many places occupy
+	 * multiple admin tiers under one name — city-states (Berlin/Hamburg/Bremen = city == state),
+	 * capital-seat provinces (Milano, Madrid), UK unitary authorities — and in the
+	 * international-order layout `…, Berlin, Berlin <PC>` the parser labels one token the region and
+	 * drops the locality entirely, leaving a region but no locality (955/1500 Berlin rows resolved to
+	 * nothing on v0.9.4).
+	 *
+	 * When this is on AND a region resolved AND the tree has NO locality node, the resolver consults
+	 * the backend's precomputed coincident-roles relation
+	 * ({@link ResolverBackend.coincidentLocalitiesFor}, #403) for a same-name coincident locality and
+	 * synthesizes a node from it. The relation is the gazetteer's own structure (same name +
+	 * descendant + centroid-coincidence, derived at build time), so the runtime is an O(1) membership
+	 * lookup — no magic distance constant. When an admin maps to several same-name localities, the
+	 * most populous wins (the principal city), nearest-centroid breaks a population tie, and a
+	 * genuine tie ABSTAINS (no completion) rather than guess. The synthesized node carries
+	 * `metadata.resolver_synthesized = true` (+ `relationship_type`) — it has no span in the raw
+	 * input. ON by default (#402): it only fires for a dual-role region whose locality the parser
+	 * dropped, and no-ops entirely when the backend has no relation (the browser WASM resolver, or a
+	 * gazetteer without the `coincident_roles` table). Pass `false` to opt out.
+	 */
+	hierarchyCompletion?: boolean
+	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */
+	cityStateFallback?: boolean
+	/**
+	 * Attach each resolved node's ancestor lineage (#404) — the containment chain (county → region →
+	 * country) the backend's {@link ResolverBackend.ancestors} returns — onto `metadata.ancestors`.
+	 * The Pelias/Nominatim "always-attach-the-hierarchy" enrichment, so a consumer gets the full
+	 * admin ladder from a single resolved place. OFF by default: omit it and resolution is
+	 * byte-identical (and there's no extra query). Only attaches to nodes the resolver actually
+	 * resolved.
+	 */
+	includeAncestors?: boolean
 }
 
 /**

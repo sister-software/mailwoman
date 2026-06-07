@@ -26,8 +26,10 @@ export interface MailwomanClassifierLike {
 export interface MailwomanLookupLike {
 	findPlace: (q: {
 		text: string
-		placetype?: "locality" | "postalcode" | undefined
+		placetype?: "locality" | "postalcode" | "region" | undefined
 		country?: string
+		/** Point-in-bbox filter — constrains candidates to a parsed region/state's bounds. */
+		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		limit?: number
 	}) => Promise<
 		Array<{
@@ -40,6 +42,9 @@ export interface MailwomanLookupLike {
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		}>
 	>
+	/** Dual-role partner roles for a resolved place id (#402). Optional — absent on lookups built from a
+	 * slim DB that predates the `coincident_roles` relation. */
+	coincidentRolesFor?: (placeId: number) => Promise<DualRole[]>
 }
 
 export interface KindResult {
@@ -81,6 +86,21 @@ export interface DemoResult {
 	timing?: StageTiming
 	fstActive: boolean
 	fstProvenance?: FstProvenanceLike | null
+	/** Dual-role (#402): the additional admin tier(s) the resolved place also fulfils (city-state etc.). */
+	dualRoles?: DualRole[]
+}
+
+/**
+ * One additional admin role a resolved place ALSO fulfils — the dual-role / city-state relation
+ * (#402). Berlin resolves as a locality but `role: "region"` here surfaces that it is also a federal
+ * state. `relationshipType` is the gazetteer-derived class (`city-state`, `capital-seat`, …).
+ */
+export interface DualRole {
+	id: number
+	name: string
+	placetype: string
+	relationshipType: string
+	role: "region" | "locality"
 }
 
 export interface ResolvedHit {
@@ -93,10 +113,15 @@ export interface ResolvedHit {
 	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 }
 
-const HF_BUCKET_RESOLVE_URL = "https://huggingface.co/buckets/sister-software/mailwoman/resolve/"
+// All demo assets are served from our Cloudflare R2 bucket (mailwoman-public) on a custom domain.
+// R2 + Cloudflare gives a stable clean URL, raw byte ranges (no gzip mangling), configurable CORS,
+// low RTT, and free egress — the combination GitHub Pages (force-gzips ranges) and HF (per-request
+// presigned redirect) couldn't. The DBs are range-loaded via sql.js-httpvfs from here; the rest is
+// one-shot full-fetch. Mirrors the old HF key layout, so this was a base-URL swap.
+const ASSET_BASE_URL = "https://public.sister.software/mailwoman/"
 
 export function assetUrl(locale: string, version: string, filename: string): string {
-	return `${HF_BUCKET_RESOLVE_URL}${locale}/${version}/${filename}`
+	return `${ASSET_BASE_URL}${locale}/${version}/${filename}`
 }
 
 export async function loadFstGazetteer(

@@ -1,0 +1,56 @@
+# Conformal coordinate intervals (2026-06-07)
+
+A coverage guarantee on *where* a resolved address actually is. Companion to the [isotonic
+calibration](./2026-06-07-isotonic-calibration.md) work — calibration tells you how much to trust the
+*label*; this tells you the *radius* the true point sits in.
+
+## The question
+
+When the resolver places an address at a locality, it returns that locality's centroid. The honest
+follow-up question is not "is the name right" but "how far is the real doorstep from the point we
+returned, and can we put a *guaranteed* bound on it." A calibrated `conf=` answers the first kind of
+question; it says nothing about distance on the ground.
+
+## Method
+
+Split conformal regression, no distributional assumption. For every row the resolver placed:
+
+- nonconformity score `s = haversine(gold point, resolved locality centroid)`.
+- split the scores into a calibration half and a test half (seeded).
+- for a target coverage `1 − α`, the radius `R(α)` is the conformal quantile of the calibration
+  scores — the `ceil((1 − α)(n + 1))`-th smallest. Output a circle of that radius around the resolved
+  centroid and the true point falls inside it with marginal probability at least `1 − α`.
+- check it: the fraction of *test* scores at or under `R(α)` should land on `1 − α`.
+
+It runs offline over an `oa-resolver-eval --out-resolved` dump plus the admin gazetteer's centroids —
+no model in the loop. Coverage is conditional on the resolver actually placing the row; rows it
+declined to place are reported as an abstention rate, not silently dropped.
+
+## Results
+
+Three locales off the night's resolved dumps (seed 20260607, 50/50 split). Realized coverage tracks
+the target everywhere, so the guarantee holds in practice and the radii are honest:
+
+```
+locale   resolved   90% radius (realized)   95% radius (realized)
+FR        98.7%       5.49 km  (0.893)        8.16 km  (0.954)
+NL        99.0%       4.64 km  (0.903)        7.60 km  (0.949)
+DE        65.2%      14.74 km  (0.895)       19.48 km  (0.952)
+```
+
+Read the French row as: when we place a French address at a locality, the real point is within
+5.49 km of it nine times in ten — and that "nine times in ten" is measured, not hoped for (0.893).
+
+Two things fall out of the table for free. France and the Netherlands resolve nearly everything
+(~99%) into tight circles; Germany resolves only 65% and into a circle three times wider. That
+34.8% German abstention is not noise — it is the Berlin / Hamburg / Bremen city-state rows where the
+parser drops the locality entirely ([#387](https://github.com/sister-software/mailwoman/issues/387)),
+surfacing here a second time through a completely independent lens. The wider German radius is the
+genuine city-centroid-to-doorstep distance for the rows that *do* resolve, not a modelling failure.
+
+## Where it lives
+
+`scripts/eval/conformal-coord.py`, with a `--self-test` that validates the conformal math on synthetic
+scores (realized coverage within 0.003 of target at 80 / 90 / 95%). The radii are model-version
+specific — re-run per model. The demo can draw `R(α)` as a circle, which is also the natural way to
+show genuine ambiguity ("could be either Berlin") instead of a false-precision pin.

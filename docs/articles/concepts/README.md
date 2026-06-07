@@ -25,6 +25,7 @@ Additional articles:
 
 - [Joint decoding walkthrough](./joint-decoding-walkthrough.md) — how the reconciler picks coherent interpretations
 - [Reconcile empty-parse bonus](./reconcile-empty-parse-bonus.md) — handling the "model gives up" failure mode
+- [Dual-role places](./dual-role-places.md) — completing the dropped locality of a city-state or capital-seat province
 - [Synthetic corpus validation](./synthetic-corpus-validation.md) — how we validate LLM-generated training data
 - [DeepSeek reasoning budget](./deepseek-reasoning-budget.md) — the adversarial corpus generation pipeline
 - [Staged pipeline contract](./staged-pipeline-contract.md) — implementer-facing TypeScript contracts

@@ -91,7 +91,15 @@
 	"files": {
 		"model": "model.onnx",
 		"tokenizer": "tokenizer.model",
-		"model_card": "model-card.json"
+		"model_card": "model-card.json",
+		"calibration": "calibration.json",
+		"calibration_per_locale": "calibration-per-locale.json"
+	},
+	"calibration": {
+		"method": "isotonic-regression (PAVA) over per-span softmax confidence; OPT-IN via core/decoder createCalibrator",
+		"held_out_ece_raw": 0.0673,
+		"held_out_ece_calibrated": 0.0035,
+		"note": "calibration.json is the global table; calibration-per-locale.json carries per-locale tables (the global table under-serves DE/NL). Apply via @mailwoman/core/decoder's createCalibrator; default parse output is byte-stable when omitted."
 	},
 	"base_relpath": "/data/output-v060/checkpoints/step-100000"
 }

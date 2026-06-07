@@ -1,0 +1,59 @@
+---
+sidebar_position: 31
+title: Confidence calibration
+tags:
+  - concepts
+  - neural
+  - calibration
+  - eval
+---
+
+# Confidence calibration
+
+Every span the parser emits carries a number: `conf="0.94"` on the locality, `conf="0.81"` on the street. You're going to want to do something with that number. Auto-accept the parses you're sure of, route the shaky ones to a human, lower a resolver's trust when the parser is hedging. Before you can lean on it, there's one question worth answering honestly: when the model says it's 94% sure, is it actually right 94% of the time?
+
+For a long while, ours wasn't.
+
+## The forecaster's promise
+
+Think about a weather forecaster. A good one who says "70% chance of rain" should be right on about seven of every ten days they say it. That's the whole contract: the number means what it says. If it rains on nineteen of every twenty "70%" days, the forecaster is sandbagging; if it rains on half, they're overselling. Either way you stop trusting the percentage, and the percentage was the useful part.
+
+A neural classifier makes the same promise implicitly, every time it hands you a softmax probability. And like a lot of cross-entropy-trained models, ours quietly broke it: confident in some bands, timid in others, with no single knob that lined the number up with reality.
+
+We measured the gap with Expected Calibration Error. Bucket the predictions by stated confidence, and in each bucket compare the average confidence to how often those predictions were actually right. Average the gaps, weighted by how many predictions land in each bucket. Zero is a forecaster you can trust. Ours sat around 0.067, about seven points of slack between what the model claimed and what it delivered.
+
+## A correction sticker, not a new model
+
+The fix doesn't touch the model. It's the same move you'd make with a cheap kitchen thermometer that reads ten degrees low. You don't crack it open and re-machine the probe; you tape a little card to the handle that says "reads 340, it's really 350."
+
+We build that card by running the shipped model over a pile of addresses where we already know the answer, watching where its stated confidence drifts from how often it turns out correct, and fitting a lookup table that translates raw confidence into an honest one. The fit is _isotonic_, which is a fancy word for a simple promise: the translation never runs backwards, so a raw 0.9 always maps to at least as much corrected confidence as a raw 0.8. Twenty bins, monotone, nothing exotic. And we calibrate the number you actually read, the per-span `conf=` aggregated across a span's tokens, rather than some internal per-token probability you'd never see.
+
+The result, measured on addresses the fit never saw: ECE 0.067 → 0.0035. The Brier score, another honesty measure, drops from 0.034 to 0.027. The `conf=` now means roughly what it says.
+
+## Where the honesty lives
+
+Two details keep this from being a number that flatters itself.
+
+First, we fit on one slice of data and report on another. Grading a calibrator on the same examples you tuned it on is like a forecaster grading last week's forecasts after he's already seen the weather; the score comes out better than the future will. So every number above is measured on a held-out 20% the fit never touched.
+
+Second, the calibration set is half OpenAddresses (real, government-sourced addresses the model never trained on) and half training-corpus rows. The corpus half is in-domain, so the model runs a touch optimistic there; the OpenAddresses half is the genuinely held-out, real-world signal. We report the OpenAddresses-only number next to the combined one (0.071 → 0.0067) precisely so that optimism stays visible instead of getting averaged away. Trust the OpenAddresses number more. We'd rather hand it to you than bury it.
+
+## It's off by default
+
+Calibration is opt-in. The default parse output is byte-for-byte what it was before, because silently rewriting the `conf=` values would break anything downstream that pinned to them. So the lookup table ships as a small JSON, and a caller who wants calibrated confidence builds a calibrator and passes it in:
+
+```ts
+import { createCalibrator } from "@mailwoman/core/decoder"
+import table from "../data/eval/calibration/isotonic-en-us-v4.0.0.json"
+
+const calibrate = createCalibrator(table)
+const tree = await classifier.parse(input, { calibrate })
+```
+
+Leave it out and you get today's numbers, unchanged.
+
+## Why bother
+
+A calibrated `conf=` is the difference between "the model felt good about this" and "this is right about 94% of the time." The first is a vibe. The second is something you can build a threshold on, accept-above-0.95 and review-the-rest, and have the threshold mean what you set it to. That's the entire reason to put a number on the output: so you can act on it without re-deriving the model's mood every time.
+
+The pipeline that produced the table (build the set, score the model, fit the curve) lives in `scripts/eval/`, and re-running it for a new model is three commands. The full reliability tables and methodology are in the [calibration eval report](../evals/2026-06-07-isotonic-calibration.md).

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 export * from "./build-tree.js"
+export * from "./calibration.js"
 export * from "./containment.js"
 export * from "./proposals-to-tree.js"
 export * from "./serialize-json.js"

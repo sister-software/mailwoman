@@ -1,5 +1,5 @@
 import CodeBlock from "@theme/CodeBlock"
-import { useCallback, useState } from "react"
+import { Fragment, useCallback, useState } from "react"
 import { DemoResult } from "../../shared/resources.tsx"
 import { CandidatePicker } from "../CandidatePicker/CandidatePicker.tsx"
 import { FailureDiagnostic } from "../FailureDiagnostic/FailureDiagnostic.tsx"
@@ -175,6 +175,25 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 							<dt>score</dt>
 							<dd>{selected.score.toFixed(3)}</dd>
 						</dl>
+						{result.dualRoles && result.dualRoles.length > 0 ? (
+							<p
+								style={{
+									margin: "0.5rem 0 0",
+									padding: "0.4rem 0.6rem",
+									borderRadius: "6px",
+									background: "var(--ifm-color-info-contrast-background, rgba(54, 122, 246, 0.1))",
+									fontSize: "0.9rem",
+								}}
+							>
+								🏛️ <strong>Dual-role place.</strong> {selected.name} also resolves as{" "}
+								{result.dualRoles.map((r, i) => (
+									<Fragment key={`${r.role}-${r.id}`}>
+										{i > 0 ? ", " : ""}a <strong>{r.role}</strong> ({r.relationshipType.replace(/-/g, " ")})
+									</Fragment>
+								))}
+								.
+							</p>
+						) : null}
 					</div>
 					{result.candidates.length > 1 ? (
 						<CandidatePicker

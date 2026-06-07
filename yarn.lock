@@ -4544,6 +4544,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/neural-web": "workspace:*"
+    "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
     "@mdx-js/react": "npm:^3.1.1"
@@ -4559,6 +4560,7 @@ __metadata:
     react: "npm:^19.2.6"
     react-dom: "npm:^19.2.6"
     react-map-gl: "npm:^8.1.1"
+    sql.js-httpvfs: "npm:^0.8.12"
     typescript: "npm:^6.0.3"
   languageName: unknown
   linkType: soft
@@ -4639,6 +4641,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     kysely: "npm:^0.29.2"
   bin:
+    mailwoman-wof-build-coincident-roles: ./out/build-coincident-roles-cli.js
     mailwoman-wof-build-fts: ./out/build-fts-cli.js
     mailwoman-wof-build-slim: ./out/build-slim-cli.js
   languageName: unknown

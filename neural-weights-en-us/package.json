@@ -11,6 +11,8 @@
 		"model.onnx",
 		"tokenizer.model",
 		"model-card.json",
+		"calibration.json",
+		"calibration-per-locale.json",
 		"README.md"
 	],
 	"publishConfig": {

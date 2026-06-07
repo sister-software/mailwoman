@@ -11,8 +11,9 @@
  *   not the MA one.
  */
 
-import type { AddressNode, AddressTree, ComponentTag } from "../decoder/types.js"
+import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "../decoder/types.js"
 import {
+	type CoincidentLocality,
 	DEFAULT_PLACETYPE_MAP,
 	type PlacetypeMap,
 	type ResolvedPlace,
@@ -37,13 +38,53 @@ interface ResolutionState {
 	candidatesPerLookup: number
 	defaultCountry?: string
 	parentFallback: boolean
-	/** The address's postcode string, extracted once up front, passed to locality lookups so a
-	 * coordinate-first backend can inject postcode-proximal locality candidates. */
+	/**
+	 * The address's postcode string, extracted once up front, passed to locality lookups so a
+	 * coordinate-first backend can inject postcode-proximal locality candidates.
+	 */
 	postcode?: string
+	/** Postcode-anchor country posterior (#369). Undefined = no re-rank (byte-stable default). */
+	anchorPosterior?: Record<string, number>
+	/** Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set. */
+	anchorWeight: number
+	/** Dual-role hierarchy completion (#405). Off by default → byte-stable. */
+	hierarchyCompletion: boolean
+	/** Attach ancestor lineage to each resolved node (#404). Off by default → byte-stable. */
+	includeAncestors: boolean
+	/**
+	 * Set while resolving when ANY tree node maps to the `locality` placetype (resolved or not) — the
+	 * completion only fires when the parser emitted no locality at all, never to override one.
+	 */
+	localityNodePresent: boolean
+	/** The first region that resolved (its place — for the coincident-roles lookup). */
+	resolvedRegion: ResolvedPlace | null
+	/**
+	 * The decorated region NODE that produced {@link resolvedRegion} — completion pushes the locality
+	 * interpretation onto it in place (no synthesized sibling).
+	 */
+	resolvedRegionNode: AddressNode | null
 }
 
-/** Find the first postcode value anywhere in the tree (a one-shot pre-scan; postcode and locality are
- * siblings, so the top-down walk wouldn't otherwise let the locality lookup see it). */
+/**
+ * Pick the completion locality when an admin maps to several coincident same-name candidates
+ * (#405). Population is the PRIMARY signal — the principal city is the populous one, and it can sit
+ * FARTHER from the admin centroid than a tiny same-name hamlet (the Niigata case from #403).
+ * Nearest centroid breaks a population tie; a genuine tie (same population AND distance) ABSTAINS
+ * rather than guess.
+ */
+function pickCompletion(candidates: readonly CoincidentLocality[]): CoincidentLocality | null {
+	if (candidates.length === 0) return null
+	if (candidates.length === 1) return candidates[0]!
+	const ranked = [...candidates].sort((a, b) => b.population - a.population || a.distanceKm - b.distanceKm)
+	const [first, second] = ranked
+	if (first!.population === second!.population && first!.distanceKm === second!.distanceKm) return null
+	return first!
+}
+
+/**
+ * Find the first postcode value anywhere in the tree (a one-shot pre-scan; postcode and locality
+ * are siblings, so the top-down walk wouldn't otherwise let the locality lookup see it).
+ */
 function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
 	const stack = [...roots]
 	while (stack.length > 0) {
@@ -72,13 +113,57 @@ class WofResolver implements Resolver {
 			defaultCountry: opts.defaultCountry,
 			parentFallback: opts.parentFallback ?? true,
 			postcode: firstPostcodeValue(tree.roots),
+			anchorPosterior: opts.anchorPosterior,
+			anchorWeight: opts.anchorWeight ?? 2.0,
+			// Default-ON (#402): completion only fires for a dual-role region whose locality the parser
+			// dropped, and no-ops entirely when the backend has no relation (the browser WASM resolver, or
+			// a gazetteer without `coincident_roles`). Pass `hierarchyCompletion: false` to opt out.
+			// `cityStateFallback` is the #387 alias that #405 generalized — still honored.
+			hierarchyCompletion: opts.hierarchyCompletion ?? opts.cityStateFallback ?? true,
+			includeAncestors: opts.includeAncestors ?? false,
+			localityNodePresent: false,
+			resolvedRegion: null,
+			resolvedRegionNode: null,
 		}
 
 		const newRoots: AddressNode[] = []
 		for (const root of tree.roots) {
 			newRoots.push(await this.#walk(root, /* parentResolved */ null, state))
 		}
+
+		// Dual-role hierarchy completion (#405/#415). Only when enabled, a region resolved, and the parser
+		// emitted NO locality — record the dropped locality as a SECONDARY ROLE (an interpretation) on the
+		// resolved region node, from the backend's precomputed coincident-roles relation (#403). One node,
+		// one span, two roles — no synthesized sibling. See ResolveOpts.hierarchyCompletion.
+		if (state.hierarchyCompletion && state.resolvedRegion && state.resolvedRegionNode && !state.localityNodePresent) {
+			this.#completeRegionRole(state.resolvedRegion, state.resolvedRegionNode)
+		}
 		return { raw: tree.raw, roots: newRoots }
+	}
+
+	/**
+	 * Record a dropped dual-role locality as a `locality` INTERPRETATION on the resolved region node
+	 * (#415, generalizes #405's synthesized node). Consults `coincidentLocalitiesFor(regionId)` (O(1)
+	 * map lookup — no distance math, no backend query), picks the principal city
+	 * ({@link pickCompletion}: population-primary, distance tiebreak, abstain on a genuine tie), and
+	 * appends an interpretation to `regionNode.interpretations`. No-op when the backend has no
+	 * relation, the region isn't a dual-role place, or it abstains. The region node's primary role
+	 * stays `region`; the locality rides alongside.
+	 */
+	#completeRegionRole(region: ResolvedPlace, regionNode: AddressNode): void {
+		if (typeof region.id !== "number" || !this.#backend.coincidentLocalitiesFor) return
+		const loc = pickCompletion(this.#backend.coincidentLocalitiesFor(region.id))
+		if (!loc) return
+		const interpretation: Interpretation = {
+			tag: "locality",
+			placeId: `wof:${loc.id}`,
+			sourceId: `${loc.placetype}:${loc.id}`,
+			lat: loc.lat,
+			lon: loc.lon,
+			confidence: 0,
+			metadata: { relationship_type: loc.relationshipType, resolver_completed: true, resolver_name: loc.name },
+		}
+		regionNode.interpretations = [...(regionNode.interpretations ?? []), interpretation]
 	}
 
 	async #walk(node: AddressNode, parentResolved: ResolvedPlace | null, state: ResolutionState): Promise<AddressNode> {
@@ -86,12 +171,27 @@ class WofResolver implements Resolver {
 		const decorated: AddressNode = { ...node, children: [] }
 
 		const placetype = state.placetypeMap[node.tag as ComponentTag]
+		// Track locality presence for hierarchy completion (#405): completion must NOT fire if the parser
+		// already emitted a locality node (even one that failed to resolve) — it only fills a genuine
+		// gap. Cheap and always-on; only consulted when hierarchyCompletion is set.
+		if (placetype === "locality") state.localityNodePresent = true
 		let resolved: ResolvedPlace | null = null
 		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length > 0) {
 			const picked = await this.#lookupAndPick(node, placetype, parentResolved, state)
 			if (picked) {
 				resolved = picked.top
 				decorateNode(decorated, picked.top, picked.alternatives)
+				// Lineage attachment (#404): stamp the resolved place's ancestor chain onto metadata. Opt-in
+				// + only when the backend supplies it, so the default stays byte-identical (no extra query).
+				if (state.includeAncestors && this.#backend.ancestors) {
+					decorated.metadata = { ...(decorated.metadata ?? {}), ancestors: this.#backend.ancestors(picked.top.id) }
+				}
+				// Capture the first resolved region (place + node) for hierarchy completion — the locality
+				// interpretation is pushed onto this node in the post-walk pass.
+				if (placetype === "region" && state.resolvedRegion === null) {
+					state.resolvedRegion = picked.top
+					state.resolvedRegionNode = decorated
+				}
 			}
 		}
 
@@ -148,9 +248,23 @@ class WofResolver implements Resolver {
 		}
 
 		if (candidates.length === 0) return null
-		const top = candidates[0]!
+		// Postcode-anchor re-rank (#369): when a country posterior is supplied (from the address's
+		// postcode), boost candidates by `anchorWeight * posterior[candidate.country]` and re-sort, so a
+		// postcode that pins the country pulls the right-country place over a higher-BM25 foreign namesake
+		// (the "Berlin DE vs Berlin US" class the #59 harness measured). No-op when `anchorPosterior` is
+		// undefined (the default) → byte-identical resolution. Locality-scoped: the posterior is a country
+		// signal, and admin parents already carry country via `parentId`.
+		let ranked = candidates
+		if (state.anchorPosterior && placetype === "locality" && candidates.length > 1) {
+			const post = state.anchorPosterior
+			const w = state.anchorWeight
+			ranked = [...candidates].sort(
+				(a, b) => b.score + w * (post[b.country] ?? 0) - (a.score + w * (post[a.country] ?? 0))
+			)
+		}
+		const top = ranked[0]!
 		if (top.score < state.minWinningScore) return null
-		return { top, alternatives: candidates.slice(1) }
+		return { top, alternatives: ranked.slice(1) }
 	}
 }
 

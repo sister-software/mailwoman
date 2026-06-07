@@ -5,11 +5,11 @@
  *   Mailwoman geocoder demo — fully client-side. Combines:
  *
  *   - `@mailwoman/neural-web` (onnxruntime-web, WASM SIMD with WebGPU fallback) for the BIO classifier.
- *   - `@mailwoman/resolver-wof-wasm` (sqlite-wasm) for the WOF locality / postcode lookup.
+ *   - sql.js-httpvfs (../../shared/httpvfs-resolver) range-loading the same-origin WOF + polygon DBs.
  *   - `@mailwoman/cartographer` `StyleSpecificationComposer` over the v4 protomaps basemap.
  *
- *   Static-asset bundle (~60 MB cold): `/mailwoman/model.onnx`, `/mailwoman/tokenizer.model`,
- *   `/mailwoman/wof-hot.db`. After first load the browser caches everything.
+ *   The model/tokenizer/fst come from HF (one-shot full-fetch); the resolver DBs are served
+ *   same-origin from `/mailwoman/` and range-loaded, so a session fetches a few MB of them, not 70+.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -27,6 +27,7 @@ import { ResultPanel } from "../../components/ResultPanel/ResultPanel.tsx"
 import {
 	assetUrl,
 	DemoResult,
+	DualRole,
 	FstMatcherLike,
 	FstProvenanceLike,
 	loadFstGazetteer,
@@ -49,6 +50,7 @@ const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
 	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
 	{ label: "ZIP only", address: "90210" },
 	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin" },
+	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris" },
 ]
 
 const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
@@ -64,6 +66,8 @@ interface ReleaseInfo {
 	hasWofDb: boolean
 	/** Anchor-trained bundle (#239/#240) — ships postcode-*.bin so the demo feeds the postcode anchor. */
 	hasAnchor?: boolean
+	/** Ships a `wof-polygons.db` sibling — the demo draws the crisp admin boundary instead of the bbox. */
+	hasPolygons?: boolean
 }
 
 interface ReleasesManifest {
@@ -109,6 +113,13 @@ function initialAddress(): string {
 }
 
 const DemoApp: React.FC = () => {
+	// Asset hosting split: the DBs + model + everything else come from R2 (assetUrl → the
+	// public.sister.software bucket — raw ranges, CORS, free egress). The sql.js-httpvfs WORKER must
+	// stay SAME-ORIGIN though — browsers block cross-origin `new Worker()` — so the worker + wasm are
+	// staged into the Pages deploy at `/mailwoman/sqljs/` by the demo-assets plugin and loaded from
+	// there, while the DB the worker range-reads lives on R2 (cross-origin, CORS-allowed).
+	const { siteConfig } = useDocusaurusContext()
+	const sqljsBaseUrl = `${siteConfig.baseUrl}mailwoman/sqljs`
 	const [manifest, setManifest] = useState<ReleasesManifest | null>(null)
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
@@ -127,6 +138,10 @@ const DemoApp: React.FC = () => {
 	const mapContainerRef = useRef<HTMLDivElement>(null)
 	const mapRef = useRef<MapLibreMap | null>(null)
 	const markerRef = useRef<{ remove: () => void } | null>(null)
+	// Lazily-loaded crisp-polygon DB (id → simplified admin geometry). Loaded once per version on the
+	// first resolve, reset when the selected version changes. Held as the in-flight promise so concurrent
+	// resolves share one fetch.
+	const polygonDbRef = useRef<Promise<PolygonDb> | null>(null)
 
 	// Sync ?q= when the operator edits the address. replaceState avoids polluting back-button
 	// history with every keystroke; only the latest state lands in the URL.
@@ -220,6 +235,7 @@ const DemoApp: React.FC = () => {
 				setFstProvenance(null)
 				setLookup(null)
 				setLookupLoader(null)
+				polygonDbRef.current = null
 				setResult(null)
 				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
 
@@ -230,12 +246,13 @@ const DemoApp: React.FC = () => {
 					modelCardUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model-card.json"),
 					runner: { useWebGpu: !forceWasm },
 					// Anchor-trained bundles (v4.0.0+) ship postcode binaries so the demo feeds the postcode
-					// anchor — US + DE cover the demo's example set (incl. the native-order Berlin case).
+					// anchor — US + DE + FR cover the demo's example set (native-order Berlin, French ZIPs).
 					...(release?.hasAnchor
 						? {
 								postcodeBinaryUrls: [
 									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-us.bin"),
 									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-de.bin"),
+									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-fr.bin"),
 								],
 							}
 						: {}),
@@ -260,11 +277,13 @@ const DemoApp: React.FC = () => {
 
 				if (release?.hasWofDb) {
 					setLookupLoader(() => async () => {
-						const resolverWasm = await import("@mailwoman/resolver-wof-wasm")
-						const { db } = await resolverWasm.loadSlimWofDatabase({
-							source: assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"),
-						})
-						return new resolverWasm.WofWasmPlaceLookup({ db })
+						// Range-load the same-origin DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
+						const { loadHttpvfsDb, WofHttpvfsPlaceLookup } = await import("../../shared/httpvfs-resolver")
+						const worker = await loadHttpvfsDb(
+							assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"),
+							sqljsBaseUrl
+						)
+						return new WofHttpvfsPlaceLookup(worker)
 					})
 				}
 
@@ -347,6 +366,40 @@ const DemoApp: React.FC = () => {
 			const maplibre = await import("maplibre-gl")
 			const marker = new maplibre.Marker({ color: "#e0367c" }).setLngLat([candidate.lon, candidate.lat]).addTo(map)
 			markerRef.current = marker
+
+			// Prefer the crisp admin polygon (lazily-loaded sibling DB) over the bbox rectangle. The points
+			// DB only carries min/max lat-lon, so without this the map draws a box around the place; the
+			// polygon DB ships the real, simplified boundary keyed by the same WOF id.
+			const release = manifest?.releases.find((r) => r.version === selectedVersion)
+			if (release?.hasPolygons && selectedVersion && candidate.id) {
+				try {
+					if (!polygonDbRef.current) {
+						polygonDbRef.current = loadPolygonDb(
+							assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"),
+							sqljsBaseUrl
+						)
+					}
+					const geom = await (await polygonDbRef.current).get(candidate.id)
+					if (geom) {
+						drawPlaceGeometry(map, geom)
+						const gb = geomBounds(geom)
+						map.fitBounds(
+							[
+								[gb.minLon, gb.minLat],
+								[gb.maxLon, gb.maxLat],
+							],
+							{ padding: 40 }
+						)
+						return
+					}
+				} catch (err) {
+					// Postcodes (point geometry) and any id absent from the polygon DB land here — fall
+					// through to the bbox. Null the ref so a transient fetch failure can retry next resolve.
+					console.error("Crisp polygon unavailable; falling back to bbox", err)
+					polygonDbRef.current = null
+				}
+			}
+
 			const b = candidate.bbox
 			if (b && Math.max(b.maxLat - b.minLat, b.maxLon - b.minLon) > 0.001) {
 				drawBbox(map, b)
@@ -361,7 +414,7 @@ const DemoApp: React.FC = () => {
 				map.flyTo({ center: [candidate.lon, candidate.lat], zoom: 12 })
 			}
 		})()
-	}, [result, selectedCandidateIndex])
+	}, [result, selectedCandidateIndex, selectedVersion, manifest])
 
 	const ensureLookup = useCallback(async (): Promise<MailwomanLookupLike | null> => {
 		if (lookup) return lookup
@@ -391,20 +444,38 @@ const DemoApp: React.FC = () => {
 			try {
 				// Stage 2.4 + 2.5: compute QueryShape + kind classification. Pure functions, ~µs.
 				// Surfaced in the UI so users see the staged pipeline working.
-				const [{ computeQueryShape }, { classifyKindSync }] = await Promise.all([
+				const [{ computeQueryShape }, { classifyKindSync }, { runPipeline }, { groupPhrases }] = await Promise.all([
 					import("@mailwoman/query-shape"),
 					import("@mailwoman/kind-classifier"),
+					import("@mailwoman/core/pipeline"),
+					import("@mailwoman/phrase-grouper"),
 				])
 				const tStart = performance.now()
 				const queryShape = computeQueryShape(text)
 				const kindResult = classifyKindSync({ raw: text, normalized: text }, queryShape)
 				const tShape = performance.now()
 
-				const tree = await classifier.parse(text, { queryShape, fst: fstMatcher ?? undefined })
+				// Run the full runtime pipeline — phrase grouper (Stage 2.7) + joint-reconcile decode
+				// (Stage 5), the default since #427 — instead of the raw argmax `classifier.parse`. This
+				// is what surfaces multi-word localities, Romance street prefixes, and the correct
+				// house-number boundary in the browser, matching the library + CLI. Normalize / locale /
+				// kind default inside runPipeline; the demo's own WOF httpvfs lookup runs below on the
+				// resulting tree (no resolver stage is passed).
+				const { tree } = await runPipeline(text, {
+					computeQueryShape,
+					groupPhrases,
+					classifier: classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+					fst: (fstMatcher ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
+				})
 				const tClassify = performance.now()
 				const nodes = flattenTree(tree)
-				const localityNode = nodes.find((n) => n.tag === "locality" || n.tag === "city")
-				const stateNode = nodes.find((n) => n.tag === "region" || n.tag === "state")
+				const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
+				// Highest-confidence region, not the first in source order: a street name like
+				// "Pennsylvania Ave" yields a spurious low-confidence region span that would otherwise
+				// hijack the lookup ("Washington, DC" → Washington, PA).
+				const stateNode = nodes
+					.filter((n) => n.tag === "region" || n.tag === "state")
+					.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
 				const wofLookup = await ensureLookup()
@@ -428,7 +499,7 @@ const DemoApp: React.FC = () => {
 				// Drop (lat=0, lon=0) hits — WOF ships placeholder zeros on ~22% of US postcodes.
 				// Timed from here so the one-time DB load above doesn't skew the resolve number.
 				const tBeforeResolve = performance.now()
-				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNode, text)
+				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNodes, stateNode, text)
 				const tResolve = performance.now()
 				const candidates: ResolvedHit[] = cascadeHits.map((c) => ({
 					id: c.id,
@@ -443,7 +514,21 @@ const DemoApp: React.FC = () => {
 				// Marker draw is centralised in the useEffect below — it reacts to result +
 				// selectedCandidateIndex changes. Just stash the candidates; the effect handles
 				// clearing stale marker/bbox AND rendering the new selection.
-				setSelectedCandidateIndex(0)
+				// Dual-role (#402): surface whether the resolved place doubles as another admin tier — a
+					// city-state (Berlin = locality AND region) or a capital-seat. Best-effort + optional: the
+					// lookup returns [] when the slim DB predates the coincident_roles relation.
+					let dualRoles: DualRole[] | undefined
+					const primaryHit = candidates[0]
+					if (primaryHit && wofLookup.coincidentRolesFor) {
+						try {
+							const roles = await wofLookup.coincidentRolesFor(primaryHit.id)
+							if (roles.length > 0) dualRoles = roles
+						} catch {
+							/* relation absent / query failed → no dual-role badge */
+						}
+					}
+
+					setSelectedCandidateIndex(0)
 				setResult({
 					input: text,
 					tree,
@@ -455,6 +540,7 @@ const DemoApp: React.FC = () => {
 					fstActive: fstMatcher !== null,
 					fstProvenance,
 					timing: { shape: tShape - tStart, classify: tClassify - tShape, resolve: tResolve - tBeforeResolve },
+						dualRoles,
 				})
 			} catch (parsingError) {
 				console.error("Error parsing input", parsingError)
@@ -587,23 +673,19 @@ function whenStyleReady(map: MapLibreMap, fn: () => void): void {
 	map.once("styledata", () => whenStyleReady(map, fn))
 }
 
-function drawBbox(map: MapLibreMap, bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number }): void {
-	const ring: Array<[number, number]> = [
-		[bbox.minLon, bbox.minLat],
-		[bbox.maxLon, bbox.minLat],
-		[bbox.maxLon, bbox.maxLat],
-		[bbox.minLon, bbox.maxLat],
-		[bbox.minLon, bbox.minLat],
-	]
+/** A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place outline. */
+type PlaceGeometry =
+	| { type: "Polygon"; coordinates: number[][][] }
+	| { type: "MultiPolygon"; coordinates: number[][][][] }
+
+/**
+ * Shared source/layer plumbing for the resolved-place outline. Both the bbox rectangle and the crisp
+ * admin polygon funnel through here so they reuse one source (`setData` swaps the geometry in place).
+ */
+function setPlaceOutline(map: MapLibreMap, geometry: PlaceGeometry): void {
 	const geojson = {
 		type: "FeatureCollection" as const,
-		features: [
-			{
-				type: "Feature" as const,
-				geometry: { type: "Polygon" as const, coordinates: [ring] },
-				properties: {},
-			},
-		],
+		features: [{ type: "Feature" as const, geometry, properties: {} }],
 	}
 	whenStyleReady(map, () => {
 		const existing = map.getSource(BBOX_SOURCE) as { setData?: (g: unknown) => void } | undefined
@@ -627,6 +709,62 @@ function drawBbox(map: MapLibreMap, bbox: { minLat: number; maxLat: number; minL
 	})
 }
 
+function drawBbox(map: MapLibreMap, bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number }): void {
+	const ring: number[][] = [
+		[bbox.minLon, bbox.minLat],
+		[bbox.maxLon, bbox.minLat],
+		[bbox.maxLon, bbox.maxLat],
+		[bbox.minLon, bbox.maxLat],
+		[bbox.minLon, bbox.minLat],
+	]
+	setPlaceOutline(map, { type: "Polygon", coordinates: [ring] })
+}
+
+/** Draw the crisp admin polygon straight from the polygon DB's GeoJSON geometry. */
+function drawPlaceGeometry(map: MapLibreMap, geometry: PlaceGeometry): void {
+	setPlaceOutline(map, geometry)
+}
+
+/** Bounding box of a Polygon / MultiPolygon, for fitBounds. Walks the nested coordinate arrays. */
+function geomBounds(geometry: PlaceGeometry): { minLon: number; minLat: number; maxLon: number; maxLat: number } {
+	let minLon = Infinity
+	let minLat = Infinity
+	let maxLon = -Infinity
+	let maxLat = -Infinity
+	const visit = (node: unknown): void => {
+		if (Array.isArray(node) && typeof node[0] === "number") {
+			const [lon, lat] = node as number[]
+			if (lon < minLon) minLon = lon
+			if (lon > maxLon) maxLon = lon
+			if (lat < minLat) minLat = lat
+			if (lat > maxLat) maxLat = lat
+			return
+		}
+		if (Array.isArray(node)) for (const child of node) visit(child)
+	}
+	visit(geometry.coordinates)
+	return { minLon, minLat, maxLon, maxLat }
+}
+
+/** id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. Async (range-loaded). */
+interface PolygonDb {
+	get(id: number): Promise<PlaceGeometry | null>
+}
+
+/**
+ * Open the crisp-polygon DB (built by scripts/build-wof-polygons.mjs) via sql.js-httpvfs — a single
+ * `SELECT geom WHERE id=?` touches ~1 page, so the browser fetches a few KB of the 19 MB file rather
+ * than the whole thing. Same range-load path as the resolver DB.
+ */
+async function loadPolygonDb(url: string, sqljsBaseUrl: string): Promise<PolygonDb> {
+	const { loadHttpvfsDb, makeHttpvfsPolygonLookup } = await import("../../shared/httpvfs-resolver")
+	const worker = await loadHttpvfsDb(url, sqljsBaseUrl)
+	const lookup = makeHttpvfsPolygonLookup(worker)
+	return {
+		get: (id: number) => lookup.get(id) as Promise<PlaceGeometry | null>,
+	}
+}
+
 function clearBbox(map: MapLibreMap): void {
 	whenStyleReady(map, () => {
 		if (map.getLayer(BBOX_FILL_LAYER)) map.removeLayer(BBOX_FILL_LAYER)
@@ -637,40 +775,85 @@ function clearBbox(map: MapLibreMap): void {
 
 type ParsedNode = { tag: string; value?: unknown; confidence?: number }
 
+const normName = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
+
+// USPS two-letter codes → full state name. A bare "IL" FTS-matches "Ille-et-Vilaine" (a French
+// département) before "Illinois", so its France bbox filters out the actual US city — expanding to
+// the full name resolves the right region. Full names pass through unchanged.
+const US_STATE_ABBREV: Record<string, string> = {
+	AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado",
+	CT: "Connecticut", DE: "Delaware", DC: "District of Columbia", FL: "Florida", GA: "Georgia",
+	HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky",
+	LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota",
+	MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire",
+	NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota",
+	OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina",
+	SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia",
+	WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", PR: "Puerto Rico",
+}
+const expandUsRegion = (text: string): string => US_STATE_ABBREV[text.trim().toUpperCase()] ?? text
+
 async function runCascade(
 	lookup: MailwomanLookupLike,
 	postcodeNode: ParsedNode | undefined,
-	localityNode: ParsedNode | undefined,
+	localityNodes: ParsedNode[],
+	stateNode: ParsedNode | undefined,
 	rawText: string
 ): Promise<Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>> {
-	const usable = (
-		cs: Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
-	): Awaited<ReturnType<MailwomanLookupLike["findPlace"]>> => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
+	type Hits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
+	const usable = (cs: Hits): Hits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
+
+	// Failure mode for a mis-tagged span. The model can label a street as a locality ("Rue du
+	// Chevaleret") and emit several locality spans alongside the real city ("Paris"). Resolve them in
+	// source order (specific → general) and prefer a hypothesis whose top hit is an EXACT name match
+	// — a real place actually called this — over a fuzzy token match (a street name can token-collide
+	// with an unrelated same-named town). So when the specific line isn't a real place, we fall
+	// through to the one that is: the city. A fuzzy hit is kept only as a last-resort backstop.
+	const resolveLocality = async (regionBbox: Hits[number]["bbox"]): Promise<Hits> => {
+		// Prefer an exact-name match inside the region bbox; if none, retry the same nodes WITHOUT the
+		// bbox before settling for a fuzzy hit. The unconstrained retry is the safety net for a
+		// mis-resolved region (e.g. "IL" → a French département): a bad bbox can't cause a total miss.
+		let fuzzy: Hits = []
+		for (const bbox of regionBbox ? [regionBbox, undefined] : [undefined]) {
+			for (const node of localityNodes) {
+				const text = String(node.value ?? "").trim()
+				if (!text) continue
+				const cs = usable(await lookup.findPlace({ text, placetype: "locality", bbox, limit: 5 }))
+				if (cs.length === 0) continue
+				if (cs.some((c) => normName(c.name) === normName(text))) return cs
+				if (fuzzy.length === 0) fuzzy = cs
+			}
+		}
+		return fuzzy
+	}
+
+	// Use the geography the parser found. Country is NOT hardcoded to US — a global search plus the
+	// resolver's population ranking surfaces the famous same-name place ("Berlin" → Berlin, DE 3.7M,
+	// not Berlin, NH 9k). A parsed region/state is resolved to its bbox and used to constrain the
+	// postcode + locality lookups, which disambiguates same-name US localities ("Roseville, Michigan"
+	// → the Roseville inside Michigan's bounds, not the larger Roseville, CA the population boost
+	// would otherwise pick).
+	let regionBbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | undefined
+	if (stateNode?.value) {
+		const regions = await lookup.findPlace({
+			text: expandUsRegion(String(stateNode.value)),
+			placetype: "region",
+			limit: 1,
+		})
+		regionBbox = regions[0]?.bbox
+	}
 
 	if (postcodeNode?.value) {
 		const cs = usable(
-			await lookup.findPlace({
-				text: String(postcodeNode.value),
-				placetype: "postalcode",
-				country: "US",
-				limit: 5,
-			})
-		)
-		if (cs.length > 0) return cs
-	}
-	if (localityNode?.value) {
-		const cs = usable(
-			await lookup.findPlace({
-				text: String(localityNode.value),
-				placetype: "locality",
-				country: "US",
-				limit: 5,
-			})
+			await lookup.findPlace({ text: String(postcodeNode.value), placetype: "postalcode", bbox: regionBbox, limit: 5 })
 		)
 		if (cs.length > 0) return cs
 	}
 
-	return usable(await lookup.findPlace({ text: rawText, country: "US", limit: 5 }))
+	const localityHits = await resolveLocality(regionBbox)
+	if (localityHits.length > 0) return localityHits
+
+	return usable(await lookup.findPlace({ text: rawText, bbox: regionBbox, limit: 5 }))
 }
 
 type TreeNode = {

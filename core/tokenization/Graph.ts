@@ -1,7 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { Sequence } from "@mailwoman/core/resources"
+// Import `Sequence` from its leaf module, NOT the `@mailwoman/core/resources` barrel: the barrel
+// re-exports the libpostal/WOF dictionaries (top-level `readdir` + fast-glob, Node-only), which would
+// drag the entire resource-loading layer into any browser bundle that touches tokenization — and
+// `@mailwoman/phrase-grouper` touches it via `Span`. `Sequence` itself is a pure `extends Set`.
+import { Sequence } from "../resources/set.js"
 
 export type GraphNodeCallback<G> = (node: G) => boolean
 

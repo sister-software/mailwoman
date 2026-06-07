@@ -95,6 +95,8 @@ docs/static/mailwoman/*.onnx
 docs/static/mailwoman/*.model
 docs/static/mailwoman/*.db
 docs/static/mailwoman/*.bin
+docs/static/mailwoman/*.json
+docs/static/mailwoman/sqljs/
 
 .claude/settings.local.json
 CLAUDE.local.md
@@ -105,6 +107,10 @@ CLAUDE.local.md
 
 # expand-golden.ts outputs — operator skims locally, then promotes to versioned dir
 data/eval/golden/candidates/
+
+# Calibration confidences (#59): derivable from calibration-set.jsonl + the model, 3 MB. The frozen
+# calibration-set.jsonl + the fitted isotonic table ARE committed; the per-span dump is not.
+data/eval/calibration/confidences.jsonl
 
 # Local env files (R2 credentials, etc.) — keep out of git
 .env

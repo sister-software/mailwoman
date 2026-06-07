@@ -93,7 +93,13 @@ async function main() {
 	console.error(`Server up on :${args.port}`)
 
 	const playwright = await import("playwright")
-	const browser = await playwright.chromium.launch({ headless: args.headless })
+	// --no-sandbox / --disable-dev-shm-usage are required to launch headless Chromium under a
+	// sandboxed/container Linux environment (the default sandbox needs user-namespace perms we
+	// don't have here); harmless for a throwaway measurement harness.
+	const browser = await playwright.chromium.launch({
+		headless: args.headless,
+		args: ["--no-sandbox", "--disable-dev-shm-usage"],
+	})
 	const context = await browser.newContext()
 	const page = await context.newPage()
 
@@ -106,9 +112,12 @@ async function main() {
 			} catch {
 				/* ignore */
 			}
+		} else {
+			console.error(`[browser:${msg.type()}] ${text}`)
 		}
 	})
 	page.on("pageerror", (e) => {
+		console.error(`[pageerror] ${e.message}`)
 		consoleEvents.push({ phase: "pageerror", error: e.message })
 	})
 
