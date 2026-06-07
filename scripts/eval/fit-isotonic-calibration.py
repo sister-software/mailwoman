@@ -126,6 +126,8 @@ def main() -> None:
     conf = np.array([r["conf"] for r in recs], dtype=float)
     correct = np.array([1.0 if r["correct"] else 0.0 for r in recs], dtype=float)
     source = np.array([r["source"] for r in recs])
+    tag = np.array([r["tag"] for r in recs])
+    country = np.array([r["country"] for r in recs])
 
     # 80/20 fit/eval split (seeded).
     rng = np.random.default_rng(args.seed)
@@ -159,6 +161,24 @@ def main() -> None:
     ece_raw_co, _, _ = ece(ev_conf[co], ev_correct[co], args.ece_bins)
     ece_cal_co, _, _ = ece(ev_cal[co], ev_correct[co], args.ece_bins)
 
+    # Per-tag + per-locale ECE on the eval split (#368 S1). The global ECE masks where the model is
+    # mis-calibrated; a subgroup needs >=100 eval spans to report (else the ECE is bin noise).
+    ev_tag, ev_country = tag[eval_idx], country[eval_idx]
+
+    def group_ece(keys):
+        out = {}
+        for k in sorted(set(keys.tolist())):
+            m = keys == k
+            if int(m.sum()) < 100:
+                continue
+            e_raw, _, _ = ece(ev_conf[m], ev_correct[m], args.ece_bins)
+            e_cal, _, _ = ece(ev_cal[m], ev_correct[m], args.ece_bins)
+            out[str(k)] = {"n": int(m.sum()), "acc": float(ev_correct[m].mean()), "ece_raw": e_raw, "ece_cal": e_cal}
+        return out
+
+    per_tag = group_ece(ev_tag)
+    per_locale = group_ece(ev_country)
+
     payload = {
         "model": args.model,
         "model_version": args.model_version,
@@ -183,6 +203,8 @@ def main() -> None:
             "ece_raw_corpus_eval": ece_raw_co,
             "ece_cal_corpus_eval": ece_cal_co,
         },
+        "per_tag_ece": per_tag,
+        "per_locale_ece": per_locale,
         "table": table,
     }
     out_path = Path(args.out)
@@ -251,6 +273,25 @@ def main() -> None:
 
     reliability_table("raw confidence", rel_raw, "conf")
     reliability_table("calibrated confidence", rel_cal, "cal")
+
+    def subgroup_table(title: str, groups: dict) -> None:
+        lines.append(f"## ECE by {title} (held-out eval, raw → calibrated)")
+        lines.append("")
+        lines.append(f"| {title} | n | accuracy | ECE raw | ECE calibrated |")
+        lines.append("| --- | ---: | ---: | ---: | ---: |")
+        for k, v in sorted(groups.items(), key=lambda kv: -kv[1]["ece_raw"]):
+            lines.append(f"| {k} | {v['n']} | {v['acc']:.3f} | {v['ece_raw']:.4f} | {v['ece_cal']:.4f} |")
+        lines.append("")
+
+    subgroup_table("locale", per_locale)
+    subgroup_table("tag", per_tag)
+    lines.append(
+        "> The single global table is fit across all locales/tags, so it under-serves the worst-calibrated "
+        "subgroups — the per-locale rows show where the one-size table leaves residual error (the OOD "
+        "locales and rare tags run far higher than the US/FR-dominated global ECE). A per-locale table is "
+        "the natural next step once the deployed multi-locale model is the calibration target (#368)."
+    )
+    lines.append("")
     lines.append("## 20-bin lookup table (raw → calibrated)")
     lines.append("")
     lines.append("| bin center | calibrated |")
