@@ -2,7 +2,7 @@
 title: "Which Berlin? When your metric grades the wrong thing"
 description: "Our resolver kept dropping German addresses in New Hampshire, and our scorecard handed it a gold star every time. Here's how a name-match metric lied to us for months, and what a postcode hint was quietly worth once we measured by distance instead."
 authors: [teffen]
-tags: [neural, resolver, eval, calibration]
+tags: [neural, resolver, hubris]
 ---
 
 Ask a geocoder for "Berlin" and it has to make a choice. There's the one in Germany, obviously. There's also Berlin, New Hampshire (population nine thousand and change), Berlin, Wisconsin, Berlin, Connecticut, and a dozen more scattered across the United States like the name was on sale. The parser hands you the word `Berlin` tagged as a locality; something downstream has to decide _which_ dot on the map that is. How would you even know if it picked right?
@@ -37,7 +37,7 @@ A metric you can satisfy without being right will let you be wrong forever, chee
 
 ## The same week, the same lesson
 
-This landed the same week we did something that sounds unrelated and turns out to be the identical problem: we calibrated the parser's confidence. Every span comes out stamped with a `conf=` number, and we'd never checked whether a 0.9 actually meant right-nine-times-in-ten. It didn't, until we fit a correction that made it honest (the [calibration writeup](/articles/concepts/confidence-calibration) has the details, including the weather-forecaster version of the story).
+This landed the same week we did something that sounds unrelated and turns out to be the identical problem: we calibrated the parser's confidence. Every span comes out stamped with a `conf=` number, and we'd never checked whether a 0.9 actually meant right-nine-times-in-ten. It didn't, until we fit a correction that made it honest (the [calibration writeup](/docs/concepts/confidence-calibration) has the details, including the weather-forecaster version of the story).
 
 Both are the same realization wearing different hats. A geocoder reports numbers about itself constantly: how confident it is in a tag, how well it scored on a benchmark. Those numbers are worthless decoration until you've checked that they mean what they say. A confidence that isn't calibrated is a vibe with a decimal point. A benchmark you can game is a way to feel good while shipping the wrong Berlin.
 
