@@ -15,8 +15,22 @@ number into two unrelated problems:
   where locality == region). Specific to city-states; untouched by the anchor or word order.
 
 The anchor was never the problem (coord p50 ~6 km across all three runs). **v0.9.5 cancelled** (saved the
-GPU). German moves off the A100: a principled resolver name-match fix (#386) recovers Saxony's 24.8pp;
-Berlin is a future narrow data-aug (#387). DeepSeek signed off across 4 turns under delegated authority.
+GPU). German moved off the A100: a principled resolver name-match fix (#386) for Saxony and an opt-in
+city-state locality recovery (#387) for Berlin. DeepSeek signed off across 4 turns under delegated authority.
+
+**Both fixes are now MEASURED on real data** (v0.9.4 model over the DE intl set, 3000 rows, PIP-containment),
+not just unit-tested — the gated re-measure happened this shift:
+
+- **#387 city-state recovery: Berlin PIP-containment 36.3% → 80.9% (+44.6pp)**, overall 56.1% → 78.4%,
+  resolved-rate 65.2% → 87.5%. Sachsen unchanged at 75.9% — the centroid-coincidence guard fires only on
+  genuine city-states, zero collateral damage. ~669 rows recovered.
+- **#386 Saxony credit: Sachsen name-match 51.1% → 65.5% (+14.4pp)** on real resolved output.
+- The DE re-measure was NOT actually symlink-gated (#397) — it runs against the explicit v0.9.4 model in
+  `/tmp/v094-eval`, independent of the en-us symlink. The recompile WAS the catch: the eval loads compiled
+  `core/out/`, so the flag was a silent no-op until `tsc -p core/tsconfig.json`.
+- Residual: ~12.5% of Berlin still unresolved because the model mangles those parses outright
+  (`Straußstraße`→`Strau`+`straße`, both Berlins dropped) — a parser/tokenizer ß-and-compound issue,
+  distinct from the resolver fix. Diagnostic: `scripts/diag-citystate-fire.ts`.
 
 ## What shipped (20 PRs merged, 1 open + 7 issues filed)
 
