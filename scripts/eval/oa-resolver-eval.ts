@@ -40,10 +40,10 @@
  *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card /tmp/v072-eval/model-card.json
  *
- *   `--wof` defaults to `admin-global-priority.db,postcode-locality-intl.db` — coordinate-first locality
- *   resolution is ON by default (no-op where the candidate table has no rows, e.g. US). Pass `--wof
- *   <admin.db>` alone for the admin-only baseline, or append a postcode shard (postalcode-*.db) to also
- *   resolve the postcode node.
+ *   `--wof` defaults to `admin-global-priority.db,postcode-locality-intl.db` — coordinate-first
+ *   locality resolution is ON by default (no-op where the candidate table has no rows, e.g. US).
+ *   Pass `--wof <admin.db>` alone for the admin-only baseline, or append a postcode shard
+ *   (postalcode-*.db) to also resolve the postcode node.
  */
 
 import { lookupGermanState } from "@mailwoman/codex/de"
@@ -283,7 +283,8 @@ async function main(): Promise<void> {
 	const postcodeAnchorLookup = modelAnchorPath
 		? (await import("@mailwoman/neural")).parseAnchorLookup(JSON.parse(readFileSync(modelAnchorPath, "utf8")))
 		: undefined
-	if (modelAnchorPath) console.error(`[model-anchor] feeding anchor from ${modelAnchorPath} (${postcodeAnchorLookup!.size} codes)`)
+	if (modelAnchorPath)
+		console.error(`[model-anchor] feeding anchor from ${modelAnchorPath} (${postcodeAnchorLookup!.size} codes)`)
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels, postcodeAnchorLookup })
 
 	// v0 = our TypeScript port of the Pelias parser. Scoring it through the same resolver makes this a
@@ -316,11 +317,48 @@ async function main(): Promise<void> {
 		}
 		return set
 	}
+	// Hierarchy-aware regional-qualifier credit (#386). OpenAddresses tags many German localities with
+	// a disambiguating district suffix WOF's canonical name drops — gold `Plauen Vogtl`/`Chemnitz Sachs`
+	// resolve to `Plauen`/`Chemnitz` (the point lands inside; PIP confirms it), but a bare string compare
+	// reads a miss. Rather than a hardcoded suffix blacklist (the no-load-bearing-trivia smell), credit
+	// the qualifier ONLY when it matches the resolved place's OWN WOF ancestry: `Vogtl`→county `Vogtland`,
+	// `Sachs`→region `Sachsen`. List-free and non-gameable — a genuinely wrong place won't carry the
+	// gold's qualifier among its ancestors. `und`/non-latin ancestor names normalize to empty under
+	// normName (Cyrillic/CJK are stripped), so the token set is latin-only without a language filter.
+	const ancestorNamesStmt = adminDb.prepare(
+		"SELECT nm.name FROM ancestors a JOIN names nm ON nm.id = a.ancestor_id " +
+			"WHERE a.id = ? AND a.ancestor_placetype IN ('county', 'region', 'macrocounty', 'macroregion')"
+	)
+	const ancestorTokCache = new Map<number, Set<string>>()
+	const ancestorTokensFor = (id: number): Set<string> => {
+		let set = ancestorTokCache.get(id)
+		if (!set) {
+			set = new Set<string>()
+			for (const r of ancestorNamesStmt.all(id) as { name: string }[]) {
+				for (const t of normName(r.name).split(" ")) if (t.length >= 4) set.add(t)
+			}
+			ancestorTokCache.set(id, set)
+		}
+		return set
+	}
 	const localityMatches = (expected: string | undefined, locNode: Resolved | undefined): boolean => {
 		if (!expected || !locNode) return false
 		const e = normName(expected)
 		if (!e) return false
-		return normName(locNode.name) === e || altNamesFor(locNode.id).has(e)
+		if (normName(locNode.name) === e || altNamesFor(locNode.id).has(e)) return true
+		// Near-miss: gold `<resolved name> <qualifier…>`. Credit only when EVERY trailing qualifier is an
+		// abbreviation-prefix (≥3 chars) of one of the resolved place's ancestor-name tokens. The base
+		// must equal the resolved name exactly, so this can only ADD credit to an already-correct place.
+		const base = normName(locNode.name)
+		if (base && e.startsWith(base + " ")) {
+			const quals = e
+				.slice(base.length + 1)
+				.split(" ")
+				.filter(Boolean)
+			const anc = ancestorTokensFor(locNode.id)
+			if (quals.length > 0 && quals.every((q) => q.length >= 3 && [...anc].some((a) => a.startsWith(q)))) return true
+		}
+		return false
 	}
 
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
@@ -390,8 +428,10 @@ async function main(): Promise<void> {
 		return best ? { lat: best.lat, lon: best.lon } : null
 	}
 
-	/** The postcode anchor's country posterior for a raw address (highest-confidence placed anchor),
-	 * fed into the resolver's locality re-rank via `ResolveOpts.anchorPosterior` (#369 S8). */
+	/**
+	 * The postcode anchor's country posterior for a raw address (highest-confidence placed anchor),
+	 * fed into the resolver's locality re-rank via `ResolveOpts.anchorPosterior` (#369 S8).
+	 */
 	const anchorPosteriorFor = (input: string): Record<string, number> | undefined => {
 		if (!postcodeLookup || !extractAnchors) return undefined
 		let best: { posterior: Record<string, number>; conf: number } | null = null
