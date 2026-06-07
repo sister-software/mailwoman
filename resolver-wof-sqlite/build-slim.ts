@@ -60,6 +60,7 @@ export type SlimBuildPhase =
 	| "postcode"
 	| "names"
 	| "geojson"
+	| "coincident_roles"
 	| "fts"
 	| "vacuum"
 	| "done"
@@ -285,6 +286,24 @@ async function copyFromSource(
 				)
 				.onConflict((oc) => oc.doNothing())
 				.execute()
+
+			// Carry the coincident_roles relation (#402) when this source has it (the admin DB), so the
+			// slim/demo DB supports dual-role hierarchy completion (on by default). Filtered to surviving
+			// spr ids → no orphans. Tiny (~hundreds of rows). `ancestors` is intentionally NOT copied (huge
+			// + build-only), so we copy the derived table rather than rebuild it. Raw SQL — conditional +
+			// not in the Kysely build schema.
+			const relationSchema = out
+				.prepare(`SELECT sql FROM src.sqlite_master WHERE type = 'table' AND name = 'coincident_roles'`)
+				.get() as { sql?: string } | undefined
+			if (relationSchema?.sql) {
+				progress("coincident_roles", `${inputPath}: copying dual-role relation`)
+				out.exec(relationSchema.sql.replace(/CREATE TABLE/i, "CREATE TABLE IF NOT EXISTS"))
+				out.exec(
+					`INSERT OR IGNORE INTO coincident_roles SELECT * FROM src.coincident_roles
+						WHERE admin_id IN (SELECT id FROM spr) AND locality_id IN (SELECT id FROM spr)`
+				)
+				out.exec(`CREATE INDEX IF NOT EXISTS coincident_roles_by_admin ON coincident_roles (admin_id)`)
+			}
 		} finally {
 			out.exec(`DETACH DATABASE src;`)
 		}
