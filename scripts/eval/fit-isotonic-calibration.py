@@ -179,6 +179,16 @@ def main() -> None:
     per_tag = group_ece(ev_tag)
     per_locale = group_ece(ev_country)
 
+    # Abstention curve (#368 S2): precision vs coverage as the accept threshold rises on CALIBRATED
+    # confidence — the downstream-routing artifact ("auto-accept above T, review the rest"). Only
+    # meaningful once confidence is calibrated, which is why it lives here.
+    abstention = []
+    for t in [0.5, 0.8, 0.9, 0.95, 0.97]:
+        sel = ev_cal >= t
+        cov = float(sel.mean())
+        prec = float(ev_correct[sel].mean()) if int(sel.sum()) else 0.0
+        abstention.append({"threshold": t, "coverage": cov, "precision": prec, "reviewed": 1.0 - cov})
+
     payload = {
         "model": args.model,
         "model_version": args.model_version,
@@ -205,6 +215,7 @@ def main() -> None:
         },
         "per_tag_ece": per_tag,
         "per_locale_ece": per_locale,
+        "abstention_curve": abstention,
         "table": table,
     }
     out_path = Path(args.out)
@@ -285,6 +296,15 @@ def main() -> None:
 
     subgroup_table("locale", per_locale)
     subgroup_table("tag", per_tag)
+    lines.append("## Abstention curve (calibrated confidence)")
+    lines.append("")
+    lines.append("Accept spans at or above the threshold; route the rest to review. Precision is the accuracy of the accepted set.")
+    lines.append("")
+    lines.append("| threshold | coverage (accepted) | precision | reviewed |")
+    lines.append("| --- | ---: | ---: | ---: |")
+    for a in abstention:
+        lines.append(f"| {a['threshold']:.2f} | {100*a['coverage']:.1f}% | {100*a['precision']:.2f}% | {100*a['reviewed']:.1f}% |")
+    lines.append("")
     lines.append(
         "> The single global table is fit across all locales/tags, so it under-serves the worst-calibrated "
         "subgroups — the per-locale rows show where the one-size table leaves residual error (the OOD "
