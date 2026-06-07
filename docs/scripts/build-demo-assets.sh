@@ -45,7 +45,12 @@ cp -L "${WEIGHTS_PKG}/model.onnx" "${STATIC_DIR}/model.onnx"
 echo "==> tokenizer.model (from ${WEIGHTS_PKG}/tokenizer.model)"
 cp -L "${WEIGHTS_PKG}/tokenizer.model" "${STATIC_DIR}/tokenizer.model"
 
-echo "==> wof-hot.db (slim WOF, top-1000 US localities + all postcodes)"
+# `--countries` MUST include every country the demo resolves, AND it gates which `coincident_roles`
+# survive the slim filter (the relation is dropped for any place whose spr row is trimmed). DE/FR carry
+# the city-states the dual-role badge surfaces (Berlin/Hamburg/Bremen, Paris) — a US-only slim has zero
+# coincident roles, so the badge would never appear. Override via SLIM_COUNTRIES.
+SLIM_COUNTRIES="${SLIM_COUNTRIES:-US,DE,FR}"
+echo "==> wof-hot.db (slim WOF, top-${SLIM_TOP_LOCALITIES:-1000} localities/country in ${SLIM_COUNTRIES} + all postcodes + coincident_roles)"
 if [[ ! -e "${SLIM_CLI}" ]]; then
     echo "build-slim-cli not compiled — running yarn compile first."
     (cd "${REPO_ROOT}" && yarn compile)
@@ -54,7 +59,8 @@ node "${SLIM_CLI}" \
     --in "${WOF_ADMIN_DB}" \
     --in "${WOF_POSTCODE_DB}" \
     --out "${STATIC_DIR}/wof-hot.db" \
-    --top "${SLIM_TOP_LOCALITIES:-1000}"
+    --top "${SLIM_TOP_LOCALITIES:-1000}" \
+    --countries "${SLIM_COUNTRIES}"
 
 echo
 echo "Done. Static assets:"

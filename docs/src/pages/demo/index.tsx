@@ -28,6 +28,7 @@ import { ResultPanel } from "../../components/ResultPanel/ResultPanel.tsx"
 import {
 	assetUrl,
 	DemoResult,
+	DualRole,
 	FstMatcherLike,
 	FstProvenanceLike,
 	loadFstGazetteer,
@@ -514,7 +515,21 @@ const DemoApp: React.FC = () => {
 				// Marker draw is centralised in the useEffect below — it reacts to result +
 				// selectedCandidateIndex changes. Just stash the candidates; the effect handles
 				// clearing stale marker/bbox AND rendering the new selection.
-				setSelectedCandidateIndex(0)
+				// Dual-role (#402): surface whether the resolved place doubles as another admin tier — a
+					// city-state (Berlin = locality AND region) or a capital-seat. Best-effort + optional: the
+					// lookup returns [] when the slim DB predates the coincident_roles relation.
+					let dualRoles: DualRole[] | undefined
+					const primaryHit = candidates[0]
+					if (primaryHit && wofLookup.coincidentRolesFor) {
+						try {
+							const roles = await wofLookup.coincidentRolesFor(primaryHit.id)
+							if (roles.length > 0) dualRoles = roles
+						} catch {
+							/* relation absent / query failed → no dual-role badge */
+						}
+					}
+
+					setSelectedCandidateIndex(0)
 				setResult({
 					input: text,
 					tree,
@@ -526,6 +541,7 @@ const DemoApp: React.FC = () => {
 					fstActive: fstMatcher !== null,
 					fstProvenance,
 					timing: { shape: tShape - tStart, classify: tClassify - tShape, resolve: tResolve - tBeforeResolve },
+						dualRoles,
 				})
 			} catch (parsingError) {
 				console.error("Error parsing input", parsingError)
