@@ -14,6 +14,7 @@
 
 import type { AddressNode, AddressTree, ComponentTag } from "../decoder/types.js"
 import {
+	type CoincidentLocality,
 	DEFAULT_PLACETYPE_MAP,
 	type PlacetypeMap,
 	type ResolvedPlace,
@@ -47,14 +48,11 @@ interface ResolutionState {
 	anchorPosterior?: Record<string, number>
 	/** Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set. */
 	anchorWeight: number
-	/** City-state locality recovery (#387). Off by default → byte-stable. */
-	cityStateFallback: boolean
-	/** Centroid-coincidence threshold (km) for the city-state recovery. Only used when on. */
-	cityStateMaxKm: number
+	/** Dual-role hierarchy completion (#405). Off by default → byte-stable. */
+	hierarchyCompletion: boolean
 	/**
 	 * Set while resolving when ANY tree node maps to the `locality` placetype (resolved or not) — the
-	 * city-state recovery only fires when the parser emitted no locality at all, never to override
-	 * one.
+	 * completion only fires when the parser emitted no locality at all, never to override one.
 	 */
 	localityNodePresent: boolean
 	/** The first region that resolved, captured for the post-walk city-state recovery. */
@@ -66,15 +64,20 @@ interface ResolutionState {
 	resolvedRegionSpan: { start: number; end: number } | null
 }
 
-/** Great-circle distance in km between two centroids (WGS-84). */
-function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
-	const R = 6371
-	const dLat = ((b.lat - a.lat) * Math.PI) / 180
-	const dLon = ((b.lon - a.lon) * Math.PI) / 180
-	const s =
-		Math.sin(dLat / 2) ** 2 +
-		Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(s))
+/**
+ * Pick the completion locality when an admin maps to several coincident same-name candidates
+ * (#405). Population is the PRIMARY signal — the principal city is the populous one, and it can sit
+ * FARTHER from the admin centroid than a tiny same-name hamlet (the Niigata case from #403).
+ * Nearest centroid breaks a population tie; a genuine tie (same population AND distance) ABSTAINS
+ * rather than guess.
+ */
+function pickCompletion(candidates: readonly CoincidentLocality[]): CoincidentLocality | null {
+	if (candidates.length === 0) return null
+	if (candidates.length === 1) return candidates[0]!
+	const ranked = [...candidates].sort((a, b) => b.population - a.population || a.distanceKm - b.distanceKm)
+	const [first, second] = ranked
+	if (first!.population === second!.population && first!.distanceKm === second!.distanceKm) return null
+	return first!
 }
 
 /**
@@ -111,8 +114,8 @@ class WofResolver implements Resolver {
 			postcode: firstPostcodeValue(tree.roots),
 			anchorPosterior: opts.anchorPosterior,
 			anchorWeight: opts.anchorWeight ?? 2.0,
-			cityStateFallback: opts.cityStateFallback ?? false,
-			cityStateMaxKm: opts.cityStateMaxKm ?? 15,
+			// `cityStateFallback` is the #387 alias that #405 generalized — still honored.
+			hierarchyCompletion: opts.hierarchyCompletion ?? opts.cityStateFallback ?? false,
 			localityNodePresent: false,
 			resolvedRegion: null,
 			resolvedRegionSpan: null,
@@ -123,41 +126,29 @@ class WofResolver implements Resolver {
 			newRoots.push(await this.#walk(root, /* parentResolved */ null, state))
 		}
 
-		// City-state locality recovery (#387). Only when enabled, a region resolved, and the parser
-		// emitted NO locality node — then ask the backend for a same-name locality descendant of the
-		// region and synthesize it iff its centroid coincides with the region's (the city-state
-		// signature). See ResolveOpts.cityStateFallback for the full rationale + false-positive guard.
-		if (state.cityStateFallback && state.resolvedRegion && !state.localityNodePresent && state.lookupsRemaining > 0) {
-			const synthesized = await this.#recoverCityStateLocality(state)
+		// Dual-role hierarchy completion (#405). Only when enabled, a region resolved, and the parser
+		// emitted NO locality — synthesize the locality from the backend's precomputed coincident-roles
+		// relation (#403). See ResolveOpts.hierarchyCompletion for the rationale + disambiguation rule.
+		if (state.hierarchyCompletion && state.resolvedRegion && !state.localityNodePresent) {
+			const synthesized = this.#completeFromRelation(state)
 			if (synthesized) newRoots.push(synthesized)
 		}
 		return { raw: tree.raw, roots: newRoots }
 	}
 
 	/**
-	 * Query the backend for the region's same-name locality descendant and, when its centroid
-	 * coincides with the region's (≤ `cityStateMaxKm`), build a synthesized locality node. Returns
-	 * null otherwise. Marked `metadata.resolver_synthesized` — the node has no span in the raw
-	 * input.
+	 * Complete a dropped dual-role locality from the backend's coincident-roles relation (#403/#405).
+	 * Consults `coincidentLocalitiesFor(regionId)` (O(1) map lookup — no distance math, no backend
+	 * query), picks the principal city ({@link pickCompletion}: population-primary, distance tiebreak,
+	 * abstain on a genuine tie), and builds a synthesized locality node borrowing the region's span.
+	 * Returns null when the backend has no relation, the region isn't a dual-role place, or it
+	 * abstains. Marked `metadata.resolver_synthesized` + `metadata.relationship_type`.
 	 */
-	async #recoverCityStateLocality(state: ResolutionState): Promise<AddressNode | null> {
+	#completeFromRelation(state: ResolutionState): AddressNode | null {
 		const region = state.resolvedRegion!
-		if (typeof region.id !== "number") return null
-		state.lookupsRemaining--
-		let candidates: ResolvedPlace[]
-		try {
-			candidates = await this.#backend.findPlace({
-				text: region.name,
-				placetype: "locality",
-				country: region.country || undefined,
-				parentId: region.id,
-				limit: 1,
-			})
-		} catch {
-			return null
-		}
-		const loc = candidates[0]
-		if (!loc || haversineKm(loc, region) > state.cityStateMaxKm) return null
+		if (typeof region.id !== "number" || !this.#backend.coincidentLocalitiesFor) return null
+		const loc = pickCompletion(this.#backend.coincidentLocalitiesFor(region.id))
+		if (!loc) return null
 		const span = state.resolvedRegionSpan ?? { start: 0, end: 0 }
 		const synthesized: AddressNode = {
 			tag: "locality",
@@ -168,7 +159,11 @@ class WofResolver implements Resolver {
 			children: [],
 		}
 		decorateNode(synthesized, loc, [])
-		synthesized.metadata = { ...(synthesized.metadata ?? {}), resolver_synthesized: true }
+		synthesized.metadata = {
+			...(synthesized.metadata ?? {}),
+			resolver_synthesized: true,
+			relationship_type: loc.relationshipType,
+		}
 		return synthesized
 	}
 
@@ -177,9 +172,9 @@ class WofResolver implements Resolver {
 		const decorated: AddressNode = { ...node, children: [] }
 
 		const placetype = state.placetypeMap[node.tag as ComponentTag]
-		// Track locality presence for the city-state recovery (#387): the recovery must NOT fire if the
-		// parser already emitted a locality node (even one that failed to resolve) — it only fills a
-		// genuine gap. Cheap and always-on; only consulted when cityStateFallback is set.
+		// Track locality presence for hierarchy completion (#405): completion must NOT fire if the parser
+		// already emitted a locality node (even one that failed to resolve) — it only fills a genuine
+		// gap. Cheap and always-on; only consulted when hierarchyCompletion is set.
 		if (placetype === "locality") state.localityNodePresent = true
 		let resolved: ResolvedPlace | null = null
 		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length > 0) {

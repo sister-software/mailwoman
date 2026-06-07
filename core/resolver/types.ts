@@ -71,6 +71,29 @@ export interface ResolverBackend {
 		postcode?: string
 		limit?: number
 	}): Promise<ResolvedPlace[]>
+	/**
+	 * The dual-role locality (or localities) coincident with an admin place id, from the precomputed
+	 * coincident-roles relation (#403). Drives {@link ResolveOpts.hierarchyCompletion}: when the parse
+	 * drops the locality of a city-state / capital-seat region, the resolver completes it from here
+	 * instead of re-querying. OPTIONAL — backends without the relation omit it, and completion
+	 * no-ops. Synchronous: it's an in-memory map lookup once the relation is loaded.
+	 */
+	coincidentLocalitiesFor?(adminId: number | string): CoincidentLocality[]
+}
+
+/**
+ * A dual-role locality returned by {@link ResolverBackend.coincidentLocalitiesFor} — a resolved
+ * place (so it can decorate a node directly) plus the relation metadata the completion step
+ * disambiguates on.
+ */
+export interface CoincidentLocality extends ResolvedPlace {
+	/** `city-state` / `capital-seat` / `consolidated-county` — surfaced as
+`metadata.relationship_type`. */
+	relationshipType: string
+	/** Locality population (0 when unknown) — the PRIMARY disambiguator when an admin has several. */
+	population: number
+	/** Centroid distance (km) admin↔locality from the relation — the population tiebreak. */
+	distanceKm: number
 }
 
 /**
@@ -140,28 +163,27 @@ export interface ResolveOpts {
 	 */
 	anchorWeight?: number
 	/**
-	 * Recover the dropped locality in a CITY-STATE address (#387). In the international-order layout
-	 * `…, Berlin, Berlin <PC>` the city and the region are the same word; the parser labels one as
-	 * the region and drops the locality entirely, so the resolved tree carries a region but no
-	 * locality (Berlin/Hamburg/Bremen — 955/1500 Berlin rows resolved to nothing in the v0.9.4 DE PIP
-	 * eval).
+	 * Recover the dropped locality in a DUAL-ROLE-place address (#405, epic #402). Many places occupy
+	 * multiple admin tiers under one name — city-states (Berlin/Hamburg/Bremen = city == state),
+	 * capital-seat provinces (Milano, Madrid), UK unitary authorities — and in the
+	 * international-order layout `…, Berlin, Berlin <PC>` the parser labels one token the region and
+	 * drops the locality entirely, leaving a region but no locality (955/1500 Berlin rows resolved to
+	 * nothing on v0.9.4).
 	 *
-	 * When this is on AND a region resolved AND the tree has NO locality node, the resolver asks the
-	 * backend for a same-name locality DESCENDANT of that region and — only if its centroid is within
-	 * {@link cityStateMaxKm} of the region centroid — synthesizes a locality node from it. That triple
-	 * (same name + descendant + coincident centroid) is what distinguishes a genuine city-state from
-	 * a normal same-name town inside a state (Brandenburg an der Havel sits 60 km from Brandenburg's
-	 * centroid; Berlin's coincide at 0 km), so the recovery is data-driven, not a hardcoded
-	 * city-state list. The synthesized node carries `metadata.resolver_synthesized = true` — it has
-	 * no span in the raw input. OFF by default: omit it and resolution is byte-identical.
+	 * When this is on AND a region resolved AND the tree has NO locality node, the resolver consults
+	 * the backend's precomputed coincident-roles relation
+	 * ({@link ResolverBackend.coincidentLocalitiesFor}, #403) for a same-name coincident locality and
+	 * synthesizes a node from it. The relation is the gazetteer's own structure (same name +
+	 * descendant + centroid-coincidence, derived at build time), so the runtime is an O(1) membership
+	 * lookup — no magic distance constant. When an admin maps to several same-name localities, the
+	 * most populous wins (the principal city), nearest-centroid breaks a population tie, and a
+	 * genuine tie ABSTAINS (no completion) rather than guess. The synthesized node carries
+	 * `metadata.resolver_synthesized = true` (+ `relationship_type`) — it has no span in the raw
+	 * input. OFF by default: omit it and resolution is byte-identical.
 	 */
+	hierarchyCompletion?: boolean
+	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */
 	cityStateFallback?: boolean
-	/**
-	 * Max km between a region centroid and its same-name locality descendant for the
-	 * {@link cityStateFallback} recovery to fire. Default 15 (city-states cluster at 0–9.3 km; the
-	 * nearest false positive, Brandenburg, is 60 km). Only consulted when `cityStateFallback` is on.
-	 */
-	cityStateMaxKm?: number
 }
 
 /**

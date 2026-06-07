@@ -12,7 +12,7 @@ import { describe, expect, test, vi } from "vitest"
 import { decodeAsXml } from "../decoder/serialize-xml.js"
 import type { AddressNode, AddressTree, ComponentTag } from "../decoder/types.js"
 import { createWofResolver } from "./resolve.js"
-import type { ResolvedPlace, ResolverBackend } from "./types.js"
+import type { CoincidentLocality, ResolvedPlace, ResolverBackend } from "./types.js"
 
 function node(
 	tag: ComponentTag,
@@ -36,9 +36,11 @@ function tree(raw: string, roots: AddressNode[]): AddressTree {
 class FakeResolverBackend implements ResolverBackend {
 	readonly calls: Array<Parameters<ResolverBackend["findPlace"]>[0]> = []
 	readonly #places: ResolvedPlace[]
+	readonly #coincident: Map<number, CoincidentLocality[]>
 
-	constructor(places: ResolvedPlace[]) {
+	constructor(places: ResolvedPlace[], coincident?: Map<number, CoincidentLocality[]>) {
 		this.#places = places
+		this.#coincident = coincident ?? new Map()
 	}
 
 	async findPlace(query: Parameters<ResolverBackend["findPlace"]>[0]): Promise<ResolvedPlace[]> {
@@ -51,6 +53,10 @@ class FakeResolverBackend implements ResolverBackend {
 			.filter((p) => !query.country || p.country === query.country)
 			.filter((p) => query.parentId === undefined || p.parent_id === query.parentId)
 			.slice(0, query.limit ?? 5)
+	}
+
+	coincidentLocalitiesFor(adminId: number | string): CoincidentLocality[] {
+		return this.#coincident.get(Number(adminId)) ?? []
 	}
 }
 
@@ -429,15 +435,15 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(on.roots[0]!.placeId).toBe("wof:1") // US already top, boost keeps it there
 	})
 
-	// City-state locality recovery (#387). In `…, Berlin, Berlin <PC>` the parser drops the locality
-	// (city == region), leaving a region but no locality. The fallback synthesizes it from the region's
-	// same-name, centroid-coincident locality descendant — data-driven, guarded against same-name towns.
-	const CITY_STATE_PLACES: ResolvedPlace[] = [
+	// Dual-role hierarchy completion (#405, generalizes #387). In `…, Berlin, Berlin <PC>` the parser
+	// drops the locality (city == region), leaving a region but no locality. Completion synthesizes it
+	// from the backend's precomputed coincident-roles relation (#403) — a membership lookup, not a
+	// runtime distance check. The places fixture only needs the region (so it resolves); the relation
+	// supplies the completion candidate.
+	const DUAL_ROLE_PLACES: ResolvedPlace[] = [
 		{ id: 900, name: "Germany", placetype: "country", country: "DE", lat: 51.1, lon: 10.4, score: 10 },
-		// Berlin: city-state — region + locality centroids coincide.
 		{ id: 910, name: "Berlin", placetype: "region", country: "DE", parent_id: 900, lat: 52.52, lon: 13.4, score: 9 },
-		{ id: 911, name: "Berlin", placetype: "locality", country: "DE", parent_id: 910, lat: 52.52, lon: 13.4, score: 8 },
-		// Brandenburg: NOT a city-state — the same-name town sits ~60 km from the state centroid.
+		// Brandenburg resolves as a region but is NOT in the relation (not a dual-role place).
 		{
 			id: 920,
 			name: "Brandenburg",
@@ -448,23 +454,27 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			lon: 13.0,
 			score: 9,
 		},
-		{
-			id: 921,
-			name: "Brandenburg",
-			placetype: "locality",
-			country: "DE",
-			parent_id: 920,
-			lat: 52.41,
-			lon: 12.55,
-			score: 8,
-		},
 	]
+	const berlinLocality: CoincidentLocality = {
+		id: 911,
+		name: "Berlin",
+		placetype: "locality",
+		country: "DE",
+		lat: 52.52,
+		lon: 13.4,
+		score: 0,
+		relationshipType: "city-state",
+		population: 3_600_000,
+		distanceKm: 0,
+	}
+	// admin_id → coincident localities. Berlin (910) is dual-role; Brandenburg (920) is absent.
+	const RELATION = new Map<number, CoincidentLocality[]>([[910, [berlinLocality]]])
 
-	test("city-state fallback synthesizes the dropped locality from the region (#387)", async () => {
-		const backend = new FakeResolverBackend(CITY_STATE_PLACES)
+	test("hierarchy completion synthesizes the dropped locality from the relation (#405)", async () => {
+		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
 		const result = await createWofResolver(backend).resolveTree(input, {
-			cityStateFallback: true,
+			hierarchyCompletion: true,
 			defaultCountry: "DE",
 		})
 
@@ -478,34 +488,101 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			lat: 52.52,
 			lon: 13.4,
 		})
-		expect(locality!.metadata).toMatchObject({ resolver_synthesized: true })
+		expect(locality!.metadata).toMatchObject({ resolver_synthesized: true, relationship_type: "city-state" })
 	})
 
-	test("city-state fallback is OFF by default — byte-stable (#387)", async () => {
-		const backend = new FakeResolverBackend(CITY_STATE_PLACES)
+	test("the deprecated cityStateFallback alias still drives completion (#405)", async () => {
+		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
+		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
+		const result = await createWofResolver(backend).resolveTree(input, {
+			cityStateFallback: true,
+			defaultCountry: "DE",
+		})
+		expect(result.roots.find((r) => r.tag === "locality")?.placeId).toBe("wof:911")
+	})
+
+	test("hierarchy completion is OFF by default — byte-stable (#405)", async () => {
+		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
 		const result = await createWofResolver(backend).resolveTree(input, { defaultCountry: "DE" })
 		expect(result.roots.find((r) => r.tag === "locality")).toBeUndefined()
 	})
 
-	test("city-state fallback rejects a same-name town that is NOT centroid-coincident (#387)", async () => {
-		const backend = new FakeResolverBackend(CITY_STATE_PLACES)
-		// Brandenburg state + no locality. A naive same-name-descendant rule would wrongly synthesize the
-		// town of Brandenburg an der Havel; the ~60 km centroid gap must veto it.
+	test("hierarchy completion does nothing for a region absent from the relation (#405)", async () => {
+		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
+		// Brandenburg resolves as a region but isn't a dual-role place → the relation has no entry → no completion.
 		const input = tree("Brandenburg 14770", [node("region", "Brandenburg", 0, 11), node("postcode", "14770", 12, 17)])
 		const result = await createWofResolver(backend).resolveTree(input, {
-			cityStateFallback: true,
+			hierarchyCompletion: true,
 			defaultCountry: "DE",
 		})
 		expect(result.roots.find((r) => r.tag === "locality")).toBeUndefined()
 	})
 
-	test("city-state fallback never overrides a locality the parser already emitted (#387)", async () => {
-		const backend = new FakeResolverBackend(CITY_STATE_PLACES)
+	test("hierarchy completion abstains when candidates tie on population AND distance (#405)", async () => {
+		// Two same-name localities, identical population + distance → genuinely indistinguishable → abstain.
+		const twin = (id: number): CoincidentLocality => ({
+			id,
+			name: "Berlin",
+			placetype: "locality",
+			country: "DE",
+			lat: 52.52,
+			lon: 13.4,
+			score: 0,
+			relationshipType: "city-state",
+			population: 1000,
+			distanceKm: 5,
+		})
+		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, new Map([[910, [twin(911), twin(912)]]]))
+		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
+		const result = await createWofResolver(backend).resolveTree(input, {
+			hierarchyCompletion: true,
+			defaultCountry: "DE",
+		})
+		expect(result.roots.find((r) => r.tag === "locality")).toBeUndefined()
+	})
+
+	test("hierarchy completion picks the most populous when an admin has several (#405)", async () => {
+		// The principal city (high population) wins even if it sits farther from the region centroid (Niigata).
+		const small: CoincidentLocality = {
+			id: 912,
+			name: "Berlin",
+			placetype: "locality",
+			country: "DE",
+			lat: 52.5,
+			lon: 13.4,
+			score: 0,
+			relationshipType: "capital-seat",
+			population: 0,
+			distanceKm: 1,
+		}
+		const big: CoincidentLocality = {
+			id: 911,
+			name: "Berlin",
+			placetype: "locality",
+			country: "DE",
+			lat: 52.52,
+			lon: 13.4,
+			score: 0,
+			relationshipType: "capital-seat",
+			population: 3_600_000,
+			distanceKm: 40,
+		}
+		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, new Map([[910, [small, big]]]))
+		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
+		const result = await createWofResolver(backend).resolveTree(input, {
+			hierarchyCompletion: true,
+			defaultCountry: "DE",
+		})
+		expect(result.roots.find((r) => r.tag === "locality")?.placeId).toBe("wof:911")
+	})
+
+	test("hierarchy completion never overrides a locality the parser already emitted (#405)", async () => {
+		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		// A real locality span is present (even if it won't resolve) → the gap-filler must stay quiet.
 		const input = tree("Some Town, Berlin", [node("locality", "Some Town", 0, 9), node("region", "Berlin", 11, 17)])
 		const result = await createWofResolver(backend).resolveTree(input, {
-			cityStateFallback: true,
+			hierarchyCompletion: true,
 			defaultCountry: "DE",
 		})
 		const localities = result.roots.filter((r) => r.tag === "locality")
