@@ -50,6 +50,8 @@ interface ResolutionState {
 	anchorWeight: number
 	/** Dual-role hierarchy completion (#405). Off by default → byte-stable. */
 	hierarchyCompletion: boolean
+	/** Attach ancestor lineage to each resolved node (#404). Off by default → byte-stable. */
+	includeAncestors: boolean
 	/**
 	 * Set while resolving when ANY tree node maps to the `locality` placetype (resolved or not) — the
 	 * completion only fires when the parser emitted no locality at all, never to override one.
@@ -116,6 +118,7 @@ class WofResolver implements Resolver {
 			anchorWeight: opts.anchorWeight ?? 2.0,
 			// `cityStateFallback` is the #387 alias that #405 generalized — still honored.
 			hierarchyCompletion: opts.hierarchyCompletion ?? opts.cityStateFallback ?? false,
+			includeAncestors: opts.includeAncestors ?? false,
 			localityNodePresent: false,
 			resolvedRegion: null,
 			resolvedRegionSpan: null,
@@ -182,6 +185,11 @@ class WofResolver implements Resolver {
 			if (picked) {
 				resolved = picked.top
 				decorateNode(decorated, picked.top, picked.alternatives)
+				// Lineage attachment (#404): stamp the resolved place's ancestor chain onto metadata. Opt-in
+				// + only when the backend supplies it, so the default stays byte-identical (no extra query).
+				if (state.includeAncestors && this.#backend.ancestors) {
+					decorated.metadata = { ...(decorated.metadata ?? {}), ancestors: this.#backend.ancestors(picked.top.id) }
+				}
 				// Capture the first resolved region for the city-state recovery, along with its span so
 				// the synthesized locality can borrow it (it has no span of its own).
 				if (placetype === "region" && state.resolvedRegion === null) {
