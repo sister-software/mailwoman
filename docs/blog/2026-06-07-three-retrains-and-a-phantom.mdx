@@ -1,0 +1,63 @@
+---
+title: "We spent three retrains fixing a German bug that didn't exist"
+description: "Our parser's international-order German 'collapsed' to 44%, so we retrained it three times. Then we measured the thing that can't be gamed and found out the model had been right all along — the metric was lying. Native German was sitting at 96%."
+authors: [teffen]
+tags: [neural, resolver, hubris]
+---
+
+There is a particular kind of engineering misery where you fix a bug three times and it never gets better, because the bug is in your ruler. This is that story.
+
+Our neural parser handles German two ways. Native order — `Hauptstraße 5, 10115 Berlin` — is the layout real German feeds and real German people use. International order — `5 Hauptstraße, Berlin, 10115` — is the Americanized layout our evaluation set happens to ship. For months, international-order German "collapsed": locality accuracy sat around 44% while native cleared 80%. We had a story for it. The postcode anchor — a side-channel that feeds the model a country hint derived from the postcode — sits at the _trailing_ postcode, which in international order lands on the far side of the locality from where it's needed. Plausible. So we retrained.
+
+{/* truncate */}
+
+## Three swings
+
+The first retrain taught the model both word orders. It moved the model's intrinsic parsing but the production number stayed flat. The second re-added a region tail the synthetic data had dropped. It fixed _region_ tagging — and left locality exactly where it was. The third injected the country hint at the front of the sentence too, so word order couldn't hide it. Locality-match went from 44.7% to 43.7%. Down. Three swings, and the needle would not move.
+
+Across all three, one number sat there glowing and we kept not looking at it: the median coordinate error was about **6 kilometers**. Six kilometers is city-centroid accuracy. That is not what a "collapse" looks like. A model that genuinely couldn't parse German addresses would be putting them in the wrong country, not six kilometers from the front door. The geography was fine the whole time while the locality-match score fell. When your accuracy metric drops and your distance-to-truth doesn't, the metric is the thing that's broken.
+
+## Measuring the thing that can't be gamed
+
+So we measured it. PIP-containment: forget whether the resolved name _string_ matches the gold string — is the address's real GPS point physically _inside the polygon_ of the place we resolved it to? You cannot game that with a string trick. It either lands in the right place or it doesn't.
+
+The international-order German result split clean down the middle:
+
+```
+                name-match   PIP-containment
+Saxony            51.1%          75.9%        (+24.8pp)
+Berlin            36.3%          36.3%        ( 0.0pp)
+```
+
+Two completely different stories had been hiding under one average.
+
+**Saxony was never broken.** The model places Saxon addresses correctly three times in four; the name-match metric only credited half of them. Look at what it was rejecting:
+
+```
+gold "Plauen Vogtl"     resolved "Plauen"        point inside Plauen ✓
+gold "Chemnitz Sachs"   resolved "Chemnitz"      point inside Chemnitz ✓
+gold "Marienberg Erzgeb" resolved "Marienberg"   point inside Marienberg ✓
+```
+
+OpenAddresses tags these with the regional district — _Vogtländischer Kreis_, _Sachsen_, _Erzgebirge_ — and Who's On First's canonical name doesn't carry the suffix. So `Plauen Vogtl` ≠ `Plauen`, the string check fails, and the model eats a miss for resolving an address to _exactly the right town_. Twenty-five points of "collapse" was our ruler refusing to call Plauen Plauen.
+
+**Berlin was genuinely broken** — just not the way we'd been retraining for. Of 1,500 Berlin addresses, 955 resolved to nothing at all. The model drops the locality entirely in the city-state layout `…, Berlin, Berlin 10115`, where the city and the state are the same word: one `Berlin` gets labeled the region, the other vanishes, and the resolver has nothing to place. That's a real bug. It is also specific to Berlin, Hamburg, and Bremen, and it has nothing whatsoever to do with the postcode anchor or word order — which is precisely why three anchor-and-order retrains never laid a finger on it.
+
+## What native German was actually doing
+
+And then the part that stung. We ran the same honest metric on native order, the layout that actually matters:
+
+```
+                name-match   PIP-containment
+native German     83.5%          96.2%
+```
+
+**Ninety-six percent.** Native German, measured by where the addresses actually land, was essentially solved and beating the rules-based baseline comfortably — while we'd been reading 83.5% off the name string and quietly wishing it were better. The metric had been low-balling our best locale by thirteen points the whole time.
+
+## The bill
+
+Three retrains, an A100 each, to discover that the model was fine and the scoreboard was broken. The honest accounting: one bug was a measurement artifact in the resolver's name comparison (the fix is an alias, not a training run), one was a narrow city-state parsing bug (a small data fix, not a country hint), and the model's German was a good deal better than any of our numbers had admitted. We cancelled the fourth retrain that was already queued.
+
+The thing I keep turning over is that the coordinate error sat at six kilometers across all three runs and we kept retraining anyway, because the metric we'd built our gates around was the one telling us to. A benchmark you can fail while being right is worse than no benchmark, because it doesn't just fail to help — it actively points you at the wrong fix and lets you feel diligent while you chase it. We have a non-gameable metric now. We should have built it first.
+
+_The 2×2s, the PIP-containment harness, and the per-state breakdowns are in `scripts/eval/de-pip-eval.sh` and `docs/articles/evals/`. Numbers in this post are generated._
