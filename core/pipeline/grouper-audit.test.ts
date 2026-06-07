@@ -180,14 +180,49 @@ describe("grouper-audit pass", () => {
 		})
 
 		it("falls back to the phrase kind when the classifier verdict is weak (<0.4)", () => {
+			// Locality-free tree so the fallback is exercised in isolation (no singleton-dedup interference).
+			const bareTree: AddressTree = {
+				raw: "Via Trento, SORBOLO",
+				roots: [{ tag: "postcode", value: "00000", start: 12, end: 19, confidence: 0.9, children: [] }],
+			}
 			const classifierTopK: ClassifierCandidate[] = [{ span: { start: 0, end: 3 }, tag: "street", score: 0.2 }]
-			const out = grouperAudit(tree, proposals, tree.raw, classifierTopK)
+			const out = grouperAudit(bareTree, proposals, bareTree.raw, classifierTopK)
 			expect(out.roots.find((n) => n.value === "Via")!.tag).toBe("locality")
 		})
 
 		it("falls back to the phrase kind when no classifierTopK is supplied (argmax path)", () => {
 			const out = grouperAudit(tree, proposals, tree.raw)
 			expect(out.roots.find((n) => n.value === "Via")!.tag).toBe("locality")
+		})
+
+		// #425 residual tail — the OOD model mistypes a Romance street-name word ("Via Francesca Nord"
+		// → `Francesca`) as a locality and the reconciler orphans it; the audit must NOT inject a SECOND
+		// locality that would shadow the real trailing city in decodeAsJson.
+		it("suppresses a duplicate singleton locality on the joint path", () => {
+			// "Francesca" orphaned, classifier (OOD) weakly calls it locality; tree already has the real city.
+			const props = [
+				{ span: Span.from("Francesca", { start: 0 }), kindHypothesis: "LOCALITY_PHRASE", confidence: 0.55 },
+			] as PhraseProposal[]
+			const treeWithCity: AddressTree = {
+				raw: "Francesca, MONSUMMANO TERME",
+				roots: [{ tag: "locality", value: "MONSUMMANO TERME", start: 11, end: 27, confidence: 0.9, children: [] }],
+			}
+			const classifierTopK: ClassifierCandidate[] = [{ span: { start: 0, end: 9 }, tag: "locality", score: 0.3 }]
+			const out = grouperAudit(treeWithCity, props, treeWithCity.raw, classifierTopK)
+			expect(out.roots.filter((n) => n.tag === "locality").map((n) => n.value)).toEqual(["MONSUMMANO TERME"])
+			expect(out.roots.find((n) => n.value === "Francesca")).toBeUndefined()
+		})
+
+		it("still allows the duplicate on the argmax path (no classifierTopK → byte-stable)", () => {
+			const props = [
+				{ span: Span.from("Francesca", { start: 0 }), kindHypothesis: "LOCALITY_PHRASE", confidence: 0.55 },
+			] as PhraseProposal[]
+			const treeWithCity: AddressTree = {
+				raw: "Francesca, MONSUMMANO TERME",
+				roots: [{ tag: "locality", value: "MONSUMMANO TERME", start: 11, end: 27, confidence: 0.9, children: [] }],
+			}
+			const out = grouperAudit(treeWithCity, props, treeWithCity.raw)
+			expect(out.roots.filter((n) => n.tag === "locality").length).toBe(2)
 		})
 	})
 

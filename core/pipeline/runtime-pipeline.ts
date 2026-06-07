@@ -278,7 +278,7 @@ export async function runPipeline(
 			logits,
 			pieces,
 			phraseProposals.map((p) => ({ start: p.span.start, end: p.span.end })),
-			{ labels }
+			{ labels, text: normalized.normalized }
 		)
 
 		if (classifierTopK.length > 0) {
@@ -428,6 +428,22 @@ export function grouperAudit(
 		if (!cur || c.score > cur.score) bestTagBySpan.set(k, { tag: c.tag, score: c.score })
 	}
 
+	// Tags that may appear AT MOST ONCE per address. On the joint path, the reconciler has already
+	// placed the confident locality/region/postcode; a SECOND one injected here is almost always a
+	// street-name word the OOD model mistyped ("Via Francesca Nord" → `Francesca`) or an area-line
+	// prefix ("LUGAR …" / "URBANIZACION …"). Suppressing the duplicate keeps the real trailing city
+	// from being shadowed by an earlier-positioned spurious node in `decodeAsJson` (#425 residual tail).
+	const SINGLETON_TAGS: ReadonlySet<ComponentTag> = new Set<ComponentTag>(["locality", "region", "postcode", "country"])
+	const presentSingletons = new Set<ComponentTag>()
+	const collectSingletons = (nodes: typeof roots): void => {
+		for (const n of nodes) {
+			if (SINGLETON_TAGS.has(n.tag)) presentSingletons.add(n.tag)
+			if (n.children) collectSingletons(n.children as typeof roots)
+		}
+	}
+	collectSingletons(roots)
+	const dedupeSingletons = classifierTopK !== undefined // joint path only — argmax stays byte-stable
+
 	for (const proposal of proposals) {
 		const phraseTag = PHRASE_KIND_TO_TAG.get(proposal.kindHypothesis)
 		if (!phraseTag) continue
@@ -443,6 +459,9 @@ export function grouperAudit(
 		const tag =
 			classifierVerdict && classifierVerdict.score >= CLASSIFIER_OVERRIDE_MIN ? classifierVerdict.tag : phraseTag
 
+		// Don't inject a second singleton-tag node when the reconciler already produced one.
+		if (dedupeSingletons && SINGLETON_TAGS.has(tag) && presentSingletons.has(tag)) continue
+
 		const provisionalNode: AddressNode = {
 			tag,
 			value: text.slice(pStart, pEnd),
@@ -455,6 +474,7 @@ export function grouperAudit(
 		}
 
 		roots.push(provisionalNode)
+		if (SINGLETON_TAGS.has(tag)) presentSingletons.add(tag)
 	}
 
 	roots.sort((a, b) => a.start - b.start)
