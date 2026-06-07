@@ -96,8 +96,11 @@ interface AddressNode {
 	source: "rule" | "neural" // Which classifier produced this node
 	children: AddressNode[] // Nested components (e.g. street contains street_prefix)
 	alternatives?: AddressAlternative[] // Resolver candidates when --candidates is set
+	interpretations?: Interpretation[] // Extra roles this one span plays — a city-state is region AND locality (#413)
 }
 ```
+
+A node usually plays one role (its `tag`). A **dual-role place** plays several on one span: `Berlin` is both a region and a locality. The extra roles ride in `interpretations` (each a `{ tag, placeId, lat, lon, … }`), and the flat projections surface every role — `decodeAsJson` emits both `region` and `locality`, `decodeAsXml` lists `roles="region locality"`. See [concepts/dual-role-places.md](./concepts/dual-role-places.md).
 
 ### `AddressAlternative`
 

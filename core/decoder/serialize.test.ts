@@ -193,3 +193,34 @@ describe("decodeAsXml (nested mixed-content)", () => {
 		expect(xml).toContain("<address raw=")
 	})
 })
+
+describe("interpretations (multi-role nodes, #413)", () => {
+	// A city-state: the `region` span "Berlin" also plays `locality` via an interpretation.
+	const cityStateTree = () => {
+		const tree = buildAddressTree("Berlin 10115", [tok("Berlin", 0, 6, "B-region"), tok("10115", 7, 12, "B-postcode")])
+		const region = tree.roots.find((r) => r.tag === "region")!
+		;(region as { interpretations?: unknown }).interpretations = [
+			{ tag: "locality", placeId: "wof:101909779", lat: 52.52, lon: 13.4 },
+		]
+		return tree
+	}
+
+	test("decodeAsJson emits one entry per role — region AND locality both surface", () => {
+		expect(decodeAsJson(cityStateTree())).toMatchObject({ region: "Berlin", locality: "Berlin", postcode: "10115" })
+	})
+
+	test("decodeAsJson is byte-stable when no interpretations are present", () => {
+		const tree = buildAddressTree("Berlin 10115", [tok("Berlin", 0, 6, "B-region"), tok("10115", 7, 12, "B-postcode")])
+		expect(decodeAsJson(tree)).toEqual({ region: "Berlin", postcode: "10115" })
+	})
+
+	test("decodeAsXml lists the roles, primary first", () => {
+		const xml = decodeAsXml(cityStateTree())
+		expect(xml).toContain('roles="region locality"')
+	})
+
+	test("decodeAsXml emits no roles attribute on a single-role node", () => {
+		const tree = buildAddressTree("Berlin 10115", [tok("Berlin", 0, 6, "B-region"), tok("10115", 7, 12, "B-postcode")])
+		expect(decodeAsXml(tree)).not.toContain("roles=")
+	})
+})
