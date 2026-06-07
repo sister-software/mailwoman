@@ -78,6 +78,10 @@ not just unit-tested — the gated re-measure happened this shift:
   warnings) — a local `yarn build-docs` before pushing docs would've caught them.
 - Completion monitors false-positived twice on stale prior-run `step-020000` checkpoints → switched to
   app-task detection.
+- **The eval loads compiled `core/out/`, not source.** The first #387 before/after showed *zero* effect —
+  the `--city-state-fallback` flag was a silent no-op until `tsc -p core/tsconfig.json`. Unit tests pass on
+  vitest's source aliases, so they hid it; only the eval scripts (which import the package `exports` map)
+  bite. Recompile after touching any workspace an eval imports. (Captured in `feedback-compiled-cli`.)
 
 ## Decisions made autonomously
 
@@ -89,27 +93,36 @@ not just unit-tested — the gated re-measure happened this shift:
 
 - The German pivot reframes the v0.6.x→v0.9.x saga: the "collapse" was substantially a name-match artifact.
   Worth a blog post? (The "which Berlin" post already opens this thread.)
-- Promote nothing this shift (no model cleared its gate). The deployed default is unchanged.
+- No MODEL promoted (no retrain cleared its gate); the deployed model default is unchanged. But two RESOLVER
+  fixes shipped and measured (#386/#387), both opt-in/default-off — see the recommendation below.
 
 ## Concrete next steps
 
-- **#386** SHIPPED (PR #395): hierarchy-aware regional-suffix credit — gold `X Y` credits resolved `X` when
-  `Y` is an abbreviation-prefix of the resolved place's own WOF ancestry (`Vogtl`→county `Vogtland`). List-
-  free, validated 7/7 against the live gazetteer. Live DE before/after (≈+12pp) is gated on the v4.0.0
-  en-us symlink (currently a v0.5.3 dev artifact) — a one-line follow-up once that's restored.
-- **#387** Berlin/Hamburg/Bremen city-state segmentation (data-aug, gated retrain — future shift). The other
-  half of the German finding; untouched by anchor/order, so it needs a corpus fix not a recipe tweak.
-- **#368 L2** calibrate the DEPLOYED multi-locale model (per-locale table — DE/NL are under-served). The
+- **#387 → promote `cityStateFallback` to default-on (recommended, your call).** Regression check is clean:
+  measured DE Berlin PIP 36.3→80.9% (+44.6pp), and ON-vs-OFF is byte-identical on US (0/10000) and FR
+  (0/3000), +7 pure improvements on NL (Dutch province-capitals Utrecht/Groningen). Serializers render the
+  synthesized node fine (`decodeAsJson` → `…,"locality":"Berlin"`). Only un-done check is the demo
+  highlighting (your verify domain). Then it's a one-line default flip in `resolve.ts`.
+- **#387 residual (~12.5% Berlin) is a PARSER bug, not the resolver:** the model mangles `Straußstraße`→
+  `Strau`+`straße` and drops both Berlins (no region to anchor on). A distinct ß / compound-street
+  tokenizer follow-up (`scripts/diag-citystate-fire.ts` reproduces it).
+- **#386 DONE + measured:** Sachsen name-match 51.1→65.5%. Residual Sachsen gap is the hyphenated-compound
+  class (`Ebersbach-Neugersdorf`→`Neugersdorf`) — a separate fragmentation follow-up.
+- **#368 L2** calibrate the DEPLOYED multi-locale model (per-locale table — DE/NL under-served). The
   per-locale fitter (#391) + drift guard (#392) are in place; this just points them at the multi-locale run.
-- **en-us symlink:** restore `neural-weights-en-us/model.onnx` → v4.0.0 (it reverted to the v0.5.3 int8 dev
-  artifact via a `yarn test` re-symlink). Blocks consistent model-running evals; the published package is
-  unaffected (real v4.0.0 is materialized at publish).
+- **en-us symlink (#397):** restore `neural-weights-en-us/model.onnx` → v4.0.0 (`link-dev-weights.sh` pins
+  stale v0.5.3). Blocks consistent *en-us* evals; the DE re-measure above did NOT need it (explicit
+  `/tmp/v094-eval/model.onnx`). Published package unaffected (real v4.0.0 materialized at publish).
 
 ## Numbers (running)
 
 - Modal: 2 retrains (v0.9.3, v0.9.4) @ 20k each, 2 ONNX exports, ~$6–8 of $15 (v0.9.5 cancellation saved ~$4).
 - NaN incidents: 0. · CI failures: 3 docs-build (all fixed) + 1 onnxruntime-download flake (re-run).
-- PRs: 21 opened, 20 merged, 1 open (#400). · Issues: 15 filed, 4 groomed. · DeepSeek: 2 consults = 6 turns.
+- PRs: 23 merged on 2026-06-07 (incl. 4 demo-infra carryover #363–366) + 1 open (#401). · Issues: 15 filed,
+  5 groomed. · DeepSeek: 2 consults = 6 turns.
+- **Measured outcomes (real v0.9.4 model, no retrain):** #387 city-state recovery DE Berlin PIP
+  36.3→80.9% (+44.6pp), regression-clean across US (0/10000) / FR (0/3000) / NL (+7, all wins); #386 Sachsen
+  name-match 51.1→65.5%. Both opt-in/default-off — promotion to default recommended, teed up for the operator.
 - The shift's second half (post the German pivot) shipped, all off the A100: the full calibration program
   (per-tag/locale ECE, abstention curve, per-locale tables, drift guard, in-package tables), BOTH halves of
   the German finding (#386 Saxony name-match + #387 city-state recovery + the measurement flag), the
