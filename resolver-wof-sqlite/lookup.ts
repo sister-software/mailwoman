@@ -15,6 +15,7 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite"
 
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 
+import type { CoincidentLocality } from "@mailwoman/core/resolver"
 import {
 	ADDRESS_CONVENTION_TABLE,
 	resolveConvention,
@@ -24,6 +25,8 @@ import {
 	type ResolvedConvention,
 	type Strategy,
 } from "./convention.js"
+
+import { COINCIDENT_ROLES_TABLE, coincidentRolesExists } from "./coincident-roles.js"
 import {
 	buildPlaceSearchFts,
 	PLACE_BBOX_TABLE,
@@ -295,6 +298,9 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #countryWofIdCache = new Map<string, number | null>()
 	/** Strategy names already warned about — so an unknown name surfaces once, not once per query. */
 	readonly #warnedUnknownStrategies = new Set<string>()
+	/** Lazily-built `admin_id → coincident localities` map from the #403 relation (null until first
+use). */
+	#coincidentRolesCache: Map<number, CoincidentLocality[]> | null = null
 
 	constructor(opts: WofSqlitePlaceLookupOpts, weights?: Partial<RankingWeights>) {
 		if (opts.database && opts.databasePath) {
@@ -399,6 +405,61 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			if (result !== null) return result
 		}
 		return []
+	}
+
+	/**
+	 * Dual-role localities coincident with an admin id, from the precomputed `coincident_roles`
+	 * relation (#403). Backs {@link ResolveOpts.hierarchyCompletion} (#405): O(1) once the relation is
+	 * loaded. Returns `[]` when the relation table is absent (older DB) or the admin isn't a
+	 * dual-role place, so completion degrades gracefully. The relation + `spr` join is loaded once
+	 * and memoized.
+	 */
+	coincidentLocalitiesFor(adminId: number | string): CoincidentLocality[] {
+		const id = typeof adminId === "number" ? adminId : Number(adminId)
+		if (!Number.isFinite(id)) return []
+		if (!this.#coincidentRolesCache) {
+			const map = new Map<number, CoincidentLocality[]>()
+			if (coincidentRolesExists(this.#db)) {
+				const rows = this.#db
+					.prepare(
+						`SELECT cr.admin_id AS adminId, s.id AS id, s.name AS name, s.country AS country,
+							s.latitude AS lat, s.longitude AS lon,
+							cr.relationship_type AS relationshipType, cr.locality_population AS population,
+							cr.distance_km AS distanceKm
+						FROM ${COINCIDENT_ROLES_TABLE} cr JOIN spr s ON s.id = cr.locality_id`
+					)
+					.all() as unknown as Array<{
+					adminId: number
+					id: number
+					name: string
+					country: string
+					lat: number
+					lon: number
+					relationshipType: string
+					population: number
+					distanceKm: number
+				}>
+				for (const r of rows) {
+					const candidate: CoincidentLocality = {
+						id: r.id,
+						name: r.name,
+						placetype: "locality",
+						country: r.country,
+						lat: r.lat,
+						lon: r.lon,
+						score: 0,
+						relationshipType: r.relationshipType,
+						population: r.population,
+						distanceKm: r.distanceKm,
+					}
+					const list = map.get(r.adminId)
+					if (list) list.push(candidate)
+					else map.set(r.adminId, [candidate])
+				}
+			}
+			this.#coincidentRolesCache = map
+		}
+		return this.#coincidentRolesCache.get(id) ?? []
 	}
 
 	/**
