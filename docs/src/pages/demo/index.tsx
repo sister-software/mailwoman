@@ -444,16 +444,29 @@ const DemoApp: React.FC = () => {
 			try {
 				// Stage 2.4 + 2.5: compute QueryShape + kind classification. Pure functions, ~µs.
 				// Surfaced in the UI so users see the staged pipeline working.
-				const [{ computeQueryShape }, { classifyKindSync }] = await Promise.all([
+				const [{ computeQueryShape }, { classifyKindSync }, { runPipeline }, { groupPhrases }] = await Promise.all([
 					import("@mailwoman/query-shape"),
 					import("@mailwoman/kind-classifier"),
+					import("@mailwoman/core/pipeline"),
+					import("@mailwoman/phrase-grouper"),
 				])
 				const tStart = performance.now()
 				const queryShape = computeQueryShape(text)
 				const kindResult = classifyKindSync({ raw: text, normalized: text }, queryShape)
 				const tShape = performance.now()
 
-				const tree = await classifier.parse(text, { queryShape, fst: fstMatcher ?? undefined })
+				// Run the full runtime pipeline — phrase grouper (Stage 2.7) + joint-reconcile decode
+				// (Stage 5), the default since #427 — instead of the raw argmax `classifier.parse`. This
+				// is what surfaces multi-word localities, Romance street prefixes, and the correct
+				// house-number boundary in the browser, matching the library + CLI. Normalize / locale /
+				// kind default inside runPipeline; the demo's own WOF httpvfs lookup runs below on the
+				// resulting tree (no resolver stage is passed).
+				const { tree } = await runPipeline(text, {
+					computeQueryShape,
+					groupPhrases,
+					classifier: classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+					fst: (fstMatcher ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
+				})
 				const tClassify = performance.now()
 				const nodes = flattenTree(tree)
 				const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")

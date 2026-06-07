@@ -4544,6 +4544,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/neural-web": "workspace:*"
+    "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
     "@mdx-js/react": "npm:^3.1.1"
