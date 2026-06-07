@@ -20,7 +20,7 @@
  *   webpack — that's what keeps the Docusaurus build warning-free.
  */
 
-import type { MailwomanLookupLike } from "./resources"
+import type { DualRole, MailwomanLookupLike } from "./resources"
 
 const POPULATION_BOOST = 4.0
 const POPULATION_SCALE_LOG10 = 6.0
@@ -81,9 +81,65 @@ export async function loadHttpvfsDb(dbUrl: string, sqljsBaseUrl: string): Promis
 export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 	#worker: HttpvfsWorker
 	#hasPop: boolean | undefined
+	#dualRolesCache: Map<number, DualRole[]> | undefined
 
 	constructor(worker: HttpvfsWorker) {
 		this.#worker = worker
+	}
+
+	/**
+	 * Dual-role lookup (#402): a city-state / capital-seat place holds two admin tiers under one name
+	 * (Berlin is both a region and a locality). The `coincident_roles` relation pairs an `admin_id`
+	 * with the `locality_id` it doubles as; this returns the PARTNER role for a resolved place in
+	 * EITHER direction, so the demo can badge "Berlin → also a region (city-state)" whether the parse
+	 * resolved the city or the state. Loaded once + memoized (the relation is ~hundreds of rows).
+	 * Returns `[]` when the slim DB predates the relation (existence-guarded) — degrades silently.
+	 */
+	async coincidentRolesFor(placeId: number): Promise<DualRole[]> {
+		if (!Number.isFinite(placeId)) return []
+		if (!this.#dualRolesCache) {
+			const map = new Map<number, DualRole[]>()
+			const exists = rowsFromExec(
+				await this.#worker.db.exec("SELECT 1 FROM sqlite_master WHERE type='table' AND name='coincident_roles' LIMIT 1")
+			)
+			if (exists.length > 0) {
+				const rows = rowsFromExec(
+					await this.#worker.db.exec(
+						`SELECT cr.admin_id AS adminId, cr.locality_id AS localityId, cr.relationship_type AS rel,
+							a.name AS adminName, a.placetype AS adminType, l.name AS locName, l.placetype AS locType
+						FROM coincident_roles cr JOIN spr a ON a.id = cr.admin_id JOIN spr l ON l.id = cr.locality_id`
+					)
+				)
+				const push = (key: number, role: DualRole): void => {
+					const arr = map.get(key) ?? []
+					arr.push(role)
+					map.set(key, arr)
+				}
+				for (const r of rows) {
+					const adminId = Number(r.adminId)
+					const localityId = Number(r.localityId)
+					const rel = String(r.rel)
+					// Resolved place is the locality → it ALSO acts as the region (the admin partner).
+					push(localityId, {
+						id: adminId,
+						name: String(r.adminName),
+						placetype: String(r.adminType),
+						relationshipType: rel,
+						role: "region",
+					})
+					// Resolved place is the admin → it ALSO acts as the locality.
+					push(adminId, {
+						id: localityId,
+						name: String(r.locName),
+						placetype: String(r.locType),
+						relationshipType: rel,
+						role: "locality",
+					})
+				}
+			}
+			this.#dualRolesCache = map
+		}
+		return this.#dualRolesCache.get(placeId) ?? []
 	}
 
 	async #hasPopulation(): Promise<boolean> {
