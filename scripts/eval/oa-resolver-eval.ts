@@ -98,6 +98,24 @@ function collectResolved(tree: AddressTree): Resolved[] {
 			const name = String(meta?.["resolver_name"] ?? n.value ?? "")
 			out.push({ id: Number(n.placeId.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
 		}
+		// Multi-role completion (#415/#416): a dual-role region carries extra roles (e.g. `locality`) as
+		// INTERPRETATIONS on the same node, not separate children. Surface each resolved interpretation as
+		// its own Resolved so the eval finds the completed locality (placetype/coord/name come from the
+		// interpretation).
+		for (const interp of (n.interpretations ?? []) as ReadonlyArray<{
+			tag: string
+			placeId?: string
+			sourceId?: string
+			lat?: number
+			lon?: number
+			metadata?: Record<string, unknown>
+		}>) {
+			if (interp.placeId?.startsWith("wof:") && interp.lat !== undefined && interp.lon !== undefined) {
+				const placetype = String(interp.sourceId ?? interp.tag).split(":")[0] ?? ""
+				const name = String(interp.metadata?.["resolver_name"] ?? n.value ?? "")
+				out.push({ id: Number(interp.placeId.slice(4)), name, placetype, lat: interp.lat, lon: interp.lon })
+			}
+		}
 		for (const c of n.children) visit(c)
 	}
 	for (const r of tree.roots) visit(r)
