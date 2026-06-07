@@ -457,7 +457,12 @@ const DemoApp: React.FC = () => {
 				const tClassify = performance.now()
 				const nodes = flattenTree(tree)
 				const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
-				const stateNode = nodes.find((n) => n.tag === "region" || n.tag === "state")
+				// Highest-confidence region, not the first in source order: a street name like
+				// "Pennsylvania Ave" yields a spurious low-confidence region span that would otherwise
+				// hijack the lookup ("Washington, DC" → Washington, PA).
+				const stateNode = nodes
+					.filter((n) => n.tag === "region" || n.tag === "state")
+					.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
 				const wofLookup = await ensureLookup()
@@ -744,6 +749,22 @@ type ParsedNode = { tag: string; value?: unknown; confidence?: number }
 
 const normName = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
 
+// USPS two-letter codes → full state name. A bare "IL" FTS-matches "Ille-et-Vilaine" (a French
+// département) before "Illinois", so its France bbox filters out the actual US city — expanding to
+// the full name resolves the right region. Full names pass through unchanged.
+const US_STATE_ABBREV: Record<string, string> = {
+	AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado",
+	CT: "Connecticut", DE: "Delaware", DC: "District of Columbia", FL: "Florida", GA: "Georgia",
+	HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky",
+	LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota",
+	MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire",
+	NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota",
+	OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina",
+	SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia",
+	WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", PR: "Puerto Rico",
+}
+const expandUsRegion = (text: string): string => US_STATE_ABBREV[text.trim().toUpperCase()] ?? text
+
 async function runCascade(
 	lookup: MailwomanLookupLike,
 	postcodeNode: ParsedNode | undefined,
@@ -761,14 +782,19 @@ async function runCascade(
 	// with an unrelated same-named town). So when the specific line isn't a real place, we fall
 	// through to the one that is: the city. A fuzzy hit is kept only as a last-resort backstop.
 	const resolveLocality = async (regionBbox: Hits[number]["bbox"]): Promise<Hits> => {
+		// Prefer an exact-name match inside the region bbox; if none, retry the same nodes WITHOUT the
+		// bbox before settling for a fuzzy hit. The unconstrained retry is the safety net for a
+		// mis-resolved region (e.g. "IL" → a French département): a bad bbox can't cause a total miss.
 		let fuzzy: Hits = []
-		for (const node of localityNodes) {
-			const text = String(node.value ?? "").trim()
-			if (!text) continue
-			const cs = usable(await lookup.findPlace({ text, placetype: "locality", bbox: regionBbox, limit: 5 }))
-			if (cs.length === 0) continue
-			if (cs.some((c) => normName(c.name) === normName(text))) return cs
-			if (fuzzy.length === 0) fuzzy = cs
+		for (const bbox of regionBbox ? [regionBbox, undefined] : [undefined]) {
+			for (const node of localityNodes) {
+				const text = String(node.value ?? "").trim()
+				if (!text) continue
+				const cs = usable(await lookup.findPlace({ text, placetype: "locality", bbox, limit: 5 }))
+				if (cs.length === 0) continue
+				if (cs.some((c) => normName(c.name) === normName(text))) return cs
+				if (fuzzy.length === 0) fuzzy = cs
+			}
 		}
 		return fuzzy
 	}
@@ -781,7 +807,11 @@ async function runCascade(
 	// would otherwise pick).
 	let regionBbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | undefined
 	if (stateNode?.value) {
-		const regions = await lookup.findPlace({ text: String(stateNode.value), placetype: "region", limit: 1 })
+		const regions = await lookup.findPlace({
+			text: expandUsRegion(String(stateNode.value)),
+			placetype: "region",
+			limit: 1,
+		})
 		regionBbox = regions[0]?.bbox
 	}
 
