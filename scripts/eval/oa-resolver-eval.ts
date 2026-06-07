@@ -367,7 +367,15 @@ async function main(): Promise<void> {
 	// non-US eval to US places (a German "Berlin" then loses to a tiny US Berlin). Settable via
 	// `--default-country <ISO|none>`; `none` disables the filter so ranking alone decides.
 	const dc = arg("default-country", "US")
-	const resolveOpts = dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}
+	// `--city-state-fallback` (#387): recover the locality the parser drops in a city-state layout
+	// (`…, Berlin, Berlin <PC>` — city == region). Opt-in, default-off, so by default this eval's
+	// numbers are byte-identical; pass it to measure the Berlin/Hamburg/Bremen before/after. Applied to
+	// BOTH the neural and rules resolve paths (they share `resolveOpts`), so the comparison stays fair.
+	const cityStateFallback = process.argv.includes("--city-state-fallback")
+	const resolveOpts = {
+		...(dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}),
+		...(cityStateFallback ? { cityStateFallback: true } : {}),
+	}
 
 	// Postcode-anchor fusion (opt-in via `--postcode-anchor`). The resolver supplies the admin/place
 	// identity, but its coordinate is the place CENTROID — legitimately tens of km from edge addresses.
