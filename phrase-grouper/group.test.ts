@@ -189,6 +189,24 @@ describe("scoreStreetPhrase", () => {
 	it("suffix alone with no preceding token emits nothing", () => {
 		expect(scoreStreetPhrase(tokenizeSegment("Street", 0), "Street")).toEqual([])
 	})
+
+	// #425 — Romance street pattern: the street TYPE leads ("Via Trento", "Calle Mayor").
+	it("emits STREET_PHRASE for a prefix-led Italian street (Via Trento)", () => {
+		const out = scoreStreetPhrase(tokenizeSegment("Via Trento", 0), "Via Trento")
+		expect(out.find((p) => p.span.body === "Via Trento")).toBeDefined()
+	})
+
+	it("emits STREET_PHRASE for a prefix-led Spanish street (Calle Mayor)", () => {
+		const out = scoreStreetPhrase(tokenizeSegment("Calle Mayor", 0), "Calle Mayor")
+		expect(out.find((p) => p.span.body === "Calle Mayor")).toBeDefined()
+	})
+
+	it("a bare street prefix still emits a low-confidence STREET marker (audit anchor)", () => {
+		const out = scoreStreetPhrase(tokenizeSegment("Via", 0), "Via")
+		const via = out.find((p) => p.span.body === "Via")
+		expect(via).toBeDefined()
+		expect(via!.confidence).toBeLessThan(0.6)
+	})
 })
 
 describe("scoreLocalityPhrase", () => {
@@ -225,6 +243,76 @@ describe("scoreLocalityPhrase", () => {
 	it("still emits multi-word runs containing a state name (New York)", () => {
 		const out = scoreLocalityPhrase(tokenizeSegment("New York", 0), "New York", true)
 		expect(out.find((p) => p.span.body === "New York")).toBeDefined()
+	})
+
+	// #425 — bridge lowercase place-name particles + apostrophe-fused names so native-order multi-word
+	// localities surface as ONE span (the gap that fragmented IT/ES/NL under joint-decode, Route A).
+	it("bridges a Spanish 'de' particle (Las Palmas de Gran Canaria)", () => {
+		const text = "Las Palmas de Gran Canaria"
+		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)
+		expect(bodies).toContain("Las Palmas de Gran Canaria")
+		// Never end a proposal on the bare particle.
+		expect(bodies).not.toContain("Las Palmas de")
+	})
+
+	it("bridges an apostrophe-fused Italian particle (Reggio nell'Emilia)", () => {
+		const text = "Reggio nell'Emilia"
+		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)
+		expect(bodies).toContain("Reggio nell'Emilia")
+	})
+
+	it("bridges an Italian 'in' particle (San Pietro in Casale)", () => {
+		const text = "San Pietro in Casale"
+		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)
+		expect(bodies).toContain("San Pietro in Casale")
+	})
+
+	it("bridges two consecutive Dutch particles (Alphen aan den Rijn)", () => {
+		const text = "Alphen aan den Rijn"
+		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)
+		expect(bodies).toContain("Alphen aan den Rijn")
+	})
+
+	it("bridges a German 'am' particle (Frankfurt am Main)", () => {
+		const text = "Frankfurt am Main"
+		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)
+		expect(bodies).toContain("Frankfurt am Main")
+	})
+
+	it("does NOT bridge a non-particle lowercase word (no 'Street and Oak' span)", () => {
+		const text = "Main Street and Oak Avenue"
+		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)
+		expect(bodies.some((b) => b.includes(" and "))).toBe(false)
+	})
+
+	it("does NOT bridge a dangling particle at end of segment (Palmas de)", () => {
+		const text = "Palmas de"
+		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)
+		expect(bodies).not.toContain("Palmas de")
+		expect(bodies).toContain("Palmas")
+	})
+
+	// #425 — all-caps intl place HEAD that matches the region-abbreviation shape ("SAN", "DI") must
+	// still form the multi-word locality, not get skipped as a US-state abbreviation.
+	it("forms a locality from a region-abbrev-shaped head (SAN NAZARIO)", () => {
+		const bodies = scoreLocalityPhrase(tokenizeSegment("SAN NAZARIO", 0), "SAN NAZARIO", true).map((p) => p.span.body)
+		expect(bodies).toContain("SAN NAZARIO")
+	})
+
+	it("bridges an all-caps particle (CITTA DI CASTELLO)", () => {
+		const bodies = scoreLocalityPhrase(tokenizeSegment("CITTA DI CASTELLO", 0), "CITTA DI CASTELLO", true).map(
+			(p) => p.span.body
+		)
+		expect(bodies).toContain("CITTA DI CASTELLO")
+		expect(bodies).not.toContain("CITTA DI")
+	})
+
+	it("does NOT start a locality on a leading street-type word (Via Trento)", () => {
+		const bodies = scoreLocalityPhrase(tokenizeSegment("Via Trento", 0), "Via Trento", false).map((p) => p.span.body)
+		expect(bodies).not.toContain("Via")
+		expect(bodies).not.toContain("Via Trento")
+		// The street NAME alone may still surface as a locality candidate — the reconciler arbitrates.
+		expect(bodies).toContain("Trento")
 	})
 })
 

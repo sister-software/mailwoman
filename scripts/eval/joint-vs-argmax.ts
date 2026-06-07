@@ -122,8 +122,11 @@ async function main(): Promise<void> {
 	const argmaxLat: number[] = []
 	const jointLat: number[] = []
 
+	const dumpReg = !!process.env.MW_DUMP_REGRESSIONS
 	for (const row of rows) {
-		const score = async (forceJointReconcile: boolean): Promise<{ loc: boolean; reg: boolean; ms: number }> => {
+		const score = async (
+			forceJointReconcile: boolean
+		): Promise<{ loc: boolean; reg: boolean; ms: number; locVal?: string }> => {
 			const t0 = performance.now()
 			let json: Partial<Record<string, string>> = {}
 			try {
@@ -137,12 +140,13 @@ async function main(): Promise<void> {
 				loc: fieldMatch(json.locality, row.expected.locality),
 				reg: fieldMatch(json.region, row.expected.region),
 				ms,
+				locVal: json.locality,
 			}
 		}
 		// Alternate which path runs first so any per-input cache warmth doesn't favor one path.
 		const argmaxFirst = argmaxLat.length % 2 === 0
-		let a: { loc: boolean; reg: boolean; ms: number }
-		let j: { loc: boolean; reg: boolean; ms: number }
+		let a: { loc: boolean; reg: boolean; ms: number; locVal?: string }
+		let j: { loc: boolean; reg: boolean; ms: number; locVal?: string }
 		if (argmaxFirst) {
 			a = await score(false)
 			j = await score(true)
@@ -165,6 +169,11 @@ async function main(): Promise<void> {
 		if (locRegressed || regRegressed || locImproved || regImproved) changed++
 		if (locRegressed || regRegressed) regressed++
 		if (locImproved || regImproved) improved++
+		if (dumpReg && locRegressed) {
+			console.error(
+				`[REG] gold="${row.expected.locality}"  argmax="${a.locVal ?? ""}"  joint="${j.locVal ?? ""}"  | ${row.input}`
+			)
+		}
 	}
 
 	const n = rows.length

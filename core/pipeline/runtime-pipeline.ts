@@ -14,6 +14,7 @@
 
 import type { AddressNode, AddressTree } from "../decoder/types.js"
 import type { ComponentTag } from "../types/component.js"
+import type { ClassifierCandidate } from "./reconcile.js"
 import { reconcileSpans } from "./reconcile.js"
 import { aggregateSpanLogits } from "./span-logit-aggregation.js"
 import type {
@@ -235,6 +236,9 @@ export async function runPipeline(
 	}
 
 	let tree: AddressTree = { raw: normalized.normalized, roots: [] }
+	// Captured from the joint-reconcile path so the grouper-audit can defer to the classifier's
+	// per-span verdict on orphaned spans (see the assignment + grouperAudit below).
+	let auditClassifierTopK: ClassifierCandidate[] | undefined
 
 	// Joint-reconcile path: opt-in until phrase-grouper proposal quality supports it as default.
 	// The reconciler produces single-token spans when phrase proposals don't cover multi-word
@@ -284,6 +288,12 @@ export async function runPipeline(
 				classifierTopK,
 			})
 			tree = result.tree
+			// The reconciler can leave a span uncovered (e.g. it picked the single-token street
+			// `Trento` over `Via Trento`, orphaning `Via`). The grouper-audit below would then promote
+			// that orphan's LOCALITY_PHRASE proposal to a `locality` node — even though the classifier
+			// confidently typed it `street`. Hand the audit the classifier's per-span verdict so it
+			// respects that opinion instead of trusting the structural phrase kind (#425 re-gate).
+			auditClassifierTopK = classifierTopK
 		} else {
 			tree = argmaxTree
 		}
@@ -297,7 +307,7 @@ export async function runPipeline(
 
 	if (phraseProposals.length > 0 && tree.roots.length >= 0) {
 		const tAudit = performance.now()
-		tree = grouperAudit(tree, phraseProposals, normalized.normalized)
+		tree = grouperAudit(tree, phraseProposals, normalized.normalized, auditClassifierTopK)
 		timing["grouper-audit"] = performance.now() - tAudit
 	}
 
@@ -382,8 +392,20 @@ const PHRASE_KIND_TO_TAG: ReadonlyMap<string, ComponentTag> = new Map([
  * Post-classification audit: for each phrase-grouper proposal whose span is entirely unlabeled
  * (all-O) in the classifier output, inject a provisional node using the grouper's structural
  * hypothesis. This rescues spans the neural model couldn't type — primarily venue text.
+ *
+ * When `classifierTopK` is supplied (the joint-reconcile path), the audit defers to the classifier's
+ * own verdict for the orphaned span: if the classifier confidently typed it as a DIFFERENT component
+ * than the phrase kind, we inject the classifier's tag rather than the structural guess. Without this,
+ * a reconciler that leaves a street-prefix word like `Via` orphaned (because it picked the single
+ * `Trento` street span) would see the audit promote `Via`'s LOCALITY_PHRASE to a spurious `locality`
+ * node — burying the real trailing city. The classifier said `street:0.73` for `Via`; trust it (#425).
  */
-function grouperAudit(tree: AddressTree, proposals: PhraseProposal[], text: string): AddressTree {
+export function grouperAudit(
+	tree: AddressTree,
+	proposals: PhraseProposal[],
+	text: string,
+	classifierTopK?: ClassifierCandidate[]
+): AddressTree {
 	if (proposals.length === 0) return tree
 
 	const roots = [...tree.roots]
@@ -397,15 +419,29 @@ function grouperAudit(tree: AddressTree, proposals: PhraseProposal[], text: stri
 	}
 	collectNodes(roots)
 
+	// Index the classifier's single best tag per exact span (start:end) so the audit can defer to it.
+	const CLASSIFIER_OVERRIDE_MIN = 0.4
+	const bestTagBySpan = new Map<string, { tag: ComponentTag; score: number }>()
+	for (const c of classifierTopK ?? []) {
+		const k = `${c.span.start}:${c.span.end}`
+		const cur = bestTagBySpan.get(k)
+		if (!cur || c.score > cur.score) bestTagBySpan.set(k, { tag: c.tag, score: c.score })
+	}
+
 	for (const proposal of proposals) {
-		const tag = PHRASE_KIND_TO_TAG.get(proposal.kindHypothesis)
-		if (!tag) continue
+		const phraseTag = PHRASE_KIND_TO_TAG.get(proposal.kindHypothesis)
+		if (!phraseTag) continue
 
 		const pStart = proposal.span.start
 		const pEnd = pStart + proposal.span.body.length
 
 		const covered = allNodes.some((node) => node.start < pEnd && pStart < node.end)
 		if (covered) continue
+
+		// Defer to the classifier when it confidently typed this exact span as something else.
+		const classifierVerdict = bestTagBySpan.get(`${proposal.span.start}:${proposal.span.end}`)
+		const tag =
+			classifierVerdict && classifierVerdict.score >= CLASSIFIER_OVERRIDE_MIN ? classifierVerdict.tag : phraseTag
 
 		const provisionalNode: AddressNode = {
 			tag,

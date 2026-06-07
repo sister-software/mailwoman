@@ -6,7 +6,9 @@
 
 import { Span } from "@mailwoman/core/tokenization"
 import { describe, expect, it } from "vitest"
-import { runPipeline } from "./runtime-pipeline.js"
+import type { AddressTree } from "../decoder/types.js"
+import type { ClassifierCandidate } from "./reconcile.js"
+import { grouperAudit, runPipeline } from "./runtime-pipeline.js"
 import type { PhraseProposal, RuntimePipelineStages } from "./types.js"
 
 function makeStages(overrides: Partial<RuntimePipelineStages> = {}): RuntimePipelineStages {
@@ -152,6 +154,41 @@ describe("grouper-audit pass", () => {
 		expect(auditNodes.length).toBe(0)
 		expect(result.tree.roots.length).toBe(1)
 		expect(result.tree.roots[0]!.tag).toBe("region")
+	})
+
+	// #425 — when the joint-reconcile path leaves a span orphaned but the classifier confidently typed
+	// it, the audit must defer to the classifier's verdict instead of the structural phrase kind.
+	describe("classifier-deferral on orphaned spans (joint path)", () => {
+		// "Via Trento 24, SORBOLO": reconcile keeps locality=SORBOLO and leaves "Via" orphaned. The
+		// LOCALITY_PHRASE proposal for "Via" would inject a spurious locality without the deferral.
+		const tree: AddressTree = {
+			raw: "Via Trento, SORBOLO",
+			roots: [{ tag: "locality", value: "SORBOLO", start: 12, end: 19, confidence: 0.9, children: [] }],
+		}
+		const proposals = [
+			{ span: Span.from("Via", { start: 0 }), kindHypothesis: "LOCALITY_PHRASE", confidence: 0.55 },
+		] as PhraseProposal[]
+
+		it("injects the classifier's tag (street) for an orphaned LOCALITY_PHRASE span", () => {
+			const classifierTopK: ClassifierCandidate[] = [{ span: { start: 0, end: 3 }, tag: "street", score: 0.73 }]
+			const out = grouperAudit(tree, proposals, tree.raw, classifierTopK)
+			const via = out.roots.find((n) => n.value === "Via")
+			expect(via).toBeDefined()
+			expect(via!.tag).toBe("street") // classifier verdict, NOT the LOCALITY_PHRASE structural kind
+			// The real city is preserved and is the only locality.
+			expect(out.roots.filter((n) => n.tag === "locality").map((n) => n.value)).toEqual(["SORBOLO"])
+		})
+
+		it("falls back to the phrase kind when the classifier verdict is weak (<0.4)", () => {
+			const classifierTopK: ClassifierCandidate[] = [{ span: { start: 0, end: 3 }, tag: "street", score: 0.2 }]
+			const out = grouperAudit(tree, proposals, tree.raw, classifierTopK)
+			expect(out.roots.find((n) => n.value === "Via")!.tag).toBe("locality")
+		})
+
+		it("falls back to the phrase kind when no classifierTopK is supplied (argmax path)", () => {
+			const out = grouperAudit(tree, proposals, tree.raw)
+			expect(out.roots.find((n) => n.value === "Via")!.tag).toBe("locality")
+		})
 	})
 
 	it("does not inject for unmapped phrase kinds", async () => {
