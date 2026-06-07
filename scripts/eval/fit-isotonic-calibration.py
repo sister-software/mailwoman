@@ -220,7 +220,8 @@ def main() -> None:
     lines.append("")
     lines.append("| Split | ECE raw | ECE calibrated | target |")
     lines.append("| --- | --- | --- | --- |")
-    lines.append(f"| **Combined (deliverable)** | {ece_raw:.4f} | **{ece_cal:.4f}** | <0.05 |")
+    # `<0.05` is backtick-wrapped: docs/articles/*.md is MDX, which parses a bare `<` as a JSX tag.
+    lines.append(f"| **Combined (deliverable)** | {ece_raw:.4f} | **{ece_cal:.4f}** | `<0.05` |")
     lines.append(f"| OA-only (held-out, trustworthy) | {ece_raw_oa:.4f} | {ece_cal_oa:.4f} | — |")
     lines.append(f"| corpus-only (in-domain) | {ece_raw_co:.4f} | {ece_cal_co:.4f} | — |")
     lines.append("")

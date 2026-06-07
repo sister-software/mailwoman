@@ -6,11 +6,11 @@ Post-hoc calibration of the decoder's per-span softmax confidence (the `conf=` a
 
 ## Headline
 
-| Split                           | ECE raw | ECE calibrated | target |
-| ------------------------------- | ------- | -------------- | ------ |
-| **Combined (deliverable)**      | 0.0673  | **0.0035**     | <0.05  |
-| OA-only (held-out, trustworthy) | 0.0706  | 0.0067         | —      |
-| corpus-only (in-domain)         | 0.0659  | 0.0061         | —      |
+| Split                           | ECE raw | ECE calibrated | target  |
+| ------------------------------- | ------- | -------------- | ------- |
+| **Combined (deliverable)**      | 0.0673  | **0.0035**     | `<0.05` |
+| OA-only (held-out, trustworthy) | 0.0706  | 0.0067         | —       |
+| corpus-only (in-domain)         | 0.0659  | 0.0061         | —       |
 
 MCE (bins n≥20) 0.2891 → 0.1829 · Brier 0.0340 → 0.0270 · n_fit=26043 n_eval=6510 spans.
 
