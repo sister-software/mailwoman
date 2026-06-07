@@ -12,7 +12,7 @@
  *   not the MA one.
  */
 
-import type { AddressNode, AddressTree, ComponentTag } from "../decoder/types.js"
+import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "../decoder/types.js"
 import {
 	type CoincidentLocality,
 	DEFAULT_PLACETYPE_MAP,
@@ -57,13 +57,13 @@ interface ResolutionState {
 	 * completion only fires when the parser emitted no locality at all, never to override one.
 	 */
 	localityNodePresent: boolean
-	/** The first region that resolved, captured for the post-walk city-state recovery. */
+	/** The first region that resolved (its place — for the coincident-roles lookup). */
 	resolvedRegion: ResolvedPlace | null
 	/**
-	 * The span of the region node that produced {@link resolvedRegion}, reused for the synthesized
-	 * locality (which has no span of its own in the raw input).
+	 * The decorated region NODE that produced {@link resolvedRegion} — completion pushes the locality
+	 * interpretation onto it in place (no synthesized sibling).
 	 */
-	resolvedRegionSpan: { start: number; end: number } | null
+	resolvedRegionNode: AddressNode | null
 }
 
 /**
@@ -124,7 +124,7 @@ class WofResolver implements Resolver {
 			includeAncestors: opts.includeAncestors ?? false,
 			localityNodePresent: false,
 			resolvedRegion: null,
-			resolvedRegionSpan: null,
+			resolvedRegionNode: null,
 		}
 
 		const newRoots: AddressNode[] = []
@@ -132,45 +132,39 @@ class WofResolver implements Resolver {
 			newRoots.push(await this.#walk(root, /* parentResolved */ null, state))
 		}
 
-		// Dual-role hierarchy completion (#405). Only when enabled, a region resolved, and the parser
-		// emitted NO locality — synthesize the locality from the backend's precomputed coincident-roles
-		// relation (#403). See ResolveOpts.hierarchyCompletion for the rationale + disambiguation rule.
-		if (state.hierarchyCompletion && state.resolvedRegion && !state.localityNodePresent) {
-			const synthesized = this.#completeFromRelation(state)
-			if (synthesized) newRoots.push(synthesized)
+		// Dual-role hierarchy completion (#405/#415). Only when enabled, a region resolved, and the parser
+		// emitted NO locality — record the dropped locality as a SECONDARY ROLE (an interpretation) on the
+		// resolved region node, from the backend's precomputed coincident-roles relation (#403). One node,
+		// one span, two roles — no synthesized sibling. See ResolveOpts.hierarchyCompletion.
+		if (state.hierarchyCompletion && state.resolvedRegion && state.resolvedRegionNode && !state.localityNodePresent) {
+			this.#completeRegionRole(state.resolvedRegion, state.resolvedRegionNode)
 		}
 		return { raw: tree.raw, roots: newRoots }
 	}
 
 	/**
-	 * Complete a dropped dual-role locality from the backend's coincident-roles relation (#403/#405).
-	 * Consults `coincidentLocalitiesFor(regionId)` (O(1) map lookup — no distance math, no backend
-	 * query), picks the principal city ({@link pickCompletion}: population-primary, distance tiebreak,
-	 * abstain on a genuine tie), and builds a synthesized locality node borrowing the region's span.
-	 * Returns null when the backend has no relation, the region isn't a dual-role place, or it
-	 * abstains. Marked `metadata.resolver_synthesized` + `metadata.relationship_type`.
+	 * Record a dropped dual-role locality as a `locality` INTERPRETATION on the resolved region node
+	 * (#415, generalizes #405's synthesized node). Consults `coincidentLocalitiesFor(regionId)` (O(1)
+	 * map lookup — no distance math, no backend query), picks the principal city
+	 * ({@link pickCompletion}: population-primary, distance tiebreak, abstain on a genuine tie), and
+	 * appends an interpretation to `regionNode.interpretations`. No-op when the backend has no
+	 * relation, the region isn't a dual-role place, or it abstains. The region node's primary role
+	 * stays `region`; the locality rides alongside.
 	 */
-	#completeFromRelation(state: ResolutionState): AddressNode | null {
-		const region = state.resolvedRegion!
-		if (typeof region.id !== "number" || !this.#backend.coincidentLocalitiesFor) return null
+	#completeRegionRole(region: ResolvedPlace, regionNode: AddressNode): void {
+		if (typeof region.id !== "number" || !this.#backend.coincidentLocalitiesFor) return
 		const loc = pickCompletion(this.#backend.coincidentLocalitiesFor(region.id))
-		if (!loc) return null
-		const span = state.resolvedRegionSpan ?? { start: 0, end: 0 }
-		const synthesized: AddressNode = {
+		if (!loc) return
+		const interpretation: Interpretation = {
 			tag: "locality",
-			value: loc.name,
-			start: span.start,
-			end: span.end,
+			placeId: `wof:${loc.id}`,
+			sourceId: `${loc.placetype}:${loc.id}`,
+			lat: loc.lat,
+			lon: loc.lon,
 			confidence: 0,
-			children: [],
+			metadata: { relationship_type: loc.relationshipType, resolver_completed: true, resolver_name: loc.name },
 		}
-		decorateNode(synthesized, loc, [])
-		synthesized.metadata = {
-			...(synthesized.metadata ?? {}),
-			resolver_synthesized: true,
-			relationship_type: loc.relationshipType,
-		}
-		return synthesized
+		regionNode.interpretations = [...(regionNode.interpretations ?? []), interpretation]
 	}
 
 	async #walk(node: AddressNode, parentResolved: ResolvedPlace | null, state: ResolutionState): Promise<AddressNode> {
@@ -193,11 +187,11 @@ class WofResolver implements Resolver {
 				if (state.includeAncestors && this.#backend.ancestors) {
 					decorated.metadata = { ...(decorated.metadata ?? {}), ancestors: this.#backend.ancestors(picked.top.id) }
 				}
-				// Capture the first resolved region for the city-state recovery, along with its span so
-				// the synthesized locality can borrow it (it has no span of its own).
+				// Capture the first resolved region (place + node) for hierarchy completion — the locality
+				// interpretation is pushed onto this node in the post-walk pass.
 				if (placetype === "region" && state.resolvedRegion === null) {
 					state.resolvedRegion = picked.top
-					state.resolvedRegionSpan = { start: node.start, end: node.end }
+					state.resolvedRegionNode = decorated
 				}
 			}
 		}
