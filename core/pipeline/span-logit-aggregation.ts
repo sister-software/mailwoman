@@ -60,14 +60,20 @@ export function aggregateSpanLogits(
 	logits: number[][],
 	pieces: readonly TokenPiece[],
 	spans: readonly SpanBounds[],
-	opts: { topK?: number; labels: readonly string[] }
+	opts: { topK?: number; labels: readonly string[]; text?: string }
 ): ClassifierCandidate[] {
 	const topK = opts.topK ?? 3
 	const labels = opts.labels
+	const text = opts.text
 
 	const candidates: ClassifierCandidate[] = []
 
 	for (const span of spans) {
+		// Inherently-numeric components can't live on a span with no digit. An OOD model facing the
+		// "<postcode> <City>" order routinely mistags the trailing city as a postcode (Toulouse →
+		// postcode:0.77); since postcodes and house numbers contain a digit in every locale we handle,
+		// drop those candidates for a digit-less span so the reconciler picks the real component (#425).
+		const spanHasNoDigit = text !== undefined && !/\d/.test(text.slice(span.start, span.end))
 		// Find tokens overlapping this span (character-level).
 		const overlapping: number[] = []
 		for (let t = 0; t < pieces.length; t++) {
@@ -88,6 +94,7 @@ export function aggregateSpanLogits(
 				const bioLabel = labels[l]!
 				const tag = stripBioPrefix(bioLabel)
 				if (tag === "O") continue
+				if (spanHasNoDigit && (tag === "postcode" || tag === "house_number")) continue
 				const prev = tagScores.get(tag) ?? 0
 				tagScores.set(tag, prev + probs[l]!)
 			}

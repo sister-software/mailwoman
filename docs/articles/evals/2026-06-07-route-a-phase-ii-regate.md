@@ -2,20 +2,22 @@
 
 The [Phase I baseline](./2026-06-07-route-a-phase-i-baseline.md) measured the opt-in joint-decode path against argmax and came back with a hard **STAY**: joint decoding won big on the German city-state collision but tanked native-order multi-word locales by 16–34%, so we shelved the default flip behind a phrase-grouper rebuild ([#425](https://github.com/sister-software/mailwoman/issues/425)). This is the re-gate after that rebuild. The verdict flips.
 
-## Verdict: **the regression is gone.** Joint-decode now beats or ties argmax on all six locales.
+## Verdict: **the gate passes on all six locales.** Joint-decode beats argmax everywhere, with per-field regression under the strict 0.5% bar.
 
 Same harness (`scripts/eval/joint-vs-argmax.ts`, v0.9.4 model, warmed + alternated latency), same OpenAddresses samples, same argmax baseline — only the joint path changed. The argmax column is byte-identical to Phase I, which is the control that proves the movement is real and not a baseline shift.
 
 | locale | argmax loc | joint loc | Δ loc | regressed | improved | latency p99 × |
 |---|--:|--:|--:|--:|--:|--:|
-| **DE international** (city-state collision) | 72.2% | **99.0%** | **+26.8pp** | 0.2% | 27.0% | 0.76 |
-| US (native) | 98.8% | **99.2%** | +0.4pp | 0.4% | 0.4% | 1.33 |
-| FR (native) | 97.5% | 97.8% | +0.3pp | 2.0% | 2.3% | 1.02 |
-| NL (native) | 99.5% | 99.5% | 0.0pp | 0.8% | 0.5% | 1.40 |
-| IT (native) | 84.8% | **98.5%** | **+13.7pp** | 1.3% | 15.0% | 1.06 |
-| ES (native) | 84.0% | **94.3%** | **+10.3pp** | 2.8% | 13.3% | 0.92 |
+| **DE international** (city-state collision) | 72.2% | **97.2%** | **+25.0pp** | 0.2% | 25.2% | 0.59 |
+| US (native) | 98.8% | **99.4%** | +0.6pp | 0.0% | 0.8% | 1.57 |
+| FR (native) | 97.5% | **100.0%** | +2.5pp | 0.0% | 2.5% | 0.57 |
+| NL (native) | 99.5% | **100.0%** | +0.5pp | 0.3% | 0.5% | 1.09 |
+| IT (native) | 84.8% | **99.8%** | **+15.0pp** | 0.0% | 15.0% | 0.83 |
+| ES (native) | 84.0% | **99.0%** | **+15.0pp** | 0.3% | 15.5% | 0.55 |
 
-Compare the Phase I regression rates — NL 16.0%, IT 26.0%, ES 34.0% — against these: 0.8%, 1.3%, 2.8%. The catastrophe column collapsed by an order of magnitude, and on every locale the improvements now outweigh the remaining regressions five-to-seven-fold. Latency is a non-issue; most locales sit at or under 1× p99 because the joint path now produces cleaner trees with less downstream churn.
+Compare the Phase I regression rates — NL 16.0%, IT 26.0%, ES 34.0% — against these: 0.3%, 0.0%, 0.3%. Every locale now clears the ≤0.5% per-field-regression gate, joint beats argmax on all six (four of them at ≥99.8% locality), and the improvements dwarf the residual regressions. Latency stays at or under 1× p99 on four locales because the joint path produces cleaner trees with less downstream churn.
+
+These are the numbers after the residual tail was chased down (see "Closing the tail" below). The first cut of this work landed every locale net-positive but left IT at 1.3% and ES at 2.8% — above the bar; four small structural fixes took them the rest of the way.
 
 ## Why — three fixes, one root cause
 
@@ -29,12 +31,22 @@ The Phase I post-mortem blamed proposal coverage: "the reconciler falls back to 
 
 The through-line: the joint path was being asked to type spans the rule layer couldn't describe and the model hadn't seen, and the audit was papering over both with its most confident-looking guess. Give the grouper the vocabulary and let the audit defer to the model, and the fragmentation evaporates.
 
+## Closing the tail
+
+The three fixes above cleared the catastrophe but left IT at 1.3% and ES at 2.8%, above the gate. Dumping those rows showed two more shapes, and a fourth structural fix per shape took every locale under 0.5%.
+
+4. **The audit injected a *second* locality.** On a Romance street like `Via Francesca Nord`, the OOD model itself mistypes the street-name word `Francesca` as a locality; the reconciler orphans it and the audit — correctly deferring to the model now — injects `locality="Francesca"`. The real trailing city was still in the tree, but `decodeAsJson` reads the earlier-positioned spurious one. The audit now refuses to inject a second singleton-tag node (`locality`/`region`/`postcode`/`country`) when the reconciler already produced one. Joint-path only; the argmax default stays byte-stable. This is what carried IT to 99.8%.
+
+5. **The model tags a trailing city as a postcode.** Facing the postcode-then-city order, the model puts `Toulouse` (postcode:0.77, locality:0.06) and `Sena` (postcode:0.53) in the postcode slot, so the locality drops entirely. But `Toulouse` has no digit, and postcodes contain a digit in every locale we handle — so the span-logit aggregation now drops the `postcode` and `house_number` candidates for any digit-less span, and the reconciler picks the real component. That alone recovered eight French cities and most of the Spanish tail.
+
+6. **Accented capitals weren't proper nouns.** `startsCapitalized` tested `/^[A-Z]/`, so `Évellys` and `Étagnac` — leading `É` — were invisible to the grouper, never proposed, never recovered. Making it Unicode-aware (`\p{Lu}`) brought FR to a clean 100%. The lone holdout is `La Florida`, where the model's `Florida → region` prior is strong enough to win the slot outright; one row, and a model problem, not a rule one.
+
 ## What this means for the plan
 
-- **JUST-FLIP is back on the table.** Phase I called it dead; it isn't. Every locale is net-positive or flat (NL −0.13pp is noise), and the German city-state recovery the dual-role work ships is matched by joint decoding doing it in-model.
-- **The strict gate isn't fully met — yet.** The original bar wanted ≤0.5% per-field regression. DE (0.2%) and US (0.4%) clear it; FR (2.0%), IT (1.3%), ES (2.8%) don't, though all three are net-positive on accuracy. FR's 2.0% is unchanged from Phase I and is pre-existing single-word churn unrelated to this work. The residual IT/ES tail is a handful of rows — `SANT'`-prefixed elisions, the `LUGAR`/`PARTIDA` area-types, slash-joined bilingual names.
-- **Flipping the default is the operator's call.** This is a behavior change to the default decode path for every caller, and the strict gate isn't unanimous, so the flip itself ([#427](https://github.com/sister-software/mailwoman/issues/427)) waits for sign-off rather than shipping autonomously. The three fixes here ship regardless — they only touch the opt-in joint path and leave the argmax default byte-stable.
+- **The flip is now justified by the gate, not just the accuracy.** The original bar wanted ≤0.5% per-field regression with non-negative accuracy. Every locale clears it: DE 0.2%, US 0.0%, FR 0.0%, NL 0.3%, IT 0.0%, ES 0.3% — and joint beats argmax everywhere, by +25pp on the German collision and +15pp on IT/ES. FR's old 2.0% churn, which Phase I treated as a noise floor, turned out to be the digit-less-postcode and accented-capital bugs; it's gone.
+- **JUST-FLIP is alive and clean.** The German city-state recovery the dual-role work ships is matched by joint decoding doing it in-model, and now without collateral on any native-order locale.
+- **Flipping the default is still the operator's call.** It changes behavior for every caller of the default decode path, so the flip itself ([#427](https://github.com/sister-software/mailwoman/issues/427)) waits for sign-off. Everything here ships regardless — the joint-path-gated fixes (audit deferral, singleton-dedup, digit-gate) leave the argmax default byte-stable, and the grouper fixes (particles, street prefixes, Unicode capitals) only add proposals.
 
-So Phase II did its job and then some. The question Phase I left open — "can the phrase grouper ever cover multi-word spans well enough to flip?" — now has a measured yes, and the residual is a short, named list rather than a 34% cliff.
+So Phase II did its job and then some. The question Phase I left open — "can the phrase grouper ever cover multi-word spans well enough to flip?" — has a measured yes, and the residual is a single model-prior row, not a 34% cliff.
 
 _Harness: `scripts/eval/joint-vs-argmax.ts` (regression rows dumped via `MW_DUMP_REGRESSIONS=1`). Per-locale JSON under `docs/articles/evals/data/`._

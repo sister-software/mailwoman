@@ -4,17 +4,17 @@
   "argmax": {
     "localityMatch": 0.975,
     "regionMatch": 1,
-    "latP50": 13.192081999999573,
-    "latP99": 29.070550999998886
+    "latP50": 12.8979989999998,
+    "latP99": 31.731975000000148
   },
   "joint": {
-    "localityMatch": 0.9775,
+    "localityMatch": 1,
     "regionMatch": 1,
-    "latP50": 13.349695999999312,
-    "latP99": 29.788902000000235
+    "latP50": 13.024917000000642,
+    "latP99": 18.214379000000918
   },
-  "regressionRate": 0.02,
-  "improvementRate": 0.0225,
-  "accuracyDeltaPp": 0.125,
-  "latencyP99Multiplier": 1.0247106083404258
+  "regressionRate": 0,
+  "improvementRate": 0.025,
+  "accuracyDeltaPp": 1.25,
+  "latencyP99Multiplier": 0.5740071016695567
 }

@@ -110,9 +110,13 @@ function isRegionAbbreviation(s: string): boolean {
 	return /^[A-Z]{2,3}$/.test(s)
 }
 
-/** True when token starts with an uppercase letter — common Western proper-noun shape. */
+/**
+ * True when token starts with an uppercase letter — the common Western proper-noun shape. Unicode-aware
+ * (`\p{Lu}`) so accented Latin capitals (`Évellys`, `Étagnac`, `Ñuñoa`, `Ávila`) count as proper nouns
+ * too; an ASCII-only `[A-Z]` silently dropped those localities from the grouper (#425 residual).
+ */
 function startsCapitalized(s: string): boolean {
-	return /^[A-Z]/.test(s)
+	return /^\p{Lu}/u.test(s)
 }
 
 /**
