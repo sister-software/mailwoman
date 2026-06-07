@@ -69,6 +69,13 @@ function buildFixtureWof(path: string): void {
 		INSERT INTO geojson VALUES (211, '{"properties":{"wof:population":580000}}');
 		INSERT INTO geojson VALUES (220, '{"properties":{"wof:population":1700}}');
 		INSERT INTO geojson VALUES (221, '{"properties":{"wof:population":8400000}}');
+
+		-- Dual-role relation (#402): Illinois(101) ⊃ Springfield(201). build-slim carries it to the slim DB.
+		CREATE TABLE coincident_roles (
+			admin_id INTEGER NOT NULL, locality_id INTEGER NOT NULL, relationship_type TEXT NOT NULL,
+			admin_placetype TEXT NOT NULL, distance_km REAL NOT NULL, locality_population INTEGER NOT NULL DEFAULT 0,
+			PRIMARY KEY (admin_id, locality_id));
+		INSERT INTO coincident_roles VALUES (101, 201, 'capital-seat', 'region', 5.0, 114000);
 	`)
 	db.close()
 }
@@ -87,6 +94,25 @@ afterAll(async () => {
 })
 
 describe("WofWasmPlaceLookup", () => {
+	test("coincidentLocalitiesFor reads the relation carried into the slim DB (#402)", async () => {
+		// End-to-end: the fixture source had coincident_roles → build-slim carried it → the WASM lookup reads it.
+		const { db } = await loadSlimWofDatabase({ source: slimBytes })
+		const lookup = new WofWasmPlaceLookup({ db })
+		try {
+			const roles = lookup.coincidentLocalitiesFor(101) // Illinois
+			expect(roles).toHaveLength(1)
+			expect(roles[0]).toMatchObject({
+				id: 201,
+				name: "Springfield",
+				placetype: "locality",
+				relationshipType: "capital-seat",
+			})
+			expect(lookup.coincidentLocalitiesFor(99999)).toHaveLength(0)
+		} finally {
+			lookup.close()
+		}
+	})
+
 	test("opens a slim DB and resolves a locality", async () => {
 		const { db } = await loadSlimWofDatabase({ source: slimBytes })
 		const lookup = new WofWasmPlaceLookup({ db })

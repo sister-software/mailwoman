@@ -20,6 +20,7 @@
 
 import type { Database } from "@sqlite.org/sqlite-wasm"
 
+import type { CoincidentLocality } from "@mailwoman/core/resolver"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "@mailwoman/resolver-wof-sqlite"
 
 export interface WofWasmPlaceLookupOpts {
@@ -29,8 +30,8 @@ export interface WofWasmPlaceLookupOpts {
 
 /**
  * Population-boost tunables, mirroring `resolver-wof-sqlite/lookup.ts` defaults. The boost is
- * `POPULATION_BOOST * min(1, log10(1 + pop) / POPULATION_SCALE_LOG10)`, subtracted from bm25 (lower =
- * better, matching SQLite's convention). A 1M-population city earns the full boost — enough to
+ * `POPULATION_BOOST * min(1, log10(1 + pop) / POPULATION_SCALE_LOG10)`, subtracted from bm25 (lower
+ * = better, matching SQLite's convention). A 1M-population city earns the full boost — enough to
  * surface the famous same-name place ("New York" over "West New York") without steamrolling a
  * clearly-better text match, because exact-name tiering is consulted FIRST.
  */
@@ -45,6 +46,9 @@ function normalizeName(s: string): string {
 export class WofWasmPlaceLookup implements PlaceLookup {
 	readonly #db: Database
 	#hasPopulationCache?: boolean
+	/** Lazily-built `admin_id → coincident localities` map from the #403 relation (the slim DB carries
+it). */
+	#coincidentRolesCache?: Map<number, CoincidentLocality[]>
 
 	constructor(opts: WofWasmPlaceLookupOpts) {
 		this.#db = opts.db
@@ -150,10 +154,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 				lon: row.longitude,
 				parent_id: row.parent_id ?? undefined,
 				bbox:
-					row.min_latitude != null &&
-					row.max_latitude != null &&
-					row.min_longitude != null &&
-					row.max_longitude != null
+					row.min_latitude != null && row.max_latitude != null && row.min_longitude != null && row.max_longitude != null
 						? {
 								minLat: row.min_latitude,
 								maxLat: row.max_latitude,
@@ -165,6 +166,61 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 				// score is what we sorted by, so callers see the same ordering they're shown.
 				score: -adjScore,
 			}))
+	}
+
+	/**
+	 * Dual-role localities coincident with an admin id, from the `coincident_roles` relation (#403)
+	 * carried into the slim DB by build-slim. Backs the resolver's hierarchy completion (on by
+	 * default) in the browser — mirrors `WofSqlitePlaceLookup.coincidentLocalitiesFor`. Returns `[]`
+	 * when the slim DB predates the relation. Loaded once + memoized (the relation is ~hundreds of
+	 * rows).
+	 */
+	coincidentLocalitiesFor(adminId: number | string): CoincidentLocality[] {
+		const id = typeof adminId === "number" ? adminId : Number(adminId)
+		if (!Number.isFinite(id)) return []
+		if (!this.#coincidentRolesCache) {
+			const map = new Map<number, CoincidentLocality[]>()
+			const exists = this.#db.selectObjects(
+				`SELECT 1 FROM sqlite_master WHERE type='table' AND name='coincident_roles' LIMIT 1`
+			)
+			if (exists.length > 0) {
+				const rows = this.#db.selectObjects(
+					`SELECT cr.admin_id AS adminId, s.id AS id, s.name AS name, s.country AS country,
+						s.latitude AS lat, s.longitude AS lon, cr.relationship_type AS relationshipType,
+						cr.locality_population AS population, cr.distance_km AS distanceKm
+					FROM coincident_roles cr JOIN spr s ON s.id = cr.locality_id`
+				) as Array<{
+					adminId: number
+					id: number
+					name: string
+					country: string
+					lat: number
+					lon: number
+					relationshipType: string
+					population: number
+					distanceKm: number
+				}>
+				for (const r of rows) {
+					const candidate: CoincidentLocality = {
+						id: r.id,
+						name: r.name,
+						placetype: "locality",
+						country: r.country,
+						lat: r.lat,
+						lon: r.lon,
+						score: 0,
+						relationshipType: r.relationshipType,
+						population: r.population,
+						distanceKm: r.distanceKm,
+					}
+					const list = map.get(r.adminId)
+					if (list) list.push(candidate)
+					else map.set(r.adminId, [candidate])
+				}
+			}
+			this.#coincidentRolesCache = map
+		}
+		return this.#coincidentRolesCache.get(id) ?? []
 	}
 
 	close(): void {
