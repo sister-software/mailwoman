@@ -95,6 +95,8 @@ docs/static/mailwoman/*.onnx
 docs/static/mailwoman/*.model
 docs/static/mailwoman/*.db
 docs/static/mailwoman/*.bin
+docs/static/mailwoman/*.json
+docs/static/mailwoman/sqljs/
 
 .claude/settings.local.json
 CLAUDE.local.md
