@@ -195,7 +195,9 @@ export interface ResolveOpts {
 	 * most populous wins (the principal city), nearest-centroid breaks a population tie, and a
 	 * genuine tie ABSTAINS (no completion) rather than guess. The synthesized node carries
 	 * `metadata.resolver_synthesized = true` (+ `relationship_type`) — it has no span in the raw
-	 * input. OFF by default: omit it and resolution is byte-identical.
+	 * input. ON by default (#402): it only fires for a dual-role region whose locality the parser
+	 * dropped, and no-ops entirely when the backend has no relation (the browser WASM resolver, or a
+	 * gazetteer without the `coincident_roles` table). Pass `false` to opt out.
 	 */
 	hierarchyCompletion?: boolean
 	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */

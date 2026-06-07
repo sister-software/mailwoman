@@ -511,8 +511,26 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(result.roots.find((r) => r.tag === "locality")?.placeId).toBe("wof:911")
 	})
 
-	test("hierarchy completion is OFF by default — byte-stable (#405)", async () => {
+	test("hierarchy completion is ON by default (#402)", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
+		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
+		const result = await createWofResolver(backend).resolveTree(input, { defaultCountry: "DE" })
+		expect(result.roots.find((r) => r.tag === "locality")?.placeId).toBe("wof:911")
+	})
+
+	test("hierarchyCompletion: false opts out of the default (#402)", async () => {
+		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
+		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
+		const result = await createWofResolver(backend).resolveTree(input, {
+			hierarchyCompletion: false,
+			defaultCountry: "DE",
+		})
+		expect(result.roots.find((r) => r.tag === "locality")).toBeUndefined()
+	})
+
+	test("a backend without the relation no-ops (default-on is safe) (#402)", async () => {
+		// No relation map → coincidentLocalitiesFor returns [] → completion can't fire even when on.
+		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
 		const result = await createWofResolver(backend).resolveTree(input, { defaultCountry: "DE" })
 		expect(result.roots.find((r) => r.tag === "locality")).toBeUndefined()
