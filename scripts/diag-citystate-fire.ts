@@ -59,5 +59,13 @@ for (const input of samples) {
 	console.log(`\n=== "${input}" ===`)
 	console.log(`  parse tags: ${[...tags].join(", ")}  | has locality node: ${tags.has("locality")}`)
 	console.log(describe({ tag: "ROOT", value: "", start: 0, end: 0, confidence: 0, children: out.roots } as AddressNode))
+	// Serializer sanity: does a synthesized node render without throwing / producing garbage?
+	try {
+		const { decodeAsXml, decodeAsJson } = await import("@mailwoman/core/decoder")
+		console.log("  XML:", String(decodeAsXml(out)).replace(/\n\s*/g, " ").slice(0, 200))
+		console.log("  JSON:", JSON.stringify(decodeAsJson(out)).slice(0, 200))
+	} catch (e) {
+		console.log("  SERIALIZER THREW:", (e as Error).message)
+	}
 }
 ;(backend as { close?: () => void }).close?.()
