@@ -395,4 +395,37 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		const alts = root.alternatives as ResolvedPlace[]
 		expect(alts).toHaveLength(1) // limit 2 → top + 1 alternative
 	})
+
+	test("anchor posterior re-ranks locality candidates by country (#369), off by default", async () => {
+		// Two same-named localities; US scores higher on name/BM25, DE is the runner-up.
+		const berlins: ResolvedPlace[] = [
+			{ id: 1, name: "Berlin", placetype: "locality", country: "US", lat: 44.46, lon: -71.18, score: 8 },
+			{ id: 2, name: "Berlin", placetype: "locality", country: "DE", lat: 52.52, lon: 13.4, score: 7 },
+		]
+		const input = tree("Berlin", [node("locality", "Berlin", 0, 6)])
+
+		// Default (no posterior): the higher-scored US Berlin wins — byte-stable.
+		const off = await createWofResolver(new FakeResolverBackend(berlins)).resolveTree(input)
+		expect(off.roots[0]!.placeId).toBe("wof:1")
+
+		// With a DE country posterior, the +weight*posterior boost pulls the German Berlin to the top.
+		const on = await createWofResolver(new FakeResolverBackend(berlins)).resolveTree(input, {
+			anchorPosterior: { DE: 1.0 },
+		})
+		expect(on.roots[0]!.placeId).toBe("wof:2")
+		// The displaced US Berlin survives as the top alternative.
+		expect((on.roots[0]!.alternatives as ResolvedPlace[])[0]!.id).toBe(1)
+	})
+
+	test("anchor posterior leaves the pick unchanged when it already agrees (#369)", async () => {
+		const berlins: ResolvedPlace[] = [
+			{ id: 1, name: "Berlin", placetype: "locality", country: "US", lat: 44.46, lon: -71.18, score: 8 },
+			{ id: 2, name: "Berlin", placetype: "locality", country: "DE", lat: 52.52, lon: 13.4, score: 7 },
+		]
+		const input = tree("Berlin", [node("locality", "Berlin", 0, 6)])
+		const on = await createWofResolver(new FakeResolverBackend(berlins)).resolveTree(input, {
+			anchorPosterior: { US: 1.0 },
+		})
+		expect(on.roots[0]!.placeId).toBe("wof:1") // US already top, boost keeps it there
+	})
 })

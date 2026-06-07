@@ -41,6 +41,10 @@ interface ResolutionState {
 	/** The address's postcode string, extracted once up front, passed to locality lookups so a
 	 * coordinate-first backend can inject postcode-proximal locality candidates. */
 	postcode?: string
+	/** Postcode-anchor country posterior (#369). Undefined = no re-rank (byte-stable default). */
+	anchorPosterior?: Record<string, number>
+	/** Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set. */
+	anchorWeight: number
 }
 
 /** Find the first postcode value anywhere in the tree (a one-shot pre-scan; postcode and locality are
@@ -73,6 +77,8 @@ class WofResolver implements Resolver {
 			defaultCountry: opts.defaultCountry,
 			parentFallback: opts.parentFallback ?? true,
 			postcode: firstPostcodeValue(tree.roots),
+			anchorPosterior: opts.anchorPosterior,
+			anchorWeight: opts.anchorWeight ?? 2.0,
 		}
 
 		const newRoots: AddressNode[] = []
@@ -149,9 +155,23 @@ class WofResolver implements Resolver {
 		}
 
 		if (candidates.length === 0) return null
-		const top = candidates[0]!
+		// Postcode-anchor re-rank (#369): when a country posterior is supplied (from the address's
+		// postcode), boost candidates by `anchorWeight * posterior[candidate.country]` and re-sort, so a
+		// postcode that pins the country pulls the right-country place over a higher-BM25 foreign namesake
+		// (the "Berlin DE vs Berlin US" class the #59 harness measured). No-op when `anchorPosterior` is
+		// undefined (the default) → byte-identical resolution. Locality-scoped: the posterior is a country
+		// signal, and admin parents already carry country via `parentId`.
+		let ranked = candidates
+		if (state.anchorPosterior && placetype === "locality" && candidates.length > 1) {
+			const post = state.anchorPosterior
+			const w = state.anchorWeight
+			ranked = [...candidates].sort(
+				(a, b) => b.score + w * (post[b.country] ?? 0) - (a.score + w * (post[a.country] ?? 0))
+			)
+		}
+		const top = ranked[0]!
 		if (top.score < state.minWinningScore) return null
-		return { top, alternatives: candidates.slice(1) }
+		return { top, alternatives: ranked.slice(1) }
 	}
 }
 

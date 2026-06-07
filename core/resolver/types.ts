@@ -123,6 +123,21 @@ export interface ResolveOpts {
 	 * break when locale-aware resolvers land in 4.4+.
 	 */
 	locale?: string
+	/**
+	 * Optional postcode-anchor country posterior (#369) — a `{ countryCode: probability }` map derived
+	 * from the address's postcode (e.g. `@mailwoman/neural`'s `extractPostcodeAnchors`). When provided,
+	 * LOCALITY candidates are re-ranked by `score + anchorWeight * posterior[candidate.country]` before
+	 * the top is picked, so a postcode that pins the country can pull the right-country place over a
+	 * higher-BM25 foreign namesake (the "Berlin DE vs Berlin US" class the #59 anchor→resolver harness
+	 * measured). OFF by default — omit it and resolution is byte-identical. Country signal only, so it
+	 * touches locality lookups only; admin parents already carry country via `parentId`.
+	 */
+	anchorPosterior?: Record<string, number>
+	/**
+	 * Weight on the anchor's country posterior in the locality re-rank (#369). Default 2.0 (the value the
+	 * harness swept). Only consulted when `anchorPosterior` is set.
+	 */
+	anchorWeight?: number
 }
 
 /**
