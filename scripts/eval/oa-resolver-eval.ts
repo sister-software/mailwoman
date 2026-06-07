@@ -338,12 +338,16 @@ async function main(): Promise<void> {
 	// when it has a placed candidate for the eval's country, else falls back to the resolver coord. So the
 	// row isolates exactly what the anchor sharpens: where, not which place.
 	const useAnchor = process.argv.includes("--postcode-anchor")
+	// `--anchor-rerank` (#369 S8): feed the postcode anchor's country posterior into the resolver's
+	// locality re-rank (`ResolveOpts.anchorPosterior`), to measure whether the merged re-ranker pulls
+	// resolves into the right country's polygon when no locale gate is set (`--default-country none`).
+	const anchorRerank = process.argv.includes("--anchor-rerank")
 	let postcodeLookup: {
 		lookup(pc: string): Array<{ country: string; lat: number; lon: number }>
 		close(): void
 	} | null = null
 	let extractAnchors: typeof import("@mailwoman/neural/postcode-anchor").extractPostcodeAnchors | null = null
-	if (useAnchor) {
+	if (useAnchor || anchorRerank) {
 		const shards = arg(
 			"postcode-shards",
 			"/mnt/playpen/mailwoman-data/wof/postalcode-us.db,/mnt/playpen/mailwoman-data/wof/postalcode-intl.db"
@@ -384,6 +388,18 @@ async function main(): Promise<void> {
 			}
 		}
 		return best ? { lat: best.lat, lon: best.lon } : null
+	}
+
+	/** The postcode anchor's country posterior for a raw address (highest-confidence placed anchor),
+	 * fed into the resolver's locality re-rank via `ResolveOpts.anchorPosterior` (#369 S8). */
+	const anchorPosteriorFor = (input: string): Record<string, number> | undefined => {
+		if (!postcodeLookup || !extractAnchors) return undefined
+		let best: { posterior: Record<string, number>; conf: number } | null = null
+		for (const a of extractAnchors(input, postcodeLookup)) {
+			if (a.candidates.length === 0) continue
+			if (!best || a.confidence > best.conf) best = { posterior: a.posterior, conf: a.confidence }
+		}
+		return best?.posterior
 	}
 
 	// Per-state aggregation so no single dense state (Cook County / Chicago) dominates the headline.
@@ -477,7 +493,9 @@ async function main(): Promise<void> {
 		// neural
 		let nResolved: Resolved[] = []
 		try {
-			nResolved = collectResolved(await resolver.resolveTree(await neural.parse(row.input, parseOpts), resolveOpts))
+			const nTree = await neural.parse(row.input, parseOpts)
+			const nOpts = anchorRerank ? { ...resolveOpts, anchorPosterior: anchorPosteriorFor(row.input) } : resolveOpts
+			nResolved = collectResolved(await resolver.resolveTree(nTree, nOpts))
 		} catch {
 			/* unresolved */
 		}
