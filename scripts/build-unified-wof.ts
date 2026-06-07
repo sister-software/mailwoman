@@ -19,7 +19,12 @@
  *   single repo directory.
  */
 
-import { createUnifiedIndexes, createUnifiedSchema, populateAncestors } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
+import {
+	createUnifiedIndexes,
+	createUnifiedSchema,
+	populateAncestors,
+} from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import FastGlob from "fast-glob"
 import { existsSync, statSync, unlinkSync } from "node:fs"
 import { readFile } from "node:fs/promises"
@@ -31,8 +36,11 @@ interface Args {
 	outputPath: string
 	concurrency: number
 	batchCommitSize: number
-	/** Override the ingested placetype set (comma-separated). Defaults to ADMIN_PLACETYPES; pass
-	 *  `--placetypes postalcode` to build the postcode shard from whosonfirst-data-postalcode-* repos. */
+	/**
+	 * Override the ingested placetype set (comma-separated). Defaults to ADMIN_PLACETYPES; pass
+	 * `--placetypes postalcode` to build the postcode shard from whosonfirst-data-postalcode-*
+	 * repos.
+	 */
 	placetypes?: string[]
 }
 
@@ -49,7 +57,10 @@ function parseArgs(): Args {
 		else if (args[i] === "--output" && args[i + 1]) outputPath = args[++i]
 		else if (args[i] === "--concurrency" && args[i + 1]) concurrency = parseInt(args[++i]!, 10)
 		else if (args[i] === "--batch" && args[i + 1]) batchCommitSize = parseInt(args[++i]!, 10)
-		else if (args[i] === "--placetypes" && args[i + 1]) placetypes = args[++i]!.split(",").map((s) => s.trim()).filter(Boolean)
+		else if (args[i] === "--placetypes" && args[i + 1])
+			placetypes = args[++i]!.split(",")
+				.map((s) => s.trim())
+				.filter(Boolean)
 	}
 
 	if (!dataDir || !outputPath) {
@@ -312,6 +323,13 @@ async function main() {
 	console.error("  Building ancestors (parent_id closure)...")
 	const ancestorRows = populateAncestors(db)
 	console.error(`  ancestors: ${ancestorRows} rows`)
+
+	// Dual-role-place relation (#403, epic #402) — needs `ancestors` + `spr` bbox + `place_population`,
+	// all present by now. Drives the resolver's hierarchy completion (on by default). Tiny (~hundreds of
+	// rows); `build-slim` carries it through to the shipped DB.
+	console.error("  Building coincident_roles (dual-role places)...")
+	const roles = buildCoincidentRoles(db)
+	console.error(`  coincident_roles: ${roles.rowCount} rows`)
 
 	console.error("  Creating indexes...")
 	createUnifiedIndexes(db)
