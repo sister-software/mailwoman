@@ -41,10 +41,10 @@ export interface ResolvedPlace {
 	 */
 	score: number
 	/**
-	 * Set when the resolver detected that the address's postcode and its parsed locality name point to
-	 * geographically different places (a transposed / wrong-for-the-city postcode). Surfaced onto the
-	 * resolved node's metadata as `postcode_city_mismatch` so callers can lower confidence or flag the
-	 * conflict instead of silently mislocating.
+	 * Set when the resolver detected that the address's postcode and its parsed locality name point
+	 * to geographically different places (a transposed / wrong-for-the-city postcode). Surfaced onto
+	 * the resolved node's metadata as `postcode_city_mismatch` so callers can lower confidence or
+	 * flag the conflict instead of silently mislocating.
 	 */
 	mismatch?: boolean
 }
@@ -124,20 +124,44 @@ export interface ResolveOpts {
 	 */
 	locale?: string
 	/**
-	 * Optional postcode-anchor country posterior (#369) — a `{ countryCode: probability }` map derived
-	 * from the address's postcode (e.g. `@mailwoman/neural`'s `extractPostcodeAnchors`). When provided,
-	 * LOCALITY candidates are re-ranked by `score + anchorWeight * posterior[candidate.country]` before
-	 * the top is picked, so a postcode that pins the country can pull the right-country place over a
-	 * higher-BM25 foreign namesake (the "Berlin DE vs Berlin US" class the #59 anchor→resolver harness
-	 * measured). OFF by default — omit it and resolution is byte-identical. Country signal only, so it
-	 * touches locality lookups only; admin parents already carry country via `parentId`.
+	 * Optional postcode-anchor country posterior (#369) — a `{ countryCode: probability }` map
+	 * derived from the address's postcode (e.g. `@mailwoman/neural`'s `extractPostcodeAnchors`). When
+	 * provided, LOCALITY candidates are re-ranked by `score + anchorWeight *
+	 * posterior[candidate.country]` before the top is picked, so a postcode that pins the country can
+	 * pull the right-country place over a higher-BM25 foreign namesake (the "Berlin DE vs Berlin US"
+	 * class the #59 anchor→resolver harness measured). OFF by default — omit it and resolution is
+	 * byte-identical. Country signal only, so it touches locality lookups only; admin parents already
+	 * carry country via `parentId`.
 	 */
 	anchorPosterior?: Record<string, number>
 	/**
-	 * Weight on the anchor's country posterior in the locality re-rank (#369). Default 2.0 (the value the
-	 * harness swept). Only consulted when `anchorPosterior` is set.
+	 * Weight on the anchor's country posterior in the locality re-rank (#369). Default 2.0 (the value
+	 * the harness swept). Only consulted when `anchorPosterior` is set.
 	 */
 	anchorWeight?: number
+	/**
+	 * Recover the dropped locality in a CITY-STATE address (#387). In the international-order layout
+	 * `…, Berlin, Berlin <PC>` the city and the region are the same word; the parser labels one as
+	 * the region and drops the locality entirely, so the resolved tree carries a region but no
+	 * locality (Berlin/Hamburg/Bremen — 955/1500 Berlin rows resolved to nothing in the v0.9.4 DE PIP
+	 * eval).
+	 *
+	 * When this is on AND a region resolved AND the tree has NO locality node, the resolver asks the
+	 * backend for a same-name locality DESCENDANT of that region and — only if its centroid is within
+	 * {@link cityStateMaxKm} of the region centroid — synthesizes a locality node from it. That triple
+	 * (same name + descendant + coincident centroid) is what distinguishes a genuine city-state from
+	 * a normal same-name town inside a state (Brandenburg an der Havel sits 60 km from Brandenburg's
+	 * centroid; Berlin's coincide at 0 km), so the recovery is data-driven, not a hardcoded
+	 * city-state list. The synthesized node carries `metadata.resolver_synthesized = true` — it has
+	 * no span in the raw input. OFF by default: omit it and resolution is byte-identical.
+	 */
+	cityStateFallback?: boolean
+	/**
+	 * Max km between a region centroid and its same-name locality descendant for the
+	 * {@link cityStateFallback} recovery to fire. Default 15 (city-states cluster at 0–9.3 km; the
+	 * nearest false positive, Brandenburg, is 60 km). Only consulted when `cityStateFallback` is on.
+	 */
+	cityStateMaxKm?: number
 }
 
 /**

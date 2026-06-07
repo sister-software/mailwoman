@@ -38,17 +38,49 @@ interface ResolutionState {
 	candidatesPerLookup: number
 	defaultCountry?: string
 	parentFallback: boolean
-	/** The address's postcode string, extracted once up front, passed to locality lookups so a
-	 * coordinate-first backend can inject postcode-proximal locality candidates. */
+	/**
+	 * The address's postcode string, extracted once up front, passed to locality lookups so a
+	 * coordinate-first backend can inject postcode-proximal locality candidates.
+	 */
 	postcode?: string
 	/** Postcode-anchor country posterior (#369). Undefined = no re-rank (byte-stable default). */
 	anchorPosterior?: Record<string, number>
 	/** Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set. */
 	anchorWeight: number
+	/** City-state locality recovery (#387). Off by default → byte-stable. */
+	cityStateFallback: boolean
+	/** Centroid-coincidence threshold (km) for the city-state recovery. Only used when on. */
+	cityStateMaxKm: number
+	/**
+	 * Set while resolving when ANY tree node maps to the `locality` placetype (resolved or not) — the
+	 * city-state recovery only fires when the parser emitted no locality at all, never to override
+	 * one.
+	 */
+	localityNodePresent: boolean
+	/** The first region that resolved, captured for the post-walk city-state recovery. */
+	resolvedRegion: ResolvedPlace | null
+	/**
+	 * The span of the region node that produced {@link resolvedRegion}, reused for the synthesized
+	 * locality (which has no span of its own in the raw input).
+	 */
+	resolvedRegionSpan: { start: number; end: number } | null
 }
 
-/** Find the first postcode value anywhere in the tree (a one-shot pre-scan; postcode and locality are
- * siblings, so the top-down walk wouldn't otherwise let the locality lookup see it). */
+/** Great-circle distance in km between two centroids (WGS-84). */
+function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
+	const R = 6371
+	const dLat = ((b.lat - a.lat) * Math.PI) / 180
+	const dLon = ((b.lon - a.lon) * Math.PI) / 180
+	const s =
+		Math.sin(dLat / 2) ** 2 +
+		Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
+	return 2 * R * Math.asin(Math.sqrt(s))
+}
+
+/**
+ * Find the first postcode value anywhere in the tree (a one-shot pre-scan; postcode and locality
+ * are siblings, so the top-down walk wouldn't otherwise let the locality lookup see it).
+ */
 function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
 	const stack = [...roots]
 	while (stack.length > 0) {
@@ -79,13 +111,65 @@ class WofResolver implements Resolver {
 			postcode: firstPostcodeValue(tree.roots),
 			anchorPosterior: opts.anchorPosterior,
 			anchorWeight: opts.anchorWeight ?? 2.0,
+			cityStateFallback: opts.cityStateFallback ?? false,
+			cityStateMaxKm: opts.cityStateMaxKm ?? 15,
+			localityNodePresent: false,
+			resolvedRegion: null,
+			resolvedRegionSpan: null,
 		}
 
 		const newRoots: AddressNode[] = []
 		for (const root of tree.roots) {
 			newRoots.push(await this.#walk(root, /* parentResolved */ null, state))
 		}
+
+		// City-state locality recovery (#387). Only when enabled, a region resolved, and the parser
+		// emitted NO locality node — then ask the backend for a same-name locality descendant of the
+		// region and synthesize it iff its centroid coincides with the region's (the city-state
+		// signature). See ResolveOpts.cityStateFallback for the full rationale + false-positive guard.
+		if (state.cityStateFallback && state.resolvedRegion && !state.localityNodePresent && state.lookupsRemaining > 0) {
+			const synthesized = await this.#recoverCityStateLocality(state)
+			if (synthesized) newRoots.push(synthesized)
+		}
 		return { raw: tree.raw, roots: newRoots }
+	}
+
+	/**
+	 * Query the backend for the region's same-name locality descendant and, when its centroid
+	 * coincides with the region's (≤ `cityStateMaxKm`), build a synthesized locality node. Returns
+	 * null otherwise. Marked `metadata.resolver_synthesized` — the node has no span in the raw
+	 * input.
+	 */
+	async #recoverCityStateLocality(state: ResolutionState): Promise<AddressNode | null> {
+		const region = state.resolvedRegion!
+		if (typeof region.id !== "number") return null
+		state.lookupsRemaining--
+		let candidates: ResolvedPlace[]
+		try {
+			candidates = await this.#backend.findPlace({
+				text: region.name,
+				placetype: "locality",
+				country: region.country || undefined,
+				parentId: region.id,
+				limit: 1,
+			})
+		} catch {
+			return null
+		}
+		const loc = candidates[0]
+		if (!loc || haversineKm(loc, region) > state.cityStateMaxKm) return null
+		const span = state.resolvedRegionSpan ?? { start: 0, end: 0 }
+		const synthesized: AddressNode = {
+			tag: "locality",
+			value: loc.name,
+			start: span.start,
+			end: span.end,
+			confidence: 0,
+			children: [],
+		}
+		decorateNode(synthesized, loc, [])
+		synthesized.metadata = { ...(synthesized.metadata ?? {}), resolver_synthesized: true }
+		return synthesized
 	}
 
 	async #walk(node: AddressNode, parentResolved: ResolvedPlace | null, state: ResolutionState): Promise<AddressNode> {
@@ -93,12 +177,22 @@ class WofResolver implements Resolver {
 		const decorated: AddressNode = { ...node, children: [] }
 
 		const placetype = state.placetypeMap[node.tag as ComponentTag]
+		// Track locality presence for the city-state recovery (#387): the recovery must NOT fire if the
+		// parser already emitted a locality node (even one that failed to resolve) — it only fills a
+		// genuine gap. Cheap and always-on; only consulted when cityStateFallback is set.
+		if (placetype === "locality") state.localityNodePresent = true
 		let resolved: ResolvedPlace | null = null
 		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length > 0) {
 			const picked = await this.#lookupAndPick(node, placetype, parentResolved, state)
 			if (picked) {
 				resolved = picked.top
 				decorateNode(decorated, picked.top, picked.alternatives)
+				// Capture the first resolved region for the city-state recovery, along with its span so
+				// the synthesized locality can borrow it (it has no span of its own).
+				if (placetype === "region" && state.resolvedRegion === null) {
+					state.resolvedRegion = picked.top
+					state.resolvedRegionSpan = { start: node.start, end: node.end }
+				}
 			}
 		}
 

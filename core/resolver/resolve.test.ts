@@ -428,4 +428,89 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		})
 		expect(on.roots[0]!.placeId).toBe("wof:1") // US already top, boost keeps it there
 	})
+
+	// City-state locality recovery (#387). In `…, Berlin, Berlin <PC>` the parser drops the locality
+	// (city == region), leaving a region but no locality. The fallback synthesizes it from the region's
+	// same-name, centroid-coincident locality descendant — data-driven, guarded against same-name towns.
+	const CITY_STATE_PLACES: ResolvedPlace[] = [
+		{ id: 900, name: "Germany", placetype: "country", country: "DE", lat: 51.1, lon: 10.4, score: 10 },
+		// Berlin: city-state — region + locality centroids coincide.
+		{ id: 910, name: "Berlin", placetype: "region", country: "DE", parent_id: 900, lat: 52.52, lon: 13.4, score: 9 },
+		{ id: 911, name: "Berlin", placetype: "locality", country: "DE", parent_id: 910, lat: 52.52, lon: 13.4, score: 8 },
+		// Brandenburg: NOT a city-state — the same-name town sits ~60 km from the state centroid.
+		{
+			id: 920,
+			name: "Brandenburg",
+			placetype: "region",
+			country: "DE",
+			parent_id: 900,
+			lat: 52.4,
+			lon: 13.0,
+			score: 9,
+		},
+		{
+			id: 921,
+			name: "Brandenburg",
+			placetype: "locality",
+			country: "DE",
+			parent_id: 920,
+			lat: 52.41,
+			lon: 12.55,
+			score: 8,
+		},
+	]
+
+	test("city-state fallback synthesizes the dropped locality from the region (#387)", async () => {
+		const backend = new FakeResolverBackend(CITY_STATE_PLACES)
+		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
+		const result = await createWofResolver(backend).resolveTree(input, {
+			cityStateFallback: true,
+			defaultCountry: "DE",
+		})
+
+		const locality = result.roots.find((r) => r.tag === "locality")
+		expect(locality).toBeDefined()
+		expect(locality).toMatchObject({
+			tag: "locality",
+			value: "Berlin",
+			source: "resolver",
+			placeId: "wof:911",
+			lat: 52.52,
+			lon: 13.4,
+		})
+		expect(locality!.metadata).toMatchObject({ resolver_synthesized: true })
+	})
+
+	test("city-state fallback is OFF by default — byte-stable (#387)", async () => {
+		const backend = new FakeResolverBackend(CITY_STATE_PLACES)
+		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
+		const result = await createWofResolver(backend).resolveTree(input, { defaultCountry: "DE" })
+		expect(result.roots.find((r) => r.tag === "locality")).toBeUndefined()
+	})
+
+	test("city-state fallback rejects a same-name town that is NOT centroid-coincident (#387)", async () => {
+		const backend = new FakeResolverBackend(CITY_STATE_PLACES)
+		// Brandenburg state + no locality. A naive same-name-descendant rule would wrongly synthesize the
+		// town of Brandenburg an der Havel; the ~60 km centroid gap must veto it.
+		const input = tree("Brandenburg 14770", [node("region", "Brandenburg", 0, 11), node("postcode", "14770", 12, 17)])
+		const result = await createWofResolver(backend).resolveTree(input, {
+			cityStateFallback: true,
+			defaultCountry: "DE",
+		})
+		expect(result.roots.find((r) => r.tag === "locality")).toBeUndefined()
+	})
+
+	test("city-state fallback never overrides a locality the parser already emitted (#387)", async () => {
+		const backend = new FakeResolverBackend(CITY_STATE_PLACES)
+		// A real locality span is present (even if it won't resolve) → the gap-filler must stay quiet.
+		const input = tree("Some Town, Berlin", [node("locality", "Some Town", 0, 9), node("region", "Berlin", 11, 17)])
+		const result = await createWofResolver(backend).resolveTree(input, {
+			cityStateFallback: true,
+			defaultCountry: "DE",
+		})
+		const localities = result.roots.filter((r) => r.tag === "locality")
+		expect(localities).toHaveLength(1)
+		expect(localities[0]!.value).toBe("Some Town")
+		expect(localities[0]!.metadata?.["resolver_synthesized"]).toBeUndefined()
+	})
 })
