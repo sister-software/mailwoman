@@ -116,8 +116,11 @@ class WofResolver implements Resolver {
 			postcode: firstPostcodeValue(tree.roots),
 			anchorPosterior: opts.anchorPosterior,
 			anchorWeight: opts.anchorWeight ?? 2.0,
+			// Default-ON (#402): completion only fires for a dual-role region whose locality the parser
+			// dropped, and no-ops entirely when the backend has no relation (the browser WASM resolver, or
+			// a gazetteer without `coincident_roles`). Pass `hierarchyCompletion: false` to opt out.
 			// `cityStateFallback` is the #387 alias that #405 generalized — still honored.
-			hierarchyCompletion: opts.hierarchyCompletion ?? opts.cityStateFallback ?? false,
+			hierarchyCompletion: opts.hierarchyCompletion ?? opts.cityStateFallback ?? true,
 			includeAncestors: opts.includeAncestors ?? false,
 			localityNodePresent: false,
 			resolvedRegion: null,
