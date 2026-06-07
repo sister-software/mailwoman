@@ -16,6 +16,7 @@ import {
 	decodeAsTuples,
 	decodeAsXml,
 	type AddressTree,
+	type Calibrator,
 	type ComponentTag,
 	type DecoderToken,
 } from "@mailwoman/core/decoder"
@@ -216,7 +217,7 @@ export class NeuralAddressClassifier {
 			tokens = repairUnitLabels(text, tokens).tokens
 		}
 
-		return buildAddressTree(text, tokens)
+		return buildAddressTree(text, tokens, opts?.calibrate ? { calibrate: opts.calibrate } : undefined)
 	}
 
 	/**
@@ -291,7 +292,7 @@ export class NeuralAddressClassifier {
 		})
 
 		return {
-			tree: buildAddressTree(text, tokens),
+			tree: buildAddressTree(text, tokens, opts?.calibrate ? { calibrate: opts.calibrate } : undefined),
 			logits,
 			pieces: pieces.map((p) => ({ start: p.start, end: p.end })),
 		}
@@ -389,6 +390,13 @@ export interface ParseOpts {
 	 * v0.7.2 arena re-run quantifies its delta. See `./unit-repair.ts`.
 	 */
 	unitRepair?: boolean
+	/**
+	 * Optional span-confidence calibrator (task #59). When provided, each decoded span's `conf=` is
+	 * mapped through it (isotonic lookup table → calibrated probability of correctness). OPT-IN —
+	 * omit for the byte-stable default softmax confidence. Build one via `createCalibrator`
+	 * (`@mailwoman/core/decoder`) from `data/eval/calibration/isotonic-<locale>-<version>.json`.
+	 */
+	calibrate?: Calibrator
 }
 
 function argmaxSoftmax(row: number[]): { idx: number; conf: number } {
