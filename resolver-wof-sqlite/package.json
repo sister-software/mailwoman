@@ -21,7 +21,8 @@
 		"./fst-autocomplete": "./out/fst-autocomplete.js",
 		"./fst-types": "./out/fst-types.js",
 		"./fst-deserialize-web": "./out/fst-deserialize-web.js",
-		"./unified-schema": "./out/unified-schema.js"
+		"./unified-schema": "./out/unified-schema.js",
+		"./coincident-roles": "./out/coincident-roles.js"
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
@@ -35,6 +36,7 @@
 		"README.md"
 	],
 	"bin": {
+		"mailwoman-wof-build-coincident-roles": "./out/build-coincident-roles-cli.js",
 		"mailwoman-wof-build-fts": "./out/build-fts-cli.js",
 		"mailwoman-wof-build-slim": "./out/build-slim-cli.js"
 	},
