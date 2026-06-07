@@ -10,9 +10,9 @@
  *   1. Span emission — walk the token stream, group `B-X` followed by `I-X*` into one span. Lenient on
  *        hanging `I-X` (treat as new span). A `B-X` that is whitespace-adjacent to an already-open
  *        `X` span is also folded in (spurious-boundary repair for multi-word values the model
- *        fragments, e.g. "Saint Paul" → B-locality B-locality); a comma/separator between them keeps
- *        them distinct. Span `value` is sliced from `raw` by [start, end), NOT concatenated from
- *        `piece` — this avoids SentencePiece's synthetic leading-space markers in the output.
+ *        fragments, e.g. "Saint Paul" → B-locality B-locality); a comma/separator between them
+ *        keeps them distinct. Span `value` is sliced from `raw` by [start, end), NOT concatenated
+ *        from `piece` — this avoids SentencePiece's synthetic leading-space markers in the output.
  *   2. Parent attachment — for each span, find the nearest labeled span whose tag is the
  *        highest-priority entry in this span's `PARENT_OF` list. Distance is the tiebreaker only.
  *        Spans with no found parent become roots.
@@ -24,6 +24,7 @@
  */
 
 import type { BioLabel, ComponentTag } from "../types/component.js"
+import type { Calibrator } from "./calibration.js"
 import { containmentFor } from "./containment.js"
 import type { AddressNode, AddressSystem, AddressTree, DecoderToken } from "./types.js"
 
@@ -43,6 +44,13 @@ export interface BuildTreeOpts {
 	 * behavioral when a system-specific map lands (Phase 6 JP). See `containment.ts`.
 	 */
 	system?: AddressSystem
+	/**
+	 * Optional confidence calibrator (task #59). When provided, each span's mean-of-token-softmax
+	 * confidence is mapped through it before being stamped on the node, so `conf=` reports a
+	 * calibrated probability of correctness rather than the raw softmax. OPT-IN — omit for the
+	 * byte-stable default. Build one via `createCalibrator` (`./calibration.ts`).
+	 */
+	calibrate?: Calibrator
 }
 
 interface OpenSpan {
@@ -79,7 +87,8 @@ function flush(open: OpenSpan | null, raw: string, out: AddressNode[], attributi
 	// A span that trims to empty (all-punctuation) is meaningless — drop it. Confidence is moot.
 	if (start >= end) return null
 	const value = raw.slice(start, end)
-	const confidence = open.confidences.reduce((a, b) => a + b, 0) / open.confidences.length
+	const rawConfidence = open.confidences.reduce((a, b) => a + b, 0) / open.confidences.length
+	const confidence = attribution.calibrate ? attribution.calibrate(rawConfidence) : rawConfidence
 	const node: AddressNode = { tag: open.tag, start, end, value, confidence, children: [] }
 	if (attribution.source !== undefined) node.source = attribution.source
 	if (attribution.sourceId !== undefined) node.sourceId = attribution.sourceId

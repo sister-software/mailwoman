@@ -5,6 +5,7 @@
  */
 
 export * from "./build-tree.js"
+export * from "./calibration.js"
 export * from "./containment.js"
 export * from "./proposals-to-tree.js"
 export * from "./serialize-json.js"
