@@ -240,11 +240,14 @@ export async function runPipeline(
 	// per-span verdict on orphaned spans (see the assignment + grouperAudit below).
 	let auditClassifierTopK: ClassifierCandidate[] | undefined
 
-	// Joint-reconcile path: opt-in until phrase-grouper proposal quality supports it as default.
-	// The reconciler produces single-token spans when phrase proposals don't cover multi-word
-	// streets/localities — needs grouper improvements before becoming the default path.
+	// Joint-reconcile path: DEFAULT as of Route A Phase II (#427). It beats argmax on every measured
+	// locale with per-field regression under 0.5% (report: docs/articles/evals/2026-06-07-route-a-
+	// phase-ii-regate.md). Set `jointReconcile: false` (or the deprecated `forceJointReconcile: false`)
+	// to force the legacy argmax sort. Still requires a phrase grouper + a `parseWithLogits` classifier;
+	// without either, the pipeline falls back to argmax regardless of the flag.
+	const jointEnabled = opts?.jointReconcile ?? opts?.forceJointReconcile ?? true
 	const useJointReconcile =
-		opts?.forceJointReconcile &&
+		jointEnabled &&
 		phraseProposals.length > 0 &&
 		stages.classifier &&
 		"parseWithLogits" in stages.classifier
