@@ -51,6 +51,7 @@ const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
 	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
 	{ label: "ZIP only", address: "90210" },
 	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin" },
+	{ label: "Berlin city-state (int'l order)", address: "5 Hauptstraße, Berlin, Berlin 10115" },
 	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris" },
 ]
 
