@@ -130,6 +130,7 @@ const config: Config = {
 						"./src/css/markdown.css",
 						"./src/css/sidebar.css",
 						"./src/css/toc-mobile.css",
+						"./src/css/mermaid.css",
 						"./src/css/custom.css",
 					],
 				},
@@ -140,6 +141,14 @@ const config: Config = {
 	themeConfig: {
 		colorMode: {
 			respectPrefersColorScheme: true,
+		},
+		mermaid: {
+			theme: { light: "base", dark: "base" },
+			options: {
+				fontFamily: '"Iosevka Nexus Mono Web", "Iosevka", monospace',
+				flowchart: { htmlLabels: false, curve: "basis", padding: 18 },
+				themeVariables: { primaryColor: "#ffffff", lineColor: "#21201c" },
+			},
 		},
 		navbar: {
 			title: "Mailwoman",
