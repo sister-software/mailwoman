@@ -72,11 +72,12 @@ function geojsonForId(id: number): Record<string, unknown> | null {
 }
 
 // `<placetype>_id` key → ancestor placetype. WOF hierarchy keys are e.g. region_id, county_id.
+// Self is filtered downstream by the `aid === id` check, so we do NOT special-case locality here:
+// for a locality candidate `locality_id` IS self (dropped by aid===id), but for a neighbourhood
+// candidate `locality_id` is its PARENT locality — a real ancestor we must keep.
 function placetypeFromKey(key: string): string | null {
 	if (!key.endsWith("_id")) return null
-	const pt = key.slice(0, -3)
-	if (pt === "locality") return null // self / not an ancestor we need to add specially
-	return pt
+	return key.slice(0, -3)
 }
 
 const db = new DatabaseSync(dbPath)
