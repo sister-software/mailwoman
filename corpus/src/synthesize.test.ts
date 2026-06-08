@@ -23,6 +23,8 @@ import {
 	streetSuffixAbbreviate,
 	streetSuffixExpand,
 	synthesizeRow,
+	unitDesignatorAbbreviate,
+	unitDesignatorExpand,
 	zipPlus4DashDrop,
 } from "./synthesize.js"
 import type { CanonicalRow } from "./types.js"
@@ -316,6 +318,77 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 		const us = defaultAugmentationsForCountry("US")
 		expect(us).toContain(streetSuffixAbbreviate)
 		expect(us).toContain(streetSuffixExpand)
+	})
+})
+
+describe("US unit-designator codex augmentations (Pub-28 Appendix C2)", () => {
+	const unitRow = (over: Partial<CanonicalRow>): CanonicalRow =>
+		baseRow({
+			raw: "123 Main St Apt 4B, Oakland, CA 94601",
+			components: {
+				house_number: "123",
+				street: "Main St",
+				unit: "Apt 4B",
+				locality: "Oakland",
+				region: "CA",
+				postcode: "94601",
+			},
+			...over,
+		})
+
+	it("unitDesignatorExpand Apt → Apartment (title case + identifier preserved)", () => {
+		const out = unitDesignatorExpand(unitRow({}))!
+		expect(out.components.unit).toBe("Apartment 4B")
+		expect(out.raw).toBe("123 Main St Apartment 4B, Oakland, CA 94601")
+		expect(out.synth?.method).toBe("us-unit-designator-expand")
+	})
+
+	it("unitDesignatorAbbreviate Apartment → Apt", () => {
+		const out = unitDesignatorAbbreviate(
+			unitRow({
+				raw: "123 Main St Apartment 4B, Oakland, CA 94601",
+				components: { house_number: "123", street: "Main St", unit: "Apartment 4B", locality: "Oakland", region: "CA", postcode: "94601" },
+			})
+		)!
+		expect(out.components.unit).toBe("Apt 4B")
+		expect(out.raw).toContain("Main St Apt 4B,")
+	})
+
+	it("unitDesignatorAbbreviate SUITE → STE (uppercase preserved)", () => {
+		const out = unitDesignatorAbbreviate(
+			unitRow({ raw: "1 OCEAN DR SUITE 200", components: { house_number: "1", street: "OCEAN DR", unit: "SUITE 200" } })
+		)!
+		expect(out.components.unit).toBe("STE 200")
+		expect(out.raw).toContain("STE 200")
+	})
+
+	it("unitDesignatorExpand handles a designator-only unit (Basement → Bsmt inverse)", () => {
+		const out = unitDesignatorExpand(unitRow({ raw: "12 Elm St Bsmt", components: { house_number: "12", street: "Elm St", unit: "Bsmt" } }))!
+		expect(out.components.unit).toBe("Basement")
+		expect(out.raw).toContain("Elm St Basement")
+	})
+
+	it("unitDesignatorAbbreviate returns null when the designator is already the approved abbreviation", () => {
+		expect(unitDesignatorAbbreviate(unitRow({}))).toBeNull() // "Apt 4B" already abbreviated
+	})
+
+	it("returns null when the unit has no recognized leading designator (bare identifier)", () => {
+		const row = unitRow({ raw: "123 Main St 4B, Oakland, CA 94601", components: { house_number: "123", street: "Main St", unit: "4B", locality: "Oakland", region: "CA", postcode: "94601" } })
+		expect(unitDesignatorExpand(row)).toBeNull()
+		expect(unitDesignatorAbbreviate(row)).toBeNull()
+	})
+
+	it("returns null on a non-US row + when there's no unit component", () => {
+		expect(unitDesignatorExpand(unitRow({ country: "FR" }))).toBeNull()
+		expect(unitDesignatorExpand(baseRow({ raw: "123 Main St", components: { house_number: "123", street: "Main St" } }))).toBeNull()
+	})
+
+	it("AUGMENTATIONS + defaultAugmentationsForCountry('US') include both unit augmentations", () => {
+		expect(AUGMENTATIONS["us-unit-designator-abbreviate"]).toBe(unitDesignatorAbbreviate)
+		expect(AUGMENTATIONS["us-unit-designator-expand"]).toBe(unitDesignatorExpand)
+		const us = defaultAugmentationsForCountry("US")
+		expect(us).toContain(unitDesignatorAbbreviate)
+		expect(us).toContain(unitDesignatorExpand)
 	})
 })
 
