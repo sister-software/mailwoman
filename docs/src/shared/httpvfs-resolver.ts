@@ -82,6 +82,7 @@ export async function loadHttpvfsDb(dbUrl: string, sqljsBaseUrl: string): Promis
 export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 	#worker: HttpvfsWorker
 	#hasPop: boolean | undefined
+	#hasAbbrCache: boolean | undefined
 	#dualRolesCache: Map<number, DualRole[]> | undefined
 
 	constructor(worker: HttpvfsWorker) {
@@ -153,6 +154,32 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 		return this.#hasPop
 	}
 
+	async #hasAbbr(): Promise<boolean> {
+		if (this.#hasAbbrCache === undefined) {
+			const r = rowsFromExec(
+				await this.#worker.db.exec("SELECT 1 FROM sqlite_master WHERE type='table' AND name='place_abbr' LIMIT 1")
+			)
+			this.#hasAbbrCache = r.length > 0
+		}
+		return this.#hasAbbrCache
+	}
+
+	/**
+	 * Ids whose region abbreviation exactly equals `text` (case-insensitive), from the slim DB's
+	 * `place_abbr` table (carried by build-slim, #189). Empty on DBs built before the table. Lets the
+	 * demo resolver tier an exact-abbrev match ("VT" → Vermont) above a foreign region that merely
+	 * token-matches — the data-driven replacement for the hardcoded `expandUsRegion` map. Mirrors
+	 * `WofWasmPlaceLookup.#abbrExactIds` (keep the two in lockstep).
+	 */
+	async #abbrExactIds(text: string): Promise<Set<number>> {
+		const t = text.trim()
+		if (!t || !(await this.#hasAbbr())) return new Set()
+		const rows = rowsFromExec(
+			await this.#worker.db.exec(`SELECT id FROM place_abbr WHERE abbr = ${sqlStr(t)} COLLATE NOCASE`)
+		)
+		return new Set(rows.map((r) => Number(r.id)))
+	}
+
 	async findPlace(query: Parameters<MailwomanLookupLike["findPlace"]>[0]) {
 		const text = (query.text ?? "").trim()
 		if (!text) return []
@@ -185,12 +212,17 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 
 		const rows = rowsFromExec(await this.#worker.db.exec(sql))
 		const normQuery = normName(text)
+		// Exact-abbrev tier: a candidate whose region abbreviation equals the query ("VT" → Vermont) is
+		// an exact match, same tier as an exact name match — so it outranks a foreign region that merely
+		// token-matches "VT". Mirrors WofWasmPlaceLookup; no-op on slim DBs without `place_abbr`.
+		const abbrIds = await this.#abbrExactIds(text)
 		return rows
 			.map((row) => {
 				const pop = typeof row.population === "number" ? row.population : 0
 				const popBoost = pop > 0 ? POPULATION_BOOST * Math.min(1, Math.log10(1 + pop) / POPULATION_SCALE_LOG10) : 0
 				const adj = (row.bm25 as number) - popBoost
-				return { row, exactTier: normName(String(row.name)) === normQuery ? 0 : 1, adj }
+				const exactTier = normName(String(row.name)) === normQuery || abbrIds.has(Number(row.id)) ? 0 : 1
+				return { row, exactTier, adj }
 			})
 			.sort((a, b) => a.exactTier - b.exactTier || a.adj - b.adj)
 			.slice(0, limit)

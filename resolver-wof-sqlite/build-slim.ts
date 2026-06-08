@@ -78,6 +78,7 @@ export type SlimBuildPhase =
 	| "names"
 	| "place_population"
 	| "coincident_roles"
+	| "place_abbr"
 	| "fts"
 	| "vacuum"
 	| "done"
@@ -186,6 +187,21 @@ export async function buildSlimWofDatabase(opts: BuildSlimOptions): Promise<Buil
 			drop: true, // schema we copied had no FTS tables, but be explicit
 			onProgress: (phase, name) => progress("fts", `${phase} ${name}`),
 		})
+
+		// Materialize region/state ABBREVIATIONS into a standalone `place_abbr (id, abbr)` table BEFORE
+		// `names` is (optionally) dropped. The full DB lets the resolver tier an exact-abbrev match by
+		// querying `names` (`#exactMatchIds`), but the slim DB drops `names` for size — so the
+		// browser resolver gets its own tiny lookup (~hundreds of rows) to do the same data-driven
+		// exact-abbrev tiering ("VT" → Vermont, not a token-matching foreign region) instead of the
+		// demo's hardcoded `expandUsRegion` map. Sourced from the `language='abbr'` rows
+		// `add-region-abbrevs.ts` wrote, already filtered to surviving spr ids via the names copy. The
+		// table is always created (empty when the source predates the abbrev enrichment) so the
+		// resolver can query it unconditionally.
+		progress("place_abbr", "materializing region abbreviations")
+		out.exec(`CREATE TABLE IF NOT EXISTS place_abbr (id INTEGER NOT NULL, abbr TEXT NOT NULL)`)
+		out.exec(`INSERT INTO place_abbr (id, abbr) SELECT id, name FROM names WHERE language = 'abbr'`)
+		out.exec(`CREATE INDEX IF NOT EXISTS place_abbr_by_abbr ON place_abbr (abbr COLLATE NOCASE)`)
+		out.exec(`CREATE INDEX IF NOT EXISTS place_abbr_by_id ON place_abbr (id)`)
 
 		// Capture the names count BEFORE any drop so the build report stays informative.
 		const namesRows = countRows(out, "names")

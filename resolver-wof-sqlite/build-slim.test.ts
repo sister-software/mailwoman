@@ -252,4 +252,28 @@ describe("buildSlimWofDatabase", () => {
 			slim.close()
 		}
 	})
+
+	test("materializes place_abbr from language='abbr' names, filtered to surviving ids, surviving dropNames (#189)", async () => {
+		const source = join(scratch, "src.db")
+		const output = join(scratch, "slim.db")
+		buildFixtureWof(source)
+		const s = new DatabaseSync(source)
+		s.exec(`INSERT INTO names (id, language, name) VALUES (101, 'abbr', 'IL')`) // Illinois (region) — survives
+		s.exec(`INSERT INTO names (id, language, name) VALUES (202, 'abbr', 'MZ')`) // Mascoutah (locality) — trimmed
+		s.close()
+
+		// top-2 keeps Springfield, drops Mascoutah; dropNames removes the source names table afterward.
+		await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
+
+		const slim = new DatabaseSync(output, { readOnly: true })
+		try {
+			const rows = slim.prepare(`SELECT id, abbr FROM place_abbr ORDER BY abbr`).all()
+			// Illinois keeps its abbr; the trimmed locality's is gone (names was pre-filtered to surviving
+			// ids). And place_abbr persists even though dropNames removed the source `names` table.
+			expect(rows).toEqual([{ id: 101, abbr: "IL" }])
+			expect(slim.prepare(`SELECT 1 FROM sqlite_master WHERE name='names'`).get()).toBeUndefined()
+		} finally {
+			slim.close()
+		}
+	})
 })
