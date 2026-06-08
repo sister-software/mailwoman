@@ -65,7 +65,25 @@ def contains(geom, lon, lat):
         return any(in_polygon(lon, lat, p) for p in geom["coordinates"])
     return None  # Point geometry etc. — can't contain
 
-rows = json.load(open(sys.argv[1]))
+# --- arg parsing: <resolved.json> [--label NAME] [--json OUT] ---------------
+args = sys.argv[1:]
+src = None
+label_arg = None
+json_out = None
+i = 0
+while i < len(args):
+    a = args[i]
+    if a == "--label":
+        label_arg = args[i + 1]; i += 2
+    elif a == "--json":
+        json_out = args[i + 1]; i += 2
+    else:
+        src = a; i += 1
+if not src:
+    print("usage: pip-containment.py <resolved.json> [--label NAME] [--json OUT]", file=sys.stderr)
+    sys.exit(2)
+
+rows = json.load(open(src))
 overall = collections.Counter()
 by_state = collections.defaultdict(collections.Counter)
 artifact_examples = []
@@ -78,19 +96,32 @@ for r in rows:
         overall["name"] += 1; by_state[st]["name"] += 1
     lid = r.get("neuralLocId")
     contained = contains(geom_for_id(lid), r["lon"], r["lat"]) if lid else None
-    if contained is None and lid:
+    if contained is not None:  # a polygon existed and was tested (True or False)
+        overall["poly"] += 1; by_state[st]["poly"] += 1
+    elif lid:
         no_poly += 1
     if contained:
         overall["pip"] += 1; by_state[st]["pip"] += 1
         if not name_ok and len(artifact_examples) < 12:
             artifact_examples.append(f'  "{r["input"]}"  gold="{r.get("expectedLoc")}"  resolved="{r.get("neuralLoc")}"')
 
+def pct(num, den):
+    return f"{100*num/den:.1f}%" if den else "—"
+
 def line(label, c):
     n = c["n"]
-    pc = lambda k: f"{100*c[k]/n:.1f}%" if n else "—"
-    return f"  {label:<10} n={n:<5} name-match={pc('name'):<7} PIP-containment={pc('pip'):<7} delta={100*(c['pip']-c['name'])/n:+.1f}pp" if n else f"  {label}: n=0"
+    if not n:
+        return f"  {label}: n=0"
+    # PIP-containment is reported two ways: over ALL rows (strict) and over rows
+    # that HAVE a polygon (coverage-adjusted), since WOF point-geometry localities
+    # can never PIP-contain and would otherwise count as silent failures.
+    return (
+        f"  {label:<10} n={n:<5} name-match={pct(c['name'],n):<7} "
+        f"PIP-containment={pct(c['pip'],n):<7} delta={100*(c['pip']-c['name'])/n:+.1f}pp  "
+        f"PIP/poly={pct(c['pip'],c['poly']):<7} poly-cov={pct(c['poly'],n)}"
+    )
 
-print(f"\n=== PIP-containment vs name-match ({sys.argv[1]}) ===")
+print(f"\n=== PIP-containment vs name-match ({src}{' · '+label_arg if label_arg else ''}) ===")
 print(line("OVERALL", overall))
 for st in sorted(by_state):
     print(line(st, by_state[st]))
@@ -98,3 +129,19 @@ print(f"\n  rows resolved-but-polygon-missing: {no_poly}")
 print(f"\nMETRIC-ARTIFACT cases (name-match FAILED but gold point IS inside the resolved locality):")
 for e in artifact_examples:
     print(e)
+
+if json_out:
+    n = overall["n"]
+    summary = {
+        "label": label_arg,
+        "source": src,
+        "n": n,
+        "name_match": overall["name"] / n if n else None,
+        "pip_all": overall["pip"] / n if n else None,
+        "pip_poly": overall["pip"] / overall["poly"] if overall["poly"] else None,
+        "poly_coverage": overall["poly"] / n if n else None,
+        "no_polygon": no_poly,
+    }
+    with open(json_out, "w") as f:
+        json.dump(summary, f, indent=2)
+    print(f"\nwrote summary → {json_out}", file=sys.stderr)
