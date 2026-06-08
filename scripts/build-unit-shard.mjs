@@ -32,7 +32,7 @@ import { spawnSync } from "node:child_process"
 import { createWriteStream } from "node:fs"
 
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, US_UNIT_DESIGNATOR_VARIANTS } from "@mailwoman/codex/us"
-import { alignRow, formatAddress, stableSourceId } from "@mailwoman/corpus"
+import { alignRow, stableSourceId } from "@mailwoman/corpus"
 
 // OA REGION is empty for US per-state extracts — the region is implied by the file, like the German
 // shard. Train sources are every NON-Vermont state cached; eval is Vermont only (the corpus holdout).
@@ -158,6 +158,35 @@ function makeUnit(random, oaUnit) {
 	return `${designator} ${id}`
 }
 
+/** Synthetic recipient/venue prefixes — the "JOHN DOE, ACME INC, ..." arena pattern. */
+const VENUES = [
+	"John Doe", "Jane Smith", "Acme Inc", "Wayne Enterprises", "Stark Industries",
+	"Globex Corp", "Maria Garcia", "Robert Chen", "Oak Street Dental", "Riverside Clinic",
+]
+
+/** Address tail: "City, ST 12345" (or no postcode). */
+const tail = (loc, reg, pc) => (pc ? `${loc}, ${reg} ${pc}` : `${loc}, ${reg}`)
+
+/**
+ * Render a unit row in a RANDOM layout. v1 trained ONLY unit-after-street in a full address, so the
+ * arena's unit-first ("Ste 12, 123 Main St") and bare ("Flat 2 14 Smith St") formats stayed at 0% —
+ * an in-distribution mirage (held-out VT eval read 98.7%, real-designator arena 0%). v2 spreads units
+ * across positions + drops the city/state tail on bare rows + prefixes a recipient/venue, so the model
+ * learns to RECOGNIZE the designator wherever it sits. Returns {fmt, raw, components}.
+ */
+function renderUnit(random, base, unit) {
+	const hn = base.house_number, street = base.street, loc = base.locality, reg = base.region, pc = base.postcode
+	const road = `${hn} ${street}`
+	const full = { house_number: hn, street, unit, locality: loc, region: reg, ...(pc ? { postcode: pc } : {}) }
+	const r = random()
+	if (r < 0.34) return { fmt: "full-after", raw: `${road} ${unit}, ${tail(loc, reg, pc)}`, components: full }
+	if (r < 0.52) return { fmt: "full-first", raw: `${unit}, ${road}, ${tail(loc, reg, pc)}`, components: full }
+	if (r < 0.68) return { fmt: "bare-after", raw: `${road} ${unit}`, components: { house_number: hn, street, unit } }
+	if (r < 0.84) return { fmt: "bare-first", raw: `${unit} ${road}`, components: { house_number: hn, street, unit } }
+	const v = VENUES[Math.floor(random() * VENUES.length)]
+	return { fmt: "venue", raw: `${v}, ${road} ${unit}, ${tail(loc, reg, pc)}`, components: { venue: v, ...full } }
+}
+
 async function main() {
 	const opts = parseArgs()
 	const random = mulberry32(opts.seed)
@@ -179,26 +208,20 @@ async function main() {
 	let skipped = 0
 	let guard = 0
 	const designatorCounts = {}
+	const formatCounts = {}
 	const N = pool.length
 	while (emitted < opts.count && guard++ < opts.count * 6) {
 		const base = pool[Math.floor(random() * N)]
 		const unit = makeUnit(random, base.oaUnit)
-		const components = {
-			house_number: base.house_number,
-			street: base.street,
-			unit,
-			locality: base.locality,
-			region: base.region,
-			...(base.postcode ? { postcode: base.postcode } : {}),
-		}
-		const raw = formatAddress(components, "US")
-		// formatAddress must keep the unit verbatim in raw, else alignment can't label it.
+		const { fmt, raw, components } = renderUnit(random, base, unit)
+		// The unit must survive verbatim in raw, else alignment can't label it.
 		if (!raw.includes(unit)) {
 			skipped++
 			continue
 		}
 		const headWord = unit.split(/\s+/)[0]
 		designatorCounts[headWord] = (designatorCounts[headWord] ?? 0) + 1
+		formatCounts[fmt] = (formatCounts[fmt] ?? 0) + 1
 
 		if (opts.golden) {
 			outStream.write(JSON.stringify({ raw, components, country: "US" }) + "\n")
@@ -228,6 +251,7 @@ async function main() {
 	await new Promise((resolve) => outStream.on("finish", resolve))
 	console.error(
 		`Done: emitted ${emitted} unit rows, skipped ${skipped} (pool ${pool.length}). → ${opts.output}\n` +
+			`  formats: ${JSON.stringify(formatCounts)}\n` +
 			`  leading designators: ${JSON.stringify(designatorCounts)}`
 	)
 }
