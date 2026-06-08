@@ -24,16 +24,12 @@ import BrowserOnly from "@docusaurus/BrowserOnly"
 import React, { useCallback, useState } from "react"
 
 import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
-import {
-	DEFAULT_ADDRESS,
-	EXAMPLE_ADDRESSES,
-	flattenTree,
-	runCascade,
-} from "../../shared/demo-helpers.ts"
+import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES, flattenTree, runCascade } from "../../shared/demo-helpers.ts"
 import type { DemoResult, DualRole, ResolvedHit } from "../../shared/resources.tsx"
 import { CandidatePicker } from "../CandidatePicker/CandidatePicker.tsx"
 import { FailureDiagnostic } from "../FailureDiagnostic/FailureDiagnostic.tsx"
 import { KindBadge } from "../KindBadge/KindBadge.tsx"
+import { BIOHighlight } from "../BIOHighlight/BIOHighlight.tsx"
 import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
 import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
 import { TreeView } from "../TreeView/TreeView.tsx"
@@ -360,6 +356,11 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 					) : null}
 
 					<SpanHighlight input={result.input} nodes={result.nodes} />
+
+					<details className={styles.hierarchyDetails}>
+						<summary>BIO labels</summary>
+						<BIOHighlight input={result.input} nodes={result.nodes} />
+					</details>
 
 					<table className={styles.componentTable}>
 						<thead>
