@@ -31,7 +31,7 @@
 		"./sdk/cli": "./out/sdk/cli.js"
 	},
 	"dependencies": {
-		"@fragaria/address-formatter": "^6.3.0",
+		"@fragaria/address-formatter": "^6.7.1",
 		"@inkjs/ui": "^2.0.0",
 		"@mailwoman/classifiers": "workspace:*",
 		"@mailwoman/core": "workspace:*",
@@ -41,18 +41,18 @@
 		"@mailwoman/phrase-grouper": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"change-case": "^5.4.4",
-		"express": "^5.0.1",
+		"express": "^5.2.1",
 		"geojson": "^0.5.0",
-		"ink": "^7.0.3",
-		"ioredis": "^5.4.1",
+		"ink": "^7.0.5",
+		"ioredis": "^5.11.1",
 		"pastel": "^4.0.1",
 		"path-ts": "^1.0.5",
-		"piscina": "^4.7.0",
+		"piscina": "^4.9.2",
 		"pluralize": "^8.0.0",
-		"react": "^19.2.6",
+		"react": "^19.2.7",
 		"regenerate": "^1.4.2",
 		"spliterator": "^2.0.0",
-		"zod": "^4.1.12"
+		"zod": "^4.4.3"
 	},
 	"peerDependencies": {
 		"@mailwoman/resolver-wof-sqlite": "workspace:*"

@@ -20,7 +20,7 @@
 		"./jp": "./out/jp/index.js"
 	},
 	"dependencies": {
-		"type-fest": "^5.6.0"
+		"type-fest": "^5.7.0"
 	},
 	"files": [
 		"out/**/*.js",
