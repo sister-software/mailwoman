@@ -226,11 +226,12 @@ export function syncArtifact(sourcePath, destPath, label) {
 /**
  * Stage sql.js-httpvfs's runtime assets (the UMD bundle + its Worker + WASM) into `destDir`. The
  * demo loads these at RUNTIME by URL — the UMD via a classic <script>, the worker + wasm passed to
- * createDbWorker — so webpack never sees them. That's deliberate: bundling sql.js-httpvfs (a webpack
- * UMD bundle with dynamic Worker/wasm requires) is exactly what produces "Critical dependency"
- * build warnings, so we keep it out of the graph entirely.
+ * createDbWorker — so webpack never sees them. That's deliberate: bundling sql.js-httpvfs (a
+ * webpack UMD bundle with dynamic Worker/wasm requires) is exactly what produces "Critical
+ * dependency" build warnings, so we keep it out of the graph entirely.
  *
- * @param {string} destDir - e.g. static/mailwoman/sqljs
+ * @param {string} destDir - E.g. static/mailwoman/sqljs
+ *
  * @returns {boolean}
  */
 export function stageSqlJsHttpvfs(destDir) {
@@ -345,12 +346,37 @@ export function buildSlimWofDb(destPath, opts) {
 		return false
 	}
 
-	console.log("[demo-assets] wof-hot.db: building slim DB")
-	const result = spawnSync("node", [slimCli, "--in", adminDb, "--in", postcodeDb, "--out", destPath, "--top", "1000"], {
-		cwd: opts.repoRoot,
-		stdio: "inherit",
-		timeout: 300_000,
-	})
+	// `--countries` MUST include every country the demo resolves, AND it gates which `coincident_roles`
+	// survive the slim filter (the relation is dropped for any place whose spr row is trimmed). DE/FR
+	// carry the city-states the dual-role badge surfaces (Berlin/Hamburg/Bremen, Paris) — a US-only slim
+	// has zero coincident roles, so the badge would never appear. Override via SLIM_COUNTRIES.
+	const countries = process.env.SLIM_COUNTRIES ?? "US,DE,FR"
+
+	// `--drop-names`: the resolver never reads the names table at runtime (place_search is a
+	// self-contained FTS5), so drop it for a ~2/3 size win on the shipped DB (see #359).
+	console.log(`[demo-assets] wof-hot.db: building slim DB (countries=${countries}, names dropped)`)
+	const result = spawnSync(
+		"node",
+		[
+			slimCli,
+			"--in",
+			adminDb,
+			"--in",
+			postcodeDb,
+			"--out",
+			destPath,
+			"--top",
+			"1000",
+			"--countries",
+			countries,
+			"--drop-names",
+		],
+		{
+			cwd: opts.repoRoot,
+			stdio: "inherit",
+			timeout: 300_000,
+		}
+	)
 
 	return result.status === 0
 }

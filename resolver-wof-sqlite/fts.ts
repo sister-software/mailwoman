@@ -30,10 +30,10 @@ export const PLACE_SEARCH_TABLE = "place_search"
 export const PLACE_BBOX_TABLE = "place_bbox"
 
 /**
- * Name of the auxiliary table that mirrors `wof:population` extracted from each place's geojson
- * body. Powers the population-weighted ranking boost. Sparse — WOF only populates this field for
- * ~15% of localities (and mostly larger ones), so we don't insert NULL rows. Missing means no
- * boost, never a penalty.
+ * Name of the auxiliary table holding `wof:population` per place. Powers the population-weighted
+ * ranking boost. Sparse — WOF only populates this field for ~15% of localities (and mostly larger
+ * ones); missing means no boost, never a penalty. Built upstream by `scripts/build-unified-wof.ts`
+ * at ingest (and copied through by `build-slim`) — this module consumes it, never builds it.
  *
  * Schema: `(id INTEGER PRIMARY KEY, population INTEGER NOT NULL)`. Plain table, not virtual.
  */
@@ -52,10 +52,6 @@ export interface BuildPlaceSearchFtsResult {
 	bboxCreated: boolean
 	/** Number of rows in the `place_bbox` R*Tree after the call. */
 	bboxIndexedRows: number
-	/** Whether the `place_population` table was created. */
-	populationCreated: boolean
-	/** Number of rows in the `place_population` table after the call. Sparse — only ~15% of WOF. */
-	populationIndexedRows: number
 	/** Wall-clock duration of the build step, in milliseconds. */
 	durationMs: number
 }
@@ -72,16 +68,7 @@ export interface BuildPlaceSearchFtsOpts {
 	 * builds where the INSERT step can take minutes.
 	 */
 	onProgress?: (
-		phase:
-			| "checking"
-			| "dropping"
-			| "creating"
-			| "populating"
-			| "creating-bbox"
-			| "populating-bbox"
-			| "creating-population"
-			| "populating-population"
-			| "done",
+		phase: "checking" | "dropping" | "creating" | "populating" | "creating-bbox" | "populating-bbox" | "done",
 		detail?: string
 	) => void
 }
@@ -103,8 +90,6 @@ export function buildPlaceSearchFts(db: DatabaseSync, opts: BuildPlaceSearchFtsO
 	onProgress("checking")
 	const ftsExisting = tableExists(db, PLACE_SEARCH_TABLE)
 	const bboxExisting = tableExists(db, PLACE_BBOX_TABLE)
-	const populationExisting = tableExists(db, PLACE_POPULATION_TABLE)
-	const hasGeojsonTable = tableExists(db, "geojson")
 
 	// ─── FTS5 phase ──────────────────────────────────────────────────
 	let ftsCreated = false
@@ -186,60 +171,22 @@ export function buildPlaceSearchFts(db: DatabaseSync, opts: BuildPlaceSearchFtsO
 	}
 	const bboxCountRow = db.prepare(`SELECT COUNT(*) AS n FROM ${PLACE_BBOX_TABLE}`).get() as { n: number }
 
-	// ─── Population aux-table phase ──────────────────────────────────
-	// Sparse. WOF only populates `wof:population` for ~15% of localities (the bigger ones). Missing
-	// is silent — the ranking boost is 0 for absent rows, never a penalty.
-	// Some fixtures don't carry a `geojson` table at all (it's modeled in schema.ts but not always
-	// populated in tests). Skip the population step gracefully in that case — it's only useful when
-	// we have geojson bodies to extract from.
-	let populationCreated = false
-	let populationCount = 0
-	if (hasGeojsonTable) {
-		if (populationExisting && opts.drop) {
-			onProgress("dropping", PLACE_POPULATION_TABLE)
-			db.exec(`DROP TABLE ${PLACE_POPULATION_TABLE}`)
-		}
-		if (!populationExisting || opts.drop) {
-			onProgress("creating-population")
-			db.exec(`
-				CREATE TABLE ${PLACE_POPULATION_TABLE} (
-					id INTEGER PRIMARY KEY,
-					population INTEGER NOT NULL
-				);
-			`)
-			onProgress("populating-population")
-			// Extract `wof:population` from the geojson body. CAST to INTEGER, drop NULLs (sparse) and
-			// any non-positive sentinels.
-			db.exec(`
-				INSERT INTO ${PLACE_POPULATION_TABLE} (id, population)
-				SELECT
-					spr.id,
-					CAST(json_extract(geojson.body, '$.properties."wof:population"') AS INTEGER) AS population
-				FROM spr
-				JOIN geojson ON geojson.id = spr.id
-				WHERE spr.is_current != 0
-					AND spr.is_deprecated = 0
-					AND json_extract(geojson.body, '$.properties."wof:population"') IS NOT NULL
-					AND CAST(json_extract(geojson.body, '$.properties."wof:population"') AS INTEGER) > 0;
-			`)
-			populationCreated = true
-		}
-		populationCount = (db.prepare(`SELECT COUNT(*) AS n FROM ${PLACE_POPULATION_TABLE}`).get() as { n: number }).n
-	}
+	// NOTE: `place_population` is NOT built here. `scripts/build-unified-wof.ts` extracts
+	// `wof:population` straight into that table at ingest (the canonical source carries no `geojson`
+	// table), and `build-slim` copies it through. This function only owns the two FTS-derived virtual
+	// tables, both of which build from `spr` + `names` alone. `placePopulationExists` lets callers
+	// check for the pre-built table.
 
 	onProgress(
 		"done",
-		`${ftsCountRow.n} FTS rows + ${bboxCountRow.n} bbox rows + ${populationCount} pop rows ` +
-			`(${ftsCreated ? "built" : "preexisting"} / ${bboxCreated ? "built" : "preexisting"} / ` +
-			`${populationCreated ? "built" : hasGeojsonTable ? "preexisting" : "skipped-no-geojson"})`
+		`${ftsCountRow.n} FTS rows + ${bboxCountRow.n} bbox rows ` +
+			`(${ftsCreated ? "built" : "preexisting"} / ${bboxCreated ? "built" : "preexisting"})`
 	)
 	return {
 		created: ftsCreated,
 		indexedRows: ftsCountRow.n,
 		bboxCreated,
 		bboxIndexedRows: bboxCountRow.n,
-		populationCreated,
-		populationIndexedRows: populationCount,
 		durationMs: Date.now() - start,
 	}
 }

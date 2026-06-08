@@ -36,9 +36,11 @@ interface SeedRegion {
 }
 
 /**
- * Build a fixture with the geojson body that `buildPlaceSearchFts` reads to populate the
- * `place_population` aux table — so the population boost is actually active (the plain
- * lookup.test.ts seed has no population path). Opened with `buildFts: true` by the lookup.
+ * Build a fixture in the production shape: a pre-built `place_population` aux table (no geojson —
+ * `build-unified-wof` extracts `wof:population` into this table at ingest), so the population boost
+ * is actually active (the plain lookup.test.ts seed has no population path). Opened with `buildFts:
+ * true` by the lookup; the lazy FTS build leaves the pre-existing `place_population` untouched (it
+ * only (re)builds it from geojson, which we don't carry).
  */
 function buildDb(regions: SeedRegion[]): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
@@ -51,7 +53,7 @@ function buildDb(regions: SeedRegion[]): DatabaseSync {
 		);
 		CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);
 		CREATE TABLE ancestors (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
-		CREATE TABLE geojson (id INTEGER PRIMARY KEY, body TEXT);
+		CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0);
 	`)
 	const insertSpr = db.prepare(`
 		INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude,
@@ -59,14 +61,12 @@ function buildDb(regions: SeedRegion[]): DatabaseSync {
 		VALUES (?, NULL, ?, 'region', ?, ?, ?, ?, ?, ?, ?, -1, 0)
 	`)
 	const insertName = db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`)
-	const insertGeo = db.prepare(`INSERT INTO geojson (id, body) VALUES (?, ?)`)
+	const insertPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
 	for (const r of regions) {
 		insertSpr.run(r.id, r.name, r.country, r.lat, r.lon, r.lat - 0.5, r.lat + 0.5, r.lon - 0.5, r.lon + 0.5)
 		insertName.run(r.id, "eng", r.name)
 		for (const a of r.aliases ?? []) insertName.run(r.id, "abbr", a)
-		const properties: Record<string, unknown> = { "geom:latitude": r.lat, "geom:longitude": r.lon }
-		if (r.population !== undefined) properties["wof:population"] = r.population
-		insertGeo.run(r.id, JSON.stringify({ properties }))
+		if (r.population !== undefined) insertPop.run(r.id, r.population)
 	}
 	return db
 }
