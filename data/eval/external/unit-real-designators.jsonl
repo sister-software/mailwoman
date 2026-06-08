@@ -1,0 +1,34 @@
+{"raw": "350 5th Ave Apt 12, New York, NY 10118", "components": {"house_number": "350", "street": "5th Ave", "unit": "Apt 12", "locality": "New York", "region": "NY", "postcode": "10118"}, "country": "US"}
+{"raw": "1600 Pennsylvania Ave NW Suite 200, Washington, DC 20500", "components": {"house_number": "1600", "street": "Pennsylvania Ave NW", "unit": "Suite 200", "locality": "Washington", "region": "DC", "postcode": "20500"}, "country": "US"}
+{"raw": "742 Evergreen Terrace Unit 5, Springfield, IL 62704", "components": {"house_number": "742", "street": "Evergreen Terrace", "unit": "Unit 5", "locality": "Springfield", "region": "IL", "postcode": "62704"}, "country": "US"}
+{"raw": "1234 Elm Street Apartment 3B, Dallas, TX 75201", "components": {"house_number": "1234", "street": "Elm Street", "unit": "Apartment 3B", "locality": "Dallas", "region": "TX", "postcode": "75201"}, "country": "US"}
+{"raw": "55 Beacon St Fl 4, Boston, MA 02108", "components": {"house_number": "55", "street": "Beacon St", "unit": "Fl 4", "locality": "Boston", "region": "MA", "postcode": "02108"}, "country": "US"}
+{"raw": "900 Biscayne Blvd Floor 12, Miami, FL 33132", "components": {"house_number": "900", "street": "Biscayne Blvd", "unit": "Floor 12", "locality": "Miami", "region": "FL", "postcode": "33132"}, "country": "US"}
+{"raw": "200 Lakeside Dr Rm 110, Oakland, CA 94612", "components": {"house_number": "200", "street": "Lakeside Dr", "unit": "Rm 110", "locality": "Oakland", "region": "CA", "postcode": "94612"}, "country": "US"}
+{"raw": "4521 Maple Ave Room 7, Saint Louis, MO 63110", "components": {"house_number": "4521", "street": "Maple Ave", "unit": "Room 7", "locality": "Saint Louis", "region": "MO", "postcode": "63110"}, "country": "US"}
+{"raw": "12 Federal St Bldg C, Portland, ME 04101", "components": {"house_number": "12", "street": "Federal St", "unit": "Bldg C", "locality": "Portland", "region": "ME", "postcode": "04101"}, "country": "US"}
+{"raw": "789 Sunset Blvd Ste 1500, Los Angeles, CA 90028", "components": {"house_number": "789", "street": "Sunset Blvd", "unit": "Ste 1500", "locality": "Los Angeles", "region": "CA", "postcode": "90028"}, "country": "US"}
+{"raw": "Apt 4, 88 Morningside Ave, New York, NY 10027", "components": {"unit": "Apt 4", "house_number": "88", "street": "Morningside Ave", "locality": "New York", "region": "NY", "postcode": "10027"}, "country": "US"}
+{"raw": "Suite 300, 1201 Third Ave, Seattle, WA 98101", "components": {"unit": "Suite 300", "house_number": "1201", "street": "Third Ave", "locality": "Seattle", "region": "WA", "postcode": "98101"}, "country": "US"}
+{"raw": "Unit B, 450 Riverside Dr, Memphis, TN 38103", "components": {"unit": "Unit B", "house_number": "450", "street": "Riverside Dr", "locality": "Memphis", "region": "TN", "postcode": "38103"}, "country": "US"}
+{"raw": "Ste 12, 123 Main St NW, Atlanta, GA 30303", "components": {"unit": "Ste 12", "house_number": "123", "street": "Main St NW", "locality": "Atlanta", "region": "GA", "postcode": "30303"}, "country": "US"}
+{"raw": "Floor 2, 600 Congress Ave, Austin, TX 78701", "components": {"unit": "Floor 2", "house_number": "600", "street": "Congress Ave", "locality": "Austin", "region": "TX", "postcode": "78701"}, "country": "US"}
+{"raw": "Building 5, 1000 Tech Park Dr, Raleigh, NC 27606", "components": {"unit": "Building 5", "house_number": "1000", "street": "Tech Park Dr", "locality": "Raleigh", "region": "NC", "postcode": "27606"}, "country": "US"}
+{"raw": "742 Evergreen Terrace Apt 3B", "components": {"house_number": "742", "street": "Evergreen Terrace", "unit": "Apt 3B"}, "country": "US"}
+{"raw": "100 Main St Ste 5", "components": {"house_number": "100", "street": "Main St", "unit": "Ste 5"}, "country": "US"}
+{"raw": "55 Oak Ave Unit 12", "components": {"house_number": "55", "street": "Oak Ave", "unit": "Unit 12"}, "country": "US"}
+{"raw": "1280 Hilltop Rd Fl 2", "components": {"house_number": "1280", "street": "Hilltop Rd", "unit": "Fl 2"}, "country": "US"}
+{"raw": "9 Birch Ln Room 4", "components": {"house_number": "9", "street": "Birch Ln", "unit": "Room 4"}, "country": "US"}
+{"raw": "44 Cedar Court Bldg A", "components": {"house_number": "44", "street": "Cedar Court", "unit": "Bldg A"}, "country": "US"}
+{"raw": "Apt 2B, 14 Smith St", "components": {"unit": "Apt 2B", "house_number": "14", "street": "Smith St"}, "country": "US"}
+{"raw": "Suite 7, 901 Park Ave", "components": {"unit": "Suite 7", "house_number": "901", "street": "Park Ave"}, "country": "US"}
+{"raw": "Unit 5 230 Forest Dr", "components": {"unit": "Unit 5", "house_number": "230", "street": "Forest Dr"}, "country": "US"}
+{"raw": "Rm 3 88 High St", "components": {"unit": "Rm 3", "house_number": "88", "street": "High St"}, "country": "US"}
+{"raw": "Ste 200 500 Commerce St", "components": {"unit": "Ste 200", "house_number": "500", "street": "Commerce St"}, "country": "US"}
+{"raw": "John Smith, 350 5th Ave Apt 12, New York, NY 10118", "components": {"venue": "John Smith", "house_number": "350", "street": "5th Ave", "unit": "Apt 12", "locality": "New York", "region": "NY", "postcode": "10118"}, "country": "US"}
+{"raw": "Acme Corp, 100 Main St Ste 5, Chicago, IL 60601", "components": {"venue": "Acme Corp", "house_number": "100", "street": "Main St", "unit": "Ste 5", "locality": "Chicago", "region": "IL", "postcode": "60601"}, "country": "US"}
+{"raw": "Jane Doe, 742 Evergreen Terrace Unit 3, Dallas, TX 75201", "components": {"venue": "Jane Doe", "house_number": "742", "street": "Evergreen Terrace", "unit": "Unit 3", "locality": "Dallas", "region": "TX", "postcode": "75201"}, "country": "US"}
+{"raw": "Riverside Clinic, 200 Health Way Bldg B, Tampa, FL 33602", "components": {"venue": "Riverside Clinic", "house_number": "200", "street": "Health Way", "unit": "Bldg B", "locality": "Tampa", "region": "FL", "postcode": "33602"}, "country": "US"}
+{"raw": "12 Harbor St Penthouse, San Diego, CA 92101", "components": {"house_number": "12", "street": "Harbor St", "unit": "Penthouse", "locality": "San Diego", "region": "CA", "postcode": "92101"}, "country": "US"}
+{"raw": "8 Garden Ct Basement, Brooklyn, NY 11215", "components": {"house_number": "8", "street": "Garden Ct", "unit": "Basement", "locality": "Brooklyn", "region": "NY", "postcode": "11215"}, "country": "US"}
+{"raw": "300 Tower Rd Lobby, Denver, CO 80202", "components": {"house_number": "300", "street": "Tower Rd", "unit": "Lobby", "locality": "Denver", "region": "CO", "postcode": "80202"}, "country": "US"}
