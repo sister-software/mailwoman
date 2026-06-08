@@ -23,6 +23,8 @@ import { defaultAdapterRegistry } from "../adapter.js"
 import type { CorpusAdapter } from "../types.js"
 import { banAdapter } from "./ban/adapter.js"
 import { fccBdcAdapter } from "./fcc-bdc/adapter.js"
+import { geonamesAdapter } from "./geonames/adapter.js"
+import { geonamesPostalAdapter } from "./geonames-postal/adapter.js"
 import { openaddressesAdapter } from "./openaddresses/adapter.js"
 import { stateHiSchoolsAdapter } from "./state-hi-schools/adapter.js"
 import { stateIaContractorsAdapter } from "./state-ia-contractors/adapter.js"
@@ -31,6 +33,7 @@ import { stateTxNotariesAdapter } from "./state-tx-notaries/adapter.js"
 import { tigerAdapter } from "./tiger/adapter.js"
 import { usgovHrsaFqhcAdapter } from "./usgov-hrsa-fqhc/adapter.js"
 import { usgovImlsPlsAdapter } from "./usgov-imls-pls/adapter.js"
+import { usgovIrsBmfAdapter } from "./usgov-irs-bmf/adapter.js"
 import { usgovNadAdapter } from "./usgov-nad/adapter.js"
 import { usgovNppesAdapter } from "./usgov-nppes/adapter.js"
 import { wofAdminAdapter } from "./wof-admin-json/adapter.js"
@@ -50,6 +53,8 @@ import { wofPostalcodeAdapter } from "./wof-postalcode-json/adapter.js"
 export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	wofAdminAdapter,
 	wofPostalcodeAdapter,
+	geonamesAdapter,
+	geonamesPostalAdapter,
 	banAdapter,
 	tigerAdapter,
 	openaddressesAdapter,
@@ -58,6 +63,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	usgovNppesAdapter,
 	usgovNadAdapter,
 	usgovImlsPlsAdapter,
+	usgovIrsBmfAdapter,
 	stateIaContractorsAdapter,
 	stateTxNotariesAdapter,
 	stateNyNotariesAdapter,
@@ -72,6 +78,12 @@ for (const adapter of BUILTIN_ADAPTERS) {
 
 export { BAN_ADAPTER_ID, banAdapter } from "./ban/adapter.js"
 export { FCC_BDC_ADAPTER_ID, FCC_BDC_DEFAULT_LICENSE, fccBdcAdapter } from "./fcc-bdc/adapter.js"
+export { GEONAMES_ADAPTER_ID, GEONAMES_DEFAULT_LICENSE, geonamesAdapter } from "./geonames/adapter.js"
+export {
+	GEONAMES_POSTAL_ADAPTER_ID,
+	GEONAMES_POSTAL_DEFAULT_LICENSE,
+	geonamesPostalAdapter,
+} from "./geonames-postal/adapter.js"
 export {
 	OPENADDRESSES_ADAPTER_ID,
 	OPENADDRESSES_DEFAULT_LICENSE,
@@ -108,6 +120,11 @@ export {
 	USGOV_IMLS_PLS_DEFAULT_LICENSE,
 	usgovImlsPlsAdapter,
 } from "./usgov-imls-pls/adapter.js"
+export {
+	USGOV_IRS_BMF_ADAPTER_ID,
+	USGOV_IRS_BMF_DEFAULT_LICENSE,
+	usgovIrsBmfAdapter,
+} from "./usgov-irs-bmf/adapter.js"
 export { USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE, usgovNadAdapter } from "./usgov-nad/adapter.js"
 export { USGOV_NPPES_ADAPTER_ID, USGOV_NPPES_DEFAULT_LICENSE, usgovNppesAdapter } from "./usgov-nppes/adapter.js"
 export {
