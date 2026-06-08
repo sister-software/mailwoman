@@ -6,7 +6,7 @@ title: "v0.6.3 step 100K — HOLD, dilution mechanism confirmed"
 # v0.6.3 step 100K eval
 
 The v0.6.3 retrain (per the
-[street-supplement architecture](../concepts/street-supplement-architecture.md))
+[street-supplement architecture](../concepts/street-supplement-architecture.mdx))
 reached step 100K and was evaluated. Verdict: **HOLD**, three gate violations,
 and the predicted dilution failure mode materialized.
 
@@ -55,7 +55,7 @@ Rate: 2110% of expected occurrences (40 expected dep_loc spans in the
 golden set; the model emitted 844 hallucinations).
 
 This was DeepSeek's [turn 10 dilution
-diagnosis](2026-05-28-night-2-postmortem.md): dropping
+diagnosis](2026-05-28-night-2-postmortem.mdx): dropping
 synth-no-street weight 1.0 → 0.5 AND adding 32K rows of synth-house-venue at
 weight 1.0 changed the anti-decompose:companion-shard ratio from v0.6.2's
 1.0:0 to v0.6.3's 0.5:1.0. The anti-decompose signal got proportionally
@@ -104,7 +104,7 @@ v0.6.3 falls in row 4: **HOLD**. Two paths from here:
    evaluation methodology, schema design, or model capacity.
 
 **The operator chose path 2.** This doc captures what we learned. The
-[v0.6.x retrospective](../retrospectives/v0-6-x-cycle-retrospective.md)
+[v0.6.x retrospective](../retrospectives/v0-6-x-cycle-retrospective.mdx)
 synthesizes what the cycle revealed and proposes a rethink agenda.
 
 ## Pre-staged v0.6.4 — held but not discarded
@@ -125,10 +125,10 @@ Artifacts in `/tmp/v063-eval-step-100000/`.
 
 ## See also
 
-- [v0.6.2 step 100K eval](./2026-05-29-v0.6.2-100k-eval.md) — the
+- [v0.6.2 step 100K eval](./2026-05-29-v0.6.2-100k-eval.mdx) — the
   immediately-prior release
-- [Layer 1 morphology FST eval](./2026-05-28-layer-1-morphology-fst.md) —
+- [Layer 1 morphology FST eval](./2026-05-28-layer-1-morphology-fst.mdx) —
   established the v0.6.x recipe direction
-- [Street-supplement architecture](../concepts/street-supplement-architecture.md) — the architectural framing
-- [Corpus poisoning vulnerability](../concepts/corpus-poisoning-vulnerability.md) — what the v0.6.x cycle teaches about
+- [Street-supplement architecture](../concepts/street-supplement-architecture.mdx) — the architectural framing
+- [Corpus poisoning vulnerability](../concepts/corpus-poisoning-vulnerability.mdx) — what the v0.6.x cycle teaches about
   fundamental architectural risk

@@ -10,7 +10,7 @@ tags:
 
 # Training pipeline
 
-The training pipeline turns raw address data sources into a model file that ships on npm. This article walks through each stage end-to-end. The [Corpus construction](./corpus-construction.md) article digs into the first three stages in more detail.
+The training pipeline turns raw address data sources into a model file that ships on npm. This article walks through each stage end-to-end. The [Corpus construction](./corpus-construction.mdx) article digs into the first three stages in more detail.
 
 ## The full pipeline
 
@@ -110,7 +110,7 @@ After training, the **eval** stage runs the model against the held-out golden se
 
 The output is a markdown report and a JSON dump under `docs/articles/evals/`. Per-component precision, recall, F1, plus an overall "exact match" rate and a calibration histogram (does confidence match accuracy?).
 
-The eval report is committed to git as part of the ship PR — see [the latest Tier 2 ship's eval report](../evals/stage2-step-001800-eval.md) for the v3.0.0 numbers (filename preserves the historical "stage2" naming).
+The eval report is committed to git as part of the ship PR — see [the latest Tier 2 ship's eval report](../evals/stage2-step-001800-eval.mdx) for the v3.0.0 numbers (filename preserves the historical "stage2" naming).
 
 ## Stage 7 — Export to ONNX
 
@@ -151,6 +151,6 @@ Both packages (en-us, fr-fr) get bumped to a new npm version (v3.0.0 for the Tie
 
 ## See also
 
-- [Corpus construction](./corpus-construction.md) — Stages 1–4 in more detail
-- [Neural classification](./neural-classification.md) — what the model itself is
-- [ONNX runtime](./onnx-runtime.md) — what happens after ship
+- [Corpus construction](./corpus-construction.mdx) — Stages 1–4 in more detail
+- [Neural classification](./neural-classification.mdx) — what the model itself is
+- [ONNX runtime](./onnx-runtime.mdx) — what happens after ship

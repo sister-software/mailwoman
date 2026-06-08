@@ -7,25 +7,25 @@ tags:
 
 # Glossary
 
-Every technical term used in this documentation, defined once. Skim it before reading the [`concepts/`](../concepts/README.md) track, or come back when a word is unfamiliar.
+Every technical term used in this documentation, defined once. Skim it before reading the [`concepts/`](../concepts/README.mdx) track, or come back when a word is unfamiliar.
 
 ## A
 
-**Alignment** — the step in the corpus pipeline that takes a `(raw, components)` pair from an adapter and produces a `(raw, tokens, BIO labels)` row by finding each component's text inside the raw string and labelling the matching tokens. See [`concepts/corpus-construction.md`](../concepts/corpus-construction.md).
+**Alignment** — the step in the corpus pipeline that takes a `(raw, components)` pair from an adapter and produces a `(raw, tokens, BIO labels)` row by finding each component's text inside the raw string and labelling the matching tokens. See [`concepts/corpus-construction.md`](../concepts/corpus-construction.mdx).
 
-**Attention** — the core mechanism inside a transformer encoder. Each token's representation is updated by looking at every other token, with learned weights deciding how much each one matters. Read more in [`concepts/neural-classification.md`](../concepts/neural-classification.md).
+**Attention** — the core mechanism inside a transformer encoder. Each token's representation is updated by looking at every other token, with learned weights deciding how much each one matters. Read more in [`concepts/neural-classification.md`](../concepts/neural-classification.mdx).
 
 **Adversarial corpus** — eval entries chosen specifically to break the parser. Mailwoman's adversarial set covers cases like "Buffalo Buffalo" (a venue named after a city), "St. Petersburg" (multi-word locality), and prefix-honorific names.
 
 ## B
 
-**BIO labels** — a labelling scheme where each token gets one of `B-X` (beginning of an `X` span), `I-X` (inside an `X` span), or `O` (outside any span). The 21-label vocabulary in the current model is `O` + 10 components × `{B-, I-}`. See [`concepts/bio-labels.md`](../concepts/bio-labels.md).
+**BIO labels** — a labelling scheme where each token gets one of `B-X` (beginning of an `X` span), `I-X` (inside an `X` span), or `O` (outside any span). The 21-label vocabulary in the current model is `O` + 10 components × `{B-, I-}`. See [`concepts/bio-labels.md`](../concepts/bio-labels.mdx).
 
 **bf16 / bfloat16** — a 16-bit floating point format used during training. Half the memory of fp32 with similar numeric range. Required to fit the training batch on the lab's GPU.
 
 ## C
 
-**CRF — Conditional Random Field** — a structured prediction layer that sits on top of per-token model outputs. The CRF rejects label sequences that violate structural rules (e.g. `O` followed by `I-locality` is invalid because an `I-` must follow a matching `B-` or `I-`). See [`concepts/crf-decoder.md`](../concepts/crf-decoder.md).
+**CRF — Conditional Random Field** — a structured prediction layer that sits on top of per-token model outputs. The CRF rejects label sequences that violate structural rules (e.g. `O` followed by `I-locality` is invalid because an `I-` must follow a matching `B-` or `I-`). See [`concepts/crf-decoder.md`](../concepts/crf-decoder.mdx).
 
 **Calibration** — how well the model's reported confidence matches its actual accuracy. A well-calibrated model that says "90% confident" should be right 90% of the time. The eval reports include calibration buckets.
 
@@ -45,9 +45,9 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 ## E
 
-**Encoder** — the part of a transformer that turns input tokens into contextualized vector representations. Mailwoman's encoder has 6 layers, 4 attention heads, 256 hidden dimensions. See [`concepts/neural-classification.md`](../concepts/neural-classification.md).
+**Encoder** — the part of a transformer that turns input tokens into contextualized vector representations. Mailwoman's encoder has 6 layers, 4 attention heads, 256 hidden dimensions. See [`concepts/neural-classification.md`](../concepts/neural-classification.mdx).
 
-**Eval / Evaluation** — running the model against a held-out golden dataset and computing per-component F1, exact-match, calibration, etc. The latest report is the [Tier 2 step-001800 eval](../evals/stage2-step-001800-eval.md) (filename preserves the historical "stage2" naming).
+**Eval / Evaluation** — running the model against a held-out golden dataset and computing per-component F1, exact-match, calibration, etc. The latest report is the [Tier 2 step-001800 eval](../evals/stage2-step-001800-eval.mdx) (filename preserves the historical "stage2" naming).
 
 ## F
 
@@ -67,7 +67,7 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 ## I
 
-**Iteration log** — the running record of each model release. Lives in [`plan/phases/PHASE_2_training.md`](../plan/phases/PHASE_2_training.md) and is the canonical "what shipped when".
+**Iteration log** — the running record of each model release. Lives in [`plan/phases/PHASE_2_training.md`](../plan/phases/PHASE_2_training.mdx) and is the canonical "what shipped when".
 
 **int8 quantization** — converting model weights from 32-bit float to 8-bit integer. Shrinks the model file ~4x with usually minor accuracy loss.
 
@@ -95,13 +95,13 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 ## O
 
-**ONNX — Open Neural Network Exchange** — a portable model file format. Mailwoman exports the trained PyTorch model to ONNX so it can be loaded by `onnxruntime-node` (server) and `onnxruntime-web` (browser) with the same file. See [`concepts/onnx-runtime.md`](../concepts/onnx-runtime.md).
+**ONNX — Open Neural Network Exchange** — a portable model file format. Mailwoman exports the trained PyTorch model to ONNX so it can be loaded by `onnxruntime-node` (server) and `onnxruntime-web` (browser) with the same file. See [`concepts/onnx-runtime.md`](../concepts/onnx-runtime.mdx).
 
-**Orphan-I** — a label sequence bug where `I-X` appears without a matching preceding `B-X` (e.g. `O, I-locality`). Structurally invalid in BIO. The CRF prevents this. See [`concepts/bio-labels.md`](../concepts/bio-labels.md).
+**Orphan-I** — a label sequence bug where `I-X` appears without a matching preceding `B-X` (e.g. `O, I-locality`). Structurally invalid in BIO. The CRF prevents this. See [`concepts/bio-labels.md`](../concepts/bio-labels.mdx).
 
 ## P
 
-**Pelias** — an open-source geocoder, Mailwoman's spiritual predecessor. See [From Pelias to Mailwoman](./our-approach/from-pelias-to-mailwoman.md).
+**Pelias** — an open-source geocoder, Mailwoman's spiritual predecessor. See [From Pelias to Mailwoman](./our-approach/from-pelias-to-mailwoman.mdx).
 
 **Phase** — a milestone in the implementation plan (`plan/README.md`). Phases 0–3 shipped (Foundation → Corpus → Training → Integration), Phases 4–6 are forward-looking. Distinct from **Stage** (runtime pipeline) and **Tier** (model vocabulary).
 
@@ -113,13 +113,13 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 ## R
 
-**Rule classifier** — a hand-written piece of code that labels tokens by pattern matching. The Mailwoman v1 approach. See [`concepts/rule-based-classifiers.md`](../concepts/rule-based-classifiers.md).
+**Rule classifier** — a hand-written piece of code that labels tokens by pattern matching. The Mailwoman v1 approach. See [`concepts/rule-based-classifiers.md`](../concepts/rule-based-classifiers.mdx).
 
-**Resolver** — the post-parse step that takes labelled components and looks them up in a gazetteer to return coordinates. See [`concepts/resolver-and-wof.md`](../concepts/resolver-and-wof.md).
+**Resolver** — the post-parse step that takes labelled components and looks them up in a gazetteer to return coordinates. See [`concepts/resolver-and-wof.md`](../concepts/resolver-and-wof.mdx).
 
 ## S
 
-**SentencePiece** — Google's subword tokenizer library. Mailwoman uses it to split input text into a fixed 16,000-piece vocabulary that handles both English and French (and falls back to byte-level for everything else). See [`concepts/tokenization.md`](../concepts/tokenization.md).
+**SentencePiece** — Google's subword tokenizer library. Mailwoman uses it to split input text into a fixed 16,000-piece vocabulary that handles both English and French (and falls back to byte-level for everything else). See [`concepts/tokenization.md`](../concepts/tokenization.mdx).
 
 **Ship of Theseus** — the migration pattern Mailwoman uses: replace rule classifiers with neural one component at a time, only when metrics justify. Name from the [philosophical thought experiment](https://en.wikipedia.org/wiki/Ship_of_Theseus).
 
@@ -129,7 +129,7 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **Span** — a contiguous range of characters in the input string. The basic unit of address parsing.
 
-**Stage (runtime)** — one of the six dataflow stages in the runtime pipeline ([the-staged-pipeline](./our-approach/the-staged-pipeline.md)): Normalize, Locale gate, Kind classify, Phrase group, Token classify, Sequence correct, Reconcile, Resolve. Distinct from **Tier** (vocabulary expansion across model versions).
+**Stage (runtime)** — one of the six dataflow stages in the runtime pipeline ([the-staged-pipeline](./our-approach/the-staged-pipeline.mdx)): Normalize, Locale gate, Kind classify, Phrase group, Token classify, Sequence correct, Reconcile, Resolve. Distinct from **Tier** (vocabulary expansion across model versions).
 
 **Tier 1 / Tier 2 / Tier 3** — internal versioning of which label classes the model emits. Tier 1 is the coarse components (`country`, `region`, `locality`, `postcode`). Tier 2 adds `venue`, `street`, `house_number`. Tier 3 (future) would add `attention`, `po_box`, and POI venue subtyping. Historically called "Stage 1/2/3" before the runtime-pipeline naming made that ambiguous (renamed 2026-05-22); some shipped artifacts (npm v3.0.0 model card, `stage2-step-001800-eval.md`) preserve the old name.
 
@@ -141,7 +141,7 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **Thread** — a parallel workstream within a release. v0.5.0 was organized as six threads (A–F): tokenizer retrain, kryptonite catalogue, classifier code path, reconcile, phrase grouper, verdict-smoke discipline. Threads compose; they are not sequential milestones like **Phases**.
 
-**Transformer** — a neural network architecture invented in 2017 ("Attention Is All You Need"). The basis of every modern NLP model from BERT to GPT-4. Mailwoman uses a small, encoder-only transformer. See [`concepts/neural-classification.md`](../concepts/neural-classification.md).
+**Transformer** — a neural network architecture invented in 2017 ("Attention Is All You Need"). The basis of every modern NLP model from BERT to GPT-4. Mailwoman uses a small, encoder-only transformer. See [`concepts/neural-classification.md`](../concepts/neural-classification.mdx).
 
 **TIGER** — US Census topographically-integrated geographic database. Used as a corpus source for street-segment data.
 
@@ -151,7 +151,7 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 ## W
 
-**WOF — Who's On First** — an open gazetteer of named places, maintained by SFO Museum. Mailwoman uses a SQLite distribution as its primary gazetteer. See [`concepts/resolver-and-wof.md`](../concepts/resolver-and-wof.md).
+**WOF — Who's On First** — an open gazetteer of named places, maintained by SFO Museum. Mailwoman uses a SQLite distribution as its primary gazetteer. See [`concepts/resolver-and-wof.md`](../concepts/resolver-and-wof.mdx).
 
 **Warmup** — the early phase of training where the learning rate ramps up from 0 to its peak value. Mailwoman uses 1,000 steps of linear warmup, then cosine decay.
 

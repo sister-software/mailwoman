@@ -1,6 +1,6 @@
 # Mailwoman validation sprint synthesis — 2026-05-24 (Claude × DeepSeek follow-up)
 
-A follow-up to the [Codex review](./2026-05-24-codex-project-direction-review.md) and the [DeepSeek synthesis review](./2026-05-24-deepseek-project-direction-review.md). Captures a six-turn technical back-and-forth between Claude (host-claude / operator's Jarvis) and DeepSeek-v4-pro, conducted via `pi --continue` on the same session that produced the DeepSeek review.
+A follow-up to the [Codex review](./2026-05-24-codex-project-direction-review.mdx) and the [DeepSeek synthesis review](./2026-05-24-deepseek-project-direction-review.mdx). Captures a six-turn technical back-and-forth between Claude (host-claude / operator's Jarvis) and DeepSeek-v4-pro, conducted via `pi --continue` on the same session that produced the DeepSeek review.
 
 The conversation refined four parts of the original reviews and named three blind spots both reviewers missed. This document is the operational synthesis used to drive the next validation sprint.
 
@@ -190,12 +190,12 @@ A fifth principle worth keeping with the four above:
 
 - **Hypotheses are tested in the direction the data points, not the direction you expected.** The probe predicted ratio &lt; 0.01 (CRF collapsed) and found ratio &gt; 8 (CRF dominant) — opposite direction, same repair. The original hypothesis was a useful scaffold for designing the experiment; falsifying it cleanly was more valuable than confirming it would have been. Build experiments around what would change your mind, not around what would confirm what you already believe.
 
-The full technical write-up of the diagnostic, the cooperative-vs-conflict regime model, and the repair is at [`docs/articles/concepts/dual-loss-curvature-conflict.md`](../concepts/dual-loss-curvature-conflict.md).
+The full technical write-up of the diagnostic, the cooperative-vs-conflict regime model, and the repair is at [`docs/articles/concepts/dual-loss-curvature-conflict.md`](../concepts/dual-loss-curvature-conflict.mdx).
 
 ## See also
 
-- [`./2026-05-24-codex-project-direction-review.md`](./2026-05-24-codex-project-direction-review.md) — the first independent review
-- [`./2026-05-24-deepseek-project-direction-review.md`](./2026-05-24-deepseek-project-direction-review.md) — the synthesis review this conversation continues from
-- [`docs/articles/plan/v0-5-0-shipped.md`](../../articles/plan/v0-5-0-shipped.md) — as-shipped state of v0.5.0
-- [`docs/articles/plan/reference/VERDICT_SMOKES.md`](../../articles/plan/reference/VERDICT_SMOKES.md) — the verdict-smoke discipline doc (pending update with the eff_batch lesson + ratio-probe lesson)
+- [`./2026-05-24-codex-project-direction-review.md`](./2026-05-24-codex-project-direction-review.mdx) — the first independent review
+- [`./2026-05-24-deepseek-project-direction-review.md`](./2026-05-24-deepseek-project-direction-review.mdx) — the synthesis review this conversation continues from
+- [`docs/articles/plan/v0-5-0-shipped.md`](../../articles/plan/v0-5-0-shipped.mdx) — as-shipped state of v0.5.0
+- [`docs/articles/plan/reference/VERDICT_SMOKES.md`](../../articles/plan/reference/VERDICT_SMOKES.mdx) — the verdict-smoke discipline doc (pending update with the eff_batch lesson + ratio-probe lesson)
 - [`docspathname:///blog/2026-05-24-v0-5-0-c-train-bisect.md`](pathname:///blog/2026-05-24-v0-5-0-c-train-bisect) and [`docspathname:///blog/2026-05-24-bisect-by-elimination.md`](pathname:///blog/2026-05-24-bisect-by-elimination) — the public retrospectives the reviews respond to

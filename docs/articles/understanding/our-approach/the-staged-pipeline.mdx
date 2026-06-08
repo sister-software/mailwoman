@@ -9,7 +9,7 @@ tags:
 
 # The staged pipeline
 
-Reading [Addresses that break geocoders](../why-its-hard/addresses-that-break-geocoders.md) makes one thing obvious: no single model handles every failure class well. Different failures want different fixes. Some want preprocessing rules, some want a small classifier, some want a transformer, some want a resolver that returns candidates instead of pretending to be sure.
+Reading [Addresses that break geocoders](../why-its-hard/addresses-that-break-geocoders.mdx) makes one thing obvious: no single model handles every failure class well. Different failures want different fixes. Some want preprocessing rules, some want a small classifier, some want a transformer, some want a resolver that returns candidates instead of pretending to be sure.
 
 This article sketches the runtime as **six stages**, three of which are learned (ML) and three of which are deterministic. As of 2026-05-23, the current Mailwoman ships stages 1, 2.5 (kind classifier), 3, 4a (Viterbi + structural mask), 5, and 6 with candidate-list output — plus the coordinator that composes them. Stage 2 (locale gate beyond the caller's hint) and Stage 4b (span re-reader) remain ahead.
 
@@ -40,8 +40,8 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 **Failures it owns.**
 
-- Tokenization and whitespace traps ([#3 in the failure catalogue](../why-its-hard/addresses-that-break-geocoders.md#3-tokenization-and-whitespace-traps)) — `"12 1/2 Main St"` and `"12½ Main St"` collapse to a canonical form before the tokenizer sees them.
-- Unicode/transliteration encoding half ([#6](../why-its-hard/addresses-that-break-geocoders.md#6-unicode-and-transliteration-traps)) — NFC ensures the resolver does not miss `"São"` because the input was NFD-encoded.
+- Tokenization and whitespace traps ([#3 in the failure catalogue](../why-its-hard/addresses-that-break-geocoders.mdx#3-tokenization-and-whitespace-traps)) — `"12 1/2 Main St"` and `"12½ Main St"` collapse to a canonical form before the tokenizer sees them.
+- Unicode/transliteration encoding half ([#6](../why-its-hard/addresses-that-break-geocoders.mdx#6-unicode-and-transliteration-traps)) — NFC ensures the resolver does not miss `"São"` because the input was NFD-encoded.
 
 **Today.** `@mailwoman/normalize` workspace shipped 2026-05-23. Public `normalize(raw, opts?)` function with NFC + punctuation + whitespace collapse (always) plus optional case-fold + abbreviation expansion. Output carries a load-bearing `offsetMap` so downstream stages map normalized spans back to raw characters.
 
@@ -53,8 +53,8 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 **Failures it owns.**
 
-- Unicode/transliteration script-handling ([#6](../why-its-hard/addresses-that-break-geocoders.md#6-unicode-and-transliteration-traps)) — picks the right tokenizer and weights for the script.
-- Language-switch hybrids ([#7](../why-its-hard/addresses-that-break-geocoders.md#7-language-switch-hybrids)) — when the input mixes scripts, the gate either picks a hybrid-trained weights package or falls back to a multi-locale ensemble.
+- Unicode/transliteration script-handling ([#6](../why-its-hard/addresses-that-break-geocoders.mdx#6-unicode-and-transliteration-traps)) — picks the right tokenizer and weights for the script.
+- Language-switch hybrids ([#7](../why-its-hard/addresses-that-break-geocoders.mdx#7-language-switch-hybrids)) — when the input mixes scripts, the gate either picks a hybrid-trained weights package or falls back to a multi-locale ensemble.
 
 **Today.** Caller-trust stub — the runtime coordinator accepts the caller's locale hint at confidence 1.0 (or `und` with confidence 0.0 if absent). The companion **QueryShape sub-system** (`@mailwoman/query-shape`) shipped 2026-05-23: character-class detection, punctuation-bounded segmentation, known postcode/PO-box format hits — all the structural priors a future locale detector would consume. The **kind classifier** (Stage 2.5 — `@mailwoman/kind-classifier`) also shipped: categorizes inputs as `postcode_only` / `locality_only` / `structured_address` / `intersection` / `po_box` / `landmark` / `vague` and drives fast-path routing in the coordinator.
 
@@ -62,11 +62,11 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 ## Stage 3 — Token classify (transformer encoder)
 
-**What it does.** The current Mailwoman model. Subword tokenizer + 6-layer transformer encoder + 21 BIO output head per token. Detailed in [Neural classification](../../concepts/neural-classification.md).
+**What it does.** The current Mailwoman model. Subword tokenizer + 6-layer transformer encoder + 21 BIO output head per token. Detailed in [Neural classification](../../concepts/neural-classification.mdx).
 
 **Failures it owns.**
 
-- Street/locality collisions ([#4](../why-its-hard/addresses-that-break-geocoders.md#4-streetlocality-collisions)) — the encoder sees the whole sequence and learns that `"Paris"` near `"Cafe"` is part of a venue, while `"Paris"` between `","` and `"Ontario"` is a locality.
+- Street/locality collisions ([#4](../why-its-hard/addresses-that-break-geocoders.mdx#4-streetlocality-collisions)) — the encoder sees the whole sequence and learns that `"Paris"` near `"Cafe"` is part of a venue, while `"Paris"` between `","` and `"Ontario"` is a locality.
 
 **Today.** Shipped at v3.0.0. The model is small (~9M parameters) and that is by design. Address parsing is not a problem where bigger LLMs help.
 
@@ -76,14 +76,14 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 **What it does.** Two sub-pieces:
 
-- **CRF** ([CRF decoder](../../concepts/crf-decoder.md)) — enforces BIO structural validity at decode time. Today.
+- **CRF** ([CRF decoder](../../concepts/crf-decoder.mdx)) — enforces BIO structural validity at decode time. Today.
 - **Span re-reader** — when stage 3 emits a span with low confidence, or two overlapping high-confidence proposals, re-run the encoder on that span alone with extra structural conditioning (the neighbouring labels as additional context). Adds new alternatives rather than narrowing existing ones — graceful-failure-friendly. Future.
 
 **Failures it owns.**
 
-- Ambiguous locality names ([#1](../why-its-hard/addresses-that-break-geocoders.md#1-ambiguous-locality-names)) — the re-reader gives the model a second look at `"Paris"` with structural priors that the next token is a region/country.
-- Repeated admin names ([#2](../why-its-hard/addresses-that-break-geocoders.md#2-repeated-admin-names)) — BIO structure + re-reader together handle `"New York, New York"` as two adjacent localities.
-- Numeric chaos ([#5](../why-its-hard/addresses-that-break-geocoders.md#5-numeric-chaos)) — the CRF prevents structurally-impossible label combinations; the re-reader can revisit `"12345 123rd St"` after the rest of the sequence is labelled.
+- Ambiguous locality names ([#1](../why-its-hard/addresses-that-break-geocoders.mdx#1-ambiguous-locality-names)) — the re-reader gives the model a second look at `"Paris"` with structural priors that the next token is a region/country.
+- Repeated admin names ([#2](../why-its-hard/addresses-that-break-geocoders.mdx#2-repeated-admin-names)) — BIO structure + re-reader together handle `"New York, New York"` as two adjacent localities.
+- Numeric chaos ([#5](../why-its-hard/addresses-that-break-geocoders.mdx#5-numeric-chaos)) — the CRF prevents structurally-impossible label combinations; the re-reader can revisit `"12345 123rd St"` after the rest of the sequence is labelled.
 
 **Today.** Viterbi decoder shipped to JavaScript runtime 2026-05-23 — `neural/viterbi.ts` with the BIO structural transition mask. Orphan-`I-*` sequences are now structurally impossible at JS runtime, even on the v3.0.0 weights (the structural mask is built from the labels list, no retraining required). Composes additively with learned CRF transitions when a future weights release ships them. The span re-reader is not built; v0.6.0 candidate.
 
@@ -95,8 +95,8 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 **Failures it owns.**
 
-- The consistency portion of numeric chaos ([#5](../why-its-hard/addresses-that-break-geocoders.md#5-numeric-chaos)) — when `"12345"` could be a house number or a postcode, the solver picks based on what makes the rest of the sequence consistent.
-- The hybrid-policy decision in general ([Rule-based classifiers](../../concepts/rule-based-classifiers.md#how-rule-classifiers-and-the-neural-classifier-coexist)) — for each component, the policy registry says whose proposal wins.
+- The consistency portion of numeric chaos ([#5](../why-its-hard/addresses-that-break-geocoders.mdx#5-numeric-chaos)) — when `"12345"` could be a house number or a postcode, the solver picks based on what makes the rest of the sequence consistent.
+- The hybrid-policy decision in general ([Rule-based classifiers](../../concepts/rule-based-classifiers.mdx#how-rule-classifiers-and-the-neural-classifier-coexist)) — for each component, the policy registry says whose proposal wins.
 
 **Today.** Hand-coded in TypeScript, lives in the v1 solver. Works fine.
 
@@ -108,9 +108,9 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 
 **Failures it owns.**
 
-- Administrative nightmares ([#8](../why-its-hard/addresses-that-break-geocoders.md#8-administrative-nightmares)) — `"Springfield"` with no region produces 41 candidates. The honest answer is to surface the list, not pretend one is correct.
+- Administrative nightmares ([#8](../why-its-hard/addresses-that-break-geocoders.mdx#8-administrative-nightmares)) — `"Springfield"` with no region produces 41 candidates. The honest answer is to surface the list, not pretend one is correct.
 
-**Today.** [Resolver and Who's On First](../../concepts/resolver-and-wof.md) decorates each resolved `AddressNode` with the top candidate (placeId / lat / lon) AND surfaces runner-ups via the new `alternatives` field — shipped 2026-05-23. Springfield-class disambiguation is now visible to consumers without changing the `resolveTree` return type.
+**Today.** [Resolver and Who's On First](../../concepts/resolver-and-wof.mdx) decorates each resolved `AddressNode` with the top candidate (placeId / lat / lon) AND surfaces runner-ups via the new `alternatives` field — shipped 2026-05-23. Springfield-class disambiguation is now visible to consumers without changing the `resolveTree` return type.
 
 **Future.** Add language-prior + user-location-prior factors to the candidate scoring (today's scoring is match × population only). `regionalPriorFromLanguage` + `regionalPriorFromUserLocation` slots reserved in the scoreBreakdown.
 
@@ -148,7 +148,7 @@ The point of this table is to make it visible that several future ships are each
 
 ## See also
 
-- [Addresses that break geocoders](../why-its-hard/addresses-that-break-geocoders.md) — the failure catalogue this article responds to
-- [How it works now](./how-it-works-now.md) — the current pipeline in plainer language
-- [How it will work](./how-it-will-work.md) — the v0.4.0 work in plainer language
-- [Implementation plan](../../plan/README.md) — phase-by-phase development plan
+- [Addresses that break geocoders](../why-its-hard/addresses-that-break-geocoders.mdx) — the failure catalogue this article responds to
+- [How it works now](./how-it-works-now.mdx) — the current pipeline in plainer language
+- [How it will work](./how-it-will-work.mdx) — the v0.4.0 work in plainer language
+- [Implementation plan](../../plan/README.mdx) — phase-by-phase development plan

@@ -24,7 +24,7 @@ Both runs trained on the v0.4.0 corpus with synth-no-street added. v0.6.2 had
 
 Both runs spike into the 0.4–0.7 range periodically. Initially I read this as
 overconfidence drift on v0.6.2; the
-[v0.6.2 confidence probe](../evals/2026-05-29-v0.6.2-100k-eval.md) walked that
+[v0.6.2 confidence probe](../evals/2026-05-29-v0.6.2-100k-eval.mdx) walked that
 back — the per-token confidence distributions on the two runs are essentially
 identical (81.2% vs 81.8% of wrong predictions land at ≥0.9 confidence). The
 val_loss bouncing is per-batch sample variance, not a model-level signal.
@@ -93,7 +93,7 @@ train-loss points.
 
 - `scripts/parse-training-log.ts` — log → JSON converter
 - `scripts/training-chart.ts` — JSON → SVG renderer
-- [v0.6.2 step 100K eval](../evals/2026-05-29-v0.6.2-100k-eval.md) — embeds
+- [v0.6.2 step 100K eval](../evals/2026-05-29-v0.6.2-100k-eval.mdx) — embeds
   these charts in context
-- [How the model reasons](./how-the-model-reasons.md) — the architecture
+- [How the model reasons](./how-the-model-reasons.mdx) — the architecture
   context for what these metrics measure

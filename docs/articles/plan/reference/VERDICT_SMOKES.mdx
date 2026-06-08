@@ -12,7 +12,7 @@ This document captures the v0.4.0 meta-bug that made the framework unreliable, a
 
 ## The cosine-LR meta-bug
 
-The v0.4.0 ablation campaign (issue [#116](https://github.com/sister-software/mailwoman/issues/116), retrospective [v0-4-0-ablation-campaign](../../retrospectives/v0-4-0-ablation-campaign.md)) ran a verdict-smoke matrix at `max_steps=3000` over the §1/§3/§4 single-knob ablations. The `cw-only` smoke (§3 class-weighted CE + §4 source rebalance) passed with peak `macro_f1=0.4279` at step 2250 — clean curve, no warning signs.
+The v0.4.0 ablation campaign (issue [#116](https://github.com/sister-software/mailwoman/issues/116), retrospective [v0-4-0-ablation-campaign](../../retrospectives/v0-4-0-ablation-campaign.mdx)) ran a verdict-smoke matrix at `max_steps=3000` over the §1/§3/§4 single-knob ablations. The `cw-only` smoke (§3 class-weighted CE + §4 source rebalance) passed with peak `macro_f1=0.4279` at step 2250 — clean curve, no warning signs.
 
 Promoted to the full 50K run, **`cw-only` diverged at step 2250** — `macro_f1` collapsed 0.41 → 0.29.
 
@@ -140,13 +140,13 @@ ratio = crf_norm / max(ce_norm, 1e-12)
 
 This probe takes 5 minutes against an existing checkpoint and answers "which loss is the aggressor?" more precisely than any 25-hour retrain could. Run it before spending GPU time on the next hypothesis.
 
-Full technical write-up: [`docs/articles/concepts/dual-loss-curvature-conflict.md`](../../concepts/dual-loss-curvature-conflict.md).
+Full technical write-up: [`docs/articles/concepts/dual-loss-curvature-conflict.md`](../../concepts/dual-loss-curvature-conflict.mdx).
 
 ## See also
 
-- [The knowledge ladder](../../understanding/our-approach/the-knowledge-ladder.md) — why v0.4.0's failure modes mapped to missing pipeline rungs (the smoke meta-bug is the process-side companion).
-- [Phase 8 — v0.5.0 fresh-slate](../phases/PHASE_8_v0_5_0_fresh_slate.md) — Thread F lands this framework before B/C/E start training.
-- [Phase 2 — training](../phases/PHASE_2_training.md) iteration log — v0.4.0 entry has the original false-positive case.
-- [v0.4.0 ablation campaign retrospective](../../retrospectives/v0-4-0-ablation-campaign.md) — full incident write-up.
-- [Dual-loss curvature conflict](../../concepts/dual-loss-curvature-conflict.md) — the CRF-as-aggressor finding + cooperative-vs-conflict regime model.
-- [Operations](./OPERATIONS.md) — working norms; smokes commit at the unit boundary like any other change.
+- [The knowledge ladder](../../understanding/our-approach/the-knowledge-ladder.mdx) — why v0.4.0's failure modes mapped to missing pipeline rungs (the smoke meta-bug is the process-side companion).
+- [Phase 8 — v0.5.0 fresh-slate](../phases/PHASE_8_v0_5_0_fresh_slate.mdx) — Thread F lands this framework before B/C/E start training.
+- [Phase 2 — training](../phases/PHASE_2_training.mdx) iteration log — v0.4.0 entry has the original false-positive case.
+- [v0.4.0 ablation campaign retrospective](../../retrospectives/v0-4-0-ablation-campaign.mdx) — full incident write-up.
+- [Dual-loss curvature conflict](../../concepts/dual-loss-curvature-conflict.mdx) — the CRF-as-aggressor finding + cooperative-vs-conflict regime model.
+- [Operations](./OPERATIONS.mdx) — working norms; smokes commit at the unit boundary like any other change.

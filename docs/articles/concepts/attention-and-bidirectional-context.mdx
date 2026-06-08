@@ -13,7 +13,7 @@ tags:
 The neural classifier's encoder is a 6-layer transformer with bidirectional
 self-attention. This article unpacks what that means for address parsing —
 specifically the operator's question from
-[How the model reasons](./how-the-model-reasons.md):
+[How the model reasons](./how-the-model-reasons.mdx):
 "are the right-side discovered placetypes influencing the left-side specificity?"
 
 The short answer: **yes, but it's not directional. Every token influences every
@@ -135,18 +135,18 @@ The cost is that you can't easily debug WHY the model made a particular
 decision. v0's classifier + solver chain produces an interpretable
 decomposition. The encoder produces a hidden state vector. The architecture
 docs (see
-[corpus-poisoning-vulnerability.md](./corpus-poisoning-vulnerability.md))
+[corpus-poisoning-vulnerability.md](./corpus-poisoning-vulnerability.mdx))
 make this trade-off explicit: more general competence, less
 interpretability, susceptibility to corpus-poisoning that more constrained
 architectures wouldn't have.
 
 ## See also
 
-- [How the model reasons](./how-the-model-reasons.md) — the central pipeline
+- [How the model reasons](./how-the-model-reasons.mdx) — the central pipeline
   doc this article expands
-- [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.md) — what
+- [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.mdx) — what
   external world knowledge gets added to the encoder's emissions
-- [Viterbi and BIO validity](./viterbi-and-bio-validity.md) — what happens
+- [Viterbi and BIO validity](./viterbi-and-bio-validity.mdx) — what happens
   AFTER the encoder's per-token emissions are computed
-- [Corpus poisoning vulnerability](./corpus-poisoning-vulnerability.md) — the
+- [Corpus poisoning vulnerability](./corpus-poisoning-vulnerability.mdx) — the
   downside of empirical learning at this scale

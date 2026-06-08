@@ -5,7 +5,7 @@ title: "2026-05-28 Layer 1 morphology FST eval"
 
 # Layer 1 (street-morphology FST) eval — 2026-05-28
 
-Applied the newly-landed [street-morphology FST](../concepts/street-supplement-architecture.md)
+Applied the newly-landed [street-morphology FST](../concepts/street-supplement-architecture.mdx)
 as a decoder-only fix on the v0.6.1 weights and re-ran the 4561-entry golden set. Goal: measure
 whether the morphology prior alone suppresses v0.6.1's 1066 `dependent_locality` hallucinations
 without retraining.
@@ -46,7 +46,7 @@ Tuned: `maxAffixBias=1.0`, `maxNeighbourStreetBias=1.0`, `dependentLocalityPenal
 
 `v0.6.1 neural-only` vs `v0.6.1 + admin FST only` is essentially a no-op (1066 vs 1063 dep_loc
 hallucinations). Confirms the structural diagnosis from the
-[WOF hierarchy gap](../concepts/wof-hierarchy-gap.md) doc: the admin FST has no street
+[WOF hierarchy gap](../concepts/wof-hierarchy-gap.mdx) doc: the admin FST has no street
 placetypes to match, so it can provide no negative-evidence anchor for street tokens. Synth-street
 exploited exactly this vacuum.
 
@@ -59,7 +59,7 @@ suppress more, you'd need to push the penalty higher — at which point it start
 legitimate decisions on other tokens.
 
 The model's confidence on its synth-street-induced dep_loc predictions is genuinely high. Per
-the [v0.6.1 calibration probe design](2026-05-28-night-2-postmortem.md): when the hallucinations
+the [v0.6.1 calibration probe design](2026-05-28-night-2-postmortem.mdx): when the hallucinations
 are high-confidence, **retraining is required, not just a decoder-time threshold or bias**.
 
 ### Default morphology bias is over-aggressive and causes collateral street_suffix damage
@@ -87,8 +87,8 @@ just needs a backbone model that wasn't trained to be wrong about dep_loc.
 
 ## What this means for v0.6.2
 
-Per [DeepSeek's turn 2 recipe](2026-05-28-night-2-postmortem.md#deepseeks-three-rubrics-for-a-night-shift-skill)
-and the [street-supplement architecture doc](../concepts/street-supplement-architecture.md):
+Per [DeepSeek's turn 2 recipe](2026-05-28-night-2-postmortem.mdx#deepseeks-three-rubrics-for-a-night-shift-skill)
+and the [street-supplement architecture doc](../concepts/street-supplement-architecture.mdx):
 
 1. **Retrain with synth-street weight 0.5** (down from 2.0) — reduces the gradient pressure
    that pushed the model into overconfident dep_loc predictions.
@@ -132,9 +132,9 @@ node --experimental-strip-types scripts/eval-morphology-fst.ts \
 
 ## See also
 
-- [Street-supplement architecture](../concepts/street-supplement-architecture.md) — the design
+- [Street-supplement architecture](../concepts/street-supplement-architecture.mdx) — the design
   this eval validates against
-- [WOF hierarchy gap](../concepts/wof-hierarchy-gap.md) — the structural cause
-- [v0.6.1 error analysis](v0.6.1-error-analysis.md) — the original regression
-- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.md) — the postmortem that drove
+- [WOF hierarchy gap](../concepts/wof-hierarchy-gap.mdx) — the structural cause
+- [v0.6.1 error analysis](v0.6.1-error-analysis.mdx) — the original regression
+- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.mdx) — the postmortem that drove
   the design consult

@@ -12,7 +12,7 @@ tags:
 
 A **Conditional Random Field (CRF)** is a structured-prediction layer that sits on top of a per-token classifier and finds the best **whole-sequence** assignment of labels, subject to learnable transition rules between consecutive labels.
 
-Mailwoman added a CRF decoder in v3.0.0 to solve the [orphan-I problem](./bio-labels.md#the-orphan-i-problem) — the "Saint Petersburg → Petersburg" clipping bug.
+Mailwoman added a CRF decoder in v3.0.0 to solve the [orphan-I problem](./bio-labels.mdx#the-orphan-i-problem) — the "Saint Petersburg → Petersburg" clipping bug.
 
 ## Why a CRF, not just argmax
 
@@ -128,6 +128,6 @@ As of v0.4.0 (shipped 2026-05-23), the Viterbi decoder has been ported to JavaSc
 
 ## See also
 
-- [BIO labels](./bio-labels.md) — the labels the CRF operates over
-- [Neural classification](./neural-classification.md) — the encoder whose outputs the CRF decodes
-- [Training pipeline](./training-pipeline.md) — where the CRF's transition scores get learned
+- [BIO labels](./bio-labels.mdx) — the labels the CRF operates over
+- [Neural classification](./neural-classification.mdx) — the encoder whose outputs the CRF decodes
+- [Training pipeline](./training-pipeline.mdx) — where the CRF's transition scores get learned

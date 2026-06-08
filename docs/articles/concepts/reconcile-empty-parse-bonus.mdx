@@ -12,7 +12,7 @@ tags:
 
 A short article on the one non-obvious knob inside Stage 5's joint decoder. If you skip it the reconciler converges on the empty parse for every input.
 
-The full walkthrough of what Stage 5 does and why is in [Joint decoding — a walkthrough](./joint-decoding-walkthrough.md). This article assumes you have read that one and only zooms in on the scoring formula.
+The full walkthrough of what Stage 5 does and why is in [Joint decoding — a walkthrough](./joint-decoding-walkthrough.mdx). This article assumes you have read that one and only zooms in on the scoring formula.
 
 ## The symptom
 
@@ -78,12 +78,12 @@ This is the same shape of bug — a natural-reading parameter (`kSpan = 3`) that
 
 Any future stage that composes confidences multiplicatively will need the same treatment:
 
-- The v0.5.1 learned span proposer ([`PHASE_8_E_learned_span_proposer.md`](../plan/phases/PHASE_8_E_learned_span_proposer.md)) will produce its own confidence distribution. If it feeds into a search with multiplicative scoring, the inclusion bonus needs to be applied again — adding a layer of factors does not change the trap.
+- The v0.5.1 learned span proposer ([`PHASE_8_E_learned_span_proposer.md`](../plan/phases/PHASE_8_E_learned_span_proposer.mdx)) will produce its own confidence distribution. If it feeds into a search with multiplicative scoring, the inclusion bonus needs to be applied again — adding a layer of factors does not change the trap.
 - The "optimal-cover" solver mentioned in earlier design notes (a candidate decoder that picks a non-overlapping set of spans to cover the input) is structurally identical. Same trap, same fix.
 - Any joint decoding over additional axes (e.g., `× alternative-language candidate`) needs the bonus scaled — the empty parse cost goes up as the axes multiply, so the bonus per accepted slot may need to grow with them.
 
 ## See also
 
-- [Joint decoding — a walkthrough](./joint-decoding-walkthrough.md) — the full picture of what Stage 5 does on a kryptonite input
+- [Joint decoding — a walkthrough](./joint-decoding-walkthrough.mdx) — the full picture of what Stage 5 does on a kryptonite input
 - [`reconcile.ts`](https://github.com/sister-software/mailwoman/blob/main/core/pipeline/reconcile.ts) — the actual implementation
-- [v0.4.0 ablation campaign](../retrospectives/v0-4-0-ablation-campaign.md) — the campaign whose mixed results made the missing reconcile rung visible
+- [v0.4.0 ablation campaign](../retrospectives/v0-4-0-ablation-campaign.mdx) — the campaign whose mixed results made the missing reconcile rung visible

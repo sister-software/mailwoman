@@ -14,7 +14,7 @@ tags:
 
 Mailwoman v2 (current as of May 2026) runs addresses through a **six-stage pipeline.** Each stage adds one kind of knowledge the stages below it cannot easily derive. Rule classifiers and a neural classifier coexist. A **policy registry** decides whose vote wins for each address component.
 
-This article assumes you have read [How it used to work](./how-it-used-to-work.md). For the design principles behind the staged decomposition, read [The knowledge ladder](./the-knowledge-ladder.md).
+This article assumes you have read [How it used to work](./how-it-used-to-work.mdx). For the design principles behind the staged decomposition, read [The knowledge ladder](./the-knowledge-ladder.mdx).
 
 ## The staged pipeline
 
@@ -67,7 +67,7 @@ Two kinds of classifier run in parallel:
 
 **Rule classifiers** (from Mailwoman v1): `house_number`, `postcode`, `whos_on_first`, `street_prefix`, `street_suffix`, and others. Deterministic, dictionary/regex-based. Correct for the bounded cases they cover.
 
-**Neural classifier**: a 9-million-parameter encoder-only transformer trained from scratch on Mailwoman's corpus. Emits per-token BIO labels using a 21-class vocabulary (country, region, locality, postcode, street, house_number, venue, and associated `I-` and `B-` variants). See [Neural classification](../../concepts/neural-classification.md).
+**Neural classifier**: a 9-million-parameter encoder-only transformer trained from scratch on Mailwoman's corpus. Emits per-token BIO labels using a 21-class vocabulary (country, region, locality, postcode, street, house_number, venue, and associated `I-` and `B-` variants). See [Neural classification](../../concepts/neural-classification.mdx).
 
 The v0.5.0 classifier (Thread C-s) adds two architectural changes gated behind config flags:
 
@@ -131,4 +131,4 @@ The live demo at [mailwoman.sister.software/demo](https://mailwoman.sister.softw
 - **Locality/region confusion persists on some inputs.** "New York, NY" is fixed (region-aware guard). "Washington, DC" is partially fixed (FST correctly biases locality) but the model's high B-street confidence for "Washington" after a street phrase resists the prior. Fix is in training data, not more priors.
 - **The model is small.** 29M parameters (h384, 6 layers, 6 heads). Runs in ~10ms per address on CPU via ONNX Runtime. The int8 quantized model is 17 MB.
 
-Continue with [How it will work](./how-it-will-work.md) for the near-future roadmap.
+Continue with [How it will work](./how-it-will-work.mdx) for the near-future roadmap.

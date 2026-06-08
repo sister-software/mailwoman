@@ -11,8 +11,8 @@ default), applies a two-dimensional threshold, and exits non-zero if any tag vio
 dimension.
 
 The shape of the gate is the lesson the
-[2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.md) and the
-[Layer 1 eval](2026-05-28-layer-1-morphology-fst.md) both pointed at: a recall-only gate
+[2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.mdx) and the
+[Layer 1 eval](2026-05-28-layer-1-morphology-fst.mdx) both pointed at: a recall-only gate
 would have **passed** v0.6.1 (no tag regressed > 2pp in recall on tags where the model
 already had > 10% baseline), letting the 1066 `dependent_locality` hallucinations through.
 The two-dimensional gate catches both halves.
@@ -87,22 +87,22 @@ tags will be measured the same way.
 
 ## What the gate does NOT replace
 
-- The [v0-vs-neural harness](2026-05-28-v0-vs-neural-harness.md) (per-locale + per-file
+- The [v0-vs-neural harness](2026-05-28-v0-vs-neural-harness.mdx) (per-locale + per-file
   pass rates across 376 hand-tuned assertions). The gate works on aggregate golden-set
   metrics; the harness works on the legacy rule-based pipeline's harsh acceptance criteria.
   Both should be green.
 - Manual demo-preset eval. The `/eval-model` skill remains the human-eyeballs gate before
   any push to default.
 - Falsehoods catalog regression check
-  ([`data/eval/falsehoods/streets.jsonl`](2026-05-28-v0-vs-neural-harness.md#falsehoods-extension)).
+  ([`data/eval/falsehoods/streets.jsonl`](2026-05-28-v0-vs-neural-harness.mdx#falsehoods-extension)).
 
 The gate is one slice of the pre-publish protocol, not the whole thing.
 
 ## See also
 
-- [Layer 1 eval](2026-05-28-layer-1-morphology-fst.md) — the eval-script's `--out-json` flag
+- [Layer 1 eval](2026-05-28-layer-1-morphology-fst.mdx) — the eval-script's `--out-json` flag
   emits the format this gate consumes
-- [v0-vs-neural harness](2026-05-28-v0-vs-neural-harness.md) — the complementary breadth
+- [v0-vs-neural harness](2026-05-28-v0-vs-neural-harness.mdx) — the complementary breadth
   metric
-- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.md) — DeepSeek-turn-1
+- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.mdx) — DeepSeek-turn-1
   rubric this gate operationalizes

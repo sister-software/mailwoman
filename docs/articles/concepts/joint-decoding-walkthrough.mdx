@@ -14,7 +14,7 @@ tags:
 
 # Joint decoding — a walkthrough
 
-[The knowledge ladder](../understanding/our-approach/the-knowledge-ladder.md) explains _why_ the v0.5.0 pipeline grew two new information layers (Stage 2.7 phrase grouper, expanded Stage 5 reconcile). This article walks through _what they actually do_ on one concrete input, end-to-end.
+[The knowledge ladder](../understanding/our-approach/the-knowledge-ladder.mdx) explains _why_ the v0.5.0 pipeline grew two new information layers (Stage 2.7 phrase grouper, expanded Stage 5 reconcile). This article walks through _what they actually do_ on one concrete input, end-to-end.
 
 We use the operator's canonical kryptonite case:
 
@@ -22,7 +22,7 @@ We use the operator's canonical kryptonite case:
 
 This string breaks every previous version of Mailwoman. The token `NY` looks exactly like the abbreviation for New York (which is what a per-token classifier reads it as on its own), but the only interpretation that makes sense for the whole string is that `NY-NY` is part of a venue name, the city is Houston, and the region is Texas. No single layer can reach that conclusion alone. Joint decoding is the layer that can.
 
-If you have not read [The staged pipeline](../understanding/our-approach/the-staged-pipeline.md), do that first — this article assumes you know the six stages by name.
+If you have not read [The staged pipeline](../understanding/our-approach/the-staged-pipeline.mdx), do that first — this article assumes you know the six stages by name.
 
 ## Stage 1 + 2 + 2.5 (warm-up)
 
@@ -53,7 +53,7 @@ Three things to notice here:
 2. **`Houston` gets a lower confidence (0.65) than `TX` (0.95)**. The grouper sees `TX` at the very tail after a comma, which is a strong structural signal for a region abbreviation. `Houston` is a capitalised word that _could_ be a locality but the grouper has no dictionary — it only knows it looks like a `LOCALITY_PHRASE` structurally.
 3. **No span covers `,` or whitespace.** The grouper proposes only over real input tokens. The character offsets in the body column refer to the original input string.
 
-What the grouper does _not_ know: that `NY` is the abbreviation for New York, that Houston is in Texas, that "Steakhouse" suggests a venue. All of those are world knowledge, and the grouper deliberately stays away. It supplies structural priors only — this is the [bitter-lesson safety](../understanding/our-approach/the-knowledge-ladder.md#why-this-decomposition-is-bitter-lesson-aligned) we want at this layer.
+What the grouper does _not_ know: that `NY` is the abbreviation for New York, that Houston is in Texas, that "Steakhouse" suggests a venue. All of those are world knowledge, and the grouper deliberately stays away. It supplies structural priors only — this is the [bitter-lesson safety](../understanding/our-approach/the-knowledge-ladder.mdx#why-this-decomposition-is-bitter-lesson-aligned) we want at this layer.
 
 ## Stage 3 — classifier emits top-k tag sequences
 
@@ -75,7 +75,7 @@ Notice though that the `venue` interpretation is _not_ far behind. The classifie
 
 ## Stage 4 — sequence corrector
 
-Stage 4 is the CRF decoder. It enforces the BIO grammar (no orphan `I-*` without a preceding `B-*`) on the tag sequence. For our top-k input, the CRF passes the candidates through unchanged — there are no orphan BIO labels to fix in this example. (See [CRF decoder](./crf-decoder.md) for a case where Stage 4 _does_ change the output, e.g. `Saint Petersburg` → `Petersburg`.)
+Stage 4 is the CRF decoder. It enforces the BIO grammar (no orphan `I-*` without a preceding `B-*`) on the tag sequence. For our top-k input, the CRF passes the candidates through unchanged — there are no orphan BIO labels to fix in this example. (See [CRF decoder](./crf-decoder.mdx) for a case where Stage 4 _does_ change the output, e.g. `Saint Petersburg` → `Petersburg`.)
 
 ## Stage 5 — reconcile picks the joint-coherent interpretation
 
@@ -121,7 +121,7 @@ Stage 5 does a beam search over `(span × tag × resolver candidate)` and scores
 score = phrase_confidence × classifier_confidence × resolver_score × concordance_bonus
 ```
 
-The `concordance_bonus` is the new piece. For each candidate parse tree, Stage 5 looks up the `parent_id` chain in the Who's On First gazetteer (see [Resolver and WOF](./resolver-and-wof.md)) and asks: does the chain agree? Concretely:
+The `concordance_bonus` is the new piece. For each candidate parse tree, Stage 5 looks up the `parent_id` chain in the Who's On First gazetteer (see [Resolver and WOF](./resolver-and-wof.mdx)) and asks: does the chain agree? Concretely:
 
 - Interpretation X says `region: NY` and `locality: Houston`. WOF says `Houston → Texas`, not `Houston → New York`. The chain disagrees. The bonus drops to ~0 (a near-fatal penalty).
 - Interpretation Y says `venue: NY-NY Steakhouse, locality: Houston, region: TX`. The chain `Houston → Texas → United States` is intact. Bonus is ~1.0.
@@ -130,7 +130,7 @@ The product favours Y by a wide margin, even though individual span scores are l
 
 ### The empty-parse trap
 
-One subtlety. The first version of the reconciler used a pure multiplicative score and discovered, empirically, that the score is _maximised_ by emitting **no spans at all** — because every factor is in `[0, 1]`, fewer factors means a higher product. The "empty parse" wins every comparison. Stage 5 fixes this by adding a fixed log-bonus for each accepted slot, so accepting a high-confidence span is net-positive. See [`reconcile-empty-parse-bonus.md`](./reconcile-empty-parse-bonus.md) for the full gotcha — this is the only non-obvious knob in the joint decoder.
+One subtlety. The first version of the reconciler used a pure multiplicative score and discovered, empirically, that the score is _maximised_ by emitting **no spans at all** — because every factor is in `[0, 1]`, fewer factors means a higher product. The "empty parse" wins every comparison. Stage 5 fixes this by adding a fixed log-bonus for each accepted slot, so accepting a high-confidence span is net-positive. See [`reconcile-empty-parse-bonus.md`](./reconcile-empty-parse-bonus.mdx) for the full gotcha — this is the only non-obvious knob in the joint decoder.
 
 ## Stage 6 — resolver looks up coordinates
 
@@ -171,12 +171,12 @@ The previous pipeline (v0.4.0 and earlier) had:
 
 Given those three constraints, `NY-NY Steakhouse, Houston, TX` returned `region: NY, locality: Houston, region: TX` and downstream code crashed trying to make sense of two regions. The fix had to live at the reconciler layer because none of the upstream stages can see the joint picture by design — they each look at their own slice.
 
-This is the [knowledge-ladder](../understanding/our-approach/the-knowledge-ladder.md) point made concrete. Each stage knows its own kind of information; the joint decoder is what composes them. Removing the joint decoder is what makes geocoders fail on adversarial inputs. Adding it back is most of what v0.5.0 set out to do.
+This is the [knowledge-ladder](../understanding/our-approach/the-knowledge-ladder.mdx) point made concrete. Each stage knows its own kind of information; the joint decoder is what composes them. Removing the joint decoder is what makes geocoders fail on adversarial inputs. Adding it back is most of what v0.5.0 set out to do.
 
 ## See also
 
-- [The knowledge ladder](../understanding/our-approach/the-knowledge-ladder.md) — the conceptual frame for why these layers exist
-- [The staged pipeline](../understanding/our-approach/the-staged-pipeline.md) — the six-stage runtime composition
-- [`STAGES.md`](../plan/reference/STAGES.md) — formal per-stage type contracts
-- [`reconcile-empty-parse-bonus.md`](./reconcile-empty-parse-bonus.md) — the multiplicative-score gotcha (link will resolve once Doc D lands)
-- [v0.5.0 — as shipped](../plan/v0-5-0-shipped.md) — what landed and when
+- [The knowledge ladder](../understanding/our-approach/the-knowledge-ladder.mdx) — the conceptual frame for why these layers exist
+- [The staged pipeline](../understanding/our-approach/the-staged-pipeline.mdx) — the six-stage runtime composition
+- [`STAGES.md`](../plan/reference/STAGES.mdx) — formal per-stage type contracts
+- [`reconcile-empty-parse-bonus.md`](./reconcile-empty-parse-bonus.mdx) — the multiplicative-score gotcha (link will resolve once Doc D lands)
+- [v0.5.0 — as shipped](../plan/v0-5-0-shipped.mdx) — what landed and when

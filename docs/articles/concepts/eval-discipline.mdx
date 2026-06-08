@@ -96,7 +96,7 @@ Three metrics survive a name collision:
 - **coordinate error** (great-circle, gold point to resolved centroid, p50/p90) — handles point geometry natively and exposes the wrong-instance resolves that name-match ties.
 - **PIP-containment** — is the gold point inside the resolved place's polygon? Name-surface-independent, but report it _with a polygon-coverage denominator_: WOF point-geometry localities have no polygon and would otherwise count as silent failures, and tight municipal polygons reject rural addresses ascribed to the nearest town. Lead with region-match and coordinate; treat locality-PIP as a coverage-adjusted secondary.
 
-`scripts/eval/honest-eval.sh` + `scripts/eval/pip-containment.py` implement this; see [the honest-eval report](../evals/2026-06-08-honest-eval.md) for the full run.
+`scripts/eval/honest-eval.sh` + `scripts/eval/pip-containment.py` implement this; see [the honest-eval report](../evals/2026-06-08-honest-eval.mdx) for the full run.
 
 ### When aggregate and functional disagree, functional wins
 
@@ -104,7 +104,7 @@ The region fix that came out of that run looked like a pure triumph on aggregate
 
 ## Verdict smokes and eval infrastructure
 
-A separate but related discipline surrounds training experiments. See [`VERDICT_SMOKES.md`](../plan/reference/VERDICT_SMOKES.md) for the full framework. The eval-relevant lessons:
+A separate but related discipline surrounds training experiments. See [`VERDICT_SMOKES.md`](../plan/reference/VERDICT_SMOKES.mdx) for the full framework. The eval-relevant lessons:
 
 - **Constant-LR smokes, not cosine.** Cosine decay hides divergence under a near-zero learning rate. A verdict smoke that uses cosine decay will report "stable" even when the recipe would diverge under sustained peak LR. v0.4.0's cosine-LR meta-bug cost five training runs before it was diagnosed.
 - **Full-run batch geometry.** A smoke that runs at a different effective batch size than the full run is testing a different gradient-noise regime. The smoke's "pass" verdict is not transferable.
@@ -125,6 +125,6 @@ Before shipping a model release:
 ## See also
 
 - [v0.4.0 ablation campaign retrospective](/blog/v0-4-0-ablation-campaign) — the original false-negative bucketing analysis
-- [VERDICT_SMOKES.md](../plan/reference/VERDICT_SMOKES.md) — smoke-test discipline for training experiments
-- [Dual-loss curvature conflict](./dual-loss-curvature-conflict.md) — the training divergence this methodology helped diagnose
-- [Training pipeline](./training-pipeline.md) — how corpus composition affects eval-set coverage
+- [VERDICT_SMOKES.md](../plan/reference/VERDICT_SMOKES.mdx) — smoke-test discipline for training experiments
+- [Dual-loss curvature conflict](./dual-loss-curvature-conflict.mdx) — the training divergence this methodology helped diagnose
+- [Training pipeline](./training-pipeline.mdx) — how corpus composition affects eval-set coverage

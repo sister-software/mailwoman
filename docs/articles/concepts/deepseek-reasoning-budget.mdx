@@ -21,7 +21,7 @@ If the worker treats `finish_reason=length` as a successful completion (most sta
 
 ## How to detect it
 
-The single best signal is the rejection-pipeline log. If the substring validator (see [Synthetic corpus — alignment validation](./synthetic-corpus-validation.md)) starts rejecting rows in batches, with reasons like `not-in-raw:postcode` clustered at end-of-row positions, the LLM responses are being truncated. The validator is doing the right thing — it would silently corrupt the corpus without it.
+The single best signal is the rejection-pipeline log. If the substring validator (see [Synthetic corpus — alignment validation](./synthetic-corpus-validation.mdx)) starts rejecting rows in batches, with reasons like `not-in-raw:postcode` clustered at end-of-row positions, the LLM responses are being truncated. The validator is doing the right thing — it would silently corrupt the corpus without it.
 
 The second signal is `finish_reason` itself. Logging the distribution per batch shows the truncation rate directly. A healthy run is `finish_reason=stop` >99% of the time; truncation rates above 1% are a configuration bug.
 
@@ -50,5 +50,5 @@ When writing the next DeepSeek-driven worker:
 
 ## See also
 
-- [Synthetic corpus — alignment validation is load-bearing](./synthetic-corpus-validation.md) — why the validator caught this even when the worker silently accepted truncated responses
-- [`CORPUS_V0_4_0_GENERATION.md`](../plan/reference/CORPUS_V0_4_0_GENERATION.md) — the operational record, including B2's actual prompt-engineering decisions and rate parameters
+- [Synthetic corpus — alignment validation is load-bearing](./synthetic-corpus-validation.mdx) — why the validator caught this even when the worker silently accepted truncated responses
+- [`CORPUS_V0_4_0_GENERATION.md`](../plan/reference/CORPUS_V0_4_0_GENERATION.mdx) — the operational record, including B2's actual prompt-engineering decisions and rate parameters

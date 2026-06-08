@@ -37,7 +37,7 @@ Each token carries metadata: its character position in the original string, what
 
 Tokenization is also the place where pre-processing happens: lowercase normalization, abbreviation expansion (`St.` → `Street`), and accent handling for non-English input.
 
-Deep dive: [`concepts/tokenization.md`](../../concepts/tokenization.md).
+Deep dive: [`concepts/tokenization.md`](../../concepts/tokenization.mdx).
 
 ## Step 2 — Rule classifiers vote
 
@@ -63,7 +63,7 @@ A single token can collect multiple classifications. For our example, `New` migh
 
 This is intentional: rule classifiers are allowed to be **uncertain and contradictory**. The next step resolves the contradiction.
 
-Deep dive: [`concepts/rule-based-classifiers.md`](../../concepts/rule-based-classifiers.md).
+Deep dive: [`concepts/rule-based-classifiers.md`](../../concepts/rule-based-classifiers.mdx).
 
 ## Step 3 — The solver picks a winning combination
 
@@ -94,7 +94,7 @@ Notice the two `locality` candidates. The solver returns multiple ranked solutio
 
 Parsing answered "what kind of thing is each part of this string?". Resolving answers "where is the resulting place?". The parsed components are looked up in a gazetteer — Who's On First, in Mailwoman's case — and the gazetteer returns coordinates, a stable place ID, and optionally a bounding box.
 
-The resolver is a separate concern from the parser. Read about it in [`concepts/resolver-and-wof.md`](../../concepts/resolver-and-wof.md).
+The resolver is a separate concern from the parser. Read about it in [`concepts/resolver-and-wof.md`](../../concepts/resolver-and-wof.mdx).
 
 ## What this approach is good at
 
@@ -109,4 +109,4 @@ The resolver is a separate concern from the parser. Read about it in [`concepts/
 - **Multi-word components.** "Saint Petersburg" is one locality, not two. A rule that recognises common multi-word names is brittle.
 - **Languages other than English.** Every locale needs its own rule set, hand-written, by someone who reads that language well.
 
-These weaknesses are why Mailwoman v2 brought in the neural classifier. Continue with [`how-it-works-now.md`](./how-it-works-now.md).
+These weaknesses are why Mailwoman v2 brought in the neural classifier. Continue with [`how-it-works-now.md`](./how-it-works-now.mdx).

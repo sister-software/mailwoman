@@ -9,7 +9,7 @@ tags:
 
 # Neural classification
 
-The neural classifier is a small **transformer encoder** that reads an address as a sequence of tokens and emits one [BIO label](../concepts/bio-labels.md) for each token. This article explains what a transformer encoder is, what makes Mailwoman's specific model the shape it is, and what the model is and is not capable of.
+The neural classifier is a small **transformer encoder** that reads an address as a sequence of tokens and emits one [BIO label](../concepts/bio-labels.mdx) for each token. This article explains what a transformer encoder is, what makes Mailwoman's specific model the shape it is, and what the model is and is not capable of.
 
 ## What a transformer encoder does
 
@@ -54,7 +54,7 @@ flowchart TD
     CRF --> F["Best BIO label sequence"]
 ```
 
-The CRF layer at the bottom is covered in [CRF decoder](./crf-decoder.md).
+The CRF layer at the bottom is covered in [CRF decoder](./crf-decoder.mdx).
 
 ## Why we hand-rolled the encoder block
 
@@ -89,7 +89,7 @@ The feed-forward layer that follows each attention layer is a straightforward 2-
 - **Generating text.** This is an **encoder-only** model. It cannot write addresses; it can only label them.
 - **Cross-locale generalization.** A model trained on en-US + fr-FR addresses will not parse Japanese addresses well. Each new locale needs its own training run and its own weights package.
 - **Free-text understanding.** "I live near the corner of 5th and Main, just past the Starbucks" is conversational, not address-shaped. The model is trained on structured addresses and will struggle with prose.
-- **Resolving.** The model labels parts of a string. It does not look anything up. That job belongs to the [resolver](./resolver-and-wof.md).
+- **Resolving.** The model labels parts of a string. It does not look anything up. That job belongs to the [resolver](./resolver-and-wof.mdx).
 
 ## Where this lives in the code
 
@@ -100,7 +100,7 @@ The feed-forward layer that follows each attention layer is a straightforward 2-
 
 ## See also
 
-- [BIO labels](./bio-labels.md) — what the model outputs
-- [CRF decoder](./crf-decoder.md) — what sits on top of the encoder
-- [ONNX runtime](./onnx-runtime.md) — how the model runs in production
-- [Training pipeline](./training-pipeline.md) — how the model gets its weights
+- [BIO labels](./bio-labels.mdx) — what the model outputs
+- [CRF decoder](./crf-decoder.mdx) — what sits on top of the encoder
+- [ONNX runtime](./onnx-runtime.mdx) — how the model runs in production
+- [Training pipeline](./training-pipeline.mdx) — how the model gets its weights

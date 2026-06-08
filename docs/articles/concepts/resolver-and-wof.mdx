@@ -66,7 +66,7 @@ The candidate-search step is where the indexes pay off. Mailwoman's WOF distribu
 - A **column index on `wof:population`** for population-weighted ranking.
 - **Multi-shard support** so different subsets (postcodes, localities, countries) can live in separate database files.
 
-These were shipped through Phase 4 of the implementation plan; see [PHASE_4_resolver.md](../plan/phases/PHASE_4_resolver.md) and its subphase files for the details.
+These were shipped through Phase 4 of the implementation plan; see [PHASE_4_resolver.md](../plan/phases/PHASE_4_resolver.mdx) and its subphase files for the details.
 
 ## The slim distribution for browsers
 
@@ -101,9 +101,9 @@ Mailwoman's resolver drops any candidate whose coordinates are `(0, 0)` from res
 - **Browser resolver:** `resolver-wof-wasm/` (uses `@sqlite.org/sqlite-wasm`)
 - **Slim builder:** `corpus/scripts/build-wof-slim.ts`
 - **Demo integration:** `docs/src/pages/demo/index.tsx` (the cascade + the `FailureDiagnostic` panel)
-- **Phase plan:** [PHASE_4_resolver.md](../plan/phases/PHASE_4_resolver.md) + subphases
+- **Phase plan:** [PHASE_4_resolver.md](../plan/phases/PHASE_4_resolver.mdx) + subphases
 
 ## See also
 
-- [What is an address?](../understanding/the-problem/what-is-an-address.md) — the components the resolver receives
-- [How it works now](../understanding/our-approach/how-it-works-now.md) — where the resolver fits in the live demo flow
+- [What is an address?](../understanding/the-problem/what-is-an-address.mdx) — the components the resolver receives
+- [How it works now](../understanding/our-approach/how-it-works-now.mdx) — where the resolver fits in the live demo flow

@@ -1,10 +1,10 @@
 # Phase 7 — Stage 1 Normalize + QueryShape boundary
 
-**Goal:** ship two new workspaces, `@mailwoman/normalize` and `@mailwoman/query-shape`, that implement runtime-pipeline stages 1 + the QueryShape boundary per [`STAGES.md`](../reference/STAGES.md) and [`QUERY_SHAPE.md`](../reference/QUERY_SHAPE.md). Pure functions, no ML, no new runtime dependencies beyond `@mailwoman/core`.
+**Goal:** ship two new workspaces, `@mailwoman/normalize` and `@mailwoman/query-shape`, that implement runtime-pipeline stages 1 + the QueryShape boundary per [`STAGES.md`](../reference/STAGES.mdx) and [`QUERY_SHAPE.md`](../reference/QUERY_SHAPE.mdx). Pure functions, no ML, no new runtime dependencies beyond `@mailwoman/core`.
 
 **Branch:** ad-hoc on `main`; ship via incremental commits.
 
-**Depends on:** [`STAGES.md`](../reference/STAGES.md) (the interface contract) and [`QUERY_SHAPE.md`](../reference/QUERY_SHAPE.md) (the QueryShape sub-system design).
+**Depends on:** [`STAGES.md`](../reference/STAGES.mdx) (the interface contract) and [`QUERY_SHAPE.md`](../reference/QUERY_SHAPE.mdx) (the QueryShape sub-system design).
 
 **Why these two together:** QueryShape consumes `NormalizedInput.normalized` and produces structural priors that downstream stages thread through. Building them in the same ship means the boundary between them gets its first real test before it ossifies.
 

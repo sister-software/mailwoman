@@ -71,9 +71,9 @@ The hierarchy goes administrative all the way down to `neighbourhood`/`microhood
 The omission is principled, not an oversight:
 
 1. **Streets are linear, not point or polygonal.** WOF stores geometries. A locality has a polygon, an address has a point. A street is a line — closer to OSM ways than to WOF places.
-2. **Streets recur per-locality.** London has [seventeen different High Streets](../understanding/why-its-hard/falsehoods-streets.md). A unique identifier for "High Street" doesn't exist without disambiguation by parent locality. WOF assigns one ID per place; streets break that assumption.
+2. **Streets recur per-locality.** London has [seventeen different High Streets](../understanding/why-its-hard/falsehoods-streets.mdx). A unique identifier for "High Street" doesn't exist without disambiguation by parent locality. WOF assigns one ID per place; streets break that assumption.
 3. **Streets are owned by different authorities.** Administrative places are governed by census bureaus, statistical offices, and political entities. Streets are governed by highway departments, postal services, and municipal planning. WOF concords with administrative authorities; street data lives elsewhere.
-4. **Streets compose differently across locales.** US street grammars assume `[number] [name] [type]`. French addresses are `[number] [type] [name]`. Japanese addresses [skip streets entirely](../understanding/why-its-hard/falsehoods-streets.md#addresses-have-a-street-at-all). Mannheim uses a grid. A single hierarchical slot can't encode this.
+4. **Streets compose differently across locales.** US street grammars assume `[number] [name] [type]`. French addresses are `[number] [type] [name]`. Japanese addresses [skip streets entirely](../understanding/why-its-hard/falsehoods-streets.mdx#addresses-have-a-street-at-all). Mannheim uses a grid. A single hierarchical slot can't encode this.
 
 WOF's decision to stop at `neighbourhood → address` is correct _for a place gazetteer_. It just leaves a gap _for an address parser_.
 
@@ -123,14 +123,14 @@ The orange `street_*` layer is the load-bearing piece WOF doesn't have. Mailwoma
 
 ## Where the gap shows up at inference
 
-The FST gazetteer prior ([concept doc](./fst-gazetteer-prior.md)) gives the neural model **two kinds of evidence** for every tag:
+The FST gazetteer prior ([concept doc](./fst-gazetteer-prior.mdx)) gives the neural model **two kinds of evidence** for every tag:
 
 - **Positive evidence:** matched token sequence biases toward `B/I-{placetype}` for the matched placetype.
 - **Negative evidence:** a token that walks off the FST trie tells the decoder "this is NOT an admin component" — likely a venue, street, or unrecognized name.
 
 For administrative tags (`country`, `region`, `locality`, `postcode`), both kinds of evidence are present and the model uses them. For street tags (`street`, `street_prefix`, `street_suffix`), only the _negative_ signal is available — and only in the form "this token is not an admin place." There is no positive evidence that says "this token _is_ a street," because the FST has no street placetypes to match.
 
-The empirical consequence shows up in [v0.6.1's error analysis](../evals/v0.6.1-error-analysis.md). When training added a 100K-row synthetic street-decomposition corpus, the model learned to decompose subcomponents — but with no inference-time anchor for "this is a street," the decomposition energy leaked into `dependent_locality` (the schema's only labeled "below locality" slot). `dependent_locality` hallucinated 1066 times where v0.6.0 emitted zero.
+The empirical consequence shows up in [v0.6.1's error analysis](../evals/v0.6.1-error-analysis.mdx). When training added a 100K-row synthetic street-decomposition corpus, the model learned to decompose subcomponents — but with no inference-time anchor for "this is a street," the decomposition energy leaked into `dependent_locality` (the schema's only labeled "below locality" slot). `dependent_locality` hallucinated 1066 times where v0.6.0 emitted zero.
 
 This is the schema speaking. The model is doing the right thing under the wrong inputs: given that streets and dep_locality look structurally similar (both sit below locality in the containment tree) and only one has gazetteer backing, it picks the one with backing.
 
@@ -190,14 +190,14 @@ Each layer addresses a different vacuum. The cheapest layers don't subsume the m
 
 - **Layer 1** is the polish-pass fix for v0.6.1's `dependent_locality` hallucinations on US-pattern addresses. ~2h to build. Solves the "model has nothing telling it `Avenue` is street-typing" problem. Conservative estimate: catches 600-800 of the 1066 dep_locality hallucinations from v0.6.1.
 - **Layer 1.5** is the next-shift addition that extends Layer 1 to suffix-less streets. ~1h to build over the existing training corpus. Doesn't require new data sources.
-- **Layer 2** is the v0.7+ architectural change. It's the FST roadmap's [Phase 2](../plan/reference/FST_GAZETTEER_LM.md) — "Streets would add ~3-5M unique names and require metro-area sharding for the browser." First POC is NYC-only.
+- **Layer 2** is the v0.7+ architectural change. It's the FST roadmap's [Phase 2](../plan/reference/FST_GAZETTEER_LM.mdx) — "Streets would add ~3-5M unique names and require metro-area sharding for the browser." First POC is NYC-only.
 - **Layer 3** is activation work for the JP-specific tags (which already exist in the schema) plus scope work for Mannheim/Nicaragua tags (v0.8+).
 
 **Building Layer 1 is not sunk cost relative to Layer 2.** The integration infrastructure — `ParseOpts.fstStreetMorphology`, `street-morphology-prior.ts`, the second `addEmissionMatrix` call, `FstMatcherLike` — is the same plumbing Layer 2 flows through when it ships. Layer 1 builds the dual-FST pipeline that Layer 2 swaps a larger FST into. Skipping Layer 1 to "go straight to Layer 2" means building the same pipeline anyway, just with no intermediate signal to evaluate against.
 
 ## See also
 
-- [FST gazetteer prior](./fst-gazetteer-prior.md) — the prior this article extends
-- [FST gazetteer LM reference](../plan/reference/FST_GAZETTEER_LM.md) — Phase 2 (streets) is the layer 2 work
-- [Falsehoods about street names](../understanding/why-its-hard/falsehoods-streets.md) — the catalog of edge cases each layer addresses
-- [v0.6.1 error analysis](../evals/v0.6.1-error-analysis.md) — the empirical regression that surfaced the gap
+- [FST gazetteer prior](./fst-gazetteer-prior.mdx) — the prior this article extends
+- [FST gazetteer LM reference](../plan/reference/FST_GAZETTEER_LM.mdx) — Phase 2 (streets) is the layer 2 work
+- [Falsehoods about street names](../understanding/why-its-hard/falsehoods-streets.mdx) — the catalog of edge cases each layer addresses
+- [v0.6.1 error analysis](../evals/v0.6.1-error-analysis.mdx) — the empirical regression that surfaced the gap

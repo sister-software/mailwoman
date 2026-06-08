@@ -1,13 +1,13 @@
 # Query Shape — Cheap Structural Priors
 
-Captures the design intent for the `QueryShape` sub-system, a stage 2 + 2.5 addition to the runtime pipeline ([the-staged-pipeline](../../understanding/our-approach/the-staged-pipeline.md)). Bitter-lesson-safe because it recognizes _what shape an input has_, not _which strings are localities_.
+Captures the design intent for the `QueryShape` sub-system, a stage 2 + 2.5 addition to the runtime pipeline ([the-staged-pipeline](../../understanding/our-approach/the-staged-pipeline.mdx)). Bitter-lesson-safe because it recognizes _what shape an input has_, not _which strings are localities_.
 
 ## Status
 
 - **Conceived:** 2026-05-22 design conversation.
 - **Decision:** commit to the sub-system; bundle as `@mailwoman/query-shape`. Pure functions, no ML.
 - **Implementation phase:** not yet opened. Will land alongside Stage 2 + Stage 2.5 work in the staged-pipeline rollout.
-- **Cross-references:** [`concepts/the-staged-pipeline`](../../understanding/our-approach/the-staged-pipeline.md), [`concepts/addresses-that-break-geocoders`](../../understanding/why-its-hard/addresses-that-break-geocoders.md), [`reference/ARCHITECTURE`](./ARCHITECTURE.md).
+- **Cross-references:** [`concepts/the-staged-pipeline`](../../understanding/our-approach/the-staged-pipeline.mdx), [`concepts/addresses-that-break-geocoders`](../../understanding/why-its-hard/addresses-that-break-geocoders.mdx), [`reference/ARCHITECTURE`](./ARCHITECTURE.mdx).
 
 ## The bitter-lesson framing test
 
@@ -136,7 +136,7 @@ External signal joining the input-side priors. Goes into **Stage 6 (resolver)** 
 score(candidate) = match × population_prior × regional_prior_from_language × regional_prior_from_user_location
 ```
 
-All four factors are **soft priors**. The TX-IP user typing `"Paris"` in French input gets a tie between Paris-FR and Paris-TX; structural cues (state abbreviation, postcode shape, etc.) break it. None of the priors hard-filter — that would violate the project's stated "possibilities, not constraints" principle ([`reference/CONTEXT.md`](./CONTEXT.md#the-confidence-as-trap-pattern)).
+All four factors are **soft priors**. The TX-IP user typing `"Paris"` in French input gets a tie between Paris-FR and Paris-TX; structural cues (state abbreviation, postcode shape, etc.) break it. None of the priors hard-filter — that would violate the project's stated "possibilities, not constraints" principle ([`reference/CONTEXT.md`](./CONTEXT.mdx#the-confidence-as-trap-pattern)).
 
 API shape (optional input):
 
@@ -187,7 +187,7 @@ Zero ML. Zero npm dependencies beyond what `@mailwoman/core` already pulls. Tiny
 
 ## Locality soft prior (v0.5.2 extension)
 
-Added 2026-05-25 after diagnosing demo preset locality/region confusion ([`DEMO_PRESET_DIAGNOSIS.md`](./DEMO_PRESET_DIAGNOSIS.md)).
+Added 2026-05-25 after diagnosing demo preset locality/region confusion ([`DEMO_PRESET_DIAGNOSIS.md`](./DEMO_PRESET_DIAGNOSIS.mdx)).
 
 The existing `buildEmissionPriors` path applies logit boosts for known-format hits (e.g., postcode regex → `B-postcode`). The locality soft prior extends this: when an unambiguous 2-letter region abbreviation is detected (e.g., `DC`, `NY`, `CA`), preceding tokens that match a WOF locality entry at the detected locale receive a `+2.0` logit boost toward `B-locality` / `I-locality`.
 
@@ -220,7 +220,7 @@ These are decisions to make when the implementation phase opens; recording so th
 
 ## See also
 
-- [`concepts/the-staged-pipeline`](../../understanding/our-approach/the-staged-pipeline.md) — the runtime stages this slots into
-- [`concepts/addresses-that-break-geocoders`](../../understanding/why-its-hard/addresses-that-break-geocoders.md) — the failure-mode catalogue that motivated this
-- [`reference/CONTEXT.md`](./CONTEXT.md) — the bitter-lesson framing and the "possibilities not constraints" principle
-- [`reference/ARCHITECTURE.md`](./ARCHITECTURE.md) — the broader system shape; QueryShape fits between tokenization and classification
+- [`concepts/the-staged-pipeline`](../../understanding/our-approach/the-staged-pipeline.mdx) — the runtime stages this slots into
+- [`concepts/addresses-that-break-geocoders`](../../understanding/why-its-hard/addresses-that-break-geocoders.mdx) — the failure-mode catalogue that motivated this
+- [`reference/CONTEXT.md`](./CONTEXT.mdx) — the bitter-lesson framing and the "possibilities not constraints" principle
+- [`reference/ARCHITECTURE.md`](./ARCHITECTURE.mdx) — the broader system shape; QueryShape fits between tokenization and classification

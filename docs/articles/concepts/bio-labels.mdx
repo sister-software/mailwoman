@@ -92,7 +92,7 @@ Neither is what the data actually wants. The data wants `B-locality, I-locality`
 
 ## How Mailwoman v3.0.0 fixes this
 
-The fix is the **CRF decoder** — see [CRF decoder](./crf-decoder.md) for the full story. In short:
+The fix is the **CRF decoder** — see [CRF decoder](./crf-decoder.mdx) for the full story. In short:
 
 - During training, the CRF learns a transition matrix between every pair of labels. Some transitions are pinned to negative infinity: `O → I-X` is impossible, `B-X → I-Y` (where `X ≠ Y`) is impossible.
 - During decoding, the CRF runs the **Viterbi algorithm**: find the highest-probability sequence of labels that obeys every transition rule. The orphan-I is structurally excluded.
@@ -139,6 +139,6 @@ This pattern is one of the most-tested approaches in NLP. CoNLL-2003 (the canoni
 
 ## See also
 
-- [CRF decoder](./crf-decoder.md) — the structural-validity layer
-- [Tokenization](./tokenization.md) — what gets labelled
-- [Training pipeline](./training-pipeline.md) — how BIO labels become training data
+- [CRF decoder](./crf-decoder.mdx) — the structural-validity layer
+- [Tokenization](./tokenization.mdx) — what gets labelled
+- [Training pipeline](./training-pipeline.mdx) — how BIO labels become training data

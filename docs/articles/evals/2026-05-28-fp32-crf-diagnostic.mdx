@@ -5,7 +5,7 @@ title: "2026-05-28 fp32-CRF diagnostic — PASS"
 
 # fp32-CRF diagnostic — 2026-05-28
 
-The [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.md) left one open
+The [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.mdx) left one open
 question after the v0.6.0 NaN incidents:
 
 > CRF training on a 33×33 transition table in bf16 NaN'd twice. Fix was to disable CRF
@@ -135,10 +135,10 @@ modal app logs <app-id>  # look for loss=nan in the step 900-2000 range
 
 ## See also
 
-- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.md) — the open question
+- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.mdx) — the open question
   this diagnostic closes
 - [v0.6.2 training config](https://github.com/sister-software/mailwoman/blob/main/corpus-python/src/mailwoman_train/configs/v0_6_2-stage3-rebalance.yaml)
   — the mainline retrain (CE-only per NaN protocol; CRF deferred to v0.6.3 with these
   fp32 changes)
-- [Street-supplement architecture](../concepts/street-supplement-architecture.md) — the
+- [Street-supplement architecture](../concepts/street-supplement-architecture.mdx) — the
   v0.6.2 retrain context

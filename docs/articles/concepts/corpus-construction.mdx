@@ -11,7 +11,7 @@ tags:
 
 The training corpus is the largest single source of leverage in the project. The model can only learn patterns that appear in the data. This article walks through how Mailwoman builds its corpus — what sources are in it, how rows are aligned to BIO labels, and how the synthesis step multiplies the effective size.
 
-A general overview of the training pipeline is in [Training pipeline](./training-pipeline.md). This article zooms into the corpus side (Stages 1–4 of that pipeline).
+A general overview of the training pipeline is in [Training pipeline](./training-pipeline.mdx). This article zooms into the corpus side (Stages 1–4 of that pipeline).
 
 ## What "the corpus" is
 
@@ -113,7 +113,7 @@ The split assignment is written to `SPLIT_MANIFEST.json` — every later step ca
 
 Final output is Parquet files with about 1 million rows per shard. Parquet is columnar — the training data loader streams one column group at a time without loading the whole file. Total v0.3.0 output: ~30 train shards + 1 val + 1 test = 32 files, ~30 GB.
 
-The training pipeline picks up from here. See [Training pipeline](./training-pipeline.md) for what happens next.
+The training pipeline picks up from here. See [Training pipeline](./training-pipeline.mdx) for what happens next.
 
 ## What corpus building is good at
 
@@ -136,10 +136,10 @@ The training pipeline picks up from here. See [Training pipeline](./training-pip
 - **Sharder:** `corpus/src/parquet.ts`
 - **Build orchestrator:** `corpus/src/build.ts` + `corpus/scripts/run-corpus-build.ts`
 - **Schema reference:** `corpus/src/types.ts` (`CanonicalRow`, `LabeledRow`, `QuarantinedRow`)
-- **Plan doc:** [PHASE_1_corpus.md](../plan/phases/PHASE_1_corpus.md)
+- **Plan doc:** [PHASE_1_corpus.md](../plan/phases/PHASE_1_corpus.mdx)
 
 ## See also
 
-- [Training pipeline](./training-pipeline.md) — what happens after corpus build
-- [BIO labels](./bio-labels.md) — what the alignment step outputs
-- [Tokenization](./tokenization.md) — how `raw` becomes `tokens`
+- [Training pipeline](./training-pipeline.mdx) — what happens after corpus build
+- [BIO labels](./bio-labels.mdx) — what the alignment step outputs
+- [Tokenization](./tokenization.mdx) — how `raw` becomes `tokens`

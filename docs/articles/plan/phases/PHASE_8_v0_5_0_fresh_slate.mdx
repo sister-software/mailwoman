@@ -97,10 +97,10 @@ Six work areas, each with its own thread. Cross-thread dependencies noted.
 - **What:** carry the v0.4.0 sidecars + diagnostic tools into the v0.5.0 process from day one.
   - `corpus-audit` already in tree (`corpus/scripts/audit.ts`) — runs cleanly against `corpus-v0.3.0`. Use it to verify Thread B's corpus mix before tokenizer training and before classifier training.
   - `diagnose_regression.py` already in tree (`corpus-python/scripts/diagnose_regression.py`) — use it for v0.5.0 eval bucketing, not just post-hoc.
-  - Verdict-smoke framework redesigned: **constant LR for the smoke window**, OR `max_steps >= 10000` so the cosine tail doesn't dominate. Documented in [`VERDICT_SMOKES.md`](../reference/VERDICT_SMOKES.md). Code enforcement: `--smoke-mode constant|long-tail` on `python -m mailwoman_train train` and `smoke` subcommands; defaults to constant for end-to-end smokes.
+  - Verdict-smoke framework redesigned: **constant LR for the smoke window**, OR `max_steps >= 10000` so the cosine tail doesn't dominate. Documented in [`VERDICT_SMOKES.md`](../reference/VERDICT_SMOKES.mdx). Code enforcement: `--smoke-mode constant|long-tail` on `python -m mailwoman_train train` and `smoke` subcommands; defaults to constant for end-to-end smokes.
   - Decoder span-trim sidecar (commit `c72ab4c`, `core/decoder/build-tree.ts:58`) stays in main — covers the long tail of bio_slip cases the phrase grouper might miss.
 - **Why:** v0.4.0's process meta-bug (cosine LR masking divergence) cost real iteration cycles. Document the lesson so v0.5.0 doesn't repeat it.
-- **Output:** new [`VERDICT_SMOKES.md`](../reference/VERDICT_SMOKES.md) + `--smoke-mode` CLI flag + updated TODO.md.
+- **Output:** new [`VERDICT_SMOKES.md`](../reference/VERDICT_SMOKES.mdx) + `--smoke-mode` CLI flag + updated TODO.md.
 
 ## Cross-thread execution order
 
@@ -163,7 +163,7 @@ Different from v0.4.0's "≥2 of 4 axes" frame, because v0.5.0 is changing the a
 
 ## See also
 
-- [The knowledge ladder](../../understanding/our-approach/the-knowledge-ladder.md) — conceptual framing for what the missing rungs do
-- [The pipeline contract](../../concepts/staged-pipeline-contract.md) — runtime mechanics
-- [v0.4.0 ablation campaign retrospective](../../retrospectives/v0-4-0-ablation-campaign.md) — what made the fresh-slate decision necessary
+- [The knowledge ladder](../../understanding/our-approach/the-knowledge-ladder.mdx) — conceptual framing for what the missing rungs do
+- [The pipeline contract](../../concepts/staged-pipeline-contract.mdx) — runtime mechanics
+- [v0.4.0 ablation campaign retrospective](../../retrospectives/v0-4-0-ablation-campaign.mdx) — what made the fresh-slate decision necessary
 - [Issue #116](https://github.com/sister-software/mailwoman/issues/116) — v0.4.0's original work plan

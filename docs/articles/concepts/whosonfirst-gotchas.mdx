@@ -12,7 +12,7 @@ tags:
 
 Who's On First (WOF) is the best open gazetteer available. It's also one of the strangest datasets you'll encounter as a developer. This article documents the gotchas — the structural quirks that trip up new consumers — and the tooling Mailwoman built to work around them.
 
-If you just want to understand how Mailwoman's resolver queries WOF at runtime, see [Resolver and Who's On First](./resolver-and-wof.md). For the build-time ingest pipeline, see [WOF data pipeline](./wof-data-pipeline.md). This article is about the data model itself.
+If you just want to understand how Mailwoman's resolver queries WOF at runtime, see [Resolver and Who's On First](./resolver-and-wof.mdx). For the build-time ingest pipeline, see [WOF data pipeline](./wof-data-pipeline.mdx). This article is about the data model itself.
 
 ## What WOF is
 
@@ -134,7 +134,7 @@ Processing 120K GeoJSON files is an embarrassingly-parallel problem. Mailwoman's
 
 When the data arrives as a single bulk NDJSON dump rather than individual files, `AsyncSpliterator.asMany(source, delimiter, concurrency)` splits the file into N byte-range chunks, snaps to delimiter boundaries, and returns N independent async iterators for parallel processing. It's built but not yet exercised at scale.
 
-For full details on the ingest pipeline, see [WOF data pipeline](./wof-data-pipeline.md).
+For full details on the ingest pipeline, see [WOF data pipeline](./wof-data-pipeline.mdx).
 
 ## So why put up with WOF?
 
@@ -151,6 +151,6 @@ WOF is the best open option for hierarchy and multilingual names. But it's hard 
 - [Who's On First on GitHub](https://github.com/whosonfirst-data) — the source repos
 - [Geocode Earth WOF distributions](https://data.geocode.earth/wof/dist/sqlite/) — pre-built SQLite files
 - [Spelunker](https://spelunker.whosonfirst.org/) — the official WOF browser
-- [Resolver and Who's On First](./resolver-and-wof.md) — how the runtime resolver queries WOF
-- [WOF data pipeline](./wof-data-pipeline.md) — build-time ingest architecture
+- [Resolver and Who's On First](./resolver-and-wof.mdx) — how the runtime resolver queries WOF
+- [WOF data pipeline](./wof-data-pipeline.mdx) — build-time ingest architecture
 - [Taming Who's On First](/blog/taming-whosonfirst) — the narrative version of this article

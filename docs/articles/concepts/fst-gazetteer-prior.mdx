@@ -193,7 +193,7 @@ The FST uses Wikipedia importance scores from [Nominatim's methodology](https://
 | Washington (state)       | 7.6M       | 0.764                |
 | New York City (locality) | 8.8M       | 0.950                |
 
-The importance scores are computed once, in a separate ETL pass, and joined into the unified SQLite before the FST builder runs. The two-signal split (importance for ranking, population for tie-breaking and resolver scoring) has its own [dedicated article](./importance-vs-population.md).
+The importance scores are computed once, in a separate ETL pass, and joined into the unified SQLite before the FST builder runs. The two-signal split (importance for ranking, population for tie-breaking and resolver scoring) has its own [dedicated article](./importance-vs-population.mdx).
 
 ## Where this fits in the bigger picture
 
@@ -231,15 +231,15 @@ The FST is one node in a longer pipeline of cached work. The unified SQLite is a
 
 ## What the FST does not do
 
-- **It does not resolve.** It tells the classifier which spans _could_ be places. Producing a single canonical place ID + coordinates is the resolver's job (see [Resolver and Who's On First](./resolver-and-wof.md)).
-- **It does not handle streets.** v1 ships admin-only (countries, regions, localities, postcodes). Streets would add ~3-5M unique names and require metro-area sharding for the browser; tracked as Phase 2+ in [`FST_GAZETTEER_LM.md`](../plan/reference/FST_GAZETTEER_LM.md).
+- **It does not resolve.** It tells the classifier which spans _could_ be places. Producing a single canonical place ID + coordinates is the resolver's job (see [Resolver and Who's On First](./resolver-and-wof.mdx)).
+- **It does not handle streets.** v1 ships admin-only (countries, regions, localities, postcodes). Streets would add ~3-5M unique names and require metro-area sharding for the browser; tracked as Phase 2+ in [`FST_GAZETTEER_LM.md`](../plan/reference/FST_GAZETTEER_LM.mdx).
 - **It does not override the model.** The bias is additive and capped. If the model is confident the input says "Paris, TX," the FST prior on French Paris doesn't change the outcome.
 
 ## See also
 
-- [FST gazetteer LM (reference)](../plan/reference/FST_GAZETTEER_LM.md) — implementation phases, design decisions, locale strategy, size estimates
-- [Resolver and Who's On First](./resolver-and-wof.md) — the parser/resolver split and the WOF SQLite distribution this is built from
-- [Importance vs population](./importance-vs-population.md) — why Wikipedia importance, not population, is the right weighting signal
-- [Neural classification](./neural-classification.md) — the transformer + Viterbi decoder the prior plugs into
-- [BIO labels](./bio-labels.md) — the per-token label space the prior biases
-- [WOF data pipeline](./wof-data-pipeline.md) — how the unified SQLite the FST is built from comes together
+- [FST gazetteer LM (reference)](../plan/reference/FST_GAZETTEER_LM.mdx) — implementation phases, design decisions, locale strategy, size estimates
+- [Resolver and Who's On First](./resolver-and-wof.mdx) — the parser/resolver split and the WOF SQLite distribution this is built from
+- [Importance vs population](./importance-vs-population.mdx) — why Wikipedia importance, not population, is the right weighting signal
+- [Neural classification](./neural-classification.mdx) — the transformer + Viterbi decoder the prior plugs into
+- [BIO labels](./bio-labels.mdx) — the per-token label space the prior biases
+- [WOF data pipeline](./wof-data-pipeline.mdx) — how the unified SQLite the FST is built from comes together

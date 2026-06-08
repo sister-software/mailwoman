@@ -1,7 +1,7 @@
 # Phase 4.3 — Resolver Integration
 
-**Parent:** [`PHASE_4_resolver.md`](./PHASE_4_resolver.md).
-**Predecessor:** [`PHASE_4_2_wof_sqlite.md`](./PHASE_4_2_wof_sqlite.md).
+**Parent:** [`PHASE_4_resolver.md`](./PHASE_4_resolver.mdx).
+**Predecessor:** [`PHASE_4_2_wof_sqlite.md`](./PHASE_4_2_wof_sqlite.mdx).
 
 **Goal:** wire `@mailwoman/resolver-wof-sqlite` into the parser pipeline. After Phase 4.3 a user can run `mailwoman parse --resolve --format xml "75004 Paris"` and get back an `<address>` tree whose `<locality>` carries `src="wof-admin:101751119"`, `lat="48.85"`, `lon="2.34"` — the resolver overlays its attribution on top of the classifier-derived provenance from Phase 4.1.
 

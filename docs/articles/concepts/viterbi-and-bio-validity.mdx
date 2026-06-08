@@ -92,7 +92,7 @@ scores come from:
    for common label-pair transitions vs rare ones.
 
 In v0.6.x today, only the structural mask is active (the
-[fp32-CRF diagnostic](../evals/2026-05-28-fp32-crf-diagnostic.md)
+[fp32-CRF diagnostic](../evals/2026-05-28-fp32-crf-diagnostic.mdx)
 confirmed the bf16-CRF NaN issue; v0.6.4 will enable learned CRF
 transitions with the fp32 fix).
 
@@ -154,11 +154,11 @@ would be additive improvement, not a replacement for the encoder.
 ## Why learned CRF was disabled in v0.6.x
 
 The
-[2026-05-28 night-shift postmortem](../evals/2026-05-28-night-2-postmortem.md)
+[2026-05-28 night-shift postmortem](../evals/2026-05-28-night-2-postmortem.mdx)
 captured the story: enabling learned CRF transitions in Stage 3 (33×33
 transition matrix with masked `-∞` entries) caused NaN gradients
 twice during training. The
-[fp32-CRF diagnostic](../evals/2026-05-28-fp32-crf-diagnostic.md)
+[fp32-CRF diagnostic](../evals/2026-05-28-fp32-crf-diagnostic.mdx)
 identified the root cause: bf16 precision is insufficient for the
 masked `logsumexp` over `-∞` entries. The fix is to run just the CRF
 forward in fp32 while the rest of the model stays bf16 — `crf_fp32:
@@ -203,12 +203,12 @@ uses `"viterbi"`.
 
 ## See also
 
-- [How the model reasons](./how-the-model-reasons.md) — the central
+- [How the model reasons](./how-the-model-reasons.mdx) — the central
   pipeline doc
-- [Attention and bidirectional context](./attention-and-bidirectional-context.md) — what's UPSTREAM of Viterbi
-- [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.md) —
+- [Attention and bidirectional context](./attention-and-bidirectional-context.mdx) — what's UPSTREAM of Viterbi
+- [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.mdx) —
   the additive biases on the emissions Viterbi consumes
-- [fp32-CRF diagnostic](../evals/2026-05-28-fp32-crf-diagnostic.md) —
+- [fp32-CRF diagnostic](../evals/2026-05-28-fp32-crf-diagnostic.mdx) —
   why learned CRF was disabled in v0.6.x and how v0.6.4 brings it back
-- [BIO labels](./bio-labels.md) — the per-tag label space (existing
+- [BIO labels](./bio-labels.mdx) — the per-tag label space (existing
   reference)

@@ -50,7 +50,7 @@ streets, different venue/locality boundaries, and the cases addressit happened t
 It says nothing about whether neural is _wrong_. The harness is a faithful
 _regression gate_ (it catches when a retrain breaks a convention we previously matched),
 but not a parsing-quality verdict. Treating it as one is the
-[harness-lineage trap](../evals/2026-05-30-harness-lineage-and-the-resolver-scoreboard.md).
+[harness-lineage trap](../evals/2026-05-30-harness-lineage-and-the-resolver-scoreboard.mdx).
 
 ## Decomposing the 20% — three unbiased arenas
 
@@ -92,7 +92,7 @@ Three different stories:
 ## Scoreboard 2 — the resolver, on real addresses, end to end
 
 The product is a geocoder, not a tag-matcher. The honest, non-circular metric is the
-[OpenAddresses real-point eval](../evals/2026-05-30-openaddresses-real-point-eval.md):
+[OpenAddresses real-point eval](../evals/2026-05-30-openaddresses-real-point-eval.mdx):
 every row is a real US address with a real government lat/lon, and we score whether each
 parser, run through the _same_ WOF resolver, lands on the right locality. On 10,000 rows:
 
@@ -122,7 +122,7 @@ Stripping out the harness bias, the real neural deficits are:
    (NZ)** against v0's 100%. **Why:** it is an **en-us** model; it was not trained for
    NZ/NL/FR conventions.
 4. **Concrete parse bugs** surfaced in the
-   [resolver failure analysis](../evals/2026-05-31-resolver-failure-analysis.md):
+   [resolver failure analysis](../evals/2026-05-31-resolver-failure-analysis.mdx):
    multi-word locality **truncation** (`Belle Fourche`→`Belle`, `Fort Pierre`→`Fort`),
    **DC directional quadrants** (`…Street Ne` → tags `Ne` as a locality), and literal
    `<Null>` tokens in dirty input that `v0` shrugs off.
@@ -143,7 +143,7 @@ We spent part of this window testing whether **masked-language-model pre-trainin
 encoder would lift the model (attacking the overconfidence + format-reliance pathologies).
 A 40k-step fine-tune from a pre-trained encoder _looked_ like a win (+4.8pp harness, a
 calibration edge). But running the
-[decisive A/B at the full v0.7.2 recipe](../evals/2026-05-31-v0.8.1-mlm-decisive.md) — both
+[decisive A/B at the full v0.7.2 recipe](../evals/2026-05-31-v0.8.1-mlm-decisive.mdx) — both
 arms to the task ceiling, single variable = encoder init — the gains **vanished**:
 
 | metric                  | pretrained | scratch |                 Δ |

@@ -5,7 +5,7 @@ title: Tokenizer A1 — corpus-v0.4.0 retrain results
 
 # Tokenizer A1 — corpus-v0.4.0 retrain results
 
-A1 is the v0.5.0 plan ([`PHASE_8 §A`](../phases/PHASE_8_v0_5_0_fresh_slate.md)) tokenizer retrain on `corpus-v0.4.0`. Same harness as [A0](./tokenizer-a0-baseline.md); the only intended differences are the corpus (v0.4.0 = v0.3.0 + Thread B kryptonite + Thread B2 transliteration) and the country list (widened to cover Thread B2's target locales).
+A1 is the v0.5.0 plan ([`PHASE_8 §A`](../phases/PHASE_8_v0_5_0_fresh_slate.mdx)) tokenizer retrain on `corpus-v0.4.0`. Same harness as [A0](./tokenizer-a0-baseline.mdx); the only intended differences are the corpus (v0.4.0 = v0.3.0 + Thread B kryptonite + Thread B2 transliteration) and the country list (widened to cover Thread B2's target locales).
 
 Trained 2026-05-24, single CPU host, 2.09 hours wall-clock (vs A0's 1.04h — wider country list + larger sample set). SentencePiece configuration unchanged from A0; sampling widened.
 
@@ -43,7 +43,7 @@ Fixture: same 43-line `data/eval/multi-script/v0.5.0-a0.jsonl` A0 used. Numbers 
 ## How to read the numbers
 
 - **A1 beats A0 on every script except cyrillic** (+0.2 pt regression, within noise) **and hebrew** (flat). The training data's effect is unambiguous.
-- **A1 beats v0.1.0 leakage on cjk** — the largest non-Latin script class and the most important target. v0.1.0's CJK win was always a WOF admin-name artefact (see [tokenizer-a0-baseline.md](./tokenizer-a0-baseline.md#why-a0-looks-worse--the-wof-admin-name-leakage-hypothesis)); A1's CJK win is honest.
+- **A1 beats v0.1.0 leakage on cjk** — the largest non-Latin script class and the most important target. v0.1.0's CJK win was always a WOF admin-name artefact (see [tokenizer-a0-baseline.md](./tokenizer-a0-baseline.mdx#why-a0-looks-worse--the-wof-admin-name-leakage-hypothesis)); A1's CJK win is honest.
 - **Latin improved, not regressed** — the anti-goal in the plan held. 5.8% → 3.4% is a meaningful Latin gain, likely from the kryptonite shard sharpening US/FR sub-pieces.
 - **`<5%` overall target missed** — the gap is concentrated in thai (41.9%) and the residual cjk (45.2%). B2 covered cjk + 4 others; thai needs a B3 follow-up to hit the headline target.
 - **Three scripts B2 didn't explicitly cover (devanagari, armenian, greek) improved or zeroed anyway.** Character-coverage 0.9999 + the larger training mix is doing real work. Devanagari going to 0% on 2 fixture lines is fragile — expand the fixture before relying on it.
@@ -56,7 +56,7 @@ A1 is a material improvement over A0 on every targeted script and preserves the 
 2. The covered scripts hit or beat their floor (cjk, cyrillic-noise, armenian).
 3. C-train's classifier consumes the tokenizer; it does not need `<5%` byte-fallback to ship Tier 2 BIO labels on en-US / fr-FR. Latin improved.
 
-The follow-up work for `<5%` overall is a **Thread B3**: extend `TRANSLIT_SCRIPTS` + `KNOWN_SOURCE_PREFIXES` to `grek`, `arab`, `hebr`, `deva`, `thai` (per [`CORPUS_V0_4_0_GENERATION.md`](./CORPUS_V0_4_0_GENERATION.md#scope) — these are noted as additive / deferred), regenerate the deepseek slice, retrain as `v0.5.0-a2`. Treating this as a separate thread keeps C-train unblocked.
+The follow-up work for `<5%` overall is a **Thread B3**: extend `TRANSLIT_SCRIPTS` + `KNOWN_SOURCE_PREFIXES` to `grek`, `arab`, `hebr`, `deva`, `thai` (per [`CORPUS_V0_4_0_GENERATION.md`](./CORPUS_V0_4_0_GENERATION.mdx#scope) — these are noted as additive / deferred), regenerate the deepseek slice, retrain as `v0.5.0-a2`. Treating this as a separate thread keeps C-train unblocked.
 
 ## Model card
 
@@ -80,7 +80,7 @@ This document was produced by an autonomous AI agent operating in a Mailwoman pl
 
 ## See also
 
-- [Tokenizer A0 — baseline](./tokenizer-a0-baseline.md) — what A1 is measured against
-- [PHASE_8 §A](../phases/PHASE_8_v0_5_0_fresh_slate.md#a-tokenizer-retrain--multi-script--adversarial-coverage) — the plan
-- [`CORPUS_V0_4_0_GENERATION.md`](./CORPUS_V0_4_0_GENERATION.md) — how the corpus A1 trained on was assembled
+- [Tokenizer A0 — baseline](./tokenizer-a0-baseline.mdx) — what A1 is measured against
+- [PHASE_8 §A](../phases/PHASE_8_v0_5_0_fresh_slate.mdx#a-tokenizer-retrain--multi-script--adversarial-coverage) — the plan
+- [`CORPUS_V0_4_0_GENERATION.md`](./CORPUS_V0_4_0_GENERATION.mdx) — how the corpus A1 trained on was assembled
 - Harness fix that unblocked the run: commit `51b77d5` (`harness: read MANIFEST.json for train shard resolution`)

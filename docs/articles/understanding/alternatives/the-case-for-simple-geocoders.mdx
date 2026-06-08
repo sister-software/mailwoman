@@ -18,13 +18,13 @@ These are not straw men. They are the architectures most production geocoders ac
 
 | Compromise                                           | What you do                                                           | What you lose                                 |
 | ---------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------- |
-| [Normalize-to-match](./simple-normalize-to-match.md) | Strip, lowercase, abbreviate, fuzzy-match against a known database    | Understanding of what anything _means_        |
-| [Postcode-only](./simple-postcode-only.md)           | Parse the postcode, centroid the result                               | Everything finer than ~1 mile                 |
-| [Gazetteer-first](./simple-gazetteer-first.md)       | Skip parsing, treat as IR — try every token against a placename index | Streets, building numbers, venue names        |
-| [Regex-anchored fields](./simple-regex-fields.md)    | Extract the 3-4 fields you care about, ignore the rest                | The rest                                      |
-| [Locality-only](./simple-locality-only.md)           | Find the city, centroid it                                            | Street-level routing, delivery-point accuracy |
-| [Human-in-the-loop](./simple-human-in-the-loop.md)   | Don't parse — suggest, let the user confirm                           | Automation, scale                             |
-| [Close-enough](./simple-close-enough.md)             | Define your precision requirement, pick the cheapest approach, stop   | Everything below your requirement             |
+| [Normalize-to-match](./simple-normalize-to-match.mdx) | Strip, lowercase, abbreviate, fuzzy-match against a known database    | Understanding of what anything _means_        |
+| [Postcode-only](./simple-postcode-only.mdx)           | Parse the postcode, centroid the result                               | Everything finer than ~1 mile                 |
+| [Gazetteer-first](./simple-gazetteer-first.mdx)       | Skip parsing, treat as IR — try every token against a placename index | Streets, building numbers, venue names        |
+| [Regex-anchored fields](./simple-regex-fields.mdx)    | Extract the 3-4 fields you care about, ignore the rest                | The rest                                      |
+| [Locality-only](./simple-locality-only.mdx)           | Find the city, centroid it                                            | Street-level routing, delivery-point accuracy |
+| [Human-in-the-loop](./simple-human-in-the-loop.mdx)   | Don't parse — suggest, let the user confirm                           | Automation, scale                             |
+| [Close-enough](./simple-close-enough.mdx)             | Define your precision requirement, pick the cheapest approach, stop   | Everything below your requirement             |
 
 ## When simple is the right choice
 
@@ -52,6 +52,6 @@ Mailwoman is the right choice when:
 
 ## See also
 
-- [Why a neural parser?](../our-approach/why-a-neural-parser.md) — the affirmative case
-- [The 90% trap](../why-its-hard/the-90-percent-trap.md) — the economic argument for going past 90%
-- [Falsehoods about addresses](../why-its-hard/falsehoods-about-addresses.md) — the counterexamples that break simple architectures
+- [Why a neural parser?](../our-approach/why-a-neural-parser.mdx) — the affirmative case
+- [The 90% trap](../why-its-hard/the-90-percent-trap.mdx) — the economic argument for going past 90%
+- [Falsehoods about addresses](../why-its-hard/falsehoods-about-addresses.mdx) — the counterexamples that break simple architectures

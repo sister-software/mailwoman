@@ -6,8 +6,8 @@ title: "2026-05-28 No-street counter-example corpus shard"
 # No-street counter-example corpus shard — 2026-05-28
 
 The corpus-side fix for v0.6.1's `dependent_locality` regression. Per the
-[2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.md) and the
-[Layer 1 morphology FST eval](2026-05-28-layer-1-morphology-fst.md): the
+[2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.mdx) and the
+[Layer 1 morphology FST eval](2026-05-28-layer-1-morphology-fst.mdx): the
 morphology FST as a decoder-only fix is insufficient because the model is too
 overconfident on its synth-street-induced dep_loc predictions. The recipe per
 DeepSeek's turn 2 consult is to add explicit counter-distribution training data:
@@ -89,7 +89,7 @@ runnable:
    - `(recall drop >2pp AND baseline >10%)` OR
    - `(hallucination spike >100 AND rate >20% of golden occurrences)`
 5. **Re-run v0-vs-neural harness** post-train and target the failure clusters
-   surfaced by [the harness eval](2026-05-28-v0-vs-neural-harness.md).
+   surfaced by [the harness eval](2026-05-28-v0-vs-neural-harness.mdx).
 
 ## What this doesn't fix
 
@@ -106,11 +106,11 @@ runnable:
 
 ## See also
 
-- [v0-vs-neural harness eval](2026-05-28-v0-vs-neural-harness.md) — establishes
+- [v0-vs-neural harness eval](2026-05-28-v0-vs-neural-harness.mdx) — establishes
   the failure clusters this shard addresses
-- [Layer 1 morphology FST eval](2026-05-28-layer-1-morphology-fst.md) — proves
+- [Layer 1 morphology FST eval](2026-05-28-layer-1-morphology-fst.mdx) — proves
   the decoder-only fix is insufficient and the corpus side is required
-- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.md) — original
+- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.mdx) — original
   postmortem driving the v0.6.2 recipe
-- [Street-supplement architecture](../concepts/street-supplement-architecture.md)
+- [Street-supplement architecture](../concepts/street-supplement-architecture.mdx)
   — the layered design context

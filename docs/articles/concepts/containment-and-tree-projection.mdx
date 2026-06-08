@@ -12,7 +12,7 @@ tags:
 
 After the encoder produces emissions, the FST priors add their biases, and
 Viterbi finds the best valid BIO sequence
-([see those sub-articles](./how-the-model-reasons.md)), the last step turns
+([see those sub-articles](./how-the-model-reasons.mdx)), the last step turns
 that flat label sequence into a hierarchical `AddressTree`. This is the
 piece that lets downstream consumers ask "what's the locality?" or "how
 does this street nest inside its admin parent?" without doing the structural
@@ -128,7 +128,7 @@ structurally weird:
 These are "labels correct, structure wrong" failures. They show up in
 the tree, not in per-tag recall. A tree validator (planned, not yet
 shipped — see
-[corpus-poisoning-vulnerability.md](./corpus-poisoning-vulnerability.md)'s
+[corpus-poisoning-vulnerability.md](./corpus-poisoning-vulnerability.mdx)'s
 deferred items) would check the AddressTree's structural validity as a
 final quality gate.
 
@@ -136,13 +136,13 @@ final quality gate.
 
 The `PARENT_OF` map is the canonical statement of "what nests in what."
 The
-[street-supplement architecture](./street-supplement-architecture.md)
+[street-supplement architecture](./street-supplement-architecture.mdx)
 treats this as the schema's source of truth — extending it (e.g. adding
 `dependent_street → street`) is a schema-level decision that flows into
 training corpus design, eval golden sets, and downstream consumers.
 
 The
-[WOF hierarchy gap](./wof-hierarchy-gap.md) doc explores how WOF's
+[WOF hierarchy gap](./wof-hierarchy-gap.mdx) doc explores how WOF's
 placetype DAG and mailwoman's `PARENT_OF` map are related but distinct
 ontologies — the model's tags answer "what role does this span play in
 an address," while WOF's placetypes answer "what kind of geographical
@@ -165,13 +165,13 @@ into either ontology cleanly.
 
 ## See also
 
-- [How the model reasons](./how-the-model-reasons.md) — the central
+- [How the model reasons](./how-the-model-reasons.mdx) — the central
   pipeline; this article expands stage 6
-- [Viterbi and BIO validity](./viterbi-and-bio-validity.md) — what
+- [Viterbi and BIO validity](./viterbi-and-bio-validity.mdx) — what
   produces the BIO sequence this article consumes
-- [WOF hierarchy gap](./wof-hierarchy-gap.md) — the relationship between
+- [WOF hierarchy gap](./wof-hierarchy-gap.mdx) — the relationship between
   mailwoman's PARENT_OF and WOF's placetype DAG
-- [Street-supplement architecture](./street-supplement-architecture.md) —
+- [Street-supplement architecture](./street-supplement-architecture.mdx) —
   the layered design that extends `PARENT_OF` for street-side components
 - `core/decoder/containment.ts` — the actual rule table
 - `core/decoder/build-tree.ts` — the projection algorithm

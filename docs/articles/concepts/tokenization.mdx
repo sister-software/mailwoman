@@ -54,7 +54,7 @@ Mailwoman's tokenizer was trained from scratch on the corpus. The current shippi
 | A1 (validated)    | 48,000 | 99.99%             | 500K US + 500K FR + 73K multi-script from `corpus-v0.4.0` | Trained; byte-fallback 36.7%→18.2%; pending classifier weights |
 
 - **Special tokens:** `[UNK]` (unknown), `[PAD]` (padding), `[BOS]` / `[EOS]` (beginning/end of sequence)
-- **A1 additions:** 2,110 user-defined symbols (US state codes, postcode literal formats, country abbreviations) to prevent byte-fallback on known address tokens. See [`tokenizer-a0-baseline.md`](../plan/reference/tokenizer-a0-baseline.md) for the A0→A1 measurement story.
+- **A1 additions:** 2,110 user-defined symbols (US state codes, postcode literal formats, country abbreviations) to prevent byte-fallback on known address tokens. See [`tokenizer-a0-baseline.md`](../plan/reference/tokenizer-a0-baseline.mdx) for the A0→A1 measurement story.
 
 ```mermaid
 flowchart LR
@@ -109,6 +109,6 @@ The byte fallback comes from SentencePiece's `byte_fallback: true` setting in th
 
 ## See also
 
-- [What is an address?](../understanding/the-problem/what-is-an-address.md) — what tokens get labelled
-- [BIO labels](./bio-labels.md) — how subword-level labels become character-level spans
-- [Neural classification](./neural-classification.md) — what the model does with tokens
+- [What is an address?](../understanding/the-problem/what-is-an-address.mdx) — what tokens get labelled
+- [BIO labels](./bio-labels.mdx) — how subword-level labels become character-level spans
+- [Neural classification](./neural-classification.mdx) — what the model does with tokens

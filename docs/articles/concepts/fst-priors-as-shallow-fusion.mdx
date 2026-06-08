@@ -66,7 +66,7 @@ viterbi_path = viterbi(final_emissions, transitions_mask)
 ```
 
 The biases are capped at 3.0 logits (per the
-[FST gazetteer prior](./fst-gazetteer-prior.md) design). A confident
+[FST gazetteer prior](./fst-gazetteer-prior.mdx) design). A confident
 encoder decision (raw logit > 5) is not overridden by a 3-logit bias.
 But when the encoder is uncertain (raw logit ~0), a 3-logit positive
 bias is decisive.
@@ -97,7 +97,7 @@ locality match, etc.) AND a negative bias against competing tags on
 those same tokens (`B-street`, `B-house_number`, `B-venue`).
 
 The full design is in
-[FST gazetteer prior](./fst-gazetteer-prior.md). Key constants:
+[FST gazetteer prior](./fst-gazetteer-prior.mdx). Key constants:
 
 - 3.0 logit cap
 - Suppression on `B/I-street`, `B/I-house_number`, `B/I-venue` for matched admin tokens
@@ -135,7 +135,7 @@ prevents the v0.6.1-style dep_loc hallucinations: when synth-street
 training pushed the model toward "decompose mode," the morphology
 prior at inference says "the token next to an affix is street-shaped,
 not dep_loc-shaped." See
-[street-supplement-architecture.md](./street-supplement-architecture.md)
+[street-supplement-architecture.md](./street-supplement-architecture.mdx)
 for the layered design.
 
 ## What additive bias means in practice
@@ -225,12 +225,12 @@ dictate.
 
 ## See also
 
-- [How the model reasons](./how-the-model-reasons.md) — the central
+- [How the model reasons](./how-the-model-reasons.mdx) — the central
   pipeline doc this expands
-- [Attention and bidirectional context](./attention-and-bidirectional-context.md) — what the encoder is doing at the layer below the priors
-- [FST gazetteer prior](./fst-gazetteer-prior.md) — the admin FST in
+- [Attention and bidirectional context](./attention-and-bidirectional-context.mdx) — what the encoder is doing at the layer below the priors
+- [FST gazetteer prior](./fst-gazetteer-prior.mdx) — the admin FST in
   full detail, with worked Washington-DC example
-- [Street-supplement architecture](./street-supplement-architecture.md) —
+- [Street-supplement architecture](./street-supplement-architecture.mdx) —
   the layered street-side prior design
-- [WOF hierarchy gap](./wof-hierarchy-gap.md) — why the admin FST alone
+- [WOF hierarchy gap](./wof-hierarchy-gap.mdx) — why the admin FST alone
   isn't enough at the street layer

@@ -206,7 +206,7 @@ a ranked list of solutions.
 
 That works well for inputs that fit the rules' coverage. It fails on
 inputs that don't. The
-[v0-vs-neural harness eval](../evals/2026-05-28-v0-vs-neural-harness.md)
+[v0-vs-neural harness eval](../evals/2026-05-28-v0-vs-neural-harness.mdx)
 showed v0 at 100% on its own test suite and neural at 14.4% — the v0 rules
 are tuned hard to those tests, and the neural is solving a more general
 problem with less precision.
@@ -252,19 +252,19 @@ With them, the model gets explicit positive and negative evidence at
 inference time that grounds its decisions.
 
 The four-layer street-supplement architecture documented in
-[street-supplement-architecture.md](./street-supplement-architecture.md)
+[street-supplement-architecture.md](./street-supplement-architecture.mdx)
 extends this with progressively richer street-side priors (morphology →
 candidacy → identity → schema). Each layer adds a different kind of
 evidence to the additive-bias sum.
 
 ## See also
 
-- [Street-supplement architecture](./street-supplement-architecture.md) — the
+- [Street-supplement architecture](./street-supplement-architecture.mdx) — the
   layered design that fills the
-  [WOF hierarchy gap](./wof-hierarchy-gap.md) at the street level
-- [FST gazetteer prior](./fst-gazetteer-prior.md) — the admin FST in detail
-- [BIO labels](./bio-labels.md) — the per-token label space
-- [Neural classification](./neural-classification.md) — earlier explanation
+  [WOF hierarchy gap](./wof-hierarchy-gap.mdx) at the street level
+- [FST gazetteer prior](./fst-gazetteer-prior.mdx) — the admin FST in detail
+- [BIO labels](./bio-labels.mdx) — the per-token label space
+- [Neural classification](./neural-classification.mdx) — earlier explanation
   of the pipeline (this doc supersedes it as the central theory)
-- [Corpus poisoning vulnerability](./corpus-poisoning-vulnerability.md) — what
+- [Corpus poisoning vulnerability](./corpus-poisoning-vulnerability.mdx) — what
   the architecture's empirical-learner nature means for training-data risk

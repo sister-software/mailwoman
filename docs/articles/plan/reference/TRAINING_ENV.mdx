@@ -113,7 +113,7 @@ Without the override, kernel launches will fail with cryptic GPU errors. Persist
 
 - **`hipBLASLt unsupported`**: PyTorch emits a `UserWarning: Attempting to use hipBLASLt on an unsupported architecture! Overriding blas backend to hipblas` on every Linear layer call. Harmless — the `hipblas` fallback works correctly on gfx1103. Future PyTorch versions may stop logging this.
 - **`amdgpu.ids: No such file or directory`**: also harmless. The file is shipped with `mesa-amdgpu-vulkan-drivers` which isn't installed in the playpen base image. Nothing fails as a result.
-- **Math SDPA**: per [the lab GPU notes](https://github.com/sister-software/mailwoman/blob/main/docs/articles/concepts/training-pipeline.md), set `torch.backends.cuda.enable_flash_sdp(False)` and use `math` SDPA backend if attention kernels misbehave. The current corpus-python configs already do this.
+- **Math SDPA**: per [the lab GPU notes](https://github.com/sister-software/mailwoman/blob/main/docs/articles/concepts/training-pipeline.mdx), set `torch.backends.cuda.enable_flash_sdp(False)` and use `math` SDPA backend if attention kernels misbehave. The current corpus-python configs already do this.
 
 ## Cost summary
 
@@ -137,6 +137,6 @@ The right time to bake it in is when classifier-training becomes a routine conta
 
 ## See also
 
-- [`VERDICT_SMOKES.md`](./VERDICT_SMOKES.md) — what to run once the environment is up
-- [PHASE_2_training.md](../phases/PHASE_2_training.md) — the training loop's expected configuration
-- [`tokenizer-a0-baseline.md`](./tokenizer-a0-baseline.md) — the lighter-weight alternative path (CPU-only, no torch needed)
+- [`VERDICT_SMOKES.md`](./VERDICT_SMOKES.mdx) — what to run once the environment is up
+- [PHASE_2_training.md](../phases/PHASE_2_training.mdx) — the training loop's expected configuration
+- [`tokenizer-a0-baseline.md`](./tokenizer-a0-baseline.mdx) — the lighter-weight alternative path (CPU-only, no torch needed)

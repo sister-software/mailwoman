@@ -73,7 +73,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 | 0.05    | v0.3.0, v0.4.0, v0.5.0 threads v3 + bisects | v0.3.0/v0.4.0: stable. v0.5.0: diverged. |
 | **0.0** | v0.5.0 CE-only, v0.5.1                      | Stable. Best results.                    |
 
-**How we got to 0.0.** The gradient-norm ratio probe (2026-05-24) revealed CRF gradient dominates CE by 8-20× at the divergence inflection point. Even at weight=0.05, the effective optimization mix was ~1:0.8 CE:CRF. Below loss 0.41, CE and CRF develop opposing curvature — the CRF pulls the model off its CE-preferred basin. See [dual-loss curvature conflict](../../concepts/dual-loss-curvature-conflict.md).
+**How we got to 0.0.** The gradient-norm ratio probe (2026-05-24) revealed CRF gradient dominates CE by 8-20× at the divergence inflection point. Even at weight=0.05, the effective optimization mix was ~1:0.8 CE:CRF. Below loss 0.41, CE and CRF develop opposing curvature — the CRF pulls the model off its CE-preferred basin. See [dual-loss curvature conflict](../../concepts/dual-loss-curvature-conflict.mdx).
 
 **What 0.05 did.** Shipped v0.3.0 and v0.4.0 successfully at h256 with those corpora. Failed at h384 and with the v0.4.0 corpus. The destabilization is recipe-dependent, not a universal property of 0.05 — it interacted with the larger model and/or the new corpus.
 
@@ -138,7 +138,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 **How we got to batch=128 direct.** The A100 has 40 GB VRAM; the h384 model uses ~4 GB. No need for gradient accumulation. Direct batch=128 gives cleaner gradients (no micro-batch noise) and much higher throughput (120 sps vs 6.9 sps).
 
-**The smoke-batch lesson.** Smoke tests at eff_batch=8 passed cleanly while full runs at eff_batch=128 diverged. At smaller batch sizes, the higher per-step gradient noise paradoxically stabilizes training against curvature conflicts (the model can't settle deep enough into the basin where the conflict manifests). This is now documented in [VERDICT_SMOKES.md](./VERDICT_SMOKES.md).
+**The smoke-batch lesson.** Smoke tests at eff_batch=8 passed cleanly while full runs at eff_batch=128 diverged. At smaller batch sizes, the higher per-step gradient noise paradoxically stabilizes training against curvature conflicts (the model can't settle deep enough into the basin where the conflict manifests). This is now documented in [VERDICT_SMOKES.md](./VERDICT_SMOKES.mdx).
 
 ### `warmup_steps`
 
@@ -160,7 +160,7 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 | cosine       | v0.3.0, v0.4.0 | Standard. But masked divergence in v0.4.0 smokes.             |
 | **constant** | v0.5.0, v0.5.1 | Used per VERDICT_SMOKES.md mode A — new recipe = constant LR. |
 
-**How we got to constant.** v0.4.0's cosine-LR smoke passed a recipe that diverged in the full run. Constant LR keeps the model at sustained peak LR for the entire training window — divergence surfaces immediately if the recipe is unstable. See [VERDICT_SMOKES.md](./VERDICT_SMOKES.md).
+**How we got to constant.** v0.4.0's cosine-LR smoke passed a recipe that diverged in the full run. Constant LR keeps the model at sustained peak LR for the entire training window — divergence surfaces immediately if the recipe is unstable. See [VERDICT_SMOKES.md](./VERDICT_SMOKES.mdx).
 
 **Downside.** Constant LR can overfit faster (no LR decay to slow learning in late training). The v0.5.1 overfitting past step 65K may partly be caused by constant LR — cosine decay would reduce the learning rate by that point, slowing the overfitting. A future experiment: constant LR for the first 60K steps (validation), then cosine decay for the remaining 40K (refinement).
 
@@ -183,7 +183,7 @@ Current values are carried from v0.4.0's §4 source rebalance (the only recipe l
 
 **How we got here.** v0.4.0's postcode regression (F1 0.76 → 0.69) was traced to NAD's downweight removing "postcode comes first" positional patterns. The current weights are a compromise. Not re-validated since v0.4.0 — the corpus-v0.4.0 additions (kryptonite + transliteration) may shift the optimal mix.
 
-**v0.5.2 planned change:** Drop `wof-admin` from 2.0 → 0.3. Root cause of the locality/region confusion in demo presets: WOF bare-name entries (which carry no positional context) outnumber OSM full-address entries for ambiguous place names like "Washington." The model learns the frequency-dominant pattern (region) rather than the positionally-correct pattern (locality when preceding a region abbreviation). See [`DEMO_PRESET_DIAGNOSIS.md`](./DEMO_PRESET_DIAGNOSIS.md).
+**v0.5.2 planned change:** Drop `wof-admin` from 2.0 → 0.3. Root cause of the locality/region confusion in demo presets: WOF bare-name entries (which carry no positional context) outnumber OSM full-address entries for ambiguous place names like "Washington." The model learns the frequency-dominant pattern (region) rather than the positionally-correct pattern (locality when preceding a region abbreviation). See [`DEMO_PRESET_DIAGNOSIS.md`](./DEMO_PRESET_DIAGNOSIS.mdx).
 
 ### Training augmentation (v0.5.2 planned)
 
@@ -211,7 +211,7 @@ Current values are carried from v0.4.0's §4 source rebalance (the only recipe l
 
 ## See also
 
-- [VERDICT_SMOKES.md](./VERDICT_SMOKES.md) — the smoke discipline that catches recipe failures
-- [Dual-loss curvature conflict](../../concepts/dual-loss-curvature-conflict.md) — why crf_loss_weight=0 works
-- [v0.5.0 — as shipped](../v0-5-0-shipped.md) — the thread table
-- [What the eval numbers mean](../../understanding/our-approach/what-the-eval-numbers-mean.md) — plain-English interpretation
+- [VERDICT_SMOKES.md](./VERDICT_SMOKES.mdx) — the smoke discipline that catches recipe failures
+- [Dual-loss curvature conflict](../../concepts/dual-loss-curvature-conflict.mdx) — why crf_loss_weight=0 works
+- [v0.5.0 — as shipped](../v0-5-0-shipped.mdx) — the thread table
+- [What the eval numbers mean](../../understanding/our-approach/what-the-eval-numbers-mean.mdx) — plain-English interpretation
