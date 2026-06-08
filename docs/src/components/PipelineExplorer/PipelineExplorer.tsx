@@ -26,11 +26,15 @@ import React, { useCallback, useState } from "react"
 import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
 import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES, flattenTree, runCascade } from "../../shared/demo-helpers.ts"
 import type { DemoResult, DualRole, ResolvedHit } from "../../shared/resources.tsx"
+import { BIOHighlight } from "../BIOHighlight/BIOHighlight.tsx"
+import { ClassifierOverlay } from "../ClassifierOverlay/ClassifierOverlay.tsx"
+import { CRFDiff } from "../CRFDiff/CRFDiff.tsx"
 import { CandidatePicker } from "../CandidatePicker/CandidatePicker.tsx"
 import { FailureDiagnostic } from "../FailureDiagnostic/FailureDiagnostic.tsx"
 import { KindBadge } from "../KindBadge/KindBadge.tsx"
-import { BIOHighlight } from "../BIOHighlight/BIOHighlight.tsx"
+import { FSTWalker } from "../FSTWalker/FSTWalker.tsx"
 import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
+import { SubwordExplorer } from "../SubwordExplorer/SubwordExplorer.tsx"
 import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
 import { TreeView } from "../TreeView/TreeView.tsx"
 
@@ -355,11 +359,39 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 						</details>
 					) : null}
 
+					{result.fstActive ? (
+						<details className={styles.hierarchyDetails}>
+							<summary>FST walker</summary>
+							<FSTWalker input={result.input} />
+						</details>
+					) : null}
+
 					<SpanHighlight input={result.input} nodes={result.nodes} />
+
+					<details className={styles.hierarchyDetails}>
+						<summary>Subword tokens & pipeline stages</summary>
+						<SubwordExplorer
+							input={result.input}
+							nodes={result.nodes}
+							tree={result.tree}
+							kindResult={result.kindResult}
+							timing={result.timing}
+						/>
+					</details>
 
 					<details className={styles.hierarchyDetails}>
 						<summary>BIO labels</summary>
 						<BIOHighlight input={result.input} nodes={result.nodes} />
+					</details>
+
+					<details className={styles.hierarchyDetails}>
+						<summary>Classification origin</summary>
+						<ClassifierOverlay tree={result.tree} nodes={result.nodes} fstActive={result.fstActive} />
+					</details>
+
+					<details className={styles.hierarchyDetails}>
+						<summary>CRF: argmax vs Viterbi</summary>
+						<CRFDiff />
 					</details>
 
 					<table className={styles.componentTable}>

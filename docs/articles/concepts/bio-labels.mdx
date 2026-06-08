@@ -137,6 +137,17 @@ This pattern is one of the most-tested approaches in NLP. CoNLL-2003 (the canoni
 - **Inference-time decoding:** `neural/decoder.ts` (per-token argmax today; Viterbi in v0.4.0)
 - **CRF transition mask:** `corpus-python/src/mailwoman_train/crf.py` (`build_bio_transition_mask`)
 
+## See it in action
+
+import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
+import { PipelineExplorer } from "@site/src/components/PipelineExplorer/PipelineExplorer"
+
+<DemoEmbedProvider sqljsBaseUrl="/mailwoman/sqljs">
+  <PipelineExplorer />
+</DemoEmbedProvider>
+
+Expand the **BIO labels** section to see the word-level BIO label breakdown for a live parse.
+
 ## See also
 
 - [CRF decoder](./crf-decoder.mdx) — the structural-validity layer

@@ -107,6 +107,17 @@ The byte fallback comes from SentencePiece's `byte_fallback: true` setting in th
 - **Subword tokenizer (neural):** `neural/tokenizer.ts` + the trained model at `packages/neural-weights-en-us/tokenizer.model`
 - **Training:** `corpus-python/scripts/train_tokenizer.py` (run once, output committed to `/data/models/tokenizer/v0.1.0/`)
 
+## See it in action
+
+import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
+import { PipelineExplorer } from "@site/src/components/PipelineExplorer/PipelineExplorer"
+
+<DemoEmbedProvider sqljsBaseUrl="/mailwoman/sqljs">
+  <PipelineExplorer />
+</DemoEmbedProvider>
+
+Expand the **Subword tokens & pipeline stages** section to see per-stage word token annotations for a live parse.
+
 ## See also
 
 - [What is an address?](../understanding/the-problem/what-is-an-address.mdx) — what tokens get labelled

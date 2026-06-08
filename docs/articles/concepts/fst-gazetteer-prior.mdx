@@ -235,6 +235,15 @@ The FST is one node in a longer pipeline of cached work. The unified SQLite is a
 - **It does not handle streets.** v1 ships admin-only (countries, regions, localities, postcodes). Streets would add ~3-5M unique names and require metro-area sharding for the browser; tracked as Phase 2+ in [`FST_GAZETTEER_LM.md`](../plan/reference/FST_GAZETTEER_LM.mdx).
 - **It does not override the model.** The bias is additive and capped. If the model is confident the input says "Paris, TX," the FST prior on French Paris doesn't change the outcome.
 
+## See it in action
+
+import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
+import { FSTWalker } from "@site/src/components/FSTWalker/FSTWalker"
+
+<DemoEmbedProvider sqljsBaseUrl="/mailwoman/sqljs">
+  <FSTWalker input="New York, NY 10001" />
+</DemoEmbedProvider>
+
 ## See also
 
 - [FST gazetteer LM (reference)](../plan/reference/FST_GAZETTEER_LM.mdx) — implementation phases, design decisions, locale strategy, size estimates

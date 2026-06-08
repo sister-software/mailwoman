@@ -135,6 +135,17 @@ Common reasons:
 
 You should **not** swap a stage to bypass it cheaply. If you want the pipeline without locale detection, pass `{ locale: "en-US" }` on every call — the default `detectLocale` is already a sub-microsecond caller-trust stub. The performance you'd reclaim by swapping is rounding error against the neural classifier's milliseconds.
 
+## See it in action
+
+import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
+import { PipelineExplorer } from "@site/src/components/PipelineExplorer/PipelineExplorer"
+
+<DemoEmbedProvider sqljsBaseUrl="/mailwoman/sqljs">
+  <PipelineExplorer />
+</DemoEmbedProvider>
+
+Expand the **Classification origin** section to see which pipeline stage contributed to each parsed component.
+
 ## See also
 
 - [STAGES.md](../plan/reference/STAGES.mdx) — the full per-stage type contract
