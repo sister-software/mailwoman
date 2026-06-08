@@ -51,7 +51,7 @@ const handler: RequestHandler = async (req, res) => {
 	})
 }
 
-export const AddressRouter = Router()
+export const AddressRouter: Router = Router()
 
 AddressRouter.post("/parse", handler)
 AddressRouter.search("/parse", handler)
