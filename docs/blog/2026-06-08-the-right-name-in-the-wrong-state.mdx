@@ -1,0 +1,69 @@
+---
+title: "The right name in the wrong state"
+description: "Our resolver scored 93.7% on the metric we'd been quoting for months. On the same addresses, its median answer was 326 kilometers from the truth. Both numbers were correct. Only one of them was honest."
+authors: [teffen]
+tags: [eval, resolver, wof, coordinate-first, methodology, advanced]
+---
+
+Our resolver scored 93.7% on the metric we'd been quoting for months. On the same addresses, its median answer was 326 kilometers from the truth.
+
+Both numbers are correct. That's the uncomfortable part.
+
+{/* truncate */}
+
+## A metric that reads the label and never checks the map
+
+When the resolver turns a parsed address into a place, we used to grade it one way: did the place it picked carry the same _name_ as the gold answer? Gold says the locality is "Sheldon", resolver says "Sheldon", that's a point. It's a reasonable-sounding check, and it is wrong in a way that took us months to see. It can only fail when the name is wrong, and the name is almost never wrong.
+
+There are ten places called "Sheldon" in the United States. "New York" is a city and a state and a village 280 kilometers apart. "Washington" is a town in most states you can name. When you grade by name, every one of those is a tie, and the resolver gets full marks for picking _any_ of them. The metric was answering "is this the right word?" when the only question that matters is "is this the right place on Earth?"
+
+So we built a harness that asks the second question, and pointed it at the one slice of data where it would tell the truth.
+
+## Leakage-free, or it's just a memory test
+
+The honest slice matters as much as the honest metric. Our model trains on a corpus that covers the same towns the eval tests, so a random evaluation partly measures memorization: the model recalling a place it has already seen rather than generalizing to one it hasn't. The corpus deliberately holds a few regions out of training entirely. Evaluate only on those held-out places and you're testing the model on geography it has genuinely never met.
+
+In our current data that's Vermont: 1,428 addresses the model trained around, not on. We ran the full pipeline on them and stopped grading by name. We measured **region-match**, the great-circle distance from the gold point to the resolved one, and **PIP-containment** (whether the gold coordinate actually falls inside the resolved place's polygon). None of those can be fooled by a matching string.
+
+Here is what the honest slice said, next to the number we'd been quoting:
+
+| metric | what we quoted | the honest number |
+| --- | ---: | ---: |
+| locality name-match | 93.7% | 93.7% |
+| region-match | — | 0.0% |
+| coordinate error (p50) | — | 326 km |
+
+Region-match: zero. Not low. Zero. The resolver was getting the state right essentially never, and the name-match metric had no way to tell us, because "Sheldon, Vermont" and "Sheldon, Iowa" are the same word.
+
+## Following the 326 kilometers down
+
+The model wasn't the problem. Hand it `226 Bridge Rd, North Hero, VT 05474` and it cleanly tags `region="VT"`, `locality="North Hero"`, the street, the number, the postcode. The parse is right. The resolver throws the region away.
+
+It throws it away because it can't read it. Who's On First stores Vermont as "Vermont"; our search index carried no abbreviations, so `findPlace("VT")` matched nothing. With no resolved region, the resolver had no parent to constrain the locality search, so it searched the whole country — and when ten Sheldons compete with no geographic filter, the one with the largest population wins. Vermont's Sheldon (population 932) loses to Iowa's (population 5,455) every single time. The 326 kilometers was the distance between the right name and the famous one.
+
+The fix already existed in the repo. A build step that pulls state abbreviations from a reference dataset we already ship had simply fallen out of the build manifest, so the gazetteer went out without it. We put it back, rebuilt the index, and re-ran the same slice:
+
+| metric | before | after |
+| --- | ---: | ---: |
+| region-match | 0.0% | 99.9% |
+| coordinate error (p50) | 326 km | 3.4 km |
+
+Across the full US sample, the long tail told the same story louder: the 90th-percentile error fell from **2,763 kilometers to 10**. We carry a flag called `--default-country`, the one that makes you tell the resolver the answer it's supposed to find, and it exists largely to paper over this exact blindness. The resolver can read the region now.
+
+## The number was right; the screwdriver was wrong
+
+This is where it would be tidy to stop. It wasn't tidy.
+
+Before promoting anything we ran the demo presets, the eight addresses we look at by hand, and one of them had gotten worse. `350 5th Ave, New York, NY` used to resolve to New York City. Now it resolved to "New York Mills", a village 283 kilometers upstate. The aggregate said the fix was a triumph; the functional check said we'd broken the most famous address in the set. When those two disagree, the functional check is the one telling the truth, and that disagreement is where you go looking.
+
+The clue led somewhere worth knowing. Now that the region resolved, the resolver was boosting places that descend from it, and it works out descent from a precomputed ancestry table. New York City spans five boroughs, so Who's On First gives it the "no single parent" sentinel for a parent id, and our table-builder, which only ever followed parent ids, had recorded NYC's ancestry as _just itself_. No link to New York state. So the region boost lifted the correctly-filed village over the city, and a village of three thousand beat a city of eight million on a technicality of bookkeeping.
+
+The ancestry was never actually missing. NYC's source record carries the full hierarchy, with New York state in all five of its borough branches, sitting in a field our builder didn't read. So we read it: a repair pass that rebuilds ancestry from the authoritative hierarchy fixed 47,129 places. New York City resolves to New York City again, Vermont stayed at 3.4 kilometers, and the metro regression was gone.
+
+## What we're keeping
+
+Two things, and they're the same shape.
+
+The first is about metrics. A measurement that grades by name can be gamed by coincidence and will flatter you right up until a customer geocodes into the wrong state. The coordinate can't be gamed: a point is either inside the right boundary or it isn't. We lead with region-match and distance now, and we report containment honestly, point geometry and all. The yardstick comes before the optimization, because every win you book against a dishonest yardstick is a win you might have to give back.
+
+The second is about trust. The aggregate loved the abbreviation fix. The eight addresses we read with our own eyes caught the regression the aggregate buried, and chasing _why_ those eight disagreed is what surfaced the ancestry bug underneath. Numbers scale and that is exactly their weakness; they average away the one case that would have embarrassed you. Keep reading the addresses by hand. The disagreement is where the bug lives.
