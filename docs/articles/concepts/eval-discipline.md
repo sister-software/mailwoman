@@ -78,6 +78,30 @@ The golden eval set (`v0.1.2`, 4,535 entries) is the single most important artif
 - **Annotation noise is real.** At typical 1% annotator error rates in human-labeled NER data, a 0.5–1.5pt macro_F1 shift can be noise. When a regression lands in this band, manually inspect the disagreement entries before deciding.
 - **Small eval sets amplify noise.** 4,535 entries means a 1pt macro_F1 regression is ~45 flipped entries. At 1% annotator error, the false-positive rate on "regression detected" is ~10%.
 
+## Resolver eval: the name is gameable, the coordinate is not
+
+The discipline above grades parser spans against a golden. The resolver — the stage that turns a parsed address into a place on Earth — needs its own, and it fails differently. The trap here is grading resolution by **name-match**: did the resolved place carry the same name string as the gold? That question can only fail when the name is wrong, and the name is almost never wrong. There are ten US localities called "Sheldon"; "New York" is a city, a state, and a village 280km apart. A name-match metric scores every one of those a tie and gives the resolver full marks for picking any of them.
+
+The 2026-06-08 honest-eval run made the cost concrete: on a leakage-free Vermont slice the resolver scored **93.7% locality name-match while its median coordinate was 326km from the truth** — it was finding the right *name* in the wrong *state*, and name-match could not see it. Two disciplines follow.
+
+### Evaluate on geography the model never trained on
+
+Random evaluation flatters the model: the corpus covers the same towns the eval tests, so component recall is partly memorization. The corpus holds specific regions out of training (`corpus/src/split.ts` `defaultHoldouts()`: VT/WY/ND for US, Corse/Lozère/Creuse for FR). OpenAddresses rows in that held-out geography test the model on places it has never seen — the only honest estimate of generalization. Require a minimum slice size (we use 1,000 rows) and report it `UNTRUSTED` below that rather than scoring noise.
+
+### Grade by the coordinate, not the string
+
+Three metrics survive a name collision:
+
+- **region-match** — does the resolved region equal the input region? 100% checkable, and the single fastest way to catch a wrong-state resolve.
+- **coordinate error** (great-circle, gold point to resolved centroid, p50/p90) — handles point geometry natively and exposes the wrong-instance resolves that name-match ties.
+- **PIP-containment** — is the gold point inside the resolved place's polygon? Name-surface-independent, but report it *with a polygon-coverage denominator*: WOF point-geometry localities have no polygon and would otherwise count as silent failures, and tight municipal polygons reject rural addresses ascribed to the nearest town. Lead with region-match and coordinate; treat locality-PIP as a coverage-adjusted secondary.
+
+`scripts/eval/honest-eval.sh` + `scripts/eval/pip-containment.py` implement this; see [the honest-eval report](../evals/2026-06-08-honest-eval.md) for the full run.
+
+### When aggregate and functional disagree, functional wins
+
+The region fix that came out of that run looked like a pure triumph on aggregate (Vermont 326→3.4km), and the eight demo presets we read by hand caught it regressing the most famous address in the set (`New York, NY` → "New York Mills", 283km upstate). The aggregate had averaged that one case away. Chasing *why* the eight disagreed is what surfaced the deeper bug. Run the functional presets before any verdict, and treat a disagreement between them and the aggregate as a clue, not noise — the same lesson the parser side learned, on the resolver side.
+
 ## Verdict smokes and eval infrastructure
 
 A separate but related discipline surrounds training experiments. See [`VERDICT_SMOKES.md`](../plan/reference/VERDICT_SMOKES.md) for the full framework. The eval-relevant lessons:
@@ -96,6 +120,7 @@ Before shipping a model release:
 4. **Inspect borderline regressions manually.** A 0.5–1.5pt macro_F1 shift could be annotator noise. Look at the actual disagreements before deciding.
 5. **Run verdict smokes at full-run geometry with constant LR.** Cosine decay and mismatched batch sizes produce false confidence.
 6. **Build diagnostic tooling before you need it.** `corpus-audit` and `diagnose_regression.py` were built during the v0.4.0 campaign — they would have saved most of v0.3.0's investigation time if they'd existed earlier.
+7. **Grade the resolver by coordinate on a leakage-free slice.** Never ship a resolver change on name-match alone — it ties same-named places in different states. Evaluate on held-out geography (`honest-eval.sh`), lead with region-match + coordinate error, and read the demo presets before the verdict.
 
 ## See also
 
