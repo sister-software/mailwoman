@@ -337,6 +337,40 @@ def export_onnx(
     image=training_image,
     timeout=600,
 )
+def quantize_onnx(
+    fp32_path: str = "",
+    int8_path: str = "",
+):
+    """Int8-quantize an fp32 ONNX on the volume, in the training image.
+
+    The dynamo-exported graph (see ``export_to_onnx``) trips onnx shape inference in some
+    *local* onnxruntime builds (``quantize_dynamic`` / the ORT pre-process both fail with a
+    ShapeInferenceError). The training image's pinned onnxruntime quantizes it cleanly, so we
+    do int8 here next to ``export_onnx`` rather than locally.
+
+    Usage: ``modal run scripts/modal/train_remote.py::quantize_onnx
+    --fp32-path=/data/output-v097-unit-v3-s42/model.onnx
+    --int8-path=/data/models/quantized/model-v097-step-20000-int8.onnx``
+    """
+    from pathlib import Path
+    import sys
+    sys.path.insert(0, "/data/corpus-python/src")
+    from mailwoman_train.quantize import quantize_dynamic_int8
+
+    fp32 = Path(fp32_path)
+    int8 = Path(int8_path)
+    print(f"Quantizing {fp32} → {int8}")
+    quantize_dynamic_int8(fp32, int8)
+    print(f"int8 written: {int8} ({int8.stat().st_size / 1e6:.1f} MB)")
+    vol.commit()
+    print("Committed to volume.")
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=600,
+)
 def diagnose_corpus(
     corpus_dir: str = "/data/corpus/versioned/v0.4.0/corpus-v0.4.0",
     verify_country: str = "",

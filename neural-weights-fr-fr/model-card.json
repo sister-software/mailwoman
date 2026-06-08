@@ -1,18 +1,16 @@
 {
 	"name": "neural-weights-fr-fr",
-	"version": "4.0.0",
-	"model_lineage": "shares the en-us Stage 3 / step 100000 model (formerly v0.6.0) — relabeled to the unified 4.0.0 release version; tokenizer 0.6.0-a0",
-	"phase": "Stage 2 (coarse + venue/street/house_number)",
+	"version": "4.1.0",
+	"model_lineage": "shares the en-us v0.9.7-unit-v3 multi-locale model (step 20000) — shipped as the unified 4.1.0 release version; tokenizer 0.6.0-a0. fr-fr and en-us bundle the SAME byte-identical model; this package carries the FR-specific calibration table.",
+	"phase": "Stage 3 — multi-locale (FR via the shared model)",
 	"license": "AGPL-3.0-only",
 	"locale": "fr-fr",
 	"training": {
-		"corpus_version": "0.3.0",
-		"tokenizer_version": "0.1.0",
-		"steps": 2200,
-		"hardware": "AMD Radeon 780M (gfx1103) bf16 ~14.6 GiB GTT",
-		"duration_seconds": 1146.0,
-		"started_at": null,
-		"completed_at": "2026-05-23T06:21:51.190078Z"
+		"corpus_version": "0.4.5-unit-v2",
+		"tokenizer_version": "0.6.0-a0",
+		"steps": 20000,
+		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+		"note": "Identical artifact to neural-weights-en-us 4.1.0 (one multi-locale model serves both). See that card's training/recipe for full provenance."
 	},
 	"components_supported": [
 		"country",
