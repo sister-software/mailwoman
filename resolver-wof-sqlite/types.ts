@@ -58,6 +58,13 @@ export interface PlaceCandidate {
 	score: number
 	distanceKm?: number
 	/**
+	 * True when this candidate's name OR an alias EXACTLY equals the query (the exact-match tier from
+	 * {@link RankingWeights.exactMatchTiering}). Surfaced so a downstream country re-rank (#369's
+	 * postcode anchor in `resolveTree`) can pin the country without crossing the tier — see the
+	 * `exactMatch` field on `@mailwoman/core`'s `ResolvedPlace`.
+	 */
+	exactMatch?: boolean
+	/**
 	 * Population from WOF's `wof:population` property. Only present when the candidate has it on
 	 * record — WOF carries population for ~15% of localities (mostly larger ones). Absent does NOT
 	 * mean zero, just unknown.
