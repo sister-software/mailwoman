@@ -20,19 +20,24 @@ interface CliArgs {
 	output: string
 	topLocalities: number
 	countries: string[]
+	dropNames: boolean
 }
 
 function printUsageAndExit(code: number): never {
 	stderr.write(
 		[
-			"usage: mailwoman-wof-build-slim --in <wof.db>... --out <slim.db> [--top N] [--countries US,CA,...]",
+			"usage: mailwoman-wof-build-slim --in <wof.db>... --out <slim.db> [--top N] [--countries US,CA,...] [--drop-names]",
 			"",
 			"Builds a trimmed WOF SQLite distribution for the browser-side demo. Default selection:",
 			"  - All ancestor placetypes (country/region/county/borough/macroregion) in scope",
-			"  - Top --top localities by wof:population (default 1000)",
+			"  - Top --top localities by population (from the source place_population table, default 1000)",
 			"  - All postalcodes in scope",
-			"  - All names + geojson rows for selected IDs",
-			"  - Fresh place_search FTS5, place_bbox R*Tree, place_population aux tables",
+			"  - All names + place_population rows for selected IDs (+ coincident_roles, filtered)",
+			"  - Fresh place_search FTS5 + place_bbox R*Tree (rebuilt from spr + names)",
+			"",
+			"--drop-names drops the names table after the FTS build (self-contained FTS5; ~2/3 size win,",
+			"the resolver never reads names at runtime — see #359). Empty --in values are skipped (pass",
+			'"" for a shard that isn\'t built yet).',
 			"",
 			"Examples:",
 			"  mailwoman-wof-build-slim --in admin-us.db --in postalcode-us.db --out wof-hot.db",
@@ -45,13 +50,15 @@ function printUsageAndExit(code: number): never {
 }
 
 function parseArgs(argv: string[]): CliArgs {
-	const out: CliArgs = { inputs: [], output: "", topLocalities: 1000, countries: ["US"] }
+	const out: CliArgs = { inputs: [], output: "", topLocalities: 1000, countries: ["US"], dropNames: false }
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i]
 		if (a === "--in") {
+			// Consume the value even when empty — callers pass `--in ""` for a shard (e.g. a custom
+			// postcode DB) that isn't built yet. Push only non-empty paths; build-slim skips the rest.
 			const v = argv[++i]
-			if (!v) printUsageAndExit(2)
-			out.inputs.push(v)
+			if (v === undefined) printUsageAndExit(2)
+			if (v) out.inputs.push(v)
 		} else if (a === "--out") {
 			const v = argv[++i]
 			if (!v) printUsageAndExit(2)
@@ -72,6 +79,8 @@ function parseArgs(argv: string[]): CliArgs {
 				.split(",")
 				.map((c) => c.trim())
 				.filter(Boolean)
+		} else if (a === "--drop-names") {
+			out.dropNames = true
 		} else if (a === "--help" || a === "-h") {
 			printUsageAndExit(0)
 		} else {
@@ -96,6 +105,7 @@ export async function main(rawArgv: string[]): Promise<number> {
 		output: args.output,
 		countries: args.countries,
 		topLocalitiesPerCountry: args.topLocalities,
+		dropNames: args.dropNames,
 		onProgress: (phase, detail) => {
 			stderr.write(`[${phase}] ${detail}\n`)
 		},
@@ -107,8 +117,7 @@ export async function main(rawArgv: string[]): Promise<number> {
 		stderr.write(
 			`\nBuilt ${result.outputPath} (${mb} MB)\n` +
 				`  spr=${result.rowCounts.spr}` +
-				`  names=${result.rowCounts.names}` +
-				`  geojson=${result.rowCounts.geojson}` +
+				`  names=${result.rowCounts.names}${args.dropNames ? " (dropped)" : ""}` +
 				`  fts=${result.rowCounts.placeSearch}` +
 				`  bbox=${result.rowCounts.placeBbox}` +
 				`  pop=${result.rowCounts.placePopulation}\n`

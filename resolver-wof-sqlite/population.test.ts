@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Population-weighted ranking tests. Builds an in-memory fixture DB with a geojson body that
- *   carries `wof:population`, exercises buildPlaceSearchFts() so the place_population aux table
- *   gets populated, then verifies the boost behaves as documented.
+ *   Population-weighted ranking tests. Builds an in-memory fixture DB in the production shape — a
+ *   pre-built `place_population` aux table (no geojson; `build-unified-wof` extracts
+ *   `wof:population` into it at ingest) — then verifies the ranking boost behaves as documented.
  */
 
 import { DatabaseSync } from "node:sqlite"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { buildPlaceSearchFts, placePopulationExists } from "./fts.js"
+import { buildPlaceSearchFts } from "./fts.js"
 import { WofSqlitePlaceLookup } from "./lookup.js"
 
 interface FixturePlace {
@@ -45,7 +45,7 @@ function buildFixtureDb(): DatabaseSync {
 		);
 		CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);
 		CREATE TABLE ancestors (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
-		CREATE TABLE geojson (id INTEGER PRIMARY KEY, body TEXT);
+		CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0);
 	`)
 	const insertSpr = db.prepare(`
 		INSERT INTO spr (id, parent_id, name, placetype, country,
@@ -54,15 +54,10 @@ function buildFixtureDb(): DatabaseSync {
 		                 is_current, is_deprecated)
 		VALUES (?, NULL, ?, 'locality', ?, ?, ?, ?, ?, ?, ?, -1, 0)
 	`)
-	const insertGeo = db.prepare(`INSERT INTO geojson (id, body) VALUES (?, ?)`)
+	const insertPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
 	for (const p of FIXTURE) {
 		insertSpr.run(p.id, p.name, p.country, p.lat, p.lon, p.lat - 0.05, p.lat + 0.05, p.lon - 0.05, p.lon + 0.05)
-		const properties: Record<string, unknown> = {
-			"geom:latitude": p.lat,
-			"geom:longitude": p.lon,
-		}
-		if (p.population !== undefined) properties["wof:population"] = p.population
-		insertGeo.run(p.id, JSON.stringify({ properties }))
+		if (p.population !== undefined) insertPop.run(p.id, p.population)
 	}
 	return db
 }
@@ -77,25 +72,8 @@ afterEach(() => {
 	lookup.close()
 })
 
-describe("buildPlaceSearchFts — place_population aux table", () => {
-	test("creates the place_population table when geojson is present", () => {
-		const db = buildFixtureDb()
-		expect(placePopulationExists(db)).toBe(false)
-		const result = buildPlaceSearchFts(db)
-		expect(result.populationCreated).toBe(true)
-		expect(placePopulationExists(db)).toBe(true)
-		db.close()
-	})
-
-	test("populates only places with wof:population — sparse coverage", () => {
-		const db = buildFixtureDb()
-		const result = buildPlaceSearchFts(db)
-		// Fixture has 5 places, 4 with population. One Springfield has undefined population.
-		expect(result.populationIndexedRows).toBe(4)
-		db.close()
-	})
-
-	test("done-phase summary mentions all three table counts", () => {
+describe("buildPlaceSearchFts — done-phase summary", () => {
+	test("reports the FTS + bbox table counts (population is built upstream, not here)", () => {
 		const db = buildFixtureDb()
 		let doneDetail: string | undefined
 		buildPlaceSearchFts(db, {
@@ -105,25 +83,6 @@ describe("buildPlaceSearchFts — place_population aux table", () => {
 		})
 		expect(doneDetail).toMatch(/FTS rows/)
 		expect(doneDetail).toMatch(/bbox rows/)
-		expect(doneDetail).toMatch(/pop rows/)
-		db.close()
-	})
-
-	test("DB without geojson table → population step skipped, no crash", () => {
-		const db = new DatabaseSync(":memory:")
-		db.exec(`
-			CREATE TABLE spr (
-				id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
-				latitude REAL, longitude REAL,
-				min_latitude REAL, max_latitude REAL, min_longitude REAL, max_longitude REAL,
-				is_current INTEGER, is_deprecated INTEGER
-			);
-			CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);
-			INSERT INTO spr VALUES (1, NULL, 'NoPop', 'locality', 'US', 0, 0, 0, 0, 0, 0, -1, 0);
-		`)
-		const result = buildPlaceSearchFts(db)
-		expect(result.populationCreated).toBe(false)
-		expect(result.populationIndexedRows).toBe(0)
 		db.close()
 	})
 })

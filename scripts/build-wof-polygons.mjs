@@ -4,21 +4,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the crisp-polygon sibling of the points DB (build-wof-points). The demo's map draws the WOF
- *   bounding RECTANGLE (`place_bbox`) today; this packs the real admin geometry — simplified — so the
- *   demo can draw an actual boundary, loaded lazily only when a result is shown.
+ *   Build the crisp-polygon sibling of the demo points DB (`wof-hot.db`, built by the geojson-free
+ *   `build-slim` / `mailwoman-wof-build-slim`). The demo's map draws the WOF bounding RECTANGLE
+ *   (`place_bbox`) today; this packs the real admin geometry — simplified — so the demo can draw an
+ *   actual boundary, loaded lazily only when a result is shown.
  *
  *   Source: the per-id WOF GeoJSON repos at
  *   `repos/whosonfirst-data/whosonfirst-data-admin-<cc>/data/<id-sharded>/<id>.geojson`, where the
  *   shard path is the id split into 3-char chunks (101909779 → 101/909/779/101909779.geojson). Only
- *   ADMIN placetypes carry polygons; postcodes resolve to a point marker, so they're skipped. We pull
- *   the in-scope ids straight from the already-built points DB so the two stay in lockstep.
+ *   ADMIN placetypes carry polygons; postcodes resolve to a point marker, so they're skipped. We
+ *   pull the in-scope ids straight from the already-built points DB so the two stay in lockstep.
  *
- *   Each ring is Douglas-Peucker simplified (default tol ~0.004° ≈ 400 m) to keep the file shippable —
- *   admin polygons are huge at full resolution. Output: `polygons(id INTEGER PRIMARY KEY, geom TEXT)`
- *   where geom is a GeoJSON geometry the demo feeds straight into a MapLibre source.
+ *   Each ring is Douglas-Peucker simplified (default tol ~0.004° ≈ 400 m) to keep the file shippable
+ *   — admin polygons are huge at full resolution. Output: `polygons(id INTEGER PRIMARY KEY, geom
+ *   TEXT)` where geom is a GeoJSON geometry the demo feeds straight into a MapLibre source.
  *
- *   Usage: node scripts/build-wof-polygons.mjs --points <wof-hot.db> --out <wof-polygons.db> [--tol 0.004]
+ *   Usage: node scripts/build-wof-polygons.mjs --points <wof-hot.db> --out <wof-polygons.db> [--tol
+ *   0.004]
  */
 
 import { existsSync, readFileSync, rmSync } from "node:fs"
@@ -87,7 +89,10 @@ function dp(ring, tol) {
 	return out.length >= 4 ? out : null
 }
 
-/** Simplify a Polygon / MultiPolygon geometry; drop rings that collapse. Returns null if nothing left. */
+/**
+ * Simplify a Polygon / MultiPolygon geometry; drop rings that collapse. Returns null if nothing
+ * left.
+ */
 function simplify(geom, tol) {
 	const ringSet = (poly) => poly.map((ring) => dp(ring, tol)).filter(Boolean)
 	if (geom.type === "Polygon") {
@@ -137,7 +142,8 @@ for (const r of rows) {
 	} catch {
 		dropped++
 	}
-	if ((done + missing + dropped) % 2000 === 0) console.error(`  …${done} packed, ${missing} missing, ${dropped} dropped`)
+	if ((done + missing + dropped) % 2000 === 0)
+		console.error(`  …${done} packed, ${missing} missing, ${dropped} dropped`)
 }
 out.exec("COMMIT")
 out.exec("VACUUM")

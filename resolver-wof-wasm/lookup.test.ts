@@ -32,7 +32,7 @@ function buildFixtureWof(path: string): void {
 			is_current INTEGER, is_deprecated INTEGER
 		);
 		CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);
-		CREATE TABLE geojson (id INTEGER PRIMARY KEY, body TEXT);
+		CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0);
 
 		INSERT INTO spr VALUES (100, NULL, 'United States', 'country', 'US', 39.0, -97.0, 24.5, 49.4, -125.0, -66.9, -1, 0);
 		INSERT INTO spr VALUES (101, 100, 'Illinois', 'region', 'US', 40.0, -89.0, 37.0, 42.5, -91.5, -87.0, -1, 0);
@@ -59,16 +59,16 @@ function buildFixtureWof(path: string): void {
 		INSERT INTO names (id, language, name) VALUES (220, 'eng', 'York');
 		INSERT INTO names (id, language, name) VALUES (221, 'eng', 'New York');
 
-		INSERT INTO geojson VALUES (100, '{"properties":{"wof:population":331000000}}');
-		INSERT INTO geojson VALUES (101, '{"properties":{"wof:population":12700000}}');
-		INSERT INTO geojson VALUES (200, '{"properties":{"wof:population":2700000}}');
-		INSERT INTO geojson VALUES (201, '{"properties":{"wof:population":114000}}');
-		INSERT INTO geojson VALUES (300, '{"properties":{}}');
-		INSERT INTO geojson VALUES (301, '{"properties":{}}');
-		INSERT INTO geojson VALUES (210, '{"properties":{"wof:population":8000}}');
-		INSERT INTO geojson VALUES (211, '{"properties":{"wof:population":580000}}');
-		INSERT INTO geojson VALUES (220, '{"properties":{"wof:population":1700}}');
-		INSERT INTO geojson VALUES (221, '{"properties":{"wof:population":8400000}}');
+		-- Pre-built population aux table (production shape — build-unified-wof extracts wof:population
+		-- here at ingest; the source has no geojson table). Postcodes (300/301) carry no population row.
+		INSERT INTO place_population VALUES (100, 331000000);
+		INSERT INTO place_population VALUES (101, 12700000);
+		INSERT INTO place_population VALUES (200, 2700000);
+		INSERT INTO place_population VALUES (201, 114000);
+		INSERT INTO place_population VALUES (210, 8000);
+		INSERT INTO place_population VALUES (211, 580000);
+		INSERT INTO place_population VALUES (220, 1700);
+		INSERT INTO place_population VALUES (221, 8400000);
 
 		-- Dual-role relation (#402): Illinois(101) ⊃ Springfield(201). build-slim carries it to the slim DB.
 		CREATE TABLE coincident_roles (
