@@ -160,3 +160,33 @@ disagreement found Cause B.
 | issues filed | 3 (#440, #442, #444) + surveys on #240/#387 |
 | headline result | full-US coord p90 2763km → 10.3km; VT region 0→99.9% |
 | DeepSeek consults | 1 session, 2 turns (curl fallback; pi wrapper timed out 2×) |
+
+## Shift close — post-merge addendum
+
+The body above was written mid-shift, before the merge wall lifted. What actually happened by close:
+
+- **All 7 PRs merged** (#437 → #439 → #441 → #438/#443/#445/#446), after a direct operator
+  instruction lifted the auto-classifier merge block. Resolved a #441 add/add conflict on the
+  honest-eval doc (kept the superset). Main green afterward (Test + Docs).
+- **Canonical gazetteer SWAPPED.** Promoted the validated abbrev+ancestry DB to
+  `admin-global-priority.db` (backup `admin-global-priority.db.bak-pre-abbrev-2026-06-08`; verified
+  VT→Vermont, ancestors 6.32M, coincident_roles 128). This is what activates the region fix for the
+  CLI/server resolver + the eval harness.
+- **R2 demo push HELD — it's a no-op.** Investigating before pushing showed the static demo already
+  resolves wrong-state cases: #365's client-side `expandUsRegion` expands `IL→Illinois` *before* the
+  lookup (+ a bbox-fallback), so the demo never queries the slim DB's abbrev tokens. Proven
+  byte-identical live-vs-rebuilt (region step + Chicago-in-IL-bbox). Building the slim DB confirmed it
+  carries the fix, but publishing changes nothing the user sees. Built artifact left unpublished.
+- **Follow-up shipped same session: #447** (`fix(resolver): widen over-fetch for short queries`).
+  A probe of the *real* resolver exposed that exact-abbrev tiering existed but the exact-abbrev holder
+  was dropped from the `limit*4` over-fetch window before tiering ran (`NY`→Highland GB). Widening the
+  window for ≤3-char queries lifted bare region-abbrev resolution **7→10/15** US states; with a
+  `country` hint it's already 15/15 (why the honest-eval never saw it). Merged; main green.
+- **Residual + roadmap captured:** 5 cross-country abbrev collisions (`VT`=Vermont/Viterbo) need a
+  country/postcode signal → documented on **#369** (extend the postcode-anchor country posterior to
+  region lookups) and **#189** (carry abbrevs into the slim DB for data-driven tiering, retire the
+  hardcoded `expandUsRegion` map). Both are the next shift's opening work.
+
+Revised tallies: **8 PRs merged** (the 7 above + #447), **27 tests** (25 + the #447 regression test),
+**5 issues touched** (#440/#442/#444 filed + findings on #369/#189). Headline + regressions-shipped
+(0) unchanged.
