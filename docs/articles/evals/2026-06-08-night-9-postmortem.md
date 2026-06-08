@@ -43,19 +43,28 @@ The lesson re-earned: aggregate metrics said the abbrev fix was great (VT 326→
 functional presets said NYC broke. When they disagree, functional wins — and chasing the
 disagreement found Cause B.
 
-## What shipped (5 PRs — all open, ready, `test`-green; see "merge wall")
+## What shipped (7 PRs — all open, ready, `test`-green; see "merge wall")
 
 - **#437** `fix(server): annotate Router exports to fix TS2883 on main` — unblocks the demo
   redeploy (main's CI was red). `test` + `build` CI green.
 - **#438** `fix(#397): link-dev-weights self-verifies against the deployed default` — `yarn test`
   no longer silently grades a stale model.
-- **#439** `feat(eval): honest-eval harness` — the yardstick (#371/#373) + coverage-adjusted PIP.
-- **#441** the region-resolution fix: `backfill-ancestors-from-hierarchy.ts` + manifest steps
-  (abbrev + backfill). Validated on the honest harness; cross-locale no-regression (DE/FR identical);
-  neural beats v0 on the honest slice (p99 277 vs 2120km); slim/demo propagation analyzed.
+- **#439** `feat(eval): honest-eval harness` — the yardstick (#371/#373) + coverage-adjusted PIP +
+  a resolver eval-integrity section in `concepts/eval-discipline.md`.
+- **#441** the region-resolution fix: `add-region-abbrevs` (manifest) + `backfill-ancestors-from-hierarchy.ts`.
+  Validated on the honest harness; cross-locale no-regression (DE/FR identical); neural beats v0 on
+  the honest slice (p99 277 vs 2120km); slim/demo propagation analyzed; **+ a regression suite**
+  (`region-abbrev.test.ts`, 8 tests) hardening the abbrev→region + constraint path.
   **DB not promoted** (canonical swap is operator-gated/blocked — see below).
 - **#443** `blog: "The right name in the wrong state"` — the eval-honesty narrative, house voice,
-  humanizer-passed. `build` + `test` green.
+  humanizer-passed.
+- **#445** this postmortem (living draft).
+- **#446** `feat(corpus): three new adapters` — **geonames** (CC-BY multi-locale gazetteer),
+  **geonames-postal** (CC-BY multi-locale postcode→locality→region, ~80 countries), **usgov-irs-bmf**
+  (public-domain venue+address, PO-box-heavy → `po_box`-tag coverage). 17 tests; all additive
+  (`corpus build` skips until an input is configured). Authorized corpus growth toward the
+  multi-locale north star. (Note: the `corpus-cli` spawned-CLI "unknown adapter" test is flaky under
+  CI load — 6s vs 0.7s local — passed on re-run; worth hardening its timeout.)
 
 ## Issues / surveys filed
 
@@ -130,13 +139,10 @@ disagreement found Cause B.
 3. Fold the ancestry repair into `build-unified-wof`'s `populateAncestors` (#440 follow-up).
 4. FR retrain decision (#444); #387 city-state retrain sign-off; dependabot vitest major bump (#442).
 5. De-prioritized: #189/#240/#369 (subsumed by the region fix; finish only for sub-km precision).
-6. Corpus growth (Tier 12, authorized but not built tonight): the adapter pattern is clean
-   (`CorpusAdapter` in `corpus/src/types.ts` + `rows()` async-gen + `reconcileComponents` + register
-   in `corpus/src/adapters/index.ts`; `usgov-nppes` is the model). Lowest-friction next source =
-   USGS GNIS (public-domain CSV, name variants) but low marginal value (US localities already
-   well-covered); higher value = a new locale (G-NAF AU, CC-BY) or paired venue+address (NCES/IRS-BMF).
-   Not built tonight: future-only payoff (needs a retrain) + the easy one needs a real-format download
-   to build correctly. Build fixture-first (no full download) when picked up.
+6. Corpus growth (Tier 12): three adapters added (#446 — geonames, geonames-postal, usgov-irs-bmf).
+   Configure their inputs in `adapterInputs` + re-run `corpus build` to ingest (downloads documented in
+   each adapter's README). Further sources (G-NAF AU street-level; NCES/EPA US venue) are diminishing
+   or need a large-format download to build correctly; military/rural-route formats are schema-gated.
 
 ## Numbers
 
@@ -148,7 +154,9 @@ disagreement found Cause B.
 | NaN incidents | 0 |
 | CI failures fixed | 1 (docs-build TS2883 on main) |
 | regressions shipped | 0 (NYC regression caught pre-merge + fixed) |
-| PRs opened | 5 (#437, #438, #439, #441, #443) — all test-green |
+| PRs opened | 7 (#437, #438, #439, #441, #443, #445, #446) — all test-green |
+| corpus adapters added | 3 (geonames, geonames-postal, usgov-irs-bmf; #446) |
+| new tests added | 25 (8 region-abbrev regression + 17 corpus-adapter) |
 | issues filed | 3 (#440, #442, #444) + surveys on #240/#387 |
 | headline result | full-US coord p90 2763km → 10.3km; VT region 0→99.9% |
 | DeepSeek consults | 1 session, 2 turns (curl fallback; pi wrapper timed out 2×) |
