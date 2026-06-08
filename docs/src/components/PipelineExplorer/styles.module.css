@@ -1,0 +1,306 @@
+/* ---------------------------------------------------------------------------
+ * PipelineExplorer — embeddable demo component styles.
+ *
+ * Mirrors the demo page's control styles but scoped to .pipelineExplorer so it
+ * works standalone in MDX pages without inheriting the full-page grid layout.
+ * --------------------------------------------------------------------------- */
+
+.pipelineExplorer {
+	max-width: 720px;
+	font-size: 0.95rem;
+}
+
+/* Release / version info */
+
+.releaseInfo {
+	font-size: 0.9rem;
+	opacity: 0.8;
+	margin: 0 0 1rem;
+}
+
+.versionRow {
+	margin-bottom: 0.75rem;
+}
+
+.versionRow label {
+	display: block;
+	margin-bottom: 0.25rem;
+	font-weight: 600;
+}
+
+.versionRow select {
+	width: 100%;
+	padding: 0.4rem;
+}
+
+.backendRow {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+	font-size: 0.85rem;
+	opacity: 0.7;
+}
+
+.wasmToggle {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	cursor: pointer;
+}
+
+/* Form */
+
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.form label {
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+.form input {
+	padding: 0.5rem 0.75rem;
+	font: inherit;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 6px;
+	background: var(--ifm-background-surface-color);
+	color: var(--ifm-font-color-base);
+}
+
+.form input:disabled {
+	opacity: 0.5;
+}
+
+.form button {
+	padding: 0.5rem 0.75rem;
+	background: var(--ifm-color-primary);
+	color: white;
+	border: 0;
+	border-radius: 6px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.form button:disabled {
+	background: var(--ifm-color-emphasis-400);
+	cursor: not-allowed;
+}
+
+/* Example chips */
+
+.examples {
+	margin-top: 0.75rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	align-items: baseline;
+}
+
+.examplesLabel {
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600);
+	margin-right: 0.25rem;
+}
+
+.exampleBtn {
+	font-size: 0.8rem;
+	padding: 0.25rem 0.55rem;
+	background: var(--ifm-color-emphasis-100);
+	color: var(--ifm-color-emphasis-800);
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	font-weight: 500;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.exampleBtn:hover:not(:disabled) {
+	background: var(--ifm-color-emphasis-200);
+	border-color: var(--ifm-color-primary);
+}
+
+.exampleBtn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* Status & errors */
+
+.status {
+	font-style: italic;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.error {
+	color: var(--ifm-color-danger);
+	font-family: var(--ifm-font-family-monospace);
+	white-space: pre-wrap;
+}
+
+/* Result panel (mirrors ResultPanel styles) */
+
+.resultPanel {
+	margin-top: 1.5rem;
+}
+
+.resultHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 0.75rem;
+}
+
+.resultHeader h2 {
+	margin: 0;
+	font-size: 1.1rem;
+}
+
+.debugBtn {
+	font-size: 0.8rem;
+	padding: 0.25rem 0.55rem;
+	background: var(--ifm-color-emphasis-100);
+	color: var(--ifm-color-emphasis-800);
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.debugBtn:hover {
+	background: var(--ifm-color-emphasis-200);
+}
+
+/* FST details */
+
+.fstDetails {
+	margin-bottom: 0.5rem;
+	font-size: 0.9rem;
+}
+
+.fstDetails summary {
+	cursor: pointer;
+	user-select: none;
+}
+
+.fstDetails ul {
+	margin: 0.25rem 0 0 1rem;
+	padding: 0;
+	list-style: disc;
+	opacity: 0.7;
+}
+
+/* Component table */
+
+.componentTable {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 0.75rem 0;
+	font-size: 0.9rem;
+}
+
+.componentTable th,
+.componentTable td {
+	padding: 0.4rem 0.6rem;
+	text-align: left;
+	border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.componentTable th {
+	font-weight: 600;
+	color: var(--ifm-color-emphasis-600);
+	font-size: 0.8rem;
+	text-transform: uppercase;
+}
+
+/* Confidence cell */
+
+.confDash {
+	color: var(--ifm-color-emphasis-500);
+}
+
+.confCell {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	min-width: 80px;
+}
+
+.confBar {
+	height: 6px;
+	border-radius: 3px;
+	min-width: 4px;
+	transition: width 0.2s ease;
+}
+
+.conf_high {
+	background: #22c55e;
+}
+
+.conf_mid {
+	background: #f59e0b;
+}
+
+.conf_low {
+	background: #ef4444;
+}
+
+.confValue {
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.8rem;
+}
+
+/* Hierarchy details */
+
+.hierarchyDetails {
+	margin-top: 0.5rem;
+}
+
+.hierarchyDetails summary {
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 0.9rem;
+	margin-bottom: 0.5rem;
+}
+
+/* Resolved place */
+
+.resolved {
+	margin-top: 1rem;
+	padding: 0.75rem;
+	border: 1px solid var(--ifm-color-emphasis-200);
+	border-radius: 6px;
+	background: var(--ifm-color-emphasis-0);
+}
+
+.resolved h2 {
+	margin: 0 0 0.5rem;
+	font-size: 1rem;
+}
+
+.resolved dl {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 0.25rem 0.75rem;
+	margin: 0;
+}
+
+.resolved dt {
+	font-weight: 600;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.resolved dd {
+	margin: 0;
+}
+
+.dualRoleNote {
+	margin: 0.5rem 0 0;
+	padding: 0.4rem 0.6rem;
+	border-radius: 6px;
+	background: var(--ifm-color-info-contrast-background, rgba(54, 122, 246, 0.1));
+	font-size: 0.9rem;
+}

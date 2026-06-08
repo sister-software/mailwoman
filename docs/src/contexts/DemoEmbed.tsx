@@ -1,0 +1,244 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Shared React context for the Mailwoman demo. Manages classifier / FST / WOF lookup loading so
+ *   multiple PipelineExplorer instances on the same page (or the main demo page) share one set of
+ *   loaded assets instead of re-fetching on mount.
+ *
+ *   The provider lazy-loads assets from R2 (public.sister.software) when `selectedVersion` changes.
+ *   Classifier runs via onnxruntime-web (WASM SIMD with WebGPU fallback); the FST + resolver
+ *   HTTP-VFS DBs are optional per-release.
+ */
+
+import type React from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
+
+import type {
+	FstMatcherLike,
+	FstProvenanceLike,
+	MailwomanClassifierLike,
+	MailwomanLookupLike,
+} from "../shared/resources.tsx"
+import { assetUrl, loadFstGazetteer } from "../shared/resources.tsx"
+
+import type { ReleaseInfo, ReleasesManifest } from "../shared/demo-helpers.ts"
+import { DEFAULT_LOCALE } from "../shared/demo-helpers.ts"
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export type { ReleaseInfo, ReleasesManifest } from "../shared/demo-helpers.ts"
+
+export interface DemoEmbedState {
+	/** The releases manifest (fetched once on mount). */
+	manifest: ReleasesManifest | null
+	/** Currently selected version string. */
+	selectedVersion: string | null
+	/** The loaded neural classifier (onnxruntime-web). */
+	classifier: MailwomanClassifierLike | null
+	/** The loaded FST gazetteer matcher. */
+	fstMatcher: FstMatcherLike | null
+	/** Provenance metadata for the FST binary. */
+	fstProvenance: FstProvenanceLike | null
+	/** The instantiated, cached WOF HTTP-VFS lookup. Loaded eagerly by the provider. */
+	lookup: MailwomanLookupLike | null
+	/** Human-readable loading progress string. */
+	loadingProgress: string
+	/** Error message if loading failed. */
+	errorMessage: string | null
+	/** Whether ALL selected-version assets (classifier + FST) are loaded and ready. */
+	ready: boolean
+	/** Backend diagnostic string (e.g. "webgpu (27 MB int8)"). */
+	activeBackend: string
+	/** Switch to a different version. Triggers asset reload. */
+	selectVersion: (version: string) => void
+	/** Force CPU WASM backend instead of WebGPU. */
+	setForceWasm: (v: boolean) => void
+	/** Whether WASM is forced. */
+	forceWasm: boolean
+}
+
+const DemoEmbedContext = createContext<DemoEmbedState | null>(null)
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
+export function useDemoEmbed(): DemoEmbedState {
+	const ctx = useContext(DemoEmbedContext)
+	if (!ctx) {
+		throw new Error("useDemoEmbed must be used within a <DemoEmbedProvider>")
+	}
+	return ctx
+}
+
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
+
+export interface DemoEmbedProviderProps {
+	/** Base URL for the sql.js-httpvfs worker + wasm (same-origin, e.g. `/mailwoman/sqljs`). */
+	sqljsBaseUrl: string
+	children: React.ReactNode
+}
+
+export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseUrl, children }) => {
+	const [manifest, setManifest] = useState<ReleasesManifest | null>(null)
+	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
+	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
+	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
+	const [fstMatcher, setFstMatcher] = useState<FstMatcherLike | null>(null)
+	const [fstProvenance, setFstProvenance] = useState<FstProvenanceLike | null>(null)
+	const [forceWasm, setForceWasm] = useState(false)
+	const [activeBackend, setActiveBackend] = useState<string>("")
+	const [lookup, setLookup] = useState<MailwomanLookupLike | null>(null)
+	const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+	// Mount: fetch the releases manifest.
+	useEffect(() => {
+		let cancelled = false
+		void (async () => {
+			try {
+				const res = await fetch(assetUrl(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"))
+				const data: ReleasesManifest | null = res.ok ? await res.json() : null
+				if (cancelled) return
+				if (data) {
+					setManifest(data)
+					setSelectedVersion(data.defaultVersion)
+				}
+			} catch (error) {
+				if (cancelled) return
+				console.error("Failed to load releases manifest", error)
+				setErrorMessage(error instanceof Error ? error.message : String(error))
+			}
+		})()
+		return () => {
+			cancelled = true
+		}
+	}, [])
+
+	// Load the model + FST + WOF DB when the selected version changes.
+	useEffect(() => {
+		if (!selectedVersion) return
+		let cancelled = false
+		const release = manifest?.releases.find((r) => r.version === selectedVersion)
+
+		void (async () => {
+			try {
+				setClassifier(null)
+				setFstMatcher(null)
+				setFstProvenance(null)
+				setLookup(null)
+				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
+
+				// Dynamic import @mailwoman/neural-web — the webpack alias resolves this to the
+				// browser-safe entry. TypeScript types are narrower than the runtime API so we cast
+				// through unknown (same pattern as the demo page).
+				const neuralWeb = await import("@mailwoman/neural-web")
+				const { classifier: cls, diagnostics } = (await neuralWeb.loadNeuralClassifierFromUrls({
+					modelUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
+					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
+					modelCardUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model-card.json"),
+					runner: { useWebGpu: !forceWasm },
+					...(release?.hasAnchor
+						? {
+								postcodeBinaryUrls: [
+									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-us.bin"),
+									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-de.bin"),
+									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-fr.bin"),
+								],
+							}
+						: {}),
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				})) as unknown as any as {
+					classifier: MailwomanClassifierLike
+					diagnostics?: { backend: string; modelBytes: number } | null
+				}
+				setActiveBackend(
+					diagnostics
+						? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)`
+						: "unknown"
+				)
+
+				if (cancelled) return
+
+				if (release?.hasFst) {
+					try {
+						const fstResult = await loadFstGazetteer(DEFAULT_LOCALE, selectedVersion)
+						setFstMatcher(fstResult.matcher)
+						if (fstResult.provenance) setFstProvenance(fstResult.provenance)
+					} catch {
+						// FST not available for this version
+					}
+				}
+
+				if (release?.hasWofDb) {
+					try {
+						const { loadHttpvfsDb, WofHttpvfsPlaceLookup } = await import("../shared/httpvfs-resolver")
+						const worker = await loadHttpvfsDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"), sqljsBaseUrl)
+						if (cancelled) return
+						setLookup(new WofHttpvfsPlaceLookup(worker))
+					} catch {
+						// WOF DB not available for this version
+					}
+				}
+
+				setClassifier(cls)
+				setLoadingProgress("")
+			} catch (error) {
+				if (cancelled) return
+				console.error("Error loading resources", error)
+				setErrorMessage(error instanceof Error ? error.message : String(error))
+				setLoadingProgress("")
+			}
+		})()
+
+		return () => {
+			cancelled = true
+		}
+	}, [selectedVersion, manifest, forceWasm, sqljsBaseUrl])
+
+	const selectVersion = useCallback((version: string) => {
+		setSelectedVersion(version)
+		setErrorMessage(null)
+	}, [])
+
+	const ready = classifier !== null
+
+	const value = useMemo<DemoEmbedState>(
+		() => ({
+			manifest,
+			selectedVersion,
+			classifier,
+			fstMatcher,
+			fstProvenance,
+			lookup,
+			loadingProgress,
+			errorMessage,
+			ready,
+			activeBackend,
+			selectVersion,
+			setForceWasm,
+			forceWasm,
+		}),
+		[
+			manifest,
+			selectedVersion,
+			classifier,
+			fstMatcher,
+			fstProvenance,
+			lookup,
+			loadingProgress,
+			errorMessage,
+			ready,
+			activeBackend,
+			selectVersion,
+			forceWasm,
+		]
+	)
+
+	return <DemoEmbedContext.Provider value={value}>{children}</DemoEmbedContext.Provider>
+}
