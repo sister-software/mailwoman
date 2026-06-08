@@ -1,7 +1,9 @@
 import styles from "./styles.module.css"
 
-/** The slice of the decoder's AddressNode the demo renders. `children` carries the containment
-nesting. */
+/**
+ * The slice of the decoder's AddressNode the demo renders. `children` carries the containment
+ * nesting.
+ */
 interface TreeNode {
 	tag?: string
 	value?: unknown

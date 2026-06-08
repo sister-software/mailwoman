@@ -1,20 +1,20 @@
 {
-  "eval": "data/eval/external/openaddresses-it-sample.jsonl",
-  "n": 400,
-  "argmax": {
-    "localityMatch": 0.8475,
-    "regionMatch": 0,
-    "latP50": 11.130919000001086,
-    "latP99": 38.19286199999988
-  },
-  "joint": {
-    "localityMatch": 0.9975,
-    "regionMatch": 0,
-    "latP50": 11.298001000000113,
-    "latP99": 31.55923199999961
-  },
-  "regressionRate": 0,
-  "improvementRate": 0.15,
-  "accuracyDeltaPp": 7.5,
-  "latencyP99Multiplier": 0.8263123093524574
+	"eval": "data/eval/external/openaddresses-it-sample.jsonl",
+	"n": 400,
+	"argmax": {
+		"localityMatch": 0.8475,
+		"regionMatch": 0,
+		"latP50": 11.130919000001086,
+		"latP99": 38.19286199999988
+	},
+	"joint": {
+		"localityMatch": 0.9975,
+		"regionMatch": 0,
+		"latP50": 11.298001000000113,
+		"latP99": 31.55923199999961
+	},
+	"regressionRate": 0,
+	"improvementRate": 0.15,
+	"accuracyDeltaPp": 7.5,
+	"latencyP99Multiplier": 0.8263123093524574
 }

@@ -4,11 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   Coordinate-first locality resolution (#275). When a `locality` query carries a sibling `postcode`
- *   AND a `postcode_locality` table is present, the resolver injects the postcode's containing locality
- *   (which the FTS name-match can't generate for an under-indexed small town) and soft-scores the union
- *   `0.6·S_pc + 0.3·S_name + 0.1·S_pop` with exact-name tiering. These tests pin the three behaviours:
- *   injection recovers the name-miss, exact-name tiering keeps an unambiguous city over the postcode's
- *   fine-grained Ortsteil, and the path is inert without a postcode.
+ *   AND a `postcode_locality` table is present, the resolver injects the postcode's containing
+ *   locality (which the FTS name-match can't generate for an under-indexed small town) and
+ *   soft-scores the union `0.6·S_pc + 0.3·S_name + 0.1·S_pop` with exact-name tiering. These tests
+ *   pin the three behaviours: injection recovers the name-miss, exact-name tiering keeps an
+ *   unambiguous city over the postcode's fine-grained Ortsteil, and the path is inert without a
+ *   postcode.
  */
 import { DatabaseSync } from "node:sqlite"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"

@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Regression guard for `parse --default-country` (the resolver country scope). Without a country
- *   hint the WOF resolver resolves globally, so a bare region abbreviation (`NY`) lands on whatever the
- *   gazetteer ranks highest — often a foreign homonym (a Scottish locality at lat ~57) rather than the
- *   US state. The demo passes `country: "US"`; this gives the CLI parity by inferring the country from
- *   `--locale` (overridable, `none` to disable).
+ *   hint the WOF resolver resolves globally, so a bare region abbreviation (`NY`) lands on whatever
+ *   the gazetteer ranks highest — often a foreign homonym (a Scottish locality at lat ~57) rather
+ *   than the US state. The demo passes `country: "US"`; this gives the CLI parity by inferring the
+ *   country from `--locale` (overridable, `none` to disable).
  *
  *   The unit tests (the locale→country inference + the override precedence) are CI-safe. The
  *   end-to-end NY-doesn't-become-Scotland check needs the GLOBAL admin DB (the US-only DB can't
@@ -68,10 +68,14 @@ const describeIfGlobal = describe.skipIf(!existsSync(GLOBAL_WOF))
 describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () => {
 	const NY = "350 5th Ave, New York, NY 10118"
 	const run = (extra: string[]) =>
-		exec("node", [cliBin, "parse", "--neural", "--resolve", "--resolve-db", GLOBAL_WOF, "--format", "xml", ...extra, NY], {
-			env: { ...process.env, NODE_NO_WARNINGS: "1" },
-			maxBuffer: 4 * 1024 * 1024,
-		})
+		exec(
+			"node",
+			[cliBin, "parse", "--neural", "--resolve", "--resolve-db", GLOBAL_WOF, "--format", "xml", ...extra, NY],
+			{
+				env: { ...process.env, NODE_NO_WARNINGS: "1" },
+				maxBuffer: 4 * 1024 * 1024,
+			}
+		)
 
 	test("default (US inferred from en-US) resolves New York to the US city, not a foreign homonym", async () => {
 		const { stdout } = await run([])
@@ -84,6 +88,9 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 		const { stdout } = await run(["--default-country", "none"])
 		// With no country filter the region NY resolves to a high-latitude foreign place (Scotland ~57).
 		const m = /region[^>]*lat="(5\d\.\d+)"/.exec(stdout)
-		expect(m, `expected a foreign (lat>50) region resolution with --default-country none, got:\n${stdout}`).not.toBeNull()
+		expect(
+			m,
+			`expected a foreign (lat>50) region resolution with --default-country none, got:\n${stdout}`
+		).not.toBeNull()
 	})
 })

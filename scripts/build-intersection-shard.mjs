@@ -6,21 +6,24 @@
  *
  *   Build a JSONL of synthetic intersection training rows (v0.7 coverage fix).
  *
- *   The night-3 diagnostic found the model never learned intersection_a/b
- *   (~0.0001 prob; 65/376 harness assertions at 0% neural) because the corpus
- *   has no intersection signal. This emits a small targeted supplement shard
- *   (synthesis-as-supplement discipline: weight < 0.25, one-and-done) of
- *   intersection rows, aligned to BIO and ready for jsonl-to-parquet.py.
+ *   The night-3 diagnostic found the model never learned intersection_a/b (~0.0001 prob; 65/376
+ *   harness assertions at 0% neural) because the corpus has no intersection signal. This emits a
+ *   small targeted supplement shard (synthesis-as-supplement discipline: weight < 0.25,
+ *   one-and-done) of intersection rows, aligned to BIO and ready for jsonl-to-parquet.py.
  *
- *   Self-generating (no --input): draws city/region/zip from the synthesizer's
- *   built-in US base pool; street variety (cores/ordinals/directionals/suffixes/
- *   connectors) is what teaches the city-independent intersection pattern.
+ *   Self-generating (no --input): draws city/region/zip from the synthesizer's built-in US base pool;
+ *   street variety (cores/ordinals/directionals/suffixes/ connectors) is what teaches the
+ *   city-independent intersection pattern.
  *
  *   Pipeline:
- *     1. node scripts/build-intersection-shard.mjs --output /tmp/intersection-labeled.jsonl --count 2000 --seed 42
- *     2. python3 scripts/jsonl-to-parquet.py --input /tmp/intersection-labeled.jsonl --output /tmp/part-intersection.parquet
- *     3. modal volume put mailwoman-training /tmp/part-intersection.parquet corpus/versioned/v0.4.0/corpus-v0.4.0/train/part-intersection.parquet
- *     4. add `synth-intersection: 0.2` to the training config source_weights, then train.
+ *
+ *   1. Node scripts/build-intersection-shard.mjs --output /tmp/intersection-labeled.jsonl --count 2000
+ *        --seed 42
+ *   2. Python3 scripts/jsonl-to-parquet.py --input /tmp/intersection-labeled.jsonl --output
+ *        /tmp/part-intersection.parquet
+ *   3. Modal volume put mailwoman-training /tmp/part-intersection.parquet
+ *        corpus/versioned/v0.4.0/corpus-v0.4.0/train/part-intersection.parquet
+ *   4. Add `synth-intersection: 0.2` to the training config source_weights, then train.
  */
 
 import { createWriteStream } from "node:fs"
@@ -44,7 +47,7 @@ function parseArgs() {
 	return out
 }
 
-/** mulberry32 — matches the synthesizer's test PRNG for reproducibility. */
+/** Mulberry32 — matches the synthesizer's test PRNG for reproducibility. */
 function mulberry32(seed) {
 	let a = seed >>> 0
 	return () => {

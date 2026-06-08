@@ -299,8 +299,10 @@ export function matchTrailingSuffix(street: string): { canonical: UsStreetSuffix
 export const StreetSuffixAbbreviationRecord = US_STREET_SUFFIX_VARIANTS
 export type StreetSuffixAbbreviationRecord = typeof US_STREET_SUFFIX_VARIANTS
 
-/** A canonical USPS street suffix, i.e. "STREET", "AVENUE", "BOULEVARD". Aliases
-{@link UsStreetSuffix}. */
+/**
+ * A canonical USPS street suffix, i.e. "STREET", "AVENUE", "BOULEVARD". Aliases
+ * {@link UsStreetSuffix}.
+ */
 export type StreetSuffix = UsStreetSuffix
 
 /** A standardized USPS street suffix abbreviation (the preferred form), i.e. "ST", "AVE", "BLVD". */

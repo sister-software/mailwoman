@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Error-type breakdown for the anchor pilot's Berlin failure (#239/#240). Parses real Berlin
- *   OpenAddresses rows through the anchor-on model, WITH the anchor fed vs WITHOUT, and shows what the
- *   model labels the trailing city token. Answers: is "Berlin" DROPPED to O (the locale context never
- *   forms), or MISLABELED (context forms but the wrong production fires)? And does feeding the anchor
- *   change it? Also dumps the postcode-collision the ambiguity rides on.
+ *   OpenAddresses rows through the anchor-on model, WITH the anchor fed vs WITHOUT, and shows what
+ *   the model labels the trailing city token. Answers: is "Berlin" DROPPED to O (the locale context
+ *   never forms), or MISLABELED (context forms but the wrong production fires)? And does feeding
+ *   the anchor change it? Also dumps the postcode-collision the ambiguity rides on.
  *
  *   Run: node --experimental-strip-types scripts/diag-berlin-anchor.ts
  */
@@ -35,7 +35,9 @@ const noAnchor = new NeuralAddressClassifier({ tokenizer, runner, labels, postco
 
 // Show the collision the ambiguity rides on.
 const collide = lookup.get("10115")
-console.log(`\n# The collision: "10115" → ${JSON.stringify(collide?.posterior)} (a real Berlin PLZ AND a real NYC ZIP)\n`)
+console.log(
+	`\n# The collision: "10115" → ${JSON.stringify(collide?.posterior)} (a real Berlin PLZ AND a real NYC ZIP)\n`
+)
 
 const rows = readFileSync(EVAL, "utf8")
 	.split("\n")
@@ -46,7 +48,10 @@ const rows = readFileSync(EVAL, "utf8")
 
 const localityOf = async (clf: NeuralAddressClassifier, input: string): Promise<string> => {
 	const tuples = await clf.parseTuples(input)
-	const loc = tuples.filter(([t]) => t === "locality").map(([, v]) => v).join(" ")
+	const loc = tuples
+		.filter(([t]) => t === "locality")
+		.map(([, v]) => v)
+		.join(" ")
 	return loc || "∅"
 }
 

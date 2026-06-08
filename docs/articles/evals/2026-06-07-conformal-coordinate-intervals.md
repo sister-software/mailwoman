@@ -1,14 +1,14 @@
 # Conformal coordinate intervals (2026-06-07)
 
-A coverage guarantee on *where* a resolved address actually is. Companion to the [isotonic
+A coverage guarantee on _where_ a resolved address actually is. Companion to the [isotonic
 calibration](./2026-06-07-isotonic-calibration.md) work — calibration tells you how much to trust the
-*label*; this tells you the *radius* the true point sits in.
+_label_; this tells you the _radius_ the true point sits in.
 
 ## The question
 
 When the resolver places an address at a locality, it returns that locality's centroid. The honest
 follow-up question is not "is the name right" but "how far is the real doorstep from the point we
-returned, and can we put a *guaranteed* bound on it." A calibrated `conf=` answers the first kind of
+returned, and can we put a _guaranteed_ bound on it." A calibrated `conf=` answers the first kind of
 question; it says nothing about distance on the ground.
 
 ## Method
@@ -20,7 +20,7 @@ Split conformal regression, no distributional assumption. For every row the reso
 - for a target coverage `1 − α`, the radius `R(α)` is the conformal quantile of the calibration
   scores — the `ceil((1 − α)(n + 1))`-th smallest. Output a circle of that radius around the resolved
   centroid and the true point falls inside it with marginal probability at least `1 − α`.
-- check it: the fraction of *test* scores at or under `R(α)` should land on `1 − α`.
+- check it: the fraction of _test_ scores at or under `R(α)` should land on `1 − α`.
 
 It runs offline over an `oa-resolver-eval --out-resolved` dump plus the admin gazetteer's centroids —
 no model in the loop. Coverage is conditional on the resolver actually placing the row; rows it
@@ -46,7 +46,7 @@ Two things fall out of the table for free. France and the Netherlands resolve ne
 34.8% German abstention is not noise — it is the Berlin / Hamburg / Bremen city-state rows where the
 parser drops the locality entirely ([#387](https://github.com/sister-software/mailwoman/issues/387)),
 surfacing here a second time through a completely independent lens. The wider German radius is the
-genuine city-centroid-to-doorstep distance for the rows that *do* resolve, not a modelling failure.
+genuine city-centroid-to-doorstep distance for the rows that _do_ resolve, not a modelling failure.
 
 ## Where it lives
 

@@ -3,11 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the v0.7 #35 postcode regex repair pass. Each case constructs a
- *   char-aligned DecoderToken sequence (offsets must match the raw text) and
- *   asserts the repaired postcode span. Covers the four failure modes from the
- *   2026-05-29 diagnostic plus the precision guards (longest-match-wins,
- *   SNAP-only for numeric shapes, no-add-over-structural, local smear-clip).
+ *   Tests for the v0.7 #35 postcode regex repair pass. Each case constructs a char-aligned
+ *   DecoderToken sequence (offsets must match the raw text) and asserts the repaired postcode span.
+ *   Covers the four failure modes from the 2026-05-29 diagnostic plus the precision guards
+ *   (longest-match-wins, SNAP-only for numeric shapes, no-add-over-structural, local smear-clip).
  */
 
 import type { BioLabel, DecoderToken } from "@mailwoman/core/decoder"

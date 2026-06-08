@@ -1,7 +1,7 @@
 # Night shift 2026-06-02 — multi-locale (German) coverage
 
 **Headline: the operator authorized the German train mid-shift, it ran to step-140000, and the eval is
-in. The verdict is REVERT, do not promote.** The order hypothesis came out *validated*: a 5,000-row
+in. The verdict is REVERT, do not promote.** The order hypothesis came out _validated_: a 5,000-row
 order shard roughly doubled German street (19.1→41.2) and house_number (14.6→30.9). But the
 continue-train recipe destabilized span boundaries. German locality and postcode collapsed, the resolver
 fell with them, and US/FR slipped just past the 1pp tripwire. The recipe is rejected; the mechanism it
@@ -26,7 +26,7 @@ reproduced to the decimal first, so the harness has no drift.
 | resolver neural locality-match |           77.4% |         43.3% | −34.1pp     |
 | resolver coord p90 (km)        |            67.4 |         291.5 | +224 km     |
 
-Pre-registered verdict: *revert if any existing locale drops > 1pp*. US −1.3 and FR −1.1 both trip it,
+Pre-registered verdict: _revert if any existing locale drops > 1pp_. US −1.3 and FR −1.1 both trip it,
 and German itself nets worse (the resolver, the product-level metric, went 77.4 → 43.3). **Not
 promoted. No HF upload, no default change. ES/IT/NL extension is held.** The recipe didn't prove
 useful, so replicating it would replicate the damage.
@@ -51,7 +51,7 @@ boundaries came apart:
   on some golden rows it cannibalizes the postcode.
 
 So the lever is real, and the failure is a known, nameable boundary bug rather than a dead end. The next
-attempt needs the order signal *without* the boundary damage. Candidates: (a) the Saint-Albans span-merge
+attempt needs the order signal _without_ the boundary damage. Candidates: (a) the Saint-Albans span-merge
 decoder fix applied to house_number/locality spans, (b) a larger/cleaner shard so the model sees complete
 multi-digit house numbers and complete trailing city names, (c) train fresh-with-German rather than
 continue-train (the continue-train is what destabilized the boundaries). That decision is the operator's;

@@ -9,15 +9,15 @@
  *   named city but raises `postcode_city_mismatch`. This eval feeds the resolver a set of CONFLICT
  *   rows (must flag) and CONTROL rows (correct or abutting — must NOT flag) and scores the flag.
  *
- *   We build the AddressTree directly from each row's components (locality + postcode siblings) so the
- *   eval isolates the RESOLVER's conflict detection, independent of the parser.
+ *   We build the AddressTree directly from each row's components (locality + postcode siblings) so
+ *   the eval isolates the RESOLVER's conflict detection, independent of the parser.
  *
- *   Run: node --experimental-strip-types scripts/eval/postcode-conflict-eval.ts \
- *     --eval data/eval/falsehoods/postcode-city-conflicts.jsonl [--out-md <path>]
- *   (`--wof` defaults to admin-global-priority.db + postcode-locality-intl.db — coord-first on.)
+ *   Run: node --experimental-strip-types scripts/eval/postcode-conflict-eval.ts\
+ *   --eval data/eval/falsehoods/postcode-city-conflicts.jsonl [--out-md <path>] (`--wof` defaults to
+ *   admin-global-priority.db + postcode-locality-intl.db — coord-first on.)
  */
-import { createWofResolver } from "@mailwoman/core/resolver"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { createWofResolver } from "@mailwoman/core/resolver"
 import { readFileSync, writeFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
@@ -82,12 +82,18 @@ const specificity = controls.filter((r) => !r.flag).length / (controls.length ||
 
 const lines: string[] = []
 lines.push(`# Postcode/city conflict falsehoods (#276)\n`)
-lines.push(`Conflict recall (flagged the wrong-postcode): **${(100 * recall).toFixed(0)}%** (${conflicts.filter((r) => r.flag).length}/${conflicts.length})`)
-lines.push(`Control specificity (did NOT false-flag correct/abutting): **${(100 * specificity).toFixed(0)}%** (${controls.filter((r) => !r.flag).length}/${controls.length})\n`)
+lines.push(
+	`Conflict recall (flagged the wrong-postcode): **${(100 * recall).toFixed(0)}%** (${conflicts.filter((r) => r.flag).length}/${conflicts.length})`
+)
+lines.push(
+	`Control specificity (did NOT false-flag correct/abutting): **${(100 * specificity).toFixed(0)}%** (${controls.filter((r) => !r.flag).length}/${controls.length})\n`
+)
 lines.push(`| input | kind | expect flag | got flag | ok |`)
 lines.push(`|---|---|:--:|:--:|:--:|`)
 for (const r of results) {
-	lines.push(`| ${r.row.input} | ${r.row.conflict ? "conflict" : "control"} | ${r.row.expect_flag} | ${r.flag} | ${r.ok ? "✅" : "❌"} |`)
+	lines.push(
+		`| ${r.row.input} | ${r.row.conflict ? "conflict" : "control"} | ${r.row.expect_flag} | ${r.flag} | ${r.ok ? "✅" : "❌"} |`
+	)
 }
 const report = lines.join("\n")
 console.log(report)

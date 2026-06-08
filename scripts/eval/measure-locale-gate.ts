@@ -1,20 +1,18 @@
 /**
- * measure-locale-gate.ts — v0.7 task #33 baseline.
+ * Measure-locale-gate.ts — v0.7 task #33 baseline.
  *
- * #33 asks for a "locale pre-classifier (lexical features → MLP)". Before
- * building an MLP, measure what the EXISTING rule-based `@mailwoman/locale-gate`
- * (`detectLocaleSync`: postcode-shape + script scoring over `QueryShape`)
- * already achieves at predicting an address's country from lexical cues alone.
- * If the rule baseline is strong, #33 needs no new model — it's already shipped,
- * and the remaining system-aware work is #38 (per-system containment) + #39
- * (tree `system` field).
+ * #33 asks for a "locale pre-classifier (lexical features → MLP)". Before building an MLP, measure
+ * what the EXISTING rule-based `@mailwoman/locale-gate` (`detectLocaleSync`: postcode-shape +
+ * script scoring over `QueryShape`) already achieves at predicting an address's country from
+ * lexical cues alone. If the rule baseline is strong, #33 needs no new model — it's already
+ * shipped, and the remaining system-aware work is #38 (per-system containment) + #39 (tree `system`
+ * field).
  *
- * Ground truth: golden v0.1.2 `country` field + falsehoods `locale` region
- * subtag. Detected: region subtag of `detectLocaleSync(...).locale`.
+ * Ground truth: golden v0.1.2 `country` field + falsehoods `locale` region subtag. Detected: region
+ * subtag of `detectLocaleSync(...).locale`.
  *
- * Run:
- *   node --experimental-strip-types scripts/eval/measure-locale-gate.ts \
- *     [--golden data/eval/golden/v0.1.2] [--falsehoods data/eval/falsehoods]
+ * Run: node --experimental-strip-types scripts/eval/measure-locale-gate.ts\
+ * [--golden data/eval/golden/v0.1.2] [--falsehoods data/eval/falsehoods]
  */
 
 import { detectLocaleSync } from "@mailwoman/locale-gate"

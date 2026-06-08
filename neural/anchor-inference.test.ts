@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Cross-language guard for the inference-side anchor features (#239/#240). The feature layout MUST
- *   match the Python training pipeline (`mailwoman_train/tokenizer.py::anchor_feature_vector`), or the
- *   model is fed garbage at inference. These vectors are pinned to values emitted by the Python
+ *   match the Python training pipeline (`mailwoman_train/tokenizer.py::anchor_feature_vector`), or
+ *   the model is fed garbage at inference. These vectors are pinned to values emitted by the Python
  *   function — if the TS drifts (locale order, centroid scale, renormalization), this fails.
  */
 import { describe, expect, it } from "vitest"

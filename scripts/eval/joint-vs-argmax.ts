@@ -46,8 +46,10 @@ const norm = (s: string | undefined | null): string =>
 		.replace(/[^a-z0-9]+/g, " ")
 		.trim()
 
-/** Did the projected output match gold on a field (subset-tolerant: gold token-subset of resolved or
-vice-versa)? */
+/**
+ * Did the projected output match gold on a field (subset-tolerant: gold token-subset of resolved or
+ * vice-versa)?
+ */
 function fieldMatch(resolved: string | undefined, gold: string | undefined | null): boolean {
 	const r = norm(resolved)
 	const g = norm(gold)

@@ -3,11 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Is the German "collapse" actually an ORDER-MISMATCH artifact? (#239/#240). The OA de-sample renders
- *   German addresses in US order (`{house#} {street}, {locality}, {region} {postcode}`), but the model
- *   trained on German order (`{street} {house#}, {postcode} {locality}`). This re-renders the SAME
- *   Berlin/Sachsen rows in German order and re-parses — if locality recovers sharply, the collapse is
- *   substantially an eval-rendering confound, not a parsing limit. Anchor fed throughout.
+ *   Is the German "collapse" actually an ORDER-MISMATCH artifact? (#239/#240). The OA de-sample
+ *   renders German addresses in US order (`{house#} {street}, {locality}, {region} {postcode}`),
+ *   but the model trained on German order (`{street} {house#}, {postcode} {locality}`). This
+ *   re-renders the SAME Berlin/Sachsen rows in German order and re-parses — if locality recovers
+ *   sharply, the collapse is substantially an eval-rendering confound, not a parsing limit. Anchor
+ *   fed throughout.
  *
  *   Run: node --experimental-strip-types scripts/diag-berlin-order.ts
  */
@@ -18,8 +19,12 @@ const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
 const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 
 const labels = JSON.parse(readFileSync("/tmp/pilot-eval/anchoron-card.json", "utf8")).labels as string[]
-const lookup = parseAnchorLookup(JSON.parse(readFileSync("/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json", "utf8")))
-const tokenizer = await MailwomanTokenizer.loadFromFile("/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model")
+const lookup = parseAnchorLookup(
+	JSON.parse(readFileSync("/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json", "utf8"))
+)
+const tokenizer = await MailwomanTokenizer.loadFromFile(
+	"/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
+)
 const runner = await OnnxRunner.create("/tmp/pilot-eval/anchoron-4in.onnx")
 const clf = new NeuralAddressClassifier({ tokenizer, runner, labels, postcodeAnchorLookup: lookup })
 
@@ -35,7 +40,8 @@ const rows = readFileSync("data/eval/external/openaddresses-de-sample.jsonl", "u
 	.filter((r) => r.state === "Berlin" || r.state === "Sachsen")
 	.slice(0, 40)
 
-/** US-order OA input "27 Straußstraße, Berlin, Berlin 12623" → German order "Straußstraße 27, 12623 Berlin". */
+/** US-order OA input "27 Straußstraße, Berlin, Berlin 12623" → German order "Straußstraße 27, 12623
+Berlin". */
 function toGermanOrder(r: Row): string | null {
 	const parts = r.input.split(",").map((s) => s.trim())
 	if (parts.length < 3) return null
@@ -43,12 +49,15 @@ function toGermanOrder(r: Row): string | null {
 	if (!m) return null
 	const [, houseNo, street] = m
 	const locality = r.expected.locality ?? parts[1]
-	const postcode = r.expected.postcode ?? (parts[parts.length - 1]!.match(/\d{5}/)?.[0] ?? "")
+	const postcode = r.expected.postcode ?? parts[parts.length - 1]!.match(/\d{5}/)?.[0] ?? ""
 	return `${street} ${houseNo}, ${postcode} ${locality}`
 }
 
 const locOf = async (text: string): Promise<string> =>
-	(await clf.parseTuples(text)).filter(([t]) => t === "locality").map(([, v]) => v).join(" ") || "∅"
+	(await clf.parseTuples(text))
+		.filter(([t]) => t === "locality")
+		.map(([, v]) => v)
+		.join(" ") || "∅"
 
 const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim()
 let usHit = 0
@@ -75,6 +84,8 @@ console.log(`\nlocality EXACT-match (anchor fed), ${n} Berlin+Sachsen rows:`)
 console.log(`  US order (as the eval renders it): ${usHit}/${n} = ${((100 * usHit) / n).toFixed(1)}%`)
 console.log(`  GERMAN order (as the model trained): ${deHit}/${n} = ${((100 * deHit) / n).toFixed(1)}%`)
 for (const [st, b] of Object.entries(byState)) {
-	console.log(`    ${st}: US ${((100 * b.us) / b.n).toFixed(0)}%  →  German-order ${((100 * b.de) / b.n).toFixed(0)}%  (n=${b.n})`)
+	console.log(
+		`    ${st}: US ${((100 * b.us) / b.n).toFixed(0)}%  →  German-order ${((100 * b.de) / b.n).toFixed(0)}%  (n=${b.n})`
+	)
 }
 process.exit(0)

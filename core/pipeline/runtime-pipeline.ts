@@ -247,10 +247,7 @@ export async function runPipeline(
 	// without either, the pipeline falls back to argmax regardless of the flag.
 	const jointEnabled = opts?.jointReconcile ?? opts?.forceJointReconcile ?? true
 	const useJointReconcile =
-		jointEnabled &&
-		phraseProposals.length > 0 &&
-		stages.classifier &&
-		"parseWithLogits" in stages.classifier
+		jointEnabled && phraseProposals.length > 0 && stages.classifier && "parseWithLogits" in stages.classifier
 
 	if (useJointReconcile) {
 		const classifierWithLogits = stages.classifier as AddressClassifier & {
@@ -396,12 +393,13 @@ const PHRASE_KIND_TO_TAG: ReadonlyMap<string, ComponentTag> = new Map([
  * (all-O) in the classifier output, inject a provisional node using the grouper's structural
  * hypothesis. This rescues spans the neural model couldn't type — primarily venue text.
  *
- * When `classifierTopK` is supplied (the joint-reconcile path), the audit defers to the classifier's
- * own verdict for the orphaned span: if the classifier confidently typed it as a DIFFERENT component
- * than the phrase kind, we inject the classifier's tag rather than the structural guess. Without this,
- * a reconciler that leaves a street-prefix word like `Via` orphaned (because it picked the single
- * `Trento` street span) would see the audit promote `Via`'s LOCALITY_PHRASE to a spurious `locality`
- * node — burying the real trailing city. The classifier said `street:0.73` for `Via`; trust it (#425).
+ * When `classifierTopK` is supplied (the joint-reconcile path), the audit defers to the
+ * classifier's own verdict for the orphaned span: if the classifier confidently typed it as a
+ * DIFFERENT component than the phrase kind, we inject the classifier's tag rather than the
+ * structural guess. Without this, a reconciler that leaves a street-prefix word like `Via` orphaned
+ * (because it picked the single `Trento` street span) would see the audit promote `Via`'s
+ * LOCALITY_PHRASE to a spurious `locality` node — burying the real trailing city. The classifier
+ * said `street:0.73` for `Via`; trust it (#425).
  */
 export function grouperAudit(
 	tree: AddressTree,

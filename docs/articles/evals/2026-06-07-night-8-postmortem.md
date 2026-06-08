@@ -78,7 +78,7 @@ not just unit-tested — the gated re-measure happened this shift:
   warnings) — a local `yarn build-docs` before pushing docs would've caught them.
 - Completion monitors false-positived twice on stale prior-run `step-020000` checkpoints → switched to
   app-task detection.
-- **The eval loads compiled `core/out/`, not source.** The first #387 before/after showed *zero* effect —
+- **The eval loads compiled `core/out/`, not source.** The first #387 before/after showed _zero_ effect —
   the `--city-state-fallback` flag was a silent no-op until `tsc -p core/tsconfig.json`. Unit tests pass on
   vitest's source aliases, so they hid it; only the eval scripts (which import the package `exports` map)
   bite. Recompile after touching any workspace an eval imports. (Captured in `feedback-compiled-cli`.)
@@ -111,7 +111,7 @@ not just unit-tested — the gated re-measure happened this shift:
 - **#368 L2** calibrate the DEPLOYED multi-locale model (per-locale table — DE/NL under-served). The
   per-locale fitter (#391) + drift guard (#392) are in place; this just points them at the multi-locale run.
 - **en-us symlink (#397):** restore `neural-weights-en-us/model.onnx` → v4.0.0 (`link-dev-weights.sh` pins
-  stale v0.5.3). Blocks consistent *en-us* evals; the DE re-measure above did NOT need it (explicit
+  stale v0.5.3). Blocks consistent _en-us_ evals; the DE re-measure above did NOT need it (explicit
   `/tmp/v094-eval/model.onnx`). Published package unaffected (real v4.0.0 materialized at publish).
 
 ## Numbers (running)

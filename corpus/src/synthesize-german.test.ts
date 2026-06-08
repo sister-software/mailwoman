@@ -128,7 +128,12 @@ describe("synthesizeLocaleRow order option (order-robustness)", () => {
 })
 
 describe("NL postcode normalization", () => {
-	const NL: LocaleBaseTuple = { house_number: "105", street: "De Ruijterkade", locality: "Amsterdam", postcode: "1011AB" }
+	const NL: LocaleBaseTuple = {
+		house_number: "105",
+		street: "De Ruijterkade",
+		locality: "Amsterdam",
+		postcode: "1011AB",
+	}
 	it("canonicalizes the NL postcode to the spaced form so native order aligns (was rejected)", () => {
 		const row = synthesizeLocaleRow(NL, "NL", { random: keepAll, order: "native" })!
 		expect(row).not.toBeNull() // previously NULL — the template's "1011 AB" didn't match unspaced "1011AB"

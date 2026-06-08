@@ -61,8 +61,10 @@ function parseArgs(): { outDir: string; locales: LocaleSource[] } {
 	return { outDir, locales }
 }
 
-/** GB outward code: the part before the space when the inward half is `\d[A-Z]{2}` (`SO4 3RX` →
-`SO4`). */
+/**
+ * GB outward code: the part before the space when the inward half is `\d[A-Z]{2}` (`SO4 3RX` →
+ * `SO4`).
+ */
 function gbOutward(name: string): string | null {
 	const sp = name.indexOf(" ")
 	if (sp < 1) return null

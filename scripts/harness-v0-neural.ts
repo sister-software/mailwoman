@@ -63,7 +63,12 @@ interface Args {
 
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
-	const out: Partial<Args> = { morphologyEnabled: true, postcodeRepair: false, unitRepair: false, symmetricMatch: false }
+	const out: Partial<Args> = {
+		morphologyEnabled: true,
+		postcodeRepair: false,
+		unitRepair: false,
+		symmetricMatch: false,
+	}
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 		if (a === "--tests" && args[i + 1]) out.testsDir = args[++i]
@@ -492,7 +497,9 @@ function printReport(results: AssertionResult[]): void {
 	console.log(`| v0 (rule-based) | ${v0Pass} | ${((100 * v0Pass) / total).toFixed(1)}% |`)
 	console.log(`| Neural | ${neuralPass} | ${((100 * neuralPass) / total).toFixed(1)}% |`)
 	console.log(`| Neural tree structurally valid (#37) | ${treeValid} | ${((100 * treeValid) / total).toFixed(1)}% |`)
-	console.log(`| Neural pass AND structurally valid | ${passAndValid} | ${((100 * passAndValid) / total).toFixed(1)}% |`)
+	console.log(
+		`| Neural pass AND structurally valid | ${passAndValid} | ${((100 * passAndValid) / total).toFixed(1)}% |`
+	)
 	console.log("")
 	console.log(`| Category | Count | Rate |`)
 	console.log(`|----------|-------|------|`)

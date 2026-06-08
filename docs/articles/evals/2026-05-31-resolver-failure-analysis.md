@@ -14,27 +14,27 @@ parser's **resolved admin name** so a miss can be bucketed as resolve-wrong vs u
 
 ## Headline
 
-| parser       | locality-match | region-match | resolved |
-|--------------|---------------:|-------------:|---------:|
-| **neural**   | **94.9%**      | 99.9%        | 100.0%   |
-| v0 (Pelias)  | 93.7%          | 99.4%        | 99.7%    |
+| parser      | locality-match | region-match | resolved |
+| ----------- | -------------: | -----------: | -------: |
+| **neural**  |      **94.9%** |        99.9% |   100.0% |
+| v0 (Pelias) |          93.7% |        99.4% |    99.7% |
 
 **Neural beats v0/Pelias on real points** (+1.2pp locality) — the north-star claim, on an
 honest non-circular signal. 101 rows had a miss from one or both parsers.
 
 ## Where neural's 76 locality-misses actually go
 
-| bucket | count | what it is |
-|--------|------:|------------|
-| **(A) name-form variant** | **40** | resolver found the RIGHT place; the eval's name-matcher rejects the form |
-| (B) genuinely wrong place | 13 | resolved to a real but incorrect admin — the resolver-disambiguation target |
-| (C) no locality resolved  | 23 | parser mis-segment, `<Null>` tokens, or WOF coverage gap |
+| bucket                    |  count | what it is                                                                  |
+| ------------------------- | -----: | --------------------------------------------------------------------------- |
+| **(A) name-form variant** | **40** | resolver found the RIGHT place; the eval's name-matcher rejects the form    |
+| (B) genuinely wrong place |     13 | resolved to a real but incorrect admin — the resolver-disambiguation target |
+| (C) no locality resolved  |     23 | parser mis-segment, `<Null>` tokens, or WOF coverage gap                    |
 
 > **If bucket (A) were credited, neural locality on these 1500 rows is ≈97.6%, not 94.9%.**
-> And several of (B) are *also* name-form (`Mt Pleasant`→`Mount Pleasant`, `Mc Laughlin`→
+> And several of (B) are _also_ name-form (`Mt Pleasant`→`Mount Pleasant`, `Mc Laughlin`→
 > `McLaughlin`, `Enosburgh`→`Enosburg Center`), so true locality accuracy is ~97–98%.
 
-The eval has been *underselling* the resolver. Examples from (A): `Butte`→`Butte-Silver Bow`
+The eval has been _underselling_ the resolver. Examples from (A): `Butte`→`Butte-Silver Bow`
 (consolidated city-county — WOF's canonical name), `Saint Johnsbury`→`St. Johnsbury`,
 `Derby`→`Derby Center`, `Monroe Twp`→`Monroe`, `Barre City`→`Barre`.
 
@@ -44,15 +44,15 @@ The eval has been *underselling* the resolver. Examples from (A): `Butte`→`But
    against the resolved place's full WOF **`names` altname set** (normalized), not a single
    canonical string, plus a tight abbreviation layer (St→Saint, Mt→Mount, Ft→Fort, Mc-despace,
    diacritics/punct). Deliberately **no civic-suffix stripping** — `Barre City` and `Barre Town`
-   are distinct VT municipalities. This is *correctness*, not gaming: WOF records these as the
+   are distinct VT municipalities. This is _correctness_, not gaming: WOF records these as the
    same place.
 
    **Result (1500 OA rows, real v0.7.2):**
 
-   | parser | locality BEFORE | locality AFTER | Δ |
-   |--------|----------------:|---------------:|---:|
-   | **neural**  | 94.9% | **97.1%** | +2.2 |
-   | v0 (Pelias) | 93.7% | 95.3% | +1.6 |
+   | parser      | locality BEFORE | locality AFTER |    Δ |
+   | ----------- | --------------: | -------------: | ---: |
+   | **neural**  |           94.9% |      **97.1%** | +2.2 |
+   | v0 (Pelias) |           93.7% |          95.3% | +1.6 |
 
    Both parsers rise (the matcher is parser-agnostic), and neural's lead over Pelias **widens
    to +1.8pp**. 32 neural misses credited — all legitimate (`Saint↔St. Johnsbury`,
@@ -87,6 +87,6 @@ where the resolver is structurally weak.
 
 ## Where neural already wins (bucket: v0-only failures, 25 rows)
 
-v0/Pelias returns *no locality* for many that neural gets right: `Des Moines`, `Des Plaines`
+v0/Pelias returns _no locality_ for many that neural gets right: `Des Moines`, `Des Plaines`
 (v0 mishandles the `Des` token), `Chicago`, `Georgia, VT` (v0 confuses the locality with the
 state), `Moretown`. These are the cases the neural parser exists to win — and does.

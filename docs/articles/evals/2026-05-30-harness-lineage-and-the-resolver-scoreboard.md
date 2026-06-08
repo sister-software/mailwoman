@@ -16,26 +16,26 @@ re-verified from clean runs) and proposes the metric reframe.
 data/eval/falsehoods --postcode-repair` against the v0.7.2 model
 (`output-v072-intersection`, tokenizer `v0.6.0-a0`):
 
-| Parser | Pass | Rate |
-| --- | --: | --: |
-| v0 (rule-based) | 389 / 415 | **93.7%** |
-| Neural (fp32) | 82 / 415 | 19.8% |
-| Neural tree structurally valid (#37) | 391 / 415 | 94.2% |
+| Parser                               |      Pass |      Rate |
+| ------------------------------------ | --------: | --------: |
+| v0 (rule-based)                      | 389 / 415 | **93.7%** |
+| Neural (fp32)                        |  82 / 415 |     19.8% |
+| Neural tree structurally valid (#37) | 391 / 415 |     94.2% |
 
 Outcome cross-tab (sums to 415, the integrity check):
 
-| Category | Count |
-| --- | --: |
-| Both pass | 72 |
+| Category    |   Count |
+| ----------- | ------: |
+| Both pass   |      72 |
 | **v0 only** | **317** |
-| Neural only | 10 |
-| Both fail | 16 |
+| Neural only |      10 |
+| Both fail   |      16 |
 
 Read the two rows that matter together: **v0-only is 317, both-fail is 16.** Of
 the 333 cases neural fails, **317 (95%) are cases v0 handles fine.** Only 16 are
 hard for both parsers. The neural model is not failing on intrinsically hard
-addresses — it is failing on addresses that are easy *for a rule parser tuned on
-this exact corpus*.
+addresses — it is failing on addresses that are easy _for a rule parser tuned on
+this exact corpus_.
 
 ## Why that is expected, not alarming
 
@@ -45,15 +45,15 @@ files the harness extracts `assert(input, ...expected)` calls from are, on
 inspection, a **port of Pelias parser + addressit** — and our v0 parser is itself
 Pelias-derived. So:
 
-- The expected labels encode Pelias/addressit's *segmentation conventions*.
+- The expected labels encode Pelias/addressit's _segmentation conventions_.
 - v0 reproduces them by construction, hence 93.7%.
-- The neural model learned a *different* (often defensible) segmentation and is
+- The neural model learned a _different_ (often defensible) segmentation and is
   graded as wrong whenever it disagrees with the Pelias convention.
 
 The matcher is already lenient — `expectedMatchesActual` passes on substring
 containment in **either** direction (`harness-v0-neural.ts`) — so pure over- or
 under-span boundary errors do **not** cause failures. The failures that remain are
-genuine *disagreements*: a tag the model did not emit, or a value that is neither
+genuine _disagreements_: a tag the model did not emit, or a value that is neither
 equal to nor a substring of the Pelias-expected value.
 
 ### The dominant failure shape: under-segmentation on non-canonical input
@@ -74,19 +74,19 @@ delimiter/format cues it saw in training rather than on token semantics.
 
 ## The honest scoreboard: resolver end-to-end
 
-The product goal is *address to correct place plus coordinates*, not *match
-Pelias's component spans*. The Direction-C resolver eval
+The product goal is _address to correct place plus coordinates_, not _match
+Pelias's component spans_. The Direction-C resolver eval
 (`scripts/eval/resolver-eval.ts`, 2406 WOF-bootstrap rows, custom gazetteer)
 measures that directly. Numbers below were re-verified two ways: the script's own
 output and an independent recompute from the raw per-row sidecar — they agree to
 the decimal.
 
-| baseline | canonical | perturbed | all |
-| --- | --: | --: | --: |
-| neural-only | 77.1% | 64.8% | **68.9%** |
-| v0-via-adapter | 69.5% | 60.8% | 63.7% |
-| arbiter (pick higher resolver score) | 76.9% | 69.5% | 72.0% |
-| oracle (either correct) | 79.4% | 77.1% | 77.9% |
+| baseline                             | canonical | perturbed |       all |
+| ------------------------------------ | --------: | --------: | --------: |
+| neural-only                          |     77.1% |     64.8% | **68.9%** |
+| v0-via-adapter                       |     69.5% |     60.8% |     63.7% |
+| arbiter (pick higher resolver score) |     76.9% |     69.5% |     72.0% |
+| oracle (either correct)              |     79.4% |     77.1% |     77.9% |
 
 On the metric that matches the product, **the neural model already beats v0**
 (+5.2pp Acc@1 overall), and the old "route clean inputs to v0" thesis is dead —
@@ -100,12 +100,12 @@ perturbed/noisy input** over the best single parser. Coordinate error is p50 0 k
 1. **Resolver end-to-end Acc@1 is the headline metric.** It matches the product,
    is lineage-neutral, and is where the model's value actually shows.
 2. **The `harness-v0-neural` suite is a regression gate, not a promotion bar.**
-   Keep running it — a *drop* signals a real regression — but stop treating "25%
+   Keep running it — a _drop_ signals a real regression — but stop treating "25%
    neural on a v0-lineage suite" as the goal. It asks the neural model to imitate
    Pelias's conventions on Pelias's own corpus.
 3. **Coverage, measured on lineage-neutral sets, is the lever.** The
    under-segmentation on non-canonical formats (above) is the real gap, and it
-   shows up on the *perturbed* resolver subset and the external arenas — both
+   shows up on the _perturbed_ resolver subset and the external arenas — both
    lineage-neutral — not just the Pelias harness.
 
 This reframe unblocks two stalled cycles (v0.6.x held after three recipe

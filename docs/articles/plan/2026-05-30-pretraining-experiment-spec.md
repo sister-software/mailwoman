@@ -7,10 +7,10 @@ neural parser. The operator asked to spec it before committing GPU.
 ## The problem it targets
 
 The encoder is trained **from scratch on labeled synthetic data only** — there is
-no self-supervised pre-training. Two diagnosed pathologies are the *known
-signature* of exactly that:
+no self-supervised pre-training. Two diagnosed pathologies are the _known
+signature_ of exactly that:
 
-1. **Overconfidence** — 81% of the model's *wrong* predictions are emitted at
+1. **Overconfidence** — 81% of the model's _wrong_ predictions are emitted at
    ≥0.9 confidence. Hendrycks et al. (ICML 2019) show "networks trained from
    scratch exhibit overconfidence ... pre-training improves model calibration"
    even when it doesn't change accuracy. Desai & Durrett (EMNLP 2020) found
@@ -22,7 +22,7 @@ signature* of exactly that:
    (Hendrycks et al., arXiv 2004.06100).
 
 Both point to the same missing ingredient. Two prior recipe cycles (v0.6.x held,
-v0.7.x calibration null) failed to move these because they tuned the *labeled*
+v0.7.x calibration null) failed to move these because they tuned the _labeled_
 corpus mixture — not the thing that's actually absent.
 
 ## The crucial property: pre-training adds ZERO bytes to the shipped model
@@ -40,7 +40,7 @@ with:   Phase 1 (NEW): unlabeled address strings → [self-supervised pre-train 
 ```
 
 The exported artifact is the **same size and shape** — same 6 layers, 256 hidden,
-~25MB int8. Pre-training only changes the *initialization* the fine-tune starts
+~25MB int8. Pre-training only changes the _initialization_ the fine-tune starts
 from (a learned prior instead of random noise). For **ELECTRA specifically**, the
 extra "generator" network used during Phase 1 is **discarded** after
 pre-training — only the discriminator (= our encoder) is kept. Nothing new ships.
@@ -51,27 +51,27 @@ It is fully reversible: if it doesn't help, we keep shipping the current model.
 Two research passes (2026-05-30) converged. For a **bidirectional tagger** where
 the whole sequence is available at inference, the objective must be bidirectional.
 
-| Objective | Verdict for a 29M offline BIO tagger |
-| --- | --- |
-| **ELECTRA replaced-token-detection (RTD)** | **Primary recommendation.** Best-documented sample/compute efficiency at our exact scale — ELECTRA-Small (14M, ~our architecture: 12L/256h/4head/1024-FFN) reached 79.9 GLUE on 1 GPU × 4 days, beating BERT-Small (75.1) and GPT at ~45× less compute. Loss is over *all* tokens (denser signal than masked-only). RTD's discrimination objective is plausibly less overconfidence-inducing than token-prediction. |
-| **MLM at ~40% mask rate** | **Safe runner-up.** What every strong small NER encoder (BERT, RoBERTa, GLiNER's DeBERTa, NuNER) is built on; simpler than RTD's generator+discriminator. 40% (not the classic 15%) is optimal at small scale per Wettig et al. (EACL 2023): more predictions = better optimization. SpanBERT-style span masking is a close variant, well-matched to multi-token spans (BIO). |
-| **Pure CLM (GPT-style, causal)** | **Wrong default for a tagger.** BERT's own ablation: a left-to-right variant scored 77.8 vs 88.5 F1 on the token-level SQuAD task. LLM2Vec confirms causal models must be *converted back to bidirectional* to encode well. |
-| **Biphasic CLM→MLM** | **Only if a generative head joins the roadmap.** The ICLR-2026 controlled study (Gisserot-Boukhlef et al., arXiv 2507.00994, 15k+ runs) found CLM is *more data-efficient and fine-tuning-stable*, ties-or-slightly-beats MLM on **token classification specifically**, and that a CLM→MLM two-stage protocol (≈25–50% CLM steps, then MLM) captures both. **Caveat:** the "CLM ≥ MLM on TC" result is contested by the paper's own author thread as a possible weak-backbone (EuroBERT) artifact, and all their models are 210M–1B — none at our 29M scale. |
+| Objective                                  | Verdict for a 29M offline BIO tagger                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **ELECTRA replaced-token-detection (RTD)** | **Primary recommendation.** Best-documented sample/compute efficiency at our exact scale — ELECTRA-Small (14M, ~our architecture: 12L/256h/4head/1024-FFN) reached 79.9 GLUE on 1 GPU × 4 days, beating BERT-Small (75.1) and GPT at ~45× less compute. Loss is over _all_ tokens (denser signal than masked-only). RTD's discrimination objective is plausibly less overconfidence-inducing than token-prediction.                                                                                                                                          |
+| **MLM at ~40% mask rate**                  | **Safe runner-up.** What every strong small NER encoder (BERT, RoBERTa, GLiNER's DeBERTa, NuNER) is built on; simpler than RTD's generator+discriminator. 40% (not the classic 15%) is optimal at small scale per Wettig et al. (EACL 2023): more predictions = better optimization. SpanBERT-style span masking is a close variant, well-matched to multi-token spans (BIO).                                                                                                                                                                                |
+| **Pure CLM (GPT-style, causal)**           | **Wrong default for a tagger.** BERT's own ablation: a left-to-right variant scored 77.8 vs 88.5 F1 on the token-level SQuAD task. LLM2Vec confirms causal models must be _converted back to bidirectional_ to encode well.                                                                                                                                                                                                                                                                                                                                  |
+| **Biphasic CLM→MLM**                       | **Only if a generative head joins the roadmap.** The ICLR-2026 controlled study (Gisserot-Boukhlef et al., arXiv 2507.00994, 15k+ runs) found CLM is _more data-efficient and fine-tuning-stable_, ties-or-slightly-beats MLM on **token classification specifically**, and that a CLM→MLM two-stage protocol (≈25–50% CLM steps, then MLM) captures both. **Caveat:** the "CLM ≥ MLM on TC" result is contested by the paper's own author thread as a possible weak-backbone (EuroBERT) artifact, and all their models are 210M–1B — none at our 29M scale. |
 
 ### The CLM question, answered directly
 
 Is there a real case for CLM here? **A partial, conditional one.** Pure CLM is the
 wrong default — a tagger consumes the full sequence bidirectionally, and CLM
-trails on every task family except (contestedly) token classification. The *only*
+trails on every task family except (contestedly) token classification. The _only_
 scenario where CLM earns a place is if mailwoman later wants a **generative repair
 / rewrite / canonicalization head** — the AddrLLM pattern (JD Logistics combined
-address *parsing* + *rewriting* in one model, cutting parcel re-routing ~43%). If
+address _parsing_ + _rewriting_ in one model, cutting parcel re-routing ~43%). If
 that lands on the roadmap, adopt the biphasic CLM→MLM recipe rather than pure CLM:
 early CLM data-efficiency + a bidirectional MLM/RTD finish. For pure BIO tagging
 today, that's speculative future-proofing, not a current need.
 
-**Note on calibration specifically:** no study isolates CLM-vs-MLM *downstream
-calibration* — the calibration win is from *pre-training presence*, not the
+**Note on calibration specifically:** no study isolates CLM-vs-MLM _downstream
+calibration_ — the calibration win is from _pre-training presence_, not the
 objective. The objective-independent calibration lever is **label smoothing +
 temperature scaling** (already partially explored in v0.7.0). So: pre-train (any
 bidirectional objective) **and** keep label smoothing in the fine-tune.
@@ -95,6 +95,7 @@ narrow domain — and it lets us keep our existing custom 16k vocab and tiny siz
 pre-training on 50–100M strings, still ~1 GPU-day.
 
 ### Recipe (Stage A)
+
 - Mask rate ~40% (small-model optimum; not the classic 15%).
 - Seq len 128 (matches the model's max); AdamW; peak LR ~5e-4, ~6% warmup, linear
   decay; large batch.
@@ -103,12 +104,14 @@ pre-training on 50–100M strings, still ~1 GPU-day.
 - Fine-tune from the pre-trained weights with low LR + label smoothing.
 
 ### Cost
+
 - ~1 GPU-day on Modal A100, **~$3–5**. MosaicBERT-Base (137M) reached 79.6 GLUE in
   ~1.1h on 8×A100 (~$22); a 29M model on a narrow corpus is far cheaper.
 
 ### Success criteria (compare pre-trained-then-fine-tuned vs from-scratch baseline)
+
 1. **Calibration** — fraction-of-wrong-predictions-at-≥0.9 (the 81% number) and
-   ECE. *Primary* — this is the pathology we're attacking.
+   ECE. _Primary_ — this is the pathology we're attacking.
 2. **OOD robustness** — accuracy on a comma-stripped / non-canonical held-out set.
 3. **Resolver end-to-end Acc@1** — the product metric (must not regress; ideally
    improves via fewer confident-wrong parses).
@@ -116,6 +119,7 @@ pre-training on 50–100M strings, still ~1 GPU-day.
    harness-lineage doc).
 
 ### Pre-registered revert
+
 If Stage A does not improve calibration (the ≥0.9-wrong fraction) **and** resolver
 Acc@1 doesn't move ≥1.5pp, stop — the from-scratch model stands and we've learned
 pre-training isn't the lever at this scale.

@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   sql.js-httpvfs-backed resolver for the demo. Range-loads the SAME-ORIGIN DB (served from the
+ *   Sql.js-httpvfs-backed resolver for the demo. Range-loads the SAME-ORIGIN DB (served from the
  *   Pages deploy) so a session fetches ~5 MB instead of the whole 53 MB — the win that matters on
  *   mobile / metered links.
  *
  *   The query SQL + ranking mirror `@mailwoman/resolver-wof-wasm`'s `WofWasmPlaceLookup` (exact-name
- *   tier → population-adjusted bm25, plus a point-in-bbox region constraint), but run ASYNC over the
- *   worker's `db.exec`. We can't share that class directly: it consumes a synchronous in-memory
- *   `@sqlite.org/sqlite-wasm` handle, whereas this talks to a Comlink-proxied sql.js worker. Keep the
- *   two ranking implementations in lockstep. (sql.js-httpvfs's WASM has no rtree module, so we only
- *   use FTS5 + plain-column bbox here — which is all the resolver path needs.)
+ *   tier → population-adjusted bm25, plus a point-in-bbox region constraint), but run ASYNC over
+ *   the worker's `db.exec`. We can't share that class directly: it consumes a synchronous in-memory
+ *   `@sqlite.org/sqlite-wasm` handle, whereas this talks to a Comlink-proxied sql.js worker. Keep
+ *   the two ranking implementations in lockstep. (sql.js-httpvfs's WASM has no rtree module, so we
+ *   only use FTS5 + plain-column bbox here — which is all the resolver path needs.)
  *
- *   sql.js-httpvfs ships a webpack UMD bundle (not ESM) and a Worker + WASM. The demo-assets plugin
+ *   Sql.js-httpvfs ships a webpack UMD bundle (not ESM) and a Worker + WASM. The demo-assets plugin
  *   stages all three into `static/mailwoman/sqljs/`; we load the UMD via a classic <script> (→
  *   `window.createDbWorker`) and hand the worker + wasm URLs to it. Nothing here is bundled by
  *   webpack — that's what keeps the Docusaurus build warning-free.
@@ -26,7 +26,8 @@ const POPULATION_BOOST = 4.0
 const POPULATION_SCALE_LOG10 = 6.0
 
 const normName = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
-/** Escape a string literal for inline SQL (we inline rather than bind — avoids param-marshaling over Comlink). */
+/** Escape a string literal for inline SQL (we inline rather than bind — avoids param-marshaling over
+Comlink). */
 const sqlStr = (s: string): string => `'${s.replace(/'/g, "''")}'`
 
 /** Trim raw input into an FTS5-safe MATCH term. Mirrors resolver-wof-wasm's sanitizeFtsQuery intent. */
@@ -43,7 +44,7 @@ function sanitizeFts(text: string): string {
 	return prefix ? `"${cleaned}"*` : `"${cleaned}"`
 }
 
-/** sql.js exec result → row objects. */
+/** Sql.js exec result → row objects. */
 function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
 	if (!res || res.length === 0) return []
 	const { columns, values } = res[0]

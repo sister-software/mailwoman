@@ -25,8 +25,10 @@ interface FixtureRow {
 	country: string
 	lat: number
 	lon: number
-	/** Half-extent in degrees → bbox = [lat±d, lon±d]. Bigger d ⇒ bigger bbox ⇒ looser relative
-tolerance. */
+	/**
+	 * Half-extent in degrees → bbox = [lat±d, lon±d]. Bigger d ⇒ bigger bbox ⇒ looser relative
+	 * tolerance.
+	 */
 	d: number
 	population?: number
 }

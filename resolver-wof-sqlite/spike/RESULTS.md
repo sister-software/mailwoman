@@ -10,16 +10,15 @@
 
 **Asset bytes** (worker JS + WASM): 1305 KB
 
-
 ## Per-query latency
 
-| Query | ms | rows | error |
-|---|---:|---:|---|
-| exact: New York | 54 | 9 | — |
-| exact: Springfield | 25 | 10 | — |
-| prefix: 902* | 7 | 10 | — |
-| ranked: New York by population | 6 | 9 | — |
-| bbox: Illinois bounding box | 1 | 0 | SQLite: no such module: rtree |
-| proximity: near Springfield IL | 0 | 0 | SQLite: no such module: rtree |
-| warm: New York repeat | 1 | 9 | — |
-| warm: Springfield repeat | 1 | 10 | — |
+| Query                          |  ms | rows | error                         |
+| ------------------------------ | --: | ---: | ----------------------------- |
+| exact: New York                |  54 |    9 | —                             |
+| exact: Springfield             |  25 |   10 | —                             |
+| prefix: 902\*                  |   7 |   10 | —                             |
+| ranked: New York by population |   6 |    9 | —                             |
+| bbox: Illinois bounding box    |   1 |    0 | SQLite: no such module: rtree |
+| proximity: near Springfield IL |   0 |    0 | SQLite: no such module: rtree |
+| warm: New York repeat          |   1 |    9 | —                             |
+| warm: Springfield repeat       |   1 |   10 | —                             |

@@ -54,13 +54,17 @@ export interface CoincidentRole {
 export interface BuildCoincidentRolesOpts {
 	/** Drop + rebuild the table if it already exists. Default true (the build is cheap + idempotent). */
 	drop?: boolean
-	/** Relative tolerance: a pair is kept when centroid distance ≤ `toleranceFraction ×
-bbox-diagonal`. Default 0.15. */
+	/**
+	 * Relative tolerance: a pair is kept when centroid distance ≤ `toleranceFraction ×
+	 * bbox-diagonal`. Default 0.15.
+	 */
 	toleranceFraction?: number
 	/** Floor (km) under the relative tolerance, so small-bbox city-states still qualify. Default 12. */
 	minToleranceKm?: number
-	/** Centroid distance (km) below which a region-tier pair is classed `city-state` (metadata only).
-Default 2. */
+	/**
+	 * Centroid distance (km) below which a region-tier pair is classed `city-state` (metadata only).
+	 * Default 2.
+	 */
 	cityStateMaxKm?: number
 	onProgress?: (phase: string, detail?: string) => void
 }

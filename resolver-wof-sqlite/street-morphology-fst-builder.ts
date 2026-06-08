@@ -41,8 +41,10 @@ const STREET_TYPES_FILENAME = "street_types.txt"
 export interface BuildStreetMorphologyFstOpts {
 	/** Path to the `core/data/libpostal/dictionaries` directory containing per-locale subfolders. */
 	dictionariesDir: string
-	/** Optional locale filter — only ingest these locale subfolders. Defaults to all that have a
-`street_types.txt`. */
+	/**
+	 * Optional locale filter — only ingest these locale subfolders. Defaults to all that have a
+	 * `street_types.txt`.
+	 */
 	locales?: string[]
 	/**
 	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into the

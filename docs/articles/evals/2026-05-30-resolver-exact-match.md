@@ -13,10 +13,10 @@ of 1090 km. Decomposing the failures pinned the cause precisely:
   one** (0% were unresolved). So the ceiling is a **resolver-ranking** problem,
   not a parser-coverage problem.
 - **77% of the wrong resolutions are >100 km off** (median wrong-error 333 km,
-  p90 2624 km) — distances that mean *wrong state*, not a local near-miss.
+  p90 2624 km) — distances that mean _wrong state_, not a local near-miss.
 
 Tracing the wrong-state cases exposed the mechanism. For `Portland, ME` the
-resolver resolved the *region* "ME" to **Missouri**, then correctly scoped the
+resolver resolved the _region_ "ME" to **Missouri**, then correctly scoped the
 locality to its (wrong) parent → Portland, MO. The `findPlace("ME", region, US)`
 candidate list:
 
@@ -34,17 +34,17 @@ Missouri's larger population overcame Maine's bm25 edge on the 2-letter query.
 ## Fix 1 — exact-match tiering (the aligned fix)
 
 **The principle (and why it aligns with population/importance rather than
-overriding it):** population is a *prominence prior*. Its job is to break ties
+overriding it):** population is a _prominence prior_. Its job is to break ties
 among candidates that match the query **equally well** — e.g. "Springfield" →
 Springfield IL over Springfield MA, both exact name matches, population correctly
 picks the bigger. It was never meant to promote a candidate that matches the query
-*worse*. The additive scheme accidentally let it do exactly that, because +4 of
+_worse_. The additive scheme accidentally let it do exactly that, because +4 of
 population exceeds the bm25 gap between an exact alias match and a non-match.
 
 The fix makes ranking **two-keyed**: match quality is the primary key, prominence
 (population) the secondary key **within a tier**. A candidate whose name or any
 alias equals the query (case-folded) ranks above any partial match; the existing
-weighted sum — including population — orders candidates *within* a tier.
+weighted sum — including population — orders candidates _within_ a tier.
 
 - `Springfield, IL` still works: both IL and MA Springfields are exact name
   matches → same tier → population decides → IL (bigger). **Unchanged.**
@@ -77,16 +77,16 @@ recall. `core/resolver/resolve.ts` (`ResolveOpts.parentFallback`, default true).
 
 One toggle apart (`--exact-tiering`/`--parent-fallback` off vs on), same model, same gazetteer:
 
-| metric | baseline (off) | both fixes (on) | Δ |
-| --- | --: | --: | --: |
-| neural-only Acc@1 — all | 68.9% | **77.4%** | **+8.5pp** |
-| neural-only — canonical | 77.1% | 88.0% | +10.9pp |
-| neural-only — perturbed | 64.8% | 72.1% | +7.3pp |
-| v0-via-adapter — all | 63.7% | 70.0% | +6.3pp |
-| arbiter — all | 72.0% | 80.0% | +8.0pp |
-| oracle — all | 77.9% | 86.4% | +8.5pp |
-| coord error p90 (km) | 1090 | **211** | 5.2× lower |
-| neural resolved-but-wrong | 749 | 544 | −205 (−27%) |
+| metric                    | baseline (off) | both fixes (on) |           Δ |
+| ------------------------- | -------------: | --------------: | ----------: |
+| neural-only Acc@1 — all   |          68.9% |       **77.4%** |  **+8.5pp** |
+| neural-only — canonical   |          77.1% |           88.0% |     +10.9pp |
+| neural-only — perturbed   |          64.8% |           72.1% |      +7.3pp |
+| v0-via-adapter — all      |          63.7% |           70.0% |      +6.3pp |
+| arbiter — all             |          72.0% |           80.0% |      +8.0pp |
+| oracle — all              |          77.9% |           86.4% |      +8.5pp |
+| coord error p90 (km)      |           1090 |         **211** |  5.2× lower |
+| neural resolved-but-wrong |            749 |             544 | −205 (−27%) |
 
 The headline: **+8.5pp end-to-end Acc@1 and a 5.2× cut in p90 coordinate error**
 (1090 km → 211 km — the cross-state tail collapses, exactly as the "ME → Missouri"
@@ -96,7 +96,7 @@ Failure attribution confirms the mechanism: neural's resolver-side errors drop
 from 749 to 544 (−27%) with parser-side errors still at 0 — the fix moved
 wrong-state resolutions into correct ones, not coverage.
 
-The 211 km p90 that *remains* is the genuine admin-centroid tail (large rural
+The 211 km p90 that _remains_ is the genuine admin-centroid tail (large rural
 counties / sprawling metros whose centroid is far from the labeled point) plus a
 residual same-state ambiguity — the target for the learned re-ranker and the
 street-level tier, not for this PR.

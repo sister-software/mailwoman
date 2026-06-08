@@ -4,14 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   Inference-side postcode-anchor features (#239/#240) — the mirror of the Python training pipeline
- *   (`mailwoman_train/tokenizer.py::anchor_feature_vector` + `realign_anchor_to_pieces`). At inference
- *   the model conditions on per-piece anchor features fed alongside `input_ids`; this builds them from
- *   a raw address + its SentencePiece pieces, using the SAME postcode→anchor lookup the model trained
- *   against (`scripts/build-pilot-anchor-lookup.py`), so the feature layout matches byte-for-byte.
+ *   (`mailwoman_train/tokenizer.py::anchor_feature_vector` + `realign_anchor_to_pieces`). At
+ *   inference the model conditions on per-piece anchor features fed alongside `input_ids`; this
+ *   builds them from a raw address + its SentencePiece pieces, using the SAME postcode→anchor
+ *   lookup the model trained against (`scripts/build-pilot-anchor-lookup.py`), so the feature
+ *   layout matches byte-for-byte.
  *
  *   The layout is LOAD-BEARING and cross-language: a wrong locale order or centroid scale feeds the
- *   model garbage. `anchor-inference.test.ts` pins both `LOCALE_ORDER` and the vector to values emitted
- *   by the Python `anchor_feature_vector` — any drift fails the test.
+ *   model garbage. `anchor-inference.test.ts` pins both `LOCALE_ORDER` and the vector to values
+ *   emitted by the Python `anchor_feature_vector` — any drift fails the test.
  */
 
 import type { TokenizedPiece } from "./tokenizer.js"
@@ -59,9 +60,9 @@ export function anchorFeatureVector(posterior: Record<string, number>, lat: numb
 }
 
 /**
- * Parse the pilot postcode→anchor lookup JSON (`{postcode: [posterior, lat, lon]}`) into a Map. Pure
- * (takes the parsed object, not a path) so this module stays browser-safe — the file read lives in
- * the Node-side caller (the eval).
+ * Parse the pilot postcode→anchor lookup JSON (`{postcode: [posterior, lat, lon]}`) into a Map.
+ * Pure (takes the parsed object, not a path) so this module stays browser-safe — the file read
+ * lives in the Node-side caller (the eval).
  */
 export function parseAnchorLookup(raw: Record<string, [Record<string, number>, number, number]>): AnchorLookup {
 	const out: AnchorLookup = new Map()

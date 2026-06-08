@@ -210,10 +210,10 @@ const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsS
 }
 
 /**
- * ISO-3166 country for the resolver's `defaultCountry`, inferred from a BCP-47 locale's region subtag
- * (en-US → US, fr-FR → FR, de-DE → DE). Returns `undefined` when the locale carries no 2-letter region
- * subtag (so the resolver stays global rather than guessing from a language alone). Script subtags
- * (`Hant`, `Latn`) are ignored.
+ * ISO-3166 country for the resolver's `defaultCountry`, inferred from a BCP-47 locale's region
+ * subtag (en-US → US, fr-FR → FR, de-DE → DE). Returns `undefined` when the locale carries no
+ * 2-letter region subtag (so the resolver stays global rather than guessing from a language alone).
+ * Script subtags (`Hant`, `Latn`) are ignored.
  */
 export function localeToCountry(locale: string | undefined): string | undefined {
 	if (!locale) return undefined
@@ -223,16 +223,13 @@ export function localeToCountry(locale: string | undefined): string | undefined 
 }
 
 /**
- * The resolver's `defaultCountry` for this invocation: the explicit `--default-country` if set (with
- * `none` meaning "no filter"), otherwise inferred from `--locale`. Without it, a bare region
+ * The resolver's `defaultCountry` for this invocation: the explicit `--default-country` if set
+ * (with `none` meaning "no filter"), otherwise inferred from `--locale`. Without it, a bare region
  * abbreviation (`NY`) resolves to whatever the gazetteer ranks highest globally — often a foreign
- * homonym (a Scottish locality) rather than the US state. The demo passes `country: "US"`; this gives
- * the CLI parity.
+ * homonym (a Scottish locality) rather than the US state. The demo passes `country: "US"`; this
+ * gives the CLI parity.
  */
-export function resolverDefaultCountry(options: {
-	defaultCountry?: string
-	locale?: string
-}): string | undefined {
+export function resolverDefaultCountry(options: { defaultCountry?: string; locale?: string }): string | undefined {
 	if (options.defaultCountry === "none") return undefined
 	return options.defaultCountry ?? localeToCountry(options.locale)
 }

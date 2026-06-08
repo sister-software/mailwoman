@@ -46,8 +46,10 @@ function normalizeName(s: string): string {
 export class WofWasmPlaceLookup implements PlaceLookup {
 	readonly #db: Database
 	#hasPopulationCache?: boolean
-	/** Lazily-built `admin_id → coincident localities` map from the #403 relation (the slim DB carries
-it). */
+	/**
+	 * Lazily-built `admin_id → coincident localities` map from the #403 relation (the slim DB carries
+	 * it).
+	 */
 	#coincidentRolesCache?: Map<number, CoincidentLocality[]>
 
 	constructor(opts: WofWasmPlaceLookupOpts) {

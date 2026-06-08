@@ -86,9 +86,9 @@ export function createUnifiedSchema(db: DatabaseSync): void {
 
 /**
  * Populate the `ancestors` table by walking each place's `parent_id` chain in `spr` (transitive
- * closure, including the place itself). Idempotent: drops + rebuilds the table contents. Returns the
- * row count. Run after `spr` is fully ingested (build-unified-wof freeze phase) or standalone on an
- * existing unified DB (`scripts/add-ancestors.ts`). Sentinel/negative parent_ids and cycles
+ * closure, including the place itself). Idempotent: drops + rebuilds the table contents. Returns
+ * the row count. Run after `spr` is fully ingested (build-unified-wof freeze phase) or standalone
+ * on an existing unified DB (`scripts/add-ancestors.ts`). Sentinel/negative parent_ids and cycles
  * terminate the walk. ~4 rows/place average; a transaction keeps the ~5M inserts fast.
  */
 export function populateAncestors(db: DatabaseSync): number {

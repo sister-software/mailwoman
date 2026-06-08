@@ -45,8 +45,10 @@ export interface MailwomanLookupLike {
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		}>
 	>
-	/** Dual-role partner roles for a resolved place id (#402). Optional — absent on lookups built from a
-	 * slim DB that predates the `coincident_roles` relation. */
+	/**
+	 * Dual-role partner roles for a resolved place id (#402). Optional — absent on lookups built from
+	 * a slim DB that predates the `coincident_roles` relation.
+	 */
 	coincidentRolesFor?: (placeId: number) => Promise<DualRole[]>
 }
 
@@ -89,14 +91,16 @@ export interface DemoResult {
 	timing?: StageTiming
 	fstActive: boolean
 	fstProvenance?: FstProvenanceLike | null
-	/** Dual-role (#402): the additional admin tier(s) the resolved place also fulfils (city-state etc.). */
+	/** Dual-role (#402): the additional admin tier(s) the resolved place also fulfils (city-state
+etc.). */
 	dualRoles?: DualRole[]
 }
 
 /**
  * One additional admin role a resolved place ALSO fulfils — the dual-role / city-state relation
- * (#402). Berlin resolves as a locality but `role: "region"` here surfaces that it is also a federal
- * state. `relationshipType` is the gazetteer-derived class (`city-state`, `capital-seat`, …).
+ * (#402). Berlin resolves as a locality but `role: "region"` here surfaces that it is also a
+ * federal state. `relationshipType` is the gazetteer-derived class (`city-state`, `capital-seat`,
+ * …).
  */
 export interface DualRole {
 	id: number

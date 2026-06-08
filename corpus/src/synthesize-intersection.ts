@@ -5,18 +5,16 @@
  *
  *   Intersection synthesizer — v0.7 coverage fix (night-3, DeepSeek-decided).
  *
- *   The 2026-05-29 harness diagnostic found the neural model emits
- *   `intersection_a`/`intersection_b` with ~0.0001 probability on canonical
- *   intersections ("Broadway & W 42nd St") — it never learned the tags, because
- *   the corpus has NO intersection training signal (no generator, and real-data
- *   adapters don't emit intersection-formatted rows). Intersections are 65 of
- *   the 376 harness assertions (17%), all 0% neural. This generator produces the
- *   missing signal as a small targeted supplement shard (synthesis-as-supplement
- *   discipline: weight < 0.25, one-and-done).
+ *   The 2026-05-29 harness diagnostic found the neural model emits `intersection_a`/`intersection_b`
+ *   with ~0.0001 probability on canonical intersections ("Broadway & W 42nd St") — it never learned
+ *   the tags, because the corpus has NO intersection training signal (no generator, and real-data
+ *   adapters don't emit intersection-formatted rows). Intersections are 65 of the 376 harness
+ *   assertions (17%), all 0% neural. This generator produces the missing signal as a small targeted
+ *   supplement shard (synthesis-as-supplement discipline: weight < 0.25, one-and-done).
  *
- *   Output is a `CanonicalRow` ({raw, components}); the corpus aligner turns it
- *   into BIO labels (B-/I-intersection_a, O on the connector, B-/I-intersection_b).
- *   Surface forms of both streets MUST occur verbatim in `raw` so alignment lands.
+ *   Output is a `CanonicalRow` ({raw, components}); the corpus aligner turns it into BIO labels
+ *   (B-/I-intersection_a, O on the connector, B-/I-intersection_b). Surface forms of both streets
+ *   MUST occur verbatim in `raw` so alignment lands.
  *
  *   US-idiomatic only (the harness intersection cases are US: "X & Y, City, ST ZIP").
  */
@@ -52,14 +50,30 @@ const STREET_CORES = [
 /** Bare proper-noun streets that idiomatically take NO suffix. */
 const BARE_NAMES = ["Broadway", "Wall", "Bourbon", "Esplanade", "Riverside", "Lakeshore"] as const
 
-const ORDINALS = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "42nd", "23rd", "34th"] as const
+const ORDINALS = [
+	"1st",
+	"2nd",
+	"3rd",
+	"4th",
+	"5th",
+	"6th",
+	"7th",
+	"8th",
+	"9th",
+	"10th",
+	"42nd",
+	"23rd",
+	"34th",
+] as const
 
 const SUFFIXES = ["St", "Ave", "Blvd", "Rd", "Dr", "Ln", "Way", "Pl", "Ct", "Pkwy", "Ter", "Cir"] as const
 
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const
 
-/** Connectors between the two streets. Whitespace-padded forms keep tokens clean for alignment.
- *  `@` added in v0.7.2 — the harness uses it ("Main St @ Second Ave") and v0.7.1 had never seen it. */
+/**
+ * Connectors between the two streets. Whitespace-padded forms keep tokens clean for alignment. `@`
+ * added in v0.7.2 — the harness uses it ("Main St @ Second Ave") and v0.7.1 had never seen it.
+ */
 const CONNECTORS = [" & ", " and ", " at ", " / ", " @ "] as const
 
 export interface IntersectionBaseTuple {

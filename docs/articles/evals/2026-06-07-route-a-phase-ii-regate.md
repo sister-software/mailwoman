@@ -6,14 +6,14 @@ The [Phase I baseline](./2026-06-07-route-a-phase-i-baseline.md) measured the op
 
 Same harness (`scripts/eval/joint-vs-argmax.ts`, v0.9.4 model, warmed + alternated latency), same OpenAddresses samples, same argmax baseline — only the joint path changed. The argmax column is byte-identical to Phase I, which is the control that proves the movement is real and not a baseline shift.
 
-| locale | argmax loc | joint loc | Δ loc | regressed | improved | latency p99 × |
-|---|--:|--:|--:|--:|--:|--:|
-| **DE international** (city-state collision) | 72.2% | **97.2%** | **+25.0pp** | 0.2% | 25.2% | 0.59 |
-| US (native) | 98.8% | **99.4%** | +0.6pp | 0.0% | 0.8% | 1.57 |
-| FR (native) | 97.5% | **100.0%** | +2.5pp | 0.0% | 2.5% | 0.57 |
-| NL (native) | 99.5% | **100.0%** | +0.5pp | 0.3% | 0.5% | 1.09 |
-| IT (native) | 84.8% | **99.8%** | **+15.0pp** | 0.0% | 15.0% | 0.83 |
-| ES (native) | 84.0% | **99.0%** | **+15.0pp** | 0.3% | 15.5% | 0.55 |
+| locale                                      | argmax loc |  joint loc |       Δ loc | regressed | improved | latency p99 × |
+| ------------------------------------------- | ---------: | ---------: | ----------: | --------: | -------: | ------------: |
+| **DE international** (city-state collision) |      72.2% |  **97.2%** | **+25.0pp** |      0.2% |    25.2% |          0.59 |
+| US (native)                                 |      98.8% |  **99.4%** |      +0.6pp |      0.0% |     0.8% |          1.57 |
+| FR (native)                                 |      97.5% | **100.0%** |      +2.5pp |      0.0% |     2.5% |          0.57 |
+| NL (native)                                 |      99.5% | **100.0%** |      +0.5pp |      0.3% |     0.5% |          1.09 |
+| IT (native)                                 |      84.8% |  **99.8%** | **+15.0pp** |      0.0% |    15.0% |          0.83 |
+| ES (native)                                 |      84.0% |  **99.0%** | **+15.0pp** |      0.3% |    15.5% |          0.55 |
 
 Compare the Phase I regression rates — NL 16.0%, IT 26.0%, ES 34.0% — against these: 0.3%, 0.0%, 0.3%. Every locale now clears the ≤0.5% per-field-regression gate, joint beats argmax on all six (four of them at ≥99.8% locality), and the improvements dwarf the residual regressions. Latency stays at or under 1× p99 on four locales because the joint path produces cleaner trees with less downstream churn.
 
@@ -21,13 +21,13 @@ These are the numbers after the residual tail was chased down (see "Closing the 
 
 ## Why — three fixes, one root cause
 
-The Phase I post-mortem blamed proposal coverage: "the reconciler falls back to single-token spans when proposals don't cover the multi-word component." That was half right. Maturing the phrase grouper to *propose* multi-word spans (`Reggio nell'Emilia`, `Las Palmas de Gran Canaria`) was necessary, but on its own it barely moved the aggregate — the proposals existed and the reconciler still fragmented. Digging into the live beam turned up two more mechanisms behind the same symptom, and all three had to land together.
+The Phase I post-mortem blamed proposal coverage: "the reconciler falls back to single-token spans when proposals don't cover the multi-word component." That was half right. Maturing the phrase grouper to _propose_ multi-word spans (`Reggio nell'Emilia`, `Las Palmas de Gran Canaria`) was necessary, but on its own it barely moved the aggregate — the proposals existed and the reconciler still fragmented. Digging into the live beam turned up two more mechanisms behind the same symptom, and all three had to land together.
 
 1. **The phrase grouper couldn't see multi-word localities.** `scoreLocalityPhrase` walked a run of capitalized tokens and stopped dead at the first lowercase one, so place-name connectives (`de`, `in`, `nell'Emilia`, `aan den`) ended the span. Worse, in OpenAddresses' all-caps international data every short place word — `SAN`, `DI`, `DEL` — matches the 2-3-uppercase region-abbreviation shape, so the head of `SAN NAZARIO` got skipped as if it were a US state. The walk now bridges a bounded set of place-name particles and apostrophe-fused names, and a region-abbreviation-shaped token that heads a multi-word place is allowed to start a locality.
 
 2. **The grouper-audit ignored the classifier.** Once the reconciler picked `street="Trento"` over `Via Trento`, the word `Via` was left orphaned. The post-reconcile audit, whose job is to rescue spans the model couldn't type, saw an uncovered `LOCALITY_PHRASE` proposal for `Via` and promoted it to a `locality` node — burying the real trailing city, which is why `Via Trento, …, SORBOLO` came out with locality `Via`. The classifier had typed that span `street:0.73` all along. The audit now takes the classifier's per-span verdict for orphaned spans and only falls back to the structural phrase kind when the model genuinely abstained. This single fix took IT from 68.5% to 93.5%.
 
-3. **Romance streets lead with their type.** `scoreStreetPhrase` was suffix-only — it found `Main Street` by walking left from `Street`. Italian and Spanish put the type first (`Via Trento`, `Calle Mayor`, `Largo Millefiori`), so the rule never fired and the leading `Via`/`Calle` stayed a capitalized first-segment word the locality rule happily proposed. We taught the grouper a bounded set of Romance street-type prefixes — street-types only, deliberately excluding the ambiguous area words like `Polígono`, `Urbanización`, and `Lugar` that legitimately serve *as* localities. That carried ES from 89.5% to 94.3% and cleaned up the IT tail.
+3. **Romance streets lead with their type.** `scoreStreetPhrase` was suffix-only — it found `Main Street` by walking left from `Street`. Italian and Spanish put the type first (`Via Trento`, `Calle Mayor`, `Largo Millefiori`), so the rule never fired and the leading `Via`/`Calle` stayed a capitalized first-segment word the locality rule happily proposed. We taught the grouper a bounded set of Romance street-type prefixes — street-types only, deliberately excluding the ambiguous area words like `Polígono`, `Urbanización`, and `Lugar` that legitimately serve _as_ localities. That carried ES from 89.5% to 94.3% and cleaned up the IT tail.
 
 The through-line: the joint path was being asked to type spans the rule layer couldn't describe and the model hadn't seen, and the audit was papering over both with its most confident-looking guess. Give the grouper the vocabulary and let the audit defer to the model, and the fragmentation evaporates.
 
@@ -35,7 +35,7 @@ The through-line: the joint path was being asked to type spans the rule layer co
 
 The three fixes above cleared the catastrophe but left IT at 1.3% and ES at 2.8%, above the gate. Dumping those rows showed two more shapes, and a fourth structural fix per shape took every locale under 0.5%.
 
-4. **The audit injected a *second* locality.** On a Romance street like `Via Francesca Nord`, the OOD model itself mistypes the street-name word `Francesca` as a locality; the reconciler orphans it and the audit — correctly deferring to the model now — injects `locality="Francesca"`. The real trailing city was still in the tree, but `decodeAsJson` reads the earlier-positioned spurious one. The audit now refuses to inject a second singleton-tag node (`locality`/`region`/`postcode`/`country`) when the reconciler already produced one. Joint-path only; the argmax default stays byte-stable. This is what carried IT to 99.8%.
+4. **The audit injected a _second_ locality.** On a Romance street like `Via Francesca Nord`, the OOD model itself mistypes the street-name word `Francesca` as a locality; the reconciler orphans it and the audit — correctly deferring to the model now — injects `locality="Francesca"`. The real trailing city was still in the tree, but `decodeAsJson` reads the earlier-positioned spurious one. The audit now refuses to inject a second singleton-tag node (`locality`/`region`/`postcode`/`country`) when the reconciler already produced one. Joint-path only; the argmax default stays byte-stable. This is what carried IT to 99.8%.
 
 5. **The model tags a trailing city as a postcode.** Facing the postcode-then-city order, the model puts `Toulouse` (postcode:0.77, locality:0.06) and `Sena` (postcode:0.53) in the postcode slot, so the locality drops entirely. But `Toulouse` has no digit, and postcodes contain a digit in every locale we handle — so the span-logit aggregation now drops the `postcode` and `house_number` candidates for any digit-less span, and the reconciler picks the real component. That alone recovered eight French cities and most of the Spanish tail.
 

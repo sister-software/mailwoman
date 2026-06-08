@@ -111,9 +111,10 @@ function isRegionAbbreviation(s: string): boolean {
 }
 
 /**
- * True when token starts with an uppercase letter — the common Western proper-noun shape. Unicode-aware
- * (`\p{Lu}`) so accented Latin capitals (`Évellys`, `Étagnac`, `Ñuñoa`, `Ávila`) count as proper nouns
- * too; an ASCII-only `[A-Z]` silently dropped those localities from the grouper (#425 residual).
+ * True when token starts with an uppercase letter — the common Western proper-noun shape.
+ * Unicode-aware (`\p{Lu}`) so accented Latin capitals (`Évellys`, `Étagnac`, `Ñuñoa`, `Ávila`)
+ * count as proper nouns too; an ASCII-only `[A-Z]` silently dropped those localities from the
+ * grouper (#425 residual).
  */
 function startsCapitalized(s: string): boolean {
 	return /^\p{Lu}/u.test(s)
@@ -169,15 +170,16 @@ function isStreetSuffix(token: string): boolean {
 }
 
 /**
- * Romance/Latin street-TYPE words that LEAD the street ("Via Trento", "Calle Mayor", "Corso Italia").
- * English puts the type last (a suffix — see STREET_SUFFIXES); Romance languages put it first. Without
- * this, a leading "Via"/"Calle" is capitalized first-segment text the locality rule happily proposes,
- * and on OOD intl input the model can't type it either — so the grouper-audit promotes it to a
- * spurious `locality`, burying the real city (#425 re-gate).
+ * Romance/Latin street-TYPE words that LEAD the street ("Via Trento", "Calle Mayor", "Corso
+ * Italia"). English puts the type last (a suffix — see STREET_SUFFIXES); Romance languages put it
+ * first. Without this, a leading "Via"/"Calle" is capitalized first-segment text the locality rule
+ * happily proposes, and on OOD intl input the model can't type it either — so the grouper-audit
+ * promotes it to a spurious `locality`, burying the real city (#425 re-gate).
  *
  * Street-TYPES only — deliberately NOT the ambiguous area/development words ("Polígono",
  * "Urbanización", "Lugar", "Partida", "Borgo") that legitimately serve AS localities. This stays a
- * bounded linguistic category; per-locale breadth belongs in a future rule pack, not an exception pile.
+ * bounded linguistic category; per-locale breadth belongs in a future rule pack, not an exception
+ * pile.
  */
 const STREET_PREFIXES: ReadonlySet<string> = new Set([
 	// Italian
@@ -224,14 +226,15 @@ function isStreetPrefix(token: string): boolean {
 }
 
 /**
- * Lowercase connective particles that live INSIDE multi-word place names — the Romance/Germanic glue
- * that bridges two capitalized content words: "Las Palmas **de** Gran Canaria", "San Pietro **in**
- * Casale", "Alphen **aan den** Rijn", "Frankfurt **am** Main", "Rothenburg **ob der** Tauber". This
- * is a BOUNDED linguistic category (place-name connectives), not a gazetteer or a stopword dump — and
- * it only ever fires when bracketed by capitalized content on BOTH sides (see `scoreLocalityPhrase`),
- * so a stray "and"/"the" in a street phrase can't smuggle a particle through. Keep coverage to the
- * connectives that actually bridge place-name tokens; growing it into a per-locale stopword list is
- * the wrong move — that pressure belongs on the gazetteer/reconciler, not here.
+ * Lowercase connective particles that live INSIDE multi-word place names — the Romance/Germanic
+ * glue that bridges two capitalized content words: "Las Palmas **de** Gran Canaria", "San Pietro
+ * **in** Casale", "Alphen **aan den** Rijn", "Frankfurt **am** Main", "Rothenburg **ob der**
+ * Tauber". This is a BOUNDED linguistic category (place-name connectives), not a gazetteer or a
+ * stopword dump — and it only ever fires when bracketed by capitalized content on BOTH sides (see
+ * `scoreLocalityPhrase`), so a stray "and"/"the" in a street phrase can't smuggle a particle
+ * through. Keep coverage to the connectives that actually bridge place-name tokens; growing it into
+ * a per-locale stopword list is the wrong move — that pressure belongs on the gazetteer/reconciler,
+ * not here.
  */
 const PLACE_NAME_PARTICLES: ReadonlySet<string> = new Set([
 	// Spanish / Catalan / Portuguese
@@ -279,15 +282,17 @@ const PLACE_NAME_PARTICLES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * A short lowercase particle fused via apostrophe to a capitalized name — the Italian/French elision
- * that the tokenizer keeps as ONE token: `nell'Emilia`, `dell'Adda`, `l'Aquila`. Treated as place-name
- * CONTENT (it carries the proper noun), so it can both start and continue a locality run.
+ * A short lowercase particle fused via apostrophe to a capitalized name — the Italian/French
+ * elision that the tokenizer keeps as ONE token: `nell'Emilia`, `dell'Adda`, `l'Aquila`. Treated as
+ * place-name CONTENT (it carries the proper noun), so it can both start and continue a locality
+ * run.
  */
 function isFusedParticleName(s: string): boolean {
 	return /^\p{Ll}{1,6}['’]\p{Lu}/u.test(s)
 }
 
-/** Place-name content token: a capitalized word OR an apostrophe-fused particle name (`nell'Emilia`). */
+/** Place-name content token: a capitalized word OR an apostrophe-fused particle name
+(`nell'Emilia`). */
 function isPlaceNameContent(s: string): boolean {
 	return startsCapitalized(s) || isFusedParticleName(s)
 }
@@ -583,14 +588,15 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
  * overlapping proposals so the reconciler can choose between e.g. `Saint Petersburg` as one phrase
  * vs `Saint` + `Petersburg` as two.
  *
- * The run bridges lowercase place-name PARTICLES (`de`, `in`, `aan den`, `am`, …) and apostrophe-fused
- * names (`nell'Emilia`) when they sit between capitalized content — without that, the walk used to
- * stop dead at the first lowercase token, so it never proposed "Reggio nell'Emilia", "Las Palmas de
- * Gran Canaria", or "San Pietro in Casale" as single spans. Those gaps are exactly the native-order
- * multi-word localities the joint-decode A/B fragmented (Route A Phase I, #425).
+ * The run bridges lowercase place-name PARTICLES (`de`, `in`, `aan den`, `am`, …) and
+ * apostrophe-fused names (`nell'Emilia`) when they sit between capitalized content — without that,
+ * the walk used to stop dead at the first lowercase token, so it never proposed "Reggio
+ * nell'Emilia", "Las Palmas de Gran Canaria", or "San Pietro in Casale" as single spans. Those gaps
+ * are exactly the native-order multi-word localities the joint-decode A/B fragmented (Route A Phase
+ * I, #425).
  *
- * Confidence scales with: run length (2-5 are good place-name lengths), tail-of-segment position, and
- * whether the span sits at a segment boundary.
+ * Confidence scales with: run length (2-5 are good place-name lengths), tail-of-segment position,
+ * and whether the span sits at a segment boundary.
  */
 export function scoreLocalityPhrase(
 	tokens: ReadonlyArray<SegmentToken>,

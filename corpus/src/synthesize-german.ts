@@ -49,10 +49,11 @@ export interface LocaleSynthesisOpts {
 	/**
 	 * Rendering order for the SAME components. `"native"` (default) uses the country's own template
 	 * (DE → house-AFTER-street, postcode-BEFORE-city). `"international"` renders house-FIRST,
-	 * postcode-AFTER-city — the US/GB layout that international feeds, US-centric systems, and our own
-	 * OpenAddresses de-sample impose on non-US addresses. Training both teaches the model that a
+	 * postcode-AFTER-city — the US/GB layout that international feeds, US-centric systems, and our
+	 * own OpenAddresses de-sample impose on non-US addresses. Training both teaches the model that a
 	 * German address can arrive either way, so the eval's US-order rendering stops reading as a
-	 * collapse. See `docs/articles/evals/2026-06-06-anchor-pilot.md` (the order-artifact correction).
+	 * collapse. See `docs/articles/evals/2026-06-06-anchor-pilot.md` (the order-artifact
+	 * correction).
 	 */
 	order?: "native" | "international"
 }
@@ -71,10 +72,10 @@ const LOCALE_TAG: Record<string, string> = {
 }
 
 /**
- * Canonicalize a postcode to the form the country's template renders, so the stored component aligns
- * verbatim against `raw`. NL is the case that needs it: OA stores `1011AB` but the OpenCage NL template
- * emits the conventional spaced `1011 AB` (4 digits + space + 2 letters), which otherwise fails verbatim
- * alignment and drops the row. Other countries pass through unchanged.
+ * Canonicalize a postcode to the form the country's template renders, so the stored component
+ * aligns verbatim against `raw`. NL is the case that needs it: OA stores `1011AB` but the OpenCage
+ * NL template emits the conventional spaced `1011 AB` (4 digits + space + 2 letters), which
+ * otherwise fails verbatim alignment and drops the row. Other countries pass through unchanged.
  */
 function normalizePostcode(postcode: string, country: string): string {
 	if (country === "NL") {
@@ -105,12 +106,13 @@ function tokenPresent(raw: string, value: string): boolean {
  *
  * Region handling is order-dependent: NATIVE order omits it (the native template absorbs the admin
  * region into the postcode/city line, so it rarely renders verbatim and would break BIO alignment),
- * while INTERNATIONAL order includes it in the tail ("City, Region Postcode" — the US/feed layout the
- * eval uses; v0.9.3 / #327).
+ * while INTERNATIONAL order includes it in the tail ("City, Region Postcode" — the US/feed layout
+ * the eval uses; v0.9.3 / #327).
  *
- * Pass `opts.order: "international"` to render the same components house-first / postcode-after-city
- * instead (see {@link LocaleSynthesisOpts.order}) — the layout international feeds impose on foreign
- * addresses, and the one a native-order-trained model treats as a "collapse."
+ * Pass `opts.order: "international"` to render the same components house-first /
+ * postcode-after-city instead (see {@link LocaleSynthesisOpts.order}) — the layout international
+ * feeds impose on foreign addresses, and the one a native-order-trained model treats as a
+ * "collapse."
  */
 export function synthesizeLocaleRow(
 	base: LocaleBaseTuple,

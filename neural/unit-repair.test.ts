@@ -3,12 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the secondary-unit regex repair pass (parser-improvement backlog).
- *   Each case builds a char-aligned DecoderToken sequence (offsets must match the
- *   raw text) and asserts the repaired unit span. Covers ADD (model missed the
- *   unit), SNAP (model truncated it), single-letter idents ("STE D"), bare hash,
- *   smear-clip, and the precision guards (no-add-over-structural, no false match
- *   on "United"/"Box"/bare prose).
+ *   Tests for the secondary-unit regex repair pass (parser-improvement backlog). Each case builds a
+ *   char-aligned DecoderToken sequence (offsets must match the raw text) and asserts the repaired
+ *   unit span. Covers ADD (model missed the unit), SNAP (model truncated it), single-letter idents
+ *   ("STE D"), bare hash, smear-clip, and the precision guards (no-add-over-structural, no false
+ *   match on "United"/"Box"/bare prose).
  */
 
 import type { BioLabel, DecoderToken } from "@mailwoman/core/decoder"
@@ -138,11 +137,7 @@ describe("repairUnitLabels", () => {
 
 	it("does NOT match 'Unit' inside 'United' or other prose", () => {
 		const text = "United States Department"
-		const tokens = [
-			tok("United", 0, 6, "B-country"),
-			tok("States", 7, 13, "I-country"),
-			tok("Department", 14, 24, "O"),
-		]
+		const tokens = [tok("United", 0, 6, "B-country"), tok("States", 7, 13, "I-country"), tok("Department", 14, 24, "O")]
 		const { tokens: out, changed } = repairUnitLabels(text, tokens)
 		expect(changed).toBe(0)
 		expect(unitValue(text, out)).toBeNull()

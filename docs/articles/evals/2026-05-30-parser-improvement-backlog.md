@@ -1,18 +1,19 @@
 # Parser-improvement backlog (2026-05-30)
 
 Scoped from the **three-arena capability eval** (libpostal + corpus-perturbation
-+ postal-standards). Those arenas — unlike our own Pelias-derived 376-assertion
-suite — surface where the neural parser actually fails. This doc turns those
-failures into a prioritized backlog, categorized by **fix mechanism**, because
-the mechanism (not the symptom) determines cost and risk.
+
+- postal-standards). Those arenas — unlike our own Pelias-derived 376-assertion
+  suite — surface where the neural parser actually fails. This doc turns those
+  failures into a prioritized backlog, categorized by **fix mechanism**, because
+  the mechanism (not the symptom) determines cost and risk.
 
 ## The capability picture
 
-| arena | what it tests | v0 | neural | takeaway |
-| --- | --- | --: | --: | --- |
-| libpostal | clean/canonical | 29% | rules-favoured | gazetteer + rules win on their turf |
-| perturbation | noisy/degraded | 39% | 64% | neural is the robustness layer |
-| postal-standards | edge formats | 26% | TBD@v0.7.2 | coverage gaps on military/PO-box/rural-route |
+| arena            | what it tests   |  v0 |         neural | takeaway                                     |
+| ---------------- | --------------- | --: | -------------: | -------------------------------------------- |
+| libpostal        | clean/canonical | 29% | rules-favoured | gazetteer + rules win on their turf          |
+| perturbation     | noisy/degraded  | 39% |            64% | neural is the robustness layer               |
+| postal-standards | edge formats    | 26% |     TBD@v0.7.2 | coverage gaps on military/PO-box/rural-route |
 
 The neural model is the **robustness layer**, not a worse v0. The backlog
 below sharpens that layer where the arenas show it bleeding.
@@ -39,17 +40,17 @@ the pass is opt-in, and precision guards keep it from regressing a confident
 parse. Postcode-repair earned default-on at a measured **+135/0**. Not every
 failure fits that mould — some need coverage (retrain) or a boundary model.
 
-| # | failure | mechanism | cost | risk | status |
-| --- | --- | --- | --- | --- | --- |
-| B1 | drops units | **post-decode repair** | low | low (opt-in) | ✅ **built** (`unit-repair.ts`) |
-| B2 | country↔region | **post-decode repair** (country lexicon) | low | low (closed set) | scoped |
-| B3 | county→locality | coverage (lexicon or synth) | med | med | scoped |
-| B4 | street over-span | decoder/boundary (gazetteer-clip or morphology-FST anchor) | high | med-high | scoped |
-| B5 | locale sparsity | coverage (real EU/Oceania data, #40) | high | low | tier-listed |
+| #   | failure          | mechanism                                                  | cost | risk             | status                          |
+| --- | ---------------- | ---------------------------------------------------------- | ---- | ---------------- | ------------------------------- |
+| B1  | drops units      | **post-decode repair**                                     | low  | low (opt-in)     | ✅ **built** (`unit-repair.ts`) |
+| B2  | country↔region   | **post-decode repair** (country lexicon)                   | low  | low (closed set) | scoped                          |
+| B3  | county→locality  | coverage (lexicon or synth)                                | med  | med              | scoped                          |
+| B4  | street over-span | decoder/boundary (gazetteer-clip or morphology-FST anchor) | high | med-high         | scoped                          |
+| B5  | locale sparsity  | coverage (real EU/Oceania data, #40)                       | high | low              | tier-listed                     |
 
 **Why units fit the repair mould and street-overspan doesn't:** a unit has a
 self-announcing shape (`Apt`/`Ste`/`Unit`/`#` + identifier). A street boundary
-is defined by *what comes after it* — there's no local shape that says "the
+is defined by _what comes after it_ — there's no local shape that says "the
 street ends here," so a regex can't draw the line. B4 needs either a locality
 gazetteer to clip the tail or the street-morphology FST to anchor the head;
 both are real work and belong after the cheap repairs land.
@@ -62,7 +63,7 @@ both are real work and belong after the cheap repairs land.
 - **Detect** explicit designators (`Apt`, `Apartment`, `Ste`, `Suite`, `Unit`,
   `Rm`, `Room`, `Fl`/`Floor`, `Bldg`, `Dept`, `Lot`, `Flat`, `PH`, …) + an
   identifier (`4B`, `12`, single letter `STE D`), plus bare `#104`.
-- **ADD** a unit span over `O` *or* a geographic-container tag
+- **ADD** a unit span over `O` _or_ a geographic-container tag
   (`locality`/`dependent_locality` — see the v0.7.2 finding below); never over
   house_number / street / postcode / po_box / region / country / venue. **SNAP**
   an existing unit span to the full shape. Local smear-clip on the flanks.
@@ -105,7 +106,7 @@ motivates it strongly:** trailing `AUSTRALIA` → `locality`, and `country` reca
 −0.8pp in the gate. Build next.
 
 **Adjacent finding (new):** the v0.7.2 postal `v0-only` cluster shows a related
-failure — *last-line-only* addresses (`NEW YORK NY 10025`, `CANBERRA ACT 2614`,
+failure — _last-line-only_ addresses (`NEW YORK NY 10025`, `CANBERRA ACT 2614`,
 `SYDNEY NSW`) mislabel the leading locality as **street** when no street is
 present. That's neither unit nor country; it's a coverage gap (the model rarely
 sees street-less addresses). Folds into the same coverage shard as B5.

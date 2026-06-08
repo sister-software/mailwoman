@@ -1,730 +1,730 @@
 [
- {
-  "raw": "JOHN DOE, ACME INC, 123 MAIN ST NW STE 12, ANYTOWN NY  12345",
-  "country": "US",
-  "edge_class": "secondary-unit",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "JOHN DOE, ACME INC, STE 12, 123 MAIN ST NW, ANYTOWN NY  12345",
-  "country": "US",
-  "edge_class": "secondary-unit",
-  "standardized": "JOHN DOE, ACME INC, 123 MAIN ST NW STE 12, ANYTOWN NY  12345",
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "NEW YORK NY  10025-7799",
-  "country": "US",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "FORT RICHARDSON AK  99505-5700",
-  "country": "US",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "SGT NICK FURY, HEADQUARTERS COMPANY, 7TH ARMY TRAINING CENTER, ATTN: AETT-AG, UNIT 28130, APO AE  09114-8130",
-  "country": "US",
-  "edge_class": "military-apofpo",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Mr Hiremm N Firem, CMR 333 Box 2345, APO AE 09903-0024",
-  "country": "US",
-  "edge_class": "military-apofpo",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "EMBASSY, Unit 9400, Box 0201, DPO AE  09718",
-  "country": "US",
-  "edge_class": "military-apofpo",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Embassy of the United States of America, 2 Avenue de Mohamed El Fassi, Rabat, MOROCCO",
-  "country": "US",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "BUREAU OF VITAL RECORDS, VIRGIN ISLANDS DEPT OF HEALTH, CHARLOTTE AMALIE, SAINT THOMAS VI  00801",
-  "country": "VI",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "PO BOX ##",
-  "country": "US",
-  "edge_class": "po-box",
-  "standardized": "PO BOX ##",
-  "source": "https://pe.usps.com/text/pub28/28c2_036.htm"
- },
- {
-  "raw": "RR ## BOX ##",
-  "country": "US",
-  "edge_class": "rural-route",
-  "standardized": "RR ## BOX ##",
-  "source": "https://pe.usps.com/text/pub28/28c2_021.htm"
- },
- {
-  "raw": "HC ## BOX ##",
-  "country": "US",
-  "edge_class": "rural-route",
-  "standardized": "HC ## BOX ##",
-  "source": "https://pe.usps.com/text/pub28/28c2_027.htm"
- },
- {
-  "raw": "SASKATCHEWAN WATER CORP, 111 FAIRFORD STREET EAST, MOOSE JAW SK  S6H 2X1, CANADA",
-  "country": "CA",
-  "edge_class": "directional",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "PROF FRED FOO, DEPARTMENT OF HISTORY, MOUNT ROYAL COLLEGE, 4825 RICHARD ROAD SW, CALGARY AB  T3E 6K6, CANADA",
-  "country": "CA",
-  "edge_class": "directional",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "ST LAURENT QC  H4N 1J7",
-  "country": "CA",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "YELLOWKNIFE NT X1A 2P7",
-  "country": "CA",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "TALOYOAK NU  X0E 1B0",
-  "country": "CA",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "56 Church Street, Hamilton HM 12, BERMUDA",
-  "country": "BM",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "PO Box HM 100, Hamilton HM AX, BERMUDA",
-  "country": "BM",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "US Consulate General, J.B. Gorsiraweg 1, Willemstad, CURACAO",
-  "country": "CW",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "MS C P APPLE, APARTADO 3068, 46807 PUERTO VALLARTA JALISCO, MEXICO",
-  "country": "MX",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Facultad Latinoamericana de Ciencias Sociales, Carretera Al Ajusco Km.13, Colonia Héroes de Padierna, Apartado 20-021, Delegación Alvaro Obregón, 01000 Ciudad de México, DF, MEXICO",
-  "country": "MX",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "(Person's Name), Calle Ave. Castillo Chapultepec No.47, Colonia Cd.Chapultepec, Cuernavaca, MOR  62380, MEXICO",
-  "country": "MX",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Marina Costa e Silva, Rua Afonso Canargo, 805, Santana, 85070-200 Guarapuava - PR",
-  "country": "BR",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Rio de Janeiro, RJ CEP 20071-003",
-  "country": "BR",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Sr. Héctor García Marizá, Reina #35, apt. 4a, e/ Gervasio y Escobar, Ciudad de La Habana, CP 11900, CUBA",
-  "country": "CU",
-  "edge_class": "secondary-unit",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Sr. Jorge Pérez Rodríguez, Calle Martí #24, apt. 4a., e/ Corombé y 26 de Julio, Rpto. Abel Santamaría, Aguacate, Palma Soriano, Santiago de Cuba, CP 22222, CUBA",
-  "country": "CU",
-  "edge_class": "secondary-unit",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Felipe Zapata Roldán, Universidad Nacional de Colombia, Sede Medellín, Escuela de Física, CALLE 59A 63 - 120, Medellín, Antioquia, COLOMBIA",
-  "country": "CO",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "A.A. 3840 Medellin, COLOMBIA",
-  "country": "CO",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "CORO 4101-A ESTADO FALCÓN",
-  "country": "VE",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "CANBERRA  ACT  2614, AUSTRALIA",
-  "country": "AU",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "SYDNEY  NSW  2000, AUSTRALIA",
-  "country": "AU",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Customer Service Centre, New Zealand Post, Private Box 39100, Wellington Mail Service Centre, Wellington, NEW ZEALAND",
-  "country": "NZ",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Mr Martin, Jollys Jewellery, P O Box 324, Wellington 6140, NEW ZEALAND",
-  "country": "NZ",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "John Brown, Jabid Electrical, Private Bag 39990, Wellington Mail Centre, Lower Hutt 5045, NEW ZEALAND",
-  "country": "NZ",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "J.P. Smith, 6-123 Great South Rd, Owairaka, Auckland   1003, NEW ZEALAND",
-  "country": "NZ",
-  "edge_class": "secondary-unit",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Mr C Campbell, Railway Road, R D 10, Palmerston North   5321, NEW ZEALAND",
-  "country": "NZ",
-  "edge_class": "rural-route",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "ABC Holding B.V., Marijkestraat 11, NL-2518 BG Den Haag, THE HAGUE, NETHERLANDS",
-  "country": "NL",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Company X, Finance department, t.a.v. Mr. Money, Street 684, 3000 DR  Rotterdam, NETHERLANDS",
-  "country": "NL",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "SE-126 25  Stockholm, SWEDEN",
-  "country": "SE",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "GE Fanuc Automation Italia S.r.l, Largo Brugnatelli - Angolo Via Volta, IT-20090 BUCCINASCO (MI), ITALY",
-  "country": "IT",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Sig. Mario Rossi, Viale Europa, 22, 00144 ROMA RM, ITALY",
-  "country": "IT",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Herrn Jürgen Jemandem, Computer+Software GmbH, Albrecht-Thär-Straße 22, 48147 Münster, GERMANY",
-  "country": "DE",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "An den Oberbürgermeister, Herrn Dr. Baganz, Stadt Mülheim an der Ruhr, Postfach 101953, 45466 Mülheim, GERMANY",
-  "country": "DE",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Frau Renate Mustermann, Universität Konstanz, 78457 Konstanz, GERMANY",
-  "country": "DE",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "A-6691/D-87491 Jungholz",
-  "country": "DE",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Société DUPONT, Mademoiselle Lucie MARTIN, Résidence le Capucines, 56 RUE EMILE ZOLA, BP 90432 MONTFERRIER SUR LEZ, 34092 MONTPELLIER CEDEX 5, FRANCE",
-  "country": "FR",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "CZ-602 00 Brno, CZECH REPUBLIC",
-  "country": "CZ",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "SK-811 01 Bratislava, SLOVAK REPUBLIC",
-  "country": "SK",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Slovenská pošta, š.p., Partizánska cesta č. 9, 975 99  Banská Bystrica 1",
-  "country": "SK",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "BA-71000 Sarajevo, BOSNIA-HERZEGOVINA",
-  "country": "BA",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Komiteti Kosovar i Helsinkit, Taslixhe I 36a, 38000 PRIŠTINA, SERBIA",
-  "country": "XK",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "198156 САНКТ ПЕТЕРБУРГ",
-  "country": "RU",
-  "edge_class": "non-latin",
-  "standardized": "198156 SAINT PETERSBURG",
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Петар Петровић, Палмотићева 027 008, 11000 Београд, 106314",
-  "country": "RS",
-  "edge_class": "non-latin",
-  "standardized": "Mr. Petar Petrovic, Palmotičeva 27 - 8, 106314 BEOGRAD, REPUBLIC OF SERBIA",
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Чичикову П.И., Междунродный Центр Научной и Технической Информации, ул.Куусинена 21-Б, 125252 г.Москва, MOSCOW, RUSSIA",
-  "country": "RU",
-  "edge_class": "non-latin",
-  "standardized": "P.I. Chichikov, International Centre for Scientific and Technical Information, Kuusinena Street 21-B, 125252 MOSCOW, RUSSIA",
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "I.F. Shponka, City Hall, Pl. Pobedy 1, 236040 Kaliningrad, RUSSIA",
-  "country": "RU",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "13 West Chang An Street, Directorate General of Posts, 100804 BEIJING, CHINA",
-  "country": "CN",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "TAIPEI  10636, TAIWAN",
-  "country": "TW",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "(Name), (Company), 10/F Tower One, Cheung Sha Wan Plaza, Kowloon, HONG KONG",
-  "country": "HK",
-  "edge_class": "secondary-unit",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "HongkongPost Headquarters, 2 Connaught Place, Central, HONG KONG",
-  "country": "HK",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "تهران, خیابان آزادی، خیابان خوش شمالی, کوچه‌ی گل‌افشان، پلاک ۱۲، شبقه‌ی ۲, آقای کامران شفیعی, کد پستی ۱۲۳۴۵۶۷۸۹۰, IRAN",
-  "country": "IR",
-  "edge_class": "non-latin",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Mr. Taro Tanaka, Fujitsu Limited, Optical Network Systems Development, 4-1-1 Kamikodanaka, Nakahara-ku, KAWASAKI, 211-8588, JAPAN",
-  "country": "JP",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Person's Name, Dept of Info Systems and Computer Science, National University of Singapore, Lower Kent Ridge Road, SINGAPORE  119081",
-  "country": "SG",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Shri Govind Singh, Advocate, 35 Mandir Marg, NEW DELHI 110 001",
-  "country": "IN",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Smt. Lakshmi Ramudu, 21, Temple Street, BUKKAPATNAM PO, Anantapur District, Andhra Pradesh 515 144",
-  "country": "IN",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Modern Engineering Company, Post Box 3254, CHENNAI, Tamil Nadu 600 002",
-  "country": "IN",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "MR THOMAS CLARK, 117 RUSSELL DRIVE, LONDON W1P 6HQ, GREAT BRITAIN",
-  "country": "GB",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Person's Name, Eden Cottage, May's Green, Harpsden, HENLEY-ON-THAMES, RG9 4AJ, ENGLAND",
-  "country": "GB",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Colchester, Essex  CO4 3SQ",
-  "country": "GB",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Coventry, West Midlands  CV6 5RW",
-  "country": "GB",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "(street address omitted), Whaley Bridge, HIGH PEAK, Derbys, SK23 7JG",
-  "country": "GB",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Communications Commission, Winchester Court, Second Avenue, ONCHAN, IM9 5DS, ISLE OF MAN",
-  "country": "IM",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Cheshire Guernsey Ltd, 2/3 Rue du Pré, ST PETER PORT, GUERNSEY, GY1 3NZ, CHANNEL ISLANDS",
-  "country": "GG",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Upland Goose Hotel, 20/22 Ross Road, STANLEY, FIQQ 1ZZ, FALKLAND ISLANDS",
-  "country": "FK",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Guide Line Promotions Ltd., Imossi House, Irish Town, Suite 6377, PO Box 561, GIBRALTAR",
-  "country": "GI",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "CRAIGAVON, CO. ARMAGH, BT67 0EY, NORTHERN IRELAND",
-  "country": "GB",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "The Village Inn, Partry, Claremorris, Co. Mayo, IRELAND",
-  "country": "IE",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Mr William Jones, Ballysomething, Kesh, Co. Fermanagh",
-  "country": "GB",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Athlone, Co. Westmeath",
-  "country": "IE",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Dun Laoghaire, Co. Dublin",
-  "country": "IE",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.columbia.edu/~fdc/postal/"
- },
- {
-  "raw": "Monsieur Jean DELHOURME, Chez Mireille COPEAU Appartement 2, Entrée A Bâtiment Jonquille, 25 RUE DE L EGLISE, CAUDOS, 33380 MIOS, FRANCE",
-  "country": "FR",
-  "edge_class": "secondary-unit",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/FraFr.pdf"
- },
- {
-  "raw": "Madame Isabelle RICHARD, LE VILLAGE, 82500 AUTERIVE, FRANCE",
-  "country": "FR",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/FraFr.pdf"
- },
- {
-  "raw": "DURAND SA, Service achat, Zone industrielle Ouest, 22 RUE DES FLEURS, BP 40122, 33506 LIBOURNE CEDEX, FRANCE",
-  "country": "FR",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/FraFr.pdf"
- },
- {
-  "raw": "Service national de l'adresse, 15 RUE DE L HOUSTEAUNEUF, BP 238, 33506 LIBOURNE CEDEX, FRANCE",
-  "country": "FR",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/FraFr.pdf"
- },
- {
-  "raw": "Herrn Quincy Happy, Wacholderweg 52a, 26133 OLDENBURG, GERMANY",
-  "country": "DE",
-  "edge_class": "secondary-unit",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
- },
- {
-  "raw": "Liselotte Sommer, Rhondorfer Str. 666 // Appartment 47, 50939 KÖLN, GERMANY",
-  "country": "DE",
-  "edge_class": "secondary-unit",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
- },
- {
-  "raw": "Schloß Britz, Ortsteil Neukoelln, Alt-Britz 73, 12359 BERLIN, GERMANY",
-  "country": "DE",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
- },
- {
-  "raw": "Harry Hase, Postlagernd, 53131 BONN, GERMANY",
-  "country": "DE",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
- },
- {
-  "raw": "Sitftung Warentest, Postfach 3 41 41, 10724 BERLIN, GERMANY",
-  "country": "DE",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
- },
- {
-  "raw": "Citibank Privatkunden AG, 68151 MANNHEIM, GERMANY",
-  "country": "DE",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
- },
- {
-  "raw": "Lara Lustig, 1234567, Packstation 101, 53113 BONN, GERMANY",
-  "country": "DE",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
- },
- {
-  "raw": "JAPAN 112-0001 TOKYO Bunkyo-Ku Hakusan 4-Chome 3-2",
-  "country": "JP",
-  "edge_class": "intl-format",
-  "standardized": "4-3-2, Hakusan, Bunkyo-ku, TOKYO, 112-0001, JAPAN",
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/JpnEn.pdf"
- },
- {
-  "raw": "Mr Taro Tanaka, 2338 Magatake, Zaou-machi, Katta-gun, MIYAGI, 989-0851 JAPAN",
-  "country": "JP",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/JpnEn.pdf"
- },
- {
-  "raw": "Mr Taro Tanaka, 10-23, Mitsugi 1-chome, Musashi-Murayama-shi, TOKYO, 231-0012 JAPAN",
-  "country": "JP",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/JpnEn.pdf"
- },
- {
-  "raw": "Mr Taro Tanaka, 2-17-10, Aioicho, Naka-ku, YOKOHAMA, 231-0012 JAPAN",
-  "country": "JP",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/JpnEn.pdf"
- },
- {
-  "raw": "Mr Taro Tanaka, 10-23, Kotobukicho, Chuo-ku, NIIGATA, 951-8073 JAPAN",
-  "country": "JP",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/JpnEn.pdf"
- },
- {
-  "raw": "Mr A Jones, 54 Stockton Rd, BUNBURY WA 6230",
-  "country": "AU",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf"
- },
- {
-  "raw": "Ms A Citizen, 3 Example Street, PARKVILLE VIC 3052",
-  "country": "AU",
-  "edge_class": "canonical",
-  "standardized": null,
-  "source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf"
- },
- {
-  "raw": "Mr J Citizen, Sample Games Co, GPO Box 123, SYDNEY  NSW 2000",
-  "country": "AU",
-  "edge_class": "po-box",
-  "standardized": null,
-  "source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf"
- },
- {
-  "raw": "Rachel McPhail, Wiradjuri Country, 70 Example Street, COOLAMON NSW 2071",
-  "country": "AU",
-  "edge_class": "intl-format",
-  "standardized": null,
-  "source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf"
- },
- {
-  "raw": "Flat 2  14 Smith St",
-  "country": "AU",
-  "edge_class": "secondary-unit",
-  "standardized": "2/14 Smith St",
-  "source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/Appendix-01.pdf"
- },
- {
-  "raw": "F 2  14 Smith St",
-  "country": "AU",
-  "edge_class": "secondary-unit",
-  "standardized": "2/14 Smith St",
-  "source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/Appendix-01.pdf"
- },
- {
-  "raw": "APT 2  14 Smith St",
-  "country": "AU",
-  "edge_class": "secondary-unit",
-  "standardized": "2/14 Smith St",
-  "source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/Appendix-01.pdf"
- },
- {
-  "raw": "RITZ CAMERA CENTERS-1749, 26601 ALISO CREEK ROAD, STE D, ALISO VIEJO TOWN CENTER, ALISO VIEJO, CA, 92656",
-  "country": "US",
-  "edge_class": "secondary-unit",
-  "standardized": null,
-  "source": "https://raw.githubusercontent.com/UPS-API/api-documentation/main/AddressValidation.yaml"
- }
+	{
+		"raw": "JOHN DOE, ACME INC, 123 MAIN ST NW STE 12, ANYTOWN NY  12345",
+		"country": "US",
+		"edge_class": "secondary-unit",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "JOHN DOE, ACME INC, STE 12, 123 MAIN ST NW, ANYTOWN NY  12345",
+		"country": "US",
+		"edge_class": "secondary-unit",
+		"standardized": "JOHN DOE, ACME INC, 123 MAIN ST NW STE 12, ANYTOWN NY  12345",
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "NEW YORK NY  10025-7799",
+		"country": "US",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "FORT RICHARDSON AK  99505-5700",
+		"country": "US",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "SGT NICK FURY, HEADQUARTERS COMPANY, 7TH ARMY TRAINING CENTER, ATTN: AETT-AG, UNIT 28130, APO AE  09114-8130",
+		"country": "US",
+		"edge_class": "military-apofpo",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Mr Hiremm N Firem, CMR 333 Box 2345, APO AE 09903-0024",
+		"country": "US",
+		"edge_class": "military-apofpo",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "EMBASSY, Unit 9400, Box 0201, DPO AE  09718",
+		"country": "US",
+		"edge_class": "military-apofpo",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Embassy of the United States of America, 2 Avenue de Mohamed El Fassi, Rabat, MOROCCO",
+		"country": "US",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "BUREAU OF VITAL RECORDS, VIRGIN ISLANDS DEPT OF HEALTH, CHARLOTTE AMALIE, SAINT THOMAS VI  00801",
+		"country": "VI",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "PO BOX ##",
+		"country": "US",
+		"edge_class": "po-box",
+		"standardized": "PO BOX ##",
+		"source": "https://pe.usps.com/text/pub28/28c2_036.htm"
+	},
+	{
+		"raw": "RR ## BOX ##",
+		"country": "US",
+		"edge_class": "rural-route",
+		"standardized": "RR ## BOX ##",
+		"source": "https://pe.usps.com/text/pub28/28c2_021.htm"
+	},
+	{
+		"raw": "HC ## BOX ##",
+		"country": "US",
+		"edge_class": "rural-route",
+		"standardized": "HC ## BOX ##",
+		"source": "https://pe.usps.com/text/pub28/28c2_027.htm"
+	},
+	{
+		"raw": "SASKATCHEWAN WATER CORP, 111 FAIRFORD STREET EAST, MOOSE JAW SK  S6H 2X1, CANADA",
+		"country": "CA",
+		"edge_class": "directional",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "PROF FRED FOO, DEPARTMENT OF HISTORY, MOUNT ROYAL COLLEGE, 4825 RICHARD ROAD SW, CALGARY AB  T3E 6K6, CANADA",
+		"country": "CA",
+		"edge_class": "directional",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "ST LAURENT QC  H4N 1J7",
+		"country": "CA",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "YELLOWKNIFE NT X1A 2P7",
+		"country": "CA",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "TALOYOAK NU  X0E 1B0",
+		"country": "CA",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "56 Church Street, Hamilton HM 12, BERMUDA",
+		"country": "BM",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "PO Box HM 100, Hamilton HM AX, BERMUDA",
+		"country": "BM",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "US Consulate General, J.B. Gorsiraweg 1, Willemstad, CURACAO",
+		"country": "CW",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "MS C P APPLE, APARTADO 3068, 46807 PUERTO VALLARTA JALISCO, MEXICO",
+		"country": "MX",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Facultad Latinoamericana de Ciencias Sociales, Carretera Al Ajusco Km.13, Colonia Héroes de Padierna, Apartado 20-021, Delegación Alvaro Obregón, 01000 Ciudad de México, DF, MEXICO",
+		"country": "MX",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "(Person's Name), Calle Ave. Castillo Chapultepec No.47, Colonia Cd.Chapultepec, Cuernavaca, MOR  62380, MEXICO",
+		"country": "MX",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Marina Costa e Silva, Rua Afonso Canargo, 805, Santana, 85070-200 Guarapuava - PR",
+		"country": "BR",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Rio de Janeiro, RJ CEP 20071-003",
+		"country": "BR",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Sr. Héctor García Marizá, Reina #35, apt. 4a, e/ Gervasio y Escobar, Ciudad de La Habana, CP 11900, CUBA",
+		"country": "CU",
+		"edge_class": "secondary-unit",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Sr. Jorge Pérez Rodríguez, Calle Martí #24, apt. 4a., e/ Corombé y 26 de Julio, Rpto. Abel Santamaría, Aguacate, Palma Soriano, Santiago de Cuba, CP 22222, CUBA",
+		"country": "CU",
+		"edge_class": "secondary-unit",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Felipe Zapata Roldán, Universidad Nacional de Colombia, Sede Medellín, Escuela de Física, CALLE 59A 63 - 120, Medellín, Antioquia, COLOMBIA",
+		"country": "CO",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "A.A. 3840 Medellin, COLOMBIA",
+		"country": "CO",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "CORO 4101-A ESTADO FALCÓN",
+		"country": "VE",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "CANBERRA  ACT  2614, AUSTRALIA",
+		"country": "AU",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "SYDNEY  NSW  2000, AUSTRALIA",
+		"country": "AU",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Customer Service Centre, New Zealand Post, Private Box 39100, Wellington Mail Service Centre, Wellington, NEW ZEALAND",
+		"country": "NZ",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Mr Martin, Jollys Jewellery, P O Box 324, Wellington 6140, NEW ZEALAND",
+		"country": "NZ",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "John Brown, Jabid Electrical, Private Bag 39990, Wellington Mail Centre, Lower Hutt 5045, NEW ZEALAND",
+		"country": "NZ",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "J.P. Smith, 6-123 Great South Rd, Owairaka, Auckland   1003, NEW ZEALAND",
+		"country": "NZ",
+		"edge_class": "secondary-unit",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Mr C Campbell, Railway Road, R D 10, Palmerston North   5321, NEW ZEALAND",
+		"country": "NZ",
+		"edge_class": "rural-route",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "ABC Holding B.V., Marijkestraat 11, NL-2518 BG Den Haag, THE HAGUE, NETHERLANDS",
+		"country": "NL",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Company X, Finance department, t.a.v. Mr. Money, Street 684, 3000 DR  Rotterdam, NETHERLANDS",
+		"country": "NL",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "SE-126 25  Stockholm, SWEDEN",
+		"country": "SE",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "GE Fanuc Automation Italia S.r.l, Largo Brugnatelli - Angolo Via Volta, IT-20090 BUCCINASCO (MI), ITALY",
+		"country": "IT",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Sig. Mario Rossi, Viale Europa, 22, 00144 ROMA RM, ITALY",
+		"country": "IT",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Herrn Jürgen Jemandem, Computer+Software GmbH, Albrecht-Thär-Straße 22, 48147 Münster, GERMANY",
+		"country": "DE",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "An den Oberbürgermeister, Herrn Dr. Baganz, Stadt Mülheim an der Ruhr, Postfach 101953, 45466 Mülheim, GERMANY",
+		"country": "DE",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Frau Renate Mustermann, Universität Konstanz, 78457 Konstanz, GERMANY",
+		"country": "DE",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "A-6691/D-87491 Jungholz",
+		"country": "DE",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Société DUPONT, Mademoiselle Lucie MARTIN, Résidence le Capucines, 56 RUE EMILE ZOLA, BP 90432 MONTFERRIER SUR LEZ, 34092 MONTPELLIER CEDEX 5, FRANCE",
+		"country": "FR",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "CZ-602 00 Brno, CZECH REPUBLIC",
+		"country": "CZ",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "SK-811 01 Bratislava, SLOVAK REPUBLIC",
+		"country": "SK",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Slovenská pošta, š.p., Partizánska cesta č. 9, 975 99  Banská Bystrica 1",
+		"country": "SK",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "BA-71000 Sarajevo, BOSNIA-HERZEGOVINA",
+		"country": "BA",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Komiteti Kosovar i Helsinkit, Taslixhe I 36a, 38000 PRIŠTINA, SERBIA",
+		"country": "XK",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "198156 САНКТ ПЕТЕРБУРГ",
+		"country": "RU",
+		"edge_class": "non-latin",
+		"standardized": "198156 SAINT PETERSBURG",
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Петар Петровић, Палмотићева 027 008, 11000 Београд, 106314",
+		"country": "RS",
+		"edge_class": "non-latin",
+		"standardized": "Mr. Petar Petrovic, Palmotičeva 27 - 8, 106314 BEOGRAD, REPUBLIC OF SERBIA",
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Чичикову П.И., Междунродный Центр Научной и Технической Информации, ул.Куусинена 21-Б, 125252 г.Москва, MOSCOW, RUSSIA",
+		"country": "RU",
+		"edge_class": "non-latin",
+		"standardized": "P.I. Chichikov, International Centre for Scientific and Technical Information, Kuusinena Street 21-B, 125252 MOSCOW, RUSSIA",
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "I.F. Shponka, City Hall, Pl. Pobedy 1, 236040 Kaliningrad, RUSSIA",
+		"country": "RU",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "13 West Chang An Street, Directorate General of Posts, 100804 BEIJING, CHINA",
+		"country": "CN",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "TAIPEI  10636, TAIWAN",
+		"country": "TW",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "(Name), (Company), 10/F Tower One, Cheung Sha Wan Plaza, Kowloon, HONG KONG",
+		"country": "HK",
+		"edge_class": "secondary-unit",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "HongkongPost Headquarters, 2 Connaught Place, Central, HONG KONG",
+		"country": "HK",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "تهران, خیابان آزادی، خیابان خوش شمالی, کوچه‌ی گل‌افشان، پلاک ۱۲، شبقه‌ی ۲, آقای کامران شفیعی, کد پستی ۱۲۳۴۵۶۷۸۹۰, IRAN",
+		"country": "IR",
+		"edge_class": "non-latin",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Mr. Taro Tanaka, Fujitsu Limited, Optical Network Systems Development, 4-1-1 Kamikodanaka, Nakahara-ku, KAWASAKI, 211-8588, JAPAN",
+		"country": "JP",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Person's Name, Dept of Info Systems and Computer Science, National University of Singapore, Lower Kent Ridge Road, SINGAPORE  119081",
+		"country": "SG",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Shri Govind Singh, Advocate, 35 Mandir Marg, NEW DELHI 110 001",
+		"country": "IN",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Smt. Lakshmi Ramudu, 21, Temple Street, BUKKAPATNAM PO, Anantapur District, Andhra Pradesh 515 144",
+		"country": "IN",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Modern Engineering Company, Post Box 3254, CHENNAI, Tamil Nadu 600 002",
+		"country": "IN",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "MR THOMAS CLARK, 117 RUSSELL DRIVE, LONDON W1P 6HQ, GREAT BRITAIN",
+		"country": "GB",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Person's Name, Eden Cottage, May's Green, Harpsden, HENLEY-ON-THAMES, RG9 4AJ, ENGLAND",
+		"country": "GB",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Colchester, Essex  CO4 3SQ",
+		"country": "GB",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Coventry, West Midlands  CV6 5RW",
+		"country": "GB",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "(street address omitted), Whaley Bridge, HIGH PEAK, Derbys, SK23 7JG",
+		"country": "GB",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Communications Commission, Winchester Court, Second Avenue, ONCHAN, IM9 5DS, ISLE OF MAN",
+		"country": "IM",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Cheshire Guernsey Ltd, 2/3 Rue du Pré, ST PETER PORT, GUERNSEY, GY1 3NZ, CHANNEL ISLANDS",
+		"country": "GG",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Upland Goose Hotel, 20/22 Ross Road, STANLEY, FIQQ 1ZZ, FALKLAND ISLANDS",
+		"country": "FK",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Guide Line Promotions Ltd., Imossi House, Irish Town, Suite 6377, PO Box 561, GIBRALTAR",
+		"country": "GI",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "CRAIGAVON, CO. ARMAGH, BT67 0EY, NORTHERN IRELAND",
+		"country": "GB",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "The Village Inn, Partry, Claremorris, Co. Mayo, IRELAND",
+		"country": "IE",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Mr William Jones, Ballysomething, Kesh, Co. Fermanagh",
+		"country": "GB",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Athlone, Co. Westmeath",
+		"country": "IE",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Dun Laoghaire, Co. Dublin",
+		"country": "IE",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.columbia.edu/~fdc/postal/"
+	},
+	{
+		"raw": "Monsieur Jean DELHOURME, Chez Mireille COPEAU Appartement 2, Entrée A Bâtiment Jonquille, 25 RUE DE L EGLISE, CAUDOS, 33380 MIOS, FRANCE",
+		"country": "FR",
+		"edge_class": "secondary-unit",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/FraFr.pdf"
+	},
+	{
+		"raw": "Madame Isabelle RICHARD, LE VILLAGE, 82500 AUTERIVE, FRANCE",
+		"country": "FR",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/FraFr.pdf"
+	},
+	{
+		"raw": "DURAND SA, Service achat, Zone industrielle Ouest, 22 RUE DES FLEURS, BP 40122, 33506 LIBOURNE CEDEX, FRANCE",
+		"country": "FR",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/FraFr.pdf"
+	},
+	{
+		"raw": "Service national de l'adresse, 15 RUE DE L HOUSTEAUNEUF, BP 238, 33506 LIBOURNE CEDEX, FRANCE",
+		"country": "FR",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/FraFr.pdf"
+	},
+	{
+		"raw": "Herrn Quincy Happy, Wacholderweg 52a, 26133 OLDENBURG, GERMANY",
+		"country": "DE",
+		"edge_class": "secondary-unit",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
+	},
+	{
+		"raw": "Liselotte Sommer, Rhondorfer Str. 666 // Appartment 47, 50939 KÖLN, GERMANY",
+		"country": "DE",
+		"edge_class": "secondary-unit",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
+	},
+	{
+		"raw": "Schloß Britz, Ortsteil Neukoelln, Alt-Britz 73, 12359 BERLIN, GERMANY",
+		"country": "DE",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
+	},
+	{
+		"raw": "Harry Hase, Postlagernd, 53131 BONN, GERMANY",
+		"country": "DE",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
+	},
+	{
+		"raw": "Sitftung Warentest, Postfach 3 41 41, 10724 BERLIN, GERMANY",
+		"country": "DE",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
+	},
+	{
+		"raw": "Citibank Privatkunden AG, 68151 MANNHEIM, GERMANY",
+		"country": "DE",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
+	},
+	{
+		"raw": "Lara Lustig, 1234567, Packstation 101, 53113 BONN, GERMANY",
+		"country": "DE",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/DeuEn.pdf"
+	},
+	{
+		"raw": "JAPAN 112-0001 TOKYO Bunkyo-Ku Hakusan 4-Chome 3-2",
+		"country": "JP",
+		"edge_class": "intl-format",
+		"standardized": "4-3-2, Hakusan, Bunkyo-ku, TOKYO, 112-0001, JAPAN",
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/JpnEn.pdf"
+	},
+	{
+		"raw": "Mr Taro Tanaka, 2338 Magatake, Zaou-machi, Katta-gun, MIYAGI, 989-0851 JAPAN",
+		"country": "JP",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/JpnEn.pdf"
+	},
+	{
+		"raw": "Mr Taro Tanaka, 10-23, Mitsugi 1-chome, Musashi-Murayama-shi, TOKYO, 231-0012 JAPAN",
+		"country": "JP",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/JpnEn.pdf"
+	},
+	{
+		"raw": "Mr Taro Tanaka, 2-17-10, Aioicho, Naka-ku, YOKOHAMA, 231-0012 JAPAN",
+		"country": "JP",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/JpnEn.pdf"
+	},
+	{
+		"raw": "Mr Taro Tanaka, 10-23, Kotobukicho, Chuo-ku, NIIGATA, 951-8073 JAPAN",
+		"country": "JP",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/JpnEn.pdf"
+	},
+	{
+		"raw": "Mr A Jones, 54 Stockton Rd, BUNBURY WA 6230",
+		"country": "AU",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf"
+	},
+	{
+		"raw": "Ms A Citizen, 3 Example Street, PARKVILLE VIC 3052",
+		"country": "AU",
+		"edge_class": "canonical",
+		"standardized": null,
+		"source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf"
+	},
+	{
+		"raw": "Mr J Citizen, Sample Games Co, GPO Box 123, SYDNEY  NSW 2000",
+		"country": "AU",
+		"edge_class": "po-box",
+		"standardized": null,
+		"source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf"
+	},
+	{
+		"raw": "Rachel McPhail, Wiradjuri Country, 70 Example Street, COOLAMON NSW 2071",
+		"country": "AU",
+		"edge_class": "intl-format",
+		"standardized": null,
+		"source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf"
+	},
+	{
+		"raw": "Flat 2  14 Smith St",
+		"country": "AU",
+		"edge_class": "secondary-unit",
+		"standardized": "2/14 Smith St",
+		"source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/Appendix-01.pdf"
+	},
+	{
+		"raw": "F 2  14 Smith St",
+		"country": "AU",
+		"edge_class": "secondary-unit",
+		"standardized": "2/14 Smith St",
+		"source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/Appendix-01.pdf"
+	},
+	{
+		"raw": "APT 2  14 Smith St",
+		"country": "AU",
+		"edge_class": "secondary-unit",
+		"standardized": "2/14 Smith St",
+		"source": "https://auspost.com.au/content/dam/auspost_corp/media/documents/Appendix-01.pdf"
+	},
+	{
+		"raw": "RITZ CAMERA CENTERS-1749, 26601 ALISO CREEK ROAD, STE D, ALISO VIEJO TOWN CENTER, ALISO VIEJO, CA, 92656",
+		"country": "US",
+		"edge_class": "secondary-unit",
+		"standardized": null,
+		"source": "https://raw.githubusercontent.com/UPS-API/api-documentation/main/AddressValidation.yaml"
+	}
 ]

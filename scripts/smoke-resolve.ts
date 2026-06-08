@@ -1,7 +1,7 @@
 /**
  * Smoke test: confirm WofSqlitePlaceLookup works against our CUSTOM unified DB
- * (admin-global-priority.db) now that ancestors + FTS are built. Tests plain text
- * lookup AND ancestors-based parent-constraint scoping (the Springfield problem).
+ * (admin-global-priority.db) now that ancestors + FTS are built. Tests plain text lookup AND
+ * ancestors-based parent-constraint scoping (the Springfield problem).
  *
  * Run: node --experimental-strip-types scripts/smoke-resolve.ts
  */
@@ -11,8 +11,14 @@ const DB = process.argv[2] ?? "/mnt/playpen/mailwoman-data/wof/admin-global-prio
 const lookup = new WofSqlitePlaceLookup({ databasePath: DB })
 
 console.log("=== plain: 'New York' (locality) ===")
-console.log((await lookup.findPlace({ text: "New York", placetypes: ["locality"], country: "US", limit: 3 }))
-	.map((p) => ({ id: p.id, name: p.name, lat: p.lat, lon: p.lon })))
+console.log(
+	(await lookup.findPlace({ text: "New York", placetypes: ["locality"], country: "US", limit: 3 })).map((p) => ({
+		id: p.id,
+		name: p.name,
+		lat: p.lat,
+		lon: p.lon,
+	}))
+)
 
 console.log("\n=== Springfield (ambiguous, locality) top 5 ===")
 const springfields = await lookup.findPlace({ text: "Springfield", placetypes: ["locality"], country: "US", limit: 5 })

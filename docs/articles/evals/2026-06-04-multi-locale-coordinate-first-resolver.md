@@ -15,7 +15,7 @@ That zero was the tell. The parse was right and the resolver still missed, becau
 
 A name-match metric is the thing that misled us, so we replaced it with one that can't. A locality is resolved correctly if the real OpenAddresses per-address point lies **inside the polygon** of the WOF locality the resolver picked — `ST_Within(gold_point, resolved_polygon)`. Containment, not centroid distance (distance is gameable in a dense metro), and scored against the genuine OA point, never the postcode centroid the resolver itself consumed.
 
-Running that metric on the *existing* resolver first was the cheap move that paid off twice: it confirmed German was a real gap (77.1% containment agreed with the 77.4% name-match, killing the comfortable "it's just a name artifact" hypothesis), and it became the honest yardstick for everything that followed.
+Running that metric on the _existing_ resolver first was the cheap move that paid off twice: it confirmed German was a real gap (77.1% containment agreed with the 77.4% name-match, killing the comfortable "it's just a name artifact" hypothesis), and it became the honest yardstick for everything that followed.
 
 ## What we built
 
@@ -31,16 +31,16 @@ with exact-name tiering on top, so an unambiguous city (`Berlin`, exact + huge p
 
 PIP-containment, n=3000 per locale, coordinate-first on:
 
-| locale | sample | PIP-containment | name-match baseline |
-| ------ | ------ | --------------: | ------------------: |
-| DE | Berlin + Saxony OA | **92.6%** | 77.1% |
-| FR | national BAN OA (from 24.7M points) | **84.0%** | 83.5% |
-| NL | national BAG OA (from 9.1M points) | **94.9%** | 97.0% |
-| GB | — | conflict-validated; ~66% WOF coverage | — |
+| locale | sample                              |                       PIP-containment | name-match baseline |
+| ------ | ----------------------------------- | ------------------------------------: | ------------------: |
+| DE     | Berlin + Saxony OA                  |                             **92.6%** |               77.1% |
+| FR     | national BAN OA (from 24.7M points) |                             **84.0%** |               83.5% |
+| NL     | national BAG OA (from 9.1M points)  |                             **94.9%** |               97.0% |
+| GB     | —                                   | conflict-validated; ~66% WOF coverage |                   — |
 
 German went from a stuck 77% to **92.6%** — Saxony alone moved 54.3% → 89.3% (+35pp) once the small Saxon towns the FTS missed got generated from their postcodes; Berlin held at 95.9%.
 
-France lands at **84.0%**, and the gap from DE is honest rather than alarming: this is the *whole country*, BAN's full 25 million points including the long rural-commune tail where WOF's locality polygons thin out. DE's 92.6% was two dense regions. On comparable density FR sits near DE.
+France lands at **84.0%**, and the gap from DE is honest rather than alarming: this is the _whole country_, BAN's full 25 million points including the long rural-commune tail where WOF's locality polygons thin out. DE's 92.6% was two dense regions. On comparable density FR sits near DE.
 
 The Netherlands is the result that proves the thesis. **94.9% — and the model is out-of-distribution on Dutch.** v0.7.2 was trained on US and French addresses; it has never seen `Dignahoeve 71, 1187LM Amstelveen`. A name-matching or BM25 resolver fed an un-parsed Dutch string would crater. Ours didn't move, because coordinate-first resolves off the postcode, and a postcode is language-agnostic — a regex finds `1187LM` whether or not the model understands the street around it. NL's near-complete 99.6% postcode→locality coverage does the rest. **The architecture's whole point is that the parser can be wrong about the language and the resolver is still right about the place.**
 

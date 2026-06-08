@@ -5,16 +5,16 @@
  * @author Teffen Ellis, et al.
  *
  *   Build the German coverage shard (night-shift 2026-06-02, DE-2). Reads REAL OpenAddresses German
- *   tuples (Berlin + Saxony, cached zips), renders each via `synthesizeGermanRow`, aligns to BIO, and
- *   writes a labeled JSONL ready for parquet.
+ *   tuples (Berlin + Saxony, cached zips), renders each via `synthesizeGermanRow`, aligns to BIO,
+ *   and writes a labeled JSONL ready for parquet.
  *
  *   ORDER ROBUSTNESS (2026-06-06): the shard now mixes TWO renderings of the same tuples —
  *   `--intl-fraction` (default 0.4) of rows in international order (house-number-FIRST,
  *   postcode-AFTER-city: `27 Straußstraße, Berlin, 12623`), the rest in idiomatic German order
- *   (house-AFTER-street, postcode-BEFORE-city: `Straußstraße 27, 12623 Berlin`). A native-only shard
- *   taught the model German order so well it traded away the US/feed order our own OA eval renders —
- *   making a healthy parser read as a "collapse." Teaching both layouts removes the trade.
- *   See `docs/articles/evals/2026-06-06-anchor-pilot.md` (the order-artifact correction).
+ *   (house-AFTER-street, postcode-BEFORE-city: `Straußstraße 27, 12623 Berlin`). A native-only
+ *   shard taught the model German order so well it traded away the US/feed order our own OA eval
+ *   renders — making a healthy parser read as a "collapse." Teaching both layouts removes the
+ *   trade. See `docs/articles/evals/2026-06-06-anchor-pilot.md` (the order-artifact correction).
  *
  *   Pipeline (mirrors build-intersection-shard.mjs):
  *
@@ -202,7 +202,9 @@ async function main() {
 			skipped++
 			continue
 		}
-		outStream.write(JSON.stringify({ ...aligned.row, synth_method: "german", synth_order: order, synth_base_id: null }) + "\n")
+		outStream.write(
+			JSON.stringify({ ...aligned.row, synth_method: "german", synth_order: order, synth_base_id: null }) + "\n"
+		)
 		orderCounts[order]++
 		emitted++
 	}

@@ -3,18 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Synthesize a BARE-STREET shard (v0.8.0 harness lever, 2026-06-05). The harness `functional.test.ts`
- *   cluster (32/34 fail on v0.7.2) is bare street names — "10th Ave", "Main St", "1 Main Pl" — that the
- *   model mislabels as `locality`, because `synthesizeStreetRow` only ever emitted streets WITH a
- *   ", City, ST ZIP" tail. This shard emits streets BARE (60%) — no tail, only `street_prefix`/`street`/
- *   `street_suffix` (+ optional `house_number`) — the bare-format analogue of the v0.7.x intersection-bare
- *   fix. Safe (US, in-distribution, no German-collapse risk).
+ *   Synthesize a BARE-STREET shard (v0.8.0 harness lever, 2026-06-05). The harness
+ *   `functional.test.ts` cluster (32/34 fail on v0.7.2) is bare street names — "10th Ave", "Main
+ *   St", "1 Main Pl" — that the model mislabels as `locality`, because `synthesizeStreetRow` only
+ *   ever emitted streets WITH a ", City, ST ZIP" tail. This shard emits streets BARE (60%) — no
+ *   tail, only `street_prefix`/`street`/ `street_suffix` (+ optional `house_number`) — the
+ *   bare-format analogue of the v0.7.x intersection-bare fix. Safe (US, in-distribution, no
+ *   German-collapse risk).
  *
  *   Pipeline (same as the intersection shard):
- *     1. node scripts/build-street-bare-shard.mjs --output /tmp/street-bare-labeled.jsonl --count 3000 --seed 42
- *     2. python3 scripts/jsonl-to-parquet.py --input /tmp/street-bare-labeled.jsonl --output /tmp/part-street-bare.parquet
- *     3. modal volume put mailwoman-training /tmp/part-street-bare.parquet corpus/versioned/v0.4.0/corpus-v0.4.0/train/part-street-bare.parquet
- *     4. add `synth-street-bare: 0.2` to the training config source_weights, then train.
+ *
+ *   1. Node scripts/build-street-bare-shard.mjs --output /tmp/street-bare-labeled.jsonl --count 3000
+ *        --seed 42
+ *   2. Python3 scripts/jsonl-to-parquet.py --input /tmp/street-bare-labeled.jsonl --output
+ *        /tmp/part-street-bare.parquet
+ *   3. Modal volume put mailwoman-training /tmp/part-street-bare.parquet
+ *        corpus/versioned/v0.4.0/corpus-v0.4.0/train/part-street-bare.parquet
+ *   4. Add `synth-street-bare: 0.2` to the training config source_weights, then train.
  */
 import { createWriteStream } from "node:fs"
 
@@ -33,13 +38,15 @@ function parseArgs() {
 		else if (a === "--hn-prob") out.hnProb = parseFloat(args[++i])
 	}
 	if (!out.output) {
-		console.error("Usage: node scripts/build-street-bare-shard.mjs --output <jsonl> [--count 3000] [--seed 42] [--bare-prob 0.6]")
+		console.error(
+			"Usage: node scripts/build-street-bare-shard.mjs --output <jsonl> [--count 3000] [--seed 42] [--bare-prob 0.6]"
+		)
 		process.exit(1)
 	}
 	return out
 }
 
-/** mulberry32 — matches the synthesizer's test PRNG for reproducibility. */
+/** Mulberry32 — matches the synthesizer's test PRNG for reproducibility. */
 function mulberry32(seed) {
 	let a = seed >>> 0
 	return () => {
@@ -101,7 +108,9 @@ async function main() {
 
 	outStream.end()
 	await new Promise((resolve) => outStream.on("finish", resolve))
-	console.error(`Done: emitted ${emitted} street rows (${bare} bare, ${(100 * bare) / emitted}%), skipped ${skipped}. → ${opts.output}`)
+	console.error(
+		`Done: emitted ${emitted} street rows (${bare} bare, ${(100 * bare) / emitted}%), skipped ${skipped}. → ${opts.output}`
+	)
 }
 
 main().catch((err) => {

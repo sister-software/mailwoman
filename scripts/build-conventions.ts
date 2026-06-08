@@ -42,8 +42,10 @@ function argval(flag: string, fallback?: string): string {
 	throw new Error(`missing required ${flag}`)
 }
 
-/** Reject malformed or code-incoherent conventions at BUILD time (loud), so the runtime never has
-to. */
+/**
+ * Reject malformed or code-incoherent conventions at BUILD time (loud), so the runtime never has
+ * to.
+ */
 function validate(rows: AuthoredConvention[]): void {
 	const errors: string[] = []
 	const seen = new Set<number>()

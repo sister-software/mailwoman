@@ -6,11 +6,12 @@
  *   Mailwoman geocoder demo — fully client-side. Combines:
  *
  *   - `@mailwoman/neural-web` (onnxruntime-web, WASM SIMD with WebGPU fallback) for the BIO classifier.
- *   - sql.js-httpvfs (../../shared/httpvfs-resolver) range-loading the same-origin WOF + polygon DBs.
+ *   - Sql.js-httpvfs (../../shared/httpvfs-resolver) range-loading the same-origin WOF + polygon DBs.
  *   - `@mailwoman/cartographer` `StyleSpecificationComposer` over the v4 protomaps basemap.
  *
  *   The model/tokenizer/fst come from HF (one-shot full-fetch); the resolver DBs are served
- *   same-origin from `/mailwoman/` and range-loaded, so a session fetches a few MB of them, not 70+.
+ *   same-origin from `/mailwoman/` and range-loaded, so a session fetches a few MB of them, not
+ *   70+.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -68,7 +69,8 @@ interface ReleaseInfo {
 	hasWofDb: boolean
 	/** Anchor-trained bundle (#239/#240) — ships postcode-*.bin so the demo feeds the postcode anchor. */
 	hasAnchor?: boolean
-	/** Ships a `wof-polygons.db` sibling — the demo draws the crisp admin boundary instead of the bbox. */
+	/** Ships a `wof-polygons.db` sibling — the demo draws the crisp admin boundary instead of the
+bbox. */
 	hasPolygons?: boolean
 }
 
@@ -281,10 +283,7 @@ const DemoApp: React.FC = () => {
 					setLookupLoader(() => async () => {
 						// Range-load the same-origin DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
 						const { loadHttpvfsDb, WofHttpvfsPlaceLookup } = await import("../../shared/httpvfs-resolver")
-						const worker = await loadHttpvfsDb(
-							assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"),
-							sqljsBaseUrl
-						)
+						const worker = await loadHttpvfsDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"), sqljsBaseUrl)
 						return new WofHttpvfsPlaceLookup(worker)
 					})
 				}
@@ -517,20 +516,20 @@ const DemoApp: React.FC = () => {
 				// selectedCandidateIndex changes. Just stash the candidates; the effect handles
 				// clearing stale marker/bbox AND rendering the new selection.
 				// Dual-role (#402): surface whether the resolved place doubles as another admin tier — a
-					// city-state (Berlin = locality AND region) or a capital-seat. Best-effort + optional: the
-					// lookup returns [] when the slim DB predates the coincident_roles relation.
-					let dualRoles: DualRole[] | undefined
-					const primaryHit = candidates[0]
-					if (primaryHit && wofLookup.coincidentRolesFor) {
-						try {
-							const roles = await wofLookup.coincidentRolesFor(primaryHit.id)
-							if (roles.length > 0) dualRoles = roles
-						} catch {
-							/* relation absent / query failed → no dual-role badge */
-						}
+				// city-state (Berlin = locality AND region) or a capital-seat. Best-effort + optional: the
+				// lookup returns [] when the slim DB predates the coincident_roles relation.
+				let dualRoles: DualRole[] | undefined
+				const primaryHit = candidates[0]
+				if (primaryHit && wofLookup.coincidentRolesFor) {
+					try {
+						const roles = await wofLookup.coincidentRolesFor(primaryHit.id)
+						if (roles.length > 0) dualRoles = roles
+					} catch {
+						/* relation absent / query failed → no dual-role badge */
 					}
+				}
 
-					setSelectedCandidateIndex(0)
+				setSelectedCandidateIndex(0)
 				setResult({
 					input: text,
 					tree,
@@ -542,7 +541,7 @@ const DemoApp: React.FC = () => {
 					fstActive: fstMatcher !== null,
 					fstProvenance,
 					timing: { shape: tShape - tStart, classify: tClassify - tShape, resolve: tResolve - tBeforeResolve },
-						dualRoles,
+					dualRoles,
 				})
 			} catch (parsingError) {
 				console.error("Error parsing input", parsingError)
@@ -675,14 +674,16 @@ function whenStyleReady(map: MapLibreMap, fn: () => void): void {
 	map.once("styledata", () => whenStyleReady(map, fn))
 }
 
-/** A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place outline. */
+/** A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place
+outline. */
 type PlaceGeometry =
 	| { type: "Polygon"; coordinates: number[][][] }
 	| { type: "MultiPolygon"; coordinates: number[][][][] }
 
 /**
- * Shared source/layer plumbing for the resolved-place outline. Both the bbox rectangle and the crisp
- * admin polygon funnel through here so they reuse one source (`setData` swaps the geometry in place).
+ * Shared source/layer plumbing for the resolved-place outline. Both the bbox rectangle and the
+ * crisp admin polygon funnel through here so they reuse one source (`setData` swaps the geometry in
+ * place).
  */
 function setPlaceOutline(map: MapLibreMap, geometry: PlaceGeometry): void {
 	const geojson = {
@@ -748,15 +749,16 @@ function geomBounds(geometry: PlaceGeometry): { minLon: number; minLat: number; 
 	return { minLon, minLat, maxLon, maxLat }
 }
 
-/** id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. Async (range-loaded). */
+/** Id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. Async
+(range-loaded). */
 interface PolygonDb {
 	get(id: number): Promise<PlaceGeometry | null>
 }
 
 /**
  * Open the crisp-polygon DB (built by scripts/build-wof-polygons.mjs) via sql.js-httpvfs — a single
- * `SELECT geom WHERE id=?` touches ~1 page, so the browser fetches a few KB of the 19 MB file rather
- * than the whole thing. Same range-load path as the resolver DB.
+ * `SELECT geom WHERE id=?` touches ~1 page, so the browser fetches a few KB of the 19 MB file
+ * rather than the whole thing. Same range-load path as the resolver DB.
  */
 async function loadPolygonDb(url: string, sqljsBaseUrl: string): Promise<PolygonDb> {
 	const { loadHttpvfsDb, makeHttpvfsPolygonLookup } = await import("../../shared/httpvfs-resolver")
@@ -783,15 +785,58 @@ const normName = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, "
 // département) before "Illinois", so its France bbox filters out the actual US city — expanding to
 // the full name resolves the right region. Full names pass through unchanged.
 const US_STATE_ABBREV: Record<string, string> = {
-	AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado",
-	CT: "Connecticut", DE: "Delaware", DC: "District of Columbia", FL: "Florida", GA: "Georgia",
-	HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky",
-	LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota",
-	MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire",
-	NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota",
-	OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina",
-	SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia",
-	WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", PR: "Puerto Rico",
+	AL: "Alabama",
+	AK: "Alaska",
+	AZ: "Arizona",
+	AR: "Arkansas",
+	CA: "California",
+	CO: "Colorado",
+	CT: "Connecticut",
+	DE: "Delaware",
+	DC: "District of Columbia",
+	FL: "Florida",
+	GA: "Georgia",
+	HI: "Hawaii",
+	ID: "Idaho",
+	IL: "Illinois",
+	IN: "Indiana",
+	IA: "Iowa",
+	KS: "Kansas",
+	KY: "Kentucky",
+	LA: "Louisiana",
+	ME: "Maine",
+	MD: "Maryland",
+	MA: "Massachusetts",
+	MI: "Michigan",
+	MN: "Minnesota",
+	MS: "Mississippi",
+	MO: "Missouri",
+	MT: "Montana",
+	NE: "Nebraska",
+	NV: "Nevada",
+	NH: "New Hampshire",
+	NJ: "New Jersey",
+	NM: "New Mexico",
+	NY: "New York",
+	NC: "North Carolina",
+	ND: "North Dakota",
+	OH: "Ohio",
+	OK: "Oklahoma",
+	OR: "Oregon",
+	PA: "Pennsylvania",
+	RI: "Rhode Island",
+	SC: "South Carolina",
+	SD: "South Dakota",
+	TN: "Tennessee",
+	TX: "Texas",
+	UT: "Utah",
+	VT: "Vermont",
+	VA: "Virginia",
+	WA: "Washington",
+	WV: "West Virginia",
+	WI: "Wisconsin",
+	WY: "Wyoming",
+	PR: "Puerto Rico",
 }
 const expandUsRegion = (text: string): string => US_STATE_ABBREV[text.trim().toUpperCase()] ?? text
 

@@ -29,13 +29,14 @@ export interface PipelineOpts {
 	/** Disable fast-path shortcuts; always run the full pipeline. */
 	forceFullPipeline?: boolean
 	/**
-	 * The joint-reconcile path (Stage 5 beam search) is the DEFAULT decode path as of Route A Phase II
-	 * (#427) — it beats argmax on every measured locale (DE +25pp, IT/ES +15pp) with per-field
-	 * regression under 0.5%. It still requires a phrase grouper + a classifier exposing `parseWithLogits`;
-	 * when either is absent the pipeline falls back to the argmax sort automatically.
+	 * The joint-reconcile path (Stage 5 beam search) is the DEFAULT decode path as of Route A Phase
+	 * II (#427) — it beats argmax on every measured locale (DE +25pp, IT/ES +15pp) with per-field
+	 * regression under 0.5%. It still requires a phrase grouper + a classifier exposing
+	 * `parseWithLogits`; when either is absent the pipeline falls back to the argmax sort
+	 * automatically.
 	 *
-	 * Set `jointReconcile: false` to force the legacy argmax path (the A/B harnesses use this to compare).
-	 * Default (unset) is `true`.
+	 * Set `jointReconcile: false` to force the legacy argmax path (the A/B harnesses use this to
+	 * compare). Default (unset) is `true`.
 	 */
 	jointReconcile?: boolean
 	/** @deprecated Use {@link jointReconcile}. Retained as an explicit override for the A/B harnesses. */

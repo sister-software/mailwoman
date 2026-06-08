@@ -29,7 +29,7 @@ A per-input **routing layer** in front of the resolver:
   band → **resolver-as-arbiter** (run both, resolve both, pick the higher
   resolver-confidence result). Caps the 2× parse cost to a small traffic slice.
 - **resolver-as-arbiter** is the powerful core mechanism — it makes
-  *resolvability* (gazetteer support) the routing signal, directly optimizing the
+  _resolvability_ (gazetteer support) the routing signal, directly optimizing the
   end goal. Used three ways: online fallback (ambiguous band), offline
   auto-labeler for the scorer, and eval oracle.
 - **No fusion** in v1 (merging v0's flat record + neural's tree is brittle — a
@@ -46,6 +46,7 @@ for every v0-involving baseline.
 ## Build order (each step yields an evaluable artifact)
 
 **Phase 1 — prove the thesis (no routing code yet):**
+
 1. **Eval harness + ground truth.** WOF-bootstrap: sample stratified US WOF
    places (localities/regions/postcodes; urban/rural/territories) → render to
    address strings via templates (full / no-street / state+ZIP) → **canonical +
@@ -55,7 +56,7 @@ for every v0-involving baseline.
    — overstates v0). Metrics: **hierarchy-tolerant Place-Match Acc@1** (primary),
    coordinate error p50/p90, component-F1 (isolates parser vs resolver error),
    resolver success rate.
-2. **v0→tree adapter** (`PARENT_OF` + tree builder). *Preliminary gate:*
+2. **v0→tree adapter** (`PARENT_OF` + tree builder). _Preliminary gate:_
    v0-via-adapter must reach **≥85% of v0's standalone component accuracy** on
    canonical golden — else the adapter is destroying info; fix before proceeding.
 3. **Single-parser baselines:** neural-only, v0-via-adapter, on the eval suite.
@@ -63,6 +64,7 @@ for every v0-involving baseline.
    score → the **arbiter** and **oracle** baselines.
 
 **KILL/CONTINUE GATE (the point of Phase 1):**
+
 > On WOF-bootstrap, the **tuned** arbiter must beat the better single-parser
 > baseline by **≥5pp Acc@1 on the clean subset**, **not regress >1–2pp on the
 > perturbed subset**, and **≥3pp overall**, with coordinate error not >10% worse.
@@ -71,18 +73,14 @@ for every v0-involving baseline.
 > If met → routing is worth building (Phase 2). If arbiter ≈ neural-only →
 > routing is a dead end; **pivot to coverage** (the backlog's B3'/B5) instead.
 
-**Phase 2 — build routing (only if the gate passes):**
-5. **Auto-label** a real unlabeled corpus (OpenAddresses US strings): run both,
-   resolve both, label by resolver-score delta — *drop both-garbage rows*
-   (both below calibrated min-score) and *drop marginal rows* (delta < win
-   margin; these belong in the online ambiguous band). Calibrate min-score +
-   win-margin on the WOF-bootstrap set first.
-6. **Lexical quality scorer** (LR on the auto-labels) — the cheap approximation
-   of the arbiter, so we pay 2× parse only on the ambiguous band.
-7. **Online router** with confidence bands; thresholds set from the eval suite;
-   ambiguous band → dual-parse + arbiter (reuse the shipped resolver).
-8. **Tune + monitor:** log 1% dual-parse samples, compare router vs arbiter,
-   retrain on decay.
+**Phase 2 — build routing (only if the gate passes):** 5. **Auto-label** a real unlabeled corpus (OpenAddresses US strings): run both,
+resolve both, label by resolver-score delta — _drop both-garbage rows_
+(both below calibrated min-score) and _drop marginal rows_ (delta < win
+margin; these belong in the online ambiguous band). Calibrate min-score +
+win-margin on the WOF-bootstrap set first. 6. **Lexical quality scorer** (LR on the auto-labels) — the cheap approximation
+of the arbiter, so we pay 2× parse only on the ambiguous band. 7. **Online router** with confidence bands; thresholds set from the eval suite;
+ambiguous band → dual-parse + arbiter (reuse the shipped resolver). 8. **Tune + monitor:** log 1% dual-parse samples, compare router vs arbiter,
+retrain on decay.
 
 **Follow-on (parallel, droppable):** OpenAddresses eval track (~10k real US
 `{address, lat/lon}` points) → independent great-circle coordinate-error number

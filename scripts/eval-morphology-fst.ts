@@ -53,11 +53,15 @@ interface Args {
 	maxAffixBias?: number
 	maxNeighbourStreetBias?: number
 	dependentLocalityPenalty?: number
-	/** Optional JSON output path. When set, emits structured per-tag stats consumable by
-`eval-gate.ts`. */
+	/**
+	 * Optional JSON output path. When set, emits structured per-tag stats consumable by
+	 * `eval-gate.ts`.
+	 */
 	outJson?: string
-	/** Optional human-readable name written into the JSON output's `name` field. Defaults to the model
-basename. */
+	/**
+	 * Optional human-readable name written into the JSON output's `name` field. Defaults to the model
+	 * basename.
+	 */
 	evalName?: string
 	/**
 	 * When set, fold the neural model's Stage 3 component tags back to Stage 2 conventions before
