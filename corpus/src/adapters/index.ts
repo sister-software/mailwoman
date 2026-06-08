@@ -23,6 +23,7 @@ import { defaultAdapterRegistry } from "../adapter.js"
 import type { CorpusAdapter } from "../types.js"
 import { banAdapter } from "./ban/adapter.js"
 import { fccBdcAdapter } from "./fcc-bdc/adapter.js"
+import { geonamesAdapter } from "./geonames/adapter.js"
 import { openaddressesAdapter } from "./openaddresses/adapter.js"
 import { stateHiSchoolsAdapter } from "./state-hi-schools/adapter.js"
 import { stateIaContractorsAdapter } from "./state-ia-contractors/adapter.js"
@@ -50,6 +51,7 @@ import { wofPostalcodeAdapter } from "./wof-postalcode-json/adapter.js"
 export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	wofAdminAdapter,
 	wofPostalcodeAdapter,
+	geonamesAdapter,
 	banAdapter,
 	tigerAdapter,
 	openaddressesAdapter,
@@ -72,6 +74,7 @@ for (const adapter of BUILTIN_ADAPTERS) {
 
 export { BAN_ADAPTER_ID, banAdapter } from "./ban/adapter.js"
 export { FCC_BDC_ADAPTER_ID, FCC_BDC_DEFAULT_LICENSE, fccBdcAdapter } from "./fcc-bdc/adapter.js"
+export { GEONAMES_ADAPTER_ID, GEONAMES_DEFAULT_LICENSE, geonamesAdapter } from "./geonames/adapter.js"
 export {
 	OPENADDRESSES_ADAPTER_ID,
 	OPENADDRESSES_DEFAULT_LICENSE,
