@@ -26,8 +26,10 @@ const POPULATION_BOOST = 4.0
 const POPULATION_SCALE_LOG10 = 6.0
 
 const normName = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
-/** Escape a string literal for inline SQL (we inline rather than bind — avoids param-marshaling over
-Comlink). */
+/**
+ * Escape a string literal for inline SQL (we inline rather than bind — avoids param-marshaling over
+ * Comlink).
+ */
 const sqlStr = (s: string): string => `'${s.replace(/'/g, "''")}'`
 
 /** Trim raw input into an FTS5-safe MATCH term. Mirrors resolver-wof-wasm's sanitizeFtsQuery intent. */

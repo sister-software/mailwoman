@@ -69,8 +69,10 @@ interface ReleaseInfo {
 	hasWofDb: boolean
 	/** Anchor-trained bundle (#239/#240) — ships postcode-*.bin so the demo feeds the postcode anchor. */
 	hasAnchor?: boolean
-	/** Ships a `wof-polygons.db` sibling — the demo draws the crisp admin boundary instead of the
-bbox. */
+	/**
+	 * Ships a `wof-polygons.db` sibling — the demo draws the crisp admin boundary instead of the
+	 * bbox.
+	 */
 	hasPolygons?: boolean
 }
 
@@ -674,8 +676,10 @@ function whenStyleReady(map: MapLibreMap, fn: () => void): void {
 	map.once("styledata", () => whenStyleReady(map, fn))
 }
 
-/** A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place
-outline. */
+/**
+ * A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place
+ * outline.
+ */
 type PlaceGeometry =
 	| { type: "Polygon"; coordinates: number[][][] }
 	| { type: "MultiPolygon"; coordinates: number[][][][] }
@@ -749,8 +753,10 @@ function geomBounds(geometry: PlaceGeometry): { minLon: number; minLat: number; 
 	return { minLon, minLat, maxLon, maxLat }
 }
 
-/** Id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. Async
-(range-loaded). */
+/**
+ * Id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. Async
+ * (range-loaded).
+ */
 interface PolygonDb {
 	get(id: number): Promise<PlaceGeometry | null>
 }

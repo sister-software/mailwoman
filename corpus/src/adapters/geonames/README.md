@@ -40,10 +40,10 @@ npx mailwoman corpus run geonames --input /mnt/playpen/mailwoman-data/geonames/U
 
 Up to two hierarchy variants per place (domestic + international order, mirroring `wof-admin`):
 
-| variant | components | raw |
-| --- | --- | --- |
-| `lr` | `{ locality, region }` | `Montpelier, Vermont` |
-| `lrc` | `{ locality, region, country }` | `Montpelier, Vermont, United States` |
+| variant | components                      | raw                                  |
+| ------- | ------------------------------- | ------------------------------------ |
+| `lr`    | `{ locality, region }`          | `Montpelier, Vermont`                |
+| `lrc`   | `{ locality, region, country }` | `Montpelier, Vermont, United States` |
 
 `source_id` = `geonames-<geonameid>-<variant>`. When region/country names are unavailable the adapter
 falls back to `{ locality, country }` or `{ locality }`.

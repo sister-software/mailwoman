@@ -13,15 +13,17 @@
  *   Input: a per-country tab-separated dump (e.g. `US.txt` from
  *   `https://download.geonames.org/export/dump/`, 19 columns, no header). Two sibling files in the
  *   same directory supply human-readable names (downloaded once from the same place):
- *     - `admin1CodesASCII.txt` — `<CC>.<admin1_code>` → region name (e.g. `US.VT` → "Vermont").
- *     - `countryInfo.txt`       — ISO alpha-2 → country name (e.g. `US` → "United States"); `#`-commented.
- *   If a sibling is missing, the corresponding component is simply omitted (graceful degradation).
+ *
+ *   - `admin1CodesASCII.txt` — `<CC>.<admin1_code>` → region name (e.g. `US.VT` → "Vermont").
+ *   - `countryInfo.txt` — ISO alpha-2 → country name (e.g. `US` → "United States"); `#`-commented. If a
+ *       sibling is missing, the corresponding component is simply omitted (graceful degradation).
  *
  *   Output: per place, up to two hierarchy variants (mirroring `wof-admin`'s with/without-country
  *   balance so the model sees both domestic and international order) —
- *     1. `{ locality, region }`              → "City, Region"
- *     2. `{ locality, region, country }`     → "City, Region, Country"
- *   `reconcileComponents` drops any component that didn't survive into the rendered `raw`.
+ *
+ *   1. `{ locality, region }` → "City, Region"
+ *   2. `{ locality, region, country }` → "City, Region, Country" `reconcileComponents` drops any
+ *        component that didn't survive into the rendered `raw`.
  *
  *   License: stamped `"CC-BY-4.0"` per row (GeoNames' terms); provenance is the `geonames-<id>` key.
  */
@@ -37,7 +39,15 @@ export const GEONAMES_ADAPTER_ID = "geonames"
 export const GEONAMES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 // GeoNames main-table column indices (0-based; see the export README).
-const COL = { geonameid: 0, name: 1, alternatenames: 3, featureClass: 6, featureCode: 7, country: 8, admin1: 10 } as const
+const COL = {
+	geonameid: 0,
+	name: 1,
+	alternatenames: 3,
+	featureClass: 6,
+	featureCode: 7,
+	country: 8,
+	admin1: 10,
+} as const
 
 // Populated-place feature codes that are NOT current real places — skip them.
 const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])

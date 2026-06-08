@@ -8,12 +8,8 @@ import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { beforeEach, describe, expect, it } from "vitest"
-import {
-	createGeonamesPostalAdapter,
-	GEONAMES_POSTAL_ADAPTER_ID,
-	GEONAMES_POSTAL_DEFAULT_LICENSE,
-} from "./adapter.js"
 import type { CanonicalRow } from "../../types.js"
+import { createGeonamesPostalAdapter, GEONAMES_POSTAL_ADAPTER_ID, GEONAMES_POSTAL_DEFAULT_LICENSE } from "./adapter.js"
 
 let scratch: string
 beforeEach(() => {
@@ -53,11 +49,17 @@ describe("geonames-postal adapter", () => {
 	})
 
 	it("emits postcode-first variants with region when admin1 differs from the place", async () => {
-		const rows = await collect(writeFixture(row("DE", "10115", "Berlin", "Berlin"), row("FR", "75001", "Paris", "Île-de-France")))
+		const rows = await collect(
+			writeFixture(row("DE", "10115", "Berlin", "Berlin"), row("FR", "75001", "Paris", "Île-de-France"))
+		)
 		const fr = rows.filter((r) => r.country === "FR")
 		const byRaw = Object.fromEntries(fr.map((r) => [r.raw, r]))
 		expect(byRaw["75001 Paris"]?.components).toEqual({ postcode: "75001", locality: "Paris" })
-		expect(byRaw["75001 Paris, Île-de-France"]?.components).toEqual({ postcode: "75001", locality: "Paris", region: "Île-de-France" })
+		expect(byRaw["75001 Paris, Île-de-France"]?.components).toEqual({
+			postcode: "75001",
+			locality: "Paris",
+			region: "Île-de-France",
+		})
 		for (const r of fr) {
 			expect(r.license).toBe(GEONAMES_POSTAL_DEFAULT_LICENSE)
 			expect(r.source).toBe(GEONAMES_POSTAL_ADAPTER_ID)
@@ -73,7 +75,13 @@ describe("geonames-postal adapter", () => {
 	})
 
 	it("skips rows missing postcode or place", async () => {
-		const rows = await collect(writeFixture(row("DE", "", "Nowhere", "Bayern"), row("DE", "80331", "", "Bayern"), row("DE", "80331", "München", "Bayern")))
+		const rows = await collect(
+			writeFixture(
+				row("DE", "", "Nowhere", "Bayern"),
+				row("DE", "80331", "", "Bayern"),
+				row("DE", "80331", "München", "Bayern")
+			)
+		)
 		expect(rows.every((r) => r.components.locality === "München")).toBe(true)
 	})
 

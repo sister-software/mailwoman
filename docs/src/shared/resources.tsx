@@ -91,8 +91,10 @@ export interface DemoResult {
 	timing?: StageTiming
 	fstActive: boolean
 	fstProvenance?: FstProvenanceLike | null
-	/** Dual-role (#402): the additional admin tier(s) the resolved place also fulfils (city-state
-etc.). */
+	/**
+	 * Dual-role (#402): the additional admin tier(s) the resolved place also fulfils (city-state
+	 * etc.).
+	 */
 	dualRoles?: DualRole[]
 }
 

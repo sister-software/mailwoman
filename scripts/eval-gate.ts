@@ -8,8 +8,8 @@
  *
  *   ```
  *   FAIL if  (recall drop > recall_threshold_pp  AND baseline_recall > recall_min_baseline_pct)
- *     OR (hallucination spike > hall_abs_threshold
- *         AND new_hallucination_rate > hall_rate_threshold_pct)
+ *   OR (hallucination spike > hall_abs_threshold
+ *       AND new_hallucination_rate > hall_rate_threshold_pct)
  * ```
  *
  *   The two-dimensional shape is critical. A recall-only gate (DeepSeek turn 1 "v0.6.1 would sail

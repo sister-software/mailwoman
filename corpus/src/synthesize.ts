@@ -342,8 +342,8 @@ export const streetSuffixExpand: Augmentation = (row) => {
  * US: swap the LEADING secondary-unit designator in `components.unit` to its approved USPS
  * abbreviation, preserving case + the identifier. `"Apartment 4B"` → `"Apt 4B"`; `"SUITE 200"` →
  * `"STE 200"`; `"floor 3"` → `"fl 3"`. Returns null when the unit has no recognized leading
- * designator (a bare `"4B"` / `"#210"`), the designator is already the approved abbreviation, or the
- * swap would leave `raw` untouched.
+ * designator (a bare `"4B"` / `"#210"`), the designator is already the approved abbreviation, or
+ * the swap would leave `raw` untouched.
  *
  * Mirrors `streetSuffixAbbreviate`, but designators LEAD the unit (vs suffixes that trail the
  * street). Sourced from the USPS Pub-28 C2 codex — the data-generation counterpart to the runtime

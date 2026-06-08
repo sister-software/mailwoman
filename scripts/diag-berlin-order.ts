@@ -40,8 +40,10 @@ const rows = readFileSync("data/eval/external/openaddresses-de-sample.jsonl", "u
 	.filter((r) => r.state === "Berlin" || r.state === "Sachsen")
 	.slice(0, 40)
 
-/** US-order OA input "27 Straußstraße, Berlin, Berlin 12623" → German order "Straußstraße 27, 12623
-Berlin". */
+/**
+ * US-order OA input "27 Straußstraße, Berlin, Berlin 12623" → German order "Straußstraße 27, 12623
+ * Berlin".
+ */
 function toGermanOrder(r: Row): string | null {
 	const parts = r.input.split(",").map((s) => s.trim())
 	if (parts.length < 3) return null

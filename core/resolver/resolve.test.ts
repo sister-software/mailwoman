@@ -479,7 +479,16 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		// tier). `exactMatch` is the backend-supplied tier flag (see ResolvedPlace.exactMatch).
 		const regions: ResolvedPlace[] = [
 			{ id: 1, name: "Maineland", placetype: "region", country: "US", lat: 45, lon: -69, score: 5, exactMatch: true },
-			{ id: 2, name: "Missouriland", placetype: "region", country: "US", lat: 38, lon: -92, score: 7, exactMatch: false },
+			{
+				id: 2,
+				name: "Missouriland",
+				placetype: "region",
+				country: "US",
+				lat: 38,
+				lon: -92,
+				score: 7,
+				exactMatch: false,
+			},
 			{ id: 3, name: "Messinaland", placetype: "region", country: "IT", lat: 38, lon: 15, score: 6, exactMatch: true },
 		]
 		const input = tree("land", [node("region", "land", 0, 4)])

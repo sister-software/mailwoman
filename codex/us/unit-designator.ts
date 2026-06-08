@@ -6,7 +6,7 @@
  *   USPS Publication 28, Appendix C2 — Secondary Unit Designators.
  *
  *   The sibling of {@link ./street-suffix.ts}: where that table standardizes the trailing street
- *   *type* (AVENUE → AVE), this one standardizes the *secondary unit* designator that introduces an
+ *   _type_ (AVENUE → AVE), this one standardizes the _secondary unit_ designator that introduces an
  *   apartment / suite / floor / room (APARTMENT → APT, SUITE → STE). For each canonical designator
  *   the value lists recognized variants in USPS order; the first is the approved USPS abbreviation
  *   (what the post office prints).
@@ -102,8 +102,8 @@ export interface UnitDesignatorMatch<D extends UsUnitDesignator = UsUnitDesignat
 }
 
 /**
- * Look up a USPS secondary unit designator (by canonical word, abbreviation, or any variant) and its
- * approved abbreviation.
+ * Look up a USPS secondary unit designator (by canonical word, abbreviation, or any variant) and
+ * its approved abbreviation.
  */
 export function lookupUnitDesignator<D extends UsUnitDesignator>(designator: D): UnitDesignatorMatch<D>
 export function lookupUnitDesignator(input: string | null | undefined): UnitDesignatorMatch | null

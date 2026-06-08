@@ -17,7 +17,7 @@ clears the 1000-row trust floor (1428 rows); FR held-out départements = 16 rows
 holdout.
 
 1. **Symptom (VT slice):** name-match 93.7%, region-match **0%**, coord p50 **326km** — the
-   resolver finding the right *name* in the wrong *state*, invisible to name-match.
+   resolver finding the right _name_ in the wrong _state_, invisible to name-match.
 2. **Cause A:** the gazetteer was built without `scripts/add-region-abbrevs.ts`, so `region="VT"`
    never resolved (WOF stores "Vermont"; FTS had no USPS abbreviations) → locality lookup ran
    unconstrained US-wide → higher-population namesakes in other states won.
@@ -30,14 +30,14 @@ holdout.
 
 ### Measured (validation copy of the gazetteer; self-emitted)
 
-| slice | metric | baseline | abbrev only | abbrev + ancestry backfill |
-| --- | --- | ---: | ---: | ---: |
-| VT held-out (1428) | region-match | 0.0% | 99.9% | 99.9% |
-| VT held-out | coord p50 (km) | 326.3 | 3.4 | 3.4 |
-| full-US (10k) | region-match | 14.2% | 99.9% | (running) |
-| full-US (10k) | coord p90 (km) | 2763.5 | 10.3 | (running) |
-| demo presets (4) | locality-match | 100% | **75%** ⚠ | **100%** ✓ |
-| demo presets | NYC resolves to | NYC | New York Mills ✗ | NYC ✓ |
+| slice              | metric          | baseline |      abbrev only | abbrev + ancestry backfill |
+| ------------------ | --------------- | -------: | ---------------: | -------------------------: |
+| VT held-out (1428) | region-match    |     0.0% |            99.9% |                      99.9% |
+| VT held-out        | coord p50 (km)  |    326.3 |              3.4 |                        3.4 |
+| full-US (10k)      | region-match    |    14.2% |            99.9% |                  (running) |
+| full-US (10k)      | coord p90 (km)  |   2763.5 |             10.3 |                  (running) |
+| demo presets (4)   | locality-match  |     100% |        **75%** ⚠ |                 **100%** ✓ |
+| demo presets       | NYC resolves to |      NYC | New York Mills ✗ |                      NYC ✓ |
 
 The lesson re-earned: aggregate metrics said the abbrev fix was great (VT 326→3.4km); the
 functional presets said NYC broke. When they disagree, functional wins — and chasing the
@@ -146,20 +146,20 @@ disagreement found Cause B.
 
 ## Numbers
 
-| metric | value |
-| --- | ---: |
-| shift window | 03:50–15:00 UTC |
-| models trained | 0 |
-| Modal time / $ | 0 / $0 |
-| NaN incidents | 0 |
-| CI failures fixed | 1 (docs-build TS2883 on main) |
-| regressions shipped | 0 (NYC regression caught pre-merge + fixed) |
-| PRs opened | 7 (#437, #438, #439, #441, #443, #445, #446) — all test-green |
-| corpus adapters added | 3 (geonames, geonames-postal, usgov-irs-bmf; #446) |
-| new tests added | 25 (8 region-abbrev regression + 17 corpus-adapter) |
-| issues filed | 3 (#440, #442, #444) + surveys on #240/#387 |
-| headline result | full-US coord p90 2763km → 10.3km; VT region 0→99.9% |
-| DeepSeek consults | 1 session, 2 turns (curl fallback; pi wrapper timed out 2×) |
+| metric                |                                                         value |
+| --------------------- | ------------------------------------------------------------: |
+| shift window          |                                               03:50–15:00 UTC |
+| models trained        |                                                             0 |
+| Modal time / $        |                                                        0 / $0 |
+| NaN incidents         |                                                             0 |
+| CI failures fixed     |                                 1 (docs-build TS2883 on main) |
+| regressions shipped   |                   0 (NYC regression caught pre-merge + fixed) |
+| PRs opened            | 7 (#437, #438, #439, #441, #443, #445, #446) — all test-green |
+| corpus adapters added |            3 (geonames, geonames-postal, usgov-irs-bmf; #446) |
+| new tests added       |           25 (8 region-abbrev regression + 17 corpus-adapter) |
+| issues filed          |                   3 (#440, #442, #444) + surveys on #240/#387 |
+| headline result       |          full-US coord p90 2763km → 10.3km; VT region 0→99.9% |
+| DeepSeek consults     |   1 session, 2 turns (curl fallback; pi wrapper timed out 2×) |
 
 ## Shift close — post-merge addendum
 
@@ -173,12 +173,12 @@ The body above was written mid-shift, before the merge wall lifted. What actuall
   VT→Vermont, ancestors 6.32M, coincident_roles 128). This is what activates the region fix for the
   CLI/server resolver + the eval harness.
 - **R2 demo push HELD — it's a no-op.** Investigating before pushing showed the static demo already
-  resolves wrong-state cases: #365's client-side `expandUsRegion` expands `IL→Illinois` *before* the
+  resolves wrong-state cases: #365's client-side `expandUsRegion` expands `IL→Illinois` _before_ the
   lookup (+ a bbox-fallback), so the demo never queries the slim DB's abbrev tokens. Proven
   byte-identical live-vs-rebuilt (region step + Chicago-in-IL-bbox). Building the slim DB confirmed it
   carries the fix, but publishing changes nothing the user sees. Built artifact left unpublished.
 - **Follow-up shipped same session: #447** (`fix(resolver): widen over-fetch for short queries`).
-  A probe of the *real* resolver exposed that exact-abbrev tiering existed but the exact-abbrev holder
+  A probe of the _real_ resolver exposed that exact-abbrev tiering existed but the exact-abbrev holder
   was dropped from the `limit*4` over-fetch window before tiering ran (`NY`→Highland GB). Widening the
   window for ≤3-char queries lifted bare region-abbrev resolution **7→10/15** US states; with a
   `country` hint it's already 15/15 (why the honest-eval never saw it). Merged; main green.

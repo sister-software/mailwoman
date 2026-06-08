@@ -291,8 +291,10 @@ function isFusedParticleName(s: string): boolean {
 	return /^\p{Ll}{1,6}['’]\p{Lu}/u.test(s)
 }
 
-/** Place-name content token: a capitalized word OR an apostrophe-fused particle name
-(`nell'Emilia`). */
+/**
+ * Place-name content token: a capitalized word OR an apostrophe-fused particle name
+ * (`nell'Emilia`).
+ */
 function isPlaceNameContent(s: string): boolean {
 	return startsCapitalized(s) || isFusedParticleName(s)
 }

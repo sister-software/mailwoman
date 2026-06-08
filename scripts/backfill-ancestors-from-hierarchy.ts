@@ -6,25 +6,24 @@
  *   Repair the unified WOF DB's `ancestors` table for places that `populateAncestors`
  *   (build-unified-wof.ts, a parent_id closure) leaves with ONLY-SELF ancestry.
  *
- *   Root cause (#440): a place that spans multiple parents — e.g. New York City, which
- *   straddles five counties (the boroughs) — carries `wof:parent_id = -4` (the WOF
- *   "ambiguous / no single parent" sentinel). The parent_id closure dead-ends there, so the
- *   place gets no region/county/country ancestry. The resolver's region-descendant boost
- *   then can't reach it: given "New York, NY", NYC (no NY-state ancestor) loses the boost to
- *   a correctly-parented namesake like "New York Mills", which wins despite NYC's 8.8M
- *   population. The honest-eval harness caught this as a metro regression once region
- *   resolution was fixed (docs/articles/evals/2026-06-08-honest-eval.md).
+ *   Root cause (#440): a place that spans multiple parents — e.g. New York City, which straddles five
+ *   counties (the boroughs) — carries `wof:parent_id = -4` (the WOF "ambiguous / no single parent"
+ *   sentinel). The parent_id closure dead-ends there, so the place gets no region/county/country
+ *   ancestry. The resolver's region-descendant boost then can't reach it: given "New York, NY", NYC
+ *   (no NY-state ancestor) loses the boost to a correctly-parented namesake like "New York Mills",
+ *   which wins despite NYC's 8.8M population. The honest-eval harness caught this as a metro
+ *   regression once region resolution was fixed (docs/articles/evals/2026-06-08-honest-eval.md).
  *
- *   The authoritative hierarchy IS in the source geojson: `wof:hierarchy` is an array of
- *   branches, each a map of `<placetype>_id` → id (region_id, county_id, country_id, …),
- *   fully populated even when parent_id is -4. This script reads it for every only-self
- *   place and inserts the missing ancestor rows (one per distinct ancestor across branches).
+ *   The authoritative hierarchy IS in the source geojson: `wof:hierarchy` is an array of branches,
+ *   each a map of `<placetype>_id` → id (region_id, county_id, country_id, …), fully populated even
+ *   when parent_id is -4. This script reads it for every only-self place and inserts the missing
+ *   ancestor rows (one per distinct ancestor across branches).
  *
- *   Run AFTER build-unified-wof and add-region-abbrevs, BEFORE build-fts (FTS doesn't depend
- *   on ancestors, so order vs FTS is not strict; keep it with the other post-build steps):
- *     node --experimental-strip-types scripts/backfill-ancestors-from-hierarchy.ts <unified.db> [<repos-root>]
- *   Idempotent: only touches places whose current ancestry is <= 1 row (self only), and
- *   inserts each (id, ancestor_id) at most once.
+ *   Run AFTER build-unified-wof and add-region-abbrevs, BEFORE build-fts (FTS doesn't depend on
+ *   ancestors, so order vs FTS is not strict; keep it with the other post-build steps): node
+ *   --experimental-strip-types scripts/backfill-ancestors-from-hierarchy.ts <unified.db>
+ *   [<repos-root>] Idempotent: only touches places whose current ancestry is <= 1 row (self only),
+ *   and inserts each (id, ancestor_id) at most once.
  */
 
 import { existsSync, readFileSync } from "node:fs"

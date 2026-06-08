@@ -57,9 +57,9 @@ v0.6.0@100K. **Caveat: calib is half-trained here; 100K is the fair compare.**
 | subregion                      | absent      | **+30 halluc.** | ✗✗                          |
 
 **Mechanism (not just under-training):** label smoothing flattens the target
-distribution, so low-prior tags (dep_locality / subregion, class-weight 0.3)
+distribution, so low-prior tags (dep*locality / subregion, class-weight 0.3)
 that were suppressed now leak → hallucination explosion AND structural-validity
-collapse (spurious spans + dropped anchors → stranded fragments). The _pattern_
+collapse (spurious spans + dropped anchors → stranded fragments). The \_pattern*
 (rare-tag leakage) is smoothing overcorrection, not uniform under-training.
 The #37 checker earned its keep — it caught a regression the harness pass-rate
 number alone would have under-weighted.
@@ -89,8 +89,8 @@ evaluated on the held-out TEST split (read once for this release).
 
 **Decision: DO NOT PROMOTE.** The plan's acceptance was "harness pass rate
 improves AND overconfidence drops, per-tag within 2pp." Harness did NOT improve
-(flat-to-down); house_number regresses 6pp. Calibration delivers better-
-_calibrated confidence_ (−20pp overconfidence — useful downstream for resolver
+(flat-to-down); house*number regresses 6pp. Calibration delivers better-
+\_calibrated confidence* (−20pp overconfidence — useful downstream for resolver
 thresholding) and a postcode bump, but it is **not** the lever for the release
 metric. The harness is capped by failure clusters calibration cannot move:
 intersections (65 assertions, 0% neural), street/locality boundary errors,

@@ -175,11 +175,12 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 }
 
 /**
- * Over-fetch floor for SHORT (≤3-char) queries — region abbreviations like "NY"/"VT". An exact-abbrev
- * holder's BM25 is poor (long multilingual alt-name document), so the normal `limit * 4` window can
- * drop it before `exactMatchTiering` promotes it. 200 comfortably covers every same-abbrev region
- * across the 12-country gazetteer (a 2-letter token matches a few dozen regions at most) while staying
- * a cheap region-placetype fetch. See the `#fuzzyNameMatch` over-fetch comment.
+ * Over-fetch floor for SHORT (≤3-char) queries — region abbreviations like "NY"/"VT". An
+ * exact-abbrev holder's BM25 is poor (long multilingual alt-name document), so the normal `limit *
+ * 4` window can drop it before `exactMatchTiering` promotes it. 200 comfortably covers every
+ * same-abbrev region across the 12-country gazetteer (a 2-letter token matches a few dozen regions
+ * at most) while staying a cheap region-placetype fetch. See the `#fuzzyNameMatch` over-fetch
+ * comment.
  */
 const SHORT_QUERY_OVERFETCH = 200
 

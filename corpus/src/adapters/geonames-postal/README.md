@@ -30,10 +30,10 @@ ingest US through this adapter.
 
 Per row, up to two postcode-first variants:
 
-| variant | components | raw |
-| --- | --- | --- |
-| `pl` | `{ postcode, locality }` | `75001 Paris` |
-| `plr` | `{ postcode, locality, region }` | `75001 Paris, Île-de-France` |
+| variant | components                       | raw                          |
+| ------- | -------------------------------- | ---------------------------- |
+| `pl`    | `{ postcode, locality }`         | `75001 Paris`                |
+| `plr`   | `{ postcode, locality, region }` | `75001 Paris, Île-de-France` |
 
 The region variant is skipped when admin1 just repeats the place (city-states / micro-admin), to
 avoid `"X X"` noise. `source_id` = component-hash + variant.

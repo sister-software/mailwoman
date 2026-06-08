@@ -10,7 +10,7 @@ cover the same places. A model that has seen Springfield, Illinois a thousand ti
 will "resolve" it on the eval — but that is recall of a memorized place, not generalization. And
 the headline metric made it worse. We graded resolution by **locality name-match**: did the
 resolved place carry the same name string as the gold? That question is blind to the failure that
-actually matters — resolving the right *name* in the wrong *place*. "New York" matches "New York"
+actually matters — resolving the right _name_ in the wrong _place_. "New York" matches "New York"
 whether the point lands in Manhattan or in a village 280km upstate.
 
 So this harness measures two things the old one could not:
@@ -29,15 +29,15 @@ So this harness measures two things the old one could not:
 
 The first run on the honest Vermont slice:
 
-| metric | value |
-| --- | ---: |
-| locality name-match (the old, gameable number) | 93.7% |
-| region-match | 0.0% |
-| coord p50 / p90 (km) | 326 / 1827 |
-| locality PIP-containment | 11.3% |
+| metric                                         |      value |
+| ---------------------------------------------- | ---------: |
+| locality name-match (the old, gameable number) |      93.7% |
+| region-match                                   |       0.0% |
+| coord p50 / p90 (km)                           | 326 / 1827 |
+| locality PIP-containment                       |      11.3% |
 
 A 93.7% name-match next to a 326km median coordinate error is the whole argument for this harness
-in one line. The resolver was finding the right *name* and the wrong *place* nearly nine times in
+in one line. The resolver was finding the right _name_ and the wrong _place_ nearly nine times in
 ten, and the metric we had been quoting could not see it.
 
 ### Root cause
@@ -59,18 +59,18 @@ the build manifest's post-build step, so the deployed gazetteer was built withou
 Running `add-region-abbrevs.ts` and rebuilding the FTS index, then re-measuring on the identical VT
 slice:
 
-| metric | baseline | abbrev-enriched |
-| --- | ---: | ---: |
-| region-match | 0.0% | **99.9%** |
-| coord p50 (km) | 326.3 | **3.4** |
-| coord p90 (km) | 1826.7 | **7.4** |
-| locality name-match | 93.7% | 93.7% |
-| locality PIP (all rows) | 11.3% | 29.7% |
-| locality PIP (polygon-coverage-adjusted) | 15.1% | 47.1% |
+| metric                                   | baseline | abbrev-enriched |
+| ---------------------------------------- | -------: | --------------: |
+| region-match                             |     0.0% |       **99.9%** |
+| coord p50 (km)                           |    326.3 |         **3.4** |
+| coord p90 (km)                           |   1826.7 |         **7.4** |
+| locality name-match                      |    93.7% |           93.7% |
+| locality PIP (all rows)                  |    11.3% |           29.7% |
+| locality PIP (polygon-coverage-adjusted) |    15.1% |           47.1% |
 
 Region resolution goes from broken to near-perfect; the median coordinate error collapses from
 326km to 3.4km. Name-match does not move — confirming the model was always emitting the right name;
-the fix makes the resolver pick the right *instance*.
+the fix makes the resolver pick the right _instance_.
 
 Note the PIP-containment numbers. Even after the fix, locality-PIP is 29.7%, because 37% of the
 correctly-resolved Vermont localities are WOF **point geometry** (no polygon can contain a point),
@@ -111,14 +111,14 @@ the gazetteer.
 
 Re-measured on the abbreviation-enriched **and** ancestry-backfilled gazetteer:
 
-| slice | metric | baseline | abbrev only | abbrev + backfill |
-| --- | --- | ---: | ---: | ---: |
-| VT held-out (1428) | region-match | 0.0% | 99.9% | 99.9% |
-| VT held-out | coord p50 / p90 (km) | 326 / 1827 | 3.4 / 7.4 | 3.4 / 7.4 |
-| full-US (10k) | region-match | 14.2% | 99.9% | 99.9% |
-| full-US (10k) | coord p50 / p90 (km) | 6.5 / **2763** | 3.3 / 10.3 | 3.3 / **10.3** |
-| demo presets (4) | locality-match | 100% | 75% ⚠ | **100%** ✓ |
-| demo presets | NYC resolves to | NYC | New York Mills ✗ | **NYC** ✓ |
+| slice              | metric               |       baseline |      abbrev only | abbrev + backfill |
+| ------------------ | -------------------- | -------------: | ---------------: | ----------------: |
+| VT held-out (1428) | region-match         |           0.0% |            99.9% |             99.9% |
+| VT held-out        | coord p50 / p90 (km) |     326 / 1827 |        3.4 / 7.4 |         3.4 / 7.4 |
+| full-US (10k)      | region-match         |          14.2% |            99.9% |             99.9% |
+| full-US (10k)      | coord p50 / p90 (km) | 6.5 / **2763** |       3.3 / 10.3 |    3.3 / **10.3** |
+| demo presets (4)   | locality-match       |           100% |            75% ⚠ |        **100%** ✓ |
+| demo presets       | NYC resolves to      |            NYC | New York Mills ✗ |         **NYC** ✓ |
 
 The wrong-state error tail (full-US coord p90) collapses from 2763km to 10.3km, and the metro
 regression is gone, with NYC resolving to New York City again. Net-positive on rural and metro.
@@ -130,9 +130,9 @@ the parser. And once the resolver is honest, the neural parser keeps its edge ov
 it never trained on:
 
 | parser (VT, fixed DB) | locality | region | coord p50 | coord p90 | coord p99 |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| neural | 93.7% | 99.9% | 3.4 | 7.4 | 277 |
-| v0 (Pelias) | 91.9% | 99.5% | 3.3 | 7.2 | 2120 |
+| --------------------- | -------: | -----: | --------: | --------: | --------: |
+| neural                |    93.7% |  99.9% |       3.4 |       7.4 |       277 |
+| v0 (Pelias)           |    91.9% |  99.5% |       3.3 |       7.2 |      2120 |
 
 The medians tie; the neural parser's p99 tail (277km vs 2120km) is far tighter, which is the
 beat-Pelias-on-the-hard-cases result we want on a held-out slice.

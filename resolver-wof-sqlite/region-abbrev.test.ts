@@ -5,19 +5,20 @@
  *
  *   Regression suite for the region-abbreviation resolution path — the 2026-06-08 honest-eval
  *   headline fix (docs/articles/evals/2026-06-08-night-9-postmortem.md, #440/#441). On a
- *   leakage-free Vermont slice the resolver scored 93.7% locality name-match while 326km wrong:
- *   a region given as a USPS abbreviation ("VT") didn't resolve (WOF stores "Vermont"; the FTS had
- *   no abbreviations), so the locality lookup ran UNCONSTRAINED across the whole country and a
+ *   leakage-free Vermont slice the resolver scored 93.7% locality name-match while 326km wrong: a
+ *   region given as a USPS abbreviation ("VT") didn't resolve (WOF stores "Vermont"; the FTS had no
+ *   abbreviations), so the locality lookup ran UNCONSTRAINED across the whole country and a
  *   higher-population same-named town in another state won. The fix is two data-build steps
  *   (`add-region-abbrevs.ts` puts the abbreviation into `names` → `place_search`;
  *   `backfill-ancestors-from-hierarchy.ts` gives multi-parent places their region ancestor so the
  *   region constraint can reach them).
  *
- *   These tests pin the resolver-side behaviour that fix relies on, against an in-memory fixture:
- *   (1) a USPS abbreviation in `names`/FTS resolves to its region; (2) a region `parentId` constrains
- *   the locality lookup to that region's descendants (via the `ancestors` table), so the right-state
- *   town beats a larger same-named town elsewhere; (3) the bug condition — without the constraint the
- *   higher-population namesake wins, which is exactly why region resolution has to work.
+ *   These tests pin the resolver-side behaviour that fix relies on, against an in-memory fixture: (1)
+ *   a USPS abbreviation in `names`/FTS resolves to its region; (2) a region `parentId` constrains
+ *   the locality lookup to that region's descendants (via the `ancestors` table), so the
+ *   right-state town beats a larger same-named town elsewhere; (3) the bug condition — without the
+ *   constraint the higher-population namesake wins, which is exactly why region resolution has to
+ *   work.
  */
 import { DatabaseSync } from "node:sqlite"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -67,7 +68,9 @@ function buildDb(): DatabaseSync {
 	nm.run(13, "DC")
 	nm.run(14, "PR")
 	// Ancestry — self + county + region + country (what backfill-ancestors-from-hierarchy restores).
-	const anc = db.prepare(`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)`)
+	const anc = db.prepare(
+		`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)`
+	)
 	for (const [id, county, region] of [
 		[30, 20, 10],
 		[31, 21, 11],

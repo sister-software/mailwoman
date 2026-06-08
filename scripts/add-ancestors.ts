@@ -12,7 +12,7 @@
  *   our custom build. See the `feedback-custom-wof-db-only` memory.
  *
  *   Usage: node --experimental-strip-types scripts/add-ancestors.ts [/path/to/unified.db] (compile
- *   @mailwoman/resolver-wof-sqlite first so the import resolves to the updated out/)
+ * @mailwoman/resolver-wof-sqlite first so the import resolves to the updated out/)
  */
 
 import {

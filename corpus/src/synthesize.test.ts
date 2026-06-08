@@ -347,7 +347,14 @@ describe("US unit-designator codex augmentations (Pub-28 Appendix C2)", () => {
 		const out = unitDesignatorAbbreviate(
 			unitRow({
 				raw: "123 Main St Apartment 4B, Oakland, CA 94601",
-				components: { house_number: "123", street: "Main St", unit: "Apartment 4B", locality: "Oakland", region: "CA", postcode: "94601" },
+				components: {
+					house_number: "123",
+					street: "Main St",
+					unit: "Apartment 4B",
+					locality: "Oakland",
+					region: "CA",
+					postcode: "94601",
+				},
 			})
 		)!
 		expect(out.components.unit).toBe("Apt 4B")
@@ -363,7 +370,9 @@ describe("US unit-designator codex augmentations (Pub-28 Appendix C2)", () => {
 	})
 
 	it("unitDesignatorExpand handles a designator-only unit (Basement → Bsmt inverse)", () => {
-		const out = unitDesignatorExpand(unitRow({ raw: "12 Elm St Bsmt", components: { house_number: "12", street: "Elm St", unit: "Bsmt" } }))!
+		const out = unitDesignatorExpand(
+			unitRow({ raw: "12 Elm St Bsmt", components: { house_number: "12", street: "Elm St", unit: "Bsmt" } })
+		)!
 		expect(out.components.unit).toBe("Basement")
 		expect(out.raw).toContain("Elm St Basement")
 	})
@@ -373,14 +382,26 @@ describe("US unit-designator codex augmentations (Pub-28 Appendix C2)", () => {
 	})
 
 	it("returns null when the unit has no recognized leading designator (bare identifier)", () => {
-		const row = unitRow({ raw: "123 Main St 4B, Oakland, CA 94601", components: { house_number: "123", street: "Main St", unit: "4B", locality: "Oakland", region: "CA", postcode: "94601" } })
+		const row = unitRow({
+			raw: "123 Main St 4B, Oakland, CA 94601",
+			components: {
+				house_number: "123",
+				street: "Main St",
+				unit: "4B",
+				locality: "Oakland",
+				region: "CA",
+				postcode: "94601",
+			},
+		})
 		expect(unitDesignatorExpand(row)).toBeNull()
 		expect(unitDesignatorAbbreviate(row)).toBeNull()
 	})
 
 	it("returns null on a non-US row + when there's no unit component", () => {
 		expect(unitDesignatorExpand(unitRow({ country: "FR" }))).toBeNull()
-		expect(unitDesignatorExpand(baseRow({ raw: "123 Main St", components: { house_number: "123", street: "Main St" } }))).toBeNull()
+		expect(
+			unitDesignatorExpand(baseRow({ raw: "123 Main St", components: { house_number: "123", street: "Main St" } }))
+		).toBeNull()
 	})
 
 	it("AUGMENTATIONS + defaultAugmentationsForCountry('US') include both unit augmentations", () => {

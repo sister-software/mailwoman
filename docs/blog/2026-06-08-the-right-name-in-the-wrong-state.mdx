@@ -27,11 +27,11 @@ In our current data that's Vermont: 1,428 addresses the model trained around, no
 
 Here is what the honest slice said, next to the number we'd been quoting:
 
-| metric | what we quoted | the honest number |
-| --- | ---: | ---: |
-| locality name-match | 93.7% | 93.7% |
-| region-match | — | 0.0% |
-| coordinate error (p50) | — | 326 km |
+| metric                 | what we quoted | the honest number |
+| ---------------------- | -------------: | ----------------: |
+| locality name-match    |          93.7% |             93.7% |
+| region-match           |              — |              0.0% |
+| coordinate error (p50) |              — |            326 km |
 
 Region-match: zero. Not low. Zero. The resolver was getting the state right essentially never, and the name-match metric had no way to tell us, because "Sheldon, Vermont" and "Sheldon, Iowa" are the same word.
 
@@ -43,9 +43,9 @@ It throws it away because it can't read it. Who's On First stores Vermont as "Ve
 
 The fix already existed in the repo. A build step that pulls state abbreviations from a reference dataset we already ship had simply fallen out of the build manifest, so the gazetteer went out without it. We put it back, rebuilt the index, and re-ran the same slice:
 
-| metric | before | after |
-| --- | ---: | ---: |
-| region-match | 0.0% | 99.9% |
+| metric                 | before |  after |
+| ---------------------- | -----: | -----: |
+| region-match           |   0.0% |  99.9% |
 | coordinate error (p50) | 326 km | 3.4 km |
 
 Across the full US sample, the long tail told the same story louder: the 90th-percentile error fell from **2,763 kilometers to 10**. We carry a flag called `--default-country`, the one that makes you tell the resolver the answer it's supposed to find, and it exists largely to paper over this exact blindness. The resolver can read the region now.

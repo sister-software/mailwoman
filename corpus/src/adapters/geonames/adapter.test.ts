@@ -8,8 +8,8 @@ import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { beforeEach, describe, expect, it } from "vitest"
-import { createGeonamesAdapter, GEONAMES_ADAPTER_ID, GEONAMES_DEFAULT_LICENSE } from "./adapter.js"
 import type { CanonicalRow } from "../../types.js"
+import { createGeonamesAdapter, GEONAMES_ADAPTER_ID, GEONAMES_DEFAULT_LICENSE } from "./adapter.js"
 
 let scratch: string
 beforeEach(() => {
@@ -75,7 +75,9 @@ describe("geonames adapter", () => {
 	})
 
 	it("emits both hierarchy variants for a populated place, with mapped region + country names", async () => {
-		const p = writeFixture([gnRow({ id: "5234567", name: "Montpelier", featureClass: "P", featureCode: "PPLA", country: "US", admin1: "VT" })])
+		const p = writeFixture([
+			gnRow({ id: "5234567", name: "Montpelier", featureClass: "P", featureCode: "PPLA", country: "US", admin1: "VT" }),
+		])
 		const rows = await collect(p)
 		expect(rows).toHaveLength(2)
 		const byRaw = Object.fromEntries(rows.map((r) => [r.raw, r]))

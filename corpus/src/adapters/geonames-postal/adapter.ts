@@ -8,17 +8,19 @@
  *   The GeoNames postal export (`https://download.geonames.org/export/zip/<CC>.zip`) is a clean,
  *   per-country `postcode → place → admin1` table with the place + region NAMES inline (no aux-file
  *   join needed). It broadens the corpus's postcode→locality→region coverage to ~80 countries, well
- *   beyond `wof-postalcode`/the coordinate-first table — forward coverage for the multi-locale goal.
+ *   beyond `wof-postalcode`/the coordinate-first table — forward coverage for the multi-locale
+ *   goal.
  *
- *   Input: a per-country postal dump (`<CC>.txt`, 12 tab-separated columns, no header):
- *     country, postcode, place, admin1_name, admin1_code, admin2_*, admin3_*, lat, lon, accuracy.
+ *   Input: a per-country postal dump (`<CC>.txt`, 12 tab-separated columns, no header): country,
+ *   postcode, place, admin1_name, admin1_code, admin2__, admin3__, lat, lon, accuracy.
  *
  *   Output: per row, postcode-FIRST (international) variants — the common order for the non-US
  *   locales this fills (US postcodes are already covered by TIGER/WOF, which use postcode-LAST):
- *     1. `{ postcode, locality }`            → "AD100 Canillo"
- *     2. `{ postcode, locality, region }`    → "AD100 Canillo, Canillo"
- *   Prefer configuring this adapter for non-US countries; for US, the postcode-last sources are the
- *   right order. License: `"CC-BY-4.0"` per row (attribute "GeoNames").
+ *
+ *   1. `{ postcode, locality }` → "AD100 Canillo"
+ *   2. `{ postcode, locality, region }` → "AD100 Canillo, Canillo" Prefer configuring this adapter for
+ *        non-US countries; for US, the postcode-last sources are the right order. License:
+ *        `"CC-BY-4.0"` per row (attribute "GeoNames").
  */
 
 import { parse as csvParse } from "csv-parse"

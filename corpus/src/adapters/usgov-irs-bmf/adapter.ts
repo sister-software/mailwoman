@@ -8,14 +8,15 @@
  *   The EO BMF is the IRS's authoritative registry of US tax-exempt organizations (charities,
  *   churches, foundations, ...), published as per-region CSVs at
  *   `https://www.irs.gov/charities-non-profits/exempt-organizations-business-master-file-extract-eo-bmf`
- *   (`eo1.csv`..`eo4.csv`, `eo_pr.csv`, `eo_xx.csv`). Each row carries an organization NAME plus its
- *   mailing address. It complements `usgov-nppes` with a DIFFERENT venue population (non-profits vs
- *   healthcare providers) and, notably, a high share of PO-box addresses — useful `po_box`-tag signal
- *   (a tag with historically low recall).
+ *   (`eo1.csv`..`eo4.csv`, `eo_pr.csv`, `eo_xx.csv`). Each row carries an organization NAME plus
+ *   its mailing address. It complements `usgov-nppes` with a DIFFERENT venue population
+ *   (non-profits vs healthcare providers) and, notably, a high share of PO-box addresses — useful
+ *   `po_box`-tag signal (a tag with historically low recall).
  *
  *   Output: one row per record with a usable city + postcode. NAME → `venue`; the street line becomes
- *   `po_box` when it's a PO-box, else `house_number` + `street`; CITY/STATE/ZIP fill the locality line.
- *   STATE is already a USPS abbreviation in the source. License: `"Public Domain"` (US federal).
+ *   `po_box` when it's a PO-box, else `house_number` + `street`; CITY/STATE/ZIP fill the locality
+ *   line. STATE is already a USPS abbreviation in the source. License: `"Public Domain"` (US
+ *   federal).
  */
 
 import { parse as csvParse } from "csv-parse"
@@ -96,7 +97,8 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 					const split = splitStreetLine(street)
 					if (!split) continue
 
-					const streetPart = "po_box" in split ? split.po_box : [split.house_number, split.street].filter(Boolean).join(" ")
+					const streetPart =
+						"po_box" in split ? split.po_box : [split.house_number, split.street].filter(Boolean).join(" ")
 
 					const components: CanonicalRow["components"] = {
 						...(venue ? { venue } : {}),
@@ -114,7 +116,9 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 					const aligned = reconcileComponents(components, raw)
 					if (Object.keys(aligned).length <= 2) continue
 
-					const sourceId = ein ? `${USGOV_IRS_BMF_ADAPTER_ID}-${ein}` : stableSourceId(USGOV_IRS_BMF_ADAPTER_ID, aligned)
+					const sourceId = ein
+						? `${USGOV_IRS_BMF_ADAPTER_ID}-${ein}`
+						: stableSourceId(USGOV_IRS_BMF_ADAPTER_ID, aligned)
 
 					yield {
 						raw,
