@@ -1,0 +1,360 @@
+/* ---------------------------------------------------------------------------
+ * GuidedTour — interactive failure-mode walkthrough component.
+ *
+ * Collapsible section within PipelineExplorer. Each of 9 stops shows a pre-loaded
+ * address, live parse, diagnosis, pipeline stage badge, and status badge.
+ * --------------------------------------------------------------------------- */
+
+.guidedTour {
+	margin-top: 1.5rem;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.tourToggle {
+	padding: 0.75rem 1rem;
+	background: var(--ifm-color-emphasis-100);
+	font-weight: 600;
+	font-size: 0.95rem;
+	cursor: pointer;
+	user-select: none;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.tourToggle:hover {
+	background: var(--ifm-color-emphasis-200);
+}
+
+.tourToggleIcon {
+	font-size: 0.75rem;
+	transition: transform 0.2s ease;
+}
+
+.tourBody {
+	padding: 1rem;
+}
+
+/* ---- Progress dots ---- */
+
+.progress {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	margin-bottom: 1rem;
+}
+
+.dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: var(--ifm-color-emphasis-300);
+	transition: background 0.2s ease, transform 0.15s ease;
+	cursor: pointer;
+	border: none;
+	padding: 0;
+}
+
+.dot:hover {
+	background: var(--ifm-color-emphasis-500);
+}
+
+.dotActive {
+	background: var(--ifm-color-primary);
+	transform: scale(1.25);
+}
+
+.dotVisited {
+	background: var(--ifm-color-emphasis-600);
+}
+
+/* ---- Navigation ---- */
+
+.nav {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 1rem;
+	gap: 0.5rem;
+}
+
+.navBtn {
+	padding: 0.35rem 0.75rem;
+	font-size: 0.8rem;
+	font-weight: 600;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	background: var(--ifm-color-emphasis-100);
+	color: var(--ifm-color-emphasis-800);
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.navBtn:hover:not(:disabled) {
+	background: var(--ifm-color-emphasis-200);
+	border-color: var(--ifm-color-primary);
+}
+
+.navBtn:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.stopCounter {
+	font-size: 0.8rem;
+	color: var(--ifm-color-emphasis-600);
+	font-variant-numeric: tabular-nums;
+}
+
+/* ---- Stop card ---- */
+
+.stopCard {
+	border: 1px solid var(--ifm-color-emphasis-200);
+	border-radius: 6px;
+	padding: 1rem;
+	background: var(--ifm-background-surface-color);
+}
+
+.stopHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+
+.stopTitle {
+	font-size: 1.05rem;
+	font-weight: 700;
+	margin: 0;
+	color: var(--ifm-color-emphasis-900);
+}
+
+.badges {
+	display: flex;
+	gap: 0.4rem;
+	flex-wrap: wrap;
+}
+
+.badge {
+	font-size: 0.7rem;
+	font-weight: 600;
+	padding: 0.15rem 0.45rem;
+	border-radius: 9999px;
+	white-space: nowrap;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+
+/* Pipeline stage badge */
+
+.stageBadge {
+	background: var(--ifm-color-info-contrast-background, rgba(54, 122, 246, 0.12));
+	color: var(--ifm-color-info-darkest, #1a56db);
+	border: 1px solid var(--ifm-color-info-dark, #3f83f8);
+}
+
+/* Status badges — colour by status */
+
+.statusExpected {
+	background: var(--ifm-color-warning-contrast-background, #fff8e1);
+	color: var(--ifm-color-warning-darker, #b88500);
+	border: 1px solid var(--ifm-color-warning, #e6a800);
+}
+
+.statusImproved {
+	background: rgba(124, 58, 237, 0.12);
+	color: #6d28d9;
+	border: 1px solid #8b5cf6;
+}
+
+.statusResolved {
+	background: rgba(26, 168, 77, 0.12);
+	color: #166534;
+	border: 1px solid #22c55e;
+}
+
+.statusKnownIssue {
+	background: rgba(216, 80, 74, 0.1);
+	color: #991b1b;
+	border: 1px solid #ef4444;
+}
+
+/* ---- Description & diagnosis ---- */
+
+.stopDescription {
+	font-size: 0.9rem;
+	color: var(--ifm-color-emphasis-700);
+	margin: 0.5rem 0 0.75rem;
+	line-height: 1.5;
+}
+
+.sourceCite {
+	font-size: 0.7rem;
+	color: var(--ifm-color-emphasis-500);
+	font-style: italic;
+	margin-bottom: 0.75rem;
+}
+
+/* ---- Parse area ---- */
+
+.parseForm {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.parseInput {
+	flex: 1;
+	padding: 0.4rem 0.6rem;
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.85rem;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	background: var(--ifm-background-surface-color);
+	color: var(--ifm-font-color-base);
+}
+
+.parseInput:disabled {
+	opacity: 0.5;
+}
+
+.parseBtn {
+	padding: 0.4rem 0.8rem;
+	font-size: 0.8rem;
+	font-weight: 600;
+	border: 1px solid var(--ifm-color-primary);
+	border-radius: 4px;
+	background: var(--ifm-color-primary);
+	color: white;
+	cursor: pointer;
+	font-family: inherit;
+	white-space: nowrap;
+}
+
+.parseBtn:hover:not(:disabled) {
+	filter: brightness(1.1);
+}
+
+.parseBtn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* ---- Diagnosis panel ---- */
+
+.diagnosis {
+	margin-top: 0.75rem;
+	padding: 0.6rem 0.75rem;
+	background: var(--ifm-color-emphasis-100);
+	border-left: 3px solid var(--ifm-color-primary);
+	border-radius: 4px;
+	font-size: 0.85rem;
+	line-height: 1.5;
+	color: var(--ifm-color-emphasis-800);
+}
+
+.diagnosisLabel {
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	font-size: 0.7rem;
+	color: var(--ifm-color-emphasis-600);
+	margin-bottom: 0.35rem;
+}
+
+/* ---- Tour result panel ---- */
+
+.tourResult {
+	margin-top: 0.75rem;
+}
+
+.tourComponentTable {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 0.5rem 0;
+	font-size: 0.8rem;
+}
+
+.tourComponentTable th,
+.tourComponentTable td {
+	padding: 0.3rem 0.5rem;
+	text-align: left;
+	border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.tourComponentTable th {
+	font-weight: 600;
+	color: var(--ifm-color-emphasis-600);
+	font-size: 0.7rem;
+	text-transform: uppercase;
+}
+
+/* Confidence mini-bars (scoped to tour) */
+
+.tourConfCell {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	min-width: 60px;
+}
+
+.tourConfBar {
+	height: 5px;
+	border-radius: 2px;
+	min-width: 3px;
+	transition: width 0.2s ease;
+}
+
+.tourConfHigh {
+	background: #22c55e;
+}
+
+.tourConfMid {
+	background: #f59e0b;
+}
+
+.tourConfLow {
+	background: #ef4444;
+}
+
+.tourConfValue {
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.7rem;
+}
+
+/* ---- Empty state ---- */
+
+.tourParsePrompt {
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-500);
+	font-style: italic;
+	margin: 0.5rem 0;
+}
+
+/* ---- Parse error ---- */
+
+.tourError {
+	padding: 0.5rem 0.75rem;
+	margin-top: 0.5rem;
+	background: var(--ifm-color-danger-contrast-background, rgba(216, 80, 74, 0.1));
+	border: 1px solid var(--ifm-color-danger-lightest, #f8d7da);
+	border-radius: 4px;
+	font-size: 0.8rem;
+	color: var(--ifm-color-danger-darkest, #991b1b);
+	font-family: var(--ifm-font-family-monospace);
+}
+
+/* ---- Result component wrapper ---- */
+
+.tourSpanWrap {
+	margin: 0.25rem 0 0.5rem;
+}
+
+.tourSpanWrap :global(.spanHighlight) {
+	margin: 0.25rem 0;
+}
