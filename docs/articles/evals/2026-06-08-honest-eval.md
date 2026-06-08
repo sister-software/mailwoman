@@ -98,23 +98,48 @@ net-positive for well-parented rural places and net-negative for mis-parented me
 
 The lesson the house already knew, re-earned: aggregate metrics agreed the fix was good (Vermont
 went from 326km to 3.4km); the functional presets disagreed (NYC broke). When they disagree, the
-functional check wins. The abbreviation fix does not ship until the ancestry gap (or a bbox-based
-region containment that does not depend on the ancestors table) lands with it.
+functional check wins — and chasing the disagreement found the deeper bug.
+
+## The resolution — repair ancestry from `wof:hierarchy`
+
+The ancestry gap is a build artifact, not a source gap. NYC's source geojson carries a full
+`wof:hierarchy` (region_id 85688543 = New York in every one of its five borough branches); it is
+only `wof:parent_id` that is `-4`, and `build-unified-wof`'s parent_id-closure follows nothing but
+parent_id. So `scripts/backfill-ancestors-from-hierarchy.ts` reads `wof:hierarchy` for every
+only-self place and inserts the missing ancestor rows — repairing 47,129 places (+132,832 rows) in
+the gazetteer.
+
+Re-measured on the abbreviation-enriched **and** ancestry-backfilled gazetteer:
+
+| slice | metric | baseline | abbrev only | abbrev + backfill |
+| --- | --- | ---: | ---: | ---: |
+| VT held-out (1428) | region-match | 0.0% | 99.9% | 99.9% |
+| VT held-out | coord p50 / p90 (km) | 326 / 1827 | 3.4 / 7.4 | 3.4 / 7.4 |
+| full-US (10k) | region-match | 14.2% | 99.9% | 99.9% |
+| full-US (10k) | coord p50 / p90 (km) | 6.5 / **2763** | 3.3 / 10.3 | 3.3 / **10.3** |
+| demo presets (4) | locality-match | 100% | 75% ⚠ | **100%** ✓ |
+| demo presets | NYC resolves to | NYC | New York Mills ✗ | **NYC** ✓ |
+
+The wrong-state error tail (full-US coord p90) collapses from 2763km to 10.3km, and the metro
+regression is gone — NYC resolves to New York City again. Net-positive on rural and metro.
 
 ## Status
 
-- The harness (`scripts/eval/honest-eval.sh`) and the coverage-adjusted PIP reporter
-  (`scripts/eval/pip-containment.py`) are the shippable deliverable — the yardstick now exists.
-- The region-abbreviation enrichment is validated on a copy of the gazetteer but **not promoted**:
-  it regresses NYC-class metros until the ancestry gap is addressed. Tracked as a follow-up.
-- The build manifest's missing `add-region-abbrevs` step is documented; the manifest fix lands with
-  the ancestry fix, not before, so a rebuild cannot ship the metro regression.
+- The harness (`scripts/eval/honest-eval.sh`) + coverage-adjusted PIP reporter
+  (`scripts/eval/pip-containment.py`) are the yardstick.
+- The fix is two idempotent build steps — `scripts/add-region-abbrevs.ts` (already existed; was
+  absent from the manifest) and `scripts/backfill-ancestors-from-hierarchy.ts` (new) — now wired
+  into `scripts/wof-build-manifest.json`'s post-build, before FTS.
+- The gazetteer fix is **validated on a copy** (`admin-abbrev-test.db`) but **not promoted to the
+  canonical DB or the live demo** — that swap + R2 re-publish is the operator's call (a one-shot:
+  run the two steps on `admin-global-priority.db`, rebuild FTS, rebuild the slim `wof-hot.db`,
+  re-publish). The canonical DB is untouched.
 
 ## Next
 
-1. Repair the WOF ancestry gap (NYC-class only-self chains) in `build-unified-wof`, **or** add a
-   bbox-based region containment so the region boost does not depend on the `ancestors` table.
-2. Re-run `honest-eval.sh` on both the Vermont slice (rural) and the demo presets (metro) — the fix
-   is promotable only when both improve.
+1. Promote: run the two build steps on the canonical gazetteer, rebuild FTS + the slim demo DB,
+   re-publish to R2 (smoke-test region-match ≥99.9%, coord p50 ≤5km after).
+2. Fold the ancestry repair into `build-unified-wof`'s `populateAncestors` so a fresh build is
+   correct without the post-build step.
 3. Broaden the honest slice: a targeted OA re-ingest for FR's held-out départements, and a DE
    holdout in the corpus manifest, so region-match and coordinate error can be reported per locale.
