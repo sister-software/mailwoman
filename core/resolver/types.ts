@@ -41,6 +41,15 @@ export interface ResolvedPlace {
 	 */
 	score: number
 	/**
+	 * Set by the backend when this candidate is an EXACT name/alias match for the query (vs a partial
+	 * token match). The postcode-anchor re-rank (#369) uses it as the PRIMARY key so a country
+	 * posterior can pin the country WITHOUT crossing the exact-match tier: "ME" under a confident US
+	 * posterior stays Maine (US exact) rather than promoting the more-populous Missouri (US partial),
+	 * and still beats Messina (IT exact) on the posterior WITHIN the exact tier. Absent → treated as
+	 * non-exact (backends that don't tier omit it; the re-rank degrades to a plain score+posterior).
+	 */
+	exactMatch?: boolean
+	/**
 	 * Set when the resolver detected that the address's postcode and its parsed locality name point
 	 * to geographically different places (a transposed / wrong-for-the-city postcode). Surfaced onto
 	 * the resolved node's metadata as `postcode_city_mismatch` so callers can lower confidence or

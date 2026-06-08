@@ -712,6 +712,10 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				candidates.map((c) => c.id as number),
 				query.text
 			)
+			// Stamp the tier onto every candidate (not just when the tiering sort fires) so a downstream
+			// re-rank — #369's postcode-anchor country pin in `resolveTree` — can keep the country pin from
+			// crossing the exact/partial boundary ("ME" → Maine, not the more-populous Missouri).
+			for (const c of candidates) c.exactMatch = exactIds.has(c.id as number)
 			if (exactIds.size > 0 && exactIds.size < candidates.length) {
 				candidates.sort((a, b) => {
 					const ax = exactIds.has(a.id as number) ? 1 : 0

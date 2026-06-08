@@ -445,6 +445,50 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(on.roots[0]!.placeId).toBe("wof:1") // US already top, boost keeps it there
 	})
 
+	test("anchor posterior re-ranks REGION candidates by country (#369), off by default", async () => {
+		// The region analogue of the locality re-rank — the collision class #447's over-fetch fix
+		// couldn't reach. A bare region abbreviation is genuinely shared across countries ("VT" is both
+		// Vermont and Viterbo; "ME" both Maine and Messina); modeled here as two same-named regions so
+		// the fake backend's name-substring match returns both. The non-US region scores higher on
+		// name/BM25, so without a signal the wrong country wins — and because resolveTree resolves region
+		// FIRST and inherits its country down, that poisons the locality too. The postcode posterior
+		// breaks the tie at the region.
+		const regions: ResolvedPlace[] = [
+			{ id: 1, name: "Vermontia", placetype: "region", country: "IT", lat: 42.4, lon: 12.1, score: 8 },
+			{ id: 2, name: "Vermontia", placetype: "region", country: "US", lat: 44.0, lon: -72.7, score: 7 },
+		]
+		const input = tree("Vermontia", [node("region", "Vermontia", 0, 9)])
+
+		// Default (no posterior): the higher-scored IT region wins — byte-stable.
+		const off = await createWofResolver(new FakeResolverBackend(regions)).resolveTree(input)
+		expect(off.roots[0]!.placeId).toBe("wof:1")
+
+		// With a US country posterior, the +weight*posterior boost pulls the US region to the top.
+		const on = await createWofResolver(new FakeResolverBackend(regions)).resolveTree(input, {
+			anchorPosterior: { US: 1.0 },
+		})
+		expect(on.roots[0]!.placeId).toBe("wof:2")
+		expect((on.roots[0]!.alternatives as ResolvedPlace[])[0]!.id).toBe(1) // displaced IT survives
+	})
+
+	test("anchor posterior keeps the EXACT match within the pinned country (#369) — tier-safe", async () => {
+		// The "ME → Maine, not the more-populous Missouri" guard. Three regions all match the query.
+		// With a confident US posterior the US EXACT match (Maineland) must win over (a) a higher-SCORE
+		// US PARTIAL match (Missouriland — a plain additive boost would promote it, dropping the tier)
+		// and (b) a foreign EXACT match (Messinaland — the posterior breaks that tie WITHIN the exact
+		// tier). `exactMatch` is the backend-supplied tier flag (see ResolvedPlace.exactMatch).
+		const regions: ResolvedPlace[] = [
+			{ id: 1, name: "Maineland", placetype: "region", country: "US", lat: 45, lon: -69, score: 5, exactMatch: true },
+			{ id: 2, name: "Missouriland", placetype: "region", country: "US", lat: 38, lon: -92, score: 7, exactMatch: false },
+			{ id: 3, name: "Messinaland", placetype: "region", country: "IT", lat: 38, lon: 15, score: 6, exactMatch: true },
+		]
+		const input = tree("land", [node("region", "land", 0, 4)])
+		const on = await createWofResolver(new FakeResolverBackend(regions)).resolveTree(input, {
+			anchorPosterior: { US: 1.0 },
+		})
+		expect(on.roots[0]!.placeId).toBe("wof:1") // US exact wins: tier primary, then US posterior
+	})
+
 	// Dual-role hierarchy completion (#405/#415). In `…, Berlin, Berlin <PC>` the parser drops the
 	// locality (city == region), leaving a region but no locality. Completion records the dropped
 	// locality as a `locality` INTERPRETATION on the resolved region node (one node, one span, two

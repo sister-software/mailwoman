@@ -253,14 +253,33 @@ class WofResolver implements Resolver {
 		// postcode), boost candidates by `anchorWeight * posterior[candidate.country]` and re-sort, so a
 		// postcode that pins the country pulls the right-country place over a higher-BM25 foreign namesake
 		// (the "Berlin DE vs Berlin US" class the #59 harness measured). No-op when `anchorPosterior` is
-		// undefined (the default) → byte-identical resolution. Locality-scoped: the posterior is a country
-		// signal, and admin parents already carry country via `parentId`.
+		// undefined (the default) → byte-identical resolution.
+		//
+		// Applied to BOTH region and locality — the two placetypes that suffer cross-country namesake/
+		// abbreviation collisions a country posterior can break. The region case is the one #447's window
+		// fix couldn't reach: a bare 2-letter abbreviation is genuinely shared across countries ("VT" is
+		// both Vermont and Viterbo; "ME" both Maine and Messina), so with no country signal the score
+		// picks the wrong one — and because resolveTree resolves region FIRST and inherits its country
+		// down, a wrong region poisons the locality too. The postcode posterior breaks the tie at the
+		// region, and the right country then flows to the locality. (Country/macroregion/county are
+		// excluded: they don't exhibit this collision class and carry country via `parentId` when nested.)
+		//
+		// Tier-SAFE ordering: the candidate's exact-match flag is the PRIMARY key, so the country pin
+		// never crosses the exact/partial boundary. WITHIN a tier, `score + anchorWeight * posterior`
+		// applies the (soft) country boost. So a confident US postcode keeps the US EXACT region
+		// ("ME" → Maine) ahead of a more-populous US PARTIAL match (Missouri) AND, within the exact
+		// tier, ahead of a foreign exact match (Messina IT); a soft posterior still blends with score.
+		// (A plain additive re-rank loses the tier — it isn't encoded in `score` — and flips
+		// "ME" → Missouri / "PA" → Alabama. Backends that don't set `exactMatch` degrade to additive.)
+		const anchorEligible = placetype === "region" || placetype === "locality"
 		let ranked = candidates
-		if (state.anchorPosterior && placetype === "locality" && candidates.length > 1) {
+		if (state.anchorPosterior && anchorEligible && candidates.length > 1) {
 			const post = state.anchorPosterior
 			const w = state.anchorWeight
 			ranked = [...candidates].sort(
-				(a, b) => b.score + w * (post[b.country] ?? 0) - (a.score + w * (post[a.country] ?? 0))
+				(a, b) =>
+					Number(b.exactMatch ?? false) - Number(a.exactMatch ?? false) ||
+					b.score + w * (post[b.country] ?? 0) - (a.score + w * (post[a.country] ?? 0))
 			)
 		}
 		const top = ranked[0]!
