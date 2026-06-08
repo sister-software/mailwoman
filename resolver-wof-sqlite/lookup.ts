@@ -174,6 +174,15 @@ const DEFAULT_WEIGHTS: RankingWeights = {
 	exactMatchTiering: true,
 }
 
+/**
+ * Over-fetch floor for SHORT (≤3-char) queries — region abbreviations like "NY"/"VT". An exact-abbrev
+ * holder's BM25 is poor (long multilingual alt-name document), so the normal `limit * 4` window can
+ * drop it before `exactMatchTiering` promotes it. 200 comfortably covers every same-abbrev region
+ * across the 12-country gazetteer (a 2-letter token matches a few dozen regions at most) while staying
+ * a cheap region-placetype fetch. See the `#fuzzyNameMatch` over-fetch comment.
+ */
+const SHORT_QUERY_OVERFETCH = 200
+
 interface RawSearchRow {
 	id: number
 	name: string
@@ -530,7 +539,16 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 */
 	async #fuzzyNameMatch(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
 		const limit = query.limit ?? 10
-		const ftsLimit = limit * 4 // over-fetch so post-scoring has room to re-rank
+		// Over-fetch so post-scoring + exact-match tiering have room to re-rank. SHORT queries (a 2–3-char
+		// region abbreviation like "NY"/"VT") are the danger case the `exactMatchTiering` docstring flags:
+		// the exact-abbrev holder's BM25 is poor (its long multilingual alt-name document tanks the score),
+		// so under the normal `limit * 4` window it drops OUT of the candidate pool BEFORE tiering can
+		// promote it — "NY" then resolves to a token-matching foreign region (Highland, GB) instead of New
+		// York. Widen the window for short queries so the exact match is always present to be tiered.
+		// (Cross-country abbrev collisions — "VT" is BOTH Vermont and Viterbo — still need a country/
+		// postcode signal to disambiguate; this only rescues the window-drop class, not genuine ambiguity.
+		// With a `country` hint every abbrev resolves; bare + no-context lifts 7→10/15 US states.)
+		const ftsLimit = query.text.trim().length <= 3 ? Math.max(limit * 4, SHORT_QUERY_OVERFETCH) : limit * 4
 
 		const placetypes = normalizePlacetypes(query.placetype)
 		const ftsQuery = sanitizeFtsQuery(query.text)

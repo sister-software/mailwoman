@@ -122,6 +122,37 @@ describe("findPlace — exact-match tiering", () => {
 		expect(results[0]!.id).toBe(11) // higher population wins within the exact tier
 	})
 
+	test("short-query over-fetch rescues an exact-abbrev region below the normal window (NY → New York)", async () => {
+		// The window-drop class (distinct from the population-override above). An exact-abbrev holder
+		// ("NY" → New York) whose BM25 for the bare 2-letter token is poor — its long multilingual
+		// alt-name document dilutes the score — sinks BELOW the normal `limit * 4` over-fetch window,
+		// behind a crowd of regions that merely TOKEN-match "ny". Without widening the window for short
+		// queries it never enters the candidate pool, so exact-match tiering can't promote it and a
+		// token-matching decoy wins (the real-DB "NY → Highland, GB" bug). With the widening, New York
+		// is in the pool and tiering lifts it. No `country` hint — this is the bare, no-context path.
+		const decoys: SeedRegion[] = Array.from({ length: 60 }, (_, i) => ({
+			id: 1000 + i,
+			name: `Ny Province ${i}`, // tokenizes to include "ny" → matches MATCH 'ny'; short doc → good BM25
+			country: "GB",
+			lat: 50 + i * 0.01,
+			lon: -1 + i * 0.01,
+		}))
+		const newYork: SeedRegion = {
+			id: 1,
+			name: "New York",
+			country: "US",
+			lat: 43,
+			lon: -75,
+			// Exact alias "NY" + a long alt-name doc → poor BM25 for "ny" → sorts below all 60 decoys
+			// (rank ~61: outside the default `limit * 4` window, inside the 200 short-query floor).
+			aliases: ["NY", ...Array.from({ length: 40 }, (_, i) => `New York alternate label ${i}`)],
+		}
+		lookup = new WofSqlitePlaceLookup({ database: buildDb([newYork, ...decoys]), buildFts: true })
+		const results = await lookup.findPlace({ text: "NY", placetype: "region", limit: 2 })
+		expect(results[0]!.id).toBe(1)
+		expect(results[0]!.name).toBe("New York")
+	})
+
 	test("a single candidate is unaffected (no tier to split)", async () => {
 		lookup = new WofSqlitePlaceLookup({
 			database: buildDb([
