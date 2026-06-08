@@ -39,6 +39,11 @@ on:
         required: false
         default: false
         type: boolean
+      publish_only:
+        description: "Finish a partial release: skip release-it's version bump/tag (already done) and just publish each workspace at its current version via OIDC (--tolerate-republish). Use when a prior run bumped+tagged but failed mid-publish."
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -111,6 +116,7 @@ jobs:
           ls -lh neural-weights-en-us/model.onnx
 
       - name: Release
+        if: ${{ !inputs.publish_only }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # copy-weights is always skipped (its /mnt/playpen source paths don't
@@ -126,3 +132,38 @@ jobs:
               ARGS+=(--dry-run)
           fi
           yarn release "${ARGS[@]}"
+
+      # Recovery path for a partial release: a prior run already bumped + tagged +
+      # pushed (release-it does git BEFORE npm), but died mid-publish (e.g. one
+      # package missing its npm Trusted Publisher). Re-running the normal flow would
+      # collide with the existing tag. This skips all git/version work and just
+      # publishes each workspace AT ITS CURRENT package.json version via the same
+      # per-workspace path (OIDC + --tolerate-republish, so already-published
+      # versions are no-ops). Continues past per-package failures and reports the
+      # full failed set at the end, so one run pinpoints every package that still
+      # rejects OIDC instead of stopping at the first.
+      - name: Finish publish (per-workspace, OIDC, no git bump)
+        if: ${{ inputs.publish_only && !inputs.dry_run }}
+        env:
+          MAILWOMAN_SKIP_WEIGHTS_COPY: "1"
+          RELEASE_IT_WORKSPACES_TAG: latest
+          RELEASE_IT_WORKSPACES_ACCESS: public
+        run: | # shell
+          set -uo pipefail
+          yarn compile
+          FAILED=()
+          for ws in core normalize query-shape kind-classifier locale-gate phrase-grouper codex classifiers corpus neural neural-weights-en-us neural-weights-fr-fr mailwoman; do
+            echo "::group::publish ${ws}"
+            if RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE="./${ws}" node scripts/publish-workspace.mjs; then
+              echo "  ✓ ${ws}"
+            else
+              echo "::warning::publish failed for ${ws}"
+              FAILED+=("${ws}")
+            fi
+            echo "::endgroup::"
+          done
+          if [ ${#FAILED[@]} -gt 0 ]; then
+            echo "::error::publish_only: failed workspaces: ${FAILED[*]}"
+            exit 1
+          fi
+          echo "All workspaces published."
