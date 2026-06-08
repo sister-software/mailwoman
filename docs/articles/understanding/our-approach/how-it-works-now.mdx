@@ -115,13 +115,14 @@ Default mode is `rule_only`. The neural classifier earns each component one at a
 
 As of the v0.4.0-shipped weights (the current production model), the neural classifier is strongest on `house_number` (F1 ≈ 0.79) and `street` (F1 ≈ 0.30). Coarse components (`country`, `region`, `locality`, `postcode`) are still better served by rules in practice.
 
-## What the demo shows
+## Try it live
 
-The live demo at [mailwoman.sister.software/demo](https://mailwoman.sister.software/demo) runs the **entire stack in the browser**:
+import { DemoEmbedProvider } from "@site/src/contexts/DemoEmbed"
+import { PipelineExplorer } from "@site/src/components/PipelineExplorer/PipelineExplorer"
 
-- The neural model (~25 MB) loads via `@mailwoman/neural-web` on top of `onnxruntime-web`.
-- The Who's On First gazetteer (~35 MB) loads via `@mailwoman/resolver-wof-wasm` on top of `sqlite-wasm`.
-- After the initial download (~60 MB), the browser caches everything.
+<DemoEmbedProvider sqljsBaseUrl="/mailwoman/sqljs">
+  <PipelineExplorer />
+</DemoEmbedProvider>
 
 ## What is honest to admit about today (May 2026)
 
