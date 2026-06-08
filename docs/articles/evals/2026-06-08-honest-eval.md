@@ -121,7 +121,21 @@ Re-measured on the abbreviation-enriched **and** ancestry-backfilled gazetteer:
 | demo presets | NYC resolves to | NYC | New York Mills ✗ | **NYC** ✓ |
 
 The wrong-state error tail (full-US coord p90) collapses from 2763km to 10.3km, and the metro
-regression is gone — NYC resolves to New York City again. Net-positive on rural and metro.
+regression is gone, with NYC resolving to New York City again. Net-positive on rural and metro.
+
+Two things are worth saying about what this fix is. It is parser-agnostic: the harness runs both
+the neural parser and the v0 (Pelias-style rules) parser through the same resolver, and the fix
+lifts both from 0% region / ~330km coord to ~99.5% / ~3.3km. The bug lived in the gazetteer, not
+the parser. And once the resolver is honest, the neural parser keeps its edge over v0 on geography
+it never trained on:
+
+| parser (VT, fixed DB) | locality | region | coord p50 | coord p90 | coord p99 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| neural | 93.7% | 99.9% | 3.4 | 7.4 | 277 |
+| v0 (Pelias) | 91.9% | 99.5% | 3.3 | 7.2 | 2120 |
+
+The medians tie; the neural parser's p99 tail (277km vs 2120km) is far tighter, which is the
+beat-Pelias-on-the-hard-cases result we want on a held-out slice.
 
 ## Status
 
