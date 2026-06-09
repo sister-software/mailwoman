@@ -1,0 +1,130 @@
+---
+sidebar_position: 33
+title: Synonymy and homonymy — canonicalize, disambiguate, never drop a span
+tags:
+  - concepts
+  - architecture
+  - resolver
+  - record-linkage
+---
+
+# Synonymy and homonymy — canonicalize, disambiguate, never drop a span
+
+An address parser has to hold two facts at once that feel contradictory until you
+name them:
+
+1. The **same place** can be written many ways. "123 N Main St", "123 North Main
+   Street", and "123 Main St N" are one location wearing three outfits.
+2. The **same surface** can mean different things. "Georgia" is a US state in
+   `Atlanta, Georgia` and a country in `Tbilisi, Georgia`.
+
+These are the two oldest axes of lexical semantics, and once you separate them the
+contradiction dissolves — they are orthogonal, and each has its own operation.
+
+| Axis | Phenomenon | Operation | Lives in |
+| --- | --- | --- | --- |
+| many surfaces → one referent | **synonymy** | **canonicalization** | parser + codex |
+| one surface → many referents | **homonymy** (homograph) | **disambiguation** | parser *and* resolver |
+
+## Synonymy → canonicalization
+
+Synonymy is handled by mapping every span to a **canonical value**, not by trying to
+guess which spelling is "right". "St" and "Street" both canonicalize to the USPS
+suffix `ST`; "USA", "U.S.A.", and "United States" all canonicalize to the ISO-3166
+code `US`. The canonical value comes from [`@mailwoman/codex`](./rule-based-classifiers.mdx)
+(the provenance-tracked reference data), not from a hand-grown alias list that grows
+forever (see [corpus poisoning](./corpus-poisoning-vulnerability.mdx) for why the
+ever-growing exception list is a smell).
+
+The payoff is that **two records match when their spans canonicalize to the same
+values**, regardless of surface. That makes the parse a *record-linkage primitive*,
+not just a geocoder input — see "Never drop a span" below.
+
+## Homonymy → disambiguation, split across two stages
+
+Homonymy is harder, because the right answer depends on context — and there are two
+*kinds* of context, which want two different homes.
+
+- **Tag disambiguation — _what kind of thing is this span?_** ("Georgia" → `country`
+  or `region`?) This is decidable from **in-string context**: "Atlanta" next to it
+  tells you it is the state. So it belongs in the **parser**, and it is exactly what
+  a context-sensitive neural tagger is for. The model resolves it; a lexicon can
+  only *inform* the decision (a soft feature), never make it — see
+  [closed-vocab fields are model-first](../plan/reference/closed-vocab-fields-model-first.mdx).
+- **Referent disambiguation — _which specific entity?_** ("Springfield" → which of
+  the 30-some?) This needs **context that is not in the address string** — a
+  coordinate, a focus point, the administrative hierarchy. So it belongs in the
+  **resolver**, and it is exactly what [concordance](../the-problem/what-is-a-concordance.mdx)
+  does: it brings gazetteer knowledge into the decision after the parse.
+
+The clean rule: **the parser disambiguates the tag using in-string context; the
+resolver disambiguates the referent using geographic context.** Conflating them is
+how parsers end up either over-committing (guessing which Springfield from text
+alone) or under-committing (refusing to tag "Georgia" at all).
+
+A note on scale, because it surprises people: there are ~195 countries, and the
+country tag still felt hard. The size is not the problem. ~180 country names collide
+with nothing and are trivial; the difficulty is the **~12 surfaces that overlap the
+other closed sets** (Georgia/Jordan/Lebanon/Mexico/Peru/Turkey ↔ US places; CA/GA/IN
+↔ state codes; Jordan/Chad ↔ given names). So "differentiate 195 countries" is
+really "make ~12 *binary* sense calls against the other vocabularies", every one
+decidable from in-string context.
+
+## Never drop a span
+
+Many geocoders' parsers are **lossy by design**: a span that does not fit the winning
+interpretation is quietly demoted to "accessory" information and folded into the
+resolver. That is fine if your only goal is "resolve to a point", and fatal the
+moment you want to do anything *adjacent* to geocoding — chiefly **record linkage**:
+deciding whether two rows from two datasets are the same entity.
+
+Mailwoman's parser emits a label for **every token** — the BIO sequence covers the
+whole string, so nothing is silently eaten. The one trap is cosmetic: the JSON
+projection currently drops `O` runs (see [eval discipline](./eval-discipline.mdx),
+"JSON hides gaps"), so unclassified material *looks* gone even though the parse kept
+it. The fix is a typed **`unknown`/`other`** span that survives projection. Then a
+parse is a **lossless, typed decomposition**: every character accounted for —
+classified or explicitly-unclassified — each carrying a canonical value.
+
+That decomposition is the record-linkage fingerprint. Two records are the same entity
+when their canonicalized span-sets agree, surface variation and all. A geocoder
+front-end cannot give you that; a structured, lossless parser can. This is why the
+parser is an *address-understanding* layer, not just the resolver's mouth.
+
+## Soft priors, not hard masks
+
+Traditional parsers lean on **positional masks** (a field may only appear in slot N)
+and **user hints** (the query's origin country) as **hard filters**. They have to —
+a rules engine cannot read context, so it constrains the search space instead.
+
+A model that reads context does not need the crutch, but the *same signals are still
+useful* — as **soft priors**, fed in as features the model or resolver can overrule
+when the string says otherwise. A focus-country becomes a feature for the parser's
+[gazetteer anchor](../plan/reference/closed-vocab-fields-model-first.mdx); a focus-point
+becomes a term in the resolver's ranking. Same information as the mask, but it bends
+instead of breaks.
+
+## Two paradigms: parse-time vs index-time
+
+Worth contrasting two whole philosophies, because each is internally coherent:
+
+- **Parse-time structured tagging** (Mailwoman, Pelias, libpostal) — commit a typed
+  decomposition up front. Tag disambiguation happens now; referent disambiguation is
+  deferred to the resolver. You get a lossless structure suitable for record linkage.
+- **Index-time disambiguation** (Airmail) — do not parse; index every token and let
+  retrieval + geographic proximity (S2 cells) decide at query time. Elegant for
+  "give me a point", and it *also* never drops a token — but it never hands you the
+  clean typed decomposition, so record linkage is off the table.
+
+The wisdom to borrow from the index-time camp is real: **information-preservation**
+(never drop a token) and **a geographic prior as evidence** (proximity as a soft
+signal). We keep both — preservation via the lossless parse, the geographic prior via
+the resolver's concordance — while keeping the structured parse the index-time
+approach gives up. The trade is deliberate: we disambiguate the *tag* early (where
+in-string context is enough) and bind the *referent* late (where geographic context
+is needed), rather than collapsing both into the index.
+
+## The one-liner
+
+**Canonicalize for synonymy; context-disambiguate the tag at parse time; late-bind
+the referent at resolve time; and never drop a span on the floor.**

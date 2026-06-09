@@ -29,6 +29,8 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **Calibration** — how well the model's reported confidence matches its actual accuracy. A well-calibrated model that says "90% confident" should be right 90% of the time. The eval reports include calibration buckets.
 
+**Canonicalization** — mapping a span to its canonical value: "St" and "Street" both become the USPS suffix `ST`; "USA" and "United States" both become ISO `US`. The operation that handles **synonymy**. Canonical values come from `@mailwoman/codex`, not a hand-grown alias list. See [`concepts/synonymy-and-homonymy.md`](../concepts/synonymy-and-homonymy.mdx).
+
 **Cartographer** — Mailwoman's mapping utilities. Composes MapLibre style specifications + builds vector source records for the demo's protomaps basemap.
 
 **Checkpoint** — a saved snapshot of the model weights + optimizer state during training. Mailwoman saves a checkpoint every 100 steps so training can resume after the GPU's periodic firmware hang.
@@ -61,9 +63,15 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **Gazetteer** — a database of named places (countries, regions, cities, neighbourhoods) with their canonical names, coordinates, and IDs. Mailwoman uses [Who's On First](https://whosonfirst.org/) as its gazetteer.
 
+**Gazetteer anchor** — an input-layer feature channel that attaches a per-token **candidate-tag set** from the gazetteer/codex ("this surface is a known {country, region}") so the model conditions on lexicon membership without being overruled by it. The knowledge lives outside the weights — extend the gazetteer, no retrain. See [the knowledge ladder](./our-approach/the-knowledge-ladder.mdx), rung 3.2.
+
 **Golden set** — a hand-labelled evaluation dataset. The current golden set is `v0.1.2` with 4,535 entries (US + FR + adversarial).
 
 **gradient clipping** — a training trick: if the gradient norm exceeds a threshold, scale it down. Stops a single bad batch from blowing up the model weights.
+
+## H
+
+**Homonymy / homograph** — one surface, many referents: "Georgia" is a US state in `Atlanta, Georgia` and a country in `Tbilisi, Georgia`. Handled by **disambiguation**, split across two stages: the parser resolves the *tag* from in-string context; the resolver late-binds the *referent* with geographic context (concordance). See [`concepts/synonymy-and-homonymy.md`](../concepts/synonymy-and-homonymy.mdx).
 
 ## I
 
@@ -113,6 +121,8 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 ## R
 
+**Record linkage** — deciding whether two rows from two datasets describe the same real-world entity. The reason a parse must be a **lossless typed decomposition**: two records match when their canonicalized span-sets agree, regardless of surface. A geocoder that silently drops unmatched spans cannot do this. See [`concepts/synonymy-and-homonymy.md`](../concepts/synonymy-and-homonymy.mdx).
+
 **Rule classifier** — a hand-written piece of code that labels tokens by pattern matching. The Mailwoman v1 approach. See [`concepts/rule-based-classifiers.md`](../concepts/rule-based-classifiers.mdx).
 
 **Resolver** — the post-parse step that takes labelled components and looks them up in a gazetteer to return coordinates. See [`concepts/resolver-and-wof.md`](../concepts/resolver-and-wof.mdx).
@@ -121,7 +131,13 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **SentencePiece** — Google's subword tokenizer library. Mailwoman uses it to split input text into a fixed 16,000-piece vocabulary that handles both English and French (and falls back to byte-level for everything else). See [`concepts/tokenization.md`](../concepts/tokenization.mdx).
 
+**Shallow fusion** — blending an external knowledge source (a gazetteer, an FST prior) into a model's decision as a *signal*, rather than retraining the model or overriding its output. Mailwoman applies it at two layers: the [FST prior](../concepts/fst-priors-as-shallow-fusion.mdx) biases emissions at decode time; the **gazetteer anchor** feeds membership features at the input layer. RAG-shaped, but the retrieval lands as feature vectors, not prompt text.
+
 **Ship of Theseus** — the migration pattern Mailwoman uses: replace rule classifiers with neural one component at a time, only when metrics justify. Name from the [philosophical thought experiment](https://en.wikipedia.org/wiki/Ship_of_Theseus).
+
+**Soft prior** — outside knowledge fed to the model or resolver as overridable evidence (a feature, a score term) rather than a hard filter. A focus-country hint becomes an anchor feature; a focus-point becomes a ranking term. The opposite of a **positional mask**, which constrains what the system may consider. See [`concepts/synonymy-and-homonymy.md`](../concepts/synonymy-and-homonymy.mdx).
+
+**Synonymy** — many surfaces, one referent: "123 N Main St" and "123 North Main Street" are the same place. Handled by **canonicalization**, never by guessing which spelling is right. The dual of **homonymy**. See [`concepts/synonymy-and-homonymy.md`](../concepts/synonymy-and-homonymy.mdx).
 
 **Shard** — a partial output file of the corpus build, written in Parquet format. The training pipeline streams shards row-by-row.
 
