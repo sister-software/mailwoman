@@ -73,11 +73,30 @@ export async function loadHttpvfsDb(dbUrl: string, sqljsBaseUrl: string): Promis
 		})
 	}
 	if (typeof w.createDbWorker !== "function") throw new Error("createDbWorker missing after UMD load")
-	return w.createDbWorker(
-		[{ from: "inline", config: { serverMode: "full", url: dbUrl, requestChunkSize: 65536 } }],
-		`${sqljsBaseUrl}/sqlite.worker.js`,
-		`${sqljsBaseUrl}/sql-wasm.wasm`
-	)
+
+	// Open over byte-range fetches, then force the header + schema pages through SQLite with a
+	// cheap read. On mobile Safari the HTTP cache can hand sql.js-httpvfs a torn 64 KB range chunk,
+	// which surfaces as "database disk image is malformed"; the assets' immutable Cache-Control means
+	// a once-poisoned cache entry is trusted indefinitely, so the only escape is a fresh URL. Try the
+	// cacheable URL first (fast — Cloudflare edge-caches the ranges); if it opens corrupt, retry ONCE
+	// with a cache-busting query param to force fresh chunks. Self-heals a poisoned cache without
+	// permanently defeating caching for the happy path. See the 2026-06 mobile-Safari demo report.
+	const open = async (url: string): Promise<HttpvfsWorker> => {
+		const worker = await w.createDbWorker!(
+			[{ from: "inline", config: { serverMode: "full", url, requestChunkSize: 65536 } }],
+			`${sqljsBaseUrl}/sqlite.worker.js`,
+			`${sqljsBaseUrl}/sql-wasm.wasm`
+		)
+		await worker.db.exec("SELECT count(*) FROM sqlite_master") // throws here if the schema chunk is torn
+		return worker
+	}
+	try {
+		return await open(dbUrl)
+	} catch (err) {
+		if (!/malformed|not a database|disk image/i.test(String(err))) throw err
+		const sep = dbUrl.includes("?") ? "&" : "?"
+		return open(`${dbUrl}${sep}cb=${Date.now()}`)
+	}
 }
 
 /** PlaceLookup over the httpvfs worker — same ranking as WofWasmPlaceLookup, async. */
