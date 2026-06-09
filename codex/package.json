@@ -12,6 +12,7 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": "./out/index.js",
+		"./country": "./out/country/index.js",
 		"./us": "./out/us/index.js",
 		"./de": "./out/de/index.js",
 		"./fr": "./out/fr/index.js",
