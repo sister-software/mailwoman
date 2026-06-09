@@ -38,6 +38,7 @@ import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
 import { SubwordExplorer } from "../SubwordExplorer/SubwordExplorer.tsx"
 import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
 import { TreeView } from "../TreeView/TreeView.tsx"
+import { LoadingIndicator } from "../LoadingIndicator/LoadingIndicator.tsx"
 
 import styles from "./styles.module.css"
 
@@ -84,6 +85,8 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 		fstProvenance,
 		lookup,
 		loadingProgress,
+		loadingStepIndex,
+		loadingStepLabels,
 		errorMessage: ctxError,
 		ready,
 		activeBackend,
@@ -301,7 +304,13 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 					placeholder={DEFAULT_ADDRESS}
 				/>
 				<button type="submit" disabled={!ready || busy}>
-					{busy ? "Parsing…" : "Parse + resolve"}
+					{busy ? (
+						<>
+							<LoadingIndicator mode="spinner" size="small" /> Parsing…
+						</>
+					) : (
+						"Parse + resolve"
+					)}
 				</button>
 			</form>
 
@@ -324,10 +333,21 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 				))}
 			</div>
 
-			{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
+			{loadingProgress && !ready ? (
+				<LoadingIndicator
+					mode="staged"
+					steps={loadingStepLabels.length > 0 ? loadingStepLabels : undefined}
+					activeStep={loadingStepIndex}
+					label={loadingProgress}
+				/>
+			) : null}
 			{errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
 
-			{result ? (
+			{busy ? (
+				<div className={styles.resultPanel}>
+					<LoadingIndicator mode="pulse" barCount={4} label="Parsing address…" />
+				</div>
+			) : result ? (
 				<div className={styles.resultPanel}>
 					<div className={styles.resultHeader}>
 						<h2>Parsed components</h2>

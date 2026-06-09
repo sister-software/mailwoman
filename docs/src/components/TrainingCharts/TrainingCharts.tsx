@@ -19,6 +19,7 @@
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
+import { LoadingIndicator } from "../LoadingIndicator/LoadingIndicator.tsx"
 import styles from "./styles.module.css"
 
 // ── Constants ───────────────────────────────────────────────────────────
@@ -549,7 +550,7 @@ const TrainingChartsInner: React.FC = () => {
 	if (loading) {
 		return (
 			<div className={styles.container}>
-				<div className={styles.status}>Loading runs…</div>
+				<LoadingIndicator mode="spinner" label="Fetching runs…" />
 			</div>
 		)
 	}

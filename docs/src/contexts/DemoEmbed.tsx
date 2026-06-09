@@ -47,6 +47,10 @@ export interface DemoEmbedState {
 	lookup: MailwomanLookupLike | null
 	/** Human-readable loading progress string. */
 	loadingProgress: string
+	/** Current loading step index (0-based). Used by staged LoadingIndicator. */
+	loadingStepIndex: number
+	/** Step labels for the staged loading indicator. */
+	loadingStepLabels: string[]
 	/** Error message if loading failed. */
 	errorMessage: string | null
 	/** Whether ALL selected-version assets (classifier + FST) are loaded and ready. */
@@ -89,6 +93,8 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 	const [manifest, setManifest] = useState<ReleasesManifest | null>(null)
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
+	const [loadingStepIndex, setLoadingStepIndex] = useState(-1)
+	const [loadingStepLabels, setLoadingStepLabels] = useState<string[]>([])
 	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
 	const [fstMatcher, setFstMatcher] = useState<FstMatcherLike | null>(null)
 	const [fstProvenance, setFstProvenance] = useState<FstProvenanceLike | null>(null)
@@ -132,7 +138,15 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				setFstMatcher(null)
 				setFstProvenance(null)
 				setLookup(null)
+				setLoadingStepIndex(-1)
+				setLoadingStepLabels([])
 				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
+
+				// Build staged step labels based on what this release includes.
+				const steps: string[] = ["Loading classifier"]
+				if (release?.hasFst) steps.push("Loading FST gazetteer")
+				if (release?.hasWofDb) steps.push("Loading WOF database")
+				setLoadingStepLabels(steps)
 
 				// Dynamic import @mailwoman/neural-web — the webpack alias resolves this to the
 				// browser-safe entry. TypeScript types are narrower than the runtime API so we cast
@@ -163,6 +177,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 						: "unknown"
 				)
 
+				// Step 0 complete: classifier loaded.
+				setLoadingStepIndex(0)
+
 				if (cancelled) return
 
 				if (release?.hasFst) {
@@ -175,6 +192,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 					}
 				}
 
+				// Step 1 complete: FST loaded (or skipped).
+				setLoadingStepIndex(1)
+
 				if (release?.hasWofDb) {
 					try {
 						const { loadHttpvfsDb, WofHttpvfsPlaceLookup } = await import("../shared/httpvfs-resolver")
@@ -185,6 +205,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 						// WOF DB not available for this version
 					}
 				}
+
+				// Step 2 complete: all assets loaded.
+				setLoadingStepIndex(2)
 
 				setClassifier(cls)
 				setLoadingProgress("")
@@ -217,6 +240,8 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 			fstProvenance,
 			lookup,
 			loadingProgress,
+			loadingStepIndex,
+			loadingStepLabels,
 			errorMessage,
 			ready,
 			activeBackend,
@@ -232,6 +257,8 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 			fstProvenance,
 			lookup,
 			loadingProgress,
+			loadingStepIndex,
+			loadingStepLabels,
 			errorMessage,
 			ready,
 			activeBackend,

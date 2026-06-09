@@ -28,6 +28,7 @@ import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
 import { flattenTree } from "../../shared/demo-helpers.ts"
 import type { DemoResult } from "../../shared/resources.tsx"
 import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
+import { LoadingIndicator } from "../LoadingIndicator/LoadingIndicator.tsx"
 
 import styles from "./styles.module.css"
 import { TOUR_STOPS, type StatusBadge } from "./tour-stops.ts"
@@ -331,12 +332,22 @@ export const GuidedTour: React.FC = () => {
 										className={styles.parseBtn}
 										disabled={!ready || currentState.busy || !currentState.address.trim()}
 									>
-										{currentState.busy ? "Parsing…" : "Parse"}
+										{currentState.busy ? (
+											<>
+												<LoadingIndicator mode="spinner" size="small" /> Parsing…
+											</>
+										) : (
+											"Parse"
+										)}
 									</button>
 								</form>
 
 								{/* ---- Parse result ---- */}
-								{currentState.result ? (
+								{currentState.busy ? (
+									<div className={styles.tourResult}>
+										<LoadingIndicator mode="pulse" barCount={3} label="Parsing stop…" />
+									</div>
+								) : currentState.result ? (
 									<div className={styles.tourResult}>
 										<div className={styles.tourSpanWrap}>
 											<SpanHighlight input={currentState.result.input} nodes={currentState.result.nodes} />
