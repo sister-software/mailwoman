@@ -59,6 +59,12 @@ def _to_tensor_batch(batch: dict, device: torch.device) -> dict:
     if "anchor_features" in batch:
         tb["anchor_features"] = torch.tensor(batch["anchor_features"], dtype=torch.float32, device=device)
         tb["anchor_confidence"] = torch.tensor(batch["anchor_confidence"], dtype=torch.float32, device=device)
+    # Gazetteer-anchor channel (#464): same presence contract — only when a lexicon is configured.
+    if "gazetteer_features" in batch:
+        tb["gazetteer_features"] = torch.tensor(batch["gazetteer_features"], dtype=torch.float32, device=device)
+        tb["gazetteer_confidence"] = torch.tensor(
+            batch["gazetteer_confidence"], dtype=torch.float32, device=device
+        )
     return tb
 
 

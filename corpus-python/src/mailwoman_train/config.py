@@ -39,6 +39,11 @@ class DataConfig:
     # (built by scripts/build-pilot-anchor-lookup.py). When set AND model.use_postcode_anchor is on,
     # the loader projects per-piece anchor features onto each row. None → no anchor features.
     anchor_lookup_path: str | None = None
+    # Gazetteer-anchor lexicon (#464, knowledge-ladder rung 3.2). Path to the codex-generated
+    # candidate-tag-set lexicon JSON (built by scripts/build-gazetteer-anchor-lexicon.mjs). When set
+    # AND model.use_gazetteer_anchor is on, the loader paints per-piece multi-hot membership clues
+    # from the RAW SURFACE (never gold labels — same computation at train + inference). None → off.
+    gazetteer_lexicon_path: str | None = None
 
 
 @dataclass
@@ -121,6 +126,14 @@ class ModelConfig:
     # the city), where the per-token-only injection fired on the wrong side of the locality. Default
     # False (no change); requires use_postcode_anchor.
     inject_first_token: bool = False
+    # Gazetteer-anchor channel (#464, knowledge-ladder rung 3.2). When on (with
+    # data.gazetteer_lexicon_path set), the encoder takes per-token multi-hot candidate-tag-set
+    # clues (country/region/po_box/cedex/homograph) painted from the raw surface by the codex
+    # lexicon, and injects ``c·(W_g·features + v_GAZ)`` at the input embedding. The clue informs;
+    # the model decides (model-first). Default False keeps existing numerics bit-identical.
+    use_gazetteer_anchor: bool = False
+    # Must match the lexicon JSON's feature_dim (slot count).
+    gazetteer_feature_dim: int = 5
 
 
 @dataclass
