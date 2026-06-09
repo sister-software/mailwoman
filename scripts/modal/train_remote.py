@@ -37,16 +37,30 @@ training_image = (
         "curl -sSL https://rclone.org/install.sh | bash",
     )
     .pip_install(
-        "torch",
+        # --- PINNED export/quant toolchain (2026-06-09) ---------------------------------
+        # These five drive the ONNX graph that ships to browsers. They were UNPINNED (`>=`)
+        # and drifted between v0.9.3 (Jun-6) and v0.9.7 (Jun-8): transformers→5.x and
+        # onnx→1.21 started rejecting a dynamo-emitted value_info during int8 quant (see
+        # mailwoman_train/quantize.py's value_info strip). Pinned to the exact set that
+        # produced the v4.1.0 int8 artifact, VERIFIED graph-identical (opset 17, same
+        # 28×DynamicQuantizeLinear/MatMulInteger, 0 reverse-slices) to the Safari-proven
+        # v0.9.3 graph. INVARIANT: the int8 graph (opset + quant op scheme) must stay
+        # within what the pinned `onnxruntime-web` native WebGPU EP runs on Metal (the
+        # JSEP int8-dequant slice bug — neural-web uses onnxruntime-web/webgpu). A bump
+        # here that raises the opset or changes the quant scheme is a Safari decision, not
+        # a free upgrade — re-verify on a real iOS device (CI cannot exercise WebGPU).
+        # Query the live image set with `modal run scripts/modal/train_remote.py::versions`.
+        "torch==2.12.0",
+        "transformers==5.9.0",
+        "onnx==1.21.0",
+        "onnxruntime==1.26.0",
+        "onnxscript==0.7.0",
+        # --- non-graph deps (unpinned floors are fine) ---------------------------------
         "sentencepiece>=0.2.0",
         "pyarrow>=15",
         "pyyaml>=6",
         "numpy>=1.26,<3",
-        "transformers>=4.41",
         "datasets>=2.19",
-        "onnx>=1.16",
-        "onnxruntime>=1.18",
-        "onnxscript>=0.1",
         "tqdm>=4.66",
         # Optional experiment tracking — streamed to a Hugging Face Space dashboard when
         # the run config sets train.trackio_enabled (best-effort, see trackio_logging.py).
@@ -282,6 +296,23 @@ def main(
     print(f"\nDownload results with:\n  modal volume get mailwoman-training /output/ ./output/")
 
 
+@app.function(image=training_image, timeout=120)
+def versions():
+    """Print the export/quant toolchain versions baked into ``training_image``.
+
+    Used to capture the exact versions for pinning (the unpinned ``>=`` deps drifted
+    between v0.9.3 and v0.9.7 and broke int8 quant — see scripts/modal pins + quantize.py).
+    Run: ``modal run scripts/modal/train_remote.py::versions``
+    """
+    import torch, transformers, onnx, onnxruntime, onnxscript, sys
+    print(f"python      {sys.version.split()[0]}")
+    print(f"torch       {torch.__version__}")
+    print(f"transformers {transformers.__version__}")
+    print(f"onnx        {onnx.__version__}")
+    print(f"onnxruntime {onnxruntime.__version__}")
+    print(f"onnxscript  {onnxscript.__version__}")
+
+
 @app.function(
     volumes={VOL_MOUNT: vol},
     image=training_image,
@@ -328,6 +359,40 @@ def export_onnx(
     export_to_onnx(model, out_path, opset=17, max_length=128, pad_token_id=tokenizer.pad_id)
     print(f"ONNX exported: {out_path} ({out_path.stat().st_size / 1e6:.1f} MB)")
 
+    vol.commit()
+    print("Committed to volume.")
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=600,
+)
+def quantize_onnx(
+    fp32_path: str = "",
+    int8_path: str = "",
+):
+    """Int8-quantize an fp32 ONNX on the volume, in the training image.
+
+    The dynamo-exported graph (see ``export_to_onnx``) trips onnx shape inference in some
+    *local* onnxruntime builds (``quantize_dynamic`` / the ORT pre-process both fail with a
+    ShapeInferenceError). The training image's pinned onnxruntime quantizes it cleanly, so we
+    do int8 here next to ``export_onnx`` rather than locally.
+
+    Usage: ``modal run scripts/modal/train_remote.py::quantize_onnx
+    --fp32-path=/data/output-v097-unit-v3-s42/model.onnx
+    --int8-path=/data/models/quantized/model-v097-step-20000-int8.onnx``
+    """
+    from pathlib import Path
+    import sys
+    sys.path.insert(0, "/data/corpus-python/src")
+    from mailwoman_train.quantize import quantize_dynamic_int8
+
+    fp32 = Path(fp32_path)
+    int8 = Path(int8_path)
+    print(f"Quantizing {fp32} → {int8}")
+    quantize_dynamic_int8(fp32, int8)
+    print(f"int8 written: {int8} ({int8.stat().st_size / 1e6:.1f} MB)")
     vol.commit()
     print("Committed to volume.")
 

@@ -33,12 +33,12 @@
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
-# --- current default (releases.json defaultVersion = v4.0.0) ---------------
-# v4.0.0 en-us ships the v0.9.3 multi-locale model (step 20000) + the 0.6.0-a0
-# tokenizer. NB: model-card.json's lineage text ("formerly v0.6.0 step 100000")
-# is stale prose; these md5s are the authoritative bytes the demo serves.
-DEFAULT_MODEL="/mnt/playpen/mailwoman-data/models/quantized/model-v093-step-20000-int8.onnx"
-DEFAULT_MODEL_MD5="0ec9af2ade916b26682f2b9898f1e673"
+# --- current default (releases.json defaultVersion = v4.1.0) ---------------
+# v4.1.0 en-us ships the v0.9.7-unit-v3 multi-locale model (step 20000, adds
+# secondary-unit coverage) + the 0.6.0-a0 tokenizer. These md5s are the
+# authoritative bytes the demo serves at .../mailwoman/en-us/v4.1.0/{model,tokenizer}.
+DEFAULT_MODEL="/mnt/playpen/mailwoman-data/models/quantized/model-v097-step-20000-int8.onnx"
+DEFAULT_MODEL_MD5="036e2e02a37a07103ef0b7c5984e1f81"
 DEFAULT_TOKENIZER="/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 DEFAULT_TOKENIZER_MD5="b6137e8c52914c9715374268ecaa4bc6"
 
