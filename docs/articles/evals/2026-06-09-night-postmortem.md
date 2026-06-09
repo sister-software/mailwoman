@@ -33,13 +33,13 @@
 
 - **#462: promote v0.9.8-affix → v4.2.0?** (clean affix win, FR-postcode −3.9 trade). DeepSeek says yes-with-annotation. *Still needs your call — I did not promote while offline against the pre-registered gate.*
 - **#463 disposition:** merge for the reusable `codex/country` + eval assets, or close in favor of #464 (deterministic)? Either is fine; the codex salvage is the durable part.
-- **#464 homograph guard:** the deterministic tagger needs a guard for state/country homographs (Georgia, Jordan) before it can default-on. Fire only when the trailing segment is unambiguously a country, or downrank when an upstream `region` already claims the span.
+- **#464 homograph guard:** the deterministic country tagger needs a guard for state/country homographs (Georgia, Jordan) before it can default-on. Fire only when the trailing segment is unambiguously a country, or downrank when an upstream `region` already claims the span. (Architecture itself is decided — overlay, see next steps; this is the one remaining design detail.)
 
 ## Concrete next steps
 
-- **#464**: build the deterministic country `ProposalClassifier` (codex `matchCountry` on the trailing comma-segment) — opt-in, byte-stable, with the homograph guard. ~½ day, zero GPU. po_box likely follows the same shape.
-- po_box: **done** (deterministic probe = 100%, no retrain — lesson applied up front). Remaining long-tail: intersection (gated — regressed before, needs care); FR venue/cedex (#330, cedex likely deterministic too).
-- Consolidation v1.0 once the open-vocab levers (affix) are promoted — bake winners into one run with **> 20k steps** to beat the cumulative dilution; full per-tag regression gate.
+- **#464 — build one `ClosedVocabTagger`** (country + po_box + cedex; all three measured at P=R=F1=100 this shift). **Architecture decided** (DeepSeek pro consult): a *post-parse `ProposalClassifier` overlay*, default-off/byte-stable, not an in-pass `classifiers/` entry — because it must *correct* the model's over-firing, so it runs after the decode and overwrites. Homograph guard (country Georgia/Jordan) lives in the overlay's apply logic; po_box/cedex have no homograph risk and can land first. ~½ day, zero GPU.
+- intersection (gated — regressed before, needs care); FR venue/region (#330).
+- **Consolidation v1.0 (#466)** once affix is promoted: make the affix shard **multi-locale** (clears its own FR-postcode gate without bundling the now-deterministic country), prove it solo, then **weight-merge** the affix delta into the v4.1.0 base rather than re-stacking shards (the dilution is step-budget-bound). DeepSeek-recommended; gated on #462 + operator go + GPU budget.
 
 ## Numbers (running)
 
