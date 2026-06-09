@@ -1,0 +1,47 @@
+---
+slug: teaching-the-tags-it-was-missing
+title: "Teaching the model the tags it was missing — and watching the others improve"
+authors: [teffen]
+tags: [neural, parsing, evaluation, training]
+date: 2026-06-09
+---
+
+You trained a model. It's good at the common stuff — house numbers, postcodes, the city. And it has a handful of tags pinned at zero. Secondary units. Street directionals. The country, when someone bothers to write it. The obvious read is that these are rare and hard, a long tail you'll get to eventually.
+
+The less obvious read, the one that turned out to be true for us, is that the zeros were quietly taxing the tags you already had.
+
+{/* truncate */}
+
+## The cheapest thing a parser can do is lump
+
+Give a sequence model a span it has no label for and it does the sensible thing: it folds the orphan into its neighbor. "350 5th Ave Apt 12" has no `unit` worth predicting (it trained at zero), so "Apt 12" gets swallowed into the street. "N Main St" becomes one undifferentiated street span. The model isn't wrong, exactly. It's doing the best it can with the vocabulary you gave it. But every swallowed token is a token the *street* prediction now has to account for, and a boundary it has to guess.
+
+This is the via-negativa idea: a category you *don't* model still shapes the categories you do. The empty space has a shape, and the shape pushes back.
+
+## So we filled one in
+
+We took the `unit` tag (`0%` F1, completely starved) and built it a coverage shard: real US address skeletons with USPS Publication 28 secondary-unit designators dropped in across realistic layouts (unit-after-street, unit-first, bare, venue-prefixed). One variable changed against the shipped model. We trained, and we measured on a held-out set of *real* designators, not the synthetic ones.
+
+`unit` went from 0% to 92%.
+
+That was the expected win. Here's the part we were watching for: US `street` went *up*, about three points, on the same evaluation where we changed nothing about streets. Locality nudged up. Country nudged up. We gave the model a place to put "Apt 12," and it stopped making the street pay for it. Covering the negative space sharpened the positive space, exactly as the theory promised and rarely delivers so cleanly.
+
+## The eval that hid the win
+
+We almost missed it. The first gate read came back `0%` on the new tag — a heart-stopping number for a shard that was supposed to fix exactly that. The model had trained fine; our *evaluator* was blind. The per-tag scorer folded street prefix, name, and suffix back into a single `street` string before comparing — so a model that split "N Main St" perfectly into three components scored zero against ground truth that was also split, because the fold recomposed it into a shape that no longer matched.
+
+The lesson we keep relearning: the measurement apparatus is part of the system, and it fails silently. A whole-address-strict arena score will tell you a unit-perfect parse "failed" because some other tag slipped. An in-distribution validation set will hand you 98% while the real-world distribution sits at zero. We now keep a small, curated set of *real* examples for every tag we touch, score the raw decode without folding, and trust that number over the convenient one. When two metrics disagree, the disagreement is the information.
+
+## One fix turned into a campaign
+
+The same lever pulls for the next tag, and the next. Street affixes (the directionals and types the suffix table already knew) split cleanly, and the street boundary tightened alongside them, exactly the way `unit` had. So far the theory held: cover the empty space, sharpen the rest.
+
+Then country broke the pattern, and taught us something better.
+
+We built `country` the same kind of shard, expecting the same kind of win. Instead the model got greedy. Country is a closed vocabulary that almost always sits in the last position of an address, so the model learned the shortcut we'd accidentally handed it: trailing token, must be a country. It started promoting cities and states to nationhood. Precision fell through the floor. The retrain hadn't filled the empty space, it had spilled into the space next door.
+
+The fix turned out to be no shard at all. There are only so many countries, and they spell themselves the same way every time, so a flat lookup against that list (match the trailing segment, tag it, done) scores a clean hundred where the trained model scored a mess. PO boxes told the same story: a fixed set of designators ("PO Box," "Drawer," "Caller") in a predictable slot, perfectly handled by a matcher and only muddied by a model.
+
+So the campaign taught us two things, not one. First, the one we went looking for: covering a starved tag sharpens its neighbors. Second, the one we didn't see coming: some tags don't want the model at all. A secondary unit can land anywhere and spell itself a hundred ways, so the model has to *learn* it, and that's where training earns its keep. A country is a closed list in a known spot, and the honest tool for a closed list is a lookup table, not a neural net you've talked into memorizing one. Half the work is knowing which tag is which.
+
+The starved tags were never a long tail to defer. They were holding the rest of the model back, and a few of them turned out not to be the model's job in the first place. Filling the empty space, and knowing what to fill it with, is the work.

@@ -10,11 +10,14 @@ tags:
 # Negative space — why training every component sharpens each one
 
 A useful intuition guides Mailwoman's corpus-coverage work: as we add training
-signal for the address components we've been _missing_ (`unit`, `country`, the
-street affixes), the model gets better at the components we already handle — not
-just the new ones. The reason is that a sequence labeller learns a tag by its
+signal for the address components we've been _missing_ (`unit`, the street
+affixes, and more), the model gets better at the components we already handle —
+not just the new ones. The reason is that a sequence labeller learns a tag by its
 **boundaries**, so teaching it what a token _isn't_ is how it learns what the
-neighbours _are_.
+neighbours _are_. (One caveat that the campaign earned the hard way: this logic
+applies to tags the model must learn from context, not to every starved tag —
+see [Two kinds of starved tag](#two-kinds-of-starved-tag-when-coverage-means-a-matcher-not-a-model)
+at the end.)
 
 This has names at three altitudes:
 
@@ -61,5 +64,40 @@ generating corpus rows for a starved tag, the eval set must carry enough held-ou
 examples of it that its F1 is real signal, not noise from a handful of rows (see
 [eval discipline](./eval-discipline.mdx) and the val-set stratification work). The
 coverage eval is the apparatus that lets the numbers say whether negative space
-held for our model — whether covering `unit`/`country` lifted `street`/`locality`
-precision, and whether anything regressed — rather than assuming it.
+held for our model — whether covering `unit` lifted `street`/`locality` precision,
+and whether anything regressed — rather than assuming it.
+
+## Two kinds of starved tag: when coverage means a matcher, not a model
+
+Negative space tells you a starved tag is taxing its neighbours. It does _not_
+tell you that **training** is how to cover it. The parity campaign surfaced two
+shapes of starved tag that want opposite tools.
+
+- **Open-vocabulary, boundary-defined tags** — `unit`, `street_prefix`,
+  `street_suffix`, `locality`. Their members are open-ended and their extent
+  depends on context, so the model genuinely has to _learn the boundary_. A
+  coverage shard is the right tool, and this is precisely where the negative-space
+  effect compounds: covering `unit` (0 → 92%) lifted US `street` by about three
+  points.
+- **Closed-vocabulary, fixed-position tags** — `country`, `po_box`, `cedex`.
+  Their members are a finite, enumerable surface set sitting in a predictable
+  slot. The "boundary" a model would laboriously learn here is _already given_ by
+  the lexicon, so training buys nothing the list doesn't already encode — and it
+  introduces a failure mode.
+
+That failure mode is the same softmax competition from above, run in reverse. A
+synthetic `country` shard is almost entirely _trailing-country_ rows, so the model
+over-learns the cheap correlation "trailing token ⇒ country" and starts promoting
+cities and regions to nationhood. Measured: the retrained `country` head scored 49
+F1 on a held-out real set at 23% precision, while a flat lookup against the country
+list (`matchCountry` on the trailing comma-segment) scored a clean 100. `po_box`
+and `cedex` told the same story — 100 each, zero false positives on the negatives —
+across two locales and two match shapes (a whole comma-segment for `po_box`, an
+in-segment regex for the French `cedex`).
+
+So the rule the campaign settled on: **negative space tells you _which_ tags to
+cover; the tag's vocabulary tells you _how_.** Open-vocab tags get a coverage shard
+and a retrain. Closed-vocab tags get a deterministic post-parse tagger — a
+default-off, byte-stable overlay that runs after the decode and corrects the
+model's over-firing — because covering them inside the model only dilutes it. The
+shared implementation is the `ClosedVocabTagger` overlay tracked in issue #464.
