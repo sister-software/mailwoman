@@ -137,9 +137,15 @@ const DemoApp: React.FC = () => {
 		void (async () => {
 			try {
 				const [manifestRes, maplibre, basemapSource] = await Promise.all([
-					fetch(assetUrl(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases")).then((r) =>
-						r.ok ? (r.json() as Promise<ReleasesManifest>) : null
-					),
+					// `cache: "reload"` bypasses the HTTP cache for the version pointer. releases.json was
+					// historically served with an immutable Cache-Control (the publish script applied it to
+					// every file), so a returning visitor's browser keeps a stale copy for up to a week and
+					// never sees a defaultVersion bump — the symptom being "the new version only shows in a
+					// private tab". Always refetch the pointer (it's ~4 KB); the versioned assets it points
+					// to stay immutably cached.
+					fetch(assetUrl(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"), {
+						cache: "reload",
+					}).then((r) => (r.ok ? (r.json() as Promise<ReleasesManifest>) : null)),
 					import("maplibre-gl"),
 					fetchBasemapSource(),
 				])
