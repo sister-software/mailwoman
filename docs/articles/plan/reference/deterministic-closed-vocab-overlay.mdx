@@ -1,0 +1,119 @@
+# Deterministic closed-vocab overlay — design rationale + prior art
+
+Why Mailwoman tags `country`, `po_box`, and `cedex` with a deterministic post-parse
+overlay instead of training the neural model on them, and how that choice sits
+against the rest of the geocoding field. Companion to the
+[negative-space concept doc](../../concepts/negative-space-coverage.mdx); this is
+the design-decision record behind the `ClosedVocabTagger` work (issue #464).
+
+## The problem this solves
+
+Our parser is a transformer + CRF sequence labeller. Covering a starved **open-vocab**
+tag (e.g. secondary `unit`) is a clean win — the model learns the tag and its
+neighbours sharpen (`unit` 0 → 92%, US `street` +3pp). But the same recipe
+**backfires on closed-vocab, fixed-position tags**. A synthetic `country` shard is
+almost entirely trailing-country rows, so the model learns the cheap correlation
+"trailing token ⇒ country" and starts promoting cities and regions to nationhood:
+measured at 49 F1 / 23% precision on a held-out real set. A flat lookup against the
+country list (`matchCountry` on the trailing comma-segment) scores P=R=F1=100 on the
+same set. `po_box` and `cedex` reproduce the result (100 each, zero false positives),
+across two locales and two match shapes.
+
+The lever-shape taxonomy that follows: **ML for open-vocab/boundary-dependent tags;
+a deterministic matcher for closed-vocab/fixed-position tags.** This doc covers the
+deterministic half.
+
+## Three ways to inject a lexicon, and why we chose the overlay
+
+The NER literature offers three points to apply a closed-vocab lexicon:
+
+1. **Lexicon as a model feature** — add a gazetteer-membership feature to the model
+   (the classic CRF approach, McCallum & Li, CoNLL-2003). Known to give only modest,
+   dataset-dependent gains (~1–2 F1), and it does **not** stop the model from learning
+   the "trailing token ⇒ country" shortcut — the lexicon is one weak signal among many.
+2. **Constrained decoding** — constrain the CRF's Viterbi pass so `country` can only be
+   emitted on gazetteer hits. Effective, but it couples the fix to the decoder and the
+   ONNX export graph.
+3. **Deterministic post-parse overlay** — run the matcher *after* the decode and
+   correct/override the model's spans. A recognized NER technique (deterministic
+   post-processing of a statistical tagger).
+
+We chose **(3), the overlay**, because:
+
+- It must **correct an already-trained model** that over-fires — only a post-decode
+  pass can overwrite mistaken spans without a retrain.
+- It **decouples the fix from the ONNX graph**: no re-export, no quantization risk, and
+  the parser stays **byte-stable** (the overlay is opt-in, default-off).
+- The matcher lives in `codex` (provenance-tracked, queryable) — the project's standard
+  for closed-vocab reference data — not as a model weight or a buried dictionary.
+
+The one cost we accept over constrained decoding: the overlay sees the model's output,
+not its lattice, so it corrects rather than prevents. For closed-vocab tags that is fine
+— the matcher is authoritative where it fires. The **homograph guard** (state/country
+collisions like `CA` → California vs. Canada, "Georgia", "Jordan") lives in the overlay's
+apply logic: fire only when the segment is unambiguously the tag, or downrank when a
+higher-confidence upstream tag already claims the span.
+
+## Where this sits in the field
+
+Two paradigms divide the space:
+
+- **Parse-time structured tagging** — produce an authoritative field-tagged record
+  (Mailwoman, Pelias, libpostal, deepparse). The over-firing failure mode lives here, and
+  the overlay is its fix.
+- **Index-time disambiguation** — don't commit a structured parse; let retrieval decide
+  (Airmail). Sidesteps the failure mode by not having the problem.
+
+| System | Parser | How it handles `country` / closed-vocab | Deterministic post-parse layer? |
+| --- | --- | --- | --- |
+| **libpostal** | statistical (perceptron / CRF-style global inference) | `country` and `po_box` are *learned* labels, same footing as open-vocab; dictionaries are input features + training-data generators | No — end-to-end, inherits the over-fire risk |
+| **deepparse** | neural seq2seq | learned labels, configurable tag set | No documented overlay |
+| **Pelias Parser** | rules + dictionary classifiers + cartesian solver | dictionary classifiers for admin; pattern for PO box | It *is* deterministic end-to-end (no ML to overlay) |
+| **Pelias Placeholder** | — (coarse gazetteer) | deterministic WoF hierarchy resolution, right-to-left, lineage-validated | Yes, but downstream **resolution**, not span re-tagging |
+| **Nominatim** | structured + free-form search | `countrycodes` is a **hard filter**, never a fuzzy/learned term | Deterministic lexicon overlays (countrycodes, special phrases) on search |
+| **Google libaddressinput** | — (validation/format engine) | per-ISO-country deterministic metadata; admin areas as closed-vocab enums | N/A — fully deterministic, no free-text parse |
+| **Airmail** | parserless by default; later a small BERT to aid malformed queries | no `country` label at all — WoF admin names baked into one content field at index time; S2 cells for containment; OSM `key=value` as a separate deterministic tag channel | No — index-time disambiguation instead |
+
+### Reading of the landscape
+
+The field is **bimodal**: libpostal and deepparse learn everything (and inherit the
+over-fire risk we measured); Pelias, Nominatim, and libaddressinput treat country
+deterministically but were never ML parsers to begin with. The deliberate hybrid —
+*keep the neural model for open-vocab fields, but **don't train it** on closed-vocab
+fields; overlay them after decode* — does not appear published in the geocoding space.
+
+Closest analogs:
+
+- **Philosophical:** Nominatim's hard country filter and Google libaddressinput
+  (country = deterministic, never learned).
+- **Architectural:** Pelias Placeholder (a deterministic layer downstream of the parse)
+  — but Pelias has no neural decode to overlay.
+- **Kindred conviction:** Airmail shares our no-Elasticsearch / cheap-embeddable stance
+  and the instinct that closed categorical vocab (its OSM `key=value` channel) belongs in
+  a deterministic path — but applies it at index time, and goes the *opposite* direction
+  on label granularity (it collapses to 6 labels and tolerates category↔POI confusion,
+  where we add labels to sharpen boundaries).
+
+A useful contrast for the over-firing motivation: Pelias's legacy `addressit` had the
+exact pathology — parsing `CA` produced a `region='CA'` subquery and **never** a
+`country='Canada'` alternative ([pelias/api #1287](https://github.com/pelias/api/pull/1287)).
+That homograph collision is precisely what our overlay's guard must handle.
+
+## Citations
+
+- McCallum & Li, "Early results for NER with CRFs, Feature Induction and Web-Enhanced
+  Lexicons", CoNLL-2003 — [aclanthology.org/W03-0430](https://aclanthology.org/W03-0430/)
+  (lexicon-as-feature is the old way; weak, dataset-dependent gains).
+- "Gazetteer-Enhanced Attentive Neural Networks", EMNLP-2019 —
+  [aclanthology.org/D19-1646](https://aclanthology.org/D19-1646/) (gazetteers valued for
+  boundary precision on closed-class spans).
+- libpostal — [Inside Libpostal](https://www.mapzen.com/blog/inside-libpostal/),
+  [openvenues/libpostal](https://github.com/openvenues/libpostal).
+- Pelias — [pelias/parser](https://github.com/pelias/parser),
+  [pelias/placeholder](https://github.com/pelias/placeholder),
+  [pelias/api #1287](https://github.com/pelias/api/pull/1287).
+- Nominatim — [Search Manual](https://nominatim.org/release-docs/develop/api/Search/).
+- Google — [libaddressinput](https://github.com/google/libaddressinput).
+- Airmail — [github.com/ellenhp/airmail](https://github.com/ellenhp/airmail),
+  [Address parsing: state of the art, and beyond](https://blog.ellenhp.me/address-parsing-state-of-the-art-and-beyond),
+  [Host a planet-scale geocoder for $10/month](https://blog.ellenhp.me/host-a-planet-scale-geocoder-for-10-month).
