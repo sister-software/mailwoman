@@ -7,9 +7,8 @@
  *
  *   Phase 1 (#9) shipped JSONL shards + a Python (PyArrow) converter as the path to binary Parquet —
  *   bridging until the JS toolchain caught up. Phase 1.5 (#18 §4) replaced that with a native JS
- *   writer based on the salvaged `@dsnp/parquetjs` wrapper from isp-nexus (now in
- *   `./parquet-wrapper/`). The build pipeline no longer touches Python at all in its hot path; the
- *   only remaining Python is the one-shot `train_tokenizer.py` SentencePiece step.
+ *   writer. The build pipeline no longer touches Python at all in its hot path; the only remaining
+ *   Python is the one-shot `train_tokenizer.py` SentencePiece step.
  *
  *   Compression: `SNAPPY`. The plan in #18 §4 specified `zstd`, but `@dsnp/parquetjs` 1.7.0 only
  *   supports UNCOMPRESSED / GZIP / SNAPPY / BROTLI (see `node_modules/@dsnp/parquetjs/dist/lib/

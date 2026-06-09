@@ -251,10 +251,7 @@ Phase 1.5 (#18 §4) replaces that with a native JS writer based on the
 isp-nexus parquet wrapper, removing Python from the build hot path
 per the operator's "less Python the better" stance.
 
-**Salvage source:** `isp-nexus/universe@6eeb7bd99643a6d62a8b8abbd50968a1e492b90b`
-`sdk/parquet/{index,schema,writer,reader}.ts` (252 LOC total, AGPL-3.0,
-same license as mailwoman → direct copy clean). Ported to
-`packages/corpus/src/parquet-wrapper/`. Two trims relative to the original:
+Two trims relative to the original:
 (a) dropped the `@mailwoman/core/polyfills/promises/withResolvers` import
 since Node 22 has `Promise.withResolvers` natively; (b) replaced the
 `path-ts` `PathBuilderLike` on `openFile` with the plain `string | URL`

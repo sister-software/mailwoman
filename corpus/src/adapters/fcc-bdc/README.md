@@ -108,14 +108,6 @@ that path should re-stamp `defaultLicense` accordingly.
 `--country US` is allowed (no-op since BDC is US-only). Any other
 country value is rejected with a clear error.
 
-## Salvage origin
-
-Adapter scaffolding patterned after `tiger` (the closest SQLite-fed
-analog). Address shape + column names salvaged from the `NTIARecord`
-interface in `/srv/isp-nexus/fcc/bdc/data-collection.ts`. The
-upstream isp-nexus BDC ingestion (`/srv/isp-nexus/sync/fcc/bdc/`)
-remains the canonical pre-build pipeline for the `bdc_locations` table.
-
 ## Fixture
 
 `fixtures/fcc-bdc/fixture.sql` — 12 hand-crafted BSL rows covering:
