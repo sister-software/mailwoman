@@ -271,6 +271,7 @@ def encode_row(
     max_length: int,
     anchor_lookup: "dict[str, tuple[dict[str, float], float, float]] | None" = None,
     gazetteer_lexicon=None,
+    gazetteer_choreography: bool = False,
 ) -> dict[str, list]:
     """Encode a single row into ``input_ids`` + ``attention_mask`` + ``label_ids``.
 
@@ -317,6 +318,15 @@ def encode_row(
         gfeats, gconfs = realign_gazetteer_to_pieces(raw, list(spans), gazetteer_lexicon)
         gfeats = gfeats[:max_length]
         gconfs = gconfs[:max_length]
+        # Train-time channel choreography (#464): zero the clue adjacent to postcode-anchor hits so
+        # the model never learns the biased region->postcode CRF transition. Keyed off the SAME anchor
+        # confidence inference uses (consistent train/inference). No-op without the anchor channel.
+        if gazetteer_choreography and "anchor_confidence" in out:
+            from .gazetteer_anchor import suppress_gazetteer_near_postcode
+
+            gfeats, gconfs = suppress_gazetteer_near_postcode(
+                gfeats, gconfs, out["anchor_confidence"][: len(gconfs)], gazetteer_lexicon.feature_dim
+            )
         gzero = [0.0] * gazetteer_lexicon.feature_dim
         if pad_needed > 0:
             gfeats = gfeats + [gzero] * pad_needed

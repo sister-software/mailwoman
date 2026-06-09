@@ -30,6 +30,7 @@ const neural = new NeuralAddressClassifier({
 	labels: card.labels,
 	postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
 	...(existsSync(GAZ) ? { gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) } : {}),
+	suppressGazetteerNearPostcode: argv.includes("--suppress-gaz-near-postcode"),
 })
 
 const rows = readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))

@@ -50,6 +50,7 @@ interface Args {
 	modelCardPath?: string
 	modelAnchorLookupPath?: string
 	gazetteerLexiconPath?: string
+	suppressGazNearPostcode?: boolean
 	outJson?: string
 }
 
@@ -73,6 +74,7 @@ function parseArgs(): Args {
 		// missing anchor inputs). Mirrors oa-resolver-eval's --model-anchor-lookup.
 		else if (a === "--model-anchor-lookup" && argv[i + 1]) out.modelAnchorLookupPath = argv[++i]
 		else if (a === "--gazetteer-lexicon" && argv[i + 1]) out.gazetteerLexiconPath = argv[++i]
+		else if (a === "--suppress-gaz-near-postcode") out.suppressGazNearPostcode = true
 		else if (a === "--out-json" && argv[i + 1]) out.outJson = argv[++i]
 	}
 	return out as Args
@@ -237,6 +239,7 @@ async function main(): Promise<void> {
 			labels: card.labels,
 			postcodeAnchorLookup,
 			gazetteerLexicon,
+			suppressGazetteerNearPostcode: !!args.suppressGazNearPostcode,
 		})
 	} else {
 		neural = await NeuralAddressClassifier.loadFromWeights()

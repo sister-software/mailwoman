@@ -12,6 +12,7 @@ from .gazetteer_anchor import (
     GazetteerLexicon,
     gazetteer_char_paint,
     realign_gazetteer_to_pieces,
+    suppress_gazetteer_near_postcode,
 )
 from .tokenizer import PieceSpan
 
@@ -102,6 +103,23 @@ def test_po_box_and_cedex_clues():
     # marks lexicon membership (model-first: a hint, never a verdict).
     assert painted_words("12 Box Canyon Rd")["Box"] == BITS["po_box"]
     assert painted_words("75008 PARIS CEDEX 02")["CEDEX"] == BITS["cedex"]
+
+
+def test_choreography_zeros_clue_adjacent_to_postcode_anchor():
+    # "Los Angeles, CA 90012": pieces [LA, CA(region clue, bits=19), 90012(postcode anchor conf=1)].
+    feats = [[0, 0, 0, 0, 0], [1, 1, 0, 0, 1], [0, 0, 0, 0, 0]]
+    confs = [0.0, 1.0, 0.0]
+    anchor_conf = [0.0, 0.0, 1.0]  # postcode anchor fires on the ZIP piece
+    out_f, out_c = suppress_gazetteer_near_postcode(feats, confs, anchor_conf, feature_dim=5, window=1)
+    # The CA clue (index 1) is adjacent to the postcode anchor (index 2) → zeroed.
+    assert out_f[1] == [0, 0, 0, 0, 0]
+    assert out_c[1] == 0.0
+    # A clue NOT adjacent to a postcode anchor is untouched.
+    feats2 = [[1, 1, 0, 0, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
+    confs2 = [1.0, 0.0, 0.0]
+    anchor2 = [0.0, 0.0, 1.0]  # postcode 2 pieces away from the clue
+    of2, oc2 = suppress_gazetteer_near_postcode(feats2, confs2, anchor2, feature_dim=5, window=1)
+    assert of2[0] == [1, 1, 0, 0, 1] and oc2[0] == 1.0
 
 
 def test_realign_projects_first_nonws_char_and_pads_zero():

@@ -21,7 +21,7 @@ import {
 	type DecoderToken,
 } from "@mailwoman/core/decoder"
 import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.js"
-import { buildGazetteerFeatures, type GazetteerLexicon } from "./gazetteer-inference.js"
+import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.js"
 import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
@@ -89,6 +89,18 @@ export interface NeuralAddressClassifierConfig {
 	 * models. Load via `parseGazetteerLexicon` from `./gazetteer-inference.js`.
 	 */
 	gazetteerLexicon?: GazetteerLexicon
+	/**
+	 * Channel choreography (#464, v0.9.13 postcode fix): when true, zero the gazetteer clue on pieces
+	 * adjacent to a postcode-anchor hit (needs both `gazetteerLexicon` and `postcodeAnchorLookup`).
+	 * Targets the region-clue→postcode CRF interference (~3pp US postcode).
+	 *
+	 * PAIRING IS LOAD-BEARING: set this IFF the model was TRAINED with the matching train-time
+	 * choreography (`data.gazetteer_choreography`). The 2026-06-10 diagnostic showed the harm is
+	 * WEIGHT-BAKED — applying this at inference on a model trained *without* train-choreography does
+	 * NOT recover postcode and adds train/inference skew. Only enable for a consolidation-era model
+	 * trained with the train-time half.
+	 */
+	suppressGazetteerNearPostcode?: boolean
 }
 
 export class NeuralAddressClassifier {
@@ -166,7 +178,11 @@ export class NeuralAddressClassifier {
 		const gazetteer = this.cfg.gazetteerLexicon
 			? buildGazetteerFeatures(text, pieces, this.cfg.gazetteerLexicon)
 			: undefined
-		const { logits } = await this.cfg.runner.infer(ids, anchor, gazetteer)
+		const gazFed =
+			gazetteer && anchor && this.cfg.suppressGazetteerNearPostcode
+				? suppressGazetteerNearPostcode(gazetteer, anchor.confidence)
+				: gazetteer
+		const { logits } = await this.cfg.runner.infer(ids, anchor, gazFed)
 
 		this.assertEmissionWidth(logits)
 
@@ -250,7 +266,11 @@ export class NeuralAddressClassifier {
 		const gazetteer = this.cfg.gazetteerLexicon
 			? buildGazetteerFeatures(text, pieces, this.cfg.gazetteerLexicon)
 			: undefined
-		const { logits } = await this.cfg.runner.infer(ids, anchor, gazetteer)
+		const gazFed =
+			gazetteer && anchor && this.cfg.suppressGazetteerNearPostcode
+				? suppressGazetteerNearPostcode(gazetteer, anchor.confidence)
+				: gazetteer
+		const { logits } = await this.cfg.runner.infer(ids, anchor, gazFed)
 
 		this.assertEmissionWidth(logits)
 

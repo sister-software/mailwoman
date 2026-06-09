@@ -491,6 +491,7 @@ def iter_encoded(
             max_length=cfg_data.max_length,
             anchor_lookup=anchor_lookup,
             gazetteer_lexicon=gazetteer_lexicon,
+            gazetteer_choreography=getattr(cfg_data, "gazetteer_choreography", False),
         )
         # Drop rows whose non-padding length exceeds max_length (length filter §2).
         non_pad = sum(enc["attention_mask"])
