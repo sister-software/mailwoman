@@ -91,8 +91,8 @@ v0.5.0's classifier (Thread C) ships two architectural changes to fit the wider 
 The classifier's input layer already accepts per-token feature rows (the phrase-prior
 channel above, and the postcode anchor). The gazetteer anchor generalizes that channel:
 for each token, consult the gazetteer/codex and attach a **candidate-tag set** — a
-multi-hot "this surface form is a known {country}", "{country, region}", "{po_box
-designator}" — as input features. The model still decides every tag; the gazetteer
+multi-hot `[country]`, `[country, region]`, `[po_box designator]` over the tag classes —
+as input features. The model still decides every tag; the gazetteer
 *informs*, it never *overrides*. Think of it as a caching layer of clues: RAG-shaped
 (retrieve external knowledge, augment the model), but the retrieval lands as a feature
 vector per token rather than text in a context window. The literature calls this
@@ -110,7 +110,7 @@ Three properties make this the right home for "the model should know place names
   a single vocab id still carries no disambiguating context. Keep the subword
   tokenizer for generalization; attach membership as a feature for knowledge.)
 - **The multi-hot encoding gives homograph awareness for free.** A token whose
-  candidate set has more than one entry ("Georgia" → {country, region}) is *flagged as
+  candidate set has more than one entry ("Georgia" → `[country, region]`) is *flagged as
   ambiguous by construction* — the model learns "context is load-bearing here."
 - **The over-reliance risk is handled by training, not architecture.** The measured
   failure mode of closed-vocab tags is a model that echoes a cheap correlation (the

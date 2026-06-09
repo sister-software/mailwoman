@@ -41,8 +41,8 @@ the bendable version of the crutch rules systems can't drop.
 ## The move order
 
 1. **Finish country (step 2b): the gazetteer anchor, built general.** A per-token
-   **candidate-tag-set** feature channel (multi-hot over {country, region, po_box,
-   cedex, …}), sourced from codex, riding the same input-layer mechanics as the
+   **candidate-tag-set** feature channel (multi-hot over `country, region, po_box,
+   cedex, …`), sourced from codex, riding the same input-layer mechanics as the
    postcode anchor and phrase priors. Country is the first consumer (its long-tail
    recall — Eswatini, Timor-Leste, multi-word names — is the measured gap);
    region/locality/street membership come nearly free later. Gate unchanged: country

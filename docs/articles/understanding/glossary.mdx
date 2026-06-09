@@ -63,7 +63,7 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **Gazetteer** — a database of named places (countries, regions, cities, neighbourhoods) with their canonical names, coordinates, and IDs. Mailwoman uses [Who's On First](https://whosonfirst.org/) as its gazetteer.
 
-**Gazetteer anchor** — an input-layer feature channel that attaches a per-token **candidate-tag set** from the gazetteer/codex ("this surface is a known {country, region}") so the model conditions on lexicon membership without being overruled by it. The knowledge lives outside the weights — extend the gazetteer, no retrain. See [the knowledge ladder](./our-approach/the-knowledge-ladder.mdx), rung 3.2.
+**Gazetteer anchor** — an input-layer feature channel that attaches a per-token **candidate-tag set** from the gazetteer/codex (e.g. "this surface is a known country-and-region") so the model conditions on lexicon membership without being overruled by it. The knowledge lives outside the weights — extend the gazetteer, no retrain. See [the knowledge ladder](./our-approach/the-knowledge-ladder.mdx), rung 3.2.
 
 **Golden set** — a hand-labelled evaluation dataset. The current golden set is `v0.1.2` with 4,535 entries (US + FR + adversarial).
 
