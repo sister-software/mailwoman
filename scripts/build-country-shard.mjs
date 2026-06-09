@@ -22,8 +22,21 @@
 import { spawnSync } from "node:child_process"
 import { createWriteStream } from "node:fs"
 
-import { countrySurfaceForms } from "@mailwoman/codex/country"
+import { CountryNames, COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { alignRow, stableSourceId } from "@mailwoman/corpus"
+
+// v2: the country TOKEN is decoupled from the skeleton's locale and drawn from a BROAD pool — every
+// ISO canonical name + every curated surface form (endonyms/abbrevs). v1 injected only the skeleton's
+// own 5 locales (US/DE/FR/IT/NL) → the model never saw Canada/Switzerland/Japan/etc. and country-real
+// recall stuck at 35% (P80). Appending "Japan" to a US skeleton is geographically fake but trains the
+// TAG (trailing country name → country), exactly like the directional injection. Surface forms are
+// over-weighted so endonyms/abbrevs ("Deutschland","USA","NL") get strong signal.
+const COUNTRY_FORM_POOL = (() => {
+	const surface = Object.values(COUNTRY_SURFACE_FORMS).flat() // endonyms + abbrevs + canonical (curated)
+	const names = [...CountryNames] // all ~249 ISO canonical English names (breadth)
+	return { surface, names }
+})()
+const COUNTRY_ABSENT_PROB = 0.3 // negatives: rows with NO country token → teach golden precision
 
 // Multi-locale OA sources. region = implied admin where the extract is single-region (US states,
 // DE Saxony/Berlin); countrywide extracts (FR/ES/IT/NL) read region from the CSV when present.
@@ -146,18 +159,18 @@ function readTuples(source, limit) {
 	return tuples
 }
 
-/** Pick a country surface form: 50% canonical English (first), 50% a random variant (endonym/code). */
-function pickCountry(random, iso2) {
-	const forms = countrySurfaceForms(iso2)
-	if (forms.length === 0) return null
-	if (random() < 0.5) return forms[0]
-	return forms[1 + Math.floor(random() * (forms.length - 1))] ?? forms[0]
+/** Pick a country token from the BROAD pool, or null (a country-absent negative). v2. */
+function pickCountry(random) {
+	if (random() < COUNTRY_ABSENT_PROB) return null // negative — teaches "trailing token != always country"
+	// 60% curated surface forms (endonym/abbrev variety), 40% broad ISO canonical names (coverage).
+	const pool = random() < 0.6 ? COUNTRY_FORM_POOL.surface : COUNTRY_FORM_POOL.names
+	return pool[Math.floor(random() * pool.length)]
 }
 
-/** Render the address body in native-ish order with the country appended, plus a few layouts. */
+/** Render the address body in native-ish order. `country` null → a country-ABSENT negative row. */
 function renderCountry(random, t, country) {
 	const { house_number: hn, street, locality: loc, region: reg, postcode: pc, order } = t
-	const components = { house_number: hn, street, locality: loc, country }
+	const components = { house_number: hn, street, locality: loc }
 	if (reg) components.region = reg
 	if (pc) components.postcode = pc
 	let body
@@ -168,11 +181,15 @@ function renderCountry(random, t, country) {
 		const pcCity = [pc, loc].filter(Boolean).join(" ")
 		body = `${street} ${hn}, ${pcCity}`
 	}
+	if (!country) {
+		// Negative: a normal address, NO country token/component. Teaches the model that a trailing
+		// region/city/postcode is NOT a country (counters the v1 golden over-firing, P23%).
+		return { fmt: "negative", raw: body, components }
+	}
+	const withC = { ...components, country }
 	const r = random()
-	// country trailing (the real form), with separator variety; a fraction bare (no postcode/region).
-	if (r < 0.8) return { fmt: "full", raw: `${body}, ${country}`, components }
-	if (r < 0.92) return { fmt: "full-nl", raw: `${body}\n${country}`, components }
-	// bare: street + city + country only
+	if (r < 0.8) return { fmt: "full", raw: `${body}, ${country}`, components: withC }
+	if (r < 0.92) return { fmt: "full-nl", raw: `${body}\n${country}`, components: withC }
 	const bareBody = order === "us" ? `${hn} ${street}, ${loc}` : `${street} ${hn}, ${loc}`
 	return { fmt: "bare", raw: `${bareBody}, ${country}`, components: { house_number: hn, street, locality: loc, country } }
 }
@@ -205,13 +222,9 @@ async function main() {
 	const N = pool.length
 	while (emitted < opts.count && guard++ < opts.count * 8) {
 		const t = pool[Math.floor(random() * N)]
-		const country = pickCountry(random, t.iso2)
-		if (!country) {
-			skipped++
-			continue
-		}
+		const country = pickCountry(random) // may be null → a country-absent negative row
 		const { fmt, raw, components } = renderCountry(random, t, country)
-		if (!raw.includes(country)) {
+		if (country && !raw.includes(country)) {
 			skipped++
 			continue
 		}

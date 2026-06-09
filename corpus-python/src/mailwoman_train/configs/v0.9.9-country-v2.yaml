@@ -1,0 +1,172 @@
+# === v0.9.9-country (#452) — country coverage (cumulative: bakes unit+affix+country) ===============
+# Off the cumulative corpus v0.4.7-country (= base + unit + affix + a 50K MULTI-LOCALE country shard,
+# US/DE/FR/IT/NL with ISO-3166 surface forms appended via codex/country). Two wins: lift `country`
+# (~27%→ target ≥60 on the real-country OOD eval data/eval/external/country-real.jsonl) AND recover the
+# FR-postcode dilution the US-only affix shard caused (#462) via the shard's ~32% non-US rows.
+# GATE (fp32, real-OOD): country ≥60; RETAIN unit ≥88 (unit-real) + affixes prefix≥60/suffix≥60
+# (affix-real via score-affix.ts, UNFOLDED); RECOVER FR postcode toward v4.1.0 (~99, vs affix 95.6);
+# no US/FR/DE regression (per-locale-f1 + de-order-eval.sh). If clean → this is the v4.2.0 consolidation
+# candidate (all three campaign tags). (Header below is the inherited affix recipe; weights updated.)
+# ====================================================================================================
+# === v0.9.8-affix (#452-adjacent) — street-affix coverage, the next negative-space parity lever ====
+# ONE conceptual variable vs v0.9.7-unit-v3 (the shipped v4.1.0): the corpus adds a 50K format-diverse
+# street-affix shard (OA streets split into street_prefix/street/street_suffix via the USPS Pub-28
+# C1/C2 codex) and `synth-affix: 2.0` to source_weights. Corpus v0.4.6-affix = v0.4.5-unit-v2 base
+# (so the unit win is RETAINED) + the affix overlay shard. Everything else held — v0.9.3 recipe
+# (anchor ON, self-cond ON, region-tail German), v0.7.2 base lineage, seed 42, 20k steps.
+#
+# WHY. The v0-parity assessment (#15) found street_prefix + street_suffix at ~0% F1 — collapsed into
+# `street` (the model lumps "N Main St" into one street span). Same coverage mechanism as `unit`:
+# the corpus carries the tags (TIGER/NAD-structured), but prevalence is too low. This shard raises
+# prevalence with format diversity (abbrev "N"/"St" vs expanded "North"/"Street", + full/bare/
+# street-only/venue layouts), and INJECTS a directional onto ~30% of prefix-less streets for
+# street_prefix signal. HYPOTHESIS (negative space): teaching the model to split off prefix+suffix
+# should also RAISE `street` precision. See docs/articles/concepts/negative-space-coverage.md.
+#
+# SHARD PROVENANCE (eval-honesty): train shard = real non-Vermont US OA streets, split via the codex
+# (directionals + USPS suffixes), prefixes partly injected. Held-out VT golden measures affix
+# recognition on held-out addresses; the REAL-in-the-wild gate is data/eval/external/
+# street-affix-real.jsonl (30 curated real addresses, naturally-occurring affixes — the TRUSTWORTHY
+# lens, mirroring the unit-real-designators eval). Read the real-affix eval at the gate, not the VT #.
+#
+# PRE-REGISTERED GATE (stop at 20k):
+#   - street_suffix F1 >= 70% AND street_prefix F1 >= 60% on the real-affix eval (both were ~0%).
+#   - `street` F1 >= v4.1.0 (no loss; ideally +; negative space) on golden US + the real-affix eval.
+#   - RETAIN the unit win: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl (was 92.3%).
+#   - NO-REGRESSION (within ~1pp vs v4.1.0 / v0.9.7, fp32-to-fp32): US house_number / postcode /
+#     locality / region; FR per-class floors; DE native-order locality (de-order-eval.sh).
+#   DECISION: affixes clear + street holds + unit retained + no tripwire → promote candidate.
+#     If street/house_number slips or affixes over-fire: lower synth-affix 2.0 -> 1.5 + rerun
+#     (the unit-v3 remedy). If affixes move but `street` drops: negative space refuted here — keep
+#     the affix lift, note it.
+# Measure: per-locale-f1.ts (US/FR golden) + the street-affix-real + unit-real-designators evals
+#   (fp32) + de-order-eval.sh (DE 2x2 tripwire).
+#
+# CORPUS: v0.4.6-affix (no rebuild of base). Reproduce:
+#   node scripts/build-street-affix-shard.mjs --output /tmp/affix-train.jsonl --count 50000 --seed 42
+#   node scripts/build-street-affix-shard.mjs --output /tmp/affix-val.jsonl --golden --count 2000 --seed 99
+#   python3 scripts/jsonl-to-parquet.py --input /tmp/affix-train.jsonl --output <NEW>/train/part-affix-train.parquet
+#   # assemble overlay MANIFEST (v0.4.5-unit-v2 base + the affix shard), then modal volume put both.
+#
+# Launch:
+#   modal run -d scripts/modal/train_remote.py \
+#     --config v0.9.8-affix.yaml --resume none \
+#     --trackio --trackio-space sister-software/mailwoman-trackio
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.4.8-country-v2/corpus-v0.4.8-country-v2
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-po-box: 1.5
+    synth-intersection: 0.2
+    synth-german: 6.0
+    # retained from v4.1.0 (v0.9.7-unit-v3) — keep the secondary-unit win.
+    synth-unit: 1.5
+    # NEW: the street-affix shard. 2.0 ≈ ~6% of the epoch — two starved tags to lift, but capped to
+    # avoid over-firing affixes / starving `street`. Lower to 1.5 if a street/house_number tripwire trips.
+    synth-affix: 2.0
+    # NEW: multi-locale country shard (US/DE/FR/IT/NL, ISO-3166 surface forms via codex/country). 1.5 —
+    # country baseline is ~27% (not 0), needs less push; the ~32% non-US rows ALSO recover the FR-postcode
+    # dilution the US-only affix shard introduced (#462). This run bakes unit+affix+country cumulatively.
+    synth-country: 1.5
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  class_weights:
+    O: 0.5
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v099-country-v2-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 20000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  trackio_project: mailwoman
+  trackio_run_name: v0.9.9-country-v2-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""
