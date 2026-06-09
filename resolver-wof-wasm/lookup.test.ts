@@ -31,7 +31,7 @@ function buildFixtureWof(path: string): void {
 			is_current INTEGER, is_deprecated INTEGER
 		);
 		CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);
-		CREATE TABLE geojson (id INTEGER PRIMARY KEY, body TEXT);
+		CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0);
 
 		INSERT INTO spr VALUES (100, NULL, 'United States', 'country', 'US', 39.0, -97.0, 24.5, 49.4, -125.0, -66.9, -1, 0);
 		INSERT INTO spr VALUES (101, 100, 'Illinois', 'region', 'US', 40.0, -89.0, 37.0, 42.5, -91.5, -87.0, -1, 0);
@@ -58,16 +58,27 @@ function buildFixtureWof(path: string): void {
 		INSERT INTO names (id, language, name) VALUES (220, 'eng', 'York');
 		INSERT INTO names (id, language, name) VALUES (221, 'eng', 'New York');
 
-		INSERT INTO geojson VALUES (100, '{"properties":{"wof:population":331000000}}');
-		INSERT INTO geojson VALUES (101, '{"properties":{"wof:population":12700000}}');
-		INSERT INTO geojson VALUES (200, '{"properties":{"wof:population":2700000}}');
-		INSERT INTO geojson VALUES (201, '{"properties":{"wof:population":114000}}');
-		INSERT INTO geojson VALUES (300, '{"properties":{}}');
-		INSERT INTO geojson VALUES (301, '{"properties":{}}');
-		INSERT INTO geojson VALUES (210, '{"properties":{"wof:population":8000}}');
-		INSERT INTO geojson VALUES (211, '{"properties":{"wof:population":580000}}');
-		INSERT INTO geojson VALUES (220, '{"properties":{"wof:population":1700}}');
-		INSERT INTO geojson VALUES (221, '{"properties":{"wof:population":8400000}}');
+		-- Pre-built population aux table (production shape — build-unified-wof extracts wof:population
+		-- here at ingest; the source has no geojson table). Postcodes (300/301) carry no population row.
+		INSERT INTO place_population VALUES (100, 331000000);
+		INSERT INTO place_population VALUES (101, 12700000);
+		INSERT INTO place_population VALUES (200, 2700000);
+		INSERT INTO place_population VALUES (201, 114000);
+		INSERT INTO place_population VALUES (210, 8000);
+		INSERT INTO place_population VALUES (211, 580000);
+		INSERT INTO place_population VALUES (220, 1700);
+		INSERT INTO place_population VALUES (221, 8400000);
+
+		-- Region abbreviation tiering (#189): 'Vermontstate' (tiny pop) carries the exact abbrev 'VT';
+		-- 'Vt Plains' (huge pop) only TOKEN-matches "vt". build-slim materializes place_abbr (110→VT) so
+		-- the WASM resolver tiers the exact-abbrev holder above the populous token match.
+		INSERT INTO spr VALUES (110, 100, 'Vermontstate', 'region', 'US', 44.0, -72.7, 42.7, 45.0, -73.4, -71.5, -1, 0);
+		INSERT INTO spr VALUES (111, 100, 'Vt Plains', 'region', 'US', 38.0, -99.0, 36.0, 40.0, -101.0, -97.0, -1, 0);
+		INSERT INTO names (id, language, name) VALUES (110, 'eng', 'Vermontstate');
+		INSERT INTO names (id, language, name) VALUES (110, 'abbr', 'VT');
+		INSERT INTO names (id, language, name) VALUES (111, 'eng', 'Vt Plains');
+		INSERT INTO place_population VALUES (110, 1000);
+		INSERT INTO place_population VALUES (111, 100000000);
 
 		-- Dual-role relation (#402): Illinois(101) ⊃ Springfield(201). build-slim carries it to the slim DB.
 		CREATE TABLE coincident_roles (
@@ -122,6 +133,22 @@ describe("WofWasmPlaceLookup", () => {
 			expect(matches[0]?.placetype).toBe("locality")
 			expect(matches[0]?.country).toBe("US")
 			expect(matches[0]?.lat).toBeCloseTo(41.88, 1)
+		} finally {
+			lookup.close()
+		}
+	})
+
+	test("exact-abbreviation tiering via place_abbr beats a populous token match (#189)", async () => {
+		const { db } = await loadSlimWofDatabase({ source: slimBytes })
+		const lookup = new WofWasmPlaceLookup({ db })
+		try {
+			const matches = await lookup.findPlace({ text: "VT", placetype: "region", limit: 5 })
+			// 'Vermontstate' holds the exact abbrev "VT" (place_abbr 110→VT, tiny pop); 'Vt Plains' only
+			// token-matches "vt" with a huge population. The exact-abbrev tier must win — the data-driven
+			// replacement for the demo's hardcoded expandUsRegion map.
+			expect(matches[0]?.id).toBe(110)
+			expect(matches[0]?.name).toBe("Vermontstate")
+			expect(matches[0]?.exactMatch).toBe(true)
 		} finally {
 			lookup.close()
 		}

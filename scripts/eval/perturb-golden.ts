@@ -1,24 +1,23 @@
 /**
- * perturb-golden.ts — corpus-perturbation neutral-arena generator (Direction A).
+ * Perturb-golden.ts — corpus-perturbation neutral-arena generator (Direction A).
  *
- * Our 376-assertion suite is a Pelias/addressit port (v0's lineage), so it can't
- * reveal where neural beats rules. This builds an UNBIASED arena from ground truth
- * WE OWN: take golden v0.1.2 (already labeled in our schema) and apply rule-
- * defeating perturbations while keeping the component labels intact. Rule-based
- * parsers lean on delimiters / capitalization / canonical spacing; a contextual
- * neural model should degrade more gracefully. The three-bucket harness then
+ * Our 376-assertion suite is a Pelias/addressit port (v0's lineage), so it can't reveal where
+ * neural beats rules. This builds an UNBIASED arena from ground truth WE OWN: take golden v0.1.2
+ * (already labeled in our schema) and apply rule- defeating perturbations while keeping the
+ * component labels intact. Rule-based parsers lean on delimiters / capitalization / canonical
+ * spacing; a contextual neural model should degrade more gracefully. The three-bucket harness then
  * shows whether that's true (the methodology-vindication test).
  *
- * Perturbation classes (each preserves the expected components — only the surface
- * changes, and the harness matcher normalizes case + allows substring):
- *   - delimiter-strip : remove commas (rules depend on them)
- *   - lowercase       : drop capitalization cues
- *   - glue            : collapse the space between region and postcode ("OR97214")
+ * Perturbation classes (each preserves the expected components — only the surface changes, and the
+ * harness matcher normalizes case + allows substring):
  *
- * Run:
- *   node --experimental-strip-types scripts/eval/perturb-golden.ts \
- *     --golden data/eval/golden/v0.1.2 --out /tmp/perturb-eval/perturbed.jsonl [--per-file 60]
- * Then run it through harness-v0-neural with --symmetric-match (see that flag).
+ * - Delimiter-strip : remove commas (rules depend on them)
+ * - Lowercase : drop capitalization cues
+ * - Glue : collapse the space between region and postcode ("OR97214")
+ *
+ * Run: node --experimental-strip-types scripts/eval/perturb-golden.ts\
+ * --golden data/eval/golden/v0.1.2 --out /tmp/perturb-eval/perturbed.jsonl [--per-file 60] Then run
+ * it through harness-v0-neural with --symmetric-match (see that flag).
  */
 
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
@@ -57,7 +56,9 @@ function main(): void {
 	let base = 0
 
 	for (const file of readdirSync(GOLDEN).filter((f) => f.endsWith(".jsonl"))) {
-		const lines = readFileSync(join(GOLDEN, file), "utf8").split("\n").filter((l) => l.trim())
+		const lines = readFileSync(join(GOLDEN, file), "utf8")
+			.split("\n")
+			.filter((l) => l.trim())
 		// Deterministic spread: every Nth row up to PER_FILE.
 		const step = Math.max(1, Math.floor(lines.length / PER_FILE))
 		for (let i = 0; i < lines.length && out.length / PERTURBATIONS.length < base + PER_FILE; i += step) {

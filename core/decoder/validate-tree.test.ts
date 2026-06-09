@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the v0.7 #37 structural-validity checker. Trees are built through
- *   the real `buildAddressTree` (so containment matches production) except for
- *   the illegal-edge case, which is hand-constructed since the builder only
- *   produces legal edges by design.
+ *   Tests for the v0.7 #37 structural-validity checker. Trees are built through the real
+ *   `buildAddressTree` (so containment matches production) except for the illegal-edge case, which
+ *   is hand-constructed since the builder only produces legal edges by design.
  */
 
 import { describe, expect, test } from "vitest"

@@ -5,11 +5,12 @@
  *   Mailwoman geocoder demo — fully client-side. Combines:
  *
  *   - `@mailwoman/neural-web` (onnxruntime-web, WASM SIMD with WebGPU fallback) for the BIO classifier.
- *   - sql.js-httpvfs (../../shared/httpvfs-resolver) range-loading the same-origin WOF + polygon DBs.
+ *   - Sql.js-httpvfs (../../shared/httpvfs-resolver) range-loading the same-origin WOF + polygon DBs.
  *   - `@mailwoman/cartographer` `StyleSpecificationComposer` over the v4 protomaps basemap.
  *
  *   The model/tokenizer/fst come from HF (one-shot full-fetch); the resolver DBs are served
- *   same-origin from `/mailwoman/` and range-loaded, so a session fetches a few MB of them, not 70+.
+ *   same-origin from `/mailwoman/` and range-loaded, so a session fetches a few MB of them, not
+ *   70+.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -36,45 +37,20 @@ import {
 	ResolvedHit,
 } from "../../shared/resources.tsx"
 
+import {
+	DEFAULT_ADDRESS,
+	DEFAULT_LOCALE,
+	EXAMPLE_ADDRESSES,
+	flattenTree,
+	runCascade,
+} from "../../shared/demo-helpers.ts"
+import type { ReleasesManifest } from "../../shared/demo-helpers.ts"
+
 import styles from "./styles.module.css"
-
-const DEFAULT_LOCALE = "en-us"
-
-const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
-
-const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
-	{ label: "White House", address: "1600 Pennsylvania Ave NW, Washington, DC 20500" },
-	{ label: "Empire State", address: "350 5th Ave, New York, NY 10118" },
-	{ label: "Pier 39 SF", address: "Pier 39, San Francisco, CA 94133" },
-	{ label: "Wrigley Field", address: "1060 W Addison St, Chicago, IL 60613" },
-	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
-	{ label: "ZIP only", address: "90210" },
-	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin" },
-	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris" },
-]
 
 const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
 
-interface ReleaseInfo {
-	version: string
-	label: string
-	description: string
-	modelSize: string
-	tokenizerVocab: number
-	steps: number
-	hasFst: boolean
-	hasWofDb: boolean
-	/** Anchor-trained bundle (#239/#240) — ships postcode-*.bin so the demo feeds the postcode anchor. */
-	hasAnchor?: boolean
-	/** Ships a `wof-polygons.db` sibling — the demo draws the crisp admin boundary instead of the bbox. */
-	hasPolygons?: boolean
-}
 
-interface ReleasesManifest {
-	locale: string
-	defaultVersion: string
-	releases: ReleaseInfo[]
-}
 
 const DemoPage: React.FC = () => {
 	const { siteConfig } = useDocusaurusContext()
@@ -279,10 +255,7 @@ const DemoApp: React.FC = () => {
 					setLookupLoader(() => async () => {
 						// Range-load the same-origin DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
 						const { loadHttpvfsDb, WofHttpvfsPlaceLookup } = await import("../../shared/httpvfs-resolver")
-						const worker = await loadHttpvfsDb(
-							assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"),
-							sqljsBaseUrl
-						)
+						const worker = await loadHttpvfsDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"), sqljsBaseUrl)
 						return new WofHttpvfsPlaceLookup(worker)
 					})
 				}
@@ -515,20 +488,20 @@ const DemoApp: React.FC = () => {
 				// selectedCandidateIndex changes. Just stash the candidates; the effect handles
 				// clearing stale marker/bbox AND rendering the new selection.
 				// Dual-role (#402): surface whether the resolved place doubles as another admin tier — a
-					// city-state (Berlin = locality AND region) or a capital-seat. Best-effort + optional: the
-					// lookup returns [] when the slim DB predates the coincident_roles relation.
-					let dualRoles: DualRole[] | undefined
-					const primaryHit = candidates[0]
-					if (primaryHit && wofLookup.coincidentRolesFor) {
-						try {
-							const roles = await wofLookup.coincidentRolesFor(primaryHit.id)
-							if (roles.length > 0) dualRoles = roles
-						} catch {
-							/* relation absent / query failed → no dual-role badge */
-						}
+				// city-state (Berlin = locality AND region) or a capital-seat. Best-effort + optional: the
+				// lookup returns [] when the slim DB predates the coincident_roles relation.
+				let dualRoles: DualRole[] | undefined
+				const primaryHit = candidates[0]
+				if (primaryHit && wofLookup.coincidentRolesFor) {
+					try {
+						const roles = await wofLookup.coincidentRolesFor(primaryHit.id)
+						if (roles.length > 0) dualRoles = roles
+					} catch {
+						/* relation absent / query failed → no dual-role badge */
 					}
+				}
 
-					setSelectedCandidateIndex(0)
+				setSelectedCandidateIndex(0)
 				setResult({
 					input: text,
 					tree,
@@ -540,7 +513,7 @@ const DemoApp: React.FC = () => {
 					fstActive: fstMatcher !== null,
 					fstProvenance,
 					timing: { shape: tShape - tStart, classify: tClassify - tShape, resolve: tResolve - tBeforeResolve },
-						dualRoles,
+					dualRoles,
 				})
 			} catch (parsingError) {
 				console.error("Error parsing input", parsingError)
@@ -673,14 +646,18 @@ function whenStyleReady(map: MapLibreMap, fn: () => void): void {
 	map.once("styledata", () => whenStyleReady(map, fn))
 }
 
-/** A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place outline. */
+/**
+ * A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place
+ * outline.
+ */
 type PlaceGeometry =
 	| { type: "Polygon"; coordinates: number[][][] }
 	| { type: "MultiPolygon"; coordinates: number[][][][] }
 
 /**
- * Shared source/layer plumbing for the resolved-place outline. Both the bbox rectangle and the crisp
- * admin polygon funnel through here so they reuse one source (`setData` swaps the geometry in place).
+ * Shared source/layer plumbing for the resolved-place outline. Both the bbox rectangle and the
+ * crisp admin polygon funnel through here so they reuse one source (`setData` swaps the geometry in
+ * place).
  */
 function setPlaceOutline(map: MapLibreMap, geometry: PlaceGeometry): void {
 	const geojson = {
@@ -746,15 +723,18 @@ function geomBounds(geometry: PlaceGeometry): { minLon: number; minLat: number; 
 	return { minLon, minLat, maxLon, maxLat }
 }
 
-/** id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. Async (range-loaded). */
+/**
+ * Id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. Async
+ * (range-loaded).
+ */
 interface PolygonDb {
 	get(id: number): Promise<PlaceGeometry | null>
 }
 
 /**
  * Open the crisp-polygon DB (built by scripts/build-wof-polygons.mjs) via sql.js-httpvfs — a single
- * `SELECT geom WHERE id=?` touches ~1 page, so the browser fetches a few KB of the 19 MB file rather
- * than the whole thing. Same range-load path as the resolver DB.
+ * `SELECT geom WHERE id=?` touches ~1 page, so the browser fetches a few KB of the 19 MB file
+ * rather than the whole thing. Same range-load path as the resolver DB.
  */
 async function loadPolygonDb(url: string, sqljsBaseUrl: string): Promise<PolygonDb> {
 	const { loadHttpvfsDb, makeHttpvfsPolygonLookup } = await import("../../shared/httpvfs-resolver")
@@ -773,118 +753,7 @@ function clearBbox(map: MapLibreMap): void {
 	})
 }
 
-type ParsedNode = { tag: string; value?: unknown; confidence?: number }
 
-const normName = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
-
-// USPS two-letter codes → full state name. A bare "IL" FTS-matches "Ille-et-Vilaine" (a French
-// département) before "Illinois", so its France bbox filters out the actual US city — expanding to
-// the full name resolves the right region. Full names pass through unchanged.
-const US_STATE_ABBREV: Record<string, string> = {
-	AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado",
-	CT: "Connecticut", DE: "Delaware", DC: "District of Columbia", FL: "Florida", GA: "Georgia",
-	HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky",
-	LA: "Louisiana", ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota",
-	MS: "Mississippi", MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire",
-	NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota",
-	OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina",
-	SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia",
-	WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", PR: "Puerto Rico",
-}
-const expandUsRegion = (text: string): string => US_STATE_ABBREV[text.trim().toUpperCase()] ?? text
-
-async function runCascade(
-	lookup: MailwomanLookupLike,
-	postcodeNode: ParsedNode | undefined,
-	localityNodes: ParsedNode[],
-	stateNode: ParsedNode | undefined,
-	rawText: string
-): Promise<Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>> {
-	type Hits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
-	const usable = (cs: Hits): Hits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
-
-	// Failure mode for a mis-tagged span. The model can label a street as a locality ("Rue du
-	// Chevaleret") and emit several locality spans alongside the real city ("Paris"). Resolve them in
-	// source order (specific → general) and prefer a hypothesis whose top hit is an EXACT name match
-	// — a real place actually called this — over a fuzzy token match (a street name can token-collide
-	// with an unrelated same-named town). So when the specific line isn't a real place, we fall
-	// through to the one that is: the city. A fuzzy hit is kept only as a last-resort backstop.
-	const resolveLocality = async (regionBbox: Hits[number]["bbox"]): Promise<Hits> => {
-		// Prefer an exact-name match inside the region bbox; if none, retry the same nodes WITHOUT the
-		// bbox before settling for a fuzzy hit. The unconstrained retry is the safety net for a
-		// mis-resolved region (e.g. "IL" → a French département): a bad bbox can't cause a total miss.
-		let fuzzy: Hits = []
-		for (const bbox of regionBbox ? [regionBbox, undefined] : [undefined]) {
-			for (const node of localityNodes) {
-				const text = String(node.value ?? "").trim()
-				if (!text) continue
-				const cs = usable(await lookup.findPlace({ text, placetype: "locality", bbox, limit: 5 }))
-				if (cs.length === 0) continue
-				if (cs.some((c) => normName(c.name) === normName(text))) return cs
-				if (fuzzy.length === 0) fuzzy = cs
-			}
-		}
-		return fuzzy
-	}
-
-	// Use the geography the parser found. Country is NOT hardcoded to US — a global search plus the
-	// resolver's population ranking surfaces the famous same-name place ("Berlin" → Berlin, DE 3.7M,
-	// not Berlin, NH 9k). A parsed region/state is resolved to its bbox and used to constrain the
-	// postcode + locality lookups, which disambiguates same-name US localities ("Roseville, Michigan"
-	// → the Roseville inside Michigan's bounds, not the larger Roseville, CA the population boost
-	// would otherwise pick).
-	let regionBbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | undefined
-	if (stateNode?.value) {
-		const regions = await lookup.findPlace({
-			text: expandUsRegion(String(stateNode.value)),
-			placetype: "region",
-			limit: 1,
-		})
-		regionBbox = regions[0]?.bbox
-	}
-
-	if (postcodeNode?.value) {
-		const cs = usable(
-			await lookup.findPlace({ text: String(postcodeNode.value), placetype: "postalcode", bbox: regionBbox, limit: 5 })
-		)
-		if (cs.length > 0) return cs
-	}
-
-	const localityHits = await resolveLocality(regionBbox)
-	if (localityHits.length > 0) return localityHits
-
-	return usable(await lookup.findPlace({ text: rawText, bbox: regionBbox, limit: 5 }))
-}
-
-type TreeNode = {
-	tag?: string
-	value?: unknown
-	confidence?: number
-	start?: number
-	end?: number
-	children?: unknown[]
-}
-
-function flattenTree(
-	tree: unknown
-): Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> {
-	const out: Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> = []
-	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
-	const stack = [...(roots as TreeNode[])]
-	while (stack.length) {
-		const n = stack.pop()!
-		if (typeof n.tag === "string") {
-			out.push({ tag: n.tag, value: n.value, confidence: n.confidence, start: n.start, end: n.end })
-		}
-		if (Array.isArray(n.children)) {
-			for (const c of n.children) {
-				stack.push(c as TreeNode)
-			}
-		}
-	}
-
-	return out.reverse() // depth-first appended in reverse; flip for source order
-}
 
 function currentDocusaurusTheme(): "light" | "dark" {
 	if (typeof document === "undefined") return "light"

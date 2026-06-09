@@ -8,7 +8,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"playwright": "^1.49.0",
+		"playwright": "^1.60.0",
 		"sql.js-httpvfs": "^0.8.12"
 	}
 }

@@ -23,7 +23,13 @@
  *   most useful at training time, not corpus build time.
  */
 
-import { US_STREET_SUFFIX_PREFERRED_ABBR, matchCase, matchTrailingSuffix } from "@mailwoman/codex/us"
+import {
+	US_STREET_SUFFIX_PREFERRED_ABBR,
+	US_UNIT_DESIGNATOR_PREFERRED_ABBR,
+	matchCase,
+	matchLeadingDesignator,
+	matchTrailingSuffix,
+} from "@mailwoman/codex/us"
 import type { BioLabel, ComponentTag } from "@mailwoman/core/types"
 import { alignRow } from "./align.js"
 import { whitespaceTokenizer, type Tokenizer } from "./tokenize.js"
@@ -331,6 +337,62 @@ export const streetSuffixExpand: Augmentation = (row) => {
 	return withAugmentation(row, "us-street-suffix-expand", newRaw, newComponents)
 }
 
+/**
+ * US: swap the LEADING secondary-unit designator in `components.unit` to its approved USPS
+ * abbreviation, preserving case + the identifier. `"Apartment 4B"` → `"Apt 4B"`; `"SUITE 200"` →
+ * `"STE 200"`; `"floor 3"` → `"fl 3"`. Returns null when the unit has no recognized leading
+ * designator (a bare `"4B"` / `"#210"`), the designator is already the approved abbreviation, or
+ * the swap would leave `raw` untouched.
+ *
+ * Mirrors `streetSuffixAbbreviate`, but designators LEAD the unit (vs suffixes that trail the
+ * street). Sourced from the USPS Pub-28 C2 codex — the data-generation counterpart to the runtime
+ * `UnitDesignatorClassifier`.
+ */
+export const unitDesignatorAbbreviate: Augmentation = (row) => {
+	if (row.country !== "US") return null
+	const unit = row.components.unit
+	if (!unit) return null
+	const match = matchLeadingDesignator(unit)
+	if (!match) return null
+
+	const preferred = US_UNIT_DESIGNATOR_PREFERRED_ABBR[match.canonical]
+	const target = matchCase(preferred, match.matched)
+	if (target === match.matched) return null
+
+	const newUnit = `${target}${unit.slice(match.matched.length)}`
+	if (newUnit === unit) return null
+
+	const newComponents: ComponentDict = { ...row.components, unit: newUnit }
+	const newRaw = row.raw.replace(new RegExp(`\\b${escapeRegex(unit)}\\b`, "g"), newUnit)
+	if (newRaw === row.raw) return null
+	return withAugmentation(row, "us-unit-designator-abbreviate", newRaw, newComponents)
+}
+
+/**
+ * US: swap the LEADING secondary-unit designator in `components.unit` to its full canonical form,
+ * preserving case + the identifier. `"Apt 4B"` → `"Apartment 4B"`; `"STE 200"` → `"SUITE 200"`.
+ * Returns null when there's no recognized leading designator, it's already the canonical word, or
+ * the swap would leave `raw` untouched. Same leading-word-only rule as `unitDesignatorAbbreviate`.
+ */
+export const unitDesignatorExpand: Augmentation = (row) => {
+	if (row.country !== "US") return null
+	const unit = row.components.unit
+	if (!unit) return null
+	const match = matchLeadingDesignator(unit)
+	if (!match) return null
+
+	const target = matchCase(match.canonical, match.matched)
+	if (target === match.matched) return null
+
+	const newUnit = `${target}${unit.slice(match.matched.length)}`
+	if (newUnit === unit) return null
+
+	const newComponents: ComponentDict = { ...row.components, unit: newUnit }
+	const newRaw = row.raw.replace(new RegExp(`\\b${escapeRegex(unit)}\\b`, "g"), newUnit)
+	if (newRaw === row.raw) return null
+	return withAugmentation(row, "us-unit-designator-expand", newRaw, newComponents)
+}
+
 /** US: ZIP+4 form `12345-6789` → `123456789` (dash dropped). */
 export const zipPlus4DashDrop: Augmentation = (row) => {
 	if (row.country !== "US") return null
@@ -377,6 +439,8 @@ export const AUGMENTATIONS: Record<string, Augmentation> = {
 	"directional-abbreviate": directionalAbbreviate,
 	"us-street-suffix-abbreviate": streetSuffixAbbreviate,
 	"us-street-suffix-expand": streetSuffixExpand,
+	"us-unit-designator-abbreviate": unitDesignatorAbbreviate,
+	"us-unit-designator-expand": unitDesignatorExpand,
 	"zip-plus4-dash-drop": zipPlus4DashDrop,
 	"particle-strip": particleStrip,
 }
@@ -394,6 +458,8 @@ export function defaultAugmentationsForCountry(country: string): readonly Augmen
 				directionalAbbreviate,
 				streetSuffixAbbreviate,
 				streetSuffixExpand,
+				unitDesignatorAbbreviate,
+				unitDesignatorExpand,
 				zipPlus4DashDrop,
 			]
 		case "FR":

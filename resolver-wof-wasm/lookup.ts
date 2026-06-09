@@ -45,8 +45,11 @@ function normalizeName(s: string): string {
 export class WofWasmPlaceLookup implements PlaceLookup {
 	readonly #db: Database
 	#hasPopulationCache?: boolean
-	/** Lazily-built `admin_id → coincident localities` map from the #403 relation (the slim DB carries
-it). */
+	#hasPlaceAbbrCache?: boolean
+	/**
+	 * Lazily-built `admin_id → coincident localities` map from the #403 relation (the slim DB carries
+	 * it).
+	 */
 	#coincidentRolesCache?: Map<number, CoincidentLocality[]>
 
 	constructor(opts: WofWasmPlaceLookupOpts) {
@@ -62,6 +65,28 @@ it). */
 			this.#hasPopulationCache = r.length > 0
 		}
 		return this.#hasPopulationCache
+	}
+
+	/** Lazily probe (once) whether the slim DB carries the `place_abbr` aux table (build-slim ≥ #189). */
+	#hasPlaceAbbr(): boolean {
+		if (this.#hasPlaceAbbrCache === undefined) {
+			const r = this.#db.selectObjects(`SELECT 1 FROM sqlite_master WHERE type='table' AND name='place_abbr' LIMIT 1`)
+			this.#hasPlaceAbbrCache = r.length > 0
+		}
+		return this.#hasPlaceAbbrCache
+	}
+
+	/**
+	 * Ids whose region abbreviation exactly equals `text` (case-insensitive), from `place_abbr`. The
+	 * exact-abbrev tier signal — see the `findPlace` call site. Empty on slim DBs without the table.
+	 */
+	#abbrExactIds(text: string): Set<number> {
+		const t = text.trim()
+		if (!t || !this.#hasPlaceAbbr()) return new Set()
+		const rows = this.#db.selectObjects(`SELECT id FROM place_abbr WHERE abbr = ? COLLATE NOCASE`, [t]) as Array<{
+			id: number
+		}>
+		return new Set(rows.map((r) => Number(r.id)))
 	}
 
 	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
@@ -131,9 +156,16 @@ it). */
 		}>
 
 		const normQuery = normalizeName(text)
+		// Exact-abbreviation ids: region/state abbreviations live in the slim DB's `place_abbr` table
+		// (carried by build-slim before `names` is dropped). A candidate whose abbreviation equals the
+		// query is an EXACT match — same tier as an exact name match — so "VT" → Vermont outranks a
+		// foreign region that merely token-matches "VT" via a multilingual name fragment. No-op on slim
+		// DBs built before place_abbr (the table is absent → empty set). This is the data-driven
+		// replacement for the demo's hardcoded `expandUsRegion` map; it also generalizes beyond US.
+		const abbrIds = this.#abbrExactIds(text)
 		return rows
 			.map((row) => {
-				const exactTier = normalizeName(row.name) === normQuery ? 0 : 1
+				const exactTier = normalizeName(row.name) === normQuery || abbrIds.has(row.id) ? 0 : 1
 				const popBoost =
 					row.population && row.population > 0
 						? POPULATION_BOOST * Math.min(1, Math.log10(1 + row.population) / POPULATION_SCALE_LOG10)
@@ -144,7 +176,7 @@ it). */
 			})
 			.sort((a, b) => a.exactTier - b.exactTier || a.adjScore - b.adjScore)
 			.slice(0, limit)
-			.map(({ row, adjScore }) => ({
+			.map(({ row, adjScore, exactTier }) => ({
 				id: row.id,
 				name: row.name,
 				placetype: row.placetype as WofPlacetype,
@@ -152,6 +184,9 @@ it). */
 				lat: row.latitude,
 				lon: row.longitude,
 				parent_id: row.parent_id ?? undefined,
+				// Surface the exact-match tier so a downstream country re-rank (#369) can keep the country
+				// pin from crossing it — parity with `WofSqlitePlaceLookup`. See ResolvedPlace.exactMatch.
+				exactMatch: exactTier === 0,
 				bbox:
 					row.min_latitude != null && row.max_latitude != null && row.min_longitude != null && row.max_longitude != null
 						? {

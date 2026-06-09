@@ -35,9 +35,11 @@ interface SeedRegion {
 }
 
 /**
- * Build a fixture with the geojson body that `buildPlaceSearchFts` reads to populate the
- * `place_population` aux table — so the population boost is actually active (the plain
- * lookup.test.ts seed has no population path). Opened with `buildFts: true` by the lookup.
+ * Build a fixture in the production shape: a pre-built `place_population` aux table (no geojson —
+ * `build-unified-wof` extracts `wof:population` into this table at ingest), so the population boost
+ * is actually active (the plain lookup.test.ts seed has no population path). Opened with `buildFts:
+ * true` by the lookup; the lazy FTS build leaves the pre-existing `place_population` untouched (it
+ * only (re)builds it from geojson, which we don't carry).
  */
 function buildDb(regions: SeedRegion[]): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
@@ -50,7 +52,7 @@ function buildDb(regions: SeedRegion[]): DatabaseSync {
 		);
 		CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);
 		CREATE TABLE ancestors (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
-		CREATE TABLE geojson (id INTEGER PRIMARY KEY, body TEXT);
+		CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0);
 	`)
 	const insertSpr = db.prepare(`
 		INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude,
@@ -58,14 +60,12 @@ function buildDb(regions: SeedRegion[]): DatabaseSync {
 		VALUES (?, NULL, ?, 'region', ?, ?, ?, ?, ?, ?, ?, -1, 0)
 	`)
 	const insertName = db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`)
-	const insertGeo = db.prepare(`INSERT INTO geojson (id, body) VALUES (?, ?)`)
+	const insertPop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
 	for (const r of regions) {
 		insertSpr.run(r.id, r.name, r.country, r.lat, r.lon, r.lat - 0.5, r.lat + 0.5, r.lon - 0.5, r.lon + 0.5)
 		insertName.run(r.id, "eng", r.name)
 		for (const a of r.aliases ?? []) insertName.run(r.id, "abbr", a)
-		const properties: Record<string, unknown> = { "geom:latitude": r.lat, "geom:longitude": r.lon }
-		if (r.population !== undefined) properties["wof:population"] = r.population
-		insertGeo.run(r.id, JSON.stringify({ properties }))
+		if (r.population !== undefined) insertPop.run(r.id, r.population)
 	}
 	return db
 }
@@ -119,6 +119,37 @@ describe("findPlace — exact-match tiering", () => {
 		const results = await lookup.findPlace({ text: "Springfield", placetype: "region", country: "US" })
 		expect(results.length).toBe(2)
 		expect(results[0]!.id).toBe(11) // higher population wins within the exact tier
+	})
+
+	test("short-query over-fetch rescues an exact-abbrev region below the normal window (NY → New York)", async () => {
+		// The window-drop class (distinct from the population-override above). An exact-abbrev holder
+		// ("NY" → New York) whose BM25 for the bare 2-letter token is poor — its long multilingual
+		// alt-name document dilutes the score — sinks BELOW the normal `limit * 4` over-fetch window,
+		// behind a crowd of regions that merely TOKEN-match "ny". Without widening the window for short
+		// queries it never enters the candidate pool, so exact-match tiering can't promote it and a
+		// token-matching decoy wins (the real-DB "NY → Highland, GB" bug). With the widening, New York
+		// is in the pool and tiering lifts it. No `country` hint — this is the bare, no-context path.
+		const decoys: SeedRegion[] = Array.from({ length: 60 }, (_, i) => ({
+			id: 1000 + i,
+			name: `Ny Province ${i}`, // tokenizes to include "ny" → matches MATCH 'ny'; short doc → good BM25
+			country: "GB",
+			lat: 50 + i * 0.01,
+			lon: -1 + i * 0.01,
+		}))
+		const newYork: SeedRegion = {
+			id: 1,
+			name: "New York",
+			country: "US",
+			lat: 43,
+			lon: -75,
+			// Exact alias "NY" + a long alt-name doc → poor BM25 for "ny" → sorts below all 60 decoys
+			// (rank ~61: outside the default `limit * 4` window, inside the 200 short-query floor).
+			aliases: ["NY", ...Array.from({ length: 40 }, (_, i) => `New York alternate label ${i}`)],
+		}
+		lookup = new WofSqlitePlaceLookup({ database: buildDb([newYork, ...decoys]), buildFts: true })
+		const results = await lookup.findPlace({ text: "NY", placetype: "region", limit: 2 })
+		expect(results[0]!.id).toBe(1)
+		expect(results[0]!.name).toBe("New York")
 	})
 
 	test("a single candidate is unaffected (no tier to split)", async () => {

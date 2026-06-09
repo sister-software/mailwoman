@@ -14,12 +14,14 @@ const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
 const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 const modelCard = JSON.parse(readFileSync(CARD, "utf8"))
-const [tokenizer, runner] = await Promise.all([
-	MailwomanTokenizer.loadFromFile(TOK),
-	OnnxRunner.create(MODEL),
-])
+const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(MODEL)])
 const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
-const neuralArgmax = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels, decode: "argmax" } as any)
+const neuralArgmax = new NeuralAddressClassifier({
+	tokenizer,
+	runner,
+	labels: modelCard.labels,
+	decode: "argmax",
+} as any)
 const v0 = createAddressParser()
 
 const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
@@ -52,7 +54,9 @@ function dumpResolved(label: string, tree: any) {
 
 const inputs = [
 	// bare "locality, ST"
-	"Saint Paul, MN", "Belle Fourche, SD", "Fort Pierre, SD",
+	"Saint Paul, MN",
+	"Belle Fourche, SD",
+	"Fort Pierre, SD",
 	// SAME localities in a FULL address (house + street + zip)
 	"123 Main Street, Saint Paul, MN 55101",
 	"512 State Street, Belle Fourche, SD 57717",
@@ -68,6 +72,10 @@ for (const input of inputs) {
 
 	const sol = await v0.parse(input)
 	const rec = (sol[0]?.classifications ?? {}) as ClassificationRecord
-	console.log(`  v0 tags: ${Object.entries(rec).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join("  ")}`)
+	console.log(
+		`  v0 tags: ${Object.entries(rec)
+			.map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+			.join("  ")}`
+	)
 }
 process.exit(0)

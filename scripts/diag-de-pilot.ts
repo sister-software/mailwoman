@@ -7,10 +7,7 @@ const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 
 async function load(model: string, card: string) {
 	const modelCard = JSON.parse(readFileSync(card, "utf8"))
-	const [tokenizer, runner] = await Promise.all([
-		MailwomanTokenizer.loadFromFile(TOK),
-		OnnxRunner.create(model),
-	])
+	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(model)])
 	return new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 }
 

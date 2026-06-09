@@ -1,0 +1,185 @@
+/**
+ * CRFDiff — side-by-side argmax vs. Viterbi decode comparison.
+ *
+ *   Shows why per-token argmax fails on multi-word named entities and how
+ *   linear-chain CRF Viterbi decode fixes it. Reuses BIOHighlight's colour
+ *   scheme (B-X green, I-X blue, O gray) plus invalid/valid indicators.
+ */
+
+.crfDiff {
+	margin: 1rem 0 1.5rem 0;
+}
+
+/* ── Legend ─────────────────────────────────────────────────────────── */
+
+.legend {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--ifm-color-emphasis-600);
+	margin-bottom: 0.75rem;
+}
+
+.dot {
+	display: inline-block;
+	width: 0.6rem;
+	height: 0.6rem;
+	border-radius: 50%;
+	margin-right: 0.15rem;
+	vertical-align: middle;
+}
+
+.dot.b {
+	background: #1aa84d;
+}
+
+.dot.i {
+	background: #3b82f6;
+}
+
+.dot.o {
+	background: #9ca3af;
+}
+
+/* ── Decode section (argmax + Viterbi rows) ─────────────────────────── */
+
+.decodeSection {
+	margin-bottom: 1rem;
+}
+
+.decodeLabel {
+	font-size: 0.8rem;
+	font-weight: 600;
+	margin-bottom: 0.4rem;
+	color: var(--ifm-heading-color);
+}
+
+.track {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	column-gap: 0;
+	row-gap: 1.8rem;
+	padding: 0.5rem 0.6rem;
+	border: 1px solid var(--ifm-color-emphasis-200);
+	border-radius: 6px;
+	background: var(--ifm-background-surface-color);
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.85rem;
+	line-height: 1.4;
+}
+
+.wordCol {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.word {
+	padding: 0.05rem 0.15rem;
+	border-bottom: 2px solid transparent;
+	white-space: pre;
+	border-radius: 2px;
+}
+
+/* B-X: green — beginning of a component span. */
+.bioB {
+	background: rgba(26, 168, 77, 0.18);
+	border-bottom-color: #1aa84d;
+}
+
+/* I-X: blue — inside a component span. */
+.bioI {
+	background: rgba(59, 130, 246, 0.18);
+	border-bottom-color: #3b82f6;
+}
+
+/* O: gray — outside any component span. */
+.bioO {
+	background: rgba(156, 163, 175, 0.12);
+	border-bottom-color: #9ca3af;
+	color: var(--ifm-color-emphasis-500);
+}
+
+/* Invalid tag (two B- in a row with no I- between). */
+.invalid::after {
+	content: " ❌";
+	font-size: 0.65rem;
+}
+
+.label {
+	margin-top: 0.15rem;
+	font-size: 0.55rem;
+	line-height: 1;
+	text-align: center;
+	letter-spacing: 0.02em;
+	color: var(--ifm-color-emphasis-600);
+	white-space: nowrap;
+}
+
+.note {
+	margin-top: 0.35rem;
+	font-size: 0.7rem;
+	color: var(--ifm-color-emphasis-500);
+	font-style: italic;
+}
+
+.noteValid {
+	color: #1aa84d;
+}
+
+.noteInvalid {
+	color: #d8504a;
+}
+
+/* ── Transition matrix table ────────────────────────────────────────── */
+
+.matrixSection {
+	margin-top: 1.25rem;
+}
+
+.matrix {
+	width: 100%;
+	border-collapse: collapse;
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.8rem;
+	margin-top: 0.4rem;
+}
+
+.matrix th,
+.matrix td {
+	padding: 0.35rem 0.5rem;
+	text-align: center;
+	border: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.matrix th {
+	background: var(--ifm-color-emphasis-100);
+	font-weight: 600;
+	font-size: 0.7rem;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.matrix th:first-child,
+.matrix td:first-child {
+	text-align: left;
+	font-weight: 600;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.allowed {
+	color: #1aa84d;
+}
+
+.forbidden {
+	color: #d8504a;
+	font-weight: 700;
+}
+
+.preferred {
+	color: #3b82f6;
+	font-weight: 700;
+}

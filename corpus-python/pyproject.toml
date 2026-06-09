@@ -25,11 +25,16 @@ dev = [
     "pytest>=7.0",
 ]
 train = [
-    "torch>=2.2",
-    "transformers>=4.41",
+    # Pinned to the exact export/quant toolchain that produced the v4.1.0 ONNX artifact
+    # (2026-06-09). Unpinned `>=` drifted (transformers→5.x, onnx→1.21) and broke int8
+    # quant; these match scripts/modal/train_remote.py's image so a local export/quant
+    # produces the same browser-shipped graph. See that file's pin comment for the
+    # mobile-Safari (onnxruntime-web native WebGPU EP) invariant before bumping.
+    "torch==2.12.0",
+    "transformers==5.9.0",
     "datasets>=2.19",
-    "onnx>=1.16",
-    "onnxruntime>=1.18",
+    "onnx==1.21.0",
+    "onnxruntime==1.26.0",
     "tqdm>=4.66",
     # Optional experiment tracking. Logging is best-effort and guarded at runtime
     # (see mailwoman_train/trackio_logging.py) so its absence never breaks a train run.

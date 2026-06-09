@@ -57,6 +57,13 @@ export interface PlaceCandidate {
 	score: number
 	distanceKm?: number
 	/**
+	 * True when this candidate's name OR an alias EXACTLY equals the query (the exact-match tier from
+	 * {@link RankingWeights.exactMatchTiering}). Surfaced so a downstream country re-rank (#369's
+	 * postcode anchor in `resolveTree`) can pin the country without crossing the tier — see the
+	 * `exactMatch` field on `@mailwoman/core`'s `ResolvedPlace`.
+	 */
+	exactMatch?: boolean
+	/**
 	 * Population from WOF's `wof:population` property. Only present when the candidate has it on
 	 * record — WOF carries population for ~15% of localities (mostly larger ones). Absent does NOT
 	 * mean zero, just unknown.
@@ -72,9 +79,10 @@ export interface PlaceCandidate {
 	/**
 	 * Set by the coordinate-first path when the chosen locality and the sibling postcode's containing
 	 * locality are geographically far apart — the postcode and the parsed city name disagree (a
-	 * transposed / wrong-for-the-city postcode). The candidate is still returned (the name wins for the
-	 * locality), but the flag lets callers lower confidence / surface the conflict rather than silently
-	 * mislocate. A retrieval/BM25 geocoder can't raise this — it's the falsehood-detection differentiator.
+	 * transposed / wrong-for-the-city postcode). The candidate is still returned (the name wins for
+	 * the locality), but the flag lets callers lower confidence / surface the conflict rather than
+	 * silently mislocate. A retrieval/BM25 geocoder can't raise this — it's the falsehood-detection
+	 * differentiator.
 	 */
 	mismatch?: boolean
 }

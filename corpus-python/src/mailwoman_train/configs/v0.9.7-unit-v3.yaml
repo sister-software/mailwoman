@@ -1,0 +1,156 @@
+# === v0.9.7-unit-v3 (#451 v3) — LOWER unit weight, the v0.9.6-v2 tripwire fix. ============
+# v0.9.6-v2 (format-diverse unit shard @ synth-unit 2.5) DECISIVELY won the real-designator gate
+# (unit F1 0→95.4%, street +8pp negative-space) but BREACHED the no-regression gate: US
+# house_number 83.1→79.6 (-3.5, floor was -1pp; clean fp32 v1→v2 delta -1.5) and FR street/postcode/
+# locality -3..-4 (confounded by int8-vs-fp32 + FR noise; v1 did not hurt FR). DeepSeek's prescribed
+# remedy for a tripped tripwire: lower synth-unit 2.5 -> 1.5, hold everything else. v3 changes EXACTLY
+# ONE variable vs v2 — the weight. Same FORMAT-DIVERSE corpus (v0.4.5-unit-v2), same base/recipe/seed.
+# HYPOTHESIS: starving the unit shard less aggressively trims the house_number/FR collateral while
+# keeping most of the 95% unit win (unit gate floor is 20% — huge headroom to give back). If v3 keeps
+# unit >=~80% AND clears house_number >=82 / FR floors, PROMOTE v3. If unit collapses toward v1's 60%
+# without recovering house_number, the trade is real and intrinsic — escalate to operator (accept v2's
+# trade, or pursue an architectural fix rather than another weight tweak).
+# ============================================================================================
+#
+# Unit-coverage retrain — the v0-parity `unit` gap. ONE variable vs v2: synth-unit 2.5 -> 1.5.
+# Everything else held — same v0.9.3 recipe (anchor ON, self-cond ON, region-tail German, v0.7.2 base,
+# seed 42) + the format-diverse v0.4.5-unit-v2 corpus (real non-Vermont US OA skeletons with USPS
+# Pub-28 C2 designators injected across positions: unit-after/first, bare-tail, venue-prefixed).
+#
+# WHY. The v0-parity assessment found `unit` at ~0% F1 — a corpus-COVERAGE gap. v2 fixed it (95.4% on
+# the real-designator arena) but at a -2..-3.5 house_number cost. Negative space (covering unit raises
+# street precision) held: golden US street 73.2→81.2. v3 tunes the dosage to bank the win without the
+# collateral. See docs/articles/concepts/negative-space-coverage.md.
+#
+# SHARD PROVENANCE (eval-honesty): identical corpus to v2 — train shard is real non-Vermont US OA
+# skeletons with designators INJECTED in diverse formats; the real-in-the-wild designator gate is
+# data/eval/external/unit-real-designators.jsonl (34 curated OOD cases, the TRUSTWORTHY lens — the VT
+# in-distribution number was a v1 mirage). Read the arena, not the VT number, at the gate.
+#
+# PRE-REGISTERED GATE (stop at 20k; the v2 verdict reframed the floors as RECOVERY targets):
+#   - `unit` F1 >= 80% on the real-designator eval — bank most of v2's 95.4% (floor was 20%; v1=60%).
+#   - `street` F1 >= +4pp vs v0.9.3 on the unit-bearing arena — negative space still holds at lower dose.
+#   - RECOVERY (the v2 breach must close): US house_number >= 82 (v0.9.3=83.1, v2=79.6) — within ~1pp.
+#   - NO-REGRESSION (within ~1pp vs v0.9.3): US postcode >=80 / locality >=77 / street >=86;
+#     FR per-class floors (compare fp32-to-fp32 to avoid the int8 confound); DE native postcode >=83 /
+#     street >=82; cross_pollution <1%.
+#   DECISION: unit>=80 AND house_number>=82 AND FR holds -> PROMOTE v3 to default. Else escalate.
+# Measure (fp32-to-fp32 to kill the int8 confound that muddied v2's FR read):
+#   per-locale-f1.ts (US/FR) + the real-designator unit eval + de-order-eval.sh (DE 2x2 tripwire).
+#
+# CORPUS: v0.4.5-unit-v2 (SAME as v2 — no rebuild). Launch:
+#   modal run -d scripts/modal/train_remote.py \
+#     --config v0.9.7-unit-v3.yaml --resume none \
+#     --trackio --trackio-space sister-software/mailwoman-trackio
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.4.5-unit-v2/corpus-v0.4.5-unit-v2
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-po-box: 1.5
+    synth-intersection: 0.2
+    synth-german: 6.0
+    # v3 (#451): unit-coverage shard LOWERED 2.5 -> 1.5 to trim the v2 house_number/FR collateral
+    # (DeepSeek-prescribed tripwire remedy). Same format-diverse corpus; only the dosage changes.
+    synth-unit: 1.5
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  class_weights:
+    O: 0.5
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v097-unit-v3-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 20000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  trackio_project: mailwoman
+  trackio_run_name: v0.9.7-unit-v3-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

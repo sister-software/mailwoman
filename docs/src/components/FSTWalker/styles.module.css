@@ -1,0 +1,381 @@
+/* ---------------------------------------------------------------------------
+ * FSTWalker — interactive FST gazetteer trie walker.
+ *
+ * Visualizes FST traversal: token pills, state badges, accepting places, and
+ * valid continuation chips. Color-coded by path status (walking / accepting /
+ * broken). Uses Docusaurus CSS variables for theme compatibility.
+ * --------------------------------------------------------------------------- */
+
+.fstWalker {
+	margin: 0.75rem 0 1.5rem;
+	font-size: 0.9rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * Header
+ * --------------------------------------------------------------------------- */
+
+.header {
+	display: flex;
+	align-items: baseline;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+}
+
+.title {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 600;
+}
+
+.provenance {
+	font-size: 0.72rem;
+	color: var(--ifm-color-emphasis-500);
+}
+
+/* ---------------------------------------------------------------------------
+ * Fallback (FST not loaded)
+ * --------------------------------------------------------------------------- */
+
+.fallback {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 1.5rem 1rem;
+	border: 1px dashed var(--ifm-color-emphasis-300);
+	border-radius: 8px;
+	background: var(--ifm-background-surface-color);
+	text-align: center;
+}
+
+.fallbackIcon {
+	font-size: 1.5rem;
+}
+
+.fallback p {
+	margin: 0;
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600);
+	max-width: 32rem;
+}
+
+.fallback code {
+	font-size: 0.8rem;
+	background: var(--ifm-code-background);
+	padding: 0.1rem 0.3rem;
+	border-radius: 3px;
+}
+
+.emptyHint {
+	margin: 0;
+	color: var(--ifm-color-emphasis-500);
+	font-style: italic;
+}
+
+/* ---------------------------------------------------------------------------
+ * Walk trail
+ * --------------------------------------------------------------------------- */
+
+.trail {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.step {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.35rem 0;
+}
+
+.stepArrow {
+	color: var(--ifm-color-emphasis-400);
+	font-size: 0.75rem;
+	flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Token pills
+ * --------------------------------------------------------------------------- */
+
+.tokenPill {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2.5rem;
+	padding: 0.2rem 0.55rem;
+	border-radius: 10px;
+	font-size: 0.82rem;
+	font-weight: 600;
+	font-family: var(--ifm-font-family-monospace);
+	flex-shrink: 0;
+	transition: background 0.15s ease;
+}
+
+/* Walking state: token matched, path still alive. */
+.tokenWalking {
+	background: var(--ifm-color-info-contrast-background);
+	color: var(--ifm-color-info-contrast-foreground);
+	border: 1px solid var(--ifm-color-info-dark);
+}
+
+/* Accepting state: token completes one or more place entries. */
+.tokenAccepting {
+	background: var(--ifm-color-success-contrast-background);
+	color: var(--ifm-color-success-contrast-foreground);
+	border: 1px solid var(--ifm-color-success-dark);
+}
+
+/* Broken path: token not in FST — negative evidence. */
+.tokenBroken {
+	background: var(--ifm-color-danger-contrast-background);
+	color: var(--ifm-color-danger-contrast-foreground);
+	border: 1px solid var(--ifm-color-danger-dark);
+	text-decoration: line-through;
+}
+
+/* ---------------------------------------------------------------------------
+ * State badges
+ * --------------------------------------------------------------------------- */
+
+.stateBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.15rem;
+	padding: 0.1rem 0.4rem;
+	border-radius: 4px;
+	font-size: 0.7rem;
+	font-weight: 500;
+	font-family: var(--ifm-font-family-monospace);
+	background: var(--ifm-color-emphasis-100);
+	color: var(--ifm-color-emphasis-700);
+	flex-shrink: 0;
+}
+
+.stateBadge sub {
+	font-size: 0.6rem;
+	bottom: 0;
+}
+
+.acceptedMark {
+	color: var(--ifm-color-success);
+	font-size: 0.7rem;
+	margin-left: 0.1rem;
+}
+
+.stateBadgeBroken {
+	background: var(--ifm-color-danger-contrast-background);
+	color: var(--ifm-color-danger-contrast-foreground);
+	cursor: help;
+}
+
+/* ---------------------------------------------------------------------------
+ * Places panel (accepting states)
+ * --------------------------------------------------------------------------- */
+
+.placesPanel {
+	width: 100%;
+	margin-top: 0.2rem;
+	margin-left: 0;
+	padding: 0.4rem 0.5rem;
+	border-left: 3px solid var(--ifm-color-success);
+	border-radius: 0 4px 4px 0;
+	background: var(--ifm-background-surface-color);
+}
+
+.placesHeader {
+	font-size: 0.72rem;
+	font-weight: 500;
+	color: var(--ifm-color-emphasis-500);
+	margin-bottom: 0.3rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.placeRow {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.15rem 0;
+	font-size: 0.78rem;
+	border-bottom: 1px solid var(--ifm-color-emphasis-100);
+}
+
+.placeRow:last-child {
+	border-bottom: none;
+}
+
+.placeName {
+	flex: 1;
+	font-weight: 500;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-width: 0;
+}
+
+.placeType {
+	font-size: 0.68rem;
+	color: var(--ifm-color-emphasis-600);
+	background: var(--ifm-color-emphasis-100);
+	padding: 0.05rem 0.35rem;
+	border-radius: 3px;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.placeImp {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
+	font-size: 0.72rem;
+	font-family: var(--ifm-font-family-monospace);
+	color: var(--ifm-color-emphasis-600);
+	flex-shrink: 0;
+}
+
+.impDot {
+	display: inline-block;
+	width: 0.45rem;
+	height: 0.45rem;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.impDot_high {
+	background: var(--ifm-color-success);
+}
+
+.impDot_mid {
+	background: var(--ifm-color-warning);
+}
+
+.impDot_low {
+	background: var(--ifm-color-danger);
+}
+
+.placeId {
+	font-size: 0.65rem;
+	color: var(--ifm-color-emphasis-400);
+	font-family: var(--ifm-font-family-monospace);
+	flex-shrink: 0;
+}
+
+/* Importance tier left-border color on place row */
+.importance_high {
+	border-left: 2.5px solid var(--ifm-color-success);
+	padding-left: 0.5rem;
+}
+
+.importance_mid {
+	border-left: 2.5px solid var(--ifm-color-warning);
+	padding-left: 0.5rem;
+}
+
+.importance_low {
+	border-left: 2.5px solid var(--ifm-color-danger);
+	padding-left: 0.5rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * Continuations panel
+ * --------------------------------------------------------------------------- */
+
+.continuationsPanel {
+	margin-top: 0.5rem;
+	padding: 0.5rem 0.6rem;
+	border: 1px solid var(--ifm-color-emphasis-200);
+	border-radius: 6px;
+	background: var(--ifm-background-surface-color);
+}
+
+.continuationsHeader {
+	font-size: 0.72rem;
+	font-weight: 500;
+	color: var(--ifm-color-emphasis-500);
+	margin-bottom: 0.35rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.continuationsList {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+
+.contChip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
+	padding: 0.15rem 0.45rem;
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 12px;
+	font-size: 0.72rem;
+	font-family: var(--ifm-font-family-monospace);
+	background: var(--ifm-background-color);
+	cursor: default;
+	transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.contChip:hover {
+	background: var(--ifm-color-emphasis-100);
+	border-color: var(--ifm-color-emphasis-400);
+}
+
+.contToken {
+	font-weight: 500;
+}
+
+.contCount {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1rem;
+	height: 0.9rem;
+	padding: 0 0.15rem;
+	border-radius: 6px;
+	font-size: 0.58rem;
+	font-weight: 700;
+	background: var(--ifm-color-success-contrast-background);
+	color: var(--ifm-color-success-contrast-foreground);
+}
+
+/* ---------------------------------------------------------------------------
+ * Summary footer
+ * --------------------------------------------------------------------------- */
+
+.summary {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.3rem;
+	margin-top: 0.75rem;
+	font-size: 0.72rem;
+	color: var(--ifm-color-emphasis-500);
+	padding-top: 0.5rem;
+	border-top: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.summaryItem {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.15rem;
+}
+
+.summarySep {
+	color: var(--ifm-color-emphasis-300);
+}
+
+.negativeEvidence {
+	color: var(--ifm-color-danger);
+	font-style: italic;
+}
+
+.negativeEvidence strong {
+	font-family: var(--ifm-font-family-monospace);
+}

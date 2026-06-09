@@ -1,0 +1,39 @@
+/**
+ * Training metrics page styles — module-scoped.
+ * The TrainingCharts component carries its own styles;
+ * this sheet only covers the page chrome (header + layout).
+ */
+
+.trainingRoot {
+	max-width: 960px;
+	margin: 0 auto;
+	padding: 2rem 1rem;
+}
+
+.header {
+	margin-bottom: 1.5rem;
+}
+
+.header h1 {
+	font-size: 2rem;
+	font-weight: 700;
+	margin-bottom: 0.5rem;
+	letter-spacing: -0.025em;
+}
+
+.header p {
+	font-size: 1rem;
+	line-height: 1.55;
+	color: var(--ifm-color-content-secondary);
+	max-width: 640px;
+}
+
+@media screen and (max-width: 996px) {
+	.trainingRoot {
+		padding: 1.5rem 1rem;
+	}
+
+	.header h1 {
+		font-size: 1.5rem;
+	}
+}

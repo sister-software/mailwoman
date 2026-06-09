@@ -1,18 +1,16 @@
 /**
- * measure-locale-lexical.ts — v0.7 task #33, step 2.
+ * Measure-locale-lexical.ts — v0.7 task #33, step 2.
  *
- * measure-locale-gate.ts showed the postcode-shape baseline collapses every
- * 5-digit-postcode country (FR/DE/NL) onto US. This probes whether RICHER
- * lexical features — diacritics, street-type morphology, toponym/country words —
- * recover those countries with rules alone. It's a rule-based proxy for the #33
- * "lexical features → MLP": if a handful of features already separate the
- * same-postcode-shape countries, an MLP's job is mostly feature-learning we can
- * bootstrap; if not, the MLP needs to be richer.
+ * Measure-locale-gate.ts showed the postcode-shape baseline collapses every 5-digit-postcode
+ * country (FR/DE/NL) onto US. This probes whether RICHER lexical features — diacritics, street-type
+ * morphology, toponym/country words — recover those countries with rules alone. It's a rule-based
+ * proxy for the #33 "lexical features → MLP": if a handful of features already separate the
+ * same-postcode-shape countries, an MLP's job is mostly feature-learning we can bootstrap; if not,
+ * the MLP needs to be richer.
  *
  * Standalone measurement — does NOT touch the shipped locale-gate pipeline.
  *
- * Run:
- *   node --experimental-strip-types scripts/eval/measure-locale-lexical.ts
+ * Run: node --experimental-strip-types scripts/eval/measure-locale-lexical.ts
  */
 
 import { detectLocaleSync } from "@mailwoman/locale-gate"
@@ -67,17 +65,26 @@ const LEXICAL: Array<{ country: string; test: (t: string, lower: string) => bool
 	// French: accented chars OR French street/PO words OR CEDEX.
 	{
 		country: "FR",
-		test: (t, l) => FR_DIACRITICS.test(t) || /\bcedex\b/.test(l) || /\b(rue|avenue|av|boulevard|bd|impasse|allée|allee|chemin|quai|cours|place)\b/.test(l) || /\bfrance\b/.test(l),
+		test: (t, l) =>
+			FR_DIACRITICS.test(t) ||
+			/\bcedex\b/.test(l) ||
+			/\b(rue|avenue|av|boulevard|bd|impasse|allée|allee|chemin|quai|cours|place)\b/.test(l) ||
+			/\bfrance\b/.test(l),
 	},
 	// German: ß or German street types or Deutschland or D-##### prefix.
 	{
 		country: "DE",
-		test: (t, l) => /ß/.test(t) || /\b(stra(ß|ss)e|str|platz|weg|gasse|allee)\b/.test(l) || /\bdeutschland\b/.test(l) || /\bd-\d{5}\b/.test(l),
+		test: (t, l) =>
+			/ß/.test(t) ||
+			/\b(stra(ß|ss)e|str|platz|weg|gasse|allee)\b/.test(l) ||
+			/\bdeutschland\b/.test(l) ||
+			/\bd-\d{5}\b/.test(l),
 	},
 	// Dutch: Dutch street types or Nederland or "#### XX" postcode shape.
 	{
 		country: "NL",
-		test: (_t, l) => /\b(straat|laan|plein|gracht|dijk|kade)\b/.test(l) || /\bnederland\b/.test(l) || /\b\d{4}\s?[a-z]{2}\b/i.test(l),
+		test: (_t, l) =>
+			/\b(straat|laan|plein|gracht|dijk|kade)\b/.test(l) || /\bnederland\b/.test(l) || /\b\d{4}\s?[a-z]{2}\b/i.test(l),
 	},
 ]
 
@@ -120,7 +127,9 @@ function main(): void {
 
 	const n = samples.length
 	console.log(`# Locale: postcode-shape baseline vs +lexical (#33) — ${n} samples\n`)
-	console.log(`**Overall:** baseline ${((100 * baseOk) / n).toFixed(1)}% → +lexical ${((100 * lexOk) / n).toFixed(1)}%\n`)
+	console.log(
+		`**Overall:** baseline ${((100 * baseOk) / n).toFixed(1)}% → +lexical ${((100 * lexOk) / n).toFixed(1)}%\n`
+	)
 	console.log("| Country | Total | Baseline | +Lexical |")
 	console.log("|---------|------:|---------:|---------:|")
 	for (const [c, b] of [...base.entries()].sort((x, y) => y[1].total - x[1].total)) {

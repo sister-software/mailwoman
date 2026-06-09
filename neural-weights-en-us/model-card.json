@@ -1,17 +1,17 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "4.0.0",
-	"model_lineage": "Stage 3 / step 100000 (formerly v0.6.0) \u2014 relabeled to the unified 4.0.0 release version; tokenizer 0.6.0-a0",
-	"phase": "Stage 3 \u2014 street decomposition + PO box + intersection",
+	"version": "4.1.0",
+	"model_lineage": "v0.9.7-unit-v3 / step 20000 (unit-coverage retrain off v0.9.3-de-regiontail, itself off v0.7.2) \u2014 shipped as the unified 4.1.0 release version; tokenizer 0.6.0-a0",
+	"phase": "Stage 3 \u2014 street decomposition + PO box + intersection + secondary-unit coverage",
 	"license": "AGPL-3.0-only",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "0.4.0+stage3",
+		"corpus_version": "0.4.5-unit-v2",
 		"tokenizer_version": "0.6.0-a0",
-		"steps": 100000,
-		"best_step": 100000,
+		"steps": 20000,
+		"best_step": 20000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v0.5.1 base + STAGE3 (33 BIO labels) + synth-po-box source @ 1.5x. CE-only (crf_loss_weight=0.0 after two NaN attempts with crf>0; the 33x33 transition table + bf16 was numerically unstable). lr=1.5e-4 constant, warmup=1000."
+		"recipe": "v0.9.3-de-regiontail base (anchor ON, self-cond ON, region-tail German, both-order synth) + a 50K format-diverse secondary-unit shard (USPS Pub-28 C2 designators across positions) @ synth-unit 1.5x. CE-only (crf_loss_weight=0.0). lr=1.5e-4 constant, warmup=1000, 20000 steps, seed 42. The synth-unit dose was tuned 2.5→1.5 (v3) after the 2.5 run (v2) showed no fp32 regression but a cleaner low-dose profile was preferred."
 	},
 	"architecture": {
 		"hidden_size": 384,
@@ -79,14 +79,14 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "v0.6.0 \u2014 Stage 3 ships. Schema expanded from 10 to 16 tags / 21 to 33 BIO labels. STAGE2 label IDs preserved exactly (new tags at IDs 21-32). TIGER, NAD, and BAN adapters now emit street_prefix/street/street_suffix/unit from existing structured input. New synth-po-box corpus source provides 50K PO box training examples across en-US/CA/GB/AU, fr-FR/CA, es-ES/MX/AR.",
+	"notes": "v4.1.0 \u2014 secondary-unit coverage. Same Stage-3 33-BIO-label schema as 4.0.0 (no schema change). Adds a format-diverse synth-unit shard (USPS Pub-28 C2 designators: APT/STE/FL/\u2026 across unit-after, unit-first, bare, and venue-prefixed layouts) on top of the v0.9.3 multi-locale base. `unit` recognition 0%\u219292.3% on a held-out real-designator eval; by 'negative space' it also raised US `street` +3.3pp and lifted `country` (US +6pp, FR +15pp) \u2014 covering the missing tag sharpened its neighbors. No regression vs 4.0.0 on any US/FR golden tag; DE native-order locality held (90.6%).",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=48000",
 		"max_sequence_length": 128,
 		"opset": 17,
-		"fp32_size_mb": 111.8,
-		"int8_size_mb": 28.1
+		"fp32_size_mb": 112.9,
+		"int8_size_mb": 28.4
 	},
 	"files": {
 		"model": "model.onnx",
@@ -101,5 +101,5 @@
 		"held_out_ece_calibrated": 0.0035,
 		"note": "calibration.json is the global table; calibration-per-locale.json carries per-locale tables (the global table under-serves DE/NL). Apply via @mailwoman/core/decoder's createCalibrator; default parse output is byte-stable when omitted."
 	},
-	"base_relpath": "/data/output-v060/checkpoints/step-100000"
+	"base_relpath": "/data/output-v097-unit-v3-s42/checkpoints/step-020000"
 }

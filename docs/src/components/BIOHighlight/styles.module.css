@@ -1,0 +1,101 @@
+/* Word-level BIO label breakdown ribbon.
+   Complements SpanHighlight (character-level confidence ribbon).
+   Each word is a column: the raw word on top (tinted by BIO tier —
+   B-X green, I-X blue, O gray) and the BIO label beneath. */
+
+.bioHighlight {
+	margin: 0.5rem 0 1rem 0;
+}
+
+.legend {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--ifm-color-emphasis-600);
+	margin-bottom: 0.5rem;
+}
+
+.dot {
+	display: inline-block;
+	width: 0.6rem;
+	height: 0.6rem;
+	border-radius: 50%;
+	margin-right: 0.15rem;
+	vertical-align: middle;
+}
+
+.dot.b {
+	background: #1aa84d;
+}
+
+.dot.i {
+	background: #3b82f6;
+}
+
+.dot.o {
+	background: #9ca3af;
+}
+
+.track {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	row-gap: 1.8rem;
+	column-gap: 0;
+	padding: 0.5rem 0.6rem;
+	border: 1px solid var(--ifm-color-emphasis-200);
+	border-radius: 6px;
+	background: var(--ifm-background-surface-color);
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.85rem;
+	line-height: 1.4;
+}
+
+.wordCol {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.ws {
+	white-space: pre;
+}
+
+.word {
+	padding: 0.05rem 0.15rem;
+	border-bottom: 2px solid transparent;
+	white-space: pre;
+	border-radius: 2px;
+}
+
+/* B-X: green — beginning of a component span. */
+.bioB {
+	background: rgba(26, 168, 77, 0.18);
+	border-bottom-color: #1aa84d;
+}
+
+/* I-X: blue — inside a component span. */
+.bioI {
+	background: rgba(59, 130, 246, 0.18);
+	border-bottom-color: #3b82f6;
+}
+
+/* O: gray — outside any component span. */
+.bioO {
+	background: rgba(156, 163, 175, 0.12);
+	border-bottom-color: #9ca3af;
+	color: var(--ifm-color-emphasis-500);
+}
+
+.label {
+	margin-top: 0.15rem;
+	font-size: 0.55rem;
+	line-height: 1;
+	text-align: center;
+	letter-spacing: 0.02em;
+	color: var(--ifm-color-emphasis-600);
+	white-space: nowrap;
+}

@@ -1,0 +1,303 @@
+/* ---------------------------------------------------------------------------
+ * ClassifierOverlay — per-component classification origin table.
+ *
+ * Shows which pipeline stages contributed to each parsed address component.
+ * Complements BIOHighlight and SubwordExplorer with provenance tracking.
+ *
+ * Color scheme:
+ *   Query Shape:  #8b5cf6 (purple)
+ *   Kind:         #f59e0b (amber)
+ *   FST Prior:    #ec4899 (pink)
+ *   Rule:         #f97316 (orange)
+ *   Neural:       #3b82f6 (blue)
+ *   Reconcile:    #22c55e (green)
+ *   WOF:          #6366f1 (indigo)
+ *   Grouper:      #14b8a6 (teal)
+ * --------------------------------------------------------------------------- */
+
+/* ── Shared layout ─────────────────────────────────────────────────────── */
+
+.staticLegend,
+.dynamicOverlay {
+	margin: 0.75rem 0 1.5rem;
+	font-size: 0.9rem;
+}
+
+.empty {
+	padding: 1rem;
+	border: 1px dashed var(--ifm-color-emphasis-300);
+	border-radius: 6px;
+	text-align: center;
+	color: var(--ifm-color-emphasis-500);
+	font-size: 0.9rem;
+}
+
+/* ── Static legend ─────────────────────────────────────────────────────── */
+
+.legendIntro {
+	margin-bottom: 0.75rem;
+	color: var(--ifm-color-emphasis-700);
+	line-height: 1.5;
+}
+
+.stageGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.stageCard {
+	padding: 0.6rem 0.7rem;
+	border-left: 3px solid;
+	border-radius: 0 6px 6px 0;
+	background: var(--ifm-background-surface-color);
+	border: 1px solid var(--ifm-color-emphasis-200);
+	border-left-width: 3px;
+}
+
+.stageCardDimmed {
+	opacity: 0.55;
+}
+
+.stageCardHeader {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin-bottom: 0.3rem;
+}
+
+.stageBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
+	padding: 0.15rem 0.5rem;
+	border-radius: 10px;
+	font-size: 0.72rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.inactiveTag {
+	font-size: 0.65rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--ifm-color-emphasis-500);
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 4px;
+	padding: 0.05rem 0.35rem;
+}
+
+.stageCardDesc {
+	margin: 0 0 0.3rem;
+	font-size: 0.8rem;
+	line-height: 1.45;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.stageCardSources {
+	font-size: 0.72rem;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.sourcesLabel {
+	font-weight: 500;
+	margin-right: 0.3rem;
+}
+
+.sourceCode {
+	font-size: 0.68rem;
+	padding: 0.05rem 0.3rem;
+	background: var(--ifm-color-emphasis-100);
+	border-radius: 3px;
+	font-family: var(--ifm-font-family-monospace);
+}
+
+.legendFlow {
+	padding: 0.5rem 0.7rem;
+	border: 1px solid var(--ifm-color-emphasis-200);
+	border-radius: 6px;
+	background: var(--ifm-background-surface-color);
+	font-size: 0.82rem;
+	color: var(--ifm-color-emphasis-700);
+}
+
+.flowArrow {
+	color: var(--ifm-color-emphasis-400);
+	margin: 0 0.1rem;
+}
+
+.flowStage {
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+/* ── Dynamic overlay ───────────────────────────────────────────────────── */
+
+.noSourceNote {
+	padding: 0.5rem 0.7rem;
+	border: 1px solid var(--ifm-color-warning-contrast-background, rgba(245, 158, 11, 0.15));
+	border-radius: 6px;
+	background: var(--ifm-color-warning-contrast-background, rgba(245, 158, 11, 0.08));
+	font-size: 0.8rem;
+	color: var(--ifm-color-emphasis-600);
+	margin-bottom: 0.6rem;
+}
+
+.componentTable {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.85rem;
+	margin-bottom: 0.5rem;
+}
+
+.componentTable th {
+	padding: 0.4rem 0.6rem;
+	text-align: left;
+	font-size: 0.7rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--ifm-color-emphasis-600);
+	border-bottom: 2px solid var(--ifm-color-emphasis-200);
+	background: var(--ifm-color-emphasis-100);
+}
+
+.componentTable th:last-child {
+	text-align: left;
+}
+
+.componentTable td {
+	padding: 0.35rem 0.6rem;
+	border-bottom: 1px solid var(--ifm-color-emphasis-100);
+	vertical-align: middle;
+}
+
+.componentTable tbody tr:hover {
+	background: var(--ifm-color-emphasis-100);
+}
+
+.componentTable tbody tr:last-child td {
+	border-bottom: 0;
+}
+
+.tagCode {
+	font-size: 0.78rem;
+	font-family: var(--ifm-font-family-monospace);
+	color: var(--ifm-color-primary);
+	background: var(--ifm-color-primary-contrast-background, rgba(54, 122, 246, 0.08));
+	padding: 0.1rem 0.35rem;
+	border-radius: 3px;
+	white-space: nowrap;
+}
+
+.valueCell {
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.82rem;
+	max-width: 180px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ── Confidence badge ──────────────────────────────────────────────────── */
+
+.confBadge {
+	display: inline-block;
+	padding: 0.1rem 0.4rem;
+	border-radius: 4px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	font-family: var(--ifm-font-family-monospace);
+	white-space: nowrap;
+}
+
+.conf_high {
+	background: rgba(34, 197, 94, 0.15);
+	color: #15803d;
+}
+
+.conf_mid {
+	background: rgba(245, 158, 11, 0.15);
+	color: #92400e;
+}
+
+.conf_low {
+	background: rgba(239, 68, 68, 0.15);
+	color: #991b1b;
+}
+
+.confDash {
+	color: var(--ifm-color-emphasis-400);
+}
+
+/* ── Origin badges ─────────────────────────────────────────────────────── */
+
+.originCell {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	align-items: center;
+}
+
+.originBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.15rem;
+	padding: 0.12rem 0.45rem;
+	border-radius: 8px;
+	font-size: 0.68rem;
+	font-weight: 600;
+	white-space: nowrap;
+	line-height: 1.3;
+	cursor: default;
+}
+
+.originDisplaced {
+	opacity: 0.65;
+	border: 1px dashed rgba(255, 255, 255, 0.5);
+}
+
+.displacedMark {
+	font-size: 0.6rem;
+	opacity: 0.8;
+}
+
+.unknownOrigin {
+	font-size: 0.72rem;
+	color: var(--ifm-color-emphasis-400);
+	font-style: italic;
+}
+
+/* ── Pipeline flags row ────────────────────────────────────────────────── */
+
+.pipelineFlags {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.4rem 0;
+	font-size: 0.78rem;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.flagLabel {
+	font-weight: 500;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+
+@media (max-width: 700px) {
+	.stageGrid {
+		grid-template-columns: 1fr;
+	}
+
+	.componentTable th:nth-child(2),
+	.componentTable td:nth-child(2) {
+		max-width: 100px;
+	}
+
+	.originBadge {
+		font-size: 0.62rem;
+		padding: 0.1rem 0.35rem;
+	}
+}

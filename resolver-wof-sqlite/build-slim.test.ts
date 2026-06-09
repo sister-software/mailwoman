@@ -5,6 +5,11 @@
  *   Tests for {@linkcode buildSlimWofDatabase}. Builds a tiny fixture WOF with a country + a few
  *   localities (varying populations) + postcodes + a non-US locality, then asserts that the slim
  *   output keeps only what the selection policy promises.
+ *
+ *   The fixture mirrors the PRODUCTION source shape: `spr` + `names` + a pre-built `place_population`
+ *   aux table, and NO `geojson` table. `scripts/build-unified-wof.ts` extracts `wof:population`
+ *   into `place_population` at ingest and never persists geojson, so the slim builder reads
+ *   population straight from that table.
  */
 
 import { mkdtemp, rm } from "node:fs/promises"
@@ -27,7 +32,7 @@ function buildFixtureWof(path: string): void {
 			is_current INTEGER, is_deprecated INTEGER
 		);
 		CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);
-		CREATE TABLE geojson (id INTEGER PRIMARY KEY, body TEXT);
+		CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0);
 
 		-- US country + region (ancestor placetypes — always kept)
 		INSERT INTO spr VALUES (100, NULL, 'United States', 'country', 'US', 39.0, -97.0, 24.5, 49.4, -125.0, -66.9, -1, 0);
@@ -56,16 +61,14 @@ function buildFixtureWof(path: string): void {
 		INSERT INTO names (id, language, name) VALUES (300, 'eng', 'Springfield ZIP');
 		INSERT INTO names (id, language, name) VALUES (400, 'fra', 'Paris');
 
-		-- geojson with wof:population so the population-ranked selector has something to sort on
-		INSERT INTO geojson VALUES (100, '{"properties":{"wof:population":331000000}}');
-		INSERT INTO geojson VALUES (101, '{"properties":{"wof:population":12700000}}');
-		INSERT INTO geojson VALUES (200, '{"properties":{"wof:population":2700000}}');
-		INSERT INTO geojson VALUES (201, '{"properties":{"wof:population":114000}}');
-		INSERT INTO geojson VALUES (202, '{"properties":{"wof:population":8000}}');
-		INSERT INTO geojson VALUES (300, '{"properties":{}}');
-		INSERT INTO geojson VALUES (301, '{"properties":{}}');
-		INSERT INTO geojson VALUES (400, '{"properties":{"wof:population":2100000}}');
-		INSERT INTO geojson VALUES (500, '{"properties":{"wof:population":0}}');
+		-- place_population (sparse, pre-built upstream) so the population-ranked selector has something
+		-- to sort on. Postcodes (300/301) and the deprecated locality (500) carry no population row.
+		INSERT INTO place_population VALUES (100, 331000000);
+		INSERT INTO place_population VALUES (101, 12700000);
+		INSERT INTO place_population VALUES (200, 2700000);
+		INSERT INTO place_population VALUES (201, 114000);
+		INSERT INTO place_population VALUES (202, 8000);
+		INSERT INTO place_population VALUES (400, 2100000);
 	`)
 	db.close()
 }
@@ -111,7 +114,7 @@ describe("buildSlimWofDatabase", () => {
 		}
 	})
 
-	test("preserves names + geojson only for selected IDs", async () => {
+	test("preserves names + place_population only for selected IDs", async () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
 		buildFixtureWof(source)
@@ -130,8 +133,18 @@ describe("buildSlimWofDatabase", () => {
 			expect(nameIds).not.toContain(400)
 			expect(nameIds).not.toContain(202)
 
-			// geojson is dropped at the end of the build — it's only needed to feed place_population,
-			// and lookup.ts never reads it at query time. Confirm the drop happened.
+			// place_population is filtered to surviving spr ids: ancestors 100/101 + top-1 locality 200.
+			// Postcodes (300/301) have no population row; trimmed places (202/400) are gone.
+			const popIds = slim
+				.prepare(`SELECT id FROM place_population ORDER BY id`)
+				.all()
+				.map((r) => (r as { id: number }).id)
+			expect(popIds).toEqual([100, 101, 200])
+			expect(popIds).not.toContain(400)
+			expect(popIds).not.toContain(202)
+
+			// The slim DB never carries a geojson table — production source has none, and the builder
+			// reads population from place_population, not geojson.
 			const geojsonExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'geojson'`).get()
 			expect(geojsonExists).toBeUndefined()
 		} finally {
@@ -139,7 +152,7 @@ describe("buildSlimWofDatabase", () => {
 		}
 	})
 
-	test("builds the place_population aux table on the trimmed row set", async () => {
+	test("carries place_population for the trimmed row set, ranked by population", async () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
 		buildFixtureWof(source)
@@ -177,6 +190,42 @@ describe("buildSlimWofDatabase", () => {
 		expect(result.rowCounts.spr).toBe(5)
 	})
 
+	test("dropNames removes the names table but keeps a working FTS index", async () => {
+		const source = join(scratch, "src.db")
+		const output = join(scratch, "slim.db")
+		buildFixtureWof(source)
+
+		const result = await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
+		// The report still carries the pre-drop names count (informative), even though the table is gone.
+		expect(result.rowCounts.names).toBeGreaterThan(0)
+		expect(result.rowCounts.placeSearch).toBe(6)
+
+		const slim = new DatabaseSync(output, { readOnly: true })
+		try {
+			const namesExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'names'`).get()
+			expect(namesExists).toBeUndefined()
+
+			// place_search is a self-contained FTS5, so name MATCH still works with names gone.
+			const hit = slim.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH 'Chicago'`).get() as
+				| { wof_id: number }
+				| undefined
+			expect(hit?.wof_id).toBe(200)
+		} finally {
+			slim.close()
+		}
+	})
+
+	test('skips empty input paths (callers pass "" for an unbuilt shard)', async () => {
+		const source = join(scratch, "src.db")
+		const output = join(scratch, "slim.db")
+		buildFixtureWof(source)
+
+		// Both the demo plugin and build-demo-assets.sh pass `--in ""` when the custom postcode DB
+		// isn't built yet. The empty path must be skipped, not treated as a missing file.
+		const result = await buildSlimWofDatabase({ inputs: ["", source, ""], output, topLocalitiesPerCountry: 1 })
+		expect(result.rowCounts.spr).toBe(5) // 1 country + 1 region + 1 locality + 2 postcodes
+	})
+
 	test("carries the coincident_roles relation, filtered to surviving spr ids (#402)", async () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
@@ -198,6 +247,30 @@ describe("buildSlimWofDatabase", () => {
 			const rows = slim.prepare(`SELECT admin_id, locality_id FROM coincident_roles ORDER BY locality_id`).all()
 			// Only the surviving pair — Mascoutah's row is dropped because 202 was trimmed from spr.
 			expect(rows).toEqual([{ admin_id: 101, locality_id: 201 }])
+		} finally {
+			slim.close()
+		}
+	})
+
+	test("materializes place_abbr from language='abbr' names, filtered to surviving ids, surviving dropNames (#189)", async () => {
+		const source = join(scratch, "src.db")
+		const output = join(scratch, "slim.db")
+		buildFixtureWof(source)
+		const s = new DatabaseSync(source)
+		s.exec(`INSERT INTO names (id, language, name) VALUES (101, 'abbr', 'IL')`) // Illinois (region) — survives
+		s.exec(`INSERT INTO names (id, language, name) VALUES (202, 'abbr', 'MZ')`) // Mascoutah (locality) — trimmed
+		s.close()
+
+		// top-2 keeps Springfield, drops Mascoutah; dropNames removes the source names table afterward.
+		await buildSlimWofDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
+
+		const slim = new DatabaseSync(output, { readOnly: true })
+		try {
+			const rows = slim.prepare(`SELECT id, abbr FROM place_abbr ORDER BY abbr`).all()
+			// Illinois keeps its abbr; the trimmed locality's is gone (names was pre-filtered to surviving
+			// ids). And place_abbr persists even though dropNames removed the source `names` table.
+			expect(rows).toEqual([{ id: 101, abbr: "IL" }])
+			expect(slim.prepare(`SELECT 1 FROM sqlite_master WHERE name='names'`).get()).toBeUndefined()
 		} finally {
 			slim.close()
 		}

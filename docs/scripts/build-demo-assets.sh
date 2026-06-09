@@ -55,12 +55,15 @@ if [[ ! -e "${SLIM_CLI}" ]]; then
     echo "build-slim-cli not compiled — running yarn compile first."
     (cd "${REPO_ROOT}" && yarn compile)
 fi
+# --drop-names: the resolver never reads the names table at runtime (self-contained FTS5), so drop it
+# for a ~2/3 size win on the shipped DB (see #359).
 node "${SLIM_CLI}" \
     --in "${WOF_ADMIN_DB}" \
     --in "${WOF_POSTCODE_DB}" \
     --out "${STATIC_DIR}/wof-hot.db" \
     --top "${SLIM_TOP_LOCALITIES:-1000}" \
-    --countries "${SLIM_COUNTRIES}"
+    --countries "${SLIM_COUNTRIES}" \
+    --drop-names
 
 echo
 echo "Done. Static assets:"

@@ -1,27 +1,25 @@
 /**
- * split-golden-dev-test.ts — Task #34 (v0.7 P0)
+ * Split-golden-dev-test.ts — Task #34 (v0.7 P0)
  *
- * Splits the golden eval set into a held-out DEV/TEST partition so the
- * calibration experiment (#31) can report per-tag recall on data the model's
- * recipe never tuned against. The methodology contract (v0.7 plan):
+ * Splits the golden eval set into a held-out DEV/TEST partition so the calibration experiment (#31)
+ * can report per-tag recall on data the model's recipe never tuned against. The methodology
+ * contract (v0.7 plan):
  *
- *   - 90/10 dev/test, stratified per source file (us / fr / adversarial) so
- *     each split preserves the country/category mix.
- *   - DETERMINISTIC: a fixed seed + mulberry32 + Fisher-Yates means re-running
- *     reproduces byte-identical splits. The TEST partition is "read exactly
- *     once per release" — it must therefore be stable and committed.
- *   - BACKWARD-COMPATIBLE: writes `dev/` and `test/` SUBDIRECTORIES under the
- *     golden dir. `loadGolden()` in harness-postcode.ts / eval-matrix.ts uses a
- *     non-recursive `readdirSync` that only picks up `*.jsonl`, so the existing
- *     `--golden data/eval/golden/v0.1.2` call is unaffected; the new splits are
- *     reached via `--golden data/eval/golden/v0.1.2/{dev,test}`.
+ * - 90/10 dev/test, stratified per source file (us / fr / adversarial) so each split preserves the
+ *   country/category mix.
+ * - DETERMINISTIC: a fixed seed + mulberry32 + Fisher-Yates means re-running reproduces
+ *   byte-identical splits. The TEST partition is "read exactly once per release" — it must
+ *   therefore be stable and committed.
+ * - BACKWARD-COMPATIBLE: writes `dev/` and `test/` SUBDIRECTORIES under the golden dir.
+ *   `loadGolden()` in harness-postcode.ts / eval-matrix.ts uses a non-recursive `readdirSync` that
+ *   only picks up `*.jsonl`, so the existing `--golden data/eval/golden/v0.1.2` call is unaffected;
+ *   the new splits are reached via `--golden data/eval/golden/v0.1.2/{dev,test}`.
  *
- * Run:
- *   node --experimental-strip-types scripts/eval/split-golden-dev-test.ts \
- *     [--golden data/eval/golden/v0.1.2] [--test-ratio 0.1] [--seed 20260529]
+ * Run: node --experimental-strip-types scripts/eval/split-golden-dev-test.ts\
+ * [--golden data/eval/golden/v0.1.2] [--test-ratio 0.1] [--seed 20260529]
  *
- * Output: <golden>/dev/<file>.jsonl, <golden>/test/<file>.jsonl, and
- *         <golden>/SPLIT-MANIFEST.json (counts + sha256 + seed for repro).
+ * Output: <golden>/dev/<file>.jsonl, <golden>/test/<file>.jsonl, and <golden>/SPLIT-MANIFEST.json
+ * (counts + sha256 + seed for repro).
  */
 
 import { createHash } from "node:crypto"
@@ -56,8 +54,10 @@ function mulberry32(seed: number): () => number {
 	}
 }
 
-/** Returns a shuffled COPY of indices [0..n). Seed is mixed per-file so the
- *  three files don't share an identical permutation. */
+/**
+ * Returns a shuffled COPY of indices [0..n). Seed is mixed per-file so the three files don't share
+ * an identical permutation.
+ */
 function shuffledIndices(n: number, rng: () => number): number[] {
 	const idx = Array.from({ length: n }, (_, i) => i)
 	for (let i = n - 1; i > 0; i--) {
@@ -154,7 +154,7 @@ function main(): void {
 					test_sha256: s.testSha256,
 					source_sha256: s.sourceSha256,
 				},
-			]),
+			])
 		),
 	}
 	writeFileSync(join(GOLDEN_DIR, "SPLIT-MANIFEST.json"), JSON.stringify(manifest, null, "\t") + "\n")

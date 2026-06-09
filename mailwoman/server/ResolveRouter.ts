@@ -177,7 +177,7 @@ const handler: RequestHandler = async (req, res) => {
 	}
 }
 
-export const ResolveRouter = Router()
+export const ResolveRouter: Router = Router()
 
 ResolveRouter.post("/api/resolve", handler)
 ResolveRouter.get("/api/resolve", handler)
