@@ -8,7 +8,7 @@
 - **Affix-aware eval tooling** (`scripts/eval/score-affix.ts`, `probe-affix-decode.ts`) — `per-locale-f1`'s `foldToComponents` joins affixes into `street`, so it can't measure the split; these score the unfolded decode. Caught the gate's false 0% (the model splits 7/10, perfect precision).
 - **Parity scorecard** (`docs/articles/evals/parity-scorecard-2026-06-09.md`, #375) — one authoritative per-tag-vs-v0 table, two lenses (arenas + per-tag), with the fold gotcha documented.
 - **Country lever resolved** (PR #463 + #464): salvaged ISO 3166-1 from isp-nexus into `codex/country/` + surface-form layer + `matchCountry`; multi-locale shard (US/DE/FR/IT/NL, v1/v2/v3); real-country OOD eval (34 cases). **Key result: the model is the wrong tool.** The v1 cumulative shard makes the model *over-fire* (country-real 49 F1, golden precision 23% — it learns "trailing token = country"), whereas a deterministic `matchCountry` on the trailing comma-segment scores **P=R=F1=100**. Lever moves to a post-parse `ProposalClassifier` (#464); the model path is kept on #463 as the exploration record.
-- **po_box reservoir resolved deterministically — zero GPU, taxonomy applied up front** (PR #463, #464). Applied the country lesson *before* spending any GPU: `matchPOBox` (codex/us/po-box.ts) per comma-segment scores **P=R=F1=100** on a curated real-OOD eval (n=25, 7 negatives incl. "Box Canyon Rd"/"Boxwood Lane" traps, 0 FP). Confirms the lever-shape taxonomy generalizes and seeds a shared `ClosedVocabTagger` design (country + po_box + cedex).
+- **po_box + cedex reservoirs resolved deterministically — zero GPU, taxonomy applied up front** (PR #463, #464). Applied the country lesson *before* spending any GPU. `matchPOBox` (codex/us/po-box.ts) per comma-segment = **P=R=F1=100** on a curated real-OOD eval (n=25, 7 negatives incl. "Box Canyon Rd"/"Boxwood Lane" traps, 0 FP). `CEDEX` regex (FR, in-segment — a *different* locale and match shape) = **P=R=F1=100** on cedex-real (n=15, 5 negatives). The taxonomy now holds across 3 tags, 2 locales, 2 match shapes — all where a retrain would dilute. Seeds a shared `ClosedVocabTagger` design.
 
 ## What went well
 
@@ -53,4 +53,4 @@
 | regressions shipped | 0 (affix held experimental; nothing promoted) |
 | PRs / issues | #461 (merged), #463 (open — country exploration), #462 (issue — affix promote), #464 (issue — deterministic country) |
 | campaign tags | unit ✅ shipped · affix ✅ gated/deferred (#462) · country ✅ + po_box ✅ resolved → deterministic (#464) |
-| reservoirs (zero-GPU) | po_box deterministic probe (100%), `ClosedVocabTagger` design |
+| reservoirs (zero-GPU) | po_box (100%) + cedex (100%) deterministic probes, `ClosedVocabTagger` design |

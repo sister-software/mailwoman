@@ -58,6 +58,7 @@ Postal-arena edge classes where BOTH are 0% (the parity frontier): `po-box` (4),
 | country-real (34) | country (deterministic) | — | **100.0** | `matchCountry` on trailing segment, P=R=100 |
 | po-box-real (25) | po_box (model, #15) | ~18 | — | starved |
 | po-box-real (25) | po_box (deterministic) | — | **100.0** | `matchPOBox` per segment; 7 negatives, 0 FP |
+| cedex-real (15) | cedex (deterministic, FR) | — | **100.0** | `CEDEX` regex in-segment; 5 negatives, 0 FP |
 
 ³ v4.1.0 lumps "Wacker Dr" into one `street` span; the affix retrain teaches the split (7/10 → split, perfect precision).
 
@@ -77,8 +78,9 @@ Common tags (postcode/house_number/street/locality/region/venue-US) are at usabl
 | **affix** | street_prefix/suffix | ✅ **GATED v0.9.8: 0→78/67 (P=100), US net-positive, negative-space street +2.1.** FR postcode −3.9 (US-shard dilution) trips the >2pp gate → promote DEFERRED to operator (#462; DeepSeek recommends promote-with-annotation). int8 ship-ready. |
 | **country** | country | ✅ **RESOLVED — deterministic, not retrain.** The synth shard makes the model over-fire (v1 country-real 49 F1, golden precision 23% — it learns "trailing token = country"). A deterministic `matchCountry` tagger on the trailing comma-segment scores **P=R=F1=100** on country-real. Lever moves to a post-parse `ProposalClassifier` (#464); model path kept as exploration record (#463). |
 | **po_box** | po_box | ✅ **RESOLVED — deterministic** (probe measured this shift): `matchPOBox` per comma-segment = **P=R=F1=100** on po-box-real (n=25, 7 negatives, 0 FP). Same closed-vocab shape as country → joins #464 as a `ProposalClassifier`, not a retrain. |
+| **cedex** (FR) | cedex | ✅ **RESOLVED — deterministic** (probe this shift): `CEDEX` regex in-segment = **P=R=F1=100** on cedex-real (n=15, 5 negatives, 0 FP). Different locale + match shape than country/po_box, same taxonomy → joins #464. |
 | intersection | intersection_a/b | ⏳ (gated — regressed before) |
-| FR | venue/cedex/region | ⏳ (#330) |
+| FR | venue/region | ⏳ (#330; cedex now resolved deterministically above) |
 | consolidation | — | ⏳ v1.0 (bake winners + full regression gate) — **needs > 20k steps**: see dilution note |
 
 > **CUMULATIVE-DILUTION LESSON (load-bearing for consolidation):** stacking synth shards into one 20k-step run dilutes each tag vs its solo run — the country run (base+unit+affix+country) dropped affix street_suffix 67→59 and street_prefix 78→75 while still under-serving country. Each added shard spreads a fixed step budget thinner. **Prove each lever solo, then consolidate with a larger step budget** (the v2-vs-v3 unit lesson, re-confirmed). Don't read a cumulative run's per-tag number as that lever's ceiling.
@@ -88,6 +90,6 @@ Common tags (postcode/house_number/street/locality/region/venue-US) are at usabl
 The campaign has surfaced two tag shapes that want different tools:
 
 - **Distributional / open-vocab tags** (street_prefix, street_suffix, unit, locality) — the model has to *learn the boundary* from context. Synth shard + retrain is the right tool; these are where negative-space training compounds.
-- **Closed-vocab / fixed-position tags** (country ✓, po_box ✓, cedex pending) — a finite surface-form set in a predictable slot. A deterministic matcher gives perfect precision with zero training; a retrained model only *dilutes* it (over-fires). Use a `ProposalClassifier`, keep it default-off + byte-stable. **Both country and po_box now measured at P=R=F1=100** via this route — build one `ClosedVocabTagger` parameterized by (matcher, tag, slot) rather than per-tag classifiers (#464).
+- **Closed-vocab / fixed-position tags** (country ✓, po_box ✓, cedex ✓) — a finite surface-form set in a predictable slot. A deterministic matcher gives perfect precision with zero training; a retrained model only *dilutes* it (over-fires). Use a `ProposalClassifier`, keep it default-off + byte-stable. **All three now measured at P=R=F1=100** via this route, across 2 locales (US/FR) and 2 match shapes (whole-segment + in-segment regex) — build one `ClosedVocabTagger` parameterized by (matcher, tag, slot) rather than per-tag classifiers (#464).
 
-*Baseline captured 2026-06-09 ~04:50 UTC during the night shift; finalized ~12:10 UTC with the country + po_box deterministic results. Affix "after" = the v0.9.8 gate run; country = the v0.9.9 v1 cumulative run + the deterministic probe; po_box = deterministic probe only (no retrain — taxonomy applied up front).*
+*Baseline captured 2026-06-09 ~04:50 UTC during the night shift; finalized ~12:25 UTC with the country + po_box + cedex deterministic results. Affix "after" = the v0.9.8 gate run; country = the v0.9.9 v1 cumulative run + the deterministic probe; po_box + cedex = deterministic probes only (no retrain — taxonomy applied up front).*
