@@ -26,6 +26,7 @@ Each layer adds one kind of knowledge the layers below it cannot easily derive:
 | **2.5. Kind classifier** | overall query category (postcode_only, structured_address, …) | Yes (rule-based)                                                                                                       |
 | **2.7. Phrase grouper**  | **coherent input units (boundary discovery)**                 | **Yes (rule-based, v0.5.0; 57 venue markers, unit gate, positional prior)**                                            |
 | **3. Token classify**    | per-token semantic type                                       | Yes (neural, v0.5.2)                                                                                                   |
+| **3.2. Gazetteer anchor** | **known-surface clues (per-token candidate-tag sets, input layer)** | Partial — postcode anchor shipped; country anchor in flight ([#464](https://github.com/sister-software/mailwoman/issues/464)); general channel designed |
 | **3.5. FST prior**       | **gazetteer-derived emission biases**                         | **Yes (Wikipedia importance-weighted, v0.5.2; [#173](https://github.com/sister-software/mailwoman/pull/173))**         |
 | **4. Sequence correct**  | per-token BIO sequence validity                               | Yes (CRF with structural mask)                                                                                         |
 | **4.5. Grouper audit**   | **provisional nodes for all-O spans**                         | **Yes (injects venue/locality from grouper proposals; [#170](https://github.com/sister-software/mailwoman/pull/170))** |
@@ -84,6 +85,48 @@ This is a separate concern from "is this span a postcode?" The grouper's questio
 The neural classifier. Per-token BIO tagging today. Knows distributions of tokens to tag classes from training. Does **not** know the world (which countries contain which regions) and cannot easily learn the gazetteer from corpus statistics. Asking it to do so wastes capacity that could be spent on type discrimination.
 
 v0.5.0's classifier (Thread C) ships two architectural changes to fit the wider ladder. **Phrase-prior conditioning:** the input layer takes a per-token feature row (BIE markers + `PhraseKind` one-hot from the Stage 2.7 phrase grouper) concatenated onto the token+position embedding and projected back to `hidden_size`. Boundary discovery moves to Stage 2.7 where it belongs; the classifier conditions on those proposals and answers the simpler "what type is this proposed span?" — and is still free to disagree when its evidence outweighs the grouper's confidence. **Top-k inference (`predict_top_k`):** the inference path emits the K most-probable tag sequences with calibrated log-probability scores under the CRF distribution, rather than the single argmax. Stage 5 reconcile consumes these as the classifier's belief over candidate parses. Both are gated behind config flags (`use_phrase_priors`, `predict_top_k(k=...)`) so the v0.4.0-style argmax-only encoder still works for ablation studies and back-compat.
+
+### Gazetteer anchor — known-surface clues at the input layer
+
+The classifier's input layer already accepts per-token feature rows (the phrase-prior
+channel above, and the postcode anchor). The gazetteer anchor generalizes that channel:
+for each token, consult the gazetteer/codex and attach a **candidate-tag set** — a
+multi-hot `[country]`, `[country, region]`, `[po_box designator]` over the tag classes —
+as input features. The model still decides every tag; the gazetteer
+*informs*, it never *overrides*. Think of it as a caching layer of clues: RAG-shaped
+(retrieve external knowledge, augment the model), but the retrieval lands as a feature
+vector per token rather than text in a context window. The literature calls this
+**shallow fusion** / gazetteer-augmented NER; the [FST prior](../../concepts/fst-priors-as-shallow-fusion.mdx)
+is the same idea applied at the *emission* layer, and this rung is its input-layer
+sibling.
+
+Three properties make this the right home for "the model should know place names":
+
+- **It is not overfitting — the knowledge lives outside the weights.** Add a place to
+  the gazetteer tomorrow and the clue fires with no retrain. The model learns to *use*
+  the clue, not to memorize the list. (The same instinct aimed at the tokenizer — put
+  every country and city in the token vocabulary — fights the tokenizer's job: it
+  balloons the embedding table, destroys subword generalization on unseen places, and
+  a single vocab id still carries no disambiguating context. Keep the subword
+  tokenizer for generalization; attach membership as a feature for knowledge.)
+- **The multi-hot encoding gives homograph awareness for free.** A token whose
+  candidate set has more than one entry ("Georgia" → `[country, region]`) is *flagged as
+  ambiguous by construction* — the model learns "context is load-bearing here."
+- **The over-reliance risk is handled by training, not architecture.** The measured
+  failure mode of closed-vocab tags is a model that echoes a cheap correlation (the
+  country retrain that learned "trailing token ⇒ country"). Homograph-contrast
+  training rows — the same surface labeled `country` in one context and `region` in
+  another, clue firing both times — teach the model the clue is a hint, not a verdict.
+  Measured on the country lever: balanced contrast data alone took country from 0 to
+  alive at **perfect precision and zero over-fire**; the anchor's remaining job is
+  long-tail recall (the model can't recognize "Eswatini" from three training
+  sightings, but the gazetteer can). See
+  [closed-vocab fields: model-first](../../plan/reference/closed-vocab-fields-model-first.mdx).
+
+There is a pleasing symmetry with the resolver: the ancestors table precomputes the
+hierarchy chain so the *resolver* trades disk for speed; the gazetteer anchor
+precomputes surface-form membership so the *parser* trades disk for clues. Same
+trade, both stages.
 
 ### Sequence correct — BIO sequence validity
 

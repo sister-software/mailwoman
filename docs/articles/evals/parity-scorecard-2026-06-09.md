@@ -87,6 +87,8 @@ Common tags (postcode/house_number/street/locality/region/venue-US) are at usabl
 
 ### Lever-shape taxonomy (why not everything is a retrain)
 
+> **Correction (reviewed later same day):** the "closed-vocab → deterministic post-parse override" conclusion below was **reversed**. The over-firing was a training-distribution artifact (a trailing-country-only shard), and the "deterministic = 100%" was measured on a no-homograph eval — an unfair comparison. The corrected decision is **model-first with a soft gazetteer anchor** (the lexicon informs, never overrides), and the matchers become feature-sources, not a `ProposalClassifier` override. The deterministic-match P=R=F1=100 numbers below stand as *matcher-accuracy* evidence (good feature-sources), not as a justification to override the model. See [Closed-vocab fields: model-first](../plan/reference/closed-vocab-fields-model-first.mdx).
+
 The campaign has surfaced two tag shapes that want different tools:
 
 - **Distributional / open-vocab tags** (street_prefix, street_suffix, unit, locality) — the model has to *learn the boundary* from context. Synth shard + retrain is the right tool; these are where negative-space training compounds.

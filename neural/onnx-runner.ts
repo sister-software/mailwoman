@@ -17,6 +17,7 @@ import { promises as fs } from "node:fs"
 import ort from "onnxruntime-node"
 
 import { ANCHOR_FEATURE_DIM } from "./anchor-inference.js"
+import { GAZETTEER_FEATURE_DIM } from "./gazetteer-inference.js"
 
 export interface OnnxRunnerOpts {
 	/** If true, load the model immediately in `create()`. Default false. */
@@ -97,7 +98,8 @@ export class OnnxRunner {
 	 */
 	async infer(
 		tokenIds: number[],
-		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
+		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
 	): Promise<InferResult> {
 		const session = await this.ensureSession()
 		const seqLen = Math.min(tokenIds.length, this.fixedSeqLen)
@@ -134,6 +136,32 @@ export class OnnxRunner {
 				ANCHOR_FEATURE_DIM,
 			])
 			feeds.anchor_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
+		}
+
+		// Gazetteer-anchor channel (#464): same feed contract as the postcode anchor. Feature width is
+		// read from the supplied rows (the lexicon's slot count); a gazetteer-trained model with no clue
+		// data supplied gets the confidence=0 identity (the model's gazetteer-off behavior).
+		if (gazetteer && session.inputNames.includes("gazetteer_features")) {
+			const dim = gazetteer.features[0]?.length ?? 0
+			const gf = new Float32Array(this.fixedSeqLen * dim)
+			const gc = new Float32Array(this.fixedSeqLen)
+			for (let i = 0; i < seqLen; i++) {
+				gc[i] = gazetteer.confidence[i] ?? 0
+				const row = gazetteer.features[i]
+				if (row) for (let d = 0; d < dim; d++) gf[i * dim + d] = row[d] ?? 0
+			}
+			feeds.gazetteer_features = new ort.Tensor("float32", gf, [1, this.fixedSeqLen, dim])
+			feeds.gazetteer_confidence = new ort.Tensor("float32", gc, [1, this.fixedSeqLen])
+		} else if (session.inputNames.includes("gazetteer_features")) {
+			feeds.gazetteer_features = new ort.Tensor(
+				"float32",
+				new Float32Array(this.fixedSeqLen * GAZETTEER_FEATURE_DIM),
+				[1, this.fixedSeqLen, GAZETTEER_FEATURE_DIM]
+			)
+			feeds.gazetteer_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [
+				1,
+				this.fixedSeqLen,
+			])
 		}
 
 		const output = await session.run(feeds)

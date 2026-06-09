@@ -32,7 +32,7 @@
  */
 
 import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
-import { NeuralAddressClassifier, parseAnchorLookup } from "@mailwoman/neural"
+import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { readFileSync, writeFileSync } from "node:fs"
@@ -49,6 +49,7 @@ interface Args {
 	tokenizerPath?: string
 	modelCardPath?: string
 	modelAnchorLookupPath?: string
+	gazetteerLexiconPath?: string
 	outJson?: string
 }
 
@@ -71,6 +72,7 @@ function parseArgs(): Args {
 		// Feed the postcode anchor for a 4-input anchor-trained model (else inference errors on the
 		// missing anchor inputs). Mirrors oa-resolver-eval's --model-anchor-lookup.
 		else if (a === "--model-anchor-lookup" && argv[i + 1]) out.modelAnchorLookupPath = argv[++i]
+		else if (a === "--gazetteer-lexicon" && argv[i + 1]) out.gazetteerLexiconPath = argv[++i]
 		else if (a === "--out-json" && argv[i + 1]) out.outJson = argv[++i]
 	}
 	return out as Args
@@ -206,7 +208,16 @@ async function main(): Promise<void> {
 	console.error("Model:     ", args.modelPath ?? "(default weights)")
 
 	let neural: NeuralAddressClassifier
-	if (args.modelPath && args.tokenizerPath && args.modelCardPath) {
+	// FOOTGUN GUARD: if ANY custom-model flag is set, ALL THREE are required. Previously a missing
+	// --tokenizer silently fell back to the DEFAULT shipped weights, so --model was ignored and two
+	// different checkpoints scored byte-identical. Refuse to guess; fail loud.
+	if (args.modelPath || args.tokenizerPath || args.modelCardPath) {
+		if (!args.modelPath || !args.tokenizerPath || !args.modelCardPath) {
+			throw new Error(
+				"--model requires --tokenizer AND --model-card together (refusing to silently fall back to " +
+					`default weights). got: model=${!!args.modelPath} tokenizer=${!!args.tokenizerPath} model-card=${!!args.modelCardPath}`
+			)
+		}
 		const card = JSON.parse(readFileSync(args.modelCardPath, "utf8"))
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(args.tokenizerPath),
@@ -215,7 +226,18 @@ async function main(): Promise<void> {
 		const postcodeAnchorLookup = args.modelAnchorLookupPath
 			? parseAnchorLookup(JSON.parse(readFileSync(args.modelAnchorLookupPath, "utf8")))
 			: undefined
-		neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels, postcodeAnchorLookup })
+		// Gazetteer-anchor lexicon (#464): fed when --gazetteer-lexicon is given so a gazetteer-trained
+		// model gets its clues. Harmless for older models (the runner skips inputs the ONNX lacks).
+		const gazetteerLexicon = args.gazetteerLexiconPath
+			? parseGazetteerLexicon(JSON.parse(readFileSync(args.gazetteerLexiconPath, "utf8")))
+			: undefined
+		neural = new NeuralAddressClassifier({
+			tokenizer,
+			runner,
+			labels: card.labels,
+			postcodeAnchorLookup,
+			gazetteerLexicon,
+		})
 	} else {
 		neural = await NeuralAddressClassifier.loadFromWeights()
 	}

@@ -57,6 +57,10 @@ class EncodedExample:
     # ``(max_length,)`` confidence, or None when no anchor lookup is configured (back-compat).
     anchor_features: list[list[float]] | None = None
     anchor_confidence: list[float] | None = None
+    # Gazetteer-anchor channel (#464). Per-piece ``(max_length, lexicon.feature_dim)`` candidate-
+    # tag-set clues + ``(max_length,)`` confidence, or None when no lexicon is configured.
+    gazetteer_features: list[list[float]] | None = None
+    gazetteer_confidence: list[float] | None = None
 
 
 def load_anchor_lookup(path: str) -> dict[str, tuple[dict[str, float], float, float]]:
@@ -293,6 +297,15 @@ def _raw_row_stream(
             "\n  ".join(f"{p}: {reason}" for p, reason in skipped_shards[:10]),
         )
 
+    # FOOTGUN GUARD: a shard with a None `source` (e.g. a --golden eval shard wrongly used as a train/
+    # val shard — golden rows carry no source field) used to crash here with a cryptic
+    # "'<' not supported between NoneType and str" from sorted(). Fail loud with the real cause instead.
+    if any(src is None for src in by_source):
+        n_none = sum(len(s) for src, s in by_source.items() if src is None)
+        raise ValueError(
+            f"{n_none} shard rows have no `source` field — likely a --golden (label-less) shard used as a "
+            "train/val shard. Rebuild that shard WITHOUT --golden so rows carry source + labels."
+        )
     logger.info(
         "Shard index: %s",
         ", ".join(f"{src}={len(shards)}" for src, shards in sorted(by_source.items())),
@@ -453,6 +466,12 @@ def iter_encoded(
     # Postcode-anchor lookup (#239/#240): loaded once, passed to every encode_row. None → no anchor
     # features produced (back-compat). See load_anchor_lookup.
     anchor_lookup = load_anchor_lookup(cfg_data.anchor_lookup_path) if cfg_data.anchor_lookup_path else None
+    # Gazetteer-anchor lexicon (#464): loaded once. None → no gazetteer features (back-compat).
+    gazetteer_lexicon = None
+    if getattr(cfg_data, "gazetteer_lexicon_path", None):
+        from .gazetteer_anchor import load_gazetteer_lexicon
+
+        gazetteer_lexicon = load_gazetteer_lexicon(cfg_data.gazetteer_lexicon_path)
     for row in iter_rows(
         Path(cfg_data.corpus_dir),
         split,
@@ -471,6 +490,7 @@ def iter_encoded(
             row["labels"],
             max_length=cfg_data.max_length,
             anchor_lookup=anchor_lookup,
+            gazetteer_lexicon=gazetteer_lexicon,
         )
         # Drop rows whose non-padding length exceeds max_length (length filter §2).
         non_pad = sum(enc["attention_mask"])
@@ -485,6 +505,8 @@ def iter_encoded(
             locale_id=locale_id(row.get("country")),
             anchor_features=enc.get("anchor_features"),
             anchor_confidence=enc.get("anchor_confidence"),
+            gazetteer_features=enc.get("gazetteer_features"),
+            gazetteer_confidence=enc.get("gazetteer_confidence"),
         )
 
 
@@ -502,6 +524,10 @@ def collate(batch: list[EncodedExample]) -> dict:
     if batch and batch[0].anchor_features is not None:
         out["anchor_features"] = [ex.anchor_features for ex in batch]
         out["anchor_confidence"] = [ex.anchor_confidence for ex in batch]
+    # Gazetteer-anchor channel (#464): same presence contract as the postcode anchor.
+    if batch and batch[0].gazetteer_features is not None:
+        out["gazetteer_features"] = [ex.gazetteer_features for ex in batch]
+        out["gazetteer_confidence"] = [ex.gazetteer_confidence for ex in batch]
     return out
 
 
