@@ -163,6 +163,11 @@ class TrainConfig:
     # smoke window masks divergence by collapsing LR before the loss curve shows it; the
     # constant-LR mode keeps the signal visible. See the ref doc for when to pick which.
     lr_schedule: str = "cosine"
+    # Gazetteer-anchor confidence curriculum (#464, v0.9.13). When True, the trainer ramps a per-row
+    # zero-out of the gazetteer clue's confidence by step (same schedule as the postcode anchor) so the
+    # model can't over-rely on the always-on clue — the v0.9.12 US-postcode-recovery knob. Off keeps
+    # v0.9.12-style always-on runs reproducible. Requires model.use_gazetteer_anchor.
+    gazetteer_curriculum: bool = False
     # Training objective. "supervised" = the BIO token-classification loss (CE + optional CRF, the
     # default and only historical mode). "mlm" = self-supervised masked-language-model PRE-training
     # on the corpus text (BIO labels ignored): masks `mlm_mask_prob` of attended tokens and predicts

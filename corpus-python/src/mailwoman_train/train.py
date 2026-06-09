@@ -93,6 +93,18 @@ def perturb_anchor_confidence(conf: torch.Tensor, step: int, max_steps: int) -> 
     return out.masked_fill(row_zero, 0.0)
 
 
+def perturb_gazetteer_confidence(conf: torch.Tensor, step: int, max_steps: int) -> torch.Tensor:
+    """Curriculum-perturb the per-token gazetteer-anchor confidence ``(B, S)`` — the v0.9.12 fix.
+
+    Same shape as the postcode curriculum: untouched early (build the clue's basin), then a ramped
+    per-row zero-out so the model can't OVER-RELY on the lexicon. v0.9.12 lifted country/region/
+    locality but cost US postcode −3.7 — symptomatic of the model leaning on the always-on clue and
+    reallocating base competence. Dropping the clue on a growing fraction of rows forces the model to
+    keep its label competence with AND without the hint. Reuses the postcode curriculum schedule.
+    """
+    return perturb_anchor_confidence(conf, step, max_steps)
+
+
 def _cosine_with_warmup(optimizer: AdamW, warmup_steps: int, max_steps: int) -> LambdaLR:
     def lr_lambda(step: int) -> float:
         if step < warmup_steps:
@@ -461,6 +473,13 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                 if "anchor_confidence" in tb:
                     tb["anchor_confidence"] = perturb_anchor_confidence(
                         tb["anchor_confidence"], step, cfg.train.max_steps
+                    )
+                # Gazetteer-anchor confidence curriculum (#464, v0.9.13): same ramped per-row zero-out
+                # so the model keeps label competence with AND without the clue (recovers the v0.9.12
+                # US postcode -3.7). Gated on the config flag so always-on runs stay reproducible.
+                if "gazetteer_confidence" in tb and getattr(cfg.train, "gazetteer_curriculum", False):
+                    tb["gazetteer_confidence"] = perturb_gazetteer_confidence(
+                        tb["gazetteer_confidence"], step, cfg.train.max_steps
                     )
                 # Optimizer step happens every ``accum`` micro-batches; gradients accumulate
                 # across the micro-batches in between. ``step`` counts *optimizer* steps,
