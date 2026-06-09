@@ -46,7 +46,7 @@ const SOURCES = [
 	{ zip: "/tmp/oa-cache/us__mt__statewide.zip", csv: "us/mt/statewide.csv", iso2: "US", region: "MT", order: "us" },
 	{ zip: "/tmp/oa-cache/us__sd__statewide.zip", csv: "us/sd/statewide.csv", iso2: "US", region: "SD", order: "us" },
 	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", iso2: "DE", region: "", order: "eu" },
-	{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv", iso2: "FR", region: "", order: "eu" },
+	{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv", iso2: "FR", region: "", order: "fr" },
 	// ES (es_addresses.csv) uses the Spanish IGN schema (nombre_via/numero/municipio), not the OA
 	// standard columns — skipped here; the codex still recognizes "España"/"Spain" for matching. A
 	// dedicated IGN adapter is a follow-up.
@@ -177,7 +177,11 @@ function renderCountry(random, t, country) {
 	if (order === "us") {
 		const regPc = [reg, pc].filter(Boolean).join(" ")
 		body = `${hn} ${street}, ${loc}${regPc ? ", " + regPc : ""}`
+	} else if (order === "fr") {
+		// French is NUMBER-street, postcode-city: "84 Route de la Fontaine, 75008 Paris".
+		body = `${hn} ${street}, ${[pc, loc].filter(Boolean).join(" ")}`
 	} else {
+		// DE/IT/NL: street-number, postcode-city: "Pariser Platz 1, 10117 Berlin".
 		const pcCity = [pc, loc].filter(Boolean).join(" ")
 		body = `${street} ${hn}, ${pcCity}`
 	}
@@ -190,7 +194,7 @@ function renderCountry(random, t, country) {
 	const r = random()
 	if (r < 0.8) return { fmt: "full", raw: `${body}, ${country}`, components: withC }
 	if (r < 0.92) return { fmt: "full-nl", raw: `${body}\n${country}`, components: withC }
-	const bareBody = order === "us" ? `${hn} ${street}, ${loc}` : `${street} ${hn}, ${loc}`
+	const bareBody = order === "us" || order === "fr" ? `${hn} ${street}, ${loc}` : `${street} ${hn}, ${loc}`
 	return { fmt: "bare", raw: `${bareBody}, ${country}`, components: { house_number: hn, street, locality: loc, country } }
 }
 
