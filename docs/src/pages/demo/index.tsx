@@ -38,6 +38,7 @@ import {
 	ResolvedHit,
 } from "../../shared/resources.tsx"
 
+import type { ReleasesManifest } from "../../shared/demo-helpers.ts"
 import {
 	DEFAULT_ADDRESS,
 	DEFAULT_LOCALE,
@@ -45,13 +46,10 @@ import {
 	flattenTree,
 	runCascade,
 } from "../../shared/demo-helpers.ts"
-import type { ReleasesManifest } from "../../shared/demo-helpers.ts"
 
 import styles from "./styles.module.css"
 
 const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
-
-
 
 const DemoPage: React.FC = () => {
 	const { siteConfig } = useDocusaurusContext()
@@ -753,8 +751,6 @@ function clearBbox(map: MapLibreMap): void {
 		if (map.getSource(BBOX_SOURCE)) map.removeSource(BBOX_SOURCE)
 	})
 }
-
-
 
 function currentDocusaurusTheme(): "light" | "dark" {
 	if (typeof document === "undefined") return "light"

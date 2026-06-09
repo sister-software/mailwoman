@@ -5,13 +5,12 @@
  *
  *   SubwordExplorer — educational word-level tokenization explorer that shows how Mailwoman's
  *   pipeline stages process each word token. Complements BIOHighlight by adding per-stage
- *   annotations (query shape, kind, phrase groups, classified spans) for each word of the
- *   input. Designed to work inside a DemoEmbedProvider context.
+ *   annotations (query shape, kind, phrase groups, classified spans) for each word of the input.
+ *   Designed to work inside a DemoEmbedProvider context.
  *
- *   Since direct SentencePiece access isn't available via the DemoEmbed context, this component
- *   shows word-level tokenization derived from the pipeline result (classified spans with
- *   start/end offsets). Each pipeline stage's contribution is annotated per word where
- *   applicable.
+ *   Since direct SentencePiece access isn't available via the DemoEmbed context, this component shows
+ *   word-level tokenization derived from the pipeline result (classified spans with start/end
+ *   offsets). Each pipeline stage's contribution is annotated per word where applicable.
  */
 
 import type React from "react"
@@ -98,18 +97,15 @@ interface AnnotatedWord {
 }
 
 /**
- * Assign each word to its most specific covering span (shortest-span owner) and derive
- * BIO labels + phrase groups.
+ * Assign each word to its most specific covering span (shortest-span owner) and derive BIO labels +
+ * phrase groups.
  */
 function annotateWords(words: WordToken[], nodes: ResultNode[]): AnnotatedWord[] {
 	// Filter to well-formed spans.
 	const spans: SpanInfo[] = nodes
 		.filter(
 			(n): n is ResultNode & { start: number; end: number } =>
-				typeof n.start === "number" &&
-				typeof n.end === "number" &&
-				n.start >= 0 &&
-				n.end > n.start
+				typeof n.start === "number" && typeof n.end === "number" && n.start >= 0 && n.end > n.start
 		)
 		.map((n) => ({ tag: n.tag, confidence: n.confidence, start: n.start, end: n.end, value: n.value }))
 
@@ -251,11 +247,7 @@ const PipelineFlow: React.FC = () => (
 		{PIPELINE_STAGES.map((stage, i) => (
 			<span key={stage.key} className={styles.flowStep}>
 				{i > 0 ? <span className={styles.flowArrow}>→</span> : null}
-				<span
-					className={styles.flowPill}
-					style={{ borderColor: stage.color }}
-					title={stage.description}
-				>
+				<span className={styles.flowPill} style={{ borderColor: stage.color }} title={stage.description}>
 					<span className={styles.flowIcon}>{stage.icon}</span>
 					<span className={styles.flowLabel}>{stage.label}</span>
 				</span>
@@ -344,12 +336,7 @@ export const SubwordExplorer: React.FC<SubwordExplorerProps> = ({ input, nodes, 
 				<div className={styles.tokenRows}>
 					{annotated.map((aw, i) => {
 						const spanTier = aw.span ? tier(aw.span.confidence) : "none"
-						const labelClass =
-							aw.label === "O"
-								? styles.bioO
-								: aw.label.startsWith("B-")
-									? styles.bioB
-									: styles.bioI
+						const labelClass = aw.label === "O" ? styles.bioO : aw.label.startsWith("B-") ? styles.bioB : styles.bioI
 
 						return (
 							<div
@@ -409,8 +396,8 @@ export const SubwordExplorer: React.FC<SubwordExplorerProps> = ({ input, nodes, 
 						</span>
 						<span className={styles.summarySep}>·</span>
 						<span className={styles.summaryItem}>
-							<strong>{new Set(annotated.filter((a) => a.span).map((a) => a.phraseGroup)).size}</strong> phrase
-							group{new Set(annotated.filter((a) => a.span).map((a) => a.phraseGroup)).size !== 1 ? "s" : ""}
+							<strong>{new Set(annotated.filter((a) => a.span).map((a) => a.phraseGroup)).size}</strong> phrase group
+							{new Set(annotated.filter((a) => a.span).map((a) => a.phraseGroup)).size !== 1 ? "s" : ""}
 						</span>
 					</>
 				) : null}
@@ -418,8 +405,8 @@ export const SubwordExplorer: React.FC<SubwordExplorerProps> = ({ input, nodes, 
 
 			{!hasSpans ? (
 				<p className={styles.noSpansNote}>
-					No classified spans available — this model version may not emit character offsets. The word tokens above
-					show the raw tokenizer output without BIO labels.
+					No classified spans available — this model version may not emit character offsets. The word tokens above show
+					the raw tokenizer output without BIO labels.
 				</p>
 			) : null}
 		</div>

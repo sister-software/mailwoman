@@ -52,7 +52,9 @@
 	height: 10px;
 	border-radius: 50%;
 	background: var(--ifm-color-emphasis-300);
-	transition: background 0.2s ease, transform 0.15s ease;
+	transition:
+		background 0.2s ease,
+		transform 0.15s ease;
 	cursor: pointer;
 	border: none;
 	padding: 0;

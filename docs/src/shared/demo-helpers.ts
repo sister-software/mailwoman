@@ -166,8 +166,8 @@ export function flattenTree(
 // ---------------------------------------------------------------------------
 
 /**
- * Cascade: postcode first (most precise), fall back to locality, then raw text.
- * Drop (lat=0, lon=0) hits — WOF ships placeholder zeros on ~22% of US postcodes.
+ * Cascade: postcode first (most precise), fall back to locality, then raw text. Drop (lat=0, lon=0)
+ * hits — WOF ships placeholder zeros on ~22% of US postcodes.
  */
 export async function runCascade(
 	lookup: MailwomanLookupLike,

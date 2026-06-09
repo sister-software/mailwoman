@@ -3,11 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   BIOHighlight — word-level BIO label breakdown from a parse tree.
- *   Maps each word of the input to its BIO label (B-X, I-X, O) using the
- *   pipeline's span output. Complements SpanHighlight (character-level
- *   confidence ribbon) by showing the discrete BIO tagging the neural model
- *   emits per word.
+ *   BIOHighlight — word-level BIO label breakdown from a parse tree. Maps each word of the input to
+ *   its BIO label (B-X, I-X, O) using the pipeline's span output. Complements SpanHighlight
+ *   (character-level confidence ribbon) by showing the discrete BIO tagging the neural model emits
+ *   per word.
  */
 
 import type { ResultNode } from "../../shared/resources.tsx"
@@ -58,10 +57,9 @@ function tokenizeWords(input: string): Array<{ text: string; start: number; end:
 /**
  * Assign BIO labels to each word based on span coverage.
  *
- * For each word we find the shortest covering span (same per-character
- * shortest-span owner algorithm SpanHighlight uses). The first word of each
- * span gets B-{tag}; subsequent words of the same span get I-{tag}. Words with
- * no covering span get O.
+ * For each word we find the shortest covering span (same per-character shortest-span owner
+ * algorithm SpanHighlight uses). The first word of each span gets B-{tag}; subsequent words of the
+ * same span get I-{tag}. Words with no covering span get O.
  */
 function assignBIOLabels(
 	words: ReturnType<typeof tokenizeWords>,
@@ -106,6 +104,7 @@ function assignBIOLabels(
  * Render the raw input as a word-level BIO label breakdown.
  *
  * Each word is shown with its BIO label underneath:
+ *
  * - B-X labels in green (beginning of an address component)
  * - I-X labels in blue (inside an address component)
  * - O labels in gray (outside any component)

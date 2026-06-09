@@ -17,7 +17,7 @@
  *   <DemoEmbedProvider sqljsBaseUrl="/mailwoman/sqljs">
  *     <PipelineExplorer />
  *   </DemoEmbedProvider>
- *   ```
+ * ```
  *
  *   The GuidedTour is rendered inside PipelineExplorer — no separate provider needed.
  */
@@ -207,14 +207,11 @@ export const GuidedTour: React.FC = () => {
 
 	// ---- Navigation ----
 
-	const goTo = useCallback(
-		(index: number) => {
-			const clamped = Math.max(0, Math.min(index, TOUR_STOPS.length - 1))
-			setCurrentIndex(clamped)
-			setVisited((prev) => new Set(prev).add(clamped))
-		},
-		[]
-	)
+	const goTo = useCallback((index: number) => {
+		const clamped = Math.max(0, Math.min(index, TOUR_STOPS.length - 1))
+		setCurrentIndex(clamped)
+		setVisited((prev) => new Set(prev).add(clamped))
+	}, [])
 
 	const prev = useCallback(() => goTo(currentIndex - 1), [currentIndex, goTo])
 	const next = useCallback(() => goTo(currentIndex + 1), [currentIndex, goTo])
@@ -287,12 +284,7 @@ export const GuidedTour: React.FC = () => {
 
 							{/* ---- Navigation ---- */}
 							<div className={styles.nav}>
-								<button
-									type="button"
-									className={styles.navBtn}
-									disabled={currentIndex === 0}
-									onClick={prev}
-								>
+								<button type="button" className={styles.navBtn} disabled={currentIndex === 0} onClick={prev}>
 									← Previous
 								</button>
 								<span className={styles.stopCounter}>
@@ -315,9 +307,7 @@ export const GuidedTour: React.FC = () => {
 										{currentStop.id}. {currentStop.title}
 									</h3>
 									<div className={styles.badges}>
-										<span className={`${styles.badge} ${styles.stageBadge}`}>
-											{currentStop.pipelineStageLabel}
-										</span>
+										<span className={`${styles.badge} ${styles.stageBadge}`}>{currentStop.pipelineStageLabel}</span>
 										<span className={`${styles.badge} ${statusBadgeClass(currentStop.statusBadge)}`}>
 											{statusBadgeLabel(currentStop.statusBadge)}
 										</span>
@@ -379,7 +369,7 @@ export const GuidedTour: React.FC = () => {
 									</div>
 								) : currentState.error ? (
 									<div className={styles.tourError}>{currentState.error}</div>
-									) : currentState.busy ? null : (
+								) : currentState.busy ? null : (
 									<p className={styles.tourParsePrompt}>
 										{currentIndex === 0 && !ready
 											? "Waiting for model to load…"

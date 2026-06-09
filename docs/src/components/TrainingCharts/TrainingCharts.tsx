@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   TrainingCharts — interactive training metrics dashboard pulling from the
- *   Trackio API. Shows train_loss, val_loss, val_macro_f1, and per-component
- *   F1 scores as pure SVG line charts with hover tooltips.
+ *   TrainingCharts — interactive training metrics dashboard pulling from the Trackio API. Shows
+ *   train_loss, val_loss, val_macro_f1, and per-component F1 scores as pure SVG line charts with
+ *   hover tooltips.
  *
  *   Usage in MDX:
  *
@@ -13,7 +13,7 @@
  *   import { TrainingCharts } from "@site/src/components/TrainingCharts/TrainingCharts"
  *
  *   <TrainingCharts />
- *   ```
+ * ```
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
@@ -178,7 +178,10 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover }) =>
 
 	const { xMin, xMax, yMin, yMax } = useMemo(() => {
 		if (allPoints.length === 0) return { xMin: 0, xMax: 1, yMin: 0, yMax: 1 }
-		let xmn = Infinity, xmx = -Infinity, ymn = Infinity, ymx = -Infinity
+		let xmn = Infinity,
+			xmx = -Infinity,
+			ymn = Infinity,
+			ymx = -Infinity
 		for (const p of allPoints) {
 			if (p.step < xmn) xmn = p.step
 			if (p.step > xmx) xmx = p.step
@@ -209,9 +212,7 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover }) =>
 	const polyPoints = useMemo(() => {
 		return series.map((s) => {
 			if (s.points.length === 0) return ""
-			return s.points
-				.map((p) => `${xScale(p.step).toFixed(1)},${yScale(p.value).toFixed(1)}`)
-				.join(" ")
+			return s.points.map((p) => `${xScale(p.step).toFixed(1)},${yScale(p.value).toFixed(1)}`).join(" ")
 		})
 	}, [series, xScale, yScale])
 
@@ -238,8 +239,8 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover }) =>
 					if (dist < bestDist && dist < 40) {
 						bestDist = dist
 						// Convert viewBox coords to wrapper-relative CSS pixels
-						const sx = ((px / SVG_WIDTH) * svgRect.width) + (svgRect.left - wrapperRect.left)
-						const sy = ((py / SVG_HEIGHT) * svgRect.height) + (svgRect.top - wrapperRect.top)
+						const sx = (px / SVG_WIDTH) * svgRect.width + (svgRect.left - wrapperRect.left)
+						const sy = (py / SVG_HEIGHT) * svgRect.height + (svgRect.top - wrapperRect.top)
 						best = { series: s, point: p, x: sx, y: sy }
 					}
 				}
@@ -276,13 +277,7 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover }) =>
 						stroke="#e5e7eb"
 						strokeWidth={1}
 					/>
-					<text
-						x={SVG_PAD.left - 6}
-						y={yScale(v) + 4}
-						textAnchor="end"
-						fontSize={11}
-						fill="#6b7280"
-					>
+					<text x={SVG_PAD.left - 6} y={yScale(v) + 4} textAnchor="end" fontSize={11} fill="#6b7280">
 						{formatValue(v)}
 					</text>
 				</g>
@@ -299,36 +294,19 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover }) =>
 						stroke="#f3f4f6"
 						strokeWidth={1}
 					/>
-					<text
-						x={xScale(v)}
-						y={SVG_HEIGHT - SVG_PAD.bottom + 18}
-						textAnchor="middle"
-						fontSize={11}
-						fill="#6b7280"
-					>
+					<text x={xScale(v)} y={SVG_HEIGHT - SVG_PAD.bottom + 18} textAnchor="middle" fontSize={11} fill="#6b7280">
 						{v}
 					</text>
 				</g>
 			))}
 
 			{/* Y-axis label */}
-			<text
-				transform={`translate(14, ${SVG_HEIGHT / 2}) rotate(-90)`}
-				textAnchor="middle"
-				fontSize={12}
-				fill="#374151"
-			>
+			<text transform={`translate(14, ${SVG_HEIGHT / 2}) rotate(-90)`} textAnchor="middle" fontSize={12} fill="#374151">
 				value
 			</text>
 
 			{/* X-axis label */}
-			<text
-				x={SVG_WIDTH / 2}
-				y={SVG_HEIGHT - 4}
-				textAnchor="middle"
-				fontSize={12}
-				fill="#374151"
-			>
+			<text x={SVG_WIDTH / 2} y={SVG_HEIGHT - 4} textAnchor="middle" fontSize={12} fill="#374151">
 				training step
 			</text>
 
@@ -469,6 +447,7 @@ const TrainingChartsInner: React.FC = () => {
 		if (pollRef.current) clearInterval(pollRef.current)
 		if (countdownRef.current) clearInterval(countdownRef.current)
 
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setPollCountdown(POLL_INTERVAL_MS / 1000)
 
 		// Countdown ticker (every 1s)
@@ -607,18 +586,16 @@ const TrainingChartsInner: React.FC = () => {
 			<div className={styles.controls}>
 				{/* Run selector */}
 				<div className={styles.controlGroup}>
-					<span className={styles.controlLabel}>Runs ({selectedRuns.size}/{runs.length})</span>
+					<span className={styles.controlLabel}>
+						Runs ({selectedRuns.size}/{runs.length})
+					</span>
 					<div className={styles.metricCheckboxes}>
 						{runs.map((r) => (
 							<label
 								key={r.name}
 								className={`${styles.metricChip} ${selectedRuns.has(r.name) ? styles.metricChipChecked : ""}`}
 							>
-								<input
-									type="checkbox"
-									checked={selectedRuns.has(r.name)}
-									onChange={() => handleRunToggle(r.name)}
-								/>
+								<input type="checkbox" checked={selectedRuns.has(r.name)} onChange={() => handleRunToggle(r.name)} />
 								{r.name}
 							</label>
 						))}

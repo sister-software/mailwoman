@@ -28,6 +28,8 @@
  *   layout.
  */
 
+///<reference types="node" />
+
 import { readFileSync, writeFileSync } from "node:fs"
 
 interface TrainPoint {

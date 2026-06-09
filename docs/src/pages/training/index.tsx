@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Training metrics page — full-page layout with the TrainingCharts
- *   dashboard. Mirrors the demo page pattern: Layout header, BrowserOnly
- *   boundary, and build-commit footer.
+ *   Training metrics page — full-page layout with the TrainingCharts dashboard. Mirrors the demo page
+ *   pattern: Layout header, BrowserOnly boundary, and build-commit footer.
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
@@ -31,8 +30,8 @@ const TrainingPage: React.FC = () => {
 				<header className={styles.header}>
 					<h1>Training metrics</h1>
 					<p>
-						Live training loss, validation F1, and per-component metrics pulled from the Trackio API.
-						Select runs and metrics to compare training progress.
+						Live training loss, validation F1, and per-component metrics pulled from the Trackio API. Select runs and
+						metrics to compare training progress.
 					</p>
 				</header>
 				<BrowserOnly fallback={<p>Loading training charts…</p>}>{() => <TrainingCharts />}</BrowserOnly>

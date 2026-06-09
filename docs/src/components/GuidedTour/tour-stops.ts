@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tour-stop definitions for the GuidedTour component. Each stop is a real failure mode drawn
- *   from the eval discipline and addresses-that-break-geocoders documentation.
+ *   Tour-stop definitions for the GuidedTour component. Each stop is a real failure mode drawn from
+ *   the eval discipline and addresses-that-break-geocoders documentation.
  */
 
 export type PipelineStage =
@@ -35,8 +35,8 @@ export interface TourStop {
 
 /**
  * The 9 guided-tour stops. Each exercises a documented failure mode from
- * `addresses-that-break-geocoders.mdx` or `eval-discipline.mdx`, mapped to the
- * pipeline stage most responsible for handling it.
+ * `addresses-that-break-geocoders.mdx` or `eval-discipline.mdx`, mapped to the pipeline stage most
+ * responsible for handling it.
  */
 export const TOUR_STOPS: TourStop[] = [
 	{
@@ -57,7 +57,7 @@ export const TOUR_STOPS: TourStop[] = [
 		title: "Repeated admin names",
 		address: "New York, New York",
 		description:
-			'Both the locality AND the state share the same string. Regex parsers often deduplicate and drop the second occurrence.',
+			"Both the locality AND the state share the same string. Regex parsers often deduplicate and drop the second occurrence.",
 		diagnosis:
 			'Mailwoman emits B-locality I-locality , B-region I-region — two distinct spans on the same token sequence. The solver expects spans, not unique strings, so both "New York" instances survive. A naïve string-deduplication parser would lose one.',
 		pipelineStage: "neural-classifier",
@@ -70,7 +70,7 @@ export const TOUR_STOPS: TourStop[] = [
 		title: "Tokenization trap",
 		address: "12 1/2 Main St",
 		description:
-			'Fractional house numbers and whitespace quirks that break regex-based house-number classifiers expecting \\d+.',
+			"Fractional house numbers and whitespace quirks that break regex-based house-number classifiers expecting \\d+.",
 		diagnosis:
 			'The subword tokenizer does not require numeric tokens — it can split "12", "1/2", "Main", "St" into subwords and let the neural classifier learn that this pattern is a house_number + street span. A regex classifier expecting ^\\d+$ would miss the fractional part entirely.',
 		pipelineStage: "tokenizer",
@@ -96,7 +96,7 @@ export const TOUR_STOPS: TourStop[] = [
 		title: "Numeric chaos",
 		address: "221B Baker St",
 		description:
-			'A house number with a trailing letter — 221B. Naïve ^\\d+$ regex classifiers drop the suffix or reject the token entirely.',
+			"A house number with a trailing letter — 221B. Naïve ^\\d+$ regex classifiers drop the suffix or reject the token entirely.",
 		diagnosis:
 			'The rule classifiers emit proposals with confidence; the solver picks self-consistent combinations. If the rule classifier emits "221" as house_number and "B" as unit, the solver can merge or choose. The neural classifier can also learn that "221B" is a single house_number span from training examples like "10A Main St".',
 		pipelineStage: "rule-classifiers",
@@ -109,9 +109,9 @@ export const TOUR_STOPS: TourStop[] = [
 		title: "Non-Latin script",
 		address: "ul. Łódzka 12, Łódź",
 		description:
-			'Polish diacritics and accented characters that break ASCII-assuming tokenizers and normalisation pipelines.',
+			"Polish diacritics and accented characters that break ASCII-assuming tokenizers and normalisation pipelines.",
 		diagnosis:
-			'The byte-fallback tokenizer encodes unknown characters at the byte level, so the pipeline does not crash on Ł or ź. But the model was trained on en-US + fr-FR data — it has no signal to label Polish tokens. The parse will complete but most components will be empty. Per-locale weights (pl-PL) are needed for accuracy.',
+			"The byte-fallback tokenizer encodes unknown characters at the byte level, so the pipeline does not crash on Ł or ź. But the model was trained on en-US + fr-FR data — it has no signal to label Polish tokens. The parse will complete but most components will be empty. Per-locale weights (pl-PL) are needed for accuracy.",
 		pipelineStage: "tokenizer",
 		pipelineStageLabel: "Tokenizer",
 		statusBadge: "known-issue",
@@ -124,7 +124,7 @@ export const TOUR_STOPS: TourStop[] = [
 		description:
 			'Mixed Spanish/English street name. "Calle" is a Spanish street prefix; "Street" is an English suffix. Neither-language-only classifiers get confused.',
 		diagnosis:
-			'The neural classifier sees the full string and can learn that [street-prefix] [proper-noun] [street-suffix] is a single street span regardless of language. However, this requires training examples in the corpus — today\'s en-US + fr-FR coverage does not include Spanish/English hybrids.',
+			"The neural classifier sees the full string and can learn that [street-prefix] [proper-noun] [street-suffix] is a single street span regardless of language. However, this requires training examples in the corpus — today's en-US + fr-FR coverage does not include Spanish/English hybrids.",
 		pipelineStage: "neural-classifier",
 		pipelineStageLabel: "Neural classifier",
 		statusBadge: "known-issue",
@@ -135,7 +135,7 @@ export const TOUR_STOPS: TourStop[] = [
 		title: "Administrative nightmare",
 		address: "Springfield",
 		description:
-			'41 Springfields in the US alone. No disambiguating context means even a perfect parse can\'t pick the right one.',
+			"41 Springfields in the US alone. No disambiguating context means even a perfect parse can't pick the right one.",
 		diagnosis:
 			'The parser extracts "Springfield" as locality. The resolver returns a candidate list ranked by population — Springfield, MO (~170K) wins but may not be what the user wanted. There is no honest fix without more context (IP geolocation, user-supplied region). The honest answer is a candidate list, not a single confident point.',
 		pipelineStage: "resolver",
@@ -148,7 +148,7 @@ export const TOUR_STOPS: TourStop[] = [
 		title: "Mid-position postcode",
 		address: "Paris 75008",
 		description:
-			'Postcode in the middle of the address instead of the end. Training-distribution bias can cause empty predictions when the positional pattern shifts.',
+			"Postcode in the middle of the address instead of the end. Training-distribution bias can cause empty predictions when the positional pattern shifts.",
 		diagnosis:
 			'In v0.4.0, 65% of postcode false-negatives were empty predictions on mid-position postcodes. The NAD downweight removed "postcode-first" patterns from training — the model learned to tag mid-position numeric tokens as house_number. This is a training-data distribution problem, not an architecture problem. The fix: bump NAD weight or synthesize component-order permutations.',
 		pipelineStage: "neural-classifier",

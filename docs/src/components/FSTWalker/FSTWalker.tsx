@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   FSTWalker — interactive FST gazetteer trie walker that shows how tokens match WOF places.
- *   Walks the FST token-by-token for a given input, displaying matched places with
- *   id/name/placetype/importance at each accepting state, plus valid continuations.
- *   Handles FST not loaded with a graceful fallback. BrowserOnly-safe.
+ *   FSTWalker — interactive FST gazetteer trie walker that shows how tokens match WOF places. Walks
+ *   the FST token-by-token for a given input, displaying matched places with
+ *   id/name/placetype/importance at each accepting state, plus valid continuations. Handles FST not
+ *   loaded with a graceful fallback. BrowserOnly-safe.
  *
  *   Usage in MDX:
  *
@@ -17,7 +17,7 @@
  *   <DemoEmbedProvider sqljsBaseUrl="/mailwoman/sqljs">
  *     <FSTWalker input="New York, NY 10001" />
  *   </DemoEmbedProvider>
- *   ```
+ * ```
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
@@ -66,8 +66,8 @@ export interface FSTWalkerProps {
 // ---------------------------------------------------------------------------
 
 /**
- * Normalize text into FST tokens: lowercase, NFKC, strip punctuation, split on whitespace.
- * Mirrors `normalizeTokens` in resolver-wof-sqlite/fst-matcher.ts.
+ * Normalize text into FST tokens: lowercase, NFKC, strip punctuation, split on whitespace. Mirrors
+ * `normalizeTokens` in resolver-wof-sqlite/fst-matcher.ts.
  */
 function normalizeTokens(text: string): string[] {
 	return text
@@ -214,8 +214,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 					<span className={styles.fallbackIcon}>📡</span>
 					<p>
 						FST gazetteer not loaded for the selected version. The walker requires an FST binary ({" "}
-						<code>fst-en-US.bin</code>) — try a version with <code>hasFst: true</code> in the releases
-						manifest.
+						<code>fst-en-US.bin</code>) — try a version with <code>hasFst: true</code> in the releases manifest.
 					</p>
 				</div>
 			</div>
@@ -233,8 +232,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 					<h4 className={styles.title}>FST Gazetteer Walker</h4>
 					{fstProvenance ? (
 						<span className={styles.provenance}>
-							{fstProvenance.stateCount.toLocaleString()} states ·{" "}
-							{fstProvenance.placeCount.toLocaleString()} places
+							{fstProvenance.stateCount.toLocaleString()} states · {fstProvenance.placeCount.toLocaleString()} places
 						</span>
 					) : null}
 				</div>
@@ -254,8 +252,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 				<h4 className={styles.title}>FST Gazetteer Walker</h4>
 				{fstProvenance ? (
 					<span className={styles.provenance}>
-						{fstProvenance.stateCount.toLocaleString()} states ·{" "}
-						{fstProvenance.placeCount.toLocaleString()} places
+						{fstProvenance.stateCount.toLocaleString()} states · {fstProvenance.placeCount.toLocaleString()} places
 					</span>
 				) : null}
 			</div>
@@ -275,11 +272,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 							{/* Token pill */}
 							<span
 								className={`${styles.tokenPill} ${
-									isBroken
-										? styles.tokenBroken
-										: isAccepting
-											? styles.tokenAccepting
-											: styles.tokenWalking
+									isBroken ? styles.tokenBroken : isAccepting ? styles.tokenAccepting : styles.tokenWalking
 								}`}
 							>
 								{step.token}
@@ -290,11 +283,16 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 								<span className={styles.stateBadge}>
 									S<sub>{step.result.stateId}</sub>
 									{isAccepting ? (
-										<span className={styles.acceptedMark} title="Accepting state">✓</span>
+										<span className={styles.acceptedMark} title="Accepting state">
+											✓
+										</span>
 									) : null}
 								</span>
 							) : (
-								<span className={`${styles.stateBadge} ${styles.stateBadgeBroken}`} title="Path broken — token not in FST">
+								<span
+									className={`${styles.stateBadge} ${styles.stateBadgeBroken}`}
+									title="Path broken — token not in FST"
+								>
 									✗
 								</span>
 							)}
@@ -318,9 +316,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 			{/* Continuations from final valid state */}
 			{continuations && continuations.length > 0 ? (
 				<div className={styles.continuationsPanel}>
-					<div className={styles.continuationsHeader}>
-						Valid continuations ({continuations.length})
-					</div>
+					<div className={styles.continuationsHeader}>Valid continuations ({continuations.length})</div>
 					<div className={styles.continuationsList}>
 						{continuations.map((c) => (
 							<ContinuationChip key={c.token} cont={c} />
@@ -348,9 +344,7 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 						<span className={styles.summarySep}>·</span>
 						<span className={`${styles.summaryItem} ${styles.negativeEvidence}`}>
 							negative evidence at token{" "}
-							<strong>
-								&ldquo;{walkSteps.find((s) => s.result === null)!.token}&rdquo;
-							</strong>
+							<strong>&ldquo;{walkSteps.find((s) => s.result === null)!.token}&rdquo;</strong>
 						</span>
 					</>
 				) : null}
@@ -366,8 +360,8 @@ const FSTWalkerInner: React.FC<FSTWalkerProps> = ({ input }) => {
 /**
  * FSTWalker — interactive FST gazetteer trie walker.
  *
- * Walks the FST token-by-token for the given input, showing state transitions, accepting
- * places, and valid continuations. Wraps BrowserOnly for SSR safety.
+ * Walks the FST token-by-token for the given input, showing state transitions, accepting places,
+ * and valid continuations. Wraps BrowserOnly for SSR safety.
  *
  * Must be used inside a `<DemoEmbedProvider>`.
  */

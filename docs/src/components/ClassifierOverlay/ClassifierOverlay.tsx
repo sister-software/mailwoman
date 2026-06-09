@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   ClassifierOverlay — shows per-component classification origin.
- *   Maps each parsed address component to the pipeline stage(s) that contributed
- *   to its assignment. Complements BIOHighlight (word-level labeling) and
- *   SubwordExplorer (per-stage token annotations) by adding the provenance story:
- *   which stages touched which components.
+ *   ClassifierOverlay — shows per-component classification origin. Maps each parsed address component
+ *   to the pipeline stage(s) that contributed to its assignment. Complements BIOHighlight
+ *   (word-level labeling) and SubwordExplorer (per-stage token annotations) by adding the
+ *   provenance story: which stages touched which components.
  *
  *   Two modes:
- *   - **static**: A legend/explainer showing all pipeline stages, their colors,
- *     and what role they play in classification.
- *   - **dynamic**: A per-component table with color-coded origin badges showing
- *     exactly which stage(s) influenced each parsed component.
+ *
+ *   - **static**: A legend/explainer showing all pipeline stages, their colors, and what role they play
+ *       in classification.
+ *   - **dynamic**: A per-component table with color-coded origin badges showing exactly which stage(s)
+ *       influenced each parsed component.
  */
 
 import type { ResultNode } from "../../shared/resources.tsx"
@@ -32,8 +32,8 @@ interface StageDef {
 	textColor: string
 	description: string
 	/**
-	 * `AddressNode.source` values that map to this stage. When a node's `source`
-	 * matches one of these, this stage contributed to that node.
+	 * `AddressNode.source` values that map to this stage. When a node's `source` matches one of
+	 * these, this stage contributed to that node.
 	 */
 	sourceMatches: string[]
 	/** True when a node can carry this stage's badge AND a different source (displaced classifier). */
@@ -166,9 +166,9 @@ interface TreeNodeLike {
 }
 
 /**
- * Flatten the address tree preserving source provenance.
- * Mirrors `flattenTree` from demo-helpers but preserves `source` / `sourceId`
- * and extracts displaced classifier info from `metadata` when available.
+ * Flatten the address tree preserving source provenance. Mirrors `flattenTree` from demo-helpers
+ * but preserves `source` / `sourceId` and extracts displaced classifier info from `metadata` when
+ * available.
  */
 function flattenTreeWithSource(tree: unknown): SourceNode[] {
 	const out: SourceNode[] = []
@@ -255,9 +255,8 @@ export interface ClassifierOverlayProps {
 const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 	<div className={styles.staticLegend}>
 		<p className={styles.legendIntro}>
-			Mailwoman's pipeline processes each address through multiple classification stages.
-			Each parsed component below carries origin badges showing which stages contributed
-			to its assignment.
+			Mailwoman's pipeline processes each address through multiple classification stages. Each parsed component below
+			carries origin badges showing which stages contributed to its assignment.
 		</p>
 
 		<div className={styles.stageGrid}>
@@ -334,15 +333,8 @@ const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: 
 	const enriched: Array<ResultNode & { sourceNode?: SourceNode }> = nodes.map((n, i) => {
 		// Match by start/end when both have offsets, otherwise by tag + value + index proximity
 		const match =
-			sourceNodes.find(
-				(sn) =>
-					sn.tag === n.tag &&
-					sn.start === n.start &&
-					sn.end === n.end
-			) ??
-			sourceNodes.find(
-				(sn) => sn.tag === n.tag && String(sn.value ?? "") === String(n.value ?? "")
-			) ??
+			sourceNodes.find((sn) => sn.tag === n.tag && sn.start === n.start && sn.end === n.end) ??
+			sourceNodes.find((sn) => sn.tag === n.tag && String(sn.value ?? "") === String(n.value ?? "")) ??
 			sourceNodes[i]
 		return { ...n, sourceNode: match && match.tag === n.tag ? match : undefined }
 	})
@@ -353,8 +345,8 @@ const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: 
 		<div className={styles.dynamicOverlay}>
 			{!hasAnySource ? (
 				<p className={styles.noSourceNote}>
-					No classifier provenance data available for this parse. Source tracking requires a
-					recent model version (v0.3.0+) with Phase 4.1 provenance threading enabled.
+					No classifier provenance data available for this parse. Source tracking requires a recent model version
+					(v0.3.0+) with Phase 4.1 provenance threading enabled.
 				</p>
 			) : null}
 

@@ -10,28 +10,28 @@
  *
  *   Reads REAL US OpenAddresses tuples (cached zips), and onto each real skeleton INJECTS a USPS
  *   Pub-28 Appendix C2 secondary-unit designator (the `@mailwoman/codex/us` table the #454 synth
- *   augmentation uses), varying the surface form (canonical "Apartment" vs approved "Apt") per row so
- *   the model sees both. OA's own UNIT column is a bare identifier ("A", "1") with no designator — we
- *   reuse it as the unit id when present, else synthesize a plausible id. Renders via the corpus
- *   `formatAddress` (US template), aligns to BIO, writes labeled JSONL ready for parquet.
+ *   augmentation uses), varying the surface form (canonical "Apartment" vs approved "Apt") per row
+ *   so the model sees both. OA's own UNIT column is a bare identifier ("A", "1") with no designator
+ *   — we reuse it as the unit id when present, else synthesize a plausible id. Renders via the
+ *   corpus `formatAddress` (US template), aligns to BIO, writes labeled JSONL ready for parquet.
  *
  *   LEAKAGE-SAFE EVAL (`--golden`): the held-out eval uses the VERMONT source only (Vermont is the
  *   corpus `defaultHoldout` — never trained), a different seed, and emits `{raw, components}` for
- *   per-locale-f1. Train uses every NON-Vermont US source. Geographic split = no overlap.
- *   NOTE: designators are INJECTED in both train and eval (OA carries none), so the eval measures
+ *   per-locale-f1. Train uses every NON-Vermont US source. Geographic split = no overlap. NOTE:
+ *   designators are INJECTED in both train and eval (OA carries none), so the eval measures
  *   "designator recognition on held-out addresses", not real-in-the-wild designators — the real-
  *   designator signal lives in the libpostal/postal arenas. Keep both lenses.
  *
- *   Pipeline (mirrors build-german-shard.mjs):
- *     node scripts/build-unit-shard.mjs --output /tmp/unit-train.jsonl --count 50000 --seed 42
- *     node scripts/build-unit-shard.mjs --output /tmp/unit-val.jsonl  --golden --seed 99
- *     python3 scripts/jsonl-to-parquet.py --input /tmp/unit-train.jsonl --output /tmp/part-unit-train.parquet
+ *   Pipeline (mirrors build-german-shard.mjs): node scripts/build-unit-shard.mjs --output
+ *   /tmp/unit-train.jsonl --count 50000 --seed 42 node scripts/build-unit-shard.mjs --output
+ *   /tmp/unit-val.jsonl --golden --seed 99 python3 scripts/jsonl-to-parquet.py --input
+ *   /tmp/unit-train.jsonl --output /tmp/part-unit-train.parquet
  */
 
 import { spawnSync } from "node:child_process"
 import { createWriteStream } from "node:fs"
 
-import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, US_UNIT_DESIGNATOR_VARIANTS } from "@mailwoman/codex/us"
+import { US_UNIT_DESIGNATOR_PREFERRED_ABBR } from "@mailwoman/codex/us"
 import { alignRow, stableSourceId } from "@mailwoman/corpus"
 
 // OA REGION is empty for US per-state extracts — the region is implied by the file, like the German
@@ -138,7 +138,14 @@ function readTuples(source) {
 		const key = `${house_number}|${street}|${locality}`.toLowerCase()
 		if (seen.has(key)) continue
 		seen.add(key)
-		tuples.push({ house_number, street, locality, region: source.region, postcode: get(cells, iPost), oaUnit: get(cells, iUnit) })
+		tuples.push({
+			house_number,
+			street,
+			locality,
+			region: source.region,
+			postcode: get(cells, iPost),
+			oaUnit: get(cells, iUnit),
+		})
 	}
 	return tuples
 }
@@ -160,8 +167,16 @@ function makeUnit(random, oaUnit) {
 
 /** Synthetic recipient/venue prefixes — the "JOHN DOE, ACME INC, ..." arena pattern. */
 const VENUES = [
-	"John Doe", "Jane Smith", "Acme Inc", "Wayne Enterprises", "Stark Industries",
-	"Globex Corp", "Maria Garcia", "Robert Chen", "Oak Street Dental", "Riverside Clinic",
+	"John Doe",
+	"Jane Smith",
+	"Acme Inc",
+	"Wayne Enterprises",
+	"Stark Industries",
+	"Globex Corp",
+	"Maria Garcia",
+	"Robert Chen",
+	"Oak Street Dental",
+	"Riverside Clinic",
 ]
 
 /** Address tail: "City, ST 12345" (or no postcode). */
@@ -170,12 +185,16 @@ const tail = (loc, reg, pc) => (pc ? `${loc}, ${reg} ${pc}` : `${loc}, ${reg}`)
 /**
  * Render a unit row in a RANDOM layout. v1 trained ONLY unit-after-street in a full address, so the
  * arena's unit-first ("Ste 12, 123 Main St") and bare ("Flat 2 14 Smith St") formats stayed at 0% —
- * an in-distribution mirage (held-out VT eval read 98.7%, real-designator arena 0%). v2 spreads units
- * across positions + drops the city/state tail on bare rows + prefixes a recipient/venue, so the model
- * learns to RECOGNIZE the designator wherever it sits. Returns {fmt, raw, components}.
+ * an in-distribution mirage (held-out VT eval read 98.7%, real-designator arena 0%). v2 spreads
+ * units across positions + drops the city/state tail on bare rows + prefixes a recipient/venue, so
+ * the model learns to RECOGNIZE the designator wherever it sits. Returns {fmt, raw, components}.
  */
 function renderUnit(random, base, unit) {
-	const hn = base.house_number, street = base.street, loc = base.locality, reg = base.region, pc = base.postcode
+	const hn = base.house_number,
+		street = base.street,
+		loc = base.locality,
+		reg = base.region,
+		pc = base.postcode
 	const road = `${hn} ${street}`
 	const full = { house_number: hn, street, unit, locality: loc, region: reg, ...(pc ? { postcode: pc } : {}) }
 	const r = random()
