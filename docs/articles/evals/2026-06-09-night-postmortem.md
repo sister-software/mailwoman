@@ -8,6 +8,7 @@
 - **Affix-aware eval tooling** (`scripts/eval/score-affix.ts`, `probe-affix-decode.ts`) — `per-locale-f1`'s `foldToComponents` joins affixes into `street`, so it can't measure the split; these score the unfolded decode. Caught the gate's false 0% (the model splits 7/10, perfect precision).
 - **Parity scorecard** (`docs/articles/evals/parity-scorecard-2026-06-09.md`, #375) — one authoritative per-tag-vs-v0 table, two lenses (arenas + per-tag), with the fold gotcha documented.
 - **Country lever resolved** (PR #463 + #464): salvaged ISO 3166-1 from isp-nexus into `codex/country/` + surface-form layer + `matchCountry`; multi-locale shard (US/DE/FR/IT/NL, v1/v2/v3); real-country OOD eval (34 cases). **Key result: the model is the wrong tool.** The v1 cumulative shard makes the model *over-fire* (country-real 49 F1, golden precision 23% — it learns "trailing token = country"), whereas a deterministic `matchCountry` on the trailing comma-segment scores **P=R=F1=100**. Lever moves to a post-parse `ProposalClassifier` (#464); the model path is kept on #463 as the exploration record.
+- **po_box reservoir resolved deterministically — zero GPU, taxonomy applied up front** (PR #463, #464). Applied the country lesson *before* spending any GPU: `matchPOBox` (codex/us/po-box.ts) per comma-segment scores **P=R=F1=100** on a curated real-OOD eval (n=25, 7 negatives incl. "Box Canyon Rd"/"Boxwood Lane" traps, 0 FP). Confirms the lever-shape taxonomy generalizes and seeds a shared `ClosedVocabTagger` design (country + po_box + cedex).
 
 ## What went well
 
@@ -37,7 +38,7 @@
 ## Concrete next steps
 
 - **#464**: build the deterministic country `ProposalClassifier` (codex `matchCountry` on the trailing comma-segment) — opt-in, byte-stable, with the homograph guard. ~½ day, zero GPU. po_box likely follows the same shape.
-- po_box lever (codex salvaged: `codex/us/po-box.ts`) — probe deterministic-first before any retrain (lesson applied); intersection (gated); FR venue/cedex (#330).
+- po_box: **done** (deterministic probe = 100%, no retrain — lesson applied up front). Remaining long-tail: intersection (gated — regressed before, needs care); FR venue/cedex (#330, cedex likely deterministic too).
 - Consolidation v1.0 once the open-vocab levers (affix) are promoted — bake winners into one run with **> 20k steps** to beat the cumulative dilution; full per-tag regression gate.
 
 ## Numbers (running)
@@ -51,4 +52,5 @@
 | CI failures | 0 (corpus-cli flake re-ran green) |
 | regressions shipped | 0 (affix held experimental; nothing promoted) |
 | PRs / issues | #461 (merged), #463 (open — country exploration), #462 (issue — affix promote), #464 (issue — deterministic country) |
-| campaign tags | unit ✅ shipped · affix ✅ gated/deferred (#462) · country ✅ resolved → deterministic (#464) |
+| campaign tags | unit ✅ shipped · affix ✅ gated/deferred (#462) · country ✅ + po_box ✅ resolved → deterministic (#464) |
+| reservoirs (zero-GPU) | po_box deterministic probe (100%), `ClosedVocabTagger` design |

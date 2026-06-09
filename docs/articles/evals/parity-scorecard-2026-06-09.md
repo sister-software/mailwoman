@@ -40,7 +40,7 @@ Postal-arena edge classes where BOTH are 0% (the parity frontier): `po-box` (4),
 | street_suffix | 0.0 | — | ❌ starved → **affix retrain in flight** |
 | street_prefix_particle | — | 0.0 | ❌ starved (FR) |
 | unit | 6.3¹ | 0.0 | ✅ FIXED (92.3 real-OOD; golden has ~no unit rows) |
-| po_box | ~18² | — | ❌ starved (#452) |
+| po_box | ~18² | — | ✅ deterministic tagger = 100% real-OOD (#464) |
 | intersection_a/b | 0.0 | — | ❌ starved (experimental, regressed before) |
 | dependent_locality | 0.0 | 0.0 | (intentionally down-weighted — WOF-schema artifact) |
 
@@ -56,6 +56,8 @@ Postal-arena edge classes where BOTH are 0% (the parity frontier): `po-box` (4),
 | street-affix-real | street (name) | 0.0³ | 50.0 | unfolded |
 | country-real (34) | country (model v1) | — | 49.0 | **over-fires**: golden precision 23% |
 | country-real (34) | country (deterministic) | — | **100.0** | `matchCountry` on trailing segment, P=R=100 |
+| po-box-real (25) | po_box (model, #15) | ~18 | — | starved |
+| po-box-real (25) | po_box (deterministic) | — | **100.0** | `matchPOBox` per segment; 7 negatives, 0 FP |
 
 ³ v4.1.0 lumps "Wacker Dr" into one `street` span; the affix retrain teaches the split (7/10 → split, perfect precision).
 
@@ -65,7 +67,7 @@ Postal-arena edge classes where BOTH are 0% (the parity frontier): `po-box` (4),
 
 ## Parity verdict (v4.1.0)
 
-Common tags (postcode/house_number/street/locality/region/venue-US) are at usable parity. The gap is a small set of **starved long-tail tags** — `unit` is now FIXED (the first campaign win), `street_prefix`/`street_suffix` are in flight (v0.9.8), and `country`/`po_box`/`intersection`/FR-`venue`/`cedex` remain. **Not yet at 90% macro parity**; the campaign is the path. Each lever is compounding (covering a tag sharpens its neighbors — unit lifted US street +3pp).
+Common tags (postcode/house_number/street/locality/region/venue-US) are at usable parity. The gap is a small set of **starved long-tail tags** — `unit` is now FIXED (the first campaign win), `street_prefix`/`street_suffix` are in flight (v0.9.8), `country` and `po_box` have a measured deterministic path (P=R=F1=100, #464 — not a retrain), and `intersection`/FR-`venue`/`cedex` remain. **Not yet at 90% macro parity**; the campaign is the path. Each lever is compounding (covering a tag sharpens its neighbors — unit lifted US street +3pp), and the lever-shape taxonomy below now routes each remaining tag to the right tool (retrain vs deterministic matcher).
 
 ## Campaign status
 
@@ -74,7 +76,7 @@ Common tags (postcode/house_number/street/locality/region/venue-US) are at usabl
 | unit | unit | ✅ shipped v4.1.0 (0→92%) |
 | **affix** | street_prefix/suffix | ✅ **GATED v0.9.8: 0→78/67 (P=100), US net-positive, negative-space street +2.1.** FR postcode −3.9 (US-shard dilution) trips the >2pp gate → promote DEFERRED to operator (#462; DeepSeek recommends promote-with-annotation). int8 ship-ready. |
 | **country** | country | ✅ **RESOLVED — deterministic, not retrain.** The synth shard makes the model over-fire (v1 country-real 49 F1, golden precision 23% — it learns "trailing token = country"). A deterministic `matchCountry` tagger on the trailing comma-segment scores **P=R=F1=100** on country-real. Lever moves to a post-parse `ProposalClassifier` (#464); model path kept as exploration record (#463). |
-| po_box | po_box | ⏳ (salvaged po-box codex seeds it; likely deterministic too — same closed-vocab shape as country) |
+| **po_box** | po_box | ✅ **RESOLVED — deterministic** (probe measured this shift): `matchPOBox` per comma-segment = **P=R=F1=100** on po-box-real (n=25, 7 negatives, 0 FP). Same closed-vocab shape as country → joins #464 as a `ProposalClassifier`, not a retrain. |
 | intersection | intersection_a/b | ⏳ (gated — regressed before) |
 | FR | venue/cedex/region | ⏳ (#330) |
 | consolidation | — | ⏳ v1.0 (bake winners + full regression gate) — **needs > 20k steps**: see dilution note |
@@ -86,6 +88,6 @@ Common tags (postcode/house_number/street/locality/region/venue-US) are at usabl
 The campaign has surfaced two tag shapes that want different tools:
 
 - **Distributional / open-vocab tags** (street_prefix, street_suffix, unit, locality) — the model has to *learn the boundary* from context. Synth shard + retrain is the right tool; these are where negative-space training compounds.
-- **Closed-vocab / fixed-position tags** (country, likely po_box, cedex) — a finite surface-form set in a predictable slot. A deterministic matcher gives perfect precision with zero training; a retrained model only *dilutes* it (over-fires). Use a `ProposalClassifier`, keep it default-off + byte-stable.
+- **Closed-vocab / fixed-position tags** (country ✓, po_box ✓, cedex pending) — a finite surface-form set in a predictable slot. A deterministic matcher gives perfect precision with zero training; a retrained model only *dilutes* it (over-fires). Use a `ProposalClassifier`, keep it default-off + byte-stable. **Both country and po_box now measured at P=R=F1=100** via this route — build one `ClosedVocabTagger` parameterized by (matcher, tag, slot) rather than per-tag classifiers (#464).
 
-*Baseline captured 2026-06-09 ~04:50 UTC during the night shift; finalized ~11:50 UTC with the country result. Affix "after" = the v0.9.8 gate run; country = the v0.9.9 v1 cumulative run + the deterministic probe.*
+*Baseline captured 2026-06-09 ~04:50 UTC during the night shift; finalized ~12:10 UTC with the country + po_box deterministic results. Affix "after" = the v0.9.8 gate run; country = the v0.9.9 v1 cumulative run + the deterministic probe; po_box = deterministic probe only (no retrain — taxonomy applied up front).*
