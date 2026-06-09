@@ -206,7 +206,16 @@ async function main(): Promise<void> {
 	console.error("Model:     ", args.modelPath ?? "(default weights)")
 
 	let neural: NeuralAddressClassifier
-	if (args.modelPath && args.tokenizerPath && args.modelCardPath) {
+	// FOOTGUN GUARD: if ANY custom-model flag is set, ALL THREE are required. Previously a missing
+	// --tokenizer silently fell back to the DEFAULT shipped weights, so --model was ignored and two
+	// different checkpoints scored byte-identical. Refuse to guess; fail loud.
+	if (args.modelPath || args.tokenizerPath || args.modelCardPath) {
+		if (!args.modelPath || !args.tokenizerPath || !args.modelCardPath) {
+			throw new Error(
+				"--model requires --tokenizer AND --model-card together (refusing to silently fall back to " +
+					`default weights). got: model=${!!args.modelPath} tokenizer=${!!args.tokenizerPath} model-card=${!!args.modelCardPath}`
+			)
+		}
 		const card = JSON.parse(readFileSync(args.modelCardPath, "utf8"))
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(args.tokenizerPath),
