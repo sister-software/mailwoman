@@ -46,7 +46,17 @@ try:
 except ImportError:
     sys.exit("boto3 is required: pip install boto3")
 
+# Versioned assets live under en-us/<version>/ and never change → immutable, long-lived
+# (Cloudflare edge-caches the byte ranges sql.js-httpvfs reads).
 CACHE_CONTROL = "public, max-age=604800, immutable"
+# EXCEPTION: releases.json is the MUTABLE version pointer the demo reads to pick
+# defaultVersion. It must NOT be immutable — otherwise a `defaultVersion` flip never
+# reaches returning visitors (they stay pinned to the old version's assets for up to a
+# week, which on mobile Safari surfaces as a stale/torn cached DB → "database disk image
+# is malformed"). Short max-age + must-revalidate so flips propagate within ~a minute.
+MUTABLE_CACHE_CONTROL = "public, max-age=60, must-revalidate"
+# Basenames served with MUTABLE_CACHE_CONTROL instead of the immutable default.
+MUTABLE_FILES = {"releases.json"}
 # Content-Type by extension. The DBs/model/binaries MUST be octet-stream so Cloudflare
 # doesn't gzip them (gzipped ranges break sql.js-httpvfs).
 CONTENT_TYPE = {
@@ -97,18 +107,19 @@ def main() -> None:
         rel = p.relative_to(src).as_posix()
         key = f"{args.prefix}/{rel}"
         ct = CONTENT_TYPE.get(p.suffix.lower(), "application/octet-stream")
+        cc = MUTABLE_CACHE_CONTROL if p.name in MUTABLE_FILES else CACHE_CONTROL
         size_mb = p.stat().st_size / 1024 / 1024
         total += p.stat().st_size
         if args.dry_run:
-            print(f"  [dry-run] {key}  ({ct}, {size_mb:.1f} MB)")
+            print(f"  [dry-run] {key}  ({ct}, {cc}, {size_mb:.1f} MB)")
             continue
         s3.upload_file(
             str(p),
             args.bucket,
             key,
-            ExtraArgs={"ContentType": ct, "CacheControl": CACHE_CONTROL},
+            ExtraArgs={"ContentType": ct, "CacheControl": cc},
         )
-        print(f"  ✓ {key}  ({ct}, {size_mb:.1f} MB)")
+        print(f"  ✓ {key}  ({ct}, {cc}, {size_mb:.1f} MB)")
 
     print(f"\n{'(dry-run) ' if args.dry_run else ''}{len(files)} objects, {total / 1024 / 1024:.1f} MB → {args.bucket}/{args.prefix}/")
     print("Served at https://public.sister.software/{}/...".format(args.prefix))
