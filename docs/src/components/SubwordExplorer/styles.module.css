@@ -1,0 +1,367 @@
+/* ---------------------------------------------------------------------------
+ * SubwordExplorer — educational word-level tokenization explorer.
+ *
+ * Shows a pipeline flow diagram, word token grid with per-stage annotations,
+ * and collapsible stage descriptions. Mirrors BIOHighlight color conventions
+ * (B-X green, I-X blue, O gray) and SpanHighlight confidence tiers.
+ * --------------------------------------------------------------------------- */
+
+.subwordExplorer {
+	margin: 0.75rem 0 1.5rem;
+	font-size: 0.9rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * Pipeline flow diagram
+ * --------------------------------------------------------------------------- */
+
+.pipelineFlow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.2rem;
+	margin-bottom: 0.75rem;
+	padding: 0.5rem 0.6rem;
+	border: 1px solid var(--ifm-color-emphasis-200);
+	border-radius: 6px;
+	background: var(--ifm-background-surface-color);
+}
+
+.flowStep {
+	display: inline-flex;
+	align-items: center;
+}
+
+.flowArrow {
+	color: var(--ifm-color-emphasis-400);
+	margin: 0 0.15rem;
+	font-size: 0.8rem;
+}
+
+.flowPill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
+	padding: 0.15rem 0.45rem;
+	border: 1.5px solid;
+	border-radius: 12px;
+	font-size: 0.72rem;
+	font-weight: 500;
+	white-space: nowrap;
+	background: var(--ifm-background-color);
+	cursor: default;
+	transition: background 0.15s ease;
+}
+
+.flowPill:hover {
+	background: var(--ifm-color-emphasis-100);
+}
+
+.flowIcon {
+	font-size: 0.75rem;
+	line-height: 1;
+}
+
+.flowLabel {
+	color: var(--ifm-font-color-base);
+}
+
+/* ---------------------------------------------------------------------------
+ * Stage details (collapsible)
+ * --------------------------------------------------------------------------- */
+
+.stageDetails {
+	margin-bottom: 0.75rem;
+	font-size: 0.85rem;
+}
+
+.stageDetailsSummary {
+	cursor: pointer;
+	user-select: none;
+	font-weight: 600;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.stageDetailsList {
+	margin: 0.5rem 0 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.stageDetailItem {
+	padding: 0.35rem 0.5rem;
+	border-left: 3px solid var(--ifm-color-emphasis-300);
+	background: var(--ifm-color-emphasis-0);
+	border-radius: 0 4px 4px 0;
+}
+
+.stageDetailItem dt {
+	font-weight: 600;
+	margin-bottom: 0.1rem;
+	padding-left: 2px;
+	border-left: 3px solid;
+	margin-left: -0.5rem;
+	padding-left: 0.5rem;
+}
+
+.stageDetailItem dd {
+	margin: 0;
+	color: var(--ifm-color-emphasis-700);
+	font-size: 0.82rem;
+	line-height: 1.45;
+}
+
+/* ---------------------------------------------------------------------------
+ * Kind context + timing context
+ * --------------------------------------------------------------------------- */
+
+.kindContext,
+.timingContext {
+	margin-bottom: 0.5rem;
+	font-size: 0.82rem;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.kindContextLabel,
+.timingLabel {
+	font-weight: 600;
+}
+
+.kindContextValue {
+	font-weight: 600;
+	color: var(--ifm-color-primary);
+}
+
+.kindContextConf {
+	opacity: 0.7;
+	margin-left: 0.25rem;
+}
+
+.timingValue {
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.8rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * Word token grid
+ * --------------------------------------------------------------------------- */
+
+.tokenGrid {
+	border: 1px solid var(--ifm-color-emphasis-200);
+	border-radius: 6px;
+	overflow: hidden;
+	background: var(--ifm-background-surface-color);
+}
+
+.tokenGridHeader {
+	display: grid;
+	grid-template-columns: 2fr 1fr 1fr;
+	padding: 0.35rem 0.6rem;
+	background: var(--ifm-color-emphasis-100);
+	border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.headerCol {
+	font-size: 0.68rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.tokenRows {
+	max-height: 400px;
+	overflow-y: auto;
+}
+
+.tokenRow {
+	display: grid;
+	grid-template-columns: 2fr 1fr 1fr;
+	padding: 0.3rem 0.6rem;
+	border-bottom: 1px solid var(--ifm-color-emphasis-100);
+	align-items: center;
+	transition: background 0.1s ease;
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.85rem;
+}
+
+.tokenRow:last-child {
+	border-bottom: 0;
+}
+
+.tokenRow:hover {
+	background: var(--ifm-color-emphasis-100);
+}
+
+/* Phrase group boundary — subtle top border to show where groups start. */
+.phraseGroupStart {
+	border-top: 1.5px solid var(--ifm-color-emphasis-300);
+}
+
+/* ---------------------------------------------------------------------------
+ * Word cell
+ * --------------------------------------------------------------------------- */
+
+.wordCell {
+	display: inline-flex;
+	align-items: baseline;
+	min-width: 0;
+}
+
+.ws {
+	white-space: pre;
+	color: transparent;
+	pointer-events: none;
+	user-select: none;
+}
+
+.wordText {
+	white-space: pre;
+	padding: 0.05rem 0.2rem;
+	border-radius: 2px;
+	font-weight: 500;
+}
+
+/* Confidence-tier tints for word text */
+.conf_high {
+	background: rgba(26, 168, 77, 0.15);
+}
+
+.conf_mid {
+	background: rgba(230, 168, 0, 0.15);
+}
+
+.conf_low {
+	background: rgba(216, 80, 74, 0.15);
+}
+
+/* ---------------------------------------------------------------------------
+ * BIO label cell
+ * --------------------------------------------------------------------------- */
+
+.labelCell {
+	font-size: 0.72rem;
+	font-weight: 600;
+	text-align: center;
+	padding: 0.1rem 0.3rem;
+	border-radius: 3px;
+	white-space: nowrap;
+}
+
+/* B-X: green — beginning of a component span. */
+.bioB {
+	background: rgba(26, 168, 77, 0.2);
+	color: #15803d;
+}
+
+/* I-X: blue — inside a component span. */
+.bioI {
+	background: rgba(59, 130, 246, 0.2);
+	color: #1d4ed8;
+}
+
+/* O: gray — outside any component span. */
+.bioO {
+	background: rgba(156, 163, 175, 0.15);
+	color: var(--ifm-color-emphasis-500);
+}
+
+/* ---------------------------------------------------------------------------
+ * Confidence cell
+ * --------------------------------------------------------------------------- */
+
+.confCell {
+	display: flex;
+	align-items: center;
+	gap: 0.3rem;
+	justify-content: center;
+}
+
+.confDot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.confDot_high {
+	background: #22c55e;
+}
+
+.confDot_mid {
+	background: #f59e0b;
+}
+
+.confDot_low {
+	background: #ef4444;
+}
+
+.confNone {
+	color: var(--ifm-color-emphasis-400);
+	font-size: 0.8rem;
+}
+
+.confValue {
+	font-size: 0.75rem;
+	color: var(--ifm-color-emphasis-600);
+	font-family: var(--ifm-font-family-monospace);
+}
+
+/* ---------------------------------------------------------------------------
+ * Summary footer
+ * --------------------------------------------------------------------------- */
+
+.summary {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin-top: 0.5rem;
+	font-size: 0.78rem;
+	color: var(--ifm-color-emphasis-600);
+}
+
+.summaryItem {
+	white-space: nowrap;
+}
+
+.summarySep {
+	color: var(--ifm-color-emphasis-400);
+}
+
+/* ---------------------------------------------------------------------------
+ * No-spans note
+ * --------------------------------------------------------------------------- */
+
+.noSpansNote {
+	margin-top: 0.4rem;
+	font-size: 0.8rem;
+	font-style: italic;
+	color: var(--ifm-color-emphasis-500);
+}
+
+/* ---------------------------------------------------------------------------
+ * Responsive
+ * --------------------------------------------------------------------------- */
+
+@media (max-width: 600px) {
+	.tokenGridHeader,
+	.tokenRow {
+		grid-template-columns: 2fr 1fr 0.8fr;
+	}
+
+	.pipelineFlow {
+		gap: 0.1rem;
+	}
+
+	.flowPill {
+		padding: 0.12rem 0.3rem;
+		font-size: 0.65rem;
+	}
+
+	.flowArrow {
+		margin: 0 0.05rem;
+		font-size: 0.65rem;
+	}
+}

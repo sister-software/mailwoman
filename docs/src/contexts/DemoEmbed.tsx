@@ -23,7 +23,7 @@ import type {
 } from "../shared/resources.tsx"
 import { assetUrl, loadFstGazetteer } from "../shared/resources.tsx"
 
-import type { ReleaseInfo, ReleasesManifest } from "../shared/demo-helpers.ts"
+import type { ReleasesManifest } from "../shared/demo-helpers.ts"
 import { DEFAULT_LOCALE } from "../shared/demo-helpers.ts"
 
 // ---------------------------------------------------------------------------

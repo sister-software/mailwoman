@@ -33,6 +33,7 @@ import { CandidatePicker } from "../CandidatePicker/CandidatePicker.tsx"
 import { FailureDiagnostic } from "../FailureDiagnostic/FailureDiagnostic.tsx"
 import { KindBadge } from "../KindBadge/KindBadge.tsx"
 import { FSTWalker } from "../FSTWalker/FSTWalker.tsx"
+import { GuidedTour } from "../GuidedTour/GuidedTour.tsx"
 import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
 import { SubwordExplorer } from "../SubwordExplorer/SubwordExplorer.tsx"
 import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
@@ -467,6 +468,8 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 					)}
 				</div>
 			) : null}
+
+			<GuidedTour />
 		</div>
 	)
 }

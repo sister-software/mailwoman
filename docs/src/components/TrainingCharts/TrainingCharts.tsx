@@ -75,7 +75,7 @@ interface RunInfo {
 }
 
 interface RunSummary {
-	metrics?: Array<{ key: string; name?: string }>
+	metrics?: string[]
 	[key: string]: unknown
 }
 
@@ -111,21 +111,22 @@ async function apiPost<T = unknown>(path: string, body: Record<string, unknown>)
 }
 
 async function fetchRuns(): Promise<RunInfo[]> {
-	const data = await apiPost<{ runs?: RunInfo[] }>("/api/get_runs_for_project", { project: PROJECT })
-	return data.runs ?? []
+	const data = await apiPost<{ data?: RunInfo[] }>("/api/get_runs_for_project", { project: PROJECT })
+	return data.data ?? []
 }
 
 async function fetchRunSummary(run: string): Promise<RunSummary> {
-	return apiPost<RunSummary>("/api/get_run_summary", { project: PROJECT, run })
+	const data = await apiPost<{ data?: RunSummary }>("/api/get_run_summary", { project: PROJECT, run })
+	return data.data ?? ({} as RunSummary)
 }
 
 async function fetchMetricValues(run: string, metric: string): Promise<MetricPoint[]> {
-	const data = await apiPost<{ values?: MetricPoint[] }>("/api/get_metric_values", {
+	const data = await apiPost<{ data?: MetricPoint[] }>("/api/get_metric_values", {
 		project: PROJECT,
 		run,
 		metric_name: metric,
 	})
-	return data.values ?? []
+	return data.data ?? []
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -432,7 +433,7 @@ const TrainingChartsInner: React.FC = () => {
 				const runData = new Map<string, MetricPoint[]>()
 
 				// Fetch data for each metric this run has
-				const metricKeys = metrics.map((m) => m.key)
+				const metricKeys = metrics
 				for (const mk of metricKeys) {
 					newAvailable.add(mk)
 					try {

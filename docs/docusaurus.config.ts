@@ -166,6 +166,11 @@ const config: Config = {
 					position: "left",
 				},
 				{
+					to: "/training",
+					label: "Training",
+					position: "left",
+				},
+				{
 					type: "docSidebar",
 					sidebarId: "tutorialSidebar",
 					position: "left",
