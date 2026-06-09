@@ -35,7 +35,7 @@ Postal-arena edge classes where BOTH are 0% (the parity frontier): `po-box` (4),
 | street | 78.5 | 60.1 | ◐ (street-eats-affix boundary) |
 | region | 78.4 | 27.8 | ◐ US / ❌ FR (#330) |
 | locality | 60.1 | 69.7 | ◐ |
-| country | 35.2 | 46.5 | ❌ starved (#452) — **next lever** |
+| country | 35.2 | 46.5 | ❌ starved → **deterministic tagger, not retrain (#464)** — see below |
 | street_prefix | 0.0 | 0.0 | ❌ starved → **affix retrain in flight (v0.9.8)** |
 | street_suffix | 0.0 | — | ❌ starved → **affix retrain in flight** |
 | street_prefix_particle | — | 0.0 | ❌ starved (FR) |
@@ -54,6 +54,8 @@ Postal-arena edge classes where BOTH are 0% (the parity frontier): `po-box` (4),
 | street-affix-real (32) | street_prefix | 0.0 | **78.0** | P100/R64 |
 | street-affix-real | street_suffix | 0.0 | **66.7** | P100/R50 |
 | street-affix-real | street (name) | 0.0³ | 50.0 | unfolded |
+| country-real (34) | country (model v1) | — | 49.0 | **over-fires**: golden precision 23% |
+| country-real (34) | country (deterministic) | — | **100.0** | `matchCountry` on trailing segment, P=R=100 |
 
 ³ v4.1.0 lumps "Wacker Dr" into one `street` span; the affix retrain teaches the split (7/10 → split, perfect precision).
 
@@ -70,11 +72,20 @@ Common tags (postcode/house_number/street/locality/region/venue-US) are at usabl
 | Lever | tag(s) | status |
 | --- | --- | --- |
 | unit | unit | ✅ shipped v4.1.0 (0→92%) |
-| **affix** | street_prefix/suffix | ✅ **GATED v0.9.8: 0→78/67 (P=100), US net-positive, negative-space street +2.1.** FR postcode −3.9 (US-shard dilution) trips the >2pp gate → promote DEFERRED to operator (DeepSeek recommends promote-with-annotation). int8 ship-ready. |
-| country | country | ⏳ next (ISO codex + shard, #452) — also recovers the FR-postcode dilution |
-| po_box | po_box | ⏳ (salvaged po-box codex seeds it) |
+| **affix** | street_prefix/suffix | ✅ **GATED v0.9.8: 0→78/67 (P=100), US net-positive, negative-space street +2.1.** FR postcode −3.9 (US-shard dilution) trips the >2pp gate → promote DEFERRED to operator (#462; DeepSeek recommends promote-with-annotation). int8 ship-ready. |
+| **country** | country | ✅ **RESOLVED — deterministic, not retrain.** The synth shard makes the model over-fire (v1 country-real 49 F1, golden precision 23% — it learns "trailing token = country"). A deterministic `matchCountry` tagger on the trailing comma-segment scores **P=R=F1=100** on country-real. Lever moves to a post-parse `ProposalClassifier` (#464); model path kept as exploration record (#463). |
+| po_box | po_box | ⏳ (salvaged po-box codex seeds it; likely deterministic too — same closed-vocab shape as country) |
 | intersection | intersection_a/b | ⏳ (gated — regressed before) |
 | FR | venue/cedex/region | ⏳ (#330) |
-| consolidation | — | ⏳ v1.0 (bake winners + full regression gate) |
+| consolidation | — | ⏳ v1.0 (bake winners + full regression gate) — **needs > 20k steps**: see dilution note |
 
-*Baseline captured 2026-06-09 ~04:50 UTC during the night shift. The v0.9.8-affix "after" column + a re-run on the promoted model follow at the affix gate.*
+> **CUMULATIVE-DILUTION LESSON (load-bearing for consolidation):** stacking synth shards into one 20k-step run dilutes each tag vs its solo run — the country run (base+unit+affix+country) dropped affix street_suffix 67→59 and street_prefix 78→75 while still under-serving country. Each added shard spreads a fixed step budget thinner. **Prove each lever solo, then consolidate with a larger step budget** (the v2-vs-v3 unit lesson, re-confirmed). Don't read a cumulative run's per-tag number as that lever's ceiling.
+
+### Lever-shape taxonomy (why not everything is a retrain)
+
+The campaign has surfaced two tag shapes that want different tools:
+
+- **Distributional / open-vocab tags** (street_prefix, street_suffix, unit, locality) — the model has to *learn the boundary* from context. Synth shard + retrain is the right tool; these are where negative-space training compounds.
+- **Closed-vocab / fixed-position tags** (country, likely po_box, cedex) — a finite surface-form set in a predictable slot. A deterministic matcher gives perfect precision with zero training; a retrained model only *dilutes* it (over-fires). Use a `ProposalClassifier`, keep it default-off + byte-stable.
+
+*Baseline captured 2026-06-09 ~04:50 UTC during the night shift; finalized ~11:50 UTC with the country result. Affix "after" = the v0.9.8 gate run; country = the v0.9.9 v1 cumulative run + the deterministic probe.*
