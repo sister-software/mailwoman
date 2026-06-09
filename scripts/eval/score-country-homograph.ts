@@ -4,10 +4,10 @@
 // (the "trailing token = country" failure), and how often gold country is missed.
 // Usage: node --experimental-strip-types scripts/eval/score-country-homograph.ts --model <onnx> [--file <jsonl>]
 import { decodeAsJson } from "@mailwoman/core/decoder"
-import { NeuralAddressClassifier, parseAnchorLookup } from "@mailwoman/neural"
+import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 
 const argv = process.argv.slice(2)
 const arg = (k: string, d?: string) => {
@@ -16,6 +16,9 @@ const arg = (k: string, d?: string) => {
 }
 const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const LK = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
+// Gazetteer-anchor lexicon (#464): fed when present so a gazetteer-trained model (v0.9.12+) gets its
+// candidate-tag clues; harmless for older models (the runner skips inputs the ONNX doesn't declare).
+const GAZ = arg("--gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")!
 const file = arg("--file", "data/eval/external/country-homograph-real.jsonl")!
 const TAGS = ["country", "region", "locality"] as const
 
@@ -26,6 +29,7 @@ const neural = new NeuralAddressClassifier({
 	runner,
 	labels: card.labels,
 	postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
+	...(existsSync(GAZ) ? { gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) } : {}),
 })
 
 const rows = readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))

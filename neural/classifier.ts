@@ -21,6 +21,7 @@ import {
 	type DecoderToken,
 } from "@mailwoman/core/decoder"
 import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.js"
+import { buildGazetteerFeatures, type GazetteerLexicon } from "./gazetteer-inference.js"
 import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
@@ -40,7 +41,8 @@ import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
 export interface NeuralRunner {
 	infer(
 		tokenIds: number[],
-		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
+		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
 	): Promise<InferResult>
 }
 
@@ -79,6 +81,14 @@ export interface NeuralAddressClassifierConfig {
 	 * models. Load via `loadAnchorLookup` from `./anchor-inference.js`.
 	 */
 	postcodeAnchorLookup?: AnchorLookup
+	/**
+	 * Optional gazetteer-anchor lexicon (#464, knowledge-ladder rung 3.2). When set, `parse` builds
+	 * per-token candidate-tag-set clues (country/region/po_box/cedex/homograph) from the text + this
+	 * lexicon and feeds them to the runner — for models trained with the gazetteer-anchor channel
+	 * (exported with the `gazetteer_features`/`gazetteer_confidence` ONNX inputs). Omit for plain
+	 * models. Load via `parseGazetteerLexicon` from `./gazetteer-inference.js`.
+	 */
+	gazetteerLexicon?: GazetteerLexicon
 }
 
 export class NeuralAddressClassifier {
@@ -153,7 +163,10 @@ export class NeuralAddressClassifier {
 		const anchor = this.cfg.postcodeAnchorLookup
 			? buildAnchorFeatures(text, pieces, this.cfg.postcodeAnchorLookup)
 			: undefined
-		const { logits } = await this.cfg.runner.infer(ids, anchor)
+		const gazetteer = this.cfg.gazetteerLexicon
+			? buildGazetteerFeatures(text, pieces, this.cfg.gazetteerLexicon)
+			: undefined
+		const { logits } = await this.cfg.runner.infer(ids, anchor, gazetteer)
 
 		this.assertEmissionWidth(logits)
 
@@ -234,7 +247,10 @@ export class NeuralAddressClassifier {
 		const anchor = this.cfg.postcodeAnchorLookup
 			? buildAnchorFeatures(text, pieces, this.cfg.postcodeAnchorLookup)
 			: undefined
-		const { logits } = await this.cfg.runner.infer(ids, anchor)
+		const gazetteer = this.cfg.gazetteerLexicon
+			? buildGazetteerFeatures(text, pieces, this.cfg.gazetteerLexicon)
+			: undefined
+		const { logits } = await this.cfg.runner.infer(ids, anchor, gazetteer)
 
 		this.assertEmissionWidth(logits)
 
