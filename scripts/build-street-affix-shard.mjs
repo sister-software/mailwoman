@@ -55,12 +55,27 @@ const TRAIN_SOURCES = [
 ]
 const EVAL_SOURCE = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
 
+// Multi-locale BALANCE sources (--multilocale-count > 0). These rows carry NO affix split — they exist
+// only to keep the postcode-ORDER distribution multi-locale so a US-heavy affix shard doesn't dilute
+// FR/DE postcode (the v0.9.8 blemish: a US-only shard drove FR postcode −3.9; the multi-locale country
+// shard recovered it 95.6→99.5). Native-order rendering mirrors build-country-shard-balanced.mjs:
+// FR = number-street, postcode-city; DE/IT/NL = street-number, postcode-city. `order` drives the body.
+const MULTILOCALE_SOURCES = [
+	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", iso2: "DE", region: "", order: "eu" },
+	{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv", iso2: "FR", region: "", order: "fr" },
+	{ zip: "/tmp/oa-cache/it__countrywide.zip", csv: "it/countrywide.csv", iso2: "IT", region: "", order: "eu" },
+	{ zip: "/tmp/oa-cache/nl__countrywide.zip", csv: "nl/countrywide.csv", iso2: "NL", region: "", order: "eu" },
+]
+const MULTILOCALE_EVAL_SOURCES = [
+	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
+]
+
 const DIRECTIONAL_ABBRS = Object.values(DirectionalAbbreviation) // ["N","E","S","W","NE","NW","SE","SW"]
 const INJECT_PREFIX_PROB = 0.3 // fraction of prefix-less streets that get a synthetic directional
 
 function parseArgs() {
 	const args = process.argv.slice(2)
-	const out = { count: 50000, seed: 42, source: "synth-affix", golden: false }
+	const out = { count: 50000, seed: 42, source: "synth-affix", golden: false, multilocaleCount: 0 }
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 		if (a === "--output") out.output = args[++i]
@@ -68,9 +83,12 @@ function parseArgs() {
 		else if (a === "--seed") out.seed = parseInt(args[++i], 10)
 		else if (a === "--source-name") out.source = args[++i]
 		else if (a === "--golden") out.golden = true
+		else if (a === "--multilocale-count") out.multilocaleCount = parseInt(args[++i], 10)
 	}
 	if (!out.output) {
-		console.error("Usage: build-street-affix-shard.mjs --output <labeled.jsonl> [--count N] [--seed N] [--golden]")
+		console.error(
+			"Usage: build-street-affix-shard.mjs --output <labeled.jsonl> [--count N] [--seed N] [--golden] [--multilocale-count N]"
+		)
 		process.exit(1)
 	}
 	return out
@@ -240,6 +258,76 @@ function renderRow(random, base, street, streetComponents) {
 	}
 }
 
+/**
+ * Capped reader for the multi-locale BALANCE sources. The FR/IT/NL countrywide extracts are GB-scale;
+ * reading the whole CSV blows V8's string limit, so cap the bytes with `head` (mirrors
+ * build-country-shard-balanced.mjs). Only keeps tuples that carry a POSTCODE — the whole point of the
+ * balance rows is native-order postcode signal, so a postcode-less row contributes nothing.
+ */
+function readBalanceTuples(source, limit) {
+	const maxLines = Math.max(limit * 8, 20000) + 1
+	const r = spawnSync("bash", ["-c", `unzip -p "${source.zip}" "${source.csv}" | head -n ${maxLines}`], {
+		maxBuffer: 1024 * 1024 * 1024,
+		encoding: "buffer",
+	})
+	if (r.status !== 0) {
+		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
+		return []
+	}
+	const lines = r.stdout.toString("utf8").split(/\r?\n/)
+	if (lines.length < 2) return []
+	const header = splitCsv(lines[0]).map((h) => h.trim().toLowerCase())
+	const idx = (n) => header.indexOf(n)
+	const iNum = idx("number"),
+		iStreet = idx("street"),
+		iCity = idx("city"),
+		iRegion = idx("region"),
+		iPost = idx("postcode")
+	const get = (cells, i) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
+	const tuples = []
+	const seen = new Set()
+	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
+		if (!lines[li]) continue
+		const cells = splitCsv(lines[li])
+		const street = get(cells, iStreet),
+			locality = get(cells, iCity),
+			house_number = get(cells, iNum),
+			postcode = get(cells, iPost)
+		if (!street || !locality || !house_number || !postcode) continue // postcode is required for balance
+		const key = `${house_number}|${street}|${locality}`.toLowerCase()
+		if (seen.has(key)) continue
+		seen.add(key)
+		tuples.push({
+			house_number,
+			street,
+			locality,
+			region: get(cells, iRegion) || source.region,
+			postcode,
+			iso2: source.iso2,
+			order: source.order,
+		})
+	}
+	return tuples
+}
+
+/**
+ * Render a non-US BALANCE row in native order — NO affix split, NO country token. `street` is the OA
+ * value verbatim (so the model learns affixes are US-conditional: "Rue de la Paix" stays whole). The
+ * sole job is to put a postcode in its native position (FR: before city, after a number-street body;
+ * DE/IT/NL: before city, after a street-number body) so the shard doesn't pull the model US-ward.
+ */
+function renderBalanceRow(t) {
+	const { house_number: hn, street, locality: loc, postcode: pc, order } = t
+	// region is intentionally omitted — it isn't rendered in `raw`, so labeling it would fail alignment,
+	// and it adds nothing to the postcode-ORDER signal these rows exist for.
+	const components = { house_number: hn, street, locality: loc, postcode: pc }
+	const raw =
+		order === "fr"
+			? `${hn} ${street}, ${pc} ${loc}` // French: number-street, postcode-city
+			: `${street} ${hn}, ${pc} ${loc}` // DE/IT/NL: street-number, postcode-city
+	return { raw, components }
+}
+
 async function main() {
 	const opts = parseArgs()
 	const random = mulberry32(opts.seed)
@@ -311,12 +399,68 @@ async function main() {
 		emitted++
 	}
 
+	// ── Multi-locale balance rows (--multilocale-count) ─────────────────────────────────────────────
+	// Appended AFTER the US affix rows so the US affix signal is unchanged vs v0.9.8 (same `--count`),
+	// and the non-US rows ride the SAME `synth-affix` source weight. These carry native-order postcodes
+	// to undo the US-only shard's FR-postcode dilution — no affix labels, no annotation.
+	let balanceEmitted = 0,
+		balanceSkipped = 0
+	const balanceIso = {}
+	if (opts.multilocaleCount > 0) {
+		const mlSources = opts.golden ? MULTILOCALE_EVAL_SOURCES : MULTILOCALE_SOURCES
+		const perSource = Math.ceil((opts.multilocaleCount * 3) / mlSources.length) // over-read; balance locales
+		const mlPool = []
+		for (const s of mlSources) {
+			const t = readBalanceTuples(s, perSource)
+			console.error(`  balance ${s.csv} (${s.iso2}): ${t.length} tuples`)
+			for (const x of t) mlPool.push(x)
+		}
+		const M = mlPool.length
+		let mlGuard = 0
+		while (M > 0 && balanceEmitted < opts.multilocaleCount && mlGuard++ < opts.multilocaleCount * 10) {
+			const t = mlPool[Math.floor(random() * M)]
+			const { raw, components } = renderBalanceRow(t)
+			// Every component surface must survive in raw, else alignment can't label it.
+			if (![components.street, components.locality, components.postcode].every((s) => raw.includes(s))) {
+				balanceSkipped++
+				continue
+			}
+			balanceIso[t.iso2] = (balanceIso[t.iso2] ?? 0) + 1
+			const locale = `${t.iso2.toLowerCase()}-${t.iso2}`
+			if (opts.golden) {
+				outStream.write(JSON.stringify({ raw, components, country: t.iso2 }) + "\n")
+				balanceEmitted++
+				continue
+			}
+			const canonical = {
+				raw,
+				components,
+				country: t.iso2,
+				locale,
+				source: opts.source,
+				source_id: stableSourceId(opts.source, components),
+				corpus_version: "0.4.0",
+				license: "OpenAddresses non-US skeletons (native-order postcode balance for the affix shard)",
+			}
+			const aligned = alignRow(canonical)
+			if (aligned.kind !== "labeled" || !aligned.row) {
+				balanceSkipped++
+				continue
+			}
+			outStream.write(JSON.stringify({ ...aligned.row, synth_method: "affix-balance", synth_base_id: null }) + "\n")
+			balanceEmitted++
+		}
+	}
+
 	outStream.end()
 	await new Promise((resolve) => outStream.on("finish", resolve))
 	console.error(
 		`Done: emitted ${emitted} affix rows, skipped ${skipped}, no-affix ${noAffix} (pool ${pool.length}). → ${opts.output}\n` +
 			`  formats: ${JSON.stringify(formatCounts)}\n` +
-			`  affix mix: ${JSON.stringify(affixCounts)}`
+			`  affix mix: ${JSON.stringify(affixCounts)}` +
+			(opts.multilocaleCount > 0
+				? `\n  balance: emitted ${balanceEmitted}, skipped ${balanceSkipped}, iso ${JSON.stringify(balanceIso)}`
+				: "")
 	)
 }
 
