@@ -58,20 +58,38 @@ scripts/eval/de-order-eval.sh --model $M --card neural-weights-en-us/model-card.
 
 **3. Training-gate targets + the trajectory so far:**
 
-| tag | target | v1.0.0 consol | Run A (5×) | diag (affix 20.0, 2k) | Run B (17×) |
+**The gate targets below are the CANONICAL pre-registration from `v1.0.0-consolidation.yaml`.**
+(2026-06-10 correction: an earlier revision of this table had silently relaxed several — affix
+72/64 vs the config's **78/67**, unit 91 vs 92, FR postcode 99 vs 99.5 — and had dropped the US-street
+row entirely. Restored to the config; see "Gate provenance & decisions" below.)
+
+| tag | **gate (config)** | v1.0.0 consol | Run A (5×) | diag (2k) | Run B (17×) |
 |---|--:|--:|--:|--:|--:|
-| affix street_prefix | **≥72** | 27.6 | 64.9 | 75.0 | ? |
-| affix street_suffix | **≥64** | 42.1 | 52.4 | 55.8 | ? |
-| country homograph | **≥83.3** | 87.5 | 85.7 | 83.3 | ? |
-| US postcode | **≥97** | 95.8 | 96.1 | 97.4 | ? |
-| unit | ≥91 | 92.1 | 90.6 | — | ? |
-| US micro | ≥85 | 85.5 | 85.5 | 85.0 | ? |
-| US region / locality | ~90 / ~76 | 89.7/75.9 | 89.9/75.9 | 89.5/74.5 | ? |
-| FR postcode / hn | ≥99 / ≥91 | 99.6/92.3 | 99.5/93.0 | 99.6/92.8 | ? |
-| DE native loc (anchor ON) | ≥83.8 | 90.7 | 90.7 | — | ? |
+| affix street_prefix | **≥78** | 27.6 | 64.9 | 75.0 | 64.9 |
+| affix street_suffix | **≥67** | 42.1 | 52.4 | 55.8 | 48.8 |
+| country homograph | **≥83.3** | 87.5 | 85.7 | 83.3 | 89.8 |
+| US postcode | **≥97** | 95.8 | 96.1 | 97.4 | 97.3 |
+| unit | **≥92** | 92.1 | 90.6 | — | 90.6 |
+| **US street** | **≥80.4** (v0.9.8) | 76.0 | 76.0 | — | 76.2 |
+| US locality / region | ≥62.2 / ≥80.1 (v0.9.8) | 75.9/89.7 | 75.9/89.9 | — | 72.9/89.1 |
+| US micro | ≥81.6 (v0.9.8) | 85.5 | 85.5 | 85.0 | 84.8 |
+| FR postcode / hn | **≥99.5 / ≥91** | 99.6/92.3 | 99.5/93.0 | — | 99.7/94.6 |
+| DE native loc (anchor ON) | ≥83.8 | 90.7 | 90.7 | — | 90.7 |
 
 Baselines (fp32, same harness): **v4.1.0** US postcode 98.3 · street 78.5 · locality 60.0 ·
-region 78.4 · micro 80.2 · FR postcode 99.5 · FR hn 91.0. **v0.9.8** US street 80.4 · micro 81.6.
+region 78.4 · micro 80.2 · FR postcode 99.5 · FR hn 91.0. **v0.9.8** US street **80.4** · locality 62.2 ·
+region 80.1 · micro 81.6 · FR hn 92.0.
+
+### Gate provenance & decisions (eval discipline — no silent drift)
+- **country ≥83.3** is config-canonical (the v0.9.12 banked-lever floor, "don't regress #464"). The
+  consolidation *demonstrated* 87.5, but that's a bonus, not the pre-registered bar. A first doc draft
+  wrote ≥85; it was reconciled DOWN to the config's 83.3 — recorded here, not silent.
+- **affix ≥78/67** (hold v0.9.8's solo level) and **US street ≥80.4** are the two REAL open gaps.
+  Across v1.0.0/A/B, affix sits ~65 (Run C aims to clear via resume+density) and **US street is stuck
+  at ~76 (−4.4 vs v0.9.8) in every run** — a genuine spine regression the relaxed table had hidden.
+- **Any future relaxation of these numbers is a STATED decision with a reason, made here.** As of now,
+  none is approved: the config gate stands. If Run C lands affix ~75/63 and street ~76, that is a
+  GATE MISS to confront (re-baseline-with-reason, or iterate), not a pass.
 
 **Decision tree (with the operator's TREADMILL GUARD):**
 - **Run B clears the training gate** (affix ≥72/64, country ≥83.3, US postcode ≥97, spine held)
