@@ -50,3 +50,24 @@ resolved). The NAD render is one template — format diversity is not this eval'
 
 Trust: 6,453 rows ≥ the 1000-row floor → **TRUSTED**. Files:
 `data/eval/external/overture-us-nad-holdout.jsonl` + `.report.json`.
+
+
+## Morning-after correction №2 (2026-06-10 day): the gold itself was composite
+
+The night's Finding-2 classification was computed on **broken gold**: NAD's locality field
+sometimes carries a composite `"County, Municipality"` string (New Jersey systematically —
+`"Union, Union Township"`, `"Cape May, Sea Isle City"`), and the holdout builder graded
+against the whole composite. Correct resolves failed on the county prefix; NJ's 148
+"misses" were ~all this artifact. Builder fixed (last comma segment), holdout rebuilt.
+
+**Corrected numbers (v4.2.0):** locality-match 78.5 (was 77.3), v0 87.7 (was 86.7) — the
+fix is fair to both. Misses-with-candidate drop 461 → 317, NJ leaves the top-miss states
+entirely, and the strict designation class (`<name> <designation>` ↔ `<name>`) shrinks to
+**14 rows (~0.2pp)** — far below implementation threshold. #498 closed as
+premise-refuted-by-corrected-measurement. The real residual gap (9.2pp vs v0) is ranking/
+coverage misses concentrated in ID/WY/UT/LA plus WOF neighborhood-vs-locality granularity
+(`College CDP` ↔ `Fox Farm-College`) — the latter is the PIP lens's territory, not a
+name-credit's.
+
+Running tally for this document: three findings published, two corrected by their own
+follow-up measurements, within 18 hours. The instrument is part of the experiment.

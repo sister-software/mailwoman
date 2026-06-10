@@ -47,7 +47,14 @@ const result = await db.runAndReadAll(`
 		SELECT
 			number, street, postcode, postal_city,
 			address_levels[1].value AS state,
-			coalesce(nullif(trim(address_levels[2].value), ''), nullif(trim(postal_city), '')) AS city,
+			-- NAD's locality field is sometimes a composite "County, Municipality" string (NJ
+			-- especially: "Union, Union Township"). The municipality is the LAST comma segment;
+			-- grading against the composite fails correct resolves on the county prefix (night-10
+			-- finding on #498). Postal_city fallback is never composite.
+			coalesce(
+				nullif(trim(regexp_extract(address_levels[2].value, '([^,]+)$', 1)), ''),
+				nullif(trim(postal_city), '')
+			) AS city,
 			sources[1].dataset AS dataset,
 			lat, lon,
 			hash(number || street || postcode || '${args.seed}') AS h
