@@ -153,9 +153,22 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
    ```
 
    This pushes `model.onnx` + `tokenizer.model` + `model-card.json` + `fst-en-US.bin` + `wof-hot.db` to
-   `…/resolve/en-us/v<version>/`, updates `releases.json`, and (with `--set-default`) re-points the live demo —
-   no docs rebuild needed. For a relabel of an existing model, the `fst-en-US.bin` + `wof-hot.db` are unchanged;
-   copy them from the previous version's bucket path.
+   `…/resolve/en-us/v<version>/` and updates the HF copy of `releases.json`. For a relabel of an existing
+   model, the `fst-en-US.bin` + `wof-hot.db` are unchanged; copy them from the previous version's bucket path.
+
+   > **⚠️ The HF `--set-default` alone does NOT flip the live demo** (night-10 discovery, v4.2.0):
+   > `public.sister.software` serves from the **R2** bucket, not HF. The demo leg is a second, mandatory
+   > step — stage the same artifact set (plus `postcode-*.bin` + `wof-polygons.db`, copied from the prior
+   > version's R2 path when unchanged) into the R2 layout and run:
+   >
+   > ```bash
+   > set -a; . ./.env; set +a   # RCLONE_S3_PUBLIC_* creds
+   > python3 scripts/publish-demo-assets-to-r2.py --src <staged-dir>
+   > ```
+   >
+   > Verify with `curl -s https://public.sister.software/mailwoman/en-us/releases.json | jq .defaultVersion`
+   > AND an md5 of the served `model.onnx` against the gated artifact. CI's weight fetch reads HF; the
+   > demo reads R2 — a release is done when BOTH backends agree.
 
 2. **Publish all packages from CI** — `publish.yml` at the same version. The "Fetch weight binaries from Hugging
    Face" step pulls `model.onnx` + `tokenizer.model` from the public bucket (no auth) into the `neural-weights-*`
