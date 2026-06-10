@@ -1,0 +1,21 @@
+{
+	"$comment": "Gate spec for the v4.2.0 ship (night-10, 2026-06-10). Bars are the STATED re-baselines from the fork decision + the always-on floors. A gate spec is a CONTRACT (feedback-no-silent-gate-drift): edits require a stated reason in the PR that changes this file.",
+	"label": "v4.2.0-ship",
+	"requires_gazetteer_lexicon": true,
+	"floors": {
+		"us.postcode": 97.0,
+		"us.country_homograph_f1": 83.3,
+		"us.micro": 81.6,
+		"us.locality": 62.2,
+		"us.region": 80.1,
+		"us.street": 74.0,
+		"us.street_prefix": 60.0,
+		"us.street_suffix": 45.0,
+		"us.unit_real": 88.0,
+		"fr.postcode": 99.5,
+		"fr.house_number": 91.0,
+		"de.native_locality": 83.8
+	},
+	"int8_vs_fp32_max_delta_pp": 1.5,
+	"ledger_path": "evals/scores-by-version.json"
+}
