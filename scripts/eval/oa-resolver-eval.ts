@@ -89,6 +89,18 @@ interface Resolved {
 }
 
 /** Collect ALL resolver-attributed nodes (we want per-placetype names, not just the most-specific). */
+/** Pull the #476 address-point hit (street-node metadata) out of a resolved tree, if any. */
+function findAddressPointHit(tree: AddressTree): { lat: number; lon: number } | null {
+	const stack = [...tree.roots]
+	while (stack.length > 0) {
+		const n = stack.pop()!
+		const ap = n.metadata?.address_point as { lat: number; lon: number } | undefined
+		if (n.tag === "street" && ap) return ap
+		stack.push(...n.children)
+	}
+	return null
+}
+
 function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
 	const visit = (n: AddressNode): void => {
@@ -403,6 +415,15 @@ async function main(): Promise<void> {
 	// street. The `neural+anchor` row keeps neural's admin match but takes the COORDINATE from the anchor
 	// when it has a placed candidate for the eval's country, else falls back to the resolver coord. So the
 	// row isolates exactly what the anchor sharpens: where, not which place.
+	// `--address-points <db>` (#476): the street-level exact-point tier. Adds `addressPoints` to
+	// resolveOpts; the `neural+addrpt` row keeps neural's admin flags but takes the COORDINATE from
+	// the address-point hit when present (the tier's whole contribution is "where", street-level).
+	const addressPointsDb = arg("address-points", "")
+	let addressPoints: import("@mailwoman/core/resolver").AddressPointLookup | null = null
+	if (addressPointsDb) {
+		const { AddressPointSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite")
+		addressPoints = new AddressPointSqliteLookup(addressPointsDb)
+	}
 	const useAnchor = process.argv.includes("--postcode-anchor")
 	// `--anchor-rerank` (#369 S8): feed the postcode anchor's country posterior into the resolver's
 	// locality re-rank (`ResolveOpts.anchorPosterior`), to measure whether the merged re-ranker pulls
@@ -528,6 +549,8 @@ async function main(): Promise<void> {
 	// `neural+anchor`: neural's admin flags, but the coordinate replaced by the postcode-anchor centroid
 	// when available. Only the coord error column differs from `neural`.
 	const neuralAnchorAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
+	const neuralAddrPtAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
+	let addressPointHits = 0
 	const record = (
 		who: "neural" | "v0",
 		row: OaRow,
@@ -560,10 +583,15 @@ async function main(): Promise<void> {
 
 		// neural
 		let nResolved: Resolved[] = []
+		let nDecorated: AddressTree | null = null
 		try {
 			const nTree = await neural.parse(row.input, parseOpts)
-			const nOpts = anchorRerank ? { ...resolveOpts, anchorPosterior: anchorPosteriorFor(row.input) } : resolveOpts
-			nResolved = collectResolved(await resolver.resolveTree(nTree, nOpts))
+			const nOpts = {
+				...(anchorRerank ? { ...resolveOpts, anchorPosterior: anchorPosteriorFor(row.input) } : resolveOpts),
+				...(addressPoints ? { addressPoints } : {}),
+			}
+			nDecorated = await resolver.resolveTree(nTree, nOpts)
+			nResolved = collectResolved(nDecorated)
 		} catch {
 			/* unresolved */
 		}
@@ -581,6 +609,17 @@ async function main(): Promise<void> {
 				neuralLoc: ns.resolvedLoc ?? null,
 				nameMatch: ns.locMatch,
 			})
+		}
+
+		// neural + address-points (#476): same admin flags; coordinate from the exact point on hit.
+		if (addressPoints) {
+			const hit = nDecorated ? findAddressPointHit(nDecorated) : null
+			const apErr = hit ? haversineKm(hit.lat, hit.lon, row.lat, row.lon) : ns.err
+			if (hit) addressPointHits++
+			const st = row.state || "??"
+			if (!neuralAddrPtAgg.byState.has(st)) neuralAddrPtAgg.byState.set(st, newAgg())
+			bump(neuralAddrPtAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, apErr)
+			bump(neuralAddrPtAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, apErr)
 		}
 
 		// neural + postcode-anchor: same admin flags, coordinate from the anchor centroid when it has one.
@@ -654,6 +693,11 @@ async function main(): Promise<void> {
 	lines.push(overallRow("**neural**", agg.neural.overall))
 	lines.push(overallRow("v0 (Pelias)", agg.v0.overall))
 	if (useAnchor) lines.push(overallRow("**neural+anchor**", neuralAnchorAgg.overall))
+	if (addressPoints) {
+		lines.push(overallRow("**neural+addrpt**", neuralAddrPtAgg.overall))
+		lines.push("")
+		lines.push(`address-point hit rate: ${addressPointHits}/${neuralAddrPtAgg.overall.n} (${((100 * addressPointHits) / Math.max(1, neuralAddrPtAgg.overall.n)).toFixed(1)}%)`)
+	}
 	lines.push("")
 	lines.push(`## Neural per-state (locality-match)`)
 	lines.push("")

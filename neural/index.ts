@@ -6,6 +6,7 @@
 
 export * from "./anchor-inference.js"
 export * from "./classifier.js"
+export * from "./gazetteer-inference.js"
 export * from "./labels.js"
 export * from "./onnx-runner.js"
 export * from "./postcode-anchor.js"

@@ -33,6 +33,14 @@ mkdir -p "$EMPTY_TESTS"
 MODEL_ARGS=()
 if [[ -n "${MODEL:-}" ]]; then
   MODEL_ARGS=(--model "$MODEL" --tokenizer "$TOKENIZER" --model-card "$MODELCARD")
+  # Gaz-trained models (v4.2.0+): feed the ship config — zero-filled clues depress country
+  # recall and fake an affix crash. Opt in via GAZETTEER=/path/lexicon.json [ANCHOR=/path/lookup.json].
+  if [[ -n "${GAZETTEER:-}" ]]; then
+    MODEL_ARGS+=(--gazetteer-lexicon "$GAZETTEER")
+  fi
+  if [[ -n "${ANCHOR:-}" ]]; then
+    MODEL_ARGS+=(--anchor-lookup "$ANCHOR")
+  fi
   echo "Model: $MODEL"
 else
   echo "Model: (default shipped weights)"

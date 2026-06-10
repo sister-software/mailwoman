@@ -52,6 +52,22 @@ The Pelias side of the equation — the gazetteer + resolver — is also evolvin
 - **The CLI ergonomics.** `mailwoman parse <input>` is the entry point.
 - **Multi-locale design.** Mailwoman ships separate weight packages per locale (en-us, fr-fr) and the architecture is built around the idea that locales are first-class (see [`plan/reference/ARCHITECTURE.md`](../../plan/reference/ARCHITECTURE.mdx)).
 
+## What we deliberately do differently: no span left behind
+
+One Pelias behavior we do **not** carry forward. The Pelias parser's solver is lossy by
+design: spans that don't fit the winning interpretation are quietly demoted to
+"accessory" information and punted to the resolver. If your only goal is "resolve to a
+point", that's a reasonable economy. But it forecloses the geocoder-*adjacent* jobs —
+chiefly **record linkage**, deciding whether two rows in two datasets describe the same
+entity — because the parse no longer accounts for the whole string.
+
+Mailwoman's parser labels **every token** (the BIO sequence covers the full input), and
+the design goal is a **lossless, typed decomposition**: every character classified or
+explicitly tagged unknown, each span carrying a canonical value. Two records match when
+their canonicalized span-sets agree, surface variation and all — something a lossy
+parser structurally cannot offer. The full argument lives in
+[`concepts/synonymy-and-homonymy.md`](../../concepts/synonymy-and-homonymy.mdx).
+
 ## Next
 
 - [How it used to work](./how-it-used-to-work.mdx) — the rule-only era in detail

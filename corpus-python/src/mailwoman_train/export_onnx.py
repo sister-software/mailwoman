@@ -44,8 +44,13 @@ def export_to_onnx(
     # c=0 identity — which is exactly the "anchor not fed" path, not the channel under test).
     has_anchor = bool(getattr(model_cpu, "use_postcode_anchor", False))
     anchor_dim = int(getattr(model_cpu, "anchor_feature_dim", 0))
+    # Gazetteer-anchor channel (#464): same reasoning — the inputs must exist in the graph for the
+    # inference runtime to feed the candidate-tag clues.
+    has_gaz = bool(getattr(model_cpu, "use_gazetteer_anchor", False))
+    gaz_dim = int(getattr(model_cpu, "gazetteer_feature_dim", 0))
 
     # ONNX exporter prefers plain-tensor outputs; wrap the model so forward returns just logits.
+    # One wrapper per input combination — the dynamo tracer wants a fixed positional signature.
     class _LogitsOnly(nn.Module):
         def __init__(self, inner: nn.Module) -> None:
             super().__init__()
@@ -73,29 +78,101 @@ def export_to_onnx(
                 anchor_confidence=anchor_confidence,
             ).logits
 
-    if has_anchor:
+    class _LogitsOnlyAnchorGaz(nn.Module):
+        def __init__(self, inner: nn.Module) -> None:
+            super().__init__()
+            self.inner = inner
+
+        def forward(
+            self,
+            input_ids: torch.Tensor,
+            attention_mask: torch.Tensor,
+            anchor_features: torch.Tensor,
+            anchor_confidence: torch.Tensor,
+            gazetteer_features: torch.Tensor,
+            gazetteer_confidence: torch.Tensor,
+        ) -> torch.Tensor:
+            return self.inner(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                anchor_features=anchor_features,
+                anchor_confidence=anchor_confidence,
+                gazetteer_features=gazetteer_features,
+                gazetteer_confidence=gazetteer_confidence,
+            ).logits
+
+    class _LogitsOnlyGaz(nn.Module):
+        def __init__(self, inner: nn.Module) -> None:
+            super().__init__()
+            self.inner = inner
+
+        def forward(
+            self,
+            input_ids: torch.Tensor,
+            attention_mask: torch.Tensor,
+            gazetteer_features: torch.Tensor,
+            gazetteer_confidence: torch.Tensor,
+        ) -> torch.Tensor:
+            return self.inner(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                gazetteer_features=gazetteer_features,
+                gazetteer_confidence=gazetteer_confidence,
+            ).logits
+
+    base_dynamic = {
+        "input_ids": {0: "batch", 1: "sequence"},
+        "attention_mask": {0: "batch", 1: "sequence"},
+    }
+    anchor_args = (
+        torch.zeros((1, max_length, anchor_dim), dtype=torch.float32),
+        torch.zeros((1, max_length), dtype=torch.float32),
+    )
+    gaz_args = (
+        torch.zeros((1, max_length, gaz_dim), dtype=torch.float32),
+        torch.zeros((1, max_length), dtype=torch.float32),
+    )
+    if has_anchor and has_gaz:
+        export_model = _LogitsOnlyAnchorGaz(model_cpu).eval()
+        args = (dummy_ids, dummy_mask, *anchor_args, *gaz_args)
+        input_names = [
+            "input_ids",
+            "attention_mask",
+            "anchor_features",
+            "anchor_confidence",
+            "gazetteer_features",
+            "gazetteer_confidence",
+        ]
+        dynamic_shapes = {
+            **base_dynamic,
+            "anchor_features": {0: "batch", 1: "sequence"},  # dim 2 (feature_dim) is fixed
+            "anchor_confidence": {0: "batch", 1: "sequence"},
+            "gazetteer_features": {0: "batch", 1: "sequence"},
+            "gazetteer_confidence": {0: "batch", 1: "sequence"},
+        }
+    elif has_anchor:
         export_model = _LogitsOnlyAnchor(model_cpu).eval()
-        args = (
-            dummy_ids,
-            dummy_mask,
-            torch.zeros((1, max_length, anchor_dim), dtype=torch.float32),
-            torch.zeros((1, max_length), dtype=torch.float32),
-        )
+        args = (dummy_ids, dummy_mask, *anchor_args)
         input_names = ["input_ids", "attention_mask", "anchor_features", "anchor_confidence"]
         dynamic_shapes = {
-            "input_ids": {0: "batch", 1: "sequence"},
-            "attention_mask": {0: "batch", 1: "sequence"},
+            **base_dynamic,
             "anchor_features": {0: "batch", 1: "sequence"},  # dim 2 (anchor_feature_dim) is fixed
             "anchor_confidence": {0: "batch", 1: "sequence"},
+        }
+    elif has_gaz:
+        export_model = _LogitsOnlyGaz(model_cpu).eval()
+        args = (dummy_ids, dummy_mask, *gaz_args)
+        input_names = ["input_ids", "attention_mask", "gazetteer_features", "gazetteer_confidence"]
+        dynamic_shapes = {
+            **base_dynamic,
+            "gazetteer_features": {0: "batch", 1: "sequence"},
+            "gazetteer_confidence": {0: "batch", 1: "sequence"},
         }
     else:
         export_model = _LogitsOnly(model_cpu).eval()
         args = (dummy_ids, dummy_mask)
         input_names = ["input_ids", "attention_mask"]
-        dynamic_shapes = {
-            "input_ids": {0: "batch", 1: "sequence"},
-            "attention_mask": {0: "batch", 1: "sequence"},
-        }
+        dynamic_shapes = dict(base_dynamic)
 
     # Use the dynamo exporter (``dynamo=True``). The legacy TorchScript path hits
     # ``IndexError: tuple index out of range`` inside transformers ≥5's ``masking_utils``

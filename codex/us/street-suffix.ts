@@ -12,12 +12,7 @@
  *   This module is the single home for the USPS suffix table. It carries both the synthesis-layer
  *   helpers (`US_STREET_SUFFIX_PREFERRED_ABBR`, `matchCase`, `matchTrailingSuffix` — used by
  *   `@mailwoman/corpus`) and the richer branded-type lookup (`StreetSuffix`, `lookupStreetSuffix`,
- *   `isStreetSuffix`) salvaged from the original isp-nexus `postal/suffix.ts`. The data is verbatim
- *   USPS Pub-28; the two APIs share one underlying record.
- *
- *   Salvaged 2026-05-17 (data) / 2026-06-03 (types) from
- *   `isp-nexus/universe@6eeb7bd99643a6d62a8b8abbd50968a1e492b90b` `mailwoman/postal/suffix.ts`
- *   (originally copyright Sister Software; both projects are AGPL-3.0).
+ *   `isStreetSuffix`) The data is verbatim USPS Pub-28; the two APIs share one underlying record.
  * @see {@link https://pe.usps.com/text/pub28/28apc_002.htm USPS Street Suffix Abbreviations}
  */
 
@@ -287,10 +282,6 @@ export function matchTrailingSuffix(street: string): { canonical: UsStreetSuffix
 	if (!canonical) return null
 	return { canonical, matched: last }
 }
-
-// ── Branded-type lookup (salvaged from isp-nexus postal/suffix.ts) ───────────────────────────────
-// The record above is the data; the types below give callers a precise StreetSuffix / abbreviation
-// vocabulary and a type-safe lookup, without a second copy of the table.
 
 /**
  * The USPS suffix record, under its original isp-nexus name. Aliases

@@ -1,0 +1,13 @@
+{
+	"release": "2026-05-20.0",
+	"rows": 6453,
+	"states": 44,
+	"per_state_cap": 150,
+	"seed": "42",
+	"datasets": {
+		"NAD": 6453
+	},
+	"lineage": "source-independent (zero OpenAddresses-derived datasets in the provenance chain)",
+	"render_template": "<number> <street>, <city>, <state-abbrev> <postcode>",
+	"trust": "TRUSTED (>= 1000-row floor)"
+}

@@ -21,6 +21,7 @@ import {
 	type DecoderToken,
 } from "@mailwoman/core/decoder"
 import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.js"
+import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.js"
 import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
@@ -40,7 +41,8 @@ import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
 export interface NeuralRunner {
 	infer(
 		tokenIds: number[],
-		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
+		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
+		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> }
 	): Promise<InferResult>
 }
 
@@ -79,6 +81,26 @@ export interface NeuralAddressClassifierConfig {
 	 * models. Load via `loadAnchorLookup` from `./anchor-inference.js`.
 	 */
 	postcodeAnchorLookup?: AnchorLookup
+	/**
+	 * Optional gazetteer-anchor lexicon (#464, knowledge-ladder rung 3.2). When set, `parse` builds
+	 * per-token candidate-tag-set clues (country/region/po_box/cedex/homograph) from the text + this
+	 * lexicon and feeds them to the runner — for models trained with the gazetteer-anchor channel
+	 * (exported with the `gazetteer_features`/`gazetteer_confidence` ONNX inputs). Omit for plain
+	 * models. Load via `parseGazetteerLexicon` from `./gazetteer-inference.js`.
+	 */
+	gazetteerLexicon?: GazetteerLexicon
+	/**
+	 * Channel choreography (#464, v0.9.13 postcode fix): when true, zero the gazetteer clue on pieces
+	 * adjacent to a postcode-anchor hit (needs both `gazetteerLexicon` and `postcodeAnchorLookup`).
+	 * Targets the region-clue→postcode CRF interference (~3pp US postcode).
+	 *
+	 * PAIRING IS LOAD-BEARING: set this IFF the model was TRAINED with the matching train-time
+	 * choreography (`data.gazetteer_choreography`). The 2026-06-10 diagnostic showed the harm is
+	 * WEIGHT-BAKED — applying this at inference on a model trained *without* train-choreography does
+	 * NOT recover postcode and adds train/inference skew. Only enable for a consolidation-era model
+	 * trained with the train-time half.
+	 */
+	suppressGazetteerNearPostcode?: boolean
 }
 
 export class NeuralAddressClassifier {
@@ -146,14 +168,53 @@ export class NeuralAddressClassifier {
 	/** Tokenize → infer → Viterbi (or argmax) → decoder tree. */
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
 		if (text.length === 0) return { raw: text, roots: [] }
+		const { tokens } = await this.#decode(text, opts)
+		return buildAddressTree(text, tokens, opts?.calibrate ? { calibrate: opts.calibrate } : undefined)
+	}
 
+	/**
+	 * Like `parse`, but also returns the raw per-token logits and piece offsets needed for per-span
+	 * logit aggregation (Option C joint-reconcile integration). Shares the ENTIRE decode path with
+	 * `parse` (one `#decode`, #481) — including the repair passes, which previously ran only in
+	 * `parse`: reconcile must consume the same tokens the argmax path serves users, and the repair
+	 * opts were silently ignored here before. `logits` stay RAW (pre-prior, pre-repair) — they are
+	 * the model's emissions, not the decode's opinions.
+	 */
+	async parseWithLogits(text: string, opts?: ParseOpts): Promise<ParseWithLogitsResult> {
+		if (text.length === 0) {
+			return { tree: { raw: text, roots: [] }, logits: [], pieces: [] }
+		}
+		const { tokens, logits, pieces } = await this.#decode(text, opts)
+		return {
+			tree: buildAddressTree(text, tokens, opts?.calibrate ? { calibrate: opts.calibrate } : undefined),
+			logits,
+			pieces: pieces.map((p) => ({ start: p.start, end: p.end })),
+		}
+	}
+
+	/**
+	 * THE decode path (#481): tokenize → anchor/gazetteer features → infer → priors → CRF/argmax →
+	 * tokens → repairs. Both `parse` and `parseWithLogits` consume this — never fork it; the 2026-06
+	 * audit found three drift surfaces in the previous duplicated copies.
+	 */
+	async #decode(
+		text: string,
+		opts?: ParseOpts
+	): Promise<{ tokens: DecoderToken[]; logits: number[][]; pieces: ReturnType<MailwomanTokenizer["encode"]>["pieces"] }> {
 		const { pieces, ids } = this.cfg.tokenizer.encode(text)
 		// Postcode-anchor channel (#239/#240): build per-piece anchor features from the same lookup the
 		// model trained on, fed alongside the ids. No-op when no lookup is configured.
 		const anchor = this.cfg.postcodeAnchorLookup
 			? buildAnchorFeatures(text, pieces, this.cfg.postcodeAnchorLookup)
 			: undefined
-		const { logits } = await this.cfg.runner.infer(ids, anchor)
+		const gazetteer = this.cfg.gazetteerLexicon
+			? buildGazetteerFeatures(text, pieces, this.cfg.gazetteerLexicon)
+			: undefined
+		const gazFed =
+			gazetteer && anchor && this.cfg.suppressGazetteerNearPostcode
+				? suppressGazetteerNearPostcode(gazetteer, anchor.confidence)
+				: gazetteer
+		const { logits } = await this.cfg.runner.infer(ids, anchor, gazFed)
 
 		this.assertEmissionWidth(logits)
 
@@ -217,85 +278,7 @@ export class NeuralAddressClassifier {
 			tokens = repairUnitLabels(text, tokens).tokens
 		}
 
-		return buildAddressTree(text, tokens, opts?.calibrate ? { calibrate: opts.calibrate } : undefined)
-	}
-
-	/**
-	 * Like `parse`, but also returns the raw per-token logits and piece offsets needed for per-span
-	 * logit aggregation (Option C joint-reconcile integration).
-	 */
-	async parseWithLogits(text: string, opts?: ParseOpts): Promise<ParseWithLogitsResult> {
-		if (text.length === 0) {
-			return { tree: { raw: text, roots: [] }, logits: [], pieces: [] }
-		}
-		const { pieces, ids } = this.cfg.tokenizer.encode(text)
-		// Postcode-anchor channel (#239/#240): build per-piece anchor features from the same lookup the
-		// model trained on, fed alongside the ids. No-op when no lookup is configured.
-		const anchor = this.cfg.postcodeAnchorLookup
-			? buildAnchorFeatures(text, pieces, this.cfg.postcodeAnchorLookup)
-			: undefined
-		const { logits } = await this.cfg.runner.infer(ids, anchor)
-
-		this.assertEmissionWidth(logits)
-
-		let emissions = opts?.queryShape
-			? addEmissionMatrix(
-					logits,
-					buildEmissionPriors(opts.queryShape, pieces, this.labels, {
-						biasScale: opts.queryShapeBiasScale ?? 1.0,
-						inputText: text,
-					})
-				)
-			: logits
-
-		if (opts?.fst) {
-			emissions = addEmissionMatrix(
-				emissions,
-				buildFstEmissionPriors(opts.fst, pieces, this.labels, {
-					biasScale: opts.fstBiasScale ?? 1.0,
-				})
-			)
-		}
-
-		if (opts?.fstStreetMorphology) {
-			emissions = addEmissionMatrix(
-				emissions,
-				buildStreetMorphologyEmissionPriors(
-					opts.fstStreetMorphology,
-					pieces,
-					this.labels,
-					opts.fstStreetMorphologyOpts ?? {}
-				)
-			)
-		}
-
-		const labelIndices =
-			this.decodeMode === "viterbi"
-				? viterbi({
-						emissions,
-						transitions: this.transitions,
-						startTransitions: this.startTransitions,
-						endTransitions: this.endTransitions,
-					}).path
-				: emissions.map((row) => argmaxSoftmax(row).idx)
-
-		const tokens: DecoderToken[] = pieces.map((p, i) => {
-			const idx = labelIndices[i]!
-			const probs = softmax(logits[i]!)
-			return {
-				piece: p.piece,
-				start: p.start,
-				end: p.end,
-				label: (this.labels[idx] ?? "O") as DecoderToken["label"],
-				confidence: probs[idx]!,
-			}
-		})
-
-		return {
-			tree: buildAddressTree(text, tokens, opts?.calibrate ? { calibrate: opts.calibrate } : undefined),
-			logits,
-			pieces: pieces.map((p) => ({ start: p.start, end: p.end })),
-		}
+		return { tokens, logits, pieces }
 	}
 
 	async parseJson(text: string, opts?: ParseOpts): Promise<Partial<Record<ComponentTag, string>>> {

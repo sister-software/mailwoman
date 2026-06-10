@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/universe",
-	"version": "4.1.0",
+	"version": "4.2.0",
 	"description": "Mailwoman monorepo workspace root.",
 	"license": "AGPL-3.0-only",
 	"private": true,
@@ -37,6 +37,7 @@
 	},
 	"type": "module",
 	"devDependencies": {
+		"@duckdb/node-api": "^1.5.3-r.3",
 		"@inkjs/ui": "^2.0.0",
 		"@release-it-plugins/workspaces": "^5.0.3",
 		"@sister.software/eslint-config": "^8.0.1",

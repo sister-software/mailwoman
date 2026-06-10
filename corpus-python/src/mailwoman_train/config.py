@@ -39,6 +39,16 @@ class DataConfig:
     # (built by scripts/build-pilot-anchor-lookup.py). When set AND model.use_postcode_anchor is on,
     # the loader projects per-piece anchor features onto each row. None → no anchor features.
     anchor_lookup_path: str | None = None
+    # Gazetteer-anchor lexicon (#464, knowledge-ladder rung 3.2). Path to the codex-generated
+    # candidate-tag-set lexicon JSON (built by scripts/build-gazetteer-anchor-lexicon.mjs). When set
+    # AND model.use_gazetteer_anchor is on, the loader paints per-piece multi-hot membership clues
+    # from the RAW SURFACE (never gold labels — same computation at train + inference). None → off.
+    gazetteer_lexicon_path: str | None = None
+    # Gazetteer channel choreography (#464, v0.9.13 postcode fix). When True (with anchor + gazetteer
+    # channels on), zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, so the model
+    # never learns the biased region->postcode CRF transition that cost v0.9.12 ~3pp US postcode.
+    # Inference MUST mirror it (classifier suppressGazetteerNearPostcode). For the consolidation run.
+    gazetteer_choreography: bool = False
 
 
 @dataclass
@@ -121,6 +131,14 @@ class ModelConfig:
     # the city), where the per-token-only injection fired on the wrong side of the locality. Default
     # False (no change); requires use_postcode_anchor.
     inject_first_token: bool = False
+    # Gazetteer-anchor channel (#464, knowledge-ladder rung 3.2). When on (with
+    # data.gazetteer_lexicon_path set), the encoder takes per-token multi-hot candidate-tag-set
+    # clues (country/region/po_box/cedex/homograph) painted from the raw surface by the codex
+    # lexicon, and injects ``c·(W_g·features + v_GAZ)`` at the input embedding. The clue informs;
+    # the model decides (model-first). Default False keeps existing numerics bit-identical.
+    use_gazetteer_anchor: bool = False
+    # Must match the lexicon JSON's feature_dim (slot count).
+    gazetteer_feature_dim: int = 5
 
 
 @dataclass
@@ -150,6 +168,11 @@ class TrainConfig:
     # smoke window masks divergence by collapsing LR before the loss curve shows it; the
     # constant-LR mode keeps the signal visible. See the ref doc for when to pick which.
     lr_schedule: str = "cosine"
+    # Gazetteer-anchor confidence curriculum (#464, v0.9.13). When True, the trainer ramps a per-row
+    # zero-out of the gazetteer clue's confidence by step (same schedule as the postcode anchor) so the
+    # model can't over-rely on the always-on clue — the v0.9.12 US-postcode-recovery knob. Off keeps
+    # v0.9.12-style always-on runs reproducible. Requires model.use_gazetteer_anchor.
+    gazetteer_curriculum: bool = False
     # Training objective. "supervised" = the BIO token-classification loss (CE + optional CRF, the
     # default and only historical mode). "mlm" = self-supervised masked-language-model PRE-training
     # on the corpus text (BIO labels ignored): masks `mlm_mask_prob` of attended tokens and predicts

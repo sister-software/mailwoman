@@ -98,6 +98,31 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 		expect(out.map((p) => p.source).sort()).toEqual(["merged", "rule"])
 	})
 
+	test("merged-source proposals survive both preference modes (they are neither rule nor neural)", () => {
+		const registry = new InMemoryPolicyRegistry()
+		registry.set({ component: "country", mode: "neural_preferred" })
+		const proposals = [
+			makeProposal({ component: "country", source: "neural", confidence: 0.9 }),
+			makeProposal({ component: "country", source: "rule", confidence: 0.9 }),
+			makeProposal({ component: "country", source: "merged", confidence: 0.9 }),
+		]
+		const out = registry.apply(proposals)
+		expect(out.map((p) => p.source).sort()).toEqual(["merged", "neural"])
+	})
+
+	test("a below-threshold preferred source does NOT trigger dropping the dispreferred one", () => {
+		// Threshold runs BEFORE preference: a neural proposal that died at the threshold must not
+		// count as "neural present" — else rule proposals vanish with nothing to replace them.
+		const registry = new InMemoryPolicyRegistry()
+		registry.set({ component: "country", mode: "neural_preferred", confidence_threshold: 0.8 })
+		const proposals = [
+			makeProposal({ component: "country", source: "neural", confidence: 0.5 }),
+			makeProposal({ component: "country", source: "rule", confidence: 0.9 }),
+		]
+		const out = registry.apply(proposals)
+		expect(out.map((p) => p.source)).toEqual(["rule"])
+	})
+
 	test("rule_preferred drops neural when rule is present", () => {
 		const registry = InMemoryPolicyRegistry.withDefaults()
 		registry.set({ component: "country", mode: "rule_preferred" })
