@@ -1,0 +1,21 @@
+{
+	"$comment": "Gate spec for the #511 relabel run (v1.1.0, 2026-06-10). STATED changes vs v4.2.0-ship (feedback-no-silent-gate-drift): affix floors RAISED 60/45 -> 78/67 — the original parity bars, pre-registered in the v1.1.0 config header; the v4.2.0 values were that fork's lowered re-baselines and the relabel fix exists precisely to make the real bars reachable. All other floors carried unchanged. The expanded NAD-native v2 eval floors (prefix/suffix F1 >= 85, P >= 95, locality >= 82.6) are pre-registered on #511 and graded alongside this spec manually — the runner's score-affix leg covers the 32-row eval only.",
+	"label": "v4.3.0-relabel",
+	"requires_gazetteer_lexicon": true,
+	"floors": {
+		"us.postcode": 97.0,
+		"us.country_homograph_f1": 83.3,
+		"us.micro": 81.6,
+		"us.locality": 62.2,
+		"us.region": 80.1,
+		"us.street": 74.0,
+		"us.street_prefix": 78.0,
+		"us.street_suffix": 67.0,
+		"us.unit_real": 88.0,
+		"fr.postcode": 99.5,
+		"fr.house_number": 91.0,
+		"de.native_locality": 83.8
+	},
+	"int8_vs_fp32_max_delta_pp": 1.5,
+	"ledger_path": "evals/scores-by-version.json"
+}
