@@ -37,6 +37,7 @@
 	},
 	"type": "module",
 	"devDependencies": {
+		"@duckdb/node-api": "^1.5.3-r.3",
 		"@inkjs/ui": "^2.0.0",
 		"@release-it-plugins/workspaces": "^5.0.3",
 		"@sister.software/eslint-config": "^8.0.1",
