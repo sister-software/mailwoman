@@ -11,28 +11,33 @@ diagnostic to reach consensus and launch the fix (**Run A**, in flight at write 
 
 ---
 
-## Resume after restart — finishing Run A (do this first)
+## Resume after restart — finishing Run B (do this first)
 
-**State:** `v1.0.1-consolidation-runA` is training on Modal, resumed from the clean
-consolidation `step-040000`, running to **step-060000** (affix 5× + affix tag-loss-weight
-2.0, country unchanged, no postcode aug). Output dir on the volume:
-`output-v100-consolidation-s42/checkpoints`. Watcher was `bsbjjwmt0` (gone after restart —
-just check the volume for `step-060000`).
+**State (2026-06-10):** Run A (5× affix) FINISHED and **partially failed the gate** — affix
+recovered but undershot (prefix 64.9/suffix 52.4, need 72/64) and US postcode 96.1 (need 97);
+country/unit/spine/FR/DE all held (see "Run A result" below). Diagnosis: affix is per-step
+DENSITY-bound, so 5× was too gentle. **Run B is now in flight** — `v1.0.2-consolidation-runB`,
+`init_from` the clean consolidation `step-040000` (weights only, fresh optimizer — avoids Run
+A's 5×-biased momentum), **affix 17×** (synth-affix 17.0) + **suffix tag-loss-weight 4.0**
+(prefix stays 2.0), 20k steps. Output dir: **`output-v101-runB-s42/checkpoints`** (NEW dir —
+NOT the v100 consolidation dir). Watcher was `bie8w5jsr` (gone after restart — just check the
+volume for `step-020000`). Run A's onnx + gate results are saved; Run A checkpoints are intact
+in `output-v100-consolidation-s42` (step-040000 = the clean v1.0.0 consolidation reference).
 
-**1. Confirm done, export, download:**
+**1. Confirm Run B done, export, download:**
 ```bash
-modal volume ls mailwoman-training output-v100-consolidation-s42/checkpoints | grep step-060000
-modal run scripts/modal/train_remote.py::export_onnx --output-dir=/data/output-v100-consolidation-s42 --step=060000
-modal volume get mailwoman-training output-v100-consolidation-s42/model.onnx /tmp/v101-runA.onnx --force
+modal volume ls mailwoman-training output-v101-runB-s42/checkpoints | grep step-020000
+modal run scripts/modal/train_remote.py::export_onnx --output-dir=/data/output-v101-runB-s42 --step=020000
+modal volume get mailwoman-training output-v101-runB-s42/model.onnx /tmp/v102-runB.onnx --force
 ```
 
-**2. Run the full gate (fp32; the model has the gazetteer anchor + choreography, so FEED the
-lexicon + the paired suppression — without them score-affix zero-fills and wrecks segmentation):**
+**2. Run the full TRAINING gate (fp32; the model has the gazetteer anchor + choreography, so FEED
+the lexicon + the paired suppression — without them score-affix zero-fills and wrecks segmentation):**
 ```bash
 TOK=/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model
 LK=/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json
 GAZ=data/gazetteer/anchor-lexicon-v1.json
-M=/tmp/v101-runA.onnx
+M=/tmp/v102-runB.onnx
 
 # country homograph
 node --experimental-strip-types scripts/eval/score-country-homograph.ts --model $M --suppress-gaz-near-postcode
@@ -43,35 +48,61 @@ node --experimental-strip-types scripts/eval/score-affix.ts --model $M --file da
 # US/FR spine + FR postcode/house_number
 node --experimental-strip-types scripts/eval/per-locale-f1.ts --model $M --tokenizer $TOK --model-card neural-weights-en-us/model-card.json --model-anchor-lookup $LK --gazetteer-lexicon $GAZ --suppress-gaz-near-postcode
 # DE native-order tripwire
-scripts/eval/de-order-eval.sh --model $M --card neural-weights-en-us/model-card.json --tokenizer $TOK --anchor-lookup $LK --out /tmp/v101-deorder
+scripts/eval/de-order-eval.sh --model $M --card neural-weights-en-us/model-card.json --tokenizer $TOK --anchor-lookup $LK --out /tmp/v102-deorder
 ```
 
-**3. Gate targets (consensus) and decision tree:**
+**3. Training-gate targets + the trajectory so far:**
 
-| tag | target | v1.0.0 consol | diagnostic (20×, 2k) |
-|---|--:|--:|--:|
-| affix street_prefix | **≥72** | 27.6 | 75.0 |
-| affix street_suffix | **≥64** | 42.1 | 55.8 (climbing) |
-| country homograph | **≥85** | 87.5 | 83.3 |
-| US postcode | **≥97** | 95.8 | 97.4 |
-| unit | ≥91 | 92.1 | 92.1 |
-| US micro | ≥85 | 85.5 | 85.0 |
-| US region / locality | hold ~90 / ~76 | 89.7 / 75.9 | 89.5 / 74.5 |
-| FR postcode / house_number | ≥99 / ≥91 | 99.6 / 92.3 | 99.6 / 92.8 |
-| DE native loc (anchor ON) | ≥83.8 | 90.7 | — |
+| tag | target | v1.0.0 consol | Run A (5×) | diag (affix 20.0, 2k) | Run B (17×) |
+|---|--:|--:|--:|--:|--:|
+| affix street_prefix | **≥72** | 27.6 | 64.9 | 75.0 | ? |
+| affix street_suffix | **≥64** | 42.1 | 52.4 | 55.8 | ? |
+| country homograph | **≥83.3** | 87.5 | 85.7 | 83.3 | ? |
+| US postcode | **≥97** | 95.8 | 96.1 | 97.4 | ? |
+| unit | ≥91 | 92.1 | 90.6 | — | ? |
+| US micro | ≥85 | 85.5 | 85.5 | 85.0 | ? |
+| US region / locality | ~90 / ~76 | 89.7/75.9 | 89.9/75.9 | 89.5/74.5 | ? |
+| FR postcode / hn | ≥99 / ≥91 | 99.6/92.3 | 99.5/93.0 | 99.6/92.8 | ? |
+| DE native loc (anchor ON) | ≥83.8 | 90.7 | 90.7 | — | ? |
 
-- **All clear → SHIP the v1.0.0 flag-plant.** Quantize int8 + release (npm ← HF bucket,
-  demo ← R2) per the v4.1.0 playbook ([[project-v4.1.0-release]]); watch the int8
-  value_info-strip quant fix. Promote as **v4.2.0**. This is the parity flag-plant.
-- **suffix short but >55 and climbing** → it just needs more steps; continue-resume
-  `step-060000` another 10–20k at the same recipe (cheap; momentum preserved).
-- **country < 85** → affix 5× still slightly starved it; drop affix to 3–4× and re-resume.
-- **US postcode < 97** → genuinely under-converged or structural after all; resume longer,
-  and only then revisit DeepSeek's postcode-position augmentation.
+Baselines (fp32, same harness): **v4.1.0** US postcode 98.3 · street 78.5 · locality 60.0 ·
+region 78.4 · micro 80.2 · FR postcode 99.5 · FR hn 91.0. **v0.9.8** US street 80.4 · micro 81.6.
 
-Baselines for context (fp32, same harness): **v4.1.0** US postcode 98.3 · US street 78.5 ·
-US locality 60.0 · US region 78.4 · US micro 80.2 · FR postcode 99.5 · FR house_number 91.0.
-**v0.9.8** US street 80.4 · US micro 81.6 · FR house_number 92.0.
+**Decision tree (with the operator's TREADMILL GUARD):**
+- **Run B clears the training gate** (affix ≥72/64, country ≥83.3, US postcode ≥97, spine held)
+  → proceed to the SHIP gate below. This is the v0-parity flag-plant model.
+- **One gate short, single-direction** (e.g. suffix still <64 but country fine) → one more
+  resume nudging that knob is OK.
+- **TWO gates short in OPPOSITE directions** (e.g. affix still <72 AND country <83.3 — pushing
+  one needs the weight the other can't give) → **STOP. This is a FORK, not a branch. No 3rd
+  recipe iteration solo — consult DeepSeek first.** (The v0.6.x-treadmill rule; consolidation is
+  where it bites.) DeepSeek's pre-named capacity-tell: if at Run B **step-8000** suffix <55 AND
+  country <84.5, it's a genuine equilibrium ceiling for 29M params → escalate to a wider model
+  (48M) or a dedicated affix head, do NOT keep tuning weights.
+
+**4. SHIP gate — REQUIRED before tagging v4.2.0 (training-gate pass is necessary, NOT sufficient).**
+The flag-plant claim is made on the artifact users get, with resolver-coupled behavior verified:
+- **Honest-eval (VT holdout)** — this model moved locality +14 / region +10; resolver behavior
+  changed and the per-tag spine evals don't see resolver interactions. Run `scripts/eval/honest-eval.sh`;
+  **region-match + coord p50/p90 must hold** vs v4.1.0 ([[project-honest-eval-region-fix]]).
+- **Demo presets** — functional tests before verdicts (house law, [[feedback-functional-before-verdict]]).
+- **int8 spot-check** — quantize, then RE-RUN country + affix + per-locale on the **int8** artifact
+  (watch the value_info-strip quant fix, [[project-v4.1.0-release]]). Claim parity on int8, not fp32.
+- **Bookkeeping makes it real** — eval-ledger row, dated eval report, re-emit the parity scorecard
+  at v4.2.0, and a row in **releases.mdx** (PR #489's "status and releases change together or not
+  at all" contract — v4.2.0 is its first test).
+
+**5. Merge debt — these merge to main BEFORE v4.2.0 is cut (RELEASING flows from main; a model whose
+recipe lives on an unmerged branch reproduces the #480 gap):** **#468** (choreography) → **#469**
+(affix reroll) → **`feat/consolidation-466`** (consolidation + Run A/B configs + assemblers). PR
+**#489** (docs/releases page) is independent + conflict-free — merge any order. Operator-gated (merge wall).
+
+**6. After the flag-plant — queue, not ad-hoc:** next substantive item is **#478** (arbitration
+layer, zero-GPU — converts the model wins into "pipeline never worse than v0"). po_box/cedex do
+NOT run standalone — they **ride the next consolidation-class run** (dilution lesson), so they're a
+queue slot, not a now. Lossless decomposition (the agent's "#32") is **NOT in the triaged backlog** —
+if it's the post-parity differentiator, it needs a fresh issue with a real spec + a deliberate slot
+in **epic #488**, not an ad-hoc grab.
 
 ---
 
