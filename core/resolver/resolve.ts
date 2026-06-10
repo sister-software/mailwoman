@@ -14,6 +14,7 @@
 
 import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "../decoder/types.js"
 import {
+	type AddressPointLookup,
 	type CoincidentLocality,
 	DEFAULT_PLACETYPE_MAP,
 	type PlacetypeMap,
@@ -96,6 +97,35 @@ function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
 	return undefined
 }
 
+/**
+ * Address-point tier (#476): find `street` + `house_number` in the tree (first occurrence,
+ * depth-first), scope by the tree's postcode/locality values, and on an exact hit stamp the
+ * point onto the STREET node's metadata. Additive only — admin resolution is never altered.
+ */
+function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup): void {
+	let street: AddressNode | undefined
+	let houseNumber: AddressNode | undefined
+	let locality: string | undefined
+	let postcode: string | undefined
+	const stack = [...roots]
+	while (stack.length > 0) {
+		const n = stack.pop()!
+		if (n.tag === "street" && !street) street = n
+		if (n.tag === "house_number" && !houseNumber) houseNumber = n
+		if (n.tag === "locality" && !locality && n.value.trim()) locality = n.value.trim()
+		if (n.tag === "postcode" && !postcode && n.value.trim()) postcode = n.value.trim()
+		stack.push(...n.children)
+	}
+	if (!street || !houseNumber) return
+	const hit = lookup.find({ street: street.value, number: houseNumber.value, postcode, locality })
+	if (!hit) return
+	street.metadata = {
+		...street.metadata,
+		address_point: { lat: hit.lat, lon: hit.lon, source: hit.source, release: hit.release },
+		resolution_tier: "address_point",
+	}
+}
+
 class WofResolver implements Resolver {
 	readonly #backend: ResolverBackend
 
@@ -138,6 +168,13 @@ class WofResolver implements Resolver {
 		// one span, two roles — no synthesized sibling. See ResolveOpts.hierarchyCompletion.
 		if (state.hierarchyCompletion && state.resolvedRegion && state.resolvedRegionNode && !state.localityNodePresent) {
 			this.#completeRegionRole(state.resolvedRegion, state.resolvedRegionNode)
+		}
+
+		// Address-point tier (#476): opt-in street-level exact match. After the admin walk so the
+		// tier can never disturb admin attribution — it only ADDS the precise coordinate. Byte-stable
+		// when opts.addressPoints is absent.
+		if (opts.addressPoints) {
+			applyAddressPoint(newRoots, opts.addressPoints)
 		}
 		return { raw: tree.raw, roots: newRoots }
 	}

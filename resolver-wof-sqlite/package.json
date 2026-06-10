@@ -25,6 +25,7 @@
 		"./coincident-roles": "./out/coincident-roles.js"
 	},
 	"dependencies": {
+		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"kysely": "^0.29.2"
 	},
