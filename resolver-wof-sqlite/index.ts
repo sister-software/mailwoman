@@ -47,3 +47,4 @@ export {
 	type ResolvedShard,
 	type ShardConfig,
 } from "./sharding.js"
+export { AddressPointSqliteLookup } from "./address-point.js"

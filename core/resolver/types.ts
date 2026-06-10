@@ -124,6 +124,28 @@ export interface CoincidentLocality extends ResolvedPlace {
 /**
  * Options for `resolveTree`. All optional with sensible defaults.
  */
+/**
+ * One exact address-point hit (#476): a real situs coordinate for `(street, number)` within a
+ * postcode/locality scope — the street-level tier in front of admin-centroid resolution.
+ */
+export interface AddressPointHit {
+	lat: number
+	lon: number
+	/** Provenance, e.g. `"overture:NAD"`. */
+	source: string
+	/** Pinned data release the point came from, e.g. `"2026-05-20.0"`. */
+	release: string
+}
+
+/**
+ * Street-level exact-point lookup (#476). Implementations own their normalization — both the
+ * shard build and this lookup must apply the SAME normalizer (see
+ * `resolver-wof-sqlite/street-normalize.ts`). Core depends only on this contract.
+ */
+export interface AddressPointLookup {
+	find(query: { street: string; number: string; postcode?: string; locality?: string }): AddressPointHit | null
+}
+
 export interface ResolveOpts {
 	/**
 	 * Hard cap on how many backend lookups one tree may issue. Default 10. Prevents a tree with
@@ -208,6 +230,12 @@ export interface ResolveOpts {
 	 * dropped, and no-ops entirely when the backend has no relation (the browser WASM resolver, or a
 	 * gazetteer without the `coincident_roles` table). Pass `false` to opt out.
 	 */
+	/**
+	 * Street-level address-point tier (#476): when the tree carries `street` + `house_number`,
+	 * consult this lookup and (on hit) stamp the exact point onto the street node's metadata
+	 * (`address_point`, `resolution_tier: "address_point"`). Opt-in; absent = byte-stable.
+	 */
+	addressPoints?: AddressPointLookup
 	hierarchyCompletion?: boolean
 	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */
 	cityStateFallback?: boolean

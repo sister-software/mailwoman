@@ -7,6 +7,8 @@
 export { createWofResolver } from "./resolve.js"
 export { DEFAULT_PLACETYPE_MAP } from "./types.js"
 export type {
+	AddressPointHit,
+	AddressPointLookup,
 	Ancestor,
 	CoincidentLocality,
 	PlacetypeMap,
