@@ -15,6 +15,7 @@
 import type { AddressNode, AddressTree } from "../decoder/types.js"
 import type { ComponentTag } from "../types/component.js"
 import type { ClassifierCandidate } from "./reconcile.js"
+import { prefetchReconcileLookups } from "./reconcile-lookups.js"
 import { reconcileSpans } from "./reconcile.js"
 import { aggregateSpanLogits } from "./span-logit-aggregation.js"
 import type {
@@ -282,10 +283,22 @@ export async function runPipeline(
 		)
 
 		if (classifierTopK.length > 0) {
+			// Concordance axes (#478): when the caller wires a backend, one bounded pre-fetch
+			// activates the resolver-candidate + parent-chain scoring the reconciler already
+			// implements. Absent backend = classifier-only reconcile (byte-stable).
+			// Country constraint from the locale gate's BCP-47 tag ("en-US" -> "US"); absent or
+			// und-like tags pass no constraint (ranking alone decides — matches resolveTree's default).
+			const localeCountry = locale.locale.split("-")[1]?.toUpperCase()
+			const lookups = stages.resolverBackend
+				? await prefetchReconcileLookups(stages.resolverBackend, normalized.normalized, classifierTopK, {
+						...(localeCountry && localeCountry.length === 2 ? { defaultCountry: localeCountry } : {}),
+					})
+				: undefined
 			const result = reconcileSpans({
 				raw: normalized.normalized,
 				phraseProposals,
 				classifierTopK,
+				...(lookups ? { resolverCandidates: lookups.resolverCandidates, parentChain: lookups.parentChain } : {}),
 			})
 			tree = result.tree
 			// The reconciler can leave a span uncovered (e.g. it picked the single-token street
