@@ -1,7 +1,9 @@
 {
 	"$comment": "Gate spec for the #511 relabel run (v1.1.0, 2026-06-10). STATED changes vs v4.2.0-ship (feedback-no-silent-gate-drift): affix floors RAISED 60/45 -> 78/67 — the original parity bars, pre-registered in the v1.1.0 config header; the v4.2.0 values were that fork's lowered re-baselines and the relabel fix exists precisely to make the real bars reachable. All other floors carried unchanged. The expanded NAD-native v2 eval floors (prefix/suffix F1 >= 85, P >= 95, locality >= 82.6) are pre-registered on #511 and graded alongside this spec manually — the runner's score-affix leg covers the 32-row eval only.",
+	"$comment2": "2026-06-11 STATED config change (#511 Tier A): requires_conventions 'auto' added — the v4.3.0 ship config includes the address-system conventions mask (locale-head detection -> codex conventions: fr forbidden affix tags + 5-digit postcode shape repair). This is the corrective for the 2026-06-10 FR digit-split FAIL; the gate re-runs on the SAME v1.1.0 weights with the mask as declared inference config. The DE leg (oa-resolver-eval) does not thread the flag — DE has no conventions row, so 'auto' is a semantic no-op there.",
 	"label": "v4.3.0-relabel",
 	"requires_gazetteer_lexicon": true,
+	"requires_conventions": "auto",
 	"floors": {
 		"us.postcode": 97.0,
 		"us.country_homograph_f1": 83.3,

@@ -63,6 +63,13 @@ GAZ_ARGS=()
 if [[ "$(node -e "console.log(JSON.parse(require('fs').readFileSync('$GATE','utf8')).requires_gazetteer_lexicon === true)")" == "true" ]]; then
 	GAZ_ARGS=(--gazetteer-lexicon "$GAZ" --suppress-gaz-near-postcode)
 fi
+# Conventions channel (#511 Tier A): when the gate spec declares requires_conventions, every scorer
+# parses with the address-system conventions mask in the declared mode ("auto" = locale-head
+# detection). Same contract discipline as the gaz flags — the spec IS the ship config.
+CONV_MODE="$(node -e "console.log(JSON.parse(require('fs').readFileSync('$GATE','utf8')).requires_conventions ?? '')")"
+if [[ -n "$CONV_MODE" ]]; then
+	GAZ_ARGS+=(--conventions "$CONV_MODE")
+fi
 
 run_battery() { # $1 = model path, $2 = tag (fp32|int8)
 	local m="$1" tag="$2"
@@ -73,7 +80,7 @@ run_battery() { # $1 = model path, $2 = tag (fp32|int8)
 	node --experimental-strip-types scripts/eval/score-affix.ts --model "$m" \
 		--file data/eval/external/unit-real-designators.jsonl "${GAZ_ARGS[@]}" > "$OUT_DIR/$tag-unit.md"
 	node --experimental-strip-types scripts/eval/score-country-homograph.ts --model "$m" \
-		--suppress-gaz-near-postcode > "$OUT_DIR/$tag-country.md"
+		"${GAZ_ARGS[@]}" --suppress-gaz-near-postcode > "$OUT_DIR/$tag-country.md"
 	scripts/eval/de-order-eval.sh --model "$m" --card "$CARD" --tokenizer "$TOK" \
 		--anchor-lookup "$LK" --out "$OUT_DIR/$tag-deorder" > "$OUT_DIR/$tag-deorder.md" 2>&1 || true
 }

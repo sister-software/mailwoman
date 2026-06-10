@@ -48,6 +48,12 @@ def export_to_onnx(
     # inference runtime to feed the candidate-tag clues.
     has_gaz = bool(getattr(model_cpu, "use_gazetteer_anchor", False))
     gaz_dim = int(getattr(model_cpu, "gazetteer_feature_dim", 0))
+    # Locale head (#511 Tier A / conventions layer): when the model carries the PR3 self-conditioning
+    # head, export its pooled posterior as a SECOND output ("locale_logits", shape [batch, num_locales],
+    # labels.LOCALE_COUNTRIES order). Consumers fetch outputs by name, so this is backward-compatible;
+    # without it the model's address-system detection is trained but UNREADABLE at inference — the gap
+    # the 2026-06-10 FR digit-split regression exposed.
+    has_locale = getattr(model_cpu, "locale_head", None) is not None
 
     # ONNX exporter prefers plain-tensor outputs; wrap the model so forward returns just logits.
     # One wrapper per input combination — the dynamo tracer wants a fixed positional signature.
@@ -55,14 +61,17 @@ def export_to_onnx(
         def __init__(self, inner: nn.Module) -> None:
             super().__init__()
             self.inner = inner
+            self.with_locale = False
 
         def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
-            return self.inner(input_ids=input_ids, attention_mask=attention_mask).logits
+            out = self.inner(input_ids=input_ids, attention_mask=attention_mask)
+            return (out.logits, out.locale_logits) if self.with_locale else out.logits
 
     class _LogitsOnlyAnchor(nn.Module):
         def __init__(self, inner: nn.Module) -> None:
             super().__init__()
             self.inner = inner
+            self.with_locale = False
 
         def forward(
             self,
@@ -71,17 +80,19 @@ def export_to_onnx(
             anchor_features: torch.Tensor,
             anchor_confidence: torch.Tensor,
         ) -> torch.Tensor:
-            return self.inner(
+            out = self.inner(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
                 anchor_features=anchor_features,
                 anchor_confidence=anchor_confidence,
-            ).logits
+            )
+            return (out.logits, out.locale_logits) if self.with_locale else out.logits
 
     class _LogitsOnlyAnchorGaz(nn.Module):
         def __init__(self, inner: nn.Module) -> None:
             super().__init__()
             self.inner = inner
+            self.with_locale = False
 
         def forward(
             self,
@@ -92,19 +103,21 @@ def export_to_onnx(
             gazetteer_features: torch.Tensor,
             gazetteer_confidence: torch.Tensor,
         ) -> torch.Tensor:
-            return self.inner(
+            out = self.inner(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
                 anchor_features=anchor_features,
                 anchor_confidence=anchor_confidence,
                 gazetteer_features=gazetteer_features,
                 gazetteer_confidence=gazetteer_confidence,
-            ).logits
+            )
+            return (out.logits, out.locale_logits) if self.with_locale else out.logits
 
     class _LogitsOnlyGaz(nn.Module):
         def __init__(self, inner: nn.Module) -> None:
             super().__init__()
             self.inner = inner
+            self.with_locale = False
 
         def forward(
             self,
@@ -113,12 +126,13 @@ def export_to_onnx(
             gazetteer_features: torch.Tensor,
             gazetteer_confidence: torch.Tensor,
         ) -> torch.Tensor:
-            return self.inner(
+            out = self.inner(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
                 gazetteer_features=gazetteer_features,
                 gazetteer_confidence=gazetteer_confidence,
-            ).logits
+            )
+            return (out.logits, out.locale_logits) if self.with_locale else out.logits
 
     base_dynamic = {
         "input_ids": {0: "batch", 1: "sequence"},
@@ -174,6 +188,8 @@ def export_to_onnx(
         input_names = ["input_ids", "attention_mask"]
         dynamic_shapes = dict(base_dynamic)
 
+    export_model.with_locale = bool(has_locale)
+
     # Use the dynamo exporter (``dynamo=True``). The legacy TorchScript path hits
     # ``IndexError: tuple index out of range`` inside transformers ≥5's ``masking_utils``
     # (``sdpa_mask`` reads ``q_length.shape[0]`` on what the tracer sees as a tuple).
@@ -183,7 +199,7 @@ def export_to_onnx(
         args,
         str(output_path),
         input_names=input_names,
-        output_names=["logits"],
+        output_names=["logits", "locale_logits"] if has_locale else ["logits"],
         opset_version=opset,
         dynamic_shapes=dynamic_shapes,
         dynamo=True,

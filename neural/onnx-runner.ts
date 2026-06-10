@@ -39,6 +39,12 @@ export interface InferResult {
 	logits: number[][]
 	/** Number of label classes (the inner-dim of the logits tensor). */
 	numLabels: number
+	/**
+	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order), when the model
+	 * exports it (v1.1.0+, #511 Tier A). Absent on older bundles — consumers must treat undefined
+	 * as "no address-system detection available".
+	 */
+	localeLogits?: number[]
 }
 
 export class OnnxRunner {
@@ -177,6 +183,11 @@ export class OnnxRunner {
 			for (let l = 0; l < numLabels; l++) row[l] = data[base + l]!
 			logits.push(row)
 		}
-		return { logits, numLabels }
+
+		// Locale head (#511 Tier A): present on v1.1.0+ exports, absent (and optional) before.
+		const localeTensor = output.locale_logits
+		const localeLogits = localeTensor ? Array.from(localeTensor.data as Float32Array) : undefined
+
+		return { logits, numLabels, ...(localeLogits ? { localeLogits } : {}) }
 	}
 }
