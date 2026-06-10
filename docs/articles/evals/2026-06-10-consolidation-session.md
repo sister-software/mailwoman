@@ -11,24 +11,29 @@ diagnostic to reach consensus and launch the fix (**Run A**, in flight at write 
 
 ---
 
-## Resume after restart — finishing Run B (do this first)
+## Resume after restart — finishing Run C (do this first)
 
-**State (2026-06-10):** Run A (5× affix) FINISHED and **partially failed the gate** — affix
-recovered but undershot (prefix 64.9/suffix 52.4, need 72/64) and US postcode 96.1 (need 97);
-country/unit/spine/FR/DE all held (see "Run A result" below). Diagnosis: affix is per-step
-DENSITY-bound, so 5× was too gentle. **Run B is now in flight** — `v1.0.2-consolidation-runB`,
-`init_from` the clean consolidation `step-040000` (weights only, fresh optimizer — avoids Run
-A's 5×-biased momentum), **affix 17×** (synth-affix 17.0) + **suffix tag-loss-weight 4.0**
-(prefix stays 2.0), 20k steps. Output dir: **`output-v101-runB-s42/checkpoints`** (NEW dir —
-NOT the v100 consolidation dir). Watcher was `bie8w5jsr` (gone after restart — just check the
-volume for `step-020000`). Run A's onnx + gate results are saved; Run A checkpoints are intact
-in `output-v100-consolidation-s42` (step-040000 = the clean v1.0.0 consolidation reference).
+**State (2026-06-10):** Run A (5×, resume) → affix 64.9/52.4, postcode 96.1. Run B (17×,
+**init_from**) → affix 64.9/**48.8** (NO gain despite +70% weight), postcode 97.3, country 89.8.
+**THE LESSON / my error:** Run B used `init_from` (fresh optimizer) instead of `resume`; a fresh
+Adam can't re-steer the CRF into the narrow prefix→street→suffix basin — **momentum (resume)
+matters more than weight** for this fragile split. The only config to ever beat affix 65 was the
+diagnostic: **resume + synth-affix 20.0** → prefix **75** (suffix still climbing, not a transient).
+~65 is NOT a capacity ceiling (country never collapsed). **Run C is now in flight** —
+`v1.0.3-consolidation-runC`: **RESUME** the clean `step-040000` (Run A's 042k-060k deleted so
+`--resume auto` finds it), **synth-affix 20.0** (the proven diagnostic value — NOT DeepSeek's "40.0"
+arithmetic slip) + **suffix tag-loss-weight 4.0** (prefix 2.0), 15k → **step-055000** in
+**`output-v100-consolidation-s42/checkpoints`**. Watcher was `bswo5ov09`.
 
-**1. Confirm Run B done, export, download:**
+**0. EARLY-ABORT CHECK (step-042000, ~4 min in):** export+score that checkpoint; if affix prefix
+≈75 → confound fixed, let Run C finish. If ≈65 → the resume hypothesis is wrong → STOP, escalate to
+a wider model (do NOT iterate further per the treadmill guard).
+
+**1. Confirm Run C done, export, download:**
 ```bash
-modal volume ls mailwoman-training output-v101-runB-s42/checkpoints | grep step-020000
-modal run scripts/modal/train_remote.py::export_onnx --output-dir=/data/output-v101-runB-s42 --step=020000
-modal volume get mailwoman-training output-v101-runB-s42/model.onnx /tmp/v102-runB.onnx --force
+modal volume ls mailwoman-training output-v100-consolidation-s42/checkpoints | grep step-055000
+modal run scripts/modal/train_remote.py::export_onnx --output-dir=/data/output-v100-consolidation-s42 --step=055000
+modal volume get mailwoman-training output-v100-consolidation-s42/model.onnx /tmp/v103-runC.onnx --force
 ```
 
 **2. Run the full TRAINING gate (fp32; the model has the gazetteer anchor + choreography, so FEED
@@ -37,7 +42,7 @@ the lexicon + the paired suppression — without them score-affix zero-fills and
 TOK=/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model
 LK=/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json
 GAZ=data/gazetteer/anchor-lexicon-v1.json
-M=/tmp/v102-runB.onnx
+M=/tmp/v103-runC.onnx
 
 # country homograph
 node --experimental-strip-types scripts/eval/score-country-homograph.ts --model $M --suppress-gaz-near-postcode
