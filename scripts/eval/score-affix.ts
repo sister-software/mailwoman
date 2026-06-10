@@ -16,7 +16,7 @@ const arg = (k: string, d?: string) => {
 const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const LK = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
 const file = arg("--file", "data/eval/external/street-affix-real.jsonl")!
-const TAGS = ["street_prefix", "street", "street_suffix", "house_number", "locality", "region", "postcode"] as const
+const TAGS = ["street_prefix", "street", "street_suffix", "house_number", "locality", "region", "postcode", "unit"] as const
 
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("--model")!)])
