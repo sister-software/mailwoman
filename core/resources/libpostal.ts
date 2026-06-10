@@ -22,17 +22,29 @@ const libPostalInternalDataDirectory = resourceDictionaryPathBuilder("internal",
 
 export type LibPostalLanguageCode = Alpha2LanguageCode | "all"
 
-export const availableLanguages = await readdir(libPostalDataDirectory).then((directories) => {
-	const languageCodeDirectories = new Set<string>()
+let _availableLanguages: Promise<LibPostalLanguageCode[]> | undefined
 
-	for (const directory of directories) {
-		if (directory.includes(".")) continue
+/**
+ * Languages with a libpostal dictionary directory on disk. Lazily resolved and memoized — this
+ * was a top-level `await` until #481, which made any bare-import + subpath-import combination a
+ * TLA cycle under Vite's loader (classifier base classes evaluated as `undefined`; see the old
+ * workaround note in `classifiers/adapter.test.ts`). The promise is shared, so concurrent first
+ * callers do one `readdir`.
+ */
+export function getAvailableLanguages(): Promise<LibPostalLanguageCode[]> {
+	_availableLanguages ??= readdir(libPostalDataDirectory).then((directories) => {
+		const languageCodeDirectories = new Set<string>()
 
-		languageCodeDirectories.add(directory)
-	}
+		for (const directory of directories) {
+			if (directory.includes(".")) continue
 
-	return Array.from(languageCodeDirectories) as LibPostalLanguageCode[]
-})
+			languageCodeDirectories.add(directory)
+		}
+
+		return Array.from(languageCodeDirectories) as LibPostalLanguageCode[]
+	})
+	return _availableLanguages
+}
 
 export interface LibPostalFileEntry {
 	filePath: string
@@ -75,7 +87,7 @@ export async function prepareLocaleIndex(
 	/**
 	 * An iterable of language codes
 	 */
-	languageCodes: LibPostalLanguageCode[] = availableLanguages,
+	languageCodes: LibPostalLanguageCode[] | undefined,
 	filename: string,
 	options?: LibPostalNormalizerInit
 ): Promise<LocaleIndex<LibPostalLanguageCode>> {
@@ -87,7 +99,9 @@ export async function prepareLocaleIndex(
 
 	let inserted = false
 
-	const fileEntries = takeAsync(findFilesMatchingLocale(filename, libPostalDataDirectory, languageCodes), batchSize)
+	// Default resolves lazily (#481 — the former TLA value).
+	const codes = languageCodes ?? (await getAvailableLanguages())
+	const fileEntries = takeAsync(findFilesMatchingLocale(filename, libPostalDataDirectory, codes), batchSize)
 
 	for await (const batch of fileEntries) {
 		await Promise.all(
@@ -105,7 +119,7 @@ export async function prepareLocaleIndex(
 	}
 
 	const internalFileEntries = takeAsync(
-		findFilesMatchingLocale(filename, libPostalInternalDataDirectory, languageCodes),
+		findFilesMatchingLocale(filename, libPostalInternalDataDirectory, codes),
 		batchSize
 	)
 

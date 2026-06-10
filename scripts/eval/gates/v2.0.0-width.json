@@ -1,0 +1,21 @@
+{
+	"$comment": "Gate spec for the #492 width run (v2.0.0-width48, operator GO 2026-06-10). Bars are the CANONICAL config floors + the affix solo levels the 29M model could only visit + no-regression vs the shipped v4.2.0. STABILITY is checked separately (20k vs 40k affix comparison, the transient lesson) — this spec grades the endpoint. intersection_a/b are REPORTED, not gated (the rider's synth lacks the audited gap forms). Edits to this file are stated decisions (feedback-no-silent-gate-drift).",
+	"label": "v2.0.0-width48",
+	"requires_gazetteer_lexicon": true,
+	"floors": {
+		"us.street_prefix": 78.0,
+		"us.street_suffix": 67.0,
+		"us.street": 80.4,
+		"us.postcode": 97.0,
+		"us.country_homograph_f1": 83.3,
+		"us.micro": 84.8,
+		"us.locality": 72.9,
+		"us.region": 89.1,
+		"us.unit_real": 90.6,
+		"fr.postcode": 99.5,
+		"fr.house_number": 91.0,
+		"de.native_locality": 83.8
+	},
+	"int8_vs_fp32_max_delta_pp": 1.5,
+	"ledger_path": "evals/scores-by-version.json"
+}

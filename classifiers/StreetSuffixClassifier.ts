@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { availableLanguages, prefixedLanguages, prepareLocaleIndex, Span, WordClassifier } from "@mailwoman/core"
+import { getAvailableLanguages, prefixedLanguages, prepareLocaleIndex, Span, WordClassifier } from "@mailwoman/core"
 
 export class StreetSuffixClassifier extends WordClassifier {
 	public async ready(): Promise<this> {
 		const compatibleLanguages = Iterator
 			// ---
-			.from(this.languages ?? availableLanguages)
+			.from(this.languages ?? (await getAvailableLanguages()))
 			.filter((language) => !prefixedLanguages.has(language))
 			.toArray()
 
