@@ -11,3 +11,7 @@ if [ "$branch" = "main" ]; then
   yarn lint
   yarn ci:test:fast
 fi
+
+# Raw-angle MDX lint (always-on, <100ms): a bare `<55` in docs prose is a build-breaking
+# MDX-JSX parse error — this class broke three builds on 2026-06-10. See the script header.
+scripts/lint-mdx-angles.sh
