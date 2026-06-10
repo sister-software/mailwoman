@@ -1,0 +1,25 @@
+{"raw": "PO Box 1234, Springfield, IL 62701", "components": {"po_box": "PO Box 1234", "locality": "Springfield", "region": "IL", "postcode": "62701"}, "country": "US"}
+{"raw": "P.O. Box 56, New York, NY 10001", "components": {"po_box": "P.O. Box 56", "locality": "New York", "region": "NY", "postcode": "10001"}, "country": "US"}
+{"raw": "P.O. Box 12-A, Austin, TX 78701", "components": {"po_box": "P.O. Box 12-A", "locality": "Austin", "region": "TX", "postcode": "78701"}, "country": "US"}
+{"raw": "Post Office Box 42, Portland, OR 97201", "components": {"po_box": "Post Office Box 42", "locality": "Portland", "region": "OR", "postcode": "97201"}, "country": "US"}
+{"raw": "PO BOX 9999, Anytown, CA 90210", "components": {"po_box": "PO BOX 9999", "locality": "Anytown", "region": "CA", "postcode": "90210"}, "country": "US"}
+{"raw": "P O Box 324, Wellington, KS 67152", "components": {"po_box": "P O Box 324", "locality": "Wellington", "region": "KS", "postcode": "67152"}, "country": "US"}
+{"raw": "Box 17, Cody, WY 82414", "components": {"po_box": "Box 17", "locality": "Cody", "region": "WY", "postcode": "82414"}, "country": "US"}
+{"raw": "Drawer 880, Tupelo, MS 38802", "components": {"po_box": "Drawer 880", "locality": "Tupelo", "region": "MS", "postcode": "38802"}, "country": "US"}
+{"raw": "Caller 9000, Beverly Hills, CA 90213", "components": {"po_box": "Caller 9000", "locality": "Beverly Hills", "region": "CA", "postcode": "90213"}, "country": "US"}
+{"raw": "Lockbox 7788, Charlotte, NC 28201", "components": {"po_box": "Lockbox 7788", "locality": "Charlotte", "region": "NC", "postcode": "28201"}, "country": "US"}
+{"raw": "PO Box 1234", "components": {"po_box": "PO Box 1234"}, "country": "US"}
+{"raw": "P.O. Box 7", "components": {"po_box": "P.O. Box 7"}, "country": "US"}
+{"raw": "Post Office Box 100, Honolulu, HI 96801", "components": {"po_box": "Post Office Box 100", "locality": "Honolulu", "region": "HI", "postcode": "96801"}, "country": "US"}
+{"raw": "PO Box A12, Santa Fe, NM 87501", "components": {"po_box": "PO Box A12", "locality": "Santa Fe", "region": "NM", "postcode": "87501"}, "country": "US"}
+{"raw": "PO Box 55-B, Reno, NV 89501", "components": {"po_box": "PO Box 55-B", "locality": "Reno", "region": "NV", "postcode": "89501"}, "country": "US"}
+{"raw": "PO Box 4500, Scottsdale, AZ 85261", "components": {"po_box": "PO Box 4500", "locality": "Scottsdale", "region": "AZ", "postcode": "85261"}, "country": "US"}
+{"raw": "P.O. Box 22000, Seattle, WA 98122", "components": {"po_box": "P.O. Box 22000", "locality": "Seattle", "region": "WA", "postcode": "98122"}, "country": "US"}
+{"raw": "Box 3, Wisdom, MT 59761", "components": {"po_box": "Box 3", "locality": "Wisdom", "region": "MT", "postcode": "59761"}, "country": "US"}
+{"raw": "233 S Wacker Dr, Chicago, IL 60606", "components": {"house_number": "233", "street": "S Wacker Dr", "locality": "Chicago", "region": "IL", "postcode": "60606"}, "country": "US"}
+{"raw": "1600 Amphitheatre Parkway, Mountain View, CA 94043", "components": {"house_number": "1600", "street": "Amphitheatre Parkway", "locality": "Mountain View", "region": "CA", "postcode": "94043"}, "country": "US"}
+{"raw": "12 Box Canyon Rd, Sedona, AZ 86336", "components": {"house_number": "12", "street": "Box Canyon Rd", "locality": "Sedona", "region": "AZ", "postcode": "86336"}, "country": "US"}
+{"raw": "742 Evergreen Terrace, Springfield, IL 62704", "components": {"house_number": "742", "street": "Evergreen Terrace", "locality": "Springfield", "region": "IL", "postcode": "62704"}, "country": "US"}
+{"raw": "100 Boxwood Lane, Raleigh, NC 27601", "components": {"house_number": "100", "street": "Boxwood Lane", "locality": "Raleigh", "region": "NC", "postcode": "27601"}, "country": "US"}
+{"raw": "55 Drawbridge Ave, Tampa, FL 33602", "components": {"house_number": "55", "street": "Drawbridge Ave", "locality": "Tampa", "region": "FL", "postcode": "33602"}, "country": "US"}
+{"raw": "1 Caller Ridge Rd, Boise, ID 83702", "components": {"house_number": "1", "street": "Caller Ridge Rd", "locality": "Boise", "region": "ID", "postcode": "83702"}, "country": "US"}
