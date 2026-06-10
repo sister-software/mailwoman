@@ -21,7 +21,7 @@
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
-import React, { useCallback, useState } from "react"
+import React, { useCallback, useMemo, useState } from "react"
 
 import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
 import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES, flattenTree, runCascade } from "../../shared/demo-helpers.ts"
@@ -97,16 +97,27 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 
 	const [text, setText] = useState(defaultAddress)
 	const [busy, setBusy] = useState(false)
+	const [parseStage, setParseStage] = useState(-1)
 	const [result, setResult] = useState<DemoResult | null>(null)
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
 	const [parseError, setParseError] = useState<string | null>(null)
 	const [copied, setCopied] = useState(false)
+
+	// Parse stage labels depend on whether WOF lookup is available for the selected release.
+	const parseStageLabels = useMemo(
+		() =>
+			lookup
+				? ["Analyzing input shape…", "Running neural classifier…", "Resolving in gazetteer…"]
+				: ["Analyzing input shape…", "Running neural classifier…"],
+		[lookup]
+	)
 
 	const onSubmit = useCallback(
 		async (e: React.FormEvent) => {
 			e.preventDefault()
 			if (!classifier) return
 			setBusy(true)
+			setParseStage(0)
 			setParseError(null)
 
 			try {
@@ -120,6 +131,8 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 				const queryShape = computeQueryShape(text)
 				const kindResult = classifyKindSync({ raw: text, normalized: text }, queryShape)
 				const tShape = performance.now()
+
+				setParseStage(1)
 
 				const pipelineResult = await runPipeline(text, {
 					computeQueryShape,
@@ -153,6 +166,8 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 					})
 					return
 				}
+
+				setParseStage(2)
 
 				const tBeforeResolve = performance.now()
 				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNodes, stateNode, text)
@@ -201,6 +216,7 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 				setParseError(err instanceof Error ? err.message : String(err))
 			} finally {
 				setBusy(false)
+				setParseStage(-1)
 			}
 		},
 		[classifier, text, fstMatcher, lookup, fstProvenance]
@@ -345,7 +361,7 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 
 			{busy ? (
 				<div className={styles.resultPanel}>
-					<LoadingIndicator mode="pulse" barCount={4} label="Parsing address…" />
+					<LoadingIndicator mode="staged" steps={parseStageLabels} activeStep={parseStage} />
 				</div>
 			) : result ? (
 				<div className={styles.resultPanel}>
