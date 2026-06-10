@@ -127,7 +127,7 @@ ceiling at moderate density) is the two-opposite-directions fork in its sharpest
 density high enough for affix destroys the spine; density low enough for the spine caps
 affix at ~65. Per the guard, all recipe iteration stopped; the live decision is "The fork"
 section at the top of this doc. (Historical note: DeepSeek's pre-named capacity-tell —
-suffix <55 AND country <84.5 at step-8000 — was framed for a steady-state miss and did
+suffix under 55 AND country under 84.5 at step-8000 — was framed for a steady-state miss and did
 not anticipate the transient-then-decay shape; the guard caught what the tell didn't.)
 
 **4. SHIP gate — REQUIRED before tagging v4.2.0 (training-gate pass is necessary, NOT sufficient).**
