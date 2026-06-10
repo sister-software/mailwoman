@@ -4576,6 +4576,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/resolver-wof-sqlite@workspace:resolver-wof-sqlite"
   dependencies:
+    "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     kysely: "npm:^0.29.2"
   bin:
