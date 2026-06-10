@@ -1,0 +1,194 @@
+# === v1.0.4-probe0-curriculum (#492 probe 0) =====================================================
+# SINGLE-VARIABLE contrast vs Run C: data.gazetteer_choreography true -> FALSE (clues NEVER
+# suppressed at train time; the random curriculum was already off for the whole consolidation
+# line). Resume the clean consolidation step-040000 (copied to a fresh dir - Run C's checkpoints
+# stay untouched as the record), affix 20x + suffix-tag-4.0 IDENTICAL to Run C, +4k steps.
+#
+# HYPOTHESIS UNDER TEST (DeepSeek consult 2026-06-10, amended by the config record): the affix
+# transient-decay is driven by train-time clue suppression (the choreography), not encoder
+# capacity. PRE-REGISTERED READ: prefix >=72 at +2k AND drop <=2pts +2k->+4k  => suppression-
+# driven (the dedicated head with its own gaz skip remains the deployable fix; this probe only
+# assigns the cause). Decay reproduced => intrinsic; the frozen-encoder head probe is next.
+# US-postcode is EXPECTED to dip with choreography off - not a gate here; this probe reads ONLY
+# the affix trajectory.
+#
+# ONE model carrying every PROVEN parity lever, at a LARGER step budget (the cumulative-dilution
+# lesson: never stack N shards into a fixed 20k budget — give them room). This is NOT a single-variable
+# experiment; it's the integration run. Levers folded in:
+#   - unit          (shipped v4.1.0)                      → synth-unit 1.5
+#   - affix         (multi-locale reroll, #469)           → synth-affix 2.0  (corpus v0.4.11-affix-ml)
+#   - country       (balanced shard, #464)                → synth-country 2.0 (corpus v0.4.10-country-bal)
+#   - gazetteer anchor (#464, knowledge-ladder rung 3.2)  → use_gazetteer_anchor + lexicon
+#   - choreography  (#468, the v0.9.12 US-postcode fix)   → data.gazetteer_choreography (FIRST trained here)
+# po_box/cedex DEFERRED (matcher-proven 100%; coverage shards are a follow-up, not in this flag-plant).
+#
+# Corpus v0.4.12-consolidation = v0.4.11-affix-ml shards (base+unit+german+deepseek+MULTI-LOCALE affix)
+# + the v0.4.10-country-bal balanced country shard, referenced verbatim (pure manifest concat; every
+# parquet already on the volume). Recipe inherits v0.9.13 (gazetteer anchor + country class-weight 3.5).
+#
+# TWO deliberate changes vs v0.9.13:
+#   1. max_steps 20k → 40k. The solo affix reroll (v0.9.14) showed fixed-budget dilution (FR
+#      house_number 92→87, US street 80.4→79.0) when 40K balance rows competed for 20k steps. A larger
+#      budget is the prescribed fix; 40k ≈ 2x exposure per shard.
+#   2. gazetteer_curriculum OFF, gazetteer_choreography ON. The curriculum (random clue zero-out) only
+#      recovered +0.6 of the −3.7 US-postcode dip in v0.9.13. The choreography (zero the clue on tokens
+#      ADJACENT to a postcode-anchor hit, train+inference paired) is the targeted, DeepSeek-diagnosed
+#      fix — and this run is its FIRST training test. Stacking both suppressions would over-zero the
+#      clue, so curriculum is dropped.
+#
+# PRE-REGISTERED GATE (stop at 40k), fp32-to-fp32 vs v4.1.0 (+ the solo-lever banks):
+#   - country ≥ v0.9.12 (83.3 F1 on country-homograph-real), P high, over-fire 0.
+#   - affix: street_prefix ≥ 78, street_suffix ≥ 67 (score-affix, real-affix eval).
+#   - unit ≥ 92 (unit-real-designators).
+#   - US postcode back to baseline (≥ 97, fp32) — the choreography must absorb the v0.9.12 −3.7.
+#   - FR postcode ≥ 99.5 AND FR house_number ≥ 91 (the v0.9.14 watch-item — confirm the bigger budget
+#     recovers it).
+#   - US spine (street/locality/region/house_number) ≥ v0.9.8; DE native-order locality ≥ 83.8.
+#   DECISION: all hold → v0-parity FLAG-PLANT; ship candidate (int8 → v4.2.0). Any tag short → the
+#     dilution isn't budget-bound; fall back to weight-merge (#466's titled approach) or raise that
+#     shard's weight/budget. Measure: score-country-homograph.ts + score-affix.ts (incl. unit) +
+#     per-locale-f1.ts (US/FR, --tokenizer + --model-anchor-lookup + --gazetteer-lexicon) +
+#     de-order-eval.sh, all fp32.
+#
+# REQUIRES on the volume (synced before launch): the #468 choreography modules (gazetteer_anchor.py
+# suppress_gazetteer_near_postcode + tokenizer/config/data_loader threading), the gazetteer lexicon at
+# /data/gazetteer/anchor-lexicon-v1.json, and corpus v0.4.12-consolidation. Repro of the corpus:
+#   (build the multi-locale affix + balanced country shards per #469 / #464, then assemble the manifest:
+#    affix-ml shards + the v0.4.10-country-bal synth-country train shard.)
+# Launch:
+#   modal run -d scripts/modal/train_remote.py \
+#     --config v1.0.0-consolidation.yaml --resume none \
+#     --trackio --trackio-space sister-software/mailwoman-trackio
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.4.12-consolidation/corpus-v0.4.12-consolidation
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-po-box: 1.5
+    synth-intersection: 0.2
+    synth-german: 6.0
+    # Every proven lever rides at its solo-validated weight.
+    synth-unit: 1.5
+    # Run C (the resume-fix): affix at the EXACT value the diagnostic hit prefix 75 with — synth-affix
+    # 20.0. Run A (10.0, RESUME) → 65; Run B (17.0, init_from) → 65 (the init_from fresh-optimizer was
+    # the confound — momentum is required to slide the CRF into the prefix→street→suffix basin). This is
+    # RESUME (output_dir below = consolidation dir, --resume auto finds clean step-040000; Run A's
+    # 042k-060k deleted). NOTE: 20.0, NOT DeepSeek's "40.0" — its "20×" arithmetic mislabeled the
+    # diagnostic, which actually used 20.0. Run to convergence (15k) so suffix asymptotes past 64.
+    synth-affix: 20.0
+    synth-country: 2.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  # The v0.9.12 US-postcode fix (#468): zero the gazetteer clue on tokens adjacent to a postcode-anchor
+  # hit, at train time (paired with classifier.suppressGazetteerNearPostcode at inference). First trained here.
+  gazetteer_choreography: false
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    # Run A: tag-loss-weight 1.5->2.0 on the affix tags — a second gradient path that can't be starved
+    # by other shards' token dominance even when the affix shard isn't in the current batch.
+    # Run C: prefix recovers on weight alone (diagnostic 75); SUFFIX is recall-limited → 4.0 loss boost
+    # (surgical, doesn't touch country's batch share — country isn't in the affix shard).
+    B-street_prefix: 2.0
+    I-street_prefix: 2.0
+    B-street_suffix: 4.0
+    I-street_suffix: 4.0
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v104-probe0-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  # Run C: RESUME clean step-040000 (Run A's 042k-060k deleted so --resume auto picks it) for 15k →
+  # 55k total. Momentum preserved (THE point — init_from is what broke Run B). EARLY-ABORT CHECK: export
+  # + score step-042000 (2k in); if prefix isn't ~75 there, the confound hypothesis is wrong → STOP.
+  max_steps: 44000
+  eval_every_steps: 1000
+  save_every_steps: 1000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  gazetteer_curriculum: false
+  trackio_project: mailwoman
+  trackio_run_name: v1.0.4-probe0-curriculum-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

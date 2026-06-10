@@ -1,0 +1,159 @@
+# === v1.1.0-relabel-consolidation (#511 — THE FULL RUN) ==========================================
+# The v4.2.0 consolidation recipe on a LABEL-CONSISTENT mix: data.affix_relabel_lexicon_path makes
+# the base corpus agree with the affix shard (trailing USPS suffix -> street_suffix, leading
+# directional -> street_prefix, exact shard-builder semantics — see relabel.py / #511).
+#
+# PROBE-VALIDATED (v1.0.6, 2026-06-10): single-variable vs probe 0, relabel ON ended the transient
+# decay — prefix 88.0R@+2k -> 84.0R@+4k (one eval instance, vs the control's 81 -> 61.1 collapse),
+# suffix F1 96.7 -> 100.0, street flat 87.5. The #492 contradiction theory is CONFIRMED.
+#
+# TWO deliberate changes vs the shipped Run B (v1.0.2) — both REVERSIONS of anti-contradiction
+# compensation that a consistent mix no longer needs (stated here per no-silent-gate-drift):
+#   1. synth-affix 17.0 -> 2.0 (the v1.0.0 base value). 17.0 was calibrated to outshout a 1,000:1
+#      contradiction that no longer exists; the probe held affix at high-80s/100 even resuming a
+#      20.0-weight model. If affix lands short at 2.0, sweep UP (4.0) — do not restore 17.0 blind.
+#   2. affix tag class-weights 2.0/4.0 -> 1.5/1.5 (v1.0.0 base). Suffix is no longer starved — it
+#      now appears on ~65% of base street rows; a 4x boost on a majority tag risks over-fire.
+# From scratch (--resume none, NO init_from): the equilibrium claim is that a consistent mix
+# produces affix-stable weights natively, not that a rescued checkpoint can keep them.
+#
+# PRE-REGISTERED GATE — the v4.2.0 ship-gate floors, UNCHANGED (scripts/eval/gates/v4.2.0-ship.json,
+# fp32-to-fp32, ship-config channels: gazetteer lexicon + suppress-gaz-near-postcode + anchor):
+#   - affix: street_prefix >= 78, street_suffix >= 67 — measured at 20k AND 40k (STABILITY is the
+#     claim under test; a 20k peak that decays by 40k is a MISS even if 40k clears the floor).
+#   - US street >= 80.4, locality >= 72.9, unit >= 90.6, US postcode >= 97, micro >= 85.4 (v4.2.0).
+#   - country >= 83.3 band (country-homograph-real), over-fire 0.
+#   - FR postcode >= 99.5, FR house_number >= 91; DE native-order locality >= 83.8.
+#   - NEW watches (DeepSeek consult 2026-06-10): folded-street invariance, short-street ("Main St")
+#     recall, house_number->street_prefix CRF transition sanity. The EXPANDED affix eval (#511
+#     task: >=100 prefix / >=100 suffix instances from NAD native fields) re-baselines BEFORE the
+#     gate verdict; the 32-row eval result is recorded alongside, not substituted.
+#   DECISION: all hold -> ship candidate (int8 -> v4.3.0). Affix short at 2.0 -> one weight sweep
+#   (4.0), nothing else. Any spine regression -> STOP, the relabel pass gets re-audited before any
+#   weight surgery (a relabel bug presents as boundary noise, not as a dilution problem).
+#
+# REQUIRES on the volume: relabel.py + config.py + data_loader.py (synced 2026-06-10), the relabel
+# lexicon at /data/gazetteer/affix-relabel-lexicon-v1.json, corpus v0.4.12-consolidation.
+# Launch:
+#   modal run -d scripts/modal/train_remote.py --config v1.1.0-relabel-consolidation.yaml --resume none
+data:
+  corpus_dir: /data/corpus/versioned/v0.4.12-consolidation/corpus-v0.4.12-consolidation
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-po-box: 1.5
+    synth-intersection: 0.2
+    synth-german: 6.0
+    # Every proven lever rides at its solo-validated weight.
+    synth-unit: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  # The v0.9.12 US-postcode fix (#468): zero the gazetteer clue on tokens adjacent to a postcode-anchor
+  # hit, at train time (paired with classifier.suppressGazetteerNearPostcode at inference). First trained here.
+  gazetteer_choreography: true
+  # THE #511 lever: end the base-vs-shard affix label contradiction (probe-validated v1.0.6).
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v110-relabel-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 40000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  gazetteer_curriculum: false
+  trackio_project: mailwoman
+  trackio_run_name: v1.1.0-relabel-consolidation-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

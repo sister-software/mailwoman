@@ -8,16 +8,16 @@ description: What ships today, what's behind a flag, and what's still experiment
 
 This page is the single source of truth for what works in Mailwoman right now.
 
-:::info[Verified as of 2026-06-10 (night-10) — release 4.2.0]
+:::info[Verified as of 2026-06-11 — release 4.3.0]
 Numbers below are sourced from the shipped `model-card.json` and the
-[parity scorecard (2026-06-10)](./evals/parity-scorecard-2026-06-10.md), which is the
-authoritative per-tag table. For which release added which capability, see
+[v4.3.0 ship gate](./evals/2026-06-11-v4.3.0-ship-gate.md), which carries the
+authoritative per-tag table for this release. For which release added which capability, see
 [Releases & capabilities](./releases.mdx).
 :::
 
 ## Packages
 
-All publishable workspaces release in lockstep; the current npm version is **4.2.0**.
+All publishable workspaces release in lockstep; the current npm version is **4.3.0**.
 
 | Package                                          | Description                                                        |
 | ------------------------------------------------ | ------------------------------------------------------------------ |
@@ -31,17 +31,18 @@ All publishable workspaces release in lockstep; the current npm version is **4.2
 | `@mailwoman/resolver-wof-sqlite` / `-wasm`        | WOF gazetteer resolver (Node SQLite / browser WASM)                |
 | `@mailwoman/neural-web`                           | Browser-side neural classifier (onnxruntime-web)                   |
 
-## Model weights (4.2.0)
+## Model weights (4.3.0)
 
 | Property             | Value                                                                                                          |
 | -------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **Lineage**          | `v1.0.2-consolidation-runB` @ step 20k — the v1.0 parity consolidation (unit + affix + country anchor + multi-locale), corpus `v0.4.12` |
+| **Lineage**          | `v1.1.0-relabel-consolidation` @ step 40k, from scratch — the consolidation recipe on a label-consistent mix (#511 affix relabel), corpus `v0.4.12` + relabel pass |
 | **Architecture**     | 29.3M params — 6-layer encoder, 384 hidden, 6 heads, 48K-vocab SentencePiece embedding                          |
 | **Label vocabulary** | 33 BIO labels over 16 component tags (incl. `unit`, `po_box`, `street_prefix`/`_suffix`, `intersection_a/b`)    |
 | **Training corpus**  | `corpus-v0.4.12-consolidation` · tokenizer `v0.6.0-a0`                                                          |
 | **Anchors**          | Postcode anchor (PCB1) + gazetteer soft anchor (country candidate-tags), both live at inference                 |
+| **Conventions**      | Locale head exported (`locale_logits`) → address-system conventions mask (#478 slice 1): fr forbids the USPS affix decomposition + pins the 5-digit postcode shape |
 | **Decode**           | Viterbi with frozen BIO structural mask (CRF at inference; CE-only training)                                    |
-| **Size**             | 28.4 MB int8 ONNX (112.9 MB fp32) · opset 17 · max sequence 128                                                 |
+| **Size**             | 29.8 MB int8 ONNX (118.4 MB fp32) · opset 17 · max sequence 128                                                 |
 
 ### Per-tag health (summary)
 
@@ -51,8 +52,12 @@ The full per-tag table — two lenses, golden-dev and real-OOD — lives in the
 - **Healthy:** postcode (98/99 US/FR), house_number (96/91), venue-US (90), street (79 US).
 - **Fixed by the parity campaign:** `unit` 0 → 92.3 on real-OOD designators (the 4.1.0 headline).
 - **Shipped by the consolidation (v4.2.0):** locality +12.8, region +10.7, country 0 → 89.8
-  (gazetteer soft anchor), affixes now exist (0 → 64.9/48.8 at P≈100), DE 90.9. Stated
-  re-baselines: US street 76.2 (−2.3), unit 90.6 (−1.7) — capacity ceiling measured, see [#492](https://github.com/sister-software/mailwoman/issues/492).
+  (gazetteer soft anchor), affixes now exist (0 → 64.9/48.8 at P≈100), DE 90.9.
+- **Closed by the relabel (v4.3.0):** the affix ceiling was never capacity — it was a 1,039:1
+  label contradiction in the training mix ([#492](https://github.com/sister-software/mailwoman/issues/492) →
+  [#511](https://github.com/sister-software/mailwoman/issues/511)). Affixes now 93.6/96.6 (int8,
+  real-OOD; 92.2/90.3 on the 193-row NAD-native eval where v4.2.0 scored 18.2/8.9). Plus the
+  first conventions-layer slice: the model's locale head is exported and OBEYED (fr mask).
 - **Open gaps:** FR venue/region ([#330](https://github.com/sister-software/mailwoman/issues/330)),
   intersections ([#487](https://github.com/sister-software/mailwoman/issues/487)).
 
@@ -90,7 +95,7 @@ It calls the classifier's argmax path directly; joint reconcile is not active in
 
 ## Model line (June 2026)
 
-The shipped weights are **4.2.0** — the v1.0 consolidation flag-plant ([#466](https://github.com/sister-software/mailwoman/issues/466), closed). The next model-side step is the architecture escalation ([#492](https://github.com/sister-software/mailwoman/issues/492), operator-gated); the next pipeline step is arbitration ([#478](https://github.com/sister-software/mailwoman/issues/478)). The ordered
+The shipped weights are **4.3.0** — the relabel run ([#511](https://github.com/sister-software/mailwoman/issues/511), the #492 ladder's data answer) plus the conventions mask. #492 is resolved (capacity falsified; cause was data). The next pipeline step is arbitration ([#478](https://github.com/sister-software/mailwoman/issues/478), slice 1 shipped); the next coverage lever is po_box/cedex. The ordered
 work queue to the full geocoder is
 [epic #488](https://github.com/sister-software/mailwoman/issues/488).
 

@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { availableLanguages, prefixedLanguages, prepareLocaleIndex, Span, WordClassifier } from "@mailwoman/core"
+import { getAvailableLanguages, prefixedLanguages, prepareLocaleIndex, Span, WordClassifier } from "@mailwoman/core"
 
 export class StreetSuffixClassifier extends WordClassifier {
 	public async ready(): Promise<this> {
 		const compatibleLanguages = Iterator
 			// ---
-			.from(this.languages ?? availableLanguages)
+			.from(this.languages ?? (await getAvailableLanguages()))
 			.filter((language) => !prefixedLanguages.has(language))
 			.toArray()
 

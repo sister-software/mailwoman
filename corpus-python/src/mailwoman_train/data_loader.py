@@ -39,6 +39,7 @@ import pyarrow.parquet as pq
 from .augment import augment_row
 from .config import Config, DataConfig
 from .labels import IGNORE_INDEX, active_components_present, locale_id
+from .relabel import AffixRelabelLexicon, relabel_row
 from .tokenizer import Tokenizer, encode_row, whitespace_spans
 
 _REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country", "source")
@@ -100,10 +101,15 @@ def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
     manifest = corpus_dir / "MANIFEST.json"
     if manifest.exists():
         data = json.loads(manifest.read_text())
+        base_version = data.get("base_corpus_version")
         resolved: list[Path] = []
+        rerooted = 0
+        missing: list[str] = []
+        declared = 0
         for s in data.get("shards", []):
             if s.get("split") != split:
                 continue
+            declared += 1
             raw = Path(s["path"])
             if raw.exists():
                 # Path is valid as-is (overlay cross-dir ref, or corpus on its build machine).
@@ -115,7 +121,25 @@ def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
             cand = corpus_dir / tail
             if cand.exists():
                 resolved.append(cand)
+                rerooted += 1
+            else:
+                missing.append(str(raw))
+        # STRICT partial-resolution guard (#480, the v0.7.1 trap): a manifest that declares shards
+        # this loop cannot find means the corpus is BROKEN (an overlay missing its base, a moved
+        # volume) — training on the survivors silently measures the wrong corpus. There is no
+        # legitimate partial case; fail with the full missing list. All-missing falls through to
+        # the legacy glob (monolithic corpora whose manifests never resolved here).
+        if resolved and missing:
+            raise FileNotFoundError(
+                f"MANIFEST declares {declared} '{split}' shards but {len(missing)} are unresolvable "
+                f"(as-is AND re-rooted under {corpus_dir}):\n  " + "\n  ".join(missing[:10])
+                + ("\n  ..." if len(missing) > 10 else "")
+            )
         if resolved:
+            print(
+                f"[shards] {split}: {len(resolved)} resolved ({rerooted} re-rooted) from MANIFEST"
+                + (f" (base_corpus_version={base_version})" if base_version else " (no base_corpus_version field)")
+            )
             return sorted(resolved)
     # legacy fallback (monolithic corpora, or manifest yielded no resolvable shards)
     paths = sorted((corpus_dir / split).glob("*.parquet"))
@@ -373,6 +397,7 @@ def iter_rows(
     row_limit: int | None = None,
     augment_directional_prob: float = 0.0,
     augment_region_prob: float = 0.0,
+    affix_relabel_lexicon: "AffixRelabelLexicon | None" = None,
     shuffle_buffer: int = 131072,
 ) -> Iterator[dict]:
     """Yield rows from parquet shards, filtered + shuffled.
@@ -424,8 +449,19 @@ def iter_rows(
     do_augment = augment_directional_prob > 0 or augment_region_prob > 0
 
     def _emit(row: dict) -> Iterator[dict]:
+        # Relabel runs AFTER augmentation so label-inheriting directional expansions are caught
+        # (#511 — see relabel.py). augment_row yields fresh dicts but shares the labels list with
+        # the source row on the no-op path, so relabel copies before mutating.
         if do_augment:
-            yield from augment_row(row, rng, augment_directional_prob, augment_region_prob)
+            for augmented in augment_row(row, rng, augment_directional_prob, augment_region_prob):
+                if affix_relabel_lexicon is not None:
+                    augmented = {**augmented, "labels": list(augmented["labels"])}
+                    relabel_row(augmented, affix_relabel_lexicon)
+                yield augmented
+        elif affix_relabel_lexicon is not None:
+            row = {**row, "labels": list(row["labels"])}
+            relabel_row(row, affix_relabel_lexicon)
+            yield row
         else:
             yield row
 
@@ -472,6 +508,9 @@ def iter_encoded(
         from .gazetteer_anchor import load_gazetteer_lexicon
 
         gazetteer_lexicon = load_gazetteer_lexicon(cfg_data.gazetteer_lexicon_path)
+    affix_relabel_lexicon = None
+    if getattr(cfg_data, "affix_relabel_lexicon_path", None):
+        affix_relabel_lexicon = AffixRelabelLexicon.load(cfg_data.affix_relabel_lexicon_path)
     for row in iter_rows(
         Path(cfg_data.corpus_dir),
         split,
@@ -482,6 +521,7 @@ def iter_encoded(
         row_limit=row_limit,
         augment_directional_prob=cfg_data.augment_directional_prob,
         augment_region_prob=cfg_data.augment_region_prob,
+        affix_relabel_lexicon=affix_relabel_lexicon,
     ):
         enc = encode_row(
             tokenizer,

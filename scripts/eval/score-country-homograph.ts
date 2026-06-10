@@ -31,6 +31,8 @@ const neural = new NeuralAddressClassifier({
 	postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
 	...(existsSync(GAZ) ? { gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) } : {}),
 	suppressGazetteerNearPostcode: argv.includes("--suppress-gaz-near-postcode"),
+	// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
+	...(arg("--conventions") ? { addressSystemConventions: arg("--conventions") as "auto" } : {}),
 })
 
 const rows = readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
