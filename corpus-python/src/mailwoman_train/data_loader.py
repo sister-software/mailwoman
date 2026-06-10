@@ -39,6 +39,7 @@ import pyarrow.parquet as pq
 from .augment import augment_row
 from .config import Config, DataConfig
 from .labels import IGNORE_INDEX, active_components_present, locale_id
+from .relabel import AffixRelabelLexicon, relabel_row
 from .tokenizer import Tokenizer, encode_row, whitespace_spans
 
 _REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country", "source")
@@ -396,6 +397,7 @@ def iter_rows(
     row_limit: int | None = None,
     augment_directional_prob: float = 0.0,
     augment_region_prob: float = 0.0,
+    affix_relabel_lexicon: "AffixRelabelLexicon | None" = None,
     shuffle_buffer: int = 131072,
 ) -> Iterator[dict]:
     """Yield rows from parquet shards, filtered + shuffled.
@@ -447,8 +449,19 @@ def iter_rows(
     do_augment = augment_directional_prob > 0 or augment_region_prob > 0
 
     def _emit(row: dict) -> Iterator[dict]:
+        # Relabel runs AFTER augmentation so label-inheriting directional expansions are caught
+        # (#511 — see relabel.py). augment_row yields fresh dicts but shares the labels list with
+        # the source row on the no-op path, so relabel copies before mutating.
         if do_augment:
-            yield from augment_row(row, rng, augment_directional_prob, augment_region_prob)
+            for augmented in augment_row(row, rng, augment_directional_prob, augment_region_prob):
+                if affix_relabel_lexicon is not None:
+                    augmented = {**augmented, "labels": list(augmented["labels"])}
+                    relabel_row(augmented, affix_relabel_lexicon)
+                yield augmented
+        elif affix_relabel_lexicon is not None:
+            row = {**row, "labels": list(row["labels"])}
+            relabel_row(row, affix_relabel_lexicon)
+            yield row
         else:
             yield row
 
@@ -495,6 +508,9 @@ def iter_encoded(
         from .gazetteer_anchor import load_gazetteer_lexicon
 
         gazetteer_lexicon = load_gazetteer_lexicon(cfg_data.gazetteer_lexicon_path)
+    affix_relabel_lexicon = None
+    if getattr(cfg_data, "affix_relabel_lexicon_path", None):
+        affix_relabel_lexicon = AffixRelabelLexicon.load(cfg_data.affix_relabel_lexicon_path)
     for row in iter_rows(
         Path(cfg_data.corpus_dir),
         split,
@@ -505,6 +521,7 @@ def iter_encoded(
         row_limit=row_limit,
         augment_directional_prob=cfg_data.augment_directional_prob,
         augment_region_prob=cfg_data.augment_region_prob,
+        affix_relabel_lexicon=affix_relabel_lexicon,
     ):
         enc = encode_row(
             tokenizer,

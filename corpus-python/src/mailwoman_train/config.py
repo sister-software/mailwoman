@@ -49,6 +49,12 @@ class DataConfig:
     # never learns the biased region->postcode CRF transition that cost v0.9.12 ~3pp US postcode.
     # Inference MUST mirror it (classifier suppressGazetteerNearPostcode). For the consolidation run.
     gazetteer_choreography: bool = False
+    # Affix-split relabel pass (#511). Path to the codex-generated relabel lexicon (built by
+    # scripts/build-affix-relabel-lexicon.mjs). When set, every street span in every loaded row is
+    # relabeled with the affix shard builder's exact split semantics (trailing USPS suffix ->
+    # street_suffix, leading directional -> street_prefix), AFTER augmentation — ending the
+    # base-vs-shard label contradiction the #492 ladder measured at >=1,000:1. None -> off.
+    affix_relabel_lexicon_path: str | None = None
 
 
 @dataclass
