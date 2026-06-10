@@ -9,20 +9,24 @@ from `external-arenas.sh` + `per-locale-f1.ts` + the real-OOD scorers — do not
 measured 29M stability ceiling — see `2026-06-10-consolidation-session.md`), Run B shipped
 as **v4.2.0** after a 4/4 ship gate (`2026-06-10-night-10-ship-gate.md`).
 
-## Lens 1 — capability arenas (v4.2.0 int8 vs v0; gaz-handicapped, see caveat)
+## Lens 1 — capability arenas (v4.2.0 int8, TRUE ship config: anchor + gazetteer fed)
 
-| arena | n | v0 | neural | both | neural-only | v0-only | both-fail |
-| --- | --: | --: | --: | --: | --: | --: | --: |
-| libpostal (clean/canonical) | 69 | 29% | 19% | 12% | 7% | 17% | 64% |
-| perturb (noisy/degraded) | 398 | 39% | **58%** | 30% | 28% | 9% | 32% |
-| postal (edge formats) | 38 | 26% | 8% | 5% | 3% | 21% | 71% |
+| arena | n | v0 | v4.1.0¹ | **v4.2.0** | both | neural-only | v0-only | both-fail |
+| --- | --: | --: | --: | --: | --: | --: | --: | --: |
+| libpostal (clean/canonical) | 69 | 29% | 22% | **41%** | 20% | 20% | 9% | 51% |
+| perturb (noisy/degraded) | 398 | 39% | 62% | **71%** | 35% | 36% | 5% | 25% |
+| postal (edge formats) | 38 | 26% | 11% | **18%** | 11% | 8% | 16% | 66% |
 
-> **CAVEAT (measurement, not model):** `harness-v0-neural` cannot feed the gazetteer
-> lexicon, so the gaz-trained v4.2.0 is graded with zero-filled clues — a configuration
-> that ships nowhere. v4.1.0 (non-gaz) was graded at full strength. The 2–3pp whole-parse
-> dip vs 06-09 is part artifact, part the stated street/unit re-baseline. Follow-up: gaz
-> support in the arena harness. The routing truth is unchanged — rules win clean, neural
-> wins noisy (+19pp), both weak on edge — and the grown `v0-only` cells are #478's bounty.
+¹ v4.1.0 anchor-fed (its true config; the gaz channel doesn't exist for it).
+
+> **MEASUREMENT CORRECTION (night-10):** every prior arena number for an anchor-trained
+> model (v4.0.0 onward) was graded with ZERO-FILLED anchor/gazetteer channels — the harness
+> couldn't feed them until tonight (`--gazetteer-lexicon`/`--anchor-lookup`). The
+> first-pass "v4.2.0 dip" (19/58/8) was entirely this artifact. In ship configuration,
+> **v4.2.0 leads v0 on the CLEAN arena for the first time in project history** (41 vs 29)
+> while extending the noisy lead to +32pp. The routing truth is now: neural leads clean AND
+> noisy; v0 leads only rare edge formats (po-box/military/rural — #492's riders). The
+> remaining `v0-only` cells (9/5/16) are #478's bounty.
 
 ## Lens 2 — per-tag F1 (int8, gaz-fed, golden dev + real-OOD)
 
