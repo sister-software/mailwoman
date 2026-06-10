@@ -8,7 +8,7 @@ const sidebars: SidebarsConfig = {
 			type: "category",
 			label: "Start here",
 			collapsed: false,
-			items: ["status", "getting-started", "api"],
+			items: ["status", "releases", "getting-started", "api"],
 		},
 		{
 			type: "category",
