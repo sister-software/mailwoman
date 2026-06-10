@@ -22,19 +22,27 @@ within-noise story as the lineage-shared evals. The consolidation's gains are no
 memorized OpenAddresses rows. This was the question this holdout exists to answer, and the
 answer is clean.
 
-## Finding 2 — the vanity-city gap, quantified at last
+## Finding 2 — the census-designation gap (CORRECTED same night)
 
-v0 beats neural on locality-NAME-match here (86.7 vs ~78) while neural crushes region
-(100.0 vs 91.7). NAD's locality field is the *postal* city — exactly the
-postal-city/geographic-city divergence #475 targets. The pattern (name miss + region
-perfect + p90 blowups on the margin) is the resolver returning the geographically-correct
-locality whose WOF name differs from the postal city on the gold row, plus genuine
-wrong-locality picks on vanity-city rows. Two consumers of this finding:
+> **CORRECTION (night-10, hours after first publication):** the first version of this
+> section attributed the locality gap to the postal-city/vanity-city divergence (#475).
+> The alias-table join MEASURED that attribution and refuted it: only 1 of 461 named
+> misses is alias-explained — NAD's locality field carries *census/municipal* names, not
+> postal names, so this eval cannot exhibit the vanity-city failure mode at all.
 
-1. **#475 (postal_city alias table)** now has its motivating number: closing the alias gap
-   is worth up to ~9pp of US locality-name-match on source-independent data.
-2. **#478 (arbitration)**: v0's 86.7 locality vs neural's 100.0 region is the per-component
-   complementarity argument in one row of a table.
+What the misses actually are (classified, n=461 with a resolved-but-wrong name):
+
+- **54.0% are the SAME PLACE under a different name surface** — census designations:
+  `College CDP` ↔ WOF `Fox Farm-College`, `City and Borough of Juneau`, `X Township` ↔
+  `X` (NJ alone is 148 of 461 — townships). This is the Plauen-Vogtl name-match-artifact
+  class, US edition; the fix lane is the #386-style hierarchy-aware designation credit
+  generalized to US census surfaces — filed as its own issue with these numbers.
+- The remainder are genuine ranking/disambiguation misses (e.g. Juneau → Wrangell).
+
+Consumers: the designation-credit issue (primary); **#478** still gets its
+complementarity row (v0 locality 86.7 vs neural region 100.0). **#475's alias table is
+NOT validated by this eval** — it needs an eval whose *inputs* carry postal surfaces
+(real-traffic shaped); noted on the issue.
 
 Caveats: admin-centroid coord errors are expected to be tens of km (the harness's own
 note); v0's 24.6 p90 reflects its conservative no-resolve behavior on hard rows (99.4%
