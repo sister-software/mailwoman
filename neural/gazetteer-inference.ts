@@ -137,6 +137,38 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 }
 
 /**
+ * Channel choreography (#464, v0.9.13 postcode fix; DeepSeek 2026-06-10): zero the gazetteer clue on
+ * pieces within `window` of a postcode-anchor hit. The clue fires on the region token (`CA`/`GA`)
+ * immediately before a US postcode; its additive vector strengthens `B-region`, which makes the
+ * `B-region → B-postcode` CRF transition less competitive and drops the postcode (~3pp, US-only — FR
+ * postcode precedes the locality, no region neighbor). Suppressing the clue adjacent to the postcode
+ * removes the interference while leaving every other clue intact. Returns a NEW features/confidence
+ * pair (does not mutate). `anchorConfidence[i] > 0` marks postcode-span pieces. PAIRS WITH the
+ * train-time half (`gazetteer_anchor.suppress_gazetteer_near_postcode`) — enable both or neither.
+ */
+export function suppressGazetteerNearPostcode(
+	gazetteer: { features: number[][]; confidence: number[] },
+	anchorConfidence: ReadonlyArray<number>,
+	window = 1
+): { features: number[][]; confidence: number[] } {
+	const n = gazetteer.confidence.length
+	const suppress = new Array<boolean>(n).fill(false)
+	for (let i = 0; i < n; i++) {
+		if ((anchorConfidence[i] ?? 0) > 0) {
+			for (let d = -window; d <= window; d++) {
+				const j = i + d
+				if (j >= 0 && j < n && d !== 0) suppress[j] = true
+			}
+		}
+	}
+	const dim = gazetteer.features[0]?.length ?? 0
+	return {
+		features: gazetteer.features.map((row, i) => (suppress[i] ? new Array<number>(dim).fill(0) : row)),
+		confidence: gazetteer.confidence.map((c, i) => (suppress[i] ? 0 : c)),
+	}
+}
+
+/**
  * Per-piece gazetteer features + confidence for `text`, projected onto its SP `pieces` by the SAME
  * char→piece rule the labels use (a piece takes the bits of the first non-whitespace char it covers).
  * Returns `(pieces × featureDim)` features + `(pieces,)` confidence (1.0 wherever any bit fires).

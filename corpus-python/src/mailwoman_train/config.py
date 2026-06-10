@@ -44,6 +44,11 @@ class DataConfig:
     # AND model.use_gazetteer_anchor is on, the loader paints per-piece multi-hot membership clues
     # from the RAW SURFACE (never gold labels — same computation at train + inference). None → off.
     gazetteer_lexicon_path: str | None = None
+    # Gazetteer channel choreography (#464, v0.9.13 postcode fix). When True (with anchor + gazetteer
+    # channels on), zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, so the model
+    # never learns the biased region->postcode CRF transition that cost v0.9.12 ~3pp US postcode.
+    # Inference MUST mirror it (classifier suppressGazetteerNearPostcode). For the consolidation run.
+    gazetteer_choreography: bool = False
 
 
 @dataclass

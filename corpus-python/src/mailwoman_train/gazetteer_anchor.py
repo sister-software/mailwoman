@@ -128,6 +128,34 @@ def gazetteer_char_paint(raw: str, lexicon: GazetteerLexicon) -> tuple[list[int]
     return char_bits, n_matches
 
 
+def suppress_gazetteer_near_postcode(
+    feats: list[list[float]],
+    confs: list[float],
+    anchor_confidence: Sequence[float],
+    feature_dim: int,
+    window: int = 1,
+) -> tuple[list[list[float]], list[float]]:
+    """TRAIN-TIME channel choreography (#464, v0.9.13 postcode fix; DeepSeek 2026-06-10) — the mirror
+    of TS ``suppressGazetteerNearPostcode``. Zero the gazetteer clue on pieces within ``window`` of a
+    postcode-anchor hit (``anchor_confidence[i] > 0``) so the model never LEARNS the biased
+    region->postcode CRF transition (the inference-only fix can't undo a weight-baked transition; the
+    cure is applying this at TRAIN time, keyed off the SAME anchor signal inference uses, so the two
+    stay consistent). Returns new (feats, confs); does not mutate.
+    """
+    n = len(confs)
+    suppress = [False] * n
+    for i in range(n):
+        if i < len(anchor_confidence) and anchor_confidence[i] > 0:
+            for d in range(-window, window + 1):
+                j = i + d
+                if d != 0 and 0 <= j < n:
+                    suppress[j] = True
+    zero = [0.0] * feature_dim
+    out_feats = [zero if suppress[i] else feats[i] for i in range(n)]
+    out_confs = [0.0 if suppress[i] else confs[i] for i in range(n)]
+    return out_feats, out_confs
+
+
 def realign_gazetteer_to_pieces(
     raw: str,
     pieces: Sequence[PieceSpan],

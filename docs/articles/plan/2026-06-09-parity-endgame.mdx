@@ -13,6 +13,23 @@ review (the model-first reversal, the synonymy/homonymy framing, and the gazette
 anchor discussion). Three principles now govern the endgame, and a concrete move
 order follows from them.
 
+## Status (2026-06-10): country banked
+
+Move 1 is **done**. The general gazetteer anchor took `country` from 0 (starved in
+v4.1.0) to **83.3 F1** on the hard homograph gate (recall 74.1, precision 95.2,
+**over-fire 0**), and lifted the spine with it (region US +11.7, locality +14.9).
+Progression: v0.9.10 balanced shard 57.9 → v0.9.11 +class-weight 65.0 → v0.9.12
++gazetteer anchor 83.3. The one cost was US postcode −3.7 — the region clue ("CA",
+"GA") sitting next to the US ZIP strengthens `B-region` and weakens the
+`B-region → B-postcode` CRF transition (US-only; FR's postcode precedes the
+locality, so it never sees this). The fix is **train-time channel choreography**:
+zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, at *both* train
+and inference (the pairing is load-bearing — the harm is weight-baked, so an
+inference-only patch can't undo it). Operator decision: **accept v0.9.12/13 as the
+country lever and carry the choreography into the consolidation retrain** (move 4),
+where the dip washes out — no standalone fix-retrain. Choreography ships
+default-off/byte-stable in PR #468.
+
 ## The three governing principles
 
 **1. Model-first, lexicon-as-evidence.** The day's central correction: no deterministic
@@ -40,13 +57,14 @@ the bendable version of the crutch rules systems can't drop.
 
 ## The move order
 
-1. **Finish country (step 2b): the gazetteer anchor, built general.** A per-token
-   **candidate-tag-set** feature channel (multi-hot over `country, region, po_box,
-   cedex, …`), sourced from codex, riding the same input-layer mechanics as the
-   postcode anchor and phrase priors. Country is the first consumer (its long-tail
-   recall — Eswatini, Timor-Leste, multi-word names — is the measured gap);
-   region/locality/street membership come nearly free later. Gate unchanged: country
-   recall up on the homograph eval, precision/over-fire intact, spine flat.
+1. ~~**Finish country (step 2b): the gazetteer anchor, built general.**~~ **DONE
+   (2026-06-10).** A per-token **candidate-tag-set** feature channel (multi-hot over
+   `country, region, po_box, cedex, …`), sourced from codex, riding the same
+   input-layer mechanics as the postcode anchor and phrase priors. Country was the
+   first consumer (its long-tail recall — Eswatini, Timor-Leste, multi-word names —
+   was the measured gap); region/locality/street membership come nearly free later.
+   Gate cleared: country 0 → 83.3 F1, precision/over-fire intact, spine lifted. See
+   the status section above; po_box/cedex ride the same channel for free.
 2. **Promote the affix lever via the multi-locale reroll (#466 step 1).** v0.9.8's
    only blemish is FR-postcode dilution from a US-only shard; the multi-locale country
    shard already demonstrated the recovery. Reroll affix multi-locale, clear its own
@@ -56,8 +74,9 @@ the bendable version of the crutch rules systems can't drop.
    already proven at 100% as feature-sources/eval material). Prove each solo.
 4. **Consolidate (#466): one model carrying all banked levers.** Weight-merge or a
    single multi-tag run at a larger step budget (the cumulative-dilution lesson:
-   never stack shards into a fixed 20k budget). Full per-tag regression gate; this
-   is the v0-parity flag-plant.
+   never stack shards into a fixed 20k budget). This run also **carries the gazetteer
+   choreography** (PR #468), where the v0.9.12 US-postcode dip is expected to wash
+   out for free. Full per-tag regression gate; this is the v0-parity flag-plant.
 5. **Then the pivot: from parity to the things v0 cannot do.** The lossless
    decomposition (typed `unknown` spans surviving projection — the small decoder
    change), canonical values on every span, and record-linkage as a named
