@@ -420,6 +420,54 @@
 				}
 			},
 			"notes": "Parity flag-plant candidate. Capacity wall measured (#492). Gate procedure requires --gazetteer-lexicon + --suppress-gaz-near-postcode. All gate numbers repairs-OFF (#486). Lineage: v1.0.2-consolidation-runB @ step 20000 — init_from consolidation v1.0.0 step-040000 (NOT resume; fresh optimizer — recorded honestly, see session doc), affix 17x, corpus v0.4.12-consolidation; shipped as the unified 4.2.0 release int8 md5 9eb4a99f6db06cccff57939f657c09f9."
+		},
+		{
+			"run_id": "v1.1.0-relabel-consolidation-step040000",
+			"model_version": "4.3.0",
+			"model_path": "/mnt/playpen/mailwoman-data/models/quantized/model-v110-step-40000-locale-int8.onnx",
+			"corpus_version": "0.4.12-consolidation + loader affix-relabel pass (lexicon affix-relabel-v1, #511)",
+			"corpus_sha256": "see corpus MANIFEST (v0.4.12-consolidation); relabel is a load-time transform stamped in the training config",
+			"eval_set_version": "golden v0.1.2 + real-OOD (affix 32-row + NAD-native v2 + unit + country-homograph) + honest-eval VT",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-06-10",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 40000,
+			"training_wall_clock_seconds": 4900,
+			"metrics": {
+				"per_component_int8_gazfed_conventions": {
+					"us": {
+						"postcode": 97.8,
+						"country_homograph": 85.1,
+						"micro": 85.1,
+						"locality": 74.4,
+						"region": 89.1,
+						"street": 75.5,
+						"street_prefix": 93.6,
+						"street_suffix": 96.6,
+						"unit": 92.1
+					},
+					"fr": {
+						"postcode": 99.7,
+						"house_number": 97.7,
+						"region": 16.2
+					},
+					"de": {
+						"native_locality_anchor_on": 90.1
+					}
+				},
+				"affix_nad_native_v2_int8": {
+					"street_prefix_f1": 92.2,
+					"street_suffix_f1": 90.3,
+					"precision": 100.0
+				},
+				"honest_eval_vt": {
+					"n": 1428,
+					"region_match_pct": 99.6,
+					"coord_p50_km": 3.4,
+					"coord_p90_km": 7.4
+				}
+			},
+			"notes": "FROM SCRATCH (clean lineage — no init_from). The #511 relabel run: the #492 ladder's root cause (1,039:1 contradictory street labels) fixed by a loader-level affix-split relabel pass; affix compensations reverted (synth-affix 17→2.0, tag weights →1.5). First gate FAILed fr.postcode 99.3/99.5 (NEW leading-postcode digit-split class) — corrected by the conventions mask (#478 slice 1: locale_logits export + codex fr conventions + emission mask + shape-triggered snap repair), same weights, re-gate PASS 12/12. Ship config: addressSystemConventions:'auto'. Gate record: docs/articles/evals/2026-06-11-v4.3.0-ship-gate.md. Country leg note: this gate fixed the historically gaz-starved country invocation; 85.1 is not comparable to v4.2.0's 89.8."
 		}
 	]
 }

@@ -41,6 +41,10 @@ if [[ -n "${MODEL:-}" ]]; then
   if [[ -n "${ANCHOR:-}" ]]; then
     MODEL_ARGS+=(--anchor-lookup "$ANCHOR")
   fi
+  # Conventions mask (#511 Tier A): CONVENTIONS=auto for v4.3.0+ ship config.
+  if [[ -n "${CONVENTIONS:-}" ]]; then
+    MODEL_ARGS+=(--conventions "$CONVENTIONS")
+  fi
   echo "Model: $MODEL"
 else
   echo "Model: (default shipped weights)"

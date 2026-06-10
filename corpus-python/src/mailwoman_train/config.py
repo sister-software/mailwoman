@@ -49,6 +49,12 @@ class DataConfig:
     # never learns the biased region->postcode CRF transition that cost v0.9.12 ~3pp US postcode.
     # Inference MUST mirror it (classifier suppressGazetteerNearPostcode). For the consolidation run.
     gazetteer_choreography: bool = False
+    # Affix-split relabel pass (#511). Path to the codex-generated relabel lexicon (built by
+    # scripts/build-affix-relabel-lexicon.mjs). When set, every street span in every loaded row is
+    # relabeled with the affix shard builder's exact split semantics (trailing USPS suffix ->
+    # street_suffix, leading directional -> street_prefix), AFTER augmentation — ending the
+    # base-vs-shard label contradiction the #492 ladder measured at >=1,000:1. None -> off.
+    affix_relabel_lexicon_path: str | None = None
 
 
 @dataclass
@@ -137,6 +143,12 @@ class ModelConfig:
     # lexicon, and injects ``c·(W_g·features + v_GAZ)`` at the input embedding. The clue informs;
     # the model decides (model-first). Default False keeps existing numerics bit-identical.
     use_gazetteer_anchor: bool = False
+
+    # Dedicated affix head (#492 probe/run): a 2-layer MLP over [final hidden ; gazetteer 5-dim]
+    # emitting {O, B/I-street_prefix, B/I-street_suffix}. Its 4 affix logits REPLACE the main
+    # classifier's affix columns in the returned logits (merge-in-forward — ONNX export and
+    # score-affix need no changes). Loss = main CE + affix CE (1:1).
+    use_affix_head: bool = False
     # Must match the lexicon JSON's feature_dim (slot count).
     gazetteer_feature_dim: int = 5
 
@@ -186,6 +198,11 @@ class TrainConfig:
     # loading optimizer/scheduler/step (unlike resume). This is how a fine-tune run starts from an
     # MLM-pretrained encoder. Empty = fresh init. Ignored when resuming (resume takes precedence).
     init_from: str = ""
+
+    # Freeze every parameter EXCEPT the affix head (#492 frozen-encoder probe): the optimizer
+    # sees only head params. Distinguishes encoder-representation sufficiency from output-head
+    # competition — see issue #492's pre-registered ladder.
+    freeze_encoder: bool = False
     # Trackio experiment tracking (Hugging Face). Off by default so existing configs and
     # plain/CI runs stay bit-identical and never depend on the optional 'trackio' package.
     # When enabled, the metrics written to train_log.csv are also streamed to a Trackio

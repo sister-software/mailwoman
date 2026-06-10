@@ -60,6 +60,7 @@ interface Args {
 	modelCardPath?: string
 	gazetteerLexiconPath?: string
 	anchorLookupPath?: string
+	conventions?: string
 	adminFstPath?: string
 	morphologyEnabled: boolean
 	morphologyBinPath?: string
@@ -86,6 +87,7 @@ function parseArgs(): Args {
 		else if (a === "--model-card" && args[i + 1]) out.modelCardPath = args[++i]
 		else if (a === "--gazetteer-lexicon" && args[i + 1]) out.gazetteerLexiconPath = args[++i]
 		else if (a === "--anchor-lookup" && args[i + 1]) out.anchorLookupPath = args[++i]
+		else if (a === "--conventions" && args[i + 1]) out.conventions = args[++i]
 		else if (a === "--admin-fst" && args[i + 1]) out.adminFstPath = args[++i]
 		else if (a === "--morphology-fst" && args[i + 1]) out.morphologyBinPath = args[++i]
 		else if (a === "--no-morphology") out.morphologyEnabled = false
@@ -619,6 +621,8 @@ async function main(): Promise<void> {
 			labels,
 			...(gazetteerLexicon ? { gazetteerLexicon, suppressGazetteerNearPostcode: true } : {}),
 			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
+			// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
+			...(args.conventions ? { addressSystemConventions: args.conventions as "auto" } : {}),
 		})
 	} else {
 		neural = await NeuralAddressClassifier.loadFromWeights()

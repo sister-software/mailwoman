@@ -18,6 +18,11 @@
  *   export.
  */
 
+export {
+	ADDRESS_SYSTEM_CONVENTIONS,
+	type AddressSystemConventions,
+	conventionsForSystem,
+} from "./address-system-conventions.js"
 export * as ca from "./ca/index.js"
 export * as de from "./de/index.js"
 export * as fr from "./fr/index.js"

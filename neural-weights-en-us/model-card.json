@@ -1,17 +1,17 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "4.2.0",
-	"model_lineage": "v1.0.2-consolidation-runB / step 20000 — consolidation of the parity campaign (unit + affix + country gazetteer-anchor + multi-locale balance) init_from consolidation v1.0.0 step-040000 (fresh optimizer — NOT resume; recorded honestly, see docs/articles/evals/2026-06-10-consolidation-session.md) @ affix 17x on corpus v0.4.12-consolidation — shipped as the unified 4.2.0 release version; tokenizer 0.6.0-a0",
-	"phase": "Stage 3 — v1.0 consolidation: parity flag-plant (spine + country anchor + affix existence)",
+	"version": "4.3.0",
+	"model_lineage": "v1.1.0-relabel-consolidation / step 40000 — the v4.2.0 consolidation recipe FROM SCRATCH on a label-consistent mix (#511 affix-split relabel pass: the base corpus's ~467M monolithic street labels rewritten to agree with the affix shard, ending the 1,039:1 contradiction the #492 probe ladder isolated), with both anti-contradiction compensations reverted (synth-affix 17.0→2.0, affix tag weights →1.5). Ships with the locale head exported (locale_logits) driving the address-system conventions mask (#478 slice 1) — declared inference config addressSystemConventions:'auto'. Gate: docs/articles/evals/2026-06-11-v4.3.0-ship-gate.md; tokenizer 0.6.0-a0",
+	"phase": "Stage 3 — v1.1 relabel: affix parity closed (data-consistency lever) + conventions layer slice 1",
 	"license": "AGPL-3.0-only",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "0.4.12-consolidation",
+		"corpus_version": "0.4.12-consolidation (+ loader affix-relabel pass, lexicon affix-relabel-v1)",
 		"tokenizer_version": "0.6.0-a0",
-		"steps": 20000,
-		"best_step": 20000,
+		"steps": 40000,
+		"best_step": 40000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "Run B of the consolidation campaign: init_from the clean v1.0.0 consolidation step-040000 (every proven lever: unit shard, affix-ml shard, country balanced shard + gazetteer soft anchor + channel choreography, both-order German), synth-affix 17x, 20k steps, CE-only, lr=1.5e-4, seed 42. Selected over v1.0.0/A/C at the fork: strongest stable variant (US postcode 97.3, country 89.8, FR hn 94.6). STATED RE-BASELINES vs canonical bars: affix 64.9/48.8 (vs 78/67), US street 76.2 (vs 80.4), unit 90.6 (vs 92) — measured 29M stability ceiling, see issue #492. GATE NUMBERS ARE REPAIRS-OFF (#486). Eval procedure REQUIRES --gazetteer-lexicon + --suppress-gaz-near-postcode (zero-filled clues degrade country recall and fake an affix crash)."
+		"recipe": "v1.1.0-relabel-consolidation: from-scratch 40k on v0.4.12 with the #511 affix-split relabel pass at load time (trailing USPS suffix→street_suffix, leading directional→street_prefix, exact shard-builder parity, after augmentation), synth-affix 2.0 (natural weight — the contradiction it fought is gone), affix tag class-weights 1.5, gazetteer anchor + train-time choreography, CE-only, lr=1.5e-4, seed 42."
 	},
 	"architecture": {
 		"hidden_size": 384,
@@ -79,14 +79,14 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "v4.1.0 — secondary-unit coverage. Same Stage-3 33-BIO-label schema as 4.0.0 (no schema change). Adds a format-diverse synth-unit shard (USPS Pub-28 C2 designators: APT/STE/FL/… across unit-after, unit-first, bare, and venue-prefixed layouts) on top of the v0.9.3 multi-locale base. `unit` recognition 0%→92.3% on a held-out real-designator eval; by 'negative space' it also raised US `street` +3.3pp and lifted `country` (US +6pp, FR +15pp) — covering the missing tag sharpened its neighbors. No regression vs 4.0.0 on any US/FR golden tag; DE native-order locality held (90.6%).",
+	"notes": "v4.3.0 — the affix lever closed by data consistency, not weights. street_prefix 64.9→93.6, street_suffix 48.8→96.6 (int8, real-affix eval); on the new 193-row NAD-native eval the shipped v4.2.0 scored 18.2/8.9 F1 where this model scores 92.2/90.3 at P=100. First shipped slice of the conventions layer: the locale head (now exported as locale_logits) detects the address system and the decoder OBEYS it — fr forbids the USPS affix decomposition and pins the 5-digit postcode shape (fixes the FR leading-postcode digit-split this run's first gate caught). Consumers: pass addressSystemConventions:'auto' (the declared ship config) or omit for byte-stable pre-#511 behavior. Known follow-ups: po_box (deferred lever, both Montréal gate rows), FR region tail (27.6→16.2, unfloored), de/gb conventions rows as evidence arrives.",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=48000",
 		"max_sequence_length": 128,
 		"opset": 17,
-		"fp32_size_mb": 112.9,
-		"int8_size_mb": 28.6
+		"fp32_size_mb": 118.4,
+		"int8_size_mb": 29.8
 	},
 	"files": {
 		"model": "model.onnx",
@@ -103,51 +103,60 @@
 	},
 	"base_relpath": "/data/output-v097-unit-v3-s42/checkpoints/step-020000",
 	"eval": {
-		"ship_gate_2026_06_10": {
+		"ship_gate_2026_06_11": {
+			"promotion_gate": "PASS 12/12 (gates/v4.3.0-relabel.json, int8-graded, max fp32-int8 delta 0.2pp)",
 			"honest_eval_vt": {
 				"n": 1428,
-				"region_match_pct": 99.9,
+				"region_match_pct": 99.6,
 				"coord_p50_km": 3.4,
 				"coord_p90_km": 7.4,
-				"pip_coverage_adj_pct": 47.1,
-				"baseline_v410_region_pct": 100.0,
+				"pip_coverage_adj_pct": 46.9,
+				"baseline_v420_region_pct": 99.9,
 				"verdict": "PASS"
 			},
-			"demo_presets": "PASS — 5/6 identical to v4.1.0; 6th is the intended affix split",
-			"int8_vs_fp32": "PASS — all gate tags within 0.1pp; quant deterministic",
-			"de_native_order_int8_pct": 90.9
+			"demo_presets": "PASS — affix split fires live (1060 W Addison St → W + Addison + St)",
+			"int8_vs_fp32": "PASS — all gate tags within 0.2pp",
+			"affix_stability_20k_to_40k": "v2 prefix 88.3→91.6, suffix 89.4→90.3 (rose, no decay)"
 		},
-		"per_component_int8_gazfed": {
+		"per_component_int8_gazfed_conventions": {
 			"us": {
-				"postcode": 97.3,
-				"country_homograph": 89.8,
-				"micro": 84.8,
-				"locality": 72.9,
+				"postcode": 97.8,
+				"country_homograph": 85.1,
+				"micro": 85.1,
+				"locality": 74.4,
 				"region": 89.1,
-				"street": 76.2,
-				"street_prefix": 64.9,
-				"street_suffix": 48.8,
-				"unit": 90.6,
-				"house_number": 96.9
+				"street": 75.5,
+				"street_prefix": 93.6,
+				"street_suffix": 96.6,
+				"unit": 92.1
 			},
 			"fr": {
-				"postcode": 99.6,
-				"house_number": 94.6,
-				"region": 27.6
+				"postcode": 99.7,
+				"house_number": 97.7,
+				"region": 16.2
 			},
 			"de": {
-				"native_locality_anchor_on": 90.9
+				"native_locality_anchor_on": 90.1
+			},
+			"affix_nad_native_v2": {
+				"street_prefix_f1": 92.2,
+				"street_suffix_f1": 90.3,
+				"precision": 100.0,
+				"baseline_v420": {
+					"street_prefix_f1": 18.2,
+					"street_suffix_f1": 8.9
+				}
 			}
 		},
-		"known_regressions_vs_4_1_0": {
-			"us_street": -2.3,
-			"unit": -1.7,
-			"us_postcode": -1.0,
-			"mitigations": "arbitration layer #478; architecture escalation #492"
+		"known_regressions_vs_4_2_0": {
+			"fr_region": -11.4,
+			"us_street_exact": -0.7,
+			"country_homograph": "-4.7 (NOT comparable: the v4.2.0 figure was measured under the gaz-starved country leg fixed this gate; both clear the 83.3 floor)",
+			"mitigations": "FR region tail rides the next corpus pass; arbitration layer #478 continues"
 		}
 	},
 	"files_md5": {
-		"model.onnx": "9eb4a99f6db06cccff57939f657c09f9",
+		"model.onnx": "9ab47793a4a454c8432c5de05567ad0f",
 		"tokenizer.model": "b6137e8c52914c9715374268ecaa4bc6"
 	}
 }

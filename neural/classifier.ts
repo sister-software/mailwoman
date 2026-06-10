@@ -20,6 +20,9 @@ import {
 	type ComponentTag,
 	type DecoderToken,
 } from "@mailwoman/core/decoder"
+import { conventionsForSystem, type SystemCode } from "@mailwoman/codex"
+
+import { detectAddressSystem } from "./address-system.js"
 import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.js"
 import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.js"
 import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
@@ -101,6 +104,12 @@ export interface NeuralAddressClassifierConfig {
 	 * trained with the train-time half.
 	 */
 	suppressGazetteerNearPostcode?: boolean
+	/**
+	 * Default address-system conventions mode for every parse (see `ParseOpts.addressSystemConventions`
+	 * for semantics — `"auto"` reads the model's locale head; a `SystemCode` pins it). Per-parse opts
+	 * override this. Omit for the byte-stable pre-#511 default (no detection, no mask).
+	 */
+	addressSystemConventions?: "auto" | SystemCode
 }
 
 export class NeuralAddressClassifier {
@@ -214,9 +223,20 @@ export class NeuralAddressClassifier {
 			gazetteer && anchor && this.cfg.suppressGazetteerNearPostcode
 				? suppressGazetteerNearPostcode(gazetteer, anchor.confidence)
 				: gazetteer
-		const { logits } = await this.cfg.runner.infer(ids, anchor, gazFed)
+		const { logits, localeLogits } = await this.cfg.runner.infer(ids, anchor, gazFed)
 
 		this.assertEmissionWidth(logits)
+
+		// Address-system conventions (#511 Tier A): resolve which system's rules apply — caller-pinned
+		// system, or the model's own locale-head detection under a high confidence bar. Null = no
+		// constraints; the parse below is byte-identical to the pre-conventions path.
+		const conventionsOpt = opts?.addressSystemConventions ?? this.cfg.addressSystemConventions
+		const conventions =
+			conventionsOpt === undefined
+				? null
+				: conventionsForSystem(
+						conventionsOpt === "auto" ? (detectAddressSystem(localeLogits)?.system ?? null) : conventionsOpt
+					)
 
 		let emissions = opts?.queryShape
 			? addEmissionMatrix(
@@ -249,6 +269,22 @@ export class NeuralAddressClassifier {
 			)
 		}
 
+		// Conventions emission mask: tags that are ungrammatical in the detected system are removed
+		// from the decoder's vocabulary outright (-1e9 ≈ log 0). Copy-on-mask — `emissions` may alias
+		// `logits`, which the per-token confidence below reads unmasked.
+		if (conventions?.forbiddenTags?.length) {
+			const forbidden = new Set<number>()
+			for (const tag of conventions.forbiddenTags) {
+				const b = this.labels.indexOf(`B-${tag}`)
+				const i = this.labels.indexOf(`I-${tag}`)
+				if (b >= 0) forbidden.add(b)
+				if (i >= 0) forbidden.add(i)
+			}
+			if (forbidden.size > 0) {
+				emissions = emissions.map((row) => row.map((v, idx) => (forbidden.has(idx) ? -1e9 : v)))
+			}
+		}
+
 		const labelIndices =
 			this.decodeMode === "viterbi"
 				? viterbi({
@@ -271,7 +307,10 @@ export class NeuralAddressClassifier {
 			}
 		})
 
-		if (opts?.postcodeRepair) {
+		// Postcode repair runs when the caller asks for it OR the detected system declares a postcode
+		// shape (#511 Tier A): a span that is a sub-match of a shape-valid string is exactly the
+		// snap-only truncation class the pass exists for ("47110" decoded as "4711" + a digit-split).
+		if (opts?.postcodeRepair || conventions?.postcodePattern) {
 			tokens = repairPostcodeLabels(text, tokens).tokens
 		}
 		if (opts?.unitRepair) {
@@ -380,6 +419,22 @@ export interface ParseOpts {
 	 * (`@mailwoman/core/decoder`) from `data/eval/calibration/isotonic-<locale>-<version>.json`.
 	 */
 	calibrate?: Calibrator
+	/**
+	 * Address-system conventions enforcement (#511 Tier A / #478's rules-as-constraints slice).
+	 *
+	 * - `"auto"` — detect the system from the model's locale head (`locale_logits` output, v1.1.0+
+	 *   exports; silently no-ops on models without it) and apply that system's codex conventions:
+	 *   forbidden tags become a hard emission mask before Viterbi, and a conventions postcode shape
+	 *   enables the snap-only postcode repair pass.
+	 * - A `SystemCode` (`"fr"`, `"us"`, …) — apply that system's conventions unconditionally
+	 *   (callers that already know the locale, e.g. the pipeline's BCP-47 region).
+	 * - Omit — byte-stable default: no detection, no mask (pre-#511 behavior).
+	 *
+	 * The detection threshold is deliberately high (0.8): the mask must never fire on a guess.
+	 * Measured motivation: the 2026-06-10 v1.1.0 gate, where US suffix logic fired inside French
+	 * parses (`street_suffix: "Rue"`) and digit-splits corrupted leading FR postcodes.
+	 */
+	addressSystemConventions?: "auto" | SystemCode
 }
 
 function argmaxSoftmax(row: number[]): { idx: number; conf: number } {

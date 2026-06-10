@@ -51,6 +51,7 @@ interface Args {
 	modelAnchorLookupPath?: string
 	gazetteerLexiconPath?: string
 	suppressGazNearPostcode?: boolean
+	conventions?: string
 	outJson?: string
 }
 
@@ -75,6 +76,7 @@ function parseArgs(): Args {
 		else if (a === "--model-anchor-lookup" && argv[i + 1]) out.modelAnchorLookupPath = argv[++i]
 		else if (a === "--gazetteer-lexicon" && argv[i + 1]) out.gazetteerLexiconPath = argv[++i]
 		else if (a === "--suppress-gaz-near-postcode") out.suppressGazNearPostcode = true
+		else if (a === "--conventions" && argv[i + 1]) out.conventions = argv[++i]
 		else if (a === "--out-json" && argv[i + 1]) out.outJson = argv[++i]
 	}
 	return out as Args
@@ -240,6 +242,8 @@ async function main(): Promise<void> {
 			postcodeAnchorLookup,
 			gazetteerLexicon,
 			suppressGazetteerNearPostcode: !!args.suppressGazNearPostcode,
+			// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
+			...(args.conventions ? { addressSystemConventions: args.conventions as "auto" } : {}),
 		})
 	} else {
 		neural = await NeuralAddressClassifier.loadFromWeights()
