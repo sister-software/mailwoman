@@ -1,0 +1,52 @@
+---
+sidebar_position: 2
+title: Releases & capabilities
+description: Which npm version shipped which model and which capabilities.
+---
+
+# Releases & capabilities
+
+Two version series exist and used to be easy to confuse:
+
+- **npm version** — what `npm install` gives you. All workspaces release in lockstep
+  (e.g. `mailwoman@4.1.0` pairs with `@mailwoman/neural-weights-en-us@4.1.0`).
+- **Training series** (`v0.x.y`) — internal model lineage used by configs, the eval ledger, and
+  the docs. A training run only becomes an npm release if it passes its pre-registered gates.
+
+Since 4.0.0 the npm version is the one that matters to consumers; the shipped weights'
+`model-card.json` records the exact training lineage, corpus, and tokenizer. The full per-model
+score record is `evals/scores-by-version.json` (schema:
+[`eval-ledger.schema.json`](./plan/reference/eval-ledger.schema.json)).
+
+## The matrix
+
+| npm | Date | Model lineage | What it added | Per-tag truth |
+| --- | --- | --- | --- | --- |
+| **4.1.0** (current) | 2026-06-09 | `v0.9.7-unit-v3` @ 20k (off `v0.9.3`, off `v0.7.2`) | **Secondary-unit coverage** (`unit` 0 → 92.3 real-OOD) — the first negative-space parity win. Int8 quant toolchain pinned + fixed (Safari WebGPU graph stability). Two-backend artifact release (npm + demo pointer). | [Parity scorecard 2026-06-09](./evals/parity-scorecard-2026-06-09.md) |
+| **4.0.0** | 2026-06-06 | `v0.9.3-de-regiontail` | First fully-synced release across all workspaces (`mailwoman` installable again, end to end). Multi-locale model (both-order German synth, region-tail), **live postcode-anchor inference**, self-conditioning. New scoped packages published (codex, locale-gate, resolvers, neural-web). | ledger `v0.9.3` rows |
+| 2.x / 3.0.0 (weights) | 2026-05 | `v0.4.0` (8.87M params, 21 labels) | The Phase-3 integration era: 6-stage runtime pipeline, CRF decode, hybrid policy registry. Weights versioned independently of the runtime packages (3.0.0 weights + 2.1.0 runtime) — the misalignment this page exists to prevent. | ledger `0.1.0`–`3.0.0` rows |
+
+Earlier training-series numbering (`v0.1.0`, `v0.2.0`, the realigned `3.0.0`) predates the
+lockstep policy; treat the eval ledger as the record there.
+
+## In flight
+
+| Series | Target | Status |
+| --- | --- | --- |
+| `v0.9.8` affix → `v0.9.14` affix-ml → **v1.0 consolidation** | next npm minor | [#466](https://github.com/sister-software/mailwoman/issues/466): bake the gated levers — street affixes (0 → 78/67), country gazetteer soft anchor (83.3 F1), multi-locale affix balance, postcode-anchor choreography — into one model with the full regression gate. |
+
+## Capability quick-reference
+
+| Capability | Since |
+| --- | --- |
+| 6-stage runtime pipeline (normalize → … → resolve) | 2.x era |
+| Hybrid rule/neural policy registry | 2.x era |
+| WOF SQLite resolver (exact-match tiering, coordinate-first postcode disambiguation) | 4.0.0 |
+| Postcode anchor at inference (PCB1) | 4.0.0 |
+| Japanese postcode-route resolution (Geographic Rule Engine) | 4.0.0 |
+| Isotonic confidence calibration (per-locale `calibration.json` in the weights bundle) | 4.0.0 |
+| Secondary-unit (`unit`) recognition | 4.1.0 |
+| Street affixes, country soft anchor, multi-locale balance | v1.0 consolidation (in flight) |
+
+When a release ships, this page gains a row and the [status page](./status.mdx) gets re-verified —
+they change together or not at all.
