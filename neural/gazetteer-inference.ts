@@ -45,6 +45,23 @@ export function parseGazetteerLexicon(raw: {
 	entries: Record<string, number>
 	code_entries: Record<string, number>
 }): GazetteerLexicon {
+	// Loud validation (#481): a malformed lexicon previously surfaced as a crash deep inside
+	// buildGazetteerFeatures (or worse, silently zero-filled clues — the fake-affix-crash class).
+	// Unknown refs fail loud, never silent.
+	if (typeof raw?.feature_dim !== "number" || raw.feature_dim <= 0) {
+		throw new Error(`gazetteer lexicon: feature_dim must be a positive number, got ${raw?.feature_dim}`)
+	}
+	if (!Array.isArray(raw.slots) || raw.slots.length === 0) {
+		throw new Error("gazetteer lexicon: slots must be a non-empty array")
+	}
+	if (typeof raw.max_ngram !== "number" || raw.max_ngram < 1) {
+		throw new Error(`gazetteer lexicon: max_ngram must be >= 1, got ${raw.max_ngram}`)
+	}
+	for (const field of ["bits", "entries", "code_entries"] as const) {
+		if (typeof raw[field] !== "object" || raw[field] === null) {
+			throw new Error(`gazetteer lexicon: ${field} must be an object`)
+		}
+	}
 	return {
 		featureDim: raw.feature_dim,
 		slots: raw.slots,
