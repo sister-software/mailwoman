@@ -166,6 +166,7 @@ class MailwomanCoarseEncoder(nn.Module):
         inject_first_token: bool = False,
         use_gazetteer_anchor: bool = False,
         gazetteer_feature_dim: int = 5,
+        use_affix_head: bool = False,
     ) -> None:
         super().__init__()
         self.pad_token_id = pad_token_id
@@ -305,6 +306,32 @@ class MailwomanCoarseEncoder(nn.Module):
         )
         self.final_ln = nn.LayerNorm(hidden_size)
         self.classifier = nn.Linear(hidden_size, num_labels)
+
+        # Dedicated affix head (#492): MLP over [final hidden ; raw gazetteer 5-dim skip] ->
+        # {O, B-street_prefix, I-street_prefix, B-street_suffix, I-street_suffix}. The gaz vector
+        # skip-connects PAST the encoder so the head owns the clue->affix mapping (consult
+        # 2026-06-10); independent dropout on the skip layers robustness locally. Its 4 affix
+        # logits replace the main classifier's affix columns in forward (merge-in-forward).
+        self.use_affix_head = use_affix_head
+        if use_affix_head:
+            affix_in = hidden_size + (self.gazetteer_feature_dim or 5)
+            self.affix_head = nn.Sequential(
+                nn.Linear(affix_in, 256),
+                nn.GELU(),
+                nn.Dropout(0.1),
+                nn.Linear(256, 5),
+            )
+            from .labels import LABEL_TO_ID
+            affix_ids = [
+                LABEL_TO_ID["B-street_prefix"], LABEL_TO_ID["I-street_prefix"],
+                LABEL_TO_ID["B-street_suffix"], LABEL_TO_ID["I-street_suffix"],
+            ]
+            self.register_buffer("affix_label_ids", torch.tensor(affix_ids, dtype=torch.long), persistent=False)
+            # labels -> affix-class targets lookup: default 0 (O-or-other), affix ids -> 1..4.
+            lut = torch.zeros(num_labels, dtype=torch.long)
+            for k, lid in enumerate(affix_ids):
+                lut[lid] = k + 1
+            self.register_buffer("affix_target_lut", lut, persistent=False)
 
         # CRF decoder (Stage 2 / v0.3.0 onwards). Adds ~num_labels² + 2·num_labels learned
         # scalars (483 for 21 labels) — negligible vs the encoder's ~30M parameters.
@@ -518,6 +545,16 @@ class MailwomanCoarseEncoder(nn.Module):
 
         logits = self.classifier(h)
 
+        affix_logits: torch.Tensor | None = None
+        if self.use_affix_head:
+            gaz = gazetteer_features
+            if gaz is None:
+                gaz = torch.zeros(bsz, seq, self.gazetteer_feature_dim or 5, dtype=h.dtype, device=h.device)
+            affix_logits = self.affix_head(torch.cat([h, gaz.to(h.dtype)], dim=-1))
+            # Merge: the head OWNS the affix columns (classes 1..4 -> the 4 affix label ids).
+            logits = logits.clone()
+            logits[:, :, self.affix_label_ids] = affix_logits[:, :, 1:]
+
         loss: torch.Tensor | None = None
         if labels is not None:
             ce_kwargs: dict[str, Any] = {
@@ -533,6 +570,15 @@ class MailwomanCoarseEncoder(nn.Module):
                 labels.view(-1),
                 **ce_kwargs,
             )
+            if self.use_affix_head and affix_logits is not None:
+                # Affix-head CE over its 5 classes; targets via the label lut (ignore -100 rows).
+                safe = labels.clamp_min(0)
+                affix_targets = self.affix_target_lut[safe]
+                affix_targets = torch.where(labels.eq(-100), torch.full_like(affix_targets, -100), affix_targets)
+                affix_loss = nn.functional.cross_entropy(
+                    affix_logits.view(-1, 5), affix_targets.view(-1), ignore_index=-100
+                )
+                ce_loss = ce_loss + affix_loss
             if self.crf is not None and attention_mask is not None and self.crf_loss_weight > 0:
                 # CRF NLL needs a (B, S) float mask. attention_mask is long-typed; cast.
                 # Replace IGNORE_INDEX positions in labels with 0 so gather doesn't OOB
@@ -734,6 +780,7 @@ class MailwomanCoarseEncoder(nn.Module):
             # Gazetteer-anchor channel (#464). False/0 on pre-gazetteer weights.
             "use_gazetteer_anchor": bool(self.use_gazetteer_anchor),
             "gazetteer_feature_dim": int(self.gazetteer_feature_dim),
+            "use_affix_head": bool(self.use_affix_head),
             "id2label": dict(ID_TO_LABEL),
             "label2id": dict(LABEL_TO_ID),
         }
@@ -786,6 +833,7 @@ class MailwomanCoarseEncoder(nn.Module):
             anchor_feature_dim=cfg.get("anchor_feature_dim", NUM_LOCALES + 2),
             inject_first_token=cfg.get("inject_first_token", False),
             use_gazetteer_anchor=cfg.get("use_gazetteer_anchor", False),
+            use_affix_head=cfg.get("use_affix_head", False),
             gazetteer_feature_dim=cfg.get("gazetteer_feature_dim", 5),
         )
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
@@ -844,6 +892,8 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoa
         # validates the JSON's feature_dim against this at startup via the trainer).
         use_gazetteer_anchor=getattr(cfg.model, "use_gazetteer_anchor", False),
         gazetteer_feature_dim=getattr(cfg.model, "gazetteer_feature_dim", 5),
+        # Dedicated affix head (#492).
+        use_affix_head=getattr(cfg.model, "use_affix_head", False),
     )
 
 

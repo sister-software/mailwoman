@@ -137,6 +137,12 @@ class ModelConfig:
     # lexicon, and injects ``c·(W_g·features + v_GAZ)`` at the input embedding. The clue informs;
     # the model decides (model-first). Default False keeps existing numerics bit-identical.
     use_gazetteer_anchor: bool = False
+
+    # Dedicated affix head (#492 probe/run): a 2-layer MLP over [final hidden ; gazetteer 5-dim]
+    # emitting {O, B/I-street_prefix, B/I-street_suffix}. Its 4 affix logits REPLACE the main
+    # classifier's affix columns in the returned logits (merge-in-forward — ONNX export and
+    # score-affix need no changes). Loss = main CE + affix CE (1:1).
+    use_affix_head: bool = False
     # Must match the lexicon JSON's feature_dim (slot count).
     gazetteer_feature_dim: int = 5
 
@@ -186,6 +192,11 @@ class TrainConfig:
     # loading optimizer/scheduler/step (unlike resume). This is how a fine-tune run starts from an
     # MLM-pretrained encoder. Empty = fresh init. Ignored when resuming (resume takes precedence).
     init_from: str = ""
+
+    # Freeze every parameter EXCEPT the affix head (#492 frozen-encoder probe): the optimizer
+    # sees only head params. Distinguishes encoder-representation sufficiency from output-head
+    # competition — see issue #492's pre-registered ladder.
+    freeze_encoder: bool = False
     # Trackio experiment tracking (Hugging Face). Off by default so existing configs and
     # plain/CI runs stay bit-identical and never depend on the optional 'trackio' package.
     # When enabled, the metrics written to train_log.csv are also streamed to a Trackio
