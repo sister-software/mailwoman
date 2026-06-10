@@ -3,7 +3,7 @@
 // output against split ground truth: exact-match (case-insensitive) P/R/F1 per tag.
 // Usage: node --experimental-strip-types scripts/eval/score-affix.ts --model <onnx> [--file <jsonl>]
 import { decodeAsJson } from "@mailwoman/core/decoder"
-import { NeuralAddressClassifier, parseAnchorLookup } from "@mailwoman/neural"
+import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { readFileSync } from "node:fs"
@@ -18,6 +18,11 @@ const LK = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
 const file = arg("--file", "data/eval/external/street-affix-real.jsonl")!
 const TAGS = ["street_prefix", "street", "street_suffix", "house_number", "locality", "region", "postcode", "unit"] as const
 
+// A gazetteer-trained model MUST be fed the lexicon (+ the paired postcode suppression) at inference,
+// else the zero-filled clue is a train/inference mismatch that wrecks segmentation. Pass for v1.0.0+.
+const GAZ = arg("--gazetteer-lexicon")
+const suppressGaz = argv.includes("--suppress-gaz-near-postcode")
+
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("--model")!)])
 const neural = new NeuralAddressClassifier({
@@ -25,6 +30,8 @@ const neural = new NeuralAddressClassifier({
 	runner,
 	labels: card.labels,
 	postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
+	...(GAZ ? { gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) } : {}),
+	suppressGazetteerNearPostcode: suppressGaz,
 })
 
 const rows = readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))

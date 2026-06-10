@@ -1,0 +1,15 @@
+{"raw": "100 Rue de la Paix, 75008 CEDEX 08 Paris", "components": {"house_number": "100", "street": "Paix", "locality": "Paris", "postcode": "75008", "cedex": "CEDEX 08"}, "country": "FR"}
+{"raw": "12 Rue de Rivoli, 75002 PARIS CEDEX 02", "components": {"house_number": "12", "street": "Rivoli", "locality": "PARIS", "postcode": "75002", "cedex": "CEDEX 02"}, "country": "FR"}
+{"raw": "BP 1234, 69347 LYON CEDEX 07", "components": {"po_box": "BP 1234", "locality": "LYON", "postcode": "69347", "cedex": "CEDEX 07"}, "country": "FR"}
+{"raw": "31100 TOULOUSE CEDEX 1", "components": {"locality": "TOULOUSE", "postcode": "31100", "cedex": "CEDEX 1"}, "country": "FR"}
+{"raw": "44000 NANTES CEDEX", "components": {"locality": "NANTES", "postcode": "44000", "cedex": "CEDEX"}, "country": "FR"}
+{"raw": "8 Avenue de la Republique, 13331 MARSEILLE CEDEX 03", "components": {"house_number": "8", "street": "Republique", "locality": "MARSEILLE", "postcode": "13331", "cedex": "CEDEX 03"}, "country": "FR"}
+{"raw": "Service Clients, 59777 LILLE CEDEX 09", "components": {"venue": "Service Clients", "locality": "LILLE", "postcode": "59777", "cedex": "CEDEX 09"}, "country": "FR"}
+{"raw": "2 Place de la Bourse, 33076 BORDEAUX CEDEX", "components": {"house_number": "2", "street": "Bourse", "locality": "BORDEAUX", "postcode": "33076", "cedex": "CEDEX"}, "country": "FR"}
+{"raw": "67081 STRASBOURG CEDEX", "components": {"locality": "STRASBOURG", "postcode": "67081", "cedex": "CEDEX"}, "country": "FR"}
+{"raw": "1 Rue Victor Hugo, 06049 NICE CEDEX 1", "components": {"house_number": "1", "street": "Victor Hugo", "locality": "NICE", "postcode": "06049", "cedex": "CEDEX 1"}, "country": "FR"}
+{"raw": "35 Rue du Faubourg, 75010 Paris", "components": {"house_number": "35", "street": "Faubourg", "locality": "Paris", "postcode": "75010"}, "country": "FR"}
+{"raw": "10 Avenue des Champs-Elysees, 75008 Paris", "components": {"house_number": "10", "street": "Champs-Elysees", "locality": "Paris", "postcode": "75008"}, "country": "FR"}
+{"raw": "5 Rue de la Gare, 69001 Lyon", "components": {"house_number": "5", "street": "Gare", "locality": "Lyon", "postcode": "69001"}, "country": "FR"}
+{"raw": "20 Boulevard Saint-Germain, 75005 Paris", "components": {"house_number": "20", "street": "Saint-Germain", "locality": "Paris", "postcode": "75005"}, "country": "FR"}
+{"raw": "3 Place Bellecour, 69002 Lyon", "components": {"house_number": "3", "street": "Bellecour", "locality": "Lyon", "postcode": "69002"}, "country": "FR"}
