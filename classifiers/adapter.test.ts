@@ -8,10 +8,12 @@
  *   attached to a span (modulo the new `source` / `source_id` / `metadata` fields).
  */
 
-// Side-effect import: forces `@mailwoman/core` to fully initialise (including its libpostal
-// top-level await) BEFORE the deep subpath imports below pull in slices of the same module
-// graph. Without this, Vite's TLA-aware loader sees the deep-path imports as a cycle and leaves
-// the bare-import re-exports unbound when HouseNumberClassifier evaluates `class extends ...`.
+// Side-effect import: forces `@mailwoman/core` to fully initialise BEFORE the deep subpath
+// imports below pull in slices of the same module graph. #481 REMOVED the libpostal top-level
+// await and this is STILL required — the cycle is structural (Vite leaves the bare-import
+// re-exports unbound when bare + subpath imports interleave), not TLA-driven. The TLA was
+// incidental. Removing this line reproduces `Class extends value undefined` in
+// HouseNumberClassifier. Full fix = import-graph hygiene, tracked on #481.
 import "@mailwoman/core"
 import { TokenContext } from "@mailwoman/core/tokenization"
 import { describe, expect, test } from "vitest"

@@ -100,10 +100,15 @@ def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
     manifest = corpus_dir / "MANIFEST.json"
     if manifest.exists():
         data = json.loads(manifest.read_text())
+        base_version = data.get("base_corpus_version")
         resolved: list[Path] = []
+        rerooted = 0
+        missing: list[str] = []
+        declared = 0
         for s in data.get("shards", []):
             if s.get("split") != split:
                 continue
+            declared += 1
             raw = Path(s["path"])
             if raw.exists():
                 # Path is valid as-is (overlay cross-dir ref, or corpus on its build machine).
@@ -115,7 +120,25 @@ def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:
             cand = corpus_dir / tail
             if cand.exists():
                 resolved.append(cand)
+                rerooted += 1
+            else:
+                missing.append(str(raw))
+        # STRICT partial-resolution guard (#480, the v0.7.1 trap): a manifest that declares shards
+        # this loop cannot find means the corpus is BROKEN (an overlay missing its base, a moved
+        # volume) — training on the survivors silently measures the wrong corpus. There is no
+        # legitimate partial case; fail with the full missing list. All-missing falls through to
+        # the legacy glob (monolithic corpora whose manifests never resolved here).
+        if resolved and missing:
+            raise FileNotFoundError(
+                f"MANIFEST declares {declared} '{split}' shards but {len(missing)} are unresolvable "
+                f"(as-is AND re-rooted under {corpus_dir}):\n  " + "\n  ".join(missing[:10])
+                + ("\n  ..." if len(missing) > 10 else "")
+            )
         if resolved:
+            print(
+                f"[shards] {split}: {len(resolved)} resolved ({rerooted} re-rooted) from MANIFEST"
+                + (f" (base_corpus_version={base_version})" if base_version else " (no base_corpus_version field)")
+            )
             return sorted(resolved)
     # legacy fallback (monolithic corpora, or manifest yielded no resolvable shards)
     paths = sorted((corpus_dir / split).glob("*.parquet"))

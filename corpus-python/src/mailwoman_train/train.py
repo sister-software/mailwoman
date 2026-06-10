@@ -379,8 +379,25 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
     print(f"device={device} param_count={model_param_count(model):,}")
     print(f"gpu={torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'cpu-only'}")
 
+    # #492 frozen-encoder probe: freeze everything except the affix head; the optimizer sees
+    # only head params (a frozen param in AdamW is harmless but a filtered list is explicit).
+    trainable_params = list(model.parameters())
+    if getattr(cfg.train, "freeze_encoder", False):
+        frozen = trainable = 0
+        for name, p in model.named_parameters():
+            if name.startswith("affix_head"):
+                p.requires_grad = True
+                trainable += p.numel()
+            else:
+                p.requires_grad = False
+                frozen += p.numel()
+        trainable_params = [p for p in model.parameters() if p.requires_grad]
+        if not trainable_params:
+            raise RuntimeError("freeze_encoder=True but no affix_head params found — set model.use_affix_head: true")
+        print(f"[freeze_encoder] frozen={frozen:,} trainable={trainable:,} (affix head only)")
+
     optim = AdamW(
-        model.parameters(),
+        trainable_params if getattr(cfg.train, "freeze_encoder", False) else model.parameters(),
         lr=cfg.train.learning_rate,
         weight_decay=cfg.train.weight_decay,
     )
@@ -408,6 +425,27 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
         if ts_p.is_file():
             ts = json.loads(ts_p.read_text(encoding="utf-8"))
             resume_step = int(ts.get("step", 0))
+            # Resume-drift audit (#480): every config field that differs from the checkpoint's
+            # stamped state is printed LOUDLY. Deliberate resume-with-changes is the campaign's
+            # lever pattern (Run A/C); UNNOTICED drift is the Run-B-class confound. Visibility,
+            # not prohibition.
+            saved_cfg = ts.get("config", {})
+            live_cfg = {"data": asdict(cfg.data), "model": asdict(cfg.model), "train": asdict(cfg.train)}
+            drift: list[str] = []
+            for section in ("data", "model", "train"):
+                saved_section = saved_cfg.get(section, {})
+                for key, live_val in live_cfg[section].items():
+                    if key in ("output_dir", "max_steps", "trackio_run_name", "csv_log_path"):
+                        continue  # expected to differ across resumes
+                    saved_val = saved_section.get(key, "<absent>")
+                    if saved_val != live_val:
+                        drift.append(f"{section}.{key}: checkpoint={saved_val!r} -> live={live_val!r}")
+            if drift:
+                print(f"[resume-drift] {len(drift)} config field(s) differ from the checkpoint's stamped state:")
+                for line in drift:
+                    print(f"  ! {line}")
+            else:
+                print("[resume-drift] none — live config matches the checkpoint's stamped state")
         sched_p = resume_from_path / "scheduler.pt"
         if sched_p.is_file():
             scheduler.load_state_dict(torch.load(sched_p, weights_only=False))
