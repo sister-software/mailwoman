@@ -14,7 +14,7 @@
  */
 
 import type { AddressTree } from "../decoder/types.js"
-import type { ResolveOpts, Resolver } from "../resolver/types.js"
+import type { ResolveOpts, Resolver, ResolverBackend } from "../resolver/types.js"
 import type { Section } from "../types/classifier.js"
 
 export type LocaleTag = string
@@ -191,6 +191,13 @@ export interface RuntimePipelineStages {
 	 */
 	fst?: FstMatcherLike
 	resolver?: Resolver
+	/**
+	 * The gazetteer BACKEND (lower-level than `resolver`), enabling the reconciler's concordance
+	 * axes (#478): a bounded pre-fetch turns it into the resolver-candidate + parent-chain lookups
+	 * `reconcileSpans` scores with. Optional — absent, reconcile runs classifier-only (today's
+	 * behavior, byte-stable).
+	 */
+	resolverBackend?: ResolverBackend
 }
 
 export interface PipelineTiming {
