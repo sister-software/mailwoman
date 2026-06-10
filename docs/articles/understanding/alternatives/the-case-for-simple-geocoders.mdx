@@ -16,8 +16,8 @@ These are not straw men. They are the architectures most production geocoders ac
 
 ## The compromises
 
-| Compromise                                           | What you do                                                           | What you lose                                 |
-| ---------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------- |
+| Compromise                                            | What you do                                                           | What you lose                                 |
+| ----------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------- |
 | [Normalize-to-match](./simple-normalize-to-match.mdx) | Strip, lowercase, abbreviate, fuzzy-match against a known database    | Understanding of what anything _means_        |
 | [Postcode-only](./simple-postcode-only.mdx)           | Parse the postcode, centroid the result                               | Everything finer than ~1 mile                 |
 | [Gazetteer-first](./simple-gazetteer-first.mdx)       | Skip parsing, treat as IR — try every token against a placename index | Streets, building numbers, venue names        |

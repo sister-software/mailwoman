@@ -1,7 +1,7 @@
 {
 	"name": "neural-weights-fr-fr",
-	"version": "4.1.0",
-	"model_lineage": "shares the en-us v0.9.7-unit-v3 multi-locale model (step 20000) — shipped as the unified 4.1.0 release version; tokenizer 0.6.0-a0. fr-fr and en-us bundle the SAME byte-identical model; this package carries the FR-specific calibration table.",
+	"version": "4.2.0",
+	"model_lineage": "shares the en-us v1.0.2-consolidation-runB multi-locale model (step 20000) — shipped as the unified 4.2.0 release version; FR postcode 99.6 / house_number 94.6 (best ever) / region 27.6 (open gap #330)",
 	"phase": "Stage 3 — multi-locale (FR via the shared model)",
 	"license": "AGPL-3.0-only",
 	"locale": "fr-fr",
@@ -181,7 +181,7 @@
 		"particle-honorific kryptonite (e.g. FR 'Saint-Just-Saint-Rambert') if not in synth set",
 		"non-Latin scripts (CJK, Cyrillic) fall through to byte-fallback tokens; F1 unknown"
 	],
-	"notes": "v0.4.0 \u2014 issue #116. Same encoder geometry as v0.3.0 (8.87M params, 6L/256H/4-heads, 21 BIO labels, linear-chain CRF). Issue proposed (1) per-token CRF NLL normalization + (3) class-weighted CE biased toward coarse labels + (4) source-weight rebalance. Empirical iteration found that \u00a71 and \u00a73 destabilize sustained training at every LR tested (5e-4, 3e-4, 1.5e-4 \u2014 even the v0.3.0-safe LR), and on the golden v0.1.2 eval (4535 entries) they slightly REGRESS country/postcode F1 vs v0.3.0. SHIPPED recipe is the \u00a74-only ablation (v0.3.0 dual-loss + v0.4.0 source-weight rebalance) at lr=1.5e-4, step 2200. Modest fine-label gains (street +0.03, house_number +0.01), modest coarse-F1 regression (country -0.07, postcode -0.07). \u00a71/\u00a73 deferred to v0.4.1 corpus-side investigation per issue's '2K divergence' clause. Full ablation matrix retrospective in LOG.md.",
+	"notes": "v0.4.0 — issue #116. Same encoder geometry as v0.3.0 (8.87M params, 6L/256H/4-heads, 21 BIO labels, linear-chain CRF). Issue proposed (1) per-token CRF NLL normalization + (3) class-weighted CE biased toward coarse labels + (4) source-weight rebalance. Empirical iteration found that §1 and §3 destabilize sustained training at every LR tested (5e-4, 3e-4, 1.5e-4 — even the v0.3.0-safe LR), and on the golden v0.1.2 eval (4535 entries) they slightly REGRESS country/postcode F1 vs v0.3.0. SHIPPED recipe is the §4-only ablation (v0.3.0 dual-loss + v0.4.0 source-weight rebalance) at lr=1.5e-4, step 2200. Modest fine-label gains (street +0.03, house_number +0.01), modest coarse-F1 regression (country -0.07, postcode -0.07). §1/§3 deferred to v0.4.1 corpus-side investigation per issue's '2K divergence' clause. Full ablation matrix retrospective in LOG.md.",
 	"format": {
 		"model": "ONNX int8 dynamic",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=16000",

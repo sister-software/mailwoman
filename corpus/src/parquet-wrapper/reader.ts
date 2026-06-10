@@ -5,13 +5,6 @@
  *   Typed wrapper around `@dsnp/parquetjs`'s `ParquetReader` that narrows the row-iterator generic to
  *   a user-supplied record type and adds `AsyncDisposable` support so `await using` cleans up the
  *   envelope reader without an explicit `close()`.
- *
- *   Drawn 2026-05-17 from the author's earlier draft
- *   `sdk/parquet/reader.ts` (implemented from the author's earlier draft concept). Two
- *   trims relative to the original: (a) removed the
- *   `@mailwoman/core/polyfills/promises/withResolvers` import — Node 22 has it native; (b) replaced
- *   the `PathBuilderLike` (path-ts) type on `openFile` with the plain `string | URL` the
- *   `@dsnp/parquetjs` envelope reader accepts directly.
  */
 
 import { ParquetReader as BaseParquetReader } from "@dsnp/parquetjs"

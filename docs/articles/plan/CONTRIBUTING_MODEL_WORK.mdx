@@ -1,0 +1,82 @@
+---
+sidebar_position: 2
+title: Contributing model work — the runbook
+description: Which evals gate a change, the lever-shape taxonomy, and how to ship a shard without breaking four locales.
+---
+
+# Contributing model work — the runbook
+
+You want to improve a tag, add a locale, or change anything that touches the model. This page is
+the procedure. The concepts behind it live elsewhere
+([What Mailwoman is](../concepts/what-mailwoman-is.mdx),
+[Eval discipline](../concepts/eval-discipline.mdx),
+[Negative space](../concepts/negative-space-coverage.mdx)); this is the part you follow with your
+hands.
+
+## The iron rules
+
+1. **Real-OOD eval before training.** Build (or find) the held-out real-world eval for your tag
+   *first*, and pre-register the gate — target numbers, no-regression bounds — in the training
+   config as a comment before step 1 runs. If you can't define the gate, you aren't ready to train.
+2. **Never compare F1 across tokenizer versions.** Same tokenizer or the comparison is void
+   (`per-locale-f1.ts --tokenizer` enforces this; the model card records the version).
+3. **Compare fp32-to-fp32.** Int8 is a release artifact, not an experiment lens.
+4. **One variable per run.** Prove a lever solo, then consolidate. Stacking shards in one 20k run
+   dilutes every tag (measured, twice — see the cumulative-dilution note in the
+   [parity scorecard](../evals/parity-scorecard-2026-06-09.md)).
+5. **Recompile before eval.** Eval harnesses load compiled `core/out` — a stale build makes your
+   core change a silent no-op.
+
+## Which tool for which tag (the lever-shape taxonomy)
+
+- **Open-vocab / distributional tags** (street, affixes, unit, locality): the model must learn the
+  boundary from context → **format-diverse synth shard + retrain** is the tool.
+- **Closed-vocab tags** (country, po_box, cedex): a finite surface set in a predictable slot →
+  **gazetteer/codex lexicon as a soft anchor feature** — the matcher informs the model, it never
+  overrides it. We measured the override version and reversed it; read
+  [Closed-vocab fields: model-first](./reference/closed-vocab-fields-model-first.mdx) before
+  proposing a deterministic tagger.
+- **Format quirks both systems miss** (rare edge shapes): consider a query-shape route before a
+  shard — some formats are structurally different enough that routing beats tagging.
+
+## The standard gate set
+
+Run for *every* candidate, regardless of what you changed (this is what
+[`promotion-gate.sh`, #479](https://github.com/sister-software/mailwoman/issues/479) automates):
+
+| Check | Command | Bar |
+| --- | --- | --- |
+| Per-locale floors | `scripts/eval/per-locale-f1.ts` (US/FR, `--tokenizer`) + `per-locale-f1-floors.py` | within 1pp, fp32-to-fp32 |
+| German native order | `scripts/eval/de-order-eval.sh` | NO-REGRESSION |
+| Unit retention | unit-real designators eval | ≥ 88 |
+| Affix split | `scripts/eval/score-affix.ts` (NOT `per-locale-f1` — its fold can't see the split) | hold gated numbers |
+| Demo smoke | `eval-model` skill / `demo-preset-compare.ts` | presets stable |
+| Honest geography | `scripts/eval/honest-eval.sh` | region-match + coord p50/p90 + PIP hold |
+
+Plus your tag's pre-registered real-OOD gate. Pass → append the run to
+`evals/scores-by-version.json` and write the dated report in `docs/articles/evals/`.
+
+## Adding a shard
+
+1. Generator lives in `corpus/` (`synthesize-*.ts`) or `scripts/build-*-shard.mjs`; every row
+   carries `synth: {method, base_source_id}` ancestry.
+2. Audit format diversity against the real eval's observed forms *before* generating — thin
+   diversity teaches lexical pattern-matching, not the boundary.
+3. Overlay manifests declare lineage against a base corpus version
+   (`scripts/assemble-*-overlay-manifest.py` is the pattern); never hand-edit a manifest.
+4. Train via `modal run -d scripts/modal/train_remote.py --config <yaml> --resume auto`
+   (~1h A100). Config lives in `corpus-python/src/mailwoman_train/configs/` — copy the latest,
+   change one variable, write the gate comment.
+
+## Reading the scorecard
+
+Two lenses that disagree on purpose: **arena head-to-head** is whole-parse-strict (the honest
+"usable parse" lens; understates per-tag wins) and **per-tag F1** is what the campaign moves.
+Golden-dev per-tag numbers lie for tags the golden set barely contains (unit reads 6.3 there and
+92.3 on real-OOD) — for campaign tags, the real-OOD column is the truth.
+
+## When your lever doesn't gate
+
+Tune-and-retry once, then stop and write the postmortem instead of a third run — the v0.6.x cycle
+is the cautionary retrospective. A negative result recorded in the ledger is a contribution; a
+recipe-tweak treadmill is not.

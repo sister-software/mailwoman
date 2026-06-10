@@ -10,11 +10,14 @@ tags:
 # Negative space — why training every component sharpens each one
 
 A useful intuition guides Mailwoman's corpus-coverage work: as we add training
-signal for the address components we've been _missing_ (`unit`, `country`, the
-street affixes), the model gets better at the components we already handle — not
-just the new ones. The reason is that a sequence labeller learns a tag by its
+signal for the address components we've been _missing_ (`unit`, the street
+affixes, and more), the model gets better at the components we already handle —
+not just the new ones. The reason is that a sequence labeller learns a tag by its
 **boundaries**, so teaching it what a token _isn't_ is how it learns what the
-neighbours _are_.
+neighbours _are_. (One caveat that the campaign earned the hard way: this logic
+applies to tags the model must learn from context, not to every starved tag —
+see [Two kinds of starved tag](#two-kinds-of-starved-tag--and-why-the-model-handles-both)
+at the end.)
 
 This has names at three altitudes:
 
@@ -61,5 +64,41 @@ generating corpus rows for a starved tag, the eval set must carry enough held-ou
 examples of it that its F1 is real signal, not noise from a handful of rows (see
 [eval discipline](./eval-discipline.mdx) and the val-set stratification work). The
 coverage eval is the apparatus that lets the numbers say whether negative space
-held for our model — whether covering `unit`/`country` lifted `street`/`locality`
-precision, and whether anything regressed — rather than assuming it.
+held for our model — whether covering `unit` lifted `street`/`locality` precision,
+and whether anything regressed — rather than assuming it.
+
+## Two kinds of starved tag — and why the model handles both
+
+Negative space tells you _which_ tags are taxing their neighbours; it doesn't tell
+you the only way to cover them is more rows of the same shape. The parity campaign
+surfaced two shapes of starved tag — but the conclusion is that **the model stays
+the authority for both**; the difference is only what kind of help it needs.
+
+- **Open-vocabulary, boundary-defined tags** — `unit`, `street_prefix`,
+  `street_suffix`, `locality`. Their members are open-ended and their extent depends
+  on context, so the model has to _learn the boundary_. A balanced coverage shard is
+  the whole fix, and this is where the negative-space effect compounds: covering
+  `unit` (0 → 92%) lifted US `street` by about three points.
+- **Closed-vocabulary tags** — `country`, `po_box`, `cedex`. A finite, enumerable
+  surface set in a predictable slot. The tempting shortcut is a deterministic
+  lookup, and an early pass took it. That was wrong, for an instructive reason.
+
+A first attempt trained `country` on a shard that was almost entirely
+_trailing-country_ rows, so the model over-learned the cheap correlation "trailing
+token ⇒ country" and started promoting cities and regions to nationhood (49 F1, 23%
+precision). A flat lookup scored 100 — but **only on an eval with no homographs**.
+The homograph case ("Atlanta, Georgia" → region vs "Tbilisi, Georgia" → country) is
+exactly where a lookup can't win without a hand-coded guard, and resolving it from
+context is the model's whole reason to exist. So the over-firing was a _training-
+distribution artifact_, not a model limitation, and "deterministic wins" was a
+mirage measured on the easy cases.
+
+The corrected rule: **cover every starved tag by training; let the lexicon _inform_
+the model, never _override_ it.** Open-vocab and closed-vocab-without-homographs
+(`po_box`, `cedex`) just need a balanced coverage shard. A closed-vocab tag with a
+large set and homographs (`country`) additionally gets the gazetteer as a **soft
+anchor feature** — a match flag plus a "known-homograph" bit — fed into the model
+the same way the postcode anchor is, so the model decides with the lexicon as
+evidence. The matcher becomes a feature-source, not a post-parse verdict. Full
+rationale, data recipe, and the eval-first plan:
+[Closed-vocab fields: model-first](../plan/reference/closed-vocab-fields-model-first.mdx).

@@ -270,6 +270,8 @@ def encode_row(
     labels: Sequence[str],
     max_length: int,
     anchor_lookup: "dict[str, tuple[dict[str, float], float, float]] | None" = None,
+    gazetteer_lexicon=None,
+    gazetteer_choreography: bool = False,
 ) -> dict[str, list]:
     """Encode a single row into ``input_ids`` + ``attention_mask`` + ``label_ids``.
 
@@ -280,6 +282,11 @@ def encode_row(
     ``anchor_features`` ``(max_length, ANCHOR_FEATURE_DIM)`` and ``anchor_confidence``
     ``(max_length,)``, projected onto the SAME pieces as the labels (so a postcode anchor lands on
     exactly its sub-tokens) and zero-padded. Absent → those keys are omitted (back-compat).
+
+    When ``gazetteer_lexicon`` is supplied (the gazetteer anchor, #464), also returns
+    ``gazetteer_features`` ``(max_length, lexicon.feature_dim)`` and ``gazetteer_confidence``
+    ``(max_length,)`` — candidate-tag-set clues painted from the RAW SURFACE only (never labels;
+    identical computation at train and inference). Absent → omitted (back-compat).
     """
     spans = tokenizer.encode_with_spans(raw)
     bio_labels = realign_labels_to_pieces(raw, tokens, labels, spans)
@@ -303,4 +310,27 @@ def encode_row(
             confs = confs + [0.0] * pad_needed
         out["anchor_features"] = feats
         out["anchor_confidence"] = confs
+
+    if gazetteer_lexicon is not None:
+        # Local import keeps tokenizer.py import-light for consumers that never use the anchor.
+        from .gazetteer_anchor import realign_gazetteer_to_pieces
+
+        gfeats, gconfs = realign_gazetteer_to_pieces(raw, list(spans), gazetteer_lexicon)
+        gfeats = gfeats[:max_length]
+        gconfs = gconfs[:max_length]
+        # Train-time channel choreography (#464): zero the clue adjacent to postcode-anchor hits so
+        # the model never learns the biased region->postcode CRF transition. Keyed off the SAME anchor
+        # confidence inference uses (consistent train/inference). No-op without the anchor channel.
+        if gazetteer_choreography and "anchor_confidence" in out:
+            from .gazetteer_anchor import suppress_gazetteer_near_postcode
+
+            gfeats, gconfs = suppress_gazetteer_near_postcode(
+                gfeats, gconfs, out["anchor_confidence"][: len(gconfs)], gazetteer_lexicon.feature_dim
+            )
+        gzero = [0.0] * gazetteer_lexicon.feature_dim
+        if pad_needed > 0:
+            gfeats = gfeats + [gzero] * pad_needed
+            gconfs = gconfs + [0.0] * pad_needed
+        out["gazetteer_features"] = gfeats
+        out["gazetteer_confidence"] = gconfs
     return out

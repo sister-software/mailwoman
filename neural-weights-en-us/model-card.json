@@ -1,17 +1,17 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "4.1.0",
-	"model_lineage": "v0.9.7-unit-v3 / step 20000 (unit-coverage retrain off v0.9.3-de-regiontail, itself off v0.7.2) \u2014 shipped as the unified 4.1.0 release version; tokenizer 0.6.0-a0",
-	"phase": "Stage 3 \u2014 street decomposition + PO box + intersection + secondary-unit coverage",
+	"version": "4.2.0",
+	"model_lineage": "v1.0.2-consolidation-runB / step 20000 — consolidation of the parity campaign (unit + affix + country gazetteer-anchor + multi-locale balance) init_from consolidation v1.0.0 step-040000 (fresh optimizer — NOT resume; recorded honestly, see docs/articles/evals/2026-06-10-consolidation-session.md) @ affix 17x on corpus v0.4.12-consolidation — shipped as the unified 4.2.0 release version; tokenizer 0.6.0-a0",
+	"phase": "Stage 3 — v1.0 consolidation: parity flag-plant (spine + country anchor + affix existence)",
 	"license": "AGPL-3.0-only",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "0.4.5-unit-v2",
+		"corpus_version": "0.4.12-consolidation",
 		"tokenizer_version": "0.6.0-a0",
 		"steps": 20000,
 		"best_step": 20000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v0.9.3-de-regiontail base (anchor ON, self-cond ON, region-tail German, both-order synth) + a 50K format-diverse secondary-unit shard (USPS Pub-28 C2 designators across positions) @ synth-unit 1.5x. CE-only (crf_loss_weight=0.0). lr=1.5e-4 constant, warmup=1000, 20000 steps, seed 42. The synth-unit dose was tuned 2.5→1.5 (v3) after the 2.5 run (v2) showed no fp32 regression but a cleaner low-dose profile was preferred."
+		"recipe": "Run B of the consolidation campaign: init_from the clean v1.0.0 consolidation step-040000 (every proven lever: unit shard, affix-ml shard, country balanced shard + gazetteer soft anchor + channel choreography, both-order German), synth-affix 17x, 20k steps, CE-only, lr=1.5e-4, seed 42. Selected over v1.0.0/A/C at the fork: strongest stable variant (US postcode 97.3, country 89.8, FR hn 94.6). STATED RE-BASELINES vs canonical bars: affix 64.9/48.8 (vs 78/67), US street 76.2 (vs 80.4), unit 90.6 (vs 92) — measured 29M stability ceiling, see issue #492. GATE NUMBERS ARE REPAIRS-OFF (#486). Eval procedure REQUIRES --gazetteer-lexicon + --suppress-gaz-near-postcode (zero-filled clues degrade country recall and fake an affix crash)."
 	},
 	"architecture": {
 		"hidden_size": 384,
@@ -79,14 +79,14 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "v4.1.0 \u2014 secondary-unit coverage. Same Stage-3 33-BIO-label schema as 4.0.0 (no schema change). Adds a format-diverse synth-unit shard (USPS Pub-28 C2 designators: APT/STE/FL/\u2026 across unit-after, unit-first, bare, and venue-prefixed layouts) on top of the v0.9.3 multi-locale base. `unit` recognition 0%\u219292.3% on a held-out real-designator eval; by 'negative space' it also raised US `street` +3.3pp and lifted `country` (US +6pp, FR +15pp) \u2014 covering the missing tag sharpened its neighbors. No regression vs 4.0.0 on any US/FR golden tag; DE native-order locality held (90.6%).",
+	"notes": "v4.1.0 — secondary-unit coverage. Same Stage-3 33-BIO-label schema as 4.0.0 (no schema change). Adds a format-diverse synth-unit shard (USPS Pub-28 C2 designators: APT/STE/FL/… across unit-after, unit-first, bare, and venue-prefixed layouts) on top of the v0.9.3 multi-locale base. `unit` recognition 0%→92.3% on a held-out real-designator eval; by 'negative space' it also raised US `street` +3.3pp and lifted `country` (US +6pp, FR +15pp) — covering the missing tag sharpened its neighbors. No regression vs 4.0.0 on any US/FR golden tag; DE native-order locality held (90.6%).",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=48000",
 		"max_sequence_length": 128,
 		"opset": 17,
 		"fp32_size_mb": 112.9,
-		"int8_size_mb": 28.4
+		"int8_size_mb": 28.6
 	},
 	"files": {
 		"model": "model.onnx",
@@ -101,5 +101,53 @@
 		"held_out_ece_calibrated": 0.0035,
 		"note": "calibration.json is the global table; calibration-per-locale.json carries per-locale tables (the global table under-serves DE/NL). Apply via @mailwoman/core/decoder's createCalibrator; default parse output is byte-stable when omitted."
 	},
-	"base_relpath": "/data/output-v097-unit-v3-s42/checkpoints/step-020000"
+	"base_relpath": "/data/output-v097-unit-v3-s42/checkpoints/step-020000",
+	"eval": {
+		"ship_gate_2026_06_10": {
+			"honest_eval_vt": {
+				"n": 1428,
+				"region_match_pct": 99.9,
+				"coord_p50_km": 3.4,
+				"coord_p90_km": 7.4,
+				"pip_coverage_adj_pct": 47.1,
+				"baseline_v410_region_pct": 100.0,
+				"verdict": "PASS"
+			},
+			"demo_presets": "PASS — 5/6 identical to v4.1.0; 6th is the intended affix split",
+			"int8_vs_fp32": "PASS — all gate tags within 0.1pp; quant deterministic",
+			"de_native_order_int8_pct": 90.9
+		},
+		"per_component_int8_gazfed": {
+			"us": {
+				"postcode": 97.3,
+				"country_homograph": 89.8,
+				"micro": 84.8,
+				"locality": 72.9,
+				"region": 89.1,
+				"street": 76.2,
+				"street_prefix": 64.9,
+				"street_suffix": 48.8,
+				"unit": 90.6,
+				"house_number": 96.9
+			},
+			"fr": {
+				"postcode": 99.6,
+				"house_number": 94.6,
+				"region": 27.6
+			},
+			"de": {
+				"native_locality_anchor_on": 90.9
+			}
+		},
+		"known_regressions_vs_4_1_0": {
+			"us_street": -2.3,
+			"unit": -1.7,
+			"us_postcode": -1.0,
+			"mitigations": "arbitration layer #478; architecture escalation #492"
+		}
+	},
+	"files_md5": {
+		"model.onnx": "9eb4a99f6db06cccff57939f657c09f9",
+		"tokenizer.model": "b6137e8c52914c9715374268ecaa4bc6"
+	}
 }

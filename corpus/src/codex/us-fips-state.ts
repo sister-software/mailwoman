@@ -10,11 +10,6 @@
  *   numeric ID used by every TIGER product). It is reproduced here so the TIGER adapter can resolve
  *   `statefp` columns (e.g. `"50"`) into a `region` component (e.g. `"VT"`) without an extra DB
  *   join.
- *
- *   Drawn 2026-05-17 from the author's earlier draft
- *   `tiger/state.ts` (implemented from the author's earlier draft concept). The earlier draft
- *   ships these as TypeScript enums + a TypeORM-backed service layer; mailwoman only needs the flat
- *   lookup so the file is a plain `Record` plus a small helper.
  */
 
 /** Per-state record: two-letter postal abbreviation + full canonical display name. */

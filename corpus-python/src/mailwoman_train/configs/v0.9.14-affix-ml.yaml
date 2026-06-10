@@ -1,0 +1,158 @@
+# === v0.9.14-affix-ml (#466 step 1) — the AFFIX MULTI-LOCALE REROLL ==============================
+# ONE conceptual variable vs v0.9.8-affix (the gated affix lever): the affix shard is now MULTI-LOCALE.
+# Corpus v0.4.11-affix-ml = v0.4.6-affix with the US-only synth-affix shard SWAPPED for a multi-locale
+# one (50K US affix splits — identical dose to v0.9.8 — PLUS 40K native-order FR/DE/IT/NL balance rows,
+# no affix split, no annotation). Everything else is held EXACTLY at v0.9.8: same recipe (postcode
+# anchor ON, self-cond ON, phrase priors ON), same source_weights (synth-affix 2.0), seed 42, 20k steps.
+# NO gazetteer anchor here — that + its choreography fold in at CONSOLIDATION (#466). This is a clean
+# SOLO A/B: does multi-locale balance clear the FR-postcode dilution WITHOUT losing the affix win?
+#
+# WHY. v0.9.8 cleared the affix gate (street_prefix 0→78, street_suffix 0→67, P100; US street +2.1
+# negative-space) but its ONE blemish was FR postcode −3.9 — a US-ONLY shard (every row "City, ST ZIP")
+# strengthened the US postcode-after-region pattern and diluted FR's postcode-BEFORE-locality order.
+# The night-9 cumulative country run PROVED the recovery: its multi-locale rows lifted FR postcode
+# 95.6→99.5. This reroll folds that exact fix into the affix shard itself (see the postmortem
+# 2026-06-09, and docs/articles/plan/2026-06-09-parity-endgame.mdx move 2). The US affix EXPOSURE is
+# unchanged (50K US rows at weight 2.0 = same weighted mass as v0.9.8); the balance rows are additive.
+#
+# PRE-REGISTERED GATE (stop at 20k), fp32-to-fp32 vs v4.1.0 / v0.9.8:
+#   - RECOVER FR postcode: FR postcode F1 >= v4.1.0 (undo the −3.9; back within ~1pp).
+#   - RETAIN the affix win: street_suffix F1 >= 65% AND street_prefix F1 >= 70% on the real-affix eval
+#     (data/eval/external/street-affix-real.jsonl) — at or above v0.9.8 (78/67).
+#   - `street` F1 >= v4.1.0 (no loss; negative space) on golden US + the real-affix eval.
+#   - RETAIN the unit win: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl.
+#   - NO-REGRESSION (within ~1pp, fp32): US house_number / postcode / locality / region; DE native-order
+#     locality (de-order-eval.sh). The balance rows ADD FR/DE order signal — DE should hold or improve.
+#   DECISION: FR postcode recovered + affix retained + no tripwire → PROMOTE candidate (v4.2.0) and the
+#     affix lever is BANKED for consolidation. If affix slips below v0.9.8: too much balance crowded the
+#     US dose — raise synth-affix to 2.5 or lower --multilocale-count and rerun. If FR still dilutes:
+#     raise --multilocale-count (more FR balance).
+# Measure: per-locale-f1.ts (US/FR golden, fp32 — needs --tokenizer + --model-card) + score-affix.ts
+#   (the UNFOLDED affix scorer — per-locale-f1's foldToComponents joins affixes into `street` and can't
+#   measure the split) + the street-affix-real + unit-real-designators evals + de-order-eval.sh.
+#
+# CORPUS: v0.4.11-affix-ml (shard swap, no base rebuild). Reproduce:
+#   node scripts/build-street-affix-shard.mjs --output /tmp/affix-ml-train.jsonl --count 50000 --multilocale-count 40000 --seed 42
+#   python3 scripts/jsonl-to-parquet.py --input /tmp/affix-ml-train.jsonl --output <NEW>/train/part-affix-ml-train.parquet
+#   python3 scripts/assemble-affix-ml-overlay-manifest.py --base <v0.4.6-affix MANIFEST.json> \
+#       --new-dir <NEW> --modal-root /data/.../corpus-v0.4.11-affix-ml --version v0.4.11-affix-ml
+#   # then `modal volume put` the parquet + the manifest onto the mailwoman-training volume.
+#
+# Launch:
+#   modal run -d scripts/modal/train_remote.py \
+#     --config v0.9.14-affix-ml.yaml --resume none \
+#     --trackio --trackio-space sister-software/mailwoman-trackio
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.4.11-affix-ml/corpus-v0.4.11-affix-ml
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-po-box: 1.5
+    synth-intersection: 0.2
+    synth-german: 6.0
+    # retained from v4.1.0 (v0.9.7-unit-v3) — keep the secondary-unit win.
+    synth-unit: 1.5
+    # the multi-locale affix shard. 2.0 keeps the US affix EXPOSURE identical to v0.9.8 (50K US rows at
+    # 2.0); the 40K FR/DE/IT/NL balance rows ride the same weight (additive, postcode-order signal).
+    synth-affix: 2.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  class_weights:
+    O: 0.5
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v0914-affix-ml-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 20000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  trackio_project: mailwoman
+  trackio_run_name: v0.9.14-affix-ml-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

@@ -70,6 +70,13 @@ const resolvedTree: AddressTree = await resolver.resolveTree(tree)
 const enriched = await resolver.resolveTree(tree, { hierarchyCompletion: true, includeAncestors: true })
 ```
 
+The resolver is the second half of a deliberate division of labor: gazetteer knowledge also flows
+*into* the parse itself as soft anchor features (postcode anchor, gazetteer candidate-tag clues) —
+the lexicon informs the model, it never overrides it. See
+[What Mailwoman is](./concepts/what-mailwoman-is.mdx) for the architecture and
+[Closed-vocab fields: model-first](./plan/reference/closed-vocab-fields-model-first.mdx) for why
+"informs, never overrides" is load-bearing.
+
 ## Output types
 
 ### `AddressTree`

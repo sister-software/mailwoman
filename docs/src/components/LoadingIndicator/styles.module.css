@@ -1,0 +1,182 @@
+/**
+ * LoadingIndicator — pure CSS animations for three loading modes.
+ *
+ * Modes:
+ *   pulse   — animated opacity skeleton bars
+ *   spinner — CSS border-top rotation ring
+ *   staged  — step list with animated checkmarks
+ *
+ * All animations are GPU-friendly (opacity + transform only).
+ * Themed via --ifm-* CSS custom properties.
+ */
+
+/* ── Shared container ──────────────────────────────────────────────────── */
+
+.container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75rem;
+	padding: 1.5rem;
+}
+
+.label {
+	font-size: 0.85rem;
+	color: var(--ifm-color-emphasis-600);
+	font-family: var(--ifm-font-family-monospace);
+	text-align: center;
+}
+
+/* ── Pulse (skeleton bars) ────────────────────────────────────────────── */
+
+.pulseTrack {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	width: 100%;
+	max-width: 320px;
+}
+
+.pulseBar {
+	height: 0.75rem;
+	border-radius: 4px;
+	background: var(--ifm-color-emphasis-200);
+	animation: pulseFade 1.4s ease-in-out infinite;
+}
+
+/* Staggered delays so bars don't blink in lockstep. */
+.pulseBar:nth-child(1) { animation-delay: 0s; }
+.pulseBar:nth-child(2) { animation-delay: 0.15s; }
+.pulseBar:nth-child(3) { animation-delay: 0.3s; }
+.pulseBar:nth-child(4) { animation-delay: 0.45s; }
+.pulseBar:nth-child(5) { animation-delay: 0.6s; }
+
+/* Width variation for natural skeleton look. */
+.pulseBar:nth-child(odd)  { width: 100%; }
+.pulseBar:nth-child(even) { width: 72%; }
+
+@keyframes pulseFade {
+	0%, 100% { opacity: 0.35; }
+	50%      { opacity: 1; }
+}
+
+/* ── Spinner (CSS ring) ───────────────────────────────────────────────── */
+
+.spinner {
+	width: 2rem;
+	height: 2rem;
+	border: 3px solid var(--ifm-color-emphasis-200);
+	border-top-color: var(--ifm-color-primary);
+	border-radius: 50%;
+	animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
+/* Sizes */
+.spinnerSmall  { width: 1.25rem; height: 1.25rem; border-width: 2px; }
+.spinnerLarge  { width: 3rem;    height: 3rem;    border-width: 4px; }
+
+/* ── Staged progress ──────────────────────────────────────────────────── */
+
+.stagedList {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	width: 100%;
+	max-width: 360px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.stagedStep {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.4rem 0.6rem;
+	border-radius: 4px;
+	font-size: 0.85rem;
+	font-family: var(--ifm-font-family-base);
+	transition: background 0.3s, color 0.3s;
+}
+
+/* Pending: dimmed */
+.stagedPending {
+	color: var(--ifm-color-emphasis-500);
+}
+
+/* Active: highlighted, with a pulsing dot */
+.stagedActive {
+	color: var(--ifm-color-primary);
+	background: color-mix(in srgb, var(--ifm-color-primary) 8%, transparent);
+	font-weight: 600;
+}
+
+/* Complete: green text + checkmark icon */
+.stagedComplete {
+	color: var(--ifm-color-success, #1aa84d);
+}
+
+/* Step icon container — fixed width so text aligns */
+.stepIcon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	flex-shrink: 0;
+}
+
+/* Pulsing dot for the active step */
+.activeDot {
+	width: 0.55rem;
+	height: 0.55rem;
+	border-radius: 50%;
+	background: var(--ifm-color-primary);
+	animation: pulseDot 1s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+	0%, 100% { opacity: 0.3; transform: scale(0.8); }
+	50%      { opacity: 1;   transform: scale(1.2); }
+}
+
+/* Checkmark: drawn with a short CSS stroke animation */
+.checkmark {
+	width: 1rem;
+	height: 1rem;
+	position: relative;
+}
+
+.checkmark::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 25%;
+	width: 0.35rem;
+	height: 0.65rem;
+	border: solid var(--ifm-color-success, #1aa84d);
+	border-width: 0 2px 2px 0;
+	transform: translateY(-60%) rotate(45deg);
+	animation: checkPop 0.35s ease-out both;
+}
+
+@keyframes checkPop {
+	0%   { opacity: 0; transform: translateY(-60%) rotate(45deg) scale(0); }
+	60%  { opacity: 1; transform: translateY(-60%) rotate(45deg) scale(1.25); }
+	100% { opacity: 1; transform: translateY(-60%) rotate(45deg) scale(1); }
+}
+
+/* Spinner in place of the active dot (optional, for active-step spinner) */
+.activeSpinner {
+	width: 0.85rem;
+	height: 0.85rem;
+	border: 2px solid var(--ifm-color-emphasis-200);
+	border-top-color: var(--ifm-color-primary);
+	border-radius: 50%;
+	animation: spin 0.7s linear infinite;
+}

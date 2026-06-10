@@ -1,0 +1,89 @@
+---
+slug: the-lookup-table-that-almost-fooled-us
+title: "A lookup table scored 100%. We shipped the model anyway."
+authors: [teffen]
+tags: [neural, parsing, evaluation, training, architecture]
+date: 2026-06-09
+---
+
+This morning we published a post that ended with a tidy rule: some address tags don't
+want a neural network, they want a lookup table. Country names are a closed list in a
+known position. Our deterministic matcher scored a perfect 100 on the eval. The
+retrained model scored a mess. Case closed, we wrote.
+
+By the afternoon we'd reopened the case, and the verdict flipped — hard enough that
+we've retracted the morning post rather than leave the wrong conclusion lying around
+for someone to cite. This is the story of how a perfect score nearly talked us out of
+the entire premise of the project.
+
+{/* truncate */}
+
+## The score was real. The fight was rigged.
+
+Here's what the morning's comparison actually was. In one corner: a flat lookup,
+matching the trailing chunk of an address against the ISO country list. In the other: a
+model we had retrained on a synthetic shard where *every single row* ended in a country.
+That model learned exactly what we taught it — "the last thing in an address is a
+country" — and started promoting cities and states to nationhood. Precision: 23%.
+
+And the referee? An eval with no homographs in it. Not one "Georgia." Not one "CA."
+Fifty-four addresses where the trailing token was never ambiguous, which is to say,
+fifty-four addresses where a lookup table cannot lose.
+
+A crippled model, an unloseable eval, and a perfect score. We looked at that 100% and
+wrote down a design principle. You've done this too — a benchmark hands you a clean
+number, the number agrees with the architecture you were already tempted by, and the
+question "what exactly did this measure?" quietly leaves the room.
+
+## The objection that reopened it
+
+The pushback, when it came, was about the soul of the thing. Mailwoman is a model
+system. The entire bet is that a human reads "Atlanta, Georgia" and "Tbilisi, Georgia"
+and resolves them without a rulebook, so a context-reading model should too. A lookup
+table can't do that. It needs a hand-coded guard for every collision — Georgia, Jordan,
+Lebanon, CA — and a growing list of exceptions is precisely the disease we left
+rules-based parsing to escape.
+
+So we did what we should have done in the morning: gave the model a fair fight.
+
+We rebuilt the training shard with the homographs *in* it, both ways. "Tbilisi, Georgia"
+labeled as a country, "Atlanta, Georgia 30309" labeled as a state, the same surface
+form pulling in opposite directions until the only way to win is to read the
+neighbors. We added addresses with no country at all, so abstaining stays on the menu.
+Then we built the eval the morning's comparison never had: Paris, Texas against Paris,
+France; Kingston, New York against Kingston, Jamaica; person-named countries; the works.
+
+## The fair fight
+
+The retrained model's first result: country recognition went from literally zero to
+alive — at **100% precision, with zero over-fires**. Not one city promoted to a nation.
+Not one "Georgia" guessed wrong. Region accuracy *improved* while the new tag came
+online. The contrast pairs did exactly what the theory said: the model learned that the
+label is contextual, because we finally showed it contexts that disagree.
+
+What it missed, it missed honestly: Eswatini. Timor-Leste. Bhutan. Countries the
+training data mentions a handful of times. That failure mode is recognition, a
+vocabulary problem, and vocabulary is what gazetteers are for.
+
+Which is where the lookup table re-enters the story — demoted. It doesn't get to be
+the judge anymore; it gets to be a witness. We feed gazetteer membership into the model
+as a per-token clue: *this word is on the country list; this word is on two lists, so
+pay attention.* The model still rules on every tag. Add Liechtenstein to the gazetteer
+tomorrow and the clue fires with no retrain, because the knowledge lives outside the
+weights. The morning's matcher survives intact, doing the one job it was always
+qualified for: knowing what's on the list. Reading the room was never on its résumé.
+
+## The lesson we're keeping
+
+The seductive thing about a deterministic component is that it cannot be wrong in the
+cases you thought to test. The treacherous thing is the same sentence with the
+emphasis moved: it cannot be *right* in the cases you didn't. Our 100% was an artifact
+of an eval that only contained the easy half of the problem.
+
+When a benchmark tells you the simple thing beats the learned thing, before you
+celebrate, check who the learned thing was that day, and check what the benchmark left
+out. Sometimes the simple thing genuinely wins. Ours lost the rematch the moment the
+hard cases showed up — and the model, given one honest shot at the data, did the thing
+we built it to do.
+
+Trust the model. Feed it better.

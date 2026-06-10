@@ -4,10 +4,6 @@
 /**
  *   US ZIP (Zone Improvement Plan) codes: branded string types, the shape patterns, the first-digit →
  *   state geographic prior, and a state-plus-ZIP plucker.
- *
- *   Drawn 2026-06-03 from the author's earlier draft
- *   `mailwoman/postal/zipcode.ts` (implemented from the author's earlier draft concept). The only adaptation: the state abbreviation type comes from this package's own
- *   {@link state.js} rather than `@earlier-draft/tiger`, so the codex stays dependency-free.
  */
 
 import type { Tagged } from "type-fest"

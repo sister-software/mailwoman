@@ -164,6 +164,8 @@ class MailwomanCoarseEncoder(nn.Module):
         use_postcode_anchor: bool = False,
         anchor_feature_dim: int = NUM_LOCALES + 2,
         inject_first_token: bool = False,
+        use_gazetteer_anchor: bool = False,
+        gazetteer_feature_dim: int = 5,
     ) -> None:
         super().__init__()
         self.pad_token_id = pad_token_id
@@ -201,6 +203,15 @@ class MailwomanCoarseEncoder(nn.Module):
         # Dual-injection (#327): also place the pooled anchor at position 0. Only meaningful with the
         # anchor on; harmlessly ignored otherwise.
         self.inject_first_token = bool(inject_first_token) and use_postcode_anchor
+        # Gazetteer-anchor conditioning channel (#464; knowledge-ladder rung 3.2). Same additive
+        # input-layer shape as the postcode anchor: g_i = c_i · (W_g·gazetteer_features + v_GAZ),
+        # where gazetteer_features is the per-token multi-hot candidate-tag set (country/region/
+        # po_box/cedex/homograph) painted from the RAW SURFACE by the codex lexicon — never from
+        # labels, so train and inference share one computation. The clue INFORMS, the model decides
+        # (model-first; the homograph bit explicitly marks "context is load-bearing here"). c=0
+        # tokens get g_i=0 — no regime switch, same continuum argument as the postcode anchor.
+        self.use_gazetteer_anchor = use_gazetteer_anchor
+        self.gazetteer_feature_dim = int(gazetteer_feature_dim) if use_gazetteer_anchor else 0
         # v0.3.0 additions: CRF decoder for structural validity + learned tag dynamics,
         # label smoothing on the per-token CE leg for calibration. Both gate-able for
         # ablation studies via the kwargs above.
@@ -269,6 +280,17 @@ class MailwomanCoarseEncoder(nn.Module):
         else:
             self.anchor_projection = None
             self.anchor_token_embedding = None
+
+        # Gazetteer-anchor projection W_g (feature_dim→hidden) + learned v_GAZ cue (#464). None when
+        # off (forward skips it → bit-identical to a no-gazetteer encoder).
+        self.gazetteer_projection: nn.Linear | None
+        self.gazetteer_token_embedding: nn.Parameter | None
+        if self.use_gazetteer_anchor:
+            self.gazetteer_projection = nn.Linear(self.gazetteer_feature_dim, hidden_size, bias=True)
+            self.gazetteer_token_embedding = nn.Parameter(torch.zeros(hidden_size))
+        else:
+            self.gazetteer_projection = None
+            self.gazetteer_token_embedding = None
 
         self.blocks = nn.ModuleList(
             [
@@ -351,6 +373,8 @@ class MailwomanCoarseEncoder(nn.Module):
         locale_ids: torch.Tensor | None = None,
         anchor_features: torch.Tensor | None = None,
         anchor_confidence: torch.Tensor | None = None,
+        gazetteer_features: torch.Tensor | None = None,
+        gazetteer_confidence: torch.Tensor | None = None,
     ) -> "_CoarseEncoderOutput":
         bsz, seq = input_ids.shape
         if seq > self.max_position_embeddings:
@@ -425,6 +449,31 @@ class MailwomanCoarseEncoder(nn.Module):
             raise ValueError(
                 "anchor_features supplied but use_postcode_anchor=False — rebuild the "
                 "encoder with use_postcode_anchor=True or drop the anchor arguments"
+            )
+
+        # Gazetteer-anchor injection (#464). Per-token additive: g_i = c_i · (W_g·features + v_GAZ),
+        # added to the input embedding. Confidence is 1.0 where any lexicon bit fires, 0 elsewhere —
+        # c=0 tokens are the no-clue identity (same continuum as the postcode anchor, no regime
+        # switch). Span-local by construction; no first-token pooling (clues are positional facts).
+        if self.gazetteer_projection is not None and self.gazetteer_token_embedding is not None:
+            if gazetteer_features is None or gazetteer_confidence is None:
+                gazetteer_features = torch.zeros(
+                    bsz, seq, self.gazetteer_feature_dim, dtype=h.dtype, device=h.device
+                )
+                gazetteer_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
+            elif gazetteer_features.shape != (bsz, seq, self.gazetteer_feature_dim):
+                raise ValueError(
+                    f"gazetteer_features shape {tuple(gazetteer_features.shape)} != "
+                    f"({bsz}, {seq}, {self.gazetteer_feature_dim})"
+                )
+            gaz_vec = (
+                self.gazetteer_projection(gazetteer_features.to(h.dtype)) + self.gazetteer_token_embedding
+            )
+            h = h + gazetteer_confidence.to(h.dtype).unsqueeze(-1) * gaz_vec
+        elif gazetteer_features is not None:
+            raise ValueError(
+                "gazetteer_features supplied but use_gazetteer_anchor=False — rebuild the "
+                "encoder with use_gazetteer_anchor=True or drop the gazetteer arguments"
             )
 
         h = self.input_dropout(self.input_ln(h))
@@ -682,6 +731,9 @@ class MailwomanCoarseEncoder(nn.Module):
             "use_postcode_anchor": bool(self.use_postcode_anchor),
             "anchor_feature_dim": int(self.anchor_feature_dim),
             "inject_first_token": bool(self.inject_first_token),
+            # Gazetteer-anchor channel (#464). False/0 on pre-gazetteer weights.
+            "use_gazetteer_anchor": bool(self.use_gazetteer_anchor),
+            "gazetteer_feature_dim": int(self.gazetteer_feature_dim),
             "id2label": dict(ID_TO_LABEL),
             "label2id": dict(LABEL_TO_ID),
         }
@@ -733,6 +785,8 @@ class MailwomanCoarseEncoder(nn.Module):
             use_postcode_anchor=cfg.get("use_postcode_anchor", False),
             anchor_feature_dim=cfg.get("anchor_feature_dim", NUM_LOCALES + 2),
             inject_first_token=cfg.get("inject_first_token", False),
+            use_gazetteer_anchor=cfg.get("use_gazetteer_anchor", False),
+            gazetteer_feature_dim=cfg.get("gazetteer_feature_dim", 5),
         )
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
         try:
@@ -786,6 +840,10 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoa
         use_postcode_anchor=getattr(cfg.model, "use_postcode_anchor", False),
         anchor_feature_dim=NUM_LOCALES + 2,
         inject_first_token=getattr(cfg.model, "inject_first_token", False),
+        # Gazetteer-anchor channel (#464). feature_dim follows the lexicon's slot count (the loader
+        # validates the JSON's feature_dim against this at startup via the trainer).
+        use_gazetteer_anchor=getattr(cfg.model, "use_gazetteer_anchor", False),
+        gazetteer_feature_dim=getattr(cfg.model, "gazetteer_feature_dim", 5),
     )
 
 

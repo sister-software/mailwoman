@@ -46,7 +46,7 @@
 					}
 				}
 			},
-			"notes": "Phase 2 ship. F1 reported from PR #42 session-notes (only the per-component F1 numbers were captured; precision/recall/support/calibration not preserved at that time). Early-stopped at step 6000/50000 per \u00a76 '<90% F1 stop and re-examine' clause. See PR #42 for full diagnosis (positional-heuristic overfit from 75% wof-admin single-name training corpus)."
+			"notes": "Phase 2 ship. F1 reported from PR #42 session-notes (only the per-component F1 numbers were captured; precision/recall/support/calibration not preserved at that time). Early-stopped at step 6000/50000 per §6 '<90% F1 stop and re-examine' clause. See PR #42 for full diagnosis (positional-heuristic overfit from 75% wof-admin single-name training corpus)."
 		},
 		{
 			"run_id": "stage1-coarse-v0.1.0-vs-golden-v0.1.2",
@@ -143,7 +143,7 @@
 					}
 				]
 			},
-			"notes": "Apples-to-apples baseline against the expanded golden v0.1.2 (4535 entries) so v0.2.0 (in-flight) gets a direct delta. Calibration is the headline finding \u2014 38K predictions in 0.9-1.0 conf bucket are only 33.7% accurate (model is confidently wrong, severe overconfidence). Postcode precision is artifically 1.0 because the model only emitted ONE postcode prediction out of 2980 (recall 0.0003); not meaningful. Eval ONNX checkpoint: /data/models/quantized/model-v0.1.0-int8.onnx sha256 aa8c2acf55e25fb23beead3bcafd543e44bc874c664d19182a2681554f73ebe6 (but eval ran against the archived pytorch checkpoint at stage1-coarse-v0.1.0-archived/step-006000 which is the source the ONNX was exported from)."
+			"notes": "Apples-to-apples baseline against the expanded golden v0.1.2 (4535 entries) so v0.2.0 (in-flight) gets a direct delta. Calibration is the headline finding — 38K predictions in 0.9-1.0 conf bucket are only 33.7% accurate (model is confidently wrong, severe overconfidence). Postcode precision is artifically 1.0 because the model only emitted ONE postcode prediction out of 2980 (recall 0.0003); not meaningful. Eval ONNX checkpoint: /data/models/quantized/model-v0.1.0-int8.onnx sha256 aa8c2acf55e25fb23beead3bcafd543e44bc874c664d19182a2681554f73ebe6 (but eval ran against the archived pytorch checkpoint at stage1-coarse-v0.1.0-archived/step-006000 which is the source the ONNX was exported from)."
 		},
 		{
 			"run_id": "stage1-coarse-v0.2.0-vs-golden-v0.1.0",
@@ -234,7 +234,7 @@
 					}
 				]
 			},
-			"notes": "Stage 1 coarse v0.2.0 \u2014 same architecture as v0.1.0 (8.87M params, 6L/256H/4-heads), trained on corpus-v0.2.0 (263M aligned rows, 6 train sources) with source-weighted multinomial sampler + relaxed coarse gate (fix in PR for #43). The v0.1.0 positional-heuristic overfit was driven by a strict country-tag gate that dropped ~94% of v0.2.0 before any source weighting; with the gate relaxed and the loader interleaving sources at the row level, the model now sees a fixed mix per batch instead of mono-source blocks.\n\nONNX int8 sha256: dece533c5ad0507256a1ee1dbe9768451491802e09d9c6082ea27f7221eb2098.\n\nDelta vs v0.1.0 on the same golden v0.1.0 eval set:\n  region    F1 0.104 \u2192 0.829  (8.0x)\n  locality  F1 0.042 \u2192 0.647  (15.4x)\n  postcode  F1 0.000 \u2192 0.859  (n/a; v0.1.0 only emitted 1 prediction)\n  country   F1 0.000 \u2192 0.000  (only 6 support entries; both models fail; investigate)\n  exact match 0.00 \u2192 0.527\n\nCalibration much tighter: conf>0.9 bucket accuracy 0.337 \u2192 0.882. Below \u00a76 95% target but a real 9x macro-F1 win + 2.6x calibration tightening; ship-worthy per the graceful-failure framing."
+			"notes": "Stage 1 coarse v0.2.0 — same architecture as v0.1.0 (8.87M params, 6L/256H/4-heads), trained on corpus-v0.2.0 (263M aligned rows, 6 train sources) with source-weighted multinomial sampler + relaxed coarse gate (fix in PR for #43). The v0.1.0 positional-heuristic overfit was driven by a strict country-tag gate that dropped ~94% of v0.2.0 before any source weighting; with the gate relaxed and the loader interleaving sources at the row level, the model now sees a fixed mix per batch instead of mono-source blocks.\n\nONNX int8 sha256: dece533c5ad0507256a1ee1dbe9768451491802e09d9c6082ea27f7221eb2098.\n\nDelta vs v0.1.0 on the same golden v0.1.0 eval set:\n  region    F1 0.104 → 0.829  (8.0x)\n  locality  F1 0.042 → 0.647  (15.4x)\n  postcode  F1 0.000 → 0.859  (n/a; v0.1.0 only emitted 1 prediction)\n  country   F1 0.000 → 0.000  (only 6 support entries; both models fail; investigate)\n  exact match 0.00 → 0.527\n\nCalibration much tighter: conf>0.9 bucket accuracy 0.337 → 0.882. Below §6 95% target but a real 9x macro-F1 win + 2.6x calibration tightening; ship-worthy per the graceful-failure framing."
 		},
 		{
 			"run_id": "stage2-v3.0.0-vs-golden-v0.1.2",
@@ -361,7 +361,65 @@
 					}
 				]
 			},
-			"notes": "Stage 2 v3.0.0 (formerly tagged v0.3.0 in the model-series numbering; realigned at publish to match the npm @mailwoman/neural-weights-en-us@3.0.0 release) \u2014 same encoder geometry as v2.0.x (8.87M params, 6L/256H/4-heads) plus a linear-chain CRF decoder (+~500 params with a frozen BIO transition mask) and a 21-label classifier head (was 15) that adds venue / street / house_number BIO classes. Trained on corpus-v0.3.0 (~103M aligned canonical rows, 11 sources incl. the new usgov-nad source with 57M structured 911-grade address points; +30% over v0.2.0). \n\nONNX int8 sha256: 24f74f0b0dc1233e7278063d9e5deffd6d2d329d366100961967dc100aaaf276.\n\nFOUR hparam-iteration runs converged on lr=1.5e-4 (vs v0.2.0's 5e-4), crf_loss_weight=0.05 (down from 1.0), label_smoothing=0.0 (was 0.1), grad_clip_norm=1.0 (new). The dual CE+CRF loss is far more LR-sensitive than v0.2.0's CE-only path. See DECISIONS.md \"v0.3.0 Stage 2 dual loss\" entry for the diagnostic trail; CRF NLL is per-sequence/unbounded vs CE's per-token/log-bounded, and equal-weight summing drowns out CE gradients.\n\nShipped checkpoint: step-001800. Training stopped after observing the same divergence pattern that broke runs 1\u20133, but delayed enough that this checkpoint reaches val_macro_f1=0.4 on the eval val split before drift kicks in. Per the v0.3.0 success metric (improve over v0.2.0 in at least one of F1, calibration, capability surface), the **capability-surface win is decisive** \u2014 v0.3.0 emits 3 new label classes (venue/street/house_number) where v0.2.0 emitted none, with house_number F1=0.78 and venue F1=0.39 on golden v0.1.2's substantial coverage (1742 and 1101 entries respectively).\n\nCoarse F1 vs v0.2.0's small-sample slice eval \u2014 **regression on every coarse class** (region 0.83 \u2192 0.18, locality 0.65 \u2192 0.27, postcode 0.86 \u2192 0.76, country n/a \u2192 0.28 on a 245-entry support pool). The combined effect of (a) early-stopping at step 1800 of 50K and (b) the 15\u219221 label space pulling per-token softmax mass off the coarse predictions explains the drop. v0.4.0 specifically targets recovery. Calibration: conf>0.9 bucket accuracy 0.60 \u2014 looser than v0.2.0's 0.88 (small-sample) but a real recalibration on v0.1.2's 37k high-conf predictions.\n\nKnown limitations: the live demo's JS classifier does per-token argmax instead of Viterbi (eval-vs-production drift on orphan-I cases). Viterbi decode in JS + transition-tensor export is the v0.4.0 follow-up."
+			"notes": "Stage 2 v3.0.0 (formerly tagged v0.3.0 in the model-series numbering; realigned at publish to match the npm @mailwoman/neural-weights-en-us@3.0.0 release) — same encoder geometry as v2.0.x (8.87M params, 6L/256H/4-heads) plus a linear-chain CRF decoder (+~500 params with a frozen BIO transition mask) and a 21-label classifier head (was 15) that adds venue / street / house_number BIO classes. Trained on corpus-v0.3.0 (~103M aligned canonical rows, 11 sources incl. the new usgov-nad source with 57M structured 911-grade address points; +30% over v0.2.0). \n\nONNX int8 sha256: 24f74f0b0dc1233e7278063d9e5deffd6d2d329d366100961967dc100aaaf276.\n\nFOUR hparam-iteration runs converged on lr=1.5e-4 (vs v0.2.0's 5e-4), crf_loss_weight=0.05 (down from 1.0), label_smoothing=0.0 (was 0.1), grad_clip_norm=1.0 (new). The dual CE+CRF loss is far more LR-sensitive than v0.2.0's CE-only path. See DECISIONS.md \"v0.3.0 Stage 2 dual loss\" entry for the diagnostic trail; CRF NLL is per-sequence/unbounded vs CE's per-token/log-bounded, and equal-weight summing drowns out CE gradients.\n\nShipped checkpoint: step-001800. Training stopped after observing the same divergence pattern that broke runs 1–3, but delayed enough that this checkpoint reaches val_macro_f1=0.4 on the eval val split before drift kicks in. Per the v0.3.0 success metric (improve over v0.2.0 in at least one of F1, calibration, capability surface), the **capability-surface win is decisive** — v0.3.0 emits 3 new label classes (venue/street/house_number) where v0.2.0 emitted none, with house_number F1=0.78 and venue F1=0.39 on golden v0.1.2's substantial coverage (1742 and 1101 entries respectively).\n\nCoarse F1 vs v0.2.0's small-sample slice eval — **regression on every coarse class** (region 0.83 → 0.18, locality 0.65 → 0.27, postcode 0.86 → 0.76, country n/a → 0.28 on a 245-entry support pool). The combined effect of (a) early-stopping at step 1800 of 50K and (b) the 15→21 label space pulling per-token softmax mass off the coarse predictions explains the drop. v0.4.0 specifically targets recovery. Calibration: conf>0.9 bucket accuracy 0.60 — looser than v0.2.0's 0.88 (small-sample) but a real recalibration on v0.1.2's 37k high-conf predictions.\n\nKnown limitations: the live demo's JS classifier does per-token argmax instead of Viterbi (eval-vs-production drift on orphan-I cases). Viterbi decode in JS + transition-tensor export is the v0.4.0 follow-up."
+		},
+		{
+			"run_id": "v1.0.2-consolidation-runB-step020000",
+			"model_version": "4.2.0",
+			"model_path": "/mnt/playpen/mailwoman-data/models/quantized/model-v102-runB-step-20000-int8.onnx",
+			"corpus_version": "0.4.12-consolidation",
+			"corpus_sha256": "see corpus MANIFEST (v0.4.12-consolidation)",
+			"eval_set_version": "golden v0.1.2 + real-OOD set (affix/unit/country-homograph) + honest-eval VT",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-06-10",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 20000,
+			"training_wall_clock_seconds": null,
+			"metrics": {
+				"per_component_fp32_gazfed": {
+					"us": {
+						"postcode": 97.3,
+						"country_homograph": 89.8,
+						"micro": 84.8,
+						"locality": 72.9,
+						"region": 89.1,
+						"street": 76.2,
+						"street_prefix": 64.9,
+						"street_suffix": 48.8,
+						"unit": 90.6
+					},
+					"fr": {
+						"postcode": 99.7,
+						"house_number": 94.6,
+						"region": 27.6
+					},
+					"de": {
+						"native_locality_anchor_on": 90.7
+					}
+				},
+				"ship_gate": {
+					"honest_eval_vt": {
+						"n": 1428,
+						"region_match": 99.9,
+						"coord_p50_km": 3.4,
+						"coord_p90_km": 7.4,
+						"pip_coverage_adj": 47.1,
+						"baseline_v410_region": 100.0,
+						"verdict": "PASS"
+					},
+					"demo_presets": "PASS (5/6 identical; 6th = intended affix split)",
+					"int8_spot_check": "PASS (country 89.8, prefix 64.9, suffix 48.8, unit 90.6 — all within 0.1pp of fp32; DE 90.9)",
+					"int8_md5": "9eb4a99f6db06cccff57939f657c09f9",
+					"quant_deterministic": true
+				},
+				"stated_re_baselines": {
+					"street_prefix": "64.9 vs canonical 78 (29M stability ceiling, #492)",
+					"street_suffix": "48.8 vs 67",
+					"us_street": "76.2 vs 80.4 (-2.3 vs shipped; mitigations #478/#492)",
+					"unit": "90.6 vs 92"
+				}
+			},
+			"notes": "Parity flag-plant candidate. Capacity wall measured (#492). Gate procedure requires --gazetteer-lexicon + --suppress-gaz-near-postcode. All gate numbers repairs-OFF (#486). Lineage: v1.0.2-consolidation-runB @ step 20000 — init_from consolidation v1.0.0 step-040000 (NOT resume; fresh optimizer — recorded honestly, see session doc), affix 17x, corpus v0.4.12-consolidation; shipped as the unified 4.2.0 release int8 md5 9eb4a99f6db06cccff57939f657c09f9."
 		}
 	]
 }

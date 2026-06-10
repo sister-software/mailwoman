@@ -20,23 +20,24 @@
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
-import React, { useCallback, useState } from "react"
+import React, { useCallback, useMemo, useState } from "react"
 
 import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
 import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES, flattenTree, runCascade } from "../../shared/demo-helpers.ts"
 import type { DemoResult, DualRole, ResolvedHit } from "../../shared/resources.tsx"
 import { BIOHighlight } from "../BIOHighlight/BIOHighlight.tsx"
+import { CandidatePicker } from "../CandidatePicker/CandidatePicker.tsx"
 import { ClassifierOverlay } from "../ClassifierOverlay/ClassifierOverlay.tsx"
 import { CRFDiff } from "../CRFDiff/CRFDiff.tsx"
-import { CandidatePicker } from "../CandidatePicker/CandidatePicker.tsx"
 import { FailureDiagnostic } from "../FailureDiagnostic/FailureDiagnostic.tsx"
-import { KindBadge } from "../KindBadge/KindBadge.tsx"
 import { FSTWalker } from "../FSTWalker/FSTWalker.tsx"
 import { GuidedTour } from "../GuidedTour/GuidedTour.tsx"
+import { KindBadge } from "../KindBadge/KindBadge.tsx"
 import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
 import { SubwordExplorer } from "../SubwordExplorer/SubwordExplorer.tsx"
 import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
 import { TreeView } from "../TreeView/TreeView.tsx"
+import { LoadingIndicator } from "../LoadingIndicator/LoadingIndicator.tsx"
 
 import styles from "./styles.module.css"
 
@@ -83,6 +84,8 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 		fstProvenance,
 		lookup,
 		loadingProgress,
+		loadingStepIndex,
+		loadingStepLabels,
 		errorMessage: ctxError,
 		ready,
 		activeBackend,
@@ -93,16 +96,27 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 
 	const [text, setText] = useState(defaultAddress)
 	const [busy, setBusy] = useState(false)
+	const [parseStage, setParseStage] = useState(-1)
 	const [result, setResult] = useState<DemoResult | null>(null)
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
 	const [parseError, setParseError] = useState<string | null>(null)
 	const [copied, setCopied] = useState(false)
+
+	// Parse stage labels depend on whether WOF lookup is available for the selected release.
+	const parseStageLabels = useMemo(
+		() =>
+			lookup
+				? ["Analyzing input shape…", "Running neural classifier…", "Resolving in gazetteer…"]
+				: ["Analyzing input shape…", "Running neural classifier…"],
+		[lookup]
+	)
 
 	const onSubmit = useCallback(
 		async (e: React.FormEvent) => {
 			e.preventDefault()
 			if (!classifier) return
 			setBusy(true)
+			setParseStage(0)
 			setParseError(null)
 
 			try {
@@ -116,6 +130,8 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 				const queryShape = computeQueryShape(text)
 				const kindResult = classifyKindSync({ raw: text, normalized: text }, queryShape)
 				const tShape = performance.now()
+
+				setParseStage(1)
 
 				const pipelineResult = await runPipeline(text, {
 					computeQueryShape,
@@ -149,6 +165,8 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 					})
 					return
 				}
+
+				setParseStage(2)
 
 				const tBeforeResolve = performance.now()
 				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNodes, stateNode, text)
@@ -197,6 +215,7 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 				setParseError(err instanceof Error ? err.message : String(err))
 			} finally {
 				setBusy(false)
+				setParseStage(-1)
 			}
 		},
 		[classifier, text, fstMatcher, lookup, fstProvenance]
@@ -300,7 +319,13 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 					placeholder={DEFAULT_ADDRESS}
 				/>
 				<button type="submit" disabled={!ready || busy}>
-					{busy ? "Parsing…" : "Parse + resolve"}
+					{busy ? (
+						<>
+							<LoadingIndicator mode="spinner" size="small" /> Parsing…
+						</>
+					) : (
+						"Parse + resolve"
+					)}
 				</button>
 			</form>
 
@@ -323,10 +348,21 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 				))}
 			</div>
 
-			{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
+			{loadingProgress && !ready ? (
+				<LoadingIndicator
+					mode="staged"
+					steps={loadingStepLabels.length > 0 ? loadingStepLabels : undefined}
+					activeStep={loadingStepIndex}
+					label={loadingProgress}
+				/>
+			) : null}
 			{errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
 
-			{result ? (
+			{busy ? (
+				<div className={styles.resultPanel}>
+					<LoadingIndicator mode="staged" steps={parseStageLabels} activeStep={parseStage} />
+				</div>
+			) : result ? (
 				<div className={styles.resultPanel}>
 					<div className={styles.resultHeader}>
 						<h2>Parsed components</h2>

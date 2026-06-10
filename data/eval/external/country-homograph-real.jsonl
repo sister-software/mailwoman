@@ -1,0 +1,54 @@
+{"raw": "Atlanta, GA 30309", "components": {"locality": "Atlanta", "region": "GA", "postcode": "30309"}, "country": "US"}
+{"raw": "Atlanta, Georgia 30309, United States", "components": {"locality": "Atlanta", "region": "Georgia", "postcode": "30309", "country": "United States"}, "country": "US"}
+{"raw": "Tbilisi 0108, Georgia", "components": {"locality": "Tbilisi", "postcode": "0108", "country": "Georgia"}, "country": "GE"}
+{"raw": "7 Shota Rustaveli Avenue, Tbilisi, Georgia", "components": {"house_number": "7", "street": "Shota Rustaveli Avenue", "locality": "Tbilisi", "country": "Georgia"}, "country": "GE"}
+{"raw": "Jordan, MN 55352", "components": {"locality": "Jordan", "region": "MN", "postcode": "55352"}, "country": "US"}
+{"raw": "Amman, Jordan", "components": {"locality": "Amman", "country": "Jordan"}, "country": "JO"}
+{"raw": "Queen Rania Street, Amman 11195, Jordan", "components": {"street": "Queen Rania Street", "locality": "Amman", "postcode": "11195", "country": "Jordan"}, "country": "JO"}
+{"raw": "Lebanon, TN 37087", "components": {"locality": "Lebanon", "region": "TN", "postcode": "37087"}, "country": "US"}
+{"raw": "Lebanon, NH 03766", "components": {"locality": "Lebanon", "region": "NH", "postcode": "03766"}, "country": "US"}
+{"raw": "Hamra Street, Beirut, Lebanon", "components": {"street": "Hamra Street", "locality": "Beirut", "country": "Lebanon"}, "country": "LB"}
+{"raw": "Paris, TX 75460", "components": {"locality": "Paris", "region": "TX", "postcode": "75460"}, "country": "US"}
+{"raw": "Paris, Texas 75460, United States", "components": {"locality": "Paris", "region": "Texas", "postcode": "75460", "country": "United States"}, "country": "US"}
+{"raw": "10 Avenue des Champs-Elysees, 75008 Paris, France", "components": {"house_number": "10", "street": "Avenue des Champs-Elysees", "postcode": "75008", "locality": "Paris", "country": "France"}, "country": "FR"}
+{"raw": "San Jose, CA 95113", "components": {"locality": "San Jose", "region": "CA", "postcode": "95113"}, "country": "US"}
+{"raw": "San Jose, Costa Rica", "components": {"locality": "San Jose", "country": "Costa Rica"}, "country": "CR"}
+{"raw": "Kingston, NY 12401", "components": {"locality": "Kingston", "region": "NY", "postcode": "12401"}, "country": "US"}
+{"raw": "Kingston, Jamaica", "components": {"locality": "Kingston", "country": "Jamaica"}, "country": "JM"}
+{"raw": "Mexico, MO 65265", "components": {"locality": "Mexico", "region": "MO", "postcode": "65265"}, "country": "US"}
+{"raw": "Avenida Reforma 222, Mexico City, Mexico", "components": {"house_number": "222", "street": "Avenida Reforma", "locality": "Mexico City", "country": "Mexico"}, "country": "MX"}
+{"raw": "Athens, GA 30601", "components": {"locality": "Athens", "region": "GA", "postcode": "30601"}, "country": "US"}
+{"raw": "Ermou 10, Athens 10563, Greece", "components": {"house_number": "10", "street": "Ermou", "locality": "Athens", "postcode": "10563", "country": "Greece"}, "country": "GR"}
+{"raw": "Cairo, IL 62914", "components": {"locality": "Cairo", "region": "IL", "postcode": "62914"}, "country": "US"}
+{"raw": "Tahrir Square, Cairo, Egypt", "components": {"street": "Tahrir Square", "locality": "Cairo", "country": "Egypt"}, "country": "EG"}
+{"raw": "Lima, OH 45801", "components": {"locality": "Lima", "region": "OH", "postcode": "45801"}, "country": "US"}
+{"raw": "Avenida Arequipa, Lima 15046, Peru", "components": {"street": "Avenida Arequipa", "locality": "Lima", "postcode": "15046", "country": "Peru"}, "country": "PE"}
+{"raw": "Naples, FL 34102", "components": {"locality": "Naples", "region": "FL", "postcode": "34102"}, "country": "US"}
+{"raw": "Via Toledo 100, Naples, Italy", "components": {"house_number": "100", "street": "Via Toledo", "locality": "Naples", "country": "Italy"}, "country": "IT"}
+{"raw": "Florence, AL 35630", "components": {"locality": "Florence", "region": "AL", "postcode": "35630"}, "country": "US"}
+{"raw": "Piazza del Duomo, Florence, Italy", "components": {"street": "Piazza del Duomo", "locality": "Florence", "country": "Italy"}, "country": "IT"}
+{"raw": "Dublin, OH 43017", "components": {"locality": "Dublin", "region": "OH", "postcode": "43017"}, "country": "US"}
+{"raw": "OConnell Street, Dublin, Ireland", "components": {"street": "OConnell Street", "locality": "Dublin", "country": "Ireland"}, "country": "IE"}
+{"raw": "Los Angeles, CA 90012", "components": {"locality": "Los Angeles", "region": "CA", "postcode": "90012"}, "country": "US"}
+{"raw": "Sacramento, CA 95814", "components": {"locality": "Sacramento", "region": "CA", "postcode": "95814"}, "country": "US"}
+{"raw": "Indianapolis, IN 46204", "components": {"locality": "Indianapolis", "region": "IN", "postcode": "46204"}, "country": "US"}
+{"raw": "Boston, MA 02108", "components": {"locality": "Boston", "region": "MA", "postcode": "02108"}, "country": "US"}
+{"raw": "Philadelphia, PA 19103", "components": {"locality": "Philadelphia", "region": "PA", "postcode": "19103"}, "country": "US"}
+{"raw": "Birmingham, AL 35203", "components": {"locality": "Birmingham", "region": "AL", "postcode": "35203"}, "country": "US"}
+{"raw": "Mumbai, India", "components": {"locality": "Mumbai", "country": "India"}, "country": "IN"}
+{"raw": "Toronto, ON, Canada", "components": {"locality": "Toronto", "region": "ON", "country": "Canada"}, "country": "CA"}
+{"raw": "Attn: Jordan Smith, 123 Main Street, Springfield, IL 62701", "components": {"attention": "Jordan Smith", "house_number": "123", "street": "Main Street", "locality": "Springfield", "region": "IL", "postcode": "62701"}, "country": "US"}
+{"raw": "Chad Johnson, 45 Elm Avenue, Dayton, OH 45402", "components": {"attention": "Chad Johnson", "house_number": "45", "street": "Elm Avenue", "locality": "Dayton", "region": "OH", "postcode": "45402"}, "country": "US"}
+{"raw": "123 Main Street, Springfield, IL 62701", "components": {"house_number": "123", "street": "Main Street", "locality": "Springfield", "region": "IL", "postcode": "62701"}, "country": "US"}
+{"raw": "742 Evergreen Terrace, Portland, OR 97201", "components": {"house_number": "742", "street": "Evergreen Terrace", "locality": "Portland", "region": "OR", "postcode": "97201"}, "country": "US"}
+{"raw": "500 Oak Lane, Denver, CO 80202", "components": {"house_number": "500", "street": "Oak Lane", "locality": "Denver", "region": "CO", "postcode": "80202"}, "country": "US"}
+{"raw": "88 Lakeview Drive, Seattle, WA 98101", "components": {"house_number": "88", "street": "Lakeview Drive", "locality": "Seattle", "region": "WA", "postcode": "98101"}, "country": "US"}
+{"raw": "12 Beacon Street, Boston, MA 02108", "components": {"house_number": "12", "street": "Beacon Street", "locality": "Boston", "region": "MA", "postcode": "02108"}, "country": "US"}
+{"raw": "United States, New York, NY 10001", "components": {"country": "United States", "locality": "New York", "region": "NY", "postcode": "10001"}, "country": "US"}
+{"raw": "France, 75001 Paris, 5 Rue de Rivoli", "components": {"country": "France", "postcode": "75001", "locality": "Paris", "house_number": "5", "street": "Rue de Rivoli"}, "country": "FR"}
+{"raw": "Mbabane, Eswatini", "components": {"locality": "Mbabane", "country": "Eswatini"}, "country": "SZ"}
+{"raw": "Dili, Timor-Leste", "components": {"locality": "Dili", "country": "Timor-Leste"}, "country": "TL"}
+{"raw": "Thimphu, Bhutan", "components": {"locality": "Thimphu", "country": "Bhutan"}, "country": "BT"}
+{"raw": "Vaduz, Liechtenstein", "components": {"locality": "Vaduz", "country": "Liechtenstein"}, "country": "LI"}
+{"raw": "Roseau, Dominica", "components": {"locality": "Roseau", "country": "Dominica"}, "country": "DM"}
+{"raw": "Stone Town, Zanzibar, Tanzania", "components": {"locality": "Stone Town", "region": "Zanzibar", "country": "Tanzania"}, "country": "TZ"}

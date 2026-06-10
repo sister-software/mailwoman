@@ -1,0 +1,152 @@
+---
+sidebar_position: 1
+title: What Mailwoman is — a name for the thing we're building
+tags:
+  - concepts
+  - architecture
+  - philosophy
+---
+
+# What Mailwoman is — a name for the thing we're building
+
+If you've tried to describe Mailwoman to someone and reached for "it's like
+libpostal but neural" or "it's a geocoder without Elasticsearch," you've felt
+the problem: both are true and neither is the thing. This page gives the
+project its name, its lineage, and the two disciplines that keep it honest.
+It's the page to read when the component count starts to feel like complexity
+instead of architecture — because the system is layered, not tangled, and the
+layers have a logic.
+
+## The name
+
+Mailwoman is a **calibrated, retrieval-augmented sequence labeler over a
+microlanguage** — coupled to a gazetteer that resolves its output to
+coordinates.
+
+Every word is load-bearing:
+
+- **Sequence labeler.** The model is a small transformer encoder doing BIO
+  token classification — the named-entity-recognition lineage
+  (BiLSTM-CRF → BERT token classification → this). It is not an LLM and
+  nothing about it is generative. For a closed label set over short strings,
+  this is the most boring, battle-proven architecture in NLP. Boring is a
+  feature.
+- **Microlanguage.** Addresses are a real language in the strict sense: a
+  grammar (regional, conventional, frequently violated) over a vocabulary
+  that's partly open (street names, venue names) and partly a finite atlas
+  (places that exist). That split — open grammar, closed world — is the entire
+  design.
+- **Retrieval-augmented.** The model never memorizes the atlas. Postcode and
+  gazetteer knowledge arrive as soft input features — anchors — retrieved at
+  inference time from provenance-tracked databases that grow without
+  retraining. If you know RAG from the LLM world, this is RAG for token
+  classification. If you know speech recognition, it's *contextual biasing
+  with shallow fusion*: the model owns structure, external knowledge tips
+  ambiguous decisions, and nothing overrides the learner. (We re-derived this
+  independently, then found the prior art. See
+  [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.mdx) and
+  [Closed-vocab fields: model-first](../plan/reference/closed-vocab-fields-model-first.mdx)
+  for the night we learned the override version is wrong.)
+- **Calibrated.** The confidences are isotonic-calibrated against held-out
+  data, so "0.6" means right-about-60%-of-the-time, not "my rule was fairly
+  specific." See [Confidence calibration](./confidence-calibration.mdx).
+
+## The division of labor
+
+> **The model learns the grammar. The gazetteer knows the atlas.**
+
+This one sentence is the architecture. Everything in the pipeline is the
+model (grammar), a knowledge base (world), or evidence routing between the
+two. The two halves scale independently — corpus and compute grow the
+grammar; data builds grow the atlas — and neither requires the other to
+retrain. Asking a model to memorize the world's place names is where capacity
+goes to die; asking a database to understand "Friedrichstraße 43-45, 10117
+Berlin-Mitte" written four different ways is where rule systems went to die.
+Each side does the job the other is structurally bad at.
+
+## The sieve and the posterior
+
+The systems Mailwoman replaces — elaborate regexes, cascading pattern
+matchers, libpostal's averaged perceptron, Pelias's rules — are **sieves**.
+Input either fits a slot or falls through to the next pattern, and what those
+systems call confidence is really *rule specificity*: certainty about the
+template, silence about the world. A sieve cannot say "I'm not sure." Novel
+input doesn't get a hedged answer; it gets a hole.
+
+A calibrated model inverts this. Mailwoman doesn't ask *"which of my patterns
+does this string match?"* — it asks *"what is the most probable reading of
+this string as an address, given what the atlas says exists?"* Parsing as
+inference instead of template matching. The practical consequence is that
+uncertainty becomes an honest, actionable measurement: the resolver can
+abstain on it, soft-score with it, or fall back to rules because of it. The
+capability difference shows up exactly where the
+[arena evals](../evals/parity-scorecard-2026-06-09.md) say it does: on noisy,
+degraded, real-user input — the queries a geocoder actually receives — the
+model wins decisively, because degraded input is where sieves leak and
+posteriors bend.
+
+## The bitter lesson, read carefully
+
+The bitter lesson is routinely misread as "no knowledge engineering." It
+actually says: no knowledge engineering *inside the learner*. The pre-model
+machines encoded the world's structure into the rules themselves, which is
+why every novel input was a hole. Mailwoman puts the grammar in weights and
+the atlas in a database — knowledge engineering on the *outside*, where it
+belongs, as data with provenance rather than as code with exceptions. The
+anchor channels are the interface between the two, and they are deliberately
+soft: features, never overrides.
+
+## The pocket budget
+
+A standing constraint shapes everything: the parser must run in a browser tab
+or a React Native app. This started as a distribution decision — nothing to
+install, the demo recruits its own users — and turned out to be the project's
+best architectural decision twice over:
+
+1. **It's why the iteration loop exists.** Small model → ~1-hour single-GPU
+   retrains → single-variable lever experiments with same-day gates. The
+   parity campaign's methodology is only affordable at this size.
+2. **It forced the correct architecture.** A model too small to memorize the
+   atlas *had* to get world knowledge from retrieval. The capacity budget did
+   design work. And when capacity got tight, the small model surfaced root
+   causes — corpus artifacts, boundary bugs, rendering-order confounds —
+   instead of absorbing them into parameters. A bigger model would have
+   masked those bugs, not fixed them.
+
+The honest cost: the *data* doesn't fit the pocket even though the model
+does. So the constraint resolves into **two tiers, same code, different
+payloads** — Tier A ("pocket"): parser + anchors + the slim hot gazetteer;
+full parse quality, coarse resolution, offline, address data never leaves the
+device. Tier B ("library"): the identical pipeline with full SQLite payloads
+on a server or desktop, where street-level data lives. The pocket claim stays
+true because it's scoped, not because we stopped checking. There is also
+real headroom: the model could grow severalfold before challenging a
+conservative mobile budget — the constraint that actually binds is iteration
+cost, and that's the one worth defending.
+
+## The discipline that keeps it honest
+
+Two failure modes can quietly un-make this architecture, and both have names
+in our history:
+
+- **The override.** Letting a lookup table seize the wheel from the model
+  because it scored well on a friendly eval. We did this once, for `country`,
+  and reversed it within a day when the homograph eval caught the sieve
+  sneaking back in. Knowledge informs; it never overrides.
+- **The accreting patch.** Post-model repairs — regex fixups, span merges,
+  audit passes — are individually defensible and collectively the sieve
+  regrowing around the model's edges. The rule: every patch is either
+  *scaffolding* (a confession of something learnable, absorbed into the next
+  consolidation retrain) or *data* (provenance-tracked, feeding the model as
+  soft evidence). Never a growing exception list. The health metric is
+  simple: the patch count goes **down** at each consolidation.
+
+## Why you can't find the comparable project
+
+The neural-parsing literature validates the parser half — multiple
+independent efforts reached the same conclusion about transformers beating
+CRFs on degraded input. But the published systems are parser-only. Nobody
+couples calibrated neural parsing, gazetteer fusion at inference time, and
+coordinate-first resolution into one system. If you've been struggling to
+explain Mailwoman by analogy, that's why: it isn't failing to match the
+reference implementation. It is the reference implementation.

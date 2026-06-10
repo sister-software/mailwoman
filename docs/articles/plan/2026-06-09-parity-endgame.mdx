@@ -1,0 +1,93 @@
+# The parity endgame — direction (2026-06-09)
+
+We are nearing the goal that has organized the last several weeks: **capability parity
+with Mailwoman v0's rules parser**. The common tags (postcode, house_number, street,
+locality, region, US venue) are at usable parity; the campaign over the starved
+long-tail tags has banked `unit` (shipped v4.1.0), gated `street_prefix`/`street_suffix`
+(#462), and brought `country` alive (0 → 65 F1 on the hard homograph gate, perfect
+precision, zero over-fire, across v0.9.10/v0.9.11). What remains is the apex of the
+last 80% — the part where each move has to be the *right* move, not just a move.
+
+This doc fixes the direction for that stretch, distilled from the 2026-06-09 design
+review (the model-first reversal, the synonymy/homonymy framing, and the gazetteer-
+anchor discussion). Three principles now govern the endgame, and a concrete move
+order follows from them.
+
+## Status (2026-06-10): country banked
+
+Move 1 is **done**. The general gazetteer anchor took `country` from 0 (starved in
+v4.1.0) to **83.3 F1** on the hard homograph gate (recall 74.1, precision 95.2,
+**over-fire 0**), and lifted the spine with it (region US +11.7, locality +14.9).
+Progression: v0.9.10 balanced shard 57.9 → v0.9.11 +class-weight 65.0 → v0.9.12
++gazetteer anchor 83.3. The one cost was US postcode −3.7 — the region clue ("CA",
+"GA") sitting next to the US ZIP strengthens `B-region` and weakens the
+`B-region → B-postcode` CRF transition (US-only; FR's postcode precedes the
+locality, so it never sees this). The fix is **train-time channel choreography**:
+zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, at *both* train
+and inference (the pairing is load-bearing — the harm is weight-baked, so an
+inference-only patch can't undo it). Operator decision: **accept v0.9.12/13 as the
+country lever and carry the choreography into the consolidation retrain** (move 4),
+where the dip washes out — no standalone fix-retrain. Choreography ships
+default-off/byte-stable in PR #468.
+
+## The three governing principles
+
+**1. Model-first, lexicon-as-evidence.** The day's central correction: no deterministic
+override ever substitutes the model's output. Closed-vocab tags are covered by
+*training* (balanced shards with homograph contrast); the gazetteer enters as a
+**soft input-layer clue** — a per-token candidate-tag set the model conditions on —
+never as a post-parse verdict. Measured grounding: the balanced country shard took
+`country` from 0 to alive at P=100 / over-fire=0 (data alone), and the remaining
+recall gap is exactly the long-tail the clue channel exists for. See
+[closed-vocab fields: model-first](./reference/closed-vocab-fields-model-first.mdx)
+and the new [gazetteer-anchor rung](../understanding/our-approach/the-knowledge-ladder.mdx)
+in the knowledge ladder.
+
+**2. Canonicalize for synonymy, disambiguate by stage, never drop a span.** The parser
+resolves *tag* ambiguity from in-string context; the resolver late-binds the
+*referent* with geographic context; every span survives the parse — classified or
+explicitly `unknown` — each with a canonical value. The lossless typed decomposition
+is a deliverable in its own right (record linkage, dataset matching), not a
+by-product of geocoding. See
+[synonymy and homonymy](../concepts/synonymy-and-homonymy.mdx).
+
+**3. Soft priors, not hard masks.** Positional masks and user hints (focus country,
+focus point) re-enter the system as *features* the model or resolver can overrule —
+the bendable version of the crutch rules systems can't drop.
+
+## The move order
+
+1. ~~**Finish country (step 2b): the gazetteer anchor, built general.**~~ **DONE
+   (2026-06-10).** A per-token **candidate-tag-set** feature channel (multi-hot over
+   `country, region, po_box, cedex, …`), sourced from codex, riding the same
+   input-layer mechanics as the postcode anchor and phrase priors. Country was the
+   first consumer (its long-tail recall — Eswatini, Timor-Leste, multi-word names —
+   was the measured gap); region/locality/street membership come nearly free later.
+   Gate cleared: country 0 → 83.3 F1, precision/over-fire intact, spine lifted. See
+   the status section above; po_box/cedex ride the same channel for free.
+2. **Promote the affix lever via the multi-locale reroll (#466 step 1).** v0.9.8's
+   only blemish is FR-postcode dilution from a US-only shard; the multi-locale country
+   shard already demonstrated the recovery. Reroll affix multi-locale, clear its own
+   gate, no annotation needed.
+3. **po_box + cedex coverage shards — the unit playbook, zero drama.** Closed-vocab
+   but homograph-free, so they need balanced shards (and their matcher-accuracy is
+   already proven at 100% as feature-sources/eval material). Prove each solo.
+4. **Consolidate (#466): one model carrying all banked levers.** Weight-merge or a
+   single multi-tag run at a larger step budget (the cumulative-dilution lesson:
+   never stack shards into a fixed 20k budget). This run also **carries the gazetteer
+   choreography** (PR #468), where the v0.9.12 US-postcode dip is expected to wash
+   out for free. Full per-tag regression gate; this is the v0-parity flag-plant.
+5. **Then the pivot: from parity to the things v0 cannot do.** The lossless
+   decomposition (typed `unknown` spans surviving projection — the small decoder
+   change), canonical values on every span, and record-linkage as a named
+   capability. Parity was never the destination; it's the license to build past it.
+
+## What this retires
+
+- The `ClosedVocabTagger` post-parse override (#464's original scope) — rejected on
+  ethos and on evidence; the issue is rescoped to the anchor.
+- Country/po_box/cedex as "deterministic" levers in the parity scorecard's taxonomy —
+  corrected to model-first; the deterministic probes stand as matcher-accuracy
+  evidence and live on as feature-sources.
+- Per-tag, one-off anchor builds — superseded by the general candidate-tag-set
+  channel (one mechanism, many tags).

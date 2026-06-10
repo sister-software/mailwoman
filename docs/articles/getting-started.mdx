@@ -41,6 +41,11 @@ region: "NY" (confidence: 0.88)
 postcode: "10118" (confidence: 0.91)
 ```
 
+Those confidence numbers are calibrated probabilities, not vibes — pass the bundled per-locale
+calibrator and "0.88" means right-about-88%-of-the-time. See
+[Confidence calibration](./concepts/confidence-calibration.mdx) for how to load it and what the
+numbers mean.
+
 ### CLI
 
 ```bash

@@ -1,0 +1,20 @@
+{
+	"rows": 36,
+	"crossings": 18,
+	"per_county": {
+		"17031": 6,
+		"34027": 6,
+		"50023": 6
+	},
+	"forms": {
+		"amp-tail": 6,
+		"and-bare": 5,
+		"at-tail": 5,
+		"corner-of": 5,
+		"intersection-of": 5,
+		"slash-unpadded": 5,
+		"at-sign-bare": 5
+	},
+	"seed": "42",
+	"source": "TIGER2023 EDGES via DuckDB ST_Read; node = >=2 distinct S1* FULLNAMEs"
+}

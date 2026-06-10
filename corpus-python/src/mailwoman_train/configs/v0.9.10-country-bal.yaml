@@ -1,0 +1,151 @@
+# === v0.9.10-country-bal (#464) — MODEL-FIRST country, the balanced shard. ===================
+# The shipped v4.1.0 model is STARVED on `country` (P=R=F1=0 on the homograph eval — it never emits
+# the tag; the night-9 49-F1/23%-precision over-fire was a SEPARATE bad shard). So this fills a void,
+# the same way `unit` did — but the corpus is built to AVOID re-creating the over-fire, and the lever
+# is MODEL-FIRST (no deterministic override; the gazetteer informs the model, never substitutes —
+# see docs/articles/plan/reference/closed-vocab-fields-model-first.mdx).
+#
+# ONE variable vs v4.1.0 (v0.9.7-unit-v3): the BALANCED country shard is overlaid on the SHIPPED
+# unit base (v0.4.5-unit-v2 → v0.4.10-country-bal). NO affix (not shipped). NO anchor feature yet
+# (DeepSeek's data-first: prove balanced data alone, add the soft anchor only if long-tail recall
+# lags). Class-weight B/I-country HELD at 2.0 (shipped model had 2.0 and country was 0% → the gap was
+# DATA). Everything else held — v0.9.3 recipe (anchor ON, self-cond ON, region-tail German), seed 42.
+#
+# THE SHARD (build-country-shard-balanced.mjs, 50k): breadth (OA skeletons + varied ISO country forms
+# + ~25% absent) + homograph CONTRAST (~26%: Georgia/Jordan/Lebanon/Mexico/Peru/Turkey BOTH as
+# country [foreign city] AND as US region/locality [US ZIP]) + code-as-region negatives (~10%:
+# CA/GA/IN/MA/PA/AL). The contrast is the signal the over-firing v0.9.9 shard lacked.
+#
+# PRE-REGISTERED GATE (stop at 20k) — data/eval/external/country-homograph-real.jsonl (n=54, held-out):
+#   - `country` F1 >> 0 (was 0) AND over-fire = 0 (NO region/locality token mistagged as country).
+#   - `region` / `locality` F1 HELD vs v4.1.0 baseline (region 76.9, locality 62.1 on the homograph eval).
+#   - NO-REGRESSION (within ~1pp, fp32-to-fp32): US house_number / postcode / street / locality;
+#     FR per-class floors; DE native-order (de-order-eval.sh). RETAIN unit >= 88 (unit-real-designators).
+#   DECISION: country alive + over-fire 0 + region/locality held + no tripwire -> candidate.
+#     If long-tail recall lags: bump class-weight B/I-country 2->3-4 + add the soft gazetteer anchor.
+#     If it over-fires: raise the homograph/negative balance (HOMOGRAPH_FRAC/ABBREV_FRAC) + rerun.
+# Measure: scripts/eval/score-country-homograph.ts + per-locale-f1.ts (US/FR) + de-order-eval.sh +
+#   unit-real-designators (fp32-to-fp32).
+#
+# CORPUS: v0.4.10-country-bal (v0.4.5-unit-v2 base + balanced country shard). Launch:
+#   modal run -d scripts/modal/train_remote.py \
+#     --config v0.9.10-country-bal.yaml --resume none \
+#     --trackio --trackio-space sister-software/mailwoman-trackio
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.4.10-country-bal/corpus-v0.4.10-country-bal
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-po-box: 1.5
+    synth-intersection: 0.2
+    synth-german: 6.0
+    # Retained from v4.1.0 — keep the shipped unit win.
+    synth-unit: 1.5
+    # NEW (#464, model-first country): the BALANCED country shard — homograph CONTRAST pairs
+    # (Georgia/Jordan/Lebanon/Mexico/Peru/Turkey rendered BOTH as country and US region/locality) +
+    # code-as-region negatives (CA/GA/IN/MA/PA/AL) + breadth. Single variable vs v4.1.0 (NO affix).
+    # Class-weight B/I-country HELD at 2.0 below — the shipped model already had 2.0 and country was
+    # still 0%, so the gap was DATA, not weighting. Bump to 3-4 + add the soft anchor only if the gate
+    # shows long-tail recall lagging. See docs/articles/plan/reference/closed-vocab-fields-model-first.mdx.
+    synth-country: 2.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  class_weights:
+    O: 0.5
+    B-country: 2.0
+    I-country: 2.0
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v0910-country-bal-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 20000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  trackio_project: mailwoman
+  trackio_run_name: v0.9.10-country-bal-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

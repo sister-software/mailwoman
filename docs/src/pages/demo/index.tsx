@@ -20,23 +20,26 @@ import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
 import Layout from "@theme/Layout"
 import type { Map as MapLibreMap, StyleSpecification, VectorSourceSpecification } from "maplibre-gl"
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import type React from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import { LayerToggleControl } from "../../components/LayerToggleControl/LayerToggleControl.tsx"
+import { LoadingIndicator } from "../../components/LoadingIndicator/LoadingIndicator.tsx"
 import { PermalinkButton } from "../../components/PermalinkButton/PermalinkButton.tsx"
 import { ResultPanel } from "../../components/ResultPanel/ResultPanel.tsx"
 import {
 	assetUrl,
-	DemoResult,
-	DualRole,
-	FstMatcherLike,
-	FstProvenanceLike,
+	type DemoResult,
+	type DualRole,
+	type FstMatcherLike,
+	type FstProvenanceLike,
 	loadFstGazetteer,
-	MailwomanClassifierLike,
-	MailwomanLookupLike,
-	ResolvedHit,
+	type MailwomanClassifierLike,
+	type MailwomanLookupLike,
+	type ResolvedHit,
 } from "../../shared/resources.tsx"
 
+import type { ReleasesManifest } from "../../shared/demo-helpers.ts"
 import {
 	DEFAULT_ADDRESS,
 	DEFAULT_LOCALE,
@@ -44,13 +47,10 @@ import {
 	flattenTree,
 	runCascade,
 } from "../../shared/demo-helpers.ts"
-import type { ReleasesManifest } from "../../shared/demo-helpers.ts"
 
 import styles from "./styles.module.css"
 
 const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
-
-
 
 const DemoPage: React.FC = () => {
 	const { siteConfig } = useDocusaurusContext()
@@ -108,9 +108,19 @@ const DemoApp: React.FC = () => {
 	const [lookup, setLookup] = useState<MailwomanLookupLike | null>(null)
 	const [text, setText] = useState(initialAddress)
 	const [busy, setBusy] = useState(false)
+	const [parseStage, setParseStage] = useState(-1)
 	const [result, setResult] = useState<DemoResult | null>(null)
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+	// Parse stage labels depend on whether WOF lookup is available for the selected release.
+	const parseStageLabels = useMemo(
+		() =>
+			lookupLoader
+				? ["Analyzing input shape…", "Running neural classifier…", "Resolving in gazetteer…"]
+				: ["Analyzing input shape…", "Running neural classifier…"],
+		[lookupLoader]
+	)
 	const mapContainerRef = useRef<HTMLDivElement>(null)
 	const mapRef = useRef<MapLibreMap | null>(null)
 	const markerRef = useRef<{ remove: () => void } | null>(null)
@@ -138,9 +148,15 @@ const DemoApp: React.FC = () => {
 		void (async () => {
 			try {
 				const [manifestRes, maplibre, basemapSource] = await Promise.all([
-					fetch(assetUrl(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases")).then((r) =>
-						r.ok ? (r.json() as Promise<ReleasesManifest>) : null
-					),
+					// `cache: "reload"` bypasses the HTTP cache for the version pointer. releases.json was
+					// historically served with an immutable Cache-Control (the publish script applied it to
+					// every file), so a returning visitor's browser keeps a stale copy for up to a week and
+					// never sees a defaultVersion bump — the symptom being "the new version only shows in a
+					// private tab". Always refetch the pointer (it's ~4 KB); the versioned assets it points
+					// to stay immutably cached.
+					fetch(assetUrl(DEFAULT_LOCALE, "", "releases.json").replace(/\/\/releases/, "/releases"), {
+						cache: "reload",
+					}).then((r) => (r.ok ? (r.json() as Promise<ReleasesManifest>) : null)),
 					import("maplibre-gl"),
 					fetchBasemapSource(),
 				])
@@ -412,6 +428,7 @@ const DemoApp: React.FC = () => {
 			e.preventDefault()
 			if (!classifier) return
 			setBusy(true)
+			setParseStage(0)
 			setErrorMessage(null)
 
 			try {
@@ -433,6 +450,8 @@ const DemoApp: React.FC = () => {
 				// is what surfaces multi-word localities, Romance street prefixes, and the correct
 				// house-number boundary in the browser, matching the library + CLI. Normalize / locale /
 				// kind default inside runPipeline; the demo's own WOF httpvfs lookup runs below on the
+				setParseStage(1)
+
 				// resulting tree (no resolver stage is passed).
 				const { tree } = await runPipeline(text, {
 					computeQueryShape,
@@ -467,6 +486,8 @@ const DemoApp: React.FC = () => {
 					})
 					return
 				}
+
+				setParseStage(2)
 
 				// Cascade: postcode first (most precise), fall back to locality, then raw text.
 				// Drop (lat=0, lon=0) hits — WOF ships placeholder zeros on ~22% of US postcodes.
@@ -520,6 +541,7 @@ const DemoApp: React.FC = () => {
 				setErrorMessage(parsingError instanceof Error ? parsingError.message : String(parsingError))
 			} finally {
 				setBusy(false)
+				setParseStage(-1)
 			}
 		},
 		[classifier, text, fstMatcher, ensureLookup, fstProvenance]
@@ -610,6 +632,7 @@ const DemoApp: React.FC = () => {
 						))}
 						<PermalinkButton text={text} />
 					</div>
+					{busy ? <LoadingIndicator mode="staged" steps={parseStageLabels} activeStep={parseStage} /> : null}
 					{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
 					{errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
 					{result ? (
@@ -752,8 +775,6 @@ function clearBbox(map: MapLibreMap): void {
 		if (map.getSource(BBOX_SOURCE)) map.removeSource(BBOX_SOURCE)
 	})
 }
-
-
 
 function currentDocusaurusTheme(): "light" | "dark" {
 	if (typeof document === "undefined") return "light"

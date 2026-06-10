@@ -10,11 +10,6 @@
  *   Implements `AsyncDisposable` so `await using writer = await ParquetWriter.openFile(...)` flushes
  *   and closes cleanly. `close()` internally serializes against any in-flight flush so back-to-back
  *   dispose calls don't race.
- *
- *   Drawn 2026-05-17 from the author's earlier draft
- *   `sdk/parquet/writer.ts` (implemented from the author's earlier draft concept). One
- *   trim relative to the original: dropped the `@mailwoman/core/polyfills/promises/withResolvers`
- *   import — Node 22 (mailwoman's runtime) has `Promise.withResolvers` natively.
  */
 
 import { ParquetWriter as BaseParquetWriter } from "@dsnp/parquetjs"
