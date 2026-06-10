@@ -27,7 +27,13 @@
  */
 
 import { type ComponentTag, decodeAsJson, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import {
+	type AnchorLookup,
+	type GazetteerLexicon,
+	NeuralAddressClassifier,
+	parseAnchorLookup,
+	parseGazetteerLexicon,
+} from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -52,6 +58,8 @@ interface Args {
 	modelPath?: string
 	tokenizerPath?: string
 	modelCardPath?: string
+	gazetteerLexiconPath?: string
+	anchorLookupPath?: string
 	adminFstPath?: string
 	morphologyEnabled: boolean
 	morphologyBinPath?: string
@@ -76,6 +84,8 @@ function parseArgs(): Args {
 		else if (a === "--model" && args[i + 1]) out.modelPath = args[++i]
 		else if (a === "--tokenizer" && args[i + 1]) out.tokenizerPath = args[++i]
 		else if (a === "--model-card" && args[i + 1]) out.modelCardPath = args[++i]
+		else if (a === "--gazetteer-lexicon" && args[i + 1]) out.gazetteerLexiconPath = args[++i]
+		else if (a === "--anchor-lookup" && args[i + 1]) out.anchorLookupPath = args[++i]
 		else if (a === "--admin-fst" && args[i + 1]) out.adminFstPath = args[++i]
 		else if (a === "--morphology-fst" && args[i + 1]) out.morphologyBinPath = args[++i]
 		else if (a === "--no-morphology") out.morphologyEnabled = false
@@ -592,7 +602,24 @@ async function main(): Promise<void> {
 			MailwomanTokenizer.loadFromFile(args.tokenizerPath),
 			OnnxRunner.create(args.modelPath),
 		])
-		neural = new NeuralAddressClassifier({ tokenizer, runner, labels })
+		// Gaz-trained models (v4.2.0+) MUST be fed the lexicon + the postcode-anchor lookup with
+		// near-postcode suppression — zero-filled clues depress country recall and fake an affix
+		// crash (the ship config; see CONTRIBUTING_MODEL_WORK eval invariants).
+		let gazetteerLexicon: GazetteerLexicon | undefined
+		if (args.gazetteerLexiconPath) {
+			gazetteerLexicon = parseGazetteerLexicon(JSON.parse(readFileSync(args.gazetteerLexiconPath, "utf8")))
+		}
+		let postcodeAnchorLookup: AnchorLookup | undefined
+		if (args.anchorLookupPath) {
+			postcodeAnchorLookup = parseAnchorLookup(JSON.parse(readFileSync(args.anchorLookupPath, "utf8")))
+		}
+		neural = new NeuralAddressClassifier({
+			tokenizer,
+			runner,
+			labels,
+			...(gazetteerLexicon ? { gazetteerLexicon, suppressGazetteerNearPostcode: true } : {}),
+			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
+		})
 	} else {
 		neural = await NeuralAddressClassifier.loadFromWeights()
 	}
