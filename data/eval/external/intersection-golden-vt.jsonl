@@ -1,0 +1,400 @@
+{"raw":"corner of Bayley Hazen Rd and Cabot Plains Rd","components":{"intersection_a":"Bayley Hazen Rd","intersection_b":"Cabot Plains Rd"},"country":"US","form":"corner-of"}
+{"raw":"corner of Cathy Rd and S Walden Rd","components":{"intersection_a":"Cathy Rd","intersection_b":"S Walden Rd"},"country":"US","form":"corner-of"}
+{"raw":"Farr Rd&Little River Rd","components":{"intersection_a":"Farr Rd","intersection_b":"Little River Rd"},"country":"US","form":"amp-tight"}
+{"raw":"Crossett Hill Rd @ Pollander Rd","components":{"intersection_a":"Crossett Hill Rd","intersection_b":"Pollander Rd"},"country":"US","form":"at-sign"}
+{"raw":"Ewing St @ North St","components":{"intersection_a":"Ewing St","intersection_b":"North St"},"country":"US","form":"at-sign"}
+{"raw":"High St @ Towne Ave","components":{"intersection_a":"High St","intersection_b":"Towne Ave"},"country":"US","form":"at-sign"}
+{"raw":"guy st at king st","components":{"intersection_a":"Guy St","intersection_b":"King St"},"country":"US","form":"at"}
+{"raw":"Beckley St at N Main St, VT","components":{"intersection_a":"Beckley St","intersection_b":"N Main St","region":"VT"},"country":"US","form":"at"}
+{"raw":"Tremont St and Walnut St, VT","components":{"intersection_a":"Tremont St","intersection_b":"Walnut St","region":"VT"},"country":"US","form":"and"}
+{"raw":"Cabot Rd & North Rd, VT","components":{"intersection_a":"Cabot Rd","intersection_b":"North Rd","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Glen View Rd&Rainbow Path, VT","components":{"intersection_a":"Glen View Rd","intersection_b":"Rainbow Path","region":"VT"},"country":"US","form":"amp-tight"}
+{"raw":"Prospect St @ Skyline Dr","components":{"intersection_a":"Prospect St","intersection_b":"Skyline Dr"},"country":"US","form":"at-sign"}
+{"raw":"Dewey St/Sunnyside Ter, VT","components":{"intersection_a":"Dewey St","intersection_b":"Sunnyside Ter","region":"VT"},"country":"US","form":"slash-tight"}
+{"raw":"Damon Dr @ State Rte 100 Bus, VT","components":{"intersection_a":"Damon Dr","intersection_b":"State Rte 100 Bus","region":"VT"},"country":"US","form":"at-sign"}
+{"raw":"Beech St and Rabbit Rd, VT 05674","components":{"intersection_a":"Beech St","intersection_b":"Rabbit Rd","region":"VT","postcode":"05674"},"country":"US","form":"and"}
+{"raw":"Jacobs Rd & Sparrow Farm Rd, VT 05602","components":{"intersection_a":"Jacobs Rd","intersection_b":"Sparrow Farm Rd","region":"VT","postcode":"05602"},"country":"US","form":"amp"}
+{"raw":"Maple Ave/North St","components":{"intersection_a":"Maple Ave","intersection_b":"North St"},"country":"US","form":"slash-tight"}
+{"raw":"Dodge Rd & Johnson Rd, VT 05651","components":{"intersection_a":"Dodge Rd","intersection_b":"Johnson Rd","region":"VT","postcode":"05651"},"country":"US","form":"amp"}
+{"raw":"Center School Rd / Middle Rd, VT 05667","components":{"intersection_a":"Center School Rd","intersection_b":"Middle Rd","region":"VT","postcode":"05667"},"country":"US","form":"slash"}
+{"raw":"corner of Marshfield Rd and State Rte 14","components":{"intersection_a":"Marshfield Rd","intersection_b":"State Rte 14"},"country":"US","form":"corner-of"}
+{"raw":"intersection of Derby Dr and Northfield St","components":{"intersection_a":"Derby Dr","intersection_b":"Northfield St"},"country":"US","form":"intersection-of"}
+{"raw":"MOSCOW WOODS RD&STATE RTE 14","components":{"intersection_a":"Moscow Woods Rd","intersection_b":"State Rte 14"},"country":"US","form":"amp-tight"}
+{"raw":"Eagle Ledge Rd at Frantz Rd","components":{"intersection_a":"Eagle Ledge Rd","intersection_b":"Frantz Rd"},"country":"US","form":"at"}
+{"raw":"CROSS ST AND UNION ST, VT 05663","components":{"intersection_a":"Cross St","intersection_b":"Union St","region":"VT","postcode":"05663"},"country":"US","form":"and"}
+{"raw":"corner of Doyon Rd and Whetstone Dr, VT","components":{"intersection_a":"Doyon Rd","intersection_b":"Whetstone Dr","region":"VT"},"country":"US","form":"corner-of"}
+{"raw":"CORNER OF PHELPS RD AND SUNSET RD, VT","components":{"intersection_a":"Phelps Rd","intersection_b":"Sunset Rd","region":"VT"},"country":"US","form":"corner-of"}
+{"raw":"intersection of Lower Depot Rd and Upper Depot Rd","components":{"intersection_a":"Lower Depot Rd","intersection_b":"Upper Depot Rd"},"country":"US","form":"intersection-of"}
+{"raw":"S Main St and Warren Ct","components":{"intersection_a":"S Main St","intersection_b":"Warren Ct"},"country":"US","form":"and"}
+{"raw":"E Hill Rd at Garand Hill, VT","components":{"intersection_a":"E Hill Rd","intersection_b":"Garand Hill","region":"VT"},"country":"US","form":"at"}
+{"raw":"Blake's Pl at Hathaway Rd, VT","components":{"intersection_a":"Blake's Pl","intersection_b":"Hathaway Rd","region":"VT"},"country":"US","form":"at"}
+{"raw":"saw mill rd and state rte 215","components":{"intersection_a":"Saw Mill Rd","intersection_b":"State Rte 215"},"country":"US","form":"and"}
+{"raw":"BAILEY AVE / TERRACE ST, VT","components":{"intersection_a":"Bailey Ave","intersection_b":"Terrace St","region":"VT"},"country":"US","form":"slash"}
+{"raw":"Plain St and Seminary St, VT 05641","components":{"intersection_a":"Plain St","intersection_b":"Seminary St","region":"VT","postcode":"05641"},"country":"US","form":"and"}
+{"raw":"river st @ scribner st, vt","components":{"intersection_a":"River St","intersection_b":"Scribner St","region":"VT"},"country":"US","form":"at-sign"}
+{"raw":"ELLIS RD AND PREMO RD","components":{"intersection_a":"Ellis Rd","intersection_b":"Premo Rd"},"country":"US","form":"and"}
+{"raw":"RIVER RD & WINOOSKI ST, VT","components":{"intersection_a":"River Rd","intersection_b":"Winooski St","region":"VT"},"country":"US","form":"amp"}
+{"raw":"S Front St & Vanetti Pl, VT","components":{"intersection_a":"S Front St","intersection_b":"Vanetti Pl","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Meadowcrest Ln at W Cobble Hill Rd","components":{"intersection_a":"Meadowcrest Ln","intersection_b":"W Cobble Hill Rd"},"country":"US","form":"at"}
+{"raw":"corner of Clover Ln and Willow Dr, VT","components":{"intersection_a":"Clover Ln","intersection_b":"Willow Dr","region":"VT"},"country":"US","form":"corner-of"}
+{"raw":"Berlin St and Highgate Dr","components":{"intersection_a":"Berlin St","intersection_b":"Highgate Dr"},"country":"US","form":"and"}
+{"raw":"Summer St at Winter St","components":{"intersection_a":"Summer St","intersection_b":"Winter St"},"country":"US","form":"at"}
+{"raw":"Brook Rd at Gray Rd","components":{"intersection_a":"Brook Rd","intersection_b":"Gray Rd"},"country":"US","form":"at"}
+{"raw":"Lonesome Trl / W Pinnacle Ridge Rd","components":{"intersection_a":"Lonesome Trl","intersection_b":"W Pinnacle Ridge Rd"},"country":"US","form":"slash"}
+{"raw":"E Warren Rd & Hastings Rd","components":{"intersection_a":"E Warren Rd","intersection_b":"Hastings Rd"},"country":"US","form":"amp"}
+{"raw":"Charles St / Washington St, VT","components":{"intersection_a":"Charles St","intersection_b":"Washington St","region":"VT"},"country":"US","form":"slash"}
+{"raw":"CORNER OF BAYLEY HAZEN RD AND STATE RTE 215, VT","components":{"intersection_a":"Bayley Hazen Rd","intersection_b":"State Rte 215","region":"VT"},"country":"US","form":"corner-of"}
+{"raw":"Brook St at Milano Hill, VT","components":{"intersection_a":"Brook St","intersection_b":"Milano Hill","region":"VT"},"country":"US","form":"at"}
+{"raw":"Center Rd & Notch Rd, VT","components":{"intersection_a":"Center Rd","intersection_b":"Notch Rd","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Richardson St and Water St","components":{"intersection_a":"Richardson St","intersection_b":"Water St"},"country":"US","form":"and"}
+{"raw":"EAGLE LEDGE RD @ FRANTZ RD","components":{"intersection_a":"Eagle Ledge Rd","intersection_b":"Frantz Rd"},"country":"US","form":"at-sign"}
+{"raw":"Old Logging Rd Exd/Scribner Rd","components":{"intersection_a":"Old Logging Rd Exd","intersection_b":"Scribner Rd"},"country":"US","form":"slash-tight"}
+{"raw":"Rabbit Rd and Tamarack St","components":{"intersection_a":"Rabbit Rd","intersection_b":"Tamarack St"},"country":"US","form":"and"}
+{"raw":"Beckley St at Bromur St, VT","components":{"intersection_a":"Beckley St","intersection_b":"Bromur St","region":"VT"},"country":"US","form":"at"}
+{"raw":"Murray Rd @ Northfield St, VT","components":{"intersection_a":"Murray Rd","intersection_b":"Northfield St","region":"VT"},"country":"US","form":"at-sign"}
+{"raw":"GIDNEY RD/NORTH ST, VT 05602","components":{"intersection_a":"Gidney Rd","intersection_b":"North St","region":"VT","postcode":"05602"},"country":"US","form":"slash-tight"}
+{"raw":"Addison Dr and Spruce St","components":{"intersection_a":"Addison Dr","intersection_b":"Spruce St"},"country":"US","form":"and"}
+{"raw":"Guy St at Spaulding St","components":{"intersection_a":"Guy St","intersection_b":"Spaulding St"},"country":"US","form":"at"}
+{"raw":"corner of Hog Hollow and River Rd","components":{"intersection_a":"Hog Hollow","intersection_b":"River Rd"},"country":"US","form":"corner-of"}
+{"raw":"Evergreen Ln&US Hwy 2","components":{"intersection_a":"Evergreen Ln","intersection_b":"US Hwy 2"},"country":"US","form":"amp-tight"}
+{"raw":"Smith Rd/Whittier Hill Rd, VT 05647","components":{"intersection_a":"Smith Rd","intersection_b":"Whittier Hill Rd","region":"VT","postcode":"05647"},"country":"US","form":"slash-tight"}
+{"raw":"Church St / US Hwy 2","components":{"intersection_a":"Church St","intersection_b":"US Hwy 2"},"country":"US","form":"slash"}
+{"raw":"Apple Hill Rd & Dugar Brook Rd","components":{"intersection_a":"Apple Hill Rd","intersection_b":"Dugar Brook Rd"},"country":"US","form":"amp"}
+{"raw":"Barnes Hill Rd & Mountainview Dr, VT","components":{"intersection_a":"Barnes Hill Rd","intersection_b":"Mountainview Dr","region":"VT"},"country":"US","form":"amp"}
+{"raw":"ELMORE RD AND WORCESTER VILLAGE RD","components":{"intersection_a":"Elmore Rd","intersection_b":"Worcester Village Rd"},"country":"US","form":"and"}
+{"raw":"River Rd @ Three Mile Bridge Rd, VT","components":{"intersection_a":"River Rd","intersection_b":"Three Mile Bridge Rd","region":"VT"},"country":"US","form":"at-sign"}
+{"raw":"Bowen Rd/Sherman Rd, VT","components":{"intersection_a":"Bowen Rd","intersection_b":"Sherman Rd","region":"VT"},"country":"US","form":"slash-tight"}
+{"raw":"corner of Berlin St and State Rte 62","components":{"intersection_a":"Berlin St","intersection_b":"State Rte 62"},"country":"US","form":"corner-of"}
+{"raw":"CRAM HILL RD AND FISHER RD","components":{"intersection_a":"Cram Hill Rd","intersection_b":"Fisher Rd"},"country":"US","form":"and"}
+{"raw":"German Flats Rd&Long Trail Dr","components":{"intersection_a":"German Flats Rd","intersection_b":"Long Trail Dr"},"country":"US","form":"amp-tight"}
+{"raw":"Merchant St and Wellington St, VT","components":{"intersection_a":"Merchant St","intersection_b":"Wellington St","region":"VT"},"country":"US","form":"and"}
+{"raw":"N College St and Towne St, VT","components":{"intersection_a":"N College St","intersection_b":"Towne St","region":"VT"},"country":"US","form":"and"}
+{"raw":"deerfield dr @ old county rd, vt","components":{"intersection_a":"Deerfield Dr","intersection_b":"Old County Rd","region":"VT"},"country":"US","form":"at-sign"}
+{"raw":"intersection of Sibley Rd and Sodom Pond Rd, VT","components":{"intersection_a":"Sibley Rd","intersection_b":"Sodom Pond Rd","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"CORNER OF FERRIS ST AND WEBSTERVILLE RD","components":{"intersection_a":"Ferris St","intersection_b":"Websterville Rd"},"country":"US","form":"corner-of"}
+{"raw":"corner of Cram Hill Rd and Fisher Rd","components":{"intersection_a":"Cram Hill Rd","intersection_b":"Fisher Rd"},"country":"US","form":"corner-of"}
+{"raw":"Huntington Rd at New Discovery Rd","components":{"intersection_a":"Huntington Rd","intersection_b":"New Discovery Rd"},"country":"US","form":"at"}
+{"raw":"MESSIER HILL RD AT UNNAMED PRRD","components":{"intersection_a":"Messier Hill Rd","intersection_b":"Unnamed Prrd"},"country":"US","form":"at"}
+{"raw":"State Rte 100 at W Hill Rd","components":{"intersection_a":"State Rte 100","intersection_b":"W Hill Rd"},"country":"US","form":"at"}
+{"raw":"Brook Rd/Main St","components":{"intersection_a":"Brook Rd","intersection_b":"Main St"},"country":"US","form":"slash-tight"}
+{"raw":"Murphy Rd at State Rte 100 Bus, VT","components":{"intersection_a":"Murphy Rd","intersection_b":"State Rte 100 Bus","region":"VT"},"country":"US","form":"at"}
+{"raw":"intersection of Everett St and Fairview St","components":{"intersection_a":"Everett St","intersection_b":"Fairview St"},"country":"US","form":"intersection-of"}
+{"raw":"N Front St / Treatment Plant Dr","components":{"intersection_a":"N Front St","intersection_b":"Treatment Plant Dr"},"country":"US","form":"slash"}
+{"raw":"intersection of Biggs St and Grandview Dr, VT","components":{"intersection_a":"Biggs St","intersection_b":"Grandview Dr","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"Circle St @ S Main St","components":{"intersection_a":"Circle St","intersection_b":"S Main St"},"country":"US","form":"at-sign"}
+{"raw":"Fiske Dr at Upper N Main St Exd","components":{"intersection_a":"Fiske Dr","intersection_b":"Upper N Main St Exd"},"country":"US","form":"at"}
+{"raw":"cedarbrook ave & graniteville rd, vt","components":{"intersection_a":"Cedarbrook Ave","intersection_b":"Graniteville Rd","region":"VT"},"country":"US","form":"amp"}
+{"raw":"College St & Ridge St, VT 05602","components":{"intersection_a":"College St","intersection_b":"Ridge St","region":"VT","postcode":"05602"},"country":"US","form":"amp"}
+{"raw":"Airport Rd @ Cockleburr Farm Rd, VT 05674","components":{"intersection_a":"Airport Rd","intersection_b":"Cockleburr Farm Rd","region":"VT","postcode":"05674"},"country":"US","form":"at-sign"}
+{"raw":"PINE HILL DR @ STATE RTE 12, VT","components":{"intersection_a":"Pine Hill Dr","intersection_b":"State Rte 12","region":"VT"},"country":"US","form":"at-sign"}
+{"raw":"corner of Roxburry Mountain Rd and Roxbury Mountain Rd","components":{"intersection_a":"Roxburry Mountain Rd","intersection_b":"Roxbury Mountain Rd"},"country":"US","form":"corner-of"}
+{"raw":"Jones Brook Rd&Three Mile Bridge Rd, VT","components":{"intersection_a":"Jones Brook Rd","intersection_b":"Three Mile Bridge Rd","region":"VT"},"country":"US","form":"amp-tight"}
+{"raw":"BAILEY AVE&TERRACE ST","components":{"intersection_a":"Bailey Ave","intersection_b":"Terrace St"},"country":"US","form":"amp-tight"}
+{"raw":"intersection of Inferno Rd and Triview Dr, VT","components":{"intersection_a":"Inferno Rd","intersection_b":"Triview Dr","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"Center Rd & Zdon Rd, VT","components":{"intersection_a":"Center Rd","intersection_b":"Zdon Rd","region":"VT"},"country":"US","form":"amp"}
+{"raw":"intersection of Colby St and Perrin St","components":{"intersection_a":"Colby St","intersection_b":"Perrin St"},"country":"US","form":"intersection-of"}
+{"raw":"Austin Rd & Hollister Hill Rd","components":{"intersection_a":"Austin Rd","intersection_b":"Hollister Hill Rd"},"country":"US","form":"amp"}
+{"raw":"Hemlock Rd and State Rte 14","components":{"intersection_a":"Hemlock Rd","intersection_b":"State Rte 14"},"country":"US","form":"and"}
+{"raw":"intersection of s main st and winter st, vt","components":{"intersection_a":"S Main St","intersection_b":"Winter St","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"corner of North St and Sparrow Farm Rd, VT","components":{"intersection_a":"North St","intersection_b":"Sparrow Farm Rd","region":"VT"},"country":"US","form":"corner-of"}
+{"raw":"fox rd and stony brook rd, vt","components":{"intersection_a":"Fox Rd","intersection_b":"Stony Brook Rd","region":"VT"},"country":"US","form":"and"}
+{"raw":"Coleman Rd & Inferno Rd, VT","components":{"intersection_a":"Coleman Rd","intersection_b":"Inferno Rd","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Covered Bridge Rd @ Mill Rd, VT 05674","components":{"intersection_a":"Covered Bridge Rd","intersection_b":"Mill Rd","region":"VT","postcode":"05674"},"country":"US","form":"at-sign"}
+{"raw":"Ruby Raymond Rd & Waterbury-Stowe Rd","components":{"intersection_a":"Ruby Raymond Rd","intersection_b":"Waterbury-Stowe Rd"},"country":"US","form":"amp"}
+{"raw":"Emmons St and Woodrow Ave","components":{"intersection_a":"Emmons St","intersection_b":"Woodrow Ave"},"country":"US","form":"and"}
+{"raw":"Crozier Rd & State Rte 12","components":{"intersection_a":"Crozier Rd","intersection_b":"State Rte 12"},"country":"US","form":"amp"}
+{"raw":"corner of George St and Pike St, VT","components":{"intersection_a":"George St","intersection_b":"Pike St","region":"VT"},"country":"US","form":"corner-of"}
+{"raw":"S Main St & South St, VT","components":{"intersection_a":"S Main St","intersection_b":"South St","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Id White Ave & S Main St, VT 05663","components":{"intersection_a":"Id White Ave","intersection_b":"S Main St","region":"VT","postcode":"05663"},"country":"US","form":"amp"}
+{"raw":"Butterfly Ln at King Pond Rd","components":{"intersection_a":"Butterfly Ln","intersection_b":"King Pond Rd"},"country":"US","form":"at"}
+{"raw":"corner of Currier St and Marcell Ave","components":{"intersection_a":"Currier St","intersection_b":"Marcell Ave"},"country":"US","form":"corner-of"}
+{"raw":"Barclay Quarry Rd and Clermont St, VT","components":{"intersection_a":"Barclay Quarry Rd","intersection_b":"Clermont St","region":"VT"},"country":"US","form":"and"}
+{"raw":"intersection of Fisher Rd and Willard Bean Rd","components":{"intersection_a":"Fisher Rd","intersection_b":"Willard Bean Rd"},"country":"US","form":"intersection-of"}
+{"raw":"Moran Ln @ N Main St","components":{"intersection_a":"Moran Ln","intersection_b":"N Main St"},"country":"US","form":"at-sign"}
+{"raw":"Sass Ave @ US Hwy 2","components":{"intersection_a":"Sass Ave","intersection_b":"US Hwy 2"},"country":"US","form":"at-sign"}
+{"raw":"intersection of Cross St and Franklin St, VT","components":{"intersection_a":"Cross St","intersection_b":"Franklin St","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"Delong Rd&State Rte 100","components":{"intersection_a":"Delong Rd","intersection_b":"State Rte 100"},"country":"US","form":"amp-tight"}
+{"raw":"Huntington Pl & Ohear Ct","components":{"intersection_a":"Huntington Pl","intersection_b":"Ohear Ct"},"country":"US","form":"amp"}
+{"raw":"Misty Mountain Dr @ Richardson Rd, VT","components":{"intersection_a":"Misty Mountain Dr","intersection_b":"Richardson Rd","region":"VT"},"country":"US","form":"at-sign"}
+{"raw":"arsenal dr / college st, vt","components":{"intersection_a":"Arsenal Dr","intersection_b":"College St","region":"VT"},"country":"US","form":"slash"}
+{"raw":"Pleasant St and Summer St, VT 05663","components":{"intersection_a":"Pleasant St","intersection_b":"Summer St","region":"VT","postcode":"05663"},"country":"US","form":"and"}
+{"raw":"bull run rd at winch hill rd","components":{"intersection_a":"Bull Run Rd","intersection_b":"Winch Hill Rd"},"country":"US","form":"at"}
+{"raw":"Clarendon Ave / Jordan St","components":{"intersection_a":"Clarendon Ave","intersection_b":"Jordan St"},"country":"US","form":"slash"}
+{"raw":"INTERSECTION OF COUNTY RD AND HORN OF THE MOON RD","components":{"intersection_a":"County Rd","intersection_b":"Horn of the Moon Rd"},"country":"US","form":"intersection-of"}
+{"raw":"corner of Little John Rd and Sabett Rd, VT","components":{"intersection_a":"Little John Rd","intersection_b":"Sabett Rd","region":"VT"},"country":"US","form":"corner-of"}
+{"raw":"corner of Buzzell Pl and Merchant St, VT","components":{"intersection_a":"Buzzell Pl","intersection_b":"Merchant St","region":"VT"},"country":"US","form":"corner-of"}
+{"raw":"Robinson Cemetery Rd & W County Rd","components":{"intersection_a":"Robinson Cemetery Rd","intersection_b":"W County Rd"},"country":"US","form":"amp"}
+{"raw":"Dole Hill Rd at University Dr","components":{"intersection_a":"Dole Hill Rd","intersection_b":"University Dr"},"country":"US","form":"at"}
+{"raw":"CAMP ST & CLIFTON ST, VT","components":{"intersection_a":"Camp St","intersection_b":"Clifton St","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Granite Shed Ln/Granite St, VT","components":{"intersection_a":"Granite Shed Ln","intersection_b":"Granite St","region":"VT"},"country":"US","form":"slash-tight"}
+{"raw":"Sugarbush Village Rd and Trailside Dr, VT","components":{"intersection_a":"Sugarbush Village Rd","intersection_b":"Trailside Dr","region":"VT"},"country":"US","form":"and"}
+{"raw":"Dugar Brook Rd & Lavallee","components":{"intersection_a":"Dugar Brook Rd","intersection_b":"Lavallee"},"country":"US","form":"amp"}
+{"raw":"AYERS RD AND SCHOOL ST, VT","components":{"intersection_a":"Ayers Rd","intersection_b":"School St","region":"VT"},"country":"US","form":"and"}
+{"raw":"Moran Ln and N Main St","components":{"intersection_a":"Moran Ln","intersection_b":"N Main St"},"country":"US","form":"and"}
+{"raw":"Elm St and Gould Hill Rd, VT","components":{"intersection_a":"Elm St","intersection_b":"Gould Hill Rd","region":"VT"},"country":"US","form":"and"}
+{"raw":"Douglass St & State St, VT","components":{"intersection_a":"Douglass St","intersection_b":"State St","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Christmas Tree Rd & Sugarbush Access Rd","components":{"intersection_a":"Christmas Tree Rd","intersection_b":"Sugarbush Access Rd"},"country":"US","form":"amp"}
+{"raw":"Paddock St and Spring St, VT","components":{"intersection_a":"Paddock St","intersection_b":"Spring St","region":"VT"},"country":"US","form":"and"}
+{"raw":"McCullough Hill Rd and Upper Barnet Hill Rd, VT","components":{"intersection_a":"McCullough Hill Rd","intersection_b":"Upper Barnet Hill Rd","region":"VT"},"country":"US","form":"and"}
+{"raw":"Hartshorn Rd / State Rte 100, VT","components":{"intersection_a":"Hartshorn Rd","intersection_b":"State Rte 100","region":"VT"},"country":"US","form":"slash"}
+{"raw":"Pine Ridge Rd / Swift Rd","components":{"intersection_a":"Pine Ridge Rd","intersection_b":"Swift Rd"},"country":"US","form":"slash"}
+{"raw":"corner of Hardwood Mountain Rd and Holt Rd","components":{"intersection_a":"Hardwood Mountain Rd","intersection_b":"Holt Rd"},"country":"US","form":"corner-of"}
+{"raw":"Maple Ave/Reid St, VT","components":{"intersection_a":"Maple Ave","intersection_b":"Reid St","region":"VT"},"country":"US","form":"slash-tight"}
+{"raw":"Bean Rd & Payette Dr","components":{"intersection_a":"Bean Rd","intersection_b":"Payette Dr"},"country":"US","form":"amp"}
+{"raw":"Fassett Rd @ State Rte 14, VT","components":{"intersection_a":"Fassett Rd","intersection_b":"State Rte 14","region":"VT"},"country":"US","form":"at-sign"}
+{"raw":"Bailey Ave&Clarendon Ave, VT 05602","components":{"intersection_a":"Bailey Ave","intersection_b":"Clarendon Ave","region":"VT","postcode":"05602"},"country":"US","form":"amp-tight"}
+{"raw":"intersection of 3rd St and Northfield St, VT","components":{"intersection_a":"3rd St","intersection_b":"Northfield St","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"Porter Rd and US Hwy 2","components":{"intersection_a":"Porter Rd","intersection_b":"US Hwy 2"},"country":"US","form":"and"}
+{"raw":"Essex St & Prospect St","components":{"intersection_a":"Essex St","intersection_b":"Prospect St"},"country":"US","form":"amp"}
+{"raw":"intersection of Kew-Vasseur Rd and Woods Rd, VT","components":{"intersection_a":"Kew-Vasseur Rd","intersection_b":"Woods Rd","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"Auburn St & Zan St","components":{"intersection_a":"Auburn St","intersection_b":"Zan St"},"country":"US","form":"amp"}
+{"raw":"Carlton Blvd & State Rte 14, VT","components":{"intersection_a":"Carlton Blvd","intersection_b":"State Rte 14","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Garvey Hill Rd / Pine Ridge Dr, VT","components":{"intersection_a":"Garvey Hill Rd","intersection_b":"Pine Ridge Dr","region":"VT"},"country":"US","form":"slash"}
+{"raw":"Center Rd & Windlea Dr","components":{"intersection_a":"Center Rd","intersection_b":"Windlea Dr"},"country":"US","form":"amp"}
+{"raw":"Butterfly Ln & King Pond Rd, VT","components":{"intersection_a":"Butterfly Ln","intersection_b":"King Pond Rd","region":"VT"},"country":"US","form":"amp"}
+{"raw":"GUILD HILL RD AT VISTA DR","components":{"intersection_a":"Guild Hill Rd","intersection_b":"Vista Dr"},"country":"US","form":"at"}
+{"raw":"Austin Hts & Pony Farm Rd, VT","components":{"intersection_a":"Austin Hts","intersection_b":"Pony Farm Rd","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Division St and Howland St","components":{"intersection_a":"Division St","intersection_b":"Howland St"},"country":"US","form":"and"}
+{"raw":"Old Pumphouse Rd/Paine Tpke S","components":{"intersection_a":"Old Pumphouse Rd","intersection_b":"Paine Tpke S"},"country":"US","form":"slash-tight"}
+{"raw":"tremblay rd and verd mont rd, vt","components":{"intersection_a":"Tremblay Rd","intersection_b":"Verd Mont Rd","region":"VT"},"country":"US","form":"and"}
+{"raw":"Berlin St & Phelps St","components":{"intersection_a":"Berlin St","intersection_b":"Phelps St"},"country":"US","form":"amp"}
+{"raw":"crossett hill rd and morse rd","components":{"intersection_a":"Crossett Hill Rd","intersection_b":"Morse Rd"},"country":"US","form":"and"}
+{"raw":"intersection of Addison Dr and Paine Tpke N, VT","components":{"intersection_a":"Addison Dr","intersection_b":"Paine Tpke N","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"Paine Tpke N / Pike Dr","components":{"intersection_a":"Paine Tpke N","intersection_b":"Pike Dr"},"country":"US","form":"slash"}
+{"raw":"Hospital Loop @ Woodridge Dr","components":{"intersection_a":"Hospital Loop","intersection_b":"Woodridge Dr"},"country":"US","form":"at-sign"}
+{"raw":"Fuller Hill Rd @ Plunkton Rd","components":{"intersection_a":"Fuller Hill Rd","intersection_b":"Plunkton Rd"},"country":"US","form":"at-sign"}
+{"raw":"mckinstry rd/whittier hill rd, vt","components":{"intersection_a":"McKinstry Rd","intersection_b":"Whittier Hill Rd","region":"VT"},"country":"US","form":"slash-tight"}
+{"raw":"Bear Farm Rd and Hallstrom Rd, VT","components":{"intersection_a":"Bear Farm Rd","intersection_b":"Hallstrom Rd","region":"VT"},"country":"US","form":"and"}
+{"raw":"Hastings Meadow Rd&Hastings Rd, VT","components":{"intersection_a":"Hastings Meadow Rd","intersection_b":"Hastings Rd","region":"VT"},"country":"US","form":"amp-tight"}
+{"raw":"corner of 2nd St and Hawes Pl","components":{"intersection_a":"2nd St","intersection_b":"Hawes Pl"},"country":"US","form":"corner-of"}
+{"raw":"corner of Birchwood Park Dr and Miller Rd, VT","components":{"intersection_a":"Birchwood Park Dr","intersection_b":"Miller Rd","region":"VT"},"country":"US","form":"corner-of"}
+{"raw":"Cabot Rd and State Rte 215, VT 05658","components":{"intersection_a":"Cabot Rd","intersection_b":"State Rte 215","region":"VT","postcode":"05658"},"country":"US","form":"and"}
+{"raw":"State Rte 14 and Strawberry Ln","components":{"intersection_a":"State Rte 14","intersection_b":"Strawberry Ln"},"country":"US","form":"and"}
+{"raw":"Buick St at Websterville Rd, VT 05641","components":{"intersection_a":"Buick St","intersection_b":"Websterville Rd","region":"VT","postcode":"05641"},"country":"US","form":"at"}
+{"raw":"corner of stowebury ln and waterbury-stowe rd","components":{"intersection_a":"Stowebury Ln","intersection_b":"Waterbury-Stowe Rd"},"country":"US","form":"corner-of"}
+{"raw":"intersection of Farnham Rd and Foster Rd","components":{"intersection_a":"Farnham Rd","intersection_b":"Foster Rd"},"country":"US","form":"intersection-of"}
+{"raw":"BUTLER ST & N MAIN ST, VT","components":{"intersection_a":"Butler St","intersection_b":"N Main St","region":"VT"},"country":"US","form":"amp"}
+{"raw":"mountain meadow ln @ tucker hill rd","components":{"intersection_a":"Mountain Meadow Ln","intersection_b":"Tucker Hill Rd"},"country":"US","form":"at-sign"}
+{"raw":"corner of Crosstown Rd and Walker Rd, VT 05602","components":{"intersection_a":"Crosstown Rd","intersection_b":"Walker Rd","region":"VT","postcode":"05602"},"country":"US","form":"corner-of"}
+{"raw":"Ctr Fayston Rd&Kew-Vasseur Rd, VT","components":{"intersection_a":"Ctr Fayston Rd","intersection_b":"Kew-Vasseur Rd","region":"VT"},"country":"US","form":"amp-tight"}
+{"raw":"Fellows Rd & Moscow Woods Rd","components":{"intersection_a":"Fellows Rd","intersection_b":"Moscow Woods Rd"},"country":"US","form":"amp"}
+{"raw":"intersection of Maple Ridge Rd and Sugar Run Rd, VT","components":{"intersection_a":"Maple Ridge Rd","intersection_b":"Sugar Run Rd","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"intersection of Loomis Hill Rd and Unnamed Private Rd","components":{"intersection_a":"Loomis Hill Rd","intersection_b":"Unnamed Private Rd"},"country":"US","form":"intersection-of"}
+{"raw":"intersection of Academy St and East St","components":{"intersection_a":"Academy St","intersection_b":"East St"},"country":"US","form":"intersection-of"}
+{"raw":"Depot Sq&S Main St, VT","components":{"intersection_a":"Depot Sq","intersection_b":"S Main St","region":"VT"},"country":"US","form":"amp-tight"}
+{"raw":"River Rd & Three Mile Bridge Rd","components":{"intersection_a":"River Rd","intersection_b":"Three Mile Bridge Rd"},"country":"US","form":"amp"}
+{"raw":"Burnham St/Granite St","components":{"intersection_a":"Burnham St","intersection_b":"Granite St"},"country":"US","form":"slash-tight"}
+{"raw":"intersection of Highgate Dr and Skyline Dr, VT","components":{"intersection_a":"Highgate Dr","intersection_b":"Skyline Dr","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"Henry Hough Rd at Perry Hill Rd","components":{"intersection_a":"Henry Hough Rd","intersection_b":"Perry Hill Rd"},"country":"US","form":"at"}
+{"raw":"Elm St at Summer St","components":{"intersection_a":"Elm St","intersection_b":"Summer St"},"country":"US","form":"at"}
+{"raw":"Minister Brook Rd at Sand Hill Rd","components":{"intersection_a":"Minister Brook Rd","intersection_b":"Sand Hill Rd"},"country":"US","form":"at"}
+{"raw":"grout rd at state rte 100, vt","components":{"intersection_a":"Grout Rd","intersection_b":"State Rte 100","region":"VT"},"country":"US","form":"at"}
+{"raw":"Chapman Rd & Richardson St, VT","components":{"intersection_a":"Chapman Rd","intersection_b":"Richardson St","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Corti St & Maple Ave","components":{"intersection_a":"Corti St","intersection_b":"Maple Ave"},"country":"US","form":"amp"}
+{"raw":"Dormitory Rd @ Pitkin Rd","components":{"intersection_a":"Dormitory Rd","intersection_b":"Pitkin Rd"},"country":"US","form":"at-sign"}
+{"raw":"Herrick's Cv Exd & Herricks Cove Rd","components":{"intersection_a":"Herrick's Cv Exd","intersection_b":"Herricks Cove Rd"},"country":"US","form":"amp"}
+{"raw":"Quarry St / S Main St","components":{"intersection_a":"Quarry St","intersection_b":"S Main St"},"country":"US","form":"slash"}
+{"raw":"Doner Rd at Fitch Rd","components":{"intersection_a":"Doner Rd","intersection_b":"Fitch Rd"},"country":"US","form":"at"}
+{"raw":"AIRPORT RD AND FLEMING RD","components":{"intersection_a":"Airport Rd","intersection_b":"Fleming Rd"},"country":"US","form":"and"}
+{"raw":"corner of Casanova St and Church Hill Rd","components":{"intersection_a":"Casanova St","intersection_b":"Church Hill Rd"},"country":"US","form":"corner-of"}
+{"raw":"Farwell St at Muddy Brook Rd","components":{"intersection_a":"Farwell St","intersection_b":"Muddy Brook Rd"},"country":"US","form":"at"}
+{"raw":"Garcia Ln & Pleasant St","components":{"intersection_a":"Garcia Ln","intersection_b":"Pleasant St"},"country":"US","form":"amp"}
+{"raw":"Bartlett Rd at Junction Rd, VT 05602","components":{"intersection_a":"Bartlett Rd","intersection_b":"Junction Rd","region":"VT","postcode":"05602"},"country":"US","form":"at"}
+{"raw":"intersection of Barre St and Main St, VT","components":{"intersection_a":"Barre St","intersection_b":"Main St","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"Frank St/Highland Ave","components":{"intersection_a":"Frank St","intersection_b":"Highland Ave"},"country":"US","form":"slash-tight"}
+{"raw":"Orlandi Camp Rd at Valley Lake Rd, VT","components":{"intersection_a":"Orlandi Camp Rd","intersection_b":"Valley Lake Rd","region":"VT"},"country":"US","form":"at"}
+{"raw":"Horn of the Moon Rd at North St","components":{"intersection_a":"Horn of the Moon Rd","intersection_b":"North St"},"country":"US","form":"at"}
+{"raw":"corner of Dewey St and Sunnyside Ter","components":{"intersection_a":"Dewey St","intersection_b":"Sunnyside Ter"},"country":"US","form":"corner-of"}
+{"raw":"INTERSECTION OF PARKER RD AND PITMAN RD","components":{"intersection_a":"Parker Rd","intersection_b":"Pitman Rd"},"country":"US","form":"intersection-of"}
+{"raw":"Slayton Pond Rd / Woodbury Mountain Rd, VT","components":{"intersection_a":"Slayton Pond Rd","intersection_b":"Woodbury Mountain Rd","region":"VT"},"country":"US","form":"slash"}
+{"raw":"INTERSECTION OF BALENTINE RD AND STATE RTE 14","components":{"intersection_a":"Balentine Rd","intersection_b":"State Rte 14"},"country":"US","form":"intersection-of"}
+{"raw":"intersection of County Rd and Martin Rd","components":{"intersection_a":"County Rd","intersection_b":"Martin Rd"},"country":"US","form":"intersection-of"}
+{"raw":"G A R RD & NELSON POND RD","components":{"intersection_a":"G A R Rd","intersection_b":"Nelson Pond Rd"},"country":"US","form":"amp"}
+{"raw":"New Discovery Rd @ Peacham Pond Rd","components":{"intersection_a":"New Discovery Rd","intersection_b":"Peacham Pond Rd"},"country":"US","form":"at-sign"}
+{"raw":"Snowside at Village Rd, VT","components":{"intersection_a":"Snowside","intersection_b":"Village Rd","region":"VT"},"country":"US","form":"at"}
+{"raw":"DANIEL DR & WESTWOOD PKWY","components":{"intersection_a":"Daniel Dr","intersection_b":"Westwood Pkwy"},"country":"US","form":"amp"}
+{"raw":"Deer Run Ln & River Rd","components":{"intersection_a":"Deer Run Ln","intersection_b":"River Rd"},"country":"US","form":"amp"}
+{"raw":"Ripley Rd @ Snow Hill Rd, VT","components":{"intersection_a":"Ripley Rd","intersection_b":"Snow Hill Rd","region":"VT"},"country":"US","form":"at-sign"}
+{"raw":"Gib Ln & Morning Star Ln, VT","components":{"intersection_a":"Gib Ln","intersection_b":"Morning Star Ln","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Foster Hill Rd and Wilbur Rd","components":{"intersection_a":"Foster Hill Rd","intersection_b":"Wilbur Rd"},"country":"US","form":"and"}
+{"raw":"CORNER OF FULLER HILL RD AND MAIN ST","components":{"intersection_a":"Fuller Hill Rd","intersection_b":"Main St"},"country":"US","form":"corner-of"}
+{"raw":"Farwell St & Mekleson Rd","components":{"intersection_a":"Farwell St","intersection_b":"Mekleson Rd"},"country":"US","form":"amp"}
+{"raw":"corner of Countryside Dr and Fieldstone Rd, VT","components":{"intersection_a":"Countryside Dr","intersection_b":"Fieldstone Rd","region":"VT"},"country":"US","form":"corner-of"}
+{"raw":"Dole Hill Rd & University Dr","components":{"intersection_a":"Dole Hill Rd","intersection_b":"University Dr"},"country":"US","form":"amp"}
+{"raw":"corner of Erskine Rd and Northfield Rd","components":{"intersection_a":"Erskine Rd","intersection_b":"Northfield Rd"},"country":"US","form":"corner-of"}
+{"raw":"Sharkyville at US Rte 2, VT","components":{"intersection_a":"Sharkyville","intersection_b":"US Rte 2","region":"VT"},"country":"US","form":"at"}
+{"raw":"corner of Gonyeau Rd and Middle Rd","components":{"intersection_a":"Gonyeau Rd","intersection_b":"Middle Rd"},"country":"US","form":"corner-of"}
+{"raw":"Intervale Ave & Wallace St, VT","components":{"intersection_a":"Intervale Ave","intersection_b":"Wallace St","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Phelps St at River St","components":{"intersection_a":"Phelps St","intersection_b":"River St"},"country":"US","form":"at"}
+{"raw":"intersection of Fox Farm Run and State Rte 100 Bus","components":{"intersection_a":"Fox Farm Run","intersection_b":"State Rte 100 Bus"},"country":"US","form":"intersection-of"}
+{"raw":"Blodgett Ave and Mill St, VT","components":{"intersection_a":"Blodgett Ave","intersection_b":"Mill St","region":"VT"},"country":"US","form":"and"}
+{"raw":"Union Brook Rd&Union St, VT","components":{"intersection_a":"Union Brook Rd","intersection_b":"Union St","region":"VT"},"country":"US","form":"amp-tight"}
+{"raw":"intersection of Cliff St and Waverly Pl","components":{"intersection_a":"Cliff St","intersection_b":"Waverly Pl"},"country":"US","form":"intersection-of"}
+{"raw":"State Rte 100 Bus @ Sugar House Way","components":{"intersection_a":"State Rte 100 Bus","intersection_b":"Sugar House Way"},"country":"US","form":"at-sign"}
+{"raw":"Looking Good Rd & S Village Blvd","components":{"intersection_a":"Looking Good Rd","intersection_b":"S Village Blvd"},"country":"US","form":"amp"}
+{"raw":"Brook Rd at Lee Rd, VT","components":{"intersection_a":"Brook Rd","intersection_b":"Lee Rd","region":"VT"},"country":"US","form":"at"}
+{"raw":"TOWN GARAGE RD AT WARREN MOUNTAIN RD, VT","components":{"intersection_a":"Town Garage Rd","intersection_b":"Warren Mountain Rd","region":"VT"},"country":"US","form":"at"}
+{"raw":"Calais Rd&Hollister Hill Rd, VT","components":{"intersection_a":"Calais Rd","intersection_b":"Hollister Hill Rd","region":"VT"},"country":"US","form":"amp-tight"}
+{"raw":"Meadow Rd&State Rte 100, VT 05673","components":{"intersection_a":"Meadow Rd","intersection_b":"State Rte 100","region":"VT","postcode":"05673"},"country":"US","form":"amp-tight"}
+{"raw":"E State St at West St","components":{"intersection_a":"E State St","intersection_b":"West St"},"country":"US","form":"at"}
+{"raw":"Main St and Radcliffe Dr, VT","components":{"intersection_a":"Main St","intersection_b":"Radcliffe Dr","region":"VT"},"country":"US","form":"and"}
+{"raw":"intersection of Blush Hill Rd and Kennedy Dr","components":{"intersection_a":"Blush Hill Rd","intersection_b":"Kennedy Dr"},"country":"US","form":"intersection-of"}
+{"raw":"intersection of Foster Hill Rd and Wilbur Rd, VT","components":{"intersection_a":"Foster Hill Rd","intersection_b":"Wilbur Rd","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"Pine St & State Rte 100, VT","components":{"intersection_a":"Pine St","intersection_b":"State Rte 100","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Mitchell Rd and Plainfield Brook Rd, VT 05641","components":{"intersection_a":"Mitchell Rd","intersection_b":"Plainfield Brook Rd","region":"VT","postcode":"05641"},"country":"US","form":"and"}
+{"raw":"corner of Ridge St and Tracy St","components":{"intersection_a":"Ridge St","intersection_b":"Tracy St"},"country":"US","form":"corner-of"}
+{"raw":"Cleveland Ave and Grant Ave","components":{"intersection_a":"Cleveland Ave","intersection_b":"Grant Ave"},"country":"US","form":"and"}
+{"raw":"corner of Holmes Ct and Spring St","components":{"intersection_a":"Holmes Ct","intersection_b":"Spring St"},"country":"US","form":"corner-of"}
+{"raw":"Cider Fork at Cider Mountain Rd, VT 05674","components":{"intersection_a":"Cider Fork","intersection_b":"Cider Mountain Rd","region":"VT","postcode":"05674"},"country":"US","form":"at"}
+{"raw":"Granite Shed Ln & Granite St","components":{"intersection_a":"Granite Shed Ln","intersection_b":"Granite St"},"country":"US","form":"amp"}
+{"raw":"intersection of Elm St and N Park Dr, VT","components":{"intersection_a":"Elm St","intersection_b":"N Park Dr","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"Coleman Rd and Inferno Rd, VT","components":{"intersection_a":"Coleman Rd","intersection_b":"Inferno Rd","region":"VT"},"country":"US","form":"and"}
+{"raw":"intersection of Paine Tpke N and Richardson Rd","components":{"intersection_a":"Paine Tpke N","intersection_b":"Richardson Rd"},"country":"US","form":"intersection-of"}
+{"raw":"Elmore Rd / Horn of the Moon Rd","components":{"intersection_a":"Elmore Rd","intersection_b":"Horn of the Moon Rd"},"country":"US","form":"slash"}
+{"raw":"Coding Rd / Codling Rd","components":{"intersection_a":"Coding Rd","intersection_b":"Codling Rd"},"country":"US","form":"slash"}
+{"raw":"INTERSECTION OF GIB LN AND MORNING STAR LN, VT","components":{"intersection_a":"Gib Ln","intersection_b":"Morning Star Ln","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"QUENNEVILLE DR&STATE RTE 100","components":{"intersection_a":"Quenneville Dr","intersection_b":"State Rte 100"},"country":"US","form":"amp-tight"}
+{"raw":"Bassett St and Prospect St","components":{"intersection_a":"Bassett St","intersection_b":"Prospect St"},"country":"US","form":"and"}
+{"raw":"Blush Hill Rd at Windridge Ln, VT","components":{"intersection_a":"Blush Hill Rd","intersection_b":"Windridge Ln","region":"VT"},"country":"US","form":"at"}
+{"raw":"Garland Ln at Terrace St","components":{"intersection_a":"Garland Ln","intersection_b":"Terrace St"},"country":"US","form":"at"}
+{"raw":"Garland Ln and Terrace St","components":{"intersection_a":"Garland Ln","intersection_b":"Terrace St"},"country":"US","form":"and"}
+{"raw":"Cottage St at N Main St, VT","components":{"intersection_a":"Cottage St","intersection_b":"N Main St","region":"VT"},"country":"US","form":"at"}
+{"raw":"corner of Center Rd and US Rte 2","components":{"intersection_a":"Center Rd","intersection_b":"US Rte 2"},"country":"US","form":"corner-of"}
+{"raw":"intersection of Pioneer Center and Pioneer Cir, VT","components":{"intersection_a":"Pioneer Center","intersection_b":"Pioneer Cir","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"Clearing Rd at Loop Rd","components":{"intersection_a":"Clearing Rd","intersection_b":"Loop Rd"},"country":"US","form":"at"}
+{"raw":"North Rd & Pony Farm Rd","components":{"intersection_a":"North Rd","intersection_b":"Pony Farm Rd"},"country":"US","form":"amp"}
+{"raw":"Center Rd and Notch Rd","components":{"intersection_a":"Center Rd","intersection_b":"Notch Rd"},"country":"US","form":"and"}
+{"raw":"Dowsville Rd and Vigilante Rd","components":{"intersection_a":"Dowsville Rd","intersection_b":"Vigilante Rd"},"country":"US","form":"and"}
+{"raw":"Elm St and Log Rd, VT","components":{"intersection_a":"Elm St","intersection_b":"Log Rd","region":"VT"},"country":"US","form":"and"}
+{"raw":"Bridges Cir at Sugarbush Access Rd, VT","components":{"intersection_a":"Bridges Cir","intersection_b":"Sugarbush Access Rd","region":"VT"},"country":"US","form":"at"}
+{"raw":"Mad River Green&Main St, VT","components":{"intersection_a":"Mad River Green","intersection_b":"Main St","region":"VT"},"country":"US","form":"amp-tight"}
+{"raw":"Keyser Rd & Worcester Village Rd","components":{"intersection_a":"Keyser Rd","intersection_b":"Worcester Village Rd"},"country":"US","form":"amp"}
+{"raw":"HOPKINS ST & MATHER TER, VT","components":{"intersection_a":"Hopkins St","intersection_b":"Mather Ter","region":"VT"},"country":"US","form":"amp"}
+{"raw":"intersection of Blackberry Ridge Rd and Chapin Rd","components":{"intersection_a":"Blackberry Ridge Rd","intersection_b":"Chapin Rd"},"country":"US","form":"intersection-of"}
+{"raw":"Bear Farm Rd/Hallstrom Rd","components":{"intersection_a":"Bear Farm Rd","intersection_b":"Hallstrom Rd"},"country":"US","form":"slash-tight"}
+{"raw":"corner of River St and Wheelock St","components":{"intersection_a":"River St","intersection_b":"Wheelock St"},"country":"US","form":"corner-of"}
+{"raw":"Panorama Rd&Whichway, VT 05674","components":{"intersection_a":"Panorama Rd","intersection_b":"Whichway","region":"VT","postcode":"05674"},"country":"US","form":"amp-tight"}
+{"raw":"Homewild Ln&Homewilde Ln, VT 05663","components":{"intersection_a":"Homewild Ln","intersection_b":"Homewilde Ln","region":"VT","postcode":"05663"},"country":"US","form":"amp-tight"}
+{"raw":"Bull Run Rd and Cruickshank Rd","components":{"intersection_a":"Bull Run Rd","intersection_b":"Cruickshank Rd"},"country":"US","form":"and"}
+{"raw":"intersection of Guptil Rd and Maple St, VT","components":{"intersection_a":"Guptil Rd","intersection_b":"Maple St","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"BLISS RD&CENTER RD, VT 05651","components":{"intersection_a":"Bliss Rd","intersection_b":"Center Rd","region":"VT","postcode":"05651"},"country":"US","form":"amp-tight"}
+{"raw":"Berlin Pond Rd and Paine Tpke S","components":{"intersection_a":"Berlin Pond Rd","intersection_b":"Paine Tpke S"},"country":"US","form":"and"}
+{"raw":"Guy St and Spaulding St, VT","components":{"intersection_a":"Guy St","intersection_b":"Spaulding St","region":"VT"},"country":"US","form":"and"}
+{"raw":"intersection of Foster Rd and Side Rd","components":{"intersection_a":"Foster Rd","intersection_b":"Side Rd"},"country":"US","form":"intersection-of"}
+{"raw":"Richardson Rd/Spring Hollow Ln","components":{"intersection_a":"Richardson Rd","intersection_b":"Spring Hollow Ln"},"country":"US","form":"slash-tight"}
+{"raw":"Dog Pond Rd and Foster Hill Rd","components":{"intersection_a":"Dog Pond Rd","intersection_b":"Foster Hill Rd"},"country":"US","form":"and"}
+{"raw":"Brook Rd at Creamery St, VT","components":{"intersection_a":"Brook Rd","intersection_b":"Creamery St","region":"VT"},"country":"US","form":"at"}
+{"raw":"Carroll Rd and Mad Ellen Rd","components":{"intersection_a":"Carroll Rd","intersection_b":"Mad Ellen Rd"},"country":"US","form":"and"}
+{"raw":"Moretown Mountain Rd & Silverdowl Rd","components":{"intersection_a":"Moretown Mountain Rd","intersection_b":"Silverdowl Rd"},"country":"US","form":"amp"}
+{"raw":"corner of Fontaine Ln and State Rte 14","components":{"intersection_a":"Fontaine Ln","intersection_b":"State Rte 14"},"country":"US","form":"corner-of"}
+{"raw":"CORNER OF SCOTT HILL RD AND TREE FARM LN","components":{"intersection_a":"Scott Hill Rd","intersection_b":"Tree Farm Ln"},"country":"US","form":"corner-of"}
+{"raw":"HOUSTON HILL RD AND S WALDEN RD, VT","components":{"intersection_a":"Houston Hill Rd","intersection_b":"S Walden Rd","region":"VT"},"country":"US","form":"and"}
+{"raw":"Ashton Dr and Turkey Hill Rd","components":{"intersection_a":"Ashton Dr","intersection_b":"Turkey Hill Rd"},"country":"US","form":"and"}
+{"raw":"E Barre Rd and Messier Dr","components":{"intersection_a":"E Barre Rd","intersection_b":"Messier Dr"},"country":"US","form":"and"}
+{"raw":"corner of Kneeland Flats Rd and Shaw Mansion Rd","components":{"intersection_a":"Kneeland Flats Rd","intersection_b":"Shaw Mansion Rd"},"country":"US","form":"corner-of"}
+{"raw":"intersection of N Main St and Water St","components":{"intersection_a":"N Main St","intersection_b":"Water St"},"country":"US","form":"intersection-of"}
+{"raw":"Main St & Towne St","components":{"intersection_a":"Main St","intersection_b":"Towne St"},"country":"US","form":"amp"}
+{"raw":"Barre St & Granite St","components":{"intersection_a":"Barre St","intersection_b":"Granite St"},"country":"US","form":"amp"}
+{"raw":"QUARRY ST AT S MAIN ST, VT","components":{"intersection_a":"Quarry St","intersection_b":"S Main St","region":"VT"},"country":"US","form":"at"}
+{"raw":"Cardinal Ln and Davis Ave, VT","components":{"intersection_a":"Cardinal Ln","intersection_b":"Davis Ave","region":"VT"},"country":"US","form":"and"}
+{"raw":"HILL ST AND WOODLAND DR","components":{"intersection_a":"Hill St","intersection_b":"Woodland Dr"},"country":"US","form":"and"}
+{"raw":"Partridge Rd and Stagecoach Rd","components":{"intersection_a":"Partridge Rd","intersection_b":"Stagecoach Rd"},"country":"US","form":"and"}
+{"raw":"State Rte 100/Wilder Rd, VT","components":{"intersection_a":"State Rte 100","intersection_b":"Wilder Rd","region":"VT"},"country":"US","form":"slash-tight"}
+{"raw":"Towne Hill Rd / Woodcrest Dr","components":{"intersection_a":"Towne Hill Rd","intersection_b":"Woodcrest Dr"},"country":"US","form":"slash"}
+{"raw":"Graves St and Three Mile Bridge Rd","components":{"intersection_a":"Graves St","intersection_b":"Three Mile Bridge Rd"},"country":"US","form":"and"}
+{"raw":"Cox Brook Rd / Showacre Rd, VT","components":{"intersection_a":"Cox Brook Rd","intersection_b":"Showacre Rd","region":"VT"},"country":"US","form":"slash"}
+{"raw":"Farwell St and Turtle Rock Dr, VT","components":{"intersection_a":"Farwell St","intersection_b":"Turtle Rock Dr","region":"VT"},"country":"US","form":"and"}
+{"raw":"Hampshire Hill Rd&Trl 18, VT","components":{"intersection_a":"Hampshire Hill Rd","intersection_b":"Trl 18","region":"VT"},"country":"US","form":"amp-tight"}
+{"raw":"Fuller Hill Rd/Main St, VT","components":{"intersection_a":"Fuller Hill Rd","intersection_b":"Main St","region":"VT"},"country":"US","form":"slash-tight"}
+{"raw":"corner of Country Way and Fecteau Cir, VT","components":{"intersection_a":"Country Way","intersection_b":"Fecteau Cir","region":"VT"},"country":"US","form":"corner-of"}
+{"raw":"intersection of Back Pasture Ln and Thatcher Brook Rd","components":{"intersection_a":"Back Pasture Ln","intersection_b":"Thatcher Brook Rd"},"country":"US","form":"intersection-of"}
+{"raw":"Forest Dr & Sugarbush Village Rd, VT","components":{"intersection_a":"Forest Dr","intersection_b":"Sugarbush Village Rd","region":"VT"},"country":"US","form":"amp"}
+{"raw":"intersection of Howes Rd and Moretown Mountain Rd","components":{"intersection_a":"Howes Rd","intersection_b":"Moretown Mountain Rd"},"country":"US","form":"intersection-of"}
+{"raw":"intersection of Bingham St and Liberty St","components":{"intersection_a":"Bingham St","intersection_b":"Liberty St"},"country":"US","form":"intersection-of"}
+{"raw":"intersection of Bailey Ave and High School Dr, VT","components":{"intersection_a":"Bailey Ave","intersection_b":"High School Dr","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"Birch St and Green St","components":{"intersection_a":"Birch St","intersection_b":"Green St"},"country":"US","form":"and"}
+{"raw":"Bliss Rd at Center Rd","components":{"intersection_a":"Bliss Rd","intersection_b":"Center Rd"},"country":"US","form":"at"}
+{"raw":"Cottage St & N Main St, VT","components":{"intersection_a":"Cottage St","intersection_b":"N Main St","region":"VT"},"country":"US","form":"amp"}
+{"raw":"intersection of Doe Rd and Hillside Rd","components":{"intersection_a":"Doe Rd","intersection_b":"Hillside Rd"},"country":"US","form":"intersection-of"}
+{"raw":"E View Rd & Jones Rd, VT","components":{"intersection_a":"E View Rd","intersection_b":"Jones Rd","region":"VT"},"country":"US","form":"amp"}
+{"raw":"intersection of Riverview Rd and Wallis Dr","components":{"intersection_a":"Riverview Rd","intersection_b":"Wallis Dr"},"country":"US","form":"intersection-of"}
+{"raw":"Division St and Hale St","components":{"intersection_a":"Division St","intersection_b":"Hale St"},"country":"US","form":"and"}
+{"raw":"intersection of Barre View St and Cherrywood Dr, VT","components":{"intersection_a":"Barre View St","intersection_b":"Cherrywood Dr","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"intersection of Glinney Pl and Witt Pl","components":{"intersection_a":"Glinney Pl","intersection_b":"Witt Pl"},"country":"US","form":"intersection-of"}
+{"raw":"intersection of Bolton Rd and Cabot Plains Rd","components":{"intersection_a":"Bolton Rd","intersection_b":"Cabot Plains Rd"},"country":"US","form":"intersection-of"}
+{"raw":"corner of Moretown Common Rd and The Commons","components":{"intersection_a":"Moretown Common Rd","intersection_b":"The Commons"},"country":"US","form":"corner-of"}
+{"raw":"corner of Eaton Cemetery Rd and Jake Martin Rd","components":{"intersection_a":"Eaton Cemetery Rd","intersection_b":"Jake Martin Rd"},"country":"US","form":"corner-of"}
+{"raw":"Perry Hill Rd and Woodland Acres, VT","components":{"intersection_a":"Perry Hill Rd","intersection_b":"Woodland Acres","region":"VT"},"country":"US","form":"and"}
+{"raw":"Garden St/Nelson St, VT 05641","components":{"intersection_a":"Garden St","intersection_b":"Nelson St","region":"VT","postcode":"05641"},"country":"US","form":"slash-tight"}
+{"raw":"corner of Roxbury Mountain Rd and Senor Rd, VT 05674","components":{"intersection_a":"Roxbury Mountain Rd","intersection_b":"Senor Rd","region":"VT","postcode":"05674"},"country":"US","form":"corner-of"}
+{"raw":"Mountain Meadow Ln @ Tucker Hill Rd, VT","components":{"intersection_a":"Mountain Meadow Ln","intersection_b":"Tucker Hill Rd","region":"VT"},"country":"US","form":"at-sign"}
+{"raw":"ICE HOUSE RD AND PINE LN, VT","components":{"intersection_a":"Ice House Rd","intersection_b":"Pine Ln","region":"VT"},"country":"US","form":"and"}
+{"raw":"intersection of Grout Rd and State Rte 100","components":{"intersection_a":"Grout Rd","intersection_b":"State Rte 100"},"country":"US","form":"intersection-of"}
+{"raw":"Old Freight Yard Rd and Wall St","components":{"intersection_a":"Old Freight Yard Rd","intersection_b":"Wall St"},"country":"US","form":"and"}
+{"raw":"Barre-Montpelier Rd at N Main St","components":{"intersection_a":"Barre-Montpelier Rd","intersection_b":"N Main St"},"country":"US","form":"at"}
+{"raw":"Quarry Dr & Ward Hill Rd","components":{"intersection_a":"Quarry Dr","intersection_b":"Ward Hill Rd"},"country":"US","form":"amp"}
+{"raw":"Dover Rd and Phillips Rd","components":{"intersection_a":"Dover Rd","intersection_b":"Phillips Rd"},"country":"US","form":"and"}
+{"raw":"Applewood Rd @ Woods Rd S","components":{"intersection_a":"Applewood Rd","intersection_b":"Woods Rd S"},"country":"US","form":"at-sign"}
+{"raw":"Diego Dr & State Rte 12A","components":{"intersection_a":"Diego Dr","intersection_b":"State Rte 12A"},"country":"US","form":"amp"}
+{"raw":"Camels Hump Dr at Hill Crest Ln, VT","components":{"intersection_a":"Camels Hump Dr","intersection_b":"Hill Crest Ln","region":"VT"},"country":"US","form":"at"}
+{"raw":"intersection of Highland Ave and Prospect St","components":{"intersection_a":"Highland Ave","intersection_b":"Prospect St"},"country":"US","form":"intersection-of"}
+{"raw":"Doe Rd & Hillside Rd, VT","components":{"intersection_a":"Doe Rd","intersection_b":"Hillside Rd","region":"VT"},"country":"US","form":"amp"}
+{"raw":"corner of Stony Brook Rd and Thompson Hill","components":{"intersection_a":"Stony Brook Rd","intersection_b":"Thompson Hill"},"country":"US","form":"corner-of"}
+{"raw":"PLEASANT ST & WASHINGTON RD, VT 05649","components":{"intersection_a":"Pleasant St","intersection_b":"Washington Rd","region":"VT","postcode":"05649"},"country":"US","form":"amp"}
+{"raw":"Fayston Hollow at Mt Ellen Rd","components":{"intersection_a":"Fayston Hollow","intersection_b":"Mt Ellen Rd"},"country":"US","form":"at"}
+{"raw":"Traverse St&Union St, VT","components":{"intersection_a":"Traverse St","intersection_b":"Union St","region":"VT"},"country":"US","form":"amp-tight"}
+{"raw":"Duxbury Rd and River Rd, VT 05676","components":{"intersection_a":"Duxbury Rd","intersection_b":"River Rd","region":"VT","postcode":"05676"},"country":"US","form":"and"}
+{"raw":"Bruce Dr & State Rte 100 Bus","components":{"intersection_a":"Bruce Dr","intersection_b":"State Rte 100 Bus"},"country":"US","form":"amp"}
+{"raw":"E STATE ST&HUBBARD ST","components":{"intersection_a":"E State St","intersection_b":"Hubbard St"},"country":"US","form":"amp-tight"}
+{"raw":"corner of N Main St and Waterbury Square Dr","components":{"intersection_a":"N Main St","intersection_b":"Waterbury Square Dr"},"country":"US","form":"corner-of"}
+{"raw":"Blackwell St & N Main St","components":{"intersection_a":"Blackwell St","intersection_b":"N Main St"},"country":"US","form":"amp"}
+{"raw":"Big Dog Hill & E Warren Rd","components":{"intersection_a":"Big Dog Hill","intersection_b":"E Warren Rd"},"country":"US","form":"amp"}
+{"raw":"Averill St & Jefferson St","components":{"intersection_a":"Averill St","intersection_b":"Jefferson St"},"country":"US","form":"amp"}
+{"raw":"Airport Rd and Castle Rd","components":{"intersection_a":"Airport Rd","intersection_b":"Castle Rd"},"country":"US","form":"and"}
+{"raw":"Cabot Rd and Holton Rd, VT","components":{"intersection_a":"Cabot Rd","intersection_b":"Holton Rd","region":"VT"},"country":"US","form":"and"}
+{"raw":"Allen St / Prospect St, VT 05641","components":{"intersection_a":"Allen St","intersection_b":"Prospect St","region":"VT","postcode":"05641"},"country":"US","form":"slash"}
+{"raw":"BACK ST & STATE RTE 14, VT","components":{"intersection_a":"Back St","intersection_b":"State Rte 14","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Seminary St / Thurston Pl, VT 05641","components":{"intersection_a":"Seminary St","intersection_b":"Thurston Pl","region":"VT","postcode":"05641"},"country":"US","form":"slash"}
+{"raw":"BLAKE HILL RD & OLD QUARRY RD, VT","components":{"intersection_a":"Blake Hill Rd","intersection_b":"Old Quarry Rd","region":"VT"},"country":"US","form":"amp"}
+{"raw":"S Main St&Spring St, VT","components":{"intersection_a":"S Main St","intersection_b":"Spring St","region":"VT"},"country":"US","form":"amp-tight"}
+{"raw":"E MONTPELIER RD AND KUBOTA DR, VT","components":{"intersection_a":"E Montpelier Rd","intersection_b":"Kubota Dr","region":"VT"},"country":"US","form":"and"}
+{"raw":"CROZIER RD / STATE RTE 12","components":{"intersection_a":"Crozier Rd","intersection_b":"State Rte 12"},"country":"US","form":"slash"}
+{"raw":"Corti St & Maple Ave, VT 05641","components":{"intersection_a":"Corti St","intersection_b":"Maple Ave","region":"VT","postcode":"05641"},"country":"US","form":"amp"}
+{"raw":"Northfield Rd and Warren Mountain Rd","components":{"intersection_a":"Northfield Rd","intersection_b":"Warren Mountain Rd"},"country":"US","form":"and"}
+{"raw":"Lincoln Gap Rd&State Rte 100, VT","components":{"intersection_a":"Lincoln Gap Rd","intersection_b":"State Rte 100","region":"VT"},"country":"US","form":"amp-tight"}
+{"raw":"MAD RIVER GREEN AT MAIN ST, VT","components":{"intersection_a":"Mad River Green","intersection_b":"Main St","region":"VT"},"country":"US","form":"at"}
+{"raw":"intersection of Beckley Hill Rd and Buena Vista Cir","components":{"intersection_a":"Beckley Hill Rd","intersection_b":"Buena Vista Cir"},"country":"US","form":"intersection-of"}
+{"raw":"corner of Elm St and Main St","components":{"intersection_a":"Elm St","intersection_b":"Main St"},"country":"US","form":"corner-of"}
+{"raw":"Chestnut St and Plunkton Rd, VT","components":{"intersection_a":"Chestnut St","intersection_b":"Plunkton Rd","region":"VT"},"country":"US","form":"and"}
+{"raw":"Camp St at Cassie St, VT","components":{"intersection_a":"Camp St","intersection_b":"Cassie St","region":"VT"},"country":"US","form":"at"}
+{"raw":"Farnham Rd at Upper Rd","components":{"intersection_a":"Farnham Rd","intersection_b":"Upper Rd"},"country":"US","form":"at"}
+{"raw":"Cabot Rd/Flat St","components":{"intersection_a":"Cabot Rd","intersection_b":"Flat St"},"country":"US","form":"slash-tight"}
+{"raw":"corti st @ maple ave","components":{"intersection_a":"Corti St","intersection_b":"Maple Ave"},"country":"US","form":"at-sign"}
+{"raw":"corner of E Warren Rd and Hastings Rd","components":{"intersection_a":"E Warren Rd","intersection_b":"Hastings Rd"},"country":"US","form":"corner-of"}
+{"raw":"Chapin Rd at Lightening Ridge Rd","components":{"intersection_a":"Chapin Rd","intersection_b":"Lightening Ridge Rd"},"country":"US","form":"at"}
+{"raw":"Mitchell Rd/Swift Rd","components":{"intersection_a":"Mitchell Rd","intersection_b":"Swift Rd"},"country":"US","form":"slash-tight"}
+{"raw":"Cabot St at St James St","components":{"intersection_a":"Cabot St","intersection_b":"St James St"},"country":"US","form":"at"}
+{"raw":"Bean Rd @ Crossman Pl, VT","components":{"intersection_a":"Bean Rd","intersection_b":"Crossman Pl","region":"VT"},"country":"US","form":"at-sign"}
+{"raw":"Bailey Rd & Steele Hill Rd","components":{"intersection_a":"Bailey Rd","intersection_b":"Steele Hill Rd"},"country":"US","form":"amp"}
+{"raw":"JONES BROOK RD & WARD BROOK RD","components":{"intersection_a":"Jones Brook Rd","intersection_b":"Ward Brook Rd"},"country":"US","form":"amp"}
+{"raw":"corner of Panorama Rd and Whichway","components":{"intersection_a":"Panorama Rd","intersection_b":"Whichway"},"country":"US","form":"corner-of"}
+{"raw":"corner of E Barre Rd and State Rte 110, VT","components":{"intersection_a":"E Barre Rd","intersection_b":"State Rte 110","region":"VT"},"country":"US","form":"corner-of"}
+{"raw":"Airport Rd @ State Rte 62","components":{"intersection_a":"Airport Rd","intersection_b":"State Rte 62"},"country":"US","form":"at-sign"}
+{"raw":"E Roxbury Rd and Steele Hill Rd","components":{"intersection_a":"E Roxbury Rd","intersection_b":"Steele Hill Rd"},"country":"US","form":"and"}
+{"raw":"Chestnut St & Plunkton Rd","components":{"intersection_a":"Chestnut St","intersection_b":"Plunkton Rd"},"country":"US","form":"amp"}
+{"raw":"Old Farm Ln and Senor Rd, VT","components":{"intersection_a":"Old Farm Ln","intersection_b":"Senor Rd","region":"VT"},"country":"US","form":"and"}
+{"raw":"intersection of locust ter and stowe st, vt","components":{"intersection_a":"Locust Ter","intersection_b":"Stowe St","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"intersection of Palmer Ln and Sugarhouse Ln","components":{"intersection_a":"Palmer Ln","intersection_b":"Sugarhouse Ln"},"country":"US","form":"intersection-of"}
+{"raw":"N Fayston Rd and Randell Rd","components":{"intersection_a":"N Fayston Rd","intersection_b":"Randell Rd"},"country":"US","form":"and"}
+{"raw":"Hersey Dr and Tremont St","components":{"intersection_a":"Hersey Dr","intersection_b":"Tremont St"},"country":"US","form":"and"}
+{"raw":"intersection of Drumley North Rd and German Flats Rd, VT","components":{"intersection_a":"Drumley North Rd","intersection_b":"German Flats Rd","region":"VT"},"country":"US","form":"intersection-of"}
+{"raw":"Hillcrest Ave/Ward Hill Rd, VT","components":{"intersection_a":"Hillcrest Ave","intersection_b":"Ward Hill Rd","region":"VT"},"country":"US","form":"slash-tight"}
+{"raw":"corner of Farnham Rd and Foster Rd","components":{"intersection_a":"Farnham Rd","intersection_b":"Foster Rd"},"country":"US","form":"corner-of"}
+{"raw":"Pleasant St @ Summer St, VT","components":{"intersection_a":"Pleasant St","intersection_b":"Summer St","region":"VT"},"country":"US","form":"at-sign"}
+{"raw":"Elm St and Winter St","components":{"intersection_a":"Elm St","intersection_b":"Winter St"},"country":"US","form":"and"}
+{"raw":"intersection of Mansfield Ln and Partridge Rd","components":{"intersection_a":"Mansfield Ln","intersection_b":"Partridge Rd"},"country":"US","form":"intersection-of"}
+{"raw":"Hattie Bell Rd & State Rte 14, VT","components":{"intersection_a":"Hattie Bell Rd","intersection_b":"State Rte 14","region":"VT"},"country":"US","form":"amp"}
+{"raw":"Circle Rd and Lake Rd, VT","components":{"intersection_a":"Circle Rd","intersection_b":"Lake Rd","region":"VT"},"country":"US","form":"and"}
+{"raw":"beaver meadow rd and dwinell rd, vt","components":{"intersection_a":"Beaver Meadow Rd","intersection_b":"Dwinell Rd","region":"VT"},"country":"US","form":"and"}
+{"raw":"corner of Crossroad Rd and Meadow Crest Ln, VT 05676","components":{"intersection_a":"Crossroad Rd","intersection_b":"Meadow Crest Ln","region":"VT","postcode":"05676"},"country":"US","form":"corner-of"}
+{"raw":"Perry St & Spaulding St, VT","components":{"intersection_a":"Perry St","intersection_b":"Spaulding St","region":"VT"},"country":"US","form":"amp"}

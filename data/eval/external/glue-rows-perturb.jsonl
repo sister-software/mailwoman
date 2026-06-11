@@ -1,0 +1,71 @@
+{"raw": "Buffalo Health Clinic, 123 Main St, Buffalo, NY14201", "components": {"venue": "Buffalo Health Clinic", "house_number": "123", "street": "Main St", "locality": "Buffalo", "region": "NY", "postcode": "14201"}}
+{"raw": "Portland Inn, 500 SW Salmon St, Portland, OR97215", "components": {"venue": "Portland Inn", "house_number": "500", "street": "SW Salmon St", "locality": "Portland", "region": "OR", "postcode": "97215"}}
+{"raw": "Springfield Plaza, 1 Springfield Ave, Springfield, IL62701", "components": {"venue": "Springfield Plaza", "house_number": "1", "street": "Springfield Ave", "locality": "Springfield", "region": "IL", "postcode": "62701"}}
+{"raw": "Boston Common Hotel, 25 Tremont St, Boston, MA02108", "components": {"venue": "Boston Common Hotel", "house_number": "25", "street": "Tremont St", "locality": "Boston", "region": "MA", "postcode": "02108"}}
+{"raw": "Las Vegas Sands, 3355 Las Vegas Blvd S, Las Vegas, NV89109", "components": {"venue": "Las Vegas Sands", "house_number": "3355", "street": "Las Vegas Blvd S", "locality": "Las Vegas", "region": "NV", "postcode": "89109"}}
+{"raw": "Chicago Cultural Center, 78 E Washington St, Chicago, IL60602", "components": {"venue": "Chicago Cultural Center", "house_number": "78", "street": "E Washington St", "locality": "Chicago", "region": "IL", "postcode": "60602"}}
+{"raw": "Detroit Institute of Arts, 5200 Woodward Ave, Detroit, MI48202", "components": {"venue": "Detroit Institute of Arts", "house_number": "5200", "street": "Woodward Ave", "locality": "Detroit", "region": "MI", "postcode": "48202"}}
+{"raw": "Memphis Music Hall of Fame, 126 S 2nd St, Memphis, TN38103", "components": {"venue": "Memphis Music Hall of Fame", "house_number": "126", "street": "S 2nd St", "locality": "Memphis", "region": "TN", "postcode": "38103"}}
+{"raw": "Phoenix Suns Arena, 201 E Jefferson St, Phoenix, AZ85004", "components": {"venue": "Phoenix Suns Arena", "house_number": "201", "street": "E Jefferson St", "locality": "Phoenix", "region": "AZ", "postcode": "85004"}}
+{"raw": "Seattle Art Museum, 1300 1st Ave, Seattle, WA98101", "components": {"venue": "Seattle Art Museum", "house_number": "1300", "street": "1st Ave", "locality": "Seattle", "region": "WA", "postcode": "98101"}}
+{"raw": "New York, New York Steakhouse, 3790 Las Vegas Blvd S, Las Vegas, NV89109", "components": {"venue": "New York, New York Steakhouse", "house_number": "3790", "street": "Las Vegas Blvd S", "locality": "Las Vegas", "region": "NV", "postcode": "89109"}}
+{"raw": "Paris, Texas Steakhouse, 100 Main St, Houston, TX77002", "components": {"venue": "Paris, Texas Steakhouse", "house_number": "100", "street": "Main St", "locality": "Houston", "region": "TX", "postcode": "77002"}}
+{"raw": "Athens, Georgia Caf\u00e9, 200 College Ave, Athens, GA30601", "components": {"venue": "Athens, Georgia Caf\u00e9", "house_number": "200", "street": "College Ave", "locality": "Athens", "region": "GA", "postcode": "30601"}}
+{"raw": "Boston, Massachusetts Pizza Co., 50 Broadway, Brooklyn, NY11201", "components": {"venue": "Boston, Massachusetts Pizza Co.", "house_number": "50", "street": "Broadway", "locality": "Brooklyn", "region": "NY", "postcode": "11201"}}
+{"raw": "Miami, Florida Surf Shop, 100 Ocean Dr, San Diego, CA92101", "components": {"venue": "Miami, Florida Surf Shop", "house_number": "100", "street": "Ocean Dr", "locality": "San Diego", "region": "CA", "postcode": "92101"}}
+{"raw": "Nashville, Tennessee BBQ Pit, 75 Elm Ave, Atlanta, GA30308", "components": {"venue": "Nashville, Tennessee BBQ Pit", "house_number": "75", "street": "Elm Ave", "locality": "Atlanta", "region": "GA", "postcode": "30308"}}
+{"raw": "St. Mark's Place Diner, 1 St Marks Pl, New York, NY10003", "components": {"venue": "St. Mark's Place Diner", "house_number": "1", "street": "St Marks Pl", "locality": "New York", "region": "NY", "postcode": "10003"}}
+{"raw": "O'Brien's St. James Pub, 12 St James Pl, Boston, MA02114", "components": {"venue": "O'Brien's St. James Pub", "house_number": "12", "street": "St James Pl", "locality": "Boston", "region": "MA", "postcode": "02114"}}
+{"raw": "N. Vasquez's Auto Body, 100 N Vasquez St, El Paso, TX79901", "components": {"venue": "N. Vasquez's Auto Body", "house_number": "100", "street": "N Vasquez St", "locality": "El Paso", "region": "TX", "postcode": "79901"}}
+{"raw": "E. Patel & Sons, 200 E Patel Way, Houston, TX77002", "components": {"venue": "E. Patel & Sons", "house_number": "200", "street": "E Patel Way", "locality": "Houston", "region": "TX", "postcode": "77002"}}
+{"raw": "Mt. Vernon Family Diner, 1 Mt Vernon Ave, Mount Vernon, NY10550", "components": {"venue": "Mt. Vernon Family Diner", "house_number": "1", "street": "Mt Vernon Ave", "locality": "Mount Vernon", "region": "NY", "postcode": "10550"}}
+{"raw": "Ft. Lauderdale Beach Resort, 100 Ft. Lauderdale Beach Blvd, Fort Lauderdale, FL33304", "components": {"venue": "Ft. Lauderdale Beach Resort", "house_number": "100", "street": "Ft. Lauderdale Beach Blvd", "locality": "Fort Lauderdale", "region": "FL", "postcode": "33304"}}
+{"raw": "1600 Pensylvania Ave NW, Washington, DC20500", "components": {"house_number": "1600", "street": "Pensylvania Ave NW", "locality": "Washington", "region": "DC", "postcode": "20500"}}
+{"raw": "1600 Pennsylvannia Ave NW, Washington, DC20500", "components": {"house_number": "1600", "street": "Pennsylvannia Ave NW", "locality": "Washington", "region": "DC", "postcode": "20500"}}
+{"raw": "123 Maon St, Portand, OR97214", "components": {"house_number": "123", "street": "Maon St", "locality": "Portand", "region": "OR", "postcode": "97214"}}
+{"raw": "500 SE Salmon St, Portlnad, OR97215", "components": {"house_number": "500", "street": "SE Salmon St", "locality": "Portlnad", "region": "OR", "postcode": "97215"}}
+{"raw": "1 Infinte Loop, Cupertino, CA95014", "components": {"house_number": "1", "street": "Infinte Loop", "locality": "Cupertino", "region": "CA", "postcode": "95014"}}
+{"raw": "75 Tremnt St, Boston, MA02108", "components": {"house_number": "75", "street": "Tremnt St", "locality": "Boston", "region": "MA", "postcode": "02108"}}
+{"raw": "123 Main St, Sprigfield, IL62701", "components": {"house_number": "123", "street": "Main St", "locality": "Sprigfield", "region": "IL", "postcode": "62701"}}
+{"raw": "100 Main St, San Fransisco, CA94103", "components": {"house_number": "100", "street": "Main St", "locality": "San Fransisco", "region": "CA", "postcode": "94103"}}
+{"raw": "50 Main St, Philadelphi, PA19104", "components": {"house_number": "50", "street": "Main St", "locality": "Philadelphi", "region": "PA", "postcode": "19104"}}
+{"raw": "1 Main St, Pittsburg, PA15222", "components": {"house_number": "1", "street": "Main St", "locality": "Pittsburg", "region": "PA", "postcode": "15222"}}
+{"raw": "123 MAIN ST PORTLAND OR97214", "components": {"house_number": "123", "street": "MAIN ST", "locality": "PORTLAND", "region": "OR", "postcode": "97214"}}
+{"raw": "123Main St, Portland, OR97214", "components": {"street": "123Main St", "locality": "Portland", "region": "OR", "postcode": "97214"}}
+{"raw": "500 SW Salmon StPortlandOR97215", "components": {"house_number": "500", "street": "SW Salmon St", "locality": "Portland", "region": "OR", "postcode": "97215"}}
+{"raw": "50.Tremont.StBostonMA02108", "components": {"house_number": "50", "street": "Tremont.St", "locality": "Boston", "region": "MA", "postcode": "02108"}}
+{"raw": "500   SW   Salmon   St,   Portland,   OR97215", "components": {"house_number": "500", "street": "SW   Salmon   St", "locality": "Portland", "region": "OR", "postcode": "97215"}}
+{"raw": "500 SE Salmon St Portland OR97215", "components": {"house_number": "500", "street": "SE Salmon St", "locality": "Portland", "region": "OR", "postcode": "97215"}}
+{"raw": "Address: 123 Main St, Portland, OR97214", "components": {"house_number": "123", "street": "Main St", "locality": "Portland", "region": "OR", "postcode": "97214"}}
+{"raw": "Phone: 555-1234 \u2014 200 Elm St, Springfield, IL62701", "components": {"house_number": "200", "street": "Elm St", "locality": "Springfield", "region": "IL", "postcode": "62701"}}
+{"raw": "Send mail to: 200 Elm St, Springfield, IL62701, USA, Earth", "components": {"house_number": "200", "street": "Elm St", "locality": "Springfield", "region": "IL", "postcode": "62701", "country": "USA"}}
+{"raw": "123 Main St c/o John Smith, Portland, OR97214", "components": {"house_number": "123", "street": "Main St", "attention": "c/o John Smith", "locality": "Portland", "region": "OR", "postcode": "97214"}}
+{"raw": "Mt. Saint Helens Lodge, 100 Volcanic Way, Cougar, WA98616", "components": {"venue": "Mt. Saint Helens Lodge", "house_number": "100", "street": "Volcanic Way", "locality": "Cougar", "region": "WA", "postcode": "98616"}}
+{"raw": "123 Main St Apt 4-B, Portland, OR97214", "components": {"house_number": "123", "street": "Main St", "unit": "Apt 4-B", "locality": "Portland", "region": "OR", "postcode": "97214"}}
+{"raw": "123 Main St #4B, Portland, OR97214", "components": {"house_number": "123", "street": "Main St", "unit": "#4B", "locality": "Portland", "region": "OR", "postcode": "97214"}}
+{"raw": "123 Main St Bldg C Ste 200, Portland, OR97214", "components": {"house_number": "123", "street": "Main St", "unit": "Bldg C Ste 200", "locality": "Portland", "region": "OR", "postcode": "97214"}}
+{"raw": "1600 Pennsylvania Avenue NW, Washington, DC20500", "components": {"house_number": "1600", "street": "Pennsylvania Avenue NW", "locality": "Washington", "region": "DC", "postcode": "20500"}}
+{"raw": "2nd St E, ND58770", "components": {"street": "2nd St E", "region": "ND", "postcode": "58770"}}
+{"raw": "Patterson Point Road, VT05457", "components": {"street": "Patterson Point Road", "region": "VT", "postcode": "05457"}}
+{"raw": "ND58801, Border Ave", "components": {"street": "Border Ave", "region": "ND", "postcode": "58801"}}
+{"raw": "North 11th St, WY82334", "components": {"street": "North 11th St", "region": "WY", "postcode": "82334"}}
+{"raw": "Willow Lake Cr, WY83128", "components": {"street": "WILLOW LAKE CR", "region": "WY", "postcode": "83128"}}
+{"raw": "Co Rd 155, WY82082, US", "components": {"street": "Co Rd 155", "region": "WY", "postcode": "82082"}}
+{"raw": "Williams St, VT05301, US", "components": {"street": "Williams St", "region": "VT", "postcode": "05301"}}
+{"raw": "Cow Hollow Road, WY82636", "components": {"street": "Cow Hollow Road", "region": "WY", "postcode": "82636"}}
+{"raw": "1ST AVE SW58523 ND", "components": {"street": "1ST AVE SW", "region": "ND", "postcode": "58523"}}
+{"raw": "Mountain Meadow Lane, ND58801, US", "components": {"street": "Mountain Meadow Lane", "region": "ND", "postcode": "58801"}}
+{"raw": "ND58801, Round Prairie Ave", "components": {"street": "Round Prairie Ave", "region": "ND", "postcode": "58801"}}
+{"raw": "Howard Rd, WY82633", "components": {"street": "Howard Rd", "region": "WY", "postcode": "82633"}}
+{"raw": "Central Billing Office, 543 S 7th St, Bismarck, ND58504-5859", "components": {"venue": "CENTRAL BILLING OFFICE", "house_number": "543", "street": "S 7TH ST", "locality": "BISMARCK", "region": "ND", "postcode": "58504-5859"}}
+{"raw": "One Health - Sheridan, 201 E 5th St, Sheridan, WY82801-3658", "components": {"venue": "ONE HEALTH - SHERIDAN", "house_number": "201", "street": "E 5TH ST", "locality": "SHERIDAN", "region": "WY", "postcode": "82801-3658"}}
+{"raw": "Albany Community Health Clinic, 2710 Harney St Ste 202-204, Laramie, WY82072-3038", "components": {"venue": "ALBANY COMMUNITY HEALTH CLINIC", "house_number": "2710", "street": "HARNEY ST STE 202-204", "locality": "LARAMIE", "region": "WY", "postcode": "82072-3038"}}
+{"raw": "Randolph Union Middle High School, 15 Forest St, Randolph, VT05060-1006", "components": {"venue": "RANDOLPH UNION MIDDLE HIGH SCHOOL", "house_number": "15", "street": "FOREST ST", "locality": "RANDOLPH", "region": "VT", "postcode": "05060-1006"}}
+{"raw": "Bismarck Clinic, 914 South 12th St, Bismarck, ND58504-5941", "components": {"venue": "Bismarck Clinic", "house_number": "914", "street": "South 12th St", "locality": "Bismarck", "region": "ND", "postcode": "58504-5941"}}
+{"raw": "Kimball Public, 67 N Main St, Randolph, VT05060", "components": {"venue": "KIMBALL PUBLIC", "house_number": "67", "street": "N MAIN ST", "locality": "RANDOLPH", "region": "VT", "postcode": "05060"}}
+{"raw": "Star Valley Branch Library, 261 Washington St, Afton, WY83110", "components": {"venue": "STAR VALLEY BRANCH LIBRARY", "house_number": "261", "street": "WASHINGTON ST", "locality": "AFTON", "region": "WY", "postcode": "83110"}}
+{"raw": "Ross Green, 7776 E Ephraim Hill Rd Lot 15, Saint Michael, ND58370", "components": {"venue": "ROSS GREEN", "house_number": "7776", "street": "E EPHRAIM HILL RD LOT 15", "locality": "SAINT MICHAEL", "region": "ND"}}
+{"raw": "Brian H Bronsther, 250 Osborne Rd, Albany, NY12205", "components": {"venue": "brian h bronsther", "house_number": "250", "street": "osborne rd", "locality": "albany", "region": "ny", "postcode": "12205"}}
+{"raw": "FAITH LACISTE, 3050 Post Oak Blvd Suite 510, Houston, TX77056", "components": {"venue": "FAITH LACISTE", "house_number": "3050", "street": "POST OAK BLVD SUITE 510", "locality": "HOUSTON", "region": "TX", "postcode": "77056"}}
+{"raw": "Yolanda Cervantes, 216 Lakeview Ct, Weatherford, TX76088", "components": {"venue": "YOLANDA CERVANTES", "house_number": "216", "street": "LAKEVIEW CT", "locality": "WEATHERFORD", "region": "TX", "postcode": "76088"}}
+{"raw": "PO BOX 99999, Houston, TX77019", "components": {"po_box": "PO BOX 99999", "locality": "Houston", "region": "TX", "postcode": "77019"}}

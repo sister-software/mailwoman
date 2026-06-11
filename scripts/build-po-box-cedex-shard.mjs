@@ -83,7 +83,12 @@ const T = Object.fromEntries(PO_BOX_LOCALE_TEMPLATES.map((t) => [t.locale, t]))
 // (Caller/Drawer/Lockbox — firm-holdout and rural forms) ride at low weight. "Box" is in both.
 const US_LEADERS_COMMON = T["en-US"].leaders // PO Box, P.O. Box, P.O.Box, PO BOX, POB, Post Office Box, Box
 const US_LEADERS_RARE = ["Caller", "Firm Caller", "Drawer", "Lockbox"] // codex US_PO_BOX_DESIGNATORS tail
-const US_PMB_LEADERS = T["en-US"].pmb // PMB, #
+// "#" EXCLUDED (v4.4.0 probe finding): bare "#N" is a secondary-unit designator per USPS Pub 28
+// and the shipped unit lever labels it `unit` — the corpus template's po_box reading CONTRADICTS
+// a shipped convention (the #511 disease class, cross-shard). The probe measured the collision:
+// the model parses "#389" as unit (correctly) and the shard's po_box gold failed it. PMB stays —
+// it is a genuine commercial-mail-receiving designator with no unit collision.
+const US_PMB_LEADERS = T["en-US"].pmb.filter((l) => l !== "#") // PMB
 const FR_LEADERS = T["fr-FR"].leaders // BP, B.P., Boîte Postale, BP.
 const CA_FR_LEADERS = T["fr-CA"].leaders // CP, C.P., Case Postale, BP, B.P.
 const CA_EN_LEADERS = T["en-CA"].leaders // PO Box, P.O. Box, POB, Post Office Box
