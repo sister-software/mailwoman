@@ -15,7 +15,13 @@
  *
  *   Usage: node --experimental-strip-types scripts/build-address-point-shard.ts\
  *   --state VT [--release 2026-05-20.0]\
- *   [--out /mnt/playpen/mailwoman-data/address-points/address-points-us-vt.db]
+ *   [--out /mnt/playpen/mailwoman-data/address-points/address-points-us-vt.db]\
+ *   [--county-fips 17031 --county-boundary /tmp/tiger-county/tl_2023_us_county.shp]
+ *
+ *   County scoping (#483 density characterization): Overture carries no county field, so an optional
+ *   `--county-fips` filter does a point-in-polygon against the TIGER COUNTY boundary shapefile
+ *   (`--county-boundary`, same TIGER vintage as the EDGES the interpolation shard reads) — keeps a
+ *   county-scoped gold comparable to a county-scoped segment table.
  */
 
 import { mkdirSync, rmSync } from "node:fs"
@@ -34,10 +40,16 @@ const { values: args } = parseArgs({
 		state: { type: "string" },
 		release: { type: "string", default: "2026-05-20.0" },
 		out: { type: "string" },
+		"county-fips": { type: "string" },
+		"county-boundary": { type: "string", default: "/tmp/tiger-county/tl_2023_us_county.shp" },
 	},
 })
 if (!args.state) {
 	console.error("--state required (US state abbreviation, e.g. VT)")
+	process.exit(1)
+}
+if (args["county-fips"] && !/^\d{5}$/.test(args["county-fips"])) {
+	console.error("--county-fips must be a 5-digit state+county FIPS (e.g. 17031)")
 	process.exit(1)
 }
 const STATE = args.state.toUpperCase()
@@ -49,6 +61,15 @@ rmSync(OUT, { force: true }) // idempotent rebuild — never append across relea
 
 const instance = await DuckDBInstance.create()
 const duck = await instance.connect()
+// Optional county scope: PIP against the TIGER COUNTY polygon (GEOID = state+county FIPS).
+// DuckDB hoists the scalar subquery to a constant, so the per-row cost is the containment test.
+let countyFilter = ""
+if (args["county-fips"]) {
+	await duck.run("INSTALL spatial; LOAD spatial;")
+	countyFilter = `AND ST_Contains(
+			(SELECT geom FROM ST_Read('${args["county-boundary"]}') WHERE GEOID = '${args["county-fips"]}'),
+			ST_Point(lon, lat))`
+}
 const result = await duck.runAndReadAll(`
 	SELECT
 		number, street, unit, postcode,
@@ -59,6 +80,7 @@ const result = await duck.runAndReadAll(`
 	WHERE address_levels[1].value = '${STATE}'
 		AND nullif(trim(street), '') IS NOT NULL
 		AND nullif(trim(number), '') IS NOT NULL
+		${countyFilter}
 `)
 const rows = result.getRowObjects() as Record<string, unknown>[]
 console.log(`${rows.length} ${STATE} rows from ${path.basename(PARQUET)}`)

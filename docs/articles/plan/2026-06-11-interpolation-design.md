@@ -183,6 +183,26 @@ truth is unknowable; measuring on known points is the only honest proxy.
   building), segment subdivision at OA point anchors, ZIP+4 snapping (#525). No rollout
   until a gate pass or a STATED re-baseline with operator sign-off.
 
+## Density characterization (2026-06-12, resolution-ladder Phase 1 step 1)
+
+Same eval, same gate, same seed-42 5000-key sampling, on a dense county: Cook County IL
+(FIPS 17031; TIGER2023 EDGES + a county-scoped #476 shard — Overture carries no county
+field, so the point shard is PIP-filtered against the TIGER2023 COUNTY polygon via the
+builder's new `--county-fips` flag; 1,460,216 points, 231 ZIPs).
+
+| county | coverage | p50 | p90 | gate (≤50 / ≤150) |
+| --- | ---: | ---: | ---: | --- |
+| Cook IL (dense) | 87.8% | 41 m | 79 m | **PASS** |
+| Vermont (rural, re-run) | 82.0% | 66 m | 249 m | **MISS** (unchanged) |
+
+Cook's median claimed uncertainty (half segment length) is 80 m vs Vermont's 137 m — the
+segment geometry itself is the divide. **Verdict: the VT gate miss is substantially a
+rural-geometry artifact, not a method error.** TIGER uniform-spacing interpolation clears
+the gate where segments are short; long sparse rural segments cap precision below the
+gate. Per the resolution-ladder plan this keeps Method 2 (address-point interpolation) as
+the corrective for the sparse stratum, and any county-stratified gate re-baseline remains
+an operator sign-off, not made here.
+
 ## Open questions
 
 1. **Workspace split.** This slice implements inside `resolver-wof-sqlite` (the module is
