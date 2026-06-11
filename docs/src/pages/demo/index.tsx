@@ -31,6 +31,7 @@ import { AboutDemo } from "../../components/AboutDemo/AboutDemo.tsx"
 import { LayerToggleControl } from "../../components/LayerToggleControl/LayerToggleControl.tsx"
 import { LoadingIndicator } from "../../components/LoadingIndicator/LoadingIndicator.tsx"
 import { PermalinkButton } from "../../components/PermalinkButton/PermalinkButton.tsx"
+import { VersionCompare } from "../../components/VersionCompare/VersionCompare.tsx"
 import { ResultPanel } from "../../components/ResultPanel/ResultPanel.tsx"
 import {
 	assetUrl,
@@ -103,6 +104,15 @@ const DemoApp: React.FC = () => {
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
 	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
+
+	// ── Compare mode ──────────────────────────────────────────────────────
+	const [compareMode, setCompareMode] = useState(false)
+	const [compareVersion, setCompareVersion] = useState<string | null>(null)
+	const [compareClassifier, setCompareClassifier] = useState<MailwomanClassifierLike | null>(null)
+	const [compareLoading, setCompareLoading] = useState(false)
+	const [compareBackend, setCompareBackend] = useState<string>("")
+	const [compareResult, setCompareResult] = useState<DemoResult | null>(null)
+
 	const [fstMatcher, setFstMatcher] = useState<FstMatcherLike | null>(null)
 	const [fstProvenance, setFstProvenance] = useState<FstProvenanceLike | null>(null)
 	const [forceWasm, setForceWasm] = useState(false)
@@ -115,6 +125,7 @@ const DemoApp: React.FC = () => {
 	const [result, setResult] = useState<DemoResult | null>(null)
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
+	const [compareErrorMessage, setCompareErrorMessage] = useState<string | null>(null)
 
 	// Parse stage labels depend on whether WOF lookup is available for the selected release.
 	const parseStageLabels = useMemo(
@@ -220,6 +231,8 @@ const DemoApp: React.FC = () => {
 	// Load the model + FST + WOF DB when the selected version changes.
 	useEffect(() => {
 		if (!selectedVersion) return
+		// Clear stale compare selection when primary version changes to match.
+		setCompareVersion((prev) => (prev === selectedVersion ? null : prev))
 		let cancelled = false
 		const release = manifest?.releases.find((r) => r.version === selectedVersion)
 
@@ -295,6 +308,66 @@ const DemoApp: React.FC = () => {
 			cancelled = true
 		}
 	}, [selectedVersion, manifest, forceWasm])
+
+	// ── Compare classifier loading ─────────────────────────────────────────
+	// When compare mode is active and the user selects a compare version, load
+	// a second classifier instance independently (via neural-web directly).
+	useEffect(() => {
+		if (!compareMode || !compareVersion) {
+			setCompareClassifier(null)
+			setCompareResult(null)
+			setCompareErrorMessage(null)
+			setCompareBackend("")
+			return
+		}
+		let cancelled = false
+		const release = manifest?.releases.find((r) => r.version === compareVersion)
+
+		void (async () => {
+			try {
+				setCompareClassifier(null)
+				setCompareErrorMessage(null)
+				setCompareLoading(true)
+				setCompareBackend("")
+
+				const neuralWeb = await import("@mailwoman/neural-web")
+				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromUrls({
+					modelUrl: assetUrl(DEFAULT_LOCALE, compareVersion, "model.onnx"),
+					tokenizerUrl: assetUrl(DEFAULT_LOCALE, compareVersion, "tokenizer.model"),
+					modelCardUrl: assetUrl(DEFAULT_LOCALE, compareVersion, "model-card.json"),
+					runner: { useWebGpu: !forceWasm },
+					...(release?.hasAnchor
+						? {
+								postcodeBinaryUrls: [
+									assetUrl(DEFAULT_LOCALE, compareVersion, "postcode-us.bin"),
+									assetUrl(DEFAULT_LOCALE, compareVersion, "postcode-de.bin"),
+									assetUrl(DEFAULT_LOCALE, compareVersion, "postcode-fr.bin"),
+								],
+							}
+						: {}),
+				})
+
+				if (cancelled) return
+
+				setCompareBackend(
+					diagnostics
+						? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)`
+						: "unknown"
+				)
+				setCompareClassifier(cls as unknown as MailwomanClassifierLike)
+			} catch (error) {
+				if (cancelled) return
+				console.error("Error loading compare classifier", error)
+				setCompareErrorMessage(error instanceof Error ? error.message : String(error))
+			} finally {
+				if (!cancelled) setCompareLoading(false)
+			}
+		})()
+
+		return () => {
+			cancelled = true
+		}
+	}, [compareMode, compareVersion, manifest, forceWasm])
 
 	// Hot-swap the map style when the operator toggles Docusaurus's color mode. The page sets
 	// data-theme="dark" / "light" on <html>; a MutationObserver is the lightest dependency-free way
@@ -433,6 +506,7 @@ const DemoApp: React.FC = () => {
 			setBusy(true)
 			setParseStage(0)
 			setErrorMessage(null)
+			setCompareResult(null)
 
 			try {
 				// Stage 2.4 + 2.5: compute QueryShape + kind classification. Pure functions, ~µs.
@@ -473,6 +547,41 @@ const DemoApp: React.FC = () => {
 					.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
+
+				// ── Compare parse (classifier-only, no FST/WOF) ──────────────────
+				// Runs before the WOF lookup so it executes even when the selected
+				// version lacks a WOF database. Reuses the already-imported pipeline
+				// functions from the primary path — no redundant dynamic imports.
+				if (compareMode && compareClassifier) {
+					try {
+						const cStart = performance.now()
+						const cQueryShape = computeQueryShape(text)
+						const cKindResult = classifyKindSync({ raw: text, normalized: text }, cQueryShape)
+						const cShapeTime = performance.now() - cStart
+
+						const cPipelineResult = await runPipeline(text, {
+							computeQueryShape,
+							groupPhrases,
+							classifier: compareClassifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+						})
+						const cClassifyTime = performance.now() - cStart - cShapeTime
+						const cNodes = flattenTree(cPipelineResult.tree)
+
+						setCompareResult({
+							input: text,
+							tree: cPipelineResult.tree,
+							nodes: cNodes,
+							resolved: null,
+							candidates: [],
+							kindResult: cKindResult,
+							fstActive: false,
+							timing: { shape: cShapeTime, classify: cClassifyTime },
+						})
+					} catch (compareError) {
+						console.error("Error in compare parse", compareError)
+						setCompareErrorMessage(compareError instanceof Error ? compareError.message : String(compareError))
+					}
+				}
 				const wofLookup = await ensureLookup()
 				if (!wofLookup) {
 					setResult({
@@ -539,6 +648,7 @@ const DemoApp: React.FC = () => {
 					timing: { shape: tShape - tStart, classify: tClassify - tShape, resolve: tResolve - tBeforeResolve },
 					dualRoles,
 				})
+
 			} catch (parsingError) {
 				console.error("Error parsing input", parsingError)
 				setErrorMessage(parsingError instanceof Error ? parsingError.message : String(parsingError))
@@ -547,7 +657,7 @@ const DemoApp: React.FC = () => {
 				setParseStage(-1)
 			}
 		},
-		[classifier, text, fstMatcher, ensureLookup, fstProvenance]
+		[classifier, text, fstMatcher, ensureLookup, fstProvenance, compareMode, compareClassifier]
 	)
 
 	const ready = classifier !== null
@@ -614,10 +724,67 @@ const DemoApp: React.FC = () => {
 						<input type="checkbox" checked={forceWasm} onChange={(e) => setForceWasm(e.target.checked)} />
 						Force WASM
 					</label>
+				{manifest && manifest.releases.length > 1 ? (
+					<label
+						style={{
+							display: "flex",
+							alignItems: "center",
+							gap: "0.25rem",
+							cursor: "pointer",
+							opacity: 0.7,
+						}}
+					>
+						<input
+							type="checkbox"
+							checked={compareMode}
+							onChange={(e) => {
+								setCompareMode(e.target.checked)
+								if (!e.target.checked) {
+									setCompareResult(null)
+									setCompareErrorMessage(null)
+								}
+							}}
+						/>
+						Compare
+					</label>
+				) : null}
+			</div>
+			{compareMode && manifest && manifest.releases.length > 1 ? (
+				<div style={{ marginBottom: "0.75rem" }}>
+					<label
+						htmlFor="compare-version-select"
+						style={{ display: "block", marginBottom: "0.25rem", fontWeight: 600 }}
+					>
+						Compare with
+					</label>
+					<select
+						id="compare-version-select"
+						value={compareVersion ?? ""}
+						onChange={(e) => setCompareVersion(e.target.value || null)}
+						disabled={busy || compareLoading}
+						style={{ width: "100%", padding: "0.4rem" }}
+					>
+						<option value="">Select version…</option>
+						{manifest.releases
+							.filter((r) => r.version !== selectedVersion)
+							.map((r) => (
+								<option key={r.version} value={r.version}>
+									{r.label}
+								</option>
+							))}
+					</select>
+					{compareLoading ? (
+						<p className={styles.status}>Loading {compareVersion} model…</p>
+					) : compareBackend ? (
+						<span style={{ fontSize: "0.8rem", opacity: 0.7 }}>
+							Backend: <code>{compareBackend}</code>
+						</span>
+					) : null}
 				</div>
-				<form onSubmit={onSubmit}>
-					<label htmlFor="addr-input">Address</label>
-					<input
+			) : null}
+			<form onSubmit={onSubmit}>
+				<label htmlFor="addr-input">Address</label>
+				<input
 						id="addr-input"
 						type="text"
 						value={text}
@@ -651,11 +818,20 @@ const DemoApp: React.FC = () => {
 				{busy ? <LoadingIndicator mode="staged" steps={parseStageLabels} activeStep={parseStage} /> : null}
 				{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
 				{errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
+				{compareErrorMessage ? <p className={styles.error}>{compareErrorMessage}</p> : null}
 				{result ? (
 					<ResultPanel
 						result={result}
 						selectedCandidateIndex={selectedCandidateIndex}
 						onSelectCandidate={setSelectedCandidateIndex}
+					/>
+				) : null}
+				{compareResult && result ? (
+					<VersionCompare
+						primary={result}
+						compare={compareResult}
+						primaryVersion={selectedVersion ?? "?"}
+						compareVersion={compareVersion ?? "?"}
 					/>
 				) : null}
 			</section>
