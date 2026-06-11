@@ -478,7 +478,10 @@ const DemoApp: React.FC = () => {
 
 			const b = candidate.bbox
 			if (b && Math.max(b.maxLat - b.minLat, b.maxLon - b.minLon) > 0.001) {
-				drawBbox(map, b)
+				// No crisp polygon for this place — draw an approximate CIRCLE sized from the bbox
+				// rather than the bbox rectangle itself: a rectangle reads as a (wrong) real boundary,
+				// a circle reads as the honest "around here" it actually is.
+				drawApproxCircle(map, candidate.lat, candidate.lon, b)
 				map.fitBounds(
 					[
 						[b.minLon, b.minLat],
@@ -914,6 +917,30 @@ function drawBbox(map: MapLibreMap, bbox: { minLat: number; maxLat: number; minL
 		[bbox.minLon, bbox.maxLat],
 		[bbox.minLon, bbox.minLat],
 	]
+	setPlaceOutline(map, { type: "Polygon", coordinates: [ring] })
+}
+
+/**
+ * Approximate-extent circle for places without a crisp polygon: centered on the place point,
+ * radius from the bbox half-diagonal (clamped 0.5–50 km). 64-point GeoJSON ring with latitude
+ * correction — visually a circle anywhere outside the poles.
+ */
+function drawApproxCircle(
+	map: MapLibreMap,
+	lat: number,
+	lon: number,
+	bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+): void {
+	const kmPerDegLat = 111.32
+	const kmPerDegLon = kmPerDegLat * Math.cos((lat * Math.PI) / 180)
+	const halfDiagKm =
+		Math.hypot((bbox.maxLat - bbox.minLat) * kmPerDegLat, (bbox.maxLon - bbox.minLon) * kmPerDegLon) / 2
+	const radiusKm = Math.min(50, Math.max(0.5, halfDiagKm))
+	const ring: number[][] = []
+	for (let i = 0; i <= 64; i++) {
+		const theta = (2 * Math.PI * i) / 64
+		ring.push([lon + (radiusKm * Math.cos(theta)) / kmPerDegLon, lat + (radiusKm * Math.sin(theta)) / kmPerDegLat])
+	}
 	setPlaceOutline(map, { type: "Polygon", coordinates: [ring] })
 }
 

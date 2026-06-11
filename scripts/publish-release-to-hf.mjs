@@ -46,6 +46,17 @@ const REQUIRED_FILES = [
 ]
 
 const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
+const DEMO_BASE = "https://public.sister.software/mailwoman"
+
+/** HEAD-probe the demo's R2 serving path for an optional artifact (the demo reads R2, so R2 is the truth for demo flags). */
+async function servedOnDemoPath(name) {
+	try {
+		const r = await fetch(`${DEMO_BASE}/${args.locale}/${args.version}/${name}`, { method: "HEAD" })
+		return r.ok
+	} catch {
+		return false
+	}
+}
 const BUCKET_RESOLVE = "https://huggingface.co/buckets/sister-software/mailwoman/resolve"
 
 function parseArgs() {
@@ -199,8 +210,17 @@ async function main() {
 		steps: args.steps ? parseInt(args.steps, 10) : 100000,
 		hasFst: true,
 		hasWofDb: true,
-		hasAnchor: postcodeBins.length > 0,
-		hasPolygons: !!polygonsDb,
+		// These artifacts usually ride the R2 staging rather than this script's flags, so derive the
+		// truth by PROBING the demo's serving path (the four-release hasPolygons:false rectangle bug,
+		// 2026-06-11). CLI args still count; either source sets the flag.
+		hasAnchor: postcodeBins.length > 0 || (await servedOnDemoPath("postcode-us.bin")),
+		hasPolygons: !!polygonsDb || (await servedOnDemoPath("wof-polygons.db")),
+	}
+	for (const flag of ["hasAnchor", "hasPolygons"]) {
+		if (!newEntry[flag])
+			console.warn(
+				`⚠ ${flag}=false for ${args.version} — if the artifact will be staged to R2 later, releases.json must be re-patched or the demo silently degrades (rectangles / anchor-off).`
+			)
 	}
 
 	releases.releases = [newEntry, ...releases.releases.filter((r) => r.version !== args.version)]
