@@ -87,6 +87,15 @@
 .map {
 	position: absolute;
 	inset: 0;
+
+	canvas {
+		cursor: crosshair !important;
+		background-color: #000019;
+		background-image:
+			radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0)),
+			url("data:image/svg+xml,%3Csvg viewBox='0 0 1000 1000' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+		background-blend-mode: overlay;
+	}
 }
 
 /* ── Floating control panel ───────────────────────────────────────────── */
@@ -103,7 +112,9 @@
 	-webkit-backdrop-filter: blur(20px);
 	border: 1px solid rgba(0, 0, 0, 0.1);
 	border-radius: 16px;
-	box-shadow: 0 4px 32px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06);
+	box-shadow:
+		0 4px 32px rgba(0, 0, 0, 0.12),
+		0 1px 4px rgba(0, 0, 0, 0.06);
 	overflow-y: auto;
 	overscroll-behavior: contain;
 	padding: 1.25rem;
@@ -118,7 +129,9 @@
 [data-theme="dark"] .controls {
 	background: rgba(27, 27, 29, 0.85);
 	border-color: rgba(255, 255, 255, 0.1);
-	box-shadow: 0 4px 32px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.2);
+	box-shadow:
+		0 4px 32px rgba(0, 0, 0, 0.4),
+		0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes panelSlideIn {

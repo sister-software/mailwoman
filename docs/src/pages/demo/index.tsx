@@ -13,8 +13,8 @@
  *   same-origin from `/mailwoman/` and range-loaded, so a session fetches a few MB of them, not
  *   70+.
  *
- *   Layout: full-viewport map (Google Maps-style) with a floating semi-transparent control panel
- *   on the left. On mobile the panel slides to the bottom.
+ *   Layout: full-viewport map (Google Maps-style) with a floating semi-transparent control panel on
+ *   the left. On mobile the panel slides to the bottom.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -23,7 +23,7 @@ import BrowserOnly from "@docusaurus/BrowserOnly"
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
 import Layout from "@theme/Layout"
-import type { Map as MapLibreMap, StyleSpecification, VectorSourceSpecification } from "maplibre-gl"
+import type { Map as MapLibreMap, VectorSourceSpecification } from "maplibre-gl"
 import type React from "react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -31,8 +31,8 @@ import { AboutDemo } from "../../components/AboutDemo/AboutDemo.tsx"
 import { LayerToggleControl } from "../../components/LayerToggleControl/LayerToggleControl.tsx"
 import { LoadingIndicator } from "../../components/LoadingIndicator/LoadingIndicator.tsx"
 import { PermalinkButton } from "../../components/PermalinkButton/PermalinkButton.tsx"
-import { VersionCompare } from "../../components/VersionCompare/VersionCompare.tsx"
 import { ResultPanel } from "../../components/ResultPanel/ResultPanel.tsx"
+import { VersionCompare } from "../../components/VersionCompare/VersionCompare.tsx"
 import {
 	assetUrl,
 	type DemoResult,
@@ -185,7 +185,11 @@ const DemoApp: React.FC = () => {
 					const composer = new StyleSpecificationComposer({
 						sources: { [MailwomanBaseTileSetID]: basemapSource },
 					})
-					const style = composer.toJSON() as StyleSpecification
+					const style = composer.toJSON()
+					style.projection = {
+						type: "globe",
+					}
+
 					const map = new maplibre.Map({
 						container: mapContainerRef.current,
 						style,
@@ -193,9 +197,12 @@ const DemoApp: React.FC = () => {
 						zoom: 3,
 						attributionControl: false,
 					})
+
 					map.addControl(new maplibre.AttributionControl({ compact: true }))
 					map.addControl(new LayerToggleControl(), "top-right")
+
 					mapRef.current = map
+
 					Object.assign(window as unknown as Record<string, unknown>, { __mailwomanDemoMap: map })
 					const wireTerrain = (): void => {
 						if (!map.isStyleLoaded()) {
@@ -392,7 +399,7 @@ const DemoApp: React.FC = () => {
 				const composer = new StyleSpecificationComposer({
 					sources: { [MailwomanBaseTileSetID]: source },
 				})
-				map.setStyle(composer.toJSON() as StyleSpecification)
+				map.setStyle(composer.toJSON())
 				map.once("styledata", () => {
 					try {
 						if (map.getSource("terrain")) {
@@ -551,7 +558,6 @@ const DemoApp: React.FC = () => {
 					.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
-
 				// ── Compare parse (classifier-only, no FST/WOF) ──────────────────
 				// Runs before the WOF lookup so it executes even when the selected
 				// version lacks a WOF database. Reuses the already-imported pipeline
@@ -652,7 +658,6 @@ const DemoApp: React.FC = () => {
 					timing: { shape: tShape - tStart, classify: tClassify - tShape, resolve: tResolve - tBeforeResolve },
 					dualRoles,
 				})
-
 			} catch (parsingError) {
 				console.error("Error parsing input", parsingError)
 				setErrorMessage(parsingError instanceof Error ? parsingError.message : String(parsingError))
@@ -728,67 +733,67 @@ const DemoApp: React.FC = () => {
 						<input type="checkbox" checked={forceWasm} onChange={(e) => setForceWasm(e.target.checked)} />
 						Force WASM
 					</label>
-				{manifest && manifest.releases.length > 1 ? (
-					<label
-						style={{
-							display: "flex",
-							alignItems: "center",
-							gap: "0.25rem",
-							cursor: "pointer",
-							opacity: 0.7,
-						}}
-					>
-						<input
-							type="checkbox"
-							checked={compareMode}
-							onChange={(e) => {
-								setCompareMode(e.target.checked)
-								if (!e.target.checked) {
-									setCompareResult(null)
-									setCompareErrorMessage(null)
-								}
+					{manifest && manifest.releases.length > 1 ? (
+						<label
+							style={{
+								display: "flex",
+								alignItems: "center",
+								gap: "0.25rem",
+								cursor: "pointer",
+								opacity: 0.7,
 							}}
-						/>
-						Compare
-					</label>
-				) : null}
-			</div>
-			{compareMode && manifest && manifest.releases.length > 1 ? (
-				<div style={{ marginBottom: "0.75rem" }}>
-					<label
-						htmlFor="compare-version-select"
-						style={{ display: "block", marginBottom: "0.25rem", fontWeight: 600 }}
-					>
-						Compare with
-					</label>
-					<select
-						id="compare-version-select"
-						value={compareVersion ?? ""}
-						onChange={(e) => setCompareVersion(e.target.value || null)}
-						disabled={busy || compareLoading}
-						style={{ width: "100%", padding: "0.4rem" }}
-					>
-						<option value="">Select version…</option>
-						{manifest.releases
-							.filter((r) => r.version !== selectedVersion)
-							.map((r) => (
-								<option key={r.version} value={r.version}>
-									{r.label}
-								</option>
-							))}
-					</select>
-					{compareLoading ? (
-						<p className={styles.status}>Loading {compareVersion} model…</p>
-					) : compareBackend ? (
-						<span style={{ fontSize: "0.8rem", opacity: 0.7 }}>
-							Backend: <code>{compareBackend}</code>
-						</span>
+						>
+							<input
+								type="checkbox"
+								checked={compareMode}
+								onChange={(e) => {
+									setCompareMode(e.target.checked)
+									if (!e.target.checked) {
+										setCompareResult(null)
+										setCompareErrorMessage(null)
+									}
+								}}
+							/>
+							Compare
+						</label>
 					) : null}
 				</div>
-			) : null}
-			<form onSubmit={onSubmit}>
-				<label htmlFor="addr-input">Address</label>
-				<input
+				{compareMode && manifest && manifest.releases.length > 1 ? (
+					<div style={{ marginBottom: "0.75rem" }}>
+						<label
+							htmlFor="compare-version-select"
+							style={{ display: "block", marginBottom: "0.25rem", fontWeight: 600 }}
+						>
+							Compare with
+						</label>
+						<select
+							id="compare-version-select"
+							value={compareVersion ?? ""}
+							onChange={(e) => setCompareVersion(e.target.value || null)}
+							disabled={busy || compareLoading}
+							style={{ width: "100%", padding: "0.4rem" }}
+						>
+							<option value="">Select version…</option>
+							{manifest.releases
+								.filter((r) => r.version !== selectedVersion)
+								.map((r) => (
+									<option key={r.version} value={r.version}>
+										{r.label}
+									</option>
+								))}
+						</select>
+						{compareLoading ? (
+							<p className={styles.status}>Loading {compareVersion} model…</p>
+						) : compareBackend ? (
+							<span style={{ fontSize: "0.8rem", opacity: 0.7 }}>
+								Backend: <code>{compareBackend}</code>
+							</span>
+						) : null}
+					</div>
+				) : null}
+				<form onSubmit={onSubmit}>
+					<label htmlFor="addr-input">Address</label>
+					<input
 						id="addr-input"
 						type="text"
 						value={text}

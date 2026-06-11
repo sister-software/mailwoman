@@ -78,6 +78,7 @@ const DashboardMap: React.FC = () => {
 				minZoom={3}
 				maxPitch={85}
 				ref={exposeMapRef}
+				projection="globe"
 			>
 				<NavigationControl position="top-left" showCompass={true} showZoom={false} visualizePitch={true} />
 				<GeoJSONClipboardLayer />
