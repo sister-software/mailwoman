@@ -9,7 +9,7 @@ from .augment import (
     augment_row,
     glue_region_postcode,
     row_span_triple,
-    spans_from_token_labels,
+    splice_expansion,
 )
 from .tokenizer import PieceSpan, realign_labels_to_pieces, realign_spans_to_pieces
 
@@ -261,13 +261,23 @@ def _spanned_directional_row() -> dict:
     }
 
 
-def test_expansion_rederives_spans_for_the_rebuilt_raw():
+def _assert_span_invariants(row: dict) -> None:
+    """The #519 triple invariants: in-bounds, sorted ascending by start, non-overlapping."""
+    prev_end = 0
+    for s, e in zip(row["span_starts"], row["span_ends"]):
+        assert 0 <= s < e <= len(row["raw"])
+        assert s >= prev_end
+        prev_end = e
+
+
+def test_expansion_splices_raw_and_retargets_spans():
     rng = random.Random(42)
     results = list(augment_row(_spanned_directional_row(), rng, directional_prob=1.0, region_prob=0.0))
     assert len(results) == 2
     augmented = results[1]
     assert augmented["raw"] == "350 5th Ave Northwest"
     assert _slices(augmented) == [("house_number", "350"), ("street", "5th Ave Northwest")]
+    _assert_span_invariants(augmented)
 
 
 def test_expansion_leaves_the_original_rows_spans_alone():
@@ -330,22 +340,131 @@ def test_row_span_triple_nonparallel_raises():
         row_span_triple({"raw": "x", "span_starts": [0], "span_ends": [1, 2], "span_tags": ["street"]})
 
 
-def test_spans_from_token_labels_groups_bi_runs():
-    starts, ends, tags = spans_from_token_labels(
-        ["350", "5th", "Ave", "Buffalo"],
-        ["B-house_number", "B-street", "I-street", "B-locality"],
-    )
-    raw = "350 5th Ave Buffalo"
-    assert [(t, raw[s:e]) for s, e, t in zip(starts, ends, tags)] == [
+# --- Raw splicing for expansions (PR #534 open question 3) ---------------------------------------
+# The expansions must never rebuild raw via " ".join(tokens): the join destroys whitespace
+# geometry (newlines, double spaces) and re-quantizing spans to token boundaries absorbs
+# punctuation the v0.5.0 spans deliberately exclude. The canonical probe is a dotted P.O. Box
+# beside a comma-bearing token.
+
+
+def _dotted_po_box_row() -> dict:
+    # raw:  P.O. Box 123, Buffalo NY 14201
+    #       0         1         2
+    #       0123456789012345678901234567890
+    # The po_box span [0, 12) excludes the trailing comma; the comma rides inside the "123,"
+    # whitespace token. A token-label re-derive would absorb it into the span.
+    return {
+        "raw": "P.O. Box 123, Buffalo NY 14201",
+        "tokens": ["P.O.", "Box", "123,", "Buffalo", "NY", "14201"],
+        "labels": ["B-po_box", "I-po_box", "I-po_box", "B-locality", "B-region", "B-postcode"],
+        "span_starts": [0, 14, 22, 25],
+        "span_ends": [12, 21, 24, 30],
+        "span_tags": ["po_box", "locality", "region", "postcode"],
+        "country": "US",
+        "source": "test",
+    }
+
+
+def test_expansion_preserves_intra_span_punctuation():
+    """The dotted P.O. Box survives the region expansion verbatim — dots inside the span,
+    trailing comma still outside it — and every offset addresses the NEW raw exactly."""
+    rng = random.Random(42)
+    results = list(augment_row(_dotted_po_box_row(), rng, directional_prob=0.0, region_prob=1.0))
+    assert len(results) == 2
+    augmented = results[1]
+    assert augmented["raw"] == "P.O. Box 123, Buffalo New York 14201"
+    assert _slices(augmented) == [
+        ("po_box", "P.O. Box 123"),
+        ("locality", "Buffalo"),
+        ("region", "New York"),
+        ("postcode", "14201"),
+    ]
+    _assert_span_invariants(augmented)
+    # The comma after the po_box stays in raw, outside the span.
+    assert augmented["raw"][12] == ","
+
+
+def test_expansion_preserves_whitespace_geometry():
+    """Newlines + double spaces in raw survive the splice — the exact information a
+    " ".join(tokens) rebuild destroys."""
+    row = {
+        "raw": "350 5th  Ave NW\nBuffalo",
+        "tokens": ["350", "5th", "Ave", "NW", "Buffalo"],
+        "labels": ["B-house_number", "B-street", "I-street", "I-street", "B-locality"],
+        "span_starts": [0, 4, 16],
+        "span_ends": [3, 15, 23],
+        "span_tags": ["house_number", "street", "locality"],
+        "country": "US",
+        "source": "test",
+    }
+    rng = random.Random(42)
+    augmented = list(augment_row(row, rng, directional_prob=1.0, region_prob=0.0))[1]
+    assert augmented["raw"] == "350 5th  Ave Northwest\nBuffalo"
+    assert _slices(augmented) == [
         ("house_number", "350"),
-        ("street", "5th Ave"),
+        ("street", "5th  Ave Northwest"),
         ("locality", "Buffalo"),
     ]
+    _assert_span_invariants(augmented)
 
 
-def test_spans_from_token_labels_o_breaks_the_run():
-    starts, ends, tags = spans_from_token_labels(["New", "York", ",", "NY"], ["B-region", "I-region", "O", "B-region"])
-    assert tags == ["region", "region"]
-    # Joined raw is "New York , NY": the comma is uncovered, the second region span is "NY".
-    assert (starts[0], ends[0]) == (0, 8)
-    assert (starts[1], ends[1]) == (11, 13)
+def test_expansion_legacy_row_keeps_punctuation_too():
+    """Token-only (pre-v0.5.0) rows ride the same splice: the raw keeps its punctuation even
+    though no spans need re-targeting."""
+    row = {k: v for k, v in _dotted_po_box_row().items() if not k.startswith("span_")}
+    rng = random.Random(42)
+    results = list(augment_row(row, rng, directional_prob=0.0, region_prob=1.0))
+    assert len(results) == 2
+    assert results[1]["raw"] == "P.O. Box 123, Buffalo New York 14201"
+    assert "span_starts" not in results[1]
+
+
+def test_splice_expansion_leaves_the_source_row_alone():
+    row = _dotted_po_box_row()
+    splice_expansion(row, 4, "New York")
+    assert row["raw"] == "P.O. Box 123, Buffalo NY 14201"
+    assert row["span_starts"] == [0, 14, 22, 25]
+    assert row["tokens"][4] == "NY"
+
+
+def test_splice_expansion_boundary_inside_edited_token_raises():
+    """A span boundary strictly inside the expanded token addresses a surface the splice
+    destroys — genuinely impossible to re-target, so it raises rather than guesses."""
+    row = {
+        "raw": "Buffalo NY 14201",
+        "tokens": ["Buffalo", "NY", "14201"],
+        "labels": ["B-locality", "B-region", "B-postcode"],
+        # Corrupt on purpose: the region span covers only the first char of "NY".
+        "span_starts": [0, 8, 11],
+        "span_ends": [7, 9, 16],
+        "span_tags": ["locality", "region", "postcode"],
+    }
+    with pytest.raises(ValueError, match="un-retargetable"):
+        splice_expansion(row, 1, "New York")
+
+
+def test_expansion_then_glue_compose_still_verifies():
+    """Composing the two splices (directional expansion, then region+postcode glue) keeps every
+    offset addressing the final raw."""
+    row = {
+        "raw": "350 5th Ave NW Buffalo, NY 14201",
+        "tokens": ["350", "5th", "Ave", "NW", "Buffalo,", "NY", "14201"],
+        "labels": ["B-house_number", "B-street", "I-street", "I-street", "B-locality", "B-region", "B-postcode"],
+        "span_starts": [0, 4, 15, 24, 27],
+        "span_ends": [3, 14, 22, 26, 32],
+        "span_tags": ["house_number", "street", "locality", "region", "postcode"],
+        "country": "US",
+        "source": "test",
+    }
+    expanded = splice_expansion(row, 3, "Northwest")
+    assert expanded["raw"] == "350 5th Ave Northwest Buffalo, NY 14201"
+    fused = glue_region_postcode(expanded, 5)
+    assert fused["raw"] == "350 5th Ave Northwest Buffalo, NY14201"
+    assert _slices(fused) == [
+        ("house_number", "350"),
+        ("street", "5th Ave Northwest"),
+        ("locality", "Buffalo"),
+        ("region", "NY"),
+        ("postcode", "14201"),
+    ]
+    _assert_span_invariants(fused)
