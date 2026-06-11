@@ -29,6 +29,7 @@ import {
 import { ancestorLineage } from "./ancestry.js"
 import { COINCIDENT_ROLES_TABLE, coincidentRolesExists } from "./coincident-roles.js"
 import {
+	aliasBagExactMatch,
 	buildPlaceSearchFts,
 	PLACE_BBOX_TABLE,
 	PLACE_POPULATION_TABLE,
@@ -915,9 +916,9 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * Among `ids`, return the subset whose name OR any alias equals `text` case-insensitively — the
 	 * exact-match tier for ranking. One indexed query over `<schema>.names`. When the shard has no
 	 * `names` table (a slim DB built with `dropNames`, or a postcode-only shard), fall back to the
-	 * self-contained `place_search` FTS content: its `alt_names` column is the same alias set,
-	 * space-joined into one token bag, so a whitespace-boundary containment check recovers the alias
-	 * tier ("New York City" → New York) that the dropped `names` table used to provide.
+	 * self-contained `place_search` FTS content: its `alt_names` column is the same alias set joined
+	 * on the boundary-preserving `ALIAS_SEPARATOR` (#523), so `aliasBagExactMatch` recovers the exact
+	 * alias tier ("New York City" → New York) that the dropped `names` table used to provide.
 	 */
 	#exactMatchIds(schemaName: string, ids: number[], text: string): Set<number> {
 		const out = new Set<number>()
@@ -946,14 +947,15 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			for (const r of rows) {
 				if (r.name !== null && norm(r.name) === needle) out.add(r.id)
 			}
-			// Alias pass, only when NO canonical name matched: alt_names is all aliases space-joined
-			// (name boundaries are lost), so a padded substring check would false-promote interior
-			// fragments ("York" inside the alias "New York City"). Gating it on "no canonical exact in
-			// the pool" confines it to the genuine alias-query case ("New York City" itself).
-			if (out.size === 0) {
-				for (const r of rows) {
-					if (r.alt_names !== null && ` ${norm(r.alt_names)} `.includes(` ${needle} `)) out.add(r.id)
-				}
+			// Alias pass via the shared bag parser (#523). Separated bags (built since #523) get a true
+			// per-alias equality check, ungated — matching the `names`-table branch above, where an
+			// alias match counts as exact regardless of other candidates. Legacy bags (no separator)
+			// fall back to padded containment, gated on "no canonical exact in the pool" because their
+			// lost boundaries would otherwise false-promote interior fragments ("York" inside the alias
+			// "New York City") or cross-alias fragments ("York New" across "…York" + "New City…").
+			const anyCanonicalExact = out.size > 0
+			for (const r of rows) {
+				if (aliasBagExactMatch(r.alt_names, needle, anyCanonicalExact)) out.add(r.id)
 			}
 		} catch {
 			// Shard without place_search either → no exact-match tier. Falls back to weighted-sum order.

@@ -70,6 +70,12 @@ function buildFixtureWof(path: string): void {
 		INSERT INTO names (id, language, name) VALUES (221, 'eng', 'New York City');
 		INSERT INTO names (id, language, name) VALUES (230, 'eng', 'Brooklyn');
 		INSERT INTO names (id, language, name) VALUES (231, 'eng', 'Brooklyn Park');
+		-- Alias-bag boundary fixture (#523): two aliases whose concatenation straddles the phrase
+		-- "York New". The boundary-preserving separator must keep the exact tier from promoting this
+		-- place (or 'New York', whose alias bag also straddles it) for the straddling query.
+		INSERT INTO spr VALUES (240, 101, 'Twin Hamlet', 'locality', 'US', 40.2, -76.8, 40.1, 40.3, -76.9, -76.7, -1, 0);
+		INSERT INTO names (id, language, name) VALUES (240, 'eng', 'Old York');
+		INSERT INTO names (id, language, name) VALUES (240, 'eng', 'New City');
 
 		-- Pre-built population aux table (production shape — build-unified-wof extracts wof:population
 		-- here at ingest; the source has no geojson table). Postcodes (300/301) carry no population row.
@@ -83,6 +89,7 @@ function buildFixtureWof(path: string): void {
 		INSERT INTO place_population VALUES (221, 8400000);
 		INSERT INTO place_population VALUES (230, 2504700);
 		INSERT INTO place_population VALUES (231, 82000);
+		INSERT INTO place_population VALUES (240, 50);
 
 		-- Region abbreviation tiering (#189): 'Vermontstate' (tiny pop) carries the exact abbrev 'VT';
 		-- 'Vt Plains' (huge pop) only TOKEN-matches "vt". build-slim materializes place_abbr (110→VT) so
@@ -249,6 +256,26 @@ describe("WofWasmPlaceLookup", () => {
 			expect(matches[0]).toMatchObject({ id: 221, name: "New York" })
 			// The alias lives only in the FTS alt_names bag on a slim DB — the tier must consult it.
 			expect(matches[0]?.exactMatch).toBe(true)
+		} finally {
+			lookup.close()
+		}
+	})
+
+	test('alias-bag boundary: "York New" straddling two aliases never claims the exact tier (#523)', async () => {
+		const { db } = await loadSlimWofDatabase({ source: slimBytes })
+		const lookup = new WofWasmPlaceLookup({ db })
+		try {
+			// "York New" token-matches both Twin Hamlet (bag "Old York <sep> New City") and New York
+			// (name + alias "New York City"). Pre-#523, the space-joined bags let the padded containment
+			// check false-promote BOTH (' old york new city ' and ' new york new york city ' each
+			// contain ' york new '). With the separator, no candidate may claim the exact tier.
+			const straddle = await lookup.findPlace({ text: "York New", placetype: "locality", limit: 5 })
+			expect(straddle.length).toBeGreaterThan(0) // still token-reachable…
+			expect(straddle.some((m) => m.exactMatch === true)).toBe(false) // …but never exact
+			// A single alias still earns the exact tier from the bag alone.
+			const alias = await lookup.findPlace({ text: "New City", placetype: "locality", limit: 5 })
+			expect(alias[0]).toMatchObject({ id: 240, name: "Twin Hamlet" })
+			expect(alias[0]?.exactMatch).toBe(true)
 		} finally {
 			lookup.close()
 		}
