@@ -45,7 +45,7 @@ TIGER conventions that shape the schema:
   street can be a ZIP boundary). We emit one ROW PER SIDE, not per edge.
 - **Parity is per side, by convention but not by contract.** Typically one side of a US
   street is odd and the other even, and TIGER's from/to numbers usually agree on parity
-  (~97.7% of Vermont sides). When from/to parity DISAGREES the side is recorded
+  (Vermont: 137,248 of 137,256 sides). When from/to parity DISAGREES the side is recorded
   `parity = "mixed"` and matches either parity. Per-side fidelity is an open question
   below — we measure it, we don't assume it.
 - **Ranges may descend.** `from > to` means house numbers decrease walking from-node →
@@ -165,8 +165,9 @@ truth is unknowable; measuring on known points is the only honest proxy.
    **Operator call** before this grows beyond a pilot: stay (one fewer package, shared
    normalizer stays intra-package) vs split (independent versioning of the TIGER data
    contract). Nothing in this slice blocks either answer.
-2. **Odd/even fidelity.** Vermont measures ~97.7% of address-carrying sides
-   parity-consistent, but TIGER does not guarantee it nationally; the `mixed` bucket and
+2. **Odd/even fidelity.** Vermont measures 99.99% of address-carrying sides
+   parity-consistent (8 `mixed` of 137,256), but a clean from/to pair doesn't prove the
+   real houses obey it, and TIGER does not guarantee it nationally; the `mixed` bucket and
    the opposite-parity fallback are the pressure valves. The eval's parity-split
    reporting is the instrument — if fallback hits dominate the error tail in a denser
    state, revisit before national rollout.
