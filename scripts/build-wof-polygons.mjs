@@ -21,6 +21,12 @@
  *
  *   Usage: node scripts/build-wof-polygons.mjs --points <wof-hot.db> --out <wof-polygons.db> [--tol
  *   0.004]
+ *
+ *   Source modes: `--points <wof-hot.db>` keeps the demo sidecar in lockstep with the slim points
+ *   DB (small, shippable). `--admin <admin-global-priority.db>` instead pulls EVERY admin row from
+ *   the full gazetteer (optionally `--countries US,DE`) — the broad-coverage build the node-side
+ *   reverse geocoder (#484) wants: the slim DB excludes localadmin, which is where US town
+ *   polygons actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
  */
 
 import { existsSync, readFileSync, rmSync } from "node:fs"
@@ -31,14 +37,18 @@ const ADMIN_PLACETYPES = new Set(["locality", "localadmin", "region", "county", 
 
 function parseArgs() {
 	const a = process.argv.slice(2)
-	const o = { points: "", output: "", tol: 0.004 }
+	const o = { points: "", admin: "", countries: null, output: "", tol: 0.004 }
 	for (let i = 0; i < a.length; i++) {
 		if (a[i] === "--points") o.points = a[++i]
+		else if (a[i] === "--admin") o.admin = a[++i]
+		else if (a[i] === "--countries") o.countries = a[++i].split(",").map((c) => c.trim().toUpperCase())
 		else if (a[i] === "--out") o.output = a[++i]
 		else if (a[i] === "--tol") o.tol = parseFloat(a[++i])
 	}
-	if (!o.points || !o.output) {
-		console.error("usage: build-wof-polygons.mjs --points <wof-hot.db> --out <wof-polygons.db> [--tol 0.004]")
+	if ((!o.points && !o.admin) || (o.points && o.admin) || !o.output) {
+		console.error(
+			"usage: build-wof-polygons.mjs (--points <wof-hot.db> | --admin <admin.db> [--countries US,DE]) --out <wof-polygons.db> [--tol 0.004]"
+		)
 		process.exit(2)
 	}
 	return o
@@ -109,12 +119,15 @@ function simplify(geom, tol) {
 const opts = parseArgs()
 if (existsSync(opts.output)) rmSync(opts.output)
 
-const pts = new DatabaseSync(opts.points, { readOnly: true })
-const rows = pts
-	.prepare(`SELECT id, country, placetype FROM spr WHERE placetype NOT IN ('postalcode') ORDER BY id`)
-	.all()
+const src = new DatabaseSync(opts.points || opts.admin, { readOnly: true })
+const where = opts.countries
+	? `placetype NOT IN ('postalcode') AND country IN (${opts.countries.map(() => "?").join(",")})`
+	: `placetype NOT IN ('postalcode')`
+const rows = src
+	.prepare(`SELECT id, country, placetype FROM spr WHERE ${where} ORDER BY id`)
+	.all(...(opts.countries ?? []))
 	.filter((r) => ADMIN_PLACETYPES.has(r.placetype))
-pts.close()
+src.close()
 
 const out = new DatabaseSync(opts.output)
 out.exec(`CREATE TABLE polygons (id INTEGER PRIMARY KEY, geom TEXT NOT NULL);`)
