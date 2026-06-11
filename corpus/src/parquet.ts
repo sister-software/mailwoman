@@ -60,6 +60,9 @@ export interface ParquetRow {
 	raw: string
 	tokens: readonly string[]
 	labels: readonly string[]
+	span_starts: readonly number[]
+	span_ends: readonly number[]
+	span_tags: readonly string[]
 	country: string
 	locale: string | null
 	source: string
@@ -76,6 +79,9 @@ export const PARQUET_COLUMNS = [
 	"raw",
 	"tokens",
 	"labels",
+	"span_starts",
+	"span_ends",
+	"span_tags",
 	"country",
 	"locale",
 	"source",
@@ -94,6 +100,12 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	raw: { type: "UTF8", compression: SHARD_COMPRESSION },
 	tokens: { type: "UTF8", repeated: true, compression: SHARD_COMPRESSION },
 	labels: { type: "UTF8", repeated: true, compression: SHARD_COMPRESSION },
+	// v0.5.0 char-offset label spans (#519): parallel arrays over `raw` (UTF-16 code units,
+	// [start, end) exclusive-end, sorted, non-overlapping). INT32 — raw is a short address string,
+	// and INT32 round-trips as `number` where parquetjs INT64 would surface bigint.
+	span_starts: { type: "INT32", repeated: true, compression: SHARD_COMPRESSION },
+	span_ends: { type: "INT32", repeated: true, compression: SHARD_COMPRESSION },
+	span_tags: { type: "UTF8", repeated: true, compression: SHARD_COMPRESSION },
 	country: { type: "UTF8", compression: SHARD_COMPRESSION },
 	locale: { type: "UTF8", compression: SHARD_COMPRESSION, optional: true },
 	source: { type: "UTF8", compression: SHARD_COMPRESSION },
@@ -147,12 +159,39 @@ export interface WriteShardsOptions {
  */
 export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 
-/** Project a labeled row to the Parquet schema. */
+/**
+ * Project a labeled row to the Parquet schema.
+ *
+ * The span triple is REQUIRED here (#519): `alignRow` emits it on every labeled row, so a row
+ * arriving without it came from a producer that hasn't migrated — writing it would silently drop
+ * the v0.5.0 labels from the shard (the "builders before parquet = silent loss" hazard). Loud
+ * failure, naming the row, instead.
+ */
 export function rowToParquet(row: LabeledRow): ParquetRow {
+	const { span_starts, span_ends, span_tags } = row
+	if (span_starts === undefined || span_ends === undefined || span_tags === undefined) {
+		throw new Error(
+			`rowToParquet: row is missing the char-offset span triple (#519) — ` +
+				`span_starts=${span_starts !== undefined} span_ends=${span_ends !== undefined} span_tags=${span_tags !== undefined} ` +
+				`(source=${row.source}, source_id=${row.source_id}). ` +
+				`Every parquet-bound row must carry span_starts/span_ends/span_tags; ` +
+				`producers that emit tokens/labels only have not migrated to the v0.5.0 format.`
+		)
+	}
+	if (span_starts.length !== span_ends.length || span_starts.length !== span_tags.length) {
+		throw new Error(
+			`rowToParquet: span triple arrays are not parallel — ` +
+				`starts=${span_starts.length} ends=${span_ends.length} tags=${span_tags.length} ` +
+				`(source=${row.source}, source_id=${row.source_id})`
+		)
+	}
 	return {
 		raw: row.raw,
 		tokens: row.tokens,
 		labels: row.labels,
+		span_starts,
+		span_ends,
+		span_tags,
 		country: row.country,
 		locale: row.locale ?? null,
 		source: row.source,
@@ -174,6 +213,9 @@ function appendShape(row: ParquetRow): Record<string, unknown> {
 		raw: row.raw,
 		tokens: row.tokens,
 		labels: row.labels,
+		span_starts: row.span_starts,
+		span_ends: row.span_ends,
+		span_tags: row.span_tags,
 		country: row.country,
 		source: row.source,
 		source_id: row.source_id,
