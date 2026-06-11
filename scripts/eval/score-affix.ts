@@ -58,10 +58,20 @@ for (const row of rows) {
 }
 console.log(`# affix per-tag (unfolded) — ${arg("--model")!.split("/").slice(-2).join("/")} · n=${rows.length}`)
 console.log("| tag | P | R | F1 | tp/fp/fn |\n| --- | --: | --: | --: | --- |")
+const sidecar: Record<string, { p: number; r: number; f1: number; tp: number; fp: number; fn: number }> = {}
 for (const t of TAGS) {
 	const { tp, fp, fn } = stat[t]!
 	const p = tp + fp ? tp / (tp + fp) : 0
 	const r = tp + fn ? tp / (tp + fn) : 0
 	const f1 = p + r ? (2 * p * r) / (p + r) : 0
+	sidecar[t] = { p: +(100 * p).toFixed(1), r: +(100 * r).toFixed(1), f1: +(100 * f1).toFixed(1), tp, fp, fn }
 	console.log(`| ${t} | ${(100 * p).toFixed(1)} | ${(100 * r).toFixed(1)} | ${(100 * f1).toFixed(1)} | ${tp}/${fp}/${fn} |`)
+}
+// JSON sidecar (--json <path>): the machine-readable contract the gate verdict reads — the
+// markdown above is presentation. Codex-review follow-up: regex-parsing scorer tables was the
+// gate's one brittle joint.
+const jsonOut = arg("--json")
+if (jsonOut) {
+	const { writeFileSync } = await import("node:fs")
+	writeFileSync(jsonOut, JSON.stringify({ n: rows.length, file, tags: sidecar }, null, "\t") + "\n")
 }
