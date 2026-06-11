@@ -186,9 +186,11 @@ export async function runCascade(
 	// with an unrelated same-named town). So when the specific line isn't a real place, we fall
 	// through to the one that is: the city. A fuzzy hit is kept only as a last-resort backstop.
 	const resolveLocality = async (regionBbox: Hits[number]["bbox"]): Promise<Hits> => {
-		// Prefer an exact-name match inside the region bbox; if none, retry the same nodes WITHOUT the
-		// bbox before settling for a fuzzy hit. The unconstrained retry is the safety net for a
-		// mis-resolved region (e.g. "IL" → a French département): a bad bbox can't cause a total miss.
+		// Prefer an exact match (canonical name, or the backend's alias/abbr `exactMatch` tier —
+		// "New York City" is a WOF alias of the New York locality) inside the region bbox; if none,
+		// retry the same nodes WITHOUT the bbox before settling for a fuzzy hit. The unconstrained
+		// retry is the safety net for a mis-resolved region (e.g. "IL" → a French département): a bad
+		// bbox can't cause a total miss.
 		let fuzzy: Hits = []
 		for (const bbox of regionBbox ? [regionBbox, undefined] : [undefined]) {
 			for (const node of localityNodes) {
@@ -196,8 +198,15 @@ export async function runCascade(
 				if (!text) continue
 				const cs = usable(await lookup.findPlace({ text, placetype: "locality", bbox, limit: 5 }))
 				if (cs.length === 0) continue
-				if (cs.some((c) => normName(c.name) === normName(text))) return cs
+				if (cs.some((c) => c.exactMatch || normName(c.name) === normName(text))) return cs
 				if (fuzzy.length === 0) fuzzy = cs
+			}
+			// Fail loud when the region constraint produced nothing and we're about to widen — a silent
+			// fallback here is how "brooklyn, new york" quietly resolved to Brooklyn Park, MN.
+			if (bbox) {
+				console.warn(
+					"[mailwoman demo] no exact locality match inside the resolved region's bbox — retrying without the region constraint"
+				)
 			}
 		}
 		return fuzzy
@@ -211,12 +220,23 @@ export async function runCascade(
 	// would otherwise pick).
 	let regionBbox: { minLat: number; maxLat: number; minLon: number; maxLon: number } | undefined
 	if (stateNode?.value) {
+		const regionText = expandUsRegion(String(stateNode.value))
 		const regions = await lookup.findPlace({
-			text: expandUsRegion(String(stateNode.value)),
+			text: regionText,
 			placetype: "region",
 			limit: 1,
 		})
 		regionBbox = regions[0]?.bbox
+		// Fail loud: a region the parser found but the gazetteer can't resolve (or one resolved
+		// without a bbox) means the locality lookup runs UNCONSTRAINED — same-name places anywhere
+		// in the world can win. Don't let that degrade silently.
+		if (!regionBbox) {
+			console.warn(
+				`[mailwoman demo] parsed region ${JSON.stringify(regionText)} did not resolve to a bbox` +
+					(regions.length > 0 ? ` (top hit ${JSON.stringify(regions[0]?.name)} carries no bbox)` : " (no candidates)") +
+					" — locality lookup is unconstrained"
+			)
+		}
 	}
 
 	if (postcodeNode?.value) {

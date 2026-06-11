@@ -50,6 +50,13 @@ function buildFixtureWof(path: string): void {
 		INSERT INTO spr VALUES (220, 101, 'York', 'locality', 'US', 39.96, -76.73, 39.9, 40.0, -76.8, -76.6, -1, 0);
 		INSERT INTO spr VALUES (221, 101, 'New York', 'locality', 'US', 40.71, -74.0, 40.5, 40.9, -74.2, -73.7, -1, 0);
 
+		-- The Brooklyn pair (live-demo bug, 2026-06-11): WOF files Brooklyn-the-borough as placetype
+		-- 'borough', NOT 'locality'. A locality query must reach it via the shared placetype expansion
+		-- (core/resolver PLACETYPE_FILTER_GROUPS) — otherwise the only locality-typed match is the
+		-- fuzzy 'Brooklyn Park' and the resolver mislocates to Minnesota.
+		INSERT INTO spr VALUES (230, 101, 'Brooklyn', 'borough', 'US', 40.64, -73.95, 40.57, 40.74, -74.04, -73.83, -1, 0);
+		INSERT INTO spr VALUES (231, 101, 'Brooklyn Park', 'locality', 'US', 45.11, -93.35, 45.07, 45.15, -93.40, -93.30, -1, 0);
+
 		INSERT INTO names (id, language, name) VALUES (100, 'eng', 'America');
 		INSERT INTO names (id, language, name) VALUES (200, 'eng', 'Chicago');
 		INSERT INTO names (id, language, name) VALUES (201, 'eng', 'Springfield');
@@ -58,6 +65,11 @@ function buildFixtureWof(path: string): void {
 		INSERT INTO names (id, language, name) VALUES (211, 'eng', 'Greenville');
 		INSERT INTO names (id, language, name) VALUES (220, 'eng', 'York');
 		INSERT INTO names (id, language, name) VALUES (221, 'eng', 'New York');
+		-- WOF carries 'New York City' as an ALIAS of the New York locality — the FTS alt_names bag is
+		-- the slim DB's only surviving alias source, and the alias-exact tier must consult it.
+		INSERT INTO names (id, language, name) VALUES (221, 'eng', 'New York City');
+		INSERT INTO names (id, language, name) VALUES (230, 'eng', 'Brooklyn');
+		INSERT INTO names (id, language, name) VALUES (231, 'eng', 'Brooklyn Park');
 
 		-- Pre-built population aux table (production shape — build-unified-wof extracts wof:population
 		-- here at ingest; the source has no geojson table). Postcodes (300/301) carry no population row.
@@ -69,6 +81,8 @@ function buildFixtureWof(path: string): void {
 		INSERT INTO place_population VALUES (211, 580000);
 		INSERT INTO place_population VALUES (220, 1700);
 		INSERT INTO place_population VALUES (221, 8400000);
+		INSERT INTO place_population VALUES (230, 2504700);
+		INSERT INTO place_population VALUES (231, 82000);
 
 		-- Region abbreviation tiering (#189): 'Vermontstate' (tiny pop) carries the exact abbrev 'VT';
 		-- 'Vt Plains' (huge pop) only TOKEN-matches "vt". build-slim materializes place_abbr (110→VT) so
@@ -188,6 +202,53 @@ describe("WofWasmPlaceLookup", () => {
 			// even though 'New York' has a far larger population (the ME->Maine-not-Missouri guard).
 			const matches = await lookup.findPlace({ text: "York", placetype: "locality", country: "US", limit: 5 })
 			expect(matches[0]?.name).toBe("York")
+		} finally {
+			lookup.close()
+		}
+	})
+
+	test('"Brooklyn" locality query reaches the exact-named borough over the fuzzy "Brooklyn Park" (placetype expansion)', async () => {
+		const { db } = await loadSlimWofDatabase({ source: slimBytes })
+		const lookup = new WofWasmPlaceLookup({ db })
+		try {
+			// Live-demo bug (2026-06-11): a strict placetype='locality' filter excluded the borough, so
+			// "Brooklyn" resolved to Brooklyn Park, MN. The shared expansion (locality → locality +
+			// borough + localadmin) makes the exact-named borough reachable; exact tiering puts it first.
+			const matches = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", limit: 5 })
+			expect(matches[0]).toMatchObject({ id: 230, name: "Brooklyn", placetype: "borough" })
+			expect(matches[0]?.exactMatch).toBe(true)
+		} finally {
+			lookup.close()
+		}
+	})
+
+	test('"Brooklyn" + a New-York-ish bbox returns the borough (the region-constrained cascade path)', async () => {
+		const { db } = await loadSlimWofDatabase({ source: slimBytes })
+		const lookup = new WofWasmPlaceLookup({ db })
+		try {
+			// Mirrors "brooklyn, new york, ny": the parsed region's bbox constrains the locality lookup.
+			// Pre-expansion this returned NOTHING (the borough was filtered out, Brooklyn Park is outside
+			// the bbox), and the cascade silently fell back to the unconstrained — wrong — hit.
+			const matches = await lookup.findPlace({
+				text: "Brooklyn",
+				placetype: "locality",
+				bbox: { minLat: 40.4, maxLat: 45.1, minLon: -79.8, maxLon: -71.7 },
+				limit: 5,
+			})
+			expect(matches.map((m) => m.id)).toEqual([230])
+		} finally {
+			lookup.close()
+		}
+	})
+
+	test('alias-exact tier: "New York City" resolves the New York locality via its WOF alias', async () => {
+		const { db } = await loadSlimWofDatabase({ source: slimBytes })
+		const lookup = new WofWasmPlaceLookup({ db })
+		try {
+			const matches = await lookup.findPlace({ text: "New York City", placetype: "locality", limit: 5 })
+			expect(matches[0]).toMatchObject({ id: 221, name: "New York" })
+			// The alias lives only in the FTS alt_names bag on a slim DB — the tier must consult it.
+			expect(matches[0]?.exactMatch).toBe(true)
 		} finally {
 			lookup.close()
 		}

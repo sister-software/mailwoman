@@ -42,6 +42,12 @@ export interface MailwomanLookupLike {
 			lat: number
 			lon: number
 			score: number
+			/**
+			 * True when the candidate's name, abbreviation, or an alias EXACTLY matched the query (vs a
+			 * partial token match). The cascade accepts alias-exact hits ("New York City" → New York) the
+			 * same way it accepts canonical-name matches.
+			 */
+			exactMatch?: boolean
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		}>
 	>

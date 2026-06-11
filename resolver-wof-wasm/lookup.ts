@@ -20,7 +20,7 @@
 
 import type { Database } from "@sqlite.org/sqlite-wasm"
 
-import type { CoincidentLocality } from "@mailwoman/core/resolver"
+import { expandPlacetypeFilter, type CoincidentLocality } from "@mailwoman/core/resolver"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "@mailwoman/resolver-wof-sqlite"
 
 export interface WofWasmPlaceLookupOpts {
@@ -104,7 +104,11 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 		const conditions: string[] = ["place_search MATCH ?", "spr.is_current != 0", "spr.is_deprecated = 0"]
 		const params: Array<string | number> = [ftsQuery]
 
-		const placetypes = normalizePlacetypes(query.placetype)
+		// Shared placetype-equivalence expansion (core/resolver): a `locality` query must also reach
+		// `borough` / `localadmin` rows. Without it, Brooklyn-the-borough (pop 2.5M, an EXACT name
+		// match) was unreachable and the fuzzy "Brooklyn Park, MN" won. Same table the Node resolver
+		// uses — the two backends can't drift.
+		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WofPlacetype[] | null
 		if (placetypes && placetypes.length > 0) {
 			conditions.push(`spr.placetype IN (${placetypes.map(() => "?").join(",")})`)
 			params.push(...placetypes)
@@ -132,6 +136,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 		const sql =
 			`SELECT spr.id, spr.name, spr.placetype, spr.country, spr.latitude, spr.longitude, spr.parent_id, ` +
 			`spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude, ` +
+			`place_search.alt_names AS alt_names, ` +
 			`${hasPop ? "pp.population" : "NULL"} AS population, bm25(place_search) AS bm25 ` +
 			`FROM place_search JOIN spr ON spr.id = place_search.wof_id ` +
 			`${hasPop ? "LEFT JOIN place_population pp ON pp.id = spr.id " : ""}` +
@@ -152,6 +157,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 			max_latitude: number | null
 			min_longitude: number | null
 			max_longitude: number | null
+			alt_names: string | null
 			population: number | null
 			bm25: number
 		}>
@@ -164,9 +170,23 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 		// DBs built before place_abbr (the table is absent → empty set). This is the data-driven
 		// replacement for the demo's hardcoded `expandUsRegion` map; it also generalizes beyond US.
 		const abbrIds = this.#abbrExactIds(text)
+		// Strict exact = canonical name or region abbreviation equals the query. Computed for the whole
+		// pool FIRST because the ALIAS tier below only engages when no strict exact exists.
+		const strictExact = (row: { name: string; id: number }): boolean =>
+			normalizeName(row.name) === normQuery || abbrIds.has(row.id)
+		const anyStrictExact = rows.some(strictExact)
 		return rows
 			.map((row) => {
-				const exactTier = normalizeName(row.name) === normQuery || abbrIds.has(row.id) ? 0 : 1
+				// Alias tier: `alt_names` is the FTS row's alias bag (all `names` rows space-joined — the
+				// slim DB's only surviving alias source). Name boundaries are LOST in the bag, so a
+				// whitespace-boundary containment check would false-promote interior fragments ("York"
+				// matches inside the alias "New York City"). It therefore only engages when NO candidate
+				// is strictly exact — the "New York City" case, where the query is an alias WOF carries
+				// for the New York locality but no spr row bears the name. Mirrors the Node resolver's
+				// alias tier (`WofSqlitePlaceLookup.#exactMatchIds`).
+				const aliasExact =
+					!anyStrictExact && row.alt_names !== null && ` ${normalizeName(row.alt_names)} `.includes(` ${normQuery} `)
+				const exactTier = strictExact(row) || aliasExact ? 0 : 1
 				const popBoost =
 					row.population && row.population > 0
 						? POPULATION_BOOST * Math.min(1, Math.log10(1 + row.population) / POPULATION_SCALE_LOG10)
