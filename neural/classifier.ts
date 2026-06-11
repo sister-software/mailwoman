@@ -359,9 +359,11 @@ export class NeuralAddressClassifier {
 		}
 		// Punctuation-gap span bridging (v4.4.0 corrective — see span-bridge.ts): merge same-tag
 		// fragments split at unlabeled punctuation ("P.O. Box" decoding as P + O + Box). Opt-in,
-		// declared in the ship config like the conventions mask.
+		// declared in the ship config like the conventions mask. When the span proposer ran, its
+		// ANNOTATION/QUOTED boundaries become merge-crossing constraints (M2's second half).
 		if (opts?.bridgePunctuationGaps ?? this.cfg.bridgePunctuationGaps) {
-			tokens = bridgePunctuationGaps(text, tokens)
+			const blockedSpans = spanProposals.filter((p) => p.kind === "ANNOTATION_SPAN" || p.kind === "QUOTED_SPAN")
+			tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length > 0 ? { blockedSpans } : undefined)
 		}
 
 		return { tokens, logits, pieces }
