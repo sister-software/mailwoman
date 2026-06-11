@@ -26,6 +26,7 @@ import {
 	type Strategy,
 } from "./convention.js"
 
+import { ancestorLineage } from "./ancestry.js"
 import { COINCIDENT_ROLES_TABLE, coincidentRolesExists } from "./coincident-roles.js"
 import {
 	buildPlaceSearchFts,
@@ -481,25 +482,21 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * ordered NEAREST-FIRST (localadmin → county → region → … → country). Backs
 	 * {@link ResolveOpts.includeAncestors} (#404). Self is excluded; memoized per id. Returns `[]`
 	 * when the place has no recorded ancestry.
+	 *
+	 * The walk itself lives in `ancestry.ts` (shared with the reverse geocoder, #484); the ordering
+	 * is its `PLACETYPE_DEPTH` table — same ranking as the previous inline SQL CASE, extended below
+	 * `localadmin` so locality/neighbourhood ancestors order correctly instead of sorting last.
 	 */
 	ancestors(id: number | string): Ancestor[] {
 		const pid = typeof id === "number" ? id : Number(id)
 		if (!Number.isFinite(pid)) return []
 		const cached = this.#ancestorsCache.get(pid)
 		if (cached) return cached
-		// Nearest-first: rank by placetype specificity (descending). Unknown placetypes sort last.
-		const rows = this.#db
-			.prepare(
-				`SELECT a.ancestor_id AS id, a.ancestor_placetype AS placetype, s.name AS name
-				FROM ancestors a JOIN spr s ON s.id = a.ancestor_id
-				WHERE a.id = ? AND a.ancestor_id != a.id
-				ORDER BY CASE a.ancestor_placetype
-					WHEN 'localadmin' THEN 6 WHEN 'borough' THEN 6 WHEN 'county' THEN 5
-					WHEN 'macrocounty' THEN 4 WHEN 'region' THEN 3 WHEN 'macroregion' THEN 2
-					WHEN 'country' THEN 1 ELSE 0 END DESC`
-			)
-			.all(pid) as unknown as Array<{ id: number; placetype: string; name: string }>
-		const lineage: Ancestor[] = rows.map((r) => ({ id: r.id, placetype: r.placetype, name: r.name }))
+		const lineage: Ancestor[] = ancestorLineage(this.#db, pid).map((r) => ({
+			id: r.id,
+			placetype: r.placetype,
+			name: r.name,
+		}))
 		this.#ancestorsCache.set(pid, lineage)
 		return lineage
 	}
