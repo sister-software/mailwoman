@@ -1,6 +1,6 @@
 """Training-time augmentation: expand abbreviations to teach token equivalence.
 
-Two augmentations, applied independently with configurable probability:
+Three augmentations, applied independently with configurable probability:
 
 1. **Directional expansion**: "NW" → "Northwest", "SE" → "Southeast", etc.
    Teaches the model that both abbreviated and expanded directionals are the same
@@ -10,15 +10,25 @@ Two augmentations, applied independently with configurable probability:
    Only US state abbreviations for now. Teaches the model that "NY" and "New York"
    are both B-region, improving locality/region disambiguation.
 
-Both augmentations replace the token in the raw text AND update the tokens + labels
-lists to match. The expanded form inherits the original token's BIO label (B- for
-the first word, I- for continuation words).
+3. **Region+postcode glue** (#513): "NY 14201" → "NY14201" in ``raw`` ONLY — the
+   ``tokens`` + ``labels`` lists stay split. ``whitespace_spans`` locates tokens by
+   substring search (no whitespace requirement), so the char-offset piece projection
+   still lands B-region on the letter pieces and B/I-postcode on the digit pieces of
+   the fused surface. Teaches the model to split the fused token at the SP-piece
+   level (the v4.3.0 "glue" regression class).
+
+The expansion augmentations replace the token in the raw text AND update the
+tokens + labels lists to match; the expanded form inherits the original token's
+BIO label (B- for the first word, I- for continuation words). The glue
+augmentation mutates ``raw`` alone.
 """
 
 from __future__ import annotations
 
 import random
 from typing import Iterator
+
+from .tokenizer import whitespace_spans
 
 # US directional abbreviations → expanded forms.
 DIRECTIONALS: dict[str, str] = {
@@ -118,11 +128,22 @@ def _expand_token(
     return new_tokens, new_labels
 
 
+def glue_region_postcode(row: dict, idx: int) -> dict:
+    """Return a copy of ``row`` with the whitespace between token ``idx`` (region) and
+    token ``idx + 1`` (postcode) removed from ``raw``. Tokens + labels are untouched —
+    the split labels project onto the fused surface via char offsets (see module doc)."""
+    spans = whitespace_spans(row["raw"], row["tokens"])
+    region_end = spans[idx][1]
+    postcode_begin = spans[idx + 1][0]
+    return {**row, "raw": row["raw"][:region_end] + row["raw"][postcode_begin:]}
+
+
 def augment_row(
     row: dict,
     rng: random.Random,
     directional_prob: float = 0.3,
     region_prob: float = 0.3,
+    glue_prob: float = 0.0,
 ) -> Iterator[dict]:
     """Yield the original row, then optionally an augmented copy.
 
@@ -152,6 +173,24 @@ def augment_row(
                 "tokens": new_tokens,
                 "labels": new_labels,
             }
+
+    # Region+postcode glue (#513): fuse the last region token with an immediately-following
+    # postcode token in raw. Letter→digit boundary only — that's the boundary SentencePiece
+    # is guaranteed to split (the eval's glue class); letter→letter fusions (e.g. GB outcodes)
+    # could yield a piece straddling the label boundary, which the char projection cannot
+    # represent (first-char label wins). The prob guard keeps the rng stream bit-identical
+    # for configs that leave the knob at 0.
+    if glue_prob > 0 and rng.random() < glue_prob:
+        glue_indices = [
+            i
+            for i in range(len(tokens) - 1)
+            if labels[i] in ("B-region", "I-region")
+            and labels[i + 1] == "B-postcode"
+            and tokens[i][-1:].isalpha()
+            and tokens[i + 1][:1].isdigit()
+        ]
+        if glue_indices:
+            yield glue_region_postcode(row, rng.choice(glue_indices))
 
     # Region-abbreviation expansion: find region-labeled abbreviations and expand one.
     if rng.random() < region_prob:
