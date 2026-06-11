@@ -21,15 +21,17 @@
  *   for".
  */
 
+import { normalizeAuPostcode } from "./au/index.js"
 import { normalizeCaPostalCode } from "./ca/index.js"
 import { normalizePLZ } from "./de/index.js"
 import { normalizeCodePostal } from "./fr/index.js"
 import { normalizeUkPostcode } from "./gb/index.js"
 import { normalizeJpPostalCode } from "./jp/index.js"
+import { normalizeNzPostcode } from "./nz/index.js"
 import { isZipCode } from "./us/index.js"
 
 /** A codex address-system code — the subpath under `@mailwoman/codex/<system>`. */
-export type SystemCode = "us" | "de" | "fr" | "ca" | "gb" | "jp"
+export type SystemCode = "us" | "de" | "fr" | "ca" | "gb" | "jp" | "au" | "nz"
 
 /**
  * Per-system membership test: each entry returns true when the string is accepted by that system's
@@ -44,6 +46,8 @@ const SYSTEM_ACCEPTS: ReadonlyArray<readonly [SystemCode, (s: string) => boolean
 	["ca", (s) => normalizeCaPostalCode(s) !== null],
 	["gb", (s) => normalizeUkPostcode(s) !== null],
 	["jp", (s) => normalizeJpPostalCode(s) !== null],
+	["au", (s) => normalizeAuPostcode(s) !== null],
+	["nz", (s) => normalizeNzPostcode(s) !== null],
 ]
 
 /**

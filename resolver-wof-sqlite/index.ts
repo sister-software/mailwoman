@@ -38,8 +38,31 @@ export {
 	type BuildPlaceSearchFtsResult,
 } from "./fts.js"
 
-export { bboxAround, haversineKm, type Bbox } from "./geo.js"
+export {
+	bboxAround,
+	geometryContains,
+	haversineKm,
+	pointInPolygonRings,
+	pointInRing,
+	type Bbox,
+	type GeojsonGeometry,
+	type GeojsonMultiPolygon,
+	type GeojsonPolygon,
+	type GeojsonPosition,
+} from "./geo.js"
 
+export { PLACETYPE_DEPTH, ancestorLineage, placetypeDepth, type AncestorPlaceRow } from "./ancestry.js"
+
+export {
+	WofReverseGeocoder,
+	type ContainmentKind,
+	type ReverseGeocodeOpts,
+	type ReverseGeocodeResult,
+	type WofReverseGeocoderOpts,
+} from "./reverse.js"
+
+export { AddressPointSqliteLookup } from "./address-point.js"
+export { StreetInterpolator, type InterpolatedHit, type InterpolationQuery } from "./interpolation.js"
 export {
 	deriveSchemaName,
 	pickShardForPlacetype,
@@ -47,4 +70,3 @@ export {
 	type ResolvedShard,
 	type ShardConfig,
 } from "./sharding.js"
-export { AddressPointSqliteLookup } from "./address-point.js"

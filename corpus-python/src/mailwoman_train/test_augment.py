@@ -2,8 +2,16 @@
 
 import random
 
-from .augment import augment_row, glue_region_postcode, _expand_token
-from .tokenizer import PieceSpan, realign_labels_to_pieces
+import pytest
+
+from .augment import (
+    _expand_token,
+    augment_row,
+    glue_region_postcode,
+    row_span_triple,
+    spans_from_token_labels,
+)
+from .tokenizer import PieceSpan, realign_labels_to_pieces, realign_spans_to_pieces
 
 
 def test_expand_token_single_word():
@@ -225,3 +233,119 @@ def test_glued_raw_projects_split_labels_onto_pieces():
     ]
     bio = realign_labels_to_pieces(fused["raw"], fused["tokens"], fused["labels"], pieces)
     assert bio == ["B-locality", "B-region", "B-postcode", "I-postcode"]
+
+
+# --- Char-offset span re-target (#519) ----------------------------------------------------------
+# Every augmented COPY must carry spans consistent with ITS raw — the mutation-upstream hazard
+# this slice exists to close.
+
+
+def _slices(row: dict) -> list[tuple[str, str]]:
+    """(tag, raw slice) pairs for a row's span triple."""
+    return [
+        (t, row["raw"][s:e])
+        for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"])
+    ]
+
+
+def _spanned_directional_row() -> dict:
+    return {
+        "raw": "350 5th Ave NW",
+        "tokens": ["350", "5th", "Ave", "NW"],
+        "labels": ["B-house_number", "B-street", "I-street", "I-street"],
+        "span_starts": [0, 4],
+        "span_ends": [3, 14],
+        "span_tags": ["house_number", "street"],
+        "country": "US",
+        "source": "tiger",
+    }
+
+
+def test_expansion_rederives_spans_for_the_rebuilt_raw():
+    rng = random.Random(42)
+    results = list(augment_row(_spanned_directional_row(), rng, directional_prob=1.0, region_prob=0.0))
+    assert len(results) == 2
+    augmented = results[1]
+    assert augmented["raw"] == "350 5th Ave Northwest"
+    assert _slices(augmented) == [("house_number", "350"), ("street", "5th Ave Northwest")]
+
+
+def test_expansion_leaves_the_original_rows_spans_alone():
+    row = _spanned_directional_row()
+    rng = random.Random(42)
+    results = list(augment_row(row, rng, directional_prob=1.0, region_prob=0.0))
+    assert results[0] is row
+    assert row["span_starts"] == [0, 4] and row["span_ends"] == [3, 14]
+
+
+def test_expanded_spans_project_identically_to_expanded_tokens():
+    """Gate: on the augmented copy, the spans-based piece stream equals the token-based one."""
+    rng = random.Random(42)
+    augmented = list(augment_row(_spanned_directional_row(), rng, directional_prob=1.0, region_prob=0.0))[1]
+    pieces = []
+    cursor = 0
+    for tok in augmented["tokens"]:
+        idx = augmented["raw"].index(tok, cursor)
+        pieces.append(PieceSpan(piece=tok, piece_id=0, char_begin=idx, char_end=idx + len(tok)))
+        cursor = idx + len(tok)
+    via_tokens = realign_labels_to_pieces(augmented["raw"], augmented["tokens"], augmented["labels"], pieces)
+    via_spans = realign_spans_to_pieces(
+        augmented["raw"], augmented["span_starts"], augmented["span_ends"], augmented["span_tags"], pieces
+    )
+    assert via_spans == via_tokens
+
+
+def test_glue_shifts_spans_with_the_splice():
+    row = {
+        **_glue_row(),
+        "span_starts": [0, 4, 12, 20, 23],
+        "span_ends": [3, 11, 19, 22, 28],
+        "span_tags": ["house_number", "street", "locality", "region", "postcode"],
+    }
+    fused = glue_region_postcode(row, 4)
+    assert fused["raw"] == "123 Main St Buffalo NY14201"
+    assert _slices(fused) == [
+        ("house_number", "123"),
+        ("street", "Main St"),
+        ("locality", "Buffalo"),
+        ("region", "NY"),
+        ("postcode", "14201"),
+    ]
+    # The source row's spans are untouched (fresh lists on the copy).
+    assert row["span_starts"] == [0, 4, 12, 20, 23]
+
+
+def test_glue_without_spans_stays_legacy():
+    fused = glue_region_postcode(_glue_row(), 4)
+    assert "span_starts" not in fused
+
+
+def test_row_span_triple_partial_raises():
+    with pytest.raises(ValueError, match="partial char-offset span triple"):
+        row_span_triple({"raw": "x", "span_starts": [0]})
+
+
+def test_row_span_triple_nonparallel_raises():
+    with pytest.raises(ValueError, match="not parallel"):
+        row_span_triple({"raw": "x", "span_starts": [0], "span_ends": [1, 2], "span_tags": ["street"]})
+
+
+def test_spans_from_token_labels_groups_bi_runs():
+    starts, ends, tags = spans_from_token_labels(
+        ["350", "5th", "Ave", "Buffalo"],
+        ["B-house_number", "B-street", "I-street", "B-locality"],
+    )
+    raw = "350 5th Ave Buffalo"
+    assert [(t, raw[s:e]) for s, e, t in zip(starts, ends, tags)] == [
+        ("house_number", "350"),
+        ("street", "5th Ave"),
+        ("locality", "Buffalo"),
+    ]
+
+
+def test_spans_from_token_labels_o_breaks_the_run():
+    starts, ends, tags = spans_from_token_labels(["New", "York", ",", "NY"], ["B-region", "I-region", "O", "B-region"])
+    assert tags == ["region", "region"]
+    # Joined raw is "New York , NY": the comma is uncovered, the second region span is "NY".
+    assert (starts[0], ends[0]) == (0, 8)
+    assert (starts[1], ends[1]) == (11, 13)

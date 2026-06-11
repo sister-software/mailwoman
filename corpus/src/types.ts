@@ -98,7 +98,12 @@ export interface CanonicalRow extends SourceProvenance {
 
 /**
  * Output of `align.ts`. Carries everything `CanonicalRow` does, plus parallel `tokens` and `labels`
- * arrays of identical length. `labels[i]` is the BIO tag for `tokens[i]`.
+ * arrays of identical length (`labels[i]` is the BIO tag for `tokens[i]`) and — as of the v0.5.0
+ * char-offset migration (#519) — parallel char-span arrays addressing `raw` directly.
+ *
+ * The span triple is the v0.5.0 source of truth; `tokens`/`labels` remain emitted during the
+ * transition (and stay derivable afterwards: whitespace split + span lookup). The reverse
+ * derivation — today's token labels — is the lossy direction (punctuation-mute).
  */
 export interface LabeledRow extends CanonicalRow {
 	/** SentencePiece subword tokens for `raw`. */
@@ -106,6 +111,25 @@ export interface LabeledRow extends CanonicalRow {
 
 	/** BIO labels, one per token. Same length as `tokens`. */
 	labels: readonly BioLabel[]
+
+	/**
+	 * Char-offset label spans over `raw` (parallel arrays, per the #519 ruling): `span_starts[i]` is
+	 * the inclusive start offset (UTF-16 code units) of span `i`, `span_ends[i]` its exclusive end,
+	 * `span_tags[i]` its component tag. Invariants — enforced loudly by `alignRow`, documented for
+	 * every other producer: sorted ascending by start, non-overlapping. `raw` must be NFC-normalized
+	 * or the offsets are ambiguous (also enforced by `alignRow`).
+	 *
+	 * Optional during the v0.4.x → v0.5.0 transition only: alignment always emits the triple; frozen
+	 * historical corpora and not-yet-migrated synthesis paths may lack it. Required once v0.5.0 lands
+	 * and the token path is deleted.
+	 */
+	span_starts?: readonly number[]
+
+	/** Exclusive end offsets, parallel to `span_starts`. */
+	span_ends?: readonly number[]
+
+	/** Component tags, parallel to `span_starts`. */
+	span_tags?: readonly ComponentTag[]
 }
 
 /**

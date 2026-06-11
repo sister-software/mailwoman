@@ -11,10 +11,12 @@
  *
  *   Checks per row:
  *
- *   1. Tokens/labels parallel arrays + well-formed BIO (no orphan I-, no tag switch mid-run).
- *   2. The po_box span covers the WHOLE designator+number phrase: the po_box-labeled tokens equal
- *        components.po_box modulo punctuation (the whitespace tokenizer drops "."/"#", so
- *        comparison is on the letter/digit stream) — same for cedex. Exactly one span per tag.
+ *   1. Tokens/labels parallel arrays + well-formed BIO (no orphan I-, no tag switch mid-run) —
+ *        transitional, while both label representations ride the shard.
+ *   2. RAW-SURFACE span check (#519): the row carries the char-offset span triple (parallel, sorted,
+ *        in-bounds), and the po_box span's raw slice equals components.po_box VERBATIM —
+ *        punctuation included ("P.O. Box 19" with the periods, the dotted blind spot the old
+ *        token-stream comparison could not see) — same for cedex. Exactly one span per tag.
  *   3. Codex round-trip: every US po_box phrase with a codex-covered designator and a clean id must
  *        satisfy `isPOBox` (POB / PMB / "#" / noisy-id forms are corpus-template territory,
  *        exempt).
@@ -39,13 +41,6 @@ const CODEX_COVERED = /^(p\.?\s*o\.?\s*box|post\s+office\s+box|firm\s+caller|cal
 const CLEAN_ID = /^[\dA-Za-z][\dA-Za-z-]*$/
 const CEDEX_SHAPE = /^cedex(\s\d{1,2})?$/i
 
-const norm = (s) =>
-	s
-		.normalize("NFC")
-		.replace(/[^\p{L}\p{N}]+/gu, " ")
-		.trim()
-		.toLowerCase()
-
 function parseArgs() {
 	const args = process.argv.slice(2)
 	const out = { samples: 8 }
@@ -60,24 +55,34 @@ function parseArgs() {
 	return out
 }
 
-/** Extract the contiguous spans for a tag from BIO labels; returns arrays of joined token text. */
-function spansOf(tokens, labels, tag) {
-	const spans = []
-	let cur = null
-	for (let i = 0; i < labels.length; i++) {
-		if (labels[i] === `B-${tag}`) {
-			if (cur) spans.push(cur)
-			cur = [tokens[i]]
-		} else if (labels[i] === `I-${tag}`) {
-			if (!cur) return { spans, malformed: true } // orphan I-
-			cur.push(tokens[i])
-		} else if (cur) {
-			spans.push(cur)
-			cur = null
+/**
+ * Validate the #519 char-offset span triple's structure (present, parallel, sorted, in-bounds) and
+ * return the raw slices per tag. Returns `{ ok: false, reason }` on a structural violation.
+ */
+function spanSlices(row) {
+	const { raw, span_starts, span_ends, span_tags } = row
+	if (!span_starts || !span_ends || !span_tags) {
+		return { ok: false, reason: "missing the char-offset span triple (#519)" }
+	}
+	if (span_starts.length !== span_ends.length || span_starts.length !== span_tags.length) {
+		return {
+			ok: false,
+			reason: `span triple not parallel: ${span_starts.length}/${span_ends.length}/${span_tags.length}`,
 		}
 	}
-	if (cur) spans.push(cur)
-	return { spans: spans.map((s) => s.join(" ")), malformed: false }
+	const byTag = new Map()
+	for (let i = 0; i < span_starts.length; i++) {
+		if (!(span_starts[i] >= 0 && span_starts[i] < span_ends[i] && span_ends[i] <= raw.length)) {
+			return { ok: false, reason: `span ${span_tags[i]}@[${span_starts[i]}, ${span_ends[i]}) out of bounds` }
+		}
+		if (i > 0 && span_starts[i] < span_ends[i - 1]) {
+			return { ok: false, reason: `spans unsorted/overlapping at index ${i}` }
+		}
+		const tag = span_tags[i]
+		if (!byTag.has(tag)) byTag.set(tag, [])
+		byTag.get(tag).push(raw.slice(span_starts[i], span_ends[i]))
+	}
+	return { ok: true, byTag }
 }
 
 function bioWellFormed(labels) {
@@ -114,13 +119,19 @@ async function main() {
 		if (!bioWellFormed(labels)) fail(row, "malformed BIO")
 		if (!c.po_box && !c.cedex) fail(row, "row carries neither po_box nor cedex")
 
-		for (const tag of ["po_box", "cedex"]) {
-			if (!c[tag]) continue
-			tagCounts[tag]++
-			const { spans, malformed } = spansOf(tokens, labels, tag)
-			if (malformed) fail(row, `orphan I-${tag}`)
-			if (spans.length !== 1) fail(row, `${tag}: expected 1 span, got ${spans.length}`)
-			else if (norm(spans[0]) !== norm(c[tag])) fail(row, `${tag} span "${spans[0]}" != component "${c[tag]}"`)
+		// RAW-surface comparison via the #519 span triple — punctuation preserved, never stripped.
+		const sliced = spanSlices(row)
+		if (!sliced.ok) {
+			fail(row, sliced.reason)
+		} else {
+			for (const tag of ["po_box", "cedex"]) {
+				if (!c[tag]) continue
+				tagCounts[tag]++
+				const slices = sliced.byTag.get(tag) ?? []
+				if (slices.length !== 1) fail(row, `${tag}: expected 1 span, got ${slices.length}`)
+				else if (slices[0].toLowerCase() !== c[tag].toLowerCase())
+					fail(row, `${tag} span "${slices[0]}" != component "${c[tag]}" (raw-surface, verbatim)`)
+			}
 		}
 
 		if (c.cedex && !CEDEX_SHAPE.test(c.cedex)) fail(row, `cedex shape: "${c.cedex}"`)

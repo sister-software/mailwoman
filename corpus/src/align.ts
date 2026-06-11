@@ -18,12 +18,19 @@
  *   4. For each token: walk the list of component spans, pick the one whose span contains the token's
  *        character range. First token in a component span → `B-<tag>`; subsequent tokens →
  *        `I-<tag>`; no overlap → `O`.
+ *   5. Emit the located char spans verbatim as `span_starts[]` / `span_ends[]` / `span_tags[]` (the
+ *        v0.5.0 char-offset format, #519). The token quantization in step 4 is the part the v0.5.0
+ *        rebuild deletes; during the transition both representations ride on every labeled row.
  *
- *   Two structural invariants the function preserves:
+ *   Structural invariants the function preserves (the span ones loudly — a violation throws rather
+ *   than quarantines, because it indicates a bug here, not bad source data):
  *
  *   - `tokens.length === labels.length` always.
  *   - Each component contributes at most one contiguous BIO run (no `B-tag … O … I-tag` gaps). This is
  *       enforced by greedy first-match span assignment + ordered token iteration.
+ *   - The span triple is sorted ascending by start and non-overlapping.
+ *   - `raw` is NFC-normalized (asserted per row; a non-NFC raw makes char offsets ambiguous downstream
+ *       — NFD `é` occupies two code units where NFC `é` occupies one — and silently so).
  */
 
 import type { BioLabel, ComponentTag } from "@mailwoman/core/types"
@@ -55,7 +62,12 @@ export interface AlignOptions {
 /** Either a successful labeled row or a quarantined one. */
 export type AlignmentResult = { kind: "labeled"; row: LabeledRow } | { kind: "quarantined"; row: QuarantinedRow }
 
-interface ComponentSpan {
+/**
+ * One located char-offset label span over a row's `raw` ([start, end) in UTF-16 code units). The
+ * element type behind the parallel `span_starts[]`/`span_ends[]`/`span_tags[]` triple on
+ * `LabeledRow` (#519).
+ */
+export interface ComponentSpan {
 	tag: ComponentTag
 	start: number
 	end: number
@@ -69,6 +81,17 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 
 	if (!row.raw) {
 		return { kind: "quarantined", row: { row, reason: "raw-empty" } }
+	}
+
+	// Build-time NFC assertion (#519 ruling 2: the converter's Unicode-mismatch class dissolves
+	// into this check). Char-offset spans over `raw` are only meaningful under ONE normalization
+	// form; a non-NFC raw corrupts every downstream offset silently. Loud failure, naming the row.
+	if (row.raw.normalize("NFC") !== row.raw) {
+		throw new Error(
+			`alignRow: raw is not NFC-normalized (source=${row.source}, source_id=${row.source_id}). ` +
+				`Char-offset spans over a non-NFC raw are ambiguous downstream — normalize at the adapter boundary. ` +
+				`raw=${JSON.stringify(row.raw)}`
+		)
 	}
 
 	const componentSpans: ComponentSpan[] = []
@@ -94,6 +117,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 	}
 
 	componentSpans.sort((a, b) => a.start - b.start)
+	assertSpanInvariants(componentSpans, row)
 	const tokens = tokenizer.tokenize(row.raw)
 	const labels = labelTokens(tokens, componentSpans)
 
@@ -101,8 +125,52 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 		...row,
 		tokens: tokens.map((t) => t.text),
 		labels,
+		// The v0.5.0 char-offset triple (#519): the located spans, emitted verbatim. The token
+		// quantization above is what the rebuild deletes; both ride during the transition.
+		span_starts: componentSpans.map((s) => s.start),
+		span_ends: componentSpans.map((s) => s.end),
+		span_tags: componentSpans.map((s) => s.tag),
 	}
 	return { kind: "labeled", row: labeled }
+}
+
+/**
+ * Enforce the #519 span-triple invariants — in-bounds, sorted ascending by start, non-overlapping —
+ * loudly.
+ *
+ * For `alignRow`: `claimed`-span bookkeeping in `locateSpan` already makes overlap impossible and
+ * the caller sorts, so a violation here is a bug in this file, not bad source data: throw (naming
+ * the row) rather than quarantine, so the corruption can't ride into a corpus. Exported for every
+ * OTHER span producer (`composeAdversarialRow`'s offset arithmetic, future synthesis paths) — any
+ * code that emits the triple without going through `alignRow` must pass its output through this.
+ */
+export function assertSpanInvariants(
+	spans: readonly ComponentSpan[],
+	row: Pick<CanonicalRow, "raw" | "source" | "source_id">
+): void {
+	for (let i = 0; i < spans.length; i++) {
+		const s = spans[i]!
+		if (!(s.start >= 0 && s.start < s.end && s.end <= row.raw.length)) {
+			throw new Error(
+				`alignRow: span out of bounds (source=${row.source}, source_id=${row.source_id}): ` +
+					`${s.tag}@[${s.start}, ${s.end}) over raw of length ${row.raw.length}`
+			)
+		}
+		if (i === 0) continue
+		const prev = spans[i - 1]!
+		if (s.start < prev.start) {
+			throw new Error(
+				`alignRow: spans not sorted (source=${row.source}, source_id=${row.source_id}): ` +
+					`${prev.tag}@[${prev.start}, ${prev.end}) precedes ${s.tag}@[${s.start}, ${s.end})`
+			)
+		}
+		if (s.start < prev.end) {
+			throw new Error(
+				`alignRow: spans overlap (source=${row.source}, source_id=${row.source_id}): ` +
+					`${prev.tag}@[${prev.start}, ${prev.end}) overlaps ${s.tag}@[${s.start}, ${s.end})`
+			)
+		}
+	}
 }
 
 /**
