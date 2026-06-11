@@ -35,6 +35,13 @@ export interface LoadResult {
 	 * `labels` field was missing — the classifier fell back to its built-in default (Stage 2).
 	 */
 	labels: readonly string[] | null
+	/**
+	 * The parsed postcode-anchor lookup (postcode → posterior + centroid), when anchor binaries were
+	 * loaded. Exposed so consumers (the demo's anchor-centroid map fallback) can reuse the SAME
+	 * artifact the model channel feeds from — WOF ships placeholder (0,0) for ~22% of US postcodes;
+	 * this lookup has a real centroid for every covered ZIP.
+	 */
+	postcodeAnchorLookup?: import("@mailwoman/neural").AnchorLookup
 }
 
 export interface LoadFromUrlsOpts {

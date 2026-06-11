@@ -141,6 +141,7 @@ const DemoApp: React.FC = () => {
 	// Lazily-loaded crisp-polygon DB (id → simplified admin geometry). Loaded once per version on the
 	// first resolve, reset when the selected version changes. Held as the in-flight promise so concurrent
 	// resolves share one fetch.
+	const anchorLookupRef = useRef<Map<string, { lat: number; lon: number }> | null>(null)
 	const polygonDbRef = useRef<Promise<PolygonDb> | null>(null)
 
 	// Sync ?q= when the operator edits the address. replaceState avoids polluting back-button
@@ -255,7 +256,7 @@ const DemoApp: React.FC = () => {
 				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
 
 				const neuralWeb = await import("@mailwoman/neural-web")
-				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromUrls({
+				const { classifier: cls, diagnostics, postcodeAnchorLookup } = await neuralWeb.loadNeuralClassifierFromUrls({
 					modelUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
 					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
 					modelCardUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model-card.json"),
@@ -303,6 +304,7 @@ const DemoApp: React.FC = () => {
 				}
 
 				setClassifier(cls as unknown as MailwomanClassifierLike)
+				anchorLookupRef.current = postcodeAnchorLookup ?? null
 				setLoadingProgress("")
 			} catch (error) {
 				if (cancelled) return
@@ -477,6 +479,13 @@ const DemoApp: React.FC = () => {
 			}
 
 			const b = candidate.bbox
+			if (!b && candidate.placetype === "postcode") {
+				// Anchor-centroid postcode: no bbox, no polygon — a default ~3 km circle says
+				// "approximately here" without inventing a boundary.
+				drawApproxCircle(map, candidate.lat, candidate.lon)
+				map.flyTo({ center: [candidate.lon, candidate.lat], zoom: 11 })
+				return
+			}
 			if (b && Math.max(b.maxLat - b.minLat, b.maxLon - b.minLon) > 0.001) {
 				// No crisp polygon for this place — draw an approximate CIRCLE sized from the bbox
 				// rather than the bbox rectangle itself: a rectangle reads as a (wrong) real boundary,
@@ -620,6 +629,24 @@ const DemoApp: React.FC = () => {
 				const tBeforeResolve = performance.now()
 				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNodes, stateNode, text)
 				const tResolve = performance.now()
+				// Anchor-centroid fallback (postcode-only dead ends): WOF ships placeholder (0,0) for
+				// ~22% of US postcodes and the cascade rightly drops those — but postcode-us.bin (the
+				// model's anchor channel, already loaded) carries a real centroid for every US ZIP.
+				// Same-artifact reuse: synthesize an approximate hit so the map shows the honest circle
+				// instead of nothing. id=0 → the polygon path skips it; bbox omitted → default radius.
+				if (cascadeHits.length === 0 && postcodeNode?.value && anchorLookupRef.current) {
+					const anchorHit = anchorLookupRef.current.get(String(postcodeNode.value).toUpperCase())
+					if (anchorHit && (anchorHit.lat !== 0 || anchorHit.lon !== 0)) {
+						cascadeHits.push({
+							id: 0,
+							name: `${postcodeNode.value} (anchor centroid)`,
+							placetype: "postcode",
+							lat: anchorHit.lat,
+							lon: anchorHit.lon,
+							score: 0,
+						} as (typeof cascadeHits)[number])
+					}
+				}
 				const candidates: ResolvedHit[] = cascadeHits.map((c) => ({
 					id: c.id,
 					name: c.name,
@@ -929,12 +956,13 @@ function drawApproxCircle(
 	map: MapLibreMap,
 	lat: number,
 	lon: number,
-	bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 ): void {
 	const kmPerDegLat = 111.32
 	const kmPerDegLon = kmPerDegLat * Math.cos((lat * Math.PI) / 180)
-	const halfDiagKm =
-		Math.hypot((bbox.maxLat - bbox.minLat) * kmPerDegLat, (bbox.maxLon - bbox.minLon) * kmPerDegLon) / 2
+	const halfDiagKm = bbox
+		? Math.hypot((bbox.maxLat - bbox.minLat) * kmPerDegLat, (bbox.maxLon - bbox.minLon) * kmPerDegLon) / 2
+		: 3 // anchor-centroid postcodes carry no extent; ~ZIP-sized default
 	const radiusKm = Math.min(50, Math.max(0.5, halfDiagKm))
 	const ring: number[][] = []
 	for (let i = 0; i <= 64; i++) {
