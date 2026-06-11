@@ -1,6 +1,6 @@
 # punctuation-stress.jsonl — gold conventions (#518)
 
-~120 hand-curated rows across the punctuation classes our government-data evals never carry.
+120 hand-curated rows across the punctuation classes our government-data evals never carry.
 Each row: `{raw, components, class}`. Graded by `scripts/eval/score-punctuation-stress.ts`
 (per-class component accuracy + parse-survival), runnable against both engines.
 
@@ -24,4 +24,27 @@ Gold conventions, decided once here:
 7. Locale defaults US; `class` field drives the per-class report. Rows seeded from: the January
    experiment's tests (commit 10195ea), the v4.4.0 gate's measured classes, arena leftovers
    (Eduard-Sueß), and real-world named places chosen for their punctuation (Coeur d'Alene,
-   Winston-Salem, Saint-Louis-du-Ha! Ha!).
+   Winston-Salem, Saint-Louis-du-Ha! Ha!). The 2026-06-11 expansion (62→120) weighted the two
+   v0-win quadrants (bracketed, hyphen), the under-5-row classes, and FR/DE/AU/NZ surfaces
+   (dotted abbreviations, CEDEX, unit designators).
+
+## Head-to-head (120 rows, 2026-06-11, folded vocabulary view)
+
+`--engine v0` vs neural v4.4.0 ship config + `--fold-gold`. Note: the set grew 62→120 on
+2026-06-11 — per-class deltas vs the 62-row run reflect the composition shift (the expansion
+deliberately deepened the v0-win quadrants and added international surfaces), NOT model drift.
+
+| class            |                  v0 |     neural (v4.4.0) | Δ            |
+| ---------------- | ------------------: | ------------------: | ------------ |
+| apostrophe       |                93.3 |                84.4 | v0 +8.9      |
+| bracketed        |                83.1 |                69.2 | v0 +13.9     |
+| care-of          |                60.0 |                85.0 | neural +25.0 |
+| dotted           |                78.2 |                81.8 | neural +3.6  |
+| hyphen           |                82.6 |                84.1 | neural +1.5  |
+| mixed-hard       |     40.5 († 1 died) |                64.3 | neural +23.8 |
+| paren-annotation |                84.6 |                81.5 | v0 +3.1      |
+| paren-component  |                75.0 |                75.0 | tie          |
+| quoted-venue     |     73.8 († 1 died) |                75.4 | neural +1.6  |
+| slash            |                71.7 |                58.7 | v0 +13.0     |
+| unbalanced       |                70.7 |                85.4 | neural +14.7 |
+| **overall**      | **75.4** (2 deaths) | **77.0** (0 deaths) | neural +1.6  |
