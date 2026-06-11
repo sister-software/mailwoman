@@ -9,8 +9,9 @@
 // identical gold, stated in the report header.
 // Usage: node --experimental-strip-types scripts/eval/score-punctuation-stress.ts --model <onnx>
 //   [--engine neural|v0] [--file data/eval/external/punctuation-stress.jsonl] [--no-ship-config]
+//   [--span-proposer]  — enable the Stage 2.7 span proposer (#518 M2+M3; default-off, NOT ship config)
 import { decodeAsJson } from "@mailwoman/core/decoder"
-import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
+import { buildCodexSpanLexicon, NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { createAddressParser } from "mailwoman"
@@ -50,6 +51,15 @@ const neural =
 							suppressGazetteerNearPostcode: true,
 							addressSystemConventions: "auto" as const,
 							bridgePunctuationGaps: true,
+						}
+					: {}),
+				...(argv.includes("--span-proposer")
+					? {
+							spanProposer: {
+								lexicon: buildCodexSpanLexicon(),
+								...(arg("--sp-bias") ? { biasScale: +arg("--sp-bias")! } : {}),
+								...(arg("--sp-ann-bias") ? { annotationBiasScale: +arg("--sp-ann-bias")! } : {}),
+							},
 						}
 					: {}),
 			})

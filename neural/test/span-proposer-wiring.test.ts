@@ -68,8 +68,8 @@ describe("buildSpanProposalPriors", () => {
 			{ start: 0, end: 7, kind: "UNIT_PHRASE", confidence: 0.85, source: "designator:unit" },
 		]
 		const m = buildSpanProposalPriors(proposals, pieces, LABELS)
-		expect(m[0]![1]).toBeCloseTo(0.85 * 2.0) // B-unit on piece 0
-		expect(m[1]![2]).toBeCloseTo(0.85 * 2.0) // I-unit on piece 1
+		expect(m[0]![1]).toBeCloseTo(0.85 * 5.0) // B-unit on piece 0
+		expect(m[1]![2]).toBeCloseTo(0.85 * 5.0) // I-unit on piece 1
 		expect(m[2]!.every((v) => v === 0)).toBe(true) // piece 2 untouched
 		expect(m[0]![0]).toBe(0) // no O bias
 	})
@@ -79,8 +79,8 @@ describe("buildSpanProposalPriors", () => {
 		expect(buildSpanProposalPriors(low, pieces, LABELS).flat().every((v) => v === 0)).toBe(true)
 		const high: ProposedSpan[] = [{ start: 0, end: 7, kind: "ANNOTATION_SPAN", confidence: 0.9, source: "paired:()" }]
 		const m = buildSpanProposalPriors(high, pieces, LABELS)
-		expect(m[0]![0]).toBeCloseTo(0.9 * 2.5)
-		expect(m[1]![0]).toBeCloseTo(0.9 * 2.5)
+		expect(m[0]![0]).toBeCloseTo(0.9 * 12.0)
+		expect(m[1]![0]).toBeCloseTo(0.9 * 12.0)
 		expect(m[2]![0]).toBe(0)
 	})
 
@@ -97,10 +97,10 @@ describe("buildSpanProposalPriors", () => {
 			{ start: 5, end: 9, kind: "FUSED_NUMBER", confidence: 0.3, alternativeGroup: 0, source: "slash" },
 		]
 		const m = buildSpanProposalPriors(proposals, pieces, LABELS)
-		expect(m[0]![1]).toBeCloseTo(0.85 * 2.0) // B-unit on "Unit"
-		expect(m[1]![2]).toBeCloseTo(0.85 * 2.0) // I-unit on "4"
-		expect(m[1]![5]).toBeCloseTo(0.3 * 2.0) // fused B-house_number ALSO alive on "4", weaker
-		expect(m[2]![5]).toBeCloseTo(0.85 * 2.0) // split B-house_number on "22" (max over fused I-)
+		expect(m[0]![1]).toBeCloseTo(0.85 * 5.0) // B-unit on "Unit"
+		expect(m[1]![2]).toBeCloseTo(0.85 * 5.0) // I-unit on "4"
+		expect(m[1]![5]).toBeCloseTo(0.3 * 5.0) // fused B-house_number ALSO alive on "4", weaker
+		expect(m[2]![5]).toBeCloseTo(0.85 * 5.0) // split B-house_number on "22" (max over fused I-)
 	})
 
 	it("returns all-zeros for no proposals", () => {

@@ -31,9 +31,21 @@ import type { ProposedSpan } from "@mailwoman/core/pipeline"
 import type { TokenLike } from "./query-shape-prior.js"
 
 export interface SpanProposalPriorOpts {
-	/** Bias magnitude for tag-mapped proposals, in log-odds units. Confidence-scaled. Default 2.0. */
+	/**
+	 * Bias magnitude for tag-mapped proposals, in log-odds units. Confidence-scaled. Default 5.0 —
+	 * measured on the punctuation-stress sweep (2026-06-12, v4.4.0 int8): the proposer's job is to
+	 * flip CONFIDENTLY-wrong emissions (fused `2/14` → split), which 1-2-nat query-shape-style
+	 * scales cannot reach; 5.0 moved slash +11.1 with every other class flat, and the model still
+	 * vetoes where its logit gap is larger (the bare `3/45` row stays fused).
+	 */
 	biasScale?: number
-	/** Bias magnitude for the annotation O-prior. Confidence-scaled. Default 2.5. */
+	/**
+	 * Bias magnitude for the annotation O-prior. Confidence-scaled. Default 12.0 — deliberately
+	 * near-mask strength (measured saturation point on the same sweep: bracketed +9.1, paren
+	 * regressions zero): a BALANCED bracket pair with aside-shaped content is the strongest
+	 * structural cue the proposer has, and the confidence floor (not the scale) is what protects the
+	 * component-shaped groups.
+	 */
 	annotationBiasScale?: number
 	/**
 	 * Annotation proposals below this confidence contribute NO O-bias (their span still feeds the
@@ -64,8 +76,8 @@ export function buildSpanProposalPriors(
 ): number[][] {
 	const T = tokens.length
 	const L = labels.length
-	const biasScale = opts.biasScale ?? 2.0
-	const annotationBiasScale = opts.annotationBiasScale ?? 2.5
+	const biasScale = opts.biasScale ?? 5.0
+	const annotationBiasScale = opts.annotationBiasScale ?? 12.0
 	const annotationFloor = opts.annotationConfidenceFloor ?? 0.6
 
 	const matrix: number[][] = []
