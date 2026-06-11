@@ -1,0 +1,27 @@
+{
+	"$comment": "DRAFT gate spec for the Track A consolidation run (glue augmentation #513 + po_box/cedex shard + intersection shard #487 + train-time conventions pairing — whichever levers pass their solo probes). Pre-registered 2026-06-11 BEFORE any lever probe has run. STATED changes vs v4.3.0-relabel: (1) fr.region floored at 16.2 — the v4.3.0 ship value; this tag drifted 27.6→16.2 across two releases UNFLOORED and that silent drift ends here (raising it back is the train-time-conventions lever's job, measured not assumed); (2) NEW floors for the campaign tags this run targets: po_box, cedex, intersection (real-OOD evals; bars set conservatively at 'alive and precise', the unit playbook's first-run bars); (3) perturb-arena floor 71 pp — the #513 pre-registration (back to the v4.2.0 mark with affix floors UNCHANGED). The arena becomes a floor for the first time because this run's headline lever exists to fix an arena-measured regression — gating on it is the point.",
+	"label": "v4.4.0-boundary",
+	"requires_gazetteer_lexicon": true,
+	"requires_conventions": "auto",
+	"floors": {
+		"us.postcode": 97.0,
+		"us.country_homograph_f1": 83.3,
+		"us.micro": 81.6,
+		"us.locality": 62.2,
+		"us.region": 80.1,
+		"us.street": 74.0,
+		"us.street_prefix": 78.0,
+		"us.street_suffix": 67.0,
+		"us.unit_real": 88.0,
+		"fr.postcode": 99.5,
+		"fr.house_number": 91.0,
+		"fr.region": 16.2,
+		"de.native_locality": 83.8,
+		"arena.perturb": 71.0,
+		"us.po_box_real": 70.0,
+		"fr.cedex_real": 70.0,
+		"us.intersection_real": 50.0
+	},
+	"int8_vs_fp32_max_delta_pp": 1.5,
+	"ledger_path": "evals/scores-by-version.json"
+}
