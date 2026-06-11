@@ -15,15 +15,15 @@
  *
  *   Mapping:
  *
- *   - `ANNOTATION_SPAN` → bias toward `O` (gold convention 2: bracketed asides are not components;
- *     the win is that neighbors stop being poisoned). Applied only above a confidence floor so
- *     trailing component-shaped groups ("(Australia)") are left to the model.
- *   - `QUOTED_SPAN` → no bias. The content is a real name; typing it is the classifier's job. The
- *     span still matters decode-side (the bridge's crossing constraint).
- *   - `PO_BOX_PHRASE` → `po_box`; `UNIT_PHRASE`/`LEVEL_PHRASE`/`SPLIT_UNIT` → `unit` (the schema
- *     has no level tag — levels ride `unit` until the codex level sourcing lands, #517);
- *     `SPLIT_HOUSE_NUMBER`/`FUSED_NUMBER` → `house_number`. B- on the first overlapping piece, I-
- *     on the rest.
+ *   - `ANNOTATION_SPAN` → bias toward `O` (gold convention 2: bracketed asides are not components; the
+ *       win is that neighbors stop being poisoned). Applied only above a confidence floor so
+ *       trailing component-shaped groups ("(Australia)") are left to the model.
+ *   - `QUOTED_SPAN` → no bias. The content is a real name; typing it is the classifier's job. The span
+ *       still matters decode-side (the bridge's crossing constraint).
+ *   - `PO_BOX_PHRASE` → `po_box`; `UNIT_PHRASE`/`LEVEL_PHRASE`/`SPLIT_UNIT` → `unit` (the schema has no
+ *       level tag — levels ride `unit` until the codex level sourcing lands, #517);
+ *       `SPLIT_HOUSE_NUMBER`/`FUSED_NUMBER` → `house_number`. B- on the first overlapping piece, I-
+ *       on the rest.
  */
 
 import type { ProposedSpan } from "@mailwoman/core/pipeline"
@@ -34,9 +34,9 @@ export interface SpanProposalPriorOpts {
 	/**
 	 * Bias magnitude for tag-mapped proposals, in log-odds units. Confidence-scaled. Default 5.0 —
 	 * measured on the punctuation-stress sweep (2026-06-12, v4.4.0 int8): the proposer's job is to
-	 * flip CONFIDENTLY-wrong emissions (fused `2/14` → split), which 1-2-nat query-shape-style
-	 * scales cannot reach; 5.0 moved slash +11.1 with every other class flat, and the model still
-	 * vetoes where its logit gap is larger (the bare `3/45` row stays fused).
+	 * flip CONFIDENTLY-wrong emissions (fused `2/14` → split), which 1-2-nat query-shape-style scales
+	 * cannot reach; 5.0 moved slash +11.1 with every other class flat, and the model still vetoes
+	 * where its logit gap is larger (the bare `3/45` row stays fused).
 	 */
 	biasScale?: number
 	/**

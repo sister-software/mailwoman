@@ -33,9 +33,9 @@ import { repairPostcodeLabels } from "./postcode-repair.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
 import { bridgePunctuationGaps } from "./span-bridge.js"
 import { buildSpanProposalPriors, type SpanProposalPriorOpts } from "./span-proposal-prior.js"
+import { buildCodexSpanLexicon } from "./span-proposer-lexicon.js"
 import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
-import { buildCodexSpanLexicon } from "./span-proposer-lexicon.js"
 import { repairUnitLabels } from "./unit-repair.js"
 import { buildBioEndMask, buildBioStartMask, buildBioTransitionMask, softmax, viterbi } from "./viterbi.js"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
@@ -131,15 +131,16 @@ export interface NeuralAddressClassifierConfig {
 	 * delimiter). Build the lexicon with `buildCodexSpanLexicon` (`./span-proposer-lexicon.js`).
 	 * Per-parse opts override.
 	 *
-	 * DEFAULT ON (operator ruling 2026-06-12, after the #518 measurement closed both v0-win
-	 * quadrants with no class down): omitting this builds the codex lexicon lazily with the frozen
-	 * measured scales (biasScale 5.0 / annotationBiasScale 12.0). Pass `false` for the
-	 * proposer-free baseline (the pre-2026-06-12 byte-stable default).
+	 * DEFAULT ON (operator ruling 2026-06-12, after the #518 measurement closed both v0-win quadrants
+	 * with no class down): omitting this builds the codex lexicon lazily with the frozen measured
+	 * scales (biasScale 5.0 / annotationBiasScale 12.0). Pass `false` for the proposer-free baseline
+	 * (the pre-2026-06-12 byte-stable default).
 	 */
 	spanProposer?: SpanProposerConfig | false
 }
 
-/** Config for the Stage 2.7 span-proposer integration (see `NeuralAddressClassifierConfig.spanProposer`). */
+/** Config for the Stage 2.7 span-proposer integration (see
+`NeuralAddressClassifierConfig.spanProposer`). */
 export interface SpanProposerConfig extends SpanProposalPriorOpts {
 	/** Codex-backed designator vocabulary (`buildCodexSpanLexicon`). */
 	lexicon: SpanProposerLexicon

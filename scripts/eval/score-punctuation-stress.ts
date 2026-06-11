@@ -11,7 +11,12 @@
 //   [--engine neural|v0] [--file data/eval/external/punctuation-stress.jsonl] [--no-ship-config]
 //   [--span-proposer]  — enable the Stage 2.7 span proposer (#518 M2+M3; default-off, NOT ship config)
 import { decodeAsJson } from "@mailwoman/core/decoder"
-import { buildCodexSpanLexicon, NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
+import {
+	buildCodexSpanLexicon,
+	NeuralAddressClassifier,
+	parseAnchorLookup,
+	parseGazetteerLexicon,
+} from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { createAddressParser } from "mailwoman"

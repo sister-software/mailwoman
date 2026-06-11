@@ -42,7 +42,7 @@ describe("paired delimiters (M2)", () => {
 	})
 
 	it("emits NO proposal for unbalanced delimiters — never guess the missing pair", () => {
-		expect(proposeSpans('Joe\'s "Pizza, 12 Main St', EMPTY_SPAN_PROPOSER_LEXICON)).toHaveLength(0)
+		expect(proposeSpans("Joe's \"Pizza, 12 Main St", EMPTY_SPAN_PROPOSER_LEXICON)).toHaveLength(0)
 		expect(proposeSpans("12 Main St (rear entrance, Springfield", EMPTY_SPAN_PROPOSER_LEXICON)).toHaveLength(0)
 		expect(proposeSpans("12 Main St ]oops[ Springfield", EMPTY_SPAN_PROPOSER_LEXICON)).toHaveLength(0)
 	})

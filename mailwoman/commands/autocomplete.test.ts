@@ -10,14 +10,14 @@
  *   symmetry contract from issue #190.
  */
 
+import { writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { writeFileSync } from "node:fs"
-import { describe, expect, it, beforeAll } from "vitest"
-import { FstMatcher, normalizeTokens } from "../../resolver-wof-sqlite/fst-matcher.js"
-import { serializeFst, deserializeFst } from "../../resolver-wof-sqlite/fst-serialize.js"
+import { beforeAll, describe, expect, it } from "vitest"
 import { autocomplete } from "../../resolver-wof-sqlite/fst-autocomplete.js"
-import { runAutocomplete, resolveFstPath } from "./autocomplete.js"
+import { FstMatcher, normalizeTokens } from "../../resolver-wof-sqlite/fst-matcher.js"
+import { serializeFst } from "../../resolver-wof-sqlite/fst-serialize.js"
+import { resolveFstPath, runAutocomplete } from "./autocomplete.js"
 
 // ---------------------------------------------------------------------------
 // Fixture helpers
@@ -189,9 +189,9 @@ describe("runAutocomplete — disk round-trip", () => {
 	})
 
 	it("throws a human-readable error for a missing FST path", async () => {
-		await expect(
-			runAutocomplete("New", { fstPath: "/nonexistent/path/fst-does-not-exist.bin" })
-		).rejects.toThrow(/FST binary not found/)
+		await expect(runAutocomplete("New", { fstPath: "/nonexistent/path/fst-does-not-exist.bin" })).rejects.toThrow(
+			/FST binary not found/
+		)
 	})
 
 	it("throws a human-readable error for a malformed FST buffer", async () => {

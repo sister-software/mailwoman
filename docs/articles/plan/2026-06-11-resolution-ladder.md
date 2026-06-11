@@ -13,17 +13,17 @@ every answer. That has been this project's posture all along (`resolution_tier`,
 `interpolated: true`, `uncertaintyM`, `approximate` containment, `source`/`release` per row) —
 the musings' contribution is a shared vocabulary for the whole ladder, which we adopt:
 
-| Rung | Tier | Status |
-| --- | --- | --- |
-| 1 | Entrance point | unbuilt (future, behind footprints) |
-| 2 | Rooftop / building centroid | unbuilt — rides Overture buildings (#470) |
-| 3 | Address point | ✅ #476, wired (`applyAddressPoint`) |
-| 4 | Parcel centroid | unbuilt, deliberately deferred (US parcel data is patchwork-licensed) |
-| 5 | Address-point interpolation ("Method 2") | **the next corrective — see Phase 1** |
-| 6 | Street-range interpolation (TIGER) | ✅ #483 pilot, standalone, gate MISS on record |
-| 7 | OSM interpolation ways | blocked on ODbL treatment (#26) |
-| 8 | Street centerline | implicit today (segment match without number) |
-| 9 | Admin centroid (locality → region) | ✅ the WOF resolver |
+| Rung | Tier                                     | Status                                                                |
+| ---- | ---------------------------------------- | --------------------------------------------------------------------- |
+| 1    | Entrance point                           | unbuilt (future, behind footprints)                                   |
+| 2    | Rooftop / building centroid              | unbuilt — rides Overture buildings (#470)                             |
+| 3    | Address point                            | ✅ #476, wired (`applyAddressPoint`)                                  |
+| 4    | Parcel centroid                          | unbuilt, deliberately deferred (US parcel data is patchwork-licensed) |
+| 5    | Address-point interpolation ("Method 2") | **the next corrective — see Phase 1**                                 |
+| 6    | Street-range interpolation (TIGER)       | ✅ #483 pilot, standalone, gate MISS on record                        |
+| 7    | OSM interpolation ways                   | blocked on ODbL treatment (#26)                                       |
+| 8    | Street centerline                        | implicit today (segment match without number)                         |
+| 9    | Admin centroid (locality → region)       | ✅ the WOF resolver                                                   |
 
 Every tier answers the same shape — `(street, number, postcode/locality scope)` → flagged
 coordinate — so the resolver walks an ordered list and the first hit wins. Tiers are data
@@ -103,7 +103,7 @@ centroids where a point is missing. Parcels stay deferred behind this.
 
 ## Phase 5 — confidence, calibrated not hand-assigned
 
-The musings proposed static weights (rooftop 0.95, interpolated 0.50, …). We keep the *ordering*
+The musings proposed static weights (rooftop 0.95, interpolated 0.50, …). We keep the _ordering_
 as a prior and reject the constants: this project has a calibration discipline (the isotonic
 work), and tier confidence should be **measured** — P(error < X m) per tier per density
 stratum, fitted from the evals we already run, recalibrated when shards rebuild. Hand-assigned
@@ -115,8 +115,8 @@ assembly.
 
 The genuinely novel idea in the musings: replace linear interpolation with a model that
 predicts where addresses sit on a block. Verdict from review: keep it, as research, with two
-corrections. First, drop the location-encoder framing — GeoCLIP/SatCLIP encode *global*
-position for geo-localization; this problem is *where along a 200 m segment*, and the
+corrections. First, drop the location-encoder framing — GeoCLIP/SatCLIP encode _global_
+position for geo-localization; this problem is _where along a 200 m segment_, and the
 informative features are segment-local (bracketing-number positions, density, footprint
 geometry). SatCLIP's own card rules out fine-grained many-close-location use. Second, the
 baseline to beat is Method 2 itself — which is already nearest-neighbor regression on real
@@ -134,13 +134,13 @@ Later  Phase 5  calibrated confidence  ·  Phase 6 learned placement (parallel r
 
 ## Decisions (ruled 2026-06-11 unless marked open)
 
-| Decision | Ruling |
-| --- | --- |
-| Search/spatial stack | sqlite + FTS5 + FST + R\*Tree/PIP — no ES, no PostGIS (standing) |
-| Primary gate corrective | Method 2 promoted to Phase 1; TIGER demotes to fallback |
-| Tier interface | Option B ordered `spatialTiers` list |
-| Workspace | split to `@mailwoman/resolver-interpolation` before national builds |
-| Gate re-baseline | only county-stratified, only by stated sign-off |
-| OSM ways | blocked on #26 (ODbL) |
-| Learned placement | research-only; gate = beat Method 2 stratified |
-| Parcel tier | deferred behind building centroids |
+| Decision                | Ruling                                                              |
+| ----------------------- | ------------------------------------------------------------------- |
+| Search/spatial stack    | sqlite + FTS5 + FST + R\*Tree/PIP — no ES, no PostGIS (standing)    |
+| Primary gate corrective | Method 2 promoted to Phase 1; TIGER demotes to fallback             |
+| Tier interface          | Option B ordered `spatialTiers` list                                |
+| Workspace               | split to `@mailwoman/resolver-interpolation` before national builds |
+| Gate re-baseline        | only county-stratified, only by stated sign-off                     |
+| OSM ways                | blocked on #26 (ODbL)                                               |
+| Learned placement       | research-only; gate = beat Method 2 stratified                      |
+| Parcel tier             | deferred behind building centroids                                  |

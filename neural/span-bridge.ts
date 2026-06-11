@@ -29,9 +29,10 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
  * Gap text qualifies when short, made only of INTRA-TOKEN punctuation (period/hyphen/slash/
  * apostrophe) plus whitespace, with at least one non-space char. Separator punctuation (comma,
  * semicolon) is EXCLUDED — measured 2026-06-11: the comma form merged "47110, 9016"-style postcode
- * + house-number fragments on six FR golden rows (the model double-labels the number; the comma is
- * the only thing keeping the spans honest). A comma between same-tag spans is a list/separator,
- * never the inside of a surface form.
+ *
+ * - House-number fragments on six FR golden rows (the model double-labels the number; the comma is
+ *   the only thing keeping the spans honest). A comma between same-tag spans is a list/separator,
+ *   never the inside of a surface form.
  */
 function bridgeable(gap: string): boolean {
 	if (gap.length === 0 || gap.length > 3) return false
@@ -45,10 +46,10 @@ export interface BridgePunctuationOpts {
 	 * Structural spans (from the Stage 2.7 span proposer — ANNOTATION/QUOTED groups, delimiters
 	 * inclusive) whose boundaries no merge may straddle: M2's crossing constraint, the bridge's
 	 * mirror image (the bridge merges across WEAK punctuation; this blocks merging across STRUCTURAL
-	 * punctuation). A merge is blocked when either span boundary falls inside the gap being bridged
-	 * — e.g. an apostrophe-quoted name whose closing quote sits in an otherwise-bridgeable gap.
-	 * Boundaries already inside a labeled token are the model's call, not the bridge's; only gaps
-	 * are policed.
+	 * punctuation). A merge is blocked when either span boundary falls inside the gap being bridged —
+	 * e.g. an apostrophe-quoted name whose closing quote sits in an otherwise-bridgeable gap.
+	 * Boundaries already inside a labeled token are the model's call, not the bridge's; only gaps are
+	 * policed.
 	 */
 	blockedSpans?: ReadonlyArray<{ start: number; end: number }>
 }

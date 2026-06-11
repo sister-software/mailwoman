@@ -10,18 +10,19 @@
  *   A pure function over the raw input emitting TYPED span proposals from three cue families:
  *
  *   1. **Paired delimiters (M2)** — balanced `()`, `[]`, `""`, `«»`, `„“` groups propose
- *      `ANNOTATION_SPAN` / `QUOTED_SPAN`. Unbalanced delimiters of a class produce NO proposal for
- *      that class — the proposer never guesses a missing pair (graceful degradation to today's
- *      behavior, per the survey's unbalanced-class read).
- *   2. **Designator + identifier** — the sub-premise grammar (`Apt 4B`, `Suite 500`, `PO Box 19`):
- *      a closed-vocabulary leader from the injected codex-backed lexicon followed by a short
- *      identifier proposes `UNIT_PHRASE` / `LEVEL_PHRASE` / `PO_BOX_PHRASE`.
- *   3. **Dual-path numeric punctuation (M3, the Pelias PR #56 mechanism)** — `2/14`, `14-16`,
- *      `123 1/2` adjacent to a number context emit BOTH readings as alternatives sharing an
- *      `alternativeGroup`: the fused single-value reading (`FUSED_NUMBER`) AND the designator-split
- *      reading (`SPLIT_UNIT` + `SPLIT_HOUSE_NUMBER`), locale-conditioned by which codex systems the
- *      lexicon was built from (the AU/NZ `Flat 2/14` split exists only when those tables are
- *      loaded). The proposer never decides between readings — downstream consumers weigh them.
+ *        `ANNOTATION_SPAN` / `QUOTED_SPAN`. Unbalanced delimiters of a class produce NO proposal
+ *        for that class — the proposer never guesses a missing pair (graceful degradation to
+ *        today's behavior, per the survey's unbalanced-class read).
+ *   2. **Designator + identifier** — the sub-premise grammar (`Apt 4B`, `Suite 500`, `PO Box 19`): a
+ *        closed-vocabulary leader from the injected codex-backed lexicon followed by a short
+ *        identifier proposes `UNIT_PHRASE` / `LEVEL_PHRASE` / `PO_BOX_PHRASE`.
+ *   3. **Dual-path numeric punctuation (M3, the Pelias PR #56 mechanism)** — `2/14`, `14-16`, `123 1/2`
+ *        adjacent to a number context emit BOTH readings as alternatives sharing an
+ *        `alternativeGroup`: the fused single-value reading (`FUSED_NUMBER`) AND the
+ *        designator-split reading (`SPLIT_UNIT` + `SPLIT_HOUSE_NUMBER`), locale-conditioned by
+ *        which codex systems the lexicon was built from (the AU/NZ `Flat 2/14` split exists only
+ *        when those tables are loaded). The proposer never decides between readings — downstream
+ *        consumers weigh them.
  *
  *   The proposals are INFORMATION, not decisions (the #464 lesson): consumers treat them as phrase
  *   priors the classifier conditions on and as structural boundaries the decode-side span bridge
@@ -37,7 +38,8 @@
 export type ProposedSpanKind =
 	/** A balanced `()`/`[]` group whose content reads as an aside about the address. */
 	| "ANNOTATION_SPAN"
-	/** A balanced quote group — the content is likely a NAME (venue/unit); typing is the classifier's job. */
+	/** A balanced quote group — the content is likely a NAME (venue/unit); typing is the classifier's
+job. */
 	| "QUOTED_SPAN"
 	/** Delivery-service designator + identifier ("PO Box 19", "GPO Box 2890", "Private Bag 7"). */
 	| "PO_BOX_PHRASE"
@@ -64,7 +66,8 @@ export interface ProposedSpan {
 	 * readings of `2/14` carry the same group). Absent for single-reading proposals.
 	 */
 	alternativeGroup?: number
-	/** Provenance: which cue family + rule emitted this ("paired:()", "designator:unit", "slash:au-split"). */
+	/** Provenance: which cue family + rule emitted this ("paired:()", "designator:unit",
+"slash:au-split"). */
 	source: string
 }
 
@@ -74,15 +77,16 @@ export interface ProposedSpan {
  * (the default) limits the proposer to the paired-delimiter cue family.
  */
 export interface SpanProposerLexicon {
-	/** Codex system codes the lexicon was built from ("us", "au", "nz", …) — drives M3 locale conditioning. */
+	/** Codex system codes the lexicon was built from ("us", "au", "nz", …) — drives M3 locale
+conditioning. */
 	systems: ReadonlySet<string>
 	/** Leading secondary-unit designator tokens (USPS Pub-28 C2 variants: "apt", "ste", "unit", …). */
 	unitDesignators: ReadonlySet<string>
 	/** Level-class designator tokens ("floor", "fl", "bsmt", "ph", …) — typed LEVEL_PHRASE. */
 	levelDesignators: ReadonlySet<string>
 	/**
-	 * Descriptive designators ("building", "rear", "side", …) that, inside a bracketed group, read
-	 * as annotation content rather than a unit ("[Building A]" describes; "[Suite 9]" addresses).
+	 * Descriptive designators ("building", "rear", "side", …) that, inside a bracketed group, read as
+	 * annotation content rather than a unit ("[Building A]" describes; "[Suite 9]" addresses).
 	 */
 	weakDesignators: ReadonlySet<string>
 	/**
@@ -178,8 +182,8 @@ function findSameCharPairs(text: string, ch: string): Array<{ open: number; clos
 /**
  * Shape-derived annotation confidence (M2: "confidence from balance + content shape"):
  *
- * - Content that is EXACTLY a strong designator + identifier ("Suite 9") is probably a real
- *   component written in brackets (gold convention 2) → very low annotation confidence, letting the
+ * - Content that is EXACTLY a strong designator + identifier ("Suite 9") is probably a real component
+ *   written in brackets (gold convention 2) → very low annotation confidence, letting the
  *   designator cue own the span.
  * - Lowercase- or digit-leading content ("rear entrance", "2nd floor", "code 2580") is the
  *   instruction/aside shape → high.
@@ -266,7 +270,11 @@ function isShortIdentifier(body: string): boolean {
 	return /^#?\d{1,6}[A-Za-z]{0,2}$/.test(body) || /^[A-Za-z]$/.test(body) || /^[A-Za-z]\d{1,4}$/.test(body)
 }
 
-function proposeDesignatorPhrases(text: string, tokens: readonly RawToken[], lexicon: SpanProposerLexicon): ProposedSpan[] {
+function proposeDesignatorPhrases(
+	text: string,
+	tokens: readonly RawToken[],
+	lexicon: SpanProposerLexicon
+): ProposedSpan[] {
 	const out: ProposedSpan[] = []
 
 	for (let i = 0; i < tokens.length - 1; i++) {
@@ -312,8 +320,8 @@ const HYPHEN_COMPOUND = /^(\d{1,4})-(\d{1,5})$/
 const FRACTION = /^\d\/\d$/
 
 /**
- * Words that lead NUMBERED ROADS ("Hwy 50/89", "Route 1/9", "I-95") — a bounded structural
- * category (road-type leaders), mirroring the phrase grouper's street-type sets. The
+ * Words that lead NUMBERED ROADS ("Hwy 50/89", "Route 1/9", "I-95") — a bounded structural category
+ * (road-type leaders), mirroring the phrase grouper's street-type sets. The
  * leading-designator-shape fallback must not read them as sub-premise designators: a slash after a
  * road leader is a route concurrency, not an AU unit/house split.
  */
@@ -498,12 +506,13 @@ export function proposeSpans(text: string, lexicon: SpanProposerLexicon = EMPTY_
 
 	const paired = proposePairedDelimiters(text, lexicon)
 	const tokens = tokenize(text)
-	const inner = [...proposeDesignatorPhrases(text, tokens, lexicon), ...proposeNumericReadings(tokens, lexicon, nextGroup)]
+	const inner = [
+		...proposeDesignatorPhrases(text, tokens, lexicon),
+		...proposeNumericReadings(tokens, lexicon, nextGroup),
+	]
 
 	const confidentAnnotations = paired.filter((p) => p.kind === "ANNOTATION_SPAN" && p.confidence >= 0.6)
-	const survivors = inner.filter(
-		(p) => !confidentAnnotations.some((a) => p.start >= a.start && p.end <= a.end)
-	)
+	const survivors = inner.filter((p) => !confidentAnnotations.some((a) => p.start >= a.start && p.end <= a.end))
 
 	const out = [...paired, ...survivors]
 	out.sort((a, b) => (a.start !== b.start ? a.start - b.start : b.confidence - a.confidence))

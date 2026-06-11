@@ -5,14 +5,14 @@
  *
  *   `mailwoman autocomplete <prefix>`
  *
- *   One-shot prefix completion against the FST gazetteer. Returns the top-N place suggestions
- *   (name, placetype, WOF id, importance) that match the given prefix, ranked by importance.
+ *   One-shot prefix completion against the FST gazetteer. Returns the top-N place suggestions (name,
+ *   placetype, WOF id, importance) that match the given prefix, ranked by importance.
  *
  *   The prefix normalizer is `normalizeTokens` from `fst-matcher` — the SAME function used at FST
  *   build time — so the symmetry contract from #190 is honoured. No third normalizer.
  *
- *   Default FST path: $MAILWOMAN_FST_BIN, else /tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin.
- *   Pass --fst <path> to override.
+ *   Default FST path: $MAILWOMAN_FST_BIN, else /tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin. Pass --fst
+ *   <path> to override.
  */
 
 import { Text } from "ink"
@@ -41,20 +41,12 @@ export const AutocompleteConfigSchema = zod.object({
 			"Path to the FST binary (fst-en-US.bin). Defaults to $MAILWOMAN_FST_BIN or " +
 				"/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin."
 		),
-	json: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe("Emit results as a JSON array instead of formatted text"),
+	json: zod.boolean().optional().default(false).describe("Emit results as a JSON array instead of formatted text"),
 })
 
 /** Resolve the FST binary path from explicit flag, env var, or the staged default. */
 export function resolveFstPath(explicitPath?: string): string {
-	return (
-		explicitPath ??
-		process.env["MAILWOMAN_FST_BIN"] ??
-		"/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin"
-	)
+	return explicitPath ?? process.env["MAILWOMAN_FST_BIN"] ?? "/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin"
 }
 
 export interface AutocompleteEntry {

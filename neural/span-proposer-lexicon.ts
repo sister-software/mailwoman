@@ -71,9 +71,9 @@ function phraseToPattern(phrase: string): string {
 }
 
 /**
- * Build the span-proposer lexicon from the codex tables of the requested systems. Defaults to
- * every system with designator tables in the codex today. The result is pure data — safe to share
- * across parses.
+ * Build the span-proposer lexicon from the codex tables of the requested systems. Defaults to every
+ * system with designator tables in the codex today. The result is pure data — safe to share across
+ * parses.
  */
 export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "au", "nz"]): SpanProposerLexicon {
 	const sys = new Set<string>(systems)

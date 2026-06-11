@@ -76,7 +76,11 @@ describe("buildSpanProposalPriors", () => {
 
 	it("applies the annotation O-bias only above the confidence floor", () => {
 		const low: ProposedSpan[] = [{ start: 0, end: 10, kind: "ANNOTATION_SPAN", confidence: 0.45, source: "paired:()" }]
-		expect(buildSpanProposalPriors(low, pieces, LABELS).flat().every((v) => v === 0)).toBe(true)
+		expect(
+			buildSpanProposalPriors(low, pieces, LABELS)
+				.flat()
+				.every((v) => v === 0)
+		).toBe(true)
 		const high: ProposedSpan[] = [{ start: 0, end: 7, kind: "ANNOTATION_SPAN", confidence: 0.9, source: "paired:()" }]
 		const m = buildSpanProposalPriors(high, pieces, LABELS)
 		expect(m[0]![0]).toBeCloseTo(0.9 * 12.0)
@@ -85,8 +89,14 @@ describe("buildSpanProposalPriors", () => {
 	})
 
 	it("QUOTED_SPAN contributes no bias (typing the name is the classifier's job)", () => {
-		const proposals: ProposedSpan[] = [{ start: 0, end: 10, kind: "QUOTED_SPAN", confidence: 0.8, source: "paired:quote" }]
-		expect(buildSpanProposalPriors(proposals, pieces, LABELS).flat().every((v) => v === 0)).toBe(true)
+		const proposals: ProposedSpan[] = [
+			{ start: 0, end: 10, kind: "QUOTED_SPAN", confidence: 0.8, source: "paired:quote" },
+		]
+		expect(
+			buildSpanProposalPriors(proposals, pieces, LABELS)
+				.flat()
+				.every((v) => v === 0)
+		).toBe(true)
 	})
 
 	it("dual-path alternatives bias their own spans — both readings stay alive", () => {
@@ -104,6 +114,10 @@ describe("buildSpanProposalPriors", () => {
 	})
 
 	it("returns all-zeros for no proposals", () => {
-		expect(buildSpanProposalPriors([], pieces, LABELS).flat().every((v) => v === 0)).toBe(true)
+		expect(
+			buildSpanProposalPriors([], pieces, LABELS)
+				.flat()
+				.every((v) => v === 0)
+		).toBe(true)
 	})
 })

@@ -36,7 +36,7 @@ separator-class tokens (`COMMA`, `NEWLINE`, `HYPHEN`, `DASH`, `BREAKING_DASH`, `
 function. The training-data format has matching `SEP`/`FSEP` labels (`SEPARATOR_LABEL` /
 `FIELD_SEPARATOR_LABEL` in the header). So the folk claim that "libpostal ignores commas"
 (repeated in Pelias's own README) is wrong in an instructive way: commas never appear as
-*labelable tokens*, but they survive as *boundary features* the model conditions on.
+_labelable tokens_, but they survive as _boundary features_ the model conditions on.
 `PERIOD`, `COLON`, and invalid chars, by contrast, are in `ADDRESS_PARSER_IS_IGNORABLE` and
 vanish without a trace.
 
@@ -55,7 +55,7 @@ the caller multiplies variants over: `LIBPOSTAL_NORMALIZE_TOKEN_REPLACE_HYPHENS`
 `DELETE_HYPHENS`, `DELETE_FINAL_PERIOD`, `DELETE_ACRONYM_PERIODS`, `DROP_ENGLISH_POSSESSIVES`,
 `DELETE_OTHER_APOSTROPHE`, `REPLACE_NUMERIC_HYPHENS`
 ([src/libpostal.h](https://github.com/openvenues/libpostal/blob/master/src/libpostal.h)) —
-i.e. for *matching*, libpostal's answer is "emit every variant," not "pick the right one."
+i.e. for _matching_, libpostal's answer is "emit every variant," not "pick the right one."
 
 **Training data.** Generated from OSM/OpenAddresses via the OpenCage address-formatting
 templates, which include each country's native separators; the stated goal was that the parser
@@ -67,10 +67,11 @@ Exact separator-dropout probabilities are not documented; inferred from the issu
 slash-form sub-premises are under-represented.
 
 **(d) Issue-tracker lessons.**
+
 - [#255 "Using field separators to increase parsing accuracy"](https://github.com/openvenues/libpostal/issues/255)
   (open, no maintainer reply): "100 Queens Road Central, Hong Kong" vs "100 Queens Road,
   Central Hong Kong" — users perceive their commas as being thrown away. The separator
-  *feature* exists but is evidently too weak to disambiguate, and there is no API to assert a
+  _feature_ exists but is evidently too weak to disambiguate, and there is no API to assert a
   boundary.
 - [#405 "Input delimiters are ignored"](https://github.com/openvenues/libpostal/issues/405)
   (open): same complaint class, still unresolved years later.
@@ -91,7 +92,7 @@ persistent residue of open issues exactly in our two v0-win quadrants.
 [tokenization/split_funcs.js](https://github.com/pelias/parser/blob/master/tokenization/split_funcs.js)
 and [tokenization/Tokenizer.js](https://github.com/pelias/parser/blob/master/tokenization/Tokenizer.js):
 
-- **Sections** split on `\n`, `\t`, `,`, and *any* character from a long quote list
+- **Sections** split on `\n`, `\t`, `,`, and _any_ character from a long quote list
   (`"«»‘’‚‛“”„‟‹›⹂「」『』〝〞〟﹁﹂﹃﹄＂＇｢｣`). The code carries the comment
   "@todo: this should ideally only work for 'matching pairs' of quotes" — i.e. **pair-matching
   was never built**; a single stray quote splits the input.
@@ -102,7 +103,7 @@ and [tokenization/Tokenizer.js](https://github.com/pelias/parser/blob/master/tok
   quote ([README](https://github.com/pelias/parser): the "Main St, East Village" example, where
   the comma position prevents "Main St East" + "Village").
 
-**(a) Survival.** Punctuation survives as *position information*. The README states the design
+**(a) Survival.** Punctuation survives as _position information_. The README states the design
 principle: tokenization "maintains token positions, so it's able to 'remember' where each
 character was in the original input text." Delimiters aren't tokens to classify (with one
 exception below); they're constraints on what spans may exist.
@@ -113,22 +114,22 @@ stripped. A lone punctuation token does get classified: `AlphaNumericClassifier`
 `PunctuationClassification` to tokens matching
 `/^[@&/\\#,+()$~%.!^'";:*?[\]<>{}]+$/`
 ([classifier/AlphaNumericClassifier.js](https://github.com/pelias/parser/blob/master/classifier/AlphaNumericClassifier.js)),
-and schemes use it as a *negative constraint* — e.g. the subdivision scheme refuses to join a
+and schemes use it as a _negative constraint_ — e.g. the subdivision scheme refuses to join a
 house number to a following subdivision token across punctuation
 ([classifier/scheme/subdivision.js](https://github.com/pelias/parser/blob/master/classifier/scheme/subdivision.js)).
-A "punctuation" label that exists to *block* compositions is a decode-side constraint, not a
+A "punctuation" label that exists to _block_ compositions is a decode-side constraint, not a
 component.
 
 **(c) Hyphens and slashes.** The dual-path mechanism arrived in
 [PR #56 "Supports for hyphen as alternative spans"](https://github.com/pelias/parser/pull/56),
-motivated by "10 Boulevard Saint-Germain Paris": the graph holds `Saint-Germain` *and*
+motivated by "10 Boulevard Saint-Germain Paris": the graph holds `Saint-Germain` _and_
 `Saint` + `Germain`, and solvers (`ExclusiveCartesianSolver` + penalty/filter passes) pick
 whichever composition yields a valid solution. The same split function covers `/`, which is
 what gives Pelias a shot at slash forms — but note honestly: we found no test or issue
 demonstrating it resolves the Australian `1/123` unit/house convention specifically.
 
 **pelias/api sanitizers.** Read from
-[sanitizer/_text.js](https://github.com/pelias/api/blob/master/sanitizer/_text.js): unicode
+[sanitizer/\_text.js](https://github.com/pelias/api/blob/master/sanitizer/_text.js): unicode
 normalization, whitespace trim, **trim of leading/trailing quotes** (same long quote list),
 truncation to 140 chars. That's all — no bracket stripping, no punctuation deletion before the
 parser sees the text. The parser is trusted with raw punctuation.
@@ -136,7 +137,7 @@ parser sees the text. The parser is trusted with raw punctuation.
 **(d) Lessons.** PR #56's discussion frames hyphens as "glue" whose alternative readings must
 both stay alive; [#71 "Street number prefixes"](https://github.com/pelias/parser/issues/71)
 covers hyphenated house-number prefixes (the Queens `69-10` class). The architecture lesson is
-that every punctuation decision is *deferred* — recorded, alternatives generated, resolved by
+that every punctuation decision is _deferred_ — recorded, alternatives generated, resolved by
 solvers against dictionaries.
 
 ## 3. Nominatim
@@ -149,7 +150,7 @@ transliteration stage then turns `-` and `:` into spaces and **deletes every rem
 character outside `a-z`, `0-9`, and space**. Net effect:
 
 **(a) Survival.** No. By the time tokens hit the lookup table, punctuation is gone —
-mostly converted to token *breaks* (a hyphen or slash becomes a space) rather than deleted
+mostly converted to token _breaks_ (a hyphen or slash becomes a space) rather than deleted
 in place. The one structural survivor is the **comma at query time**: free-form queries are
 split into phrases at commas, and the docs are explicit that "Commas are optional, but improve
 performance by reducing the complexity of the search"
@@ -158,7 +159,7 @@ performance by reducing the complexity of the search"
 
 **(b) Paired delimiters.** Handled at **import time, as alias generation**: the
 `strip-brace-terms` sanitizer "creates additional name variants for names that have addendums
-in brackets (e.g. 'Halle (Saale)')" — the bracketed form *and* the stripped form are both
+in brackets (e.g. 'Halle (Saale)')" — the bracketed form _and_ the stripped form are both
 indexed ([Tokenizers docs](https://nominatim.org/release-docs/latest/customize/Tokenizers/)).
 This is the only purpose-built bracketed-annotation mechanism we found in any surveyed system,
 and it lives on the index side, not the parser.
@@ -172,13 +173,14 @@ as a house number; `clean-postcodes` enforces per-country postcode patterns;
 the whitespace/punctuation breaks the pipeline expects).
 
 **(d) Lessons.**
+
 - [#2569](https://github.com/osm-search/Nominatim/issues/2569) /
   [#2571](https://github.com/osm-search/Nominatim/issues/2571): the modifier apostrophe U+02BC
   wasn't classed as punctuation, so `Hawaiʻi` tokenized differently from `Hawai'i` — fixed by
   adding U+02BC to the punctuation fold (visible in today's YAML). Lesson: punctuation
-  *equivalence classes* (curly vs straight vs modifier apostrophes) are a real bug source.
+  _equivalence classes_ (curly vs straight vs modifier apostrophes) are a real bug source.
 - [#3754](https://github.com/osm-search/Nominatim/issues/3754): "Severobaykal'sk" findable
-  only *with* the apostrophe — closed as a data issue. Because the apostrophe becomes a token
+  only _with_ the apostrophe — closed as a data issue. Because the apostrophe becomes a token
   break, the name indexes as two tokens while the apostrophe-less query is one fused token.
   Lesson: **normalize-to-break and normalize-to-nothing diverge exactly on the
   punctuation-omitted query**, and pushing that onto users gets issues filed.
@@ -198,7 +200,7 @@ analyzer concern, applied **symmetrically at index and query time**. Read from t
   of Pelias's dual-path token graph.
 - char_filter `remove_ws_hnr_suffix` (`(\d+)\s(?=\p{L}\b)` → `$1`): glues "12 a" into "12a" on
   the house-number field — punctuation/spacing variants of house numbers solved by
-  *canonicalizing toward the fused form* at index time.
+  _canonicalizing toward the fused form_ at index time.
 
 (Current master has been restructured around OpenSearch and the settings live elsewhere; the
 mechanisms above are from the 0.3.x tree that PR #311 landed in — inferred to carry forward,
@@ -228,13 +230,13 @@ char_filter buys most of it.
   semicolon-separated `field=value` pairs; punctuation normalization inside free-form queries
   is not documented ([HERE Geocoding & Search docs](https://www.here.com/docs/category/geocoding-search-v7)).
 
-The honest summary: commercial systems document punctuation as *input contract* (what you may
-send) rather than *mechanism* (what they do with it). No design evidence to mine beyond "they
+The honest summary: commercial systems document punctuation as _input contract_ (what you may
+send) rather than _mechanism_ (what they do with it). No design evidence to mine beyond "they
 reserve list delimiters and discourage sub-premise content."
 
 ## 6. Punctuation in canonical address DATA — OSM / Karlsruhe schema
 
-The query-side systems above mostly delete punctuation. The data side shows why a *parser*
+The query-side systems above mostly delete punctuation. The data side shows why a _parser_
 can't: in canonical data, punctuation is frequently **presentation over real structure**
 ([OSM Addresses wiki](https://wiki.openstreetmap.org/wiki/Addresses),
 [Key:addr:housenumber](https://wiki.openstreetmap.org/wiki/Key:addr:housenumber)):
@@ -245,7 +247,7 @@ can't: in canonical data, punctuation is frequently **presentation over real str
   two different data dialects.
 - **Hyphen ranges are ambiguous by design**: "10-95" is either a literal label (the NYC Queens
   `69-10` class, where the hyphenated form IS the house number) or a range to interpolate —
-  OSM disambiguates with a *separate tag* (`addr:interpolation`), not by syntax. A parser that
+  OSM disambiguates with a _separate tag_ (`addr:interpolation`), not by syntax. A parser that
   splits every numeric hyphen is wrong in Queens; one that never splits is wrong on ranges.
 - **Czech/Slovak slash numbers**: the displayed `123/4` is conscription number + orientation
   number, **tagged as two separate fields** (`addr:conscriptionnumber`, `addr:streetnumber`) —
@@ -253,7 +255,7 @@ can't: in canonical data, punctuation is frequently **presentation over real str
   in street names (`1/1. Sokak` is a distinct street, not a sub-number).
 - **Dotted abbreviations**: OSM convention is unabbreviated names in `addr:street`, but
   official national registries disagree with themselves — the Dutch BAG import notes official
-  pairs like "Doctorandus F. Bijlweg" vs "Drs.F. Bijlweg". Dots in data are a *variant axis*,
+  pairs like "Doctorandus F. Bijlweg" vs "Drs.F. Bijlweg". Dots in data are a _variant axis_,
   not noise.
 
 Implication for us: Austria/Czechia's `14/2`, Australia's `1/123`, USPS's `123 1/2` are three
@@ -267,25 +269,25 @@ modeled; "delete the slash" destroys exactly the bits the data model keeps in se
 
 A one-table summary of who does what:
 
-| System | Punctuation survives? | Paired delimiters | Hyphen/slash compounds | Core mechanism |
-|---|---|---|---|---|
-| libpostal | as CRF boundary *features* (commas, dashes, brackets); periods/colons vanish | flattened to separator bits | subword features per hyphen part; slash unsupervised | normalize-at-feature-time + multi-variant expansion |
-| Pelias parser | as *positions/constraints*; punct-only tokens get a blocking label | quotes = unpaired hard boundaries (pair-matching is a TODO); parens ignored | **dual-path token graph** (fused + split both alive), solvers choose | defer-the-decision via token graph + solvers |
-| Nominatim | no (folded to breaks); comma survives as query phrase boundary | **strip-brace-terms index-time alias** | become token breaks; data-side sanitizers split lists | normalize-away + index-time variants |
-| Photon | no (symmetric index/query analyzers) | none | word_delimiter with preserve_original (fused + split indexed) | index-time canonicalization |
-| Google/Mapbox/HERE | undocumented | undocumented | undocumented | input contract, not mechanism |
+| System             | Punctuation survives?                                                        | Paired delimiters                                                           | Hyphen/slash compounds                                               | Core mechanism                                      |
+| ------------------ | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------- |
+| libpostal          | as CRF boundary _features_ (commas, dashes, brackets); periods/colons vanish | flattened to separator bits                                                 | subword features per hyphen part; slash unsupervised                 | normalize-at-feature-time + multi-variant expansion |
+| Pelias parser      | as _positions/constraints_; punct-only tokens get a blocking label           | quotes = unpaired hard boundaries (pair-matching is a TODO); parens ignored | **dual-path token graph** (fused + split both alive), solvers choose | defer-the-decision via token graph + solvers        |
+| Nominatim          | no (folded to breaks); comma survives as query phrase boundary               | **strip-brace-terms index-time alias**                                      | become token breaks; data-side sanitizers split lists                | normalize-away + index-time variants                |
+| Photon             | no (symmetric index/query analyzers)                                         | none                                                                        | word_delimiter with preserve_original (fused + split indexed)        | index-time canonicalization                         |
+| Google/Mapbox/HERE | undocumented                                                                 | undocumented                                                                | undocumented                                                         | input contract, not mechanism                       |
 
 ### Quadrant: bracketed annotations (v0 +13.9 over neural)
 
 Nobody parses paired delimiters as structure at query time. The only deliberate, shipped
 solution is **Nominatim's `strip-brace-terms`** — index-time variant generation, which encodes
-the key semantic: *bracketed content is an optional addendum; the name is valid with and
-without it*. That is exactly our eval's gold convention 2 (annotations are not components;
+the key semantic: _bracketed content is an optional addendum; the name is valid with and
+without it_. That is exactly our eval's gold convention 2 (annotations are not components;
 the row grades whether neighbors survive). Pelias's section mechanism is the nearest
 query-side analog — delimiters define spans that phrases must not cross — but Pelias never
 built pair-matching (their own TODO) and ignores parentheses entirely. libpostal flattens
 bracket structure into two anonymous boundary bits. Conclusion: our weak quadrant is weak
-*everywhere*; the survey's transferable mechanisms are (i) boundary-constraint semantics
+_everywhere_; the survey's transferable mechanisms are (i) boundary-constraint semantics
 (Pelias sections) and (ii) with-and-without variant semantics (Nominatim aliases).
 
 ### Quadrant: bare-slash unit designators (v0 +13.0)
@@ -302,7 +304,7 @@ so the choice must be made where locale knowledge lives — not in the tokenizer
 ### Quadrant: dotted abbreviations (neural +3.6; apostrophes v0 +8.9)
 
 Solved twice, both times by **normalization inside the matching layer, never in the surface
-string**: libpostal deletes final/acronym periods *per token at featurization time*
+string**: libpostal deletes final/acronym periods _per token at featurization time_
 (`ADDRESS_PARSER_NORMALIZE_TOKEN_OPTIONS`), so `St.` and `st` hit the same embeddings and
 dictionary entries while the raw string is untouched; Photon folds `[\.,']` to spaces
 symmetrically at index and query time. Nominatim's apostrophe issues (#2569/#3754) supply the
@@ -329,7 +331,7 @@ pre-tokenization.
 comma-boundary ambiguity (libpostal #255's complaint class).
 **Lives in:** corpus supervision + neural input channel (retrain-coupled; rides a scheduled run).
 **Evidence:** libpostal ships exactly this as `separators` features and SEP/FSEP training
-labels — and its open issues show feature-only punctuation is *necessary but not sufficient*;
+labels — and its open issues show feature-only punctuation is _necessary but not sufficient_;
 Pelias's position-tracking README states the same design value from the rules side.
 **vs Stage 2.7 doc:** confirms slot 1 and extends it from "designator clue bit" to a general
 punctuation-context channel.
@@ -355,7 +357,7 @@ decode-side crossing constraint, which that doc does not yet name.
 
 ### M3. Dual-path slash/hyphen proposals, locale-conditioned (the Pelias PR #56 mechanism in our stack)
 
-**What:** for `N/M` and `N-M` tokens, the proposer emits *both* readings as typed candidates —
+**What:** for `N/M` and `N-M` tokens, the proposer emits _both_ readings as typed candidates —
 fused (`house_number="69-10"`, `house_number="123 1/2"`) and split (`unit=1 / house_number=123`
 AU/NZ; conscription/orientation CZ/AT/SK) — with per-locale shape rules from codex deciding
 which alternatives exist and their priors. Downstream (classifier conditioning now, reconcile
@@ -366,7 +368,7 @@ arbitration at slot 3) picks per evidence; never a tokenizer-level decision.
 mechanism that handles this class without locale-blind destruction; Photon's
 `preserve_original` is the same idea at index time; libpostal #573 documents the single-path
 failure; OSM tagging shows the slash is presentation over distinct fields, so the split
-readings are the *canonical* structure, not a heuristic.
+readings are the _canonical_ structure, not a heuristic.
 **vs Stage 2.7 doc:** confirms slot 2 and slot 3 sequencing; adds numeric-punctuation forms as
 a third cue family beside designators and paired delimiters.
 

@@ -385,7 +385,13 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 			baseRow({
 				raw: "Hauptstraße 5, 10827 Berlin",
 				country: "DE",
-				components: { street: "Haupt", street_suffix: "straße", house_number: "5", postcode: "10827", locality: "Berlin" },
+				components: {
+					street: "Haupt",
+					street_suffix: "straße",
+					house_number: "5",
+					postcode: "10827",
+					locality: "Berlin",
+				},
 			})
 		)
 		expect(result.kind).toBe("labeled")
