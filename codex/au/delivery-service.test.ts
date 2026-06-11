@@ -20,7 +20,13 @@ describe("AU_DELIVERY_SERVICE_DESIGNATORS", () => {
 		// "With the exception of Care of Post Office, Community Mail Agent, Community Postal Agent,
 		// and Community Mail Bag, all Postal Delivery Types must have an associated number."
 		expect(noNumber.sort()).toEqual(
-			["CARE OF POST OFFICE", "COMMUNITY MAIL AGENT", "COMMUNITY MAIL BAG", "COMMUNITY POSTAL AGENT", "POSTE RESTANTE"].sort()
+			[
+				"CARE OF POST OFFICE",
+				"COMMUNITY MAIL AGENT",
+				"COMMUNITY MAIL BAG",
+				"COMMUNITY POSTAL AGENT",
+				"POSTE RESTANTE",
+			].sort()
 		)
 	})
 

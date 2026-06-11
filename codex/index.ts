@@ -20,8 +20,8 @@
 
 export {
 	ADDRESS_SYSTEM_CONVENTIONS,
-	type AddressSystemConventions,
 	conventionsForSystem,
+	type AddressSystemConventions,
 } from "./address-system-conventions.js"
 export * as au from "./au/index.js"
 export * as ca from "./ca/index.js"

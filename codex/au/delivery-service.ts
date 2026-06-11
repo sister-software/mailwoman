@@ -4,25 +4,25 @@
  * @author Teffen Ellis, et al.
  *
  *   Australia Post delivery-service designators (Postal Delivery Types) — the Commonwealth po_box
- *   vocabulary the US-only `us/po-box.ts` cannot see: `GPO Box 2890`, `Locked Bag 1797`,
- *   `Private Bag 7`, plus the rural/community legacy tail (`RMB 4600`, `RSD`, `CMB`).
+ *   vocabulary the US-only `us/po-box.ts` cannot see: `GPO Box 2890`, `Locked Bag 1797`, `Private
+ *   Bag 7`, plus the rural/community legacy tail (`RMB 4600`, `RSD`, `CMB`).
  *
  *   Sourcing (accessed 2026-06-11; the underlying urban/rural addressing standard is AS/NZS 4819,
  *   which governs street addressing — the delivery-service designators below are Australia Post's
  *   own, from its addressing guidance):
  *
- *   - The complete Postal Delivery Type table comes verbatim from Australia Post's barcode
- *       addressing booklet ("Hints and tips to get a higher address match rate", SAP 8838883):
- *       CARE OF POST OFFICE→CARE PO, COMMUNITY MAIL AGENT→CMA, COMMUNITY MAIL BAG→CMB, GENERAL POST
- *       OFFICE BOX→GPO BOX, LOCKED MAIL BAG SERVICE→LOCKED BAG, MAIL SERVICE→MS, POST OFFICE
- *       BOX→PO BOX, POSTE RESTANTE→CARE PO, PRIVATE MAIL BAG SERVICE→PRIVATE BAG, ROADSIDE
- *       DELIVERY→RSD, ROADSIDE MAIL BAG→RMB, ROADSIDE MAIL BOX→RMB, ROADSIDE MAIL SERVICE→RMS,
- *       COMMUNITY POSTAL AGENT→CPA. The same booklet states: "With the exception of Care of Post
- *       Office, Community Mail Agent, Community Postal Agent, and Community Mail Bag, all Postal
- *       Delivery Types must have an associated number for a match to occur. e.g. PO Box 112", and
- *       "'PRIVATE BOX' is not a valid type" (so PRIVATE BOX is deliberately NOT in this table).
- *   - Which designators are CURRENT retail products (vs. AMAS-recognized legacy forms) comes from
- *       the live auspost.com.au pages: the addressing guidelines ("Line 2 should contain the street
+ *   - The complete Postal Delivery Type table comes verbatim from Australia Post's barcode addressing
+ *       booklet ("Hints and tips to get a higher address match rate", SAP 8838883): CARE OF POST
+ *       OFFICE→CARE PO, COMMUNITY MAIL AGENT→CMA, COMMUNITY MAIL BAG→CMB, GENERAL POST OFFICE
+ *       BOX→GPO BOX, LOCKED MAIL BAG SERVICE→LOCKED BAG, MAIL SERVICE→MS, POST OFFICE BOX→PO BOX,
+ *       POSTE RESTANTE→CARE PO, PRIVATE MAIL BAG SERVICE→PRIVATE BAG, ROADSIDE DELIVERY→RSD,
+ *       ROADSIDE MAIL BAG→RMB, ROADSIDE MAIL BOX→RMB, ROADSIDE MAIL SERVICE→RMS, COMMUNITY POSTAL
+ *       AGENT→CPA. The same booklet states: "With the exception of Care of Post Office, Community
+ *       Mail Agent, Community Postal Agent, and Community Mail Bag, all Postal Delivery Types must
+ *       have an associated number for a match to occur. e.g. PO Box 112", and "'PRIVATE BOX' is not
+ *       a valid type" (so PRIVATE BOX is deliberately NOT in this table).
+ *   - Which designators are CURRENT retail products (vs. AMAS-recognized legacy forms) comes from the
+ *       live auspost.com.au pages: the addressing guidelines ("Line 2 should contain the street
  *       number and name, or PO Box or Locked Bag number"), the Correct Addressing brochure (SAP
  *       8833878, Nov 2022 — `GPO Box 123 / SYDNEY NSW 2000` example), the personal "PO Boxes and
  *       Private Bags" page (Private Bag: "If you live in a rural or remote area of Australia, you
@@ -48,8 +48,8 @@ export interface AuDeliveryServiceDesignator {
 	abbreviation: string
 	/**
 	 * Whether the designator "must have an associated number for a match to occur" (AMAS rule;
-	 * exceptions are Care of Post Office, Community Mail Agent, Community Postal Agent, and
-	 * Community Mail Bag).
+	 * exceptions are Care of Post Office, Community Mail Agent, Community Postal Agent, and Community
+	 * Mail Bag).
 	 */
 	requiresNumber: boolean
 	/**
@@ -138,10 +138,10 @@ export interface AuDeliveryServiceMatch {
 }
 
 /**
- * If `input` is a standalone Australia Post delivery-service phrase ("GPO Box 2890",
- * "Locked Bag 1797", "RMB 4600", bare "CMB"), return the canonical designator, the id, and the
- * legacy flag. Null otherwise — including for "Private Box", which Australia Post explicitly calls
- * out as not a valid type.
+ * If `input` is a standalone Australia Post delivery-service phrase ("GPO Box 2890", "Locked Bag
+ * 1797", "RMB 4600", bare "CMB"), return the canonical designator, the id, and the legacy flag.
+ * Null otherwise — including for "Private Box", which Australia Post explicitly calls out as not a
+ * valid type.
  */
 export function matchAuDeliveryService(input: unknown): AuDeliveryServiceMatch | null {
 	if (typeof input !== "string") return null
@@ -165,8 +165,8 @@ export function isAuDeliveryService(input: unknown): boolean {
 }
 
 /**
- * Normalize a recognized delivery-service phrase to the canonical AMAS form
- * (`"g.p.o. box 123"` → `"GPO BOX 123"`). Returns the input unchanged if it isn't one.
+ * Normalize a recognized delivery-service phrase to the canonical AMAS form (`"g.p.o. box 123"` →
+ * `"GPO BOX 123"`). Returns the input unchanged if it isn't one.
  */
 export function normalizeAuDeliveryService(input: string): string {
 	const m = matchAuDeliveryService(input)

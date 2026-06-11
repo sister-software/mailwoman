@@ -3,24 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   NZ Post delivery-service types — the second half of the Commonwealth po_box vocabulary:
- *   `PO Box 24999`, `Private Bag 106999`, `CMB B99`, plus the identifier-less counter services.
+ *   NZ Post delivery-service types — the second half of the Commonwealth po_box vocabulary: `PO Box
+ *   24999`, `Private Bag 106999`, `CMB B99`, plus the identifier-less counter services.
  *
  *   Sourcing (accessed 2026-06-11):
  *
  *   - NZ Post Address Standards (ADV358, October 2021 edition hosted on nzpost.co.nz) is the
- *       authoritative document. Verbatim: "The Delivery Service Type is mandatory. It may be PO Box,
- *       Private Bag, CMB, Response Bag, Counter Delivery or Poste Restante." Its Delivery Service
- *       Elements table gives the descriptions reproduced in {@link NZ_DELIVERY_SERVICE_TYPES}, and
- *       the identifier rules: "The Delivery Service Identifier must have no leading zeros and no
- *       spaces, separators or other punctuation"; "The Delivery Service Identifier is not used for
- *       Counter Delivery or Poste Restante. It is also not used for Private Bags that do not have an
- *       identifier allocated by New Zealand Post". Examples: `PO Box 24999`, `Private Bag 106999`,
- *       `Response Bag 500999`, `CMB B99`, `Counter Delivery`, `Poste Restante`. The standard's
- *       incorrect-form examples show `P O Box 4 099` and `PB 39990` as wrong — `PB` is a common
- *       error, not a designator, so it is NOT in this table.
- *   - The live addressing-standards page repeats the format rules: "PO Box and Private Bag numbers
- *       are space-free (eg. 'PO Box 23226', not 'PO Box 23 226')", "'PO' is space-free … and
+ *       authoritative document. Verbatim: "The Delivery Service Type is mandatory. It may be PO
+ *       Box, Private Bag, CMB, Response Bag, Counter Delivery or Poste Restante." Its Delivery
+ *       Service Elements table gives the descriptions reproduced in
+ *       {@link NZ_DELIVERY_SERVICE_TYPES}, and the identifier rules: "The Delivery Service
+ *       Identifier must have no leading zeros and no spaces, separators or other punctuation"; "The
+ *       Delivery Service Identifier is not used for Counter Delivery or Poste Restante. It is also
+ *       not used for Private Bags that do not have an identifier allocated by New Zealand Post".
+ *       Examples: `PO Box 24999`, `Private Bag 106999`, `Response Bag 500999`, `CMB B99`, `Counter
+ *       Delivery`, `Poste Restante`. The standard's incorrect-form examples show `P O Box 4 099`
+ *       and `PB 39990` as wrong — `PB` is a common error, not a designator, so it is NOT in this
+ *       table.
+ *   - The live addressing-standards page repeats the format rules: "PO Box and Private Bag numbers are
+ *       space-free (eg. 'PO Box 23226', not 'PO Box 23 226')", "'PO' is space-free … and
  *       punctuation-free".
  *
  *   All six types are CURRENT in the October 2021 ADV358 (including CMB — no legacy flag is needed
@@ -28,7 +29,6 @@
  *   gold rows carry — does NOT appear in ADV358 or the live standards pages and is therefore
  *   excluded here (see the issue #517 sourcing note: a smaller sourced list beats a larger guessed
  *   one).
- *
  * @see {@link https://www.nzpost.co.nz/sites/nz/files/2021-10/adv358-address-standards.pdf NZ Post Address Standards (ADV358, Oct 2021)}
  * @see {@link https://www.nzpost.co.nz/business/shipping-in-nz/addressing-standards NZ Post addressing standards}
  * @see {@link https://www.nzpost.co.nz/personal/sending-in-nz/how-to-address-mail NZ Post — how to address mail}
@@ -61,8 +61,16 @@ export const NZ_DELIVERY_SERVICE_TYPES = [
 		description: "Community Mail Box in postal outlet or on a thoroughfare",
 		identifier: "required-if-allocated",
 	},
-	{ type: "Counter Delivery", description: "Hold for Counter Delivery collection - domestic mail", identifier: "not-used" },
-	{ type: "Poste Restante", description: "Hold for Poste Restante collection - international mail", identifier: "not-used" },
+	{
+		type: "Counter Delivery",
+		description: "Hold for Counter Delivery collection - domestic mail",
+		identifier: "not-used",
+	},
+	{
+		type: "Poste Restante",
+		description: "Hold for Poste Restante collection - international mail",
+		identifier: "not-used",
+	},
 ] as const satisfies readonly NzDeliveryServiceType[]
 
 /** A canonical NZ Delivery Service Type. */
@@ -106,9 +114,9 @@ export interface NzDeliveryServiceMatch {
 }
 
 /**
- * If `input` is a standalone NZ delivery-service phrase ("PO Box 24999", "Private Bag 106999",
- * "CMB B99", bare "Private Bag", "Counter Delivery"), return the canonical type and identifier.
- * Null otherwise — including for "PB 39990" (an error of form per ADV358) and "Private Box" (not a
+ * If `input` is a standalone NZ delivery-service phrase ("PO Box 24999", "Private Bag 106999", "CMB
+ * B99", bare "Private Bag", "Counter Delivery"), return the canonical type and identifier. Null
+ * otherwise — including for "PB 39990" (an error of form per ADV358) and "Private Box" (not a
  * Delivery Service Type).
  */
 export function matchNzDeliveryService(input: unknown): NzDeliveryServiceMatch | null {
@@ -127,8 +135,8 @@ export function isNzDeliveryService(input: unknown): boolean {
 }
 
 /**
- * Normalize a recognized phrase to the ADV358 form (`"p.o. box 24999"` → `"PO Box 24999"`).
- * Returns the input unchanged if it isn't a delivery-service phrase.
+ * Normalize a recognized phrase to the ADV358 form (`"p.o. box 24999"` → `"PO Box 24999"`). Returns
+ * the input unchanged if it isn't a delivery-service phrase.
  */
 export function normalizeNzDeliveryService(input: string): string {
 	const m = matchNzDeliveryService(input)
