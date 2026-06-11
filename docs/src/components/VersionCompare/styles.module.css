@@ -1,0 +1,203 @@
+/* ============================================================================
+ * VersionCompare — side-by-side compare styles
+ * Two-column layout for SpanHighlight ribbons, unified diff table with
+ * confidence-delta annotations, and parallel timing panels.
+ * ============================================================================ */
+
+.compareRoot {
+	margin-top: 1.5rem;
+}
+
+.compareHeader {
+	display: flex;
+	align-items: baseline;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.compareHeader h2 {
+	font-size: 1rem;
+	margin: 0;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.compareMeta {
+	font-size: 0.8rem;
+	opacity: 0.6;
+}
+
+.compareMeta code {
+	font-size: 0.75rem;
+}
+
+/* ── Side-by-side SpanHighlight ribbons ───────────────────────────────── */
+
+.spanRow {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.spanCol {
+	min-width: 0;
+}
+
+.colLabel {
+	font-size: 0.7rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--ifm-color-emphasis-600);
+	margin-bottom: 0.35rem;
+	text-align: center;
+}
+
+.colLabel code {
+	font-size: 0.7rem;
+}
+
+/* ── Unified diff table ────────────────────────────────────────────────── */
+
+.compareTable {
+	width: 100%;
+	font-size: 0.85rem;
+	border-collapse: collapse;
+	margin-bottom: 1rem;
+}
+
+.compareTable th,
+.compareTable td {
+	text-align: left;
+	padding: 0.25rem 0.4rem;
+	border-bottom: 1px solid var(--ifm-color-emphasis-200);
+	vertical-align: top;
+}
+
+.compareTable th {
+	font-weight: 600;
+	color: var(--ifm-color-emphasis-700);
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	white-space: nowrap;
+}
+
+.deltaHead {
+	text-align: center;
+	width: 3rem;
+}
+
+.tagCell {
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.75rem;
+	color: var(--ifm-color-emphasis-600);
+	white-space: nowrap;
+	min-width: 6ch;
+}
+
+.valCell {
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.8rem;
+	max-width: 14ch;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.confCell {
+	min-width: 5em;
+}
+
+.deltaCell {
+	text-align: center;
+	min-width: 3rem;
+}
+
+/* ── Row kind tints ────────────────────────────────────────────────────── */
+
+.rowPrimaryOnly td {
+	background: rgba(216, 80, 74, 0.06);
+}
+
+.rowPrimaryOnly .tagCell {
+	color: #d8504a;
+}
+
+.rowCompareOnly td {
+	background: rgba(26, 168, 77, 0.06);
+}
+
+.rowCompareOnly .tagCell {
+	color: #1aa84d;
+}
+
+.rowTagChanged td {
+	background: rgba(230, 168, 0, 0.06);
+}
+
+/* ── Delta badge ───────────────────────────────────────────────────────── */
+
+.deltaUp {
+	display: inline-block;
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #1aa84d;
+	background: rgba(26, 168, 77, 0.12);
+	border-radius: 3px;
+	padding: 0 0.25rem;
+}
+
+.deltaDown {
+	display: inline-block;
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #d8504a;
+	background: rgba(216, 80, 74, 0.12);
+	border-radius: 3px;
+	padding: 0 0.25rem;
+}
+
+.deltaNeutral {
+	display: inline-block;
+	font-size: 0.8rem;
+	opacity: 0.4;
+}
+
+/* ── Side-by-side timing ───────────────────────────────────────────────── */
+
+.timingRow {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+}
+
+.timingCol {
+	min-width: 0;
+}
+
+/* ── Mobile: stack vertically ──────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+	.spanRow,
+	.timingRow {
+		grid-template-columns: 1fr;
+	}
+
+	.compareTable th,
+	.compareTable td {
+		padding: 0.2rem 0.25rem;
+		font-size: 0.75rem;
+	}
+
+	.tagCell {
+		min-width: 4ch;
+	}
+
+	.valCell {
+		max-width: 8ch;
+	}
+}
