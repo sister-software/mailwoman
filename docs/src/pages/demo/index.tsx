@@ -316,6 +316,7 @@ const DemoApp: React.FC = () => {
 		if (!compareMode || !compareVersion) {
 			setCompareClassifier(null)
 			setCompareResult(null)
+			setCompareErrorMessage(null)
 			setCompareBackend("")
 			return
 		}
@@ -325,6 +326,7 @@ const DemoApp: React.FC = () => {
 		void (async () => {
 			try {
 				setCompareClassifier(null)
+				setCompareErrorMessage(null)
 				setCompareLoading(true)
 				setCompareBackend("")
 
@@ -577,7 +579,7 @@ const DemoApp: React.FC = () => {
 						})
 					} catch (compareError) {
 						console.error("Error in compare parse", compareError)
-						// Non-fatal: primary result is still valid.
+						setCompareErrorMessage(compareError instanceof Error ? compareError.message : String(compareError))
 					}
 				}
 				const wofLookup = await ensureLookup()
@@ -737,7 +739,10 @@ const DemoApp: React.FC = () => {
 							checked={compareMode}
 							onChange={(e) => {
 								setCompareMode(e.target.checked)
-								if (!e.target.checked) setCompareResult(null)
+								if (!e.target.checked) {
+									setCompareResult(null)
+									setCompareErrorMessage(null)
+								}
 							}}
 						/>
 						Compare
