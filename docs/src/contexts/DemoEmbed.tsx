@@ -156,6 +156,9 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 					modelUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
 					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
 					modelCardUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model-card.json"),
+					// Gazetteer-anchor lexicon (#464): REQUIRED by gazetteer-trained bundles (v4.2.0+). The
+					// loader tolerates a 404 for older bundles (logging loudly when the model needed it).
+					gazetteerLexiconUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "anchor-lexicon-v1.json"),
 					runner: { useWebGpu: !forceWasm },
 					...(release?.hasAnchor
 						? {

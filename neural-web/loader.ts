@@ -15,8 +15,11 @@
 
 import {
 	type AnchorLookup,
+	type GazetteerLexicon,
 	MailwomanTokenizer,
 	NeuralAddressClassifier,
+	type NeuralAddressClassifierConfig,
+	parseGazetteerLexicon,
 	PostcodeBinaryResolver,
 } from "@mailwoman/neural/browser"
 
@@ -58,6 +61,37 @@ export interface LoadFromUrlsOpts {
 	 * (e.g. US + DE). Omit for plain models — the runner then feeds the anchor-off identity.
 	 */
 	postcodeBinaryUrls?: readonly string[]
+	/**
+	 * URL to the gazetteer-anchor lexicon JSON (`anchor-lexicon-v1.json`, #464 — the in-repo source is
+	 * `data/gazetteer/anchor-lexicon-v1.json`). Gazetteer-trained models (v4.2.0+, whose ONNX declares
+	 * the `gazetteer_features`/`gazetteer_confidence` inputs) REQUIRE this clue at inference: running
+	 * them on the zero-filled fallback is the measured train/inference mismatch that wrecks
+	 * segmentation ("the zero-fill trap", CONTRIBUTING_MODEL_WORK.mdx eval invariants).
+	 *
+	 * Defaults to `anchor-lexicon-v1.json` next to `modelUrl`. A fetch miss (404 etc.) does NOT throw —
+	 * older bundles never shipped the file — but if the loaded model turns out to be gazetteer-trained
+	 * the loader logs a loud `console.error` naming the missing file and the model runs gazetteer-off
+	 * (structurally valid, quality-degraded). Pass `null` to skip the fetch entirely.
+	 */
+	gazetteerLexiconUrl?: string | null
+	/**
+	 * Channel choreography (#464, v0.9.13 postcode fix): zero the gazetteer clue on pieces adjacent to
+	 * a postcode-anchor hit. Defaults to TRUE — it pairs with the train-time half on every
+	 * gazetteer-trained bundle (v4.2.0+) and is inert when either channel is absent.
+	 */
+	suppressGazetteerNearPostcode?: boolean
+	/**
+	 * Address-system conventions mode (#511 Tier A, v4.3.0+). Defaults to `"auto"` (read the model's
+	 * locale head when exported; inert on bundles without `locale_logits`). Pass a `SystemCode` to pin,
+	 * or `null` to disable.
+	 */
+	addressSystemConventions?: NeuralAddressClassifierConfig["addressSystemConventions"] | null
+	/**
+	 * Span bridge (v4.4.0 declared behavior): merge same-tag spans split at intra-token punctuation
+	 * ("P.O. Box"). Defaults to TRUE per the v4.4.0 ship config (model-card.json: po_box 60.4 without,
+	 * 89.1 with). Pass false to disable for pre-bridge bundles where gate parity matters.
+	 */
+	bridgePunctuationGaps?: boolean
 	/** Optional fetch override. Defaults to `globalThis.fetch`. */
 	fetchImpl?: typeof fetch
 }
@@ -90,9 +124,25 @@ function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 }
 
 /**
+ * Default location of the gazetteer-anchor lexicon: `anchor-lexicon-v1.json` as a sibling of the
+ * model file. Matches how release bundles lay out their version directory (model.onnx,
+ * tokenizer.model, model-card.json, postcode-*.bin, anchor-lexicon-v1.json side by side).
+ */
+export function defaultGazetteerLexiconUrl(modelUrl: string): string {
+	// Swap the final path segment — string surgery rather than `new URL()` so relative model URLs
+	// ("/static/mailwoman/model.onnx") stay relative.
+	return modelUrl.replace(/[^/]*$/, "anchor-lexicon-v1.json")
+}
+
+/**
  * Convenience factory: fetch model + tokenizer, build the runner, return a classifier. The
  * tokenizer is loaded via the existing `loadFromBase64` path so this file shares zero Node-only
  * code with `@mailwoman/neural/classifier`'s `loadFromWeights`.
+ *
+ * The classifier is constructed with the v4.4.0 ship config by default (gazetteer lexicon +
+ * postcode anchor when their assets resolve, `suppressGazetteerNearPostcode: true`,
+ * `addressSystemConventions: "auto"`, `bridgePunctuationGaps: true`) — every knob is inert on
+ * bundles that predate the corresponding channel, so older versions keep decoding unchanged.
  */
 export async function loadNeuralClassifierFromUrls(opts: LoadFromUrlsOpts): Promise<LoadResult> {
 	const fetchImpl = opts.fetchImpl ?? globalThis.fetch
@@ -100,10 +150,14 @@ export async function loadNeuralClassifierFromUrls(opts: LoadFromUrlsOpts): Prom
 		throw new Error("no fetch implementation available — pass fetchImpl in non-fetch environments")
 	}
 
-	const [modelBytes, tokenizerBytes, labels] = await Promise.all([
+	const gazetteerLexiconUrl =
+		opts.gazetteerLexiconUrl === null ? null : (opts.gazetteerLexiconUrl ?? defaultGazetteerLexiconUrl(opts.modelUrl))
+
+	const [modelBytes, tokenizerBytes, labels, gazetteerLexicon] = await Promise.all([
 		fetchBytes(opts.modelUrl, fetchImpl),
 		fetchBytes(opts.tokenizerUrl, fetchImpl),
 		opts.modelCardUrl ? fetchLabelsFromModelCard(opts.modelCardUrl, fetchImpl) : Promise.resolve(null),
+		gazetteerLexiconUrl ? fetchGazetteerLexicon(gazetteerLexiconUrl, fetchImpl) : Promise.resolve(null),
 	])
 
 	const [tokenizer, runner, postcodeAnchorLookup] = await Promise.all([
@@ -118,14 +172,79 @@ export async function loadNeuralClassifierFromUrls(opts: LoadFromUrlsOpts): Prom
 			: Promise.resolve<AnchorLookup | undefined>(undefined),
 	])
 
+	const conventions = opts.addressSystemConventions === null ? undefined : (opts.addressSystemConventions ?? "auto")
 	const classifier = new NeuralAddressClassifier({
 		tokenizer,
 		runner,
 		...(labels ? { labels } : {}),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
+		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
+		suppressGazetteerNearPostcode: opts.suppressGazetteerNearPostcode ?? true,
+		...(conventions ? { addressSystemConventions: conventions } : {}),
+		bridgePunctuationGaps: opts.bridgePunctuationGaps ?? true,
 	})
 	await runner.infer([0])
+	warnOnUnfedTrainedChannels(runner, {
+		gazetteerLexicon,
+		gazetteerLexiconUrl,
+		postcodeAnchorLookup,
+	})
 	return { classifier, diagnostics: runner.diagnostics, labels }
+}
+
+/**
+ * Loud degrade (#464): the warmup `infer([0])` above forced session creation, so the graph's
+ * declared inputs are now known. A gazetteer/anchor-TRAINED model running on the zero-filled
+ * fallback is a measured failure mode (train/inference mismatch — "the zero-fill trap"), not a
+ * quality-neutral default; without this check the only symptom would be silently degraded parses.
+ * (Pre-fix, the symptom was worse still: ORT's cryptic `input 'gazetteer_features' is missing in
+ * 'feeds'`.) The loader still returns a working classifier — structural fallback, loud console.
+ */
+function warnOnUnfedTrainedChannels(
+	runner: WebOnnxRunner,
+	fed: {
+		gazetteerLexicon: GazetteerLexicon | null
+		gazetteerLexiconUrl: string | null
+		postcodeAnchorLookup: AnchorLookup | undefined
+	}
+): void {
+	const inputNames = runner.inputNames
+	if (!inputNames) return
+	if (inputNames.includes("gazetteer_features") && !fed.gazetteerLexicon) {
+		console.error(
+			"[mailwoman/neural-web] This model is gazetteer-anchor-trained (its ONNX declares `gazetteer_features`) " +
+				"but no gazetteer lexicon was loaded" +
+				(fed.gazetteerLexiconUrl
+					? ` — \`anchor-lexicon-v1.json\` could not be fetched from ${fed.gazetteerLexiconUrl}. ` +
+						"Upload the lexicon next to model.onnx, or pass `gazetteerLexiconUrl` explicitly."
+					: " — `gazetteerLexiconUrl` was explicitly disabled (null). ") +
+				" Running with zero-filled gazetteer clues: parses will be degraded (train/inference mismatch)."
+		)
+	}
+	if (inputNames.includes("anchor_features") && !fed.postcodeAnchorLookup) {
+		console.error(
+			"[mailwoman/neural-web] This model is postcode-anchor-trained (its ONNX declares `anchor_features`) " +
+				"but no `postcodeBinaryUrls` were provided (postcode-<cc>.bin). " +
+				"Running with zero-filled anchor features: the anchor-off identity, degraded vs the ship config."
+		)
+	}
+}
+
+/**
+ * Fetch + parse `anchor-lexicon-v1.json`. A missing file (404 or network failure) returns null —
+ * the caller decides whether that matters (it does iff the model declares the gazetteer inputs;
+ * see `warnOnUnfedTrainedChannels`). A PRESENT-but-malformed lexicon throws loudly via
+ * `parseGazetteerLexicon`'s validation — never silently zero-fill off bad data.
+ */
+async function fetchGazetteerLexicon(url: string, fetchImpl: typeof fetch): Promise<GazetteerLexicon | null> {
+	let res: Response
+	try {
+		res = await fetchImpl(url)
+	} catch {
+		return null
+	}
+	if (!res.ok) return null
+	return parseGazetteerLexicon((await res.json()) as Parameters<typeof parseGazetteerLexicon>[0])
 }
 
 /**

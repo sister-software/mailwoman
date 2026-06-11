@@ -26,6 +26,7 @@
  *   --model-card /path/to/model-card.json\
  *   --fst /path/to/fst-en-US.bin\
  *   --wof-hot /path/to/wof-hot.db\
+ *   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json\
  *   --label "v0.5.4 — multi-script tokenizer"\
  *   --description "Multi-script tokenizer..."\
  *   --set-default
@@ -131,6 +132,15 @@ async function main() {
 		if (!existsSync(localPath) || statSync(localPath).size === 0) fail(`postcode binary ${localPath} missing/empty`)
 	}
 
+	// Optional gazetteer-anchor lexicon (#464): a single --gazetteer-lexicon path, uploaded as
+	// anchor-lexicon-v1.json. REQUIRED for gazetteer-trained models (v4.2.0+, ONNX declares
+	// gazetteer_features) — the demo loader fetches it beside model.onnx and degrades LOUDLY
+	// (console.error + zero-filled clues = the measured zero-fill quality trap) when it 404s.
+	const gazetteerLexicon = args.gazetteerLexicon || null
+	if (gazetteerLexicon && (!existsSync(gazetteerLexicon) || statSync(gazetteerLexicon).size === 0)) {
+		fail(`gazetteer lexicon ${gazetteerLexicon} missing/empty`)
+	}
+
 	// Optional crisp-polygon DB (build-wof-polygons.mjs): a single --polygons path. Uploaded as
 	// wof-polygons.db; the demo draws the real admin boundary instead of the bbox when `hasPolygons`
 	// is set. Sibling of wof-hot.db, keyed by the same WOF ids.
@@ -153,6 +163,11 @@ async function main() {
 		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
 		console.error(`  → ${dst}`)
 		run("hf", ["buckets", "cp", localPath, dst])
+	}
+	if (gazetteerLexicon) {
+		const dst = `${BUCKET_PATH}/${remoteBase}/anchor-lexicon-v1.json`
+		console.error(`  → ${dst}`)
+		run("hf", ["buckets", "cp", gazetteerLexicon, dst])
 	}
 	if (polygonsDb) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/wof-polygons.db`
