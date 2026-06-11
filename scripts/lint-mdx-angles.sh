@@ -24,7 +24,9 @@ for f in $files; do
 	# Digits-only: the measured build-breaking class is `<55`-style numeric prose. Uppercase
 	# `<Component>` is legitimate MDX JSX and lowercase `<word>` is usually real HTML — flagging
 	# them false-positives on valid docs (bit on the pipeline-contract page, night-11).
-	hits=$(awk '/^```/{fence=!fence; next} !fence' "$f" | sed 's/`[^`]*`//g' | grep -nE '<[0-9]' || true)
+	# Braces joined 2026-06-11: bare `{word` in prose is an MDX JSX EXPRESSION — `{raw, components}`
+	# broke main's SSG with `ReferenceError: raw is not defined`. Same fix menu: backtick it.
+	hits=$(awk '/^```/{fence=!fence; next} !fence' "$f" | sed 's/`[^`]*`//g' | grep -nE '<[0-9]|\{[a-zA-Z]' || true)
 	if [ -n "$hits" ]; then
 		echo "✗ $f — raw '<' before alphanumeric (MDX parses it as a JSX tag; build will fail):" >&2
 		echo "$hits" | head -5 | sed 's/^/    /' >&2
@@ -33,6 +35,6 @@ for f in $files; do
 done
 if [ $fail -ne 0 ]; then
 	echo "" >&2
-	echo "Fix: spell it out ('under 80%'), use ≤/＜, or backtick the expression." >&2
+	echo "Fix: backtick the expression, spell it out, or escape the brace/angle." >&2
 	exit 1
 fi
