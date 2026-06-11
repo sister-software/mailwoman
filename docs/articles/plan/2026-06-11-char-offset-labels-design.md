@@ -57,7 +57,7 @@ Properties:
    builder-parity token surgery becomes char arithmetic).
 3. **Audit gates**: must compare RAW-surface reconstructions (this is a feature — the dotted
    blind spot came from token-level audits).
-4. **Eval golds**: unchanged ({raw, components} is already char-level by construction).
+4. **Eval golds**: unchanged (`{raw, components}` is already char-level by construction).
 5. **The 673M-row base corpus**: needs a one-time conversion (token labels → char spans is
    LOSSLESS upward — every existing label maps to the chars its token occupies). A converter +
    spot-audit, not a re-alignment.
