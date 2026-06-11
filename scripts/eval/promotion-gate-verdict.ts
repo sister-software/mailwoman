@@ -107,6 +107,12 @@ function collect(tag: "fp32" | "int8"): Record<string, number | undefined> {
 			const m = md?.match(/\|\s*perturb\s*\|\s*\d+\s*\|\s*[\d.]+%\s*\|\s*([\d.]+)%/)
 			return m ? Number(m[1]) : undefined
 		})(),
+		// Demo-cascade smoke pass rate (#524) — whole-stack parse→reconcile→resolve against the slim
+		// hot DB. Like the arena leg it runs ONCE on the ship artifact (no fp32/int8 split); sidecar
+		// only (the leg is new — there are no pre-sidecar out-dirs to replay). Absent sidecar (DB not
+		// staged / runner errored) reads undefined → a floored spec FAILS loudly, an unfloored spec
+		// ignores it.
+		"cascade.demo_smoke": sidecar("cascade-smoke.json")?.summary?.pass_rate_pct,
 	}
 }
 

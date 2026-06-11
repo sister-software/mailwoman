@@ -1,0 +1,21 @@
+{"input":"New York City","expect":{"id":85977539,"name":"New York","placetype":"locality"},"note":"bare multiword famous name; WOF alias of the New York locality — reachable only through the alt_names bag","source":"#521 #522 (2026-06-11 demo bugs)"}
+{"input":"new york city","expect":{"id":85977539,"name":"New York","placetype":"locality"},"note":"lowercase variant of the alias row — exact-match tier must be case-insensitive","source":"#522"}
+{"input":"Brooklyn","expect":{"id":421205765,"name":"Brooklyn","placetype":"borough"},"note":"the locality placetype filter excluded the borough row; pre-fix this resolved to Brooklyn Park, MN","source":"#522"}
+{"input":"brooklyn, new york, ny","expect":{"id":421205765,"name":"Brooklyn","placetype":"borough"},"note":"region-bbox-constrained pass found nothing pre-fix and the cascade silently fell back unconstrained","source":"#522"}
+{"input":"Chicago","expect":{"id":85940195,"name":"Chicago","placetype":"locality"},"note":"bare famous name, single token","source":"#524"}
+{"input":"Seattle","expect":{"id":101730401,"name":"Seattle","placetype":"locality"},"note":"bare famous name, single token","source":"#524"}
+{"input":"San Francisco","expect":{"id":85922583,"name":"San Francisco","placetype":"locality"},"note":"bare famous two-token name; exact tier must beat the South San Francisco token collision","source":"#524"}
+{"input":"Washington, DC","expect":{"id":85931779,"name":"Washington","placetype":"locality"},"note":"locality + region abbreviation; DC expands to District of Columbia for the bbox","source":"#524"}
+{"input":"Saint Paul, MN","expect":{"id":85953191,"name":"St. Paul","placetype":"locality"},"note":"multi-token locality, the Saint-Albans fragmentation kryptonite; gazetteer name is the abbreviated alias","source":"#524"}
+{"input":"Springfield, IL","expect":{"id":85940429,"name":"Springfield","placetype":"locality"},"note":"same-name disambiguation: population ranking alone picks Springfield MO (85971363) — the region bbox must constrain","source":"#524"}
+{"input":"Berlin","expect":{"id":101909779,"name":"Berlin","placetype":"locality"},"note":"famous-name population ranking with no hardcoded country: Berlin DE 3.7M, not Berlin NH","source":"demo cascade failure-mode notes"}
+{"input":"Paris","expect":{"id":101751119,"name":"Paris","placetype":"locality"},"note":"famous-name population ranking: Paris FR, not Paris TX","source":"#524"}
+{"input":"1600 Pennsylvania Ave NW, Washington, DC 20500","expect":{"id":85931779,"name":"Washington","placetype":"locality"},"note":"White House preset; the slim hot DB ships NO postalcode rows, so the postcode leg misses and the locality leg must carry","source":"demo preset"}
+{"input":"350 5th Ave, New York, NY 10118","expect":{"id":85977539,"name":"New York","placetype":"locality"},"note":"Empire State preset","source":"demo preset"}
+{"input":"Pier 39, San Francisco, CA 94133","expect":{"id":85922583,"name":"San Francisco","placetype":"locality"},"note":"Pier 39 preset — venue prefix ahead of the locality","source":"demo preset"}
+{"input":"1060 W Addison St, Chicago, IL 60613","expect":{"id":85940195,"name":"Chicago","placetype":"locality"},"note":"Wrigley Field preset","source":"demo preset"}
+{"input":"400 Broad St, Seattle, WA 98109","expect":{"id":101730401,"name":"Seattle","placetype":"locality"},"note":"Space Needle preset","source":"demo preset"}
+{"input":"90210","expect":{"anchor_centroid":true},"note":"ZIP-only preset: no postalcode rows in the slim DB, no locality — the anchor-centroid fallback (postcode-us.bin) must fire","source":"demo preset"}
+{"input":"Straußstraße 27, 12623 Berlin","expect":{"id":101909779,"name":"Berlin","placetype":"locality"},"note":"Berlin native-order preset (house number after street, postcode before city)","source":"demo preset"}
+{"input":"5 Hauptstraße, Berlin, Berlin 10115","expect":{"id":101909779,"name":"Berlin","placetype":"locality"},"note":"Berlin city-state preset (intl order, dual-role locality+region)","source":"demo preset"}
+{"input":"181 Rue du Chevaleret, Paris","expect":{"id":101751119,"name":"Paris","placetype":"locality"},"note":"Paris street fall-through preset: a mis-tagged street span must fall through to the real city","source":"demo preset"}
