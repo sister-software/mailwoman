@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { BIO_LABELS } from "@mailwoman/core/types"
+import { BIO_LABELS, type ComponentTag } from "@mailwoman/core/types"
 import { describe, expect, it } from "vitest"
+import { alignRow } from "./align.js"
 import {
 	AUGMENTATIONS,
 	accentStrip,
@@ -27,7 +28,7 @@ import {
 	unitDesignatorExpand,
 	zipPlus4DashDrop,
 } from "./synthesize.js"
-import type { CanonicalRow } from "./types.js"
+import type { CanonicalRow, LabeledRow } from "./types.js"
 
 const baseRow = (over: Partial<CanonicalRow>): CanonicalRow => ({
 	raw: "",
@@ -488,6 +489,158 @@ describe("registry + defaults", () => {
 		const upper = out.find((r) => r.synth?.method === "case-upper")!
 		expect(upper.source_id).toBe("t-1+case-upper")
 		expect(upper.synth?.base_source_id).toBe("t-1")
+	})
+})
+
+// ===========================================================================
+// Raw-surface punctuation survival (#519 / PR #534 open question 3)
+// ===========================================================================
+//
+// Every augmentation transforms `raw` by direct string splicing (replace/case-map on the raw
+// itself — never a rebuild from a token list), and the build pipeline re-runs `alignRow` on each
+// augmented copy, deriving the char-offset span triple from the AUGMENTED raw. These probes pin
+// the property v0.5.0 makes load-bearing: intra-span punctuation (the dotted `P.O. Box` is the
+// canonical case) survives onto the augmented copy, and every span addresses the new raw exactly.
+// A future refactor that rebuilds raw from tokens would fail these.
+
+describe("augmented copies keep intra-span punctuation (#519)", () => {
+	/** Apply the augmentation, align the copy, and return the labeled row (asserting both steps). */
+	const augmentAndAlign = (id: string, row: CanonicalRow) => {
+		const out = AUGMENTATIONS[id]!(row)
+		expect(out, `${id} should apply to its fixture`).not.toBeNull()
+		const aligned = alignRow(out!)
+		expect(aligned.kind, `${id} copy should align (got ${JSON.stringify(aligned.row)})`).toBe("labeled")
+		if (aligned.kind !== "labeled") throw new Error("unreachable")
+		// Every span must address the augmented raw exactly: its slice IS the component surface.
+		const { raw, span_starts, span_ends, span_tags } = aligned.row
+		for (let i = 0; i < span_tags!.length; i++) {
+			expect(raw.slice(span_starts![i]!, span_ends![i]!)).toBe(out!.components[span_tags![i]!])
+		}
+		return aligned.row
+	}
+
+	/** The dotted po_box surface on the augmented copy — slice the span, not the tokens. */
+	const poBoxSurface = (row: LabeledRow): string => {
+		const i = row.span_tags!.indexOf("po_box")
+		expect(i).toBeGreaterThanOrEqual(0)
+		return row.raw.slice(row.span_starts![i]!, row.span_ends![i]!)
+	}
+
+	const poBoxRow = (over: Partial<CanonicalRow> = {}): CanonicalRow =>
+		baseRow({
+			raw: "P.O. Box 5, Portland, OR 97214",
+			components: { po_box: "P.O. Box 5", locality: "Portland", region: "OR", postcode: "97214" },
+			...over,
+		})
+
+	const streetRow = (street: string): CanonicalRow =>
+		baseRow({
+			raw: `P.O. Box 5, 100 ${street}, Portland, OR 97214`,
+			components: {
+				po_box: "P.O. Box 5",
+				house_number: "100",
+				street,
+				locality: "Portland",
+				region: "OR",
+				postcode: "97214",
+			},
+		})
+
+	const unitRow = (unit: string): CanonicalRow =>
+		baseRow({
+			raw: `P.O. Box 5, 123 Main St ${unit}, Portland, OR 97214`,
+			components: {
+				po_box: "P.O. Box 5",
+				house_number: "123",
+				street: "Main St",
+				unit,
+				locality: "Portland",
+				region: "OR",
+				postcode: "97214",
+			},
+		})
+
+	const cases: ReadonlyArray<[id: string, row: CanonicalRow, expectedPoBox: string]> = [
+		["case-upper", poBoxRow(), "P.O. BOX 5"],
+		["case-lower", poBoxRow(), "p.o. box 5"],
+		// drop-commas deliberately deletes the commas BETWEEN spans; the dots inside the span stay.
+		["drop-commas", poBoxRow(), "P.O. Box 5"],
+		["double-space", poBoxRow(), "P.O.  Box  5"],
+		[
+			"accent-strip",
+			poBoxRow({
+				raw: "P.O. Box 5, Mâcon 97214",
+				components: { po_box: "P.O. Box 5", locality: "Mâcon", postcode: "97214" },
+			}),
+			"P.O. Box 5",
+		],
+		["state-expand", poBoxRow(), "P.O. Box 5"],
+		[
+			"state-abbreviate",
+			poBoxRow({
+				raw: "P.O. Box 5, Portland, Oregon 97214",
+				components: { po_box: "P.O. Box 5", locality: "Portland", region: "Oregon", postcode: "97214" },
+			}),
+			"P.O. Box 5",
+		],
+		["directional-expand", streetRow("Main St NW"), "P.O. Box 5"],
+		["directional-abbreviate", streetRow("Main St Northwest"), "P.O. Box 5"],
+		["us-street-suffix-abbreviate", streetRow("Main Street"), "P.O. Box 5"],
+		["us-street-suffix-expand", streetRow("Main St"), "P.O. Box 5"],
+		["us-unit-designator-abbreviate", unitRow("Apartment 4B"), "P.O. Box 5"],
+		["us-unit-designator-expand", unitRow("Apt 4B"), "P.O. Box 5"],
+		[
+			"zip-plus4-dash-drop",
+			poBoxRow({
+				raw: "P.O. Box 5, Portland, OR 97214-1234",
+				components: { po_box: "P.O. Box 5", locality: "Portland", region: "OR", postcode: "97214-1234" },
+			}),
+			"P.O. Box 5",
+		],
+		[
+			"particle-strip",
+			baseRow({
+				raw: "B.P. 24, 10 Rue de la République, 75008 Paris",
+				country: "FR",
+				components: {
+					po_box: "B.P. 24",
+					house_number: "10",
+					street_prefix: "Rue",
+					street_prefix_particle: "de la",
+					street: "République",
+					postcode: "75008",
+					locality: "Paris",
+				},
+			}),
+			"B.P. 24",
+		],
+	]
+
+	it.each(cases)("%s: the dotted po_box span survives on the augmented copy", (id, row, expectedPoBox) => {
+		const labeled = augmentAndAlign(id, row)
+		expect(poBoxSurface(labeled)).toBe(expectedPoBox)
+	})
+
+	it("the registry probe table covers every augmentation", () => {
+		expect(new Set(cases.map(([id]) => id))).toEqual(new Set(Object.keys(AUGMENTATIONS)))
+	})
+
+	it("chained augmentations (case-upper ∘ us-street-suffix-abbreviate) still verify", () => {
+		const abbreviated = streetSuffixAbbreviate(streetRow("Main Street"))!
+		expect(abbreviated.raw).toBe("P.O. Box 5, 100 Main St, Portland, OR 97214")
+		const upper = caseUpper(abbreviated)!
+		expect(upper.source_id).toBe("t-1+us-street-suffix-abbreviate+case-upper")
+		expect(upper.synth?.base_source_id).toBe("t-1")
+		const aligned = alignRow(upper)
+		expect(aligned.kind).toBe("labeled")
+		if (aligned.kind !== "labeled") return
+		const { raw, span_starts, span_ends, span_tags } = aligned.row
+		const slice = (tag: ComponentTag) => {
+			const i = span_tags!.indexOf(tag)
+			return raw.slice(span_starts![i]!, span_ends![i]!)
+		}
+		expect(slice("po_box")).toBe("P.O. BOX 5")
+		expect(slice("street")).toBe("MAIN ST")
 	})
 })
 
