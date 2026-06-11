@@ -154,6 +154,10 @@ class ModelConfig:
     # classifier's affix columns in the returned logits (merge-in-forward — ONNX export and
     # score-affix need no changes). Loss = main CE + affix CE (1:1).
     use_affix_head: bool = False
+    # Train-time conventions pairing (#478): mask conventions-forbidden labels out of the CE on
+    # rows whose gold country has a conventions row (mirror: conventions.py <- codex). The
+    # inference mask's training half; hypothesis = FR region recovers (16.2 was the v4.3.0 tail).
+    use_conventions_loss_mask: bool = False
     # Must match the lexicon JSON's feature_dim (slot count).
     gazetteer_feature_dim: int = 5
 

@@ -296,6 +296,27 @@ def main(
     print(f"\nDownload results with:\n  modal volume get mailwoman-training /output/ ./output/")
 
 
+@app.function(volumes={VOL_MOUNT: vol}, image=training_image, timeout=600)
+def run_tests(pattern: str = ""):
+    """Run the corpus-python pytest suite INSIDE the training image (torch available) against the
+    volume's code. Exists because torch-dependent tests skip on the local venv — verify loss-path
+    changes here BEFORE spending GPU on a probe. Usage:
+    ``modal run scripts/modal/train_remote.py::run_tests --pattern test_conventions``"""
+    import subprocess
+    import sys
+
+    # The training image ships without pytest; install container-locally (ephemeral, ~3s).
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pytest"], check=True)
+    args = [sys.executable, "-m", "pytest", "/data/corpus-python/src/mailwoman_train/", "-q"]
+    if pattern:
+        args += ["-k", pattern]
+    proc = subprocess.run(args, capture_output=True, text=True)
+    print(proc.stdout[-4000:])
+    if proc.returncode != 0:
+        print(proc.stderr[-2000:])
+        raise SystemExit(proc.returncode)
+
+
 @app.function(image=training_image, timeout=120)
 def versions():
     """Print the export/quant toolchain versions baked into ``training_image``.
