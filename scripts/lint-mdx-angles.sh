@@ -21,7 +21,10 @@ fail=0
 for f in $files; do
 	[ -f "$f" ] || continue
 	# Strip fenced code blocks, then inline code spans, then flag raw <alnum in what remains.
-	hits=$(awk '/^```/{fence=!fence; next} !fence' "$f" | sed 's/`[^`]*`//g' | grep -nE '<[0-9A-Za-z]' || true)
+	# Digits-only: the measured build-breaking class is `<55`-style numeric prose. Uppercase
+	# `<Component>` is legitimate MDX JSX and lowercase `<word>` is usually real HTML — flagging
+	# them false-positives on valid docs (bit on the pipeline-contract page, night-11).
+	hits=$(awk '/^```/{fence=!fence; next} !fence' "$f" | sed 's/`[^`]*`//g' | grep -nE '<[0-9]' || true)
 	if [ -n "$hits" ]; then
 		echo "✗ $f — raw '<' before alphanumeric (MDX parses it as a JSX tag; build will fail):" >&2
 		echo "$hits" | head -5 | sed 's/^/    /' >&2
