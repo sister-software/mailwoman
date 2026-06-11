@@ -41,6 +41,8 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **Corpus** — the curated dataset used for training. The current corpus is `corpus-v0.3.0` with 677 million aligned rows.
 
+**Conventions mask** — a decode-time constraint layer keyed by the model's own address-system detection (the exported locale head): tags that are ungrammatical in the detected system are removed from the Viterbi vocabulary outright, and the system's postcode shape arms the snap-only repair pass. First slice (v4.3.0): French forbids the USPS street-affix decomposition. Same knowledge-outside-the-weights property as the gazetteer anchor — add a codex conventions row, no retrain. See [the knowledge ladder](./our-approach/the-knowledge-ladder.mdx), rung 4.2.
+
 ## D
 
 **Decoder** — in a transformer encoder-decoder model, the part that produces output sequences. Mailwoman's classifier is **encoder-only** (no decoder); the "CRF decoder" is a different thing — a structured-prediction layer that picks the best label sequence from the encoder's outputs.

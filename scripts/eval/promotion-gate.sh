@@ -71,17 +71,33 @@ CONV_MODE="$(node -e "console.log(JSON.parse(require('fs').readFileSync('$GATE',
 if [[ -n "$CONV_MODE" ]]; then
 	GAZ_ARGS+=(--conventions "$CONV_MODE")
 fi
+# Span-bridge channel (v4.4.0 corrective): spec-declared like the conventions mask.
+BRIDGE_MODE=""
+if [[ "$(node -e "console.log(JSON.parse(require('fs').readFileSync('$GATE','utf8')).requires_bridge === true)")" == "true" ]]; then
+	GAZ_ARGS+=(--bridge-gaps)
+	BRIDGE_MODE="1"
+fi
 
 run_battery() { # $1 = model path, $2 = tag (fp32|int8)
 	local m="$1" tag="$2"
 	echo "== battery [$tag] $m =="
 	node --experimental-strip-types scripts/eval/per-locale-f1.ts --model "$m" --tokenizer "$TOK" \
-		--model-card "$CARD" --model-anchor-lookup "$LK" "${GAZ_ARGS[@]}" > "$OUT_DIR/$tag-per-locale.md"
-	node --experimental-strip-types scripts/eval/score-affix.ts --model "$m" "${GAZ_ARGS[@]}" > "$OUT_DIR/$tag-affix.md"
+		--model-card "$CARD" --model-anchor-lookup "$LK" "${GAZ_ARGS[@]}" --out-json "$OUT_DIR/$tag-per-locale.json" > "$OUT_DIR/$tag-per-locale.md"
+	node --experimental-strip-types scripts/eval/score-affix.ts --model "$m" "${GAZ_ARGS[@]}" --json "$OUT_DIR/$tag-affix.json" > "$OUT_DIR/$tag-affix.md"
 	node --experimental-strip-types scripts/eval/score-affix.ts --model "$m" \
-		--file data/eval/external/unit-real-designators.jsonl "${GAZ_ARGS[@]}" > "$OUT_DIR/$tag-unit.md"
+		--file data/eval/external/unit-real-designators.jsonl "${GAZ_ARGS[@]}" --json "$OUT_DIR/$tag-unit.json" > "$OUT_DIR/$tag-unit.md"
 	node --experimental-strip-types scripts/eval/score-country-homograph.ts --model "$m" \
-		"${GAZ_ARGS[@]}" --suppress-gaz-near-postcode > "$OUT_DIR/$tag-country.md"
+		"${GAZ_ARGS[@]}" --suppress-gaz-near-postcode --json "$OUT_DIR/$tag-country.json" > "$OUT_DIR/$tag-country.md"
+	# v4.4.0 floors: po_box/cedex (the coverage-shard val) + intersections (real TIGER crossings).
+	node --experimental-strip-types scripts/eval/score-affix.ts --model "$m" \
+		--file data/eval/external/po-box-cedex-val.jsonl "${GAZ_ARGS[@]}" --json "$OUT_DIR/$tag-pobox.json" > "$OUT_DIR/$tag-pobox.md"
+	node --experimental-strip-types scripts/eval/score-affix.ts --model "$m" \
+		--file data/eval/external/intersection-real.jsonl "${GAZ_ARGS[@]}" --json "$OUT_DIR/$tag-intersection.json" > "$OUT_DIR/$tag-intersection.md"
+	# Watch lenses (v4.4.0+, recorded not floored — one release of history before promotion, #488):
+	node --experimental-strip-types scripts/eval/score-affix.ts --model "$m" \
+		--file data/eval/external/intersection-golden-vt.jsonl "${GAZ_ARGS[@]}" > "$OUT_DIR/$tag-watch-intersection-vt.md"
+	node --experimental-strip-types scripts/eval/score-affix.ts --model "$m" \
+		--file data/eval/external/glue-rows-perturb.jsonl "${GAZ_ARGS[@]}" > "$OUT_DIR/$tag-watch-glue.md"
 	scripts/eval/de-order-eval.sh --model "$m" --card "$CARD" --tokenizer "$TOK" \
 		--anchor-lookup "$LK" --out "$OUT_DIR/$tag-deorder" > "$OUT_DIR/$tag-deorder.md" 2>&1 || true
 }
@@ -89,6 +105,13 @@ run_battery() { # $1 = model path, $2 = tag (fp32|int8)
 run_battery "$MODEL" fp32
 [[ -n "$INT8" ]] && run_battery "$INT8" int8
 node --experimental-strip-types scripts/eval/demo-preset-compare.ts --model-path="${INT8:-$MODEL}" > "$OUT_DIR/presets.md"
+
+# Arena leg (v4.4.0+: arena.perturb is a floor when the spec declares it) — heavy, ship artifact only.
+if [[ "$(node -e "console.log('arena.perturb' in (JSON.parse(require('fs').readFileSync('$GATE','utf8')).floors||{}))")" == "true" ]]; then
+	MODEL="${INT8:-$MODEL}" TOKENIZER="$TOK" MODELCARD="$CARD" \
+		GAZETTEER="$GAZ" ANCHOR="$LK" CONVENTIONS="${CONV_MODE:-}" BRIDGE="${BRIDGE_MODE:-}" \
+		OUT_DIR="$OUT_DIR/arenas" scripts/eval/external-arenas.sh > "$OUT_DIR/arenas.md" 2>&1
+fi
 
 # --- collect + verify (node does the parsing; bash stays an orchestrator) ---
 node --experimental-strip-types scripts/eval/promotion-gate-verdict.ts \

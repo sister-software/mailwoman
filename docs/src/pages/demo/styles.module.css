@@ -1,35 +1,157 @@
+/* ============================================================================
+ * Google Maps-style demo layout
+ * - Map fills entire viewport (fixed position, behind Docusaurus navbar)
+ * - Floating semi-transparent control panel on the left
+ * - Thin header bar at the top
+ * - Mobile: panel slides to the bottom
+ * - All existing element IDs and selectors preserved for E2E tests
+ * ============================================================================ */
+
+/* ── Root: fixed full-viewport layer behind Docusaurus navbar ──────────── */
 .demoRoot {
-	max-width: 1280px;
-	margin: 0 auto;
-	padding: 2rem 1.5rem;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 0;
+	overflow: hidden;
+	padding: 0;
+	margin: 0;
+	max-width: none;
 }
 
+/* ── Thin top bar overlay ────────────────────────────────────────────── */
 .header {
-	margin-bottom: 1.5rem;
+	position: absolute;
+	top: var(--ifm-navbar-height, 60px);
+	left: 0;
+	right: 0;
+	z-index: 100;
+	padding: 0.45rem 1.25rem;
+	background: rgba(255, 255, 255, 0.78);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+	display: flex;
+	align-items: baseline;
+	gap: 0.75rem;
+	font-size: 0.85rem;
+}
+
+[data-theme="dark"] .header {
+	background: rgba(27, 27, 29, 0.78);
+	border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
 .header h1 {
-	margin: 0 0 0.5rem 0;
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 700;
+	white-space: nowrap;
 }
 
 .header p {
 	margin: 0;
-	color: var(--ifm-color-emphasis-700);
+	opacity: 0.6;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
+.headerMeta {
+	margin-left: auto;
+	opacity: 0.45;
+	font-size: 0.72rem;
+	font-family: var(--ifm-font-family-monospace);
+	white-space: nowrap;
+}
+
+/* ── Layout: map + floating panel ─────────────────────────────────────── */
 .layout {
-	display: grid;
-	grid-template-columns: 380px 1fr;
-	gap: 1.5rem;
-	min-height: 600px;
+	position: absolute;
+	inset: 0;
 }
 
-@media (max-width: 996px) {
-	.layout {
-		grid-template-columns: 1fr;
+/* Map fills entire viewport */
+.mapWrap {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	border-radius: 0;
+	border: none;
+	height: auto;
+	overflow: visible;
+}
+
+.map {
+	position: absolute;
+	inset: 0;
+}
+
+/* ── Floating control panel ───────────────────────────────────────────── */
+.controls {
+	position: absolute;
+	left: 1rem;
+	top: calc(var(--ifm-navbar-height, 60px) + 3rem);
+	bottom: 1rem;
+	width: 400px;
+	max-width: calc(100vw - 2rem);
+	z-index: 10;
+	background: rgba(255, 255, 255, 0.85);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	border: 1px solid rgba(0, 0, 0, 0.1);
+	border-radius: 16px;
+	box-shadow: 0 4px 32px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	animation: panelSlideIn 0.3s ease-out;
+	/* Scrollbar gutters: prevent layout shift when scrollbar appears */
+	scrollbar-gutter: stable;
+}
+
+[data-theme="dark"] .controls {
+	background: rgba(27, 27, 29, 0.85);
+	border-color: rgba(255, 255, 255, 0.1);
+	box-shadow: 0 4px 32px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes panelSlideIn {
+	from {
+		opacity: 0;
+		transform: translateX(-12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
 	}
 }
 
+/* ── Panel scrollbar styling ──────────────────────────────────────────── */
+.controls::-webkit-scrollbar {
+	width: 5px;
+}
+
+.controls::-webkit-scrollbar-track {
+	background: transparent;
+	margin: 4px 0;
+}
+
+.controls::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.15);
+	border-radius: 3px;
+}
+
+[data-theme="dark"] .controls::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Controls children: form elements ─────────────────────────────────── */
 .controls form {
 	display: flex;
 	flex-direction: column;
@@ -55,9 +177,7 @@
 }
 
 /* Scope the primary submit-button styling to the form so secondary buttons (example chips, debug
- * toggle) keep their own visual weight. Without this scope, `.controls button` outranked the more
- * specific `.exampleBtn` selector via SVN (0,1,1 vs 0,1,0) and example buttons rendered as
- * filled primary buttons — misleading the visual hierarchy. */
+ * toggle) keep their own visual weight. */
 .controls form button {
 	padding: 0.5rem 0.75rem;
 	background: var(--ifm-color-primary);
@@ -120,33 +240,61 @@
 	white-space: pre-wrap;
 }
 
-/*
- * Map container — explicit height (not min-height) + position:relative on the wrapper.
- *
- * MapLibre's canvas auto-resizes via ResizeObserver. If the wrapper's height is `min-height`
- * (unbounded growth allowed), the canvas hits a feedback loop: canvas size → wrapper size →
- * canvas size → ... until the GPU buffer allocation OOMs the tab. Pinning to an explicit pixel
- * height bounds the loop on first paint. Reported by the front-end Deepseek monitor 2026-05-21.
- *
- * `position: absolute; inset: 0` on the inner .map sidesteps the secondary case where a parent
- * grid track itself grows in response to canvas size — the absolute element is out of flow, so
- * its dimensions don't feed back into grid track sizing.
- */
-.mapWrap {
-	position: relative;
-	height: 600px;
-	border-radius: 8px;
-	overflow: hidden;
-	border: 1px solid var(--ifm-color-emphasis-300);
+/* ── Version description in panel ─────────────────────────────────────── */
+.versionInfo {
+	font-size: 0.85rem;
+	opacity: 0.8;
+	margin: 0;
+	padding-bottom: 0.25rem;
+	border-bottom: 1px solid var(--ifm-color-emphasis-200);
 }
 
-.map {
-	position: absolute;
-	inset: 0;
+/* ── Mobile: panel slides to bottom ───────────────────────────────────── */
+@media (max-width: 768px) {
+	.header {
+		padding: 0.35rem 0.75rem;
+		font-size: 0.75rem;
+	}
+
+	.header h1 {
+		font-size: 0.9rem;
+	}
+
+	.header p {
+		display: none;
+	}
+
+	.headerMeta {
+		font-size: 0.65rem;
+	}
+
+	.controls {
+		left: 0;
+		right: 0;
+		bottom: 0;
+		top: auto;
+		width: auto;
+		max-width: none;
+		max-height: 55vh;
+		border-radius: 16px 16px 0 0;
+		padding: 1rem;
+		animation: panelSlideUp 0.3s ease-out;
+	}
+
+	@keyframes panelSlideUp {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
 }
 
-@media (max-width: 996px) {
-	.mapWrap {
-		height: 480px;
+@media (min-width: 769px) and (max-width: 996px) {
+	.controls {
+		width: 340px;
 	}
 }

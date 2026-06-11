@@ -468,6 +468,44 @@
 				}
 			},
 			"notes": "FROM SCRATCH (clean lineage — no init_from). The #511 relabel run: the #492 ladder's root cause (1,039:1 contradictory street labels) fixed by a loader-level affix-split relabel pass; affix compensations reverted (synth-affix 17→2.0, tag weights →1.5). First gate FAILed fr.postcode 99.3/99.5 (NEW leading-postcode digit-split class) — corrected by the conventions mask (#478 slice 1: locale_logits export + codex fr conventions + emission mask + shape-triggered snap repair), same weights, re-gate PASS 12/12. Ship config: addressSystemConventions:'auto'. Gate record: docs/articles/evals/2026-06-11-v4.3.0-ship-gate.md. Country leg note: this gate fixed the historically gaz-starved country invocation; 85.1 is not comparable to v4.2.0's 89.8."
+		},
+		{
+			"run_id": "v1.3.0-boundary-consolidation-step040000",
+			"model_version": "4.4.0",
+			"model_path": "/mnt/playpen/mailwoman-data/models/quantized/model-v130-step-40000-int8.onnx",
+			"corpus_version": "0.4.15-boundary",
+			"corpus_sha256": "see corpus MANIFEST (v0.4.15-boundary)",
+			"eval_set_version": "golden v0.1.2 + real-OOD (affix/v2/unit/country/po_box-cedex/intersection) + arena perturb + honest-eval VT",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-06-11",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 40000,
+			"training_wall_clock_seconds": 4080,
+			"metrics": {
+				"us": {
+					"postcode": 98.3,
+					"country_homograph": 89.8,
+					"micro": 86.1,
+					"locality": 75.7,
+					"region": 90.3,
+					"street": 77.9,
+					"street_prefix": 93.6,
+					"street_suffix": 96.6,
+					"unit": 92.1,
+					"po_box_real": 89.1,
+					"intersection_real": 100.0
+				},
+				"fr": {
+					"postcode": 99.6,
+					"house_number": 97.2,
+					"region": 25.6,
+					"cedex_real": 96.1
+				},
+				"de": {
+					"native_locality_anchor_on": 91.0
+				}
+			},
+			"notes": "FROM SCRATCH, clean lineage. PASS 17/17 on the densest pre-registered spec to date (arena floor gated for the first time). Three-battery verdict: po_box FAIL 60.4 (dotted-leader truncation — the corpus format cannot label intra-span punctuation) → span bridge corrective → fr.postcode FAIL 99.0 (comma over-merge) → separator exclusion → PASS. Both correctives decode-side, $0 GPU. Ship config: addressSystemConventions:'auto' + bridgePunctuationGaps:true (REQUIRED — see model card notes)."
 		}
 	]
 }

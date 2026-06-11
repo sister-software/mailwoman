@@ -397,6 +397,7 @@ def iter_rows(
     row_limit: int | None = None,
     augment_directional_prob: float = 0.0,
     augment_region_prob: float = 0.0,
+    augment_glue_prob: float = 0.0,
     affix_relabel_lexicon: "AffixRelabelLexicon | None" = None,
     shuffle_buffer: int = 131072,
 ) -> Iterator[dict]:
@@ -446,14 +447,16 @@ def iter_rows(
             buf.append(next(upstream))
     except StopIteration:
         pass
-    do_augment = augment_directional_prob > 0 or augment_region_prob > 0
+    do_augment = augment_directional_prob > 0 or augment_region_prob > 0 or augment_glue_prob > 0
 
     def _emit(row: dict) -> Iterator[dict]:
         # Relabel runs AFTER augmentation so label-inheriting directional expansions are caught
         # (#511 — see relabel.py). augment_row yields fresh dicts but shares the labels list with
         # the source row on the no-op path, so relabel copies before mutating.
         if do_augment:
-            for augmented in augment_row(row, rng, augment_directional_prob, augment_region_prob):
+            for augmented in augment_row(
+                row, rng, augment_directional_prob, augment_region_prob, augment_glue_prob
+            ):
                 if affix_relabel_lexicon is not None:
                     augmented = {**augmented, "labels": list(augmented["labels"])}
                     relabel_row(augmented, affix_relabel_lexicon)
@@ -521,6 +524,7 @@ def iter_encoded(
         row_limit=row_limit,
         augment_directional_prob=cfg_data.augment_directional_prob,
         augment_region_prob=cfg_data.augment_region_prob,
+        augment_glue_prob=getattr(cfg_data, "augment_glue_prob", 0.0),
         affix_relabel_lexicon=affix_relabel_lexicon,
     ):
         enc = encode_row(

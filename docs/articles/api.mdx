@@ -152,11 +152,12 @@ interface PipelineOpts {
 	resolveOpts?: {
 		candidatesPerLookup?: number // How many alternatives to surface (default: 1)
 	}
-	forceJointReconcile?: boolean // Use joint decoding instead of argmax fallback
+	jointReconcile?: boolean // Joint decoding (default true when stages support it; false → argmax)
+	forceJointReconcile?: boolean // DEPRECATED alias of jointReconcile
 }
 ```
 
-`forceJointReconcile` requires a classifier with `parseWithLogits` support (the `NeuralAddressClassifier` has this). When enabled, Stage 5 runs beam search over phrase proposals × classifier top-K × resolver candidates with WOF concordance scoring. Currently opt-in behind this flag.
+Joint reconcile requires a classifier with `parseWithLogits` support (the `NeuralAddressClassifier` has this) and the phrase grouper. When those stages are wired it is the DEFAULT — Stage 5 runs beam search over phrase proposals × classifier top-K × resolver candidates with WOF concordance scoring, falling back to argmax when the prerequisites are absent. Set `jointReconcile: false` to opt out; `forceJointReconcile` is the deprecated alias.
 
 ## CLI
 

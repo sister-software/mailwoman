@@ -167,6 +167,7 @@ class MailwomanCoarseEncoder(nn.Module):
         use_gazetteer_anchor: bool = False,
         gazetteer_feature_dim: int = 5,
         use_affix_head: bool = False,
+        use_conventions_loss_mask: bool = False,
     ) -> None:
         super().__init__()
         self.pad_token_id = pad_token_id
@@ -312,6 +313,16 @@ class MailwomanCoarseEncoder(nn.Module):
         # skip-connects PAST the encoder so the head owns the clue->affix mapping (consult
         # 2026-06-10); independent dropout on the skip layers robustness locally. Its 4 affix
         # logits replace the main classifier's affix columns in forward (merge-in-forward).
+        # Train-time conventions pairing (#478): per-locale forbidden-label mask applied to the
+        # CE input only (returned logits untouched — inference behavior is the codex mask's job).
+        self.use_conventions_loss_mask = bool(use_conventions_loss_mask)
+        if self.use_conventions_loss_mask:
+            from .conventions import build_forbidden_mask
+            from .labels import LABEL_TO_ID
+            self.register_buffer(
+                "conventions_forbidden", build_forbidden_mask(LABEL_TO_ID, num_labels), persistent=False
+            )
+
         self.use_affix_head = use_affix_head
         if use_affix_head:
             affix_in = hidden_size + (self.gazetteer_feature_dim or 5)
@@ -557,6 +568,11 @@ class MailwomanCoarseEncoder(nn.Module):
 
         loss: torch.Tensor | None = None
         if labels is not None:
+            ce_logits = logits
+            if self.use_conventions_loss_mask and locale_ids is not None:
+                # IGNORE_INDEX rows clamp to locale 0 (US), whose mask row is all-zero — a no-op.
+                rows = self.conventions_forbidden[locale_ids.clamp_min(0)]  # (B, num_labels)
+                ce_logits = logits.masked_fill(rows.unsqueeze(1).bool(), -1e9)
             ce_kwargs: dict[str, Any] = {
                 "ignore_index": -100,
                 "label_smoothing": self.label_smoothing,
@@ -566,7 +582,7 @@ class MailwomanCoarseEncoder(nn.Module):
             if isinstance(self.class_weights, torch.Tensor):
                 ce_kwargs["weight"] = self.class_weights
             ce_loss = nn.functional.cross_entropy(
-                logits.view(-1, self.num_labels),
+                ce_logits.view(-1, self.num_labels),
                 labels.view(-1),
                 **ce_kwargs,
             )
@@ -781,6 +797,7 @@ class MailwomanCoarseEncoder(nn.Module):
             "use_gazetteer_anchor": bool(self.use_gazetteer_anchor),
             "gazetteer_feature_dim": int(self.gazetteer_feature_dim),
             "use_affix_head": bool(self.use_affix_head),
+            "use_conventions_loss_mask": bool(self.use_conventions_loss_mask),
             "id2label": dict(ID_TO_LABEL),
             "label2id": dict(LABEL_TO_ID),
         }
@@ -834,6 +851,7 @@ class MailwomanCoarseEncoder(nn.Module):
             inject_first_token=cfg.get("inject_first_token", False),
             use_gazetteer_anchor=cfg.get("use_gazetteer_anchor", False),
             use_affix_head=cfg.get("use_affix_head", False),
+            use_conventions_loss_mask=cfg.get("use_conventions_loss_mask", False),
             gazetteer_feature_dim=cfg.get("gazetteer_feature_dim", 5),
         )
         # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
@@ -894,6 +912,7 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int) -> MailwomanCoa
         gazetteer_feature_dim=getattr(cfg.model, "gazetteer_feature_dim", 5),
         # Dedicated affix head (#492).
         use_affix_head=getattr(cfg.model, "use_affix_head", False),
+        use_conventions_loss_mask=getattr(cfg.model, "use_conventions_loss_mask", False),
     )
 
 

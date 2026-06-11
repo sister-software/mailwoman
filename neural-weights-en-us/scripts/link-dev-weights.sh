@@ -33,14 +33,14 @@
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
-# --- current default (releases.json defaultVersion = v4.3.0) ---------------
+# --- current default (releases.json defaultVersion = v4.4.0) ---------------
 # v4.3.0 en-us ships the v1.1.0-relabel-consolidation model (step 40000, from
 # scratch on the label-consistent mix — #511 affix relabel; affix 93.6/96.6) with
 # the locale head exported (locale_logits) for the conventions mask (#478 slice 1),
 # + the 0.6.0-a0 tokenizer. These md5s are the authoritative bytes the demo serves
 # at .../mailwoman/en-us/v4.3.0/{model,tokenizer}.
-DEFAULT_MODEL="/mnt/playpen/mailwoman-data/models/quantized/model-v110-step-40000-locale-int8.onnx"
-DEFAULT_MODEL_MD5="9ab47793a4a454c8432c5de05567ad0f"
+DEFAULT_MODEL="/mnt/playpen/mailwoman-data/models/quantized/model-v130-step-40000-int8.onnx"
+DEFAULT_MODEL_MD5="f086951a807b35e1ef700c0c2662a088"
 DEFAULT_TOKENIZER="/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 DEFAULT_TOKENIZER_MD5="b6137e8c52914c9715374268ecaa4bc6"
 

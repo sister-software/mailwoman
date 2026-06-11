@@ -35,6 +35,11 @@ class DataConfig:
     # Probability (0-1) that each augmentation fires per row. 0 = disabled.
     augment_directional_prob: float = 0.0
     augment_region_prob: float = 0.0
+    # Region+postcode glue augmentation (#513): probability that a row with a region token
+    # immediately followed by a postcode token yields an extra copy with the pair fused in
+    # raw ("NY 14201" -> "NY14201") while tokens/labels stay split — the model learns to
+    # split the fused surface at the SP-piece level. 0 = disabled (rng-stream bit-identical).
+    augment_glue_prob: float = 0.0
     # Postcode-anchor lookup (#239/#240). Path to the JSON {postcode: [posterior, lat, lon]} table
     # (built by scripts/build-pilot-anchor-lookup.py). When set AND model.use_postcode_anchor is on,
     # the loader projects per-piece anchor features onto each row. None → no anchor features.
@@ -149,6 +154,10 @@ class ModelConfig:
     # classifier's affix columns in the returned logits (merge-in-forward — ONNX export and
     # score-affix need no changes). Loss = main CE + affix CE (1:1).
     use_affix_head: bool = False
+    # Train-time conventions pairing (#478): mask conventions-forbidden labels out of the CE on
+    # rows whose gold country has a conventions row (mirror: conventions.py <- codex). The
+    # inference mask's training half; hypothesis = FR region recovers (16.2 was the v4.3.0 tail).
+    use_conventions_loss_mask: bool = False
     # Must match the lexicon JSON's feature_dim (slot count).
     gazetteer_feature_dim: int = 5
 

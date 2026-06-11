@@ -1,17 +1,17 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "4.3.0",
-	"model_lineage": "v1.1.0-relabel-consolidation / step 40000 — the v4.2.0 consolidation recipe FROM SCRATCH on a label-consistent mix (#511 affix-split relabel pass: the base corpus's ~467M monolithic street labels rewritten to agree with the affix shard, ending the 1,039:1 contradiction the #492 probe ladder isolated), with both anti-contradiction compensations reverted (synth-affix 17.0→2.0, affix tag weights →1.5). Ships with the locale head exported (locale_logits) driving the address-system conventions mask (#478 slice 1) — declared inference config addressSystemConventions:'auto'. Gate: docs/articles/evals/2026-06-11-v4.3.0-ship-gate.md; tokenizer 0.6.0-a0",
-	"phase": "Stage 3 — v1.1 relabel: affix parity closed (data-consistency lever) + conventions layer slice 1",
+	"version": "4.4.0",
+	"model_lineage": "v1.3.0-boundary-consolidation / step 40000 — from scratch on corpus v0.4.15-boundary: the v4.3.0 recipe + three probe-passed levers (glue augmentation #513, real-TIGER intersection shard #487, codex po_box/cedex coverage shard), old synth-po-box retired. Ships with TWO declared inference behaviors: addressSystemConventions:'auto' (v4.3.0) + bridgePunctuationGaps:true (the span bridge — the corpus label format cannot express punctuation inside spans; the bridge merges same-tag fragments across intra-token punctuation). Gate: docs/articles/evals/2026-06-11-v4.4.0-ship-gate.md; tokenizer 0.6.0-a0",
+	"phase": "Stage 3 — v1.3 boundary: the last starved tags alive (po_box/cedex/intersections) + the arena debt closed",
 	"license": "AGPL-3.0-only",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "0.4.12-consolidation (+ loader affix-relabel pass, lexicon affix-relabel-v1)",
+		"corpus_version": "0.4.15-boundary (v0.4.12 + intersection + po_box/cedex shards; loader relabel + glue augmentation)",
 		"tokenizer_version": "0.6.0-a0",
 		"steps": 40000,
 		"best_step": 40000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v1.1.0-relabel-consolidation: from-scratch 40k on v0.4.12 with the #511 affix-split relabel pass at load time (trailing USPS suffix→street_suffix, leading directional→street_prefix, exact shard-builder parity, after augmentation), synth-affix 2.0 (natural weight — the contradiction it fought is gone), affix tag class-weights 1.5, gazetteer anchor + train-time choreography, CE-only, lr=1.5e-4, seed 42."
+		"recipe": "v1.3.0-boundary-consolidation: from-scratch 40k, augment_glue_prob 0.25, synth-intersection 1.0, synth-po-box-cedex 1.5 (old synth-po-box retired, stated), affix relabel pass, gazetteer anchor + choreography, CE-only, lr=1.5e-4, seed 42."
 	},
 	"architecture": {
 		"hidden_size": 384,
@@ -79,7 +79,7 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "v4.3.0 — the affix lever closed by data consistency, not weights. street_prefix 64.9→93.6, street_suffix 48.8→96.6 (int8, real-affix eval); on the new 193-row NAD-native eval the shipped v4.2.0 scored 18.2/8.9 F1 where this model scores 92.2/90.3 at P=100. First shipped slice of the conventions layer: the locale head (now exported as locale_logits) detects the address system and the decoder OBEYS it — fr forbids the USPS affix decomposition and pins the 5-digit postcode shape (fixes the FR leading-postcode digit-split this run's first gate caught). Consumers: pass addressSystemConventions:'auto' (the declared ship config) or omit for byte-stable pre-#511 behavior. Known follow-ups: po_box (deferred lever, both Montréal gate rows), FR region tail (27.6→16.2, unfloored), de/gb conventions rows as evidence arrives.",
+	"notes": "v4.4.0 — the boundary consolidation: po_box 0→89.1, cedex 0→96.1, intersections 0→100 (real-OOD, P≥95) — the parity scorecard's last empty rows filled; the v4.3.0 perturb-arena debt closed (64→72, gated). The ship config REQUIRES bridgePunctuationGaps:true + addressSystemConventions:'auto' — without the bridge, dotted surfaces (P.O. Box, C.P.) decode as period-truncated fragments (the corpus alignment tokenizer cannot label punctuation; measured: po_box 60.4 without, 89.1 with). Bridge merges intra-token punctuation gaps ONLY (commas excluded — they separate genuine spans). Known follow-ups: char-offset corpus labels (the structural cure), conventions loss-mask rides the next run, FR region tail 25.6 (floored, recovering).",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=48000",
@@ -103,60 +103,49 @@
 	},
 	"base_relpath": "/data/output-v097-unit-v3-s42/checkpoints/step-020000",
 	"eval": {
-		"ship_gate_2026_06_11": {
-			"promotion_gate": "PASS 12/12 (gates/v4.3.0-relabel.json, int8-graded, max fp32-int8 delta 0.2pp)",
+		"ship_gate_2026_06_11_night": {
+			"promotion_gate": "PASS 17/17 (gates/v4.4.0-boundary.json, int8-graded, max delta 0.3pp; three-battery record in the gate doc)",
 			"honest_eval_vt": {
 				"n": 1428,
 				"region_match_pct": 99.6,
 				"coord_p50_km": 3.4,
-				"coord_p90_km": 7.4,
-				"pip_coverage_adj_pct": 46.9,
-				"baseline_v420_region_pct": 99.9,
+				"coord_p90_km": 7.5,
 				"verdict": "PASS"
 			},
-			"demo_presets": "PASS — affix split fires live (1060 W Addison St → W + Addison + St)",
-			"int8_vs_fp32": "PASS — all gate tags within 0.2pp",
-			"affix_stability_20k_to_40k": "v2 prefix 88.3→91.6, suffix 89.4→90.3 (rose, no decay)"
+			"arena_perturb_pct": 72.0
 		},
-		"per_component_int8_gazfed_conventions": {
+		"per_component_int8_shipconfig": {
 			"us": {
-				"postcode": 97.8,
-				"country_homograph": 85.1,
-				"micro": 85.1,
-				"locality": 74.4,
-				"region": 89.1,
-				"street": 75.5,
+				"postcode": 98.3,
+				"country_homograph": 89.8,
+				"micro": 86.1,
+				"locality": 75.7,
+				"region": 90.3,
+				"street": 77.9,
 				"street_prefix": 93.6,
 				"street_suffix": 96.6,
-				"unit": 92.1
+				"unit": 92.1,
+				"po_box_real": 89.1,
+				"intersection_real": 100.0
 			},
 			"fr": {
-				"postcode": 99.7,
-				"house_number": 97.7,
-				"region": 16.2
+				"postcode": 99.6,
+				"house_number": 97.2,
+				"region": 25.6,
+				"cedex_real": 96.1
 			},
 			"de": {
-				"native_locality_anchor_on": 90.1
-			},
-			"affix_nad_native_v2": {
-				"street_prefix_f1": 92.2,
-				"street_suffix_f1": 90.3,
-				"precision": 100.0,
-				"baseline_v420": {
-					"street_prefix_f1": 18.2,
-					"street_suffix_f1": 8.9
-				}
+				"native_locality_anchor_on": 91.0
 			}
 		},
-		"known_regressions_vs_4_2_0": {
-			"fr_region": -11.4,
-			"us_street_exact": -0.7,
-			"country_homograph": "-4.7 (NOT comparable: the v4.2.0 figure was measured under the gaz-starved country leg fixed this gate; both clear the 83.3 floor)",
-			"mitigations": "FR region tail rides the next corpus pass; arbitration layer #478 continues"
+		"known_regressions_vs_4_3_0": {
+			"fr_postcode": -0.1,
+			"fr_house_number": -0.5,
+			"note": "both within single-row noise on their evals; every floor met"
 		}
 	},
 	"files_md5": {
-		"model.onnx": "9ab47793a4a454c8432c5de05567ad0f",
+		"model.onnx": "f086951a807b35e1ef700c0c2662a088",
 		"tokenizer.model": "b6137e8c52914c9715374268ecaa4bc6"
 	}
 }
