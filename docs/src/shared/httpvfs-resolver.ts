@@ -20,6 +20,8 @@
  *   webpack — that's what keeps the Docusaurus build warning-free.
  */
 
+import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
+
 import type { DualRole, MailwomanLookupLike } from "./resources"
 
 const POPULATION_BOOST = 4.0
@@ -210,7 +212,12 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 
 		const conds = [`place_search MATCH ${sqlStr(fts)}`, "spr.is_current != 0", "spr.is_deprecated = 0"]
 		if (query.placetype) {
-			const types = (Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(Boolean) as string[]
+			// Shared placetype-equivalence expansion (core/resolver): a `locality` query must also reach
+			// `borough` / `localadmin` rows — Brooklyn-the-borough is a borough, not a locality, and a
+			// strict filter made it unreachable (the "Brooklyn → Brooklyn Park, MN" bug).
+			const types = expandPlacetypeFilter(
+				(Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(Boolean) as string[]
+			)
 			if (types.length) conds.push(`spr.placetype IN (${types.map(sqlStr).join(",")})`)
 		}
 		if (query.country) conds.push(`spr.country = ${sqlStr(query.country.toUpperCase())}`)
@@ -226,6 +233,7 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 		const sql =
 			`SELECT spr.id, spr.name, spr.placetype, spr.country, spr.latitude, spr.longitude, spr.parent_id, ` +
 			`spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude, ` +
+			`place_search.alt_names AS alt_names, ` +
 			`${hasPop ? "pp.population" : "NULL"} AS population, bm25(place_search) AS bm25 ` +
 			`FROM place_search JOIN spr ON spr.id = place_search.wof_id ` +
 			`${hasPop ? "LEFT JOIN place_population pp ON pp.id = spr.id " : ""}` +
@@ -237,23 +245,40 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 		// an exact match, same tier as an exact name match — so it outranks a foreign region that merely
 		// token-matches "VT". Mirrors WofWasmPlaceLookup; no-op on slim DBs without `place_abbr`.
 		const abbrIds = await this.#abbrExactIds(text)
+		// Strict exact = canonical name or region abbreviation equals the query. Computed for the whole
+		// pool FIRST because the ALIAS tier below only engages when no strict exact exists.
+		const strictExact = (row: Record<string, unknown>): boolean =>
+			normName(String(row.name)) === normQuery || abbrIds.has(Number(row.id))
+		const anyStrictExact = rows.some(strictExact)
 		return rows
 			.map((row) => {
 				const pop = typeof row.population === "number" ? row.population : 0
 				const popBoost = pop > 0 ? POPULATION_BOOST * Math.min(1, Math.log10(1 + pop) / POPULATION_SCALE_LOG10) : 0
 				const adj = (row.bm25 as number) - popBoost
-				const exactTier = normName(String(row.name)) === normQuery || abbrIds.has(Number(row.id)) ? 0 : 1
+				// Alias tier: `alt_names` is the FTS row's alias bag (all `names` rows space-joined). Name
+				// boundaries are LOST in the bag, so a containment check would false-promote interior
+				// fragments ("York" matches inside "New York City") — it only engages when NO candidate is
+				// strictly exact: the "New York City" case, where the query is a WOF alias of the New York
+				// locality but no spr row bears the name. Mirrors WofWasmPlaceLookup.
+				const aliasExact =
+					!anyStrictExact &&
+					typeof row.alt_names === "string" &&
+					` ${normName(row.alt_names)} `.includes(` ${normQuery} `)
+				const exactTier = strictExact(row) || aliasExact ? 0 : 1
 				return { row, exactTier, adj }
 			})
 			.sort((a, b) => a.exactTier - b.exactTier || a.adj - b.adj)
 			.slice(0, limit)
-			.map(({ row, adj }) => ({
+			.map(({ row, adj, exactTier }) => ({
 				id: row.id as number,
 				name: row.name as string,
 				placetype: row.placetype as string,
 				lat: row.latitude as number,
 				lon: row.longitude as number,
 				score: -adj,
+				// Surfaced so the demo cascade can accept an alias-exact hit ("New York City" → New York)
+				// the same way it accepts a canonical-name match.
+				exactMatch: exactTier === 0,
 				bbox:
 					row.min_latitude != null && row.max_latitude != null && row.min_longitude != null && row.max_longitude != null
 						? {

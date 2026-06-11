@@ -155,6 +155,34 @@ const FIXTURE: FixturePlace[] = [
 		lon: 4.69,
 		ancestor_ids: [85633723],
 	},
+
+	// The Brooklyn pair: WOF files Brooklyn-the-borough (NYC, pop 2.5M) as placetype `borough`, NOT
+	// `locality`. A locality query must still reach it via the shared placetype expansion
+	// (core/resolver PLACETYPE_FILTER_GROUPS) — otherwise the only locality-typed match is the fuzzy
+	// "Brooklyn Park" and the resolver mislocates to Minnesota.
+	{
+		id: 421205765,
+		parent_id: 85633147,
+		name: "Brooklyn",
+		placetype: "borough",
+		country: "US",
+		lat: 40.64,
+		lon: -73.95,
+		// The canonical name also lives in `names` in a real WOF distribution — required for the
+		// exact-match tier (#exactMatchIds queries `names`, not `spr`).
+		alt_names: ["Brooklyn"],
+		ancestor_ids: [85633147],
+	},
+	{
+		id: 85969229,
+		parent_id: 85633147,
+		name: "Brooklyn Park",
+		placetype: "locality",
+		country: "US",
+		lat: 45.11,
+		lon: -93.35,
+		ancestor_ids: [85633147],
+	},
 ]
 
 function buildFixtureDb(): DatabaseSync {
@@ -263,10 +291,30 @@ describe("WofSqlitePlaceLookup against an inline WOF fixture", () => {
 		expect(candidates[0]).toMatchObject({ name: "Paris", country: "US", placetype: "locality" })
 	})
 
-	test('"London" with placetype: "locality" excludes the Ontario borough', async () => {
+	test('"London" with placetype: "locality" INCLUDES the Ontario borough (locality placetype expansion)', async () => {
+		// `locality` expands to locality + borough + localadmin (core/resolver PLACETYPE_FILTER_GROUPS):
+		// WOF files many city-like places (Brooklyn, the London boroughs) under `borough`/`localadmin`,
+		// and a locality span must be able to reach them.
 		const candidates = await lookup.findPlace({ text: "London", placetype: "locality" })
+		const byCountry = candidates.map((c) => `${c.country}:${c.placetype}`)
+		expect(byCountry).toContain("GB:locality")
+		expect(byCountry).toContain("CA:borough")
+	})
+
+	test('an explicit placetype: "borough" filter stays narrow (no reverse expansion)', async () => {
+		const candidates = await lookup.findPlace({ text: "London", placetype: "borough" })
 		expect(candidates.length).toBe(1)
-		expect(candidates[0]).toMatchObject({ name: "London", country: "GB" })
+		expect(candidates[0]).toMatchObject({ name: "London", country: "CA", placetype: "borough" })
+	})
+
+	test('"Brooklyn" locality query reaches the exact-named borough over the fuzzy "Brooklyn Park" locality', async () => {
+		// The live-demo bug (2026-06-11): with the borough excluded, the only locality-typed match was
+		// the partial "Brooklyn Park" → resolved to Minnesota. The expansion makes the exact-named
+		// borough reachable, and exact-match tiering puts it on top.
+		const candidates = await lookup.findPlace({ text: "Brooklyn", placetype: "locality" })
+		expect(candidates.length).toBeGreaterThan(0)
+		expect(candidates[0]).toMatchObject({ id: 421205765, name: "Brooklyn", placetype: "borough" })
+		expect(candidates[0]?.exactMatch).toBe(true)
 	})
 
 	test('"Springfield" with parentId: Illinois returns Springfield,IL first', async () => {
@@ -305,6 +353,25 @@ describe("WofSqlitePlaceLookup against an inline WOF fixture", () => {
 	test("query with special characters is sanitized — `St. (Petersburg)` does not throw", async () => {
 		// No such place in the fixture; we only assert no SQL syntax error.
 		await expect(lookup.findPlace({ text: "St. (Petersburg)" })).resolves.toEqual([])
+	})
+
+	test("exact-match tier survives a names-less (slim) DB via the place_search alias bag", async () => {
+		// Slim DBs built with `dropNames` have no `names` table — the aliases survive only inside the
+		// FTS `alt_names` token bag. #exactMatchIds must fall back to it so "Brooklyn" still tiers the
+		// exact-named borough above the fuzzy "Brooklyn Park" against a hot/slim DB.
+		const db = buildFixtureDb()
+		const withFts = new WofSqlitePlaceLookup({ database: db, buildFts: true })
+		withFts.close() // releases nothing we need — the FTS table now exists on `db`, which we own
+		db.exec(`DROP TABLE names`)
+		const lookup2 = new WofSqlitePlaceLookup({ database: db })
+		try {
+			const candidates = await lookup2.findPlace({ text: "Brooklyn", placetype: "locality" })
+			expect(candidates[0]).toMatchObject({ id: 421205765, name: "Brooklyn", placetype: "borough" })
+			expect(candidates[0]?.exactMatch).toBe(true)
+		} finally {
+			lookup2.close()
+			db.close()
+		}
 	})
 
 	test("Disposable: Symbol.dispose closes the lookup", async () => {

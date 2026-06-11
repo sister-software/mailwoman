@@ -138,8 +138,8 @@ export interface AddressPointHit {
 }
 
 /**
- * Street-level exact-point lookup (#476). Implementations own their normalization — both the
- * shard build and this lookup must apply the SAME normalizer (see
+ * Street-level exact-point lookup (#476). Implementations own their normalization — both the shard
+ * build and this lookup must apply the SAME normalizer (see
  * `resolver-wof-sqlite/street-normalize.ts`). Core depends only on this contract.
  */
 export interface AddressPointLookup {
@@ -275,6 +275,43 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 	// backend has the postcode shard available — `WofSqlitePlaceLookup` auto-routes `postalcode`
 	// queries to a `postalcode_us` (or similarly-named) shard, falling back to main if absent.
 	postcode: "postalcode",
+}
+
+/**
+ * Placetype-equivalence groups for lookup FILTERING. WOF splits "city-like place" across several
+ * placetypes — `locality` (most cities), `borough` (Brooklyn, the Paris arrondissements, the London
+ * boroughs), and `localadmin` (FR communes, US towns/townships in New England) — but an address's
+ * locality span can name ANY of them. A backend that filters a locality query to `placetype =
+ * 'locality'` alone makes Brooklyn-the-borough (pop 2.5M) unreachable, so the fuzzy "Brooklyn Park,
+ * MN" wins instead.
+ *
+ * This table is the single source of truth for that expansion, shared by every lookup backend
+ * (`@mailwoman/resolver-wof-sqlite`, `@mailwoman/resolver-wof-wasm`, and the demo's httpvfs lookup)
+ * so the Node and browser resolvers can't drift. Keyed by the REQUESTED placetype; the value is the
+ * set the SQL filter should actually accept. Placetypes without an entry pass through unchanged —
+ * an explicit `placetype: "borough"` query stays narrow.
+ */
+export const PLACETYPE_FILTER_GROUPS: Readonly<Record<string, readonly string[]>> = {
+	locality: ["locality", "borough", "localadmin"],
+}
+
+/**
+ * Expand a placetype filter through {@link PLACETYPE_FILTER_GROUPS}, deduplicated and
+ * order-preserving (the first entry stays first — shard routing keys off it). `null`/`undefined`
+ * (no filter) passes through untouched.
+ */
+export function expandPlacetypeFilter(placetypes: null): null
+export function expandPlacetypeFilter(placetypes: readonly string[]): string[]
+export function expandPlacetypeFilter(placetypes: readonly string[] | null): string[] | null
+export function expandPlacetypeFilter(placetypes: readonly string[] | null): string[] | null {
+	if (!placetypes) return null
+	const out: string[] = []
+	for (const placetype of placetypes) {
+		for (const expanded of PLACETYPE_FILTER_GROUPS[placetype] ?? [placetype]) {
+			if (!out.includes(expanded)) out.push(expanded)
+		}
+	}
+	return out
 }
 
 /**

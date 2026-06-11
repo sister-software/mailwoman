@@ -15,7 +15,7 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite"
 
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 
-import type { Ancestor, CoincidentLocality } from "@mailwoman/core/resolver"
+import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/core/resolver"
 import {
 	ADDRESS_CONVENTION_TABLE,
 	resolveConvention,
@@ -551,7 +551,12 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// With a `country` hint every abbrev resolves; bare + no-context lifts 7→10/15 US states.)
 		const ftsLimit = query.text.trim().length <= 3 ? Math.max(limit * 4, SHORT_QUERY_OVERFETCH) : limit * 4
 
-		const placetypes = normalizePlacetypes(query.placetype)
+		// Expand the placetype filter through the shared equivalence table (core/resolver): a
+		// `locality` query must also reach `borough` / `localadmin` rows — Brooklyn-the-borough
+		// (pop 2.5M) is a borough, not a locality, and a strict filter made it unreachable so the
+		// fuzzy "Brooklyn Park, MN" won instead. Order-preserving: the FIRST entry stays the
+		// requested placetype, which is what shard routing keys off below.
+		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WofPlacetype[] | null
 		const ftsQuery = sanitizeFtsQuery(query.text)
 		if (!ftsQuery) return []
 
@@ -707,7 +712,10 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// ranks above any partial match, with the weighted-sum score (incl. population) breaking ties
 		// WITHIN a tier. See the RankingWeights.exactMatchTiering docstring for why this aligns the
 		// population prior rather than overriding it. One cheap indexed lookup over the candidate ids.
-		if (this.#weights.exactMatchTiering && candidates.length > 1) {
+		// Runs even for a SINGLE candidate so `exactMatch` is stamped consistently (parity with the
+		// WASM lookup) — a sole alias hit ("New York City" → New York) must still carry the flag the
+		// demo cascade / #369 re-rank read.
+		if (this.#weights.exactMatchTiering && candidates.length > 0) {
 			const exactIds = this.#exactMatchIds(
 				sch,
 				candidates.map((c) => c.id as number),
@@ -886,24 +894,50 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 	/**
 	 * Among `ids`, return the subset whose name OR any alias equals `text` case-insensitively — the
-	 * exact-match tier for ranking. One indexed query over `<schema>.names`. Returns an empty set
-	 * when the shard has no `names` table (e.g. a postcode-only shard), so tiering silently no-ops
-	 * there.
+	 * exact-match tier for ranking. One indexed query over `<schema>.names`. When the shard has no
+	 * `names` table (a slim DB built with `dropNames`, or a postcode-only shard), fall back to the
+	 * self-contained `place_search` FTS content: its `alt_names` column is the same alias set,
+	 * space-joined into one token bag, so a whitespace-boundary containment check recovers the alias
+	 * tier ("New York City" → New York) that the dropped `names` table used to provide.
 	 */
 	#exactMatchIds(schemaName: string, ids: number[], text: string): Set<number> {
 		const out = new Set<number>()
 		const trimmed = text.trim()
 		if (ids.length === 0 || !trimmed) return out
+		const placeholders = ids.map(() => "?").join(", ")
 		try {
-			const placeholders = ids.map(() => "?").join(", ")
 			const rows = this.#db
 				.prepare(
 					`SELECT DISTINCT id FROM ${schemaName}.names WHERE id IN (${placeholders}) AND name = ? COLLATE NOCASE`
 				)
 				.all(...ids, trimmed) as Array<{ id: number }>
 			for (const r of rows) out.add(r.id)
+			return out
 		} catch {
-			// Shard without a `names` table → no exact-match tier. Falls back to weighted-sum order.
+			// No `names` table on this shard — fall through to the place_search alias bag.
+		}
+		try {
+			const rows = this.#db
+				.prepare(
+					`SELECT wof_id AS id, name, alt_names FROM ${schemaName}.place_search WHERE wof_id IN (${placeholders})`
+				)
+				.all(...ids) as Array<{ id: number; name: string | null; alt_names: string | null }>
+			const norm = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
+			const needle = norm(trimmed)
+			for (const r of rows) {
+				if (r.name !== null && norm(r.name) === needle) out.add(r.id)
+			}
+			// Alias pass, only when NO canonical name matched: alt_names is all aliases space-joined
+			// (name boundaries are lost), so a padded substring check would false-promote interior
+			// fragments ("York" inside the alias "New York City"). Gating it on "no canonical exact in
+			// the pool" confines it to the genuine alias-query case ("New York City" itself).
+			if (out.size === 0) {
+				for (const r of rows) {
+					if (r.alt_names !== null && ` ${norm(r.alt_names)} `.includes(` ${needle} `)) out.add(r.id)
+				}
+			}
+		} catch {
+			// Shard without place_search either → no exact-match tier. Falls back to weighted-sum order.
 		}
 		return out
 	}
