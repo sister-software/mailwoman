@@ -145,7 +145,21 @@ async function main(): Promise<void> {
 		MailwomanTokenizer.loadFromFile(arg("tokenizer", "neural-weights-en-us/tokenizer.model")),
 		OnnxRunner.create(arg("model", "neural-weights-en-us/model.onnx")),
 	])
-	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
+	// Ship-config channels (v4.4.0): the calibrator must describe the model AS DEPLOYED — anchor +
+	// gazetteer (+ suppression), conventions, and the span bridge all change span confidences.
+	const { parseAnchorLookup, parseGazetteerLexicon } = await import("@mailwoman/neural")
+	const anchorPath = arg("anchor-lookup", "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json")
+	const gazPath = arg("gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")
+	const neural = new NeuralAddressClassifier({
+		tokenizer,
+		runner,
+		labels: modelCard.labels,
+		postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(anchorPath, "utf8"))),
+		gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(gazPath, "utf8"))),
+		suppressGazetteerNearPostcode: true,
+		addressSystemConventions: "auto",
+		bridgePunctuationGaps: true,
+	})
 	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
 
 	const records: ConfRecord[] = []

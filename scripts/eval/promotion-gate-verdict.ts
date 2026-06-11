@@ -47,11 +47,29 @@ function perLocale(md: string, tag: string, locale: "us" | "fr"): number | undef
 	return Number(locale === "us" ? m[1] : m[2]) || undefined
 }
 
+/** Sidecar-first reads (the scorers emit JSON beside the markdown since night-11; the regex
+ * fallback keeps old out-dirs replayable). A sidecar that exists but can't parse is a loud
+ * throw — never a silent fallback to presentation parsing. */
+function sidecar(f: string): any | undefined {
+	const raw = maybeRead(f)
+	return raw === undefined ? undefined : JSON.parse(raw)
+}
+function tagF1(side: any | undefined, md: string, tag: string): number | undefined {
+	if (side?.tags?.[tag]?.f1 !== undefined) return side.tags[tag].f1
+	return scorerF1(md, tag)
+}
+
 function collect(tag: "fp32" | "int8"): Record<string, number | undefined> {
 	const pl = read(`${tag}-per-locale.md`)
 	const affix = read(`${tag}-affix.md`)
 	const unit = read(`${tag}-unit.md`)
 	const country = read(`${tag}-country.md`)
+	const affixJ = sidecar(`${tag}-affix.json`)
+	const unitJ = sidecar(`${tag}-unit.json`)
+	const countryJ = sidecar(`${tag}-country.json`)
+	const poboxJ = sidecar(`${tag}-pobox.json`)
+	const intersectionJ = sidecar(`${tag}-intersection.json`)
+	const plJ = sidecar(`${tag}-per-locale.json`)
 	const pobox = maybeRead(`${tag}-pobox.md`)
 	const intersection = maybeRead(`${tag}-intersection.md`)
 	const deorder = read(`${tag}-deorder.md`)
@@ -64,19 +82,21 @@ function collect(tag: "fp32" | "int8"): Record<string, number | undefined> {
 		"us.region": perLocale(pl, "region", "us"),
 		"us.street": perLocale(pl, "street", "us"),
 		"us.micro": micro ? Number(micro[1]) : undefined,
-		"us.street_prefix": scorerF1(affix, "street_prefix"),
-		"us.street_suffix": scorerF1(affix, "street_suffix"),
-		"us.unit_real": scorerF1(unit, "unit"),
-		"us.country_homograph_f1": scorerF1(country, "country"),
+		"us.street_prefix": tagF1(affixJ, affix, "street_prefix"),
+		"us.street_suffix": tagF1(affixJ, affix, "street_suffix"),
+		"us.unit_real": tagF1(unitJ, unit, "unit"),
+		"us.country_homograph_f1": tagF1(countryJ, country, "country"),
 		"fr.postcode": perLocale(pl, "postcode", "fr"),
 		"fr.house_number": perLocale(pl, "house_number", "fr"),
 		"de.native_locality": deNative ? Number(deNative[1]) : undefined,
 		"fr.region": perLocale(pl, "region", "fr"),
-		"us.po_box_real": pobox ? scorerF1(pobox, "po_box") : undefined,
-		"fr.cedex_real": pobox ? scorerF1(pobox, "cedex") : undefined,
+		"us.po_box_real": poboxJ?.tags?.po_box?.f1 ?? (pobox ? scorerF1(pobox, "po_box") : undefined),
+		"fr.cedex_real": poboxJ?.tags?.cedex?.f1 ?? (pobox ? scorerF1(pobox, "cedex") : undefined),
 		// Graded as the WEAKER of the two spans — an intersection parse needs both.
 		"us.intersection_real":
-			intersection ?
+			intersectionJ ?
+				Math.min(intersectionJ.tags?.intersection_a?.f1 ?? 0, intersectionJ.tags?.intersection_b?.f1 ?? 0)
+			: intersection ?
 				Math.min(scorerF1(intersection, "intersection_a") ?? 0, scorerF1(intersection, "intersection_b") ?? 0)
 			:	undefined,
 		// Arena leg runs once on the ship artifact (int8); the fp32 pass reads undefined and the

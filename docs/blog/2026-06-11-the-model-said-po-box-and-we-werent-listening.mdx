@@ -1,0 +1,81 @@
+---
+slug: the-model-said-po-box-and-we-werent-listening
+title: "The model said P.O. Box all along. We just weren't listening."
+authors: [teffen]
+tags: [neural, parsing, evaluation, decoding, architecture]
+date: 2026-06-11
+draft: true
+---
+
+Last night our release gate failed twice before it passed, and both failures turned out
+to be the same lesson wearing different hats. If you've ever trained a model, watched it
+flunk an eval, and reached for more data or more parameters: this post is about the
+third option you might be skipping. The questions on the table: why did a model that
+scored 89 on post-office boxes in validation score 60 at the gate? Why did fixing that
+break French postcodes? And what does any of this say about where a parser's knowledge
+actually lives?
+
+<!-- truncate -->
+
+## A tag with a 98% failure rate, sorted by punctuation
+
+Some context. Our parser had three famously empty rows on its scorecard: `po_box`,
+`cedex`, and intersections. Last night's release candidate carried fresh training data
+for all three, and the pre-registered gate floors were waiting for it. Intersections
+came back a clean 100. Cedex, 96. And po_box came back at 60.4 against a floor of 70.
+
+Naturally we went looking for the failure, expecting the usual suspects. A thin layout
+class, maybe, or an under-weighted shard. What we found instead was a sorting key we'd never
+graded by before: punctuation. Plain leaders like `PO Box 19` passed at 84%. Dotted
+leaders — `P.O. Box`, `C.P.`, `B.P.` — failed at **98%**, and every single failure was a
+truncation at the first period. The model would emit `p` and stop.
+
+Here's the part that made us sit up. We dumped the raw per-piece labels for
+`P.O. BOX 3274`, and the model had labeled *every piece correctly*: `P` as po_box at
+0.93 confidence, `O` as po_box at 0.94, `BOX 3274` as po_box at 0.96. The knowledge was
+all there, loud and unambiguous. The span just shattered at the periods, because our
+corpus format — which tokenizes on whitespace and drops standalone punctuation — has no
+way to put a label *on a dot*. No training row in 670 million could ever have taught the
+span to stay whole, and ten times more training data had moved the score by exactly 2.9
+points. You can't fix a representation gap with repetition.
+
+## Listening is a decoder feature
+
+So the fix wasn't data and it wasn't weights. It was a dozen lines of decode logic we
+now call the span bridge: when two fragments carry the same tag and the only thing
+between them is a short run of intra-token punctuation, merge them — dots, hyphens,
+slashes — and absorb the punctuation the corpus could never label. Same model, same
+weights, not a second of GPU. po_box went from 60.4 to 87.
+
+Then the re-gate failed on French postcodes, and honestly, this failure was the better
+teacher. The bridge had been merging across commas too, and commas are where the bodies
+are buried: when the model saw `Sainte-Livrade-sur-Lot 47110, 9016 Route de Lablasie`,
+it sometimes double-labeled that house number as a second postcode — and the comma was
+the only thing keeping the two spans honest. Our bridge had been helpfully gluing the
+mistake together into `47110, 9016`. A period lives *inside* a surface form;
+a comma separates two of them. The bridge needed to know the difference, and once it
+did, French postcodes came back and po_box climbed another two points for free.
+
+The third battery passed 17 floors out of 17, and the release shipped before sunrise.
+
+## Where the knowledge lives
+
+We keep relearning this and it keeps being worth a post. The transformer is one layer of
+a system, and an eval failure names the *system*, not the weights. Last month a
+stubborn tag turned out to be contradictory labels in the corpus. Last night it was a
+label format that couldn't say what the model already knew. In both cases the
+tempting move — scale the model, multiply the data — would have burned a week and
+changed nothing, because the binding constraint was sitting in a different layer,
+waiting for someone to read forty failing rows.
+
+The cost of finding it the right way: three full gate batteries in one night and a
+pre-registered floor we refused to round up. Personally, I'll pay that every time. The
+gate that fails twice and tells you exactly why is worth ten that pass quietly.
+
+There's a deeper cut coming — that punctuation gap is a property of our corpus format
+itself, and the real cure (labels addressed by character offset, not token index) is a
+bigger renovation than a night allows. The bridge is containment, honestly labeled as
+such. But the scorecard that had three empty rows yesterday has none today, and the
+parser that couldn't say "P.O. Box" now says it the way it always could.
+
+Now go check what your decoder is throwing away. 👏

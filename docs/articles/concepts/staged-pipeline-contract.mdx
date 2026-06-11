@@ -38,6 +38,25 @@ interface RuntimePipelineStages {
 
 Every stage is **optional**. When you omit one, the coordinator either substitutes a no-op stub (`normalize`, `computeQueryShape`, `detectLocale`, `classifyKind`) or skips the stage entirely (`classifier`, `resolver`).
 
+### Decode-time constraint layers (v4.3.0+)
+
+The neural classifier carries two constraint layers configured at construction, not as pipeline
+stages — they run inside `classifier.parse` and are part of the SHIP CONFIG contract (the model
+card's notes name the required settings per release):
+
+- **Conventions mask** (`addressSystemConventions: "auto" | SystemCode`, v4.3.0+): the model's
+  exported locale head detects the address system; the codex conventions row removes that
+  system's ungrammatical tags from the Viterbi vocabulary and arms the postcode-shape snap
+  repair. Threshold-gated (0.8) — never fires on a guess; undetected systems parse unmasked.
+- **Span bridge** (`bridgePunctuationGaps: true`, REQUIRED from v4.4.0): merges same-tag
+  fragments split at unlabeled intra-token punctuation ("P.O. Box" decoding as `P`+`O`+`Box`) —
+  the corpus label format cannot express punctuation inside spans, so the bridge is decode-side
+  containment. Separator punctuation (commas) never bridges; space-only gaps never bridge.
+
+Running a v4.4.0+ model WITHOUT these settings reproduces measured gate failures (po_box 60.4 vs
+89.1 with the bridge; the FR digit-split class without conventions) — they are not optional
+enhancements for those weights, they are the decode contract.
+
 ## Replacing a stage
 
 ```ts

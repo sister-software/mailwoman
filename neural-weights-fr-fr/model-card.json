@@ -1,6 +1,6 @@
 {
 	"name": "neural-weights-fr-fr",
-	"version": "4.3.0",
+	"version": "4.4.0",
 	"model_lineage": "shares the en-us v1.0.2-consolidation-runB multi-locale model (step 20000) — shipped as the unified 4.2.0 release version; FR postcode 99.6 / house_number 94.6 (best ever) / region 27.6 (open gap #330)",
 	"phase": "Stage 3 — multi-locale (FR via the shared model)",
 	"license": "AGPL-3.0-only",
