@@ -33,14 +33,20 @@ export interface PoBoxBaseTuple {
 	country: string
 }
 
-interface LocaleTemplate {
+export interface LocaleTemplate {
 	locale: string
 	leaders: ReadonlyArray<string>
 	// Use 'pmb' to render as "STREET, PMB N, CITY ..." instead of replacing the street line.
 	pmb?: ReadonlyArray<string>
 }
 
-const LOCALE_TEMPLATES: ReadonlyArray<LocaleTemplate> = [
+/**
+ * The per-locale PO-box designator vocabulary (DeepSeek-signed list, see the header). Exported so
+ * shard builders (scripts/build-po-box-cedex-shard.mjs) can reuse THIS list as the single source of
+ * truth for non-US leaders instead of re-deriving it — the US slice additionally has
+ * `@mailwoman/codex/us` `US_PO_BOX_DESIGNATORS`/`isPOBox` as its matcher-side truth.
+ */
+export const PO_BOX_LOCALE_TEMPLATES: ReadonlyArray<LocaleTemplate> = [
 	{
 		locale: "en-US",
 		leaders: ["PO Box", "P.O. Box", "P.O.Box", "PO BOX", "POB", "Post Office Box", "Box"],
@@ -81,7 +87,7 @@ const LOCALE_TEMPLATES: ReadonlyArray<LocaleTemplate> = [
 	},
 ]
 
-const LEADERS_BY_LOCALE = new Map<string, LocaleTemplate>(LOCALE_TEMPLATES.map((t) => [t.locale, t]))
+const LEADERS_BY_LOCALE = new Map<string, LocaleTemplate>(PO_BOX_LOCALE_TEMPLATES.map((t) => [t.locale, t]))
 
 /**
  * Inject number-format noise into a box number string. Returns the noisy variant or the original
@@ -215,5 +221,5 @@ export function countryToLocale(country: string): string {
 
 /** All locales we synthesize for. Exposed for tests and for source-weight tuning. */
 export function supportedLocales(): ReadonlyArray<string> {
-	return LOCALE_TEMPLATES.map((t) => t.locale)
+	return PO_BOX_LOCALE_TEMPLATES.map((t) => t.locale)
 }
