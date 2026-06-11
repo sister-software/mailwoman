@@ -81,14 +81,16 @@ class EncodedExample:
 def load_anchor_lookup(path: str) -> dict[str, tuple[dict[str, float], float, float]]:
     """Load the postcode→anchor lookup (#239/#240) from JSON, once at loader init.
 
-    Format: ``{normalized_postcode: [posterior_dict, lat, lon]}`` where ``posterior_dict`` is
-    ``{country: weight}`` (uniform over the countries the code exists in). Returns the tuple form
-    ``realign_anchor_to_pieces`` consumes. Built offline by ``scripts/build-pilot-anchor-lookup.py``
-    so the training loop carries no gazetteer dependency.
+    Format: ``{normalized_postcode: [posterior_dict, lat, lon, source?]}`` where ``posterior_dict``
+    is ``{country: weight}`` (uniform over the countries the code exists in) and the optional 4th
+    element is the centroid's provenance label (#525 — e.g. ``"wof"`` / ``"census-zcta-2024"`` /
+    ``null``), ignored here. Returns the tuple form ``realign_anchor_to_pieces`` consumes. Built
+    offline by ``scripts/build-pilot-anchor-lookup.py`` so the training loop carries no gazetteer
+    dependency.
     """
     with open(path, encoding="utf-8") as fh:
         raw = json.load(fh)
-    return {pc: (post, float(lat), float(lon)) for pc, (post, lat, lon) in raw.items()}
+    return {pc: (row[0], float(row[1]), float(row[2])) for pc, row in raw.items()}
 
 
 def _shard_paths(corpus_dir: Path, split: str) -> list[Path]:

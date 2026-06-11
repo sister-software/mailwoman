@@ -93,7 +93,7 @@
 		"_comment": "US postcodes live in a SEPARATE shard DB (the resolver routes postalcode queries to it via multi-shard ATTACH). Built with the same build-unified-wof.ts using --placetypes postalcode.",
 		"artifact": "postalcode-us.db",
 		"build_command": "node --experimental-strip-types scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-postalcode-us --output /mnt/playpen/mailwoman-data/wof/postalcode-us.db --placetypes postalcode",
-		"post_build": "node resolver-wof-sqlite/out/build-fts-cli.js /mnt/playpen/mailwoman-data/wof/postalcode-us.db",
+		"post_build": "Two steps, IN ORDER. STEP 1: node resolver-wof-sqlite/out/build-fts-cli.js /mnt/playpen/mailwoman-data/wof/postalcode-us.db   (FTS + R*Tree). STEP 2: node --experimental-strip-types scripts/fill-zcta-centroids.ts   (#525: fills (0,0)-placeholder centroids from the Census ZCTA Gazetteer — /mnt/playpen/mailwoman-data/census/README.md — stamping per-row provenance in `centroid_source`; never overwrites a real WOF coordinate; residual placeholders are PO-box/unique ZIPs with no ZCTA. Without it the anchor lookup, postcode-us.bin, and the slim hot DB postcode cascade leg inherit ~22% dead coordinates).",
 		"repo": {
 			"name": "whosonfirst-data-postalcode-us",
 			"url": "https://github.com/whosonfirst-data/whosonfirst-data-postalcode-us",
