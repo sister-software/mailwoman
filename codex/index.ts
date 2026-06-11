@@ -23,10 +23,12 @@ export {
 	type AddressSystemConventions,
 	conventionsForSystem,
 } from "./address-system-conventions.js"
+export * as au from "./au/index.js"
 export * as ca from "./ca/index.js"
 export * as de from "./de/index.js"
 export * as fr from "./fr/index.js"
 export * as gb from "./gb/index.js"
 export * as jp from "./jp/index.js"
+export * as nz from "./nz/index.js"
 export { candidateSystemsForPostcode, type SystemCode } from "./postcode-systems.js"
 export * as us from "./us/index.js"
