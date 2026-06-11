@@ -15,8 +15,10 @@ Gold conventions, decided once here:
 3. **c/o & attention lines**: the schema has no `attention`/`care_of` tag the current model emits;
    the c/o phrase is left UNLABELED in gold and the row grades the neighbors. These rows measure
    poisoning, not c/o extraction (that capability is a separate future lever).
-4. **Unbalanced delimiters**: gold includes stray quotes as they appear in the value when they are
-   part of a real-world name (`Joe's "Pizza`); the load-bearing read is parse SURVIVAL + neighbor
+4. **Unbalanced delimiters** (operator ruling 2026-06-11): a stray, unpaired delimiter is
+   EXCLUDED from the component value (`Joe's "Pizza` → `venue: Joe's Pizza`), and the component is
+   still graded — never omitted. BALANCED quotes that are part of a name as written stay
+   (`Joe's "Famous" Deli`, `Office "B"`). The load-bearing read remains parse SURVIVAL + neighbor
    accuracy, captured per-row by the scorer (a thrown parse fails every component in the row).
 5. **Dotted abbreviations**: values keep their dots as written (`P.O. Box 19`, `St. Louis`,
    `Washington D.C.`) — the span-bridge regression lens.
@@ -30,7 +32,9 @@ Gold conventions, decided once here:
 
 ## Head-to-head (120 rows, 2026-06-11, folded vocabulary view)
 
-`--engine v0` vs neural v4.4.0 ship config + `--fold-gold`. Note: the set grew 62→120 on
+`--engine v0` vs neural v4.4.0 ship config + `--fold-gold`. Gold updated 2026-06-11 per the
+operator's unbalanced-delimiter ruling (convention 4: rows 29/32/112) — unbalanced + overall
+cells shifted slightly vs the expansion-day run. Note: the set grew 62→120 on
 2026-06-11 — per-class deltas vs the 62-row run reflect the composition shift (the expansion
 deliberately deepened the v0-win quadrants and added international surfaces), NOT model drift.
 
@@ -46,5 +50,5 @@ deliberately deepened the v0-win quadrants and added international surfaces), NO
 | paren-component  |                75.0 |                75.0 | tie          |
 | quoted-venue     |     73.8 († 1 died) |                75.4 | neural +1.6  |
 | slash            |                71.7 |                58.7 | v0 +13.0     |
-| unbalanced       |                70.7 |                85.4 | neural +14.7 |
-| **overall**      | **75.4** (2 deaths) | **77.0** (0 deaths) | neural +1.6  |
+| unbalanced       |                69.0 |                83.3 | neural +14.3 |
+| **overall**      | **75.3** (2 deaths) | **76.8** (0 deaths) | neural +1.5  |
