@@ -436,6 +436,69 @@ describe("kryptonite catalogue — Buffalo Buffalo (post-reconcile keeps both as
 	})
 })
 
+describe("kryptonite catalogue — New York City (bare multiword famous name, no resolver evidence)", () => {
+	// Regression for the v4.4.0 demo bug (2026-06-11): `runPipeline("New York City")` produced
+	// `{region: "York", locality: "City"}` while plain argmax produced the correct
+	// `{locality: "New York City"}`. Root cause: the per-token logit aggregation gives interior
+	// fragments inflated confidence (`City` aggregates I-locality mass → 0.92 vs 0.60 for the full
+	// span) and the per-SLOT inclusion bonus charged nothing for leaving "New York" uncovered — the
+	// beam picked the bare `locality="City"` and the grouper-audit then promoted the orphaned `York`
+	// to a spurious `region`. The per-WORD inclusion bonus makes the covering interpretation win.
+	//
+	// Phrase proposals + classifier top-K below are RECORDED from the live v4.4.0 ship config
+	// (v130-boundary-40k-int8 + v0.6.0-a0 tokenizer + fst-en-US.bin) via
+	// `scripts/diag-nyc-reconcile.ts`. No resolver / parent chain — the demo passes no backend, so
+	// the reconciler must rank these on classifier + phrase evidence alone.
+	const raw = "New York City"
+	const phraseProposals: PhraseProposal[] = [
+		proposal({ start: 4, end: 13, body: "York City" }, "LOCALITY_PHRASE", 0.85),
+		proposal({ start: 0, end: 13, body: "New York City" }, "LOCALITY_PHRASE", 0.82),
+		proposal({ start: 0, end: 8, body: "New York" }, "LOCALITY_PHRASE", 0.7),
+		proposal({ start: 9, end: 13, body: "City" }, "LOCALITY_PHRASE", 0.7),
+		proposal({ start: 0, end: 3, body: "New" }, "LOCALITY_PHRASE", 0.55),
+		proposal({ start: 0, end: 13, body: "New York City" }, "VENUE_PHRASE", 0.55),
+		proposal({ start: 4, end: 8, body: "York" }, "LOCALITY_PHRASE", 0.55),
+	]
+	const classifierTopK: ClassifierCandidate[] = [
+		tagC(4, 13, "locality", 0.603),
+		tagC(4, 13, "region", 0.2397),
+		tagC(4, 13, "country", 0.0306),
+		tagC(0, 13, "locality", 0.5951),
+		tagC(0, 13, "region", 0.2472),
+		tagC(0, 13, "country", 0.0328),
+		tagC(0, 8, "locality", 0.433),
+		tagC(0, 8, "region", 0.3669),
+		tagC(0, 8, "country", 0.044),
+		tagC(9, 13, "locality", 0.9192),
+		tagC(9, 13, "country", 0.0104),
+		tagC(0, 3, "locality", 0.5792),
+		tagC(0, 3, "region", 0.2622),
+		tagC(0, 3, "country", 0.0373),
+		tagC(4, 8, "region", 0.4716),
+		tagC(4, 8, "locality", 0.2868),
+		tagC(4, 8, "country", 0.0508),
+	]
+
+	it("post-reconcile keeps the single full-span locality — no fragmentation into York/City", () => {
+		const result = reconcileSpans({ raw, phraseProposals, classifierTopK })
+		expect(result.tree.roots).toHaveLength(1)
+		const root = result.tree.roots[0]!
+		expect(root.tag).toBe("locality")
+		expect(root.value).toBe("New York City")
+	})
+
+	it("post-reconcile leaves no span uncovered for the grouper-audit to mis-promote", () => {
+		const result = reconcileSpans({ raw, phraseProposals, classifierTopK })
+		// Every phrase proposal must overlap a chosen root — an uncovered `York` proposal is what
+		// produced the spurious `region` node in the original bug.
+		for (const p of phraseProposals) {
+			const pEnd = p.span.start + p.span.body.length
+			const covered = result.tree.roots.some((r) => r.start < pEnd && p.span.start < r.end)
+			expect(covered, `proposal ${JSON.stringify(p.span.body)} should be covered`).toBe(true)
+		}
+	})
+})
+
 describe("reconcile — concordance hard veto", () => {
 	const raw = "Paris, Texas"
 	// Setup: classifier wants Paris=locality + Texas=region. Resolver candidates are *all*

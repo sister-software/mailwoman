@@ -132,14 +132,33 @@ const DEFAULTS = {
 }
 
 /**
- * Log-space bonus per accepted slot. Counterweight for the multiplicative penalty inherent in
- * "score = ∏ confidences": each factor in [0, 1] strictly lowers the running score, which would
- * otherwise make the empty parse always win. log(2.5) — a slot whose product of factors exceeds
- * 1/2.5 = 0.4 is worth including; below that, the search prefers to skip.
+ * Log-space bonus per **word covered** by an accepted slot. Counterweight for the multiplicative
+ * penalty inherent in "score = ∏ confidences": each factor in [0, 1] strictly lowers the running
+ * score, which would otherwise make the empty parse always win. With per-word scaling, a slot is
+ * worth including when the per-word geometric mean of its factors exceeds 1/2.5 = 0.4; below that,
+ * the search prefers to skip.
+ *
+ * Why per-word and not per-slot: a constant per-slot bonus carries two structural biases, both
+ * measured on `"New York City"` (2026-06-11):
+ *
+ * 1. **Fragments beat coverage.** The per-token logit aggregation gives interior fragments inflated
+ *    confidence (`City` aggregates I-locality mass → locality 0.92 vs 0.60 for the full span), and
+ *    a per-slot bonus charges nothing for leaving the rest of the input unexplained — so the beam
+ *    picked the bare `locality="City"` (+0.475) over `locality="New York City"` (+0.199) and the
+ *    grouper-audit then promoted the orphaned `York` to a spurious `region`.
+ * 2. **More spans collect more bonuses.** For two interpretations covering the same words, the one
+ *    split into more slots banked one bonus per slot — a fragmentation subsidy.
+ *
+ * Scaling the bonus by the slot's word count makes coverage the thing being rewarded:
+ * equal-coverage interpretations collect equal bonus (the classifier/phrase/resolver factors alone
+ * decide), and an interpretation that explains more of the input out-scores one that silently drops
+ * words unless the extra evidence is genuinely weak (per-word factor mean < 0.4).
  *
  * The choice of 2.5 is a tuning constant, not a free parameter we expose — exposing it would invite
  * callers to disable inclusion entirely (defeating the purpose of the reconciler) and the sensible
- * range is narrow. Lives here rather than `ReconcileOpts` for that reason.
+ * range is narrow. Lives here rather than `ReconcileOpts` for that reason. Words are
+ * whitespace-delimited; scripts without spaces (CJK) count as one word, which degrades to the old
+ * per-slot behavior rather than misbehaving.
  */
 const INCLUSION_LOG_BONUS = Math.log(2.5)
 
@@ -157,6 +176,8 @@ interface SlotChoice {
 	classifierScore: number
 	place: ResolvedPlace | null
 	resolverScore: number
+	/** Whitespace-delimited word count of the span's surface text — scales the inclusion bonus. */
+	wordCount: number
 }
 
 interface Beam {
@@ -205,7 +226,7 @@ export function reconcileSpans(inputs: ReconcileInputs): ParseTree {
 					logSafe(slot.classifierScore) +
 					logSafe(slot.resolverScore) +
 					concordanceDelta +
-					INCLUSION_LOG_BONUS
+					INCLUSION_LOG_BONUS * slot.wordCount
 				next.push({
 					assignments: [...beam.assignments, slot],
 					logScore: beam.logScore + slotLog,
@@ -282,6 +303,7 @@ function buildSlots(inputs: ReconcileInputs, opts: Required<ReconcileOpts>): Slo
 	for (const phrase of spans) {
 		const key = spanKey(phrase.span.start, phrase.span.end)
 		const tagCandidates = topN(tagsBySpan.get(key) ?? [], opts.kTag, (c) => c.score)
+		const words = wordCountOf(inputs.raw, phrase.span)
 		for (const tagC of tagCandidates) {
 			const places = inputs.resolverCandidates
 				? inputs.resolverCandidates.candidatesFor(tagC.span, tagC.tag).slice(0, opts.kResolver)
@@ -294,6 +316,7 @@ function buildSlots(inputs: ReconcileInputs, opts: Required<ReconcileOpts>): Slo
 					classifierScore: tagC.score,
 					place: null,
 					resolverScore: 1,
+					wordCount: words,
 				})
 				continue
 			}
@@ -305,11 +328,22 @@ function buildSlots(inputs: ReconcileInputs, opts: Required<ReconcileOpts>): Slo
 					classifierScore: tagC.score,
 					place,
 					resolverScore: normalizeResolverScore(place.score),
+					wordCount: words,
 				})
 			}
 		}
 	}
 	return slots
+}
+
+/**
+ * Whitespace-delimited word count of a span's surface text, floor 1. Scales the per-slot inclusion
+ * bonus so coverage — not slot count — is what the search rewards (see `INCLUSION_LOG_BONUS`).
+ */
+function wordCountOf(raw: string, span: { start: number; end: number }): number {
+	const text = raw.slice(span.start, span.end).trim()
+	if (text.length === 0) return 1
+	return text.split(/\s+/).length
 }
 
 /**
