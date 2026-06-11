@@ -15,7 +15,13 @@
  *
  *   Usage: node --experimental-strip-types scripts/build-address-point-shard.ts\
  *   --state VT [--release 2026-05-20.0]\
- *   [--out /mnt/playpen/mailwoman-data/address-points/address-points-us-vt.db]
+ *   [--out /mnt/playpen/mailwoman-data/address-points/address-points-us-vt.db]\
+ *   [--county-fips 17031 --county-boundary /tmp/tiger-county/tl_2023_us_county.shp]
+ *
+ *   County scoping (#483 density characterization): Overture carries no county field, so an optional
+ *   `--county-fips` filter does a point-in-polygon against the TIGER COUNTY boundary shapefile
+ *   (`--county-boundary`, same TIGER vintage as the EDGES the interpolation shard reads) — keeps a
+ *   county-scoped gold comparable to a county-scoped segment table.
  */
 
 import { mkdirSync, rmSync } from "node:fs"
@@ -27,17 +33,27 @@ import { DuckDBInstance } from "@duckdb/node-api"
 
 // Cross-tree source import (.ts explicit): this script runs via --experimental-strip-types,
 // not from compiled out/ — the lookup tier imports the same module intra-package.
-import { normalizeLocalityForKey, normalizeStreetForKey } from "../resolver-wof-sqlite/street-normalize.ts"
+import {
+	canonicalizeRouteKey,
+	normalizeLocalityForKey,
+	normalizeStreetForKey,
+} from "../resolver-wof-sqlite/street-normalize.ts"
 
 const { values: args } = parseArgs({
 	options: {
 		state: { type: "string" },
 		release: { type: "string", default: "2026-05-20.0" },
 		out: { type: "string" },
+		"county-fips": { type: "string" },
+		"county-boundary": { type: "string", default: "/tmp/tiger-county/tl_2023_us_county.shp" },
 	},
 })
 if (!args.state) {
 	console.error("--state required (US state abbreviation, e.g. VT)")
+	process.exit(1)
+}
+if (args["county-fips"] && !/^\d{5}$/.test(args["county-fips"])) {
+	console.error("--county-fips must be a 5-digit state+county FIPS (e.g. 17031)")
 	process.exit(1)
 }
 const STATE = args.state.toUpperCase()
@@ -49,6 +65,15 @@ rmSync(OUT, { force: true }) // idempotent rebuild — never append across relea
 
 const instance = await DuckDBInstance.create()
 const duck = await instance.connect()
+// Optional county scope: PIP against the TIGER COUNTY polygon (GEOID = state+county FIPS).
+// DuckDB hoists the scalar subquery to a constant, so the per-row cost is the containment test.
+let countyFilter = ""
+if (args["county-fips"]) {
+	await duck.run("INSTALL spatial; LOAD spatial;")
+	countyFilter = `AND ST_Contains(
+			(SELECT geom FROM ST_Read('${args["county-boundary"]}') WHERE GEOID = '${args["county-fips"]}'),
+			ST_Point(lon, lat))`
+}
 const result = await duck.runAndReadAll(`
 	SELECT
 		number, street, unit, postcode,
@@ -59,6 +84,7 @@ const result = await duck.runAndReadAll(`
 	WHERE address_levels[1].value = '${STATE}'
 		AND nullif(trim(street), '') IS NOT NULL
 		AND nullif(trim(number), '') IS NOT NULL
+		${countyFilter}
 `)
 const rows = result.getRowObjects() as Record<string, unknown>[]
 console.log(`${rows.length} ${STATE} rows from ${path.basename(PARQUET)}`)
@@ -68,6 +94,7 @@ db.exec(`
 	PRAGMA journal_mode = WAL;
 	CREATE TABLE address_point (
 		street_norm   TEXT NOT NULL,
+		street_key    TEXT NOT NULL, -- canonicalizeRouteKey(street_norm): the route-fold key (#483 Method 2)
 		number        TEXT NOT NULL,
 		unit          TEXT,
 		postcode      TEXT,
@@ -81,8 +108,8 @@ db.exec(`
 `)
 
 const insert = db.prepare(
-	`INSERT INTO address_point (street_norm, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
-	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	`INSERT INTO address_point (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
+	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 )
 db.exec("BEGIN")
 let kept = 0
@@ -93,6 +120,7 @@ for (const r of rows) {
 	const locality = r.locality ? normalizeLocalityForKey(String(r.locality)) : null
 	insert.run(
 		streetNorm,
+		canonicalizeRouteKey(streetNorm),
 		String(r.number).trim().toLowerCase(),
 		r.unit ? String(r.unit).trim().toLowerCase() : null,
 		r.postcode ? String(r.postcode).trim() : null,
@@ -109,6 +137,7 @@ db.exec("COMMIT")
 db.exec(`
 	CREATE INDEX idx_ap_postcode ON address_point (postcode, street_norm, number);
 	CREATE INDEX idx_ap_locality ON address_point (locality_norm, street_norm, number);
+	CREATE INDEX idx_ap_streetkey ON address_point (postcode, street_key);
 	PRAGMA wal_checkpoint(TRUNCATE);
 	VACUUM;
 `)
