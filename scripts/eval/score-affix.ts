@@ -16,7 +16,7 @@ const arg = (k: string, d?: string) => {
 const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const LK = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
 const file = arg("--file", "data/eval/external/street-affix-real.jsonl")!
-const TAGS = ["street_prefix", "street", "street_suffix", "house_number", "locality", "region", "postcode", "unit", "intersection_a", "intersection_b"] as const
+const TAGS = ["street_prefix", "street", "street_suffix", "house_number", "locality", "region", "postcode", "unit", "intersection_a", "intersection_b", "po_box", "cedex"] as const
 
 // A gazetteer-trained model MUST be fed the lexicon (+ the paired postcode suppression) at inference,
 // else the zero-filled clue is a train/inference mismatch that wrecks segmentation. Pass for v1.0.0+.
