@@ -25,6 +25,7 @@ import { assetUrl, loadFstGazetteer } from "../shared/resources.tsx"
 
 import type { ReleasesManifest } from "../shared/demo-helpers.ts"
 import { DEFAULT_LOCALE } from "../shared/demo-helpers.ts"
+import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../shared/register-range-sw.ts"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -102,6 +103,18 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 	const [activeBackend, setActiveBackend] = useState<string>("")
 	const [lookup, setLookup] = useState<MailwomanLookupLike | null>(null)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+	// Mount: register the range-chunk service worker (persists validated DB range chunks across
+	// visits; see static/range-cache-sw.js). The provider only receives sqljsBaseUrl
+	// (`${baseUrl}mailwoman/sqljs`), so the site base is recovered by stripping the staged suffix.
+	useEffect(() => {
+		registerRangeCacheServiceWorker(sqljsBaseUrl.replace(/mailwoman\/sqljs\/?$/, ""))
+	}, [sqljsBaseUrl])
+
+	// Drop cached range chunks from other (immutable, never-expiring) versions.
+	useEffect(() => {
+		if (selectedVersion) pruneDbRangeCache(selectedVersion)
+	}, [selectedVersion])
 
 	// Mount: fetch the releases manifest.
 	useEffect(() => {
@@ -203,7 +216,12 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 						const { loadHttpvfsDb, WofHttpvfsPlaceLookup } = await import("../shared/httpvfs-resolver")
 						const worker = await loadHttpvfsDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"), sqljsBaseUrl)
 						if (cancelled) return
-						setLookup(new WofHttpvfsPlaceLookup(worker))
+						const wofLookup = new WofHttpvfsPlaceLookup(worker)
+						// Fire-and-forget: pull the schema/FTS/dual-role pages through the VFS now so the
+						// first interactive query starts warm. The worker serializes execs, so a user query
+						// issued mid-warm-up simply queues behind pages it was going to need anyway.
+						void wofLookup.warmUp().catch(() => {})
+						setLookup(wofLookup)
 					} catch {
 						// WOF DB not available for this version
 					}
