@@ -1,0 +1,224 @@
+# Mailwoman deep dive: Codex review
+
+**Date:** 2026-06-11 · **Scope:** follow-up review against Claude's
+[`2026-06-10-deep-dive-review.md`](./2026-06-10-deep-dive-review.md), the current
+[`2026-06-11-NIGHT-SHIFT-PLAN.md`](../../../2026-06-11-NIGHT-SHIFT-PLAN.md), open GitHub
+issues, and recent mainline commits through `177cb41`.
+
+---
+
+## Verdict
+
+The project moved materially between Claude's 2026-06-10 review and this pass. Several items that
+were called out as hygiene risks are no longer merely recommendations:
+
+- `parse()` and `parseWithLogits()` now share the same private decode path in
+  `neural/classifier.ts`, including the repair passes.
+- `ParseOpts` is exported.
+- the libpostal top-level await was removed in favor of `getAvailableLanguages()`.
+- policy preference filtering now has direct tests.
+- `REPRODUCIBILITY.md` exists.
+- `scripts/eval/promotion-gate.sh` now centralizes the standard eval battery, and the current
+  head commit extends the runner/verdict parser for the v4.4.0 boundary floors.
+
+That is the good news. The remaining risks are narrower and more operational than architectural:
+the v4.4.0 plan is disciplined but dense, some docs now lag the code by one round-trip, and parts
+of #480/#481 are only partially closed while their issues still read as fully open. The biggest
+thing to guard tonight is not another broad refactor; it is keeping the v4.4.0 boundary run honest:
+one artifact, one gate contract, no quiet floor drift, and no shipping if the new floors expose
+po_box or perturb as still below the line.
+
+## Current State
+
+Main is at `177cb41 eval(gate): teach the runner+verdict the v4.4.0 floor keys`. There are no open
+PRs. The open issue queue is now well aligned with Claude's review: #513 tracks the v4.3.0 boundary
+regression, #487 tracks intersections, #481 tracks parser hardening, #480 tracks training
+reproducibility, and #483/#484/#485 carry the resolver/service table-stakes work.
+
+The shipped release is 4.3.0. `docs/articles/status.mdx` has been refreshed to that release and
+the 2026-06-11 parity scorecard exists. The active v4.4.0 candidate is
+`v1.3.0-boundary-consolidation`, with three probe-passed levers in the config header:
+glue augmentation, real-TIGER intersection rows, and the rebuilt po_box/cedex shard.
+
+The night-shift plan is coherent: it starts from the v4.4.0 verdict fork, allows publication on a
+clean gate pass, and constrains further GPU work with the single-variable and DeepSeek-consult
+guardrails. I would not reorder the plan. I would tighten the stop conditions around two specific
+surfaces: po_box punctuation truncation and the perturb arena floor.
+
+## Findings
+
+### 1. #481 is stale as an issue; only `core/utils/repo.ts` and smaller cleanup remain
+
+Claude's top parser findings were valid when written, but main has already absorbed most of that
+bundle. `neural/classifier.ts` now has one `#decode()` path used by both public decode methods,
+and its comment explicitly says reconcile should see the same repaired tokens users see.
+`core/resources/libpostal.ts` now lazy-loads languages. `core/policy/registry.test.ts` covers
+`rule_preferred`, `neural_preferred`, merged proposals, and threshold-before-preference behavior.
+
+The remaining high-value piece is still `core/utils/repo.ts`: `__isCompiledTree` is path sniffing
+for `/out/`. That is less urgent than the old `parseWithLogits()` divergence, but it is still a
+runtime fragility surface. The issue body for #481 should be edited or split so the team does not
+spend time re-checking work that already landed.
+
+### 2. #480 improved, but the "all missing manifest falls back to glob" case still preserves the old trap
+
+`REPRODUCIBILITY.md` is a useful clone-and-train recipe, and `_shard_paths()` now raises on
+partial manifest resolution. That closes a large part of Claude's reproducibility concern.
+
+The remaining edge is explicit in `corpus-python/src/mailwoman_train/test_shard_paths.py`:
+`test_all_missing_falls_through_to_glob` enshrines a fallback where a manifest can resolve zero
+declared shards and still train from `corpus_dir/<split>/*.parquet`. That may be needed for legacy
+corpora, but for versioned overlay corpora it is exactly the shape of "measured the wrong data."
+The fix does not have to be a big-bang removal. Add an explicit manifest mode or config flag:
+legacy glob is allowed only when the manifest says it is legacy, or when no manifest exists.
+
+Curriculum stamping also remains open. The current v4.4.0 config has `gazetteer_curriculum: false`,
+so it is not an immediate ship blocker tonight, but the resume-assertion gap still matters for any
+future ramped run.
+
+### 3. The v4.4.0 gate is much better than yesterday's gate discipline, but the parser is brittle to scorer output
+
+`scripts/eval/promotion-gate.sh` now encodes the standard battery and carries the right lore:
+tokenizer comparability, recompile warnings, gazetteer flags, conventions mode, affix scoring from
+the unfolded scorer, int8 delta enforcement, and arena.perturb when the spec declares it.
+
+The brittle point is `scripts/eval/promotion-gate-verdict.ts`: it extracts numbers from markdown
+tables with regexes. It fails closed when a declared floor is missing, which is the right default,
+but this still means harmless scorer formatting changes can turn into gate failures. That is
+acceptable for tonight. Longer-term, the scorers should emit JSON sidecars and the markdown should
+be presentation only.
+
+### 4. The status docs are refreshed, but now conflict with the runtime pipeline on reconcile defaults
+
+`core/pipeline/runtime-pipeline.ts` says joint reconcile is default-on when the phrase grouper and
+`parseWithLogits` classifier are present:
+
+```ts
+const jointEnabled = opts?.jointReconcile ?? opts?.forceJointReconcile ?? true
+```
+
+But `docs/articles/status.mdx`, `docs/articles/api.mdx`, and
+`docs/articles/plan/reference/STAGES.mdx` still describe Stage 5 as opt-in / argmax default /
+`forceJointReconcile`-gated. The docs are now behind the code.
+
+This is not just editorial. It changes how users interpret parser results and how reviewers reason
+about regressions. The status page should say "default when the required stages are wired, falls
+back to argmax otherwise," and the API docs should prefer `jointReconcile` while marking
+`forceJointReconcile` deprecated.
+
+### 5. The status page points at the 2026-06-10 scorecard while the 2026-06-11 scorecard is the live truth
+
+`docs/articles/status.mdx` correctly says the release is 4.3.0 and links the v4.3.0 ship gate, but
+the per-tag health section links `parity-scorecard-2026-06-10.md`. The latest scorecard is
+`parity-scorecard-2026-06-11.md` and carries the v4.3.0 arena dip, affix closeout, and FR region
+tail. This is a one-line fix, but it is the first page readers will use to understand the release.
+
+There is also a small size mismatch: the model table says 29.8 MB int8, while the browser demo
+section says 28.4 MB. If both are true for different served artifacts, say so; otherwise pick the
+release artifact number.
+
+### 6. The v4.4.0 plan's highest-risk new floor is po_box, not intersection
+
+The intersection lever looks comparatively clean: #487 now has real rows, the recent commits add
+`intersection-real`/VT watch material, and the config header reports 100/100 probe behavior with
+zero false fires. The floor is conservative at 50.
+
+po_box is more delicate. The v4.4.0 config says the rebuilt shard passed cedex but the po_box probe
+was still 57.5 because of punctuation truncation, and the full run is expected to answer that with
+more exposure. That is a reasonable experiment, but it should be treated as an experiment. If
+po_box misses the 70 floor, do not reinterpret it as "close enough" just because cedex passed; it
+means the punctuation class needs its own corrective.
+
+### 7. The v4.3.0 arena dip is now properly tracked; keep it as a hard v4.4.0 constraint
+
+The v4.3.0 ship gate and 2026-06-11 scorecard characterize the perturb drop well: fused
+region+postcode tokens dominate the regression, with post-directional and unit-junction boundary
+wobbles behind it. #513 captures the right fix direction: data, not a conventions mask.
+
+The v4.4.0 gate now floors `arena.perturb` at 71, restoring the v4.2.0 mark. That is exactly the
+right move. If this floor fails, shipping v4.4.0 would convert a documented v4.3.0 tradeoff into a
+known unfixed regression.
+
+## Night Shift Watch List
+
+1. Treat `scripts/eval/gates/v4.4.0-boundary.json` as immutable for this candidate. If a floor
+   needs to move, that is a new candidate or a written rebaseline, not an edit during verdict.
+2. On pass, verify the artifact identity end-to-end: fp32 path, quantized md5, HF label, R2 served
+   md5, npm package version.
+3. On fail, classify to row before spending GPU. For tonight, likely classes are po_box
+   punctuation truncation, perturb glue rows, and any FR region tail movement.
+4. Do not spend the train-time conventions probe until the v4.4.0 verdict is stable. It is a good
+   next lever, but it is not part of the current gate's proof.
+5. Keep #481/#480 cleanup as issue hygiene after the model decision, not during the ship fork.
+
+## Suggested Follow-ups
+
+- Update #481 to mark completed items and leave only `core/utils/repo.ts`, gazetteer schema
+  validation, and the grouper constant if those are still desired.
+- Tighten #480's shard resolver semantics so all-missing manifests cannot silently glob for new
+  versioned corpora.
+- Update status/API/STAGES docs for joint reconcile's actual default behavior.
+- Point `status.mdx` at `parity-scorecard-2026-06-11.md` and reconcile the int8 size number.
+- After v4.4.0, add JSON outputs for eval scorers so `promotion-gate-verdict.ts` does not depend
+  on markdown table parsing.
+
+## Bottom Line
+
+Claude's review was directionally right, but the repo has already acted on several of the highest
+ROI items. The current project risk is no longer "the architecture is under-documented and gates
+are scattered"; it is "the team is moving fast enough that issues/docs lag code, and the v4.4.0
+boundary candidate must not be allowed to blur experimental probe results into ship claims."
+
+Ship v4.4.0 only on a clean pre-registered gate pass. If it passes, it closes the v4.3.0 arena dip
+and brings po_box/cedex/intersections alive. If it fails, the right output is a short, row-classed
+postmortem and one single-variable corrective, not a widened release.
+
+---
+
+## Context for the next phase
+
+What currently keeps Mailwoman from v0 parser parity is not raw model capacity anymore. The recent affix work basically proved that: the model was not too small to learn street-prefix/suffix boundaries; the corpus was teaching contradictory
+labels. The blocker is now the long tail of component-specific boundary conventions and rare address shapes where v0’s hand-built rules still have very sharp local knowledge.
+
+The main remaining parser-parity gaps look like this:
+
+1. Rare but structured fields are still underfed
+   po_box, cedex, and intersections are the clearest examples. These are not conceptually hard for the model, but they need enough real or high-fidelity rows to stop being dead labels. v4.4.0 is aimed directly at this.
+
+2. Adjacent-boundary instability
+   Fixing one boundary can loosen the next one. v4.3.0 closed affixes, but exposed glue/post-directional/unit-junction wobble: NY14201, Pennsylvania Ave NW, Main St Apt #456. That is the current parity frontier: not “can the model parse
+   streets,” but “can it hold all neighboring boundaries simultaneously under degraded input.”
+
+3. Locale convention leakage
+   v0 has country-specific assumptions baked into rules. The model is now getting a cleaner equivalent through address-system conventions, but only the first slice has shipped. FR got a useful mask; DE/GB and transition masks still need
+   evidence-driven rows and tests.
+
+4. Some v0 wins come from deterministic special cases
+   v0 will continue to win on clean canonical formats and edge formats it explicitly knows. The model beats v0 on noisy/degraded input, but whole-parse-strict parity means losing one small deterministic field can zero the row. That makes
+   parity more about removing tail failures than raising average F1.
+
+5. The arbitration layer is not fully harvested yet
+   The model-first approach does not require neural-only output. If v0 is better for a component in a specific context, the model-first system should be able to accept that candidate through policy/reconcile without becoming rule-first again.
+   That is why #478 matters: parity may come from learned parsing plus disciplined arbitration, not from forcing the neural model to imitate every v0 trick.
+
+My read: parser parity is close enough that geocoder work should start as soon as the v4.4.0 boundary gate resolves cleanly, or after one more tightly scoped corrective if v4.4.0 fails for a named class. I would not wait for perfect parser
+parity.
+
+The reason is that the model already exceeds v0 in the situations that matter most for a modern geocoder: noisy, partial, degraded, mixed-format, and user-entered queries. Continuing to polish parser tail cases has diminishing returns unless
+the resolver/geocoder side can turn those better parses into better coordinates.
+
+I would sequence it like this:
+
+Now: finish v4.4.0 or characterize its failure. Do not start broad geocoder work mid-candidate.
+
+Immediately after v4.4.0: do a short hygiene pass: issue/docs sync, strict reproducibility cleanup, reconcile docs, maybe the remaining #481/#480 pieces. Keep it measured in days, not weeks.
+
+Then start geocoder table stakes in parallel with parser tail work. The first serious beyond-parser targets should be:
+
+- House-number interpolation: biggest forward-geocoding coverage jump; closes the admin-centroid gap.
+- Reverse geocoding: WOF polygons/PIP already exist; this is assembly more than research.
+- Autocomplete as a product: use the FST tier for prefixes, bring the parser in after enough signal exists.
+- Batch/service hardening: needed for peer comparison, benchmarks, and real usage.
+
+In short: finish the current boundary consolidation, then let parser work and geocoder work run in parallel. Parser parity should become a release gate for parser claims, not a blocker on building the full geocoder. The model-first bet is
+already validated enough to extend upward into resolution, confidence, interpolation, reverse, and autocomplete.
