@@ -45,6 +45,10 @@ if [[ -n "${MODEL:-}" ]]; then
   if [[ -n "${CONVENTIONS:-}" ]]; then
     MODEL_ARGS+=(--conventions "$CONVENTIONS")
   fi
+  # Span bridge (v4.4.0 corrective): BRIDGE=1 for v4.4.0+ ship config.
+  if [[ -n "${BRIDGE:-}" ]]; then
+    MODEL_ARGS+=(--bridge-gaps)
+  fi
   echo "Model: $MODEL"
 else
   echo "Model: (default shipped weights)"

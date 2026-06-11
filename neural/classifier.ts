@@ -29,6 +29,7 @@ import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
 import { repairPostcodeLabels } from "./postcode-repair.js"
+import { bridgePunctuationGaps } from "./span-bridge.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
 import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
@@ -110,6 +111,14 @@ export interface NeuralAddressClassifierConfig {
 	 * override this. Omit for the byte-stable pre-#511 default (no detection, no mask).
 	 */
 	addressSystemConventions?: "auto" | SystemCode
+	/**
+	 * Punctuation-gap span bridging (the v4.4.0 corrective; see `span-bridge.ts`). The corpus
+	 * label format cannot express punctuation inside a span, so dotted surfaces ("P.O. Box",
+	 * "C.P.") decode as fragments. When true, adjacent same-tag spans separated only by short
+	 * punctuation gaps are merged after decode. Per-parse opts override. Omit for the byte-stable
+	 * pre-v4.4.0 behavior.
+	 */
+	bridgePunctuationGaps?: boolean
 }
 
 export class NeuralAddressClassifier {
@@ -316,6 +325,12 @@ export class NeuralAddressClassifier {
 		if (opts?.unitRepair) {
 			tokens = repairUnitLabels(text, tokens).tokens
 		}
+		// Punctuation-gap span bridging (v4.4.0 corrective — see span-bridge.ts): merge same-tag
+		// fragments split at unlabeled punctuation ("P.O. Box" decoding as P + O + Box). Opt-in,
+		// declared in the ship config like the conventions mask.
+		if (opts?.bridgePunctuationGaps ?? this.cfg.bridgePunctuationGaps) {
+			tokens = bridgePunctuationGaps(text, tokens)
+		}
 
 		return { tokens, logits, pieces }
 	}
@@ -419,6 +434,8 @@ export interface ParseOpts {
 	 * (`@mailwoman/core/decoder`) from `data/eval/calibration/isotonic-<locale>-<version>.json`.
 	 */
 	calibrate?: Calibrator
+	/** Per-parse override of the config-level `bridgePunctuationGaps` (see that doc). */
+	bridgePunctuationGaps?: boolean
 	/**
 	 * Address-system conventions enforcement (#511 Tier A / #478's rules-as-constraints slice).
 	 *

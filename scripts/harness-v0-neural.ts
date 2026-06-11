@@ -61,6 +61,7 @@ interface Args {
 	gazetteerLexiconPath?: string
 	anchorLookupPath?: string
 	conventions?: string
+	bridgeGaps?: boolean
 	adminFstPath?: string
 	morphologyEnabled: boolean
 	morphologyBinPath?: string
@@ -88,6 +89,7 @@ function parseArgs(): Args {
 		else if (a === "--gazetteer-lexicon" && args[i + 1]) out.gazetteerLexiconPath = args[++i]
 		else if (a === "--anchor-lookup" && args[i + 1]) out.anchorLookupPath = args[++i]
 		else if (a === "--conventions" && args[i + 1]) out.conventions = args[++i]
+		else if (a === "--bridge-gaps") out.bridgeGaps = true
 		else if (a === "--admin-fst" && args[i + 1]) out.adminFstPath = args[++i]
 		else if (a === "--morphology-fst" && args[i + 1]) out.morphologyBinPath = args[++i]
 		else if (a === "--no-morphology") out.morphologyEnabled = false
@@ -623,6 +625,7 @@ async function main(): Promise<void> {
 			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 			// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
 			...(args.conventions ? { addressSystemConventions: args.conventions as "auto" } : {}),
+			...(args.bridgeGaps ? { bridgePunctuationGaps: true } : {}),
 		})
 	} else {
 		neural = await NeuralAddressClassifier.loadFromWeights()

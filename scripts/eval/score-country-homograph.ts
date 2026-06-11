@@ -33,6 +33,7 @@ const neural = new NeuralAddressClassifier({
 	suppressGazetteerNearPostcode: argv.includes("--suppress-gaz-near-postcode"),
 	// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
 	...(arg("--conventions") ? { addressSystemConventions: arg("--conventions") as "auto" } : {}),
+	...(argv.includes("--bridge-gaps") ? { bridgePunctuationGaps: true } : {}),
 })
 
 const rows = readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))

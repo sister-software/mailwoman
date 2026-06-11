@@ -1,0 +1,82 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Contract tests for punctuation-gap span bridging (the v4.4.0 corrective). Load-bearing
+ *   properties: dotted fragments merge through their punctuation O-tokens; space-only gaps NEVER
+ *   merge (the Saint-Albans guard); different tags never merge; the merged confidence is the
+ *   minimum of the fragments.
+ */
+
+import { describe, expect, it } from "vitest"
+
+import type { DecoderToken } from "@mailwoman/core/decoder"
+import { bridgePunctuationGaps } from "./span-bridge.js"
+
+const tok = (piece: string, start: number, label: string, confidence = 0.9): DecoderToken =>
+	({ piece, start, end: start + piece.length, label, confidence }) as DecoderToken
+
+describe("bridgePunctuationGaps", () => {
+	it("merges dotted po_box fragments through period O-tokens", () => {
+		// "P.O. BOX 19" — P[0,1) .[1,2) O[2,3) .[3,4) BOX 19[5,11)
+		const text = "P.O. BOX 19"
+		const input = [
+			tok("P", 0, "B-po_box", 0.93),
+			tok(".", 1, "O"),
+			tok("O", 2, "B-po_box", 0.94),
+			tok(".", 3, "O"),
+			tok("BOX 19", 5, "B-po_box", 0.96),
+		]
+		const out = bridgePunctuationGaps(text, input)
+		expect(out).toHaveLength(1)
+		expect(out[0]).toMatchObject({ piece: "P.O. BOX 19", start: 0, end: 11, label: "B-po_box" })
+		expect(out[0]!.confidence).toBeCloseTo(0.93)
+	})
+
+	it("does NOT merge across space-only gaps (Saint-Albans guard)", () => {
+		const text = "Saint Paul"
+		const input = [tok("Saint", 0, "B-locality"), tok("Paul", 6, "B-locality")]
+		expect(bridgePunctuationGaps(text, input)).toHaveLength(2)
+	})
+
+	it("does NOT merge different tags", () => {
+		const text = "VT. 05751"
+		const input = [tok("VT", 0, "B-region"), tok(".", 2, "O"), tok("05751", 4, "B-postcode")]
+		expect(bridgePunctuationGaps(text, input)).toHaveLength(3)
+	})
+
+	it("does NOT merge across long gaps", () => {
+		const text = "Box 12 --- Box 99"
+		const input = [tok("Box 12", 0, "B-po_box"), tok("Box 99", 11, "B-po_box")]
+		expect(bridgePunctuationGaps(text, input)).toHaveLength(2)
+	})
+
+	it("does NOT merge when a labeled token sits in the gap range", () => {
+		// Pathological overlap: a non-O token between the fragments blocks the bridge.
+		const text = "A.B"
+		const input = [tok("A", 0, "B-venue"), tok(".", 1, "B-street"), tok("B", 2, "B-venue")]
+		expect(bridgePunctuationGaps(text, input)).toHaveLength(3)
+	})
+
+	it("merges comma-gap C.P. style fragments and absorbs the O token", () => {
+		const text = "C.P. 220"
+		const input = [
+			tok("C", 0, "B-po_box", 0.6),
+			tok(".", 1, "O"),
+			tok("P", 2, "I-po_box", 0.97),
+			tok(".", 3, "O"),
+			tok("220", 5, "I-po_box", 0.94),
+		]
+		const out = bridgePunctuationGaps(text, input)
+		expect(out).toHaveLength(1)
+		expect(out[0]!.piece).toBe("C.P. 220")
+		expect(out[0]!.confidence).toBeCloseTo(0.6)
+	})
+
+	it("leaves O-only streams and plain spans untouched", () => {
+		const text = "PO Box 989"
+		const input = [tok("PO Box 989", 0, "B-po_box")]
+		expect(bridgePunctuationGaps(text, input)).toEqual(input)
+	})
+})

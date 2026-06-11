@@ -70,6 +70,12 @@ CONV_MODE="$(node -e "console.log(JSON.parse(require('fs').readFileSync('$GATE',
 if [[ -n "$CONV_MODE" ]]; then
 	GAZ_ARGS+=(--conventions "$CONV_MODE")
 fi
+# Span-bridge channel (v4.4.0 corrective): spec-declared like the conventions mask.
+BRIDGE_MODE=""
+if [[ "$(node -e "console.log(JSON.parse(require('fs').readFileSync('$GATE','utf8')).requires_bridge === true)")" == "true" ]]; then
+	GAZ_ARGS+=(--bridge-gaps)
+	BRIDGE_MODE="1"
+fi
 
 run_battery() { # $1 = model path, $2 = tag (fp32|int8)
 	local m="$1" tag="$2"
@@ -97,7 +103,7 @@ node --experimental-strip-types scripts/eval/demo-preset-compare.ts --model-path
 # Arena leg (v4.4.0+: arena.perturb is a floor when the spec declares it) — heavy, ship artifact only.
 if [[ "$(node -e "console.log('arena.perturb' in (JSON.parse(require('fs').readFileSync('$GATE','utf8')).floors||{}))")" == "true" ]]; then
 	MODEL="${INT8:-$MODEL}" TOKENIZER="$TOK" MODELCARD="$CARD" \
-		GAZETTEER="$GAZ" ANCHOR="$LK" CONVENTIONS="${CONV_MODE:-}" \
+		GAZETTEER="$GAZ" ANCHOR="$LK" CONVENTIONS="${CONV_MODE:-}" BRIDGE="${BRIDGE_MODE:-}" \
 		OUT_DIR="$OUT_DIR/arenas" scripts/eval/external-arenas.sh > "$OUT_DIR/arenas.md" 2>&1
 fi
 

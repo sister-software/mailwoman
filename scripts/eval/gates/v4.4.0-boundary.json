@@ -1,5 +1,5 @@
 {
-	"$comment": "DRAFT gate spec for the Track A consolidation run (glue augmentation #513 + po_box/cedex shard + intersection shard #487 + train-time conventions pairing — whichever levers pass their solo probes). Pre-registered 2026-06-11 BEFORE any lever probe has run. STATED changes vs v4.3.0-relabel: (1) fr.region floored at 16.2 — the v4.3.0 ship value; this tag drifted 27.6→16.2 across two releases UNFLOORED and that silent drift ends here (raising it back is the train-time-conventions lever's job, measured not assumed); (2) NEW floors for the campaign tags this run targets: po_box, cedex, intersection (real-OOD evals; bars set conservatively at 'alive and precise', the unit playbook's first-run bars); (3) perturb-arena floor 71 pp — the #513 pre-registration (back to the v4.2.0 mark with affix floors UNCHANGED). The arena becomes a floor for the first time because this run's headline lever exists to fix an arena-measured regression — gating on it is the point.",
+	"$comment": "DRAFT gate spec for the Track A consolidation run (glue augmentation #513 + po_box/cedex shard + intersection shard #487 + train-time conventions pairing \u2014 whichever levers pass their solo probes). Pre-registered 2026-06-11 BEFORE any lever probe has run. STATED changes vs v4.3.0-relabel: (1) fr.region floored at 16.2 \u2014 the v4.3.0 ship value; this tag drifted 27.6\u219216.2 across two releases UNFLOORED and that silent drift ends here (raising it back is the train-time-conventions lever's job, measured not assumed); (2) NEW floors for the campaign tags this run targets: po_box, cedex, intersection (real-OOD evals; bars set conservatively at 'alive and precise', the unit playbook's first-run bars); (3) perturb-arena floor 71 pp \u2014 the #513 pre-registration (back to the v4.2.0 mark with affix floors UNCHANGED). The arena becomes a floor for the first time because this run's headline lever exists to fix an arena-measured regression \u2014 gating on it is the point.",
 	"label": "v4.4.0-boundary",
 	"requires_gazetteer_lexicon": true,
 	"requires_conventions": "auto",
@@ -23,5 +23,7 @@
 		"us.intersection_real": 50.0
 	},
 	"int8_vs_fp32_max_delta_pp": 1.5,
-	"ledger_path": "evals/scores-by-version.json"
+	"ledger_path": "evals/scores-by-version.json",
+	"$comment3": "2026-06-11 STATED config change (night-11, the v4.4.0 corrective): requires_bridge true \u2014 the ship config adds punctuation-gap span bridging (neural/span-bridge.ts). The first battery run FAILed po_box 60.4/70; row-level audit: dotted leaders (P.O./C.P./B.P.) failed 98%, ALL truncations at the first period, while plain leaders passed 84% \u2014 the corpus alignment tokenizer drops standalone punctuation so NO training row can label the dots; the model labels every letter piece po_box at 0.93+ and the span shatters at decode. The bridge merges same-tag fragments across short punctuation gaps (space-only gaps excluded \u2014 the Saint-Albans guard). Same weights, measured: po_box 60.4 -> 87.0, cedex unchanged. Same corrective pattern as v4.3.0's conventions mask: decode-side, deterministic, re-gated in full.",
+	"requires_bridge": true
 }
