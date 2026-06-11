@@ -12,6 +12,9 @@
  *   The model/tokenizer/fst come from HF (one-shot full-fetch); the resolver DBs are served
  *   same-origin from `/mailwoman/` and range-loaded, so a session fetches a few MB of them, not
  *   70+.
+ *
+ *   Layout: full-viewport map (Google Maps-style) with a floating semi-transparent control panel
+ *   on the left. On mobile the panel slides to the bottom.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -59,7 +62,7 @@ const DemoPage: React.FC = () => {
 	const buildTimeDisplay = (siteConfig.customFields?.buildTimeDisplay as string) ?? "?"
 
 	return (
-		<Layout title="Demo" description="Client-side address geocoder demo for mailwoman.">
+		<Layout title="Demo" description="Client-side address geocoder demo for mailwoman." noFooter>
 			<main className={styles.demoRoot}>
 				<header className={styles.header}>
 					<h1>Mailwoman geocoder demo</h1>
@@ -67,13 +70,11 @@ const DemoPage: React.FC = () => {
 						Type a US address. The neural classifier and supporting data run entirely in your browser — no server
 						round-trips after the initial asset load.
 					</p>
+					<span className={styles.headerMeta}>
+						Build {buildCommit} · {buildTimeDisplay}
+					</span>
 				</header>
 				<BrowserOnly fallback={<p>Loading…</p>}>{() => <DemoApp />}</BrowserOnly>
-				<footer
-					style={{ marginTop: "2rem", padding: "1rem 0", opacity: 0.4, fontSize: "0.75rem", textAlign: "center" }}
-				>
-					Build {buildCommit} · {buildTimeDisplay}
-				</footer>
 			</main>
 		</Layout>
 	)
@@ -552,103 +553,111 @@ const DemoApp: React.FC = () => {
 	const currentRelease = manifest?.releases.find((r) => r.version === selectedVersion)
 
 	return (
-		<>
-			{currentRelease ? (
-				<p style={{ fontSize: "0.9rem", opacity: 0.8, margin: "0 0 1rem" }}>
-					<strong>{currentRelease.version}</strong> — {currentRelease.description} ({currentRelease.modelSize},{" "}
-					{currentRelease.tokenizerVocab.toLocaleString()} vocab, {currentRelease.steps.toLocaleString()} steps)
-				</p>
-			) : null}
-			<div className={styles.layout}>
-				<section className={styles.controls}>
-					{manifest && manifest.releases.length > 1 ? (
-						<div style={{ marginBottom: "0.75rem" }}>
-							<label htmlFor="version-select" style={{ display: "block", marginBottom: "0.25rem", fontWeight: 600 }}>
-								Model version
-							</label>
-							<select
-								id="version-select"
-								value={selectedVersion ?? ""}
-								onChange={(e) => setSelectedVersion(e.target.value)}
-								disabled={busy}
-								style={{ width: "100%", padding: "0.4rem" }}
-							>
-								{manifest.releases.map((r) => (
-									<option key={r.version} value={r.version}>
-										{r.label}
-									</option>
-								))}
-							</select>
-						</div>
+		<div className={styles.layout}>
+			{/* Map fills entire viewport — rendered first so it's behind the floating panel */}
+			<section className={styles.mapWrap}>
+				<div ref={mapContainerRef} className={styles.map} />
+			</section>
+			{/* Floating control panel */}
+			<section className={styles.controls}>
+				{currentRelease ? (
+					<p className={styles.versionInfo}>
+						<strong>{currentRelease.version}</strong> — {currentRelease.description} ({currentRelease.modelSize},{" "}
+						{currentRelease.tokenizerVocab.toLocaleString()} vocab, {currentRelease.steps.toLocaleString()} steps)
+					</p>
+				) : null}
+				{manifest && manifest.releases.length > 1 ? (
+					<div style={{ marginBottom: "0.75rem" }}>
+						<label htmlFor="version-select" style={{ display: "block", marginBottom: "0.25rem", fontWeight: 600 }}>
+							Model version
+						</label>
+						<select
+							id="version-select"
+							value={selectedVersion ?? ""}
+							onChange={(e) => setSelectedVersion(e.target.value)}
+							disabled={busy}
+							style={{ width: "100%", padding: "0.4rem" }}
+						>
+							{manifest.releases.map((r) => (
+								<option key={r.version} value={r.version}>
+									{r.label}
+								</option>
+							))}
+						</select>
+					</div>
+				) : null}
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						gap: "0.75rem",
+						marginBottom: "0.75rem",
+						fontSize: "0.85rem",
+					}}
+				>
+					{activeBackend ? (
+						<span style={{ opacity: 0.7 }}>
+							Backend: <code>{activeBackend}</code>
+						</span>
 					) : null}
-					<div
+					<label
 						style={{
 							display: "flex",
 							alignItems: "center",
-							gap: "0.75rem",
-							marginBottom: "0.75rem",
-							fontSize: "0.85rem",
+							gap: "0.25rem",
+							cursor: "pointer",
+							opacity: 0.7,
 						}}
 					>
-						{activeBackend ? (
-							<span style={{ opacity: 0.7 }}>
-								Backend: <code>{activeBackend}</code>
-							</span>
-						) : null}
-						<label style={{ display: "flex", alignItems: "center", gap: "0.25rem", cursor: "pointer", opacity: 0.7 }}>
-							<input type="checkbox" checked={forceWasm} onChange={(e) => setForceWasm(e.target.checked)} />
-							Force WASM
-						</label>
-					</div>
-					<form onSubmit={onSubmit}>
-						<label htmlFor="addr-input">Address</label>
-						<input
-							id="addr-input"
-							type="text"
-							value={text}
-							onChange={(e) => setText(e.target.value)}
+						<input type="checkbox" checked={forceWasm} onChange={(e) => setForceWasm(e.target.checked)} />
+						Force WASM
+					</label>
+				</div>
+				<form onSubmit={onSubmit}>
+					<label htmlFor="addr-input">Address</label>
+					<input
+						id="addr-input"
+						type="text"
+						value={text}
+						onChange={(e) => setText(e.target.value)}
+						disabled={!ready || busy}
+						placeholder={DEFAULT_ADDRESS}
+					/>
+					<button type="submit" disabled={!ready || busy}>
+						{busy ? "Parsing…" : "Parse + resolve"}
+					</button>
+				</form>
+				<div className={styles.examples}>
+					<span className={styles.examplesLabel}>Try:</span>
+					{EXAMPLE_ADDRESSES.map((ex) => (
+						<button
+							key={ex.label}
+							type="button"
+							className={styles.exampleBtn}
 							disabled={!ready || busy}
-							placeholder={DEFAULT_ADDRESS}
-						/>
-						<button type="submit" disabled={!ready || busy}>
-							{busy ? "Parsing…" : "Parse + resolve"}
+							onClick={() => {
+								setText(ex.address)
+								setResult(null)
+							}}
+							title={ex.address}
+						>
+							{ex.label}
 						</button>
-					</form>
-					<div className={styles.examples}>
-						<span className={styles.examplesLabel}>Try:</span>
-						{EXAMPLE_ADDRESSES.map((ex) => (
-							<button
-								key={ex.label}
-								type="button"
-								className={styles.exampleBtn}
-								disabled={!ready || busy}
-								onClick={() => {
-									setText(ex.address)
-									setResult(null)
-								}}
-								title={ex.address}
-							>
-								{ex.label}
-							</button>
-						))}
-						<PermalinkButton text={text} />
-					</div>
-					{busy ? <LoadingIndicator mode="staged" steps={parseStageLabels} activeStep={parseStage} /> : null}
-					{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
-					{errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
-					{result ? (
-						<ResultPanel
-							result={result}
-							selectedCandidateIndex={selectedCandidateIndex}
-							onSelectCandidate={setSelectedCandidateIndex}
-						/>
-					) : null}
-				</section>
-				<section className={styles.mapWrap}>
-					<div ref={mapContainerRef} className={styles.map} />
-				</section>
-			</div>
-		</>
+					))}
+					<PermalinkButton text={text} />
+				</div>
+				{busy ? <LoadingIndicator mode="staged" steps={parseStageLabels} activeStep={parseStage} /> : null}
+				{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
+				{errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
+				{result ? (
+					<ResultPanel
+						result={result}
+						selectedCandidateIndex={selectedCandidateIndex}
+						onSelectCandidate={setSelectedCandidateIndex}
+					/>
+				) : null}
+			</section>
+		</div>
 	)
 }
 
