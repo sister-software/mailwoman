@@ -31,7 +31,10 @@
  *   in the cache). Span convention matches the eval gold: intersection_a/b cover each street
  *   INCLUDING directional + suffix ("S Loomis Blvd"); connector tokens are O.
  *
- *   A JSON report (counts per form/tail/case + samples) lands next to the output.
+ *   AUDIT: every emitted row is label-checked (B-count == component count; each labeled span
+ *   reconstructs its component verbatim; every O token is a known connector word). Any violation
+ *   fails the build. A JSON audit report (counts per form/tail/case + samples) lands next to the
+ *   output.
  *
  *   Inputs (already on disk; do not re-download):
  *
@@ -97,6 +100,12 @@ const CASES = [
 	{ id: "upper", w: 0.12, apply: (s) => s.toUpperCase() },
 	{ id: "lower", w: 0.06, apply: (s) => s.toLowerCase() },
 ]
+
+/**
+ * Words a connector may contribute as O tokens. The audit rejects any O token outside this set —
+ * an unlabeled street/locality token would surface here.
+ */
+const CONNECTOR_O_TOKENS = new Set(["and", "at", "of", "corner", "intersection"])
 
 /**
  * Street names that would make the connector ambiguous or break verbatim alignment: embedded
@@ -306,6 +315,45 @@ function renderRow(random, crossing, zipCity) {
 	return { raw, components, formId: form.id, tailId: tail.id, caseId: casing.id }
 }
 
+const TOKEN_RE = /[\p{L}\p{N}\p{M}'_-]+/gu
+const tokenizeLikeAligner = (s) => (s.match(TOKEN_RE) ?? []).map((t) => t.toLowerCase())
+
+/**
+ * Label-correctness audit for one aligned row. Returns a list of violations (empty = clean):
+ *
+ * 1. Tokens/labels length mismatch
+ * 2. B-label count != component count (a component span captured zero tokens, or split)
+ * 3. A labeled span does not reconstruct its component value token-for-token
+ * 4. An O token is not a known connector word (an unlabeled street/locality token shows up here)
+ */
+function auditRow(row, components) {
+	const errors = []
+	const { tokens, labels } = row
+	if (tokens.length !== labels.length) errors.push("tokens/labels length mismatch")
+
+	const bCount = labels.filter((l) => l.startsWith("B-")).length
+	const compCount = Object.keys(components).length
+	if (bCount !== compCount) errors.push(`B-count ${bCount} != components ${compCount}`)
+
+	const byTag = new Map()
+	for (let i = 0; i < tokens.length; i++) {
+		const label = labels[i]
+		if (label === "O") {
+			if (!CONNECTOR_O_TOKENS.has(tokens[i].toLowerCase())) errors.push(`illegal O token "${tokens[i]}"`)
+			continue
+		}
+		const tag = label.slice(2)
+		if (!byTag.has(tag)) byTag.set(tag, [])
+		byTag.get(tag).push(tokens[i].toLowerCase())
+	}
+	for (const [tag, value] of Object.entries(components)) {
+		const got = (byTag.get(tag) ?? []).join(" ")
+		const want = tokenizeLikeAligner(value).join(" ")
+		if (got !== want) errors.push(`${tag} span "${got}" != component "${want}"`)
+	}
+	return errors
+}
+
 async function main() {
 	const opts = parseArgs()
 	const random = mulberry32(opts.seed)
@@ -362,6 +410,7 @@ async function main() {
 	const countyCounts = {}
 	const usedCrossings = new Set()
 	const seenRaw = new Set()
+	const auditErrors = []
 	const samples = []
 
 	while (emitted < opts.count && guard++ < opts.count * 10) {
@@ -401,6 +450,11 @@ async function main() {
 			skipped++
 			continue
 		}
+		const violations = auditRow(aligned.row, components)
+		if (violations.length > 0) {
+			auditErrors.push({ raw, violations })
+			continue
+		}
 
 		seenRaw.add(raw)
 		outStream.write(JSON.stringify({ ...aligned.row, synth_method: "intersection", synth_base_id: null }) + "\n")
@@ -427,6 +481,7 @@ async function main() {
 		forms: formCounts,
 		tails: tailCounts,
 		cases: caseCounts,
+		audit: { errors: auditErrors.length, examples: auditErrors.slice(0, 10) },
 		seed: opts.seed,
 		source: "TIGER2023 EDGES via DuckDB ST_Read; node = 2 distinct S1* FULLNAMEs; eval crossings excluded",
 		samples,
@@ -436,8 +491,13 @@ async function main() {
 		`Done: emitted ${emitted} rows (skipped ${skipped}) from ${usedCrossings.size}/${pool.length} real crossings. → ${opts.output}\n` +
 			`  forms: ${JSON.stringify(formCounts)}\n` +
 			`  tails: ${JSON.stringify(tailCounts)}\n` +
-			`  cases: ${JSON.stringify(caseCounts)}`
+			`  cases: ${JSON.stringify(caseCounts)}\n` +
+			`  audit: ${auditErrors.length} violation(s)`
 	)
+	if (auditErrors.length > 0) {
+		console.error(`AUDIT FAILED — first violation: ${JSON.stringify(auditErrors[0])}`)
+		process.exit(1)
+	}
 }
 
 main().catch((err) => {
