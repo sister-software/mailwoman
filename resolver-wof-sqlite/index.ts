@@ -51,7 +51,7 @@ export {
 	type GeojsonPosition,
 } from "./geo.js"
 
-export { ancestorLineage, PLACETYPE_DEPTH, placetypeDepth, type AncestorPlaceRow } from "./ancestry.js"
+export { PLACETYPE_DEPTH, ancestorLineage, placetypeDepth, type AncestorPlaceRow } from "./ancestry.js"
 
 export {
 	WofReverseGeocoder,
@@ -61,6 +61,8 @@ export {
 	type WofReverseGeocoderOpts,
 } from "./reverse.js"
 
+export { AddressPointSqliteLookup } from "./address-point.js"
+export { StreetInterpolator, type InterpolatedHit, type InterpolationQuery } from "./interpolation.js"
 export {
 	deriveSchemaName,
 	pickShardForPlacetype,
@@ -68,4 +70,3 @@ export {
 	type ResolvedShard,
 	type ShardConfig,
 } from "./sharding.js"
-export { AddressPointSqliteLookup } from "./address-point.js"
