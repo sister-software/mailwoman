@@ -47,7 +47,7 @@ All publishable workspaces release in lockstep; the current npm version is **4.3
 ### Per-tag health (summary)
 
 The full per-tag table — two lenses, golden-dev and real-OOD — lives in the
-[parity scorecard](./evals/parity-scorecard-2026-06-10.md). The shape of it:
+[parity scorecard](./evals/parity-scorecard-2026-06-11.md). The shape of it:
 
 - **Healthy:** postcode (98/99 US/FR), house_number (96/91), venue-US (90), street (79 US).
 - **Fixed by the parity campaign:** `unit` 0 → 92.3 on real-OOD designators (the 4.1.0 headline).
@@ -77,7 +77,7 @@ make the pipeline take the better of both per component.
 | 2.7   | Phrase grouper   | ✅ default | Rule-based span proposals before classification                                                                 |
 | 3     | Token classify   | ✅ default | Neural encoder + rule classifiers, hybrid via policy registry (per-component modes)                             |
 | 4     | Sequence correct | ✅ default | Viterbi over the frozen BIO mask; postcode/unit label repairs                                                   |
-| 5     | Reconcile        | 🚩 opt-in  | Joint decoding with WOF concordance scoring (`forceJointReconcile` + `parseWithLogits`); argmax is the default  |
+| 5     | Reconcile        | ✅ default | Joint decoding with WOF concordance scoring — DEFAULT when the phrase grouper + a `parseWithLogits` classifier are wired (falls back to argmax otherwise); disable via `jointReconcile: false` |
 | 6     | Resolve          | 🚩 opt-in  | WOF SQLite gazetteer: admin/postcode-level candidates with coordinates, exact-match tiering, coordinate-first postcode disambiguation, opt-in `hierarchyCompletion`/`cityStateFallback`/`includeAncestors` |
 
 ## Confidence
@@ -89,7 +89,7 @@ weights bundle as `calibration.json`) to make those scores honest probabilities 
 ## Browser demo
 
 The live demo at [mailwoman.sister.software/demo](https://mailwoman.sister.software/demo) runs the
-int8 model (28.4 MB) via `@mailwoman/neural-web` plus a slim WOF "hot" database via
+int8 model (29.8 MB) via `@mailwoman/neural-web` plus a slim WOF "hot" database via
 `@mailwoman/resolver-wof-wasm`, with artifacts served from a versioned `releases.json` pointer.
 It calls the classifier's argmax path directly; joint reconcile is not active in the demo.
 
