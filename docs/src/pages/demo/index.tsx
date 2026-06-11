@@ -20,6 +20,7 @@
 import "maplibre-gl/dist/maplibre-gl.css"
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
+import Head from "@docusaurus/Head"
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
 import Layout from "@theme/Layout"
@@ -53,6 +54,7 @@ import {
 	flattenTree,
 	runCascade,
 } from "../../shared/demo-helpers.ts"
+import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 
 import styles from "./styles.module.css"
 
@@ -65,6 +67,18 @@ const DemoPage: React.FC = () => {
 
 	return (
 		<Layout title="Demo" description="Client-side address geocoder demo for mailwoman." noFooter>
+			{/* Resource hints: the DBs/model range-load from R2 and the basemap tiles from tiles.* the
+			    moment the app boots — preconnecting here overlaps DNS+TLS with hydration. The sqljs
+			    worker assets are same-origin and fetched on (or before) first lookup; prefetch warms
+			    the HTTP cache at low priority. */}
+			<Head>
+				<link rel="preconnect" href="https://public.sister.software" crossOrigin="anonymous" />
+				<link rel="dns-prefetch" href="https://public.sister.software" />
+				<link rel="preconnect" href="https://tiles.sister.software" crossOrigin="anonymous" />
+				<link rel="prefetch" href={`${siteConfig.baseUrl}mailwoman/sqljs/index.js`} />
+				<link rel="prefetch" href={`${siteConfig.baseUrl}mailwoman/sqljs/sqlite.worker.js`} />
+				<link rel="prefetch" href={`${siteConfig.baseUrl}mailwoman/sqljs/sql-wasm.wasm`} />
+			</Head>
 			<main className={styles.demoRoot}>
 				<header className={styles.header}>
 					<h1>Mailwoman geocoder demo</h1>
@@ -117,8 +131,14 @@ const DemoApp: React.FC = () => {
 	const [fstProvenance, setFstProvenance] = useState<FstProvenanceLike | null>(null)
 	const [forceWasm, setForceWasm] = useState(false)
 	const [activeBackend, setActiveBackend] = useState<string>("")
-	const [lookupLoader, setLookupLoader] = useState<(() => Promise<MailwomanLookupLike>) | null>(null)
+	const [lookupLoader, setLookupLoader] = useState<
+		((onProgress?: (bytesRead: number) => void) => Promise<MailwomanLookupLike>) | null
+	>(null)
 	const [lookup, setLookup] = useState<MailwomanLookupLike | null>(null)
+	// In-flight lookup load. ensureLookup is reachable from BOTH the idle warm-up and a user submit;
+	// without this guard a submit racing the warm-up would spawn a second worker + duplicate range
+	// fetches. Cleared on version change and on load failure (so the next attempt can retry).
+	const lookupPromiseRef = useRef<Promise<MailwomanLookupLike> | null>(null)
 	const [text, setText] = useState(initialAddress)
 	const [busy, setBusy] = useState(false)
 	const [parseStage, setParseStage] = useState(-1)
@@ -156,6 +176,18 @@ const DemoApp: React.FC = () => {
 		}
 		window.history.replaceState(null, "", url.toString())
 	}, [text])
+
+	// Mount: register the range-chunk service worker (persists validated DB range chunks in Cache
+	// Storage — warm repeat visits, and the root fix for mobile Safari's torn-chunk HTTP cache).
+	useEffect(() => {
+		registerRangeCacheServiceWorker(siteConfig.baseUrl)
+	}, [siteConfig.baseUrl])
+
+	// Drop cached range chunks belonging to other versions once a version is selected — the URLs are
+	// immutable, so old versions' chunks never expire on their own.
+	useEffect(() => {
+		if (selectedVersion) pruneDbRangeCache(selectedVersion)
+	}, [selectedVersion])
 
 	// Mount: fetch the releases manifest + set up the map.
 	useEffect(() => {
@@ -251,6 +283,7 @@ const DemoApp: React.FC = () => {
 				setFstProvenance(null)
 				setLookup(null)
 				setLookupLoader(null)
+				lookupPromiseRef.current = null
 				polygonDbRef.current = null
 				setResult(null)
 				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
@@ -299,11 +332,22 @@ const DemoApp: React.FC = () => {
 				}
 
 				if (release?.hasWofDb) {
-					setLookupLoader(() => async () => {
-						// Range-load the same-origin DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
+					setLookupLoader(() => async (onProgress?: (bytesRead: number) => void) => {
+						// Range-load the DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
 						const { loadHttpvfsDb, WofHttpvfsPlaceLookup } = await import("../../shared/httpvfs-resolver")
 						const worker = await loadHttpvfsDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"), sqljsBaseUrl)
-						return new WofHttpvfsPlaceLookup(worker)
+						const wofLookup = new WofHttpvfsPlaceLookup(worker)
+						// Warm the schema/FTS/abbr/dual-role pages now (idle or first submit) so the first
+						// real query starts from a warm page cache; report live transfer while it runs.
+						const poll = onProgress
+							? window.setInterval(() => void worker.bytesRead().then(onProgress), 300)
+							: undefined
+						try {
+							await wofLookup.warmUp()
+						} finally {
+							if (poll !== undefined) window.clearInterval(poll)
+						}
+						return wofLookup
 					})
 				}
 
@@ -511,20 +555,62 @@ const DemoApp: React.FC = () => {
 	const ensureLookup = useCallback(async (): Promise<MailwomanLookupLike | null> => {
 		if (lookup) return lookup
 		if (!lookupLoader) return null
-		setLoadingProgress("Loading WOF locality DB (~35 MB)…")
+		if (!lookupPromiseRef.current) {
+			// Honest copy: the DB is range-loaded, so a session transfers a few MB of it — not the
+			// whole file. The bytesRead poll below shows the real number as it grows.
+			setLoadingProgress("Connecting to place index…")
+			lookupPromiseRef.current = lookupLoader((bytesRead) => {
+				if (bytesRead > 0) setLoadingProgress(`Loading place index… ${(bytesRead / 1024 / 1024).toFixed(1)} MB fetched`)
+			})
+		}
 
 		try {
-			const l = await lookupLoader()
+			const l = await lookupPromiseRef.current
 			setLookup(l)
 			setLoadingProgress("")
 			return l
 		} catch (error) {
+			lookupPromiseRef.current = null
 			setLoadingProgress("")
-			console.error("Error loading WOF locality DB", error)
+			console.error("Error loading WOF place index", error)
 			setErrorMessage(error instanceof Error ? error.message : String(error))
 			return null
 		}
 	}, [lookup, lookupLoader])
+
+	// Warm the place index + polygon DB during browser idle time. The cold path (UMD script + worker
+	// spawn + WASM compile + ~40 SERIAL 64 KB range round-trips — sql.js-httpvfs fetches via sync XHR)
+	// costs seconds on a cold cache; paying it while the user reads the page / types means the first
+	// submit starts warm. Skipped under Save-Data; ensureLookup's in-flight guard makes racing a real
+	// submit safe.
+	useEffect(() => {
+		if (!lookupLoader || lookup) return
+		const connection = (navigator as { connection?: { saveData?: boolean } }).connection
+		if (connection?.saveData) return
+		let cancelled = false
+		const warm = (): void => {
+			if (cancelled) return
+			void ensureLookup().then(() => {
+				if (cancelled) return
+				const release = manifest?.releases.find((r) => r.version === selectedVersion)
+				if (release?.hasPolygons && selectedVersion && !polygonDbRef.current) {
+					const loading = loadPolygonDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseUrl)
+					polygonDbRef.current = loading
+					loading.catch(() => {
+						// Transient failure — null the ref so the next resolve retries.
+						if (polygonDbRef.current === loading) polygonDbRef.current = null
+					})
+				}
+			})
+		}
+		const hasIdleCallback = typeof window.requestIdleCallback === "function" // Safari ships without it
+		const idleId = hasIdleCallback ? window.requestIdleCallback(warm, { timeout: 4000 }) : window.setTimeout(warm, 1500)
+		return () => {
+			cancelled = true
+			if (hasIdleCallback) window.cancelIdleCallback(idleId)
+			else window.clearTimeout(idleId)
+		}
+	}, [lookupLoader, lookup, ensureLookup, manifest, selectedVersion, sqljsBaseUrl])
 
 	const onSubmit = useCallback(
 		async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -627,6 +713,18 @@ const DemoApp: React.FC = () => {
 
 				setParseStage(2)
 
+				// Open the polygon DB now (no await) so its worker spawn + header/schema range fetches
+				// overlap the cascade below — by the time a candidate renders, the geometry query is the
+				// only cold work left. The idle warm-up usually got here first; this covers a fast submit.
+				const releaseForResolve = manifest?.releases.find((r) => r.version === selectedVersion)
+				if (releaseForResolve?.hasPolygons && selectedVersion && !polygonDbRef.current) {
+					const loading = loadPolygonDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseUrl)
+					polygonDbRef.current = loading
+					loading.catch(() => {
+						if (polygonDbRef.current === loading) polygonDbRef.current = null
+					})
+				}
+
 				// Cascade: postcode first (most precise), fall back to locality, then raw text.
 				// Drop (lat=0, lon=0) hits — WOF ships placeholder zeros on ~22% of US postcodes.
 				// Timed from here so the one-time DB load above doesn't skew the resolve number.
@@ -700,7 +798,18 @@ const DemoApp: React.FC = () => {
 				setParseStage(-1)
 			}
 		},
-		[classifier, text, fstMatcher, ensureLookup, fstProvenance, compareMode, compareClassifier]
+		[
+			classifier,
+			text,
+			fstMatcher,
+			ensureLookup,
+			fstProvenance,
+			compareMode,
+			compareClassifier,
+			manifest,
+			selectedVersion,
+			sqljsBaseUrl,
+		]
 	)
 
 	const ready = classifier !== null
