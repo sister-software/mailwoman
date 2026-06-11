@@ -35,6 +35,11 @@ class DataConfig:
     # Probability (0-1) that each augmentation fires per row. 0 = disabled.
     augment_directional_prob: float = 0.0
     augment_region_prob: float = 0.0
+    # Region+postcode glue augmentation (#513): probability that a row with a region token
+    # immediately followed by a postcode token yields an extra copy with the pair fused in
+    # raw ("NY 14201" -> "NY14201") while tokens/labels stay split — the model learns to
+    # split the fused surface at the SP-piece level. 0 = disabled (rng-stream bit-identical).
+    augment_glue_prob: float = 0.0
     # Postcode-anchor lookup (#239/#240). Path to the JSON {postcode: [posterior, lat, lon]} table
     # (built by scripts/build-pilot-anchor-lookup.py). When set AND model.use_postcode_anchor is on,
     # the loader projects per-piece anchor features onto each row. None → no anchor features.
