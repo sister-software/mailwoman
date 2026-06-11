@@ -2,12 +2,18 @@
 // each row's gold (exact match, case-insensitive) and reports per-class component accuracy plus
 // parse SURVIVAL (a thrown parse fails every component in its row — the unbalanced-delimiter
 // classes exist to measure exactly that). Conventions: punctuation-stress.README.md.
+//
+// --engine v0 grades the legacy rules parser on the FOLDED view of the same gold: v0's vocabulary
+// has no street_prefix/street_suffix (joined into street, the harness fold convention) and no
+// cedex (excluded from its denominator) — each engine is graded on its own vocabulary's view of
+// identical gold, stated in the report header.
 // Usage: node --experimental-strip-types scripts/eval/score-punctuation-stress.ts --model <onnx>
-//   [--file data/eval/external/punctuation-stress.jsonl] [--no-ship-config]
+//   [--engine neural|v0] [--file data/eval/external/punctuation-stress.jsonl] [--no-ship-config]
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { createAddressParser } from "mailwoman"
 import { readFileSync, writeFileSync } from "node:fs"
 
 const argv = process.argv.slice(2)
@@ -19,10 +25,16 @@ const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.mo
 const LK = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
 const file = arg("--file", "data/eval/external/punctuation-stress.jsonl")!
 
+const engine = arg("--engine", "neural")!
+
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("--model")!)])
+const [tokenizer, runner] =
+	engine === "neural" ?
+		await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("--model")!)])
+	:	[undefined!, undefined!]
 const shipConfig = !argv.includes("--no-ship-config")
-const neural = new NeuralAddressClassifier({
+const v0 = engine === "v0" ? createAddressParser() : undefined
+const neural = engine === "v0" ? undefined! : new NeuralAddressClassifier({
 	tokenizer,
 	runner,
 	labels: card.labels,
@@ -47,17 +59,44 @@ interface Row {
 const rows: Row[] = readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
 const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 
+/** v0-vocabulary view of a gold record: affixes fold into street; cedex is out of vocab. */
+function foldGoldForV0(components: Record<string, string>): Record<string, string> {
+	const out: Record<string, string> = {}
+	const street = ["street_prefix", "street", "street_suffix"]
+		.map((t) => components[t])
+		.filter(Boolean)
+		.join(" ")
+	for (const [tag, v] of Object.entries(components)) {
+		if (tag === "cedex" || tag === "street_prefix" || tag === "street_suffix") continue
+		out[tag] = tag === "street" ? street : v
+	}
+	if (street && !out.street) out.street = street
+	return out
+}
+
+async function parseWith(raw: string): Promise<Record<string, string>> {
+	if (engine === "v0") {
+		const solutions = await v0!.parse(raw)
+		const rec = (solutions[0]?.classifications ?? {}) as Record<string, string[]>
+		return Object.fromEntries(Object.entries(rec).map(([t, vs]) => [t, vs.join(" ")]))
+	}
+	const flat = decodeAsJson(await neural.parse(raw)) as Record<string, string>
+	return argv.includes("--fold-gold") ? foldGoldForV0(flat) : flat
+}
+
 const byClass: Record<string, { components: number; correct: number; rows: number; died: number; samples: string[] }> = {}
 for (const row of rows) {
 	const c = (byClass[row.class] ??= { components: 0, correct: 0, rows: 0, died: 0, samples: [] })
 	c.rows++
 	let got: Record<string, string> = {}
 	try {
-		got = decodeAsJson(await neural.parse(row.raw)) as Record<string, string>
+		got = await parseWith(row.raw)
 	} catch {
 		c.died++ // every component in the row fails below
 	}
-	for (const [tag, gold] of Object.entries(row.components)) {
+	// --fold-gold grades neural on the same folded view as v0 (apples-to-apples head-to-head).
+	const goldView = engine === "v0" || argv.includes("--fold-gold") ? foldGoldForV0(row.components) : row.components
+	for (const [tag, gold] of Object.entries(goldView)) {
 		c.components++
 		if (norm(got[tag]) === norm(gold)) c.correct++
 		else if (c.samples.length < 2)
@@ -65,7 +104,7 @@ for (const row of rows) {
 	}
 }
 
-console.log(`# punctuation-stress — ${arg("--model")!.split("/").slice(-1)} · ${rows.length} rows · ship-config=${shipConfig}`)
+console.log(`# punctuation-stress — engine=${engine}${engine === "neural" ? ` · ${arg("--model")!.split("/").slice(-1)} · ship-config=${shipConfig}` : " (folded gold view)"} · ${rows.length} rows`)
 console.log("| class | rows | died | component acc |\n| --- | --: | --: | --: |")
 const sidecar: Record<string, { rows: number; died: number; acc: number }> = {}
 let totC = 0
