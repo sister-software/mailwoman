@@ -33,7 +33,11 @@ import { DuckDBInstance } from "@duckdb/node-api"
 
 // Cross-tree source import (.ts explicit): this script runs via --experimental-strip-types,
 // not from compiled out/ — the lookup tier imports the same module intra-package.
-import { normalizeLocalityForKey, normalizeStreetForKey } from "../resolver-wof-sqlite/street-normalize.ts"
+import {
+	canonicalizeRouteKey,
+	normalizeLocalityForKey,
+	normalizeStreetForKey,
+} from "../resolver-wof-sqlite/street-normalize.ts"
 
 const { values: args } = parseArgs({
 	options: {
@@ -90,6 +94,7 @@ db.exec(`
 	PRAGMA journal_mode = WAL;
 	CREATE TABLE address_point (
 		street_norm   TEXT NOT NULL,
+		street_key    TEXT NOT NULL, -- canonicalizeRouteKey(street_norm): the route-fold key (#483 Method 2)
 		number        TEXT NOT NULL,
 		unit          TEXT,
 		postcode      TEXT,
@@ -103,8 +108,8 @@ db.exec(`
 `)
 
 const insert = db.prepare(
-	`INSERT INTO address_point (street_norm, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
-	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	`INSERT INTO address_point (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
+	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 )
 db.exec("BEGIN")
 let kept = 0
@@ -115,6 +120,7 @@ for (const r of rows) {
 	const locality = r.locality ? normalizeLocalityForKey(String(r.locality)) : null
 	insert.run(
 		streetNorm,
+		canonicalizeRouteKey(streetNorm),
 		String(r.number).trim().toLowerCase(),
 		r.unit ? String(r.unit).trim().toLowerCase() : null,
 		r.postcode ? String(r.postcode).trim() : null,
@@ -131,6 +137,7 @@ db.exec("COMMIT")
 db.exec(`
 	CREATE INDEX idx_ap_postcode ON address_point (postcode, street_norm, number);
 	CREATE INDEX idx_ap_locality ON address_point (locality_norm, street_norm, number);
+	CREATE INDEX idx_ap_streetkey ON address_point (postcode, street_key);
 	PRAGMA wal_checkpoint(TRUNCATE);
 	VACUUM;
 `)
