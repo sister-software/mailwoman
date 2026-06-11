@@ -61,11 +61,17 @@ export interface SplitManifest {
  *
  * - US: Vermont, Wyoming, North Dakota (low density, easy to identify in WOF/admin sources).
  * - FR: Corse, Lozère, Creuse (small departments / regions).
+ * - DE (added 2026-06-11, night-11): Saarland + Mecklenburg-Vorpommern — small Länder so the
+ *   training cost is low while the slice clears the honest-eval 1000-row trust floor. DE has had
+ *   NO trustable honest-eval slice since the harness shipped (flagged 2026-06-08); this takes
+ *   effect at the NEXT base corpus rebuild — existing versioned corpora keep their committed
+ *   SPLIT_MANIFESTs (a holdout added after a corpus is built is leakage-laundering, not a holdout).
  */
 export function defaultHoldouts(): Record<string, readonly string[]> {
 	return {
 		US: ["Vermont", "VT", "Wyoming", "WY", "North Dakota", "ND"],
 		FR: ["Corse", "Lozère", "Lozere", "Creuse"],
+		DE: ["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"],
 	}
 }
 
