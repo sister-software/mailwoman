@@ -17,6 +17,9 @@
 #   - Runs: per-locale-f1 (US/FR, tokenizer-enforced), score-affix (+ unit-real),
 #     score-country-homograph, de-order-eval, demo-preset-compare. When --int8 is given,
 #     re-runs the per-tag battery on the int8 artifact and enforces the fp32↔int8 delta cap.
+#   - Demo-cascade smoke (#524): whole-stack parse→reconcile→resolve against the slim hot DB
+#     (MAILWOMAN_WOF_HOT_DB or the v4.4.0 stage default). Skips LOUD when the DB is absent;
+#     floor key `cascade.demo_smoke` (pass-rate %) for specs that gate on it.
 #   - Collects headline numbers into <out-dir>/verdict.json with per-floor PASS/FAIL.
 #   - Exit 0 = every floor met; exit 1 = any miss (CI-able, agent-guardrail-able).
 #
@@ -104,6 +107,22 @@ run_battery() { # $1 = model path, $2 = tag (fp32|int8)
 run_battery "$MODEL" fp32
 [[ -n "$INT8" ]] && run_battery "$INT8" int8
 node --experimental-strip-types scripts/eval/demo-preset-compare.ts --model-path="${INT8:-$MODEL}" > "$OUT_DIR/presets.md"
+
+# Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery
+# lacks (the 2026-06-11 lesson: #520/#521/#522 all shipped through green per-layer gates). Runs on
+# the ship artifact against the slim hot DB the demo serves. Env-gated like the other
+# artifact-dependent legs: skips LOUD when the DB is absent so CI stays green without it — but a
+# gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
+HOT_DB="${MAILWOMAN_WOF_HOT_DB:-/tmp/v440-stage/en-us/v4.4.0/wof-hot.db}"
+HOT_STAGE="$(dirname "$HOT_DB")"
+if [[ -f "$HOT_DB" ]]; then
+	node --experimental-strip-types scripts/eval/demo-cascade-smoke.ts \
+		--db "$HOT_DB" --stage-dir "$HOT_STAGE" --model "${INT8:-$MODEL}" --tokenizer "$TOK" --card "$CARD" \
+		--gazetteer-lexicon "$GAZ" --json "$OUT_DIR/cascade-smoke.json" > "$OUT_DIR/cascade-smoke.md" \
+		|| echo "✗ demo-cascade smoke errored (see $OUT_DIR/cascade-smoke.md) — no sidecar; a floored gate spec will FAIL" >&2
+else
+	echo "⚠ demo-cascade smoke SKIPPED — no wof-hot.db at $HOT_DB (set MAILWOMAN_WOF_HOT_DB). The whole-stack lens did NOT run (#524)." | tee "$OUT_DIR/cascade-smoke.md" >&2
+fi
 
 # Arena leg (v4.4.0+: arena.perturb is a floor when the spec declares it) — heavy, ship artifact only.
 if [[ "$(node -e "console.log('arena.perturb' in (JSON.parse(require('fs').readFileSync('$GATE','utf8')).floors||{}))")" == "true" ]]; then
