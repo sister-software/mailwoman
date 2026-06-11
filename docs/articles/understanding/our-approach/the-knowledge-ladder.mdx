@@ -25,12 +25,13 @@ Each layer adds one kind of knowledge the layers below it cannot easily derive:
 | **2. Locale gate**       | language / script family                                      | Yes (rule-based)                                                                                                       |
 | **2.5. Kind classifier** | overall query category (postcode_only, structured_address, …) | Yes (rule-based)                                                                                                       |
 | **2.7. Phrase grouper**  | **coherent input units (boundary discovery)**                 | **Yes (rule-based, v0.5.0; 57 venue markers, unit gate, positional prior)**                                            |
-| **3. Token classify**    | per-token semantic type                                       | Yes (neural, v0.5.2)                                                                                                   |
-| **3.2. Gazetteer anchor** | **known-surface clues (per-token candidate-tag sets, input layer)** | Partial — postcode anchor shipped; country anchor in flight ([#464](https://github.com/sister-software/mailwoman/issues/464)); general channel designed |
+| **3. Token classify**    | per-token semantic type                                       | Yes (neural; v4.3.0 ships the relabel-consistent 29M model)                                                            |
+| **3.2. Gazetteer anchor** | **known-surface clues (per-token candidate-tag sets, input layer)** | Yes (v4.2.0): postcode anchor + the general candidate-tag channel (country/region/po_box/cedex/homograph, 5-dim) + train/inference-paired choreography ([#464](https://github.com/sister-software/mailwoman/issues/464)) |
 | **3.5. FST prior**       | **gazetteer-derived emission biases**                         | **Yes (Wikipedia importance-weighted, v0.5.2; [#173](https://github.com/sister-software/mailwoman/pull/173))**         |
 | **4. Sequence correct**  | per-token BIO sequence validity                               | Yes (CRF with structural mask)                                                                                         |
+| **4.2. Conventions mask** | **per-address-system grammar (which tags are grammatical in the detected system)** | **Yes (v4.3.0, slice 1): locale head exported (`locale_logits`) → codex conventions — `fr` forbids the USPS affix decomposition + pins the postcode shape ([#478](https://github.com/sister-software/mailwoman/issues/478))** |
 | **4.5. Grouper audit**   | **provisional nodes for all-O spans**                         | **Yes (injects venue/locality from grouper proposals; [#170](https://github.com/sister-software/mailwoman/pull/170))** |
-| **5. Reconcile**         | **joint-coherent interpretation across candidates**           | Yes (joint-decoding path shipped in v0.5.0; opt-in via `forceJointReconcile`)                                          |
+| **5. Reconcile**         | **joint-coherent interpretation across candidates**           | Yes — default-on; resolver-backed concordance axes wired via `prefetchReconcileLookups` ([#478](https://github.com/sister-software/mailwoman/issues/478) step 2)                  |
 | **6. Resolve**           | world hierarchy (gazetteer)                                   | Yes (WOF SQLite, unified builder in [#176](https://github.com/sister-software/mailwoman/pull/176))                     |
 
 The two emphasized rows are the layers that v0.4.0's mixed result exposed as missing. They're complementary: the phrase grouper feeds cleaner spans IN to the classifier; the expanded reconciler picks coherent assignments OUT of the classifier's candidates.
@@ -43,7 +44,7 @@ Unicode normalization, locale-aware case folding, whitespace collapsing. Knows n
 
 ### Locale gate — language / script family
 
-Detects whether input is en-US, fr-FR, ja-JP, etc. Today this is a rule-based scorer (script-class + postcode-format hits with a caller-trust fallback). Tomorrow it could be a small detector model. Knows enough to bias the kind classifier and resolver weighting; doesn't know about specific places.
+Detects whether input is en-US, fr-FR, ja-JP, etc. Two sources today: the rule-based scorer at Stage 2 (script-class + postcode-format hits with a caller-trust fallback), and — since v4.3.0 — the classifier's own locale head, exported as the `locale_logits` ONNX output (~98% held-out accuracy, threshold-gated). The head was trained from PR3 onward but unreadable at inference until the conventions work needed it; now it drives the Stage 4.2 conventions mask. Knows enough to bias the kind classifier, resolver weighting, and per-system grammar; doesn't know about specific places.
 
 ### Kind classifier — overall query category
 
@@ -132,6 +133,22 @@ trade, both stages.
 
 The CRF with frozen structural transition mask. Forbids orphan-`I-*` sequences (no `I-locality` without preceding `B-locality`), enforces the BIO grammar. Knows the structural rules of BIO; doesn't know about semantic coherence.
 
+### Conventions mask — per-address-system grammar — SHIPPED (slice 1, v4.3.0)
+
+BIO validity is universal; addressing grammar is not. French street types are leading
+particles ("Rue de Rivoli"), so `street_suffix` is not a tag that can occur in a French
+parse — and RUE being a genuine USPS Pub-28 suffix variant means a model trained on
+consistent US splits will happily emit it on French soil (measured: the v4.3.0 gate's
+FAIL→corrective→PASS story). The conventions mask is the rung that makes the model's own
+address-system detection load-bearing: detected system → the codex conventions row →
+forbidden tags removed from the Viterbi vocabulary outright, and the system's postcode
+shape arms the snap-only repair pass. Same knowledge-outside-the-weights property as the
+gazetteer anchor: add a `de` or `gb` row to `codex/address-system-conventions.ts` and the
+constraint applies with no retrain. Detection is threshold-gated (0.8) — the mask never
+fires on a guess, and an undetected system parses exactly as before. The forward path
+([#478](https://github.com/sister-software/mailwoman/issues/478)): per-system *transition*
+masks, and eventually conventions as a second candidate emitter into Stage 5.
+
 ### Reconcile — joint-coherent interpretation — SHIPPED (joint-decoding path, v0.5.0)
 
 **Joint-decoding path shipped in v0.5.0 Thread D (`core/pipeline/reconcile.ts`). The fallback "sort spans by start" path is still wired as the default in `runtime-pipeline.ts` until Thread C-s lands the classifier top-k contract — at which point joint decoding becomes the default.**
@@ -186,13 +203,18 @@ The missing rungs were _information layers_. v0.4.0 wasn't doing the joint reaso
 
 Both v0.4.0 and v0.5.0 training runs diverge in the same fingerprint: loss descends through warmup, bottoms out, then climbs catastrophically under sustained peak learning rate. The May 2026 diagnostic work identified that the **CRF-NLL gradient dominates the CE gradient by 8-20×** — the CRF is pulling the model toward a degenerate attractor that CE opposes.
 
-Resolution path:
+Resolution (answered): **CE-only training is the shipped recipe** — every release since has
+trained CE-only with the CRF applied at inference over the frozen structural mask. The
+"sequence correct" rung moved permanently to "applied at inference only," which is also what
+made the conventions mask (rung 4.2) a zero-retrain layer: decode-time constraints compose
+freely when the decoder owns sequence structure.
 
-- **CE-only training** is the current experiment: remove CRF loss from training, keep CRF as inference-time structural decoder with frozen mask.
-- If CE-only trains stably, the knowledge ladder's "sequence correct" rung moves from "trained alongside classifier" to "applied at inference only" — a simpler architecture with the same structural guarantees.
-- If CE-only also diverges, the destabilizer is in the corpus or tokenizer, not the dual loss.
-
-The ladder architecture is sound. Whether the current training recipe can reach it is being answered in real time.
+One later episode completes the story: when affix recall hit a hard ceiling at 29M params,
+the capacity hypothesis was probe-laddered and falsified (a 48M model landed at the
+identical equilibrium) — the cause was a 1,000:1 label contradiction in the corpus, fixed
+by relabeling, not architecture ([#492](https://github.com/sister-software/mailwoman/issues/492) →
+[#511](https://github.com/sister-software/mailwoman/issues/511)). The ladder lesson
+generalizes: when a rung underperforms, audit what the data teaches it before resizing it.
 
 ## See also
 

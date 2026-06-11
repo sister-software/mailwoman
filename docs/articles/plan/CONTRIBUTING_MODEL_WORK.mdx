@@ -38,6 +38,20 @@ hands.
   proposing a deterministic tagger.
 - **Format quirks both systems miss** (rare edge shapes): consider a query-shape route before a
   shard — some formats are structurally different enough that routing beats tagging.
+- **Cross-locale grammar leakage** (a convention from one address system firing in another —
+  USPS suffix logic on French streets): **a conventions row + the decode-time mask**, not a
+  shard. `codex/address-system-conventions.ts` keyed by the model's own locale head; zero GPU,
+  applies without retrain. Shipped v4.3.0 (#478 slice 1).
+
+**The base-consistency check (the #511 lesson — run it BEFORE weighting any shard):** a coverage
+shard cannot outvote a contradicting base corpus. The affix shard spent four releases fighting
+~467M base rows that labeled the same surfaces the other way (≥1,000:1 effective gradient mass);
+every weight/architecture lever failed because the equilibrium was the mixing ratio. Audit what
+the base corpus says about your tag's surfaces first (`scripts/eval/audit-affix-misses.ts` is the
+template — per-row miss classification + absorption check). If the base contradicts the shard,
+the lever is a relabel pass (make the mix agree), not a bigger weight. Corollary, measured on
+v4.3.0: relabeling one boundary loosens its neighbors — pre-register watches on the adjacent
+classes (#513).
 
 ## The standard gate set
 
@@ -52,6 +66,13 @@ Run for *every* candidate, regardless of what you changed (this is what
 | Affix split | `scripts/eval/score-affix.ts` (NOT `per-locale-f1` — its fold can't see the split) | hold gated numbers |
 | Demo smoke | `eval-model` skill / `demo-preset-compare.ts` | presets stable |
 | Honest geography | `scripts/eval/honest-eval.sh` | region-match + coord p50/p90 + PIP hold |
+
+The ship-config channels are part of the contract: a gaz-trained model is graded with
+`--gazetteer-lexicon` + `--suppress-gaz-near-postcode`, and (v4.3.0+) `--conventions auto` —
+the gate spec declares them (`requires_gazetteer_lexicon`, `requires_conventions`) so the runner
+threads them everywhere. A scorer invoked without the declared channels grades a crippled model
+and produces numbers that look real (the zero-fill trap; it has bitten the country leg and the
+first affix audit).
 
 Plus your tag's pre-registered real-OOD gate. Pass → append the run to
 `evals/scores-by-version.json` and write the dated report in `docs/articles/evals/`.
