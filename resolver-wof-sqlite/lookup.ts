@@ -194,6 +194,10 @@ interface RawSearchRow {
 	rank: number // BM25 (lower = better in SQLite); we negate to get higher-is-better
 	lat: number | null
 	lon: number | null
+	min_latitude: number | null
+	max_latitude: number | null
+	min_longitude: number | null
+	max_longitude: number | null
 	population: number | null // from the place_population aux table; null when missing
 }
 
@@ -634,6 +638,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				bm25(place_search) AS rank,
 				spr.latitude AS lat,
 				spr.longitude AS lon,
+				spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude,
 				${populationSelect}
 			FROM ${sch}.place_search
 			${joinClause}
@@ -702,6 +707,23 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			}
 			if (distanceKm !== undefined) candidate.distanceKm = distanceKm
 			if (row.population !== null && row.population > 0) candidate.population = row.population
+			// Candidate bbox — parity with the WASM lookup (resolver-wof-wasm/lookup.ts), whose
+			// consumers (the demo cascade's region constraint) read it. Without this the Node
+			// backend's region→bbox constraint is dead and disambiguation falls to population
+			// ranking (the Springfield-IL→MO failure the #524 smoke eval caught).
+			if (
+				row.min_latitude != null &&
+				row.max_latitude != null &&
+				row.min_longitude != null &&
+				row.max_longitude != null
+			) {
+				candidate.bbox = {
+					minLat: row.min_latitude,
+					maxLat: row.max_latitude,
+					minLon: row.min_longitude,
+					maxLon: row.max_longitude,
+				}
+			}
 			return candidate
 		})
 
