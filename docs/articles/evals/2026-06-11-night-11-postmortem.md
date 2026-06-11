@@ -1,4 +1,4 @@
-# Night-11 postmortem — 2026-06-11 (DRAFT, completed at shift end)
+# Night-11 postmortem — 2026-06-11
 
 ## What shipped
 
@@ -105,12 +105,12 @@
 
 | Metric | Value |
 | --- | --- |
-| Shift window | 03:30–15:00 UTC (planned) |
+| Shift window | ~03:30–12:51 UTC (operator returned early; all objectives complete by 11:30) |
 | Models trained | 0 (the v1.3.0 run pre-dated the shift; gate + ship only) |
 | GPU spend vs cap | **$0 / $15** |
 | Gate batteries run | 3 (FAIL → FAIL → PASS, all on one artifact) |
 | Releases shipped | 1 (v4.4.0, all backends verified) |
-| Issues closed / filed | 2 closed (#513, #487) / 1 filed (#517) |
+| Issues closed / filed | 2 closed (#513, #487) / 1 filed (#517); #480/#481 scope-synced |
 | NaN incidents | 0 |
 | CI failures | 0 (one self-inflicted battery abort, see above) |
 | Demo regressions | none known (operator browser-verify stands) |
