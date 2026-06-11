@@ -61,17 +61,22 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 	const pNodes = primary.nodes
 	const cNodes = compare.nodes
 
-	// Index compare nodes by (start, end) key for O(1) span lookup.
+	// Index compare nodes by (start, end) key for span-based matching.
+	// Nodes without a span are collected separately for positional fallback.
 	const cBySpan = new Map<string, ResultNode>()
+	const cUnspanned: ResultNode[] = []
 	for (const n of cNodes) {
 		if (typeof n.start === "number" && typeof n.end === "number") {
 			cBySpan.set(`${n.start}:${n.end}`, n)
+		} else {
+			cUnspanned.push(n)
 		}
 	}
 
 	// Walk primary nodes; paired compare nodes are removed from the map so leftovers
-	// surface as compare-only.
+	// surface as compare-only. Unspanned nodes are matched positionally.
 	const handledSpans = new Set<string>()
+	let cUnspannedIdx = 0
 	for (const pn of pNodes) {
 		const spanKey =
 			typeof pn.start === "number" && typeof pn.end === "number" ? `${pn.start}:${pn.end}` : null
@@ -79,6 +84,10 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 		if (spanKey) {
 			cn = cBySpan.get(spanKey) ?? null
 			if (cn) handledSpans.add(spanKey)
+		} else {
+			// Positional fallback for nodes without character spans.
+			cn = cUnspanned[cUnspannedIdx] ?? null
+			if (cn) cUnspannedIdx++
 		}
 
 		if (!cn) {
@@ -113,13 +122,24 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 		})
 	}
 
-	// Remaining compare nodes not matched by span.
+	// Remaining spanned compare nodes not matched by span.
 	for (const [spanKey, cn] of cBySpan) {
 		if (handledSpans.has(spanKey)) continue
 		rows.push({
 			tag: cn.tag,
 			primaryNode: null,
 			compareNode: cn,
+			delta: null,
+			diffKind: "compare-only",
+		})
+	}
+
+	// Remaining unspanned compare nodes.
+	for (let i = cUnspannedIdx; i < cUnspanned.length; i++) {
+		rows.push({
+			tag: cUnspanned[i].tag,
+			primaryNode: null,
+			compareNode: cUnspanned[i],
 			delta: null,
 			diffKind: "compare-only",
 		})

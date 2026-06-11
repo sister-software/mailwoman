@@ -125,6 +125,7 @@ const DemoApp: React.FC = () => {
 	const [result, setResult] = useState<DemoResult | null>(null)
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
+	const [compareErrorMessage, setCompareErrorMessage] = useState<string | null>(null)
 
 	// Parse stage labels depend on whether WOF lookup is available for the selected release.
 	const parseStageLabels = useMemo(
@@ -230,6 +231,8 @@ const DemoApp: React.FC = () => {
 	// Load the model + FST + WOF DB when the selected version changes.
 	useEffect(() => {
 		if (!selectedVersion) return
+		// Clear stale compare selection when primary version changes to match.
+		setCompareVersion((prev) => (prev === selectedVersion ? null : prev))
 		let cancelled = false
 		const release = manifest?.releases.find((r) => r.version === selectedVersion)
 
@@ -353,7 +356,7 @@ const DemoApp: React.FC = () => {
 			} catch (error) {
 				if (cancelled) return
 				console.error("Error loading compare classifier", error)
-				setErrorMessage(error instanceof Error ? error.message : String(error))
+				setCompareErrorMessage(error instanceof Error ? error.message : String(error))
 			} finally {
 				if (!cancelled) setCompareLoading(false)
 			}
@@ -501,6 +504,7 @@ const DemoApp: React.FC = () => {
 			setBusy(true)
 			setParseStage(0)
 			setErrorMessage(null)
+			setCompareResult(null)
 
 			try {
 				// Stage 2.4 + 2.5: compute QueryShape + kind classification. Pure functions, ~µs.
@@ -541,6 +545,41 @@ const DemoApp: React.FC = () => {
 					.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
+
+				// ── Compare parse (classifier-only, no FST/WOF) ──────────────────
+				// Runs before the WOF lookup so it executes even when the selected
+				// version lacks a WOF database. Reuses the already-imported pipeline
+				// functions from the primary path — no redundant dynamic imports.
+				if (compareMode && compareClassifier) {
+					try {
+						const cStart = performance.now()
+						const cQueryShape = computeQueryShape(text)
+						const cKindResult = classifyKindSync({ raw: text, normalized: text }, cQueryShape)
+						const cShapeTime = performance.now() - cStart
+
+						const cPipelineResult = await runPipeline(text, {
+							computeQueryShape,
+							groupPhrases,
+							classifier: compareClassifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+						})
+						const cClassifyTime = performance.now() - cStart - cShapeTime
+						const cNodes = flattenTree(cPipelineResult.tree)
+
+						setCompareResult({
+							input: text,
+							tree: cPipelineResult.tree,
+							nodes: cNodes,
+							resolved: null,
+							candidates: [],
+							kindResult: cKindResult,
+							fstActive: false,
+							timing: { shape: cShapeTime, classify: cClassifyTime },
+						})
+					} catch (compareError) {
+						console.error("Error in compare parse", compareError)
+						// Non-fatal: primary result is still valid.
+					}
+				}
 				const wofLookup = await ensureLookup()
 				if (!wofLookup) {
 					setResult({
@@ -594,7 +633,6 @@ const DemoApp: React.FC = () => {
 				}
 
 				setSelectedCandidateIndex(0)
-				setCompareResult(null)
 				setResult({
 					input: text,
 					tree,
@@ -609,49 +647,6 @@ const DemoApp: React.FC = () => {
 					dualRoles,
 				})
 
-				// ── Compare parse (runs in parallel after primary) ─────────────────
-				if (compareMode && compareClassifier) {
-					try {
-						const { computeQueryShape: cqs, classifyKindSync: cks, runPipeline: crp, groupPhrases: cgp } =
-							await Promise.all([
-								import("@mailwoman/query-shape"),
-								import("@mailwoman/kind-classifier"),
-								import("@mailwoman/core/pipeline"),
-								import("@mailwoman/phrase-grouper"),
-							]).then(([qs, kc, pl, pg]) => ({
-								computeQueryShape: qs.computeQueryShape,
-								classifyKindSync: kc.classifyKindSync,
-								runPipeline: pl.runPipeline,
-								groupPhrases: pg.groupPhrases,
-							}))
-						const cStart = performance.now()
-						const cQueryShape = cqs(text)
-						const cKindResult = cks({ raw: text, normalized: text }, cQueryShape)
-						const cShapeTime = performance.now() - cStart
-
-						const cPipelineResult = await crp(text, {
-							computeQueryShape: cqs,
-							groupPhrases: cgp,
-							classifier: compareClassifier as unknown as Parameters<typeof crp>[1]["classifier"],
-						})
-						const cClassifyTime = performance.now() - cStart - cShapeTime
-						const cNodes = flattenTree(cPipelineResult.tree)
-
-						setCompareResult({
-							input: text,
-							tree: cPipelineResult.tree,
-							nodes: cNodes,
-							resolved: null,
-							candidates: [],
-							kindResult: cKindResult,
-							fstActive: false,
-							timing: { shape: cShapeTime, classify: cClassifyTime },
-						})
-					} catch (compareError) {
-						console.error("Error in compare parse", compareError)
-						// Non-fatal: primary result is still valid.
-					}
-				}
 			} catch (parsingError) {
 				console.error("Error parsing input", parsingError)
 				setErrorMessage(parsingError instanceof Error ? parsingError.message : String(parsingError))
@@ -818,6 +813,7 @@ const DemoApp: React.FC = () => {
 				{busy ? <LoadingIndicator mode="staged" steps={parseStageLabels} activeStep={parseStage} /> : null}
 				{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
 				{errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
+				{compareErrorMessage ? <p className={styles.error}>{compareErrorMessage}</p> : null}
 				{result ? (
 					<ResultPanel
 						result={result}
