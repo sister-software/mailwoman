@@ -4,10 +4,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the REAL-pair intersection training shard (#487). The model scores 0.0 on
- *   intersection_a/b (the intersection-real eval, v4.2.0 baseline) because the training mix has
- *   ZERO intersection-labeled rows — `synth-intersection` config weights (2.0, then 0.2) were
- *   twice a data no-op. This is the missing data.
+ *   Build the REAL-pair intersection training shard (#487). The model scores 0.0 on intersection_a/b
+ *   (the intersection-real eval, v4.2.0 baseline) because the training mix has ZERO
+ *   intersection-labeled rows — `synth-intersection` config weights (2.0, then 0.2) were twice a
+ *   data no-op. This is the missing data.
  *
  *   STREET PAIRS ARE REAL: the same TIGER 2023 EDGES extraction as the eval builder
  *   (scripts/eval/build-intersection-real.ts) — a node where two road edges (MTFCC S1*) with
@@ -18,36 +18,38 @@
  *   LEAKAGE POLICY (mirrors the affix shard's VT discipline):
  *
  *   - TRAIN counties: Cook IL (grid city) + Morris NJ (suburb).
- *   - GOLDEN (`--golden`) county: Washington VT (rural) ONLY — the corpus defaultHoldout state,
- *       never sampled by train mode.
- *   - Every crossing in data/eval/external/intersection-real.jsonl is excluded from BOTH modes, by
- *       node id AND by order-insensitive name pair (the eval shares all three counties).
+ *   - GOLDEN (`--golden`) county: Washington VT (rural) ONLY — the corpus defaultHoldout state, never
+ *       sampled by train mode.
+ *   - Every crossing in data/eval/external/intersection-real.jsonl is excluded from BOTH modes, by node
+ *       id AND by order-insensitive name pair (the eval shares all three counties).
  *
  *   RENDERING: junction-format variety per the night-10 audit — padded/TIGHT `&` and `/`, `and`,
  *   `at`, `@`, leading-phrase `corner of` / `intersection of` — crossed with tails (bare / `, ST` /
  *   `, ST ZIP` / `, City, ST [ZIP]`) and case variants (as-is / UPPER / lower). ZIPs are the
- *   crossing's own TIGER edge ZIPL (real); the locality tail comes from the OA Cook-county
- *   ZIP→city majority map (real pairing; NJ crossings get region/ZIP tails only — no OA NJ source
- *   in the cache). Span convention matches the eval gold: intersection_a/b cover each street
- *   INCLUDING directional + suffix ("S Loomis Blvd"); connector tokens are O.
+ *   crossing's own TIGER edge ZIPL (real); the locality tail comes from the OA Cook-county ZIP→city
+ *   majority map (real pairing; NJ crossings get region/ZIP tails only — no OA NJ source in the
+ *   cache). Span convention matches the eval gold: intersection_a/b cover each street INCLUDING
+ *   directional + suffix ("S Loomis Blvd"); connector tokens are O.
  *
- *   AUDIT: every emitted row is label-checked (B-count == component count; each labeled span
- *   reconstructs its component verbatim; every O token is a known connector word). Any violation
- *   fails the build. A JSON audit report (counts per form/tail/case + samples) lands next to the
- *   output.
+ *   AUDIT: every emitted row is label-checked on the RAW SURFACE via the #519 char-offset span triple
+ *   (one span per component; each span's raw slice reconstructs its component verbatim, punctuation
+ *   included; every uncovered char is connector material — whitespace, the connector punctuation,
+ *   or a known connector word). The previous token-stream comparison was punctuation-blind (the
+ *   dotted-designator lesson); raw slices are the authority now. Any violation fails the build. A
+ *   JSON audit report (counts per form/tail/case + samples) lands next to the output.
  *
  *   Inputs (already on disk; do not re-download):
  *
  *   - /tmp/tiger-edges/tl_2023_{17031,34027,50023}_edges.shp (unzipped TIGER 2023 EDGES)
  *   - /tmp/oa-cache/us__il__cook.zip (ZIP→city tails)
  *
- *   Pipeline:
- *     node scripts/build-intersection-shard.mjs --output /tmp/intersection-shard/intersection-train.jsonl \
- *       --count 40000 --seed 42
- *     node scripts/build-intersection-shard.mjs --output /tmp/intersection-shard/intersection-golden.jsonl \
- *       --golden --count 500 --seed 99
- *     python3 scripts/jsonl-to-parquet.py --input /tmp/intersection-shard/intersection-train.jsonl \
- *       --output /tmp/intersection-shard/part-intersection-train.parquet
+ *   Pipeline: node scripts/build-intersection-shard.mjs --output
+ *   /tmp/intersection-shard/intersection-train.jsonl\
+ *   --count 40000 --seed 42 node scripts/build-intersection-shard.mjs --output
+ *   /tmp/intersection-shard/intersection-golden.jsonl\
+ *   --golden --count 500 --seed 99 python3 scripts/jsonl-to-parquet.py --input
+ *   /tmp/intersection-shard/intersection-train.jsonl\
+ *   --output /tmp/intersection-shard/part-intersection-train.parquet
  */
 
 import { spawnSync } from "node:child_process"
@@ -102,8 +104,8 @@ const CASES = [
 ]
 
 /**
- * Words a connector may contribute as O tokens. The audit rejects any O token outside this set —
- * an unlabeled street/locality token would surface here.
+ * Words a connector may contribute as O tokens. The audit rejects any O token outside this set — an
+ * unlabeled street/locality token would surface here.
  */
 const CONNECTOR_O_TOKENS = new Set(["and", "at", "of", "corner", "intersection"])
 
@@ -315,41 +317,74 @@ function renderRow(random, crossing, zipCity) {
 	return { raw, components, formId: form.id, tailId: tail.id, caseId: casing.id }
 }
 
-const TOKEN_RE = /[\p{L}\p{N}\p{M}'_-]+/gu
-const tokenizeLikeAligner = (s) => (s.match(TOKEN_RE) ?? []).map((t) => t.toLowerCase())
+/** Punctuation a connector form may leave between spans (besides whitespace): `, & @ /`. */
+const CONNECTOR_PUNCT_RE = /^[\s,&@/]*$/
 
 /**
- * Label-correctness audit for one aligned row. Returns a list of violations (empty = clean):
+ * Label-correctness audit for one aligned row, on the RAW SURFACE via the #519 span triple. Returns
+ * a list of violations (empty = clean):
  *
- * 1. Tokens/labels length mismatch
- * 2. B-label count != component count (a component span captured zero tokens, or split)
- * 3. A labeled span does not reconstruct its component value token-for-token
- * 4. An O token is not a known connector word (an unlabeled street/locality token shows up here)
+ * 1. Tokens/labels length mismatch (transitional — both representations ride during v0.4.x→v0.5.0)
+ * 2. Span triple missing / non-parallel / unsorted / out of bounds (re-derived here, independent of
+ *    `alignRow`'s own assertion, so a builder bug can't vouch for itself)
+ * 3. Span count != component count, or a component without exactly one span of its tag
+ * 4. A span's raw slice does not reconstruct its component verbatim (punctuation included —
+ *    case-insensitive only because the case augmentation re-cases `raw`, not the components)
+ * 5. An uncovered char is not connector material: whitespace, connector punctuation (, & @ /), or part
+ *    of a known connector word (an unlabeled street/locality surface shows up here)
  */
 function auditRow(row, components) {
 	const errors = []
-	const { tokens, labels } = row
+	const { raw, tokens, labels, span_starts, span_ends, span_tags } = row
 	if (tokens.length !== labels.length) errors.push("tokens/labels length mismatch")
 
-	const bCount = labels.filter((l) => l.startsWith("B-")).length
-	const compCount = Object.keys(components).length
-	if (bCount !== compCount) errors.push(`B-count ${bCount} != components ${compCount}`)
+	if (!span_starts || !span_ends || !span_tags) {
+		errors.push("missing the char-offset span triple (#519)")
+		return errors
+	}
+	if (span_starts.length !== span_ends.length || span_starts.length !== span_tags.length) {
+		errors.push(`span triple not parallel: ${span_starts.length}/${span_ends.length}/${span_tags.length}`)
+		return errors
+	}
+	for (let i = 0; i < span_starts.length; i++) {
+		if (!(span_starts[i] >= 0 && span_starts[i] < span_ends[i] && span_ends[i] <= raw.length)) {
+			errors.push(`span ${span_tags[i]}@[${span_starts[i]}, ${span_ends[i]}) out of bounds`)
+		}
+		if (i > 0 && span_starts[i] < span_ends[i - 1]) {
+			errors.push(`spans unsorted/overlapping at index ${i}`)
+		}
+	}
+	if (errors.length > 0) return errors
 
-	const byTag = new Map()
-	for (let i = 0; i < tokens.length; i++) {
-		const label = labels[i]
-		if (label === "O") {
-			if (!CONNECTOR_O_TOKENS.has(tokens[i].toLowerCase())) errors.push(`illegal O token "${tokens[i]}"`)
+	const compCount = Object.keys(components).length
+	if (span_tags.length !== compCount) errors.push(`span count ${span_tags.length} != components ${compCount}`)
+
+	// Raw-surface reconstruction: each component's single span slices raw to the component verbatim.
+	for (const [tag, value] of Object.entries(components)) {
+		const indices = span_tags.map((t, i) => (t === tag ? i : -1)).filter((i) => i >= 0)
+		if (indices.length !== 1) {
+			errors.push(`${tag}: expected 1 span, got ${indices.length}`)
 			continue
 		}
-		const tag = label.slice(2)
-		if (!byTag.has(tag)) byTag.set(tag, [])
-		byTag.get(tag).push(tokens[i].toLowerCase())
+		const got = raw.slice(span_starts[indices[0]], span_ends[indices[0]])
+		if (got.toLowerCase() !== value.toLowerCase()) errors.push(`${tag} span "${got}" != component "${value}"`)
 	}
-	for (const [tag, value] of Object.entries(components)) {
-		const got = (byTag.get(tag) ?? []).join(" ")
-		const want = tokenizeLikeAligner(value).join(" ")
-		if (got !== want) errors.push(`${tag} span "${got}" != component "${want}"`)
+
+	// Negative space: every char outside the spans must be connector material.
+	let cursor = 0
+	const uncovered = []
+	for (let i = 0; i < span_starts.length; i++) {
+		if (span_starts[i] > cursor) uncovered.push(raw.slice(cursor, span_starts[i]))
+		cursor = span_ends[i]
+	}
+	if (cursor < raw.length) uncovered.push(raw.slice(cursor))
+	for (const segment of uncovered) {
+		const words = segment.match(/[\p{L}\p{N}]+/gu) ?? []
+		for (const word of words) {
+			if (!CONNECTOR_O_TOKENS.has(word.toLowerCase())) errors.push(`illegal uncovered word "${word}"`)
+		}
+		const punctOnly = segment.replace(/[\p{L}\p{N}]+/gu, "")
+		if (!CONNECTOR_PUNCT_RE.test(punctOnly)) errors.push(`illegal uncovered punctuation in "${segment}"`)
 	}
 	return errors
 }
