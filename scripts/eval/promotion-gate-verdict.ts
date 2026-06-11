@@ -52,6 +52,8 @@ function collect(tag: "fp32" | "int8"): Record<string, number | undefined> {
 	const affix = read(`${tag}-affix.md`)
 	const unit = read(`${tag}-unit.md`)
 	const country = read(`${tag}-country.md`)
+	const pobox = maybeRead(`${tag}-pobox.md`)
+	const intersection = maybeRead(`${tag}-intersection.md`)
 	const deorder = read(`${tag}-deorder.md`)
 	const deNative = deorder.match(/native DE\s*\|\s*[\d.]+%\s*\|\s*([\d.]+)%/)
 	// Locale summary row: `| us | <n> | <macro>% | <micro>% | <exact>% |`
@@ -69,6 +71,29 @@ function collect(tag: "fp32" | "int8"): Record<string, number | undefined> {
 		"fr.postcode": perLocale(pl, "postcode", "fr"),
 		"fr.house_number": perLocale(pl, "house_number", "fr"),
 		"de.native_locality": deNative ? Number(deNative[1]) : undefined,
+		"fr.region": perLocale(pl, "region", "fr"),
+		"us.po_box_real": pobox ? scorerF1(pobox, "po_box") : undefined,
+		"fr.cedex_real": pobox ? scorerF1(pobox, "cedex") : undefined,
+		// Graded as the WEAKER of the two spans — an intersection parse needs both.
+		"us.intersection_real":
+			intersection ?
+				Math.min(scorerF1(intersection, "intersection_a") ?? 0, scorerF1(intersection, "intersection_b") ?? 0)
+			:	undefined,
+		// Arena leg runs once on the ship artifact (int8); the fp32 pass reads undefined and the
+		// delta loop skips it. `| perturb | <n> | <v0>% | <neural>% |` from the three-bucket summary.
+		"arena.perturb": (() => {
+			const md = maybeRead("arenas.md")
+			const m = md?.match(/\|\s*perturb\s*\|\s*\d+\s*\|\s*[\d.]+%\s*\|\s*([\d.]+)%/)
+			return m ? Number(m[1]) : undefined
+		})(),
+	}
+}
+
+function maybeRead(f: string): string | undefined {
+	try {
+		return read(f)
+	} catch {
+		return undefined
 	}
 }
 

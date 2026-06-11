@@ -81,6 +81,11 @@ run_battery() { # $1 = model path, $2 = tag (fp32|int8)
 		--file data/eval/external/unit-real-designators.jsonl "${GAZ_ARGS[@]}" > "$OUT_DIR/$tag-unit.md"
 	node --experimental-strip-types scripts/eval/score-country-homograph.ts --model "$m" \
 		"${GAZ_ARGS[@]}" --suppress-gaz-near-postcode > "$OUT_DIR/$tag-country.md"
+	# v4.4.0 floors: po_box/cedex (the coverage-shard val) + intersections (real TIGER crossings).
+	node --experimental-strip-types scripts/eval/score-affix.ts --model "$m" \
+		--file data/eval/external/po-box-cedex-val.jsonl "${GAZ_ARGS[@]}" > "$OUT_DIR/$tag-pobox.md"
+	node --experimental-strip-types scripts/eval/score-affix.ts --model "$m" \
+		--file data/eval/external/intersection-real.jsonl "${GAZ_ARGS[@]}" > "$OUT_DIR/$tag-intersection.md"
 	scripts/eval/de-order-eval.sh --model "$m" --card "$CARD" --tokenizer "$TOK" \
 		--anchor-lookup "$LK" --out "$OUT_DIR/$tag-deorder" > "$OUT_DIR/$tag-deorder.md" 2>&1 || true
 }
@@ -88,6 +93,13 @@ run_battery() { # $1 = model path, $2 = tag (fp32|int8)
 run_battery "$MODEL" fp32
 [[ -n "$INT8" ]] && run_battery "$INT8" int8
 node --experimental-strip-types scripts/eval/demo-preset-compare.ts --model-path="${INT8:-$MODEL}" > "$OUT_DIR/presets.md"
+
+# Arena leg (v4.4.0+: arena.perturb is a floor when the spec declares it) — heavy, ship artifact only.
+if [[ "$(node -e "console.log('arena.perturb' in (JSON.parse(require('fs').readFileSync('$GATE','utf8')).floors||{}))")" == "true" ]]; then
+	MODEL="${INT8:-$MODEL}" TOKENIZER="$TOK" MODELCARD="$CARD" \
+		GAZETTEER="$GAZ" ANCHOR="$LK" CONVENTIONS="${CONV_MODE:-}" \
+		OUT_DIR="$OUT_DIR/arenas" scripts/eval/external-arenas.sh > "$OUT_DIR/arenas.md" 2>&1
+fi
 
 # --- collect + verify (node does the parsing; bash stays an orchestrator) ---
 node --experimental-strip-types scripts/eval/promotion-gate-verdict.ts \
