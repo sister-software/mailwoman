@@ -81,8 +81,10 @@
 
 ## Open questions for the operator
 
-- The blog draft (decision point 3): a v4.4.0 wrap exists as an option; nothing written yet —
-  morning call.
+- The blog draft (decision point 3): WRITTEN (`docs/blog/2026-06-11-the-model-said-po-box-and-we-werent-listening.mdx`,
+  `draft: true`) — the gate-pass condition was met, so the authorized draft rides; flipping it
+  live is yours. Credit where due: DeepSeek's idle-check nudge caught that I had mis-filed this
+  as a morning item when it was already-granted night work.
 - #517 (Commonwealth/military po_box): needs codex au/nz slices first — queue position?
 - The char-offset label format (the structural cure for what the bridge contains): a corpus-
   format change with wide blast radius — deserves a day-session design, not a night slot.
