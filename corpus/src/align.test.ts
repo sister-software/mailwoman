@@ -357,3 +357,79 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 		expect(result.kind).toBe("quarantined")
 	})
 })
+
+describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Umak/AK bug)", () => {
+	it("a short region value does not claim the inside of an earlier word", () => {
+		// Pre-fix, leftmost-substring let region "AK" (case-insensitive) match inside "Umak",
+		// scrambling every later span — 0.088% of the pilot shard, 46 natural rows.
+		const result = alignRow(
+			baseRow({
+				raw: "Umak Cir, AK 99546",
+				components: { street: "Umak", street_suffix: "Cir", region: "AK", postcode: "99546" },
+			})
+		)
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+		const { raw, span_starts, span_ends, span_tags } = result.row
+		const byTag = Object.fromEntries(span_tags!.map((t, i) => [t, raw.slice(span_starts![i]!, span_ends![i]!)]))
+		expect(byTag).toEqual({ street: "Umak", street_suffix: "Cir", region: "AK", postcode: "99546" })
+		// And specifically: the region span sits at the standalone "AK", not inside "Umak".
+		const regionIdx = span_tags!.indexOf("region")
+		expect(span_starts![regionIdx]).toBe(10)
+	})
+
+	it("intra-word matches survive as the fallback — affix supervision inside compounds", () => {
+		// street_suffix "straße" has NO boundary-aligned occurrence in "Hauptstraße"; the sub-word
+		// span is the point of the char-offset format and must not be quarantined by the fix.
+		const result = alignRow(
+			baseRow({
+				raw: "Hauptstraße 5, 10827 Berlin",
+				country: "DE",
+				components: { street: "Haupt", street_suffix: "straße", house_number: "5", postcode: "10827", locality: "Berlin" },
+			})
+		)
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+		const { raw, span_starts, span_ends, span_tags } = result.row
+		const suffixIdx = span_tags!.indexOf("street_suffix")
+		expect(raw.slice(span_starts![suffixIdx]!, span_ends![suffixIdx]!)).toBe("straße")
+		expect(span_starts![suffixIdx]).toBe(5) // inside the compound, directly after "Haupt"
+	})
+
+	it("longest value locates first — a region homonym cannot steal the street's word (pilot2 residual)", () => {
+		// "Alaska" is both the region and the street's first word; locating region first claimed
+		// [0,6) and quarantined the street. Longest-first gives the street its full surface, and
+		// the region then finds its own boundary-aligned occurrence.
+		const result = alignRow(
+			baseRow({
+				raw: "Alaska Regional Dr, Alaska 99508",
+				components: { street: "Alaska Regional Dr", region: "Alaska", postcode: "99508" },
+			})
+		)
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+		const { raw, span_starts, span_ends, span_tags } = result.row
+		const byTag = Object.fromEntries(span_tags!.map((t, i) => [t, [span_starts![i]!, span_ends![i]!]]))
+		expect(raw.slice(...(byTag["street"] as [number, number]))).toBe("Alaska Regional Dr")
+		expect(byTag["region"]).toEqual([20, 26])
+	})
+
+	it("the Lake/AK natural-row case from the pilot scan", () => {
+		const result = alignRow(
+			baseRow({
+				raw: "Lake Dr, AK 99692",
+				components: { street: "Lake", street_suffix: "Dr", region: "AK", postcode: "99692" },
+			})
+		)
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+		const { raw, span_starts, span_ends, span_tags } = result.row
+		for (let i = 0; i < span_tags!.length; i++) {
+			const slice = raw.slice(span_starts![i]!, span_ends![i]!)
+			expect(slice.trim()).toBe(slice) // no span carries edge whitespace
+		}
+		const regionIdx = span_tags!.indexOf("region")
+		expect(raw.slice(span_starts![regionIdx]!, span_ends![regionIdx]!)).toBe("AK")
+		expect(span_starts![regionIdx]).toBe(9)
+	})
+})
