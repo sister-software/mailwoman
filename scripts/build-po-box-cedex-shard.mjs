@@ -57,6 +57,7 @@ import { spawnSync } from "node:child_process"
 import { createWriteStream } from "node:fs"
 
 import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/ca"
+import { isCedex } from "@mailwoman/codex/fr"
 import { isPOBox } from "@mailwoman/codex/us"
 import { alignRow, maybeNoisifyBoxNumber, PO_BOX_LOCALE_TEMPLATES, stableSourceId } from "@mailwoman/corpus"
 
@@ -321,14 +322,19 @@ function makePoBoxPhrase(random, leaders, rareLeaders) {
 	return phrase
 }
 
-/** A CEDEX designation: "CEDEX 08" / "Cedex 8" / bare "CEDEX" (the SCHEMA.mdx / NF Z 10-011 form). */
+/** A CEDEX designation: "CEDEX 08" / "Cedex 8" / bare "CEDEX". Shape contract = codex fr/cedex
+ * (the slice PR #516's gap note asked for) — every emitted phrase must satisfy isCedex, loud. */
 function makeCedex(random) {
 	const r = random()
 	const word = r < 0.6 ? "CEDEX" : r < 0.9 ? "Cedex" : "cedex"
-	if (random() < 0.2) return word // "33077 BORDEAUX CEDEX" — un-numbered offices are common
-	const n = 1 + Math.floor(random() * 20)
-	const id = random() < 0.5 ? String(n).padStart(2, "0") : String(n)
-	return `${word} ${id}`
+	const phrase = (() => {
+		if (random() < 0.2) return word // "33077 BORDEAUX CEDEX" — un-numbered offices are common
+		const n = 1 + Math.floor(random() * 20)
+		const id = random() < 0.5 ? String(n).padStart(2, "0") : String(n)
+		return `${word} ${id}`
+	})()
+	if (!isCedex(phrase)) throw new Error(`makeCedex emitted a phrase the codex matcher rejects: "${phrase}"`)
+	return phrase
 }
 
 /** Synthesize a codex-valid Canadian postcode for a province's FSA letters ("H2X 3V4"). */

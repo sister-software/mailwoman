@@ -92,6 +92,11 @@ run_battery() { # $1 = model path, $2 = tag (fp32|int8)
 		--file data/eval/external/po-box-cedex-val.jsonl "${GAZ_ARGS[@]}" > "$OUT_DIR/$tag-pobox.md"
 	node --experimental-strip-types scripts/eval/score-affix.ts --model "$m" \
 		--file data/eval/external/intersection-real.jsonl "${GAZ_ARGS[@]}" > "$OUT_DIR/$tag-intersection.md"
+	# Watch lenses (v4.4.0+, recorded not floored — one release of history before promotion, #488):
+	node --experimental-strip-types scripts/eval/score-affix.ts --model "$m" \
+		--file data/eval/external/intersection-golden-vt.jsonl "${GAZ_ARGS[@]}" > "$OUT_DIR/$tag-watch-intersection-vt.md"
+	node --experimental-strip-types scripts/eval/score-affix.ts --model "$m" \
+		--file data/eval/external/glue-rows-perturb.jsonl "${GAZ_ARGS[@]}" > "$OUT_DIR/$tag-watch-glue.md"
 	scripts/eval/de-order-eval.sh --model "$m" --card "$CARD" --tokenizer "$TOK" \
 		--anchor-lookup "$LK" --out "$OUT_DIR/$tag-deorder" > "$OUT_DIR/$tag-deorder.md" 2>&1 || true
 }

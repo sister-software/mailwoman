@@ -7,6 +7,7 @@
  *   postal), and the admin hierarchy of départements and régions.
  */
 
+export * from "./cedex.js"
 export * from "./code-postal.js"
 export * from "./departement.js"
 export * from "./region.js"
