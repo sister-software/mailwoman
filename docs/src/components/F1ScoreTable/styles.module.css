@@ -1,0 +1,165 @@
+/* ---------------------------------------------------------------------------
+ * F1ScoreTable — sortable F1 score table with tooltip hover.
+ * --------------------------------------------------------------------------- */
+
+.tableWrapper {
+	margin: 1.5rem 0;
+	overflow-x: auto;
+}
+
+.f1Table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.9rem;
+}
+
+.f1Table th,
+.f1Table td {
+	padding: 0.5rem 0.65rem;
+	text-align: left;
+	border-bottom: 1px solid var(--ifm-color-emphasis-200);
+	white-space: nowrap;
+}
+
+.f1Table thead th {
+	font-weight: 600;
+	color: var(--ifm-color-emphasis-600);
+	font-size: 0.82rem;
+	text-transform: uppercase;
+	background: var(--ifm-table-head-background, var(--ifm-color-emphasis-100));
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+
+.sortableHeader {
+	cursor: pointer;
+	user-select: none;
+}
+
+.sortableHeader:hover {
+	color: var(--ifm-color-primary);
+}
+
+.tagCell code {
+	font-size: 0.85rem;
+	padding: 0.1rem 0.3rem;
+	background: var(--ifm-color-emphasis-200);
+	border-radius: 3px;
+}
+
+.evalCell {
+	color: var(--ifm-color-emphasis-600);
+	font-size: 0.85rem;
+	max-width: 220px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* F1 score cells */
+
+.f1Cell {
+	font-family: var(--ifm-font-family-monospace);
+	font-weight: 600;
+	text-align: right;
+	cursor: default;
+}
+
+.cellHigh {
+	color: #16a34a;
+	background: rgba(22, 163, 74, 0.06);
+}
+
+.cellMid {
+	color: #d97706;
+	background: rgba(217, 119, 6, 0.06);
+}
+
+.cellLow {
+	color: #dc2626;
+	background: rgba(220, 38, 38, 0.06);
+}
+
+.cellNA {
+	color: var(--ifm-color-emphasis-400);
+}
+
+/* Tooltip */
+
+.tooltipWrap {
+	position: relative;
+	cursor: help;
+}
+
+.tooltip {
+	visibility: hidden;
+	opacity: 0;
+	position: absolute;
+	left: 50%;
+	bottom: 100%;
+	transform: translateX(-50%);
+	margin-bottom: 6px;
+	padding: 0.5rem 0.7rem;
+	background: var(--ifm-background-color);
+	color: var(--ifm-font-color-base);
+	border: 1px solid var(--ifm-color-emphasis-300);
+	border-radius: 6px;
+	font-size: 0.82rem;
+	font-weight: 400;
+	font-family: var(--ifm-font-family-base);
+	line-height: 1.5;
+	white-space: normal;
+	width: 300px;
+	z-index: 10;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	pointer-events: none;
+	transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+
+/* Arrow at the bottom of the tooltip */
+.tooltip::after {
+	content: "";
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	border-width: 5px;
+	border-style: solid;
+	border-color: var(--ifm-background-color) transparent transparent transparent;
+}
+
+.tooltipWrap:hover .tooltip {
+	visibility: visible;
+	opacity: 1;
+}
+
+/* Footnote */
+
+.footnote {
+	margin-top: 0.75rem;
+	font-size: 0.82rem;
+	color: var(--ifm-color-emphasis-600);
+	line-height: 1.6;
+}
+
+/* Color key in footnote */
+
+.colorKey {
+	display: inline-block;
+	margin-top: 0.25rem;
+}
+
+.keyHigh {
+	color: #16a34a;
+	font-weight: 600;
+}
+
+.keyMid {
+	color: #d97706;
+	font-weight: 600;
+}
+
+.keyLow {
+	color: #dc2626;
+	font-weight: 600;
+}

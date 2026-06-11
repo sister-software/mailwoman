@@ -47,7 +47,18 @@ All publishable workspaces release in lockstep; the current npm version is **4.3
 ### Per-tag health (summary)
 
 The full per-tag table — two lenses, golden-dev and real-OOD — lives in the
-[parity scorecard](./evals/parity-scorecard-2026-06-11.md). The shape of it:
+[parity scorecard](./evals/parity-scorecard-2026-06-11.md). The sortable summary:
+
+import { F1ScoreTable } from "@site/src/components/F1ScoreTable/F1ScoreTable"
+
+<F1ScoreTable />
+
+:::tip[Click to sort · Hover for context]
+Click any column header to sort the table by that metric. Hover over any F1 score cell to see an
+explanation of what that value means in the context of the eval set it was measured on.
+:::
+
+The trend, in words:
 
 - **Healthy:** postcode (98/99 US/FR), house_number (96/91), venue-US (90), street (79 US).
 - **Fixed by the parity campaign:** `unit` 0 → 92.3 on real-OOD designators (the 4.1.0 headline).

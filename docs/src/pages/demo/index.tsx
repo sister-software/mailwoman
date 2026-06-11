@@ -27,6 +27,7 @@ import type { Map as MapLibreMap, StyleSpecification, VectorSourceSpecification 
 import type React from "react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
+import { AboutDemo } from "../../components/AboutDemo/AboutDemo.tsx"
 import { LayerToggleControl } from "../../components/LayerToggleControl/LayerToggleControl.tsx"
 import { LoadingIndicator } from "../../components/LoadingIndicator/LoadingIndicator.tsx"
 import { PermalinkButton } from "../../components/PermalinkButton/PermalinkButton.tsx"
@@ -560,6 +561,7 @@ const DemoApp: React.FC = () => {
 			</section>
 			{/* Floating control panel */}
 			<section className={styles.controls}>
+				<AboutDemo />
 				{currentRelease ? (
 					<p className={styles.versionInfo}>
 						<strong>{currentRelease.version}</strong> — {currentRelease.description} ({currentRelease.modelSize},{" "}

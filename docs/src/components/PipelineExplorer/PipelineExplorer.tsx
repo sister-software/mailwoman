@@ -23,6 +23,7 @@
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import React, { useCallback, useMemo, useState } from "react"
 
+import { AboutDemo } from "../AboutDemo/AboutDemo.tsx"
 import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
 import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES, flattenTree, runCascade } from "../../shared/demo-helpers.ts"
 import type { DemoResult, DualRole, ResolvedHit } from "../../shared/resources.tsx"
@@ -272,6 +273,7 @@ const PipelineExplorerInner: React.FC<{ defaultAddress: string }> = ({ defaultAd
 
 	return (
 		<div className={styles.pipelineExplorer}>
+			<AboutDemo />
 			{currentRelease ? (
 				<p className={styles.releaseInfo}>
 					<strong>{currentRelease.version}</strong> — {currentRelease.description} ({currentRelease.modelSize},{" "}
