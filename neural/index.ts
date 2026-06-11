@@ -13,6 +13,8 @@ export * from "./postcode-anchor.js"
 export * from "./postcode-binary-resolver.js"
 export * from "./proposal-classifier.js"
 export { addEmissionMatrix, buildEmissionPriors } from "./query-shape-prior.js"
+export * from "./span-proposal-prior.js"
+export * from "./span-proposer-lexicon.js"
 export type { BuildPriorsOpts, KnownFormatHitLike, QueryShapeLike, TokenLike } from "./query-shape-prior.js"
 export * from "./tokenizer.js"
 export {
