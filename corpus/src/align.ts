@@ -99,7 +99,14 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 
 	const haystack = caseInsensitive ? row.raw.toLowerCase() : row.raw
 
-	for (const [tag, value] of Object.entries(row.components) as Array<[ComponentTag, string | undefined]>) {
+	// Longest value first: a short component must not claim a word that a longer, more specific
+	// component owns ("Alaska Regional Dr, Alaska" — region "Alaska" stealing the street's first
+	// word quarantined the street; pilot2's residual class). Emit order is unaffected — spans are
+	// re-sorted by start below.
+	const entries = (Object.entries(row.components) as Array<[ComponentTag, string | undefined]>).sort(
+		(a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0)
+	)
+	for (const [tag, value] of entries) {
 		if (!value) continue
 
 		const needle = caseInsensitive ? value.toLowerCase() : value
@@ -191,15 +198,25 @@ function locateSpan(args: {
 	const { haystack, needle, claimed, maxEditDistance } = args
 	if (needle.length === 0) return undefined
 
-	// Pass 1: verbatim substring, leftmost non-claimed.
+	// Pass 1: verbatim substring. Word-boundary-aligned matches are PREFERRED over intra-word ones
+	// — leftmost-substring alone let a short value claim the inside of an earlier word (region "AK"
+	// matched inside "Umak"/"Lake", scrambling every later span; caught by the v0.5.0 pilot build).
+	// Intra-word matches stay allowed as the fallback because they are load-bearing for affix
+	// supervision (street_suffix "straße" inside "Hauptstraße" has no boundary-aligned occurrence —
+	// sub-word spans are the point of the char-offset format).
+	let intraWord: { start: number; end: number } | undefined
 	let from = 0
 	while (true) {
 		const idx = haystack.indexOf(needle, from)
 		if (idx < 0) break
 		const end = idx + needle.length
-		if (!overlapsClaimed(idx, end, claimed)) return { start: idx, end }
+		if (!overlapsClaimed(idx, end, claimed)) {
+			if (isBoundaryAligned(haystack, idx, end)) return { start: idx, end }
+			intraWord ??= { start: idx, end }
+		}
 		from = idx + 1
 	}
+	if (intraWord) return intraWord
 
 	if (maxEditDistance <= 0) return undefined
 
@@ -215,6 +232,15 @@ function locateSpan(args: {
 	}
 
 	return undefined
+}
+
+const WORD_CHAR = /[\p{L}\p{N}]/u
+
+/** Both needle edges sit on word boundaries of the haystack (string edges count as boundaries). */
+function isBoundaryAligned(haystack: string, start: number, end: number): boolean {
+	const before = start === 0 || !WORD_CHAR.test(haystack[start - 1]!)
+	const after = end === haystack.length || !WORD_CHAR.test(haystack[end]!)
+	return before && after
 }
 
 function overlapsClaimed(start: number, end: number, claimed: Array<[number, number]>): boolean {
