@@ -3,26 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a per-state STREET-SEGMENT shard (#483) from TIGER EDGES: side-aware house-number
- *   ranges + segment polylines, keyed by THE shared street normalizer
- *   (`resolver-wof-sqlite/street-normalize.ts` — same function the interpolation lookup
- *   applies at query time; one normalizer, never two). The interpolation tier's data half;
- *   design in `docs/articles/plan/2026-06-11-interpolation-design.md`.
+ *   Build a per-state STREET-SEGMENT shard (#483) from TIGER EDGES: side-aware house-number ranges +
+ *   segment polylines, keyed by THE shared street normalizer
+ *   (`resolver-wof-sqlite/street-normalize.ts` — same function the interpolation lookup applies at
+ *   query time; one normalizer, never two). The interpolation tier's data half; design in
+ *   `docs/articles/plan/2026-06-11-interpolation-design.md`.
  *
- *   One row PER SIDE per address-carrying road edge (left and right carry independent
- *   ranges and ZIPs in TIGER). Parity is derived from the from/to numbers ('odd' | 'even' |
- *   'mixed'); descending ranges keep their raw from/to (direction matters for the
- *   interpolation position) alongside min/max index columns. Non-numeric ranges
- *   (hyphenated, alphanumeric) are skipped and counted.
+ *   One row PER SIDE per address-carrying road edge (left and right carry independent ranges and ZIPs
+ *   in TIGER). Parity is derived from the from/to numbers ('odd' | 'even' | 'mixed'); descending
+ *   ranges keep their raw from/to (direction matters for the interpolation position) alongside
+ *   min/max index columns. Non-numeric ranges (hyphenated, alphanumeric) are skipped and counted.
  *
  *   Inputs: TIGER EDGES shapefiles per county (the same files the intersection eval reads),
  *   downloaded to --edges-dir from:
- *     https://www2.census.gov/geo/tiger/TIGER2023/EDGES/tl_2023_<countyfips>_edges.zip
+ *   https://www2.census.gov/geo/tiger/TIGER2023/EDGES/tl_2023_<countyfips>_edges.zip
  *
- *   Usage:
- *     node --experimental-strip-types scripts/build-interpolation-shard.ts \
- *       --state VT [--edges-dir /tmp/tiger-edges] [--release TIGER2023] \
- *       [--out /mnt/playpen/mailwoman-data/interpolation/interpolation-us-vt.db]
+ *   Usage: node --experimental-strip-types scripts/build-interpolation-shard.ts\
+ *   --state VT [--edges-dir /tmp/tiger-edges] [--release TIGER2023]\
+ *   [--out /mnt/playpen/mailwoman-data/interpolation/interpolation-us-vt.db]
  */
 
 import { globSync, mkdirSync, rmSync } from "node:fs"
@@ -56,8 +54,7 @@ if (!args.state || !STATE_FIPS[args.state.toUpperCase()]) {
 	process.exit(1)
 }
 const STATE = args.state.toUpperCase()
-const OUT =
-	args.out ?? `/mnt/playpen/mailwoman-data/interpolation/interpolation-us-${STATE.toLowerCase()}.db`
+const OUT = args.out ?? `/mnt/playpen/mailwoman-data/interpolation/interpolation-us-${STATE.toLowerCase()}.db`
 
 const shapefiles = globSync(`${args["edges-dir"]}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`).sort()
 if (shapefiles.length === 0) {
@@ -91,7 +88,7 @@ db.exec(`
 const insert = db.prepare(
 	`INSERT INTO street_segment
 	 (street_norm, side, from_hn, to_hn, min_hn, max_hn, parity, postcode, county_fips, street_raw, geometry, source, release)
-	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 )
 
 /** Strictly-numeric house number → integer, else null (hyphenated/alphanumeric skipped). */
@@ -135,10 +132,9 @@ for (const shp of shapefiles) {
 		const geom = JSON.parse(String(r.geojson)) as { type: string; coordinates: number[][] }
 		if (geom.type !== "LineString" || geom.coordinates.length < 2) continue
 		// Round to 1e-6 deg (~0.1 m) — shapefile floats carry noise digits that bloat the JSON.
-		const polyline = JSON.stringify(geom.coordinates.map(([lon, lat]) => [
-			Math.round(lon! * 1e6) / 1e6,
-			Math.round(lat! * 1e6) / 1e6,
-		]))
+		const polyline = JSON.stringify(
+			geom.coordinates.map(([lon, lat]) => [Math.round(lon! * 1e6) / 1e6, Math.round(lat! * 1e6) / 1e6])
+		)
 
 		for (const [side, fromRaw, toRaw, zip] of [
 			["L", r.LFROMADD, r.LTOADD, r.ZIPL],
@@ -166,7 +162,7 @@ for (const shp of shapefiles) {
 				streetRaw,
 				polyline,
 				"tiger:edges",
-				String(args.release),
+				String(args.release)
 			)
 			sides++
 		}
@@ -182,7 +178,7 @@ db.exec(`
 `)
 const stats = db
 	.prepare(
-		"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM street_segment",
+		"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM street_segment"
 	)
 	.get() as Record<string, number>
 db.close()

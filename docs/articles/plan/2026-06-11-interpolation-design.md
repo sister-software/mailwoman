@@ -30,14 +30,14 @@ The same per-county shapefiles the real-intersection eval already reads
 `www2.census.gov/geo/tiger/TIGER2023/EDGES/tl_2023_<countyfips>_edges.zip` into
 `/tmp/tiger-edges/`). Each road edge carries:
 
-| Field                 | Meaning                                                        |
-| --------------------- | -------------------------------------------------------------- |
-| `FULLNAME`            | Street name as TIGER spells it (`State Route 12`, `Main St`)   |
-| `LFROMADD`/`LTOADD`   | House-number range on the LEFT side, walking from→to node      |
-| `RFROMADD`/`RTOADD`   | House-number range on the RIGHT side                           |
-| `ZIPL`/`ZIPR`         | ZIP code per side                                              |
-| `MTFCC`               | Feature class — `S1…` is a road                                |
-| `geom`                | The segment polyline (WGS84 lon/lat)                           |
+| Field               | Meaning                                                      |
+| ------------------- | ------------------------------------------------------------ |
+| `FULLNAME`          | Street name as TIGER spells it (`State Route 12`, `Main St`) |
+| `LFROMADD`/`LTOADD` | House-number range on the LEFT side, walking from→to node    |
+| `RFROMADD`/`RTOADD` | House-number range on the RIGHT side                         |
+| `ZIPL`/`ZIPR`       | ZIP code per side                                            |
+| `MTFCC`             | Feature class — `S1…` is a road                              |
+| `geom`              | The segment polyline (WGS84 lon/lat)                         |
 
 TIGER conventions that shape the schema:
 
@@ -116,7 +116,7 @@ Given `{ street, number, postcode? }`:
    length to the point at fraction `t`. Descending ranges need no special case: `t` is
    computed against the raw from/to, which already encodes direction.
 6. **Answer** — `{ lat, lon, interpolated: true, parityMatched, uncertaintyM, source,
-   release }` where `uncertaintyM` is half the segment's polyline length in meters.
+release }` where `uncertaintyM` is half the segment's polyline length in meters.
 
 No side-of-street offset in this slice: TIGER centerline + half-segment uncertainty is
 the honest claim. Offsetting perpendicular by ~10 m to the matched side is a cheap
