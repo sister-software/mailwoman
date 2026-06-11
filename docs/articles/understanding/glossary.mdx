@@ -41,6 +41,8 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **Corpus** — the curated dataset used for training. The current corpus is `corpus-v0.3.0` with 677 million aligned rows.
 
+**Conventions mask** — a decode-time constraint layer keyed by the model's own address-system detection (the exported locale head): tags that are ungrammatical in the detected system are removed from the Viterbi vocabulary outright, and the system's postcode shape arms the snap-only repair pass. First slice (v4.3.0): French forbids the USPS street-affix decomposition. Same knowledge-outside-the-weights property as the gazetteer anchor — add a codex conventions row, no retrain. See [the knowledge ladder](./our-approach/the-knowledge-ladder.mdx), rung 4.2.
+
 ## D
 
 **Decoder** — in a transformer encoder-decoder model, the part that produces output sequences. Mailwoman's classifier is **encoder-only** (no decoder); the "CRF decoder" is a different thing — a structured-prediction layer that picks the best label sequence from the encoder's outputs.
@@ -64,8 +66,6 @@ Every technical term used in this documentation, defined once. Skim it before re
 **Gazetteer** — a database of named places (countries, regions, cities, neighbourhoods) with their canonical names, coordinates, and IDs. Mailwoman uses [Who's On First](https://whosonfirst.org/) as its gazetteer.
 
 **Gazetteer anchor** — an input-layer feature channel that attaches a per-token **candidate-tag set** from the gazetteer/codex (e.g. "this surface is a known country-and-region") so the model conditions on lexicon membership without being overruled by it. The knowledge lives outside the weights — extend the gazetteer, no retrain. See [the knowledge ladder](./our-approach/the-knowledge-ladder.mdx), rung 3.2.
-
-**Conventions mask** — a decode-time constraint layer keyed by the model's own address-system detection (the exported locale head): tags that are ungrammatical in the detected system are removed from the Viterbi vocabulary outright, and the system's postcode shape arms the snap-only repair pass. First slice (v4.3.0): French forbids the USPS street-affix decomposition. Same knowledge-outside-the-weights property as the gazetteer anchor — add a codex conventions row, no retrain. See [the knowledge ladder](./our-approach/the-knowledge-ladder.mdx), rung 4.2.
 
 **Golden set** — a hand-labelled evaluation dataset. The current golden set is `v0.1.2` with 4,535 entries (US + FR + adversarial).
 
