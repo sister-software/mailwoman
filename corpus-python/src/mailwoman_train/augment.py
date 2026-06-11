@@ -21,6 +21,15 @@ The expansion augmentations replace the token in the raw text AND update the
 tokens + labels lists to match; the expanded form inherits the original token's
 BIO label (B- for the first word, I- for continuation words). The glue
 augmentation mutates ``raw`` alone.
+
+**Char-offset spans** (#519, v0.5.0): rows from a v0.5.0 corpus carry
+``span_starts``/``span_ends``/``span_tags`` beside tokens/labels, and every augmented COPY this
+module yields must re-target them — the expansion augmentations rebuild ``raw`` (so the spans are
+re-derived from the new tokens/labels over the rebuilt surface), and the glue augmentation
+splices chars out of ``raw`` (so offsets at/after the splice shift left). Yielding a mutated raw
+with the source row's spans would corrupt the labels silently — the exact hazard that put the
+augmentation re-target in the same change as the loader wiring. Rows without spans (frozen
+pre-v0.5.0 corpora) pass through the legacy token path unchanged; a PARTIAL triple raises.
 """
 
 from __future__ import annotations
@@ -98,6 +107,71 @@ US_STATES: dict[str, str] = {
 }
 
 
+SPAN_KEYS = ("span_starts", "span_ends", "span_tags")
+
+
+def row_span_triple(row: dict) -> tuple[list[int], list[int], list[str]] | None:
+    """Return the row's char-offset span triple (#519), or None for a legacy (token-only) row.
+
+    A PARTIAL triple — some keys present/non-null, others missing/null — is a corrupt row and
+    raises loudly; it must never silently fall back to the token path (the labels it would fall
+    back TO are not the labels the row was built with).
+    """
+    values = [row.get(k) for k in SPAN_KEYS]
+    present = [v is not None for v in values]
+    if not any(present):
+        return None
+    if not all(present):
+        missing = [k for k, p in zip(SPAN_KEYS, present) if not p]
+        raise ValueError(
+            f"corrupt row: partial char-offset span triple (#519) — missing {missing} "
+            f"(raw={row.get('raw')!r})"
+        )
+    starts, ends, tags = values
+    if len(starts) != len(ends) or len(starts) != len(tags):
+        raise ValueError(
+            f"corrupt row: span triple arrays not parallel — "
+            f"starts={len(starts)} ends={len(ends)} tags={len(tags)} (raw={row.get('raw')!r})"
+        )
+    return starts, ends, tags
+
+
+def spans_from_token_labels(tokens: list[str], labels: list[str]) -> tuple[list[int], list[int], list[str]]:
+    """Derive a span triple for a raw REBUILT as ``" ".join(tokens)`` (the expansion augmentations'
+    surface): contiguous B-/I- runs become one span each, offsets exact by construction."""
+    starts: list[int] = []
+    ends: list[int] = []
+    tags: list[str] = []
+    cursor = 0
+    open_tag: str | None = None
+    for token, label in zip(tokens, labels):
+        begin = cursor
+        end = cursor + len(token)
+        cursor = end + 1  # single-space join
+        if label == "O":
+            open_tag = None
+            continue
+        prefix, tag = label.split("-", 1)
+        if prefix == "I" and open_tag == tag:
+            ends[-1] = end  # extend the open span across the joining space
+        else:
+            starts.append(begin)
+            ends.append(end)
+            tags.append(tag)
+        open_tag = tag
+    return starts, ends, tags
+
+
+def _with_rederived_spans(row: dict, augmented: dict) -> dict:
+    """Attach a re-derived span triple to an expansion-augmented copy when the source row carries
+    spans. The expansions rebuild ``raw`` from the new tokens, so the spans are re-derived from
+    the new tokens/labels — the source offsets address a surface that no longer exists."""
+    if row_span_triple(row) is None:
+        return augmented
+    starts, ends, tags = spans_from_token_labels(augmented["tokens"], augmented["labels"])
+    return {**augmented, "span_starts": starts, "span_ends": ends, "span_tags": tags}
+
+
 def _expand_token(
     tokens: list[str],
     labels: list[str],
@@ -131,11 +205,34 @@ def _expand_token(
 def glue_region_postcode(row: dict, idx: int) -> dict:
     """Return a copy of ``row`` with the whitespace between token ``idx`` (region) and
     token ``idx + 1`` (postcode) removed from ``raw``. Tokens + labels are untouched —
-    the split labels project onto the fused surface via char offsets (see module doc)."""
+    the split labels project onto the fused surface via char offsets (see module doc).
+
+    Char-offset spans (#519) shift with the splice: every offset at/after the removed gap moves
+    left by the gap width, so the region span still ends at the fused boundary and the postcode
+    span starts there. A span STRADDLING the gap would be corrupt input (the gap is inter-token
+    whitespace between two differently-labeled tokens) — raises rather than guesses."""
     spans = whitespace_spans(row["raw"], row["tokens"])
     region_end = spans[idx][1]
     postcode_begin = spans[idx + 1][0]
-    return {**row, "raw": row["raw"][:region_end] + row["raw"][postcode_begin:]}
+    gap = postcode_begin - region_end
+    out = {**row, "raw": row["raw"][:region_end] + row["raw"][postcode_begin:]}
+    triple = row_span_triple(row)
+    if triple is not None:
+        starts, ends, tags = triple
+        new_starts: list[int] = []
+        new_ends: list[int] = []
+        for start, end in zip(starts, ends):
+            if start < postcode_begin < end:
+                raise ValueError(
+                    f"corrupt row: span [{start}, {end}) straddles the glue gap "
+                    f"[{region_end}, {postcode_begin}) (raw={row['raw']!r})"
+                )
+            new_starts.append(start - gap if start >= postcode_begin else start)
+            new_ends.append(end - gap if end > region_end else end)
+        out["span_starts"] = new_starts
+        out["span_ends"] = new_ends
+        out["span_tags"] = list(tags)
+    return out
 
 
 def augment_row(
@@ -167,12 +264,15 @@ def augment_row(
                 tokens, labels, idx, DIRECTIONALS[tokens[idx]]
             )
             new_raw = " ".join(new_tokens)
-            yield {
-                **row,
-                "raw": new_raw,
-                "tokens": new_tokens,
-                "labels": new_labels,
-            }
+            yield _with_rederived_spans(
+                row,
+                {
+                    **row,
+                    "raw": new_raw,
+                    "tokens": new_tokens,
+                    "labels": new_labels,
+                },
+            )
 
     # Region+postcode glue (#513): fuse the last region token with an immediately-following
     # postcode token in raw. Letter→digit boundary only — that's the boundary SentencePiece
@@ -205,9 +305,12 @@ def augment_row(
                 tokens, labels, idx, US_STATES[tokens[idx]]
             )
             new_raw = " ".join(new_tokens)
-            yield {
-                **row,
-                "raw": new_raw,
-                "tokens": new_tokens,
-                "labels": new_labels,
-            }
+            yield _with_rederived_spans(
+                row,
+                {
+                    **row,
+                    "raw": new_raw,
+                    "tokens": new_tokens,
+                    "labels": new_labels,
+                },
+            )

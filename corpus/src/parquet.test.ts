@@ -30,6 +30,9 @@ const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 	license: "CC0-1.0",
 	tokens: ["Paris"],
 	labels: ["B-locality"],
+	span_starts: [0],
+	span_ends: [5],
+	span_tags: ["locality"],
 	...over,
 })
 
@@ -82,6 +85,37 @@ describe("rowToParquet", () => {
 		expect(pq.tokens).toEqual(["Paris", "France"])
 		expect(pq.labels).toEqual(["B-locality", "B-country"])
 	})
+
+	it("preserves the char-offset span triple (#519)", () => {
+		const pq = rowToParquet(
+			labeled({
+				raw: "Paris, France",
+				tokens: ["Paris", "France"],
+				labels: ["B-locality", "B-country"],
+				span_starts: [0, 7],
+				span_ends: [5, 13],
+				span_tags: ["locality", "country"],
+			})
+		)
+		expect(pq.span_starts).toEqual([0, 7])
+		expect(pq.span_ends).toEqual([5, 13])
+		expect(pq.span_tags).toEqual(["locality", "country"])
+	})
+
+	it("throws loudly when the span triple is absent (un-migrated producer)", () => {
+		expect(() => rowToParquet(labeled({ span_starts: undefined, span_ends: undefined, span_tags: undefined }))).toThrow(
+			/missing the char-offset span triple/
+		)
+	})
+
+	it("throws loudly on a partial span triple (corrupt row, never a silent fallback)", () => {
+		expect(() => rowToParquet(labeled({ span_tags: undefined }))).toThrow(/missing the char-offset span triple/)
+		expect(() => rowToParquet(labeled({ span_starts: undefined }))).toThrow(/missing the char-offset span triple/)
+	})
+
+	it("throws loudly when the span arrays are not parallel", () => {
+		expect(() => rowToParquet(labeled({ span_starts: [0, 7] }))).toThrow(/not parallel/)
+	})
 })
 
 describe("LABELED_ROW_SCHEMA", () => {
@@ -100,6 +134,12 @@ describe("LABELED_ROW_SCHEMA", () => {
 		expect(LABELED_ROW_SCHEMA.labels.repeated).toBe(true)
 	})
 
+	it("marks the span triple REPEATED, offsets as INT32 (#519)", () => {
+		expect(LABELED_ROW_SCHEMA.span_starts).toMatchObject({ type: "INT32", repeated: true })
+		expect(LABELED_ROW_SCHEMA.span_ends).toMatchObject({ type: "INT32", repeated: true })
+		expect(LABELED_ROW_SCHEMA.span_tags).toMatchObject({ type: "UTF8", repeated: true })
+	})
+
 	it("uses SHARD_COMPRESSION on every column", () => {
 		for (const def of Object.values(LABELED_ROW_SCHEMA)) {
 			expect(def.compression).toBe(SHARD_COMPRESSION)
@@ -114,6 +154,9 @@ describe("writeShards", () => {
 			"raw",
 			"tokens",
 			"labels",
+			"span_starts",
+			"span_ends",
+			"span_tags",
 			"country",
 			"locale",
 			"source",
@@ -172,6 +215,68 @@ describe("writeShards", () => {
 		expect(manifestOnDisk.total_rows).toBe(4)
 		expect(manifestOnDisk.schema).toEqual([...PARQUET_COLUMNS])
 		expect(manifestOnDisk.row_group_size).toBe(ROW_GROUP_SIZE)
+	})
+
+	it("round-trips the span triple: row → parquet → read back → spans identical (#519)", async () => {
+		const rows: LabeledRow[] = [
+			labeled({
+				source_id: "t-multi",
+				raw: "1600 Pennsylvania Ave NW, Washington, DC 20500",
+				tokens: ["1600", "Pennsylvania", "Ave", "NW", "Washington", "DC", "20500"],
+				labels: ["B-house_number", "B-street", "I-street", "I-street", "B-locality", "B-region", "B-postcode"],
+				span_starts: [0, 5, 26, 38, 41],
+				span_ends: [4, 24, 36, 40, 46],
+				span_tags: ["house_number", "street", "locality", "region", "postcode"],
+			}),
+			// Intra-span punctuation — the offsets the token columns structurally cannot carry.
+			labeled({
+				source_id: "t-pobox",
+				raw: "P.O. Box 19",
+				tokens: ["P", "O", "Box", "19"],
+				labels: ["B-po_box", "I-po_box", "I-po_box", "I-po_box"],
+				span_starts: [0],
+				span_ends: [11],
+				span_tags: ["po_box"],
+			}),
+			// All-O row: a legitimately EMPTY span triple must survive (not become a missing column).
+			labeled({
+				source_id: "t-all-o",
+				raw: "hello world",
+				components: {},
+				tokens: ["hello", "world"],
+				labels: ["O", "O"],
+				span_starts: [],
+				span_ends: [],
+				span_tags: [],
+			}),
+		]
+		const m = await writeShards({ train: asyncFrom(rows) }, { outputDir: scratch, corpusVersion: "0.5.0" })
+		const back = await readParquet(m.shards[0]!.path)
+		expect(back).toHaveLength(3)
+
+		const multi = back.find((r) => r.source_id === "t-multi")!
+		expect(multi.span_starts).toEqual([0, 5, 26, 38, 41])
+		expect(multi.span_ends).toEqual([4, 24, 36, 40, 46])
+		expect(multi.span_tags).toEqual(["house_number", "street", "locality", "region", "postcode"])
+
+		const pobox = back.find((r) => r.source_id === "t-pobox")!
+		expect(pobox.span_starts).toEqual([0])
+		expect(pobox.span_ends).toEqual([11])
+		expect(pobox.span_tags).toEqual(["po_box"])
+
+		// parquetjs reads an empty repeated field back as an absent key — normalize to [] and assert
+		// the row carries no spurious spans.
+		const allO = back.find((r) => r.source_id === "t-all-o")!
+		expect(allO.span_starts ?? []).toEqual([])
+		expect(allO.span_ends ?? []).toEqual([])
+		expect(allO.span_tags ?? []).toEqual([])
+	})
+
+	it("refuses to shard rows missing the span triple (the silent-loss hazard, loudly)", async () => {
+		const rows = [labeled({ source_id: "t-1", span_starts: undefined, span_ends: undefined, span_tags: undefined })]
+		await expect(
+			writeShards({ train: asyncFrom(rows) }, { outputDir: scratch, corpusVersion: "0.5.0" })
+		).rejects.toThrow(/missing the char-offset span triple/)
 	})
 
 	it("rolls to a new shard at rowsPerShard rows", async () => {

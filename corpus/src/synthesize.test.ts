@@ -695,6 +695,85 @@ describe("composeAdversarialRow", () => {
 		}
 	})
 
+	it("re-targets the char-offset span triple onto the composed surface (#519)", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+			source_id: "wof-admin-buffalo",
+		})
+		const result = composeAdversarialRow("Buffalo Health Clinic", address, {
+			pattern: "place-name-venue",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+
+		const { raw, span_starts, span_ends, span_tags } = result.row
+		expect(raw).toBe("Buffalo Health Clinic, Buffalo, NY 14201")
+		// One venue span over the whole venue, then the address spans shifted by venue + separator.
+		expect(span_tags).toEqual(["venue", "locality", "region", "postcode"])
+		expect(span_starts).toEqual([0, 23, 32, 35])
+		expect(span_ends).toEqual([21, 30, 34, 40])
+		// Every span reconstructs its component surface verbatim off the COMPOSED raw.
+		const surfaces = span_tags!.map((_, i) => raw.slice(span_starts![i]!, span_ends![i]!))
+		expect(surfaces).toEqual(["Buffalo Health Clinic", "Buffalo", "NY", "14201"])
+		// The separator comma + space sit outside every span (deliberately unlabeled).
+		expect(span_ends![0]!).toBeLessThanOrEqual(21)
+		expect(span_starts![1]!).toBeGreaterThanOrEqual(23)
+	})
+
+	it("composed spans satisfy the #519 invariants under every separator", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+		})
+		for (const separator of [", ", " ", "\n"]) {
+			const result = composeAdversarialRow("New York, New York Steakhouse", address, {
+				pattern: "place-shaped-venue",
+				separator,
+			})
+			expect(result.kind).toBe("labeled")
+			if (result.kind !== "labeled") continue
+			const { raw, span_starts, span_ends, span_tags } = result.row
+			expect(span_starts!.length).toBe(span_ends!.length)
+			expect(span_starts!.length).toBe(span_tags!.length)
+			for (let i = 0; i < span_starts!.length; i++) {
+				expect(span_starts![i]!).toBeGreaterThanOrEqual(0)
+				expect(span_starts![i]!).toBeLessThan(span_ends![i]!)
+				expect(span_ends![i]!).toBeLessThanOrEqual(raw.length)
+				if (i > 0) expect(span_starts![i]!).toBeGreaterThanOrEqual(span_ends![i - 1]!)
+			}
+		}
+	})
+
+	it("venue span covers internal punctuation the token path cannot express", () => {
+		const address = baseRow({
+			raw: "Montreal, QC H2X 1Y4",
+			country: "CA",
+			components: { locality: "Montreal", region: "QC", postcode: "H2X 1Y4" },
+		})
+		const result = composeAdversarialRow("P'tit St. Denis Street Café", address, {
+			pattern: "particle-honorific",
+		})
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+		// The whole venue — apostrophe, period, accent included — is ONE span.
+		expect(result.row.span_tags![0]).toBe("venue")
+		expect(result.row.raw.slice(result.row.span_starts![0]!, result.row.span_ends![0]!)).toBe(
+			"P'tit St. Denis Street Café"
+		)
+	})
+
+	it("non-NFC venue quarantines with reason=venue-not-nfc (offset ambiguity guard)", () => {
+		const address = baseRow({
+			raw: "Buffalo, NY 14201",
+			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
+		})
+		const nfdVenue = "Café Olé".normalize("NFD")
+		const result = composeAdversarialRow(nfdVenue, address, { pattern: "place-name-venue" })
+		expect(result.kind).toBe("quarantined")
+		if (result.kind === "quarantined") expect(result.row.reason).toBe("venue-not-nfc")
+	})
+
 	it("is deterministic: two compositions of the same inputs produce identical output", () => {
 		const address = baseRow({
 			raw: "Buffalo, NY 14201",

@@ -21,6 +21,14 @@ Per Phase 2 §2:
 - Length filter: rows whose SP tokenization exceeds ``max_length`` are dropped.
 - Tokenizer alignment verification: re-tokenize a sample and assert the stored ``tokens``
   match (see ``verify_tokenizer_alignment``).
+
+v0.5.0 char-offset labels (#519): shards whose schema carries
+``span_starts``/``span_ends``/``span_tags`` stream the triple end-to-end — through the
+augmentations (which re-target it; see ``augment.py``) and the #511 relabel pass (char
+arithmetic; see ``relabel.py``) into ``encode_row``, which builds the per-char label array FROM
+the spans. Frozen pre-v0.5.0 shards carry no span columns and ride the legacy token path. A
+shard with a partial column set, or a null span value in a span-schema shard, is corrupt and
+raises loudly — never a silent fallback.
 """
 
 from __future__ import annotations
@@ -36,13 +44,19 @@ logger = logging.getLogger(__name__)
 
 import pyarrow.parquet as pq
 
-from .augment import augment_row
+from .augment import SPAN_KEYS, augment_row
 from .config import Config, DataConfig
 from .labels import IGNORE_INDEX, active_components_present, locale_id
 from .relabel import AffixRelabelLexicon, relabel_row
 from .tokenizer import Tokenizer, encode_row, whitespace_spans
 
 _REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country", "source")
+
+# v0.5.0 char-offset label columns (#519). Presence is decided PER SHARD by schema: a v0.5.0
+# shard carries all three (and every row must be non-null in all three); a frozen pre-v0.5.0
+# shard carries none (rows ride the legacy token path). A shard with SOME of the three is
+# corrupt — loud failure, never a silent fallback.
+_SPAN_COLUMNS: tuple[str, ...] = SPAN_KEYS
 
 
 @dataclass
@@ -195,15 +209,28 @@ def _shard_row_iter(
     unreliable as a steering mechanism — PR #44).
     """
     pf = pq.ParquetFile(shard)
+    # Span-column presence is a per-shard schema fact (#519): all three or none. Partial = a
+    # corrupt shard; reading the survivors would silently train the wrong labels.
+    schema_names = set(pf.schema_arrow.names)
+    span_present = [c for c in _SPAN_COLUMNS if c in schema_names]
+    if span_present and len(span_present) != len(_SPAN_COLUMNS):
+        missing = [c for c in _SPAN_COLUMNS if c not in schema_names]
+        raise ValueError(
+            f"corrupt shard {shard}: carries span columns {span_present} but is missing {missing} "
+            "— the #519 triple is all-or-none per shard"
+        )
+    has_spans = bool(span_present)
+    columns = list(_REQUIRED_COLUMNS) + (list(_SPAN_COLUMNS) if has_spans else [])
     rg_order = list(range(pf.num_row_groups))
     rng.shuffle(rg_order)
     for rg in rg_order:
-        t = pf.read_row_group(rg, columns=list(_REQUIRED_COLUMNS))
+        t = pf.read_row_group(rg, columns=columns)
         raws = t["raw"]
         tokens_col = t["tokens"]
         labels_col = t["labels"]
         countries = t["country"]
         sources = t["source"]
+        span_cols = {c: t[c] for c in _SPAN_COLUMNS} if has_spans else None
         idx_order = list(range(t.num_rows))
         rng.shuffle(idx_order)
         for i in idx_order:
@@ -221,13 +248,24 @@ def _shard_row_iter(
                 keys = _row_components_keys(bio_labels)
                 if not active_components_present(keys):
                     continue
-            yield {
+            row = {
                 "raw": raws[i].as_py(),
                 "tokens": tokens_col[i].as_py(),
                 "labels": bio_labels,
                 "country": country,
                 "source": source,
             }
+            if span_cols is not None:
+                spans = {c: span_cols[c][i].as_py() for c in _SPAN_COLUMNS}
+                nulls = [c for c, v in spans.items() if v is None]
+                if nulls:
+                    raise ValueError(
+                        f"corrupt row in {shard} (row-group {rg}, raw={row['raw']!r}): "
+                        f"null span column(s) {nulls} in a span-schema shard — never a silent "
+                        "fallback to token labels"
+                    )
+                row.update(spans)
+            yield row
 
 
 def _source_iter(
@@ -536,6 +574,12 @@ def iter_encoded(
             anchor_lookup=anchor_lookup,
             gazetteer_lexicon=gazetteer_lexicon,
             gazetteer_choreography=getattr(cfg_data, "gazetteer_choreography", False),
+            # v0.5.0 char-offset labels (#519): rows from a span-schema shard train FROM the
+            # spans (encode_row builds the per-char label array from them; the token path is the
+            # legacy fallback for frozen corpora). encode_row raises on a partial triple.
+            span_starts=row.get("span_starts"),
+            span_ends=row.get("span_ends"),
+            span_tags=row.get("span_tags"),
         )
         # Drop rows whose non-padding length exceeds max_length (length filter §2).
         non_pad = sum(enc["attention_mask"])
