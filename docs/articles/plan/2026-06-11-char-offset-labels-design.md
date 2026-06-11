@@ -1,8 +1,23 @@
-# Char-offset labels — design sketch (2026-06-11, pre-consult draft)
+# Char-offset labels — design (2026-06-11, REVIEWED)
 
-Status: DESIGN. The structural cure for the class the span bridge contains. Nothing here is
-committed work; the open questions at the bottom go to a DeepSeek consult and then to the
-operator before anything is scheduled.
+Status: **APPROVED — operator design review 2026-06-11.** The four open questions are ruled;
+scheduling is the v0.5.0 rebuild's. Rulings:
+
+1. **Storage: parallel arrays** (`span_starts[]` / `span_ends[]` / `span_tags[]`) — flat-column
+   decode for the 1M-row/epoch streaming loader; the manifest schema documents the triple's
+   invariants (sorted, non-overlapping).
+2. **Migration: from-source rebuild.** v0.5.0 rebuilds from sources emitting native char spans —
+   `alignRow` already finds char offsets and QUANTIZES to tokens; the new format deletes the
+   quantization rather than adding a converter. No conversion step exists, so the converter's
+   Unicode-mismatch class (blast-radius item 7) dissolves into a build-time NFC assertion; the
+   per-piece channel invariance gates (item 8) remain as encode-time checks. Old corpora stay
+   frozen as history.
+3. **Span bridge: RETIRE FULLY on gate-pass** (operator override of the keep-reduced option,
+   consistent with the "old bundles are historical" ruling): once a new-format model passes the
+   pre-registered gate (dotted po_box ≥ 89.1 with the bridge OFF, FR postcode ≥ 99.5 held, affix
+   floors unchanged, over-merge precision floor), the bridge leaves ship config AND the decoder.
+4. **v0.5.0 scope FROZEN at four passengers**: char-offset format, DE holdout, ZCTA centroid
+   fill (#525), FTS alias-bag boundary separator (#523). Everything else is v0.5.1.
 
 ## The problem, measured
 
