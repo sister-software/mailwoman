@@ -147,6 +147,20 @@ beforeAll(() => {
 				[0.001, 4],
 			],
 		},
+		// Stored under the CANONICAL route key (as the builder writes it from TIGER's
+		// "State Rte 100") — the query side must fold "VT ROUTE 100" to the same key.
+		{
+			street_norm: "state route 100",
+			side: "L",
+			from_hn: 1001,
+			to_hn: 1099,
+			parity: "odd",
+			postcode: "05601",
+			geometry: [
+				[0, 5],
+				[0.001, 5],
+			],
+		},
 	])
 	interpolator = new StreetInterpolator({ database: db })
 })
@@ -232,6 +246,14 @@ describe("StreetInterpolator", () => {
 		const hit = interpolator.find({ street: "River Rd", number: "450" })
 		expect(hit).not.toBeNull()
 		expect(hit!.lat).toBeCloseTo(1, 9)
+	})
+
+	it("matches a TIGER-spelled route key from the E911/Overture route spelling", () => {
+		// TIGER says "State Rte 100"; E911/Overture say "VT ROUTE 100" — both fold to the same
+		// canonical key (build side stores it folded, query side folds before matching).
+		const hit = interpolator.find({ street: "VT ROUTE 100", number: "1043", postcode: "05601" })
+		expect(hit).not.toBeNull()
+		expect(hit!.lat).toBeCloseTo(5, 9)
 	})
 
 	it("falls through on no matching street, out-of-range number, wrong ZIP, or non-numeric input", () => {

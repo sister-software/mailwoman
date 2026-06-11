@@ -32,7 +32,7 @@ import { DuckDBInstance } from "@duckdb/node-api"
 
 // Cross-tree source import (.ts explicit): this script runs via --experimental-strip-types,
 // not from compiled out/ — the lookup tier imports the same module intra-package.
-import { normalizeStreetForKey } from "../resolver-wof-sqlite/street-normalize.ts"
+import { canonicalizeRouteKey, normalizeStreetForKey } from "../resolver-wof-sqlite/street-normalize.ts"
 
 /** State abbreviation → state FIPS prefix, for picking county files out of --edges-dir. */
 const STATE_FIPS: Record<string, string> = {
@@ -127,7 +127,7 @@ for (const shp of shapefiles) {
 	`)
 	for (const r of result.getRowObjects() as Record<string, unknown>[]) {
 		const streetRaw = String(r.name)
-		const streetNorm = normalizeStreetForKey(streetRaw)
+		const streetNorm = canonicalizeRouteKey(normalizeStreetForKey(streetRaw))
 		if (!streetNorm) continue
 		const geom = JSON.parse(String(r.geojson)) as { type: string; coordinates: number[][] }
 		if (geom.type !== "LineString" || geom.coordinates.length < 2) continue

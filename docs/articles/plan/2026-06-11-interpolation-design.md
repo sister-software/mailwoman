@@ -85,9 +85,14 @@ CREATE INDEX idx_seg_street   ON street_segment (street_norm, min_hn);
 
 Keying reuses `resolver-wof-sqlite/street-normalize.ts` — the SAME function the
 address-point shard and lookup use (one normalizer, never two; the PLACETYPE_ORDER
-lesson). Geometry is a plain JSON polyline: segments are short (p95 well under a km),
-the per-row cost is small at state scale, and it keeps the reader dependency-free —
-revisit encoding only if a national build makes size hurt.
+lesson) — plus `canonicalizeRouteKey`, a route-designator fold applied by BOTH the
+builder and the lookup. Measured need: TIGER spells routes `State Rte 100` / `US Hwy 5`
+where E911/Overture say `VT ROUTE 100` / `US ROUTE 5` — the single largest street-name
+miss class in the VT eval (+3.1pp coverage from the fold alone, no tail cost). The
+address-point tier does not apply the fold yet; adopting it there needs a #476 shard
+rebuild (follow-up). Geometry is a plain JSON polyline: segments are short, the per-row
+cost is small at state scale, and it keeps the reader dependency-free — revisit encoding
+only if a national build makes size hurt.
 
 **Scoping is postcode-first, like the address-point tier.** TIGER edges carry no
 locality name, so locality scope can't be matched directly against this table — a known
@@ -103,8 +108,12 @@ Given `{ street, number, postcode? }`:
 1. **Normalize** street via `normalizeStreetForKey`; parse `number` as a non-negative
    integer (non-numeric → no answer, this tier doesn't guess).
 2. **Candidate fetch** — rows with `street_norm` equal and `min_hn ≤ n ≤ max_hn`,
-   postcode-scoped when a postcode is given. On zero postcode-scoped rows, retry
-   statewide; abstain if the statewide candidates disagree on postcode.
+   postcode-scoped when a postcode is given. A given ZIP that scopes to nothing is a
+   MISS, not a statewide guess — the statewide retry was built and MEASURED (2026-06-11
+   VT eval): +2.3pp coverage but a poisoned tail (p99 1.0 → 20.8 km, max 204 km — a
+   statewide-unique name can live in a far-away town), so it was reverted. Queries
+   WITHOUT a postcode match statewide and abstain unless every candidate agrees on a
+   single ZIP.
 3. **Parity match** — prefer sides whose `parity` equals the number's parity, then
    `mixed`, then opposite-parity as a last resort (an opposite-parity hit is usually the
    right block, wrong side of the street — tens of meters, not kilometers; the result
@@ -155,6 +164,24 @@ deterministic held-out sample of Vermont points:
 These are points the exact tier would mostly HIT — the eval uses them precisely because
 truth is known. The production value is the complement (numbers with no point), where
 truth is unknowable; measuring on known points is the only honest proxy.
+
+## Pilot results (2026-06-11, VT, 5000-key sample, seed 42)
+
+- **Coverage 82.0%** (4100/5000 found a segment). Miss composition: 469 name-absent in
+  TIGER (private roads, new subdivisions, E911-only names like `CHARBO UNKNOWN 6`), 232
+  range-gaps within the right ZIP+name, 166 ZIP-mismatches (name+range exists in a
+  neighbouring ZIP — the class the rejected statewide retry would have answered, badly),
+  33 range-gaps statewide.
+- **Coord error vs truth: p50 66 m, p90 249 m** (p99 1.0 km; parity-matched n=3927 p50
+  65 m / fallback n=173 p50 116 m). Median claimed uncertainty (half segment length)
+  137 m — the p50 error sits inside the claimed radius.
+- **Gate: MISS.** The pre-registered #483 gate (p50 ≤ 50 m, p90 ≤ 150 m) is NOT met —
+  stated plainly, not re-baselined. The shortfall tracks rural Vermont's long sparse
+  segments (median claimed uncertainty 137 m: the geometry itself caps precision) and
+  TIGER's uniform-spacing assumption. Next levers, in measured-first order: re-run on a
+  denser county (the gate may simply be a rural-geometry artifact — measure before
+  building), segment subdivision at OA point anchors, ZIP+4 snapping (#525). No rollout
+  until a gate pass or a STATED re-baseline with operator sign-off.
 
 ## Open questions
 

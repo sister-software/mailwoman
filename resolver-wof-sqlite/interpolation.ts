@@ -16,9 +16,10 @@
  *   Every answer is honest about being an estimate: `interpolated: true`, `parityMatched` (false when
  *   only the opposite side's range contained the number — usually the right block, wrong side of
  *   the street), and `uncertaintyM` (half the matched segment's length — the #483 issue's honest
- *   default). Scoping is postcode-first; without a postcode the statewide name match must agree on
- *   a single postcode or the lookup ABSTAINS (a common street name spanning towns is ambiguity, not
- *   an answer).
+ *   default). Scoping is postcode-first (a given ZIP that scopes to nothing is a MISS — the
+ *   statewide retry was measured and rejected, see `find()`); without a postcode the statewide name
+ *   match must agree on a single postcode or the lookup ABSTAINS (a common street name spanning
+ *   towns is ambiguity, not an answer).
  *
  *   Standalone in this slice — core tier wiring (`resolution_tier: "interpolated"` after the
  *   exact-point fall-through) is a noted follow-up on #483, so the `find()` shape mirrors
@@ -28,7 +29,7 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { haversineKm } from "./geo.js"
-import { normalizeStreetForKey } from "./street-normalize.js"
+import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.js"
 
 /** One interpolated coordinate estimate. Never an exact situs point — see `uncertaintyM`. */
 export interface InterpolatedHit {
@@ -96,7 +97,7 @@ export class StreetInterpolator {
 	}
 
 	find(query: InterpolationQuery): InterpolatedHit | null {
-		const streetNorm = normalizeStreetForKey(query.street)
+		const streetNorm = canonicalizeRouteKey(normalizeStreetForKey(query.street))
 		const numberRaw = query.number.trim()
 		// Strictly-numeric house numbers only — this tier estimates, it doesn't guess at
 		// hyphenated/alphanumeric schemes the ranges don't model.
@@ -105,10 +106,13 @@ export class StreetInterpolator {
 
 		let rows: SegmentRow[]
 		if (query.postcode) {
+			// A given ZIP that scopes to nothing is a MISS, not a statewide guess: the retry was
+			// measured (2026-06-11 VT eval) at +2.3pp coverage for a poisoned tail (p99 1.0 → 20.8
+			// km, max 204 km — a unique name statewide can live in a far-away town).
 			rows = this.#byPostcode.all(query.postcode.trim(), streetNorm, n, n) as unknown as SegmentRow[]
 		} else {
-			rows = this.#byStreet.all(streetNorm, n, n) as unknown as SegmentRow[]
 			// No scope given: a name matching ranges across several ZIPs is ambiguous — abstain.
+			rows = this.#byStreet.all(streetNorm, n, n) as unknown as SegmentRow[]
 			const postcodes = new Set(rows.map((r) => r.postcode ?? ""))
 			if (postcodes.size > 1) return null
 		}
