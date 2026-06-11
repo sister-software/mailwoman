@@ -32,7 +32,7 @@ import {
 	matchTrailingSuffix,
 } from "@mailwoman/codex/us"
 import type { BioLabel, ComponentTag } from "@mailwoman/core/types"
-import { alignRow } from "./align.js"
+import { alignRow, assertSpanInvariants, type ComponentSpan } from "./align.js"
 import { whitespaceTokenizer, type Tokenizer } from "./tokenize.js"
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "./types.js"
 
@@ -561,12 +561,22 @@ export type ComposeResult = { kind: "labeled"; row: LabeledRow } | { kind: "quar
  * tokens in the venue stay labeled as `venue`, never as the address's locality / region / etc.,
  * even when they share surface forms.
  *
+ * The char-offset span triple (#519) is re-targeted to the composed surface by the same
+ * deterministic boundary: one `venue` span over `[0, venue.length)` (no re-search), then the
+ * address's own spans shifted by `venue.length + separator.length` — plain offset arithmetic, no
+ * token indirection. The separator chars sit outside every span (deliberately unlabeled — now
+ * expressible). The composed triple is passed through `assertSpanInvariants` so a composition bug
+ * can't ride into a corpus.
+ *
  * The address's components are forwarded as-is (alignment ran on them and they survived); `venue`
  * is added on top with the trimmed venue string as its surface form.
  *
  * Returns `{ kind: "quarantined" }` when:
  *
  * - The venue is empty or whitespace-only.
+ * - The venue is not NFC-normalized (char offsets over a non-NFC raw are ambiguous — the same
+ *   discipline `alignRow` enforces on adapter rows, surfaced as quarantine here because the venue
+ *   is caller-supplied data).
  * - The address row fails alignment in isolation (the underlying failure reason is propagated).
  */
 export function composeAdversarialRow(
@@ -580,6 +590,11 @@ export function composeAdversarialRow(
 	const venueTrimmed = venue.trim()
 	if (!venueTrimmed) {
 		return { kind: "quarantined", row: { row: address, reason: "venue-empty" } }
+	}
+	// Char-offset spans over the composed raw are only meaningful under NFC (#519) — the address
+	// half is enforced by alignRow; the venue is caller-supplied and checked here.
+	if (venueTrimmed.normalize("NFC") !== venueTrimmed) {
+		return { kind: "quarantined", row: { row: address, reason: "venue-not-nfc" } }
 	}
 
 	const addressAligned = alignRow(address, { tokenizer })
@@ -609,6 +624,23 @@ export function composeAdversarialRow(
 		...address.components,
 	}
 
+	// Re-target the char-offset spans (#519) onto the composed surface: the venue span covers the
+	// whole trimmed venue (internal punctuation included — the token path cannot say that), and the
+	// address's spans shift right by the venue + separator length. alignRow emits the triple on
+	// every labeled row, so absence here is an alignment-contract bug, not data — fail loudly.
+	const { span_starts: addrStarts, span_ends: addrEnds, span_tags: addrTags } = addressAligned.row
+	if (addrStarts === undefined || addrEnds === undefined || addrTags === undefined) {
+		throw new Error(
+			`composeAdversarialRow: alignRow returned a labeled row without the span triple ` +
+				`(source=${address.source}, source_id=${address.source_id}) — alignment contract violation`
+		)
+	}
+	const offset = venueTrimmed.length + separator.length
+	const spans: ComponentSpan[] = [
+		{ tag: "venue", start: 0, end: venueTrimmed.length },
+		...addrTags.map((tag, i) => ({ tag, start: addrStarts[i]! + offset, end: addrEnds[i]! + offset })),
+	]
+
 	const baseSourceId = address.synth?.base_source_id ?? address.source_id
 	const method = `compose:${options.pattern}`
 
@@ -624,7 +656,11 @@ export function composeAdversarialRow(
 		synth: { method, base_source_id: baseSourceId },
 		tokens,
 		labels,
+		span_starts: spans.map((s) => s.start),
+		span_ends: spans.map((s) => s.end),
+		span_tags: spans.map((s) => s.tag),
 	}
+	assertSpanInvariants(spans, composed)
 
 	return { kind: "labeled", row: composed }
 }

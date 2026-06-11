@@ -62,7 +62,12 @@ export interface AlignOptions {
 /** Either a successful labeled row or a quarantined one. */
 export type AlignmentResult = { kind: "labeled"; row: LabeledRow } | { kind: "quarantined"; row: QuarantinedRow }
 
-interface ComponentSpan {
+/**
+ * One located char-offset label span over a row's `raw` ([start, end) in UTF-16 code units). The
+ * element type behind the parallel `span_starts[]`/`span_ends[]`/`span_tags[]` triple on
+ * `LabeledRow` (#519).
+ */
+export interface ComponentSpan {
 	tag: ComponentTag
 	start: number
 	end: number
@@ -130,13 +135,19 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 }
 
 /**
- * Enforce the #519 span-triple invariants — sorted ascending by start, non-overlapping — loudly.
+ * Enforce the #519 span-triple invariants — in-bounds, sorted ascending by start, non-overlapping —
+ * loudly.
  *
- * `claimed`-span bookkeeping in `locateSpan` already makes overlap impossible and the caller sorts,
- * so a violation here is a bug in this file, not bad source data: throw (naming the row) rather
- * than quarantine, so the corruption can't ride into a corpus.
+ * For `alignRow`: `claimed`-span bookkeeping in `locateSpan` already makes overlap impossible and
+ * the caller sorts, so a violation here is a bug in this file, not bad source data: throw (naming
+ * the row) rather than quarantine, so the corruption can't ride into a corpus. Exported for every
+ * OTHER span producer (`composeAdversarialRow`'s offset arithmetic, future synthesis paths) — any
+ * code that emits the triple without going through `alignRow` must pass its output through this.
  */
-function assertSpanInvariants(spans: readonly ComponentSpan[], row: CanonicalRow): void {
+export function assertSpanInvariants(
+	spans: readonly ComponentSpan[],
+	row: Pick<CanonicalRow, "raw" | "source" | "source_id">
+): void {
 	for (let i = 0; i < spans.length; i++) {
 		const s = spans[i]!
 		if (!(s.start >= 0 && s.start < s.end && s.end <= row.raw.length)) {
