@@ -46,6 +46,14 @@ describe("bridgePunctuationGaps", () => {
 		expect(bridgePunctuationGaps(text, input)).toHaveLength(3)
 	})
 
+	it("does NOT merge across separator punctuation (the FR comma class)", () => {
+		// "…47110, 9016…" — the model double-labels the house number as a second postcode
+		// fragment; the comma is the only thing keeping the spans honest. Never bridge it.
+		const text = "47110, 9016"
+		const input = [tok("47110", 0, "B-postcode"), tok(",", 5, "O"), tok("9016", 7, "B-postcode")]
+		expect(bridgePunctuationGaps(text, input)).toHaveLength(3)
+	})
+
 	it("does NOT merge across long gaps", () => {
 		const text = "Box 12 --- Box 99"
 		const input = [tok("Box 12", 0, "B-po_box"), tok("Box 99", 11, "B-po_box")]
