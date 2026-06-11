@@ -5,28 +5,29 @@
  * @author Teffen Ellis, et al.
  *
  *   Build the US street-affix coverage shard (the v0-parity `street_prefix` / `street_suffix` gap —
- *   both ~0% F1 in the #15 assessment, collapsed into `street`). Mirrors build-unit-shard.mjs: raise
- *   PREVALENCE of affix-split streets with format diversity so the model learns to split
- *   "N Main St" → street_prefix="N" + street="Main" + street_suffix="St", and (negative space) sharpen
+ *   both ~0% F1 in the #15 assessment, collapsed into `street`). Mirrors build-unit-shard.mjs:
+ *   raise PREVALENCE of affix-split streets with format diversity so the model learns to split "N
+ *   Main St" → street_prefix="N" + street="Main" + street_suffix="St", and (negative space) sharpen
  *   `street` itself.
  *
  *   Reads REAL US OpenAddresses tuples and SPLITS the OA `street` field via the codex:
- *   `matchLeadingDirectional` (USPS Pub-28 C1) for the prefix, `matchTrailingSuffix` (Pub-28 C2 street
- *   suffixes) for the suffix. OA streets nearly all carry a suffix; only ~10-20% carry a directional,
- *   so we INJECT a directional prefix onto a fraction of prefix-less streets (same move as the unit
- *   shard injecting designators onto bare skeletons) to give `street_prefix` real signal. Each row
- *   varies surface form per affix — abbreviated ("N", "St") vs expanded ("North", "Street") — so the
- *   model sees both, and varies the layout (full address / bare / street-only / venue-prefixed).
+ *   `matchLeadingDirectional` (USPS Pub-28 C1) for the prefix, `matchTrailingSuffix` (Pub-28 C2
+ *   street suffixes) for the suffix. OA streets nearly all carry a suffix; only ~10-20% carry a
+ *   directional, so we INJECT a directional prefix onto a fraction of prefix-less streets (same
+ *   move as the unit shard injecting designators onto bare skeletons) to give `street_prefix` real
+ *   signal. Each row varies surface form per affix — abbreviated ("N", "St") vs expanded ("North",
+ *   "Street") — so the model sees both, and varies the layout (full address / bare / street-only /
+ *   venue-prefixed).
  *
  *   LEAKAGE-SAFE EVAL (`--golden`): held-out eval uses the VERMONT source only (the corpus
- *   defaultHoldout), a different seed, and emits {raw, components} for per-locale-f1. Train uses every
- *   NON-Vermont US source. The real-in-the-wild affix signal lives in data/eval/external/
+ *   defaultHoldout), a different seed, and emits {raw, components} for per-locale-f1. Train uses
+ *   every NON-Vermont US source. The real-in-the-wild affix signal lives in data/eval/external/
  *   street-affix-real.jsonl + the libpostal/postal arenas — read both lenses at the gate.
  *
- *   Pipeline (mirrors build-unit-shard.mjs):
- *     node scripts/build-street-affix-shard.mjs --output /tmp/affix-train.jsonl --count 50000 --seed 42
- *     node scripts/build-street-affix-shard.mjs --output /tmp/affix-val.jsonl --golden --seed 99
- *     python3 scripts/jsonl-to-parquet.py --input /tmp/affix-train.jsonl --output /tmp/part-affix-train.parquet
+ *   Pipeline (mirrors build-unit-shard.mjs): node scripts/build-street-affix-shard.mjs --output
+ *   /tmp/affix-train.jsonl --count 50000 --seed 42 node scripts/build-street-affix-shard.mjs
+ *   --output /tmp/affix-val.jsonl --golden --seed 99 python3 scripts/jsonl-to-parquet.py --input
+ *   /tmp/affix-train.jsonl --output /tmp/part-affix-train.parquet
  */
 
 import { spawnSync } from "node:child_process"
@@ -173,8 +174,9 @@ const title = (s) =>
 const isSuffixOrDirectional = (word) => matchTrailingSuffix(word) !== null || matchLeadingDirectional(word) !== null
 
 /**
- * Split an OA street into { prefix?, name, suffix } using the codex. Requires a trailing suffix and a
- * non-empty name that isn't itself an affix token. Returns null when the street has no usable suffix.
+ * Split an OA street into { prefix?, name, suffix } using the codex. Requires a trailing suffix and
+ * a non-empty name that isn't itself an affix token. Returns null when the street has no usable
+ * suffix.
  */
 function parseStreet(street) {
 	let words = street.trim().split(/\s+/)
@@ -195,7 +197,8 @@ function parseStreet(street) {
 	return { prefix, name, suffix }
 }
 
-/** Render the affix-split street in random surface forms (abbrev vs expanded per affix), Title-cased. */
+/** Render the affix-split street in random surface forms (abbrev vs expanded per affix),
+Title-cased. */
 function renderStreet(random, parsed) {
 	const name = title(parsed.name)
 	const parts = []
@@ -259,10 +262,10 @@ function renderRow(random, base, street, streetComponents) {
 }
 
 /**
- * Capped reader for the multi-locale BALANCE sources. The FR/IT/NL countrywide extracts are GB-scale;
- * reading the whole CSV blows V8's string limit, so cap the bytes with `head` (mirrors
- * build-country-shard-balanced.mjs). Only keeps tuples that carry a POSTCODE — the whole point of the
- * balance rows is native-order postcode signal, so a postcode-less row contributes nothing.
+ * Capped reader for the multi-locale BALANCE sources. The FR/IT/NL countrywide extracts are
+ * GB-scale; reading the whole CSV blows V8's string limit, so cap the bytes with `head` (mirrors
+ * build-country-shard-balanced.mjs). Only keeps tuples that carry a POSTCODE — the whole point of
+ * the balance rows is native-order postcode signal, so a postcode-less row contributes nothing.
  */
 function readBalanceTuples(source, limit) {
 	const maxLines = Math.max(limit * 8, 20000) + 1
@@ -311,10 +314,11 @@ function readBalanceTuples(source, limit) {
 }
 
 /**
- * Render a non-US BALANCE row in native order — NO affix split, NO country token. `street` is the OA
- * value verbatim (so the model learns affixes are US-conditional: "Rue de la Paix" stays whole). The
- * sole job is to put a postcode in its native position (FR: before city, after a number-street body;
- * DE/IT/NL: before city, after a street-number body) so the shard doesn't pull the model US-ward.
+ * Render a non-US BALANCE row in native order — NO affix split, NO country token. `street` is the
+ * OA value verbatim (so the model learns affixes are US-conditional: "Rue de la Paix" stays whole).
+ * The sole job is to put a postcode in its native position (FR: before city, after a number-street
+ * body; DE/IT/NL: before city, after a street-number body) so the shard doesn't pull the model
+ * US-ward.
  */
 function renderBalanceRow(t) {
 	const { house_number: hn, street, locality: loc, postcode: pc, order } = t

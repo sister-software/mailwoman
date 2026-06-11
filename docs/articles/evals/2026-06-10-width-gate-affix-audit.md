@@ -7,29 +7,29 @@ time.
 
 ## The ladder
 
-| Probe | Hypothesis | Result | Verdict |
-| --- | --- | --- | --- |
-| Probe 0 (v1.0.4, choreography off, +4k) | choreography suppression erodes affix recall | decay reproduced 81 → 61.1 with choreography OFF | falsified |
-| Frozen-encoder head (v1.0.5, init 40k, 2k) | shared-BIO output competition; a dedicated head bypasses it | prefix 38.7 / suffix 46.2, P=100 / R≈25 — the head only finds what the frozen representation already separates | falsified |
-| Width 48M (v2.0.0, 512H/8 heads/FF2048, 40k) | 29M is capacity-bound | prefix **64.9** — identical to 29M Run A's 64.9 at matched 5× density | falsified |
+| Probe                                        | Hypothesis                                                  | Result                                                                                                         | Verdict   |
+| -------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------- |
+| Probe 0 (v1.0.4, choreography off, +4k)      | choreography suppression erodes affix recall                | decay reproduced 81 → 61.1 with choreography OFF                                                               | falsified |
+| Frozen-encoder head (v1.0.5, init 40k, 2k)   | shared-BIO output competition; a dedicated head bypasses it | prefix 38.7 / suffix 46.2, P=100 / R≈25 — the head only finds what the frozen representation already separates | falsified |
+| Width 48M (v2.0.0, 512H/8 heads/FF2048, 40k) | 29M is capacity-bound                                       | prefix **64.9** — identical to 29M Run A's 64.9 at matched 5× density                                          | falsified |
 
 ## Width gate (fp32-to-fp32, pre-registered floors)
 
 FAIL, 6 of 12 checks:
 
-| Check | Floor | Got | |
-| --- | --- | --- | --- |
-| street_prefix | ≥ 78 | 64.9 | ✗ |
-| street_suffix | ≥ 67 | 59.1 | ✗ |
-| US street | ≥ 80.4 | 79.8 | ✗ |
-| US locality | ≥ 72.9 | 71.6 | ✗ |
-| unit | ≥ 90.6 | 87.1 | ✗ |
-| postcode | no-reg | 98.1 | ✓ |
-| country | 83.3 band | 87.5 | ✓ |
-| US micro | no-reg | 85.4 | ✓ |
-| region | no-reg | 89.5 | ✓ |
-| FR (both) | no-reg | pass | ✓ |
-| DE deorder int8 | ≥ 83.8 | NOT FOUND (harness wart on the int8 leg; immaterial) | ✗ |
+| Check           | Floor     | Got                                                  |     |
+| --------------- | --------- | ---------------------------------------------------- | --- |
+| street_prefix   | ≥ 78      | 64.9                                                 | ✗   |
+| street_suffix   | ≥ 67      | 59.1                                                 | ✗   |
+| US street       | ≥ 80.4    | 79.8                                                 | ✗   |
+| US locality     | ≥ 72.9    | 71.6                                                 | ✗   |
+| unit            | ≥ 90.6    | 87.1                                                 | ✗   |
+| postcode        | no-reg    | 98.1                                                 | ✓   |
+| country         | 83.3 band | 87.5                                                 | ✓   |
+| US micro        | no-reg    | 85.4                                                 | ✓   |
+| region          | no-reg    | 89.5                                                 | ✓   |
+| FR (both)       | no-reg    | pass                                                 | ✓   |
+| DE deorder int8 | ≥ 83.8    | NOT FOUND (harness wart on the int8 leg; immaterial) | ✗   |
 
 NOT promoted. Artifacts banked: int8 md5 `33527afae87526f667c7e83453a723e6` (43 MB —
 the size alone disqualifies it as a ship default). The intersection rider

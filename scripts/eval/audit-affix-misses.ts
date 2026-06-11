@@ -3,17 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Affix miss-form audit (#492 endgame): the width run falsified the capacity hypothesis (48M
- *   lands at exactly 29M's 64.9-prefix equilibrium at matched density, P=100/R≈48 on both), which
- *   points the ladder's last finger at the DATA. This script classifies every real-affix-eval
- *   miss by surface-form features and compares them against what the shard builder actually
- *   varies (abbr/full per affix, Title-case, four layouts) — the #487 audit method, applied to
- *   affix.
+ *   Affix miss-form audit (#492 endgame): the width run falsified the capacity hypothesis (48M lands
+ *   at exactly 29M's 64.9-prefix equilibrium at matched density, P=100/R≈48 on both), which points
+ *   the ladder's last finger at the DATA. This script classifies every real-affix-eval miss by
+ *   surface-form features and compares them against what the shard builder actually varies
+ *   (abbr/full per affix, Title-case, four layouts) — the #487 audit method, applied to affix.
  *
- *   Usage:
- *     node --experimental-strip-types scripts/eval/audit-affix-misses.ts \
- *       --model <int8.onnx> [--file data/eval/external/street-affix-real.jsonl] \
- *       [--gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json]
+ *   Usage: node --experimental-strip-types scripts/eval/audit-affix-misses.ts\
+ *   --model <int8.onnx> [--file data/eval/external/street-affix-real.jsonl]\
+ *   [--gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json]
  */
 
 import { readFileSync } from "node:fs"
@@ -55,7 +53,20 @@ const neural = new NeuralAddressClassifier({
 	suppressGazetteerNearPostcode: true,
 })
 
-const COMMON_SUFFIXES = new Set(["st", "street", "ave", "avenue", "dr", "drive", "rd", "road", "blvd", "boulevard", "ln", "lane"])
+const COMMON_SUFFIXES = new Set([
+	"st",
+	"street",
+	"ave",
+	"avenue",
+	"dr",
+	"drive",
+	"rd",
+	"road",
+	"blvd",
+	"boulevard",
+	"ln",
+	"lane",
+])
 
 /** Classify the surface-form features of one eval row. */
 function formFeatures(row: { raw: string; components: Record<string, string> }): string[] {
@@ -96,7 +107,9 @@ for (const row of rows) {
 console.log(`rows: ${rows.length} · affix-gold instances missed: ${misses.length}`)
 console.log("\n== per-miss detail ==")
 for (const m of misses) {
-	console.log(`✗ [${m.tag}] expected "${m.expected}" got "${m.got}" · model street="${m.street}" · forms: ${formFeatures(m.row).join(",")}`)
+	console.log(
+		`✗ [${m.tag}] expected "${m.expected}" got "${m.got}" · model street="${m.street}" · forms: ${formFeatures(m.row).join(",")}`
+	)
 	console.log(`    ${m.row.raw}`)
 }
 console.log("\n== form-feature rates: misses vs whole eval ==")
@@ -106,6 +119,10 @@ const features = [...new Set([...all.keys(), ...missed.keys()])].sort()
 for (const f of features) {
 	const a = all.get(f) ?? 0
 	const m = missed.get(f) ?? 0
-	console.log(`${f.padEnd(18)} misses ${String(m).padStart(2)} / eval ${String(a).padStart(2)}  (${a ? Math.round((100 * m) / a) : 0}% of carriers missed)`)
+	console.log(
+		`${f.padEnd(18)} misses ${String(m).padStart(2)} / eval ${String(a).padStart(2)}  (${a ? Math.round((100 * m) / a) : 0}% of carriers missed)`
+	)
 }
-console.log("\nShard variation surface (build-street-affix-shard.mjs): abbr/full per affix (50/50), Title-case ONLY, 4 layouts (full/bare/street-only/venue), comma-tailed. NOT varied: ALL-CAPS, periods ('S.'/'Dr.'), rare suffixes beyond the parse source's natural mix.")
+console.log(
+	"\nShard variation surface (build-street-affix-shard.mjs): abbr/full per affix (50/50), Title-case ONLY, 4 layouts (full/bare/street-only/venue), comma-tailed. NOT varied: ALL-CAPS, periods ('S.'/'Dr.'), rare suffixes beyond the parse source's natural mix."
+)

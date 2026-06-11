@@ -186,8 +186,10 @@ export function renderDirectional(
 	return matchCase(target, reference)
 }
 
-/** Case-insensitive check: is the token any USPS directional or abbreviation (`"N"`, `"north"`,
-`"NW"`)? */
+/**
+ * Case-insensitive check: is the token any USPS directional or abbreviation (`"N"`, `"north"`,
+ * `"NW"`)?
+ */
 export function isStreetDirectionalToken(input: unknown): boolean {
 	return lookupDirectional(typeof input === "string" ? input.trim() : input) !== null
 }

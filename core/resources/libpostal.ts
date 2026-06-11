@@ -25,9 +25,9 @@ export type LibPostalLanguageCode = Alpha2LanguageCode | "all"
 let _availableLanguages: Promise<LibPostalLanguageCode[]> | undefined
 
 /**
- * Languages with a libpostal dictionary directory on disk. Lazily resolved and memoized — this
- * was a top-level `await` until #481, which made any bare-import + subpath-import combination a
- * TLA cycle under Vite's loader (classifier base classes evaluated as `undefined`; see the old
+ * Languages with a libpostal dictionary directory on disk. Lazily resolved and memoized — this was
+ * a top-level `await` until #481, which made any bare-import + subpath-import combination a TLA
+ * cycle under Vite's loader (classifier base classes evaluated as `undefined`; see the old
  * workaround note in `classifiers/adapter.test.ts`). The promise is shared, so concurrent first
  * callers do one `readdir`.
  */

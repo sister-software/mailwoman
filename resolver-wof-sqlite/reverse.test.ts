@@ -10,8 +10,8 @@
  *   The integration suite SKIPS unless BOTH env vars point at real artifacts (so CI stays green
  *   without them — same pattern as `resolver-wof-wasm/hot-db.test.ts`):
  *
- *   - `MAILWOMAN_WOF_ADMIN_DB` — the admin gazetteer with the package-built `place_bbox` R*Tree,
- *       e.g. `/mnt/playpen/mailwoman-data/wof/admin-global-priority.db`.
+ *   - `MAILWOMAN_WOF_ADMIN_DB` — the admin gazetteer with the package-built `place_bbox` R*Tree, e.g.
+ *       `/mnt/playpen/mailwoman-data/wof/admin-global-priority.db`.
  *   - `MAILWOMAN_WOF_POLYGONS_DB` — the polygon sidecar, e.g.
  *       `/tmp/v440-stage/en-us/v4.4.0/wof-polygons.db` (staged by build-demo-assets).
  */
@@ -64,10 +64,10 @@ describe("point-in-polygon primitives", () => {
 /**
  * Fixture gazetteer — a miniature Vermont-like geography around (44.0, -72.0):
  *
- *   country US (1) ⊃ region (2) ⊃ county A (3, polygon) + county B (6, bbox overlaps A but polygon
- *   rejects — the bbox-false-positive case) ⊃ localadmin town (4, point geometry, centroid near the
- *   query point) ⊃ locality village (5, point geometry, degenerate bbox — reachable only via the
- *   ancestors-table descent, never via the R*Tree).
+ * Country US (1) ⊃ region (2) ⊃ county A (3, polygon) + county B (6, bbox overlaps A but polygon
+ * rejects — the bbox-false-positive case) ⊃ localadmin town (4, point geometry, centroid near the
+ * query point) ⊃ locality village (5, point geometry, degenerate bbox — reachable only via the
+ * ancestors-table descent, never via the R*Tree).
  */
 function buildFixture(): { admin: DatabaseSync; polygons: DatabaseSync } {
 	const admin = new DatabaseSync(":memory:")

@@ -99,8 +99,8 @@ function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
 
 /**
  * Address-point tier (#476): find `street` + `house_number` in the tree (first occurrence,
- * depth-first), scope by the tree's postcode/locality values, and on an exact hit stamp the
- * point onto the STREET node's metadata. Additive only — admin resolution is never altered.
+ * depth-first), scope by the tree's postcode/locality values, and on an exact hit stamp the point
+ * onto the STREET node's metadata. Additive only — admin resolution is never altered.
  */
 function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup): void {
 	let street: AddressNode | undefined

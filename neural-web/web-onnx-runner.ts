@@ -22,7 +22,12 @@
  *   `@mailwoman/neural/onnx-runner` for the full export contract this file mirrors.
  */
 
-import { ANCHOR_FEATURE_DIM, GAZETTEER_FEATURE_DIM, type InferResult, type NeuralRunner } from "@mailwoman/neural/browser"
+import {
+	ANCHOR_FEATURE_DIM,
+	GAZETTEER_FEATURE_DIM,
+	type InferResult,
+	type NeuralRunner,
+} from "@mailwoman/neural/browser"
 import * as ort from "onnxruntime-web/webgpu"
 
 export interface WebOnnxRunnerOpts {
@@ -120,10 +125,10 @@ export class WebOnnxRunner implements NeuralRunner {
 
 	/**
 	 * Names of the inputs the loaded ONNX graph declares. `null` until the session has been created
-	 * (first `infer()` call). Lets callers (e.g. the neural-web loader) detect anchor/gazetteer-trained
-	 * models and warn loudly when the corresponding feature source wasn't provided — running such a
-	 * model on the zero-filled fallback is the measured train/inference mismatch ("the zero-fill
-	 * trap"), not a quality-neutral degrade.
+	 * (first `infer()` call). Lets callers (e.g. the neural-web loader) detect
+	 * anchor/gazetteer-trained models and warn loudly when the corresponding feature source wasn't
+	 * provided — running such a model on the zero-filled fallback is the measured train/inference
+	 * mismatch ("the zero-fill trap"), not a quality-neutral degrade.
 	 */
 	get inputNames(): readonly string[] | null {
 		return this.#session?.inputNames ?? null
@@ -188,15 +193,12 @@ export class WebOnnxRunner implements NeuralRunner {
 			feeds.gazetteer_features = new ort.Tensor("float32", gf, [1, this.fixedSeqLen, dim])
 			feeds.gazetteer_confidence = new ort.Tensor("float32", gc, [1, this.fixedSeqLen])
 		} else if (session.inputNames.includes("gazetteer_features")) {
-			feeds.gazetteer_features = new ort.Tensor(
-				"float32",
-				new Float32Array(this.fixedSeqLen * GAZETTEER_FEATURE_DIM),
-				[1, this.fixedSeqLen, GAZETTEER_FEATURE_DIM]
-			)
-			feeds.gazetteer_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [
+			feeds.gazetteer_features = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * GAZETTEER_FEATURE_DIM), [
 				1,
 				this.fixedSeqLen,
+				GAZETTEER_FEATURE_DIM,
 			])
+			feeds.gazetteer_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
 		const output = await session.run(feeds)

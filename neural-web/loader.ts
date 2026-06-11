@@ -69,34 +69,35 @@ export interface LoadFromUrlsOpts {
 	 */
 	postcodeBinaryUrls?: readonly string[]
 	/**
-	 * URL to the gazetteer-anchor lexicon JSON (`anchor-lexicon-v1.json`, #464 — the in-repo source is
-	 * `data/gazetteer/anchor-lexicon-v1.json`). Gazetteer-trained models (v4.2.0+, whose ONNX declares
-	 * the `gazetteer_features`/`gazetteer_confidence` inputs) REQUIRE this clue at inference: running
-	 * them on the zero-filled fallback is the measured train/inference mismatch that wrecks
-	 * segmentation ("the zero-fill trap", CONTRIBUTING_MODEL_WORK.mdx eval invariants).
+	 * URL to the gazetteer-anchor lexicon JSON (`anchor-lexicon-v1.json`, #464 — the in-repo source
+	 * is `data/gazetteer/anchor-lexicon-v1.json`). Gazetteer-trained models (v4.2.0+, whose ONNX
+	 * declares the `gazetteer_features`/`gazetteer_confidence` inputs) REQUIRE this clue at
+	 * inference: running them on the zero-filled fallback is the measured train/inference mismatch
+	 * that wrecks segmentation ("the zero-fill trap", CONTRIBUTING_MODEL_WORK.mdx eval invariants).
 	 *
-	 * Defaults to `anchor-lexicon-v1.json` next to `modelUrl`. A fetch miss (404 etc.) does NOT throw —
-	 * older bundles never shipped the file — but if the loaded model turns out to be gazetteer-trained
-	 * the loader logs a loud `console.error` naming the missing file and the model runs gazetteer-off
-	 * (structurally valid, quality-degraded). Pass `null` to skip the fetch entirely.
+	 * Defaults to `anchor-lexicon-v1.json` next to `modelUrl`. A fetch miss (404 etc.) does NOT throw
+	 * — older bundles never shipped the file — but if the loaded model turns out to be
+	 * gazetteer-trained the loader logs a loud `console.error` naming the missing file and the model
+	 * runs gazetteer-off (structurally valid, quality-degraded). Pass `null` to skip the fetch
+	 * entirely.
 	 */
 	gazetteerLexiconUrl?: string | null
 	/**
-	 * Channel choreography (#464, v0.9.13 postcode fix): zero the gazetteer clue on pieces adjacent to
-	 * a postcode-anchor hit. Defaults to TRUE — it pairs with the train-time half on every
+	 * Channel choreography (#464, v0.9.13 postcode fix): zero the gazetteer clue on pieces adjacent
+	 * to a postcode-anchor hit. Defaults to TRUE — it pairs with the train-time half on every
 	 * gazetteer-trained bundle (v4.2.0+) and is inert when either channel is absent.
 	 */
 	suppressGazetteerNearPostcode?: boolean
 	/**
 	 * Address-system conventions mode (#511 Tier A, v4.3.0+). Defaults to `"auto"` (read the model's
-	 * locale head when exported; inert on bundles without `locale_logits`). Pass a `SystemCode` to pin,
-	 * or `null` to disable.
+	 * locale head when exported; inert on bundles without `locale_logits`). Pass a `SystemCode` to
+	 * pin, or `null` to disable.
 	 */
 	addressSystemConventions?: NeuralAddressClassifierConfig["addressSystemConventions"] | null
 	/**
 	 * Span bridge (v4.4.0 declared behavior): merge same-tag spans split at intra-token punctuation
-	 * ("P.O. Box"). Defaults to TRUE per the v4.4.0 ship config (model-card.json: po_box 60.4 without,
-	 * 89.1 with). Pass false to disable for pre-bridge bundles where gate parity matters.
+	 * ("P.O. Box"). Defaults to TRUE per the v4.4.0 ship config (model-card.json: po_box 60.4
+	 * without, 89.1 with). Pass false to disable for pre-bridge bundles where gate parity matters.
 	 */
 	bridgePunctuationGaps?: boolean
 	/** Optional fetch override. Defaults to `globalThis.fetch`. */
@@ -239,8 +240,8 @@ function warnOnUnfedTrainedChannels(
 
 /**
  * Fetch + parse `anchor-lexicon-v1.json`. A missing file (404 or network failure) returns null —
- * the caller decides whether that matters (it does iff the model declares the gazetteer inputs;
- * see `warnOnUnfedTrainedChannels`). A PRESENT-but-malformed lexicon throws loudly via
+ * the caller decides whether that matters (it does iff the model declares the gazetteer inputs; see
+ * `warnOnUnfedTrainedChannels`). A PRESENT-but-malformed lexicon throws loudly via
  * `parseGazetteerLexicon`'s validation — never silently zero-fill off bad data.
  */
 async function fetchGazetteerLexicon(url: string, fetchImpl: typeof fetch): Promise<GazetteerLexicon | null> {

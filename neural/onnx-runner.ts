@@ -41,8 +41,8 @@ export interface InferResult {
 	numLabels: number
 	/**
 	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order), when the model
-	 * exports it (v1.1.0+, #511 Tier A). Absent on older bundles — consumers must treat undefined
-	 * as "no address-system detection available".
+	 * exports it (v1.1.0+, #511 Tier A). Absent on older bundles — consumers must treat undefined as
+	 * "no address-system detection available".
 	 */
 	localeLogits?: number[]
 }
@@ -159,15 +159,12 @@ export class OnnxRunner {
 			feeds.gazetteer_features = new ort.Tensor("float32", gf, [1, this.fixedSeqLen, dim])
 			feeds.gazetteer_confidence = new ort.Tensor("float32", gc, [1, this.fixedSeqLen])
 		} else if (session.inputNames.includes("gazetteer_features")) {
-			feeds.gazetteer_features = new ort.Tensor(
-				"float32",
-				new Float32Array(this.fixedSeqLen * GAZETTEER_FEATURE_DIM),
-				[1, this.fixedSeqLen, GAZETTEER_FEATURE_DIM]
-			)
-			feeds.gazetteer_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [
+			feeds.gazetteer_features = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen * GAZETTEER_FEATURE_DIM), [
 				1,
 				this.fixedSeqLen,
+				GAZETTEER_FEATURE_DIM,
 			])
+			feeds.gazetteer_confidence = new ort.Tensor("float32", new Float32Array(this.fixedSeqLen), [1, this.fixedSeqLen])
 		}
 
 		const output = await session.run(feeds)

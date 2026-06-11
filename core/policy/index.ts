@@ -5,6 +5,6 @@
  */
 
 export * from "./defaults.js"
+export * from "./from-config.js"
 export * from "./policy.js"
 export * from "./registry.js"
-export * from "./from-config.js"

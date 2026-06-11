@@ -7,11 +7,11 @@ each gets its own design doc when picked up.
 ## #484 Reverse geocoding — assembly, not research
 
 **Shape:** lat/lon → containing hierarchy. The pieces exist: `wof-polygons.db` (22,104
-DP-simplified admin polygons), the R*Tree bbox index (`place_bbox` in the hot DB), the
+DP-simplified admin polygons), the R\*Tree bbox index (`place_bbox` in the hot DB), the
 `coincident_roles` relation, and the PIP machinery the honest-eval harness already runs
 (`pip-containment.py` proves the polygon→point test works at eval scale).
 
-**Plan shape:** (1) bbox candidate fetch via R*Tree → (2) PIP against the polygon DB
+**Plan shape:** (1) bbox candidate fetch via R\*Tree → (2) PIP against the polygon DB
 (point-geometry places fall back to nearest-centroid-within-bbox, flagged `approximate` — the
 same honesty convention as the demo circles) → (3) ancestor chain from the resolver's existing
 walk. Node first (`resolver-wof-sqlite`), browser via the same httpvfs split the demo proved.

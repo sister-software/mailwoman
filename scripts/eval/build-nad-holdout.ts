@@ -3,23 +3,22 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the US SOURCE-INDEPENDENT holdout (#472, re-scoped) from Overture rows whose
- *   provenance chain contains NO OpenAddresses-derived dataset — in practice the DoT NAD
- *   slice (85.5M of 126.5M US rows in release 2026-05-20.0).
+ *   Build the US SOURCE-INDEPENDENT holdout (#472, re-scoped) from Overture rows whose provenance
+ *   chain contains NO OpenAddresses-derived dataset — in practice the DoT NAD slice (85.5M of
+ *   126.5M US rows in release 2026-05-20.0).
  *
  *   Why this exists: the existing US honest holdout (VT/WY/ND) is GEOGRAPHY-independent but
- *   LINEAGE-shared — the eval rows flow through the same OpenAddresses snapshot the corpus
- *   trains on. This holdout is the orthogonal axis: rows our training lineage has never
- *   carried, measuring memorization rather than geographic generalization.
+ *   LINEAGE-shared — the eval rows flow through the same OpenAddresses snapshot the corpus trains
+ *   on. This holdout is the orthogonal axis: rows our training lineage has never carried, measuring
+ *   memorization rather than geographic generalization.
  *
- *   Provenance rules (epic #470): reads the pinned-release local Parquet (never the planet),
- *   keeps the source dataset per row, emits the standard eval-JSONL shape
- *   ({input, lat, lon, expected, state, source}) consumed by oa-resolver-eval/honest-eval.
+ *   Provenance rules (epic #470): reads the pinned-release local Parquet (never the planet), keeps
+ *   the source dataset per row, emits the standard eval-JSONL shape ({input, lat, lon, expected,
+ *   state, source}) consumed by oa-resolver-eval/honest-eval.
  *
- *   Usage:
- *     node --experimental-strip-types scripts/eval/build-nad-holdout.ts \
- *       [--release 2026-05-20.0] [--per-state 150] [--seed 42] \
- *       [--out data/eval/external/overture-us-nad-holdout.jsonl]
+ *   Usage: node --experimental-strip-types scripts/eval/build-nad-holdout.ts\
+ *   [--release 2026-05-20.0] [--per-state 150] [--seed 42]\
+ *   [--out data/eval/external/overture-us-nad-holdout.jsonl]
  */
 
 import { writeFileSync } from "node:fs"
@@ -86,7 +85,7 @@ for (const r of rows) {
 			expected: { locality: city, region: state, postcode: String(r.postcode) },
 			state,
 			source: `overture:${r.dataset}`,
-		}),
+		})
 	)
 	datasets.set(String(r.dataset), (datasets.get(String(r.dataset)) ?? 0) + 1)
 }
@@ -108,8 +107,8 @@ writeFileSync(
 			trust: lines.length >= 1000 ? "TRUSTED (>= 1000-row floor)" : "UNTRUSTED (< 1000-row floor)",
 		},
 		null,
-		"\t",
-	),
+		"\t"
+	)
 )
 console.log(`${lines.length} rows across ${states} states -> ${args.out}`)
 console.log("datasets:", Object.fromEntries(datasets))

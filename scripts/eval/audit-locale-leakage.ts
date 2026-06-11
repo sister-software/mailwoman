@@ -30,7 +30,11 @@ const slices: Array<[string, string, number]> = [
 	["DE intl", "data/eval/external/openaddresses-de-sample.jsonl", 300],
 ]
 for (const [label, file, cap] of slices) {
-	const rows = readFileSync(file, "utf8").split("\n").filter(Boolean).slice(0, cap).map((l) => JSON.parse(l))
+	const rows = readFileSync(file, "utf8")
+		.split("\n")
+		.filter(Boolean)
+		.slice(0, cap)
+		.map((l) => JSON.parse(l))
 	let affix = 0
 	let badPostcode = 0
 	let n = 0
@@ -51,6 +55,8 @@ for (const [label, file, cap] of slices) {
 		}
 	}
 	console.log(`\n== ${label} (n=${n}) ==`)
-	console.log(`affix-tag emissions: ${affix} (${((100 * affix) / n).toFixed(1)}%) · postcode-shape violations: ${badPostcode} (${((100 * badPostcode) / n).toFixed(1)}%)`)
+	console.log(
+		`affix-tag emissions: ${affix} (${((100 * affix) / n).toFixed(1)}%) · postcode-shape violations: ${badPostcode} (${((100 * badPostcode) / n).toFixed(1)}%)`
+	)
 	for (const s of samples) console.log(`  ${s}`)
 }

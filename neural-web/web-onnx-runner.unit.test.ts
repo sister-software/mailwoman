@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for `WebOnnxRunner`'s feed construction against a MOCKED onnxruntime-web session —
- *   no model files required, so these run in CI where the weights aren't linked.
+ *   Unit tests for `WebOnnxRunner`'s feed construction against a MOCKED onnxruntime-web session — no
+ *   model files required, so these run in CI where the weights aren't linked.
  *
  *   What this suite guards (the live-demo regression of 2026-06-10): models since v4.2.0 are
  *   gazetteer-anchor-trained and their ONNX graphs declare `gazetteer_features` /
@@ -190,8 +190,6 @@ describe("defaultGazetteerLexiconUrl", () => {
 			"https://public.sister.software/mailwoman/en-us/v4.4.0/anchor-lexicon-v1.json"
 		)
 		// Relative URLs stay relative.
-		expect(defaultGazetteerLexiconUrl("/static/mailwoman/model.onnx")).toBe(
-			"/static/mailwoman/anchor-lexicon-v1.json"
-		)
+		expect(defaultGazetteerLexiconUrl("/static/mailwoman/model.onnx")).toBe("/static/mailwoman/anchor-lexicon-v1.json")
 	})
 })

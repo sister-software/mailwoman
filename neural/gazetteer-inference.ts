@@ -6,9 +6,9 @@
  *   Inference-side gazetteer-anchor features (#464, knowledge-ladder rung 3.2) — the TS mirror of the
  *   Python training pipeline (`mailwoman_train/gazetteer_anchor.py`). Both consumers load the SAME
  *   codex-generated lexicon (`scripts/build-gazetteer-anchor-lexicon.mjs` →
- *   `data/gazetteer/anchor-lexicon-v1.json`) whose `rules` encode the match semantics as DATA, so the
- *   two implementations cannot drift. The model conditions on per-token candidate-tag-set clues fed
- *   alongside `input_ids`; this builds them from a raw address + its SentencePiece pieces.
+ *   `data/gazetteer/anchor-lexicon-v1.json`) whose `rules` encode the match semantics as DATA, so
+ *   the two implementations cannot drift. The model conditions on per-token candidate-tag-set clues
+ *   fed alongside `input_ids`; this builds them from a raw address + its SentencePiece pieces.
  *
  *   The clue INFORMS, the model decides (model-first). `gazetteer-inference.test.ts` pins the matcher
  *   against the Python fixture: the homograph clue is symmetric, "in" ≠ "IN", multi-word countries
@@ -30,9 +30,9 @@ export interface GazetteerLexicon {
 	slots: readonly string[]
 	bits: Record<string, number>
 	maxNgram: number
-	/** case-insensitive: key = word_norm lowercased → bitmask. */
+	/** Case-insensitive: key = word_norm lowercased → bitmask. */
 	entries: Map<string, number>
-	/** case-SENSITIVE: key = word_norm uppercased → bitmask (surface must already be uppercase). */
+	/** Case-SENSITIVE: key = word_norm uppercased → bitmask (surface must already be uppercase). */
 	codeEntries: Map<string, number>
 }
 
@@ -72,7 +72,7 @@ export function parseGazetteerLexicon(raw: {
 	}
 }
 
-/** word_norm for one word: strip leading/trailing non-letter/digit chars (keep internal). */
+/** Word_norm for one word: strip leading/trailing non-letter/digit chars (keep internal). */
 function stripWord(word: string): string {
 	let start = 0
 	let end = word.length
@@ -154,14 +154,15 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 }
 
 /**
- * Channel choreography (#464, v0.9.13 postcode fix; DeepSeek 2026-06-10): zero the gazetteer clue on
- * pieces within `window` of a postcode-anchor hit. The clue fires on the region token (`CA`/`GA`)
- * immediately before a US postcode; its additive vector strengthens `B-region`, which makes the
- * `B-region → B-postcode` CRF transition less competitive and drops the postcode (~3pp, US-only — FR
- * postcode precedes the locality, no region neighbor). Suppressing the clue adjacent to the postcode
- * removes the interference while leaving every other clue intact. Returns a NEW features/confidence
- * pair (does not mutate). `anchorConfidence[i] > 0` marks postcode-span pieces. PAIRS WITH the
- * train-time half (`gazetteer_anchor.suppress_gazetteer_near_postcode`) — enable both or neither.
+ * Channel choreography (#464, v0.9.13 postcode fix; DeepSeek 2026-06-10): zero the gazetteer clue
+ * on pieces within `window` of a postcode-anchor hit. The clue fires on the region token
+ * (`CA`/`GA`) immediately before a US postcode; its additive vector strengthens `B-region`, which
+ * makes the `B-region → B-postcode` CRF transition less competitive and drops the postcode (~3pp,
+ * US-only — FR postcode precedes the locality, no region neighbor). Suppressing the clue adjacent
+ * to the postcode removes the interference while leaving every other clue intact. Returns a NEW
+ * features/confidence pair (does not mutate). `anchorConfidence[i] > 0` marks postcode-span pieces.
+ * PAIRS WITH the train-time half (`gazetteer_anchor.suppress_gazetteer_near_postcode`) — enable
+ * both or neither.
  */
 export function suppressGazetteerNearPostcode(
 	gazetteer: { features: number[][]; confidence: number[] },
@@ -187,8 +188,9 @@ export function suppressGazetteerNearPostcode(
 
 /**
  * Per-piece gazetteer features + confidence for `text`, projected onto its SP `pieces` by the SAME
- * char→piece rule the labels use (a piece takes the bits of the first non-whitespace char it covers).
- * Returns `(pieces × featureDim)` features + `(pieces,)` confidence (1.0 wherever any bit fires).
+ * char→piece rule the labels use (a piece takes the bits of the first non-whitespace char it
+ * covers). Returns `(pieces × featureDim)` features + `(pieces,)` confidence (1.0 wherever any bit
+ * fires).
  */
 export function buildGazetteerFeatures(
 	text: string,

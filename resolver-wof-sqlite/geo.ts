@@ -5,13 +5,13 @@
  *
  *   Geographic helpers for the resolver — haversine distance, bbox math, and point-in-polygon.
  *
- *   We deliberately don't pull SpatiaLite (or turf) for this. SQLite's built-in `rtree` virtual
- *   table gives us bbox filtering at the SQL level; haversine distance is a 12-line TS function and
+ *   We deliberately don't pull SpatiaLite (or turf) for this. SQLite's built-in `rtree` virtual table
+ *   gives us bbox filtering at the SQL level; haversine distance is a 12-line TS function and
  *   ray-cast PIP a ~30-line one — both plenty fast for the post-fetch passes (we operate on ≤ a few
  *   hundred candidates per query, not the whole 142k-row corpus).
  *
- *   The PIP implementation here is the CANONICAL port of the even-odd ray cast that previously
- *   lived only in Python (`scripts/eval/pip-containment.py`, with a second copy in
+ *   The PIP implementation here is the CANONICAL port of the even-odd ray cast that previously lived
+ *   only in Python (`scripts/eval/pip-containment.py`, with a second copy in
  *   `scripts/build-postcode-locality.py`). Keep the three in sync if the algorithm ever changes —
  *   the eval-side Python copies grade the same containment truth this one resolves with.
  *
@@ -128,7 +128,11 @@ export function pointInPolygonRings(lon: number, lat: number, rings: readonly Ge
  * - `null` — the geometry isn't areal (Point, LineString, …) and CANNOT contain; callers treat this
  *   the same as "no polygon on record" (the approximate-fallback path), never as a rejection.
  */
-export function geometryContains(geometry: GeojsonGeometry | null | undefined, lon: number, lat: number): boolean | null {
+export function geometryContains(
+	geometry: GeojsonGeometry | null | undefined,
+	lon: number,
+	lat: number
+): boolean | null {
 	if (!geometry) return null
 	if (geometry.type === "Polygon") {
 		return pointInPolygonRings(lon, lat, (geometry as GeojsonPolygon).coordinates)

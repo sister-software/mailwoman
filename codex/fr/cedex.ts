@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   CEDEX — Courrier d'Entreprise à Distribution EXceptionnelle (La Poste business routing,
- *   NF Z 10-011 §3.4). A CEDEX line replaces the ordinary delivery line for high-volume business
+ *   CEDEX — Courrier d'Entreprise à Distribution EXceptionnelle (La Poste business routing, NF Z
+ *   10-011 §3.4). A CEDEX line replaces the ordinary delivery line for high-volume business
  *   recipients: `75008 PARIS CEDEX 08` — the word CEDEX after the distribution office name,
  *   optionally followed by a 1–2 digit office number. The component is the `CEDEX [NN]` phrase
  *   itself (the schema's `cedex` tag); the preceding postcode/locality keep their own tags.
  *
- *   This slice closes the gap PR #516 documented: the shard builder sourced the shape from
- *   SCHEMA.mdx prose because codex had no cedex home. Now it does — the builder and any future
- *   consumer import from here (the no-load-bearing-trivia discipline: one provenanced source).
+ *   This slice closes the gap PR #516 documented: the shard builder sourced the shape from SCHEMA.mdx
+ *   prose because codex had no cedex home. Now it does — the builder and any future consumer import
+ *   from here (the no-load-bearing-trivia discipline: one provenanced source).
  */
 
 /** Matches a CEDEX phrase: the keyword plus an optional 1–2 digit office number. */
@@ -28,9 +28,9 @@ export interface CedexMatch {
 }
 
 /**
- * Find the CEDEX phrase in a line, if any. Returns the LAST match — a CEDEX line places the
- * phrase terminally (NF Z 10-011), and any earlier occurrence in pathological input is more
- * likely a venue name fragment.
+ * Find the CEDEX phrase in a line, if any. Returns the LAST match — a CEDEX line places the phrase
+ * terminally (NF Z 10-011), and any earlier occurrence in pathological input is more likely a venue
+ * name fragment.
  */
 export function matchCedex(text: string): CedexMatch | null {
 	let match: CedexMatch | null = null

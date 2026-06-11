@@ -3,25 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the POSTAL-CITY ALIAS table (#475) from the pinned-release Overture US Parquet:
- *   per-address ground truth for the postal-city/geographic-city split that the resolver's
- *   coordinate-first soft-scorer currently approximates geometrically.
+ *   Build the POSTAL-CITY ALIAS table (#475) from the pinned-release Overture US Parquet: per-address
+ *   ground truth for the postal-city/geographic-city split that the resolver's coordinate-first
+ *   soft-scorer currently approximates geometrically.
  *
- *   The signal: 45.9M US rows carry BOTH `postal_city` (what the postal system calls the
- *   place — USPS "acceptable city names", vanity cities) AND a geographic locality
- *   (`address_levels[2]`); 16.0M of them (34.9%) DIVERGE. Aggregated per
- *   `(postcode, postal_city, geo_locality)` with observed counts, that divergence is the
- *   alias evidence: "postcode 10954's mail says Nanuet; the polygon says Clarkstown".
+ *   The signal: 45.9M US rows carry BOTH `postal_city` (what the postal system calls the place — USPS
+ *   "acceptable city names", vanity cities) AND a geographic locality (`address_levels[2]`); 16.0M
+ *   of them (34.9%) DIVERGE. Aggregated per `(postcode, postal_city, geo_locality)` with observed
+ *   counts, that divergence is the alias evidence: "postcode 10954's mail says Nanuet; the polygon
+ *   says Clarkstown".
  *
- *   SIBLING table by design (`postal_city_alias`, its own sqlite) — never mixed into the
- *   PIP-derived `postcode_locality` rows: one table = one provenance class
- *   (feedback-no-load-bearing-trivia). A count floor drops typo noise; everything kept is
- *   observed-in-the-wild N times, with N recorded.
+ *   SIBLING table by design (`postal_city_alias`, its own sqlite) — never mixed into the PIP-derived
+ *   `postcode_locality` rows: one table = one provenance class (feedback-no-load-bearing-trivia). A
+ *   count floor drops typo noise; everything kept is observed-in-the-wild N times, with N
+ *   recorded.
  *
- *   Usage:
- *     node --experimental-strip-types scripts/build-postal-city-alias.ts \
- *       [--release 2026-05-20.0] [--min-count 25] \
- *       [--out /mnt/playpen/mailwoman-data/wof/postal-city-alias-us.db]
+ *   Usage: node --experimental-strip-types scripts/build-postal-city-alias.ts\
+ *   [--release 2026-05-20.0] [--min-count 25]\
+ *   [--out /mnt/playpen/mailwoman-data/wof/postal-city-alias-us.db]
  */
 
 import { mkdirSync, rmSync } from "node:fs"
@@ -75,7 +74,7 @@ db.exec(`
 	);
 `)
 const insert = db.prepare(
-	"INSERT INTO postal_city_alias (postcode, postal_city, geo_locality, n, divergent, source, release) VALUES (?, ?, ?, ?, ?, ?, ?)",
+	"INSERT INTO postal_city_alias (postcode, postal_city, geo_locality, n, divergent, source, release) VALUES (?, ?, ?, ?, ?, ?, ?)"
 )
 db.exec("BEGIN")
 let divergent = 0

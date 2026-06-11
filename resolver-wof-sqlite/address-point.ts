@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   SQLite implementation of core's `AddressPointLookup` (#476): exact `(street, number)`
- *   within a postcode (preferred) or locality scope, against a per-state shard built by
- *   `scripts/build-address-point-shard.ts`. Query-side normalization is THE shared
- *   normalizer (`street-normalize.ts`) — identical to build-side, by construction.
+ *   SQLite implementation of core's `AddressPointLookup` (#476): exact `(street, number)` within a
+ *   postcode (preferred) or locality scope, against a per-state shard built by
+ *   `scripts/build-address-point-shard.ts`. Query-side normalization is THE shared normalizer
+ *   (`street-normalize.ts`) — identical to build-side, by construction.
  *
- *   Matching is exact-after-normalization only — no fuzzy street matching in this tier
- *   (measure how far exact gets first; fuzz is a later, separate decision). Postcode scope
- *   is attempted first (cheapest, most selective); locality scope is the fallback. Multiple
- *   hits (same number, units/duplicates) return the first by rowid — coordinates of unit
- *   siblings are the same building for tier purposes.
+ *   Matching is exact-after-normalization only — no fuzzy street matching in this tier (measure how
+ *   far exact gets first; fuzz is a later, separate decision). Postcode scope is attempted first
+ *   (cheapest, most selective); locality scope is the fallback. Multiple hits (same number,
+ *   units/duplicates) return the first by rowid — coordinates of unit siblings are the same
+ *   building for tier purposes.
  */
 
 import { DatabaseSync } from "node:sqlite"
@@ -37,11 +37,11 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 		this.#db = new DatabaseSync(dbPath, { readOnly: true })
 		this.#byPostcode = this.#db.prepare(
 			`SELECT lat, lon, source, release FROM address_point
-			 WHERE postcode = ? AND street_norm = ? AND number = ? LIMIT 1`,
+			 WHERE postcode = ? AND street_norm = ? AND number = ? LIMIT 1`
 		)
 		this.#byLocality = this.#db.prepare(
 			`SELECT lat, lon, source, release FROM address_point
-			 WHERE locality_norm = ? AND street_norm = ? AND number = ? LIMIT 1`,
+			 WHERE locality_norm = ? AND street_norm = ? AND number = ? LIMIT 1`
 		)
 	}
 

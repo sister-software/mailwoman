@@ -14,8 +14,8 @@
 
 import type { AddressNode, AddressTree } from "../decoder/types.js"
 import type { ComponentTag } from "../types/component.js"
-import type { ClassifierCandidate } from "./reconcile.js"
 import { prefetchReconcileLookups } from "./reconcile-lookups.js"
+import type { ClassifierCandidate } from "./reconcile.js"
 import { reconcileSpans } from "./reconcile.js"
 import { aggregateSpanLogits } from "./span-logit-aggregation.js"
 import type {

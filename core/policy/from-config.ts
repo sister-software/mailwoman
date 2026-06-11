@@ -18,12 +18,12 @@
  *       "country":  { "mode": "both" }
  *     }
  *   }
- *   ```
+ * ```
  *
- *   Validation is LOUD and total, by hard-won rule: unknown tags, unknown modes, unknown FIELDS,
- *   and out-of-range thresholds all throw with the offending path. (A silently-accepted
- *   `minimumConfidence` typo cost a debugging session on 2026-06-10 — `set()` is structurally
- *   typed and won't save a JSON file. This loader is where the contract is enforced.)
+ *   Validation is LOUD and total, by hard-won rule: unknown tags, unknown modes, unknown FIELDS, and
+ *   out-of-range thresholds all throw with the offending path. (A silently-accepted
+ *   `minimumConfidence` typo cost a debugging session on 2026-06-10 — `set()` is structurally typed
+ *   and won't save a JSON file. This loader is where the contract is enforced.)
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "../types/component.js"
@@ -71,7 +71,7 @@ export function policyRegistryFromConfig(config: PolicyConfig): InMemoryPolicyRe
 			for (const field of Object.keys(entry)) {
 				if (!ENTRY_FIELDS.has(field)) {
 					throw new Error(
-						`policy config: ${path}."${field}" is not a recognized field (allowed: ${[...ENTRY_FIELDS].join(", ")})`,
+						`policy config: ${path}."${field}" is not a recognized field (allowed: ${[...ENTRY_FIELDS].join(", ")})`
 					)
 				}
 			}

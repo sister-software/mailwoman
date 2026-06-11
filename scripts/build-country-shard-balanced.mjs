@@ -5,18 +5,19 @@
  * @author Teffen Ellis, et al.
  *
  *   Build the BALANCED, MODEL-FIRST country-coverage shard (#464). The shipped v4.1.0 model is
- *   STARVED on `country` (P=R=F1=0 on the homograph eval — never emits it), so this fills a void the
- *   same way the `unit` shard did, but built to AVOID the night-9 over-fire (a trailing-country-only
- *   shard taught "trailing token ⇒ country"). Three ingredients:
- *     1. Breadth/recall — real OA skeletons (US/DE/FR/IT/NL) with a country token in a varied surface
- *        form from @mailwoman/codex/country (canonical / endonym / ISO code), + ~30% country-ABSENT
+ *   STARVED on `country` (P=R=F1=0 on the homograph eval — never emits it), so this fills a void
+ *   the same way the `unit` shard did, but built to AVOID the night-9 over-fire (a
+ *   trailing-country-only shard taught "trailing token ⇒ country"). Three ingredients:
+ *
+ *   1. Breadth/recall — real OA skeletons (US/DE/FR/IT/NL) with a country token in a varied surface form
+ *        from @mailwoman/codex/country (canonical / endonym / ISO code), + ~30% country-ABSENT
  *        negatives (teach O-emission, the precision floor).
- *     2. Homograph CONTRAST pairs — the key addition. Each true country-name homograph (Georgia,
- *        Jordan, Lebanon, Mexico, Peru, Turkey) rendered BOTH ways: as `country` (foreign-city
- *        context) AND as the US `region`/`locality` (US ZIP context). Teaches that the label is
- *        CONTEXTUAL, not positional — the thing a deterministic lookup cannot do.
- *     3. Code-as-region negatives — 2-letter codes that are both a US state abbrev and an ISO country
- *        code (CA/GA/IN/MA/PA/AL) in US-ZIP context → must read as `region`, never `country`.
+ *   2. Homograph CONTRAST pairs — the key addition. Each true country-name homograph (Georgia, Jordan,
+ *        Lebanon, Mexico, Peru, Turkey) rendered BOTH ways: as `country` (foreign-city context) AND
+ *        as the US `region`/`locality` (US ZIP context). Teaches that the label is CONTEXTUAL, not
+ *        positional — the thing a deterministic lookup cannot do.
+ *   3. Code-as-region negatives — 2-letter codes that are both a US state abbrev and an ISO country code
+ *        (CA/GA/IN/MA/PA/AL) in US-ZIP context → must read as `region`, never `country`.
  *
  *   The trustworthy gate is data/eval/external/country-homograph-real.jsonl (curated, held-out);
  *   --golden emits a held-out synthetic val. Pair with class-weighted CRF loss at train time (the
@@ -27,7 +28,7 @@
 import { spawnSync } from "node:child_process"
 import { createWriteStream } from "node:fs"
 
-import { CountryNames, COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import { alignRow, stableSourceId } from "@mailwoman/corpus"
 
 // v2: the country TOKEN is decoupled from the skeleton's locale and drawn from a BROAD pool — every
@@ -200,7 +201,11 @@ function renderCountry(random, t, country) {
 	if (r < 0.8) return { fmt: "full", raw: `${body}, ${country}`, components: withC }
 	if (r < 0.92) return { fmt: "full-nl", raw: `${body}\n${country}`, components: withC }
 	const bareBody = order === "us" || order === "fr" ? `${hn} ${street}, ${loc}` : `${street} ${hn}, ${loc}`
-	return { fmt: "bare", raw: `${bareBody}, ${country}`, components: { house_number: hn, street, locality: loc, country } }
+	return {
+		fmt: "bare",
+		raw: `${bareBody}, ${country}`,
+		components: { house_number: hn, street, locality: loc, country },
+	}
 }
 
 // ── Homograph contrast (the model-first addition) ───────────────────────────────────────────────
@@ -208,12 +213,42 @@ function renderCountry(random, t, country) {
 // each BOTH ways (foreign-city → country; US-ZIP → region/locality) is what teaches the CONTEXTUAL
 // distinction. role: how the surface reads in US context.
 const HOMOGRAPHS = [
-	{ surface: "Georgia", iso2: "GE", cities: ["Tbilisi", "Batumi", "Kutaisi", "Rustavi"], us: { role: "region", locality: "Atlanta", region: "Georgia", postcodes: ["30309", "31401", "30601", "31201"] } },
-	{ surface: "Jordan", iso2: "JO", cities: ["Amman", "Irbid", "Zarqa", "Aqaba"], us: { role: "locality", locality: "Jordan", region: "MN", postcodes: ["55352"] } },
-	{ surface: "Lebanon", iso2: "LB", cities: ["Beirut", "Tripoli", "Sidon", "Byblos"], us: { role: "locality", locality: "Lebanon", region: "TN", postcodes: ["37087", "03766", "17042", "45036"] } },
-	{ surface: "Mexico", iso2: "MX", cities: ["Guadalajara", "Monterrey", "Puebla", "Oaxaca"], us: { role: "locality", locality: "Mexico", region: "MO", postcodes: ["65265"] } },
-	{ surface: "Peru", iso2: "PE", cities: ["Cusco", "Arequipa", "Trujillo", "Iquitos"], us: { role: "locality", locality: "Peru", region: "IL", postcodes: ["61354", "46970"] } },
-	{ surface: "Turkey", iso2: "TR", cities: ["Ankara", "Izmir", "Bursa", "Antalya"], us: { role: "locality", locality: "Turkey", region: "TX", postcodes: ["79261", "28393"] } },
+	{
+		surface: "Georgia",
+		iso2: "GE",
+		cities: ["Tbilisi", "Batumi", "Kutaisi", "Rustavi"],
+		us: { role: "region", locality: "Atlanta", region: "Georgia", postcodes: ["30309", "31401", "30601", "31201"] },
+	},
+	{
+		surface: "Jordan",
+		iso2: "JO",
+		cities: ["Amman", "Irbid", "Zarqa", "Aqaba"],
+		us: { role: "locality", locality: "Jordan", region: "MN", postcodes: ["55352"] },
+	},
+	{
+		surface: "Lebanon",
+		iso2: "LB",
+		cities: ["Beirut", "Tripoli", "Sidon", "Byblos"],
+		us: { role: "locality", locality: "Lebanon", region: "TN", postcodes: ["37087", "03766", "17042", "45036"] },
+	},
+	{
+		surface: "Mexico",
+		iso2: "MX",
+		cities: ["Guadalajara", "Monterrey", "Puebla", "Oaxaca"],
+		us: { role: "locality", locality: "Mexico", region: "MO", postcodes: ["65265"] },
+	},
+	{
+		surface: "Peru",
+		iso2: "PE",
+		cities: ["Cusco", "Arequipa", "Trujillo", "Iquitos"],
+		us: { role: "locality", locality: "Peru", region: "IL", postcodes: ["61354", "46970"] },
+	},
+	{
+		surface: "Turkey",
+		iso2: "TR",
+		cities: ["Ankara", "Izmir", "Bursa", "Antalya"],
+		us: { role: "locality", locality: "Turkey", region: "TX", postcodes: ["79261", "28393"] },
+	},
 ]
 // 2-letter codes that are BOTH a US state abbrev AND an ISO country code → must read as region in US ctx.
 const ABBREV_REGIONS = [
@@ -224,12 +259,25 @@ const ABBREV_REGIONS = [
 	{ code: "PA", localities: ["Philadelphia", "Pittsburgh"], postcodes: ["19103", "15222"] }, // Pennsylvania / Panama
 	{ code: "AL", localities: ["Birmingham", "Montgomery"], postcodes: ["35203", "36104"] }, // Alabama / Albania
 ]
-const STREET_POOL = ["Main Street", "Oak Avenue", "Park Road", "Elm Street", "Hill Road", "Market Street", "Church Street", "King Street", "2nd Avenue", "Maple Drive"]
+const STREET_POOL = [
+	"Main Street",
+	"Oak Avenue",
+	"Park Road",
+	"Elm Street",
+	"Hill Road",
+	"Market Street",
+	"Church Street",
+	"King Street",
+	"2nd Avenue",
+	"Maple Drive",
+]
 const pick = (random, arr) => arr[Math.floor(random() * arr.length)]
 const houseNo = (random) => String(1 + Math.floor(random() * 998))
 
-/** A homograph CONTRAST row: ~half render the surface as `country` (foreign city), half as the US
- *  `region`/`locality` (US ZIP, NO country). Returns iso2 for provenance. */
+/**
+ * A homograph CONTRAST row: ~half render the surface as `country` (foreign city), half as the US
+ * `region`/`locality` (US ZIP, NO country). Returns iso2 for provenance.
+ */
 function renderHomograph(random) {
 	const h = pick(random, HOMOGRAPHS)
 	const hn = houseNo(random),
@@ -246,10 +294,20 @@ function renderHomograph(random) {
 	const pc = pick(random, h.us.postcodes)
 	if (h.us.role === "region") {
 		// surface is the US STATE: "123 Oak Ave, Atlanta, Georgia 30309" → region, no country
-		return { fmt: "homograph-us-region", raw: `${hn} ${street}, ${h.us.locality}, ${h.surface} ${pc}`, components: { house_number: hn, street, locality: h.us.locality, region: h.surface, postcode: pc }, iso2: "US" }
+		return {
+			fmt: "homograph-us-region",
+			raw: `${hn} ${street}, ${h.us.locality}, ${h.surface} ${pc}`,
+			components: { house_number: hn, street, locality: h.us.locality, region: h.surface, postcode: pc },
+			iso2: "US",
+		}
 	}
 	// surface is the US CITY: "123 Oak Ave, Lebanon, TN 37087" → locality, no country
-	return { fmt: "homograph-us-locality", raw: `${hn} ${street}, ${h.surface}, ${h.us.region} ${pc}`, components: { house_number: hn, street, locality: h.surface, region: h.us.region, postcode: pc }, iso2: "US" }
+	return {
+		fmt: "homograph-us-locality",
+		raw: `${hn} ${street}, ${h.surface}, ${h.us.region} ${pc}`,
+		components: { house_number: hn, street, locality: h.surface, region: h.us.region, postcode: pc },
+		iso2: "US",
+	}
 }
 
 /** An abbrev-as-region negative: "123 Main St, Los Angeles, CA 90012" → region CA, NO country. */
@@ -259,7 +317,12 @@ function renderAbbrevRegion(random) {
 		street = pick(random, STREET_POOL),
 		locality = pick(random, a.localities),
 		postcode = pick(random, a.postcodes)
-	return { fmt: "abbrev-region", raw: `${hn} ${street}, ${locality}, ${a.code} ${postcode}`, components: { house_number: hn, street, locality, region: a.code, postcode }, iso2: "US" }
+	return {
+		fmt: "abbrev-region",
+		raw: `${hn} ${street}, ${locality}, ${a.code} ${postcode}`,
+		components: { house_number: hn, street, locality, region: a.code, postcode },
+		iso2: "US",
+	}
 }
 
 const HOMOGRAPH_FRAC = 0.22 // share of rows that are homograph contrast pairs

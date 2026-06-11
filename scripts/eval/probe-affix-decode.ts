@@ -25,7 +25,10 @@ const [tokenizer, runner] = await Promise.all([
 const postcodeAnchorLookup = parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8")))
 const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels, postcodeAnchorLookup })
 
-const rows = readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
+const rows = readFileSync(file, "utf8")
+	.split("\n")
+	.filter(Boolean)
+	.map((l) => JSON.parse(l))
 let prefixHits = 0,
 	suffixHits = 0
 for (const row of rows.slice(0, 10)) {

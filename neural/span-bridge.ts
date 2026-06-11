@@ -8,17 +8,17 @@
  *
  *   The corpus alignment tokenizer drops standalone punctuation (corpus/src/tokenize.ts), so NO
  *   training row can label the periods inside "P.O. Box" — the model learns the tag perfectly
- *   (every letter piece at 0.93+ confidence) but emits it as fragments split at each dot, and
- *   span assembly surfaces only the first fragment ("p"). Measured on the v1.3.0 gate: dotted
- *   po_box leaders failed 98%, ALL truncations, while plain leaders passed — a structural
- *   expressivity limit of the label format, not a learning failure.
+ *   (every letter piece at 0.93+ confidence) but emits it as fragments split at each dot, and span
+ *   assembly surfaces only the first fragment ("p"). Measured on the v1.3.0 gate: dotted po_box
+ *   leaders failed 98%, ALL truncations, while plain leaders passed — a structural expressivity
+ *   limit of the label format, not a learning failure.
  *
- *   The fix is deterministic: AFTER decode, merge adjacent same-label spans whose gap consists
- *   only of punctuation/whitespace, contains at least one non-space character, and is short
- *   (≤ 3 chars). The non-space requirement is load-bearing — space-only gaps ("Saint Paul" as two
- *   locality spans) are NOT bridged, because a space between two same-tag spans is often a real
- *   boundary (the Saint-Albans fragmentation wants this fix too, but it must come with its own
- *   evidence; this pass stays conservative by construction).
+ *   The fix is deterministic: AFTER decode, merge adjacent same-label spans whose gap consists only
+ *   of punctuation/whitespace, contains at least one non-space character, and is short (≤ 3 chars).
+ *   The non-space requirement is load-bearing — space-only gaps ("Saint Paul" as two locality
+ *   spans) are NOT bridged, because a space between two same-tag spans is often a real boundary
+ *   (the Saint-Albans fragmentation wants this fix too, but it must come with its own evidence;
+ *   this pass stays conservative by construction).
  *
  *   Runs beside the postcode/unit repair passes in the classifier, before tree-building.
  */
@@ -28,10 +28,10 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
 /**
  * Gap text qualifies when short, made only of INTRA-TOKEN punctuation (period/hyphen/slash/
  * apostrophe) plus whitespace, with at least one non-space char. Separator punctuation (comma,
- * semicolon) is EXCLUDED — measured 2026-06-11: the comma form merged "47110, 9016"-style
- * postcode + house-number fragments on six FR golden rows (the model double-labels the number;
- * the comma is the only thing keeping the spans honest). A comma between same-tag spans is a
- * list/separator, never the inside of a surface form.
+ * semicolon) is EXCLUDED — measured 2026-06-11: the comma form merged "47110, 9016"-style postcode
+ * + house-number fragments on six FR golden rows (the model double-labels the number; the comma is
+ * the only thing keeping the spans honest). A comma between same-tag spans is a list/separator,
+ * never the inside of a surface form.
  */
 function bridgeable(gap: string): boolean {
 	if (gap.length === 0 || gap.length > 3) return false
@@ -42,8 +42,8 @@ function bridgeable(gap: string): boolean {
 /**
  * Merge same-label fragments separated only by punctuation gaps. Returns a new token array where
  * the first fragment of each bridged group is widened to the group's full char range (so span
- * extraction reads the raw text straight through the punctuation), and later fragments are
- * dropped. Labels, ordering, and all non-bridged tokens are untouched.
+ * extraction reads the raw text straight through the punctuation), and later fragments are dropped.
+ * Labels, ordering, and all non-bridged tokens are untouched.
  */
 export function bridgePunctuationGaps(text: string, input: readonly DecoderToken[]): DecoderToken[] {
 	const out: DecoderToken[] = []
@@ -57,8 +57,7 @@ export function bridgePunctuationGaps(text: string, input: readonly DecoderToken
 			const tag = token.label.replace(/^[BI]-/, "")
 			const prevTag = prev?.label.replace(/^[BI]-/, "")
 			const skipped = out.slice(back + 1)
-			const skippedInsideGap =
-				prev !== undefined && skipped.every((t) => t.start >= prev.end && t.end <= token.start)
+			const skippedInsideGap = prev !== undefined && skipped.every((t) => t.start >= prev.end && t.end <= token.start)
 			if (
 				prev &&
 				prev.label !== "O" &&

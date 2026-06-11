@@ -192,8 +192,8 @@ export interface RuntimePipelineStages {
 	fst?: FstMatcherLike
 	resolver?: Resolver
 	/**
-	 * The gazetteer BACKEND (lower-level than `resolver`), enabling the reconciler's concordance
-	 * axes (#478): a bounded pre-fetch turns it into the resolver-candidate + parent-chain lookups
+	 * The gazetteer BACKEND (lower-level than `resolver`), enabling the reconciler's concordance axes
+	 * (#478): a bounded pre-fetch turns it into the resolver-candidate + parent-chain lookups
 	 * `reconcileSpans` scores with. Optional — absent, reconcile runs classifier-only (today's
 	 * behavior, byte-stable).
 	 */

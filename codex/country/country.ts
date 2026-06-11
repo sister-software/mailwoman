@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   Country recognition for the `country` parity lever. The ISO 3166-1 base (names + alpha-2/alpha-3)
- *   is salvaged from isp-nexus `spatial/countries` ({@link ./names.ts}, {@link ./codes.ts}); this adds
- *   the layer ISO doesn't carry — the **surface forms** addresses actually use (endonyms + common
- *   abbreviations: "USA"/"United States"/"U.S."; "Deutschland"/"Germany"; "España"/"Spain") — plus a
- *   {@link matchCountry} resolver the corpus country-shard + parsing reuse. Same shape as the other
- *   codex matchers (street-suffix, directional, po-box).
+ *   is salvaged from isp-nexus `spatial/countries` ({@link ./names.ts}, {@link ./codes.ts}); this
+ *   adds the layer ISO doesn't carry — the **surface forms** addresses actually use (endonyms +
+ *   common abbreviations: "USA"/"United States"/"U.S."; "Deutschland"/"Germany"; "España"/"Spain")
+ *   — plus a {@link matchCountry} resolver the corpus country-shard + parsing reuse. Same shape as
+ *   the other codex matchers (street-suffix, directional, po-box).
  */
 
 import { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "./codes.js"
@@ -16,9 +16,9 @@ import { type CountryName } from "./names.js"
 
 /**
  * Common real-address surface forms per ISO 3166-1 alpha-2, **canonical English name first** then
- * endonym + abbreviations. Curated for the corpus locales + frequent countries (NOT a full 249-entry
- * variant table — the ISO base below catches the canonical name/code for everything else). Forms are
- * matched case-insensitively; the first entry is the preferred render form.
+ * endonym + abbreviations. Curated for the corpus locales + frequent countries (NOT a full
+ * 249-entry variant table — the ISO base below catches the canonical name/code for everything
+ * else). Forms are matched case-insensitively; the first entry is the preferred render form.
  */
 export const COUNTRY_SURFACE_FORMS = {
 	US: ["United States", "USA", "US", "U.S.A.", "U.S.", "United States of America", "America"],
@@ -40,14 +40,14 @@ export const COUNTRY_SURFACE_FORMS = {
 
 export type CountrySurfaceIso2 = keyof typeof COUNTRY_SURFACE_FORMS
 
-/** alpha-2 → canonical English name (inverted from the salvaged CountryISO2 enum). */
+/** Alpha-2 → canonical English name (inverted from the salvaged CountryISO2 enum). */
 export const ISO2_TO_NAME: ReadonlyMap<string, CountryName> = new Map(
 	Object.entries(CountryISO2).map(([name, code]) => [code as string, name as CountryName])
 )
 
 /**
- * Any recognized country surface form / canonical name / alpha-2 / alpha-3 → alpha-2 code. Built once
- * at module load, lowercase-keyed. Canonical names + codes from the ISO base, plus the curated
+ * Any recognized country surface form / canonical name / alpha-2 / alpha-3 → alpha-2 code. Built
+ * once at module load, lowercase-keyed. Canonical names + codes from the ISO base, plus the curated
  * surface forms (surface forms win on collision — they're the address-facing spellings).
  */
 export const COUNTRY_LOOKUP: ReadonlyMap<string, string> = (() => {
@@ -78,9 +78,9 @@ export interface CountryMatch {
 }
 
 /**
- * Resolve a token (surface form, canonical name, alpha-2, or alpha-3) to a country. Case-insensitive.
- * Returns null if unrecognized. Multi-word names ("United States", "Great Britain") must be passed as
- * the whole phrase — the caller decides the span; this matches it.
+ * Resolve a token (surface form, canonical name, alpha-2, or alpha-3) to a country.
+ * Case-insensitive. Returns null if unrecognized. Multi-word names ("United States", "Great
+ * Britain") must be passed as the whole phrase — the caller decides the span; this matches it.
  */
 export function matchCountry(token: string | null | undefined): CountryMatch | null {
 	if (!token || typeof token !== "string") return null
@@ -94,10 +94,11 @@ export function isCountryToken(token: unknown): boolean {
 	return typeof token === "string" && COUNTRY_LOOKUP.has(token.trim().toLowerCase())
 }
 
-/** The preferred render forms for an alpha-2 (canonical first), for synth shards. Empty if none curated. */
+/** The preferred render forms for an alpha-2 (canonical first), for synth shards. Empty if none
+curated. */
 export function countrySurfaceForms(iso2: string): readonly string[] {
 	return (COUNTRY_SURFACE_FORMS as Record<string, readonly string[]>)[iso2.toUpperCase()] ?? []
 }
 
-export type { CountryName, CountryISO3 }
-export { CountryISO2, Alpha3ToCountryRecord }
+export { Alpha3ToCountryRecord, CountryISO2 }
+export type { CountryISO3, CountryName }

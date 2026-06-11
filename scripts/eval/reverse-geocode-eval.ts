@@ -9,9 +9,9 @@
  *   in the returned hierarchy. No parser, no model — this isolates the reverse stack (R*Tree bbox →
  *   PIP → approximate descent → ancestor chain).
  *
- *   Default slice: the US/VT corpus holdout (`SPLIT_MANIFEST defaultHoldouts`), the same
- *   leakage-free geography honest-eval.sh grades forward resolution on. Leakage matters less here
- *   (no trained model is involved), but using the same slice keeps the numbers comparable.
+ *   Default slice: the US/VT corpus holdout (`SPLIT_MANIFEST defaultHoldouts`), the same leakage-free
+ *   geography honest-eval.sh grades forward resolution on. Leakage matters less here (no trained
+ *   model is involved), but using the same slice keeps the numbers comparable.
  *
  *   Metrics:
  *
@@ -19,8 +19,8 @@
  *       "VT", WOF says "Vermont") matches the gold region.
  *   - **locality-match%** — any node at localadmin grain or finer whose name/alias matches the gold
  *       locality.
- *   - **containment histogram** — polygon vs approximate (the honesty signal; VT localities are
- *       mostly point-geometry in WOF, so expect approximate to dominate at the locality grain).
+ *   - **containment histogram** — polygon vs approximate (the honesty signal; VT localities are mostly
+ *       point-geometry in WOF, so expect approximate to dominate at the locality grain).
  *   - **deepest-placetype distribution** — the empirical answer to the scoping doc's granularity
  *       question (stop at locality vs descend to neighbourhood).
  *   - **ms/query** — mean + p50/p90 over the slice.
@@ -30,10 +30,10 @@
  *
  *   Run (after `yarn compile`):
  *
- *   node --experimental-strip-types scripts/eval/reverse-geocode-eval.ts \
- *     --admin-db /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
- *     --polygons-db /tmp/v440-stage/en-us/v4.4.0/wof-polygons.db \
- *     --states VT
+ *   Node --experimental-strip-types scripts/eval/reverse-geocode-eval.ts\
+ *   --admin-db /mnt/playpen/mailwoman-data/wof/admin-global-priority.db\
+ *   --polygons-db /tmp/v440-stage/en-us/v4.4.0/wof-polygons.db\
+ *   --states VT
  */
 
 import { createReadStream } from "node:fs"
@@ -74,10 +74,10 @@ function normalizeName(s: string): string {
 
 /**
  * The SURFACE-normalized variant (reported as a separate, labeled metric — never silently folded
- * into the strict one): expands the St↔Saint abbreviation and strips the trailing
- * Town/City/Village status suffix. Both are gold-surface artifacts the honest-eval work already
- * documented (OA says "Saint Albans Town" / "Barre City", WOF says "St. Albans" / "Barre" — same
- * place, different convention), the name-match analogue of the PIP-vs-name-match artifact class.
+ * into the strict one): expands the St↔Saint abbreviation and strips the trailing Town/City/Village
+ * status suffix. Both are gold-surface artifacts the honest-eval work already documented (OA says
+ * "Saint Albans Town" / "Barre City", WOF says "St. Albans" / "Barre" — same place, different
+ * convention), the name-match analogue of the PIP-vs-name-match artifact class.
  */
 function normalizeNameLoose(s: string): string {
 	return normalizeName(s)
@@ -205,12 +205,16 @@ console.log(
 	`| locality-match (surface-normalized: St↔Saint, Town/City/Village suffix) | ${pct(localityMatchLoose, localityScored)} (${localityMatchLoose}/${localityScored}) |`
 )
 console.log(`| ms/query mean | ${meanMs.toFixed(2)} |`)
-console.log(`| ms/query p50 / p90 | ${percentile(sortedMs, 0.5).toFixed(2)} / ${percentile(sortedMs, 0.9).toFixed(2)} |`)
+console.log(
+	`| ms/query p50 / p90 | ${percentile(sortedMs, 0.5).toFixed(2)} / ${percentile(sortedMs, 0.9).toFixed(2)} |`
+)
 console.log("")
 console.log(`Containment histogram:`)
 for (const [kind, n] of [...containmentCounts].sort((a, b) => b[1] - a[1])) {
 	const bucket = localityMatchByContainment.get(kind)
-	console.log(`- \`${kind}\`: ${n} (${pct(n, rows.length - empty)}) — locality-match ${pct(bucket?.match ?? 0, bucket?.n ?? 0)}`)
+	console.log(
+		`- \`${kind}\`: ${n} (${pct(n, rows.length - empty)}) — locality-match ${pct(bucket?.match ?? 0, bucket?.n ?? 0)}`
+	)
 }
 console.log("")
 console.log(`Deepest-placetype distribution (the granularity question):`)

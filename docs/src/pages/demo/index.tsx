@@ -256,7 +256,11 @@ const DemoApp: React.FC = () => {
 				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
 
 				const neuralWeb = await import("@mailwoman/neural-web")
-				const { classifier: cls, diagnostics, postcodeAnchorLookup } = await neuralWeb.loadNeuralClassifierFromUrls({
+				const {
+					classifier: cls,
+					diagnostics,
+					postcodeAnchorLookup,
+				} = await neuralWeb.loadNeuralClassifierFromUrls({
 					modelUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
 					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
 					modelCardUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model-card.json"),
@@ -948,9 +952,9 @@ function drawBbox(map: MapLibreMap, bbox: { minLat: number; maxLat: number; minL
 }
 
 /**
- * Approximate-extent circle for places without a crisp polygon: centered on the place point,
- * radius from the bbox half-diagonal (clamped 0.5–50 km). 64-point GeoJSON ring with latitude
- * correction — visually a circle anywhere outside the poles.
+ * Approximate-extent circle for places without a crisp polygon: centered on the place point, radius
+ * from the bbox half-diagonal (clamped 0.5–50 km). 64-point GeoJSON ring with latitude correction —
+ * visually a circle anywhere outside the poles.
  */
 function drawApproxCircle(
 	map: MapLibreMap,

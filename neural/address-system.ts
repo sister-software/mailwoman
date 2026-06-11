@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Address-system detection from the model's locale head (#511 Tier A — the consumer the head
- *   never had). The PR3 self-conditioning head predicts which country an address belongs to from
- *   the pooled sequence; v1.1.0+ exports surface it as the `locale_logits` ONNX output. This module
+ *   Address-system detection from the model's locale head (#511 Tier A — the consumer the head never
+ *   had). The PR3 self-conditioning head predicts which country an address belongs to from the
+ *   pooled sequence; v1.1.0+ exports surface it as the `locale_logits` ONNX output. This module
  *   turns that posterior into a `SystemCode` the conventions layer can act on.
  *
- *   Conservative by contract: below the confidence threshold, or for locales without a codex
- *   system slice, detection returns null and the parse proceeds exactly as before. The mask must
- *   never fire on a guess.
+ *   Conservative by contract: below the confidence threshold, or for locales without a codex system
+ *   slice, detection returns null and the parse proceeds exactly as before. The mask must never
+ *   fire on a guess.
  */
 
 import type { SystemCode } from "@mailwoman/codex"

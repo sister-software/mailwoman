@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pre-fetch adapters that wire a `ResolverBackend` into the reconciler's concordance axes
- *   (#478 step 2, re-scoped): `reconcileSpans` already implements resolver-candidate and
- *   parent-chain scoring but the runtime pipeline never passed the lookups — the axes were
- *   dormant, exercised only by Map-backed test fixtures.
+ *   Pre-fetch adapters that wire a `ResolverBackend` into the reconciler's concordance axes (#478
+ *   step 2, re-scoped): `reconcileSpans` already implements resolver-candidate and parent-chain
+ *   scoring but the runtime pipeline never passed the lookups — the axes were dormant, exercised
+ *   only by Map-backed test fixtures.
  *
  *   The reconciler's beam search is SYNCHRONOUS; the backend is async. So this module does one
- *   bounded async pre-fetch pass — `findPlace` per (phrase-span × top-k tag) pair, `ancestors`
- *   per fetched place — and returns Map-backed lookups with the contract the reconciler expects.
- *   Query count is capped (`maxLookups`, default 12) the same way `resolveTree` caps its walk;
- *   pairs are visited in classifier-score order so the budget goes to the likeliest spans.
+ *   bounded async pre-fetch pass — `findPlace` per (phrase-span × top-k tag) pair, `ancestors` per
+ *   fetched place — and returns Map-backed lookups with the contract the reconciler expects. Query
+ *   count is capped (`maxLookups`, default 12) the same way `resolveTree` caps its walk; pairs are
+ *   visited in classifier-score order so the budget goes to the likeliest spans.
  */
 
 import type { ResolvedPlace, ResolverBackend } from "../resolver/types.js"
@@ -40,7 +40,7 @@ export async function prefetchReconcileLookups(
 	backend: ResolverBackend,
 	raw: string,
 	classifierTopK: ReadonlyArray<ClassifierCandidate>,
-	opts?: { maxLookups?: number; candidatesPerPair?: number; defaultCountry?: string },
+	opts?: { maxLookups?: number; candidatesPerPair?: number; defaultCountry?: string }
 ): Promise<ReconcileLookups> {
 	const maxLookups = opts?.maxLookups ?? 12
 	const perPair = opts?.candidatesPerPair ?? 3
@@ -82,7 +82,7 @@ export async function prefetchReconcileLookups(
 				// coordinates, and none are needed; zeroes satisfy the ResolvedPlace shape.
 				chainTable.set(
 					place.id,
-					chain.map((a) => ({ id: a.id, name: a.name, placetype: a.placetype, lat: 0, lon: 0 }) as ResolvedPlace),
+					chain.map((a) => ({ id: a.id, name: a.name, placetype: a.placetype, lat: 0, lon: 0 }) as ResolvedPlace)
 				)
 			}
 		}

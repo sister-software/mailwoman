@@ -70,8 +70,7 @@ const F1_DATA: F1Row[] = [
 	{
 		tag: "street_suffix",
 		eval: "NAD-native v2 (193-row)",
-		tooltip:
-			"F1 on 193 NAD-native addresses for street suffix detection. Independent of the training corpus.",
+		tooltip: "F1 on 193 NAD-native addresses for street suffix detection. Independent of the training corpus.",
 		v410: null,
 		v420: 8.9,
 		v430: 90.3,
@@ -296,12 +295,10 @@ const F1ScoreTableInner: React.FC = () => {
 				</tbody>
 			</table>
 			<p className={styles.footnote}>
-				Source:{" "}
-				<a href="./evals/parity-scorecard-2026-06-11">parity-scorecard-2026-06-11.md</a>.{" "}
-				Click any column header to sort. Hover over a score to see what it means in context.{" "}
+				Source: <a href="./evals/parity-scorecard-2026-06-11">parity-scorecard-2026-06-11.md</a>. Click any column
+				header to sort. Hover over a score to see what it means in context.{" "}
 				<span className={styles.colorKey}>
-					<span className={styles.keyHigh}>≥ 80 healthy</span> ·{" "}
-					<span className={styles.keyMid}>30–79 moderate</span> ·{" "}
+					<span className={styles.keyHigh}>≥ 80 healthy</span> · <span className={styles.keyMid}>30–79 moderate</span> ·{" "}
 					<span className={styles.keyLow}>&lt; 30 needs work</span>
 				</span>
 			</p>
@@ -314,9 +311,5 @@ const F1ScoreTableInner: React.FC = () => {
 // ---------------------------------------------------------------------------
 
 export const F1ScoreTable: React.FC = () => {
-	return (
-		<BrowserOnly fallback={<p>Loading F1 score table…</p>}>
-			{() => <F1ScoreTableInner />}
-		</BrowserOnly>
-	)
+	return <BrowserOnly fallback={<p>Loading F1 score table…</p>}>{() => <F1ScoreTableInner />}</BrowserOnly>
 }

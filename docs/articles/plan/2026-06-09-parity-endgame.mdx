@@ -8,14 +8,13 @@
 > [Daily Queue board](https://github.com/orgs/sister-software/projects/4). This doc stands
 > as the direction record.
 
-
 We are nearing the goal that has organized the last several weeks: **capability parity
 with Mailwoman v0's rules parser**. The common tags (postcode, house_number, street,
 locality, region, US venue) are at usable parity; the campaign over the starved
 long-tail tags has banked `unit` (shipped v4.1.0), gated `street_prefix`/`street_suffix`
 (#462), and brought `country` alive (0 → 65 F1 on the hard homograph gate, perfect
 precision, zero over-fire, across v0.9.10/v0.9.11). What remains is the apex of the
-last 80% — the part where each move has to be the *right* move, not just a move.
+last 80% — the part where each move has to be the _right_ move, not just a move.
 
 This doc fixes the direction for that stretch, distilled from the 2026-06-09 design
 review (the model-first reversal, the synonymy/homonymy framing, and the gazetteer-
@@ -32,7 +31,7 @@ Progression: v0.9.10 balanced shard 57.9 → v0.9.11 +class-weight 65.0 → v0.9
 "GA") sitting next to the US ZIP strengthens `B-region` and weakens the
 `B-region → B-postcode` CRF transition (US-only; FR's postcode precedes the
 locality, so it never sees this). The fix is **train-time channel choreography**:
-zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, at *both* train
+zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, at _both_ train
 and inference (the pairing is load-bearing — the harm is weight-baked, so an
 inference-only patch can't undo it). Operator decision: **accept v0.9.12/13 as the
 country lever and carry the choreography into the consolidation retrain** (move 4),
@@ -43,7 +42,7 @@ default-off/byte-stable in PR #468.
 
 **1. Model-first, lexicon-as-evidence.** The day's central correction: no deterministic
 override ever substitutes the model's output. Closed-vocab tags are covered by
-*training* (balanced shards with homograph contrast); the gazetteer enters as a
+_training_ (balanced shards with homograph contrast); the gazetteer enters as a
 **soft input-layer clue** — a per-token candidate-tag set the model conditions on —
 never as a post-parse verdict. Measured grounding: the balanced country shard took
 `country` from 0 to alive at P=100 / over-fire=0 (data alone), and the remaining
@@ -53,15 +52,15 @@ and the new [gazetteer-anchor rung](../understanding/our-approach/the-knowledge-
 in the knowledge ladder.
 
 **2. Canonicalize for synonymy, disambiguate by stage, never drop a span.** The parser
-resolves *tag* ambiguity from in-string context; the resolver late-binds the
-*referent* with geographic context; every span survives the parse — classified or
+resolves _tag_ ambiguity from in-string context; the resolver late-binds the
+_referent_ with geographic context; every span survives the parse — classified or
 explicitly `unknown` — each with a canonical value. The lossless typed decomposition
 is a deliverable in its own right (record linkage, dataset matching), not a
 by-product of geocoding. See
 [synonymy and homonymy](../concepts/synonymy-and-homonymy.mdx).
 
 **3. Soft priors, not hard masks.** Positional masks and user hints (focus country,
-focus point) re-enter the system as *features* the model or resolver can overrule —
+focus point) re-enter the system as _features_ the model or resolver can overrule —
 the bendable version of the crutch rules systems can't drop.
 
 ## The move order

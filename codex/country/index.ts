@@ -6,6 +6,6 @@
  *   ISO 3166-1 country reference + surface-form recognition (the `country` parity lever).
  */
 
-export * from "./names.js"
 export * from "./codes.js"
 export * from "./country.js"
+export * from "./names.js"

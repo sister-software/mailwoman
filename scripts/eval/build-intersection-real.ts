@@ -10,17 +10,16 @@
  *
  *   Recipe per the #487 issue comment. Counties span regimes: Cook IL (grid city), Morris NJ
  *   (suburb), Washington VT (rural — same county as the #476 ground truth). Gold carries
- *   intersection_a/b + region (state); locality is deliberately ABSENT (a county's nodes span
- *   many localities and a wrong gold poisons the eval — honesty over completeness).
+ *   intersection_a/b + region (state); locality is deliberately ABSENT (a county's nodes span many
+ *   localities and a wrong gold poisons the eval — honesty over completeness).
  *
  *   Inputs: TIGER EDGES shapefiles, downloaded per county to --edges-dir:
- *     https://www2.census.gov/geo/tiger/TIGER2023/EDGES/tl_2023_<fips>_edges.zip (unzipped)
- *   Read via DuckDB spatial ST_Read — no shapefile dependency.
+ *   https://www2.census.gov/geo/tiger/TIGER2023/EDGES/tl_2023_<fips>_edges.zip (unzipped) Read via
+ *   DuckDB spatial ST_Read — no shapefile dependency.
  *
- *   Usage:
- *     node --experimental-strip-types scripts/eval/build-intersection-real.ts \
- *       [--edges-dir /tmp/tiger-edges] [--per-county 6] [--seed 42] \
- *       [--out data/eval/external/intersection-real.jsonl]
+ *   Usage: node --experimental-strip-types scripts/eval/build-intersection-real.ts\
+ *   [--edges-dir /tmp/tiger-edges] [--per-county 6] [--seed 42]\
+ *   [--out data/eval/external/intersection-real.jsonl]
  */
 
 import { writeFileSync } from "node:fs"
@@ -118,7 +117,15 @@ crossings.forEach((c, i) => {
 		const expected: Record<string, string> = { intersection_a: c.a, intersection_b: c.b }
 		if (input.includes(`, ${c.state}`)) expected.region = c.state
 		lines.push(
-			JSON.stringify({ raw: input, components: expected, form: form.id, source: `tiger:2023:${c.fips}`, node: c.node, lat: c.lat, lon: c.lon }),
+			JSON.stringify({
+				raw: input,
+				components: expected,
+				form: form.id,
+				source: `tiger:2023:${c.fips}`,
+				node: c.node,
+				lat: c.lat,
+				lon: c.lon,
+			})
 		)
 		formCounts.set(form.id, (formCounts.get(form.id) ?? 0) + 1)
 	}
@@ -137,8 +144,8 @@ writeFileSync(
 			source: "TIGER2023 EDGES via DuckDB ST_Read; node = >=2 distinct S1* FULLNAMEs",
 		},
 		null,
-		"\t",
-	),
+		"\t"
+	)
 )
 console.log(`${lines.length} rows from ${crossings.length} crossings → ${args.out}`)
 console.log("forms:", Object.fromEntries(formCounts))

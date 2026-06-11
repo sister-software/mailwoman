@@ -22,7 +22,10 @@ const matchCedex = (s) => {
 	return m ? m[0].replace(/\s+/g, " ").trim() : null
 }
 
-const rows = readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
+const rows = readFileSync(file, "utf8")
+	.split("\n")
+	.filter(Boolean)
+	.map((l) => JSON.parse(l))
 const norm = (s) => (s ?? "").trim().toLowerCase().replace(/\s+/g, " ")
 
 let tp = 0,
@@ -49,7 +52,9 @@ const r = tp + fn ? tp / (tp + fn) : 0
 const f1 = p + r ? (2 * p * r) / (p + r) : 0
 const negatives = rows.filter((r) => !r.components.cedex).length
 console.log(`# deterministic cedex (CEDEX regex on raw, FR) — n=${rows.length} (${negatives} negatives)`)
-console.log(`P=${(100 * p).toFixed(1)}  R=${(100 * r).toFixed(1)}  F1=${(100 * f1).toFixed(1)}  (tp=${tp} fp=${fp} fn=${fn})`)
+console.log(
+	`P=${(100 * p).toFixed(1)}  R=${(100 * r).toFixed(1)}  F1=${(100 * f1).toFixed(1)}  (tp=${tp} fp=${fp} fn=${fn})`
+)
 if (misses.length) {
 	console.log("\n-- misses --")
 	for (const m of misses) console.log(m)

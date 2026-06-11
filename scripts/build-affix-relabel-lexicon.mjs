@@ -3,13 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Export the codex US street-affix vocab (directionals + Pub-28 street suffixes) as a JSON
- *   lexicon for the Python training loader's affix-split relabel pass (#511). Same
- *   one-source-of-truth pattern as build-gazetteer-anchor-lexicon.mjs: the TS codex matchers stay
- *   canonical; Python consumes a dumb variant→canonical map so the relabel pass agrees with the
- *   affix shard builder (which calls the codex matchers directly) by construction.
+ *   Export the codex US street-affix vocab (directionals + Pub-28 street suffixes) as a JSON lexicon
+ *   for the Python training loader's affix-split relabel pass (#511). Same one-source-of-truth
+ *   pattern as build-gazetteer-anchor-lexicon.mjs: the TS codex matchers stay canonical; Python
+ *   consumes a dumb variant→canonical map so the relabel pass agrees with the affix shard builder
+ *   (which calls the codex matchers directly) by construction.
  *
- *   Usage: node scripts/build-affix-relabel-lexicon.mjs   (writes data/gazetteer/affix-relabel-lexicon-v1.json)
+ *   Usage: node scripts/build-affix-relabel-lexicon.mjs (writes
+ *   data/gazetteer/affix-relabel-lexicon-v1.json)
  */
 
 import { mkdirSync, writeFileSync } from "node:fs"
@@ -54,5 +55,5 @@ const out = resolve(root, "data/gazetteer/affix-relabel-lexicon-v1.json")
 mkdirSync(dirname(out), { recursive: true })
 writeFileSync(out, JSON.stringify(lexicon, null, "\t") + "\n")
 console.log(
-	`wrote ${out}: ${Object.keys(directionals).length} directional variants, ${Object.keys(suffixes).length} suffix variants`,
+	`wrote ${out}: ${Object.keys(directionals).length} directional variants, ${Object.keys(suffixes).length} suffix variants`
 )

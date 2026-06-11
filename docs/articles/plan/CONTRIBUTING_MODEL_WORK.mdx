@@ -16,7 +16,7 @@ hands.
 ## The iron rules
 
 1. **Real-OOD eval before training.** Build (or find) the held-out real-world eval for your tag
-   *first*, and pre-register the gate — target numbers, no-regression bounds — in the training
+   _first_, and pre-register the gate — target numbers, no-regression bounds — in the training
    config as a comment before step 1 runs. If you can't define the gate, you aren't ready to train.
 2. **Never compare F1 across tokenizer versions.** Same tokenizer or the comparison is void
    (`per-locale-f1.ts --tokenizer` enforces this; the model card records the version).
@@ -55,17 +55,17 @@ classes (#513).
 
 ## The standard gate set
 
-Run for *every* candidate, regardless of what you changed (this is what
+Run for _every_ candidate, regardless of what you changed (this is what
 [`promotion-gate.sh`, #479](https://github.com/sister-software/mailwoman/issues/479) automates):
 
-| Check | Command | Bar |
-| --- | --- | --- |
-| Per-locale floors | `scripts/eval/per-locale-f1.ts` (US/FR, `--tokenizer`) + `per-locale-f1-floors.py` | within 1pp, fp32-to-fp32 |
-| German native order | `scripts/eval/de-order-eval.sh` | NO-REGRESSION |
-| Unit retention | unit-real designators eval | ≥ 88 |
-| Affix split | `scripts/eval/score-affix.ts` (NOT `per-locale-f1` — its fold can't see the split) | hold gated numbers |
-| Demo smoke | `eval-model` skill / `demo-preset-compare.ts` | presets stable |
-| Honest geography | `scripts/eval/honest-eval.sh` | region-match + coord p50/p90 + PIP hold |
+| Check               | Command                                                                            | Bar                                     |
+| ------------------- | ---------------------------------------------------------------------------------- | --------------------------------------- |
+| Per-locale floors   | `scripts/eval/per-locale-f1.ts` (US/FR, `--tokenizer`) + `per-locale-f1-floors.py` | within 1pp, fp32-to-fp32                |
+| German native order | `scripts/eval/de-order-eval.sh`                                                    | NO-REGRESSION                           |
+| Unit retention      | unit-real designators eval                                                         | ≥ 88                                    |
+| Affix split         | `scripts/eval/score-affix.ts` (NOT `per-locale-f1` — its fold can't see the split) | hold gated numbers                      |
+| Demo smoke          | `eval-model` skill / `demo-preset-compare.ts`                                      | presets stable                          |
+| Honest geography    | `scripts/eval/honest-eval.sh`                                                      | region-match + coord p50/p90 + PIP hold |
 
 The ship-config channels are part of the contract: a gaz-trained model is graded with
 `--gazetteer-lexicon` + `--suppress-gaz-near-postcode`, and (v4.3.0+) `--conventions auto` —
@@ -81,7 +81,7 @@ Plus your tag's pre-registered real-OOD gate. Pass → append the run to
 
 1. Generator lives in `corpus/` (`synthesize-*.ts`) or `scripts/build-*-shard.mjs`; every row
    carries `synth: {method, base_source_id}` ancestry.
-2. Audit format diversity against the real eval's observed forms *before* generating — thin
+2. Audit format diversity against the real eval's observed forms _before_ generating — thin
    diversity teaches lexical pattern-matching, not the boundary.
 3. Overlay manifests declare lineage against a base corpus version
    (`scripts/assemble-*-overlay-manifest.py` is the pattern); never hand-edit a manifest.

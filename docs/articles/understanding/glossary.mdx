@@ -73,7 +73,7 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 ## H
 
-**Homonymy / homograph** — one surface, many referents: "Georgia" is a US state in `Atlanta, Georgia` and a country in `Tbilisi, Georgia`. Handled by **disambiguation**, split across two stages: the parser resolves the *tag* from in-string context; the resolver late-binds the *referent* with geographic context (concordance). See [`concepts/synonymy-and-homonymy.md`](../concepts/synonymy-and-homonymy.mdx).
+**Homonymy / homograph** — one surface, many referents: "Georgia" is a US state in `Atlanta, Georgia` and a country in `Tbilisi, Georgia`. Handled by **disambiguation**, split across two stages: the parser resolves the _tag_ from in-string context; the resolver late-binds the _referent_ with geographic context (concordance). See [`concepts/synonymy-and-homonymy.md`](../concepts/synonymy-and-homonymy.mdx).
 
 ## I
 
@@ -133,7 +133,7 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **SentencePiece** — Google's subword tokenizer library. Mailwoman uses it to split input text into a fixed 16,000-piece vocabulary that handles both English and French (and falls back to byte-level for everything else). See [`concepts/tokenization.md`](../concepts/tokenization.mdx).
 
-**Shallow fusion** — blending an external knowledge source (a gazetteer, an FST prior) into a model's decision as a *signal*, rather than retraining the model or overriding its output. Mailwoman applies it at two layers: the [FST prior](../concepts/fst-priors-as-shallow-fusion.mdx) biases emissions at decode time; the **gazetteer anchor** feeds membership features at the input layer. RAG-shaped, but the retrieval lands as feature vectors, not prompt text.
+**Shallow fusion** — blending an external knowledge source (a gazetteer, an FST prior) into a model's decision as a _signal_, rather than retraining the model or overriding its output. Mailwoman applies it at two layers: the [FST prior](../concepts/fst-priors-as-shallow-fusion.mdx) biases emissions at decode time; the **gazetteer anchor** feeds membership features at the input layer. RAG-shaped, but the retrieval lands as feature vectors, not prompt text.
 
 **Ship of Theseus** — the migration pattern Mailwoman uses: replace rule classifiers with neural one component at a time, only when metrics justify. Name from the [philosophical thought experiment](https://en.wikipedia.org/wiki/Ship_of_Theseus).
 

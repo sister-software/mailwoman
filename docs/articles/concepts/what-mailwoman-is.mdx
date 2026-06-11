@@ -40,8 +40,8 @@ Every word is load-bearing:
   gazetteer knowledge arrive as soft input features — anchors — retrieved at
   inference time from provenance-tracked databases that grow without
   retraining. If you know RAG from the LLM world, this is RAG for token
-  classification. If you know speech recognition, it's *contextual biasing
-  with shallow fusion*: the model owns structure, external knowledge tips
+  classification. If you know speech recognition, it's _contextual biasing
+  with shallow fusion_: the model owns structure, external knowledge tips
   ambiguous decisions, and nothing overrides the learner. (We re-derived this
   independently, then found the prior art. See
   [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.mdx) and
@@ -69,13 +69,13 @@ Each side does the job the other is structurally bad at.
 The systems Mailwoman replaces — elaborate regexes, cascading pattern
 matchers, libpostal's averaged perceptron, Pelias's rules — are **sieves**.
 Input either fits a slot or falls through to the next pattern, and what those
-systems call confidence is really *rule specificity*: certainty about the
+systems call confidence is really _rule specificity_: certainty about the
 template, silence about the world. A sieve cannot say "I'm not sure." Novel
 input doesn't get a hedged answer; it gets a hole.
 
-A calibrated model inverts this. Mailwoman doesn't ask *"which of my patterns
-does this string match?"* — it asks *"what is the most probable reading of
-this string as an address, given what the atlas says exists?"* Parsing as
+A calibrated model inverts this. Mailwoman doesn't ask _"which of my patterns
+does this string match?"_ — it asks _"what is the most probable reading of
+this string as an address, given what the atlas says exists?"_ Parsing as
 inference instead of template matching. The practical consequence is that
 uncertainty becomes an honest, actionable measurement: the resolver can
 abstain on it, soft-score with it, or fall back to rules because of it. The
@@ -88,10 +88,10 @@ posteriors bend.
 ## The bitter lesson, read carefully
 
 The bitter lesson is routinely misread as "no knowledge engineering." It
-actually says: no knowledge engineering *inside the learner*. The pre-model
+actually says: no knowledge engineering _inside the learner_. The pre-model
 machines encoded the world's structure into the rules themselves, which is
 why every novel input was a hole. Mailwoman puts the grammar in weights and
-the atlas in a database — knowledge engineering on the *outside*, where it
+the atlas in a database — knowledge engineering on the _outside_, where it
 belongs, as data with provenance rather than as code with exceptions. The
 anchor channels are the interface between the two, and they are deliberately
 soft: features, never overrides.
@@ -107,13 +107,13 @@ best architectural decision twice over:
    retrains → single-variable lever experiments with same-day gates. The
    parity campaign's methodology is only affordable at this size.
 2. **It forced the correct architecture.** A model too small to memorize the
-   atlas *had* to get world knowledge from retrieval. The capacity budget did
+   atlas _had_ to get world knowledge from retrieval. The capacity budget did
    design work. And when capacity got tight, the small model surfaced root
    causes — corpus artifacts, boundary bugs, rendering-order confounds —
    instead of absorbing them into parameters. A bigger model would have
    masked those bugs, not fixed them.
 
-The honest cost: the *data* doesn't fit the pocket even though the model
+The honest cost: the _data_ doesn't fit the pocket even though the model
 does. So the constraint resolves into **two tiers, same code, different
 payloads** — Tier A ("pocket"): parser + anchors + the slim hot gazetteer;
 full parse quality, coarse resolution, offline, address data never leaves the
@@ -136,8 +136,8 @@ in our history:
 - **The accreting patch.** Post-model repairs — regex fixups, span merges,
   audit passes — are individually defensible and collectively the sieve
   regrowing around the model's edges. The rule: every patch is either
-  *scaffolding* (a confession of something learnable, absorbed into the next
-  consolidation retrain) or *data* (provenance-tracked, feeding the model as
+  _scaffolding_ (a confession of something learnable, absorbed into the next
+  consolidation retrain) or _data_ (provenance-tracked, feeding the model as
   soft evidence). Never a growing exception list. The health metric is
   simple: the patch count goes **down** at each consolidation.
 

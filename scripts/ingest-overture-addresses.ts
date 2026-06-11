@@ -5,25 +5,25 @@
  *
  *   Overture Maps addresses-theme ingest + per-country fill-rate probe (#471, epic #470).
  *
- *   Pulls address rows for a pinned Overture release into per-country local Parquet via DuckDB
- *   with predicate pushdown (megabytes per country — never the planet), and emits the
- *   fill-rate report that gates every downstream Overture issue (#472-#477): per-country row
- *   counts, field fill percentages, observed source datasets, and OpenAddresses-lineage share.
+ *   Pulls address rows for a pinned Overture release into per-country local Parquet via DuckDB with
+ *   predicate pushdown (megabytes per country — never the planet), and emits the fill-rate report
+ *   that gates every downstream Overture issue (#472-#477): per-country row counts, field fill
+ *   percentages, observed source datasets, and OpenAddresses-lineage share.
  *
  *   Standing rules encoded here (see epic #470 "pre-registered decision rules"):
- *   - The release version is pinned in every artifact path. The addresses theme is ALPHA; rows
- *     churn between monthly releases. Two releases never mix in one artifact.
- *   - The per-row `sources` array is preserved verbatim — it is what makes leakage-free eval
- *     filtering possible (#472) and satisfies the provenance-per-row rule.
+ *
+ *   - The release version is pinned in every artifact path. The addresses theme is ALPHA; rows churn
+ *       between monthly releases. Two releases never mix in one artifact.
+ *   - The per-row `sources` array is preserved verbatim — it is what makes leakage-free eval filtering
+ *       possible (#472) and satisfies the provenance-per-row rule.
  *   - Overture's `id` (GERS) rides along as a nullable passthrough column. Nothing joins on it.
  *
- *   Usage:
- *     node --experimental-strip-types scripts/ingest-overture-addresses.ts \
- *       --release 2026-05-20.0 --countries LI,DE,FR [--limit 1000] [--probe-only] \
- *       [--out /mnt/playpen/mailwoman-data/overture]
+ *   Usage: node --experimental-strip-types scripts/ingest-overture-addresses.ts\
+ *   --release 2026-05-20.0 --countries LI,DE,FR [--limit 1000] [--probe-only]\
+ *   [--out /mnt/playpen/mailwoman-data/overture]
  *
- *   The probe (fill-rates.json + fill-rates.md) runs against the LOCAL Parquet after ingest, so
- *   it is exact for what we materialized and costs no second remote scan.
+ *   The probe (fill-rates.json + fill-rates.md) runs against the LOCAL Parquet after ingest, so it is
+ *   exact for what we materialized and costs no second remote scan.
  */
 
 import { mkdirSync, writeFileSync } from "node:fs"
@@ -117,7 +117,7 @@ async function ingestCountry(cc: string): Promise<void> {
 async function probeCountry(cc: string): Promise<CountryProbe | null> {
 	const src = countryParquet(cc)
 	const fillExprs = FILL_FIELDS.map(
-		(f) => `round(100.0 * count(nullif(trim(${f}), '')) / count(*), 1) AS ${f}_pct`,
+		(f) => `round(100.0 * count(nullif(trim(${f}), '')) / count(*), 1) AS ${f}_pct`
 	).join(",\n\t\t\t")
 
 	const totals = await db.runAndReadAll(`
@@ -170,7 +170,7 @@ function renderMarkdown(probes: CountryProbe[]): string {
 		lines.push(
 			`| ${p.country} | ${p.rows.toLocaleString("en-US")} | ${p.fill_pct.postcode}% | ${p.fill_pct.street}% | ` +
 				`${p.fill_pct.number}% | ${p.fill_pct.unit}% | ${p.fill_pct.postal_city}% | ` +
-				`${p.address_levels_pct}% | ${p.oa_lineage_pct}% |`,
+				`${p.address_levels_pct}% | ${p.oa_lineage_pct}% |`
 		)
 	}
 	lines.push("", "## Observed source datasets (per country)", "")
@@ -192,7 +192,7 @@ for (const cc of countries) {
 		probes.push(probe)
 		console.log(
 			`[probe] ${cc}: ${probe.rows} rows · postcode ${probe.fill_pct.postcode}% · ` +
-				`postal_city ${probe.fill_pct.postal_city}% · OA-lineage ${probe.oa_lineage_pct}%`,
+				`postal_city ${probe.fill_pct.postal_city}% · OA-lineage ${probe.oa_lineage_pct}%`
 		)
 	} else {
 		console.warn(`[probe] ${cc}: no rows found — check the country code or release`)

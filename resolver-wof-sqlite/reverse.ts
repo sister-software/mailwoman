@@ -13,16 +13,16 @@
  *        `scripts/eval/pip-containment.py`) against the polygon sidecar DB (`wof-polygons.db`,
  *        `polygons(id, geom)` with GeoJSON text — built by `scripts/build-wof-polygons.mjs` for the
  *        demo map). A candidate whose polygon EXISTS but rejects the point is a bbox false positive
- *        and is dropped entirely; a candidate with no polygon row stays eligible for the approximate
- *        fallback.
+ *        and is dropped entirely; a candidate with no polygon row stays eligible for the
+ *        approximate fallback.
  *   3. **Approximate descent** — WOF carries point geometry for most localities (#292: ~99% of JP
  *        municipalities; ~half of US localities have degenerate bboxes too), so the polygon walk
  *        usually bottoms out at county level. We then descend tier-by-tier (county → localadmin →
  *        locality → …) through the winner's DESCENDANTS (the `ancestors` table, reversed), taking
  *        the PIP-confirmed child when a polygon exists and the nearest-centroid child otherwise —
  *        the latter flagged `containment: "approximate"`, the demo's honesty convention.
- *   4. **Hierarchy assembly** — the deepest place's ancestor chain via the SAME walk forward
- *        resolution uses (`ancestry.ts`, #404), so consumers get a symmetric tree.
+ *   4. **Hierarchy assembly** — the deepest place's ancestor chain via the SAME walk forward resolution
+ *        uses (`ancestry.ts`, #404), so consumers get a symmetric tree.
  *
  *   Reverse quality is country-dependent (polygon coverage: see the #292 JP finding); `containment`
  *   says so per result rather than pretending.
@@ -165,7 +165,8 @@ export class WofReverseGeocoder implements Disposable {
 
 		this.#admin = opts.adminDatabase ?? new DatabaseSync(opts.adminDbPath!, { readOnly: true })
 		this.#ownsAdmin = !opts.adminDatabase
-		this.#polygons = opts.polygonDatabase ?? (opts.polygonDbPath ? new DatabaseSync(opts.polygonDbPath, { readOnly: true }) : null)
+		this.#polygons =
+			opts.polygonDatabase ?? (opts.polygonDbPath ? new DatabaseSync(opts.polygonDbPath, { readOnly: true }) : null)
 		this.#ownsPolygons = !opts.polygonDatabase && Boolean(opts.polygonDbPath)
 
 		// Fail loudly up front — the R*Tree is a build artifact, not part of the upstream WOF
@@ -332,7 +333,13 @@ export class WofReverseGeocoder implements Disposable {
 	 * far centroids, e.g. a sprawling consolidated city; the precise cap is applied per-candidate in
 	 * the caller, and only to centroid-fallback steps).
 	 */
-	#descendants(parentId: number, placetype: string, lat: number, lon: number, maxApproximateKm: number): CandidateRow[] {
+	#descendants(
+		parentId: number,
+		placetype: string,
+		lat: number,
+		lon: number,
+		maxApproximateKm: number
+	): CandidateRow[] {
 		const windowDeg = (maxApproximateKm * 4) / 111
 		return this.#admin
 			.prepare(
@@ -342,7 +349,14 @@ export class WofReverseGeocoder implements Disposable {
 				WHERE a.ancestor_id = ? AND s.placetype = ? AND s.is_current != 0 AND s.is_deprecated = 0
 					AND s.latitude BETWEEN ? AND ? AND s.longitude BETWEEN ? AND ?`
 			)
-			.all(parentId, placetype, lat - windowDeg, lat + windowDeg, lon - windowDeg, lon + windowDeg) as unknown as CandidateRow[]
+			.all(
+				parentId,
+				placetype,
+				lat - windowDeg,
+				lat + windowDeg,
+				lon - windowDeg,
+				lon + windowDeg
+			) as unknown as CandidateRow[]
 	}
 
 	/** Parsed GeoJSON geometry for a WOF id, or null when absent / unparseable / no polygon DB. */
@@ -351,9 +365,7 @@ export class WofReverseGeocoder implements Disposable {
 		const cached = this.#geometryCache.get(id)
 		if (cached !== undefined) return cached
 		if (this.#geometryCache.size >= WofReverseGeocoder.#GEOMETRY_CACHE_CAP) this.#geometryCache.clear()
-		const row = this.#polygons.prepare(`SELECT geom FROM polygons WHERE id = ?`).get(id) as
-			| { geom: string }
-			| undefined
+		const row = this.#polygons.prepare(`SELECT geom FROM polygons WHERE id = ?`).get(id) as { geom: string } | undefined
 		let geometry: GeojsonGeometry | null = null
 		if (row) {
 			try {

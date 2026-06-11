@@ -3,20 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a per-state ADDRESS-POINT shard (#476) from the pinned-release Overture Parquet:
- *   exact `(street, number)` within a `(postcode | locality)` scope → exact point. The
- *   geocoder's street-level opening move — when the point exists you look it up; you
- *   interpolate (#483) only on miss. This shard is also the gold standard the future TIGER
- *   interpolation is graded against.
+ *   Build a per-state ADDRESS-POINT shard (#476) from the pinned-release Overture Parquet: exact
+ *   `(street, number)` within a `(postcode | locality)` scope → exact point. The geocoder's
+ *   street-level opening move — when the point exists you look it up; you interpolate (#483) only
+ *   on miss. This shard is also the gold standard the future TIGER interpolation is graded
+ *   against.
  *
- *   Keying uses THE shared normalizer (`resolver-wof-sqlite/street-normalize.ts`) — the
- *   same function the lookup tier applies at query time. Provenance per row (epic #470
- *   rules): source dataset + release pinned in-table.
+ *   Keying uses THE shared normalizer (`resolver-wof-sqlite/street-normalize.ts`) — the same function
+ *   the lookup tier applies at query time. Provenance per row (epic #470 rules): source dataset +
+ *   release pinned in-table.
  *
- *   Usage:
- *     node --experimental-strip-types scripts/build-address-point-shard.ts \
- *       --state VT [--release 2026-05-20.0] \
- *       [--out /mnt/playpen/mailwoman-data/address-points/address-points-us-vt.db]
+ *   Usage: node --experimental-strip-types scripts/build-address-point-shard.ts\
+ *   --state VT [--release 2026-05-20.0]\
+ *   [--out /mnt/playpen/mailwoman-data/address-points/address-points-us-vt.db]
  */
 
 import { mkdirSync, rmSync } from "node:fs"
@@ -83,7 +82,7 @@ db.exec(`
 
 const insert = db.prepare(
 	`INSERT INTO address_point (street_norm, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
-	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 )
 db.exec("BEGIN")
 let kept = 0
@@ -102,7 +101,7 @@ for (const r of rows) {
 		Number(r.lat),
 		Number(r.lon),
 		`overture:${r.dataset}`,
-		String(args.release),
+		String(args.release)
 	)
 	kept++
 }
@@ -113,7 +112,11 @@ db.exec(`
 	PRAGMA wal_checkpoint(TRUNCATE);
 	VACUUM;
 `)
-const stats = db.prepare("SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM address_point").get() as Record<string, number>
+const stats = db
+	.prepare(
+		"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM address_point"
+	)
+	.get() as Record<string, number>
 db.close()
 console.log(`${kept} points → ${OUT}`)
 console.log(`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`)

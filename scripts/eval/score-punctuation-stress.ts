@@ -29,37 +29,43 @@ const engine = arg("--engine", "neural")!
 
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] =
-	engine === "neural" ?
-		await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("--model")!)])
-	:	[undefined!, undefined!]
+	engine === "neural"
+		? await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("--model")!)])
+		: [undefined!, undefined!]
 const shipConfig = !argv.includes("--no-ship-config")
 const v0 = engine === "v0" ? createAddressParser() : undefined
-const neural = engine === "v0" ? undefined! : new NeuralAddressClassifier({
-	tokenizer,
-	runner,
-	labels: card.labels,
-	postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
-	...(shipConfig ?
-		{
-			gazetteerLexicon: parseGazetteerLexicon(
-				JSON.parse(readFileSync(arg("--gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")!, "utf8"))
-			),
-			suppressGazetteerNearPostcode: true,
-			addressSystemConventions: "auto" as const,
-			bridgePunctuationGaps: true,
-		}
-	:	{}),
-})
+const neural =
+	engine === "v0"
+		? undefined!
+		: new NeuralAddressClassifier({
+				tokenizer,
+				runner,
+				labels: card.labels,
+				postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
+				...(shipConfig
+					? {
+							gazetteerLexicon: parseGazetteerLexicon(
+								JSON.parse(readFileSync(arg("--gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")!, "utf8"))
+							),
+							suppressGazetteerNearPostcode: true,
+							addressSystemConventions: "auto" as const,
+							bridgePunctuationGaps: true,
+						}
+					: {}),
+			})
 
 interface Row {
 	raw: string
 	components: Record<string, string>
 	class: string
 }
-const rows: Row[] = readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
+const rows: Row[] = readFileSync(file, "utf8")
+	.split("\n")
+	.filter(Boolean)
+	.map((l) => JSON.parse(l))
 const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 
-/** v0-vocabulary view of a gold record: affixes fold into street; cedex is out of vocab. */
+/** V0-vocabulary view of a gold record: affixes fold into street; cedex is out of vocab. */
 function foldGoldForV0(components: Record<string, string>): Record<string, string> {
 	const out: Record<string, string> = {}
 	const street = ["street_prefix", "street", "street_suffix"]
@@ -84,7 +90,8 @@ async function parseWith(raw: string): Promise<Record<string, string>> {
 	return argv.includes("--fold-gold") ? foldGoldForV0(flat) : flat
 }
 
-const byClass: Record<string, { components: number; correct: number; rows: number; died: number; samples: string[] }> = {}
+const byClass: Record<string, { components: number; correct: number; rows: number; died: number; samples: string[] }> =
+	{}
 for (const row of rows) {
 	const c = (byClass[row.class] ??= { components: 0, correct: 0, rows: 0, died: 0, samples: [] })
 	c.rows++
@@ -104,7 +111,9 @@ for (const row of rows) {
 	}
 }
 
-console.log(`# punctuation-stress — engine=${engine}${engine === "neural" ? ` · ${arg("--model")!.split("/").slice(-1)} · ship-config=${shipConfig}` : " (folded gold view)"} · ${rows.length} rows`)
+console.log(
+	`# punctuation-stress — engine=${engine}${engine === "neural" ? ` · ${arg("--model")!.split("/").slice(-1)} · ship-config=${shipConfig}` : " (folded gold view)"} · ${rows.length} rows`
+)
 console.log("| class | rows | died | component acc |\n| --- | --: | --: | --: |")
 const sidecar: Record<string, { rows: number; died: number; acc: number }> = {}
 let totC = 0
@@ -116,7 +125,9 @@ for (const [cls, c] of Object.entries(byClass).sort()) {
 	totOk += c.correct
 	console.log(`| ${cls} | ${c.rows} | ${c.died} | ${acc.toFixed(1)}% |`)
 }
-console.log(`| **overall** | ${rows.length} | ${Object.values(byClass).reduce((a, c) => a + c.died, 0)} | **${((100 * totOk) / totC).toFixed(1)}%** |`)
+console.log(
+	`| **overall** | ${rows.length} | ${Object.values(byClass).reduce((a, c) => a + c.died, 0)} | **${((100 * totOk) / totC).toFixed(1)}%** |`
+)
 console.log("\n## sample misses (≤2/class)")
 for (const [cls, c] of Object.entries(byClass).sort()) for (const s of c.samples) console.log(`- [${cls}] ${s}`)
 

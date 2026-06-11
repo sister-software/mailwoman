@@ -696,7 +696,9 @@ async function main(): Promise<void> {
 	if (addressPoints) {
 		lines.push(overallRow("**neural+addrpt**", neuralAddrPtAgg.overall))
 		lines.push("")
-		lines.push(`address-point hit rate: ${addressPointHits}/${neuralAddrPtAgg.overall.n} (${((100 * addressPointHits) / Math.max(1, neuralAddrPtAgg.overall.n)).toFixed(1)}%)`)
+		lines.push(
+			`address-point hit rate: ${addressPointHits}/${neuralAddrPtAgg.overall.n} (${((100 * addressPointHits) / Math.max(1, neuralAddrPtAgg.overall.n)).toFixed(1)}%)`
+		)
 	}
 	lines.push("")
 	lines.push(`## Neural per-state (locality-match)`)

@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   VersionCompare — side-by-side parse comparison of two model versions on the same input.
- *   Activated by the Compare toggle on the demo page. Shows two SpanHighlight ribbons, two
- *   component tables with confidence-delta annotations, and a unified diff of tag changes.
+ *   VersionCompare — side-by-side parse comparison of two model versions on the same input. Activated
+ *   by the Compare toggle on the demo page. Shows two SpanHighlight ribbons, two component tables
+ *   with confidence-delta annotations, and a unified diff of tag changes.
  */
 
-import { Fragment, useMemo } from "react"
+import { useMemo } from "react"
 
 import type { DemoResult, ResultNode } from "../../shared/resources.tsx"
 
@@ -78,8 +78,7 @@ function computeCompareRows(primary: DemoResult, compare: DemoResult): CompareRo
 	const handledSpans = new Set<string>()
 	let cUnspannedIdx = 0
 	for (const pn of pNodes) {
-		const spanKey =
-			typeof pn.start === "number" && typeof pn.end === "number" ? `${pn.start}:${pn.end}` : null
+		const spanKey = typeof pn.start === "number" && typeof pn.end === "number" ? `${pn.start}:${pn.end}` : null
 		let cn: ResultNode | null = null
 		if (spanKey) {
 			cn = cBySpan.get(spanKey) ?? null
@@ -157,28 +156,25 @@ function diffConfidence(c: number | undefined, p: number | undefined): number | 
 // Sub-components
 // ---------------------------------------------------------------------------
 
-const DeltaBadge: React.FC<{ delta: number | null; diffKind: CompareRow["diffKind"] }> = ({
-	delta,
-	diffKind,
-}) => {
+const DeltaBadge: React.FC<{ delta: number | null; diffKind: CompareRow["diffKind"] }> = ({ delta, diffKind }) => {
 	if (delta === null || diffKind === "primary-only" || diffKind === "compare-only") return null
 	const abs = Math.abs(delta)
 	if (abs < 0.01) return <span className={styles.deltaNeutral}>≈</span>
 	const sign = delta >= 0 ? "+" : "−"
 	const cls = delta >= 0 ? styles.deltaUp : styles.deltaDown
-	return <span className={cls}>{sign}{abs.toFixed(3)}</span>
+	return (
+		<span className={cls}>
+			{sign}
+			{abs.toFixed(3)}
+		</span>
+	)
 }
 
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
-export const VersionCompare: React.FC<VersionCompareProps> = ({
-	primary,
-	compare,
-	primaryVersion,
-	compareVersion,
-}) => {
+export const VersionCompare: React.FC<VersionCompareProps> = ({ primary, compare, primaryVersion, compareVersion }) => {
 	const rows = useMemo(() => computeCompareRows(primary, compare), [primary, compare])
 
 	const changedCount = rows.filter((r) => r.diffKind !== "match").length
@@ -188,19 +184,23 @@ export const VersionCompare: React.FC<VersionCompareProps> = ({
 			<div className={styles.compareHeader}>
 				<h2>Version Compare</h2>
 				<span className={styles.compareMeta}>
-					{changedCount} difference{changedCount !== 1 ? "s" : ""} —{" "}
-					<code>{primaryVersion}</code> vs <code>{compareVersion}</code>
+					{changedCount} difference{changedCount !== 1 ? "s" : ""} — <code>{primaryVersion}</code> vs{" "}
+					<code>{compareVersion}</code>
 				</span>
 			</div>
 
 			{/* Side-by-side SpanHighlight ribbons */}
 			<div className={styles.spanRow}>
 				<div className={styles.spanCol}>
-					<div className={styles.colLabel}><code>{primaryVersion}</code></div>
+					<div className={styles.colLabel}>
+						<code>{primaryVersion}</code>
+					</div>
 					<SpanHighlight input={primary.input} nodes={primary.nodes} />
 				</div>
 				<div className={styles.spanCol}>
-					<div className={styles.colLabel}><code>{compareVersion}</code></div>
+					<div className={styles.colLabel}>
+						<code>{compareVersion}</code>
+					</div>
 					<SpanHighlight input={compare.input} nodes={compare.nodes} />
 				</div>
 			</div>
@@ -234,9 +234,7 @@ export const VersionCompare: React.FC<VersionCompareProps> = ({
 						>
 							{/* Primary (left) side */}
 							<td className={styles.tagCell}>{row.primaryNode?.tag ?? "—"}</td>
-							<td className={styles.valCell}>
-								{row.primaryNode ? String(row.primaryNode.value ?? "") : "—"}
-							</td>
+							<td className={styles.valCell}>{row.primaryNode ? String(row.primaryNode.value ?? "") : "—"}</td>
 							<td className={styles.confCell}>
 								<ConfidenceCell confidence={row.primaryNode?.confidence} />
 							</td>
@@ -250,9 +248,7 @@ export const VersionCompare: React.FC<VersionCompareProps> = ({
 							<td className={styles.confCell}>
 								<ConfidenceCell confidence={row.compareNode?.confidence} />
 							</td>
-							<td className={styles.valCell}>
-								{row.compareNode ? String(row.compareNode.value ?? "") : "—"}
-							</td>
+							<td className={styles.valCell}>{row.compareNode ? String(row.compareNode.value ?? "") : "—"}</td>
 							<td className={styles.tagCell}>{row.compareNode?.tag ?? "—"}</td>
 						</tr>
 					))}
@@ -263,11 +259,15 @@ export const VersionCompare: React.FC<VersionCompareProps> = ({
 			{primary.timing && compare.timing ? (
 				<div className={styles.timingRow}>
 					<div className={styles.timingCol}>
-						<div className={styles.colLabel}><code>{primaryVersion}</code></div>
+						<div className={styles.colLabel}>
+							<code>{primaryVersion}</code>
+						</div>
 						<TimingPanel timing={primary.timing} />
 					</div>
 					<div className={styles.timingCol}>
-						<div className={styles.colLabel}><code>{compareVersion}</code></div>
+						<div className={styles.colLabel}>
+							<code>{compareVersion}</code>
+						</div>
 						<TimingPanel timing={compare.timing} />
 					</div>
 				</div>

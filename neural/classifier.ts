@@ -10,6 +10,7 @@
  *   Convenience wrappers `parseJson` / `parseTuples` / `parseXml` project the tree on the way out.
  */
 
+import { conventionsForSystem, type SystemCode } from "@mailwoman/codex"
 import {
 	buildAddressTree,
 	decodeAsJson,
@@ -20,17 +21,16 @@ import {
 	type ComponentTag,
 	type DecoderToken,
 } from "@mailwoman/core/decoder"
-import { conventionsForSystem, type SystemCode } from "@mailwoman/codex"
 
 import { detectAddressSystem } from "./address-system.js"
 import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.js"
-import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.js"
 import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
+import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
 import { repairPostcodeLabels } from "./postcode-repair.js"
-import { bridgePunctuationGaps } from "./span-bridge.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
+import { bridgePunctuationGaps } from "./span-bridge.js"
 import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import { repairUnitLabels } from "./unit-repair.js"
@@ -100,23 +100,23 @@ export interface NeuralAddressClassifierConfig {
 	 *
 	 * PAIRING IS LOAD-BEARING: set this IFF the model was TRAINED with the matching train-time
 	 * choreography (`data.gazetteer_choreography`). The 2026-06-10 diagnostic showed the harm is
-	 * WEIGHT-BAKED — applying this at inference on a model trained *without* train-choreography does
+	 * WEIGHT-BAKED — applying this at inference on a model trained _without_ train-choreography does
 	 * NOT recover postcode and adds train/inference skew. Only enable for a consolidation-era model
 	 * trained with the train-time half.
 	 */
 	suppressGazetteerNearPostcode?: boolean
 	/**
-	 * Default address-system conventions mode for every parse (see `ParseOpts.addressSystemConventions`
-	 * for semantics — `"auto"` reads the model's locale head; a `SystemCode` pins it). Per-parse opts
-	 * override this. Omit for the byte-stable pre-#511 default (no detection, no mask).
+	 * Default address-system conventions mode for every parse (see
+	 * `ParseOpts.addressSystemConventions` for semantics — `"auto"` reads the model's locale head; a
+	 * `SystemCode` pins it). Per-parse opts override this. Omit for the byte-stable pre-#511 default
+	 * (no detection, no mask).
 	 */
 	addressSystemConventions?: "auto" | SystemCode
 	/**
-	 * Punctuation-gap span bridging (the v4.4.0 corrective; see `span-bridge.ts`). The corpus
-	 * label format cannot express punctuation inside a span, so dotted surfaces ("P.O. Box",
-	 * "C.P.") decode as fragments. When true, adjacent same-tag spans separated only by short
-	 * punctuation gaps are merged after decode. Per-parse opts override. Omit for the byte-stable
-	 * pre-v4.4.0 behavior.
+	 * Punctuation-gap span bridging (the v4.4.0 corrective; see `span-bridge.ts`). The corpus label
+	 * format cannot express punctuation inside a span, so dotted surfaces ("P.O. Box", "C.P.") decode
+	 * as fragments. When true, adjacent same-tag spans separated only by short punctuation gaps are
+	 * merged after decode. Per-parse opts override. Omit for the byte-stable pre-v4.4.0 behavior.
 	 */
 	bridgePunctuationGaps?: boolean
 }
@@ -218,7 +218,11 @@ export class NeuralAddressClassifier {
 	async #decode(
 		text: string,
 		opts?: ParseOpts
-	): Promise<{ tokens: DecoderToken[]; logits: number[][]; pieces: ReturnType<MailwomanTokenizer["encode"]>["pieces"] }> {
+	): Promise<{
+		tokens: DecoderToken[]
+		logits: number[][]
+		pieces: ReturnType<MailwomanTokenizer["encode"]>["pieces"]
+	}> {
 		const { pieces, ids } = this.cfg.tokenizer.encode(text)
 		// Postcode-anchor channel (#239/#240): build per-piece anchor features from the same lookup the
 		// model trained on, fed alongside the ids. No-op when no lookup is configured.
@@ -443,8 +447,8 @@ export interface ParseOpts {
 	 *   exports; silently no-ops on models without it) and apply that system's codex conventions:
 	 *   forbidden tags become a hard emission mask before Viterbi, and a conventions postcode shape
 	 *   enables the snap-only postcode repair pass.
-	 * - A `SystemCode` (`"fr"`, `"us"`, …) — apply that system's conventions unconditionally
-	 *   (callers that already know the locale, e.g. the pipeline's BCP-47 region).
+	 * - A `SystemCode` (`"fr"`, `"us"`, …) — apply that system's conventions unconditionally (callers
+	 *   that already know the locale, e.g. the pipeline's BCP-47 region).
 	 * - Omit — byte-stable default: no detection, no mask (pre-#511 behavior).
 	 *
 	 * The detection threshold is deliberately high (0.8): the mask must never fire on a guess.

@@ -6,23 +6,25 @@
  *
  *   Build the gazetteer-anchor LEXICON (knowledge-ladder rung 3.2; #464). One generated artifact,
  *   codex as the single source of truth, consumed by BOTH the Python trainer (gazetteer_anchor.py)
- *   and the TS inference side — so the two matchers cannot drift (the PLACETYPE_ORDER lesson:
- *   dual implementations silently corrupt).
+ *   and the TS inference side — so the two matchers cannot drift (the PLACETYPE_ORDER lesson: dual
+ *   implementations silently corrupt).
  *
- *   The lexicon maps normalized surface forms → a candidate-tag BITMASK:
- *     country=1, region=2, po_box=4, cedex=8, homograph=16 (set iff country∩region by construction).
- *   Two entry maps with different match rules (encoded as DATA so both consumers share them):
- *     - `entries`      — case-INSENSITIVE, keyed lowercase ("georgia", "costa rica", "timor-leste").
- *     - `code_entries` — exact-UPPERCASE only ("CA", "GA", "IN", "USA"), because "in"/"ca" as common
- *       lowercase words would fire everywhere. Country/region surfaces ≤3 alphabetic chars land here.
- *       po_box/cedex designators stay case-insensitive regardless of length ("Box 17" is titlecase).
+ *   The lexicon maps normalized surface forms → a candidate-tag BITMASK: country=1, region=2,
+ *   po_box=4, cedex=8, homograph=16 (set iff country∩region by construction). Two entry maps with
+ *   different match rules (encoded as DATA so both consumers share them):
+ *
+ *   - `entries` — case-INSENSITIVE, keyed lowercase ("georgia", "costa rica", "timor-leste").
+ *   - `code_entries` — exact-UPPERCASE only ("CA", "GA", "IN", "USA"), because "in"/"ca" as common
+ *       lowercase words would fire everywhere. Country/region surfaces ≤3 alphabetic chars land
+ *       here. po_box/cedex designators stay case-insensitive regardless of length ("Box 17" is
+ *       titlecase).
  *
  *   The anchor is membership CLUES, not verdicts — the model decides every tag (model-first, see
- *   docs/articles/plan/reference/closed-vocab-fields-model-first.mdx). A "Box" hit inside
- *   "Box Canyon Rd" is fine: the homograph/contrast training teaches the model to read context.
+ *   docs/articles/plan/reference/closed-vocab-fields-model-first.mdx). A "Box" hit inside "Box
+ *   Canyon Rd" is fine: the homograph/contrast training teaches the model to read context.
  *
- *   Output: data/gazetteer/anchor-lexicon-v1.json (small, committed, provenance-tracked).
- *   Usage: node scripts/build-gazetteer-anchor-lexicon.mjs [--output <path>]
+ *   Output: data/gazetteer/anchor-lexicon-v1.json (small, committed, provenance-tracked). Usage: node
+ *   scripts/build-gazetteer-anchor-lexicon.mjs [--output <path>]
  */
 
 import { mkdirSync, writeFileSync } from "node:fs"
@@ -118,7 +120,8 @@ const lexicon = {
 			"(keep internal: 'timor-leste', 'u.s.a'); rejoin single-spaced. Applied to BOTH entry keys " +
 			"and scanned tokens.",
 		entries: "case-insensitive; key = word_norm lowercased",
-		code_entries: "case-SENSITIVE exact: word_norm(token) == key (keys uppercase; the surface must already BE uppercase, so 'in' the word ≠ 'IN' the code). n-gram length 1 only.",
+		code_entries:
+			"case-SENSITIVE exact: word_norm(token) == key (keys uppercase; the surface must already BE uppercase, so 'in' the word ≠ 'IN' the code). n-gram length 1 only.",
 		scan: "longest-first n-gram over whitespace words, left to right, non-overlapping",
 	},
 	entries: Object.fromEntries([...entries].sort(([a], [b]) => a.localeCompare(b))),
