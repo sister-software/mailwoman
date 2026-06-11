@@ -164,4 +164,14 @@ describe("findPlace — exact-match tiering", () => {
 		expect(results.length).toBe(1)
 		expect(results[0]!.name).toBe("Oregon")
 	})
+
+	test("candidates carry the spr bbox (WASM-lookup parity — the demo cascade's region constraint reads it)", async () => {
+		// Without candidate.bbox the cascade's region→bbox constraint is dead on the Node backend and
+		// locality disambiguation falls to population ranking (Springfield IL → MO, caught by the
+		// #524 smoke eval). The fixture seeds min/max as centroid ±0.5.
+		lookup = new WofSqlitePlaceLookup({ database: buildDb(REGIONS), buildFts: true })
+		const results = await lookup.findPlace({ text: "Maine", placetype: "region", country: "US" })
+		expect(results[0]!.name).toBe("Maine")
+		expect(results[0]!.bbox).toEqual({ minLat: 44.8, maxLat: 45.8, minLon: -69.7, maxLon: -68.7 })
+	})
 })
