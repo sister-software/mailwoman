@@ -331,8 +331,9 @@ export function buildSlimWofDb(destPath, opts) {
 	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
 	const globalDb = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
 	const adminDb = process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDb
-	// Postcodes: the custom build is admin-only today. Set PLAYPEN_WOF_POSTCODE_DB once a custom
-	// postcode DB exists; until then the slim build runs admin-only.
+	// Postcodes: opt-in via PLAYPEN_WOF_POSTCODE_DB (e.g. /mnt/playpen/mailwoman-data/wof/
+	// postalcode-us.db — custom-built, ZCTA-centroid-filled per #525); unset, the slim build runs
+	// admin-only and the demo's postcode-first cascade leg has no rows to hit.
 	const postcodeDb = process.env.PLAYPEN_WOF_POSTCODE_DB ?? ""
 
 	if (!existsSync(adminDb)) {
