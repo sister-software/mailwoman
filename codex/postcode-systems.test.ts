@@ -35,6 +35,11 @@ describe("candidateSystemsForPostcode", () => {
 		expect(candidateSystemsForPostcode("100-0001")).toEqual(["jp"])
 	})
 
+	it("a bare 4-digit code is eligible for both Australasian systems (shape can't split them)", () => {
+		expect(candidateSystemsForPostcode("2000").sort()).toEqual(["au", "nz"])
+		expect(candidateSystemsForPostcode("7942").sort()).toEqual(["au", "nz"])
+	})
+
 	it("returns empty for a shape no system recognizes", () => {
 		expect(candidateSystemsForPostcode("27")).toEqual([])
 		expect(candidateSystemsForPostcode("123456789")).toEqual([])

@@ -18,7 +18,9 @@
 		"./fr": "./out/fr/index.js",
 		"./ca": "./out/ca/index.js",
 		"./gb": "./out/gb/index.js",
-		"./jp": "./out/jp/index.js"
+		"./jp": "./out/jp/index.js",
+		"./au": "./out/au/index.js",
+		"./nz": "./out/nz/index.js"
 	},
 	"dependencies": {
 		"type-fest": "^5.7.0"

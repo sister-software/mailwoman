@@ -36,14 +36,28 @@
  *       G/H/J postcodes — covers both the golden order ("CP 1500, H2X 3V4 Montréal, QC") and the
  *       Canada-Post-native order ("CP 1500, Montréal QC H2X 3V4").
  *   - Po-box-ca-en: the en-CA mirror (Ontario localities, K/L/M/N/P postcodes).
+ *   - Po-box-au (#517): the Commonwealth designators from `@mailwoman/codex/au` — current (GPO Box / PO
+ *       Box / Locked Bag / Private Bag, per the live auspost.com.au addressing pages) at full
+ *       weight, AMAS-legacy rural forms (RMB / RSD / CMB) at low weight — on real GeoNames AU
+ *       postal-dump (CC-BY 4.0) locality/state/postcode tails. Last line follows the Australia Post
+ *       guideline ("locality or suburb, state and postcode … in capital letters"): "SYDNEY NSW
+ *       2001".
+ *   - Po-box-nz (#517): the `@mailwoman/codex/nz` ADV358 types (PO Box / Private Bag, plus CMB at low
+ *       weight) on real GeoNames NZ postal-dump tails. NZ has NO region line (ADV358: "The
+ *       province, region, district or territory is not to be used"): "PO Box 23226, Wellington
+ *       6011". "Private Box" is deliberately ABSENT — neither Australia Post nor NZ Post recognizes
+ *       it (AP: "'PRIVATE BOX' is not a valid type"); see the codex slice headers.
  *
  *   LEAKAGE-SAFE EVAL (`--golden`): US rows use the VERMONT source only (the corpus defaultHoldout);
  *   FR and CA rows use a stable locality-hash holdout (hash%10==0 is golden-only, train gets the
  *   rest) and a different seed. Golden mode emits {raw, components, country} for per-locale-f1.
  *
- *   Prerequisites: the cached OA zips in /tmp/oa-cache (same set the unit/affix builders read) and
- *   the GeoNames Canada dump at /tmp/geonames-cache/CA.zip (curl -o /tmp/geonames-cache/CA.zip
- *   https://download.geonames.org/export/dump/CA.zip).
+ *   Prerequisites: the cached OA zips in /tmp/oa-cache (same set the unit/affix builders read), the
+ *   GeoNames Canada dump at /tmp/geonames-cache/CA.zip (curl -o /tmp/geonames-cache/CA.zip
+ *   https://download.geonames.org/export/dump/CA.zip), and the GeoNames POSTAL-CODE dumps for AU/NZ
+ *   (curl -o /tmp/geonames-cache/AU-postal.zip https://download.geonames.org/export/zip/AU.zip and
+ *   …/NZ-postal.zip from …/zip/NZ.zip) — these carry real (postcode, locality, state) triples, so
+ *   the AU last line gets a real state↔postcode pairing instead of a synthesized guess.
  *
  *   Pipeline (mirrors build-street-affix-shard.mjs): node scripts/build-po-box-cedex-shard.mjs
  *   --output /tmp/po-box-shard/po-box-cedex-train.jsonl --count 50000 --seed 42 node
@@ -56,8 +70,10 @@
 import { spawnSync } from "node:child_process"
 import { createWriteStream } from "node:fs"
 
+import { isAuDeliveryService, isAuPostcode, isAuStateAbbreviation } from "@mailwoman/codex/au"
 import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { isCedex } from "@mailwoman/codex/fr"
+import { isNzDeliveryService, isNzPostcode } from "@mailwoman/codex/nz"
 import { isPOBox } from "@mailwoman/codex/us"
 import { alignRow, maybeNoisifyBoxNumber, PO_BOX_LOCALE_TEMPLATES, stableSourceId } from "@mailwoman/corpus"
 
@@ -77,6 +93,8 @@ const US_TRAIN_SOURCES = [
 const US_EVAL_SOURCE = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
 const FR_SOURCE = { zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }
 const GEONAMES_CA = "/tmp/geonames-cache/CA.zip"
+const GEONAMES_POSTAL_AU = { zip: "/tmp/geonames-cache/AU-postal.zip", txt: "AU.txt" }
+const GEONAMES_POSTAL_NZ = { zip: "/tmp/geonames-cache/NZ-postal.zip", txt: "NZ.txt" }
 
 // ── Surface vocabulary (codex + corpus templates — see the header) ──────────────────────────────
 const T = Object.fromEntries(PO_BOX_LOCALE_TEMPLATES.map((t) => [t.locale, t]))
@@ -93,6 +111,17 @@ const US_PMB_LEADERS = T["en-US"].pmb.filter((l) => l !== "#") // PMB
 const FR_LEADERS = T["fr-FR"].leaders // BP, B.P., Boîte Postale, BP.
 const CA_FR_LEADERS = T["fr-CA"].leaders // CP, C.P., Case Postale, BP, B.P.
 const CA_EN_LEADERS = T["en-CA"].leaders // PO Box, P.O. Box, POB, Post Office Box
+// AU (#517): codex/au is the vocabulary truth. Current designators (live auspost.com.au pages) at
+// full weight; the AMAS-legacy rural/community tail rides at the same 10% rare-dial as the US
+// Caller/Drawer tail. Surfaces are the canonical display forms of the codex table — every emitted
+// phrase must round-trip the codex matcher (asserted in makeAuNzPoBoxPhrase).
+const AU_LEADERS_CURRENT = ["PO Box", "P.O. Box", "Post Office Box", "GPO Box", "Locked Bag", "Private Bag"]
+const AU_LEADERS_LEGACY = ["RMB", "RSD", "CMB"] // codex legacy: true (recognize-only forms)
+// NZ (#517): the ADV358 box/bag types that carry an identifier. CMB rides rare (its "CMB B99"
+// identifier shape is alpha-led, covered by pickNzCmbId below). Counter Delivery / Poste Restante
+// are identifier-less counter services — no number to learn, excluded from synthesis.
+const NZ_LEADERS_COMMON = ["PO Box", "Private Bag"]
+const NZ_LEADERS_RARE = ["CMB"]
 
 // Canadian postcode synthesis: valid first letters per province from the codex FSA prior, interior
 // letters per the codex pattern (excludes the visually ambiguous D F I O Q U). The LDU digits are
@@ -108,12 +137,14 @@ const CA_INTERIOR_LETTERS = "ABCEGHJKLMNPRSTVWXYZ"
 // Class mix — po_box mass leans US (the production arena), cedex gets a real block, and the CA-fr
 // class exists because the #511 Montréal rows ("Case Postale 200, H3A 1B9 Montréal, QC") fail today.
 const CLASS_MIX = [
-	["po-box-us", 0.4],
-	["pmb-us", 0.08],
-	["bp-fr", 0.12],
-	["cedex-fr", 0.2],
-	["cp-ca-fr", 0.15],
-	["po-box-ca-en", 0.05],
+	["po-box-us", 0.32],
+	["pmb-us", 0.07],
+	["bp-fr", 0.1],
+	["cedex-fr", 0.17],
+	["cp-ca-fr", 0.12],
+	["po-box-ca-en", 0.04],
+	["po-box-au", 0.12],
+	["po-box-nz", 0.06],
 ]
 
 /** Synthetic recipient/venue prefixes — the arena's "JOHN DOE, ACME INC, …" pattern. */
@@ -282,6 +313,38 @@ function readCaLocalities(admin1) {
 	return [...new Set(r.stdout.split("\n").filter(cleanLocality))]
 }
 
+/**
+ * Real (locality, state?, postcode) tuples from a GeoNames postal-code dump (CC-BY 4.0). Tab
+ * format: country, postal_code, place_name, admin1_name, admin1_code, … — for AU the admin1_code IS
+ * the postal state abbreviation (NSW/VIC/…), validated against the codex table; NZ has no region
+ * line so the state column is ignored. Postcodes are validated against the codex 4-digit shape — a
+ * dump row that fails the contract is skipped, not emitted as a junk label.
+ */
+function readPostalTuples(source, { withState }) {
+	const r = spawnSync("unzip", ["-p", source.zip, source.txt], { maxBuffer: 1024 * 1024 * 64, encoding: "utf8" })
+	if (r.status !== 0) {
+		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
+		return []
+	}
+	const tuples = []
+	const seen = new Set()
+	const validPostcode = withState ? isAuPostcode : isNzPostcode
+	for (const line of r.stdout.split("\n")) {
+		if (!line) continue
+		const cols = line.split("\t")
+		const postcode = (cols[1] ?? "").trim()
+		const locality = (cols[2] ?? "").trim()
+		const region = (cols[4] ?? "").trim()
+		if (!cleanLocality(locality) || !validPostcode(postcode)) continue
+		if (withState && !isAuStateAbbreviation(region)) continue
+		const key = `${locality}|${postcode}`.toLowerCase()
+		if (seen.has(key)) continue
+		seen.add(key)
+		tuples.push(withState ? { locality, region, postcode } : { locality, postcode })
+	}
+	return tuples
+}
+
 // ── Rendering helpers ────────────────────────────────────────────────────────────────────────────
 
 /** Box-number distribution (mirrors the corpus defaultPickNumber bands: 70% are 1-3 digits). */
@@ -322,8 +385,10 @@ function makePoBoxPhrase(random, leaders, rareLeaders) {
 	return phrase
 }
 
-/** A CEDEX designation: "CEDEX 08" / "Cedex 8" / bare "CEDEX". Shape contract = codex fr/cedex
- * (the slice PR #516's gap note asked for) — every emitted phrase must satisfy isCedex, loud. */
+/**
+ * A CEDEX designation: "CEDEX 08" / "Cedex 8" / bare "CEDEX". Shape contract = codex fr/cedex (the
+ * slice PR #516's gap note asked for) — every emitted phrase must satisfy isCedex, loud.
+ */
 function makeCedex(random) {
 	const r = random()
 	const word = r < 0.6 ? "CEDEX" : r < 0.9 ? "Cedex" : "cedex"
@@ -334,6 +399,28 @@ function makeCedex(random) {
 		return `${word} ${id}`
 	})()
 	if (!isCedex(phrase)) throw new Error(`makeCedex emitted a phrase the codex matcher rejects: "${phrase}"`)
+	return phrase
+}
+
+/**
+ * Compose an AU or NZ delivery-service phrase from the codex-sourced leaders. Same contract as
+ * makePoBoxPhrase: a phrase built from a codex-known designator and a clean id must round-trip the
+ * codex matcher (isAuDeliveryService / isNzDeliveryService) — a failure is a generation bug, loud.
+ * Noisy ids (commas / embedded spaces) are corpus-designed adversarial forms, exempt.
+ */
+function makeAuNzPoBoxPhrase(random, leaders, rareLeaders, validate) {
+	let leader = leaders[Math.floor(random() * leaders.length)]
+	if (rareLeaders && random() < 0.1) leader = rareLeaders[Math.floor(random() * rareLeaders.length)]
+	let num = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
+	// NZ CMB identifiers are alpha-led per the ADV358 example ("CMB B99").
+	if (leader === "CMB" && validate === isNzDeliveryService) num = `B${num}`
+	const phrase = `${caseDial(random, leader)} ${num}`
+	// The "clean id" shape differs per system: ADV358 identifiers carry no separators at all, the
+	// AU AMAS id (like the US one) tolerates dashes. Noisy ids outside the clean shape are exempt.
+	const cleanId = validate === isNzDeliveryService ? /^[\dA-Za-z]+$/ : /^[\dA-Za-z][\dA-Za-z-]*$/
+	if (cleanId.test(num) && !validate(phrase)) {
+		throw new Error(`generated a phrase the codex matcher rejects: "${phrase}"`)
+	}
 	return phrase
 }
 
@@ -461,6 +548,47 @@ function renderCaEn(random, loc) {
 	return { fmt: "ca-en-bare", raw: phrase, components: { po_box: phrase } }
 }
 
+function renderAuPoBox(random, t) {
+	const phrase = makeAuNzPoBoxPhrase(random, AU_LEADERS_CURRENT, AU_LEADERS_LEGACY, isAuDeliveryService)
+	const { locality, region: reg, postcode: pc } = t
+	const r = random()
+	// The guideline last line is capitals ("SYDNEY NSW 2000"); mixed case rides as a softer variant.
+	const loc = r < 0.6 ? locality.toUpperCase() : locality
+	const base = { po_box: phrase, locality: loc, region: reg, postcode: pc }
+	if (r < 0.45) return { fmt: "au-standard", raw: `${phrase}, ${loc} ${reg} ${pc}`, components: base }
+	if (r < 0.6) {
+		// The envelope label form: comma-less, designator upper-cased ("GPO BOX 123 SYDNEY NSW 2001").
+		const up = phrase.toUpperCase()
+		return {
+			fmt: "au-label-nocomma",
+			raw: `${up} ${locality.toUpperCase()} ${reg} ${pc}`,
+			components: { po_box: up, locality: locality.toUpperCase(), region: reg, postcode: pc },
+		}
+	}
+	if (r < 0.75)
+		return {
+			fmt: "au-no-postcode",
+			raw: `${phrase}, ${loc} ${reg}`,
+			components: { po_box: phrase, locality: loc, region: reg },
+		}
+	if (r < 0.88) return { fmt: "au-bare", raw: phrase, components: { po_box: phrase } }
+	const v = pick(random, VENUES_EN)
+	return { fmt: "au-venue", raw: `${v}, ${phrase}, ${loc} ${reg} ${pc}`, components: { venue: v, ...base } }
+}
+
+function renderNzPoBox(random, t) {
+	const phrase = makeAuNzPoBoxPhrase(random, NZ_LEADERS_COMMON, NZ_LEADERS_RARE, isNzDeliveryService)
+	const { locality, postcode: pc } = t
+	// NZ addresses are written mixed-case ("PO Box 4099, Timaru 7942") — no region line (ADV358).
+	const base = { po_box: phrase, locality, postcode: pc }
+	const r = random()
+	if (r < 0.55) return { fmt: "nz-standard", raw: `${phrase}, ${locality} ${pc}`, components: base }
+	if (r < 0.7) return { fmt: "nz-no-postcode", raw: `${phrase}, ${locality}`, components: { po_box: phrase, locality } }
+	if (r < 0.85) return { fmt: "nz-bare", raw: phrase, components: { po_box: phrase } }
+	const v = pick(random, VENUES_EN)
+	return { fmt: "nz-venue", raw: `${v}, ${phrase}, ${locality} ${pc}`, components: { venue: v, ...base } }
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -495,8 +623,23 @@ async function main() {
 	const qcPool = qcAll.filter((l) => isHoldoutLocality(l) === opts.golden)
 	const onPool = onAll.filter((l) => isHoldoutLocality(l) === opts.golden)
 	console.error(`  GeoNames CA: QC ${qcAll.length}→${qcPool.length}, ON ${onAll.length}→${onPool.length}`)
-	if (usPool.length === 0 || frPool.length === 0 || qcPool.length === 0 || onPool.length === 0) {
-		console.error("A base pool is empty — check /tmp/oa-cache and /tmp/geonames-cache/CA.zip.")
+	// AU/NZ pools: same stable locality-hash holdout as FR/CA.
+	const auAll = readPostalTuples(GEONAMES_POSTAL_AU, { withState: true })
+	const nzAll = readPostalTuples(GEONAMES_POSTAL_NZ, { withState: false })
+	const auPool = auAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
+	const nzPool = nzAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
+	console.error(`  GeoNames postal: AU ${auAll.length}→${auPool.length}, NZ ${nzAll.length}→${nzPool.length}`)
+	if (
+		usPool.length === 0 ||
+		frPool.length === 0 ||
+		qcPool.length === 0 ||
+		onPool.length === 0 ||
+		auPool.length === 0 ||
+		nzPool.length === 0
+	) {
+		console.error(
+			"A base pool is empty — check /tmp/oa-cache and /tmp/geonames-cache (CA.zip, AU-postal.zip, NZ-postal.zip)."
+		)
 		process.exit(1)
 	}
 
@@ -541,6 +684,14 @@ async function main() {
 			rendered = renderCaFr(random, pick(random, qcPool))
 			country = "CA"
 			locale = "fr-CA"
+		} else if (cls === "po-box-au") {
+			rendered = renderAuPoBox(random, pick(random, auPool))
+			country = "AU"
+			locale = "en-AU"
+		} else if (cls === "po-box-nz") {
+			rendered = renderNzPoBox(random, pick(random, nzPool))
+			country = "NZ"
+			locale = "en-NZ"
 		} else {
 			rendered = renderCaEn(random, pick(random, onPool))
 			country = "CA"
@@ -577,7 +728,11 @@ async function main() {
 					? "GeoNames CA (CC-BY 4.0) locality skeletons + Canada Post box forms (corpus templates); postcodes synthesized to the codex CA pattern"
 					: country === "FR"
 						? "OpenAddresses FR (BAN-derived) skeletons + La Poste BP/CEDEX forms (corpus templates, NF Z 10-011)"
-						: "OpenAddresses US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)",
+						: country === "AU"
+							? "GeoNames AU postal dump (CC-BY 4.0) locality/state/postcode tails + Australia Post Postal Delivery Type designators (@mailwoman/codex/au)"
+							: country === "NZ"
+								? "GeoNames NZ postal dump (CC-BY 4.0) locality/postcode tails + NZ Post ADV358 Delivery Service Types (@mailwoman/codex/nz)"
+								: "OpenAddresses US (non-VT) skeletons + USPS Pub-28 §29 PO-box designators (codex/corpus templates)",
 		}
 		const aligned = alignRow(canonical)
 		if (aligned.kind !== "labeled" || !aligned.row) {
