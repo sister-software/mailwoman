@@ -10,7 +10,13 @@
 import { DatabaseSync } from "node:sqlite"
 import { describe, expect, test } from "vitest"
 
-import { buildPlaceSearchFts, PLACE_SEARCH_TABLE, placeSearchFtsExists } from "./fts.js"
+import {
+	ALIAS_SEPARATOR,
+	aliasBagExactMatch,
+	buildPlaceSearchFts,
+	PLACE_SEARCH_TABLE,
+	placeSearchFtsExists,
+} from "./fts.js"
 
 function buildBaseSchema(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
@@ -101,6 +107,66 @@ describe("buildPlaceSearchFts", () => {
 		expect(row.name).toBe("Paris")
 		expect(row.alt_names).toContain("パリ")
 		expect(row.alt_names).toContain("París")
+
+		db.close()
+	})
+
+	test("joins aliases with the boundary-preserving ALIAS_SEPARATOR token (#523)", () => {
+		const db = buildBaseSchema()
+		buildPlaceSearchFts(db)
+
+		const row = db.prepare(`SELECT alt_names FROM ${PLACE_SEARCH_TABLE} WHERE wof_id = 1`).get() as {
+			alt_names: string
+		}
+		// One boundary between the two aliases (space-padded so each alias tokenizes normally) plus
+		// the trailing format marker that distinguishes new bags from legacy single-alias ones.
+		expect(row.alt_names).toBe(`パリ ${ALIAS_SEPARATOR} París ${ALIAS_SEPARATOR}`)
+
+		db.close()
+	})
+
+	test("a phrase query cannot match ACROSS two aliases' concatenation boundary (#523)", () => {
+		const db = buildBaseSchema()
+		// Two aliases whose concatenation forms a third phrase: the bag "York <sep> New City" must
+		// not phrase-match "york new". Without the separator token, FTS5 assigns the aliases' tokens
+		// consecutive positions and the cross-boundary phrase falsely matches (see the ALIAS_SEPARATOR
+		// probe table in fts.ts — punctuation separators do NOT fix this; only an indexed token does).
+		db.exec(`
+			INSERT INTO spr VALUES (5, NULL, 'Twin Hamlet', 'locality', 'US', 40.0, -80.0, 39.9, 40.1, -80.1, -79.9, -1, 0);
+			INSERT INTO names (id, language, name) VALUES (5, 'eng', 'York');
+			INSERT INTO names (id, language, name) VALUES (5, 'eng', 'New City');
+		`)
+		buildPlaceSearchFts(db)
+
+		const match = (q: string): number[] =>
+			(
+				db.prepare(`SELECT wof_id FROM ${PLACE_SEARCH_TABLE} WHERE ${PLACE_SEARCH_TABLE} MATCH ?`).all(q) as {
+					wof_id: number
+				}[]
+			).map((r) => r.wof_id)
+
+		expect(match('"york new"')).toEqual([]) // the false cross-boundary phrase
+		expect(match('"york"')).toEqual([5]) // each alias is still individually matchable
+		expect(match('"new city"')).toEqual([5])
+
+		db.close()
+	})
+
+	test("strips an embedded U+E000 from source names so a poisoned row can't forge an alias boundary (#523)", () => {
+		const db = buildBaseSchema()
+		db.exec(`
+			INSERT INTO spr VALUES (6, NULL, 'Honest Place', 'locality', 'US', 41.0, -81.0, 40.9, 41.1, -81.1, -80.9, -1, 0);
+		`)
+		db.prepare(`INSERT INTO names (id, language, name) VALUES (6, 'eng', ?)`).run(`Evil${ALIAS_SEPARATOR}Name`)
+		buildPlaceSearchFts(db)
+
+		const row = db.prepare(`SELECT alt_names FROM ${PLACE_SEARCH_TABLE} WHERE wof_id = 6`).get() as {
+			alt_names: string
+		}
+		// Flattened to a space — ONE alias (plus the trailing format marker), no forged boundary.
+		expect(row.alt_names).toBe(`Evil Name ${ALIAS_SEPARATOR}`)
+		expect(aliasBagExactMatch(row.alt_names, "evil", false)).toBe(false) // fragment ≠ exact
+		expect(aliasBagExactMatch(row.alt_names, "evil name", false)).toBe(true) // the whole alias is
 
 		db.close()
 	})
@@ -219,6 +285,35 @@ describe("buildPlaceSearchFts", () => {
 			| undefined
 		expect(hit).toBeUndefined()
 		db.close()
+	})
+})
+
+describe("aliasBagExactMatch", () => {
+	const SEP = ALIAS_SEPARATOR
+	// What buildPlaceSearchFts emits for aliases ["York", "New City"] (note the trailing marker).
+	const separated = `York ${SEP} New City ${SEP}`
+
+	test("separated bag: per-alias equality, case/whitespace-insensitive", () => {
+		expect(aliasBagExactMatch(separated, "york", false)).toBe(true)
+		expect(aliasBagExactMatch(separated, "new city", false)).toBe(true)
+		expect(aliasBagExactMatch(separated, "city", false)).toBe(false) // interior fragment
+		expect(aliasBagExactMatch(separated, "york new", false)).toBe(false) // cross-boundary fragment
+	})
+
+	test("separated bag: ungated — an alias match counts even when another candidate is strictly exact", () => {
+		expect(aliasBagExactMatch(separated, "new city", true)).toBe(true)
+	})
+
+	test("legacy bag (no separator): padded containment, gated on anyStrictExact", () => {
+		const legacy = "York New City" // pre-#523 space-joined bag — boundaries lost
+		expect(aliasBagExactMatch(legacy, "new city", false)).toBe(true) // historical behavior preserved
+		expect(aliasBagExactMatch(legacy, "new city", true)).toBe(false) // the gate
+	})
+
+	test("null / empty bag and empty query never match", () => {
+		expect(aliasBagExactMatch(null, "york", false)).toBe(false)
+		expect(aliasBagExactMatch("", "york", false)).toBe(false)
+		expect(aliasBagExactMatch(separated, "", false)).toBe(false)
 	})
 })
 

@@ -31,18 +31,40 @@ import { DatabaseSync } from "node:sqlite"
 import { haversineKm } from "./geo.js"
 import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.js"
 
+/**
+ * How an interpolated answer was computed (#483 Method 2):
+ *
+ * - `address_point` — bracketed/extrapolated between REAL neighbor points from the #476 shard
+ *   (`AddressPointInterpolator`), replacing TIGER's uniform-spacing assumption with occupancy.
+ * - `tiger_range` — linear position within a TIGER segment's theoretical house-number range
+ *   (`StreetInterpolator`), the fallback for streets too sparse to bracket.
+ */
+export type InterpolationMethod = "address_point" | "tiger_range"
+
 /** One interpolated coordinate estimate. Never an exact situs point — see `uncertaintyM`. */
 export interface InterpolatedHit {
 	lat: number
 	lon: number
 	/** Always true — the tier's honesty flag, mirrored into `resolution_tier` when wired. */
 	interpolated: true
+	/** Which rung answered — see {@link InterpolationMethod}. */
+	method: InterpolationMethod
 	/**
-	 * True when the matched segment side's parity agrees with the house number (or the side is
-	 * `mixed`). False = opposite-side fallback: usually the right block, wrong side of the street.
+	 * `tiger_range` only. True when the matched segment side's parity agrees with the house number
+	 * (or the side is `mixed`). False = opposite-side fallback: usually the right block, wrong side
+	 * of the street.
 	 */
-	parityMatched: boolean
-	/** Half the matched segment's polyline length, meters — the honest uncertainty radius. */
+	parityMatched?: boolean
+	/**
+	 * `address_point` only. `both` = the query number sits between two known neighbor numbers;
+	 * `single` = neighbors exist on one side only (extrapolated, larger `uncertaintyM`).
+	 */
+	bracket?: "both" | "single"
+	/**
+	 * Honest uncertainty radius in meters: half the matched segment's polyline length
+	 * (`tiger_range`), half the bracket span (`address_point`/`both`), or the explicitly larger
+	 * extrapolation penalty (`address_point`/`single`).
+	 */
 	uncertaintyM: number
 	/** Provenance, e.g. `"tiger:edges"`. */
 	source: string
@@ -138,6 +160,7 @@ export class StreetInterpolator {
 			lat,
 			lon,
 			interpolated: true,
+			method: "tiger_range",
 			parityMatched,
 			uncertaintyM: Math.round((lengthKm * 1000) / 2),
 			source: best.source,

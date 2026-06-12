@@ -87,4 +87,47 @@ describe("bridgePunctuationGaps", () => {
 		const input = [tok("PO Box 989", 0, "B-po_box")]
 		expect(bridgePunctuationGaps(text, input)).toEqual(input)
 	})
+
+	describe("crossing constraint (M2 — Stage 2.7 structural boundaries)", () => {
+		it("blocks a same-tag merge whose gap contains a proposed span boundary", () => {
+			// "Joe's 'Pizza' Shop" with a quoted span over 'Pizza' — the gap " '" between two venue
+			// fragments is bridgeable (apostrophe + space), but the opening quote at index 6 is a
+			// structural boundary the merge must not straddle.
+			const text = "Joe's 'Pizza' Shop"
+			const input = [tok("Joe's", 0, "B-venue"), tok("Pizza", 7, "B-venue")]
+			// Without the constraint the bridge merges (regression guard for the test itself):
+			expect(bridgePunctuationGaps(text, input)).toHaveLength(1)
+			const out = bridgePunctuationGaps(text, input, { blockedSpans: [{ start: 6, end: 13 }] })
+			expect(out).toHaveLength(2)
+		})
+
+		it("blocks a merge across a CLOSING boundary", () => {
+			// Closing quote at index 12 sits inside the gap "' " between the fragments.
+			const text = "Joe's 'Pizza' Shop"
+			const input = [tok("Pizza", 7, "B-venue"), tok("Shop", 14, "B-venue")]
+			expect(bridgePunctuationGaps(text, input)).toHaveLength(1)
+			const out = bridgePunctuationGaps(text, input, { blockedSpans: [{ start: 6, end: 13 }] })
+			expect(out).toHaveLength(2)
+		})
+
+		it("still merges when the boundary is elsewhere (dotted po_box stays bridged)", () => {
+			const text = "P.O. BOX 19 (rear)"
+			const input = [
+				tok("P", 0, "B-po_box", 0.93),
+				tok(".", 1, "O"),
+				tok("O", 2, "B-po_box", 0.94),
+				tok(".", 3, "O"),
+				tok("BOX 19", 5, "B-po_box", 0.96),
+			]
+			const out = bridgePunctuationGaps(text, input, { blockedSpans: [{ start: 12, end: 18 }] })
+			expect(out).toHaveLength(1)
+			expect(out[0]!.piece).toBe("P.O. BOX 19")
+		})
+
+		it("no blocked spans = byte-identical to the unconstrained bridge", () => {
+			const text = "P.O. BOX 19"
+			const input = [tok("P", 0, "B-po_box"), tok(".", 1, "O"), tok("O", 2, "B-po_box"), tok("BOX 19", 5, "I-po_box")]
+			expect(bridgePunctuationGaps(text, input, {})).toEqual(bridgePunctuationGaps(text, input))
+		})
+	})
 })

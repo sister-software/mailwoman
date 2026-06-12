@@ -19,6 +19,8 @@ export type {
 export { runPipeline } from "./runtime-pipeline.js"
 export { aggregateSpanLogits } from "./span-logit-aggregation.js"
 export type { SpanBounds, TokenPiece } from "./span-logit-aggregation.js"
+export { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans } from "./span-proposer.js"
+export type { ProposedSpan, ProposedSpanKind, SpanProposerLexicon } from "./span-proposer.js"
 export type {
 	AddressClassifier,
 	ClassifierOpts,

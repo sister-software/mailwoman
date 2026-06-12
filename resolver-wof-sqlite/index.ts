@@ -61,8 +61,14 @@ export {
 	type WofReverseGeocoderOpts,
 } from "./reverse.js"
 
+export { AddressPointInterpolator } from "./address-point-interpolation.js"
 export { AddressPointSqliteLookup } from "./address-point.js"
-export { StreetInterpolator, type InterpolatedHit, type InterpolationQuery } from "./interpolation.js"
+export {
+	StreetInterpolator,
+	type InterpolatedHit,
+	type InterpolationMethod,
+	type InterpolationQuery,
+} from "./interpolation.js"
 export {
 	deriveSchemaName,
 	pickShardForPlacetype,

@@ -21,6 +21,7 @@ import {
 	type ComponentTag,
 	type DecoderToken,
 } from "@mailwoman/core/decoder"
+import { proposeSpans, type ProposedSpan, type SpanProposerLexicon } from "@mailwoman/core/pipeline"
 
 import { detectAddressSystem } from "./address-system.js"
 import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.js"
@@ -31,6 +32,8 @@ import type { InferResult } from "./onnx-runner.js"
 import { repairPostcodeLabels } from "./postcode-repair.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
 import { bridgePunctuationGaps } from "./span-bridge.js"
+import { buildSpanProposalPriors, type SpanProposalPriorOpts } from "./span-proposal-prior.js"
+import { buildCodexSpanLexicon } from "./span-proposer-lexicon.js"
 import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import { repairUnitLabels } from "./unit-repair.js"
@@ -119,12 +122,36 @@ export interface NeuralAddressClassifierConfig {
 	 * merged after decode. Per-parse opts override. Omit for the byte-stable pre-v4.4.0 behavior.
 	 */
 	bridgePunctuationGaps?: boolean
+	/**
+	 * Stage 2.7 span proposer (M2+M3 from the punctuation survey, #518). When set, every parse runs
+	 * `proposeSpans` (`@mailwoman/core/pipeline`) over the raw text and consumes the typed proposals
+	 * two ways: (a) as additive emission priors — the phrase-prior path; the classifier conditions on
+	 * the boundary hypotheses and can still disagree — and (b) ANNOTATION/QUOTED span boundaries feed
+	 * the span bridge as merge-crossing constraints (no same-tag merge may straddle a structural
+	 * delimiter). Build the lexicon with `buildCodexSpanLexicon` (`./span-proposer-lexicon.js`).
+	 * Per-parse opts override.
+	 *
+	 * DEFAULT ON (operator ruling 2026-06-12, after the #518 measurement closed both v0-win quadrants
+	 * with no class down): omitting this builds the codex lexicon lazily with the frozen measured
+	 * scales (biasScale 5.0 / annotationBiasScale 12.0). Pass `false` for the proposer-free baseline
+	 * (the pre-2026-06-12 byte-stable default).
+	 */
+	spanProposer?: SpanProposerConfig | false
+}
+
+/** Config for the Stage 2.7 span-proposer integration (see
+`NeuralAddressClassifierConfig.spanProposer`). */
+export interface SpanProposerConfig extends SpanProposalPriorOpts {
+	/** Codex-backed designator vocabulary (`buildCodexSpanLexicon`). */
+	lexicon: SpanProposerLexicon
 }
 
 export class NeuralAddressClassifier {
 	private readonly labels: readonly string[]
 	private readonly decodeMode: "viterbi" | "argmax"
 	private readonly transitions: number[][]
+	/** Lazily-built default Stage 2.7 config (codex lexicon, frozen scales) — see `cfg.spanProposer`. */
+	#defaultProposerCfg: SpanProposerConfig | undefined
 	private readonly startTransitions: number[]
 	private readonly endTransitions: number[]
 
@@ -139,6 +166,15 @@ export class NeuralAddressClassifier {
 		}
 		this.startTransitions = cfg.startTransitions ?? buildBioStartMask(this.labels)
 		this.endTransitions = cfg.endTransitions ?? buildBioEndMask(this.labels)
+	}
+
+	/**
+	 * The default-ON Stage 2.7 config: codex lexicon (us/au/nz), frozen measured scales (the prior
+	 * builder's own defaults). Built once per instance, only when a parse actually needs it.
+	 */
+	private defaultProposer(): SpanProposerConfig {
+		this.#defaultProposerCfg ??= { lexicon: buildCodexSpanLexicon() }
+		return this.#defaultProposerCfg
 	}
 
 	/**
@@ -282,6 +318,19 @@ export class NeuralAddressClassifier {
 			)
 		}
 
+		// Stage 2.7 span proposer (#518, M2+M3): typed span proposals consumed as phrase priors.
+		// DEFAULT ON since 2026-06-12 (operator ruling): an omitted config builds the codex lexicon
+		// lazily with the frozen measured scales; `spanProposer: false` (config or per-parse) is the
+		// proposer-free baseline. Disabled = byte-stable (no proposals computed).
+		const configured = this.cfg.spanProposer === false ? undefined : (this.cfg.spanProposer ?? this.defaultProposer())
+		const proposerCfg = (opts?.spanProposer ?? true) ? configured : undefined
+		const spanProposals: ProposedSpan[] = proposerCfg ? proposeSpans(text, proposerCfg.lexicon) : []
+		if (spanProposals.length > 0) {
+			emissions = addEmissionMatrix(emissions, buildSpanProposalPriors(spanProposals, pieces, this.labels, proposerCfg))
+		}
+
+		// (defaultProposer lives below decode helpers — one lazy build per classifier instance.)
+
 		// Conventions emission mask: tags that are ungrammatical in the detected system are removed
 		// from the decoder's vocabulary outright (-1e9 ≈ log 0). Copy-on-mask — `emissions` may alias
 		// `logits`, which the per-token confidence below reads unmasked.
@@ -331,9 +380,11 @@ export class NeuralAddressClassifier {
 		}
 		// Punctuation-gap span bridging (v4.4.0 corrective — see span-bridge.ts): merge same-tag
 		// fragments split at unlabeled punctuation ("P.O. Box" decoding as P + O + Box). Opt-in,
-		// declared in the ship config like the conventions mask.
+		// declared in the ship config like the conventions mask. When the span proposer ran, its
+		// ANNOTATION/QUOTED boundaries become merge-crossing constraints (M2's second half).
 		if (opts?.bridgePunctuationGaps ?? this.cfg.bridgePunctuationGaps) {
-			tokens = bridgePunctuationGaps(text, tokens)
+			const blockedSpans = spanProposals.filter((p) => p.kind === "ANNOTATION_SPAN" || p.kind === "QUOTED_SPAN")
+			tokens = bridgePunctuationGaps(text, tokens, blockedSpans.length > 0 ? { blockedSpans } : undefined)
 		}
 
 		return { tokens, logits, pieces }
@@ -440,6 +491,12 @@ export interface ParseOpts {
 	calibrate?: Calibrator
 	/** Per-parse override of the config-level `bridgePunctuationGaps` (see that doc). */
 	bridgePunctuationGaps?: boolean
+	/**
+	 * Per-parse switch for the config-level `spanProposer` (see that doc). `false` disables the
+	 * configured proposer for this parse; `true`/omitted runs it when configured. Cannot enable the
+	 * stage without a configured lexicon.
+	 */
+	spanProposer?: boolean
 	/**
 	 * Address-system conventions enforcement (#511 Tier A / #478's rules-as-constraints slice).
 	 *

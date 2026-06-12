@@ -21,6 +21,10 @@
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
+// Browser-safe subpath (fts.ts's only node:sqlite import is type-only; aliased in
+// docs/plugins/demo-assets/resolve.mjs) — the shared alias-bag parser keeps this backend's exact
+// tier identical to the Node + WASM resolvers'.
+import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
 
 import type { DualRole, MailwomanLookupLike } from "./resources"
 
@@ -34,13 +38,19 @@ const normName = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, "
  */
 const sqlStr = (s: string): string => `'${s.replace(/'/g, "''")}'`
 
-/** Trim raw input into an FTS5-safe MATCH term. Mirrors resolver-wof-wasm's sanitizeFtsQuery intent. */
+/**
+ * Trim raw input into an FTS5-safe MATCH term. Mirrors resolver-wof-wasm's sanitizeFtsQuery intent.
+ * Unlike the Node/WASM sanitizers (which strip everything outside `\p{L}\p{N}`), this one strips a
+ * denylist — so the alias-bag separator must be stripped EXPLICITLY or a pasted U+E000 could
+ * address the boundary token in the quoted phrase below.
+ */
 function sanitizeFts(text: string): string {
 	const trimmed = text.trim()
 	const prefix = trimmed.endsWith("*")
 	const cleaned = trimmed
 		.replace(/[*]/g, " ")
-		.replace(/["'()^:{}\[\]~]/g, " ")
+		.replace(/["'()^:{}[\]~]/g, " ")
+		.replaceAll(ALIAS_SEPARATOR, " ")
 		.replace(/\s+/g, " ")
 		.trim()
 	if (!cleaned) return ""
@@ -347,15 +357,13 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 				const pop = typeof row.population === "number" ? row.population : 0
 				const popBoost = pop > 0 ? POPULATION_BOOST * Math.min(1, Math.log10(1 + pop) / POPULATION_SCALE_LOG10) : 0
 				const adj = (row.bm25 as number) - popBoost
-				// Alias tier: `alt_names` is the FTS row's alias bag (all `names` rows space-joined). Name
-				// boundaries are LOST in the bag, so a containment check would false-promote interior
-				// fragments ("York" matches inside "New York City") — it only engages when NO candidate is
-				// strictly exact: the "New York City" case, where the query is a WOF alias of the New York
-				// locality but no spr row bears the name. Mirrors WofWasmPlaceLookup.
+				// Alias tier: `alt_names` is the FTS row's alias bag, aliases joined on the
+				// boundary-preserving ALIAS_SEPARATOR (#523). The shared parser does a per-alias equality
+				// check, ungated; on a LEGACY bag (pre-#523 slim artifact, boundaries lost) it falls back
+				// to padded containment gated on "no strictly exact candidate" so interior fragments
+				// ("York" inside "New York City") can't be false-promoted. Mirrors WofWasmPlaceLookup.
 				const aliasExact =
-					!anyStrictExact &&
-					typeof row.alt_names === "string" &&
-					` ${normName(row.alt_names)} `.includes(` ${normQuery} `)
+					typeof row.alt_names === "string" && aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
 				const exactTier = strictExact(row) || aliasExact ? 0 : 1
 				return { row, exactTier, adj }
 			})

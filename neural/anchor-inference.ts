@@ -60,11 +60,15 @@ export function anchorFeatureVector(posterior: Record<string, number>, lat: numb
 }
 
 /**
- * Parse the pilot postcode→anchor lookup JSON (`{postcode: [posterior, lat, lon]}`) into a Map.
+ * Parse the pilot postcode→anchor lookup JSON (`{postcode: [posterior, lat, lon, source?]}`) into a
+ * Map. The optional trailing `source` is the centroid's provenance label (#525 — `"wof"`,
+ * `"census-zcta-2024"`, or `null` for a placeholder); build-side bookkeeping, ignored at inference.
  * Pure (takes the parsed object, not a path) so this module stays browser-safe — the file read
  * lives in the Node-side caller (the eval).
  */
-export function parseAnchorLookup(raw: Record<string, [Record<string, number>, number, number]>): AnchorLookup {
+export function parseAnchorLookup(
+	raw: Record<string, [Record<string, number>, number, number, (string | null)?]>
+): AnchorLookup {
 	const out: AnchorLookup = new Map()
 	for (const [pc, [posterior, lat, lon]] of Object.entries(raw)) out.set(pc, { posterior, lat, lon })
 	return out

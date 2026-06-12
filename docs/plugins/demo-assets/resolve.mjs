@@ -115,10 +115,12 @@ export function buildWorkspaceAliases() {
 		aliases["@mailwoman/cartographer/styles"] = resolveWorkspaceDirEntry(cartographerDir, "styles")
 	}
 
-	// @mailwoman/resolver-wof-sqlite — FST browser-safe subpaths only.
+	// @mailwoman/resolver-wof-sqlite — browser-safe subpaths only (the FST modules plus fts.ts,
+	// whose single node:sqlite import is type-only; httpvfs-resolver.ts imports its alias-bag
+	// parser so the demo's exact tier can't drift from the Node/WASM resolvers).
 	const resolverWofDir = resolveWorkspaceDir("@mailwoman/resolver-wof-sqlite")
 	if (resolverWofDir) {
-		for (const sub of ["fst-deserialize-web", "fst-matcher", "fst-types"]) {
+		for (const sub of ["fst-deserialize-web", "fst-matcher", "fst-types", "fts"]) {
 			aliases[`@mailwoman/resolver-wof-sqlite/${sub}`] = resolveWorkspaceFile(resolverWofDir, sub)
 		}
 	}
@@ -331,8 +333,9 @@ export function buildSlimWofDb(destPath, opts) {
 	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
 	const globalDb = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
 	const adminDb = process.env.PLAYPEN_WOF_ADMIN_DB ?? globalDb
-	// Postcodes: the custom build is admin-only today. Set PLAYPEN_WOF_POSTCODE_DB once a custom
-	// postcode DB exists; until then the slim build runs admin-only.
+	// Postcodes: opt-in via PLAYPEN_WOF_POSTCODE_DB (e.g. /mnt/playpen/mailwoman-data/wof/
+	// postalcode-us.db — custom-built, ZCTA-centroid-filled per #525); unset, the slim build runs
+	// admin-only and the demo's postcode-first cascade leg has no rows to hit.
 	const postcodeDb = process.env.PLAYPEN_WOF_POSTCODE_DB ?? ""
 
 	if (!existsSync(adminDb)) {

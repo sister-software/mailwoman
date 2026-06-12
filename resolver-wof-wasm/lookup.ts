@@ -22,6 +22,9 @@ import type { Database } from "@sqlite.org/sqlite-wasm"
 
 import { expandPlacetypeFilter, type CoincidentLocality } from "@mailwoman/core/resolver"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "@mailwoman/resolver-wof-sqlite"
+// Browser-safe subpath import (fts.ts's only node:sqlite import is type-only) — the shared
+// alias-bag parser keeps this backend's exact tier byte-identical to the Node resolver's.
+import { aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
 
 export interface WofWasmPlaceLookupOpts {
 	/** Open `@sqlite.org/sqlite-wasm` Database (from `loadSlimWofDatabase`). */
@@ -177,15 +180,14 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 		const anyStrictExact = rows.some(strictExact)
 		return rows
 			.map((row) => {
-				// Alias tier: `alt_names` is the FTS row's alias bag (all `names` rows space-joined — the
-				// slim DB's only surviving alias source). Name boundaries are LOST in the bag, so a
-				// whitespace-boundary containment check would false-promote interior fragments ("York"
-				// matches inside the alias "New York City"). It therefore only engages when NO candidate
-				// is strictly exact — the "New York City" case, where the query is an alias WOF carries
-				// for the New York locality but no spr row bears the name. Mirrors the Node resolver's
-				// alias tier (`WofSqlitePlaceLookup.#exactMatchIds`).
-				const aliasExact =
-					!anyStrictExact && row.alt_names !== null && ` ${normalizeName(row.alt_names)} `.includes(` ${normQuery} `)
+				// Alias tier: `alt_names` is the FTS row's alias bag (the slim DB's only surviving alias
+				// source), aliases joined on the boundary-preserving ALIAS_SEPARATOR (#523). The shared
+				// parser does a true per-alias equality check, ungated; on a LEGACY bag (pre-#523 slim
+				// artifact, boundaries lost) it falls back to padded containment gated on "no strictly
+				// exact candidate" so interior fragments ("York" inside "New York City") can't be
+				// false-promoted. Mirrors the Node resolver's alias tier
+				// (`WofSqlitePlaceLookup.#exactMatchIds`).
+				const aliasExact = aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
 				const exactTier = strictExact(row) || aliasExact ? 0 : 1
 				const popBoost =
 					row.population && row.population > 0

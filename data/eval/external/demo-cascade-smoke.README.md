@@ -72,3 +72,20 @@ Schema validation lives in `scripts/eval/demo-cascade-rows.ts` (unit-tested in
 All ids verified against the staged `v4.4.0` `wof-hot.db`
 (`/tmp/v440-stage/en-us/v4.4.0/wof-hot.db`, the byte-copy of what the live demo
 serves) on 2026-06-11.
+
+## 2026-06-12 expansion: 21 → 39 rows
+
+Added 18 rows covering additional coverage dimensions the slim DB (US/DE/FR only) supports:
+
+- **More US top-10 cities**: `Los Angeles`, `Houston`, `Philadelphia`, `Denver`, `Austin, TX`,
+  `Boston`, `Portland, OR` (disambiguation: OR 665K vs ME 69K), `Nashville, TN`.
+- **DE cities**: `München`, `Munich` (English alias), `Hamburg`, `Frankfurt am Main`,
+  `Frankfurt, Germany` (FTS short-name path).
+- **FR cities**: `Lyon`, `Marseille`.
+- **Full-address DE/FR/US variants**: `200 E Colfax Ave, Denver, CO 80203` (CO region bbox),
+  `1600 Amphitheatre Pkwy, Mountain View, CA 94043` (locality+region within CA),
+  `1776 Independence Ave, Philadelphia, PA 19106`.
+
+All 18 new ids verified directly against `/tmp/v440-stage/en-us/v4.4.0/wof-hot.db` on 2026-06-12
+via `sqlite3` `spr` table lookup (id, name, placetype, country, lat, lon) before row was written.
+39/39 pass rate confirmed by runner on 2026-06-12.

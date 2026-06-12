@@ -17,19 +17,26 @@ Three augmentations, applied independently with configurable probability:
    the fused surface. Teaches the model to split the fused token at the SP-piece
    level (the v4.3.0 "glue" regression class).
 
-The expansion augmentations replace the token in the raw text AND update the
-tokens + labels lists to match; the expanded form inherits the original token's
-BIO label (B- for the first word, I- for continuation words). The glue
-augmentation mutates ``raw`` alone.
+The expansion augmentations SPLICE the expansion into ``raw`` at the token's char
+range (located via ``whitespace_spans``, same as the glue) AND update the tokens +
+labels lists to match; the expanded form inherits the original token's BIO label
+(B- for the first word, I- for continuation words). The glue augmentation mutates
+``raw`` alone. No augmentation ever rebuilds ``raw`` from the token list — a
+``" ".join(tokens)`` rebuild destroys whatever the tokens don't carry (newlines,
+double spaces) and re-quantizes spans to token boundaries (a trailing comma inside
+a ``"123,"`` token would get absorbed into the po_box span). v0.5.0 (#519) makes
+that punctuation load-bearing, so every augmented copy must keep the source raw's
+characters except for the deliberate edit (PR #534 open question 3).
 
 **Char-offset spans** (#519, v0.5.0): rows from a v0.5.0 corpus carry
 ``span_starts``/``span_ends``/``span_tags`` beside tokens/labels, and every augmented COPY this
-module yields must re-target them — the expansion augmentations rebuild ``raw`` (so the spans are
-re-derived from the new tokens/labels over the rebuilt surface), and the glue augmentation
-splices chars out of ``raw`` (so offsets at/after the splice shift left). Yielding a mutated raw
-with the source row's spans would corrupt the labels silently — the exact hazard that put the
-augmentation re-target in the same change as the loader wiring. Rows without spans (frozen
-pre-v0.5.0 corpora) pass through the legacy token path unchanged; a PARTIAL triple raises.
+module yields must re-target them by the same splice arithmetic — offsets after the edit shift by
+the replacement's length delta, a span containing the edit grows/shrinks at its end, and a span
+boundary falling strictly INSIDE the edited token is genuinely impossible to re-target (the
+replaced surface no longer exists) and raises loudly. Yielding a mutated raw with the source
+row's spans would corrupt the labels silently — the exact hazard that put the augmentation
+re-target in the same change as the loader wiring. Rows without spans (frozen pre-v0.5.0
+corpora) pass through the legacy token path unchanged; a PARTIAL triple raises.
 """
 
 from __future__ import annotations
@@ -136,40 +143,62 @@ def row_span_triple(row: dict) -> tuple[list[int], list[int], list[str]] | None:
     return starts, ends, tags
 
 
-def spans_from_token_labels(tokens: list[str], labels: list[str]) -> tuple[list[int], list[int], list[str]]:
-    """Derive a span triple for a raw REBUILT as ``" ".join(tokens)`` (the expansion augmentations'
-    surface): contiguous B-/I- runs become one span each, offsets exact by construction."""
-    starts: list[int] = []
-    ends: list[int] = []
-    tags: list[str] = []
-    cursor = 0
-    open_tag: str | None = None
-    for token, label in zip(tokens, labels):
-        begin = cursor
-        end = cursor + len(token)
-        cursor = end + 1  # single-space join
-        if label == "O":
-            open_tag = None
-            continue
-        prefix, tag = label.split("-", 1)
-        if prefix == "I" and open_tag == tag:
-            ends[-1] = end  # extend the open span across the joining space
-        else:
-            starts.append(begin)
-            ends.append(end)
-            tags.append(tag)
-        open_tag = tag
-    return starts, ends, tags
+def splice_expansion(row: dict, idx: int, expansion: str) -> dict:
+    """Return a copy of ``row`` with token ``idx``'s surface in ``raw`` replaced by ``expansion``
+    via character splicing — never a ``" ".join(tokens)`` rebuild, which would destroy whatever
+    raw carries that the tokens don't (PR #534 open question 3). Tokens + labels are updated by
+    the matching ``_expand_token`` arithmetic; everything else in raw (commas, dots, newlines,
+    double spaces) survives verbatim.
 
+    Char-offset spans (#519) are re-targeted by the same splice arithmetic, mirroring
+    ``glue_region_postcode``: with the edit at ``[s, e)`` and ``delta = len(expansion) - (e - s)``,
 
-def _with_rederived_spans(row: dict, augmented: dict) -> dict:
-    """Attach a re-derived span triple to an expansion-augmented copy when the source row carries
-    spans. The expansions rebuild ``raw`` from the new tokens, so the spans are re-derived from
-    the new tokens/labels — the source offsets address a surface that no longer exists."""
-    if row_span_triple(row) is None:
-        return augmented
-    starts, ends, tags = spans_from_token_labels(augmented["tokens"], augmented["labels"])
-    return {**augmented, "span_starts": starts, "span_ends": ends, "span_tags": tags}
+    - a span entirely before the edit is untouched,
+    - a span entirely after the edit shifts by ``delta``,
+    - a span containing the edit keeps its start and moves its end by ``delta`` (the edit is one
+      whole whitespace token, so a span covering the token shrinks/grows in place),
+    - a span boundary STRICTLY INSIDE the edited token cannot be re-targeted — the surface it
+      addressed no longer exists — and raises rather than guesses.
+    """
+    raw: str = row["raw"]
+    tokens: list[str] = row["tokens"]
+    labels: list[str] = row["labels"]
+    s, e = whitespace_spans(raw, tokens)[idx]
+    delta = len(expansion) - (e - s)
+    new_tokens, new_labels = _expand_token(tokens, labels, idx, expansion)
+    out = {
+        **row,
+        "raw": raw[:s] + expansion + raw[e:],
+        "tokens": new_tokens,
+        "labels": new_labels,
+    }
+    triple = row_span_triple(row)
+    if triple is not None:
+        starts, ends, tags = triple
+        new_starts: list[int] = []
+        new_ends: list[int] = []
+        for start, end in zip(starts, ends):
+            if end <= s:
+                # Entirely before the edit.
+                new_starts.append(start)
+                new_ends.append(end)
+            elif start >= e:
+                # Entirely after the edit: shift by the replacement's length delta.
+                new_starts.append(start + delta)
+                new_ends.append(end + delta)
+            elif start <= s and end >= e:
+                # Contains the edited token: the end moves with the splice.
+                new_starts.append(start)
+                new_ends.append(end + delta)
+            else:
+                raise ValueError(
+                    f"corrupt row: span [{start}, {end}) has a boundary inside the expanded "
+                    f"token {tokens[idx]!r} at [{s}, {e}) — un-retargetable (raw={raw!r})"
+                )
+        out["span_starts"] = new_starts
+        out["span_ends"] = new_ends
+        out["span_tags"] = list(tags)
+    return out
 
 
 def _expand_token(
@@ -260,19 +289,7 @@ def augment_row(
         ]
         if directional_indices:
             idx = rng.choice(directional_indices)
-            new_tokens, new_labels = _expand_token(
-                tokens, labels, idx, DIRECTIONALS[tokens[idx]]
-            )
-            new_raw = " ".join(new_tokens)
-            yield _with_rederived_spans(
-                row,
-                {
-                    **row,
-                    "raw": new_raw,
-                    "tokens": new_tokens,
-                    "labels": new_labels,
-                },
-            )
+            yield splice_expansion(row, idx, DIRECTIONALS[tokens[idx]])
 
     # Region+postcode glue (#513): fuse the last region token with an immediately-following
     # postcode token in raw. Letter→digit boundary only — that's the boundary SentencePiece
@@ -301,16 +318,4 @@ def augment_row(
         ]
         if region_indices:
             idx = rng.choice(region_indices)
-            new_tokens, new_labels = _expand_token(
-                tokens, labels, idx, US_STATES[tokens[idx]]
-            )
-            new_raw = " ".join(new_tokens)
-            yield _with_rederived_spans(
-                row,
-                {
-                    **row,
-                    "raw": new_raw,
-                    "tokens": new_tokens,
-                    "labels": new_labels,
-                },
-            )
+            yield splice_expansion(row, idx, US_STATES[tokens[idx]])
