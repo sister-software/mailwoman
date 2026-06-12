@@ -4,7 +4,9 @@ Continuation of the night-12 build session. The build finished and validated; th
 to get the first model TRAINING on the v0.5.0 char-offset corpus. It did — after closing a corpus gap
 that should have been caught earlier and routing around a Modal volume consistency failure. Training
 completed all 40k steps and the gate ran: **the bridge-retirement test PASSES** (po_box 90 bridge-OFF
-≥ 89.1), 16/17 floors hold, one real −1.4pp miss on fr.house_number (#560).
+≥ 89.1, intrinsic). 15/17 tags hold flat-or-better actual-vs-actual; the one real casualty is
+fr.house_number, **−8.1pp vs v4.4.0's actual 97.7** (the gate floor of 91 understated it). Held
+experimental — hold promotion pending #560.
 
 ## RESULT (gate, post-training)
 
@@ -17,9 +19,13 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
   so the decode-side span bridge can retire at zero cost.
 - **16/17 floors pass**, several beaten: us.micro 85.4 (▲81.6), locality 74.1 (▲62.2), region 89.5
   (▲80.1), unit_real 97, fr.cedex_real 96.7, intersection_real 100, de.native_locality 91.
-- **One real miss:** `fr.house_number` 89.6 vs 91 (−1.4pp). Bridge-INDEPENDENT (89.6 both ways), so
-  not a bridge-off cost — a genuine small regression vs v4.4.0's shipped 91. Gate FAILs on it; model
-  held experimental, not promoted (no silent re-baseline). Follow-up #560.
+- **One real miss — and bigger than the floor implies:** `fr.house_number` 89.6. The gate FAILs the
+  floor (91) by 1.4pp, but the floor is a conservative bar — **v4.4.0 actually measured 97.7**, so the
+  true regression is **−8.1pp** (97.7 → 89.6). Bridge-INDEPENDENT (89.6 both ways), so a genuine
+  char-offset-format regression isolated to FR house_number, not a bridge-off cost. Anchoring to the
+  floor first understated it — the actual-vs-actual read is what matters. Model held experimental,
+  NOT promoted; **hold promotion** until the FR house_number cause is understood (#560). The
+  bridge-retirement win is real and independent of this.
 
 ## What shipped
 
@@ -86,10 +92,11 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
    Does it warrant a Modal support ticket or a volume rebuild? (Memory saved: route via R2 meanwhile.)
 2. **Bridge-retirement gate thresholds.** `over-merge precision` + `#518 punctuation lens` need
    numeric floors before the gate is authoritative. Operator/DeepSeek to pin.
-3. ~~Will char-offset hold v4.4.0 parity?~~ **ANSWERED: yes, 16/17 floors** — held and beaten on the
-   US/DE tags, bridge retired at zero cost. The lone exception is fr.house_number −1.4pp (#560), a
-   real bridge-independent regression: investigate FR house_number corpus coverage vs v4.4.0, or
-   confirm it's within FR-golden eval noise (n=1396).
+3. ~~Will char-offset hold v4.4.0 parity?~~ **MOSTLY: 15/17 tags flat-or-better actual-vs-actual**,
+   bridge retired at zero cost (po_box intrinsic 90 > v4.4.0 bridged 89.1). The one real casualty is
+   **fr.house_number −8.1pp** (97.7 → 89.6, #560) — a genuine char-offset regression, NOT noise and
+   NOT the bridge. Lesson re-learned: grade actual-vs-actual, not vs the conservative floor (which
+   said −1.4pp and nearly let an 8pp regression read as trivial).
 4. **Trackio Space** needs waking if a live dashboard is wanted for this and future runs.
 
 ## Concrete next steps
@@ -114,7 +121,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 | Models trained | 1 (v1.4.0-charoffset, completed 40k steps) |
 | A100 spend before launch | 0 (held on the volume issue) |
 | Training rate | warmed to ~5 steps/s (num_workers:0 loader); ~3.5h total |
-| Gate verdict | FAIL (16/17 floors; bridge-retirement PASS po_box 90 bridge-off; fr.house_number 89.6/91) |
+| Gate verdict | FAIL (1 floor: fr.house_number 89.6/91 — but −8.1pp vs v4.4.0 actual 97.7). bridge-retirement PASS (po_box 90 bridge-off, intrinsic > v4.4.0 bridged 89.1) |
 | Bridge | confirmed no-op (bridge-on == bridge-off on every tag) → retire |
 | Infra incidents | 1 (Modal volume CLI-write blindness, both directions; rerouted via R2) |
 | NaN incidents | 0 |
