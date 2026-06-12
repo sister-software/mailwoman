@@ -336,20 +336,29 @@ describe("alignRow — char-offset span emission (#519, v0.5.0 format)", () => {
 		expect(result.row.span_tags).toEqual([])
 	})
 
-	it("throws loudly on a non-NFC raw, naming the row's source_id", () => {
+	it("normalizes a non-NFC raw to NFC instead of throwing (keeps the row; spans over the NFC raw)", () => {
 		// NFD: "é" as base letter + combining acute — two code units where NFC has one.
 		const nfdRaw = "10 Rue de la Re\u0301publique, 75008 Paris"
 		expect(nfdRaw.normalize("NFC")).not.toBe(nfdRaw)
-		expect(() =>
-			alignRow(
-				baseRow({
-					raw: nfdRaw,
-					country: "FR",
-					source_id: "nfd-row-42",
-					components: { locality: "Paris", postcode: "75008" },
-				})
-			)
-		).toThrowError(/not NFC-normalized.*nfd-row-42/s)
+		const result = alignRow(
+			baseRow({
+				raw: nfdRaw,
+				country: "FR",
+				source_id: "nfd-row-42",
+				components: { locality: "Paris", postcode: "75008" },
+			})
+		)
+		expect(result.kind).toBe("labeled")
+		if (result.kind !== "labeled") return
+		// Stored raw is the NFC form (single normalization form — #519 principle preserved).
+		const nfcRaw = nfdRaw.normalize("NFC")
+		expect(result.row.raw).toBe(nfcRaw)
+		// Spans located over the NFC raw → slicing by each span yields the component text.
+		const located = result.row.span_tags.map(
+			(tag, i) => `${tag}:${nfcRaw.slice(result.row.span_starts[i]!, result.row.span_ends[i]!)}`
+		)
+		expect(located).toContain("locality:Paris")
+		expect(located).toContain("postcode:75008")
 	})
 
 	it("does not throw on a non-NFC raw that is empty-ish (raw-empty quarantine wins)", () => {
