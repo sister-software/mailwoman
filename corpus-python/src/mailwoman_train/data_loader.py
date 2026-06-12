@@ -554,6 +554,7 @@ def iter_encoded(
     affix_relabel_lexicon = None
     if getattr(cfg_data, "affix_relabel_lexicon_path", None):
         affix_relabel_lexicon = AffixRelabelLexicon.load(cfg_data.affix_relabel_lexicon_path)
+    astral_skipped = 0
     for row in iter_rows(
         Path(cfg_data.corpus_dir),
         split,
@@ -567,6 +568,22 @@ def iter_encoded(
         augment_glue_prob=getattr(cfg_data, "augment_glue_prob", 0.0),
         affix_relabel_lexicon=affix_relabel_lexicon,
     ):
+        # v0.5.0 stopgap (#519 offset-unit mismatch): the corpus stores span offsets in UTF-16 code
+        # units, but this consumer (char_label_array_from_spans + SentencePiece pieces) is code-point-
+        # native. For astral-plane rows (~0.06% — exotic-script country-name variants like Gothic), a
+        # UTF-16 span end can exceed the code-point len(raw) and encode_row would raise
+        # span-out-of-bounds. Skip + count rather than crash a multi-hour training run. Lasting fix:
+        # emit code-point offsets in the TS build and re-align (corpus-v0.5.1). 2026-06-12.
+        _se = row.get("span_ends")
+        if _se and max(_se) > len(row["raw"]):
+            astral_skipped += 1
+            if astral_skipped <= 5 or astral_skipped % 50000 == 0:
+                logger.warning(
+                    "iter_encoded: skipped astral UTF-16-offset row #%d (span end > code-point len): %r",
+                    astral_skipped,
+                    row["raw"][:40],
+                )
+            continue
         enc = encode_row(
             tokenizer,
             row["raw"],

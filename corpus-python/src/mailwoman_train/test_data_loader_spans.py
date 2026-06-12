@@ -203,3 +203,30 @@ def test_iter_encoded_legacy_path_passes_none(tmp_path: Path, monkeypatch) -> No
     list(iter_encoded(cfg, tokenizer=None, split="train"))
     assert captured[0]["span_starts"] is None
     assert captured[0]["span_tags"] is None
+
+
+def test_iter_encoded_skips_astral_utf16_offset_rows(tmp_path: Path, monkeypatch) -> None:
+    # The corpus stores UTF-16 span offsets (#519); this consumer is code-point-native. An astral-
+    # script row (Gothic — 2 UTF-16 units per code point) has span ends that exceed the code-point
+    # len(raw), so encode_row would raise span-out-of-bounds. iter_encoded must skip it, not crash.
+    astral = _row(
+        raw="𐍃𐌿𐌽𐌸",  # 4 code points, 8 UTF-16 units
+        tokens=["𐍃𐌿𐌽𐌸"],
+        labels=["B-country"],
+        span_starts=[0],
+        span_ends=[8],  # UTF-16 end > code-point len(raw)=4
+        span_tags=["country"],
+    )
+    corpus = _write_corpus(tmp_path, [_row(), astral])
+    captured: list[dict] = []
+
+    def fake_encode_row(tokenizer, raw, tokens, labels, max_length, **kwargs):
+        captured.append({"raw": raw, **kwargs})
+        return {"input_ids": [1], "attention_mask": [1], "labels": [0]}
+
+    monkeypatch.setattr(data_loader, "encode_row", fake_encode_row)
+    cfg = DataConfig(corpus_dir=str(corpus), country_weights={"US": 1.0}, coarse_filter=False)
+    list(iter_encoded(cfg, tokenizer=None, split="train"))
+    # Only the BMP row reached encode_row; the astral row was skipped before it (no crash).
+    assert len(captured) == 1
+    assert captured[0]["raw"] == "P.O. Box 19, Buffalo, NY 14201"
