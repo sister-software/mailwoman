@@ -47,7 +47,7 @@
  *   self-contained.
  */
 
-import { createReadStream, createWriteStream, type WriteStream } from "node:fs"
+import { createReadStream, createWriteStream, existsSync, readFileSync, type WriteStream } from "node:fs"
 import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { createInterface } from "node:readline"
@@ -138,6 +138,19 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			opts.onProgress?.("adapter-run", `skipped ${adapter.id} (no input configured)`)
 			continue
 		}
+		// Opt-in resume (MAILWOMAN_RESUME=1): if a complete per-adapter canonical.jsonl + MANIFEST.json
+		// already exist, reuse them instead of re-emitting. The MANIFEST is written only after the
+		// canonical is fully flushed, so its presence guarantees completeness; row order is identical,
+		// so downstream holdout-split determinism is preserved. Recovers an align-phase crash without
+		// redoing the (expensive) emit phase. Default (unset) re-emits, preserving correctness. (2026-06-12.)
+		const adapterDir = join(intermediateDir, adapter.id)
+		const cachedManifest = join(adapterDir, "MANIFEST.json")
+		if (process.env.MAILWOMAN_RESUME === "1" && existsSync(cachedManifest) && existsSync(join(adapterDir, "canonical.jsonl"))) {
+			const cached = JSON.parse(readFileSync(cachedManifest, "utf8")) as AdapterRunManifest
+			opts.onProgress?.("adapter-run", `resumed ${adapter.id} (reused ${cached.yielded} canonical rows)`)
+			adapterRuns.push(cached)
+			continue
+		}
 		opts.onProgress?.("adapter-run", `running ${adapter.id}`)
 		const m = await runAdapter({
 			adapter,
@@ -185,7 +198,18 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 				}
 			}
 			for (const r of fanned) {
-				const result = alignRow(r)
+				let result: ReturnType<typeof alignRow>
+				try {
+					result = alignRow(r)
+				} catch (err) {
+					// Last-resort robustness (2026-06-12): no single row may crash a multi-hour build.
+					// alignRow's targeted paths normalize/quarantine known issues with specific reasons;
+					// this catches any UNKNOWN throw (e.g. assertSpanInvariants on an unforeseen span
+					// shape) → quarantine + continue. A spike in `align-threw` reasons is a finding.
+					writeQuarantine(r, `align-threw:${(err as Error).message.slice(0, 160)}`)
+					quarantined++
+					continue
+				}
 				if (result.kind === "labeled") {
 					const split = splitForRow(result.row, holdouts)
 					labeledStreams[split].write(`${JSON.stringify(result.row)}\n`)

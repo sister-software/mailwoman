@@ -83,34 +83,34 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 		return { kind: "quarantined", row: { row, reason: "raw-empty" } }
 	}
 
-	// Build-time NFC assertion (#519 ruling 2: the converter's Unicode-mismatch class dissolves
-	// into this check). Char-offset spans over `raw` are only meaningful under ONE normalization
-	// form; a non-NFC raw corrupts every downstream offset silently. Loud failure, naming the row.
-	if (row.raw.normalize("NFC") !== row.raw) {
-		throw new Error(
-			`alignRow: raw is not NFC-normalized (source=${row.source}, source_id=${row.source_id}). ` +
-				`Char-offset spans over a non-NFC raw are ambiguous downstream — normalize at the adapter boundary. ` +
-				`raw=${JSON.stringify(row.raw)}`
-		)
+	// #519 NFC handling — relaxed from a hard throw to normalization (2026-06-12, DeepSeek-validated):
+	// one non-NFC row (e.g. a non-Latin name variant like "দক্ষিণ কোরিয়া") must not crash a multi-hour
+	// build. Normalize `raw` AND every component value to NFC, compute spans over the NFC raw, and
+	// store the NFC raw — preserving the #519 single-normalization-form principle while keeping the row.
+	const raw = row.raw.normalize("NFC")
+	const components = { ...row.components }
+	for (const key in components) {
+		const v = components[key as keyof typeof components]
+		if (typeof v === "string") components[key as keyof typeof components] = v.normalize("NFC")
 	}
 
 	const componentSpans: ComponentSpan[] = []
 	const claimed: Array<[number, number]> = []
 
-	const haystack = caseInsensitive ? row.raw.toLowerCase() : row.raw
+	const haystack = caseInsensitive ? raw.toLowerCase() : raw
 
 	// Longest value first: a short component must not claim a word that a longer, more specific
 	// component owns ("Alaska Regional Dr, Alaska" — region "Alaska" stealing the street's first
 	// word quarantined the street; pilot2's residual class). Emit order is unaffected — spans are
 	// re-sorted by start below.
-	const entries = (Object.entries(row.components) as Array<[ComponentTag, string | undefined]>).sort(
+	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).sort(
 		(a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0)
 	)
 	for (const [tag, value] of entries) {
 		if (!value) continue
 
 		const needle = caseInsensitive ? value.toLowerCase() : value
-		const span = locateSpan({ haystack, needle, raw: row.raw, claimed, maxEditDistance })
+		const span = locateSpan({ haystack, needle, raw, claimed, maxEditDistance })
 
 		if (!span) {
 			return {
@@ -119,17 +119,32 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 			}
 		}
 
+		// Defensive bounds quarantine (2026-06-12): locateSpan's fuzzy/boundary logic can over-run the
+		// raw by a code unit on some non-Latin / combining-mark strings (e.g. Bengali name variants),
+		// yielding a span past the end. An out-of-bounds offset can never be a valid char span —
+		// quarantine the row rather than crash assertSpanInvariants and take down a multi-hour build.
+		// (If this class proves large in the quarantine report, locateSpan's boundary logic needs a
+		// combining-mark fix to KEEP these non-Latin rows.)
+		if (span.start < 0 || span.end > raw.length || span.start >= span.end) {
+			return {
+				kind: "quarantined",
+				row: { row, reason: `span-out-of-bounds:${tag}` },
+			}
+		}
+
 		componentSpans.push({ tag, start: span.start, end: span.end })
 		claimed.push([span.start, span.end])
 	}
 
 	componentSpans.sort((a, b) => a.start - b.start)
-	assertSpanInvariants(componentSpans, row)
-	const tokens = tokenizer.tokenize(row.raw)
+	assertSpanInvariants(componentSpans, { ...row, raw })
+	const tokens = tokenizer.tokenize(raw)
 	const labels = labelTokens(tokens, componentSpans)
 
 	const labeled: LabeledRow = {
 		...row,
+		raw,
+		components,
 		tokens: tokens.map((t) => t.text),
 		labels,
 		// The v0.5.0 char-offset triple (#519): the located spans, emitted verbatim. The token
