@@ -73,6 +73,10 @@ export default defineConfig({
 			// and crash on the unfamiliar `test.describe` API.
 			"**/docs/test/browser/**",
 			"**/docs/test/e2e/**",
+			// Agent worktrees under .claude/worktrees/ are isolated git checkouts; each contains a
+			// full copy of the repo's test files. Without this exclude, vitest descends into every
+			// active worktree and runs every test suite N×(worktree count) times.
+			"**/.claude/worktrees/**",
 		],
 	},
 })
