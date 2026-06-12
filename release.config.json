@@ -1,14 +1,14 @@
 {
 	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode — see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to `weights.dataRoot` (override the root with MAILWOMAN_DATA_ROOT, or the individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.mjs, the ship script, and the model card all read this instead of hardcoding the numbers.",
-	"version": "4.1.0",
+	"version": "4.5.0",
 	"locales": ["en-us", "fr-fr"],
 	"weights": {
 		"dataRoot": "/mnt/playpen/mailwoman-data",
-		"model": "models/quantized/model-v097-step-20000-int8.onnx",
+		"model": "models/quantized/model-v140-step-40000-int8.onnx",
 		"tokenizer": "models/tokenizer/v0.6.0-a0/tokenizer.model",
 		"tokenizerVersion": "0.6.0-a0",
-		"trainingStep": 20000,
-		"lineage": "v0.9.7-unit-v3 (unit-coverage retrain off v0.9.3-de-regiontail, step 20000) — shipped as the unified 4.1.0 release version"
+		"trainingStep": 40000,
+		"lineage": "v1.4.0-charoffset (char-offset corpus #519, step 40000) — shipped as the unified 4.5.0 release; span bridge RETIRED (po_box learned intrinsically), fr.house_number known regression vs 4.4.0 (#560, reversed-order FR). NOTE: this file had drifted to 4.1.0/v097 (v4.4.0 shipped via MAILWOMAN_PUBLISH_MODEL override) — realigned to current here."
 	},
 	"assets": {
 		"$comment": "Where the model release lives for the demo + the CI weights pull. The release path embeds `version`; publish.yml derives the same path from the model card so CI and local stay in sync.",

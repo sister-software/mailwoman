@@ -1,0 +1,31 @@
+{
+	"$comment": "PRE-REGISTERED gate for v1.4.0-charoffset (the FIRST v0.5.0 char-offset-corpus run), authored 2026-06-12 BEFORE the run produces a checkpoint. It inherits EVERY floor from v4.4.0-boundary VERBATIM (the shipped contract) — the recipe is unchanged, only the corpus label FORMAT changed (token BIO -> #519 char-offset spans), so the v4.4.0 bars are the right hold-the-line contract. Two STATED changes encode the bridge-retirement test (no silent drift):",
+	"$comment_change_1": "requires_bridge: FALSE. v4.4.0 shipped with the decode-side punctuation-gap span bridge (neural/span-bridge.ts) carrying dotted po_box (P.O./C.P./B.P.) — the token corpus could not label standalone dots, so the model shattered the span and the bridge re-merged it (measured po_box 60.4 -> 87.0). The char-offset corpus CAN label the dots as a contiguous span, so the model should learn po_box INTRINSICALLY. This gate runs the eval with the bridge OFF: if po_box holds, the bridge retires.",
+	"$comment_change_2": "us.po_box_real raised 70.0 -> 89.1. The v4.4.0 floor (70) was the conservative 'alive and precise' first-run bar WITH the bridge. The retirement bar is the pre-registered 89.1 (2026-06-12 validation report): intrinsic bridge-OFF po_box must MEET-OR-BEAT the v4.4.0 bridge-ON measurement (87.0) with margin. Below 89.1 bridge-off = retirement DENIED (keep the bridge, flip requires_bridge back to true for the ship gate, and treat it as a MISS to confront — not a quiet re-baseline).",
+	"$comment_unpinned": "OPEN — the validation report's bridge-retirement spec also names 'over-merge precision' and the '#518 punctuation lens'. Their numeric thresholds are NOT yet pinned here and must be set before this gate is authoritative (deliberately NOT fabricated). over-merge precision = the inverse risk of retiring the bridge (does intrinsic span-learning now OVER-merge adjacent tags that the bridge's Saint-Albans space-gap guard used to protect?); the #518 punctuation lens = the per-punctuation-class po_box/cedex breakdown the v4.4.0 audit used. Operator/DeepSeek to pin both (flagged in the night-shift report).",
+	"label": "v0.5.0-bridge",
+	"requires_gazetteer_lexicon": true,
+	"requires_conventions": "auto",
+	"requires_bridge": false,
+	"floors": {
+		"us.postcode": 97.0,
+		"us.country_homograph_f1": 83.3,
+		"us.micro": 81.6,
+		"us.locality": 62.2,
+		"us.region": 80.1,
+		"us.street": 74.0,
+		"us.street_prefix": 78.0,
+		"us.street_suffix": 67.0,
+		"us.unit_real": 88.0,
+		"fr.postcode": 99.5,
+		"fr.house_number": 91.0,
+		"fr.region": 16.2,
+		"de.native_locality": 83.8,
+		"arena.perturb": 71.0,
+		"us.po_box_real": 89.1,
+		"fr.cedex_real": 70.0,
+		"us.intersection_real": 50.0
+	},
+	"int8_vs_fp32_max_delta_pp": 1.5,
+	"ledger_path": "evals/scores-by-version.json"
+}

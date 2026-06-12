@@ -267,9 +267,22 @@ async function main(): Promise<void> {
 		}
 		const preds: Array<Record<string, string>> = []
 		const t0 = performance.now()
+		// MAILWOMAN_DUMP_MISS_TAG=<tag>: print every row where gold has <tag> but the prediction
+		// differs (false-neg or mislabel). A diagnostic lens for "which surfaces does the model drop"
+		// — added for the #560 fr.house_number investigation; harmless when the env is unset.
+		const dumpTag = process.env.MAILWOMAN_DUMP_MISS_TAG
 		for (const row of rows) {
 			const tree = await neural.parse(row.raw)
-			preds.push(foldToComponents(decodeAsJson(tree)))
+			const pred = foldToComponents(decodeAsJson(tree))
+			preds.push(pred)
+			if (dumpTag) {
+				const gold = (row as { components?: Record<string, string> }).components?.[dumpTag]
+				if (gold && gold !== pred[dumpTag]) {
+					console.error(
+						`MISS[${dumpTag}] ${basename(file, ".jsonl")} raw=${JSON.stringify(row.raw)} gold=${JSON.stringify(gold)} pred=${JSON.stringify(pred[dumpTag] ?? null)} all=${JSON.stringify(pred)}`
+					)
+				}
+			}
 		}
 		const rep = scoreFile(basename(file, ".jsonl"), rows, preds)
 		reports.push(rep)
