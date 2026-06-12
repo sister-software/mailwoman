@@ -430,7 +430,8 @@ def debug_volume(config_name: str = "v1.4.0-charoffset.yaml"):
 
     import modal as _m
     print("modal client version:", getattr(_m, "__version__", "?"))
-    for d in ["/data", "/data/corpus/versioned", "/data/models", "/data/models/tokenizer"]:
+    for d in ["/data", "/data/corpus/versioned", "/data/models", "/data/models/tokenizer",
+              "/data/output-v140-charoffset-s42", "/data/output-v140-charoffset-s42/checkpoints"]:
         print(f"  ls {d}:", sorted(os.listdir(d)) if os.path.isdir(d) else "MISSING")
 
     snapshot("pre-reload (mount as-started)")

@@ -3,7 +3,23 @@
 Continuation of the night-12 build session. The build finished and validated; this shift's job was
 to get the first model TRAINING on the v0.5.0 char-offset corpus. It did — after closing a corpus gap
 that should have been caught earlier and routing around a Modal volume consistency failure. Training
-is live and healthy at write time; the gate result is ~4h out.
+completed all 40k steps and the gate ran: **the bridge-retirement test PASSES** (po_box 90 bridge-OFF
+≥ 89.1), 16/17 floors hold, one real −1.4pp miss on fr.house_number (#560).
+
+## RESULT (gate, post-training)
+
+`v1.4.0-charoffset` step-40000, graded bridge-OFF against `v0.5.0-bridge.json` and bridge-ON against
+`v4.4.0-boundary.json` (apples-to-apples). The two are **byte-identical on every tag** — the bridge is
+a confirmed NO-OP for this model (it never fragments po_box, so there's nothing to merge).
+
+- **Bridge retirement VALIDATED:** `us.po_box_real = 90.0` bridge-OFF (floor 89.1). The char-offset
+  format does exactly what it was built for — the model learns dotted P.O. Box spans intrinsically,
+  so the decode-side span bridge can retire at zero cost.
+- **16/17 floors pass**, several beaten: us.micro 85.4 (▲81.6), locality 74.1 (▲62.2), region 89.5
+  (▲80.1), unit_real 97, fr.cedex_real 96.7, intersection_real 100, de.native_locality 91.
+- **One real miss:** `fr.house_number` 89.6 vs 91 (−1.4pp). Bridge-INDEPENDENT (89.6 both ways), so
+  not a bridge-off cost — a genuine small regression vs v4.4.0's shipped 91. Gate FAILs on it; model
+  held experimental, not promoted (no silent re-baseline). Follow-up #560.
 
 ## What shipped
 
@@ -70,8 +86,10 @@ is live and healthy at write time; the gate result is ~4h out.
    Does it warrant a Modal support ticket or a volume rebuild? (Memory saved: route via R2 meanwhile.)
 2. **Bridge-retirement gate thresholds.** `over-merge precision` + `#518 punctuation lens` need
    numeric floors before the gate is authoritative. Operator/DeepSeek to pin.
-3. **Will char-offset hold v4.4.0 parity?** The step-2000 val is healthy but early. The real answer
-   is the post-training gate (all v4.4.0 floors, bridge OFF). Pending.
+3. ~~Will char-offset hold v4.4.0 parity?~~ **ANSWERED: yes, 16/17 floors** — held and beaten on the
+   US/DE tags, bridge retired at zero cost. The lone exception is fr.house_number −1.4pp (#560), a
+   real bridge-independent regression: investigate FR house_number corpus coverage vs v4.4.0, or
+   confirm it's within FR-golden eval noise (n=1396).
 4. **Trackio Space** needs waking if a live dashboard is wanted for this and future runs.
 
 ## Concrete next steps
@@ -93,10 +111,11 @@ is live and healthy at write time; the gate result is ~4h out.
 | Shift focus | complete corpus + launch first char-offset training |
 | Overlay shards re-emitted | 7 (~485k train rows) |
 | Corpus | 689 shards, 676.6M train / 1.89M val / 1.89M test |
-| Models trained | 1 launched (v1.4.0-charoffset, in-flight) |
+| Models trained | 1 (v1.4.0-charoffset, completed 40k steps) |
 | A100 spend before launch | 0 (held on the volume issue) |
-| Training rate | ~2.6 steps/s (num_workers:0 data loader bound); ~4h ETA |
-| Step-2000 val macro_f1 | 0.627 (healthy early checkpoint) |
-| Infra incidents | 1 (Modal volume CLI-write blindness; rerouted via R2) |
+| Training rate | warmed to ~5 steps/s (num_workers:0 loader); ~3.5h total |
+| Gate verdict | FAIL (16/17 floors; bridge-retirement PASS po_box 90 bridge-off; fr.house_number 89.6/91) |
+| Bridge | confirmed no-op (bridge-on == bridge-off on every tag) → retire |
+| Infra incidents | 1 (Modal volume CLI-write blindness, both directions; rerouted via R2) |
 | NaN incidents | 0 |
-| PRs opened | #559 |
+| PRs / issues | PR #559 · issue #560 |
