@@ -214,6 +214,39 @@ def sync_v050():
           "astral_skipped" in open(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/data_loader.py").read())
 
 
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
+def push_artifact_r2(volume_path: str, r2_subpath: str):
+    """Push a volume artifact (e.g. an exported model.onnx) OUT to R2, container-side.
+
+    The mirror of sync_v050: on this volume the container<->CLI views are fully divergent (CLI writes
+    don't reach containers AND container writes — checkpoints, exported ONNX — don't reach the CLI,
+    verified 2026-06-12), so `modal volume get` can't pull a container-written artifact. Route it
+    through R2 instead: this copies `<volume_path>` to `:s3:mailwoman-assets/<r2_subpath>`, then you
+    `rclone copy` it down locally. Rides R2's intermittent 501s with retries.
+
+    Usage: modal run scripts/modal/train_remote.py::push_artifact_r2 \\
+             --volume-path /data/output-v140-charoffset-s42/model.onnx \\
+             --r2-subpath artifacts/v1.4.0-charoffset/model.onnx"""
+    import subprocess
+
+    vol.reload()
+    if not os.path.exists(volume_path):
+        raise RuntimeError(f"volume artifact not found: {volume_path}")
+    dst = f":s3:{BUCKET}/{r2_subpath}"
+    cmd = f"rclone copyto '{volume_path}' '{dst}' --low-level-retries 30 --retries 8 --stats-one-line"
+    print(f"push: {volume_path} -> {dst}")
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"STDERR: {result.stderr[:800]}")
+        raise RuntimeError(f"rclone push failed: {result.stderr[:200]}")
+    print(f"pushed OK. Pull locally with: rclone copyto :s3:{BUCKET}/{r2_subpath} ./<local>")
+
+
 # ---------------------------------------------------------------------------
 # Training function
 # ---------------------------------------------------------------------------
