@@ -39,8 +39,8 @@ set -euo pipefail
 # the locale head exported (locale_logits) for the conventions mask (#478 slice 1),
 # + the 0.6.0-a0 tokenizer. These md5s are the authoritative bytes the demo serves
 # at .../mailwoman/en-us/v4.3.0/{model,tokenizer}.
-DEFAULT_MODEL="/mnt/playpen/mailwoman-data/models/quantized/model-v130-step-40000-int8.onnx"
-DEFAULT_MODEL_MD5="f086951a807b35e1ef700c0c2662a088"
+DEFAULT_MODEL="/mnt/playpen/mailwoman-data/models/quantized/model-v140-step-40000-int8.onnx"
+DEFAULT_MODEL_MD5="25f3956de77a252bb9440907eb5b2a37"
 DEFAULT_TOKENIZER="/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 DEFAULT_TOKENIZER_MD5="b6137e8c52914c9715374268ecaa4bc6"
 
