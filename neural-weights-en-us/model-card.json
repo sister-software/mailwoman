@@ -1,17 +1,17 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "4.4.0",
-	"model_lineage": "v1.3.0-boundary-consolidation / step 40000 — from scratch on corpus v0.4.15-boundary: the v4.3.0 recipe + three probe-passed levers (glue augmentation #513, real-TIGER intersection shard #487, codex po_box/cedex coverage shard), old synth-po-box retired. Ships with TWO declared inference behaviors: addressSystemConventions:'auto' (v4.3.0) + bridgePunctuationGaps:true (the span bridge — the corpus label format cannot express punctuation inside spans; the bridge merges same-tag fragments across intra-token punctuation). Gate: docs/articles/evals/2026-06-11-v4.4.0-ship-gate.md; tokenizer 0.6.0-a0",
-	"phase": "Stage 3 — v1.3 boundary: the last starved tags alive (po_box/cedex/intersections) + the arena debt closed",
+	"version": "4.5.0",
+	"model_lineage": "v1.4.0-charoffset / step 40000 — the FIRST char-offset-corpus model (#519). From scratch on corpus v0.5.0 (676.6M rows: a from-source rebuild in the char-offset span-label format + the 7 re-emitted parity overlays). IDENTICAL recipe to v4.4.0's v1.3.0-boundary-consolidation — the ONLY variable is the label format (token BIO → char-offset span triple), so the v4.4.0 floors are the hold-the-line contract. HEADLINE: the span bridge (bridgePunctuationGaps) is RETIRED — the char-offset format lets the model learn dotted po_box spans intrinsically (po_box 90.0 graded bridge-OFF, ≥ the 89.1 the bridge achieved), and bridge-on vs bridge-off is byte-identical on every tag (confirmed no-op). One declared inference behavior remains: addressSystemConventions:'auto'. Gate: scripts/eval/gates/v0.5.0-bridge.json + docs/articles/evals/2026-06-12-v050-charoffset-launch.md; tokenizer 0.6.0-a0.",
+	"phase": "v1.4 char-offset — the structural cure: span-label format ships, the decode-side span bridge retired (po_box learned intrinsically)",
 	"license": "AGPL-3.0-only",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "0.4.15-boundary (v0.4.12 + intersection + po_box/cedex shards; loader relabel + glue augmentation)",
+		"corpus_version": "0.5.0 (char-offset span labels #519: from-source base + 7 re-emitted parity overlays)",
 		"tokenizer_version": "0.6.0-a0",
 		"steps": 40000,
 		"best_step": 40000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v1.3.0-boundary-consolidation: from-scratch 40k, augment_glue_prob 0.25, synth-intersection 1.0, synth-po-box-cedex 1.5 (old synth-po-box retired, stated), affix relabel pass, gazetteer anchor + choreography, CE-only, lr=1.5e-4, seed 42."
+		"recipe": "v1.4.0-charoffset: from-scratch 40k on the char-offset corpus, recipe held identical to v1.3.0-boundary (augment_glue_prob 0.25, synth-intersection 1.0, synth-po-box-cedex 1.5, affix relabel, gazetteer anchor + choreography, CE-only, lr=1.5e-4, seed 42) — the format is the single variable."
 	},
 	"architecture": {
 		"hidden_size": 384,
@@ -21,7 +21,7 @@
 		"max_position_embeddings": 128,
 		"vocab_size": 48000,
 		"num_labels": 33,
-		"params": "29.3M (29M encoder + 9M embedding from 48K vocab)",
+		"params": "29.6M (29M encoder + 9M embedding from 48K vocab)",
 		"crf_at_training": false,
 		"crf_at_inference": true,
 		"phrase_priors": true
@@ -79,9 +79,9 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "v4.4.0 — the boundary consolidation: po_box 0→89.1, cedex 0→96.1, intersections 0→100 (real-OOD, P≥95) — the parity scorecard's last empty rows filled; the v4.3.0 perturb-arena debt closed (64→72, gated). The ship config REQUIRES bridgePunctuationGaps:true + addressSystemConventions:'auto' — without the bridge, dotted surfaces (P.O. Box, C.P.) decode as period-truncated fragments (the corpus alignment tokenizer cannot label punctuation; measured: po_box 60.4 without, 89.1 with). Bridge merges intra-token punctuation gaps ONLY (commas excluded — they separate genuine spans). Known follow-ups: char-offset corpus labels (the structural cure), conventions loss-mask rides the next run, FR region tail 25.6 (floored, recovering).",
+	"notes": "v4.5.0 — the char-offset cure. The corpus now labels spans by character offset (#519), so the model learns dotted surfaces (P.O. Box, C.P.) as contiguous spans WITHOUT the decode-side span bridge: po_box 90.0 graded bridge-OFF (v4.4.0 needed the bridge to reach 89.1). The bridge is now a CONFIRMED NO-OP (bridge-on == bridge-off on every tag) and is retired — it may be left enabled harmlessly. 15/17 tags hold flat-or-better actual-vs-v4.4.0. KNOWN REGRESSION (accepted trade, recover-next-run): fr.house_number 97.7 → ~89.6 (−8pp). Root cause #560 — the model is order-blind on FR house_numbers in REVERSED (postcode-first) order (\"47110 Locality, 69 Street\"), which the FR training (BAN, canonical-order) never taught; v4.4.0's 97.7 was bridge-rescued on exactly these. The FR house_number eval is 85% one reversed-order cluster, so the metric is hypersensitive. Fix queued: a reversed-order FR synth shard (the German both-order shape). Other follow-up: corpus-v0.5.1 code-point offset re-align (the #558 astral-skip's lasting fix).",
 	"format": {
-		"model": "ONNX int8 dynamic (quantized from fp32)",
+		"model": "ONNX int8 dynamic (quantized from fp32, max fp32↔int8 delta 0.3pp)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=48000",
 		"max_sequence_length": 128,
 		"opset": 17,
@@ -99,53 +99,51 @@
 		"method": "isotonic-regression (PAVA) over per-span softmax confidence; OPT-IN via core/decoder createCalibrator",
 		"held_out_ece_raw": 0.0673,
 		"held_out_ece_calibrated": 0.0035,
-		"note": "calibration.json is the global table; calibration-per-locale.json carries per-locale tables (the global table under-serves DE/NL). Apply via @mailwoman/core/decoder's createCalibrator; default parse output is byte-stable when omitted."
+		"note": "calibration.json + calibration-per-locale.json carried forward from v4.4.0 (architecture + label space unchanged). Re-fit recommended next train. Apply via @mailwoman/core/decoder's createCalibrator; default parse output is byte-stable when omitted."
 	},
-	"base_relpath": "/data/output-v097-unit-v3-s42/checkpoints/step-020000",
+	"base_relpath": "/data/output-v140-charoffset-s42/checkpoints/step-040000",
 	"eval": {
-		"ship_gate_2026_06_11_night": {
-			"promotion_gate": "PASS 17/17 (gates/v4.4.0-boundary.json, int8-graded, max delta 0.3pp; three-battery record in the gate doc)",
-			"honest_eval_vt": {
-				"n": 1428,
-				"region_match_pct": 99.6,
-				"coord_p50_km": 3.4,
-				"coord_p90_km": 7.5,
-				"verdict": "PASS"
-			},
-			"arena_perturb_pct": 72.0
+		"gate_2026_06_12_charoffset": {
+			"promotion_gate": "FAIL 16/17 (gates/v0.5.0-bridge.json, bridge-OFF) — the single miss is fr.house_number 89.6 vs floor 91 (accepted trade, #560). int8-vs-fp32 max delta 0.3pp (≤1.5 cap). bridge-retirement VALIDATED: po_box 90.0 bridge-OFF ≥ 89.1.",
+			"bridge_retired": true,
+			"gate_doc": "docs/articles/evals/2026-06-12-v050-charoffset-launch.md"
 		},
 		"per_component_int8_shipconfig": {
 			"us": {
-				"postcode": 98.3,
-				"country_homograph": 89.8,
-				"micro": 86.1,
-				"locality": 75.7,
-				"region": 90.3,
-				"street": 77.9,
-				"street_prefix": 93.6,
-				"street_suffix": 96.6,
-				"unit": 92.1,
-				"po_box_real": 89.1,
+				"postcode": 98.5,
+				"country_homograph": 87.5,
+				"micro": 85.4,
+				"locality": 74.0,
+				"region": 89.5,
+				"street": 75.8,
+				"street_prefix": 98.0,
+				"street_suffix": 94.9,
+				"unit": 97.0,
+				"po_box_real": 90.0,
 				"intersection_real": 100.0
 			},
 			"fr": {
-				"postcode": 99.6,
-				"house_number": 97.2,
-				"region": 25.6,
-				"cedex_real": 96.1
+				"postcode": 99.7,
+				"house_number": 89.3,
+				"region": 35.2,
+				"cedex_real": 96.6
 			},
 			"de": {
 				"native_locality_anchor_on": 91.0
 			}
 		},
-		"known_regressions_vs_4_3_0": {
-			"fr_postcode": -0.1,
-			"fr_house_number": -0.5,
-			"note": "both within single-row noise on their evals; every floor met"
+		"vs_4_4_0_actual": {
+			"po_box_real": "+0.9 (89.1 bridged → 90.0 intrinsic, bridge RETIRED)",
+			"unit_real": "+4.9",
+			"country_homograph": "+2.4",
+			"street_prefix": "+4.4",
+			"fr_region": "+9.6",
+			"fr_house_number": "-8.1 (97.7 → 89.6) — KNOWN, #560, reversed-order FR (recover next run)",
+			"note": "15/17 tags flat-or-better actual-vs-actual; fr.house_number is the one real casualty (accepted trade)."
 		}
 	},
 	"files_md5": {
-		"model.onnx": "f086951a807b35e1ef700c0c2662a088",
+		"model.onnx": "25f3956de77a252bb9440907eb5b2a37",
 		"tokenizer.model": "b6137e8c52914c9715374268ecaa4bc6"
 	}
 }
