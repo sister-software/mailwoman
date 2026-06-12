@@ -80,6 +80,14 @@ resolver:
   label: Resolver / WOF
   description: Articles about the Who's On First gazetteer, concordance scoring, and resolver candidate ranking.
 
+wof:
+  label: Who's On First
+  description: Articles about the Who's On First gazetteer dataset — IDs, place hierarchies, concordance, and WOF-derived data products.
+
+parsing:
+  label: Parsing
+  description: Articles about the core parsing problem — segmenting raw address text into labeled components via rule-based and neural stages.
+
 #endregion
 
 #region Infrastructure
@@ -167,6 +175,26 @@ multilingual:
 non-latin:
   label: Non-Latin scripts
   description: Articles about CJK, Cyrillic, Arabic, Hangul, and other non-Latin address formats.
+
+#endregion
+
+#region Evaluation
+
+eval:
+  label: Evaluation harness
+  description: Articles about specific evaluation rigs, test sets, and harnesses built to measure model or resolver correctness.
+
+evaluation:
+  label: Evaluation
+  description: Articles about evaluating model and system performance — how results are measured, reported, and interpreted.
+
+methodology:
+  label: Methodology
+  description: Articles examining how Mailwoman defines and measures success — metric design, scoring philosophy, and what makes a test honest.
+
+coordinate-first:
+  label: Coordinate-first scoring
+  description: Articles about scoring resolver outputs by geographic distance rather than name equality — the shift from label matching to spatial grounding.
 
 #endregion
 
