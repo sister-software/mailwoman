@@ -193,6 +193,8 @@ Approved dependencies for this project:
 - Corpus versions: `corpus-v<major>.<minor>.<patch>`. Major = schema change. Minor = source added. Patch = synthesis tweak.
 - Model versions: `model-v<major>.<minor>.<patch>-<locale>`. Same scheme.
 - Both versions appear in `ModelCard.trainedOn` and `LabeledRow.corpus_version` so any prediction is traceable to its training data.
+- **Package / release versions** (the published `mailwoman` npm package + the live demo) are a SEPARATE, independent line — the user-facing product version (currently `4.4.0`). It does not share a counter with the corpus or model versions: the package marched 4.0 → 4.4 through the parity campaign while the corpus stayed on its own `corpus-v0.x` line. A release pins which `corpus-v<…>` and `model-v<…>` it trained on (via `ModelCard.trainedOn`), but its own number belongs to the product, not the data.
+- **Don't read across the lines.** Seeing `corpus-v0.5.0` next to package `4.4.0` and inferring a regression is the common mistake — they track different things (the data the model learns from vs. the product you install), like a database schema version vs. an app version. The build that produces `corpus-v0.5.0` ships, after training, as the _next package release_ (`4.5.0` / `5.0.0`), continuing the v4 line.
 
 ### What never goes in git
 
