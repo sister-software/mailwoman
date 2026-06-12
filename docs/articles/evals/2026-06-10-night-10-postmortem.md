@@ -103,15 +103,15 @@ substantially eaten.
 
 ## Numbers
 
-| | |
-|---|---|
-| shift span | 08:08–15:00 UTC (operator offline) |
-| models trained | **0** (treadmill guard held; 1 export + 2 quant runs, ~3 min A100) |
-| released | v4.2.0: npm (13 pkgs, registry-verified), HF + R2 (md5-verified), tag, release object |
-| PRs merged | 10 — #491, #494, #495, #496, #497, #499, #500, #501, #502, #503 (gaz-fed arenas) |
-| issues closed | #466, #472, #476, #479 (+ #475/#481/#487/#478 advanced with scoped completions) |
-| issues filed | #492, #493, #498 |
-| evals run | ship gate ×2 artifacts, arenas ×2 (one invalid, caught), NAD holdout ×2 models, VT tier on/off, gate-runner validation |
-| findings corrected by measurement | 3 (NAD Finding 2; the stash byte-check; the arena 'dip' — handicapped harness, resolved to a +19/+9/+7 sweep) |
-| CI failures | 1 (MDX raw-angle, fixed in 8 min) |
-| merge-wall blocks | 0 |
+|                                   |                                                                                                                        |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| shift span                        | 08:08–15:00 UTC (operator offline)                                                                                     |
+| models trained                    | **0** (treadmill guard held; 1 export + 2 quant runs, ~3 min A100)                                                     |
+| released                          | v4.2.0: npm (13 pkgs, registry-verified), HF + R2 (md5-verified), tag, release object                                  |
+| PRs merged                        | 10 — #491, #494, #495, #496, #497, #499, #500, #501, #502, #503 (gaz-fed arenas)                                       |
+| issues closed                     | #466, #472, #476, #479 (+ #475/#481/#487/#478 advanced with scoped completions)                                        |
+| issues filed                      | #492, #493, #498                                                                                                       |
+| evals run                         | ship gate ×2 artifacts, arenas ×2 (one invalid, caught), NAD holdout ×2 models, VT tier on/off, gate-runner validation |
+| findings corrected by measurement | 3 (NAD Finding 2; the stash byte-check; the arena 'dip' — handicapped harness, resolved to a +19/+9/+7 sweep)          |
+| CI failures                       | 1 (MDX raw-angle, fixed in 8 min)                                                                                      |
+| merge-wall blocks                 | 0                                                                                                                      |

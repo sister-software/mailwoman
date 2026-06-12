@@ -22,7 +22,7 @@ Source files live at each workspace's root (no `src/` nesting). The repo root ho
 
 ## Where to read next
 
-- **[`docs/articles/concepts/what-mailwoman-is.mdx`](./docs/articles/concepts/what-mailwoman-is.mdx)** — what the system *is* (a calibrated, retrieval-augmented sequence labeler), the grammar/atlas division of labor, and the disciplines that keep the architecture honest. Read this first if you're new to the project entirely.
+- **[`docs/articles/concepts/what-mailwoman-is.mdx`](./docs/articles/concepts/what-mailwoman-is.mdx)** — what the system _is_ (a calibrated, retrieval-augmented sequence labeler), the grammar/atlas division of labor, and the disciplines that keep the architecture honest. Read this first if you're new to the project entirely.
 - **[`docs/articles/plan/README.mdx`](./docs/articles/plan/README.mdx)** — the implementation plan that drove the neural classifier work. Phases 0–3 are substantially shipped; Phases 4–6 are the forward roadmap. Read this first if you're working on anything model-related.
 - **[`docs/articles/plan/reference/`](./docs/articles/plan/reference/)** — design rationale, schema source of truth, TS contracts, operations playbook, address-data-sources catalog. `SCHEMA.mdx` is the single source of truth for the `ComponentTag` union.
 - **[`docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx`](./docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx)** — the model-work runbook: which evals gate a change, the lever-shape taxonomy, how to add a shard. Read before touching the model, a shard recipe, or an eval.

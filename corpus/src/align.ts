@@ -17,12 +17,19 @@
  *   4. For each token: walk the list of component spans, pick the one whose span contains the token's
  *        character range. First token in a component span → `B-<tag>`; subsequent tokens →
  *        `I-<tag>`; no overlap → `O`.
+ *   5. Emit the located char spans verbatim as `span_starts[]` / `span_ends[]` / `span_tags[]` (the
+ *        v0.5.0 char-offset format, #519). The token quantization in step 4 is the part the v0.5.0
+ *        rebuild deletes; during the transition both representations ride on every labeled row.
  *
- *   Two structural invariants the function preserves:
+ *   Structural invariants the function preserves (the span ones loudly — a violation throws rather
+ *   than quarantines, because it indicates a bug here, not bad source data):
  *
  *   - `tokens.length === labels.length` always.
  *   - Each component contributes at most one contiguous BIO run (no `B-tag … O … I-tag` gaps). This is
  *       enforced by greedy first-match span assignment + ordered token iteration.
+ *   - The span triple is sorted ascending by start and non-overlapping.
+ *   - `raw` is NFC-normalized (asserted per row; a non-NFC raw makes char offsets ambiguous downstream
+ *       — NFD `é` occupies two code units where NFC `é` occupies one — and silently so).
  */
 
 import type { BioLabel, ComponentTag } from "@mailwoman/core/types"
@@ -54,7 +61,12 @@ export interface AlignOptions {
 /** Either a successful labeled row or a quarantined one. */
 export type AlignmentResult = { kind: "labeled"; row: LabeledRow } | { kind: "quarantined"; row: QuarantinedRow }
 
-interface ComponentSpan {
+/**
+ * One located char-offset label span over a row's `raw` ([start, end) in UTF-16 code units). The
+ * element type behind the parallel `span_starts[]`/`span_ends[]`/`span_tags[]` triple on
+ * `LabeledRow` (#519).
+ */
+export interface ComponentSpan {
 	tag: ComponentTag
 	start: number
 	end: number
@@ -70,16 +82,34 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 		return { kind: "quarantined", row: { row, reason: "raw-empty" } }
 	}
 
+	// #519 NFC handling — relaxed from a hard throw to normalization (2026-06-12, DeepSeek-validated):
+	// one non-NFC row (e.g. a non-Latin name variant like "দক্ষিণ কোরিয়া") must not crash a multi-hour
+	// build. Normalize `raw` AND every component value to NFC, compute spans over the NFC raw, and
+	// store the NFC raw — preserving the #519 single-normalization-form principle while keeping the row.
+	const raw = row.raw.normalize("NFC")
+	const components = { ...row.components }
+	for (const key in components) {
+		const v = components[key as keyof typeof components]
+		if (typeof v === "string") components[key as keyof typeof components] = v.normalize("NFC")
+	}
+
 	const componentSpans: ComponentSpan[] = []
 	const claimed: Array<[number, number]> = []
 
-	const haystack = caseInsensitive ? row.raw.toLowerCase() : row.raw
+	const haystack = caseInsensitive ? raw.toLowerCase() : raw
 
-	for (const [tag, value] of Object.entries(row.components) as Array<[ComponentTag, string | undefined]>) {
+	// Longest value first: a short component must not claim a word that a longer, more specific
+	// component owns ("Alaska Regional Dr, Alaska" — region "Alaska" stealing the street's first
+	// word quarantined the street; pilot2's residual class). Emit order is unaffected — spans are
+	// re-sorted by start below.
+	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).sort(
+		(a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0)
+	)
+	for (const [tag, value] of entries) {
 		if (!value) continue
 
 		const needle = caseInsensitive ? value.toLowerCase() : value
-		const span = locateSpan({ haystack, needle, raw: row.raw, claimed, maxEditDistance })
+		const span = locateSpan({ haystack, needle, raw, claimed, maxEditDistance })
 
 		if (!span) {
 			return {
@@ -88,20 +118,80 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 			}
 		}
 
+		// Defensive bounds quarantine (2026-06-12): locateSpan's fuzzy/boundary logic can over-run the
+		// raw by a code unit on some non-Latin / combining-mark strings (e.g. Bengali name variants),
+		// yielding a span past the end. An out-of-bounds offset can never be a valid char span —
+		// quarantine the row rather than crash assertSpanInvariants and take down a multi-hour build.
+		// (If this class proves large in the quarantine report, locateSpan's boundary logic needs a
+		// combining-mark fix to KEEP these non-Latin rows.)
+		if (span.start < 0 || span.end > raw.length || span.start >= span.end) {
+			return {
+				kind: "quarantined",
+				row: { row, reason: `span-out-of-bounds:${tag}` },
+			}
+		}
+
 		componentSpans.push({ tag, start: span.start, end: span.end })
 		claimed.push([span.start, span.end])
 	}
 
 	componentSpans.sort((a, b) => a.start - b.start)
-	const tokens = tokenizer.tokenize(row.raw)
+	assertSpanInvariants(componentSpans, { ...row, raw })
+	const tokens = tokenizer.tokenize(raw)
 	const labels = labelTokens(tokens, componentSpans)
 
 	const labeled: LabeledRow = {
 		...row,
+		raw,
+		components,
 		tokens: tokens.map((t) => t.text),
 		labels,
+		// The v0.5.0 char-offset triple (#519): the located spans, emitted verbatim. The token
+		// quantization above is what the rebuild deletes; both ride during the transition.
+		span_starts: componentSpans.map((s) => s.start),
+		span_ends: componentSpans.map((s) => s.end),
+		span_tags: componentSpans.map((s) => s.tag),
 	}
 	return { kind: "labeled", row: labeled }
+}
+
+/**
+ * Enforce the #519 span-triple invariants — in-bounds, sorted ascending by start, non-overlapping —
+ * loudly.
+ *
+ * For `alignRow`: `claimed`-span bookkeeping in `locateSpan` already makes overlap impossible and
+ * the caller sorts, so a violation here is a bug in this file, not bad source data: throw (naming
+ * the row) rather than quarantine, so the corruption can't ride into a corpus. Exported for every
+ * OTHER span producer (`composeAdversarialRow`'s offset arithmetic, future synthesis paths) — any
+ * code that emits the triple without going through `alignRow` must pass its output through this.
+ */
+export function assertSpanInvariants(
+	spans: readonly ComponentSpan[],
+	row: Pick<CanonicalRow, "raw" | "source" | "source_id">
+): void {
+	for (let i = 0; i < spans.length; i++) {
+		const s = spans[i]!
+		if (!(s.start >= 0 && s.start < s.end && s.end <= row.raw.length)) {
+			throw new Error(
+				`alignRow: span out of bounds (source=${row.source}, source_id=${row.source_id}): ` +
+					`${s.tag}@[${s.start}, ${s.end}) over raw of length ${row.raw.length}`
+			)
+		}
+		if (i === 0) continue
+		const prev = spans[i - 1]!
+		if (s.start < prev.start) {
+			throw new Error(
+				`alignRow: spans not sorted (source=${row.source}, source_id=${row.source_id}): ` +
+					`${prev.tag}@[${prev.start}, ${prev.end}) precedes ${s.tag}@[${s.start}, ${s.end})`
+			)
+		}
+		if (s.start < prev.end) {
+			throw new Error(
+				`alignRow: spans overlap (source=${row.source}, source_id=${row.source_id}): ` +
+					`${prev.tag}@[${prev.start}, ${prev.end}) overlaps ${s.tag}@[${s.start}, ${s.end})`
+			)
+		}
+	}
 }
 
 /**
@@ -122,15 +212,25 @@ function locateSpan(args: {
 	const { haystack, needle, claimed, maxEditDistance } = args
 	if (needle.length === 0) return undefined
 
-	// Pass 1: verbatim substring, leftmost non-claimed.
+	// Pass 1: verbatim substring. Word-boundary-aligned matches are PREFERRED over intra-word ones
+	// — leftmost-substring alone let a short value claim the inside of an earlier word (region "AK"
+	// matched inside "Umak"/"Lake", scrambling every later span; caught by the v0.5.0 pilot build).
+	// Intra-word matches stay allowed as the fallback because they are load-bearing for affix
+	// supervision (street_suffix "straße" inside "Hauptstraße" has no boundary-aligned occurrence —
+	// sub-word spans are the point of the char-offset format).
+	let intraWord: { start: number; end: number } | undefined
 	let from = 0
 	while (true) {
 		const idx = haystack.indexOf(needle, from)
 		if (idx < 0) break
 		const end = idx + needle.length
-		if (!overlapsClaimed(idx, end, claimed)) return { start: idx, end }
+		if (!overlapsClaimed(idx, end, claimed)) {
+			if (isBoundaryAligned(haystack, idx, end)) return { start: idx, end }
+			intraWord ??= { start: idx, end }
+		}
 		from = idx + 1
 	}
+	if (intraWord) return intraWord
 
 	if (maxEditDistance <= 0) return undefined
 
@@ -146,6 +246,15 @@ function locateSpan(args: {
 	}
 
 	return undefined
+}
+
+const WORD_CHAR = /[\p{L}\p{N}]/u
+
+/** Both needle edges sit on word boundaries of the haystack (string edges count as boundaries). */
+function isBoundaryAligned(haystack: string, start: number, end: number): boolean {
+	const before = start === 0 || !WORD_CHAR.test(haystack[start - 1]!)
+	const after = end === haystack.length || !WORD_CHAR.test(haystack[end]!)
+	return before && after
 }
 
 function overlapsClaimed(start: number, end: number, claimed: Array<[number, number]>): boolean {

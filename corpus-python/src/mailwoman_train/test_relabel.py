@@ -9,7 +9,7 @@ import json
 
 import pytest
 
-from .relabel import AffixRelabelLexicon, relabel_row, split_street_span
+from .relabel import AffixRelabelLexicon, relabel_row, relabel_spans, split_street_span
 
 LEX = AffixRelabelLexicon(
     directionals={
@@ -123,6 +123,132 @@ class TestRelabelRow:
             "B-street_prefix", "B-street", "B-street_suffix", "O",
             "B-street_prefix", "B-street", "B-street_suffix",
         ]
+
+
+class TestRelabelSpans:
+    """Char-arithmetic re-target of the #519 span triple — the v0.5.0 form of the pass."""
+
+    @staticmethod
+    def _slices(row):
+        return [
+            (t, row["raw"][s:e])
+            for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"])
+        ]
+
+    def test_splits_street_span_by_char_arithmetic(self):
+        row = {
+            "raw": "1234 SE Division St, Portland, OR 97202",
+            "tokens": ["1234", "SE", "Division", "St", "Portland", "OR", "97202"],
+            "labels": ["B-house_number", "B-street", "I-street", "I-street", "B-locality", "B-region", "B-postcode"],
+            "span_starts": [0, 5, 21, 31, 34],
+            "span_ends": [4, 19, 29, 33, 39],
+            "span_tags": ["house_number", "street", "locality", "region", "postcode"],
+        }
+        assert relabel_row(row, LEX) is True
+        assert self._slices(row) == [
+            ("house_number", "1234"),
+            ("street_prefix", "SE"),
+            ("street", "Division"),
+            ("street_suffix", "St"),
+            ("locality", "Portland"),
+            ("region", "OR"),
+            ("postcode", "97202"),
+        ]
+        # Token labels split in lockstep (transitional — both representations ride).
+        assert row["labels"][1:4] == ["B-street_prefix", "B-street", "B-street_suffix"]
+
+    def test_multiword_name_span(self):
+        row = {
+            "raw": "N Dixie Box Road",
+            "tokens": ["N", "Dixie", "Box", "Road"],
+            "labels": ["B-street", "I-street", "I-street", "I-street"],
+            "span_starts": [0],
+            "span_ends": [16],
+            "span_tags": ["street"],
+        }
+        assert relabel_row(row, LEX) is True
+        assert self._slices(row) == [
+            ("street_prefix", "N"),
+            ("street", "Dixie Box"),
+            ("street_suffix", "Road"),
+        ]
+
+    def test_no_split_leaves_spans_untouched(self):
+        row = {
+            "raw": "South County Trail 175 West",
+            "tokens": ["South", "County", "Trail", "175", "West"],
+            "labels": ["B-street", "I-street", "I-street", "I-street", "I-street"],
+            "span_starts": [0],
+            "span_ends": [27],
+            "span_tags": ["street"],
+        }
+        assert relabel_spans(row, LEX) is False
+        assert row["span_starts"] == [0] and row["span_ends"] == [27] and row["span_tags"] == ["street"]
+
+    def test_dotted_suffix_is_conservative_on_the_span_path(self):
+        # "Main St.": the corpus tokenizer dropped the period, so the TOKEN path sees "St" and
+        # splits; the span path sees the whitespace word "St." (builder parity: parseStreet
+        # splits raw words, "St." is not in the lexicon) and leaves the span whole. The span path
+        # is the v0.5.0 source of truth — conservative beats a third labeling.
+        row = {
+            "raw": "Main St.",
+            "tokens": ["Main", "St"],
+            "labels": ["B-street", "I-street"],
+            "span_starts": [0],
+            "span_ends": [8],
+            "span_tags": ["street"],
+        }
+        relabel_row(row, LEX)
+        assert row["span_tags"] == ["street"]
+        assert row["labels"] == ["B-street", "B-street_suffix"]  # token path split (legacy semantics)
+
+    def test_multiple_street_spans_intersection_style(self):
+        row = {
+            "raw": "N Main St and W Oak Ave",
+            "tokens": ["N", "Main", "St", "and", "W", "Oak", "Ave"],
+            "labels": ["B-street", "I-street", "I-street", "O", "B-street", "I-street", "I-street"],
+            "span_starts": [0, 14],
+            "span_ends": [9, 23],
+            "span_tags": ["street", "street"],
+        }
+        assert relabel_row(row, LEX) is True
+        assert self._slices(row) == [
+            ("street_prefix", "N"),
+            ("street", "Main"),
+            ("street_suffix", "St"),
+            ("street_prefix", "W"),
+            ("street", "Oak"),
+            ("street_suffix", "Ave"),
+        ]
+
+    def test_replaces_lists_instead_of_mutating(self):
+        starts = [0]
+        row = {
+            "raw": "Weaver Lane",
+            "tokens": ["Weaver", "Lane"],
+            "labels": ["B-street", "I-street"],
+            "span_starts": starts,
+            "span_ends": [11],
+            "span_tags": ["street"],
+        }
+        assert relabel_spans(row, LEX) is True
+        assert starts == [0]  # the caller's original list is not mutated through
+        assert row["span_starts"] == [0, 7]
+
+    def test_legacy_row_without_spans_is_a_no_op(self):
+        row = {"tokens": ["Weaver", "Lane"], "labels": ["B-street", "I-street"]}
+        assert relabel_spans(row, LEX) is False
+        assert relabel_row(row, LEX) is True  # token path still fires
+
+    def test_partial_triple_raises(self):
+        row = {
+            "raw": "Weaver Lane",
+            "tokens": ["Weaver", "Lane"],
+            "labels": ["B-street", "I-street"],
+            "span_starts": [0],
+        }
+        with pytest.raises(ValueError, match="partial char-offset span triple"):
+            relabel_spans(row, LEX)
 
 
 class TestLexiconLoading:

@@ -118,3 +118,6 @@ data/eval/calibration/confidences.jsonl
 
 corpus-python/.pytest_cache/
 output/
+
+# Pi session state (not project config)
+.pi/flow.json

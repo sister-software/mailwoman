@@ -19,30 +19,30 @@ authoritative per-tag table for this release. For which release added which capa
 
 All publishable workspaces release in lockstep; the current npm version is **4.4.0**.
 
-| Package                                          | Description                                                        |
-| ------------------------------------------------ | ------------------------------------------------------------------ |
-| `mailwoman`                                      | CLI + high-level `AddressParser` + runtime pipeline factory        |
-| `@mailwoman/core`                                 | Tokenization, classification, solver, decoder, policy registry     |
-| `@mailwoman/codex`                                | Per-address-system postal reference data (USPS suffixes, ZIP types) |
-| `@mailwoman/classifiers`                          | Rule-based classifiers                                             |
-| `@mailwoman/neural`                               | ONNX runtime + SentencePiece tokenizer + anchor inference          |
-| `@mailwoman/neural-weights-en-us` / `-fr-fr`      | Trained model bundles                                              |
-| `@mailwoman/normalize` / `query-shape` / `locale-gate` / `kind-classifier` / `phrase-grouper` | Pipeline stages 1–2.7 |
-| `@mailwoman/resolver-wof-sqlite` / `-wasm`        | WOF gazetteer resolver (Node SQLite / browser WASM)                |
-| `@mailwoman/neural-web`                           | Browser-side neural classifier (onnxruntime-web)                   |
+| Package                                                                                       | Description                                                         |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `mailwoman`                                                                                   | CLI + high-level `AddressParser` + runtime pipeline factory         |
+| `@mailwoman/core`                                                                             | Tokenization, classification, solver, decoder, policy registry      |
+| `@mailwoman/codex`                                                                            | Per-address-system postal reference data (USPS suffixes, ZIP types) |
+| `@mailwoman/classifiers`                                                                      | Rule-based classifiers                                              |
+| `@mailwoman/neural`                                                                           | ONNX runtime + SentencePiece tokenizer + anchor inference           |
+| `@mailwoman/neural-weights-en-us` / `-fr-fr`                                                  | Trained model bundles                                               |
+| `@mailwoman/normalize` / `query-shape` / `locale-gate` / `kind-classifier` / `phrase-grouper` | Pipeline stages 1–2.7                                               |
+| `@mailwoman/resolver-wof-sqlite` / `-wasm`                                                    | WOF gazetteer resolver (Node SQLite / browser WASM)                 |
+| `@mailwoman/neural-web`                                                                       | Browser-side neural classifier (onnxruntime-web)                    |
 
 ## Model weights (4.4.0)
 
-| Property             | Value                                                                                                          |
-| -------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **Lineage**          | `v1.3.0-boundary-consolidation` @ step 40k, from scratch — the boundary consolidation (glue + intersections + po_box/cedex on the label-consistent mix), corpus `v0.4.15` |
-| **Architecture**     | 29.3M params — 6-layer encoder, 384 hidden, 6 heads, 48K-vocab SentencePiece embedding                          |
-| **Label vocabulary** | 33 BIO labels over 16 component tags (incl. `unit`, `po_box`, `street_prefix`/`_suffix`, `intersection_a/b`)    |
-| **Training corpus**  | `corpus-v0.4.12-consolidation` · tokenizer `v0.6.0-a0`                                                          |
-| **Anchors**          | Postcode anchor (PCB1) + gazetteer soft anchor (country candidate-tags), both live at inference                 |
+| Property             | Value                                                                                                                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lineage**          | `v1.3.0-boundary-consolidation` @ step 40k, from scratch — the boundary consolidation (glue + intersections + po_box/cedex on the label-consistent mix), corpus `v0.4.15`                      |
+| **Architecture**     | 29.3M params — 6-layer encoder, 384 hidden, 6 heads, 48K-vocab SentencePiece embedding                                                                                                         |
+| **Label vocabulary** | 33 BIO labels over 16 component tags (incl. `unit`, `po_box`, `street_prefix`/`_suffix`, `intersection_a/b`)                                                                                   |
+| **Training corpus**  | `corpus-v0.4.12-consolidation` · tokenizer `v0.6.0-a0`                                                                                                                                         |
+| **Anchors**          | Postcode anchor (PCB1) + gazetteer soft anchor (country candidate-tags), both live at inference                                                                                                |
 | **Conventions**      | Locale head exported (`locale_logits`) → conventions mask (fr row) + punctuation-gap span bridge — BOTH required ship config (`addressSystemConventions:'auto'`, `bridgePunctuationGaps:true`) |
-| **Decode**           | Viterbi with frozen BIO structural mask (CRF at inference; CE-only training)                                    |
-| **Size**             | 29.8 MB int8 ONNX (118.4 MB fp32) · opset 17 · max sequence 128                                                 |
+| **Decode**           | Viterbi with frozen BIO structural mask (CRF at inference; CE-only training)                                                                                                                   |
+| **Size**             | 29.8 MB int8 ONNX (118.4 MB fp32) · opset 17 · max sequence 128                                                                                                                                |
 
 ### Per-tag health (summary)
 
@@ -85,15 +85,15 @@ make the pipeline take the better of both per component.
 
 ## Runtime pipeline — stage status
 
-| Stage | Name             | Status     | Notes                                                                                                           |
-| ----- | ---------------- | ---------- | ---------------------------------------------------------------------------------------------------------------- |
-| 1     | Normalize        | ✅ default | NFC, whitespace collapse, locale-aware case folding                                                             |
-| 2     | Locale gate      | 🚩 opt-in  | Ships (`@mailwoman/locale-gate`); not wired as factory default                                                  |
-| 2.5   | Kind classifier  | ✅ default | Rule-based; fast-paths bare postcodes and single localities                                                     |
-| 2.7   | Phrase grouper   | ✅ default | Rule-based span proposals before classification                                                                 |
-| 3     | Token classify   | ✅ default | Neural encoder + rule classifiers, hybrid via policy registry (per-component modes)                             |
-| 4     | Sequence correct | ✅ default | Viterbi over the frozen BIO mask; postcode/unit label repairs                                                   |
-| 5     | Reconcile        | ✅ default | Joint decoding with WOF concordance scoring — DEFAULT when the phrase grouper + a `parseWithLogits` classifier are wired (falls back to argmax otherwise); disable via `jointReconcile: false` |
+| Stage | Name             | Status     | Notes                                                                                                                                                                                                      |
+| ----- | ---------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | Normalize        | ✅ default | NFC, whitespace collapse, locale-aware case folding                                                                                                                                                        |
+| 2     | Locale gate      | 🚩 opt-in  | Ships (`@mailwoman/locale-gate`); not wired as factory default                                                                                                                                             |
+| 2.5   | Kind classifier  | ✅ default | Rule-based; fast-paths bare postcodes and single localities                                                                                                                                                |
+| 2.7   | Phrase grouper   | ✅ default | Rule-based span proposals before classification                                                                                                                                                            |
+| 3     | Token classify   | ✅ default | Neural encoder + rule classifiers, hybrid via policy registry (per-component modes)                                                                                                                        |
+| 4     | Sequence correct | ✅ default | Viterbi over the frozen BIO mask; postcode/unit label repairs                                                                                                                                              |
+| 5     | Reconcile        | ✅ default | Joint decoding with WOF concordance scoring — DEFAULT when the phrase grouper + a `parseWithLogits` classifier are wired (falls back to argmax otherwise); disable via `jointReconcile: false`             |
 | 6     | Resolve          | 🚩 opt-in  | WOF SQLite gazetteer: admin/postcode-level candidates with coordinates, exact-match tiering, coordinate-first postcode disambiguation, opt-in `hierarchyCompletion`/`cityStateFallback`/`includeAncestors` |
 
 ## Confidence

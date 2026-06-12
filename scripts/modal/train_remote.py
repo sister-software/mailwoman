@@ -163,6 +163,90 @@ def sync_corpus():
             print(f"  {d}: MISSING")
 
 
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_v050():
+    """Pull the v0.5.0 char-offset corpus + current training code (configs incl. v1.4.0) from R2 into
+    the volume, CONTAINER-SIDE.
+
+    Why a dedicated path instead of `modal volume put`: on this volume the CLI write -> container read
+    path is broken — files put via `modal volume put` are visible to `modal volume ls/get` but NOT to
+    a mounted container, and `vol.reload()` does not bridge it (verified 2026-06-12 with a marker
+    file). Container-side writes + `vol.commit()` DO propagate. So we route the corpus through R2 (the
+    same channel sync_corpus uses) and write it from inside a container. R2 occasionally 501s on a
+    PUT/GET; the retry flags ride through it (each op succeeds on a later attempt)."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.5.0 from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus/v0.5.0/corpus-v0.5.0/ {VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    # Clear stale pyc so the freshly-synced loader is what imports (the night-3 pyc gotcha).
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv0.5.0 sync complete. Volume committed.")
+
+    tdir = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.4.0-charoffset.yaml"
+    print("  v0.5.0 train shards:", len(os.listdir(tdir)) if os.path.isdir(tdir) else "MISSING")
+    print("  v1.4.0 config present:", os.path.isfile(cfg))
+    print("  loader has astral-skip:",
+          "astral_skipped" in open(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/data_loader.py").read())
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
+def push_artifact_r2(volume_path: str, r2_subpath: str):
+    """Push a volume artifact (e.g. an exported model.onnx) OUT to R2, container-side.
+
+    The mirror of sync_v050: on this volume the container<->CLI views are fully divergent (CLI writes
+    don't reach containers AND container writes — checkpoints, exported ONNX — don't reach the CLI,
+    verified 2026-06-12), so `modal volume get` can't pull a container-written artifact. Route it
+    through R2 instead: this copies `<volume_path>` to `:s3:mailwoman-assets/<r2_subpath>`, then you
+    `rclone copy` it down locally. Rides R2's intermittent 501s with retries.
+
+    Usage: modal run scripts/modal/train_remote.py::push_artifact_r2 \\
+             --volume-path /data/output-v140-charoffset-s42/model.onnx \\
+             --r2-subpath artifacts/v1.4.0-charoffset/model.onnx"""
+    import subprocess
+
+    vol.reload()
+    if not os.path.exists(volume_path):
+        raise RuntimeError(f"volume artifact not found: {volume_path}")
+    dst = f":s3:{BUCKET}/{r2_subpath}"
+    cmd = f"rclone copyto '{volume_path}' '{dst}' --low-level-retries 30 --retries 8 --stats-one-line"
+    print(f"push: {volume_path} -> {dst}")
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"STDERR: {result.stderr[:800]}")
+        raise RuntimeError(f"rclone push failed: {result.stderr[:200]}")
+    print(f"pushed OK. Pull locally with: rclone copyto :s3:{BUCKET}/{r2_subpath} ./<local>")
+
+
 # ---------------------------------------------------------------------------
 # Training function
 # ---------------------------------------------------------------------------
@@ -204,13 +288,9 @@ def train(
         print(f"GPU: {torch.cuda.get_device_name(0)}")
         print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
-    # Verify corpus exists
-    train_dir = f"{VOL_MOUNT}/corpus/versioned/v0.3.0/corpus-v0.3.0/train"
-    if not os.path.isdir(train_dir):
-        raise RuntimeError(f"Corpus not found at {train_dir}. Run sync_corpus first.")
-
-    shard_count = len([f for f in os.listdir(train_dir) if f.endswith(".parquet")])
-    print(f"Corpus: {shard_count} train shards")
+    # Corpus existence is verified AFTER the config loads (below), against cfg.data.corpus_dir — the
+    # corpus version travels in the config, not hardcoded here. (Was pinned to v0.3.0, which silently
+    # blocked every later corpus once v0.3.0 was cleaned off the volume. 2026-06-12.)
 
     # The config file references paths relative to /data/ which matches our volume mount
     config_path = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/{config_name}"
@@ -228,6 +308,17 @@ def train(
     import yaml
     cfg = Config()
     _merge(cfg, yaml.safe_load(open(config_path)))
+
+    # Verify the corpus the config actually points at exists on the volume (post-config so the version
+    # isn't hardcoded). The data loader reads cfg.data.corpus_dir; fail loud here if it's missing.
+    train_dir = os.path.join(cfg.data.corpus_dir, "train")
+    if not os.path.isdir(train_dir):
+        raise RuntimeError(
+            f"Corpus not found at {train_dir} (cfg.data.corpus_dir={cfg.data.corpus_dir}). "
+            "Stage it with `modal volume put` or run sync_corpus first."
+        )
+    shard_count = len([f for f in os.listdir(train_dir) if f.endswith(".parquet")])
+    print(f"Corpus: {cfg.data.corpus_dir} ({shard_count} train shards)")
 
     # CLI overrides for experiment tracking (take precedence over the YAML config).
     if trackio:
@@ -315,6 +406,37 @@ def run_tests(pattern: str = ""):
     if proc.returncode != 0:
         print(proc.stderr[-2000:])
         raise SystemExit(proc.returncode)
+
+
+@app.function(volumes={VOL_MOUNT: vol}, image=training_image, timeout=120)
+def debug_volume(config_name: str = "v1.4.0-charoffset.yaml"):
+    """Diagnostic: what does a container actually see on the volume, before/after vol.reload()?
+    Added 2026-06-12 to chase a 'Config not found' on a config that `modal volume ls/get` confirms
+    is present. Run: modal run scripts/modal/train_remote.py::debug_volume"""
+    import os
+
+    cfgdir = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs"
+    cpath = f"{cfgdir}/{config_name}"
+    ctrain = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train"
+
+    def snapshot(label):
+        print(f"\n[{label}]")
+        print("  configs dir exists:", os.path.isdir(cfgdir))
+        if os.path.isdir(cfgdir):
+            print("  configs:", sorted(os.listdir(cfgdir)))
+        print(f"  isfile({config_name}):", os.path.isfile(cpath))
+        print("  v0.5.0 train dir exists:", os.path.isdir(ctrain),
+              "shards:", len(os.listdir(ctrain)) if os.path.isdir(ctrain) else 0)
+
+    import modal as _m
+    print("modal client version:", getattr(_m, "__version__", "?"))
+    for d in ["/data", "/data/corpus/versioned", "/data/models", "/data/models/tokenizer",
+              "/data/output-v140-charoffset-s42", "/data/output-v140-charoffset-s42/checkpoints"]:
+        print(f"  ls {d}:", sorted(os.listdir(d)) if os.path.isdir(d) else "MISSING")
+
+    snapshot("pre-reload (mount as-started)")
+    vol.reload()
+    snapshot("post-reload")
 
 
 @app.function(image=training_image, timeout=120)

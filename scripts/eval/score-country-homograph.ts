@@ -23,7 +23,10 @@ const file = arg("--file", "data/eval/external/country-homograph-real.jsonl")!
 const TAGS = ["country", "region", "locality"] as const
 
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("--model")!)])
+const [tokenizer, runner] = await Promise.all([
+	MailwomanTokenizer.loadFromFile(TOK),
+	OnnxRunner.create(arg("--model")!),
+])
 const neural = new NeuralAddressClassifier({
 	tokenizer,
 	runner,
@@ -36,7 +39,10 @@ const neural = new NeuralAddressClassifier({
 	...(argv.includes("--bridge-gaps") ? { bridgePunctuationGaps: true } : {}),
 })
 
-const rows = readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
+const rows = readFileSync(file, "utf8")
+	.split("\n")
+	.filter(Boolean)
+	.map((l) => JSON.parse(l))
 const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
 for (const t of TAGS) stat[t] = { tp: 0, fp: 0, fn: 0 }
@@ -63,7 +69,9 @@ for (const row of rows) {
 	const gc = norm(got.country)
 	if (gc && !norm(exp.country) && (gc === norm(exp.region) || gc === norm(exp.locality))) {
 		overfire++
-		overfireCases.push(`  ${row.raw}  → country="${got.country}" (gold ${norm(exp.region) === gc ? "region" : "locality"})`)
+		overfireCases.push(
+			`  ${row.raw}  → country="${got.country}" (gold ${norm(exp.region) === gc ? "region" : "locality"})`
+		)
 	}
 	if (norm(exp.country) && !gc) {
 		missedCountry++
@@ -80,13 +88,18 @@ for (const t of TAGS) {
 	const r = tp + fn ? tp / (tp + fn) : 0
 	const f1 = p + r ? (2 * p * r) / (p + r) : 0
 	sidecar[t] = { p: +(100 * p).toFixed(1), r: +(100 * r).toFixed(1), f1: +(100 * f1).toFixed(1), tp, fp, fn }
-	console.log(`| ${t} | ${(100 * p).toFixed(1)} | ${(100 * r).toFixed(1)} | ${(100 * f1).toFixed(1)} | ${tp}/${fp}/${fn} |`)
+	console.log(
+		`| ${t} | ${(100 * p).toFixed(1)} | ${(100 * r).toFixed(1)} | ${(100 * f1).toFixed(1)} | ${tp}/${fp}/${fn} |`
+	)
 }
 // JSON sidecar — the machine-readable contract for the gate verdict (markdown = presentation).
 const jsonOut = arg("--json")
 if (jsonOut) {
 	const { writeFileSync } = await import("node:fs")
-	writeFileSync(jsonOut, JSON.stringify({ n: rows.length, file, tags: sidecar, overfire, missedCountry }, null, "\t") + "\n")
+	writeFileSync(
+		jsonOut,
+		JSON.stringify({ n: rows.length, file, tags: sidecar, overfire, missedCountry }, null, "\t") + "\n"
+	)
 }
 console.log(`\nover-fire (region/locality tagged as country): ${overfire}`)
 console.log(`missed country (gold country, none emitted): ${missedCountry}`)

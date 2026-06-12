@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Verdict assembler for promotion-gate.sh (#479). Parses the battery outputs the runner
- *   teed into --out-dir, checks every number against the gate spec's floors, enforces the
- *   fp32↔int8 delta cap, and writes verdict.json. Exit 0 = all floors met; exit 1 = any miss.
+ *   Verdict assembler for promotion-gate.sh (#479). Parses the battery outputs the runner teed into
+ *   --out-dir, checks every number against the gate spec's floors, enforces the fp32↔int8 delta
+ *   cap, and writes verdict.json. Exit 0 = all floors met; exit 1 = any miss.
  *
- *   Parsing contract: the scorers emit pipe-tables (`| tag | P | R | F1 |` from the affix
- *   scorers, `| tag | golden | … |` from per-locale-f1, the de-order summary line). If a
- *   harness output format changes, THIS file is the single place the gate's parsing breaks —
- *   loudly (a floor whose number can't be found is a FAIL, never a skip).
+ *   Parsing contract: the scorers emit pipe-tables (`| tag | P | R | F1 |` from the affix scorers, `|
+ *   tag | golden | … |` from per-locale-f1, the de-order summary line). If a harness output format
+ *   changes, THIS file is the single place the gate's parsing breaks — loudly (a floor whose number
+ *   can't be found is a FAIL, never a skip).
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
@@ -46,9 +46,11 @@ function perLocale(md: string, tag: string, locale: "us" | "fr"): number | undef
 	return Number(locale === "us" ? m[1] : m[2]) || undefined
 }
 
-/** Sidecar-first reads (the scorers emit JSON beside the markdown since night-11; the regex
- * fallback keeps old out-dirs replayable). A sidecar that exists but can't parse is a loud
- * throw — never a silent fallback to presentation parsing. */
+/**
+ * Sidecar-first reads (the scorers emit JSON beside the markdown since night-11; the regex fallback
+ * keeps old out-dirs replayable). A sidecar that exists but can't parse is a loud throw — never a
+ * silent fallback to presentation parsing.
+ */
 function sidecar(f: string): any | undefined {
 	const raw = maybeRead(f)
 	return raw === undefined ? undefined : JSON.parse(raw)
@@ -92,12 +94,11 @@ function collect(tag: "fp32" | "int8"): Record<string, number | undefined> {
 		"us.po_box_real": poboxJ?.tags?.po_box?.f1 ?? (pobox ? scorerF1(pobox, "po_box") : undefined),
 		"fr.cedex_real": poboxJ?.tags?.cedex?.f1 ?? (pobox ? scorerF1(pobox, "cedex") : undefined),
 		// Graded as the WEAKER of the two spans — an intersection parse needs both.
-		"us.intersection_real":
-			intersectionJ ?
-				Math.min(intersectionJ.tags?.intersection_a?.f1 ?? 0, intersectionJ.tags?.intersection_b?.f1 ?? 0)
-			: intersection ?
-				Math.min(scorerF1(intersection, "intersection_a") ?? 0, scorerF1(intersection, "intersection_b") ?? 0)
-			:	undefined,
+		"us.intersection_real": intersectionJ
+			? Math.min(intersectionJ.tags?.intersection_a?.f1 ?? 0, intersectionJ.tags?.intersection_b?.f1 ?? 0)
+			: intersection
+				? Math.min(scorerF1(intersection, "intersection_a") ?? 0, scorerF1(intersection, "intersection_b") ?? 0)
+				: undefined,
 		// Arena leg runs once on the ship artifact (int8); the fp32 pass reads undefined and the
 		// delta loop skips it. `| perturb | <n> | <v0>% | <neural>% |` from the three-bucket summary.
 		"arena.perturb": (() => {
@@ -105,6 +106,12 @@ function collect(tag: "fp32" | "int8"): Record<string, number | undefined> {
 			const m = md?.match(/\|\s*perturb\s*\|\s*\d+\s*\|\s*[\d.]+%\s*\|\s*([\d.]+)%/)
 			return m ? Number(m[1]) : undefined
 		})(),
+		// Demo-cascade smoke pass rate (#524) — whole-stack parse→reconcile→resolve against the slim
+		// hot DB. Like the arena leg it runs ONCE on the ship artifact (no fp32/int8 split); sidecar
+		// only (the leg is new — there are no pre-sidecar out-dirs to replay). Absent sidecar (DB not
+		// staged / runner errored) reads undefined → a floored spec FAILS loudly, an unfloored spec
+		// ignores it.
+		"cascade.demo_smoke": sidecar("cascade-smoke.json")?.summary?.pass_rate_pct,
 	}
 }
 

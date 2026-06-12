@@ -7,13 +7,13 @@ is **v4.2.0** (`v1.0.2-consolidation-runB`); substitute per the eval-ledger row
 
 ## The five inputs
 
-| Input | v4.2.0 value | Where it lives |
-| --- | --- | --- |
-| Training code | `corpus-python/src/mailwoman_train/` @ the release tag | this repo |
-| Config | `corpus-python/src/mailwoman_train/configs/v1.0.2-consolidation-runB.yaml` | this repo |
-| Corpus | `corpus-v0.4.12-consolidation` (Parquet shards + MANIFEST) | R2 `mailwoman-assets` bucket → Modal volume `mailwoman-training` at `/data/corpus/versioned/` |
-| Tokenizer | `v0.6.0-a0/tokenizer.model` (md5 `b6137e8c…`) | same volume, `/data/models/tokenizer/` |
-| Aux lookups | `pilot-anchor-lookup.json` + `anchor-lexicon-v1.json` | volume `/data/anchor/`, `/data/gazetteer/` — rebuildable from source: `scripts/build-pilot-anchor-lookup.py`, `scripts/build-gazetteer-anchor-lexicon.mjs` (needs the custom WOF DBs + codex) |
+| Input         | v4.2.0 value                                                               | Where it lives                                                                                                                                                                                |
+| ------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Training code | `corpus-python/src/mailwoman_train/` @ the release tag                     | this repo                                                                                                                                                                                     |
+| Config        | `corpus-python/src/mailwoman_train/configs/v1.0.2-consolidation-runB.yaml` | this repo                                                                                                                                                                                     |
+| Corpus        | `corpus-v0.4.12-consolidation` (Parquet shards + MANIFEST)                 | R2 `mailwoman-assets` bucket → Modal volume `mailwoman-training` at `/data/corpus/versioned/`                                                                                                 |
+| Tokenizer     | `v0.6.0-a0/tokenizer.model` (md5 `b6137e8c…`)                              | same volume, `/data/models/tokenizer/`                                                                                                                                                        |
+| Aux lookups   | `pilot-anchor-lookup.json` + `anchor-lexicon-v1.json`                      | volume `/data/anchor/`, `/data/gazetteer/` — rebuildable from source: `scripts/build-pilot-anchor-lookup.py`, `scripts/build-gazetteer-anchor-lexicon.mjs` (needs the custom WOF DBs + codex) |
 
 > **Honest caveats (the #480 gaps, still open):** the corpus + tokenizer are snapshots on
 > R2/Modal, not derivable offline from the repo (adapters fetch from live sources that age);

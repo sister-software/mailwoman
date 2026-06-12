@@ -14,7 +14,7 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite"
 
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 
-import type { Ancestor, CoincidentLocality } from "@mailwoman/core/resolver"
+import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/core/resolver"
 import {
 	ADDRESS_CONVENTION_TABLE,
 	resolveConvention,
@@ -25,8 +25,10 @@ import {
 	type Strategy,
 } from "./convention.js"
 
+import { ancestorLineage } from "./ancestry.js"
 import { COINCIDENT_ROLES_TABLE, coincidentRolesExists } from "./coincident-roles.js"
 import {
+	aliasBagExactMatch,
 	buildPlaceSearchFts,
 	PLACE_BBOX_TABLE,
 	PLACE_POPULATION_TABLE,
@@ -192,6 +194,10 @@ interface RawSearchRow {
 	rank: number // BM25 (lower = better in SQLite); we negate to get higher-is-better
 	lat: number | null
 	lon: number | null
+	min_latitude: number | null
+	max_latitude: number | null
+	min_longitude: number | null
+	max_longitude: number | null
 	population: number | null // from the place_population aux table; null when missing
 }
 
@@ -480,25 +486,21 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * ordered NEAREST-FIRST (localadmin → county → region → … → country). Backs
 	 * {@link ResolveOpts.includeAncestors} (#404). Self is excluded; memoized per id. Returns `[]`
 	 * when the place has no recorded ancestry.
+	 *
+	 * The walk itself lives in `ancestry.ts` (shared with the reverse geocoder, #484); the ordering
+	 * is its `PLACETYPE_DEPTH` table — same ranking as the previous inline SQL CASE, extended below
+	 * `localadmin` so locality/neighbourhood ancestors order correctly instead of sorting last.
 	 */
 	ancestors(id: number | string): Ancestor[] {
 		const pid = typeof id === "number" ? id : Number(id)
 		if (!Number.isFinite(pid)) return []
 		const cached = this.#ancestorsCache.get(pid)
 		if (cached) return cached
-		// Nearest-first: rank by placetype specificity (descending). Unknown placetypes sort last.
-		const rows = this.#db
-			.prepare(
-				`SELECT a.ancestor_id AS id, a.ancestor_placetype AS placetype, s.name AS name
-				FROM ancestors a JOIN spr s ON s.id = a.ancestor_id
-				WHERE a.id = ? AND a.ancestor_id != a.id
-				ORDER BY CASE a.ancestor_placetype
-					WHEN 'localadmin' THEN 6 WHEN 'borough' THEN 6 WHEN 'county' THEN 5
-					WHEN 'macrocounty' THEN 4 WHEN 'region' THEN 3 WHEN 'macroregion' THEN 2
-					WHEN 'country' THEN 1 ELSE 0 END DESC`
-			)
-			.all(pid) as unknown as Array<{ id: number; placetype: string; name: string }>
-		const lineage: Ancestor[] = rows.map((r) => ({ id: r.id, placetype: r.placetype, name: r.name }))
+		const lineage: Ancestor[] = ancestorLineage(this.#db, pid).map((r) => ({
+			id: r.id,
+			placetype: r.placetype,
+			name: r.name,
+		}))
 		this.#ancestorsCache.set(pid, lineage)
 		return lineage
 	}
@@ -550,7 +552,12 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// With a `country` hint every abbrev resolves; bare + no-context lifts 7→10/15 US states.)
 		const ftsLimit = query.text.trim().length <= 3 ? Math.max(limit * 4, SHORT_QUERY_OVERFETCH) : limit * 4
 
-		const placetypes = normalizePlacetypes(query.placetype)
+		// Expand the placetype filter through the shared equivalence table (core/resolver): a
+		// `locality` query must also reach `borough` / `localadmin` rows — Brooklyn-the-borough
+		// (pop 2.5M) is a borough, not a locality, and a strict filter made it unreachable so the
+		// fuzzy "Brooklyn Park, MN" won instead. Order-preserving: the FIRST entry stays the
+		// requested placetype, which is what shard routing keys off below.
+		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WofPlacetype[] | null
 		const ftsQuery = sanitizeFtsQuery(query.text)
 		if (!ftsQuery) return []
 
@@ -631,6 +638,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 				bm25(place_search) AS rank,
 				spr.latitude AS lat,
 				spr.longitude AS lon,
+				spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude,
 				${populationSelect}
 			FROM ${sch}.place_search
 			${joinClause}
@@ -699,6 +707,23 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			}
 			if (distanceKm !== undefined) candidate.distanceKm = distanceKm
 			if (row.population !== null && row.population > 0) candidate.population = row.population
+			// Candidate bbox — parity with the WASM lookup (resolver-wof-wasm/lookup.ts), whose
+			// consumers (the demo cascade's region constraint) read it. Without this the Node
+			// backend's region→bbox constraint is dead and disambiguation falls to population
+			// ranking (the Springfield-IL→MO failure the #524 smoke eval caught).
+			if (
+				row.min_latitude != null &&
+				row.max_latitude != null &&
+				row.min_longitude != null &&
+				row.max_longitude != null
+			) {
+				candidate.bbox = {
+					minLat: row.min_latitude,
+					maxLat: row.max_latitude,
+					minLon: row.min_longitude,
+					maxLon: row.max_longitude,
+				}
+			}
 			return candidate
 		})
 
@@ -706,7 +731,10 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// ranks above any partial match, with the weighted-sum score (incl. population) breaking ties
 		// WITHIN a tier. See the RankingWeights.exactMatchTiering docstring for why this aligns the
 		// population prior rather than overriding it. One cheap indexed lookup over the candidate ids.
-		if (this.#weights.exactMatchTiering && candidates.length > 1) {
+		// Runs even for a SINGLE candidate so `exactMatch` is stamped consistently (parity with the
+		// WASM lookup) — a sole alias hit ("New York City" → New York) must still carry the flag the
+		// demo cascade / #369 re-rank read.
+		if (this.#weights.exactMatchTiering && candidates.length > 0) {
 			const exactIds = this.#exactMatchIds(
 				sch,
 				candidates.map((c) => c.id as number),
@@ -885,24 +913,51 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 	/**
 	 * Among `ids`, return the subset whose name OR any alias equals `text` case-insensitively — the
-	 * exact-match tier for ranking. One indexed query over `<schema>.names`. Returns an empty set
-	 * when the shard has no `names` table (e.g. a postcode-only shard), so tiering silently no-ops
-	 * there.
+	 * exact-match tier for ranking. One indexed query over `<schema>.names`. When the shard has no
+	 * `names` table (a slim DB built with `dropNames`, or a postcode-only shard), fall back to the
+	 * self-contained `place_search` FTS content: its `alt_names` column is the same alias set joined
+	 * on the boundary-preserving `ALIAS_SEPARATOR` (#523), so `aliasBagExactMatch` recovers the exact
+	 * alias tier ("New York City" → New York) that the dropped `names` table used to provide.
 	 */
 	#exactMatchIds(schemaName: string, ids: number[], text: string): Set<number> {
 		const out = new Set<number>()
 		const trimmed = text.trim()
 		if (ids.length === 0 || !trimmed) return out
+		const placeholders = ids.map(() => "?").join(", ")
 		try {
-			const placeholders = ids.map(() => "?").join(", ")
 			const rows = this.#db
 				.prepare(
 					`SELECT DISTINCT id FROM ${schemaName}.names WHERE id IN (${placeholders}) AND name = ? COLLATE NOCASE`
 				)
 				.all(...ids, trimmed) as Array<{ id: number }>
 			for (const r of rows) out.add(r.id)
+			return out
 		} catch {
-			// Shard without a `names` table → no exact-match tier. Falls back to weighted-sum order.
+			// No `names` table on this shard — fall through to the place_search alias bag.
+		}
+		try {
+			const rows = this.#db
+				.prepare(
+					`SELECT wof_id AS id, name, alt_names FROM ${schemaName}.place_search WHERE wof_id IN (${placeholders})`
+				)
+				.all(...ids) as Array<{ id: number; name: string | null; alt_names: string | null }>
+			const norm = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, " ")
+			const needle = norm(trimmed)
+			for (const r of rows) {
+				if (r.name !== null && norm(r.name) === needle) out.add(r.id)
+			}
+			// Alias pass via the shared bag parser (#523). Separated bags (built since #523) get a true
+			// per-alias equality check, ungated — matching the `names`-table branch above, where an
+			// alias match counts as exact regardless of other candidates. Legacy bags (no separator)
+			// fall back to padded containment, gated on "no canonical exact in the pool" because their
+			// lost boundaries would otherwise false-promote interior fragments ("York" inside the alias
+			// "New York City") or cross-alias fragments ("York New" across "…York" + "New City…").
+			const anyCanonicalExact = out.size > 0
+			for (const r of rows) {
+				if (aliasBagExactMatch(r.alt_names, needle, anyCanonicalExact)) out.add(r.id)
+			}
+		} catch {
+			// Shard without place_search either → no exact-match tier. Falls back to weighted-sum order.
 		}
 		return out
 	}

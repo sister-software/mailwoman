@@ -29,7 +29,7 @@ the open question, **negatively and informatively**:
   US postcode 97.4 → **94.9**, unit 92.1 → 88.5.
 
 **Conclusion: the affix-75 peak is a TRANSIENT, not an equilibrium.** The model can
-briefly represent the affix split at solo level but cannot *hold* it under the full data
+briefly represent the affix split at solo level but cannot _hold_ it under the full data
 distribution; sustained density high enough to reach it starves the rest. Combined with
 the stable ~65 ceiling at moderate density (Runs A/B) and **US street stuck at ~74–76.5
 in every variant** (canonical bar 80.4), this is a demonstrated
@@ -40,19 +40,19 @@ capacity-competition hypothesis were right.)
 
 **Training-gate scorecard (canonical config bars, all fp32, gaz-fed + suppress):**
 
-| tag | gate | v1.0.0 (40k) | Run A (5×) | Run B (17×, init_from) | Run C @42k | Run C @55k |
-|---|--:|--:|--:|--:|--:|--:|
-| affix street_prefix | ≥78 | 27.6 | 64.9 | 64.9 | **75.0** | 52.9 ⬇ |
-| affix street_suffix | ≥67 | 42.1 | 52.4 | 48.8 | 55.8 | 48.8 |
-| **US street** | **≥80.4** | 76.0 | 76.0 | 76.2 | 74.3 | 76.5 — **fails everywhere** |
-| US postcode | ≥97 | 95.8 | 96.1 | **97.3 ✓** | 97.4 ✓ | 94.9 ⬇ |
-| country homograph | ≥83.3 | 87.5 ✓ | 85.7 ✓ | **89.8 ✓** | 83.3 ✓ | 85.1 ✓ |
-| unit | ≥92 | 92.1 ✓ | 90.6 | 90.6 | 92.1 ✓ | 88.5 ⬇ |
-| US micro | ≥81.6 | **85.5 ✓** | 85.5 ✓ | 84.8 ✓ | 85.0 ✓ | 85.3 ✓ |
-| US locality / region | ≥62.2/≥80.1 | 75.9/89.7 ✓ | 75.9/89.9 ✓ | 72.9/89.1 ✓ | 74.5/89.5 ✓ | 75.5/89.6 ✓ |
-| FR postcode / hn | ≥99.5/≥91 | 99.6/92.3 ✓ | 99.5/93.0 ✓ | **99.7/94.6 ✓** | 99.6/92.8 ✓ | 99.6/92.7 ✓ |
-| FR region (hold ~25) | — | ~25 | 21.7 | 27.6 | 24.7 | **5.3 — collapsed** |
-| DE native loc | ≥83.8 | 90.7 ✓ | 90.7 ✓ | 90.7 ✓ | — | — |
+| tag                  |        gate | v1.0.0 (40k) |  Run A (5×) | Run B (17×, init_from) |  Run C @42k |                  Run C @55k |
+| -------------------- | ----------: | -----------: | ----------: | ---------------------: | ----------: | --------------------------: |
+| affix street_prefix  |         ≥78 |         27.6 |        64.9 |                   64.9 |    **75.0** |                      52.9 ⬇ |
+| affix street_suffix  |         ≥67 |         42.1 |        52.4 |                   48.8 |        55.8 |                        48.8 |
+| **US street**        |   **≥80.4** |         76.0 |        76.0 |                   76.2 |        74.3 | 76.5 — **fails everywhere** |
+| US postcode          |         ≥97 |         95.8 |        96.1 |             **97.3 ✓** |      97.4 ✓ |                      94.9 ⬇ |
+| country homograph    |       ≥83.3 |       87.5 ✓ |      85.7 ✓ |             **89.8 ✓** |      83.3 ✓ |                      85.1 ✓ |
+| unit                 |         ≥92 |       92.1 ✓ |        90.6 |                   90.6 |      92.1 ✓ |                      88.5 ⬇ |
+| US micro             |       ≥81.6 |   **85.5 ✓** |      85.5 ✓ |                 84.8 ✓ |      85.0 ✓ |                      85.3 ✓ |
+| US locality / region | ≥62.2/≥80.1 |  75.9/89.7 ✓ | 75.9/89.9 ✓ |            72.9/89.1 ✓ | 74.5/89.5 ✓ |                 75.5/89.6 ✓ |
+| FR postcode / hn     |   ≥99.5/≥91 |  99.6/92.3 ✓ | 99.5/93.0 ✓ |        **99.7/94.6 ✓** | 99.6/92.8 ✓ |                 99.6/92.7 ✓ |
+| FR region (hold ~25) |           — |          ~25 |        21.7 |                   27.6 |        24.7 |         **5.3 — collapsed** |
+| DE native loc        |       ≥83.8 |       90.7 ✓ |      90.7 ✓ |                 90.7 ✓ |           — |                           — |
 
 **No variant passes the full canonical gate.** The misses are consistent: affix below the
 solo 78/67 everywhere stable, and US street −4 to −6 vs v0.9.8 everywhere (a real spine
@@ -63,7 +63,7 @@ regression of the consolidation itself, likely the affix-split pressure costing 
 
 Per the treadmill guard, no further recipe iteration. Three options, stated:
 
-1. **Re-baseline with reason + ship Run B as v4.2.0** *(recommended)*. Run B is the
+1. **Re-baseline with reason + ship Run B as v4.2.0** _(recommended)_. Run B is the
    strongest stable model: US postcode 97.3 ✓, country 89.8 ✓ (best ever), FR ✓ (hn 94.6
    best ever), DE ✓, micro/locality/region far above v4.1.0. Stated re-baselines it
    needs: **affix 64.9/48.8** (vs solo 78/67 — still infinitely better than the shipped
@@ -92,26 +92,27 @@ scorecard above):**
 72/64 vs the config's **78/67**, unit 91 vs 92, FR postcode 99 vs 99.5 — and had dropped the US-street
 row entirely. Restored to the config; see "Gate provenance & decisions" below.)
 
-| tag | **gate (config)** | v1.0.0 consol | Run A (5×) | diag (2k) | Run B (17×) |
-|---|--:|--:|--:|--:|--:|
-| affix street_prefix | **≥78** | 27.6 | 64.9 | 75.0 | 64.9 |
-| affix street_suffix | **≥67** | 42.1 | 52.4 | 55.8 | 48.8 |
-| country homograph | **≥83.3** | 87.5 | 85.7 | 83.3 | 89.8 |
-| US postcode | **≥97** | 95.8 | 96.1 | 97.4 | 97.3 |
-| unit | **≥92** | 92.1 | 90.6 | — | 90.6 |
-| **US street** | **≥80.4** (v0.9.8) | 76.0 | 76.0 | — | 76.2 |
-| US locality / region | ≥62.2 / ≥80.1 (v0.9.8) | 75.9/89.7 | 75.9/89.9 | — | 72.9/89.1 |
-| US micro | ≥81.6 (v0.9.8) | 85.5 | 85.5 | 85.0 | 84.8 |
-| FR postcode / hn | **≥99.5 / ≥91** | 99.6/92.3 | 99.5/93.0 | — | 99.7/94.6 |
-| DE native loc (anchor ON) | ≥83.8 | 90.7 | 90.7 | — | 90.7 |
+| tag                       |      **gate (config)** | v1.0.0 consol | Run A (5×) | diag (2k) | Run B (17×) |
+| ------------------------- | ---------------------: | ------------: | ---------: | --------: | ----------: |
+| affix street_prefix       |                **≥78** |          27.6 |       64.9 |      75.0 |        64.9 |
+| affix street_suffix       |                **≥67** |          42.1 |       52.4 |      55.8 |        48.8 |
+| country homograph         |              **≥83.3** |          87.5 |       85.7 |      83.3 |        89.8 |
+| US postcode               |                **≥97** |          95.8 |       96.1 |      97.4 |        97.3 |
+| unit                      |                **≥92** |          92.1 |       90.6 |         — |        90.6 |
+| **US street**             |     **≥80.4** (v0.9.8) |          76.0 |       76.0 |         — |        76.2 |
+| US locality / region      | ≥62.2 / ≥80.1 (v0.9.8) |     75.9/89.7 |  75.9/89.9 |         — |   72.9/89.1 |
+| US micro                  |         ≥81.6 (v0.9.8) |          85.5 |       85.5 |      85.0 |        84.8 |
+| FR postcode / hn          |        **≥99.5 / ≥91** |     99.6/92.3 |  99.5/93.0 |         — |   99.7/94.6 |
+| DE native loc (anchor ON) |                  ≥83.8 |          90.7 |       90.7 |         — |        90.7 |
 
 Baselines (fp32, same harness): **v4.1.0** US postcode 98.3 · street 78.5 · locality 60.0 ·
 region 78.4 · micro 80.2 · FR postcode 99.5 · FR hn 91.0. **v0.9.8** US street **80.4** · locality 62.2 ·
 region 80.1 · micro 81.6 · FR hn 92.0.
 
 ### Gate provenance & decisions (eval discipline — no silent drift)
+
 - **country ≥83.3** is config-canonical (the v0.9.12 banked-lever floor, "don't regress #464"). The
-  consolidation *demonstrated* 87.5, but that's a bonus, not the pre-registered bar. A first doc draft
+  consolidation _demonstrated_ 87.5, but that's a bonus, not the pre-registered bar. A first doc draft
   wrote ≥85; it was reconciled DOWN to the config's 83.3 — recorded here, not silent.
 - **affix ≥78/67** (hold v0.9.8's solo level) and **US street ≥80.4** are the two REAL open gaps.
   Across v1.0.0/A/B, affix sits ~65 (Run C aims to clear via resume+density) and **US street is stuck
@@ -132,6 +133,7 @@ not anticipate the transient-then-decay shape; the guard caught what the tell di
 
 **4. SHIP gate — REQUIRED before tagging v4.2.0 (training-gate pass is necessary, NOT sufficient).**
 The flag-plant claim is made on the artifact users get, with resolver-coupled behavior verified:
+
 - **Honest-eval (VT holdout)** — this model moved locality +14 / region +10; resolver behavior
   changed and the per-tag spine evals don't see resolver interactions. Run `scripts/eval/honest-eval.sh`;
   **region-match + coord p50/p90 must hold** vs v4.1.0 ([[project-honest-eval-region-fix]]).
@@ -171,14 +173,14 @@ in **epic #488**, not an ad-hoc grab.
 - **DeepSeek consult + diagnostic → consensus** (session
   `consolidation-tradeoff-2026-06-10`; notes in `.agents/skills/deepseek-consult/`):
   - Affix is **scheduling-bound, not capacity-bound** (diagnostic: prefix 27.6→75 in 2k
-    steps @ affix 20×, postcode even +1.6, spine flat). *[SUPERSEDED by Run C: the 75 is a
+    steps @ affix 20×, postcode even +1.6, spine flat). _[SUPERSEDED by Run C: the 75 is a
     transient that decays under sustained density — it IS a capacity/stability constraint;
-    see "Final result" above.]*
+    see "Final result" above.]_
   - **Weight-merge is unsound** for our from-scratch (non-fine-tune) solo models — would
-    wreck the CRF transition matrix. *(Stands.)*
+    wreck the CRF transition matrix. _(Stands.)_
   - **US postcode needed convergence, not a structural fix** — improved +1.6 with zero
-    postcode-position changes; the #468 choreography is not load-bearing for it. *(Stands;
-    Run B confirmed 97.3 at moderate density.)*
+    postcode-position changes; the #468 choreography is not load-bearing for it. _(Stands;
+    Run B confirmed 97.3 at moderate density.)_
   - Fix = **continue-resume** (cheaper than fresh) with affix 5× + tag-weights → **Run A**.
 - **Runs A/B/C — the affix-recovery arc** (full scorecard in "Final result"): A (5×,
   resume) → stable 64.9/52.4; B (17×, but my `init_from` error) → flat 64.9, postcode
@@ -186,6 +188,7 @@ in **epic #488**, not an ad-hoc grab.
   collapse @ 15k** → treadmill STOP, fork to operator.
 
 ## What went well
+
 - The cheap 2k-step diagnostic adjudicated a real strategy fork (scheduling vs capacity)
   for ~5 min of GPU before committing to a 35-min run. Reusable pattern.
 - Caught the score-affix harness artifact (zero-filled gazetteer → fake affix crash);
@@ -193,6 +196,7 @@ in **epic #488**, not an ad-hoc grab.
 - Operator-in-the-loop on every GPU launch; DeepSeek consensus on the consequential fork.
 
 ## What could've gone better
+
 - I framed the US-postcode dip as feature-channel interference and built choreography (#468)
   for it; the diagnostic showed it was mostly under-convergence. Choreography is still
   default-off/byte-stable and harmless, but it wasn't the right tool for that nail.
@@ -209,6 +213,7 @@ in **epic #488**, not an ad-hoc grab.
   the cheap-diagnostic-first pattern and the treadmill guard are what bounded the damage.
 
 ## Open / next
+
 - **The fork decision** (this doc, above) — sent for operator review: re-baseline + ship Run
   B / escalate architecture / hold. Then the SHIP gate (honest-eval VT, demo presets, int8
   spot-check, ledger + scorecard + releases.mdx) before any v4.2.0 tag.
@@ -220,11 +225,12 @@ in **epic #488**, not an ad-hoc grab.
   **affix/width architecture question** (option 2) should also get an issue if pursued.
 
 ## Numbers
-| | |
-|---|---|
-| models trained | v1.0.0 consolidation (40k) + affix diagnostic (2k) + Run A (20k) + Run B (20k) + Run C (15k) ≈ 97k steps, ~2.6 A100-h |
-| GPU lost to error | Run B ~35 min (init_from confound) |
-| consults | DeepSeek-pro 4-turn (`consolidation-tradeoff-2026-06-10`); 2 of its predictions falsified by experiment |
-| PRs/branches | #489 MERGED, #463 closed (salvaged); #468, #469, `feat/consolidation-466` open for the cut |
-| regressions shipped | 0 (nothing promoted; v4.1.0 still default) |
-| canonical-gate status | no variant passes (affix + US street); fork pending review |
+
+|                       |                                                                                                                       |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| models trained        | v1.0.0 consolidation (40k) + affix diagnostic (2k) + Run A (20k) + Run B (20k) + Run C (15k) ≈ 97k steps, ~2.6 A100-h |
+| GPU lost to error     | Run B ~35 min (init_from confound)                                                                                    |
+| consults              | DeepSeek-pro 4-turn (`consolidation-tradeoff-2026-06-10`); 2 of its predictions falsified by experiment               |
+| PRs/branches          | #489 MERGED, #463 closed (salvaged); #468, #469, `feat/consolidation-466` open for the cut                            |
+| regressions shipped   | 0 (nothing promoted; v4.1.0 still default)                                                                            |
+| canonical-gate status | no variant passes (affix + US street); fork pending review                                                            |

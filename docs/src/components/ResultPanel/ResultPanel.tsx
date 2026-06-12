@@ -19,7 +19,7 @@ export interface ConfidenceCellProps {
  * red→amber→green at .5 / .8 thresholds so eyeballing the table surfaces low-confidence predictions
  * without reading every number.
  */
-const ConfidenceCell: React.FC<ConfidenceCellProps> = ({ confidence }) => {
+export const ConfidenceCell: React.FC<ConfidenceCellProps> = ({ confidence }) => {
 	if (confidence == null) return <span className={styles.confDash}>—</span>
 	const pct = Math.max(0, Math.min(1, confidence)) * 100
 	const tier = confidence >= 0.8 ? "high" : confidence >= 0.5 ? "mid" : "low"

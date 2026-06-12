@@ -6,12 +6,12 @@ normalizer (`resolver-wof-sqlite/street-normalize.ts`) on both build and lookup 
 
 ## VT holdout (1,428 honest rows, v4.2.0 int8, tier on vs off)
 
-| tier | locality-match | region-match | coord p50 | coord p90 | coord p99 | hit rate |
-| --- | --: | --: | --: | --: | --: | --: |
-| admin-centroid (today's default) | 93.8% | 99.9% | 3.4 km | 7.4 km | 277.4 km | — |
-| **+ address-point** | 93.8% | 99.9% | **0.0 km** | **0.0 km** | **6.2 km** | **93.1%** (1330/1428) |
+| tier                             | locality-match | region-match |  coord p50 |  coord p90 |  coord p99 |              hit rate |
+| -------------------------------- | -------------: | -----------: | ---------: | ---------: | ---------: | --------------------: |
+| admin-centroid (today's default) |          93.8% |        99.9% |     3.4 km |     7.4 km |   277.4 km |                     — |
+| **+ address-point**              |          93.8% |        99.9% | **0.0 km** | **0.0 km** | **6.2 km** | **93.1%** (1330/1428) |
 
-The tier changes *where*, never *which place* — admin flags are identical by construction
+The tier changes _where_, never _which place_ — admin flags are identical by construction
 (the hook decorates the street node's metadata after the admin walk; it cannot alter
 attribution). On a hit, the resolved coordinate is the actual building: gold OA points and
 Overture NAD points agree to meters. The 6.9% miss population is exactly what house-number

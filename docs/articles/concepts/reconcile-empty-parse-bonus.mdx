@@ -42,21 +42,32 @@ With `beamWidth = 1` (greedy), the empty beam dominates immediately and beam pru
 
 This is not specific to our use case — any joint decoder that composes confidences multiplicatively will hit it. It is what the reconciler is supposed to be doing (picking high-evidence interpretations), so the search needs a structural reason to _prefer_ accepting evidence over skipping it.
 
-## The fix — inclusion bonus
+## The fix — inclusion bonus, scaled per word
 
-Add a fixed log-bonus for each accepted slot. The bonus shifts the trade-off so accepting a high-confidence slot is net-positive in log-space.
+Add a log-bonus for each **word covered** by an accepted slot. The bonus shifts the trade-off so accepting a high-confidence slot is net-positive in log-space.
 
 In `core/pipeline/reconcile.ts`:
 
 ```ts
-const INCLUSION_LOG_BONUS = Math.log(2.5) // ≈ +0.916
+const INCLUSION_LOG_BONUS = Math.log(2.5) // ≈ +0.916, × the slot's word count
 ```
 
-What `log(2.5)` means: any slot whose **product of factors** exceeds `1/2.5 = 0.4` is net-positive in log-space and worth including. Slots below `0.4` aren't.
+What `log(2.5)` means: any slot whose **per-word geometric mean of factors** exceeds `1/2.5 = 0.4` is net-positive in log-space and worth including. Slots below that aren't.
 
-Concretely: a slot with `phrase=0.85, classifier=0.7, resolver=0.9, concordance=0.95` has product `0.508`. With the bonus added, that slot's log-contribution is `log(0.508) + log(2.5) = log(1.27) > 0`. It is net-positive and will be accepted. Drop any factor below ~0.7 across the board and the slot becomes net-negative and gets skipped — the search prefers to leave it out, which is also the right answer when evidence is weak.
+Concretely: a one-word slot with `phrase=0.85, classifier=0.7, resolver=0.9, concordance=0.95` has product `0.508`. With the bonus added, that slot's log-contribution is `log(0.508) + log(2.5) = log(1.27) > 0`. It is net-positive and will be accepted. Drop any factor below ~0.7 across the board and the slot becomes net-negative and gets skipped — the search prefers to leave it out, which is also the right answer when evidence is weak.
 
 The `2.5` is empirical. `e` (≈ 2.718) is the natural-log analogue, equivalent to "a slot with `product > 1/e` survives". We landed on 2.5 after the kryptonite fixtures rather than 2.718 — slightly more permissive, slightly easier to reason about as "factors averaging above 0.4". Future tuning should be driven by an eval corpus large enough to justify a change.
+
+### Why per word, not per slot
+
+The first implementation granted the bonus once per accepted slot. That carries two structural biases, both measured on the bare query `"New York City"` with no resolver wired (the live demo's configuration, 2026-06-11):
+
+1. **Fragments beat coverage.** The per-token logit aggregation gives interior fragments inflated confidence — `City` aggregates the I-locality mass of a token that sits _inside_ a locality, scoring `locality=0.92`, while the full `New York City` span scores `0.60`. With a flat per-slot bonus, the beam paid nothing for leaving `New York` unexplained: the bare `locality="City"` won at `+0.475` over the full span's `+0.199`, and the grouper-audit then promoted the orphaned `York` proposal to a spurious `region` node. Final output: `{region: "York", locality: "City"}` — for an input the plain argmax path parses correctly.
+2. **More spans collect more bonuses.** Two interpretations covering the same words were not scored on evidence alone — the one split into more slots banked one bonus per slot, a flat subsidy for fragmentation.
+
+Scaling the bonus by the slot's word count makes _coverage_ the thing being rewarded. Equal-coverage interpretations collect equal bonus (the evidence factors alone decide between them), and a covering interpretation out-scores one that silently drops words unless the extra evidence is genuinely weak. On the query above, the full span now wins at `+2.03` (three words' bonus) vs `+0.48` for the bare fragment.
+
+Word counting is whitespace-delimited with a floor of one — scripts without spaces (CJK) degrade to the old per-slot behavior rather than misbehaving.
 
 ## Why this knob is not public
 

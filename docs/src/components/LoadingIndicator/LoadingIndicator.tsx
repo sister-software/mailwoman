@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * LoadingIndicator — pure-CSS loading states for three UX patterns:
+ *   LoadingIndicator — pure-CSS loading states for three UX patterns:
  *
- *   pulse   — animated opacity skeleton bars (content-placeholder shimmer)
- *   spinner — CSS border-top rotation ring (in-progress spinner)
- *   staged  — step list with animated checkmarks (pipeline / multi-phase progress)
+ *   Pulse — animated opacity skeleton bars (content-placeholder shimmer) spinner — CSS border-top
+ *   rotation ring (in-progress spinner) staged — step list with animated checkmarks (pipeline /
+ *   multi-phase progress)
  *
- * SSR-safe: all animations are CSS-driven; no DOM measurement or browser APIs at
- * render time. The component renders identically on server and client.
+ *   SSR-safe: all animations are CSS-driven; no DOM measurement or browser APIs at render time. The
+ *   component renders identically on server and client.
  */
 
 import classNames from "classnames"
@@ -24,13 +24,13 @@ export type LoadingMode = "pulse" | "spinner" | "staged"
 export interface LoadingIndicatorProps extends React.HTMLAttributes<HTMLDivElement> {
 	/**
 	 * Visual mode.
+	 *
 	 * @default "spinner"
 	 */
 	mode?: LoadingMode
 
 	/**
-	 * Optional label rendered below the indicator.
-	 * In staged mode this is shown above the step list.
+	 * Optional label rendered below the indicator. In staged mode this is shown above the step list.
 	 */
 	label?: string
 
@@ -50,9 +50,9 @@ export interface LoadingIndicatorProps extends React.HTMLAttributes<HTMLDivEleme
 	steps?: string[]
 
 	/**
-	 * Index of the currently active step (0-based).
-	 * Steps before this index are marked complete (checkmark).
-	 * Steps after this index are pending (dimmed).
+	 * Index of the currently active step (0-based). Steps before this index are marked complete
+	 * (checkmark). Steps after this index are pending (dimmed).
+	 *
 	 * @default -1 (all pending)
 	 */
 	activeStep?: number
@@ -132,7 +132,11 @@ const StagedProgress = memo<StagedProgressProps>(({ steps, activeStep }) => {
 				return (
 					<li key={i} className={rowClass}>
 						<span className={styles.stepIcon}>
-							{isComplete ? <span className={styles.checkmark} /> : isActive ? <span className={styles.activeDot} /> : null}
+							{isComplete ? (
+								<span className={styles.checkmark} />
+							) : isActive ? (
+								<span className={styles.activeDot} />
+							) : null}
 						</span>
 						<span>{step}</span>
 					</li>

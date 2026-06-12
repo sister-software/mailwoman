@@ -1,0 +1,158 @@
+---
+slug: one-row-crashed-the-build-twice
+title: "One row crashed our corpus build. Twice, on the same character."
+authors: [teffen]
+tags: [corpus, build, unicode, infrastructure, resilience]
+date: 2026-06-12
+draft: true
+---
+
+Our training corpus is built from source: hundreds of millions of address rows, stitched
+out of eleven raw data sources, written to disk over the course of a long unattended night.
+Last night's build ran for two and a half hours and then died on a single row. If you've ever
+launched a long job before bed and woken up to a stack trace instead of an artifact, you know
+the specific flavor of that disappointment. The questions I want to answer here: how does one
+row out of nearly 700 million take down hours of compute? Why, after we fixed the thing that
+killed it, did it crash again on the *exact same row*? And what do you change once you've
+learned that a correct assertion and a safe one are different animals?
+
+{/* truncate */}
+
+## দক্ষিণ কোরিয়া
+
+The build crashes loud, which is the one mercy here. The error named its victim: a Who's On
+First record, specifically the `name:ben` variant of South Korea — `দক্ষিণ কোরিয়া`, the country's
+name written in Bengali. We carry those localized name variants on purpose; "Saint Petersburg"
+and "St. Petersburg" and the Bengali rendering of South Korea are all rows we *want*, because a
+parser that only knows the Latin spelling of a place is a parser with a blind spot the size of
+most of the planet.
+
+What it tripped on was an assertion we'd written ourselves, and meant. Deep in alignment, the
+code checks that a row's raw text is already in Unicode's NFC normalization form, and throws a
+loud error if it isn't. This Bengali string wasn't. So: throw, and a two-and-a-half-hour build
+falls over because one record out of nearly 700 million arrived in the wrong normalization form.
+
+## The assertion was right
+
+Here's the uncomfortable part. That assertion is correct, and I'd write it again.
+
+Our labels are character offsets. When the corpus says the postcode lives at `[10, 15)`, it
+means code units 10 through 15 of the raw string. Those numbers only mean one thing if everyone
+agrees on how the string is spelled at the byte level — and Unicode lets you spell the same
+visible text more than one way. The letter `é` can be one code unit (NFC, precomposed) or two
+(NFD, a bare `e` followed by a combining acute accent). A span of `[10, 15)` lands in a
+different place depending on which spelling you're holding. Feed the model offsets computed over
+one form and raw text stored in another, and every label is quietly, invisibly off by however
+many combining marks came before it. There is no error message for that. There's just a model
+that slowly learns garbage.
+
+So the assertion guards something real: char-offset labels are only meaningful under a single
+normalization form. The principle is sound. The *blast radius* is the bug. A correct guard that
+takes down the entire build the first time it meets a row it doesn't like is a guard that has
+confused being right with being safe.
+
+The fix for the first crash was to stop asserting and start normalizing. Where alignment used to
+throw, it now normalizes the raw text *and* every component value to NFC, computes the spans over
+the normalized text, and stores that normalized text on the row. Same guarantee — offsets and
+text in one agreed form — and the valuable, multi-locale row survives instead of detonating.
+DeepSeek, which we use as an independent reviewer for calls like this, agreed the move preserved
+the invariant rather than papering over it. We shipped it and re-ran.
+
+## Then it crashed again, on the same character
+
+The build got past the NFC check, ran a few seconds, and died. Same row. South Korea, in Bengali,
+again. A different error this time:
+
+```
+span out of bounds: country@[0,14) over raw of length 13
+```
+
+The `country` component here *is* the whole raw string — the same 13 code units. The span should
+have been `[0, 13)`, the entire thing. Our span-locating code returned `[0, 14)`: one code unit
+past the end of a string it was supposed to be contained in. It over-ran, by exactly one, on a
+string built almost entirely of combining marks.
+
+Combining marks are where character-offset code goes to embarrass itself. A grapheme like the
+Bengali `ক্ষ` is several code units wearing a trench coat, and the boundary logic we use to keep a
+short component from stealing a longer one's word — logic that is perfectly behaved on Latin
+script — took one step too far across the combining sequence and handed back an offset that
+couldn't exist. The span-invariant check caught it and threw, which is how we found out.
+
+And this is the honest lesson buried in the wreck: we had validated the build on nine of the
+eleven sources, every Latin-script shape we could think of, and they were spotless. The two we'd
+skipped the full dress rehearsal on were the WOF adapters — which is precisely where every
+non-Latin name variant on Earth lives. The long tail wasn't hiding. We just hadn't walked all
+the way down it.
+
+## Stop trusting the row
+
+The tempting fix is to chase the off-by-one. It's a real bug, and there's a real version of the
+fix that teaches the boundary logic about combining marks and *keeps* every one of those non-Latin
+rows. We filed it (issue #555) and we'll do it properly. But chasing it at 3 a.m., mid-recovery,
+to unblock a multi-hour build, is how you ship a worse bug at 4.
+
+So the recovery fix was smaller and meaner: stop letting any single row crash hours of work.
+Two moves. First, an out-of-bounds span — one that can't possibly be a valid character offset —
+quarantines the row with a named reason instead of throwing. Second, a `try`/`catch` wraps the
+per-row alignment in the build loop, so *any* unforeseen exception on *any* one row sends that
+row to the quarantine pile and the build keeps walking.
+
+The build already worked this way for every other kind of failure. A component it couldn't find
+in the raw text, a row with empty text — those have always been quarantine lines, written out
+with a reason, counted, and stepped over. The NFC assertion was the one place in the whole
+pipeline that broke that contract and reached for a stack trace. We brought it back in line with
+how the rest of the system already treated bad data: a multi-hour unattended build should hold
+every row guilty until it proves itself alignable, and the cost of a guilty row is a line in a
+quarantine file, not a dead process.
+
+The bill for that, this run: tens of thousands of non-Latin name variants set aside — under two
+hundredths of one percent of the corpus, every one of them logged with the reason `span-out-of-bounds`
+so the number is staring back at us in the manifest. Small, visible, and on the list to recover.
+Named, not swept under the parquet.
+
+## The two and a half hours we didn't lose
+
+Now the part that turned a catastrophe into an inconvenience.
+
+By the time the build crashed, it had already finished the slow, expensive half of its job:
+reading all eleven sources and writing 36 gigabytes of canonical rows to disk. Two and a half
+hours of I/O, done, sitting right there. The crash was in the *next* phase — alignment — which
+reads those canonical files back and turns them into labeled rows.
+
+The build, as written, had no memory. Re-running it meant re-emitting all 36 gigabytes from
+scratch: another two and a half hours just to limp back to the line where it had fallen over.
+The penalty for trying again is what actually ruins a night. The original bug barely registers
+next to it.
+
+So the recovery shipped one more thing: resume. Each adapter writes its canonical file and then,
+only once that file is completely flushed, a manifest beside it. So the manifest's existence is a
+promise that the file behind it is whole. Resume checks for that pair; if both are there, it
+reuses them and skips the emit entirely. It's opt-in — the default still re-emits, because for a
+clean run you want the source of truth, not yesterday's cache — but with the flag flipped, the
+re-run reused every gigabyte we'd already paid for and went straight back to alignment. Freed of
+the emit, the align phase turned out to be fast. The thing we'd budgeted twenty-two hours for is
+mostly going to come in under ten, because the original estimate was paying for an emit phase the
+recovery never had to repeat.
+
+## Build like it's going to crash
+
+Three fixes came out of one row, and not one of them is clever. Normalize instead of throw.
+Quarantine instead of crash. Resume instead of restart. They're the unglamorous difference
+between a build that survives the night and one that needs a human awake to babysit it.
+
+The thread running through all three is the same, and I keep relearning it: correct-in-principle
+and safe-in-production are not the same property, and the gap between them is always lined with
+the rows you didn't picture. The combining mark. The one record in 690 million that showed up in
+the wrong normalization form. The boundary check that's flawless on every script you tested and a
+single code unit wrong on the one you didn't. You can't enumerate that tail — it's too long, and
+it's mostly written in alphabets you can't read. What you *can* do is decide, up front, that the
+tail isn't allowed to take down the whole machine: that a weird row is a quarantine line, that a
+crash is resumable, that the assertion which is right about your data still has to be gentle about
+how it's wrong.
+
+The deeper fix is still out there — that span-locator owes a few tens of thousands of non-Latin
+names a correct offset, and #555 is where we go pay them back. But the build that died twice on
+South Korea finished its night, and the next time something runs for hours in the dark, one bad
+row is going to cost us a line in a log instead of the morning.
+
+Go make your long jobs survivable. The one that crashes at hour two will thank you. 👏

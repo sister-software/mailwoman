@@ -1,8 +1,13 @@
 """SentencePiece tokenizer wrapper with span info + label realignment.
 
 The corpus parquet stores ``raw`` plus a whitespace-tokenized ``tokens`` list and a parallel
-``labels`` list (BIO over those whitespace tokens). The neural model is trained over
-SentencePiece sub-tokens, which are *finer-grained* than the whitespace tokens. This module:
+``labels`` list (BIO over those whitespace tokens). As of the v0.5.0 char-offset migration
+(#519) rows additionally carry ``span_starts[]``/``span_ends[]``/``span_tags[]`` — char ranges
+over ``raw`` (sorted, non-overlapping) — which become the label source of truth; when present,
+``encode_row`` builds the per-char label array directly from the spans and skips the
+token-quantized projection (the path that made supervision punctuation-mute). The neural model
+is trained over SentencePiece sub-tokens, which are *finer-grained* than the whitespace tokens.
+This module:
 
 1. Loads the SentencePiece model trained in Phase 1 (``/data/models/tokenizer/v0.1.0/``).
 2. Encodes ``raw`` into pieces *with byte-level offsets*.
@@ -147,19 +152,59 @@ def char_label_array(
     return out
 
 
-def realign_labels_to_pieces(
+def char_label_array_from_spans(
     raw: str,
-    tokens: Sequence[str],
-    labels: Sequence[str],
+    span_starts: Sequence[int],
+    span_ends: Sequence[int],
+    span_tags: Sequence[str],
+) -> list[str]:
+    """Build the per-character BIO label array directly from char-offset spans (#519, v0.5.0).
+
+    The v0.5.0 corpus stores labels as the parallel triple ``span_starts[]/span_ends[]/span_tags[]``
+    — char ranges over ``raw``, [start, end) exclusive-end. This is the spans-native sibling of
+    ``char_label_array``: no whitespace-token indirection, so intra-span punctuation chars (the
+    ``P.O.`` periods) carry the span's label instead of falling to ``O``.
+
+    Validates the triple's manifest invariants loudly (equal lengths, sorted ascending by start,
+    non-overlapping, in-bounds) — a violation means a corrupt corpus row, never something to paper
+    over silently.
+    """
+    n = len(span_starts)
+    if len(span_ends) != n or len(span_tags) != n:
+        raise ValueError(
+            f"span arrays length mismatch: starts={n} ends={len(span_ends)} tags={len(span_tags)}"
+        )
+    out = ["O"] * len(raw)
+    prev_start = -1
+    prev_end = 0
+    for start, end, tag in zip(span_starts, span_ends, span_tags):
+        if not (0 <= start < end <= len(raw)):
+            raise ValueError(
+                f"span out of bounds: {tag}@[{start}, {end}) over raw of length {len(raw)}: {raw!r}"
+            )
+        if start < prev_start:
+            raise ValueError(f"spans not sorted: {tag}@[{start}, {end}) after [{prev_start}, {prev_end})")
+        if start < prev_end:
+            raise ValueError(f"spans overlap: {tag}@[{start}, {end}) overlaps [{prev_start}, {prev_end})")
+        out[start] = f"B-{tag}"
+        for i in range(start + 1, end):
+            out[i] = f"I-{tag}"
+        prev_start, prev_end = start, end
+    return out
+
+
+def project_char_labels_to_pieces(
+    raw: str,
+    char_labels: Sequence[str],
     pieces: Iterable[PieceSpan],
 ) -> list[str]:
-    """Project the whitespace-token BIO labels onto SP pieces.
+    """Project a per-character BIO label array onto SP pieces.
 
-    Each SP piece gets the label of the first non-whitespace char it covers; B/I semantics
-    are preserved: only the leading piece of an entity gets ``B-``, subsequent pieces in the
-    same contiguous entity span get ``I-``.
+    THE projection — both label paths (token-quantized and char-span) flow through this single
+    function, so the two cannot drift. Each SP piece gets the label of the first non-whitespace
+    char it covers; B/I semantics are recomputed per piece: only the leading piece of a contiguous
+    entity gets ``B-``, subsequent pieces get ``I-``.
     """
-    char_labels = char_label_array(raw, tokens, labels)
     out: list[str] = []
     prev_tag: str | None = None
     for piece in pieces:
@@ -169,7 +214,7 @@ def realign_labels_to_pieces(
             if i < len(raw) and not raw[i].isspace():
                 first_label = char_labels[i] if i < len(char_labels) else "O"
                 break
-        # Collapse to Stage 1 (anything outside the coarse set becomes O).
+        # Collapse to the active set (anything outside it becomes O).
         first_label = collapse_label(first_label)
         if first_label == "O":
             out.append("O")
@@ -183,6 +228,39 @@ def realign_labels_to_pieces(
             out.append(f"B-{tag}")
         prev_tag = tag
     return out
+
+
+def realign_labels_to_pieces(
+    raw: str,
+    tokens: Sequence[str],
+    labels: Sequence[str],
+    pieces: Iterable[PieceSpan],
+) -> list[str]:
+    """Project the whitespace-token BIO labels onto SP pieces (the pre-v0.5.0 token path).
+
+    Token-quantized: punctuation chars the corpus tokenizer dropped are ``O`` in the per-char
+    array, so a piece whose first non-whitespace char is intra-span punctuation gets ``O`` — the
+    structural blind spot the v0.5.0 char-span format removes. Deleted once v0.5.0 lands.
+    """
+    return project_char_labels_to_pieces(raw, char_label_array(raw, tokens, labels), pieces)
+
+
+def realign_spans_to_pieces(
+    raw: str,
+    span_starts: Sequence[int],
+    span_ends: Sequence[int],
+    span_tags: Sequence[str],
+    pieces: Iterable[PieceSpan],
+) -> list[str]:
+    """Project char-offset label spans onto SP pieces (#519, the v0.5.0 path).
+
+    Same projection as ``realign_labels_to_pieces`` (shared ``project_char_labels_to_pieces``);
+    only the per-char array construction differs — built FROM the spans, so every covered char
+    (punctuation included) carries its span's label.
+    """
+    return project_char_labels_to_pieces(
+        raw, char_label_array_from_spans(raw, span_starts, span_ends, span_tags), pieces
+    )
 
 
 def anchor_feature_vector(posterior: dict[str, float], lat: float, lon: float) -> list[float]:
@@ -236,18 +314,76 @@ def realign_anchor_to_pieces(
                 j += 1
             begin = spans[i][0]
             end = spans[j - 1][1]
-            postcode = raw[begin:end].replace(" ", "").upper()
-            hit = anchor_lookup.get(postcode)
-            if hit is not None:
-                posterior, lat, lon = hit
-                feat = anchor_feature_vector(posterior, lat, lon)
-                for c in range(begin, end):
-                    char_feat[c] = feat
-                    char_conf[c] = 1.0
+            _paint_anchor_chars(raw, begin, end, anchor_lookup, char_feat, char_conf)
             i = j
         else:
             i += 1
 
+    return _project_anchor_chars_to_pieces(raw, char_feat, char_conf, pieces)
+
+
+def realign_anchor_to_pieces_from_spans(
+    raw: str,
+    span_starts: Sequence[int],
+    span_ends: Sequence[int],
+    span_tags: Sequence[str],
+    pieces: Sequence[PieceSpan],
+    anchor_lookup: "dict[str, tuple[dict[str, float], float, float]]",
+) -> tuple[list[list[float]], list[float]]:
+    """Spans-native sibling of ``realign_anchor_to_pieces`` (#519, the v0.5.0 path).
+
+    The postcode entity's char range comes straight off the row's char-offset spans (``span_tags ==
+    "postcode"``) instead of being reconstructed from token labels + ``whitespace_spans``; lookup
+    normalization and the char→piece projection are SHARED with the token path, so the channel
+    tensor is bit-identical on rows where the postcode span equals the token-quantized range
+    (i.e. every row without intra-postcode punctuation).
+    """
+    zero = [0.0] * ANCHOR_FEATURE_DIM
+    char_feat: list[list[float]] = [zero] * len(raw)
+    char_conf: list[float] = [0.0] * len(raw)
+    for start, end, tag in zip(span_starts, span_ends, span_tags):
+        if tag != "postcode":
+            continue
+        _paint_anchor_chars(raw, start, end, anchor_lookup, char_feat, char_conf)
+    return _project_anchor_chars_to_pieces(raw, char_feat, char_conf, pieces)
+
+
+def _paint_anchor_chars(
+    raw: str,
+    begin: int,
+    end: int,
+    anchor_lookup: "dict[str, tuple[dict[str, float], float, float]]",
+    char_feat: list[list[float]],
+    char_conf: list[float],
+) -> None:
+    """Look up the postcode surface at ``raw[begin:end]`` and paint its chars on a hit.
+
+    Shared by both anchor paths — one normalization (space-stripped, uppercased), one painting
+    rule, so token-era and span-era rows cannot diverge here.
+    """
+    postcode = raw[begin:end].replace(" ", "").upper()
+    hit = anchor_lookup.get(postcode)
+    if hit is None:
+        return
+    posterior, lat, lon = hit
+    feat = anchor_feature_vector(posterior, lat, lon)
+    for c in range(begin, end):
+        char_feat[c] = feat
+        char_conf[c] = 1.0
+
+
+def _project_anchor_chars_to_pieces(
+    raw: str,
+    char_feat: Sequence[list[float]],
+    char_conf: Sequence[float],
+    pieces: Sequence[PieceSpan],
+) -> tuple[list[list[float]], list[float]]:
+    """Char→piece projection for the anchor channel — first non-whitespace char wins.
+
+    Mirrors ``project_char_labels_to_pieces`` exactly (the off-by-one DeepSeek flagged as the
+    silent run-killer); shared by both anchor paths.
+    """
+    zero = [0.0] * ANCHOR_FEATURE_DIM
     feats: list[list[float]] = []
     confs: list[float] = []
     for piece in pieces:
@@ -272,24 +408,47 @@ def encode_row(
     anchor_lookup: "dict[str, tuple[dict[str, float], float, float]] | None" = None,
     gazetteer_lexicon=None,
     gazetteer_choreography: bool = False,
+    span_starts: Sequence[int] | None = None,
+    span_ends: Sequence[int] | None = None,
+    span_tags: Sequence[str] | None = None,
 ) -> dict[str, list]:
     """Encode a single row into ``input_ids`` + ``attention_mask`` + ``label_ids``.
 
     Truncates to ``max_length`` SP pieces. Pads to ``max_length`` with the SP ``pad_id`` and
     fills the label tail with ``IGNORE_INDEX`` so cross-entropy ignores the padding.
 
+    **Label source** (#519, the v0.5.0 char-offset migration): when the row carries the span
+    triple (``span_starts``/``span_ends``/``span_tags``), the per-char label array is built FROM
+    THE SPANS and the token-quantized path is skipped — intra-span punctuation pieces get the
+    span's label, which the token path structurally cannot express. Rows without spans use the
+    legacy ``tokens``/``labels`` path unchanged, so the loader reads both corpus generations
+    during the transition; the token path is deleted once v0.5.0 lands. This is one storage
+    format change in flight, not a permanent dual-format fork.
+
     When ``anchor_lookup`` is supplied (the postcode-anchor pilot, #239/#240), also returns
     ``anchor_features`` ``(max_length, ANCHOR_FEATURE_DIM)`` and ``anchor_confidence``
     ``(max_length,)``, projected onto the SAME pieces as the labels (so a postcode anchor lands on
-    exactly its sub-tokens) and zero-padded. Absent → those keys are omitted (back-compat).
+    exactly its sub-tokens) and zero-padded. Absent → those keys are omitted (back-compat). The
+    anchor follows the label source: spans present → the postcode range comes off the spans.
 
     When ``gazetteer_lexicon`` is supplied (the gazetteer anchor, #464), also returns
     ``gazetteer_features`` ``(max_length, lexicon.feature_dim)`` and ``gazetteer_confidence``
     ``(max_length,)`` — candidate-tag-set clues painted from the RAW SURFACE only (never labels;
-    identical computation at train and inference). Absent → omitted (back-compat).
+    identical computation at train and inference, and identical under both label sources).
+    Absent → omitted (back-compat).
     """
+    has_spans = span_starts is not None or span_ends is not None or span_tags is not None
+    if has_spans and (span_starts is None or span_ends is None or span_tags is None):
+        raise ValueError(
+            "encode_row: span_starts/span_ends/span_tags must be supplied together "
+            f"(got starts={span_starts is not None} ends={span_ends is not None} "
+            f"tags={span_tags is not None})"
+        )
     spans = tokenizer.encode_with_spans(raw)
-    bio_labels = realign_labels_to_pieces(raw, tokens, labels, spans)
+    if has_spans:
+        bio_labels = realign_spans_to_pieces(raw, span_starts, span_ends, span_tags, spans)
+    else:
+        bio_labels = realign_labels_to_pieces(raw, tokens, labels, spans)
     ids = [s.piece_id for s in spans][:max_length]
     label_ids = [LABEL_TO_ID[label] for label in bio_labels][:max_length]
     attention = [1] * len(ids)
@@ -301,7 +460,12 @@ def encode_row(
     out: dict[str, list] = {"input_ids": ids, "attention_mask": attention, "labels": label_ids}
 
     if anchor_lookup is not None:
-        feats, confs = realign_anchor_to_pieces(raw, tokens, labels, list(spans), anchor_lookup)
+        if has_spans:
+            feats, confs = realign_anchor_to_pieces_from_spans(
+                raw, span_starts, span_ends, span_tags, list(spans), anchor_lookup
+            )
+        else:
+            feats, confs = realign_anchor_to_pieces(raw, tokens, labels, list(spans), anchor_lookup)
         feats = feats[:max_length]
         confs = confs[:max_length]
         zero = [0.0] * ANCHOR_FEATURE_DIM

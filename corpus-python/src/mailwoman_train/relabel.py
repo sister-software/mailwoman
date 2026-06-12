@@ -16,6 +16,15 @@ whole mix makes one consistent claim:
 Runs AFTER augmentation (see data_loader) so label-inheriting directional expansions
 ("N"->"North", still street) are caught and split too.
 
+**Char-offset spans** (#519, v0.5.0): rows carrying ``span_starts``/``span_ends``/``span_tags``
+get their street SPANS split too — pure char arithmetic on the span's whitespace words (the
+builder's exact word-splitting: ``street.trim().split(/\\s+/)``), no token indirection. The token
+labels keep their existing relabel for the transition. The two can diverge ONLY on surfaces where
+the corpus tokenizer dropped punctuation ("Main St." — tokens see "St" and split; the span path
+sees the word "St.", which is not in the lexicon, and conservatively leaves the span whole,
+exactly like the builder's parseStreet). The span path is the v0.5.0 source of truth: when a row
+has spans, encode_row trains FROM the spans.
+
 Vocab comes from the codex-generated lexicon (scripts/build-affix-relabel-lexicon.mjs ->
 data/gazetteer/affix-relabel-lexicon-v1.json) — one source of truth shared with the TS matchers.
 Matching is conservative by parity: case-insensitive, NO period stripping ("St." does not match,
@@ -29,8 +38,11 @@ prints split rate, per-rule counts, and a sample of relabeled rows for manual in
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
+
+from .augment import row_span_triple
 
 
 @dataclass(frozen=True)
@@ -86,7 +98,8 @@ def split_street_span(words: list[str], lex: AffixRelabelLexicon) -> tuple[int, 
 
 
 def relabel_row(row: dict, lex: AffixRelabelLexicon) -> bool:
-    """Relabel every street span in ``row`` (mutates ``row['labels']`` in place).
+    """Relabel every street span in ``row`` (mutates ``row['labels']`` in place; replaces the
+    char-offset span arrays when the row carries them — #519).
 
     Returns True if any span was split. Rows whose street spans don't meet the builder's
     split contract are left untouched (the shard makes no claim about them either).
@@ -116,6 +129,64 @@ def relabel_row(row: dict, lex: AffixRelabelLexicon) -> bool:
             labels[j - suffix_count] = "B-street_suffix"
             changed = True
         i = j
+    if relabel_spans(row, lex):
+        changed = True
+    return changed
+
+
+def relabel_spans(row: dict, lex: AffixRelabelLexicon) -> bool:
+    """Split every ``street`` char-offset span in ``row`` with the builder's exact semantics —
+    pure char arithmetic (#519).
+
+    The span's raw slice is whitespace-split (the builder's ``street.trim().split(/\\s+/)``,
+    punctuation intact — "St." conservatively does not match, same as parseStreet), the split
+    decision is the SAME ``split_street_span``, and the street span is replaced in place by up to
+    three spans (street_prefix / street / street_suffix) whose offsets are the matched words'
+    positions within the original span. Sortedness/non-overlap are preserved by construction —
+    every replacement lies inside the original span's range.
+
+    No-op (returns False) on rows without the triple; replaces the three arrays with fresh lists
+    when it splits, so callers holding the source row's lists are never mutated through.
+    """
+    triple = row_span_triple(row)
+    if triple is None:
+        return False
+    starts, ends, tags = triple
+    raw = row["raw"]
+    new_starts: list[int] = []
+    new_ends: list[int] = []
+    new_tags: list[str] = []
+    changed = False
+    for start, end, tag in zip(starts, ends, tags):
+        if tag != "street":
+            new_starts.append(start)
+            new_ends.append(end)
+            new_tags.append(tag)
+            continue
+        words = [(m.group(0), start + m.start(), start + m.end()) for m in re.finditer(r"\S+", raw[start:end])]
+        split = split_street_span([w[0] for w in words], lex)
+        if split is None:
+            new_starts.append(start)
+            new_ends.append(end)
+            new_tags.append(tag)
+            continue
+        prefix_count, suffix_count = split
+        changed = True
+        if prefix_count:
+            new_starts.append(words[0][1])
+            new_ends.append(words[0][2])
+            new_tags.append("street_prefix")
+        name_words = words[prefix_count : len(words) - suffix_count]
+        new_starts.append(name_words[0][1])
+        new_ends.append(name_words[-1][2])
+        new_tags.append("street")
+        new_starts.append(words[-1][1])
+        new_ends.append(words[-1][2])
+        new_tags.append("street_suffix")
+    if changed:
+        row["span_starts"] = new_starts
+        row["span_ends"] = new_ends
+        row["span_tags"] = new_tags
     return changed
 
 

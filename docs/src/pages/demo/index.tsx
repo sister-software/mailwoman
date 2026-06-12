@@ -12,17 +12,18 @@
  *   same-origin from `/mailwoman/` and range-loaded, so a session fetches a few MB of them, not
  *   70+.
  *
- *   Layout: full-viewport map (Google Maps-style) with a floating semi-transparent control panel
- *   on the left. On mobile the panel slides to the bottom.
+ *   Layout: full-viewport map (Google Maps-style) with a floating semi-transparent control panel on
+ *   the left. On mobile the panel slides to the bottom.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
 
 import BrowserOnly from "@docusaurus/BrowserOnly"
+import Head from "@docusaurus/Head"
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
 import Layout from "@theme/Layout"
-import type { Map as MapLibreMap, StyleSpecification, VectorSourceSpecification } from "maplibre-gl"
+import type { Map as MapLibreMap, VectorSourceSpecification } from "maplibre-gl"
 import type React from "react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -31,6 +32,7 @@ import { LayerToggleControl } from "../../components/LayerToggleControl/LayerTog
 import { LoadingIndicator } from "../../components/LoadingIndicator/LoadingIndicator.tsx"
 import { PermalinkButton } from "../../components/PermalinkButton/PermalinkButton.tsx"
 import { ResultPanel } from "../../components/ResultPanel/ResultPanel.tsx"
+import { VersionCompare } from "../../components/VersionCompare/VersionCompare.tsx"
 import {
 	assetUrl,
 	type DemoResult,
@@ -51,6 +53,7 @@ import {
 	flattenTree,
 	runCascade,
 } from "../../shared/demo-helpers.ts"
+import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 
 import styles from "./styles.module.css"
 
@@ -63,6 +66,18 @@ const DemoPage: React.FC = () => {
 
 	return (
 		<Layout title="Demo" description="Client-side address geocoder demo for mailwoman." noFooter>
+			{/* Resource hints: the DBs/model range-load from R2 and the basemap tiles from tiles.* the
+			    moment the app boots — preconnecting here overlaps DNS+TLS with hydration. The sqljs
+			    worker assets are same-origin and fetched on (or before) first lookup; prefetch warms
+			    the HTTP cache at low priority. */}
+			<Head>
+				<link rel="preconnect" href="https://public.sister.software" crossOrigin="anonymous" />
+				<link rel="dns-prefetch" href="https://public.sister.software" />
+				<link rel="preconnect" href="https://tiles.sister.software" crossOrigin="anonymous" />
+				<link rel="prefetch" href={`${siteConfig.baseUrl}mailwoman/sqljs/index.js`} />
+				<link rel="prefetch" href={`${siteConfig.baseUrl}mailwoman/sqljs/sqlite.worker.js`} />
+				<link rel="prefetch" href={`${siteConfig.baseUrl}mailwoman/sqljs/sql-wasm.wasm`} />
+			</Head>
 			<main className={styles.demoRoot}>
 				<header className={styles.header}>
 					<h1>Mailwoman geocoder demo</h1>
@@ -102,18 +117,34 @@ const DemoApp: React.FC = () => {
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
 	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
+
+	// ── Compare mode ──────────────────────────────────────────────────────
+	const [compareMode, setCompareMode] = useState(false)
+	const [compareVersion, setCompareVersion] = useState<string | null>(null)
+	const [compareClassifier, setCompareClassifier] = useState<MailwomanClassifierLike | null>(null)
+	const [compareLoading, setCompareLoading] = useState(false)
+	const [compareBackend, setCompareBackend] = useState<string>("")
+	const [compareResult, setCompareResult] = useState<DemoResult | null>(null)
+
 	const [fstMatcher, setFstMatcher] = useState<FstMatcherLike | null>(null)
 	const [fstProvenance, setFstProvenance] = useState<FstProvenanceLike | null>(null)
 	const [forceWasm, setForceWasm] = useState(false)
 	const [activeBackend, setActiveBackend] = useState<string>("")
-	const [lookupLoader, setLookupLoader] = useState<(() => Promise<MailwomanLookupLike>) | null>(null)
+	const [lookupLoader, setLookupLoader] = useState<
+		((onProgress?: (bytesRead: number) => void) => Promise<MailwomanLookupLike>) | null
+	>(null)
 	const [lookup, setLookup] = useState<MailwomanLookupLike | null>(null)
+	// In-flight lookup load. ensureLookup is reachable from BOTH the idle warm-up and a user submit;
+	// without this guard a submit racing the warm-up would spawn a second worker + duplicate range
+	// fetches. Cleared on version change and on load failure (so the next attempt can retry).
+	const lookupPromiseRef = useRef<Promise<MailwomanLookupLike> | null>(null)
 	const [text, setText] = useState(initialAddress)
 	const [busy, setBusy] = useState(false)
 	const [parseStage, setParseStage] = useState(-1)
 	const [result, setResult] = useState<DemoResult | null>(null)
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
+	const [compareErrorMessage, setCompareErrorMessage] = useState<string | null>(null)
 
 	// Parse stage labels depend on whether WOF lookup is available for the selected release.
 	const parseStageLabels = useMemo(
@@ -129,6 +160,7 @@ const DemoApp: React.FC = () => {
 	// Lazily-loaded crisp-polygon DB (id → simplified admin geometry). Loaded once per version on the
 	// first resolve, reset when the selected version changes. Held as the in-flight promise so concurrent
 	// resolves share one fetch.
+	const anchorLookupRef = useRef<Map<string, { lat: number; lon: number }> | null>(null)
 	const polygonDbRef = useRef<Promise<PolygonDb> | null>(null)
 
 	// Sync ?q= when the operator edits the address. replaceState avoids polluting back-button
@@ -143,6 +175,18 @@ const DemoApp: React.FC = () => {
 		}
 		window.history.replaceState(null, "", url.toString())
 	}, [text])
+
+	// Mount: register the range-chunk service worker (persists validated DB range chunks in Cache
+	// Storage — warm repeat visits, and the root fix for mobile Safari's torn-chunk HTTP cache).
+	useEffect(() => {
+		registerRangeCacheServiceWorker(siteConfig.baseUrl)
+	}, [siteConfig.baseUrl])
+
+	// Drop cached range chunks belonging to other versions once a version is selected — the URLs are
+	// immutable, so old versions' chunks never expire on their own.
+	useEffect(() => {
+		if (selectedVersion) pruneDbRangeCache(selectedVersion)
+	}, [selectedVersion])
 
 	// Mount: fetch the releases manifest + set up the map.
 	useEffect(() => {
@@ -173,7 +217,11 @@ const DemoApp: React.FC = () => {
 					const composer = new StyleSpecificationComposer({
 						sources: { [MailwomanBaseTileSetID]: basemapSource },
 					})
-					const style = composer.toJSON() as StyleSpecification
+					const style = composer.toJSON()
+					style.projection = {
+						type: "globe",
+					}
+
 					const map = new maplibre.Map({
 						container: mapContainerRef.current,
 						style,
@@ -181,9 +229,12 @@ const DemoApp: React.FC = () => {
 						zoom: 3,
 						attributionControl: false,
 					})
+
 					map.addControl(new maplibre.AttributionControl({ compact: true }))
 					map.addControl(new LayerToggleControl(), "top-right")
+
 					mapRef.current = map
+
 					Object.assign(window as unknown as Record<string, unknown>, { __mailwomanDemoMap: map })
 					const wireTerrain = (): void => {
 						if (!map.isStyleLoaded()) {
@@ -219,6 +270,8 @@ const DemoApp: React.FC = () => {
 	// Load the model + FST + WOF DB when the selected version changes.
 	useEffect(() => {
 		if (!selectedVersion) return
+		// Clear stale compare selection when primary version changes to match.
+		setCompareVersion((prev) => (prev === selectedVersion ? null : prev))
 		let cancelled = false
 		const release = manifest?.releases.find((r) => r.version === selectedVersion)
 
@@ -229,15 +282,23 @@ const DemoApp: React.FC = () => {
 				setFstProvenance(null)
 				setLookup(null)
 				setLookupLoader(null)
+				lookupPromiseRef.current = null
 				polygonDbRef.current = null
 				setResult(null)
 				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
 
 				const neuralWeb = await import("@mailwoman/neural-web")
-				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromUrls({
+				const {
+					classifier: cls,
+					diagnostics,
+					postcodeAnchorLookup,
+				} = await neuralWeb.loadNeuralClassifierFromUrls({
 					modelUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
 					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
 					modelCardUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model-card.json"),
+					// Gazetteer-anchor lexicon (#464): REQUIRED by gazetteer-trained bundles (v4.2.0+). The
+					// loader tolerates a 404 for older bundles (logging loudly when the model needed it).
+					gazetteerLexiconUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "anchor-lexicon-v1.json"),
 					runner: { useWebGpu: !forceWasm },
 					// Anchor-trained bundles (v4.0.0+) ship postcode binaries so the demo feeds the postcode
 					// anchor — US + DE + FR cover the demo's example set (native-order Berlin, French ZIPs).
@@ -270,15 +331,27 @@ const DemoApp: React.FC = () => {
 				}
 
 				if (release?.hasWofDb) {
-					setLookupLoader(() => async () => {
-						// Range-load the same-origin DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
+					setLookupLoader(() => async (onProgress?: (bytesRead: number) => void) => {
+						// Range-load the DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
 						const { loadHttpvfsDb, WofHttpvfsPlaceLookup } = await import("../../shared/httpvfs-resolver")
 						const worker = await loadHttpvfsDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"), sqljsBaseUrl)
-						return new WofHttpvfsPlaceLookup(worker)
+						const wofLookup = new WofHttpvfsPlaceLookup(worker)
+						// Warm the schema/FTS/abbr/dual-role pages now (idle or first submit) so the first
+						// real query starts from a warm page cache; report live transfer while it runs.
+						const poll = onProgress
+							? window.setInterval(() => void worker.bytesRead().then(onProgress), 300)
+							: undefined
+						try {
+							await wofLookup.warmUp()
+						} finally {
+							if (poll !== undefined) window.clearInterval(poll)
+						}
+						return wofLookup
 					})
 				}
 
 				setClassifier(cls as unknown as MailwomanClassifierLike)
+				anchorLookupRef.current = postcodeAnchorLookup ?? null
 				setLoadingProgress("")
 			} catch (error) {
 				if (cancelled) return
@@ -294,6 +367,67 @@ const DemoApp: React.FC = () => {
 			cancelled = true
 		}
 	}, [selectedVersion, manifest, forceWasm])
+
+	// ── Compare classifier loading ─────────────────────────────────────────
+	// When compare mode is active and the user selects a compare version, load
+	// a second classifier instance independently (via neural-web directly).
+	useEffect(() => {
+		if (!compareMode || !compareVersion) {
+			setCompareClassifier(null)
+			setCompareResult(null)
+			setCompareErrorMessage(null)
+			setCompareBackend("")
+			return
+		}
+		let cancelled = false
+		const release = manifest?.releases.find((r) => r.version === compareVersion)
+
+		void (async () => {
+			try {
+				setCompareClassifier(null)
+				setCompareErrorMessage(null)
+				setCompareLoading(true)
+				setCompareBackend("")
+
+				const neuralWeb = await import("@mailwoman/neural-web")
+				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromUrls({
+					modelUrl: assetUrl(DEFAULT_LOCALE, compareVersion, "model.onnx"),
+					tokenizerUrl: assetUrl(DEFAULT_LOCALE, compareVersion, "tokenizer.model"),
+					modelCardUrl: assetUrl(DEFAULT_LOCALE, compareVersion, "model-card.json"),
+					gazetteerLexiconUrl: assetUrl(DEFAULT_LOCALE, compareVersion, "anchor-lexicon-v1.json"),
+					runner: { useWebGpu: !forceWasm },
+					...(release?.hasAnchor
+						? {
+								postcodeBinaryUrls: [
+									assetUrl(DEFAULT_LOCALE, compareVersion, "postcode-us.bin"),
+									assetUrl(DEFAULT_LOCALE, compareVersion, "postcode-de.bin"),
+									assetUrl(DEFAULT_LOCALE, compareVersion, "postcode-fr.bin"),
+								],
+							}
+						: {}),
+				})
+
+				if (cancelled) return
+
+				setCompareBackend(
+					diagnostics
+						? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)`
+						: "unknown"
+				)
+				setCompareClassifier(cls as unknown as MailwomanClassifierLike)
+			} catch (error) {
+				if (cancelled) return
+				console.error("Error loading compare classifier", error)
+				setCompareErrorMessage(error instanceof Error ? error.message : String(error))
+			} finally {
+				if (!cancelled) setCompareLoading(false)
+			}
+		})()
+
+		return () => {
+			cancelled = true
+		}
+	}, [compareMode, compareVersion, manifest, forceWasm])
 
 	// Hot-swap the map style when the operator toggles Docusaurus's color mode. The page sets
 	// data-theme="dark" / "light" on <html>; a MutationObserver is the lightest dependency-free way
@@ -314,7 +448,7 @@ const DemoApp: React.FC = () => {
 				const composer = new StyleSpecificationComposer({
 					sources: { [MailwomanBaseTileSetID]: source },
 				})
-				map.setStyle(composer.toJSON() as StyleSpecification)
+				map.setStyle(composer.toJSON())
 				map.once("styledata", () => {
 					try {
 						if (map.getSource("terrain")) {
@@ -392,8 +526,18 @@ const DemoApp: React.FC = () => {
 			}
 
 			const b = candidate.bbox
+			if (!b && candidate.placetype === "postcode") {
+				// Anchor-centroid postcode: no bbox, no polygon — a default ~3 km circle says
+				// "approximately here" without inventing a boundary.
+				drawApproxCircle(map, candidate.lat, candidate.lon)
+				map.flyTo({ center: [candidate.lon, candidate.lat], zoom: 11 })
+				return
+			}
 			if (b && Math.max(b.maxLat - b.minLat, b.maxLon - b.minLon) > 0.001) {
-				drawBbox(map, b)
+				// No crisp polygon for this place — draw an approximate CIRCLE sized from the bbox
+				// rather than the bbox rectangle itself: a rectangle reads as a (wrong) real boundary,
+				// a circle reads as the honest "around here" it actually is.
+				drawApproxCircle(map, candidate.lat, candidate.lon, b)
 				map.fitBounds(
 					[
 						[b.minLon, b.minLat],
@@ -410,20 +554,62 @@ const DemoApp: React.FC = () => {
 	const ensureLookup = useCallback(async (): Promise<MailwomanLookupLike | null> => {
 		if (lookup) return lookup
 		if (!lookupLoader) return null
-		setLoadingProgress("Loading WOF locality DB (~35 MB)…")
+		if (!lookupPromiseRef.current) {
+			// Honest copy: the DB is range-loaded, so a session transfers a few MB of it — not the
+			// whole file. The bytesRead poll below shows the real number as it grows.
+			setLoadingProgress("Connecting to place index…")
+			lookupPromiseRef.current = lookupLoader((bytesRead) => {
+				if (bytesRead > 0) setLoadingProgress(`Loading place index… ${(bytesRead / 1024 / 1024).toFixed(1)} MB fetched`)
+			})
+		}
 
 		try {
-			const l = await lookupLoader()
+			const l = await lookupPromiseRef.current
 			setLookup(l)
 			setLoadingProgress("")
 			return l
 		} catch (error) {
+			lookupPromiseRef.current = null
 			setLoadingProgress("")
-			console.error("Error loading WOF locality DB", error)
+			console.error("Error loading WOF place index", error)
 			setErrorMessage(error instanceof Error ? error.message : String(error))
 			return null
 		}
 	}, [lookup, lookupLoader])
+
+	// Warm the place index + polygon DB during browser idle time. The cold path (UMD script + worker
+	// spawn + WASM compile + ~40 SERIAL 64 KB range round-trips — sql.js-httpvfs fetches via sync XHR)
+	// costs seconds on a cold cache; paying it while the user reads the page / types means the first
+	// submit starts warm. Skipped under Save-Data; ensureLookup's in-flight guard makes racing a real
+	// submit safe.
+	useEffect(() => {
+		if (!lookupLoader || lookup) return
+		const connection = (navigator as { connection?: { saveData?: boolean } }).connection
+		if (connection?.saveData) return
+		let cancelled = false
+		const warm = (): void => {
+			if (cancelled) return
+			void ensureLookup().then(() => {
+				if (cancelled) return
+				const release = manifest?.releases.find((r) => r.version === selectedVersion)
+				if (release?.hasPolygons && selectedVersion && !polygonDbRef.current) {
+					const loading = loadPolygonDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseUrl)
+					polygonDbRef.current = loading
+					loading.catch(() => {
+						// Transient failure — null the ref so the next resolve retries.
+						if (polygonDbRef.current === loading) polygonDbRef.current = null
+					})
+				}
+			})
+		}
+		const hasIdleCallback = typeof window.requestIdleCallback === "function" // Safari ships without it
+		const idleId = hasIdleCallback ? window.requestIdleCallback(warm, { timeout: 4000 }) : window.setTimeout(warm, 1500)
+		return () => {
+			cancelled = true
+			if (hasIdleCallback) window.cancelIdleCallback(idleId)
+			else window.clearTimeout(idleId)
+		}
+	}, [lookupLoader, lookup, ensureLookup, manifest, selectedVersion, sqljsBaseUrl])
 
 	const onSubmit = useCallback(
 		async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -432,6 +618,7 @@ const DemoApp: React.FC = () => {
 			setBusy(true)
 			setParseStage(0)
 			setErrorMessage(null)
+			setCompareResult(null)
 
 			try {
 				// Stage 2.4 + 2.5: compute QueryShape + kind classification. Pure functions, ~µs.
@@ -472,6 +659,40 @@ const DemoApp: React.FC = () => {
 					.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
 
+				// ── Compare parse (classifier-only, no FST/WOF) ──────────────────
+				// Runs before the WOF lookup so it executes even when the selected
+				// version lacks a WOF database. Reuses the already-imported pipeline
+				// functions from the primary path — no redundant dynamic imports.
+				if (compareMode && compareClassifier) {
+					try {
+						const cStart = performance.now()
+						const cQueryShape = computeQueryShape(text)
+						const cKindResult = classifyKindSync({ raw: text, normalized: text }, cQueryShape)
+						const cShapeTime = performance.now() - cStart
+
+						const cPipelineResult = await runPipeline(text, {
+							computeQueryShape,
+							groupPhrases,
+							classifier: compareClassifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+						})
+						const cClassifyTime = performance.now() - cStart - cShapeTime
+						const cNodes = flattenTree(cPipelineResult.tree)
+
+						setCompareResult({
+							input: text,
+							tree: cPipelineResult.tree,
+							nodes: cNodes,
+							resolved: null,
+							candidates: [],
+							kindResult: cKindResult,
+							fstActive: false,
+							timing: { shape: cShapeTime, classify: cClassifyTime },
+						})
+					} catch (compareError) {
+						console.error("Error in compare parse", compareError)
+						setCompareErrorMessage(compareError instanceof Error ? compareError.message : String(compareError))
+					}
+				}
 				const wofLookup = await ensureLookup()
 				if (!wofLookup) {
 					setResult({
@@ -491,12 +712,42 @@ const DemoApp: React.FC = () => {
 
 				setParseStage(2)
 
+				// Open the polygon DB now (no await) so its worker spawn + header/schema range fetches
+				// overlap the cascade below — by the time a candidate renders, the geometry query is the
+				// only cold work left. The idle warm-up usually got here first; this covers a fast submit.
+				const releaseForResolve = manifest?.releases.find((r) => r.version === selectedVersion)
+				if (releaseForResolve?.hasPolygons && selectedVersion && !polygonDbRef.current) {
+					const loading = loadPolygonDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-polygons.db"), sqljsBaseUrl)
+					polygonDbRef.current = loading
+					loading.catch(() => {
+						if (polygonDbRef.current === loading) polygonDbRef.current = null
+					})
+				}
+
 				// Cascade: postcode first (most precise), fall back to locality, then raw text.
 				// Drop (lat=0, lon=0) hits — WOF ships placeholder zeros on ~22% of US postcodes.
 				// Timed from here so the one-time DB load above doesn't skew the resolve number.
 				const tBeforeResolve = performance.now()
 				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNodes, stateNode, text)
 				const tResolve = performance.now()
+				// Anchor-centroid fallback (postcode-only dead ends): WOF ships placeholder (0,0) for
+				// ~22% of US postcodes and the cascade rightly drops those — but postcode-us.bin (the
+				// model's anchor channel, already loaded) carries a real centroid for every US ZIP.
+				// Same-artifact reuse: synthesize an approximate hit so the map shows the honest circle
+				// instead of nothing. id=0 → the polygon path skips it; bbox omitted → default radius.
+				if (cascadeHits.length === 0 && postcodeNode?.value && anchorLookupRef.current) {
+					const anchorHit = anchorLookupRef.current.get(String(postcodeNode.value).toUpperCase())
+					if (anchorHit && (anchorHit.lat !== 0 || anchorHit.lon !== 0)) {
+						cascadeHits.push({
+							id: 0,
+							name: `${postcodeNode.value} (anchor centroid)`,
+							placetype: "postcode",
+							lat: anchorHit.lat,
+							lon: anchorHit.lon,
+							score: 0,
+						} as (typeof cascadeHits)[number])
+					}
+				}
 				const candidates: ResolvedHit[] = cascadeHits.map((c) => ({
 					id: c.id,
 					name: c.name,
@@ -546,7 +797,18 @@ const DemoApp: React.FC = () => {
 				setParseStage(-1)
 			}
 		},
-		[classifier, text, fstMatcher, ensureLookup, fstProvenance]
+		[
+			classifier,
+			text,
+			fstMatcher,
+			ensureLookup,
+			fstProvenance,
+			compareMode,
+			compareClassifier,
+			manifest,
+			selectedVersion,
+			sqljsBaseUrl,
+		]
 	)
 
 	const ready = classifier !== null
@@ -613,7 +875,64 @@ const DemoApp: React.FC = () => {
 						<input type="checkbox" checked={forceWasm} onChange={(e) => setForceWasm(e.target.checked)} />
 						Force WASM
 					</label>
+					{manifest && manifest.releases.length > 1 ? (
+						<label
+							style={{
+								display: "flex",
+								alignItems: "center",
+								gap: "0.25rem",
+								cursor: "pointer",
+								opacity: 0.7,
+							}}
+						>
+							<input
+								type="checkbox"
+								checked={compareMode}
+								onChange={(e) => {
+									setCompareMode(e.target.checked)
+									if (!e.target.checked) {
+										setCompareResult(null)
+										setCompareErrorMessage(null)
+									}
+								}}
+							/>
+							Compare
+						</label>
+					) : null}
 				</div>
+				{compareMode && manifest && manifest.releases.length > 1 ? (
+					<div style={{ marginBottom: "0.75rem" }}>
+						<label
+							htmlFor="compare-version-select"
+							style={{ display: "block", marginBottom: "0.25rem", fontWeight: 600 }}
+						>
+							Compare with
+						</label>
+						<select
+							id="compare-version-select"
+							value={compareVersion ?? ""}
+							onChange={(e) => setCompareVersion(e.target.value || null)}
+							disabled={busy || compareLoading}
+							style={{ width: "100%", padding: "0.4rem" }}
+						>
+							<option value="">Select version…</option>
+							{manifest.releases
+								.filter((r) => r.version !== selectedVersion)
+								.map((r) => (
+									<option key={r.version} value={r.version}>
+										{r.label}
+									</option>
+								))}
+						</select>
+						{compareLoading ? (
+							<p className={styles.status}>Loading {compareVersion} model…</p>
+						) : compareBackend ? (
+							<span style={{ fontSize: "0.8rem", opacity: 0.7 }}>
+								Backend: <code>{compareBackend}</code>
+							</span>
+						) : null}
+					</div>
+				) : null}
 				<form onSubmit={onSubmit}>
 					<label htmlFor="addr-input">Address</label>
 					<input
@@ -650,11 +969,20 @@ const DemoApp: React.FC = () => {
 				{busy ? <LoadingIndicator mode="staged" steps={parseStageLabels} activeStep={parseStage} /> : null}
 				{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
 				{errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
+				{compareErrorMessage ? <p className={styles.error}>{compareErrorMessage}</p> : null}
 				{result ? (
 					<ResultPanel
 						result={result}
 						selectedCandidateIndex={selectedCandidateIndex}
 						onSelectCandidate={setSelectedCandidateIndex}
+					/>
+				) : null}
+				{compareResult && result ? (
+					<VersionCompare
+						primary={result}
+						compare={compareResult}
+						primaryVersion={selectedVersion ?? "?"}
+						compareVersion={compareVersion ?? "?"}
 					/>
 				) : null}
 			</section>
@@ -728,6 +1056,31 @@ function drawBbox(map: MapLibreMap, bbox: { minLat: number; maxLat: number; minL
 		[bbox.minLon, bbox.maxLat],
 		[bbox.minLon, bbox.minLat],
 	]
+	setPlaceOutline(map, { type: "Polygon", coordinates: [ring] })
+}
+
+/**
+ * Approximate-extent circle for places without a crisp polygon: centered on the place point, radius
+ * from the bbox half-diagonal (clamped 0.5–50 km). 64-point GeoJSON ring with latitude correction —
+ * visually a circle anywhere outside the poles.
+ */
+function drawApproxCircle(
+	map: MapLibreMap,
+	lat: number,
+	lon: number,
+	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+): void {
+	const kmPerDegLat = 111.32
+	const kmPerDegLon = kmPerDegLat * Math.cos((lat * Math.PI) / 180)
+	const halfDiagKm = bbox
+		? Math.hypot((bbox.maxLat - bbox.minLat) * kmPerDegLat, (bbox.maxLon - bbox.minLon) * kmPerDegLon) / 2
+		: 3 // anchor-centroid postcodes carry no extent; ~ZIP-sized default
+	const radiusKm = Math.min(50, Math.max(0.5, halfDiagKm))
+	const ring: number[][] = []
+	for (let i = 0; i <= 64; i++) {
+		const theta = (2 * Math.PI * i) / 64
+		ring.push([lon + (radiusKm * Math.cos(theta)) / kmPerDegLon, lat + (radiusKm * Math.sin(theta)) / kmPerDegLat])
+	}
 	setPlaceOutline(map, { type: "Polygon", coordinates: [ring] })
 }
 

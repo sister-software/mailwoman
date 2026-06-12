@@ -24,12 +24,25 @@ async function classifier(model: string) {
 const v110 = await classifier("/tmp/v110-relabel-040000.onnx")
 const v420 = await classifier("/tmp/v102-runB-fp32.onnx")
 
-const rows = readFileSync("data/eval/golden/v0.1.2/dev/fr.jsonl", "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
-const targets = ["47110 Sainte-Livrade-sur-Lot, 72 Rossignol 3", "47110 Sainte-Livrade-sur-Lot 6 Rue d'Agen", "02870 Crépy, France", "07430 Davézieux", "Case Postale 200, H3A 1B9 Montréal, QC", "CP 1500, H2X 3V4 Montréal, QC"]
+const rows = readFileSync("data/eval/golden/v0.1.2/dev/fr.jsonl", "utf8")
+	.split("\n")
+	.filter(Boolean)
+	.map((l) => JSON.parse(l))
+const targets = [
+	"47110 Sainte-Livrade-sur-Lot, 72 Rossignol 3",
+	"47110 Sainte-Livrade-sur-Lot 6 Rue d'Agen",
+	"02870 Crépy, France",
+	"07430 Davézieux",
+	"Case Postale 200, H3A 1B9 Montréal, QC",
+	"CP 1500, H2X 3V4 Montréal, QC",
+]
 
 for (const t of targets) {
 	const row = rows.find((r) => r.raw === t)
-	if (!row) { console.log(`NOT FOUND: ${t}`); continue }
+	if (!row) {
+		console.log(`NOT FOUND: ${t}`)
+		continue
+	}
 	console.log(`\n=== "${row.raw}"`)
 	console.log(`  gold:   ${JSON.stringify(row.components)}`)
 	console.log(`  v1.1.0: ${JSON.stringify(decodeAsJson(await v110.parse(row.raw)))}`)

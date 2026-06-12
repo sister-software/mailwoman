@@ -19,20 +19,20 @@ Read [The pipeline contract](../../concepts/staged-pipeline-contract.mdx) first 
 
 Each layer adds one kind of knowledge the layers below it cannot easily derive:
 
-| Layer                    | Knows                                                         | Shipped today                                                                                                          |
-| ------------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **1. Normalize**         | input preprocessing rules                                     | Yes                                                                                                                    |
-| **2. Locale gate**       | language / script family                                      | Yes (rule-based)                                                                                                       |
-| **2.5. Kind classifier** | overall query category (postcode_only, structured_address, …) | Yes (rule-based)                                                                                                       |
-| **2.7. Phrase grouper**  | **coherent input units (boundary discovery)**                 | **Yes (rule-based, v0.5.0; 57 venue markers, unit gate, positional prior)**                                            |
-| **3. Token classify**    | per-token semantic type                                       | Yes (neural; v4.3.0 ships the relabel-consistent 29M model)                                                            |
-| **3.2. Gazetteer anchor** | **known-surface clues (per-token candidate-tag sets, input layer)** | Yes (v4.2.0): postcode anchor + the general candidate-tag channel (country/region/po_box/cedex/homograph, 5-dim) + train/inference-paired choreography ([#464](https://github.com/sister-software/mailwoman/issues/464)) |
-| **3.5. FST prior**       | **gazetteer-derived emission biases**                         | **Yes (Wikipedia importance-weighted, v0.5.2; [#173](https://github.com/sister-software/mailwoman/pull/173))**         |
-| **4. Sequence correct**  | per-token BIO sequence validity                               | Yes (CRF with structural mask)                                                                                         |
+| Layer                     | Knows                                                                              | Shipped today                                                                                                                                                                                                                 |
+| ------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Normalize**          | input preprocessing rules                                                          | Yes                                                                                                                                                                                                                           |
+| **2. Locale gate**        | language / script family                                                           | Yes (rule-based)                                                                                                                                                                                                              |
+| **2.5. Kind classifier**  | overall query category (postcode_only, structured_address, …)                      | Yes (rule-based)                                                                                                                                                                                                              |
+| **2.7. Phrase grouper**   | **coherent input units (boundary discovery)**                                      | **Yes (rule-based, v0.5.0; 57 venue markers, unit gate, positional prior)**                                                                                                                                                   |
+| **3. Token classify**     | per-token semantic type                                                            | Yes (neural; v4.3.0 ships the relabel-consistent 29M model)                                                                                                                                                                   |
+| **3.2. Gazetteer anchor** | **known-surface clues (per-token candidate-tag sets, input layer)**                | Yes (v4.2.0): postcode anchor + the general candidate-tag channel (country/region/po_box/cedex/homograph, 5-dim) + train/inference-paired choreography ([#464](https://github.com/sister-software/mailwoman/issues/464))      |
+| **3.5. FST prior**        | **gazetteer-derived emission biases**                                              | **Yes (Wikipedia importance-weighted, v0.5.2; [#173](https://github.com/sister-software/mailwoman/pull/173))**                                                                                                                |
+| **4. Sequence correct**   | per-token BIO sequence validity                                                    | Yes (CRF with structural mask)                                                                                                                                                                                                |
 | **4.2. Conventions mask** | **per-address-system grammar (which tags are grammatical in the detected system)** | **Yes (v4.3.0, slice 1): locale head exported (`locale_logits`) → codex conventions — `fr` forbids the USPS affix decomposition + pins the postcode shape ([#478](https://github.com/sister-software/mailwoman/issues/478))** |
-| **4.5. Grouper audit**   | **provisional nodes for all-O spans**                         | **Yes (injects venue/locality from grouper proposals; [#170](https://github.com/sister-software/mailwoman/pull/170))** |
-| **5. Reconcile**         | **joint-coherent interpretation across candidates**           | Yes — default-on; resolver-backed concordance axes wired via `prefetchReconcileLookups` ([#478](https://github.com/sister-software/mailwoman/issues/478) step 2)                  |
-| **6. Resolve**           | world hierarchy (gazetteer)                                   | Yes (WOF SQLite, unified builder in [#176](https://github.com/sister-software/mailwoman/pull/176))                     |
+| **4.5. Grouper audit**    | **provisional nodes for all-O spans**                                              | **Yes (injects venue/locality from grouper proposals; [#170](https://github.com/sister-software/mailwoman/pull/170))**                                                                                                        |
+| **5. Reconcile**          | **joint-coherent interpretation across candidates**                                | Yes — default-on; resolver-backed concordance axes wired via `prefetchReconcileLookups` ([#478](https://github.com/sister-software/mailwoman/issues/478) step 2)                                                              |
+| **6. Resolve**            | world hierarchy (gazetteer)                                                        | Yes (WOF SQLite, unified builder in [#176](https://github.com/sister-software/mailwoman/pull/176))                                                                                                                            |
 
 The two emphasized rows are the layers that v0.4.0's mixed result exposed as missing. They're complementary: the phrase grouper feeds cleaner spans IN to the classifier; the expanded reconciler picks coherent assignments OUT of the classifier's candidates.
 
@@ -94,25 +94,25 @@ channel above, and the postcode anchor). The gazetteer anchor generalizes that c
 for each token, consult the gazetteer/codex and attach a **candidate-tag set** — a
 multi-hot `[country]`, `[country, region]`, `[po_box designator]` over the tag classes —
 as input features. The model still decides every tag; the gazetteer
-*informs*, it never *overrides*. Think of it as a caching layer of clues: RAG-shaped
+_informs_, it never _overrides_. Think of it as a caching layer of clues: RAG-shaped
 (retrieve external knowledge, augment the model), but the retrieval lands as a feature
 vector per token rather than text in a context window. The literature calls this
 **shallow fusion** / gazetteer-augmented NER; the [FST prior](../../concepts/fst-priors-as-shallow-fusion.mdx)
-is the same idea applied at the *emission* layer, and this rung is its input-layer
+is the same idea applied at the _emission_ layer, and this rung is its input-layer
 sibling.
 
 Three properties make this the right home for "the model should know place names":
 
 - **It is not overfitting — the knowledge lives outside the weights.** Add a place to
-  the gazetteer tomorrow and the clue fires with no retrain. The model learns to *use*
+  the gazetteer tomorrow and the clue fires with no retrain. The model learns to _use_
   the clue, not to memorize the list. (The same instinct aimed at the tokenizer — put
   every country and city in the token vocabulary — fights the tokenizer's job: it
   balloons the embedding table, destroys subword generalization on unseen places, and
   a single vocab id still carries no disambiguating context. Keep the subword
   tokenizer for generalization; attach membership as a feature for knowledge.)
 - **The multi-hot encoding gives homograph awareness for free.** A token whose
-  candidate set has more than one entry ("Georgia" → `[country, region]`) is *flagged as
-  ambiguous by construction* — the model learns "context is load-bearing here."
+  candidate set has more than one entry ("Georgia" → `[country, region]`) is _flagged as
+  ambiguous by construction_ — the model learns "context is load-bearing here."
 - **The over-reliance risk is handled by training, not architecture.** The measured
   failure mode of closed-vocab tags is a model that echoes a cheap correlation (the
   country retrain that learned "trailing token ⇒ country"). Homograph-contrast
@@ -125,8 +125,8 @@ Three properties make this the right home for "the model should know place names
   [closed-vocab fields: model-first](../../plan/reference/closed-vocab-fields-model-first.mdx).
 
 There is a pleasing symmetry with the resolver: the ancestors table precomputes the
-hierarchy chain so the *resolver* trades disk for speed; the gazetteer anchor
-precomputes surface-form membership so the *parser* trades disk for clues. Same
+hierarchy chain so the _resolver_ trades disk for speed; the gazetteer anchor
+precomputes surface-form membership so the _parser_ trades disk for clues. Same
 trade, both stages.
 
 ### Sequence correct — BIO sequence validity
@@ -146,7 +146,7 @@ shape arms the snap-only repair pass. Same knowledge-outside-the-weights propert
 gazetteer anchor: add a `de` or `gb` row to `codex/address-system-conventions.ts` and the
 constraint applies with no retrain. Detection is threshold-gated (0.8) — the mask never
 fires on a guess, and an undetected system parses exactly as before. The forward path
-([#478](https://github.com/sister-software/mailwoman/issues/478)): per-system *transition*
+([#478](https://github.com/sister-software/mailwoman/issues/478)): per-system _transition_
 masks, and eventually conventions as a second candidate emitter into Stage 5.
 
 ### Reconcile — joint-coherent interpretation — SHIPPED (joint-decoding path, v0.5.0)

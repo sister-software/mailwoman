@@ -401,16 +401,16 @@ export interface ParseTree {
 
 Score per beam = `phrase_conf × classifier_score × resolver_score × concordance_bonus`. Concordance bonus is **+1** in log-space for a fully consistent WOF parent_id chain across all admin pairs in the assignment, **-Infinity** (hard veto) for an explicit chain contradiction, **0** when no admin signal is available. Per-axis pruning (kSpan / kTag / kResolver) keeps the search tight.
 
-**Today.** Joint-decoding path shipped in v0.5.0 Thread D (`core/pipeline/reconcile.ts`, 2026-05-23). Closes the kryptonite catalogue — `NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg, FL`, `Buffalo Buffalo` — via the concordance bonus and hard-veto contradiction handling. Fallback path (sort spans by start) remains in `runtime-pipeline.ts` for callers without top-k inputs. The Thread C-s classifier top-k contract is mocked locally in tests; integration tests in `@mailwoman/neural` swap to real top-k output when Thread C-s lands.
+**Today.** Joint-decoding path shipped in v0.5.0 Thread D (`core/pipeline/reconcile.ts`, 2026-05-23). Closes the kryptonite catalogue — `NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg, FL`, `Buffalo Buffalo` — via the concordance bonus and hard-veto contradiction handling. Wired as the DEFAULT Stage 5 when the phrase grouper and a `parseWithLogits` classifier are both present; falls back to argmax otherwise. Set `jointReconcile: false` to opt out.
 
-**Future.** Wire `reconcileSpans` into the `runPipeline` coordinator as a default Stage 5 once Thread C-s ships the classifier top-k contract. Add learned-reranker comparison once joint decoding has a kryptonite-eval baseline.
+**Future.** Add learned-reranker comparison now that joint decoding has a kryptonite-eval baseline. Long-term: replace the concordance scoring with a learned reranker trained on the kryptonite catalogue.
 
 **Failure classes owned.** Consistency portion of numeric chaos (#5); the hybrid-policy decision in general; cross-component coherence for the kryptonite catalogue.
 
 **Open questions.**
 
 - Should `Components` carry a "global confidence" (probability the whole parse is correct)? Recommend: yes — `ParseTree.confidence` is the softmaxed equivalent; carry forward into the resolver.
-- Joint decoding wired as default vs opt-in? Recommend: default once Thread C-s lands, opt-in only for callers without a classifier.
+- ~~Joint decoding wired as default vs opt-in?~~ **Resolved (v4.4.0):** DEFAULT when the phrase grouper + `parseWithLogits` are wired; `jointReconcile: false` to opt out; `forceJointReconcile` is the deprecated alias.
 
 ## Stage 6 — Resolve with candidates
 

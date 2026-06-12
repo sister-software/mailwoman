@@ -7,14 +7,22 @@ import { readFileSync } from "node:fs"
 const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const LK = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create("/tmp/v110-relabel-040000.onnx")])
+const [tokenizer, runner] = await Promise.all([
+	MailwomanTokenizer.loadFromFile(TOK),
+	OnnxRunner.create("/tmp/v110-relabel-040000.onnx"),
+])
 const neural = new NeuralAddressClassifier({
-	tokenizer, runner, labels: card.labels,
+	tokenizer,
+	runner,
+	labels: card.labels,
 	postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
 	gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync("data/gazetteer/anchor-lexicon-v1.json", "utf8"))),
 	suppressGazetteerNearPostcode: true,
 })
-const rows = readFileSync("data/eval/golden/v0.1.2/dev/fr.jsonl", "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l))
+const rows = readFileSync("data/eval/golden/v0.1.2/dev/fr.jsonl", "utf8")
+	.split("\n")
+	.filter(Boolean)
+	.map((l) => JSON.parse(l))
 const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 let n = 0
 for (const row of rows) {

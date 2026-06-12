@@ -50,8 +50,7 @@ wake up six weeks later wondering when street tagging got worse.
 
 We consult an external model on consequential forks, and it earns its keep often
 enough that we keep asking. This time it was sure, twice, with numbers. The affix
-crash was a scheduling problem, not a capacity problem. Five-times density would clear
-72. And the 75 we'd seen in a quick diagnostic? Not a transient.
+crash was a scheduling problem, not a capacity problem. Five-times density would clear 72. And the 75 we'd seen in a quick diagnostic? Not a transient.
 
 Both predictions died by experiment, and we know that precisely because we spent five
 minutes of GPU on a cheap diagnostic before each expensive run instead of trusting
@@ -61,7 +60,7 @@ while the pressure collapses French region tagging from 25 to 5. The blanket is 
 small, and yanking it hard enough to cover your feet tears it somewhere you weren't
 looking.
 
-So that's a capacity wall with a number on it: 29 million parameters cannot *hold* the
+So that's a capacity wall with a number on it: 29 million parameters cannot _hold_ the
 affix split and the rest of the distribution at once. It can visit. It can't stay. We
 wrote months ago that the first model-size increase would have to earn its way in with
 evidence, and this is what earning it looks like. The escalation now sits in an issue
@@ -77,13 +76,13 @@ says what everyone got: locality +13, region +11, country from absent to 89.8, F
 house numbers at their best ever, German locality beating the system we're chasing.
 
 Name your regressions in the model card and something nice happens downstream: the
-*next* regression has something honest to be measured against. The cards that only
+_next_ regression has something honest to be measured against. The cards that only
 list wins go stale the moment anything moves.
 
 ## Lie number four: the harness was starving our model
 
 Hours after shipping, one number kept itching. Our capability arenas, the unbiased
-head-to-head against the rules parser, showed the new model slightly *down* on
+head-to-head against the rules parser, showed the new model slightly _down_ on
 whole-parse accuracy. Plausible, right? We'd just traded street precision away, and we
 very nearly filed it under the stated costs.
 
@@ -105,7 +104,7 @@ we knew to ask.
 Four numbers lied to us in 24 hours: a gate that softened itself in retelling, a
 consultant's confident extrapolation, a transient peak dressed as an equilibrium, and
 a benchmark grading a handicapped model. None of them lied maliciously. Every one of
-them was *plausible*, and plausible is the only kind of wrong number that survives
+them was _plausible_, and plausible is the only kind of wrong number that survives
 long enough to cost you something.
 
 The machinery that caught them is boring on purpose. Bars written down before looking.

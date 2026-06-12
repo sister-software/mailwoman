@@ -1,0 +1,139 @@
+# === v1.4.0-charoffset (the FIRST char-offset-corpus run) =======================================
+# Identical recipe to v1.3.0-boundary-consolidation (the v4.4.0 ship), retargeted at the v0.5.0
+# CHAR-OFFSET corpus. This is the format-change run: same levers, same source mix, same gates — the
+# ONE variable is that labels now come from the #519 span triple (span_starts/ends/tags) instead of
+# per-token BIO. The loader's span path (PR #534) trains FROM the spans; encode_row realigns them to
+# SentencePiece pieces. Holding the recipe fixed is deliberate: it isolates "did the format change
+# move anything?" from any recipe drift.
+#
+# WHY THIS RUN EXISTS — the bridge-retirement test. The decode-side span bridge (adjacent same-tag
+# merge) has been carrying dotted po_box / cedex since the token era. Char-offset labels let the model
+# learn those spans INTRINSICALLY. The gate (scripts/eval/gates/v0.5.0-bridge.json) asks: does dotted
+# po_box hold >= 89.1 with the bridge OFF? If yes, the bridge retires. That test is only meaningful
+# because the po_box signal is now a char-span the model can learn — which is exactly why the corpus
+# HAD to carry the re-emitted synth-po-box-cedex overlay (it does: 50k rows, char-offset, source-tagged).
+#
+# CORPUS: /data/corpus/versioned/v0.5.0/corpus-v0.5.0 — 676.62M train (676.13M base + 484.8k overlay),
+# 1.89M val, 1.89M test. 18 weighted sources, all present (11 base + 7 re-emitted parity overlays).
+# KNOWN CAVEAT (stopgap, not a recipe choice): the corpus stores UTF-16 span offsets (#519); the
+# ~0.06% astral-script rows are skipped at load by the #558 iter_encoded guard. The lasting fix
+# (code-point re-align → corpus-v0.5.1) is DeepSeek's follow-on; it does not gate this run.
+# Launch: modal run -d scripts/modal/train_remote.py --config v1.4.0-charoffset.yaml --resume none
+data:
+  corpus_dir: /data/corpus/versioned/v0.5.0/corpus-v0.5.0
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    synth-unit: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v140-charoffset-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 40000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  gazetteer_curriculum: false
+  trackio_project: mailwoman
+  trackio_run_name: v1.4.0-charoffset-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

@@ -22,7 +22,7 @@ the entire premise of the project.
 
 Here's what the morning's comparison actually was. In one corner: a flat lookup,
 matching the trailing chunk of an address against the ISO country list. In the other: a
-model we had retrained on a synthetic shard where *every single row* ended in a country.
+model we had retrained on a synthetic shard where _every single row_ ended in a country.
 That model learned exactly what we taught it — "the last thing in an address is a
 country" — and started promoting cities and states to nationhood. Precision: 23%.
 
@@ -46,7 +46,7 @@ rules-based parsing to escape.
 
 So we did what we should have done in the morning: gave the model a fair fight.
 
-We rebuilt the training shard with the homographs *in* it, both ways. "Tbilisi, Georgia"
+We rebuilt the training shard with the homographs _in_ it, both ways. "Tbilisi, Georgia"
 labeled as a country, "Atlanta, Georgia 30309" labeled as a state, the same surface
 form pulling in opposite directions until the only way to win is to read the
 neighbors. We added addresses with no country at all, so abstaining stays on the menu.
@@ -57,7 +57,7 @@ France; Kingston, New York against Kingston, Jamaica; person-named countries; th
 
 The retrained model's first result: country recognition went from literally zero to
 alive — at **100% precision, with zero over-fires**. Not one city promoted to a nation.
-Not one "Georgia" guessed wrong. Region accuracy *improved* while the new tag came
+Not one "Georgia" guessed wrong. Region accuracy _improved_ while the new tag came
 online. The contrast pairs did exactly what the theory said: the model learned that the
 label is contextual, because we finally showed it contexts that disagree.
 
@@ -67,8 +67,8 @@ vocabulary problem, and vocabulary is what gazetteers are for.
 
 Which is where the lookup table re-enters the story — demoted. It doesn't get to be
 the judge anymore; it gets to be a witness. We feed gazetteer membership into the model
-as a per-token clue: *this word is on the country list; this word is on two lists, so
-pay attention.* The model still rules on every tag. Add Liechtenstein to the gazetteer
+as a per-token clue: _this word is on the country list; this word is on two lists, so
+pay attention._ The model still rules on every tag. Add Liechtenstein to the gazetteer
 tomorrow and the clue fires with no retrain, because the knowledge lives outside the
 weights. The morning's matcher survives intact, doing the one job it was always
 qualified for: knowing what's on the list. Reading the room was never on its résumé.
@@ -77,7 +77,7 @@ qualified for: knowing what's on the list. Reading the room was never on its ré
 
 The seductive thing about a deterministic component is that it cannot be wrong in the
 cases you thought to test. The treacherous thing is the same sentence with the
-emphasis moved: it cannot be *right* in the cases you didn't. Our 100% was an artifact
+emphasis moved: it cannot be _right_ in the cases you didn't. Our 100% was an artifact
 of an eval that only contained the easy half of the problem.
 
 When a benchmark tells you the simple thing beats the learned thing, before you

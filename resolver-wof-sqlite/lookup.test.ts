@@ -91,7 +91,9 @@ const FIXTURE: FixturePlace[] = [
 		country: "FR",
 		lat: 48.85,
 		lon: 2.34,
-		alt_names: ["Pari", "París", "パリ", "巴黎"],
+		// The canonical name also lives in `names` in a real WOF distribution — required for the
+		// exact-match tier (#exactMatchIds queries `names`, not `spr`). Same shape as Brooklyn below.
+		alt_names: ["Paris", "Pari", "París", "パリ", "巴黎"],
 		ancestor_ids: [85633723],
 	},
 	{
@@ -153,6 +155,49 @@ const FIXTURE: FixturePlace[] = [
 		lat: 46.92,
 		lon: 4.69,
 		ancestor_ids: [85633723],
+	},
+
+	// The Brooklyn pair: WOF files Brooklyn-the-borough (NYC, pop 2.5M) as placetype `borough`, NOT
+	// `locality`. A locality query must still reach it via the shared placetype expansion
+	// (core/resolver PLACETYPE_FILTER_GROUPS) — otherwise the only locality-typed match is the fuzzy
+	// "Brooklyn Park" and the resolver mislocates to Minnesota.
+	{
+		id: 421205765,
+		parent_id: 85633147,
+		name: "Brooklyn",
+		placetype: "borough",
+		country: "US",
+		lat: 40.64,
+		lon: -73.95,
+		// The canonical name also lives in `names` in a real WOF distribution — required for the
+		// exact-match tier (#exactMatchIds queries `names`, not `spr`).
+		alt_names: ["Brooklyn"],
+		ancestor_ids: [85633147],
+	},
+	{
+		id: 85969229,
+		parent_id: 85633147,
+		name: "Brooklyn Park",
+		placetype: "locality",
+		country: "US",
+		lat: 45.11,
+		lon: -93.35,
+		ancestor_ids: [85633147],
+	},
+
+	// Alias-bag boundary fixture (#523): two aliases whose concatenation straddles the phrase
+	// "York New". The exact tier must never promote this place for that straddling query, while
+	// each alias on its own ("New City") still earns the exact tier.
+	{
+		id: 999000001,
+		parent_id: 85633147,
+		name: "Twin Hamlet",
+		placetype: "locality",
+		country: "US",
+		lat: 40.2,
+		lon: -76.8,
+		alt_names: ["Old York", "New City"],
+		ancestor_ids: [85633147],
 	},
 ]
 
@@ -262,10 +307,30 @@ describe("WofSqlitePlaceLookup against an inline WOF fixture", () => {
 		expect(candidates[0]).toMatchObject({ name: "Paris", country: "US", placetype: "locality" })
 	})
 
-	test('"London" with placetype: "locality" excludes the Ontario borough', async () => {
+	test('"London" with placetype: "locality" INCLUDES the Ontario borough (locality placetype expansion)', async () => {
+		// `locality` expands to locality + borough + localadmin (core/resolver PLACETYPE_FILTER_GROUPS):
+		// WOF files many city-like places (Brooklyn, the London boroughs) under `borough`/`localadmin`,
+		// and a locality span must be able to reach them.
 		const candidates = await lookup.findPlace({ text: "London", placetype: "locality" })
+		const byCountry = candidates.map((c) => `${c.country}:${c.placetype}`)
+		expect(byCountry).toContain("GB:locality")
+		expect(byCountry).toContain("CA:borough")
+	})
+
+	test('an explicit placetype: "borough" filter stays narrow (no reverse expansion)', async () => {
+		const candidates = await lookup.findPlace({ text: "London", placetype: "borough" })
 		expect(candidates.length).toBe(1)
-		expect(candidates[0]).toMatchObject({ name: "London", country: "GB" })
+		expect(candidates[0]).toMatchObject({ name: "London", country: "CA", placetype: "borough" })
+	})
+
+	test('"Brooklyn" locality query reaches the exact-named borough over the fuzzy "Brooklyn Park" locality', async () => {
+		// The live-demo bug (2026-06-11): with the borough excluded, the only locality-typed match was
+		// the partial "Brooklyn Park" → resolved to Minnesota. The expansion makes the exact-named
+		// borough reachable, and exact-match tiering puts it on top.
+		const candidates = await lookup.findPlace({ text: "Brooklyn", placetype: "locality" })
+		expect(candidates.length).toBeGreaterThan(0)
+		expect(candidates[0]).toMatchObject({ id: 421205765, name: "Brooklyn", placetype: "borough" })
+		expect(candidates[0]?.exactMatch).toBe(true)
 	})
 
 	test('"Springfield" with parentId: Illinois returns Springfield,IL first', async () => {
@@ -282,12 +347,27 @@ describe("WofSqlitePlaceLookup against an inline WOF fixture", () => {
 	})
 
 	test("length penalty: short name beats long name for short query", async () => {
-		const candidates = await lookup.findPlace({ text: "Paris", country: "FR" })
-		const paris = candidates.find((c) => c.name === "Paris")
+		// Compare the ALIAS-FREE pair (Paris,US vs Paris-l'Hôpital,FR — both have empty alt_names
+		// bags) so this guards the NAME-column length penalty in isolation. Paris,FR is no longer a
+		// clean subject: its four aliases now carry four ALIAS_SEPARATOR tokens (#523), and that
+		// alias-doc length inflation drags its raw BM25 below the alias-free l'Hôpital row — the
+		// known shared-length-stats problem (#189), not the name-length penalty under test.
+		const candidates = await lookup.findPlace({ text: "Paris" })
+		const parisUs = candidates.find((c) => c.name === "Paris" && c.country === "US")
 		const parisLHopital = candidates.find((c) => c.name === "Paris-l'Hôpital")
-		expect(paris).toBeDefined()
+		expect(parisUs).toBeDefined()
 		expect(parisLHopital).toBeDefined()
-		expect(paris!.score).toBeGreaterThan(parisLHopital!.score)
+		expect(parisUs!.score).toBeGreaterThan(parisLHopital!.score)
+	})
+
+	test("exact-name tier keeps an alias-rich place above a partial match despite its longer alias doc (#523)", async () => {
+		// The user-visible guarantee for the pair the length-penalty test used to compare: Paris,FR's
+		// separator-inflated alias doc may cost it raw BM25, but "Paris" is an exact name match and
+		// the exact tier orders it above the partial-matching Paris-l'Hôpital regardless.
+		const candidates = await lookup.findPlace({ text: "Paris", country: "FR" })
+		const names = candidates.map((c) => c.name)
+		expect(names.indexOf("Paris")).toBeGreaterThanOrEqual(0)
+		expect(names.indexOf("Paris-l'Hôpital")).toBeGreaterThan(names.indexOf("Paris"))
 	})
 
 	test("limit defaults to 10, respected when specified", async () => {
@@ -304,6 +384,46 @@ describe("WofSqlitePlaceLookup against an inline WOF fixture", () => {
 	test("query with special characters is sanitized — `St. (Petersburg)` does not throw", async () => {
 		// No such place in the fixture; we only assert no SQL syntax error.
 		await expect(lookup.findPlace({ text: "St. (Petersburg)" })).resolves.toEqual([])
+	})
+
+	test("exact-match tier survives a names-less (slim) DB via the place_search alias bag", async () => {
+		// Slim DBs built with `dropNames` have no `names` table — the aliases survive only inside the
+		// FTS `alt_names` token bag. #exactMatchIds must fall back to it so "Brooklyn" still tiers the
+		// exact-named borough above the fuzzy "Brooklyn Park" against a hot/slim DB.
+		const db = buildFixtureDb()
+		const withFts = new WofSqlitePlaceLookup({ database: db, buildFts: true })
+		withFts.close() // releases nothing we need — the FTS table now exists on `db`, which we own
+		db.exec(`DROP TABLE names`)
+		const lookup2 = new WofSqlitePlaceLookup({ database: db })
+		try {
+			const candidates = await lookup2.findPlace({ text: "Brooklyn", placetype: "locality" })
+			expect(candidates[0]).toMatchObject({ id: 421205765, name: "Brooklyn", placetype: "borough" })
+			expect(candidates[0]?.exactMatch).toBe(true)
+		} finally {
+			lookup2.close()
+			db.close()
+		}
+	})
+
+	test("alias-bag boundary: a query straddling two aliases is never exact on a names-less DB (#523)", async () => {
+		// "York New" straddles the bag "Old York <sep> New City": its tokens AND-match the row, but
+		// the exact tier must NOT promote it. Pre-#523 the bag was space-joined and the padded
+		// containment check (' old york new city ' ⊇ ' york new ') false-promoted exactly this shape.
+		const db = buildFixtureDb()
+		const withFts = new WofSqlitePlaceLookup({ database: db, buildFts: true })
+		withFts.close()
+		db.exec(`DROP TABLE names`)
+		const lookup2 = new WofSqlitePlaceLookup({ database: db })
+		try {
+			const straddle = await lookup2.findPlace({ text: "York New", placetype: "locality" })
+			expect(straddle.some((c) => c.exactMatch === true)).toBe(false)
+			// A single alias still earns the exact tier from the bag alone.
+			const alias = await lookup2.findPlace({ text: "New City", placetype: "locality" })
+			expect(alias[0]).toMatchObject({ id: 999000001, exactMatch: true })
+		} finally {
+			lookup2.close()
+			db.close()
+		}
 	})
 
 	test("Disposable: Symbol.dispose closes the lookup", async () => {

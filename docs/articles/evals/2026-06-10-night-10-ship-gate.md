@@ -20,14 +20,14 @@ side only.
 
 Same harness, same canonical DBs, 1428 held-out rows:
 
-| model | region-match | name-match | coord p50 | coord p90 | PIP (cov-adj) |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| v4.1.0 | 100.0% | 93.8% | 3.4 km | 7.4 km | 47.1% |
-| **Run B** | **99.9%** | **93.8%** | **3.4 km** | **7.4 km** | **47.1%** |
+| model     | region-match | name-match |  coord p50 |  coord p90 | PIP (cov-adj) |
+| --------- | -----------: | ---------: | ---------: | ---------: | ------------: |
+| v4.1.0    |       100.0% |      93.8% |     3.4 km |     7.4 km |         47.1% |
+| **Run B** |    **99.9%** |  **93.8%** | **3.4 km** | **7.4 km** |     **47.1%** |
 
 The locality +12.9 / region +10.7 parse gains cost nothing downstream; the street −2.3 does
 not propagate to coordinates. (Procedure note: this harness cannot feed the gazetteer
-lexicon — Run B graded with zero-filled clues, a *degraded* configuration vs what ships, so
+lexicon — Run B graded with zero-filled clues, a _degraded_ configuration vs what ships, so
 this PASS is conservative.)
 
 ### 2. Demo presets — PASS
@@ -38,13 +38,13 @@ libpostal-compat consumers.
 
 ### 3. int8 spot-check (gaz-fed) — PASS
 
-| tag | fp32 | int8 | Δ |
-| --- | ---: | ---: | ---: |
-| country homograph | 89.8 | 89.8 | 0.0 |
-| street_prefix / suffix | 64.9 / 48.8 | 64.9 / 48.8 | 0.0 |
-| unit | 90.6 | 90.6 | 0.0 |
-| US postcode / street / locality / region | 97.3 / 76.2 / 72.9 / 89.1 | identical | ≤0.1 |
-| FR postcode / house_number | 99.7 / 94.6 | 99.6 / 94.6 | ≤0.1 |
+| tag                                      |                      fp32 |        int8 |    Δ |
+| ---------------------------------------- | ------------------------: | ----------: | ---: |
+| country homograph                        |                      89.8 |        89.8 |  0.0 |
+| street_prefix / suffix                   |               64.9 / 48.8 | 64.9 / 48.8 |  0.0 |
+| unit                                     |                      90.6 |        90.6 |  0.0 |
+| US postcode / street / locality / region | 97.3 / 76.2 / 72.9 / 89.1 |   identical | ≤0.1 |
+| FR postcode / house_number               |               99.7 / 94.6 | 99.6 / 94.6 | ≤0.1 |
 
 ### 4. DE native order (int8) — PASS
 
@@ -52,11 +52,11 @@ Native-order locality 90.9% (bar ≥83.8); US/FR no-regression held (96.7 / 84.5
 
 ## Arena refresh (scorecard lens 1 — NOT a gate; reported with caveats)
 
-| arena | n | v0 | v4.1.0 | Run B | v0-only (B) |
-| --- | --: | --: | --: | --: | --: |
-| libpostal (clean) | 69 | 29% | 22% | 19% | 17% |
-| perturb (noisy) | 398 | 39% | 60% | **58%** | 9% |
-| postal (edge) | 38 | 26% | 11% | 8% | 21% |
+| arena             |   n |  v0 | v4.1.0 |   Run B | v0-only (B) |
+| ----------------- | --: | --: | -----: | ------: | ----------: |
+| libpostal (clean) |  69 | 29% |    22% |     19% |         17% |
+| perturb (noisy)   | 398 | 39% |    60% | **58%** |          9% |
+| postal (edge)     |  38 | 26% |    11% |      8% |         21% |
 
 Run B dips 2–3pp whole-parse-strict vs v4.1.0. Two caveats, then the honest residue:
 (a) `harness-v0-neural` cannot feed the gazetteer lexicon → Run B graded handicapped

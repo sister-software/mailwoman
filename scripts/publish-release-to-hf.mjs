@@ -25,6 +25,7 @@
  *   --model-card /path/to/model-card.json\
  *   --fst /path/to/fst-en-US.bin\
  *   --wof-hot /path/to/wof-hot.db\
+ *   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json\
  *   --label "v0.5.4 — multi-script tokenizer"\
  *   --description "Multi-script tokenizer..."\
  *   --set-default
@@ -44,6 +45,18 @@ const REQUIRED_FILES = [
 ]
 
 const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
+const DEMO_BASE = "https://public.sister.software/mailwoman"
+
+/** HEAD-probe the demo's R2 serving path for an optional artifact (the demo reads R2, so R2 is the
+truth for demo flags). */
+async function servedOnDemoPath(name) {
+	try {
+		const r = await fetch(`${DEMO_BASE}/${args.locale}/${args.version}/${name}`, { method: "HEAD" })
+		return r.ok
+	} catch {
+		return false
+	}
+}
 const BUCKET_RESOLVE = "https://huggingface.co/buckets/sister-software/mailwoman/resolve"
 
 function parseArgs() {
@@ -130,6 +143,15 @@ async function main() {
 		if (!existsSync(localPath) || statSync(localPath).size === 0) fail(`postcode binary ${localPath} missing/empty`)
 	}
 
+	// Optional gazetteer-anchor lexicon (#464): a single --gazetteer-lexicon path, uploaded as
+	// anchor-lexicon-v1.json. REQUIRED for gazetteer-trained models (v4.2.0+, ONNX declares
+	// gazetteer_features) — the demo loader fetches it beside model.onnx and degrades LOUDLY
+	// (console.error + zero-filled clues = the measured zero-fill quality trap) when it 404s.
+	const gazetteerLexicon = args.gazetteerLexicon || null
+	if (gazetteerLexicon && (!existsSync(gazetteerLexicon) || statSync(gazetteerLexicon).size === 0)) {
+		fail(`gazetteer lexicon ${gazetteerLexicon} missing/empty`)
+	}
+
 	// Optional crisp-polygon DB (build-wof-polygons.mjs): a single --polygons path. Uploaded as
 	// wof-polygons.db; the demo draws the real admin boundary instead of the bbox when `hasPolygons`
 	// is set. Sibling of wof-hot.db, keyed by the same WOF ids.
@@ -152,6 +174,11 @@ async function main() {
 		const dst = `${BUCKET_PATH}/${remoteBase}/${remoteName}`
 		console.error(`  → ${dst}`)
 		run("hf", ["buckets", "cp", localPath, dst])
+	}
+	if (gazetteerLexicon) {
+		const dst = `${BUCKET_PATH}/${remoteBase}/anchor-lexicon-v1.json`
+		console.error(`  → ${dst}`)
+		run("hf", ["buckets", "cp", gazetteerLexicon, dst])
 	}
 	if (polygonsDb) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/wof-polygons.db`
@@ -183,8 +210,17 @@ async function main() {
 		steps: args.steps ? parseInt(args.steps, 10) : 100000,
 		hasFst: true,
 		hasWofDb: true,
-		hasAnchor: postcodeBins.length > 0,
-		hasPolygons: !!polygonsDb,
+		// These artifacts usually ride the R2 staging rather than this script's flags, so derive the
+		// truth by PROBING the demo's serving path (the four-release hasPolygons:false rectangle bug,
+		// 2026-06-11). CLI args still count; either source sets the flag.
+		hasAnchor: postcodeBins.length > 0 || (await servedOnDemoPath("postcode-us.bin")),
+		hasPolygons: !!polygonsDb || (await servedOnDemoPath("wof-polygons.db")),
+	}
+	for (const flag of ["hasAnchor", "hasPolygons"]) {
+		if (!newEntry[flag])
+			console.warn(
+				`⚠ ${flag}=false for ${args.version} — if the artifact will be staged to R2 later, releases.json must be re-patched or the demo silently degrades (rectangles / anchor-off).`
+			)
 	}
 
 	releases.releases = [newEntry, ...releases.releases.filter((r) => r.version !== args.version)]
