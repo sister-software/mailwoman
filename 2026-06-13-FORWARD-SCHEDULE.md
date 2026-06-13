@@ -10,8 +10,8 @@ at the north star: a production geocoder that beats Pelias Parser's rules with n
 
 The #488 epic splits cleanly at the Phase-2/Phase-3 boundary:
 
-- **Phase 2 — parity completion** is the table we've lived in all arc. fr.house_number is its _last
-  empty cell_: v4.5.0 retired the span bridge (proving po_box and friends are learned intrinsically),
+- **Phase 2 — parity completion** is the table we've lived in all arc. fr.house*number is its \_last
+  empty cell*: v4.5.0 retired the span bridge (proving po_box and friends are learned intrinsically),
   and fr.house_number was the one tag the bridge had been propping. v1.5.1 settles it — pass → the
   parity table is full; documented-floor → we ship the honest intrinsic number and move on. Either
   way, **after tonight the parity scoreboard is closed.**

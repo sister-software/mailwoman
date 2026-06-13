@@ -42,7 +42,7 @@ Weight 3.0 → 6.0 matches the proven `synth-german` weight (which fully worked)
 
 ### v1.5.1 re-gate result: ❌ WORSE — weight is NOT the lever (REJECTED)
 
-The weight-bump hypothesis is **falsified**. v1.5.1 (weight 6.0) scored fr.house_number **84.7%** — _below_ v1.5.0's 87.4% (weight 3.0). More reversed-FR exposure made it worse, not better.
+The weight-bump hypothesis is **falsified**. v1.5.1 (weight 6.0) scored fr.house*number **84.7%** — \_below* v1.5.0's 87.4% (weight 3.0). More reversed-FR exposure made it worse, not better.
 
 | Run           | synth-fr-order weight | fr.house_number (diversified golden) |
 | ------------- | --------------------: | -----------------------------------: |
@@ -50,7 +50,7 @@ The weight-bump hypothesis is **falsified**. v1.5.1 (weight 6.0) scored fr.house
 | v1.5.0        |                   3.0 |                     **87.4%** ← best |
 | v1.5.1        |                   6.0 |                                84.7% |
 
-**And it introduced a NEW failure mode: postcode fragmentation.** The v1.5.0 misses were clean ("47110 …" → predict `47110` as house_number — wrong span, intact tokens). v1.5.1's miss dump shows the model now _splits the postcode_: `47110` → house_number `4` + postcode `7110`, and sometimes _merges_ it (`pred="47110 85"`). Over-weighting the both-order synth shard pushed the model to over-eagerly hunt for a leading house number, destabilizing the postcode boundary itself. Strictly worse.
+**And it introduced a NEW failure mode: postcode fragmentation.** The v1.5.0 misses were clean ("47110 …" → predict `47110` as house*number — wrong span, intact tokens). v1.5.1's miss dump shows the model now \_splits the postcode*: `47110` → house*number `4` + postcode `7110`, and sometimes \_merges* it (`pred="47110 85"`). Over-weighting the both-order synth shard pushed the model to over-eagerly hunt for a leading house number, destabilizing the postcode boundary itself. Strictly worse.
 
 **Conclusion — the both-order synth recipe plateaus at ~87% on this golden, and louder weight is actively harmful.** Likely mechanism: the generated synth distribution diverges from the real OA golden's reversed-order distribution; overweighting fits synth quirks at the expense of real rows. The German precedent (6.0) did NOT transfer — German's number is always _last_ (one position to learn); FR postcode-first makes the house_number position genuinely ambiguous (it can collide with the leading postcode), so more synth mass amplifies the collision.
 
