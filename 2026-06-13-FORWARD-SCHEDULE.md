@@ -10,8 +10,8 @@ at the north star: a production geocoder that beats Pelias Parser's rules with n
 
 The #488 epic splits cleanly at the Phase-2/Phase-3 boundary:
 
-- **Phase 2 — parity completion** is the table we've lived in all arc. fr.house_number is its *last
-  empty cell*: v4.5.0 retired the span bridge (proving po_box and friends are learned intrinsically),
+- **Phase 2 — parity completion** is the table we've lived in all arc. fr.house_number is its _last
+  empty cell_: v4.5.0 retired the span bridge (proving po_box and friends are learned intrinsically),
   and fr.house_number was the one tag the bridge had been propping. v1.5.1 settles it — pass → the
   parity table is full; documented-floor → we ship the honest intrinsic number and move on. Either
   way, **after tonight the parity scoreboard is closed.**
@@ -34,13 +34,13 @@ Grabbing the #488 rule (topmost unchecked, unblocked), with what the supplementa
    `AddressPointInterpolator` (bracket between real points) + shared normalizer + builder + design doc
    (`docs/articles/plan/2026-06-11-interpolation-design.md`)._ Status: **Cook County (IL) PASSES the
    gate; VT improved-but-still-MISSES** the p50≤50m / p90≤150m bar. The open work is therefore an
-   *investigation* (why does VT miss — TIGER data quality? sparse-segment handling?) plus the
+   _investigation_ (why does VT miss — TIGER data quality? sparse-segment handling?) plus the
    `resolution_tier: "interpolated"` core-tier wiring — **judgment-heavy, not a clean slice.** Defer to
    an operator-steered session, not an autonomous 4am pickup. (My earlier "recommended next centerpiece"
    call was made before I'd read the merged history — corrected here.)
 2. **#484 — reverse geocoding (PIP over wof-polygons).** _CORRECTION (verified mid-shift): also
    already built — `reverse.ts` + `reverse.test.ts` (9 pass / 4 skipped, the skips need the real
-   polygon DB). "Assembly over existing machinery": bbox R*Tree → PIP confirm → approximate descent →
+   polygon DB). "Assembly over existing machinery": bbox R\*Tree → PIP confirm → approximate descent →
    hierarchy. Engine done; the skipped tests + tier wiring remain._
 
 > **Verified-mid-shift synthesis — Phase 3 is more built than the #488 boxes imply.** Both Tier-1
@@ -51,17 +51,18 @@ Grabbing the #488 rule (topmost unchecked, unblocked), with what the supplementa
 > tier), and (b) **passing the empirical gates** (#483: Cook passes, VT misses p50≤50m/p90≤150m). Both
 > are integration + investigation, **operator-steered**, not clean autonomous 4am slices. The honest
 > next centerpiece is "wire + gate the built interpolation/reverse tiers," and it wants daylight.
+
 3. **The arena-gate infra fix** (found + fixed THIS shift — see "Gate integrity" below): a
    pre-registered floor (`arena.perturb` 71.0) was un-evaluable on every v0.5.0 gate run because the
    compiled-tree libpostal path doesn't resolve, so it hard-failed as `NOT FOUND` — masking the real
    number (measured this shift: **78%, a clean pass**). Cheap, high-trust-value, makes the verdict honest.
 
-### Tier 2 — unblocked, feeds a *future* training run (build now, train later — no GPU tonight)
+### Tier 2 — unblocked, feeds a _future_ training run (build now, train later — no GPU tonight)
 
 4. **#330 — FR venue/region shard** (+ #444 street-collapse + accent fragmentation) — the FR parity
    gap beyond house_number. Builds the same way the order shard did; rides into the next training run.
-5. **#435 — European street/number composition quirks** (number-after-street) — *this is the
-   generalization of the v1.5.x order work.* If v1.5.1 validates the both-order recipe, #435 extends
+5. **#435 — European street/number composition quirks** (number-after-street) — _this is the
+   generalization of the v1.5.x order work._ If v1.5.1 validates the both-order recipe, #435 extends
    it to IT/ES/NL. Build the shards now; they cost nothing until trained.
 6. **#487 — intersection reintroduction** (gate pre-registered in-issue).
 
@@ -79,7 +80,7 @@ The budget rule is set: **no second training run tonight.** So the remaining run
 1. **v1.5.1 re-gate** when `ap-1PoHJlr1GfFwoeoJgzO0up` stops (~07:00 UTC) — the decision point.
    - Pass (fr.house_number ≥95, floors hold) → v4.6.0 candidate → stage the four-store ship, flag operator.
    - Miss → document 87.4% (v1.5.0) / new number as the honest intrinsic floor; the lever for a
-     *future* run is shard mass (50K→100K), not weight. File the convergence-curve issue. Do NOT
+     _future_ run is shard mass (50K→100K), not weight. File the convergence-curve issue. Do NOT
      re-train tonight.
 2. **Land the arena-gate fix** (Tier-1 #3) — make `arena.perturb` enforce again. Verified, committed.
 3. **Open #483** (Tier-1 #1) as the next centerpiece — scope it, write the TIGER-range interpolation
