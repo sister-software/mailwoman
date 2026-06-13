@@ -118,6 +118,10 @@ data/eval/calibration/confidences.jsonl
 
 corpus-python/.pytest_cache/
 output/
+# Per-run training-output download dirs (e.g. output-v150-fr-order-s42/ — pulled from the Modal
+# volume to local during a re-gate; each holds a ~113MB model.onnx). The exact `output/` above
+# only matches the bare dir; the suffixed per-run dirs need their own glob.
+output-*/
 
 # Pi session state (not project config)
 .pi/flow.json
