@@ -12,6 +12,15 @@ for this sprint. Drives tonight's parallel-agent shift._
 radii**, measured on a **non-circular** held-out set (ground truth that does NOT share lineage with our
 situs shards). Until that metric is measured on independent truth, "done" is vacuous.
 
+**✅ CHECKPOINT MET (2026-06-14).** On the Travis-County TX E-911 holdout (TxGIO/TNRIS, 1965 rows, acquired
+as out-of-lineage truth): the full parse → situs → interpolation → admin cascade resolves **98.8% within
+100 m (97.7% within 10 m)** — far past the 85% bar. **This is a geocoder.** Honest caveats: (1) the
+98.8% leans on situs whose Overture/NAD lineage likely overlaps the E-911 truth (the 10 m tightness is the
+tell) — the _fully_ independent number is **interpolation-only at 66% within 100 m**; (2) accuracy tracks
+situs coverage (doorstep where Overture has points, neighborhood elsewhere). Remaining for a _shipped
+national_ geocoder: national interp + (license-filtered) situs builds, the conformal confidence wrapper,
+the forward service surface (#485). The architecture is proven; the rest is scaling + packaging.
+
 ## Standing constraints (this sprint)
 
 - **No current users — we are our own customer.** Back-compat is a non-constraint; breaking changes
@@ -53,10 +62,19 @@ The wall — but the timing probe (2026-06-13) defused it. National street-level
   download of ~3.1MB): national ≈ **~13 min build + ~5–15 min parallelized download (~9.7GB)** =
   **~30–45 min total, detached.** NOT hours. (The genuinely-hours item is the OPTIONAL Overture situs
   ingestion — the precision cache — which stays deferrable.)
-- **Situs as a precision cache** (not the base): snap to an Overture/NAD point when one falls in a
-  segment. Overture ingestion (#470/#477/#474) runs in parallel, deferrable.
-- **GATED by Stream 0.** Small code lift: `STATE_FIPS` in the builder has only PS/VT/IL/NJ wired —
-  extend to all 50 (trivial, Sonnet). Issues: #483 (done-engine), #476, #470, #297.
+- **Situs is the DoD lever, not just a cache (PROVEN 2026-06-14).** On the non-circular Travis-County
+  E-911 holdout: TIGER interpolation alone = 66% within 100m; **+ Overture/NAD situs = 98.8% within 100m
+  (97.7% within 10m), 98.3% situs hit.** Builder `scripts/build-address-point-shard.ts --state TX` read
+  the local 6.5GB Overture US parquet → 11.5M TX points in a few minutes. The honest split: situs (98.8%)
+  is partly in-distribution (Overture/NAD ≈ the E-911 truth lineage); **interpolation-only (66%) is the
+  genuinely independent number.** Real-world read: doorstep where situs points exist (dense via Overture),
+  neighborhood-via-interpolation where they don't.
+- **National situs:** per-state from the same parquet (~minutes/state). **ACTION ITEM — add a
+  `--license-filter` (source allow-list) before distributing:** Overture is a license mosaic; the builder
+  already stamps `overture:<dataset>` per row (TX was 100% `overture:NAD` = public, clean), so filter to
+  NAD/public and DROP OSM-sourced (ODbL) rows so shipped shards stay license-clean. See "OSM / licensing".
+- **GATED by Stream 0** (cleared). `STATE_FIPS` extended to all 50 + the national driver landed
+  (`build-national-interpolation.mjs`, DE-verified). Issues: #483 (done-engine), #476, #470, #297.
 
 ### Stream 3 — Confidence (~minutes compute) — **Sonnet (build) + Opus (gate)**
 
@@ -81,6 +99,26 @@ Parser multi-locale / FR-EU polish (#330/#435/#444/#241/#293/#294/#473/#296), ty
 (#530/#531), exotic source adapters (#29/#31/#35–41), Geographic Rule Engine breadth (#288), Studio
 (#13). Hygiene (#379/#442/#397/#552/#480), corpus-v0.5.1 code-point re-align (#519/#555/#558) — DeepSeek's
 parallel track.
+
+## OSM / licensing (the international lever — deferred, ODbL-gated)
+
+The interpolation engine is source-agnostic, so OSM `addr:interpolation` ways are a drop-in for
+international coverage (no TIGER/NAD equivalent exists outside the US) — needs only an OSM→`street_segment`
+adapter, not an engine change. The constraint is **ODbL**, which forks on one distinction:
+
+- A **geocoding RESULT** returned to a user is a **Produced Work** → attribution only, NO share-alike.
+- A **shard built from OSM** is a **Derivative Database** → public use/distribution triggers **share-alike**
+  (the shard must be offered under ODbL; its derivatives stay open). Private/server-side use does NOT trigger it.
+
+So OSM interpolation forks: **(a) distribute ODbL open-data shards** (fine with our AGPL/copyleft ethos, but
+ODbL obligations flow to consumers + infect derivatives), or **(b) server-side-only service** (private shard,
+attributed results — the Pelias/Nominatim model). A product-model decision, not a blocker.
+
+**Why this keeps OSM international-only for us:** TIGER (public domain) + NAD (open) make the US fully
+distributable with zero ODbL — OSM only earns its keep where no TIGER/NAD equivalent exists. **Overture is a
+license mosaic** (NAD = public; OSM-sourced features = ODbL), so the `--license-filter` action item (Stream 2)
+keeps shipped US situs shards clean. (IANAL — confirm against current OSMF geocoding guidelines + counsel
+before shipping OSM-derived data.)
 
 ## Tonight's parallel structure (the shift)
 
