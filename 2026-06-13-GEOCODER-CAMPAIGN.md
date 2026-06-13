@@ -17,9 +17,10 @@ situs shards). Until that metric is measured on independent truth, "done" is vac
 - **No current users — we are our own customer.** Back-compat is a non-constraint; breaking changes
   (schema, pipeline rewire) are FREE. Take them now.
 - **Non-Latin / multi-locale may degrade.** Deferred, not abandoned. US street-level is the DoD.
-- **Avoid hours-long wheel-spinning compute.** Only ONE task carries it (national shard build); it runs
-  detached + staged in the background while compute-light streams complete. **No corpus rebuild this
-  sprint** (the corpus exists; these are resolver shards, a separate pipeline).
+- **Avoid hours-long wheel-spinning compute.** Probe-confirmed: the national shard build is **~30–45 min**
+  (measured), not hours, and runs detached. The only genuinely-hours item is the OPTIONAL Overture situs
+  ingestion (precision cache, deferrable). **No corpus rebuild this sprint** (the corpus exists; these are
+  resolver shards, a separate pipeline). A parser fix from the Stream-0 gate is the one conditional ~1.6h.
 
 ## The five streams
 
@@ -41,17 +42,21 @@ ground truth** — a jurisdiction that doesn't feed Overture (NYC PLUTO points, 
 file) — build a holdout eval slice in the OA-sample format, and run the existing resolver eval against
 it. Lock the DoD metric. Issues: #375 (eval methodology), #229 (val-set stratification), #518.
 
-### Stream 2 — Coverage (HOURS, detached + staged) — **Opus (decision) + Sonnet (per-state runs)**
+### Stream 2 — Coverage (~30–45 min MEASURED, detached) — **Opus (decision) + Sonnet (per-state runs)**
 
-The wall. National street-level coverage:
+The wall — but the timing probe (2026-06-13) defused it. National street-level coverage:
 
 - **TIGER interpolation FIRST** (DeepSeek's unlock): TIGER has complete US road+range coverage →
-  interpolation shards give street-level for ~80% of addresses at ±50–150m. Build per-county/state,
-  **staged by population (top-N counties first)**, detached. Builder: `scripts/build-interpolation-shard.ts`.
+  interpolation shards give street-level for ~80% of addresses at ±50–150m. Builder:
+  `scripts/build-interpolation-shard.ts`.
+- **MEASURED cost** (VT probe: 14 counties / 137K segments in **3.5s** → ~0.25s/county build, ~1.2s/county
+  download of ~3.1MB): national ≈ **~13 min build + ~5–15 min parallelized download (~9.7GB)** =
+  **~30–45 min total, detached.** NOT hours. (The genuinely-hours item is the OPTIONAL Overture situs
+  ingestion — the precision cache — which stays deferrable.)
 - **Situs as a precision cache** (not the base): snap to an Overture/NAD point when one falls in a
   segment. Overture ingestion (#470/#477/#474) runs in parallel, deferrable.
-- **GATED by Stream 0.** **De-risk: one-state timing probe FIRST** to convert "HOURS, unknown" into a
-  measured per-county number before committing national. Issues: #483 (done-engine), #476, #470, #297.
+- **GATED by Stream 0.** Small code lift: `STATE_FIPS` in the builder has only PS/VT/IL/NJ wired —
+  extend to all 50 (trivial, Sonnet). Issues: #483 (done-engine), #476, #470, #297.
 
 ### Stream 3 — Confidence (~minutes compute) — **Sonnet (build) + Opus (gate)**
 
