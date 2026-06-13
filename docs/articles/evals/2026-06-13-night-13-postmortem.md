@@ -40,6 +40,31 @@ Bridge retirement HOLDS (po_box 90.3%), German order HOLDS (native+anchor 90.8%)
 
 Weight 3.0 → 6.0 matches the proven `synth-german` weight (which fully worked). Shard is already on the volume, no re-upload needed. Config committed as `728b67b`, pushed via R2 → sync_v050, training started. Re-gate runbook: `build-logs/v151-regate-runbook.sh`.
 
+### v1.5.1 re-gate result: ❌ WORSE — weight is NOT the lever (REJECTED)
+
+The weight-bump hypothesis is **falsified**. v1.5.1 (weight 6.0) scored fr.house_number **84.7%** — *below* v1.5.0's 87.4% (weight 3.0). More reversed-FR exposure made it worse, not better.
+
+| Run            | synth-fr-order weight | fr.house_number (diversified golden) |
+| -------------- | --------------------: | -----------------------------------: |
+| v4.5.0 (ship)  |              none     |                                54.5% |
+| v1.5.0         |              3.0      |                          **87.4%** ← best |
+| v1.5.1         |              6.0      |                                84.7% |
+
+**And it introduced a NEW failure mode: postcode fragmentation.** The v1.5.0 misses were clean ("47110 …" → predict `47110` as house_number — wrong span, intact tokens). v1.5.1's miss dump shows the model now *splits the postcode*: `47110` → house_number `4` + postcode `7110`, and sometimes *merges* it (`pred="47110 85"`). Over-weighting the both-order synth shard pushed the model to over-eagerly hunt for a leading house number, destabilizing the postcode boundary itself. Strictly worse.
+
+**Conclusion — the both-order synth recipe plateaus at ~87% on this golden, and louder weight is actively harmful.** Likely mechanism: the generated synth distribution diverges from the real OA golden's reversed-order distribution; overweighting fits synth quirks at the expense of real rows. The German precedent (6.0) did NOT transfer — German's number is always *last* (one position to learn); FR postcode-first makes the house_number position genuinely ambiguous (it can collide with the leading postcode), so more synth mass amplifies the collision.
+
+**This closes the v1.5.x weight thread** (committed to the operator: "the last weight experiment"). No third training run tonight. The lever for a *future* run is NOT weight — candidates: (a) more *real* reversed-order data (BAN-sourced, not synth), (b) a postcode-anchor / position-aware signal that protects the postcode span, (c) accept ~87% as the honest intrinsic floor.
+
+### Ship decision — operator's call (flagged)
+
+The best recovery model is **v1.5.0 (87.4%)**: +32.9pp over v4.5.0 on the diversified golden, every other floor passing, bridge retirement intact, arena.perturb confirmed 78% (now that it's enforced — see gate-integrity below). It misses the pre-registered `fr.house_number` floor of **91** by 3.6pp. Two honest options, both the operator's to choose (no silent re-baseline):
+
+1. **Ship v1.5.0 as v4.6.0 with a STATED floor re-baseline.** The 91 floor was inherited from v4.4.0, measured against the *easier* pre-#563 golden (v4.5.0 itself scores only 54.5% on the new golden). The floor is arguably miscalibrated for the harder eval. Re-baselining is legitimate *if reasoned in the doc* — but it's the operator's explicit decision, not a night-shift edit.
+2. **Hold v4.5.0; pursue a different lever next session.** Keep the shipped model, treat 87.4% as a documented way-station, and attack the plateau with real-data / position-aware approaches.
+
+My recommendation: **option 2 short-term** (don't ship a below-gate model on a recovery that's still 8pp shy of target), unless the operator wants the +32.9pp in users' hands now and re-baselines the floor deliberately.
+
 ## What went well
 
 - **Clean fan-out → verify → merge loop.** Three agents returned PR-ready branches; each verified by the orchestrator before merge. No worktree leaks — every diff single-file/single-concern.
@@ -47,6 +72,8 @@ Weight 3.0 → 6.0 matches the proven `synth-german` weight (which fully worked)
 - **Verify-the-self-report paid off.** Task 3's agent mis-reported its Sainte-Livrade baseline (claimed 503; actual 582). The DATA was sound; orchestrator caught the number error before it propagated.
 - **Bridge retirement held clean.** po_box 90.3% with bridge OFF, every US floor passed — the v4.5.0 spine is solid.
 - **Actual-vs-actual grading revealed the golden shift.** The diversified golden (#563) changed the baseline: v4.5.0 at 54.5% (not 89.6%) on the same n=1546 set makes the +32.9pp gain visible and attributable.
+- **Caught a silent gate-integrity bug.** `arena.perturb` (a pre-registered floor, 71.0) was reporting `NOT FOUND` on every v0.5.0 gate — the compiled v0 arena parser couldn't find libpostal dicts (`core/out/data` vs `core/data` path mismatch). Root-caused, locally bridged (symlink + gate-script guard, commit `ab2a029`), and re-measured: the real perturb pass-rate is **78%** (neural) vs 39% (v0) — a clean pass that had been masked. Order-robustness is *already* paying off in the arena: the perturb arena IS delimiter/case/order perturbation, and neural doubles the rules parser.
+- **The negative result is clean and attributable.** Two runs isolated one variable (weight 3.0 vs 6.0); the falsification is unambiguous and the failure mode (postcode fragmentation) is diagnosed, not mysterious. That's $-worth of signal: we now know weight is the wrong lever and *why*.
 
 ## What could've gone better
 
@@ -68,28 +95,30 @@ The orchestrator session became unresponsive (network) mid-shift after launching
 
 ## Open questions
 
-- **Will 6.0 weight recover fr.house_number to ≥95%?** The miss pattern is clean (all same format, same one-digit explanation). The German analogy is close. If v1.5.1 still misses, the next lever is shard size (50K → 100K rows) rather than weight — the signal-vs-BAN-prior balance needs more mass, not just louder weight.
-- **arena.perturb NOT FOUND** — what eval produces this? Missing from the gate output for v1.5.0. Not gating v1.5.1 but should be diagnosed separately.
-- **int8_delta.us.street_prefix: 2.2 (floor 1.5)** — v1.5.0 int8 quantization introduced a slightly-above-floor delta on street_prefix. Watch whether v1.5.1 shows the same or if it closes.
+- **What recovers fr.house_number past the ~87% plateau, if not weight?** Falsified: weight (6.0 < 3.0). Untested candidates, for the operator to prioritize: (a) more *real* reversed-order data from BAN rather than synth (the synth↔real distribution gap is the leading suspect); (b) a postcode-anchor / position-aware signal that protects the postcode span from being raided for a leading house number; (c) accept ~87% as the honest intrinsic floor and re-baseline the gate. **Do NOT bump shard mass blindly** — v1.5.1 shows the synth shard can actively destabilize; more of it is not obviously safe.
+- **Ship v1.5.0 (87.4%) as v4.6.0, or hold v4.5.0?** It misses the 91 floor by 3.6pp but is +32.9pp over the shipped model on the hard golden. Operator's explicit call (re-baseline-and-ship vs hold). See "Ship decision" above.
+- **`__isCompiledTree` off-by-one?** The gate-integrity fix bridged `core/out/data` locally; the deeper question (does repo.ts's compiled-tree detection resolve FALSE when it should be TRUE?) is load-bearing and deferred to daylight review (#481).
 
 ## Concrete next steps
 
-- **Re-gate v1.5.1** via `build-logs/v151-regate-runbook.sh` when `ap-1PoHJlr1GfFwoeoJgzO0up` stops (~07:30 UTC). Clean pass → v4.6.0 candidate → four-store ship (HF bucket + nexus-public are separate; ship all `postcode-{us,de,fr}.bin`).
-- **If v1.5.1 also misses fr.house_number**: bump shard to 100K rows + weight 6.0 (v1.5.2). File a GitHub issue tracking the convergence curve.
-- **prettier sweep #7b**: Sonnet limit resets 2026-06-14 9pm Paris. One wave-B Sonnet agent, same pattern as 2026-06-12.
-- **corpus-v0.5.1 code-point re-align** (#558 lasting fix): DeepSeek's parallel track; plan doc at `.agents/skills/deepseek-consult/plan-2026-06-12-codepoint-realign.md`.
+- **Operator ship decision** on v1.5.0 (recommendation: hold + pursue a non-weight lever; alternative: re-baseline floor + ship the +32.9pp). v1.5.0 artifacts are staged at `artifacts/v1.5.0-fr-order/` on R2; v1.5.1 at `artifacts/v1.5.1-fr-order/` (rejected, kept for the record).
+- **Pivot to Phase 3** (the forward schedule, `2026-06-13-FORWARD-SCHEDULE.md`): the parity table is effectively closed; the next centerpiece is **#483 house-number interpolation from TIGER** (unblocked, no GPU) — coordinate truth, the real-geocoder step.
+- **File the fr.house_number convergence finding** as a GitHub issue (weight falsified, plateau ~87%, postcode-fragmentation failure mode) so the next attempt starts from evidence.
+- **prettier sweep #7b**: Sonnet limit resets 2026-06-14 9pm Paris.
+- **corpus-v0.5.1 code-point re-align** (#558): DeepSeek's parallel track.
 
 ## Numbers
 
 |                          |                                                              |
 | ------------------------ | ------------------------------------------------------------ |
 | Wave-A tasks             | 3 delegated / 3 verified / 3 merged (#561, #562, #563)       |
-| Centerpiece (v1.5.0)     | 40K steps, healthy (macro_f1=0.626 @step-2000, 0 NaN)        |
-| v1.5.0 fr.house_number   | **87.4%** — GATE MISS (floor 91, target ≥95)                 |
-| Actual improvement       | +32.9pp vs v4.5.0 on same diversified golden (54.5% → 87.4%) |
+| Centerpiece              | 2 runs (v1.5.0 weight 3.0, v1.5.1 weight 6.0), both 40K steps, 0 NaN |
+| v1.5.0 fr.house_number   | **87.4%** — best recovery (+32.9pp vs v4.5.0's 54.5%), misses 91 floor |
+| v1.5.1 fr.house_number   | **84.7%** — WORSE; weight falsified + postcode-fragmentation failure |
 | Bridge retirement        | HOLDS: us.po_box_real=90.3% (floor 89.1) ✅                  |
 | German order             | HOLDS: de.native_locality=90.8% (floor 83.8) ✅              |
-| v1.5.1 (weight 6.0)      | Launched ~05:00 UTC, running on ap-1PoHJlr1GfFwoeoJgzO0up   |
-| Models trained           | 2 (v1.5.0 complete, v1.5.1 in progress)                      |
+| arena.perturb            | **78%** (was silently NOT FOUND; fixed + enforced, commit ab2a029) ✅ |
+| Models trained           | 2 (both complete + gated)                                    |
 | NaN incidents            | 0                                                            |
-| Task 5 (prettier)        | BLOCKED — Sonnet weekly limit (resets 2026-06-14 9pm Paris)  |
+| Gate-integrity bugs      | 1 found + fixed (arena.perturb un-evaluable)                 |
+| Task 5 (prettier)        | DONE by supplemental session (`cb2ea168`)                    |
