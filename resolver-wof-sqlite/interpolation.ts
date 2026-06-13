@@ -28,6 +28,8 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import type { InterpolationLookup } from "@mailwoman/core/resolver"
+
 import { haversineKm } from "./geo.js"
 import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.js"
 
@@ -91,7 +93,7 @@ interface SegmentRow {
 	release: string
 }
 
-export class StreetInterpolator {
+export class StreetInterpolator implements InterpolationLookup {
 	readonly #db: DatabaseSync
 	readonly #ownsDb: boolean
 	readonly #byPostcode

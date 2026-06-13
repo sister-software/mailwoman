@@ -12,7 +12,13 @@ import { describe, expect, test, vi } from "vitest"
 import { decodeAsXml } from "../decoder/serialize-xml.js"
 import type { AddressNode, AddressTree, ComponentTag } from "../decoder/types.js"
 import { createWofResolver } from "./resolve.js"
-import type { Ancestor, CoincidentLocality, ResolvedPlace, ResolverBackend } from "./types.js"
+import type {
+	Ancestor,
+	CoincidentLocality,
+	InterpolationLookup,
+	ResolvedPlace,
+	ResolverBackend,
+} from "./types.js"
 
 function node(
 	tag: ComponentTag,
@@ -700,5 +706,95 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		])
 		const result = await createWofResolver(backend).resolveTree(input)
 		expect(result.roots[0]?.children[0]?.metadata?.["ancestors"]).toBeUndefined()
+	})
+})
+
+describe("resolveTree — interpolation tier (#483)", () => {
+	// A fake interpolation lookup: hits "Main St" #42, with an exact-tier-style AddressPointLookup
+	// available for the fall-through test. Mirrors the FakeResolverBackend pattern (no SQLite).
+	const fakeInterp: InterpolationLookup = {
+		find: ({ street, number }) =>
+			street.toLowerCase().includes("main") && number === "42"
+				? {
+						lat: 44.1,
+						lon: -72.5,
+						interpolated: true,
+						method: "tiger_range",
+						parityMatched: true,
+						bracket: "both",
+						uncertaintyM: 35,
+						source: "tiger:edges",
+						release: "TIGER2023",
+					}
+				: null,
+	}
+	const addrTree = () =>
+		tree("42 Main St 05601", [
+			node("house_number", "42", 0, 2),
+			node("street", "Main St", 3, 10),
+			node("postcode", "05601", 11, 16),
+		])
+
+	test("stamps the interpolated point onto the street node on a hit", async () => {
+		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const result = await resolver.resolveTree(addrTree(), { interpolation: fakeInterp })
+		const street = result.roots.find((n) => n.tag === "street")
+		expect(street?.metadata).toMatchObject({
+			resolution_tier: "interpolated",
+			uncertainty_m: 35,
+			interpolation_method: "tiger_range",
+			parity_matched: true,
+			interpolation_bracket: "both",
+			interpolated_point: { lat: 44.1, lon: -72.5, source: "tiger:edges", release: "TIGER2023" },
+		})
+		// NEVER the exact key — an estimate must not masquerade as a situs point.
+		expect(street?.metadata?.["address_point"]).toBeUndefined()
+	})
+
+	test("byte-stable when the flag is absent", async () => {
+		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const withFlagOff = await resolver.resolveTree(addrTree())
+		const street = withFlagOff.roots.find((n) => n.tag === "street")
+		expect(street?.metadata?.["resolution_tier"]).toBeUndefined()
+		expect(street?.metadata?.["interpolated_point"]).toBeUndefined()
+	})
+
+	test("exact address-point tier wins — interpolation never overrides a situs point", async () => {
+		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const exact = {
+			find: () => ({ lat: 44.2, lon: -72.6, source: "overture:NAD", release: "2026-05-20.0" }),
+		}
+		const result = await resolver.resolveTree(addrTree(), { addressPoints: exact, interpolation: fakeInterp })
+		const street = result.roots.find((n) => n.tag === "street")
+		expect(street?.metadata?.["resolution_tier"]).toBe("address_point")
+		expect(street?.metadata?.["address_point"]).toMatchObject({ lat: 44.2, lon: -72.6 })
+		// the gate held: no interpolated estimate stamped
+		expect(street?.metadata?.["interpolated_point"]).toBeUndefined()
+	})
+
+	test("miss → no stamp, admin untouched", async () => {
+		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const missTree = tree("999 Main St 05601", [
+			node("house_number", "999", 0, 3),
+			node("street", "Main St", 4, 11),
+			node("postcode", "05601", 12, 17),
+		])
+		const result = await resolver.resolveTree(missTree, { interpolation: fakeInterp })
+		const street = result.roots.find((n) => n.tag === "street")
+		expect(street?.metadata?.["resolution_tier"]).toBeUndefined()
+	})
+
+	test("no house_number → tier never fires", async () => {
+		let called = false
+		const spy: InterpolationLookup = {
+			find: (q) => {
+				called = true
+				return fakeInterp.find(q)
+			},
+		}
+		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		const noHn = tree("Main St", [node("street", "Main St", 0, 7)])
+		await resolver.resolveTree(noHn, { interpolation: spy })
+		expect(called).toBe(false)
 	})
 })

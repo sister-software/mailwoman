@@ -11,6 +11,8 @@ export type {
 	AddressPointLookup,
 	Ancestor,
 	CoincidentLocality,
+	InterpolatedPointHit,
+	InterpolationLookup,
 	PlacetypeMap,
 	ResolveOpts,
 	ResolvedPlace,

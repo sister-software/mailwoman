@@ -35,6 +35,8 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import type { InterpolationLookup } from "@mailwoman/core/resolver"
+
 import { haversineKm } from "./geo.js"
 import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "./interpolation.js"
 import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.js"
@@ -62,7 +64,7 @@ interface NumberAnchor {
 	release: string
 }
 
-export class AddressPointInterpolator {
+export class AddressPointInterpolator implements InterpolationLookup {
 	readonly #db: DatabaseSync
 	readonly #ownsDb: boolean
 	readonly #fallback: StreetInterpolator | undefined

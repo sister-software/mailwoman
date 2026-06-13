@@ -17,6 +17,7 @@ import {
 	type AddressPointLookup,
 	type CoincidentLocality,
 	DEFAULT_PLACETYPE_MAP,
+	type InterpolationLookup,
 	type PlacetypeMap,
 	type ResolvedPlace,
 	type ResolveOpts,
@@ -126,6 +127,42 @@ function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup): vo
 	}
 }
 
+/**
+ * House-number interpolation tier (#483): the third rung, consulted ONLY when the exact address-point
+ * tier ({@link applyAddressPoint}) did NOT already stamp the street node (`resolution_tier ===
+ * "address_point"`). That gate IS the "after the exact-point fall-through" — an estimate never
+ * overwrites a real situs point. Postcode-scoped (no locality — the interpolators abstain statewide
+ * without a postcode). Stamps a DISTINCT metadata key (`interpolated_point`, never `address_point`).
+ * Additive only — admin resolution is untouched.
+ */
+function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup): void {
+	let street: AddressNode | undefined
+	let houseNumber: AddressNode | undefined
+	let postcode: string | undefined
+	const stack = [...roots]
+	while (stack.length > 0) {
+		const n = stack.pop()!
+		if (n.tag === "street" && !street) street = n
+		if (n.tag === "house_number" && !houseNumber) houseNumber = n
+		if (n.tag === "postcode" && !postcode && n.value.trim()) postcode = n.value.trim()
+		stack.push(...n.children)
+	}
+	if (!street || !houseNumber) return
+	// The fall-through gate: an exact situs point already won — never override it with an estimate.
+	if (street.metadata?.["resolution_tier"] === "address_point") return
+	const hit = lookup.find({ street: street.value, number: houseNumber.value, postcode })
+	if (!hit) return
+	street.metadata = {
+		...street.metadata,
+		interpolated_point: { lat: hit.lat, lon: hit.lon, source: hit.source, release: hit.release },
+		resolution_tier: "interpolated",
+		uncertainty_m: hit.uncertaintyM,
+		interpolation_method: hit.method,
+		...(hit.parityMatched !== undefined ? { parity_matched: hit.parityMatched } : {}),
+		...(hit.bracket !== undefined ? { interpolation_bracket: hit.bracket } : {}),
+	}
+}
+
 class WofResolver implements Resolver {
 	readonly #backend: ResolverBackend
 
@@ -175,6 +212,12 @@ class WofResolver implements Resolver {
 		// when opts.addressPoints is absent.
 		if (opts.addressPoints) {
 			applyAddressPoint(newRoots, opts.addressPoints)
+		}
+		// Interpolation tier (#483): strictly AFTER the exact-point block so an estimate can never
+		// override a real situs point (applyInterpolation also gates on resolution_tier). Opt-in;
+		// byte-stable when opts.interpolation is absent.
+		if (opts.interpolation) {
+			applyInterpolation(newRoots, opts.interpolation)
 		}
 		return { raw: tree.raw, roots: newRoots }
 	}
