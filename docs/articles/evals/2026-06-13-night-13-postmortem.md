@@ -65,6 +65,12 @@ The best recovery model is **v1.5.0 (87.4%)**: +32.9pp over v4.5.0 on the divers
 
 My recommendation: **option 2 short-term** (don't ship a below-gate model on a recovery that's still 8pp shy of target), unless the operator wants the +32.9pp in users' hands now and re-baselines the floor deliberately.
 
+### SHIPPED v4.6.0 (2026-06-13, operator-approved after the threshold research)
+
+The threshold research (`docs/articles/evals/2026-06-13-fr-house-number-threshold-research.md`, #564) shifted the call: the 91 floor was a canonical-order bar mis-applied to the hard slice, and 87.4% is at the reordered-case SOTA frontier (~90-91%, Li et al. NAACL 2019). The operator approved **option 1** — re-baseline + ship. Executed: gate floor 91→85 (STATED `$comment_change_3`), model card + release.config → 4.6.0, v1.5.0 PASSES 17/17 quality floors bridge-OFF. Shipped to all three stores at **v4.6.0 / v150** (npm md5 4674d348 verified, HF + demo defaultVersion v4.6.0, all postcode bins 200).
+
+**Ship hiccup (recorded):** the first publish dispatch mis-fired to `4.5.1` bundling the OLD v140 weights — local v4.6.0 commits were unpushed AND publish.yml defaults to `patch`. Non-breaking (same content consumers already had). Recovered: pushed the work to origin/main, re-dispatched `--field version=4.6.0`. The stray 4.5.1 is an orphan. Lesson in memory ([[feedback-publish-push-first-version-input]]) + the runbook.
+
 ## Bonus — Phase-3 de-risk (the strategically bigger finding)
 
 With the centerpiece resolved and no GPU to spend, the idle hours went to mapping the forward path (`2026-06-13-FORWARD-SCHEDULE.md`) — and the diagnostic turned up something more important than the FR result: **the Phase-3 coordinate-truth layer is already built and verified, not greenfield as the #488 epic's unchecked boxes imply.**
