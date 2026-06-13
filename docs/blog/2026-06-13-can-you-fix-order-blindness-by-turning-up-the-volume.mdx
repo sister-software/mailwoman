@@ -1,0 +1,95 @@
+---
+slug: can-you-fix-order-blindness-by-turning-up-the-volume
+title: "Can you fix order-blindness by turning up the volume?"
+authors: [teffen]
+tags: [neural, parsing, training, evaluation]
+date: 2026-06-13
+draft: true
+---
+
+Two days ago we retired a piece of decode-time machinery we'd been quietly leaning on,
+and it exposed something the crutch had been hiding: our parser can't read a French
+address backwards. Last night we tried to teach it to. We got most of the way, hit a
+wall at 87%, and did the obvious thing and turned the training signal up, fully expecting
+the last few points to fall out. They didn't. The model got _worse_, and the way it got
+worse is the whole story. The questions on the table: can a pile of reordered examples
+teach a model where a house number lives? When that pile gets you 80% of the way, can you
+just add more? And what does the failure tell you about the thing you were actually
+training?
+
+{/* truncate */}
+
+## The crutch and what it was hiding
+
+A French address can lead with its postcode: `47110 Sainte-Livrade-sur-Lot, 69 Allée du
+Bugatel`. The house number, `69`, sits in the back half. Our model learned house numbers
+from data that almost always puts them out front — so when the number moves, the model
+reaches for the first number-shaped thing it sees and labels `47110`, the postcode, as
+the house number. It reads by position, not by meaning.
+
+For a while we never noticed, because a decode-time span bridge was papering over the
+worst of it. When we shipped the char-offset corpus and retired that bridge, which had
+become a confirmed no-op everywhere else, French house numbers were the one tag that
+fell out the bottom: 97.7 down to 89.6. The crutch came off and the limp showed. That's
+the regression we set out to fix.
+
+## Eighty-seven percent and a wall
+
+The fix looked obvious. German addresses have the same any-order problem, and we'd
+already beaten it with a synthetic shard that teaches both word orders. So we built the
+French version: real street and city data, half the rows flipped into the postcode-first
+shapes the model keeps tripping on, every house number labeled correctly wherever it
+landed. Then we retrained and re-measured against a French eval we'd just widened from
+one town to fifty-six.
+
+It worked, mostly. On that harder eval the shipped model scores 54.5%. It's blind to
+every reordered row. The retrain came back at **87.4%**. A thirty-two point swing from a
+single shard is the kind of number that makes you want to ship before coffee.
+
+Except the bar was 91, and 87.4 is not 91. Every miss was the same shape, too: `47110
+Sainte-Livrade-sur-Lot, 69 …` with `47110` labeled as the house number. The model had
+learned the back-half number existed. It just hadn't learned to stop grabbing the
+postcode out front. The signal was there and slightly too quiet.
+
+## So we turned it up
+
+If a shard at weight 3 gets you to 87, a shard at weight 6 gets you the rest of the way.
+That was the bet, and it's the same weight the German shard runs at, so we had
+precedent. We doubled it and retrained.
+
+It came back at **84.7%**. Lower. And when we dumped the misses, the model wasn't just
+making the old mistake more often. It had invented a new one. On `47110
+Sainte-Livrade-sur-Lot, 69 Allée du Bugatel`, instead of grabbing the whole postcode, it
+now sliced `47110` into a house number `4` and a postcode `7110`. Sometimes it glued the
+postcode and the real house number into a single number, `47110 85`. We'd made the model
+so hungry for a leading house number that it started carving one out of the postcode
+itself. The postcode tag, which had been rock-solid, slipped too.
+
+Here's why the German precedent lied to us. A German house number is always _last_ —
+there's one position to find, and more practice sharpens the aim. A postcode-first French
+address puts a five-digit number and a one-to-four-digit number in the same neighborhood,
+and the only thing telling them apart is which is which. Turning up the volume on "look
+for a number up front" doesn't resolve that ambiguity. It amplifies it, right up until
+the model is willing to cut a postcode in half to satisfy the craving.
+
+## What the wall is made of
+
+Two days ago we wrote that you can't fix a representation gap with more data. Last night's
+lesson is its cousin: you can't fix a data-realism gap by turning up the weight. The
+synthetic shard taught the model a caricature of reordered French: useful enough for a
+thirty-two point jump, too coarse to close the last stretch, and actively harmful past a
+point, because more exposure just deepened the caricature. The plateau isn't a quantity
+problem we can outspend. The model needs reordered examples that look like the real thing,
+or a signal that protects the postcode from being raided, and neither of those is a
+bigger number in a config file.
+
+So we held. The 87% model is a real, honest gain over what's live, and we'll likely put
+it in front of people once we decide how to price a number that beats the old one but
+misses its own bar. The recovery itself waits for the right lever, which we now know is
+not this one. Two training runs and about ten dollars of GPU bought us a clean _no_ —
+weight is the wrong knob, and we have the fragmented postcodes to prove it.
+
+That's the unglamorous half of training a model in the open: half the runs exist to tell
+you which door is locked. Next time the eval plateaus and your hand drifts toward the
+weight, remember the parser that ate a postcode trying to please you. Go find the door
+that opens.
