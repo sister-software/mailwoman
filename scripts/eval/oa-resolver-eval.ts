@@ -576,6 +576,10 @@ async function main(): Promise<void> {
 	let addressPointHits = 0
 	const neuralInterpAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
 	let interpHits = 0
+	const diagInterp = process.env.MAILWOMAN_DIAG_INTERP === "1"
+	let interpPrecond = 0 // rows that parsed street+house_number+postcode (interp's precondition)
+	let interpFullParseMiss = 0 // precond met + exact missed + interp null = genuine find() miss
+	const diagMisses: string[] = []
 	const record = (
 		who: "neural" | "v0",
 		row: OaRow,
@@ -660,6 +664,30 @@ async function main(): Promise<void> {
 			if (!neuralInterpAgg.byState.has(st)) neuralInterpAgg.byState.set(st, newAgg())
 			bump(neuralInterpAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, ipErr)
 			bump(neuralInterpAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, ipErr)
+
+			// --- coverage diagnostic (MAILWOMAN_DIAG_INTERP=1): split the miss cause. ---
+			// The interp tier only runs in resolveTree when the exact tier did NOT stamp. So:
+			//   precond met (street+house_number+postcode parsed) + exact miss + interp null
+			//   ⟹ a genuine StreetInterpolator.find() miss (shard/normalization gap, NOT parse, NOT gate).
+			if (diagInterp && nDecorated) {
+				let s: string | undefined
+				let hn: string | undefined
+				let pc: string | undefined
+				const stk = [...nDecorated.roots]
+				while (stk.length > 0) {
+					const n = stk.pop()!
+					if (n.tag === "street" && !s && n.value.trim()) s = n.value.trim()
+					if (n.tag === "house_number" && !hn && n.value.trim()) hn = n.value.trim()
+					if (n.tag === "postcode" && !pc && n.value.trim()) pc = n.value.trim()
+					stk.push(...n.children)
+				}
+				const precond = !!(s && hn && pc)
+				if (precond) interpPrecond++
+				if (precond && !exact && !interp) {
+					interpFullParseMiss++
+					if (diagMisses.length < 25) diagMisses.push(`${hn} | ${s} | ${pc}  ←  ${row.input}`)
+				}
+			}
 		}
 
 		// neural + postcode-anchor: same admin flags, coordinate from the anchor centroid when it has one.
@@ -746,6 +774,25 @@ async function main(): Promise<void> {
 		lines.push(
 			`interpolation hit rate (interp coord, no exact point): ${interpHits}/${neuralInterpAgg.overall.n} (${((100 * interpHits) / Math.max(1, neuralInterpAgg.overall.n)).toFixed(1)}%)`
 		)
+		if (diagInterp) {
+			const N = neuralInterpAgg.overall.n
+			lines.push("")
+			lines.push(`### interp coverage diagnostic`)
+			lines.push(
+				`- parsed street+house_number+postcode (precondition): ${interpPrecond}/${N} (${((100 * interpPrecond) / Math.max(1, N)).toFixed(1)}%)`
+			)
+			lines.push(
+				`- precondition met + exact missed + interp MISS (genuine find() miss = shard/normalization gap): ${interpFullParseMiss}`
+			)
+			lines.push(
+				`- interp HITS: ${interpHits} → of full-parse non-exact rows, hit rate ${((100 * interpHits) / Math.max(1, interpFullParseMiss + interpHits)).toFixed(1)}%`
+			)
+			if (diagMisses.length > 0) {
+				lines.push("")
+				lines.push("sample full-parse interp misses (house_number | street | postcode ← input):")
+				for (const m of diagMisses) lines.push(`  - ${m}`)
+			}
+		}
 	}
 	lines.push("")
 	lines.push(`## Neural per-state (locality-match)`)

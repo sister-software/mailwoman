@@ -98,6 +98,28 @@ function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
 	return undefined
 }
 
+/** Street-name component tags that, with the street node itself, reconstruct the full street string. */
+const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
+
+/**
+ * Reassemble the full street string from the street node's subtree (#483 coverage fix). The parser
+ * nests the directional/suffix as `street_prefix`/`street_suffix` CHILDREN of `street` (containment.ts),
+ * so `street.value` alone is the bare base name ("Sheldon" for "East Sheldon Rd") — which misses the
+ * coordinate shards keyed on the FULL normalized name. Collect street + its prefix/particle/suffix
+ * descendants (NOT house_number/unit, which also nest under street), order by span offset, and join.
+ */
+function assembleStreetValue(streetNode: AddressNode): string {
+	const parts: AddressNode[] = []
+	const stack = [streetNode]
+	while (stack.length > 0) {
+		const n = stack.pop()!
+		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) parts.push(n)
+		stack.push(...n.children)
+	}
+	parts.sort((a, b) => a.start - b.start)
+	return parts.map((n) => n.value.trim()).join(" ")
+}
+
 /**
  * Address-point tier (#476): find `street` + `house_number` in the tree (first occurrence,
  * depth-first), scope by the tree's postcode/locality values, and on an exact hit stamp the point
@@ -118,7 +140,7 @@ function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup): vo
 		stack.push(...n.children)
 	}
 	if (!street || !houseNumber) return
-	const hit = lookup.find({ street: street.value, number: houseNumber.value, postcode, locality })
+	const hit = lookup.find({ street: assembleStreetValue(street), number: houseNumber.value, postcode, locality })
 	if (!hit) return
 	street.metadata = {
 		...street.metadata,
@@ -150,7 +172,7 @@ function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup): 
 	if (!street || !houseNumber) return
 	// The fall-through gate: an exact situs point already won — never override it with an estimate.
 	if (street.metadata?.["resolution_tier"] === "address_point") return
-	const hit = lookup.find({ street: street.value, number: houseNumber.value, postcode })
+	const hit = lookup.find({ street: assembleStreetValue(street), number: houseNumber.value, postcode })
 	if (!hit) return
 	street.metadata = {
 		...street.metadata,

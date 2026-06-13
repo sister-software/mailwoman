@@ -784,6 +784,29 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		expect(street?.metadata?.["resolution_tier"]).toBeUndefined()
 	})
 
+	test("reassembles the full street (prefix+name+suffix) for the lookup query (#483 coverage fix)", async () => {
+		let queried: string | undefined
+		const recorder: InterpolationLookup = {
+			find: ({ street }) => {
+				queried = street
+				return null
+			},
+		}
+		// "344 East Sheldon Rd": parser nests street_prefix/street_suffix UNDER street; street.value is
+		// the bare base name. The query must be the FULL reassembled street, ordered by offset.
+		const nested = tree("344 East Sheldon Rd 05450", [
+			node("street", "Sheldon", 8, 15, [
+				node("house_number", "344", 0, 3),
+				node("street_prefix", "East", 4, 8),
+				node("street_suffix", "Rd", 16, 18),
+				node("postcode", "05450", 19, 24),
+			]),
+		])
+		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		await resolver.resolveTree(nested, { interpolation: recorder })
+		expect(queried).toBe("East Sheldon Rd")
+	})
+
 	test("no house_number → tier never fires", async () => {
 		let called = false
 		const spy: InterpolationLookup = {
