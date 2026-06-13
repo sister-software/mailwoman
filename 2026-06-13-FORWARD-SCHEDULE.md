@@ -32,12 +32,15 @@ Grabbing the #488 rule (topmost unchecked, unblocked), with what the supplementa
    NOT greenfield — it's two PRs deep (#533 first slice, #542 Method-2 address-point interpolation).
    The engine is built + committed + green (21/21 tests): `StreetInterpolator` (TIGER range) +
    `AddressPointInterpolator` (bracket between real points) + shared normalizer + builder + design doc
-   (`docs/articles/plan/2026-06-11-interpolation-design.md`)._ Status: **Cook County (IL) PASSES the
-   gate; VT improved-but-still-MISSES** the p50≤50m / p90≤150m bar. The open work is therefore an
-   _investigation_ (why does VT miss — TIGER data quality? sparse-segment handling?) plus the
-   `resolution_tier: "interpolated"` core-tier wiring — **judgment-heavy, not a clean slice.** Defer to
-   an operator-steered session, not an autonomous 4am pickup. (My earlier "recommended next centerpiece"
-   call was made before I'd read the merged history — corrected here.)
+   (`docs/articles/plan/2026-06-11-interpolation-design.md`)._ Status — **RE-MEASURED this shift
+   (diagnostic, no code change; #483 comment): the VT gate already PASSES in the production
+   `--mode ladder` cascade** (Method 2 address-point bracketing → TIGER fallback), all bands, seeds
+   42+7, ≤100m band p90 114–118m vs the 150m bar, coverage 97.7%. The "VT still-MISSES" note was
+   **`--mode tiger`-only** (StreetInterpolator alone: ≤100m p90 182m, tail driven by opposite-side
+   fallback). So the gate is **met**, matching Cook. **The only remaining #483 work is the mechanical
+   `resolution_tier: "interpolated"` core-tier wiring** — no investigation needed. (Both my earlier
+   calls — "recommended greenfield centerpiece" then "judgment-heavy gate investigation" — were wrong;
+   the gate passes, the wiring is mechanical. This is the cleanest real-geocoder forward slice.)
 2. **#484 — reverse geocoding (PIP over wof-polygons).** _CORRECTION (verified mid-shift): also
    already built — `reverse.ts` + `reverse.test.ts` (9 pass / 4 skipped, the skips need the real
    polygon DB). "Assembly over existing machinery": bbox R\*Tree → PIP confirm → approximate descent →
@@ -48,9 +51,9 @@ Grabbing the #488 rule (topmost unchecked, unblocked), with what the supplementa
 > shipped them. The recurring note in BOTH headers: _"core tier wiring (`resolution_tier`) is a noted
 > follow-up."_ So the real remaining Phase-3 work is NOT greenfield building — it's (a) **wiring the
 > standalone engines into the resolver's tier cascade** (fall-through order, conditions, surfacing the
-> tier), and (b) **passing the empirical gates** (#483: Cook passes, VT misses p50≤50m/p90≤150m). Both
-> are integration + investigation, **operator-steered**, not clean autonomous 4am slices. The honest
-> next centerpiece is "wire + gate the built interpolation/reverse tiers," and it wants daylight.
+> tier). The gate worry was overstated: **#483's VT gate PASSES in the production ladder mode** (re-measured
+> this shift) — so the remaining work is overwhelmingly the mechanical wiring, not investigation. The honest
+> next centerpiece is "wire the built interpolation/reverse tiers into the cascade," and it's a clean slice.
 
 3. **The arena-gate infra fix** (found + fixed THIS shift — see "Gate integrity" below): a
    pre-registered floor (`arena.perturb` 71.0) was un-evaluable on every v0.5.0 gate run because the
