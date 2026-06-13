@@ -50,6 +50,10 @@ const { values: args } = parseArgs({
 		// allow-list (case-insensitive). Default absent = keep everything (current behaviour,
 		// byte-stable). Typical use: --license-filter NAD to retain only US-public-domain rows.
 		"license-filter": { type: "string" },
+		// DuckDB worker-thread cap for the parquet scan. Default (unset) = DuckDB's default (all
+		// cores). The national driver passes a low value so N concurrent state builds don't each
+		// grab every core (N × threads ≈ core count).
+		threads: { type: "string" },
 	},
 })
 if (!args.state) {
@@ -80,6 +84,10 @@ rmSync(OUT, { force: true }) // idempotent rebuild — never append across relea
 
 const instance = await DuckDBInstance.create()
 const duck = await instance.connect()
+// Optional thread cap (national driver sets this so concurrent state builds don't oversubscribe cores).
+if (args.threads && /^\d+$/.test(args.threads)) {
+	await duck.run(`SET threads TO ${args.threads}`)
+}
 // Optional county scope: PIP against the TIGER COUNTY polygon (GEOID = state+county FIPS).
 // DuckDB hoists the scalar subquery to a constant, so the per-row cost is the containment test.
 let countyFilter = ""

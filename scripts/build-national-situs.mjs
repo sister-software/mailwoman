@@ -4,34 +4,41 @@
  * @author Teffen Ellis, et al.
  *
  *   National ADDRESS-POINT (situs) shard build driver. The situs counterpart to
- *   `build-national-interpolation.mjs` — but simpler: there are no downloads. Every US address point
- *   already lives in one pinned Overture parquet
- *   (`/mnt/playpen/mailwoman-data/overture/<release>/addresses-us.parquet`), so this just drives the
- *   per-state `build-address-point-shard.ts` across every state that has coverage, sequentially (one
- *   DuckDB parquet reader + one SQLite writer at a time — parallelism would thrash the 6.5GB parquet
- *   and the disk for no wall-clock win; the bottleneck is the per-row SQLite insert, not CPU).
+ *   `build-national-interpolation.mjs` — but downloadless: every US address point already lives in
+ *   one pinned Overture parquet, so this drives the per-state `build-address-point-shard.ts` across
+ *   every covered state.
  *
- *   LICENSING (measured 2026-06-14, see docs/articles/evals/2026-06-14-reconcile-retirement.md's
- *   sibling note + the campaign doc): US Overture addresses are NAD (68%, US public domain) +
+ *   PARALLELISM: states build concurrently via spliterator's `asyncParallelIterator` (the house
+ *   bounded-concurrency primitive — same one `build-unified-wof.ts` uses to fan out file reads behind
+ *   a single writer). Each state is an isolated child process (its own DuckDB + SQLite heap), so N
+ *   states run at once with no shared-memory risk. To avoid oversubscribing cores, each child's DuckDB
+ *   scan is capped at `--threads` (default: cores / concurrency), so concurrency × threads ≈ cores.
+ *   The per-state steady-state bottleneck is the single-threaded SQLite insert loop, not the scan, so
+ *   N concurrent inserts is the real win. Sequentialising is still available via `--concurrency 1`.
+ *
+ *   LICENSING (measured 2026-06-14): US Overture addresses are NAD (68%, US public domain) +
  *   OpenAddresses (32%, government open data) with ZERO OpenStreetMap/ODbL rows. So the default is NO
- *   license filter — applying `--license-filter NAD` would drop 39.4M OpenAddresses points (a third of
- *   coverage, the dense urban counties) for no licensing benefit. The only obligation is ATTRIBUTION:
- *   the per-row `overture:<dataset>` provenance the builder stamps is summarized into
- *   `<out-dir>/ATTRIBUTION.json` here. Pass `--license-filter <datasets>` only to build a
- *   deliberately-narrowed shard.
+ *   license filter — `--license-filter NAD` would drop a third of coverage for no benefit. The only
+ *   obligation is ATTRIBUTION: the per-row `overture:<dataset>` provenance is summarized into
+ *   `<out-dir>/ATTRIBUTION.json`. Pass `--license-filter <datasets>` to build a narrowed shard.
  *
- *   Idempotency: a state whose output DB already exists is skipped unless `--force`.
- *   Population/coverage-ranked order (largest first) so killing early still yields the most points.
+ *   IDEMPOTENCY: a state is skipped only if its shard is COMPLETE — non-empty `address_point` table
+ *   AND the `idx_ap_streetkey` index present. A half-built shard (data inserted, indexing/VACUUM not
+ *   reached — e.g. a killed run) is detected as incomplete and rebuilt. `--force` rebuilds regardless.
  *
  *   Usage:
  *     node scripts/build-national-situs.mjs [--out-dir <path>] [--release <tag>]
- *       [--states CA,FL,...] [--license-filter NAD] [--force]
+ *       [--states CA,FL,...] [--concurrency 4] [--threads N] [--license-filter NAD] [--force]
  */
 
 import { existsSync, mkdirSync, writeFileSync } from "node:fs"
+import { spawn } from "node:child_process"
+import { DatabaseSync } from "node:sqlite"
+import * as os from "node:os"
 import * as path from "node:path"
-import { spawnSync } from "node:child_process"
 import { parseArgs } from "node:util"
+
+import { asyncParallelIterator } from "spliterator"
 
 const { values: args } = parseArgs({
 	options: {
@@ -39,6 +46,8 @@ const { values: args } = parseArgs({
 		release: { type: "string", default: "2026-05-20.0" },
 		states: { type: "string" },
 		"license-filter": { type: "string" },
+		concurrency: { type: "string", default: "4" },
+		threads: { type: "string" },
 		force: { type: "boolean", default: false },
 	},
 })
@@ -57,43 +66,75 @@ const states = (args.states ? args.states.split(",").map((s) => s.trim().toUpper
 const outDir = args["out-dir"]
 mkdirSync(outDir, { recursive: true })
 
+const concurrency = Math.max(1, parseInt(args.concurrency, 10) || 4)
+const cores = os.availableParallelism?.() ?? os.cpus().length
+const threads = Math.max(1, parseInt(args.threads ?? "", 10) || Math.floor(cores / concurrency))
 const builder = path.resolve(import.meta.dirname, "build-address-point-shard.ts")
+
+console.log(`national situs build — ${states.length} states, concurrency=${concurrency}, ${threads} DuckDB threads/state (of ${cores} cores)`)
+
+// A shard is COMPLETE iff its address_point table has rows AND the streetkey index exists — the index
+// is the last build step, so its presence means insert + index + VACUUM all finished.
+function isComplete(dbPath) {
+	if (!existsSync(dbPath)) return false
+	try {
+		const db = new DatabaseSync(dbPath, { readOnly: true })
+		const n = db.prepare("SELECT count(*) AS n FROM address_point").get().n
+		const idx = db.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type='index' AND name='idx_ap_streetkey'").get().n
+		db.close()
+		return n > 0 && idx > 0
+	} catch {
+		return false
+	}
+}
+
+function buildOneState(state) {
+	const dbPath = path.join(outDir, `address-points-us-${state.toLowerCase()}.db`)
+	if (!args.force && isComplete(dbPath)) return Promise.resolve({ state, skipped: true })
+	return new Promise((resolve) => {
+		const argv = [
+			"--experimental-strip-types", builder,
+			"--state", state, "--release", args.release, "--out", dbPath, "--threads", String(threads),
+		]
+		if (args["license-filter"]) argv.push("--license-filter", args["license-filter"])
+		const t = Date.now()
+		const child = spawn("node", argv)
+		let out = "", err = ""
+		child.stdout.on("data", (d) => (out += d))
+		child.stderr.on("data", (d) => (err += d))
+		child.on("close", (code) => resolve({ state, code, seconds: Number(((Date.now() - t) / 1000).toFixed(1)), out, err }))
+	})
+}
+
 const t0 = Date.now()
 const manifest = { release: args.release, builtAt: null, licenseFilter: args["license-filter"] ?? null, states: {}, datasetTotals: {} }
 let built = 0, skipped = 0, failed = 0, totalRows = 0
 
-for (const state of states) {
-	const dbPath = path.join(outDir, `address-points-us-${state.toLowerCase()}.db`)
-	if (existsSync(dbPath) && !args.force) {
-		console.log(`[skip] ${state} — ${path.basename(dbPath)} exists (use --force to rebuild)`)
+// asyncParallelIterator yields results AS THEY COMPLETE (out of order), capped at `concurrency` in
+// flight. Each result carries its own state, so out-of-order is fine for the state-keyed manifest.
+for await (const r of asyncParallelIterator(states, concurrency, buildOneState)) {
+	if (r.skipped) {
+		console.log(`[skip] ${r.state} — complete (use --force to rebuild)`)
 		skipped++
 		continue
 	}
-	const argv = ["--experimental-strip-types", builder, "--state", state, "--release", args.release, "--out", dbPath]
-	if (args["license-filter"]) argv.push("--license-filter", args["license-filter"])
-	const tState = Date.now()
-	const res = spawnSync("node", argv, { encoding: "utf8" })
-	const secs = ((Date.now() - tState) / 1000).toFixed(1)
-	if (res.status !== 0) {
-		console.error(`[FAIL] ${state} (${secs}s)\n${res.stderr?.slice(-600) ?? ""}`)
-		manifest.states[state] = { ok: false }
+	if (r.code !== 0) {
+		console.error(`[FAIL] ${r.state} (${r.seconds}s)\n${(r.err || "").slice(-600)}`)
+		manifest.states[r.state] = { ok: false }
 		failed++
 		continue
 	}
-	// Parse the builder's stdout: "<n> points → ..." and the per-dataset provenance lines.
-	const out = res.stdout
-	const pts = Number(out.match(/^(\d+) points →/m)?.[1] ?? 0)
+	const pts = Number(r.out.match(/^(\d+) points →/m)?.[1] ?? 0)
 	const datasets = {}
-	for (const m of out.matchAll(/^ {2}overture:(\S+)\s+([\d,]+) rows$/gm)) {
+	for (const m of r.out.matchAll(/^ {2}overture:(\S+)\s+([\d,]+) rows$/gm)) {
 		const ds = m[1], n = Number(m[2].replace(/,/g, ""))
 		datasets[ds] = n
 		manifest.datasetTotals[ds] = (manifest.datasetTotals[ds] ?? 0) + n
 	}
-	manifest.states[state] = { ok: true, points: pts, seconds: Number(secs), datasets }
+	manifest.states[r.state] = { ok: true, points: pts, seconds: r.seconds, datasets }
 	totalRows += pts
 	built++
-	console.log(`[ok]   ${state} — ${pts.toLocaleString()} points (${secs}s) → ${path.basename(dbPath)}`)
-	// Persist the manifest after every state so a kill leaves a usable partial.
+	console.log(`[ok]   ${r.state} — ${pts.toLocaleString()} points (${r.seconds}s)`)
 	manifest.builtAt = new Date(t0).toISOString().slice(0, 10)
 	writeFileSync(path.join(outDir, "ATTRIBUTION.json"), JSON.stringify(manifest, null, 2))
 }
