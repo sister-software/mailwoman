@@ -118,7 +118,14 @@ describe("normalizeNzDeliveryService", () => {
 	})
 
 	it("round-trips: every normalized form still matches", () => {
-		for (const raw of ["PO Box 24999", "Private Bag", "CMB B99", "Counter Delivery", "Poste Restante", "Private Box 102"]) {
+		for (const raw of [
+			"PO Box 24999",
+			"Private Bag",
+			"CMB B99",
+			"Counter Delivery",
+			"Poste Restante",
+			"Private Box 102",
+		]) {
 			expect(isNzDeliveryService(normalizeNzDeliveryService(raw)), `round-trip for "${raw}"`).toBe(true)
 		}
 	})

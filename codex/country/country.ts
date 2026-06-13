@@ -94,8 +94,10 @@ export function isCountryToken(token: unknown): boolean {
 	return typeof token === "string" && COUNTRY_LOOKUP.has(token.trim().toLowerCase())
 }
 
-/** The preferred render forms for an alpha-2 (canonical first), for synth shards. Empty if none
-curated. */
+/**
+ * The preferred render forms for an alpha-2 (canonical first), for synth shards. Empty if none
+ * curated.
+ */
 export function countrySurfaceForms(iso2: string): readonly string[] {
 	return (COUNTRY_SURFACE_FORMS as Record<string, readonly string[]>)[iso2.toUpperCase()] ?? []
 }

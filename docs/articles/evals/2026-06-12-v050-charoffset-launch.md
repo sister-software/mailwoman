@@ -113,16 +113,16 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
 
 ## Numbers
 
-| | |
-|---|---|
-| Shift focus | complete corpus + launch first char-offset training |
-| Overlay shards re-emitted | 7 (~485k train rows) |
-| Corpus | 689 shards, 676.6M train / 1.89M val / 1.89M test |
-| Models trained | 1 (v1.4.0-charoffset, completed 40k steps) |
-| A100 spend before launch | 0 (held on the volume issue) |
-| Training rate | warmed to ~5 steps/s (num_workers:0 loader); ~3.5h total |
-| Gate verdict | FAIL (1 floor: fr.house_number 89.6/91 — but −8.1pp vs v4.4.0 actual 97.7). bridge-retirement PASS (po_box 90 bridge-off, intrinsic > v4.4.0 bridged 89.1) |
-| Bridge | confirmed no-op (bridge-on == bridge-off on every tag) → retire |
-| Infra incidents | 1 (Modal volume CLI-write blindness, both directions; rerouted via R2) |
-| NaN incidents | 0 |
-| PRs / issues | PR #559 · issue #560 |
+|                           |                                                                                                                                                            |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shift focus               | complete corpus + launch first char-offset training                                                                                                        |
+| Overlay shards re-emitted | 7 (~485k train rows)                                                                                                                                       |
+| Corpus                    | 689 shards, 676.6M train / 1.89M val / 1.89M test                                                                                                          |
+| Models trained            | 1 (v1.4.0-charoffset, completed 40k steps)                                                                                                                 |
+| A100 spend before launch  | 0 (held on the volume issue)                                                                                                                               |
+| Training rate             | warmed to ~5 steps/s (num_workers:0 loader); ~3.5h total                                                                                                   |
+| Gate verdict              | FAIL (1 floor: fr.house_number 89.6/91 — but −8.1pp vs v4.4.0 actual 97.7). bridge-retirement PASS (po_box 90 bridge-off, intrinsic > v4.4.0 bridged 89.1) |
+| Bridge                    | confirmed no-op (bridge-on == bridge-off on every tag) → retire                                                                                            |
+| Infra incidents           | 1 (Modal volume CLI-write blindness, both directions; rerouted via R2)                                                                                     |
+| NaN incidents             | 0                                                                                                                                                          |
+| PRs / issues              | PR #559 · issue #560                                                                                                                                       |

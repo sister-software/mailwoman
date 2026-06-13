@@ -31,11 +31,11 @@ leaders — `P.O. Box`, `C.P.`, `B.P.` — failed at **98%**, and every single f
 truncation at the first period. The model would emit `p` and stop.
 
 Here's the part that made us sit up. We dumped the raw per-piece labels for
-`P.O. BOX 3274`, and the model had labeled _every piece correctly_: `P` as po_box at
+`P.O. BOX 3274`, and the model had labeled _every piece correctly_: `P` as po*box at
 0.93 confidence, `O` as po_box at 0.94, `BOX 3274` as po_box at 0.96. The knowledge was
 all there, loud and unambiguous. The span just shattered at the periods, because our
 corpus format — which tokenizes on whitespace and drops standalone punctuation — has no
-way to put a label _on a dot_. No training row in 670 million could ever have taught the
+way to put a label \_on a dot*. No training row in 670 million could ever have taught the
 span to stay whole, and ten times more training data had moved the score by exactly 2.9
 points. You can't fix a representation gap with repetition.
 

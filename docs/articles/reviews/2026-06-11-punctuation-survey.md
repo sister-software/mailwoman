@@ -198,9 +198,9 @@ analyzer concern, applied **symmetrically at index and query time**. Read from t
 - filter `preserving_word_delimiter` (`word_delimiter` with `preserve_original: true`):
   hyphenated compounds are indexed **both split and fused** — the Elasticsearch-native version
   of Pelias's dual-path token graph.
-- char_filter `remove_ws_hnr_suffix` (`(\d+)\s(?=\p{L}\b)` → `$1`): glues "12 a" into "12a" on
+- char*filter `remove_ws_hnr_suffix` (`(\d+)\s(?=\p{L}\b)` → `$1`): glues "12 a" into "12a" on
   the house-number field — punctuation/spacing variants of house numbers solved by
-  _canonicalizing toward the fused form_ at index time.
+  \_canonicalizing toward the fused form* at index time.
 
 (Current master has been restructured around OpenSearch and the settings live elsewhere; the
 mechanisms above are from the 0.3.x tree that PR #311 landed in — inferred to carry forward,

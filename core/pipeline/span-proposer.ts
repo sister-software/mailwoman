@@ -38,8 +38,10 @@
 export type ProposedSpanKind =
 	/** A balanced `()`/`[]` group whose content reads as an aside about the address. */
 	| "ANNOTATION_SPAN"
-	/** A balanced quote group — the content is likely a NAME (venue/unit); typing is the classifier's
-job. */
+	/**
+	 * A balanced quote group — the content is likely a NAME (venue/unit); typing is the classifier's
+	 * job.
+	 */
 	| "QUOTED_SPAN"
 	/** Delivery-service designator + identifier ("PO Box 19", "GPO Box 2890", "Private Bag 7"). */
 	| "PO_BOX_PHRASE"
@@ -66,8 +68,10 @@ export interface ProposedSpan {
 	 * readings of `2/14` carry the same group). Absent for single-reading proposals.
 	 */
 	alternativeGroup?: number
-	/** Provenance: which cue family + rule emitted this ("paired:()", "designator:unit",
-"slash:au-split"). */
+	/**
+	 * Provenance: which cue family + rule emitted this ("paired:()", "designator:unit",
+	 * "slash:au-split").
+	 */
 	source: string
 }
 
@@ -77,8 +81,10 @@ export interface ProposedSpan {
  * (the default) limits the proposer to the paired-delimiter cue family.
  */
 export interface SpanProposerLexicon {
-	/** Codex system codes the lexicon was built from ("us", "au", "nz", …) — drives M3 locale
-conditioning. */
+	/**
+	 * Codex system codes the lexicon was built from ("us", "au", "nz", …) — drives M3 locale
+	 * conditioning.
+	 */
 	systems: ReadonlySet<string>
 	/** Leading secondary-unit designator tokens (USPS Pub-28 C2 variants: "apt", "ste", "unit", …). */
 	unitDesignators: ReadonlySet<string>

@@ -2,6 +2,7 @@
 description: Run the release pre-flight checklist — workspace sync, weights, gate, changelog
 argument-hint: "[version]"
 ---
+
 Run the Mailwoman release pre-flight for ${1:-the pending version}. Use the checklist below.
 
 ## 1. Dependency closure audit

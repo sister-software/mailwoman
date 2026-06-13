@@ -139,8 +139,10 @@ export interface NeuralAddressClassifierConfig {
 	spanProposer?: SpanProposerConfig | false
 }
 
-/** Config for the Stage 2.7 span-proposer integration (see
-`NeuralAddressClassifierConfig.spanProposer`). */
+/**
+ * Config for the Stage 2.7 span-proposer integration (see
+ * `NeuralAddressClassifierConfig.spanProposer`).
+ */
 export interface SpanProposerConfig extends SpanProposalPriorOpts {
 	/** Codex-backed designator vocabulary (`buildCodexSpanLexicon`). */
 	lexicon: SpanProposerLexicon

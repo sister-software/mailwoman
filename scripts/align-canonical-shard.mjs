@@ -3,8 +3,8 @@
  * Re-emit a CANONICAL jsonl ({raw, components, country, source, ...}) as a LABELED jsonl in the
  * CURRENT align format, by running every row through `alignRow` (corpus/src/align.ts).
  *
- * Why this exists
- * ---------------
+ * ## Why this exists
+ *
  * Most synthetic shards are GENERATED on demand by a `build-*-shard.mjs` (parametrized by --count),
  * so re-emitting them in a new label format is just a re-run. A few shards are FIXED corpora with a
  * hand/DeepSeek-authored canonical source that is never regenerated — notably `deepseek-kryptonite`
@@ -14,21 +14,21 @@
  * When the corpus label format changes (the v0.5.0 char-offset triple, #519), those fixed shards
  * must be RE-ALIGNED, not regenerated — feed the canonical source back through the same `alignRow`
  * the from-source build uses, so the spans land in the new format with zero drift. That is exactly
- * what this does: canonical jsonl in → labeled jsonl out, one `alignRow` per row, quarantine on miss.
+ * what this does: canonical jsonl in → labeled jsonl out, one `alignRow` per row, quarantine on
+ * miss.
  *
- * It is the uniform, tsx-free counterpart to corpus/scripts/build-kryptonite-shard.ts (which couples
- * to a base manifest and writes parquet directly). Output goes to jsonl so it joins the SAME
- * jsonl-to-parquet.py path every other overlay shard uses.
+ * It is the uniform, tsx-free counterpart to corpus/scripts/build-kryptonite-shard.ts (which
+ * couples to a base manifest and writes parquet directly). Output goes to jsonl so it joins the
+ * SAME jsonl-to-parquet.py path every other overlay shard uses.
  *
- * Usage:
- *   node scripts/align-canonical-shard.mjs \
- *     --input  /path/canonical-kryptonite.jsonl \
- *     --output /tmp/kryptonite-labeled.jsonl \
- *     --corpus-version 0.5.0
+ * Usage: node scripts/align-canonical-shard.mjs\
+ * --input /path/canonical-kryptonite.jsonl\
+ * --output /tmp/kryptonite-labeled.jsonl\
+ * --corpus-version 0.5.0
  */
+import { alignRow } from "@mailwoman/corpus"
 import { createReadStream, createWriteStream } from "node:fs"
 import { createInterface } from "node:readline"
-import { alignRow } from "@mailwoman/corpus"
 
 function parseArgs(argv) {
 	const out = { corpusVersion: "0.5.0" }
@@ -69,7 +69,7 @@ async function main() {
 	await new Promise((res) => outStream.end(res))
 	console.error(
 		`align-canonical-shard: ${labeled} labeled, ${quarantined} quarantined → ${args.output}\n` +
-			`  quarantine reasons: ${JSON.stringify(quarantineReasons)}`,
+			`  quarantine reasons: ${JSON.stringify(quarantineReasons)}`
 	)
 }
 

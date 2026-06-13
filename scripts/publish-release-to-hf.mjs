@@ -48,8 +48,10 @@ const REQUIRED_FILES = [
 const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
 const DEMO_BASE = "https://public.sister.software/mailwoman"
 
-/** HEAD-probe the demo's R2 serving path for an optional artifact (the demo reads R2, so R2 is the
-truth for demo flags). */
+/**
+ * HEAD-probe the demo's R2 serving path for an optional artifact (the demo reads R2, so R2 is the
+ * truth for demo flags).
+ */
 async function servedOnDemoPath(name) {
 	try {
 		const r = await fetch(`${DEMO_BASE}/${args.locale}/${args.version}/${name}`, { method: "HEAD" })

@@ -41,17 +41,17 @@ the 120-row run because the MIX changed (more challenging slash/mixed-hard rows 
 because either engine's behavior changed. Do not read this table as a model regression or
 improvement vs the 120-row baseline; it is a different population.
 
-| class            |                  v0 |     neural (v4.4.0) | Δ            |
-| ---------------- | ------------------: | ------------------: | ------------ |
-| apostrophe       |                89.0 |                79.5 | v0 +9.5      |
-| bracketed        |                80.3 |                84.1 | neural +3.8  |
-| care-of          |                60.8 |                74.5 | neural +13.7 |
-| dotted           |                82.3 |                74.0 | v0 +8.3      |
-| hyphen           |                86.9 |                82.8 | v0 +4.1      |
-| mixed-hard       |     58.2 († 1 died) |                60.0 | neural +1.8  |
-| paren-annotation |                78.4 |                87.5 | neural +9.1  |
-| paren-component  |                76.5 |                80.4 | neural +3.9  |
-| quoted-venue     |     75.3 († 1 died) |                66.7 | v0 +8.6      |
-| slash            |                71.8 |                62.4 | v0 +9.4      |
-| unbalanced       |                68.3 |                84.1 | neural +15.8 |
-| **overall**      | **75.7** (2 deaths) | **75.3** (0 deaths) | tie (+0.4 v0)|
+| class            |                  v0 |     neural (v4.4.0) | Δ             |
+| ---------------- | ------------------: | ------------------: | ------------- |
+| apostrophe       |                89.0 |                79.5 | v0 +9.5       |
+| bracketed        |                80.3 |                84.1 | neural +3.8   |
+| care-of          |                60.8 |                74.5 | neural +13.7  |
+| dotted           |                82.3 |                74.0 | v0 +8.3       |
+| hyphen           |                86.9 |                82.8 | v0 +4.1       |
+| mixed-hard       |     58.2 († 1 died) |                60.0 | neural +1.8   |
+| paren-annotation |                78.4 |                87.5 | neural +9.1   |
+| paren-component  |                76.5 |                80.4 | neural +3.9   |
+| quoted-venue     |     75.3 († 1 died) |                66.7 | v0 +8.6       |
+| slash            |                71.8 |                62.4 | v0 +9.4       |
+| unbalanced       |                68.3 |                84.1 | neural +15.8  |
+| **overall**      | **75.7** (2 deaths) | **75.3** (0 deaths) | tie (+0.4 v0) |

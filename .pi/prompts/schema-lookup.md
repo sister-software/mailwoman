@@ -2,6 +2,7 @@
 description: Look up a ComponentTag definition from the canonical schema and trace its usage
 argument-hint: "<tag-name>"
 ---
+
 Look up the Mailwoman ComponentTag `$1` in the canonical schema and trace its usage across the codebase.
 
 ## 1. Schema definition

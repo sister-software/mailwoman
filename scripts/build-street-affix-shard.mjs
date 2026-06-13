@@ -197,8 +197,10 @@ function parseStreet(street) {
 	return { prefix, name, suffix }
 }
 
-/** Render the affix-split street in random surface forms (abbrev vs expanded per affix),
-Title-cased. */
+/**
+ * Render the affix-split street in random surface forms (abbrev vs expanded per affix),
+ * Title-cased.
+ */
 function renderStreet(random, parsed) {
 	const name = title(parsed.name)
 	const parts = []

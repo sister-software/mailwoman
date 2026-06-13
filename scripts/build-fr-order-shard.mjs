@@ -9,20 +9,20 @@
  *   (default 0.5) — whether to render in CANONICAL French order (number-street, postcode-city) or
  *   one of four REVERSED / postcode-first variants that the v4.4.0→v0.5.0 regression exposed:
  *
- *   Canonical (already learned):
- *     "9 Rue de la Promenade, 01200 Villes"
+ *   Canonical (already learned): "9 Rue de la Promenade, 01200 Villes"
  *
- *   Reversed variants (the gap — the model misses house_number in every one of these):
- *     A. "47110 Sainte-Livrade-sur-Lot, 69 Allée du Bugatel"       (postcode city, HN street)
- *     B. "Sainte-Livrade-sur-Lot, 47110, 619 Impasse de la Rose"   (city, postcode, HN street)
- *     C. "Sainte-Livrade-sur-Lot 59 bis Rue des Ecuries 47110"     (city HN street postcode)
- *     D. "47110, 6 rue de la république, Sainte-Livrade-sur-Lot"   (postcode, HN street, city)
+ *   Reversed variants (the gap — the model misses house_number in every one of these): A. "47110
+ *   Sainte-Livrade-sur-Lot, 69 Allée du Bugatel" (postcode city, HN street) B.
+ *   "Sainte-Livrade-sur-Lot, 47110, 619 Impasse de la Rose" (city, postcode, HN street) C.
+ *   "Sainte-Livrade-sur-Lot 59 bis Rue des Ecuries 47110" (city HN street postcode) D. "47110, 6
+ *   rue de la république, Sainte-Livrade-sur-Lot" (postcode, HN street, city)
  *
  *   Spans are FREE — we render `raw` + `components` and hand to `alignRow` (the same call all other
  *   builders use). The only invariant to maintain is substring-presence: every component surface
  *   must appear verbatim in `raw`.
  *
  *   Sub-modes covered alongside order:
+ *
  *   - `bis`/`ter`/`quater` ordinal suffixes in house_number ("59 bis", "4 ter")
  *   - ALL-CAPS locality (a minor sub-mode in the golden misses: "SAINTE-LIVRADE-SUR-LOT")
  *
@@ -32,14 +32,16 @@
  *
  *   Pipeline (mirrors build-german-shard.mjs):
  *
- *   1. node scripts/build-fr-order-shard.mjs --output /tmp/fr-order-train.jsonl --count 50000 --seed 42
- *   2. python3 scripts/jsonl-to-parquet.py --input /tmp/fr-order-train.jsonl --output /tmp/part-fr-order.parquet
- *   3. modal volume put mailwoman-training /tmp/part-fr-order.parquet corpus/versioned/.../train/part-fr-order.parquet
+ *   1. Node scripts/build-fr-order-shard.mjs --output /tmp/fr-order-train.jsonl --count 50000 --seed 42
+ *   2. Python3 scripts/jsonl-to-parquet.py --input /tmp/fr-order-train.jsonl --output
+ *        /tmp/part-fr-order.parquet
+ *   3. Modal volume put mailwoman-training /tmp/part-fr-order.parquet
+ *        corpus/versioned/.../train/part-fr-order.parquet
  *   4. Add to MANIFEST.json + `synth-fr-order: 0.2` to source_weights, then train.
  *
  *   Root cause: FR house_number in reversed (postcode-first) order never appeared in the BAN training
- *   corpus. The v4.4.0 span bridge rescued it by merging "47110, 9016" fragments; v0.5.0 retired the
- *   bridge and exposed the gap. This shard teaches the post-postcode position intrinsically.
+ *   corpus. The v4.4.0 span bridge rescued it by merging "47110, 9016" fragments; v0.5.0 retired
+ *   the bridge and exposed the gap. This shard teaches the post-postcode position intrinsically.
  */
 
 import { spawnSync } from "node:child_process"
@@ -120,9 +122,9 @@ function splitCsv(line) {
 
 /**
  * Stream FR tuples out of the cached OA zip. The countrywide extract is GB-scale; cap with `head`
- * to stay under V8's string limit (mirrors build-country-shard-balanced.mjs / build-street-affix-shard.mjs).
- * Only keeps rows that have a house_number (required for the shard's core signal) and a postcode
- * (required for reversed-order rendering to be meaningful).
+ * to stay under V8's string limit (mirrors build-country-shard-balanced.mjs /
+ * build-street-affix-shard.mjs). Only keeps rows that have a house_number (required for the shard's
+ * core signal) and a postcode (required for reversed-order rendering to be meaningful).
  */
 function readTuples(limit) {
 	const maxLines = Math.max(limit * 8, 40000) + 1
@@ -163,9 +165,9 @@ function readTuples(limit) {
 }
 
 /**
- * Optionally augment a house_number with a French ordinal suffix ("59 bis", "4 ter"). The suffix
- * is appended with a space so it forms a single multi-token house_number string that alignRow
- * can still locate verbatim ("59 bis" appears as a substring of raw).
+ * Optionally augment a house_number with a French ordinal suffix ("59 bis", "4 ter"). The suffix is
+ * appended with a space so it forms a single multi-token house_number string that alignRow can
+ * still locate verbatim ("59 bis" appears as a substring of raw).
  */
 function maybeAddOrdinal(random, house_number) {
 	if (random() >= ORDINAL_PROB) return house_number
@@ -175,8 +177,8 @@ function maybeAddOrdinal(random, house_number) {
 }
 
 /**
- * Render a tuple in CANONICAL French order: "9 Rue de la Promenade, 01200 Villes".
- * Components: { house_number, street, postcode, locality }
+ * Render a tuple in CANONICAL French order: "9 Rue de la Promenade, 01200 Villes". Components: {
+ * house_number, street, postcode, locality }
  */
 function renderCanonical(hn, street, postcode, locality) {
 	const raw = `${hn} ${street}, ${postcode} ${locality}`
@@ -191,10 +193,10 @@ function renderCanonical(hn, street, postcode, locality) {
  * misses. The variant is chosen by `random()` so the corpus covers all four with roughly equal
  * frequency. Comma placement in each variant mirrors the real golden rows exactly.
  *
- * Variant A: "47110 Sainte-Livrade-sur-Lot, 69 Allée du Bugatel"        (postcode city, HN street)
- * Variant B: "Sainte-Livrade-sur-Lot, 47110, 619 Impasse de la Rose"    (city, postcode, HN street)
- * Variant C: "Sainte-Livrade-sur-Lot 59 bis Rue des Ecuries 47110"      (city HN street postcode) — NO commas
- * Variant D: "47110, 6 rue de la république, Sainte-Livrade-sur-Lot"    (postcode, HN street, city)
+ * Variant A: "47110 Sainte-Livrade-sur-Lot, 69 Allée du Bugatel" (postcode city, HN street) Variant
+ * B: "Sainte-Livrade-sur-Lot, 47110, 619 Impasse de la Rose" (city, postcode, HN street) Variant C:
+ * "Sainte-Livrade-sur-Lot 59 bis Rue des Ecuries 47110" (city HN street postcode) — NO commas
+ * Variant D: "47110, 6 rue de la république, Sainte-Livrade-sur-Lot" (postcode, HN street, city)
  */
 function renderReversed(random, hn, street, postcode, locality) {
 	const r = random()
@@ -336,7 +338,9 @@ async function main() {
 			`skipped ${skipped} (pool ${pool.length}). -> ${opts.output}`
 	)
 	if (orderCounts.reversed > 0) {
-		console.error(`  reversed variants: A=${variantCounts.A} B=${variantCounts.B} C=${variantCounts.C} D=${variantCounts.D}`)
+		console.error(
+			`  reversed variants: A=${variantCounts.A} B=${variantCounts.B} C=${variantCounts.C} D=${variantCounts.D}`
+		)
 	}
 
 	// ── Self-check: sample 200 reversed rows from the output and verify house_number span ─────────

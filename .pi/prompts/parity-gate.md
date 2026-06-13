@@ -2,6 +2,7 @@
 description: Run the parity gate — compare eval scores against floor bars for a version
 argument-hint: "<version>"
 ---
+
 Run the parity gate for Mailwoman version $1. Compare eval scores against the floor bars defined in the gate config.
 
 ## 1. Find the gate config
@@ -33,15 +34,16 @@ For each floored tag, report: tag name, measured F1, floor bar, PASS/FAIL, delta
 
 Example format (from v4.3.0 gate):
 
-| tag                  | bar  | measured | status |
-| -------------------- | ---- | -------- | ------ |
-| us.street_prefix     | 78   | 93.6     | PASS   |
-| us.street_suffix     | 67   | 96.6     | PASS   |
-| fr.postcode          | 99.5 | 99.7     | PASS   |
+| tag              | bar  | measured | status |
+| ---------------- | ---- | -------- | ------ |
+| us.street_prefix | 78   | 93.6     | PASS   |
+| us.street_suffix | 67   | 96.6     | PASS   |
+| fr.postcode      | 99.5 | 99.7     | PASS   |
 
 ## 5. Regression check
 
 Compare against the previous parity scorecard. Any tag that regressed more than 2pp needs:
+
 - A characterized root cause
 - A documented decision (gated vs. flagged-not-gated)
 

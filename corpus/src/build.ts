@@ -145,7 +145,11 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		// redoing the (expensive) emit phase. Default (unset) re-emits, preserving correctness. (2026-06-12.)
 		const adapterDir = join(intermediateDir, adapter.id)
 		const cachedManifest = join(adapterDir, "MANIFEST.json")
-		if (process.env.MAILWOMAN_RESUME === "1" && existsSync(cachedManifest) && existsSync(join(adapterDir, "canonical.jsonl"))) {
+		if (
+			process.env.MAILWOMAN_RESUME === "1" &&
+			existsSync(cachedManifest) &&
+			existsSync(join(adapterDir, "canonical.jsonl"))
+		) {
 			const cached = JSON.parse(readFileSync(cachedManifest, "utf8")) as AdapterRunManifest
 			opts.onProgress?.("adapter-run", `resumed ${adapter.id} (reused ${cached.yielded} canonical rows)`)
 			adapterRuns.push(cached)

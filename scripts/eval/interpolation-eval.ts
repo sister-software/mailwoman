@@ -26,19 +26,17 @@
  *
  *   # Banded gate — #483 operator ruling 2026-06-12 (stated re-baseline, recorded)
  *
- *   Rows are graded WITHIN their claimed `uncertaintyM` band. The gate thresholds scale with the
- *   band ceiling C:
+ *   Rows are graded WITHIN their claimed `uncertaintyM` band. The gate thresholds scale with the band
+ *   ceiling C:
  *
- *     band ≤ 100 m  →  p50 ≤ 50 m,  p90 ≤ 150 m         (C = 100: p50 ≤ C/2, p90 ≤ 1.5 × C)
- *     band ≤ 250 m  →  p50 ≤ 125 m, p90 ≤ 375 m         (C = 250: p50 ≤ C/2, p90 ≤ 1.5 × C)
- *     band ≤ 500 m  →  p50 ≤ 250 m, p90 ≤ 750 m         (C = 500: p50 ≤ C/2, p90 ≤ 1.5 × C)
- *     band > 500 m  →  no gate cap — priced honestly
+ *   Band ≤ 100 m → p50 ≤ 50 m, p90 ≤ 150 m (C = 100: p50 ≤ C/2, p90 ≤ 1.5 × C) band ≤ 250 m → p50 ≤
+ *   125 m, p90 ≤ 375 m (C = 250: p50 ≤ C/2, p90 ≤ 1.5 × C) band ≤ 500 m → p50 ≤ 250 m, p90 ≤ 750 m
+ *   (C = 500: p50 ≤ C/2, p90 ≤ 1.5 × C) band > 500 m → no gate cap — priced honestly
  *
- *   Formula: gate_p50 = C / 2, gate_p90 = 1.5 × C, where C is the band ceiling.
- *   The ≤ 100 m band is the explicit Phase 1 gate from the pre-registered VT pilot.
- *   Wider bands are graded on calibrated claims: a row claiming 300 m uncertainty
- *   falls in the ≤ 500 m band (C = 500) and is expected to measure ≤ 250 m / ≤ 750 m.
- *   Bands with zero rows are flagged, not silently omitted.
+ *   Formula: gate_p50 = C / 2, gate_p90 = 1.5 × C, where C is the band ceiling. The ≤ 100 m band is
+ *   the explicit Phase 1 gate from the pre-registered VT pilot. Wider bands are graded on
+ *   calibrated claims: a row claiming 300 m uncertainty falls in the ≤ 500 m band (C = 500) and is
+ *   expected to measure ≤ 250 m / ≤ 750 m. Bands with zero rows are flagged, not silently omitted.
  *   A miss is a finding reported plainly — the band ceiling is NEVER moved to make a row pass.
  *
  *   NOTE: imports the WORKTREE's compiled module by relative path (run `yarn compile` first) — the
@@ -84,8 +82,8 @@ if (MODE !== "tiger" && MODE !== "ladder") {
 /**
  * Banded gate definition — #483 operator ruling 2026-06-12.
  *
- * Formula: gate_p50 = C / 2, gate_p90 = 1.5 × C, where C is the band ceiling in metres.
- * The open-ended top band (> 500 m) carries no gate cap — those rows are reported honestly.
+ * Formula: gate_p50 = C / 2, gate_p90 = 1.5 × C, where C is the band ceiling in metres. The
+ * open-ended top band (> 500 m) carries no gate cap — those rows are reported honestly.
  */
 interface BandDef {
 	/** Label shown in output. */
@@ -99,8 +97,8 @@ interface BandDef {
 }
 
 /**
- * The four uncertainty bands. Each row's `uncertaintyM` is assigned to the FIRST band whose
- * ceiling >= uncertaintyM (or the unbounded tail). Gate thresholds follow the ruling formula.
+ * The four uncertainty bands. Each row's `uncertaintyM` is assigned to the FIRST band whose ceiling
+ * >= uncertaintyM (or the unbounded tail). Gate thresholds follow the ruling formula.
  */
 const BANDS: BandDef[] = [
 	{ label: "≤ 100 m", ceiling: 100, gateP50: 50, gateP90: 150 },
