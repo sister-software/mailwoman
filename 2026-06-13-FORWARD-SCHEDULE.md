@@ -28,11 +28,16 @@ Grabbing the #488 rule (topmost unchecked, unblocked), with what the supplementa
 
 ### Tier 1 — unblocked NOW, no GPU, highest leverage
 
-1. **#483 — house-number interpolation from TIGER ranges** (gated on #476, which is DONE: VT
-   prototype hit coord p50/p90 → 0/0 km @ 93.1% hits). This is *the* Phase-3 opener: turn TIGER's
-   per-segment address ranges into an interpolated point for any house number, lifting us from
-   admin-centroid coordinates (tens of km) to sub-km street-level truth. Pure data+code, CPU-bound,
-   no training. **Recommended next centerpiece.**
+1. **#483 — house-number interpolation from TIGER ranges.** _CORRECTION (verified mid-shift): this is
+   NOT greenfield — it's two PRs deep (#533 first slice, #542 Method-2 address-point interpolation).
+   The engine is built + committed + green (21/21 tests): `StreetInterpolator` (TIGER range) +
+   `AddressPointInterpolator` (bracket between real points) + shared normalizer + builder + design doc
+   (`docs/articles/plan/2026-06-11-interpolation-design.md`)._ Status: **Cook County (IL) PASSES the
+   gate; VT improved-but-still-MISSES** the p50≤50m / p90≤150m bar. The open work is therefore an
+   *investigation* (why does VT miss — TIGER data quality? sparse-segment handling?) plus the
+   `resolution_tier: "interpolated"` core-tier wiring — **judgment-heavy, not a clean slice.** Defer to
+   an operator-steered session, not an autonomous 4am pickup. (My earlier "recommended next centerpiece"
+   call was made before I'd read the merged history — corrected here.)
 2. **#484 — reverse geocoding (PIP over wof-polygons)** — the symmetric tree API: coordinate → admin
    hierarchy. We already ship `wof-polygons.db` (DP-simplified boundaries) for the demo outline; this
    reuses it. Bounded, testable, no GPU.
