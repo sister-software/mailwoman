@@ -241,12 +241,21 @@ export async function runPipeline(
 	// per-span verdict on orphaned spans (see the assignment + grouperAudit below).
 	let auditClassifierTopK: ClassifierCandidate[] | undefined
 
-	// Joint-reconcile path: DEFAULT as of Route A Phase II (#427). It beats argmax on every measured
-	// locale with per-field regression under 0.5% (report: docs/articles/evals/2026-06-07-route-a-
-	// phase-ii-regate.md). Set `jointReconcile: false` (or the deprecated `forceJointReconcile: false`)
-	// to force the legacy argmax sort. Still requires a phrase grouper + a `parseWithLogits` classifier;
-	// without either, the pipeline falls back to argmax regardless of the flag.
-	const jointEnabled = opts?.jointReconcile ?? opts?.forceJointReconcile ?? true
+	// Joint-reconcile path: RETIRED AS DEFAULT 2026-06-14 (#427 promoted it; this de-promotes it).
+	// A reconcile-vs-raw-neural audit on two non-circular US holdouts (Travis E-911 + 7-state
+	// OpenAddresses) found it BREAKS the street+house_number geocode precondition on 77-84% of clean
+	// US addresses and fixes 0% — the phrase grouper bundles the house number into the STREET_PHRASE
+	// ("3075 Hill Street") and reconcileSpans then fuses the whole span into one node, leaving no
+	// separate `street`. Confirmed on golden v0.1.2 US+FR (n=4507, per-tag recall vs raw argmax):
+	// street -25.6pp, house_number -23.1pp, locality -2.3pp, venue -0.6pp, region/postcode/unit flat.
+	// It is worse-or-flat on EVERY tag — including venue, the thing #427 promoted it for. The #427
+	// re-gate's "DE +25pp / IT-ES +15pp" was loose street-STRING recall on OOD inputs (where raw
+	// neural mangles the street); it never measured the geocode precondition our evals grade on raw
+	// neural, so the regression was invisible. The destructive piece is the grouper HN-bundling (see
+	// the tracked issue); until that's fixed, argmax is the correct default. Set `jointReconcile: true`
+	// to opt back into reconcile (the A/B harnesses do). Report: docs/articles/evals/2026-06-14-
+	// reconcile-retirement.md.
+	const jointEnabled = opts?.jointReconcile ?? opts?.forceJointReconcile ?? false
 	const useJointReconcile =
 		jointEnabled && phraseProposals.length > 0 && stages.classifier && "parseWithLogits" in stages.classifier
 

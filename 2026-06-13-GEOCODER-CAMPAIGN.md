@@ -93,6 +93,17 @@ independent of Coverage; engines exist, this is API surface + wiring.
 Spec the policy-registry + reconcile + abstention layer now (so the pipeline is ≥v0 by construction),
 but VALIDATE after Coverage exists — it needs real tiers to calibrate. False-independence flag.
 
+**⚠️ FINDING (2026-06-14) — the existing reconcile stage was the OPPOSITE of ≥v0.** A
+reconcile-vs-raw-neural audit found joint-reconcile (#427's default) BREAKS the street+house_number
+geocode precondition on 77–84% of clean US addresses and fixes 0% (golden US+FR per-tag: street
+−25.6pp, house_number −23.1pp, worse-or-flat on every tag). The phrase grouper bundles the house
+number into `STREET_PHRASE` and `reconcileSpans` fuses the span. It was invisible because our evals
+grade **raw neural**, not the assembled pipeline — so the demo + any `createRuntimePipeline` consumer
+(the #485 service surface) were silently shipping broken parses. **Retired as default** (PR #566,
+`jointReconcile` → `false`); root cause filed as #565. Lesson for #478: the arbitration layer MUST be
+graded on the assembled pipeline against truth, never on raw-neural per-tag F1. Report:
+`docs/articles/evals/2026-06-14-reconcile-retirement.md`.
+
 ## Deferred this sprint (accuracy-broadening, not DoD-blocking)
 
 Parser multi-locale / FR-EU polish (#330/#435/#444/#241/#293/#294/#473/#296), typo-tolerance
