@@ -126,10 +126,19 @@ ODbL obligations flow to consumers + infect derivatives), or **(b) server-side-o
 attributed results — the Pelias/Nominatim model). A product-model decision, not a blocker.
 
 **Why this keeps OSM international-only for us:** TIGER (public domain) + NAD (open) make the US fully
-distributable with zero ODbL — OSM only earns its keep where no TIGER/NAD equivalent exists. **Overture is a
-license mosaic** (NAD = public; OSM-sourced features = ODbL), so the `--license-filter` action item (Stream 2)
-keeps shipped US situs shards clean. (IANAL — confirm against current OSMF geocoding guidelines + counsel
-before shipping OSM-derived data.)
+distributable with zero ODbL — OSM only earns its keep where no TIGER/NAD equivalent exists.
+
+**✅ MEASURED 2026-06-14 — the US Overture addresses carry ZERO OSM.** A full-parquet probe of the
+2026-05-20.0 `addresses-us.parquet` (124.9M geocodable points) found the source mosaic is **NAD 85.5M
+(68%, US public domain) + OpenAddresses 39.4M (32%, government open data), and `0` OpenStreetMap rows**
+(explicit `LIKE '%osm%'` check). So the earlier "Overture is a license mosaic with OSM-sourced features
+→ filter to NAD" framing was wrong for the US: there is nothing ODbL to drop, and `--license-filter NAD`
+would discard a third of coverage (the dense urban OpenAddresses counties) for **no** licensing benefit.
+The national situs build therefore runs **unfiltered**; the only obligation is **attribution** (NAD +
+the named OpenAddresses sources), satisfied by the per-row `overture:<dataset>` provenance the builder
+stamps, summarized into `<out-dir>/ATTRIBUTION.json` by `scripts/build-national-situs.mjs`. The
+`--license-filter` flag stays for deliberately-narrowed or non-US/OSM shards. (IANAL — confirm against
+current OSMF geocoding guidelines + counsel before shipping OSM-derived data internationally.)
 
 ## Tonight's parallel structure (the shift)
 
