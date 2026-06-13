@@ -38,9 +38,19 @@ Grabbing the #488 rule (topmost unchecked, unblocked), with what the supplementa
    `resolution_tier: "interpolated"` core-tier wiring — **judgment-heavy, not a clean slice.** Defer to
    an operator-steered session, not an autonomous 4am pickup. (My earlier "recommended next centerpiece"
    call was made before I'd read the merged history — corrected here.)
-2. **#484 — reverse geocoding (PIP over wof-polygons)** — the symmetric tree API: coordinate → admin
-   hierarchy. We already ship `wof-polygons.db` (DP-simplified boundaries) for the demo outline; this
-   reuses it. Bounded, testable, no GPU.
+2. **#484 — reverse geocoding (PIP over wof-polygons).** _CORRECTION (verified mid-shift): also
+   already built — `reverse.ts` + `reverse.test.ts` (9 pass / 4 skipped, the skips need the real
+   polygon DB). "Assembly over existing machinery": bbox R*Tree → PIP confirm → approximate descent →
+   hierarchy. Engine done; the skipped tests + tier wiring remain._
+
+> **Verified-mid-shift synthesis — Phase 3 is more built than the #488 boxes imply.** Both Tier-1
+> "openers" (#483 interpolation, #484 reverse) already have committed, green engines — prior sessions
+> shipped them. The recurring note in BOTH headers: _"core tier wiring (`resolution_tier`) is a noted
+> follow-up."_ So the real remaining Phase-3 work is NOT greenfield building — it's (a) **wiring the
+> standalone engines into the resolver's tier cascade** (fall-through order, conditions, surfacing the
+> tier), and (b) **passing the empirical gates** (#483: Cook passes, VT misses p50≤50m/p90≤150m). Both
+> are integration + investigation, **operator-steered**, not clean autonomous 4am slices. The honest
+> next centerpiece is "wire + gate the built interpolation/reverse tiers," and it wants daylight.
 3. **The arena-gate infra fix** (found + fixed THIS shift — see "Gate integrity" below): a
    pre-registered floor (`arena.perturb` 71.0) was un-evaluable on every v0.5.0 gate run because the
    compiled-tree libpostal path doesn't resolve, so it hard-failed as `NOT FOUND` — masking the real
