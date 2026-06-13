@@ -31,7 +31,6 @@ import { existsSync } from "node:fs"
 import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
-import { createRuntimePipeline } from "../runtime-pipeline.js"
 import type { CommandComponent } from "../sdk/cli.js"
 import { resolverDefaultCountry } from "./parse.js"
 
@@ -206,10 +205,16 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 		// Build a resolver pipeline for the first (admin-only) pass — no address-point / interpolation
 		// yet; those need the region slug we haven't extracted yet.
-		const pipeline = createRuntimePipeline({ classifier, resolver })
-		const pipelineOpts = { locale: options.locale, resolveOpts: baseResolveOpts }
-		const firstResult = await pipeline(input, pipelineOpts)
-		const firstTree = firstResult.tree
+		if (!classifier) {
+			throw new Error(
+				"geocode requires the neural weights. Install @mailwoman/neural-weights-en-us (or pass --locale with installed weights)."
+			)
+		}
+		// RAW neural parse — the path the eval validated at 98.8% within 100m. NOT the runtime pipeline:
+		// its reconcile/solver stage can merge street INTO house_number (dropping the street node the
+		// coordinate tiers need — the bug that made situs silently fall to admin). Region for shard
+		// selection comes straight from the parse; no admin pre-resolve needed.
+		const firstTree = await classifier.parse(input, { postcodeRepair: true })
 
 		// --- Step 3: shard selection from resolved region ---
 		// Walk the resolved tree to find the region node's canonical name / value.
@@ -258,12 +263,10 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			if (addressPointLookup) enrichedResolveOpts.addressPoints = addressPointLookup
 			if (interpolationLookup) enrichedResolveOpts.interpolation = interpolationLookup
 
-			// Re-resolve the tree from the first-pass result with the enriched opts.
-			// We re-resolve the already-parsed tree (not re-parse) to avoid a second neural inference.
-			let finalTree = firstTree
-			if (addressPointLookup || interpolationLookup) {
-				finalTree = await resolver.resolveTree(firstTree, enrichedResolveOpts)
-			}
+			// Single resolve pass on the raw-neural parse with the coordinate tiers wired — the eval's exact
+			// path (parse → resolveTree(addressPoints, interpolation)). Always resolves (admin even with no
+			// shards); the tiers are additive and byte-stable when absent.
+			const finalTree = await resolver.resolveTree(firstTree, enrichedResolveOpts)
 
 			// --- Step 5: extract geocode result from the resolved tree ---
 			const result = extractGeocodeResult(input, finalTree)
