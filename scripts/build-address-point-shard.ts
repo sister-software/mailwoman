@@ -96,22 +96,6 @@ const datasetFilter =
 		? `AND lower(sources[1].dataset) IN (${[...allowedDatasets].map((d) => `'${d}'`).join(", ")})`
 		: ""
 
-const result = await duck.runAndReadAll(`
-	SELECT
-		number, street, unit, postcode,
-		coalesce(nullif(trim(address_levels[2].value), ''), nullif(trim(postal_city), '')) AS locality,
-		sources[1].dataset AS dataset,
-		lat, lon
-	FROM read_parquet('${PARQUET}')
-	WHERE address_levels[1].value = '${STATE}'
-		AND nullif(trim(street), '') IS NOT NULL
-		AND nullif(trim(number), '') IS NOT NULL
-		${countyFilter}
-		${datasetFilter}
-`)
-const rows = result.getRowObjects() as Record<string, unknown>[]
-console.log(`${rows.length} ${STATE} rows from ${path.basename(PARQUET)}`)
-
 const db = new DatabaseSync(OUT)
 db.exec(`
 	PRAGMA journal_mode = WAL;
@@ -134,37 +118,64 @@ const insert = db.prepare(
 	`INSERT INTO address_point (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
 	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 )
-db.exec("BEGIN")
-let kept = 0
-// Provenance accounting: track per-dataset counts across ALL rows returned by DuckDB.
-// When --license-filter is active DuckDB already dropped the ineligible rows, so this
-// summary reflects the kept set. We also record total parquet rows (pre-JS-normalisation
-// drop) for the kept-vs-dropped summary below.
-const datasetCounts = new Map<string, number>()
-for (const r of rows) {
-	const dataset = String(r.dataset ?? "unknown")
-	datasetCounts.set(dataset, (datasetCounts.get(dataset) ?? 0) + 1)
 
-	const streetRaw = String(r.street)
-	const streetNorm = normalizeStreetForKey(streetRaw)
-	if (!streetNorm) continue
-	const locality = r.locality ? normalizeLocalityForKey(String(r.locality)) : null
-	insert.run(
-		streetNorm,
-		canonicalizeRouteKey(streetNorm),
-		String(r.number).trim().toLowerCase(),
-		r.unit ? String(r.unit).trim().toLowerCase() : null,
-		r.postcode ? String(r.postcode).trim() : null,
-		locality,
-		streetRaw,
-		Number(r.lat),
-		Number(r.lon),
-		`overture:${r.dataset}`,
-		String(args.release)
-	)
-	kept++
+// Provenance accounting: per-dataset counts across ALL rows returned by DuckDB (pre-JS-normalisation
+// drop). When --license-filter is active DuckDB already dropped the ineligible rows, so this reflects
+// the kept set. `totalReturned` feeds the kept-vs-dropped summary below.
+const datasetCounts = new Map<string, number>()
+let kept = 0
+let totalReturned = 0
+
+// STREAM the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising the whole
+// result with runAndReadAll().getRowObjects() — a 13.5M-row state (CA/FL/TX) blows the ~4GB V8 heap
+// that way (OOM observed 2026-06-14). stream()+fetchChunk() keeps JS memory bounded to one chunk; the
+// growing data lives in the on-disk SQLite WAL inside a single transaction.
+const stream = await duck.stream(`
+	SELECT
+		number, street, unit, postcode,
+		coalesce(nullif(trim(address_levels[2].value), ''), nullif(trim(postal_city), '')) AS locality,
+		sources[1].dataset AS dataset,
+		lat, lon
+	FROM read_parquet('${PARQUET}')
+	WHERE address_levels[1].value = '${STATE}'
+		AND nullif(trim(street), '') IS NOT NULL
+		AND nullif(trim(number), '') IS NOT NULL
+		${countyFilter}
+		${datasetFilter}
+`)
+// A streamed DataChunk carries no column names of its own (only the materialised reader sets them),
+// so pull them off the result once and hand them to each chunk's getRowObjects().
+const colNames = stream.columnNames()
+db.exec("BEGIN")
+for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
+	const rows = chunk.getRowObjects(colNames) as Record<string, unknown>[]
+	for (const r of rows) {
+		totalReturned++
+		const dataset = String(r.dataset ?? "unknown")
+		datasetCounts.set(dataset, (datasetCounts.get(dataset) ?? 0) + 1)
+
+		const streetRaw = String(r.street)
+		const streetNorm = normalizeStreetForKey(streetRaw)
+		if (!streetNorm) continue
+		const locality = r.locality ? normalizeLocalityForKey(String(r.locality)) : null
+		insert.run(
+			streetNorm,
+			canonicalizeRouteKey(streetNorm),
+			String(r.number).trim().toLowerCase(),
+			r.unit ? String(r.unit).trim().toLowerCase() : null,
+			r.postcode ? String(r.postcode).trim() : null,
+			locality,
+			streetRaw,
+			Number(r.lat),
+			Number(r.lon),
+			`overture:${r.dataset}`,
+			String(args.release)
+		)
+		kept++
+	}
 }
 db.exec("COMMIT")
+console.log(`${totalReturned} ${STATE} rows from ${path.basename(PARQUET)}`)
 db.exec(`
 	CREATE INDEX idx_ap_postcode ON address_point (postcode, street_norm, number);
 	CREATE INDEX idx_ap_locality ON address_point (locality_norm, street_norm, number);
@@ -201,7 +212,7 @@ if (allowedDatasets.size > 0) {
 			${countyFilter}
 	`)
 	const totalUnfiltered = Number((totalResult.getRowObjects()[0] as Record<string, unknown>).n)
-	const keptCount = rows.length
+	const keptCount = totalReturned
 	const droppedCount = totalUnfiltered - keptCount
 	console.log(
 		`\nlicense-filter: ${[...allowedDatasets].join(", ")} → kept ${keptCount.toLocaleString()} / dropped ${droppedCount.toLocaleString()} (of ${totalUnfiltered.toLocaleString()} total parquet rows for ${STATE})`
