@@ -94,6 +94,8 @@ export function createRuntimePipeline(
 }
 
 // Re-export the types so consumers don't need to import from both `mailwoman` and `@mailwoman/core/pipeline`.
+// `ParseOpts` lives in `@mailwoman/neural` — re-export here so callers can type-check parse options
+// without reaching into internal workspace packages.
 export type {
 	AddressClassifier,
 	ClassifierOpts,
@@ -111,3 +113,4 @@ export type {
 	QueryShapeLite,
 	RuntimePipelineStages,
 } from "@mailwoman/core/pipeline"
+export type { ParseOpts } from "@mailwoman/neural"

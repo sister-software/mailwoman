@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { dirname, resolve } from "node:path"
+import { basename, dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
-import { createPathBuilderResolver, type Join, PathBuilder } from "path-ts"
+import { createPathBuilderResolver, type Join, type PathBuilder } from "path-ts"
 
 /**
  * Aliased path to the root of the repository.
@@ -34,12 +34,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
 /**
  * The absolute path to the root of the repository.
  *
- * In compiled mode this file lives at `core/out/utils/repo.js` and the walk goes up
- * `PathReflection.length` (3) levels. In source mode — e.g. vitest loading the `.ts` file directly
- * via a workspace alias — the `out/` segment is absent and the file is one level shallower, so we
- * walk up one less. Detect the mode by looking for `/out/` in `__dirname`.
+ * In compiled mode this file lives at `core/out/utils/repo.js` (3 levels deep: core → out → utils)
+ * and in source mode at `core/utils/repo.ts` (2 levels deep: core → utils). Detect the mode by
+ * checking whether `resolve("..", "..")` lands in the `out/` directory — uses `basename` on the
+ * resolved path rather than a substring match on `__dirname`, so it survives symlinks and output
+ * directory renames.
  */
-const __isCompiledTree = __dirname.includes(`/${OutDirectoryName}/`)
+const __isCompiledTree = basename(resolve(__dirname, "..", "..")) === OutDirectoryName
 const __upCount = __isCompiledTree ? PathReflection.length : PathReflection.length - 1
 const RepoRootAbsolutePath = resolve(__dirname, ...Array.from({ length: __upCount }, () => ".."))
 type RepoRootAbsolutePath = RepoRootAlias

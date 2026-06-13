@@ -31,6 +31,14 @@ export interface SegmentToken {
 
 const WHITESPACE = /\s+/
 
+/**
+ * Neutral baseline confidence for phrase proposals when no structural cue (position, length, known
+ * suffix/prefix/marker, format-hit) lifts or penalizes the score. Each rule adds bonuses on top of
+ * this base (e.g. +0.15 for 2-token locality runs, +0.1 for tail-of-last-segment) and subtracts
+ * penalties (e.g. −0.2 for a known US region name that isn't at segment-tail).
+ */
+const NEUTRAL_PROPOSAL_CONFIDENCE = 0.55
+
 const US_REGION_NAMES: ReadonlySet<string> = new Set([
 	"alabama",
 	"alaska",
@@ -426,7 +434,7 @@ export function scoreNumeric(tokens: ReadonlyArray<SegmentToken>, text: string):
 		const len = t.body.length
 		// 1-4 digit pure-numerics are clearly NUMERIC (house number). 5+ are ambiguous with POSTCODE
 		// — emit anyway at lower confidence so the reconciler sees both options.
-		const confidence = len <= 4 ? 0.95 : 0.55
+		const confidence = len <= 4 ? 0.95 : NEUTRAL_PROPOSAL_CONFIDENCE
 		out.push({
 			span: makeSection(text, t.start, t.end),
 			kindHypothesis: "NUMERIC",
@@ -484,7 +492,7 @@ export function scoreRegionAbbreviation(
 		// else, moderate. Anywhere in the LAST segment → slightly elevated (region is canonically the
 		// final non-postcode component).
 		const atTail = i === tokens.length - 1
-		const confidence = atTail ? 0.85 : segmentIsLast ? 0.7 : 0.55
+		const confidence = atTail ? 0.85 : segmentIsLast ? 0.7 : NEUTRAL_PROPOSAL_CONFIDENCE
 		out.push({
 			span: makeSection(text, t.start, t.end),
 			kindHypothesis: "REGION_ABBREVIATION",
@@ -659,7 +667,7 @@ export function scoreLocalityPhrase(
 			const isRegionName = len === 1 && US_REGION_NAMES.has(spanText.toLowerCase())
 			const atTail = i + len - 1 === tokens.length - 1
 			const lenBonus = len === 2 ? 0.15 : len === 3 ? 0.12 : len >= 4 ? 0.08 : 0
-			let confidence = 0.55 + lenBonus
+			let confidence = NEUTRAL_PROPOSAL_CONFIDENCE + lenBonus
 			if (isRegionName && !atTail) confidence -= 0.2
 			if (atTail && segmentIsLast) confidence += 0.1
 			if (atTail) confidence += 0.05
@@ -727,7 +735,7 @@ export function scoreVenuePhrase(
 				out.push({
 					span: makeSection(text, startTok.start, endTok.end),
 					kindHypothesis: "VENUE_PHRASE",
-					confidence: run.length >= 3 ? 0.55 : 0.5,
+					confidence: run.length >= 3 ? NEUTRAL_PROPOSAL_CONFIDENCE : 0.5,
 				})
 			}
 		}
