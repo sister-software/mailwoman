@@ -41,19 +41,23 @@ Grabbing the #488 rule (topmost unchecked, unblocked), with what the supplementa
    `resolution_tier: "interpolated"` core-tier wiring** — no investigation needed. (Both my earlier
    calls — "recommended greenfield centerpiece" then "judgment-heavy gate investigation" — were wrong;
    the gate passes, the wiring is mechanical. This is the cleanest real-geocoder forward slice.)
-2. **#484 — reverse geocoding (PIP over wof-polygons).** _CORRECTION (verified mid-shift): also
-   already built — `reverse.ts` + `reverse.test.ts` (9 pass / 4 skipped, the skips need the real
-   polygon DB). "Assembly over existing machinery": bbox R\*Tree → PIP confirm → approximate descent →
-   hierarchy. Engine done; the skipped tests + tier wiring remain._
+2. **#484 — reverse geocoding (PIP over wof-polygons).** _CORRECTION + VERIFIED (this shift): built
+   (`reverse.ts`), and the 4 production-gated tests (skipped without the real DBs) **PASS** when run
+   against the real gazetteer (`admin-global-priority.db`, 2 GB) + `wof-polygons.db` — all 13 green.
+   "Assembly over existing machinery": bbox R\*Tree → PIP confirm → approximate descent → hierarchy.
+   Engine confirmed working end-to-end; only the resolver-API wiring remains._
 
 > **Verified-mid-shift synthesis — Phase 3 is more built than the #488 boxes imply.** Both Tier-1
 > "openers" (#483 interpolation, #484 reverse) already have committed, green engines — prior sessions
 > shipped them. The recurring note in BOTH headers: _"core tier wiring (`resolution_tier`) is a noted
 > follow-up."_ So the real remaining Phase-3 work is NOT greenfield building — it's (a) **wiring the
 > standalone engines into the resolver's tier cascade** (fall-through order, conditions, surfacing the
-> tier). The gate worry was overstated: **#483's VT gate PASSES in the production ladder mode** (re-measured
-> this shift) — so the remaining work is overwhelmingly the mechanical wiring, not investigation. The honest
-> next centerpiece is "wire the built interpolation/reverse tiers into the cascade," and it's a clean slice.
+> tier). The gate/test worry was overstated, verified this shift: **#483's VT gate PASSES in production
+> ladder mode** AND **#484's production reverse-geocoding tests PASS against the real gazetteer +
+> polygons** (all 13 green). Both coordinate-truth engines are confirmed working end-to-end — so the
+> remaining Phase-3 work is overwhelmingly the **mechanical resolver-API wiring**, not investigation or
+> gate-chasing. The honest next centerpiece is "wire the built interpolation/reverse tiers into the
+> resolve/reverse cascade," and it's a clean, low-risk slice — the cleanest path to the geocoder.
 
 3. **The arena-gate infra fix** (found + fixed THIS shift — see "Gate integrity" below): a
    pre-registered floor (`arena.perturb` 71.0) was un-evaluable on every v0.5.0 gate run because the
