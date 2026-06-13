@@ -13,7 +13,7 @@ Last night's build ran for two and a half hours and then died on a single row. I
 launched a long job before bed and woken up to a stack trace instead of an artifact, you know
 the specific flavor of that disappointment. The questions I want to answer here: how does one
 row out of nearly 700 million take down hours of compute? Why, after we fixed the thing that
-killed it, did it crash again on the *exact same row*? And what do you change once you've
+killed it, did it crash again on the _exact same row_? And what do you change once you've
 learned that a correct assertion and a safe one are different animals?
 
 {/* truncate */}
@@ -23,7 +23,7 @@ learned that a correct assertion and a safe one are different animals?
 The build crashes loud, which is the one mercy here. The error named its victim: a Who's On
 First record, specifically the `name:ben` variant of South Korea — `দক্ষিণ কোরিয়া`, the country's
 name written in Bengali. We carry those localized name variants on purpose; "Saint Petersburg"
-and "St. Petersburg" and the Bengali rendering of South Korea are all rows we *want*, because a
+and "St. Petersburg" and the Bengali rendering of South Korea are all rows we _want_, because a
 parser that only knows the Latin spelling of a place is a parser with a blind spot the size of
 most of the planet.
 
@@ -47,12 +47,12 @@ many combining marks came before it. There is no error message for that. There's
 that slowly learns garbage.
 
 So the assertion guards something real: char-offset labels are only meaningful under a single
-normalization form. The principle is sound. The *blast radius* is the bug. A correct guard that
+normalization form. The principle is sound. The _blast radius_ is the bug. A correct guard that
 takes down the entire build the first time it meets a row it doesn't like is a guard that has
 confused being right with being safe.
 
 The fix for the first crash was to stop asserting and start normalizing. Where alignment used to
-throw, it now normalizes the raw text *and* every component value to NFC, computes the spans over
+throw, it now normalizes the raw text _and_ every component value to NFC, computes the spans over
 the normalized text, and stores that normalized text on the row. Same guarantee — offsets and
 text in one agreed form — and the valuable, multi-locale row survives instead of detonating.
 DeepSeek, which we use as an independent reviewer for calls like this, agreed the move preserved
@@ -67,7 +67,7 @@ again. A different error this time:
 span out of bounds: country@[0,14) over raw of length 13
 ```
 
-The `country` component here *is* the whole raw string — the same 13 code units. The span should
+The `country` component here _is_ the whole raw string — the same 13 code units. The span should
 have been `[0, 13)`, the entire thing. Our span-locating code returned `[0, 14)`: one code unit
 past the end of a string it was supposed to be contained in. It over-ran, by exactly one, on a
 string built almost entirely of combining marks.
@@ -87,14 +87,14 @@ the way down it.
 ## Stop trusting the row
 
 The tempting fix is to chase the off-by-one. It's a real bug, and there's a real version of the
-fix that teaches the boundary logic about combining marks and *keeps* every one of those non-Latin
+fix that teaches the boundary logic about combining marks and _keeps_ every one of those non-Latin
 rows. We filed it (issue #555) and we'll do it properly. But chasing it at 3 a.m., mid-recovery,
 to unblock a multi-hour build, is how you ship a worse bug at 4.
 
 So the recovery fix was smaller and meaner: stop letting any single row crash hours of work.
 Two moves. First, an out-of-bounds span — one that can't possibly be a valid character offset —
 quarantines the row with a named reason instead of throwing. Second, a `try`/`catch` wraps the
-per-row alignment in the build loop, so *any* unforeseen exception on *any* one row sends that
+per-row alignment in the build loop, so _any_ unforeseen exception on _any_ one row sends that
 row to the quarantine pile and the build keeps walking.
 
 The build already worked this way for every other kind of failure. A component it couldn't find
@@ -116,7 +116,7 @@ Now the part that turned a catastrophe into an inconvenience.
 
 By the time the build crashed, it had already finished the slow, expensive half of its job:
 reading all eleven sources and writing 36 gigabytes of canonical rows to disk. Two and a half
-hours of I/O, done, sitting right there. The crash was in the *next* phase — alignment — which
+hours of I/O, done, sitting right there. The crash was in the _next_ phase — alignment — which
 reads those canonical files back and turns them into labeled rows.
 
 The build, as written, had no memory. Re-running it meant re-emitting all 36 gigabytes from
@@ -145,7 +145,7 @@ and safe-in-production are not the same property, and the gap between them is al
 the rows you didn't picture. The combining mark. The one record in 690 million that showed up in
 the wrong normalization form. The boundary check that's flawless on every script you tested and a
 single code unit wrong on the one you didn't. You can't enumerate that tail — it's too long, and
-it's mostly written in alphabets you can't read. What you *can* do is decide, up front, that the
+it's mostly written in alphabets you can't read. What you _can_ do is decide, up front, that the
 tail isn't allowed to take down the whole machine: that a weird row is a quarantine line, that a
 crash is resumable, that the assertion which is right about your data still has to be gentle about
 how it's wrong.

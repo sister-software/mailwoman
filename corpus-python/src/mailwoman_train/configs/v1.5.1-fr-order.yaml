@@ -1,0 +1,141 @@
+# === v1.5.1-fr-order (fr.house_number recovery — weight bump pass) ===============================
+# Same as v1.5.0-fr-order (one variable vs v4.5.0: synth-fr-order shard), with ONE change:
+# synth-fr-order weight 3.0 → 6.0 (matching the proven synth-german weight).
+#
+# WHY: v1.5.0 re-gate (2026-06-13 ~04:30 UTC) showed:
+#   - fr.house_number: 87.4% (gate floor 91, target ≥95) — MISS
+#   - BUT: v4.5.0 scored only 54.5% on the same diversified golden → net +32.9pp improvement
+#   - ALL 93 FR house_number misses are "47110 Sainte-Livrade-sur-Lot, XX..." (postcode-first)
+#     — model still predicts the leading 47110 as house_number (BAN canonical-order prior too strong)
+#   - Shard is CORRECT (0 oob spans, 199/199 reversed-order span check PASS) — signal, not quality
+#   - German synth at weight=6.0 fully works; FR shard needs equivalent signal strength
+#   - Bridge retirement HELD (po_box 90.3), DE order HELD (native 90.8%), all US/FR floors PASS
+#
+# GOAL / GATE: same as v1.5.0 — fr.house_number ≥95 (actual-vs-v4.4.0 benchmark) AND bridge
+# retirement holds (po_box ≥89.1) AND all v4.4.0 floors hold AND no NEW regression vs v4.5.0.
+#
+# CORPUS: same v0.5.0 + synth-fr-order (already on Modal volume, no re-upload needed).
+# KNOWN CAVEAT: UTF-16 span offsets; ~0.06% astral rows skipped (#558 guard).
+# Launch: modal run -d scripts/modal/train_remote.py --config v1.5.1-fr-order.yaml --resume none
+data:
+  corpus_dir: /data/corpus/versioned/v0.5.0/corpus-v0.5.0
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    # THE #560 recovery lever: reversed-order (postcode-first) FR. Weight bumped 3.0 → 6.0 (matching
+    # synth-german) after v1.5.0 re-gate showed +32.9pp improvement but still missed fr.house_number
+    # floor (87.4% vs 91 floor). Shard correct; BAN canonical-order prior dominates at 3.0 weight.
+    synth-fr-order: 6.0
+    synth-unit: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v151-fr-order-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 40000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  gazetteer_curriculum: false
+  trackio_project: mailwoman
+  trackio_run_name: v1.5.1-fr-order-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

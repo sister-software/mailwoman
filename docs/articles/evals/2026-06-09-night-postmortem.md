@@ -37,7 +37,7 @@ _Sketched live during the shift (04:45→15:00 UTC), finalized at wrap-up._
 
 ## Concrete next steps
 
-- **#464 — build one `ClosedVocabTagger`** (country + po_box + cedex; all three measured at P=R=F1=100 this shift). **Architecture decided** (DeepSeek pro consult): a _post-parse `ProposalClassifier` overlay_, default-off/byte-stable, not an in-pass `classifiers/` entry — because it must _correct_ the model's over-firing, so it runs after the decode and overwrites. Homograph guard (country Georgia/Jordan) lives in the overlay's apply logic; po_box/cedex have no homograph risk and can land first. ~½ day, zero GPU.
+- **#464 — build one `ClosedVocabTagger`** (country + po*box + cedex; all three measured at P=R=F1=100 this shift). **Architecture decided** (DeepSeek pro consult): a \_post-parse `ProposalClassifier` overlay*, default-off/byte-stable, not an in-pass `classifiers/` entry — because it must _correct_ the model's over-firing, so it runs after the decode and overwrites. Homograph guard (country Georgia/Jordan) lives in the overlay's apply logic; po_box/cedex have no homograph risk and can land first. ~½ day, zero GPU.
 - intersection (gated — regressed before, needs care); FR venue/region (#330).
 - **Consolidation v1.0 (#466)** once affix is promoted: make the affix shard **multi-locale** (clears its own FR-postcode gate without bundling the now-deterministic country), prove it solo, then **weight-merge** the affix delta into the v4.1.0 base rather than re-stacking shards (the dilution is step-budget-bound). DeepSeek-recommended; gated on #462 + operator go + GPU budget.
 

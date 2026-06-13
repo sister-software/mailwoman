@@ -121,3 +121,31 @@ output/
 
 # Pi session state (not project config)
 .pi/flow.json
+
+# Night-shift ephemera — operational plans, logs, and session notes produced during
+# autonomous overnight shifts. AI-agent scratch, not project source (#379).
+*-NIGHT-SHIFT-*.md
+*-NIGHT-SHIFT-*.log
+*-NIGHT-SHIFT-*.sh
+*-SESSION-HANDOFF.md
+*-SESSION-RECAP.md
+*-DEEP-DIVE-REVIEW.md
+
+# DeepSeek consult skill directory — the skill definition (SKILL.md) IS tracked;
+# all other files (conversation transcripts, session notes, plans) are AI-agent
+# scratch and not project source (#379).
+.agents/skills/deepseek-consult/*
+!.agents/skills/deepseek-consult/SKILL.md
+!.agents/skills/deepseek-consult/ds-mlm-ft-turn1.txt
+!.agents/skills/deepseek-consult/ds-mlm-ft-turn2.txt
+!.agents/skills/deepseek-consult/ds-mlm-ft-turn3.txt
+!.agents/skills/deepseek-consult/ds-mlm-ft-turn4-results.txt
+!.agents/skills/deepseek-consult/ds-v092-turn3-decision.txt
+!.agents/skills/deepseek-consult/session-notes-2026-05-30-resolver.md
+!.agents/skills/deepseek-consult/session-notes-2026-05-31-mlm-finetune.md
+
+# Diagnostic scripts — one-off investigation scripts that aren't part of the shipped
+# toolchain. Keepers cited by docs/memories stay tracked; this only hides untracked
+# new diag scripts (#379).
+scripts/diag-*.ts
+scripts/diag-*.sh
