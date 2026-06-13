@@ -891,7 +891,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		const rows = this.#db
 			.prepare(
 				`SELECT s.id AS id, s.name AS name, s.country AS country, s.parent_id AS parent_id,
-				        s.latitude AS lat, s.longitude AS lon, ${popSelect}
+				        s.latitude AS lat, s.longitude AS lon, s.placetype AS placetype, ${popSelect}
 				 FROM main.spr s ${popJoin}
 				 WHERE s.id IN (${ph}) AND s.is_current != 0`
 			)
@@ -900,7 +900,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			const c: PlaceCandidate = {
 				id: row.id,
 				name: row.name,
-				placetype: "locality",
+				placetype: row.placetype as WofPlacetype,
 				country: row.country ?? "",
 				lat: row.lat ?? 0,
 				lon: row.lon ?? 0,
