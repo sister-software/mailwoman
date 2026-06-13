@@ -685,7 +685,7 @@ async function main(): Promise<void> {
 				if (precond) interpPrecond++
 				if (precond && !exact && !interp) {
 					interpFullParseMiss++
-					if (diagMisses.length < 25) diagMisses.push(`${hn} | ${s} | ${pc}  ←  ${row.input}`)
+					if (diagMisses.length < 5000) diagMisses.push(`${hn} | ${s} | ${pc}  ←  ${row.input}`)
 				}
 			}
 		}
@@ -787,10 +787,23 @@ async function main(): Promise<void> {
 			lines.push(
 				`- interp HITS: ${interpHits} → of full-parse non-exact rows, hit rate ${((100 * interpHits) / Math.max(1, interpFullParseMiss + interpHits)).toFixed(1)}%`
 			)
+			// Error CDF over the neural+interp coordinate (DeepSeek: "where's the cliff?"). Cumulative % of
+			// ALL rows within each radius — the within-100m DoD metric + the shape of the tail.
+			const ierrs = neuralInterpAgg.overall.errs
+			lines.push("")
+			lines.push(`error CDF (neural+interp, n=${ierrs.length}) — cumulative % within radius:`)
+			for (const m of [10, 25, 50, 100, 200, 500, 1000, 5000]) {
+				const within = ierrs.filter((e) => e <= m / 1000).length
+				lines.push(`  ≤ ${m} m: ${((100 * within) / Math.max(1, ierrs.length)).toFixed(1)}%`)
+			}
+			// Dump ALL full-parse misses for the standalone shard-membership categorization (segment-not-found
+			// vs in-shard-range-miss vs normalization). Bump cap done at collection site.
 			if (diagMisses.length > 0) {
+				writeFileSync("/tmp/interp-misses.txt", diagMisses.join("\n"))
 				lines.push("")
-				lines.push("sample full-parse interp misses (house_number | street | postcode ← input):")
-				for (const m of diagMisses) lines.push(`  - ${m}`)
+				lines.push(`full-parse interp misses dumped: ${diagMisses.length} → /tmp/interp-misses.txt`)
+				lines.push("sample (house_number | street | postcode ← input):")
+				for (const m of diagMisses.slice(0, 12)) lines.push(`  - ${m}`)
 			}
 		}
 	}
