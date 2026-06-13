@@ -65,6 +65,15 @@ The best recovery model is **v1.5.0 (87.4%)**: +32.9pp over v4.5.0 on the divers
 
 My recommendation: **option 2 short-term** (don't ship a below-gate model on a recovery that's still 8pp shy of target), unless the operator wants the +32.9pp in users' hands now and re-baselines the floor deliberately.
 
+## Bonus — Phase-3 de-risk (the strategically bigger finding)
+
+With the centerpiece resolved and no GPU to spend, the idle hours went to mapping the forward path (`2026-06-13-FORWARD-SCHEDULE.md`) — and the diagnostic turned up something more important than the FR result: **the Phase-3 coordinate-truth layer is already built and verified, not greenfield as the #488 epic's unchecked boxes imply.**
+
+- **#483 house-number interpolation** — engine built (two merged PRs #533/#542, 21/21 unit tests). The "VT still-MISSES the gate" status was **`--mode tiger`-only** (StreetInterpolator alone: ≤100m band p90 182m, opposite-side-fallback tail). Re-measured on the production **`--mode ladder`** cascade (Method 2 address-point bracketing → TIGER fallback), seeds 42+7: **PASSES every band** (≤100m p90 114–118m vs 150m bar, coverage 97.7%). Gate met, matching Cook County. Recorded on #483.
+- **#484 reverse geocoding** — engine built (`reverse.ts`). The 4 production-gated tests (skipped without real DBs) **PASS** against the real gazetteer (`admin-global-priority.db`, 2 GB) + `wof-polygons.db` — all 13 green. Recorded on #484.
+
+So both engines that turn the parser into a geocoder — street-level forward coordinates + coordinate→hierarchy reverse — **exist and work against real data today.** The remaining Phase-3 work is the **mechanical resolver-API wiring** (surface `resolution_tier: "interpolated"` / the reverse path in the public resolve API), not building or gate-chasing. That's the single clean, low-risk centerpiece between here and a real geocoder. All diagnostic — no code changed.
+
 ## What went well
 
 - **Clean fan-out → verify → merge loop.** Three agents returned PR-ready branches; each verified by the orchestrator before merge. No worktree leaks — every diff single-file/single-concern.
@@ -102,7 +111,7 @@ The orchestrator session became unresponsive (network) mid-shift after launching
 ## Concrete next steps
 
 - **Operator ship decision** on v1.5.0 (recommendation: hold + pursue a non-weight lever; alternative: re-baseline floor + ship the +32.9pp). v1.5.0 artifacts are staged at `artifacts/v1.5.0-fr-order/` on R2; v1.5.1 at `artifacts/v1.5.1-fr-order/` (rejected, kept for the record).
-- **Pivot to Phase 3** (the forward schedule, `2026-06-13-FORWARD-SCHEDULE.md`): the parity table is effectively closed; the next centerpiece is **#483 house-number interpolation from TIGER** (unblocked, no GPU) — coordinate truth, the real-geocoder step.
+- **Pivot to Phase 3** (the forward schedule, `2026-06-13-FORWARD-SCHEDULE.md`): the parity table is effectively closed AND both coordinate-truth engines are now verified working (see "Bonus" above). The next centerpiece is the **mechanical resolver-API wiring** that surfaces the built interpolation (#483) + reverse-geocoding (#484) tiers — the cleanest, lowest-risk step to a real geocoder.
 - **File the fr.house_number convergence finding** as a GitHub issue (weight falsified, plateau ~87%, postcode-fragmentation failure mode) so the next attempt starts from evidence.
 - **prettier sweep #7b**: Sonnet limit resets 2026-06-14 9pm Paris.
 - **corpus-v0.5.1 code-point re-align** (#558): DeepSeek's parallel track.
@@ -121,4 +130,5 @@ The orchestrator session became unresponsive (network) mid-shift after launching
 | Models trained         | 2 (both complete + gated)                                              |
 | NaN incidents          | 0                                                                      |
 | Gate-integrity bugs    | 1 found + fixed (arena.perturb un-evaluable)                           |
+| Phase-3 de-risk        | #483 VT gate PASSES (ladder mode) + #484 reverse tests PASS (real DBs) |
 | Task 5 (prettier)      | DONE by supplemental session (`cb2ea168`)                              |
