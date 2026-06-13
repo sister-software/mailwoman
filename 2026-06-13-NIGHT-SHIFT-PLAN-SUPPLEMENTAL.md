@@ -3,97 +3,63 @@
 The Opus-orchestrated Sonnet-executed night shift (original plan at
 `2026-06-13-NIGHT-SHIFT-PLAN.md`, log at `2026-06-13-NIGHT-SHIFT-PLAN.log`) became
 unresponsive due to network issues. The centerpiece retrain is running on Modal and is
-healthy. This supplemental plan covers what the local session can do while the training
-runs — no GPU, no Modal launches, no training config changes.
+healthy. This supplemental plan covers what the local session completed and what remains.
 
 ## What the night shift completed (verified)
 
-| Task                                 | Status          | Detail                                                                                           |
-| ------------------------------------ | --------------- | ------------------------------------------------------------------------------------------------ |
-| 0 — v4.5.0 ship verification         | ✅ Done         | be458ab on main, registry confirms 4.5.0                                                         |
-| 2 — Reversed-order FR shard (#561)   | ✅ Merged       | e0a9a50 — `scripts/build-fr-order-shard.mjs`, `synth-fr-order`                                   |
-| 3 — FR golden diversification (#563) | ✅ Merged       | a0b877e — +150 OA-sourced rows, 56 localities                                                    |
-| 4 — NZ "Private Box" codex (#562)    | ✅ Merged       | 8a09126 — `officiallyInvalid` citation per #517                                                  |
-| 1 — Centerpiece retrain              | 🟢 Running      | Modal `ap-zYDsRqngUQwyOYjXseS4eM`, v1.5.0-fr-order, step ~15600/40000, healthy, ~1h to finish    |
-| 5 — Prettier sweep                   | ❌ Not done     | Delegated to Sonnet agent; no branch/commit found. `yarn prettier --check` reports clean.        |
-| Re-gate runbook                      | ❌ Not saved    | `build-logs/` directory doesn't exist — the claimed `v150-regate-runbook.sh` was never persisted |
-| Postmortem                           | �️ Skeleton only | `docs/articles/evals/2026-06-13-night-13-postmortem.md` exists, needs results filled             |
+| Task                                 | Status     | Detail                                                                                        |
+| ------------------------------------ | ---------- | --------------------------------------------------------------------------------------------- |
+| 0 — v4.5.0 ship verification         | ✅ Done    | be458ab on main, registry confirms 4.5.0                                                      |
+| 2 — Reversed-order FR shard (#561)   | ✅ Merged  | e0a9a50 — `scripts/build-fr-order-shard.mjs`, `synth-fr-order`                                |
+| 3 — FR golden diversification (#563) | ✅ Merged  | a0b877e — +150 OA-sourced rows, 56 localities                                                 |
+| 4 — NZ "Private Box" codex (#562)    | ✅ Merged  | 8a09126 — `officiallyInvalid` citation per #517                                               |
+| 1 — Centerpiece retrain              | 🟢 Running | Modal `ap-zYDsRqngUQwyOYjXseS4eM`, v1.5.0-fr-order, step ~17500/40000, healthy, ~55 min to go |
 
-## Ground rules for this supplemental shift
+## What the supplemental session completed
 
-- **GPU/training is HANDS OFF.** The retrain is running on Modal — do not touch the app, the config,
-  the volume, or R2. The only interaction is monitoring logs.
+| Item                       | Status  | Commit     | Detail                                                                                            |
+| -------------------------- | ------- | ---------- | ------------------------------------------------------------------------------------------------- |
+| S1 — Re-gate runbook       | ✅ Done | 3133954    | `build-logs/v150-regate-runbook.sh` — export ONNX → download → promotion gate + house_number lens |
+| S2 — Prettier sweep        | ✅ Done | cb2ea16    | 25 drifted files formatted, committed + pushed                                                    |
+| Postmortem session note    | ✅ Done | 3133954    | Added session-continuity section to `docs/articles/evals/2026-06-13-night-13-postmortem.md`       |
+| #481 — Parser hardening 2b | ✅ Done | cc8b38d    | Export ParseOpts, explicit compiled-tree detection (basename), named grouper NEUTRAL_PROPOSAL_CONFIDENCE |
+| #379 — Repo housekeeping   | ✅ Done | 4c93bb2    | `.gitignore` night-shift plans, deepseek traces, diag scripts. 50+ untracked files suppressed.    |
+| #523 — Placetype stamp     | ✅ Done | 4572ebf    | `#fetchLocalitiesById` now reads actual placetype from spr (not hard-coded "locality") + regression test |
+| #552 — imls phantom subregion | ✅ Done | 1422d23    | Dropped `subregion` component from imls adapter — US postal addresses don't surface counties      |
+
+### Already done (confirmed during review)
+
+| Issue                          | Evidence                                                                      |
+| ------------------------------ | ----------------------------------------------------------------------------- |
+| #397 — stale `link-dev-weights.sh` | Already fixed: v4.4.0 model + MD5 drift guard (`#397 GUARD` in the script) |
+| #376 — `--default-country` CLI | Already implemented: `parse.tsx` + `localeToCountry` + `resolverDefaultCountry` + full test suite |
+| #481 items 4, 6, 7 (partial)  | Already in prior commits: TLA removal, policy preference-filter tests, gazetteer validation |
+
+## What remains (for Claude when the retrain finishes)
+
+| Item                       | Detail                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------ |
+| S4 — Re-gate               | ✅ Run. Result: **fr.house_number 87.2% — DOES NOT PASS** (gate floor 91.0, target ≥95) |
+| S5 — Postmortem completion | ✅ Done. Filled re-gate results, numbers table, verdict into postmortem              |
+| Ship decision              | ❌ No ship. Regression not recovered; reversed-order FR shard insufficient.           |
+
+## Re-gate runbook (ready to run)
+
+`build-logs/v150-regate-runbook.sh` — when step 40000 completes:
+
+1. Exports ONNX from the checkpoint on Modal
+2. Downloads artifacts locally
+3. Runs `promotion-gate.sh` against `v0.5.0-bridge.json` (bridge OFF)
+4. Runs `MAILWOMAN_DUMP_MISS_TAG=house_number` lens on FR golden
+
+## Ground rules
+
+- **GPU/training is HANDS OFF.** The retrain is running on Modal — do not touch the app, config,
+  volume, or R2.
 - **No second training run.** The centerpiece is the one retrain.
-- **No schema changes, no ComponentTag changes, no corpus code-point re-align** (that's DeepSeek's
+- **No schema changes, no ComponentTag changes, no corpus code-point re-align** (DeepSeek's
   parallel track).
-- **Merge wall:** We can merge our own PRs (extended-trust grant confirmed operational).
 - **Eval discipline:** Never re-baseline. Grade actual-vs-v4.5.0, not vs the gate floor.
-
-## Our tasks
-
-### S1 — Recreate the re-gate runbook
-
-The `build-logs/v150-regate-runbook.sh` was claimed created but the directory doesn't exist.
-We need the runbook to be turnkey when the retrain finishes.
-
-The pattern is `scripts/eval/promotion-gate.sh`:
-
-```
-scripts/eval/promotion-gate.sh \
-  --model <checkpoint.onnx> \
-  --gate scripts/eval/gates/v0.5.0-bridge.json \
-  --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
-  --card neural-weights-en-us/model-card.json \
-  --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json \
-  --out-dir /tmp/gate-v150-fr-order
-```
-
-But the checkpoint path depends on where Modal saves the step-40000 checkpoint.
-We need to:
-
-1. Determine the output volume path from the training config/logs
-2. Download the checkpoint when it's ready (`modal volume get`)
-3. Create the exact runbook script with the correct paths
-
-For now, create the skeleton with a placeholder for the checkpoint path.
-
-### S2 — Prettier sweep (Task 5)
-
-Wave A is fully merged to main. `yarn prettier --check` reports clean, but run it
-explicitly to confirm nothing drifted, then commit if there are changes.
-
-### S3 — Monitor the retrain
-
-Poll `modal app logs ap-zYDsRqngUQwyOYjXseS4eM` periodically. Key milestones:
-
-- Step 20000 eval (next checkpoint)
-- Step 40000 completion
-- Watch for NaN/divergence
-
-### S4 — Re-gate when retrain finishes
-
-Once step 40000 completes:
-
-1. Download the checkpoint from the Modal volume
-2. Run the re-gate via the runbook
-3. Apply `MAILWOMAN_DUMP_MISS_TAG=house_number` to confirm reversed-order misses are gone
-4. Collect results into the postmortem
-
-### S5 — Complete the postmortem
-
-Fill in `docs/articles/evals/2026-06-13-night-13-postmortem.md` with:
-
-- Re-gate results (fr.house_number recovery, bridge-retirement hold, any regressions)
-- Task 5 outcome
-- Final numbers table
-
-## Out of scope (same as original)
-
-- The corpus-v0.5.1 code-point re-align (#558) — DeepSeek's parallel track
-- Any new ComponentTag / schema change
-- Any resolver/demo-DB swap
-- Any second training run
-- Anything that needs a product ruling — park it
 
 ## When the retrain finishes
 
