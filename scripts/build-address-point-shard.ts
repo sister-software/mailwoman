@@ -46,6 +46,10 @@ const { values: args } = parseArgs({
 		out: { type: "string" },
 		"county-fips": { type: "string" },
 		"county-boundary": { type: "string", default: "/tmp/tiger-county/tl_2023_us_county.shp" },
+		// ODbL-hygiene: when set, only keep rows whose Overture dataset is in this comma-separated
+		// allow-list (case-insensitive). Default absent = keep everything (current behaviour,
+		// byte-stable). Typical use: --license-filter NAD to retain only US-public-domain rows.
+		"license-filter": { type: "string" },
 	},
 })
 if (!args.state) {
@@ -59,6 +63,17 @@ if (args["county-fips"] && !/^\d{5}$/.test(args["county-fips"])) {
 const STATE = args.state.toUpperCase()
 const PARQUET = `/mnt/playpen/mailwoman-data/overture/${args.release}/addresses-us.parquet`
 const OUT = args.out ?? `/mnt/playpen/mailwoman-data/address-points/address-points-us-${STATE.toLowerCase()}.db`
+
+// Build the dataset allow-list (normalised to lower-case for a case-insensitive match).
+// Empty = no filter (keep everything).
+const allowedDatasets: Set<string> = new Set(
+	args["license-filter"]
+		? args["license-filter"]
+				.split(",")
+				.map((d) => d.trim().toLowerCase())
+				.filter(Boolean)
+		: []
+)
 
 mkdirSync(path.dirname(OUT), { recursive: true })
 rmSync(OUT, { force: true }) // idempotent rebuild — never append across releases
@@ -74,6 +89,13 @@ if (args["county-fips"]) {
 			(SELECT geom FROM ST_Read('${args["county-boundary"]}') WHERE GEOID = '${args["county-fips"]}'),
 			ST_Point(lon, lat))`
 }
+// License filter: pushed into DuckDB so the parquet scan drops ineligible rows before transfer.
+// lower() matches case-insensitively against our normalised allow-list.
+const datasetFilter =
+	allowedDatasets.size > 0
+		? `AND lower(sources[1].dataset) IN (${[...allowedDatasets].map((d) => `'${d}'`).join(", ")})`
+		: ""
+
 const result = await duck.runAndReadAll(`
 	SELECT
 		number, street, unit, postcode,
@@ -85,6 +107,7 @@ const result = await duck.runAndReadAll(`
 		AND nullif(trim(street), '') IS NOT NULL
 		AND nullif(trim(number), '') IS NOT NULL
 		${countyFilter}
+		${datasetFilter}
 `)
 const rows = result.getRowObjects() as Record<string, unknown>[]
 console.log(`${rows.length} ${STATE} rows from ${path.basename(PARQUET)}`)
@@ -113,7 +136,15 @@ const insert = db.prepare(
 )
 db.exec("BEGIN")
 let kept = 0
+// Provenance accounting: track per-dataset counts across ALL rows returned by DuckDB.
+// When --license-filter is active DuckDB already dropped the ineligible rows, so this
+// summary reflects the kept set. We also record total parquet rows (pre-JS-normalisation
+// drop) for the kept-vs-dropped summary below.
+const datasetCounts = new Map<string, number>()
 for (const r of rows) {
+	const dataset = String(r.dataset ?? "unknown")
+	datasetCounts.set(dataset, (datasetCounts.get(dataset) ?? 0) + 1)
+
 	const streetRaw = String(r.street)
 	const streetNorm = normalizeStreetForKey(streetRaw)
 	if (!streetNorm) continue
@@ -149,3 +180,30 @@ const stats = db
 db.close()
 console.log(`${kept} points → ${OUT}`)
 console.log(`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`)
+
+// --- Provenance summary ---
+// Always printed so the operator can audit which licenses a shard carries.
+console.log(`\nprovenance (${STATE}, release ${args.release}):`)
+const sortedDatasets = [...datasetCounts.entries()].sort((a, b) => b[1] - a[1])
+for (const [dataset, count] of sortedDatasets) {
+	console.log(`  overture:${dataset.padEnd(20)} ${count.toLocaleString()} rows`)
+}
+if (allowedDatasets.size > 0) {
+	// The DuckDB query already excluded non-allowed rows, so rows.length is the kept count.
+	// Run a secondary count query (cheap: parquet predicate pushdown on a single column) to
+	// surface the total-minus-kept so the operator can see how much was dropped by the filter.
+	const totalResult = await duck.runAndReadAll(`
+		SELECT count(*) AS n
+		FROM read_parquet('${PARQUET}')
+		WHERE address_levels[1].value = '${STATE}'
+			AND nullif(trim(street), '') IS NOT NULL
+			AND nullif(trim(number), '') IS NOT NULL
+			${countyFilter}
+	`)
+	const totalUnfiltered = Number((totalResult.getRowObjects()[0] as Record<string, unknown>).n)
+	const keptCount = rows.length
+	const droppedCount = totalUnfiltered - keptCount
+	console.log(
+		`\nlicense-filter: ${[...allowedDatasets].join(", ")} → kept ${keptCount.toLocaleString()} / dropped ${droppedCount.toLocaleString()} (of ${totalUnfiltered.toLocaleString()} total parquet rows for ${STATE})`
+	)
+}
