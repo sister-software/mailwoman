@@ -11,6 +11,7 @@ import {
 	matchNzDeliveryService,
 	normalizeNzDeliveryService,
 	NZ_DELIVERY_SERVICE_TYPES,
+	NZ_PRIVATE_BOX_ALIAS,
 } from "./delivery-service.js"
 
 describe("NZ_DELIVERY_SERVICE_TYPES", () => {
@@ -26,6 +27,25 @@ describe("NZ_DELIVERY_SERVICE_TYPES", () => {
 				expect(t.identifier).toBe("not-used")
 			}
 		}
+	})
+})
+
+describe("NZ_PRIVATE_BOX_ALIAS", () => {
+	it("is marked officiallyInvalid — not a valid ADV358 Delivery Service Type", () => {
+		// ADV358 (Oct 2021) lists exactly six types; 'Private Box' is not among them.
+		// Source: nzpost.co.nz/sites/nz/files/2021-10/adv358-address-standards.pdf (accessed 2026-06-11).
+		// Operator ruling 2026-06-11: recognize-as-used with this citation.
+		expect(NZ_PRIVATE_BOX_ALIAS.officiallyInvalid).toBe(true)
+	})
+
+	it("has the same identifier rule as PO Box — required-if-allocated", () => {
+		const poBox = NZ_DELIVERY_SERVICE_TYPES.find((t) => t.type === "PO Box")!
+		expect(NZ_PRIVATE_BOX_ALIAS.identifier).toBe(poBox.identifier)
+	})
+
+	it("is NOT present in NZ_DELIVERY_SERVICE_TYPES (kept separate per operator ruling)", () => {
+		const types = NZ_DELIVERY_SERVICE_TYPES.map((t) => t.type)
+		expect(types).not.toContain("Private Box")
 	})
 })
 
@@ -49,9 +69,31 @@ describe("matchNzDeliveryService", () => {
 		expect(matchNzDeliveryService("Post Box 12")).toMatchObject({ type: "PO Box", id: "12" })
 	})
 
-	it("rejects the forms ADV358 names as errors, and types that don't exist", () => {
+	it("ADV358 types do not carry the colloquial flag", () => {
+		expect(matchNzDeliveryService("PO Box 24999")?.colloquial).toBeUndefined()
+		expect(matchNzDeliveryService("Private Bag 106999")?.colloquial).toBeUndefined()
+		expect(matchNzDeliveryService("Counter Delivery")?.colloquial).toBeUndefined()
+	})
+
+	it("recognizes 'Private Box' as the colloquial NZ alias — operator ruling 2026-06-11", () => {
+		// 'Private Box' is NOT a valid ADV358 type. NZ Post's live standards pages do not list it.
+		// Source: adv358-address-standards.pdf (Oct 2021) + nzpost.co.nz/business/shipping-in-nz/
+		//   addressing-standards (accessed 2026-06-11). Operator authorizes recognition with citation.
+		expect(matchNzDeliveryService("Private Box 102")).toMatchObject({
+			type: "Private Box",
+			id: "102",
+			colloquial: true,
+		})
+		expect(matchNzDeliveryService("private box 24999")).toMatchObject({
+			type: "Private Box",
+			id: "24999",
+			colloquial: true,
+		})
+		expect(isNzDeliveryService("Private Box 102")).toBe(true)
+	})
+
+	it("rejects the forms ADV358 names as errors", () => {
 		expect(matchNzDeliveryService("PB 39990")).toBeNull()
-		expect(matchNzDeliveryService("Private Box 102")).toBeNull()
 		expect(matchNzDeliveryService("Locked Bag 1797")).toBeNull() // AU-only designator
 	})
 
@@ -69,9 +111,15 @@ describe("normalizeNzDeliveryService", () => {
 		expect(normalizeNzDeliveryService("community mail box b99")).toBe("CMB B99")
 	})
 
+	it("normalizes 'Private Box' to its recognized surface form", () => {
+		// The colloquial alias normalizes to 'Private Box <id>' (preserves the label used on real mail).
+		expect(normalizeNzDeliveryService("private box 102")).toBe("Private Box 102")
+		expect(normalizeNzDeliveryService("Private Box 24999")).toBe("Private Box 24999")
+	})
+
 	it("round-trips: every normalized form still matches", () => {
-		for (const raw of ["PO Box 24999", "Private Bag", "CMB B99", "Counter Delivery", "Poste Restante"]) {
-			expect(isNzDeliveryService(normalizeNzDeliveryService(raw))).toBe(true)
+		for (const raw of ["PO Box 24999", "Private Bag", "CMB B99", "Counter Delivery", "Poste Restante", "Private Box 102"]) {
+			expect(isNzDeliveryService(normalizeNzDeliveryService(raw)), `round-trip for "${raw}"`).toBe(true)
 		}
 	})
 
