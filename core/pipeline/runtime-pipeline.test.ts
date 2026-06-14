@@ -526,6 +526,15 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 		})
 	})
 
+	it("uses the placer's full posterior distribution when supplied (vs the one-hot argmax)", async () => {
+		const { resolver, seen } = captureResolveOpts()
+		// A country-ambiguous in-map guess: argmax FR, but GB nearly as likely. The distribution lets the
+		// resolver break the tie with its own evidence instead of committing to FR.
+		const placeCountry = vi.fn(() => ({ country: "FR", confidence: 0.45, posterior: { FR: 0.45, GB: 0.4 } }))
+		await runPipeline("Birmingham", { resolver, placeCountry })
+		expect(seen[0]).toMatchObject({ anchorPosterior: { FR: 0.45, GB: 0.4 }, anchorWeight: 1.0 })
+	})
+
 	it("preserves the caller's resolveOpts fields while injecting the posterior", async () => {
 		const { resolver, seen } = captureResolveOpts()
 		const placeCountry = vi.fn(() => ({ country: "DE", confidence: 0.97 }))

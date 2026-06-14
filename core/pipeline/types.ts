@@ -183,14 +183,23 @@ export interface RuntimePipelineStages {
 	detectLocale?: (input: NormalizedInputLite, shape: QueryShapeLite, opts?: { hint?: LocaleTag }) => Promise<LocaleHint>
 	classifyKind?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<QueryKindResult>
 	/**
-	 * Coarse country router (#244). A `(normalizedText) → { country, confidence }` predictor (a
-	 * `CoarsePlacer.predict`); `country: null` ⇒ abstained, `"OTHER"` ⇒ off-map. When provided, a
-	 * confident IN-MAP guess becomes a SOFT country prior fed into the resolver's #369
+	 * Coarse country router (#244). A `(normalizedText) → { country, confidence, posterior? }`
+	 * predictor (a `CoarsePlacer`-backed fn); `country: null` ⇒ abstained, `"OTHER"` ⇒ off-map. When
+	 * provided, a confident IN-MAP guess becomes a SOFT country prior fed into the resolver's #369
 	 * `anchorPosterior` re-rank (boosts the right-country candidate, never filters); it defers to a
 	 * caller-supplied posterior (a stronger postcode anchor) and is a no-op on abstain/OTHER. Off by
-	 * default → byte-stable. See docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md.
+	 * default → byte-stable.
+	 *
+	 * `posterior` (residual upgrade) is the full per-in-map-country distribution: when present it IS
+	 * the `anchorPosterior` (so the resolver breaks country-ambiguous ties with its own place-level
+	 * evidence); when absent the coordinator falls back to the one-hot `{ [country]: confidence }`.
+	 * See docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md.
 	 */
-	placeCountry?: (normalizedText: string) => { country: string | null; confidence: number }
+	placeCountry?: (normalizedText: string) => {
+		country: string | null
+		confidence: number
+		posterior?: Record<string, number>
+	}
 	/**
 	 * Stage 2.7 phrase grouper. Emits coherent input-unit proposals consumed by Stage 3 (as
 	 * conditioning) and Stage 5 (as boundary candidates). Hard dep in v0.5.0; pre-v0.5.0 callers run

@@ -81,9 +81,15 @@ only when confident). The rule — not the threshold — is the M2 lever (+5.9pp
   misroute question but can't fully validate resolution quality on thin-coverage locales. Production flows
   usually also pin locale/`defaultCountry`.) ⇒ **default-on is defensible**; the flip is the operator's call
   (a user-facing default change).
-- **Residual upgrade (documented, not needed now):** a full in-map posterior _distribution_ as the
-  `anchorPosterior` (vs today's one-hot argmax) would let the resolver break in-map ties itself — the natural
-  fix for the misrouting risk, and a clean follow-on.
+- **Residual upgrade — SHIPPED (#244):** the soft prior now feeds the full in-map posterior _distribution_
+  as the `anchorPosterior` (vs the one-hot argmax) — the placer hands the resolver every plausible country
+  weighted by mass, so the resolver breaks country-ambiguous ties with its own place-level evidence and can
+  never be committed to a wrong argmax. New `inMapPosterior()` on the core placer; `placeCountry` stage gained
+  an optional `posterior` (consumers fall back to the one-hot when absent); the default placer emits it. A/B
+  on both gates (`--distribution`): homograph **identical** (91.2%, 9 wins, 0 regressions — those wins are
+  confidently single-country, so distribution ≈ one-hot), misroute **+1 win (59 vs 58), still 0 regressions /
+  0 misroutes** — a strict, principled improvement (larger on data with more in-map ambiguity, e.g. European
+  cross-border namesakes).
 
 ## Reproduce
 
