@@ -36,11 +36,27 @@ function captureResolver(): { resolver: Resolver; seen: ResolveOpts[] } {
 const emptyTree: AddressTree = { raw: "x", roots: [] }
 
 describe("geocodeAddress — coarse-placer soft prior (#244)", () => {
-	test("no placeCountry stage ⇒ resolver sees no anchorPosterior (byte-stable)", async () => {
+	test("placeCountry: false ⇒ no anchorPosterior (the disable / byte-stable path)", async () => {
 		const { resolver, seen } = captureResolver()
-		await geocodeAddress("12 rue de la Paix, Paris", { classifier: fakeClassifier(emptyTree), resolver })
+		await geocodeAddress("12 rue de la Paix, Paris", {
+			classifier: fakeClassifier(emptyTree),
+			resolver,
+			placeCountry: false,
+		})
 		expect(seen[0]?.anchorPosterior).toBeUndefined()
 		expect(seen[0]?.anchorWeight).toBeUndefined()
+	})
+
+	test("default-on (no placeCountry) ⇒ the bundled placer injects a posterior for an in-map address", async () => {
+		const { resolver, seen } = captureResolver()
+		// No `placeCountry` → geocodeAddress lazy-loads the bundled coarse-placer (#244 M2 default-on).
+		await geocodeAddress("350 5th Ave, New York, NY 10118", { classifier: fakeClassifier(emptyTree), resolver })
+		const post = seen[0]?.anchorPosterior
+		expect(post, "default-on should inject a country posterior for a clear in-map address").toBeDefined()
+		const keys = Object.keys(post ?? {})
+		expect(keys).toHaveLength(1)
+		expect(keys[0]).toMatch(/^[A-Z]{2}$/) // a 2-letter in-map country
+		expect(seen[0]?.anchorWeight).toBe(1.0)
 	})
 
 	test("a confident in-map guess injects an anchorPosterior + weight", async () => {

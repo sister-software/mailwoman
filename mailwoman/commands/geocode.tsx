@@ -99,11 +99,12 @@ const OptionsSchema = zod.object({
 	placeCountry: zod
 		.boolean()
 		.optional()
-		.default(false)
+		.default(true)
 		.describe(
-			"Enable the #244 coarse-placer soft country prior. A confident whole-string country guess biases the " +
-				"resolver's locality/region ranking toward the right country (never filters); most useful when no " +
-				"--default-country / locale pins it. Off by default (byte-stable). See the coarse-placer soft-signal spec."
+			"The #244 coarse-placer soft country prior (open-set rule). A confident whole-string country guess biases " +
+				"the resolver's locality/region ranking toward the right country (never filters); most useful when no " +
+				"--default-country / locale pins it. ON by default after the M2 misroute gate (0 misroutes); pass " +
+				"--no-place-country to disable."
 		),
 	placeCountryThreshold: zod
 		.number()
@@ -183,9 +184,10 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 	// Coarse-placer soft country prior (#244) — opt-in. Loads the int8 model bundled in @mailwoman/core
 	// at the requested abstention threshold; a confident in-map guess feeds the resolver's anchorPosterior.
-	// The M2 open-set reject rule (reject on in-map MASS 1-P(OTHER), route on the in-map argmax) strictly
-	// dominates the max-prob rule — on the assembled gate it lifts in-map right-country 85.3→91.2% with 0
-	// regressions (see docs/articles/evals/2026-06-14-coarse-placer-m2-pipeline-gate.md), so the flag uses it.
+	// The M2 open-set reject rule (reject on in-map MASS 1-P(OTHER), route on the in-map argmax) lifts in-map
+	// right-country 85.3→91.2% with 0 regressions / 0 misroutes (the pipeline + misroute gates), so it's ON
+	// by default. --no-place-country disables it (passes `false`); a custom --place-country-threshold builds
+	// an explicit placer instead of the default-on bundled one.
 	const placer = options.placeCountry
 		? await CoarsePlacer.fromBundled({ abstainBelow: options.placeCountryThreshold, openSet: true })
 		: undefined
@@ -199,7 +201,8 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			defaultCountry: resolverDefaultCountry(options) || undefined,
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
-			...(placer ? { placeCountry: (t: string) => placer.predict(t) } : {}),
+			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).
+			placeCountry: placer ? (t: string) => placer.predict(t) : false,
 		})
 		return options.format === "text" ? formatText(result) : JSON.stringify(result, null, 2)
 	} finally {

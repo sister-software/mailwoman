@@ -27,7 +27,8 @@ import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } f
 import { existsSync } from "node:fs"
 
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
-import { type InterpCalibrationTable, interpCalibrationForRegion } from "./interp-calibration.js"
+import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.js"
+import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.js"
 
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `admin`.
@@ -85,16 +86,19 @@ export interface GeocodeDeps {
 	 */
 	interpCalibration?: number | InterpCalibrationTable
 	/**
-	 * Coarse country router (#244, soft prior). A `(text) → { country, confidence }` predictor —
-	 * typically `(t) => placer.predict(t)` for a `CoarsePlacer.fromBundled({ abstainBelow: 0.9 })`. A
+	 * Coarse country router (#244, soft prior). A `(text) → { country, confidence }` predictor. A
 	 * confident IN-MAP guess becomes an `anchorPosterior` the resolver's #369 re-rank boosts (never
 	 * filters); abstain (`null`) / off-map (`OTHER`) are no-ops, and an explicit
-	 * {@link defaultCountry} still wins (we never overwrite a caller-set posterior). Off by default →
-	 * byte-stable. Mostly orthogonal to street geocoding (the situs shards are state-keyed) but
-	 * hardens the admin-tier locality disambiguation, especially when no {@link defaultCountry} is
-	 * pinned. See docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md.
+	 * {@link defaultCountry} still wins (we never overwrite a caller-set posterior).
+	 *
+	 * **Default-on (#244 M2, after the misroute gate):**
+	 *
+	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is
+	 *   lazy-loaded and applied. Degrades to no prior if the model can't be resolved.
+	 * - A function → use it (a custom placer / threshold).
+	 * - `false` → disabled (no prior; the pre-M2 byte-stable behavior).
 	 */
-	placeCountry?: (text: string) => { country: string | null; confidence: number }
+	placeCountry?: PlaceCountryFn | false
 }
 
 /**
@@ -254,10 +258,13 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 
 	const opts: ResolveOpts = {}
 	if (deps.defaultCountry) opts.defaultCountry = deps.defaultCountry
-	// Coarse country router (#244, soft prior). A confident in-map guess feeds the resolver's
+	// Coarse country router (#244, soft prior) — DEFAULT-ON (#244 M2). undefined → the bundled placer;
+	// a function → that placer; false → disabled. A confident in-map guess feeds the resolver's
 	// anchorPosterior re-rank; abstain/OTHER are no-ops and an explicit defaultCountry isn't disturbed.
-	if (deps.placeCountry) {
-		const placed = deps.placeCountry(input)
+	const placeCountry: PlaceCountryFn | null =
+		deps.placeCountry === false ? null : (deps.placeCountry ?? (await loadDefaultPlaceCountry()))
+	if (placeCountry) {
+		const placed = placeCountry(input)
 		if (placed.country && placed.country !== "OTHER" && !opts.anchorPosterior) {
 			opts.anchorPosterior = { [placed.country]: placed.confidence }
 			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT

@@ -31,6 +31,9 @@ export default defineConfig({
 				find: "@mailwoman/core/parser/proposal-pipeline",
 				replacement: resolve(here, "core/parser/proposal-pipeline.ts"),
 			},
+			// coarse-placer (#244) is a single-file subpath (no index.ts), so the generic core/$1/index.ts
+			// rule below would mis-resolve it. Map it to the file directly.
+			{ find: "@mailwoman/core/coarse-placer", replacement: resolve(here, "core/coarse-placer/coarse-placer.ts") },
 			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolve(here, "core/$1/index.ts") },
 			{ find: /^@mailwoman\/core$/, replacement: resolve(here, "core/index.ts") },
 			// Sibling workspaces.
