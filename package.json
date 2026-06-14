@@ -84,6 +84,7 @@
 		"corpus",
 		"formatter",
 		"record",
+		"match",
 		"neural",
 		"neural-web",
 		"neural-weights-en-us",

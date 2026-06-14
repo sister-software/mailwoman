@@ -4761,6 +4761,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/match@workspace:match":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/match@workspace:match"
+  dependencies:
+    "@types/node": "npm:^25.9.2"
+    fastest-levenshtein: "npm:^1.0.16"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/neural-web@workspace:*, @mailwoman/neural-web@workspace:neural-web":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-web@workspace:neural-web"

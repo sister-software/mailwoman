@@ -28,6 +28,7 @@
 		{ "path": "./corpus" },
 		{ "path": "./formatter" },
 		{ "path": "./record" },
+		{ "path": "./match" },
 		{ "path": "./neural" },
 		{ "path": "./neural-web" },
 		{ "path": "./normalize" },
