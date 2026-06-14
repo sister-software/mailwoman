@@ -84,6 +84,15 @@ const OptionsSchema = zod.object({
 			"Explicit path to an interpolation SQLite shard. Bypasses the per-state shard selection. " +
 				"Use when you already know the right shard or are testing a specific file."
 		),
+	interpCalibration: zod
+		.number()
+		.optional()
+		.default(1.7)
+		.describe(
+			"Conformal calibration multiplier for the interpolation tier's reported uncertainty_m (#374). " +
+				"The raw half-segment radius covers only ~72% of true errors; the default 1.7 (Travis-County " +
+				"calibration, 2026-06-14) lifts that to a ~90% bound. Pass 1 to report the raw heuristic radius."
+		),
 	format: zod
 		.enum(["json", "text"])
 		.optional()
@@ -261,7 +270,14 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 			const enrichedResolveOpts: ResolveOpts = { ...baseResolveOpts }
 			if (addressPointLookup) enrichedResolveOpts.addressPoints = addressPointLookup
-			if (interpolationLookup) enrichedResolveOpts.interpolation = interpolationLookup
+			if (interpolationLookup) {
+				enrichedResolveOpts.interpolation = interpolationLookup
+				// Honest interp radius: the raw half-segment heuristic underestimates the true spread
+				// (~72% coverage); the calibration multiplier reports a ~90% bound. Default 1.7 (#374).
+				if (options.interpCalibration && options.interpCalibration !== 1) {
+					enrichedResolveOpts.interpolationRadiusCalibration = options.interpCalibration
+				}
+			}
 
 			// Single resolve pass on the raw-neural parse with the coordinate tiers wired — the eval's exact
 			// path (parse → resolveTree(addressPoints, interpolation)). Always resolves (admin even with no

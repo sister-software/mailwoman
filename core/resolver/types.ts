@@ -276,6 +276,18 @@ export interface ResolveOpts {
 	 * byte-stable. Independent of {@link addressPoints} (either, both, or neither may be passed).
 	 */
 	interpolation?: InterpolationLookup
+	/**
+	 * Conformal calibration multiplier for the interpolation tier's `uncertainty_m` (#374). The raw
+	 * radius is half the matched TIGER segment length — an honest-but-TIGHT prior: a split-conformal
+	 * calibration on 1562 Travis-County interp hits (2026-06-14) found it covers only ~72% of true
+	 * errors, and that multiplying by **Q̂ ≈ 1.70** yields a calibrated 90% bound (91.5% empirical).
+	 * When set, `applyInterpolation` reports `uncertainty_m = round(raw × this)` and preserves the raw
+	 * value under `uncertainty_raw_m`. Absent = raw heuristic (byte-stable). The factor is the CALLER's
+	 * (it's a property of the calibration set, not the geometry); the geocode CLI passes the TX-derived
+	 * 1.70. Re-calibrate on a multi-region holdout before treating it as national-exact.
+	 * Report: docs/articles/evals/2026-06-14-interp-radius-calibration.md.
+	 */
+	interpolationRadiusCalibration?: number
 	hierarchyCompletion?: boolean
 	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */
 	cityStateFallback?: boolean
