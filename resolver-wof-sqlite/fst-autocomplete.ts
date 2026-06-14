@@ -53,6 +53,15 @@ interface BfsItem {
 	tokens: string[]
 }
 
+/** Max accepting entries collected per BFS branch — keeps one dense branch from starving the search. */
+const PER_BRANCH = 4
+
+/** The top-`k` entries by importance (descending). Avoids sorting/allocating when `entries` is small. */
+function topByImportance(entries: readonly PlaceEntry[], k: number): PlaceEntry[] {
+	if (entries.length <= k) return [...entries]
+	return [...entries].sort((a, b) => b.importance - a.importance).slice(0, k)
+}
+
 /**
  * Autocomplete from the current prefix. Returns suggestions ranked importance-descending.
  */
@@ -89,17 +98,22 @@ export function autocomplete(fst: FstMatcher, query: string, opts: AutocompleteO
 		for (const cont of fst.continuations(prefixState)) {
 			if (!cont.token.startsWith(partial)) continue
 			// This edge completes the typed partial token — its target is a real match at depth+1.
-			for (const entry of fst.accepting(cont.targetState)) addSuggestion(seen, entry, complete.length + 1, [cont.token])
+			for (const entry of topByImportance(fst.accepting(cont.targetState), PER_BRANCH))
+				addSuggestion(seen, entry, complete.length + 1, [cont.token])
 			// BFS a little past it too (multi-token completions: "new yor" → "New York Mills").
 			queue.push({ stateId: cont.targetState, depth: 1, tokens: [cont.token] })
 		}
 	}
 
-	// BFS expansion (shared by both paths) — find nearby completions up to maxExpansionDepth.
-	while (queue.length > 0 && seen.size < maxSuggestions * 3) {
+	// BFS expansion (shared by both paths) — find nearby completions up to maxExpansionDepth. Each
+	// branch contributes only its top PER_BRANCH places: a state like "new london" has dozens of
+	// accepting entries and would otherwise blow the budget before the BFS ever reaches "new york"
+	// (the "new" state has 311 continuations). Per-branch capping keeps the search broad. (#587)
+	while (queue.length > 0 && seen.size < maxSuggestions * 4) {
 		const item = queue.shift()!
 		if (item.depth > maxExpansionDepth) continue
-		for (const entry of fst.accepting(item.stateId)) addSuggestion(seen, entry, depth + item.depth, item.tokens)
+		for (const entry of topByImportance(fst.accepting(item.stateId), PER_BRANCH))
+			addSuggestion(seen, entry, depth + item.depth, item.tokens)
 		if (item.depth < maxExpansionDepth) {
 			for (const cont of fst.continuations(item.stateId)) {
 				queue.push({ stateId: cont.targetState, depth: item.depth + 1, tokens: [...item.tokens, cont.token] })

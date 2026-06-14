@@ -130,4 +130,18 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 	it("returns nothing for an unmatched prefix", () => {
 		expect(autocomplete(matcher, "xyz").suggestions).toEqual([])
 	})
+
+	it("a dense branch does not starve a high-importance sibling (#587 per-branch cap)", () => {
+		// "go" → "diego" (12 low-importance places) + "tham" (one high-importance Gotham). Without the
+		// per-branch cap, the 12 "Go Diego"s blow the budget before "tham" is ever visited, so Gotham
+		// (the place a user most likely wants) is dropped — the real "new → New London not New York" bug.
+		const dense = new FstMatcher([
+			{ edges: new Map([["go", 1]]), places: [] },
+			{ edges: new Map([["diego", 2], ["tham", 3]]), places: [] },
+			{ edges: new Map(), places: Array.from({ length: 12 }, (_, i) => place(100 + i, `Go Diego ${i}`, "locality", 0.1)) },
+			{ edges: new Map(), places: [place(200, "Gotham", "locality", 0.9)] },
+		])
+		const r = autocomplete(dense, "go", { maxSuggestions: 3 })
+		expect(r.suggestions[0]?.name).toBe("Gotham")
+	})
 })
