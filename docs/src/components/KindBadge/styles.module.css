@@ -1,0 +1,29 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Styles for KindBadge — the Stage 2.5 kind-classifier verdict pill. Previously these lived as
+ *   inline style objects on the component; moved here so the markup stays declarative and the
+ *   spacing/typography is themeable.
+ */
+
+.kindBadge {
+	margin-bottom: 0.5rem;
+	font-size: 0.9rem;
+}
+
+.summary {
+	cursor: pointer;
+	user-select: none;
+}
+
+.confidence {
+	opacity: 0.7;
+}
+
+.alternatives {
+	margin: 0.25rem 0 0 1rem;
+	padding: 0;
+	list-style: disc;
+}
