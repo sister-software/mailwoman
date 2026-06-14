@@ -4814,6 +4814,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/record@workspace:record":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/record@workspace:record"
+  dependencies:
+    "@mailwoman/formatter": "workspace:*"
+    "@types/node": "npm:^25.9.2"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/resolver-wof-sqlite@workspace:*, @mailwoman/resolver-wof-sqlite@workspace:resolver-wof-sqlite":
   version: 0.0.0-use.local
   resolution: "@mailwoman/resolver-wof-sqlite@workspace:resolver-wof-sqlite"

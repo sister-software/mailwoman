@@ -40,6 +40,8 @@ export default defineConfig({
 			{ find: /^@mailwoman\/corpus$/, replacement: resolve(here, "corpus/src/index.ts") },
 			{ find: /^@mailwoman\/formatter\/(.+)$/, replacement: resolve(here, "formatter/$1.ts") },
 			{ find: /^@mailwoman\/formatter$/, replacement: resolve(here, "formatter/index.ts") },
+			{ find: /^@mailwoman\/record\/(.+)$/, replacement: resolve(here, "record/$1.ts") },
+			{ find: /^@mailwoman\/record$/, replacement: resolve(here, "record/index.ts") },
 			{ find: "@mailwoman/neural/tokenizer", replacement: resolve(here, "neural/tokenizer.ts") },
 			{ find: /^@mailwoman\/neural$/, replacement: resolve(here, "neural/index.ts") },
 			{ find: /^@mailwoman\/query-shape$/, replacement: resolve(here, "query-shape/index.ts") },

@@ -1,0 +1,32 @@
+{
+	"name": "@mailwoman/record",
+	"version": "4.8.1",
+	"description": "Lean, plain-TypeScript record schema + per-field normalizers for the geocode-first matcher. Address-first: the canonical PostalAddress record composes parser components, the formatter's match key, and a resolved geocode; organization + contact records build on the same spine.",
+	"license": "AGPL-3.0-only",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "record"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js",
+		"./address": "./out/address.js"
+	},
+	"dependencies": {
+		"@mailwoman/formatter": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^25.9.2"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}
