@@ -24,6 +24,8 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } from "@mailwoman/core/resolver"
 import { existsSync } from "node:fs"
 
+import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
+
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `admin`.
  *   - `address_point` — rooftop / parcel centroid; uncertainty_m is a small floor (~1 m)
@@ -124,33 +126,77 @@ export interface ShardLookupFactory {
 	StreetInterpolator: new (opts: { dbPath: string }) => InterpolationLookup & { close(): void }
 }
 
+interface ShardCacheEntry extends StateShards {
+	_ap?: { close(): void }
+	_ip?: { close(): void }
+	/** The resolved on-disk paths this entry was opened from — reload() diffs against these. */
+	apPath: string | null
+	ipPath: string | null
+}
+
 /**
  * Opens + CACHES per-state situs/interpolation lookups so a batch geocoding many addresses in one
- * state opens that state's (possibly multi-GB) shards once, not once per row. Call {@link close} when
- * done to release every cached handle.
+ * state opens that state's (possibly multi-GB) shards once, not once per row. Versioned-data aware
+ * (#485): paths resolve through the `releases.json` manifest (legacy unversioned fallback), and
+ * {@link reload} performs a zero-downtime atomic switchover when a new version is published. Call
+ * {@link close} when done to release every cached handle.
  */
 export class ShardProvider {
 	readonly #factory: ShardLookupFactory
 	readonly #dataRoot: string
-	readonly #cache = new Map<string, StateShards & { _ap?: { close(): void }; _ip?: { close(): void } }>()
+	readonly #cache = new Map<string, ShardCacheEntry>()
+	/** Previous-generation handles, retired by reload() and closed on the NEXT reload (one-gen grace). */
+	#retired: Array<{ close(): void }> = []
+	#manifest: DataReleaseManifest | null
 
 	constructor(factory: ShardLookupFactory, dataRoot: string) {
 		this.#factory = factory
 		this.#dataRoot = dataRoot
+		this.#manifest = readReleaseManifest(dataRoot)
+	}
+
+	#open(stateSlug: string): ShardCacheEntry {
+		const apPath = resolveShardPath(this.#dataRoot, "address-points", stateSlug, this.#manifest)
+		const ipPath = resolveShardPath(this.#dataRoot, "interpolation", stateSlug, this.#manifest)
+		const ap = apPath ? new this.#factory.AddressPointSqliteLookup(apPath) : undefined
+		const ip = ipPath ? new this.#factory.StreetInterpolator({ dbPath: ipPath }) : undefined
+		return { addressPoints: ap, interpolation: ip, _ap: ap, _ip: ip, apPath, ipPath }
 	}
 
 	readonly for: ShardResolver = (stateSlug) => {
 		if (!stateSlug) return {}
-		const cached = this.#cache.get(stateSlug)
-		if (cached) return { addressPoints: cached.addressPoints, interpolation: cached.interpolation }
+		let entry = this.#cache.get(stateSlug)
+		if (!entry) {
+			entry = this.#open(stateSlug)
+			this.#cache.set(stateSlug, entry)
+		}
+		return { addressPoints: entry.addressPoints, interpolation: entry.interpolation }
+	}
 
-		const apPath = selectAddressPointsDb(this.#dataRoot, stateSlug)
-		const ipPath = selectInterpolationDb(this.#dataRoot, stateSlug)
-		const ap = apPath ? new this.#factory.AddressPointSqliteLookup(apPath) : undefined
-		const ip = ipPath ? new this.#factory.StreetInterpolator({ dbPath: ipPath }) : undefined
-		const entry = { addressPoints: ap, interpolation: ip, _ap: ap, _ip: ip }
-		this.#cache.set(stateSlug, entry)
-		return { addressPoints: ap, interpolation: ip }
+	/** The current data-release versions ({@link readReleaseManifest}), or null in legacy mode. */
+	versions(): DataReleaseManifest | null {
+		return this.#manifest ? { ...this.#manifest } : null
+	}
+
+	/**
+	 * Re-read the manifest and atomically swap any cached shard whose resolved path changed. New
+	 * requests see the new version immediately; the old handles are RETIRED and closed on the next
+	 * reload (one-generation grace — safe because find() is synchronous, so no in-flight query can
+	 * still hold a handle once a request yields). Returns the new version map.
+	 */
+	reload(): DataReleaseManifest | null {
+		for (const h of this.#retired) h.close()
+		this.#retired = []
+		this.#manifest = readReleaseManifest(this.#dataRoot)
+		for (const [slug, old] of this.#cache) {
+			const apPath = resolveShardPath(this.#dataRoot, "address-points", slug, this.#manifest)
+			const ipPath = resolveShardPath(this.#dataRoot, "interpolation", slug, this.#manifest)
+			if (apPath === old.apPath && ipPath === old.ipPath) continue // unchanged — keep the open handle
+			this.#cache.set(slug, this.#open(slug))
+			if (old._ap) this.#retired.push(old._ap)
+			if (old._ip) this.#retired.push(old._ip)
+		}
+		return this.versions()
 	}
 
 	close(): void {
@@ -158,7 +204,9 @@ export class ShardProvider {
 			e._ap?.close()
 			e._ip?.close()
 		}
+		for (const h of this.#retired) h.close()
 		this.#cache.clear()
+		this.#retired = []
 	}
 }
 
