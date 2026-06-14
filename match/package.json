@@ -12,6 +12,7 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": "./out/index.js",
+		"./blocking": "./out/blocking.js",
 		"./comparators": "./out/comparators.js",
 		"./fellegi-sunter": "./out/fellegi-sunter.js",
 		"./em": "./out/em.js",
