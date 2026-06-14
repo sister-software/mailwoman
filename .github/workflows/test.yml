@@ -47,3 +47,10 @@ jobs:
 
       - name: Test
         run: yarn ci:test
+
+      # Packs every published workspace + installs the tarballs into a throwaway project (no monorepo
+      # hoisting) + runs the compiled CLI. Catches the class of bug that shipped in v4.8.0: an
+      # undeclared runtime dep, an unshipped file, or a command module with an eager top-level side
+      # effect — all invisible in-repo, all fatal to a fresh `npm install`.
+      - name: Clean-install smoke test
+        run: yarn ci:smoke
