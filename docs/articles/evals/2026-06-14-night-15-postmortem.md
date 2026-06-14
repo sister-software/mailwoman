@@ -3,7 +3,7 @@
 _The autonomous shift after the v4.7.0 geocoder-campaign ship. Plan: the six workstreams A–F of
 `nightshift/2026-06-14-NIGHT-SHIFT-PLAN.md` — reconcile re-gate, coarse-placer M3, multi-region interp
 recalibration, autocomplete, the marquee client-side demo geocoder, and issue housekeeping. All six
-landed (D was already shipped); the marquee shipped working and browser-verified. Eight PRs, six issue
+landed (D was already shipped); the marquee shipped working and browser-verified. Eight PRs, five issue
 closures, plus an unplanned CI rescue that unblocked the whole shift._
 
 ## What shipped
@@ -35,9 +35,14 @@ overconfident in rural states (dangerous) and over-conservative in dense cities.
 seed per-region calibration table + reusable tooling. PR-and-flag (wiring per-region changes shipped
 `uncertainty_m`).
 
-**D — autocomplete:** Already shipped (#547, `mailwoman autocomplete`, 21 tests). The plan's "unwired"
-was outdated; verified working (`autocomplete "San"` → ranked San Diego/…). The demo *typeahead* is the
-remaining piece (folded into E's follow-ups).
+**D — autocomplete (CLI #547 + algorithm fix #588 + demo typeahead in #585):** The CLI was already
+shipped (#547, 21 tests); the plan's "unwired" was outdated. Wiring it into the demo surfaced (per
+DeepSeek's hint) that the FST `autocomplete` was **token-level, not char-level** — "New Yor" → "Denver",
+and "New" → "New London" ×4 (no name-dedup, off ranking). Fixed it (**#588**): on a failed walk, walk
+the complete prefix and prefix-filter continuations by `startsWith(partial)`; added per-branch importance
+capping (`PER_BRANCH = 4`) + opt-in `dedupeByName`; 7 synthetic unit tests. Now `New Yor`→New York,
+`Chic`→Chicago, `San Fr`→San Francisco. The demo box shows a live "Did you mean:" chip row (#585),
+deploy-verified. Only the *address-level* (street-prefix) typeahead remains, deferred to **#587**.
 
 **E — the marquee: client-side street geocoder (#583 spec + #585 working demo):** **Shipped working and
 browser-verified.** Type a US address → exact building coordinate, fully in the browser, no server.
@@ -55,8 +60,8 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
   now assembled in source order). The #377 UX cluster (span-highlight, hierarchy, candidates, timing) was
   already built; this shift added the live street tier + precision caption on top.
 
-**F — issue housekeeping:** Closed **#483, #484, #523, #560** (verified shipped); triaged **#374, #481,
-#368** (kept open with status); filed **#582**.
+**F — issue housekeeping:** Closed **#483, #484, #523, #560, #397** (verified shipped); triaged **#374,
+#481, #368** (kept open with status); filed **#582, #587**.
 
 ## What went well
 
@@ -107,24 +112,28 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
   the data acquisition?
 - **Promote anything?** Nothing was promoted to a shipped default tonight (all PR-and-flag). The
   marquee demo is a docs deploy, not a model release.
-- **Autocomplete typeahead — needs real work, not a wire.** I prototyped wiring the FST autocomplete
-  into the demo's address box and found (confirming DeepSeek's hint that "there's more here than
-  described") that the FST `autocomplete` is **token-level, not char-level**: "New Yor" returns nothing
-  or garbage ("Denver"), and even complete tokens have quality issues ("New" → "New London" ×4, not New
-  York — no name-dedup, off importance ranking). It's fine for the CLI's "complete a place word"
-  (#547) but not a Google-Maps char-level typeahead. Reverted the wiring (a demo suggesting "Denver" for
-  "New Yor" fails the hostile-interviewer test). Real path: char/partial-token completion + name-dedup +
-  importance ranking in `fst-autocomplete.ts`, then the address-level variant (street index). The 3
-  options are in the demo spec (#583).
+- **Autocomplete typeahead — fixed and shipped (#588 + #585), address-level variant deferred.** My first
+  wire surfaced (confirming DeepSeek's hint that "there's more here than described") that the FST
+  `autocomplete` was **token-level, not char-level**: "New Yor" returned garbage ("Denver"), and even
+  complete tokens had quality issues ("New" → "New London" ×4, not New York — no name-dedup, off
+  importance ranking). Rather than ship a demo that fails the hostile-interviewer test, I fixed the
+  algorithm: when the FST walk fails on a partial last token, walk the complete prefix and prefix-filter
+  continuations by `startsWith(partial)`; added per-branch importance capping (`PER_BRANCH = 4`, fixes
+  the "New London" starvation) and an opt-in `dedupeByName`. Verified `New Yor`→New York, `Chic`→Chicago,
+  `San Fr`→San Francisco, `New`→New York|New Haven|New London; 7 new synthetic unit tests, all green.
+  The demo box now shows a live "Did you mean:" chip row (#585), deploy-verified in the production build.
+  **Open for the operator:** only the *address-level* (street-prefix) typeahead remains — a separate
+  street index, documented as a follow-up in #587. The place-level typeahead the plan asked for is done.
 
 ## Concrete next steps
 
-- Merge **#579 first** (greens CI), then the rest (#580/#581/#583/#584/#585).
+- Merge **#579 first** (greens CI), then the rest (#580/#581/#583/#584/#585/#588). #588 (autocomplete
+  algorithm) lands before #585 (demo) so the typeahead wires against the fixed `fst-autocomplete.ts`.
 - **E go-wide:** finish hosting NY + CA (uploading), add them to `HOSTED_STREET_SLUGS`, verify a CA
   address in-browser (closes the spec's go-wide latency decision on the real 3.3 GB shard).
-- **E UX (#377):** tier caption ("exact" / "±N m"), span-highlight, resolved-hierarchy tree, the
-  place-level autocomplete typeahead (D into the search box). Then lift the cascade into a Web Worker +
-  the capped Service Worker cache.
+- **E UX (#377):** tier caption ("exact" / "±N m") and place-level autocomplete typeahead are shipped;
+  remaining is span-highlight, the resolved-hierarchy tree, the address-level (street-prefix) typeahead
+  (#587), then lifting the cascade into a Web Worker + the capped Service Worker cache.
 - **B:** int8-quantize is done; the broad off-map pull is the next accuracy lever.
 - **C:** finish the 50-state sweep (heat-managed) → complete the calibration table.
 
@@ -133,8 +142,8 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
 | metric                  | value                                                          |
 | ----------------------- | -------------------------------------------------------------- |
 | shift window            | 2026-06-14 03:47 → ~15:00 UTC                                  |
-| PRs opened              | 8 (#579, #580, #581, #583, #584, #585, #586) + #582 issue       |
-| issues closed           | 4 (#483, #484, #523, #560) + 3 triaged                         |
+| PRs opened              | 8 (#579, #580, #581, #583, #584, #585, #586, #588) + #582/#587 issues |
+| issues closed           | 5 (#483, #484, #523, #560, #397) + 3 triaged                   |
 | models trained          | 1 (coarse-placer M3 retrain, 34 s CPU)                         |
 | Modal / GPU time        | 0 (CPU-only shift, as planned)                                 |
 | marquee verification    | 4 states in-browser (DC/MI/NY/CA), all exact, zero errors      |
