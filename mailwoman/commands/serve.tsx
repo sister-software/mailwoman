@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url"
 import { useEffect, useState } from "react"
 import zod from "zod"
 import type { CommandComponent } from "../sdk/cli.js"
-import { AddressRouter, ResolveRouter } from "../server/index.js"
+import { AddressRouter, GeocodeRouter, ResolveRouter } from "../server/index.js"
 
 const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
 	options: { cpus = availableParallelism() },
@@ -110,8 +110,10 @@ const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { p
 	useEffect(() => {
 		const app = express()
 
-		app.use(express.json())
+		// 2mb body cap accommodates a full /api/batch (up to MAILWOMAN_BATCH_MAX addresses).
+		app.use(express.json({ limit: "2mb" }))
 		app.use(AddressRouter)
+		app.use(GeocodeRouter)
 		app.use(ResolveRouter)
 
 		// `mailwoman/server/static/` lives next to the compiled `mailwoman/out/commands/serve.js`,

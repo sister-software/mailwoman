@@ -103,6 +103,13 @@ Make it a callable geocoder. Reverse geocoding API (#484, engine built+green). P
 (#485 — batch, RemoteResolver, observability). Autocomplete (#190, FST built). Demo UX (#377). All
 independent of Coverage; engines exist, this is API surface + wiring.
 
+- **✅ Street-level `/api/geocode` + `/api/batch` (2026-06-14, PR #571 — #485 piece 1).** The server was
+  admin-only (`/api/resolve`); now it runs the full cascade. Extracted the cascade into
+  `mailwoman/geocode-core.ts` (`geocodeAddress` + a per-state `ShardProvider` cache), refactored the CLI
+  onto it (one implementation, re-validated byte-for-byte), and added `/api/batch` (bounded concurrency,
+  per-row error isolation, BATCH_MAX guardrail). Tests 5; full server+resolver suite 49/49.
+- **Open #485:** RemoteResolver adapter, observability (latency/tier/health), versioned data switchover.
+
 ### Cross-cutting — Arbitration (#478) — **Opus**
 
 Spec the policy-registry + reconcile + abstention layer now (so the pipeline is ≥v0 by construction),
