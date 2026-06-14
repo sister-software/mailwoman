@@ -40,27 +40,47 @@ import {
 	type DualRole,
 	type FstMatcherLike,
 	type FstProvenanceLike,
+	HOSTED_STREET_SLUGS,
 	loadFstGazetteer,
 	type MailwomanClassifierLike,
 	type MailwomanLookupLike,
 	neuralClassifierLoadUrls,
+	regionToStateSlug,
 	type ResolvedHit,
+	streetShardUrl,
 } from "../../shared/resources.tsx"
 
-import type { ReleasesManifest } from "../../shared/demo-helpers.ts"
+import type { ReleasesManifest, StreetResolution } from "../../shared/demo-helpers.ts"
 import {
 	DEFAULT_ADDRESS,
 	DEFAULT_LOCALE,
 	EXAMPLE_ADDRESSES,
 	flattenTree,
+	resolveStreet,
 	runCascade,
 } from "../../shared/demo-helpers.ts"
+
+import type { HttpvfsAddressPointLookup, HttpvfsInterpolator } from "../../shared/httpvfs-street.ts"
+
+/** Per-region interp-radius conformal factor (#374); default for unmeasured regions. */
+const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
+const INTERP_RADIUS_DEFAULT = 1.95
+
+/** Spans that together make up the street name — assembled in source order for the situs/interp query. */
+const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
+
+/** The per-state street lookups, loaded together (lazy by region). */
+interface StreetLookups {
+	situs: HttpvfsAddressPointLookup
+	interp: HttpvfsInterpolator
+}
 import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 
 import {
 	clearBbox,
 	currentDocusaurusTheme,
 	drawApproxCircle,
+	drawRadiusCircle,
 	drawPlaceGeometry,
 	fetchBasemapSource,
 	geomBounds,
@@ -150,6 +170,17 @@ const DemoApp: React.FC = () => {
 	const lookupPromiseRef = useRef<Promise<MailwomanLookupLike> | null>(null)
 	const [text, setText] = useState(initialAddress)
 	const [busy, setBusy] = useState(false)
+	// Place-autocomplete (#190/#587): suggestions for the locality the user is typing (the segment after
+	// the last comma), from the already-loaded FST gazetteer. Place-level; the address-level variant is
+	// a follow-up (demo spec). Empty when nothing matches, so the chip row only shows when useful.
+	const [suggestions, setSuggestions] = useState<Array<{ name: string; placetype: string }>>([])
+	// Keyboard-highlighted suggestion (combobox active descendant). -1 = none highlighted; ↑/↓ move it,
+	// Enter picks it, Esc dismisses. Reset to -1 whenever the suggestion list changes.
+	const [activeSuggestion, setActiveSuggestion] = useState(-1)
+	// One-shot guard: picking a suggestion rewrites `text` to the chosen name, which would otherwise
+	// re-trigger the autocomplete effect and immediately re-suggest the place just chosen. Set on pick,
+	// consumed by the next effect run so the list stays closed until the user types again.
+	const suppressAutocompleteRef = useRef(false)
 	const [parseStage, setParseStage] = useState(-1)
 	const [result, setResult] = useState<DemoResult | null>(null)
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
@@ -172,6 +203,9 @@ const DemoApp: React.FC = () => {
 	// resolves share one fetch.
 	const anchorLookupRef = useRef<Map<string, { lat: number; lon: number }> | null>(null)
 	const polygonDbRef = useRef<Promise<PolygonDb> | null>(null)
+	// Street tier (#377): per-state situs/interp httpvfs lookups, lazy-loaded by parsed region and
+	// cached. Held as the in-flight promise so a fast second submit on the same state shares one load.
+	const streetLookupsRef = useRef<Map<string, Promise<StreetLookups>>>(new Map())
 
 	// Sync ?q= when the operator edits the address. replaceState avoids polluting back-button
 	// history with every keystroke; only the latest state lands in the URL.
@@ -478,6 +512,15 @@ const DemoApp: React.FC = () => {
 			const marker = new maplibre.Marker({ color: "#e0367c" }).setLngLat([candidate.lon, candidate.lat]).addTo(map)
 			markerRef.current = marker
 
+			// Street-level tier (#377): draw the honest uncertainty circle (10 m exact building / calibrated
+			// interp radius) and zoom in — no admin polygon for a precise point. Takes precedence over the
+			// admin polygon/bbox path below.
+			if (candidate.tier && candidate.uncertaintyM != null) {
+				drawRadiusCircle(map, candidate.lat, candidate.lon, candidate.uncertaintyM)
+				map.flyTo({ center: [candidate.lon, candidate.lat], zoom: candidate.tier === "address_point" ? 17 : 15 })
+				return
+			}
+
 			// Prefer the crisp admin polygon (lazily-loaded sibling DB) over the bbox rectangle. The points
 			// DB only carries min/max lat-lon, so without this the map draws a box around the place; the
 			// polygon DB ships the real, simplified boundary keyed by the same WOF id.
@@ -563,6 +606,30 @@ const DemoApp: React.FC = () => {
 		}
 	}, [lookup, lookupLoader])
 
+	// Lazy-load (and cache) the situs + interp httpvfs lookups for a parsed region's state shard. Both
+	// DBs range-load from R2 like wof-hot.db; a lookup touches ~KB. Returns null if the shards aren't
+	// hosted for this state (the street tier then no-ops and the admin cascade answers).
+	const ensureStreetLookups = useCallback(
+		async (slug: string): Promise<StreetLookups | null> => {
+			let p = streetLookupsRef.current.get(slug)
+			if (!p) {
+				p = (async () => {
+					const { loadHttpvfsDb } = await import("../../shared/httpvfs-resolver")
+					const { HttpvfsAddressPointLookup, HttpvfsInterpolator } = await import("../../shared/httpvfs-street")
+					const [situsW, interpW] = await Promise.all([
+						loadHttpvfsDb(streetShardUrl(slug, "situs"), sqljsBaseUrl),
+						loadHttpvfsDb(streetShardUrl(slug, "interp"), sqljsBaseUrl),
+					])
+					return { situs: new HttpvfsAddressPointLookup(situsW), interp: new HttpvfsInterpolator(interpW) }
+				})()
+				p.catch(() => streetLookupsRef.current.delete(slug))
+				streetLookupsRef.current.set(slug, p)
+			}
+			return p
+		},
+		[sqljsBaseUrl]
+	)
+
 	// Warm the place index + polygon DB during browser idle time. The cold path (UMD script + worker
 	// spawn + WASM compile + ~40 SERIAL 64 KB range round-trips — sql.js-httpvfs fetches via sync XHR)
 	// costs seconds on a cold cache; paying it while the user reads the page / types means the first
@@ -596,6 +663,81 @@ const DemoApp: React.FC = () => {
 			else window.clearTimeout(idleId)
 		}
 	}, [lookupLoader, lookup, ensureLookup, manifest, selectedVersion, sqljsBaseUrl])
+
+	// Place-autocomplete: debounced FST prefix walk over the locality being typed (the segment after the
+	// last comma). Runs against the in-memory gazetteer FST already loaded for the parser — no fetch,
+	// microsecond walk. dedupeByName so the dropdown isn't four "New London"s. (#587)
+	useEffect(() => {
+		if (suppressAutocompleteRef.current) {
+			suppressAutocompleteRef.current = false
+			setSuggestions([])
+			setActiveSuggestion(-1)
+			return
+		}
+		const acQuery = (text.includes(",") ? text.slice(text.lastIndexOf(",") + 1) : text).trim()
+		if (!fstMatcher || acQuery.length < 2 || /^\d/.test(acQuery)) {
+			setSuggestions([])
+			setActiveSuggestion(-1)
+			return
+		}
+		const handle = window.setTimeout(async () => {
+			try {
+				const { autocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst-autocomplete")
+				const res = autocomplete(fstMatcher as unknown as Parameters<typeof autocomplete>[0], acQuery, {
+					maxSuggestions: 6,
+					dedupeByName: true,
+				})
+				setSuggestions(res.suggestions.map((s) => ({ name: s.name, placetype: s.placetype })))
+				setActiveSuggestion(-1)
+			} catch {
+				setSuggestions([])
+				setActiveSuggestion(-1)
+			}
+		}, 150)
+		return () => window.clearTimeout(handle)
+	}, [text, fstMatcher])
+
+	/** Fill a chosen place — replace the locality segment the user was typing (after the last comma). */
+	const onPickSuggestion = useCallback((name: string) => {
+		suppressAutocompleteRef.current = true
+		setText((cur) => (cur.includes(",") ? `${cur.slice(0, cur.lastIndexOf(",") + 1)} ${name}` : name))
+		setSuggestions([])
+		setActiveSuggestion(-1)
+	}, [])
+
+	/**
+	 * Combobox keyboard nav over the "Did you mean" suggestions: ↓/↑ move the highlight (clamped),
+	 * Enter accepts the highlighted one (and suppresses the form submit), Esc dismisses the list. With
+	 * nothing highlighted, Enter falls through to the normal submit so typing an address + Enter still
+	 * parses.
+	 */
+	const onInputKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLInputElement>) => {
+			if (suggestions.length === 0) return
+			switch (e.key) {
+				case "ArrowDown":
+					e.preventDefault()
+					setActiveSuggestion((i) => Math.min(i + 1, suggestions.length - 1))
+					break
+				case "ArrowUp":
+					e.preventDefault()
+					setActiveSuggestion((i) => Math.max(i - 1, 0))
+					break
+				case "Enter":
+					if (activeSuggestion >= 0 && activeSuggestion < suggestions.length) {
+						e.preventDefault()
+						onPickSuggestion(suggestions[activeSuggestion]!.name)
+					}
+					break
+				case "Escape":
+					e.preventDefault()
+					setSuggestions([])
+					setActiveSuggestion(-1)
+					break
+			}
+		},
+		[suggestions, activeSuggestion, onPickSuggestion]
+	)
 
 	const onSubmit = useCallback(
 		async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -644,6 +786,40 @@ const DemoApp: React.FC = () => {
 					.filter((n) => n.tag === "region" || n.tag === "state")
 					.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
+
+				// ── Street tier (#377): exact situs point / TIGER interpolation ──
+				// Ahead of the admin cascade: when the parse has a street + house number and we host a
+				// street shard for the parsed state, resolve the precise coordinate (exact building, or an
+				// interpolated estimate with an honest radius). Best-effort + lazy — a miss or an unhosted
+				// state silently falls through to the admin centroid below.
+				let streetResolution: StreetResolution | null = null
+				// Assemble the full street from ALL its component spans in source order — the model often
+				// splits it into street + street_suffix (+ prefix/particle), e.g. "Point Lobos" + "Ave". The
+				// situs/interp normalizer needs the whole thing ("point lobos avenue") to match.
+				const streetParts = nodes
+					.filter((n) => STREET_COMPONENT_TAGS.has(n.tag) && String(n.value ?? "").trim())
+					.sort((a, b) => (a.start ?? 0) - (b.start ?? 0))
+				const streetValue = streetParts.map((n) => String(n.value).trim()).join(" ")
+				const houseNumberNode = nodes.find((n) => n.tag === "house_number" || n.tag === "house_number_prefix")
+				const stateSlug = regionToStateSlug(stateNode?.value as string | undefined)
+				if (streetValue && houseNumberNode?.value && stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)) {
+					try {
+						const street = await ensureStreetLookups(stateSlug)
+						if (street) {
+							streetResolution = await resolveStreet(
+								streetValue,
+								String(houseNumberNode.value),
+								postcodeNode?.value ? String(postcodeNode.value) : undefined,
+								localityNodes[0]?.value ? String(localityNodes[0].value) : undefined,
+								street.situs,
+								street.interp,
+								INTERP_RADIUS_BY_REGION[stateSlug] ?? INTERP_RADIUS_DEFAULT
+							)
+						}
+					} catch (streetErr) {
+						console.warn("[mailwoman demo] street tier unavailable; falling back to admin cascade", streetErr)
+					}
+				}
 
 				// ── Compare parse (classifier-only, no FST/WOF) ──────────────────
 				// Runs before the WOF lookup so it executes even when the selected
@@ -743,6 +919,22 @@ const DemoApp: React.FC = () => {
 					score: c.score,
 					bbox: c.bbox,
 				}))
+
+				// Street-level coordinate wins the pin (more precise than any admin centroid). The admin
+				// candidates stay in the list for the resolved-hierarchy context. id=0 → not a WOF place, so
+				// the marker effect skips the polygon path and draws the calibrated uncertainty circle.
+				if (streetResolution) {
+					candidates.unshift({
+						id: 0,
+						name: `${String(houseNumberNode!.value)} ${streetValue}`,
+						placetype: streetResolution.tier,
+						lat: streetResolution.lat,
+						lon: streetResolution.lon,
+						score: 1,
+						tier: streetResolution.tier,
+						uncertaintyM: streetResolution.uncertaintyM,
+					})
+				}
 
 				// Marker draw is centralised in the useEffect below — it reacts to result +
 				// selectedCandidateIndex changes. Just stash the candidates; the effect handles
@@ -931,13 +1123,45 @@ const DemoApp: React.FC = () => {
 						type="text"
 						value={text}
 						onChange={(e) => setText(e.target.value)}
+						onKeyDown={onInputKeyDown}
 						disabled={!ready || busy}
 						placeholder={DEFAULT_ADDRESS}
+						role="combobox"
+						aria-expanded={suggestions.length > 0}
+						aria-controls="addr-suggest-list"
+						aria-autocomplete="list"
+						aria-activedescendant={activeSuggestion >= 0 ? `addr-suggest-${activeSuggestion}` : undefined}
+						autoComplete="off"
 					/>
 					<button type="submit" disabled={!ready || busy}>
 						{busy ? "Parsing…" : "Parse + resolve"}
 					</button>
 				</form>
+				{suggestions.length > 0 ? (
+					<div className={styles.examples} id="addr-suggest-list" role="listbox" aria-label="Place suggestions">
+						<span className={styles.examplesLabel}>Did you mean:</span>
+						{suggestions.map((s, i) => (
+							<button
+								key={`${s.name}-${i}`}
+								id={`addr-suggest-${i}`}
+								type="button"
+								role="option"
+								aria-selected={i === activeSuggestion}
+								className={styles.exampleBtn}
+								style={
+									i === activeSuggestion
+										? { outline: "2px solid var(--ifm-color-primary)", outlineOffset: "1px" }
+										: undefined
+								}
+								onMouseEnter={() => setActiveSuggestion(i)}
+								onClick={() => onPickSuggestion(s.name)}
+								title={s.placetype}
+							>
+								{s.name}
+							</button>
+						))}
+					</div>
+				) : null}
 				<div className={styles.examples}>
 					<span className={styles.examplesLabel}>Try:</span>
 					{EXAMPLE_ADDRESSES.map((ex) => (

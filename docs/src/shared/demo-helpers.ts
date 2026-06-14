@@ -53,7 +53,8 @@ export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
 	{ label: "White House", address: "1600 Pennsylvania Ave NW, Washington, DC 20500" },
-	{ label: "Empire State", address: "350 5th Ave, New York, NY 10118" },
+	{ label: "Apple Park", address: "1 Apple Park Way, Cupertino, CA 95014" },
+	{ label: "30 Rockefeller Plaza", address: "30 Rockefeller Plaza, New York, NY 10112" },
 	{ label: "Pier 39 SF", address: "Pier 39, San Francisco, CA 94133" },
 	{ label: "Wrigley Field", address: "1060 W Addison St, Chicago, IL 60613" },
 	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
@@ -272,4 +273,61 @@ export async function runCascade(
 	if (localityHits.length > 0) return localityHits
 
 	return usable(await lookup.findPlace({ text: rawText, bbox: regionBbox, limit: 5 }))
+}
+
+// ---------------------------------------------------------------------------
+// Street-level resolution (situs → interpolation), in front of the admin cascade
+// ---------------------------------------------------------------------------
+
+/** A street-level coordinate + which tier produced it + an honest radius. */
+export interface StreetResolution {
+	lat: number
+	lon: number
+	tier: "address_point" | "interpolated"
+	/** Calibrated uncertainty radius in meters (10 m situs floor; interp = uncertaintyM × the region factor). */
+	uncertaintyM: number
+}
+
+/** Structural shapes so this is testable with stubs (and decoupled from the httpvfs-street classes). */
+interface SitusLike {
+	find(q: { street: string; number: string; postcode?: string; locality?: string }): Promise<{ lat: number; lon: number } | null>
+}
+interface InterpLike {
+	find(q: { street: string; number: string; postcode?: string }): Promise<{ lat: number; lon: number; uncertaintyM: number } | null>
+}
+
+/**
+ * Street tier: exact situs point first (10 m floor), then TIGER interpolation (honest calibrated
+ * radius), else null so the caller falls back to the admin cascade ({@link runCascade}). Mirrors the
+ * node `geocode-core` tier order (address_point > interpolated > admin) — but async, on the main
+ * thread, over the demo's httpvfs handles. `interpRadiusCalibration` is the per-region conformal
+ * factor (#374 / data/calibration/interp-radius-conformal.json); default 1.95 (the conservative
+ * national default — under-coverage is the harmful error).
+ */
+export async function resolveStreet(
+	street: string | undefined,
+	houseNumber: string | undefined,
+	postcode: string | undefined,
+	locality: string | undefined,
+	situs: SitusLike | undefined,
+	interp: InterpLike | undefined,
+	interpRadiusCalibration = 1.95
+): Promise<StreetResolution | null> {
+	const st = (street ?? "").trim()
+	const num = (houseNumber ?? "").trim()
+	if (!st || !num) return null // not a street-level query — let the admin cascade handle it
+
+	if (situs) {
+		const hit = await situs.find({ street: st, number: num, postcode, locality })
+		if (hit && !(hit.lat === 0 && hit.lon === 0)) {
+			return { lat: hit.lat, lon: hit.lon, tier: "address_point", uncertaintyM: 10 }
+		}
+	}
+	if (interp) {
+		const hit = await interp.find({ street: st, number: num, postcode })
+		if (hit && !(hit.lat === 0 && hit.lon === 0)) {
+			return { lat: hit.lat, lon: hit.lon, tier: "interpolated", uncertaintyM: Math.round(hit.uncertaintyM * interpRadiusCalibration) }
+		}
+	}
+	return null
 }

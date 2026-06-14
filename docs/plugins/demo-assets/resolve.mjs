@@ -117,10 +117,12 @@ export function buildWorkspaceAliases() {
 
 	// @mailwoman/resolver-wof-sqlite — browser-safe subpaths only (the FST modules plus fts.ts,
 	// whose single node:sqlite import is type-only; httpvfs-resolver.ts imports its alias-bag
-	// parser so the demo's exact tier can't drift from the Node/WASM resolvers).
+	// parser so the demo's exact tier can't drift from the Node/WASM resolvers). `street-normalize`
+	// (pure, imports only @mailwoman/codex) + `geo` (pure math) back the httpvfs STREET lookups
+	// (httpvfs-street.ts) so the demo's situs/interp normalization can't drift from the Node tiers.
 	const resolverWofDir = resolveWorkspaceDir("@mailwoman/resolver-wof-sqlite")
 	if (resolverWofDir) {
-		for (const sub of ["fst-deserialize-web", "fst-matcher", "fst-types", "fts"]) {
+		for (const sub of ["fst-deserialize-web", "fst-matcher", "fst-types", "fts", "street-normalize", "geo", "fst-autocomplete"]) {
 			aliases[`@mailwoman/resolver-wof-sqlite/${sub}`] = resolveWorkspaceFile(resolverWofDir, sub)
 		}
 	}
