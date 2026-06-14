@@ -254,15 +254,26 @@ export function stageSqlJsHttpvfs(destDir) {
 		return false
 	}
 	const files = ["index.js", "sqlite.worker.js", "sql-wasm.wasm"]
+	let copied = 0
 	for (const f of files) {
 		const src = resolve(distDir, f)
 		if (!existsSync(src)) {
 			console.warn(`[demo-assets] sql.js-httpvfs: missing ${f} in dist`)
 			return false
 		}
-		copyFileSync(src, resolve(destDir, f))
+		const dest = resolve(destDir, f)
+		// Idempotent stage: skip when the destination already matches (by size). This runs in
+		// loadContent(), which the Docusaurus dev server (`yarn start`) re-invokes on reload — and
+		// `destDir` lives under the watched `static/` tree. An UNCONDITIONAL copyFileSync rewrites the
+		// file (fresh mtime) even when the bytes are identical, the watcher sees a "change" and reloads,
+		// loadContent() re-runs and re-copies… a reload LOOP that shows up as the /demo page flickering
+		// during `start`. Skipping the no-op copy breaks the cycle. (Prod `build` runs loadContent once,
+		// so it was never affected.)
+		if (existsSync(dest) && statSync(dest).size === statSync(src).size) continue
+		copyFileSync(src, dest)
+		copied++
 	}
-	console.log(`[demo-assets] sql.js-httpvfs: staged ${files.length} runtime assets`)
+	if (copied > 0) console.log(`[demo-assets] sql.js-httpvfs: staged ${copied} runtime asset(s)`)
 	return true
 }
 
