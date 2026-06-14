@@ -17,7 +17,12 @@
  */
 
 /** Structural shape of a place-country predictor — matches `RuntimePipelineStages["placeCountry"]`. */
-export type PlaceCountryFn = (normalizedText: string) => { country: string | null; confidence: number }
+export type PlaceCountryFn = (normalizedText: string) => {
+	country: string | null
+	confidence: number
+	/** Full per-in-map-country distribution (#244 residual). When set it IS the `anchorPosterior`. */
+	posterior?: Record<string, number>
+}
 
 // Abstention threshold for the default prior — the open-set rule's flat-optimum operating point (#244 M2).
 const DEFAULT_ABSTAIN_BELOW = 0.9
@@ -33,9 +38,15 @@ export function loadDefaultPlaceCountry(): Promise<PlaceCountryFn | null> {
 	if (!cached) {
 		cached = (async (): Promise<PlaceCountryFn | null> => {
 			try {
-				const { CoarsePlacer } = await import("@mailwoman/core/coarse-placer")
+				const { CoarsePlacer, inMapPosterior } = await import("@mailwoman/core/coarse-placer")
 				const placer = await CoarsePlacer.fromBundled({ abstainBelow: DEFAULT_ABSTAIN_BELOW, openSet: true })
-				return (text: string) => placer.predict(text)
+				return (text: string) => {
+					const p = placer.predict(text)
+					// Hand the resolver the full in-map distribution (#244 residual): it boosts every plausible
+					// country and breaks ambiguous ties with its own evidence, instead of the lossy one-hot argmax.
+					const posterior = inMapPosterior(p)
+					return { country: p.country, confidence: p.confidence, ...(posterior ? { posterior } : {}) }
+				}
 			} catch {
 				return null
 			}

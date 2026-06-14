@@ -221,6 +221,25 @@ export class CoarsePlacer {
 	}
 }
 
+/**
+ * The in-map posterior for the soft-prior DISTRIBUTION wiring (#244 residual upgrade): the
+ * per-in-map-country marginals (every class except `OTHER`) from a prediction, or `null` when the
+ * model abstained / routed off-map. Fed straight to the resolver's `anchorPosterior` so it boosts
+ * EVERY plausible in-map country proportionally — and breaks country-ambiguous ties (mass split
+ * across several in-map countries) with its own place-level evidence — instead of committing to the
+ * single argmax (the one-hot the M2 wiring shipped). Raw marginals (un-renormalized; they sum to
+ * the in-map mass `1 - P(OTHER)`), matching the one-hot's `confidence` scale so `anchorWeight` is
+ * unchanged.
+ */
+export function inMapPosterior(prediction: CoarsePrediction): Record<string, number> | null {
+	if (prediction.country === null || prediction.country === "OTHER") return null
+	const posterior: Record<string, number> = {}
+	for (const [cls, prob] of Object.entries(prediction.probs)) {
+		if (cls !== "OTHER") posterior[cls] = prob
+	}
+	return posterior
+}
+
 /** Load a coarse-placer from a JSON metadata file + a sibling `.weights.bin` (Float32). */
 export async function loadCoarsePlacer(
 	metaJson: { classes: string[]; featureDim: number; temperature: number; bias: number[] },

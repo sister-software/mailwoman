@@ -37,7 +37,7 @@
  *   --out-md docs/articles/evals/2026-06-14-coarse-placer-country-disambig.md
  */
 
-import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
+import { CoarsePlacer, inMapPosterior } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver, type ResolveOpts } from "@mailwoman/core/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -59,6 +59,8 @@ const ABSTAIN_BELOW = Number(arg("abstain-below", "0.9"))
 const ANCHOR_WEIGHT = Number(arg("anchor-weight", "1.0"))
 /** `--openset` uses the M2 in-map-mass reject rule (1 - P(OTHER)) instead of top-class prob. */
 const OPENSET = process.argv.includes("--openset")
+// `--distribution` feeds the full in-map posterior (vs the one-hot argmax) as anchorPosterior (#244 residual).
+const DISTRIBUTION = process.argv.includes("--distribution")
 
 interface HomographRow {
 	raw: string
@@ -159,9 +161,8 @@ async function main(): Promise<void> {
 		const parsed = await neural.parse(row.raw, { postcodeRepair: true })
 		const pred = placer.predict(row.raw)
 		const usePrior = !!pred.country && pred.country !== "OTHER"
-		const onOpts: ResolveOpts = usePrior
-			? { anchorPosterior: { [pred.country!]: pred.confidence }, anchorWeight: ANCHOR_WEIGHT }
-			: {}
+		const posterior = usePrior ? (DISTRIBUTION ? inMapPosterior(pred) : { [pred.country!]: pred.confidence }) : null
+		const onOpts: ResolveOpts = posterior ? { anchorPosterior: posterior, anchorWeight: ANCHOR_WEIGHT } : {}
 
 		const off = await resolvedCountry(parsed, {})
 		const on = await resolvedCountry(parsed, onOpts)

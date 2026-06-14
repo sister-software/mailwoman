@@ -47,15 +47,22 @@ describe("geocodeAddress — coarse-placer soft prior (#244)", () => {
 		expect(seen[0]?.anchorWeight).toBeUndefined()
 	})
 
-	test("default-on (no placeCountry) ⇒ the bundled placer injects a posterior for an in-map address", async () => {
+	test("default-on (no placeCountry) ⇒ the bundled placer injects the in-map distribution for a clear address", async () => {
 		const { resolver, seen } = captureResolver()
-		// No `placeCountry` → geocodeAddress lazy-loads the bundled coarse-placer (#244 M2 default-on).
+		// No `placeCountry` → geocodeAddress lazy-loads the bundled coarse-placer (#244 default-on).
 		await geocodeAddress("350 5th Ave, New York, NY 10118", { classifier: fakeClassifier(emptyTree), resolver })
 		const post = seen[0]?.anchorPosterior
 		expect(post, "default-on should inject a country posterior for a clear in-map address").toBeDefined()
-		const keys = Object.keys(post ?? {})
-		expect(keys).toHaveLength(1)
-		expect(keys[0]).toMatch(/^[A-Z]{2}$/) // a 2-letter in-map country
+		const entries = Object.entries(post ?? {})
+		// Residual upgrade: a full per-in-map-country DISTRIBUTION, not the one-hot argmax.
+		expect(entries.length).toBeGreaterThan(1)
+		for (const [c, p] of entries) {
+			expect(c).toMatch(/^[A-Z]{2}$/) // 2-letter in-map country (never OTHER)
+			expect(p).toBeGreaterThanOrEqual(0)
+		}
+		// US is the unambiguous winner for this address.
+		const top = entries.sort((a, b) => b[1] - a[1])[0]!
+		expect(top[0]).toBe("US")
 		expect(seen[0]?.anchorWeight).toBe(1.0)
 	})
 

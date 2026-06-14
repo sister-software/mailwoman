@@ -27,7 +27,7 @@
  *   [--per-country 200] [--abstain-below 0.9] [--out-md <path>]
  */
 
-import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
+import { CoarsePlacer, inMapPosterior } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver, type ResolveOpts } from "@mailwoman/core/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -46,6 +46,8 @@ const COUNTRIES = ["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR"]
 const ANCHOR_WEIGHT = Number(arg("anchor-weight", "1.0"))
 const ABSTAIN_BELOW = Number(arg("abstain-below", "0.9"))
 const PER_COUNTRY = Number(arg("per-country", "200"))
+// `--distribution` feeds the full in-map posterior (vs one-hot argmax) as anchorPosterior (#244 residual).
+const DISTRIBUTION = process.argv.includes("--distribution")
 
 // Trailing explicit country tokens to strip so the country must be inferred (where the prior bites).
 const COUNTRY_TOKENS =
@@ -149,9 +151,8 @@ async function main(): Promise<void> {
 		const parsed = await neural.parse(s.raw, { postcodeRepair: true })
 		const pred = placer.predict(s.raw)
 		const usePrior = !!pred.country && pred.country !== "OTHER"
-		const onOpts: ResolveOpts = usePrior
-			? { anchorPosterior: { [pred.country!]: pred.confidence }, anchorWeight: ANCHOR_WEIGHT }
-			: {}
+		const posterior = usePrior ? (DISTRIBUTION ? inMapPosterior(pred) : { [pred.country!]: pred.confidence }) : null
+		const onOpts: ResolveOpts = posterior ? { anchorPosterior: posterior, anchorWeight: ANCHOR_WEIGHT } : {}
 		const off = await resolvedCountry(parsed, {})
 		const on = await resolvedCountry(parsed, onOpts)
 		rows.push({ gold: s.country, placer: pred.country, off, on })

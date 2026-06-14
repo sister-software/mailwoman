@@ -206,7 +206,9 @@ export async function runPipeline(
 				...opts,
 				resolveOpts: {
 					...opts?.resolveOpts,
-					anchorPosterior: { [placed.country]: placed.confidence },
+					// The full in-map distribution when the placer supplies it (resolver breaks ties); else the
+					// one-hot argmax (the M2 behavior).
+					anchorPosterior: placed.posterior ?? { [placed.country]: placed.confidence },
 					anchorWeight: opts?.resolveOpts?.anchorWeight ?? COARSE_PLACER_ANCHOR_WEIGHT,
 				},
 			}

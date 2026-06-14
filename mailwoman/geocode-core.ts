@@ -266,7 +266,8 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	if (placeCountry) {
 		const placed = placeCountry(input)
 		if (placed.country && placed.country !== "OTHER" && !opts.anchorPosterior) {
-			opts.anchorPosterior = { [placed.country]: placed.confidence }
+			// The full in-map distribution when supplied (resolver breaks ties); else the one-hot argmax.
+			opts.anchorPosterior = placed.posterior ?? { [placed.country]: placed.confidence }
 			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
 		}
 	}
