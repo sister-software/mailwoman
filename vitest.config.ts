@@ -68,10 +68,13 @@ export default defineConfig({
 			"**/cypress/**",
 			"**/.{idea,git,cache,output,temp}/**",
 			"**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*",
-			// Playwright e2e specs live under docs/test/browser/. They use @playwright/test as the
-			// runner, not vitest, but vitest's default `*.spec.ts` glob would happily pick them up
-			// and crash on the unfamiliar `test.describe` API.
+			// Playwright e2e specs live under docs/test/browser/ + docs/test/build/. They use
+			// @playwright/test as the runner, not vitest, but vitest's default `*.spec.ts` glob would
+			// happily pick them up and crash on the unfamiliar `test.describe` API. (The build/ entry
+			// — the `docusaurus build` health gate — was missing here, so it surfaced the moment CI
+			// could reach the test phase again.)
 			"**/docs/test/browser/**",
+			"**/docs/test/build/**",
 			"**/docs/test/e2e/**",
 			// Agent worktrees under .claude/worktrees/ are isolated git checkouts; each contains a
 			// full copy of the repo's test files. Without this exclude, vitest descends into every
