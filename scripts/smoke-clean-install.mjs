@@ -37,6 +37,10 @@ const WORKSPACES = {
 	"@mailwoman/phrase-grouper": "phrase-grouper",
 	"@mailwoman/query-shape": "query-shape",
 	"@mailwoman/neural": "neural",
+	"@mailwoman/formatter": "formatter",
+	"@mailwoman/record": "record",
+	"@mailwoman/match": "match",
+	"@mailwoman/registry": "registry",
 	"@mailwoman/corpus": "corpus",
 	mailwoman: "mailwoman",
 }
