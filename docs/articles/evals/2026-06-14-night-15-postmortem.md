@@ -3,8 +3,10 @@
 _The autonomous shift after the v4.7.0 geocoder-campaign ship. Plan: the six workstreams A–F of
 `nightshift/2026-06-14-NIGHT-SHIFT-PLAN.md` — reconcile re-gate, coarse-placer M3, multi-region interp
 recalibration, autocomplete, the marquee client-side demo geocoder, and issue housekeeping. All six
-landed (D was already shipped); the marquee shipped working and browser-verified. Nine PRs, five issue
-closures, plus an unplanned CI rescue — fully greened — that unblocked the whole shift._
+landed (D was already shipped); the marquee shipped working and browser-verified. Then the back half
+turned into a bonus tail — a CI root-cause-and-fix, a keyboard-combobox typeahead, a 200-row
+punctuation-stress verdict, a docs-accuracy sweep, and a docs-build finding. **Eleven PRs, six issue
+closures, zero self-merges** (PR-and-flag throughout); the operator returned ~13:00 to close the shift._
 
 ## What shipped
 
@@ -73,7 +75,34 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
   already built; this shift added the live street tier + precision caption on top.
 
 **F — issue housekeeping:** Closed **#483, #484, #523, #560, #397** (verified shipped); triaged **#374,
-#481, #368** (kept open with status); filed **#582, #587**.
+#481, #368** (kept open with status); filed **#582, #587**. Later closed **#190** (FST autocomplete →
+CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #587) and status-commented
+**#421** (its premise — reconcile as the default — was superseded by this campaign's retirement).
+
+**Bonus tail (back half + after the operator returned):**
+
+- **#588 — autocomplete edge-case tests.** The typeahead is now user-facing, so 4 synthetic tests lock in
+  the "no throw, no garbage" contract (empty/whitespace → `[]`, a partial matching no continuation → `[]`,
+  `maxSuggestions` capping, single-char never throws). 11/11 synthetic green.
+- **#590 — punctuation-stress eval verdict (closes the measurement half of #518).** Ran the 200-row
+  paired-delimiter / punctuation-stress dataset (already on `main`) across v0, neural, and neural +
+  span-proposer at three bias settings. **Verdict: the Stage 2.7 paired-delimiter span proposer doesn't
+  earn its revival** — no-op at default, −0.7pp gentle, **−3.9pp** strong (a strong annotation bias
+  *merges* the parenthetical into the span — wrong direction). The bigger finding: **neural already beats
+  v0 here (77.3 vs 75.7) and is far more robust (0 parse deaths vs 2)**; the engines fail *differently* —
+  v0 shatters on quotes and poisons neighbors (`(The White House)` → locality "White"), neural
+  *over-extends* spans (`Sydney NSW`, `Oxford OX1 4DB`). So the real punctuation lever is reducing neural
+  span over-extension (kin to #555 / Saint-Albans), not a span proposer.
+- **#591 — reconcile-default docs sweep.** Three source-of-truth docs (`status.mdx`, `api.mdx`,
+  `STAGES.mdx`) still called joint reconcile the default decode path — stale since #566 retired it. The
+  2026-06-11 codex review had flagged exactly this; night-11 fixed it to the then-current default-on
+  state, and #566 left it stale again. Corrected all three to match the code (`runtime-pipeline.ts:258`:
+  `jointReconcile ?? false`).
+- **docs-build is red on `main` — and it needs #585, not just #579.** Confirmed it's a two-failure stack:
+  the #579 lockfile issue fast-fails install, *under which* sits a `map-helpers` SSG break
+  (`src/pages/demo/map-helpers.ts` is on `main` without the pages-exclude fix). The fix lives in #585's
+  `docusaurus.config.ts`, so **docs-build (the marquee deploy) greens only after #579 AND #585** — merging
+  #579 alone leaves it red. Flagged on #585 (not extracted, to avoid a duplicate-change rebase conflict).
 
 ## What went well
 
@@ -82,9 +111,11 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
   flagged pre-existing weights condition).
 - **Grade-the-pipeline discipline paid off again.** The A re-gate and the C non-circular holdout both
   came from the same rule that caught the original reconcile regression — never trust raw-neural F1.
-- **Probe-before-build saved hours twice.** The byte-range *measurement* (24 KB/lookup) de-risked the
-  whole marquee before a line of demo wiring; the Overture off-map *probe* found the data ceiling before
-  a wasted retrain campaign.
+- **Probe-before-build saved hours three times.** The byte-range *measurement* (24 KB/lookup) de-risked
+  the whole marquee before a line of demo wiring; the Overture off-map *probe* found the data ceiling
+  before a wasted retrain campaign; and the punctuation-stress eval (#590) answered "revive the span
+  proposer?" with a measured *no* before anyone reopened that code — and reframed the lever (neural span
+  over-extension, not a proposer) in the bargain.
 - **The marquee actually works.** The biggest risk item shipped browser-verified, not as a "foundation +
   guide." Reusing the existing httpvfs WOF pattern + the already-async demo cascade made it tractable.
 
@@ -147,9 +178,16 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
 
 ## Concrete next steps
 
-- Merge **#579 then #589 first** (together they green CI fully), then the rest
-  (#580/#581/#583/#584/#585/#588). #588 (autocomplete algorithm) lands before #585 (demo) so the
-  typeahead wires against the fixed `fst-autocomplete.ts`.
+- **Merge order (two CI gates to satisfy):**
+  - _Test/CI green_ needs **#579** (lockfile) **+ #589** (compiled-data bridge) — together they take the
+    Test workflow to 225/225.
+  - _docs-build green / marquee deploy_ needs **#579** (lockfile) **+ #585's `docusaurus.config.ts`**
+    (pages-exclude → fixes the `map-helpers` SSG break). #579 alone leaves docs-build red.
+  - Then the rest: **#580** (reconcile doc), **#581** (coarse-placer), **#583** (spec), **#584** (interp),
+    **#588 before #585** (so the typeahead wires against the fixed `fst-autocomplete.ts`), **#590**
+    (punctuation eval), **#591** (reconcile-default docs), **#586** (this postmortem). All eleven are
+    branched off pre-#579 `main`, so each needs an "Update branch"/rebase to pick up the lockfile before
+    its own CI can pass — that's expected, not a per-PR problem.
 - **E go-wide:** finish hosting NY + CA (uploading), add them to `HOSTED_STREET_SLUGS`, verify a CA
   address in-browser (closes the spec's go-wide latency decision on the real 3.3 GB shard).
 - **E UX (#377):** tier caption ("exact" / "±N m") and place-level autocomplete typeahead are shipped;
@@ -162,13 +200,15 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
 
 | metric                  | value                                                          |
 | ----------------------- | -------------------------------------------------------------- |
-| shift window            | 2026-06-14 03:47 → ~15:00 UTC                                  |
-| PRs opened              | 9 (#579, #580, #581, #583, #584, #585, #586, #588, #589) + #582/#587 issues |
-| issues closed           | 5 (#483, #484, #523, #560, #397) + 3 triaged                   |
+| shift window            | 2026-06-14 03:47 → ~13:00 UTC (operator closed early)          |
+| PRs opened              | 11 (#579–#591: 579/580/581/583/584/585/586/588/589/590/591) + #582/#587 filed |
+| issues closed           | 6 (#483, #484, #523, #560, #397, #190) + #421/#374/#481/#368 triaged |
 | models trained          | 1 (coarse-placer M3 retrain, 34 s CPU)                         |
 | Modal / GPU time        | 0 (CPU-only shift, as planned)                                 |
 | marquee verification    | 4 states in-browser (DC/MI/NY/CA), all exact, zero errors      |
 | R2 hosted street shards | DC + MI + NY + CA (the full launch trio + DC), all verified    |
+| evals run               | reconcile re-gate, 12-state conformal, coarse-placer quant, 200-row punctuation-stress (v0/neural/+SP) |
 | NaN incidents           | 0                                                              |
-| CI status               | rescued 0 → 224/231 (#579); last red root-caused + fixed (#589) → fully green |
+| self-merges to main     | 0 (PR-and-flag throughout)                                     |
+| CI status               | Test: rescued 0 → 224/231 (#579) → 225/225 with #589. docs-build: red, needs #579 + #585-config (#590-finding) |
 | peak heat               | 92 °C (sweep; killed per the 85 °C rule)                       |
