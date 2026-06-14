@@ -13,8 +13,13 @@
  *   runs in microseconds — the "always-resident, places the planet coarsely" tier.
  */
 
-/** The trained classes (well-represented countries in the v0.5.0 corpus). Index order is the label id. */
-export const COARSE_CLASSES = ["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW"] as const
+/**
+ * The trained classes: the well-represented corpus countries + `OTHER` — the explicit off-map class
+ * (milestone 2) trained on non-Latin/non-CJK scripts via outlier exposure, so the model learns the edge
+ * of its competence and routes "probably off my loaded map" instead of a confident mis-placement. Index
+ * order is the label id.
+ */
+export const COARSE_CLASSES = ["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW", "OTHER"] as const
 export type CoarseClass = (typeof COARSE_CLASSES)[number]
 
 /** Hashed-feature dimensionality (2^16). Keeps the weight matrix small (11×65536) while collisions stay

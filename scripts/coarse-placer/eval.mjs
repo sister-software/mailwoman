@@ -85,26 +85,29 @@ const msPath = path.resolve(import.meta.dirname, "../../data/eval/multi-script/v
 try {
 	const ms = readFileSync(msPath, "utf8").trim().split("\n").map((l) => JSON.parse(l))
 	const TRAINED_SCRIPTS = new Set(["latin", "cjk"]) // the only scripts among the 11 trained countries
-	let offN = 0, offAbstain = 0, onN = 0, onAbstain = 0
-	const offExamples = []
+	// With the OTHER class, an off-map input is HANDLED if it routes to OTHER or abstains — either way
+	// it's not a confident mis-placement onto a wrong country.
+	const handled = (p) => p.abstained || p.country === "OTHER"
+	let offN = 0, offOk = 0, missN = 0, missOk = 0
+	const offMiss = []
 	for (const r of ms) {
 		const p = placer.predict(r.raw)
 		const offMap = !TRAINED_SCRIPTS.has(r.script)
 		if (offMap) {
 			offN++
-			if (p.abstained) offAbstain++
-			else if (offExamples.length < 8) offExamples.push(`    ${r.script}/${r.country} → ${p.country} @${p.confidence.toFixed(2)}  «${r.raw.slice(0, 30)}»`)
+			if (handled(p)) offOk++
+			else if (offMiss.length < 8) offMiss.push(`    ${r.script}/${r.country} → ${p.country} @${p.confidence.toFixed(2)}  «${r.raw.slice(0, 30)}»`)
 		} else {
-			onN++
-			if (p.abstained) onAbstain++
+			missN++
+			if (handled(p)) missOk++ // a latin/cjk in-map input mis-routed to OTHER = a false abstention
 		}
 	}
-	console.log(`\nmulti-script abstention (n=${ms.length}):`)
-	console.log(`  OFF-map scripts (Cyrillic/Arabic/Thai/…): ${offAbstain}/${offN} abstained (${(100 * offAbstain / Math.max(1, offN)).toFixed(0)}%) ← want HIGH`)
-	console.log(`  ON-map scripts (latin/cjk): ${onAbstain}/${onN} abstained (${(100 * onAbstain / Math.max(1, onN)).toFixed(0)}%) ← want LOW`)
-	if (offExamples.length) {
-		console.log(`  off-map NOT abstained (the Latin-off-map hard case → motivates the explicit 'other' class):`)
-		console.log(offExamples.join("\n"))
+	console.log(`\nmulti-script off-map handling (n=${ms.length}):`)
+	console.log(`  OFF-map scripts (Cyrillic/Arabic/Thai/…) routed to OTHER-or-abstain: ${offOk}/${offN} (${(100 * offOk / Math.max(1, offN)).toFixed(0)}%) ← want HIGH`)
+	console.log(`  ON-map scripts (latin/cjk) wrongly OTHER-or-abstain: ${missOk}/${missN} (${(100 * missOk / Math.max(1, missN)).toFixed(0)}%) ← want LOW`)
+	if (offMiss.length) {
+		console.log(`  off-map still mis-placed (the Latin-off-map residual — needs full off-map addresses, M3):`)
+		console.log(offMiss.join("\n"))
 	}
 } catch (e) {
 	console.log(`\n(multi-script set not found at ${msPath}: ${e.message})`)

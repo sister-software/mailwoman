@@ -55,11 +55,31 @@ classes and one wins with moderate-to-high confidence. The design anticipated ex
 **outlier exposure**: an explicit "other" class trained on off-map examples so the model learns the edge
 of its own competence. That's milestone 2.
 
-## Next (milestone 2+)
+## Milestone 2 — outlier exposure → an explicit OTHER class (the wall, cleared)
 
-1. **Outlier exposure → an explicit "other" class.** Needs a diverse off-map source (the corpus tail
-   CA/AU/PE/TR/LB/JO/GE is thin and mostly Latin; a broader multilingual/multi-script auxiliary set is
-   the real unlock). Re-measure off-map abstention — target ≥90%.
+The data unlock: the WOF `names` table carries native-script alternate names in dozens of languages
+(rus/ukr/ara/ell/heb/hin/tha/kat/hye/…) — exactly the off-map scripts the model needs to learn to
+abstain on. `scripts/coarse-placer/build-outlier-exposure.mjs` extracts ~44k of them, balanced
+per-language and filtered to a genuinely off-map dominant script, PLUS an address-shaped sibling for each
+(name + a house number) — because real off-map input mixes the script with Latin digits/abbreviations
+("ул. Тверская, д. 1"), and the bare place name alone left a gap. Added as a 12th class, `OTHER`.
+
+| metric | M1 (closed-set) | M2 (+ OTHER) |
+| --- | --- | --- |
+| off-map-script handling (route to OTHER / abstain) | 36% | **86%** |
+| OTHER recall (test) | — | 92.2% |
+| in-distribution accuracy | 96.6% | 95.0% |
+| ECE | 0.055 | 0.050 |
+
+The explicit OTHER class lifts off-map handling 36% → 86% at a ~1.6pp in-distribution cost — the design's
+prediction, confirmed. The address-shaped augmentation was decisive (place names alone got only 59%): the
+numeric/punctuation n-grams in a real address otherwise pull an off-map input toward a country.
+
+## Next (milestone 3+)
+
+1. **The Latin-off-map residual.** Off-map COUNTRIES in Latin script (Poland, Turkey, Brazil…) still
+   mis-place — they share the script with the in-map European 11 and the OTHER training is non-Latin. The
+   fix is full off-map *addresses* (OpenAddresses for more countries), not place names.
 2. **Script/continent heads** — the design wants (script, continent, coarse-region); script is
    deterministic, continent is a grouping, coarse-region routes shard loading.
 3. **Shrink + ship** — int8-quantize (≈720 KB), wire as the first pipeline stage + the #243 query-type
