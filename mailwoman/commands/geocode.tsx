@@ -125,6 +125,11 @@ function resolveWofPath(options: zod.infer<typeof OptionsSchema>): string {
 // ---------------------------------------------------------------------------
 
 async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
+	// Resolve the WOF admin path FIRST — it's the most common missing prerequisite and the cheapest to
+	// check, so surface that error before the (slower) weights load. (Order matters for the CLI contract:
+	// a missing WOF DB must report the WOF error even when the weights are also absent.)
+	const wofPath = resolveWofPath(options)
+
 	// Load the neural classifier (required for street-level; weights must be present).
 	let classifier: NeuralAddressClassifier
 	try {
@@ -146,7 +151,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 		)
 	}
 
-	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: resolveWofPath(options) })
+	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: wofPath })
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
 	// specific file); an unset tier still falls back to the region-derived per-state shard.
