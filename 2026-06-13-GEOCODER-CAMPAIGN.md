@@ -117,8 +117,13 @@ independent of Coverage; engines exist, this is API surface + wiring.
   which owns the shards, runs the cascade, returns the resolved tree. Drop-in for `WofResolver` → stateless
   parser nodes + a shared resolver service, and canary diffing. Pure fetch (browser-safe). Tests 6 + a live
   round-trip; 12/12.
-- **Open #485:** versioned data switchover (the last piece — atomic DB pointer-swap). Prometheus exposition
-  + calibration-drift wiring ride on `/metrics`.
+- **✅ Versioned data switchover (2026-06-14, PR #574 — #485 piece 4, CLOSES THE EPIC).** Shards addressed
+  as `<family>-us-<slug>-<version>.db` via a `releases.json` manifest (legacy unversioned fallback);
+  `ShardProvider.reload()` atomically swaps changed versions with one-generation grace (zero-downtime).
+  `POST /api/reload` cuts over after publishing; `/health` reports `data.versions`. Tests 4.
+- **✅ #485 service layer DONE:** batch (#571) · observability (#572) · RemoteResolver (#573) · versioned
+  switchover (#574). Deferred follow-ons (not blocking): Prometheus text exposition + calibration-drift
+  wiring on `/metrics`; auth/rate-limiting (deployment-specific).
 
 ### Cross-cutting — Arbitration (#478) — **Opus**
 

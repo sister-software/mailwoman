@@ -216,7 +216,24 @@ function collectStreetTier(node: AddressTree["roots"][number]): Array<"address_p
 	return out
 }
 
+/**
+ * `POST /api/reload` — versioned data switchover (#485). Re-reads `releases.json` and atomically swaps
+ * any per-state shard whose pinned version changed (zero-downtime, one-generation grace on the old
+ * handles). Call this after publishing a new shard build to cut traffic over without a restart. Returns
+ * the new version map. (Deploy-only; gate it behind your ingress — no auth here by design, per #485.)
+ */
+const reloadHandler: RequestHandler = async (_req, res) => {
+	const deps = await getDeps()
+	if (!deps) {
+		res.status(503).json(DEPS_UNAVAILABLE)
+		return
+	}
+	const versions = deps.shards.reload()
+	res.status(200).json({ reloaded: true, versions })
+}
+
 export const GeocodeRouter: Router = Router()
 GeocodeRouter.post("/api/geocode", singleHandler)
 GeocodeRouter.post("/api/batch", batchHandler)
 GeocodeRouter.post("/api/resolve-tree", resolveTreeHandler)
+GeocodeRouter.post("/api/reload", reloadHandler)

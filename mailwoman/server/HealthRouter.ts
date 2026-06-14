@@ -14,6 +14,7 @@ import { type RequestHandler, Router } from "express"
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { createRequire } from "node:module"
 
+import { readReleaseManifest } from "../data-release.js"
 import { metricsSnapshot } from "./metrics.js"
 
 const DATA_ROOT = process.env["MAILWOMAN_DATA_ROOT"] ?? "/mnt/playpen/mailwoman-data"
@@ -73,6 +74,8 @@ const healthHandler: RequestHandler = (_req, res) => {
 			: null,
 		data: {
 			data_root: DATA_ROOT,
+			// Versioned-switchover provenance (#485): the releases.json pin, or null in legacy mode.
+			versions: readReleaseManifest(DATA_ROOT),
 			wof_dbs: wofPaths(),
 			situs_states: countShards("address-points", "address-points"),
 			interpolation_states: countShards("interpolation", "interpolation"),
