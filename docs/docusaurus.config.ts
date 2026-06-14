@@ -107,6 +107,20 @@ const config: Config = {
 					sidebarPath: "./sidebars.ts",
 					editUrl: "https://github.com/sister-software/mailwoman/tree/main/docs/",
 				},
+				pages: {
+					// Files in src/pages/ are auto-routed. Co-located `.ts` helpers (e.g.
+					// demo/map-helpers.ts) are NOT pages and SSG-fail ("no default export") if routed —
+					// a latent break the install-blocked CI never surfaced. Pages here are all
+					// .tsx/.md/.mdx, so exclude `.ts`. The other entries reproduce Docusaurus's defaults
+					// (a custom `exclude` replaces them).
+					exclude: [
+						"**/_*.{js,jsx,ts,tsx,md,mdx}",
+						"**/_*/**",
+						"**/*.test.{js,jsx,ts,tsx}",
+						"**/__tests__/**",
+						"**/*.ts",
+					],
+				},
 				blog: {
 					path: "blog",
 					routeBasePath: "blog",
