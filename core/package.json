@@ -13,6 +13,7 @@
 		"./package.json": "./package.json",
 		".": "./out/index.js",
 		"./classification": "./out/classification/index.js",
+		"./coarse-placer": "./out/coarse-placer/coarse-placer.js",
 		"./tokenization": "./out/tokenization/index.js",
 		"./types": "./out/types/index.js",
 		"./parser": "./out/parser/index.js",

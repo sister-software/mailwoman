@@ -125,6 +125,20 @@ export class CoarsePlacer {
 		)
 	}
 
+	/**
+	 * Load the int8 model bundled in `@mailwoman/core` (`core/data/coarse-placer/`). Node-only — uses
+	 * the package path builder (the #481-corrected `__isCompiledTree` makes this resolve to the shipped
+	 * `data/` in source, compiled, AND installed-package layouts). Override the directory with
+	 * `$MAILWOMAN_COARSE_PLACER_DIR`. Callers set `abstainBelow` per their use (the soft-country-prior
+	 * wiring passes 0.9 — see docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md).
+	 */
+	static async fromBundled(opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
+		const dir = process.env["MAILWOMAN_COARSE_PLACER_DIR"]
+		if (dir) return CoarsePlacer.fromArtifactDir(dir, opts)
+		const { corePackagePathBuilder } = await import("../utils/repo.js")
+		return CoarsePlacer.fromArtifactDir(String(corePackagePathBuilder("data", "coarse-placer")), opts)
+	}
+
 	predict(text: string): CoarsePrediction {
 		const feats = featurize(text)
 		const C = this.#classes.length

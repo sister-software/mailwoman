@@ -27,6 +27,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { Text } from "ink"
@@ -94,6 +95,22 @@ const OptionsSchema = zod.object({
 				"The raw half-segment radius covers only ~72% of true errors. Default (unset): the per-region " +
 				"table (#584) selects by parsed region — 1.44 (DC) … 3.12 (AZ), 1.95 for unmeasured states — " +
 				"for a ~90% bound. Pass an explicit number to force a single multiplier everywhere (1 = raw)."
+		),
+	placeCountry: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"Enable the #244 coarse-placer soft country prior. A confident whole-string country guess biases the " +
+				"resolver's locality/region ranking toward the right country (never filters); most useful when no " +
+				"--default-country / locale pins it. Off by default (byte-stable). See the coarse-placer soft-signal spec."
+		),
+	placeCountryThreshold: zod
+		.number()
+		.optional()
+		.default(0.9)
+		.describe(
+			"Abstention threshold for --place-country: below this calibrated confidence the prior is skipped. Default 0.9."
 		),
 	format: zod
 		.enum(["json", "text"])
@@ -164,6 +181,12 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 				}
 			: shardProvider.for
 
+	// Coarse-placer soft country prior (#244) — opt-in. Loads the int8 model bundled in @mailwoman/core
+	// at the requested abstention threshold; a confident in-map guess feeds the resolver's anchorPosterior.
+	const placer = options.placeCountry
+		? await CoarsePlacer.fromBundled({ abstainBelow: options.placeCountryThreshold })
+		: undefined
+
 	try {
 		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
 		const result = await geocodeAddress(input, {
@@ -173,6 +196,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			defaultCountry: resolverDefaultCountry(options) || undefined,
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
+			...(placer ? { placeCountry: (t: string) => placer.predict(t) } : {}),
 		})
 		return options.format === "text" ? formatText(result) : JSON.stringify(result, null, 2)
 	} finally {
