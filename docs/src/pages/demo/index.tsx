@@ -174,6 +174,13 @@ const DemoApp: React.FC = () => {
 	// the last comma), from the already-loaded FST gazetteer. Place-level; the address-level variant is
 	// a follow-up (demo spec). Empty when nothing matches, so the chip row only shows when useful.
 	const [suggestions, setSuggestions] = useState<Array<{ name: string; placetype: string }>>([])
+	// Keyboard-highlighted suggestion (combobox active descendant). -1 = none highlighted; ↑/↓ move it,
+	// Enter picks it, Esc dismisses. Reset to -1 whenever the suggestion list changes.
+	const [activeSuggestion, setActiveSuggestion] = useState(-1)
+	// One-shot guard: picking a suggestion rewrites `text` to the chosen name, which would otherwise
+	// re-trigger the autocomplete effect and immediately re-suggest the place just chosen. Set on pick,
+	// consumed by the next effect run so the list stays closed until the user types again.
+	const suppressAutocompleteRef = useRef(false)
 	const [parseStage, setParseStage] = useState(-1)
 	const [result, setResult] = useState<DemoResult | null>(null)
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
@@ -661,9 +668,16 @@ const DemoApp: React.FC = () => {
 	// last comma). Runs against the in-memory gazetteer FST already loaded for the parser — no fetch,
 	// microsecond walk. dedupeByName so the dropdown isn't four "New London"s. (#587)
 	useEffect(() => {
+		if (suppressAutocompleteRef.current) {
+			suppressAutocompleteRef.current = false
+			setSuggestions([])
+			setActiveSuggestion(-1)
+			return
+		}
 		const acQuery = (text.includes(",") ? text.slice(text.lastIndexOf(",") + 1) : text).trim()
 		if (!fstMatcher || acQuery.length < 2 || /^\d/.test(acQuery)) {
 			setSuggestions([])
+			setActiveSuggestion(-1)
 			return
 		}
 		const handle = window.setTimeout(async () => {
@@ -674,8 +688,10 @@ const DemoApp: React.FC = () => {
 					dedupeByName: true,
 				})
 				setSuggestions(res.suggestions.map((s) => ({ name: s.name, placetype: s.placetype })))
+				setActiveSuggestion(-1)
 			} catch {
 				setSuggestions([])
+				setActiveSuggestion(-1)
 			}
 		}, 150)
 		return () => window.clearTimeout(handle)
@@ -683,9 +699,45 @@ const DemoApp: React.FC = () => {
 
 	/** Fill a chosen place — replace the locality segment the user was typing (after the last comma). */
 	const onPickSuggestion = useCallback((name: string) => {
+		suppressAutocompleteRef.current = true
 		setText((cur) => (cur.includes(",") ? `${cur.slice(0, cur.lastIndexOf(",") + 1)} ${name}` : name))
 		setSuggestions([])
+		setActiveSuggestion(-1)
 	}, [])
+
+	/**
+	 * Combobox keyboard nav over the "Did you mean" suggestions: ↓/↑ move the highlight (clamped),
+	 * Enter accepts the highlighted one (and suppresses the form submit), Esc dismisses the list. With
+	 * nothing highlighted, Enter falls through to the normal submit so typing an address + Enter still
+	 * parses.
+	 */
+	const onInputKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLInputElement>) => {
+			if (suggestions.length === 0) return
+			switch (e.key) {
+				case "ArrowDown":
+					e.preventDefault()
+					setActiveSuggestion((i) => Math.min(i + 1, suggestions.length - 1))
+					break
+				case "ArrowUp":
+					e.preventDefault()
+					setActiveSuggestion((i) => Math.max(i - 1, 0))
+					break
+				case "Enter":
+					if (activeSuggestion >= 0 && activeSuggestion < suggestions.length) {
+						e.preventDefault()
+						onPickSuggestion(suggestions[activeSuggestion]!.name)
+					}
+					break
+				case "Escape":
+					e.preventDefault()
+					setSuggestions([])
+					setActiveSuggestion(-1)
+					break
+			}
+		},
+		[suggestions, activeSuggestion, onPickSuggestion]
+	)
 
 	const onSubmit = useCallback(
 		async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -1071,21 +1123,37 @@ const DemoApp: React.FC = () => {
 						type="text"
 						value={text}
 						onChange={(e) => setText(e.target.value)}
+						onKeyDown={onInputKeyDown}
 						disabled={!ready || busy}
 						placeholder={DEFAULT_ADDRESS}
+						role="combobox"
+						aria-expanded={suggestions.length > 0}
+						aria-controls="addr-suggest-list"
+						aria-autocomplete="list"
+						aria-activedescendant={activeSuggestion >= 0 ? `addr-suggest-${activeSuggestion}` : undefined}
+						autoComplete="off"
 					/>
 					<button type="submit" disabled={!ready || busy}>
 						{busy ? "Parsing…" : "Parse + resolve"}
 					</button>
 				</form>
 				{suggestions.length > 0 ? (
-					<div className={styles.examples}>
+					<div className={styles.examples} id="addr-suggest-list" role="listbox" aria-label="Place suggestions">
 						<span className={styles.examplesLabel}>Did you mean:</span>
 						{suggestions.map((s, i) => (
 							<button
 								key={`${s.name}-${i}`}
+								id={`addr-suggest-${i}`}
 								type="button"
+								role="option"
+								aria-selected={i === activeSuggestion}
 								className={styles.exampleBtn}
+								style={
+									i === activeSuggestion
+										? { outline: "2px solid var(--ifm-color-primary)", outlineOffset: "1px" }
+										: undefined
+								}
+								onMouseEnter={() => setActiveSuggestion(i)}
 								onClick={() => onPickSuggestion(s.name)}
 								title={s.placetype}
 							>
