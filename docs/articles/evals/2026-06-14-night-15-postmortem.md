@@ -51,7 +51,10 @@ and "New" → "New London" ×4 (no name-dedup, off ranking). Fixed it (**#588**)
 the complete prefix and prefix-filter continuations by `startsWith(partial)`; added per-branch importance
 capping (`PER_BRANCH = 4`) + opt-in `dedupeByName`; 7 synthetic unit tests. Now `New Yor`→New York,
 `Chic`→Chicago, `San Fr`→San Francisco. The demo box shows a live "Did you mean:" chip row (#585),
-deploy-verified. Only the *address-level* (street-prefix) typeahead remains, deferred to **#587**.
+now a full keyboard **combobox** (↑/↓ highlight, Enter accepts + suppresses the form submit, Esc dismisses;
+ARIA `role=combobox`/`listbox`/`option`) — functional-verified headless **8/8** against the production
+build, FST fetched live from R2, zero console errors. Only the *address-level* (street-prefix) typeahead
+remains, deferred to **#587**.
 
 **E — the marquee: client-side street geocoder (#583 spec + #585 working demo):** **Shipped working and
 browser-verified.** Type a US address → exact building coordinate, fully in the browser, no server.
