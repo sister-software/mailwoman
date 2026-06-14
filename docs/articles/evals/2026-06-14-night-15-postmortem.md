@@ -107,6 +107,15 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
   the data acquisition?
 - **Promote anything?** Nothing was promoted to a shipped default tonight (all PR-and-flag). The
   marquee demo is a docs deploy, not a model release.
+- **Autocomplete typeahead — needs real work, not a wire.** I prototyped wiring the FST autocomplete
+  into the demo's address box and found (confirming DeepSeek's hint that "there's more here than
+  described") that the FST `autocomplete` is **token-level, not char-level**: "New Yor" returns nothing
+  or garbage ("Denver"), and even complete tokens have quality issues ("New" → "New London" ×4, not New
+  York — no name-dedup, off importance ranking). It's fine for the CLI's "complete a place word"
+  (#547) but not a Google-Maps char-level typeahead. Reverted the wiring (a demo suggesting "Denver" for
+  "New Yor" fails the hostile-interviewer test). Real path: char/partial-token completion + name-dedup +
+  importance ranking in `fst-autocomplete.ts`, then the address-level variant (street index). The 3
+  options are in the demo spec (#583).
 
 ## Concrete next steps
 
