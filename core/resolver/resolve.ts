@@ -158,7 +158,7 @@ function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup): vo
  * abstain statewide without a postcode). Stamps a DISTINCT metadata key (`interpolated_point`,
  * never `address_point`). Additive only — admin resolution is untouched.
  */
-function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup): void {
+function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup, radiusCalibration?: number): void {
 	let street: AddressNode | undefined
 	let houseNumber: AddressNode | undefined
 	let postcode: string | undefined
@@ -175,11 +175,16 @@ function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup): 
 	if (street.metadata?.["resolution_tier"] === "address_point") return
 	const hit = lookup.find({ street: assembleStreetValue(street), number: houseNumber.value, postcode })
 	if (!hit) return
+	// Conformal-calibrated radius when the caller supplies a multiplier (#374): the raw half-segment
+	// heuristic underestimates the true spread (~72% coverage on Travis); ×1.70 → a 90% bound. Default
+	// (no multiplier) keeps the raw value, byte-stable. Preserve the raw radius for transparency.
+	const calibrated = radiusCalibration ? Math.round(hit.uncertaintyM * radiusCalibration) : hit.uncertaintyM
 	street.metadata = {
 		...street.metadata,
 		interpolated_point: { lat: hit.lat, lon: hit.lon, source: hit.source, release: hit.release },
 		resolution_tier: "interpolated",
-		uncertainty_m: hit.uncertaintyM,
+		uncertainty_m: calibrated,
+		...(radiusCalibration ? { uncertainty_raw_m: hit.uncertaintyM, uncertainty_calibration: radiusCalibration } : {}),
 		interpolation_method: hit.method,
 		...(hit.parityMatched !== undefined ? { parity_matched: hit.parityMatched } : {}),
 		...(hit.bracket !== undefined ? { interpolation_bracket: hit.bracket } : {}),
@@ -240,7 +245,7 @@ class WofResolver implements Resolver {
 		// override a real situs point (applyInterpolation also gates on resolution_tier). Opt-in;
 		// byte-stable when opts.interpolation is absent.
 		if (opts.interpolation) {
-			applyInterpolation(newRoots, opts.interpolation)
+			applyInterpolation(newRoots, opts.interpolation, opts.interpolationRadiusCalibration)
 		}
 		return { raw: tree.raw, roots: newRoots }
 	}

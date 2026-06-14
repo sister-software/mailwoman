@@ -19,6 +19,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { AddressPointHit, AddressPointLookup } from "@mailwoman/core/resolver"
 
+import { hasTable } from "./sqlite-utils.js"
 import { normalizeLocalityForKey, normalizeStreetForKey } from "./street-normalize.js"
 
 interface AddressPointRow {
@@ -30,22 +31,27 @@ interface AddressPointRow {
 
 export class AddressPointSqliteLookup implements AddressPointLookup {
 	readonly #db: DatabaseSync
-	readonly #byPostcode
-	readonly #byLocality
+	readonly #byPostcode: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #byLocality: ReturnType<DatabaseSync["prepare"]> | undefined
 
 	constructor(dbPath: string) {
 		this.#db = new DatabaseSync(dbPath, { readOnly: true })
-		this.#byPostcode = this.#db.prepare(
-			`SELECT lat, lon, source, release FROM address_point
-			 WHERE postcode = ? AND street_norm = ? AND number = ? LIMIT 1`
-		)
-		this.#byLocality = this.#db.prepare(
-			`SELECT lat, lon, source, release FROM address_point
-			 WHERE locality_norm = ? AND street_norm = ? AND number = ? LIMIT 1`
-		)
+		// Degrade gracefully on an empty/tableless shard (interrupted build, stray 0-byte file): with no
+		// `address_point` table this lookup is a no-op miss, not a crash that loses the whole state (#568).
+		if (hasTable(this.#db, "address_point")) {
+			this.#byPostcode = this.#db.prepare(
+				`SELECT lat, lon, source, release FROM address_point
+				 WHERE postcode = ? AND street_norm = ? AND number = ? LIMIT 1`
+			)
+			this.#byLocality = this.#db.prepare(
+				`SELECT lat, lon, source, release FROM address_point
+				 WHERE locality_norm = ? AND street_norm = ? AND number = ? LIMIT 1`
+			)
+		}
 	}
 
 	find(query: { street: string; number: string; postcode?: string; locality?: string }): AddressPointHit | null {
+		if (!this.#byPostcode || !this.#byLocality) return null
 		const streetNorm = normalizeStreetForKey(query.street)
 		const number = query.number.trim().toLowerCase()
 		if (!streetNorm || !number) return null

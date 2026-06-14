@@ -69,10 +69,16 @@ The wall — but the timing probe (2026-06-13) defused it. National street-level
   is partly in-distribution (Overture/NAD ≈ the E-911 truth lineage); **interpolation-only (66%) is the
   genuinely independent number.** Real-world read: doorstep where situs points exist (dense via Overture),
   neighborhood-via-interpolation where they don't.
-- **National situs:** per-state from the same parquet (~minutes/state). **ACTION ITEM — add a
-  `--license-filter` (source allow-list) before distributing:** Overture is a license mosaic; the builder
-  already stamps `overture:<dataset>` per row (TX was 100% `overture:NAD` = public, clean), so filter to
-  NAD/public and DROP OSM-sourced (ODbL) rows so shipped shards stay license-clean. See "OSM / licensing".
+- **National situs: ✅ DONE (2026-06-14).** All 50 state shards built —
+  **124,928,159 address points, 29 GB**, 0 failures — at `/mnt/playpen/mailwoman-data/address-points/`.
+  Driver `scripts/build-national-situs.mjs` (PR #567): streams the parquet (DuckDB `fetchChunk`, after
+  `runAndReadAll` OOM'd the 13M-row states), parallelizes states via spliterator `asyncParallelIterator`
+  (the 40 not-already-built finished in **4.2 min** at concurrency 4 / 4 threads each), idempotent on a
+  completeness check (rows + `idx_ap_streetkey`). DoD spot-check across CA/IL/DC/IA/MT/VT: **all 6
+  `address_point`, 0–34 m from truth** (5 of 6 ≤1 m). **Licensing resolved (probe, not assumption):** the
+  US parquet is NAD 68.4% (public domain) + OpenAddresses 31.6% (gov open data) + **zero OSM** → built
+  **unfiltered**; `--license-filter` stays for narrowed/non-US shards. Complete attribution ledger at
+  `address-points/ATTRIBUTION.json` (regenerable via `scripts/situs-attribution-manifest.mjs`).
 - **GATED by Stream 0** (cleared). `STATE_FIPS` extended to all 50 + the national driver landed
   (`build-national-interpolation.mjs`, DE-verified). Issues: #483 (done-engine), #476, #470, #297.
 
@@ -82,11 +88,42 @@ The "reasonable confidence" half. Conformal prediction over resolved coordinates
 2-region resolver — produces calibrated coverage radii. Abstention/coarse-placer router (#244) — know
 when NOT to answer. Builds on shipped isotonic calibration (#59/#368). Independent of Coverage.
 
+- **✅ Interp radius calibrated (2026-06-14, PR #569).** Split-conformal on 1562 Travis interp hits (full
+  national TX shard, situs off): the raw half-segment radius covers only 71.9% of errors; **×Q̂=1.70 →
+  91.5%** (target 90%). Median raw 87m → calibrated 148m, median error 52.7m, interp-only hit rate 79.5%.
+  Shipped opt-in (`ResolveOpts.interpolationRadiusCalibration`, byte-stable default) + on-by-default in the
+  `geocode` CLI (`--interp-calibration 1.7`). Report: `docs/articles/evals/2026-06-14-interp-radius-calibration.md`.
+- **Open:** re-calibrate multi-region (1.70 is TX-only); promote to a loadable artifact (#59 pattern);
+  abstention router (#244 — confidence-gated downgrade to admin). The 10m situs floor is conservative-safe;
+  leave it.
+
 ### Stream 4 — Callable surface (~seconds compute; pure code) — **Sonnet (each a contract)**
 
 Make it a callable geocoder. Reverse geocoding API (#484, engine built+green). Production service layer
 (#485 — batch, RemoteResolver, observability). Autocomplete (#190, FST built). Demo UX (#377). All
 independent of Coverage; engines exist, this is API surface + wiring.
+
+- **✅ Street-level `/api/geocode` + `/api/batch` (2026-06-14, PR #571 — #485 piece 1).** The server was
+  admin-only (`/api/resolve`); now it runs the full cascade. Extracted the cascade into
+  `mailwoman/geocode-core.ts` (`geocodeAddress` + a per-state `ShardProvider` cache), refactored the CLI
+  onto it (one implementation, re-validated byte-for-byte), and added `/api/batch` (bounded concurrency,
+  per-row error isolation, BATCH_MAX guardrail). Tests 5; full server+resolver suite 49/49.
+- **✅ Observability `/health` + `/metrics` (2026-06-14, PR #572 — #485 piece 2).** `/health` = "what's
+  deployed in one curl" (model-card version + situs/interp shard counts, no model load); `/metrics` =
+  per-tier counts + latency p50/p90/p99 from a bounded reservoir, recorded per request. The instrument the
+  SLO targets need. Tests 4.
+- **✅ RemoteResolver (2026-06-14, PR #573 — #485 piece 3).** The `Resolver` interface over HTTP:
+  `RemoteResolver.resolveTree` POSTs the parsed tree + serializable opts to the service's `/api/resolve-tree`,
+  which owns the shards, runs the cascade, returns the resolved tree. Drop-in for `WofResolver` → stateless
+  parser nodes + a shared resolver service, and canary diffing. Pure fetch (browser-safe). Tests 6 + a live
+  round-trip; 12/12.
+- **✅ Versioned data switchover (2026-06-14, PR #574 — #485 piece 4, CLOSES THE EPIC).** Shards addressed
+  as `<family>-us-<slug>-<version>.db` via a `releases.json` manifest (legacy unversioned fallback);
+  `ShardProvider.reload()` atomically swaps changed versions with one-generation grace (zero-downtime).
+  `POST /api/reload` cuts over after publishing; `/health` reports `data.versions`. Tests 4.
+- **✅ #485 service layer DONE:** batch (#571) · observability (#572) · RemoteResolver (#573) · versioned
+  switchover (#574). Deferred follow-ons (not blocking): Prometheus text exposition + calibration-drift
+  wiring on `/metrics`; auth/rate-limiting (deployment-specific).
 
 ### Cross-cutting — Arbitration (#478) — **Opus**
 
@@ -126,10 +163,19 @@ ODbL obligations flow to consumers + infect derivatives), or **(b) server-side-o
 attributed results — the Pelias/Nominatim model). A product-model decision, not a blocker.
 
 **Why this keeps OSM international-only for us:** TIGER (public domain) + NAD (open) make the US fully
-distributable with zero ODbL — OSM only earns its keep where no TIGER/NAD equivalent exists. **Overture is a
-license mosaic** (NAD = public; OSM-sourced features = ODbL), so the `--license-filter` action item (Stream 2)
-keeps shipped US situs shards clean. (IANAL — confirm against current OSMF geocoding guidelines + counsel
-before shipping OSM-derived data.)
+distributable with zero ODbL — OSM only earns its keep where no TIGER/NAD equivalent exists.
+
+**✅ MEASURED 2026-06-14 — the US Overture addresses carry ZERO OSM.** A full-parquet probe of the
+2026-05-20.0 `addresses-us.parquet` (124.9M geocodable points) found the source mosaic is **NAD 85.5M
+(68%, US public domain) + OpenAddresses 39.4M (32%, government open data), and `0` OpenStreetMap rows**
+(explicit `LIKE '%osm%'` check). So the earlier "Overture is a license mosaic with OSM-sourced features
+→ filter to NAD" framing was wrong for the US: there is nothing ODbL to drop, and `--license-filter NAD`
+would discard a third of coverage (the dense urban OpenAddresses counties) for **no** licensing benefit.
+The national situs build therefore runs **unfiltered**; the only obligation is **attribution** (NAD +
+the named OpenAddresses sources), satisfied by the per-row `overture:<dataset>` provenance the builder
+stamps, summarized into `<out-dir>/ATTRIBUTION.json` by `scripts/build-national-situs.mjs`. The
+`--license-filter` flag stays for deliberately-narrowed or non-US/OSM shards. (IANAL — confirm against
+current OSMF geocoding guidelines + counsel before shipping OSM-derived data internationally.)
 
 ## Tonight's parallel structure (the shift)
 
