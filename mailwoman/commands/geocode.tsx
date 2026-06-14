@@ -24,13 +24,18 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { createWofResolver, type ResolveOpts, type ResolverBackend } from "@mailwoman/core/resolver"
+import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { Text } from "ink"
-import { existsSync } from "node:fs"
 import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
+import {
+	geocodeAddress,
+	type GeocodeResult,
+	type ShardResolver,
+	ShardProvider,
+} from "../geocode-core.js"
 import type { CommandComponent } from "../sdk/cli.js"
 import { resolverDefaultCountry } from "./parse.js"
 
@@ -101,33 +106,6 @@ const OptionsSchema = zod.object({
 })
 
 // ---------------------------------------------------------------------------
-// Output shape
-// ---------------------------------------------------------------------------
-
-/**
- * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `admin`.
- * Consumers should treat coordinates differently depending on the tier:
- *   - `address_point` — rooftop / parcel centroid; uncertainty_m is a small floor (~1 m)
- *   - `interpolated`  — house-number estimate; uncertainty_m is honest (half the bracket span)
- *   - `admin`         — admin centroid; uncertainty_m is null (no sub-locality estimate available)
- */
-type ResolutionTier = "address_point" | "interpolated" | "admin"
-
-interface GeocodeResult {
-	input: string
-	lat: number | null
-	lon: number | null
-	resolution_tier: ResolutionTier
-	/** Uncertainty radius in meters. null for the admin tier. */
-	uncertainty_m: number | null
-	locality: string | null
-	region: string | null
-	postcode: string | null
-	/** Admin hierarchy from the resolver, locality → country (most specific first). */
-	hierarchy: Array<{ tag: string; value: string; lat?: number; lon?: number; placeId?: string }>
-}
-
-// ---------------------------------------------------------------------------
 // Path helpers
 // ---------------------------------------------------------------------------
 
@@ -142,56 +120,22 @@ function resolveWofPath(options: zod.infer<typeof OptionsSchema>): string {
 	return path
 }
 
-/**
- * Convert a resolved region name or abbreviation to a lowercase 2-letter state slug for shard
- * filenames (e.g. "TX" → "tx", "Texas" → null). Both the raw parsed value (e.g. "TX") and the
- * resolver's canonical name (e.g. "Texas") are checked — the raw abbreviation wins when present
- * because that's what the user typed and what the shard filenames encode.
- */
-function regionToStateSlug(regionValue: string | null | undefined, resolverName: string | null | undefined): string | null {
-	// Check raw parsed value first — abbreviations ("TX") are 2-letter and match immediately.
-	for (const candidate of [regionValue, resolverName]) {
-		if (!candidate) continue
-		const trimmed = candidate.trim()
-		if (/^[A-Za-z]{2}$/.test(trimmed)) return trimmed.toLowerCase()
-	}
-	return null
-}
-
-/**
- * Select the per-state address-points shard path from the data root + state slug.
- * Returns null when no slug is available or the file does not exist.
- */
-function selectAddressPointsDb(dataRoot: string, stateSlug: string | null): string | null {
-	if (!stateSlug) return null
-	const candidate = `${dataRoot}/address-points/address-points-us-${stateSlug}.db`
-	return existsSync(candidate) ? candidate : null
-}
-
-/**
- * Select the per-state interpolation shard path from the data root + state slug.
- * Returns null when no slug is available or the file does not exist.
- */
-function selectInterpolationDb(dataRoot: string, stateSlug: string | null): string | null {
-	if (!stateSlug) return null
-	const candidate = `${dataRoot}/interpolation/interpolation-us-${stateSlug}.db`
-	return existsSync(candidate) ? candidate : null
-}
-
 // ---------------------------------------------------------------------------
 // Core geocode logic
 // ---------------------------------------------------------------------------
 
 async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
-	// --- Step 1: load neural classifier (graceful degradation if weights absent) ---
-	let classifier: NeuralAddressClassifier | undefined
+	// Load the neural classifier (required for street-level; weights must be present).
+	let classifier: NeuralAddressClassifier
 	try {
 		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: options.locale })
 	} catch {
-		// Weights not present — pipeline runs rule-only (queryShape / kind only). Acceptable degradation.
+		throw new Error(
+			"geocode requires the neural weights. Install @mailwoman/neural-weights-en-us (or pass --locale with installed weights)."
+		)
 	}
 
-	// --- Step 2: open WOF admin resolver ---
+	// Open the WOF admin resolver + the situs/interpolation shard provider.
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
 	try {
 		mod = await import("@mailwoman/resolver-wof-sqlite")
@@ -202,190 +146,36 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 		)
 	}
 
-	const wofPath = resolveWofPath(options)
-	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: wofPath })
+	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: resolveWofPath(options) })
+	const shardProvider = new ShardProvider(mod, options.dataRoot)
+	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
+	// specific file); an unset tier still falls back to the region-derived per-state shard.
+	const explicitAp = options.addressPointsDb ? new mod.AddressPointSqliteLookup(options.addressPointsDb) : undefined
+	const explicitIp = options.interpolationDb ? new mod.StreetInterpolator({ dbPath: options.interpolationDb }) : undefined
+	const shards: ShardResolver =
+		explicitAp || explicitIp
+			? (slug) => {
+					const base = explicitAp && explicitIp ? {} : shardProvider.for(slug)
+					return { addressPoints: explicitAp ?? base.addressPoints, interpolation: explicitIp ?? base.interpolation }
+				}
+			: shardProvider.for
 
 	try {
-		// Step 2a: first pass — admin-only resolve so we can read the region to select shards.
 		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
-		const dc = resolverDefaultCountry(options)
-		const baseResolveOpts: ResolveOpts = {}
-		if (dc) baseResolveOpts.defaultCountry = dc
-
-		// Build a resolver pipeline for the first (admin-only) pass — no address-point / interpolation
-		// yet; those need the region slug we haven't extracted yet.
-		if (!classifier) {
-			throw new Error(
-				"geocode requires the neural weights. Install @mailwoman/neural-weights-en-us (or pass --locale with installed weights)."
-			)
-		}
-		// RAW neural parse — the path the eval validated at 98.8% within 100m. NOT the runtime pipeline:
-		// its reconcile/solver stage can merge street INTO house_number (dropping the street node the
-		// coordinate tiers need — the bug that made situs silently fall to admin). Region for shard
-		// selection comes straight from the parse; no admin pre-resolve needed.
-		const firstTree = await classifier.parse(input, { postcodeRepair: true })
-
-		// --- Step 3: shard selection from resolved region ---
-		// Walk the resolved tree to find the region node's canonical name / value.
-		let regionValue: string | null = null
-		let regionResolverName: string | null = null
-		let localityValue: string | null = null
-		let postcodeValue: string | null = null
-
-		const stack = [...firstTree.roots]
-		while (stack.length > 0) {
-			const node = stack.pop()!
-			if (node.tag === "region" && !regionValue) {
-				regionValue = node.value.trim() || null
-				regionResolverName = (node.metadata?.["resolver_name"] as string | undefined) ?? null
-			}
-			if (node.tag === "locality" && !localityValue) {
-				localityValue = node.value.trim() || null
-			}
-			if (node.tag === "postcode" && !postcodeValue) {
-				postcodeValue = node.value.trim() || null
-			}
-			stack.push(...node.children)
-		}
-
-		// Determine which state shard to open. Explicit flags always win; then fall back to
-		// the region-derived slug. Missing shards → admin-only (never an error).
-		const stateSlug = regionToStateSlug(regionValue, regionResolverName)
-		const dataRoot = options.dataRoot
-
-		const addressPointsPath = options.addressPointsDb ?? selectAddressPointsDb(dataRoot, stateSlug)
-		const interpolationPath = options.interpolationDb ?? selectInterpolationDb(dataRoot, stateSlug)
-
-		// --- Step 4: second resolve pass wiring in address-point + interpolation tiers ---
-		let addressPointLookup: InstanceType<typeof mod.AddressPointSqliteLookup> | undefined
-		let interpolationLookup: InstanceType<typeof mod.StreetInterpolator> | undefined
-
-		try {
-			if (addressPointsPath) {
-				addressPointLookup = new mod.AddressPointSqliteLookup(addressPointsPath)
-			}
-			if (interpolationPath) {
-				interpolationLookup = new mod.StreetInterpolator({ dbPath: interpolationPath })
-			}
-
-			const enrichedResolveOpts: ResolveOpts = { ...baseResolveOpts }
-			if (addressPointLookup) enrichedResolveOpts.addressPoints = addressPointLookup
-			if (interpolationLookup) {
-				enrichedResolveOpts.interpolation = interpolationLookup
-				// Honest interp radius: the raw half-segment heuristic underestimates the true spread
-				// (~72% coverage); the calibration multiplier reports a ~90% bound. Default 1.7 (#374).
-				if (options.interpCalibration && options.interpCalibration !== 1) {
-					enrichedResolveOpts.interpolationRadiusCalibration = options.interpCalibration
-				}
-			}
-
-			// Single resolve pass on the raw-neural parse with the coordinate tiers wired — the eval's exact
-			// path (parse → resolveTree(addressPoints, interpolation)). Always resolves (admin even with no
-			// shards); the tiers are additive and byte-stable when absent.
-			const finalTree = await resolver.resolveTree(firstTree, enrichedResolveOpts)
-
-			// --- Step 5: extract geocode result from the resolved tree ---
-			const result = extractGeocodeResult(input, finalTree)
-
-			// Emit
-			if (options.format === "text") {
-				return formatText(result)
-			}
-			return JSON.stringify(result, null, 2)
-		} finally {
-			addressPointLookup?.close()
-			interpolationLookup?.close()
-		}
+		const result = await geocodeAddress(input, {
+			classifier,
+			resolver,
+			shards,
+			defaultCountry: resolverDefaultCountry(options) || undefined,
+			interpCalibration: options.interpCalibration,
+		})
+		return options.format === "text" ? formatText(result) : JSON.stringify(result, null, 2)
 	} finally {
+		explicitAp?.close()
+		explicitIp?.close()
+		shardProvider.close()
 		lookup.close()
 	}
-}
-
-// ---------------------------------------------------------------------------
-// Tree extraction
-// ---------------------------------------------------------------------------
-
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-
-/**
- * Walk the resolved `AddressTree` and extract the geocode result. Reads the street node's metadata
- * for the address-point / interpolation coordinate (whichever tier won), falls back to the best
- * admin centroid (locality → region → country) for the `admin` tier.
- */
-function extractGeocodeResult(input: string, tree: AddressTree): GeocodeResult {
-	// Flatten tree to a depth-first list for scanning.
-	const allNodes: AddressNode[] = []
-	const flatten = (nodes: readonly AddressNode[]) => {
-		for (const n of nodes) {
-			allNodes.push(n)
-			flatten(n.children)
-		}
-	}
-	flatten(tree.roots)
-
-	// Find street node (carries address_point / interpolated_point metadata).
-	const streetNode = allNodes.find((n) => n.tag === "street")
-
-	let lat: number | null = null
-	let lon: number | null = null
-	let tier: ResolutionTier = "admin"
-	let uncertaintyM: number | null = null
-
-	// Address-point tier: the street node's metadata key is `address_point`.
-	if (streetNode?.metadata?.["resolution_tier"] === "address_point") {
-		const ap = streetNode.metadata["address_point"] as { lat: number; lon: number } | undefined
-		if (ap) {
-			lat = ap.lat
-			lon = ap.lon
-			tier = "address_point"
-			uncertaintyM = 1 // Floor: situs point is essentially exact.
-		}
-	}
-
-	// Interpolation tier: metadata key is `interpolated_point`.
-	if (tier !== "address_point" && streetNode?.metadata?.["resolution_tier"] === "interpolated") {
-		const ip = streetNode.metadata["interpolated_point"] as { lat: number; lon: number } | undefined
-		if (ip) {
-			lat = ip.lat
-			lon = ip.lon
-			tier = "interpolated"
-			uncertaintyM = (streetNode.metadata["uncertainty_m"] as number | undefined) ?? null
-		}
-	}
-
-	// Admin tier: best admin centroid from resolved nodes.
-	if (tier === "admin") {
-		// Prefer locality, then region, then country — most specific first.
-		const adminPriority: ReadonlyArray<string> = ["locality", "dependent_locality", "region", "country"]
-		for (const tag of adminPriority) {
-			const node = allNodes.find((n) => n.tag === tag && n.lat != null && n.lon != null)
-			if (node) {
-				lat = node.lat!
-				lon = node.lon!
-				break
-			}
-		}
-	}
-
-	// Extract admin string values for the structured fields.
-	const locality =
-		allNodes.find((n) => n.tag === "locality" || n.tag === "dependent_locality")?.value?.trim() || null
-	const region = allNodes.find((n) => n.tag === "region")?.value?.trim() || null
-	const postcode = allNodes.find((n) => n.tag === "postcode")?.value?.trim() || null
-
-	// Build hierarchy: all resolved admin nodes, most specific first.
-	const HIERARCHY_TAGS = ["locality", "dependent_locality", "subregion", "region", "country"]
-	const hierarchy = allNodes
-		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat != null || n.placeId))
-		.sort((a, b) => HIERARCHY_TAGS.indexOf(a.tag) - HIERARCHY_TAGS.indexOf(b.tag))
-		.map((n) => ({
-			tag: n.tag,
-			value: n.value.trim(),
-			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
-			...(n.placeId ? { placeId: n.placeId } : {}),
-		}))
-
-	return { input, lat, lon, resolution_tier: tier, uncertainty_m: uncertaintyM, locality, region, postcode, hierarchy }
 }
 
 // ---------------------------------------------------------------------------
