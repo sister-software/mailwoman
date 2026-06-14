@@ -25,13 +25,62 @@
 import type { AddressGeocode, PostalAddress } from "@mailwoman/record"
 import { canonicalizeOrganizationName, parsePersonName, toPostalAddress, withGeocode } from "@mailwoman/record"
 import { parse as parseCsvSync } from "csv-parse/sync"
+import { Delimiters, TextSpliterator } from "spliterator"
 import type { SourceRecord } from "./types.js"
 
 /** Resolve a raw address string into a {@link PostalAddress}. The seam to mailwoman's geocoder. */
 export type GeocodeAddress = (raw: string) => Promise<PostalAddress | null> | PostalAddress | null
 
-/** Maps dataset columns to record fields. A field may draw from several columns (joined with
-spaces). */
+/** Column delimiter of a delimited source. */
+export type Delimiter = "comma" | "tab"
+
+/** Infer the delimiter from a path's extension (`.tsv` → tab, else comma). */
+export function delimiterFor(path: string): Delimiter {
+	return /\.tsv$/i.test(path) ? "tab" : "comma"
+}
+
+/**
+ * Stream a delimited file's rows lazily as header-keyed objects — the same shape {@link parseCsv}
+ * returns, but **without loading the file into memory**. A multi-GB source (the NPPES registry is
+ * ~4.8 GB / 9.6M rows — too big for `readFileSync`, which throws `ERR_STRING_TOO_LONG`) streams
+ * line by line. Keys are the original header names so a {@link ColumnMapping} written against the
+ * source's headers matches. Filter/sample the stream before {@link ingestRows} to keep only the rows
+ * you geocode.
+ *
+ * We stream _lines_ with spliterator's `TextSpliterator` (pure-Node, the part that handles the huge
+ * file) and split each line into columns here with `String.prototype.split`. We deliberately do NOT
+ * use `CSVSpliterator`: its column tokenizer hard-codes `skipEmpty` (it builds the column
+ * spliterator as `{ delimiter }` with no `skipEmpty: false`), so consecutive delimiters collapse
+ * and EMPTY FIELDS ARE DROPPED — fatal for a fixed-width registry like NPPES where a row of 330
+ * columns full of empties would mis-parse to 40 and shift every value. (Upstream `spliterator` bug;
+ * revisit when it's fixed.)
+ *
+ * Assumes an unquoted delimited file (no fields containing the delimiter) — true for these
+ * government TSVs. For small, possibly-quoted CSVs use {@link parseCsv} (quote-aware, in-memory).
+ */
+export async function* streamRows(
+	source: string,
+	opts: { delimiter?: Delimiter } = {}
+): AsyncGenerator<Record<string, string>> {
+	const sep = (opts.delimiter ?? delimiterFor(source)) === "tab" ? "\t" : ","
+	let header: string[] | null = null
+	for await (const line of TextSpliterator.fromAsync(source, { delimiter: Delimiters.LineFeed })) {
+		if (line.length === 0) continue // blank line / trailing newline
+		const fields = line.replace(/\r$/, "").split(sep) // tolerate CRLF
+		if (header === null) {
+			header = fields
+			continue
+		}
+		const row: Record<string, string> = {}
+		for (let i = 0; i < header.length; i++) row[header[i]!] = fields[i] ?? ""
+		yield row
+	}
+}
+
+/**
+ * Maps dataset columns to record fields. A field may draw from several columns (joined with
+ * spaces).
+ */
 export interface ColumnMapping {
 	/** Column holding a stable row id. Falls back to the row index. */
 	id?: string
@@ -67,16 +116,20 @@ function pick(row: Record<string, string>, columns?: string | string[]): string 
 	return value || undefined
 }
 
-/** Normalize tabular rows into {@link SourceRecord}s under a {@link ColumnMapping}. */
+/**
+ * Normalize tabular rows into {@link SourceRecord}s under a {@link ColumnMapping}. Accepts a sync OR
+ * async iterable, so {@link parseCsv} (in-memory) and {@link streamRows} (lazy, for huge files) both
+ * thread straight through.
+ */
 export async function ingestRows(
-	rows: Iterable<Record<string, string>>,
+	rows: Iterable<Record<string, string>> | AsyncIterable<Record<string, string>>,
 	mapping: ColumnMapping,
 	opts: IngestOptions = {}
 ): Promise<SourceRecord[]> {
 	const records: SourceRecord[] = []
 	let index = 0
 
-	for (const row of rows) {
+	for await (const row of rows) {
 		const id = (mapping.id ? row[mapping.id]?.trim() : "") || String(index)
 		const nameValue = pick(row, mapping.name)
 		const orgValue = pick(row, mapping.organization)
