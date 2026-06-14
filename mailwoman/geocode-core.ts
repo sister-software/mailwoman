@@ -82,7 +82,24 @@ export interface GeocodeDeps {
 	 * `docs/articles/evals/2026-06-14-interp-multiregion-recalibration.md`.
 	 */
 	interpCalibration?: number | InterpCalibrationTable
+	/**
+	 * Coarse country router (#244, soft prior). A `(text) → { country, confidence }` predictor —
+	 * typically `(t) => placer.predict(t)` for a `CoarsePlacer.fromBundled({ abstainBelow: 0.9 })`. A
+	 * confident IN-MAP guess becomes an `anchorPosterior` the resolver's #369 re-rank boosts (never
+	 * filters); abstain (`null`) / off-map (`OTHER`) are no-ops, and an explicit {@link defaultCountry}
+	 * still wins (we never overwrite a caller-set posterior). Off by default → byte-stable. Mostly
+	 * orthogonal to street geocoding (the situs shards are state-keyed) but hardens the admin-tier
+	 * locality disambiguation, especially when no {@link defaultCountry} is pinned. See
+	 * docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md.
+	 */
+	placeCountry?: (text: string) => { country: string | null; confidence: number }
 }
+
+/**
+ * Anchor weight for the coarse-placer's country prior. Matches the runtime-pipeline default — a
+ * whole-string country guess is broader/softer than a postcode anchor (2.0), so it blends gently.
+ */
+const COARSE_PLACER_ANCHOR_WEIGHT = 1.0
 
 /** Lowercase 2-letter state slug from a parsed region value / resolver name, else null. */
 export function regionToStateSlug(
@@ -231,6 +248,15 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 
 	const opts: ResolveOpts = {}
 	if (deps.defaultCountry) opts.defaultCountry = deps.defaultCountry
+	// Coarse country router (#244, soft prior). A confident in-map guess feeds the resolver's
+	// anchorPosterior re-rank; abstain/OTHER are no-ops and an explicit defaultCountry isn't disturbed.
+	if (deps.placeCountry) {
+		const placed = deps.placeCountry(input)
+		if (placed.country && placed.country !== "OTHER" && !opts.anchorPosterior) {
+			opts.anchorPosterior = { [placed.country]: placed.confidence }
+			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
+		}
+	}
 	if (addressPoints) opts.addressPoints = addressPoints
 	if (interpolation) {
 		opts.interpolation = interpolation

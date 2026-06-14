@@ -56,6 +56,16 @@ export interface CreateRuntimePipelineOpts {
 	 * @see RuntimePipelineStages.groupPhrases
 	 */
 	groupPhrases?: RuntimePipelineStages["groupPhrases"]
+	/**
+	 * Coarse country router (#244, soft prior). A `(normalizedText) → { country, confidence }`
+	 * predictor — typically `(t) => placer.predict(t)` for a `CoarsePlacer` loaded via
+	 * `CoarsePlacer.fromBundled({ abstainBelow: 0.9 })`. A confident in-map guess becomes a soft
+	 * country prior the resolver re-rank boosts (never filters); off by default (no wiring) →
+	 * byte-stable. See docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md.
+	 *
+	 * @see RuntimePipelineStages.placeCountry
+	 */
+	placeCountry?: RuntimePipelineStages["placeCountry"]
 }
 
 /**
@@ -84,6 +94,9 @@ export function createRuntimePipeline(
 		classifier: opts.classifier,
 		fst: opts.fst,
 		resolver: opts.resolver,
+		// Coarse country router (#244). Off unless the caller wires it — keeps the default pipeline
+		// byte-stable. When present, a confident in-map guess feeds the resolver's anchorPosterior re-rank.
+		placeCountry: opts.placeCountry,
 		// Default locale gate: rule-based from @mailwoman/locale-gate. Derives locale from
 		// QueryShape character class (CJK→ja-JP, Cyrillic→ru-RU, Arabic→ar) + known-format
 		// hits (us_zip→en-US, fr_postcode→fr-FR, uk_postcode→en-GB). Caller-hint wins when set.

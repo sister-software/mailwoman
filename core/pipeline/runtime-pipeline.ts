@@ -51,6 +51,13 @@ function isPostcodeFormat(format: string): boolean {
 	return POSTCODE_FORMATS.has(format)
 }
 
+/**
+ * Anchor weight for the coarse-placer's country prior (#244). Lower than the postcode anchor's 2.0
+ * default — a whole-string country guess is a broader, softer signal than a postcode that pins the
+ * country, so it blends more gently with the candidate score.
+ */
+const COARSE_PLACER_ANCHOR_WEIGHT = 1.0
+
 function isPostcodeFormatHit(hit: { format: string }): boolean {
 	return isPostcodeFormat(hit.format)
 }
@@ -185,6 +192,27 @@ export async function runPipeline(
 	const normalized = normalize(raw, { locale: opts?.locale })
 	timing["normalize"] = performance.now() - t0
 
+	// Coarse country router (#244, soft prior). A confident in-map guess becomes an `anchorPosterior`
+	// the resolver's #369 re-rank BOOSTS (never filters); abstain/OTHER → no signal. Defers to a
+	// caller-supplied posterior (a stronger postcode anchor — never overwrite it). Off (no stage) →
+	// `effectiveOpts === opts` → byte-stable. See the soft-signal wiring spec.
+	let effectiveOpts = opts
+	if (stages.placeCountry) {
+		const tPlace = performance.now()
+		const placed = stages.placeCountry(normalized.normalized)
+		timing["place-country"] = performance.now() - tPlace
+		if (placed.country && placed.country !== "OTHER" && !opts?.resolveOpts?.anchorPosterior) {
+			effectiveOpts = {
+				...opts,
+				resolveOpts: {
+					...opts?.resolveOpts,
+					anchorPosterior: { [placed.country]: placed.confidence },
+					anchorWeight: opts?.resolveOpts?.anchorWeight ?? COARSE_PLACER_ANCHOR_WEIGHT,
+				},
+			}
+		}
+	}
+
 	throwIfAborted(opts)
 	const tQs = performance.now()
 	const queryShape = computeQueryShape(normalized, { locale: opts?.locale })
@@ -209,7 +237,7 @@ export async function runPipeline(
 		if (stages.resolver) {
 			throwIfAborted(opts)
 			const tResolve = performance.now()
-			tree = await safeResolve(stages.resolver, tree, opts)
+			tree = await safeResolve(stages.resolver, tree, effectiveOpts)
 			timing["resolve"] = performance.now() - tResolve
 		}
 		return {
@@ -336,7 +364,7 @@ export async function runPipeline(
 	if (stages.resolver) {
 		throwIfAborted(opts)
 		const tResolve = performance.now()
-		tree = await safeResolve(stages.resolver, tree, opts)
+		tree = await safeResolve(stages.resolver, tree, effectiveOpts)
 		timing["resolve"] = performance.now() - tResolve
 	}
 
