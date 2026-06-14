@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "4.8.1",
+	"version": "4.9.0",
 	"description": "Utilities for working with contacts for email, phone, and postal addresses.",
 	"license": "AGPL-3.0-only",
 	"contributors": [
