@@ -273,3 +273,60 @@ export async function runCascade(
 
 	return usable(await lookup.findPlace({ text: rawText, bbox: regionBbox, limit: 5 }))
 }
+
+// ---------------------------------------------------------------------------
+// Street-level resolution (situs → interpolation), in front of the admin cascade
+// ---------------------------------------------------------------------------
+
+/** A street-level coordinate + which tier produced it + an honest radius. */
+export interface StreetResolution {
+	lat: number
+	lon: number
+	tier: "address_point" | "interpolated"
+	/** Calibrated uncertainty radius in meters (10 m situs floor; interp = uncertaintyM × the region factor). */
+	uncertaintyM: number
+}
+
+/** Structural shapes so this is testable with stubs (and decoupled from the httpvfs-street classes). */
+interface SitusLike {
+	find(q: { street: string; number: string; postcode?: string; locality?: string }): Promise<{ lat: number; lon: number } | null>
+}
+interface InterpLike {
+	find(q: { street: string; number: string; postcode?: string }): Promise<{ lat: number; lon: number; uncertaintyM: number } | null>
+}
+
+/**
+ * Street tier: exact situs point first (10 m floor), then TIGER interpolation (honest calibrated
+ * radius), else null so the caller falls back to the admin cascade ({@link runCascade}). Mirrors the
+ * node `geocode-core` tier order (address_point > interpolated > admin) — but async, on the main
+ * thread, over the demo's httpvfs handles. `interpRadiusCalibration` is the per-region conformal
+ * factor (#374 / data/calibration/interp-radius-conformal.json); default 1.95 (the conservative
+ * national default — under-coverage is the harmful error).
+ */
+export async function resolveStreet(
+	street: string | undefined,
+	houseNumber: string | undefined,
+	postcode: string | undefined,
+	locality: string | undefined,
+	situs: SitusLike | undefined,
+	interp: InterpLike | undefined,
+	interpRadiusCalibration = 1.95
+): Promise<StreetResolution | null> {
+	const st = (street ?? "").trim()
+	const num = (houseNumber ?? "").trim()
+	if (!st || !num) return null // not a street-level query — let the admin cascade handle it
+
+	if (situs) {
+		const hit = await situs.find({ street: st, number: num, postcode, locality })
+		if (hit && !(hit.lat === 0 && hit.lon === 0)) {
+			return { lat: hit.lat, lon: hit.lon, tier: "address_point", uncertaintyM: 10 }
+		}
+	}
+	if (interp) {
+		const hit = await interp.find({ street: st, number: num, postcode })
+		if (hit && !(hit.lat === 0 && hit.lon === 0)) {
+			return { lat: hit.lat, lon: hit.lon, tier: "interpolated", uncertaintyM: Math.round(hit.uncertaintyM * interpRadiusCalibration) }
+		}
+	}
+	return null
+}

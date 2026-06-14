@@ -22,7 +22,9 @@
 		"./fst-types": "./out/fst-types.js",
 		"./fst-deserialize-web": "./out/fst-deserialize-web.js",
 		"./unified-schema": "./out/unified-schema.js",
-		"./coincident-roles": "./out/coincident-roles.js"
+		"./coincident-roles": "./out/coincident-roles.js",
+		"./geo": "./out/geo.js",
+		"./street-normalize": "./out/street-normalize.js"
 	},
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
