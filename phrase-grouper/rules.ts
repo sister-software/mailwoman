@@ -551,12 +551,22 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
 		// Need at least one preceding token (or a numeric house number) for STREET_PHRASE — a
 		// suffix-only token "Street" alone isn't a street phrase.
 		if (start === suffixIdx) continue
+		// #565: a leading ALL-DIGIT token is a house NUMBER, not part of the street name. Exclude it from
+		// the STREET_PHRASE span — the NUMERIC rule already proposes the house number separately — so the
+		// joint reconciler types the house number and the street as DISTINCT nodes instead of fusing the
+		// whole run ("3075 Hill Street") into one (the regression behind #566). Ordinals ("5th Ave") are
+		// part of the name and stay.
+		let hadHouseNumber = false
+		if (isAllDigit(tokens[start]!.body)) {
+			start += 1
+			hadHouseNumber = true
+			if (start === suffixIdx) continue // only "<number> <suffix>" remained — no street name to phrase
+		}
 		const startTok = tokens[start]!
 		const endTok = tokens[suffixIdx]!
-		const hasLeadingNumeric = isAllDigit(startTok.body) || /^\d+(st|nd|rd|th)$/i.test(startTok.body)
-		// Canonical NUMERIC + capitalized + SUFFIX scores high; capitalized-run + SUFFIX scores
-		// slightly lower since it could also be a venue.
-		const confidence = hasLeadingNumeric ? 0.9 : 0.75
+		// A preceding (now-excluded) house number is still strong evidence this run is a street → high
+		// confidence. A capitalized-run + suffix with no number scores slightly lower (could be a venue).
+		const confidence = hadHouseNumber ? 0.9 : 0.75
 		out.push({
 			span: makeSection(text, startTok.start, endTok.end),
 			kindHypothesis: "STREET_PHRASE",
