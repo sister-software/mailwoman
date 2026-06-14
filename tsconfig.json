@@ -29,6 +29,7 @@
 		{ "path": "./formatter" },
 		{ "path": "./record" },
 		{ "path": "./match" },
+		{ "path": "./registry" },
 		{ "path": "./neural" },
 		{ "path": "./neural-web" },
 		{ "path": "./normalize" },

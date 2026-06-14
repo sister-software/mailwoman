@@ -4761,7 +4761,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/match@workspace:match":
+"@mailwoman/match@workspace:*, @mailwoman/match@workspace:match":
   version: 0.0.0-use.local
   resolution: "@mailwoman/match@workspace:match"
   dependencies:
@@ -4823,11 +4823,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/record@workspace:record":
+"@mailwoman/record@workspace:*, @mailwoman/record@workspace:record":
   version: 0.0.0-use.local
   resolution: "@mailwoman/record@workspace:record"
   dependencies:
     "@mailwoman/formatter": "workspace:*"
+    "@types/node": "npm:^25.9.2"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/registry@workspace:registry":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/registry@workspace:registry"
+  dependencies:
+    "@mailwoman/match": "workspace:*"
+    "@mailwoman/record": "workspace:*"
     "@types/node": "npm:^25.9.2"
   languageName: unknown
   linkType: soft

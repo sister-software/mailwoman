@@ -85,6 +85,7 @@
 		"formatter",
 		"record",
 		"match",
+		"registry",
 		"neural",
 		"neural-web",
 		"neural-weights-en-us",
