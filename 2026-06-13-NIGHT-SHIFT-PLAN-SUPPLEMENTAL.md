@@ -17,31 +17,31 @@ healthy. This supplemental plan covers what the local session completed and what
 
 ## What the supplemental session completed
 
-| Item                       | Status  | Commit     | Detail                                                                                            |
-| -------------------------- | ------- | ---------- | ------------------------------------------------------------------------------------------------- |
-| S1 — Re-gate runbook       | ✅ Done | 3133954    | `build-logs/v150-regate-runbook.sh` — export ONNX → download → promotion gate + house_number lens |
-| S2 — Prettier sweep        | ✅ Done | cb2ea16    | 25 drifted files formatted, committed + pushed                                                    |
-| Postmortem session note    | ✅ Done | 3133954    | Added session-continuity section to `docs/articles/evals/2026-06-13-night-13-postmortem.md`       |
-| #481 — Parser hardening 2b | ✅ Done | cc8b38d    | Export ParseOpts, explicit compiled-tree detection (basename), named grouper NEUTRAL_PROPOSAL_CONFIDENCE |
-| #379 — Repo housekeeping   | ✅ Done | 4c93bb2    | `.gitignore` night-shift plans, deepseek traces, diag scripts. 50+ untracked files suppressed.    |
-| #523 — Placetype stamp     | ✅ Done | 4572ebf    | `#fetchLocalitiesById` now reads actual placetype from spr (not hard-coded "locality") + regression test |
-| #552 — imls phantom subregion | ✅ Done | 1422d23    | Dropped `subregion` component from imls adapter — US postal addresses don't surface counties      |
+| Item                          | Status  | Commit  | Detail                                                                                                   |
+| ----------------------------- | ------- | ------- | -------------------------------------------------------------------------------------------------------- |
+| S1 — Re-gate runbook          | ✅ Done | 3133954 | `build-logs/v150-regate-runbook.sh` — export ONNX → download → promotion gate + house_number lens        |
+| S2 — Prettier sweep           | ✅ Done | cb2ea16 | 25 drifted files formatted, committed + pushed                                                           |
+| Postmortem session note       | ✅ Done | 3133954 | Added session-continuity section to `docs/articles/evals/2026-06-13-night-13-postmortem.md`              |
+| #481 — Parser hardening 2b    | ✅ Done | cc8b38d | Export ParseOpts, explicit compiled-tree detection (basename), named grouper NEUTRAL_PROPOSAL_CONFIDENCE |
+| #379 — Repo housekeeping      | ✅ Done | 4c93bb2 | `.gitignore` night-shift plans, deepseek traces, diag scripts. 50+ untracked files suppressed.           |
+| #523 — Placetype stamp        | ✅ Done | 4572ebf | `#fetchLocalitiesById` now reads actual placetype from spr (not hard-coded "locality") + regression test |
+| #552 — imls phantom subregion | ✅ Done | 1422d23 | Dropped `subregion` component from imls adapter — US postal addresses don't surface counties             |
 
 ### Already done (confirmed during review)
 
-| Issue                          | Evidence                                                                      |
-| ------------------------------ | ----------------------------------------------------------------------------- |
-| #397 — stale `link-dev-weights.sh` | Already fixed: v4.4.0 model + MD5 drift guard (`#397 GUARD` in the script) |
-| #376 — `--default-country` CLI | Already implemented: `parse.tsx` + `localeToCountry` + `resolverDefaultCountry` + full test suite |
-| #481 items 4, 6, 7 (partial)  | Already in prior commits: TLA removal, policy preference-filter tests, gazetteer validation |
+| Issue                              | Evidence                                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------- |
+| #397 — stale `link-dev-weights.sh` | Already fixed: v4.4.0 model + MD5 drift guard (`#397 GUARD` in the script)                        |
+| #376 — `--default-country` CLI     | Already implemented: `parse.tsx` + `localeToCountry` + `resolverDefaultCountry` + full test suite |
+| #481 items 4, 6, 7 (partial)       | Already in prior commits: TLA removal, policy preference-filter tests, gazetteer validation       |
 
 ## What remains (for Claude when the retrain finishes)
 
-| Item                       | Detail                                                                               |
-| -------------------------- | ------------------------------------------------------------------------------------ |
+| Item                       | Detail                                                                                  |
+| -------------------------- | --------------------------------------------------------------------------------------- |
 | S4 — Re-gate               | ✅ Run. Result: **fr.house_number 87.2% — DOES NOT PASS** (gate floor 91.0, target ≥95) |
-| S5 — Postmortem completion | ✅ Done. Filled re-gate results, numbers table, verdict into postmortem              |
-| Ship decision              | ❌ No ship. Regression not recovered; reversed-order FR shard insufficient.           |
+| S5 — Postmortem completion | ✅ Done. Filled re-gate results, numbers table, verdict into postmortem                 |
+| Ship decision              | ❌ No ship. Regression not recovered; reversed-order FR shard insufficient.             |
 
 ## Re-gate runbook (ready to run)
 

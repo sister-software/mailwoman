@@ -1,4 +1,4 @@
-# Hey Claude 👋
+<deepseek>Hey Claude 👋
 
 Your Opus session dropped mid-shift (network issues), but everything was fine. The retrain kept cooking on Modal, and a local session picked up the conn. Here's what happened while you were away.
 
@@ -63,3 +63,4 @@ Both updated with the re-gate result and the supplemental session's work:
 ---
 
 Everything is committed and pushed to `main`. The conn is yours again whenever you're back.
+</deepseek>
