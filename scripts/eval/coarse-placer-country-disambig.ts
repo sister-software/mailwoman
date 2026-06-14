@@ -3,45 +3,46 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #244 M1 PROMOTION GATE — grade the ASSEMBLED pipeline (parse → resolve), not the coarse-placer
- *   in isolation. The reconcile-retirement lesson: a component's intrinsic accuracy says nothing about
- *   whether it helps the pipeline against ground truth. So this measures the geocoder's RIGHT-COUNTRY
- *   rate WITH vs WITHOUT the coarse-placer's soft country prior on ambiguous namesakes + off-map
- *   inputs.
+ *   The #244 M1 PROMOTION GATE — grade the ASSEMBLED pipeline (parse → resolve), not the
+ *   coarse-placer in isolation. The reconcile-retirement lesson: a component's intrinsic accuracy
+ *   says nothing about whether it helps the pipeline against ground truth. So this measures the
+ *   geocoder's RIGHT-COUNTRY rate WITH vs WITHOUT the coarse-placer's soft country prior on
+ *   ambiguous namesakes + off-map inputs.
  *
- *   The A/B lever is EXACTLY the `placeCountry` stage's only effect: it sets `resolveOpts.anchorPosterior`
- *   from the coarse-placer's prediction (threshold 0.9). So toggling the posterior on/off here is
- *   toggling the shipped stage on/off — a faithful assembled-pipeline A/B, not a simulation.
+ *   The A/B lever is EXACTLY the `placeCountry` stage's only effect: it sets
+ *   `resolveOpts.anchorPosterior` from the coarse-placer's prediction (threshold 0.9). So toggling
+ *   the posterior on/off here is toggling the shipped stage on/off — a faithful assembled-pipeline
+ *   A/B, not a simulation.
  *
- *   Per row: parse once, then resolve the SAME tree twice with NO `defaultCountry` (the honest
- *   "we don't know the country" baseline a locale gate would otherwise supply):
+ *   Per row: parse once, then resolve the SAME tree twice with NO `defaultCountry` (the honest "we
+ *   don't know the country" baseline a locale gate would otherwise supply):
  *
  *   - OFF: `resolveTree(tree, {})` — ranking alone disambiguates.
- *   - ON:  `resolveTree(tree, { anchorPosterior: {[country]: conf}, anchorWeight: 1.0 })` when the placer
- *          gives a confident IN-MAP guess; identical to OFF when it abstains / says OTHER.
+ *   - ON: `resolveTree(tree, { anchorPosterior: {[country]: conf}, anchorWeight: 1.0 })` when the
+ *       placer gives a confident IN-MAP guess; identical to OFF when it abstains / says OTHER.
  *
  *   The resolved country is the most-specific resolved admin node's `spr.country` (looked up by the
  *   node's `wof:<id>` in the WOF DB — no shipped-code change to surface it).
  *
- *   Promotion gate (per the soft-signal spec): the prior must IMPROVE the ambiguous/off-map right-country
- *   rate at NO in-map regression. Abstain/OTHER rows MUST be byte-identical OFF vs ON (a strong invariant
- *   the run asserts).
+ *   Promotion gate (per the soft-signal spec): the prior must IMPROVE the ambiguous/off-map
+ *   right-country rate at NO in-map regression. Abstain/OTHER rows MUST be byte-identical OFF vs ON
+ *   (a strong invariant the run asserts).
  *
- *   Run: node --experimental-strip-types scripts/eval/coarse-placer-country-disambig.ts \
- *     --eval data/eval/external/country-homograph-real.jsonl \
- *     --wof /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
- *     --model neural-weights-en-us/model.onnx \
- *     --tokenizer neural-weights-en-us/tokenizer.model \
- *     --model-card neural-weights-en-us/model-card.json \
- *     --out-md docs/articles/evals/2026-06-14-coarse-placer-country-disambig.md
+ *   Run: node --experimental-strip-types scripts/eval/coarse-placer-country-disambig.ts\
+ *   --eval data/eval/external/country-homograph-real.jsonl\
+ *   --wof /mnt/playpen/mailwoman-data/wof/admin-global-priority.db\
+ *   --model neural-weights-en-us/model.onnx\
+ *   --tokenizer neural-weights-en-us/tokenizer.model\
+ *   --model-card neural-weights-en-us/model-card.json\
+ *   --out-md docs/articles/evals/2026-06-14-coarse-placer-country-disambig.md
  */
 
+import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver, type ResolveOpts } from "@mailwoman/core/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
@@ -103,7 +104,10 @@ async function main(): Promise<void> {
 		.map((l) => JSON.parse(l) as HomographRow)
 
 	const card = JSON.parse(readFileSync(cardPath, "utf8")) as { labels: string[]; version?: string }
-	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(tokPath), OnnxRunner.create(modelPath)])
+	const [tokenizer, runner] = await Promise.all([
+		MailwomanTokenizer.loadFromFile(tokPath),
+		OnnxRunner.create(modelPath),
+	])
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: card.labels })
 
 	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
@@ -230,8 +234,12 @@ async function main(): Promise<void> {
 	lines.push(`- **Wins** (wrong → right): ${wins.length}`)
 	lines.push(`- **Regressions** (right → wrong): ${regressions.length}`)
 	lines.push(`- **Neutral flips** (country changed, correctness unchanged): ${flipsNeutral.length}`)
-	lines.push(`- **Abstain/OTHER rows** (no signal → must be identical OFF/ON): ${outcomes.filter((o) => o.abstained).length}`)
-	lines.push(`- **Invariant violations** (abstained but OFF≠ON): ${invariantViolations.length} ${invariantViolations.length === 0 ? "✅" : "❌"}`)
+	lines.push(
+		`- **Abstain/OTHER rows** (no signal → must be identical OFF/ON): ${outcomes.filter((o) => o.abstained).length}`
+	)
+	lines.push(
+		`- **Invariant violations** (abstained but OFF≠ON): ${invariantViolations.length} ${invariantViolations.length === 0 ? "✅" : "❌"}`
+	)
 	lines.push("")
 
 	const showRows = (label: string, subset: Outcome[]) => {
@@ -242,9 +250,7 @@ async function main(): Promise<void> {
 		lines.push(`|---|---|---|---|---|`)
 		for (const o of subset) {
 			const placer = o.abstained ? `_(abstain)_` : `${o.placerCountry} ${o.placerConf.toFixed(2)}`
-			lines.push(
-				`| ${o.row.raw} | ${o.row.country} | ${placer} | ${o.off || "—"} | ${o.on || "—"} |`
-			)
+			lines.push(`| ${o.row.raw} | ${o.row.country} | ${placer} | ${o.off || "—"} | ${o.on || "—"} |`)
 		}
 		lines.push("")
 	}

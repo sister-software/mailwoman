@@ -185,10 +185,10 @@ export interface RuntimePipelineStages {
 	/**
 	 * Coarse country router (#244). A `(normalizedText) → { country, confidence }` predictor (a
 	 * `CoarsePlacer.predict`); `country: null` ⇒ abstained, `"OTHER"` ⇒ off-map. When provided, a
-	 * confident IN-MAP guess becomes a SOFT country prior fed into the resolver's #369 `anchorPosterior`
-	 * re-rank (boosts the right-country candidate, never filters); it defers to a caller-supplied
-	 * posterior (a stronger postcode anchor) and is a no-op on abstain/OTHER. Off by default → byte-stable.
-	 * See docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md.
+	 * confident IN-MAP guess becomes a SOFT country prior fed into the resolver's #369
+	 * `anchorPosterior` re-rank (boosts the right-country candidate, never filters); it defers to a
+	 * caller-supplied posterior (a stronger postcode anchor) and is a no-op on abstain/OTHER. Off by
+	 * default → byte-stable. See docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md.
 	 */
 	placeCountry?: (normalizedText: string) => { country: string | null; confidence: number }
 	/**

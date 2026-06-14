@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Unit tests for the coarse-placer soft-prior wiring in `geocodeAddress` (#244, M1 step C). Fakes
- *   the classifier + resolver so the test captures the `ResolveOpts` the cascade hands the resolver —
- *   no WOF / weights / shards needed. Pins the contract: a confident in-map guess injects an
+ *   the classifier + resolver so the test captures the `ResolveOpts` the cascade hands the resolver
+ *   — no WOF / weights / shards needed. Pins the contract: a confident in-map guess injects an
  *   `anchorPosterior`; abstain / off-map / no-stage are byte-stable no-ops; an explicit
  *   `defaultCountry` still flows alongside.
  */

@@ -109,7 +109,9 @@ const OptionsSchema = zod.object({
 		.number()
 		.optional()
 		.default(0.9)
-		.describe("Abstention threshold for --place-country: below this calibrated confidence the prior is skipped. Default 0.9."),
+		.describe(
+			"Abstention threshold for --place-country: below this calibrated confidence the prior is skipped. Default 0.9."
+		),
 	format: zod
 		.enum(["json", "text"])
 		.optional()

@@ -52,8 +52,10 @@ export interface GeocodeResult {
 	hierarchy: Array<{ tag: string; value: string; lat?: number; lon?: number; placeId?: string }>
 }
 
-/** The per-state shards to wire into a single geocode resolve. Either/both may be absent
-(admin-only). */
+/**
+ * The per-state shards to wire into a single geocode resolve. Either/both may be absent
+ * (admin-only).
+ */
 export interface StateShards {
 	addressPoints?: AddressPointLookup
 	interpolation?: InterpolationLookup
@@ -76,21 +78,21 @@ export interface GeocodeDeps {
 	defaultCountry?: string
 	/**
 	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound;
-	 * `1` or `undefined` keeps the raw half-segment heuristic. Accepts either a single multiplier (the
-	 * legacy Travis 1.7) OR a per-region {@link InterpCalibrationTable} — when a table is supplied the
-	 * factor is selected by the parsed region (DC 1.44 … AZ 3.12, `default` otherwise, #584). See
-	 * `docs/articles/evals/2026-06-14-interp-multiregion-recalibration.md`.
+	 * `1` or `undefined` keeps the raw half-segment heuristic. Accepts either a single multiplier
+	 * (the legacy Travis 1.7) OR a per-region {@link InterpCalibrationTable} — when a table is
+	 * supplied the factor is selected by the parsed region (DC 1.44 … AZ 3.12, `default` otherwise,
+	 * #584). See `docs/articles/evals/2026-06-14-interp-multiregion-recalibration.md`.
 	 */
 	interpCalibration?: number | InterpCalibrationTable
 	/**
 	 * Coarse country router (#244, soft prior). A `(text) → { country, confidence }` predictor —
 	 * typically `(t) => placer.predict(t)` for a `CoarsePlacer.fromBundled({ abstainBelow: 0.9 })`. A
 	 * confident IN-MAP guess becomes an `anchorPosterior` the resolver's #369 re-rank boosts (never
-	 * filters); abstain (`null`) / off-map (`OTHER`) are no-ops, and an explicit {@link defaultCountry}
-	 * still wins (we never overwrite a caller-set posterior). Off by default → byte-stable. Mostly
-	 * orthogonal to street geocoding (the situs shards are state-keyed) but hardens the admin-tier
-	 * locality disambiguation, especially when no {@link defaultCountry} is pinned. See
-	 * docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md.
+	 * filters); abstain (`null`) / off-map (`OTHER`) are no-ops, and an explicit
+	 * {@link defaultCountry} still wins (we never overwrite a caller-set posterior). Off by default →
+	 * byte-stable. Mostly orthogonal to street geocoding (the situs shards are state-keyed) but
+	 * hardens the admin-tier locality disambiguation, especially when no {@link defaultCountry} is
+	 * pinned. See docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md.
 	 */
 	placeCountry?: (text: string) => { country: string | null; confidence: number }
 }
@@ -114,8 +116,10 @@ export function regionToStateSlug(
 	return null
 }
 
-/** Walk a (parsed or resolved) tree for its region → the per-state shard slug (e.g. `"tx"`), else
-null. */
+/**
+ * Walk a (parsed or resolved) tree for its region → the per-state shard slug (e.g. `"tx"`), else
+ * null.
+ */
 export function regionSlugFromTree(tree: AddressTree): string | null {
 	let regionValue: string | null = null
 	let regionResolverName: string | null = null
@@ -131,8 +135,10 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 	return regionToStateSlug(regionValue, regionResolverName)
 }
 
-/** Per-state situs shard path under `<dataRoot>/address-points/`, or null if the slug/file is
-absent. */
+/**
+ * Per-state situs shard path under `<dataRoot>/address-points/`, or null if the slug/file is
+ * absent.
+ */
 export function selectAddressPointsDb(dataRoot: string, stateSlug: string | null): string | null {
 	if (!stateSlug) return null
 	const candidate = `${dataRoot}/address-points/address-points-us-${stateSlug}.db`
