@@ -88,6 +88,15 @@ The "reasonable confidence" half. Conformal prediction over resolved coordinates
 2-region resolver — produces calibrated coverage radii. Abstention/coarse-placer router (#244) — know
 when NOT to answer. Builds on shipped isotonic calibration (#59/#368). Independent of Coverage.
 
+- **✅ Interp radius calibrated (2026-06-14, PR #569).** Split-conformal on 1562 Travis interp hits (full
+  national TX shard, situs off): the raw half-segment radius covers only 71.9% of errors; **×Q̂=1.70 →
+  91.5%** (target 90%). Median raw 87m → calibrated 148m, median error 52.7m, interp-only hit rate 79.5%.
+  Shipped opt-in (`ResolveOpts.interpolationRadiusCalibration`, byte-stable default) + on-by-default in the
+  `geocode` CLI (`--interp-calibration 1.7`). Report: `docs/articles/evals/2026-06-14-interp-radius-calibration.md`.
+- **Open:** re-calibrate multi-region (1.70 is TX-only); promote to a loadable artifact (#59 pattern);
+  abstention router (#244 — confidence-gated downgrade to admin). The 10m situs floor is conservative-safe;
+  leave it.
+
 ### Stream 4 — Callable surface (~seconds compute; pure code) — **Sonnet (each a contract)**
 
 Make it a callable geocoder. Reverse geocoding API (#484, engine built+green). Production service layer
