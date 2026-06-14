@@ -136,7 +136,6 @@ export function buildWorkspaceAliases() {
 	if (coreDir) {
 		for (const sub of [
 			"decoder",
-			"resolver",
 			"classification",
 			"tokenization",
 			"parser",
@@ -147,6 +146,16 @@ export function buildWorkspaceAliases() {
 		]) {
 			aliases[`@mailwoman/core/${sub}`] = resolveWorkspaceDirEntry(coreDir, sub)
 		}
+		// Barrel-bypass for @mailwoman/core/resolver — resolve it straight to its `types` module (where
+		// `expandPlacetypeFilter`, `DEFAULT_PLACETYPE_MAP`, and `PLACETYPE_FILTER_GROUPS` are DIRECTLY
+		// defined) instead of the package barrel `resolver/index.ts`, which RE-EXPORTS them from
+		// `./types.js`. In the demo's production web build, webpack mis-wired that re-exported binding on
+		// the async resolver chunk: `httpvfs-resolver.ts` saw `expandPlacetypeFilter` as `undefined` at
+		// runtime ("expandPlacetypeFilter is not a function"). The ONLY runtime value the bundled graph
+		// imports from this barrel is `expandPlacetypeFilter` (the resolver-wof-* lookups + this demo);
+		// `createWofResolver` is never bundled. This alias is webpack-only — `tsc` still resolves the
+		// package barrel, so type-only imports (`CoincidentLocality`, `Ancestor`) keep working.
+		aliases["@mailwoman/core/resolver"] = resolveWorkspaceFile(coreDir, "resolver/types")
 		aliases["@mailwoman/core/environment/load"] = resolveWorkspaceFile(coreDir, "environment/load")
 		aliases["@mailwoman/core/kysley/dialect"] = resolveWorkspaceFile(coreDir, "kysley/dialect")
 	}
