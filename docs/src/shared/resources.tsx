@@ -162,7 +162,7 @@ export function streetShardUrl(slug: string, kind: "situs" | "interp"): string {
  * admin centroid. Extend as shards are published — NY/MI/CA is the launch trio (the spec's size spread);
  * DC is the dense-urban verification (the White House resolves to its exact building).
  */
-export const HOSTED_STREET_SLUGS = new Set(["dc", "mi"])
+export const HOSTED_STREET_SLUGS = new Set(["dc", "mi", "ny", "ca"])
 
 const US_STATE_NAME_TO_SLUG: Record<string, string> = {
 	alabama: "al", alaska: "ak", arizona: "az", arkansas: "ar", california: "ca", colorado: "co",

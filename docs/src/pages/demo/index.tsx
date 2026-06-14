@@ -66,6 +66,9 @@ import type { HttpvfsAddressPointLookup, HttpvfsInterpolator } from "../../share
 const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
 const INTERP_RADIUS_DEFAULT = 1.95
 
+/** Spans that together make up the street name — assembled in source order for the situs/interp query. */
+const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
+
 /** The per-state street lookups, loaded together (lazy by region). */
 interface StreetLookups {
 	situs: HttpvfsAddressPointLookup
@@ -704,15 +707,21 @@ const DemoApp: React.FC = () => {
 				// interpolated estimate with an honest radius). Best-effort + lazy — a miss or an unhosted
 				// state silently falls through to the admin centroid below.
 				let streetResolution: StreetResolution | null = null
-				const streetNode = nodes.find((n) => n.tag === "street")
+				// Assemble the full street from ALL its component spans in source order — the model often
+				// splits it into street + street_suffix (+ prefix/particle), e.g. "Point Lobos" + "Ave". The
+				// situs/interp normalizer needs the whole thing ("point lobos avenue") to match.
+				const streetParts = nodes
+					.filter((n) => STREET_COMPONENT_TAGS.has(n.tag) && String(n.value ?? "").trim())
+					.sort((a, b) => (a.start ?? 0) - (b.start ?? 0))
+				const streetValue = streetParts.map((n) => String(n.value).trim()).join(" ")
 				const houseNumberNode = nodes.find((n) => n.tag === "house_number" || n.tag === "house_number_prefix")
 				const stateSlug = regionToStateSlug(stateNode?.value as string | undefined)
-				if (streetNode?.value && houseNumberNode?.value && stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)) {
+				if (streetValue && houseNumberNode?.value && stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)) {
 					try {
 						const street = await ensureStreetLookups(stateSlug)
 						if (street) {
 							streetResolution = await resolveStreet(
-								String(streetNode.value),
+								streetValue,
 								String(houseNumberNode.value),
 								postcodeNode?.value ? String(postcodeNode.value) : undefined,
 								localityNodes[0]?.value ? String(localityNodes[0].value) : undefined,
@@ -831,7 +840,7 @@ const DemoApp: React.FC = () => {
 				if (streetResolution) {
 					candidates.unshift({
 						id: 0,
-						name: `${String(houseNumberNode!.value)} ${String(streetNode!.value)}`,
+						name: `${String(houseNumberNode!.value)} ${streetValue}`,
 						placetype: streetResolution.tier,
 						lat: streetResolution.lat,
 						lon: streetResolution.lon,
