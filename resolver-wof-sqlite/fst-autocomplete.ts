@@ -5,6 +5,15 @@
  *
  *   FST-based autocomplete. Prefix walk + BFS expansion to collect ranked place suggestions. O(depth
  *   × branching) — the FST IS the autocomplete index.
+ *
+ *   Two query shapes are handled (the FST is a trie over normalized WORD tokens):
+ *
+ *   - COMPLETE tokens ("new york") — `walk` lands on a state; collect its accepting entries + BFS
+ *     a couple tokens past it for nearby completions. This is the CLI's "complete a place word" path.
+ *   - A PARTIAL last token ("new yor", "chic") — `walk` fails (there is no "yor" edge, only "york").
+ *     So walk the complete prefix, then complete the partial token by prefix-filtering the
+ *     continuation edges (`token.startsWith(partial)`). This is what a char-level typeahead needs;
+ *     without it "new yor" returns nothing useful. (#587)
  */
 
 import { FstMatcher, normalizeTokens } from "./fst-matcher.js"
@@ -30,17 +39,22 @@ export interface AutocompleteSuggestion {
 export interface AutocompleteOpts {
 	maxSuggestions?: number
 	maxExpansionDepth?: number
+	/**
+	 * Collapse same-name suggestions to the single highest-importance one. Off by default (the CLI
+	 * surfaces distinct same-name places — New York the city vs the county); a typeahead wants it ON so
+	 * the dropdown isn't four "New London"s. (#587)
+	 */
+	dedupeByName?: boolean
+}
+
+interface BfsItem {
+	stateId: number
+	depth: number
+	tokens: string[]
 }
 
 /**
- * Autocomplete from the current prefix. Returns ranked suggestions (importance-descending).
- *
- * Algorithm:
- *
- * 1. Walk the FST with the normalized prefix tokens
- * 2. Collect all accepting entries at the current state (exact matches)
- * 3. BFS-expand continuations up to `maxExpansionDepth` to find nearby completions
- * 4. Deduplicate by wofID, rank by importance
+ * Autocomplete from the current prefix. Returns suggestions ranked importance-descending.
  */
 export function autocomplete(fst: FstMatcher, query: string, opts: AutocompleteOpts = {}): AutocompleteResult {
 	const maxSuggestions = opts.maxSuggestions ?? 10
@@ -51,64 +65,51 @@ export function autocomplete(fst: FstMatcher, query: string, opts: AutocompleteO
 		return { query, normalizedTokens: [], depth: 0, suggestions: [] }
 	}
 
+	const seen = new Map<number, AutocompleteSuggestion>()
+	const queue: BfsItem[] = []
+	let depth = 0
+
 	const match = fst.walk(normalizedTokens)
-	if (!match) {
-		const partial = fst.query(query)
-		return {
-			query,
-			normalizedTokens,
-			depth: partial.path.length,
-			suggestions: partial.accepting.map((e) => ({
-				name: e.name,
-				placetype: e.placetype,
-				importance: e.importance,
-				wofID: e.wofID,
-				parentChain: e.parentChain,
-				matchDepth: partial.path.length,
-				completionTokens: [],
-			})),
+	if (match) {
+		// COMPLETE-token prefix landed on a state. Seed at the match state (accepting + continuations).
+		depth = match.depth
+		for (const entry of fst.accepting(match.stateId)) addSuggestion(seen, entry, match.depth, [])
+		for (const cont of fst.continuations(match.stateId)) {
+			queue.push({ stateId: cont.targetState, depth: 1, tokens: [cont.token] })
+		}
+	} else {
+		// PARTIAL last token — walk the complete prefix, complete the partial by prefix-filtering edges.
+		const complete = normalizedTokens.slice(0, -1)
+		const partial = normalizedTokens[normalizedTokens.length - 1]!
+		const prefixState = complete.length === 0 ? 0 : (fst.walk(complete)?.stateId ?? undefined)
+		if (prefixState === undefined) {
+			return { query, normalizedTokens, depth: 0, suggestions: [] }
+		}
+		depth = complete.length
+		for (const cont of fst.continuations(prefixState)) {
+			if (!cont.token.startsWith(partial)) continue
+			// This edge completes the typed partial token — its target is a real match at depth+1.
+			for (const entry of fst.accepting(cont.targetState)) addSuggestion(seen, entry, complete.length + 1, [cont.token])
+			// BFS a little past it too (multi-token completions: "new yor" → "New York Mills").
+			queue.push({ stateId: cont.targetState, depth: 1, tokens: [cont.token] })
 		}
 	}
 
-	const seen = new Map<number, AutocompleteSuggestion>()
-
-	for (const entry of fst.accepting(match.stateId)) {
-		addSuggestion(seen, entry, match.depth, [])
-	}
-
-	interface BfsItem {
-		stateId: number
-		depth: number
-		tokens: string[]
-	}
-
-	const queue: BfsItem[] = []
-	for (const cont of fst.continuations(match.stateId)) {
-		queue.push({ stateId: cont.targetState, depth: 1, tokens: [cont.token] })
-	}
-
+	// BFS expansion (shared by both paths) — find nearby completions up to maxExpansionDepth.
 	while (queue.length > 0 && seen.size < maxSuggestions * 3) {
 		const item = queue.shift()!
 		if (item.depth > maxExpansionDepth) continue
-
-		for (const entry of fst.accepting(item.stateId)) {
-			addSuggestion(seen, entry, match.depth + item.depth, item.tokens)
-		}
-
+		for (const entry of fst.accepting(item.stateId)) addSuggestion(seen, entry, depth + item.depth, item.tokens)
 		if (item.depth < maxExpansionDepth) {
 			for (const cont of fst.continuations(item.stateId)) {
-				queue.push({
-					stateId: cont.targetState,
-					depth: item.depth + 1,
-					tokens: [...item.tokens, cont.token],
-				})
+				queue.push({ stateId: cont.targetState, depth: item.depth + 1, tokens: [...item.tokens, cont.token] })
 			}
 		}
 	}
 
-	const suggestions = [...seen.values()].sort((a, b) => b.importance - a.importance).slice(0, maxSuggestions)
-
-	return { query, normalizedTokens, depth: match.depth, suggestions }
+	let suggestions = [...seen.values()].sort((a, b) => b.importance - a.importance)
+	if (opts.dedupeByName) suggestions = dedupeByName(suggestions)
+	return { query, normalizedTokens, depth, suggestions: suggestions.slice(0, maxSuggestions) }
 }
 
 function addSuggestion(
@@ -128,4 +129,18 @@ function addSuggestion(
 		matchDepth,
 		completionTokens: [...completionTokens],
 	})
+}
+
+/** Keep one suggestion per name — the highest-importance. Input is already importance-sorted, so the
+ * first occurrence per name wins; order is preserved. */
+function dedupeByName(suggestions: AutocompleteSuggestion[]): AutocompleteSuggestion[] {
+	const seenNames = new Set<string>()
+	const out: AutocompleteSuggestion[] = []
+	for (const s of suggestions) {
+		const key = s.name.toLowerCase()
+		if (seenNames.has(key)) continue
+		seenNames.add(key)
+		out.push(s)
+	}
+	return out
 }

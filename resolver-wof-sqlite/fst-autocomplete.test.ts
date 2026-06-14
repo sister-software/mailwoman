@@ -8,7 +8,8 @@ import { existsSync } from "node:fs"
 import { beforeAll, describe, expect, it } from "vitest"
 import { autocomplete } from "./fst-autocomplete.js"
 import { buildFstFromWof } from "./fst-builder.js"
-import type { FstMatcher } from "./fst-matcher.js"
+import { FstMatcher } from "./fst-matcher.js"
+import type { PlaceEntry, PlacetypeId } from "./fst-types.js"
 
 const WOF_DB = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
 const HAS_WOF = existsSync(WOF_DB)
@@ -69,5 +70,64 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 	it("reports correct depth for partial matches", () => {
 		const result = autocomplete(matcher, "New York City")
 		expect(result.depth).toBeGreaterThanOrEqual(2)
+	})
+})
+
+// Synthetic-FST unit tests (no WOF DB needed → always run in CI). Cover the #587 char-level
+// partial-last-token completion + dedupeByName. The trie:
+//   root --new--> [york -> New York; london -> New London ×2 (city+county)]
+//        --san--> [francisco -> San Francisco]
+//        --chicago--> Chicago
+describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
+	const place = (wofID: number, name: string, placetype: PlacetypeId, importance: number): PlaceEntry => ({
+		wofID,
+		name,
+		placetype,
+		importance,
+		parentChain: [],
+		lat: 0,
+		lon: 0,
+	})
+	const matcher = new FstMatcher([
+		{ edges: new Map([["new", 1], ["san", 4], ["chicago", 6]]), places: [] }, // 0 root
+		{ edges: new Map([["york", 2], ["london", 3]]), places: [] }, // 1 "new"
+		{ edges: new Map(), places: [place(1, "New York", "locality", 0.9)] }, // 2 "new york"
+		{ edges: new Map(), places: [place(2, "New London", "locality", 0.5), place(3, "New London", "county", 0.4)] }, // 3 "new london"
+		{ edges: new Map([["francisco", 5]]), places: [] }, // 4 "san"
+		{ edges: new Map(), places: [place(4, "San Francisco", "locality", 0.8)] }, // 5 "san francisco"
+		{ edges: new Map(), places: [place(5, "Chicago", "locality", 0.85)] }, // 6 "chicago"
+	])
+
+	it("completes a PARTIAL last token (the #587 fix): 'new yor' → New York", () => {
+		const r = autocomplete(matcher, "new yor")
+		expect(r.suggestions.map((s) => s.name)).toContain("New York")
+	})
+
+	it("completes a single partial token from the root: 'chic' → Chicago", () => {
+		const r = autocomplete(matcher, "chic")
+		expect(r.suggestions[0]?.name).toBe("Chicago")
+	})
+
+	it("does not mis-complete: 'san fr' → San Francisco (not San anything-else)", () => {
+		const r = autocomplete(matcher, "san fr")
+		expect(r.suggestions.map((s) => s.name)).toEqual(["San Francisco"])
+	})
+
+	it("complete-token path is unchanged: 'new york' resolves exactly", () => {
+		const r = autocomplete(matcher, "new york")
+		expect(r.suggestions[0]?.name).toBe("New York")
+	})
+
+	it("dedupeByName collapses same-name places (two New Londons → one)", () => {
+		const without = autocomplete(matcher, "new london")
+		expect(without.suggestions.filter((s) => s.name === "New London").length).toBe(2)
+		const withDedupe = autocomplete(matcher, "new london", { dedupeByName: true })
+		expect(withDedupe.suggestions.filter((s) => s.name === "New London").length).toBe(1)
+		// keeps the higher-importance one (the locality, 0.5 > the county's 0.4)
+		expect(withDedupe.suggestions[0]?.placetype).toBe("locality")
+	})
+
+	it("returns nothing for an unmatched prefix", () => {
+		expect(autocomplete(matcher, "xyz").suggestions).toEqual([])
 	})
 })
