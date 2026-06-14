@@ -40,27 +40,44 @@ import {
 	type DualRole,
 	type FstMatcherLike,
 	type FstProvenanceLike,
+	HOSTED_STREET_SLUGS,
 	loadFstGazetteer,
 	type MailwomanClassifierLike,
 	type MailwomanLookupLike,
 	neuralClassifierLoadUrls,
+	regionToStateSlug,
 	type ResolvedHit,
+	streetShardUrl,
 } from "../../shared/resources.tsx"
 
-import type { ReleasesManifest } from "../../shared/demo-helpers.ts"
+import type { ReleasesManifest, StreetResolution } from "../../shared/demo-helpers.ts"
 import {
 	DEFAULT_ADDRESS,
 	DEFAULT_LOCALE,
 	EXAMPLE_ADDRESSES,
 	flattenTree,
+	resolveStreet,
 	runCascade,
 } from "../../shared/demo-helpers.ts"
+
+import type { HttpvfsAddressPointLookup, HttpvfsInterpolator } from "../../shared/httpvfs-street.ts"
+
+/** Per-region interp-radius conformal factor (#374); default for unmeasured regions. */
+const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
+const INTERP_RADIUS_DEFAULT = 1.95
+
+/** The per-state street lookups, loaded together (lazy by region). */
+interface StreetLookups {
+	situs: HttpvfsAddressPointLookup
+	interp: HttpvfsInterpolator
+}
 import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 
 import {
 	clearBbox,
 	currentDocusaurusTheme,
 	drawApproxCircle,
+	drawRadiusCircle,
 	drawPlaceGeometry,
 	fetchBasemapSource,
 	geomBounds,
@@ -172,6 +189,9 @@ const DemoApp: React.FC = () => {
 	// resolves share one fetch.
 	const anchorLookupRef = useRef<Map<string, { lat: number; lon: number }> | null>(null)
 	const polygonDbRef = useRef<Promise<PolygonDb> | null>(null)
+	// Street tier (#377): per-state situs/interp httpvfs lookups, lazy-loaded by parsed region and
+	// cached. Held as the in-flight promise so a fast second submit on the same state shares one load.
+	const streetLookupsRef = useRef<Map<string, Promise<StreetLookups>>>(new Map())
 
 	// Sync ?q= when the operator edits the address. replaceState avoids polluting back-button
 	// history with every keystroke; only the latest state lands in the URL.
@@ -478,6 +498,15 @@ const DemoApp: React.FC = () => {
 			const marker = new maplibre.Marker({ color: "#e0367c" }).setLngLat([candidate.lon, candidate.lat]).addTo(map)
 			markerRef.current = marker
 
+			// Street-level tier (#377): draw the honest uncertainty circle (10 m exact building / calibrated
+			// interp radius) and zoom in — no admin polygon for a precise point. Takes precedence over the
+			// admin polygon/bbox path below.
+			if (candidate.tier && candidate.uncertaintyM != null) {
+				drawRadiusCircle(map, candidate.lat, candidate.lon, candidate.uncertaintyM)
+				map.flyTo({ center: [candidate.lon, candidate.lat], zoom: candidate.tier === "address_point" ? 17 : 15 })
+				return
+			}
+
 			// Prefer the crisp admin polygon (lazily-loaded sibling DB) over the bbox rectangle. The points
 			// DB only carries min/max lat-lon, so without this the map draws a box around the place; the
 			// polygon DB ships the real, simplified boundary keyed by the same WOF id.
@@ -563,6 +592,30 @@ const DemoApp: React.FC = () => {
 		}
 	}, [lookup, lookupLoader])
 
+	// Lazy-load (and cache) the situs + interp httpvfs lookups for a parsed region's state shard. Both
+	// DBs range-load from R2 like wof-hot.db; a lookup touches ~KB. Returns null if the shards aren't
+	// hosted for this state (the street tier then no-ops and the admin cascade answers).
+	const ensureStreetLookups = useCallback(
+		async (slug: string): Promise<StreetLookups | null> => {
+			let p = streetLookupsRef.current.get(slug)
+			if (!p) {
+				p = (async () => {
+					const { loadHttpvfsDb } = await import("../../shared/httpvfs-resolver")
+					const { HttpvfsAddressPointLookup, HttpvfsInterpolator } = await import("../../shared/httpvfs-street")
+					const [situsW, interpW] = await Promise.all([
+						loadHttpvfsDb(streetShardUrl(slug, "situs"), sqljsBaseUrl),
+						loadHttpvfsDb(streetShardUrl(slug, "interp"), sqljsBaseUrl),
+					])
+					return { situs: new HttpvfsAddressPointLookup(situsW), interp: new HttpvfsInterpolator(interpW) }
+				})()
+				p.catch(() => streetLookupsRef.current.delete(slug))
+				streetLookupsRef.current.set(slug, p)
+			}
+			return p
+		},
+		[sqljsBaseUrl]
+	)
+
 	// Warm the place index + polygon DB during browser idle time. The cold path (UMD script + worker
 	// spawn + WASM compile + ~40 SERIAL 64 KB range round-trips — sql.js-httpvfs fetches via sync XHR)
 	// costs seconds on a cold cache; paying it while the user reads the page / types means the first
@@ -644,6 +697,34 @@ const DemoApp: React.FC = () => {
 					.filter((n) => n.tag === "region" || n.tag === "state")
 					.sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 				const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
+
+				// ── Street tier (#377): exact situs point / TIGER interpolation ──
+				// Ahead of the admin cascade: when the parse has a street + house number and we host a
+				// street shard for the parsed state, resolve the precise coordinate (exact building, or an
+				// interpolated estimate with an honest radius). Best-effort + lazy — a miss or an unhosted
+				// state silently falls through to the admin centroid below.
+				let streetResolution: StreetResolution | null = null
+				const streetNode = nodes.find((n) => n.tag === "street")
+				const houseNumberNode = nodes.find((n) => n.tag === "house_number" || n.tag === "house_number_prefix")
+				const stateSlug = regionToStateSlug(stateNode?.value as string | undefined)
+				if (streetNode?.value && houseNumberNode?.value && stateSlug && HOSTED_STREET_SLUGS.has(stateSlug)) {
+					try {
+						const street = await ensureStreetLookups(stateSlug)
+						if (street) {
+							streetResolution = await resolveStreet(
+								String(streetNode.value),
+								String(houseNumberNode.value),
+								postcodeNode?.value ? String(postcodeNode.value) : undefined,
+								localityNodes[0]?.value ? String(localityNodes[0].value) : undefined,
+								street.situs,
+								street.interp,
+								INTERP_RADIUS_BY_REGION[stateSlug] ?? INTERP_RADIUS_DEFAULT
+							)
+						}
+					} catch (streetErr) {
+						console.warn("[mailwoman demo] street tier unavailable; falling back to admin cascade", streetErr)
+					}
+				}
 
 				// ── Compare parse (classifier-only, no FST/WOF) ──────────────────
 				// Runs before the WOF lookup so it executes even when the selected
@@ -743,6 +824,22 @@ const DemoApp: React.FC = () => {
 					score: c.score,
 					bbox: c.bbox,
 				}))
+
+				// Street-level coordinate wins the pin (more precise than any admin centroid). The admin
+				// candidates stay in the list for the resolved-hierarchy context. id=0 → not a WOF place, so
+				// the marker effect skips the polygon path and draws the calibrated uncertainty circle.
+				if (streetResolution) {
+					candidates.unshift({
+						id: 0,
+						name: `${String(houseNumberNode!.value)} ${String(streetNode!.value)}`,
+						placetype: streetResolution.tier,
+						lat: streetResolution.lat,
+						lon: streetResolution.lon,
+						score: 1,
+						tier: streetResolution.tier,
+						uncertaintyM: streetResolution.uncertaintyM,
+					})
+				}
 
 				// Marker draw is centralised in the useEffect below — it reacts to result +
 				// selectedCandidateIndex changes. Just stash the candidates; the effect handles
