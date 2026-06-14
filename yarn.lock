@@ -4682,9 +4682,9 @@ __metadata:
   resolution: "@mailwoman/corpus@workspace:corpus"
   dependencies:
     "@dsnp/parquetjs": "npm:1.8.7"
-    "@fragaria/address-formatter": "npm:^6.7.1"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/formatter": "workspace:*"
     "@types/node": "npm:^25.9.2"
     csv-parse: "npm:^5.6.0"
     fast-glob: "npm:^3.3.3"
@@ -4735,7 +4735,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/formatter@workspace:formatter":
+"@mailwoman/formatter@workspace:*, @mailwoman/formatter@workspace:formatter":
   version: 0.0.0-use.local
   resolution: "@mailwoman/formatter@workspace:formatter"
   dependencies:
