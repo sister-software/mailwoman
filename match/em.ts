@@ -24,8 +24,10 @@
 
 import type { Comparison, FellegiSunterModel } from "./fellegi-sunter.js"
 
-/** Tiny floor mixed into the M-step so an unobserved level never produces a zero (→ infinite
-weight). */
+/**
+ * Tiny floor mixed into the M-step so an unobserved level never produces a zero (→ infinite
+ * weight).
+ */
 const EPSILON = 1e-9
 
 /** Reduce a record pair to its agreement pattern — the per-comparison level index (`-1` = missing). */

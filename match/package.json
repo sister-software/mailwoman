@@ -14,7 +14,8 @@
 		".": "./out/index.js",
 		"./comparators": "./out/comparators.js",
 		"./fellegi-sunter": "./out/fellegi-sunter.js",
-		"./em": "./out/em.js"
+		"./em": "./out/em.js",
+		"./tf": "./out/tf.js"
 	},
 	"dependencies": {
 		"fastest-levenshtein": "^1.0.16"

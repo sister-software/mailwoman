@@ -47,6 +47,32 @@ export interface Comparison<R> {
 	levels: ComparisonLevel[]
 	/** Index into {@link levels}, or `-1` when either value is missing (no evidence → weight 0). */
 	assess(a: R, b: R): number
+	/**
+	 * Optional term-frequency adjustment: on the levels it names, replace the level's average `u`
+	 * with the agreeing value's actual frequency, so agreement on a rare value (`Vijayan`) outweighs
+	 * agreement on a common one (`Smith`). See `withTermFrequency`.
+	 */
+	termFrequency?: TermFrequencyAdjustment<R>
+}
+
+/**
+ * Per-value term-frequency adjustment for a comparison (the Splink/Winkler mechanism). `m` is
+ * unchanged; on an agreement level the effective `u` becomes the value's own frequency, adding
+ * `log2(u_level / frequency)` to the weight — large and positive for rare values, negative for
+ * common ones. Floored at {@link TermFrequencyAdjustment.minimumFrequency} so an ultra-rare value
+ * can't produce an unbounded boost.
+ */
+export interface TermFrequencyAdjustment<R> {
+	/** Relative frequency of a value in the data, in (0, 1]. Typically computed on-the-fly. */
+	frequency(value: string): number
+	/** The level indices the adjustment applies to (typically just the exact level). */
+	levels: ReadonlySet<number>
+	/** The agreeing value to look up for a pair (a normalized field value), or null to skip. */
+	value(a: R, b: R): string | null | undefined
+	/** Scale the adjustment in [0, 1]. Default 1. */
+	weight?: number
+	/** Floor for the looked-up frequency, bounding the boost on ultra-rare values. Default 1e-4. */
+	minimumFrequency?: number
 }
 
 /** A Fellegi-Sunter model: the field comparisons plus the prior match rate `λ`. */
@@ -131,7 +157,18 @@ export function scorePair<R>(model: FellegiSunterModel<R>, a: R, b: R): PairScor
 			continue
 		}
 		const level = comparison.levels[index]!
-		const w = levelWeight(level)
+		let w = levelWeight(level)
+
+		// Term-frequency adjustment: swap the level's average u for the agreeing value's own frequency.
+		const tf = comparison.termFrequency
+		if (tf && tf.levels.has(index) && level.u > 0) {
+			const value = tf.value(a, b)
+			if (value) {
+				const frequency = Math.max(tf.frequency(value), tf.minimumFrequency ?? 1e-4)
+				if (frequency > 0) w += Math.log2(level.u / frequency) * (tf.weight ?? 1)
+			}
+		}
+
 		weight += w
 		contributions.push({ name: comparison.name, level: level.label, weight: w })
 	}
