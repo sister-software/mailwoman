@@ -45,22 +45,5 @@ jobs:
       - name: Compile
         run: yarn compile
 
-      # Bridge the compiled tree to the committed dictionaries. core/utils/repo.ts's
-      # __isCompiledTree detection lands CorePackageAbsolutePath at core/out (not the
-      # documented core/), so the compiled parser reads libpostal dicts from
-      # core/out/data/... while the data physically lives at core/data/.... core/out is
-      # gitignored build output, so this symlink only exists where something creates it —
-      # locally it's made by scripts/eval/promotion-gate.sh, but CI never ran the gate, so
-      # the compiled CLI ENOENTs on first parse and the whole mailwoman/test/locale-flag.test.ts
-      # suite fails (every `mailwoman parse …`, incl. the model-free fast-paths). Mirror the
-      # gate's sanctioned bridge. Touches no path logic; the proper repo.ts-detection fix is
-      # tracked for daylight review — see #481 / #582.
-      - name: Bridge compiled data dir
-        run: |
-          if [[ ! -e core/out/data && -d core/data ]]; then
-            ln -sfn ../data core/out/data
-            echo "bridged core/out/data -> ../data so the compiled parser finds libpostal dicts"
-          fi
-
       - name: Test
         run: yarn ci:test
