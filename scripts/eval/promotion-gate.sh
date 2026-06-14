@@ -126,19 +126,11 @@ fi
 
 # Arena leg (v4.4.0+: arena.perturb is a floor when the spec declares it) — heavy, ship artifact only.
 if [[ "$(node -e "console.log('arena.perturb' in (JSON.parse(require('fs').readFileSync('$GATE','utf8')).floors||{}))")" == "true" ]]; then
-	# The arena harness runs the COMPILED v0 (Pelias) parser, which loads libpostal dictionaries via
-	# core/utils/repo.ts. In the compiled tree that path resolves to core/out/data/libpostal/... but the
-	# data physically lives at core/data/... (repo.ts's __isCompiledTree lands CorePackageAbsolutePath at
-	# core/out, not the documented core/). Without the bridge below, EVERY v0 arena assertion ENOENTs →
-	# 0 assertions → the verdict reports `arena.perturb: NOT FOUND` and the floor is un-evaluable (it then
-	# hard-fails the gate for an INFRA reason, masking the real arena number — measured 2026-06-13: the
-	# real perturb pass-rate was 78%, comfortably over the 71 floor, but reported NOT FOUND). core/out is
-	# gitignored build output, so this symlink is local + reversible + touches no path logic. The proper
-	# fix (repo.ts detection vs a sanctioned build copy) is tracked for daylight review — see #481.
-	if [[ ! -e core/out/data && -d core/data ]]; then
-		ln -sfn ../data core/out/data
-		echo "[gate] bridged core/out/data -> ../data so the compiled v0 arena parser finds libpostal dicts" >&2
-	fi
+	# (Historical note: the compiled v0 arena parser used to ENOENT on libpostal dicts because
+	# repo.ts's __isCompiledTree detection landed CorePackageAbsolutePath at core/out, so dict reads
+	# went to core/out/data/... while the data lives at core/data/.... A local core/out/data symlink
+	# bridged the gap. #481 fixed the detection — the compiled tree now reads core/data directly — so
+	# no bridge is needed here anymore.)
 	MODEL="${INT8:-$MODEL}" TOKENIZER="$TOK" MODELCARD="$CARD" \
 		GAZETTEER="$GAZ" ANCHOR="$LK" CONVENTIONS="${CONV_MODE:-}" BRIDGE="${BRIDGE_MODE:-}" \
 		OUT_DIR="$OUT_DIR/arenas" scripts/eval/external-arenas.sh > "$OUT_DIR/arenas.md" 2>&1

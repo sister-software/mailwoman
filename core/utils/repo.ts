@@ -34,13 +34,17 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
 /**
  * The absolute path to the root of the repository.
  *
- * In compiled mode this file lives at `core/out/utils/repo.js` (3 levels deep: core → out → utils)
- * and in source mode at `core/utils/repo.ts` (2 levels deep: core → utils). Detect the mode by
- * checking whether `resolve("..", "..")` lands in the `out/` directory — uses `basename` on the
- * resolved path rather than a substring match on `__dirname`, so it survives symlinks and output
- * directory renames.
+ * In compiled mode this file lives at `core/out/utils/repo.js` (so the PARENT of `utils` is `out/`)
+ * and in source mode at `core/utils/repo.ts` (the parent is `core/`). Detect the mode by checking
+ * whether the parent directory (`resolve("..")`) is `out/` — uses `basename` on the resolved path
+ * rather than a substring match on `__dirname`, so it survives symlinks and output-directory renames.
+ *
+ * (Earlier this checked `resolve("..", "..")`, which overshoots `out/` to `core/` and so was always
+ * false — the compiled tree then resolved `CorePackageAbsolutePath` to `core/out` instead of `core/`,
+ * landing dictionary reads at the nonexistent `core/out/data` and requiring an external symlink bridge
+ * to find `core/data`. #481.)
  */
-const __isCompiledTree = basename(resolve(__dirname, "..", "..")) === OutDirectoryName
+const __isCompiledTree = basename(resolve(__dirname, "..")) === OutDirectoryName
 const __upCount = __isCompiledTree ? PathReflection.length : PathReflection.length - 1
 const RepoRootAbsolutePath = resolve(__dirname, ...Array.from({ length: __upCount }, () => ".."))
 type RepoRootAbsolutePath = RepoRootAlias
