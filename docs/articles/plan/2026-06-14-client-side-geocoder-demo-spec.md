@@ -42,37 +42,43 @@ shards, to measure (not assume):
 - **Tune `requestChunkSize` down** for the situs DB specifically (sparse access) vs up for the FTS-walk
   WOF DB — they want opposite chunk sizes.
 
-## The architecture: a single geocode worker (worker-internal-sync)
+## The architecture: extend the demo's existing async cascade (corrected)
 
-The non-obvious constraint. `geocodeAddress()` is `async`, but it resolves coordinates by calling
+A first reading of `geocode-core.ts` suggests a hard constraint: `geocodeAddress()` resolves via
 `resolver.resolveTree(tree, { addressPoints, interpolation })`, and the resolver calls the lookups'
-**synchronous** `find()` (`AddressPointLookup.find(): AddressPointHit | null`,
-`InterpolationLookup.find(): InterpolatedPointHit | null` — both sync by contract). So the lookups must
-be synchronous *at the point the resolver runs them*.
+**synchronous** `find()` (`AddressPointLookup.find(): AddressPointHit | null` — sync by contract). That
+would force "run the whole cascade inside a worker against synchronous sql.js handles," because
+sql.js-httpvfs's fetches are sync XHR only *inside* the worker.
 
-sql.js-httpvfs makes this possible: **its byte-range fetches inside the worker are synchronous XHR** —
-the async (Promise) only appears at the Comlink proxy *across* the main↔worker boundary. So the design
-is **not** "make the lookups async and refactor the cascade" — it is "run the whole cascade inside the
-worker, against synchronous sql.js handles." The page never sees a sync API; it posts a string and gets
-a result.
+**But the demo does not use `geocodeAddress`/`resolveTree`.** It has its own **async** cascade —
+`runCascade()` in `docs/src/shared/demo-helpers.ts` — that already `await`s `lookup.findPlace(...)` over
+the Comlink-proxied httpvfs worker on the main thread. So the street tiers slot in as **async** lookups
+(mirroring the existing `WofHttpvfsPlaceLookup`), with no sync-interface problem and no
+worker-internal-sync requirement. The sync `AddressPointLookup` contract is a *node* concern (the CLI /
+server path); the browser has always resolved async.
 
 ```
- main thread                          geocode worker (owns everything sync)
- ───────────                          ─────────────────────────────────────
- input string ─ postMessage ────────▶ onnxruntime-web session (parse)
-                                       sql.js-httpvfs sync handles:
-                                         · wof-hot.db        (admin resolve)
-                                         · situs-<state>.db  (exact point)   ← lazy, by parsed region
-                                         · interp-<state>.db (HN interp)     ← lazy, by parsed region
-                                       geocodeAddress(input, { classifier, resolver, shards })
- GeocodeResult ◀─ postMessage ───────  └─ unchanged: sync find() over sync handles
+ main thread (extends the existing demo cascade)
+ ──────────────────────────────────────────────
+ onnxruntime-web parse → ParsedNodes
+ street + number + (postcode|locality) present?
+   ├─ await HttpvfsAddressPointLookup.find(...)   situs-<state>.db   → address_point tier
+   ├─ else await HttpvfsInterpolator.find(...)    interp-<state>.db  → interpolated tier
+   └─ else runCascade(...) (existing)             wof-hot.db         → admin tier
+ → coordinate + tier + calibrated uncertainty_m → map pin + radius
 ```
 
-This is why the plan's "geocodeAddress runs unchanged once the browser supplies the three deps" is
-*true* — but only inside the worker. The worker is not an optimization to bolt on later; it is the
-thing that lets the sync interface stand. Design the page↔worker message as the contract from line one.
+The situs/interp handles are sql.js-httpvfs workers (one per loaded state, lazy by parsed region),
+exactly like the WOF one the demo already opens.
 
-### Worker-message contract
+### Is a Web Worker still wanted? Yes — but as an enhancement, not a necessity
+
+The cascade is heavy (ONNX + several sync-XHR byte-range walks); on a cold cache it can block the main
+thread long enough to jank the typeahead and the map. So **moving the whole cascade into a Web Worker
+is still the right call** for UI responsiveness — but it is now an *optimization* layered on a correct
+async main-thread implementation, not the thing that makes correctness possible. Build the async street
+tier first (it works on the main thread, like today's WOF resolve), then lift it into a worker. If/when
+lifted, the page↔worker contract is:
 
 ```ts
 // page → worker
@@ -83,9 +89,8 @@ thing that lets the sync interface stand. Design the page↔worker message as th
 { type: "progress", id: number, bytesRead: number }   // live transfer readout, like the WOF demo
 ```
 
-`GeocodeResult` is the existing `geocode-core.ts` type — coordinate, `tier`
-(`address_point > interpolated > admin`), `uncertainty_m` (calibrated), and the resolved hierarchy. No
-new shape.
+`GeocodeResult` mirrors the existing `geocode-core.ts` type — coordinate, `tier`
+(`address_point > interpolated > admin`), `uncertainty_m` (calibrated), resolved hierarchy.
 
 ### Latency budget + graceful degradation (per the DeepSeek review)
 
@@ -140,30 +145,35 @@ shards, not the admin FST. Three honest options, in increasing cost:
 Recommend shipping (1) with the demo, designing the box so (2) slots in. Flagging (3) as its own
 epic — it is more than "wire the existing feature," which is the nuance worth naming up front.
 
-## Implementation steps (next session — needs a browser + R2)
+## Implementation steps
 
-1. **`HttpvfsAddressPointLookup` + `HttpvfsInterpolator`** in `docs/src/shared/` — sync `find()` over a
-   sql.js-httpvfs handle, mirroring `AddressPointSqliteLookup` / the interpolation lookup query-for-query
-   (same `street-normalize`, same postcode-then-locality scoping). They run *inside the worker*, so
-   `find()` stays sync against the worker's sync handle.
-2. **The geocode worker** — own the ONNX session (`onnxruntime-web/webgpu`, per the int8-on-Metal note)
-   + the three sql.js handles; implement the message contract + the per-tier timeout + warm-up.
-3. **Host MI first** (229 MB — smallest) on R2 byte-range; wire the worker end-to-end on Michigan;
-   verify via `run-docs` that the browser issues **Range** requests (pulls ~KB, not the full shard) on
-   a real geocode. This is the gate — confirm before NY/CA.
+1. **`HttpvfsAddressPointLookup` + `HttpvfsInterpolator`** in `docs/src/shared/` — **async** `find()`
+   over a sql.js-httpvfs handle (`worker.db.exec` + inline SQL), mirroring `AddressPointSqliteLookup` /
+   the interpolation lookup query-for-query (same `street-normalize`, same postcode-then-locality
+   scoping) and the existing `WofHttpvfsPlaceLookup` async idiom.
+2. **A `resolveStreet()` street tier** in `demo-helpers.ts` — given the parsed street/number/postcode/
+   locality + the two lookups, return `{ lat, lon, tier, uncertaintyM }` (situs → interp → null), so
+   `index.tsx` runs it before `runCascade` and falls back to admin on a null. Main-thread async — no
+   worker needed for correctness.
+3. **Host MI first** (229 MB — smallest) byte-range; wire the street tier on Michigan end-to-end; verify
+   via `run-docs` that the browser issues **Range** requests (pulls ~KB, not the full shard) on a real
+   geocode. The gate — confirm before NY/CA. (Local Range-serving for the verification; R2 for prod.)
 4. **Add NY, then CA**; measure CA's real in-browser geocode latency against the < 3 s budget.
-5. **UX (#377):** map pin + calibrated-radius circle + tier caption; span-highlight by tag; resolved-
+5. **UX (#377):** map pin + calibrated-radius circle (the per-region factor from
+   `data/calibration/interp-radius-conformal.json`) + tier caption; span-highlight by tag; resolved-
    hierarchy tree; per-stage timing; place-level autocomplete typeahead (option 1).
-6. **Service Worker** with the capped cache.
+6. **Lift the cascade into a Web Worker** (UI responsiveness) + a **Service Worker** with the capped
+   cache. Both are enhancements over the working main-thread version, not prerequisites.
 
-## Why this is the headless deliverable, not the demo itself
+## What's done headless vs. what needs a browser
 
-Every step above changes browser code whose correctness is only observable in a browser (Range requests
-fired, WASM loaded, worker messaging, map render) — and step 3+ needs the shards hosted on R2. Building
-it blind and unverified would violate ship discipline. What *was* doable headless — proving the data
-layer survives the 3.3 GB stress shard, and resolving the sync/async architecture that the sync `find()`
-contract forces — is done here. The next session executes steps 1–6 against this spec with the
-byte-range risk already retired.
+Steps 1–2 are pure code mirroring an existing, tested pattern — written + query-verified against a real
+shard with `node:sqlite` (the httpvfs version runs the identical SQL). Steps 3+ change browser code
+whose correctness is only observable in a browser (Range requests fired, WASM loaded, map render) and
+need shards served with byte-range. The two architectural risks — does byte-range survive the 3.3 GB
+stress shard, and does the sync `find()` contract force a worker — are **both retired here** (it does;
+it doesn't, because the demo's cascade is already async). So the remaining work is execution against a
+de-risked spec, not open questions.
 
 ## Sources
 
