@@ -112,8 +112,13 @@ independent of Coverage; engines exist, this is API surface + wiring.
   deployed in one curl" (model-card version + situs/interp shard counts, no model load); `/metrics` =
   per-tier counts + latency p50/p90/p99 from a bounded reservoir, recorded per request. The instrument the
   SLO targets need. Tests 4.
-- **Open #485:** RemoteResolver adapter (multi-instance / canary — the bigger architectural lift),
-  versioned data switchover. Prometheus exposition + calibration-drift wiring ride on `/metrics`.
+- **✅ RemoteResolver (2026-06-14, PR #573 — #485 piece 3).** The `Resolver` interface over HTTP:
+  `RemoteResolver.resolveTree` POSTs the parsed tree + serializable opts to the service's `/api/resolve-tree`,
+  which owns the shards, runs the cascade, returns the resolved tree. Drop-in for `WofResolver` → stateless
+  parser nodes + a shared resolver service, and canary diffing. Pure fetch (browser-safe). Tests 6 + a live
+  round-trip; 12/12.
+- **Open #485:** versioned data switchover (the last piece — atomic DB pointer-swap). Prometheus exposition
+  + calibration-drift wiring ride on `/metrics`.
 
 ### Cross-cutting — Arbitration (#478) — **Opus**
 
