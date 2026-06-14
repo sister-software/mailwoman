@@ -82,6 +82,8 @@
 		"codex",
 		"classifiers",
 		"corpus",
+		"formatter",
+		"record",
 		"neural",
 		"neural-web",
 		"neural-weights-en-us",
