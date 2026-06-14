@@ -13,7 +13,8 @@
 		"./package.json": "./package.json",
 		".": "./out/index.js",
 		"./comparators": "./out/comparators.js",
-		"./fellegi-sunter": "./out/fellegi-sunter.js"
+		"./fellegi-sunter": "./out/fellegi-sunter.js",
+		"./em": "./out/em.js"
 	},
 	"dependencies": {
 		"fastest-levenshtein": "^1.0.16"

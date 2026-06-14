@@ -12,4 +12,5 @@
  */
 
 export * from "./comparators.js"
+export * from "./em.js"
 export * from "./fellegi-sunter.js"
