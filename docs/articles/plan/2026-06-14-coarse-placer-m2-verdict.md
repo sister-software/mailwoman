@@ -69,11 +69,18 @@ only when confident). The rule — not the threshold — is the M2 lever (+5.9pp
 
 - **Shipped in M2 (this branch):** the `openSet` rule on `CoarsePlacer` (opt-in, default-off → byte-stable);
   `--place-country` uses it. The whole prior remains **default-off** overall.
-- **Default-ON (no flag) is NOT taken here.** The 54-row homograph set under-tests in-map **misrouting** —
-  the placer injecting a _wrong in-map country_ (seen as a harmless neutral flip on off-map "San Jose, Costa
-  Rica" → ES, but a real risk if the address were in-map). The remaining gate before default-on: a broad
-  in-map non-regression eval **across all 11 countries** (NL-vs-DE, ES-vs-IT … misroute classes the
-  homograph set doesn't cover). That's the M2.5 / pre-default-on step.
+- **Misrouting gate — PASSED (the pre-default-on check).** The 54-row homograph set under-tests in-map
+  _misrouting_ (the prior injecting a _wrong in-map country_). The across-11 gate
+  (`scripts/eval/coarse-placer-inmap-misroute.ts`, report
+  `docs/articles/evals/2026-06-14-coarse-placer-inmap-misroute.md`) resolves 2 000 in-map addresses
+  (200/country × 10; TW excluded — 0 WOF rows) with the country token **stripped** so the country must be
+  inferred — the case where the prior can bite. Result: **0 misroutes, 0 regressions**, 58 wins, right-country
+  50.7 → 53.6%. The tier-safe soft re-rank never pushed an in-map address to a wrong in-map country, even on
+  OOD-parsed inputs. (Caveat — honest read: absolute rates are depressed by the en-US model being OOD on
+  non-US addresses + thin WOF coverage for NL/DE/KR, so the eval is _conservative_; it cleanly answers the
+  misroute question but can't fully validate resolution quality on thin-coverage locales. Production flows
+  usually also pin locale/`defaultCountry`.) ⇒ **default-on is defensible**; the flip is the operator's call
+  (a user-facing default change).
 - **Residual upgrade (documented, not needed now):** a full in-map posterior _distribution_ as the
   `anchorPosterior` (vs today's one-hot argmax) would let the resolver break in-map ties itself — the natural
   fix for the misrouting risk, and a clean follow-on.
