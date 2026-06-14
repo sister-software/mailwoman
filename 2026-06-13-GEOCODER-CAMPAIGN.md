@@ -108,7 +108,12 @@ independent of Coverage; engines exist, this is API surface + wiring.
   `mailwoman/geocode-core.ts` (`geocodeAddress` + a per-state `ShardProvider` cache), refactored the CLI
   onto it (one implementation, re-validated byte-for-byte), and added `/api/batch` (bounded concurrency,
   per-row error isolation, BATCH_MAX guardrail). Tests 5; full server+resolver suite 49/49.
-- **Open #485:** RemoteResolver adapter, observability (latency/tier/health), versioned data switchover.
+- **✅ Observability `/health` + `/metrics` (2026-06-14, PR #572 — #485 piece 2).** `/health` = "what's
+  deployed in one curl" (model-card version + situs/interp shard counts, no model load); `/metrics` =
+  per-tier counts + latency p50/p90/p99 from a bounded reservoir, recorded per request. The instrument the
+  SLO targets need. Tests 4.
+- **Open #485:** RemoteResolver adapter (multi-instance / canary — the bigger architectural lift),
+  versioned data switchover. Prometheus exposition + calibration-drift wiring ride on `/metrics`.
 
 ### Cross-cutting — Arbitration (#478) — **Opus**
 
