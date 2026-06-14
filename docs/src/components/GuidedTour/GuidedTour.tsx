@@ -188,23 +188,14 @@ export const GuidedTour: React.FC = () => {
 	)
 
 	// ---- Auto-parse first stop ----
-
+	// Once the classifier is ready, run the first stop a single time (guarded by autoParsedRef). This
+	// covers both the mount-then-ready and the ready-before-expand orderings the two prior effects
+	// handled separately.
 	useEffect(() => {
 		if (!ready || autoParsedRef.current) return
 		autoParsedRef.current = true
-		const firstId = TOUR_STOPS[0].id
-		void parse(firstId)
+		void parse(TOUR_STOPS[0].id)
 	}, [ready, parse])
-
-	// When the tour is first expanded, trigger a re-check (in case ready became true between mount and expand).
-	useEffect(() => {
-		if (!expanded || !ready || autoParsedRef.current) return
-		autoParsedRef.current = true
-		const firstId = TOUR_STOPS[0].id
-		if (!stopStates.get(firstId)?.result && !stopStates.get(firstId)?.busy) {
-			void parse(firstId)
-		}
-	}, [expanded, ready, parse, stopStates])
 
 	// ---- Navigation ----
 

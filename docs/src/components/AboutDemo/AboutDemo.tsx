@@ -74,13 +74,13 @@ const AboutDemoInner: React.FC = () => {
 				</section>
 
 				<section className={styles.section}>
-					<h3 className={styles.sectionHeading}>WOF slim subset ("hot" DB)</h3>
+					<h3 className={styles.sectionHeading}>WOF slim subset (&quot;hot&quot; DB)</h3>
 					<p>
 						The full WOF database is ~70 GB and covers every place on Earth. The demo uses a slim
-						<strong>"hot" subset</strong> (~35 MB) that includes major US localities, postcodes, and regions — enough to
-						resolve most real US addresses. It loads via <strong>sql.js-httpvfs</strong>, which range-requests only the
-						pages it needs from the same-origin server, so your browser fetches ~5 MB per session instead of the whole
-						file.
+						<strong>&quot;hot&quot; subset</strong> (~35 MB) that includes major US localities, postcodes, and regions —
+						enough to resolve most real US addresses. It loads via <strong>sql.js-httpvfs</strong>, which range-requests
+						only the pages it needs from the same-origin server, so your browser fetches ~5 MB per session instead of
+						the whole file.
 					</p>
 				</section>
 
@@ -89,9 +89,10 @@ const AboutDemoInner: React.FC = () => {
 					<p>
 						A <strong>finite-state transducer</strong> (FST) built from ~94K US place names runs before the neural
 						classifier. It pre-annotates known locality, region, and postcode spans in the input — places like
-						"Springfield" or "Cook County" that the FST can match exactly. These "FST prior" hits feed the classifier as
-						strong hints, improving locality and region recall on addresses where the neural model alone might miss
-						them. The FST shipped in v4.0.0 and is active whenever the selected release includes it.
+						&quot;Springfield&quot; or &quot;Cook County&quot; that the FST can match exactly. These &quot;FST
+						prior&quot; hits feed the classifier as strong hints, improving locality and region recall on addresses
+						where the neural model alone might miss them. The FST shipped in v4.0.0 and is active whenever the selected
+						release includes it.
 					</p>
 				</section>
 			</div>
