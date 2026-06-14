@@ -3,18 +3,26 @@
   "method": "split-conformal, interp-only; OA/NAD situs address points as independent ground truth for TIGER interpolation error (non-circular)",
   "alpha": 0.9,
   "generated": "2026-06-14",
-  "nPerState": 1500,
+  "nPerState": 1700,
   "default": 1.95,
   "_defaultRationale": "Deliberately high (near the rural end): under-coverage (overconfidence) is the harmful error and most unmeasured states skew rural. Replace per-state as the full sweep fills in.",
+  "_measured": "12 states (a partial sweep; the full 50 was abandoned at the >85C heat ceiling). Range 1.44 (DC, densest) to 3.12 (AZ, sprawl) — Q-hat rises monotonically with rurality, confirming the per-region finding on a wider sample.",
   "byRegion": {
+    "DC": 1.44,
     "NY": 1.53,
     "TX": 1.7,
+    "AK": 1.72,
     "CA": 1.87,
+    "CT": 1.91,
     "MI": 1.93,
-    "MT": 2.85
+    "AR": 2.24,
+    "CO": 2.29,
+    "AL": 2.79,
+    "MT": 2.85,
+    "AZ": 3.12
   },
   "followups": [
-    "Full 50-state table (tooling committed: build-situs-holdout.mjs + run-conformal-multistate.sh, ~2 min/state)",
+    "Full 50-state table (tooling committed: build-situs-holdout.mjs + run-conformal-multistate.sh, ~2 min/state; mind the heat ceiling on a sustained sweep)",
     "Per-segment-length-bucket factor — the principled refinement; generalizes within a state and to unmeasured states"
   ]
 }

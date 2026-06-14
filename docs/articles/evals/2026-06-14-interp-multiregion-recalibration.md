@@ -44,6 +44,22 @@ is the **factor itself**, monotonically with rurality: dense NY needs 1.53×, ex
 (rural addresses are spaced far less uniformly along their long TIGER segments than the interpolation's
 uniform-spacing assumption allows), so it needs the biggest correction.
 
+### Wider sample confirms it (12 states)
+
+A partial 50-state sweep (abandoned at the >85 °C heat ceiling on the lab CPU — a sustained run of the
+neural cascade) extended the five above to **twelve**, and the trend holds and widens. Ordered by Q̂:
+
+| Q̂   | states                                                              |
+| ---- | ------------------------------------------------------------------ |
+| 1.4–1.6 | **DC 1.44**, NY 1.53 (densest urban)                           |
+| 1.7–2.0 | TX 1.70, AK 1.72, CA 1.87, CT 1.91, MI 1.93                    |
+| 2.2–2.9 | AR 2.24, CO 2.29, AL 2.79, MT 2.85                             |
+| 3.0+    | **AZ 3.12** (sprawl / long rural segments)                     |
+
+A **2.2× spread** (DC 1.44 → AZ 3.12), monotonic with rurality. The five-state read wasn't a small-sample
+fluke — it's the real shape. The seed table (`data/calibration/interp-radius-conformal.json`) carries all
+twelve; the full 50 is a turn-key follow-up (mind the heat ceiling on a sustained sweep).
+
 ## What the shipped 1.70 actually does off-Texas
 
 A single nationwide 1.70× is wrong in both directions, and one direction is dangerous:
