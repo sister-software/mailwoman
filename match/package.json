@@ -13,6 +13,7 @@
 		"./package.json": "./package.json",
 		".": "./out/index.js",
 		"./blocking": "./out/blocking.js",
+		"./clustering": "./out/clustering.js",
 		"./comparators": "./out/comparators.js",
 		"./fellegi-sunter": "./out/fellegi-sunter.js",
 		"./em": "./out/em.js",
