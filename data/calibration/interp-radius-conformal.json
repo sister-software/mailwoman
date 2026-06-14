@@ -1,0 +1,20 @@
+{
+  "_about": "Per-region split-conformal multipliers for the interpolation tier's uncertainty_m radius. Multiply the claimed radius (half the matched TIGER segment length) by the region's factor to get a calibrated 90%-coverage interval. #569 shipped a single 1.70 from Texas; this seed table records the measured regional spread (see docs/articles/evals/2026-06-14-interp-multiregion-recalibration.md). geocode-core would select by parsed region; the single 1.70 stays the hardcoded default until per-region wiring is approved.",
+  "method": "split-conformal, interp-only; OA/NAD situs address points as independent ground truth for TIGER interpolation error (non-circular)",
+  "alpha": 0.9,
+  "generated": "2026-06-14",
+  "nPerState": 1500,
+  "default": 1.95,
+  "_defaultRationale": "Deliberately high (near the rural end): under-coverage (overconfidence) is the harmful error and most unmeasured states skew rural. Replace per-state as the full sweep fills in.",
+  "byRegion": {
+    "NY": 1.53,
+    "TX": 1.7,
+    "CA": 1.87,
+    "MI": 1.93,
+    "MT": 2.85
+  },
+  "followups": [
+    "Full 50-state table (tooling committed: build-situs-holdout.mjs + run-conformal-multistate.sh, ~2 min/state)",
+    "Per-segment-length-bucket factor — the principled refinement; generalizes within a state and to unmeasured states"
+  ]
+}
