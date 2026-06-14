@@ -30,11 +30,11 @@ import {
 	regionSlugFromTree,
 	ShardProvider,
 } from "../geocode-core.js"
+import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "../interp-calibration.js"
 import { recordGeocode } from "./metrics.js"
 
 /** Default per-state shard root + interp calibration — mirror the CLI defaults. */
 const DATA_ROOT = process.env["MAILWOMAN_DATA_ROOT"] ?? "/mnt/playpen/mailwoman-data"
-const INTERP_CALIBRATION = 1.7
 /** Bounded concurrency for `/api/batch`. Override with MAILWOMAN_BATCH_CONCURRENCY. */
 const BATCH_CONCURRENCY = Math.max(1, Number(process.env["MAILWOMAN_BATCH_CONCURRENCY"] ?? "8"))
 /** Hard cap on batch size — a guardrail against unbounded request bodies. */
@@ -94,7 +94,7 @@ function oneGeocode(deps: GeocodeDepsBundle, address: string): Promise<GeocodeRe
 		resolver: deps.resolver,
 		shards: deps.shards.for,
 		defaultCountry: deps.defaultCountry,
-		interpCalibration: INTERP_CALIBRATION,
+		interpCalibration: INTERP_RADIUS_CALIBRATION,
 	})
 }
 
@@ -193,7 +193,8 @@ const resolveTreeHandler: RequestHandler = async (req, res) => {
 	}
 	const t0 = performance.now()
 	try {
-		const { addressPoints, interpolation } = deps.shards.for(regionSlugFromTree(tree))
+		const slug = regionSlugFromTree(tree)
+		const { addressPoints, interpolation } = deps.shards.for(slug)
 		const opts: ResolveOpts = {
 			...incomingOpts,
 			defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry,
@@ -201,7 +202,9 @@ const resolveTreeHandler: RequestHandler = async (req, res) => {
 			...(interpolation
 				? {
 						interpolation,
-						interpolationRadiusCalibration: incomingOpts.interpolationRadiusCalibration ?? INTERP_CALIBRATION,
+						interpolationRadiusCalibration:
+							incomingOpts.interpolationRadiusCalibration ??
+							interpCalibrationForRegion(INTERP_RADIUS_CALIBRATION, slug),
 					}
 				: {}),
 		}

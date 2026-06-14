@@ -27,6 +27,7 @@ import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } f
 import { existsSync } from "node:fs"
 
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
+import { type InterpCalibrationTable, interpCalibrationForRegion } from "./interp-calibration.js"
 
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `admin`.
@@ -74,11 +75,13 @@ export interface GeocodeDeps {
 	/** Country constraint passed to the resolver (e.g. `"US"`). */
 	defaultCountry?: string
 	/**
-	 * Interpolation-radius conformal calibration multiplier (#374). The geocode surfaces pass 1.7
-	 * (the Travis calibration) so reported radii are an honest ~90% bound; 1 or undefined keeps the
-	 * raw half-segment heuristic. See `docs/articles/evals/2026-06-14-interp-radius-calibration.md`.
+	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound;
+	 * `1` or `undefined` keeps the raw half-segment heuristic. Accepts either a single multiplier (the
+	 * legacy Travis 1.7) OR a per-region {@link InterpCalibrationTable} — when a table is supplied the
+	 * factor is selected by the parsed region (DC 1.44 … AZ 3.12, `default` otherwise, #584). See
+	 * `docs/articles/evals/2026-06-14-interp-multiregion-recalibration.md`.
 	 */
-	interpCalibration?: number
+	interpCalibration?: number | InterpCalibrationTable
 }
 
 /** Lowercase 2-letter state slug from a parsed region value / resolver name, else null. */
@@ -231,8 +234,14 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	if (addressPoints) opts.addressPoints = addressPoints
 	if (interpolation) {
 		opts.interpolation = interpolation
-		if (deps.interpCalibration && deps.interpCalibration !== 1) {
-			opts.interpolationRadiusCalibration = deps.interpCalibration
+		// Resolve to a single multiplier: a per-region table selects by the parsed region (`stateSlug`);
+		// a bare number is used as-is (legacy single-factor / explicit caller override).
+		const calibration =
+			typeof deps.interpCalibration === "object"
+				? interpCalibrationForRegion(deps.interpCalibration, stateSlug)
+				: deps.interpCalibration
+		if (calibration && calibration !== 1) {
+			opts.interpolationRadiusCalibration = calibration
 		}
 	}
 

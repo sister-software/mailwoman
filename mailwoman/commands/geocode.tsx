@@ -34,6 +34,7 @@ import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
 import { geocodeAddress, ShardProvider, type GeocodeResult, type ShardResolver } from "../geocode-core.js"
+import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
 import type { CommandComponent } from "../sdk/cli.js"
 import { resolverDefaultCountry } from "./parse.js"
 
@@ -88,11 +89,11 @@ const OptionsSchema = zod.object({
 	interpCalibration: zod
 		.number()
 		.optional()
-		.default(1.7)
 		.describe(
 			"Conformal calibration multiplier for the interpolation tier's reported uncertainty_m (#374). " +
-				"The raw half-segment radius covers only ~72% of true errors; the default 1.7 (Travis-County " +
-				"calibration, 2026-06-14) lifts that to a ~90% bound. Pass 1 to report the raw heuristic radius."
+				"The raw half-segment radius covers only ~72% of true errors. Default (unset): the per-region " +
+				"table (#584) selects by parsed region — 1.44 (DC) … 3.12 (AZ), 1.95 for unmeasured states — " +
+				"for a ~90% bound. Pass an explicit number to force a single multiplier everywhere (1 = raw)."
 		),
 	format: zod
 		.enum(["json", "text"])
@@ -170,7 +171,8 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			resolver,
 			shards,
 			defaultCountry: resolverDefaultCountry(options) || undefined,
-			interpCalibration: options.interpCalibration,
+			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
+			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 		})
 		return options.format === "text" ? formatText(result) : JSON.stringify(result, null, 2)
 	} finally {
