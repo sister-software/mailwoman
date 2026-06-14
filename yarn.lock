@@ -4654,22 +4654,30 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/core@workspace:core"
   dependencies:
+    "@fragaria/address-formatter": "npm:^6.7.1"
     "@types/d3-color": "npm:^3.1.3"
     "@types/d3-scale-chromatic": "npm:^3.1.0"
     axios: "npm:^1.17.0"
     axios-cache-interceptor: "npm:^1.12.0"
+    change-case: "npm:^5.4.4"
     d3-color: "npm:^3.1.0"
     d3-scale-chromatic: "npm:^3.1.0"
+    fast-glob: "npm:^3.3.3"
     http-status-codes: "npm:^2.3.0"
     json-colorizer: "npm:^3.0.1"
     kysely: "npm:^0.29.2"
+    lru-cache: "npm:^10.4.3"
+    path-ts: "npm:^1.0.5"
     pino: "npm:^10.3.1"
     pino-pretty: "npm:^13.1.3"
+    pluralize: "npm:^8.0.0"
+    regenerate: "npm:^1.4.2"
+    spliterator: "npm:^2.0.0"
     table: "npm:^6.9.0"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/corpus@workspace:corpus":
+"@mailwoman/corpus@workspace:*, @mailwoman/corpus@workspace:corpus":
   version: 0.0.0-use.local
   resolution: "@mailwoman/corpus@workspace:corpus"
   dependencies:
@@ -4679,8 +4687,10 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@types/node": "npm:^25.9.2"
     csv-parse: "npm:^5.6.0"
+    fast-glob: "npm:^3.3.3"
     fastest-levenshtein: "npm:^1.0.16"
     lru-cache: "npm:^10.4.3"
+    spliterator: "npm:^2.0.0"
   languageName: unknown
   linkType: soft
 
@@ -17487,13 +17497,18 @@ __metadata:
     "@inkjs/ui": "npm:^2.0.0"
     "@mailwoman/classifiers": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/corpus": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/locale-gate": "workspace:*"
+    "@mailwoman/neural": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
+    chalk: "npm:^5.6.2"
     change-case: "npm:^5.4.4"
+    d3-scale-chromatic: "npm:^3.1.0"
     express: "npm:^5.2.1"
+    fast-glob: "npm:^3.3.3"
     geojson: "npm:^0.5.0"
     ink: "npm:^7.0.5"
     ioredis: "npm:^5.11.1"
@@ -17505,6 +17520,7 @@ __metadata:
     regenerate: "npm:^1.4.2"
     spliterator: "npm:^2.0.0"
     zod: "npm:^4.4.3"
+    zx: "npm:^8.8.5"
   peerDependencies:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   peerDependenciesMeta:
