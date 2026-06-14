@@ -144,4 +144,34 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		const r = autocomplete(dense, "go", { maxSuggestions: 3 })
 		expect(r.suggestions[0]?.name).toBe("Gotham")
 	})
+
+	// Robustness contract for the demo typeahead (#190/#585): the box feeds raw, half-typed input on
+	// every keystroke, so the function must never throw and must return [] (not garbage) for input it
+	// can't complete. These lock that in so a future refactor can't reintroduce the "Denver for New
+	// Yor" class of bug.
+	it("empty / whitespace-only query → no suggestions, depth 0", () => {
+		for (const q of ["", "   ", "\t"]) {
+			const r = autocomplete(matcher, q)
+			expect(r.suggestions).toEqual([])
+			expect(r.depth).toBe(0)
+		}
+	})
+
+	it("a partial last token that matches no continuation → [] (not a wrong completion)", () => {
+		// "new" walks to a real state, but "zzz" prefixes none of its edges (york/london).
+		expect(autocomplete(matcher, "new zzz").suggestions).toEqual([])
+	})
+
+	it("respects maxSuggestions (caps a branch with more matches than the limit)", () => {
+		// "new" → New York + two New Londons (3 places); cap to 1.
+		const r = autocomplete(matcher, "new", { maxSuggestions: 1 })
+		expect(r.suggestions.length).toBe(1)
+	})
+
+	it("never throws on single-character input", () => {
+		expect(() => autocomplete(matcher, "n")).not.toThrow()
+		// 'n' prefixes 'new' from the root → at least surfaces the New* places, none mis-typed.
+		const r = autocomplete(matcher, "n")
+		expect(r.suggestions.every((s) => typeof s.name === "string")).toBe(true)
+	})
 })
