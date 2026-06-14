@@ -170,6 +170,10 @@ const DemoApp: React.FC = () => {
 	const lookupPromiseRef = useRef<Promise<MailwomanLookupLike> | null>(null)
 	const [text, setText] = useState(initialAddress)
 	const [busy, setBusy] = useState(false)
+	// Place-autocomplete (#190/#587): suggestions for the locality the user is typing (the segment after
+	// the last comma), from the already-loaded FST gazetteer. Place-level; the address-level variant is
+	// a follow-up (demo spec). Empty when nothing matches, so the chip row only shows when useful.
+	const [suggestions, setSuggestions] = useState<Array<{ name: string; placetype: string }>>([])
 	const [parseStage, setParseStage] = useState(-1)
 	const [result, setResult] = useState<DemoResult | null>(null)
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
@@ -653,6 +657,36 @@ const DemoApp: React.FC = () => {
 		}
 	}, [lookupLoader, lookup, ensureLookup, manifest, selectedVersion, sqljsBaseUrl])
 
+	// Place-autocomplete: debounced FST prefix walk over the locality being typed (the segment after the
+	// last comma). Runs against the in-memory gazetteer FST already loaded for the parser — no fetch,
+	// microsecond walk. dedupeByName so the dropdown isn't four "New London"s. (#587)
+	useEffect(() => {
+		const acQuery = (text.includes(",") ? text.slice(text.lastIndexOf(",") + 1) : text).trim()
+		if (!fstMatcher || acQuery.length < 2 || /^\d/.test(acQuery)) {
+			setSuggestions([])
+			return
+		}
+		const handle = window.setTimeout(async () => {
+			try {
+				const { autocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst-autocomplete")
+				const res = autocomplete(fstMatcher as unknown as Parameters<typeof autocomplete>[0], acQuery, {
+					maxSuggestions: 6,
+					dedupeByName: true,
+				})
+				setSuggestions(res.suggestions.map((s) => ({ name: s.name, placetype: s.placetype })))
+			} catch {
+				setSuggestions([])
+			}
+		}, 150)
+		return () => window.clearTimeout(handle)
+	}, [text, fstMatcher])
+
+	/** Fill a chosen place — replace the locality segment the user was typing (after the last comma). */
+	const onPickSuggestion = useCallback((name: string) => {
+		setText((cur) => (cur.includes(",") ? `${cur.slice(0, cur.lastIndexOf(",") + 1)} ${name}` : name))
+		setSuggestions([])
+	}, [])
+
 	const onSubmit = useCallback(
 		async (e: React.SubmitEvent<HTMLFormElement>) => {
 			e.preventDefault()
@@ -1044,6 +1078,22 @@ const DemoApp: React.FC = () => {
 						{busy ? "Parsing…" : "Parse + resolve"}
 					</button>
 				</form>
+				{suggestions.length > 0 ? (
+					<div className={styles.examples}>
+						<span className={styles.examplesLabel}>Did you mean:</span>
+						{suggestions.map((s, i) => (
+							<button
+								key={`${s.name}-${i}`}
+								type="button"
+								className={styles.exampleBtn}
+								onClick={() => onPickSuggestion(s.name)}
+								title={s.placetype}
+							>
+								{s.name}
+							</button>
+						))}
+					</div>
+				) : null}
 				<div className={styles.examples}>
 					<span className={styles.examplesLabel}>Try:</span>
 					{EXAMPLE_ADDRESSES.map((ex) => (
