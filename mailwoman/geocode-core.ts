@@ -88,6 +88,22 @@ export function regionToStateSlug(
 	return null
 }
 
+/** Walk a (parsed or resolved) tree for its region → the per-state shard slug (e.g. `"tx"`), else null. */
+export function regionSlugFromTree(tree: AddressTree): string | null {
+	let regionValue: string | null = null
+	let regionResolverName: string | null = null
+	const stack = [...tree.roots]
+	while (stack.length > 0) {
+		const node = stack.pop()!
+		if (node.tag === "region" && !regionValue) {
+			regionValue = node.value.trim() || null
+			regionResolverName = (node.metadata?.["resolver_name"] as string | undefined) ?? null
+		}
+		stack.push(...node.children)
+	}
+	return regionToStateSlug(regionValue, regionResolverName)
+}
+
 /** Per-state situs shard path under `<dataRoot>/address-points/`, or null if the slug/file is absent. */
 export function selectAddressPointsDb(dataRoot: string, stateSlug: string | null): string | null {
 	if (!stateSlug) return null
@@ -153,21 +169,7 @@ export class ShardProvider {
  */
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
 	const tree = await deps.classifier.parse(input, { postcodeRepair: true })
-
-	// Read the parsed region (raw value + resolver canonical name) for shard selection.
-	let regionValue: string | null = null
-	let regionResolverName: string | null = null
-	const stack = [...tree.roots]
-	while (stack.length > 0) {
-		const node = stack.pop()!
-		if (node.tag === "region" && !regionValue) {
-			regionValue = node.value.trim() || null
-			regionResolverName = (node.metadata?.["resolver_name"] as string | undefined) ?? null
-		}
-		stack.push(...node.children)
-	}
-
-	const stateSlug = regionToStateSlug(regionValue, regionResolverName)
+	const stateSlug = regionSlugFromTree(tree)
 	const { addressPoints, interpolation } = deps.shards?.(stateSlug) ?? {}
 
 	const opts: ResolveOpts = {}

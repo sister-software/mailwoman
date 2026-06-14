@@ -80,4 +80,29 @@ describeIfStack("GeocodeRouter — success path against real WOF + TX shards", (
 		expect(results[0]!.input).toBe(addresses[0])
 		expect(results[1]!.input).toBe(addresses[1])
 	}, 60_000)
+
+	test("RemoteResolver round-trips a parsed tree → street-level via /api/resolve-tree", async () => {
+		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
+		const { RemoteResolver } = await import("@mailwoman/core/resolver")
+		const server = buildApp().listen(0)
+		try {
+			const port = (server.address() as { port: number }).port
+			const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+			const tree = await classifier.parse("3075 Hill Street, Round Rock, TX 78664", { postcodeRepair: true })
+			const remote = new RemoteResolver({ endpoint: `http://127.0.0.1:${port}/api/resolve-tree` })
+			const resolved = await remote.resolveTree(tree, { defaultCountry: "US" })
+
+			const flat: Array<(typeof resolved.roots)[number]> = []
+			const walk = (n: (typeof resolved.roots)[number]) => {
+				flat.push(n)
+				n.children.forEach(walk)
+			}
+			resolved.roots.forEach(walk)
+			const street = flat.find((n) => n.tag === "street")
+			// The resolver service wired its own shards → the street node carries a coordinate tier.
+			expect(street?.metadata?.["resolution_tier"]).toBeDefined()
+		} finally {
+			await new Promise<void>((resolve) => server.close(() => resolve()))
+		}
+	}, 60_000)
 })

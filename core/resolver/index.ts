@@ -4,6 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
+export { RemoteResolver, serializableResolveOpts } from "./remote-resolver.js"
+export type {
+	RemoteResolverOpts,
+	ResolveTreeRequest,
+	ResolveTreeResponse,
+	SerializableResolveOpts,
+} from "./remote-resolver.js"
 export { createWofResolver } from "./resolve.js"
 export { DEFAULT_PLACETYPE_MAP, PLACETYPE_FILTER_GROUPS, expandPlacetypeFilter } from "./types.js"
 export type {

@@ -18,7 +18,16 @@ import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwom
 import { type RequestHandler, Router } from "express"
 import { existsSync } from "node:fs"
 
-import { geocodeAddress, type GeocodeClassifier, type GeocodeResult, ShardProvider } from "../geocode-core.js"
+import type { AddressTree } from "@mailwoman/core/decoder"
+import type { ResolveOpts } from "@mailwoman/core/resolver"
+
+import {
+	geocodeAddress,
+	type GeocodeClassifier,
+	type GeocodeResult,
+	regionSlugFromTree,
+	ShardProvider,
+} from "../geocode-core.js"
 import { recordGeocode } from "./metrics.js"
 
 /** Default per-state shard root + interp calibration — mirror the CLI defaults. */
@@ -156,6 +165,58 @@ const batchHandler: RequestHandler = async (req, res) => {
 	res.status(200).json({ results })
 }
 
+/**
+ * `POST /api/resolve-tree` — the resolver-service endpoint that `RemoteResolver` (core) calls. Accepts
+ * an already-parsed `{ tree, opts? }`, selects this region's situs/interpolation shards (the data lives
+ * here, not on the caller), runs the FULL cascade, and returns `{ tree }`. This is what lets a
+ * stateless parser node geocode at street level against a shared resolver service.
+ */
+const resolveTreeHandler: RequestHandler = async (req, res) => {
+	const tree = req.body?.tree as AddressTree | undefined
+	if (!tree || !Array.isArray(tree.roots)) {
+		res.status(400).json({ error: "Body must be `{ tree: AddressTree, opts?: ResolveOpts }`" })
+		return
+	}
+	const incomingOpts = (req.body?.opts ?? {}) as ResolveOpts
+	const deps = await getDeps()
+	if (!deps) {
+		res.status(503).json(DEPS_UNAVAILABLE)
+		return
+	}
+	const t0 = performance.now()
+	try {
+		const { addressPoints, interpolation } = deps.shards.for(regionSlugFromTree(tree))
+		const opts: ResolveOpts = {
+			...incomingOpts,
+			defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry,
+			...(addressPoints ? { addressPoints } : {}),
+			...(interpolation
+				? { interpolation, interpolationRadiusCalibration: incomingOpts.interpolationRadiusCalibration ?? INTERP_CALIBRATION }
+				: {}),
+		}
+		const resolved = await deps.resolver.resolveTree(tree, opts)
+		// Best-effort tier metric: read the street node's stamped tier (matches the geocode path).
+		const street = resolved.roots.flatMap((r) => collectStreetTier(r)).find(Boolean)
+		recordGeocode(performance.now() - t0, street ?? "admin")
+		res.status(200).json({ tree: resolved })
+	} catch (err) {
+		recordGeocode(performance.now() - t0, "error")
+		res.status(500).json({ error: `resolve-tree error: ${err instanceof Error ? err.message : String(err)}` })
+	}
+}
+
+/** Pull the street node's resolution tier (if any) for the metric — mirrors extractGeocodeResult. */
+function collectStreetTier(node: AddressTree["roots"][number]): Array<"address_point" | "interpolated" | "admin"> {
+	const out: Array<"address_point" | "interpolated" | "admin"> = []
+	if (node.tag === "street") {
+		const tier = node.metadata?.["resolution_tier"]
+		if (tier === "address_point" || tier === "interpolated") out.push(tier)
+	}
+	for (const child of node.children) out.push(...collectStreetTier(child))
+	return out
+}
+
 export const GeocodeRouter: Router = Router()
 GeocodeRouter.post("/api/geocode", singleHandler)
 GeocodeRouter.post("/api/batch", batchHandler)
+GeocodeRouter.post("/api/resolve-tree", resolveTreeHandler)
