@@ -37,6 +37,8 @@ export interface ComparisonLevel {
 	u: number
 	/** For similarity-driven comparisons: the minimum similarity (inclusive) to qualify. */
 	minSimilarity?: number
+	/** For distance-driven comparisons: the maximum distance in km (inclusive) to qualify. */
+	maxKm?: number
 }
 
 /** A per-field comparison: pull a value from each record and assign an agreement level. */

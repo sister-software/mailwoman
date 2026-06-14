@@ -15,6 +15,7 @@
 		"./blocking": "./out/blocking.js",
 		"./clustering": "./out/clustering.js",
 		"./comparators": "./out/comparators.js",
+		"./distance": "./out/distance.js",
 		"./fellegi-sunter": "./out/fellegi-sunter.js",
 		"./em": "./out/em.js",
 		"./tf": "./out/tf.js"

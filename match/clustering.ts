@@ -29,8 +29,10 @@ export interface ScoredLink<R> {
 
 /** Options for {@link cluster}. */
 export interface ClusterOptions {
-	/** Link two records only when their match weight is at or above this (bits) — the precision/recall
-knob. */
+	/**
+	 * Link two records only when their match weight is at or above this (bits) — the precision/recall
+	 * knob.
+	 */
 	threshold: number
 }
 

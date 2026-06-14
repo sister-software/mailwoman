@@ -19,6 +19,7 @@
 export * from "./blocking.js"
 export * from "./clustering.js"
 export * from "./comparators.js"
+export * from "./distance.js"
 export * from "./em.js"
 export * from "./fellegi-sunter.js"
 export * from "./tf.js"
