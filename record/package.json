@@ -12,7 +12,9 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": "./out/index.js",
-		"./address": "./out/address.js"
+		"./address": "./out/address.js",
+		"./name": "./out/name.js",
+		"./organization": "./out/organization.js"
 	},
 	"dependencies": {
 		"@mailwoman/formatter": "workspace:*"

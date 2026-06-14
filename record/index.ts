@@ -5,8 +5,12 @@
  *
  *   `@mailwoman/record` — the canonicalize layer for the geocode-first matcher.
  *
- *   Address-first: {@linkcode PostalAddress} is the spine. Organization and contact records (and their
- *   per-field normalizers) build on the same plain-data pattern and land here next.
+ *   Address-first: {@linkcode PostalAddress} is the spine. The per-field normalizers
+ *   ({@linkcode parsePersonName}, {@linkcode canonicalizeOrganizationName}) build on the same
+ *   plain-data pattern. Contact records and the comparator/Fellegi-Sunter layer land in the
+ *   matcher.
  */
 
 export * from "./address.js"
+export * from "./name.js"
+export * from "./organization.js"
