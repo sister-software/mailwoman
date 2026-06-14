@@ -37,8 +37,10 @@ export interface ResolvedEntity {
 	representative: SourceRecord
 	/** The entity's location, from the representative's geocode. */
 	coordinate?: { latitude: number; longitude: number }
-	/** Weakest within-cluster link weight in bits (how tightly it holds together); `null` for a
-singleton. */
+	/**
+	 * Weakest within-cluster link weight in bits (how tightly it holds together); `null` for a
+	 * singleton.
+	 */
 	cohesion: number | null
 }
 

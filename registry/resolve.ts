@@ -43,8 +43,10 @@ const NAME_LEVELS: ComparisonLevel[] = [
 	{ label: "different", minSimilarity: 0, m: 0.05, u: 0.96 },
 ]
 
-/** The default geocode-first scoring model: name + organization + address key + great-circle
-distance. */
+/**
+ * The default geocode-first scoring model: name + organization + address key + great-circle
+ * distance.
+ */
 export function buildDefaultModel(): FellegiSunterModel<SourceRecord> {
 	return {
 		lambda: 0.0001,
@@ -82,8 +84,10 @@ export interface ResolveConfig {
 	threshold?: number
 	/** Skip and report blocks larger than this rather than scanning them. */
 	maxBlockSize?: number
-	/** Fit the model's `m`/`u` to the candidate pairs with EM before scoring (label-free). Default
-false. */
+	/**
+	 * Fit the model's `m`/`u` to the candidate pairs with EM before scoring (label-free). Default
+	 * false.
+	 */
 	trainEM?: boolean
 }
 

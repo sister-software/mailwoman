@@ -12,5 +12,6 @@
  */
 
 export * from "./geojson.js"
+export * from "./ingest.js"
 export * from "./resolve.js"
 export * from "./types.js"
