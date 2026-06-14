@@ -100,6 +100,18 @@ function findAddressPointHit(tree: AddressTree): { lat: number; lon: number } | 
 	return null
 }
 
+/** Pull the #483 interpolated estimate (street-node metadata) out of a resolved tree, if any. */
+function findInterpolatedHit(tree: AddressTree): { lat: number; lon: number } | null {
+	const stack = [...tree.roots]
+	while (stack.length > 0) {
+		const n = stack.pop()!
+		const ip = n.metadata?.interpolated_point as { lat: number; lon: number } | undefined
+		if (n.tag === "street" && ip) return ip
+		stack.push(...n.children)
+	}
+	return null
+}
+
 function collectResolved(tree: AddressTree): Resolved[] {
 	const out: Resolved[] = []
 	const visit = (n: AddressNode): void => {
@@ -423,6 +435,17 @@ async function main(): Promise<void> {
 		const { AddressPointSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite")
 		addressPoints = new AddressPointSqliteLookup(addressPointsDb)
 	}
+	// `--interpolation <segments-db>` (#483): the house-number interpolation tier (StreetInterpolator,
+	// tiger-range). Adds `interpolation` to resolveOpts; the `neural+interp` row takes the COORDINATE
+	// from the exact point when present, else the interpolated estimate, else the admin centroid — the
+	// full street-level coordinate cascade. The delta vs `neural+addrpt` is interpolation's lift on the
+	// long tail of valid-but-unlisted numbers the exact tier misses.
+	const interpolationDb = arg("interpolation", "")
+	let interpolation: import("@mailwoman/core/resolver").InterpolationLookup | null = null
+	if (interpolationDb) {
+		const { StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
+		interpolation = new StreetInterpolator({ dbPath: interpolationDb })
+	}
 	const useAnchor = process.argv.includes("--postcode-anchor")
 	// `--anchor-rerank` (#369 S8): feed the postcode anchor's country posterior into the resolver's
 	// locality re-rank (`ResolveOpts.anchorPosterior`), to measure whether the merged re-ranker pulls
@@ -550,6 +573,12 @@ async function main(): Promise<void> {
 	const neuralAnchorAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
 	const neuralAddrPtAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
 	let addressPointHits = 0
+	const neuralInterpAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
+	let interpHits = 0
+	const diagInterp = process.env.MAILWOMAN_DIAG_INTERP === "1"
+	let interpPrecond = 0 // rows that parsed street+house_number+postcode (interp's precondition)
+	let interpFullParseMiss = 0 // precond met + exact missed + interp null = genuine find() miss
+	const diagMisses: string[] = []
 	const record = (
 		who: "neural" | "v0",
 		row: OaRow,
@@ -588,6 +617,7 @@ async function main(): Promise<void> {
 			const nOpts = {
 				...(anchorRerank ? { ...resolveOpts, anchorPosterior: anchorPosteriorFor(row.input) } : resolveOpts),
 				...(addressPoints ? { addressPoints } : {}),
+				...(interpolation ? { interpolation } : {}),
 			}
 			nDecorated = await resolver.resolveTree(nTree, nOpts)
 			nResolved = collectResolved(nDecorated)
@@ -619,6 +649,44 @@ async function main(): Promise<void> {
 			if (!neuralAddrPtAgg.byState.has(st)) neuralAddrPtAgg.byState.set(st, newAgg())
 			bump(neuralAddrPtAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, apErr)
 			bump(neuralAddrPtAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, apErr)
+		}
+
+		// neural + interpolation (#483): the full street-level cascade — exact point if present, else the
+		// interpolated estimate, else the admin centroid. Same admin flags; only the COORDINATE changes.
+		if (interpolation) {
+			const exact = nDecorated ? findAddressPointHit(nDecorated) : null
+			const interp = nDecorated ? findInterpolatedHit(nDecorated) : null
+			const coord = exact ?? interp
+			const ipErr = coord ? haversineKm(coord.lat, coord.lon, row.lat, row.lon) : ns.err
+			if (interp) interpHits++
+			const st = row.state || "??"
+			if (!neuralInterpAgg.byState.has(st)) neuralInterpAgg.byState.set(st, newAgg())
+			bump(neuralInterpAgg.byState.get(st)!, ns.locMatch, ns.regMatch, ns.resolved, ipErr)
+			bump(neuralInterpAgg.overall, ns.locMatch, ns.regMatch, ns.resolved, ipErr)
+
+			// --- coverage diagnostic (MAILWOMAN_DIAG_INTERP=1): split the miss cause. ---
+			// The interp tier only runs in resolveTree when the exact tier did NOT stamp. So:
+			//   precond met (street+house_number+postcode parsed) + exact miss + interp null
+			//   ⟹ a genuine StreetInterpolator.find() miss (shard/normalization gap, NOT parse, NOT gate).
+			if (diagInterp && nDecorated) {
+				let s: string | undefined
+				let hn: string | undefined
+				let pc: string | undefined
+				const stk = [...nDecorated.roots]
+				while (stk.length > 0) {
+					const n = stk.pop()!
+					if (n.tag === "street" && !s && n.value.trim()) s = n.value.trim()
+					if (n.tag === "house_number" && !hn && n.value.trim()) hn = n.value.trim()
+					if (n.tag === "postcode" && !pc && n.value.trim()) pc = n.value.trim()
+					stk.push(...n.children)
+				}
+				const precond = !!(s && hn && pc)
+				if (precond) interpPrecond++
+				if (precond && !exact && !interp) {
+					interpFullParseMiss++
+					if (diagMisses.length < 5000) diagMisses.push(`${hn} | ${s} | ${pc}  ←  ${row.input}`)
+				}
+			}
 		}
 
 		// neural + postcode-anchor: same admin flags, coordinate from the anchor centroid when it has one.
@@ -698,6 +766,45 @@ async function main(): Promise<void> {
 		lines.push(
 			`address-point hit rate: ${addressPointHits}/${neuralAddrPtAgg.overall.n} (${((100 * addressPointHits) / Math.max(1, neuralAddrPtAgg.overall.n)).toFixed(1)}%)`
 		)
+	}
+	if (interpolation) {
+		lines.push(overallRow("**neural+interp**", neuralInterpAgg.overall))
+		lines.push("")
+		lines.push(
+			`interpolation hit rate (interp coord, no exact point): ${interpHits}/${neuralInterpAgg.overall.n} (${((100 * interpHits) / Math.max(1, neuralInterpAgg.overall.n)).toFixed(1)}%)`
+		)
+		if (diagInterp) {
+			const N = neuralInterpAgg.overall.n
+			lines.push("")
+			lines.push(`### interp coverage diagnostic`)
+			lines.push(
+				`- parsed street+house_number+postcode (precondition): ${interpPrecond}/${N} (${((100 * interpPrecond) / Math.max(1, N)).toFixed(1)}%)`
+			)
+			lines.push(
+				`- precondition met + exact missed + interp MISS (genuine find() miss = shard/normalization gap): ${interpFullParseMiss}`
+			)
+			lines.push(
+				`- interp HITS: ${interpHits} → of full-parse non-exact rows, hit rate ${((100 * interpHits) / Math.max(1, interpFullParseMiss + interpHits)).toFixed(1)}%`
+			)
+			// Error CDF over the neural+interp coordinate (DeepSeek: "where's the cliff?"). Cumulative % of
+			// ALL rows within each radius — the within-100m DoD metric + the shape of the tail.
+			const ierrs = neuralInterpAgg.overall.errs
+			lines.push("")
+			lines.push(`error CDF (neural+interp, n=${ierrs.length}) — cumulative % within radius:`)
+			for (const m of [10, 25, 50, 100, 200, 500, 1000, 5000]) {
+				const within = ierrs.filter((e) => e <= m / 1000).length
+				lines.push(`  ≤ ${m} m: ${((100 * within) / Math.max(1, ierrs.length)).toFixed(1)}%`)
+			}
+			// Dump ALL full-parse misses for the standalone shard-membership categorization (segment-not-found
+			// vs in-shard-range-miss vs normalization). Bump cap done at collection site.
+			if (diagMisses.length > 0) {
+				writeFileSync("/tmp/interp-misses.txt", diagMisses.join("\n"))
+				lines.push("")
+				lines.push(`full-parse interp misses dumped: ${diagMisses.length} → /tmp/interp-misses.txt`)
+				lines.push("sample (house_number | street | postcode ← input):")
+				for (const m of diagMisses.slice(0, 12)) lines.push(`  - ${m}`)
+			}
+		}
 	}
 	lines.push("")
 	lines.push(`## Neural per-state (locality-match)`)

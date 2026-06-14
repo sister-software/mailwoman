@@ -34,8 +34,11 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import type { InterpolationLookup } from "@mailwoman/core/resolver"
+
 import { haversineKm } from "./geo.js"
 import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "./interpolation.js"
+import { hasTable } from "./sqlite-utils.js"
 import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.js"
 
 /**
@@ -61,11 +64,11 @@ interface NumberAnchor {
 	release: string
 }
 
-export class AddressPointInterpolator {
+export class AddressPointInterpolator implements InterpolationLookup {
 	readonly #db: DatabaseSync
 	readonly #ownsDb: boolean
 	readonly #fallback: StreetInterpolator | undefined
-	readonly #byPostcode
+	readonly #byPostcode: ReturnType<DatabaseSync["prepare"]> | undefined
 
 	constructor(opts: { dbPath?: string; database?: DatabaseSync; fallback?: StreetInterpolator }) {
 		if (opts.database) {
@@ -78,15 +81,19 @@ export class AddressPointInterpolator {
 			throw new Error("AddressPointInterpolator: one of dbPath or database is required")
 		}
 		this.#fallback = opts.fallback
-		// Strictly-numeric neighbor numbers on the route-folded street key within the ZIP. The
-		// queried number itself is excluded HERE (see module doc: non-circular by construction).
-		this.#byPostcode = this.#db.prepare(
-			`SELECT CAST(number AS INTEGER) AS n, lat, lon, source, release
-			 FROM address_point
-			 WHERE postcode = ? AND street_key = ?
-				AND number GLOB '[0-9]*' AND number NOT GLOB '*[^0-9]*'
-				AND CAST(number AS INTEGER) != ?`
-		)
+		// Degrade gracefully on an empty/tableless shard (#568): with no `address_point` table this tier
+		// is skipped, deferring to the segment fallback rather than crashing at construction.
+		if (hasTable(this.#db, "address_point")) {
+			// Strictly-numeric neighbor numbers on the route-folded street key within the ZIP. The
+			// queried number itself is excluded HERE (see module doc: non-circular by construction).
+			this.#byPostcode = this.#db.prepare(
+				`SELECT CAST(number AS INTEGER) AS n, lat, lon, source, release
+				 FROM address_point
+				 WHERE postcode = ? AND street_key = ?
+					AND number GLOB '[0-9]*' AND number NOT GLOB '*[^0-9]*'
+					AND CAST(number AS INTEGER) != ?`
+			)
+		}
 	}
 
 	find(query: InterpolationQuery): InterpolatedHit | null {
@@ -95,9 +102,8 @@ export class AddressPointInterpolator {
 		if (!streetKey || !/^\d+$/.test(numberRaw)) return null
 		const n = Number(numberRaw)
 
-		// Postcode scope only in this slice — without one, the segment fallback owns the
-		// statewide-ambiguity abstention; duplicating it here would be a second policy.
-		if (!query.postcode) return this.#fallback?.find(query) ?? null
+		// No own table (empty shard) or no postcode → defer to the segment fallback rather than query.
+		if (!this.#byPostcode || !query.postcode) return this.#fallback?.find(query) ?? null
 
 		const rows = this.#byPostcode.all(query.postcode.trim(), streetKey, n) as unknown as PointRow[]
 		const hit = rows.length >= 2 ? interpolateFromNeighbors(rows, n) : null

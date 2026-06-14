@@ -45,6 +45,14 @@ const { values: args } = parseArgs({
 		out: { type: "string" },
 		"county-fips": { type: "string" },
 		"county-boundary": { type: "string", default: "/tmp/tiger-county/tl_2023_us_county.shp" },
+		// ODbL-hygiene: when set, only keep rows whose Overture dataset is in this comma-separated
+		// allow-list (case-insensitive). Default absent = keep everything (current behaviour,
+		// byte-stable). Typical use: --license-filter NAD to retain only US-public-domain rows.
+		"license-filter": { type: "string" },
+		// DuckDB worker-thread cap for the parquet scan. Default (unset) = DuckDB's default (all
+		// cores). The national driver passes a low value so N concurrent state builds don't each
+		// grab every core (N × threads ≈ core count).
+		threads: { type: "string" },
 	},
 })
 if (!args.state) {
@@ -59,11 +67,26 @@ const STATE = args.state.toUpperCase()
 const PARQUET = `/mnt/playpen/mailwoman-data/overture/${args.release}/addresses-us.parquet`
 const OUT = args.out ?? `/mnt/playpen/mailwoman-data/address-points/address-points-us-${STATE.toLowerCase()}.db`
 
+// Build the dataset allow-list (normalised to lower-case for a case-insensitive match).
+// Empty = no filter (keep everything).
+const allowedDatasets: Set<string> = new Set(
+	args["license-filter"]
+		? args["license-filter"]
+				.split(",")
+				.map((d) => d.trim().toLowerCase())
+				.filter(Boolean)
+		: []
+)
+
 mkdirSync(path.dirname(OUT), { recursive: true })
 rmSync(OUT, { force: true }) // idempotent rebuild — never append across releases
 
 const instance = await DuckDBInstance.create()
 const duck = await instance.connect()
+// Optional thread cap (national driver sets this so concurrent state builds don't oversubscribe cores).
+if (args.threads && /^\d+$/.test(args.threads)) {
+	await duck.run(`SET threads TO ${args.threads}`)
+}
 // Optional county scope: PIP against the TIGER COUNTY polygon (GEOID = state+county FIPS).
 // DuckDB hoists the scalar subquery to a constant, so the per-row cost is the containment test.
 let countyFilter = ""
@@ -73,20 +96,12 @@ if (args["county-fips"]) {
 			(SELECT geom FROM ST_Read('${args["county-boundary"]}') WHERE GEOID = '${args["county-fips"]}'),
 			ST_Point(lon, lat))`
 }
-const result = await duck.runAndReadAll(`
-	SELECT
-		number, street, unit, postcode,
-		coalesce(nullif(trim(address_levels[2].value), ''), nullif(trim(postal_city), '')) AS locality,
-		sources[1].dataset AS dataset,
-		lat, lon
-	FROM read_parquet('${PARQUET}')
-	WHERE address_levels[1].value = '${STATE}'
-		AND nullif(trim(street), '') IS NOT NULL
-		AND nullif(trim(number), '') IS NOT NULL
-		${countyFilter}
-`)
-const rows = result.getRowObjects() as Record<string, unknown>[]
-console.log(`${rows.length} ${STATE} rows from ${path.basename(PARQUET)}`)
+// License filter: pushed into DuckDB so the parquet scan drops ineligible rows before transfer.
+// lower() matches case-insensitively against our normalised allow-list.
+const datasetFilter =
+	allowedDatasets.size > 0
+		? `AND lower(sources[1].dataset) IN (${[...allowedDatasets].map((d) => `'${d}'`).join(", ")})`
+		: ""
 
 const db = new DatabaseSync(OUT)
 db.exec(`
@@ -110,29 +125,64 @@ const insert = db.prepare(
 	`INSERT INTO address_point (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
 	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 )
-db.exec("BEGIN")
+
+// Provenance accounting: per-dataset counts across ALL rows returned by DuckDB (pre-JS-normalisation
+// drop). When --license-filter is active DuckDB already dropped the ineligible rows, so this reflects
+// the kept set. `totalReturned` feeds the kept-vs-dropped summary below.
+const datasetCounts = new Map<string, number>()
 let kept = 0
-for (const r of rows) {
-	const streetRaw = String(r.street)
-	const streetNorm = normalizeStreetForKey(streetRaw)
-	if (!streetNorm) continue
-	const locality = r.locality ? normalizeLocalityForKey(String(r.locality)) : null
-	insert.run(
-		streetNorm,
-		canonicalizeRouteKey(streetNorm),
-		String(r.number).trim().toLowerCase(),
-		r.unit ? String(r.unit).trim().toLowerCase() : null,
-		r.postcode ? String(r.postcode).trim() : null,
-		locality,
-		streetRaw,
-		Number(r.lat),
-		Number(r.lon),
-		`overture:${r.dataset}`,
-		String(args.release)
-	)
-	kept++
+let totalReturned = 0
+
+// STREAM the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising the whole
+// result with runAndReadAll().getRowObjects() — a 13.5M-row state (CA/FL/TX) blows the ~4GB V8 heap
+// that way (OOM observed 2026-06-14). stream()+fetchChunk() keeps JS memory bounded to one chunk; the
+// growing data lives in the on-disk SQLite WAL inside a single transaction.
+const stream = await duck.stream(`
+	SELECT
+		number, street, unit, postcode,
+		coalesce(nullif(trim(address_levels[2].value), ''), nullif(trim(postal_city), '')) AS locality,
+		sources[1].dataset AS dataset,
+		lat, lon
+	FROM read_parquet('${PARQUET}')
+	WHERE address_levels[1].value = '${STATE}'
+		AND nullif(trim(street), '') IS NOT NULL
+		AND nullif(trim(number), '') IS NOT NULL
+		${countyFilter}
+		${datasetFilter}
+`)
+// A streamed DataChunk carries no column names of its own (only the materialised reader sets them),
+// so pull them off the result once and hand them to each chunk's getRowObjects().
+const colNames = stream.columnNames()
+db.exec("BEGIN")
+for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
+	const rows = chunk.getRowObjects(colNames) as Record<string, unknown>[]
+	for (const r of rows) {
+		totalReturned++
+		const dataset = String(r.dataset ?? "unknown")
+		datasetCounts.set(dataset, (datasetCounts.get(dataset) ?? 0) + 1)
+
+		const streetRaw = String(r.street)
+		const streetNorm = normalizeStreetForKey(streetRaw)
+		if (!streetNorm) continue
+		const locality = r.locality ? normalizeLocalityForKey(String(r.locality)) : null
+		insert.run(
+			streetNorm,
+			canonicalizeRouteKey(streetNorm),
+			String(r.number).trim().toLowerCase(),
+			r.unit ? String(r.unit).trim().toLowerCase() : null,
+			r.postcode ? String(r.postcode).trim() : null,
+			locality,
+			streetRaw,
+			Number(r.lat),
+			Number(r.lon),
+			`overture:${r.dataset}`,
+			String(args.release)
+		)
+		kept++
+	}
 }
 db.exec("COMMIT")
+console.log(`${totalReturned} ${STATE} rows from ${path.basename(PARQUET)}`)
 db.exec(`
 	CREATE INDEX idx_ap_postcode ON address_point (postcode, street_norm, number);
 	CREATE INDEX idx_ap_locality ON address_point (locality_norm, street_norm, number);
@@ -148,3 +198,30 @@ const stats = db
 db.close()
 console.log(`${kept} points → ${OUT}`)
 console.log(`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`)
+
+// --- Provenance summary ---
+// Always printed so the operator can audit which licenses a shard carries.
+console.log(`\nprovenance (${STATE}, release ${args.release}):`)
+const sortedDatasets = [...datasetCounts.entries()].sort((a, b) => b[1] - a[1])
+for (const [dataset, count] of sortedDatasets) {
+	console.log(`  overture:${dataset.padEnd(20)} ${count.toLocaleString()} rows`)
+}
+if (allowedDatasets.size > 0) {
+	// The DuckDB query already excluded non-allowed rows, so rows.length is the kept count.
+	// Run a secondary count query (cheap: parquet predicate pushdown on a single column) to
+	// surface the total-minus-kept so the operator can see how much was dropped by the filter.
+	const totalResult = await duck.runAndReadAll(`
+		SELECT count(*) AS n
+		FROM read_parquet('${PARQUET}')
+		WHERE address_levels[1].value = '${STATE}'
+			AND nullif(trim(street), '') IS NOT NULL
+			AND nullif(trim(number), '') IS NOT NULL
+			${countyFilter}
+	`)
+	const totalUnfiltered = Number((totalResult.getRowObjects()[0] as Record<string, unknown>).n)
+	const keptCount = totalReturned
+	const droppedCount = totalUnfiltered - keptCount
+	console.log(
+		`\nlicense-filter: ${[...allowedDatasets].join(", ")} → kept ${keptCount.toLocaleString()} / dropped ${droppedCount.toLocaleString()} (of ${totalUnfiltered.toLocaleString()} total parquet rows for ${STATE})`
+	)
+}

@@ -27,7 +27,10 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import type { InterpolationLookup } from "@mailwoman/core/resolver"
+
 import { haversineKm } from "./geo.js"
+import { hasTable } from "./sqlite-utils.js"
 import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.js"
 
 /**
@@ -90,11 +93,11 @@ interface SegmentRow {
 	release: string
 }
 
-export class StreetInterpolator {
+export class StreetInterpolator implements InterpolationLookup {
 	readonly #db: DatabaseSync
 	readonly #ownsDb: boolean
-	readonly #byPostcode
-	readonly #byStreet
+	readonly #byPostcode: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #byStreet: ReturnType<DatabaseSync["prepare"]> | undefined
 
 	constructor(opts: { dbPath?: string; database?: DatabaseSync }) {
 		if (opts.database) {
@@ -106,18 +109,23 @@ export class StreetInterpolator {
 		} else {
 			throw new Error("StreetInterpolator: one of dbPath or database is required")
 		}
-		const columns = `from_hn, to_hn, min_hn, max_hn, parity, postcode, geometry, source, release`
-		this.#byPostcode = this.#db.prepare(
-			`SELECT ${columns} FROM street_segment
-			 WHERE postcode = ? AND street_norm = ? AND min_hn <= ? AND max_hn >= ?`
-		)
-		this.#byStreet = this.#db.prepare(
-			`SELECT ${columns} FROM street_segment
-			 WHERE street_norm = ? AND min_hn <= ? AND max_hn >= ?`
-		)
+		// Degrade gracefully on an empty/tableless shard (interrupted build, stray 0-byte file): with no
+		// `street_segment` table this interpolator is a no-op miss, not a crash that loses the state (#568).
+		if (hasTable(this.#db, "street_segment")) {
+			const columns = `from_hn, to_hn, min_hn, max_hn, parity, postcode, geometry, source, release`
+			this.#byPostcode = this.#db.prepare(
+				`SELECT ${columns} FROM street_segment
+				 WHERE postcode = ? AND street_norm = ? AND min_hn <= ? AND max_hn >= ?`
+			)
+			this.#byStreet = this.#db.prepare(
+				`SELECT ${columns} FROM street_segment
+				 WHERE street_norm = ? AND min_hn <= ? AND max_hn >= ?`
+			)
+		}
 	}
 
 	find(query: InterpolationQuery): InterpolatedHit | null {
+		if (!this.#byPostcode || !this.#byStreet) return null
 		const streetNorm = canonicalizeRouteKey(normalizeStreetForKey(query.street))
 		const numberRaw = query.number.trim()
 		// Strictly-numeric house numbers only — this tier estimates, it doesn't guess at

@@ -10,15 +10,15 @@ converged on the same answers. Sources are listed at the end._
 ## TL;DR
 
 1. **The 91% floor is mis-calibrated for the postcode-first case.** It was inherited from a
-   canonical-order eval where house_number is the _easiest_ field (published SOTA 99–100% F1). On the
+   canonical-order eval where house*number is the \_easiest* field (published SOTA 99–100% F1). On the
    genuinely hard reordered/international case, the nearest published SOTA — Chinese flexible-order
    address parsing — reports house-number F1 of **~90–91%**, and neural parsers _collapse_ on reorder
    (deepparse: 100% → 28%; libpostal overall 0.992 → 0.781). **87.4% is respectable-to-SOTA for this
    slice, not a failure.** Both the literature and DeepSeek independently call the 91% bar wrong for
    this regime.
 2. **The plateau-and-backfire is well-explained:** a _positional shortcut_ (the model learned
-   "house_number = the leading number" because real FR data is canonical-order) + a _synthetic-realism
-   / distribution gap_ (overweighting synthetic reorder data shifts training away from the real
+   "house*number = the leading number" because real FR data is canonical-order) + a \_synthetic-realism
+   / distribution gap* (overweighting synthetic reorder data shifts training away from the real
    distribution and degrades it) + **simplicity-bias fallback** — when weight 6.0 corrupts the
    "leading-token" shortcut without supplying a real discriminator, the model drops to the
    _next_-simplest spurious cue ("leading _digit_"), which is exactly why `47110` fragments into
@@ -47,7 +47,7 @@ Why more weight made it _worse_, with a new failure (postcode fragmentation):
   At weight 6.0 the synthetic shard overwhelms real BAN and the model fits the generator's caricature
   of reordered French, not the real eval distribution.
 - **Simplicity-bias fallback (the fragmentation mechanism).** When weight 6.0 corrupts the dominant
-  "leading-token = house_number" shortcut _without_ installing a robust discriminator, the model falls
+  "leading-token = house*number" shortcut \_without* installing a robust discriminator, the model falls
   to the next-simplest spurious feature rather than the intended one (Shah et al., "Pitfalls of
   Simplicity Bias", NeurIPS 2020). Here that fallback is "leading _digit_" — so it carves a house
   number (`4`) out of the front of the postcode (`47110`), leaving `7110`. This is the piece pure
@@ -68,7 +68,7 @@ teaching discrimination.
 
 | Setting                                   | House-number / number-field accuracy                        | Source                                         |
 | ----------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------- |
-| Clean, canonical, US single-order         | **99–100% F1** (house_number is the _easiest_ field)        | Yin et al. 2023 (US geocoding benchmark)       |
+| Clean, canonical, US single-order         | **99–100% F1** (house*number is the \_easiest* field)       | Yin et al. 2023 (US geocoding benchmark)       |
 | Hard, flexible-order, non-Latin (Chinese) | **HOUSENO F1 89.83–91.30%** (numeric tail is the weak spot) | Li et al., NAACL 2019                          |
 | Reorder a learned country (deepparse)     | 100% → **28%** sequence accuracy                            | Yassine/Beauchemin 2020                        |
 | Inverse-order zero-shot (Hungary/Japan)   | **25.5% / 35.3%**                                           | Yassine/Beauchemin 2020                        |

@@ -135,7 +135,6 @@ export function buildWorkspaceAliases() {
 	if (coreDir) {
 		for (const sub of [
 			"decoder",
-			"resolver",
 			"classification",
 			"tokenization",
 			"parser",
@@ -146,6 +145,16 @@ export function buildWorkspaceAliases() {
 		]) {
 			aliases[`@mailwoman/core/${sub}`] = resolveWorkspaceDirEntry(coreDir, sub)
 		}
+		// Barrel-bypass for @mailwoman/core/resolver — resolve it straight to its `types` module (where
+		// `expandPlacetypeFilter`, `DEFAULT_PLACETYPE_MAP`, and `PLACETYPE_FILTER_GROUPS` are DIRECTLY
+		// defined) instead of the package barrel `resolver/index.ts`, which RE-EXPORTS them from
+		// `./types.js`. In the demo's production web build, webpack mis-wired that re-exported binding on
+		// the async resolver chunk: `httpvfs-resolver.ts` saw `expandPlacetypeFilter` as `undefined` at
+		// runtime ("expandPlacetypeFilter is not a function"). The ONLY runtime value the bundled graph
+		// imports from this barrel is `expandPlacetypeFilter` (the resolver-wof-* lookups + this demo);
+		// `createWofResolver` is never bundled. This alias is webpack-only — `tsc` still resolves the
+		// package barrel, so type-only imports (`CoincidentLocality`, `Ancestor`) keep working.
+		aliases["@mailwoman/core/resolver"] = resolveWorkspaceFile(coreDir, "resolver/types")
 		aliases["@mailwoman/core/environment/load"] = resolveWorkspaceFile(coreDir, "environment/load")
 		aliases["@mailwoman/core/kysley/dialect"] = resolveWorkspaceFile(coreDir, "kysley/dialect")
 	}
@@ -244,15 +253,26 @@ export function stageSqlJsHttpvfs(destDir) {
 		return false
 	}
 	const files = ["index.js", "sqlite.worker.js", "sql-wasm.wasm"]
+	let copied = 0
 	for (const f of files) {
 		const src = resolve(distDir, f)
 		if (!existsSync(src)) {
 			console.warn(`[demo-assets] sql.js-httpvfs: missing ${f} in dist`)
 			return false
 		}
-		copyFileSync(src, resolve(destDir, f))
+		const dest = resolve(destDir, f)
+		// Idempotent stage: skip when the destination already matches (by size). This runs in
+		// loadContent(), which the Docusaurus dev server (`yarn start`) re-invokes on reload — and
+		// `destDir` lives under the watched `static/` tree. An UNCONDITIONAL copyFileSync rewrites the
+		// file (fresh mtime) even when the bytes are identical, the watcher sees a "change" and reloads,
+		// loadContent() re-runs and re-copies… a reload LOOP that shows up as the /demo page flickering
+		// during `start`. Skipping the no-op copy breaks the cycle. (Prod `build` runs loadContent once,
+		// so it was never affected.)
+		if (existsSync(dest) && statSync(dest).size === statSync(src).size) continue
+		copyFileSync(src, dest)
+		copied++
 	}
-	console.log(`[demo-assets] sql.js-httpvfs: staged ${files.length} runtime assets`)
+	if (copied > 0) console.log(`[demo-assets] sql.js-httpvfs: staged ${copied} runtime asset(s)`)
 	return true
 }
 

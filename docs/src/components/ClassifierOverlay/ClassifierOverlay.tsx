@@ -212,7 +212,7 @@ interface StageContribution {
 }
 
 /** Determine which pipeline stages contributed to a node. */
-function resolveStages(node: SourceNode, fstActive: boolean): StageContribution[] {
+function resolveStages(node: SourceNode): StageContribution[] {
 	const contributions: StageContribution[] = []
 
 	// Primary source
@@ -254,8 +254,8 @@ export interface ClassifierOverlayProps {
 const StaticLegend: React.FC<{ fstActive?: boolean }> = ({ fstActive }) => (
 	<div className={styles.staticLegend}>
 		<p className={styles.legendIntro}>
-			Mailwoman's pipeline processes each address through multiple classification stages. Each parsed component below
-			carries origin badges showing which stages contributed to its assignment.
+			Mailwoman&apos;s pipeline processes each address through multiple classification stages. Each parsed component
+			below carries origin badges showing which stages contributed to its assignment.
 		</p>
 
 		<div className={styles.stageGrid}>
@@ -360,7 +360,7 @@ const DynamicOverlay: React.FC<{ tree: unknown; nodes: ResultNode[]; fstActive: 
 				</thead>
 				<tbody>
 					{enriched.map((n, i) => {
-						const contributions = n.sourceNode ? resolveStages(n.sourceNode, fstActive) : []
+						const contributions = n.sourceNode ? resolveStages(n.sourceNode) : []
 						return (
 							<tr key={i}>
 								<td>

@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/phrase-grouper",
-	"version": "4.6.0",
+	"version": "4.7.0",
 	"description": "Stage 2.7 of the runtime pipeline — propose coherent input units (boundary discovery) with a structural kind hypothesis + confidence. Rule-based v1 (port of v1 section/sub-section logic); learned 1-2M-param span proposer reserved for v0.5.1.",
 	"license": "AGPL-3.0-only",
 	"repository": {

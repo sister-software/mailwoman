@@ -145,6 +145,42 @@ export interface AddressPointLookup {
 	find(query: { street: string; number: string; postcode?: string; locality?: string }): AddressPointHit | null
 }
 
+/**
+ * One interpolated coordinate estimate (#483) — NEVER an exact situs point (`uncertaintyM` prices
+ * the estimate honestly). Structural mirror of `InterpolatedHit` in
+ * `resolver-wof-sqlite/interpolation.ts`; keep this a SUBSET of that shape so the concrete
+ * `StreetInterpolator`/`AddressPointInterpolator` satisfy {@link InterpolationLookup} with no
+ * adapter (the {@link AddressPointHit} precedent).
+ */
+export interface InterpolatedPointHit {
+	lat: number
+	lon: number
+	interpolated: true
+	/**
+	 * `address_point` = bracketed between real neighbor points; `tiger_range` = linear within a
+	 * segment range.
+	 */
+	method: "address_point" | "tiger_range"
+	/** False when only the opposite side's range contained the number (right block, wrong side). */
+	parityMatched?: boolean
+	/** `both` = neighbors bracketed it; `single` = one-sided extrapolation (larger uncertainty). */
+	bracket?: "both" | "single"
+	/** Honest uncertainty radius in METERS (half the matched segment length). */
+	uncertaintyM: number
+	source: string
+	release: string
+}
+
+/**
+ * House-number interpolation lookup (#483). Like {@link AddressPointLookup}, implementations own
+ * their normalization (the shared `resolver-wof-sqlite/street-normalize.ts`); core depends only on
+ * this contract. Postcode-scoped (no locality field) — the tier abstains statewide without a
+ * postcode.
+ */
+export interface InterpolationLookup {
+	find(query: { street: string; number: string; postcode?: string }): InterpolatedPointHit | null
+}
+
 export interface ResolveOpts {
 	/**
 	 * Hard cap on how many backend lookups one tree may issue. Default 10. Prevents a tree with
@@ -235,6 +271,28 @@ export interface ResolveOpts {
 	 * (`address_point`, `resolution_tier: "address_point"`). Opt-in; absent = byte-stable.
 	 */
 	addressPoints?: AddressPointLookup
+	/**
+	 * House-number interpolation tier (#483): consulted ONLY when the exact address-point tier
+	 * ({@link addressPoints}) did NOT stamp the street node — the "after the exact-point fall-through"
+	 * semantics. On hit, stamps the estimate onto the street node's metadata under a DISTINCT key
+	 * (`interpolated_point`, `resolution_tier: "interpolated"`, `uncertainty_m`) — never
+	 * `address_point`, so a consumer reading the exact key never gets an estimate mislabeled as
+	 * exact. Opt-in; absent = byte-stable. Independent of {@link addressPoints} (either, both, or
+	 * neither may be passed).
+	 */
+	interpolation?: InterpolationLookup
+	/**
+	 * Conformal calibration multiplier for the interpolation tier's `uncertainty_m` (#374). The raw
+	 * radius is half the matched TIGER segment length — an honest-but-TIGHT prior: a split-conformal
+	 * calibration on 1562 Travis-County interp hits (2026-06-14) found it covers only ~72% of true
+	 * errors, and that multiplying by **Q̂ ≈ 1.70** yields a calibrated 90% bound (91.5% empirical).
+	 * When set, `applyInterpolation` reports `uncertainty_m = round(raw × this)` and preserves the
+	 * raw value under `uncertainty_raw_m`. Absent = raw heuristic (byte-stable). The factor is the
+	 * CALLER's (it's a property of the calibration set, not the geometry); the geocode CLI passes the
+	 * TX-derived 1.70. Re-calibrate on a multi-region holdout before treating it as national-exact.
+	 * Report: docs/articles/evals/2026-06-14-interp-radius-calibration.md.
+	 */
+	interpolationRadiusCalibration?: number
 	hierarchyCompletion?: boolean
 	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */
 	cityStateFallback?: boolean
