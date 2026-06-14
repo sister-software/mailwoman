@@ -19,6 +19,7 @@ import { type RequestHandler, Router } from "express"
 import { existsSync } from "node:fs"
 
 import { geocodeAddress, type GeocodeClassifier, type GeocodeResult, ShardProvider } from "../geocode-core.js"
+import { recordGeocode } from "./metrics.js"
 
 /** Default per-state shard root + interp calibration — mirror the CLI defaults. */
 const DATA_ROOT = process.env["MAILWOMAN_DATA_ROOT"] ?? "/mnt/playpen/mailwoman-data"
@@ -96,9 +97,13 @@ const singleHandler: RequestHandler = async (req, res) => {
 		res.status(503).json(DEPS_UNAVAILABLE)
 		return
 	}
+	const t0 = performance.now()
 	try {
-		res.status(200).json(await oneGeocode(deps, address))
+		const result = await oneGeocode(deps, address)
+		recordGeocode(performance.now() - t0, result.resolution_tier)
+		res.status(200).json(result)
 	} catch (err) {
+		recordGeocode(performance.now() - t0, "error")
 		res.status(500).json({ error: `geocode error: ${err instanceof Error ? err.message : String(err)}` })
 	}
 }
@@ -135,9 +140,13 @@ const batchHandler: RequestHandler = async (req, res) => {
 	const worker = async (): Promise<void> => {
 		for (let i = cursor++; i < inputs.length; i = cursor++) {
 			const input = inputs[i]!
+			const t0 = performance.now()
 			try {
-				results[i] = await oneGeocode(deps, input)
+				const result = await oneGeocode(deps, input)
+				recordGeocode(performance.now() - t0, result.resolution_tier)
+				results[i] = result
 			} catch (err) {
+				recordGeocode(performance.now() - t0, "error")
 				results[i] = { input, error: err instanceof Error ? err.message : String(err) }
 			}
 		}
