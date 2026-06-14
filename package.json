@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/universe",
-	"version": "4.8.0",
+	"version": "4.8.1",
 	"description": "Mailwoman monorepo workspace root.",
 	"license": "AGPL-3.0-only",
 	"private": true,
