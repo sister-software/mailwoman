@@ -140,17 +140,18 @@ describe("kryptonite catalogue — 350 5th Ave, New York, NY 10118 (canonical)",
 
 	it("surfaces all canonical components", () => {
 		expectProposal(out, { kind: "NUMERIC", body: "350", minConfidence: 0.9 })
-		expectProposal(out, { kind: "STREET_PHRASE", body: "350 5th Ave", minConfidence: 0.85 })
+		expectProposal(out, { kind: "STREET_PHRASE", body: "5th Ave", minConfidence: 0.85 })
 		expectProposal(out, { kind: "LOCALITY_PHRASE", body: "New York", minConfidence: 0.65 })
 		expectProposal(out, { kind: "REGION_ABBREVIATION", body: "NY", minConfidence: 0.7 })
 		expectProposal(out, { kind: "POSTCODE", body: "10118", minConfidence: 0.5 })
 	})
 
-	it("the STREET_PHRASE includes the house number (350 5th Ave, not just 5th Ave)", () => {
+	it("the STREET_PHRASE EXCLUDES the house number (5th Ave, not 350 5th Ave) — #565", () => {
+		// The house number lives in its own NUMERIC proposal; bundling it into STREET_PHRASE is what let
+		// the reconciler fuse "350 5th Ave" into one node and drop the street (#566). Keep them separate.
 		const streetPhrases = out.filter((p) => p.kindHypothesis === "STREET_PHRASE")
-		const withNumber = streetPhrases.find((p) => p.span.body === "350 5th Ave")
-		expect(withNumber).toBeDefined()
-		expect(withNumber!.confidence).toBeGreaterThanOrEqual(0.85)
+		expect(streetPhrases.find((p) => p.span.body === "5th Ave")).toBeDefined()
+		expect(streetPhrases.find((p) => p.span.body === "350 5th Ave")).toBeUndefined()
 	})
 
 	it("New York is a single LOCALITY_PHRASE proposal (not two separate)", () => {
