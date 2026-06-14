@@ -3,8 +3,8 @@
 _The autonomous shift after the v4.7.0 geocoder-campaign ship. Plan: the six workstreams A–F of
 `nightshift/2026-06-14-NIGHT-SHIFT-PLAN.md` — reconcile re-gate, coarse-placer M3, multi-region interp
 recalibration, autocomplete, the marquee client-side demo geocoder, and issue housekeeping. All six
-landed (D was already shipped); the marquee shipped working and browser-verified. Eight PRs, five issue
-closures, plus an unplanned CI rescue that unblocked the whole shift._
+landed (D was already shipped); the marquee shipped working and browser-verified. Nine PRs, five issue
+closures, plus an unplanned CI rescue — fully greened — that unblocked the whole shift._
 
 ## What shipped
 
@@ -14,8 +14,17 @@ closures, plus an unplanned CI rescue that unblocked the whole shift._
   committed without regenerating `yarn.lock` broke `yarn install --immutable` (the first step of every
   workflow). Under it sat two more latent failures the install-block had hidden: vite 8 broke the
   `vitest.config` `defineConfig` typing, and vitest was collecting a Playwright `.spec.ts`. Fixed all
-  three; CI went **0 → 224/231** test files passing. The only residual red is the weight-dependent
-  integration suite (filed as **#582** — a CI data-provisioning decision).
+  three; CI went **0 → 224/231** test files passing.
+- **#589** — chased the one residual red to ground (first filed as #582, *guessed* to be weights/WOF
+  absence — wrong). `mailwoman/test/locale-flag.test.ts` is the only suite that shells out to the
+  **compiled** CLI (`execFile out/cli.js parse`). `repo.ts`'s `__isCompiledTree` detection lands the
+  core package root at `core/out`, so the compiled parser reads dictionaries from `core/out/data/…` —
+  a path that only exists once something creates the `core/out/data → ../data` bridge. Locally that's a
+  side-effect of `promotion-gate.sh`; CI never ran the gate, so the first rule-path parse `ENOENT`s and
+  every `parse` fails (the same bridge issue behind night-13's `arena.perturb NOT FOUND`). Fix: mirror
+  the sanctioned bridge as a Test-workflow step after compile — makes the suite genuinely pass **without**
+  provisioning weights. Validated locally (pull the symlink → 5 fail; restore → 5 pass). The proper
+  `repo.ts`-detection fix stays deferred to daylight review (#481). **This greens CI fully (225/225).**
 
 **A — reconcile re-gate (#580):** Graded the assembled pipeline (never raw neural) in argmax vs
 reconcile mode after the #565 grouper fix. Reconcile is **strictly worse**: US street −2.4pp, FR street
@@ -87,6 +96,12 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
   finding). Lesson: background sweeps must not depend on the working-tree branch.
 - **A self-inflicted empty-DB stumble** (read-only `node:sqlite` can't create the no-op situs file) cost
   a couple iterations on the interp-only conformal runs.
+- **Filed #582 with a guessed root cause.** I labelled the last CI red "weight-dependent integration
+  tests" from the test name alone, without reading the failure. It was actually the compiled-data bridge
+  (`core/out/data`) — provable in two minutes by pulling the symlink locally. The guess wasn't *wrong*
+  enough to be harmless: it framed the fix as a costly CI-data-provisioning decision (the 3 options in
+  the issue) when the real fix was a one-line symlink. Lesson: a one-line repro beats a plausible label —
+  read the actual error before writing the issue. Fixed properly in #589.
 
 ## Decisions made autonomously
 
@@ -106,8 +121,10 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
 
 - **Wire per-region interp calibration (C)?** The seed table is ready; wiring it changes shipped
   `uncertainty_m`. Per-region table now, or hold for the per-segment-length-bucket refinement?
-- **CI weights provisioning (#582)?** Provide weights in CI, point the gate at `ci:test:fast`, or have
-  the integration tests self-skip when data is absent.
+- ~~**CI weights provisioning (#582)?**~~ **Resolved** — the residual red wasn't weights at all; it was
+  the compiled-data bridge (#589, closes #582). Open sub-question for daylight: take the *proper*
+  `repo.ts` `__isCompiledTree` fix (#481) so no bridge is needed anywhere, vs. keep the sanctioned
+  symlink workaround.
 - **Coarse-placer breadth (B)?** A full OpenAddresses off-map pull would close the Latin residual; worth
   the data acquisition?
 - **Promote anything?** Nothing was promoted to a shipped default tonight (all PR-and-flag). The
@@ -127,8 +144,9 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
 
 ## Concrete next steps
 
-- Merge **#579 first** (greens CI), then the rest (#580/#581/#583/#584/#585/#588). #588 (autocomplete
-  algorithm) lands before #585 (demo) so the typeahead wires against the fixed `fst-autocomplete.ts`.
+- Merge **#579 then #589 first** (together they green CI fully), then the rest
+  (#580/#581/#583/#584/#585/#588). #588 (autocomplete algorithm) lands before #585 (demo) so the
+  typeahead wires against the fixed `fst-autocomplete.ts`.
 - **E go-wide:** finish hosting NY + CA (uploading), add them to `HOSTED_STREET_SLUGS`, verify a CA
   address in-browser (closes the spec's go-wide latency decision on the real 3.3 GB shard).
 - **E UX (#377):** tier caption ("exact" / "±N m") and place-level autocomplete typeahead are shipped;
@@ -142,12 +160,12 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
 | metric                  | value                                                          |
 | ----------------------- | -------------------------------------------------------------- |
 | shift window            | 2026-06-14 03:47 → ~15:00 UTC                                  |
-| PRs opened              | 8 (#579, #580, #581, #583, #584, #585, #586, #588) + #582/#587 issues |
+| PRs opened              | 9 (#579, #580, #581, #583, #584, #585, #586, #588, #589) + #582/#587 issues |
 | issues closed           | 5 (#483, #484, #523, #560, #397) + 3 triaged                   |
 | models trained          | 1 (coarse-placer M3 retrain, 34 s CPU)                         |
 | Modal / GPU time        | 0 (CPU-only shift, as planned)                                 |
 | marquee verification    | 4 states in-browser (DC/MI/NY/CA), all exact, zero errors      |
 | R2 hosted street shards | DC + MI + NY + CA (the full launch trio + DC), all verified    |
 | NaN incidents           | 0                                                              |
-| CI status               | rescued 0 → 224/231 (#579); residual = weights-only (#582)     |
+| CI status               | rescued 0 → 224/231 (#579); last red root-caused + fixed (#589) → fully green |
 | peak heat               | 92 °C (sweep; killed per the 85 °C rule)                       |
