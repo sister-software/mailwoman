@@ -46,10 +46,14 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
   sync/async architecture resolved (the demo's cascade is already async, so no worker needed for
   correctness).
 - Implementation (#585): async httpvfs situs/interp lookups (twins of the node tiers, lockstep) +
-  `resolveStreet` + the `index.tsx`/marker/types wiring. Hosted DC + MI on R2 byte-range.
-- **Verified in-browser (Playwright/run-docs):** "1600 Pennsylvania Avenue NW, Washington, DC 20500" →
-  tier `address_point`, coord **38.8977, -77.0365 (the White House)**, 8.3 s cold, zero console errors.
-  MI confirmed too (exact, 4.8 s). NY + CA uploading for the full launch trio.
+  `resolveStreet` + the `index.tsx`/marker/types wiring + a precision caption ("📍 exact address point
+  (≤10 m)" / "≈ interpolated · ±N m"). Hosted the **full launch trio NY/MI/CA + DC** on R2 byte-range.
+- **Verified in-browser (Playwright/run-docs) on all four** — each resolves to its exact `address_point`,
+  fully client-side, zero console errors: DC (the White House, 38.8977/-77.0365, 8.3 s), MI (4.8 s), NY
+  (5.8 s, 1.4 GB shard), and **CA (5.5 s on the 3.3 GB stress shard)** — closing the spec's go-wide
+  latency question. Fixed a street-assembly bug CA exposed (the model splits `street`+`street_suffix`;
+  now assembled in source order). The #377 UX cluster (span-highlight, hierarchy, candidates, timing) was
+  already built; this shift added the live street tier + precision caption on top.
 
 **F — issue housekeeping:** Closed **#483, #484, #523, #560** (verified shipped); triaged **#374, #481,
 #368** (kept open with status); filed **#582**.
@@ -120,12 +124,12 @@ browser-verified.** Type a US address → exact building coordinate, fully in th
 | metric                  | value                                                          |
 | ----------------------- | -------------------------------------------------------------- |
 | shift window            | 2026-06-14 03:47 → ~15:00 UTC                                  |
-| PRs opened              | 7 (#579, #580, #581, #583, #584, #585) + #582 issue            |
+| PRs opened              | 8 (#579, #580, #581, #583, #584, #585, #586) + #582 issue       |
 | issues closed           | 4 (#483, #484, #523, #560) + 3 triaged                         |
 | models trained          | 1 (coarse-placer M3 retrain, 34 s CPU)                         |
 | Modal / GPU time        | 0 (CPU-only shift, as planned)                                 |
-| marquee verification    | 2 states in-browser (DC White House, MI), zero console errors  |
-| R2 hosted street shards | DC + MI (verified) + NY (live), CA uploading                   |
+| marquee verification    | 4 states in-browser (DC/MI/NY/CA), all exact, zero errors      |
+| R2 hosted street shards | DC + MI + NY + CA (the full launch trio + DC), all verified    |
 | NaN incidents           | 0                                                              |
 | CI status               | rescued 0 → 224/231 (#579); residual = weights-only (#582)     |
 | peak heat               | 92 °C (sweep; killed per the 85 °C rule)                       |
