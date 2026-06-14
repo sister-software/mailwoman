@@ -6,4 +6,5 @@
 
 export * from "./AddressRouter.js"
 export * from "./GeocodeRouter.js"
+export * from "./HealthRouter.js"
 export * from "./ResolveRouter.js"
