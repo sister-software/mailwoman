@@ -156,3 +156,5 @@ scripts/diag-*.sh
 
 # Coarse-placer (#244) training data + model artifacts — regenerable, not committed
 data/coarse-placer/
+
+nightshift
