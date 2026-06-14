@@ -9,7 +9,7 @@
  *   identical confidence. Also covers `featurize` determinism and `dequantizeInt8Weights`.
  */
 
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterAll, describe, expect, test } from "vitest"
@@ -145,12 +145,68 @@ describe("CoarsePlacer.fromArtifactDir", () => {
 	})
 })
 
+describe("open-set reject rule (#244 M2)", () => {
+	// Zero weights ⇒ logits == bias ⇒ probs == softmax(bias), independent of the input string. Lets us
+	// engineer an exact class distribution and assert the reject/route decoupling deterministically.
+	const classes = ["US", "FR", "OTHER"]
+	// dim MUST be FEATURE_DIM: featurize() returns hashed indices in [0, FEATURE_DIM); a smaller dim
+	// would index past the (zero) weight rows → NaN logits. Zero weights ⇒ logits == bias regardless.
+	const dim = FEATURE_DIM
+	const make = (bias: number[], opts: { abstainBelow?: number; openSet?: boolean }) =>
+		new CoarsePlacer(
+			{ classes, featureDim: dim, temperature: 1, bias, weights: new Float32Array(classes.length * dim) },
+			opts
+		)
+
+	test("keeps an in-map-but-country-ambiguous address the max-prob rule rejects", () => {
+		// US .4 / FR .4 / OTHER .2 — max-prob 0.4 < 0.5 (reject), but in-map MASS 0.8 ≥ 0.5 (keep).
+		const bias = [Math.log(0.4), Math.log(0.4), Math.log(0.2)]
+		const def = make(bias, { abstainBelow: 0.5 })
+		const open = make(bias, { abstainBelow: 0.5, openSet: true })
+
+		const d = def.predict("x")
+		expect(d.abstained).toBe(true)
+		expect(d.country).toBeNull()
+
+		const o = open.predict("x")
+		expect(o.abstained).toBe(false)
+		expect(o.country).toBe("US") // argmax over the in-map classes
+		expect(o.confidence).toBeCloseTo(0.4, 5) // routed country's marginal (the posterior weight)
+	})
+
+	test("rejects to null (never 'OTHER' as a country) when off-map mass dominates", () => {
+		const bias = [Math.log(0.1), Math.log(0.1), Math.log(0.8)] // OTHER .8
+		const def = make(bias, { abstainBelow: 0.5 })
+		const open = make(bias, { abstainBelow: 0.5, openSet: true })
+
+		// Default rule: OTHER wins outright (0.8 ≥ 0.5) → a confident OTHER, not an abstain.
+		expect(def.predict("x").country).toBe("OTHER")
+		// Open-set: in-map mass 0.2 < 0.5 → abstain; a reject is null, never the OTHER class.
+		const o = open.predict("x")
+		expect(o.abstained).toBe(true)
+		expect(o.country).toBeNull()
+	})
+
+	test("openSet off is byte-stable (top-class rule unchanged)", () => {
+		const bias = [Math.log(0.6), Math.log(0.2), Math.log(0.2)]
+		const p = make(bias, { abstainBelow: 0.5 }).predict("x")
+		expect(p.country).toBe("US")
+		expect(p.confidence).toBeCloseTo(0.6, 5)
+	})
+})
+
 describe("abstention", () => {
 	test("abstains when no class clears the threshold", () => {
 		// All-zero weights → logits are the (equal) bias → near-uniform softmax → top prob ≈ 1/C < 0.5.
 		const classes = ["AA", "BB", "CC", "DD"]
 		const placer = new CoarsePlacer(
-			{ classes, featureDim: FEATURE_DIM, temperature: 1, bias: [0, 0, 0, 0], weights: new Float32Array(classes.length * FEATURE_DIM) },
+			{
+				classes,
+				featureDim: FEATURE_DIM,
+				temperature: 1,
+				bias: [0, 0, 0, 0],
+				weights: new Float32Array(classes.length * FEATURE_DIM),
+			},
 			{ abstainBelow: 0.5 }
 		)
 		const p = placer.predict("anything at all")

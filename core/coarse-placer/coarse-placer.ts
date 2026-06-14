@@ -24,9 +24,10 @@ export interface CoarsePlacerArtifact {
 }
 
 /**
- * On-disk `meta.json` shape. The fp32 artifact omits `quantization`/`scales`; the int8 artifact (from
- * `scripts/coarse-placer/quantize.mjs`) sets `quantization: "int8-per-row"` and carries one `scale`
- * per class, so `weights.bin` can be a 4×-smaller `Int8Array` dequantized as `int8 * scales[class]`.
+ * On-disk `meta.json` shape. The fp32 artifact omits `quantization`/`scales`; the int8 artifact
+ * (from `scripts/coarse-placer/quantize.mjs`) sets `quantization: "int8-per-row"` and carries one
+ * `scale` per class, so `weights.bin` can be a 4×-smaller `Int8Array` dequantized as `int8 *
+ * scales[class]`.
  */
 export interface CoarsePlacerMeta {
 	classes: string[]
@@ -39,9 +40,9 @@ export interface CoarsePlacerMeta {
 }
 
 /**
- * Dequantize a per-row int8 weight matrix back to fp32: `W[c][i] = int8[c*dim + i] * scales[c]`. The
- * predict path stays fp32 (identical math); quantization only shrinks the serialized/wire artifact.
- * Pure — usable in the browser loader too.
+ * Dequantize a per-row int8 weight matrix back to fp32: `W[c][i] = int8[c*dim + i] * scales[c]`.
+ * The predict path stays fp32 (identical math); quantization only shrinks the serialized/wire
+ * artifact. Pure — usable in the browser loader too.
  */
 export function dequantizeInt8Weights(
 	int8: Int8Array,
@@ -74,6 +75,19 @@ export interface CoarsePrediction {
 export interface CoarsePlacerOpts {
 	/** Abstain when the calibrated top-class confidence is below this (default 0.5). */
 	abstainBelow?: number
+	/**
+	 * Open-set reject rule (#244 M2). When `true`, the ABSTAIN decision uses the total IN-MAP
+	 * probability mass `1 - P(OTHER)` instead of the single top-class prob, and a KEEP routes to the
+	 * argmax IN-MAP class (never `OTHER`). This decouples "is it in-map at all?" (the reject
+	 * question) from "which country?" (the routing question) — so a
+	 * clearly-in-map-but-country-ambiguous address (mass split across several in-map countries) is
+	 * KEPT rather than wrongly rejected. It clears the 90/90 the default max-prob rule cannot
+	 * (post-hoc, no retrain: heldout-family generalization 89→91 — see
+	 * docs/articles/evals/2026-06-14-coarse-placer-m2-openset.md). The returned `confidence` becomes
+	 * the routed in-map country's marginal probability (the soft-prior posterior weight). Default
+	 * `false` = the M1 max-prob rule (byte-stable; can still return `OTHER`).
+	 */
+	openSet?: boolean
 }
 
 export class CoarsePlacer {
@@ -83,6 +97,7 @@ export class CoarsePlacer {
 	readonly #bias: Float32Array
 	readonly #weights: Float32Array
 	readonly #threshold: number
+	readonly #openSet: boolean
 
 	constructor(artifact: CoarsePlacerArtifact, opts: CoarsePlacerOpts = {}) {
 		this.#classes = artifact.classes
@@ -91,6 +106,7 @@ export class CoarsePlacer {
 		this.#bias = Float32Array.from(artifact.bias)
 		this.#weights = artifact.weights
 		this.#threshold = opts.abstainBelow ?? 0.5
+		this.#openSet = opts.openSet ?? false
 		const expected = this.#classes.length * this.#dim
 		if (this.#weights.length !== expected) {
 			throw new Error(`CoarsePlacer: weights length ${this.#weights.length} ≠ classes×dim ${expected}`)
@@ -100,9 +116,9 @@ export class CoarsePlacer {
 	/**
 	 * Load a placer from an artifact directory holding `meta.json` + `weights.bin` (the layout
 	 * `scripts/coarse-placer/train.mjs` and `quantize.mjs` write). Handles both the fp32 artifact
-	 * (`weights.bin` is a `Float32Array`) and the int8 artifact (`meta.quantization === "int8-per-row"`,
-	 * `weights.bin` is an `Int8Array` dequantized via `meta.scales`). Node-only — the `node:` imports are
-	 * dynamic so bundling the class for the browser doesn't pull them in.
+	 * (`weights.bin` is a `Float32Array`) and the int8 artifact (`meta.quantization ===
+	 * "int8-per-row"`, `weights.bin` is an `Int8Array` dequantized via `meta.scales`). Node-only —
+	 * the `node:` imports are dynamic so bundling the class for the browser doesn't pull them in.
 	 */
 	static async fromArtifactDir(dir: string, opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
 		const { readFile } = await import("node:fs/promises")
@@ -127,10 +143,11 @@ export class CoarsePlacer {
 
 	/**
 	 * Load the int8 model bundled in `@mailwoman/core` (`core/data/coarse-placer/`). Node-only — uses
-	 * the package path builder (the #481-corrected `__isCompiledTree` makes this resolve to the shipped
-	 * `data/` in source, compiled, AND installed-package layouts). Override the directory with
-	 * `$MAILWOMAN_COARSE_PLACER_DIR`. Callers set `abstainBelow` per their use (the soft-country-prior
-	 * wiring passes 0.9 — see docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md).
+	 * the package path builder (the #481-corrected `__isCompiledTree` makes this resolve to the
+	 * shipped `data/` in source, compiled, AND installed-package layouts). Override the directory
+	 * with `$MAILWOMAN_COARSE_PLACER_DIR`. Callers set `abstainBelow` per their use (the
+	 * soft-country-prior wiring passes 0.9 — see
+	 * docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md).
 	 */
 	static async fromBundled(opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
 		const dir = process.env["MAILWOMAN_COARSE_PLACER_DIR"]
@@ -161,6 +178,10 @@ export class CoarsePlacer {
 		}
 		let topIdx = 0
 		let topProb = -1
+		let otherProb = 0
+		// argmax + prob over the IN-MAP classes only (excludes OTHER) — used by the open-set rule.
+		let inMapIdx = -1
+		let inMapProb = -1
 		const distribution: Record<string, number> = {}
 		for (let c = 0; c < C; c++) {
 			const p = probs[c]! / sum
@@ -169,7 +190,27 @@ export class CoarsePlacer {
 				topProb = p
 				topIdx = c
 			}
+			if (this.#classes[c] === "OTHER") {
+				otherProb = p
+			} else if (p > inMapProb) {
+				inMapProb = p
+				inMapIdx = c
+			}
 		}
+
+		// Open-set rule (#244 M2): reject on total in-map MASS, route on the in-map argmax. Decouples
+		// "is it in-map?" from "which country?". The posterior weight is the routed country's marginal.
+		if (this.#openSet) {
+			const inMapMass = 1 - otherProb
+			const abstained = inMapMass < this.#threshold
+			return {
+				country: abstained || inMapIdx < 0 ? null : this.#classes[inMapIdx]!,
+				confidence: abstained ? inMapMass : inMapProb,
+				abstained,
+				probs: distribution,
+			}
+		}
+
 		const abstained = topProb < this.#threshold
 		return {
 			country: abstained ? null : this.#classes[topIdx]!,
