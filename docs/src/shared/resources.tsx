@@ -139,6 +139,38 @@ export function assetUrl(locale: string, version: string, filename: string): str
 	return `${ASSET_BASE_URL}${locale}/${version}/${filename}`
 }
 
+/**
+ * Build the URL bag handed to `loadNeuralClassifierFromUrls` for a release. Shared by the demo's
+ * primary and compare classifier loaders so the per-file asset layout (model / tokenizer / card /
+ * gazetteer lexicon, plus the optional US/DE/FR postcode-anchor binaries) is defined exactly once.
+ */
+export function neuralClassifierLoadUrls(
+	locale: string,
+	version: string,
+	opts: { hasAnchor?: boolean; forceWasm: boolean }
+) {
+	return {
+		modelUrl: assetUrl(locale, version, "model.onnx"),
+		tokenizerUrl: assetUrl(locale, version, "tokenizer.model"),
+		modelCardUrl: assetUrl(locale, version, "model-card.json"),
+		// Gazetteer-anchor lexicon (#464): REQUIRED by gazetteer-trained bundles (v4.2.0+). The loader
+		// tolerates a 404 for older bundles (logging loudly when the model needed it).
+		gazetteerLexiconUrl: assetUrl(locale, version, "anchor-lexicon-v1.json"),
+		runner: { useWebGpu: !opts.forceWasm },
+		// Anchor-trained bundles (v4.0.0+) ship postcode binaries so the demo feeds the postcode anchor
+		// — US + DE + FR cover the demo's example set (native-order Berlin, French ZIPs).
+		...(opts.hasAnchor
+			? {
+					postcodeBinaryUrls: [
+						assetUrl(locale, version, "postcode-us.bin"),
+						assetUrl(locale, version, "postcode-de.bin"),
+						assetUrl(locale, version, "postcode-fr.bin"),
+					],
+				}
+			: {}),
+	}
+}
+
 export async function loadFstGazetteer(
 	locale: string,
 	version: string

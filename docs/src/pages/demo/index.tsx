@@ -24,7 +24,7 @@ import Head from "@docusaurus/Head"
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
 import Layout from "@theme/Layout"
-import type { Map as MapLibreMap, VectorSourceSpecification } from "maplibre-gl"
+import type { Map as MapLibreMap } from "maplibre-gl"
 import type React from "react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -43,6 +43,7 @@ import {
 	loadFstGazetteer,
 	type MailwomanClassifierLike,
 	type MailwomanLookupLike,
+	neuralClassifierLoadUrls,
 	type ResolvedHit,
 } from "../../shared/resources.tsx"
 
@@ -56,9 +57,17 @@ import {
 } from "../../shared/demo-helpers.ts"
 import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 
+import {
+	clearBbox,
+	currentDocusaurusTheme,
+	drawApproxCircle,
+	drawPlaceGeometry,
+	fetchBasemapSource,
+	geomBounds,
+	loadPolygonDb,
+	type PolygonDb,
+} from "./map-helpers.ts"
 import styles from "./styles.module.css"
-
-const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
 
 const DemoPage: React.FC = () => {
 	const { siteConfig } = useDocusaurusContext()
@@ -268,11 +277,11 @@ const DemoApp: React.FC = () => {
 		}
 	}, [])
 
-	// Load the model + FST + WOF DB when the selected version changes.
+	// Load the model + FST + WOF DB when the selected version changes. Clearing a now-colliding
+	// compare selection is handled in the version <select>'s onChange (not here) so this effect stays
+	// a pure load-on-change with no setState in its body.
 	useEffect(() => {
 		if (!selectedVersion) return
-		// Clear stale compare selection when primary version changes to match.
-		setCompareVersion((prev) => (prev === selectedVersion ? null : prev))
 		let cancelled = false
 		const release = manifest?.releases.find((r) => r.version === selectedVersion)
 
@@ -293,26 +302,9 @@ const DemoApp: React.FC = () => {
 					classifier: cls,
 					diagnostics,
 					postcodeAnchorLookup,
-				} = await neuralWeb.loadNeuralClassifierFromUrls({
-					modelUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model.onnx"),
-					tokenizerUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "tokenizer.model"),
-					modelCardUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "model-card.json"),
-					// Gazetteer-anchor lexicon (#464): REQUIRED by gazetteer-trained bundles (v4.2.0+). The
-					// loader tolerates a 404 for older bundles (logging loudly when the model needed it).
-					gazetteerLexiconUrl: assetUrl(DEFAULT_LOCALE, selectedVersion, "anchor-lexicon-v1.json"),
-					runner: { useWebGpu: !forceWasm },
-					// Anchor-trained bundles (v4.0.0+) ship postcode binaries so the demo feeds the postcode
-					// anchor — US + DE + FR cover the demo's example set (native-order Berlin, French ZIPs).
-					...(release?.hasAnchor
-						? {
-								postcodeBinaryUrls: [
-									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-us.bin"),
-									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-de.bin"),
-									assetUrl(DEFAULT_LOCALE, selectedVersion, "postcode-fr.bin"),
-								],
-							}
-						: {}),
-				})
+				} = await neuralWeb.loadNeuralClassifierFromUrls(
+					neuralClassifierLoadUrls(DEFAULT_LOCALE, selectedVersion, { hasAnchor: release?.hasAnchor, forceWasm })
+				)
 				setActiveBackend(
 					diagnostics
 						? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)`
@@ -367,17 +359,23 @@ const DemoApp: React.FC = () => {
 		return () => {
 			cancelled = true
 		}
-	}, [selectedVersion, manifest, forceWasm])
+	}, [selectedVersion, manifest, forceWasm, sqljsBaseUrl])
 
 	// ── Compare classifier loading ─────────────────────────────────────────
 	// When compare mode is active and the user selects a compare version, load
 	// a second classifier instance independently (via neural-web directly).
 	useEffect(() => {
 		if (!compareMode || !compareVersion) {
+			// Clear the async-loaded compare resources when their inputs go invalid (compare turned off
+			// or its version cleared). Centralising the reset here keeps it correct across every entry
+			// point that can invalidate compare mode; the set-state-in-effect lint is a false positive
+			// for this resource-teardown pattern.
+			/* eslint-disable react-hooks/set-state-in-effect -- teardown of external resources on invalid inputs */
 			setCompareClassifier(null)
 			setCompareResult(null)
 			setCompareErrorMessage(null)
 			setCompareBackend("")
+			/* eslint-enable react-hooks/set-state-in-effect */
 			return
 		}
 		let cancelled = false
@@ -391,22 +389,9 @@ const DemoApp: React.FC = () => {
 				setCompareBackend("")
 
 				const neuralWeb = await import("@mailwoman/neural-web")
-				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromUrls({
-					modelUrl: assetUrl(DEFAULT_LOCALE, compareVersion, "model.onnx"),
-					tokenizerUrl: assetUrl(DEFAULT_LOCALE, compareVersion, "tokenizer.model"),
-					modelCardUrl: assetUrl(DEFAULT_LOCALE, compareVersion, "model-card.json"),
-					gazetteerLexiconUrl: assetUrl(DEFAULT_LOCALE, compareVersion, "anchor-lexicon-v1.json"),
-					runner: { useWebGpu: !forceWasm },
-					...(release?.hasAnchor
-						? {
-								postcodeBinaryUrls: [
-									assetUrl(DEFAULT_LOCALE, compareVersion, "postcode-us.bin"),
-									assetUrl(DEFAULT_LOCALE, compareVersion, "postcode-de.bin"),
-									assetUrl(DEFAULT_LOCALE, compareVersion, "postcode-fr.bin"),
-								],
-							}
-						: {}),
-				})
+				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromUrls(
+					neuralClassifierLoadUrls(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWasm })
+				)
 
 				if (cancelled) return
 
@@ -550,7 +535,7 @@ const DemoApp: React.FC = () => {
 				map.flyTo({ center: [candidate.lon, candidate.lat], zoom: 12 })
 			}
 		})()
-	}, [result, selectedCandidateIndex, selectedVersion, manifest])
+	}, [result, selectedCandidateIndex, selectedVersion, manifest, sqljsBaseUrl])
 
 	const ensureLookup = useCallback(async (): Promise<MailwomanLookupLike | null> => {
 		if (lookup) return lookup
@@ -838,7 +823,12 @@ const DemoApp: React.FC = () => {
 						<select
 							id="version-select"
 							value={selectedVersion ?? ""}
-							onChange={(e) => setSelectedVersion(e.target.value)}
+							onChange={(e) => {
+								const version = e.target.value
+								setSelectedVersion(version)
+								// Keep the compare selection distinct from the primary one.
+								setCompareVersion((prev) => (prev === version ? null : prev))
+							}}
 							disabled={busy}
 							style={{ width: "100%", padding: "0.4rem" }}
 						>
@@ -989,184 +979,4 @@ const DemoApp: React.FC = () => {
 			</section>
 		</div>
 	)
-}
-
-const BBOX_SOURCE = "mailwoman-bbox"
-const BBOX_FILL_LAYER = "mailwoman-bbox-fill"
-const BBOX_LINE_LAYER = "mailwoman-bbox-line"
-
-/**
- * AddSource / addLayer / removeLayer / removeSource all throw "Style is not done loading" if called
- * too early. Every state-mutating call funnels through here so the initial-load and post-setStyle
- * paths never race.
- */
-function whenStyleReady(map: MapLibreMap, fn: () => void): void {
-	if (map.isStyleLoaded()) {
-		fn()
-
-		return
-	}
-	map.once("styledata", () => whenStyleReady(map, fn))
-}
-
-/**
- * A GeoJSON Polygon / MultiPolygon — what the polygon DB stores and the map draws as the place
- * outline.
- */
-type PlaceGeometry =
-	| { type: "Polygon"; coordinates: number[][][] }
-	| { type: "MultiPolygon"; coordinates: number[][][][] }
-
-/**
- * Shared source/layer plumbing for the resolved-place outline. Both the bbox rectangle and the
- * crisp admin polygon funnel through here so they reuse one source (`setData` swaps the geometry in
- * place).
- */
-function setPlaceOutline(map: MapLibreMap, geometry: PlaceGeometry): void {
-	const geojson = {
-		type: "FeatureCollection" as const,
-		features: [{ type: "Feature" as const, geometry, properties: {} }],
-	}
-	whenStyleReady(map, () => {
-		const existing = map.getSource(BBOX_SOURCE) as { setData?: (g: unknown) => void } | undefined
-		if (existing && typeof existing.setData === "function") {
-			existing.setData(geojson)
-			return
-		}
-		map.addSource(BBOX_SOURCE, { type: "geojson", data: geojson })
-		map.addLayer({
-			id: BBOX_FILL_LAYER,
-			type: "fill",
-			source: BBOX_SOURCE,
-			paint: { "fill-color": "#e0367c", "fill-opacity": 0.12 },
-		})
-		map.addLayer({
-			id: BBOX_LINE_LAYER,
-			type: "line",
-			source: BBOX_SOURCE,
-			paint: { "line-color": "#e0367c", "line-width": 2 },
-		})
-	})
-}
-
-function drawBbox(map: MapLibreMap, bbox: { minLat: number; maxLat: number; minLon: number; maxLon: number }): void {
-	const ring: number[][] = [
-		[bbox.minLon, bbox.minLat],
-		[bbox.maxLon, bbox.minLat],
-		[bbox.maxLon, bbox.maxLat],
-		[bbox.minLon, bbox.maxLat],
-		[bbox.minLon, bbox.minLat],
-	]
-	setPlaceOutline(map, { type: "Polygon", coordinates: [ring] })
-}
-
-/**
- * Approximate-extent circle for places without a crisp polygon: centered on the place point, radius
- * from the bbox half-diagonal (clamped 0.5–50 km). 64-point GeoJSON ring with latitude correction —
- * visually a circle anywhere outside the poles.
- */
-function drawApproxCircle(
-	map: MapLibreMap,
-	lat: number,
-	lon: number,
-	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
-): void {
-	const kmPerDegLat = 111.32
-	const kmPerDegLon = kmPerDegLat * Math.cos((lat * Math.PI) / 180)
-	const halfDiagKm = bbox
-		? Math.hypot((bbox.maxLat - bbox.minLat) * kmPerDegLat, (bbox.maxLon - bbox.minLon) * kmPerDegLon) / 2
-		: 3 // anchor-centroid postcodes carry no extent; ~ZIP-sized default
-	const radiusKm = Math.min(50, Math.max(0.5, halfDiagKm))
-	const ring: number[][] = []
-	for (let i = 0; i <= 64; i++) {
-		const theta = (2 * Math.PI * i) / 64
-		ring.push([lon + (radiusKm * Math.cos(theta)) / kmPerDegLon, lat + (radiusKm * Math.sin(theta)) / kmPerDegLat])
-	}
-	setPlaceOutline(map, { type: "Polygon", coordinates: [ring] })
-}
-
-/** Draw the crisp admin polygon straight from the polygon DB's GeoJSON geometry. */
-function drawPlaceGeometry(map: MapLibreMap, geometry: PlaceGeometry): void {
-	setPlaceOutline(map, geometry)
-}
-
-/** Bounding box of a Polygon / MultiPolygon, for fitBounds. Walks the nested coordinate arrays. */
-function geomBounds(geometry: PlaceGeometry): { minLon: number; minLat: number; maxLon: number; maxLat: number } {
-	let minLon = Infinity
-	let minLat = Infinity
-	let maxLon = -Infinity
-	let maxLat = -Infinity
-	const visit = (node: unknown): void => {
-		if (Array.isArray(node) && typeof node[0] === "number") {
-			const [lon, lat] = node as number[]
-			if (lon < minLon) minLon = lon
-			if (lon > maxLon) maxLon = lon
-			if (lat < minLat) minLat = lat
-			if (lat > maxLat) maxLat = lat
-			return
-		}
-		if (Array.isArray(node)) for (const child of node) visit(child)
-	}
-	visit(geometry.coordinates)
-	return { minLon, minLat, maxLon, maxLat }
-}
-
-/**
- * Id → simplified admin geometry, backed by the lazily-loaded `wof-polygons.db`. Async
- * (range-loaded).
- */
-interface PolygonDb {
-	get(id: number): Promise<PlaceGeometry | null>
-}
-
-/**
- * Open the crisp-polygon DB (built by scripts/build-wof-polygons.mjs) via sql.js-httpvfs — a single
- * `SELECT geom WHERE id=?` touches ~1 page, so the browser fetches a few KB of the 19 MB file
- * rather than the whole thing. Same range-load path as the resolver DB.
- */
-async function loadPolygonDb(url: string, sqljsBaseUrl: string): Promise<PolygonDb> {
-	const { loadHttpvfsDb, makeHttpvfsPolygonLookup } = await import("../../shared/httpvfs-resolver")
-	const worker = await loadHttpvfsDb(url, sqljsBaseUrl)
-	const lookup = makeHttpvfsPolygonLookup(worker)
-	return {
-		get: (id: number) => lookup.get(id) as Promise<PlaceGeometry | null>,
-	}
-}
-
-function clearBbox(map: MapLibreMap): void {
-	whenStyleReady(map, () => {
-		if (map.getLayer(BBOX_FILL_LAYER)) map.removeLayer(BBOX_FILL_LAYER)
-		if (map.getLayer(BBOX_LINE_LAYER)) map.removeLayer(BBOX_LINE_LAYER)
-		if (map.getSource(BBOX_SOURCE)) map.removeSource(BBOX_SOURCE)
-	})
-}
-
-function currentDocusaurusTheme(): "light" | "dark" {
-	if (typeof document === "undefined") return "light"
-	return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"
-}
-
-async function fetchBasemapSource(): Promise<VectorSourceSpecification> {
-	const response = await fetch(BASEMAP_TILEJSON_URL)
-	if (!response.ok) {
-		throw new Error(`Failed to load basemap tilejson (${response.status})`)
-	}
-	const meta = (await response.json()) as {
-		scheme?: string
-		tiles: string[]
-		minzoom?: number
-		maxzoom?: number
-		attribution?: string
-		bounds?: [number, number, number, number]
-	}
-
-	return {
-		type: "vector",
-		scheme: meta.scheme as VectorSourceSpecification["scheme"],
-		tiles: meta.tiles,
-		minzoom: meta.minzoom,
-		maxzoom: meta.maxzoom,
-		attribution: meta.attribution,
-		bounds: meta.bounds,
-	}
 }
