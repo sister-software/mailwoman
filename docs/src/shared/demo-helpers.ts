@@ -53,7 +53,8 @@ export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string }> = [
 	{ label: "White House", address: "1600 Pennsylvania Ave NW, Washington, DC 20500" },
-	{ label: "Empire State", address: "350 5th Ave, New York, NY 10118" },
+	{ label: "Apple Park", address: "1 Apple Park Way, Cupertino, CA 95014" },
+	{ label: "30 Rockefeller Plaza", address: "30 Rockefeller Plaza, New York, NY 10112" },
 	{ label: "Pier 39 SF", address: "Pier 39, San Francisco, CA 94133" },
 	{ label: "Wrigley Field", address: "1060 W Addison St, Chicago, IL 60613" },
 	{ label: "Space Needle", address: "400 Broad St, Seattle, WA 98109" },
