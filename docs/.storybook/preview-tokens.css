@@ -1,0 +1,31 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Minimal Infima token shim for Storybook. These are the `--ifm-*` variables the docs components
+ *   reference via their CSS modules; Docusaurus normally supplies them, but Storybook renders the
+ *   components in isolation, so we provide just enough for them to look right. Values mirror Infima's
+ *   light-theme defaults plus the project's brand primary.
+ */
+
+:root {
+	--ifm-color-primary: #e0367c;
+	--ifm-color-success: #2e8555;
+	--ifm-color-emphasis-200: #ebedf0;
+	--ifm-color-emphasis-500: #8c8c8c;
+	--ifm-color-emphasis-600: #6e6e6e;
+	--ifm-background-surface-color: #ffffff;
+	--ifm-font-family-base:
+		system-ui, -apple-system, "Segoe UI", roboto, ubuntu, cantarell, "Noto Sans", sans-serif, "Helvetica Neue", arial;
+	--ifm-font-family-monospace: "SFMono-Regular", consolas, "Liberation Mono", menlo, courier, monospace;
+
+	font-family: var(--ifm-font-family-base);
+}
+
+[data-theme="dark"] {
+	--ifm-color-emphasis-200: #444950;
+	--ifm-color-emphasis-500: #898e93;
+	--ifm-color-emphasis-600: #a1a6ab;
+	--ifm-background-surface-color: #242526;
+}

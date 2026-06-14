@@ -5,10 +5,12 @@
 	"private": true,
 	"scripts": {
 		"build": "docusaurus build",
+		"build-storybook": "storybook build",
 		"clear": "docusaurus clear",
 		"docusaurus": "docusaurus",
 		"serve": "docusaurus serve --host 0.0.0.0 --port 7770",
 		"start": "docusaurus start --host 0.0.0.0 --port 7770 --no-open",
+		"storybook": "storybook dev -p 6006 --no-open",
 		"swizzle": "docusaurus swizzle",
 		"test:e2e": "playwright test",
 		"test:e2e:headed": "playwright test --headed",
@@ -51,12 +53,17 @@
 		"@docusaurus/tsconfig": "^3.10.1",
 		"@docusaurus/types": "^3.10.1",
 		"@playwright/test": "^1.60.0",
+		"@storybook/addon-docs": "^10.4.4",
+		"@storybook/react-vite": "^10.4.4",
 		"@types/node": "^25.9.2",
 		"@types/react": "^19.2.17",
 		"@types/react-dom": "^19.2.3",
 		"@types/react-map-gl": "^6.1.8",
+		"@vitejs/plugin-react": "^6.0.2",
 		"sql.js-httpvfs": "^0.8.12",
-		"typescript": "^6.0.3"
+		"storybook": "^10.4.4",
+		"typescript": "^6.0.3",
+		"vite": "^8.0.16"
 	},
 	"engines": {
 		"node": ">=24.0"
