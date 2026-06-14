@@ -25,6 +25,7 @@ import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
 import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
+import { loadDefaultPlaceCountry } from "./default-placer.js"
 
 export interface CreateRuntimePipelineOpts {
 	/** The Stage 3 classifier — typically a `NeuralAddressClassifier`. */
@@ -57,15 +58,19 @@ export interface CreateRuntimePipelineOpts {
 	 */
 	groupPhrases?: RuntimePipelineStages["groupPhrases"]
 	/**
-	 * Coarse country router (#244, soft prior). A `(normalizedText) → { country, confidence }`
-	 * predictor — typically `(t) => placer.predict(t)` for a `CoarsePlacer` loaded via
-	 * `CoarsePlacer.fromBundled({ abstainBelow: 0.9 })`. A confident in-map guess becomes a soft
-	 * country prior the resolver re-rank boosts (never filters); off by default (no wiring) →
-	 * byte-stable. See docs/articles/plan/2026-06-14-coarse-placer-soft-signal-spec.md.
+	 * Coarse country router (#244, soft prior) — **default-on (#244 M2, after the misroute gate).** A
+	 * confident in-map guess becomes a soft country prior the resolver re-rank boosts (never
+	 * filters).
+	 *
+	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is
+	 *   lazy-loaded on the first pipeline call and applied (no prior if the model can't be
+	 *   resolved).
+	 * - A function → use it (a custom placer / threshold).
+	 * - `false` → disabled (no prior; byte-stable pre-M2 behavior).
 	 *
 	 * @see RuntimePipelineStages.placeCountry
 	 */
-	placeCountry?: RuntimePipelineStages["placeCountry"]
+	placeCountry?: RuntimePipelineStages["placeCountry"] | false
 }
 
 /**
@@ -94,16 +99,29 @@ export function createRuntimePipeline(
 		classifier: opts.classifier,
 		fst: opts.fst,
 		resolver: opts.resolver,
-		// Coarse country router (#244). Off unless the caller wires it — keeps the default pipeline
-		// byte-stable. When present, a confident in-map guess feeds the resolver's anchorPosterior re-rank.
-		placeCountry: opts.placeCountry,
+		// Coarse country router (#244) — DEFAULT-ON (#244 M2). A function override is wired here; the
+		// `undefined` default is lazy-loaded on the first call (below) so the sync factory stays sync;
+		// `false` disables it. A confident in-map guess feeds the resolver's anchorPosterior re-rank.
+		placeCountry: typeof opts.placeCountry === "function" ? opts.placeCountry : undefined,
 		// Default locale gate: rule-based from @mailwoman/locale-gate. Derives locale from
 		// QueryShape character class (CJK→ja-JP, Cyrillic→ru-RU, Arabic→ar) + known-format
 		// hits (us_zip→en-US, fr_postcode→fr-FR, uk_postcode→en-GB). Caller-hint wins when set.
 		detectLocale: opts.detectLocale ?? defaultDetectLocale,
 	}
 
-	return (raw: string, runOpts?: PipelineOpts) => runPipeline(raw, stages, runOpts)
+	// Default-on lazy wiring: when the caller neither supplied a placeCountry fn nor disabled it
+	// (`false`), load the bundled placer once on the first call and inject it. Done in the returned
+	// (async) function so the factory itself stays synchronous.
+	const autoPlaceCountry = opts.placeCountry === undefined
+	let placeCountryResolved = !autoPlaceCountry
+	return async (raw: string, runOpts?: PipelineOpts): Promise<PipelineResult> => {
+		if (!placeCountryResolved) {
+			placeCountryResolved = true
+			const fn = await loadDefaultPlaceCountry()
+			if (fn) stages.placeCountry = fn
+		}
+		return runPipeline(raw, stages, runOpts)
+	}
 }
 
 // Re-export the types so consumers don't need to import from both `mailwoman` and `@mailwoman/core/pipeline`.
