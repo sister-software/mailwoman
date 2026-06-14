@@ -26,6 +26,7 @@
 		{ "path": "./codex" },
 		{ "path": "./classifiers" },
 		{ "path": "./corpus" },
+		{ "path": "./formatter" },
 		{ "path": "./neural" },
 		{ "path": "./neural-web" },
 		{ "path": "./normalize" },
