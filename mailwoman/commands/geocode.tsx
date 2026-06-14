@@ -183,8 +183,11 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 	// Coarse-placer soft country prior (#244) — opt-in. Loads the int8 model bundled in @mailwoman/core
 	// at the requested abstention threshold; a confident in-map guess feeds the resolver's anchorPosterior.
+	// The M2 open-set reject rule (reject on in-map MASS 1-P(OTHER), route on the in-map argmax) strictly
+	// dominates the max-prob rule — on the assembled gate it lifts in-map right-country 85.3→91.2% with 0
+	// regressions (see docs/articles/evals/2026-06-14-coarse-placer-m2-pipeline-gate.md), so the flag uses it.
 	const placer = options.placeCountry
-		? await CoarsePlacer.fromBundled({ abstainBelow: options.placeCountryThreshold })
+		? await CoarsePlacer.fromBundled({ abstainBelow: options.placeCountryThreshold, openSet: true })
 		: undefined
 
 	try {
