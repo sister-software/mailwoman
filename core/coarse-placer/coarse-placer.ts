@@ -23,6 +23,44 @@ export interface CoarsePlacerArtifact {
 	weights: Float32Array
 }
 
+/**
+ * On-disk `meta.json` shape. The fp32 artifact omits `quantization`/`scales`; the int8 artifact (from
+ * `scripts/coarse-placer/quantize.mjs`) sets `quantization: "int8-per-row"` and carries one `scale`
+ * per class, so `weights.bin` can be a 4×-smaller `Int8Array` dequantized as `int8 * scales[class]`.
+ */
+export interface CoarsePlacerMeta {
+	classes: string[]
+	featureDim: number
+	temperature: number
+	bias: number[]
+	quantization?: "int8-per-row"
+	/** Per-class dequantization scale; present iff `quantization === "int8-per-row"`. */
+	scales?: number[]
+}
+
+/**
+ * Dequantize a per-row int8 weight matrix back to fp32: `W[c][i] = int8[c*dim + i] * scales[c]`. The
+ * predict path stays fp32 (identical math); quantization only shrinks the serialized/wire artifact.
+ * Pure — usable in the browser loader too.
+ */
+export function dequantizeInt8Weights(
+	int8: Int8Array,
+	scales: readonly number[],
+	classCount: number,
+	dim: number
+): Float32Array {
+	const expected = classCount * dim
+	if (int8.length !== expected) throw new Error(`dequantize: int8 length ${int8.length} ≠ classes×dim ${expected}`)
+	if (scales.length !== classCount) throw new Error(`dequantize: ${scales.length} scales ≠ ${classCount} classes`)
+	const out = new Float32Array(expected)
+	for (let c = 0; c < classCount; c++) {
+		const s = scales[c]!
+		const base = c * dim
+		for (let i = 0; i < dim; i++) out[base + i] = int8[base + i]! * s
+	}
+	return out
+}
+
 export interface CoarsePrediction {
 	/** The predicted class, or `null` when the model abstained (confidence below the threshold). */
 	country: string | null
@@ -57,6 +95,34 @@ export class CoarsePlacer {
 		if (this.#weights.length !== expected) {
 			throw new Error(`CoarsePlacer: weights length ${this.#weights.length} ≠ classes×dim ${expected}`)
 		}
+	}
+
+	/**
+	 * Load a placer from an artifact directory holding `meta.json` + `weights.bin` (the layout
+	 * `scripts/coarse-placer/train.mjs` and `quantize.mjs` write). Handles both the fp32 artifact
+	 * (`weights.bin` is a `Float32Array`) and the int8 artifact (`meta.quantization === "int8-per-row"`,
+	 * `weights.bin` is an `Int8Array` dequantized via `meta.scales`). Node-only — the `node:` imports are
+	 * dynamic so bundling the class for the browser doesn't pull them in.
+	 */
+	static async fromArtifactDir(dir: string, opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
+		const { readFile } = await import("node:fs/promises")
+		const { join } = await import("node:path")
+		const meta = JSON.parse(await readFile(join(dir, "meta.json"), "utf8")) as CoarsePlacerMeta
+		const buf = await readFile(join(dir, "weights.bin"))
+		// Copy out of the (possibly pooled, possibly mis-aligned) Buffer into a fresh ArrayBuffer so the
+		// typed-array view is always validly aligned.
+		const bytes = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
+		let weights: Float32Array
+		if (meta.quantization === "int8-per-row") {
+			if (!meta.scales) throw new Error(`CoarsePlacer.fromArtifactDir: int8 artifact at ${dir} has no scales`)
+			weights = dequantizeInt8Weights(new Int8Array(bytes), meta.scales, meta.classes.length, meta.featureDim)
+		} else {
+			weights = new Float32Array(bytes)
+		}
+		return new CoarsePlacer(
+			{ classes: meta.classes, featureDim: meta.featureDim, temperature: meta.temperature, bias: meta.bias, weights },
+			opts
+		)
 	}
 
 	predict(text: string): CoarsePrediction {
