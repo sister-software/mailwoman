@@ -93,7 +93,7 @@ make the pipeline take the better of both per component.
 | 2.7   | Phrase grouper   | ✅ default | Rule-based span proposals before classification                                                                                                                                                            |
 | 3     | Token classify   | ✅ default | Neural encoder + rule classifiers, hybrid via policy registry (per-component modes)                                                                                                                        |
 | 4     | Sequence correct | ✅ default | Viterbi over the frozen BIO mask; postcode/unit label repairs                                                                                                                                              |
-| 5     | Reconcile        | ✅ default | Joint decoding with WOF concordance scoring — DEFAULT when the phrase grouper + a `parseWithLogits` classifier are wired (falls back to argmax otherwise); disable via `jointReconcile: false`             |
+| 5     | Reconcile        | 🚩 opt-in  | Joint decoding with WOF concordance scoring. **Retired as the default** (#566): on the assembled pipeline it broke the street + house_number geocode precondition on 77–84% of clean US addresses and fixed 0%, so argmax is now the default decode. Code + A/B harnesses remain; opt back in via `jointReconcile: true` |
 | 6     | Resolve          | 🚩 opt-in  | WOF SQLite gazetteer: admin/postcode-level candidates with coordinates, exact-match tiering, coordinate-first postcode disambiguation, opt-in `hierarchyCompletion`/`cityStateFallback`/`includeAncestors` |
 
 ## Confidence
