@@ -5,25 +5,24 @@
  *
  *   Parser Coverage Audit — per-US-state gate for the coordinate tiers.
  *
- *   The geocoder's street-level coordinate tiers (address-point and interpolation) require the
- *   parser to emit a clean (house_number, street, postcode) triple. "Street" must reassemble to its
- *   FULL name — the street node value PLUS any street_prefix / street_prefix_particle / street_suffix
+ *   The geocoder's street-level coordinate tiers (address-point and interpolation) require the parser
+ *   to emit a clean (house_number, street, postcode) triple. "Street" must reassemble to its FULL
+ *   name — the street node value PLUS any street_prefix / street_prefix_particle / street_suffix
  *   CHILDREN, ordered by offset (see `assembleStreetValue` in core/resolver/resolve.ts). A row that
- *   silently drops any member of that triple — or assembles a bare street name when a prefix/suffix is
- *   present — is a coordinate-tier failure.
+ *   silently drops any member of that triple — or assembles a bare street name when a prefix/suffix
+ *   is present — is a coordinate-tier failure.
  *
- *   This script measures, PER US STATE, how often the neural parser satisfies that precondition on
- *   a held-out OA sample. No go/no-go decision is made here — the orchestrator reads the table.
+ *   This script measures, PER US STATE, how often the neural parser satisfies that precondition on a
+ *   held-out OA sample. No go/no-go decision is made here — the orchestrator reads the table.
  *
- *   Usage:
- *     node --experimental-strip-types scripts/eval/parser-coverage-audit.ts \
- *       --model /mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx \
- *       --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
- *       --model-card neural-weights-en-us/model-card.json \
- *       [--eval data/eval/external/openaddresses-us-sample.jsonl] \
- *       [--per-state-cap 300] \
- *       [--model-anchor-lookup /mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json] \
- *       [--gazetteer-lexicon <path>]
+ *   Usage: node --experimental-strip-types scripts/eval/parser-coverage-audit.ts\
+ *   --model /mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx\
+ *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model-card neural-weights-en-us/model-card.json\
+ *   [--eval data/eval/external/openaddresses-us-sample.jsonl]\
+ *   [--per-state-cap 300]\
+ *   [--model-anchor-lookup /mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json]\
+ *   [--gazetteer-lexicon <path>]
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -75,10 +74,9 @@ interface OaRow {
 const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
 /**
- * Reassemble the full street string from a street node's subtree. Mirrors
- * `assembleStreetValue` in core/resolver/resolve.ts exactly — DFS over
- * children, collect STREET_NAME_TAGS members (trimmed + non-empty), sort by
- * .start, join with spaces.
+ * Reassemble the full street string from a street node's subtree. Mirrors `assembleStreetValue` in
+ * core/resolver/resolve.ts exactly — DFS over children, collect STREET_NAME_TAGS members (trimmed +
+ * non-empty), sort by .start, join with spaces.
  */
 function assembleStreetValue(streetNode: AddressNode): string {
 	const parts: AddressNode[] = []
@@ -209,9 +207,7 @@ const [tokenizer, runner] = await Promise.all([
 	OnnxRunner.create(modelPath),
 ])
 
-const postcodeAnchorLookup = anchorPath
-	? parseAnchorLookup(JSON.parse(readFileSync(anchorPath, "utf8")))
-	: undefined
+const postcodeAnchorLookup = anchorPath ? parseAnchorLookup(JSON.parse(readFileSync(anchorPath, "utf8"))) : undefined
 if (anchorPath) console.error(`[parser-coverage-audit] anchor-lookup  : ${anchorPath}`)
 
 const gazetteerLexicon = gazetteerPath
@@ -304,12 +300,8 @@ console.log(`Model: \`${modelPath.split("/").slice(-1)[0]}\``)
 console.log(`Tokenizer: \`${tokenizerPath.split("/").slice(-2).join("/")}\``)
 console.log(`Eval: \`${evalPath}\`  Cap/state: ${perStateCap}`)
 console.log()
-console.log(
-	"| state | n | precondition% | has_street% | has_hn% | has_postcode% | reassembled≠bare% |"
-)
-console.log(
-	"| ----- | -: | ------------: | ----------: | ------: | ------------: | ----------------: |"
-)
+console.log("| state | n | precondition% | has_street% | has_hn% | has_postcode% | reassembled≠bare% |")
+console.log("| ----- | -: | ------------: | ----------: | ------: | ------------: | ----------------: |")
 
 for (const state of stateKeys) {
 	const s = stateStats.get(state)!

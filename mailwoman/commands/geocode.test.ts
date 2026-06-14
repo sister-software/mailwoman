@@ -10,9 +10,10 @@
  *   being present on disk.
  *
  *   Integration suite paths:
- *     - WOF admin DB: $MAILWOMAN_WOF_DB or /mnt/playpen/mailwoman-data/wof/admin-global-priority.db
- *     - Address-point shard: --address-points-db flag (explicit, skips state-selection)
- *     - Interpolation shard: --interpolation-db flag (explicit, skips state-selection)
+ *
+ *   - WOF admin DB: $MAILWOMAN_WOF_DB or /mnt/playpen/mailwoman-data/wof/admin-global-priority.db
+ *   - Address-point shard: --address-points-db flag (explicit, skips state-selection)
+ *   - Interpolation shard: --interpolation-db flag (explicit, skips state-selection)
  *
  *   The integration test demonstrates the compiled CLI geocoding a real TX address with explicit
  *   shard overrides, expecting a street-level coordinate near 30.5, -97.6.
@@ -112,86 +113,82 @@ const hasTxShards = hasTxAddressPoints && hasTxInterpolation
  * Integration: compiled CLI geocodes a real Round Rock, TX address with explicit shard overrides.
  * Expects a street-level coordinate near 30.5, -97.6 (Round Rock area).
  */
-describe.skipIf(!hasCliCompiled || !hasWofDb || !hasTxShards)(
-	`geocode integration — ${wofPath} + TX shards`,
-	() => {
-		const TX_ADDRESS = "2929 Flower Hill Drive, Round Rock, TX 78664"
+describe.skipIf(!hasCliCompiled || !hasWofDb || !hasTxShards)(`geocode integration — ${wofPath} + TX shards`, () => {
+	const TX_ADDRESS = "2929 Flower Hill Drive, Round Rock, TX 78664"
 
-		test("street-level geocode returns address_point or interpolated tier near Round Rock, TX", () => {
-			const stdout = execFileSync(
-				process.execPath,
-				[
-					CLI_PATH,
-					"geocode",
-					TX_ADDRESS,
-					`--resolve-db=${wofPath}`,
-					`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
-					`--interpolation-db=${TX_INTERPOLATION_DB}`,
-				],
-				{ encoding: "utf8", timeout: 60_000 }
-			)
+	test("street-level geocode returns address_point or interpolated tier near Round Rock, TX", () => {
+		const stdout = execFileSync(
+			process.execPath,
+			[
+				CLI_PATH,
+				"geocode",
+				TX_ADDRESS,
+				`--resolve-db=${wofPath}`,
+				`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
+				`--interpolation-db=${TX_INTERPOLATION_DB}`,
+			],
+			{ encoding: "utf8", timeout: 60_000 }
+		)
 
-			const result = JSON.parse(stdout) as {
-				lat: number | null
-				lon: number | null
-				resolution_tier: string
-				uncertainty_m: number | null
-				locality: string | null
-				region: string | null
-			}
+		const result = JSON.parse(stdout) as {
+			lat: number | null
+			lon: number | null
+			resolution_tier: string
+			uncertainty_m: number | null
+			locality: string | null
+			region: string | null
+		}
 
-			// We got a coordinate.
-			expect(result.lat).not.toBeNull()
-			expect(result.lon).not.toBeNull()
+		// We got a coordinate.
+		expect(result.lat).not.toBeNull()
+		expect(result.lon).not.toBeNull()
 
-			// Coordinate is plausibly in the Round Rock, TX area (within ~50 km).
-			expect(result.lat!).toBeGreaterThan(29.5)
-			expect(result.lat!).toBeLessThan(31.5)
-			expect(result.lon!).toBeGreaterThan(-98.5)
-			expect(result.lon!).toBeLessThan(-96.5)
+		// Coordinate is plausibly in the Round Rock, TX area (within ~50 km).
+		expect(result.lat!).toBeGreaterThan(29.5)
+		expect(result.lat!).toBeLessThan(31.5)
+		expect(result.lon!).toBeGreaterThan(-98.5)
+		expect(result.lon!).toBeLessThan(-96.5)
 
-			// Should have resolved to address_point or interpolated (not admin centroid).
-			expect(["address_point", "interpolated"]).toContain(result.resolution_tier)
+		// Should have resolved to address_point or interpolated (not admin centroid).
+		expect(["address_point", "interpolated"]).toContain(result.resolution_tier)
 
-			// Uncertainty_m should be set for non-admin tiers.
-			expect(result.uncertainty_m).not.toBeNull()
+		// Uncertainty_m should be set for non-admin tiers.
+		expect(result.uncertainty_m).not.toBeNull()
 
-			// Admin context is populated.
-			expect(result.region).toBeTruthy()
-		}, 60_000)
+		// Admin context is populated.
+		expect(result.region).toBeTruthy()
+	}, 60_000)
 
-		test("--format=text produces readable output with coordinate line", () => {
-			const stdout = execFileSync(
-				process.execPath,
-				[
-					CLI_PATH,
-					"geocode",
-					TX_ADDRESS,
-					`--resolve-db=${wofPath}`,
-					`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
-					`--interpolation-db=${TX_INTERPOLATION_DB}`,
-					"--format=text",
-				],
-				{ encoding: "utf8", timeout: 60_000 }
-			)
+	test("--format=text produces readable output with coordinate line", () => {
+		const stdout = execFileSync(
+			process.execPath,
+			[
+				CLI_PATH,
+				"geocode",
+				TX_ADDRESS,
+				`--resolve-db=${wofPath}`,
+				`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
+				`--interpolation-db=${TX_INTERPOLATION_DB}`,
+				"--format=text",
+			],
+			{ encoding: "utf8", timeout: 60_000 }
+		)
 
-			expect(stdout).toMatch(/resolution_tier/)
-			expect(stdout).toMatch(/coordinate/)
-		}, 60_000)
-	}
-)
+		expect(stdout).toMatch(/resolution_tier/)
+		expect(stdout).toMatch(/coordinate/)
+	}, 60_000)
+})
 
 /**
- * Admin-only degradation: when no shard is provided, geocode still returns a coordinate from
- * the WOF admin centroid.
+ * Admin-only degradation: when no shard is provided, geocode still returns a coordinate from the
+ * WOF admin centroid.
  */
 describe.skipIf(!hasCliCompiled || !hasWofDb)(`geocode admin-only degradation — ${wofPath}`, () => {
 	test("geocodes to admin centroid when no shards provided", () => {
-		const stdout = execFileSync(
-			process.execPath,
-			[CLI_PATH, "geocode", "Round Rock, TX", `--resolve-db=${wofPath}`],
-			{ encoding: "utf8", timeout: 60_000 }
-		)
+		const stdout = execFileSync(process.execPath, [CLI_PATH, "geocode", "Round Rock, TX", `--resolve-db=${wofPath}`], {
+			encoding: "utf8",
+			timeout: 60_000,
+		})
 
 		const result = JSON.parse(stdout) as {
 			lat: number | null

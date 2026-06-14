@@ -36,10 +36,11 @@ export interface PipelineOpts {
 	 * phrase grouper bundles the house number into the STREET_PHRASE and reconcileSpans fuses the
 	 * span. The #427 "DE +25pp" gains were loose street-string recall on OOD inputs, not the geocode
 	 * precondition. Default (unset) is now `false` (argmax). It still requires a phrase grouper + a
-	 * classifier exposing `parseWithLogits`; when either is absent the pipeline uses argmax regardless.
+	 * classifier exposing `parseWithLogits`; when either is absent the pipeline uses argmax
+	 * regardless.
 	 *
-	 * Set `jointReconcile: true` to opt back into reconcile (the A/B harnesses do).
-	 * Report: docs/articles/evals/2026-06-14-reconcile-retirement.md.
+	 * Set `jointReconcile: true` to opt back into reconcile (the A/B harnesses do). Report:
+	 * docs/articles/evals/2026-06-14-reconcile-retirement.md.
 	 */
 	jointReconcile?: boolean
 	/** @deprecated Use {@link jointReconcile}. Retained as an explicit override for the A/B harnesses. */

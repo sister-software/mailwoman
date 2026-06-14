@@ -103,10 +103,11 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
 
 /**
  * Reassemble the full street string from the street node's subtree (#483 coverage fix). The parser
- * nests the directional/suffix as `street_prefix`/`street_suffix` CHILDREN of `street` (containment.ts),
- * so `street.value` alone is the bare base name ("Sheldon" for "East Sheldon Rd") — which misses the
- * coordinate shards keyed on the FULL normalized name. Collect street + its prefix/particle/suffix
- * descendants (NOT house_number/unit, which also nest under street), order by span offset, and join.
+ * nests the directional/suffix as `street_prefix`/`street_suffix` CHILDREN of `street`
+ * (containment.ts), so `street.value` alone is the bare base name ("Sheldon" for "East Sheldon Rd")
+ * — which misses the coordinate shards keyed on the FULL normalized name. Collect street + its
+ * prefix/particle/suffix descendants (NOT house_number/unit, which also nest under street), order
+ * by span offset, and join.
  */
 function assembleStreetValue(streetNode: AddressNode): string {
 	const parts: AddressNode[] = []
@@ -150,12 +151,12 @@ function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup): vo
 }
 
 /**
- * House-number interpolation tier (#483): the third rung, consulted ONLY when the exact address-point
- * tier ({@link applyAddressPoint}) did NOT already stamp the street node (`resolution_tier ===
- * "address_point"`). That gate IS the "after the exact-point fall-through" — an estimate never
- * overwrites a real situs point. Postcode-scoped (no locality — the interpolators abstain statewide
- * without a postcode). Stamps a DISTINCT metadata key (`interpolated_point`, never `address_point`).
- * Additive only — admin resolution is untouched.
+ * House-number interpolation tier (#483): the third rung, consulted ONLY when the exact
+ * address-point tier ({@link applyAddressPoint}) did NOT already stamp the street node
+ * (`resolution_tier === "address_point"`). That gate IS the "after the exact-point fall-through" —
+ * an estimate never overwrites a real situs point. Postcode-scoped (no locality — the interpolators
+ * abstain statewide without a postcode). Stamps a DISTINCT metadata key (`interpolated_point`,
+ * never `address_point`). Additive only — admin resolution is untouched.
  */
 function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup): void {
 	let street: AddressNode | undefined

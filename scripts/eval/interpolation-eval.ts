@@ -98,7 +98,8 @@ interface BandDef {
 
 /**
  * The four uncertainty bands. Each row's `uncertaintyM` is assigned to the FIRST band whose ceiling
- * >= uncertaintyM (or the unbounded tail). Gate thresholds follow the ruling formula.
+ *
+ * > = uncertaintyM (or the unbounded tail). Gate thresholds follow the ruling formula.
  */
 const BANDS: BandDef[] = [
 	{ label: "≤ 100 m", ceiling: 100, gateP50: 50, gateP90: 150 },

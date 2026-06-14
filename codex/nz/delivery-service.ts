@@ -107,8 +107,10 @@ export const NZ_PRIVATE_BOX_ALIAS = {
 	description: "Colloquial NZ synonym for a numbered PO Box — NOT a valid ADV358 Delivery Service Type",
 	/** Identifier rule mirrors PO Box: a number is expected when the alias is used with one. */
 	identifier: "required-if-allocated" satisfies NzIdentifierRule,
-	/** True — this form is NOT valid per ADV358 or NZ Post's live standards pages (accessed
-2026-06-11). */
+	/**
+	 * True — this form is NOT valid per ADV358 or NZ Post's live standards pages (accessed
+	 * 2026-06-11).
+	 */
 	officiallyInvalid: true,
 } as const
 

@@ -19,38 +19,32 @@
  *   Idempotency: ZIPs already present in --edges-dir are skipped (size-verified). State shard DBs
  *   already present in --out-dir are skipped unless --force is passed.
  *
- *   Usage:
- *     node scripts/build-national-interpolation.mjs [options]
+ *   Usage: node scripts/build-national-interpolation.mjs [options]
  *
- *   Key options:
- *     --edges-dir <path>    Download destination for TIGER ZIP + SHP files.
- *                           Default: /tmp/tiger-edges
- *     --out-dir <path>      Directory for per-state shard DBs.
- *                           Default: /mnt/playpen/mailwoman-data/interpolation
- *     --release <tag>       TIGER vintage tag written into each shard row.
- *                           Default: TIGER2023
- *     --states <abbr,...>   Comma-separated state abbreviations to build (e.g. VT,DE).
- *                           Omit to build all 50 states + DC.
- *     --top-counties <N>    Build only the N most-populated counties (across all selected states),
- *                           then build the states that have at least one downloaded county.
- *     --concurrency <N>     Max parallel ZIP downloads. Default: 12.
- *     --force               Re-build state shards even if the output DB already exists.
- *     --download-only       Download ZIPs and unpack; skip the shard build step.
- *     --build-only          Skip downloads; build shards from whatever is already in --edges-dir.
+ *   Key options: --edges-dir <path> Download destination for TIGER ZIP + SHP files. Default:
+ *   /tmp/tiger-edges --out-dir <path> Directory for per-state shard DBs. Default:
+ *   /mnt/playpen/mailwoman-data/interpolation --release <tag> TIGER vintage tag written into each
+ *   shard row. Default: TIGER2023 --states <abbr,...> Comma-separated state abbreviations to build
+ *   (e.g. VT,DE). Omit to build all 50 states + DC. --top-counties <N> Build only the N
+ *   most-populated counties (across all selected states), then build the states that have at least
+ *   one downloaded county. --concurrency <N> Max parallel ZIP downloads. Default: 12. --force
+ *   Re-build state shards even if the output DB already exists. --download-only Download ZIPs and
+ *   unpack; skip the shard build step. --build-only Skip downloads; build shards from whatever is
+ *   already in --edges-dir.
  *
- *   Full national build (what you'd run once all counties are downloaded):
- *     node scripts/build-national-interpolation.mjs \
- *       --edges-dir /tmp/tiger-edges \
- *       --out-dir /mnt/playpen/mailwoman-data/interpolation \
- *       --concurrency 12
+ *   Full national build (what you'd run once all counties are downloaded): node
+ *   scripts/build-national-interpolation.mjs\
+ *   --edges-dir /tmp/tiger-edges\
+ *   --out-dir /mnt/playpen/mailwoman-data/interpolation\
+ *   --concurrency 12
  */
 
-import { createWriteStream, existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs"
+import { spawnSync } from "node:child_process"
+import { createWriteStream, existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs"
 import * as https from "node:https"
 import * as path from "node:path"
-import { parseArgs } from "node:util"
-import { execSync, spawnSync } from "node:child_process"
 import { pipeline } from "node:stream/promises"
+import { parseArgs } from "node:util"
 
 // ---------------------------------------------------------------------------
 // CLI args
@@ -58,26 +52,26 @@ import { pipeline } from "node:stream/promises"
 
 const { values: args } = parseArgs({
 	options: {
-		"edges-dir":     { type: "string",  default: "/tmp/tiger-edges" },
-		"out-dir":       { type: "string",  default: "/mnt/playpen/mailwoman-data/interpolation" },
-		release:         { type: "string",  default: "TIGER2023" },
-		states:          { type: "string" },
-		"top-counties":  { type: "string" },
-		concurrency:     { type: "string",  default: "12" },
-		force:           { type: "boolean", default: false },
+		"edges-dir": { type: "string", default: "/tmp/tiger-edges" },
+		"out-dir": { type: "string", default: "/mnt/playpen/mailwoman-data/interpolation" },
+		release: { type: "string", default: "TIGER2023" },
+		states: { type: "string" },
+		"top-counties": { type: "string" },
+		concurrency: { type: "string", default: "12" },
+		force: { type: "boolean", default: false },
 		"download-only": { type: "boolean", default: false },
-		"build-only":    { type: "boolean", default: false },
+		"build-only": { type: "boolean", default: false },
 	},
 	allowPositionals: false,
 })
 
-const EDGES_DIR   = /** @type {string} */ (args["edges-dir"])
-const OUT_DIR     = /** @type {string} */ (args["out-dir"])
-const RELEASE     = /** @type {string} */ (args.release)
+const EDGES_DIR = /** @type {string} */ (args["edges-dir"])
+const OUT_DIR = /** @type {string} */ (args["out-dir"])
+const RELEASE = /** @type {string} */ (args.release)
 const CONCURRENCY = Number(args.concurrency)
-const FORCE       = args.force
+const FORCE = args.force
 const DOWNLOAD_ONLY = args["download-only"]
-const BUILD_ONLY    = args["build-only"]
+const BUILD_ONLY = args["build-only"]
 
 // ---------------------------------------------------------------------------
 // State FIPS map (mirrors build-interpolation-shard.ts — single source in future)
@@ -85,22 +79,66 @@ const BUILD_ONLY    = args["build-only"]
 
 /** @type {Record<string, string>} */
 const STATE_FIPS = {
-	AL: "01", AK: "02", AZ: "04", AR: "05", CA: "06",
-	CO: "08", CT: "09", DE: "10", DC: "11", FL: "12",
-	GA: "13", HI: "15", ID: "16", IL: "17", IN: "18",
-	IA: "19", KS: "20", KY: "21", LA: "22", ME: "23",
-	MD: "24", MA: "25", MI: "26", MN: "27", MS: "28",
-	MO: "29", MT: "30", NE: "31", NV: "32", NH: "33",
-	NJ: "34", NM: "35", NY: "36", NC: "37", ND: "38",
-	OH: "39", OK: "40", OR: "41", PA: "42", RI: "44",
-	SC: "45", SD: "46", TN: "47", TX: "48", UT: "49",
-	VT: "50", VA: "51", WA: "53", WV: "54", WI: "55",
+	AL: "01",
+	AK: "02",
+	AZ: "04",
+	AR: "05",
+	CA: "06",
+	CO: "08",
+	CT: "09",
+	DE: "10",
+	DC: "11",
+	FL: "12",
+	GA: "13",
+	HI: "15",
+	ID: "16",
+	IL: "17",
+	IN: "18",
+	IA: "19",
+	KS: "20",
+	KY: "21",
+	LA: "22",
+	ME: "23",
+	MD: "24",
+	MA: "25",
+	MI: "26",
+	MN: "27",
+	MS: "28",
+	MO: "29",
+	MT: "30",
+	NE: "31",
+	NV: "32",
+	NH: "33",
+	NJ: "34",
+	NM: "35",
+	NY: "36",
+	NC: "37",
+	ND: "38",
+	OH: "39",
+	OK: "40",
+	OR: "41",
+	PA: "42",
+	RI: "44",
+	SC: "45",
+	SD: "46",
+	TN: "47",
+	TX: "48",
+	UT: "49",
+	VT: "50",
+	VA: "51",
+	WA: "53",
+	WV: "54",
+	WI: "55",
 	WY: "56",
 }
 
 /** States to process — filtered by --states flag if provided. */
 const TARGET_STATES = args.states
-	? args.states.toUpperCase().split(",").map((s) => s.trim()).filter((s) => s in STATE_FIPS)
+	? args.states
+			.toUpperCase()
+			.split(",")
+			.map((s) => s.trim())
+			.filter((s) => s in STATE_FIPS)
 	: Object.keys(STATE_FIPS)
 
 if (TARGET_STATES.length === 0) {
@@ -117,7 +155,13 @@ const SCRIPTS_DIR = path.dirname(new URL(import.meta.url).pathname)
 const RANKED_FILE = path.join(SCRIPTS_DIR, "data", "county-population-ranked.json")
 
 /**
- * @typedef {{ stateFips: string; countyFips: string; geoid: string; name: string; pop2023: number }} CountyRecord
+ * @typedef {{
+ * 	stateFips: string
+ * 	countyFips: string
+ * 	geoid: string
+ * 	name: string
+ * 	pop2023: number
+ * }} CountyRecord
  */
 
 /**
@@ -128,16 +172,17 @@ const RANKED_FILE = path.join(SCRIPTS_DIR, "data", "county-population-ranked.jso
  */
 async function fetchAndBuildRanking() {
 	console.log("Fetching Census Population Estimates CSV (co-est2023-alldata.csv)…")
-	const url = "https://www2.census.gov/programs-surveys/popest/datasets/2020-2023/counties/totals/co-est2023-alldata.csv"
+	const url =
+		"https://www2.census.gov/programs-surveys/popest/datasets/2020-2023/counties/totals/co-est2023-alldata.csv"
 	const csv = await fetchText(url)
 	const lines = csv.split("\n")
 	const header = lines[0].split(",")
 	const idx = (col) => header.indexOf(col)
 	const iSumlev = idx("SUMLEV")
-	const iState  = idx("STATE")
+	const iState = idx("STATE")
 	const iCounty = idx("COUNTY")
-	const iName   = idx("CTYNAME")
-	const iPop    = idx("POPESTIMATE2023")
+	const iName = idx("CTYNAME")
+	const iPop = idx("POPESTIMATE2023")
 
 	/** @type {CountyRecord[]} */
 	const records = []
@@ -145,12 +190,12 @@ async function fetchAndBuildRanking() {
 		const line = lines[i].trim()
 		if (!line) continue
 		const cols = line.split(",")
-		if (cols[iSumlev] !== "050") continue           // county rows only
-		const stateFips  = cols[iState].padStart(2, "0")
+		if (cols[iSumlev] !== "050") continue // county rows only
+		const stateFips = cols[iState].padStart(2, "0")
 		const countyFips = cols[iCounty].padStart(3, "0")
-		const geoid      = stateFips + countyFips
-		const name       = cols[iName] ?? ""
-		const pop2023    = Number(cols[iPop]) || 0
+		const geoid = stateFips + countyFips
+		const name = cols[iName] ?? ""
+		const pop2023 = Number(cols[iPop]) || 0
 		records.push({ stateFips, countyFips, geoid, name, pop2023 })
 	}
 
@@ -207,8 +252,9 @@ function fetchText(url, redirectsLeft = 3) {
  * Download a URL to a local file path, with retry on 5xx / network errors.
  *
  * @param {string} url
- * @param {string} dest  Absolute path of the output file.
- * @param {number} [retries=3]
+ * @param {string} dest Absolute path of the output file.
+ * @param {number} [retries=3] Default is `3`
+ *
  * @returns {Promise<void>}
  */
 async function downloadFile(url, dest, retries = 3) {
@@ -279,9 +325,10 @@ function extractEdgesZip(zipPath, destDir) {
 /**
  * Download and unpack a list of county ZIPs with capped parallelism.
  *
- * @param {Array<{ geoid: string; zipUrl: string; zipPath: string }>} tasks
+ * @param {{ geoid: string; zipUrl: string; zipPath: string }[]} tasks
  * @param {number} concurrency
  * @param {string} edgesDir
+ *
  * @returns {Promise<{ downloaded: number; skipped: number; failed: string[] }>}
  */
 async function downloadParallel(tasks, concurrency, edgesDir) {
@@ -338,10 +385,11 @@ const BUILD_SCRIPT = path.join(SCRIPTS_DIR, "build-interpolation-shard.ts")
  * Build one state's interpolation shard DB. Returns wall-clock ms + segment count from the script's
  * stdout.
  *
- * @param {string} stateAbbr  e.g. "VT"
+ * @param {string} stateAbbr E.g. "VT"
  * @param {string} edgesDir
  * @param {string} outDir
  * @param {string} release
+ *
  * @returns {{ wallMs: number; segments: number; counties: number } | null}
  */
 function buildStateShard(stateAbbr, edgesDir, outDir, release) {
@@ -359,10 +407,14 @@ function buildStateShard(stateAbbr, edgesDir, outDir, release) {
 			"--experimental-strip-types",
 			"--disable-warning=ExperimentalWarning",
 			BUILD_SCRIPT,
-			"--state", stateAbbr,
-			"--edges-dir", edgesDir,
-			"--release", release,
-			"--out", outDb,
+			"--state",
+			stateAbbr,
+			"--edges-dir",
+			edgesDir,
+			"--release",
+			release,
+			"--out",
+			outDb,
 		],
 		{
 			cwd: SCRIPTS_DIR + "/..",
@@ -440,7 +492,7 @@ async function main() {
 		console.log(`Step 2: downloading TIGER EDGES ZIPs (concurrency=${CONCURRENCY})`)
 		const BASE = "https://www2.census.gov/geo/tiger/TIGER2023/EDGES"
 		const tasks = counties.map((c) => {
-			const geoid = c.geoid  // 5-digit: stateFips + countyFips
+			const geoid = c.geoid // 5-digit: stateFips + countyFips
 			const zipFile = `tl_2023_${geoid}_edges.zip`
 			return {
 				geoid,
@@ -484,7 +536,7 @@ async function main() {
 	const wallStart = Date.now()
 	let totalSegments = 0
 	let builtStates = 0
-	/** @type {Array<{ state: string; counties: number; segments: number; wallMs: number }>} */
+	/** @type {{ state: string; counties: number; segments: number; wallMs: number }[]} */
 	const stateResults = []
 
 	for (const abbr of availableStates) {
@@ -498,7 +550,7 @@ async function main() {
 		builtStates++
 		totalSegments += result.segments
 		stateResults.push({ state: abbr, counties: result.counties, segments: result.segments, wallMs: result.wallMs })
-		const elapsed = ((result.wallMs) / 1000).toFixed(1)
+		const elapsed = (result.wallMs / 1000).toFixed(1)
 		console.log(
 			`  ${abbr}: ${result.counties} counties, ${result.segments.toLocaleString()} segment-sides, ${elapsed}s`
 		)
@@ -517,7 +569,9 @@ async function main() {
 		if (r.skipped) {
 			console.log(`  ${r.state}: SKIPPED (already built)`)
 		} else {
-			console.log(`  ${r.state}: ${r.counties} counties · ${r.segments.toLocaleString()} segments · ${(r.wallMs / 1000).toFixed(1)}s`)
+			console.log(
+				`  ${r.state}: ${r.counties} counties · ${r.segments.toLocaleString()} segments · ${(r.wallMs / 1000).toFixed(1)}s`
+			)
 		}
 	}
 }

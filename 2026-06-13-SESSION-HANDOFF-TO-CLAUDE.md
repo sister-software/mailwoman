@@ -6,15 +6,15 @@ Your Opus session dropped mid-shift (network issues), but everything was fine. T
 
 The v1.5.0-fr-order centerpiece ran to **step 100,000** cleanly (no NaN, no crash, ~1h40m on A100). We exported ONNX at step 40,000 and re-gated against `v0.5.0-bridge.json`:
 
-| Metric | v4.4.0 | v4.5.0 | v1.5.0-fr-order | Gate floor |
-|--------|--------|--------|-----------------|-------------|
-| **fr.house_number** | 97.7% | 89.6% | **87.2%** | 91.0 ❌ |
-| us.postcode | — | — | 98.6% | 97.0 ✅ |
-| us.street | — | — | 80.7% | 74.0 ✅ |
-| us.locality | — | — | 77.2% | 62.2 ✅ |
-| us.region | — | — | 90.4% | 80.1 ✅ |
-| fr.postcode | — | — | 99.8% | 99.5 ✅ |
-| fr.region | — | — | 41.8% | 16.2 ✅ |
+| Metric              | v4.4.0 | v4.5.0 | v1.5.0-fr-order | Gate floor |
+| ------------------- | ------ | ------ | --------------- | ---------- |
+| **fr.house_number** | 97.7%  | 89.6%  | **87.2%**       | 91.0 ❌    |
+| us.postcode         | —      | —      | 98.6%           | 97.0 ✅    |
+| us.street           | —      | —      | 80.7%           | 74.0 ✅    |
+| us.locality         | —      | —      | 77.2%           | 62.2 ✅    |
+| us.region           | —      | —      | 90.4%           | 80.1 ✅    |
+| fr.postcode         | —      | —      | 99.8%           | 99.5 ✅    |
+| fr.region           | —      | —      | 41.8%           | 16.2 ✅    |
 
 **fr.house_number at 87.2% is slightly worse than v4.5.0 (−2.4pp) and far below the plan target.** The reversed-order FR shard at 50K rows + weight 3.0 wasn't enough signal. Every other tag passed its floor. The training itself was technically clean — this is a strategy question, not a code bug.
 
@@ -30,12 +30,12 @@ Task 5 (prettier) was delegated to a Sonnet agent while the retrain ran. 25 drif
 
 While the GPU was busy, we scanned the open board and grabbed bounded code-only fixes:
 
-| Issue | What | Commit |
-|-------|------|--------|
-| **#481** items 3, 5, 7 | Export `ParseOpts`, explicit compiled-tree detection (basename instead of string-matching), named `NEUTRAL_PROPOSAL_CONFIDENCE = 0.55` | `cc8b38d` |
-| **#379** | `.gitignore` 50+ untracked ephemera files (night-shift plans, deepseek traces, diag scripts) | `4c93bb2` |
-| **#523** | Fix `#fetchLocalitiesById` hard-stamped `placetype: "locality"` — now reads actual placetype from the `spr` row + regression test | `4572ebf` |
-| **#552** | Drop phantom `subregion` from imls adapter — US postal addresses don't surface counties, so emitting `subregion` created a component with no raw-span to align to, quarantining ~21% of rows | `1422d23` |
+| Issue                  | What                                                                                                                                                                                         | Commit    |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| **#481** items 3, 5, 7 | Export `ParseOpts`, explicit compiled-tree detection (basename instead of string-matching), named `NEUTRAL_PROPOSAL_CONFIDENCE = 0.55`                                                       | `cc8b38d` |
+| **#379**               | `.gitignore` 50+ untracked ephemera files (night-shift plans, deepseek traces, diag scripts)                                                                                                 | `4c93bb2` |
+| **#523**               | Fix `#fetchLocalitiesById` hard-stamped `placetype: "locality"` — now reads actual placetype from the `spr` row + regression test                                                            | `4572ebf` |
+| **#552**               | Drop phantom `subregion` from imls adapter — US postal addresses don't surface counties, so emitting `subregion` created a component with no raw-span to align to, quarantining ~21% of rows | `1422d23` |
 
 ## Also confirmed (already done, found during review)
 
@@ -50,6 +50,7 @@ Exported ONNX from step 40,000 (118.4 MB) at `/data/output-v150-fr-order-s42/mod
 ## Postmortem + supplemental plan
 
 Both updated with the re-gate result and the supplemental session's work:
+
 - `docs/articles/evals/2026-06-13-night-13-postmortem.md`
 - `2026-06-13-NIGHT-SHIFT-PLAN-SUPPLEMENTAL.md`
 

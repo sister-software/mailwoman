@@ -12,13 +12,7 @@ import { describe, expect, test, vi } from "vitest"
 import { decodeAsXml } from "../decoder/serialize-xml.js"
 import type { AddressNode, AddressTree, ComponentTag } from "../decoder/types.js"
 import { createWofResolver } from "./resolve.js"
-import type {
-	Ancestor,
-	CoincidentLocality,
-	InterpolationLookup,
-	ResolvedPlace,
-	ResolverBackend,
-} from "./types.js"
+import type { Ancestor, CoincidentLocality, InterpolationLookup, ResolvedPlace, ResolverBackend } from "./types.js"
 
 function node(
 	tag: ComponentTag,

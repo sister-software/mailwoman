@@ -6,21 +6,24 @@
  *   `mailwoman geocode "<address>" [flags]` — end-to-end street-level geocoder.
  *
  *   Pipeline:
- *     1. Parse the address with the neural classifier (same path as `parse` command).
- *     2. Resolve admin hierarchy via `createWofResolver(WofSqlitePlaceLookup)`.
- *     3. Augment with per-state address-point (situs) + interpolation shards, selected from
- *        the resolved region. Both are optional — absent shards degrade gracefully to admin-only.
- *     4. Extract the best available coordinate + resolution tier from the resolved tree and emit
- *        a flat geocode result object.
+ *
+ *   1. Parse the address with the neural classifier (same path as `parse` command).
+ *   2. Resolve admin hierarchy via `createWofResolver(WofSqlitePlaceLookup)`.
+ *   3. Augment with per-state address-point (situs) + interpolation shards, selected from the resolved
+ *        region. Both are optional — absent shards degrade gracefully to admin-only.
+ *   4. Extract the best available coordinate + resolution tier from the resolved tree and emit a flat
+ *        geocode result object.
  *
  *   Resolution tiers (best → worst):
- *     - `address_point`  — exact situs coordinate from the address-points shard
- *     - `interpolated`   — house-number estimate from the interpolation shard
- *     - `admin`          — admin centroid from the WOF gazetteer
+ *
+ *   - `address_point` — exact situs coordinate from the address-points shard
+ *   - `interpolated` — house-number estimate from the interpolation shard
+ *   - `admin` — admin centroid from the WOF gazetteer
  *
  *   Exit-code contract:
- *     - 0  successful geocode (including admin-only degradation when shards are absent)
- *     - 1  bad arguments, missing required DB, or fatal parse/resolve error
+ *
+ *   - 0 successful geocode (including admin-only degradation when shards are absent)
+ *   - 1 bad arguments, missing required DB, or fatal parse/resolve error
  */
 
 import { Spinner } from "@inkjs/ui"
@@ -58,9 +61,7 @@ const OptionsSchema = zod.object({
 	resolveDb: zod
 		.string()
 		.optional()
-		.describe(
-			"Path to a WOF admin SQLite distribution. Defaults to $MAILWOMAN_WOF_DB; errors if neither is set."
-		),
+		.describe("Path to a WOF admin SQLite distribution. Defaults to $MAILWOMAN_WOF_DB; errors if neither is set."),
 	dataRoot: zod
 		.string()
 		.optional()
@@ -98,9 +99,10 @@ const OptionsSchema = zod.object({
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `admin`.
  * Consumers should treat coordinates differently depending on the tier:
- *   - `address_point` — rooftop / parcel centroid; uncertainty_m is a small floor (~1 m)
- *   - `interpolated`  — house-number estimate; uncertainty_m is honest (half the bracket span)
- *   - `admin`         — admin centroid; uncertainty_m is null (no sub-locality estimate available)
+ *
+ * - `address_point` — rooftop / parcel centroid; uncertainty_m is a small floor (~1 m)
+ * - `interpolated` — house-number estimate; uncertainty_m is honest (half the bracket span)
+ * - `admin` — admin centroid; uncertainty_m is null (no sub-locality estimate available)
  */
 type ResolutionTier = "address_point" | "interpolated" | "admin"
 
@@ -139,7 +141,10 @@ function resolveWofPath(options: zod.infer<typeof OptionsSchema>): string {
  * resolver's canonical name (e.g. "Texas") are checked — the raw abbreviation wins when present
  * because that's what the user typed and what the shard filenames encode.
  */
-function regionToStateSlug(regionValue: string | null | undefined, resolverName: string | null | undefined): string | null {
+function regionToStateSlug(
+	regionValue: string | null | undefined,
+	resolverName: string | null | undefined
+): string | null {
 	// Check raw parsed value first — abbreviations ("TX") are 2-letter and match immediately.
 	for (const candidate of [regionValue, resolverName]) {
 		if (!candidate) continue
@@ -150,8 +155,8 @@ function regionToStateSlug(regionValue: string | null | undefined, resolverName:
 }
 
 /**
- * Select the per-state address-points shard path from the data root + state slug.
- * Returns null when no slug is available or the file does not exist.
+ * Select the per-state address-points shard path from the data root + state slug. Returns null when
+ * no slug is available or the file does not exist.
  */
 function selectAddressPointsDb(dataRoot: string, stateSlug: string | null): string | null {
 	if (!stateSlug) return null
@@ -160,8 +165,8 @@ function selectAddressPointsDb(dataRoot: string, stateSlug: string | null): stri
 }
 
 /**
- * Select the per-state interpolation shard path from the data root + state slug.
- * Returns null when no slug is available or the file does not exist.
+ * Select the per-state interpolation shard path from the data root + state slug. Returns null when
+ * no slug is available or the file does not exist.
  */
 function selectInterpolationDb(dataRoot: string, stateSlug: string | null): string | null {
 	if (!stateSlug) return null
@@ -352,8 +357,7 @@ function extractGeocodeResult(input: string, tree: AddressTree): GeocodeResult {
 	}
 
 	// Extract admin string values for the structured fields.
-	const locality =
-		allNodes.find((n) => n.tag === "locality" || n.tag === "dependent_locality")?.value?.trim() || null
+	const locality = allNodes.find((n) => n.tag === "locality" || n.tag === "dependent_locality")?.value?.trim() || null
 	const region = allNodes.find((n) => n.tag === "region")?.value?.trim() || null
 	const postcode = allNodes.find((n) => n.tag === "postcode")?.value?.trim() || null
 
@@ -420,7 +424,7 @@ const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 		const input = args[0]
 
 		if (!input || input.trim().length === 0) {
-			setError("geocode requires a positional address argument  (e.g. mailwoman geocode \"350 5th Ave, New York, NY\")")
+			setError('geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")')
 			return
 		}
 

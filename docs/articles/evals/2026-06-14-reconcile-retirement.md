@@ -22,23 +22,23 @@ is invisible to every scorecard we publish.
 **Precondition audit** — share of addresses where the parse yields a separate `street`, `house_number`,
 and `postcode` (the minimum the geocoder needs), on two **non-circular** US holdouts:
 
-| Holdout | raw neural | reconcile pipeline | reconcile BREAKS (raw had it, lost it) | reconcile FIXES |
-| --- | --- | --- | --- | --- |
-| Travis County E-911 (TX, n=1965) | 100.0% | 16.2% | **83.8%** (1647) | 0% |
-| OpenAddresses 7-state (n=700) | 99.7% | 22.9% | **76.9%** (538) | 0% |
+| Holdout                          | raw neural | reconcile pipeline | reconcile BREAKS (raw had it, lost it) | reconcile FIXES |
+| -------------------------------- | ---------- | ------------------ | -------------------------------------- | --------------- |
+| Travis County E-911 (TX, n=1965) | 100.0%     | 16.2%              | **83.8%** (1647)                       | 0%              |
+| OpenAddresses 7-state (n=700)    | 99.7%      | 22.9%              | **76.9%** (538)                        | 0%              |
 
 **Per-tag recall** — raw argmax vs the reconcile pipeline on golden v0.1.2 US+FR (n=4507, the eval
 family our parity scorecards use; loose value-match, identical for both columns so the delta is fair):
 
-| tag | raw | reconcile | delta |
-| --- | --- | --- | --- |
-| house_number | 92.7% | 69.7% | **−23.1pp** |
-| street | 92.6% | 67.0% | **−25.6pp** |
-| locality | 89.2% | 87.0% | −2.3pp |
-| region | 53.1% | 53.1% | −0.1pp |
-| postcode | 68.5% | 68.7% | +0.2pp |
-| venue | 95.5% | 95.0% | −0.6pp |
-| unit | 100.0% | 100.0% | 0.0pp |
+| tag          | raw    | reconcile | delta       |
+| ------------ | ------ | --------- | ----------- |
+| house_number | 92.7%  | 69.7%     | **−23.1pp** |
+| street       | 92.6%  | 67.0%     | **−25.6pp** |
+| locality     | 89.2%  | 87.0%     | −2.3pp      |
+| region       | 53.1%  | 53.1%     | −0.1pp      |
+| postcode     | 68.5%  | 68.7%     | +0.2pp      |
+| venue        | 95.5%  | 95.0%     | −0.6pp      |
+| unit         | 100.0% | 100.0%    | 0.0pp       |
 
 Reconcile is **worse-or-flat on every tag** — including venue, the component #427 promoted it for.
 

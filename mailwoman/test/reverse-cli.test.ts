@@ -98,90 +98,70 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 			NODE_NO_WARNINGS: "1",
 		}
 
-		test(
-			"New York City (40.7128, -74.0060) → JSON hierarchy contains New York + United States",
-			async () => {
-				const result = await exec("node", [cliBin, "reverse", "40.7128", "-74.0060"], {
-					env: ENV,
-					maxBuffer: 4 * 1024 * 1024,
-				})
-				const json = JSON.parse(stripAnsiSpinner(result.stdout)) as {
-					lat: number
-					lon: number
-					containment: string
-					hierarchy: Array<{ id: number; name: string; placetype: string; country: string }>
-				}
-				expect(json.lat).toBe(40.7128)
-				expect(json.lon).toBe(-74.006)
-				expect(["polygon", "approximate"]).toContain(json.containment)
-				const names = json.hierarchy.map((p) => p.name)
-				expect(names).toContain("United States")
-				// The hierarchy must reach at least the region (New York state).
-				const placetypes = json.hierarchy.map((p) => p.placetype)
-				expect(placetypes).toContain("region")
-			},
-			60_000
-		)
+		test("New York City (40.7128, -74.0060) → JSON hierarchy contains New York + United States", async () => {
+			const result = await exec("node", [cliBin, "reverse", "40.7128", "-74.0060"], {
+				env: ENV,
+				maxBuffer: 4 * 1024 * 1024,
+			})
+			const json = JSON.parse(stripAnsiSpinner(result.stdout)) as {
+				lat: number
+				lon: number
+				containment: string
+				hierarchy: Array<{ id: number; name: string; placetype: string; country: string }>
+			}
+			expect(json.lat).toBe(40.7128)
+			expect(json.lon).toBe(-74.006)
+			expect(["polygon", "approximate"]).toContain(json.containment)
+			const names = json.hierarchy.map((p) => p.name)
+			expect(names).toContain("United States")
+			// The hierarchy must reach at least the region (New York state).
+			const placetypes = json.hierarchy.map((p) => p.placetype)
+			expect(placetypes).toContain("region")
+		}, 60_000)
 
-		test(
-			"--admin-db flag overrides env var (same result)",
-			async () => {
-				const result = await exec(
-					"node",
-					[cliBin, "reverse", "40.7128", "-74.0060", "--admin-db", ADMIN_DB!, "--polygons-db", POLYGONS_DB!],
-					{ env: { ...process.env, MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }, maxBuffer: 4 * 1024 * 1024 }
-				)
-				const json = JSON.parse(stripAnsiSpinner(result.stdout)) as { hierarchy: Array<{ name: string }> }
-				const names = json.hierarchy.map((p) => p.name)
-				expect(names).toContain("United States")
-			},
-			60_000
-		)
+		test("--admin-db flag overrides env var (same result)", async () => {
+			const result = await exec(
+				"node",
+				[cliBin, "reverse", "40.7128", "-74.0060", "--admin-db", ADMIN_DB!, "--polygons-db", POLYGONS_DB!],
+				{ env: { ...process.env, MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }, maxBuffer: 4 * 1024 * 1024 }
+			)
+			const json = JSON.parse(stripAnsiSpinner(result.stdout)) as { hierarchy: Array<{ name: string }> }
+			const names = json.hierarchy.map((p) => p.name)
+			expect(names).toContain("United States")
+		}, 60_000)
 
-		test(
-			"--format text emits human-readable hierarchy without JSON wrapper",
-			async () => {
-				const result = await exec("node", [cliBin, "reverse", "40.7128", "-74.0060", "--format", "text"], {
-					env: ENV,
-					maxBuffer: 4 * 1024 * 1024,
-				})
-				const out = result.stdout
-				expect(out).toMatch(/containment:/)
-				expect(out).toMatch(/wof:\d+/)
-				expect(out).not.toMatch(/^\s*\{/u) // not JSON
-			},
-			60_000
-		)
+		test("--format text emits human-readable hierarchy without JSON wrapper", async () => {
+			const result = await exec("node", [cliBin, "reverse", "40.7128", "-74.0060", "--format", "text"], {
+				env: ENV,
+				maxBuffer: 4 * 1024 * 1024,
+			})
+			const out = result.stdout
+			expect(out).toMatch(/containment:/)
+			expect(out).toMatch(/wof:\d+/)
+			expect(out).not.toMatch(/^\s*\{/u) // not JSON
+		}, 60_000)
 
-		test(
-			"open ocean (40.0, -40.0) → empty hierarchy, exit 0",
-			async () => {
-				const result = await exec("node", [cliBin, "reverse", "40.0", "-40.0"], {
-					env: ENV,
-					maxBuffer: 4 * 1024 * 1024,
-				})
-				const json = JSON.parse(stripAnsiSpinner(result.stdout)) as { hierarchy: unknown[] }
-				expect(json.hierarchy).toEqual([])
-			},
-			60_000
-		)
+		test("open ocean (40.0, -40.0) → empty hierarchy, exit 0", async () => {
+			const result = await exec("node", [cliBin, "reverse", "40.0", "-40.0"], {
+				env: ENV,
+				maxBuffer: 4 * 1024 * 1024,
+			})
+			const json = JSON.parse(stripAnsiSpinner(result.stdout)) as { hierarchy: unknown[] }
+			expect(json.hierarchy).toEqual([])
+		}, 60_000)
 
-		test(
-			"centroid-only mode (no polygon DB) returns approximate containment",
-			async () => {
-				// Deliberately strip the polygons DB — every result must be approximate.
-				const result = await exec("node", [cliBin, "reverse", "40.7128", "-74.0060"], {
-					env: { ...ENV, MAILWOMAN_WOF_POLYGONS_DB: "" },
-					maxBuffer: 4 * 1024 * 1024,
-				})
-				const json = JSON.parse(stripAnsiSpinner(result.stdout)) as {
-					containment: string
-					hierarchy: Array<{ name: string }>
-				}
-				expect(json.containment).toBe("approximate")
-				expect(json.hierarchy.map((p) => p.name)).toContain("United States")
-			},
-			60_000
-		)
+		test("centroid-only mode (no polygon DB) returns approximate containment", async () => {
+			// Deliberately strip the polygons DB — every result must be approximate.
+			const result = await exec("node", [cliBin, "reverse", "40.7128", "-74.0060"], {
+				env: { ...ENV, MAILWOMAN_WOF_POLYGONS_DB: "" },
+				maxBuffer: 4 * 1024 * 1024,
+			})
+			const json = JSON.parse(stripAnsiSpinner(result.stdout)) as {
+				containment: string
+				hierarchy: Array<{ name: string }>
+			}
+			expect(json.containment).toBe("approximate")
+			expect(json.hierarchy.map((p) => p.name)).toContain("United States")
+		}, 60_000)
 	}
 )

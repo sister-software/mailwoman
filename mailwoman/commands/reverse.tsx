@@ -7,12 +7,13 @@
  *   via the WofReverseGeocoder (#484).
  *
  *   Falls back to the MAILWOMAN_WOF_ADMIN_DB / MAILWOMAN_WOF_POLYGONS_DB env vars when the
- *   corresponding flags are absent.  Prints a JSON object with the resolved hierarchy and the
+ *   corresponding flags are absent. Prints a JSON object with the resolved hierarchy and the
  *   containment kind (polygon | approximate) so callers can gauge result quality.
  *
  *   Exit-code contract:
- *   - 0  successful reverse-geocode (including "open ocean" empty-hierarchy)
- *   - 1  bad arguments or DB path missing / wrong
+ *
+ *   - 0 successful reverse-geocode (including "open ocean" empty-hierarchy)
+ *   - 1 bad arguments or DB path missing / wrong
  */
 
 import { Spinner } from "@inkjs/ui"
@@ -67,11 +68,7 @@ function resolvePolygonsDbPath(options: zod.infer<typeof OptionsSchema>): string
 	return options.polygonsDb ?? process.env["MAILWOMAN_WOF_POLYGONS_DB"]
 }
 
-async function runReverse(
-	lat: number,
-	lon: number,
-	options: zod.infer<typeof OptionsSchema>
-): Promise<string> {
+async function runReverse(lat: number, lon: number, options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
 	try {
 		mod = await import("@mailwoman/resolver-wof-sqlite")
@@ -96,8 +93,7 @@ async function runReverse(
 				lines.push("(no admin hierarchy — point may be in open ocean or outside the gazetteer coverage)")
 			} else {
 				for (const place of result.hierarchy) {
-					const distStr =
-						place.distanceKm !== undefined ? ` (~${place.distanceKm.toFixed(1)} km from centroid)` : ""
+					const distStr = place.distanceKm !== undefined ? ` (~${place.distanceKm.toFixed(1)} km from centroid)` : ""
 					lines.push(`  ${place.placetype.padEnd(16)} ${place.name} [wof:${place.id}]${distStr}`)
 				}
 			}
