@@ -37,6 +37,7 @@ import {
 	streamRows,
 	type ColumnMapping,
 	type ResolvedEntity,
+	type SourceRecord,
 } from "@mailwoman/registry"
 import { writeFileSync } from "node:fs"
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
@@ -75,19 +76,26 @@ const C = {
 	otherOrg: "Provider Other Organization Name",
 	authLast: "Authorized Official Last Name",
 	authFirst: "Authorized Official First Name",
+	isSubpart: "Is Organization Subpart",
+	parentLBN: "Parent Organization LBN",
+	parentTIN: "Parent Organization TIN",
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
 const addr = (line: string, city: string, st: string, zip: string) =>
 	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
 
-/** One synthetic input row for the matcher; `npi` is the hidden ground-truth label. */
+/**
+ * One synthetic input row for the matcher; `npi` is the hidden NPI-level truth, `entityId` the
+ * site-level entity-level truth (subpart-collapsed).
+ */
 interface MessyRow {
 	npi: string
 	name: string
 	org: string
 	address: string
 	auth: string
+	entityId: string
 }
 
 async function main(): Promise<void> {
@@ -137,11 +145,22 @@ async function main(): Promise<void> {
 			if (primaryName) {
 				const org = isOrg ? norm(r[C.orgLegal]) : ""
 				const auth = `${norm(r[C.authFirst])} ${norm(r[C.authLast])}`.trim() // the NPI's registrant — shared across its records
+				// Entity-level (site) truth: same org + same physical address. Subparts (NPPES
+				// "Is Organization Subpart" + parent LBN/TIN) collapse to their PARENT, so the matcher isn't
+				// charged for correctly fusing one org's many subpart-NPIs at a site; an NPI's mailing-vs-
+				// practice records stay DISTINCT sites. orgKey = parent identity for subparts, else the NPI
+				// (independent orgs sharing an address stay distinct — the conservative choice).
+				const isSubpart = norm(r[C.isSubpart]).toUpperCase() === "Y"
+				const parentKey = `${norm(r[C.parentLBN])}|${norm(r[C.parentTIN])}`.toLowerCase()
+				const orgKey = isSubpart && parentKey !== "|" ? `p:${parentKey}` : `n:${npi}`
+				const eid = (a: string) => `${addressFrequencyKey(a)}|${orgKey}`
 				kept.add(npi)
-				rows.push({ npi, name: primaryName, org, address: practice, auth }) // primary
-				for (const alt of altNames.get(npi)!) rows.push({ npi, name: alt, org: alt, address: practice, auth }) // name drift
+				rows.push({ npi, name: primaryName, org, address: practice, auth, entityId: eid(practice) }) // primary
+				for (const alt of altNames.get(npi)!)
+					rows.push({ npi, name: alt, org: alt, address: practice, auth, entityId: eid(practice) }) // name drift
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
-				if (mailing && mailing !== practice) rows.push({ npi, name: primaryName, org, address: mailing, auth }) // address variation
+				if (mailing && mailing !== practice)
+					rows.push({ npi, name: primaryName, org, address: mailing, auth, entityId: eid(mailing) }) // address variation
 			}
 		}
 	}
@@ -185,7 +204,9 @@ async function main(): Promise<void> {
 		name: "name",
 		organization: "org",
 		address: "address",
-		attributes: { authorizedOfficial: "auth" },
+		// `entityTruth` rides as an attribute purely for scoring (NOT a discriminator → never used in
+		// matching); it carries the site-level entity-level label alongside the NPI (record.id).
+		attributes: { authorizedOfficial: "auth", entityTruth: "entityId" },
 		source: "nppes",
 	}
 	const records = await ingestRows(rows as unknown as Record<string, string>[], mapping, { geocodeAddress: seam })
@@ -210,7 +231,7 @@ async function main(): Promise<void> {
 		splitNpis: number
 	}
 
-	function scoreEntities(entities: ResolvedEntity[]): Score {
+	function scoreEntities(entities: ResolvedEntity[], labelOf: (rec: SourceRecord) => string): Score {
 		const npiTotals = new Map<string, number>()
 		const npiClusters = new Map<string, Set<number>>()
 		let sumCK = 0 // Σ C(n_ck, 2)
@@ -221,7 +242,10 @@ async function main(): Promise<void> {
 		let maxNpisFused = 0
 		entities.forEach((e, ci) => {
 			const byNpi = new Map<string, number>()
-			for (const rec of e.records) byNpi.set(rec.id, (byNpi.get(rec.id) ?? 0) + 1)
+			for (const rec of e.records) {
+				const lbl = labelOf(rec)
+				byNpi.set(lbl, (byNpi.get(lbl) ?? 0) + 1)
+			}
 			sumCluster += choose2(e.records.length)
 			if (e.records.length === 1) singletons++
 			if (byNpi.size > 1) {
@@ -234,9 +258,10 @@ async function main(): Promise<void> {
 				npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + n)
 			}
 			for (const rec of e.records) {
-				const s = npiClusters.get(rec.id) ?? new Set<number>()
+				const lbl = labelOf(rec)
+				const s = npiClusters.get(lbl) ?? new Set<number>()
 				s.add(ci)
-				npiClusters.set(rec.id, s)
+				npiClusters.set(lbl, s)
 			}
 		})
 		let sumClass = 0 // Σ_k C(|k|, 2)
@@ -263,6 +288,12 @@ async function main(): Promise<void> {
 			splitNpis,
 		}
 	}
+
+	// Truth labels: NPI-level (the conservative held-out NPI = record.id) and entity-level (the
+	// site-level subpart-collapsed id that rides on attributes.entityTruth). Scoring the SAME clusters
+	// both ways isolates how much of the apparent over-merge is NPI over-segmentation, not model error.
+	const npiLabel = (rec: SourceRecord) => rec.id
+	const entityLabel = (rec: SourceRecord) => rec.attributes?.["entityTruth"] ?? rec.id
 
 	// --- Phase D: the comparison-model lever progression — toggle each lever ON in turn at the default
 	// threshold to isolate its marginal effect, then sweep the link threshold on the best config (geocode
@@ -296,7 +327,7 @@ async function main(): Promise<void> {
 	// GBT; the learned scorer is measured separately (learned-scorer-clustering-eval / -crossstate-eval).
 	const progression = LEVERS.map((l) => {
 		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0, ...l.config })
-		return { ...l, res, score: scoreEntities(res.entities) }
+		return { ...l, res, score: scoreEntities(res.entities, npiLabel) }
 	})
 	const baseline = progression[0]! // no levers — the prior-prior behaviour
 	const bestLever = progression[progression.length - 1]! // the full lever stack
@@ -309,13 +340,13 @@ async function main(): Promise<void> {
 	// CLI passes a corpus-wide table built from the full source files so even a geocoded sub-sample benefits.
 	const defaultOutOfBox = (() => {
 		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0 })
-		return { res, score: scoreEntities(res.entities) }
+		return { res, score: scoreEntities(res.entities, npiLabel) }
 	})()
 
 	const THRESHOLDS = [0, 4, 8, 12, 16, 20]
 	const sweep = THRESHOLDS.map((t) => {
 		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: t, ...bestLever.config })
-		return { t, res, score: scoreEntities(res.entities) }
+		return { t, res, score: scoreEntities(res.entities, npiLabel) }
 	})
 	const base = sweep[0]! // threshold 0, full lever stack
 	const best = sweep.reduce((a, b) => (b.score.f1 > a.score.f1 ? b : a))
@@ -324,6 +355,21 @@ async function main(): Promise<void> {
 	)
 	console.error(
 		`    default F1 ${(100 * base.score.f1).toFixed(1)}% → best F1 ${(100 * best.score.f1).toFixed(1)}% @ threshold ${best.t}`
+	)
+
+	// --- Phase F: NPI-level vs ENTITY-level truth. Score the SAME clusters against both yardsticks to
+	// reveal how much of the apparent over-merge is NPI over-segmentation (one org / many subpart-NPIs,
+	// where merging is CORRECT) rather than model error. Two production configs: the FS full lever stack
+	// and the shipped default (GBT, default-on) — each fed the corpus-wide address-frequency table. ---
+	const entityCount = new Set(records.map((r) => entityLabel(r))).size
+	const fsNpi = bestLever.score
+	const fsEntity = scoreEntities(bestLever.res.entities, entityLabel)
+	const gbtRes = resolveEntities(records, { addressFrequency, trainEM: TRAIN_EM }) // GBT default-on (production)
+	const gbtNpi = scoreEntities(gbtRes.entities, npiLabel)
+	const gbtEntity = scoreEntities(gbtRes.entities, entityLabel)
+	console.error(
+		`    dual-level — FS: NPI ${(100 * fsNpi.f1).toFixed(1)}% / entity ${(100 * fsEntity.f1).toFixed(1)}%; ` +
+			`GBT: NPI ${(100 * gbtNpi.f1).toFixed(1)}% / entity ${(100 * gbtEntity.f1).toFixed(1)}%`
 	)
 
 	const pct = (x: number) => (100 * x).toFixed(1)
@@ -406,6 +452,56 @@ async function main(): Promise<void> {
 	lines.push(
 		`- **Under-merge (recall):** ${base.score.splitNpis}/${kept.size} NPIs split across >1 cluster — records at distant ` +
 			`addresses (mailing vs practice) or with strong name drift the score didn't bridge.`
+	)
+	lines.push("")
+	lines.push(`## NPI-level vs entity-level truth (the over-segmentation correction)`)
+	lines.push("")
+	lines.push(
+		`NPI-as-truth is the wrong grain in BOTH directions. **Site-level** truth (org + physical location) ` +
+			`(a) COLLAPSES an org's co-located subpart-NPIs to their parent (NPPES \`Is Organization Subpart\` + parent ` +
+			`LBN/TIN) — so correctly fusing them isn't an "over-merge" — and (b) SPLITS one NPI's distinct addresses ` +
+			`(mailing vs practice) into separate sites — so a correct geo-split isn't a "recall miss." Here the same ${N} ` +
+			`records carry **${kept.size} NPI-level** vs **${entityCount} site-level** classes (the multi-address split ` +
+			`dominates the subpart collapse in this alt-name sample). Scoring the SAME clusters against both isolates real ` +
+			`model error from the yardstick's noise.`
+	)
+	lines.push("")
+	lines.push(`| config | truth | precision | recall | F1 | ΔF1 (entity − NPI) | ARI | over-merged |`)
+	lines.push(`|---|---|---:|---:|---:|---:|---:|---:|`)
+	const dualRow = (label: string, truth: string, s: Score, delta?: number) =>
+		lines.push(
+			`| ${label} | ${truth} | ${pct(s.precision)}% | ${pct(s.recall)}% | **${pct(s.f1)}%** | ${delta === undefined ? "—" : signed(100 * delta)} | ${s.ari.toFixed(3)} | ${s.overMergedClusters} |`
+		)
+	dualRow("FS full stack", "NPI", fsNpi)
+	dualRow("FS full stack", "**entity**", fsEntity, fsEntity.f1 - fsNpi.f1)
+	dualRow("GBT (shipped default)", "NPI", gbtNpi)
+	dualRow("GBT (shipped default)", "**entity**", gbtEntity, gbtEntity.f1 - gbtNpi.f1)
+	lines.push("")
+	lines.push(
+		`Against the **site-level** truth the F1 barely moves (GBT ${signed(100 * (gbtEntity.f1 - gbtNpi.f1))}, ` +
+			`FS ${signed(100 * (fsEntity.f1 - fsNpi.f1))}) — but the precision/recall BALANCE shifts sharply. RECALL jumps ` +
+			`(GBT ${pct(gbtNpi.recall)}% → ${pct(gbtEntity.recall)}%, FS ${pct(fsNpi.recall)}% → ${pct(fsEntity.recall)}%): the ` +
+			`matcher's correct geo-splits of an NPI's distant mailing-vs-practice records are recall MISSES under NPI-truth but CORRECT ` +
+			`under site-truth. PRECISION drops (GBT ${pct(gbtNpi.precision)}% → ${pct(gbtEntity.precision)}%) and the site over-merge ` +
+			`count rises (GBT ${gbtNpi.overMergedClusters} → ${gbtEntity.overMergedClusters}) — the matcher's same-org two-site merges ` +
+			`become site over-merges.`
+	)
+	lines.push("")
+	lines.push(
+		`**Takeaways:** (1) NPI-level RECALL (${pct(gbtNpi.recall)}%) UNDERSTATES the model — ` +
+			`~${(100 * (gbtEntity.recall - gbtNpi.recall)).toFixed(0)}pp of its apparent recall miss is correct geo-splitting, not ` +
+			`failure (site-grain recall ${pct(gbtEntity.recall)}%). (2) The frontier is PRECISION / over-merge at EITHER grain — the ` +
+			`#625 target. (3) The model is genuinely ~${pct(gbtNpi.f1)}% F1 regardless of grain; site-level does NOT hide a much better ` +
+			`model. So **~0.85 stays mis-anchored as a near-term target** — but the ceiling (\`2026-06-16-dedup-ceiling.md\`: only ~1.6% ` +
+			`irreducible over-merge) says the gap from ~${pct(gbtNpi.f1)}% toward the ceiling is mostly ADDRESSABLE model headroom (the ` +
+			`GBT corroboration features), not irreducible. **Small samples mislead here too: a 50-NPI smoke showed +5–7pp; this ` +
+			`${kept.size}-NPI run shows ±2pp.**`
+	)
+	lines.push("")
+	lines.push(
+		`Caveats: the programmatic site-truth is CONSERVATIVE (collapses only NPPES-flagged subparts; unflagged same-org pairs still ` +
+			`read as over-merge), so it understates the subpart correction. A hand-adjudicated gold set on the ambiguous co-located + ` +
+			`two-site slice is the next refinement (#625).`
 	)
 	lines.push("")
 	lines.push(`## Reading`)
