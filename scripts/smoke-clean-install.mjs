@@ -70,7 +70,7 @@ try {
 	const cli = join(proj, "node_modules", "mailwoman", "out", "cli.js")
 	console.log("[smoke] mailwoman --help (loads every command module)…")
 	const help = run("node", [cli, "--help"], proj)
-	for (const c of ["parse", "geocode", "autocomplete", "reverse", "wof", "corpus"]) {
+	for (const c of ["parse", "geocode", "autocomplete", "reverse", "wof", "corpus", "registry"]) {
 		if (!help.includes(c)) throw new Error(`--help missing command "${c}"`)
 	}
 
