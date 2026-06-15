@@ -30,6 +30,7 @@ import { decodeAsJson } from "@mailwoman/core/decoder"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
+	addressFrequencyKey,
 	geocodeAddressVia,
 	ingestRows,
 	resolveEntities,
@@ -100,36 +101,55 @@ async function main(): Promise<void> {
 	}
 	console.error(`    ${altNames.size} NPIs with ≥1 alternate name`)
 
-	// --- Phase B: stream the registry, keep in-state NPIs with variation, build the messy record set. ---
-	console.error(`[B] streaming registry, sampling ${MAX_NPIS} ${STATE} providers with name variation…`)
+	// --- Phase B: ONE full registry pass — build the GLOBAL address-frequency table (every practice
+	// address, so the sharing structure is corpus-wide, not sample-biased) AND collect the sample. ---
+	console.error(`[B] full registry pass: address-frequency table + ${MAX_NPIS} ${STATE} sample…`)
 	const rows: MessyRow[] = []
 	const kept = new Set<string>()
+	const addrCounts = new Map<string, number>()
+	let addrTotal = 0
 	let scanned = 0
 	for await (const r of streamRows(REGISTRY)) {
 		if (++scanned % 1_000_000 === 0) console.error(`    scanned ${scanned / 1e6}M rows, kept ${kept.size}`)
-		const npi = norm(r[C.npi])
-		if (!npi || kept.has(npi) || !altNames.has(npi)) continue
-		if (norm(r[C.pState]).toUpperCase() !== STATE) continue
 		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
-		if (!practice) continue
+		// Global address-frequency: count every practice address (one row ≈ one distinct NPI).
+		if (practice) {
+			const k = addressFrequencyKey(practice)
+			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
+			addrTotal++
+		}
 
-		const isOrg = norm(r[C.entityType]) === "2"
-		const primaryName = isOrg ? norm(r[C.orgLegal]) : `${norm(r[C.first])} ${norm(r[C.last])}`.trim()
-		if (!primaryName) continue
-		const org = isOrg ? norm(r[C.orgLegal]) : ""
-		kept.add(npi)
-
-		// 1) the primary record (name + practice address)
-		rows.push({ npi, name: primaryName, org, address: practice })
-		// 2) one record per alternate name — NAME drift, same place (real other-names data)
-		for (const alt of altNames.get(npi)!) rows.push({ npi, name: alt, org: alt, address: practice })
-		// 3) the mailing address as a record when it differs from the practice location — ADDRESS variation
-		const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
-		if (mailing && mailing !== practice) rows.push({ npi, name: primaryName, org, address: mailing })
-
-		if (kept.size >= MAX_NPIS) break
+		// Sample: in-state NPIs with ≥1 alternate name, up to MAX_NPIS — NO early break (the table needs the full pass).
+		const npi = norm(r[C.npi])
+		if (
+			kept.size < MAX_NPIS &&
+			npi &&
+			!kept.has(npi) &&
+			altNames.has(npi) &&
+			practice &&
+			norm(r[C.pState]).toUpperCase() === STATE
+		) {
+			const isOrg = norm(r[C.entityType]) === "2"
+			const primaryName = isOrg ? norm(r[C.orgLegal]) : `${norm(r[C.first])} ${norm(r[C.last])}`.trim()
+			if (primaryName) {
+				const org = isOrg ? norm(r[C.orgLegal]) : ""
+				kept.add(npi)
+				rows.push({ npi, name: primaryName, org, address: practice }) // primary
+				for (const alt of altNames.get(npi)!) rows.push({ npi, name: alt, org: alt, address: practice }) // name drift
+				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
+				if (mailing && mailing !== practice) rows.push({ npi, name: primaryName, org, address: mailing }) // address variation
+			}
+		}
 	}
-	console.error(`    ${kept.size} NPIs → ${rows.length} records (${(rows.length / kept.size).toFixed(1)}/NPI)`)
+	// Corpus-wide address-frequency table — the inverse-frequency signal (#617 fix per the DeepSeek consult).
+	const addressFrequency = {
+		total: addrTotal,
+		distinct: addrCounts.size,
+		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
+	}
+	console.error(
+		`    ${kept.size} NPIs → ${rows.length} records; address table: ${addrCounts.size} distinct over ${addrTotal} rows`
+	)
 
 	// --- Phase C: geocode + ingest (the NPI rides on record.id as the held-out label). ---
 	console.error("[C] building the geocoder + geocoding records…")
@@ -233,15 +253,21 @@ async function main(): Promise<void> {
 		}
 	}
 
-	// --- Phase D: resolve at a sweep of link thresholds (geocode once, resolve many — config is cheap). ---
-	console.error(`[D] resolving at a threshold sweep${TRAIN_EM ? " (EM-trained)" : ""}…`)
+	// --- Phase D: resolve at a sweep of thresholds WITH the address-frequency fix, plus an A/B at
+	// threshold 0 to isolate the fix's effect (geocode once, resolve many — config is cheap). ---
+	console.error(`[D] resolving (address-frequency ON) at a threshold sweep${TRAIN_EM ? " (EM-trained)" : ""}…`)
 	const THRESHOLDS = [0, 4, 8, 12, 16, 20]
 	const sweep = THRESHOLDS.map((t) => {
-		const res = resolveEntities(records, { trainEM: TRAIN_EM, threshold: t })
+		const res = resolveEntities(records, { trainEM: TRAIN_EM, threshold: t, addressFrequency })
 		return { t, res, score: scoreEntities(res.entities) }
 	})
-	const base = sweep[0]! // threshold 0 = the default config
+	const base = sweep[0]! // threshold 0, address-frequency ON
 	const best = sweep.reduce((a, b) => (b.score.f1 > a.score.f1 ? b : a))
+	// A/B: the same default WITHOUT the address-frequency fix (the prior behaviour).
+	const offScore = scoreEntities(resolveEntities(records, { trainEM: TRAIN_EM, threshold: 0 }).entities)
+	console.error(
+		`    address-frequency OFF→ON @ threshold 0: F1 ${(100 * offScore.f1).toFixed(1)}% → ${(100 * base.score.f1).toFixed(1)}%`
+	)
 	console.error(
 		`    default F1 ${(100 * base.score.f1).toFixed(1)}% → best F1 ${(100 * best.score.f1).toFixed(1)}% @ threshold ${best.t}`
 	)
@@ -257,7 +283,25 @@ async function main(): Promise<void> {
 			`geocoded ${pct(geo / N)}% of addresses. The NPI is held-out ground truth._`
 	)
 	lines.push("")
-	lines.push(`## Dedup accuracy vs the NPI, across the link threshold (the scoring lever)`)
+	lines.push(`## The fix: inverse-address-frequency weighting (off → on, at the default threshold)`)
+	lines.push("")
+	lines.push(`| | precision | recall | F1 | ARI | over-merged clusters |`)
+	lines.push(`|---|---:|---:|---:|---:|---:|`)
+	lines.push(
+		`| address-freq **OFF** (prior default) | ${pct(offScore.precision)}% | ${pct(offScore.recall)}% | ${pct(offScore.f1)}% | ${offScore.ari.toFixed(3)} | ${offScore.overMergedClusters} |`
+	)
+	lines.push(
+		`| address-freq **ON** | **${pct(base.score.precision)}%** | **${pct(base.score.recall)}%** | **${pct(base.score.f1)}%** | **${base.score.ari.toFixed(3)}** | **${base.score.overMergedClusters}** |`
+	)
+	lines.push("")
+	lines.push(
+		`Down-weighting a shared address by how many distinct entities sit on it (the corpus-wide table: ` +
+			`${addrCounts.size.toLocaleString()} distinct addresses over ${addrTotal.toLocaleString()} providers) moves F1 ` +
+			`${pct(offScore.f1)}% → **${pct(base.score.f1)}%** and cuts over-merged clusters ${offScore.overMergedClusters} → ${base.score.overMergedClusters} — ` +
+			`address agreement is no longer treated as identity at a crowded clinic/billing address.`
+	)
+	lines.push("")
+	lines.push(`## With the fix on, across the link threshold (the secondary lever)`)
 	lines.push("")
 	lines.push(`| link threshold (bits) | precision | recall | F1 | ARI | clusters | over-merged |`)
 	lines.push(`|---:|---:|---:|---:|---:|---:|---:|`)
@@ -297,12 +341,15 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(
 		`The geocode-first **foundation works**: **${pct(geo / N)}%** of addresses placed, blocking + clustering clean — the ` +
-			`geocoding (the Pelias/Nominatim-can't-do-this part) is not the bottleneck. The gap is the **comparison model**. At ` +
-			`a shared clinic/billing address the address + distance agreement dominates, so distinct co-located providers fuse ` +
-			`(over-merge) while same-provider records with strong name or address drift fall below the link bar (under-merge); ` +
-			`the threshold sweep shows a single cutoff can't resolve both at once. The revision: a link must require name **or** ` +
-			`org corroboration — address alone is not identity — plus EM-tuned \`m\`/\`u\` per comparison. Config dominates the ` +
-			`model (the pre-registered finding), tracked as the auto-tuning + selective-model work (#602 / #603).`
+			`geocoding (the Pelias/Nominatim-can't-do-this part) is not the bottleneck. Inverse-address-frequency weighting (the ` +
+			`fix above) moved F1 +${(100 * (base.score.f1 - offScore.f1)).toFixed(0)}pp, mostly **recall**: it restores full weight ` +
+			`to agreement on a *rare* shared address (stitching a provider's name-drifted records together) while down-weighting a ` +
+			`*crowded* clinic/billing address. What remains is **precision / over-merge** — ${base.score.overMergedClusters} clusters ` +
+			`still fuse distinct co-located providers, because a down-weighted address agreement can still outvote a disagreeing ` +
+			`name. The next levers (per the design consult): collapse the redundant address + distance signals into one ` +
+			`spatial-agreement comparison, require name **or** org corroboration for a link (address alone is not identity), and ` +
+			`add a phone / authorized-official tie-breaker for the recall tail. Config dominates the model (the pre-registered ` +
+			`finding) — tracked as the auto-tuning + selective-model + cross-dataset work (#602 / #603 / #618).`
 	)
 	lines.push("")
 	lines.push(
