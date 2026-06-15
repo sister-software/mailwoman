@@ -276,19 +276,29 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 
 	const clusters = cluster(records, links, { threshold })
 
-	const entities: ResolvedEntity[] = clusters.map((group, i) => {
-		const members = new Set(group)
-		const intraWeights = links
-			.filter((link) => link.weight >= threshold && members.has(link.a) && members.has(link.b))
-			.map((link) => link.weight)
-		const rep = representative(group) ?? group[0]!
+	// Cohesion = the weakest within-cluster link weight (how tightly an entity holds together). Compute it
+	// in ONE pass over links via a record→cluster index, not by filtering every link for every cluster —
+	// the latter is O(clusters × links) and dominates the resolve at scale.
+	const clusterOf = new Map<SourceRecord, number>()
+	clusters.forEach((group, i) => {
+		for (const record of group) clusterOf.set(record, i)
+	})
+	const minIntraWeight = new Array<number>(clusters.length).fill(Infinity)
+	for (const link of links) {
+		if (link.weight < threshold) continue
+		const ci = clusterOf.get(link.a)
+		if (ci === undefined || ci !== clusterOf.get(link.b)) continue
+		if (link.weight < minIntraWeight[ci]!) minIntraWeight[ci] = link.weight
+	}
 
+	const entities: ResolvedEntity[] = clusters.map((group, i) => {
+		const rep = representative(group) ?? group[0]!
 		return {
 			id: `entity-${i}`,
 			records: group,
 			representative: rep,
 			coordinate: rep.address?.geocode?.coordinate ?? undefined,
-			cohesion: group.length > 1 && intraWeights.length > 0 ? Math.min(...intraWeights) : null,
+			cohesion: group.length > 1 && minIntraWeight[i]! !== Infinity ? minIntraWeight[i]! : null,
 		}
 	})
 
