@@ -31,6 +31,7 @@ import {
 	resolveEntities,
 	streamRows,
 	toGeoJSON,
+	toMapHTML,
 	type ColumnMapping,
 	type GeocodeAddress,
 	type SourceRecord,
@@ -82,6 +83,15 @@ const OptionsSchema = zod.object({
 				"right for the big government TSVs; convert a quoted CSV first or use the single-CSV path for those."
 		),
 	out: zod.string().optional().describe("Write the GeoJSON FeatureCollection here. Default: print to stdout."),
+	mapOut: zod
+		.string()
+		.optional()
+		.describe(
+			"Also write a standalone HTML map of the resolved entities here (MapLibre + the house Protomaps " +
+				"basemap). Points are sized by records-merged and colored by cross-dataset-link status. SERVE IT OVER " +
+				"localhost (e.g. `npx serve`), don't open the file directly — the basemap tiles are CORS-restricted to " +
+				"localhost + the docs domain. Pairs naturally with --sources."
+		),
 	trainEm: zod
 		.boolean()
 		.optional()
@@ -262,6 +272,28 @@ export function loadSources(option: string): MultiSourceSpec[] {
 }
 
 /**
+ * Write the artifacts requested via `--out` (GeoJSON) and/or `--map-out` (standalone HTML map),
+ * returning the lines to append to the run summary. Returns `null` when neither is set — the signal
+ * to dump GeoJSON to stdout (the original default). Shared by both pipeline paths.
+ */
+function writeOutputs(geojson: ReturnType<typeof toGeoJSON>, options: zod.infer<typeof OptionsSchema>): string | null {
+	if (!options.out && !options.mapOut) return null
+	const lines: string[] = []
+	if (options.out) {
+		writeFileSync(options.out, JSON.stringify(geojson, null, 2))
+		lines.push(`wrote ${geojson.features.length} features → ${options.out}`)
+	}
+	if (options.mapOut) {
+		writeFileSync(
+			options.mapOut,
+			toMapHTML(geojson, options.source ? { title: `Mailwoman — ${options.source}` } : {})
+		)
+		lines.push(`wrote map → ${options.mapOut} (serve over localhost to view)`)
+	}
+	return lines.join("\n")
+}
+
+/**
  * Multi-source mode (#618): stream each dataset under its own mapping + provenance label into ONE
  * combined record set, geocode, resolve, and report the entities that span ≥2 sources — the
  * cross-dataset links. No shared key required; geography is the join.
@@ -307,11 +339,8 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			`registry --sources: ${specs.length} sources (${perSource.join(", ")}) → ${records.length} records ` +
 			`(${geocoded} geocoded) → ${result.entities.length} entities; ${crossSource} span ≥2 sources (cross-dataset links)`
 
-		if (options.out) {
-			writeFileSync(options.out, JSON.stringify(geojson, null, 2))
-			return `${summary}\nwrote ${geojson.features.length} features → ${options.out}`
-		}
-		return JSON.stringify(geojson, null, 2)
+		const written = writeOutputs(geojson, options)
+		return written === null ? JSON.stringify(geojson, null, 2) : `${summary}\n${written}`
 	} finally {
 		close()
 	}
@@ -344,11 +373,8 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 			`${result.entities.length} entities ` +
 			`(${result.candidatePairs} candidate pairs${result.droppedBlocks.length ? `, ${result.droppedBlocks.length} oversized blocks skipped` : ""})`
 
-		if (options.out) {
-			writeFileSync(options.out, JSON.stringify(geojson, null, 2))
-			return `${summary}\nwrote ${geojson.features.length} features → ${options.out}`
-		}
-		return JSON.stringify(geojson, null, 2)
+		const written = writeOutputs(geojson, options)
+		return written === null ? JSON.stringify(geojson, null, 2) : `${summary}\n${written}`
 	} finally {
 		close()
 	}

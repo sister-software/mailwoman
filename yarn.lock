@@ -4850,6 +4850,7 @@ __metadata:
     "@mailwoman/address-id": "workspace:*"
     "@mailwoman/match": "workspace:*"
     "@mailwoman/record": "workspace:*"
+    "@protomaps/basemaps": "npm:^5.7.2"
     "@types/node": "npm:^25.9.2"
     csv-parse: "npm:^5.6.0"
     spliterator: "npm:^2.0.0"
