@@ -23,10 +23,12 @@ import { decodeAsJson } from "@mailwoman/core/decoder"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
+	addressFrequencyKey,
 	geocodeAddressVia,
 	ingestRows,
 	resolveEntities,
 	streamRows,
+	toGeoJSON,
 	type ColumnMapping,
 	type ResolvedEntity,
 	type SourceRecord,
@@ -38,15 +40,40 @@ function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
+function hasFlag(name: string): boolean {
+	return process.argv.includes(`--${name}`)
+}
 
 const SOURCES = arg("sources", "/mnt/playpen/mailwoman-data/record-matcher/sources")
-const CAP = Number(arg("cap", "300")) // rows kept per source (TX-scoped)
+const CAP = Number(arg("cap", "300")) // rows kept per source for geocoding (TX-scoped)
 const STATE = arg("state", "TX").toUpperCase()
 const WOF = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
 const DATA_ROOT = arg("data-root", "/mnt/playpen/mailwoman-data")
 const OUT_MD = arg("out-md", "")
+const OUT_GEOJSON = arg("out-geojson", "") // the reconciliation artifact (FeatureCollection, QGIS-ready)
+// The inverse-address-frequency lever is a CORPUS statistic — it can't be synthesized from the geocoded
+// sample. By default we scan the FULL files (cheap, parse-free) for an in-state corpus-wide frequency
+// table and feed it to the matcher, so the proven #617 lever actually bites on a sub-sampled run. The
+// scan adds a full pass over the 4.8 GB NPPES file (~5 min); `--no-corpus-frequency` skips it and falls
+// back to resolveEntities' zero-config input-scoped default (#86).
+const CORPUS_FREQ = !hasFlag("no-corpus-frequency")
 
 const norm = (s: string | undefined) => (s ?? "").trim()
+
+/**
+ * Compose a row's address the SAME way {@link ingestRows} does (`pick`: join the mapped columns with
+ * a space, drop empties), so a frequency key built here matches the geocoded record's
+ * `address.raw`.
+ */
+function composeAddress(row: Record<string, string>, columns: string | string[] | undefined): string {
+	if (!columns) return ""
+	const list = Array.isArray(columns) ? columns : [columns]
+	return list
+		.map((c) => norm(row[c]))
+		.filter(Boolean)
+		.join(" ")
+		.trim()
+}
 
 /**
  * One source to ingest: where it lives, the column mapping, a TX filter, and an optional row
@@ -150,23 +177,49 @@ const SPECS: SourceSpec[] = [
 ]
 
 async function main(): Promise<void> {
-	// --- Phase A: stream each source, TX-filter, cap, explode → combined raw rows. ---
+	// --- Phase A: stream each source, TX-filter, explode → keep the first CAP rows for geocoding AND
+	// (when --corpus-frequency, the default) count EVERY in-state address into a corpus-wide table. The
+	// sample is the matched set; the frequency table reflects the full TX population, so the proven
+	// inverse-frequency lever down-weights a genuinely-crowded shared campus even when it appears once in
+	// the geocoded sample. ---
 	const rawBySource = new Map<string, Record<string, string>[]>()
+	const addrCounts = new Map<string, number>()
+	let addrTotal = 0
 	for (const spec of SPECS) {
-		console.error(`[A] ${spec.source}: streaming + ${STATE} filter (cap ${CAP})…`)
+		console.error(
+			`[A] ${spec.source}: streaming + ${STATE} filter (sample ${CAP}${CORPUS_FREQ ? ", full freq scan" : ""})…`
+		)
 		const kept: Record<string, string>[] = []
 		for await (const row of streamRows(spec.path)) {
 			if (!spec.inState(row)) continue
 			const exploded = spec.explode ? spec.explode(row) : [row]
 			for (const e of exploded) {
-				kept.push(e)
-				if (kept.length >= CAP) break
+				if (CORPUS_FREQ) {
+					const a = composeAddress(e, spec.mapping.address)
+					if (a) {
+						const k = addressFrequencyKey(a)
+						addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
+						addrTotal++
+					}
+				}
+				if (kept.length < CAP) kept.push(e)
 			}
-			if (kept.length >= CAP) break
+			// Stop early only when we DON'T need the full frequency pass (otherwise scan to EOF).
+			if (!CORPUS_FREQ && kept.length >= CAP) break
 		}
 		rawBySource.set(spec.source, kept)
-		console.error(`    ${spec.source}: ${kept.length} rows`)
+		console.error(`    ${spec.source}: ${kept.length} sampled`)
 	}
+	// The in-state corpus-wide address-frequency table (the #617 lever, fed to the matcher below).
+	const addressFrequency = CORPUS_FREQ
+		? {
+				total: addrTotal,
+				distinct: addrCounts.size,
+				frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
+			}
+		: undefined
+	if (CORPUS_FREQ)
+		console.error(`    address-frequency table: ${addrCounts.size} distinct over ${addrTotal} ${STATE} addresses`)
 
 	// --- Phase B: geocoder. ---
 	console.error("[B] building the geocoder…")
@@ -209,9 +262,14 @@ async function main(): Promise<void> {
 	lookup.close()
 	console.error(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
-	// --- Phase D: resolve to canonical entities (geo-first spine: collapsed spatial + EM). ---
+	// --- Phase D: resolve to canonical entities. The proven levers are default-on (#86): collapsed
+	// spatial (A1) + inverse-address-frequency. We feed the corpus-wide table when we built one; otherwise
+	// resolveEntities auto-computes the input-scoped default. ---
 	console.error("[D] resolving across sources…")
-	const { entities, candidatePairs } = resolveEntities(records, { trainEM: true, collapseSpatial: true })
+	const { entities, candidatePairs } = resolveEntities(records, {
+		trainEM: true,
+		...(addressFrequency ? { addressFrequency } : {}),
+	})
 
 	// --- Phase E: find the cross-source entities — members spanning ≥2 distinct sources. ---
 	const sourceOf = (r: SourceRecord) => r.source ?? "?"
@@ -239,13 +297,13 @@ async function main(): Promise<void> {
 	// --- Report. ---
 	const pct = (x: number) => (100 * x).toFixed(1)
 	const lines: string[] = []
-	lines.push(`# Cross-dataset correlation (#618)`)
+	lines.push(`# Cross-dataset correlation (#618 / #87 real-data run)`)
 	lines.push("")
 	lines.push(
 		`_Generated by \`scripts/record-matcher/cross-dataset-correlation.ts\`. ${STATE}-scoped, ≤${CAP} rows per ` +
-			`source, resolved BLIND across sources (geo-first block → Fellegi-Sunter + EM → cluster). The sources share ` +
-			`no key; an entity spanning ≥2 sources is a cross-dataset link we surface for review — interpretation is the ` +
-			`consumer's._`
+			`source geocoded, resolved BLIND across sources (geo-first block → Fellegi-Sunter + EM → cluster) with the ` +
+			`proven levers default-on (#86). The sources share no key; an entity spanning ≥2 sources is a cross-dataset ` +
+			`link we surface for review — interpretation is the consumer's._`
 	)
 	lines.push("")
 	lines.push(`## Sources`)
@@ -265,6 +323,16 @@ async function main(): Promise<void> {
 	lines.push(
 		`Combined: **${records.length} records**, geocoded ${pct(geo / total)}%. Resolved to ` +
 			`**${entities.length} entities** from ${candidatePairs} candidate pairs.`
+	)
+	lines.push("")
+	lines.push(
+		addressFrequency
+			? `Matched with the proven levers default-on (#86): collapsed spatial (A1) + inverse-address-frequency, fed ` +
+					`a corpus-wide table built from the full source files (**${addressFrequency.distinct.toLocaleString()}** distinct ` +
+					`addresses over **${addressFrequency.total.toLocaleString()}** ${STATE} rows — a crowded shared campus is ` +
+					`down-weighted as weak identity evidence).`
+			: `Matched with the zero-config default (#86): collapsed spatial (A1) + an input-scoped address-frequency table ` +
+					`(\`--no-corpus-frequency\`; pass nothing to build the corpus-wide table from the full files instead).`
 	)
 	lines.push("")
 	lines.push(`## Cross-dataset links (entities spanning ≥2 sources)`)
@@ -306,6 +374,17 @@ async function main(): Promise<void> {
 	if (OUT_MD) {
 		writeFileSync(OUT_MD, md)
 		console.error(`\n[written] ${OUT_MD}`)
+	}
+
+	// --- The reconciliation artifact: a GeoJSON FeatureCollection of every resolved entity. Each feature
+	// carries `sources` + `sourceIds` (so an analyst filters the cross-dataset links by `sources` length ≥ 2)
+	// and the geocode tier. QGIS-ready; this is the operator-verifiable output of the matcher. ---
+	if (OUT_GEOJSON) {
+		const fc = toGeoJSON(entities)
+		writeFileSync(OUT_GEOJSON, JSON.stringify(fc, null, 2))
+		console.error(
+			`[written] ${OUT_GEOJSON} — ${fc.features.length} entity features (${crossSource.length} cross-source)`
+		)
 	}
 }
 
