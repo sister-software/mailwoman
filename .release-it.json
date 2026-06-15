@@ -4,6 +4,7 @@
 		"@release-it-plugins/workspaces": {
 			"workspaces": [
 				"core",
+				"spatial",
 				"normalize",
 				"query-shape",
 				"kind-classifier",
