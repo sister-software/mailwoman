@@ -144,6 +144,30 @@ describe("phone corroboration rescues name drift (A3, #625)", () => {
 	})
 })
 
+describe("secondary-identifier discriminators (#625)", () => {
+	it("an agreeing discriminator corroborates a name-drifted shared-address link", () => {
+		const a: SourceRecord = { ...coLocated("1", "Acme", "Health"), attributes: { authorizedOfficial: "jane smith" } }
+		const b: SourceRecord = { ...coLocated("2", "Saint", "Marys"), attributes: { authorizedOfficial: "jane smith" } } // same registrant
+		const res = resolveEntities([a, b], {
+			threshold: -100,
+			requireCorroboration: true,
+			discriminators: ["authorizedOfficial"],
+		})
+		expect(res.entities).toHaveLength(1)
+	})
+
+	it("a disagreeing discriminator keeps distinct providers apart", () => {
+		const a: SourceRecord = { ...coLocated("1", "Acme", "Health"), attributes: { authorizedOfficial: "jane smith" } }
+		const b: SourceRecord = { ...coLocated("2", "Saint", "Marys"), attributes: { authorizedOfficial: "bob jones" } }
+		const res = resolveEntities([a, b], {
+			threshold: -100,
+			requireCorroboration: true,
+			discriminators: ["authorizedOfficial"],
+		})
+		expect(res.entities).toHaveLength(2)
+	})
+})
+
 describe("toGeoJSON", () => {
 	it("emits a Point feature per geocoded entity with analyst-facing properties", () => {
 		const { entities } = resolveEntities(records)
