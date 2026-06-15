@@ -191,6 +191,23 @@ The same four rules that keep the geocoder honest govern the matcher:
   that silently never compares two records reads as "no match found" — the most
   dangerous lie an ER system can tell.
 
+## The address-frequency lever needs a corpus
+
+Two records at the same address might be the same clinic — or two of the forty
+providers who share a hospital campus. The matcher's strongest precision lever is
+**inverse-address-frequency**: down-weight a shared address by how many distinct
+entities sit on it, so a lonely address is strong evidence of identity and a
+crowded one is nearly none. It's on by default.
+
+But rarity is only meaningful against a population. The lever counts how often each
+address appears across the records you hand it — so when you dedupe a _whole_
+dataset, the input is the corpus and it just works. Hand it a thin sample and
+there's nothing to be rare against: every address looks unique, the signal
+flattens, and you quietly fall back to baseline. The fix is cheap — the frequency
+table is a parse-free string scan, no geocoding — so when you're matching a slice,
+build the table over the full source and pass it in. The one thing you can't do is
+conjure rarity from a single record with nothing to compare it to.
+
 ## The layers
 
 | Workspace             | Job                                                                                  |
