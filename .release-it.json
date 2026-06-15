@@ -16,6 +16,11 @@
 				"neural",
 				"neural-weights-en-us",
 				"neural-weights-fr-fr",
+				"formatter",
+				"record",
+				"match",
+				"address-id",
+				"registry",
 				"mailwoman"
 			],
 			"publish": true,

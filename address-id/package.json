@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/address-id",
-	"version": "4.8.1",
+	"version": "4.9.0",
 	"description": "Turn a canonicalized + geocoded address into a stable, parseable primary key (`<state>.<H3-cell>.<hash>`) for deterministic record joins / dedup — the exact-match complement to the fuzzy matcher.",
 	"license": "AGPL-3.0-only",
 	"repository": {
