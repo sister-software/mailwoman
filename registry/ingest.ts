@@ -25,6 +25,7 @@
 import type { AddressGeocode, PostalAddress } from "@mailwoman/record"
 import { canonicalizeOrganizationName, parsePersonName, toPostalAddress, withGeocode } from "@mailwoman/record"
 import { parse as parseCsvSync } from "csv-parse/sync"
+import { open } from "node:fs/promises"
 import { Delimiters, TextSpliterator } from "spliterator"
 import type { SourceRecord } from "./types.js"
 
@@ -63,17 +64,26 @@ export async function* streamRows(
 	opts: { delimiter?: Delimiter } = {}
 ): AsyncGenerator<Record<string, string>> {
 	const sep = (opts.delimiter ?? delimiterFor(source)) === "tab" ? "\t" : ","
-	let header: string[] | null = null
-	for await (const line of TextSpliterator.fromAsync(source, { delimiter: Delimiters.LineFeed })) {
-		if (line.length === 0) continue // blank line / trailing newline
-		const fields = line.replace(/\r$/, "").split(sep) // tolerate CRLF
-		if (header === null) {
-			header = fields
-			continue
+	// Own the file handle so it's closed deterministically. spliterator's `autoDispose` only fires on
+	// natural completion, not on an early `break`/`.return()` — which then leaks the fd (a GC-time error
+	// in Node 24+). We open it, pass `autoDispose: false` so spliterator never touches our handle, and
+	// close it in `finally` (runs on completion AND when the consumer abandons the generator early).
+	const handle = await open(source, "r")
+	try {
+		let header: string[] | null = null
+		for await (const line of TextSpliterator.fromAsync(handle, { delimiter: Delimiters.LineFeed, autoDispose: false })) {
+			if (line.length === 0) continue // blank line / trailing newline
+			const fields = line.replace(/\r$/, "").split(sep) // tolerate CRLF
+			if (header === null) {
+				header = fields
+				continue
+			}
+			const row: Record<string, string> = {}
+			for (let i = 0; i < header.length; i++) row[header[i]!] = fields[i] ?? ""
+			yield row
 		}
-		const row: Record<string, string> = {}
-		for (let i = 0; i < header.length; i++) row[header[i]!] = fields[i] ?? ""
-		yield row
+	} finally {
+		await handle.close()
 	}
 }
 

@@ -22,6 +22,7 @@ import {
 	type BlockingKey,
 	type FellegiSunterModel,
 	type ScoredLink,
+	type TermFrequencyTable,
 	DEFAULT_DISTANCE_LEVELS,
 	agreementPattern,
 	block,
@@ -33,8 +34,25 @@ import {
 	representative,
 	scorePair,
 	similarityComparison,
+	withTermFrequency,
 } from "@mailwoman/match"
 import type { ResolvedEntity, SourceRecord } from "./types.js"
+
+/**
+ * Cheap, parse-free normalization for the address-frequency key — uppercase, collapse whitespace,
+ * drop punctuation. Used to count how many distinct entities share an address across the WHOLE
+ * corpus (computable over millions of rows without geocoding) and to look that frequency up at
+ * match time. It's the inverse-frequency signal: a crowded clinic/billing address is weak evidence
+ * of identity; a lonely address is strong. (See
+ * docs/articles/evals/2026-06-15-nppes-dedup-benchmark.md.)
+ */
+export function addressFrequencyKey(raw: string): string {
+	return raw
+		.toUpperCase()
+		.replace(/[^A-Z0-9]+/g, " ")
+		.trim()
+		.replace(/\s+/g, " ")
+}
 
 /** Default tiered levels for a name-like text field. `m`/`u` are EM-estimable seeds. */
 const NAME_LEVELS: ComparisonLevel[] = [
@@ -46,15 +64,31 @@ const NAME_LEVELS: ComparisonLevel[] = [
 /**
  * The default geocode-first scoring model: name + organization + address key + great-circle
  * distance.
+ *
+ * Pass `addressFrequency` (a corpus-wide {@link TermFrequencyTable} over {@link addressFrequencyKey})
+ * to make the address-agreement weight **inverse to how shared the address is** — the fix for the
+ * co-located-distinct-entities over-merge (a building with 50 providers makes "same address" near-
+ * worthless evidence). The table's `value` is the record's raw address string; the table normalizes
+ * it.
  */
-export function buildDefaultModel(): FellegiSunterModel<SourceRecord> {
+export function buildDefaultModel(
+	opts: { addressFrequency?: TermFrequencyTable } = {}
+): FellegiSunterModel<SourceRecord> {
+	let address = similarityComparison<SourceRecord>({
+		name: "address",
+		extract: (r) => r.address?.canonicalKey,
+		levels: NAME_LEVELS,
+	})
+	if (opts.addressFrequency) {
+		address = withTermFrequency(address, { table: opts.addressFrequency, value: (a) => a.address?.raw ?? null })
+	}
 	return {
 		lambda: 0.0001,
 		comparisons: [
 			similarityComparison({ name: "given", extract: (r) => r.name?.given, levels: NAME_LEVELS }),
 			similarityComparison({ name: "family", extract: (r) => r.name?.family, levels: NAME_LEVELS }),
 			similarityComparison({ name: "organization", extract: (r) => r.organization?.canonical, levels: NAME_LEVELS }),
-			similarityComparison({ name: "address", extract: (r) => r.address?.canonicalKey, levels: NAME_LEVELS }),
+			address,
 			distanceComparison({
 				name: "distance",
 				extract: (r) => r.address?.geocode?.coordinate,
@@ -89,6 +123,12 @@ export interface ResolveConfig {
 	 * false.
 	 */
 	trainEM?: boolean
+	/**
+	 * Corpus-wide address-frequency table (over {@link addressFrequencyKey}) — when set, the default
+	 * model down-weights address agreement by how shared the address is. Ignored if `model` is
+	 * supplied.
+	 */
+	addressFrequency?: TermFrequencyTable
 }
 
 /** The outcome of a resolve pass. */
@@ -105,7 +145,7 @@ export interface ResolveResult {
  * exactly one entity (a record with no confident link is its own singleton entity).
  */
 export function resolveEntities(records: readonly SourceRecord[], config: ResolveConfig = {}): ResolveResult {
-	const model = config.model ?? buildDefaultModel()
+	const model = config.model ?? buildDefaultModel({ addressFrequency: config.addressFrequency })
 	const blockingKeys = config.blockingKeys ?? defaultBlockingKeys()
 	const threshold = config.threshold ?? 0
 

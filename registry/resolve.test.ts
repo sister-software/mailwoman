@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { scorePair, type TermFrequencyTable } from "@mailwoman/match"
 import { describe, expect, it } from "vitest"
 import { toGeoJSON } from "./geojson.js"
-import { resolveEntities } from "./resolve.js"
+import { addressFrequencyKey, buildDefaultModel, resolveEntities } from "./resolve.js"
 import type { SourceRecord } from "./types.js"
 
 function clinic(
@@ -65,6 +66,44 @@ describe("resolveEntities", () => {
 			expect(entity.representative).toBeDefined()
 			expect(entity.coordinate).toBeDefined()
 		}
+	})
+})
+
+// Two distinct people at the SAME practice address — the co-located-providers over-merge case (#617).
+function coLocated(id: string, given: string, family: string): SourceRecord {
+	return {
+		id,
+		name: { given, family },
+		address: {
+			components: {},
+			canonicalKey: "100 plaza dr",
+			raw: "100 Plaza Dr, Houston, TX",
+			formatted: "100 Plaza Dr, Houston, TX",
+			geocode: { coordinate: { latitude: 29.76, longitude: -95.37 }, tier: "address_point", uncertaintyMeters: 1 },
+		},
+	}
+}
+
+describe("address-frequency down-weighting (#617)", () => {
+	it("normalizes the frequency key parse-free (uppercase, punctuation → single spaces)", () => {
+		expect(addressFrequencyKey("100 Plaza Dr, Houston, TX")).toBe("100 PLAZA DR HOUSTON TX")
+	})
+
+	it("lowers a shared-address link weight when the address is corpus-common", () => {
+		const a = coLocated("1", "Robert", "Smith")
+		const b = coLocated("2", "Maria", "Garcia") // same address, different people
+
+		const plain = scorePair(buildDefaultModel(), a, b).weight
+
+		// A table marking this exact address as shared by half the corpus — agreement on it is near-worthless.
+		const crowded: TermFrequencyTable = {
+			total: 1000,
+			distinct: 1,
+			frequency: (v) => (addressFrequencyKey(v) === "100 PLAZA DR HOUSTON TX" ? 0.5 : 0),
+		}
+		const downWeighted = scorePair(buildDefaultModel({ addressFrequency: crowded }), a, b).weight
+
+		expect(downWeighted).toBeLessThan(plain)
 	})
 })
 
