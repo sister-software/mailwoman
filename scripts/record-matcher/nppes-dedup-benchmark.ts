@@ -253,26 +253,39 @@ async function main(): Promise<void> {
 		}
 	}
 
-	// --- Phase D: resolve at a sweep of thresholds WITH the address-frequency fix, plus an A/B at
-	// threshold 0 to isolate the fix's effect (geocode once, resolve many — config is cheap). ---
-	console.error(`[D] resolving (address-frequency ON) at a threshold sweep${TRAIN_EM ? " (EM-trained)" : ""}…`)
+	// --- Phase D: the comparison-model lever progression — toggle each lever ON in turn at the default
+	// threshold to isolate its marginal effect, then sweep the link threshold on the best config (geocode
+	// once, resolve many — config is cheap). ---
+	console.error(`[D] resolving the lever progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
+	type LeverConfig = { addressFrequency?: typeof addressFrequency; collapseSpatial?: boolean }
+	const LEVERS: Array<{ label: string; config: LeverConfig }> = [
+		{ label: "baseline (address-key + distance)", config: {} },
+		{ label: "+ inverse-address-frequency (#617)", config: { addressFrequency } },
+		{ label: "+ collapsed spatial signal (A1, #625)", config: { addressFrequency, collapseSpatial: true } },
+	]
+	const progression = LEVERS.map((l) => {
+		const res = resolveEntities(records, { trainEM: TRAIN_EM, threshold: 0, ...l.config })
+		return { ...l, res, score: scoreEntities(res.entities) }
+	})
+	const baseline = progression[0]! // no levers — the prior-prior behaviour
+	const bestLever = progression[progression.length - 1]! // the full lever stack
+
 	const THRESHOLDS = [0, 4, 8, 12, 16, 20]
 	const sweep = THRESHOLDS.map((t) => {
-		const res = resolveEntities(records, { trainEM: TRAIN_EM, threshold: t, addressFrequency })
+		const res = resolveEntities(records, { trainEM: TRAIN_EM, threshold: t, ...bestLever.config })
 		return { t, res, score: scoreEntities(res.entities) }
 	})
-	const base = sweep[0]! // threshold 0, address-frequency ON
+	const base = sweep[0]! // threshold 0, full lever stack
 	const best = sweep.reduce((a, b) => (b.score.f1 > a.score.f1 ? b : a))
-	// A/B: the same default WITHOUT the address-frequency fix (the prior behaviour).
-	const offScore = scoreEntities(resolveEntities(records, { trainEM: TRAIN_EM, threshold: 0 }).entities)
 	console.error(
-		`    address-frequency OFF→ON @ threshold 0: F1 ${(100 * offScore.f1).toFixed(1)}% → ${(100 * base.score.f1).toFixed(1)}%`
+		`    progression @ threshold 0: ${progression.map((p) => `${(100 * p.score.f1).toFixed(1)}%`).join(" → ")} F1`
 	)
 	console.error(
 		`    default F1 ${(100 * base.score.f1).toFixed(1)}% → best F1 ${(100 * best.score.f1).toFixed(1)}% @ threshold ${best.t}`
 	)
 
 	const pct = (x: number) => (100 * x).toFixed(1)
+	const signed = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(1)}pp`
 	const lines: string[] = []
 	lines.push(`# NPPES NPI dedup benchmark (#617)`)
 	lines.push("")
@@ -283,25 +296,28 @@ async function main(): Promise<void> {
 			`geocoded ${pct(geo / N)}% of addresses. The NPI is held-out ground truth._`
 	)
 	lines.push("")
-	lines.push(`## The fix: inverse-address-frequency weighting (off → on, at the default threshold)`)
+	lines.push(`## The comparison-model levers (each toggled on, at the default threshold)`)
 	lines.push("")
-	lines.push(`| | precision | recall | F1 | ARI | over-merged clusters |`)
-	lines.push(`|---|---:|---:|---:|---:|---:|`)
-	lines.push(
-		`| address-freq **OFF** (prior default) | ${pct(offScore.precision)}% | ${pct(offScore.recall)}% | ${pct(offScore.f1)}% | ${offScore.ari.toFixed(3)} | ${offScore.overMergedClusters} |`
-	)
-	lines.push(
-		`| address-freq **ON** | **${pct(base.score.precision)}%** | **${pct(base.score.recall)}%** | **${pct(base.score.f1)}%** | **${base.score.ari.toFixed(3)}** | **${base.score.overMergedClusters}** |`
-	)
+	lines.push(`| model | precision | recall | F1 | ΔF1 | ARI | over-merged |`)
+	lines.push(`|---|---:|---:|---:|---:|---:|---:|`)
+	progression.forEach((p, i) => {
+		const delta = i === 0 ? "—" : signed(100 * (p.score.f1 - progression[i - 1]!.score.f1))
+		const bold = i === progression.length - 1
+		const w = (s: string) => (bold ? `**${s}**` : s)
+		lines.push(
+			`| ${w(p.label)} | ${w(pct(p.score.precision) + "%")} | ${w(pct(p.score.recall) + "%")} | ${w(pct(p.score.f1) + "%")} | ${delta} | ${w(p.score.ari.toFixed(3))} | ${w(String(p.score.overMergedClusters))} |`
+		)
+	})
 	lines.push("")
 	lines.push(
-		`Down-weighting a shared address by how many distinct entities sit on it (the corpus-wide table: ` +
-			`${addrCounts.size.toLocaleString()} distinct addresses over ${addrTotal.toLocaleString()} providers) moves F1 ` +
-			`${pct(offScore.f1)}% → **${pct(base.score.f1)}%** and cuts over-merged clusters ${offScore.overMergedClusters} → ${base.score.overMergedClusters} — ` +
-			`address agreement is no longer treated as identity at a crowded clinic/billing address.`
+		`Inverse-frequency weighting uses the corpus-wide table (${addrCounts.size.toLocaleString()} distinct addresses ` +
+			`over ${addrTotal.toLocaleString()} providers) to down-weight a crowded shared address; collapsing the redundant ` +
+			`address-key + distance comparisons into one spatial signal (A1) removes the double-count that let a shared address ` +
+			`over-vote a disagreeing name. Across the levers, F1 ${pct(baseline.score.f1)}% → **${pct(bestLever.score.f1)}%** ` +
+			`(${signed(100 * (bestLever.score.f1 - baseline.score.f1))}).`
 	)
 	lines.push("")
-	lines.push(`## With the fix on, across the link threshold (the secondary lever)`)
+	lines.push(`## With all levers on, across the link threshold (the secondary lever)`)
 	lines.push("")
 	lines.push(`| link threshold (bits) | precision | recall | F1 | ARI | clusters | over-merged |`)
 	lines.push(`|---:|---:|---:|---:|---:|---:|---:|`)
@@ -341,15 +357,18 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(
 		`The geocode-first **foundation works**: **${pct(geo / N)}%** of addresses placed, blocking + clustering clean — the ` +
-			`geocoding (the Pelias/Nominatim-can't-do-this part) is not the bottleneck. Inverse-address-frequency weighting (the ` +
-			`fix above) moved F1 +${(100 * (base.score.f1 - offScore.f1)).toFixed(0)}pp, mostly **recall**: it restores full weight ` +
-			`to agreement on a *rare* shared address (stitching a provider's name-drifted records together) while down-weighting a ` +
-			`*crowded* clinic/billing address. What remains is **precision / over-merge** — ${base.score.overMergedClusters} clusters ` +
-			`still fuse distinct co-located providers, because a down-weighted address agreement can still outvote a disagreeing ` +
-			`name. The next levers (per the design consult): collapse the redundant address + distance signals into one ` +
-			`spatial-agreement comparison, require name **or** org corroboration for a link (address alone is not identity), and ` +
-			`add a phone / authorized-official tie-breaker for the recall tail. Config dominates the model (the pre-registered ` +
-			`finding) — tracked as the auto-tuning + selective-model + cross-dataset work (#602 / #603 / #618).`
+			`geocoding (the Pelias/Nominatim-can't-do-this part) is not the bottleneck. The comparison-model levers above moved ` +
+			`F1 ${pct(baseline.score.f1)}% → **${pct(bestLever.score.f1)}%** (${signed(100 * (bestLever.score.f1 - baseline.score.f1))}): ` +
+			`inverse-frequency weighting restores full weight to a *rare* shared address (stitching a provider's name-drifted ` +
+			`records together — mostly recall) while down-weighting a *crowded* one, and the collapsed spatial signal (A1) drops ` +
+			`the address+distance double-count. What remains is **precision / over-merge** — ${bestLever.score.overMergedClusters} ` +
+			`clusters still fuse distinct co-located providers, because even one down-weighted spatial agreement can outvote a ` +
+			`disagreeing name. A name/org/phone **corroboration gate** (A2/A3) was investigated and does NOT beat this spine ` +
+			`on NPPES: phone is an unreliable secondary identifier here (shared institutional switchboard lines), so it ` +
+			`over-links via blocking and falsely corroborates co-phone distinct providers — a documented negative (#625). The ` +
+			`real over-merge lever is therefore **average-linkage clustering (A4)** replacing fragile connected-components, plus ` +
+			`a more reliable secondary identifier (authorized-official, taxonomy). Config dominates the model (the pre-registered ` +
+			`finding) — tracked as #625 / the auto-tuning + selective-model work (#602 / #603).`
 	)
 	lines.push("")
 	lines.push(
