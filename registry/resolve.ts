@@ -21,6 +21,7 @@ import type { ComparisonLevel } from "@mailwoman/match"
 import {
 	type BlockingKey,
 	type FellegiSunterModel,
+	type GBT,
 	type ScoredLink,
 	type TermFrequencyTable,
 	DEFAULT_DISTANCE_LEVELS,
@@ -39,6 +40,8 @@ import {
 	spatialComparison,
 	withTermFrequency,
 } from "@mailwoman/match"
+import { createGbtScorer } from "./learned-scorer.js"
+import { DEDUP_GBT_MODEL } from "./models/dedup-gbt-en-us.js"
 import type { ResolvedEntity, SourceRecord } from "./types.js"
 
 /**
@@ -275,6 +278,18 @@ export interface ResolveConfig {
 	 * combining them lets the FS gate veto the learned score, which is rarely what you want.
 	 */
 	scorer?: (a: SourceRecord, b: SourceRecord) => number
+	/**
+	 * **#603 (opt-in):** use the LEARNED gradient-boosted-tree scorer instead of the Fellegi-Sunter
+	 * weight. `true` loads the bundled default model ({@link DEDUP_GBT_MODEL} — trained on the NPPES
+	 * NPI-truth set, validated to generalize across states); pass your own {@link GBT} to override.
+	 * The scorer is built over the SAME collapsed-spatial + address-frequency feature model as
+	 * training (via the resolved {@link addressFrequency}), independent of this call's comparison
+	 * config. An explicit {@link scorer} takes precedence over this. Default off — the FS spine
+	 * remains the shipped default; flip this on once you've A/B'd it on your data. Higher
+	 * precision/F1 in the dedup benchmark, but its logit is scaled differently from the FS weight, so
+	 * re-tune {@link threshold}.
+	 */
+	learnedScorer?: boolean | GBT
 }
 
 /** The outcome of a resolve pass. */
@@ -314,6 +329,19 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 	const blockingKeys = config.blockingKeys ?? defaultBlockingKeys()
 	const threshold = config.threshold ?? 0
 
+	// #603 (opt-in): the learned scorer. An explicit `scorer` wins; otherwise `learnedScorer` builds the
+	// GBT scorer over the FIXED collapsed-spatial + address-frequency feature model (matching training,
+	// independent of this call's comparison config), using the resolved address-frequency table.
+	let scorer = config.scorer
+	if (!scorer && config.learnedScorer) {
+		const gbt = config.learnedScorer === true ? DEDUP_GBT_MODEL : config.learnedScorer
+		scorer = createGbtScorer({
+			model: gbt,
+			comparisons: buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons,
+			addressFrequency: addressFrequency ?? buildTermFrequencyTable([], { normalize: addressFrequencyKey }),
+		})
+	}
+
 	const { pairs, droppedBlocks } = block(records, blockingKeys, { maxBlockSize: config.maxBlockSize })
 
 	let scoringModel = model
@@ -324,8 +352,9 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 
 	const links: ScoredLink<SourceRecord>[] = pairs.map(([a, b]) => {
 		const score = scorePair(scoringModel, a, b)
-		// #603: a learned scorer replaces the FS weight (same clustering + threshold semantics).
-		let weight = config.scorer ? config.scorer(a, b) : score.weight
+		// #603: a learned scorer (explicit `scorer` or the opt-in `learnedScorer`) replaces the FS weight
+		// (same clustering + threshold semantics).
+		let weight = scorer ? scorer(a, b) : score.weight
 		// A2 (#625): a link must carry positive name OR org corroboration — a shared (even down-weighted)
 		// address alone is not identity. Spatial-only pairs are suppressed below any threshold.
 		if (config.requireCorroboration) {

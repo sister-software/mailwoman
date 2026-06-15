@@ -80,6 +80,26 @@ describe("resolveEntities", () => {
 		const big = merged.entities.find((e) => e.records.length > 1)
 		expect(big?.records.map((r) => r.id).sort()).toEqual(["1", "2"])
 	})
+
+	it("learnedScorer: true loads the bundled GBT model and resolves end-to-end (#603)", () => {
+		// The opt-in bundled model loads + scores every blocked pair without throwing; the result is a
+		// sane entity set (between fully-merged and fully-split). Behaviour on these synthetic records is
+		// the model's call — this guards the wiring (load → featurize → gbtScore → cluster), not a number.
+		const { entities } = resolveEntities(records, { learnedScorer: true })
+		expect(entities.length).toBeGreaterThanOrEqual(1)
+		expect(entities.length).toBeLessThanOrEqual(records.length)
+		for (const e of entities) expect(e.representative).toBeDefined()
+	})
+
+	it("an explicit scorer takes precedence over learnedScorer (#603)", () => {
+		// Both set → the explicit scorer wins. It rejects every pair, so nothing merges even though the
+		// bundled learned model is also requested.
+		const { entities } = resolveEntities(records, {
+			learnedScorer: true,
+			scorer: () => Number.NEGATIVE_INFINITY,
+		})
+		expect(entities).toHaveLength(records.length)
+	})
 })
 
 // Two distinct people at the SAME practice address — the co-located-providers over-merge case (#617).

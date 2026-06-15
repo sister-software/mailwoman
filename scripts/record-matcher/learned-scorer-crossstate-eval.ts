@@ -23,11 +23,12 @@
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
-import { agreementPattern, block } from "@mailwoman/match"
+import { block, gbtScore, trainGBT } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
+	createMatchFeaturizer,
 	defaultBlockingKeys,
 	geocodeAddressVia,
 	ingestRows,
@@ -39,7 +40,6 @@ import {
 } from "@mailwoman/registry"
 import { writeFileSync } from "node:fs"
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
-import { gbtScore, trainGBT } from "./lib/gbt.ts"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
@@ -195,27 +195,10 @@ async function main(): Promise<void> {
 	shardProvider.close()
 	lookup.close()
 
-	// Feature basis (the spine model); the agreement pattern is EM-independent → train/inference consistent.
-	const model = buildDefaultModel({ collapseSpatial: true, addressFrequency })
-	const levelCounts = model.comparisons.map((c) => c.levels.length)
-	const compIndex = Object.fromEntries(model.comparisons.map((c, i) => [c.name, i]))
-	const spatialI = compIndex["spatial"]!
-	const givenI = compIndex["given"]!
-	const familyI = compIndex["family"]!
-	const orgI = compIndex["organization"]!
-	const lastLevel = (i: number) => levelCounts[i]! - 1
-	function featurize(a: SourceRecord, b: SourceRecord): number[] {
-		const pat = agreementPattern(model.comparisons, a, b)
-		const f: number[] = []
-		for (let i = 0; i < pat.length; i++) for (let l = 0; l < levelCounts[i]!; l++) f.push(pat[i] === l ? 1 : 0)
-		const spatialExact = pat[spatialI] === 0 ? 1 : 0
-		const nameDisagree = pat[givenI] === lastLevel(givenI) && pat[familyI] === lastLevel(familyI) ? 1 : 0
-		f.push(spatialExact * nameDisagree)
-		f.push(spatialExact * (pat[orgI] === lastLevel(orgI) ? 1 : 0))
-		const freq = a.address?.raw ? addressFrequency.frequency(a.address.raw) : 0
-		f.push(Math.min(1, freq * 1000))
-		return f
-	}
+	// Feature basis: the SHARED production featurizer (train ≡ eval ≡ inference, one definition) over the
+	// collapsed-spatial + address-frequency comparison set (the spine).
+	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
+	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 
 	console.error(`[D] training GBT + LR on ${TRAIN_STATE} pairs…`)
 	const { pairs: trainPairs } = block(trainRecords, defaultBlockingKeys())
