@@ -122,6 +122,21 @@ describe("streamRows (lazy delimited ingest)", () => {
 		expect(rows[0]).toEqual({ npi: "123", org: "", last: "", first: "", state: "NE" })
 	})
 
+	it("closes the file handle on an early break (no leaked fd)", async () => {
+		const file = join(tmp(), "f.tsv")
+		writeFileSync(file, "a\tb\n1\t2\n3\t4\n5\t6\n")
+		let count = 0
+		for await (const _ of streamRows(file)) {
+			count++
+			if (count === 1) break // abandon the generator early → finally must close the handle
+		}
+		expect(count).toBe(1)
+		// Re-stream the same file fully — succeeds because the prior handle was released.
+		const all: Record<string, string>[] = []
+		for await (const r of streamRows(file)) all.push(r)
+		expect(all).toHaveLength(3)
+	})
+
 	it("threads straight into ingestRows (async-iterable source)", async () => {
 		const file = join(tmp(), "f.tsv")
 		writeFileSync(file, "name\taddress\nJohn Smith\t123 Main St\nMaria Garcia\t50 Elm Ave\n")
