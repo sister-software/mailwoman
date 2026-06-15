@@ -29,6 +29,7 @@ import { existsSync } from "node:fs"
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.js"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.js"
+import { recognizeUsRegions } from "./region-recognition.js"
 
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `admin`.
@@ -252,7 +253,7 @@ export class ShardProvider {
  * parse/resolve error — callers doing batch work should catch per-row.
  */
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
-	const tree = await deps.classifier.parse(input, { postcodeRepair: true })
+	const tree = recognizeUsRegions(await deps.classifier.parse(input, { postcodeRepair: true }))
 	const stateSlug = regionSlugFromTree(tree)
 	const { addressPoints, interpolation } = deps.shards?.(stateSlug) ?? {}
 
