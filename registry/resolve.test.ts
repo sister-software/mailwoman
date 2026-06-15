@@ -40,7 +40,9 @@ const records: SourceRecord[] = [
 
 describe("resolveEntities", () => {
 	it("merges the same-place duplicates and keeps the distinct record separate", () => {
-		const { entities, candidatePairs } = resolveEntities(records)
+		// learnedScorer:false — this asserts the FS-spine merge behaviour. The NPPES-trained GBT (now the
+		// default) is validated on real data + the #603 tests below, not on these 3 synthetic records.
+		const { entities, candidatePairs } = resolveEntities(records, { learnedScorer: false })
 
 		expect(candidatePairs).toBeGreaterThanOrEqual(1)
 		expect(entities).toHaveLength(2)
@@ -61,7 +63,7 @@ describe("resolveEntities", () => {
 	})
 
 	it("picks a representative and a coordinate per entity", () => {
-		const { entities } = resolveEntities(records)
+		const { entities } = resolveEntities(records, { learnedScorer: false }) // FS-spine pipeline assertion
 		for (const entity of entities) {
 			expect(entity.representative).toBeDefined()
 			expect(entity.coordinate).toBeDefined()
@@ -203,7 +205,7 @@ describe("secondary-identifier discriminators (#625)", () => {
 
 describe("toGeoJSON", () => {
 	it("emits a Point feature per geocoded entity with analyst-facing properties", () => {
-		const { entities } = resolveEntities(records)
+		const { entities } = resolveEntities(records, { learnedScorer: false }) // FS-spine pipeline assertion
 		const fc = toGeoJSON(entities)
 
 		expect(fc.type).toBe("FeatureCollection")

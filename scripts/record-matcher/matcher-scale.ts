@@ -42,10 +42,10 @@ function lcg(seed: number): () => number {
 }
 
 /**
- * Generate N synthetic records clustered into ~N/DUP distinct "places". Each place gets a coordinate in
- * the continental-US box, a canonical key, and an org name; its DUP duplicates carry a lightly-varied name
- * and a jittered coordinate, so geo-cell + canonical-key blocking groups them and scoring links them — the
- * realistic shape of a dedup workload.
+ * Generate N synthetic records clustered into ~N/DUP distinct "places". Each place gets a
+ * coordinate in the continental-US box, a canonical key, and an org name; its DUP duplicates carry
+ * a lightly-varied name and a jittered coordinate, so geo-cell + canonical-key blocking groups them
+ * and scoring links them — the realistic shape of a dedup workload.
  */
 function generate(n: number, seed = 1): SourceRecord[] {
 	const rnd = lcg(seed)
@@ -91,7 +91,13 @@ async function main(): Promise<void> {
 	for (const n of SIZES) {
 		const records = generate(n)
 		const t0 = performance.now()
-		const { entities, candidatePairs } = resolveEntities(records, { collapseSpatial: true, trainEM: EM })
+		// learnedScorer:false — this measures the FS-spine pipeline throughput baseline (the learned scorer
+		// is now default-on; its per-pair tree eval is a separate cost, not what this scale number tracks).
+		const { entities, candidatePairs } = resolveEntities(records, {
+			collapseSpatial: true,
+			trainEM: EM,
+			learnedScorer: false,
+		})
 		const wallMs = performance.now() - t0
 		const rssBytes = process.memoryUsage().rss
 		rows.push({ n, records: records.length, entities: entities.length, candidatePairs, wallMs, rssBytes })

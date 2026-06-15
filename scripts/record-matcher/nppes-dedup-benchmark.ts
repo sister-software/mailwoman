@@ -291,8 +291,11 @@ async function main(): Promise<void> {
 			config: { collapseSpatial: true, addressFrequency, discriminators: ["authorizedOfficial"] },
 		},
 	]
+	// learnedScorer:false throughout — this benchmark studies the FS COMPARISON-MODEL levers (#617/#625).
+	// The learned scorer is now default-on, so it must be pinned off here or every row would silently be the
+	// GBT; the learned scorer is measured separately (learned-scorer-clustering-eval / -crossstate-eval).
 	const progression = LEVERS.map((l) => {
-		const res = resolveEntities(records, { trainEM: TRAIN_EM, threshold: 0, ...l.config })
+		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0, ...l.config })
 		return { ...l, res, score: scoreEntities(res.entities) }
 	})
 	const baseline = progression[0]! // no levers — the prior-prior behaviour
@@ -305,13 +308,13 @@ async function main(): Promise<void> {
 	// from a slice. On a FULL-dataset dedup the input IS the corpus and this default reaches the spine; the
 	// CLI passes a corpus-wide table built from the full source files so even a geocoded sub-sample benefits.
 	const defaultOutOfBox = (() => {
-		const res = resolveEntities(records, { trainEM: TRAIN_EM, threshold: 0 })
+		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0 })
 		return { res, score: scoreEntities(res.entities) }
 	})()
 
 	const THRESHOLDS = [0, 4, 8, 12, 16, 20]
 	const sweep = THRESHOLDS.map((t) => {
-		const res = resolveEntities(records, { trainEM: TRAIN_EM, threshold: t, ...bestLever.config })
+		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: t, ...bestLever.config })
 		return { t, res, score: scoreEntities(res.entities) }
 	})
 	const base = sweep[0]! // threshold 0, full lever stack

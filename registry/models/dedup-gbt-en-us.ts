@@ -29,6 +29,7 @@ export const DEDUP_GBT_META = {
 		lr: 0.3,
 		minLeaf: 20,
 	},
+	recommendedThreshold: 2.7143,
 	features: 17,
 	addressFrequencyDistinct: 3317267,
 	addressFrequencyTotal: 9260504,

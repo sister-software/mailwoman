@@ -41,7 +41,7 @@ import {
 	withTermFrequency,
 } from "@mailwoman/match"
 import { createGbtScorer } from "./learned-scorer.js"
-import { DEDUP_GBT_MODEL } from "./models/dedup-gbt-en-us.js"
+import { DEDUP_GBT_META, DEDUP_GBT_MODEL } from "./models/dedup-gbt-en-us.js"
 import type { ResolvedEntity, SourceRecord } from "./types.js"
 
 /**
@@ -279,15 +279,17 @@ export interface ResolveConfig {
 	 */
 	scorer?: (a: SourceRecord, b: SourceRecord) => number
 	/**
-	 * **#603 (opt-in):** use the LEARNED gradient-boosted-tree scorer instead of the Fellegi-Sunter
-	 * weight. `true` loads the bundled default model ({@link DEDUP_GBT_MODEL} — trained on the NPPES
-	 * NPI-truth set, validated to generalize across states); pass your own {@link GBT} to override.
-	 * The scorer is built over the SAME collapsed-spatial + address-frequency feature model as
-	 * training (via the resolved {@link addressFrequency}), independent of this call's comparison
-	 * config. An explicit {@link scorer} takes precedence over this. Default off — the FS spine
-	 * remains the shipped default; flip this on once you've A/B'd it on your data. Higher
-	 * precision/F1 in the dedup benchmark, but its logit is scaled differently from the FS weight, so
-	 * re-tune {@link threshold}.
+	 * **#603: the LEARNED gradient-boosted-tree scorer — DEFAULT-ON.** Omitted or `true` uses the
+	 * bundled {@link DEDUP_GBT_MODEL} (trained on the NPPES NPI-truth set; beats the Fellegi-Sunter
+	 * spine ~+5pp dedup F1 held-out within a state and ~+22pp on states it never trained on, cutting
+	 * the co-located over-merge). `false` opts out to the pure FS spine; pass your own {@link GBT} for
+	 * a custom model. The scorer is built over the SAME collapsed-spatial + address-frequency feature
+	 * model as training (via the resolved {@link addressFrequency}), independent of this call's
+	 * comparison config. An explicit {@link scorer} takes precedence. When the bundled model is active
+	 * and you don't set {@link threshold}, its CALIBRATED link threshold
+	 * ({@link DEDUP_GBT_META}.recommendedThreshold) is used — the GBT logit isn't in FS-weight units,
+	 * so 0 would over-merge. The model is NPPES/US-trained; for a very different domain, A/B it or
+	 * pass `false`.
 	 */
 	learnedScorer?: boolean | GBT
 }
@@ -327,20 +329,27 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 			discriminators: config.discriminators,
 		})
 	const blockingKeys = config.blockingKeys ?? defaultBlockingKeys()
-	const threshold = config.threshold ?? 0
 
-	// #603 (opt-in): the learned scorer. An explicit `scorer` wins; otherwise `learnedScorer` builds the
-	// GBT scorer over the FIXED collapsed-spatial + address-frequency feature model (matching training,
-	// independent of this call's comparison config), using the resolved address-frequency table.
+	// #603: the learned scorer is DEFAULT-ON. An explicit `scorer` overrides everything; otherwise
+	// `learnedScorer === false` opts out to the FS spine, a GBT supplies a custom model, and
+	// `true`/omitted uses the bundled DEDUP_GBT_MODEL. The scorer is built over the FIXED
+	// collapsed-spatial + address-frequency feature model (matching training, independent of this call's
+	// comparison config), using the resolved address-frequency table.
 	let scorer = config.scorer
-	if (!scorer && config.learnedScorer) {
-		const gbt = config.learnedScorer === true ? DEDUP_GBT_MODEL : config.learnedScorer
+	let usingBundledModel = false
+	if (!scorer && config.learnedScorer !== false) {
+		const gbt =
+			config.learnedScorer === undefined || config.learnedScorer === true ? DEDUP_GBT_MODEL : config.learnedScorer
+		usingBundledModel = gbt === DEDUP_GBT_MODEL
 		scorer = createGbtScorer({
 			model: gbt,
 			comparisons: buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons,
 			addressFrequency: addressFrequency ?? buildTermFrequencyTable([], { normalize: addressFrequencyKey }),
 		})
 	}
+	// Threshold: an explicit value wins; else the bundled model's CALIBRATED threshold when it's active
+	// (its logit isn't in FS-weight units, so 0 would over-merge); else 0 (FS spine or a custom model).
+	const threshold = config.threshold ?? (usingBundledModel ? DEDUP_GBT_META.recommendedThreshold : 0)
 
 	const { pairs, droppedBlocks } = block(records, blockingKeys, { maxBlockSize: config.maxBlockSize })
 
