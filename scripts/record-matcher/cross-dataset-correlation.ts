@@ -114,6 +114,39 @@ const SPECS: SourceSpec[] = [
 			norm(r["Entity Type Code"]) === "2" &&
 			!!norm(r["Provider Organization Name (Legal Business Name)"]),
 	},
+	{
+		// FCC RHC funding commitments — TWO addressable entities per row (a Filing HCP and a Participating
+		// HCP). Explode each in-state HCP into its own record (the #618 B1 two-entity-per-row case).
+		source: "fcc-rhc-commitments",
+		path: `${S}/fcc-rhc_commitments-disbursements_form462-466-466a_20260615.tsv`,
+		mapping: {
+			id: "hcpId",
+			organization: "hcpName",
+			address: ["hcpStreet", "hcpCity", "hcpState", "hcpZip"],
+			source: "fcc-rhc-commitments",
+		},
+		inState: (r) =>
+			norm(r["Filing HCP State"]).toUpperCase() === STATE || norm(r["Participating HCP State"]).toUpperCase() === STATE,
+		explode: (r) => {
+			const out: Record<string, string>[] = []
+			const add = (prefix: string, role: string): void => {
+				const id = norm(r[`${prefix} HCP`])
+				const state = norm(r[`${prefix} HCP State`]).toUpperCase()
+				if (id && state === STATE)
+					out.push({
+						hcpId: `${role}-${id}`,
+						hcpName: norm(r[`${prefix} HCP Name`]),
+						hcpStreet: norm(r[`${prefix} HCP Street`]),
+						hcpCity: norm(r[`${prefix} HCP City`]),
+						hcpState: state,
+						hcpZip: norm(r[`${prefix} HCP Zip Code`]),
+					})
+			}
+			add("Filing", "filing")
+			add("Participating", "participating")
+			return out
+		},
+	},
 ]
 
 async function main(): Promise<void> {
@@ -217,13 +250,17 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(`## Sources`)
 	lines.push("")
+	const blurb: Record<string, string> = {
+		"txhhsc-nursing": "TX HHSC licensed nursing facilities",
+		"fcc-rhc": "FCC Rural Health Care posted-services filings",
+		"fcc-rhc-commitments": "FCC RHC funding commitments (Filing + Participating HCP, exploded)",
+		nppes: "NPPES organization NPIs",
+	}
 	lines.push(`| source | rows | what it is |`)
 	lines.push(`|---|---:|---|`)
-	lines.push(
-		`| \`txhhsc-nursing\` | ${rawBySource.get("txhhsc-nursing")!.length} | TX HHSC licensed nursing facilities |`
-	)
-	lines.push(`| \`fcc-rhc\` | ${rawBySource.get("fcc-rhc")!.length} | FCC Rural Health Care posted-services filings |`)
-	lines.push(`| \`nppes\` | ${rawBySource.get("nppes")!.length} | NPPES organization NPIs |`)
+	for (const spec of SPECS) {
+		lines.push(`| \`${spec.source}\` | ${rawBySource.get(spec.source)!.length} | ${blurb[spec.source] ?? ""} |`)
+	}
 	lines.push("")
 	lines.push(
 		`Combined: **${records.length} records**, geocoded ${pct(geo / total)}%. Resolved to ` +
@@ -255,11 +292,12 @@ async function main(): Promise<void> {
 	lines.push(`## Reading`)
 	lines.push("")
 	lines.push(
-		`Three datasets with no shared key — a provider registry, a federal funding program, and a state ` +
-			`facility registry — resolve into a single entity model where ${crossSource.length} entities are corroborated ` +
-			`by ≥2 independent sources, purely on geocoded location + name/org agreement, in pure Node (no Elasticsearch, ` +
-			`no server). Each cross-source entity is a candidate "same place, multiple records" surfaced for review; whether ` +
-			`a correlation means anything is the data consumer's call, not ours.`
+		`${SPECS.length} datasets with no shared key — a provider registry, a federal funding program (two of its forms, ` +
+			`the commitments form exploded into its Filing + Participating HCP per row), and a state facility registry — ` +
+			`resolve into a single entity model where ${crossSource.length} entities are corroborated by ≥2 independent ` +
+			`sources (${triple} by all three kinds), purely on geocoded location + name/org agreement, in pure Node (no ` +
+			`Elasticsearch, no server). Each cross-source entity is a candidate "same place, multiple records" surfaced for ` +
+			`review; whether a correlation means anything is the data consumer's call, not ours.`
 	)
 	lines.push("")
 
