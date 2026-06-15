@@ -28,8 +28,11 @@ import {
 	ingestRows,
 	parseCsv,
 	resolveEntities,
+	streamRows,
 	toGeoJSON,
 	type ColumnMapping,
+	type GeocodeAddress,
+	type SourceRecord,
 } from "@mailwoman/registry"
 import { Text } from "ink"
 import { readFileSync, writeFileSync } from "node:fs"
@@ -45,7 +48,10 @@ import { resolverDefaultCountry } from "./parse.js"
 // CLI contract — args + options
 // ---------------------------------------------------------------------------
 
-const ArgumentsSchema = zod.array(zod.string().describe("Path to a CSV file of contact / organization records"))
+const ArgumentsSchema = zod
+	.array(zod.string().describe("Path to a CSV file of contact / organization records"))
+	.optional()
+	.describe("CSV path(s). Optional when --sources is given (multi-source mode supplies the inputs).")
 
 const OptionsSchema = zod.object({
 	mapping: zod
@@ -55,6 +61,16 @@ const OptionsSchema = zod.object({
 			"Column mapping: a path to a JSON file (or inline JSON) of { id?, source?, name?, organization?, address?, " +
 				"phone?, email? }, where each field names the CSV column(s) to draw from. Merged over the built-in default; " +
 				"column names are matched case-sensitively. Inferring the mapping from the header is the #603 fast-follow."
+		),
+	sources: zod
+		.string()
+		.optional()
+		.describe(
+			"Multi-source mode: a path to a JSON file (or inline JSON) of [{ path, delimiter?, mapping, source?, limit? }] " +
+				"— each dataset gets its own column mapping + provenance label, all resolved into ONE entity set across " +
+				"sources with no shared key. An entity spanning ≥2 sources is a cross-dataset link. The positional CSV is " +
+				"ignored when --sources is set. Inputs are streamed as UNQUOTED delimited files (tab inferred from .tsv) — " +
+				"right for the big government TSVs; convert a quoted CSV first or use the single-CSV path for those."
 		),
 	out: zod.string().optional().describe("Write the GeoJSON FeatureCollection here. Default: print to stdout."),
 	trainEm: zod
@@ -145,14 +161,15 @@ function resolveWofPath(options: zod.infer<typeof OptionsSchema>): string {
 	return path
 }
 
-// ---------------------------------------------------------------------------
-// Core
-// ---------------------------------------------------------------------------
-
-async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
+/**
+ * Construct the heavy geocoder once (neural parser + WOF resolver + per-state shards) and wire it
+ * into the matcher's {@link GeocodeAddress} seam. Returns the seam plus a `close` to release the DB
+ * handles. Shared by the single-CSV and multi-source paths.
+ */
+async function buildGeocoder(
+	options: zod.infer<typeof OptionsSchema>
+): Promise<{ seam: GeocodeAddress; close: () => void }> {
 	const wofPath = resolveWofPath(options)
-	const mapping = loadMapping(options.mapping, options.source)
-	const rows = parseCsv(readFileSync(csvPath, "utf8"))
 
 	let classifier: NeuralAddressClassifier
 	try {
@@ -174,27 +191,119 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	const shards: ShardResolver = shardProvider.for
 	const defaultCountry = resolverDefaultCountry(options) || undefined
+	const resolver = createWofResolver(lookup as unknown as ResolverBackend)
+
+	const seam = geocodeAddressVia({
+		parse: async (raw) => decodeAsJson(await classifier.parse(raw, { postcodeRepair: true })),
+		geocode: (raw) =>
+			geocodeAddress(raw, {
+				classifier,
+				resolver,
+				shards,
+				defaultCountry,
+				interpCalibration: INTERP_RADIUS_CALIBRATION,
+				...(options.placeCountry ? {} : { placeCountry: false }),
+			}),
+		country: defaultCountry,
+	})
+
+	return {
+		seam,
+		close: () => {
+			shardProvider.close()
+			lookup.close()
+		},
+	}
+}
+
+/**
+ * One dataset in a `--sources` config: where it lives, its mapping, an optional provenance label + row cap.
+ */
+interface MultiSourceSpec {
+	path: string
+	delimiter?: "comma" | "tab"
+	mapping: ColumnMapping
+	source?: string
+	/** Read at most this many rows (the head of the file) — for sampling a huge source without pre-filtering. */
+	limit?: number
+}
+
+/** Parse `--sources` (a file path or inline JSON) into specs. */
+export function loadSources(option: string): MultiSourceSpec[] {
+	const text = /^[[{]/.test(option.trim()) ? option : readFileSync(option, "utf8")
+	let parsed: unknown
+	try {
+		parsed = JSON.parse(text)
+	} catch (err) {
+		throw new Error(`--sources is neither a readable file nor valid JSON: ${(err as Error).message}`)
+	}
+	if (!Array.isArray(parsed) || parsed.some((s) => !s || typeof (s as MultiSourceSpec).path !== "string")) {
+		throw new Error("--sources must be a JSON array of { path, mapping, source?, delimiter?, limit? }.")
+	}
+	return parsed as MultiSourceSpec[]
+}
+
+/**
+ * Multi-source mode (#618): stream each dataset under its own mapping + provenance label into ONE
+ * combined record set, geocode, resolve, and report the entities that span ≥2 sources — the
+ * cross-dataset links. No shared key required; geography is the join.
+ */
+async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeof OptionsSchema>): Promise<string> {
+	const { seam, close } = await buildGeocoder(options)
+	try {
+		const records: SourceRecord[] = []
+		const perSource: string[] = []
+		for (const spec of specs) {
+			const label = spec.source ?? spec.path
+			const mapping: ColumnMapping = { ...spec.mapping, source: label }
+			let read = 0
+			const rows = (async function* () {
+				for await (const row of streamRows(spec.path, spec.delimiter ? { delimiter: spec.delimiter } : {})) {
+					if (spec.limit !== undefined && read >= spec.limit) break
+					read++
+					yield row
+				}
+			})()
+			const recs = await ingestRows(rows, mapping, { geocodeAddress: seam })
+			for (const record of recs) record.id = `${label}:${record.id}` // namespace ids so cross-source ids never collide
+			records.push(...recs)
+			perSource.push(`${label} ${recs.length}`)
+		}
+
+		const result = resolveEntities(records, {
+			trainEM: options.trainEm,
+			threshold: options.threshold,
+			...(options.maxBlockSize !== undefined ? { maxBlockSize: options.maxBlockSize } : {}),
+		})
+		const geojson = toGeoJSON(result.entities)
+		const crossSource = result.entities.filter(
+			(e) => new Set(e.records.map((r) => r.source).filter(Boolean)).size >= 2
+		).length
+		const geocoded = records.filter((r) => r.address?.geocode).length
+		const summary =
+			`registry --sources: ${specs.length} sources (${perSource.join(", ")}) → ${records.length} records ` +
+			`(${geocoded} geocoded) → ${result.entities.length} entities; ${crossSource} span ≥2 sources (cross-dataset links)`
+
+		if (options.out) {
+			writeFileSync(options.out, JSON.stringify(geojson, null, 2))
+			return `${summary}\nwrote ${geojson.features.length} features → ${options.out}`
+		}
+		return JSON.stringify(geojson, null, 2)
+	} finally {
+		close()
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Core
+// ---------------------------------------------------------------------------
+
+async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
+	const mapping = loadMapping(options.mapping, options.source)
+	const rows = parseCsv(readFileSync(csvPath, "utf8"))
+	const { seam, close } = await buildGeocoder(options)
 
 	try {
-		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
-
-		// Wire the heavy geocoder into the matcher's seam: parse → components (for the canonical key +
-		// formatting) and geocode → the resolved coordinate/tier. GeocodeResult is a structural superset
-		// of the RawGeocode the adapter consumes. --no-place-country disables the default-on prior.
-		const seam = geocodeAddressVia({
-			parse: async (raw) => decodeAsJson(await classifier.parse(raw, { postcodeRepair: true })),
-			geocode: (raw) =>
-				geocodeAddress(raw, {
-					classifier,
-					resolver,
-					shards,
-					defaultCountry,
-					interpCalibration: INTERP_RADIUS_CALIBRATION,
-					...(options.placeCountry ? {} : { placeCountry: false }),
-				}),
-			country: defaultCountry,
-		})
-
 		const records = await ingestRows(rows, mapping, { geocodeAddress: seam })
 		const result = resolveEntities(records, {
 			trainEM: options.trainEm,
@@ -215,8 +324,7 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 		}
 		return JSON.stringify(geojson, null, 2)
 	} finally {
-		shardProvider.close()
-		lookup.close()
+		close()
 	}
 }
 
@@ -235,15 +343,23 @@ const RegistryCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSc
 	}, [error])
 
 	useEffect(() => {
-		const csv = args[0]
-		if (!csv || csv.trim().length === 0) {
-			setError("registry requires a positional CSV path (e.g. mailwoman registry contacts.csv --out entities.geojson)")
-			return
-		}
+		// `loadSources` can throw on a malformed config — wrap so its error routes to the same handler.
+		const task = options.sources
+			? Promise.resolve().then(() => runMultiSource(loadSources(options.sources!), options))
+			: (() => {
+					const csv = args?.[0]
+					if (!csv || csv.trim().length === 0) {
+						return Promise.reject(
+							new Error(
+								"registry requires a positional CSV path (or --sources <config.json> for multi-source). " +
+									"e.g. mailwoman registry contacts.csv --out entities.geojson"
+							)
+						)
+					}
+					return runRegistry(csv.trim(), options)
+				})()
 
-		runRegistry(csv.trim(), options)
-			.then(setOutput)
-			.catch((err: unknown) => setError((err as Error).message))
+		task.then(setOutput).catch((err: unknown) => setError((err as Error).message))
 	}, [args, options])
 
 	if (error) {
