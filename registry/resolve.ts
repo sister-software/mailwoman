@@ -27,6 +27,7 @@ import {
 	DEFAULT_SPATIAL_LEVELS,
 	agreementPattern,
 	block,
+	buildTermFrequencyTable,
 	cluster,
 	distanceComparison,
 	estimateParameters,
@@ -222,14 +223,18 @@ export interface ResolveConfig {
 	 */
 	trainEM?: boolean
 	/**
-	 * Corpus-wide address-frequency table (over {@link addressFrequencyKey}) — when set, the default
-	 * model down-weights address agreement by how shared the address is. Ignored if `model` is
-	 * supplied.
+	 * Address-frequency table (over {@link addressFrequencyKey}) — down-weights address agreement by
+	 * how shared the address is (a crowded clinic/billing address is weak identity evidence).
+	 * **Default-on (#625):** when omitted, `resolveEntities` AUTO-COMPUTES the table over the INPUT
+	 * records' addresses (the right scope for a single dataset — a crowded address within the data is
+	 * down-weighted). Pass your own {@link TermFrequencyTable} (e.g. a corpus-wide one) to override,
+	 * or `false` to disable (the legacy bare baseline). Ignored if `model` is supplied.
 	 */
-	addressFrequency?: TermFrequencyTable
+	addressFrequency?: TermFrequencyTable | false
 	/**
-	 * A1 (#625): build the default model with one collapsed {@link spatialComparison} instead of the
-	 * redundant address-key + distance pair. Ignored if `model` is supplied.
+	 * A1 (#625): collapse the redundant address-key + distance pair into one
+	 * {@link spatialComparison}. **Default-on (true)** — the cleaner, less-over-merging spatial model.
+	 * Set `false` for the legacy two-signal baseline. Ignored if `model` is supplied.
 	 */
 	collapseSpatial?: boolean
 	/**
@@ -286,11 +291,23 @@ export interface ResolveResult {
  * exactly one entity (a record with no confident link is its own singleton entity).
  */
 export function resolveEntities(records: readonly SourceRecord[], config: ResolveConfig = {}): ResolveResult {
+	// The proven levers are DEFAULT-ON (#625): the address-frequency down-weight (auto-computed over the
+	// input records when not supplied; `false` disables) + the collapsed spatial signal (A1). A new
+	// caller gets the strong config out of the box; pass explicit values to override.
+	const addressFrequency =
+		config.addressFrequency === false
+			? undefined
+			: (config.addressFrequency ??
+				buildTermFrequencyTable(
+					records.map((r) => r.address?.raw),
+					{ normalize: addressFrequencyKey }
+				))
+	const collapseSpatial = config.collapseSpatial ?? true
 	const model =
 		config.model ??
 		buildDefaultModel({
-			addressFrequency: config.addressFrequency,
-			collapseSpatial: config.collapseSpatial,
+			addressFrequency,
+			collapseSpatial,
 			usePhone: config.usePhone,
 			discriminators: config.discriminators,
 		})
