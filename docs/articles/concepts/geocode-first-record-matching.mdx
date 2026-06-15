@@ -218,17 +218,21 @@ conjure rarity from a single record with nothing to compare it to.
 
 ## The layers
 
-| Workspace              | Job                                                                                   |
-| ---------------------- | ------------------------------------------------------------------------------------- |
-| `@mailwoman/formatter` | The inverse of the parser: components → idiomatic localized string + a canonical key. |
-| `@mailwoman/record`    | The record schema (person / organization / address) + per-field normalizers.          |
-| `@mailwoman/match`     | Block (geo-first) → score (Fellegi-Sunter) → cluster (centroid-linkage).              |
-| _the application_      | Ingest → normalize → geocode → match → cluster → export to GeoJSON / QGIS / leads.    |
+| Workspace               | Job                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------- |
+| `@mailwoman/formatter`  | The inverse of the parser: components → idiomatic localized string + a canonical key. |
+| `@mailwoman/record`     | The record schema (person / organization / address) + per-field normalizers.          |
+| `@mailwoman/match`      | Block (geo-first) → score (Fellegi-Sunter) → cluster (centroid-linkage).              |
+| `@mailwoman/address-id` | A resolved address → a stable `state.cell.hash` primary key — the deterministic join. |
+| _the application_       | Ingest → normalize → geocode → match → cluster → export to GeoJSON / QGIS / leads.    |
 
 The formatter is the small foundation — it's also the piece this whole thread
 started as, before we understood it was one component of a matcher. The record
 layer is salvage. The match layer is the part that imploded last time, now
-standing on coordinates instead of strings.
+standing on coordinates instead of strings. The address-id is the cheap certainty
+beside the probabilistic match: when two records resolve to the same place _and_
+share a canonical address, they collapse on a deterministic key — no scoring, no
+threshold — and the matcher spends its effort only on the genuinely-messy rest.
 
 ## Why you can't find the comparable project
 

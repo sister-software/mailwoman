@@ -11,6 +11,7 @@
  *   for, finally standing on a calibrated, label-free matcher.
  */
 
+export * from "./address-key.js"
 export * from "./geojson.js"
 export * from "./ingest.js"
 export * from "./learned-scorer.js"

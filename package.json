@@ -86,6 +86,7 @@
 		"record",
 		"match",
 		"registry",
+		"address-id",
 		"neural",
 		"neural-web",
 		"neural-weights-en-us",
