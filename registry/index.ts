@@ -13,5 +13,6 @@
 
 export * from "./geojson.js"
 export * from "./ingest.js"
+export * from "./learned-scorer.js"
 export * from "./resolve.js"
 export * from "./types.js"
