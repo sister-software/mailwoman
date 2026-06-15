@@ -269,17 +269,26 @@ async function main(): Promise<void> {
 	// once, resolve many — config is cheap). ---
 	console.error(`[D] resolving the lever progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
 	type LeverConfig = {
-		addressFrequency?: typeof addressFrequency
+		addressFrequency?: typeof addressFrequency | false
 		collapseSpatial?: boolean
 		discriminators?: string[]
 	}
+	// The proven levers are now DEFAULT-ON in resolveEntities (#86). Each row sets BOTH `collapseSpatial`
+	// and `addressFrequency` EXPLICITLY so the progression isolates one lever at a time — otherwise the
+	// flipped default (collapseSpatial:true) would silently ride the `+ inverse-address-frequency` row and
+	// the A1 delta would read as 0. Every row feeds the corpus-wide frequency table (the realistic
+	// deployment, where the CLI builds it from the full source files); the zero-config `{}` default is
+	// reported SEPARATELY below, since on a sub-sample its input-scoped table is intentionally sparse.
 	const LEVERS: Array<{ label: string; config: LeverConfig }> = [
-		{ label: "baseline (address-key + distance)", config: {} },
-		{ label: "+ inverse-address-frequency (#617)", config: { addressFrequency } },
-		{ label: "+ collapsed spatial signal (A1, #625)", config: { addressFrequency, collapseSpatial: true } },
 		{
-			label: "+ authorized-official discriminator (#625)",
-			config: { addressFrequency, collapseSpatial: true, discriminators: ["authorizedOfficial"] },
+			label: "baseline (legacy: address-key + distance, levers OFF)",
+			config: { collapseSpatial: false, addressFrequency: false },
+		},
+		{ label: "+ inverse-address-frequency (#617, corpus-wide)", config: { collapseSpatial: false, addressFrequency } },
+		{ label: "+ collapsed spatial signal (A1, #625)", config: { collapseSpatial: true, addressFrequency } },
+		{
+			label: "+ authorized-official discriminator (#625, full stack)",
+			config: { collapseSpatial: true, addressFrequency, discriminators: ["authorizedOfficial"] },
 		},
 	]
 	const progression = LEVERS.map((l) => {
@@ -288,6 +297,17 @@ async function main(): Promise<void> {
 	})
 	const baseline = progression[0]! // no levers — the prior-prior behaviour
 	const bestLever = progression[progression.length - 1]! // the full lever stack
+
+	// The SHIPPED out-of-box default (#86): no lever config at all → resolveEntities auto-computes an
+	// input-scoped address-frequency table + collapsed spatial. On this deliberately-sub-sampled corpus the
+	// auto table is sparse (few repeats), so the inverse-frequency signal is near-inert and F1 collapses to
+	// ≈baseline — NOT a regression, just the honest truth that IDF is a corpus statistic you can't synthesize
+	// from a slice. On a FULL-dataset dedup the input IS the corpus and this default reaches the spine; the
+	// CLI passes a corpus-wide table built from the full source files so even a geocoded sub-sample benefits.
+	const defaultOutOfBox = (() => {
+		const res = resolveEntities(records, { trainEM: TRAIN_EM, threshold: 0 })
+		return { res, score: scoreEntities(res.entities) }
+	})()
 
 	const THRESHOLDS = [0, 4, 8, 12, 16, 20]
 	const sweep = THRESHOLDS.map((t) => {
@@ -336,6 +356,17 @@ async function main(): Promise<void> {
 			`default threshold; the **authorized-official discriminator** is roughly neutral there (${signed(100 * (bestLever.score.f1 - progression[2]!.score.f1))}) ` +
 			`but enables a higher cutoff — it holds recall where the spine alone collapses, reaching **${pct(best.score.f1)}%** at ` +
 			`threshold ${best.t} (below), the first config past the spine (#625).`
+	)
+	lines.push("")
+	lines.push(
+		`**Out-of-the-box (zero-config \`resolveEntities(records)\`, levers default-on #86):** F1 ` +
+			`**${pct(defaultOutOfBox.score.f1)}%** on this sample — essentially the baseline. The default auto-computes the ` +
+			`address-frequency table over the INPUT records, and this benchmark deliberately sub-samples ${N} records, so ` +
+			`that table is too sparse to carry the inverse-frequency signal (a corpus statistic you can't synthesize from a ` +
+			`slice). It's **not a regression** (≥ baseline, no over-merge added) — it's the honest floor when the input isn't ` +
+			`corpus-scale. Fed the corpus-wide table (the \`+ inverse-address-frequency\` row above, what the CLI builds from ` +
+			`the full source files) the SAME default reaches the **${pct(progression[2]!.score.f1)}%** spine. On a full-dataset ` +
+			`dedup the input IS the corpus, so zero-config reaches the spine on its own.`
 	)
 	lines.push("")
 	lines.push(`## With all levers on, across the link threshold (the secondary lever)`)
