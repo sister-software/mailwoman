@@ -41,6 +41,7 @@ const WORKSPACES = {
 	"@mailwoman/record": "record",
 	"@mailwoman/match": "match",
 	"@mailwoman/registry": "registry",
+	"@mailwoman/address-id": "address-id",
 	"@mailwoman/corpus": "corpus",
 	mailwoman: "mailwoman",
 }

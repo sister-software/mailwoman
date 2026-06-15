@@ -4617,6 +4617,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mailwoman/address-id@workspace:*, @mailwoman/address-id@workspace:address-id":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/address-id@workspace:address-id"
+  dependencies:
+    "@mailwoman/codex": "workspace:*"
+    "@mailwoman/normalize": "workspace:*"
+    "@types/node": "npm:^25.9.2"
+    h3-js: "npm:^4.4.0"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/cartographer@workspace:*, @mailwoman/cartographer@workspace:cartographer":
   version: 0.0.0-use.local
   resolution: "@mailwoman/cartographer@workspace:cartographer"
@@ -4836,6 +4847,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/registry@workspace:registry"
   dependencies:
+    "@mailwoman/address-id": "workspace:*"
     "@mailwoman/match": "workspace:*"
     "@mailwoman/record": "workspace:*"
     "@types/node": "npm:^25.9.2"

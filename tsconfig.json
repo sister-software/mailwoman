@@ -30,6 +30,7 @@
 		{ "path": "./record" },
 		{ "path": "./match" },
 		{ "path": "./registry" },
+		{ "path": "./address-id" },
 		{ "path": "./neural" },
 		{ "path": "./neural-web" },
 		{ "path": "./normalize" },
