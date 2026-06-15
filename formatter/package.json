@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/formatter",
-	"version": "4.8.1",
+	"version": "4.10.0",
 	"description": "The inverse of the parser: render Mailwoman `ComponentTag` components into an idiomatic, locale-aware address string — plus a canonical, normalized match key for record linkage. Consolidates the former core/formatter stub and corpus synthesis formatter behind one API.",
 	"license": "AGPL-3.0-only",
 	"repository": {
