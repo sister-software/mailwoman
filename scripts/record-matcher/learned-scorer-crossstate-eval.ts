@@ -258,7 +258,9 @@ async function main(): Promise<void> {
 	}
 	const fs = bestOver(
 		Array.from({ length: 26 }, (_, i) => i),
-		(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t })
+		// learnedScorer:false — the FS spine is the baseline (the learned scorer is now default-on, so
+		// without this the "FS arm" would silently BE the GBT).
+		(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t, learnedScorer: false })
 	)
 	const gbtArm = bestOver(quantileThresholds(evalPairs.map(([a, b]) => gbtScorer(a, b))), (t) => ({
 		addressFrequency,

@@ -21,7 +21,7 @@
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
-import { block, trainGBT } from "@mailwoman/match"
+import { block, gbtScore, trainGBT } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
@@ -82,6 +82,45 @@ interface MessyRow {
 	name: string
 	org: string
 	address: string
+}
+
+/** Deterministic LCG (no Math.random — reproducible split + commit). */
+function lcg(seed: number): () => number {
+	let s = seed >>> 0 || 1
+	return () => {
+		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
+		return s / 0x100000000
+	}
+}
+
+/** Up to `n` unique sorted-quantile values from a sorted score array — link-threshold candidates. */
+function uniqueQuantiles(sorted: number[], n: number): number[] {
+	if (sorted.length === 0) return [0]
+	const ts = new Set<number>()
+	for (let k = 0; k <= n; k++) ts.add(sorted[Math.floor((k / n) * (sorted.length - 1))]!)
+	return [...ts]
+}
+
+/** Pairwise clustering F1 of resolved entities vs the NPI grouping (record.id = the NPI). */
+function clusterF1(entities: { records: readonly SourceRecord[] }[]): number {
+	const choose2 = (k: number) => (k * (k - 1)) / 2
+	const npiTotals = new Map<string, number>()
+	let tp = 0
+	let sumCluster = 0
+	for (const e of entities) {
+		const byNpi = new Map<string, number>()
+		for (const rec of e.records) byNpi.set(rec.id, (byNpi.get(rec.id) ?? 0) + 1)
+		sumCluster += choose2(e.records.length)
+		for (const [npi, c] of byNpi) {
+			tp += choose2(c)
+			npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + c)
+		}
+	}
+	let sumClass = 0
+	for (const total of npiTotals.values()) sumClass += choose2(total)
+	const precision = sumCluster > 0 ? tp / sumCluster : 0
+	const recall = sumClass > 0 ? tp / sumClass : 0
+	return precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
 }
 
 async function main(): Promise<void> {
@@ -171,8 +210,8 @@ async function main(): Promise<void> {
 	const geocoded = records.filter((r) => r.address?.geocode).length
 	console.error(`    ${records.length} records, ${geocoded} geocoded`)
 
-	// --- Phase D: block → features (the SHARED featurizer) → labels → train. ---
-	console.error("[D] blocking + featurizing + training…")
+	// --- Phase D: block → features (the SHARED featurizer) → labels. ---
+	console.error("[D] blocking + featurizing…")
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 	const { pairs } = block(records, defaultBlockingKeys())
@@ -181,12 +220,50 @@ async function main(): Promise<void> {
 	const posRate = Y.reduce((s, v) => s + v, 0) / Math.max(1, Y.length)
 	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate)) // class-balanced (same as the eval)
 	const hyperparams = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
+
+	// --- Phase E: calibrate the default link threshold. The GBT logit is NOT in FS-weight units — it's
+	// trained with class-balanced weights, so logit 0 (the balanced boundary) ignores the ~1% match base
+	// rate and over-merges. Split the NPIs 80/20, fit a calibration GBT on the 80%, and sweep the
+	// CLUSTERING threshold on the held-out 20% (the metric resolveEntities actually optimizes) for F1-max.
+	// The shipped full-data model has near-identical logit calibration, so the threshold transfers. ---
+	console.error("[E] calibrating the default link threshold on a held-out NPI split…")
+	const rnd = lcg(20260615)
+	const split = new Map<string, "fit" | "holdout">()
+	for (const npi of kept) split.set(npi, rnd() < 0.8 ? "fit" : "holdout")
+	const fitPairs = pairs.filter(([a, b]) => split.get(a.id) === "fit" && split.get(b.id) === "fit")
+	const calibGbt = trainGBT(
+		fitPairs.map(([a, b]) => featurize(a, b)),
+		fitPairs.map(([a, b]) => (a.id === b.id ? 1 : 0)),
+		fitPairs.map(([a, b]) => (a.id === b.id ? 1 - posRate : posRate)),
+		hyperparams
+	)
+	const calibScorer = (a: SourceRecord, b: SourceRecord) => gbtScore(calibGbt, featurize(a, b))
+	const holdoutRecords = records.filter((r) => split.get(r.id) === "holdout")
+	const { pairs: holdoutPairs } = block(holdoutRecords, defaultBlockingKeys())
+	const holdoutScores = holdoutPairs.map(([a, b]) => calibScorer(a, b)).sort((p, q) => p - q)
+	let recommendedThreshold = 0
+	let bestF1 = -1
+	for (const t of uniqueQuantiles(holdoutScores, 40)) {
+		const { entities } = resolveEntities(holdoutRecords, {
+			addressFrequency,
+			collapseSpatial: true,
+			scorer: calibScorer,
+			threshold: t,
+		})
+		const f1 = clusterF1(entities)
+		if (f1 > bestF1) {
+			bestF1 = f1
+			recommendedThreshold = t
+		}
+	}
+	console.error(
+		`    recommended link threshold ${recommendedThreshold.toFixed(3)} (held-out clustering F1 ${(100 * bestF1).toFixed(1)}%)`
+	)
+
+	// --- Phase F: train the SHIPPED model on ALL pairs. ---
+	console.error("[F] training the shipped model on all pairs…")
 	const model = trainGBT(X, Y, W, hyperparams)
 	console.error(`    ${pairs.length} pairs (${(100 * posRate).toFixed(1)}% positive), ${model.trees.length} trees`)
-
-	// --- Sanity: the trained scorer should separate same-NPI from different-NPI pairs on TRAIN. ---
-	const sample = resolveEntities(records, { addressFrequency, collapseSpatial: true, trainEM: true })
-	console.error(`    (FS-spine self-resolve: ${records.length} → ${sample.entities.length} entities, for reference)`)
 
 	// --- Emit the model as a committed TS module. The literal is single-line + prettier-ignored so a
 	// retrain produces a clean one-line diff, not a thousand reformatted lines. ---
@@ -200,6 +277,7 @@ async function main(): Promise<void> {
 		pairs: pairs.length,
 		posRate: Number(posRate.toFixed(4)),
 		hyperparams,
+		recommendedThreshold: Number(recommendedThreshold.toFixed(4)), // F1-max link threshold (held-out); resolveEntities' default when learnedScorer is active
 		features: X[0]?.length ?? 0,
 		addressFrequencyDistinct: addrCounts.size,
 		addressFrequencyTotal: addrTotal,
