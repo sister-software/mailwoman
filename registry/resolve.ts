@@ -256,12 +256,18 @@ export interface ResolveConfig {
 	 */
 	discriminators?: string[]
 	/**
-	 * Override the Fellegi-Sunter link weight with a LEARNED score (#603). When set, a candidate pair's
-	 * match weight is this function's return value (same threshold-comparable units as the FS weight)
-	 * instead of {@link scorePair}'s. Default undefined (pure FS). The blocking + clustering are
-	 * unchanged, so a trained scorer can be A/B'd against the FS spine on the identical pipeline. The
-	 * function is responsible for its own feature computation (e.g. the agreement pattern, which is
-	 * EM-independent, plus any corpus statistics it captured).
+	 * Override the Fellegi-Sunter link weight with a LEARNED score (#603). When set, a candidate
+	 * pair's match weight is this function's return value (same threshold-comparable units as the FS
+	 * weight) instead of {@link scorePair}'s. Default undefined (pure FS). The blocking + clustering
+	 * are unchanged, so a trained scorer can be A/B'd against the FS spine on the identical pipeline.
+	 * The function is responsible for its own feature computation (e.g. the agreement pattern, which
+	 * is EM-independent, plus any corpus statistics it captured).
+	 *
+	 * INTERACTION with {@link requireCorroboration}: the two are independent and compose, but the
+	 * corroboration gate is still evaluated on the Fellegi-Sunter `contributions` (NOT the learned
+	 * score) — so a learned-high pair with no positive FS name/org/phone agreement is still gated
+	 * out. A learned scorer is normally trained to subsume corroboration, so use ONE or the other;
+	 * combining them lets the FS gate veto the learned score, which is rarely what you want.
 	 */
 	scorer?: (a: SourceRecord, b: SourceRecord) => number
 }
