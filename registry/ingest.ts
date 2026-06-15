@@ -71,7 +71,10 @@ export async function* streamRows(
 	const handle = await open(source, "r")
 	try {
 		let header: string[] | null = null
-		for await (const line of TextSpliterator.fromAsync(handle, { delimiter: Delimiters.LineFeed, autoDispose: false })) {
+		for await (const line of TextSpliterator.fromAsync(handle, {
+			delimiter: Delimiters.LineFeed,
+			autoDispose: false,
+		})) {
 			if (line.length === 0) continue // blank line / trailing newline
 			const fields = line.replace(/\r$/, "").split(sep) // tolerate CRLF
 			if (header === null) {
@@ -101,6 +104,12 @@ export interface ColumnMapping {
 	address?: string | string[]
 	phone?: string
 	email?: string
+	/**
+	 * Extra secondary-identifier fields → the column(s) to draw each from (joined with spaces). Land
+	 * on `SourceRecord.attributes` under the same key, for the matcher's `discriminators`
+	 * (authorized-official name, taxonomy, license…).
+	 */
+	attributes?: Record<string, string | string[]>
 }
 
 /** Options for {@link ingestRows}. */
@@ -145,6 +154,14 @@ export async function ingestRows(
 		const orgValue = pick(row, mapping.organization)
 		const addressValue = pick(row, mapping.address)
 
+		let attributes: Record<string, string> | undefined
+		if (mapping.attributes) {
+			for (const [key, columns] of Object.entries(mapping.attributes)) {
+				const value = pick(row, columns)
+				if (value) (attributes ??= {})[key] = value
+			}
+		}
+
 		const record: SourceRecord = {
 			id,
 			source: mapping.source,
@@ -154,6 +171,7 @@ export async function ingestRows(
 			email: (mapping.email && row[mapping.email]?.trim()?.toLowerCase()) || undefined,
 			address:
 				addressValue && opts.geocodeAddress ? ((await opts.geocodeAddress(addressValue)) ?? undefined) : undefined,
+			attributes,
 			raw: row,
 		}
 

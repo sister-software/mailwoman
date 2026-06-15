@@ -23,6 +23,13 @@ export interface SourceRecord {
 	address?: PostalAddress | null
 	phone?: string | null
 	email?: string | null
+	/**
+	 * Additional secondary-identifier fields, normalized — anything that helps tell two records apart
+	 * or confirm they're the same beyond name/org/address/phone (an authorized-official name, a
+	 * provider taxonomy, a license number…). Used as extra comparisons + corroborators when the model
+	 * is built with matching `discriminators`. Keyed by a stable field name the model references.
+	 */
+	attributes?: Record<string, string>
 	/** The original row, verbatim, for audit. */
 	raw?: Record<string, string>
 }

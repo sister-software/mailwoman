@@ -73,6 +73,8 @@ const C = {
 	mState: "Provider Business Mailing Address State Name",
 	mZip: "Provider Business Mailing Address Postal Code",
 	otherOrg: "Provider Other Organization Name",
+	authLast: "Authorized Official Last Name",
+	authFirst: "Authorized Official First Name",
 }
 
 const norm = (s: string | undefined) => (s ?? "").trim()
@@ -85,6 +87,7 @@ interface MessyRow {
 	name: string
 	org: string
 	address: string
+	auth: string
 }
 
 async function main(): Promise<void> {
@@ -133,11 +136,12 @@ async function main(): Promise<void> {
 			const primaryName = isOrg ? norm(r[C.orgLegal]) : `${norm(r[C.first])} ${norm(r[C.last])}`.trim()
 			if (primaryName) {
 				const org = isOrg ? norm(r[C.orgLegal]) : ""
+				const auth = `${norm(r[C.authFirst])} ${norm(r[C.authLast])}`.trim() // the NPI's registrant — shared across its records
 				kept.add(npi)
-				rows.push({ npi, name: primaryName, org, address: practice }) // primary
-				for (const alt of altNames.get(npi)!) rows.push({ npi, name: alt, org: alt, address: practice }) // name drift
+				rows.push({ npi, name: primaryName, org, address: practice, auth }) // primary
+				for (const alt of altNames.get(npi)!) rows.push({ npi, name: alt, org: alt, address: practice, auth }) // name drift
 				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
-				if (mailing && mailing !== practice) rows.push({ npi, name: primaryName, org, address: mailing }) // address variation
+				if (mailing && mailing !== practice) rows.push({ npi, name: primaryName, org, address: mailing, auth }) // address variation
 			}
 		}
 	}
@@ -176,7 +180,14 @@ async function main(): Promise<void> {
 		country: "US",
 	})
 
-	const mapping: ColumnMapping = { id: "npi", name: "name", organization: "org", address: "address", source: "nppes" }
+	const mapping: ColumnMapping = {
+		id: "npi",
+		name: "name",
+		organization: "org",
+		address: "address",
+		attributes: { authorizedOfficial: "auth" },
+		source: "nppes",
+	}
 	const records = await ingestRows(rows as unknown as Record<string, string>[], mapping, { geocodeAddress: seam })
 	shardProvider.close()
 	lookup.close()
@@ -257,11 +268,19 @@ async function main(): Promise<void> {
 	// threshold to isolate its marginal effect, then sweep the link threshold on the best config (geocode
 	// once, resolve many — config is cheap). ---
 	console.error(`[D] resolving the lever progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
-	type LeverConfig = { addressFrequency?: typeof addressFrequency; collapseSpatial?: boolean }
+	type LeverConfig = {
+		addressFrequency?: typeof addressFrequency
+		collapseSpatial?: boolean
+		discriminators?: string[]
+	}
 	const LEVERS: Array<{ label: string; config: LeverConfig }> = [
 		{ label: "baseline (address-key + distance)", config: {} },
 		{ label: "+ inverse-address-frequency (#617)", config: { addressFrequency } },
 		{ label: "+ collapsed spatial signal (A1, #625)", config: { addressFrequency, collapseSpatial: true } },
+		{
+			label: "+ authorized-official discriminator (#625)",
+			config: { addressFrequency, collapseSpatial: true, discriminators: ["authorizedOfficial"] },
+		},
 	]
 	const progression = LEVERS.map((l) => {
 		const res = resolveEntities(records, { trainEM: TRAIN_EM, threshold: 0, ...l.config })
@@ -313,8 +332,10 @@ async function main(): Promise<void> {
 		`Inverse-frequency weighting uses the corpus-wide table (${addrCounts.size.toLocaleString()} distinct addresses ` +
 			`over ${addrTotal.toLocaleString()} providers) to down-weight a crowded shared address; collapsing the redundant ` +
 			`address-key + distance comparisons into one spatial signal (A1) removes the double-count that let a shared address ` +
-			`over-vote a disagreeing name. Across the levers, F1 ${pct(baseline.score.f1)}% → **${pct(bestLever.score.f1)}%** ` +
-			`(${signed(100 * (bestLever.score.f1 - baseline.score.f1))}).`
+			`over-vote a disagreeing name. The address-frequency + A1 spine is F1 ${pct(progression[2]!.score.f1)}% at the ` +
+			`default threshold; the **authorized-official discriminator** is roughly neutral there (${signed(100 * (bestLever.score.f1 - progression[2]!.score.f1))}) ` +
+			`but enables a higher cutoff — it holds recall where the spine alone collapses, reaching **${pct(best.score.f1)}%** at ` +
+			`threshold ${best.t} (below), the first config past the spine (#625).`
 	)
 	lines.push("")
 	lines.push(`## With all levers on, across the link threshold (the secondary lever)`)
@@ -357,19 +378,19 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(
 		`The geocode-first **foundation works**: **${pct(geo / N)}%** of addresses placed, blocking + clustering clean — the ` +
-			`geocoding (the Pelias/Nominatim-can't-do-this part) is not the bottleneck. The comparison-model levers above moved ` +
-			`F1 ${pct(baseline.score.f1)}% → **${pct(bestLever.score.f1)}%** (${signed(100 * (bestLever.score.f1 - baseline.score.f1))}): ` +
+			`geocoding (the Pelias/Nominatim-can't-do-this part) is not the bottleneck. The comparison-model levers reach the ` +
+			`address-frequency + A1 spine at F1 **${pct(progression[2]!.score.f1)}%** (${signed(100 * (progression[2]!.score.f1 - baseline.score.f1))} over baseline): ` +
 			`inverse-frequency weighting restores full weight to a *rare* shared address (stitching a provider's name-drifted ` +
 			`records together — mostly recall) while down-weighting a *crowded* one, and the collapsed spatial signal (A1) drops ` +
 			`the address+distance double-count. What remains is **precision / over-merge** — ${bestLever.score.overMergedClusters} ` +
 			`clusters still fuse distinct co-located providers, because even one down-weighted spatial agreement can outvote a ` +
-			`disagreeing name. Three levers were investigated and ALL are documented negatives here (#625): a name/org/phone ` +
+			`disagreeing name. The lever search (#625) — two negatives, then the first positive: a name/org/phone ` +
 			`**corroboration gate** (A2/A3) — phone is an unreliable secondary identifier on NPPES (shared institutional ` +
 			`switchboard lines), so it over-links and falsely corroborates co-phone distinct providers; and **average-linkage ` +
 			`clustering** (A4) — the over-merged clusters are joined by STRONG shared-address edges, not weak bridges, so ` +
 			`average-linkage can't split them and only trades away name-drift recall. The over-merge is a **scoring** problem ` +
-			`this data can't resolve, not a clustering-topology one: the real levers are a more reliable secondary identifier ` +
-			`(authorized-official name, taxonomy/license) or a learned scorer over the FS feature vector (#603). Config ` +
+			`this data can't resolve, not a clustering-topology one. The **authorized-official discriminator** is the first lever to beat the spine — a reliable secondary identifier holds recall so a higher threshold separates the co-located providers; a still-more-distinctive identifier ` +
+			`(taxonomy / license) or a learned scorer over the FS feature vector (#603) goes further. Config ` +
 			`dominates the model (the pre-registered finding) — tracked as #625 / the selective-model work (#602 / #603).`
 	)
 	lines.push("")

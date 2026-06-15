@@ -111,6 +111,12 @@ export interface DefaultModelOptions {
 	 * and the secondary corroborator that lets a true same-entity link survive name drift under A2.
 	 */
 	usePhone?: boolean
+	/**
+	 * Extra secondary-identifier comparisons drawn from {@link SourceRecord.attributes} (e.g.
+	 * `["authorizedOfficial"]`). Each becomes an `attr:<key>` comparison AND counts toward A2
+	 * corroboration — a more reliable discriminator than phone where the data has one (#625).
+	 */
+	discriminators?: string[]
 }
 
 /**
@@ -137,6 +143,15 @@ export function buildDefaultModel(opts: DefaultModelOptions = {}): FellegiSunter
 				extract: (r) => normalizePhone(r.phone),
 				similarity: (a, b) => (a === b ? 1 : 0), // exact normalized-digit match only
 				levels: PHONE_LEVELS,
+			})
+		)
+	}
+	for (const key of opts.discriminators ?? []) {
+		identity.push(
+			similarityComparison<SourceRecord>({
+				name: `attr:${key}`,
+				extract: (r) => r.attributes?.[key],
+				levels: NAME_LEVELS,
 			})
 		)
 	}
@@ -235,6 +250,11 @@ export interface ResolveConfig {
 	 * bridge — the principled over-merge fix.
 	 */
 	linkage?: "single" | "average"
+	/**
+	 * Extra secondary-identifier keys (from {@link SourceRecord.attributes}) to add as comparisons +
+	 * corroborators — e.g. `["authorizedOfficial"]`. Ignored if `model` is supplied.
+	 */
+	discriminators?: string[]
 }
 
 /** The outcome of a resolve pass. */
@@ -257,6 +277,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 			addressFrequency: config.addressFrequency,
 			collapseSpatial: config.collapseSpatial,
 			usePhone: config.usePhone,
+			discriminators: config.discriminators,
 		})
 	const blockingKeys = config.blockingKeys ?? defaultBlockingKeys()
 	const threshold = config.threshold ?? 0
@@ -275,7 +296,9 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 		// A2 (#625): a link must carry positive name OR org corroboration — a shared (even down-weighted)
 		// address alone is not identity. Spatial-only pairs are suppressed below any threshold.
 		if (config.requireCorroboration) {
-			const corroborated = score.contributions.some((c) => CORROBORATING_FIELDS.has(c.name) && c.weight > 0)
+			const corroborated = score.contributions.some(
+				(c) => (CORROBORATING_FIELDS.has(c.name) || c.name.startsWith("attr:")) && c.weight > 0
+			)
 			if (!corroborated) weight = Number.NEGATIVE_INFINITY
 		}
 		return { a, b, weight }
