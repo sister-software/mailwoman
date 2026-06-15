@@ -149,7 +149,8 @@ export const DEFAULT_MAPPING: ColumnMapping = {
 }
 
 /**
- * Resolve --mapping (a file path or inline JSON) and merge it over `base` (default {@link DEFAULT_MAPPING}).
+ * Resolve --mapping (a file path or inline JSON) and merge it over `base` (default
+ * {@link DEFAULT_MAPPING}).
  */
 export function loadMapping(
 	option: string | undefined,
@@ -240,7 +241,8 @@ interface MultiSourceSpec {
 	delimiter?: "comma" | "tab"
 	mapping: ColumnMapping
 	source?: string
-	/** Read at most this many rows (the head of the file) — sampling a huge source without pre-filtering. */
+	/** Read at most this many rows (the head of the file) — sampling a huge source without
+pre-filtering. */
 	limit?: number
 }
 
@@ -286,9 +288,14 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			perSource.push(`${label} ${recs.length}`)
 		}
 
+		// learnedScorer:false — multi-source is CROSS-dataset link discovery (recall-oriented): the same
+		// facility under different operational names across sources is the signal we want. The default GBT is
+		// dedup-calibrated and rejects exactly that (it learned "same place + name drift = distinct"), so the
+		// cross-dataset path uses the FS spine. (Single-CSV dedup below keeps the GBT default.)
 		const result = resolveEntities(records, {
 			trainEM: options.trainEm,
 			threshold: options.threshold,
+			learnedScorer: false,
 			...(options.maxBlockSize !== undefined ? { maxBlockSize: options.maxBlockSize } : {}),
 		})
 		const geojson = toGeoJSON(result.entities)
