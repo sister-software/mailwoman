@@ -107,6 +107,43 @@ describe("address-frequency down-weighting (#617)", () => {
 	})
 })
 
+describe("name-or-org corroboration gate (A2, #625)", () => {
+	it("suppresses a spatial-only link — a shared address with disagreeing names does not merge", () => {
+		const a = coLocated("1", "Robert", "Smith") // same address...
+		const b = coLocated("2", "Maria", "Garcia") // ...different people
+		// A permissive threshold so the shared address alone WOULD merge them without the gate.
+		const without = resolveEntities([a, b], { threshold: -100 })
+		expect(without.entities).toHaveLength(1) // over-merge: an address-only link
+
+		const gated = resolveEntities([a, b], { threshold: -100, requireCorroboration: true })
+		expect(gated.entities).toHaveLength(2) // the gate holds the distinct providers apart
+	})
+
+	it("still merges when names DO corroborate at a shared address", () => {
+		const a = coLocated("1", "Robert", "Smith")
+		const b = coLocated("2", "Robert", "Smith") // same person, same place — name agreement corroborates
+		const res = resolveEntities([a, b], { threshold: -100, requireCorroboration: true })
+		expect(res.entities).toHaveLength(1)
+	})
+})
+
+describe("phone corroboration rescues name drift (A3, #625)", () => {
+	it("merges a shared-address, name-drifted pair when they share a phone line", () => {
+		const a: SourceRecord = { ...coLocated("1", "Acme", "Health"), phone: "512-555-0100" }
+		const b: SourceRecord = { ...coLocated("2", "Saint", "Marys"), phone: "(512) 555-0100" } // same line, drifted name
+		// The name/org-only gate (A2) would block this; phone (A3) is the secondary identifier that rescues it.
+		const res = resolveEntities([a, b], { threshold: -100, requireCorroboration: true, usePhone: true })
+		expect(res.entities).toHaveLength(1)
+	})
+
+	it("keeps distinct providers apart when they share an address but NOT a phone", () => {
+		const a: SourceRecord = { ...coLocated("1", "Acme", "Health"), phone: "512-555-0100" }
+		const b: SourceRecord = { ...coLocated("2", "Saint", "Marys"), phone: "512-555-0200" } // different line
+		const res = resolveEntities([a, b], { threshold: -100, requireCorroboration: true, usePhone: true })
+		expect(res.entities).toHaveLength(2)
+	})
+})
+
 describe("toGeoJSON", () => {
 	it("emits a Point feature per geocoded entity with analyst-facing properties", () => {
 		const { entities } = resolveEntities(records)
