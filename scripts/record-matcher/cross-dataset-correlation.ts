@@ -266,8 +266,15 @@ async function main(): Promise<void> {
 	// spatial (A1) + inverse-address-frequency. We feed the corpus-wide table when we built one; otherwise
 	// resolveEntities auto-computes the input-scoped default. ---
 	console.error("[D] resolving across sources…")
+	// learnedScorer:false — the GBT default is calibrated for same-dataset DEDUP, where "same address +
+	// different name" means distinct co-located providers (reject). CROSS-dataset linkage is the opposite
+	// objective: "same address + different name" is the prototypical signal of the SAME facility under a
+	// different operational name across sources. The dedup GBT rejects exactly those true cross-source
+	// links (measured: cross-source 219→166, triple-source 10→1), so this flow uses the recall-appropriate
+	// FS spine. (A cross-objective GBT threshold is the documented follow-up — #655.)
 	const { entities, candidatePairs } = resolveEntities(records, {
 		trainEM: true,
+		learnedScorer: false,
 		...(addressFrequency ? { addressFrequency } : {}),
 	})
 
@@ -333,6 +340,13 @@ async function main(): Promise<void> {
 					`down-weighted as weak identity evidence).`
 			: `Matched with the zero-config default (#86): collapsed spatial (A1) + an input-scoped address-frequency table ` +
 					`(\`--no-corpus-frequency\`; pass nothing to build the corpus-wide table from the full files instead).`
+	)
+	lines.push("")
+	lines.push(
+		`Scored with the Fellegi-Sunter spine (\`learnedScorer: false\`): cross-dataset link discovery is ` +
+			`recall-oriented — the same facility under different operational names across sources is the signal — so the ` +
+			`dedup-calibrated GBT default (#603), which is trained to REJECT "same place, different name," is pinned off ` +
+			`here. A cross-objective GBT threshold is the follow-up (#655).`
 	)
 	lines.push("")
 	lines.push(`## Cross-dataset links (entities spanning ≥2 sources)`)

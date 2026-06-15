@@ -182,7 +182,10 @@ async function main(): Promise<void> {
 	console.error(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
 	console.error("[D] resolving + reconciling…")
-	const { entities } = resolveEntities(records, { trainEM: true, collapseSpatial: true })
+	// learnedScorer:false — reconciliation joins eligibility ↔ funding ACROSS datasets (recall-oriented):
+	// the same facility under different operational names is the signal we want, which the dedup-calibrated
+	// GBT default rejects (measured: "enrolled" overlap 22→6). Use the FS spine for this cross-dataset join.
+	const { entities } = resolveEntities(records, { trainEM: true, collapseSpatial: true, learnedScorer: false })
 
 	// --- Classify every entity into a reconciliation bucket. ---
 	const classified = entities.map((e) => {
@@ -226,6 +229,12 @@ async function main(): Promise<void> {
 			`**funding/enrollment** = FCC Rural Health Care filings. Each resolved entity is classified by which kinds ` +
 			`of source its records span. This is a **set-membership reconciliation, not a determination** — see the ` +
 			`caveat below._`
+	)
+	lines.push("")
+	lines.push(
+		`Scored with the Fellegi-Sunter spine (\`learnedScorer: false\`): this is a cross-dataset eligibility ↔ ` +
+			`funding join (recall-oriented), so the dedup-calibrated GBT default (#603) — trained to reject the ` +
+			`"same place, different operational name" pattern that IS the cross-source signal — is pinned off. See #655.`
 	)
 	lines.push("")
 	lines.push(`## The reconciliation`)

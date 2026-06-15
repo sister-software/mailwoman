@@ -172,7 +172,14 @@ evidence says they pay — never the foundation:
   it earns the default slot, shipped with a calibrated link threshold (its logit
   isn't in FS-weight units). The model is NPPES/US-trained; for a very different
   domain, A/B it or drop back to the hand-weighted spine with
-  `resolveEntities({ learnedScorer: false })`.
+  `resolveEntities({ learnedScorer: false })`. One sharp caveat we measured: the GBT
+  is calibrated for **dedup** — where "same address, different name" means distinct
+  co-located providers, so it's trained to _reject_ that. **Cross-dataset link
+  discovery is the opposite objective** — that same pattern is the prototypical
+  signal of one facility under different operational names across sources — so the
+  cross-dataset and reconciliation flows pin the FS spine (`learnedScorer: false`),
+  where recall, not over-merge precision, is what matters. Same model, opposite
+  objective: pick the scorer by the question you're asking.
 - **An LLM in the gray zone, never on the easy 95%.** Framed as in-context
   _clustering_ rather than all-pairs classification, an LLM cuts API calls ~5× and
   improves quality (LLM-CER, 2025). Spend it only on the clerical-review band the
