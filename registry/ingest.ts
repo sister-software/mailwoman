@@ -112,6 +112,62 @@ export interface ColumnMapping {
 	attributes?: Record<string, string | string[]>
 }
 
+/**
+ * Best-effort {@link ColumnMapping} inferred from a header row — the "point it at any CSV"
+ * convenience. Each column name is matched (case- and punctuation-insensitive, on whole tokens) to
+ * a field by keyword, in a precedence that resolves the common ambiguities: a dedicated id / phone
+ * / email column is claimed before the generic sweep, an org / facility column beats a person
+ * "name", and address columns (street / city / state / zip…) collect into one multi-column field.
+ * Imperfect on bespoke headers (an explicit mapping or the LLM-assisted inference #603 is the
+ * answer there), but it nails tidy and semi-tidy files with no hand-mapping. Unmatched columns are
+ * left out.
+ */
+export function inferMapping(header: readonly string[]): ColumnMapping {
+	// Pad to whole-token boundaries so "state" doesn't match inside "statement".
+	const tok = (h: string) =>
+		` ${h
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, " ")
+			.trim()} `
+	const mapping: ColumnMapping = {}
+	const name: string[] = []
+	const address: string[] = []
+
+	for (const column of header) {
+		const h = tok(column)
+		const has = (...words: string[]): boolean => words.some((w) => h.includes(` ${w} `))
+
+		if (!mapping.email && has("email", "e mail")) mapping.email = column
+		else if (!mapping.phone && has("phone", "telephone", "tel", "mobile", "cell")) mapping.phone = column
+		else if (!mapping.id && has("id", "npi", "ein", "frn", "spin", "uuid", "guid", "key")) mapping.id = column
+		else if (has("org", "organization", "organisation", "company", "business", "facility", "agency", "employer"))
+			mapping.organization ??= column
+		else if (
+			has(
+				"street",
+				"address",
+				"addr",
+				"city",
+				"town",
+				"state",
+				"province",
+				"zip",
+				"zipcode",
+				"postal",
+				"postcode",
+				"county"
+			)
+		)
+			address.push(column)
+		else if (has("name", "first", "last", "given", "family", "middle", "surname", "fullname", "contact"))
+			name.push(column)
+	}
+
+	if (name.length) mapping.name = name.length === 1 ? name[0]! : name
+	if (address.length) mapping.address = address
+	return mapping
+}
+
 /** Options for {@link ingestRows}. */
 export interface IngestOptions {
 	/** The geocoding seam. Without it, records carry name/org but no resolved address. */

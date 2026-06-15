@@ -13,6 +13,7 @@ import {
 	type RawGeocode,
 	delimiterFor,
 	geocodeAddressVia,
+	inferMapping,
 	ingestRows,
 	parseCsv,
 	streamRows,
@@ -27,6 +28,46 @@ describe("parseCsv", () => {
 		const rows = parseCsv(CSV)
 		expect(rows).toHaveLength(2)
 		expect(rows[0]).toMatchObject({ id: "c1", name: "Dr. Robert Smith", state: "OR" })
+	})
+})
+
+describe("inferMapping", () => {
+	it("maps a tidy header to the obvious fields", () => {
+		const m = inferMapping(["id", "name", "org", "street", "city", "state", "zip", "phone", "email"])
+		expect(m).toMatchObject({ id: "id", organization: "org", phone: "phone", email: "email", name: "name" })
+		expect(m.address).toEqual(["street", "city", "state", "zip"])
+	})
+
+	it("reads a real bespoke header (TX HHSC facility), id beating org despite 'Facility'", () => {
+		const m = inferMapping([
+			"Facility ID",
+			"Facility Name",
+			"Physical Address",
+			"Physical Address CITY",
+			"Physical Address State",
+			"Physical Address Zipcode",
+			"Facility Phone Number",
+		])
+		expect(m.id).toBe("Facility ID")
+		expect(m.organization).toBe("Facility Name")
+		expect(m.phone).toBe("Facility Phone Number")
+		expect(m.address).toEqual([
+			"Physical Address",
+			"Physical Address CITY",
+			"Physical Address State",
+			"Physical Address Zipcode",
+		])
+	})
+
+	it("prefers org over a person name, and a dedicated email over the generic sweep", () => {
+		const m = inferMapping(["Organization Name", "Contact First Name", "Contact Last Name", "Contact E-mail"])
+		expect(m.organization).toBe("Organization Name")
+		expect(m.email).toBe("Contact E-mail")
+		expect(m.name).toEqual(["Contact First Name", "Contact Last Name"])
+	})
+
+	it("matches whole tokens — 'Statement' is not an address 'state'", () => {
+		expect(inferMapping(["Statement", "Notes"])).toEqual({})
 	})
 })
 
