@@ -164,7 +164,13 @@ evidence says they pay — never the foundation:
 - **A gradient-boosted matcher** over the comparison vector once labels exist. A
   tree over `{distance, name-sim, street-sim}` already clears ~90% matched-class F1
   in production (Grab) — a strong, interpretable upgrade from hand-weights, not a
-  neural moonshot.
+  neural moonshot. **This one is shipped** (`resolveEntities({ learnedScorer: true })`,
+  off by default): a pure-Node gradient-boosted tree over the agreement pattern plus
+  the over-merge interaction (co-located × name-disagree), trained on the NPPES
+  NPI-truth set. It beat the Fellegi-Sunter spine by ~5pp dedup F1 held-out within a
+  state and generalized across states (TX→CA/NY) in the eval — so it earns the slot.
+  It learns the over-merge signature the hand-weights miss; the spine stays the
+  default until you've A/B'd the model on your own data.
 - **An LLM in the gray zone, never on the easy 95%.** Framed as in-context
   _clustering_ rather than all-pairs classification, an LLM cuts API calls ~5× and
   improves quality (LLM-CER, 2025). Spend it only on the clerical-review band the
@@ -210,12 +216,12 @@ conjure rarity from a single record with nothing to compare it to.
 
 ## The layers
 
-| Workspace             | Job                                                                                  |
-| --------------------- | ------------------------------------------------------------------------------------ |
-| `@mailwoman/formatter`| The inverse of the parser: components → idiomatic localized string + a canonical key. |
-| `@mailwoman/record`   | The record schema (person / organization / address) + per-field normalizers.         |
-| `@mailwoman/match`    | Block (geo-first) → score (Fellegi-Sunter) → cluster (centroid-linkage).              |
-| _the application_     | Ingest → normalize → geocode → match → cluster → export to GeoJSON / QGIS / leads.    |
+| Workspace              | Job                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------- |
+| `@mailwoman/formatter` | The inverse of the parser: components → idiomatic localized string + a canonical key. |
+| `@mailwoman/record`    | The record schema (person / organization / address) + per-field normalizers.          |
+| `@mailwoman/match`     | Block (geo-first) → score (Fellegi-Sunter) → cluster (centroid-linkage).              |
+| _the application_      | Ingest → normalize → geocode → match → cluster → export to GeoJSON / QGIS / leads.    |
 
 The formatter is the small foundation — it's also the piece this whole thread
 started as, before we understood it was one component of a matcher. The record
