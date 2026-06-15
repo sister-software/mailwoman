@@ -25,6 +25,7 @@ import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolve
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	geocodeAddressVia,
+	inferMapping,
 	ingestRows,
 	parseCsv,
 	resolveEntities,
@@ -59,8 +60,16 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe(
 			"Column mapping: a path to a JSON file (or inline JSON) of { id?, source?, name?, organization?, address?, " +
-				"phone?, email? }, where each field names the CSV column(s) to draw from. Merged over the built-in default; " +
-				"column names are matched case-sensitively. Inferring the mapping from the header is the #603 fast-follow."
+				"phone?, email? }, where each field names the CSV column(s) to draw from. Merged over the base (the built-in " +
+				"default, or --infer-mapping's inference); column names are matched case-sensitively."
+		),
+	inferMapping: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"Infer the column mapping from the header by keyword (best-effort — point it at any reasonably-named CSV). " +
+				"Used as the base instead of the built-in default; an explicit --mapping still merges on top. Single-CSV mode."
 		),
 	sources: zod
 		.string()
@@ -139,8 +148,14 @@ export const DEFAULT_MAPPING: ColumnMapping = {
 	email: "email",
 }
 
-/** Resolve --mapping (a file path or inline JSON) and merge it over {@link DEFAULT_MAPPING}. */
-export function loadMapping(option: string | undefined, source: string | undefined): ColumnMapping {
+/**
+ * Resolve --mapping (a file path or inline JSON) and merge it over `base` (default {@link DEFAULT_MAPPING}).
+ */
+export function loadMapping(
+	option: string | undefined,
+	source: string | undefined,
+	base: ColumnMapping = DEFAULT_MAPPING
+): ColumnMapping {
 	let provided: Partial<ColumnMapping> = {}
 	if (option) {
 		const text = option.trim().startsWith("{") ? option : readFileSync(option, "utf8")
@@ -150,7 +165,7 @@ export function loadMapping(option: string | undefined, source: string | undefin
 			throw new Error(`--mapping is neither a readable file nor valid JSON: ${(err as Error).message}`)
 		}
 	}
-	return { ...DEFAULT_MAPPING, ...provided, ...(source ? { source } : {}) }
+	return { ...base, ...provided, ...(source ? { source } : {}) }
 }
 
 function resolveWofPath(options: zod.infer<typeof OptionsSchema>): string {
@@ -217,14 +232,15 @@ async function buildGeocoder(
 }
 
 /**
- * One dataset in a `--sources` config: where it lives, its mapping, an optional provenance label + row cap.
+ * One dataset in a `--sources` config: where it lives, its mapping, an optional provenance label +
+ * row cap.
  */
 interface MultiSourceSpec {
 	path: string
 	delimiter?: "comma" | "tab"
 	mapping: ColumnMapping
 	source?: string
-	/** Read at most this many rows (the head of the file) — for sampling a huge source without pre-filtering. */
+	/** Read at most this many rows (the head of the file) — sampling a huge source without pre-filtering. */
 	limit?: number
 }
 
@@ -299,8 +315,11 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 // ---------------------------------------------------------------------------
 
 async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
-	const mapping = loadMapping(options.mapping, options.source)
 	const rows = parseCsv(readFileSync(csvPath, "utf8"))
+	// --infer-mapping reads the header (the first row's keys) and guesses the mapping; an explicit --mapping
+	// still merges on top of it. Otherwise the base is the built-in default.
+	const base = options.inferMapping && rows[0] ? inferMapping(Object.keys(rows[0])) : DEFAULT_MAPPING
+	const mapping = loadMapping(options.mapping, options.source, base)
 	const { seam, close } = await buildGeocoder(options)
 
 	try {
