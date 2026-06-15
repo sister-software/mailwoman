@@ -39,7 +39,10 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
+import type { GBT } from "@mailwoman/match"
 import { writeFileSync } from "node:fs"
+import { resolve as resolvePath } from "node:path"
+import { pathToFileURL } from "node:url"
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 function arg(name: string, fallback = ""): string {
@@ -54,6 +57,9 @@ const WOF = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db
 const DATA_ROOT = arg("data-root", "/mnt/playpen/mailwoman-data")
 const OUT_MD = arg("out-md", "")
 const TRAIN_EM = !process.argv.includes("--no-train-em")
+// Optional A/B: a path to a trained dedup-gbt TS module (exports DEDUP_GBT_MODEL + DEDUP_GBT_META) to
+// score alongside the shipped GBT at both truth levels — e.g. grade the #625 corroboration candidate.
+const CANDIDATE = arg("candidate", "")
 
 const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
@@ -367,6 +373,30 @@ async function main(): Promise<void> {
 	const gbtRes = resolveEntities(records, { addressFrequency, trainEM: TRAIN_EM }) // GBT default-on (production)
 	const gbtNpi = scoreEntities(gbtRes.entities, npiLabel)
 	const gbtEntity = scoreEntities(gbtRes.entities, entityLabel)
+
+	// Optional candidate A/B (--candidate): score a trained GBT module at both levels, at its own
+	// recommendedThreshold, alongside the shipped GBT — grades a new model (e.g. corroboration features).
+	let cand: { label: string; npi: Score; entity: Score } | null = null
+	if (CANDIDATE) {
+		const mod = (await import(pathToFileURL(resolvePath(CANDIDATE)).href)) as {
+			DEDUP_GBT_MODEL: GBT
+			DEDUP_GBT_META?: { recommendedThreshold?: number; features?: number; costNegative?: number }
+		}
+		const t = mod.DEDUP_GBT_META?.recommendedThreshold ?? 0
+		const res = resolveEntities(records, {
+			addressFrequency,
+			trainEM: TRAIN_EM,
+			learnedScorer: mod.DEDUP_GBT_MODEL,
+			threshold: t,
+		})
+		const cost = mod.DEDUP_GBT_META?.costNegative ?? 1
+		cand = {
+			label: `GBT candidate (${mod.DEDUP_GBT_META?.features ?? "?"}-feat${cost !== 1 ? `, cost ×${cost}` : ""})`,
+			npi: scoreEntities(res.entities, npiLabel),
+			entity: scoreEntities(res.entities, entityLabel),
+		}
+		console.error(`    candidate ${CANDIDATE}: NPI ${(100 * cand.npi.f1).toFixed(1)}% / entity ${(100 * cand.entity.f1).toFixed(1)}%`)
+	}
 	console.error(
 		`    dual-level — FS: NPI ${(100 * fsNpi.f1).toFixed(1)}% / entity ${(100 * fsEntity.f1).toFixed(1)}%; ` +
 			`GBT: NPI ${(100 * gbtNpi.f1).toFixed(1)}% / entity ${(100 * gbtEntity.f1).toFixed(1)}%`
@@ -476,6 +506,10 @@ async function main(): Promise<void> {
 	dualRow("FS full stack", "**entity**", fsEntity, fsEntity.f1 - fsNpi.f1)
 	dualRow("GBT (shipped default)", "NPI", gbtNpi)
 	dualRow("GBT (shipped default)", "**entity**", gbtEntity, gbtEntity.f1 - gbtNpi.f1)
+	if (cand) {
+		dualRow(cand.label, "NPI", cand.npi)
+		dualRow(cand.label, "**entity**", cand.entity, cand.entity.f1 - cand.npi.f1)
+	}
 	lines.push("")
 	lines.push(
 		`Against the **site-level** truth the F1 barely moves (GBT ${signed(100 * (gbtEntity.f1 - gbtNpi.f1))}, ` +
