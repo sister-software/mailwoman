@@ -28,7 +28,9 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
+	createGbtScorer,
 	createMatchFeaturizer,
+	DEDUP_GBT_MODEL,
 	defaultBlockingKeys,
 	geocodeAddressVia,
 	ingestRows,
@@ -270,13 +272,25 @@ async function main(): Promise<void> {
 		scorer: lrScorer,
 		threshold: t,
 	}))
+	// The SHIPPED model (the default-on candidate): the bundled DEDUP_GBT_MODEL, NOT a fresh per-run TX
+	// fit. This is the arm that justifies flipping `learnedScorer` default-on — the actual artifact every
+	// caller would get, evaluated on a state it never trained on.
+	const bundledScorer = createGbtScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
+	const bundledArm = bestOver(quantileThresholds(evalPairs.map(([a, b]) => bundledScorer(a, b))), (t) => ({
+		addressFrequency,
+		collapseSpatial: true,
+		scorer: bundledScorer,
+		threshold: t,
+	}))
+	const dBundled = bundledArm.f1 - fs.f1
 
 	const pct = (x: number) => (100 * x).toFixed(1)
 	const sgn = (x: number) => (x >= 0 ? "+" : "")
 	const dGbt = gbtArm.f1 - fs.f1
 	const dLr = lrArm.f1 - fs.f1
 	console.error(
-		`    FS  ${pct(fs.f1)}%  ·  LR ${pct(lrArm.f1)}% (${sgn(dLr)}${pct(dLr)})  ·  GBT ${pct(gbtArm.f1)}% (${sgn(dGbt)}${pct(dGbt)})`
+		`    FS  ${pct(fs.f1)}%  ·  LR ${pct(lrArm.f1)}% (${sgn(dLr)}${pct(dLr)})  ·  GBT ${pct(gbtArm.f1)}% (${sgn(dGbt)}${pct(dGbt)})` +
+			`  ·  BUNDLED ${pct(bundledArm.f1)}% (${sgn(dBundled)}${pct(dBundled)})`
 	)
 
 	const row = (label: string, a: ArmScore, d: number | null, bold: boolean) => {
@@ -301,7 +315,13 @@ async function main(): Promise<void> {
 	lines.push(`|---|---:|---:|---:|---:|---:|`)
 	lines.push(row("FS spine (EM-fit)", fs, null, false))
 	lines.push(row("logistic regression", lrArm, dLr, false))
-	lines.push(row("gradient-boosted trees", gbtArm, dGbt, true))
+	lines.push(row(`GBT (fresh ${TRAIN_STATE} fit)`, gbtArm, dGbt, false))
+	lines.push(row("SHIPPED bundled model (default-on candidate)", bundledArm, dBundled, true))
+	lines.push("")
+	lines.push(
+		`The **bundled** row is the actual shipped \`DEDUP_GBT_MODEL\` (the default-on candidate), evaluated on ` +
+			`${EVAL_STATE} — a state it never trained on. The "fresh ${TRAIN_STATE} fit" row retrains per run for comparison.`
+	)
 	lines.push("")
 	const verdict =
 		dGbt > 0.02
