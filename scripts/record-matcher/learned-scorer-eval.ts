@@ -407,7 +407,7 @@ async function main(): Promise<void> {
 			`ranking barely moves.`
 	)
 	lines.push("")
-	lines.push(`<details><summary>Per-seed</summary>`)
+	lines.push(`### Per-seed`)
 	lines.push("")
 	lines.push(`| seed | test pairs | FS AUC | LR AUC | ΔAUC |`)
 	lines.push(`|---:|---:|---:|---:|---:|`)
@@ -416,8 +416,6 @@ async function main(): Promise<void> {
 		const la = auc(r.lrScored)
 		lines.push(`| ${r.seed} | ${r.testN} | ${f4(fa)} | ${f4(la)} | ${sgn(la - fa)}${f4(la - fa)} |`)
 	}
-	lines.push("")
-	lines.push(`</details>`)
 	lines.push("")
 	const verdict =
 		unanimous && (meanDelta > 0.01 || f1Delta > 0.02)
