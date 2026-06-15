@@ -28,6 +28,9 @@ import {
 	inferMapping,
 	ingestRows,
 	parseCsv,
+	reconcileCoverage,
+	reconciliationGeoJSON,
+	reconciliationReport,
 	resolveEntities,
 	streamRows,
 	toGeoJSON,
@@ -108,6 +111,17 @@ const OptionsSchema = zod.object({
 		.number()
 		.optional()
 		.describe("Skip + report blocks larger than this rather than scanning them (recall vs cost). Default: scan all."),
+	reconcile: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"Coverage reconciliation (#621): classify each resolved entity by which KIND of source its records " +
+				"span — `enrolled` (eligibility + funding), `eligible-not-enrolled` (the anti-join), or " +
+				"`funded-not-eligible`. Requires --sources where each spec carries `role: \"eligibility\" | \"funding\"`. " +
+				"Prints a set-membership report to stdout; --out writes bucket-tagged GeoJSON, --map-out a bucket-colored " +
+				"map. A reconciliation, never a determination."
+		),
 	source: zod.string().optional().describe("A provenance label stamped on every record (e.g. the dataset name)."),
 	locale: zod
 		.string()
@@ -251,6 +265,8 @@ interface MultiSourceSpec {
 	delimiter?: "comma" | "tab"
 	mapping: ColumnMapping
 	source?: string
+	/** For --reconcile: whether this dataset denotes eligibility/membership or funding/enrollment. */
+	role?: "eligibility" | "funding"
 	/** Read at most this many rows (the head of the file) — sampling a huge source without
 pre-filtering. */
 	limit?: number
@@ -330,11 +346,40 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			learnedScorer: false,
 			...(options.maxBlockSize !== undefined ? { maxBlockSize: options.maxBlockSize } : {}),
 		})
+		const geocoded = records.filter((r) => r.address?.geocode).length
+
+		// Reconciliation mode (#621): classify entities by eligibility/funding role membership, via the
+		// SAME @mailwoman/registry library as scripts/record-matcher/coverage-reconciliation.ts.
+		if (options.reconcile) {
+			const labelOf = (s: MultiSourceSpec) => s.source ?? s.path
+			const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)
+			const fundingSources = specs.filter((s) => s.role === "funding").map(labelOf)
+			if (!eligibilitySources.length || !fundingSources.length) {
+				throw new Error(
+					'--reconcile needs each --sources entry tagged with `role: "eligibility"` or `role: "funding"` ' +
+						"(at least one of each)."
+				)
+			}
+			const recon = reconcileCoverage(result.entities, { eligibilitySources, fundingSources })
+			const geojson = reconciliationGeoJSON(recon)
+			const report = reconciliationReport(recon, {
+				scopeNote:
+					`Resolved BLIND across ${specs.length} sources via \`mailwoman registry --reconcile\` ` +
+					`(${perSource.join(", ")}). Eligibility: ${eligibilitySources.join(", ")}; funding/enrollment: ` +
+					`${fundingSources.join(", ")}.`,
+				scorerNote:
+					"Scored with the Fellegi-Sunter spine (cross-dataset join, recall-oriented): the dedup-calibrated " +
+					'GBT default (#603) rejects the "same place, different operational name" pattern that IS the ' +
+					"cross-source signal, so it is pinned off here. See #655.",
+			})
+			const written = writeOutputs(geojson, options)
+			return written === null ? report : `${report}\n\n${written}`
+		}
+
 		const geojson = toGeoJSON(result.entities)
 		const crossSource = result.entities.filter(
 			(e) => new Set(e.records.map((r) => r.source).filter(Boolean)).size >= 2
 		).length
-		const geocoded = records.filter((r) => r.address?.geocode).length
 		const summary =
 			`registry --sources: ${specs.length} sources (${perSource.join(", ")}) → ${records.length} records ` +
 			`(${geocoded} geocoded) → ${result.entities.length} entities; ${crossSource} span ≥2 sources (cross-dataset links)`
@@ -351,6 +396,12 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 // ---------------------------------------------------------------------------
 
 async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
+	if (options.reconcile) {
+		throw new Error(
+			"--reconcile is a cross-source mode: pass --sources <config.json> (each entry tagged with a " +
+				'`role`), not a single positional CSV.'
+		)
+	}
 	const rows = parseCsv(readFileSync(csvPath, "utf8"))
 	// --infer-mapping reads the header (the first row's keys) and guesses the mapping; an explicit --mapping
 	// still merges on top of it. Otherwise the base is the built-in default.
