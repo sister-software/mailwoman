@@ -64,7 +64,8 @@ const NAME_LEVELS: ComparisonLevel[] = [
 ]
 
 /**
- * Exact-vs-different levels for a normalized phone. A shared line is strong, rarely-coincidental evidence.
+ * Exact-vs-different levels for a normalized phone. A shared line is strong, rarely-coincidental
+ * evidence.
  */
 const PHONE_LEVELS: ComparisonLevel[] = [
 	{ label: "exact", minSimilarity: 1.0, m: 0.6, u: 0.002 },
@@ -228,6 +229,12 @@ export interface ResolveConfig {
 	 * supplied.
 	 */
 	usePhone?: boolean
+	/**
+	 * A4 (#625): clustering linkage. `"single"` (default) = connected components; `"average"` =
+	 * average-linkage refinement that splits a component whose sub-clusters are joined only by a weak
+	 * bridge — the principled over-merge fix.
+	 */
+	linkage?: "single" | "average"
 }
 
 /** The outcome of a resolve pass. */
@@ -274,7 +281,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 		return { a, b, weight }
 	})
 
-	const clusters = cluster(records, links, { threshold })
+	const clusters = cluster(records, links, { threshold, linkage: config.linkage })
 
 	// Cohesion = the weakest within-cluster link weight (how tightly an entity holds together). Compute it
 	// in ONE pass over links via a record→cluster index, not by filtering every link for every cluster —

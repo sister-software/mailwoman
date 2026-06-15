@@ -363,12 +363,14 @@ async function main(): Promise<void> {
 			`records together — mostly recall) while down-weighting a *crowded* one, and the collapsed spatial signal (A1) drops ` +
 			`the address+distance double-count. What remains is **precision / over-merge** — ${bestLever.score.overMergedClusters} ` +
 			`clusters still fuse distinct co-located providers, because even one down-weighted spatial agreement can outvote a ` +
-			`disagreeing name. A name/org/phone **corroboration gate** (A2/A3) was investigated and does NOT beat this spine ` +
-			`on NPPES: phone is an unreliable secondary identifier here (shared institutional switchboard lines), so it ` +
-			`over-links via blocking and falsely corroborates co-phone distinct providers — a documented negative (#625). The ` +
-			`real over-merge lever is therefore **average-linkage clustering (A4)** replacing fragile connected-components, plus ` +
-			`a more reliable secondary identifier (authorized-official, taxonomy). Config dominates the model (the pre-registered ` +
-			`finding) — tracked as #625 / the auto-tuning + selective-model work (#602 / #603).`
+			`disagreeing name. Three levers were investigated and ALL are documented negatives here (#625): a name/org/phone ` +
+			`**corroboration gate** (A2/A3) — phone is an unreliable secondary identifier on NPPES (shared institutional ` +
+			`switchboard lines), so it over-links and falsely corroborates co-phone distinct providers; and **average-linkage ` +
+			`clustering** (A4) — the over-merged clusters are joined by STRONG shared-address edges, not weak bridges, so ` +
+			`average-linkage can't split them and only trades away name-drift recall. The over-merge is a **scoring** problem ` +
+			`this data can't resolve, not a clustering-topology one: the real levers are a more reliable secondary identifier ` +
+			`(authorized-official name, taxonomy/license) or a learned scorer over the FS feature vector (#603). Config ` +
+			`dominates the model (the pre-registered finding) — tracked as #625 / the selective-model work (#602 / #603).`
 	)
 	lines.push("")
 	lines.push(
