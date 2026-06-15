@@ -13,7 +13,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterAll, describe, expect, test } from "vitest"
 
-import { DEFAULT_MAPPING, loadMapping } from "../commands/registry.js"
+import { DEFAULT_MAPPING, loadMapping, loadSources } from "../commands/registry.js"
 
 const dirs: string[] = []
 function tmp(): string {
@@ -54,5 +54,36 @@ describe("registry command — loadMapping", () => {
 
 	test("invalid JSON (and not a file) throws a clear error", () => {
 		expect(() => loadMapping("{ not json", undefined)).toThrow(/mapping/)
+	})
+})
+
+describe("registry command — loadSources (--sources)", () => {
+	test("inline JSON array parses into specs", () => {
+		const specs = loadSources(
+			'[{ "path": "a.tsv", "source": "a", "mapping": { "id": "id" } }, { "path": "b.csv", "mapping": {} }]'
+		)
+		expect(specs).toHaveLength(2)
+		expect(specs[0]).toMatchObject({ path: "a.tsv", source: "a" })
+		expect(specs[1]!.path).toBe("b.csv")
+	})
+
+	test("a file path is read + parsed", () => {
+		const dir = tmp()
+		const file = join(dir, "sources.json")
+		writeFileSync(file, JSON.stringify([{ path: "x.tsv", mapping: { id: "NPI" }, limit: 100 }]))
+		const specs = loadSources(file)
+		expect(specs[0]).toMatchObject({ path: "x.tsv", limit: 100 })
+	})
+
+	test("a non-array throws", () => {
+		expect(() => loadSources('{ "path": "a.tsv" }')).toThrow(/array/)
+	})
+
+	test("an entry missing `path` throws", () => {
+		expect(() => loadSources('[{ "mapping": {} }]')).toThrow(/path/)
+	})
+
+	test("invalid JSON (and not a file) throws a clear error", () => {
+		expect(() => loadSources("[ not json")).toThrow(/sources/)
 	})
 })

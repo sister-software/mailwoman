@@ -37,6 +37,8 @@ function toFeature(entity: ResolvedEntity): GeoJsonFeature {
 			recordCount: entity.records.length,
 			cohesion: entity.cohesion,
 			sourceIds: entity.records.map((r) => r.id),
+			// Distinct provenance labels the entity's records span — an entity with ≥2 is a cross-dataset link.
+			sources: [...new Set(entity.records.map((r) => r.source).filter((s): s is string => !!s))].sort(),
 			name: displayName(rep),
 			organization: rep.organization?.canonical ?? null,
 			address: rep.address?.formatted ?? null,
