@@ -29,11 +29,12 @@
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
-import { agreementPattern, block, gbtScore, trainGBT } from "@mailwoman/match"
+import { block, gbtScore, trainGBT } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
+	createMatchFeaturizer,
 	defaultBlockingKeys,
 	geocodeAddressVia,
 	ingestRows,
@@ -211,31 +212,10 @@ async function main(): Promise<void> {
 
 	// --- The feature basis: address-frequency + collapsed-spatial model (the spine). The agreement
 	// pattern is EM-independent, so the same featurize() is consistent at train and inference time. ---
-	const model = buildDefaultModel({ collapseSpatial: true, addressFrequency })
-	const levelCounts = model.comparisons.map((c) => c.levels.length)
-	const compIndex = Object.fromEntries(model.comparisons.map((c, i) => [c.name, i]))
-	const spatialI = compIndex["spatial"]!
-	const givenI = compIndex["given"]!
-	const familyI = compIndex["family"]!
-	const orgI = compIndex["organization"]!
-	const lastLevel = (i: number) => levelCounts[i]! - 1
-
-	function featurize(a: SourceRecord, b: SourceRecord): number[] {
-		const pat = agreementPattern(model.comparisons, a, b)
-		const f: number[] = []
-		for (let i = 0; i < pat.length; i++) {
-			const lvl = pat[i]!
-			for (let l = 0; l < levelCounts[i]!; l++) f.push(lvl === l ? 1 : 0)
-		}
-		const spatialExact = pat[spatialI] === 0 ? 1 : 0
-		const nameDisagree = pat[givenI] === lastLevel(givenI) && pat[familyI] === lastLevel(familyI) ? 1 : 0
-		const orgDisagree = pat[orgI] === lastLevel(orgI) ? 1 : 0
-		f.push(spatialExact * nameDisagree)
-		f.push(spatialExact * orgDisagree)
-		const freq = a.address?.raw ? addressFrequency.frequency(a.address.raw) : 0
-		f.push(Math.min(1, freq * 1000))
-		return f
-	}
+	// The featurizer is the SHARED production one (createMatchFeaturizer) — train ≡ eval ≡ inference, one
+	// definition. Feed the collapsed-spatial + address-frequency comparison set (the benchmark spine).
+	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
+	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 
 	interface ArmScore {
 		precision: number
