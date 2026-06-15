@@ -18,17 +18,21 @@
  *        the label is same-NPI.
  *   3. Split the NPIs into train / test. A pair is train iff BOTH endpoints are train-NPIs, test iff
  *        both test-NPIs — so no NPI's records leak across the split.
- *   4. Train an L2-regularized logistic regression on the train pairs.
- *   5. Score the test pairs with (a) the EM-fitted FS scorer and (b) the LR. Report pairwise ROC-AUC +
- *        best-threshold F1 for each. AUC is threshold-free: does the LR RANK matches above
- *        non-matches better than FS?
+ *   4. Train TWO learned scorers on the train pairs: an L2 logistic regression (linear) and
+ *        gradient-boosted shallow trees (non-linear — the model #603 names). Both pure-Node.
+ *   5. Score the test pairs with (a) the EM-fitted FS scorer, (b) the LR, (c) the GBT. Report pairwise
+ *        ROC-AUC + best-threshold F1 for each, averaged over N seeds. AUC is threshold-free: does
+ *        the learned scorer RANK matches above non-matches better than FS — and does the TREE beat
+ *        the LINEAR model (i.e. is there non-linear signal the hand-crafted interaction features
+ *        miss)?
  *
- *   Honest caveats are printed: in-domain (TX), a modest sample, a simple model. A positive result
- *   greenlights #603; a flat result says the over-merge resists even a learned scorer on this
- *   feature set.
+ *   Honest caveats are printed: in-domain (TX), a modest sample, PAIRWISE (not the clustering
+ *   metric). The definitive test is a GBM A/B on the dedup clustering metric with a
+ *   train-TX/eval-held-out-state split (#603 Tier 2); this probe bounds the pairwise-ranking gain
+ *   cheaply first.
  *
  *   Run: node --experimental-strip-types scripts/record-matcher/learned-scorer-eval.ts [--npis 1500]\
- *   [--wof <admin.db>] [--data-root <dir>] [--seed 1] [--out-md <md>]
+ *   [--seeds 8] [--wof <admin.db>] [--data-root <dir>] [--seed 1] [--out-md <md>]
  */
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
@@ -92,6 +96,153 @@ function lcg(seed: number): () => number {
 		s = (Math.imul(s, 1664525) + 1013904223) >>> 0
 		return s / 0x100000000
 	}
+}
+
+// --- Gradient-boosted shallow regression trees (logistic loss), pure-Node. The NON-LINEAR arm of the
+// probe: does a tree extract MORE over-merge signal than the linear LR over the same FS feature vector?
+// This is the model #603 actually names (XGBoost/LightGBM offline → tiny tree JSON, pure-Node inference). ---
+
+type TreeNode = { leaf: number } | { f: number; thr: number; lo: TreeNode; hi: TreeNode }
+
+/**
+ * Per-feature candidate split thresholds: midpoints for few-valued/binary features, quantiles for
+ * continuous.
+ */
+function buildThresholds(X: number[][]): number[][] {
+	const dim = X[0]?.length ?? 0
+	const out: number[][] = []
+	for (let f = 0; f < dim; f++) {
+		const vals = X.map((r) => r[f]!)
+		const uniq = [...new Set(vals)].sort((p, q) => p - q)
+		if (uniq.length <= 1) {
+			out.push([])
+		} else if (uniq.length <= 5) {
+			const t: number[] = []
+			for (let k = 0; k < uniq.length - 1; k++) t.push((uniq[k]! + uniq[k + 1]!) / 2)
+			out.push(t)
+		} else {
+			const sorted = [...vals].sort((p, q) => p - q)
+			const t: number[] = []
+			for (let q = 1; q <= 6; q++) t.push(sorted[Math.floor((q / 7) * (sorted.length - 1))]!)
+			out.push([...new Set(t)])
+		}
+	}
+	return out
+}
+
+/** Weighted SSE of target `g` over `rows` around their weighted mean. */
+function nodeSSE(rows: number[], g: number[], w: number[]): number {
+	let wsum = 0
+	let wg = 0
+	for (const i of rows) {
+		wsum += w[i]!
+		wg += w[i]! * g[i]!
+	}
+	const mean = wsum > 0 ? wg / wsum : 0
+	let sse = 0
+	for (const i of rows) {
+		const d = g[i]! - mean
+		sse += w[i]! * d * d
+	}
+	return sse
+}
+
+/** Greedy depth-limited weighted regression tree on target `g` (the boosting residual). */
+function fitRegTree(
+	rows: number[],
+	X: number[][],
+	g: number[],
+	w: number[],
+	thresholds: number[][],
+	depth: number,
+	minLeaf: number
+): TreeNode {
+	let wsum = 0
+	let wg = 0
+	for (const i of rows) {
+		wsum += w[i]!
+		wg += w[i]! * g[i]!
+	}
+	const leaf = wsum > 0 ? wg / wsum : 0
+	if (depth === 0 || rows.length < 2 * minLeaf) return { leaf }
+	const parentSSE = nodeSSE(rows, g, w)
+	let bestGain = 1e-12
+	let bestF = -1
+	let bestThr = 0
+	let bestLo: number[] = []
+	let bestHi: number[] = []
+	for (let f = 0; f < thresholds.length; f++) {
+		for (const thr of thresholds[f]!) {
+			const lo: number[] = []
+			const hi: number[] = []
+			for (const i of rows) (X[i]![f]! <= thr ? lo : hi).push(i)
+			if (lo.length < minLeaf || hi.length < minLeaf) continue
+			const gain = parentSSE - (nodeSSE(lo, g, w) + nodeSSE(hi, g, w))
+			if (gain > bestGain) {
+				bestGain = gain
+				bestF = f
+				bestThr = thr
+				bestLo = lo
+				bestHi = hi
+			}
+		}
+	}
+	if (bestF < 0) return { leaf }
+	return {
+		f: bestF,
+		thr: bestThr,
+		lo: fitRegTree(bestLo, X, g, w, thresholds, depth - 1, minLeaf),
+		hi: fitRegTree(bestHi, X, g, w, thresholds, depth - 1, minLeaf),
+	}
+}
+
+function predictTree(t: TreeNode, x: number[]): number {
+	let n = t
+	while ("f" in n) n = x[n.f]! <= n.thr ? n.lo : n.hi
+	return n.leaf
+}
+
+interface GBT {
+	trees: TreeNode[]
+	lr: number
+	base: number
+}
+
+/** Gradient-boosted regression trees on logistic loss, with per-sample class weights `w`. */
+function trainGBT(
+	X: number[][],
+	y: number[],
+	w: number[],
+	opts: { rounds: number; depth: number; lr: number; minLeaf: number }
+): GBT {
+	const N = X.length
+	const thresholds = buildThresholds(X)
+	const rowsAll = Array.from({ length: N }, (_, i) => i)
+	let wpos = 0
+	let wtot = 0
+	for (let i = 0; i < N; i++) {
+		wtot += w[i]!
+		if (y[i] === 1) wpos += w[i]!
+	}
+	const base = Math.log((wpos + 1) / (wtot - wpos + 1)) // weighted base log-odds
+	const F = new Array<number>(N).fill(base)
+	const trees: TreeNode[] = []
+	const sig = (z: number) => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
+	for (let m = 0; m < opts.rounds; m++) {
+		const g = new Array<number>(N)
+		for (let i = 0; i < N; i++) g[i] = y[i]! - sig(F[i]!) // negative gradient of logistic loss
+		const tree = fitRegTree(rowsAll, X, g, w, thresholds, opts.depth, opts.minLeaf)
+		for (let i = 0; i < N; i++) F[i]! += opts.lr * predictTree(tree, X[i]!)
+		trees.push(tree)
+	}
+	return { trees, lr: opts.lr, base }
+}
+
+/** GBT score (logit) for one feature vector. */
+function gbtScore(m: GBT, x: number[]): number {
+	let f = m.base
+	for (const t of m.trees) f += m.lr * predictTree(t, x)
+	return f
 }
 
 interface MessyRow {
@@ -233,6 +384,7 @@ async function main(): Promise<void> {
 		testN: number
 		lrScored: Scored[]
 		fsScored: Scored[]
+		gbtScored: Scored[]
 	}
 
 	const sigmoid = (z: number) => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
@@ -290,12 +442,21 @@ async function main(): Promise<void> {
 			return z
 		}
 
+		// Gradient-boosted trees on the SAME train pairs + class weights — the non-linear arm.
+		const gbt = trainGBT(
+			train.map((s) => s.x),
+			train.map((s) => s.y),
+			train.map((s) => (s.y === 1 ? 1 - posWeight : posWeight)),
+			{ rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
+		)
+
 		return {
 			seed,
 			trainN: train.length,
 			testN: test.length,
 			lrScored: test.map((s) => ({ s: lrScore(s.x), y: s.y })),
 			fsScored: test.map((s) => ({ s: s.fs, y: s.y })),
+			gbtScored: test.map((s) => ({ s: gbtScore(gbt, s.x), y: s.y })),
 		}
 	}
 
@@ -360,14 +521,29 @@ async function main(): Promise<void> {
 	const zScore = seMean > 0 ? meanDelta / seMean : 0 // ΔAUC in standard errors above zero
 	const f1Delta = mean(lrF1s) - mean(fsF1s) // operating-point F1 gain (LR − FS)
 	const unanimous = lrWins === SEEDS
+	// GBT (non-linear) arm.
+	const gbtAucs = splits.map((r) => auc(r.gbtScored))
+	const gbtF1s = splits.map((r) => bestF1(r.gbtScored).f1)
+	const gbtVsFs = splits.map((_, i) => gbtAucs[i]! - fsAucs[i]!)
+	const gbtVsLr = splits.map((_, i) => gbtAucs[i]! - lrAucs[i]!)
+	const gbtBeatsFs = gbtVsFs.filter((d) => d > 0).length
+	const gbtBeatsLr = gbtVsLr.filter((d) => d > 0).length
+	const meanGbtVsFs = mean(gbtVsFs)
+	const meanGbtVsLr = mean(gbtVsLr)
+	const f1DeltaGbt = mean(gbtF1s) - mean(fsF1s) // operating-point F1 gain (GBT − FS)
 	for (const r of splits) {
-		const d = auc(r.lrScored) - auc(r.fsScored)
+		const dl = auc(r.lrScored) - auc(r.fsScored)
+		const dg = auc(r.gbtScored) - auc(r.fsScored)
 		console.error(
-			`    seed ${r.seed}: ${r.trainN}tr/${r.testN}te  FS ${auc(r.fsScored).toFixed(4)}  LR ${auc(r.lrScored).toFixed(4)}  Δ${d >= 0 ? "+" : ""}${d.toFixed(4)}`
+			`    seed ${r.seed}: ${r.trainN}tr/${r.testN}te  FS ${auc(r.fsScored).toFixed(4)}  ` +
+				`LR ${auc(r.lrScored).toFixed(4)} (Δ${dl >= 0 ? "+" : ""}${dl.toFixed(4)})  ` +
+				`GBT ${auc(r.gbtScored).toFixed(4)} (Δ${dg >= 0 ? "+" : ""}${dg.toFixed(4)})`
 		)
 	}
 	console.error(
-		`    mean/${SEEDS} — FS ${mean(fsAucs).toFixed(4)}  LR ${mean(lrAucs).toFixed(4)}  Δ${meanDelta >= 0 ? "+" : ""}${meanDelta.toFixed(4)}±${std(deltas).toFixed(4)}  (LR>FS ${lrWins}/${SEEDS})`
+		`    mean/${SEEDS} — FS ${mean(fsAucs).toFixed(4)}  LR ${mean(lrAucs).toFixed(4)} (Δ${meanDelta >= 0 ? "+" : ""}${meanDelta.toFixed(4)})  ` +
+			`GBT ${mean(gbtAucs).toFixed(4)} (Δ${meanGbtVsFs >= 0 ? "+" : ""}${meanGbtVsFs.toFixed(4)} vs FS, ` +
+			`${meanGbtVsLr >= 0 ? "+" : ""}${meanGbtVsLr.toFixed(4)} vs LR)`
 	)
 
 	const pct = (x: number) => (100 * x).toFixed(1)
@@ -379,21 +555,27 @@ async function main(): Promise<void> {
 	lines.push(
 		`_Generated by \`scripts/record-matcher/learned-scorer-eval.ts\`. ${kept.size} ${STATE} NPIs → ${records.length} ` +
 			`records, geocoded. Candidate pairs are split BY NPI into train/test (no NPI's records cross the split), repeated ` +
-			`over ${SEEDS} seeds to bound split variance. An L2 logistic regression over the FS agreement pattern + over-merge ` +
+			`over ${SEEDS} seeds to bound split variance. Two learned scorers over the FS agreement pattern + over-merge ` +
 			`interaction features (spatial-exact × name-disagree, spatial-exact × org-disagree, address crowdedness) — features ` +
-			`FS structurally cannot express — vs the EM-fitted FS scorer, on the held-out test pairs. AUC is threshold-free ` +
+			`FS structurally cannot express — vs the EM-fitted FS scorer, on the held-out test pairs: an **L2 logistic ` +
+			`regression** (linear) and **gradient-boosted trees** (non-linear, the model #603 names). AUC is threshold-free ` +
 			`(does it RANK matches above non-matches?). The FS scorer is fit unsupervised on ALL pairs, so the comparison ` +
-			`slightly favors FS — it has already seen the test pairs (label-free), the LR has not._`
+			`slightly favors FS — it has already seen the test pairs (label-free), the learned scorers have not._`
 	)
 	lines.push("")
 	lines.push(
 		`## Result — mean over ${SEEDS} NPI-splits (~${Math.round(avgTestN)} test pairs/split, ~${Math.round(avgTestPos)} matches)`
 	)
 	lines.push("")
-	lines.push(`| scorer | ROC-AUC (mean±std) | best F1 (mean) |`)
-	lines.push(`|---|---:|---:|`)
-	lines.push(`| Fellegi-Sunter (EM-fit) | ${f4(mean(fsAucs))} ± ${f4(std(fsAucs))} | ${pct(mean(fsF1s))}% |`)
-	lines.push(`| **logistic regression** | **${f4(mean(lrAucs))} ± ${f4(std(lrAucs))}** | **${pct(mean(lrF1s))}%** |`)
+	lines.push(`| scorer | ROC-AUC (mean±std) | ΔAUC vs FS | best F1 (mean) |`)
+	lines.push(`|---|---:|---:|---:|`)
+	lines.push(`| Fellegi-Sunter (EM-fit) | ${f4(mean(fsAucs))} ± ${f4(std(fsAucs))} | — | ${pct(mean(fsF1s))}% |`)
+	lines.push(
+		`| logistic regression (linear) | ${f4(mean(lrAucs))} ± ${f4(std(lrAucs))} | ${sgn(meanDelta)}${f4(meanDelta)} | ${pct(mean(lrF1s))}% |`
+	)
+	lines.push(
+		`| **gradient-boosted trees** | **${f4(mean(gbtAucs))} ± ${f4(std(gbtAucs))}** | **${sgn(meanGbtVsFs)}${f4(meanGbtVsFs)}** | **${pct(mean(gbtF1s))}%** |`
+	)
 	lines.push("")
 	lines.push(
 		`**ΔAUC (LR − FS): ${sgn(meanDelta)}${f4(meanDelta)} ± ${f4(std(deltas))}, LR > FS in ${lrWins}/${SEEDS} seeds.**`
@@ -407,14 +589,33 @@ async function main(): Promise<void> {
 			`ranking barely moves.`
 	)
 	lines.push("")
+	// Linear vs tree: does a non-linear model extract MORE than the LR? (The probe's open question.)
+	const treeVerdict =
+		meanGbtVsLr > 0.005 && gbtBeatsLr >= SEEDS - 1
+			? `**The tree extends the linear gain** — GBT beats the LR by ΔAUC ${sgn(meanGbtVsLr)}${f4(meanGbtVsLr)} ` +
+				`(${gbtBeatsLr}/${SEEDS} seeds), ${sgn(meanGbtVsFs)}${f4(meanGbtVsFs)} over FS, ΔF1 ${sgn(f1DeltaGbt * 100)}${(f1DeltaGbt * 100).toFixed(1)}pp. ` +
+				`Non-linear interactions the hand-crafted features miss carry additional signal — a real GBM (XGBoost/LightGBM, ` +
+				`more NPIs, more features) is worth building.`
+			: meanGbtVsLr < -0.005
+				? `**The tree does NOT beat the linear model** (GBT − LR = ${sgn(meanGbtVsLr)}${f4(meanGbtVsLr)} AUC, ` +
+					`${gbtBeatsLr}/${SEEDS} seeds; GBT − FS = ${sgn(meanGbtVsFs)}${f4(meanGbtVsFs)}). With the over-merge interactions ` +
+					`already hand-engineered into the feature vector, a shallow tree finds little extra and slightly overfits the ` +
+					`small label set — the LR is the better-behaved scorer here.`
+				: `**The tree roughly TIES the linear model** (GBT − LR = ${sgn(meanGbtVsLr)}${f4(meanGbtVsLr)} AUC, ` +
+					`${gbtBeatsLr}/${SEEDS} seeds; GBT − FS = ${sgn(meanGbtVsFs)}${f4(meanGbtVsFs)}, ΔF1 ${sgn(f1DeltaGbt * 100)}${(f1DeltaGbt * 100).toFixed(1)}pp). ` +
+					`Because the key over-merge interactions are ALREADY hand-engineered into the feature vector, the tree's main ` +
+					`advantage — auto-discovering interactions — is largely pre-empted; it neither extends nor erases the linear ` +
+					`gain. The signal in this feature set is close to linearly saturated, so a production GBM should budget for the ` +
+					`SAME modest margin the LR shows, not a step change — its real value is generalizing the #625 levers, not ` +
+					`finding hidden non-linear structure here.`
+	lines.push(treeVerdict)
+	lines.push("")
 	lines.push(`### Per-seed`)
 	lines.push("")
-	lines.push(`| seed | test pairs | FS AUC | LR AUC | ΔAUC |`)
+	lines.push(`| seed | test pairs | FS AUC | LR AUC | GBT AUC |`)
 	lines.push(`|---:|---:|---:|---:|---:|`)
 	for (const r of splits) {
-		const fa = auc(r.fsScored)
-		const la = auc(r.lrScored)
-		lines.push(`| ${r.seed} | ${r.testN} | ${f4(fa)} | ${f4(la)} | ${sgn(la - fa)}${f4(la - fa)} |`)
+		lines.push(`| ${r.seed} | ${r.testN} | ${f4(auc(r.fsScored))} | ${f4(auc(r.lrScored))} | ${f4(auc(r.gbtScored))} |`)
 	}
 	lines.push("")
 	const verdict =
@@ -445,13 +646,15 @@ async function main(): Promise<void> {
 	lines.push(`## Honest caveats`)
 	lines.push("")
 	lines.push(
-		`In-domain (${STATE} only), ${kept.size} NPIs, a SIMPLE model (L2 logistic regression, not a GBM — this bounds the ` +
-			`*linear-with-interactions* gain, the cheap first question; a tree with non-linear splits could extend or erase it). ` +
-			`The split is by NPI so there's no record-level leakage, but the address-frequency feature is a corpus statistic over ` +
-			`all NPIs (a population prior, not per-pair leakage), and the FS scorer is EM-fit on all pairs including the test ` +
-			`subset (standard for label-free FS — it makes the LR's win the harder result). At ~${Math.round(avgTestN)} test ` +
-			`pairs/split both AUC and F1 are stable across seeds (see the per-seed table), so the small ΔAUC is signal, not ` +
-			`sampling noise._`
+		`In-domain (${STATE} only), ${kept.size} NPIs, PAIRWISE ranking (not the assembled clustering metric the dedup ` +
+			`benchmark reports against the 64.7% spine — a better pairwise scorer need not translate 1:1 to cluster F1). The GBT ` +
+			`is a compact pure-Node implementation (120 boosting rounds, depth 3), a faithful stand-in for an offline ` +
+			`XGBoost/LightGBM but not tuned. The split is by NPI so there's no record-level leakage, but the address-frequency ` +
+			`feature is a corpus statistic over all NPIs (a population prior, not per-pair leakage), and the FS scorer is EM-fit ` +
+			`on all pairs including the test subset (standard for label-free FS — it makes the learned scorers' win the harder ` +
+			`result). At ~${Math.round(avgTestN)} test pairs/split both AUC and F1 are stable across seeds (per-seed table). The ` +
+			`definitive test remains a GBM A/B on the **clustering** metric with a train-TX / eval-held-out-state split (#603 ` +
+			`Tier 2)._`
 	)
 	lines.push("")
 
