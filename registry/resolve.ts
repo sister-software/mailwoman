@@ -255,6 +255,15 @@ export interface ResolveConfig {
 	 * corroborators — e.g. `["authorizedOfficial"]`. Ignored if `model` is supplied.
 	 */
 	discriminators?: string[]
+	/**
+	 * Override the Fellegi-Sunter link weight with a LEARNED score (#603). When set, a candidate pair's
+	 * match weight is this function's return value (same threshold-comparable units as the FS weight)
+	 * instead of {@link scorePair}'s. Default undefined (pure FS). The blocking + clustering are
+	 * unchanged, so a trained scorer can be A/B'd against the FS spine on the identical pipeline. The
+	 * function is responsible for its own feature computation (e.g. the agreement pattern, which is
+	 * EM-independent, plus any corpus statistics it captured).
+	 */
+	scorer?: (a: SourceRecord, b: SourceRecord) => number
 }
 
 /** The outcome of a resolve pass. */
@@ -292,7 +301,8 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 
 	const links: ScoredLink<SourceRecord>[] = pairs.map(([a, b]) => {
 		const score = scorePair(scoringModel, a, b)
-		let weight = score.weight
+		// #603: a learned scorer replaces the FS weight (same clustering + threshold semantics).
+		let weight = config.scorer ? config.scorer(a, b) : score.weight
 		// A2 (#625): a link must carry positive name OR org corroboration — a shared (even down-weighted)
 		// address alone is not identity. Spatial-only pairs are suppressed below any threshold.
 		if (config.requireCorroboration) {

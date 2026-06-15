@@ -67,6 +67,19 @@ describe("resolveEntities", () => {
 			expect(entity.coordinate).toBeDefined()
 		}
 	})
+
+	it("the scorer hook overrides the FS weight and drives the clustering (#603)", () => {
+		// A learned scorer that rejects every pair → no merges, every record is its own entity.
+		const none = resolveEntities(records, { scorer: () => Number.NEGATIVE_INFINITY })
+		expect(none.entities).toHaveLength(records.length)
+		expect(none.entities.every((e) => e.records.length === 1)).toBe(true)
+
+		// A scorer that accepts every blocked pair → the blocked duplicates (1,2) merge on the learned
+		// weight, not the FS weight; the far-away record (3) is never blocked with them, so it stays apart.
+		const merged = resolveEntities(records, { scorer: () => 100, threshold: 1 })
+		const big = merged.entities.find((e) => e.records.length > 1)
+		expect(big?.records.map((r) => r.id).sort()).toEqual(["1", "2"])
+	})
 })
 
 // Two distinct people at the SAME practice address — the co-located-providers over-merge case (#617).
