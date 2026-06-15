@@ -3,14 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Gradient-boosted shallow regression trees (logistic loss), pure-Node — the learned-scorer model
- *   #603 names (XGBoost/LightGBM offline → a tiny tree structure + a trivial evaluator, no new
- *   runtime). Extracted so the pairwise probe (`learned-scorer-eval.ts`) and the clustering A/B
- *   (`learned-scorer-clustering-eval.ts`) share ONE implementation. Feature vectors are
- *   caller-defined `number[]` (one-hot agreement levels + interactions + corpus statistics); this
- *   module only fits and scores.
+ *   Gradient-boosted shallow regression trees (logistic loss), pure-Node — the learned scorer #603
+ *   names: an offline-trained model (this trainer, or XGBoost/LightGBM exported to the same
+ *   {@link GBT} shape) plus a trivial evaluator, no new runtime dependency. It sits behind the
+ *   matcher's `scorer` hook to replace the Fellegi-Sunter link weight where labels (or a held-out
+ *   truth like an NPI) let a tree learn the over-merge signature the hand-weights miss.
+ *
+ *   This module is feature-agnostic: feature vectors are caller-defined `number[]` (the record
+ *   matcher builds them in `@mailwoman/registry`'s learned-scorer module — one-hot agreement levels
+ *   + interaction terms + corpus statistics). It only fits ({@link trainGBT}) and scores
+ *   ({@link gbtScore}). The trained {@link GBT} is plain JSON (`{trees, lr, base}`), so a model
+ *   trains offline once and ships as a data file.
  */
 
+/** A trained tree: an internal split (feature `f` ≤ `thr` → `lo`, else `hi`) or a `leaf` value. */
 export type TreeNode = { leaf: number } | { f: number; thr: number; lo: TreeNode; hi: TreeNode }
 
 const sigmoid = (z: number): number => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
@@ -113,12 +119,14 @@ function predictTree(t: TreeNode, x: number[]): number {
 	return n.leaf
 }
 
+/** A trained gradient-boosted-tree model: an additive ensemble over a base log-odds. Plain JSON. */
 export interface GBT {
 	trees: TreeNode[]
 	lr: number
 	base: number
 }
 
+/** Hyperparameters for {@link trainGBT}. */
 export interface GBTOpts {
 	rounds: number
 	depth: number
@@ -150,7 +158,7 @@ export function trainGBT(X: number[][], y: number[], w: number[], opts: GBTOpts)
 	return { trees, lr: opts.lr, base }
 }
 
-/** GBT score (logit) for one feature vector. */
+/** GBT score (logit) for one feature vector. Threshold-comparable like the FS weight. */
 export function gbtScore(m: GBT, x: number[]): number {
 	let f = m.base
 	for (const t of m.trees) f += m.lr * predictTree(t, x)

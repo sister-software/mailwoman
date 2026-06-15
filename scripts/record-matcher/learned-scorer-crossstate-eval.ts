@@ -23,7 +23,7 @@
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
-import { agreementPattern, block } from "@mailwoman/match"
+import { agreementPattern, block, gbtScore, trainGBT } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
@@ -39,7 +39,6 @@ import {
 } from "@mailwoman/registry"
 import { writeFileSync } from "node:fs"
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
-import { gbtScore, trainGBT } from "./lib/gbt.ts"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
