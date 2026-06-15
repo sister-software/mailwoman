@@ -7,10 +7,13 @@
  *   `address_point` (exact building) tier — not the DC admin centroid. This is the marquee: a fully
  *   client-side geocoder that places an exact building from a byte-ranged shard, no server.
  *
- *   The second test guards the byte-range efficiency. It is `test.fixme` until #638 is fixed: the
- *   sql.js-httpvfs `serverMode: "full"` open path currently downloads the ENTIRE shard once to
- *   learn the file length (a redundant 114 MB GET for DC, ~3.2 GB for CA), on top of the efficient
- *   ranged page reads the lookup itself needs. Un-fixme when #638 lands and this passes.
+ *   The second test guards the byte-range efficiency: a lookup must transfer a tiny fraction of the
+ *   shard, never the whole file. It counts only GET response bodies — sql.js-httpvfs's `serverMode:
+ *   "full"` open does ONE `HEAD` to learn the file length (the length-discovery probe), and a
+ *   HEAD's `content-length` reports the full size but transfers ZERO bytes; summing it was the #638
+ *   false-alarm (the original report + an earlier version of this guard counted the HEAD as a 114
+ *   MB download). Measured against prod: 1 HEAD (0 bytes) + ~5 ranged 206 reads ≈ 280 KB of the 114
+ *   MB shard. There is no full-shard download — #638 was a measurement artifact, closed not fixed.
  *
  *   Ground truth (confirmed against the shard): street_norm "pennsylvania avenue northwest", number
  *   1600, postcode 20500 → lat 38.89768, lon -77.03655 (overture:NAD). Postcode disambiguates from
@@ -59,7 +62,7 @@ test.describe("Demo — street tier (#377)", () => {
 	})
 
 	// Un-fixme when #638 lands: the open must NOT download the whole shard to learn its length.
-	test.fixme("byte-range: a lookup transfers a fraction of the shard, never the whole file (#638)", async ({
+	test("byte-range: a lookup transfers a fraction of the shard, never the whole file (#638)", async ({
 		demo,
 		page,
 	}) => {
@@ -67,6 +70,10 @@ test.describe("Demo — street tier (#377)", () => {
 		let rangeReads = 0
 		page.on("response", (res) => {
 			if (!res.url().includes("/street/us/dc/situs.db")) return
+			// Only GET responses transfer a body. A HEAD (sql.js-httpvfs's length probe on open) carries
+			// the full file size in `content-length` but transfers ZERO bytes — counting it would falsely
+			// read as a whole-shard download (the #638 measurement trap). The 206 page reads are the lookup.
+			if (res.request().method() !== "GET") return
 			if (res.status() === 206) rangeReads++
 			situsBytes += Number(res.headers()["content-length"] ?? 0)
 		})
@@ -76,6 +83,6 @@ test.describe("Demo — street tier (#377)", () => {
 		await demo.readResult()
 
 		expect(rangeReads).toBeGreaterThan(0)
-		expect(situsBytes).toBeLessThan(DC_SITUS_BYTES / 10) // a few MB, not the whole 114 MB
+		expect(situsBytes).toBeLessThan(DC_SITUS_BYTES / 10) // a few MB of ranged reads, not the whole 114 MB
 	})
 })
