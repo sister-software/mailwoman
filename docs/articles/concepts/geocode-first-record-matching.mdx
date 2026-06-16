@@ -54,6 +54,25 @@ the wrong _topology_: it pulls different buildings together and pushes spellings
 of the same building apart. A matcher built on it spends its life drowning in
 false pairs and missing real ones, and ours did.
 
+![Two decision surfaces — string-first vs geocode-first — for P(match) over string similarity × geographic distance. String-first is a vertical wall blind to geography; geocode-first is a basin carved by distance, with the two canonical traps annotated.](./img/geocode-first-surface.png)
+
+_Both surfaces are `P(match)` over the same record-pair space — string similarity
+(x) against geographic distance (y) — scored by the **same** Fellegi-Sunter model
+([below](#the-spine-fellegi-sunter-without-labels)) with the **real** per-level
+Bayes factors (`NAME_LEVELS`, `DEFAULT_DISTANCE_LEVELS`); the only difference is
+which evidence each model may see. **String-first** sees the name alone — a
+vertical wall at high similarity, blind to where the records are. It fuses
+namesakes 1500 km apart (① `Springfield General` IL vs MA) and splits a
+same-building pair whose string drifted (② `123 Main St` vs `123 Main Street Apt
+2`). **Geocode-first** also sees distance — the wall becomes a basin you climb out
+of only near a shared place, and it inverts both verdicts the right way. The
+geography levels carry the heaviest evidence by design (±9.45 bits at the
+same-building grain vs ±6.32 for an exact name), which is why the boundary bends
+with distance rather than with spelling. (Prior λ is illustrative here to keep the
+boundary visible; production runs λ=1e-4 with phone and spatial-key corroboration
+this two-axis slice omits. Generator:
+`scripts/record-matcher/viz/geocode-first-surface.ts`.)_
+
 What changed is that mailwoman is now a **geocoder with calibrated confidence.**
 Every record can become a rooftop coordinate (± calibrated metres) plus a
 Who's-on-First hierarchy plus structured components, each with a confidence. That
