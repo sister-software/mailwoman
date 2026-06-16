@@ -35,7 +35,8 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
   verified end-to-end (resolves a provider + facility across two sources into one cross-dataset link).
 - **#635 merged** — `--infer-mapping` best-effort auto column-mapping ("point it at any CSV").
 - **#636 open** — FCC commitments two-HCP row explode (#618 B1): a 4th source → **cross-source links
-  27 → 219, with 10 spanning all three source kinds** (provider + funded + facility).
+  27 → 219** (10 spanning three of the four _sources_ — but only two _agency-roles_, since RHC +
+  commitments are both FCC; the cross-agency correction is in the second-half section below).
 - **Issues #625** (the full lever search, now incl. the auth-official first-positive) · **#630**
   (Dependabot triage — dev-tooling-only transitive vulns, triaged not bumped).
 - **#603 learned-scorer probe (DONE, qualified-positive)** — `scripts/record-matcher/learned-scorer-eval.ts`
@@ -127,8 +128,10 @@ circumvented).
   across sources with no shared key, on the HOUSE stack (MapLibre + Protomaps via `toMapHTML`, rendered
   with `render-map.mjs` — SwiftShader WebGL + the localhost-serve the tile CORS requires). **Generator
   only, not embedded:** 191/219 links are FCC-internal (RHC ↔ commitments, same agency); the genuinely
-  cross-_agency_ links are ~28 (10 spanning all three) — the honest framing is an operator call, and map
-  renders are the operator's to verify.
+  cross-_agency_ links are **28, all pairwise (2 agencies); ZERO span all three agencies** (no entity
+  resolves across provider + funder + facility at once). The "10 spanning all three source kinds" framing
+  counted 3 sources where 2 are FCC. A `--cross-agency-only` flag renders the honest 28-link slice; the
+  framing is an operator call, and map renders are the operator's to verify.
 - **#673 — #655 option 2 is data-blocked.** A feasibility analysis, not an experiment: the FCC/TX sources
   carry no NPI/EIN/TIN, so the only shared cross-source signals are name+geocode (what FS already
   scores → circular, the #664 mechanism) and phone (#625-unreliable). There is no strong signal
@@ -273,7 +276,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 | learned scorer — **clustering** F1 cross-state (TX→CA) | FS 15.0% → LR 13.9% → **GBT 35.5%** (+20.5pp); generalizes, over-merged 239→47 |
 | demo street geocoder | White House → exact building (≤10 m), client-side, byte-ranged — **verified** (#639); full-shard-download-on-open bug (#638) |
 | geocoder admin tier | wrong-US-state w/o postcode (Dublin TX→OH, 1628 km) — diagnosed (#642) + probe (#643) |
-| cross-dataset | **219** cross-source entities, 10 spanning all 3 source kinds |
+| cross-dataset | **219** cross-source entities (191 FCC-internal); **28 cross-AGENCY, all pairwise — 0 span all 3 agencies** |
 | scale | 500K records in 68 s, pure Node |
 | Modal / GPU time | 0 (CPU-only shift) |
 | NaN incidents / CI failures / regressions | 0 / 0 / 0 |
