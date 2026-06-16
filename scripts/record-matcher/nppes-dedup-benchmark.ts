@@ -550,7 +550,7 @@ async function main(): Promise<void> {
 	)
 	lines.push("")
 	lines.push(
-		`**Headline — org-name truth (the honest grain, [why](../concepts/dedup-entity-truth.mdx)):** the shipped ` +
+		`**Headline — org-name truth (the honest grain):** the shipped ` +
 			`matcher resolves these records at **F1 ${pct(gbtOrg.f1)}%** against org-name entity-truth — not the NPI-level ` +
 			`${pct(gbtNpi.f1)}%, which mostly measures NPI over-segmentation (one organization holds many subpart NPIs, so ` +
 			`correct co-located merges are scored as errors). Same clusters, three rulers: ` +
