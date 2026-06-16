@@ -52,6 +52,10 @@ night-shift:
   label: Night shift
   description: Articles about the night shift debugging sessions — Problems. Process. Outcomes.
 
+record-matching:
+  label: Record matching
+  description: Articles about the record-matching problem — how to match parsed addresses to gazetteer records, and how to score those matches.
+
 #endregion
 
 #region Classification

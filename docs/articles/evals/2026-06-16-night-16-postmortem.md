@@ -1,6 +1,6 @@
 ---
 sidebar_position: 16
-draft: true
+authors: [playpen-agent]
 title: Night 16 postmortem — record-matcher comparison-model v2 + cross-dataset proof
 tags:
   - evals
@@ -29,8 +29,8 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
 - **#624 merged** (concept doc) · **#631 merged** (Tier 3: scale eval + O(clusters×links)→linear cohesion
   fix [13× faster] + CA generalization + geocode-first blog draft).
 - **#626 / #632 / #633 merged** (the #625 comparison-model lever search: A1 collapse + A2/A3 corroboration
-  + A4 average-linkage + the secondary-identifier mechanism — auth-official is the **first lever past the
-  spine, F1 64.7%**).
+  - A4 average-linkage + the secondary-identifier mechanism — auth-official is the **first lever past the
+    spine, F1 64.7%**).
 - **#634 merged** — `mailwoman registry --sources` full-pipeline multi-source CLI (the product surface),
   verified end-to-end (resolves a provider + facility across two sources into one cross-dataset link).
 - **#635 merged** — `--infer-mapping` best-effort auto column-mapping ("point it at any CSV").
@@ -40,16 +40,16 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
 - **Issues #625** (the full lever search, now incl. the auth-official first-positive) · **#630**
   (Dependabot triage — dev-tooling-only transitive vulns, triaged not bumped).
 - **#603 learned-scorer probe (DONE, qualified-positive)** — `scripts/record-matcher/learned-scorer-eval.ts`
-  + `docs/articles/evals/2026-06-16-learned-scorer-probe.md`. Does a model over the FS feature vector +
-  over-merge interaction features (spatial-exact × name-disagree) rank matches above non-matches better than
-  Fellegi-Sunter? Methodology: 1500 TX NPIs → 4182 records, block → pairs, split **by NPI** (no record
-  leakage), L2 logistic regression vs the EM-fit FS scorer, pairwise ROC-AUC, **averaged over 8 seeds**.
-  **Result: ΔAUC +0.0057 ± 0.0030 (8/8 seeds, ≈5σ), ΔF1 +4.3pp (72.6% → 76.9%).** A *small-but-robust*
-  positive — the interaction features carry real, consistent signal concentrated at the decision boundary,
-  but FS already ranks well (0.942), so the linear headroom is modest. **Qualified greenlight for the GBM**
-  (#603 Tier 2): the principled next step, but it widens a real-but-small margin — the reliable secondary
-  identifier (#625) is the larger lever. The 8-seed design earned its keep: seed 1 alone read a misleading
-  +0.054; across 8 it settled at +0.0057. Merged via **#637**.
+  - `docs/articles/evals/2026-06-16-learned-scorer-probe.md`. Does a model over the FS feature vector +
+    over-merge interaction features (spatial-exact × name-disagree) rank matches above non-matches better than
+    Fellegi-Sunter? Methodology: 1500 TX NPIs → 4182 records, block → pairs, split **by NPI** (no record
+    leakage), L2 logistic regression vs the EM-fit FS scorer, pairwise ROC-AUC, **averaged over 8 seeds**.
+    **Result: ΔAUC +0.0057 ± 0.0030 (8/8 seeds, ≈5σ), ΔF1 +4.3pp (72.6% → 76.9%).** A _small-but-robust_
+    positive — the interaction features carry real, consistent signal concentrated at the decision boundary,
+    but FS already ranks well (0.942), so the linear headroom is modest. **Qualified greenlight for the GBM**
+    (#603 Tier 2): the principled next step, but it widens a real-but-small margin — the reliable secondary
+    identifier (#625) is the larger lever. The 8-seed design earned its keep: seed 1 alone read a misleading
+    +0.054; across 8 it settled at +0.0057. Merged via **#637**.
 - **#603 GBT arm (#640) — the tree EXTENDS the linear gain.** Added the non-linear arm (a compact pure-Node
   gradient-boosted-trees scorer, the model #603 names) to the probe. On the same 1500-NPI/8-seed harness:
   **GBT AUC 0.9597 (+0.0177 vs FS, +0.0121 vs LR, 8/8 seeds, ±0.0015), best-F1 79.1% (vs FS 72.6%, +6.6pp).**
@@ -65,28 +65,28 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
   **Two methodology catches en route** (both load-bearing — the result inverted without them): (1) a 300-NPI
   smoke MISLED (FS ahead by 5pp) — too few co-located collisions to exhibit the over-merge, which only bites
   at scale → trust the larger eval; (2) a coarse 6-point threshold sweep understated the learned scorers by
-  ~9pp — a fine 33-point sweep corrected it. *Always sweep finely + size the eval to the phenomenon before
-  declaring a clustering verdict.*
+  ~9pp — a fine 33-point sweep corrected it. _Always sweep finely + size the eval to the phenomenon before
+  declaring a clustering verdict._
 - **#603 cross-STATE generalization (folds into #641) — the GBT win TRANSFERS, strongly.** Built
   `learned-scorer-crossstate-eval.ts` (train on TX, evaluate dedup clustering F1 on held-out **CA** — a state
   the model never saw). **Result (2000 TX-train / 2000 CA-eval, ~5.6K records each): FS spine F1 15.0% (P 10%,
   239 over-merged!), LR 13.9% (−1.0pp, collapses to over-merging), GBT 35.5% (+20.5pp, P 59%, over-merged
-  239→47).** The GBT — trained only on TX — generalizes and *fixes CA's severe over-merge*; the over-merge
+  239→47).** The GBT — trained only on TX — generalizes and _fixes CA's severe over-merge_; the over-merge
   signal it learns is transferable, not TX-specific. The LR does NOT generalize. **Confirmed on a SECOND
   independent held-out state — TX→NY: GBT +19.6pp** (38.2% vs FS 18.6%), ≈ the +20.5pp on CA. Two states,
   same ~+20pp result → the generalization is robust, not a CA artifact. **Strongest evidence yet for the
   production GBM.** Honest framing: single seed per state pair, and the absolute FS F1 (15–19%) is far below
   TX's 55% because the eval states' over-merge is denser — so the ~+20pp is **directional** (the FS spine
-  *craters* as over-merge scales, the GBT holds), not a precise production number. **The 250-NPI smokes
+  _craters_ as over-merge scales, the GBT holds), not a precise production number. **The 250-NPI smokes
   misled THREE times** (FS-ahead / LR-ahead / attenuation; the 2000-NPI runs all showed the GBT winning) —
-  the unmistakable shift lesson: *the over-merge only manifests at scale; smokes systematically understate
-  the GBT; size the eval to the phenomenon + sweep finely before any clustering verdict.*
+  the unmistakable shift lesson: _the over-merge only manifests at scale; smokes systematically understate
+  the GBT; size the eval to the phenomenon + sweep finely before any clustering verdict._
 - **M (demo client-side street geocoder, #377) — verified end-to-end + found a live bug.** Built the
   `verify-httpvfs-street` integration probe (`docs/test/browser/250-demo-street-tier.spec.ts`, **#639**)
   the unit test promised: drives the real demo against the production R2 DC situs shard and proves "1600
   Pennsylvania Avenue NW" resolves to the **White House at the `address_point` (≤10 m exact-building) tier**,
   fully client-side, byte-ranged — green against both local and prod. **But it caught the fatal trap (#638):**
-  the sql.js-httpvfs `serverMode: "full"` *open* path downloads the **entire shard once** to learn the file
+  the sql.js-httpvfs `serverMode: "full"` _open_ path downloads the **entire shard once** to learn the file
   length (a redundant 114 MB GET for DC, **~3.2 GB for CA → demo-breaking**), on top of the efficient ranged
   lookup reads (5 × 64 KB). Confirmed load-bearing + live in prod; `config.fileLength` does NOT fix it (tried,
   reverted). Filed #638 with the diagnosis + fix options (chunked serverMode + per-shard config.json — touches
@@ -190,11 +190,11 @@ Two more landed while closing the shift with the operator:
 
 (threshold 0, 300 TX NPIs / 816 records, EM-trained, 100% geocoded)
 
-| lever | precision | recall | F1 | ARI | over-merged |
-|---|---:|---:|---:|---:|---:|
-| baseline (address-key + distance) | 47.5% | 40.5% | 43.7% | 0.436 | 39 |
-| + inverse-address-frequency (#617) | 55.7% | 74.6% | 63.8% | 0.637 | 36 |
-| + collapsed spatial (A1) | 55.8% | 74.6% | **63.9%** | 0.638 | 36 |
+| lever                              | precision | recall |        F1 |   ARI | over-merged |
+| ---------------------------------- | --------: | -----: | --------: | ----: | ----------: |
+| baseline (address-key + distance)  |     47.5% |  40.5% |     43.7% | 0.436 |          39 |
+| + inverse-address-frequency (#617) |     55.7% |  74.6% |     63.8% | 0.637 |          36 |
+| + collapsed spatial (A1)           |     55.8% |  74.6% | **63.9%** | 0.638 |          36 |
 
 **The spine holds at F1 63.9%.** A2 (corroboration) and A3 (phone) were investigated and are documented
 negatives on NPPES — not in this table, not promoted (full detail in #625):
@@ -218,14 +218,14 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 - **The fix generalizes.** The address-frequency win reproduces on a second held-out state (CA: 45.0% →
   58.6%), so it isn't TX-overfit — magnitude is state-dependent (TX +20pp, CA +12pp), the direction holds.
 - **The first lever to beat the spine — and a general mechanism for it.** Built `SourceRecord.attributes`
-  + a model `discriminators` option (extra secondary-identifier comparisons + corroborators — taxonomy,
-  license, authorized-official…). The authorized-official discriminator is the **first lever to exceed the
-  63.9% spine: F1 64.7% at threshold 12** (it holds recall where the spine alone collapsed at t=4, so a
-  higher cutoff separates the co-located providers). Modest (+0.8pp) because auth-officials are partly
-  shared across hospital-system NPIs — but it **validates the #625 conclusion** that a reliable secondary
-  identifier is the lever (unlike phone, which hurt), and the `discriminators` mechanism makes a stronger
-  one (taxonomy / license) a one-line add. The over-merge is confirmed a *scoring* problem with a path past
-  it, not a dead end.
+  - a model `discriminators` option (extra secondary-identifier comparisons + corroborators — taxonomy,
+    license, authorized-official…). The authorized-official discriminator is the **first lever to exceed the
+    63.9% spine: F1 64.7% at threshold 12** (it holds recall where the spine alone collapsed at t=4, so a
+    higher cutoff separates the co-located providers). Modest (+0.8pp) because auth-officials are partly
+    shared across hospital-system NPIs — but it **validates the #625 conclusion** that a reliable secondary
+    identifier is the lever (unlike phone, which hurt), and the `discriminators` mechanism makes a stronger
+    one (taxonomy / license) a one-line add. The over-merge is confirmed a _scoring_ problem with a path past
+    it, not a dead end.
 
 ## What could've gone better
 
@@ -245,7 +245,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 - **A4 (average-linkage) is also a documented negative (−4.6pp, recall −13.3pp, over-merge flat).** It
   can't split the over-merged clusters because they're joined by STRONG shared-address edges, not weak
   bridges — so it only splits the true name-drift clusters. **The conclusion across A1–A4: the NPPES
-  over-merge is a *scoring* problem this data can't resolve, not a comparison-weight or clustering-topology
+  over-merge is a _scoring_ problem this data can't resolve, not a comparison-weight or clustering-topology
   one** — the data lacks a reliable discriminator between co-located distinct providers and co-located
   name-drift. The real levers (out of tonight's CPU scope): a reliable secondary identifier
   (authorized-official name / taxonomy / license) or the learned GBM scorer (#603). A1 + A4 ship as tested
@@ -301,27 +301,27 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
   serves the QGIS/web-map workflow); **address-ID (I, #259)** — canonicalKey already covers the basic
   join-key need, so the value-add is geo-equivalence (a geohash-boundary problem worth a design pass).
 - **Geocoder admin-tier tail (from #619):** 53% of rural TX fell to admin centroid, with a catastrophic
-  >1000 km tail — a wrong-region admin resolution worth a bug hunt, plus wider rural street-shard coverage.
+  > 1000 km tail — a wrong-region admin resolution worth a bug hunt, plus wider rural street-shard coverage.
 
 ## Numbers
 
-| metric | value |
-|---|---|
-| shift window | ~01:00–15:00 UTC |
-| PRs merged | 18 — #623, #614, #626, #627, #628, #624, #629, #631, #632, #633, #634, #635, #636, #637 (probe), #639 (street-tier spec), #640 (GBT arm), #643 (geocoder namesake probe) |
-| PRs open (flagged) | **#641** — #603 Tier-2 clustering A/B + `scorer?` hook · **second half (9, awaiting merge):** **#669** geocode-first decision surface · **#670** org-name yardstick (string+coord) · **#671** context-aware designations (#668) · **#672** cross-dataset map (generator-only) · **#673** #655 feasibility · **#674** this postmortem · **#675** #595 stale-test fix · **#676** AGENTS.md TLA-note fix · **#677** the blog (both figures, draft) |
-| backlog triaged (recommend close / groomed) | **#642** already-fixed (#646) · **#555** mis-premised (14 code units, not 13) · **#638** already-closed · **#655** data-blocked · **#481** ~6.5/7 done (only TLA remains) — all with evidence |
-| dedup F1 — by truth grain (GBT, #670) | NPI 53.6% → site 55.3% → org-name 60.7% → **org-name-coord 68.1%** (+14.5pp, identical clusters — the ruler, not the model) |
-| issues filed | #625 (lever search), #630 (Dependabot), **#638 (demo httpvfs full-shard download — live prod bug)**, **#642 (geocoder wrong-US-state w/o postcode)** |
-| evals produced | dedup (TX + CA), cross-dataset (4-source), reconciliation, geocoder-vs-coords, matcher-scale, learned-scorer (pairwise FS/LR/GBT), **clustering A/B**, **cross-state TX→CA**, geocoder-namesake |
-| dedup F1 | 43.7% → 63.9% spine → **64.7%** (auth-official discriminator) |
-| learned scorer — **pairwise** AUC | FS 0.942 → LR 0.948 → **GBT 0.960** (+0.0177, 8/8 seeds); best-F1 72.6→76.9→**79.1%** |
-| learned scorer — **clustering** F1 within-state (4 seeds) | FS 55.3% → LR 56.7% → **GBT 60.5%** (+5.2pp, 4/4); over-merged 94→69 — **GBM greenlit** |
-| learned scorer — **clustering** F1 cross-state (TX→CA) | FS 15.0% → LR 13.9% → **GBT 35.5%** (+20.5pp); generalizes, over-merged 239→47 |
-| demo street geocoder | White House → exact building (≤10 m), client-side, byte-ranged — **verified** (#639); full-shard-download-on-open bug (#638) |
-| geocoder admin tier | wrong-US-state w/o postcode (Dublin TX→OH, 1628 km) — diagnosed (#642) + probe (#643) |
-| cross-dataset | **219** cross-source entities (191 FCC-internal); **28 cross-AGENCY, all pairwise — 0 span all 3 agencies** |
-| scale | 500K records in 68 s, pure Node |
-| Modal / GPU time | 0 (CPU-only shift) |
-| NaN incidents / CI failures / regressions | 0 / 0 / 0 |
-| perf wins | cohesion O(clusters×links) → linear (13×) |
+| metric                                                    | value                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| shift window                                              | ~01:00–15:00 UTC                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| PRs merged                                                | 18 — #623, #614, #626, #627, #628, #624, #629, #631, #632, #633, #634, #635, #636, #637 (probe), #639 (street-tier spec), #640 (GBT arm), #643 (geocoder namesake probe)                                                                                                                                                                                                                                                                        |
+| PRs open (flagged)                                        | **#641** — #603 Tier-2 clustering A/B + `scorer?` hook · **second half (9, awaiting merge):** **#669** geocode-first decision surface · **#670** org-name yardstick (string+coord) · **#671** context-aware designations (#668) · **#672** cross-dataset map (generator-only) · **#673** #655 feasibility · **#674** this postmortem · **#675** #595 stale-test fix · **#676** AGENTS.md TLA-note fix · **#677** the blog (both figures, draft) |
+| backlog triaged (recommend close / groomed)               | **#642** already-fixed (#646) · **#555** mis-premised (14 code units, not 13) · **#638** already-closed · **#655** data-blocked · **#481** ~6.5/7 done (only TLA remains) — all with evidence                                                                                                                                                                                                                                                   |
+| dedup F1 — by truth grain (GBT, #670)                     | NPI 53.6% → site 55.3% → org-name 60.7% → **org-name-coord 68.1%** (+14.5pp, identical clusters — the ruler, not the model)                                                                                                                                                                                                                                                                                                                     |
+| issues filed                                              | #625 (lever search), #630 (Dependabot), **#638 (demo httpvfs full-shard download — live prod bug)**, **#642 (geocoder wrong-US-state w/o postcode)**                                                                                                                                                                                                                                                                                            |
+| evals produced                                            | dedup (TX + CA), cross-dataset (4-source), reconciliation, geocoder-vs-coords, matcher-scale, learned-scorer (pairwise FS/LR/GBT), **clustering A/B**, **cross-state TX→CA**, geocoder-namesake                                                                                                                                                                                                                                                 |
+| dedup F1                                                  | 43.7% → 63.9% spine → **64.7%** (auth-official discriminator)                                                                                                                                                                                                                                                                                                                                                                                   |
+| learned scorer — **pairwise** AUC                         | FS 0.942 → LR 0.948 → **GBT 0.960** (+0.0177, 8/8 seeds); best-F1 72.6→76.9→**79.1%**                                                                                                                                                                                                                                                                                                                                                           |
+| learned scorer — **clustering** F1 within-state (4 seeds) | FS 55.3% → LR 56.7% → **GBT 60.5%** (+5.2pp, 4/4); over-merged 94→69 — **GBM greenlit**                                                                                                                                                                                                                                                                                                                                                         |
+| learned scorer — **clustering** F1 cross-state (TX→CA)    | FS 15.0% → LR 13.9% → **GBT 35.5%** (+20.5pp); generalizes, over-merged 239→47                                                                                                                                                                                                                                                                                                                                                                  |
+| demo street geocoder                                      | White House → exact building (≤10 m), client-side, byte-ranged — **verified** (#639); full-shard-download-on-open bug (#638)                                                                                                                                                                                                                                                                                                                    |
+| geocoder admin tier                                       | wrong-US-state w/o postcode (Dublin TX→OH, 1628 km) — diagnosed (#642) + probe (#643)                                                                                                                                                                                                                                                                                                                                                           |
+| cross-dataset                                             | **219** cross-source entities (191 FCC-internal); **28 cross-AGENCY, all pairwise — 0 span all 3 agencies**                                                                                                                                                                                                                                                                                                                                     |
+| scale                                                     | 500K records in 68 s, pure Node                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Modal / GPU time                                          | 0 (CPU-only shift)                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| NaN incidents / CI failures / regressions                 | 0 / 0 / 0                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| perf wins                                                 | cohesion O(clusters×links) → linear (13×)                                                                                                                                                                                                                                                                                                                                                                                                       |

@@ -1,6 +1,13 @@
+playpen-agent:
+  name: Playpen Agent
+  title: Autonomous Researcher
+  url: https://github.com/playpen-agent
+  image_url: https://github.com/playpen-agent.png
+  socials:
+    github: playpen-agent
 teffen:
   name: Teffen Ellis
-  title: Sister Software
+  title: Creator, Sister Software
   url: https://github.com/GirlBossRush
   image_url: https://github.com/GirlBossRush.png
   socials:
