@@ -83,7 +83,7 @@ If a release fails partway through publishing:
 
 - Each workspace has its own `tsconfig.json` + (for `core/` and `neural/`) a `vitest.config.ts` that aliases sibling `@mailwoman/*` subpath imports to source. This lets `yarn test` run without a precompile step. The cross-package aliases are fiddly — see the file headers for the resolution rules.
 - `core/utils/repo.ts` has a `__isCompiledTree` flag that distinguishes source mode from compiled mode for path-builder math. Don't reach across that boundary without reading the comment.
-- The TLA in `core/resources/libpostal.ts` (top-level `await readdir`) is a known fragility surface. When test files import `@mailwoman/core` bare AND a subpath, Vite's TLA-aware loader treats it as a cycle — classifier base classes evaluate as `undefined`. Workaround: side-effect `import "@mailwoman/core"` at the top of the affected test file. See `classifiers/adapter.test.ts` for an example.
+- The **bare-import + subpath-import cycle** is a fragility surface. When a test file imports `@mailwoman/core` bare AND a subpath, Vite can leave the bare re-exports unbound while the slices interleave — classifier base classes evaluate as `undefined`. (`core/resources/libpostal.ts` had a top-level `await readdir` that contributed until #481 made it a lazy `getAvailableLanguages()` getter; the cycle turned out to be **structural** — Vite's bare/subpath interleaving — not TLA-driven, so it persists after the TLA removal.) Workaround: a side-effect `import "@mailwoman/core"` at the top of the affected test file forces full init first. See `classifiers/adapter.test.ts`. Full fix = import-graph hygiene (tracked on #481).
 
 ## When in doubt
 
