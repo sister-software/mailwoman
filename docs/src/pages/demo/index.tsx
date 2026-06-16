@@ -66,7 +66,7 @@ import {
 	geomBounds,
 	loadPolygonDb,
 	type PolygonDb,
-} from "./map-helpers.ts"
+} from "./_map-helpers.ts"
 import styles from "./styles.module.css"
 
 const DemoPage: React.FC = () => {
