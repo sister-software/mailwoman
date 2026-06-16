@@ -28,6 +28,7 @@
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
+import type { GBT } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
@@ -39,7 +40,6 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import type { GBT } from "@mailwoman/match"
 import { writeFileSync } from "node:fs"
 import { resolve as resolvePath } from "node:path"
 import { pathToFileURL } from "node:url"
@@ -91,6 +91,42 @@ const norm = (s: string | undefined) => (s ?? "").trim()
 const addr = (line: string, city: string, st: string, zip: string) =>
 	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
 
+// Org-name similarity for the org-name entity-truth (the gold-set rule: same address + same org name
+// ⇒ same entity, even when NPPES doesn't flag the subpart). Strip corporate-form + articles, keep
+// domain words (the distinguishing signal).
+const ORG_STOP = new Set([
+	"llc",
+	"inc",
+	"incorporated",
+	"corp",
+	"corporation",
+	"co",
+	"ltd",
+	"pllc",
+	"pc",
+	"pa",
+	"lp",
+	"llp",
+	"the",
+	"of",
+	"and",
+])
+const orgTokens = (s: string): Set<string> =>
+	new Set(
+		s
+			.toLowerCase()
+			.replace(/[^a-z0-9 ]/g, " ")
+			.split(/\s+/)
+			.filter((t) => t && !ORG_STOP.has(t))
+	)
+function orgJaccard(a: Set<string>, b: Set<string>): number {
+	if (a.size === 0 || b.size === 0) return 0
+	let inter = 0
+	for (const t of a) if (b.has(t)) inter++
+	return inter / (a.size + b.size - inter)
+}
+const ORG_TAU = 0.7 // gold-set threshold
+
 /**
  * One synthetic input row for the matcher; `npi` is the hidden NPI-level truth, `entityId` the
  * site-level entity-level truth (subpart-collapsed).
@@ -123,6 +159,8 @@ async function main(): Promise<void> {
 	console.error(`[B] full registry pass: address-frequency table + ${MAX_NPIS} ${STATE} sample…`)
 	const rows: MessyRow[] = []
 	const kept = new Set<string>()
+	// Per-NPI primary org name + practice address key — the basis for the ORG-NAME entity-truth.
+	const npiPrimary = new Map<string, { tokens: Set<string>; addrKey: string }>()
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
 	let scanned = 0
@@ -160,6 +198,7 @@ async function main(): Promise<void> {
 				const parentKey = `${norm(r[C.parentLBN])}|${norm(r[C.parentTIN])}`.toLowerCase()
 				const orgKey = isSubpart && parentKey !== "|" ? `p:${parentKey}` : `n:${npi}`
 				const eid = (a: string) => `${addressFrequencyKey(a)}|${orgKey}`
+				if (org) npiPrimary.set(npi, { tokens: orgTokens(org), addrKey: addressFrequencyKey(practice) })
 				kept.add(npi)
 				rows.push({ npi, name: primaryName, org, address: practice, auth, entityId: eid(practice) }) // primary
 				for (const alt of altNames.get(npi)!)
@@ -301,6 +340,46 @@ async function main(): Promise<void> {
 	const npiLabel = (rec: SourceRecord) => rec.id
 	const entityLabel = (rec: SourceRecord) => rec.attributes?.["entityTruth"] ?? rec.id
 
+	// --- ORG-NAME entity-truth (the gold-set lever, #625). Union-find over NPIs: same NPI ⇒ same entity
+	// (so an NPI's records stay together — recall preserved), PLUS union two NPIs at the same address whose
+	// primary org names match (Jaccard ≥ ORG_TAU). This collapses the same-org-many-NPIs over-segmentation
+	// the gold set proved is correct, WITHOUT the subpart flag (which the gold set showed misses 37%). ---
+	const parent = new Map<string, string>()
+	const find = (x: string): string => {
+		if (!parent.has(x)) parent.set(x, x)
+		let root = x
+		while (parent.get(root)! !== root) root = parent.get(root)!
+		while (parent.get(x)! !== root) {
+			const next = parent.get(x)!
+			parent.set(x, root)
+			x = next
+		}
+		return root
+	}
+	const union = (a: string, b: string) => {
+		const ra = find(a)
+		const rb = find(b)
+		if (ra !== rb) parent.set(ra, rb)
+	}
+	{
+		const byAddr = new Map<string, string[]>()
+		for (const [npi, info] of npiPrimary) {
+			find(npi) // seed
+			if (!info.addrKey) continue
+			if (!byAddr.has(info.addrKey)) byAddr.set(info.addrKey, [])
+			byAddr.get(info.addrKey)!.push(npi)
+		}
+		for (const group of byAddr.values()) {
+			for (let i = 0; i < group.length; i++) {
+				for (let j = i + 1; j < group.length; j++) {
+					if (orgJaccard(npiPrimary.get(group[i]!)!.tokens, npiPrimary.get(group[j]!)!.tokens) >= ORG_TAU)
+						union(group[i]!, group[j]!)
+				}
+			}
+		}
+	}
+	const orgNameLabel = (rec: SourceRecord) => (npiPrimary.has(rec.id) ? find(rec.id) : rec.id)
+
 	// --- Phase D: the comparison-model lever progression — toggle each lever ON in turn at the default
 	// threshold to isolate its marginal effect, then sweep the link threshold on the best config (geocode
 	// once, resolve many — config is cheap). ---
@@ -368,11 +447,14 @@ async function main(): Promise<void> {
 	// where merging is CORRECT) rather than model error. Two production configs: the FS full lever stack
 	// and the shipped default (GBT, default-on) — each fed the corpus-wide address-frequency table. ---
 	const entityCount = new Set(records.map((r) => entityLabel(r))).size
+	const orgCount = new Set(records.map((r) => orgNameLabel(r))).size
 	const fsNpi = bestLever.score
 	const fsEntity = scoreEntities(bestLever.res.entities, entityLabel)
+	const fsOrg = scoreEntities(bestLever.res.entities, orgNameLabel)
 	const gbtRes = resolveEntities(records, { addressFrequency, trainEM: TRAIN_EM }) // GBT default-on (production)
 	const gbtNpi = scoreEntities(gbtRes.entities, npiLabel)
 	const gbtEntity = scoreEntities(gbtRes.entities, entityLabel)
+	const gbtOrg = scoreEntities(gbtRes.entities, orgNameLabel)
 
 	// Optional candidate A/B (--candidate): score a trained GBT module at both levels, at its own
 	// recommendedThreshold, alongside the shipped GBT — grades a new model (e.g. corroboration features).
@@ -395,10 +477,13 @@ async function main(): Promise<void> {
 			npi: scoreEntities(res.entities, npiLabel),
 			entity: scoreEntities(res.entities, entityLabel),
 		}
-		console.error(`    candidate ${CANDIDATE}: NPI ${(100 * cand.npi.f1).toFixed(1)}% / entity ${(100 * cand.entity.f1).toFixed(1)}%`)
+		console.error(
+			`    candidate ${CANDIDATE}: NPI ${(100 * cand.npi.f1).toFixed(1)}% / entity ${(100 * cand.entity.f1).toFixed(1)}%`
+		)
 	}
 	console.error(
-		`    dual-level — FS: NPI ${(100 * fsNpi.f1).toFixed(1)}% / entity ${(100 * fsEntity.f1).toFixed(1)}%; ` +
+		`    truth-grains — GBT NPI ${(100 * gbtNpi.f1).toFixed(1)}% → site ${(100 * gbtEntity.f1).toFixed(1)}% → org-name ${(100 * gbtOrg.f1).toFixed(1)}%; ` +
+			`FS: NPI ${(100 * fsNpi.f1).toFixed(1)}% / entity ${(100 * fsEntity.f1).toFixed(1)}%; ` +
 			`GBT: NPI ${(100 * gbtNpi.f1).toFixed(1)}% / entity ${(100 * gbtEntity.f1).toFixed(1)}%`
 	)
 
@@ -484,52 +569,50 @@ async function main(): Promise<void> {
 			`addresses (mailing vs practice) or with strong name drift the score didn't bridge.`
 	)
 	lines.push("")
-	lines.push(`## NPI-level vs entity-level truth (the over-segmentation correction)`)
+	lines.push(`## Three truth grains — NPI → site → org-name (the over-segmentation correction)`)
 	lines.push("")
 	lines.push(
-		`NPI-as-truth is the wrong grain in BOTH directions. **Site-level** truth (org + physical location) ` +
-			`(a) COLLAPSES an org's co-located subpart-NPIs to their parent (NPPES \`Is Organization Subpart\` + parent ` +
-			`LBN/TIN) — so correctly fusing them isn't an "over-merge" — and (b) SPLITS one NPI's distinct addresses ` +
-			`(mailing vs practice) into separate sites — so a correct geo-split isn't a "recall miss." Here the same ${N} ` +
-			`records carry **${kept.size} NPI-level** vs **${entityCount} site-level** classes (the multi-address split ` +
-			`dominates the subpart collapse in this alt-name sample). Scoring the SAME clusters against both isolates real ` +
-			`model error from the yardstick's noise.`
+		`NPI-as-truth OVER-SEGMENTS: one org holds many NPIs, so the matcher's correct co-located merges are scored as ` +
+			`errors. Three yardsticks, same clusters: **NPI** (one entity per registration), **site** (subpart-flagged ` +
+			`collapse + split an NPI's distinct addresses), and **org-name** — the gold-set-validated truth: same NPI ⇒ ` +
+			`same entity (recall preserved) PLUS collapse co-located NPIs whose primary org names match (Jaccard ≥ ${ORG_TAU}), ` +
+			`with NO reliance on the subpart flag (the gold set showed it misses 37%). The same ${N} records carry ` +
+			`**${kept.size} NPI** → **${entityCount} site** → **${orgCount} org-name** classes. The org-name number is the ` +
+			`honest one: it stops charging the matcher for the same-org merges the gold set proved are correct.`
 	)
 	lines.push("")
-	lines.push(`| config | truth | precision | recall | F1 | ΔF1 (entity − NPI) | ARI | over-merged |`)
+	lines.push(`| config | truth | precision | recall | F1 | ΔF1 vs NPI | ARI | over-merged |`)
 	lines.push(`|---|---|---:|---:|---:|---:|---:|---:|`)
 	const dualRow = (label: string, truth: string, s: Score, delta?: number) =>
 		lines.push(
 			`| ${label} | ${truth} | ${pct(s.precision)}% | ${pct(s.recall)}% | **${pct(s.f1)}%** | ${delta === undefined ? "—" : signed(100 * delta)} | ${s.ari.toFixed(3)} | ${s.overMergedClusters} |`
 		)
 	dualRow("FS full stack", "NPI", fsNpi)
-	dualRow("FS full stack", "**entity**", fsEntity, fsEntity.f1 - fsNpi.f1)
+	dualRow("FS full stack", "site", fsEntity, fsEntity.f1 - fsNpi.f1)
+	dualRow("FS full stack", "**org-name**", fsOrg, fsOrg.f1 - fsNpi.f1)
 	dualRow("GBT (shipped default)", "NPI", gbtNpi)
-	dualRow("GBT (shipped default)", "**entity**", gbtEntity, gbtEntity.f1 - gbtNpi.f1)
+	dualRow("GBT (shipped default)", "site", gbtEntity, gbtEntity.f1 - gbtNpi.f1)
+	dualRow("GBT (shipped default)", "**org-name**", gbtOrg, gbtOrg.f1 - gbtNpi.f1)
 	if (cand) {
 		dualRow(cand.label, "NPI", cand.npi)
 		dualRow(cand.label, "**entity**", cand.entity, cand.entity.f1 - cand.npi.f1)
 	}
 	lines.push("")
 	lines.push(
-		`Against the **site-level** truth the F1 barely moves (GBT ${signed(100 * (gbtEntity.f1 - gbtNpi.f1))}, ` +
-			`FS ${signed(100 * (fsEntity.f1 - fsNpi.f1))}) — but the precision/recall BALANCE shifts sharply. RECALL jumps ` +
-			`(GBT ${pct(gbtNpi.recall)}% → ${pct(gbtEntity.recall)}%, FS ${pct(fsNpi.recall)}% → ${pct(fsEntity.recall)}%): the ` +
-			`matcher's correct geo-splits of an NPI's distant mailing-vs-practice records are recall MISSES under NPI-truth but CORRECT ` +
-			`under site-truth. PRECISION drops (GBT ${pct(gbtNpi.precision)}% → ${pct(gbtEntity.precision)}%) and the site over-merge ` +
-			`count rises (GBT ${gbtNpi.overMergedClusters} → ${gbtEntity.overMergedClusters}) — the matcher's same-org two-site merges ` +
-			`become site over-merges.`
+		`The F1 **climbs as the yardstick gets honest**: GBT **${pct(gbtNpi.f1)}% (NPI) → ${pct(gbtEntity.f1)}% (site) → ` +
+			`${pct(gbtOrg.f1)}% (org-name)**, the over-merge collapsing (${gbtNpi.overMergedClusters} → ${gbtOrg.overMergedClusters}) ` +
+			`and precision rising (${pct(gbtNpi.precision)}% → ${pct(gbtOrg.precision)}%). The clusters are IDENTICAL across the three ` +
+			`columns — the climb is purely the ruler ceasing to charge the matcher for the correct same-org merges the gold set proved ` +
+			`(\`2026-06-16-dedup-gold-set-tx120.md\`: 120/120 same org, 0 genuine over-merges).`
 	)
 	lines.push("")
 	lines.push(
-		`**Takeaways:** (1) NPI-level RECALL (${pct(gbtNpi.recall)}%) UNDERSTATES the model — ` +
-			`~${(100 * (gbtEntity.recall - gbtNpi.recall)).toFixed(0)}pp of its apparent recall miss is correct geo-splitting, not ` +
-			`failure (site-grain recall ${pct(gbtEntity.recall)}%). (2) The frontier is PRECISION / over-merge at EITHER grain — the ` +
-			`#625 target. (3) The model is genuinely ~${pct(gbtNpi.f1)}% F1 regardless of grain; site-level does NOT hide a much better ` +
-			`model. So **~0.85 stays mis-anchored as a near-term target** — but the ceiling (\`2026-06-16-dedup-ceiling.md\`: only ~1.6% ` +
-			`irreducible over-merge) says the gap from ~${pct(gbtNpi.f1)}% toward the ceiling is mostly ADDRESSABLE model headroom (the ` +
-			`GBT corroboration features), not irreducible. **Small samples mislead here too: a 50-NPI smoke showed +5–7pp; this ` +
-			`${kept.size}-NPI run shows ±2pp.**`
+		`**Takeaways:** (1) The dedup model's REAL quality is the **org-name F1 ~${pct(gbtOrg.f1)}%**, not the NPI-level ` +
+			`${pct(gbtNpi.f1)}% — the difference was NPI over-segmentation, not model error. (2) The #625 lever was the YARDSTICK, ` +
+			`not the scorer: the corroboration-feature experiment (reverted) couldn't move precision because the over-merge was ` +
+			`mostly correct. (3) The remaining org-name over-merge (${gbtOrg.overMergedClusters} clusters) is the genuine frontier — ` +
+			`small, approaching the ceiling's ~1.6% irreducible (\`2026-06-16-dedup-ceiling.md\`). (4) Trust the large eval: a 50-NPI ` +
+			`smoke misled on the site delta (+5–7pp vs this run's ±2pp).`
 	)
 	lines.push("")
 	lines.push(

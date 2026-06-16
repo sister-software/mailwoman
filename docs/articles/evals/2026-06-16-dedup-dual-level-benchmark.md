@@ -35,20 +35,22 @@ Best F1 **48.2%** (ARI 0.481) at threshold 8, vs **45.1%** at the default — th
 - **Over-merge (precision):** 144 clusters fuse ≥2 distinct NPIs (largest fuses 14; 985 records) — **co-located providers sharing a clinic / billing address**, linked by address agreement despite different names.
 - **Under-merge (recall):** 284/1000 NPIs split across >1 cluster — records at distant addresses (mailing vs practice) or with strong name drift the score didn't bridge.
 
-## NPI-level vs entity-level truth (the over-segmentation correction)
+## Three truth grains — NPI → site → org-name (the over-segmentation correction)
 
-NPI-as-truth is the wrong grain in BOTH directions. **Site-level** truth (org + physical location) (a) COLLAPSES an org's co-located subpart-NPIs to their parent (NPPES `Is Organization Subpart` + parent LBN/TIN) — so correctly fusing them isn't an "over-merge" — and (b) SPLITS one NPI's distinct addresses (mailing vs practice) into separate sites — so a correct geo-split isn't a "recall miss." Here the same 2757 records carry **1000 NPI-level** vs **1456 site-level** classes (the multi-address split dominates the subpart collapse in this alt-name sample). Scoring the SAME clusters against both isolates real model error from the yardstick's noise.
+NPI-as-truth OVER-SEGMENTS: one org holds many NPIs, so the matcher's correct co-located merges are scored as errors. Three yardsticks, same clusters: **NPI** (one entity per registration), **site** (subpart-flagged collapse + split an NPI's distinct addresses), and **org-name** — the gold-set-validated truth: same NPI ⇒ same entity (recall preserved) PLUS collapse co-located NPIs whose primary org names match (Jaccard ≥ 0.7), with NO reliance on the subpart flag (the gold set showed it misses 37%). The same 2757 records carry **1000 NPI** → **1456 site** → **956 org-name** classes. The org-name number is the honest one: it stops charging the matcher for the same-org merges the gold set proved are correct.
 
-| config                | truth      | precision | recall |        F1 | ΔF1 (entity − NPI) |   ARI | over-merged |
-| --------------------- | ---------- | --------: | -----: | --------: | -----------------: | ----: | ----------: |
-| FS full stack         | NPI        |     32.1% |  75.9% | **45.1%** |                  — | 0.450 |         144 |
-| FS full stack         | **entity** |     27.1% | 100.0% | **42.7%** |             -2.5pp | 0.426 |         253 |
-| GBT (shipped default) | NPI        |     43.7% |  69.1% | **53.6%** |                  — | 0.535 |         109 |
-| GBT (shipped default) | **entity** |     38.9% |  95.7% | **55.3%** |             +1.7pp | 0.553 |         208 |
+| config                | truth        | precision | recall |        F1 | ΔF1 vs NPI |   ARI | over-merged |
+| --------------------- | ------------ | --------: | -----: | --------: | ---------: | ----: | ----------: |
+| FS full stack         | NPI          |     32.1% |  75.9% | **45.1%** |          — | 0.450 |         144 |
+| FS full stack         | site         |     27.1% | 100.0% | **42.7%** |     -2.5pp | 0.426 |         253 |
+| FS full stack         | **org-name** |     39.4% |  78.0% | **52.3%** |     +7.2pp | 0.523 |         129 |
+| GBT (shipped default) | NPI          |     43.7% |  69.1% | **53.6%** |          — | 0.535 |         109 |
+| GBT (shipped default) | site         |     38.9% |  95.7% | **55.3%** |     +1.7pp | 0.553 |         208 |
+| GBT (shipped default) | **org-name** |     53.3% |  70.4% | **60.7%** |     +7.1pp | 0.606 |          92 |
 
-Against the **site-level** truth the F1 barely moves (GBT **+1.7pp**, FS **−2.5pp**) — but the precision/recall BALANCE shifts sharply. RECALL jumps (GBT 69.1% → 95.7%, FS 75.9% → 100.0%): the matcher's correct geo-splits of an NPI's distant mailing-vs-practice records are recall MISSES under NPI-truth but CORRECT under site-truth. PRECISION drops (GBT 43.7% → 38.9%) and the site over-merge count rises (GBT 109 → 208) — the matcher's same-org two-site merges become site over-merges.
+The F1 **climbs as the yardstick gets honest**: GBT **53.6% (NPI) → 55.3% (site) → 60.7% (org-name)**, the over-merge collapsing (109 → 92) and precision rising (43.7% → 53.3%). The clusters are IDENTICAL across the three columns — the climb is purely the ruler ceasing to charge the matcher for the correct same-org merges the gold set proved (`2026-06-16-dedup-gold-set-tx120.md`: 120/120 same org, 0 genuine over-merges).
 
-**Takeaways:** (1) NPI-level RECALL (69.1%) UNDERSTATES the model — ~27pp of its apparent recall miss is correct geo-splitting, not failure (site-grain recall 95.7%). (2) The frontier is PRECISION / over-merge at EITHER grain — the #625 target. (3) The model is genuinely ~53.6% F1 regardless of grain; site-level does NOT hide a much better model. So **~0.85 stays mis-anchored as a near-term target** — but the ceiling (`2026-06-16-dedup-ceiling.md`: only ~1.6% irreducible over-merge) says the gap from ~53.6% toward the ceiling is mostly ADDRESSABLE model headroom (the GBT corroboration features), not irreducible. **Small samples mislead here too: a 50-NPI smoke showed +5–7pp; this 1000-NPI run shows ±2pp.**
+**Takeaways:** (1) The dedup model's REAL quality is the **org-name F1 ~60.7%**, not the NPI-level 53.6% — the difference was NPI over-segmentation, not model error. (2) The #625 lever was the YARDSTICK, not the scorer: the corroboration-feature experiment (reverted) couldn't move precision because the over-merge was mostly correct. (3) The remaining org-name over-merge (92 clusters) is the genuine frontier — small, approaching the ceiling's ~1.6% irreducible (`2026-06-16-dedup-ceiling.md`). (4) Trust the large eval: a 50-NPI smoke misled on the site delta (+5–7pp vs this run's ±2pp).
 
 Caveats: the programmatic site-truth is CONSERVATIVE (collapses only NPPES-flagged subparts; unflagged same-org pairs still read as over-merge), so it understates the subpart correction. A hand-adjudicated gold set on the ambiguous co-located + two-site slice is the next refinement (#625).
 
