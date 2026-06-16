@@ -31,13 +31,25 @@ export default defineConfig({
 				find: "@mailwoman/core/parser/proposal-pipeline",
 				replacement: resolve(here, "core/parser/proposal-pipeline.ts"),
 			},
+			// coarse-placer (#244) is a single-file subpath (no index.ts), so the generic core/$1/index.ts
+			// rule below would mis-resolve it. Map it to the file directly.
+			{ find: "@mailwoman/core/coarse-placer", replacement: resolve(here, "core/coarse-placer/coarse-placer.ts") },
 			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolve(here, "core/$1/index.ts") },
 			{ find: /^@mailwoman\/core$/, replacement: resolve(here, "core/index.ts") },
 			// Sibling workspaces.
+			{ find: /^@mailwoman\/address-id$/, replacement: resolve(here, "address-id/index.ts") },
 			{ find: /^@mailwoman\/classifiers\/(.+)$/, replacement: resolve(here, "classifiers/$1") },
 			{ find: /^@mailwoman\/classifiers$/, replacement: resolve(here, "classifiers/index.ts") },
 			{ find: /^@mailwoman\/corpus\/(.+)$/, replacement: resolve(here, "corpus/src/$1.ts") },
 			{ find: /^@mailwoman\/corpus$/, replacement: resolve(here, "corpus/src/index.ts") },
+			{ find: /^@mailwoman\/formatter\/(.+)$/, replacement: resolve(here, "formatter/$1.ts") },
+			{ find: /^@mailwoman\/formatter$/, replacement: resolve(here, "formatter/index.ts") },
+			{ find: /^@mailwoman\/record\/(.+)$/, replacement: resolve(here, "record/$1.ts") },
+			{ find: /^@mailwoman\/record$/, replacement: resolve(here, "record/index.ts") },
+			{ find: /^@mailwoman\/match\/(.+)$/, replacement: resolve(here, "match/$1.ts") },
+			{ find: /^@mailwoman\/match$/, replacement: resolve(here, "match/index.ts") },
+			{ find: /^@mailwoman\/registry\/(.+)$/, replacement: resolve(here, "registry/$1.ts") },
+			{ find: /^@mailwoman\/registry$/, replacement: resolve(here, "registry/index.ts") },
 			{ find: "@mailwoman/neural/tokenizer", replacement: resolve(here, "neural/tokenizer.ts") },
 			{ find: /^@mailwoman\/neural$/, replacement: resolve(here, "neural/index.ts") },
 			{ find: /^@mailwoman\/query-shape$/, replacement: resolve(here, "query-shape/index.ts") },
@@ -68,10 +80,13 @@ export default defineConfig({
 			"**/cypress/**",
 			"**/.{idea,git,cache,output,temp}/**",
 			"**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*",
-			// Playwright e2e specs live under docs/test/browser/. They use @playwright/test as the
-			// runner, not vitest, but vitest's default `*.spec.ts` glob would happily pick them up
-			// and crash on the unfamiliar `test.describe` API.
+			// Playwright e2e specs live under docs/test/browser/ + docs/test/build/. They use
+			// @playwright/test as the runner, not vitest, but vitest's default `*.spec.ts` glob would
+			// happily pick them up and crash on the unfamiliar `test.describe` API. (The build/ entry
+			// — the `docusaurus build` health gate — was missing here, so it surfaced the moment CI
+			// could reach the test phase again.)
 			"**/docs/test/browser/**",
+			"**/docs/test/build/**",
 			"**/docs/test/e2e/**",
 			// Agent worktrees under .claude/worktrees/ are isolated git checkouts; each contains a
 			// full copy of the repo's test files. Without this exclude, vitest descends into every

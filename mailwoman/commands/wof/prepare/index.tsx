@@ -6,10 +6,8 @@
 
 import { ProgressBar } from "@inkjs/ui"
 import { formatMinutes, formatQuantity, takeAsync, tallyPatternCount } from "@mailwoman/core/resources"
-import { createUnifiedIndexes, createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import FastGlob from "fast-glob"
 import { Box, Text } from "ink"
-import { availableParallelism } from "node:os"
 import { DatabaseSync } from "node:sqlite"
 import { setImmediate } from "node:timers/promises"
 import { PathBuilder } from "path-ts"
@@ -19,15 +17,6 @@ import zod from "zod"
 import type { CommandComponent } from "../../../sdk/cli.js"
 import type { WorkerInput, WorkerOutput } from "./_app_worker.mjs"
 
-const piscina = new Piscina<WorkerInput, WorkerOutput>({
-	filename: PathBuilder.from(import.meta.dirname, "_app_worker.mjs").href,
-	idleTimeout: 1000 * 10,
-	env: {
-		WOF_DATA_DIR: process.env.WOF_DATA_DIR || "/tmp/wof-placetype-dbs",
-	},
-})
-
-const WORKER_COUNT = availableParallelism()
 const FILES_PER_BATCH = 500
 
 const ArgumentsSchema = zod.array(zod.string().describe("Path to the Who's On First data directory"))
@@ -71,9 +60,31 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 
 	useEffect(() => {
 		;(async () => {
+			// Worker pool is created HERE (not at module scope) so importing this command module — which
+			// pastel does eagerly for every CLI invocation — has no side effects and ships no hard
+			// dependency on the worker being resolvable at load time.
+			const piscina = new Piscina<WorkerInput, WorkerOutput>({
+				filename: PathBuilder.from(import.meta.dirname, "_app_worker.mjs").href,
+				idleTimeout: 1000 * 10,
+				env: {
+					WOF_DATA_DIR: process.env.WOF_DATA_DIR || "/tmp/wof-placetype-dbs",
+				},
+			})
+			// The unified-DB helpers live in the optional `@mailwoman/resolver-wof-sqlite` peer. Load them
+			// lazily (only when --unified-db is requested) so the published CLI loads without that package —
+			// same graceful-optional pattern as `parse --resolve`. Without it, the standalone CLI would crash
+			// on startup importing an unpublished workspace (#481 follow-up / clean-install fix).
+			let unifiedSchema: typeof import("@mailwoman/resolver-wof-sqlite/unified-schema") | undefined
 			if (unifiedDbPath) {
+				try {
+					unifiedSchema = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
+				} catch {
+					throw new Error(
+						"`wof prepare --unified-db` needs @mailwoman/resolver-wof-sqlite — install it (npm i @mailwoman/resolver-wof-sqlite) and retry."
+					)
+				}
 				const db = new DatabaseSync(unifiedDbPath, { open: true })
-				createUnifiedSchema(db)
+				unifiedSchema.createUnifiedSchema(db)
 				db.close()
 			}
 
@@ -106,7 +117,6 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 			}
 
 			const tasks: Promise<void>[] = []
-			let batchCount = 0
 
 			for await (const fileNames of takeAsync(matchStream, FILES_PER_BATCH)) {
 				const filePaths = fileNames.map((f) => f.toString())
@@ -152,7 +162,7 @@ const WOFPrepare: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 			await piscina.destroy()
 
 			if (unifiedDb) {
-				createUnifiedIndexes(unifiedDb)
+				unifiedSchema!.createUnifiedIndexes(unifiedDb)
 				unifiedDb.close()
 			}
 		})()

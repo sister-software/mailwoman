@@ -27,6 +27,9 @@ import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } f
 import { existsSync } from "node:fs"
 
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"
+import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.js"
+import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.js"
+import { recognizeUsRegions } from "./region-recognition.js"
 
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `admin`.
@@ -51,8 +54,10 @@ export interface GeocodeResult {
 	hierarchy: Array<{ tag: string; value: string; lat?: number; lon?: number; placeId?: string }>
 }
 
-/** The per-state shards to wire into a single geocode resolve. Either/both may be absent
-(admin-only). */
+/**
+ * The per-state shards to wire into a single geocode resolve. Either/both may be absent
+ * (admin-only).
+ */
 export interface StateShards {
 	addressPoints?: AddressPointLookup
 	interpolation?: InterpolationLookup
@@ -74,12 +79,34 @@ export interface GeocodeDeps {
 	/** Country constraint passed to the resolver (e.g. `"US"`). */
 	defaultCountry?: string
 	/**
-	 * Interpolation-radius conformal calibration multiplier (#374). The geocode surfaces pass 1.7
-	 * (the Travis calibration) so reported radii are an honest ~90% bound; 1 or undefined keeps the
-	 * raw half-segment heuristic. See `docs/articles/evals/2026-06-14-interp-radius-calibration.md`.
+	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound;
+	 * `1` or `undefined` keeps the raw half-segment heuristic. Accepts either a single multiplier
+	 * (the legacy Travis 1.7) OR a per-region {@link InterpCalibrationTable} — when a table is
+	 * supplied the factor is selected by the parsed region (DC 1.44 … AZ 3.12, `default` otherwise,
+	 * #584). See `docs/articles/evals/2026-06-14-interp-multiregion-recalibration.md`.
 	 */
-	interpCalibration?: number
+	interpCalibration?: number | InterpCalibrationTable
+	/**
+	 * Coarse country router (#244, soft prior). A `(text) → { country, confidence }` predictor. A
+	 * confident IN-MAP guess becomes an `anchorPosterior` the resolver's #369 re-rank boosts (never
+	 * filters); abstain (`null`) / off-map (`OTHER`) are no-ops, and an explicit
+	 * {@link defaultCountry} still wins (we never overwrite a caller-set posterior).
+	 *
+	 * **Default-on (#244 M2, after the misroute gate):**
+	 *
+	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is
+	 *   lazy-loaded and applied. Degrades to no prior if the model can't be resolved.
+	 * - A function → use it (a custom placer / threshold).
+	 * - `false` → disabled (no prior; the pre-M2 byte-stable behavior).
+	 */
+	placeCountry?: PlaceCountryFn | false
 }
+
+/**
+ * Anchor weight for the coarse-placer's country prior. Matches the runtime-pipeline default — a
+ * whole-string country guess is broader/softer than a postcode anchor (2.0), so it blends gently.
+ */
+const COARSE_PLACER_ANCHOR_WEIGHT = 1.0
 
 /** Lowercase 2-letter state slug from a parsed region value / resolver name, else null. */
 export function regionToStateSlug(
@@ -94,8 +121,10 @@ export function regionToStateSlug(
 	return null
 }
 
-/** Walk a (parsed or resolved) tree for its region → the per-state shard slug (e.g. `"tx"`), else
-null. */
+/**
+ * Walk a (parsed or resolved) tree for its region → the per-state shard slug (e.g. `"tx"`), else
+ * null.
+ */
 export function regionSlugFromTree(tree: AddressTree): string | null {
 	let regionValue: string | null = null
 	let regionResolverName: string | null = null
@@ -111,8 +140,10 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 	return regionToStateSlug(regionValue, regionResolverName)
 }
 
-/** Per-state situs shard path under `<dataRoot>/address-points/`, or null if the slug/file is
-absent. */
+/**
+ * Per-state situs shard path under `<dataRoot>/address-points/`, or null if the slug/file is
+ * absent.
+ */
 export function selectAddressPointsDb(dataRoot: string, stateSlug: string | null): string | null {
 	if (!stateSlug) return null
 	const candidate = `${dataRoot}/address-points/address-points-us-${stateSlug}.db`
@@ -222,17 +253,36 @@ export class ShardProvider {
  * parse/resolve error — callers doing batch work should catch per-row.
  */
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
-	const tree = await deps.classifier.parse(input, { postcodeRepair: true })
+	const tree = recognizeUsRegions(await deps.classifier.parse(input, { postcodeRepair: true }))
 	const stateSlug = regionSlugFromTree(tree)
 	const { addressPoints, interpolation } = deps.shards?.(stateSlug) ?? {}
 
 	const opts: ResolveOpts = {}
 	if (deps.defaultCountry) opts.defaultCountry = deps.defaultCountry
+	// Coarse country router (#244, soft prior) — DEFAULT-ON (#244 M2). undefined → the bundled placer;
+	// a function → that placer; false → disabled. A confident in-map guess feeds the resolver's
+	// anchorPosterior re-rank; abstain/OTHER are no-ops and an explicit defaultCountry isn't disturbed.
+	const placeCountry: PlaceCountryFn | null =
+		deps.placeCountry === false ? null : (deps.placeCountry ?? (await loadDefaultPlaceCountry()))
+	if (placeCountry) {
+		const placed = placeCountry(input)
+		if (placed.country && placed.country !== "OTHER" && !opts.anchorPosterior) {
+			// The full in-map distribution when supplied (resolver breaks ties); else the one-hot argmax.
+			opts.anchorPosterior = placed.posterior ?? { [placed.country]: placed.confidence }
+			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
+		}
+	}
 	if (addressPoints) opts.addressPoints = addressPoints
 	if (interpolation) {
 		opts.interpolation = interpolation
-		if (deps.interpCalibration && deps.interpCalibration !== 1) {
-			opts.interpolationRadiusCalibration = deps.interpCalibration
+		// Resolve to a single multiplier: a per-region table selects by the parsed region (`stateSlug`);
+		// a bare number is used as-is (legacy single-factor / explicit caller override).
+		const calibration =
+			typeof deps.interpCalibration === "object"
+				? interpCalibrationForRegion(deps.interpCalibration, stateSlug)
+				: deps.interpCalibration
+		if (calibration && calibration !== 1) {
+			opts.interpolationRadiusCalibration = calibration
 		}
 	}
 

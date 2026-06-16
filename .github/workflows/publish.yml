@@ -152,7 +152,7 @@ jobs:
           set -uo pipefail
           yarn compile
           FAILED=()
-          for ws in core normalize query-shape kind-classifier locale-gate phrase-grouper codex classifiers corpus neural neural-weights-en-us neural-weights-fr-fr mailwoman; do
+          for ws in core spatial normalize query-shape kind-classifier locale-gate phrase-grouper codex classifiers corpus neural neural-weights-en-us neural-weights-fr-fr formatter record match address-id registry mailwoman; do
             echo "::group::publish ${ws}"
             if RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE="./${ws}" node scripts/publish-workspace.mjs; then
               echo "  ✓ ${ws}"

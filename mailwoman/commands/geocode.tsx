@@ -27,6 +27,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { Text } from "ink"
@@ -34,6 +35,7 @@ import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
 import { geocodeAddress, ShardProvider, type GeocodeResult, type ShardResolver } from "../geocode-core.js"
+import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
 import type { CommandComponent } from "../sdk/cli.js"
 import { resolverDefaultCountry } from "./parse.js"
 
@@ -88,11 +90,28 @@ const OptionsSchema = zod.object({
 	interpCalibration: zod
 		.number()
 		.optional()
-		.default(1.7)
 		.describe(
 			"Conformal calibration multiplier for the interpolation tier's reported uncertainty_m (#374). " +
-				"The raw half-segment radius covers only ~72% of true errors; the default 1.7 (Travis-County " +
-				"calibration, 2026-06-14) lifts that to a ~90% bound. Pass 1 to report the raw heuristic radius."
+				"The raw half-segment radius covers only ~72% of true errors. Default (unset): the per-region " +
+				"table (#584) selects by parsed region — 1.44 (DC) … 3.12 (AZ), 1.95 for unmeasured states — " +
+				"for a ~90% bound. Pass an explicit number to force a single multiplier everywhere (1 = raw)."
+		),
+	placeCountry: zod
+		.boolean()
+		.optional()
+		.default(true)
+		.describe(
+			"The #244 coarse-placer soft country prior (open-set rule). A confident whole-string country guess biases " +
+				"the resolver's locality/region ranking toward the right country (never filters); most useful when no " +
+				"--default-country / locale pins it. ON by default after the M2 misroute gate (0 misroutes); pass " +
+				"--no-place-country to disable."
+		),
+	placeCountryThreshold: zod
+		.number()
+		.optional()
+		.default(0.9)
+		.describe(
+			"Abstention threshold for --place-country: below this calibrated confidence the prior is skipped. Default 0.9."
 		),
 	format: zod
 		.enum(["json", "text"])
@@ -163,6 +182,16 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 				}
 			: shardProvider.for
 
+	// Coarse-placer soft country prior (#244) — opt-in. Loads the int8 model bundled in @mailwoman/core
+	// at the requested abstention threshold; a confident in-map guess feeds the resolver's anchorPosterior.
+	// The M2 open-set reject rule (reject on in-map MASS 1-P(OTHER), route on the in-map argmax) lifts in-map
+	// right-country 85.3→91.2% with 0 regressions / 0 misroutes (the pipeline + misroute gates), so it's ON
+	// by default. --no-place-country disables it (passes `false`); a custom --place-country-threshold builds
+	// an explicit placer instead of the default-on bundled one.
+	const placer = options.placeCountry
+		? await CoarsePlacer.fromBundled({ abstainBelow: options.placeCountryThreshold, openSet: true })
+		: undefined
+
 	try {
 		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
 		const result = await geocodeAddress(input, {
@@ -170,7 +199,10 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			resolver,
 			shards,
 			defaultCountry: resolverDefaultCountry(options) || undefined,
-			interpCalibration: options.interpCalibration,
+			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
+			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
+			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).
+			placeCountry: placer ? (t: string) => placer.predict(t) : false,
 		})
 		return options.format === "text" ? formatText(result) : JSON.stringify(result, null, 2)
 	} finally {

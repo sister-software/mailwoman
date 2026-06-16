@@ -4,14 +4,19 @@
  * @author Teffen Ellis, et al.
  *
  *   Regression guard for `parse --default-country` (the resolver country scope). Without a country
- *   hint the WOF resolver resolves globally, so a bare region abbreviation (`NY`) lands on whatever
- *   the gazetteer ranks highest — often a foreign homonym (a Scottish locality at lat ~57) rather
- *   than the US state. The demo passes `country: "US"`; this gives the CLI parity by inferring the
- *   country from `--locale` (overridable, `none` to disable).
+ *   hint the WOF resolver resolves globally; the demo passes `country: "US"`, and this gives the
+ *   CLI parity by inferring the country from `--locale` (overridable, `none` to disable).
+ *
+ *   Note (#595): a bare region abbreviation (`NY`) once landed on a foreign homonym (a Scottish
+ *   locality at lat ~57) without a country hint — the original motivation. WOF ranking has since
+ *   improved so US New York now wins even unfiltered, so `NY` no longer demonstrates the opt-out.
+ *   The end-to-end test instead uses `Paris, TX`, which still flips: with the en-US hint it
+ *   resolves to Paris, TEXAS (lat ~33.7); with `--default-country none` the global ranking picks
+ *   the far-more- populous Paris, FRANCE (lat ~48.9) — a live differential that proves the opt-out
+ *   changes the result.
  *
  *   The unit tests (the locale→country inference + the override precedence) are CI-safe. The
- *   end-to-end NY-doesn't-become-Scotland check needs the GLOBAL admin DB (the US-only DB can't
- *   reproduce the homonym), so it skips when that DB is absent.
+ *   end-to-end resolution check needs the GLOBAL admin DB, so it skips when that DB is absent.
  */
 import { execFile } from "node:child_process"
 import { existsSync } from "node:fs"
@@ -66,31 +71,45 @@ describe("--default-country schema validation", () => {
 // End-to-end: needs the GLOBAL admin DB (the US-only DB can't reproduce the foreign homonym).
 const describeIfGlobal = describe.skipIf(!existsSync(GLOBAL_WOF))
 describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () => {
-	const NY = "350 5th Ave, New York, NY 10118"
-	const run = (extra: string[]) =>
+	const run = (address: string, extra: string[] = []) =>
 		exec(
 			"node",
-			[cliBin, "parse", "--neural", "--resolve", "--resolve-db", GLOBAL_WOF, "--format", "xml", ...extra, NY],
+			[cliBin, "parse", "--neural", "--resolve", "--resolve-db", GLOBAL_WOF, "--format", "xml", ...extra, address],
 			{
 				env: { ...process.env, NODE_NO_WARNINGS: "1" },
 				maxBuffer: 4 * 1024 * 1024,
 			}
 		)
 
+	// The resolver prints lat/lon on the line after the opening tag; `[^>]*` spans that newline.
+	const localityLat = (xml: string): number | null => {
+		const m = /<locality[^>]*lat="([-0-9.]+)"/.exec(xml)
+		return m ? Number(m[1]) : null
+	}
+
 	test("default (US inferred from en-US) resolves New York to the US city, not a foreign homonym", async () => {
-		const { stdout } = await run([])
+		const { stdout } = await run("350 5th Ave, New York, NY 10118")
 		// Locality "New York" resolves to a NYC-range coordinate (lat 40–41).
 		const m = /locality[^>]*lat="(4[01]\.\d+)" lon="(-7[34]\.\d+)"/.exec(stdout)
 		expect(m, `expected a NYC-range locality coordinate, got:\n${stdout}`).not.toBeNull()
 	})
 
-	test("--default-country none reverts to the global homonym (the opt-out is real)", async () => {
-		const { stdout } = await run(["--default-country", "none"])
-		// With no country filter the region NY resolves to a high-latitude foreign place (Scotland ~57).
-		const m = /region[^>]*lat="(5\d\.\d+)"/.exec(stdout)
-		expect(
-			m,
-			`expected a foreign (lat>50) region resolution with --default-country none, got:\n${stdout}`
-		).not.toBeNull()
+	test("--default-country none is a real opt-out: it flips a US namesake to its more-populous foreign twin", async () => {
+		// `Paris, TX`, no postcode (a postcode would re-pin the country via the #369 anchor). With the
+		// en-US hint, "Paris" resolves to Paris, TEXAS (lat ~33.7); drop the hint with
+		// `--default-country none` and the global ranking picks the far-more-populous Paris, FRANCE
+		// (lat ~48.9). Same input, different country scope, demonstrably different place — the opt-out is
+		// real and observable. (Replaces the old NY→Scotland example, which #595 found no longer flips.)
+		const usLat = localityLat((await run("Paris, TX")).stdout)
+		const noneLat = localityLat((await run("Paris, TX", ["--default-country", "none"])).stdout)
+
+		expect(usLat, "expected a Paris locality under the en-US default").not.toBeNull()
+		expect(noneLat, "expected a Paris locality under --default-country none").not.toBeNull()
+		// Default → Paris, Texas (≈ 33.7°N); opt-out → Paris, France (≈ 48.9°N).
+		expect(usLat!).toBeGreaterThan(32)
+		expect(usLat!).toBeLessThan(36)
+		expect(noneLat!).toBeGreaterThan(45)
+		// The point of the test: the opt-out changed the resolved place.
+		expect(usLat).not.toBe(noneLat)
 	})
 })

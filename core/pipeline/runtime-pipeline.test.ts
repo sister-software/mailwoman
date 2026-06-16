@@ -495,3 +495,109 @@ describe("runPipeline — locale + opts threading", () => {
 		expect(resolver.resolveTree).toHaveBeenCalledWith(expect.anything(), { maxLookups: 3 })
 	})
 })
+
+describe("runPipeline — coarse-placer soft prior (#244)", () => {
+	function captureResolveOpts() {
+		const seen: Array<unknown> = []
+		const resolver: Resolver = {
+			resolveTree: vi.fn(async (t, opts) => {
+				seen.push(opts)
+				return t
+			}),
+		}
+		return { resolver, seen }
+	}
+
+	it("byte-stable when no placeCountry stage is wired (resolveOpts passed through verbatim)", async () => {
+		const { resolver, seen } = captureResolveOpts()
+		await runPipeline("hello", { resolver }, { resolveOpts: { maxLookups: 3 } })
+		// No coarse-placer ⇒ effectiveOpts === opts ⇒ resolver sees exactly the caller's resolveOpts.
+		expect(seen[0]).toEqual({ maxLookups: 3 })
+	})
+
+	it("a confident in-map guess becomes an anchorPosterior fed to the resolver", async () => {
+		const { resolver, seen } = captureResolveOpts()
+		const placeCountry = vi.fn(() => ({ country: "FR", confidence: 0.94 }))
+		await runPipeline("12 rue de la Paix, Paris", { resolver, placeCountry })
+		expect(placeCountry).toHaveBeenCalledOnce()
+		expect(seen[0]).toMatchObject({
+			anchorPosterior: { FR: 0.94 },
+			anchorWeight: 1.0,
+		})
+	})
+
+	it("uses the placer's full posterior distribution when supplied (vs the one-hot argmax)", async () => {
+		const { resolver, seen } = captureResolveOpts()
+		// A country-ambiguous in-map guess: argmax FR, but GB nearly as likely. The distribution lets the
+		// resolver break the tie with its own evidence instead of committing to FR.
+		const placeCountry = vi.fn(() => ({ country: "FR", confidence: 0.45, posterior: { FR: 0.45, GB: 0.4 } }))
+		await runPipeline("Birmingham", { resolver, placeCountry })
+		expect(seen[0]).toMatchObject({ anchorPosterior: { FR: 0.45, GB: 0.4 }, anchorWeight: 1.0 })
+	})
+
+	it("preserves the caller's resolveOpts fields while injecting the posterior", async () => {
+		const { resolver, seen } = captureResolveOpts()
+		const placeCountry = vi.fn(() => ({ country: "DE", confidence: 0.97 }))
+		await runPipeline("Hauptstraße 5, Berlin", { resolver, placeCountry }, { resolveOpts: { maxLookups: 7 } })
+		expect(seen[0]).toMatchObject({ maxLookups: 7, anchorPosterior: { DE: 0.97 } })
+	})
+
+	it("abstains (country: null) ⇒ no posterior injected", async () => {
+		const { resolver, seen } = captureResolveOpts()
+		const placeCountry = vi.fn(() => ({ country: null, confidence: 0.3 }))
+		await runPipeline("ambiguous text", { resolver, placeCountry }, { resolveOpts: { maxLookups: 2 } })
+		expect(seen[0]).toEqual({ maxLookups: 2 })
+	})
+
+	it("OTHER (off-map) ⇒ no posterior injected", async () => {
+		const { resolver, seen } = captureResolveOpts()
+		const placeCountry = vi.fn(() => ({ country: "OTHER", confidence: 0.99 }))
+		await runPipeline("улица Пушкина", { resolver, placeCountry })
+		expect(seen[0]).toBeUndefined()
+	})
+
+	it("defers to a caller-supplied anchorPosterior (a stronger postcode anchor) — never overwrites", async () => {
+		const { resolver, seen } = captureResolveOpts()
+		const placeCountry = vi.fn(() => ({ country: "FR", confidence: 0.94 }))
+		await runPipeline(
+			"75002",
+			{ resolver, placeCountry },
+			{ resolveOpts: { anchorPosterior: { GB: 1.0 }, anchorWeight: 2.0 } }
+		)
+		// Caller's posterior wins; the coarse-placer is a no-op here.
+		expect(seen[0]).toEqual({ anchorPosterior: { GB: 1.0 }, anchorWeight: 2.0 })
+	})
+
+	it("respects a caller-supplied anchorWeight while injecting the placer's posterior", async () => {
+		const { resolver, seen } = captureResolveOpts()
+		const placeCountry = vi.fn(() => ({ country: "ES", confidence: 0.9 }))
+		await runPipeline("Calle Mayor 1, Madrid", { resolver, placeCountry }, { resolveOpts: { anchorWeight: 3.5 } })
+		expect(seen[0]).toMatchObject({ anchorPosterior: { ES: 0.9 }, anchorWeight: 3.5 })
+	})
+
+	it("records place-country timing only when the stage is wired", async () => {
+		const placeCountry = vi.fn(() => ({ country: "US", confidence: 0.95 }))
+		const withStage = await runPipeline("350 5th Ave, New York", { placeCountry })
+		expect(withStage.timing["place-country"]).toBeGreaterThanOrEqual(0)
+		const without = await runPipeline("350 5th Ave, New York", {})
+		expect(without.timing["place-country"]).toBeUndefined()
+	})
+
+	it("flows the posterior on the fast-path too (postcode_only)", async () => {
+		const { resolver, seen } = captureResolveOpts()
+		const placeCountry = vi.fn(() => ({ country: "US", confidence: 0.96 }))
+		const postcodeShape: QueryShapeLite = {
+			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
+			totalLength: 5,
+			characterClass: "numeric",
+		}
+		const result = await runPipeline("10118", {
+			computeQueryShape: () => postcodeShape,
+			classifyKind: async () => ({ kind: "postcode_only" as const, confidence: 0.97, alternatives: [] }),
+			resolver,
+			placeCountry,
+		})
+		expect(result.path).toBe("fast-path")
+		expect(seen[0]).toMatchObject({ anchorPosterior: { US: 0.96 }, anchorWeight: 1.0 })
+	})
+})

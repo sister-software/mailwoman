@@ -1,0 +1,92 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Clean-install smoke test — the guard that would have caught the v4.8.0 broken publish.
+ *
+ *   The monorepo HOISTS dependencies, so an undeclared runtime dep (or a missing shipped file, or a
+ *   command module with an eager top-level side effect) resolves fine in-repo but crashes a fresh
+ *   `npm install`. Nothing tested that path, so several published versions shipped a `mailwoman`
+ *   CLI that crashed on startup (undeclared `path-ts`/`fast-glob`/… in core, an eager `new Piscina`
+ *   + unshipped `.mjs` worker in `wof prepare`, an eager import of the unpublished
+ *   `@mailwoman/resolver-wof-sqlite`). See #481 follow-up.
+ *
+ *   This packs every published code workspace, installs the tarballs into a throwaway project (so the
+ *   ONLY packages available are what the manifests declare — no hoisting), and runs the compiled
+ *   CLI. A missing dep / file / eager side effect surfaces as a non-zero exit here, in CI, before
+ *   publish.
+ *
+ *   Run AFTER `yarn compile`. Usage: node scripts/smoke-clean-install.mjs
+ */
+import { execFileSync } from "node:child_process"
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+import { fileURLToPath } from "node:url"
+
+const repoRoot = fileURLToPath(new URL("..", import.meta.url))
+// The published code workspaces (mirrors the release set; weights packages carry no code to import).
+const WORKSPACES = {
+	"@mailwoman/core": "core",
+	"@mailwoman/codex": "codex",
+	"@mailwoman/classifiers": "classifiers",
+	"@mailwoman/kind-classifier": "kind-classifier",
+	"@mailwoman/locale-gate": "locale-gate",
+	"@mailwoman/normalize": "normalize",
+	"@mailwoman/phrase-grouper": "phrase-grouper",
+	"@mailwoman/query-shape": "query-shape",
+	"@mailwoman/neural": "neural",
+	"@mailwoman/formatter": "formatter",
+	"@mailwoman/record": "record",
+	"@mailwoman/match": "match",
+	"@mailwoman/registry": "registry",
+	"@mailwoman/address-id": "address-id",
+	"@mailwoman/corpus": "corpus",
+	mailwoman: "mailwoman",
+}
+
+const tmp = mkdtempSync(join(tmpdir(), "mw-smoke-"))
+const tarDir = join(tmp, "tarballs")
+const proj = join(tmp, "proj")
+execFileSync("mkdir", ["-p", tarDir, proj])
+const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" })
+
+try {
+	console.log(`[smoke] packing ${Object.keys(WORKSPACES).length} workspaces…`)
+	const deps = {}
+	for (const [name, dir] of Object.entries(WORKSPACES)) {
+		const tgz = join(tarDir, `${dir}.tgz`)
+		run("yarn", ["workspace", name, "pack", "-o", tgz], repoRoot)
+		deps[name] = `file:${tgz}`
+	}
+	writeFileSync(
+		join(proj, "package.json"),
+		JSON.stringify({ name: "mw-smoke", private: true, dependencies: deps }, null, 2)
+	)
+
+	console.log("[smoke] npm install (tarballs only — no hoisting)…")
+	run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], proj)
+
+	const cli = join(proj, "node_modules", "mailwoman", "out", "cli.js")
+	console.log("[smoke] mailwoman --help (loads every command module)…")
+	const help = run("node", [cli, "--help"], proj)
+	for (const c of ["parse", "geocode", "autocomplete", "reverse", "wof", "corpus", "registry"]) {
+		if (!help.includes(c)) throw new Error(`--help missing command "${c}"`)
+	}
+
+	console.log("[smoke] mailwoman parse --isolated (exercises bundled core/data dictionaries)…")
+	const out = run("node", [cli, "parse", "--isolated", "350 5th Ave, New York, NY 10118"], proj)
+	if (!out.includes("New York") || !out.includes("10118"))
+		throw new Error(`parse output unexpected:\n${out.slice(0, 400)}`)
+
+	console.log("\n[smoke] ✅ clean install + CLI run succeeded")
+} catch (err) {
+	console.error("\n[smoke] ❌ FAILED — a published package does not clean-install/run:")
+	console.error(
+		err.stdout ? `${err.message}\n--- stdout ---\n${err.stdout}\n--- stderr ---\n${err.stderr}` : (err.message ?? err)
+	)
+	process.exitCode = 1
+} finally {
+	rmSync(tmp, { recursive: true, force: true })
+}

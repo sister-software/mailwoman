@@ -111,6 +111,28 @@ export function approxCircleGeometry(
 	return { type: "Polygon", coordinates: [ring] }
 }
 
+/**
+ * A circle of an EXACT radius in meters — for the street-level uncertainty (#377): a 10 m situs floor
+ * or a calibrated interp radius. Unlike {@link approxCircleGeometry} (clamped to a ~ZIP-sized 0.5 km
+ * floor for admin fallbacks), this honors small radii so an exact building reads as a tight dot.
+ */
+export function radiusCircleGeometry(lat: number, lon: number, radiusM: number): PlaceGeometry {
+	const kmPerDegLat = 111.32
+	const kmPerDegLon = kmPerDegLat * Math.cos((lat * Math.PI) / 180)
+	const radiusKm = Math.max(0.008, radiusM / 1000) // ~8 m min so a 10 m situs circle is still visible
+	const ring: number[][] = []
+	for (let i = 0; i <= 64; i++) {
+		const theta = (2 * Math.PI * i) / 64
+		ring.push([lon + (radiusKm * Math.cos(theta)) / kmPerDegLon, lat + (radiusKm * Math.sin(theta)) / kmPerDegLat])
+	}
+	return { type: "Polygon", coordinates: [ring] }
+}
+
+/** Draw a street-level uncertainty circle (exact meter radius) around a situs/interp coordinate. */
+export function drawRadiusCircle(map: MapLibreMap, lat: number, lon: number, radiusM: number): void {
+	setPlaceOutline(map, radiusCircleGeometry(lat, lon, radiusM))
+}
+
 /** Draw the crisp admin polygon straight from the polygon DB's GeoJSON geometry. */
 export function drawPlaceGeometry(map: MapLibreMap, geometry: PlaceGeometry): void {
 	setPlaceOutline(map, geometry)

@@ -1,0 +1,11 @@
+{
+	"extends": "@sister.software/tsconfig",
+	"compilerOptions": {
+		"outDir": "./out",
+		"emitDeclarationOnly": false,
+		"allowImportingTsExtensions": false
+	},
+	"include": ["./**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [{ "path": "../codex" }, { "path": "../normalize" }]
+}
