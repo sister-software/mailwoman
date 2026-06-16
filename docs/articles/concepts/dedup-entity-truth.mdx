@@ -1,0 +1,111 @@
+---
+sidebar_position: 3
+title: Choosing the dedup yardstick — why org-name, not NPI
+draft: true
+tags:
+  - concepts
+  - record-matching
+  - eval
+---
+
+# Choosing the dedup yardstick — why org-name, not NPI
+
+"How good is the matcher at deduplication?" sounds like a question with one
+number for an answer. It isn't. The honest answer is _"against which ruler?"_ —
+and on the NPPES provider registry, the ruler you reach for first is the one that
+quietly lies to you.
+
+The setup is the cleanest kind of held-out truth: the **NPI** (National Provider
+Identifier) is a stable, government-issued key, assigned once per registration.
+Run the matcher blind to the NPI, then grade its clusters against it. Two records
+that share an NPI _should_ land together; a cluster fusing two NPIs is an
+over-merge; an NPI split across clusters is an under-merge. No labels, no
+adjudication — just count. Tempting, and on this registry, wrong by construction.
+
+## One organization, many NPIs
+
+The NPI is a registration key, not an organization key. A single hospital system
+holds a **separate NPI for every billing subpart** — each clinic, each
+department, sometimes each location — plus legal-form variants, state qualifiers,
+and the occasional typo'd re-registration. `Baylor College of Medicine` appears
+four times at one address (`1504 Taub Loop`); `WAL-MART STORES TEXAS LLC` and
+`… LP` are the same Walmart pharmacy under two corporate skins. These are not
+distinct entities. They are one organization wearing many registration numbers.
+
+So when the matcher does exactly the right thing — recognizing that four
+co-located `Baylor` records are one place — NPI-as-truth scores all six of those
+within-org pairs as **over-merges**. The matcher is penalized for being correct.
+The lower its measured precision, the better it may actually be working.
+
+## Three rulers, one set of clusters
+
+The fix is not a better model; it's a better ruler. We grade the **identical**
+matcher output against three entity-truths, ordered from over-segmenting to
+honest:
+
+- **NPI** — one entity per registration. Over-segments every multi-subpart org.
+- **site** — collapse NPPES-flagged subparts back into their parent, then split
+  an NPI's genuinely-distinct addresses (mailing vs practice). Closer, but the
+  subpart flag is conservative: it misses the 37% of same-org pairs that aren't
+  flagged.
+- **org-name** — the gold-set-validated truth: same NPI implies same entity
+  (recall preserved), **plus** collapse co-located NPIs whose primary
+  organization names agree (token Jaccard ≥ 0.7), with no reliance on the subpart
+  flag. This is the ruler that stops charging the matcher for the same-org merges
+  that are genuinely correct.
+
+The same 2757-record sample carries **1000 NPI** classes → **1456 site** → **956
+org-name**. The class count first _expands_ (site splits multi-address NPIs) then
+_contracts_ below the NPI count (org-name fuses the co-located subparts) — the
+shape of over-segmentation being corrected.
+
+![The dedup F1 climbs as the entity-truth gets honest: a slope chart of entity-resolution F1 across three rulers (NPI, site, org-name) for the shipped GBT scorer and the FS baseline. The GBT F1 climbs 53.6% → 55.3% → 60.7% across the same clusters.](../evals/charts/dedup-yardstick.svg)
+
+Grade the shipped GBT scorer's clusters against each ruler and the F1 climbs
+**53.6% (NPI) → 55.3% (site) → 60.7% (org-name)** — a **+7.1pp** swing with the
+clusters held _identical_. The over-merge count falls (109 → 92) and precision
+rises (43.7% → 53.3%) for the same reason: the ruler stops counting correct
+same-org merges as errors. The climb is the yardstick getting honest, not the
+model changing.
+
+## Why we trust the org-name ruler
+
+A ruler you invent to make your number go up is worthless unless it's _right_. So
+the org-name collapse was validated against a frozen gold set: the genuinely-hard
+slice — co-located, name-similar, **distinct** NPIs that are **not** flagged
+subparts — adjudicated one pair at a time. The verdict was unanimous:
+[**120 of 120**](../evals/2026-06-16-dedup-gold-set-tx120.md) were the same
+real-world organization; **zero** were two unrelated companies wrongly fused.
+Every hard pair the matcher merges at a shared address is a correct merge that
+NPI-truth was scoring as an error.
+
+That result also settled the model question. An earlier experiment added
+"corroboration" features aimed at cutting over-merges — and moved precision not at
+all. The gold set explains why: there was essentially no genuine over-merge to
+cut. Optimizing the scorer for precision here optimizes a phantom; the lever was
+the ruler all along.
+
+## The discipline
+
+Report the number that matches the entity you're resolving. For NPPES
+organization dedup that is **org-name F1 (~60.7%)**, not the NPI-level 53.6% —
+the latter mostly measures NPI over-segmentation, a property of the registry, not
+of the matcher. State the ruler next to the number, every time; a dedup F1 with
+no named truth-grain is unreadable.
+
+This is the same move the rest of the system makes: [grade the pipeline against
+the right target, not a convenient proxy](./eval-discipline). The remaining
+org-name over-merge (92 clusters) is the genuine frontier — small, and approaching
+the [irreducible ceiling](../evals/2026-06-16-dedup-ceiling.md) of co-located
+distinct organizations that no address-based signal can separate.
+
+A closing note on framing: NPI-as-truth is _conservative_ in the direction that
+matters. A cluster fusing two NPIs is a candidate "same entity, two registrations"
+**surfaced for review**, not an adjudicated error; an NPI split across distant
+addresses is geocode-first behaving correctly. We resolve and report the join;
+what it _means_ is the consumer's call.
+
+_Measurements: [`2026-06-16-dedup-dual-level-benchmark`](../evals/2026-06-16-dedup-dual-level-benchmark.md)
+(the three-grain table), [`2026-06-16-dedup-gold-set-tx120`](../evals/2026-06-16-dedup-gold-set-tx120.md)
+(the adjudicated slice), [`2026-06-16-dedup-ceiling`](../evals/2026-06-16-dedup-ceiling.md)
+(the irreducible floor). Figure generator: `scripts/record-matcher/viz/yardstick-figure.ts`._

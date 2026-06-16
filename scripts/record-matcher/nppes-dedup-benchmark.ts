@@ -499,6 +499,16 @@ async function main(): Promise<void> {
 			`geocoded ${pct(geo / N)}% of addresses. The NPI is held-out ground truth._`
 	)
 	lines.push("")
+	lines.push(
+		`**Headline — org-name truth (the honest grain, [why](../concepts/dedup-entity-truth.mdx)):** the shipped ` +
+			`matcher resolves these records at **F1 ${pct(gbtOrg.f1)}%** against org-name entity-truth — not the NPI-level ` +
+			`${pct(gbtNpi.f1)}%, which mostly measures NPI over-segmentation (one organization holds many subpart NPIs, so ` +
+			`correct co-located merges are scored as errors). Same clusters, three rulers: ` +
+			`**NPI ${pct(gbtNpi.f1)}% → site ${pct(gbtEntity.f1)}% → org-name ${pct(gbtOrg.f1)}%** ` +
+			`(${kept.size} NPI → ${entityCount} site → ${orgCount} org-name classes); the climb is the yardstick getting honest, ` +
+			`not the model changing — gold-set validated (120/120 hard pairs = same org). Details in "Three truth grains" below.`
+	)
+	lines.push("")
 	lines.push(`## The comparison-model levers (each toggled on, at the default threshold)`)
 	lines.push("")
 	lines.push(`| model | precision | recall | F1 | ΔF1 | ARI | over-merged |`)
