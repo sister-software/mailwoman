@@ -4,14 +4,17 @@
  * @author Teffen Ellis, et al.
  *
  *   Regression guard for `parse --default-country` (the resolver country scope). Without a country
- *   hint the WOF resolver resolves globally, so a bare region abbreviation (`NY`) lands on whatever
- *   the gazetteer ranks highest — often a foreign homonym (a Scottish locality at lat ~57) rather
- *   than the US state. The demo passes `country: "US"`; this gives the CLI parity by inferring the
- *   country from `--locale` (overridable, `none` to disable).
+ *   hint the WOF resolver resolves globally; the demo passes `country: "US"`, and this gives the
+ *   CLI parity by inferring the country from `--locale` (overridable, `none` to disable).
+ *
+ *   Note (#595): a bare region abbreviation (`NY`) once landed on a foreign homonym (a Scottish
+ *   locality at lat ~57) without a country hint — that was the original motivation. WOF ranking has
+ *   since improved so US New York State now wins even unfiltered, so the end-to-end test guards the
+ *   improved ranking (US NY both with the hint and with `--default-country none`) rather than the
+ *   obsolete foreign-flip.
  *
  *   The unit tests (the locale→country inference + the override precedence) are CI-safe. The
- *   end-to-end NY-doesn't-become-Scotland check needs the GLOBAL admin DB (the US-only DB can't
- *   reproduce the homonym), so it skips when that DB is absent.
+ *   end-to-end resolution check needs the GLOBAL admin DB, so it skips when that DB is absent.
  */
 import { execFile } from "node:child_process"
 import { existsSync } from "node:fs"
@@ -84,13 +87,18 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 		expect(m, `expected a NYC-range locality coordinate, got:\n${stdout}`).not.toBeNull()
 	})
 
-	test("--default-country none reverts to the global homonym (the opt-out is real)", async () => {
+	test("--default-country none is accepted and resolves NY to US New York State (WOF ranks it over the foreign homonym, even unfiltered)", async () => {
 		const { stdout } = await run(["--default-country", "none"])
-		// With no country filter the region NY resolves to a high-latitude foreign place (Scotland ~57).
-		const m = /region[^>]*lat="(5\d\.\d+)"/.exec(stdout)
+		// HISTORY (#595): this once asserted the unfiltered region NY flipped to a Scottish homonym (lat
+		// ~57) — proving the country opt-out changed the result. WOF ranking has since improved so US New
+		// York State (lat ~42.9, wof:85688543) now wins even with NO country filter; the opt-out is still
+		// a real, plumbed flag, but it no longer flips THIS input. The assertion now guards that improved
+		// ranking (and that `--default-country none` is accepted and resolves cleanly) rather than the
+		// obsolete foreign-flip premise. The default-US locality test above still covers the country hint.
+		const m = /region[^>]*lat="(42\.\d+)"/.exec(stdout)
 		expect(
 			m,
-			`expected a foreign (lat>50) region resolution with --default-country none, got:\n${stdout}`
+			`expected US New York State (region lat 42.x) under --default-country none, got:\n${stdout}`
 		).not.toBeNull()
 	})
 })
