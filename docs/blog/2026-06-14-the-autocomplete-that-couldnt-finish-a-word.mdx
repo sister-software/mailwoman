@@ -1,0 +1,101 @@
+---
+slug: the-autocomplete-that-couldnt-finish-a-word
+title: "The autocomplete that couldn't finish a word"
+authors: [teffen]
+tags: [geocoding, wof, concepts, night-shift]
+date: 2026-06-14
+draft: true
+---
+
+Last night we turned the demo into a real geocoder — type an address, get a rooftop
+coordinate, all in your browser, no server. The last touch was the one that makes a search
+box feel alive: autocomplete, so the city finishes itself while you type. We already had the
+autocomplete. We'd shipped it as a command-line tool a few days earlier, watched it rank San
+Francisco above San Diego, and called it done. So we dropped the same function into the box,
+typed `New Yor`, and it suggested Denver. The questions that fell out of that: why does a
+function that nails `San` choke on `New Yor`? What's the difference between completing a word
+and completing the word a person is in the middle of typing? And how does an autocomplete
+that knows ten thousand cities fail to finish one of them?
+
+{/* truncate */}
+
+## The autocomplete we already had
+
+Our gazetteer — every country, region, county, and city we resolve against — is stored as a
+finite-state transducer: a trie over place-name tokens, with each accepting state carrying the
+places that spell out to that point. `mailwoman autocomplete "San"` walks the trie to the
+`San` node and reads off everything beneath it, ranked by importance: San Francisco, San
+Diego, San Bernardino. It's quick because there's no search — the FST _is_ the index. You walk
+to a node and the answers are sitting there.
+
+For a command line, this is exactly right. You type a whole word, you hit tab, you get
+completions. The unit of input is the word, and the trie is keyed by words. The shapes match.
+
+## Then we typed half a word
+
+A search box does not hand you whole words. It hands you `New Yor`. It hands you `Chic`. It
+hands you the front half of a word and asks what you meant.
+
+To walk a token trie you need tokens, and `Yor` is not a token — it's the beginning of one.
+The walk steps through `New`, reaches for an edge labeled `Yor`, finds nothing, and fails.
+That part is forgivable; a trie can't match a fragment. What wasn't forgivable was what the
+old code did on failure: it shrugged and fell back to a fuzzy text search over the gazetteer,
+which did its earnest best and returned the nearest fuzzy thing it could find. For `New Yor`,
+that was Denver. A demo that answers "New Yor" with "Denver" fails the only test that matters,
+which is the one where someone you're trying to impress is watching the screen.
+
+## It was worse than Denver
+
+So we fed it whole tokens, expecting relief, and got `New` → New London. Four times.
+
+Two problems, stacked. The first was that nothing collapsed duplicates: New London the city,
+New London the county, and a couple of smaller New Londons each took a slot, so the dropdown
+was four rows of the same name before it offered anything else. The second was subtler and
+worse. The `New` node has 311 children. The walk collects completions breadth-first under a
+budget, and a dense branch — all those New Londons — filled the budget before the search ever
+reached `New York`. The autocomplete knew New York perfectly well. It just never got there.
+The most prominent place a person could possibly mean, starved out by a pile of smaller ones
+that happened to sort first.
+
+## Two problems wearing one name
+
+This is the part the command line hid from us for a week. "Complete a place word" and
+"complete the word a person is typing" look like the same feature. They are not the same
+feature. One assumes the token is finished and asks what comes after it; the other assumes the
+token is unfinished and has to finish it, character by character, while also ranking the
+results well enough that the thing you obviously meant is on top. The CLI only ever exercised
+the easy half, so the hard half shipped untested and we never knew.
+
+We'd asked DeepSeek to sanity-check the wiring before we started, and it said it suspected
+"there's more here than the operator described." It was right. There was a whole second
+feature hiding inside the first one's name.
+
+## The fix is just finishing the word yourself
+
+When the walk fails on a partial last token, don't fall back to fuzzy anything. Walk the
+_complete_ prefix instead — `New` — and then filter that node's outgoing edges by the
+fragment: keep every edge whose token starts with `yor`. `york` survives. `london` doesn't.
+You've completed the word using the trie you already have, no fuzzy search, no Denver.
+
+Then fix the ranking so the completion is worth showing. Cap how many places any single branch
+can contribute, so one dense `New London` branch can't crowd out `New York` before the search
+reaches it. Collapse same-name places to the most prominent one. Do those three things —
+character-level completion, a per-branch cap, name dedup — and `New Yor` becomes New York,
+`Chic` becomes Chicago, `San Fr` becomes San Francisco. The search box finishes your word.
+
+We wrote eight headless browser checks and watched all eight pass before we let ourselves
+believe it — typed `New`, arrowed down, hit enter, confirmed the box filled with New York and
+_didn't_ fire a search. Because the first time we believed this thing, it said Denver.
+
+## What the gap was made of
+
+There's a tidy lesson in here about prefix tries and a less tidy one about products. The tidy
+one: a token-keyed index can do character-level completion, but only if you stop walking at the
+last complete token and treat the final fragment as a filter over edges instead of an edge to
+follow. The less tidy one is the reason we shipped the bug at all. The same function was
+correct on the command line and a liability in the search box, and nothing about its name, its
+tests, or its track record warned us — because the surface it was correct on never asked it the
+hard question. "Autocomplete" was two features in a trench coat, and we only met the second one
+when a stranger typed half a word and it tried to send them to Colorado.
+
+The demo finishes your word now. Go type half of one and watch it land.

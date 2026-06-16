@@ -17,6 +17,7 @@
 		{ "path": "../normalize" },
 		{ "path": "../phrase-grouper" },
 		{ "path": "../query-shape" },
+		{ "path": "../registry" },
 		{ "path": "../resolver-wof-sqlite" }
 	]
 }

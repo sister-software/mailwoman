@@ -166,8 +166,21 @@ export const ResultPanel: React.FC<ResultPanelProps> = ({ result, selectedCandid
 							<dd>{selected.name}</dd>
 							<dt>placetype</dt>
 							<dd>{selected.placetype}</dd>
-							<dt>WOF id</dt>
-							<dd>{selected.id}</dd>
+							{selected.tier ? (
+								<>
+									<dt>precision</dt>
+									<dd>
+										{selected.tier === "address_point"
+											? "📍 exact address point (≤10 m)"
+											: `≈ interpolated · ±${selected.uncertaintyM} m`}
+									</dd>
+								</>
+							) : (
+								<>
+									<dt>WOF id</dt>
+									<dd>{selected.id}</dd>
+								</>
+							)}
 							<dt>coords</dt>
 							<dd>
 								{selected.lat.toFixed(4)}, {selected.lon.toFixed(4)}

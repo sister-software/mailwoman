@@ -128,6 +128,8 @@ for ws in <new-workspace-dirs>; do
 done
 ```
 
+> **Use the script above (or `yarn pack -o <tmp> && npm publish <tmp>`) — never a raw `npm publish` from the workspace dir.** Yarn 4's `workspace:*` dep protocol is yarn-specific; `npm publish` ships the literal string `"workspace:*"`, and consumers then fail to install with `EUNSUPPORTEDPROTOCOL`. `yarn pack` (which `publish-workspace.mjs` runs) rewrites `workspace:*` → the concrete sibling version. This bit `@mailwoman/address-id`'s 4.9.0 first publish (shipped `"@mailwoman/codex": "workspace:*"`); it was fixed by republishing 4.9.1 from a `yarn pack`'d tarball.
+
 Then, on npmjs.com, **configure each new package's Trusted Publisher** (repo `sister-software/mailwoman`, workflow `.github/workflows/publish.yml`). After that, OIDC publishes it like every other package and you never touch it manually again.
 
 Two traps that wasted time during 4.0.0, worth knowing:
