@@ -8,12 +8,13 @@
  *
  *   Two query shapes are handled (the FST is a trie over normalized WORD tokens):
  *
- *   - COMPLETE tokens ("new york") — `walk` lands on a state; collect its accepting entries + BFS
- *     a couple tokens past it for nearby completions. This is the CLI's "complete a place word" path.
- *   - A PARTIAL last token ("new yor", "chic") — `walk` fails (there is no "yor" edge, only "york").
- *     So walk the complete prefix, then complete the partial token by prefix-filtering the
- *     continuation edges (`token.startsWith(partial)`). This is what a char-level typeahead needs;
- *     without it "new yor" returns nothing useful. (#587)
+ *   - COMPLETE tokens ("new york") — `walk` lands on a state; collect its accepting entries + BFS a
+ *       couple tokens past it for nearby completions. This is the CLI's "complete a place word"
+ *       path.
+ *   - A PARTIAL last token ("new yor", "chic") — `walk` fails (there is no "yor" edge, only "york"). So
+ *       walk the complete prefix, then complete the partial token by prefix-filtering the
+ *       continuation edges (`token.startsWith(partial)`). This is what a char-level typeahead
+ *       needs; without it "new yor" returns nothing useful. (#587)
  */
 
 import { FstMatcher, normalizeTokens } from "./fst-matcher.js"
@@ -41,8 +42,8 @@ export interface AutocompleteOpts {
 	maxExpansionDepth?: number
 	/**
 	 * Collapse same-name suggestions to the single highest-importance one. Off by default (the CLI
-	 * surfaces distinct same-name places — New York the city vs the county); a typeahead wants it ON so
-	 * the dropdown isn't four "New London"s. (#587)
+	 * surfaces distinct same-name places — New York the city vs the county); a typeahead wants it ON
+	 * so the dropdown isn't four "New London"s. (#587)
 	 */
 	dedupeByName?: boolean
 }
@@ -56,7 +57,8 @@ interface BfsItem {
 /** Max accepting entries collected per BFS branch — keeps one dense branch from starving the search. */
 const PER_BRANCH = 4
 
-/** The top-`k` entries by importance (descending). Avoids sorting/allocating when `entries` is small. */
+/** The top-`k` entries by importance (descending). Avoids sorting/allocating when `entries` is
+small. */
 function topByImportance(entries: readonly PlaceEntry[], k: number): PlaceEntry[] {
 	if (entries.length <= k) return [...entries]
 	return [...entries].sort((a, b) => b.importance - a.importance).slice(0, k)
@@ -145,8 +147,10 @@ function addSuggestion(
 	})
 }
 
-/** Keep one suggestion per name — the highest-importance. Input is already importance-sorted, so the
- * first occurrence per name wins; order is preserved. */
+/**
+ * Keep one suggestion per name — the highest-importance. Input is already importance-sorted, so the
+ * first occurrence per name wins; order is preserved.
+ */
 function dedupeByName(suggestions: AutocompleteSuggestion[]): AutocompleteSuggestion[] {
 	const seenNames = new Set<string>()
 	const out: AutocompleteSuggestion[] = []

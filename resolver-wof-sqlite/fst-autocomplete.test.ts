@@ -89,8 +89,21 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		lon: 0,
 	})
 	const matcher = new FstMatcher([
-		{ edges: new Map([["new", 1], ["san", 4], ["chicago", 6]]), places: [] }, // 0 root
-		{ edges: new Map([["york", 2], ["london", 3]]), places: [] }, // 1 "new"
+		{
+			edges: new Map([
+				["new", 1],
+				["san", 4],
+				["chicago", 6],
+			]),
+			places: [],
+		}, // 0 root
+		{
+			edges: new Map([
+				["york", 2],
+				["london", 3],
+			]),
+			places: [],
+		}, // 1 "new"
 		{ edges: new Map(), places: [place(1, "New York", "locality", 0.9)] }, // 2 "new york"
 		{ edges: new Map(), places: [place(2, "New London", "locality", 0.5), place(3, "New London", "county", 0.4)] }, // 3 "new london"
 		{ edges: new Map([["francisco", 5]]), places: [] }, // 4 "san"
@@ -137,8 +150,17 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		// (the place a user most likely wants) is dropped — the real "new → New London not New York" bug.
 		const dense = new FstMatcher([
 			{ edges: new Map([["go", 1]]), places: [] },
-			{ edges: new Map([["diego", 2], ["tham", 3]]), places: [] },
-			{ edges: new Map(), places: Array.from({ length: 12 }, (_, i) => place(100 + i, `Go Diego ${i}`, "locality", 0.1)) },
+			{
+				edges: new Map([
+					["diego", 2],
+					["tham", 3],
+				]),
+				places: [],
+			},
+			{
+				edges: new Map(),
+				places: Array.from({ length: 12 }, (_, i) => place(100 + i, `Go Diego ${i}`, "locality", 0.1)),
+			},
 			{ edges: new Map(), places: [place(200, "Gotham", "locality", 0.9)] },
 		])
 		const r = autocomplete(dense, "go", { maxSuggestions: 3 })

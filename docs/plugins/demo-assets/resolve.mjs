@@ -122,7 +122,15 @@ export function buildWorkspaceAliases() {
 	// (httpvfs-street.ts) so the demo's situs/interp normalization can't drift from the Node tiers.
 	const resolverWofDir = resolveWorkspaceDir("@mailwoman/resolver-wof-sqlite")
 	if (resolverWofDir) {
-		for (const sub of ["fst-deserialize-web", "fst-matcher", "fst-types", "fts", "street-normalize", "geo", "fst-autocomplete"]) {
+		for (const sub of [
+			"fst-deserialize-web",
+			"fst-matcher",
+			"fst-types",
+			"fts",
+			"street-normalize",
+			"geo",
+			"fst-autocomplete",
+		]) {
 			aliases[`@mailwoman/resolver-wof-sqlite/${sub}`] = resolveWorkspaceFile(resolverWofDir, sub)
 		}
 	}

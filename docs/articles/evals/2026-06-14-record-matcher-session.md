@@ -51,16 +51,16 @@ version works where the string-first v0 imploded.
   only (operator decision: **no Nexus/TypeORM/JSON-schema machinery**; use Kysely if a DB
   is ever needed).
   - `address.ts`: `PostalAddress` (components + canonicalKey + optional `AddressGeocode`
-    + formatted), `AddressGeocode` (mirrors mailwoman `GeocodeResult`: `ResolutionTier` +
-    `uncertaintyMeters` + hierarchy + poBox/multiUnit flags), `toPostalAddress`,
-    `withGeocode`.
+    - formatted), `AddressGeocode` (mirrors mailwoman `GeocodeResult`: `ResolutionTier` +
+      `uncertaintyMeters` + hierarchy + poBox/multiUnit flags), `toPostalAddress`,
+      `withGeocode`.
   - `name.ts`: `parsePersonName` — rule-based positional parser (the python-nameparser
     recipe), comma-inversion, leading titles, trailing suffixes, surname **particle stored
     separately** (`de la Vega` to particle `de la` + family `Vega`), nickname extraction.
     Western/romanized only; does NOT map nicknames to roots (lossy/gendered — that belongs
     in the matcher as a fuzzy agreement level).
   - `organization.ts`: `canonicalizeOrganizationName` — Winkler designation-strip (`Acme
-    Corp` equals `Acme Corporation, LLC`), DBA split, ampersand to "and", intra-token
+Corp` equals `Acme Corporation, LLC`), DBA split, ampersand to "and", intra-token
     period/apostrophe removal (`S.A.` to `sa`), leading-`The` drop. ISO 20275 ELF + cleanco
     designation list.
 

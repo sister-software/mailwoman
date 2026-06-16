@@ -35,8 +35,10 @@ export function serializableResolveOpts(opts?: ResolveOpts): SerializableResolve
 }
 
 export interface RemoteResolverOpts {
-	/** Full URL of the resolver service's resolve-tree endpoint, e.g.
-`http://resolver:7081/api/resolve-tree`. */
+	/**
+	 * Full URL of the resolver service's resolve-tree endpoint, e.g.
+	 * `http://resolver:7081/api/resolve-tree`.
+	 */
 	endpoint: string
 	/** Injectable fetch (tests / custom agents). Defaults to the global `fetch`. */
 	fetch?: typeof fetch

@@ -3,17 +3,17 @@
 	"version": "4.10.0",
 	"description": "Spatial analysis, geocoding, and other geo-related utilities.",
 	"license": "AGPL-3.0-only",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/sister-software/mailwoman.git",
-		"directory": "spatial"
-	},
 	"contributors": [
 		{
 			"name": "Teffen Ellis",
 			"email": "teffen@sister.software"
 		}
 	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "spatial"
+	},
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",

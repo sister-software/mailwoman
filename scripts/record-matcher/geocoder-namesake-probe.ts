@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Admin-tier wrong-region probe (#619 tail) — the geocoder-vs-provided-coords eval found an admin-tier
- *   tail to 11143 km (p99 2189 km). Hypothesis: when no street shard covers the address, the admin
- *   cascade resolves the locality by NAME and (when the region/postcode constraint is weak) picks the
- *   population-dominant FOREIGN namesake — Paris→France, Athens→Greece — instead of the in-state Texas
- *   city. This probes a curated set of TX namesake cities, with and without ZIP, and flags any result
- *   outside the Texas bounding box.
+ *   Admin-tier wrong-region probe (#619 tail) — the geocoder-vs-provided-coords eval found an
+ *   admin-tier tail to 11143 km (p99 2189 km). Hypothesis: when no street shard covers the address,
+ *   the admin cascade resolves the locality by NAME and (when the region/postcode constraint is
+ *   weak) picks the population-dominant FOREIGN namesake — Paris→France, Athens→Greece — instead of
+ *   the in-state Texas city. This probes a curated set of TX namesake cities, with and without ZIP,
+ *   and flags any result outside the Texas bounding box.
  *
  *   Run: node --experimental-strip-types scripts/record-matcher/geocoder-namesake-probe.ts
  */
@@ -60,7 +60,13 @@ async function main(): Promise<void> {
 	const shardProvider = new ShardProvider(mod, DATA_ROOT)
 
 	const geo = (address: string) =>
-		geocodeAddress(address, { classifier, resolver, shards: shardProvider.for, defaultCountry: "US", placeCountry: false })
+		geocodeAddress(address, {
+			classifier,
+			resolver,
+			shards: shardProvider.for,
+			defaultCountry: "US",
+			placeCountry: false,
+		})
 
 	console.error("[B] probing TX namesake cities (with ZIP / without ZIP)…\n")
 	let wrongRegion = 0

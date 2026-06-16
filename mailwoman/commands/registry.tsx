@@ -118,7 +118,7 @@ const OptionsSchema = zod.object({
 		.describe(
 			"Coverage reconciliation (#621): classify each resolved entity by which KIND of source its records " +
 				"span — `enrolled` (eligibility + funding), `eligible-not-enrolled` (the anti-join), or " +
-				"`funded-not-eligible`. Requires --sources where each spec carries `role: \"eligibility\" | \"funding\"`. " +
+				'`funded-not-eligible`. Requires --sources where each spec carries `role: "eligibility" | "funding"`. ' +
 				"Prints a set-membership report to stdout; --out writes bucket-tagged GeoJSON, --map-out a bucket-colored " +
 				"map. A reconciliation, never a determination."
 		),
@@ -267,8 +267,10 @@ interface MultiSourceSpec {
 	source?: string
 	/** For --reconcile: whether this dataset denotes eligibility/membership or funding/enrollment. */
 	role?: "eligibility" | "funding"
-	/** Read at most this many rows (the head of the file) — sampling a huge source without
-pre-filtering. */
+	/**
+	 * Read at most this many rows (the head of the file) — sampling a huge source without
+	 * pre-filtering.
+	 */
 	limit?: number
 }
 
@@ -300,10 +302,7 @@ function writeOutputs(geojson: ReturnType<typeof toGeoJSON>, options: zod.infer<
 		lines.push(`wrote ${geojson.features.length} features → ${options.out}`)
 	}
 	if (options.mapOut) {
-		writeFileSync(
-			options.mapOut,
-			toMapHTML(geojson, options.source ? { title: `Mailwoman — ${options.source}` } : {})
-		)
+		writeFileSync(options.mapOut, toMapHTML(geojson, options.source ? { title: `Mailwoman — ${options.source}` } : {}))
 		lines.push(`wrote map → ${options.mapOut} (serve over localhost to view)`)
 	}
 	return lines.join("\n")
@@ -399,7 +398,7 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 	if (options.reconcile) {
 		throw new Error(
 			"--reconcile is a cross-source mode: pass --sources <config.json> (each entry tagged with a " +
-				'`role`), not a single positional CSV.'
+				"`role`), not a single positional CSV."
 		)
 	}
 	const rows = parseCsv(readFileSync(csvPath, "utf8"))

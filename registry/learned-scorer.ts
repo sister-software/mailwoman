@@ -35,8 +35,10 @@ export interface LearnedFeatureConfig {
 	 * FS weight wholesale and owns its own feature vector.)
 	 */
 	comparisons: Comparison<SourceRecord>[]
-	/** Address-frequency table for the crowdedness feature (a crowded shared address is weak
-identity). */
+	/**
+	 * Address-frequency table for the crowdedness feature (a crowded shared address is weak
+	 * identity).
+	 */
 	addressFrequency: TermFrequencyTable
 }
 

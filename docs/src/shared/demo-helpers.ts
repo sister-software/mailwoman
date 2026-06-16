@@ -284,16 +284,26 @@ export interface StreetResolution {
 	lat: number
 	lon: number
 	tier: "address_point" | "interpolated"
-	/** Calibrated uncertainty radius in meters (10 m situs floor; interp = uncertaintyM × the region factor). */
+	/** Calibrated uncertainty radius in meters (10 m situs floor; interp = uncertaintyM × the region
+factor). */
 	uncertaintyM: number
 }
 
 /** Structural shapes so this is testable with stubs (and decoupled from the httpvfs-street classes). */
 interface SitusLike {
-	find(q: { street: string; number: string; postcode?: string; locality?: string }): Promise<{ lat: number; lon: number } | null>
+	find(q: {
+		street: string
+		number: string
+		postcode?: string
+		locality?: string
+	}): Promise<{ lat: number; lon: number } | null>
 }
 interface InterpLike {
-	find(q: { street: string; number: string; postcode?: string }): Promise<{ lat: number; lon: number; uncertaintyM: number } | null>
+	find(q: {
+		street: string
+		number: string
+		postcode?: string
+	}): Promise<{ lat: number; lon: number; uncertaintyM: number } | null>
 }
 
 /**
@@ -326,7 +336,12 @@ export async function resolveStreet(
 	if (interp) {
 		const hit = await interp.find({ street: st, number: num, postcode })
 		if (hit && !(hit.lat === 0 && hit.lon === 0)) {
-			return { lat: hit.lat, lon: hit.lon, tier: "interpolated", uncertaintyM: Math.round(hit.uncertaintyM * interpRadiusCalibration) }
+			return {
+				lat: hit.lat,
+				lon: hit.lon,
+				tier: "interpolated",
+				uncertaintyM: Math.round(hit.uncertaintyM * interpRadiusCalibration),
+			}
 		}
 	}
 	return null

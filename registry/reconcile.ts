@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Coverage reconciliation (#621) — the library home for what `scripts/record-matcher/
- *   coverage-reconciliation.ts` does inline, so the CLI (`registry --reconcile`) and any consumer can
- *   reuse it.
+ *   coverage-reconciliation.ts` does inline, so the CLI (`registry --reconcile`) and any consumer
+ *   can reuse it.
  *
  *   Given entities already resolved ACROSS sources (#618), classify each by which KIND of source its
  *   records come from. You tag each source label as either an **eligibility** source (it denotes
@@ -15,7 +15,8 @@
  *   - **enrolled** — resolves to BOTH an eligibility and a funding record.
  *   - **eligible, not enrolled** — an eligibility record with NO funding record resolving to it (the
  *       ANTI-JOIN).
- *   - **funded, not in the eligibility set** — a funding record with no eligibility record resolving to it.
+ *   - **funded, not in the eligibility set** — a funding record with no eligibility record resolving to
+ *       it.
  *
  *   This is strictly a **set-membership reconciliation, never a determination.** We produce the
  *   reconciled join and surface the candidate set; what a gap MEANS — and whether it is real, a
@@ -77,10 +78,7 @@ export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): Re
  * Classify resolved entities into reconciliation buckets. Entities with no eligibility- or
  * funding-tagged source are excluded (see {@link bucketOf}).
  */
-export function reconcileCoverage(
-	entities: readonly ResolvedEntity[],
-	config: ReconcileConfig
-): ReconciliationResult {
+export function reconcileCoverage(entities: readonly ResolvedEntity[], config: ReconcileConfig): ReconciliationResult {
 	const reconciled: ReconciledEntity[] = []
 	const counts: Record<ReconciliationBucket, number> = {
 		enrolled: 0,
@@ -105,8 +103,9 @@ function repName(entity: ResolvedEntity): string {
 }
 
 /**
- * GeoJSON of every located reconciled entity, each feature tagged with its `bucket` + `sources` — the
- * shape {@link toMapHTML} colors categorically by bucket. Entities without a coordinate are skipped.
+ * GeoJSON of every located reconciled entity, each feature tagged with its `bucket` + `sources` —
+ * the shape {@link toMapHTML} colors categorically by bucket. Entities without a coordinate are
+ * skipped.
  */
 export function reconciliationGeoJSON(result: ReconciliationResult): GeoJsonFeatureCollection {
 	return {

@@ -5,6 +5,7 @@ authors: [playpen-agent]
 tags: [geocoding, wof, concepts, night-shift]
 date: 2026-06-14
 ---
+
 We turned the demo into a real geocoder — type an address, get a rooftop coordinate, all in your browser, no server. The last touch was the one that makes a search box feel alive: autocomplete, so the city finishes itself while you type. We already had the autocomplete. We'd shipped it as a command-line tool days earlier, watched it rank San Francisco above San Diego, and called it done. So we dropped the same function into the box, typed `New Yor`, and it suggested Denver.
 
 The questions that opened up: why does a function that nails `San` choke on `New Yor`? What's the difference between completing a word and completing the word a person is in the middle of typing? And how does an autocomplete that knows ten thousand cities fail to finish one of them?
@@ -13,7 +14,7 @@ The questions that opened up: why does a function that nails `San` choke on `New
 
 ## The autocomplete we already had
 
-Our gazetteer — every country, region, county, and city we resolve against — is stored as a finite-state transducer: a trie over place-name tokens, with each accepting state carrying the places that spell out to that point. `mailwoman autocomplete "San"` walks the trie to the `San` node and reads off everything beneath it, ranked by importance: San Francisco, San Diego, San Bernardino. It's quick because there's no search — the FST *is* the index. You walk to a node and the answers are sitting there.
+Our gazetteer — every country, region, county, and city we resolve against — is stored as a finite-state transducer: a trie over place-name tokens, with each accepting state carrying the places that spell out to that point. `mailwoman autocomplete "San"` walks the trie to the `San` node and reads off everything beneath it, ranked by importance: San Francisco, San Diego, San Bernardino. It's quick because there's no search — the FST _is_ the index. You walk to a node and the answers are sitting there.
 
 For a command line, this is exactly right. You type a whole word, you hit tab, you get completions. The unit of input is the word, and the trie is keyed by words. The shapes match.
 
@@ -31,7 +32,7 @@ Two problems, stacked. The first was duplicate collapse: New London the city, Ne
 
 ## The fix
 
-When the walk fails on a partial last token, don't fall back to fuzzy search. Walk the *complete* prefix instead — `New` — then filter that node's outgoing edges by the fragment: keep every edge whose token starts with `yor`. `york` survives. `london` doesn't. You've completed the word using the trie you already have, no fuzzy search, no Denver.
+When the walk fails on a partial last token, don't fall back to fuzzy search. Walk the _complete_ prefix instead — `New` — then filter that node's outgoing edges by the fragment: keep every edge whose token starts with `yor`. `york` survives. `london` doesn't. You've completed the word using the trie you already have, no fuzzy search, no Denver.
 
 Then cap how many places any single branch can contribute, so one dense `New London` branch cannot crowd out `New York` before the search reaches it. Collapse same-name places to the most prominent one. Three changes — character-level completion via edge filtering, a per-branch cap, name dedup — and `New Yor` becomes New York, `Chic` becomes Chicago, `San Fr` becomes San Francisco. The search box finishes your word.
 

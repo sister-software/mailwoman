@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   Measure the #244 coarse-placer's handling of the Latin-script off-map residual (milestone 3). A
- *   Latin off-map address is HANDLED when the model routes it to OTHER or abstains — anything else is
- *   a confident mis-placement onto a wrong (trained) country. Reports handled-rate overall, by group
- *   (indist = held-out rows of trained-OTHER countries; heldout = countries never trained), and by
- *   source country, plus where the misses land. Run baseline (current model) and the M3 retrain
- *   through this to read the before/after.
+ *   Latin off-map address is HANDLED when the model routes it to OTHER or abstains — anything else
+ *   is a confident mis-placement onto a wrong (trained) country. Reports handled-rate overall, by
+ *   group (indist = held-out rows of trained-OTHER countries; heldout = countries never trained),
+ *   and by source country, plus where the misses land. Run baseline (current model) and the M3
+ *   retrain through this to read the before/after.
  *
  *   Usage: node scripts/coarse-placer/eval-latin-offmap.mjs --model <dir> [--abstain 0.5]
  */
@@ -70,17 +70,22 @@ for (const r of rows) {
 		bump(`cc:${r.srcCountry}`).ok++
 	} else {
 		missTo[p.country] = (missTo[p.country] ?? 0) + 1
-		if (samples.length < 8) samples.push(`    ${r.srcCountry} → ${p.country} @${p.confidence.toFixed(2)}  «${r.raw.slice(0, 38)}»`)
+		if (samples.length < 8)
+			samples.push(`    ${r.srcCountry} → ${p.country} @${p.confidence.toFixed(2)}  «${r.raw.slice(0, 38)}»`)
 	}
 }
 const pct = (o, m) => `${((100 * o) / m).toFixed(1)}%`
 console.log(`Latin off-map handling — model ${path.basename(args.model)} (abstain ${args.abstain}, n=${n})`)
 console.log(`  OVERALL handled (OTHER-or-abstain): ${ok}/${n} (${pct(ok, n)})  ← want ≥90%`)
 console.log(`  by group:`)
-for (const k of Object.keys(by).filter((k) => k.startsWith("group:")).sort())
+for (const k of Object.keys(by)
+	.filter((k) => k.startsWith("group:"))
+	.sort())
 	console.log(`    ${k.slice(6).padEnd(8)} ${pct(by[k].ok, by[k].n)} (n=${by[k].n})`)
 console.log(`  by source country:`)
-for (const k of Object.keys(by).filter((k) => k.startsWith("cc:")).sort())
+for (const k of Object.keys(by)
+	.filter((k) => k.startsWith("cc:"))
+	.sort())
 	console.log(`    ${k.slice(3).padEnd(4)} ${pct(by[k].ok, by[k].n)} (n=${by[k].n})`)
 const misses = Object.entries(missTo).sort((a, b) => b[1] - a[1])
 if (misses.length) console.log(`  misses land on: ${misses.map(([c, m]) => `${c}:${m}`).join(", ")}`)

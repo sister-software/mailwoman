@@ -3,18 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Per-region split-conformal multipliers for the interpolation tier's `uncertainty_m` radius (#374).
- *   Multiply the raw claimed radius (half the matched TIGER segment length) by the region's factor to
- *   get a calibrated ~90%-coverage interval.
+ *   Per-region split-conformal multipliers for the interpolation tier's `uncertainty_m` radius
+ *   (#374). Multiply the raw claimed radius (half the matched TIGER segment length) by the region's
+ *   factor to get a calibrated ~90%-coverage interval.
  *
  *   #569 shipped a single 1.70 measured on Texas; the multi-region recalibration (#584) found the
- *   factor is regional — Q̂ rises monotonically with rurality, 1.44 (DC, densest) → 3.12 (AZ, sprawl).
- *   This wires the per-region selection the seed table anticipated.
+ *   factor is regional — Q̂ rises monotonically with rurality, 1.44 (DC, densest) → 3.12 (AZ,
+ *   sprawl). This wires the per-region selection the seed table anticipated.
  *
  *   SOURCE OF RECORD: `data/calibration/interp-radius-conformal.json` (the eval artifact + rationale,
- *   `docs/articles/evals/2026-06-14-interp-multiregion-recalibration.md`). Embedded here as a constant
- *   so the published package + the server ship it without a runtime data-file dependency. **Keep the
- *   two in sync** — when the full 50-state sweep (followups in the JSON) fills in, update both.
+ *   `docs/articles/evals/2026-06-14-interp-multiregion-recalibration.md`). Embedded here as a
+ *   constant so the published package + the server ship it without a runtime data-file dependency.
+ *   **Keep the two in sync** — when the full 50-state sweep (followups in the JSON) fills in,
+ *   update both.
  */
 
 export interface InterpCalibrationTable {
@@ -28,8 +29,8 @@ export interface InterpCalibrationTable {
 }
 
 /**
- * Measured 12-state seed table (a partial sweep; the full 50 was abandoned at the >85 °C heat ceiling).
- * Mirrors `data/calibration/interp-radius-conformal.json` (#584).
+ * Measured 12-state seed table (a partial sweep; the full 50 was abandoned at the >85 °C heat
+ * ceiling). Mirrors `data/calibration/interp-radius-conformal.json` (#584).
  */
 export const INTERP_RADIUS_CALIBRATION: InterpCalibrationTable = {
 	byRegion: {
@@ -54,7 +55,10 @@ export const INTERP_RADIUS_CALIBRATION: InterpCalibrationTable = {
  * {@link regionToStateSlug} (e.g. `"tx"`); falls back to the table's conservative `default` for an
  * unmeasured or absent region.
  */
-export function interpCalibrationForRegion(table: InterpCalibrationTable, stateSlug: string | null | undefined): number {
+export function interpCalibrationForRegion(
+	table: InterpCalibrationTable,
+	stateSlug: string | null | undefined
+): number {
 	if (!stateSlug) return table.default
 	return table.byRegion[stateSlug.toUpperCase()] ?? table.default
 }

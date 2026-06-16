@@ -148,8 +148,8 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 }
 
 /**
- * Split a `locality` whose value is `"City, ST"` (state in the LAST comma segment) into
- * region(ST) → locality(City). Returns null when the tail isn't a US state.
+ * Split a `locality` whose value is `"City, ST"` (state in the LAST comma segment) into region(ST)
+ * → locality(City). Returns null when the tail isn't a US state.
  */
 function splitMergedCityState(node: AddressNode): AddressNode | null {
 	const comma = node.value.lastIndexOf(",")

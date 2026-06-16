@@ -5,19 +5,19 @@
  *   Reconcile RE-GATE (post-#565). The grouper HN-bundling fix (#565) re-enabled joint-reconcile's
  *   street/HN precondition (US 20% → 91.7% in the bundling audit). Open question for re-promotion:
  *   does running the pipeline with `jointReconcile: true` now BEAT-OR-MATCH argmax (reconcile off,
- *   the #566 default) on FR/EU **without regressing US**? This grades the ASSEMBLED pipeline in both
- *   modes — never raw-neural F1 — which is the lesson of the retirement (see
+ *   the #566 default) on FR/EU **without regressing US**? This grades the ASSEMBLED pipeline in
+ *   both modes — never raw-neural F1 — which is the lesson of the retirement (see
  *   docs/articles/evals/2026-06-14-reconcile-retirement.md).
  *
- *   For each golden file it prints a per-tag recall table: raw-neural (reference) | argmax | reconcile
- *   | Δ(reconcile − argmax), flagging any tag where reconcile moves ≥2pp either way. The decision
- *   metric is the per-locale Δ column, US vs FR.
+ *   For each golden file it prints a per-tag recall table: raw-neural (reference) | argmax |
+ *   reconcile | Δ(reconcile − argmax), flagging any tag where reconcile moves ≥2pp either way. The
+ *   decision metric is the per-locale Δ column, US vs FR.
  *
- *   Usage: node scripts/eval/reconcile-regate.mjs <golden-a.jsonl> [golden-b.jsonl ...]
- *   Requires compiled out/ (yarn compile).
+ *   Usage: node scripts/eval/reconcile-regate.mjs <golden-a.jsonl> [golden-b.jsonl ...] Requires
+ *   compiled out/ (yarn compile).
  */
-import { basename } from "node:path"
 import { readFileSync } from "node:fs"
+import { basename } from "node:path"
 
 const root = new URL("../../", import.meta.url)
 const { NeuralAddressClassifier } = await import(new URL("neural/out/index.js", root).href)
@@ -73,7 +73,7 @@ for (const f of files) {
 		const recT = collect((await pipeline(r.raw, { jointReconcile: true })).tree)
 		for (const [tag, gv] of Object.entries(r.components)) {
 			if (!TAGS.includes(tag)) continue
-			acc.raw[tag].n++, (acc.argmax[tag].n++, acc.rec[tag].n++)
+			;(acc.raw[tag].n++, (acc.argmax[tag].n++, acc.rec[tag].n++))
 			if (hit(rawT, tag, gv)) acc.raw[tag].h++
 			if (hit(argT, tag, gv)) acc.argmax[tag].h++
 			if (hit(recT, tag, gv)) acc.rec[tag].h++
@@ -96,5 +96,7 @@ for (const f of files) {
 			`${t.padEnd(14)} ${pct(rw.h, rw.n).padStart(5)}%   ${pct(a.h, a.n).padStart(5)}%   ${pct(c.h, c.n).padStart(6)}%   ${(d >= 0 ? "+" : "") + d.toFixed(1)}pp${flag}`
 		)
 	}
-	console.log(`worst Δ(rec−argmax) on this file: ${worst.toFixed(1)}pp  ${worst <= -2 ? "→ REGRESSION" : "→ no regression ≥2pp"}`)
+	console.log(
+		`worst Δ(rec−argmax) on this file: ${worst.toFixed(1)}pp  ${worst <= -2 ? "→ REGRESSION" : "→ no regression ≥2pp"}`
+	)
 }

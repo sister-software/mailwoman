@@ -124,8 +124,10 @@ const singleHandler: RequestHandler = async (req, res) => {
 	}
 }
 
-/** Per-row result: the GeocodeResult, OR an `{ input, error }` slot so one bad row never fails the
-batch. */
+/**
+ * Per-row result: the GeocodeResult, OR an `{ input, error }` slot so one bad row never fails the
+ * batch.
+ */
 type BatchRow = GeocodeResult | { input: string; error: string }
 
 const batchHandler: RequestHandler = async (req, res) => {

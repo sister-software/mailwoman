@@ -4,18 +4,19 @@
  * @author Teffen Ellis, et al.
  *
  *   Gold-set P3 (#625) — sample the HARD slice for adjudication. The programmatic entity truth
- *   (`nppes-dedup-benchmark.ts`) collapses only NPPES-FLAGGED subparts (Is-Subpart + parent LBN/TIN);
- *   it can't settle the genuinely-ambiguous co-located collisions: distinct NPIs at one address with
- *   near-identical names that are NOT flagged subparts of the same parent. Those are where NPI-truth
- *   and any programmatic rule disagree — exactly the pairs a frozen adjudicated gold set must cover.
+ *   (`nppes-dedup-benchmark.ts`) collapses only NPPES-FLAGGED subparts (Is-Subpart + parent
+ *   LBN/TIN); it can't settle the genuinely-ambiguous co-located collisions: distinct NPIs at one
+ *   address with near-identical names that are NOT flagged subparts of the same parent. Those are
+ *   where NPI-truth and any programmatic rule disagree — exactly the pairs a frozen adjudicated
+ *   gold set must cover.
  *
  *   This finds them (over the full TX registry, geocode-free — same machinery as `dedup-ceiling.ts`)
  *   and writes each as a JSONL row carrying BOTH records' fields (org name, address, authorized
- *   official, taxonomy, subpart/parent flags) plus the programmatic verdict, so an adjudicator (human
- *   or LLM-as-judge, flagged as such) can label "same real-world entity? yes/no" and we can MEASURE
- *   how often the programmatic truth matches judgment.
+ *   official, taxonomy, subpart/parent flags) plus the programmatic verdict, so an adjudicator
+ *   (human or LLM-as-judge, flagged as such) can label "same real-world entity? yes/no" and we can
+ *   MEASURE how often the programmatic truth matches judgment.
  *
- *   Run: node --experimental-strip-types scripts/record-matcher/gold-set-sample.ts \
+ *   Run: node --experimental-strip-types scripts/record-matcher/gold-set-sample.ts\
  *   [--cap 200000] [--state TX] [--tau 0.7] [--n 300] [--out-jsonl <path>]
  */
 
@@ -36,9 +37,31 @@ const OUT = arg("out-jsonl", "")
 const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 
 const norm = (s: string | undefined) => (s ?? "").trim()
-const STOP = new Set(["llc", "inc", "incorporated", "corp", "corporation", "co", "ltd", "pllc", "pc", "pa", "lp", "llp", "the", "of", "and"])
+const STOP = new Set([
+	"llc",
+	"inc",
+	"incorporated",
+	"corp",
+	"corporation",
+	"co",
+	"ltd",
+	"pllc",
+	"pc",
+	"pa",
+	"lp",
+	"llp",
+	"the",
+	"of",
+	"and",
+])
 function orgTokens(s: string): Set<string> {
-	return new Set(s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((t) => t && !STOP.has(t)))
+	return new Set(
+		s
+			.toLowerCase()
+			.replace(/[^a-z0-9 ]/g, " ")
+			.split(/\s+/)
+			.filter((t) => t && !STOP.has(t))
+	)
 }
 function jaccard(a: Set<string>, b: Set<string>): number {
 	if (a.size === 0 || b.size === 0) return 0

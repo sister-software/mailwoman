@@ -8,26 +8,32 @@
  *   (#483). They run the SAME SQL + the SAME shared normalizer (`street-normalize.ts`) as the node
  *   classes, just ASYNC over the Comlink-proxied worker's `db.exec` (the demo resolves async on the
  *   main thread; see the architecture spec, 2026-06-14-client-side-geocoder-demo-spec.md). The
- *   parity-preference + polyline interpolation in `HttpvfsInterpolator` mirrors `StreetInterpolator`
- *   line-for-line — KEEP THE TWO IN LOCKSTEP (the same lockstep contract the WOF resolvers hold).
+ *   parity-preference + polyline interpolation in `HttpvfsInterpolator` mirrors
+ *   `StreetInterpolator` line-for-line — KEEP THE TWO IN LOCKSTEP (the same lockstep contract the
+ *   WOF resolvers hold).
  *
  *   These power the demo's street tier against byte-ranged per-state situs/interp shards: a lookup
- *   touches ~KB of a multi-GB shard (measured, see the spec), so the file size is irrelevant to query
- *   cost.
+ *   touches ~KB of a multi-GB shard (measured, see the spec), so the file size is irrelevant to
+ *   query cost.
  */
 
 import { haversineKm } from "@mailwoman/resolver-wof-sqlite/geo"
-import { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import {
+	canonicalizeRouteKey,
+	normalizeLocalityForKey,
+	normalizeStreetForKey,
+} from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 /** The minimal worker handle the lookups need — the same shape `loadHttpvfsDb` returns. */
 export interface HttpvfsDb {
 	db: { exec(sql: string): Promise<Array<{ columns: string[]; values: unknown[][] }>> }
 }
 
-/** Inline a string literal for SQL (we inline rather than bind — avoids param marshaling over Comlink). */
+/** Inline a string literal for SQL (we inline rather than bind — avoids param marshaling over
+Comlink). */
 const sqlStr = (s: string): string => `'${s.replace(/'/g, "''")}'`
 
-/** sql.js exec result → row objects. */
+/** Sql.js exec result → row objects. */
 function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
 	if (!res || res.length === 0) return []
 	const { columns, values } = res[0]!
@@ -41,7 +47,8 @@ export interface StreetPointHit {
 	release: string
 }
 
-/** Exact situs point — async twin of `AddressPointSqliteLookup`. Postcode scope first, locality fallback. */
+/** Exact situs point — async twin of `AddressPointSqliteLookup`. Postcode scope first, locality
+fallback. */
 export class HttpvfsAddressPointLookup {
 	#worker: HttpvfsDb
 	#available: Promise<boolean> | undefined
@@ -50,7 +57,8 @@ export class HttpvfsAddressPointLookup {
 		this.#worker = worker
 	}
 
-	/** One round trip to confirm the shard carries `address_point` (graceful on a tableless shard, #568). */
+	/** One round trip to confirm the shard carries `address_point` (graceful on a tableless shard,
+#568). */
 	#hasTable(): Promise<boolean> {
 		if (!this.#available) {
 			this.#available = this.#worker.db
@@ -63,7 +71,12 @@ export class HttpvfsAddressPointLookup {
 		return this.#available
 	}
 
-	async find(query: { street: string; number: string; postcode?: string; locality?: string }): Promise<StreetPointHit | null> {
+	async find(query: {
+		street: string
+		number: string
+		postcode?: string
+		locality?: string
+	}): Promise<StreetPointHit | null> {
 		if (!(await this.#hasTable())) return null
 		const streetNorm = normalizeStreetForKey(query.street)
 		const number = query.number.trim().toLowerCase()
@@ -75,14 +88,18 @@ export class HttpvfsAddressPointLookup {
 		if (query.postcode) {
 			rows = rowsFromExec(
 				await this.#worker.db.exec(
-					select(`postcode = ${sqlStr(query.postcode.trim())} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`)
+					select(
+						`postcode = ${sqlStr(query.postcode.trim())} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
+					)
 				)
 			)
 		}
 		if (rows.length === 0 && query.locality) {
 			rows = rowsFromExec(
 				await this.#worker.db.exec(
-					select(`locality_norm = ${sqlStr(normalizeLocalityForKey(query.locality))} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`)
+					select(
+						`locality_norm = ${sqlStr(normalizeLocalityForKey(query.locality))} AND street_norm = ${sqlStr(streetNorm)} AND number = ${sqlStr(number)}`
+					)
 				)
 			)
 		}
@@ -103,7 +120,8 @@ export interface StreetInterpHit {
 	release: string
 }
 
-/** TIGER-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped; abstains on cross-ZIP ambiguity. */
+/** TIGER-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped; abstains on
+cross-ZIP ambiguity. */
 export class HttpvfsInterpolator {
 	#worker: HttpvfsDb
 	#available: Promise<boolean> | undefined
@@ -141,7 +159,9 @@ export class HttpvfsInterpolator {
 			)
 		} else {
 			rows = rowsFromExec(
-				await this.#worker.db.exec(`SELECT ${cols} FROM street_segment WHERE street_norm = ${sqlStr(streetNorm)} AND min_hn <= ${n} AND max_hn >= ${n}`)
+				await this.#worker.db.exec(
+					`SELECT ${cols} FROM street_segment WHERE street_norm = ${sqlStr(streetNorm)} AND min_hn <= ${n} AND max_hn >= ${n}`
+				)
 			)
 			// No scope: a name matching ranges across several ZIPs is ambiguous — abstain.
 			if (new Set(rows.map((r) => String(r.postcode ?? ""))).size > 1) return null
@@ -157,7 +177,9 @@ export class HttpvfsInterpolator {
 		const parityMatched = preferred.length > 0
 
 		// Tightest range wins.
-		const best = pool.reduce((a, b) => (Number(b.max_hn) - Number(b.min_hn) < Number(a.max_hn) - Number(a.min_hn) ? b : a))
+		const best = pool.reduce((a, b) =>
+			Number(b.max_hn) - Number(b.min_hn) < Number(a.max_hn) - Number(a.min_hn) ? b : a
+		)
 		const polyline = JSON.parse(String(best.geometry)) as [number, number][]
 		const span = Number(best.to_hn) - Number(best.from_hn)
 		const t = span === 0 ? 0.5 : clamp01((n - Number(best.from_hn)) / span)
@@ -179,7 +201,8 @@ function clamp01(t: number): number {
 	return t < 0 ? 0 : t > 1 ? 1 : t
 }
 
-/** Point at fraction `t` of the polyline's arc length (haversine), + total length km. Mirrors StreetInterpolator. */
+/** Point at fraction `t` of the polyline's arc length (haversine), + total length km. Mirrors
+StreetInterpolator. */
 function pointAlong(polyline: readonly [number, number][], t: number): [lon: number, lat: number, lengthKm: number] {
 	const legs: number[] = []
 	let total = 0

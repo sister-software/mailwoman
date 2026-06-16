@@ -3,15 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Int8-quantize the #244 coarse-placer (milestone 3). The placer is a linear classifier, so the only
- *   weight is a dense [class][feature] fp32 matrix (12×65536 = 3.0 MB). Per-CLASS symmetric int8
- *   quantization — `scale[c] = max(|W[c]|) / 127`, `q = round(W / scale)` clamped to [-127, 127] —
- *   shrinks it to 0.75 MB (4×) while preserving the linear math exactly up to rounding (the logit is
- *   `bias[c] + scale[c] * Σ int8`, dequantized on load by `CoarsePlacer.fromArtifactDir`). Per-class
- *   scales matter because class weight magnitudes differ (OTHER's outlier-exposure rows push bigger
- *   weights than the in-map countries).
+ *   Int8-quantize the #244 coarse-placer (milestone 3). The placer is a linear classifier, so the
+ *   only weight is a dense [class][feature] fp32 matrix (12×65536 = 3.0 MB). Per-CLASS symmetric
+ *   int8 quantization — `scale[c] = max(|W[c]|) / 127`, `q = round(W / scale)` clamped to [-127,
+ *   127] — shrinks it to 0.75 MB (4×) while preserving the linear math exactly up to rounding (the
+ *   logit is `bias[c] + scale[c] * Σ int8`, dequantized on load by `CoarsePlacer.fromArtifactDir`).
+ *   Per-class scales matter because class weight magnitudes differ (OTHER's outlier-exposure rows
+ *   push bigger weights than the in-map countries).
  *
- *   Verify the accuracy cost with `scripts/coarse-placer/eval-quant-compare.mjs` (target: within ~1pp).
+ *   Verify the accuracy cost with `scripts/coarse-placer/eval-quant-compare.mjs` (target: within
+ *   ~1pp).
  *
  *   Usage: node scripts/coarse-placer/quantize.mjs [--in <fp32 dir>] [--out <int8 dir>]
  */
@@ -71,6 +72,8 @@ const rmse = Math.sqrt(sumSqErr / w.length)
 console.log(`coarse-placer int8 quantization`)
 console.log(`  in:  ${args.in}`)
 console.log(`  out: ${args.out}`)
-console.log(`  weights: ${(fp32Bytes / 1e6).toFixed(2)} MB fp32 → ${(int8Bytes / 1e6).toFixed(2)} MB int8 (${(fp32Bytes / int8Bytes).toFixed(1)}×)`)
+console.log(
+	`  weights: ${(fp32Bytes / 1e6).toFixed(2)} MB fp32 → ${(int8Bytes / 1e6).toFixed(2)} MB int8 (${(fp32Bytes / int8Bytes).toFixed(1)}×)`
+)
 console.log(`  per-class scales: [${scales.map((s) => s.toExponential(2)).join(", ")}]`)
 console.log(`  weight reconstruction error: max ${maxAbsErr.toExponential(2)}, rmse ${rmse.toExponential(2)}`)

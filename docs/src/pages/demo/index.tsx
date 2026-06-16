@@ -61,12 +61,14 @@ import {
 } from "../../shared/demo-helpers.ts"
 
 import type { HttpvfsAddressPointLookup, HttpvfsInterpolator } from "../../shared/httpvfs-street.ts"
+import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 
 /** Per-region interp-radius conformal factor (#374); default for unmeasured regions. */
 const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
 const INTERP_RADIUS_DEFAULT = 1.95
 
-/** Spans that together make up the street name — assembled in source order for the situs/interp query. */
+/** Spans that together make up the street name — assembled in source order for the situs/interp
+query. */
 const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
 /** The per-state street lookups, loaded together (lazy by region). */
@@ -74,14 +76,13 @@ interface StreetLookups {
 	situs: HttpvfsAddressPointLookup
 	interp: HttpvfsInterpolator
 }
-import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 
 import {
 	clearBbox,
 	currentDocusaurusTheme,
 	drawApproxCircle,
-	drawRadiusCircle,
 	drawPlaceGeometry,
+	drawRadiusCircle,
 	fetchBasemapSource,
 	geomBounds,
 	loadPolygonDb,
@@ -707,9 +708,9 @@ const DemoApp: React.FC = () => {
 
 	/**
 	 * Combobox keyboard nav over the "Did you mean" suggestions: ↓/↑ move the highlight (clamped),
-	 * Enter accepts the highlighted one (and suppresses the form submit), Esc dismisses the list. With
-	 * nothing highlighted, Enter falls through to the normal submit so typing an address + Enter still
-	 * parses.
+	 * Enter accepts the highlighted one (and suppresses the form submit), Esc dismisses the list.
+	 * With nothing highlighted, Enter falls through to the normal submit so typing an address + Enter
+	 * still parses.
 	 */
 	const onInputKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLInputElement>) => {

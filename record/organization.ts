@@ -11,17 +11,18 @@
  *   normalize connectives (`&` → `and`), punctuation, accents, and a leading `The`.
  *
  *   **The collision problem (#668).** A legal-form token in one jurisdiction is a meaningful word in
- *   another domain. `PT` is Indonesia's `Perseroan Terbatas` (its LLC) — and US-healthcare shorthand
- *   for *Physical Therapy*. `SCA` / `SCS` are French/Belgian/Luxembourg commandite forms — and, in a
- *   clinic's name, *Sudden Cardiac Arrest* / *Spinal Cord Stimulator*. A single universal strip-list
- *   can't be right for both: strip `PT` and you corrupt `Lakeside PT`; keep it and you leave the
- *   legal form on an Indonesian company. So the strip-set is computed on **two axes**:
+ *   another domain. `PT` is Indonesia's `Perseroan Terbatas` (its LLC) — and US-healthcare
+ *   shorthand for _Physical Therapy_. `SCA` / `SCS` are French/Belgian/Luxembourg commandite forms
+ *   — and, in a clinic's name, _Sudden Cardiac Arrest_ / _Spinal Cord Stimulator_. A single
+ *   universal strip-list can't be right for both: strip `PT` and you corrupt `Lakeside PT`; keep it
+ *   and you leave the legal form on an Indonesian company. So the strip-set is computed on **two
+ *   axes**:
  *
- *   - **jurisdiction** (ISO 3166-1 alpha-2, e.g. from the resolved address country) — *adds* the
- *     legal forms valid in that country. Collision-prone forms (`pt`, `sca`, `scs`) live here, gated
- *     behind a known jurisdiction, NOT in the universal base.
- *   - **domain** (an ingest-config tag, e.g. `healthcare`) — *protects* domain-meaningful tokens from
- *     ever being stripped, even when a jurisdiction pack would add them. Domain protection wins.
+ *   - **jurisdiction** (ISO 3166-1 alpha-2, e.g. from the resolved address country) — _adds_ the legal
+ *       forms valid in that country. Collision-prone forms (`pt`, `sca`, `scs`) live here, gated
+ *       behind a known jurisdiction, NOT in the universal base.
+ *   - **domain** (an ingest-config tag, e.g. `healthcare`) — _protects_ domain-meaningful tokens from
+ *       ever being stripped, even when a jurisdiction pack would add them. Domain protection wins.
  *
  *   `effective = (base ∪ jurisdiction-pack) − domain-protect-pack`. With no options the set is the
  *   universal base and behavior is byte-for-byte unchanged — the new axes are strictly opt-in.
@@ -33,7 +34,8 @@
  *   are grounded seeds, not exhaustive — extend them per ISO 20275 as locales are added. The harder
  *   org-_matching_ problems — acronym ↔ expansion (`IBM` ↔ `International Business Machines`),
  *   DBA/alias resolution beyond the simple clause, subsidiary/parent, and TF-IDF n-gram token
- *   matching — are deferred to a follow-up (a dedicated org-matching research pass + the matcher epic).
+ *   matching — are deferred to a follow-up (a dedicated org-matching research pass + the matcher
+ *   epic).
  */
 
 /** A canonicalized organization name. */
@@ -55,7 +57,8 @@ export interface OrganizationName {
  */
 export type DesignationDomain = "general" | "healthcare"
 
-/** Context for {@link canonicalizeOrganizationName}. Omit both fields for the universal base behavior. */
+/** Context for {@link canonicalizeOrganizationName}. Omit both fields for the universal base
+behavior. */
 export interface CanonicalizeOptions {
 	/**
 	 * ISO 3166-1 alpha-2 country code of the org's jurisdiction (typically the resolved address
@@ -137,7 +140,8 @@ const BASE_DESIGNATIONS = new Set([
  * Jurisdiction-gated legal forms (ISO 3166-1 alpha-2 → forms), added only when the jurisdiction is
  * known. This is where the collision-prone tokens live: `pt` (Indonesia), `sca` / `scs`
  * (French/Belgian/Luxembourg commandite forms). Stripping these is correct ONLY when we know the
- * org's country — never in the universal base. Grounded seeds, not exhaustive; extend per ISO 20275.
+ * org's country — never in the universal base. Grounded seeds, not exhaustive; extend per ISO
+ * 20275.
  */
 const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {
 	ID: ["pt", "tbk", "ud"], // Perseroan Terbatas / Terbuka (listed) / Usaha Dagang
@@ -150,10 +154,10 @@ const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {
 
 /**
  * Domain protect-sets (domain → tokens never stripped). Overrides any jurisdiction pack: a token
- * here stays in the name even if the org's jurisdiction would treat it as a legal form. `healthcare`
- * guards the clinical abbreviations that collide with gated legal forms — `pt` (Physical Therapy),
- * `sca` (Sudden Cardiac Arrest), `scs` (Spinal Cord Stimulator) — plus a couple of always-clinical
- * ones for future-proofing.
+ * here stays in the name even if the org's jurisdiction would treat it as a legal form.
+ * `healthcare` guards the clinical abbreviations that collide with gated legal forms — `pt`
+ * (Physical Therapy), `sca` (Sudden Cardiac Arrest), `scs` (Spinal Cord Stimulator) — plus a couple
+ * of always-clinical ones for future-proofing.
  */
 const DOMAIN_PROTECTED: Record<DesignationDomain, readonly string[]> = {
 	general: [],
@@ -161,9 +165,9 @@ const DOMAIN_PROTECTED: Record<DesignationDomain, readonly string[]> = {
 }
 
 /**
- * Compute the effective designation strip-set for the given context:
- * `(base ∪ jurisdiction-pack) − domain-protect-pack`. Returns the shared base set unchanged when no
- * context is given (the byte-stable default), so the common path allocates nothing.
+ * Compute the effective designation strip-set for the given context: `(base ∪ jurisdiction-pack) −
+ * domain-protect-pack`. Returns the shared base set unchanged when no context is given (the
+ * byte-stable default), so the common path allocates nothing.
  */
 function resolveDesignations(options?: CanonicalizeOptions): ReadonlySet<string> {
 	const jurisdiction = options?.jurisdiction?.trim().toUpperCase()
@@ -188,7 +192,7 @@ const DBA_PATTERN = /\s+(?:d\/b\/a|dba|doing business as|t\/a|trading as|a\/k\/a
  */
 function canonicalizeFragment(
 	fragment: string,
-	designationSet: ReadonlySet<string>,
+	designationSet: ReadonlySet<string>
 ): { canonical: string; designations: string[] } {
 	const normalized = fragment
 		.normalize("NFKD")
@@ -221,11 +225,12 @@ function canonicalizeFragment(
  *
  * Pass {@link CanonicalizeOptions} to resolve the jurisdiction × domain collision (#668): a
  * `jurisdiction` adds that country's legal forms, a `domain` protects its meaningful abbreviations.
- * With no options the universal base set is used and the result is byte-for-byte the legacy behavior.
+ * With no options the universal base set is used and the result is byte-for-byte the legacy
+ * behavior.
  */
 export function canonicalizeOrganizationName(
 	input: string | null | undefined,
-	options?: CanonicalizeOptions,
+	options?: CanonicalizeOptions
 ): OrganizationName | null {
 	if (typeof input !== "string" || !input.trim()) return null
 

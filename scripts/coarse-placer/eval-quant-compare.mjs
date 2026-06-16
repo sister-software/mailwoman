@@ -9,7 +9,8 @@
  *   within ~1pp of fp32 (the milestone target). Uses the already-compiled `core/out` CoarsePlacer
  *   constructor, so it needs no recompile to validate a fresh quantization.
  *
- *   Usage: node scripts/coarse-placer/eval-quant-compare.mjs [--fp32 <dir>] [--int8 <dir>] [--abstain 0.5]
+ *   Usage: node scripts/coarse-placer/eval-quant-compare.mjs [--fp32 <dir>] [--int8 <dir>] [--abstain
+ *   0.5]
  */
 import { readFileSync } from "node:fs"
 import * as path from "node:path"
@@ -82,7 +83,9 @@ const N = test.length
 const accF = (100 * okF) / N
 const accI = (100 * okI) / N
 console.log(`coarse-placer int8 vs fp32 — test n=${N} (abstain ${abstainBelow})`)
-console.log(`  overall accuracy:  fp32 ${accF.toFixed(2)}%   int8 ${accI.toFixed(2)}%   Δ ${(accI - accF >= 0 ? "+" : "") + (accI - accF).toFixed(2)}pp`)
+console.log(
+	`  overall accuracy:  fp32 ${accF.toFixed(2)}%   int8 ${accI.toFixed(2)}%   Δ ${(accI - accF >= 0 ? "+" : "") + (accI - accF).toFixed(2)}pp`
+)
 console.log(`  prediction agreement (same top class): ${((100 * agree) / N).toFixed(2)}%`)
 console.log(`  confidence MAE: ${(confMae / N).toFixed(4)}`)
 console.log(`  per-class recall (fp32 → int8):`)
@@ -92,7 +95,9 @@ for (const c of classes) {
 	if (!f) continue
 	const rf = (100 * f.ok) / f.n
 	const ri = (100 * i.ok) / i.n
-	console.log(`    ${c.padEnd(6)} ${rf.toFixed(1)}% → ${ri.toFixed(1)}%  (Δ ${(ri - rf >= 0 ? "+" : "") + (ri - rf).toFixed(1)}pp, n=${f.n})`)
+	console.log(
+		`    ${c.padEnd(6)} ${rf.toFixed(1)}% → ${ri.toFixed(1)}%  (Δ ${(ri - rf >= 0 ? "+" : "") + (ri - rf).toFixed(1)}pp, n=${f.n})`
+	)
 }
 const verdict = Math.abs(accI - accF) <= 1.0 ? "PASS (within 1pp)" : "FAIL (>1pp drop)"
 console.log(`  gate: ${verdict}`)

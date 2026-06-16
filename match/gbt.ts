@@ -10,10 +10,12 @@
  *   truth like an NPI) let a tree learn the over-merge signature the hand-weights miss.
  *
  *   This module is feature-agnostic: feature vectors are caller-defined `number[]` (the record
- *   matcher builds them in `@mailwoman/registry`'s learned-scorer module — one-hot agreement levels
- *   + interaction terms + corpus statistics). It only fits ({@link trainGBT}) and scores
- *   ({@link gbtScore}). The trained {@link GBT} is plain JSON (`{trees, lr, base}`), so a model
- *   trains offline once and ships as a data file.
+ *   matcher builds them in `@mailwoman/registry`'s learned-scorer module — one-hot agreement
+ *   levels
+ *
+ *   - Interaction terms + corpus statistics). It only fits ({@link trainGBT}) and scores
+ *       ({@link gbtScore}). The trained {@link GBT} is plain JSON (`{trees, lr, base}`), so a model
+ *       trains offline once and ships as a data file.
  */
 
 /** A trained tree: an internal split (feature `f` ≤ `thr` → `lo`, else `hi`) or a `leaf` value. */

@@ -80,9 +80,7 @@ The geocoder's resolver already implements a "where is something likely to be gi
 
 ```ts
 // core/resolver/resolve.ts
-const ranked = [...candidates].sort(
-  (a, b) => b.population - a.population || a.distanceKm - b.distanceKm
-)
+const ranked = [...candidates].sort((a, b) => b.population - a.population || a.distanceKm - b.distanceKm)
 ```
 
 The coarse-placer (#244) extends this to the country level: a tiny linear classifier infers the probable country from the address text and injects that as a soft `anchorPosterior` into the resolver's re-ranking (`core/coarse-placer/coarse-placer.ts`, `core/pipeline/runtime-pipeline.ts`). Population data lives in `place_population` (built from WOF `wof:population` / `gn:population` during `scripts/build-unified-wof.ts`). The resolver's `populationBoost: 4.0` is a calibrated prior that says: the more people live there, the more likely an address is actually there.

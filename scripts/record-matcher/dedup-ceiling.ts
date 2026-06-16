@@ -92,8 +92,10 @@ interface Provider {
 	phone: string
 	/** Authorized official (last + first), lowercased — same official ⇒ almost certainly one org. */
 	auth: string
-	/** Primary taxonomy (specialty) code — different specialty ⇒ likely a genuinely different
-provider. */
+	/**
+	 * Primary taxonomy (specialty) code — different specialty ⇒ likely a genuinely different
+	 * provider.
+	 */
 	taxonomy: string
 }
 

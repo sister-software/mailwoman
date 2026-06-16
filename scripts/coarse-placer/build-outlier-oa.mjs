@@ -4,26 +4,29 @@
  * @author Teffen Ellis, et al.
  *
  *   OpenAddresses Latin-off-map outlier exposure for the #244 coarse-placer (milestone 3, breadth).
- *   The successor to build-outlier-latin.mjs (Overture): Overture's ALPHA addresses theme only carries
- *   real rows for ~7 off-map countries, so a model trained on them MEMORIZED rather than learned an
- *   "off-map" boundary (night-15 finding). OpenAddresses covers far more countries — this assembles
- *   address strings from OA's per-country CSVs and appends them as `country: "OTHER"`.
+ *   The successor to build-outlier-latin.mjs (Overture): Overture's ALPHA addresses theme only
+ *   carries real rows for ~7 off-map countries, so a model trained on them MEMORIZED rather than
+ *   learned an "off-map" boundary (night-15 finding). OpenAddresses covers far more countries —
+ *   this assembles address strings from OA's per-country CSVs and appends them as `country:
+ *   "OTHER"`.
  *
  *   Discipline (per the #244 scoping note + DeepSeek consult):
- *     - LEAVE-ONE-LANGUAGE-FAMILY-OUT, not random: whole families are held out (Nordic, Baltic, …) so a
- *       trained sibling's shared n-grams can't rescue the generalization metric. TRAIN families feed
- *       train/val/test(indist); HELDOUT families go ONLY to the dedicated test file.
- *     - Schema variance: read via DuckDB read_csv_auto(..., union_by_name) so differing per-source OA
- *       schemas align; assemble to the SAME format the in-map rows use (build-outlier-latin's assemble).
- *     - Dedup (per country) + per-country CAP (downsample): PL/CZ dwarf others, so cap so OTHER isn't
+ *
+ *   - LEAVE-ONE-LANGUAGE-FAMILY-OUT, not random: whole families are held out (Nordic, Baltic, …) so a
+ *       trained sibling's shared n-grams can't rescue the generalization metric. TRAIN families
+ *       feed train/val/test(indist); HELDOUT families go ONLY to the dedicated test file.
+ *   - Schema variance: read via DuckDB read_csv_auto(..., union_by_name) so differing per-source OA
+ *       schemas align; assemble to the SAME format the in-map rows use (build-outlier-latin's
+ *       assemble).
+ *   - Dedup (per country) + per-country CAP (downsample): PL/CZ dwarf others, so cap so OTHER isn't
  *       "mostly Polish".
- *     - Country filter: only OFF-MAP countries (never the 11 in-map); the in-map test.jsonl is untouched.
+ *   - Country filter: only OFF-MAP countries (never the 11 in-map); the in-map test.jsonl is untouched.
  *
  *   Run AFTER build-dataset.mjs + build-outlier-exposure.mjs (it APPENDS). Re-runnable: rewrites the
  *   dedicated test file and appends fresh OTHER rows — rebuild train/val before re-running.
  *
  *   Usage: node scripts/coarse-placer/build-outlier-oa.mjs --oa-dir <extracted-OA-root>
- *     [--per-country 6000] [--data data/coarse-placer]
+ *   [--per-country 6000] [--data data/coarse-placer]
  */
 import { appendFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
@@ -97,7 +100,7 @@ function assemble(r) {
 
 const duck = await (await DuckDBInstance.create()).connect()
 
-/** Read+assemble up to PER deduped rows for a country from its OA CSVs (glob under <oa>/**\/<cc>/). */
+/** Read+assemble up to PER deduped rows for a country from its OA CSVs (glob under <oa>/**/<cc>/). */
 async function rowsFor(cc) {
 	const lc = cc.toLowerCase()
 	// OA collected layout: `<cc>/[<region>/]<source>.csv` (country at root; `summary/` excluded by

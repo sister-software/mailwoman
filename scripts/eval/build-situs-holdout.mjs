@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a {input, lat, lon} holdout for conformal interp calibration (#374/C) from a per-state situs
- *   shard. The situs address points (OA/NAD) are the GROUND TRUTH; running conformal-calibrate.ts
- *   interp-only against them measures the TIGER interpolation tier's error — and TIGER is an
- *   INDEPENDENT source from OA/NAD, so this is a non-circular holdout for any state (the same
- *   provenance separation the TX/Travis calibration relied on, available 50× over).
+ *   Build a {input, lat, lon} holdout for conformal interp calibration (#374/C) from a per-state
+ *   situs shard. The situs address points (OA/NAD) are the GROUND TRUTH; running
+ *   conformal-calibrate.ts interp-only against them measures the TIGER interpolation tier's error —
+ *   and TIGER is an INDEPENDENT source from OA/NAD, so this is a non-circular holdout for any state
+ *   (the same provenance separation the TX/Travis calibration relied on, available 50× over).
  *
  *   Usage: node scripts/eval/build-situs-holdout.mjs --shard <situs.db> --region <ABBR> [--n 2500]
- *     [--out /tmp/<region>-situs-holdout.jsonl]
+ *   [--out /tmp/<region>-situs-holdout.jsonl]
  */
 import { writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
@@ -57,5 +57,7 @@ for (const r of rows) {
 }
 db.close()
 writeFileSync(out, lines.join("\n") + "\n")
-console.log(`${region || a.shard}: ${lines.length} holdout rows (of ${total.toLocaleString()} situs points, stride ${stride}) → ${out}`)
+console.log(
+	`${region || a.shard}: ${lines.length} holdout rows (of ${total.toLocaleString()} situs points, stride ${stride}) → ${out}`
+)
 console.log(`sample: ${lines[0]}`)

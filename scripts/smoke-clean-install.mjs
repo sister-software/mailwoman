@@ -8,9 +8,11 @@
  *   The monorepo HOISTS dependencies, so an undeclared runtime dep (or a missing shipped file, or a
  *   command module with an eager top-level side effect) resolves fine in-repo but crashes a fresh
  *   `npm install`. Nothing tested that path, so several published versions shipped a `mailwoman`
- *   CLI that crashed on startup (undeclared `path-ts`/`fast-glob`/… in core, an eager `new Piscina`
- *   + unshipped `.mjs` worker in `wof prepare`, an eager import of the unpublished
- *   `@mailwoman/resolver-wof-sqlite`). See #481 follow-up.
+ *   CLI that crashed on startup (undeclared `path-ts`/`fast-glob`/… in core, an eager `new
+ *   Piscina`
+ *
+ *   - Unshipped `.mjs` worker in `wof prepare`, an eager import of the unpublished
+ *       `@mailwoman/resolver-wof-sqlite`). See #481 follow-up.
  *
  *   This packs every published code workspace, installs the tarballs into a throwaway project (so the
  *   ONLY packages available are what the manifests declare — no hoisting), and runs the compiled

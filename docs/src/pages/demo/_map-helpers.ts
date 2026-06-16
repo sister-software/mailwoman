@@ -112,9 +112,10 @@ export function approxCircleGeometry(
 }
 
 /**
- * A circle of an EXACT radius in meters — for the street-level uncertainty (#377): a 10 m situs floor
- * or a calibrated interp radius. Unlike {@link approxCircleGeometry} (clamped to a ~ZIP-sized 0.5 km
- * floor for admin fallbacks), this honors small radii so an exact building reads as a tight dot.
+ * A circle of an EXACT radius in meters — for the street-level uncertainty (#377): a 10 m situs
+ * floor or a calibrated interp radius. Unlike {@link approxCircleGeometry} (clamped to a ~ZIP-sized
+ * 0.5 km floor for admin fallbacks), this honors small radii so an exact building reads as a tight
+ * dot.
  */
 export function radiusCircleGeometry(lat: number, lon: number, radiusM: number): PlaceGeometry {
 	const kmPerDegLat = 111.32

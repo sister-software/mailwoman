@@ -127,12 +127,13 @@ export interface ResolvedHit {
 	score: number
 	bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 	/**
-	 * Street-level resolution tier (#377), when this hit came from the situs/interp tier rather than the
-	 * WOF admin cascade. `address_point` = exact building; `interpolated` = TIGER estimate. Drives the
-	 * "exact / ±N m" caption + the uncertainty circle.
+	 * Street-level resolution tier (#377), when this hit came from the situs/interp tier rather than
+	 * the WOF admin cascade. `address_point` = exact building; `interpolated` = TIGER estimate.
+	 * Drives the "exact / ±N m" caption + the uncertainty circle.
 	 */
 	tier?: "address_point" | "interpolated"
-	/** Honest uncertainty radius in meters for a street-level tier (10 m situs floor; calibrated interp). */
+	/** Honest uncertainty radius in meters for a street-level tier (10 m situs floor; calibrated
+interp). */
 	uncertaintyM?: number
 }
 
@@ -148,35 +149,78 @@ export function assetUrl(locale: string, version: string, filename: string): str
 }
 
 /**
- * Per-state street shard URL (#377). The situs (exact address points) + interp (TIGER ranges) DBs are
- * hosted byte-range at `mailwoman/street/us/<slug>/<kind>.db` — a lookup touches ~KB of a multi-GB
- * shard, so they're loaded lazily by parsed region, not bundled. Independent of the locale/version
- * WOF asset layout (street shards are per-state, not per-model-version).
+ * Per-state street shard URL (#377). The situs (exact address points) + interp (TIGER ranges) DBs
+ * are hosted byte-range at `mailwoman/street/us/<slug>/<kind>.db` — a lookup touches ~KB of a
+ * multi-GB shard, so they're loaded lazily by parsed region, not bundled. Independent of the
+ * locale/version WOF asset layout (street shards are per-state, not per-model-version).
  */
 export function streetShardUrl(slug: string, kind: "situs" | "interp"): string {
 	return `${ASSET_BASE_URL}street/us/${slug}/${kind}.db`
 }
 
 /**
- * Slugs we host street shards for (byte-range on R2). A state not in this set falls through to the WOF
- * admin centroid. Extend as shards are published — NY/MI/CA is the launch trio (the spec's size spread);
- * DC is the dense-urban verification (the White House resolves to its exact building).
+ * Slugs we host street shards for (byte-range on R2). A state not in this set falls through to the
+ * WOF admin centroid. Extend as shards are published — NY/MI/CA is the launch trio (the spec's size
+ * spread); DC is the dense-urban verification (the White House resolves to its exact building).
  */
 export const HOSTED_STREET_SLUGS = new Set(["dc", "mi", "ny", "ca"])
 
 const US_STATE_NAME_TO_SLUG: Record<string, string> = {
-	alabama: "al", alaska: "ak", arizona: "az", arkansas: "ar", california: "ca", colorado: "co",
-	connecticut: "ct", delaware: "de", "district of columbia": "dc", florida: "fl", georgia: "ga",
-	hawaii: "hi", idaho: "id", illinois: "il", indiana: "in", iowa: "ia", kansas: "ks", kentucky: "ky",
-	louisiana: "la", maine: "me", maryland: "md", massachusetts: "ma", michigan: "mi", minnesota: "mn",
-	mississippi: "ms", missouri: "mo", montana: "mt", nebraska: "ne", nevada: "nv", "new hampshire": "nh",
-	"new jersey": "nj", "new mexico": "nm", "new york": "ny", "north carolina": "nc", "north dakota": "nd",
-	ohio: "oh", oklahoma: "ok", oregon: "or", pennsylvania: "pa", "rhode island": "ri", "south carolina": "sc",
-	"south dakota": "sd", tennessee: "tn", texas: "tx", utah: "ut", vermont: "vt", virginia: "va",
-	washington: "wa", "west virginia": "wv", wisconsin: "wi", wyoming: "wy",
+	alabama: "al",
+	alaska: "ak",
+	arizona: "az",
+	arkansas: "ar",
+	california: "ca",
+	colorado: "co",
+	connecticut: "ct",
+	delaware: "de",
+	"district of columbia": "dc",
+	florida: "fl",
+	georgia: "ga",
+	hawaii: "hi",
+	idaho: "id",
+	illinois: "il",
+	indiana: "in",
+	iowa: "ia",
+	kansas: "ks",
+	kentucky: "ky",
+	louisiana: "la",
+	maine: "me",
+	maryland: "md",
+	massachusetts: "ma",
+	michigan: "mi",
+	minnesota: "mn",
+	mississippi: "ms",
+	missouri: "mo",
+	montana: "mt",
+	nebraska: "ne",
+	nevada: "nv",
+	"new hampshire": "nh",
+	"new jersey": "nj",
+	"new mexico": "nm",
+	"new york": "ny",
+	"north carolina": "nc",
+	"north dakota": "nd",
+	ohio: "oh",
+	oklahoma: "ok",
+	oregon: "or",
+	pennsylvania: "pa",
+	"rhode island": "ri",
+	"south carolina": "sc",
+	"south dakota": "sd",
+	tennessee: "tn",
+	texas: "tx",
+	utah: "ut",
+	vermont: "vt",
+	virginia: "va",
+	washington: "wa",
+	"west virginia": "wv",
+	wisconsin: "wi",
+	wyoming: "wy",
 }
 
-/** US state/territory name OR abbreviation → 2-letter shard slug, or null if not a US region we recognize. */
+/** US state/territory name OR abbreviation → 2-letter shard slug, or null if not a US region we
+recognize. */
 export function regionToStateSlug(region: string | undefined): string | null {
 	if (!region) return null
 	const r = region.trim().toLowerCase()

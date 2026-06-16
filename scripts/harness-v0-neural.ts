@@ -73,7 +73,8 @@ interface Args {
 	 * #478: also grade the ASSEMBLED runtime pipeline (`createRuntimePipeline` — normalize → kind/
 	 * fast-path → grouper → reconcile → classify), not just the raw neural classifier. This is the
 	 * #566-lesson gate: a pipeline regression (e.g. a reconcile/arbitration change) is invisible when
-	 * the eval grades raw neural. Off by default → the existing v0-vs-raw-neural report is byte-stable.
+	 * the eval grades raw neural. Off by default → the existing v0-vs-raw-neural report is
+	 * byte-stable.
 	 */
 	assembled: boolean
 }
@@ -357,7 +358,8 @@ interface AssertionResult {
 	neural_dropped: Partial<Record<ComponentTag, string>>
 	neural_tree_valid: boolean
 	neural_tree_violations: TreeViolation[]
-	/** #478 assembled-pipeline arm (only when `--assembled`): the full `runPipeline` parse, graded like neural. */
+	/** #478 assembled-pipeline arm (only when `--assembled`): the full `runPipeline` parse, graded
+like neural. */
 	assembled_pass?: boolean
 	assembled_actual?: ClassificationRecord
 }

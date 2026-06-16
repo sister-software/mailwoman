@@ -21,11 +21,11 @@ DeepSeek's refinements (leave-one-language-family-out + an abstention-threshold 
 
 At the default decision threshold (abstain 0.5):
 
-| group | M3 baseline | OA retrain | Δ |
-| ----- | ----------: | ---------: | --: |
-| **indist** (trained families) | 35.9% | **100.0%** | +64.1pp |
-| **heldout** (never-trained families) | 53.1% | **66.1%** | **+13.0pp** |
-| overall | 50.9% | 70.4% | +19.5pp |
+| group                                | M3 baseline | OA retrain |           Δ |
+| ------------------------------------ | ----------: | ---------: | ----------: |
+| **indist** (trained families)        |       35.9% | **100.0%** |     +64.1pp |
+| **heldout** (never-trained families) |       53.1% |  **66.1%** | **+13.0pp** |
+| overall                              |       50.9% |      70.4% |     +19.5pp |
 
 - **Trained families → 100%**: broad real off-map exposure makes the trained families perfectly handled —
   the night-15 mechanism, now at 16-family scale.
@@ -40,14 +40,14 @@ Sweeping the threshold on the OA retrain trades in-map accuracy for off-map hand
 
 | abstain | in-map accuracy | off-map heldout handled |
 | ------: | --------------: | ----------------------: |
-| 0.50 | 95.1% | 66.1% |
-| 0.85 | 91.8% | 82.5% |
-| 0.95 | 87.8% | 87.6% |
+|    0.50 |           95.1% |                   66.1% |
+|    0.85 |           91.8% |                   82.5% |
+|    0.95 |           87.8% |                   87.6% |
 
 The OA-retrained model **dominates** the M3 baseline at every threshold. ~**0.85** is a balanced operating
 point: in-map stays **>90%** (91.8%) while off-map heldout jumps to **82.5%** (+29pp over M3-at-0.5). At
 0.95 the two cross at ~**88/88**. Neither point hits **90/90 simultaneously** — so breadth + a tuned
-threshold gets *close* but not all the way.
+threshold gets _close_ but not all the way.
 
 ## Verdict
 

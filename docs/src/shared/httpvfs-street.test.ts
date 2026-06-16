@@ -3,11 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for the demo's street tier: the httpvfs situs/interp lookups (HttpvfsAddressPointLookup,
- *   HttpvfsInterpolator) against a node:sqlite-backed stub worker that mimics sql.js-httpvfs's
- *   `db.exec` contract ([] on no rows, else [{columns, values}]), plus `resolveStreet`'s tier ordering
- *   with stub lookups. Synthetic in-memory shards — no /mnt/playpen dependency, CI-safe. Integration
- *   against real shards is the `verify-httpvfs-street` probe in the geocoder-demo spec.
+ *   Unit tests for the demo's street tier: the httpvfs situs/interp lookups
+ *   (HttpvfsAddressPointLookup, HttpvfsInterpolator) against a node:sqlite-backed stub worker that
+ *   mimics sql.js-httpvfs's `db.exec` contract ([] on no rows, else [{columns, values}]), plus
+ *   `resolveStreet`'s tier ordering with stub lookups. Synthetic in-memory shards — no /mnt/playpen
+ *   dependency, CI-safe. Integration against real shards is the `verify-httpvfs-street` probe in
+ *   the geocoder-demo spec.
  */
 
 import { DatabaseSync } from "node:sqlite"
@@ -47,16 +48,9 @@ function situsDb(): DatabaseSync {
 			"CREATE TABLE address_point(street_norm TEXT, street_key TEXT, number TEXT, unit TEXT, postcode TEXT, locality_norm TEXT, street_raw TEXT, lat REAL, lon REAL, source TEXT, release TEXT)"
 		)
 		// street_norm is the SHARED normalizer output; "Main St" → "main street".
-		d.prepare("INSERT INTO address_point(street_norm, number, postcode, locality_norm, lat, lon, source, release) VALUES(?,?,?,?,?,?,?,?)").run(
-			"main street",
-			"100",
-			"10001",
-			"new york",
-			40.75,
-			-73.99,
-			"overture:test",
-			"2026-05-20.0"
-		)
+		d.prepare(
+			"INSERT INTO address_point(street_norm, number, postcode, locality_norm, lat, lon, source, release) VALUES(?,?,?,?,?,?,?,?)"
+		).run("main street", "100", "10001", "new york", 40.75, -73.99, "overture:test", "2026-05-20.0")
 	})
 }
 

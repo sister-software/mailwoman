@@ -5,22 +5,22 @@
  *
  *   Latin-script off-map outlier exposure for the #244 coarse-placer (milestone 3). M2's OTHER class
  *   was trained on NON-Latin/non-CJK scripts (Cyrillic, Arabic, …) from WOF names, so off-map
- *   COUNTRIES written in Latin script (Poland, Brazil, Mexico, …) still mis-place to a trained Latin
- *   country (the "Latin-off-map residual"). The fix is REAL off-map addresses (not synthetic name
- *   variants — see #564: synthetic mass fits its own quirks): assemble address strings from the
- *   Overture per-country address parquet and append them as `country: "OTHER"`.
+ *   COUNTRIES written in Latin script (Poland, Brazil, Mexico, …) still mis-place to a trained
+ *   Latin country (the "Latin-off-map residual"). The fix is REAL off-map addresses (not synthetic
+ *   name variants — see #564: synthetic mass fits its own quirks): assemble address strings from
+ *   the Overture per-country address parquet and append them as `country: "OTHER"`.
  *
  *   Discipline: countries split into TRAIN (their rows feed train/val OTHER) and HELDOUT (rows go
- *   ONLY to the dedicated test file), so we can measure generalization to off-map countries the model
- *   never saw — not just memorization. The in-map test.jsonl is left UNTOUCHED so the before/after
- *   in-map regression check stays clean; the Latin metric lives in its own file.
+ *   ONLY to the dedicated test file), so we can measure generalization to off-map countries the
+ *   model never saw — not just memorization. The in-map test.jsonl is left UNTOUCHED so the
+ *   before/after in-map regression check stays clean; the Latin metric lives in its own file.
  *
  *   Run AFTER build-dataset.mjs + build-outlier-exposure.mjs (it appends). Re-runnable: it rewrites
- *   the dedicated test file and appends fresh OTHER rows (so don't run it twice onto the same splits
- *   without rebuilding train/val).
+ *   the dedicated test file and appends fresh OTHER rows (so don't run it twice onto the same
+ *   splits without rebuilding train/val).
  *
- *   Usage: node scripts/coarse-placer/build-outlier-latin.mjs [--per-country 6000]
- *     [--overture /mnt/playpen/mailwoman-data/overture/2026-05-20.0]
+ *   Usage: node scripts/coarse-placer/build-outlier-latin.mjs [--per-country 6000] [--overture
+ *   /mnt/playpen/mailwoman-data/overture/2026-05-20.0]
  */
 import { appendFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
@@ -46,7 +46,7 @@ const PER = Number(args["per-country"])
 const TRAIN_COUNTRIES = ["PL", "BR", "MX", "PT"]
 const HELDOUT_COUNTRIES = ["CZ", "CA", "LI"]
 
-/** address_levels arrives as a list (node-api) or its string repr; pull the value strings out. */
+/** Address_levels arrives as a list (node-api) or its string repr; pull the value strings out. */
 function levelValues(al) {
 	if (Array.isArray(al)) return al.map((x) => (x && x.value ? String(x.value) : "")).filter(Boolean)
 	const s = String(al ?? "")
@@ -138,9 +138,8 @@ duck.disconnect?.()
 const wr = (rows) => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
 appendFileSync(path.join(args.data, "train.jsonl"), wr(trainAppend))
 appendFileSync(path.join(args.data, "val.jsonl"), wr(valAppend))
-writeFileSync(
-	path.join(args.data, "test-latin-offmap.jsonl"),
-	testRows.map((r) => JSON.stringify(r)).join("\n") + "\n"
-)
+writeFileSync(path.join(args.data, "test-latin-offmap.jsonl"), testRows.map((r) => JSON.stringify(r)).join("\n") + "\n")
 console.log(`\nappended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
-console.log(`wrote test-latin-offmap.jsonl: ${testRows.length} rows (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`)
+console.log(
+	`wrote test-latin-offmap.jsonl: ${testRows.length} rows (indist ${testRows.filter((r) => r.group === "indist").length} / heldout ${testRows.filter((r) => r.group === "heldout").length})`
+)
