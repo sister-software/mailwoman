@@ -38,7 +38,7 @@ import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { buildStreetMorphologyFst } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
-import { type ClassificationRecord, createAddressParser } from "mailwoman"
+import { type ClassificationRecord, createAddressParser, createRuntimePipeline } from "mailwoman"
 import { readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -69,6 +69,13 @@ interface Args {
 	postcodeRepair: boolean
 	unitRepair: boolean
 	symmetricMatch: boolean
+	/**
+	 * #478: also grade the ASSEMBLED runtime pipeline (`createRuntimePipeline` — normalize → kind/
+	 * fast-path → grouper → reconcile → classify), not just the raw neural classifier. This is the
+	 * #566-lesson gate: a pipeline regression (e.g. a reconcile/arbitration change) is invisible when
+	 * the eval grades raw neural. Off by default → the existing v0-vs-raw-neural report is byte-stable.
+	 */
+	assembled: boolean
 }
 
 function parseArgs(): Args {
@@ -78,6 +85,7 @@ function parseArgs(): Args {
 		postcodeRepair: false,
 		unitRepair: false,
 		symmetricMatch: false,
+		assembled: false,
 	}
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
@@ -97,6 +105,7 @@ function parseArgs(): Args {
 		else if (a === "--postcode-repair") out.postcodeRepair = true
 		else if (a === "--unit-repair") out.unitRepair = true
 		else if (a === "--symmetric-match") out.symmetricMatch = true
+		else if (a === "--assembled") out.assembled = true
 	}
 	if (!out.testsDir) {
 		console.error("Usage: scripts/harness-v0-neural.ts --tests <dir> [--out-json <path>] [...]")
@@ -348,6 +357,9 @@ interface AssertionResult {
 	neural_dropped: Partial<Record<ComponentTag, string>>
 	neural_tree_valid: boolean
 	neural_tree_violations: TreeViolation[]
+	/** #478 assembled-pipeline arm (only when `--assembled`): the full `runPipeline` parse, graded like neural. */
+	assembled_pass?: boolean
+	assembled_actual?: ClassificationRecord
 }
 
 /**
@@ -374,7 +386,8 @@ async function runAssertion(
 	v0Parser: ReturnType<typeof createAddressParser>,
 	neuralClassifier: NeuralAddressClassifier,
 	parseOpts: Parameters<NeuralAddressClassifier["parse"]>[1],
-	symmetricMatch: boolean
+	symmetricMatch: boolean,
+	pipeline?: ReturnType<typeof createRuntimePipeline>
 ): Promise<AssertionResult> {
 	const solutions = await v0Parser.parse(a.input)
 	const v0Records: ClassificationRecord[] = solutions.map((s) => s.classifications as ClassificationRecord)
@@ -408,6 +421,18 @@ async function runAssertion(
 	const neuralPass = anyExpectedMatches(a.expected, neuralRecord)
 	const treeValidity = validateTree(tree) // #37 — structural coherence of the neural parse
 
+	// #478 assembled-pipeline arm: grade the full `runPipeline` parse (what production runs) — same
+	// loose top-1 semantics + tree→v0-record conversion as neural. Off unless `--assembled` wired the
+	// pipeline. This is the #566-lesson measurement: an assembled-pipeline regression is invisible
+	// against raw-neural F1.
+	let assembledPass: boolean | undefined
+	let assembledRecord: ClassificationRecord | undefined
+	if (pipeline) {
+		const { tree: assembledTree } = await pipeline(a.input)
+		assembledRecord = neuralTreeToV0Record(decodeAsJson(assembledTree)).record
+		assembledPass = anyExpectedMatches(a.expected, assembledRecord)
+	}
+
 	return {
 		file: a.file,
 		locale: a.locale,
@@ -420,6 +445,8 @@ async function runAssertion(
 		neural_dropped: dropped,
 		neural_tree_valid: treeValidity.valid,
 		neural_tree_violations: treeValidity.violations,
+		assembled_pass: assembledPass,
+		assembled_actual: assembledRecord,
 	}
 }
 
@@ -522,6 +549,31 @@ function printReport(results: AssertionResult[]): void {
 	console.log(`| Neural only | ${onlyNeural} | ${((100 * onlyNeural) / total).toFixed(1)}% |`)
 	console.log(`| Both fail | ${bothFail} | ${((100 * bothFail) / total).toFixed(1)}% |`)
 	console.log("")
+
+	// #478 assembled-pipeline arm (only when --assembled). The HEADLINE is `v0-only vs ASSEMBLED` —
+	// the parses v0 gets that the ASSEMBLED pipeline (not just raw neural) drops. Arbitration must
+	// drive this to ~0 "by construction"; comparing it to `v0-only vs raw-neural` shows what the
+	// current pipeline (grouper + reconcile + fast-path, no arbitration yet) already captures or loses.
+	const hasAssembled = results.some((r) => r.assembled_pass !== undefined)
+	if (hasAssembled) {
+		const asmPass = results.filter((r) => r.assembled_pass).length
+		const onlyV0vsAsm = results.filter((r) => r.v0_pass && !r.assembled_pass).length
+		const onlyAsm = results.filter((r) => !r.v0_pass && r.assembled_pass).length
+		const asmGainedVsNeural = results.filter((r) => r.assembled_pass && !r.neural_pass).length
+		const asmLostVsNeural = results.filter((r) => !r.assembled_pass && r.neural_pass).length
+		console.log("## Assembled pipeline (#478 — `runPipeline`, the gate)")
+		console.log("")
+		console.log(`| Metric | Count | Rate |`)
+		console.log(`|--------|-------|------|`)
+		console.log(`| Assembled pass | ${asmPass} | ${((100 * asmPass) / total).toFixed(1)}% |`)
+		console.log(
+			`| **v0-only vs ASSEMBLED** (gate target → ~0) | ${onlyV0vsAsm} | ${((100 * onlyV0vsAsm) / total).toFixed(1)}% |`
+		)
+		console.log(`| v0-only vs raw-neural (for comparison) | ${onlyV0} | ${((100 * onlyV0) / total).toFixed(1)}% |`)
+		console.log(`| Assembled-only (vs v0) | ${onlyAsm} | ${((100 * onlyAsm) / total).toFixed(1)}% |`)
+		console.log(`| Assembled vs raw-neural (gained / lost) | +${asmGainedVsNeural} / -${asmLostVsNeural} | |`)
+		console.log("")
+	}
 
 	console.log("## Per-file")
 	console.log("")
@@ -659,6 +711,13 @@ async function main(): Promise<void> {
 		unitRepair: args.unitRepair,
 	} as Parameters<NeuralAddressClassifier["parse"]>[1]
 
+	// #478: the assembled runtime pipeline (reuses the neural classifier + admin FST). No resolver —
+	// the arena grades COMPONENT parses (Stage 3 / grouper / reconcile), not coordinates.
+	const pipeline = args.assembled
+		? createRuntimePipeline({ classifier: neural, ...(adminFst ? { fst: adminFst as never } : {}) })
+		: undefined
+	if (pipeline) console.error("Assembled-pipeline arm ON (--assembled): grading runPipeline alongside raw neural.")
+
 	console.error("Running harness...")
 	const t0 = performance.now()
 	const results: AssertionResult[] = []
@@ -666,7 +725,7 @@ async function main(): Promise<void> {
 	for (const a of all) {
 		i++
 		try {
-			results.push(await runAssertion(a, v0Parser, neural, parseOpts, args.symmetricMatch))
+			results.push(await runAssertion(a, v0Parser, neural, parseOpts, args.symmetricMatch, pipeline))
 		} catch (err) {
 			console.error(`[harness] WARN: error on assertion ${i} (${a.input}): ${(err as Error).message}`)
 		}
