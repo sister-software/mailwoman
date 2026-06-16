@@ -104,7 +104,7 @@ async function cmdCheck(path: string) {
 
 async function cmdSmoke() {
 	// Real routes, not just "/docs/" — Docusaurus's bare /docs/ is a soft-404; the actual entry is /docs/understanding/.
-	const routes = ["/", "/demo/", "/blog/", "/docs/understanding/", "/docs/plan/"]
+	const routes = ["/", "/demo/", "/research/", "/docs/understanding/", "/docs/plan/"]
 	let fail = 0
 
 	for (const r of routes) {

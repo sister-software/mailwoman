@@ -122,15 +122,18 @@ const config: Config = {
 					],
 				},
 				blog: {
-					path: "blog",
-					routeBasePath: "blog",
-					blogTitle: "Mailwoman log",
+					path: "research",
+					routeBasePath: "research",
+					blogTitle: "Research Log",
 					blogDescription: "Iteration notes, ship retrospectives, design log entries.",
+					blogSidebarTitle: "All posts",
+					blogSidebarCount: "ALL",
 					showReadingTime: true,
 					postsPerPage: 10,
+
 					feedOptions: {
 						type: ["rss", "atom"],
-						title: "Mailwoman log",
+						title: "Mailwoman Research Log",
 						copyright: `Copyright © ${new Date().getFullYear()} Sister Software.`,
 					},
 				},
@@ -191,8 +194,8 @@ const config: Config = {
 					label: "Docs",
 				},
 				{
-					to: "/blog",
-					label: "Log",
+					to: "/research",
+					label: "Research",
 					position: "left",
 				},
 				{
@@ -209,7 +212,7 @@ const config: Config = {
 					title: "Try it",
 					items: [
 						{ label: "Demo", to: "/demo" },
-						{ label: "Log", to: "/blog" },
+						{ label: "Log", to: "/research" },
 					],
 				},
 				{

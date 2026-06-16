@@ -292,4 +292,5 @@
 	--ifm-tabs-color-active-border: var(--ifm-tabs-color-active);
 	--ifm-tabs-padding-horizontal: 1rem;
 	--ifm-tabs-padding-vertical: 1rem;
+	--docusaurus-tag-list-border: var(--ifm-color-primary-contrast-foreground);
 }

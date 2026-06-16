@@ -61,7 +61,7 @@ node .claude/skills/run-docs/driver.mts --screenshot /demo/ /tmp/docs-demo.png
 # HTTP + console-error + soft-404 check for one route
 node .claude/skills/run-docs/driver.mts --check /docs/understanding/
 
-# smoke the five key routes (/, /demo/, /blog/, /docs/understanding/, /docs/plan/) —
+# smoke the five key routes (/, /demo/, /research/, /docs/understanding/, /docs/plan/) —
 # exits 1 on any soft-404, HTTP >=400, or console error
 node .claude/skills/run-docs/driver.mts --smoke
 
@@ -96,7 +96,7 @@ The Playwright e2e suite (`test/browser/*.spec.ts`) targets the live `/demo` pag
 
 - **Docusaurus serves its 404 page with HTTP 200.** A `curl -o /dev/null -w '%{http_code}' http://localhost:7770/some/typo` returns `200` even though the page renders "Page Not Found." The driver's `check`/`smoke` commands sniff the rendered `<h1>` and flag this as `SOFT-404` — trust that, not the status code. If you're writing your own check, do the same.
 - **The bare `/docs/` URL is a soft-404.** The actual docs entry is `/docs/understanding/`. The nav link labelled "Docs" points there. The smoke list reflects this; don't add `/docs/` thinking it'll be a sanity check.
-- **`/blog/` has a known React console error.** A blog post (probably MDX) is rendering a `RegExp` as a child: `Objects are not valid as a React child (found: [object RegExp])`. `smoke` will exit 1 because of it. This is a real existing bug, not driver flakiness — if you're not the one fixing it, ignore the `/blog/` failure and check the other three routes individually.
+- **`/research/` has a known React console error.** A research blog post (probably MDX) is rendering a `RegExp` as a child: `Objects are not valid as a React child (found: [object RegExp])`. `smoke` will exit 1 because of it. This is a real existing bug, not driver flakiness — if you're not the one fixing it, ignore the `/research/` failure and check the other three routes individually.
 - **`@docusaurus/theme-mermaid` is listed but not always installed.** If `yarn start` errors with "Docusaurus was unable to resolve the `@docusaurus/theme-mermaid` theme," run `yarn install` from `docs/`. The lockfile knows about it; whatever cleared `node_modules/` (a `yarn clean`, a workspace migration) left it stale.
 - **The dev server uses port 7770, not the Docusaurus default 3000.** Hardcoded in `package.json` scripts. Don't `curl :3000`.
 - **`networkidle` is required, not `domcontentloaded`.** Docusaurus is SPA-ish; `domcontentloaded` fires before the React hydration assets land and your screenshot will show "Loading..." The driver already uses `networkidle`; if you write your own Playwright snippet, do the same.

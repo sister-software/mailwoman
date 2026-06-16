@@ -74,13 +74,13 @@ The v0.5.0 classifier (Thread C-s) adds two architectural changes gated behind c
 - **Phrase-prior conditioning.** The input layer takes per-token features from the Stage 2.7 phrase grouper (BIE markers + `PhraseKind` one-hot), concatenated onto the token+position embedding. The classifier conditions on proposed boundaries rather than discovering them from scratch.
 - **Top-k inference.** The inference path emits the K most-probable tag sequences with calibrated log-probability scores, rather than the single argmax. Stage 5 reconcile consumes these as the classifier's belief over candidate parses.
 
-Both are scaffolded and tested in `main`. The full training run that exercises them (C-train) is in progress as of May 2026 — see the [v0.5.0 C-train blog post](pathname:///blog/2026-05-24-v0-5-0-c-train-bisect).
+Both are scaffolded and tested in `main`. The full training run that exercises them (C-train) is in progress as of May 2026 — see the [v0.5.0 C-train blog post](pathname:///research/2026-05-24-v0-5-0-c-train-bisect).
 
 ### Stage 4 — Sequence correct
 
 A CRF with a frozen structural transition mask enforces BIO sequence validity. The mask forbids orphan `I-*` sequences (no `I-locality` without preceding `B-locality` or `I-locality`). This is the fix for the "Saint Petersburg → Petersburg" clipping: the CRF transition `O → I-locality` is structurally impossible with the frozen mask.
 
-The CRF is applied at inference time via Viterbi decode (JS-side, shipped in v0.4.0). It was used at training time in v0.4.0's dual-loss recipe (CRF-NLL + CE). The May 2026 training experiments are testing whether removing the CRF loss term (CE-only training, CRF at inference only) stabilizes training — see [the v0.5.0 retrospective](pathname:///blog/2026-05-24-v0-5-0-c-train-bisect).
+The CRF is applied at inference time via Viterbi decode (JS-side, shipped in v0.4.0). It was used at training time in v0.4.0's dual-loss recipe (CRF-NLL + CE). The May 2026 training experiments are testing whether removing the CRF loss term (CE-only training, CRF at inference only) stabilizes training — see [the v0.5.0 retrospective](pathname:///research/2026-05-24-v0-5-0-c-train-bisect).
 
 ### Stage 5 — Reconcile
 

@@ -13,7 +13,7 @@ This post is a beginner-friendly debugging story — no ML background needed. If
 
 :::
 
-This is the third post in a series about a training problem we've been chasing. The [first two](/blog/v0-5-0-c-train-bisect) [were](/blog/v0-5-0-bisect-by-elimination) written for software engineers. This one is for someone who is just starting to learn about AI and machine learning — no jargon assumed, no math beyond high-school algebra. The point is to show you what real ML debugging looks like, using a problem we actually had this week.
+This is the third post in a series about a training problem we've been chasing. The [first two](/research/v0-5-0-c-train-bisect) [were](/research/v0-5-0-bisect-by-elimination) written for software engineers. This one is for someone who is just starting to learn about AI and machine learning — no jargon assumed, no math beyond high-school algebra. The point is to show you what real ML debugging looks like, using a problem we actually had this week.
 
 If you've been programming for a while but ML feels opaque, this post is for you. The core technique we used — figuring out which of two instructions our model was listening to — turns out to be much more like ordinary debugging than the field usually makes it sound.
 
@@ -155,8 +155,8 @@ A few things stand out:
 
 ## Where to read more
 
-- [The original failure post](/blog/v0-5-0-c-train-bisect) — written for engineers, has the loss curves and recipe details.
-- [The bisect-by-elimination post](/blog/v0-5-0-bisect-by-elimination) — what we ruled out before the diagnostic.
+- [The original failure post](/research/v0-5-0-c-train-bisect) — written for engineers, has the loss curves and recipe details.
+- [The bisect-by-elimination post](/research/v0-5-0-bisect-by-elimination) — what we ruled out before the diagnostic.
 - [The technical writeup](/docs/concepts/dual-loss-curvature-conflict) — for engineers who want the gradient math and the cooperative-vs-conflict framing in detail.
 
 If you're starting out in ML and any of this helped, the mailbox is open: `contact@sister.software`. We'd genuinely like to hear what gaps the existing intro material still leaves.

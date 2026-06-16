@@ -90,7 +90,7 @@ substantially eaten.
 3. **#492 architecture escalation**: the cheap probe (dedicated affix head) is specced and
    gated — fund it when?
 4. The night-9 → night-10 arc (silent gate drift caught → canonical bars restored → stated
-   re-baseline shipped) is a strong blog story; draft deliberately not written tonight —
+   re-baseline shipped) is a strong research blog story; draft deliberately not written tonight —
    want it?
 
 ## Concrete next steps

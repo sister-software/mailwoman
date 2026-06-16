@@ -13,7 +13,7 @@ tags: [training, retrospective]
 
 v0.5.0 was the **fresh-slate ship**: new tokenizer, expanded corpus, new architecture, new reconcile stage. The plan was to bundle several months of structural improvements into one big iteration and pay the cost once. Most of it landed clean. The classifier didn't.
 
-This post walks through the four training attempts the v0.5.0 C-train made overnight, the bisect that ruled out three plausible explanations, and what we think the remaining culprit is. It's a sister piece to [the v0.4.0 retrospective](/blog/v0-4-0-ablation-campaign) — same shape of failure, different diagnostic ladder.
+This post walks through the four training attempts the v0.5.0 C-train made overnight, the bisect that ruled out three plausible explanations, and what we think the remaining culprit is. It's a sister piece to [the v0.4.0 retrospective](/research/v0-4-0-ablation-campaign) — same shape of failure, different diagnostic ladder.
 
 {/* truncate */}
 
@@ -137,6 +137,6 @@ That's still a useful outcome. We have a smaller hypothesis space (two architect
 - [`docs/articles/plan/reference/VERDICT_SMOKES.md`](/docs/plan/reference/VERDICT_SMOKES) — the smoke discipline (with the eff_batch lesson pending)
 - [`docs/articles/plan/reference/TRAINING_ENV.md`](/docs/plan/reference/TRAINING_ENV) — playpen container ROCm bootstrap
 - Diverged train CSVs at `c-train-full-{DIVERGED-lr1.5e4,v2-watchdog-DIVERGED-step1200,v3-DIVERGED-step900,h256-bisect}.csv`
-- [v0.4.0 retrospective](/blog/v0-4-0-ablation-campaign) — the sister piece
+- [v0.4.0 retrospective](/research/v0-4-0-ablation-campaign) — the sister piece
 
 Next: phrase-priors-off bisect. If that lands a stable train, we ship v0.5.0 weights without phrase-prior conditioning and pick up the priors as a v0.5.1 follow-up. If it doesn't, we revert the A1 tokenizer and confirm v0.4.0-shipped configuration trains cleanly on `corpus-v0.4.0` — which would isolate the destabilizer to corpus distribution effects from B2's transliteration mass.
