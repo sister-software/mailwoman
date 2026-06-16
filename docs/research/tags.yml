@@ -36,6 +36,14 @@ geocoding:
   label: Geocoding
   description: Articles about geocoding — the process of turning parsed addresses into lat/lon coordinates.
 
+geocoder:
+  label: Geocoder
+  description: Articles about Mailwoman as a calibrated street-level geocoder — resolving a messy address line to a coordinate, a resolution tier, and a calibrated uncertainty.
+
+record-matching:
+  label: Record matching
+  description: Articles about geocode-first entity resolution — correlating and deduplicating fragmented records by the resolved place rather than the address string.
+
 infrastructure:
   label: Infrastructure
   description: Articles about the training-data pipeline, model training, tokenization, and other non-model components.
