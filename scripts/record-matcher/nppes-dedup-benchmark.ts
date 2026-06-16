@@ -40,6 +40,7 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
+import { latLngToCell } from "h3-js"
 import { writeFileSync } from "node:fs"
 import { resolve as resolvePath } from "node:path"
 import { pathToFileURL } from "node:url"
@@ -427,6 +428,52 @@ async function main(): Promise<void> {
 	const geocodedNpis = [...npiPrimary.keys()].filter((n) => npiCoord.has(n)).length
 	const orgNameCoordLabel = (rec: SourceRecord) => (npiPrimary.has(rec.id) ? findC(rec.id) : rec.id)
 
+	// --- ORG-NAME-H3 entity-truth (Task 4, #109). The same building-grain co-location, but keyed on an
+	// H3 CELL (the geocode-first "cell" the issue suggested) instead of a pairwise 50 m haversine: assign
+	// each NPI's coordinate to an H3 cell at building-block resolution, then union same-org (Jaccard ≥
+	// ORG_TAU) NPIs that share a cell. A robustness check on the haversine coord-grain — if the F1
+	// matches, the number isn't an artifact of the 50 m threshold, and cell-blocking is O(n) not O(n²).
+	// Caveat: a hard cell boundary can split a same-building pair into adjacent cells (a slight
+	// under-count vs the radius); res 10 (~65 m edge) absorbs most of it. ---
+	const H3_RES = Number(arg("h3-res", "11")) // res 11 ≈ 25 m edge; res 10 ≈ 65 m (block scale)
+	const parentH = new Map<string, string>()
+	const findH = (x: string): string => {
+		if (!parentH.has(x)) parentH.set(x, x)
+		let root = x
+		while (parentH.get(root)! !== root) root = parentH.get(root)!
+		while (parentH.get(x)! !== root) {
+			const next = parentH.get(x)!
+			parentH.set(x, root)
+			x = next
+		}
+		return root
+	}
+	const unionH = (a: string, b: string) => {
+		const ra = findH(a)
+		const rb = findH(b)
+		if (ra !== rb) parentH.set(ra, rb)
+	}
+	{
+		const byCell = new Map<string, string[]>()
+		for (const n of npiPrimary.keys()) {
+			findH(n) // seed every NPI (un-geocoded ones stay singletons)
+			const c = npiCoord.get(n)
+			if (!c) continue
+			const cell = latLngToCell(c.latitude, c.longitude, H3_RES)
+			if (!byCell.has(cell)) byCell.set(cell, [])
+			byCell.get(cell)!.push(n)
+		}
+		for (const group of byCell.values()) {
+			for (let i = 0; i < group.length; i++) {
+				for (let j = i + 1; j < group.length; j++) {
+					if (orgJaccard(npiPrimary.get(group[i]!)!.tokens, npiPrimary.get(group[j]!)!.tokens) >= ORG_TAU)
+						unionH(group[i]!, group[j]!)
+				}
+			}
+		}
+	}
+	const orgNameH3Label = (rec: SourceRecord) => (npiPrimary.has(rec.id) ? findH(rec.id) : rec.id)
+
 	// --- Phase D: the comparison-model lever progression — toggle each lever ON in turn at the default
 	// threshold to isolate its marginal effect, then sweep the link threshold on the best config (geocode
 	// once, resolve many — config is cheap). ---
@@ -506,6 +553,9 @@ async function main(): Promise<void> {
 	const orgCoordCount = new Set(records.map((r) => orgNameCoordLabel(r))).size
 	const fsOrgCoord = scoreEntities(bestLever.res.entities, orgNameCoordLabel)
 	const gbtOrgCoord = scoreEntities(gbtRes.entities, orgNameCoordLabel)
+	// Task 4 (#109): the H3-cell co-location truth — a robustness check on the haversine coord-grain.
+	const orgH3Count = new Set(records.map((r) => orgNameH3Label(r))).size
+	const gbtOrgH3 = scoreEntities(gbtRes.entities, orgNameH3Label)
 
 	// Optional candidate A/B (--candidate): score a trained GBT module at both levels, at its own
 	// recommendedThreshold, alongside the shipped GBT — grades a new model (e.g. corroboration features).
@@ -533,7 +583,7 @@ async function main(): Promise<void> {
 		)
 	}
 	console.error(
-		`    truth-grains — GBT NPI ${(100 * gbtNpi.f1).toFixed(1)}% → site ${(100 * gbtEntity.f1).toFixed(1)}% → org-name ${(100 * gbtOrg.f1).toFixed(1)}% → org-name-coord ${(100 * gbtOrgCoord.f1).toFixed(1)}%; ` +
+		`    truth-grains — GBT NPI ${(100 * gbtNpi.f1).toFixed(1)}% → site ${(100 * gbtEntity.f1).toFixed(1)}% → org-name ${(100 * gbtOrg.f1).toFixed(1)}% → org-name-coord ${(100 * gbtOrgCoord.f1).toFixed(1)}% → org-name-h3 ${(100 * gbtOrgH3.f1).toFixed(1)}% (res ${H3_RES}); ` +
 			`FS: NPI ${(100 * fsNpi.f1).toFixed(1)}% / entity ${(100 * fsEntity.f1).toFixed(1)}% / org-coord ${(100 * fsOrgCoord.f1).toFixed(1)}%`
 	)
 
@@ -655,6 +705,7 @@ async function main(): Promise<void> {
 	dualRow("GBT (shipped default)", "site", gbtEntity, gbtEntity.f1 - gbtNpi.f1)
 	dualRow("GBT (shipped default)", "**org-name**", gbtOrg, gbtOrg.f1 - gbtNpi.f1)
 	dualRow("GBT (shipped default)", "**org-name (coord)**", gbtOrgCoord, gbtOrgCoord.f1 - gbtNpi.f1)
+	dualRow("GBT (shipped default)", `org-name (H3 res ${H3_RES})`, gbtOrgH3, gbtOrgH3.f1 - gbtNpi.f1)
 	if (cand) {
 		dualRow(cand.label, "NPI", cand.npi)
 		dualRow(cand.label, "**entity**", cand.entity, cand.entity.f1 - cand.npi.f1)
@@ -677,6 +728,21 @@ async function main(): Promise<void> {
 			`(${signed(100 * (gbtOrgCoord.f1 - gbtOrg.f1))}), ${orgCount} → ${orgCoordCount} classes, over ${geocodedNpis}/${kept.size} ` +
 			`geocoded NPIs. The string org-name F1 is a conservative LOWER bound; the coordinate one is tighter (the Jaccard gate ` +
 			`still blocks distinct co-located orgs). Both are honest — the coordinate is the geocode-first key.`
+	)
+	lines.push("")
+	lines.push(
+		`**Task 4 (#109) — H3-cell robustness check.** Re-keying the same building-grain co-location on an H3 cell ` +
+			`(res ${H3_RES}) instead of the 50 m haversine radius — the deterministic, O(n) "geocode-first cell" the issue ` +
+			`suggested — gives GBT **org-name-h3 ${pct(gbtOrgH3.f1)}%** (${orgH3Count} classes), vs the haversine ` +
+			`${pct(gbtOrgCoord.f1)}% (${orgCoordCount}). ${
+				Math.abs(gbtOrgH3.f1 - gbtOrgCoord.f1) < 0.015
+					? "Within noise of the haversine grain — the ~" +
+						pct(gbtOrgCoord.f1) +
+						"% coord-grain F1 is robust to the co-location method, not an artifact of the 50 m threshold."
+					: "The two co-location methods differ by " +
+						signed(100 * (gbtOrgH3.f1 - gbtOrgCoord.f1)) +
+						" — the cell-vs-radius boundary handling shifts the count (a hard H3 boundary can split a same-building pair into adjacent cells)."
+			}`
 	)
 	lines.push("")
 	lines.push(
