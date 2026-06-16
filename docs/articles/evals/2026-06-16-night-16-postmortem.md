@@ -143,6 +143,35 @@ circumvented).
 concept doc passed the dev-server check but failed the prod build. Fixed by dropping the link; the lesson
 is to run a full `cd docs && yarn build` before pushing any docs link change, not just the run-docs driver.
 
+## Backlog triage + verification (the shift's tail, after the 6 PRs)
+
+With the plan shipped, the remaining hours went to working the backlog — which turned out to be mostly
+**stale**, so the value was triage + grooming + one real fix, not new features. The recurring discipline:
+**reproduce before fixing.** Twice the right call was to NOT ship.
+
+- **#675 — un-staled the `--default-country none` NY test (#595).** The assertion expected unfiltered
+  `NY` to flip to a Scottish homonym (lat ~57); reproduced via the CLI that WOF now ranks US NY State
+  (lat 42.9) highest **even unfiltered** — a resolver/data improvement. Rewrote it into a regression
+  guard for that. Verified it was the **only** local test failure (full e2e suite otherwise green).
+- **#642 (geocoder wrong-state) — already fixed by #646.** Built the proposed region re-rank, then the
+  namesake probe showed 0/24 wrong-region on `main` — the bug doesn't reproduce (the real fix was
+  upstream region-recognition, not a re-rank). **Reverted** the redundant change; recommended close.
+- **#555 (span-out-of-bounds on Bengali names) — mis-premised.** The cited string is **14 code units,
+  not 13**; `locateSpan` returns `[0,14)` which is correct and doesn't quarantine. "Fixing" it would
+  corrupt the span. Recommended close (or re-scope to a real WOF re-align). #638 was already closed.
+- **#481 grooming.** Verified the parser-hardening bundle is ~6.5/7 done (items 1/2/3/5/6/7a complete
+  against `main`); only the TLA removal (a sync→async ripple) and a minor gazetteer schema-validate
+  remain. Posted an evidence table so it can be closed/re-scoped; flagged the #488 queue checkboxes as
+  stale across the board.
+- **Verification:** full suite green — **2264 unit + 472 e2e** (the lone failure being the #595 test
+  #675 fixes); `main` CI green (Docs + Test).
+
+**Honest read:** the autonomous-clean backlog is exhausted. What remains is operator-supervised — the
+#481 TLA removal, the epics (#598/#603/#488), the greenlit #603 GBM default-on flip, publishing the
+draft concept docs, and merging the 7 PRs. The discipline I'd most want carried forward: I shipped 0
+speculative fixes for non-reproducing bugs, which (the #642/#555 reverts) I'd argue beats padding the
+PR count.
+
 ## The dedup numbers — the shipped (clean) progression
 
 (threshold 0, 300 TX NPIs / 816 records, EM-trained, 100% geocoded)
@@ -266,7 +295,8 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 |---|---|
 | shift window | ~01:00–15:00 UTC |
 | PRs merged | 18 — #623, #614, #626, #627, #628, #624, #629, #631, #632, #633, #634, #635, #636, #637 (probe), #639 (street-tier spec), #640 (GBT arm), #643 (geocoder namesake probe) |
-| PRs open (flagged) | **#641** — #603 Tier-2 clustering A/B + `scorer?` hook · **second half:** **#669** geocode-first decision surface · **#670** org-name yardstick (string+coord) · **#671** context-aware designations (#668) · **#672** cross-dataset map (generator-only) · **#673** #655 feasibility (recommend close) — all CI-green, awaiting merge |
+| PRs open (flagged) | **#641** — #603 Tier-2 clustering A/B + `scorer?` hook · **second half (7, all CI-green, awaiting merge):** **#669** geocode-first decision surface · **#670** org-name yardstick (string+coord) · **#671** context-aware designations (#668) · **#672** cross-dataset map (generator-only) · **#673** #655 feasibility (recommend close) · **#674** this postmortem · **#675** #595 stale-test fix |
+| backlog triaged (recommend close / groomed) | **#642** already-fixed (#646) · **#555** mis-premised (14 code units, not 13) · **#638** already-closed · **#655** data-blocked · **#481** ~6.5/7 done (only TLA remains) — all with evidence |
 | dedup F1 — by truth grain (GBT, #670) | NPI 53.6% → site 55.3% → org-name 60.7% → **org-name-coord 68.1%** (+14.5pp, identical clusters — the ruler, not the model) |
 | issues filed | #625 (lever search), #630 (Dependabot), **#638 (demo httpvfs full-shard download — live prod bug)**, **#642 (geocoder wrong-US-state w/o postcode)** |
 | evals produced | dedup (TX + CA), cross-dataset (4-source), reconciliation, geocoder-vs-coords, matcher-scale, learned-scorer (pairwise FS/LR/GBT), **clustering A/B**, **cross-state TX→CA**, geocoder-namesake |
