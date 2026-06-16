@@ -168,9 +168,23 @@ With the plan shipped, the remaining hours went to working the backlog — which
 
 **Honest read:** the autonomous-clean backlog is exhausted. What remains is operator-supervised — the
 #481 TLA removal, the epics (#598/#603/#488), the greenlit #603 GBM default-on flip, publishing the
-draft concept docs, and merging the 7 PRs. The discipline I'd most want carried forward: I shipped 0
+draft concept docs, and merging the PRs. The discipline I'd most want carried forward: I shipped 0
 speculative fixes for non-reproducing bugs, which (the #642/#555 reverts) I'd argue beats padding the
 PR count.
+
+## Morning close-off (operator back, ~12:00 UTC)
+
+Two more landed while closing the shift with the operator:
+
+- **#676 — corrected the stale TLA note in AGENTS.md.** The orientation doc still called
+  `libpostal.ts`'s top-level await a live fragility; #481 had already made it a lazy getter, and the
+  surviving import cycle is structural (Vite bare+subpath), not TLA-driven. Also confirmed **#481 is
+  effectively complete** (only import-graph hygiene + a minor gazetteer schema-validate remain) and
+  groomed it.
+- **#677 — the blog: "Match where it is, not how it's spelled."** Extended the #631 geocode-first draft
+  into a two-figure "how we measure matching honestly" post — the decision surface (match on the right
+  KEY) + the yardstick (measure against the right RULER, with the over-merge-is-a-phantom finding).
+  Both figures verified rendering; stays `draft: true` pending the operator's read.
 
 ## The dedup numbers — the shipped (clean) progression
 
@@ -295,7 +309,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 |---|---|
 | shift window | ~01:00–15:00 UTC |
 | PRs merged | 18 — #623, #614, #626, #627, #628, #624, #629, #631, #632, #633, #634, #635, #636, #637 (probe), #639 (street-tier spec), #640 (GBT arm), #643 (geocoder namesake probe) |
-| PRs open (flagged) | **#641** — #603 Tier-2 clustering A/B + `scorer?` hook · **second half (7, all CI-green, awaiting merge):** **#669** geocode-first decision surface · **#670** org-name yardstick (string+coord) · **#671** context-aware designations (#668) · **#672** cross-dataset map (generator-only) · **#673** #655 feasibility (recommend close) · **#674** this postmortem · **#675** #595 stale-test fix |
+| PRs open (flagged) | **#641** — #603 Tier-2 clustering A/B + `scorer?` hook · **second half (9, awaiting merge):** **#669** geocode-first decision surface · **#670** org-name yardstick (string+coord) · **#671** context-aware designations (#668) · **#672** cross-dataset map (generator-only) · **#673** #655 feasibility · **#674** this postmortem · **#675** #595 stale-test fix · **#676** AGENTS.md TLA-note fix · **#677** the blog (both figures, draft) |
 | backlog triaged (recommend close / groomed) | **#642** already-fixed (#646) · **#555** mis-premised (14 code units, not 13) · **#638** already-closed · **#655** data-blocked · **#481** ~6.5/7 done (only TLA remains) — all with evidence |
 | dedup F1 — by truth grain (GBT, #670) | NPI 53.6% → site 55.3% → org-name 60.7% → **org-name-coord 68.1%** (+14.5pp, identical clusters — the ruler, not the model) |
 | issues filed | #625 (lever search), #630 (Dependabot), **#638 (demo httpvfs full-shard download — live prod bug)**, **#642 (geocoder wrong-US-state w/o postcode)** |
