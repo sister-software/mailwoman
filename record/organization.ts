@@ -87,6 +87,12 @@ const DESIGNATIONS = new Set([
 	"doo",
 	"ood",
 	"ead",
+	// Belgian forms — the only ISP-Nexus FCC designations we lacked that are SAFE to add. The rest of
+	// its international set (pt, sca, scs) collide with US-healthcare abbreviations — PT = Physical
+	// Therapy, SCA = Sudden Cardiac Arrest, SCS = Spinal Cord Stimulator — so stripping them as legal
+	// designations would corrupt NPPES org names. Designation lists are domain-scoped, not universal.
+	"bvba",
+	"sprl",
 ])
 
 /** Splits a `doing business as` / trade-name clause from a legal name. */

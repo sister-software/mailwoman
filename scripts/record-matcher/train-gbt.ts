@@ -51,6 +51,10 @@ const WOF = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db
 const DATA_ROOT = arg("data-root", "/mnt/playpen/mailwoman-data")
 const OUT = arg("out", "registry/models/dedup-gbt-en-us.ts")
 const LOCALE = arg("locale", "en-US")
+// Cost-sensitive training (#625): up-weight the NEGATIVE (distinct-pair) class by this factor so the
+// model is more conservative about merging — directly trades recall for precision to cut over-merge.
+// 1 = the symmetric class-balanced default; >1 penalizes a false merge more than a missed one.
+const COST = Number(arg("cost", "1"))
 const TRAIN_DATE = arg("date", new Date().toISOString().slice(0, 10)) // overridable for reproducible commits
 
 const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
@@ -218,8 +222,9 @@ async function main(): Promise<void> {
 	const X = pairs.map(([a, b]) => featurize(a, b))
 	const Y = pairs.map(([a, b]) => (a.id === b.id ? 1 : 0))
 	const posRate = Y.reduce((s, v) => s + v, 0) / Math.max(1, Y.length)
-	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate)) // class-balanced (same as the eval)
+	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate * COST)) // class-balanced; COST up-weights negatives
 	const hyperparams = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
+	if (COST !== 1) console.error(`    cost-sensitive: negative class weighted ×${COST} (penalize over-merge)`)
 
 	// --- Phase E: calibrate the default link threshold. The GBT logit is NOT in FS-weight units — it's
 	// trained with class-balanced weights, so logit 0 (the balanced boundary) ignores the ~1% match base
@@ -234,7 +239,7 @@ async function main(): Promise<void> {
 	const calibGbt = trainGBT(
 		fitPairs.map(([a, b]) => featurize(a, b)),
 		fitPairs.map(([a, b]) => (a.id === b.id ? 1 : 0)),
-		fitPairs.map(([a, b]) => (a.id === b.id ? 1 - posRate : posRate)),
+		fitPairs.map(([a, b]) => (a.id === b.id ? 1 - posRate : posRate * COST)),
 		hyperparams
 	)
 	const calibScorer = (a: SourceRecord, b: SourceRecord) => gbtScore(calibGbt, featurize(a, b))
@@ -276,6 +281,7 @@ async function main(): Promise<void> {
 		records: records.length,
 		pairs: pairs.length,
 		posRate: Number(posRate.toFixed(4)),
+		costNegative: COST, // cost-sensitive negative-class up-weight (1 = symmetric class-balanced)
 		hyperparams,
 		recommendedThreshold: Number(recommendedThreshold.toFixed(4)), // F1-max link threshold (held-out); resolveEntities' default when learnedScorer is active
 		features: X[0]?.length ?? 0,
