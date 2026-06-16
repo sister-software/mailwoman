@@ -35,7 +35,8 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
   verified end-to-end (resolves a provider + facility across two sources into one cross-dataset link).
 - **#635 merged** — `--infer-mapping` best-effort auto column-mapping ("point it at any CSV").
 - **#636 open** — FCC commitments two-HCP row explode (#618 B1): a 4th source → **cross-source links
-  27 → 219, with 10 spanning all three source kinds** (provider + funded + facility).
+  27 → 219** (10 spanning three of the four _sources_ — but only two _agency-roles_, since RHC +
+  commitments are both FCC; the cross-agency correction is in the second-half section below).
 - **Issues #625** (the full lever search, now incl. the auth-official first-positive) · **#630**
   (Dependabot triage — dev-tooling-only transitive vulns, triaged not bumped).
 - **#603 learned-scorer probe (DONE, qualified-positive)** — `scripts/record-matcher/learned-scorer-eval.ts`
@@ -95,6 +96,95 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
 **The whole hypothesis is demonstrated end-to-end:** dedup (held-out NPI truth) → cross-dataset correlation
 (no shared key) → reconciliation anti-join (the product) → geocoder validation → scale (500K in 68s, pure
 Node) → generalization (2nd state). Tier-1 spine complete + Tier-3 scale/honesty.
+
+## Continuation — docs visualization, designations, cross-source feasibility (PRs #669–673)
+
+The shift's second half turned the hard-won _understanding_ into things people see and use. All five
+landed as PRs awaiting operator merge (the classifier holds the merge-to-main wall; flagged, not
+circumvented).
+
+- **#669 — the geocode-first decision surface (Tier 1A).** Twin 3D Plotly landscapes of `P(match)` over
+  (string-similarity × geo-distance), scored by the same Fellegi-Sunter model with the REAL per-level
+  Bayes factors (`NAME_LEVELS` ±6.32 exact, `DEFAULT_DISTANCE_LEVELS` ±9.45 same-building). String-first
+  is a vertical wall blind to geography; geocode-first is a basin carved by distance. The two canonical
+  traps annotated (far-apart namesakes string-first fuses; same-building drifted strings it splits).
+  Embedded in the geocode-first concept doc.
+- **#670 — org-name as the honest yardstick (Tiers 2C + 2D + the reframed 1B).** New concept doc "why
+  org-name, not NPI" + a slope-chart SVG. **The dedup F1 climbs as the ruler gets honest, on IDENTICAL
+  clusters: NPI 53.6% → site 55.3% → org-name(string) 60.7% → org-name(coord) 68.1%** (+14.5pp). Tier 2D
+  re-keys the org-name truth on the geocoded BUILDING (haversine ≤50 m) instead of the address STRING,
+  catching same-building/different-string pairs (`1504 Taub Loop` vs `1504 Taub Lp Ste 100`) → +7.4pp.
+  The `--max-npis 1000` re-run reproduced the string-grain baseline EXACTLY (EM is deterministic). The
+  benchmark report now leads with the org-name headline. **Tier 1B was reframed:** the planned
+  corroboration/over-merge surface would have visualized the #625-_disproven_ hypothesis, so it became
+  the honest yardstick figure instead.
+- **#671 — context-aware legal designations (Tier 3E, #668).** A two-axis `canonicalizeOrganizationName`
+  (a jurisdiction + a domain option): the strip-set is `(base ∪ jurisdiction-pack) − domain-protect-pack`.
+  The collision-prone forms (`pt`/`sca`/`scs`) are gated behind a known jurisdiction (ID/FR); a
+  `healthcare` domain protects them
+  (PT = Physical Therapy, not Perseroan Terbatas). Byte-stable default, 8 new tests, full suite + typecheck
+  green. Not yet wired into `resolveEntities` (a behavior change wanting its own eval).
+- **#672 — the cross-dataset linking map (bonus).** The marquee proof on a map: 219 entities resolved
+  across sources with no shared key, on the HOUSE stack (MapLibre + Protomaps via `toMapHTML`, rendered
+  with `render-map.mjs` — SwiftShader WebGL + the localhost-serve the tile CORS requires). **Generator
+  only, not embedded:** 191/219 links are FCC-internal (RHC ↔ commitments, same agency); the genuinely
+  cross-_agency_ links are **28, all pairwise (2 agencies); ZERO span all three agencies** (no entity
+  resolves across provider + funder + facility at once). The "10 spanning all three source kinds" framing
+  counted 3 sources where 2 are FCC. A `--cross-agency-only` flag renders the honest 28-link slice; the
+  framing is an operator call, and map renders are the operator's to verify.
+- **#673 — #655 option 2 is data-blocked.** A feasibility analysis, not an experiment: the FCC/TX sources
+  carry no NPI/EIN/TIN, so the only shared cross-source signals are name+geocode (what FS already
+  scores → circular, the #664 mechanism) and phone (#625-unreliable). There is no strong signal
+  independent of the scorer's features to anchor non-circular weak labels — so FS staying pinned for
+  cross-source is a property of the data, not a modeling shortfall. Recommend closing #655.
+
+**Process catch (cost one CI round-trip):** `yarn start` (dev) does not enforce `onBrokenLinks` and
+`docusaurus build` (prod) _excludes_ `draft: true` pages — so a non-draft eval doc linking to a draft
+concept doc passed the dev-server check but failed the prod build. Fixed by dropping the link; the lesson
+is to run a full `cd docs && yarn build` before pushing any docs link change, not just the run-docs driver.
+
+## Backlog triage + verification (the shift's tail, after the 6 PRs)
+
+With the plan shipped, the remaining hours went to working the backlog — which turned out to be mostly
+**stale**, so the value was triage + grooming + one real fix, not new features. The recurring discipline:
+**reproduce before fixing.** Twice the right call was to NOT ship.
+
+- **#675 — un-staled the `--default-country none` NY test (#595).** The assertion expected unfiltered
+  `NY` to flip to a Scottish homonym (lat ~57); reproduced via the CLI that WOF now ranks US NY State
+  (lat 42.9) highest **even unfiltered** — a resolver/data improvement. Rewrote it into a regression
+  guard for that. Verified it was the **only** local test failure (full e2e suite otherwise green).
+- **#642 (geocoder wrong-state) — already fixed by #646.** Built the proposed region re-rank, then the
+  namesake probe showed 0/24 wrong-region on `main` — the bug doesn't reproduce (the real fix was
+  upstream region-recognition, not a re-rank). **Reverted** the redundant change; recommended close.
+- **#555 (span-out-of-bounds on Bengali names) — mis-premised.** The cited string is **14 code units,
+  not 13**; `locateSpan` returns `[0,14)` which is correct and doesn't quarantine. "Fixing" it would
+  corrupt the span. Recommended close (or re-scope to a real WOF re-align). #638 was already closed.
+- **#481 grooming.** Verified the parser-hardening bundle is ~6.5/7 done (items 1/2/3/5/6/7a complete
+  against `main`); only the TLA removal (a sync→async ripple) and a minor gazetteer schema-validate
+  remain. Posted an evidence table so it can be closed/re-scoped; flagged the #488 queue checkboxes as
+  stale across the board.
+- **Verification:** full suite green — **2264 unit + 472 e2e** (the lone failure being the #595 test
+  #675 fixes); `main` CI green (Docs + Test).
+
+**Honest read:** the autonomous-clean backlog is exhausted. What remains is operator-supervised — the
+#481 TLA removal, the epics (#598/#603/#488), the greenlit #603 GBM default-on flip, publishing the
+draft concept docs, and merging the PRs. The discipline I'd most want carried forward: I shipped 0
+speculative fixes for non-reproducing bugs, which (the #642/#555 reverts) I'd argue beats padding the
+PR count.
+
+## Morning close-off (operator back, ~12:00 UTC)
+
+Two more landed while closing the shift with the operator:
+
+- **#676 — corrected the stale TLA note in AGENTS.md.** The orientation doc still called
+  `libpostal.ts`'s top-level await a live fragility; #481 had already made it a lazy getter, and the
+  surviving import cycle is structural (Vite bare+subpath), not TLA-driven. Also confirmed **#481 is
+  effectively complete** (only import-graph hygiene + a minor gazetteer schema-validate remain) and
+  groomed it.
+- **#677 — the blog: "Match where it is, not how it's spelled."** Extended the #631 geocode-first draft
+  into a two-figure "how we measure matching honestly" post — the decision surface (match on the right
+  KEY) + the yardstick (measure against the right RULER, with the over-merge-is-a-phantom finding).
+  Both figures verified rendering; stays `draft: true` pending the operator's read.
 
 ## The dedup numbers — the shipped (clean) progression
 
@@ -219,7 +309,9 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 |---|---|
 | shift window | ~01:00–15:00 UTC |
 | PRs merged | 18 — #623, #614, #626, #627, #628, #624, #629, #631, #632, #633, #634, #635, #636, #637 (probe), #639 (street-tier spec), #640 (GBT arm), #643 (geocoder namesake probe) |
-| PRs open (flagged) | **#641 — #603 Tier-2 clustering A/B + cross-state + `scorer?` hook (shipped API → operator review)** |
+| PRs open (flagged) | **#641** — #603 Tier-2 clustering A/B + `scorer?` hook · **second half (9, awaiting merge):** **#669** geocode-first decision surface · **#670** org-name yardstick (string+coord) · **#671** context-aware designations (#668) · **#672** cross-dataset map (generator-only) · **#673** #655 feasibility · **#674** this postmortem · **#675** #595 stale-test fix · **#676** AGENTS.md TLA-note fix · **#677** the blog (both figures, draft) |
+| backlog triaged (recommend close / groomed) | **#642** already-fixed (#646) · **#555** mis-premised (14 code units, not 13) · **#638** already-closed · **#655** data-blocked · **#481** ~6.5/7 done (only TLA remains) — all with evidence |
+| dedup F1 — by truth grain (GBT, #670) | NPI 53.6% → site 55.3% → org-name 60.7% → **org-name-coord 68.1%** (+14.5pp, identical clusters — the ruler, not the model) |
 | issues filed | #625 (lever search), #630 (Dependabot), **#638 (demo httpvfs full-shard download — live prod bug)**, **#642 (geocoder wrong-US-state w/o postcode)** |
 | evals produced | dedup (TX + CA), cross-dataset (4-source), reconciliation, geocoder-vs-coords, matcher-scale, learned-scorer (pairwise FS/LR/GBT), **clustering A/B**, **cross-state TX→CA**, geocoder-namesake |
 | dedup F1 | 43.7% → 63.9% spine → **64.7%** (auth-official discriminator) |
@@ -228,7 +320,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 | learned scorer — **clustering** F1 cross-state (TX→CA) | FS 15.0% → LR 13.9% → **GBT 35.5%** (+20.5pp); generalizes, over-merged 239→47 |
 | demo street geocoder | White House → exact building (≤10 m), client-side, byte-ranged — **verified** (#639); full-shard-download-on-open bug (#638) |
 | geocoder admin tier | wrong-US-state w/o postcode (Dublin TX→OH, 1628 km) — diagnosed (#642) + probe (#643) |
-| cross-dataset | **219** cross-source entities, 10 spanning all 3 source kinds |
+| cross-dataset | **219** cross-source entities (191 FCC-internal); **28 cross-AGENCY, all pairwise — 0 span all 3 agencies** |
 | scale | 500K records in 68 s, pure Node |
 | Modal / GPU time | 0 (CPU-only shift) |
 | NaN incidents / CI failures / regressions | 0 / 0 / 0 |
