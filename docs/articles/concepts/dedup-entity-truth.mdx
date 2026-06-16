@@ -37,10 +37,10 @@ co-located `Baylor` records are one place — NPI-as-truth scores all six of tho
 within-org pairs as **over-merges**. The matcher is penalized for being correct.
 The lower its measured precision, the better it may actually be working.
 
-## Three rulers, one set of clusters
+## Four rulers, one set of clusters
 
 The fix is not a better model; it's a better ruler. We grade the **identical**
-matcher output against three entity-truths, ordered from over-segmenting to
+matcher output against four entity-truths, ordered from over-segmenting to
 honest:
 
 - **NPI** — one entity per registration. Over-segments every multi-subpart org.
@@ -51,22 +51,29 @@ honest:
 - **org-name** — the gold-set-validated truth: same NPI implies same entity
   (recall preserved), **plus** collapse co-located NPIs whose primary
   organization names agree (token Jaccard ≥ 0.7), with no reliance on the subpart
-  flag. This is the ruler that stops charging the matcher for the same-org merges
-  that are genuinely correct.
+  flag. Co-location here is the address _string_ key — so it still misses
+  same-building records whose text drifts.
+- **org-name (coord)** — the same rule, but co-location is keyed on the geocoded
+  **building** (within 50 m), not the address string. `1504 Taub Loop` and `1504
+Taub Lp Ste 100` key apart as strings yet geocode to one point, so this collapses
+  the same-building same-org pairs the string key leaves split. It is the
+  geocode-first key, and the tightest honest ruler.
 
 The same 2757-record sample carries **1000 NPI** classes → **1456 site** → **956
-org-name**. The class count first _expands_ (site splits multi-address NPIs) then
-_contracts_ below the NPI count (org-name fuses the co-located subparts) — the
-shape of over-segmentation being corrected.
+org-name** → **928 org-name (coord)**. The class count first _expands_ (site splits
+multi-address NPIs) then _contracts_ below the NPI count (org-name fuses the
+co-located subparts, the coordinate fusing a few more) — the shape of
+over-segmentation being corrected.
 
-![The dedup F1 climbs as the entity-truth gets honest: a slope chart of entity-resolution F1 across three rulers (NPI, site, org-name) for the shipped GBT scorer and the FS baseline. The GBT F1 climbs 53.6% → 55.3% → 60.7% across the same clusters.](../evals/charts/dedup-yardstick.svg)
+![The dedup F1 climbs as the entity-truth gets honest: a slope chart of entity-resolution F1 across four rulers (NPI, site, org-name, org-name-coord) for the shipped GBT scorer and the FS baseline. The GBT F1 climbs 53.6% → 55.3% → 60.7% → 68.1% across the same clusters.](../evals/charts/dedup-yardstick.svg)
 
 Grade the shipped GBT scorer's clusters against each ruler and the F1 climbs
-**53.6% (NPI) → 55.3% (site) → 60.7% (org-name)** — a **+7.1pp** swing with the
-clusters held _identical_. The over-merge count falls (109 → 92) and precision
-rises (43.7% → 53.3%) for the same reason: the ruler stops counting correct
-same-org merges as errors. The climb is the yardstick getting honest, not the
-model changing.
+**53.6% (NPI) → 55.3% (site) → 60.7% (org-name) → 68.1% (coordinate)** — a
+**+14.5pp** swing with the clusters held _identical_. The over-merge count falls
+(109 → 76) and precision rises (43.7% → 64.6%) for the same reason: the ruler stops
+counting correct same-org merges as errors, and the geocode-first building key
+catches the most of them. The climb is the yardstick getting honest, not the model
+changing.
 
 ## Why we trust the org-name ruler
 
@@ -88,14 +95,15 @@ the ruler all along.
 ## The discipline
 
 Report the number that matches the entity you're resolving. For NPPES
-organization dedup that is **org-name F1 (~60.7%)**, not the NPI-level 53.6% —
-the latter mostly measures NPI over-segmentation, a property of the registry, not
-of the matcher. State the ruler next to the number, every time; a dedup F1 with
-no named truth-grain is unreadable.
+organization dedup that is the **org-name F1 — ~60.7% by the address-string key,
+~68.1% by the geocode-first building key** — not the NPI-level 53.6%, which mostly
+measures NPI over-segmentation, a property of the registry, not of the matcher.
+State the ruler next to the number, every time; a dedup F1 with no named
+truth-grain is unreadable.
 
 This is the same move the rest of the system makes: [grade the pipeline against
 the right target, not a convenient proxy](./eval-discipline). The remaining
-org-name over-merge (92 clusters) is the genuine frontier — small, and approaching
+org-name over-merge (76 clusters at the coordinate grain) is the genuine frontier — small, and approaching
 the [irreducible ceiling](../evals/2026-06-16-dedup-ceiling.md) of co-located
 distinct organizations that no address-based signal can separate.
 
@@ -106,6 +114,6 @@ addresses is geocode-first behaving correctly. We resolve and report the join;
 what it _means_ is the consumer's call.
 
 _Measurements: [`2026-06-16-dedup-dual-level-benchmark`](../evals/2026-06-16-dedup-dual-level-benchmark.md)
-(the three-grain table), [`2026-06-16-dedup-gold-set-tx120`](../evals/2026-06-16-dedup-gold-set-tx120.md)
+(the four-grain table), [`2026-06-16-dedup-gold-set-tx120`](../evals/2026-06-16-dedup-gold-set-tx120.md)
 (the adjudicated slice), [`2026-06-16-dedup-ceiling`](../evals/2026-06-16-dedup-ceiling.md)
 (the irreducible floor). Figure generator: `scripts/record-matcher/viz/yardstick-figure.ts`._

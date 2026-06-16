@@ -28,7 +28,7 @@
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
-import type { GBT } from "@mailwoman/match"
+import { haversineKm, type GBT } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
@@ -380,6 +380,53 @@ async function main(): Promise<void> {
 	}
 	const orgNameLabel = (rec: SourceRecord) => (npiPrimary.has(rec.id) ? find(rec.id) : rec.id)
 
+	// --- ORG-NAME-COORD entity-truth (Tier 2D, #625). The string org-name truth above blocks by the
+	// address STRING (`addressFrequencyKey`), so it MISSES same-building pairs whose text differs —
+	// "1504 Taub LOOP" vs "1504 Taub LP STE 100" key apart even though the geocoder places them at one
+	// point. This variant blocks by the GEOCODED BUILDING instead: union two NPIs whose org names match
+	// (Jaccard ≥ ORG_TAU) AND whose primary practice coordinates are within the same-building distance
+	// (≤ 50 m haversine, the DEFAULT_DISTANCE_LEVELS grain). Brute-force pairwise over the ~1000 sampled
+	// NPIs (trivial); a tighter LOWER bound on the org-name truth — the org-name F1 here is ≥ the string
+	// one. The Jaccard gate still prevents collapsing distinct co-located orgs (the gold-set safety). ---
+	const COLOCATION_KM = 0.05
+	const npiCoord = new Map<string, { latitude: number; longitude: number }>()
+	for (const rec of records) {
+		const c = rec.address?.geocode?.coordinate
+		// first geocoded record per NPI ≈ its primary practice address (primary row is pushed first)
+		if (c && !npiCoord.has(rec.id)) npiCoord.set(rec.id, c)
+	}
+	const parentC = new Map<string, string>()
+	const findC = (x: string): string => {
+		if (!parentC.has(x)) parentC.set(x, x)
+		let root = x
+		while (parentC.get(root)! !== root) root = parentC.get(root)!
+		while (parentC.get(x)! !== root) {
+			const next = parentC.get(x)!
+			parentC.set(x, root)
+			x = next
+		}
+		return root
+	}
+	const unionC = (a: string, b: string) => {
+		const ra = findC(a)
+		const rb = findC(b)
+		if (ra !== rb) parentC.set(ra, rb)
+	}
+	{
+		const coLocated = [...npiPrimary.keys()].filter((n) => npiCoord.has(n))
+		for (const n of npiPrimary.keys()) findC(n) // seed every NPI (un-geocoded ones stay singletons)
+		for (let i = 0; i < coLocated.length; i++) {
+			for (let j = i + 1; j < coLocated.length; j++) {
+				const a = coLocated[i]!
+				const b = coLocated[j]!
+				if (haversineKm(npiCoord.get(a)!, npiCoord.get(b)!) > COLOCATION_KM) continue
+				if (orgJaccard(npiPrimary.get(a)!.tokens, npiPrimary.get(b)!.tokens) >= ORG_TAU) unionC(a, b)
+			}
+		}
+	}
+	const geocodedNpis = [...npiPrimary.keys()].filter((n) => npiCoord.has(n)).length
+	const orgNameCoordLabel = (rec: SourceRecord) => (npiPrimary.has(rec.id) ? findC(rec.id) : rec.id)
+
 	// --- Phase D: the comparison-model lever progression — toggle each lever ON in turn at the default
 	// threshold to isolate its marginal effect, then sweep the link threshold on the best config (geocode
 	// once, resolve many — config is cheap). ---
@@ -455,6 +502,10 @@ async function main(): Promise<void> {
 	const gbtNpi = scoreEntities(gbtRes.entities, npiLabel)
 	const gbtEntity = scoreEntities(gbtRes.entities, entityLabel)
 	const gbtOrg = scoreEntities(gbtRes.entities, orgNameLabel)
+	// Tier 2D: the coordinate-co-location org-name truth (tighter lower bound).
+	const orgCoordCount = new Set(records.map((r) => orgNameCoordLabel(r))).size
+	const fsOrgCoord = scoreEntities(bestLever.res.entities, orgNameCoordLabel)
+	const gbtOrgCoord = scoreEntities(gbtRes.entities, orgNameCoordLabel)
 
 	// Optional candidate A/B (--candidate): score a trained GBT module at both levels, at its own
 	// recommendedThreshold, alongside the shipped GBT — grades a new model (e.g. corroboration features).
@@ -482,9 +533,8 @@ async function main(): Promise<void> {
 		)
 	}
 	console.error(
-		`    truth-grains — GBT NPI ${(100 * gbtNpi.f1).toFixed(1)}% → site ${(100 * gbtEntity.f1).toFixed(1)}% → org-name ${(100 * gbtOrg.f1).toFixed(1)}%; ` +
-			`FS: NPI ${(100 * fsNpi.f1).toFixed(1)}% / entity ${(100 * fsEntity.f1).toFixed(1)}%; ` +
-			`GBT: NPI ${(100 * gbtNpi.f1).toFixed(1)}% / entity ${(100 * gbtEntity.f1).toFixed(1)}%`
+		`    truth-grains — GBT NPI ${(100 * gbtNpi.f1).toFixed(1)}% → site ${(100 * gbtEntity.f1).toFixed(1)}% → org-name ${(100 * gbtOrg.f1).toFixed(1)}% → org-name-coord ${(100 * gbtOrgCoord.f1).toFixed(1)}%; ` +
+			`FS: NPI ${(100 * fsNpi.f1).toFixed(1)}% / entity ${(100 * fsEntity.f1).toFixed(1)}% / org-coord ${(100 * fsOrgCoord.f1).toFixed(1)}%`
 	)
 
 	const pct = (x: number) => (100 * x).toFixed(1)
@@ -600,9 +650,11 @@ async function main(): Promise<void> {
 	dualRow("FS full stack", "NPI", fsNpi)
 	dualRow("FS full stack", "site", fsEntity, fsEntity.f1 - fsNpi.f1)
 	dualRow("FS full stack", "**org-name**", fsOrg, fsOrg.f1 - fsNpi.f1)
+	dualRow("FS full stack", "org-name (coord)", fsOrgCoord, fsOrgCoord.f1 - fsNpi.f1)
 	dualRow("GBT (shipped default)", "NPI", gbtNpi)
 	dualRow("GBT (shipped default)", "site", gbtEntity, gbtEntity.f1 - gbtNpi.f1)
 	dualRow("GBT (shipped default)", "**org-name**", gbtOrg, gbtOrg.f1 - gbtNpi.f1)
+	dualRow("GBT (shipped default)", "**org-name (coord)**", gbtOrgCoord, gbtOrgCoord.f1 - gbtNpi.f1)
 	if (cand) {
 		dualRow(cand.label, "NPI", cand.npi)
 		dualRow(cand.label, "**entity**", cand.entity, cand.entity.f1 - cand.npi.f1)
@@ -614,6 +666,17 @@ async function main(): Promise<void> {
 			`and precision rising (${pct(gbtNpi.precision)}% → ${pct(gbtOrg.precision)}%). The clusters are IDENTICAL across the three ` +
 			`columns — the climb is purely the ruler ceasing to charge the matcher for the correct same-org merges the gold set proved ` +
 			`(\`2026-06-16-dedup-gold-set-tx120.md\`: 120/120 same org, 0 genuine over-merges).`
+	)
+	lines.push("")
+	lines.push(
+		`**Tier 2D — tightening the org-name ruler with the geocode coordinate.** The org-name truth above blocks by the address ` +
+			`STRING (\`addressFrequencyKey\`), so two records at one building whose text differs — \`1504 Taub LOOP\` vs ` +
+			`\`1504 Taub LP STE 100\` — key apart and the merge is still charged as an error. Block by the GEOCODED BUILDING instead ` +
+			`(union co-located NPIs within ${COLOCATION_KM * 1000} m whose org names agree, same Jaccard gate) and the truth tightens ` +
+			`further: GBT **org-name ${pct(gbtOrg.f1)}% → org-name-coord ${pct(gbtOrgCoord.f1)}%** ` +
+			`(${signed(100 * (gbtOrgCoord.f1 - gbtOrg.f1))}), ${orgCount} → ${orgCoordCount} classes, over ${geocodedNpis}/${kept.size} ` +
+			`geocoded NPIs. The string org-name F1 is a conservative LOWER bound; the coordinate one is tighter (the Jaccard gate ` +
+			`still blocks distinct co-located orgs). Both are honest — the coordinate is the geocode-first key.`
 	)
 	lines.push("")
 	lines.push(
