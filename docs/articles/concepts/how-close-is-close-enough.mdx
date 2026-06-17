@@ -1,7 +1,6 @@
 ---
 sidebar_position: 40
 title: How close is close enough?
-draft: true
 tags:
   - concepts
   - geocoder
@@ -11,7 +10,7 @@ tags:
 
 # How close is close enough?
 
-A geocoder turns an address into a point. The obvious question — _is the point right?_ — is the wrong one, because "right" implies a single tolerance that doesn't exist. A point that is **right enough to tell you which county regulates this facility** can be **uselessly wrong for routing a truck to its loading dock**. So the real question is the one the operator keeps asking, and the one this page answers: _close enough for what?_
+A geocoder turns an address into a point, and the obvious thing to ask is whether the point is right. That question has no real answer, because "right" assumes a single tolerance and there isn't one. A point that is **right enough to tell you which county regulates this facility** can be **uselessly wrong for routing a truck to its loading dock**. The question that does have an answer is the one the operator keeps coming back to, and the one this page is about: _close enough for what?_
 
 The short version: Mailwoman never hands you a bare point. It hands you a point, a **tier**, and a **calibrated radius** — and "close enough" is a comparison between that radius and your task's tolerance, made by the consumer, not asserted by us.
 
@@ -21,11 +20,11 @@ The short version: Mailwoman never hands you a bare point. It hands you a point,
 
 Three real consumers of the same resolved address want three different things:
 
-| consumer | the question | tolerance that's "close enough" |
-| --- | --- | --- |
-| jurisdiction / coverage | which city / county / HPSA is this in? | the **admin centroid** — a few km is fine; the centroid is inside the right polygon |
-| record co-location (the matcher) | are these two records the same _building_? | the **rooftop** — tens of metres; a city centroid fuses every facility in town |
-| routing / dispatch | where is the door? | **rooftop**, and you care about the tail, not the median |
+| consumer                         | the question                               | tolerance that's "close enough"                                                     |
+| -------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| jurisdiction / coverage          | which city / county / HPSA is this in?     | the **admin centroid** — a few km is fine; the centroid is inside the right polygon |
+| record co-location (the matcher) | are these two records the same _building_? | the **rooftop** — tens of metres; a city centroid fuses every facility in town      |
+| routing / dispatch               | where is the door?                         | **rooftop**, and you care about the tail, not the median                            |
 
 A single accuracy number ("p50 3 km") answers none of these on its own. It's only meaningful against a stated tolerance. The jurisdiction consumer is delighted by 3 km; the matcher is sunk by it.
 
@@ -33,15 +32,15 @@ A single accuracy number ("p50 3 km") answers none of these on its own. It's onl
 
 Mailwoman resolves to the finest tier it has data for, and labels which one it used (measured on 1172 real TX facility addresses, [`2026-06-17-geocoder-vs-provided-coords`](../evals/2026-06-17-geocoder-vs-provided-coords.md)):
 
-| tier | what it is | coord p50 | when it fires |
-| --- | --- | ---: | --- |
-| `admin` | locality / region centroid | **3.4 km** | always (fallback) |
-| `interpolated` | house-number estimate along the street segment | **0.1 km** | a TIGER segment matches |
-| `address_point` | rooftop / parcel centroid | **0.7 km** | a situs shard has the point |
+| tier            | what it is                                     |  coord p50 | when it fires               |
+| --------------- | ---------------------------------------------- | ---------: | --------------------------- |
+| `admin`         | locality / region centroid                     | **3.4 km** | always (fallback)           |
+| `interpolated`  | house-number estimate along the street segment | **0.1 km** | a TIGER segment matches     |
+| `address_point` | rooftop / parcel centroid                      | **0.7 km** | a situs shard has the point |
 
 When a finer tier fires, the geocoder is street-to-rooftop accurate — **98.8% within 100 m** on the non-circular Travis-County E-911 holdout. The admin tier means "right city," nothing finer.
 
-So the first half of "close enough" is **which tier did we reach**, because the tier _is_ the grain. A matcher that needs buildings should treat an `admin`-tier result as "we don't actually know the building" — not as a 3-km-accurate building.
+So the first half of "close enough" is **which tier did we reach**, because the tier _is_ the grain. A matcher that needs buildings should treat an `admin`-tier result as a building it hasn't actually located, even though the centroid happens to sit a mere 3 km away.
 
 ## The honest part is the radius, not the point
 
@@ -49,7 +48,7 @@ A tier label is coarse. The per-parse answer to "how close is this one?" is the 
 
 > A radius is only meaningful if it's calibrated. If we say ±87 m it must contain the truth ~90% of the time — not 72%. Otherwise the number is decoration.
 
-The raw half-segment interpolation radius covered only ~72% of true errors; a split-conformal calibration (Q̂ ≈ 1.70, per-region) makes it a real 90% bound. That turns "±87 m" from a guess into a promise: _the true point is within this radius ~90% of the time._ The consumer can then do the comparison honestly — "my tolerance is 50 m, your 90% radius is 87 m, so this one isn't close enough, abstain" — instead of trusting a bare point that's secretly a city centroid.
+The raw half-segment interpolation radius covered only ~72% of true errors; a split-conformal calibration (Q̂ ≈ 1.70, per-region) makes it a real 90% bound. That turns "±87 m" from a guess into a promise: _the true point is within this radius ~90% of the time._ The consumer can then make the call honestly: "my tolerance is 50 m, your 90% radius is 87 m, so this one isn't close enough, abstain." That beats trusting a bare point that is secretly a city centroid.
 
 This is the same move the parser makes with [confidence calibration](./confidence-calibration.mdx): a number you can act on, not a vibe.
 
