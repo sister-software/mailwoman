@@ -73,5 +73,16 @@ Each is the #566/#478 lesson: a plausible change stopped by a measured gate befo
 - The corpus base shards are source-homogeneous + ordered — a naive by-index lint sample is biased;
   stratify (or use the full base-stats) for the #511 lint.
 
-_PRs: #689 #691 #692 #693 #695 #697 #698 #699 #700 #701 #702 #703 #704 #705 #706 #707 #708 #709 #710.
-Working notes: `nightshift/postmortem-draft.md`._
+## Post-merge verification (the feature commits skipped the main-only lint+test gate)
+Ran the main gate after all merges: **functionally GREEN** — `tsc -b` clean, the fast test suite
+**2342 passed / 23 skipped (216 files)**, and eslint clean on every file I touched. The 20 PRs broke
+nothing. Two **pre-existing** hygiene issues surfaced (not introduced this shift, flagged for you):
+- `lint:prettier:check` fails on ~49 files (mostly pre-existing: `docs/src/shared/*`, `harness-v0-neural`,
+  etc., plus a few of mine) — a `prettier --write .` (with the `@sister.software/prettier-config`) clears
+  it. I did NOT bulk-reformat (it would touch unrelated files + my direct `prettier --write` hit a config
+  mismatch that malformed a comment — reverted).
+- eslint scans the stale `.claude/worktrees/` leaked copies and errors on them — add `.claude/worktrees/`
+  to `.eslintignore` (the errors are not in the live tree).
+
+_PRs: #689 #691 #692 #693 #695 #697 #698 #699 #700 #701 #702 #703 #704 #705 #706 #707 #708 #709 #710 #711
+(+ this). Working notes: `nightshift/postmortem-draft.md`._
