@@ -6,8 +6,10 @@
 # BUNDLE (DeepSeek-validated 2026-06-17 — the rule is "one CONFOUNDING variable per run, each change its
 # own gate row"). The boundary shard is the headline data-mix variable. Riding alongside it, NON-confounding
 # because they don't shift the distribution the shard trains on, three additions, each gated below:
-#   (a) use_conventions_loss_mask ON — a loss-level legality mask (different axis, can't compete for
-#       capacity). READY NOW (built #478, enabled below).
+#   (a) use_conventions_loss_mask — ❌ DISABLED 2026-06-18. The "non-confounding, different axis" call was
+#       WRONG: the FR convention forbids street_prefix/street_suffix, but the boundary shard's fr-prefix
+#       shape TEACHES FR street_prefix ("Rue"). The mask -inf'd the gold label → train_loss ~7M, broken
+#       run killed at step 2000. v1.5.1 trained fine without it. Off until the table↔FR-data are reconciled.
 #   (c) an EXPANDED gate grading the FR/DE composition wins the shard already trains for free
 #       (fr.house_number #564, FR street_prefix, number-after-street #435). READY NOW (gate rows below).
 #   (b) [NOT ride-ready — a focused #517 corpus task, do it first if you want it this run] extend
@@ -45,9 +47,9 @@
 #   DECISION: targets move up + floors hold → ship candidate. Spine regression → STOP, re-audit the
 #     shard's alignment before any weight surgery.
 #
-#   BUNDLE GATE ROWS (each rider attributable on its own; DeepSeek-validated non-confounding):
-#   - conventions loss-mask: ZERO per-locale impossible-label emissions in the eval (the mask's job), AND
-#     no regression on the non-regression floors above (a legality mask must not cost legal recall).
+#   BUNDLE GATE ROWS (each rider attributable on its own):
+#   - conventions loss-mask: ❌ removed (rider a disabled — it conflicts with the FR street_prefix the
+#     shard teaches; see the header). No gate row needed.
 #   - po_box NZ + military [ONLY IF rider (b) is built first]: the postal arena po_box class 0/4 → >0 (and
 #     military 0/3 → >0), with NO US/FR/CA po_box regression (existing synth-po-box rows only extended).
 #   - FREE-RIDER MEASURES (the shard trains these — grade as wins, not just floors): fr.house_number holds
@@ -130,11 +132,13 @@ model:
   label_smoothing: 0.1
   use_locale_conditioning: true
   locale_loss_weight: 0.3
-  # #694-bundle rider (DeepSeek-validated 2026-06-17, NON-confounding): a loss-level legality constraint,
-  # not a data-mix change, so it cannot compete for capacity with the boundary shard. Masks per-locale
-  # IMPOSSIBLE label emissions (e.g. a US address emitting a French CEDEX). Built for #478, dormant until
-  # now. Its own gate row below — enable + watch, attributable independently of the shard.
-  use_conventions_loss_mask: true
+  # conventions loss-mask rider (a) — DISABLED 2026-06-18. It DIRECTLY CONFLICTS with the boundary shard:
+  # CONVENTIONS_FORBIDDEN_TAGS forbids FR street_prefix/street_suffix, but the shard's fr-prefix shape
+  # labels exactly that ("Rue" -> street_prefix). Enabling it -inf'd the gold label the shard teaches and
+  # exploded train_loss to ~7M (a broken run, killed at step 2000). v1.5.1 trained fine WITHOUT it. The
+  # "non-confounding, different axis" call (DeepSeek + me) was wrong — the FR convention is inconsistent
+  # with the FR training data. Revisit only after reconciling the conventions table with the FR labels.
+  use_conventions_loss_mask: false
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
