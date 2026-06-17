@@ -358,7 +358,7 @@ export async function runPipeline(
 	} else if (stages.classifier) {
 		throwIfAborted(opts)
 		const tClassify = performance.now()
-		tree = await safeClassify(stages.classifier, normalized.normalized, queryShape, stages.fst)
+		tree = await safeClassify(stages.classifier, normalized.normalized, queryShape, stages.fst, opts?.normalizeCase)
 		timing["token-classify"] = performance.now() - tClassify
 	}
 
@@ -435,11 +435,12 @@ async function safeClassify(
 	classifier: AddressClassifier,
 	text: string,
 	queryShape: QueryShapeLite,
-	fst?: FstMatcherLike
+	fst?: FstMatcherLike,
+	normalizeCase?: boolean
 ): Promise<AddressTree> {
 	try {
-		// Postcode regex repair on by default (v0.7 #35, operator-signed).
-		return await classifier.parse(text, { queryShape, fst, postcodeRepair: true })
+		// Postcode regex repair on by default (v0.7 #35, operator-signed). #690 normalizeCase off by default.
+		return await classifier.parse(text, { queryShape, fst, postcodeRepair: true, normalizeCase })
 	} catch {
 		return { raw: text, roots: [] }
 	}

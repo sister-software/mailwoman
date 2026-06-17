@@ -113,6 +113,12 @@ describe("runPipeline — stage composition", () => {
 		expect(classifier.parse).toHaveBeenCalledWith("10118", { queryShape: shape, postcodeRepair: true })
 	})
 
+	it("threads PipelineOpts.normalizeCase to classifier.parse (#690)", async () => {
+		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("214 JONES RD")) }
+		await runPipeline("214 JONES RD", { classifier }, { normalizeCase: true })
+		expect(classifier.parse).toHaveBeenCalledWith("214 JONES RD", expect.objectContaining({ normalizeCase: true }))
+	})
+
 	it("skips resolver when not wired", async () => {
 		const classifier = fakeClassifier(fakeTree("hello"))
 		const result = await runPipeline("hello", { classifier })

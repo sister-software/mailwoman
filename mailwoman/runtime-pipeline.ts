@@ -83,6 +83,12 @@ export interface CreateRuntimePipelineOpts {
 	 * @see RuntimePipelineStages.ruleProposer
 	 */
 	ruleProposer?: RuntimePipelineStages["ruleProposer"]
+	/**
+	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ASCII
+	 * input before the model (helps on all-caps registry/compliance data; detection-gated, mixed-case
+	 * untouched). Off by default. A per-call `runOpts.normalizeCase` overrides this.
+	 */
+	normalizeCase?: boolean
 }
 
 /**
@@ -149,7 +155,10 @@ export function createRuntimePipeline(
 			const fn = await loadDefaultPlaceCountry()
 			if (fn) stages.placeCountry = fn
 		}
-		return runPipeline(raw, stages, runOpts)
+		// #690: apply the factory-level normalizeCase default; a per-call runOpts value overrides it.
+		const effectiveRunOpts =
+			opts.normalizeCase && runOpts?.normalizeCase === undefined ? { ...runOpts, normalizeCase: true } : runOpts
+		return runPipeline(raw, stages, effectiveRunOpts)
 	}
 }
 

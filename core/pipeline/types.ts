@@ -55,6 +55,12 @@ export interface PipelineOpts {
 	 * argmax tree is used unchanged (byte-stable). Behind a flag pending the assembled gate.
 	 */
 	arbitrate?: boolean
+	/**
+	 * #690: title-case detected all-caps ASCII input before the Stage 3 classifier (helps on
+	 * all-caps registry/compliance data). Threaded to `ClassifierOpts.normalizeCase`. Detection-gated
+	 * + off by default → byte-stable for mixed-case input.
+	 */
+	normalizeCase?: boolean
 	signal?: AbortSignal
 }
 
@@ -173,6 +179,11 @@ export interface ClassifierOpts {
 	fstBiasScale?: number
 	/** Run the deterministic postcode regex repair pass (v0.7 #35) on the decoded labels. */
 	postcodeRepair?: boolean
+	/**
+	 * #690: title-case a detected all-caps ASCII input before the model (all-caps registry/compliance
+	 * data is partly OOD). Detection-gated — mixed-case + non-ASCII input is untouched. Off by default.
+	 */
+	normalizeCase?: boolean
 }
 
 export interface AddressClassifier {
