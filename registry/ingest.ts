@@ -177,8 +177,10 @@ export interface IngestOptions {
 	 * `" "`. Pass `", "` to give the parser delimited input (`"214 Main St, Austin, TX 78701"`) instead
 	 * of a concatenated run (`"214 Main St Austin TX 78701"`) — the latter strips the parser's
 	 * segmentation boundaries and is partly OOD (it also breaks all-caps case-normalization; #694).
-	 * Default-OFF (`" "`) so existing callers + the space-trained dedup GBT stay byte-stable; opt into
-	 * `", "` for new geocode/record-matcher flows after validating the parse shift.
+	 * **Default `", "` (#694 flip, validated).** Comma-join is the correct shape for an address built
+	 * from separate columns, and #700 measured it at +15% cross-dataset rooftop (579→667) with no
+	 * comma-less crater. The dedup GBT was trained on the old space-joined coords, so this flip is paired
+	 * with a GBT re-validation (#694). Pass `" "` to restore the legacy space-join for a byte-stable A/B.
 	 */
 	addressSeparator?: string
 }
@@ -217,7 +219,7 @@ export async function ingestRows(
 		const id = (mapping.id ? row[mapping.id]?.trim() : "") || String(index)
 		const nameValue = pick(row, mapping.name)
 		const orgValue = pick(row, mapping.organization)
-		const addressValue = pick(row, mapping.address, opts.addressSeparator ?? " ")
+		const addressValue = pick(row, mapping.address, opts.addressSeparator ?? ", ")
 
 		let attributes: Record<string, string> | undefined
 		if (mapping.attributes) {
