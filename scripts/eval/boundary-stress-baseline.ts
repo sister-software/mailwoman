@@ -36,6 +36,7 @@ const STRESS_TAG: Record<BoundaryStressTemplate, string> = {
 	"comma-less-city-state": "region",
 	"fr-prefix": "street_prefix",
 	"house-number-after-street": "house_number",
+	"au-uk-slash-unit": "house_number",
 }
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })

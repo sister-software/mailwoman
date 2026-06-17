@@ -12,9 +12,10 @@ the current neural model, exact-match per tag).
 | comma-less City STATE | region | **66.3%** | **34%** |
 | fr-prefix | street_prefix | **70.3%** | 70% |
 | house-number-after-street | house_number | **47.3%** | 44% |
+| au-uk-slash-unit (`4/2A`) | house_number | **38.7%** | — |
 
-(house_number, locality, postcode read ~100% on the delimited shapes — the failures are concentrated on
-the contested boundary, exactly as designed.)
+(On the delimited shapes the uncontested tags read ~100% — the failures concentrate on the contested
+boundary, exactly as designed.)
 
 ## Reading
 
@@ -28,6 +29,10 @@ the contested boundary, exactly as designed.)
 - **house-number-after-street 47%** is the fr.house_number plateau in miniature (the FR/DE
   number-follows-street order) — confirming the shipped ~87% there degrades further on stress positions,
   and that this shard's `house-number-after-street` shape targets that lever too.
+- **au-uk-slash-unit is the worst at 38.7%** — the AU/NZ/UK `4/2A` unit/street-number convention, the
+  one genuinely-new case from the #702 decomposition. The aligner's tokenizer splits on `/`, so this
+  labels cleanly (unit then house_number) and is includable in the shard; it does not collide with the
+  US `123 1/2` fraction (locale-disambiguated). This is the clearest single addressable win in the set.
 
 ## So what
 
