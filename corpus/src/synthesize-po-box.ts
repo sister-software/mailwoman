@@ -66,6 +66,10 @@ export const PO_BOX_LOCALE_TEMPLATES: ReadonlyArray<LocaleTemplate> = [
 		leaders: ["PO Box", "P.O. Box", "Post Office Box", "GPO Box", "Locked Bag"],
 	},
 	{
+		locale: "en-NZ",
+		leaders: ["PO Box", "P.O. Box", "Post Office Box", "Private Bag", "Private Box"],
+	},
+	{
 		locale: "fr-FR",
 		leaders: ["BP", "B.P.", "Boîte Postale", "BP."],
 	},
@@ -121,7 +125,7 @@ export interface SynthesizedPoBoxRow {
 	raw: string
 	components: CanonicalRow["components"]
 	locale: string
-	template: "po-box" | "pmb-with-street"
+	template: "po-box" | "pmb-with-street" | "military-po-box"
 }
 
 export interface PoBoxSynthesisOpts {
@@ -186,19 +190,68 @@ export function synthesizePoBoxRow(
 		}
 	}
 
-	// Standard PO box: replaces the street line entirely.
-	const raw = `${poBoxPhrase}, ${base.locality}, ${base.region} ${base.postcode}`
+	// Standard PO box: replaces the street line entirely. Region-optional — NZ (and other region-less
+	// locales) read "Private Bag 12, Auckland 1010" with no region token between locality and postcode.
+	const hasRegion = Boolean(base.region && base.region.trim())
+	const tail = hasRegion ? `${base.locality}, ${base.region} ${base.postcode}` : `${base.locality} ${base.postcode}`
+	const raw = `${poBoxPhrase}, ${tail}`
 	return {
 		raw,
 		components: {
 			po_box: poBoxPhrase,
 			locality: base.locality,
-			region: base.region,
+			...(hasRegion ? { region: base.region } : {}),
 			postcode: base.postcode,
 			country: base.country,
 		},
 		locale,
 		template: "po-box",
+	}
+}
+
+/**
+ * The US military/diplomatic PO-box class (#517). A distinct shape the leader-based locale templates
+ * can't express: a unit line (`PSC <id> Box <box>`, `CMR <id> Box <box>`, `Unit <id> [Box <box>]`)
+ * tagged `po_box`, then the post-office code (APO/FPO/DPO) as the locality and the armed-forces region
+ * (AA/AE/AP) as the region, with a theatre-specific ZIP. Authoritative reference + citations:
+ * `@mailwoman/codex` `codex/us/military-address.ts`; the small constants are inlined here so the
+ * generator is self-contained.
+ */
+const MIL_UNITS: ReadonlyArray<{ code: string; boxRequired: boolean }> = [
+	{ code: "PSC", boxRequired: true },
+	{ code: "CMR", boxRequired: true },
+	{ code: "Unit", boxRequired: false },
+]
+const MIL_PO_CODES = ["APO", "FPO", "DPO"] as const
+// region → plausible ZIP prefix (AE Europe 09xxx, AP Pacific 962-966xx, AA Americas 340xx).
+const MIL_REGION_ZIP: ReadonlyArray<{ region: string; zip: (r: () => number) => string }> = [
+	{ region: "AE", zip: (r) => `09${String(Math.floor(r() * 1000)).padStart(3, "0")}` },
+	{ region: "AP", zip: (r) => `96${String(200 + Math.floor(r() * 100)).padStart(3, "0")}` },
+	{ region: "AA", zip: (r) => `340${String(Math.floor(r() * 100)).padStart(2, "0")}` },
+]
+
+/** Generate one US military/diplomatic PO-box row (#517). Self-contained — draws no base tuple. */
+export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): SynthesizedPoBoxRow {
+	const random = opts.random ?? Math.random
+	const unit = MIL_UNITS[Math.floor(random() * MIL_UNITS.length)]!
+	const unitId = String(1 + Math.floor(random() * 9999))
+	const { region, zip } = MIL_REGION_ZIP[Math.floor(random() * MIL_REGION_ZIP.length)]!
+	const zipStr = zip(random)
+	const po = MIL_PO_CODES[Math.floor(random() * MIL_PO_CODES.length)]!
+	const hasBox = unit.boxRequired || random() < 0.5
+	const unitLine = hasBox ? `${unit.code} ${unitId} Box ${1 + Math.floor(random() * 9999)}` : `${unit.code} ${unitId}`
+	const raw = `${unitLine}, ${po} ${region} ${zipStr}`
+	return {
+		raw,
+		components: {
+			po_box: unitLine,
+			locality: po,
+			region,
+			postcode: zipStr,
+			country: "US",
+		},
+		locale: "en-US",
+		template: "military-po-box",
 	}
 }
 
@@ -212,6 +265,7 @@ export function countryToLocale(country: string): string {
 	if (c === "CA" || c === "CAN" || c === "CANADA") return "en-CA"
 	if (c === "GB" || c === "UK" || c === "GBR" || c === "UNITED KINGDOM") return "en-GB"
 	if (c === "AU" || c === "AUS" || c === "AUSTRALIA") return "en-AU"
+	if (c === "NZ" || c === "NZL" || c === "NEW ZEALAND") return "en-NZ"
 	if (c === "FR" || c === "FRA" || c === "FRANCE") return "fr-FR"
 	if (c === "ES" || c === "ESP" || c === "SPAIN") return "es-ES"
 	if (c === "MX" || c === "MEX" || c === "MEXICO") return "es-MX"

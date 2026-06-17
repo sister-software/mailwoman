@@ -5,13 +5,16 @@
  */
 
 import { describe, expect, it } from "vitest"
+import { alignRow } from "./align.js"
 import {
 	composePoBoxPhrase,
 	countryToLocale,
 	maybeNoisifyBoxNumber,
 	supportedLocales,
+	synthesizeMilitaryPoBoxRow,
 	synthesizePoBoxRow,
 } from "./synthesize-po-box.js"
+import type { CanonicalRow } from "./types.js"
 
 // Deterministic RNG for reproducible tests.
 function seededRandom(seed: number): () => number {
@@ -71,6 +74,18 @@ describe("synthesizePoBoxRow", () => {
 		expect(row!.components.po_box!).toMatch(/^(Casilla|Casilla de Correo|CC) 55$/)
 	})
 
+	it("NZ: Private Bag / Private Box leaders, region-less format (#517)", () => {
+		const row = synthesizePoBoxRow(
+			{ locality: "Auckland", region: "", postcode: "1010", country: "NZ" },
+			{ random: seededRandom(5), pickNumber: () => "12" }
+		)
+		expect(row).not.toBeNull()
+		expect(row!.locale).toBe("en-NZ")
+		expect(row!.components.po_box!).toMatch(/^(PO Box|P\.O\. Box|Post Office Box|Private Bag|Private Box) 12$/)
+		expect(row!.components.region).toBeUndefined() // NZ: no region token between locality and postcode
+		expect(row!.raw).toBe(`${row!.components.po_box}, Auckland 1010`)
+	})
+
 	it("PMB variant: when locale supports it and street is provided", () => {
 		// pmbRatio=1.0 forces PMB path
 		const row = synthesizePoBoxRow(
@@ -126,6 +141,36 @@ describe("synthesizePoBoxRow", () => {
 		)
 		// po_box component is the WHOLE span ("PO Box 5"), not just "5"
 		expect(row!.components.po_box!.split(/\s+/).length).toBeGreaterThanOrEqual(2)
+	})
+})
+
+describe("synthesizeMilitaryPoBoxRow (#517)", () => {
+	it("generates a unit-line po_box + APO/FPO/DPO locality + AA/AE/AP region + theatre ZIP", () => {
+		const row = synthesizeMilitaryPoBoxRow({ random: seededRandom(7) })
+		expect(row.template).toBe("military-po-box")
+		expect(row.locale).toBe("en-US")
+		expect(row.components.po_box!).toMatch(/^(PSC|CMR|Unit) \d+( Box \d+)?$/)
+		expect(["APO", "FPO", "DPO"]).toContain(row.components.locality)
+		expect(["AA", "AE", "AP"]).toContain(row.components.region)
+		expect(row.components.postcode!).toMatch(/^\d{5}$/)
+		// Every component must be a verbatim substring of raw (the BIO aligner needs this).
+		for (const v of [row.components.po_box, row.components.locality, row.components.region, row.components.postcode]) {
+			expect(row.raw).toContain(v!)
+		}
+	})
+
+	it("aligns cleanly through alignRow (po_box + locality + region + postcode, no quarantine)", () => {
+		// Seeds chosen to cover a box-bearing (PSC/CMR) and a bare (Unit) line.
+		for (const seed of [11, 23, 42, 7, 100]) {
+			const row = synthesizeMilitaryPoBoxRow({ random: seededRandom(seed) })
+			const canonical = { ...row, source: "synth-po-box", source_id: `mil:${seed}` } as CanonicalRow
+			const result = alignRow(canonical)
+			expect(result.kind, `should align, raw=${row.raw}`).toBe("labeled")
+			if (result.kind !== "labeled") continue
+			expect(result.row.labels).toContain("B-po_box")
+			expect(result.row.labels).toContain("B-locality")
+			expect(result.row.labels).toContain("B-postcode")
+		}
 	})
 })
 
