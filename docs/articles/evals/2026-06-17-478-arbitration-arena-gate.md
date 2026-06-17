@@ -1,10 +1,14 @@
-# Arbitration layer (#478 inc 3) — arena capability gate
+# Arbitration layer (#478 inc 3) — the two-leg gate (arena PASS, coordinate FAIL → not promoted)
 
 _2026-06-17. Increment 3 wires per-component rule-vs-neural arbitration into the assembled
-`runPipeline` (default-OFF, behind `arbitrate`). This records the first of the two pre-registered gate
-legs — the arena capability gate, graded on the ASSEMBLED pipeline (the #566-lesson instrument inc 1
-added), not raw neural. The second leg (precondition + coordinate, on the non-circular holdouts) is the
-promotion gate and is run separately before any mode flips to default-on._
+`runPipeline` (default-OFF, behind `arbitrate`). The two pre-registered gate legs split decisively:
+**leg 1 (arena label-match) passes strongly** — arbitration nearly halves the `v0-only` gap; **leg 2
+(precondition + coordinate) FAILS catastrophically** — it drops locality-match 26pp, blows coord p50
+from 3.3 km to 1069 km, and loses the street+house_number precondition on half the rows. Arbitration is
+**not promoted**; it stays default-OFF. This is the #566 lesson reproduced in real time: a layer that
+"can't score below v0 by construction" is only true if you grade the ASSEMBLED COORDINATE output — the
+arena's loose label-match made arbitration look like a clean win it isn't. Leg 2 is exactly why the gate
+runs before any flip to default-on._
 
 ## What ran
 
@@ -42,14 +46,48 @@ parse). The run is clean across all 376 assertions, no errors.
   leg below is what confirms these don't translate into a street+house_number precondition or
   coordinate regression — the gate that the original #427 re-promotion skipped.
 
-## Gate status
+## Leg 2 — the coordinate gate (FAILS)
 
-- **Leg 1 (arena capability): CLEARS.** `v0-only vs ASSEMBLED` halved (56.4 → 27.1%), `neural-only`
-  retained (0 lost in that column), no `both-fail` added; +122/−10 vs raw neural.
-- **Leg 2 (precondition + coordinate): the promotion gate, run separately.** `oa-resolver-eval` on the
-  non-circular holdouts (Travis E-911 + OpenAddresses) — street+house_number+postcode precondition must
-  not regress vs argmax and coord-error percentiles must hold. Per-component modes promote to default
-  ONLY where both legs clear.
+`scripts/eval/oa-resolver-eval.ts --assembled` routes each row through `createRuntimePipeline` (same
+neural classifier with postcodeRepair, `placeCountry` OFF for comparability, same resolver) — without
+(`assembled`) and with (`assembled + arb`) arbitration. 300 OpenAddresses US rows, admin-centroid tier:
 
-Arbitration ships **default-OFF** (`opts.arbitrate`); this report is the capability evidence, not a
-promotion. The machinery + this gate instrument land together; the promotion decision rides leg 2.
+| arm | locality-match | region-match | coord p50 km | coord p90 km | street+hn precondition |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| neural | 83.0% | 99.7% | 3.3 | 12.5 | 100.0% |
+| assembled (no arb) | 83.0% | 99.7% | 3.3 | 12.5 | 100.0% |
+| **assembled + arb** | **57.0%** | 100.0% | **1069.4** | **3182.5** | **48.0%** |
+
+The `assembled (no arb)` arm reproduces `neural` to the decimal — the **instrument is sound**, so the
+regression is fully attributable to arbitration (the only delta is `arbitrate: true`). Arbitration:
+
+- **drops locality-match 83.0% → 57.0%** (−26pp) — it produces locality/region values that resolve to
+  the wrong place (a namesake city in another state), which is what blows the coord p50 from **3.3 km to
+  1069 km**;
+- **loses the street+house_number precondition on half the rows** (100% → 48%) — the #566 failure mode
+  directly: components that anchor the street-level geocode are dropped in the union → arbitration →
+  coherence → flat-rebuild path.
+
+This is invisible to leg 1 because the arena scores loose top-1 label-match (does the parse name the
+same components as v0), not the resolved coordinate. Arbitration makes the labels look more v0-like
+(+122) while wrecking the geocode — the exact gap the #566 reconcile-retirement warned the gate must
+close.
+
+## Gate status — NOT PROMOTED
+
+- **Leg 1 (arena label-match): clears.** `v0-only vs ASSEMBLED` 56.4 → 27.1%, +122/−10 vs raw neural.
+- **Leg 2 (precondition + coordinate): FAILS decisively.** locality −26pp, coord p50 3.3 → 1069 km,
+  precondition 100% → 48%.
+
+**Both legs must clear to promote; leg 2 fails, so arbitration stays default-OFF.** The machinery and
+both gate instruments are merged; no default changes. The methodology did its job — it caught a
+catastrophic coordinate regression that the label-match arena scored as a +122 win.
+
+## Next (the path to a promotable arbitration)
+
+The failure is concentrated in the precondition drop (48%) and wrong-place resolution. Two suspects,
+separable with a follow-up probe: (a) the **flat `proposalsToTree` rebuild** losing structure the
+resolver needs (DeepSeek's flagged risk — the resolver-output no-op was never asserted, only tree
+shape); (b) the **arbitration/coherence dropping anchor components** (street/house_number/locality) when
+rule and neural spans overlap. Diagnosing which — likely both — is the prerequisite to any future
+promotion. Until then arbitration is a measured-negative behind a default-off flag, not a shipped path.

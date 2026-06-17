@@ -50,7 +50,7 @@ import { lookupGermanState } from "@mailwoman/codex/de"
 import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/core/resolver"
-import { type ClassificationRecord, createAddressParser } from "mailwoman"
+import { type ClassificationRecord, createAddressParser, createRuntimePipeline } from "mailwoman"
 import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
@@ -580,6 +580,38 @@ async function main(): Promise<void> {
 	let interpPrecond = 0 // rows that parsed street+house_number+postcode (interp's precondition)
 	let interpFullParseMiss = 0 // precond met + exact missed + interp null = genuine find() miss
 	const diagMisses: string[] = []
+
+	// #478 inc 3 leg 2 — the ASSEMBLED arms. Route each row through `createRuntimePipeline` using the
+	// SAME neural classifier (postcodeRepair on, for comparability with the neural arm), placeCountry
+	// OFF (so we isolate arbitration from the #244 coarse prior), and the SAME resolver — without
+	// (`assembled`) and with (`assembled+arb`) per-component arbitration. The street+house_number
+	// precondition (the thing #566 broke) is counted per arm so a regression is visible directly.
+	const runAssembled = process.argv.includes("--assembled")
+	const assembledAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
+	const assembledArbAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
+	let neuralPrecond = 0
+	let asmPrecond = 0
+	let arbPrecond = 0
+	const hasStreetHN = (tree: AddressTree | null): boolean => {
+		if (!tree) return false
+		let street = false
+		let hn = false
+		const visit = (n: AddressNode): void => {
+			if (n.tag === "street") street = true
+			if (n.tag === "house_number") hn = true
+			for (const c of n.children) visit(c)
+		}
+		for (const r of tree.roots) visit(r)
+		return street && hn
+	}
+	const assembledPipeline = runAssembled
+		? createRuntimePipeline({
+				classifier: { parse: (text: string, o?: object) => neural.parse(text, { ...o, postcodeRepair: true }) } as never,
+				resolver: resolver as never,
+				placeCountry: false,
+			})
+		: null
+
 	const record = (
 		who: "neural" | "v0",
 		row: OaRow,
@@ -610,16 +642,18 @@ async function main(): Promise<void> {
 		i++
 		if (i % 500 === 0) console.error(`  ${i}/${rows.length}`)
 
+		// Shared resolve opts (hoisted so the assembled arms below resolve identically to neural).
+		const nOpts = {
+			...(anchorRerank ? { ...resolveOpts, anchorPosterior: anchorPosteriorFor(row.input) } : resolveOpts),
+			...(addressPoints ? { addressPoints } : {}),
+			...(interpolation ? { interpolation } : {}),
+		}
+
 		// neural
 		let nResolved: Resolved[] = []
 		let nDecorated: AddressTree | null = null
 		try {
 			const nTree = await neural.parse(row.input, parseOpts)
-			const nOpts = {
-				...(anchorRerank ? { ...resolveOpts, anchorPosterior: anchorPosteriorFor(row.input) } : resolveOpts),
-				...(addressPoints ? { addressPoints } : {}),
-				...(interpolation ? { interpolation } : {}),
-			}
 			nDecorated = await resolver.resolveTree(nTree, nOpts)
 			nResolved = collectResolved(nDecorated)
 		} catch {
@@ -627,6 +661,7 @@ async function main(): Promise<void> {
 		}
 		const ns = scoreTree(row, nResolved)
 		record("neural", row, ns)
+		if (runAssembled && hasStreetHN(nDecorated)) neuralPrecond++
 
 		if (collectResolvedDump) {
 			resolvedRows.push({
@@ -713,6 +748,31 @@ async function main(): Promise<void> {
 		const vs = scoreTree(row, vResolved)
 		record("v0", row, vs)
 
+		// #478 inc 3 leg 2: assembled (no-arb) + assembled+arb, through the same resolver + nOpts.
+		if (assembledPipeline) {
+			const st = row.state || "??"
+			try {
+				const { tree } = await assembledPipeline(row.input, { resolveOpts: nOpts })
+				const s = scoreTree(row, collectResolved(tree))
+				if (!assembledAgg.byState.has(st)) assembledAgg.byState.set(st, newAgg())
+				bump(assembledAgg.byState.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
+				bump(assembledAgg.overall, s.locMatch, s.regMatch, s.resolved, s.err)
+				if (hasStreetHN(tree)) asmPrecond++
+			} catch {
+				/* unresolved */
+			}
+			try {
+				const { tree } = await assembledPipeline(row.input, { arbitrate: true, resolveOpts: nOpts })
+				const s = scoreTree(row, collectResolved(tree))
+				if (!assembledArbAgg.byState.has(st)) assembledArbAgg.byState.set(st, newAgg())
+				bump(assembledArbAgg.byState.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
+				bump(assembledArbAgg.overall, s.locMatch, s.regMatch, s.resolved, s.err)
+				if (hasStreetHN(tree)) arbPrecond++
+			} catch {
+				/* unresolved */
+			}
+		}
+
 		if (collectErrors && (!ns.locMatch || !vs.locMatch)) {
 			errorRows.push({
 				input: row.input,
@@ -760,6 +820,10 @@ async function main(): Promise<void> {
 		`| ${label} | ${pct(a.localityMatch, a.n)} | ${pct(a.regionMatch, a.n)} | ${pct(a.resolved, a.n)} | ${p(a.errs, 50)} | ${p(a.errs, 90)} | ${p(a.errs, 99)} |`
 	lines.push(overallRow("**neural**", agg.neural.overall))
 	lines.push(overallRow("v0 (Pelias)", agg.v0.overall))
+	if (runAssembled) {
+		lines.push(overallRow("assembled (no arb)", assembledAgg.overall))
+		lines.push(overallRow("**assembled + arb**", assembledArbAgg.overall))
+	}
 	if (useAnchor) lines.push(overallRow("**neural+anchor**", neuralAnchorAgg.overall))
 	if (addressPoints) {
 		lines.push(overallRow("**neural+addrpt**", neuralAddrPtAgg.overall))
@@ -806,6 +870,21 @@ async function main(): Promise<void> {
 				for (const m of diagMisses.slice(0, 12)) lines.push(`  - ${m}`)
 			}
 		}
+	}
+	if (runAssembled) {
+		const N = agg.neural.overall.n
+		lines.push("")
+		lines.push(`### Arbitration coordinate gate (#478 leg 2)`)
+		lines.push("")
+		lines.push(
+			"`assembled (no arb)` is the pipeline through the same neural+resolver (comparability check vs `neural`); `assembled + arb` adds per-component arbitration. The street+house_number **precondition** (parsed both, the thing #566 broke) per arm:"
+		)
+		lines.push("")
+		lines.push(`- neural: ${pct(neuralPrecond, N)} · assembled (no arb): ${pct(asmPrecond, N)} · **assembled + arb: ${pct(arbPrecond, N)}** (of ${N} rows)`)
+		lines.push("")
+		lines.push(
+			"Gate: arbitration PASSES leg 2 iff the precondition does not regress and coord p50/p90 + locality/region Acc@1 hold vs `neural`."
+		)
 	}
 	lines.push("")
 	lines.push(`## Neural per-state (locality-match)`)
