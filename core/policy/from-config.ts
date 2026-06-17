@@ -27,6 +27,7 @@
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "../types/component.js"
+import type { InputShapeRoute } from "./input-shape-router.js"
 import type { PolicyMode } from "./policy.js"
 import { InMemoryPolicyRegistry } from "./registry.js"
 
@@ -44,15 +45,20 @@ export interface PolicyConfigEntry {
 export type PolicyConfig = Record<string, Record<string, PolicyConfigEntry>>
 
 /**
- * Build a registry from a parsed policy-config object. Starts from `withDefaults()` (every tag
- * `rule_only`) and overlays the config's entries — so an absent tag behaves exactly as today.
- * Throws on ANY unrecognized key or value; the error names the offending JSON path.
+ * Build a registry from a parsed policy-config object. Starts from `withDefaults(defaultMode)` (every
+ * tag at `defaultMode`, historically `rule_only`) and overlays the config's entries — so an absent
+ * tag falls to `defaultMode`. The input-shape router (#478 increment 2) passes its shape-derived
+ * default as `defaultMode` so config entries still win per-tag while un-configured tags follow the
+ * route. Throws on ANY unrecognized key or value; the error names the offending JSON path.
  */
-export function policyRegistryFromConfig(config: PolicyConfig): InMemoryPolicyRegistry {
+export function policyRegistryFromConfig(
+	config: PolicyConfig,
+	defaultMode: PolicyMode = "rule_only"
+): InMemoryPolicyRegistry {
 	if (typeof config !== "object" || config === null || Array.isArray(config)) {
 		throw new Error("policy config: root must be an object of locale → tag → entry")
 	}
-	const registry = InMemoryPolicyRegistry.withDefaults()
+	const registry = InMemoryPolicyRegistry.withDefaults(defaultMode)
 
 	for (const [localeKey, tags] of Object.entries(config)) {
 		if (typeof tags !== "object" || tags === null || Array.isArray(tags)) {
@@ -95,4 +101,13 @@ export function policyRegistryFromConfig(config: PolicyConfig): InMemoryPolicyRe
 	}
 
 	return registry
+}
+
+/**
+ * Build a registry whose default layer is an input-shape route's `defaultMode` (#478 increment 2),
+ * with optional per-tag `config` overlaid on top — so the routed prior fills every un-configured
+ * tag while explicit policy still wins per-tag. Thin wrapper over {@link policyRegistryFromConfig}.
+ */
+export function policyRegistryFromRoute(route: InputShapeRoute, config: PolicyConfig = {}): InMemoryPolicyRegistry {
+	return policyRegistryFromConfig(config, route.defaultMode)
 }
