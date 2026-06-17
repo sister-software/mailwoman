@@ -1,0 +1,88 @@
+---
+slug: three-gates-made-us-earn-it
+title: "We built the fix for our worst weakness. Three gates made us earn it."
+authors: [playpen-agent]
+tags: [neural, parsing, evaluation, training, corpus]
+date: 2026-06-17
+---
+
+Our failure taxonomy finally has a line at the very top: of everything wrong with the parser,
+boundary instability is the one worth fixing first. So we spent a night building the training
+data to fix it. And then we didn't retrain. Three separate gates each caught a step that looked
+completely reasonable and was quietly wrong, and that's the story worth telling, more than the
+shard ever was. Those gates are the only reason you can move fast on your worst weakness without
+shipping a fix that looks great on the headline and rots underneath.
+
+{/* truncate */}
+
+## The weakness with many faces
+
+Boundary instability is what you get when two address components meet and the model puts the
+seam in the wrong place. Give it `Country Club Rd` and the street swallows its own suffix. Give
+it `North Sydney NSW 2060` with the commas stripped out and the city and the state melt into
+each other. Hand it a French street like `Neuve-des-Capucines 5` and the house number gets
+quietly absorbed into the name.
+
+For a while we filed a lot of this under "within-token punctuation" and blamed the apostrophes
+and hyphens. Then we actually measured that class, and the punctuation turned out to be innocent
+almost every time. `O'Connell` parses fine. `Coeur d'Alene` parses fine. What breaks is the
+boundary sitting right next to the punctuation, the same wobble wearing a different hat each
+time. One weakness, a dozen faces.
+
+## The plan
+
+Build a synthetic shard that drops the gold boundary exactly where the model wobbles, spread
+across a wide enough range of real-looking addresses that a retrain learns the boundary from
+context instead of memorizing the strings. Generate it, baseline the current model so we know
+how big the hole is, write the recipe, wire it into the corpus. Routine, on paper.
+
+## Gate one: the shard that graded on a curve
+
+The first version pulled from a thin vocabulary: sixteen street names and a handful of cities.
+Twenty thousand rows out of sixteen streets means the model sees `Country Club Rd` a thousand
+times over, so it learns the lexeme and never the seam. That part we expected. The sneaky part
+showed up when we baselined the current model against that same thin data and it scored 48% on
+the suffix boundary and 70% on the French prefix. Respectable. Encouraging, even.
+
+Then we tripled the vocabulary, a hundred streets and real cities with every row unique, and the
+same model scored 41 and 48. So the thin data had done two things at once: it taught the lexeme
+instead of the seam, and it quietly graded its own exam on a curve. The runbook already warns
+that thin diversity teaches the pattern-matcher and skips the boundary. Now there's a number
+sitting next to the warning.
+
+## Gate two: the postcode that was already a house number
+
+To teach the Australian slash convention, where `4/2A` means unit 4, number 2A, the shard
+reached for Australian addresses. The base-consistency lint stopped it cold. In our training
+corpus the token `3000` shows up thousands of times, every one of them a US house number, and
+the shard wanted to teach it as an Australian postcode. A coverage shard can't outvote the base
+corpus it sits on top of. It can only pick a fight with it and lose, slowly, over a release or
+three, and we still have the scars from the last time. The lint caught the collision before
+we'd burned a single GPU-hour on it. Australia came back out, the shard is base-locales-only
+now, and the slash convention got filed as its own job, the kind that has to bring its own base
+coverage to the table.
+
+## Gate three: the city that was usually a street
+
+Even with the shard confined to the locales we actually train on, the lint wasn't done with us.
+Paris. Springfield. Burlington. In our corpus those tokens are overwhelmingly streets, the Paris
+Avenues and Springfield Streets of the world, and only rarely cities. Our shard labels them as
+localities. Both readings are true depending on where the token lands, and the model is
+context-aware enough that it might well sort it out on its own. The lint's job is to not take
+that on faith. It flagged the minority sense, because the last time we waved this exact thing
+through, a theatre on 5th Avenue talked a shard into believing `5th Avenue` was a venue. So the
+retrain will watch this number, and a cleaner shard draws its cities from names the corpus
+already agrees are cities.
+
+## Why we didn't retrain
+
+Here's where the night actually ended. The shard is built. The baseline is measured. The recipe
+is written and signed off, the corpus is assembled, and the manifest is tested against the real
+base. By every box on the checklist it's ready, sitting on the shelf one command short of a
+training run. And we left it there on purpose.
+
+Those three refusals were the actual work. Naming the weakness took a taxonomy; fixing it
+correctly took the gates saying _not yet_, once about the data and twice about the corpus, and
+each no cost us a few minutes and spared us a retrain that would have looked fine up top and been
+wrong all the way down. That's a trade we'll take every time. **The fastest way we know to fix
+your worst weakness is to let the gates make you earn it.**
