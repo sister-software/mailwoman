@@ -1,0 +1,70 @@
+---
+sidebar_position: 40
+title: How close is close enough?
+draft: true
+tags:
+  - concepts
+  - geocoder
+  - eval
+  - coordinate-first
+---
+
+# How close is close enough?
+
+A geocoder turns an address into a point. The obvious question — _is the point right?_ — is the wrong one, because "right" implies a single tolerance that doesn't exist. A point that is **right enough to tell you which county regulates this facility** can be **uselessly wrong for routing a truck to its loading dock**. So the real question is the one the operator keeps asking, and the one this page answers: _close enough for what?_
+
+The short version: Mailwoman never hands you a bare point. It hands you a point, a **tier**, and a **calibrated radius** — and "close enough" is a comparison between that radius and your task's tolerance, made by the consumer, not asserted by us.
+
+{/* truncate */}
+
+## There is no single tolerance
+
+Three real consumers of the same resolved address want three different things:
+
+| consumer | the question | tolerance that's "close enough" |
+| --- | --- | --- |
+| jurisdiction / coverage | which city / county / HPSA is this in? | the **admin centroid** — a few km is fine; the centroid is inside the right polygon |
+| record co-location (the matcher) | are these two records the same _building_? | the **rooftop** — tens of metres; a city centroid fuses every facility in town |
+| routing / dispatch | where is the door? | **rooftop**, and you care about the tail, not the median |
+
+A single accuracy number ("p50 3 km") answers none of these on its own. It's only meaningful against a stated tolerance. The jurisdiction consumer is delighted by 3 km; the matcher is sunk by it.
+
+## The three tiers, and what each is actually worth
+
+Mailwoman resolves to the finest tier it has data for, and labels which one it used (measured on 1172 real TX facility addresses, [`2026-06-17-geocoder-vs-provided-coords`](../evals/2026-06-17-geocoder-vs-provided-coords.md)):
+
+| tier | what it is | coord p50 | when it fires |
+| --- | --- | ---: | --- |
+| `admin` | locality / region centroid | **3.4 km** | always (fallback) |
+| `interpolated` | house-number estimate along the street segment | **0.1 km** | a TIGER segment matches |
+| `address_point` | rooftop / parcel centroid | **0.7 km** | a situs shard has the point |
+
+When a finer tier fires, the geocoder is street-to-rooftop accurate — **98.8% within 100 m** on the non-circular Travis-County E-911 holdout. The admin tier means "right city," nothing finer.
+
+So the first half of "close enough" is **which tier did we reach**, because the tier _is_ the grain. A matcher that needs buildings should treat an `admin`-tier result as "we don't actually know the building" — not as a 3-km-accurate building.
+
+## The honest part is the radius, not the point
+
+A tier label is coarse. The per-parse answer to "how close is this one?" is the **calibrated uncertainty radius** the geocoder reports alongside the coordinate. The discipline here is absolute, and it's the whole reason the number is trustworthy ([`2026-06-14-interp-radius-calibration`](../evals/2026-06-14-interp-radius-calibration.md)):
+
+> A radius is only meaningful if it's calibrated. If we say ±87 m it must contain the truth ~90% of the time — not 72%. Otherwise the number is decoration.
+
+The raw half-segment interpolation radius covered only ~72% of true errors; a split-conformal calibration (Q̂ ≈ 1.70, per-region) makes it a real 90% bound. That turns "±87 m" from a guess into a promise: _the true point is within this radius ~90% of the time._ The consumer can then do the comparison honestly — "my tolerance is 50 m, your 90% radius is 87 m, so this one isn't close enough, abstain" — instead of trusting a bare point that's secretly a city centroid.
+
+This is the same move the parser makes with [confidence calibration](./confidence-calibration.mdx): a number you can act on, not a vibe.
+
+## Coverage is the frontier, not precision
+
+Where the finer tiers fire, accuracy is solved (0.1–0.7 km, calibrated). The open problem is **coverage** — on the TX facility set, the rooftop tier fired on 47% and interpolation on a further 12.5%, so ~40% fell back to the city centroid. "Close enough" for a building-grain task therefore depends mostly on _did we have a shard for this place_, not on the tier math. Widening situs/interpolation coverage is the lever that moves the most addresses into "close enough," and it's a data problem, not a model one.
+
+## So: how do we know how close is close enough?
+
+We don't decide it — we **report enough that the consumer can**. Every resolved address carries:
+
+1. a **tier** (the grain we actually reached), and
+2. a **calibrated radius** (the honest 90% bound), so that
+3. the consumer compares the radius to **their** tolerance and either uses the point or **abstains** — the same honest-radius downgrade the resolver already makes when its candidates scatter.
+
+"Close enough" is not a property of the geocoder. It's a comparison, and our job is to make that comparison truthful: never a bare point, always a point with a tier and a radius that means what it says.
+
+_What's still owed: per-use-case sufficiency thresholds (the matcher's "building-grain" cutoff, a routing cutoff) measured against the calibrated radius, and the coverage push to move the ~40% admin-tier fallbacks onto a shard. Both are tracked under the geocoder-quality work._
