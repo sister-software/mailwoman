@@ -39,9 +39,25 @@ mixed-case text — degrades on them. On a 5-address spot-check, locality is cor
 locality of **`ALESTINE`** (the leading `P` is dropped) in all-caps, but `Palestine` parses correctly.
 v0's dictionaries are case-folded by construction, so on a SHOUTING dataset that robustness wins.
 
-This is a real "where we lose," with a **near-free fix**: title-case (or otherwise case-normalize) an
-all-caps input before the model — it recovered 5/5 in the probe — and/or a case-augmentation training
-shard for durability. Filed as a follow-up.
+This is a real "where we lose," with a **near-free fix** — and we built it (#690). `parse(…, {
+normalizeCase: true })` title-cases a detected all-caps **ASCII** input before the model (detection is
+strict: mixed-case and non-ASCII/accented input are left untouched, so the path is byte-stable by
+construction). Re-running this eval with `--normalize-case`:
+
+| metric | all-caps (default) | + `normalizeCase` (#690) |
+| --- | --: | --: |
+| neural locality-match | 90.1% | **99.7%** (now > v0's 96.8%) |
+| address-point hit rate | 47.0% | **61.8%** |
+| coord p50 (admin) | 3.4 km | 2.8 km |
+| coord p50 (+address-point) | 0.7 km | **0.1 km** |
+| coord p99 (+address-point) | 486.8 km | **20.7 km** |
+
+The fix doesn't just close the gap — it **overtakes** v0 on locality (99.7 vs 96.8) and collapses the
+catastrophic-miss tail (p99 487 → 21 km), because correct localities resolve to the right place and the
+parsed street/number then hits the rooftop shard more often (47% → 62%). The one cost: region dips
+**100.0% → 98.0%** — title-casing the 2-letter state (`TX`→`Tx`) trips ~2% of region resolutions, a
+small, fixable artifact (preserve all-caps 2-letter state codes) against a large net win. Ships
+**default-OFF** behind the `normalizeCase` opt.
 
 ## Reading
 
