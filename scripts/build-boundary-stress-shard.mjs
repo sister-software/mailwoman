@@ -60,7 +60,6 @@ for (let i = 0; i < COUNT; i++) {
 		source_id,
 		corpus_version: "0.6.0",
 		license: "Synthetic — boundary-stress; derived from public-domain locality/region tuples",
-		synth: { method: `boundary-stress:${row.template}`, base_source_id: source_id },
 	}
 	const r = alignRow(canonical)
 	if (r.kind !== "labeled") {
@@ -69,7 +68,9 @@ for (let i = 0; i < COUNT; i++) {
 	}
 	labeled++
 	byTemplate[row.template] = (byTemplate[row.template] ?? 0) + 1
-	out.write(JSON.stringify(r.row) + "\n")
+	// Match the base corpus parquet schema: flat synth_method / synth_base_id (the synthesize-* pattern),
+	// not a nested `synth` object.
+	out.write(JSON.stringify({ ...r.row, synth_method: `boundary-stress:${row.template}`, synth_base_id: null }) + "\n")
 }
 out.end()
 console.error(`wrote ${labeled} labeled rows (${quarantined} quarantined, ${((100 * quarantined) / COUNT).toFixed(1)}%) → ${OUT}`)
