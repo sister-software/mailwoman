@@ -34,10 +34,13 @@
 # corpus is staged at /mnt/playpen/.../corpus/versioned/v0.6.0-boundary-stress/ — assembled via
 # scripts/assemble-boundary-stress-overlay-manifest.py against the v0.5.0 base, schema-matched). Operator
 # steps: (1) `modal volume put` the parquet + manifest, (2) **run the FULL #511 base-consistency lint**
-# (build-corpus-stats over the whole base, not a sample — the night-16 sampled lint flagged distribution
-# outliers, e.g. US/FR locality tokens that read as I-street, that a source-clustered sample can't
-# resolve; if the full lint confirms a locality/street overlap, tune the shard's locality vocabulary to
-# tokens the base labels as localities). DO NOT retrain until that lint is clean. Then `modal run`.
+# (build-corpus-stats over the whole base). The night-16 sampled lint found a REAL locality/street
+# overlap: common US city names (Paris, Springfield) appear predominantly as STREET tokens in the base
+# (usgov-nad/tiger), so the shard's B-locality is the minority sense (the "5th Avenue Theatre" class).
+# The CRF is context-aware and may resolve it — so WATCH the per-locale F1 for locality-token regression
+# in the retrain; if it regresses, tune the shard's locality vocabulary to distinctive cities the base
+# labels as localities. (The affix-tag flags are train-time-relabel artifacts — safe, lexicon-verified.)
+# DO NOT retrain until the full lint is clean OR the overlap is confirmed context-resolved. Then `modal run`.
 #
 # Launch (after the corpus build): modal run -d scripts/modal/train_remote.py \
 #   --config v1.6.0-boundary-stress.yaml --resume none

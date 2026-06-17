@@ -35,15 +35,19 @@ caught two things, only one of them a true problem:
   flagged it; the shard is now **base-locales-only**, and the AU/UK slash convention (the worst
   within-token class, #702) is deferred to a separately-scoped AU/NZ/UK shard that also adds AU **base
   coverage** — it cannot ride a US/FR/DE shard without contradicting the base.
-- **Residual distribution-outlier flags are likely sampling artifacts.** The lint also flags US/FR
-  localities (`Paris`, `Springfield`, `Toulouse`) as B-locality where the *sampled* base majority is
-  I-street — but the sample (a by-index spread of 20/685 shards) is source-clustered and TIGER-street-
-  heavy, undersampling the WOF/admin shards that carry localities. And the street_suffix/street_prefix
-  flags are train-time-relabel artifacts (the lint compares pre-relabel parquets; the affix-relabel
-  lexicon — verified — maps every one of the shard's suffixes/directionals). **The proper gate is the
-  full-corpus lint on the operator's machine** (the 680M-row base-stats); it will resolve whether the
-  locality/street overlap is real, and if so the shard's locality vocabulary should be tuned to tokens
-  the base labels as localities. The shard must not ship to a retrain until that lint is clean.
+- **The affix-tag flags ARE artifacts; the locality/street overlap is REAL.** Two residual classes:
+  - *street_suffix / street_prefix* flags (`Ave`/`Place`/`NW` → suffix/prefix) are **train-time-relabel
+    artifacts** — the lint compares pre-relabel parquets, and the affix-relabel lexicon (verified) maps
+    every one of the shard's suffixes + directionals. Safe.
+  - *locality/street* flags (`Paris`, `Springfield`, `Toulouse` → B-locality) are **real**. The base
+    shards are source-homogeneous (part-0000–~199 = wof-admin localities; ~342+ = usgov-nad US streets),
+    and across the full base these common city names appear *predominantly as street tokens* (countless
+    "Paris Ave" / "Springfield St"), so the base's token-majority is I-street and the shard's B-locality
+    is the minority sense — the "5th Avenue Theatre" #511 class. The model is context-aware (a token
+    after `street+suffix+comma` is a locality), so the CRF may resolve it, but the retrain MUST watch for
+    locality-token regression, and a safer shard would draw locality names the base labels as localities
+    (distinctive cities), tunable against the full base-stats. **The full-corpus lint is the gate — do
+    not retrain until it's clean OR the overlap is confirmed context-resolved by the per-locale F1.**
 
 ## Reading
 
