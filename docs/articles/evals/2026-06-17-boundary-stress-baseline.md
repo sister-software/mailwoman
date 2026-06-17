@@ -8,14 +8,22 @@ the current neural model, exact-match per tag).
 
 | stress shape | stress tag | stress-tag accuracy | street accuracy |
 | --- | --- | --: | --: |
-| street-eats-affix | street_suffix | **48.0%** | 42% |
-| comma-less City STATE | region | **66.3%** | **34%** |
-| fr-prefix | street_prefix | **70.3%** | 70% |
-| house-number-after-street | house_number | **47.3%** | 44% |
-| au-uk-slash-unit (`4/2A`) | house_number | **38.7%** | — |
+| street-eats-affix | street_suffix | **40.7%** | 38% |
+| comma-less City STATE | region | **74.7%** | street 44 / locality 65 |
+| fr-prefix | street_prefix | **47.7%** | 43% |
+| house-number-after-street | house_number | **50.7%** | 49% |
+| au-uk-slash-unit (`4/2A`) | house_number | **38.7%** | unit 39 / region 9 |
 
 (On the delimited shapes the uncontested tags read ~100% — the failures concentrate on the contested
 boundary, exactly as designed.)
+
+**Diversity correction (the runbook's point, measured):** an initial thin-pool shard (~16 streets, ~7
+tuples) gave an *inflated* baseline — street_suffix read 48% and fr-prefix 70% because the few lexemes
+were memorizable. Expanding the pools ~3× (≈100 distinct streets, 28 US / 14 AU / 12 FR / 10 DE tuples,
+~100% unique rows) drops those to **40.7% / 47.7%** — the *true* gap on the real distribution. This is
+exactly why CONTRIBUTING_MODEL_WORK gates on diversity ("thin diversity teaches lexical pattern-matching,
+not the boundary"): a thin shard would have taught the lexemes and a thin baseline would have hidden the
+gap. The numbers above are the diverse-pool measurement.
 
 ## Reading
 

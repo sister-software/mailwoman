@@ -65,49 +65,51 @@ function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
 
 // Multi-word street names — the suffix boundary only bites when "Club" could be read as part of the
 // name. Single-word names alone teach nothing about the suffix edge.
+// Multi-word names are what make the suffix boundary BITE (the model must not read the trailing
+// suffix word as part of the name). Kept diverse so the shard teaches the boundary, not the lexeme.
 const MULTIWORD_STREETS = [
-	"Country Club",
-	"Martin Luther King",
-	"Forest Hill",
-	"Lake View",
-	"Spring Valley",
-	"Cedar Ridge",
-	"Old Mill",
-	"Sunset Park",
-	"Maple Grove",
-	"Stone Creek",
-	"Glen Cove",
-	"Pine Bluff",
-	"Fox Hollow",
-	"Briar Patch",
-	"West End",
-	"College Station",
+	"Country Club", "Martin Luther King", "Forest Hill", "Lake View", "Spring Valley", "Cedar Ridge",
+	"Old Mill", "Sunset Park", "Maple Grove", "Stone Creek", "Glen Cove", "Pine Bluff", "Fox Hollow",
+	"Briar Patch", "West End", "College Station", "Quail Hollow", "Eagle Ridge", "Deer Run", "Bear Creek",
+	"Willow Bend", "Cypress Point", "Laurel Oak", "Magnolia Park", "Cherry Hill", "Walnut Grove",
+	"Birch Hollow", "Aspen Grove", "Juniper Ridge", "Hidden Valley", "Rolling Hills", "Tanglewood",
+	"Meadow Brook", "Clover Field", "Sunrise Point", "Harbor View", "Bay Shore", "Ocean Breeze",
+	"Mountain View", "Valley Forge", "Liberty Square", "Washington Crossing", "Kings Highway",
+	"Queens Gate", "Princeton Junction",
 ] as const
-const SINGLE_STREETS = ["Main", "Oak", "Maple", "Park", "Washington", "Lincoln", "Church", "River"] as const
-const SUFFIXES = ["St", "Street", "Ave", "Avenue", "Rd", "Road", "Blvd", "Ln", "Dr", "Pkwy", "Way", "Ct", "Pl", "Cir", "Ter"] as const
+const SINGLE_STREETS = [
+	"Main", "Oak", "Maple", "Park", "Washington", "Lincoln", "Church", "River", "Pine", "Cedar", "Elm",
+	"Jefferson", "Madison", "Adams", "Jackson", "Franklin", "Highland", "Sunset", "Lakeview", "Hillcrest",
+	"Cambridge", "Devonshire", "Sherwood", "Kingston", "Berkshire", "Aberdeen", "Belmont", "Carlisle",
+	"Dover", "Easton", "Fairfax", "Greenwood", "1st", "2nd", "3rd", "4th", "5th", "12th", "42nd",
+] as const
+const SUFFIXES = [
+	"St", "Street", "Ave", "Avenue", "Rd", "Road", "Blvd", "Boulevard", "Ln", "Lane", "Dr", "Drive",
+	"Pkwy", "Parkway", "Way", "Ct", "Court", "Pl", "Place", "Cir", "Circle", "Ter", "Terrace", "Hwy",
+	"Trail", "Loop", "Cres", "Crescent", "Row", "Walk",
+] as const
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const
 
 // FR street-type prefixes + hyphenated honorific street names (the hyphen is incidental; the boundary
 // stress is the prefix↔name split + the number-after-street order).
-const FR_PREFIXES = ["Rue", "Avenue", "Boulevard", "Place", "Impasse", "Chemin", "Quai", "Cours", "Allée"] as const
+const FR_PREFIXES = [
+	"Rue", "Avenue", "Boulevard", "Place", "Impasse", "Chemin", "Quai", "Cours", "Allée", "Passage",
+	"Square", "Villa", "Sentier", "Promenade",
+] as const
 const FR_NAMES = [
-	"Jean-Baptiste Lebas",
-	"Neuve-des-Capucines",
-	"Charles-de-Gaulle",
-	"du Général-Leclerc",
-	"de la République",
-	"des Trois-Frères",
-	"Victor-Hugo",
-	"Jean-Jaurès",
-	"de l'Abreuvoir",
+	"Jean-Baptiste Lebas", "Neuve-des-Capucines", "Charles-de-Gaulle", "du Général-Leclerc",
+	"de la République", "des Trois-Frères", "Victor-Hugo", "Jean-Jaurès", "de l'Abreuvoir",
+	"Émile-Zola", "Gambetta", "Jean-Moulin", "des Martyrs-de-la-Résistance", "du Maréchal-Foch",
+	"Pierre-et-Marie-Curie", "Antoine-de-Saint-Exupéry", "de la Liberté", "des Quatre-Vents",
+	"du Faubourg-Saint-Antoine", "Saint-Honoré", "de la Pompe", "des Petits-Champs", "Léon-Blum",
+	"Aristide-Briand",
 ] as const
 const DE_NAMES = [
-	"Konrad-Adenauer-Ufer",
-	"Müller-Breslau-Straße",
-	"Ernst-Reuter-Platz",
-	"Hans-Dietrich-Genscher-Platz",
-	"Friedrich-Ebert-Straße",
-	"Rosa-Luxemburg-Straße",
+	"Konrad-Adenauer-Ufer", "Müller-Breslau-Straße", "Ernst-Reuter-Platz", "Hans-Dietrich-Genscher-Platz",
+	"Friedrich-Ebert-Straße", "Rosa-Luxemburg-Straße", "Willy-Brandt-Allee", "Karl-Marx-Straße",
+	"Theodor-Heuss-Platz", "Otto-Hahn-Straße", "Max-Planck-Straße", "Robert-Koch-Platz",
+	"Heinrich-Heine-Allee", "Sophie-Scholl-Straße", "Albert-Einstein-Ring", "Gottlieb-Daimler-Straße",
+	"Käthe-Kollwitz-Ufer", "Bertolt-Brecht-Platz",
 ] as const
 
 const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
@@ -118,6 +120,27 @@ const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Fort Worth", region: "TX", postcode: "76102", country: "US" },
 	{ locality: "Grand Prairie", region: "TX", postcode: "75052", country: "US" },
 	{ locality: "Coeur d'Alene", region: "ID", postcode: "83814", country: "US" },
+	{ locality: "Portland", region: "OR", postcode: "97201", country: "US" },
+	{ locality: "Madison", region: "WI", postcode: "53703", country: "US" },
+	{ locality: "Boulder", region: "CO", postcode: "80302", country: "US" },
+	{ locality: "Savannah", region: "GA", postcode: "31401", country: "US" },
+	{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" },
+	{ locality: "Santa Fe", region: "NM", postcode: "87501", country: "US" },
+	{ locality: "Providence", region: "RI", postcode: "02903", country: "US" },
+	{ locality: "Chapel Hill", region: "NC", postcode: "27514", country: "US" },
+	{ locality: "Ithaca", region: "NY", postcode: "14850", country: "US" },
+	{ locality: "Boise", region: "ID", postcode: "83702", country: "US" },
+	{ locality: "Tacoma", region: "WA", postcode: "98402", country: "US" },
+	{ locality: "Lincoln", region: "NE", postcode: "68508", country: "US" },
+	{ locality: "Asheville", region: "NC", postcode: "28801", country: "US" },
+	{ locality: "Flagstaff", region: "AZ", postcode: "86001", country: "US" },
+	{ locality: "Bend", region: "OR", postcode: "97701", country: "US" },
+	{ locality: "Frederick", region: "MD", postcode: "21701", country: "US" },
+	{ locality: "Bloomington", region: "IN", postcode: "47401", country: "US" },
+	{ locality: "Athens", region: "GA", postcode: "30601", country: "US" },
+	{ locality: "Salem", region: "OR", postcode: "97301", country: "US" },
+	{ locality: "Dover", region: "DE", postcode: "19901", country: "US" },
+	{ locality: "Bozeman", region: "MT", postcode: "59715", country: "US" },
 ]
 const AU_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "North Sydney", region: "NSW", postcode: "2060", country: "AU" },
@@ -125,17 +148,41 @@ const AU_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Brisbane", region: "QLD", postcode: "4000", country: "AU" },
 	{ locality: "Mosman Park", region: "WA", postcode: "6012", country: "AU" },
 	{ locality: "Wollongong", region: "NSW", postcode: "2500", country: "AU" },
+	{ locality: "Newcastle", region: "NSW", postcode: "2300", country: "AU" },
+	{ locality: "Geelong", region: "VIC", postcode: "3220", country: "AU" },
+	{ locality: "Adelaide", region: "SA", postcode: "5000", country: "AU" },
+	{ locality: "Hobart", region: "TAS", postcode: "7000", country: "AU" },
+	{ locality: "Darwin", region: "NT", postcode: "0800", country: "AU" },
+	{ locality: "Cairns", region: "QLD", postcode: "4870", country: "AU" },
+	{ locality: "Ballarat", region: "VIC", postcode: "3350", country: "AU" },
+	{ locality: "Fremantle", region: "WA", postcode: "6160", country: "AU" },
+	{ locality: "Toowoomba", region: "QLD", postcode: "4350", country: "AU" },
 ]
 const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Roubaix", region: "Hauts-de-France", postcode: "59100", country: "FR" },
 	{ locality: "Paris", region: "Île-de-France", postcode: "75014", country: "FR" },
 	{ locality: "Toulouse", region: "Occitanie", postcode: "31000", country: "FR" },
 	{ locality: "Strasbourg", region: "Grand Est", postcode: "67000", country: "FR" },
+	{ locality: "Lyon", region: "Auvergne-Rhône-Alpes", postcode: "69001", country: "FR" },
+	{ locality: "Nantes", region: "Pays de la Loire", postcode: "44000", country: "FR" },
+	{ locality: "Bordeaux", region: "Nouvelle-Aquitaine", postcode: "33000", country: "FR" },
+	{ locality: "Rennes", region: "Bretagne", postcode: "35000", country: "FR" },
+	{ locality: "Dijon", region: "Bourgogne-Franche-Comté", postcode: "21000", country: "FR" },
+	{ locality: "Montpellier", region: "Occitanie", postcode: "34000", country: "FR" },
+	{ locality: "Aix-en-Provence", region: "Provence-Alpes-Côte d'Azur", postcode: "13100", country: "FR" },
+	{ locality: "Caen", region: "Normandie", postcode: "14000", country: "FR" },
 ]
 const DE_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Berlin", region: "Berlin", postcode: "10623", country: "DE" },
 	{ locality: "Köln", region: "Nordrhein-Westfalen", postcode: "50668", country: "DE" },
 	{ locality: "Heidelberg", region: "Baden-Württemberg", postcode: "69117", country: "DE" },
+	{ locality: "München", region: "Bayern", postcode: "80331", country: "DE" },
+	{ locality: "Hamburg", region: "Hamburg", postcode: "20095", country: "DE" },
+	{ locality: "Dresden", region: "Sachsen", postcode: "01067", country: "DE" },
+	{ locality: "Frankfurt", region: "Hessen", postcode: "60311", country: "DE" },
+	{ locality: "Leipzig", region: "Sachsen", postcode: "04109", country: "DE" },
+	{ locality: "Bremen", region: "Bremen", postcode: "28195", country: "DE" },
+	{ locality: "Münster", region: "Nordrhein-Westfalen", postcode: "48143", country: "DE" },
 ]
 // AU/NZ/UK — the unit/street-number slash convention lives here (4/2A = unit 4, number 2A).
 const SLASH_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
@@ -145,6 +192,16 @@ const SLASH_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Auckland", region: "", postcode: "1011", country: "NZ" },
 	{ locality: "Edinburgh", region: "", postcode: "EH2 2BY", country: "GB" },
 	{ locality: "Brisbane", region: "QLD", postcode: "4000", country: "AU" },
+	{ locality: "Newcastle", region: "NSW", postcode: "2300", country: "AU" },
+	{ locality: "Perth", region: "WA", postcode: "6000", country: "AU" },
+	{ locality: "Wellington", region: "", postcode: "6011", country: "NZ" },
+	{ locality: "Christchurch", region: "", postcode: "8011", country: "NZ" },
+	{ locality: "Glasgow", region: "", postcode: "G1 1XW", country: "GB" },
+	{ locality: "Manchester", region: "", postcode: "M1 1AE", country: "GB" },
+	{ locality: "Bristol", region: "", postcode: "BS1 4DJ", country: "GB" },
+	{ locality: "Adelaide", region: "SA", postcode: "5000", country: "AU" },
+	{ locality: "Hobart", region: "TAS", postcode: "7000", country: "AU" },
+	{ locality: "Canberra", region: "ACT", postcode: "2600", country: "AU" },
 ]
 const UNIT_DESIGNATORS = ["", "", "Unit", "Flat", "Apt", "Suite", "Shop", "Level"] as const
 
