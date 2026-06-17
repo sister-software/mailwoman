@@ -1,0 +1,97 @@
+---
+slug: a-tie-on-main-street
+title: "A tie on Main Street, a rout at the PO Box"
+authors: [teffen]
+tags: [architecture, parsing, eval]
+date: 2026-06-17
+draft: true
+---
+
+Mailwoman ships two address parsers in the same box.
+
+The first, which we call **v0**, is our TypeScript port of the [Pelias parser](https://github.com/pelias/parser) — a rules engine: tokenize, classify each token against dictionaries and patterns, solve for the most plausible arrangement under a pile of hand-written constraints. It is fast, deterministic, and the product of years of accumulated postal wisdom. It is also the thing we set out to beat.
+
+The second is the **neural** classifier — a sequence labeler trained on a BIO-tagged corpus, the one this blog has spent most of its life arguing with.
+
+So: a year in, did the neural net actually beat the rules parser? The honest answer is _mostly a tie, until the address gets weird_ — and the weird is where it gets interesting.
+
+{/* truncate */}
+
+## The scoreboard
+
+We don't grade the two parsers against each other's labels — that just measures which one looks more like the other. We grade both through the **same resolver**, against real address points: take 2,000 [OpenAddresses](https://openaddresses.io/) US rows the model never trained on, parse each one, resolve it to a coordinate, and measure how often we land in the right city, the right state, and how far the resolved point is from the truth.
+
+| parser | locality match | region match | coord p50 | coord p90 | coord p99 |
+| --- | --: | --: | --: | --: | --: |
+| **neural** | **84.0%** | **99.9%** | 3.3 km | **10.7 km** | **239 km** |
+| v0 (Pelias port) | 82.1% | 99.5% | 3.3 km | 11.2 km | 277 km |
+
+On clean US addresses it is close. Neural is a couple of points ahead on locality, a hair ahead on region, dead even at the median coordinate — and the difference you can actually feel is in the **tail**: neural's p99 error is 239 km versus 277. Both parsers nail the easy ones; the neural net just throws fewer wild misses.
+
+(Pelias publishes no accuracy numbers of its own — only architecture docs — which is exactly why v0 _is_ our baseline. We can't compare to a number nobody printed, so we ported the thing and graded it ourselves.)
+
+A couple of points on clean addresses is not the headline. The headline is what happens off the beaten path.
+
+## Where the neural net pulls ahead
+
+Here is the same handful of addresses through both parsers. Watch the rules engine on anything that isn't `<number> <street>, <city>, <state> <zip>`.
+
+**A PO box** — the classic. `PO Box 1207, Anchorage, AK 99510`:
+
+```
+v0    : street="PO Box"  house_number=1207  locality=Anchorage  region=AK  postcode=99510
+neural: po_box="PO Box 1207"  locality=Anchorage  region=AK  postcode=99510
+```
+
+The rules parser reads "PO Box 1207" as a street named "PO Box" with house number 1207. It's not wrong by its own logic — "Box" looks like a street type, a number follows it — it just has no concept that this is a _post office box_, a different kind of place entirely. The neural net learned the `po_box` tag and uses it.
+
+**An intersection** — `5th & Main, Springfield, IL`:
+
+```
+v0    : street="5th"  locality=Springfield  region=IL
+neural: intersection_a="5th"  intersection_b="Main"  locality=Springfield  region=IL
+```
+
+v0 keeps the first street and **drops "Main" on the floor**. The neural net knows an intersection has two sides and labels both.
+
+**A unit** — `1600 Pennsylvania Ave NW Apt 4B`:
+
+```
+v0    : house_number=1600  street="Pennsylvania Ave NW"  unit="4B"  ...
+neural: house_number=1600  street="Pennsylvania Ave NW"  unit="Apt 4B"  ...
+```
+
+Both find the unit; the neural net keeps the designator ("Apt") attached, where v0 strips it to the bare "4B".
+
+None of these are flukes. They're the payoff of a discipline we've written about before — **negative space**: you teach the model the tags the rules engine never had, by training on examples where they appear. The receipts, from our parity evals: `unit` coverage went from **0 → 92%**, `street_prefix` 0 → 78%, `street_suffix` 0 → 67% — components the Pelias port simply doesn't emit. And on multi-locale evals the same recipe is why native-order German resolves locality at ~90% where a US-order assumption falls to the 40s (a story we've told before — the right name in the wrong state).
+
+The pattern: on the addresses that fit the template, the parsers tie. On PO boxes, intersections, units, sub-street components, and non-US word order, the neural net is doing something the rules engine architecturally cannot.
+
+## Where we still struggle (and what we haven't touched)
+
+Honesty is the house style, so:
+
+- **Clean addresses are a genuine tie, not a win.** The two parsers above agree on `350 5th Ave` down to the components — neural splits `street="5th"` + `street_suffix="Ave"` where v0 keeps `"5th Ave"` whole, and _both are correct_. For a model this good on US structure, the rules engine is not a thing to beat there; it's a thing to match.
+- **Reordered house numbers.** French addresses that lead with the postcode still trip the model — `fr.house_number` plateaus around 87% on the hardest reordered slice, where the model wants to grab the leading number as the house number. We pushed it from 54% to 87% and then hit a wall that a training-weight tweak won't move; the next lever is real reordered data, not more synthetic.
+- **Whole locales we haven't tackled.** Japanese, Korean, and Taiwanese addressing — block-and-lot systems that don't map onto a Western street grid — are scoped but unbuilt. So is the last stubborn 0% class in the postal arena: Commonwealth and military PO-box formats (BFPO, APO/FPO).
+- **Coordinate precision.** Today's US coordinate is the admin-centroid tier — we land you in the right city, and "right city" is a centroid that can sit tens of kilometers from an edge address. The finer tiers (postcode centroid, then street-level interpolation) are wired but not yet the default everywhere.
+
+## We even tried to have both
+
+If the neural net wins on weird addresses and ties on clean ones, the obvious move is to run both parsers and keep the better answer per component. We built exactly that — a per-component arbitration layer — and it taught us something worth the detour.
+
+On our label-match arena, arbitration looked like a triumph: it captured 122 parses the neural net alone "missed." Then we graded the **assembled coordinate output** instead of the labels, and it was a catastrophe — locality match fell from 83% to 57%, the median coordinate error blew from 3 km to **over a thousand**, and half the addresses lost their street-and-number entirely.
+
+The diagnosis is the interesting part. The arena's "neural missed it" column conflates two very different things: addresses the neural net gets _wrong_, and addresses it gets _differently right_. When v0 writes `street="Seminary Dr"` and neural writes `street="Seminary"` + `street_suffix="Dr"`, arbitrating toward v0 "wins" on label-match and **loses** on the actual parse — and flattening the two parsers' outputs together destroyed the tree structure the resolver needs to tell one "Mill Valley" from another. We rebuilt the layer to preserve that structure; the regression vanished, and so did the apparent win. The safe version is a net wash.
+
+The lesson we're keeping: for a model this strong on the addresses we serve, **there is no free lunch in blending it with the rules parser** — neural isn't wrong where it differs, it's differently right, and "differently right" is not something to overwrite. We grade the coordinate now, never the label, and we let the arbitration machinery sit behind a default-off flag for the day a weaker model or a new locale makes it pay.
+
+## What's on deck
+
+The parser is in a good place: at or ahead of a mature rules engine on clean US, clearly ahead on the hard structured tags, and we've now mapped exactly where it isn't. The next moves are about feeding it and placing it more precisely:
+
+- **Real data over synthetic.** Overture Maps address ingestion — to widen the corpus with real reordered, multi-locale, and long-tail formats, the thing the fr-house-number wall told us we need.
+- **Finer coordinate tiers.** Make postcode-centroid and street-level interpolation the default where the data supports it, so "right city" becomes "right block."
+- **Geocode-first record matching.** The other half of the box: once every record resolves to a coordinate, you can match records by where they are, not how they're spelled — the entity-resolution layer we've been building on top of all of this, and the subject of its own recent post.
+
+A tie on Main Street was never the goal. Matching a battle-tested rules engine on its home turf, beating it everywhere the turf gets strange, and knowing precisely where the next kilometer of accuracy comes from — that's the state of affairs.
