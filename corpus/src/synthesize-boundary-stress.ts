@@ -106,70 +106,69 @@ const FR_NAMES = [
 	"du Faubourg-Saint-Antoine", "Saint-Honoré", "de la Pompe", "des Petits-Champs", "Léon-Blum",
 	"Aristide-Briand",
 ] as const
-const DE_NAMES = [
-	"Konrad-Adenauer-Ufer", "Müller-Breslau-Straße", "Ernst-Reuter-Platz", "Hans-Dietrich-Genscher-Platz",
-	"Friedrich-Ebert-Straße", "Rosa-Luxemburg-Straße", "Willy-Brandt-Allee", "Karl-Marx-Straße",
-	"Theodor-Heuss-Platz", "Otto-Hahn-Straße", "Max-Planck-Straße", "Robert-Koch-Platz",
-	"Heinrich-Heine-Allee", "Sophie-Scholl-Straße", "Albert-Einstein-Ring", "Gottlieb-Daimler-Straße",
-	"Käthe-Kollwitz-Ufer", "Bertolt-Brecht-Platz",
-] as const
 
+// Localities DERIVED from the base corpus (#511): every name here is verified locality-DOMINANT in the
+// training data (B-locality ≫ I-street), so the shard agrees with the base instead of fighting it. The
+// night's targeted scan caught the prior vocab (Madison, Portland, Springfield IL…) at 92–100% STREET
+// in the base ("Madison Ave"), the "5th Avenue Theatre" #511 trap. See 2026-06-17-locality-vocab-fix.
 const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
-	{ locality: "Springfield", region: "IL", postcode: "62701", country: "US" },
-	{ locality: "Winston-Salem", region: "NC", postcode: "27101", country: "US" },
-	{ locality: "Ann Arbor", region: "MI", postcode: "48104", country: "US" },
-	{ locality: "Beverly Hills", region: "CA", postcode: "90210", country: "US" },
-	{ locality: "Fort Worth", region: "TX", postcode: "76102", country: "US" },
-	{ locality: "Grand Prairie", region: "TX", postcode: "75052", country: "US" },
-	{ locality: "Coeur d'Alene", region: "ID", postcode: "83814", country: "US" },
-	{ locality: "Portland", region: "OR", postcode: "97201", country: "US" },
-	{ locality: "Madison", region: "WI", postcode: "53703", country: "US" },
-	{ locality: "Boulder", region: "CO", postcode: "80302", country: "US" },
-	{ locality: "Savannah", region: "GA", postcode: "31401", country: "US" },
-	{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" },
-	{ locality: "Santa Fe", region: "NM", postcode: "87501", country: "US" },
-	{ locality: "Providence", region: "RI", postcode: "02903", country: "US" },
-	{ locality: "Chapel Hill", region: "NC", postcode: "27514", country: "US" },
-	{ locality: "Ithaca", region: "NY", postcode: "14850", country: "US" },
-	{ locality: "Boise", region: "ID", postcode: "83702", country: "US" },
-	{ locality: "Tacoma", region: "WA", postcode: "98402", country: "US" },
-	{ locality: "Lincoln", region: "NE", postcode: "68508", country: "US" },
-	{ locality: "Asheville", region: "NC", postcode: "28801", country: "US" },
-	{ locality: "Flagstaff", region: "AZ", postcode: "86001", country: "US" },
-	{ locality: "Bend", region: "OR", postcode: "97701", country: "US" },
-	{ locality: "Frederick", region: "MD", postcode: "21701", country: "US" },
-	{ locality: "Bloomington", region: "IN", postcode: "47401", country: "US" },
-	{ locality: "Athens", region: "GA", postcode: "30601", country: "US" },
-	{ locality: "Salem", region: "OR", postcode: "97301", country: "US" },
-	{ locality: "Dover", region: "DE", postcode: "19901", country: "US" },
-	{ locality: "Bozeman", region: "MT", postcode: "59715", country: "US" },
+	{ locality: "Albuquerque", region: "NM", postcode: "87102", country: "US" },
+	{ locality: "Indianapolis", region: "IN", postcode: "46203", country: "US" },
+	{ locality: "Sacramento", region: "CA", postcode: "95823", country: "US" },
+	{ locality: "Rochester", region: "NY", postcode: "14606", country: "US" },
+	{ locality: "Jacksonville", region: "FL", postcode: "32209", country: "US" },
+	{ locality: "Portsmouth", region: "VA", postcode: "23704", country: "US" },
+	{ locality: "Merced", region: "CA", postcode: "95340", country: "US" },
+	{ locality: "Miami", region: "FL", postcode: "33125", country: "US" },
+	{ locality: "Tampa", region: "FL", postcode: "33624", country: "US" },
+	{ locality: "Orlando", region: "FL", postcode: "32827", country: "US" },
+	{ locality: "Tulsa", region: "OK", postcode: "74133", country: "US" },
+	{ locality: "Louisville", region: "KY", postcode: "40203", country: "US" },
+	{ locality: "Nashville", region: "TN", postcode: "37207", country: "US" },
+	{ locality: "Spokane", region: "WA", postcode: "99202", country: "US" },
+	{ locality: "Akron", region: "OH", postcode: "44313", country: "US" },
+	{ locality: "Fairbanks", region: "AK", postcode: "99701", country: "US" },
+	{ locality: "Plano", region: "TX", postcode: "75024", country: "US" },
+	{ locality: "Shreveport", region: "LA", postcode: "71103", country: "US" },
+	{ locality: "Southfield", region: "MI", postcode: "48034", country: "US" },
+	{ locality: "Glendale", region: "CA", postcode: "91203", country: "US" },
+	{ locality: "Philadelphia", region: "PA", postcode: "19104", country: "US" },
+	{ locality: "Brooklyn", region: "NY", postcode: "11230", country: "US" },
+	{ locality: "Bronx", region: "NY", postcode: "10461", country: "US" },
+	{ locality: "Fairport", region: "NY", postcode: "14450", country: "US" },
+	{ locality: "Syracuse", region: "NE", postcode: "68446", country: "US" },
+	{ locality: "Marion", region: "AR", postcode: "72364", country: "US" },
+	{ locality: "Chicago", region: "IL", postcode: "60625", country: "US" },
+	{ locality: "Springfield", region: "MA", postcode: "01108", country: "US" },
 ]
+// FR localities DERIVED from the FR (ban) shards specifically — where these famous cities are 95–99%
+// locality-DOMINANT (Paris 515605/24789, Marseille 247014/1752, Lyon 106239/3114). NB: the all-shard
+// scan falsely flagged them street-dominant by undersampling the FR block (parts 180–209) and mixing in
+// US street-contexts; the FR-block scan is the honest distribution. Dept-diverse (28 depts), region
+// empty (French addresses carry no region token; the generator's region-optional path handles it).
 const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
-	{ locality: "Roubaix", region: "Hauts-de-France", postcode: "59100", country: "FR" },
-	{ locality: "Paris", region: "Île-de-France", postcode: "75014", country: "FR" },
-	{ locality: "Toulouse", region: "Occitanie", postcode: "31000", country: "FR" },
-	{ locality: "Strasbourg", region: "Grand Est", postcode: "67000", country: "FR" },
-	{ locality: "Lyon", region: "Auvergne-Rhône-Alpes", postcode: "69001", country: "FR" },
-	{ locality: "Nantes", region: "Pays de la Loire", postcode: "44000", country: "FR" },
-	{ locality: "Bordeaux", region: "Nouvelle-Aquitaine", postcode: "33000", country: "FR" },
-	{ locality: "Rennes", region: "Bretagne", postcode: "35000", country: "FR" },
-	{ locality: "Dijon", region: "Bourgogne-Franche-Comté", postcode: "21000", country: "FR" },
-	{ locality: "Montpellier", region: "Occitanie", postcode: "34000", country: "FR" },
-	{ locality: "Aix-en-Provence", region: "Provence-Alpes-Côte d'Azur", postcode: "13100", country: "FR" },
-	{ locality: "Caen", region: "Normandie", postcode: "14000", country: "FR" },
+	{ locality: "Paris", region: "", postcode: "75003", country: "FR" },
+	{ locality: "Marseille", region: "", postcode: "13016", country: "FR" },
+	{ locality: "Lyon", region: "", postcode: "69009", country: "FR" },
+	{ locality: "Perpignan", region: "", postcode: "66000", country: "FR" },
+	{ locality: "Toulon", region: "", postcode: "83100", country: "FR" },
+	{ locality: "Avignon", region: "", postcode: "84140", country: "FR" },
+	{ locality: "Poitiers", region: "", postcode: "86000", country: "FR" },
+	{ locality: "Arles", region: "", postcode: "13280", country: "FR" },
+	{ locality: "Annecy", region: "", postcode: "74940", country: "FR" },
+	{ locality: "Mulhouse", region: "", postcode: "68200", country: "FR" },
+	{ locality: "Carpentras", region: "", postcode: "84200", country: "FR" },
+	{ locality: "Antony", region: "", postcode: "92160", country: "FR" },
+	{ locality: "Sartrouville", region: "", postcode: "78500", country: "FR" },
+	{ locality: "Épinal", region: "", postcode: "88000", country: "FR" },
+	{ locality: "Meyzieu", region: "", postcode: "69330", country: "FR" },
+	{ locality: "Sens", region: "", postcode: "89100", country: "FR" },
+	{ locality: "Brunoy", region: "", postcode: "91800", country: "FR" },
+	{ locality: "Rambouillet", region: "", postcode: "78120", country: "FR" },
 ]
-const DE_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
-	{ locality: "Berlin", region: "Berlin", postcode: "10623", country: "DE" },
-	{ locality: "Köln", region: "Nordrhein-Westfalen", postcode: "50668", country: "DE" },
-	{ locality: "Heidelberg", region: "Baden-Württemberg", postcode: "69117", country: "DE" },
-	{ locality: "München", region: "Bayern", postcode: "80331", country: "DE" },
-	{ locality: "Hamburg", region: "Hamburg", postcode: "20095", country: "DE" },
-	{ locality: "Dresden", region: "Sachsen", postcode: "01067", country: "DE" },
-	{ locality: "Frankfurt", region: "Hessen", postcode: "60311", country: "DE" },
-	{ locality: "Leipzig", region: "Sachsen", postcode: "04109", country: "DE" },
-	{ locality: "Bremen", region: "Bremen", postcode: "28195", country: "DE" },
-	{ locality: "Münster", region: "Nordrhein-Westfalen", postcode: "48143", country: "DE" },
-]
+// NB: no DE_TUPLES — German cities are street-dominated too ("Berliner Straße"), and the base yielded
+// zero locality-dominant DE towns in the scan, so house-number-after-street is FR-only here. DE's
+// native-order number-after-street is covered by the dedicated synth-german shard.
 const houseNumber = (random: () => number): string => String(1 + Math.floor(random() * 4999))
 const localeFor: Record<string, string> = { US: "en-US", FR: "fr-FR", DE: "de-DE" }
 
@@ -194,9 +193,9 @@ export function synthesizeBoundaryStressRow(
 	const template = opts.forceTemplate ?? pick(ALL_TEMPLATES, random)
 
 	if (template === "fr-prefix" || template === "house-number-after-street") {
-		const useDe = template === "house-number-after-street" && random() < 0.4
-		const b = base ?? pick(useDe ? DE_TUPLES : FR_TUPLES, random)
-		const name = useDe ? pick(DE_NAMES, random) : pick(FR_NAMES, random)
+		// FR-only (no base-consistent DE locality vocab; see the DE_TUPLES note above).
+		const b = base ?? pick(FR_TUPLES, random)
+		const name = pick(FR_NAMES, random)
 		const hn = houseNumber(random)
 		if (template === "fr-prefix") {
 			const prefix = pick(FR_PREFIXES, random)

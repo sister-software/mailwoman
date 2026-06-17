@@ -9,10 +9,14 @@ base-consistency section for why.
 
 | stress shape | stress tag | accuracy | street accuracy |
 | --- | --- | --: | --: |
-| street-eats-affix | street_suffix | **40.7%** | 38% |
-| comma-less City ST | street | **46%** | (locality 91, region 100) |
-| fr-prefix | street_prefix | **47.7%** | 43% |
-| house-number-after-street | house_number | **50.7%** | 49% |
+| street-eats-affix | street_suffix | **41.7%** | 39% |
+| comma-less City ST | street | **47%** | (locality 91, region 90) |
+| fr-prefix | street_prefix | **55.0%** | 39% |
+| house-number-after-street | house_number | **51.3%** | 53% |
+
+_(Measured on the base-consistent locality vocabulary — see the #511 section. Earlier drafts read
+street_suffix 40.7 / fr-prefix 47.7 on a vocab that contradicted the base; the numbers above are on the
+corrected vocab. house-number-after-street is now FR-only.)_
 
 (On the delimited shapes the uncontested tags read ~100% — the failures concentrate on the contested
 boundary, exactly as designed. US comma-less locality/region are easy at 91/100%; the *street* span is
@@ -35,19 +39,19 @@ caught two things, only one of them a true problem:
   flagged it; the shard is now **base-locales-only**, and the AU/UK slash convention (the worst
   within-token class, #702) is deferred to a separately-scoped AU/NZ/UK shard that also adds AU **base
   coverage** — it cannot ride a US/FR/DE shard without contradicting the base.
-- **The affix-tag flags ARE artifacts; the locality/street overlap is REAL.** Two residual classes:
-  - *street_suffix / street_prefix* flags (`Ave`/`Place`/`NW` → suffix/prefix) are **train-time-relabel
-    artifacts** — the lint compares pre-relabel parquets, and the affix-relabel lexicon (verified) maps
-    every one of the shard's suffixes + directionals. Safe.
-  - *locality/street* flags (`Paris`, `Springfield`, `Toulouse` → B-locality) are **real**. The base
-    shards are source-homogeneous (part-0000–~199 = wof-admin localities; ~342+ = usgov-nad US streets),
-    and across the full base these common city names appear *predominantly as street tokens* (countless
-    "Paris Ave" / "Springfield St"), so the base's token-majority is I-street and the shard's B-locality
-    is the minority sense — the "5th Avenue Theatre" #511 class. The model is context-aware (a token
-    after `street+suffix+comma` is a locality), so the CRF may resolve it, but the retrain MUST watch for
-    locality-token regression, and a safer shard would draw locality names the base labels as localities
-    (distinctive cities), tunable against the full base-stats. **The full-corpus lint is the gate — do
-    not retrain until it's clean OR the overlap is confirmed context-resolved by the per-locale F1.**
+- **The affix-tag flags are train-time-relabel artifacts** (`Ave`/`Place`/`NW` → suffix/prefix): the lint
+  compares pre-relabel parquets, and the affix-relabel lexicon (verified) maps every suffix + directional. Safe.
+- **The locality/street overlap was RESOLVED by deriving the vocabulary from the base itself.** A targeted
+  scan (what label does the base give each shard locality?) found the original **US** vocab was a genuine
+  contradiction — `Madison` 96% street, `Portland` 95%, `Springfield IL` 84% (the "5th Avenue Theatre"
+  class, well-sampled across ~23 US shards). Fixed: the US vocab is now **derived + verified
+  locality-dominant** (Albuquerque 258584:8, Indianapolis 219700:29, Sacramento, Jacksonville…). The
+  **FR** flag, by contrast, was a *sampling artifact* — the all-shard scan barely touched the FR ban block
+  (parts 180–209) and mixed in US street-contexts; the FR-block scan shows Paris (515605:24789), Marseille,
+  Lyon are 95–99% **locality** in the FR data, so familiar dept-diverse FR cities are kept. **DE** yielded
+  no locality-dominant towns (German cities are street-dominated too, "Berliner Straße"), so
+  house-number-after-street is FR-only (DE's native order is covered by `synth-german`). Net: every shard
+  locality now agrees with the base — the contradiction is gone, not deferred.
 
 ## Reading
 
@@ -59,9 +63,11 @@ caught two things, only one of them a true problem:
 
 ## So what
 
-The shard puts the gold boundary on diverse realizations of these shapes. The retrain's success
-criterion (the `v1.6.0-boundary-stress` recipe gate): move these four numbers up without regressing the
-clean canonical per-locale F1 (the US/FR/DE tripwire) and the affix floors — one variable, gated, per
-`CONTRIBUTING_MODEL_WORK`, **after the full-corpus #511 lint is clean**.
+The shard puts the gold boundary on diverse realizations of these shapes. The locality vocabulary is now
+base-derived (the #511 contradiction is resolved, not deferred), so the shard is retrain-ready. The
+retrain's success criterion (the `v1.6.0-boundary-stress` recipe gate): move these four numbers up
+(street_suffix 41.7 → ≥55, comma-less street 47 → ≥65, fr-prefix 55 → ≥70, hn-after 51.3 → ≥65) without
+regressing the clean canonical per-locale F1 (the US/FR/DE tripwire) and the affix floors — one variable,
+gated, per `CONTRIBUTING_MODEL_WORK`.
 
 _Source: `scripts/eval/boundary-stress-baseline.ts` over `corpus/src/synthesize-boundary-stress.ts`._
