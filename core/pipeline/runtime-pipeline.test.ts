@@ -635,66 +635,83 @@ describe("runPipeline — arbitration (#478 inc 3)", () => {
 		expect(result.timing["arbitrate"]).toBeUndefined()
 	})
 
-	it("rule_preferred route: rule decomposition replaces the coarse neural span", async () => {
-		// clean structured + alpha + no placer → rule_preferred. Rule proposes house_number[0,3] +
-		// street[4,15]; the neural coarse street[0,15] overlaps both → rule preference + coherence win.
-		const ruleProposer = vi.fn(async () => [ruleProp("house_number", "350", 0, 0.9), ruleProp("street", "Main Street", 4, 0.9)])
+	it("rule_preferred PRESERVES neural's street decomposition (the precondition fix)", async () => {
+		// neural: street[4,12]"Seminary" + street_suffix[13,15]"Dr"; rule: combined street[4,15]. fix-v1
+		// never restructures, so both neural nodes survive and the coarse rule street is ignored — the
+		// suffix is no longer able to evict the street (the leg-2 bug).
+		const ruleProposer = vi.fn(async () => [ruleProp("house_number", "109", 0, 1), ruleProp("street", "Seminary Dr", 4, 0.82)])
 		const result = await runPipeline(
-			"350 Main Street",
+			"109 Seminary Dr",
 			{
 				computeQueryShape: alphaShape,
 				classifyKind: async () => cleanKind,
 				classifier: fakeClassifier(
-					fakeTree("350 Main Street", [
-						{ tag: "street", value: "350 Main Street", start: 0, end: 15, confidence: 0.8, children: [] },
+					fakeTree("109 Seminary Dr", [
+						{ tag: "house_number", value: "109", start: 0, end: 3, confidence: 0.93, children: [] },
+						{ tag: "street", value: "Seminary", start: 4, end: 12, confidence: 0.94, children: [] },
+						{ tag: "street_suffix", value: "Dr", start: 13, end: 15, confidence: 0.94, children: [] },
 					])
 				),
 				ruleProposer,
 			},
 			{ arbitrate: true }
 		)
-		expect(ruleProposer).toHaveBeenCalled()
-		expect(result.tree.roots.map((r) => r.tag)).toContain("house_number")
-		expect(result.tree.roots.every((r) => r.source === "rule")).toBe(true)
+		const tags = result.tree.roots.map((r) => r.tag)
+		expect(tags).toContain("street")
+		expect(tags).toContain("street_suffix") // NOT evicted
+		expect(result.tree.roots.find((r) => r.tag === "street")?.value).toBe("Seminary") // neural decomposition kept
 		expect(result.timing["arbitrate"]).toBeGreaterThanOrEqual(0)
 	})
 
-	it("neural_preferred (OOD script) keeps the neural span over an overlapping rule span", async () => {
-		const ruleProposer = vi.fn(async () => [ruleProp("street", "abc", 0, 0.95)])
+	it("rule_preferred RELABELS a same-span tag disagreement toward rule", async () => {
+		// neural labels [0,3] locality; rule says region — same span, different tag → rule wins.
+		const ruleProposer = vi.fn(async () => [ruleProp("region", "NYC", 0, 1)])
 		const result = await runPipeline(
-			"abc",
+			"NYC",
 			{
-				computeQueryShape: () => ({ knownFormats: [], characterClass: "cjk" }),
+				computeQueryShape: alphaShape,
 				classifyKind: async () => cleanKind,
-				classifier: fakeClassifier(
-					fakeTree("abc", [{ tag: "street", value: "abc", start: 0, end: 3, confidence: 0.5, children: [] }])
-				),
+				classifier: fakeClassifier(fakeTree("NYC", [{ tag: "locality", value: "NYC", start: 0, end: 3, confidence: 0.6, children: [] }])),
 				ruleProposer,
 			},
 			{ arbitrate: true }
 		)
 		expect(result.tree.roots).toHaveLength(1)
-		expect(result.tree.roots[0]?.source).toBe("neural")
+		expect(result.tree.roots[0]?.tag).toBe("region")
+		expect(result.tree.roots[0]?.source).toBe("rule")
 	})
 
-	it("flat round-trip: arbitrate with no rule proposals preserves every neural node (no-op guard)", async () => {
-		const tree = fakeTree("350 Main", [
-			{ tag: "house_number", value: "350", start: 0, end: 3, confidence: 0.9, children: [] },
-			{ tag: "street", value: "Main", start: 4, end: 8, confidence: 0.9, children: [] },
-		])
+	it("rule_preferred ADDS a rule-only missing tag on a non-overlapping span", async () => {
+		const ruleProposer = vi.fn(async () => [ruleProp("country", "USA", 10, 1)])
 		const result = await runPipeline(
-			"350 Main",
+			"Main St   USA",
 			{
 				computeQueryShape: alphaShape,
 				classifyKind: async () => cleanKind,
-				classifier: fakeClassifier(tree),
-				ruleProposer: async () => [],
+				classifier: fakeClassifier(fakeTree("Main St   USA", [{ tag: "street", value: "Main St", start: 0, end: 7, confidence: 0.9, children: [] }])),
+				ruleProposer,
 			},
 			{ arbitrate: true }
 		)
-		expect(result.tree.roots.map((r) => ({ tag: r.tag, value: r.value, start: r.start, end: r.end }))).toEqual([
-			{ tag: "house_number", value: "350", start: 0, end: 3 },
-			{ tag: "street", value: "Main", start: 4, end: 8 },
-		])
+		const country = result.tree.roots.find((r) => r.tag === "country")
+		expect(country?.value).toBe("USA")
+		expect(country?.source).toBe("rule")
+	})
+
+	it("neural_preferred (OOD script) passes the neural tree through unchanged", async () => {
+		const ruleProposer = vi.fn(async () => [ruleProp("street", "abc", 0, 0.95)])
+		const neuralRoots: AddressNode[] = [{ tag: "street", value: "abc", start: 0, end: 3, confidence: 0.5, children: [] }]
+		const result = await runPipeline(
+			"abc",
+			{
+				computeQueryShape: () => ({ knownFormats: [], characterClass: "cjk" }),
+				classifyKind: async () => cleanKind,
+				classifier: fakeClassifier(fakeTree("abc", neuralRoots)),
+				ruleProposer,
+			},
+			{ arbitrate: true }
+		)
+		expect(ruleProposer).not.toHaveBeenCalled()
+		expect(result.tree.roots).toEqual(neuralRoots)
 	})
 })

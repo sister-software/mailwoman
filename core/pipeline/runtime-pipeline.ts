@@ -12,10 +12,8 @@
  *   Implementation contract per `docs/articles/plan/reference/STAGES.md`.
  */
 
-import { proposalsToTree, treeToProposals } from "../decoder/proposals-to-tree.js"
-import { resolveProposalOverlaps } from "../decoder/resolve-proposal-overlaps.js"
+import { applyRuleArbitration } from "../decoder/arbitrate-tree.js"
 import type { AddressNode, AddressTree } from "../decoder/types.js"
-import { policyRegistryFromRoute } from "../policy/from-config.js"
 import { routeInputShape } from "../policy/input-shape-router.js"
 import type { ComponentTag } from "../types/component.js"
 import { prefetchReconcileLookups } from "./reconcile-lookups.js"
@@ -364,12 +362,13 @@ export async function runPipeline(
 		timing["token-classify"] = performance.now() - tClassify
 	}
 
-	// #478 increment 3: per-component rule-vs-neural arbitration over the (argmax) neural tree.
-	// Default-OFF (`opts.arbitrate`) and requires a `ruleProposer` stage. Union the WHOLE-TEXT neural
-	// parse (preserves the model's sequence context — deliberately NOT the per-section proposal
-	// fan-out) with the solved v0 rule parse, filter per-component by the input-shape router prior,
-	// drop overlapping survivors (the coherence pass), and rebuild the tree from the survivors.
-	// Reconcile (above) stays the orthogonal opt-in; this operates on whatever `tree` it produced.
+	// #478 increment 3 (fix-v1): per-component rule-vs-neural arbitration as EDITS on the nested neural
+	// argmax tree — never flattening, so the tree's containment survives (the flatten+rebuild v0 dropped
+	// `street` for its own `street_suffix` and lost region→locality structure; see the eval doc). The
+	// input-shape router sets the mode: only `rule_preferred` mutates the tree (relabel same-span tag
+	// disagreements toward the solved v0 parse + add rule-only missing tags); `neural_preferred` /
+	// abstain pass the neural tree through unchanged. Default-OFF (`opts.arbitrate`). Reconcile above
+	// stays the orthogonal opt-in; this operates on whatever `tree` it produced.
 	if (opts?.arbitrate && stages.ruleProposer) {
 		throwIfAborted(opts)
 		const tArb = performance.now()
@@ -385,10 +384,10 @@ export async function runPipeline(
 			{ characterClass: queryShape.characterClass },
 			placerSignal
 		)
-		const neuralProposals = treeToProposals(tree, "neural")
-		const ruleProposals = await stages.ruleProposer(normalized.normalized, locale.locale)
-		const arbitrated = policyRegistryFromRoute(route).apply([...neuralProposals, ...ruleProposals], locale.locale)
-		tree = proposalsToTree(normalized.normalized, resolveProposalOverlaps(arbitrated))
+		if (route.defaultMode === "rule_preferred") {
+			const ruleProposals = await stages.ruleProposer(normalized.normalized, locale.locale)
+			tree = applyRuleArbitration(tree, ruleProposals)
+		}
 		timing["arbitrate"] = performance.now() - tArb
 	}
 
