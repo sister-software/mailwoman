@@ -75,7 +75,13 @@ import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/
 import { isCedex } from "@mailwoman/codex/fr"
 import { isNzDeliveryService, isNzPostcode } from "@mailwoman/codex/nz"
 import { isPOBox } from "@mailwoman/codex/us"
-import { alignRow, maybeNoisifyBoxNumber, PO_BOX_LOCALE_TEMPLATES, stableSourceId } from "@mailwoman/corpus"
+import {
+	alignRow,
+	maybeNoisifyBoxNumber,
+	PO_BOX_LOCALE_TEMPLATES,
+	stableSourceId,
+	synthesizeMilitaryPoBoxRow,
+} from "@mailwoman/corpus"
 
 // ── Base-skeleton sources ────────────────────────────────────────────────────────────────────────
 // Same OA cache as the unit/affix shards. US train = every NON-Vermont state; US eval = Vermont
@@ -137,7 +143,8 @@ const CA_INTERIOR_LETTERS = "ABCEGHJKLMNPRSTVWXYZ"
 // Class mix — po_box mass leans US (the production arena), cedex gets a real block, and the CA-fr
 // class exists because the #511 Montréal rows ("Case Postale 200, H3A 1B9 Montréal, QC") fail today.
 const CLASS_MIX = [
-	["po-box-us", 0.32],
+	["po-box-us", 0.27],
+	["po-box-us-military", 0.05], // #517: CMR/PSC/Unit + Box, APO/FPO/DPO + AA/AE/AP — the arena's 0/3 class
 	["pmb-us", 0.07],
 	["bp-fr", 0.1],
 	["cedex-fr", 0.17],
@@ -692,6 +699,14 @@ async function main() {
 			rendered = renderNzPoBox(random, pick(random, nzPool))
 			country = "NZ"
 			locale = "en-NZ"
+		} else if (cls === "po-box-us-military") {
+			// #517: self-contained (no real-tuple tail) — APO/FPO/DPO locality + AA/AE/AP region + theatre
+			// ZIP, codex-backed. Strip the synthesizer's `country` field (the build sets country below).
+			const m = synthesizeMilitaryPoBoxRow({ random })
+			const { country: _c, ...comps } = m.components
+			rendered = { fmt: "po-box-military", raw: m.raw, components: comps }
+			country = "US"
+			locale = "en-US"
 		} else {
 			rendered = renderCaEn(random, pick(random, onPool))
 			country = "CA"
