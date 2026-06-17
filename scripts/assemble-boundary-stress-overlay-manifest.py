@@ -63,7 +63,15 @@ def main() -> int:
     # Pure ADD: every base shard kept verbatim; refuse to double-add on re-run.
     if any(s.get("source") == "synth-boundary-stress" for s in base["shards"]):
         print("WARN: base already contains synth-boundary-stress — is this the right base?")
-    kept = list(base["shards"])
+    # Re-root base shards to the Modal volume path. The trainer reads each manifest path AS-IS, and on
+    # Modal the base corpus lives under /data (sync_v050), not the local /mnt/playpen build path. Without
+    # this the 690 base shards don't resolve on the volume — the loader would re-root them under the
+    # OVERLAY corpus_dir (which holds only the boundary shard) and find nothing.
+    def _reroot(p):
+        i = p.find("/corpus/versioned/")
+        return ("/data" + p[i:]) if i >= 0 else p
+
+    kept = [{**s, "path": _reroot(s["path"])} for s in base["shards"]]
 
     bs_train = _descriptor(
         args.new_dir / "train" / "part-boundary-stress-train.parquet",
