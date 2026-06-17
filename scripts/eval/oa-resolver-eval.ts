@@ -637,6 +637,12 @@ async function main(): Promise<void> {
 	const collectResolvedDump = !!arg("out-resolved")
 	const resolvedRows: Record<string, unknown>[] = []
 
+	// `--out-rows <path>`: per-row neural-vs-v0 outcome dump (EVERY row, not just misses), for the
+	// per-address-type head-to-head (scripts/eval/per-type-report.ts buckets by input shape offline).
+	// Reuses the same scoreTree the aggregates use — no extra inference, no scoring duplication.
+	const collectRows = !!arg("out-rows")
+	const outRows: Record<string, unknown>[] = []
+
 	let i = 0
 	for (const row of rows) {
 		i++
@@ -748,6 +754,15 @@ async function main(): Promise<void> {
 		const vs = scoreTree(row, vResolved)
 		record("v0", row, vs)
 
+		if (collectRows) {
+			outRows.push({
+				input: row.input,
+				expected: row.expected,
+				neural: { loc: ns.locMatch, reg: ns.regMatch, resolved: ns.resolved, err: ns.err },
+				v0: { loc: vs.locMatch, reg: vs.regMatch, resolved: vs.resolved, err: vs.err },
+			})
+		}
+
 		// #478 inc 3 leg 2: assembled (no-arb) + assembled+arb, through the same resolver + nOpts.
 		if (assembledPipeline) {
 			const st = row.state || "??"
@@ -798,6 +813,10 @@ async function main(): Promise<void> {
 	if (collectErrors) {
 		writeFileSync(arg("errors-json"), JSON.stringify(errorRows, null, 2))
 		console.error(`wrote ${errorRows.length} failure rows → ${arg("errors-json")}`)
+	}
+	if (collectRows) {
+		writeFileSync(arg("out-rows"), JSON.stringify(outRows))
+		console.error(`wrote ${outRows.length} per-row outcomes → ${arg("out-rows")}`)
 	}
 	if (collectResolvedDump) {
 		writeFileSync(arg("out-resolved"), JSON.stringify(resolvedRows))
