@@ -83,11 +83,39 @@ close.
 both gate instruments are merged; no default changes. The methodology did its job — it caught a
 catastrophic coordinate regression that the label-match arena scored as a +122 win.
 
-## Next (the path to a promotable arbitration)
+## Diagnosis — one root cause: loss of containment
 
-The failure is concentrated in the precondition drop (48%) and wrong-place resolution. Two suspects,
-separable with a follow-up probe: (a) the **flat `proposalsToTree` rebuild** losing structure the
-resolver needs (DeepSeek's flagged risk — the resolver-output no-op was never asserted, only tree
-shape); (b) the **arbitration/coherence dropping anchor components** (street/house_number/locality) when
-rule and neural spans overlap. Diagnosing which — likely both — is the prerequisite to any future
-promotion. Until then arbitration is a measured-negative behind a default-off flag, not a shipped path.
+`scripts/eval/probe-arbitration.ts` traces the arbitration stages on real US addresses. The aggregate
+over 60 clean rows is decisive — **both** failure modes are the same root cause: the flat
+proposal/tree representation has no containment.
+
+- **Precondition (street dropped 42%, all by overlap eviction).** Neural emits `street` + a separate
+  `street_suffix`/`street_prefix` (e.g. `street[4,12]"Seminary"` + `street_suffix[13,15]"Dr"`); the
+  solved v0 parse emits the combined `street[4,15]"Seminary Dr"`. Under `rule_preferred` both survive
+  arbitration (v0 has no `street_suffix`), then the coherence pass — which only knows intervals, not
+  that a suffix is *part of* a street — sees `street_suffix` (conf 0.94) overlapping `street` (conf
+  0.82) and **evicts the street**, leaving a dangling suffix and no street. Measured: 25/60 rows drop
+  street, **25/25 by this overlap eviction**. (When v0's street outranks the neural suffix, it
+  survives — the ~50/50.)
+- **Coordinate (locality resolves to a wrong-state namesake).** The probe shows locality/region
+  *values* are byte-identical to neural (**0/60** changed) — yet they resolve to the wrong place. The
+  only difference is the tree: the nested neural argmax tree vs the **flat** `proposalsToTree`. The
+  resolver loses the region→locality containment constraint and resolves the same `"Mill Valley"`
+  string globally to a wrong-state namesake. (DeepSeek's flagged flat-tree risk — the resolver-output
+  no-op was never asserted, only tree shape.)
+
+## Fix plan (DeepSeek-coordinated) — edit the neural tree, don't rebuild flat
+
+Apply arbitration as **edits on the nested neural argmax tree** instead of flatten → arbitrate →
+`proposalsToTree`. This preserves containment by construction, so the coherence pass becomes
+unnecessary and the resolver keeps its structure. The v1 edit algorithm:
+
+- `neural_preferred` / `abstain` routes → pass the neural tree **unchanged**.
+- `rule_preferred` → **override a neural node's value only** when a same-tag rule proposal overlaps it
+  with a different value; **add rule-only missing tags** as nodes; **never restructure** (no dropping
+  neural's sub-component decomposition, no flattening).
+
+This makes clean-address arbitration a **no-op** (killing both regressions), captures the high-value
+wins (value disagreements + tags neural missed entirely), and accepts losing the low-value
+pure-decomposition wins. Then **re-run the coordinate gate (leg 2)** before any promotion. Until that
+lands and clears, arbitration stays a measured-negative behind the default-off flag.
