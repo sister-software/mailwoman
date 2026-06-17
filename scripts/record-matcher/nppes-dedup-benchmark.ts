@@ -58,6 +58,10 @@ const WOF = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db
 const DATA_ROOT = arg("data-root", "/mnt/playpen/mailwoman-data")
 const OUT_MD = arg("out-md", "")
 const TRAIN_EM = !process.argv.includes("--no-train-em")
+// #694 A/B: `--legacy-join` reproduces the pre-flip ingest (space-joined address columns + normalizeCase
+// OFF). Default (no flag) is the validated flip: comma-join (the correct address shape) + #690 all-caps
+// normalization. Same data + GBT, only the flip toggled — so a delta here is attributable to the flip.
+const LEGACY = process.argv.includes("--legacy-join")
 // Optional A/B: a path to a trained dedup-gbt TS module (exports DEDUP_GBT_MODEL + DEDUP_GBT_META) to
 // score alongside the shipped GBT at both truth levels — e.g. grade the #625 corroboration candidate.
 const CANDIDATE = arg("candidate", "")
@@ -238,6 +242,7 @@ async function main(): Promise<void> {
 				shards: shardProvider.for,
 				defaultCountry: "US",
 				placeCountry: false,
+				normalizeCase: !LEGACY,
 			})
 			if (g.lat !== null) geo++
 			return g
@@ -255,7 +260,10 @@ async function main(): Promise<void> {
 		attributes: { authorizedOfficial: "auth", entityTruth: "entityId" },
 		source: "nppes",
 	}
-	const records = await ingestRows(rows as unknown as Record<string, string>[], mapping, { geocodeAddress: seam })
+	const records = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
+		geocodeAddress: seam,
+		addressSeparator: LEGACY ? " " : ", ",
+	})
 	shardProvider.close()
 	lookup.close()
 	console.error(`    geocoded ${geo}/${rows.length} (${((100 * geo) / rows.length).toFixed(1)}%)`)

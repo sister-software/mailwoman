@@ -103,19 +103,19 @@ describe("ingestRows", () => {
 		expect(a!.phone).toBe("503-555-0100")
 		expect(a!.email).toBe("bob@acme.org") // lowercased
 		expect(a!.address?.geocode?.tier).toBe("address_point")
-		// The address column-join feeds the geocoder.
-		expect(a!.address?.formatted).toBe("123 Main St Portland OR 97201")
+		// The address column-join feeds the geocoder (comma-joined by default; #694 flip).
+		expect(a!.address?.formatted).toBe("123 Main St, Portland, OR, 97201")
 
 		expect(b!.name).toEqual({ given: "Maria", family: "Garcia" })
 		expect(b!.organization).toBeUndefined() // empty org column
 		expect(b!.phone).toBeUndefined()
 	})
 
-	it("joins a multi-column address with addressSeparator when set, space otherwise (#694)", async () => {
+	it("comma-joins a multi-column address by default, space when overridden (#694 flip)", async () => {
 		const [dflt] = await ingestRows(parseCsv(CSV), mapping, { geocodeAddress: stubGeocode })
-		expect(dflt!.address?.formatted).toBe("123 Main St Portland OR 97201") // default: space (byte-stable)
-		const [comma] = await ingestRows(parseCsv(CSV), mapping, { geocodeAddress: stubGeocode, addressSeparator: ", " })
-		expect(comma!.address?.formatted).toBe("123 Main St, Portland, OR, 97201") // delimited for the parser
+		expect(dflt!.address?.formatted).toBe("123 Main St, Portland, OR, 97201") // default: comma-join (#694, validated)
+		const [space] = await ingestRows(parseCsv(CSV), mapping, { geocodeAddress: stubGeocode, addressSeparator: " " })
+		expect(space!.address?.formatted).toBe("123 Main St Portland OR 97201") // override → legacy space-join (byte-stable A/B)
 	})
 
 	it("falls back to the row index when no id column maps", async () => {

@@ -68,7 +68,7 @@ export type ShardResolver = (stateSlug: string | null) => StateShards
 
 /** The minimal classifier surface the cascade needs (a `NeuralAddressClassifier` satisfies it). */
 export interface GeocodeClassifier {
-	parse(text: string, opts?: { postcodeRepair?: boolean }): Promise<AddressTree>
+	parse(text: string, opts?: { postcodeRepair?: boolean; normalizeCase?: boolean }): Promise<AddressTree>
 }
 
 export interface GeocodeDeps {
@@ -78,6 +78,13 @@ export interface GeocodeDeps {
 	shards?: ShardResolver
 	/** Country constraint passed to the resolver (e.g. `"US"`). */
 	defaultCountry?: string
+	/**
+	 * Title-case all-caps ASCII input before the model (#690), detection-gated so mixed-case + non-Latin
+	 * pass through untouched. **Default `true`** — validated-beneficial on this geocode/resolveTree path
+	 * (#619: TX-facility locality 90.1 → 99.7%). The #694 comma-less crater was the space-join, not the
+	 * casing, so on comma-joined input it is a clean win. Set `false` to restore the legacy raw-case parse.
+	 */
+	normalizeCase?: boolean
 	/**
 	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound;
 	 * `1` or `undefined` keeps the raw half-segment heuristic. Accepts either a single multiplier
@@ -253,7 +260,7 @@ export class ShardProvider {
  * parse/resolve error — callers doing batch work should catch per-row.
  */
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
-	const tree = recognizeUsRegions(await deps.classifier.parse(input, { postcodeRepair: true }))
+	const tree = recognizeUsRegions(await deps.classifier.parse(input, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true }))
 	const stateSlug = regionSlugFromTree(tree)
 	const { addressPoints, interpolation } = deps.shards?.(stateSlug) ?? {}
 
