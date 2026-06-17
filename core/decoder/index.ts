@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+export * from "./arbitrate-tree.js"
 export * from "./build-tree.js"
 export * from "./calibration.js"
 export * from "./containment.js"
