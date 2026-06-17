@@ -15,6 +15,8 @@
  *   Pure module: no resource imports, no top-level await. Safe to import from anywhere.
  */
 
+import { policyRegistryFromRoute } from "../policy/from-config.js"
+import type { InputShapeRoute } from "../policy/input-shape-router.js"
 import type { PolicyRegistry } from "../policy/policy.js"
 import type { Span, TokenContext } from "../tokenization/index.js"
 import {
@@ -53,16 +55,28 @@ export async function collectProposals(
 }
 
 /**
- * Optional policy filter. Returns the input unchanged when `policy` is undefined, otherwise
- * delegates to `PolicyRegistry.apply`.
+ * Optional policy filter.
+ *
+ * Resolution order:
+ *
+ * 1. An explicit `policy` registry is authoritative (the operator's config wins entirely).
+ * 2. Otherwise, when an input-shape `routerPrior` is supplied (#478 increment 2), build a registry
+ *    whose default mode is the routed prior and apply that.
+ * 3. Otherwise return the input unchanged.
+ *
+ * Increment 2 ships with no production caller passing `routerPrior` (the production `runPipeline`
+ * does not yet feed live signals — that is increment 3), so this stays byte-stable by default. The
+ * seam is exercised by the router/proposal-pipeline tests.
  */
 export function filterByPolicy(
 	proposals: readonly ClassificationProposal[],
 	policy: PolicyRegistry | undefined,
-	locale: string | undefined
+	locale: string | undefined,
+	routerPrior?: InputShapeRoute
 ): ClassificationProposal[] {
-	if (!policy) return [...proposals]
-	return policy.apply(proposals, locale)
+	const effective = policy ?? (routerPrior ? policyRegistryFromRoute(routerPrior) : undefined)
+	if (!effective) return [...proposals]
+	return effective.apply(proposals, locale)
 }
 
 /**
@@ -150,10 +164,16 @@ export function writeProposalsToContext(
 export async function runProposalPipeline(
 	context: TokenContext,
 	classifiers: readonly ProposalClassifier[],
-	options: { policy?: PolicyRegistry; locale?: string; classifierContext?: ClassifierContext } = {}
+	options: {
+		policy?: PolicyRegistry
+		locale?: string
+		classifierContext?: ClassifierContext
+		/** Input-shape routed prior (#478 increment 2). Applied only when `policy` is absent. */
+		routerPrior?: InputShapeRoute
+	} = {}
 ): Promise<{ proposals: ClassificationProposal[]; writeback: WritebackResult }> {
 	const raw = await collectProposals(context.sections, classifiers, options.classifierContext ?? {})
-	const filtered = filterByPolicy(raw, options.policy, options.locale)
+	const filtered = filterByPolicy(raw, options.policy, options.locale, options.routerPrior)
 	const writeback = writeProposalsToContext(filtered, context)
 	return { proposals: filtered, writeback }
 }

@@ -27,10 +27,14 @@ function policyKey(component: ComponentTag, locale: string | undefined): string 
 export class InMemoryPolicyRegistry implements PolicyRegistry {
 	#entries = new Map<string, ClassifierPolicy>()
 
-	/** Build a registry pre-loaded with `rule_only` for every component. */
-	static withDefaults(): InMemoryPolicyRegistry {
+	/**
+	 * Build a registry pre-loaded with `mode` for every component (default `rule_only`). The
+	 * input-shape router (#478) passes a shape-derived default so the whole table starts from the
+	 * routed prior.
+	 */
+	static withDefaults(mode: PolicyMode = "rule_only"): InMemoryPolicyRegistry {
 		const registry = new InMemoryPolicyRegistry()
-		for (const policy of buildDefaultPolicies()) {
+		for (const policy of buildDefaultPolicies(mode)) {
 			registry.set(policy)
 		}
 		return registry
