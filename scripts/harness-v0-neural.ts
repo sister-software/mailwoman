@@ -77,6 +77,12 @@ interface Args {
 	 * byte-stable.
 	 */
 	assembled: boolean
+	/**
+	 * #478 inc 3: run the assembled arm with per-component arbitration ON (`runPipeline`'s
+	 * `arbitrate: true`). Only meaningful with `--assembled`. Lets the gate compare the arbitrated
+	 * pipeline's `v0-only vs ASSEMBLED` against the non-arbitrated assembled baseline.
+	 */
+	arbitrate: boolean
 }
 
 function parseArgs(): Args {
@@ -87,6 +93,7 @@ function parseArgs(): Args {
 		unitRepair: false,
 		symmetricMatch: false,
 		assembled: false,
+		arbitrate: false,
 	}
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
@@ -107,6 +114,7 @@ function parseArgs(): Args {
 		else if (a === "--unit-repair") out.unitRepair = true
 		else if (a === "--symmetric-match") out.symmetricMatch = true
 		else if (a === "--assembled") out.assembled = true
+		else if (a === "--arbitrate") out.arbitrate = true
 	}
 	if (!out.testsDir) {
 		console.error("Usage: scripts/harness-v0-neural.ts --tests <dir> [--out-json <path>] [...]")
@@ -389,7 +397,8 @@ async function runAssertion(
 	neuralClassifier: NeuralAddressClassifier,
 	parseOpts: Parameters<NeuralAddressClassifier["parse"]>[1],
 	symmetricMatch: boolean,
-	pipeline?: ReturnType<typeof createRuntimePipeline>
+	pipeline?: ReturnType<typeof createRuntimePipeline>,
+	arbitrate = false
 ): Promise<AssertionResult> {
 	const solutions = await v0Parser.parse(a.input)
 	const v0Records: ClassificationRecord[] = solutions.map((s) => s.classifications as ClassificationRecord)
@@ -430,7 +439,7 @@ async function runAssertion(
 	let assembledPass: boolean | undefined
 	let assembledRecord: ClassificationRecord | undefined
 	if (pipeline) {
-		const { tree: assembledTree } = await pipeline(a.input)
+		const { tree: assembledTree } = await pipeline(a.input, arbitrate ? { arbitrate: true } : undefined)
 		assembledRecord = neuralTreeToV0Record(decodeAsJson(assembledTree)).record
 		assembledPass = anyExpectedMatches(a.expected, assembledRecord)
 	}
@@ -718,7 +727,10 @@ async function main(): Promise<void> {
 	const pipeline = args.assembled
 		? createRuntimePipeline({ classifier: neural, ...(adminFst ? { fst: adminFst as never } : {}) })
 		: undefined
-	if (pipeline) console.error("Assembled-pipeline arm ON (--assembled): grading runPipeline alongside raw neural.")
+	if (pipeline)
+		console.error(
+			`Assembled-pipeline arm ON (--assembled${args.arbitrate ? " --arbitrate" : ""}): grading runPipeline${args.arbitrate ? " with per-component arbitration" : ""} alongside raw neural.`
+		)
 
 	console.error("Running harness...")
 	const t0 = performance.now()
@@ -727,7 +739,7 @@ async function main(): Promise<void> {
 	for (const a of all) {
 		i++
 		try {
-			results.push(await runAssertion(a, v0Parser, neural, parseOpts, args.symmetricMatch, pipeline))
+			results.push(await runAssertion(a, v0Parser, neural, parseOpts, args.symmetricMatch, pipeline, args.arbitrate))
 		} catch (err) {
 			console.error(`[harness] WARN: error on assertion ${i} (${a.input}): ${(err as Error).message}`)
 		}

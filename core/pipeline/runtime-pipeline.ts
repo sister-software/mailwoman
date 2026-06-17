@@ -12,7 +12,11 @@
  *   Implementation contract per `docs/articles/plan/reference/STAGES.md`.
  */
 
+import { proposalsToTree, treeToProposals } from "../decoder/proposals-to-tree.js"
+import { resolveProposalOverlaps } from "../decoder/resolve-proposal-overlaps.js"
 import type { AddressNode, AddressTree } from "../decoder/types.js"
+import { policyRegistryFromRoute } from "../policy/from-config.js"
+import { routeInputShape } from "../policy/input-shape-router.js"
 import type { ComponentTag } from "../types/component.js"
 import { prefetchReconcileLookups } from "./reconcile-lookups.js"
 import type { ClassifierCandidate } from "./reconcile.js"
@@ -197,9 +201,12 @@ export async function runPipeline(
 	// caller-supplied posterior (a stronger postcode anchor — never overwrite it). Off (no stage) →
 	// `effectiveOpts === opts` → byte-stable. See the soft-signal wiring spec.
 	let effectiveOpts = opts
+	// Captured for the arbitration router signal (#478 inc 3) as well as the resolver anchor below.
+	let placedPrediction: { country: string | null; confidence: number; posterior?: Record<string, number> } | undefined
 	if (stages.placeCountry) {
 		const tPlace = performance.now()
 		const placed = stages.placeCountry(normalized.normalized)
+		placedPrediction = placed
 		timing["place-country"] = performance.now() - tPlace
 		if (placed.country && placed.country !== "OTHER" && !opts?.resolveOpts?.anchorPosterior) {
 			effectiveOpts = {
@@ -355,6 +362,34 @@ export async function runPipeline(
 		const tClassify = performance.now()
 		tree = await safeClassify(stages.classifier, normalized.normalized, queryShape, stages.fst)
 		timing["token-classify"] = performance.now() - tClassify
+	}
+
+	// #478 increment 3: per-component rule-vs-neural arbitration over the (argmax) neural tree.
+	// Default-OFF (`opts.arbitrate`) and requires a `ruleProposer` stage. Union the WHOLE-TEXT neural
+	// parse (preserves the model's sequence context — deliberately NOT the per-section proposal
+	// fan-out) with the solved v0 rule parse, filter per-component by the input-shape router prior,
+	// drop overlapping survivors (the coherence pass), and rebuild the tree from the survivors.
+	// Reconcile (above) stays the orthogonal opt-in; this operates on whatever `tree` it produced.
+	if (opts?.arbitrate && stages.ruleProposer) {
+		throwIfAborted(opts)
+		const tArb = performance.now()
+		const placerSignal =
+			placedPrediction !== undefined
+				? {
+						country: placedPrediction.country,
+						abstained: placedPrediction.country === null || placedPrediction.country === "OTHER",
+					}
+				: null
+		const route = routeInputShape(
+			{ kind: kind.kind, confidence: kind.confidence },
+			{ characterClass: queryShape.characterClass },
+			placerSignal
+		)
+		const neuralProposals = treeToProposals(tree, "neural")
+		const ruleProposals = await stages.ruleProposer(normalized.normalized, locale.locale)
+		const arbitrated = policyRegistryFromRoute(route).apply([...neuralProposals, ...ruleProposals], locale.locale)
+		tree = proposalsToTree(normalized.normalized, resolveProposalOverlaps(arbitrated))
+		timing["arbitrate"] = performance.now() - tArb
 	}
 
 	if (phraseProposals.length > 0 && tree.roots.length >= 0) {

@@ -6,3 +6,4 @@
 
 export * from "./AddressParser.js"
 export * from "./proposal-pipeline.js"
+export * from "./solution-to-proposals.js"
