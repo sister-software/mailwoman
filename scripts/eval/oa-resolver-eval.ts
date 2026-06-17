@@ -403,7 +403,11 @@ async function main(): Promise<void> {
 		return false
 	}
 
-	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
+	// #690: --normalize-case title-cases all-caps input before the model (detection-gated). Off by default.
+	const normalizeCase = process.argv.includes("--normalize-case")
+	const parseOpts = { postcodeRepair: true, ...(normalizeCase ? { normalizeCase: true } : {}) } as Parameters<
+		typeof neural.parse
+	>[1]
 	// `defaultCountry` is the hard country filter applied to admin lookups when the parse carries no
 	// resolved country node. It MUST match the dataset's locale — hardcoding "US" silently filters a
 	// non-US eval to US places (a German "Berlin" then loses to a tiny US Berlin). Settable via

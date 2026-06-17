@@ -25,6 +25,7 @@ import { proposeSpans, type ProposedSpan, type SpanProposerLexicon } from "@mail
 
 import { detectAddressSystem } from "./address-system.js"
 import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.js"
+import { normalizeInputCase } from "./case-normalize.js"
 import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
@@ -224,8 +225,13 @@ export class NeuralAddressClassifier {
 	/** Tokenize → infer → Viterbi (or argmax) → decoder tree. */
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
 		if (text.length === 0) return { raw: text, roots: [] }
-		const { tokens } = await this.#decode(text, opts)
-		return buildAddressTree(text, tokens, opts?.calibrate ? { calibrate: opts.calibrate } : undefined)
+		// #690: title-case all-caps ASCII input so the mixed-case-trained model doesn't go OOD.
+		// Detection-gated (mixed-case + non-ASCII untouched), opt-in. ASCII title-case is char-for-char
+		// length-preserving, so token offsets are unaffected; the tree is built from the normalized text
+		// (values come out title-cased — the SHOUTING is gone, the resolver name-matches case-insensitively).
+		const modelText = opts?.normalizeCase ? normalizeInputCase(text) : text
+		const { tokens } = await this.#decode(modelText, opts)
+		return buildAddressTree(modelText, tokens, opts?.calibrate ? { calibrate: opts.calibrate } : undefined)
 	}
 
 	/**
@@ -484,6 +490,16 @@ export interface ParseOpts {
 	 * v0.7.2 arena re-run quantifies its delta. See `./unit-repair.ts`.
 	 */
 	unitRepair?: boolean
+	/**
+	 * When true AND the input is detected ALL-CAPS (registry/compliance data like
+	 * `214 JONES RD, ELKHART, TX 75839`), title-case the input before the model sees it. The model
+	 * trains on mixed-case text, so all-caps is partly OOD — it drops/mis-bounds tokens (#690:
+	 * `PALESTINE` → locality `ALESTINE`; all-caps locality 3/5 vs title-case 5/5). Detection-gated, so
+	 * MIXED-case input is untouched (byte-stable). Off by default. On all-caps input the output values
+	 * are title-cased (the SHOUTING is normalized away — better, and the resolver name-matches
+	 * case-insensitively regardless).
+	 */
+	normalizeCase?: boolean
 	/**
 	 * Optional span-confidence calibrator (task #59). When provided, each decoded span's `conf=` is
 	 * mapped through it (isotonic lookup table → calibrated probability of correctness). OPT-IN —
