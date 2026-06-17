@@ -33,10 +33,9 @@ function mulberry32(seed: number): () => number {
 // The stress tag each shape is built to teach (the boundary the model wobbles on).
 const STRESS_TAG: Record<BoundaryStressTemplate, string> = {
 	"street-eats-affix": "street_suffix",
-	"comma-less-city-state": "region",
+	"comma-less-city-state": "street",
 	"fr-prefix": "street_prefix",
 	"house-number-after-street": "house_number",
-	"au-uk-slash-unit": "house_number",
 }
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })

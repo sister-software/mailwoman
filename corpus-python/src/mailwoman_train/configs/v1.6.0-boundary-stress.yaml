@@ -8,17 +8,18 @@
 # decomposition (#702) showed it surfacing under many names. The "before" baseline
 # (docs/articles/evals/2026-06-17-boundary-stress-baseline.md) measured the current model at 38.7–70%
 # on these boundaries vs ~95%+ on clean canonical:
-#   (diverse-pool baseline — the thin-pool first read inflated street_suffix to 48 / fr-prefix to 70):
-#   street-eats-affix street_suffix 40.7 / street 38 | comma-less region 74.7 / street 44 |
-#   fr-prefix prefix 47.7 / street 43 | house-number-after-street house_number 50.7 |
-#   au-uk-slash-unit house_number 38.7 / unit 39 / region 9 (worst)
+#   (diverse-pool baseline, BASE-LOCALES-ONLY US/FR/DE — the #511 lint flagged an AU-bearing draft as a
+#   real contradiction, so AU/NZ/UK + the slash shape are deferred to a separate AU-coverage shard):
+#   street-eats-affix street_suffix 40.7 / street 38 | comma-less(US) street 46 / locality 91 |
+#   fr-prefix prefix 47.7 / street 43 | house-number-after-street house_number 50.7 / street 49.
+#   The STREET span is the common casualty (38-49% across all four shapes).
 # The shard puts the gold boundary on diverse realizations of exactly these 5 shapes (alignRow-clean,
 # 0% quarantine). It ALSO reinforces fr.house_number (the number-after-street shape).
 #
 # PRE-REGISTERED GATE (DeepSeek-signed targets; per-shape via scripts/eval/boundary-stress-baseline.ts):
-#   - street_suffix 40.7 → ≥55 ; comma-less region 74.7 → ≥85 ; fr-prefix 47.7 → ≥70 ;
-#     house-number-after-street 50.7 → ≥65 ; au-uk-slash-unit 38.7 → ≥60 (anchored to the diverse
-#     baseline; the lifts are larger than the thin-pool first read implied).
+#   - street_suffix 40.7 → ≥55 ; comma-less(US) street 46 → ≥65 ; fr-prefix 47.7 → ≥70 ;
+#     house-number-after-street 50.7 → ≥65 ; AND the shared STREET span ≥65 on all four shapes
+#     (anchored to the diverse base-locale baseline).
 #   NON-REGRESSION FLOORS (must hold, the v4.x ship-gate): US street ≥80.4, locality ≥72.9,
 #     unit ≥90.6, US postcode ≥97 ; affix prefix ≥78 / suffix ≥67 ; FR postcode ≥99.5,
 #     fr.house_number ≥87 (the v4.6.0 re-baseline) ; DE native-order locality ≥83.8 ; country band 83.3.
@@ -29,11 +30,14 @@
 #   DECISION: targets move up + floors hold → ship candidate. Spine regression → STOP, re-audit the
 #     shard's alignment before any weight surgery.
 #
-# CORPUS PREREQUISITE (operator-machine step — NOT done here): synth-boundary-stress must be built into
-# a versioned corpus first. Generate the shard JSONL (scripts/build-boundary-stress-shard.mjs), run the
-# #511 base-consistency lint against the base corpus (lint-corpus-shard.ts — needs base corpus-stats),
-# assemble its overlay manifest (the scripts/assemble-*-overlay-manifest.py pattern), build the new
-# corpus version, then point `corpus_dir` at it. Until then this config references a TODO path.
+# CORPUS PREREQUISITE: the shard JSONL→parquet + the overlay manifest are BUILT (a v0.6.0-boundary-stress
+# corpus is staged at /mnt/playpen/.../corpus/versioned/v0.6.0-boundary-stress/ — assembled via
+# scripts/assemble-boundary-stress-overlay-manifest.py against the v0.5.0 base, schema-matched). Operator
+# steps: (1) `modal volume put` the parquet + manifest, (2) **run the FULL #511 base-consistency lint**
+# (build-corpus-stats over the whole base, not a sample — the night-16 sampled lint flagged distribution
+# outliers, e.g. US/FR locality tokens that read as I-street, that a source-clustered sample can't
+# resolve; if the full lint confirms a locality/street overlap, tune the shard's locality vocabulary to
+# tokens the base labels as localities). DO NOT retrain until that lint is clean. Then `modal run`.
 #
 # Launch (after the corpus build): modal run -d scripts/modal/train_remote.py \
 #   --config v1.6.0-boundary-stress.yaml --resume none
