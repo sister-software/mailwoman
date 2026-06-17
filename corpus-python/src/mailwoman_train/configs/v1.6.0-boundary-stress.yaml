@@ -57,15 +57,17 @@
 #
 # CORPUS PREREQUISITE: the shard JSONL→parquet + the overlay manifest are BUILT (a v0.6.0-boundary-stress
 # corpus is staged at /mnt/playpen/.../corpus/versioned/v0.6.0-boundary-stress/ — assembled via
-# scripts/assemble-boundary-stress-overlay-manifest.py against the v0.5.0 base, schema-matched). Operator
-# steps: (1) `modal volume put` the parquet + manifest, (2) **run the FULL #511 base-consistency lint**
-# (build-corpus-stats over the whole base). The night-16 sampled lint found a REAL locality/street
-# overlap: common US city names (Paris, Springfield) appear predominantly as STREET tokens in the base
-# (usgov-nad/tiger), so the shard's B-locality is the minority sense (the "5th Avenue Theatre" class).
-# The CRF is context-aware and may resolve it — so WATCH the per-locale F1 for locality-token regression
-# in the retrain; if it regresses, tune the shard's locality vocabulary to distinctive cities the base
-# labels as localities. (The affix-tag flags are train-time-relabel artifacts — safe, lexicon-verified.)
-# DO NOT retrain until the full lint is clean OR the overlap is confirmed context-resolved. Then `modal run`.
+# scripts/assemble-boundary-stress-overlay-manifest.py against the v0.5.0 base, schema-matched).
+#
+# #511 locality/street overlap — INVESTIGATED + RESOLVED (no longer a pre-retrain blocker). A targeted
+# base scan (label distribution per shard-locality) found the original US vocab was a real contradiction
+# (Madison 96% street, Portland 95%, Springfield-IL 84% — the "5th Avenue Theatre" class). FIXED: the US
+# vocab is now DERIVED + verified locality-dominant (Albuquerque 258584:8, Indianapolis 219700:29, …). The
+# FR flag was a SAMPLING artifact (the all-shard scan undersampled the FR ban block; the FR-block scan
+# shows Paris/Marseille/Lyon 95–99% locality in FR data) → familiar dept-diverse FR cities kept. DE dropped
+# (street-dominated too; synth-german covers its native order). Re-baselined: street_suffix 41.7, comma-less
+# 47, fr-prefix 55, hn-after 51.3. Affix-tag lint flags are train-time-relabel artifacts (lexicon-verified).
+# Operator steps: (1) `modal volume put` the (regenerated) parquet + manifest, (2) `modal run`.
 #
 # Launch (after the corpus build): modal run -d scripts/modal/train_remote.py \
 #   --config v1.6.0-boundary-stress.yaml --resume none
