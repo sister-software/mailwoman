@@ -24,6 +24,7 @@ const shards = new ShardProvider(mod, "/mnt/playpen/mailwoman-data")
 import { readFileSync } from "node:fs"
 const SRC = process.argv[2] ?? "txhhsc"
 const N = Number(process.argv[3] ?? "200")
+const NOCOMMA = process.argv.includes("nocomma") // #694: ingestRows space-joins columns (no commas)
 let addrs: string[]
 if (SRC === "fcc") {
 	const lines = readFileSync("/tmp/fcc-rhc-tx.csv", "utf8").split("\n").filter((l) => l.trim())
@@ -54,7 +55,9 @@ const tierOf = async (raw: string) => {
 	const g = await geocodeAddress(raw, { classifier, resolver, shards: shards.for, defaultCountry: "US", placeCountry: false })
 	return { lat: g.lat, tier: g.resolution_tier }
 }
-for (const raw of addrs) {
+const prep = (s: string) => (NOCOMMA ? s.replace(/,/g, "") : s)
+for (const raw0 of addrs) {
+	const raw = prep(raw0)
 	const a = await tierOf(raw)
 	const b = await tierOf(titleCaseInput(raw))
 	if (a.lat !== null) rawLat++
