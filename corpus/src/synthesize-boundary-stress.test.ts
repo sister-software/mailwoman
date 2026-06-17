@@ -78,6 +78,13 @@ describe("synthesizeBoundaryStressRow", () => {
 		expect(labels.indexOf("B-street")).toBeLessThan(labels.indexOf("B-house_number"))
 	})
 
+	it("au-uk-slash-unit: the slash splits into unit then house_number (clean BIO)", () => {
+		const labels = labelsFor("au-uk-slash-unit", 5)
+		expect(labels).toContain("B-unit")
+		expect(labels).toContain("B-house_number")
+		expect(labels.indexOf("B-unit")).toBeLessThan(labels.indexOf("B-house_number"))
+	})
+
 	it("is deterministic under a fixed seed", () => {
 		const a = synthesizeBoundaryStressRow(undefined, { random: mulberry32(42) })
 		const b = synthesizeBoundaryStressRow(undefined, { random: mulberry32(42) })
