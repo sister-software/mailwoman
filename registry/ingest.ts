@@ -172,6 +172,15 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
 export interface IngestOptions {
 	/** The geocoding seam. Without it, records carry name/org but no resolved address. */
 	geocodeAddress?: GeocodeAddress
+	/**
+	 * Separator for joining a multi-column ADDRESS mapping (name/org always join with a space). Default
+	 * `" "`. Pass `", "` to give the parser delimited input (`"214 Main St, Austin, TX 78701"`) instead
+	 * of a concatenated run (`"214 Main St Austin TX 78701"`) — the latter strips the parser's
+	 * segmentation boundaries and is partly OOD (it also breaks all-caps case-normalization; #694).
+	 * Default-OFF (`" "`) so existing callers + the space-trained dedup GBT stay byte-stable; opt into
+	 * `", "` for new geocode/record-matcher flows after validating the parse shift.
+	 */
+	addressSeparator?: string
 }
 
 /** Parse a CSV string (with a header row) into row objects keyed by column name. */
@@ -180,13 +189,13 @@ export function parseCsv(text: string): Record<string, string>[] {
 }
 
 /** Join the named column(s) of a row into a single trimmed string, or undefined if empty. */
-function pick(row: Record<string, string>, columns?: string | string[]): string | undefined {
+function pick(row: Record<string, string>, columns?: string | string[], separator = " "): string | undefined {
 	if (!columns) return undefined
 	const list = Array.isArray(columns) ? columns : [columns]
 	const value = list
 		.map((c) => row[c]?.trim())
 		.filter(Boolean)
-		.join(" ")
+		.join(separator)
 		.trim()
 	return value || undefined
 }
@@ -208,7 +217,7 @@ export async function ingestRows(
 		const id = (mapping.id ? row[mapping.id]?.trim() : "") || String(index)
 		const nameValue = pick(row, mapping.name)
 		const orgValue = pick(row, mapping.organization)
-		const addressValue = pick(row, mapping.address)
+		const addressValue = pick(row, mapping.address, opts.addressSeparator ?? " ")
 
 		let attributes: Record<string, string> | undefined
 		if (mapping.attributes) {

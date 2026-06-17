@@ -111,6 +111,13 @@ describe("ingestRows", () => {
 		expect(b!.phone).toBeUndefined()
 	})
 
+	it("joins a multi-column address with addressSeparator when set, space otherwise (#694)", async () => {
+		const [dflt] = await ingestRows(parseCsv(CSV), mapping, { geocodeAddress: stubGeocode })
+		expect(dflt!.address?.formatted).toBe("123 Main St Portland OR 97201") // default: space (byte-stable)
+		const [comma] = await ingestRows(parseCsv(CSV), mapping, { geocodeAddress: stubGeocode, addressSeparator: ", " })
+		expect(comma!.address?.formatted).toBe("123 Main St, Portland, OR, 97201") // delimited for the parser
+	})
+
 	it("falls back to the row index when no id column maps", async () => {
 		const [first] = await ingestRows(parseCsv(CSV), { name: "name" })
 		expect(first!.id).toBe("0")
