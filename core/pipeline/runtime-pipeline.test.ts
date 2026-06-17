@@ -10,6 +10,8 @@
 import { describe, expect, it, vi } from "vitest"
 import type { AddressNode, AddressTree } from "../decoder/types.js"
 import type { Resolver } from "../resolver/types.js"
+import type { Span } from "../tokenization/index.js"
+import type { ClassificationProposal, ComponentTag } from "../types/index.js"
 import { runPipeline } from "./runtime-pipeline.js"
 import type {
 	AddressClassifier,
@@ -599,5 +601,100 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 		})
 		expect(result.path).toBe("fast-path")
 		expect(seen[0]).toMatchObject({ anchorPosterior: { US: 0.96 }, anchorWeight: 1.0 })
+	})
+})
+
+describe("runPipeline — arbitration (#478 inc 3)", () => {
+	function ruleProp(component: ComponentTag, body: string, start: number, confidence: number): ClassificationProposal {
+		return {
+			span: { start, end: start + body.length, body } as unknown as Span,
+			component,
+			confidence,
+			source: "rule",
+			source_id: "v0-test",
+			penalty: 0,
+		}
+	}
+
+	const cleanKind: QueryKindResult = { kind: "structured_address", confidence: 0.9, alternatives: [] }
+	const alphaShape = (): QueryShapeLite => ({ knownFormats: [], characterClass: "alpha" })
+
+	it("arbitrate unset → neural tree unchanged, ruleProposer never called (byte-stable)", async () => {
+		const neuralRoots: AddressNode[] = [
+			{ tag: "street", value: "Main Street", start: 0, end: 11, confidence: 0.8, children: [] },
+		]
+		const ruleProposer = vi.fn(async () => [ruleProp("street", "Main", 0, 0.9)])
+		const result = await runPipeline("Main Street", {
+			computeQueryShape: alphaShape,
+			classifyKind: async () => cleanKind,
+			classifier: fakeClassifier(fakeTree("Main Street", neuralRoots)),
+			ruleProposer,
+		})
+		expect(ruleProposer).not.toHaveBeenCalled()
+		expect(result.tree.roots).toEqual(neuralRoots)
+		expect(result.timing["arbitrate"]).toBeUndefined()
+	})
+
+	it("rule_preferred route: rule decomposition replaces the coarse neural span", async () => {
+		// clean structured + alpha + no placer → rule_preferred. Rule proposes house_number[0,3] +
+		// street[4,15]; the neural coarse street[0,15] overlaps both → rule preference + coherence win.
+		const ruleProposer = vi.fn(async () => [ruleProp("house_number", "350", 0, 0.9), ruleProp("street", "Main Street", 4, 0.9)])
+		const result = await runPipeline(
+			"350 Main Street",
+			{
+				computeQueryShape: alphaShape,
+				classifyKind: async () => cleanKind,
+				classifier: fakeClassifier(
+					fakeTree("350 Main Street", [
+						{ tag: "street", value: "350 Main Street", start: 0, end: 15, confidence: 0.8, children: [] },
+					])
+				),
+				ruleProposer,
+			},
+			{ arbitrate: true }
+		)
+		expect(ruleProposer).toHaveBeenCalled()
+		expect(result.tree.roots.map((r) => r.tag)).toContain("house_number")
+		expect(result.tree.roots.every((r) => r.source === "rule")).toBe(true)
+		expect(result.timing["arbitrate"]).toBeGreaterThanOrEqual(0)
+	})
+
+	it("neural_preferred (OOD script) keeps the neural span over an overlapping rule span", async () => {
+		const ruleProposer = vi.fn(async () => [ruleProp("street", "abc", 0, 0.95)])
+		const result = await runPipeline(
+			"abc",
+			{
+				computeQueryShape: () => ({ knownFormats: [], characterClass: "cjk" }),
+				classifyKind: async () => cleanKind,
+				classifier: fakeClassifier(
+					fakeTree("abc", [{ tag: "street", value: "abc", start: 0, end: 3, confidence: 0.5, children: [] }])
+				),
+				ruleProposer,
+			},
+			{ arbitrate: true }
+		)
+		expect(result.tree.roots).toHaveLength(1)
+		expect(result.tree.roots[0]?.source).toBe("neural")
+	})
+
+	it("flat round-trip: arbitrate with no rule proposals preserves every neural node (no-op guard)", async () => {
+		const tree = fakeTree("350 Main", [
+			{ tag: "house_number", value: "350", start: 0, end: 3, confidence: 0.9, children: [] },
+			{ tag: "street", value: "Main", start: 4, end: 8, confidence: 0.9, children: [] },
+		])
+		const result = await runPipeline(
+			"350 Main",
+			{
+				computeQueryShape: alphaShape,
+				classifyKind: async () => cleanKind,
+				classifier: fakeClassifier(tree),
+				ruleProposer: async () => [],
+			},
+			{ arbitrate: true }
+		)
+		expect(result.tree.roots.map((r) => ({ tag: r.tag, value: r.value, start: r.start, end: r.end }))).toEqual([
+			{ tag: "house_number", value: "350", start: 0, end: 3 },
+			{ tag: "street", value: "Main", start: 4, end: 8 },
+		])
 	})
 })
