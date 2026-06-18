@@ -12,6 +12,8 @@ gated NO-PROMOTE) through build → #511 lint → recipe → retrain → gate. N
 
 _(Living document — sketched as the shift runs; final numbers + verdict at the end.)_
 
+> **CORRECTION (post-shift re-eval, 2026-06-18):** the PROMOTE recommendation in §6 is **retracted.** The shift benchmarked v1.7.0 against v1.5.1, which was never the production default — v1.5.0 is (md5-confirmed). Re-graded against v1.5.0 on the assembled coordinate, v1.7.0 is **flat** (US locality-match 83.8 vs 83.9, p50 3.3 vs 3.3 km) and **regresses country-homograph by 2.4** (the 83.3 floor is v1.5.0's real score, not stale). Verdict: **HOLD v1.5.0, do not promote.** Full re-eval: [v1.5.0 vs v1.7.0 head-to-head](./2026-06-18-v150-vs-v170-head-to-head.md); see the Addendum at the end.
+
 ## 1. What shipped
 
 - **Phase 1 — balanced shard** (`a6da3500`): `build-boundary-stress-shard.mjs` weighted composition
@@ -188,3 +190,34 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
 | CI failures | 0 (docs-build green on all commits) |
 | commits | 14 |
 | demo / production regressions | n/a (no promote — candidate shipped beside canonical) |
+
+## Addendum — promote retracted on re-eval (2026-06-18)
+
+The shift's verdict (§6: "PROMOTE v1.7.0, a net improvement over v1.5.1") rested on a wrong baseline.
+**v1.5.1 was never promoted** — it was the falsified weight-6.0 experiment (worse than v1.5.0's
+weight-3.0). The production default is **v1.5.0** (model-card 4.6.0; md5 `4674d3…` ==
+`model-v150-step-40000-int8.onnx`, the fr-order recovery model). Every §6 delta ("+5.1 locality",
+"fr.house_number +10.2, v1.5.1 was failing its floor", "stale country floor") was measured against
+that worse model.
+
+Re-anchored to v1.5.0 ([head-to-head](./2026-06-18-v150-vs-v170-head-to-head.md)):
+
+- **US assembled coordinates: FLAT** — locality-match 83.8% vs 83.9%, coord p50 3.3 vs 3.3 km, p90
+  10.7 vs 10.7. The locality F1 gain (real at the label level) does not reach the coordinate.
+- **country-homograph: −2.4** (80.9 vs v1.5.0's 83.3). The floor is **not stale** — 83.3 is exactly
+  v1.5.0's score. A real regression.
+- **fr.house_number: +7.5** over v1.5.0's 87.4 (which already passes its floor) — a real label gain,
+  but FR coordinates are unmeasurable with the current resolver (resolves under 10% of FR), so it is
+  label-only.
+
+**Verdict: HOLD v1.5.0. Do not promote v1.7.0.** No coordinate-level case, plus a country regression.
+
+**The lever moved.** The US coordinate misses are rural-gazetteer coverage (SD 62%, VT 31%
+locality-match — identical across model versions), not model tagging. The model has caught up to its
+database; the next US gain is in the gazetteer/resolver, not a retrain. v1.7.1 (street recovery)
+won't change the coordinate picture and isn't worth the GPU.
+
+**Process lesson:** confirm the production default by md5 against the shipped artifact before using it
+as a baseline — don't assume the latest training run is the default. And grade the assembled
+coordinate, not just the assembled per-locale F1. The shift fell into a one-level-deeper version of
+the same trap the blog post warns about.
