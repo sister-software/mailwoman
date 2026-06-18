@@ -64,3 +64,49 @@ gotcha). Every `sync_*` clears `…/mailwoman_train/__pycache__` before `vol.com
 The Volume persists across runs (outputs under `/data/output*`). A failed train doesn't corrupt the
 synced corpus, so re-launch after fixing the config/recipe — no re-sync needed unless the corpus changed.
 `modal volume get mailwoman-training /output-<run>/ ./output/` pulls a finished run's artifacts.
+
+## After the run: the promote/no-promote gate (v1.6.0-boundary-stress example)
+
+The training function writes ONLY checkpoints + `train_log.csv` to the output dir — **no `model.onnx`,
+`model-card.json`, or `crf-transitions.json`.** You produce the evaluatable artifact yourself. Two
+simplifiers for this model: (1) the STAGE3 label set is stable, so the existing
+`neural-weights-en-us/model-card.json` (labels-identical) is reused as-is — no packaging step for the
+eval. (2) `crf_loss_weight` is `0.0`, so `export_crf_transitions()` returns `None` and the bundle ships
+no `crf-transitions.json`; production therefore decodes **argmax**, and a gate run without it is faithful.
+
+```bash
+# 1. Export the final checkpoint to fp32 ONNX (writes {output-dir}/model.onnx on the volume)
+modal run scripts/modal/train_remote.py::export_onnx \
+  --output-dir=/data/output-v160-boundary-stress-s42 --step=40000
+
+# 2. Int8-quantize it (must run in the training image; local ORT trips on the dynamo graph)
+modal run scripts/modal/train_remote.py::quantize_onnx \
+  --fp32-path=/data/output-v160-boundary-stress-s42/model.onnx \
+  --int8-path=/data/models/quantized/model-v160-step-40000-int8.onnx
+
+# 3. Fetch the int8 artifact (the ship format — grade what production runs)
+mkdir -p ./out/v160
+modal volume get mailwoman-training /models/quantized/model-v160-step-40000-int8.onnx ./out/v160/model.onnx
+
+TOK=/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model
+
+# 4a. The 4-shape TARGET gate (the headline — street_suffix/comma-less/fr-prefix/hn-after)
+node --experimental-strip-types scripts/eval/boundary-stress-gate.ts \
+  --model ./out/v160/model.onnx --tokenizer "$TOK" \
+  --model-card neural-weights-en-us/model-card.json --n 300
+
+# 4b. The per-locale FLOORS gate (spine non-regression). score-affix.ts hardcodes the repo card +
+#     tokenizer — both already correct for v1.6.0 (labels identical, same v0.6.0-a0 tokenizer).
+scripts/eval/promotion-gate.sh \
+  --model ./out/v160/model.onnx --int8 ./out/v160/model.onnx \
+  --gate scripts/eval/gates/v1.6.0-boundary-stress.json \
+  --tokenizer "$TOK" --card neural-weights-en-us/model-card.json \
+  --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json \
+  --out-dir /tmp/gate-v160
+cat /tmp/gate-v160/verdict.json
+```
+
+Both must pass to ship: 4a moves the four boundary targets up; 4b holds the spine floors. The floors
+spec (`scripts/eval/gates/v1.6.0-boundary-stress.json`) carries a stated `us.street` caveat — the recipe's
+80.4 is the pre-#492 shipped value; recent models sit at ~76-78, so it's floored at the committed 74.0
+pending a re-anchor to v1.5.1's measured number.
