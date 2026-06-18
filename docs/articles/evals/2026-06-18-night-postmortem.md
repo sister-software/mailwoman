@@ -105,16 +105,17 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
   flagged localities — was ITSELF sample-biased** (a small tiger/nad-heavy sample read Indianapolis 54%
   street, but the v1.6.0 verification has it 219700:29 LOCALITY — the small sample lied). FIRM lesson after
   three tries: judge a token's tag-dominance by FULL per-token counts, not a small scan; a small sample is
-  street-biased because the street sources (tiger 39 + nad 378 parts) dwarf the locality sources. So I built
-  the COUNTRY-SCOPED lint (v2, `lint-shard-vocab.py`) — tally each token SCOPED to the country the shard uses
-  it in — **and it WORKS** (the lint earns its keep a 3rd time): it correctly CLEARS the big locality-dominant
-  cities (Paris/Marseille/Lyon, Albuquerque/Indianapolis/Sacramento/Miami — none flagged) and FLAGS genuinely
-  street-dominant ones the v1.6.0 work missed (it only verified the big cities): FR Avignon/Mulhouse/Toulon/
-  Perpignan/Sens/Antony/Poitiers/Rambouillet, US Glendale/Portsmouth/Nashville/Fairbanks/Syracuse/Tulsa. So
-  the v0.6.1 locality vocab DOES carry several street-dominant tuples — a REAL #511 issue (correcting my
-  too-hasty "the localities stand"). It is NOT a v1.7.0 blocker (the shard net-improved locality +5.1; the
-  big locality-dominant cities carry the lesson), but it IS a **PRUNE list for the next shard.** ACTION: run
-  the full v2 lint (`--fraction 1.0`, slow) + drop the street-dominant cities from FR_TUPLES/US_TUPLES.
+  street-biased because the street sources (tiger 39 + nad 378 parts) dwarf the locality sources. I then built
+  the COUNTRY-SCOPED lint (v2, `lint-shard-vocab.py`) — the DESIGN is right, but **the SAMPLING is not, and
+  the larger run proved it: the result is SAMPLE-DEPENDENT.** The 0.1 smoke CLEARED Paris (locality); the 0.5
+  run FLAGS Paris 89% street and Lyon 100% street — and BOTH contradict the v1.6.0 full-block count (Paris
+  515605:24789 = 95% LOCALITY). Sampling the first-N parts of ORDERED source blocks is biased. So the
+  "prune-list" is BOGUS — it flags the very big cities v1.6.0 verified clean. **I got over-eager on the smoke
+  and committed a wrong "found a real issue" claim; this corrects it.** The v0.6.1 vocab STANDS (v1.6.0
+  full-count + v1.7.0's +5.1 locality gain). FIRM lesson (the sampling bit FIVE times): only a FULL per-token
+  count is reliable for tag-dominance, AND validate any new lint against a KNOWN case (Paris) before trusting
+  its flags. The lint needs a true full-count mode (all parts/rows, no sampling) — the real follow-up; the
+  sampled modes are all biased. STOPPED here — over-invested, and the honest output is "the tool isn't trustworthy yet."
 - _(more as the shift runs)_
 
 ## 4. Decisions made autonomously
