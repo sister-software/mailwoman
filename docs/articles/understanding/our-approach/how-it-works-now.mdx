@@ -12,7 +12,7 @@ tags:
 
 # How it works now — the staged pipeline
 
-Mailwoman v2 (current as of May 2026) runs addresses through a **six-stage pipeline.** Each stage adds one kind of knowledge the stages below it cannot easily derive. Rule classifiers and a neural classifier coexist. A **policy registry** decides whose vote wins for each address component.
+Mailwoman runs addresses through a **staged pipeline.** Each stage adds one kind of knowledge the stages below it cannot easily derive. Two models are involved, not one: a small **coarse-placer** that guesses the country up front (Stage 1.5), and the main **neural classifier** that labels the tokens (Stage 3). Rule classifiers run alongside the neural classifier, and a **policy registry** decides whose vote wins for each address component. Outside knowledge — postcodes, the gazetteer — reaches the model as soft hints called **anchors**, which inform a decision but never override it.
 
 This article assumes you have read [How it used to work](./how-it-used-to-work.mdx). For the design principles behind the staged decomposition, read [The knowledge ladder](./the-knowledge-ladder.mdx).
 
@@ -22,13 +22,18 @@ This article assumes you have read [How it used to work](./how-it-used-to-work.m
 flowchart TD
     A["Input string<br>'350 5th Ave, New York, NY 10118'"]
     A --> S1["Stage 1: Normalize<br>Unicode, whitespace, case folding"]
-    S1 --> S2["Stage 2: Locale gate<br>Script class + postcode-format detection"]
-    S2 --> S25["Stage 2.5: Kind classifier<br>Query shape: postcode_only, structured_address, intersection"]
-    S25 --> S27["Stage 2.7: Phrase grouper<br>Coherent input spans (rule-based)"]
-    S27 --> S3["Stage 3: Token classify<br>Rule classifiers + neural classifier"]
-    S3 --> S4["Stage 4: Sequence correct<br>CRF with frozen structural mask"]
-    S4 --> S5["Stage 5: Reconcile<br>Joint-coherent interpretation (joint decoding)"]
-    S5 --> S6["Stage 6: Resolve<br>WOF SQLite gazetteer lookup"]
+    S1 --> S15["Stage 1.5: Coarse-placer<br>separate small model — guesses the country (on by default)"]
+    S15 --> S2["Stage 2: Locale gate<br>script class + postcode-format detection"]
+    S2 --> S25["Stage 2.5: Kind classifier<br>query shape: postcode_only, structured_address, intersection"]
+    S25 --> S27["Stage 2.7: Phrase grouper<br>coherent input spans (rule-based)"]
+    S27 --> S3["Stage 3: Token classify<br>rule + neural classifier — one forward pass"]
+    ANCH["Anchors: soft hints retrieved from the databases<br>postcode → country; gazetteer place-name + homograph flags"]
+    ANCH -.->|"informs, never overrides"| S3
+    S3 --> S4["Stage 4: Sequence correct<br>CRF Viterbi, frozen structural mask"]
+    S4 -->|"default: argmax"| S6["Stage 6: Resolve<br>WOF gazetteer lookup + disambiguation"]
+    S4 -.->|"opt-in"| S5["Stage 5: Reconcile<br>joint decoding (off by default)"]
+    S5 -.-> S6
+    S15 -.->|"country prior"| S6
     S6 --> F["Resolved place with candidates"]
 ```
 
@@ -37,6 +42,10 @@ flowchart TD
 ### Stage 1 — Normalize
 
 Unicode normalization (NFD-decomposed accents → composed), locale-aware case folding, whitespace collapsing. Knows nothing about address structure. Cleans bytes so downstream layers see canonical text.
+
+### Stage 1.5 — Coarse-placer
+
+A separate, small model (#244) reads the whole normalized string and guesses its country, with a confidence. It is **on by default,** and it is the second model in the system. It has exactly one job: a fast, coarse country guess. It does _not_ feed the main classifier — its guess is held back and handed to the resolver (Stage 6), where it gently boosts in-country candidates when two places share a name. A confident "this looks French" never forces a French reading; it only tips the scale at resolution time. This is the same discipline as the anchors below: knowledge informs, it never overrides.
 
 ### Stage 2 — Locale gate
 
@@ -76,6 +85,17 @@ The v0.5.0 classifier (Thread C-s) adds two architectural changes gated behind c
 
 Both are scaffolded and tested in `main`. The full training run that exercises them (C-train) is in progress as of May 2026 — see the [v0.5.0 C-train blog post](pathname:///research/2026-05-24-v0-5-0-c-train-bisect).
 
+### How outside knowledge reaches the model — anchors
+
+The classifier never memorizes the world's place names; that is the gazetteer's job. Instead, knowledge from the databases is retrieved at inference time and fed in as soft input features — **anchors** — alongside the tokens:
+
+- **Postcode-anchor.** A postcode is looked up and the result ("this is probably in the United States") is fed in as a soft signal on the surrounding tokens.
+- **Gazetteer-anchor.** Each token is flagged with what the gazetteer knows about it — whether it matches a known country, region, PO box, or _homograph_ place-name (a place whose name also looks like something else, like "Paris" or "Reading").
+
+Both are optional and both are soft: they shift the model's probabilities, they never replace its reading. This is the one discipline that keeps the system from sliding back into a rule engine. We let a lookup table _override_ the model exactly once, for `country`, and reversed it within a day when a homograph eval caught the regression. Knowledge informs; it never overrides. For the mechanism, see [FST priors as shallow fusion](../../concepts/fst-priors-as-shallow-fusion.mdx) and [What Mailwoman is](../../concepts/what-mailwoman-is.mdx).
+
+The forward pass itself runs **once** per address. The anchors and the phrase prior are folded into the per-token scores, then a single decode (Stage 4) picks the labels. There is no loop, and no second neural read of the model's own output.
+
 ### Stage 4 — Sequence correct
 
 A CRF with a frozen structural transition mask enforces BIO sequence validity. The mask forbids orphan `I-*` sequences (no `I-locality` without preceding `B-locality` or `I-locality`). This is the fix for the "Saint Petersburg → Petersburg" clipping: the CRF transition `O → I-locality` is structurally impossible with the frozen mask.
@@ -92,11 +112,13 @@ score = phrase_conf × classifier_score × resolver_score × concordance_bonus
 
 The concordance bonus rewards parent-chain consistency in the WOF gazetteer. A fully-consistent WOF parent chain contributes `+concordanceWeight` in log-space. An explicit contradiction (`region=NY` when the locality's parent is Illinois) is a hard veto.
 
-Joint decode is **opt-in** behind a feature flag in the runtime as of May 2026. The argmax fallback path (sort spans by start position) is still the default until the classifier's top-k contract lands. Wiring joint decode as the default is the next integration step — tracked in the v0.5.0 ship PR.
+Joint decode is **opt-in**, off by default. It was briefly the default and then retired on 2026-06-14: joint reconcile broke the street + house_number precondition on 77–84% of clean US addresses while fixing none, and the damage stayed invisible because the evals graded the raw neural labels rather than the assembled parse a user actually receives. The default is now plain argmax (spans sorted by start position); reconcile stays behind a flag until it can be graded on the assembled coordinate. The successor mechanism for rule-vs-neural disagreement is the opt-in **arbitration** layer (#478), which edits the neural tree in a containment-preserving way and is also off by default.
 
 ### Stage 6 — Resolve
 
 Looks up parsed components against the WOF SQLite gazetteer. Returns place IDs, coordinates, parent chains, and alternate names. The resolver surfaces top-K candidates per administrative span (locality, region) so downstream systems can handle ambiguity.
+
+This is where "which Paris?" gets answered — never by the model, which only tagged "Paris" as a place. The resolver walks the parsed tree top-down and narrows each name with everything around it: a resolved parent constrains its children (a locality must sit inside the region that resolved above it), the country constrains the search, an exact-name match outranks a fuzzy one, and the coarse-placer's country guess (Stage 1.5) re-ranks candidates within a tier. Only when all of that still leaves a genuine tie does population break it — "Paris" with nothing else resolves to France because more people mean that one, the same shortcut a person on the street uses. See [the resolver and WOF](../../concepts/resolver-and-wof.mdx) and [importance vs population](../../concepts/importance-vs-population.mdx).
 
 ## The Ship-of-Theseus dial
 
@@ -128,7 +150,7 @@ import { PipelineExplorer } from "@site/src/components/PipelineExplorer/Pipeline
 
 - **CE-only training resolved the divergence problem.** The v0.5.2 model ships from a stable 100K-step CE-only training run on an A100. The dual-loss CRF-NLL + CE divergence that blocked v0.4.0 and v0.5.0 was resolved by setting `crf_loss_weight: 0.0` — CRF is used at inference only, not training. v0.5.3 diagnostic training is in progress with per-tag F1 visibility.
 - **The FST gazetteer prior is shipped but not yet in the browser.** The FST builder, Wikipedia importance scoring, and emission prior compose with the QueryShape soft prior in the Node.js pipeline. The browser `/demo` page runs the neural classifier directly without the FST — it would need a browser-compatible FST loader (Phase 4).
-- **Joint decode is still opt-in.** The reconciler produces single-token spans when phrase-grouper proposals don't cover multi-word streets/localities. It stays behind `forceJointReconcile` until the grouper proposes multi-word phrases.
+- **Joint decode is retired as the default (2026-06-14).** It stays behind `forceJointReconcile`; the default is argmax. Reconcile broke the street + house_number precondition on most clean US addresses while the label-level evals showed it improving — which is the whole reason we now grade the assembled parse, not the raw labels. See Stage 5 above.
 - **Locality/region confusion persists on some inputs.** "New York, NY" is fixed (region-aware guard). "Washington, DC" is partially fixed (FST correctly biases locality) but the model's high B-street confidence for "Washington" after a street phrase resists the prior. Fix is in training data, not more priors.
 - **The model is small.** 29M parameters (h384, 6 layers, 6 heads). Runs in ~10ms per address on CPU via ONNX Runtime. The int8 quantized model is 17 MB.
 
