@@ -51,10 +51,13 @@ describe("detectAddressSystem", () => {
 })
 
 describe("conventions table", () => {
-	it("fr forbids the USPS affix decomposition and pins the 5-digit shape", () => {
+	it("fr forbids only the trailing street_suffix (NOT street_prefix) and pins the 5-digit shape", () => {
+		// Post-#719: FR genuinely has a LEADING street_prefix ("Rue de Rivoli") that the model emits, so
+		// the conventions row forbids only the trailing USPS-style street_suffix — forbidding the prefix
+		// destroyed real capability (see address-system-conventions.ts provenance + the load-time gate).
 		const fr = conventionsForSystem("fr")!
-		expect(fr.forbiddenTags).toContain("street_prefix")
-		expect(fr.forbiddenTags).toContain("street_suffix")
+		expect(fr.forbiddenTags).toEqual(["street_suffix"])
+		expect(fr.forbiddenTags).not.toContain("street_prefix")
 		expect(fr.postcodePattern!.test("47110")).toBe(true)
 		expect(fr.postcodePattern!.test("4711")).toBe(false)
 	})

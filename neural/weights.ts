@@ -244,6 +244,85 @@ export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): 
 	}
 }
 
+/**
+ * One tag's certified capability under a (tier × address-system) cell of the capability manifest
+ * (#718/#719). `maskOffF1` is the model's measured per-tag exact-match F1 with the conventions mask
+ * OFF; `maskOnF1` is the same with the mask ON — recorded ONLY for tags some codex `forbiddenTags`
+ * row suppresses, because that's the only place the loader's delta-gate consults it.
+ */
+export interface TagCapability {
+	/** Measured per-tag F1 (percent) with the conventions mask OFF — the model's real capability. */
+	maskOffF1: number
+	/** Measured per-tag F1 (percent) with the mask ON. Present only for codex-forbidden tags. */
+	maskOnF1?: number
+}
+
+/**
+ * The `capabilities` block of a `model-card.json` (#718/#719): per serving TIER (`server` =
+ * anchor+gazetteer; `pocket` = anchor-only) × per codex address-system × per tag, the model's
+ * certified per-tag capability. The `createScorer` loader reads this to FAIL CLOSED when a
+ * conventions mask would forbid a tag the model is certified to emit — the structural fix that makes
+ * the D2/#719 bug-class (a mask destroying a demonstrated capability) impossible.
+ *
+ * Shape: `capabilities[tier][system][tag] = { maskOffF1, maskOnF1? }`. A `$comment` provenance key
+ * may sit alongside the tier keys and is ignored by readers.
+ */
+export type CapabilityManifest = Record<string, Record<string, Record<string, TagCapability>>>
+
+/**
+ * Read the `capabilities` block from a `model-card.json` (#718/#719). DEFENSIVE, mirroring
+ * `readRequiredChannels`: returns `undefined` when the card is absent, unreadable, or has no
+ * `capabilities` field (a pre-#718 card → the loader's delta-gate is skipped, back-compat). Throws
+ * ONLY when the field is PRESENT but not an object — a corrupt declared contract is a loud artifact
+ * bug, not a silent skip. Tier/system/tag sub-shapes are read leniently (a malformed cell simply
+ * yields no capability claim — `undefined` from `lookupTagCapability`).
+ */
+export function readCapabilityManifest(modelCardPath: string | undefined): CapabilityManifest | undefined {
+	if (!modelCardPath || !existsSync(modelCardPath)) return undefined
+	let raw: string
+	try {
+		raw = readFileSync(modelCardPath, "utf8")
+	} catch {
+		return undefined
+	}
+	let parsed: unknown
+	try {
+		parsed = JSON.parse(raw)
+	} catch {
+		return undefined
+	}
+	if (typeof parsed !== "object" || parsed === null) return undefined
+	const capabilities = (parsed as { capabilities?: unknown }).capabilities
+	if (capabilities === undefined) return undefined
+	if (typeof capabilities !== "object" || capabilities === null || Array.isArray(capabilities)) {
+		throw new Error(
+			`model-card.json at ${modelCardPath} has a malformed \`capabilities\` field — ` +
+				`expected an object, got ${JSON.stringify(capabilities)}.`
+		)
+	}
+	return capabilities as CapabilityManifest
+}
+
+/**
+ * Resolve `capabilities[tier][system][tag]` to a `TagCapability`, returning `undefined` for any
+ * missing/malformed cell (a tag the model is NOT certified for — the loader treats that as legal:
+ * the model can't emit it, so a mask can't destroy it). Skips the `$comment` provenance key.
+ */
+export function lookupTagCapability(
+	manifest: CapabilityManifest | undefined,
+	tier: string,
+	system: string,
+	tag: string
+): TagCapability | undefined {
+	const tierCell = manifest?.[tier]
+	if (!tierCell || typeof tierCell !== "object") return undefined
+	const systemCell = tierCell[system]
+	if (!systemCell || typeof systemCell !== "object") return undefined
+	const cap = systemCell[tag]
+	if (!cap || typeof cap !== "object" || typeof (cap as TagCapability).maskOffF1 !== "number") return undefined
+	return cap as TagCapability
+}
+
 export interface CrfTransitions {
 	transitions: number[][]
 	startTransitions: number[]

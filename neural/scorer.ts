@@ -23,6 +23,8 @@
 
 import { existsSync, readFileSync } from "node:fs"
 
+import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex"
+
 import { parseAnchorLookup, type AnchorLookup } from "./anchor-inference.js"
 import { NeuralAddressClassifier } from "./classifier.js"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "./gazetteer-inference.js"
@@ -30,10 +32,20 @@ import { OnnxRunner } from "./onnx-runner.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import {
 	inferRequiredChannelsFromInputs,
+	lookupTagCapability,
+	readCapabilityManifest,
 	readLabelsFromModelCard,
 	readRequiredChannels,
 	type RequiredChannels,
 } from "./weights.js"
+
+/**
+ * Delta threshold for the capability-manifest gate (#718/#719): a conventions row may forbid a tag
+ * only if the mask does NOT provably destroy a real capability — i.e. `maskOffF1 − maskOnF1 ≤ 5pp`.
+ * A DELTA, not an absolute floor: a tag the model emits at 0.80 is protected if the mask drops it to
+ * 0.0, but a tag the mask leaves intact (small/zero delta) is legal regardless of its absolute F1.
+ */
+export const CAPABILITY_DELTA_THRESHOLD = 0.05
 
 /** Default postcode→anchor lookup (the pilot lookup the shipped en-us model trained against). */
 export const DEFAULT_ANCHOR_LOOKUP = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
@@ -79,6 +91,13 @@ export interface CreateScorerOpts {
 	 * this module exists to catch.
 	 */
 	strict?: boolean
+	/**
+	 * Serving tier whose certified capabilities the load-time delta-gate (#718/#719) reads from the
+	 * card's `capabilities` block: `"server"` (anchor+gazetteer — the production default) or
+	 * `"pocket"` (anchor-only). Default `"server"`. A tier the card doesn't certify → the gate has no
+	 * capability claims to consult and is a no-op (legal).
+	 */
+	tier?: string
 	/** Deliberate, DECLARED ablations (warn-not-throw). See {@link ScorerOverrides}. */
 	overrides?: ScorerOverrides
 }
@@ -88,6 +107,74 @@ class UnfedChannelError extends Error {
 	constructor(message: string) {
 		super(message)
 		this.name = "UnfedChannelError"
+	}
+}
+
+/**
+ * A loud, descriptive fail-closed error for a conventions mask that would destroy a CERTIFIED
+ * capability (#718/#719). Thrown by {@link assertConventionsRespectCapabilities} — the structural
+ * guard that makes the D2/#719 bug-class (a `forbiddenTags` row suppressing a tag the model
+ * demonstrably emits) impossible to ship.
+ */
+class CapabilityViolationError extends Error {
+	constructor(message: string) {
+		super(message)
+		this.name = "CapabilityViolationError"
+	}
+}
+
+/**
+ * The load-time delta-gate (#718/#719). Iterate the codex `ADDRESS_SYSTEM_CONVENTIONS`; for every
+ * `forbiddenTags` entry, look up the loaded tier's certified capability for that (system, tag). The
+ * forbid is ILLEGAL — the mask provably destroys a real capability — when the model is certified to
+ * emit the tag (`maskOffF1` present) and the mask measurably drops it:
+ *
+ *     maskOffF1 − (maskOnF1 ?? 0) > CAPABILITY_DELTA_THRESHOLD
+ *
+ * A forbidden tag with NO capability entry (model not certified there), or one whose `maskOnF1`
+ * shows the mask leaves it intact (small/zero/negative delta), is LEGAL. When `maskOnF1` is ABSENT
+ * for a certified tag, the mask's effect was never measured — and since the mask is a hard −1e9
+ * emission ban, we conservatively assume full destruction (delta = maskOffF1 − 0). That's the #719
+ * shape: FR `street_prefix` certified at maskOff 80.0, no benign mask-on measurement → forbidding it
+ * is rejected at load time.
+ *
+ * Back-compat: a card with no `capabilities` block (pre-#718) has no claims to consult, so the gate
+ * is a one-time-warn no-op and the model still loads.
+ */
+let warnedNoCapabilities = false
+
+function assertConventionsRespectCapabilities(modelCardPath: string, tier: string, strict: boolean): void {
+	const manifest = readCapabilityManifest(modelCardPath)
+	if (!manifest) {
+		// No certified capabilities → nothing to protect. Old cards still load (warn ONCE per process).
+		if (!warnedNoCapabilities) {
+			warnedNoCapabilities = true
+			console.error(
+				`[createScorer] model-card has no \`capabilities\` block — the conventions capability-gate ` +
+					`(#718/#719) is SKIPPED. Regenerate the card via scripts/eval/gen-capability-manifest.ts to ` +
+					`certify per-tag capability and enable the gate.`
+			)
+		}
+		return
+	}
+	for (const [system, conventions] of Object.entries(ADDRESS_SYSTEM_CONVENTIONS)) {
+		for (const tag of conventions?.forbiddenTags ?? []) {
+			const cap = lookupTagCapability(manifest, tier, system, tag)
+			if (!cap) continue // model not certified to emit this tag here → the mask can't destroy it.
+			const delta = cap.maskOffF1 - (cap.maskOnF1 ?? 0)
+			if (delta > CAPABILITY_DELTA_THRESHOLD) {
+				const maskOn = cap.maskOnF1 === undefined ? "unmeasured (assumed 0 — hard −1e9 ban)" : String(cap.maskOnF1)
+				fail(
+					strict,
+					`conventions forbids \`${tag}\` for system \`${system}\` but the model is certified to emit it ` +
+						`(tier \`${tier}\`: maskOff F1 ${cap.maskOffF1} vs maskOn ${maskOn}; Δ=${delta.toFixed(2)} > ` +
+						`${CAPABILITY_DELTA_THRESHOLD}); this mask would destroy a real capability — #718/#719. ` +
+						`Either remove \`${tag}\` from the codex forbiddenTags for \`${system}\`, or re-certify the ` +
+						`model and prove the mask is benign (record a maskOnF1 within ${CAPABILITY_DELTA_THRESHOLD} of maskOff).`,
+					CapabilityViolationError
+				)
+			}
+		}
 	}
 }
 
@@ -123,6 +210,14 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	// trained with those channels mandatory. Conventions/bridge are card-only (not graph-observable).
 	const declared: RequiredChannels =
 		readRequiredChannels(opts.modelCardPath) ?? inferRequiredChannelsFromInputs(await runner.inputNames())
+
+	// --- Capability-manifest delta-gate (#718/#719) -----------------------------------------------
+	// BEFORE wiring the conventions mask, prove the shipped codex `forbiddenTags` don't destroy a tag
+	// this model is CERTIFIED to emit (per the card's `capabilities` block for the loaded tier). This
+	// is a property of the model-card + codex pairing, independent of any per-instance `overrides` —
+	// an ablation scorer still loads the same shipped conventions table production will use, so the
+	// gate runs unconditionally. Makes the D2/#719 bug-class structurally impossible to ship.
+	assertConventionsRespectCapabilities(opts.modelCardPath, opts.tier ?? "server", strict)
 
 	// --- Anchor channel ---------------------------------------------------------------------------
 	const anchorLookupPath = opts.anchorLookupPath ?? DEFAULT_ANCHOR_LOOKUP
@@ -225,9 +320,17 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	})
 }
 
-/** Throw in strict mode; otherwise warn loudly and continue (deliberate below-config debugging). */
-function fail(strict: boolean, message: string): void {
+/**
+ * Throw in strict mode; otherwise warn loudly and continue (deliberate below-config debugging).
+ * `ErrorClass` defaults to {@link UnfedChannelError} (the channel-feed traps); the capability-gate
+ * passes {@link CapabilityViolationError} so the two fail-closed families are distinguishable.
+ */
+function fail(
+	strict: boolean,
+	message: string,
+	ErrorClass: new (message: string) => Error = UnfedChannelError
+): void {
 	const full = `[createScorer] ${message}`
-	if (strict) throw new UnfedChannelError(full)
-	console.error(`${full}\n[createScorer] strict=false — continuing with the channel UNFED (OOD).`)
+	if (strict) throw new ErrorClass(full)
+	console.error(`${full}\n[createScorer] strict=false — continuing despite the violation.`)
 }
