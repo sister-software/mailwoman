@@ -105,9 +105,16 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
   flagged localities — was ITSELF sample-biased** (a small tiger/nad-heavy sample read Indianapolis 54%
   street, but the v1.6.0 verification has it 219700:29 LOCALITY — the small sample lied). FIRM lesson after
   three tries: judge a token's tag-dominance by FULL per-token counts, not a small scan; a small sample is
-  street-biased because the street sources (tiger 39 + nad 378 parts) dwarf the locality sources. The v0.6.1
-  US localities STAND (v1.6.0 big-count verified + v1.7.0's +5.1 locality gain proves the vocab net-works);
-  a full-count, country-scoped lint is the proper #511-tooling follow-up. Stopped chasing it with small scans.
+  street-biased because the street sources (tiger 39 + nad 378 parts) dwarf the locality sources. So I built
+  the COUNTRY-SCOPED lint (v2, `lint-shard-vocab.py`) — tally each token SCOPED to the country the shard uses
+  it in — **and it WORKS** (the lint earns its keep a 3rd time): it correctly CLEARS the big locality-dominant
+  cities (Paris/Marseille/Lyon, Albuquerque/Indianapolis/Sacramento/Miami — none flagged) and FLAGS genuinely
+  street-dominant ones the v1.6.0 work missed (it only verified the big cities): FR Avignon/Mulhouse/Toulon/
+  Perpignan/Sens/Antony/Poitiers/Rambouillet, US Glendale/Portsmouth/Nashville/Fairbanks/Syracuse/Tulsa. So
+  the v0.6.1 locality vocab DOES carry several street-dominant tuples — a REAL #511 issue (correcting my
+  too-hasty "the localities stand"). It is NOT a v1.7.0 blocker (the shard net-improved locality +5.1; the
+  big locality-dominant cities carry the lesson), but it IS a **PRUNE list for the next shard.** ACTION: run
+  the full v2 lint (`--fraction 1.0`, slow) + drop the street-dominant cities from FR_TUPLES/US_TUPLES.
 - _(more as the shift runs)_
 
 ## 4. Decisions made autonomously
