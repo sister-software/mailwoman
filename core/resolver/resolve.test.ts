@@ -864,6 +864,47 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		expect(queried).toBe("East Sheldon Rd")
 	})
 
+	test("folds a directional quadrant mis-tagged `unit` into the street key (#718 admin-tail)", async () => {
+		let queried: string | undefined
+		const recorder: InterpolationLookup = {
+			find: ({ street }) => {
+				queried = street
+				return null
+			},
+		}
+		// The model often tags the trailing quadrant of a directional street as `unit` ("Taylor Street
+		// NE" → [unit] "NE"), so the bare key misses the shard's "taylor street northeast". The
+		// directional unit folds back into the key by span order; the lookup normalizer expands "Ne".
+		const dirTree = tree("1532 Taylor Street Ne 20018", [
+			node("house_number", "1532", 0, 4),
+			node("street", "Taylor Street", 5, 18),
+			node("unit", "Ne", 19, 21),
+			node("postcode", "20018", 22, 27),
+		])
+		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		await resolver.resolveTree(dirTree, { interpolation: recorder })
+		expect(queried).toBe("Taylor Street Ne")
+	})
+
+	test("a non-directional `unit` is NOT folded into the street key (byte-stable)", async () => {
+		let queried: string | undefined
+		const recorder: InterpolationLookup = {
+			find: ({ street }) => {
+				queried = street
+				return null
+			},
+		}
+		const aptTree = tree("1532 Taylor Street Apt 4 20018", [
+			node("house_number", "1532", 0, 4),
+			node("street", "Taylor Street", 5, 18),
+			node("unit", "Apt 4", 19, 24),
+			node("postcode", "20018", 25, 30),
+		])
+		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		await resolver.resolveTree(aptTree, { interpolation: recorder })
+		expect(queried).toBe("Taylor Street")
+	})
+
 	test("no house_number → tier never fires", async () => {
 		let called = false
 		const spy: InterpolationLookup = {

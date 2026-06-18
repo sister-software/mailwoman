@@ -110,7 +110,7 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
  * prefix/particle/suffix descendants (NOT house_number/unit, which also nest under street), order
  * by span offset, and join.
  */
-function assembleStreetValue(streetNode: AddressNode): string {
+function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressNode): string {
 	const parts: AddressNode[] = []
 	const stack = [streetNode]
 	while (stack.length > 0) {
@@ -118,8 +118,27 @@ function assembleStreetValue(streetNode: AddressNode): string {
 		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) parts.push(n)
 		stack.push(...n.children)
 	}
+	// #718 admin-tail: a directional quadrant the model mis-tagged `unit` ("1532 Taylor Street NE" →
+	// [unit] "NE") folds back into the street key by span order, so the situs/interp lookup matches the
+	// shard's "taylor street northeast" (the lookup normalizer expands the abbreviation). Lookup-key
+	// only — the parse output and admin resolution are untouched. Byte-stable when absent (undefined).
+	if (directionalUnit && directionalUnit.value.trim()) parts.push(directionalUnit)
 	parts.sort((a, b) => a.start - b.start)
 	return parts.map((n) => n.value.trim()).join(" ")
+}
+
+/**
+ * Directional quadrant values the model sometimes emits as a `unit` node instead of inside the
+ * street subtree (#718 admin-tail diagnostic: ~19% of the admin-fallback tail, 83% of DC). Folded
+ * into the street lookup key by {@link assembleStreetValue}; the situs/interp lookup normalizer
+ * expands the abbreviation ("ne" → "northeast") so the shard's full street name matches.
+ */
+const STREET_DIRECTIONAL_UNITS: ReadonlySet<string> = new Set([
+	"n", "s", "e", "w", "ne", "nw", "se", "sw",
+	"north", "south", "east", "west", "northeast", "northwest", "southeast", "southwest",
+])
+function isDirectionalUnit(value: string): boolean {
+	return STREET_DIRECTIONAL_UNITS.has(value.trim().toLowerCase().replace(/\./g, ""))
 }
 
 /**
@@ -130,6 +149,7 @@ function assembleStreetValue(streetNode: AddressNode): string {
 function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup): void {
 	let street: AddressNode | undefined
 	let houseNumber: AddressNode | undefined
+	let directionalUnit: AddressNode | undefined
 	let locality: string | undefined
 	let postcode: string | undefined
 	const stack = [...roots]
@@ -137,12 +157,13 @@ function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup): vo
 		const n = stack.pop()!
 		if (n.tag === "street" && !street) street = n
 		if (n.tag === "house_number" && !houseNumber) houseNumber = n
+		if (n.tag === "unit" && !directionalUnit && isDirectionalUnit(n.value)) directionalUnit = n
 		if (n.tag === "locality" && !locality && n.value.trim()) locality = n.value.trim()
 		if (n.tag === "postcode" && !postcode && n.value.trim()) postcode = n.value.trim()
 		stack.push(...n.children)
 	}
 	if (!street || !houseNumber) return
-	const hit = lookup.find({ street: assembleStreetValue(street), number: houseNumber.value, postcode, locality })
+	const hit = lookup.find({ street: assembleStreetValue(street, directionalUnit), number: houseNumber.value, postcode, locality })
 	if (!hit) return
 	street.metadata = {
 		...street.metadata,
@@ -162,19 +183,21 @@ function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup): vo
 function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup, radiusCalibration?: number): void {
 	let street: AddressNode | undefined
 	let houseNumber: AddressNode | undefined
+	let directionalUnit: AddressNode | undefined
 	let postcode: string | undefined
 	const stack = [...roots]
 	while (stack.length > 0) {
 		const n = stack.pop()!
 		if (n.tag === "street" && !street) street = n
 		if (n.tag === "house_number" && !houseNumber) houseNumber = n
+		if (n.tag === "unit" && !directionalUnit && isDirectionalUnit(n.value)) directionalUnit = n
 		if (n.tag === "postcode" && !postcode && n.value.trim()) postcode = n.value.trim()
 		stack.push(...n.children)
 	}
 	if (!street || !houseNumber) return
 	// The fall-through gate: an exact situs point already won — never override it with an estimate.
 	if (street.metadata?.["resolution_tier"] === "address_point") return
-	const hit = lookup.find({ street: assembleStreetValue(street), number: houseNumber.value, postcode })
+	const hit = lookup.find({ street: assembleStreetValue(street, directionalUnit), number: houseNumber.value, postcode })
 	if (!hit) return
 	// Conformal-calibrated radius when the caller supplies a multiplier (#374): the raw half-segment
 	// heuristic underestimates the true spread (~72% coverage on Travis); ×1.70 → a 90% bound. Default
