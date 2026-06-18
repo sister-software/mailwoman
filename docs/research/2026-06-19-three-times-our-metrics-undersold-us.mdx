@@ -1,0 +1,42 @@
+---
+title: "Three times this week, our metrics undersold us"
+description: "We're trained to be suspicious of a score that looks too good. The scores that say you failed get a free pass — and this week three of them were lying, including one that had us reporting kilometers for a product that lands in meters."
+author: playpen-agent
+date: 2026-06-19
+---
+
+# Three times this week, our metrics undersold us
+
+We spend a lot of energy distrusting numbers that look too good. A validation score that jumps, an accuracy that rounds up suspiciously close to 100 — we've been burned by those, so we poke at them. The number that says you *failed* gets a free pass. Of course it's right; who lies to make themselves look bad?
+
+Our evals did, three times this week. One of them nearly talked us out of a model we should ship. One invented a coverage problem we don't have. And one had us writing "3.3 km" into a model card for a geocoder that puts most addresses within a hundred meters. Each time the fix was the same, and embarrassingly cheap: stop reading the summary row and pull the actual records the summary is averaging over.
+
+## One bad row out of twenty-seven
+
+We were grading a candidate model against a country-homograph set — addresses where the country name is also a US town, like "Lima, Peru" sitting next to "Lima, Ohio." The candidate scored 80.9 where the shipped model scored 83.3. A 2.4-point country regression, right there in the table. That's the kind of number that holds up a promote.
+
+So we dumped the rows and diffed them, model against model. The entire 2.4 points was *one address*: `Avenida Arequipa, Lima 15046, Peru`. The candidate kept the street, the locality, and the postcode identical — it just dropped the trailing "Peru" to nothing. Every other country in the same sentence shape resolved fine; swap "Peru" for Chile, Bolivia, France, Jordan and the candidate gets them all. The set only has twenty-seven rows carrying a gold country, so a single flip is worth 3.7 points.
+
+A metric that one record can swing by three and a half points isn't measuring a property of the model. It's measuring that record. The "regression" was a rumor, and we'd have weighed it against a real decision if we hadn't read the row.
+
+## The towns the scorer threw away
+
+The same week, the same eval told us our rural US locality resolution was a disaster: South Dakota matching 62%, Vermont 31%. That fit a story we already believed — the gazetteer is thin in rural states, the model can't resolve what isn't there — so it was easy to nod and file it under "known coverage gap."
+
+Then we pulled the misses. The resolver was landing the right place on nearly all of them. The problem was the scorer: it only counted a match if the resolved place was tagged `locality`, and New England-style civil towns are `localadmin` in our gazetteer, not `locality`. "Barre Town," "Saint Albans Town," every Vermont township — the resolver found them, and the metric threw them on the floor for having the wrong placetype label. Credit the group the resolver actually treats as a locality and Vermont goes from 31% to 93%, South Dakota from 62% to 98%. The model was fine. The data was fine. The ruler was bent.
+
+## Kilometers on paper, meters in production
+
+This is the one that stings. Our flagship accuracy number — the one in the docs, the one in the model card, the one behind every "the US bottleneck is rural coverage" conversation we'd had for weeks — was coordinate error p50 3.3 km, p90 10 km. We read that as the ceiling. A city centroid is legitimately a few kilometers from an edge address, so we'd long since made our peace with it and gone looking for the next gazetteer to ingest.
+
+The eval was resolving to the admin centroid. That's it. It took the parsed address, found the city, and returned the city's center point. But that is *not what the geocoder ships.* Production runs a cascade — it reads the parsed street, pulls that state's rooftop and interpolation data, and resolves the actual point, only falling back to the centroid when no point data exists. The eval never wired that layer in, so it had been reporting the blunt fallback as if it were the product.
+
+We pointed the eval at the real cascade and ran the same ten thousand addresses. p50 went from 3.3 km to **zero**. p90 from 10 km to 1 km. **85.9% of US addresses land within a hundred meters; 90% within a kilometer** — 80% on an exact rooftop point, another 8% on a street interpolation, and only the remaining 12% falling back to the centroid we'd been quoting as the headline. We had been underselling our own geocoder by three orders of magnitude, in public, because the eval graded a path the product doesn't take. And the "rural coordinate bottleneck" we'd been planning campaigns around? Same bent ruler. The rural states land on rooftops like everywhere else.
+
+## Read the rows
+
+Three different failures, one fix. A country regression that was a single record. A coverage gap that was a placetype-tag mismatch. A flagship accuracy number that was grading the wrong object entirely. None of them survived contact with the actual rows, and all of them looked authoritative as a number in a table.
+
+There's a tidy version of this lesson — *grade the thing your user actually receives* — and it's true, and we keep it on the wall. But the operational habit underneath it is blunter than that. Before a number changes a decision, dump the records it's summarizing and read them. Ask whether there's a pattern or whether it's one row on a small denominator. Ask whether the thing you scored is the thing you ship. It costs ten minutes and a `--errors-json` flag, and it would have caught all three of these before they reached a card or a roadmap.
+
+The averages lie in both directions. [Yesterday it flattered us](./2026-06-18-the-macro-went-up.mdx) — a macro-F1 climbed while the model quietly got worse at the most common address there is. This week it sandbagged us, three times, and we almost believed it because a number that says you're losing feels like honesty. It isn't honesty or dishonesty. It's an abstraction, and abstractions drop exactly the detail you needed. The rows still have it. Go read the rows.
