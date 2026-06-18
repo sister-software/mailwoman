@@ -102,6 +102,24 @@ Three metrics survive a name collision:
 
 The region fix that came out of that run looked like a pure triumph on aggregate (Vermont 326→3.4km), and the eight demo presets we read by hand caught it regressing the most famous address in the set (`New York, NY` → "New York Mills", 283km upstate). The aggregate had averaged that one case away. Chasing _why_ the eight disagreed is what surfaced the deeper bug. Run the functional presets before any verdict, and treat a disagreement between them and the aggregate as a clue, not noise — the same lesson the parser side learned, on the resolver side.
 
+## Oracle substitution: where the error actually lives
+
+Per-component F1 and coordinate error tell you _how much_ is wrong. They don't tell you _which stage_ is at fault — and in a pipeline (model → resolver → gazetteer) a single bad coordinate can come from a mis-tag, a missing gazetteer entry, or a ranking slip, and the aggregate can't tell them apart. **Oracle substitution** can: hand one stage the ground-truth answer, run the rest of the pipeline for real, and read what error survives. Whatever is still wrong after a stage has been given the truth cannot be that stage's fault — you've attributed it to everything downstream.
+
+Which stage you oracle decides what you learn:
+
+- **Oracle the model's output** — feed the resolver the _gold_ tags. "If parsing were perfect, how good is the coordinate?" The surviving error is the resolver-and-gazetteer's ceiling, not the model's. This is how you answer "is this a tagging problem or a coverage problem?": hand the resolver the true locality for a row it gets wrong — if it _still_ misses, the place isn't findable in the gazetteer (coverage or name-mismatch) and no model improvement can touch it; if it suddenly resolves, the tag was the bottleneck.
+- **Oracle the retrieval** — feed the model _perfect_ anchor/gazetteer hints. "If retrieval were perfect, how good is the parse?" The surviving error is the model's own ceiling, independent of how good the gazetteer is.
+
+Run both and you've decomposed the total error across the model and the atlas — the measurable form of the question "has the model caught up to its database?" The gap between _oracle-X_ and _everything-perfect_ is X's share of the error; the gap between _oracle-X_ and _current_ is everyone-else's share.
+
+Two cautions:
+
+- **It is an upper bound, always optimistic.** The oracle is perfect; the real stage never is. "Oracle locality → coord p50 1km" means _1km is the best the resolver could do given perfect parsing_, not a number you will ship.
+- **Inject at the right interface.** A gold locality _string_ (the model's output level) tests the resolver; a gold resolved _place-ID_ (skipping the resolver) tests only the coordinate math. Match the injection point to the stage you want to isolate.
+
+The negative form of the same experiment is worth naming, because it bit us: _removing_ a signal and watching a metric crater tells you how hard a stage leans on that signal. Scoring an anchor-trained model with its retrieval channels _absent_ collapsed the admin tags (country, region, locality, postcode) to near-zero — which, read backwards, measured how load-bearing those channels are (the [v1.5.0-vs-v1.7.0 head-to-head](../evals/2026-06-18-v150-vs-v170-head-to-head.md) is where that surfaced). Oracle substitution is the same idea run forwards: add a perfect signal and read the ceiling.
+
 ## Verdict smokes and eval infrastructure
 
 A separate but related discipline surrounds training experiments. See [`VERDICT_SMOKES.md`](../plan/reference/VERDICT_SMOKES.mdx) for the full framework. The eval-relevant lessons:
@@ -121,6 +139,7 @@ Before shipping a model release:
 5. **Run verdict smokes at full-run geometry with constant LR.** Cosine decay and mismatched batch sizes produce false confidence.
 6. **Build diagnostic tooling before you need it.** `corpus-audit` and `diagnose_regression.py` were built during the v0.4.0 campaign — they would have saved most of v0.3.0's investigation time if they'd existed earlier.
 7. **Grade the resolver by coordinate on a leakage-free slice.** Never ship a resolver change on name-match alone — it ties same-named places in different states. Evaluate on held-out geography (`honest-eval.sh`), lead with region-match + coordinate error, and read the demo presets before the verdict.
+8. **Score in the production SHIP-CONFIG, and oracle to attribute error.** Always feed the model the same soft channels (anchor + gazetteer + conventions) it ships with — an anchor-trained model scored anchor-off silently mis-reports the admin tags (country, region, locality, postcode). When you cannot tell which stage owns a failure, oracle-substitute one — feed it the gold answer and re-measure — and the surviving error isolates the rest.
 
 ## See also
 

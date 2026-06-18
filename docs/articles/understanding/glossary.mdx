@@ -107,6 +107,8 @@ Every technical term used in this documentation, defined once. Skim it before re
 
 **ONNX — Open Neural Network Exchange** — a portable model file format. Mailwoman exports the trained PyTorch model to ONNX so it can be loaded by `onnxruntime-node` (server) and `onnxruntime-web` (browser) with the same file. See [`concepts/onnx-runtime.md`](../concepts/onnx-runtime.mdx).
 
+**Oracle substitution (ceiling analysis)** — a diagnostic that hands one pipeline stage the ground-truth answer and measures the end-to-end result, to find which stage the error actually lives in: if the output is still wrong after a stage has been given the truth, the fault is downstream of it. Oracle the model's tags to measure the resolver's ceiling; oracle the gazetteer hints to measure the model's. Always an optimistic upper bound. See [eval discipline](../concepts/eval-discipline.mdx#oracle-substitution-where-the-error-actually-lives).
+
 **Orphan-I** — a label sequence bug where `I-X` appears without a matching preceding `B-X` (e.g. `O, I-locality`). Structurally invalid in BIO. The CRF prevents this. See [`concepts/bio-labels.md`](../concepts/bio-labels.mdx).
 
 ## P
