@@ -11,7 +11,7 @@ tags:
 
 Reading [Addresses that break geocoders](../why-its-hard/addresses-that-break-geocoders.mdx) makes one thing obvious: no single model handles every failure class well. Different failures want different fixes. Some want preprocessing rules, some want a small classifier, some want a transformer, some want a resolver that returns candidates instead of pretending to be sure.
 
-This article sketches the runtime as **six stages**, three of which are learned (ML) and three of which are deterministic. As of 2026-05-23, the current Mailwoman ships stages 1, 2.5 (kind classifier), 3, 4a (Viterbi + structural mask), 5, and 6 with candidate-list output — plus the coordinator that composes them. Stage 2 (locale gate beyond the caller's hint) and Stage 4b (span re-reader) remain ahead.
+This article sketches the runtime as **six stages**, three of which are learned (ML) and three of which are deterministic. As of 2026-05-23, the current Mailwoman ships stages 1, 2.5 (kind classifier), 3, 4a (Viterbi + structural mask), 5, and 6 with candidate-list output — plus the coordinator that composes them. Stage 2 (locale gate beyond the caller's hint) and Stage 4b (span re-reader) remain ahead. A small **coarse-placer** model (Stage 1.5, #244) was added after this sketch: it runs right after normalization, guesses the country, and hands that guess to the resolver as a soft prior — it never feeds the classifier.
 
 ## The picture
 
@@ -19,7 +19,8 @@ This article sketches the runtime as **six stages**, three of which are learned 
 flowchart LR
     I["Input string"]
     I --> S1["Stage 1<br>Normalize<br>(rules) ✅"]
-    S1 --> QS["compute<br>QueryShape ✅"]
+    S1 --> CP["Stage 1.5<br>Coarse-placer<br>country guess ✅"]
+    CP --> QS["compute<br>QueryShape ✅"]
     QS --> S2["Stage 2<br>Locale gate<br>(stub today)"]
     S2 --> S25["Stage 2.5<br>Kind classifier ✅"]
     S25 -->|"fast-path"| S6
@@ -27,6 +28,7 @@ flowchart LR
     S3 --> S4["Stage 4<br>Sequence correct<br>(CRF + re-reader)"]
     S4 --> S5["Stage 5<br>Reconcile ✅"]
     S5 --> S6["Stage 6<br>Resolve + alternatives ✅"]
+    CP -.->|"country prior"| S6
     S6 --> O["Top-k places"]
 ```
 

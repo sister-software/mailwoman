@@ -10,10 +10,10 @@ For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`]
 - **Last edited:** 2026-05-25.
 - **Implementation state (frozen 2026-05-25):**
   - **Shipped and wired as default:** Stage 1 (normalize), Stage 2.5 (kind classifier), Stage 2.7 (phrase grouper, rule-based), Stage 3 (neural classifier + CRF Viterbi), Stage 4a (CRF structural mask), Stage 6 (WOF SQLite resolver).
+  - **Shipped, soft-signal (#244):** Stage 1.5 (coarse-placer country router). Off in the bare `core` coordinator (byte-stable); wired **on by default** in the `mailwoman` package. Runs after normalize, feeds the resolver's `anchorPosterior` re-rank — never the classifier.
   - **Shipped, opt-in (retired as default 2026-06-14, #566):** Stage 5 (joint reconcile). Was default-on when the phrase grouper + a `parseWithLogits` classifier were wired, but graded against the assembled pipeline it broke the street + house_number geocode precondition on 77–84% of clean US addresses while fixing 0% — so **argmax is now the default decode**. Code + A/B harnesses remain; `jointReconcile: true` opts back in (`forceJointReconcile` is the deprecated alias).
   - **Shipped but not wired as factory default:** Stage 2 (locale gate workspace exists, not in `createRuntimePipeline` factory).
   - **Scaffold only:** Stage 4b (span re-reader — unbuilt).
-  - **In-flight:** CE-only C-train producing new Stage 3 weights (step 6800/50K, val_macro_f1=0.496).
   - **In-flight:** CE-only C-train producing new Stage 3 weights (step 6800/50K, val_macro_f1=0.496).
 
 ## The pipeline
@@ -22,14 +22,17 @@ For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`]
 flowchart LR
     I["Input string"]
     I --> S1["Stage 1<br>Normalize"]
-    S1 --> QS["compute QueryShape<br>(boundary)"]
+    S1 --> CP["Stage 1.5<br>Coarse-placer<br>(soft country prior)"]
+    CP --> QS["compute QueryShape<br>(boundary)"]
     QS --> S2["Stage 2<br>Locale gate"]
     S2 --> S25["Stage 2.5<br>Kind classifier"]
     S25 -->|"fast-path"| S6
     S25 -->|"full pipeline"| S3["Stage 3<br>Token classify<br>(rule + neural)"]
     S3 --> S4["Stage 4<br>Sequence correct"]
-    S4 --> S5["Stage 5<br>Reconcile"]
-    S5 --> S6["Stage 6<br>Resolve"]
+    S4 -->|"default: argmax"| S6["Stage 6<br>Resolve"]
+    S4 -.->|"opt-in"| S5["Stage 5<br>Reconcile"]
+    S5 -.-> S6
+    CP -.->|"country prior"| S6
     S6 --> O["Top-k places"]
 ```
 
