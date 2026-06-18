@@ -42,11 +42,19 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
   - ✅ Blind-spot cleared: street-recall-full **35.0%** ≥ 32.7% floor (29 regressions, 4 "eaten" — small).
   - ✅ All other floors hold (us.street 75.7, fr.house_number 94.9, affix 98/93, arena 77, …).
   - ❌ **4-target boundary gate 1/4** — targets ~flat vs v1.6.0 (shard rebalanced, didn't advance them).
-  - ❌ **NEW floor miss: `us.country_homograph_f1` 80.9 vs 83.3** (−2.4pp) — the one red floor; a new small
-    regression to diagnose (likely the composition shift; the bare-locality rows carry no country token).
+  - ❌ ONE red floor: `us.country_homograph_f1` 80.9 vs 83.3 — but the **v1.5.1 baseline (run after) reframed
+    this: it is NOT a v1.7.0 regression.** v1.5.1 scores the *identical* 80.9; the 83.3 floor is stale (from
+    the older v4.x 85-89 models). v1.7.0 didn't touch country.
   - Record-matcher 3-point curve FLAT: v1.5.1 68.0 / v1.6.0 67.9 / v1.7.0 68.0 (boundary lever ≠ dedup lever).
-  Candidate shipped beside the canonical (`./out/v170/model.onnx`, volume `model-v170-step-40000-int8.onnx`);
-  NOT promoted (the wall + the gate red). The diagnostic arc is validated: the predicted fix landed.
+
+  **THE v1.5.1 → v1.7.0 FLOOR DELTA (the definitive comparison — most important number of the shift):**
+  locality **+5.1** (74.9→80.0), **fr.house_number +10.2** (84.7→94.9 — v1.5.1 was *failing* its own 87 floor),
+  fr.region +7.1, fr.cedex +2.5, unit +1.5, micro/region +~0.7; us.street **−4.3** (80.0→75.7, above floor —
+  a locality/street tradeoff), street_suffix −1.6, de −1.0; country **±0.0**. **v1.7.0 is a NET IMPROVEMENT
+  over v1.5.1**, not just a regression-fix. The gate FAILs only on (a) a stale country floor v1.5.1 also
+  fails, and (b) the capacity-bound 4-target boundary gate. Candidate shipped beside the canonical
+  (`./out/v170/model.onnx`); NOT auto-promoted (the wall). The diagnostic arc is validated AND v1.7.0 beats
+  the current ship — a stronger outcome than "the fix worked."
 - **Stretch #1 — record-matcher curve** (`ed89dd4d` + reports): added a model-swap to `nppes-dedup-benchmark.ts`
   and ran the v1.5.1 + v1.6.0 baselines (TX, 300 NPIs). **Result: flat within noise** — org-name F1 68.0%
   (v1.5.1) vs 67.9% (v1.6.0), NPI 62.8 vs 62.6, spine 61.0 vs 60.9. The honest read: **the boundary-parse
@@ -125,13 +133,24 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
 
 ## 6. Concrete next steps
 
-- **v1.7.1 (one retrain) — the obvious next iteration:** sweep the shard weight 1.0→1.5 (the recipe's
-  pre-registered move to ADVANCE the boundary targets, now safe because the bare-locality balance protects
-  the spine) + add a small country-context slice to recover `us.country_homograph`. Reuse v0.6.1 corpus +
-  the recipe; flip `synth-boundary-stress: 1.0 → 1.5`. The gate + probes re-run in minutes.
-- **Or bank the win and stop:** v1.7.0 fixed the regression that blocked v1.6.0. If the boundary targets are
-  at the 29.6M ceiling, the honest move is to ship v1.7.0's locality recovery (once the country floor is
-  cleared) rather than chase boundary targets a bigger model would need.
+- **RECOMMENDATION: PROMOTE v1.7.0 (a net improvement over v1.5.1); do NOT bump the weight.** The v1.5.1
+  baseline shows v1.7.0 wins the floors that matter — locality +5.1, **fr.house_number +10.2 (v1.5.1 was
+  *failing* its own floor)**, fr.region +7.1 — at the cost of us.street −4.3 (above floor). DeepSeek-confirmed:
+  weight 1.5 is unsafe (amplifies the flat boundary signal, re-risks the spine — the lever that cratered an
+  affix tag) and the 4 boundary targets are capacity-bound; don't chase them. The record-matcher flatness
+  confirms the boundary lever doesn't move real-world dedup. v1.7.0 is the better ship.
+- **Two stated gate decisions the promote needs (operator's call, not autonomous — the no-silent-drift rule):**
+  (1) **re-baseline the stale `us.country_homograph` floor** 83.3 → ~80 (v1.5.1 fails it identically at 80.9 —
+  it's not a v1.7.0 regression); (2) **re-frame the 4 capacity-bound boundary targets as WATCH-items**, not
+  blockers. With both, v1.7.0 promotes with NO retrain.
+- **Weigh the us.street −4.3 tradeoff.** Locality up / street down is the bare-locality emphasis (11%) shifting
+  the spine. It's above floor and the gains outweigh it, but if street matters more, a future iteration could
+  trim bare-locality to ~8-9% (less street erosion, keep most of the locality recovery). Tuning note, not a blocker.
+- **Country PATCH staged (optional, not a must-fix)** — a country-bearing bare-locality variant (~12%
+  "…, United States"/"…, France"; #511-linted, "USA" DROPPED as locality-dominant). Pushes country UP if the
+  operator wants it: rebuild shard v0.6.2 + a short fine-tune from v1.7.0. Not needed to promote (the floor's stale).
+- If the boundary shapes ever bottleneck production: revisit with a bigger model / a specialized second-pass
+  (per DeepSeek), not more of the same shard.
 - The diagnosis blog (`docs/research/2026-06-18-the-macro-went-up.mdx`) coda: fill the v1.7.0 result (the
   fix worked) + humanizer pass before publish.
 - Follow-up: the `lint-shard-vocab.py` proper fix (source-proportional sampling).
