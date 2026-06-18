@@ -1,0 +1,213 @@
+# === v1.7.0-boundary-stress (night shift 2026-06-18) =============================================
+# The corrective retrain after v1.6.0 gated NO-PROMOTE. v1.6.0 added the boundary shard at weight 1.0 and
+# LIFTED the boundaries (fr-prefix 55→99.7) but was a NARROW distribution — every row a clean full address
+# — so the model over-fit it and regressed on OOD real rows (held-out us.locality 66.3→58.2%; 84% of the
+# regression was DROPPED locality on bare "City, STATE" rows). Diagnosed via three probes + a DeepSeek consult.
+# THE HEADLINE VARIABLE: the BALANCED shard (corpus v0.6.1-boundary-stress) — two new shapes widen the
+# distribution: bare-locality (~11%, the ship-blocker fix; VENUES #511-linted) + house-number-before-street
+# (7:3 before:after, the confounding mirror for the order-bias). Co-change (hygiene): lr constant→cosine.
+#
+# BUNDLE (DeepSeek-validated 2026-06-17 — the rule is "one CONFOUNDING variable per run, each change its
+# own gate row"). The boundary shard is the headline data-mix variable. Riding alongside it, NON-confounding
+# because they don't shift the distribution the shard trains on, three additions, each gated below:
+#   (a) use_conventions_loss_mask — ❌ DISABLED 2026-06-18. The "non-confounding, different axis" call was
+#       WRONG: the FR convention forbids street_prefix/street_suffix, but the boundary shard's fr-prefix
+#       shape TEACHES FR street_prefix ("Rue"). The mask -inf'd the gold label → train_loss ~7M, broken
+#       run killed at step 2000. v1.5.1 trained fine without it. Off until the table↔FR-data are reconciled.
+#   (c) an EXPANDED gate grading the FR/DE composition wins the shard already trains for free
+#       (fr.house_number #564, FR street_prefix, number-after-street #435). READY NOW (gate rows below).
+#   (b) [NOT ride-ready — a focused #517 corpus task, do it first if you want it this run] extend
+#       synth-po-box for NZ + military. It's more than leaders: the synthesizer needs an en-NZ template +
+#       `countryToLocale` NZ→en-NZ + a NEW military template (CMR/PSC/Unit + Box, APO/FPO/DPO + AE/AP/AA —
+#       which the leader-based model doesn't fit), and the shard builder needs NZ/military base tuples +
+#       a rebuild. Low-confounding (additive on the po_box tag) once built, but it isn't built yet.
+# Competing new shards (typo-inject, non-Latin) are deliberately NOT bundled — same-axis capacity
+# competition is the v4.2.0 trap (affix 78→27). DeepSeek also flagged a per-locale CRF transition penalty
+# (street→cedex) as a clean future rider; it needs wiring (crf_loss_weight is 0.0) so it's a later run.
+#
+# WHY: the failure taxonomy named boundary instability the #1 parser lever, and the within-token
+# decomposition (#702) showed it surfacing under many names. The "before" baseline
+# (docs/articles/evals/2026-06-17-boundary-stress-baseline.md) measured the current model at 38.7–70%
+# on these boundaries vs ~95%+ on clean canonical:
+#   (diverse-pool baseline, BASE-LOCALES-ONLY US/FR/DE — the #511 lint flagged an AU-bearing draft as a
+#   real contradiction, so AU/NZ/UK + the slash shape are deferred to a separate AU-coverage shard):
+#   street-eats-affix street_suffix 40.7 / street 38 | comma-less(US) street 46 / locality 91 |
+#   fr-prefix prefix 47.7 / street 43 | house-number-after-street house_number 50.7 / street 49.
+#   The STREET span is the common casualty (38-49% across all four shapes).
+# The shard puts the gold boundary on diverse realizations of exactly these 4 shapes (alignRow-clean,
+# 0% quarantine). It ALSO reinforces fr.house_number (the number-after-street shape).
+#
+# PRE-REGISTERED GATE (DeepSeek-signed targets; per-shape via scripts/eval/boundary-stress-baseline.ts):
+#   - street_suffix 40.7 → ≥55 ; comma-less(US) street 46 → ≥65 ; fr-prefix 47.7 → ≥70 ;
+#     house-number-after-street 50.7 → ≥65 ; AND the shared STREET span ≥65 on all four shapes
+#     (anchored to the diverse base-locale baseline).
+#   NON-REGRESSION FLOORS (gates/v1.7.0-boundary-stress.json): the v1.6.0 floors (us.street 74, locality
+#     72.9, US postcode 97, affix 78/67, FR postcode 99.5, fr.house_number 87, DE locality 83.8, country
+#     83.3) PLUS two NEW v1.7.0 guards — us.bare_locality (the 84%-drop surface; re-probe v1.5.1, floor just
+#     below) and us.street_recall_full (street recall where gold has BOTH street+locality — DeepSeek's
+#     blind-spot: bare-locality emphasis can eat the street on full addresses; >1% drop below v1.5.1 = STOP).
+#   WATCH (DeepSeek): street_suffix OVER-fire (its gate target vs the floor — a boundary shard can push
+#     suffix onto non-suffix tokens) ; affix CRF transition stability (prefix↔street↔suffix) — a relabel
+#     bug presents as boundary noise, not dilution. If slash/comma-less land short at 1.0, sweep the
+#     weight UP (1.5) — one variable, do not stack other changes.
+#   DECISION: targets move up + floors hold → ship candidate. Spine regression → STOP, re-audit the
+#     shard's alignment before any weight surgery.
+#
+#   BUNDLE GATE ROWS (each rider attributable on its own):
+#   - conventions loss-mask: ❌ removed (rider a disabled — it conflicts with the FR street_prefix the
+#     shard teaches; see the header). No gate row needed.
+#   - po_box NZ + military [ONLY IF rider (b) is built first]: the postal arena po_box class 0/4 → >0 (and
+#     military 0/3 → >0), with NO US/FR/CA po_box regression (existing synth-po-box rows only extended).
+#   - FREE-RIDER MEASURES (the shard trains these — grade as wins, not just floors): fr.house_number holds
+#     ≥87 AND targets the plateau-break >87 (#564) ; FR street_prefix (the fr-prefix shape) up ;
+#     number-after-street house_number (the hn-after shape, #435/#444) up. A lift is a free win; a DROP
+#     means the shard's FR/DE shapes are fighting the native-order shards — STOP and re-audit.
+#
+# CORPUS PREREQUISITE: the shard JSONL→parquet + the overlay manifest are BUILT (a v0.6.0-boundary-stress
+# corpus is staged at /mnt/playpen/.../corpus/versioned/v0.6.0-boundary-stress/ — assembled via
+# scripts/assemble-boundary-stress-overlay-manifest.py against the v0.5.0 base, schema-matched).
+#
+# #511 locality/street overlap — INVESTIGATED + RESOLVED (no longer a pre-retrain blocker). A targeted
+# base scan (label distribution per shard-locality) found the original US vocab was a real contradiction
+# (Madison 96% street, Portland 95%, Springfield-IL 84% — the "5th Avenue Theatre" class). FIXED: the US
+# vocab is now DERIVED + verified locality-dominant (Albuquerque 258584:8, Indianapolis 219700:29, …). The
+# FR flag was a SAMPLING artifact (the all-shard scan undersampled the FR ban block; the FR-block scan
+# shows Paris/Marseille/Lyon 95–99% locality in FR data) → familiar dept-diverse FR cities kept. DE dropped
+# (street-dominated too; synth-german covers its native order). Re-baselined: street_suffix 41.7, comma-less
+# 47, fr-prefix 55, hn-after 51.3. Affix-tag lint flags are train-time-relabel artifacts (lexicon-verified).
+# Operator steps: (1) `modal volume put` the (regenerated) parquet + manifest, (2) `modal run`.
+#
+# Launch: modal run -d scripts/modal/train_remote.py --config v1.7.0-boundary-stress.yaml --resume none
+data:
+  corpus_dir: /data/corpus/versioned/v0.6.1-boundary-stress/corpus-v0.6.1-boundary-stress
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    synth-fr-order: 6.0
+    synth-unit: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+    # THE #375 #1-lever variable (DeepSeek-signed 2026-06-17): the boundary-instability stress shard.
+    # Conservative 1.0 start (prevents street_suffix over-fire); sweep to 1.5 if slash/comma-less land
+    # short. ONE change vs v1.5.1 — nothing else moves.
+    synth-boundary-stress: 1.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  # conventions loss-mask rider (a) — DISABLED 2026-06-18. It DIRECTLY CONFLICTS with the boundary shard:
+  # CONVENTIONS_FORBIDDEN_TAGS forbids FR street_prefix/street_suffix, but the shard's fr-prefix shape
+  # labels exactly that ("Rue" -> street_prefix). Enabling it -inf'd the gold label the shard teaches and
+  # exploded train_loss to ~7M (a broken run, killed at step 2000). v1.5.1 trained fine WITHOUT it. The
+  # "non-confounding, different axis" call (DeepSeek + me) was wrong — the FR convention is inconsistent
+  # with the FR training data. Revisit only after reconciling the conventions table with the FR labels.
+  use_conventions_loss_mask: false
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v170-boundary-stress-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 40000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  # v1.7.0 hygiene co-change (STATED, not a lever): was `constant`. v1.6.0's constant LR let the spine
+  # drift PAST its ~26k optimum (final-checkpoint spine worse than mid-training). Cosine decay (peak after
+  # warmup → ~0 over max_steps) makes the final checkpoint the best, so the gate needn't checkpoint-select.
+  lr_schedule: cosine
+  gazetteer_curriculum: false
+  trackio_project: mailwoman
+  trackio_run_name: v1.7.0-boundary-stress-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""
