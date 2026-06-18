@@ -1,0 +1,149 @@
+---
+title: "Night shift 2026-06-18 — v1.7.0 balanced boundary-shard retrain"
+author: playpen-agent
+date: 2026-06-18
+draft: true
+---
+
+# Night shift 2026-06-18 — v1.7.0 balanced boundary-shard retrain
+
+_Shift: 03:58–15:00 UTC. Goal: take the balanced boundary shard (the diagnosis-driven fix after v1.6.0
+gated NO-PROMOTE) through build → #511 lint → recipe → retrain → gate. NO promote (operator wall)._
+
+_(Living document — sketched as the shift runs; final numbers + verdict at the end.)_
+
+## 1. What shipped
+
+- **Phase 1 — balanced shard** (`a6da3500`): `build-boundary-stress-shard.mjs` weighted composition
+  (was uniform). bare-locality 10.9%, hn-before:hn-after 7:3, original 4 shapes keep the bulk. Full
+  v0.6.1-boundary-stress corpus built: 20k rows, 0% quarantine, manifest re-rooted clean (0 `/mnt`).
+- **Phase 2 — #511 venue lint** (`a6da3500` + `scripts/lint-venue-vocab.py`): the lint flagged **9
+  contradictory venue terms** (Fire 93% street, Veterans 94% street, City 68% locality, Hall/Memorial/
+  Hospital/Recreation street, Town locality, Library/County street) — the Madison-as-street class.
+  Replaced with venue-dominant tokens only (Clinic 98%, Practice 98%, Dental 100%, …).
+- **Phase 3 — recipe** (`bf26474b`): `v1.7.0-boundary-stress.yaml`. One headline variable (the balanced
+  shard); one stated hygiene co-change (lr constant→cosine — zero code surface, it was the config default).
+- **Phase 4 — gate spec + blind-spot probe** (`d3e580fa`): `gates/v1.7.0-boundary-stress.json` +
+  `street-recall-full-probe.ts` (DeepSeek's catch). Baselined: v1.5.1 33.7% / v1.6.0 37.9% full-address
+  street-exact (v1.6.0 did NOT erode street — reassuring).
+- **Phase 5 — sync + launch** (`7307eafb`): `sync_v061`, R2 push (501s rode the retries), launched
+  `ap-dC3SU5VQdTQLVTwNdFp2Zq`. **Early-loss abort gate PASSED** (5.05→1.91 over 250 steps, decreasing).
+- **Phase 7 — gate**: run finished (step-040000, after the resume). Exported → quantized → fetched
+  (`./out/v170/model.onnx`). **4-target gate: NO-PROMOTE (1/4), targets ~flat vs v1.6.0** — fr-prefix 99.3
+  (✓), street_suffix 55.3 (tag at target, street-span short), comma-less 57.0 (✗), hn-after 53.7 (✗). The
+  balanced shard rebalanced (held the spine) but did NOT lift the boundary targets — they're flat, so the
+  boundary lever needs more than rebalancing (weight, or capacity). Floors gate + locality-regression +
+  street-recall probes + the record-matcher 3rd point running — the decisive question is whether the v1.6.0
+  locality regression got FIXED.
+  **COMBINED VERDICT: NO-PROMOTE — but the diagnosis-driven fix WORKED.**
+  - ✅ **The v1.6.0 ship-blocker is FIXED**: floors `us.locality` **80.0** (floor 72.9) — recovered from
+    v1.6.0's failing 66.2, now *above* v1.5.1. The bare-locality shape + cosine LR did exactly what the
+    probes predicted. Spine held end-to-end (no drift).
+  - ✅ Blind-spot cleared: street-recall-full **35.0%** ≥ 32.7% floor (29 regressions, 4 "eaten" — small).
+  - ✅ All other floors hold (us.street 75.7, fr.house_number 94.9, affix 98/93, arena 77, …).
+  - ❌ **4-target boundary gate 1/4** — targets ~flat vs v1.6.0 (shard rebalanced, didn't advance them).
+  - ❌ **NEW floor miss: `us.country_homograph_f1` 80.9 vs 83.3** (−2.4pp) — the one red floor; a new small
+    regression to diagnose (likely the composition shift; the bare-locality rows carry no country token).
+  - Record-matcher 3-point curve FLAT: v1.5.1 68.0 / v1.6.0 67.9 / v1.7.0 68.0 (boundary lever ≠ dedup lever).
+  Candidate shipped beside the canonical (`./out/v170/model.onnx`, volume `model-v170-step-40000-int8.onnx`);
+  NOT promoted (the wall + the gate red). The diagnostic arc is validated: the predicted fix landed.
+- **Stretch #1 — record-matcher curve** (`ed89dd4d` + reports): added a model-swap to `nppes-dedup-benchmark.ts`
+  and ran the v1.5.1 + v1.6.0 baselines (TX, 300 NPIs). **Result: flat within noise** — org-name F1 68.0%
+  (v1.5.1) vs 67.9% (v1.6.0), NPI 62.8 vs 62.6, spine 61.0 vs 60.9. The honest read: **the boundary-parse
+  lever does NOT move the NPPES dedup F1** — the benchmark's own pre-registered finding is "config dominates
+  the model," and dedup is bottlenecked on org-name over-merge (#625/#603), not parse boundaries. So the
+  synthetic boundary wins are real for the PARSE but don't translate to this real-world dedup task. v1.7.0
+  joins as the 3rd point when it lands (expected ~flat).
+
+### First eval (step 2000) — v1.7.0 vs v1.6.0
+macro_f1 0.656 vs 0.631 ; locality 0.691 vs 0.684 ; street 0.842 vs 0.819 ; hn 0.990 vs 0.994. The balanced
+shard isn't hurting the spine early; cosine LR should hold it at the end (the v1.6.0 drift fix).
+
+At step ~4000 the spine dipped slightly (locality 0.659, street 0.812 — below step-2000) while macro rose to
+0.666 — the normal mid-training re-balance. By step ~16000 it had RECOVERED and climbed *past* step-2000:
+locality 0.740, street 0.834, macro 0.690. And it's tracking MUCH healthier than v1.6.0 at the same point —
+v1.6.0's locality had collapsed to ~0.61 by step ~14k; v1.7.0 is at 0.74. The balanced shard is holding the
+spine where v1.6.0 traded it away. Cosine LR decaying (lr ~0.00009) should consolidate it. The gate decides.
+
+Confirmed post-resume at step ~28-30k: locality 0.731, street 0.819, macro 0.702 (highest yet), cosine LR
+down to 0.000022 — the spine is HOLDING through the decay, no end-drift (v1.6.0 had drifted locality to 0.656
+by its end). A noisy 0.623 reading near step 20k was a transient. The gate is the authoritative check.
+
+## 2. What went well
+
+- **The #511 lint paid for itself the first time it ran** — 9 contradictions caught before they could
+  fight the base. My first venue draft was naive; the discipline (scan the source block, tally per token)
+  worked exactly as designed. Strong argument for stretch-goal #4 (generalize the lint).
+- **The DeepSeek consult was load-bearing AND self-correcting** — it caught the street-recall blind spot I
+  missed, and corrected my own walk-back (1:1 → 7:3) on the FR number ratio.
+- **The runbook held** — every Modal gotcha (volume-put blindness, R2 501s, the zero-padded step) was
+  already documented from the v1.6.0 run; Phase 5 went clean on the first try.
+- **Pace** — Phases 1–5 in ~35 min of work; the prep was genuinely turnkey.
+
+## 3. What could've gone better
+
+- I'd been calling the model "9M params" (echoing the consult framing); it's actually **29.6M** (the #492
+  ceiling size). Didn't change any conclusion, but I should verify the number, not echo it.
+- **Generalizing the #511 lint naively reproduced the trap it lints for** — uniform per-source sampling
+  undersampled the big `ban` block and false-flagged FR cities as "street." The lesson is the same #511
+  discipline applied to the lint itself (scan source-scoped / proportional). Shipped as a caveated v1
+  screen; proper fix is a follow-up. (v0.6.1 itself is base-consistent — the flags were false-positives.)
+- _(more as the shift runs)_
+
+## 4. Decisions made autonomously
+
+- **Venue vocab rewrite** (lint-driven): dropped 9 contradictory terms. Alternative was shipping them and
+  letting the model fight the base — rejected per #511.
+- **7:3 composition** over my own 1:1 — DeepSeek's reasoning (FR's own dominant order, shared cross-locale
+  capacity) was sound.
+- **The two new guards (bare_locality, street_recall_full) ride as gate-time standalone probes**, NOT
+  floors-map keys — wiring unscored keys into promotion-gate-verdict.ts would FAIL loudly; the probes give
+  the v1.5.1→candidate comparison directly. Lower surface for an unattended night.
+- **Corpus version v0.6.1-boundary-stress** (incremental on v0.6.0, same v0.5.0 base) — signals "same base,
+  improved shard."
+- **Stall recovery (~05:55 UTC).** The first run (app ap-dC3…) STALLED at step ~21k — the highest checkpoint
+  sat at step-020000 for ~35 min with no advance, loss healthy (0.66, no NaN), app still "running" and
+  burning the A100. Diagnosed it as a hang (not a divergence) via the checkpoint-not-advancing signal (the
+  logs replay-window, so the checkpoint is the only reliable step). Stopped the hung app and **resumed from
+  step-020000** (`--resume auto`, app ap-wvqFyeCdRGtf3X2d0pmeGB) rather than gate a half-trained checkpoint —
+  resume came up clean ("[resume-drift] none", cosine LR correct at lr 0.000077). Added a STALL-WATCH to the
+  monitor: a 2nd stall does NOT trigger a 2nd resume — it gates the highest checkpoint instead (bounded risk).
+
+## 5. Open questions (for the operator)
+
+- **Promote v1.7.0?** — gated on the Phase 7 verdict; NOT promoted autonomously regardless (the wall).
+- **us.street floor** — kept at the committed 74.0; the recipe's 80.4 is the pre-#492 shipped value. Worth
+  re-anchoring to v1.5.1's measured us.street when convenient.
+- **The NEW `us.country_homograph_f1` regression (80.9 vs 83.3).** The one red floor on an otherwise-fixed
+  model. Likely the composition shift (the bare-locality rows added US "City, STATE" weight with no country
+  token). Needs a quick diagnosis before the next iteration — is it real or eval noise, and does a small
+  country-context addition to the shard recover it? **Operator call: worth a v1.7.1 to clear this one floor?**
+- **The boundary targets are stuck (1/4).** The shard at weight 1.0 rebalanced but didn't ADVANCE the four
+  shapes. The confidence probe said signal-not-capacity, so the next lever is more boundary signal — sweep
+  the shard weight up (the recipe's pre-registered 1.5), now that the spine is protected by the bare-locality
+  balance. Or accept that 29.6M params caps these shapes (the #492 ceiling) and bank the regression fix.
+
+## 6. Concrete next steps
+
+- **v1.7.1 (one retrain) — the obvious next iteration:** sweep the shard weight 1.0→1.5 (the recipe's
+  pre-registered move to ADVANCE the boundary targets, now safe because the bare-locality balance protects
+  the spine) + add a small country-context slice to recover `us.country_homograph`. Reuse v0.6.1 corpus +
+  the recipe; flip `synth-boundary-stress: 1.0 → 1.5`. The gate + probes re-run in minutes.
+- **Or bank the win and stop:** v1.7.0 fixed the regression that blocked v1.6.0. If the boundary targets are
+  at the 29.6M ceiling, the honest move is to ship v1.7.0's locality recovery (once the country floor is
+  cleared) rather than chase boundary targets a bigger model would need.
+- The diagnosis blog (`docs/research/2026-06-18-the-macro-went-up.mdx`) coda: fill the v1.7.0 result (the
+  fix worked) + humanizer pass before publish.
+- Follow-up: the `lint-shard-vocab.py` proper fix (source-proportional sampling).
+
+## Numbers
+
+| metric | value |
+|---|---|
+| shift duration | _tbd_ |
+| models trained | 1 (v1.7.0) |
+| Modal time | _tbd_ |
+| local compute | shard build + probes |
+| NaN incidents | 0 |
+| CI failures | _tbd_ |
+| demo regressions | n/a (no promote) |
