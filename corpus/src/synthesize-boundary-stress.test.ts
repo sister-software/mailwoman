@@ -78,6 +78,26 @@ describe("synthesizeBoundaryStressRow", () => {
 		expect(labels.indexOf("B-street")).toBeLessThan(labels.indexOf("B-house_number"))
 	})
 
+	it("bare-locality: locality labels with NO street present (the v1.6.0 ship-blocker fix)", () => {
+		const row = synthesizeBoundaryStressRow(
+			{ locality: "Sacramento", region: "CA", postcode: "95823", country: "US" },
+			{ random: mulberry32(7), forceTemplate: "bare-locality" }
+		)
+		const result = alignRow(asCanonical(row))
+		expect(result.kind, `raw=${row.raw}`).toBe("labeled")
+		if (result.kind !== "labeled") return
+		expect(result.row.labels).toContain("B-locality")
+		expect(result.row.labels).toContain("B-region")
+		expect(result.row.labels).not.toContain("B-street") // the whole point — no street before the city
+	})
+
+	it("house-number-before-street: house_number BEFORE the street (the confounding mirror of #4)", () => {
+		const labels = labelsFor("house-number-before-street", 8)
+		expect(labels).toContain("B-house_number")
+		expect(labels).toContain("B-street")
+		expect(labels.indexOf("B-house_number")).toBeLessThan(labels.indexOf("B-street"))
+	})
+
 	it("is deterministic under a fixed seed", () => {
 		const a = synthesizeBoundaryStressRow(undefined, { random: mulberry32(42) })
 		const b = synthesizeBoundaryStressRow(undefined, { random: mulberry32(42) })

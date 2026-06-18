@@ -25,6 +25,17 @@
  *   4. `house-number-after-street` — FR/DE number-follows-street (`Neuve-des-Capucines 5` → street +
  *        house_number), the model absorbs the number into the street.
  *
+ *   Two BALANCING shapes (added 2026-06-18 after the v1.6.0 probes). The first pass at weight 1.0 lifted
+ *   the boundaries but over-fit a NARROW distribution — every row was a clean, full, structured address —
+ *   so the model regressed on out-of-distribution real rows (held-out US locality 66.3→58.2%). These two
+ *   widen the distribution the shard teaches over, per the diagnosis (scripts/eval/locality-regression-probe):
+ *   5. `bare-locality` — locality with NO street (`Public Library, Lisbon ND`, `75003 Paris`), the
+ *        ship-blocker: 84% of the v1.6.0 locality regression was DROPPED locality on bare "City, STATE"
+ *        rows, because every other shape placed a street before the city. Bare / comma-less / postcode'd /
+ *        venue-prefixed forms, US + FR.
+ *   6. `house-number-before-street` — the confounding mirror of #4 (same FR vocab, number BEFORE the
+ *        street). A balanced before:after mix breaks the positional shortcut behind the #4 order-bias.
+ *
  *   EXCLUDED: the region+postcode glue (`NY14201` — sub-token, no punctuation to split) and the AU/NZ/UK
  *   slash unit-convention (`4/2A` → unit+house_number). The slash labels cleanly (the tokenizer splits
  *   `/`) and is the worst within-token class — but it inherently requires non-base AU/NZ/UK locales,
@@ -40,6 +51,10 @@ export type BoundaryStressTemplate =
 	| "comma-less-city-state"
 	| "fr-prefix"
 	| "house-number-after-street"
+	// Added 2026-06-18 after the v1.6.0 probes (the shard's NARROW distribution over-fit "full structured
+	// address" and regressed OOD). These two re-balance the contexts the model actually sees:
+	| "bare-locality" // the ship-blocker fix: locality with NO street (the 84%-dropped "City, STATE" rows)
+	| "house-number-before-street" // the confounding mirror of house-number-after-street (number position)
 
 export interface BoundaryStressBaseTuple {
 	locality: string
@@ -105,6 +120,17 @@ const FR_NAMES = [
 	"Pierre-et-Marie-Curie", "Antoine-de-Saint-Exupéry", "de la Liberté", "des Quatre-Vents",
 	"du Faubourg-Saint-Antoine", "Saint-Honoré", "de la Pompe", "des Petits-Champs", "Léon-Blum",
 	"Aristide-Briand",
+] as const
+
+// Org/venue prefixes for the bare-locality shape — the v1.6.0 locality drop hit org-PREFIXED real rows
+// hardest ("LISBON PUBLIC LIBRARY, …, Lisbon ND"; "Maplehill School, …"; "Alburg Health Center"). Teaching
+// the locality WITH a leading venue keeps the model emitting it on facility-style addresses (NPPES/HRSA/IMLS
+// shapes). `venue` is a base ComponentTag; these are generic (no city tokens) so they never shadow locality.
+const VENUES = [
+	"Public Library", "Community Center", "Health Center", "Municipal Library", "Elementary School",
+	"High School", "Memorial Hospital", "Fire Department", "City Hall", "Senior Center", "Medical Clinic",
+	"Family Practice", "Dental Group", "Veterans Hall", "Recreation Center", "Town Office", "Community Hospital",
+	"Public School", "Arts Council", "County Courthouse",
 ] as const
 
 // Localities DERIVED from the base corpus (#511): every name here is verified locality-DOMINANT in the
@@ -177,6 +203,8 @@ const ALL_TEMPLATES: readonly BoundaryStressTemplate[] = [
 	"comma-less-city-state",
 	"fr-prefix",
 	"house-number-after-street",
+	"bare-locality",
+	"house-number-before-street",
 ]
 
 /**
@@ -192,11 +220,62 @@ export function synthesizeBoundaryStressRow(
 	const random = opts.random ?? Math.random
 	const template = opts.forceTemplate ?? pick(ALL_TEMPLATES, random)
 
-	if (template === "fr-prefix" || template === "house-number-after-street") {
+	if (template === "bare-locality") {
+		// The v1.6.0 ship-blocker fix: locality was DROPPED on bare/short "City, STATE" rows (84% of the
+		// regression) because every prior shape placed a street before the city, so the model learned "the
+		// city follows a street" and stopped emitting locality without one. Teach the locality with NO street,
+		// across the forms real data carries it — bare, comma-LESS, postcode'd, and venue/org-prefixed.
+		const b = base ?? (random() < 0.3 ? pick(FR_TUPLES, random) : pick(US_TUPLES, random))
+		const venue = random() < 0.45 ? pick(VENUES, random) : ""
+		if (b.country === "FR") {
+			// FR carries no region token; "{postcode} {locality}" is the bare FR form.
+			const core = `${b.postcode} ${b.locality}`
+			return {
+				raw: venue ? `${venue}, ${core}` : core,
+				components: { ...(venue ? { venue } : {}), postcode: b.postcode, locality: b.locality },
+				locale: "fr-FR",
+				template,
+			}
+		}
+		const withZip = random() < 0.5
+		const comma = random() < 0.6 ? "," : "" // include the comma-LESS "City STATE" form too
+		const core = `${b.locality}${comma} ${b.region}${withZip ? ` ${b.postcode}` : ""}`
+		return {
+			raw: venue ? `${venue}, ${core}` : core,
+			components: {
+				...(venue ? { venue } : {}),
+				locality: b.locality,
+				region: b.region,
+				...(withZip ? { postcode: b.postcode } : {}),
+			},
+			locale: "en-US",
+			template,
+		}
+	}
+
+	if (
+		template === "fr-prefix" ||
+		template === "house-number-after-street" ||
+		template === "house-number-before-street"
+	) {
 		// FR-only (no base-consistent DE locality vocab; see the DE_TUPLES note above).
 		const b = base ?? pick(FR_TUPLES, random)
 		const name = pick(FR_NAMES, random)
 		const hn = houseNumber(random)
+		if (template === "house-number-before-street") {
+			// The confounding MIRROR of house-number-after-street: the SAME FR street vocab with the number
+			// BEFORE the name. A balanced before:after mix (the build/recipe sets the ratio, ~7:3 to keep US
+			// house_number 99.8% safe) teaches the model a street-adjacent number is a house_number by FORM,
+			// not position — the probe found v1.6.0 confidently absorbs the TRAILING number into street (I-street
+			// P=0.96), the order-bias.
+			const raw = `${hn} ${name}, ${b.postcode} ${b.locality}`
+			return {
+				raw,
+				components: { house_number: hn, street: name, postcode: b.postcode, locality: b.locality },
+				locale: localeFor[b.country] ?? "fr-FR",
+				template,
+			}
+		}
 		if (template === "fr-prefix") {
 			const prefix = pick(FR_PREFIXES, random)
 			// "{hn} {prefix} {name}, {postcode} {locality}" — postcode-first, prefix split from the name.
