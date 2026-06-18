@@ -30,7 +30,7 @@ import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
 import type { GazetteerLexicon } from "./gazetteer-inference.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
-import { repairPostcodeLabels } from "./postcode-repair.js"
+import { repairLeadingHouseNumber, repairPostcodeLabels } from "./postcode-repair.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
 import { buildSoftFeatures } from "./soft-features.js"
 import { bridgePunctuationGaps } from "./span-bridge.js"
@@ -360,12 +360,16 @@ export class NeuralAddressClassifier {
 		// system, or the model's own locale-head detection under a high confidence bar. Null = no
 		// constraints; the parse below is byte-identical to the pre-conventions path.
 		const conventionsOpt = opts?.addressSystemConventions ?? this.cfg.addressSystemConventions
-		const conventions =
+		// The resolved system code, captured so the US-only leading-house-number repair below can gate on
+		// it (see repairLeadingHouseNumber). null when conventions are off → no system, no repair
+		// (byte-stable). "auto" reads the model's locale head; a pinned SystemCode wins.
+		const detectedSystem: SystemCode | null =
 			conventionsOpt === undefined
 				? null
-				: conventionsForSystem(
-						conventionsOpt === "auto" ? (detectAddressSystem(localeLogits)?.system ?? null) : conventionsOpt
-					)
+				: conventionsOpt === "auto"
+					? (detectAddressSystem(localeLogits)?.system ?? null)
+					: conventionsOpt
+		const conventions = conventionsForSystem(detectedSystem)
 
 		let emissions = opts?.queryShape
 			? addEmissionMatrix(
@@ -454,6 +458,12 @@ export class NeuralAddressClassifier {
 		// snap-only truncation class the pass exists for ("47110" decoded as "4711" + a digit-split).
 		if (opts?.postcodeRepair || conventions?.postcodePattern) {
 			tokens = repairPostcodeLabels(text, tokens).tokens
+		}
+		// US leading-house-number repair (#723): the model labels a big rural house number as a ZIP
+		// ("24588 Outback Trl" → [postcode], no house_number). US-GATED — a leading 5-digit before a
+		// street is a POSTCODE in reversed-order FR (the #560 shard), so only when the detected system is US.
+		if (detectedSystem === "us") {
+			tokens = repairLeadingHouseNumber(text, tokens).tokens
 		}
 		if (opts?.unitRepair) {
 			tokens = repairUnitLabels(text, tokens).tokens
