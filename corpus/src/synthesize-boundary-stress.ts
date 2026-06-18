@@ -235,19 +235,31 @@ export function synthesizeBoundaryStressRow(
 		// across the forms real data carries it — bare, comma-LESS, postcode'd, and venue/org-prefixed.
 		const b = base ?? (random() < 0.3 ? pick(FR_TUPLES, random) : pick(US_TUPLES, random))
 		const venue = random() < 0.45 ? pick(VENUES, random) : ""
+		// ~12% carry a trailing country token — the v1.7.1 country patch (DeepSeek 2026-06-18). The pure
+		// "City, STATE" bare rows carry NO country token, which cost ~4pp on us.country_homograph in v1.7.0;
+		// teaching "…, USA"/"…, France" recovers it as a single-variable additive without diluting locality.
+		const withCountry = random() < 0.12
 		if (b.country === "FR") {
 			// FR carries no region token; "{postcode} {locality}" is the bare FR form.
-			const core = `${b.postcode} ${b.locality}`
+			const core = `${b.postcode} ${b.locality}${withCountry ? ", France" : ""}`
 			return {
 				raw: venue ? `${venue}, ${core}` : core,
-				components: { ...(venue ? { venue } : {}), postcode: b.postcode, locality: b.locality },
+				components: {
+					...(venue ? { venue } : {}),
+					postcode: b.postcode,
+					locality: b.locality,
+					...(withCountry ? { country: "France" } : {}),
+				},
 				locale: "fr-FR",
 				template,
 			}
 		}
 		const withZip = random() < 0.5
 		const comma = random() < 0.6 ? "," : "" // include the comma-LESS "City STATE" form too
-		const core = `${b.locality}${comma} ${b.region}${withZip ? ` ${b.postcode}` : ""}`
+		// "United States" (United 98% / States 98% country in the base), NOT "USA" — the #511 lint found
+		// "USA" is locality-DOMINANT (75%, only 6% country) in the base; labeling it country would contradict.
+		const countryName = "United States"
+		const core = `${b.locality}${comma} ${b.region}${withZip ? ` ${b.postcode}` : ""}${withCountry ? `, ${countryName}` : ""}`
 		return {
 			raw: venue ? `${venue}, ${core}` : core,
 			components: {
@@ -255,6 +267,7 @@ export function synthesizeBoundaryStressRow(
 				locality: b.locality,
 				region: b.region,
 				...(withZip ? { postcode: b.postcode } : {}),
+				...(withCountry ? { country: countryName } : {}),
 			},
 			locale: "en-US",
 			template,
