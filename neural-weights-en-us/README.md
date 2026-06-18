@@ -32,10 +32,16 @@ model-index:
             name: region-match (anchor-on, full pipeline)
           - type: distance
             value: 3.3
-            name: coordinate error p50 (km, anchor-on, full pipeline)
+            name: coordinate p50 km — admin-centroid tier (parser + admin gazetteer, no point data)
           - type: distance
-            value: 10.7
-            name: coordinate error p90 (km, anchor-on, full pipeline)
+            value: 0.0
+            name: coordinate p50 km — full geocode cascade (with situs + interpolation data layer)
+          - type: distance
+            value: 1.0
+            name: coordinate p90 km — full geocode cascade (with situs + interpolation data layer)
+          - type: accuracy
+            value: 0.859
+            name: within 100 m — full geocode cascade (with situs + interpolation data layer)
 ---
 
 # mailwoman — neural address-parser weights (en-us)
@@ -111,26 +117,37 @@ wrong city. All numbers below are the production-faithful, **anchor-on**
 configuration on the currently shipped model (lineage `v1.5.0-fr-order`, step
 40000; `model.onnx` md5 `4674d348…`).
 
-**Assembled coordinates — OpenAddresses US, 2000 real government address points,
-full pipeline (anchor-on):**
+**Assembled coordinates — OpenAddresses US (real government address points),
+anchor-on, currently shipped model:**
 
 | metric | value |
 | --- | --: |
 | locality-match | 97.8% |
 | region-match | 99.9% |
-| coordinate error p50 | 3.3 km |
-| coordinate error p90 | 10.7 km |
+| coordinate p50 — admin-centroid tier | 3.3 km |
+| coordinate p50 — full geocode cascade | **0.0 km** |
+| coordinate p90 — full geocode cascade | **1.0 km** |
+| within 100 m — full geocode cascade | **85.9%** |
 
-These are the headline `model-index` results. Two notes on reading them:
+**The two coordinate tiers matter.** The parser plus the admin gazetteer alone
+resolve to the locality **centroid** — legitimately a few km from an edge address
+(p50 3.3 km). The full geocode pipeline (`mailwoman`'s `geocode` cascade) wires a
+per-state situs + interpolation data layer on top and resolves the actual point:
+**79.8% of US addresses land on an exact address-point, 8.2% on a street
+interpolation, and only 12% fall back to the centroid — p50 0.0 km, 85.9% within
+100 m.** That data layer is the released data the geocoder consumes, not part of
+this weights package; see the situs-cascade eval under
+[`docs/articles/evals/`](https://mailwoman.sister.software) for the breakdown.
+
+Two more notes on reading these:
 
 - **The model is not the bottleneck; the resolver lands the right place.**
   locality-match credits the resolver's full locality group (locality ∪ borough ∪
   `localadmin`) — New England towns are `localadmin` in the gazetteer, which an
   earlier metric discarded, under-counting locality-match by ~14pp (the corrected
-  metric is 97.8%). The small residual (~2%) splits between civic-suffix
-  name-mismatch ("Barre City" vs the gazetteer's "Barre") and genuine rural-state
-  coverage. Where rooftop or street-interpolation data exists, the assembled
-  coordinate is street-accurate (p50 collapses to ~0.1–0.7 km).
+  metric is 97.8%). The small residual (~2%) is mostly civic-suffix name-mismatch
+  ("Barre City" vs the gazetteer's "Barre"), not absent places — a naming-convention
+  artifact more than a coverage hole.
 - **Structured types are where the neural front-end clearly leads** the rules
   baseline it replaces: on templated PO boxes, units, and intersections the
   rules port emits 0% correct structure (no `po_box` tag, dropped intersection
