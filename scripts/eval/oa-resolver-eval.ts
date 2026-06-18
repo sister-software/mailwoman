@@ -310,24 +310,30 @@ async function main(): Promise<void> {
 		.map((l) => JSON.parse(l))
 		.slice(0, limit === Infinity ? undefined : limit)
 
-	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
-	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-	const modelCard = JSON.parse(readFileSync(arg("model-card"), "utf8"))
-	const [tokenizer, runner] = await Promise.all([
-		MailwomanTokenizer.loadFromFile(arg("tokenizer")),
-		OnnxRunner.create(arg("model")),
-	])
-	// Model-side postcode anchor (#239/#240): feed the parser per-piece anchor features from the same
-	// lookup it trained on. Only for anchor models (ONNX exported with the anchor inputs). The verdict
-	// run: `--model-anchor-lookup /path/pilot-anchor-lookup.json` on the anchor-on model.
+	// Full SHIP-CONFIG via the canonical ProductionScorer (#722): createScorer reads the model-card's
+	// `requires` block and feeds EVERY declared channel — anchor + gazetteer + conventions(=auto) +
+	// suppress-gaz-near-postcode — and fails closed (strict) if a declared channel can't be fed. This
+	// grades the parse the library + server actually ship, not the hand-built anchor-only classifier
+	// this eval used before. `--model-anchor-lookup` still pins the anchor source (else createScorer's
+	// default /mnt pilot + the repo gazetteer lexicon). `--ablate-to-anchor` drops back to anchor-only
+	// (gazetteer + conventions OFF) for the #722 before/after comparison.
+	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const modelAnchorPath = arg("model-anchor-lookup", "")
-	const postcodeAnchorLookup = modelAnchorPath
-		? (await import("@mailwoman/neural")).parseAnchorLookup(JSON.parse(readFileSync(modelAnchorPath, "utf8")))
-		: undefined
-	if (modelAnchorPath)
-		console.error(`[model-anchor] feeding anchor from ${modelAnchorPath} (${postcodeAnchorLookup!.size} codes)`)
-	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels, postcodeAnchorLookup })
+	const ablateToAnchor = process.argv.includes("--ablate-to-anchor")
+	const neural = await createScorer({
+		modelPath: arg("model"),
+		tokenizerPath: arg("tokenizer"),
+		modelCardPath: arg("model-card"),
+		...(modelAnchorPath ? { anchorLookupPath: modelAnchorPath } : {}),
+		strict: true,
+		tier: "server",
+		...(ablateToAnchor ? { overrides: { gazetteer: false, conventions: false } } : {}),
+	})
+	console.error(
+		ablateToAnchor
+			? "[scorer] ABLATED to anchor-only (gazetteer + conventions OFF) — #722 before/after baseline"
+			: "[scorer] full ship-config via createScorer (anchor + gazetteer + conventions=auto + suppress)"
+	)
 
 	// v0 = our TypeScript port of the Pelias parser. Scoring it through the same resolver makes this a
 	// real "neural vs Pelias parser" head-to-head on non-circular addresses.
