@@ -165,10 +165,12 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
 
 | metric | value |
 |---|---|
-| shift duration | _tbd_ |
-| models trained | 1 (v1.7.0) |
-| Modal time | _tbd_ |
-| local compute | shard build + probes |
+| shift duration | 03:58–15:00 UTC (~11h) |
+| models trained | 1 (v1.7.0, full 40k after a mid-run resume) |
+| Modal GPU time | ~4h (train + stall window + resume + export/quant) |
+| local compute | shard builds, the gate + 5 probe evals (×2 models for the comparatives), 3 record-matcher runs, 3 lint runs |
 | NaN incidents | 0 |
-| CI failures | _tbd_ |
-| demo regressions | n/a (no promote) |
+| training stalls | 1 (hung ~step 21k; recovered via `--resume auto` from step-020000, no training lost) |
+| CI failures | 0 (docs-build green on all commits) |
+| commits | 14 |
+| demo / production regressions | n/a (no promote — candidate shipped beside canonical) |
