@@ -92,10 +92,16 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
 
 - I'd been calling the model "9M params" (echoing the consult framing); it's actually **29.6M** (the #492
   ceiling size). Didn't change any conclusion, but I should verify the number, not echo it.
-- **Generalizing the #511 lint naively reproduced the trap it lints for** — uniform per-source sampling
-  undersampled the big `ban` block and false-flagged FR cities as "street." The lesson is the same #511
-  discipline applied to the lint itself (scan source-scoped / proportional). Shipped as a caveated v1
-  screen; proper fix is a follow-up. (v0.6.1 itself is base-consistent — the flags were false-positives.)
+- **Generalizing the #511 lint is harder than it looked — and the experiment proved it.** The v1 uniform
+  sample false-flagged FR cities as "street"; I tried PROPORTIONAL sampling to fix it and it got WORSE (more
+  false-flags). Root cause: a token's correct tag is SOURCE/COUNTRY-specific (Paris = locality in FR data,
+  street in US "Paris Ave"), so ANY cross-source aggregate mis-judges it — sampling can't fix it. The only
+  fix is COUNTRY-scoped (check each shard token against same-COUNTRY base rows; the base has a `country`
+  column). Reverted to the v1 caveated coarse-screen — its caveat ("re-check minority-source flags
+  source-scoped") was right. The country-scoped lint is a real follow-up, and it will likely also surface
+  some US-locality tokens (Marion/Glendale/Portsmouth) as street-dominant in US base — worth verifying
+  before the next shard. (v0.6.1 itself: the FR-city + affix-split flags are false/expected; the venue +
+  country tokens were linted source-scoped and are clean.)
 - _(more as the shift runs)_
 
 ## 4. Decisions made autonomously
