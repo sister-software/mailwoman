@@ -44,4 +44,10 @@ The boundary shard taught real cases honestly; the trouble was that it only ever
 
 But the deeper lesson is the one about the number we started with. The macro-F1 went up. The model got worse at its most common real-world input. Both of those things were true at the same time, and only one of them mattered. If you're tuning a model on an aggregate score, the aggregate is the first thing that will lie to you — and it will do it while pointing at a bigger number and smiling. Grade the thing your user actually receives. We had to be told twice.
 
-_(Coda — the corrected model: pending its gate.)_
+## Coda: did the fix work?
+
+Yes — and in a way that drove the lesson home twice. We built exactly what the probe pointed at: teach the model bare "City, STATE" rows, so it stops needing a street to recognize a town. Held-out locality climbed from 66 back up to 80, past where it started before any of this. A French house-number tag we'd been stuck on for months came along for the ride, up ten points. The macro-F1? It barely twitched.
+
+That's the whole point, restated from the other direction. The aggregate that almost fooled us into shipping the broken model was the same aggregate that wouldn't have told us the fix landed, either. Both times, the truth was in the held-out spine — the town, the street, the house number a real user hands us — and both times the average just shrugged. So we read the spine. We had to learn that once; the fix made us prove we'd kept it.
+
+One honest footnote. The four hard boundary cases we set out to improve — the comma-less cities, the trailing house numbers — barely moved. We chased them, rebalanced for them, and they sat there. That's not a data problem we can out-augment; it's a thirty-million-parameter model bumping its own ceiling on the genuinely ambiguous cases. Knowing *that* — knowing when to stop pushing a lever — is worth as much as the fix. We banked the locality win and left the boundary shapes for a bigger model. That's a different post.
