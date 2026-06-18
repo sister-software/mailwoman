@@ -29,6 +29,7 @@ import { parseAnchorLookup, type AnchorLookup } from "./anchor-inference.js"
 import { NeuralAddressClassifier } from "./classifier.js"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "./gazetteer-inference.js"
 import { OnnxRunner } from "./onnx-runner.js"
+import { PostcodeBinaryResolver } from "./postcode-binary-resolver.js"
 import { MailwomanTokenizer } from "./tokenizer.js"
 import {
 	inferRequiredChannelsFromInputs,
@@ -36,6 +37,7 @@ import {
 	readCapabilityManifest,
 	readLabelsFromModelCard,
 	readRequiredChannels,
+	resolveWeights,
 	type RequiredChannels,
 } from "./weights.js"
 
@@ -52,6 +54,43 @@ export const DEFAULT_ANCHOR_LOOKUP = "/mnt/playpen/mailwoman-data/anchor/pilot-a
 
 /** Default gazetteer-anchor lexicon (codex-generated, repo-relative). */
 export const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
+
+/**
+ * Resolve the anchor lookup source the scorer feeds when the caller passes no `anchorLookupPath`
+ * (#718 D1): prefer the operator's local pilot JSON (the eval's historical default — unchanged when
+ * present), else fall back to the soft-feed sibling the weights package SHIPS (`postcode-<cc>.bin` /
+ * `anchor-lookup.json`), so eval + serving read the SAME artifact. Returns `undefined` when neither
+ * exists (the scorer then fails closed on a declared-required anchor, as before).
+ */
+function defaultAnchorSource(locale: string | undefined): { path: string; binary: boolean } | undefined {
+	if (existsSync(DEFAULT_ANCHOR_LOOKUP)) return { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
+	try {
+		return resolveWeights({ locale }).anchorLookupPath
+	} catch {
+		return undefined
+	}
+}
+
+/**
+ * Resolve the gazetteer lexicon path the scorer feeds when the caller passes no
+ * `gazetteerLexiconPath` (#718 D1): prefer the repo-relative codex lexicon (the eval default —
+ * unchanged when present), else the soft-feed sibling shipped in the weights package.
+ */
+function defaultGazetteerLexicon(locale: string | undefined): string | undefined {
+	if (existsSync(DEFAULT_GAZETTEER_LEXICON)) return DEFAULT_GAZETTEER_LEXICON
+	try {
+		return resolveWeights({ locale }).gazetteerLexiconPath
+	} catch {
+		return undefined
+	}
+}
+
+/** Load an `AnchorLookup` from either a PCB1 binary or a JSON pilot lookup (#718 D1). */
+function loadAnchorLookup(source: { path: string; binary: boolean }): AnchorLookup {
+	return source.binary
+		? new PostcodeBinaryResolver(new Uint8Array(readFileSync(source.path))).toAnchorLookup()
+		: parseAnchorLookup(JSON.parse(readFileSync(source.path, "utf8")))
+}
 
 /**
  * Per-channel overrides for a deliberate, DECLARED ablation. Setting any of these to a value
@@ -81,10 +120,22 @@ export interface CreateScorerOpts {
 	tokenizerPath: string
 	/** Path to the `model-card.json` (label vocab + the `requires` ship-config). */
 	modelCardPath: string
-	/** Postcode→anchor lookup path. Default {@link DEFAULT_ANCHOR_LOOKUP}. */
+	/**
+	 * Postcode→anchor lookup path. Default {@link DEFAULT_ANCHOR_LOOKUP} when it exists, else the
+	 * soft-feed sibling shipped in the `@mailwoman/neural-weights-<locale>` package (#718 D1).
+	 */
 	anchorLookupPath?: string
-	/** Gazetteer-anchor lexicon path. Default {@link DEFAULT_GAZETTEER_LEXICON}. */
+	/**
+	 * Gazetteer-anchor lexicon path. Default {@link DEFAULT_GAZETTEER_LEXICON} when it exists, else the
+	 * soft-feed sibling shipped in the weights package (#718 D1).
+	 */
 	gazetteerLexiconPath?: string
+	/**
+	 * Locale tag (e.g. `"en-us"`) used to resolve the weights-package soft-feed siblings when the
+	 * default `/mnt` / repo-relative paths are absent (#718 D1). Only consulted for that fallback; the
+	 * model/tokenizer/card are always explicit on this path.
+	 */
+	locale?: string
 	/**
 	 * Fail CLOSED (throw) when the model-card declares a channel required but it isn't actually fed.
 	 * Default `true`. Set `false` only for throwaway debugging — a below-config scorer is the trap
@@ -220,7 +271,11 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	assertConventionsRespectCapabilities(opts.modelCardPath, opts.tier ?? "server", strict)
 
 	// --- Anchor channel ---------------------------------------------------------------------------
-	const anchorLookupPath = opts.anchorLookupPath ?? DEFAULT_ANCHOR_LOOKUP
+	// Caller-pinned path wins (explicit `--anchor-lookup`, always JSON); else fall back to the
+	// operator pilot JSON or, failing that, the weights-package soft-feed sibling (PCB1 or JSON, #718).
+	const anchorSource: { path: string; binary: boolean } | undefined = opts.anchorLookupPath
+		? { path: opts.anchorLookupPath, binary: false }
+		: defaultAnchorSource(opts.locale)
 	const anchorRequired = declared.anchor?.required ?? false
 	let postcodeAnchorLookup: AnchorLookup | undefined
 	if (overrides.anchor === false) {
@@ -231,15 +286,13 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 			)
 		}
 	} else {
-		postcodeAnchorLookup = existsSync(anchorLookupPath)
-			? parseAnchorLookup(JSON.parse(readFileSync(anchorLookupPath, "utf8")))
-			: undefined
+		postcodeAnchorLookup = anchorSource && existsSync(anchorSource.path) ? loadAnchorLookup(anchorSource) : undefined
 		// Fail closed: declared-required but the lookup is missing or parsed empty → the model would be
 		// fed zeros (the anchor-off identity) and silently go OOD. That's the #566/#685 trap.
 		if (anchorRequired && !(postcodeAnchorLookup && postcodeAnchorLookup.size > 0)) {
 			const reason = postcodeAnchorLookup
 				? `parsed lookup is EMPTY (size 0)`
-				: `lookup file not found at ${anchorLookupPath}`
+				: `lookup not found (tried ${anchorSource?.path ?? DEFAULT_ANCHOR_LOOKUP} + weights-package sibling)`
 			fail(
 				strict,
 				`anchor channel is declared REQUIRED by the model-card but cannot be fed: ${reason}. ` +
@@ -249,7 +302,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	}
 
 	// --- Gazetteer channel ------------------------------------------------------------------------
-	const gazetteerLexiconPath = opts.gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON
+	const gazetteerLexiconPath = opts.gazetteerLexiconPath ?? defaultGazetteerLexicon(opts.locale)
 	const gazetteerRequired = declared.gazetteer?.required ?? false
 	let gazetteerLexicon: GazetteerLexicon | undefined
 	if (overrides.gazetteer === false) {
@@ -260,15 +313,16 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 			)
 		}
 	} else {
-		gazetteerLexicon = existsSync(gazetteerLexiconPath)
-			? parseGazetteerLexicon(JSON.parse(readFileSync(gazetteerLexiconPath, "utf8")))
-			: undefined
+		gazetteerLexicon =
+			gazetteerLexiconPath && existsSync(gazetteerLexiconPath)
+				? parseGazetteerLexicon(JSON.parse(readFileSync(gazetteerLexiconPath, "utf8")))
+				: undefined
 		if (gazetteerRequired && !gazetteerLexicon) {
 			fail(
 				strict,
 				`gazetteer channel is declared REQUIRED by the model-card but the lexicon file was not found ` +
-					`at ${gazetteerLexiconPath}. Provide a valid --gazetteer-lexicon, or pass overrides.gazetteer=false ` +
-					`for a deliberate ablation.`
+					`at ${gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON}. Provide a valid --gazetteer-lexicon, or pass ` +
+					`overrides.gazetteer=false for a deliberate ablation.`
 			)
 		}
 	}

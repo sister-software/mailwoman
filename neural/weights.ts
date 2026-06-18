@@ -43,6 +43,12 @@ export interface ResolveWeightsOpts {
 	 * checkpoint via explicit paths.
 	 */
 	modelCardPath?: string
+	/**
+	 * Serving tier (#718 D1). `"server"` (default) = anchor + gazetteer channels; `"pocket"` =
+	 * anchor-only (skip the gazetteer lexicon even when shipped). Selects which soft-feature sibling
+	 * artifacts {@link resolveWeights} surfaces — the loader feeds only the resolved channels.
+	 */
+	tier?: "server" | "pocket"
 }
 
 export interface ResolvedWeights {
@@ -60,6 +66,22 @@ export interface ResolvedWeights {
 	 * exist (pre-v0.6.0 bundles or CE-only training).
 	 */
 	crfTransitionsPath?: string
+	/**
+	 * Path to the postcode→anchor source shipped beside the resolved model (#718 D1) — the soft-feed
+	 * `loadFromWeights` reads to feed the anchor channel without a callsite change. Prefer the compact
+	 * PCB1 binary (`postcode-<cc>.bin`, decoded via `PostcodeBinaryResolver.toAnchorLookup()`), else a
+	 * JSON anchor lookup (`anchor-lookup.json`, parsed via `parseAnchorLookup`). `undefined` when the
+	 * package ships neither (a plain/pre-#718 bundle) — the loader then runs anchor-OFF. The
+	 * `binary` flag tells the loader which parser to use.
+	 */
+	anchorLookupPath?: { path: string; binary: boolean }
+	/**
+	 * Path to the gazetteer-anchor lexicon (`anchor-lexicon-v1.json`, #464) shipped beside the
+	 * resolved model. `undefined` when the package doesn't ship it, OR when `opts.tier === "pocket"`
+	 * (pocket is anchor-only — the gazetteer channel is deliberately skipped). Read by the
+	 * `loadFromWeights` soft-feed via `parseGazetteerLexicon`.
+	 */
+	gazetteerLexiconPath?: string
 	/** "explicit" if both paths came from opts; "package:<name>" if resolved via require.resolve. */
 	source: string
 }
@@ -113,7 +135,43 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	const crfCandidate = resolve(packageDir, "crf-transitions.json")
 	const crfTransitionsPath = existsSync(crfCandidate) ? crfCandidate : undefined
 
-	return { modelPath, tokenizerPath, modelCardPath, crfTransitionsPath, source: `package:${packageName}` }
+	// Soft-feature sibling artifacts (#718 D1): the anchor + gazetteer sources the package ships so
+	// `loadFromWeights` can feed the channels the model was trained against — without a callsite
+	// change. Resolved package-dir-relative via the same `existsSync → undefined` pattern as the CRF
+	// transitions above. The locale tag's region subtag (`en-us` → `us`) names the PCB1 binary.
+	const country = locale.split("-")[1] ?? ""
+	const anchorLookupPath = resolveAnchorLookupSibling(packageDir, country)
+	// Tier `"pocket"` is anchor-only — never surface the gazetteer lexicon (the loader then skips it).
+	const gazetteerCandidate = resolve(packageDir, "anchor-lexicon-v1.json")
+	const gazetteerLexiconPath =
+		opts.tier === "pocket" ? undefined : existsSync(gazetteerCandidate) ? gazetteerCandidate : undefined
+
+	return {
+		modelPath,
+		tokenizerPath,
+		modelCardPath,
+		crfTransitionsPath,
+		...(anchorLookupPath ? { anchorLookupPath } : {}),
+		...(gazetteerLexiconPath ? { gazetteerLexiconPath } : {}),
+		source: `package:${packageName}`,
+	}
+}
+
+/**
+ * Locate the package's postcode→anchor source for the soft-feed (#718 D1), preferring the compact
+ * PCB1 binary (`postcode-<cc>.bin`, ~0.66 MB) over the much larger JSON lookup (`anchor-lookup.json`,
+ * the 3.2 MB pilot dump). Returns the path + a `binary` flag so the loader picks the right parser
+ * (`PostcodeBinaryResolver.toAnchorLookup()` vs `parseAnchorLookup`). `undefined` when neither
+ * ships.
+ */
+function resolveAnchorLookupSibling(packageDir: string, country: string): { path: string; binary: boolean } | undefined {
+	if (country) {
+		const binary = resolve(packageDir, `postcode-${country}.bin`)
+		if (existsSync(binary)) return { path: binary, binary: true }
+	}
+	const json = resolve(packageDir, "anchor-lookup.json")
+	if (existsSync(json)) return { path: json, binary: false }
+	return undefined
 }
 
 /**

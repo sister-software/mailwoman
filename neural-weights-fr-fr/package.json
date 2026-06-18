@@ -11,6 +11,8 @@
 		"model.onnx",
 		"tokenizer.model",
 		"model-card.json",
+		"postcode-fr.bin",
+		"anchor-lexicon-v1.json",
 		"README.md"
 	],
 	"publishConfig": {

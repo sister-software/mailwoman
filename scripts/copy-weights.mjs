@@ -17,11 +17,20 @@
  *   - MAILWOMAN_PUBLISH_MODEL: absolute path to the int8 quantized model.onnx (wins outright)
  *   - MAILWOMAN_PUBLISH_TOKENIZER: absolute path to the matching tokenizer.model (wins outright)
  *
+ *   Also materializes the #718 D1 SOFT-FEED artifacts so the library default `loadFromWeights` feeds
+ *   the anchor + gazetteer channels the trained model expects (without these, the package's default
+ *   load path serves the model anchor-OFF — the #566/#685 OOD crater):
+ *
+ *   - `postcode-<cc>.bin` — the compact PCB1 postcode-anchor binary, built from the WOF postcode shard
+ *       (`softFeed.postcodeDbByCountry[<cc>]`) via `scripts/build-postcode-binary.ts`.
+ *   - `anchor-lexicon-v1.json` — the codex-generated gazetteer-anchor lexicon (`softFeed.gazetteerLexicon`).
+ *
  *   Idempotent. Used by .release-it.json's before:init hook.
  * @import {PathLike} from "node:fs"
  */
 
-import { readFileSync } from "node:fs"
+import { spawnSync } from "node:child_process"
+import { existsSync, readFileSync } from "node:fs"
 import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -33,6 +42,9 @@ const config = JSON.parse(readFileSync(resolve(repoRoot, "release.config.json"),
 const dataRoot = process.env.MAILWOMAN_DATA_ROOT ?? config.weights.dataRoot
 const SOURCE_MODEL = process.env.MAILWOMAN_PUBLISH_MODEL ?? resolve(dataRoot, config.weights.model)
 const SOURCE_TOKENIZER = process.env.MAILWOMAN_PUBLISH_TOKENIZER ?? resolve(dataRoot, config.weights.tokenizer)
+
+const SOFT_FEED = config.softFeed ?? {}
+const SOURCE_GAZETTEER = SOFT_FEED.gazetteerLexicon ? resolve(repoRoot, SOFT_FEED.gazetteerLexicon) : null
 
 const TARGETS = config.locales.map((locale) => `neural-weights-${locale}`)
 
@@ -80,7 +92,56 @@ async function main() {
 		await copyFile(SOURCE_MODEL, modelDest)
 		await copyFile(SOURCE_TOKENIZER, tokenizerDest)
 		process.stderr.write(`copied weights → ${workspace}/{model.onnx,tokenizer.model}\n`)
+
+		await materializeSoftFeed(workspace, dir)
 	}
+}
+
+/**
+ * Materialize the #718 D1 soft-feed artifacts into a weights workspace: the gazetteer-anchor lexicon
+ * (a verbatim copy) + the per-country PCB1 postcode-anchor binary (built fresh from the WOF shard).
+ * Both `removeIfPresent` first — same symlink-in-tarball trap the model/tokenizer copy guards against.
+ *
+ * @param {string} workspace
+ * @param {string} dir
+ */
+async function materializeSoftFeed(workspace, dir) {
+	// Gazetteer-anchor lexicon (#464) — a small JSON, copied verbatim from the repo source.
+	if (SOURCE_GAZETTEER) {
+		if (!(await exists(SOURCE_GAZETTEER))) {
+			throw new Error(`Missing gazetteer lexicon: ${SOURCE_GAZETTEER}\nSet softFeed.gazetteerLexicon in release.config.json.`)
+		}
+		const dest = resolve(dir, "anchor-lexicon-v1.json")
+		await removeIfPresent(dest)
+		await copyFile(SOURCE_GAZETTEER, dest)
+		process.stderr.write(`copied soft-feed → ${workspace}/anchor-lexicon-v1.json\n`)
+	}
+
+	// PCB1 postcode-anchor binary (#240) — built from the locale's WOF postcode shard. The locale's
+	// region subtag (`en-us` → `us`) names both the binary and the postcodeDbByCountry source entry.
+	const country = workspace.replace(/^neural-weights-[a-z]+-/, "")
+	const dbRel = SOFT_FEED.postcodeDbByCountry?.[country]
+	if (!dbRel) {
+		process.stderr.write(`soft-feed: no postcodeDbByCountry entry for "${country}" — skipping ${workspace}/postcode-${country}.bin\n`)
+		return
+	}
+	const db = dbRel.startsWith("/") ? dbRel : resolve(dataRoot, "wof", dbRel)
+	if (!existsSync(db)) {
+		throw new Error(`Missing postcode shard for ${country}: ${db}\nSet MAILWOMAN_DATA_ROOT or softFeed.postcodeDbByCountry.`)
+	}
+	const binDest = resolve(dir, `postcode-${country}.bin`)
+	await removeIfPresent(binDest)
+	// build-postcode-binary.ts is a TS script run under node --experimental-strip-types; --out is the
+	// workspace dir, so it writes postcode-<cc>.bin directly where the `files` array expects it.
+	const buildScript = resolve(repoRoot, "scripts/build-postcode-binary.ts")
+	const r = spawnSync(
+		process.execPath,
+		["--experimental-strip-types", buildScript, "--out", dir, "--locale", `${country.toUpperCase()}:${db}`],
+		{ stdio: "inherit" }
+	)
+	if (r.status !== 0) throw new Error(`build-postcode-binary.ts failed for ${country} (exit ${r.status})`)
+	if (!existsSync(binDest)) throw new Error(`build-postcode-binary.ts ran but ${binDest} was not produced`)
+	process.stderr.write(`built soft-feed → ${workspace}/postcode-${country}.bin\n`)
 }
 
 /**

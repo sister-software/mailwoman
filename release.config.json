@@ -10,6 +10,14 @@
 		"trainingStep": 40000,
 		"lineage": "v1.5.0-fr-order (char-offset corpus #519 + synth-fr-order shard #561 @ weight 3.0, step 40000) — the fr.house_number RECOVERY release. fr.house_number 54.5 → 87.4 on the diversified golden (#563, +32.9pp, at the reordered-case SOTA frontier). Span bridge stays RETIRED (po_box 90.3 bridge-OFF). fr.house_number gate floor re-baselined 91 → 85 (STATED, operator-approved, research-anchored: #564 + docs/articles/evals/2026-06-13-fr-house-number-threshold-research.md). int8 md5 4674d3483c94bfddd1884872467763d9."
 	},
+	"softFeed": {
+		"$comment": "Soft-feed artifacts (#718 D1) materialized into each neural-weights-<locale> workspace at publish time by copy-weights.mjs so the library default `loadFromWeights` feeds the channels the anchor+gazetteer-trained model expects (closing the anchor-OFF crater). The PCB1 postcode binary is built from the WOF postcode shard (per locale's country code); the gazetteer lexicon is the codex-generated repo file. Paths under `db` are relative to weights.dataRoot/wof. Like the weights binaries, these are skipped in CI (MAILWOMAN_SKIP_WEIGHTS_COPY) — the publish workflow places them via the HF fetch step.",
+		"gazetteerLexicon": "data/gazetteer/anchor-lexicon-v1.json",
+		"postcodeDbByCountry": {
+			"us": "postalcode-us.db",
+			"fr": "postalcode-intl.db"
+		}
+	},
 	"assets": {
 		"$comment": "Where the model release lives for the demo + the CI weights pull. The release path embeds `version`; publish.yml derives the same path from the model card so CI and local stay in sync.",
 		"r2Bucket": "mailwoman-assets",

@@ -201,9 +201,20 @@ export class NeuralAddressClassifier {
 		// + node:fs) and throws cleanly in a browser if called. Without the directive, webpack
 		// pulls onnx-runner / weights into the browser chunk graph + then chokes on the Node-only
 		// builtins they reference.
-		const [{ OnnxRunner }, { resolveWeights, readLabelsFromModelCard, readCrfTransitions }] = await Promise.all([
+		const [
+			{ OnnxRunner },
+			{ resolveWeights, readLabelsFromModelCard, readCrfTransitions, readRequiredChannels },
+			{ parseAnchorLookup },
+			{ parseGazetteerLexicon },
+			{ PostcodeBinaryResolver },
+			fs,
+		] = await Promise.all([
 			import(/* webpackIgnore: true */ "./onnx-runner.js"),
 			import(/* webpackIgnore: true */ "./weights.js"),
+			import(/* webpackIgnore: true */ "./anchor-inference.js"),
+			import(/* webpackIgnore: true */ "./gazetteer-inference.js"),
+			import(/* webpackIgnore: true */ "./postcode-binary-resolver.js"),
+			import(/* webpackIgnore: true */ "node:fs"),
 		])
 		const resolved: ResolvedWeights = resolveWeights(opts)
 		const labels = readLabelsFromModelCard(resolved.modelCardPath)
@@ -212,6 +223,65 @@ export class NeuralAddressClassifier {
 			MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
 			OnnxRunner.create(resolved.modelPath),
 		])
+
+		// --- Soft-feed (#718 D1): feed the channels the SHIPPED model was trained against ----------
+		// The anchor-trained en-us model goes OOD when scored anchor-OFF (the #566/#685 crater: country
+		// ~0, region 71, locality 57 vs the server-tier 68/90/77). The browser loader already feeds the
+		// channels from URLs; this is the Node-side mirror so EVERY consumer (ResolveRouter,
+		// GeocodeRouter, geocode.tsx, the CLI) transparently gains them with no callsite change.
+		//
+		// SOFT: each channel is best-effort. A caller-passed `postcodeAnchorLookup` always wins. When
+		// the model-card declares a channel REQUIRED but the package didn't ship its data, we warn ONCE
+		// (mirroring neural-web's `warnOnUnfedTrainedChannels`) and run that channel OFF — never crash.
+		const declared = readRequiredChannels(resolved.modelCardPath)
+
+		let postcodeAnchorLookup = opts.postcodeAnchorLookup
+		if (!postcodeAnchorLookup && resolved.anchorLookupPath) {
+			try {
+				postcodeAnchorLookup = resolved.anchorLookupPath.binary
+					? new PostcodeBinaryResolver(
+							new Uint8Array(fs.readFileSync(resolved.anchorLookupPath.path))
+						).toAnchorLookup()
+					: parseAnchorLookup(JSON.parse(fs.readFileSync(resolved.anchorLookupPath.path, "utf8")))
+			} catch (err) {
+				warnUnfedChannel("anchor", `failed to parse ${resolved.anchorLookupPath.path}: ${(err as Error).message}`)
+			}
+		}
+		if (declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size > 0)) {
+			warnUnfedChannel(
+				"anchor",
+				resolved.anchorLookupPath
+					? `parsed lookup at ${resolved.anchorLookupPath.path} is empty`
+					: `no postcode-<cc>.bin / anchor-lookup.json found in the weights package`
+			)
+		}
+
+		let gazetteerLexicon: GazetteerLexicon | undefined
+		if (resolved.gazetteerLexiconPath) {
+			try {
+				gazetteerLexicon = parseGazetteerLexicon(JSON.parse(fs.readFileSync(resolved.gazetteerLexiconPath, "utf8")))
+			} catch (err) {
+				warnUnfedChannel("gazetteer", `failed to parse ${resolved.gazetteerLexiconPath}: ${(err as Error).message}`)
+			}
+		}
+		// Pocket tier is anchor-only: `resolveWeights` already withholds the gazetteer path, so a
+		// declared-required gazetteer is EXPECTED to be unfed there — don't warn. Otherwise warn.
+		if (declared?.gazetteer?.required && !gazetteerLexicon && opts.tier !== "pocket") {
+			warnUnfedChannel(
+				"gazetteer",
+				resolved.gazetteerLexiconPath
+					? `lexicon at ${resolved.gazetteerLexiconPath} could not be parsed`
+					: `no anchor-lexicon-v1.json found in the weights package`
+			)
+		}
+
+		// Near-postcode gazetteer choreography + conventions mode: drive them off the card's declared
+		// SHIP-CONFIG (mirrors createScorer / the browser loader defaults), inert when the source
+		// channel is absent. Byte-stable for a non-anchor card (no `requires` → all undefined/false).
+		const suppressGazetteerNearPostcode = declared?.suppress_gazetteer_near_postcode ?? false
+		const addressSystemConventions =
+			declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : undefined
+
 		return new NeuralAddressClassifier({
 			tokenizer,
 			runner,
@@ -219,7 +289,10 @@ export class NeuralAddressClassifier {
 			transitions: crf?.transitions,
 			startTransitions: crf?.startTransitions,
 			endTransitions: crf?.endTransitions,
-			...(opts.postcodeAnchorLookup ? { postcodeAnchorLookup: opts.postcodeAnchorLookup } : {}),
+			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
+			...(gazetteerLexicon ? { gazetteerLexicon } : {}),
+			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
+			...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" } : {}),
 		})
 	}
 
@@ -530,6 +603,24 @@ export interface ParseOpts {
 	 * parses (`street_suffix: "Rue"`) and digit-splits corrupted leading FR postcodes.
 	 */
 	addressSystemConventions?: "auto" | SystemCode
+}
+
+/**
+ * Loud-degrade warning for the `loadFromWeights` soft-feed (#718 D1) — the Node mirror of
+ * neural-web's `warnOnUnfedTrainedChannels`. Fired ONCE per channel per process: a model-card that
+ * declares a channel REQUIRED, paired with a package that didn't ship (or could not parse) its data,
+ * runs that channel OFF. Structural fallback (the parse still works), loud console (a silently
+ * anchor-OFF anchor-trained model is the #566/#685 OOD crater this fix exists to surface).
+ */
+const warnedUnfedChannels = new Set<string>()
+function warnUnfedChannel(channel: "anchor" | "gazetteer", detail: string): void {
+	if (warnedUnfedChannels.has(channel)) return
+	warnedUnfedChannels.add(channel)
+	console.error(
+		`[mailwoman/neural] loadFromWeights: model-card declares the ${channel} channel REQUIRED but ${detail} — ` +
+			`running ${channel}-OFF, parses degraded (train/inference mismatch). Ship the ${channel} artifact in the ` +
+			`weights package (postcode-<cc>.bin / anchor-lexicon-v1.json), or pass an explicit lookup.`
+	)
 }
 
 function argmaxSoftmax(row: number[]): { idx: number; conf: number } {

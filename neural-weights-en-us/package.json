@@ -13,6 +13,8 @@
 		"model-card.json",
 		"calibration.json",
 		"calibration-per-locale.json",
+		"postcode-us.bin",
+		"anchor-lexicon-v1.json",
 		"README.md"
 	],
 	"publishConfig": {
