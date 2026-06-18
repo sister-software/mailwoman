@@ -18,6 +18,7 @@ import {
 	type CoincidentLocality,
 	DEFAULT_PLACETYPE_MAP,
 	type InterpolationLookup,
+	isPlacetypeFallback,
 	type PlacetypeMap,
 	type ResolvedPlace,
 	type ResolveOpts,
@@ -390,8 +391,31 @@ class WofResolver implements Resolver {
 					b.score + w * (post[b.country] ?? 0) - (a.score + w * (post[a.country] ?? 0))
 			)
 		}
+
+		// Exact-type preference (#718): when the placetype-equivalence group let a broader admin tier
+		// (`macroregion`/`macrocounty`) into the candidate pool, prefer a candidate of the EXACT
+		// requested type over the macro fallback — a real `region` (US state, DE Bundesland, ES
+		// provincia) must win over a same-name macroregion namesake, so no real region silently
+		// downgrades to a macro. STABLE partition: exact-type candidates keep their (already-ranked)
+		// relative order ahead of fallbacks, so the score / anchor re-rank survives WITHIN each tier.
+		// No-op for placetypes without a macro fallback (the byte-stable default) and when every
+		// candidate is the same tier.
+		const hasFallbackCandidate = ranked.some((c) => isPlacetypeFallback(placetype, c.placetype))
+		if (hasFallbackCandidate && ranked.length > 1) {
+			ranked = [
+				...ranked.filter((c) => !isPlacetypeFallback(placetype, c.placetype)),
+				...ranked.filter((c) => isPlacetypeFallback(placetype, c.placetype)),
+			]
+		}
+
 		const top = ranked[0]!
 		if (top.score < state.minWinningScore) return null
+		// Fallback-observability (#718): if the winner is a macro-type AND no exact-type candidate
+		// existed for this span, annotate that a broader tier stood in for the true one. Additive —
+		// identity/coordinate are unchanged; only `metadata.resolution_quality` is stamped downstream.
+		if (isPlacetypeFallback(placetype, top.placetype)) {
+			top.resolutionQuality = "fallback"
+		}
 		return { top, alternatives: ranked.slice(1) }
 	}
 }
@@ -424,6 +448,10 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 	// geographically different place than the parsed city name. Surface it so callers can warn rather
 	// than silently trust the resolved point.
 	if (resolved.mismatch) node.metadata["postcode_city_mismatch"] = true
+	// Fallback-observability (#718): a broader admin tier (macroregion/macrocounty) stood in for the
+	// true region/county because no exact-type candidate existed. Additive annotation only — the
+	// resolved coordinate/identity above is untouched; this just lets a consumer / QA pass see it.
+	if (resolved.resolutionQuality) node.metadata["resolution_quality"] = resolved.resolutionQuality
 	if (alternatives.length > 0) {
 		node.alternatives = alternatives
 	}
