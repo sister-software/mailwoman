@@ -123,14 +123,22 @@ const FR_NAMES = [
 ] as const
 
 // Org/venue prefixes for the bare-locality shape — the v1.6.0 locality drop hit org-PREFIXED real rows
-// hardest ("LISBON PUBLIC LIBRARY, …, Lisbon ND"; "Maplehill School, …"; "Alburg Health Center"). Teaching
-// the locality WITH a leading venue keeps the model emitting it on facility-style addresses (NPPES/HRSA/IMLS
-// shapes). `venue` is a base ComponentTag; these are generic (no city tokens) so they never shadow locality.
+// hardest ("LISBON PUBLIC LIBRARY, …, Lisbon ND"; "Alburg Health Center"). Teaching the locality WITH a
+// leading venue keeps the model emitting it on facility-style addresses (NPPES/HRSA shapes). `venue` is a
+// base ComponentTag.
+//
+// #511-LINTED 2026-06-18 (scripts/lint-venue-vocab — scan of nppes/hrsa/tiger/nad/wof-admin): every token
+// here is venue-DOMINANT in the base, so the shard agrees with it. The first draft was naive — 9 terms
+// were dropped because their tokens are dominantly street/locality and would CONTRADICT the base the way
+// Madison-as-street did (#511): "Fire" 93% street, "Veterans" 94% street, "City" 68% locality, "Hall" 63%
+// street, "Memorial"/"Hospital" 62-63% street, "Recreation" 79% street, "Town" 48% locality, "Library" 51%
+// street, "County" 68% street, "Arts"/"Courthouse"/"Municipal" dependent_locality. Kept tokens: Clinic 98%,
+// Practice 98%, Dental 100%, Health 99%, Medical 88%, Community 92%, Department 90%, Group 87%, Center 65%,
+// School 70%, Public 89%, Elementary/Family 97% (all venue).
 const VENUES = [
-	"Public Library", "Community Center", "Health Center", "Municipal Library", "Elementary School",
-	"High School", "Memorial Hospital", "Fire Department", "City Hall", "Senior Center", "Medical Clinic",
-	"Family Practice", "Dental Group", "Veterans Hall", "Recreation Center", "Town Office", "Community Hospital",
-	"Public School", "Arts Council", "County Courthouse",
+	"Community Center", "Health Center", "Medical Center", "Medical Clinic", "Family Clinic",
+	"Community Clinic", "Dental Clinic", "Family Practice", "Medical Practice", "Dental Group",
+	"Medical Group", "Health Department", "Elementary School", "Public School",
 ] as const
 
 // Localities DERIVED from the base corpus (#511): every name here is verified locality-DOMINANT in the

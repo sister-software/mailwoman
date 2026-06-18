@@ -42,13 +42,37 @@ function mulberry32(seed) {
 }
 const random = mulberry32(SEED)
 
+// Revised composition (v1.7.0, DeepSeek-tuned 2026-06-18). The v1.6.0 shard was uniform over 4 shapes;
+// the probes showed it over-fit a narrow distribution. Weighted now: `bare-locality` ~11% (recover the
+// 84% locality drop on bare "City, STATE" rows WITHOUT becoming a locality-first majority — the base
+// already carries ~5-8%), and `house-number-before:after` = 7:3 (FR's own dominant order is number-BEFORE;
+// 30% after is enough to break the order-bias shortcut without risking FR hn-before accuracy via shared
+// cross-locale capacity). The three original non-number shapes keep the bulk. Weights sum to 1.0.
+const WEIGHTS = {
+	"street-eats-affix": 0.22,
+	"comma-less-city-state": 0.22,
+	"fr-prefix": 0.18,
+	"bare-locality": 0.11,
+	"house-number-before-street": 0.189,
+	"house-number-after-street": 0.081,
+}
+const CUM = (() => {
+	let acc = 0
+	return Object.entries(WEIGHTS).map(([t, w]) => [t, (acc += w)])
+})()
+function pickTemplate(r) {
+	const x = r()
+	for (const [t, c] of CUM) if (x <= c) return t
+	return CUM[CUM.length - 1][0]
+}
+
 mkdirSync(dirname(OUT), { recursive: true })
 const out = createWriteStream(OUT)
 let labeled = 0
 let quarantined = 0
 const byTemplate = {}
 for (let i = 0; i < COUNT; i++) {
-	const row = synthesizeBoundaryStressRow(undefined, { random })
+	const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: pickTemplate(random) })
 	const country = row.locale.split("-")[1] ?? "US"
 	const source_id = stableSourceId("synth-boundary-stress", { ...row.components, v: String(i) })
 	const canonical = {
