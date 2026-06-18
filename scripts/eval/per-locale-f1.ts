@@ -22,6 +22,13 @@
  *   `intersection_a`/`_b` → `street`) into the golden component vocab, then compare case-folded
  *   strings per tag.
  *
+ *   The anchor + gazetteer feed channels are fed by DEFAULT (the standard paths, same as
+ *   `score-country-homograph.ts` / `oa-resolver-eval`). The current 33-label STAGE3 models were
+ *   trained with these channels live, so omitting them scores the model out-of-distribution and
+ *   silently collapses the admin tags (country→0, region↔locality flips) while street/venue survive —
+ *   the false "regression" this script used to report. Pass `--no-anchor` to measure the zero-feed
+ *   (anchor-off) path on purpose, or `--model-anchor-lookup`/`--gazetteer-lexicon` to override paths.
+ *
  *   Usage: node --experimental-strip-types scripts/eval/per-locale-f1.ts\
  *   --golden-dir data/eval/golden/v0.1.2/dev\
  *   --model /tmp/v072-eval/model.onnx\
@@ -35,8 +42,24 @@ import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { readFileSync, writeFileSync } from "node:fs"
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { basename, resolve } from "node:path"
+
+// Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict
+// `oa-resolver-eval` runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x; ONNX inputs
+// `anchor_features`/`gazetteer_features`) were trained WITH these channels live, so honest inference
+// must feed them. The lookup is keyed by the input's own postcode — always available at eval time.
+//
+// Why this is a DEFAULT, not opt-in (the bug this file used to have): when these are omitted, the
+// OnnxRunner falls back to the `confidence = 0` zero-feed (its "anchor-off identity"). That's
+// out-of-distribution for an anchor-trained model and it SELECTIVELY collapses the admin tags
+// (country/region/locality/postcode) + the CRF transitions around them — `country` F1 drops to 0,
+// region↔locality flip — while the morphology tags (street/house_number/venue) that don't lean on
+// the anchor channel survive. The result LOOKS like a per-version model regression but is purely a
+// harness OOD artifact: BOTH v1.5.0 and v1.7.0 crater identically without the feed and recover
+// identically with it. Pass `--no-anchor` to deliberately measure the anchor-off (zero-feed) path.
+const DEFAULT_ANCHOR_LOOKUP = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
+const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 
 // -------------------------------------------------------------------------------------------------
 // Args
@@ -50,6 +73,7 @@ interface Args {
 	modelCardPath?: string
 	modelAnchorLookupPath?: string
 	gazetteerLexiconPath?: string
+	noAnchor?: boolean
 	suppressGazNearPostcode?: boolean
 	conventions?: string
 	bridgeGaps?: boolean
@@ -76,6 +100,9 @@ function parseArgs(): Args {
 		// missing anchor inputs). Mirrors oa-resolver-eval's --model-anchor-lookup.
 		else if (a === "--model-anchor-lookup" && argv[i + 1]) out.modelAnchorLookupPath = argv[++i]
 		else if (a === "--gazetteer-lexicon" && argv[i + 1]) out.gazetteerLexiconPath = argv[++i]
+		// Opt OUT of the default anchor/gazetteer feed to deliberately measure the zero-feed (anchor-off)
+		// behavior of an anchor-trained model. Without this flag the standard lookup/lexicon are fed.
+		else if (a === "--no-anchor") out.noAnchor = true
 		else if (a === "--suppress-gaz-near-postcode") out.suppressGazNearPostcode = true
 		else if (a === "--conventions" && argv[i + 1]) out.conventions = argv[++i]
 		else if (a === "--bridge-gaps") out.bridgeGaps = true
@@ -229,14 +256,30 @@ async function main(): Promise<void> {
 			MailwomanTokenizer.loadFromFile(args.tokenizerPath),
 			OnnxRunner.create(args.modelPath),
 		])
-		const postcodeAnchorLookup = args.modelAnchorLookupPath
-			? parseAnchorLookup(JSON.parse(readFileSync(args.modelAnchorLookupPath, "utf8")))
-			: undefined
-		// Gazetteer-anchor lexicon (#464): fed when --gazetteer-lexicon is given so a gazetteer-trained
-		// model gets its clues. Harmless for older models (the runner skips inputs the ONNX lacks).
-		const gazetteerLexicon = args.gazetteerLexiconPath
-			? parseGazetteerLexicon(JSON.parse(readFileSync(args.gazetteerLexiconPath, "utf8")))
-			: undefined
+		// Anchor + gazetteer feed. DEFAULT-ON (the standard paths) so an anchor-trained model is scored
+		// in-distribution — see the DEFAULT_* note above for why omitting these silently collapses the
+		// admin tags. `--no-anchor` opts out; an explicit `--model-anchor-lookup`/`--gazetteer-lexicon`
+		// overrides the default path. The runner harmlessly skips inputs a plainer ONNX doesn't declare.
+		const anchorLookupPath = args.noAnchor ? undefined : (args.modelAnchorLookupPath ?? DEFAULT_ANCHOR_LOOKUP)
+		const gazetteerLexiconPath = args.noAnchor
+			? undefined
+			: (args.gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON)
+		const postcodeAnchorLookup =
+			anchorLookupPath && existsSync(anchorLookupPath)
+				? parseAnchorLookup(JSON.parse(readFileSync(anchorLookupPath, "utf8")))
+				: undefined
+		// Gazetteer-anchor lexicon (#464): fed so a gazetteer-trained model gets its clues. Harmless for
+		// older models (the runner skips inputs the ONNX lacks).
+		const gazetteerLexicon =
+			gazetteerLexiconPath && existsSync(gazetteerLexiconPath)
+				? parseGazetteerLexicon(JSON.parse(readFileSync(gazetteerLexiconPath, "utf8")))
+				: undefined
+		console.error(
+			`Anchor:     ${postcodeAnchorLookup ? `${anchorLookupPath} (${postcodeAnchorLookup.size} codes)` : args.noAnchor ? "(off — --no-anchor)" : `(none found at ${anchorLookupPath})`}`
+		)
+		console.error(
+			`Gazetteer:  ${gazetteerLexicon ? gazetteerLexiconPath : args.noAnchor ? "(off — --no-anchor)" : `(none found at ${gazetteerLexiconPath})`}`
+		)
 		neural = new NeuralAddressClassifier({
 			tokenizer,
 			runner,
