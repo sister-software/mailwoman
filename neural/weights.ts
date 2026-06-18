@@ -153,6 +153,97 @@ export function readLabelsFromModelCard(modelCardPath: string | undefined): read
 	return Object.freeze(labels.slice()) as readonly string[]
 }
 
+/**
+ * The structured `requires` block of a `model-card.json` (#718) — the declared SHIP-CONFIG the
+ * model was trained against. The ProductionScorer reads this and FAILS CLOSED when a declared
+ * channel isn't actually fed (silent OOD is the #566/#685 trap). Each channel is optional; a
+ * missing channel means "not declared" (treated as not-required).
+ */
+export interface RequiredChannels {
+	/** Postcode-anchor channel (#239/#240). */
+	anchor?: { required: boolean }
+	/** Gazetteer-anchor channel (#464). */
+	gazetteer?: { required: boolean }
+	/** Address-system conventions (#511 Tier A). `mode` mirrors `ParseOpts.addressSystemConventions`. */
+	conventions?: { required: boolean; mode?: "auto" | string }
+	/** Punctuation-gap span bridge (v4.4.0 corrective). */
+	bridge?: { required: boolean }
+	/** Near-postcode gazetteer choreography (#464, v0.9.13). */
+	suppress_gazetteer_near_postcode?: boolean
+}
+
+/**
+ * Read the structured `requires` block from a `model-card.json` (#718). DEFENSIVE: returns
+ * `undefined` when the card is absent, unreadable, or has no `requires` field (callers then INFER
+ * the required channels from the ONNX graph — see `inferRequiredChannelsFromInputs`). Throws ONLY
+ * when the field is PRESENT but corrupt (not an object, or a channel entry with a non-boolean
+ * `required`) — a malformed declared contract is a loud artifact bug, not a silent re-default.
+ */
+export function readRequiredChannels(modelCardPath: string | undefined): RequiredChannels | undefined {
+	if (!modelCardPath || !existsSync(modelCardPath)) return undefined
+	let raw: string
+	try {
+		raw = readFileSync(modelCardPath, "utf8")
+	} catch {
+		return undefined
+	}
+	let parsed: unknown
+	try {
+		parsed = JSON.parse(raw)
+	} catch {
+		return undefined
+	}
+	if (typeof parsed !== "object" || parsed === null) return undefined
+	const requires = (parsed as { requires?: unknown }).requires
+	if (requires === undefined) return undefined
+	if (typeof requires !== "object" || requires === null || Array.isArray(requires)) {
+		throw new Error(
+			`model-card.json at ${modelCardPath} has a malformed \`requires\` field — ` +
+				`expected an object, got ${JSON.stringify(requires)}.`
+		)
+	}
+	const obj = requires as Record<string, unknown>
+	// Channel entries must be `{ required: boolean, ... }`; a present-but-shapeless entry is corrupt.
+	for (const channel of ["anchor", "gazetteer", "conventions", "bridge"] as const) {
+		const entry = obj[channel]
+		if (entry === undefined) continue
+		if (
+			typeof entry !== "object" ||
+			entry === null ||
+			typeof (entry as { required?: unknown }).required !== "boolean"
+		) {
+			throw new Error(
+				`model-card.json at ${modelCardPath} has a malformed \`requires.${channel}\` entry — ` +
+					`expected { required: boolean }, got ${JSON.stringify(entry)}.`
+			)
+		}
+	}
+	if (obj.suppress_gazetteer_near_postcode !== undefined && typeof obj.suppress_gazetteer_near_postcode !== "boolean") {
+		throw new Error(
+			`model-card.json at ${modelCardPath} has a malformed \`requires.suppress_gazetteer_near_postcode\` ` +
+				`field — expected a boolean, got ${JSON.stringify(obj.suppress_gazetteer_near_postcode)}.`
+		)
+	}
+	return requires as RequiredChannels
+}
+
+/**
+ * Back-compat inference of the required soft-feature channels from an ONNX model's declared input
+ * names (#718). A model that exports `anchor_features` / `gazetteer_features` declared those
+ * channels mandatory at train time — feeding zeros is the channel-off identity, but a model TRAINED
+ * with the channel is OOD when scored without it. Cards without a `requires` block (every pre-#718
+ * bundle) route through here so the fail-closed guard still protects them. Conventions/bridge are
+ * NOT graph-observable (no dedicated input), so they're left undeclared here — only the card
+ * declares them.
+ */
+export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): RequiredChannels {
+	const names = new Set(inputNames)
+	return {
+		...(names.has("anchor_features") ? { anchor: { required: true } } : {}),
+		...(names.has("gazetteer_features") ? { gazetteer: { required: true } } : {}),
+	}
+}
+
 export interface CrfTransitions {
 	transitions: number[][]
 	startTransitions: number[]

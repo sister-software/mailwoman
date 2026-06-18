@@ -26,6 +26,14 @@
 		"crf_at_inference": true,
 		"phrase_priors": true
 	},
+	"requires": {
+		"$comment": "The SHIP-CONFIG this model was TRAINED against (#718). The canonical ProductionScorer (@mailwoman/neural's createScorer) reads this and FAILS CLOSED if a required channel isn't actually fed — closing the #566/#685 trap where a channel-trained model scored channel-OFF silently goes OOD. Read off the gate it shipped against (scripts/eval/gates/v0.5.0-bridge.json: requires_gazetteer_lexicon=true, requires_conventions=auto, requires_bridge=false) plus anchor (the model exports anchor_features). Additive metadata only.",
+		"anchor": { "required": true },
+		"gazetteer": { "required": true },
+		"conventions": { "required": true, "mode": "auto" },
+		"bridge": { "required": false },
+		"suppress_gazetteer_near_postcode": true
+	},
 	"labels": [
 		"O",
 		"B-country",

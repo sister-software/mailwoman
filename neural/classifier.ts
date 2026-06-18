@@ -24,14 +24,15 @@ import {
 import { proposeSpans, type ProposedSpan, type SpanProposerLexicon } from "@mailwoman/core/pipeline"
 
 import { detectAddressSystem } from "./address-system.js"
-import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.js"
+import type { AnchorLookup } from "./anchor-inference.js"
 import { normalizeInputCase } from "./case-normalize.js"
 import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
-import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.js"
+import type { GazetteerLexicon } from "./gazetteer-inference.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
 import { repairPostcodeLabels } from "./postcode-repair.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
+import { buildSoftFeatures } from "./soft-features.js"
 import { bridgePunctuationGaps } from "./span-bridge.js"
 import { buildSpanProposalPriors, type SpanProposalPriorOpts } from "./span-proposal-prior.js"
 import { buildCodexSpanLexicon } from "./span-proposer-lexicon.js"
@@ -268,19 +269,17 @@ export class NeuralAddressClassifier {
 		pieces: ReturnType<MailwomanTokenizer["encode"]>["pieces"]
 	}> {
 		const { pieces, ids } = this.cfg.tokenizer.encode(text)
-		// Postcode-anchor channel (#239/#240): build per-piece anchor features from the same lookup the
-		// model trained on, fed alongside the ids. No-op when no lookup is configured.
-		const anchor = this.cfg.postcodeAnchorLookup
-			? buildAnchorFeatures(text, pieces, this.cfg.postcodeAnchorLookup)
-			: undefined
-		const gazetteer = this.cfg.gazetteerLexicon
-			? buildGazetteerFeatures(text, pieces, this.cfg.gazetteerLexicon)
-			: undefined
-		const gazFed =
-			gazetteer && anchor && this.cfg.suppressGazetteerNearPostcode
-				? suppressGazetteerNearPostcode(gazetteer, anchor.confidence)
-				: gazetteer
-		const { logits, localeLogits } = await this.cfg.runner.infer(ids, anchor, gazFed)
+		// Soft-feature channels (#718): the postcode-anchor (#239/#240) + gazetteer-anchor (#464) clues
+		// the model conditions on alongside the ids, plus the near-postcode gazetteer choreography. The
+		// build + choreography is the single PURE `buildSoftFeatures` (soft-features.ts) — both this
+		// decode path and the ProductionScorer feed channels identically, so there is exactly one
+		// choreography. Each channel is undefined when its source is unconfigured (no-op).
+		const soft = buildSoftFeatures(text, pieces, {
+			postcodeAnchorLookup: this.cfg.postcodeAnchorLookup,
+			gazetteerLexicon: this.cfg.gazetteerLexicon,
+			suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
+		})
+		const { logits, localeLogits } = await this.cfg.runner.infer(ids, soft.anchor, soft.gazetteer)
 
 		this.assertEmissionWidth(logits)
 
@@ -491,12 +490,12 @@ export interface ParseOpts {
 	 */
 	unitRepair?: boolean
 	/**
-	 * When true AND the input is detected ALL-CAPS (registry/compliance data like
-	 * `214 JONES RD, ELKHART, TX 75839`), title-case the input before the model sees it. The model
-	 * trains on mixed-case text, so all-caps is partly OOD — it drops/mis-bounds tokens (#690:
-	 * `PALESTINE` → locality `ALESTINE`; all-caps locality 3/5 vs title-case 5/5). Detection-gated, so
-	 * MIXED-case input is untouched (byte-stable). Off by default. On all-caps input the output values
-	 * are title-cased (the SHOUTING is normalized away — better, and the resolver name-matches
+	 * When true AND the input is detected ALL-CAPS (registry/compliance data like `214 JONES RD,
+	 * ELKHART, TX 75839`), title-case the input before the model sees it. The model trains on
+	 * mixed-case text, so all-caps is partly OOD — it drops/mis-bounds tokens (#690: `PALESTINE` →
+	 * locality `ALESTINE`; all-caps locality 3/5 vs title-case 5/5). Detection-gated, so MIXED-case
+	 * input is untouched (byte-stable). Off by default. On all-caps input the output values are
+	 * title-cased (the SHOUTING is normalized away — better, and the resolver name-matches
 	 * case-insensitively regardless).
 	 */
 	normalizeCase?: boolean

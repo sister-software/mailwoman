@@ -187,4 +187,15 @@ export class OnnxRunner {
 
 		return { logits, numLabels, ...(localeLogits ? { localeLogits } : {}) }
 	}
+
+	/**
+	 * The model's declared input names (loads the session if not already loaded). Used by the
+	 * ProductionScorer (#718) back-compat path: when a model-card has no `requires` block, the
+	 * required soft-feature channels are INFERRED from the graph — a model exporting
+	 * `anchor_features` / `gazetteer_features` declared those channels mandatory at train time.
+	 */
+	async inputNames(): Promise<readonly string[]> {
+		const session = await this.ensureSession()
+		return session.inputNames
+	}
 }
