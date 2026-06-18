@@ -451,6 +451,26 @@ async function main(): Promise<void> {
 		const { StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
 		interpolation = new StreetInterpolator({ dbPath: interpolationDb })
 	}
+	// `--cascade` (#718 situs-eval): grade the PRODUCTION coordinate path (mailwoman/geocode-core.ts) —
+	// per-row, per-state situs + interpolation shards via ShardProvider — so the eval reports the SHIPPED
+	// coordinate (address_point > interpolated > admin) across ALL states, not the admin centroid the
+	// neural headline alone reports. The diagnostic that motivated this: the headline read 3.3 km p50 /
+	// 10 km p90 (admin centroid) while the production cascade over the same rows is ~0 m p50 / 1 km p90,
+	// 85.9% within 100 m — the eval simply wasn't grading what ships. The single-state
+	// --address-points/--interpolation flags still work for a one-state run; --cascade supersedes them
+	// with multi-state per-row selection. --data-root locates the shards (<root>/address-points/,
+	// <root>/interpolation/).
+	const cascadeOn = process.argv.includes("--cascade")
+	const dataRoot = arg("data-root", "/mnt/playpen/mailwoman-data")
+	let cascadeProvider: import("mailwoman/geocode-core").ShardProvider | null = null
+	if (cascadeOn) {
+		const { ShardProvider } = await import("mailwoman/geocode-core")
+		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
+		cascadeProvider = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
+	}
+	// The addrpt + interp arms run when EITHER a single-state shard was given OR --cascade is on.
+	const runAddrPt = !!addressPoints || cascadeOn
+	const runInterp = !!interpolation || cascadeOn
 	const useAnchor = process.argv.includes("--postcode-anchor")
 	// `--anchor-rerank` (#369 S8): feed the postcode anchor's country posterior into the resolver's
 	// locality re-rank (`ResolveOpts.anchorPosterior`), to measure whether the merged re-ranker pulls
@@ -659,11 +679,16 @@ async function main(): Promise<void> {
 		i++
 		if (i % 500 === 0) console.error(`  ${i}/${rows.length}`)
 
+		// --cascade: per-row per-state shards (the production geocode cascade); falls back to the
+		// single-state --address-points/--interpolation when --cascade is off (byte-stable default).
+		const rowShards = cascadeProvider ? cascadeProvider.for((row.state || "").toLowerCase() || null) : null
+		const rowAddrPoints = rowShards?.addressPoints ?? addressPoints ?? null
+		const rowInterp = rowShards?.interpolation ?? interpolation ?? null
 		// Shared resolve opts (hoisted so the assembled arms below resolve identically to neural).
 		const nOpts = {
 			...(anchorRerank ? { ...resolveOpts, anchorPosterior: anchorPosteriorFor(row.input) } : resolveOpts),
-			...(addressPoints ? { addressPoints } : {}),
-			...(interpolation ? { interpolation } : {}),
+			...(rowAddrPoints ? { addressPoints: rowAddrPoints } : {}),
+			...(rowInterp ? { interpolation: rowInterp } : {}),
 		}
 
 		// neural
@@ -694,7 +719,7 @@ async function main(): Promise<void> {
 		}
 
 		// neural + address-points (#476): same admin flags; coordinate from the exact point on hit.
-		if (addressPoints) {
+		if (runAddrPt) {
 			const hit = nDecorated ? findAddressPointHit(nDecorated) : null
 			const apErr = hit ? haversineKm(hit.lat, hit.lon, row.lat, row.lon) : ns.err
 			if (hit) addressPointHits++
@@ -706,7 +731,7 @@ async function main(): Promise<void> {
 
 		// neural + interpolation (#483): the full street-level cascade — exact point if present, else the
 		// interpolated estimate, else the admin centroid. Same admin flags; only the COORDINATE changes.
-		if (interpolation) {
+		if (runInterp) {
 			const exact = nDecorated ? findAddressPointHit(nDecorated) : null
 			const interp = nDecorated ? findInterpolatedHit(nDecorated) : null
 			const coord = exact ?? interp
@@ -855,19 +880,30 @@ async function main(): Promise<void> {
 		lines.push(overallRow("**assembled + arb**", assembledArbAgg.overall))
 	}
 	if (useAnchor) lines.push(overallRow("**neural+anchor**", neuralAnchorAgg.overall))
-	if (addressPoints) {
+	if (runAddrPt) {
 		lines.push(overallRow("**neural+addrpt**", neuralAddrPtAgg.overall))
 		lines.push("")
 		lines.push(
 			`address-point hit rate: ${addressPointHits}/${neuralAddrPtAgg.overall.n} (${((100 * addressPointHits) / Math.max(1, neuralAddrPtAgg.overall.n)).toFixed(1)}%)`
 		)
 	}
-	if (interpolation) {
-		lines.push(overallRow("**neural+interp**", neuralInterpAgg.overall))
+	if (runInterp) {
+		lines.push(overallRow(cascadeOn ? "**neural+cascade (SHIPPED coord)**" : "**neural+interp**", neuralInterpAgg.overall))
 		lines.push("")
 		lines.push(
 			`interpolation hit rate (interp coord, no exact point): ${interpHits}/${neuralInterpAgg.overall.n} (${((100 * interpHits) / Math.max(1, neuralInterpAgg.overall.n)).toFixed(1)}%)`
 		)
+		if (cascadeOn) {
+			const Nc = neuralInterpAgg.overall.n
+			const adminTier = Math.max(0, Nc - addressPointHits - interpHits)
+			const cerrs = neuralInterpAgg.overall.errs
+			const within = (m: number): string =>
+				`${((100 * cerrs.filter((e) => e <= m / 1000).length) / Math.max(1, cerrs.length)).toFixed(1)}%`
+			lines.push("")
+			lines.push(
+				`**neural+cascade** is the PRODUCTION coordinate (mailwoman/geocode-core.ts: address_point > interpolated > admin, per-state shards) — what mailwoman actually ships, vs the admin-centroid **neural** row above. Tier share: address_point ${pct(addressPointHits, Nc)}, interpolated ${pct(interpHits, Nc)}, admin ${pct(adminTier, Nc)}. Within 100 m: ${within(100)} · within 1 km: ${within(1000)} (n=${cerrs.length}).`
+			)
+		}
 		if (diagInterp) {
 			const N = neuralInterpAgg.overall.n
 			lines.push("")
