@@ -49,7 +49,7 @@
 import { lookupGermanState } from "@mailwoman/codex/de"
 import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { createWofResolver } from "@mailwoman/core/resolver"
+import { createWofResolver, expandPlacetypeFilter } from "@mailwoman/core/resolver"
 import { type ClassificationRecord, createAddressParser, createRuntimePipeline } from "mailwoman"
 import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
@@ -552,7 +552,14 @@ async function main(): Promise<void> {
 		// Admin-match is by NAME (OA carries no WOF id): a row matches if OA's expected locality
 		// equals the resolved place's canonical name OR any of its WOF altnames (see
 		// localityMatches); region is name-or-abbrev tolerant.
-		const locNode = resolved.find((r) => r.placetype === "locality")
+		// Credit the placetypes the resolver's `locality` tag actually expands to — locality ∪ borough ∪
+		// localadmin (New England civil "towns" are `localadmin` in WOF, not `locality`). Mirrors the
+		// resolver's PLACETYPE_FILTER_GROUPS.locality so this metric counts exactly what the resolver
+		// treats as a locality; the old bare `=== "locality"` filter silently discarded correct localadmin
+		// hits and under-reported rural US locality-match by tens of points (#375 oracle-locality diagnostic).
+		const locNode =
+			resolved.find((r) => r.placetype === "locality") ??
+			resolved.find((r) => expandPlacetypeFilter(["locality"]).includes(r.placetype))
 		const locRaw = locNode?.name
 		const regResolved = resolved.find((r) => r.placetype === "region")
 		return {
