@@ -101,7 +101,13 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
   source-scoped") was right. The country-scoped lint is a real follow-up, and it will likely also surface
   some US-locality tokens (Marion/Glendale/Portsmouth) as street-dominant in US base — worth verifying
   before the next shard. (v0.6.1 itself: the FR-city + affix-split flags are false/expected; the venue +
-  country tokens were linted source-scoped and are clean.)
+  country tokens were linted source-scoped and are clean.) **A third attempt — a US-scoped spot-check of the
+  flagged localities — was ITSELF sample-biased** (a small tiger/nad-heavy sample read Indianapolis 54%
+  street, but the v1.6.0 verification has it 219700:29 LOCALITY — the small sample lied). FIRM lesson after
+  three tries: judge a token's tag-dominance by FULL per-token counts, not a small scan; a small sample is
+  street-biased because the street sources (tiger 39 + nad 378 parts) dwarf the locality sources. The v0.6.1
+  US localities STAND (v1.6.0 big-count verified + v1.7.0's +5.1 locality gain proves the vocab net-works);
+  a full-count, country-scoped lint is the proper #511-tooling follow-up. Stopped chasing it with small scans.
 - _(more as the shift runs)_
 
 ## 4. Decisions made autonomously
