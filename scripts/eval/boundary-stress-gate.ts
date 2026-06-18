@@ -10,10 +10,15 @@
  *
  *   Unlike the baseline (which hard-codes the dev weights), this accepts an explicit model so it can
  *   grade a freshly-trained checkpoint WITHOUT touching the neural-weights symlink (which yarn test
- *   re-creates). Threading the model-card is MANDATORY for a custom model: loadFromWeights without it
- *   falls back to STAGE2 labels and silently mis-decodes the 33-label STAGE3 model into empty parses.
- *   crf-transitions.json is auto-resolved when co-located with the model (resolveWeights); absent, the
- *   decoder drops to argmax — which understates exactly the boundary consistency this gate measures.
+ *   re-creates). The classifier is built via the canonical `createScorer` (`@mailwoman/neural/scorer`,
+ *   #718) in STRICT mode, so the model is fed the full SHIP-CONFIG it was TRAINED against — anchor +
+ *   gazetteer + conventions, per the model-card's `requires` block — and the gate FAILS CLOSED if a
+ *   declared channel can't be fed. This closes the #566/#685 trap the gate previously walked into: it
+ *   built the classifier via `loadFromWeights` with NO anchor/gazetteer/conventions, so the
+ *   anchor-trained STAGE3 model was scored ANCHOR-OFF (out-of-distribution on exactly the admin-
+ *   adjacent boundary shapes this gate measures). The model-card is therefore MANDATORY for a custom
+ *   model (`createScorer` reads its label vocab AND `requires`); without it the gate now throws rather
+ *   than silently mis-decoding the 33-label STAGE3 model.
  *
  *   Run (baseline, dev weights):
  *     node --experimental-strip-types scripts/eval/boundary-stress-gate.ts
@@ -27,7 +32,8 @@
 import { parseArgs } from "node:util"
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createScorer } from "@mailwoman/neural/scorer"
+import { resolveWeights } from "@mailwoman/neural/weights"
 
 import {
 	type BoundaryStressTemplate,
@@ -66,14 +72,30 @@ function mulberry32(seed: number): () => number {
 	}
 }
 
-const loadOpts = args.model
-	? { locale: "en-US", modelPath: args.model, tokenizerPath: args.tokenizer, modelCardPath: args["model-card"] }
-	: { locale: "en-US" }
+// Route through the canonical ProductionScorer (#718): feed the model the full SHIP-CONFIG it was
+// TRAINED against (anchor + gazetteer + conventions, per the model-card's `requires` block). The
+// prior loadFromWeights construction fed NO anchor/gazetteer/conventions, so this anchor-trained
+// STAGE3 model was scored ANCHOR-OFF — out-of-distribution on exactly the admin-adjacent boundary
+// shapes this gate measures (the #566/#685 trap). createScorer in `strict` mode FAILS CLOSED if a
+// declared channel can't actually be fed, so a silent OOD re-grade can't recur.
 if (args.model && !args.tokenizer) throw new Error("--tokenizer is required when --model is passed")
 if (args.model && !args["model-card"])
-	console.warn("⚠️  --model without --model-card: labels fall back to STAGE2 → likely garbage parses. Pass --model-card.")
+	throw new Error("--model-card is required when --model is passed (createScorer reads its `requires` SHIP-CONFIG)")
 
-const classifier = await NeuralAddressClassifier.loadFromWeights(loadOpts)
+// Dev-weights default (no --model): resolve the en-us package paths so the scorer gets concrete
+// model/tokenizer/model-card paths instead of the symlink auto-resolve.
+const resolved = args.model
+	? { modelPath: args.model, tokenizerPath: args.tokenizer!, modelCardPath: args["model-card"]! }
+	: resolveWeights({ locale: "en-us" })
+if (!resolved.modelPath || !resolved.tokenizerPath || !resolved.modelCardPath)
+	throw new Error("createScorer needs model + tokenizer + model-card paths; resolveWeights returned incomplete paths")
+
+const classifier = await createScorer({
+	modelPath: resolved.modelPath,
+	tokenizerPath: resolved.tokenizerPath,
+	modelCardPath: resolved.modelCardPath,
+	strict: true,
+})
 const random = mulberry32(20260617)
 
 type ShapeResult = {
