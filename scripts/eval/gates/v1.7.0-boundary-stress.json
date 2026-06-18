@@ -1,0 +1,30 @@
+{
+	"$comment": "v1.7.0 boundary-stress non-regression FLOORS gate (the per-locale half; the 4-shape TARGET half is scripts/eval/boundary-stress-gate.ts). Derived from v1.6.0-boundary-stress.json. The headline floors are UNCHANGED from v1.6.0 — critically us.locality 72.9 IS the locality-regression guard (v1.6.0 FAILED it at 66.2, which is exactly the regression v1.7.0's bare-locality shape fixes). us.street 74.0 is kept (the recipe's 80.4 is the pre-#492 shipped value; recent models sit at 76-78).",
+	"$comment_v170_guards": "TWO NEW v1.7.0 guards ride as gate-time STANDALONE PROBES (not floors-map keys — the promotion-gate.sh verdict assembler has no scorer for them, and adding unscored keys would FAIL loudly). Phase 7 runs them and flags a regression: (1) bare_locality — re-run scripts/eval/locality-regression-probe.ts v1.5.1->v1.7.0; the 84%-dropped 'City, STATE' surface must RECOVER (v1.6.0 net -130 on US-golden locality; v1.7.0 should be net >=0 and the 'dropped' failure mode should shrink). (2) street_recall_full — scripts/eval/street-recall-full-probe.ts v1.5.1->v1.7.0; DeepSeek's blind-spot: bare-locality emphasis can eat the street's leading tokens on FULL addresses. v1.5.1 baseline = 33.7% street-exact on 977 full-address rows; v1.6.0 (no bare-locality) was 37.9%. FLOOR: v1.7.0 within 1pp of v1.5.1 (>=32.7%); WARN if it drops below v1.6.0's 37.9%.",
+	"$comment_us_street": "us.street 74.0 not 80.4: the ledger shows 80.4 is the pre-#492 shipped value; recent models sit at the #492 stability ceiling (76.2/75.5/77.9). 74.0 is the actual last-shipped floor. Re-anchor to v1.5.1's measured us.street when convenient.",
+	"label": "v1.7.0-boundary-stress",
+	"requires_gazetteer_lexicon": true,
+	"requires_conventions": "auto",
+	"requires_bridge": true,
+	"floors": {
+		"us.postcode": 97.0,
+		"us.country_homograph_f1": 83.3,
+		"us.micro": 81.6,
+		"us.locality": 72.9,
+		"us.region": 80.1,
+		"us.street": 74.0,
+		"us.street_prefix": 78.0,
+		"us.street_suffix": 67.0,
+		"us.unit_real": 88.0,
+		"fr.postcode": 99.5,
+		"fr.house_number": 87.0,
+		"fr.region": 16.2,
+		"de.native_locality": 83.8,
+		"arena.perturb": 71.0,
+		"us.po_box_real": 70.0,
+		"fr.cedex_real": 70.0,
+		"us.intersection_real": 50.0
+	},
+	"int8_vs_fp32_max_delta_pp": 1.5,
+	"ledger_path": "evals/scores-by-version.json"
+}
