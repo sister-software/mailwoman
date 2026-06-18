@@ -226,7 +226,16 @@ async function main(): Promise<void> {
 
 	// --- Phase C: geocode + ingest (the NPI rides on record.id as the held-out label). ---
 	console.error("[C] building the geocoder + geocoding records…")
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+	// Model-swap (night shift 2026-06-18): point at a specific exported model for a multi-version curve
+	// (mirrors scripts/eval/eval-matrix.ts / compare-parsers.ts). modelCardPath is MANDATORY when modelPath
+	// is set — without it a STAGE3 model silently mis-decodes into empty parses (neural/weights.ts). Bare
+	// call (no --model) keeps the default dev-weights behavior.
+	const classifier = await NeuralAddressClassifier.loadFromWeights({
+		locale: "en-US",
+		...(arg("model") ? { modelPath: arg("model") } : {}),
+		...(arg("tokenizer") ? { tokenizerPath: arg("tokenizer") } : {}),
+		...(arg("model-card") ? { modelCardPath: arg("model-card") } : {}),
+	})
 	const mod = await import("@mailwoman/resolver-wof-sqlite")
 	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: WOF })
 	const resolver = createWofResolver(lookup as unknown as ResolverBackend)
