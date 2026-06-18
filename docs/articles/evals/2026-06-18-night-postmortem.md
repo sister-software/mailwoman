@@ -206,9 +206,13 @@ Re-anchored to v1.5.0 ([head-to-head](./2026-06-18-v150-vs-v170-head-to-head.md)
   10.7 vs 10.7. The locality F1 gain (real at the label level) does not reach the coordinate.
 - **country-homograph: −2.4** (80.9 vs v1.5.0's 83.3). The floor is **not stale** — 83.3 is exactly
   v1.5.0's score. A real regression.
-- **fr.house_number: +7.5** over v1.5.0's 87.4 (which already passes its floor) — a real label gain,
-  but FR coordinates are unmeasurable with the current resolver (resolves under 10% of FR), so it is
-  label-only.
+- **fr.house_number: FLAT** — anchor-on, both v1.5.0 and v1.7.0 score 99.3. The night's "+10" was an
+  anchor-off measurement artifact (`per-locale-f1.ts` fed the model anchor-off; fixed in `d7b51748`).
+- **FR coordinates: also flat** — 76.3% locality-match, p50 1.5 km, both models. The earlier "FR
+  unmeasurable" reading was an eval-flag error (`--default-country` defaulted to US); with
+  `--default-country FR` the resolver handles FR fine.
+- Corrected per-tag (anchor-on): v1.7.0 is a small us.locality gain (+2.6) offset by us.street −4.0,
+  fr.region −6.1, us.house_number −1.0, country −2.4 — not a net label improvement.
 
 **Verdict: HOLD v1.5.0. Do not promote v1.7.0.** No coordinate-level case, plus a country regression.
 

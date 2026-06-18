@@ -48,7 +48,7 @@ It's worth pulling apart what actually went wrong with that number, because two 
 
 ## Coda: did the fix work?
 
-Yes, on the labels — and in a way that drove the lesson home twice. We built exactly what the probe pointed at: teach the model bare "City, STATE" rows, so it stops needing a street to recognize a town. Held-out locality F1 climbed from 66 back up to 80, past where it started before any of this. A French house-number tag we'd been stuck on for months came along for the ride, up ten points. The macro-F1? It barely twitched.
+Yes, on the labels — and in a way that drove the lesson home twice. We built exactly what the probe pointed at: teach the model bare "City, STATE" rows, so it stops needing a street to recognize a town. Held-out locality F1 climbed from 66 back up to 80, past where it started before any of this. The macro-F1? It barely twitched.
 
 That's the whole point, restated from the other direction. The aggregate that almost fooled us into shipping the broken model was the same aggregate that wouldn't have told us the fix landed, either. Both times, the truth was in the held-out spine (the town, the street, the house number a real user hands us), and both times the average just shrugged. So we read the spine.
 
