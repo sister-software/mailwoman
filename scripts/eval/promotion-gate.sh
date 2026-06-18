@@ -20,8 +20,11 @@
 #   - Demo-cascade smoke (#524): whole-stack parse→reconcile→resolve against the slim hot DB
 #     (MAILWOMAN_WOF_HOT_DB or the v4.4.0 stage default). Skips LOUD when the DB is absent;
 #     floor key `cascade.demo_smoke` (pass-rate %) for specs that gate on it.
+#   - Mask-regression gate (#718): when the spec declares requires_conventions, re-runs the ship
+#     artifact mask-off vs mask-on and FAILS the gate if any tag drops >2pp under the mask — the
+#     "second lock" beside createScorer's load-time capability delta-gate.
 #   - Collects headline numbers into <out-dir>/verdict.json with per-floor PASS/FAIL.
-#   - Exit 0 = every floor met; exit 1 = any miss (CI-able, agent-guardrail-able).
+#   - Exit 0 = every floor met AND the mask-regression lock held; exit 1 = any miss.
 #
 # Lore encoded (the traps that bit before — see CONTRIBUTING_MODEL_WORK.mdx):
 #   - Tokenizer comparability: the tokenizer path must contain the card's tokenizer_version;
@@ -136,6 +139,35 @@ if [[ "$(node -e "console.log('arena.perturb' in (JSON.parse(require('fs').readF
 		OUT_DIR="$OUT_DIR/arenas" scripts/eval/external-arenas.sh > "$OUT_DIR/arenas.md" 2>&1
 fi
 
+# --- mask-regression gate (#718) — the "second lock" ------------------------
+# Re-runs the SHIP artifact mask-off vs the declared conventions mode and FAILS if any tag's UNFOLDED
+# F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta-gate (it catches
+# INDIRECT mask harms, e.g. forbidding street_suffix depressing street). Weight-dependent, so it lives
+# on the release path here, NOT Test CI (#582). Only meaningful when the spec declares a conventions
+# mask; skipped = PASS otherwise. Its exit folds into the final verdict below.
+MASK_GATE_STATUS=0
+if [[ -n "$CONV_MODE" ]]; then
+	echo "== mask-regression gate (#718) =="
+	node --experimental-strip-types scripts/eval/mask-regression-gate.ts \
+		--model "${INT8:-$MODEL}" --tokenizer "$TOK" --model-card "$CARD" \
+		--anchor-lookup "$LK" --gazetteer-lexicon "$GAZ" \
+		--json "$OUT_DIR/mask-regression.json" > "$OUT_DIR/mask-regression.md" 2>&1 || MASK_GATE_STATUS=$?
+	if [[ "$MASK_GATE_STATUS" -eq 0 ]]; then
+		echo "✓ mask-regression gate PASS (no tag regresses >2pp under the conventions mask)"
+	else
+		echo "✗ mask-regression gate FAIL (see $OUT_DIR/mask-regression.md) — a tag regresses >2pp under the '$CONV_MODE' mask" >&2
+	fi
+else
+	echo "⚠ mask-regression gate SKIPPED — spec declares no requires_conventions (no mask in the ship config)"
+fi
+
 # --- collect + verify (node does the parsing; bash stays an orchestrator) ---
+# Folds BOTH locks: the floor verdict AND the mask-regression gate above. Either miss fails the gate.
+VERDICT_STATUS=0
 node --experimental-strip-types scripts/eval/promotion-gate-verdict.ts \
-	--gate "$GATE" --out-dir "$OUT_DIR" $( [[ -n "$INT8" ]] && echo --with-int8 )
+	--gate "$GATE" --out-dir "$OUT_DIR" $( [[ -n "$INT8" ]] && echo --with-int8 ) || VERDICT_STATUS=$?
+
+if [[ "$VERDICT_STATUS" -ne 0 || "$MASK_GATE_STATUS" -ne 0 ]]; then
+	[[ "$MASK_GATE_STATUS" -ne 0 ]] && echo "✗ gate FAILED the mask-regression lock (#718) — see $OUT_DIR/mask-regression.md" >&2
+	exit 1
+fi
