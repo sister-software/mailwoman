@@ -3,7 +3,7 @@ title: "The macro-F1 went up. Did the model get better?"
 description: "We taught our parser the hardest street cases it gets wrong, the aggregate score climbed, and we almost shipped it. Then a held-out probe caught it forgetting what a town is."
 author: playpen-agent
 date: 2026-06-18
-draft: true
+draft: false
 ---
 
 # The macro-F1 went up. Did the model get better?
@@ -14,13 +14,13 @@ It wasn't, and it took three probes to prove it. The same model that scored high
 
 ## What we were trying to fix
 
-Mailwoman's biggest measured weakness is *boundary instability* — the model wobbling on where one part of an address ends and the next begins. A street suffix swallowed into the street name. A French house number that trails the street instead of leading it. The kind of thing that's invisible on a clean "123 Main St, Springfield, IL 62701" and falls apart the moment the punctuation goes missing.
+Mailwoman's biggest measured weakness is *boundary instability*: the model wobbling on where one part of an address ends and the next begins. A street suffix swallowed into the street name. A French house number that trails the street instead of leading it. The kind of thing that's invisible on a clean "123 Main St, Springfield, IL 62701" and falls apart the moment the punctuation goes missing.
 
 So we built a synthetic training shard that puts the gold boundary on exactly those hard cases, mixed it in at a conservative weight, and retrained. It worked — on the boundaries. French street-prefix recognition went from a coin flip (55%) to essentially perfect (99.7%). Every boundary shape moved up. The macro-F1 rose. We had the release notes half-written.
 
 ## The catch
 
-We don't ship on the macro. We ship on a battery of per-locale floors — "don't regress US locality below 72.9," that sort of thing — graded against the *assembled* output, the actual parse a user would get, not the per-token score the trainer optimizes.
+We don't ship on the macro. We ship on a battery of per-locale floors ("don't regress US locality below 72.9," that sort of thing), graded against the *assembled* output: the actual parse a user would get, not the per-token score the trainer optimizes.
 
 One floor came back red. **US locality: 66.2, floor 72.9.** The retrain that aced the boundaries had dropped six and a half points on locality, on real held-out US addresses, while the aggregate went *up*. The gains were concentrated where we'd added training data; the loss was spread across everything else, and the average happily averaged it away.
 
@@ -34,13 +34,13 @@ The first asked a simple question of every boundary the model got wrong: is it *
 
 The second probe went after the locality drop directly. It took the model *before* the retrain and the model *after*, ran both over 1,616 real US addresses, and isolated every row where locality went from right to wrong. Then it asked where the locality text *went*.
 
-We expected the street to be eating it. It wasn't — that was 3% of the damage. **84% of the regression was the model dropping the locality entirely** on short, bare rows: "LaMoure, ND." "Frannie, Wyoming." "Buckhorn, Wyoming." A town and a state, nothing else, and the model now returned *nothing* for the town.
+We expected the street to be eating it. It wasn't. That was 3% of the damage. **84% of the regression was the model dropping the locality entirely** on short, bare rows: "LaMoure, ND." "Frannie, Wyoming." "Buckhorn, Wyoming." A town and a state, nothing else, and the model now returned *nothing* for the town.
 
 The mechanism, once you see it, is almost funny. Every example in our hard-case shard had a street before the city — that's what made the boundary hard. So the model learned, a little too well, that *a city is the thing that comes after a street.* Take the street away, hand it a bare "LaMoure, ND," and it no longer recognized LaMoure as a place at all. We didn't teach it a new skill so much as we taught it a superstition.
 
 ## The lesson we keep re-learning
 
-The boundary shard taught real cases honestly; the trouble was that it only ever showed them in one shape. Every row was a clean, full, structured address, so the model over-fit that shape and fell off the moment the input stopped matching it. The fix isn't less of the hard cases — it's surrounding them with the cases they need to be distinguished from. Teach the bare "City, STATE" next to the full address. Teach the house number before the street as well as after, so position stops being a shortcut the model can lean on.
+The boundary shard taught real cases honestly; the trouble was that it only ever showed them in one shape. Every row was a clean, full, structured address, so the model over-fit that shape and fell off the moment the input stopped matching it. The fix is to surround the hard cases with the ordinary ones they need to be told apart from. Teach the bare "City, STATE" next to the full address. Teach the house number before the street as well as after, so position stops being a shortcut the model can lean on.
 
 But the deeper lesson is the one about the number we started with. The macro-F1 went up. The model got worse at its most common real-world input. Both of those things were true at the same time, and only one of them mattered. If you're tuning a model on an aggregate score, the aggregate is the first thing that will lie to you — and it will do it while pointing at a bigger number and smiling. Grade the thing your user actually receives. We had to be told twice.
 
@@ -48,6 +48,6 @@ But the deeper lesson is the one about the number we started with. The macro-F1 
 
 Yes — and in a way that drove the lesson home twice. We built exactly what the probe pointed at: teach the model bare "City, STATE" rows, so it stops needing a street to recognize a town. Held-out locality climbed from 66 back up to 80, past where it started before any of this. A French house-number tag we'd been stuck on for months came along for the ride, up ten points. The macro-F1? It barely twitched.
 
-That's the whole point, restated from the other direction. The aggregate that almost fooled us into shipping the broken model was the same aggregate that wouldn't have told us the fix landed, either. Both times, the truth was in the held-out spine — the town, the street, the house number a real user hands us — and both times the average just shrugged. So we read the spine. We had to learn that once; the fix made us prove we'd kept it.
+That's the whole point, restated from the other direction. The aggregate that almost fooled us into shipping the broken model was the same aggregate that wouldn't have told us the fix landed, either. Both times, the truth was in the held-out spine (the town, the street, the house number a real user hands us), and both times the average just shrugged. So we read the spine. We had to learn that once; the fix made us prove we'd kept it.
 
-One honest footnote. The four hard boundary cases we set out to improve — the comma-less cities, the trailing house numbers — barely moved. We chased them, rebalanced for them, and they sat there. That's not a data problem we can out-augment; it's a thirty-million-parameter model bumping its own ceiling on the genuinely ambiguous cases. Knowing *that* — knowing when to stop pushing a lever — is worth as much as the fix. We banked the locality win and left the boundary shapes for a bigger model. That's a different post.
+One honest footnote. The four hard boundary cases we set out to improve, the comma-less cities and the trailing house numbers, barely moved. We chased them, rebalanced for them, and they sat there. More data won't move them. They're a thirty-million-parameter model bumping its own ceiling on the genuinely ambiguous cases, and knowing when to stop pushing a lever is worth as much as the fix. We banked the locality win and left the boundary shapes for a bigger model. That's a different post.
