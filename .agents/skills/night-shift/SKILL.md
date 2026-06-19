@@ -1,6 +1,6 @@
 ---
 name: night-shift
-description: Autonomous overnight engineering shift workflow for mailwoman. Encodes pre-flight checks, idle-time policy, eval gates, NaN protocol, compute placement, and shift-end handoff. Use when the operator hands the conn for a multi-hour autonomous session, especially involving Modal training runs and HF releases.
+description: Autonomous overnight engineering shift workflow for mailwoman. Encodes pre-flight checks, salvage-first survey, idle-time policy, eval gates (with no-silent-gate-drift), diagnostic-before-fix, resume-vs-init_from, NaN protocol, compute placement, treadmill guard, and shift-end handoff. Use when the operator hands the conn for a multi-hour autonomous session, especially involving Modal training runs and HF releases.
 ---
 
 # Night Shift Skill
@@ -47,6 +47,27 @@ sensors 2>/dev/null | grep -E "(Core|Package)" | head -3
 
 Output a one-paragraph pre-flight summary at session start: anything that needs fixing before work begins.
 
+## Salvage-first survey
+
+Before writing any new module, helper, or lookup table, **search the adjacent
+repos for prior art**. Two known sources — `isp-nexus/universe/mailwoman/postal/`
+and `isp-nexus/universe/spatial/` — carry vetted, provenance-tracked data and
+utilities (USPS directionals, ISO-3166 tables, country/region name maps) that
+have been re-derived inside `mailwoman` more than once.
+
+```bash
+# Standard pre-write check (run BEFORE drafting a new file):
+KW="<concept>"   # e.g. "directional", "iso-3166", "postcode", "cedex"
+find /home/lab/Projects/isp-nexus /home/lab/Projects/mailwoman \
+  -iname "*${KW}*" 2>/dev/null \
+  | grep -viE 'node_modules|\.d\.ts$|/test/' | head -20
+```
+
+If a match exists, **import it** (and adjust as needed) rather than re-derive.
+The operator has called this out twice; the cost of forgetting is a polite but
+firm "I warned you about recreating existing work." Salvage-first is part of
+pre-flight, not an optional optimization.
+
 ## Compute placement
 
 **Default: Modal for heavy work, local for light work.**
@@ -87,6 +108,67 @@ When training diverges:
 - CRF training on a 33×33 transition table in bf16 NaN'd twice. Fix was to disable CRF training entirely. The bf16 hypothesis remains unconfirmed — needs a fp32 follow-up.
 - Both NaN attempts happened post-warmup at peak LR. Warmup + LR adjustments alone don't fix the root cause.
 
+## Diagnostic before fix
+
+When a run regresses or a tag underperforms, the next action is **the cheapest
+experiment that could falsify your hypothesis** — not a code change, not a
+structural retrain. The pattern that adjudicated the consolidation affix fork
+(2026-06-10) is the template:
+
+1. **State the hypothesis in one sentence.** "Affix collapsed because feature X
+   interferes with feature Y" vs "Affix collapsed because the schedule starved
+   its examples." These imply different fixes; conflating them wastes a full
+   training cycle.
+2. **Design a 2k-step probe that distinguishes them.** Resume from the latest
+   checkpoint, change ONE knob in the direction the hypothesis predicts,
+   re-evaluate. If the metric moves with the hypothesis → confirmed; if flat →
+   the planned fix is wasted compute.
+3. **Run the probe before the fix.** Even 2k steps × A100 is minutes; a
+   wrong-hypothesis full retrain is hours.
+
+Worked example: the v1.0.0 consolidation regressed US postcode 98.3 → 95.8.
+First instinct was "CRF / feature-channel interference, build choreography to
+zero the gazetteer clue near postcodes" (which became PR #468). The cheap
+diagnostic (resume + raise affix-sampling weight, 2k steps) later showed US
+postcode improved +1.6 with _zero_ postcode-position changes — the regression
+was under-convergence, not interference. **Choreography wasn't load-bearing for
+the nail it was built for.** Default-off/byte-stable saved face; the diagnostic
+would have saved the build cycle.
+
+Rule of thumb: if your next planned action costs more than 30 min of GPU _and_
+you can't articulate a 2k-step experiment that would falsify it, you don't
+have a hypothesis yet — you have a guess. Don't launch.
+
+## Resume vs init_from
+
+When continuing training to recover or extend a fragile capability, `init_from`
+is **not a substitute for `resume`**. The two paths look similar in config but
+carry different state:
+
+| Path        | Loads weights | Loads optimizer state (Adam moments, LR schedule, step counter) | Use when                                                                                                |
+| ----------- | :-----------: | :-------------------------------------------------------------: | ------------------------------------------------------------------------------------------------------- |
+| `resume`    |      yes      |                             **yes**                             | continuing a run; recovering or extending a learned capability; any fragile, low-prevalence tag         |
+| `init_from` |      yes      |                               no                                | warm-starting a _new_ run with a fresh objective; fine-tune off a different base; A/B optimizer recipes |
+
+Why this matters: late-emergent splits (street_prefix/suffix in the
+consolidation arc, the multi-locale country signal) sit in narrow basins that
+Adam's momentum is actively _in the middle of_ at checkpoint time. A fresh
+optimizer at the same weights is **not the same model**: it has no first/second
+moments pointing at the basin, no warmup remaining, and a step-counter reset
+that re-triggers any cosine schedule. The visible symptom is the run looks
+"flat" — it isn't; it's redoing the descent from a worse starting kinematic.
+
+Specific cost from the campaign: Run B of the consolidation arc used
+`init_from` to avoid deleting Run A's later checkpoints. The result (affix
+prefix flat at 64.9 at 17× density) appeared to falsify the sampling-weight
+hypothesis. Run C — same recipe, **`resume`** — reproduced the predicted 75
+at 2k. ~35 min A100 lost; one consult-round downstream based on a misread
+result.
+
+**Rule: never `init_from` to continue a run whose capability you are still
+trying to grow.** If you need the checkpoint slot, snapshot the optimizer state
+with the weights and delete the _next_ checkpoint, not the resume target.
+
 ## Pre-publish eval gate
 
 **Before uploading a model artifact to HF, run the full per-tag error analysis and compare against the current default release:**
@@ -103,6 +185,37 @@ Abort the upload if **any tag regresses >2pp from the default release**, unless:
 The 2pp threshold catches the regressions that matter without blocking on noise.
 
 **If the gate fires:** label the artifact as experimental in the model card, add it to `releases.json` without promoting to `defaultVersion`, file a GitHub issue explaining the trade-off. The artifact still ships — it's the _promotion_ that's gated.
+
+### No silent gate drift
+
+The 2pp pre-publish gate measures against **canonical floors from the config**,
+not against whatever table happens to be in the current postmortem. Any
+relaxation lives in a separate, explicit "gate-revision" note with a stated
+reason; the table in the doc cites the config bars verbatim above any
+scorecard.
+
+When writing a scorecard or comparison table in `docs/articles/evals/`:
+
+1. **Quote the config-canonical bar above the table.** Example:
+   `gate (config v1.0.0-consolidation.yaml): affix prefix ≥78, suffix ≥67, US street ≥80.4, …`
+2. **Don't drop rows that fail.** A row that fails the canonical bar is the
+   most important row in the table; if it's "noisy" or "out of scope," say so
+   in a footnote next to the row, don't remove it.
+3. **Any cell with a softer threshold than the config gets a marker** (e.g.
+   `*` with a footnote stating the relaxation and rationale). Don't re-baseline
+   silently.
+
+The 2026-06-10 consolidation doc relaxed `affix 78/67 → 72/64` and dropped the
+US-street row from one table; the operator caught it on review. No decision
+flipped on the relaxed numbers (luck), but ~2h of detection lag is the kind of
+friction that ends with "did we just ship a regression?" The
+`feedback-no-silent-gate-drift` memory exists; this rule is what keeps the
+next doc from triggering it.
+
+When a regression is genuinely the right thing to ship (e.g. spine gains that
+justify a tag dip), the path is: state the trade-off in the doc, file the
+gate revision separately, and the operator promotes — not the agent silently
+lowering the bar in the table.
 
 ## Idle-time policy
 
@@ -156,7 +269,7 @@ Sections (in this order):
 5. **Open questions** — things the operator should decide when they're back
 6. **Concrete next steps** — bullets with file paths, branch names, issue numbers
 
-Numbers table at the end: shift duration, models trained, total Modal time, local compute time, NaN incidents, CI failures, demo regressions.
+Numbers table at the end: shift duration, models trained, total Modal time, local compute time, NaN incidents, CI failures, demo regressions, GPU lost to error (if any).
 
 **Don't write this at the end as an afterthought.** Sketch it as you go — the structured handoff helps you make better decisions because you're rehearsing the operator's "was that the right call?" question in real time.
 
@@ -172,6 +285,22 @@ Numbers table at the end: shift duration, models trained, total Modal time, loca
 - A model change that costs 4h of GPU and 30min of human attention should produce ONE before/after table covering 5+ tags. If you can't articulate what you expect to change before the run, don't launch.
 - If a run produces an unexpected result (good OR bad), pause for 10 minutes to write up the surprise before launching the follow-up. Surprises lose information if you don't capture them while fresh.
 
+### Treadmill guard (codified)
+
+Two opposite-direction failures on consecutive iterations = **fork, not a
+branch**. Stop, name the fork, consult; do not run a third recipe variant
+solo. The pattern: iteration N pushes knob K up to fix tag A and hurts tag B;
+iteration N+1 pushes K down to fix B and re-hurts A. That's a capacity or
+stability constraint, not a tuning problem, and no further K-only iteration
+will resolve it.
+
+The consolidation arc hit this exactly at Run C (high density → transient
+affix peak + FR-region collapse; moderate density → stable ~65 affix ceiling
+
+- no FR collapse). Treadmill guard fired; campaign STOPPED; the fork went to
+  the operator with three named options (re-baseline + ship / architecture
+  escalation / hold). No fourth iteration was launched.
+
 ### Time budget discipline
 
 - A 9h shift is 9h of capacity, not 9h × (work duration). If you finish primary goals at 60% time, the remaining 40% is bonus iterations or backlog, not waiting.
@@ -179,11 +308,11 @@ Numbers table at the end: shift duration, models trained, total Modal time, loca
 
 ## Operator handoff format
 
-At the very end of an autonomous shift, send the operator a chat-friendly summary (not just a commit link) that contains:
+At the very end of an autonomous shift, send the operator a chat-friendly summary (not just a commit link). **Order matters — lead with what the operator needs to act on, not with what shipped.**
 
-1. The numbers (1-2 sentences)
-2. What changed in production (HF defaults, demo version, etc.)
-3. Anything that needs eyes-on (regression, decision deferred, open NaN mystery)
-4. Where the detailed report lives
+1. **Anything that needs eyes-on, in priority order** — merge wall, decision deferred, regression to review, open NaN mystery. This is what gets read first; everything below is context.
+2. **What changed in production** — HF defaults, demo version, npm tags. Empty is fine; say so.
+3. **The numbers (1–2 sentences)** — headline result + the cost (Modal $, GPU hours).
+4. **Where the detailed report lives** — link to the committed postmortem.
 
-This is _additional to_ the committed shift artifact — the chat summary is what gets read first thing in the morning; the artifact is the deep dive.
+This is _additional to_ the committed shift artifact — the chat summary is what gets read first thing in the morning; the artifact is the deep dive. The morning-shift skill consumes this; if you want the handoff to feel smooth, write it the way you'd want to read it half-awake.

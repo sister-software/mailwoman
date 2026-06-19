@@ -1,6 +1,6 @@
 ---
 name: deepseek-consult
-description: Consult DeepSeek for architectural review, code feedback, design exploration, or second opinions. Use when the operator requests a multi-turn conversation with DeepSeek, or when an independent perspective would strengthen a design decision.
+description: Consult DeepSeek for architectural review, code feedback, design exploration, or second opinions. Use when the operator requests a multi-turn conversation with DeepSeek, or when an independent perspective would strengthen a design decision. Includes per-category calibration (trust structure, test numbers) and an extended verify-before-concluding guard for quantitative predictions.
 ---
 
 Consult DeepSeek through the `pi` agent harness via the `ds-consult.sh` wrapper.
@@ -113,6 +113,60 @@ Add a penultimate turn to every model-quality session:
 
 This prevents the "do not ship" verdict that was wrong for v0.5.3 — DeepSeek recommended reverting on an invalid F1 comparison.
 
+**Extended for quantitative predictions:** when DS recommends a path based on a
+quantitative prediction (a threshold, a step count, a percentage), the
+penultimate turn also asks for the probe that would falsify it cheaply, **and
+the probe is run before the recommended path**. The exchange:
+
+> "Before we proceed: what's the 30-minute experiment that would falsify the
+> 'X clears threshold Y at step Z' prediction? If it holds, we continue down
+> your path; if it falsifies, we re-scope."
+
+Two things this catches: (a) predictions that can't be cheaply falsified
+(usually too vague to act on anyway), (b) predictions DS would itself
+de-weight if asked to design a falsifier. The night-shift skill's
+"Diagnostic before fix" pairs with this — same probe, different framing.
+
+## Calibration — structure vs numbers
+
+DeepSeek's quality is **not uniform across answer types**. The mailwoman
+campaign produced enough turns to characterize the asymmetry; calibrate the
+next session against it:
+
+| Contribution type                                                                                                                                                                                                    | Track record                                                               | How to weight                                                                               |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Structural** — reframes, architectural alternatives, naming the problem, probe-ladder design, eliminating an option as unsound (weight-merge on from-scratch models, frozen-encoder probe, label-partition design) | strong; multiple turns where DS named the load-bearing reframe we'd missed | trust, but cross-check ethos; structural advice survives even when downstream numerics miss |
+| **Procedural** — pre-registered gates, evidence checklists, "verify functional tests before concluding"                                                                                                              | strong                                                                     | apply directly                                                                              |
+| **Quantitative** — predicted F1 / accuracy / step-count thresholds (e.g. "5× clears ≥72", "75 is not a transient", capacity-tell at step-N)                                                                          | weak; 0/3 on the consolidation arc                                         | treat as hypothesis to falsify, not gate to lower; run the cheap probe                      |
+
+**Operational rule: trust the structure, test the numbers.** When DS hands
+back a structural reframe, fold it in. When it hands back a quantitative
+prediction with a threshold, write it down as a _pre-registered prediction_
+and verify with a probe. Don't build a follow-up plan that depends on the
+quantitative prediction holding.
+
+### Scoreboard maintenance
+
+Every consult on a quantitative question gets a one-line entry in the session
+notes, scored after the experiment:
+
+```
+Session: <id>
+- structural: <count predicted-and-held / count predicted>
+- quantitative: <count predicted-and-held / count predicted>
+- counter-evidence: <one line per falsified prediction>
+```
+
+The scoreboard is the corrective to "DeepSeek said X, so we did X." It's also
+the calibration record for the next session — if DS missed three quantitative
+predictions in a row, the next consult opens with that fact on the table.
+
+Example entry (consolidation-tradeoff-2026-06-10, retrospective):
+
+- structural: 3/3 — frozen-encoder probe design, label-partition for affix head, curriculum-erosion reframe
+- quantitative: 0/3 — "5× clears ≥72" (Run A held at 64.9), "75 is not a transient" (Run C decayed 75→52.9), "try reweighting first" (Run C carried tag-weight 4.0 and decayed anyway)
+- counter-evidence: capacity-tell at step-8000 was framed for a steady-state miss; transient-then-decay shape wasn't anticipated.
+
 ## Failure modes
 
 - **Timeout (exit 124):** the model ran past the wall-clock guard. Re-scope the
@@ -125,6 +179,11 @@ This prevents the "do not ship" verdict that was wrong for v0.5.3 — DeepSeek r
   id, or missing key in `$HOME/Projects/playpen/.env.host`.
 - **Generic answers:** the prompt lacked code context. Add file paths, types, and
   the specific constraint that makes this non-trivial.
+- **Wrapper hangs on long pro+low prompts:** documented twice in the campaign
+  (wrapper timed out at 180s on a long flash+low prompt during the #511 design
+  consult). Fall through to the tier-2 curl path below; note the wrapper failure
+  in the session-notes so it gets fixed eventually, but don't block the consult
+  on it.
 
 ## Cross-session continuity
 
@@ -138,20 +197,22 @@ $EDITOR .agents/skills/deepseek-consult/session-notes-$(date +%Y-%m-%d)-<topic>.
 
 The raw per-turn transcripts in `~/.cache/ds-consult/sessions/*.transcript.md`
 are the source to distill from (and are not committed — keep notes terse and
-curated, the way the existing `session-notes-*.md` are).
+curated, the way the existing `session-notes-*.md` are). Include the calibration
+scoreboard line (above) in any notes file for a quantitative consult.
 
 ## Tier-2 fallback: direct curl
 
-If `pi` itself misbehaves (e.g. a provider/streaming bug), bypass it and hit the
-DeepSeek API directly. This is the path past sessions used; keep it as a backstop,
-not the default — the wrapper gives sessions, isolation, and structured output for free.
+If `pi` itself misbehaves (e.g. a provider/streaming bug, the long-prompt hang
+above), bypass it and hit the DeepSeek API directly. This is the path past
+sessions used; keep it as a backstop, not the default — the wrapper gives
+sessions, isolation, and structured output for free.
 
 ```bash
 KEY=$(grep '^DEEPSEEK_API_KEY=' "$HOME/Projects/playpen/.env.host" | cut -d= -f2-)
 curl -s https://api.deepseek.com/chat/completions \
   -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
-  -d '{"model":"deepseek-chat","messages":[{"role":"user","content":"<prompt>"}]}' \
+  -d @prompt.json \
   | jq -r '.choices[0].message.content'
 ```
 
-Continuation = resend the prior messages array yourself (curl is stateless).
+Continuation = resend the prior `messages` array yourself (curl is stateless).
