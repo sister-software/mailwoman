@@ -17,10 +17,30 @@
  *   3. Canonicalize a trailing USPS street-type token via the codex suffix table to its canonical full
  *        form (`st`/`str`/`street` → `street`).
  *
- *   Numbered streets are left as digits (`5th` stays `5th`) — both sides see the same bytes.
+ *   Numbered streets are left as digits (`5th` stays `5th`); a SPELLED ordinal before a street
+ *   suffix folds to its digit form (`tenth street` → `10th street`, #723) so the grid-city ordinal
+ *   cross-streets the source data spells with digits become reachable.
  */
 
 import { AbbreviationToDirectional, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us"
+
+/**
+ * Spelled ordinal street names → their digit-ordinal form ("tenth" → "10th"), applied ONLY when a
+ * street-type suffix follows (#723 admin-tail) — so the ordinal cross-streets common in grid cities
+ * ("Tenth Street", "Fifth Avenue") match the shards' digit keys, WITHOUT rewriting ordinal-WORD
+ * names where the next token is not a suffix ("First National Bank Rd" stays "first national …").
+ * Digit-source shards are unaffected (a digit token isn't in this map), so the existing keys need no
+ * rebuild; a future rebuild folds any spelled-source key the same way (the one-function discipline).
+ */
+const SPELLED_ORDINAL_TO_DIGIT = new Map<string, string>([
+	["first", "1st"], ["second", "2nd"], ["third", "3rd"], ["fourth", "4th"], ["fifth", "5th"],
+	["sixth", "6th"], ["seventh", "7th"], ["eighth", "8th"], ["ninth", "9th"], ["tenth", "10th"],
+	["eleventh", "11th"], ["twelfth", "12th"], ["thirteenth", "13th"], ["fourteenth", "14th"],
+	["fifteenth", "15th"], ["sixteenth", "16th"], ["seventeenth", "17th"], ["eighteenth", "18th"],
+	["nineteenth", "19th"], ["twentieth", "20th"], ["thirtieth", "30th"], ["fortieth", "40th"],
+	["fiftieth", "50th"], ["sixtieth", "60th"], ["seventieth", "70th"], ["eightieth", "80th"],
+	["ninetieth", "90th"], ["hundredth", "100th"],
+])
 
 /** Lowercase + diacritic-fold + punctuation strip + whitespace collapse. */
 function fold(input: string): string {
@@ -40,6 +60,13 @@ function fold(input: string): string {
 export function normalizeStreetForKey(street: string): string {
 	const tokens = fold(street).split(" ")
 	if (tokens.length === 0) return ""
+
+	// Spelled-ordinal street names → digit form when a street suffix follows ("Tenth Street" →
+	// "10th street", #723). Gated on the next token being a suffix so ordinal-WORD names are untouched.
+	for (let i = 0; i < tokens.length - 1; i++) {
+		const digit = SPELLED_ORDINAL_TO_DIGIT.get(tokens[i]!)
+		if (digit && US_STREET_SUFFIX_LOOKUP.has(tokens[i + 1]!)) tokens[i] = digit
+	}
 
 	// Directional expansion at the edges only ("N Main St" / "Main St N" — never interior
 	// tokens, where "W" may be an initial in a person-named street). The codex expands

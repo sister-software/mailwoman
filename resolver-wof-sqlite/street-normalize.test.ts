@@ -43,6 +43,17 @@ describe("normalizeStreetForKey", () => {
 		expect(normalizeStreetForKey("  CALLE   José.  ")).toEqual("calle jose")
 	})
 
+	it("folds a spelled ordinal before a street suffix to digit form (#723)", () => {
+		expect(normalizeStreetForKey("Tenth St")).toEqual(normalizeStreetForKey("10th Street"))
+		expect(normalizeStreetForKey("Fifth Avenue")).toEqual(normalizeStreetForKey("5th Ave"))
+		expect(normalizeStreetForKey("Twentieth St")).toEqual("20th street")
+	})
+
+	it("does NOT fold an ordinal WORD that is not followed by a street suffix", () => {
+		// "First National Bank Rd" — "First" is a name prefix here, not an ordinal cross-street.
+		expect(normalizeStreetForKey("First National Bank Rd")).toContain("first")
+	})
+
 	it("distinct streets stay distinct", () => {
 		expect(normalizeStreetForKey("Main Street")).not.toEqual(normalizeStreetForKey("Maine Street"))
 		expect(normalizeStreetForKey("North Main Street")).not.toEqual(normalizeStreetForKey("Main Street"))
