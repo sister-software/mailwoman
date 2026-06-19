@@ -79,7 +79,7 @@
 	/* FIX: was acid-green links + orange hover. Now pale → white → magenta. */
 	--ifm-navbar-background-color: hsl(230.21deg 100% 11.41%);
 	--ifm-navbar-link-color: hsl(220deg 40% 90%);
-	--ifm-navbar-link-hover-color: #fff;
+	--ifm-navbar-link-hover-color: var(--ifm-color-secondary);
 	--ifm-navbar-link-active-color: var(--ifm-color-primary);
 
 	--ifm-breadcrumb-color-active: var(--ifm-color-primary);
