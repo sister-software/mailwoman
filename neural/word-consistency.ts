@@ -14,16 +14,27 @@
  *
  *   Fix (DeepSeek-Pro consult `contested-frag`, 2026-06-19): a SentencePiece word — a `▁`-started
  *   piece + its non-`▁` continuations — must carry ONE tag. The tag is chosen by a
- *   CONFIDENCE-WEIGHTED vote, NOT first-piece-wins: sum each piece's softmax mass per TAG TYPE (B-X
- *   + I-X collapsed; `O` included) across the word, argmax the type, and force `B-<type>` then
- *   `I-<type>` (or all `O`). The near-certain `ère`→region then pulls the whole word to region,
- *   healing both the fragment and the `Loz` bleed. Operates ONLY within a `▁`-delimited word, so
- *   cross-word multi-token names ("Saint Paul" → two words) are untouched and the decoder's
- *   existing cross-word merge still joins them.
+ *   CONFIDENCE-WEIGHTED vote, NOT first-piece-wins: sum each piece's softmax mass per TAG TYPE
+ *   (B-X
+ *
+ *   - I-X collapsed; `O` included) across the word, argmax the type, and force `B-<type>` then
+ *       `I-<type>` (or all `O`). The near-certain `ère`→region then pulls the whole word to region,
+ *       healing both the fragment and the `Loz` bleed. Operates ONLY within a `▁`-delimited word,
+ *       so cross-word multi-token names ("Saint Paul" → two words) are untouched and the decoder's
+ *       existing cross-word merge still joins them.
  *
  *   Safety: a word whose pieces already agree is left byte-identical (no change). The vote includes
- *   `O`, so a genuinely-`O` word stays `O` (no spurious spans). It is strictly more robust than the
- *   per-piece argmax — a stray mis-tagged piece is out-voted by the rest of its word.
+ *   `O`, so a genuinely-`O` word stays `O` (no spurious spans).
+ *
+ *   Gate outcome (2026-06-19, fr-admin-split-gate + per-locale-f1, MAILWOMAN_WORD_CONSISTENCY=1): NOT
+ *   a clean win, so this ships DEFAULT-OFF. It heals clean-latin fragments (`PRUNIÈRES LOZÈRE
+ *   FRANCE` → region=`LOZÈRE`), but on OOD byte-soup rows where the per-piece confidence is itself
+ *   unreliable the vote AMPLIFIES that noise — e.g. `VERMONT, ウェストミンスター` lets the region word
+ *   absorb the adjacent CJK locality — and it net-regressed street −12.6 on the adversarial golden.
+ *   The confidence-weighted vote out-votes a stray mis-tagged piece only when the surviving pieces
+ *   are themselves trustworthy; on byte-fallback pieces that premise breaks. A confidence-gated
+ *   variant (skip the heal when the word's mean p(bestType) is below a floor, or when any piece is
+ *   a raw byte-fallback piece) is the path to a clean win — tracked on #727.
  */
 
 import { SPACE_SENTINEL } from "./tokenizer.js"

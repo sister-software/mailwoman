@@ -1,17 +1,17 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "4.6.0",
-	"model_lineage": "v1.5.0-fr-order / step 40000 — the fr.house_number RECOVERY model. Identical to v4.5.0's v1.4.0-charoffset (char-offset corpus v0.5.0, span bridge RETIRED) EXCEPT one added lever: the synth-fr-order shard (#560/#561, weight 3.0), which teaches reversed-order (postcode-first) FR so the model stops grabbing the leading postcode as the house number. RESULT: fr.house_number 54.5 → 87.4 on the diversified golden (#563), +32.9pp — at the published frontier for reordered house numbers (Chinese flexible-order SOTA ~90-91%, Li et al. NAACL 2019). The fr.house_number gate floor was re-baselined 91 → 85 (STATED, operator-approved, research-anchored — docs/articles/evals/2026-06-13-fr-house-number-threshold-research.md + #564): the 91 bar was a canonical-order bar mis-applied to the hard postcode-first slice. Bridge stays retired (po_box 90.3 bridge-OFF). Gate: scripts/eval/gates/v0.5.0-bridge.json; tokenizer 0.6.0-a0.",
-	"phase": "v1.5 fr-order — recover the bridge-retirement casualty: reversed-order FR shard lifts fr.house_number +32.9pp to the reordered-case frontier",
+	"version": "4.11.0",
+	"model_lineage": "v1.8.0-fr-admin-split / step 40000 — the FIRST model in the arc to surpass v1.5.0 on the SHIPPED assembled anchor-ON coordinate (not label-F1). Clones v1.5.0-fr-order verbatim EXCEPT one added lever: the fr-admin-split shard (weight 6.0), built from real BAN commune+postcode tuples with the locality SPLIT from its département (region), département derived via codex departementForCodePostal, anchor-ON by construction (99.9% postcode landing). It fixes the one admin-deciding, coordinate-coupled failure: on non-US formats the model fused the trailing admin token into the locality. RESULT (held-out FR golden, 3000 disjoint communes, ship-config anchor-ON): coord p50 42.5 → 2.2 km (−95%), mean 175 → 105.5 km (−40%), region-emit 39.6 → 99.6%, region-correct 36.4 → 96.4%, resolve-rate 59.5 → 78.5%. US assembled coordinate FLAT (locality-match 97.5 → 97.6, p50 3.3 = 3.3). Two label deltas trip the 2pp pre-publish gate, BOTH coordinate-invisible (operator-approved, #728): us.locality −2.2 (precision-only — 0 recall misses, spurious-FP on gold-locality-absent rows) and fr.country −3.5 (the resolver is given the country, so it never reaches the coordinate). Bridge stays RETIRED. Tokenizer 0.6.0-a0 (byte-identical to v1.5.0). #727 diacritic break only partially closed (rate among emitted regions halved 2.8→1.1%, ~24 absolute remain — tokenizer/decode-level; the span-head + lower-fertility-vocab fix path is in .notes/research-romp-applicability.md).",
+	"phase": "v1.8 fr-admin-split — teach locality↔adjacent-admin-token SPLIT on non-US formats (FR département); first model to beat v1.5.0 on the shipped coordinate (FR p50 42→2 km, −40% mean, US flat)",
 	"license": "AGPL-3.0-only",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "0.5.0 (char-offset span labels #519: from-source base + 7 re-emitted parity overlays) + synth-fr-order shard (#561)",
+		"corpus_version": "0.5.0 (char-offset span labels #519: from-source base + 7 re-emitted parity overlays) + synth-fr-order shard (#561) + fr-admin-split shard (v0.8.0-fr-admin-split: real BAN commune+postcode+département, locality split from région)",
 		"tokenizer_version": "0.6.0-a0",
 		"steps": 40000,
 		"best_step": 40000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v1.5.0-fr-order: from-scratch 40k on the char-offset corpus + the synth-fr-order shard (weight 3.0, the single variable vs v1.4.0-charoffset). All else held identical (augment_glue_prob 0.25, synth-intersection 1.0, synth-po-box-cedex 1.5, synth-german 6.0, affix relabel, gazetteer anchor + choreography, CE-only, lr=1.5e-4, seed 42). NOTE: weight 6.0 (v1.5.1) was tested and REJECTED — worse (84.7%) + postcode fragmentation (#564); 3.0 is the shipped weight."
+		"recipe": "v1.8.0-fr-admin-split: cloned v1.5.0-fr-order verbatim (from-scratch 40k on the char-offset corpus + synth-fr-order shard weight 3.0) + the fr-admin-split shard (weight 6.0, matching synth-german — the single added variable). conventions loss-mask OFF (the shard TEACHES FR street_prefix 'Rue'; the mask would −inf gold — caught live v1.6.0). All else held identical to v1.5.0-fr-order (augment_glue_prob 0.25, synth-intersection 1.0, synth-po-box-cedex 1.5, synth-german 6.0, affix relabel, gazetteer anchor + choreography, CE-only, lr=1.5e-4, seed 42). Loss-abort gate PASSED (loss 5.0 → ~0.7, decreasing)."
 	},
 	"architecture": {
 		"hidden_size": 384,
@@ -27,7 +27,7 @@
 		"phrase_priors": true
 	},
 	"requires": {
-		"$comment": "The SHIP-CONFIG this model was TRAINED against (#718). The canonical ProductionScorer (@mailwoman/neural's createScorer) reads this and FAILS CLOSED if a required channel isn't actually fed — closing the #566/#685 trap where a channel-trained model scored channel-OFF silently goes OOD. Read off the gate it shipped against (scripts/eval/gates/v0.5.0-bridge.json: requires_gazetteer_lexicon=true, requires_conventions=auto, requires_bridge=false) plus anchor (the model exports anchor_features). Additive metadata only.",
+		"$comment": "The SHIP-CONFIG this model was TRAINED against (#718) — UNCHANGED from v1.5.0 (v1.8.0 cloned the v1.5.0-fr-order ship config; the single training variable was the fr-admin-split shard). The canonical ProductionScorer (@mailwoman/neural's createScorer) reads this and FAILS CLOSED if a required channel isn't actually fed — closing the #566/#685 trap where a channel-trained model scored channel-OFF silently goes OOD. Read off the gate it shipped against (scripts/eval/gates/v0.5.0-bridge.json: requires_gazetteer_lexicon=true, requires_conventions=auto, requires_bridge=false) plus anchor (the model exports anchor_features). Additive metadata only.",
 		"anchor": { "required": true },
 		"gazetteer": { "required": true },
 		"conventions": { "required": true, "mode": "auto" },
@@ -87,7 +87,7 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "v4.6.0 — recover the v4.5.0 fr.house_number casualty without losing bridge retirement. The synth-fr-order shard (#561, weight 3.0) teaches reversed-order (postcode-first) FR (\"47110 Locality, 69 Street\"), which the canonical-order BAN training never showed. On the diversified golden (#563, 56 localities, both orders) fr.house_number recovers 54.5 → 87.4 (+32.9pp). It does NOT reach the OLD 91 floor — but that floor was a canonical-order bar mis-applied to the hard reordered slice (research: docs/articles/evals/2026-06-13-fr-house-number-threshold-research.md, #564). Literature puts the reordered-house-number ceiling at ~90-91% (Chinese flexible-order SOTA, Li et al. NAACL 2019) and shows neural parsers COLLAPSE on reorder (deepparse 100→28%, libpostal 0.992→0.781); 87.4% is at the frontier. Floor re-baselined 91 → 85 (STATED, operator-approved). The bridge stays RETIRED (po_box 90.3 bridge-OFF). The NEXT lever to push past 90% is postcode-anchor span protection (reuses the existing anchor signal) — NOT more synth weight: weight 6.0 (v1.5.1) was WORSE (84.7%) and fragmented the postcode (47110 → hn 4 + pc 7110). KNOWN: int8_delta.us.street_prefix flagged 2.2pp (>1.5 cap) — WAIVED: int8 98.0 vs fp32 95.8 is int8 BETTER on a 25-example tag (single-example favorable quant noise, not a regression). Follow-up: corpus-v0.5.1 code-point offset re-align (#558).",
+	"notes": "v4.11.0 / v1.8.0-fr-admin-split — the FIRST model to surpass v1.5.0 on the SHIPPED assembled anchor-ON coordinate (FR held-out p50 42→2 km, −40% mean), US coordinate flat. The lever: an fr-admin-split shard (real BAN commune+postcode, locality split from département via codex departementForCodePostal, weight 6.0) teaches the model to split the locality from the adjacent admin token on non-US formats — the one admin-deciding, coordinate-coupled failure. Unlock: the v0.9.2 'intl washes anchor-on' scar was POSITIONAL (German LEADING postcode); FR/AU have TRAILING postcodes → the anchor REINFORCES the split (scar tissue is conditional, not universal). Pre-GPU self-validation PASSED (splitting the département cuts collision-commune coordinate error −61%; the merge resolves 0%) → the resolver demonstrably uses the région tag, GPU justified before spend. Ships carrying two coordinate-invisible label deltas that trip the 2pp gate (us.locality −2.2 precision-only — 0 recall misses; fr.country −3.5, resolver given --default-country FR) — STATED + operator-approved (#728), not a silent relaxation. #727 diacritic only partially closed (tokenizer-level — the accent strands a subword; the span-head + lower-fertility-vocab fix path is in .notes/research-romp-applicability.md). The enforceWordConsistency decode-fix (#727) ships in @mailwoman/neural DEFAULT-OFF (the live gate showed it over-merges on OOD byte-soup — over-confidence amplification, not a clean win). AU iteration is BLOCKED until admin-global-priority.db gains AU rows (US+DE+FR only). KNOWN: int8 max fp32↔int8 delta 0.3pp.",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32, max fp32↔int8 delta 0.3pp)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=48000",
@@ -107,62 +107,79 @@
 		"method": "isotonic-regression (PAVA) over per-span softmax confidence; OPT-IN via core/decoder createCalibrator",
 		"held_out_ece_raw": 0.0673,
 		"held_out_ece_calibrated": 0.0035,
-		"note": "calibration.json + calibration-per-locale.json carried forward from v4.4.0 (architecture + label space unchanged). Re-fit recommended next train. Apply via @mailwoman/core/decoder's createCalibrator; default parse output is byte-stable when omitted."
+		"note": "calibration.json + calibration-per-locale.json carried forward from v4.4.0 (architecture + label space unchanged across v1.5.0→v1.8.0). Re-fit recommended next train. Apply via @mailwoman/core/decoder's createCalibrator; default parse output is byte-stable when omitted."
 	},
-	"base_relpath": "/data/output-v150-fr-order-s42/checkpoints/step-040000",
+	"base_relpath": "/data/output-v180-fr-admin-split-s42/checkpoints/step-040000",
 	"eval": {
-		"gate_2026_06_13_fr_order": {
-			"promotion_gate": "PASS 17/17 quality floors (gates/v0.5.0-bridge.json, bridge-OFF; fr.house_number floor re-baselined 91→85, STATED $comment_change_3). fr.house_number 87.4 ≥ 85. arena.perturb 78 ≥ 71 (gate-integrity fix: the floor was previously un-evaluable, see promotion-gate.sh). bridge-retirement HOLDS: po_box 90.3 bridge-OFF ≥ 89.1. The single non-quality flag — int8_delta.us.street_prefix 2.2 > 1.5 — is WAIVED (int8 98.0 > fp32 95.8 on a 25-example tag = favorable single-example quant noise).",
+		"gate_2026_06_19_fr_admin_split": {
+			"promotion_gate": "FR centroid gate PASS — surpasses v1.5.0 on the SHIPPED assembled anchor-ON coordinate (held-out FR golden, 3000 disjoint communes): coord p50 42.5→2.2 km, mean 175→105.5 km (−40%), région-emit 39.6→99.6%. US assembled coordinate FLAT (oa-resolver-eval, 2000 OA-US rows: locality-match 97.5→97.6, p50 3.3=3.3). Two label deltas trip the 2pp pre-publish gate, BOTH coordinate-invisible and operator-approved (#728): us.locality −2.2 (precision-only, 0 recall misses) and fr.country −3.5 (resolver given --default-country FR). No silent drift — both stated here + on #728 + the night postmortem.",
+			"gate_doc": "docs/articles/evals/2026-06-19-night-postmortem.md",
 			"bridge_retired": true,
-			"floor_rebaseline": "fr.house_number 91 → 85, research-anchored + operator-approved (#564, docs/articles/evals/2026-06-13-fr-house-number-threshold-research.md)",
-			"gate_doc": "docs/articles/evals/2026-06-13-night-13-postmortem.md"
+			"flagged_deltas_coordinate_invisible": [
+				"us.locality -2.2 (precision-only — 0 recall misses, spurious-FP on gold-locality-absent rows)",
+				"fr.country -3.5 (resolver given --default-country FR, never reaches the coordinate; abandoned v1.8.1 country-shard targeted this)"
+			]
+		},
+		"fr_centroid_gate_heldout": {
+			"n": 3000,
+			"coord_mean_km": { "v1_5_0": 174.99, "v1_8_0": 105.51 },
+			"coord_p50_km": { "v1_5_0": 42.52, "v1_8_0": 2.17 },
+			"coord_p90_km": { "v1_5_0": 389.37, "v1_8_0": 334.15 },
+			"resolve_rate": { "v1_5_0": 0.595, "v1_8_0": 0.785 },
+			"region_emit_rate": { "v1_5_0": 0.396, "v1_8_0": 0.996 },
+			"region_correct_rate": { "v1_5_0": 0.364, "v1_8_0": 0.964 },
+			"diacritic_727_breaks": { "v1_5_0": 23, "v1_8_0": 24 }
+		},
+		"us_assembled_coord_oa": {
+			"n": 2000,
+			"locality_match": { "v1_5_0": 0.975, "v1_8_0": 0.976 },
+			"coord_p50_km": { "v1_5_0": 3.3, "v1_8_0": 3.3 },
+			"coord_p90_km": { "v1_5_0": 10.8, "v1_8_0": 10.7 },
+			"region_match": { "v1_5_0": 0.999, "v1_8_0": 0.999 }
 		},
 		"per_component_int8_shipconfig": {
+			"$comment": "per-locale-f1 anchor-ON matched pair vs v1.5.0 (postmortem guardrail tables). The unfolded per-tag F1 (split affix, intersections, etc.) is the authoritative `capabilities` block below. Tags off the FR-shard path (us intersections/unit, de native_locality, arena.perturb) were not re-measured for v1.8.0 — the single training variable was the FR admin-split shard and the architecture is identical to v1.5.0.",
 			"us": {
-				"postcode": 98.6,
-				"country_homograph": 83.3,
-				"micro": 87.4,
-				"locality": 77.3,
-				"region": 90.4,
+				"house_number": 98.6,
+				"locality": 75.7,
+				"region": 89.8,
 				"street": 80.8,
-				"street_prefix": 98.0,
-				"street_suffix": 94.9,
-				"unit": 97.0,
-				"po_box_real": 90.3,
-				"intersection_real": 100.0
+				"postcode": 98.6,
+				"country": 68.9
 			},
 			"fr": {
-				"postcode": 99.9,
-				"house_number": 87.4,
-				"region": 41.8,
-				"cedex_real": 94.2
-			},
-			"de": {
-				"native_locality_anchor_on": 90.8
-			},
-			"arena": {
-				"perturb": 78.0
+				"house_number": 99.5,
+				"locality": 87.6,
+				"po_box": 83.3,
+				"region": 43.7,
+				"street": 89.4,
+				"postcode": 99.7,
+				"country": 59.2
 			}
 		},
-		"vs_4_5_0_actual": {
-			"fr_house_number": "+32.9 on the diversified golden (54.5 → 87.4) — the recovery; at the reordered-case SOTA frontier (~90-91% ceiling). NOTE: v4.5.0's card listed 89.3 on the EASIER pre-#563 golden; on the same diversified golden v4.5.0 is 54.5%.",
-			"po_box_real": "+0.3 (90.0 → 90.3), bridge stays RETIRED",
-			"de_native_locality": "-0.2 (91.0 → 90.8), flat",
-			"note": "fr.house_number recovered without disturbing the spine; weight 6.0 (v1.5.1) was rejected (worse + postcode fragmentation, #564). Grade vs the diversified golden #563, not the pre-#563 numbers."
+		"vs_1_5_0": {
+			"fr_coord_p50": "42.5 → 2.2 km (−95%) — the win; first model in the arc to beat v1.5.0 on the shipped coordinate",
+			"fr_region_emit": "39.6 → 99.6% (+60pp) — learned the locality↔département split",
+			"us_assembled_coord": "FLAT (locality-match +0.1, p50 identical)",
+			"us_locality_label": "−2.2pp (precision-only, coordinate-invisible; gate-firing, operator-approved #728)",
+			"fr_country_label": "−3.5pp (resolver given country, coordinate-invisible; gate-firing, operator-approved #728)",
+			"fr_street": "+1.9 (87.5 → 89.4)",
+			"fr_po_box": "+10.6 (72.7 → 83.3)",
+			"fr_house_number": "99.3 → 99.5 (held — v1.5.0's raison d'être)"
 		}
 	},
 	"files_md5": {
-		"model.onnx": "4674d3483c94bfddd1884872467763d9",
+		"model.onnx": "d163396ce30869e117bf29ffb939177b",
 		"tokenizer.model": "b6137e8c52914c9715374268ecaa4bc6"
 	},
 	"capabilities": {
 		"server": {
 			"us": {
 				"street_prefix": {
-					"maskOffF1": 1.5
+					"maskOffF1": 1.9
 				},
 				"street": {
-					"maskOffF1": 25
+					"maskOffF1": 24
 				},
 				"street_suffix": {
 					"maskOffF1": 0.3,
@@ -172,31 +189,31 @@
 					"maskOffF1": 98.3
 				},
 				"locality": {
-					"maskOffF1": 77.3
+					"maskOffF1": 75.6
 				},
 				"region": {
-					"maskOffF1": 90.4
+					"maskOffF1": 89.7
 				},
 				"postcode": {
 					"maskOffF1": 98.6
 				},
 				"country": {
-					"maskOffF1": 68.4
+					"maskOffF1": 68.9
 				},
 				"unit": {
-					"maskOffF1": 8.7
+					"maskOffF1": 9.5
 				},
 				"intersection_a": {
-					"maskOffF1": 40
+					"maskOffF1": 28.6
 				},
 				"intersection_b": {
-					"maskOffF1": 15.4
+					"maskOffF1": 33.3
 				},
 				"po_box": {
-					"maskOffF1": 73.5
+					"maskOffF1": 64.2
 				},
 				"venue": {
-					"maskOffF1": 90.7
+					"maskOffF1": 90.9
 				},
 				"dependent_locality": {
 					"maskOffF1": 0
@@ -204,7 +221,7 @@
 			},
 			"fr": {
 				"street_prefix": {
-					"maskOffF1": 80
+					"maskOffF1": 77.8
 				},
 				"street": {
 					"maskOffF1": 54.5
@@ -223,23 +240,23 @@
 		"pocket": {
 			"us": {
 				"street_prefix": {
-					"maskOffF1": 1.5
+					"maskOffF1": 1.9
 				},
 				"street": {
-					"maskOffF1": 24.7
+					"maskOffF1": 23.9
 				},
 				"street_suffix": {
 					"maskOffF1": 0.3,
 					"maskOnF1": 0.3
 				},
 				"house_number": {
-					"maskOffF1": 97.7
+					"maskOffF1": 98.2
 				},
 				"locality": {
-					"maskOffF1": 56.9
+					"maskOffF1": 59.4
 				},
 				"region": {
-					"maskOffF1": 71
+					"maskOffF1": 72.5
 				},
 				"postcode": {
 					"maskOffF1": 98.6
@@ -248,19 +265,19 @@
 					"maskOffF1": 0
 				},
 				"unit": {
-					"maskOffF1": 9.3
+					"maskOffF1": 10
 				},
 				"intersection_a": {
 					"maskOffF1": 16.7
 				},
 				"intersection_b": {
-					"maskOffF1": 5.3
+					"maskOffF1": 9.1
 				},
 				"po_box": {
-					"maskOffF1": 65.5
+					"maskOffF1": 63
 				},
 				"venue": {
-					"maskOffF1": 90.7
+					"maskOffF1": 90.8
 				},
 				"dependent_locality": {
 					"maskOffF1": 0
@@ -268,7 +285,7 @@
 			},
 			"fr": {
 				"street_prefix": {
-					"maskOffF1": 80
+					"maskOffF1": 77.8
 				},
 				"street": {
 					"maskOffF1": 54.5
