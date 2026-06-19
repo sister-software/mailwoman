@@ -119,7 +119,10 @@ async function main() {
 		diacriticBroken = 0,
 		hasGoldRegion = 0
 	for (const row of rows) {
-		const tree = await neural.parse(row.raw, { postcodeRepair: true })
+		const tree = await neural.parse(row.raw, {
+			postcodeRepair: true,
+			enforceWordConsistency: process.env.MAILWOMAN_WORD_CONSISTENCY === "1",
+		})
 		const flat = decodeAsJson(tree) as Record<string, string>
 		const goldRegion = row.components?.region as string | undefined
 		const predRegion = flat.region

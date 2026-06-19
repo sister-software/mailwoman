@@ -41,6 +41,7 @@ import { MailwomanTokenizer } from "./tokenizer.js"
 import { repairUnitLabels } from "./unit-repair.js"
 import { buildBioEndMask, buildBioStartMask, buildBioTransitionMask, softmax, viterbi } from "./viterbi.js"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
+import { enforceWordConsistency } from "./word-consistency.js"
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `OnnxRunner`
@@ -139,6 +140,14 @@ export interface NeuralAddressClassifierConfig {
 	 * (the pre-2026-06-12 byte-stable default).
 	 */
 	spanProposer?: SpanProposerConfig | false
+
+	/**
+	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Default off →
+	 * byte-identical. When true, every `▁`-delimited word's pieces are forced to ONE tag by a
+	 * confidence-weighted vote over the post-prior emissions (see word-consistency.ts). Per-parse
+	 * `ParseOptions.enforceWordConsistency` overrides this default.
+	 */
+	enforceWordConsistency?: boolean
 }
 
 /**
@@ -428,7 +437,7 @@ export class NeuralAddressClassifier {
 			}
 		}
 
-		const labelIndices =
+		let labelIndices =
 			this.decodeMode === "viterbi"
 				? viterbi({
 						emissions,
@@ -438,6 +447,17 @@ export class NeuralAddressClassifier {
 					}).path
 				: emissions.map((row) => argmaxSoftmax(row).idx)
 
+		// Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Opt-in — default
+		// OFF → byte-identical. Heals words whose pieces disagree (e.g. `VERMONT`→VER[loc]+MONT[region],
+		// `Lozère`→Loz[loc]+ère[region]) via a confidence-weighted vote over the post-prior emissions; a
+		// word whose pieces already agree is untouched. See word-consistency.ts.
+		let healedConfidence: Map<number, number> | null = null
+		if (opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? false) {
+			const wc = enforceWordConsistency(pieces, emissions, this.labels, labelIndices)
+			labelIndices = wc.labelIndices
+			healedConfidence = wc.healedConfidence
+		}
+
 		let tokens: DecoderToken[] = pieces.map((p, i) => {
 			const idx = labelIndices[i]!
 			const probs = softmax(logits[i]!)
@@ -446,7 +466,9 @@ export class NeuralAddressClassifier {
 				start: p.start,
 				end: p.end,
 				label: (this.labels[idx] ?? "O") as DecoderToken["label"],
-				confidence: probs[idx]!,
+				// Healed words carry the vote's mean p(type) (length-invariant); unchanged pieces keep
+				// the model's per-piece softmax confidence.
+				confidence: healedConfidence?.get(i) ?? probs[idx]!,
 			}
 		})
 
@@ -561,6 +583,13 @@ export interface ParseOpts {
 	 * v0.7 gate confirms it. See `./postcode-repair.ts`.
 	 */
 	postcodeRepair?: boolean
+
+	/**
+	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Overrides the
+	 * classifier's `enforceWordConsistency` config default for this parse. See word-consistency.ts.
+	 */
+	enforceWordConsistency?: boolean
+
 	/**
 	 * When true, run the deterministic secondary-unit regex repair pass on the decoded label sequence
 	 * before tree-building. Detects designator-shaped substrings ("Apt 4B", "Ste 12", "Unit 9400",

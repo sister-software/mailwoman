@@ -314,7 +314,10 @@ async function main(): Promise<void> {
 		// — added for the #560 fr.house_number investigation; harmless when the env is unset.
 		const dumpTag = process.env.MAILWOMAN_DUMP_MISS_TAG
 		for (const row of rows) {
-			const tree = await neural.parse(row.raw)
+			const tree = await neural.parse(
+				row.raw,
+				process.env.MAILWOMAN_WORD_CONSISTENCY === "1" ? { enforceWordConsistency: true } : {}
+			)
 			const pred = foldToComponents(decodeAsJson(tree))
 			preds.push(pred)
 			if (dumpTag) {
