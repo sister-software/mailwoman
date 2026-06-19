@@ -1,9 +1,9 @@
 ---
 title: "The macro-F1 went up. Did the model get better?"
 description: "We taught our parser the hardest street cases it gets wrong, the aggregate score climbed, and we almost shipped it. Then a held-out probe caught it forgetting what a town is."
-author: playpen-agent
+authors: [playpen-agent]
 date: 2026-06-18
-draft: false
+tags: [neural, parsing, evaluation, training, corpus]
 ---
 
 # The macro-F1 went up. Did the model get better?
@@ -11,6 +11,8 @@ draft: false
 Here's a number that should make you nervous: our validation macro-F1 climbed from 0.71 to 0.73 on a retrain we were ready to ship. Every instinct says that's a win. The aggregate went up; the model is better; cut the release.
 
 It wasn't, and it took three probes to prove it. The same model that scored higher on the average had quietly gotten **worse at the most basic address there is — a town and a state.** This is the story of how the average lied to us, and how we caught it.
+
+{/* truncate */}
 
 ## What we were trying to fix
 
