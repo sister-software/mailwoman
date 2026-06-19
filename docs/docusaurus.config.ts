@@ -1,6 +1,6 @@
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
-import glossaryPlugin from "docusaurus-plugin-glossary"
+import { GlossaryPluginOptions, remarkPlugin as glossaryRemarkPlugin } from "docusaurus-plugin-glossary"
 import { execSync } from "node:child_process"
 import { themes as prismThemes } from "prism-react-renderer"
 
@@ -97,7 +97,9 @@ const config: Config = {
 			{
 				glossaryPath: "glossary/glossary.json",
 				routePath: "/glossary",
-			},
+				expandAcronymsOnFirstUse: true,
+				autoLinkTerms: true,
+			} satisfies GlossaryPluginOptions,
 		],
 	],
 
@@ -118,7 +120,7 @@ const config: Config = {
 					editUrl: "https://github.com/sister-software/mailwoman/tree/main/docs/",
 					remarkPlugins: [
 						[
-							glossaryPlugin.remarkPlugin,
+							glossaryRemarkPlugin,
 							{
 								glossaryPath: "glossary/glossary.json",
 								routePath: "/glossary",
@@ -198,19 +200,14 @@ const config: Config = {
 			},
 			items: [
 				{
-				to: "/glossary",
-				label: "Glossary",
-				position: "left",
+					to: "/demo",
+					label: "Demo",
+					position: "left",
 				},
 				{
-				to: "/demo",
-				label: "Demo",
-				position: "left",
-				},
-				{
-				to: "/training",
-				label: "Training",
-				position: "left",
+					to: "/training",
+					label: "Training",
+					position: "left",
 				},
 				{
 					type: "docSidebar",
@@ -221,6 +218,11 @@ const config: Config = {
 				{
 					to: "/research",
 					label: "Research",
+					position: "left",
+				},
+				{
+					to: "/glossary",
+					label: "Glossary",
 					position: "left",
 				},
 				{
