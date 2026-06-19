@@ -10,8 +10,13 @@ class — on non-US formats the model fuses the trailing admin token into the lo
 without operator GO (merge wall)._
 
 > **STATUS: COMPLETE.** Training finished (40k steps, loss-abort passed), gated, verdict below —
-> v1.8.0 is a clean coordinate net win (FR p50 42→2 km, US flat). NOT promoted (merge wall); staged +
-> flagged for operator GO (issue #728).
+> v1.8.0 is a clean coordinate net win (FR p50 42→2 km, US flat). Shift window: overnight →
+> hand-off ~12:53 UTC (operator returned early). GPU lost to error: ~0. Regressions shipped: 0.
+>
+> **Morning wrap (2026-06-19 ~12:53 UTC):** operator GO — the 7 night commits rebased + pushed to
+> main (`00ae8f56`, Test + Docs CI green), and **v1.8.1 launched** (`ap-K2x5hDTbABeEhdaW3i5WUS`,
+> the country-bearing shard that closes fr.country; loss-abort passed). On v1.8.1's completion: gate
+> (FR centroid + US/FR guardrails) → test → publish the chosen candidate. v1.8.0 stays the fallback.
 
 ## The arc (how we got here)
 
