@@ -91,11 +91,33 @@ The −2.2pp us.locality _label_ regression does **not reach the coordinate** �
 actually +0.1, coord identical. The day's lesson reproduced: a label moves, the assembled coordinate
 doesn't. Precision-only label blips on fragment rows are invisible in real full-address geocoding.
 
-## Verdict — v1.8.0 is a clean net win on the shipped coordinate; RECOMMEND promote (operator GO)
+**Standard FR golden** — `per-locale-f1` on `fr.jsonl` (anchor-ON), matched pair (the FR-side
+guardrail, complementing the custom centroid golden):
+
+| tag          | v1.5.0 | v1.8.0 | Δ          |
+| ------------ | -----: | -----: | ---------- |
+| house_number |   99.3 |   99.5 | +0.2 ✓     |
+| locality     |   86.3 |   87.6 | +1.3       |
+| po_box       |   72.7 |   83.3 | +10.6      |
+| region       |   41.8 |   43.7 | +1.9       |
+| street       |   87.5 |   89.4 | +1.9       |
+| postcode     |   99.7 |   99.7 | flat       |
+| **country**  |   62.7 |   59.2 | **−3.5** ⚠ |
+
+Net FR improvement (incl. `fr.house_number` held at 99.5 — v1.5.0's raison d'être) **except
+fr.country −3.5pp**. Likely mechanism: the shard's bare `Commune, Département` rows carry
+`country: FR` metadata but **no country token in the text**, so the model learns to emit country less
+often on FR. Coordinate-invisible for the FR coord eval (which is given `--default-country FR`), but
+over the 2pp gate — a clean v1.8.1 refinement is to mix in FR rows that DO carry "France".
+
+## Verdict — v1.8.0 is a net win on the shipped coordinate; RECOMMEND promote (operator GO), with two flagged label deltas
 
 **FR coordinate massively up (p50 42→2 km, −40% mean), US coordinate flat.** This is the first model
-in the arc (v1.6.0 and v1.7.0 both HOLD) to genuinely surpass v1.5.0 on the metric we ship. The only
-"regression" is a precision-only us.locality label blip that the assembled coordinate doesn't see.
+in the arc (v1.6.0 and v1.7.0 both HOLD) to genuinely surpass v1.5.0 on the metric we ship. **Two
+label deltas exceed the 2pp gate, and both are coordinate-invisible:** us.locality −2.2pp
+(precision-only — 0 recall misses; spurious-fp on fragment rows) and fr.country −3.5pp (the resolver
+is given the country, so it doesn't reach the coordinate). No silent drift — both are stated here and
+on #728; the promote is the operator's call with the full picture.
 
 Per the merge wall this is **NOT auto-promoted** — the artifact is staged beside the canonical
 (int8 `model-v180-step-40000-int8.onnx`, md5 `d163396ce30869e117bf29ffb939177b`, on the volume +
@@ -160,13 +182,13 @@ a subword) and wants a separate decode/tokenizer look, not more shard data.
 
 ## Numbers table
 
-|                   |                                                                                       |
-| ----------------- | ------------------------------------------------------------------------------------- |
-| Shift window      | 2026-06-19 02:00→15:00 UTC                                                            |
-| Models trained    | 1 (v1.8.0-fr-admin-split, from scratch, 40k steps)                                    |
-| Modal $           | ≈ $5 (1× A100-40GB ~2h train + export/quantize/sync)                                  |
-| NaN incidents     | 0                                                                                     |
-| Loss-abort gate   | PASSED (loss 5.0 → ~0.7, decreasing)                                                  |
-| GPU lost to error | ~0 (one failed export attempt, CPU-side, seconds)                                     |
-| Verdict           | v1.8.0 = clean coordinate net win (FR −40%, US flat); RECOMMEND promote (operator GO) |
-| Promoted          | NO (merge wall — staged + flagged)                                                    |
+|                   |                                                                                                                                                                                    |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shift window      | 2026-06-19 02:00→15:00 UTC                                                                                                                                                         |
+| Models trained    | 1 (v1.8.0-fr-admin-split, from scratch, 40k steps)                                                                                                                                 |
+| Modal $           | ≈ $5 (1× A100-40GB ~2h train + export/quantize/sync)                                                                                                                               |
+| NaN incidents     | 0                                                                                                                                                                                  |
+| Loss-abort gate   | PASSED (loss 5.0 → ~0.7, decreasing)                                                                                                                                               |
+| GPU lost to error | ~0 (one failed export attempt, CPU-side, seconds)                                                                                                                                  |
+| Verdict           | v1.8.0 = net win on shipped coordinate (FR −40%, US flat); 2 coordinate-invisible label deltas (us.locality −2.2 precision-only, fr.country −3.5); RECOMMEND promote (operator GO) |
+| Promoted          | NO (merge wall — staged + flagged)                                                                                                                                                 |
