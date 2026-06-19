@@ -189,13 +189,18 @@ const config: Config = {
 				},
 				{
 					type: "docSidebar",
-					sidebarId: "tutorialSidebar",
+					sidebarId: "docs",
 					position: "left",
 					label: "Docs",
 				},
 				{
 					to: "/research",
 					label: "Research",
+					position: "left",
+				},
+				{
+					to: "/docs/licensing/",
+					label: "Licensing",
 					position: "left",
 				},
 				{
