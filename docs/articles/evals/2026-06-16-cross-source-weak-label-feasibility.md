@@ -21,12 +21,12 @@ the labels.
 
 Inspecting the raw headers of every source in the matcher's catalog:
 
-| source | rows' identity key | shares a clean strong ID? |
-|---|---|---|
-| NPPES registry | **NPI** (+ EIN, taxonomy) | — |
-| FCC RHC posted-services (71 cols) | FCC HCP number | **no** NPI / EIN / TIN / tax-ID field |
-| FCC RHC commitments (53 cols) | Participating HCP number | **no** NPI / EIN / TIN / tax-ID field |
-| TX HHSC nursing facilities (43 cols) | TX license number | **no** NPI / EIN / TIN / tax-ID field |
+| source                               | rows' identity key        | shares a clean strong ID?             |
+| ------------------------------------ | ------------------------- | ------------------------------------- |
+| NPPES registry                       | **NPI** (+ EIN, taxonomy) | —                                     |
+| FCC RHC posted-services (71 cols)    | FCC HCP number            | **no** NPI / EIN / TIN / tax-ID field |
+| FCC RHC commitments (53 cols)        | Participating HCP number  | **no** NPI / EIN / TIN / tax-ID field |
+| TX HHSC nursing facilities (43 cols) | TX license number         | **no** NPI / EIN / TIN / tax-ID field |
 
 NPPES is the **only** source carrying a clean strong identifier (NPI, EIN). The FCC and TX sources
 key on their own program-internal IDs and carry no crosswalk back to NPI/EIN. The fields shared

@@ -81,7 +81,7 @@
 
 ## Open questions for the operator
 
-- The blog draft (decision point 3): WRITTEN (`docs/blog/2026-06-11-the-model-said-po-box-and-we-werent-listening.mdx`,
+- The blog draft (decision point 3): WRITTEN (`docs/research/2026-06-11-the-model-said-po-box-and-we-werent-listening.mdx`,
   `draft: true`) — the gate-pass condition was met, so the authorized draft rides; flipping it
   live is yours. Credit where due: DeepSeek's idle-check nudge caught that I had mis-filed this
   as a morning item when it was already-granted night work.

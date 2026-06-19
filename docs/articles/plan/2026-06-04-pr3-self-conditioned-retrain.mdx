@@ -1,6 +1,6 @@
 # PR3 — the self-conditioned retrain (plan)
 
-The third and largest step of the system-conditioning work. The consult and the risk-probe that motivate it are written up in the blog post "Does a postcode know what country it's in?" and the consult notes under `.agents/skills/deepseek-consult/session-notes-2026-06-03-system-conditioning.md`. PR1 (the codex inverse-mapping + the membership-gated anchor, #264) shipped. PR2 (an anchor-only locale prior replacing `--default-country`) was killed by the risk-probe before it was built. This is the piece the probe pointed at: teach the model to infer the country from the whole address and condition its own labeling on it.
+The third and largest step of the system-conditioning work. The consult and the risk-probe that motivate it are written up in the research blog post "Does a postcode know what country it's in?" and the consult notes under `.agents/skills/deepseek-consult/session-notes-2026-06-03-system-conditioning.md`. PR1 (the codex inverse-mapping + the membership-gated anchor, #264) shipped. PR2 (an anchor-only locale prior replacing `--default-country`) was killed by the risk-probe before it was built. This is the piece the probe pointed at: teach the model to infer the country from the whole address and condition its own labeling on it.
 
 This document is the plan, not a launch. It costs GPU time and changes the model, so the run waits on explicit sign-off. The decisions that need an operator call are collected at the end.
 

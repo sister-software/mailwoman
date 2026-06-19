@@ -56,17 +56,17 @@ Both emit country posteriors; they must not double-count.
 The measured tradeoff (OA-retrained model, `docs/articles/evals/2026-06-14-coarse-placer-oa-breadth.md`):
 
 | abstain | in-map accuracy | off-map heldout caught |
-|---:|---:|---:|
-| 0.50 | 95.1% | 66.1% |
-| 0.85 | 91.8% | 82.5% |
-| 0.95 | 87.8% | 87.6% |
+| ------: | --------------: | ---------------------: |
+|    0.50 |           95.1% |                  66.1% |
+|    0.85 |           91.8% |                  82.5% |
+|    0.95 |           87.8% |                  87.6% |
 
 The in-map "cost" of a high threshold is a **false abstention** — but in the soft design a false abstention
 just means "no country hint this time," which degrades gracefully (the resolver ranks unconstrained, still
 correct). The harmful error is the opposite: a **confident wrong placement** on an off-map address (→ wrong
 country search). So the asymmetry favors a high threshold, and **~0.9** sits where off-map catch is high
 (~85%) while the only thing we "lose" on in-map is some boosts we'd have applied — not correctness. (A
-*hard*-gate design would force ~0.85 to keep in-map routing >90%; the soft design removes that pressure.)
+_hard_-gate design would force ~0.85 to keep in-map routing >90%; the soft design removes that pressure.)
 
 ## Validation — grade the ASSEMBLED pipeline, not the model
 
@@ -104,7 +104,7 @@ clean-install smoke test** — the new artifact must resolve from a fresh `npm i
 
 - **Double-counting with the postcode anchor** → the precedence rule (postcode wins; coarse-placer fills).
 - **Model-not-shipped** → the packaging prerequisite above; must pass `ci:smoke`.
-- **The linear ceiling** → the threshold can't push *both* axes past ~90 (curves cross at ~88/88). The
+- **The linear ceiling** → the threshold can't push _both_ axes past ~90 (curves cross at ~88/88). The
   follow-on (separate milestone) is an **open-set / novelty method** (Mahalanobis on the in-map manifold,
   or a "not-any-of-11" head) that moves the whole frontier out — at which point the threshold relaxes and a
   default-on (even gate) integration becomes defensible.

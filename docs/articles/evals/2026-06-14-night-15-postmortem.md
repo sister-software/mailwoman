@@ -17,7 +17,7 @@ closures, zero self-merges** (PR-and-flag throughout); the operator returned ~13
   workflow). Under it sat two more latent failures the install-block had hidden: vite 8 broke the
   `vitest.config` `defineConfig` typing, and vitest was collecting a Playwright `.spec.ts`. Fixed all
   three; CI went **0 → 224/231** test files passing.
-- **#589** — chased the one residual red to ground (first filed as #582, *guessed* to be weights/WOF
+- **#589** — chased the one residual red to ground (first filed as #582, _guessed_ to be weights/WOF
   absence — wrong). `mailwoman/test/locale-flag.test.ts` is the only suite that shells out to the
   **compiled** CLI (`execFile out/cli.js parse`). `repo.ts`'s `__isCompiledTree` detection lands the
   core package root at `core/out`, so the compiled parser reads dictionaries from `core/out/data/…` —
@@ -55,7 +55,7 @@ capping (`PER_BRANCH = 4`) + opt-in `dedupeByName`; 7 synthetic unit tests. Now 
 `Chic`→Chicago, `San Fr`→San Francisco. The demo box shows a live "Did you mean:" chip row (#585),
 now a full keyboard **combobox** (↑/↓ highlight, Enter accepts + suppresses the form submit, Esc dismisses;
 ARIA `role=combobox`/`listbox`/`option`) — functional-verified headless **8/8** against the production
-build, FST fetched live from R2, zero console errors. Only the *address-level* (street-prefix) typeahead
+build, FST fetched live from R2, zero console errors. Only the _address-level_ (street-prefix) typeahead
 remains, deferred to **#587**.
 
 **E — the marquee: client-side street geocoder (#583 spec + #585 working demo):** **Shipped working and
@@ -88,10 +88,10 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
   paired-delimiter / punctuation-stress dataset (already on `main`) across v0, neural, and neural +
   span-proposer at three bias settings. **Verdict: the Stage 2.7 paired-delimiter span proposer doesn't
   earn its revival** — no-op at default, −0.7pp gentle, **−3.9pp** strong (a strong annotation bias
-  *merges* the parenthetical into the span — wrong direction). The bigger finding: **neural already beats
-  v0 here (77.3 vs 75.7) and is far more robust (0 parse deaths vs 2)**; the engines fail *differently* —
+  _merges_ the parenthetical into the span — wrong direction). The bigger finding: **neural already beats
+  v0 here (77.3 vs 75.7) and is far more robust (0 parse deaths vs 2)**; the engines fail _differently_ —
   v0 shatters on quotes and poisons neighbors (`(The White House)` → locality "White"), neural
-  *over-extends* spans (`Sydney NSW`, `Oxford OX1 4DB`). So the real punctuation lever is reducing neural
+  _over-extends_ spans (`Sydney NSW`, `Oxford OX1 4DB`). So the real punctuation lever is reducing neural
   span over-extension (kin to #555 / Saint-Albans), not a span proposer.
 - **#591 — reconcile-default docs sweep.** Three source-of-truth docs (`status.mdx`, `api.mdx`,
   `STAGES.mdx`) still called joint reconcile the default decode path — stale since #566 retired it. The
@@ -99,7 +99,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
   state, and #566 left it stale again. Corrected all three to match the code (`runtime-pipeline.ts:258`:
   `jointReconcile ?? false`).
 - **docs-build is red on `main` — and it needs #585, not just #579.** Confirmed it's a two-failure stack:
-  the #579 lockfile issue fast-fails install, *under which* sits a `map-helpers` SSG break
+  the #579 lockfile issue fast-fails install, _under which_ sits a `map-helpers` SSG break
   (`src/pages/demo/map-helpers.ts` is on `main` without the pages-exclude fix). The fix lives in #585's
   `docusaurus.config.ts`, so **docs-build (the marquee deploy) greens only after #579 AND #585** — merging
   #579 alone leaves it red. Flagged on #585 (not extracted, to avoid a duplicate-change rebase conflict).
@@ -111,10 +111,10 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
   flagged pre-existing weights condition).
 - **Grade-the-pipeline discipline paid off again.** The A re-gate and the C non-circular holdout both
   came from the same rule that caught the original reconcile regression — never trust raw-neural F1.
-- **Probe-before-build saved hours three times.** The byte-range *measurement* (24 KB/lookup) de-risked
-  the whole marquee before a line of demo wiring; the Overture off-map *probe* found the data ceiling
+- **Probe-before-build saved hours three times.** The byte-range _measurement_ (24 KB/lookup) de-risked
+  the whole marquee before a line of demo wiring; the Overture off-map _probe_ found the data ceiling
   before a wasted retrain campaign; and the punctuation-stress eval (#590) answered "revive the span
-  proposer?" with a measured *no* before anyone reopened that code — and reframed the lever (neural span
+  proposer?" with a measured _no_ before anyone reopened that code — and reframed the lever (neural span
   over-extension, not a proposer) in the bargain.
 - **The marquee actually works.** The biggest risk item shipped browser-verified, not as a "foundation +
   guide." Reusing the existing httpvfs WOF pattern + the already-async demo cascade made it tractable.
@@ -132,7 +132,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
   a couple iterations on the interp-only conformal runs.
 - **Filed #582 with a guessed root cause.** I labelled the last CI red "weight-dependent integration
   tests" from the test name alone, without reading the failure. It was actually the compiled-data bridge
-  (`core/out/data`) — provable in two minutes by pulling the symlink locally. The guess wasn't *wrong*
+  (`core/out/data`) — provable in two minutes by pulling the symlink locally. The guess wasn't _wrong_
   enough to be harmless: it framed the fix as a costly CI-data-provisioning decision (the 3 options in
   the issue) when the real fix was a one-line symlink. Lesson: a one-line repro beats a plausible label —
   read the actual error before writing the issue. Fixed properly in #589.
@@ -156,7 +156,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 - **Wire per-region interp calibration (C)?** The seed table is ready; wiring it changes shipped
   `uncertainty_m`. Per-region table now, or hold for the per-segment-length-bucket refinement?
 - ~~**CI weights provisioning (#582)?**~~ **Resolved** — the residual red wasn't weights at all; it was
-  the compiled-data bridge (#589, closes #582). Open sub-question for daylight: take the *proper*
+  the compiled-data bridge (#589, closes #582). Open sub-question for daylight: take the _proper_
   `repo.ts` `__isCompiledTree` fix (#481) so no bridge is needed anywhere, vs. keep the sanctioned
   symlink workaround.
 - **Coarse-placer breadth (B)?** A full OpenAddresses off-map pull would close the Latin residual; worth
@@ -173,7 +173,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
   the "New London" starvation) and an opt-in `dedupeByName`. Verified `New Yor`→New York, `Chic`→Chicago,
   `San Fr`→San Francisco, `New`→New York|New Haven|New London; 7 new synthetic unit tests, all green.
   The demo box now shows a live "Did you mean:" chip row (#585), deploy-verified in the production build.
-  **Open for the operator:** only the *address-level* (street-prefix) typeahead remains — a separate
+  **Open for the operator:** only the _address-level_ (street-prefix) typeahead remains — a separate
   street index, documented as a follow-up in #587. The place-level typeahead the plan asked for is done.
 
 ## Concrete next steps
@@ -198,17 +198,17 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 
 ## Numbers
 
-| metric                  | value                                                          |
-| ----------------------- | -------------------------------------------------------------- |
-| shift window            | 2026-06-14 03:47 → ~13:00 UTC (operator closed early)          |
-| PRs opened              | 11 (#579–#591: 579/580/581/583/584/585/586/588/589/590/591) + #582/#587 filed |
-| issues closed           | 6 (#483, #484, #523, #560, #397, #190) + #421/#374/#481/#368 triaged |
-| models trained          | 1 (coarse-placer M3 retrain, 34 s CPU)                         |
-| Modal / GPU time        | 0 (CPU-only shift, as planned)                                 |
-| marquee verification    | 4 states in-browser (DC/MI/NY/CA), all exact, zero errors      |
-| R2 hosted street shards | DC + MI + NY + CA (the full launch trio + DC), all verified    |
-| evals run               | reconcile re-gate, 12-state conformal, coarse-placer quant, 200-row punctuation-stress (v0/neural/+SP) |
-| NaN incidents           | 0                                                              |
-| self-merges to main     | 0 (PR-and-flag throughout)                                     |
+| metric                  | value                                                                                                          |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
+| shift window            | 2026-06-14 03:47 → ~13:00 UTC (operator closed early)                                                          |
+| PRs opened              | 11 (#579–#591: 579/580/581/583/584/585/586/588/589/590/591) + #582/#587 filed                                  |
+| issues closed           | 6 (#483, #484, #523, #560, #397, #190) + #421/#374/#481/#368 triaged                                           |
+| models trained          | 1 (coarse-placer M3 retrain, 34 s CPU)                                                                         |
+| Modal / GPU time        | 0 (CPU-only shift, as planned)                                                                                 |
+| marquee verification    | 4 states in-browser (DC/MI/NY/CA), all exact, zero errors                                                      |
+| R2 hosted street shards | DC + MI + NY + CA (the full launch trio + DC), all verified                                                    |
+| evals run               | reconcile re-gate, 12-state conformal, coarse-placer quant, 200-row punctuation-stress (v0/neural/+SP)         |
+| NaN incidents           | 0                                                                                                              |
+| self-merges to main     | 0 (PR-and-flag throughout)                                                                                     |
 | CI status               | Test: rescued 0 → 224/231 (#579) → 225/225 with #589. docs-build: red, needs #579 + #585-config (#590-finding) |
-| peak heat               | 92 °C (sweep; killed per the 85 °C rule)                       |
+| peak heat               | 92 °C (sweep; killed per the 85 °C rule)                                                                       |

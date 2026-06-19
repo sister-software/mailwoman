@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "4.10.0",
+	"version": "4.11.0",
 	"description": "Utilities for working with contacts for email, phone, and postal addresses.",
 	"license": "AGPL-3.0-only",
 	"contributors": [
@@ -25,6 +25,7 @@
 	"exports": {
 		"./package.json": "./package.json",
 		".": "./out/index.js",
+		"./geocode-core": "./out/geocode-core.js",
 		"./server": "./out/server/index.js",
 		"./sdk/test": "./out/sdk/test/index.js",
 		"./sdk/repo": "./out/sdk/repo.js",
@@ -53,7 +54,7 @@
 		"ioredis": "^5.11.1",
 		"pastel": "^4.0.1",
 		"path-ts": "^1.0.5",
-		"piscina": "^4.9.2",
+		"piscina": "^5.2.0",
 		"pluralize": "^8.0.0",
 		"react": "^19.2.7",
 		"regenerate": "^1.4.2",

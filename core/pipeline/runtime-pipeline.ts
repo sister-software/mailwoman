@@ -11,7 +11,9 @@
  *   Implementation contract per `docs/articles/plan/reference/STAGES.md`.
  */
 
+import { applyRuleArbitration } from "../decoder/arbitrate-tree.js"
 import type { AddressNode, AddressTree } from "../decoder/types.js"
+import { routeInputShape } from "../policy/input-shape-router.js"
 import type { ComponentTag } from "../types/component.js"
 import { prefetchReconcileLookups } from "./reconcile-lookups.js"
 import type { ClassifierCandidate } from "./reconcile.js"
@@ -196,9 +198,12 @@ export async function runPipeline(
 	// caller-supplied posterior (a stronger postcode anchor — never overwrite it). Off (no stage) →
 	// `effectiveOpts === opts` → byte-stable. See the soft-signal wiring spec.
 	let effectiveOpts = opts
+	// Captured for the arbitration router signal (#478 inc 3) as well as the resolver anchor below.
+	let placedPrediction: { country: string | null; confidence: number; posterior?: Record<string, number> } | undefined
 	if (stages.placeCountry) {
 		const tPlace = performance.now()
 		const placed = stages.placeCountry(normalized.normalized)
+		placedPrediction = placed
 		timing["place-country"] = performance.now() - tPlace
 		if (placed.country && placed.country !== "OTHER" && !opts?.resolveOpts?.anchorPosterior) {
 			effectiveOpts = {
@@ -352,8 +357,37 @@ export async function runPipeline(
 	} else if (stages.classifier) {
 		throwIfAborted(opts)
 		const tClassify = performance.now()
-		tree = await safeClassify(stages.classifier, normalized.normalized, queryShape, stages.fst)
+		tree = await safeClassify(stages.classifier, normalized.normalized, queryShape, stages.fst, opts?.normalizeCase)
 		timing["token-classify"] = performance.now() - tClassify
+	}
+
+	// #478 increment 3 (fix-v1): per-component rule-vs-neural arbitration as EDITS on the nested neural
+	// argmax tree — never flattening, so the tree's containment survives (the flatten+rebuild v0 dropped
+	// `street` for its own `street_suffix` and lost region→locality structure; see the eval doc). The
+	// input-shape router sets the mode: only `rule_preferred` mutates the tree (relabel same-span tag
+	// disagreements toward the solved v0 parse + add rule-only missing tags); `neural_preferred` /
+	// abstain pass the neural tree through unchanged. Default-OFF (`opts.arbitrate`). Reconcile above
+	// stays the orthogonal opt-in; this operates on whatever `tree` it produced.
+	if (opts?.arbitrate && stages.ruleProposer) {
+		throwIfAborted(opts)
+		const tArb = performance.now()
+		const placerSignal =
+			placedPrediction !== undefined
+				? {
+						country: placedPrediction.country,
+						abstained: placedPrediction.country === null || placedPrediction.country === "OTHER",
+					}
+				: null
+		const route = routeInputShape(
+			{ kind: kind.kind, confidence: kind.confidence },
+			{ characterClass: queryShape.characterClass },
+			placerSignal
+		)
+		if (route.defaultMode === "rule_preferred") {
+			const ruleProposals = await stages.ruleProposer(normalized.normalized, locale.locale)
+			tree = applyRuleArbitration(tree, ruleProposals)
+		}
+		timing["arbitrate"] = performance.now() - tArb
 	}
 
 	if (phraseProposals.length > 0 && tree.roots.length >= 0) {
@@ -400,11 +434,12 @@ async function safeClassify(
 	classifier: AddressClassifier,
 	text: string,
 	queryShape: QueryShapeLite,
-	fst?: FstMatcherLike
+	fst?: FstMatcherLike,
+	normalizeCase?: boolean
 ): Promise<AddressTree> {
 	try {
-		// Postcode regex repair on by default (v0.7 #35, operator-signed).
-		return await classifier.parse(text, { queryShape, fst, postcodeRepair: true })
+		// Postcode regex repair on by default (v0.7 #35, operator-signed). #690 normalizeCase off by default.
+		return await classifier.parse(text, { queryShape, fst, postcodeRepair: true, normalizeCase })
 	} catch {
 		return { raw: text, roots: [] }
 	}

@@ -1,6 +1,6 @@
 # Night shift 2026-06-13 — fr.house_number recovery (postmortem)
 
-_Shift complete. Two training runs, both gated. Result: a clean negative (weight is not the lever for fr.house_number — #564) plus a bonus Phase-3 de-risk (both coordinate-truth engines verified). Companion blog post: `can-you-fix-order-blindness-by-turning-up-the-volume`._
+_Shift complete. Two training runs, both gated. Result: a clean negative (weight is not the lever for fr.house_number — #564) plus a bonus Phase-3 de-risk (both coordinate-truth engines verified). Companion research blog post: `can-you-fix-order-blindness-by-turning-up-the-volume`._
 
 The mandate: recover the one regression v4.5.0 shipped with — fr.house_number 97.7 → 89.6, the model's order-blindness on postcode-first FR (#560) — without losing the bridge-retirement win. Same Opus-orchestrates-Sonnet structure as 2026-06-12.
 

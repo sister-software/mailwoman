@@ -32,7 +32,7 @@ byte-bound.
 ### One data-layer tuning note
 
 The situs shards are `page_size` 4096; the existing httpvfs resolver fetches in 64 KB `requestChunkSize`
-chunks (16 pages). A situs point lookup touches ~6 *scattered* B-tree pages, so it lands in a few
+chunks (16 pages). A situs point lookup touches ~6 _scattered_ B-tree pages, so it lands in a few
 64 KB chunks — this is precisely the "sparse single-row access over-fetches" tradeoff the
 `httpvfs-resolver.ts` header already calls out for the polygon DB. Two levers for the hosted demo
 shards, to measure (not assume):
@@ -48,13 +48,13 @@ A first reading of `geocode-core.ts` suggests a hard constraint: `geocodeAddress
 `resolver.resolveTree(tree, { addressPoints, interpolation })`, and the resolver calls the lookups'
 **synchronous** `find()` (`AddressPointLookup.find(): AddressPointHit | null` — sync by contract). That
 would force "run the whole cascade inside a worker against synchronous sql.js handles," because
-sql.js-httpvfs's fetches are sync XHR only *inside* the worker.
+sql.js-httpvfs's fetches are sync XHR only _inside_ the worker.
 
 **But the demo does not use `geocodeAddress`/`resolveTree`.** It has its own **async** cascade —
 `runCascade()` in `docs/src/shared/demo-helpers.ts` — that already `await`s `lookup.findPlace(...)` over
 the Comlink-proxied httpvfs worker on the main thread. So the street tiers slot in as **async** lookups
 (mirroring the existing `WofHttpvfsPlaceLookup`), with no sync-interface problem and no
-worker-internal-sync requirement. The sync `AddressPointLookup` contract is a *node* concern (the CLI /
+worker-internal-sync requirement. The sync `AddressPointLookup` contract is a _node_ concern (the CLI /
 server path); the browser has always resolved async.
 
 ```
@@ -75,7 +75,7 @@ exactly like the WOF one the demo already opens.
 
 The cascade is heavy (ONNX + several sync-XHR byte-range walks); on a cold cache it can block the main
 thread long enough to jank the typeahead and the map. So **moving the whole cascade into a Web Worker
-is still the right call** for UI responsiveness — but it is now an *optimization* layered on a correct
+is still the right call** for UI responsiveness — but it is now an _optimization_ layered on a correct
 async main-thread implementation, not the thing that makes correctness possible. Build the async street
 tier first (it works on the main thread, like today's WOF resolve), then lift it into a worker. If/when
 lifted, the page↔worker contract is:
@@ -117,10 +117,10 @@ mode to avoid.
 A deliberate size spread to validate byte-range latency across scales, hosted on R2 with Range support
 and immutable `Cache-Control`:
 
-| state | situs rows | situs size | role                          |
-| ----- | ---------: | ---------: | ----------------------------- |
-| MI    |       858 K |     229 MB | mid-size baseline             |
-| NY    |      6.5 M |    1.44 GB | dense urban (NYC)             |
+| state | situs rows | situs size | role                                         |
+| ----- | ---------: | ---------: | -------------------------------------------- |
+| MI    |      858 K |     229 MB | mid-size baseline                            |
+| NY    |      6.5 M |    1.44 GB | dense urban (NYC)                            |
 | CA    |     13.5 M |    3.30 GB | the stress test — if it's OK, every state is |
 
 State routing: `regionSlugFromTree()` (already in `geocode-core.ts`) picks the shard from the parsed
@@ -129,9 +129,9 @@ demo's region constraint already biases the WOF resolve; the same slug selects t
 
 ## The autocomplete nuance (per the DeepSeek hint)
 
-The shipped `mailwoman autocomplete` (#547) walks the **WOF FST** → it suggests *places* (localities,
+The shipped `mailwoman autocomplete` (#547) walks the **WOF FST** → it suggests _places_ (localities,
 counties: "San Diego", "San Juan"), ranked by importance. That is the right typeahead for the
-*locality* field, but a Google-Maps-grade box also wants **address-level** suggestions ("350 5th Ave"
+_locality_ field, but a Google-Maps-grade box also wants **address-level** suggestions ("350 5th Ave"
 → "350 5th Avenue, New York, NY"). Those are a different index — street-name prefixes over the situs
 shards, not the admin FST. Three honest options, in increasing cost:
 

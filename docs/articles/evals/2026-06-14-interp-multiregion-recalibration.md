@@ -16,7 +16,7 @@ calibrated 90%-coverage interval: multiply the claimed radius by Q̂ = 1.70 and 
 held-out error. But that Q̂ came from a single region. A confidence interval calibrated on Austin and
 shipped nationwide is only honest if the factor generalizes — and there's a physical reason to doubt it
 does: TIGER segment geometry and address-point spacing differ between Manhattan and rural Montana, so
-the *ratio* of true error to segment length (what Q̂ captures) may differ too.
+the _ratio_ of true error to segment length (what Q̂ captures) may differ too.
 
 ## Method — non-circular, by construction
 
@@ -30,13 +30,13 @@ state, 50/50 cal/test split, α = 0.90.
 
 ## Result
 
-| state | character        | interp Q̂ (90%) | coverage @ Q̂ | uncalibrated (Q̂=1) | median err | median claimed r |
-| ----- | ---------------- | -------------: | -----------: | ------------------: | ---------: | ---------------: |
-| NY    | dense urban      |       **1.53** |        90.6% |               79.7% |     45.2 m |            104 m |
-| TX    | urban (Travis)   |   **1.70** [#569] |          — |                   — |          — |                — |
-| CA    | large / varied   |       **1.87** |        91.0% |               76.1% |     40.6 m |             82 m |
-| MI    | mid              |       **1.93** |        89.7% |               77.1% |     51.1 m |            113 m |
-| MT    | extreme rural    |       **2.85** |        90.2% |               62.7% |     61.3 m |             83 m |
+| state | character      |  interp Q̂ (90%) | coverage @ Q̂ | uncalibrated (Q̂=1) | median err | median claimed r |
+| ----- | -------------- | --------------: | -----------: | -----------------: | ---------: | ---------------: |
+| NY    | dense urban    |        **1.53** |        90.6% |              79.7% |     45.2 m |            104 m |
+| TX    | urban (Travis) | **1.70** [#569] |            — |                  — |          — |                — |
+| CA    | large / varied |        **1.87** |        91.0% |              76.1% |     40.6 m |             82 m |
+| MI    | mid            |        **1.93** |        89.7% |              77.1% |     51.1 m |            113 m |
+| MT    | extreme rural  |        **2.85** |        90.2% |              62.7% |     61.3 m |             83 m |
 
 Every state's own Q̂ lands coverage within 3pp of 90% — the conformal machinery is sound. What varies
 is the **factor itself**, monotonically with rurality: dense NY needs 1.53×, extreme-rural MT needs
@@ -49,12 +49,12 @@ uniform-spacing assumption allows), so it needs the biggest correction.
 A partial 50-state sweep (abandoned at the >85 °C heat ceiling on the lab CPU — a sustained run of the
 neural cascade) extended the five above to **twelve**, and the trend holds and widens. Ordered by Q̂:
 
-| Q̂   | states                                                              |
-| ---- | ------------------------------------------------------------------ |
-| 1.4–1.6 | **DC 1.44**, NY 1.53 (densest urban)                           |
-| 1.7–2.0 | TX 1.70, AK 1.72, CA 1.87, CT 1.91, MI 1.93                    |
-| 2.2–2.9 | AR 2.24, CO 2.29, AL 2.79, MT 2.85                             |
-| 3.0+    | **AZ 3.12** (sprawl / long rural segments)                     |
+| Q̂       | states                                      |
+| ------- | ------------------------------------------- |
+| 1.4–1.6 | **DC 1.44**, NY 1.53 (densest urban)        |
+| 1.7–2.0 | TX 1.70, AK 1.72, CA 1.87, CT 1.91, MI 1.93 |
+| 2.2–2.9 | AR 2.24, CO 2.29, AL 2.79, MT 2.85          |
+| 3.0+    | **AZ 3.12** (sprawl / long rural segments)  |
 
 A **2.2× spread** (DC 1.44 → AZ 3.12), monotonic with rurality. The five-state read wasn't a small-sample
 fluke — it's the real shape. The seed table (`data/calibration/interp-radius-conformal.json`) carries all

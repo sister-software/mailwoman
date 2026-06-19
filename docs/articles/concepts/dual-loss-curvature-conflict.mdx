@@ -13,7 +13,7 @@ If you're a software engineer curious about what went wrong but you don't have m
 
 A specific failure mode of CE + CRF dual-loss training that surfaced across nine of mailwoman's v0.5.0 attempts. Documented here because the diagnostic technique generalises and the fix is simple once you know what's happening.
 
-If you haven't read [the v0.4.0 ablation retrospective](../retrospectives/v0-4-0-ablation-campaign.mdx) and the [bisect-by-elimination blog post](pathname:///blog/2026-05-24-bisect-by-elimination), do those first — they set up the failure pattern this article diagnoses.
+If you haven't read [the v0.4.0 ablation retrospective](../retrospectives/v0-4-0-ablation-campaign.mdx) and the [bisect-by-elimination blog post](pathname:///research/2026-05-24-bisect-by-elimination), do those first — they set up the failure pattern this article diagnoses.
 
 ## The failure fingerprint
 
@@ -170,7 +170,7 @@ Three lessons that generalise:
 ## See also
 
 - [v0.4.0 ablation campaign retrospective](../retrospectives/v0-4-0-ablation-campaign.mdx) — first appearance of the divergence fingerprint, before the diagnostic was named
-- [Bisect-by-elimination blog post](pathname:///blog/2026-05-24-bisect-by-elimination) — the bisect ladder that narrowed the suspects before the probe ran
+- [Bisect-by-elimination blog post](pathname:///research/2026-05-24-bisect-by-elimination) — the bisect ladder that narrowed the suspects before the probe ran
 - [Synthesis review](../reviews/2026-05-24-claude-deepseek-followup-synthesis.mdx) — the multi-agent conversation that produced both the dual-loss hypothesis and its falsification
 - [`VERDICT_SMOKES.md`](../plan/reference/VERDICT_SMOKES.mdx) — the smoke discipline that catches this class of divergence (constant-LR, full-eff-batch)
 - [CRF decoder](./crf-decoder.mdx) — the frozen-mask Viterbi the runtime keeps using even when training drops the NLL

@@ -52,6 +52,7 @@ import { join } from "node:path"
 import { createInterface } from "node:readline"
 import { defaultAdapterRegistry } from "./adapter.js"
 import { alignRow } from "./align.js"
+import { licenseExcluded } from "./license.js"
 import { writeShards, type ShardManifest } from "./parquet.js"
 import { runAdapter, type AdapterRunManifest } from "./runner.js"
 import {
@@ -95,6 +96,15 @@ export interface BuildCorpusOptions {
 
 	/** Progress hook. Errors thrown abort the build. */
 	onProgress?: (stage: BuildStage, message: string) => void
+
+	/**
+	 * License kinds to PURPOSELY exclude from this build (#26). Compiled patterns (see
+	 * `compileLicenseExcludes` / `SHARE_ALIKE_PATTERN` in `license.ts`); a row whose `license`
+	 * matches any is dropped at ingest. Default (omitted) includes EVERYTHING — exclusion is a
+	 * deliberate act, not a silent default. A proprietary-weights build passes the share-alike set
+	 * (`--exclude-share-alike`).
+	 */
+	excludeLicenses?: readonly RegExp[]
 }
 
 /** Top-level manifest tying every stage together. */
@@ -107,6 +117,12 @@ export interface BuildCorpusManifest {
 	shards: { counts: ShardManifest["counts"]; total_rows: number }
 	quarantine_count: number
 	total_aligned_rows: number
+	/**
+	 * Resolved license set across all INCLUDED rows (license string → row count), + the count dropped
+	 * by `excludeLicenses` (#26). The model card derives its data-attribution table from `licenses`.
+	 */
+	licenses: Record<string, number>
+	excluded_by_license: number
 }
 
 /**
@@ -186,6 +202,12 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	let quarantined = 0
 	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 	const holdouts = defaultHoldouts()
+	// License accounting + the deliberate exclusion filter (#26). `licenseCounts` is the resolved
+	// license set (→ manifest + model-card attribution); `excludeLicenses` (empty by default → include
+	// everything) is the operator's PURPOSEFUL exclusion, never a silent drop.
+	const excludeLicenses = opts.excludeLicenses ?? []
+	const licenseCounts = new Map<string, number>()
+	let excludedByLicense = 0
 
 	const writeQuarantine = (row: CanonicalRow, reason: string): void => {
 		quarantineStream.write(`${JSON.stringify({ row, reason })}\n`)
@@ -194,6 +216,15 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	for (const adapterRun of adapterRuns) {
 		opts.onProgress?.("align", `aligning ${adapterRun.adapter_id}`)
 		for await (const row of streamJsonl<CanonicalRow>(adapterRun.jsonl_path)) {
+			licenseCounts.set(row.license, (licenseCounts.get(row.license) ?? 0) + 1)
+			// Deliberate license exclusion (#26): drop a row ONLY when the operator named its license
+			// kind via `excludeLicenses`. Default (no patterns) keeps everything — exclusion is a
+			// purposeful act, not a silent default. Counted BEFORE the drop so the manifest's license
+			// set reflects what the corpus actually CONTAINED, and `excluded_by_license` what was cut.
+			if (licenseExcluded(row.license, excludeLicenses)) {
+				excludedByLicense++
+				continue
+			}
 			const fanned: CanonicalRow[] = [row]
 			if (synthesize) {
 				for (const aug of synthesizeRow(row, defaultAugmentationsForCountry(row.country))) {
@@ -259,6 +290,17 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		}
 	)
 
+	// License-set visibility (#26): loudly report the resolved license set so a build is an obvious
+	// deliberate act — especially a proprietary-weights build (did you pass --exclude-share-alike?).
+	const licenseSummary = [...licenseCounts.entries()].sort((a, b) => b[1] - a[1])
+	opts.onProgress?.(
+		"manifest",
+		`license set: ${licenseSummary.map(([l, c]) => `${l}=${c}`).join(", ")}` +
+			(excludedByLicense > 0
+				? ` | EXCLUDED ${excludedByLicense} rows by --exclude-licenses`
+				: " | NO license exclusion applied (all rows kept)")
+	)
+
 	// 6. Top-level manifest.
 	opts.onProgress?.("manifest", "writing top-level MANIFEST.json")
 	const manifest: BuildCorpusManifest = {
@@ -270,6 +312,8 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		shards: { counts: shardManifest.counts, total_rows: shardManifest.total_rows },
 		quarantine_count: quarantined,
 		total_aligned_rows: aligned,
+		licenses: Object.fromEntries(licenseSummary),
+		excluded_by_license: excludedByLicense,
 	}
 	await writeFile(join(opts.outputDir, "MANIFEST.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
 	return manifest

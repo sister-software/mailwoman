@@ -54,14 +54,14 @@ weights, same grouper, only the `jointReconcile` flag differs):
 
 **FR — golden v0.1.2, n=1551 addresses**
 
-| tag          | argmax | reconcile |    Δ (rec − argmax) |
-| ------------ | -----: | --------: | ------------------: |
-| house_number |  83.0% |     84.8% |              +1.8pp |
-| street       |  79.4% |     65.7% | **−13.7pp** |
-| locality     |  80.2% |     76.5% |              −3.6pp |
-| region       |  17.4% |     10.5% |              −6.8pp |
-| postcode     |  63.9% |     63.4% |              −0.5pp |
-| venue        | 100.0% |    100.0% |              +0.0pp |
+| tag          | argmax | reconcile | Δ (rec − argmax) |
+| ------------ | -----: | --------: | ---------------: |
+| house_number |  83.0% |     84.8% |           +1.8pp |
+| street       |  79.4% |     65.7% |      **−13.7pp** |
+| locality     |  80.2% |     76.5% |           −3.6pp |
+| region       |  17.4% |     10.5% |           −6.8pp |
+| postcode     |  63.9% |     63.4% |           −0.5pp |
+| venue        | 100.0% |    100.0% |           +0.0pp |
 
 US has no offsetting win — street regresses 2.4pp, locality 1.8pp, everything else flat. FR is the
 damning column: reconcile takes **street from 79.4% to 65.7% (−13.7pp)**, with locality and region also
@@ -74,8 +74,8 @@ locale it hurts most.
 
 | mode      | street+HN+postcode preserved | reconcile BREAKS (argmax had it, lost it) | reconcile FIXES |
 | --------- | ---------------------------: | ----------------------------------------: | --------------: |
-| argmax    |              1965 (100.0%) |                                         — |               — |
-| reconcile |               1854 (94.4%) |                            **111 (5.6%)** |        0 (0.0%) |
+| argmax    |                1965 (100.0%) |                                         — |               — |
+| reconcile |                 1854 (94.4%) |                            **111 (5.6%)** |        0 (0.0%) |
 
 This is the good news and the verdict in one table. The #565 fix is real: the precondition break
 collapsed from the retirement audit's **77–84% to 5.6%**. But argmax preserves the precondition on

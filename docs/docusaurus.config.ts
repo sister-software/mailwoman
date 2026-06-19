@@ -1,5 +1,6 @@
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
+import { GlossaryPluginOptions, remarkPlugin as glossaryRemarkPlugin } from "docusaurus-plugin-glossary"
 import { execSync } from "node:child_process"
 import { themes as prismThemes } from "prism-react-renderer"
 
@@ -89,7 +90,18 @@ const config: Config = {
 		locales: ["en"],
 	},
 
-	plugins: ["./plugins/demo-assets/plugin.mjs"],
+	plugins: [
+		"./plugins/demo-assets/plugin.mjs",
+		[
+			"docusaurus-plugin-glossary",
+			{
+				glossaryPath: "glossary/glossary.json",
+				routePath: "/glossary",
+				expandAcronymsOnFirstUse: true,
+				autoLinkTerms: true,
+			} satisfies GlossaryPluginOptions,
+		],
+	],
 
 	themes: ["@docusaurus/theme-mermaid"],
 
@@ -106,6 +118,16 @@ const config: Config = {
 					routeBasePath: "docs",
 					sidebarPath: "./sidebars.ts",
 					editUrl: "https://github.com/sister-software/mailwoman/tree/main/docs/",
+					remarkPlugins: [
+						[
+							glossaryRemarkPlugin,
+							{
+								glossaryPath: "glossary/glossary.json",
+								routePath: "/glossary",
+								siteDir: __dirname,
+							},
+						],
+					],
 				},
 				pages: {
 					// Files in src/pages/ are auto-routed. Co-located `.ts` helpers (e.g.
@@ -122,15 +144,18 @@ const config: Config = {
 					],
 				},
 				blog: {
-					path: "blog",
-					routeBasePath: "blog",
-					blogTitle: "Mailwoman log",
+					path: "research",
+					routeBasePath: "research",
+					blogTitle: "Research Log",
 					blogDescription: "Iteration notes, ship retrospectives, design log entries.",
+					blogSidebarTitle: "All posts",
+					blogSidebarCount: "ALL",
 					showReadingTime: true,
 					postsPerPage: 10,
+
 					feedOptions: {
 						type: ["rss", "atom"],
-						title: "Mailwoman log",
+						title: "Mailwoman Research Log",
 						copyright: `Copyright © ${new Date().getFullYear()} Sister Software.`,
 					},
 				},
@@ -186,13 +211,23 @@ const config: Config = {
 				},
 				{
 					type: "docSidebar",
-					sidebarId: "tutorialSidebar",
+					sidebarId: "docs",
 					position: "left",
 					label: "Docs",
 				},
 				{
-					to: "/blog",
-					label: "Log",
+					to: "/research",
+					label: "Research",
+					position: "left",
+				},
+				{
+					to: "/glossary",
+					label: "Glossary",
+					position: "left",
+				},
+				{
+					to: "/docs/licensing/",
+					label: "Licensing",
 					position: "left",
 				},
 				{
@@ -209,7 +244,7 @@ const config: Config = {
 					title: "Try it",
 					items: [
 						{ label: "Demo", to: "/demo" },
-						{ label: "Log", to: "/blog" },
+						{ label: "Log", to: "/research" },
 					],
 				},
 				{

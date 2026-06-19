@@ -1,0 +1,144 @@
+# === v1.8.0-fr-admin-split (surpass-v1.5.0, the international admin-split run) ====================
+# Clone of v1.5.0-fr-order (the production default, model-card 4.6.0) with EXACTLY ONE added lever:
+# the synth-fr-admin-split shard. It teaches the model to SPLIT the département out of the locality on
+# bare/space/comma French place rows ("Thauron, Creuse" -> locality=Thauron, region=Creuse; not the
+# merged/dropped failure). The model's admin-split detector is overfit to the US "City, ST ZIP"
+# template; non-US formats fuse the trailing admin token into the locality. Unlike US (situs-cascade
+# shielded), the FR coordinate IS the admin centroid, so this split moves the SHIPPED coordinate.
+#
+# WHY IT WON'T WASH (v0.9.2 / v1.7.0 traps): (1) anchor-ON by construction — real BAN postcodes (99.9%
+# land the anchor); FR postcode is TRAILING like the US, so the anchor REINFORCES the split (the v0.9.2
+# German wash was positional, leading-PLZ — scar is conditional, not universal). (2) Pre-GPU self-
+# validation PASSED: splitting the département cuts collision-commune coordinate error -61%, merge
+# resolves 0% (docs/articles/evals/2026-06-19-fr-admin-split-prevalidation.md). use_conventions_loss_mask
+# stays OFF (absent here; would -inf the FR street_prefix the corpus carries -> loss explosion).
+#
+# GOAL / GATE: grade the ASSEMBLED anchor-ON coordinate, NOT label-F1. Live gate: FR centroid-shift vs
+# v1.5.0 on the held-out commune set (mean <= 0.95x + significant) AND US guardrail (mean regress <=1%
+# rel, p90 <=0.1km) AND #727 diacritic (Lozère -> region, not "ère"). NOT promoted without operator GO.
+# CORPUS: corpus-v0.5.0 (690 shards verbatim) + synth-fr-admin-split (60k BAN rows) overlay -> R2 -> sync_v080.
+# Launch: modal run -d scripts/modal/train_remote.py --config v1.8.0-fr-admin-split.yaml --resume none
+data:
+  corpus_dir: /data/corpus/versioned/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    # THE #560 recovery lever: reversed-order (postcode-first) FR — teaches the post-postcode
+    # house_number the canonical-only BAN training never showed. First-pass weight 3.0 (moderate; the
+    # shard carries BOTH orders via --reversed-fraction, so it won't over-skew canonical FR). Bump if
+    # the step-2000 eval shows insufficient reversed-FR signal.
+    synth-fr-order: 3.0
+    synth-fr-admin-split: 6.0
+    synth-unit: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v180-fr-admin-split-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 40000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  gazetteer_curriculum: false
+  trackio_project: mailwoman
+  trackio_run_name: v1.8.0-fr-admin-split-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

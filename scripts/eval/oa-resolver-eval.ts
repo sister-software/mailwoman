@@ -48,8 +48,8 @@
 import { lookupGermanState } from "@mailwoman/codex/de"
 import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { createWofResolver } from "@mailwoman/core/resolver"
-import { type ClassificationRecord, createAddressParser } from "mailwoman"
+import { createWofResolver, expandPlacetypeFilter } from "@mailwoman/core/resolver"
+import { type ClassificationRecord, createAddressParser, createRuntimePipeline } from "mailwoman"
 import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
@@ -309,24 +309,30 @@ async function main(): Promise<void> {
 		.map((l) => JSON.parse(l))
 		.slice(0, limit === Infinity ? undefined : limit)
 
-	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-	const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
-	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-	const modelCard = JSON.parse(readFileSync(arg("model-card"), "utf8"))
-	const [tokenizer, runner] = await Promise.all([
-		MailwomanTokenizer.loadFromFile(arg("tokenizer")),
-		OnnxRunner.create(arg("model")),
-	])
-	// Model-side postcode anchor (#239/#240): feed the parser per-piece anchor features from the same
-	// lookup it trained on. Only for anchor models (ONNX exported with the anchor inputs). The verdict
-	// run: `--model-anchor-lookup /path/pilot-anchor-lookup.json` on the anchor-on model.
+	// Full SHIP-CONFIG via the canonical ProductionScorer (#722): createScorer reads the model-card's
+	// `requires` block and feeds EVERY declared channel — anchor + gazetteer + conventions(=auto) +
+	// suppress-gaz-near-postcode — and fails closed (strict) if a declared channel can't be fed. This
+	// grades the parse the library + server actually ship, not the hand-built anchor-only classifier
+	// this eval used before. `--model-anchor-lookup` still pins the anchor source (else createScorer's
+	// default /mnt pilot + the repo gazetteer lexicon). `--ablate-to-anchor` drops back to anchor-only
+	// (gazetteer + conventions OFF) for the #722 before/after comparison.
+	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const modelAnchorPath = arg("model-anchor-lookup", "")
-	const postcodeAnchorLookup = modelAnchorPath
-		? (await import("@mailwoman/neural")).parseAnchorLookup(JSON.parse(readFileSync(modelAnchorPath, "utf8")))
-		: undefined
-	if (modelAnchorPath)
-		console.error(`[model-anchor] feeding anchor from ${modelAnchorPath} (${postcodeAnchorLookup!.size} codes)`)
-	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels, postcodeAnchorLookup })
+	const ablateToAnchor = process.argv.includes("--ablate-to-anchor")
+	const neural = await createScorer({
+		modelPath: arg("model"),
+		tokenizerPath: arg("tokenizer"),
+		modelCardPath: arg("model-card"),
+		...(modelAnchorPath ? { anchorLookupPath: modelAnchorPath } : {}),
+		strict: true,
+		tier: "server",
+		...(ablateToAnchor ? { overrides: { gazetteer: false, conventions: false } } : {}),
+	})
+	console.error(
+		ablateToAnchor
+			? "[scorer] ABLATED to anchor-only (gazetteer + conventions OFF) — #722 before/after baseline"
+			: "[scorer] full ship-config via createScorer (anchor + gazetteer + conventions=auto + suppress)"
+	)
 
 	// v0 = our TypeScript port of the Pelias parser. Scoring it through the same resolver makes this a
 	// real "neural vs Pelias parser" head-to-head on non-circular addresses.
@@ -402,7 +408,11 @@ async function main(): Promise<void> {
 		return false
 	}
 
-	const parseOpts = { postcodeRepair: true } as Parameters<typeof neural.parse>[1]
+	// #690: --normalize-case title-cases all-caps input before the model (detection-gated). Off by default.
+	const normalizeCase = process.argv.includes("--normalize-case")
+	const parseOpts = { postcodeRepair: true, ...(normalizeCase ? { normalizeCase: true } : {}) } as Parameters<
+		typeof neural.parse
+	>[1]
 	// `defaultCountry` is the hard country filter applied to admin lookups when the parse carries no
 	// resolved country node. It MUST match the dataset's locale — hardcoding "US" silently filters a
 	// non-US eval to US places (a German "Berlin" then loses to a tiny US Berlin). Settable via
@@ -446,6 +456,26 @@ async function main(): Promise<void> {
 		const { StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
 		interpolation = new StreetInterpolator({ dbPath: interpolationDb })
 	}
+	// `--cascade` (#718 situs-eval): grade the PRODUCTION coordinate path (mailwoman/geocode-core.ts) —
+	// per-row, per-state situs + interpolation shards via ShardProvider — so the eval reports the SHIPPED
+	// coordinate (address_point > interpolated > admin) across ALL states, not the admin centroid the
+	// neural headline alone reports. The diagnostic that motivated this: the headline read 3.3 km p50 /
+	// 10 km p90 (admin centroid) while the production cascade over the same rows is ~0 m p50 / 1 km p90,
+	// 85.9% within 100 m — the eval simply wasn't grading what ships. The single-state
+	// --address-points/--interpolation flags still work for a one-state run; --cascade supersedes them
+	// with multi-state per-row selection. --data-root locates the shards (<root>/address-points/,
+	// <root>/interpolation/).
+	const cascadeOn = process.argv.includes("--cascade")
+	const dataRoot = arg("data-root", "/mnt/playpen/mailwoman-data")
+	let cascadeProvider: import("mailwoman/geocode-core").ShardProvider | null = null
+	if (cascadeOn) {
+		const { ShardProvider } = await import("mailwoman/geocode-core")
+		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
+		cascadeProvider = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
+	}
+	// The addrpt + interp arms run when EITHER a single-state shard was given OR --cascade is on.
+	const runAddrPt = !!addressPoints || cascadeOn
+	const runInterp = !!interpolation || cascadeOn
 	const useAnchor = process.argv.includes("--postcode-anchor")
 	// `--anchor-rerank` (#369 S8): feed the postcode anchor's country posterior into the resolver's
 	// locality re-rank (`ResolveOpts.anchorPosterior`), to measure whether the merged re-ranker pulls
@@ -547,7 +577,14 @@ async function main(): Promise<void> {
 		// Admin-match is by NAME (OA carries no WOF id): a row matches if OA's expected locality
 		// equals the resolved place's canonical name OR any of its WOF altnames (see
 		// localityMatches); region is name-or-abbrev tolerant.
-		const locNode = resolved.find((r) => r.placetype === "locality")
+		// Credit the placetypes the resolver's `locality` tag actually expands to — locality ∪ borough ∪
+		// localadmin (New England civil "towns" are `localadmin` in WOF, not `locality`). Mirrors the
+		// resolver's PLACETYPE_FILTER_GROUPS.locality so this metric counts exactly what the resolver
+		// treats as a locality; the old bare `=== "locality"` filter silently discarded correct localadmin
+		// hits and under-reported rural US locality-match by tens of points (#375 oracle-locality diagnostic).
+		const locNode =
+			resolved.find((r) => r.placetype === "locality") ??
+			resolved.find((r) => expandPlacetypeFilter(["locality"]).includes(r.placetype))
 		const locRaw = locNode?.name
 		const regResolved = resolved.find((r) => r.placetype === "region")
 		return {
@@ -579,6 +616,40 @@ async function main(): Promise<void> {
 	let interpPrecond = 0 // rows that parsed street+house_number+postcode (interp's precondition)
 	let interpFullParseMiss = 0 // precond met + exact missed + interp null = genuine find() miss
 	const diagMisses: string[] = []
+
+	// #478 inc 3 leg 2 — the ASSEMBLED arms. Route each row through `createRuntimePipeline` using the
+	// SAME neural classifier (postcodeRepair on, for comparability with the neural arm), placeCountry
+	// OFF (so we isolate arbitration from the #244 coarse prior), and the SAME resolver — without
+	// (`assembled`) and with (`assembled+arb`) per-component arbitration. The street+house_number
+	// precondition (the thing #566 broke) is counted per arm so a regression is visible directly.
+	const runAssembled = process.argv.includes("--assembled")
+	const assembledAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
+	const assembledArbAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
+	let neuralPrecond = 0
+	let asmPrecond = 0
+	let arbPrecond = 0
+	const hasStreetHN = (tree: AddressTree | null): boolean => {
+		if (!tree) return false
+		let street = false
+		let hn = false
+		const visit = (n: AddressNode): void => {
+			if (n.tag === "street") street = true
+			if (n.tag === "house_number") hn = true
+			for (const c of n.children) visit(c)
+		}
+		for (const r of tree.roots) visit(r)
+		return street && hn
+	}
+	const assembledPipeline = runAssembled
+		? createRuntimePipeline({
+				classifier: {
+					parse: (text: string, o?: object) => neural.parse(text, { ...o, postcodeRepair: true }),
+				} as never,
+				resolver: resolver as never,
+				placeCountry: false,
+			})
+		: null
+
 	const record = (
 		who: "neural" | "v0",
 		row: OaRow,
@@ -604,21 +675,34 @@ async function main(): Promise<void> {
 	const collectResolvedDump = !!arg("out-resolved")
 	const resolvedRows: Record<string, unknown>[] = []
 
+	// `--out-rows <path>`: per-row neural-vs-v0 outcome dump (EVERY row, not just misses), for the
+	// per-address-type head-to-head (scripts/eval/per-type-report.ts buckets by input shape offline).
+	// Reuses the same scoreTree the aggregates use — no extra inference, no scoring duplication.
+	const collectRows = !!arg("out-rows")
+	const outRows: Record<string, unknown>[] = []
+
 	let i = 0
 	for (const row of rows) {
 		i++
 		if (i % 500 === 0) console.error(`  ${i}/${rows.length}`)
+
+		// --cascade: per-row per-state shards (the production geocode cascade); falls back to the
+		// single-state --address-points/--interpolation when --cascade is off (byte-stable default).
+		const rowShards = cascadeProvider ? cascadeProvider.for((row.state || "").toLowerCase() || null) : null
+		const rowAddrPoints = rowShards?.addressPoints ?? addressPoints ?? null
+		const rowInterp = rowShards?.interpolation ?? interpolation ?? null
+		// Shared resolve opts (hoisted so the assembled arms below resolve identically to neural).
+		const nOpts = {
+			...(anchorRerank ? { ...resolveOpts, anchorPosterior: anchorPosteriorFor(row.input) } : resolveOpts),
+			...(rowAddrPoints ? { addressPoints: rowAddrPoints } : {}),
+			...(rowInterp ? { interpolation: rowInterp } : {}),
+		}
 
 		// neural
 		let nResolved: Resolved[] = []
 		let nDecorated: AddressTree | null = null
 		try {
 			const nTree = await neural.parse(row.input, parseOpts)
-			const nOpts = {
-				...(anchorRerank ? { ...resolveOpts, anchorPosterior: anchorPosteriorFor(row.input) } : resolveOpts),
-				...(addressPoints ? { addressPoints } : {}),
-				...(interpolation ? { interpolation } : {}),
-			}
 			nDecorated = await resolver.resolveTree(nTree, nOpts)
 			nResolved = collectResolved(nDecorated)
 		} catch {
@@ -626,6 +710,7 @@ async function main(): Promise<void> {
 		}
 		const ns = scoreTree(row, nResolved)
 		record("neural", row, ns)
+		if (runAssembled && hasStreetHN(nDecorated)) neuralPrecond++
 
 		if (collectResolvedDump) {
 			resolvedRows.push({
@@ -641,7 +726,7 @@ async function main(): Promise<void> {
 		}
 
 		// neural + address-points (#476): same admin flags; coordinate from the exact point on hit.
-		if (addressPoints) {
+		if (runAddrPt) {
 			const hit = nDecorated ? findAddressPointHit(nDecorated) : null
 			const apErr = hit ? haversineKm(hit.lat, hit.lon, row.lat, row.lon) : ns.err
 			if (hit) addressPointHits++
@@ -653,7 +738,7 @@ async function main(): Promise<void> {
 
 		// neural + interpolation (#483): the full street-level cascade — exact point if present, else the
 		// interpolated estimate, else the admin centroid. Same admin flags; only the COORDINATE changes.
-		if (interpolation) {
+		if (runInterp) {
 			const exact = nDecorated ? findAddressPointHit(nDecorated) : null
 			const interp = nDecorated ? findInterpolatedHit(nDecorated) : null
 			const coord = exact ?? interp
@@ -712,6 +797,40 @@ async function main(): Promise<void> {
 		const vs = scoreTree(row, vResolved)
 		record("v0", row, vs)
 
+		if (collectRows) {
+			outRows.push({
+				input: row.input,
+				expected: row.expected,
+				neural: { loc: ns.locMatch, reg: ns.regMatch, resolved: ns.resolved, err: ns.err },
+				v0: { loc: vs.locMatch, reg: vs.regMatch, resolved: vs.resolved, err: vs.err },
+			})
+		}
+
+		// #478 inc 3 leg 2: assembled (no-arb) + assembled+arb, through the same resolver + nOpts.
+		if (assembledPipeline) {
+			const st = row.state || "??"
+			try {
+				const { tree } = await assembledPipeline(row.input, { resolveOpts: nOpts })
+				const s = scoreTree(row, collectResolved(tree))
+				if (!assembledAgg.byState.has(st)) assembledAgg.byState.set(st, newAgg())
+				bump(assembledAgg.byState.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
+				bump(assembledAgg.overall, s.locMatch, s.regMatch, s.resolved, s.err)
+				if (hasStreetHN(tree)) asmPrecond++
+			} catch {
+				/* unresolved */
+			}
+			try {
+				const { tree } = await assembledPipeline(row.input, { arbitrate: true, resolveOpts: nOpts })
+				const s = scoreTree(row, collectResolved(tree))
+				if (!assembledArbAgg.byState.has(st)) assembledArbAgg.byState.set(st, newAgg())
+				bump(assembledArbAgg.byState.get(st)!, s.locMatch, s.regMatch, s.resolved, s.err)
+				bump(assembledArbAgg.overall, s.locMatch, s.regMatch, s.resolved, s.err)
+				if (hasStreetHN(tree)) arbPrecond++
+			} catch {
+				/* unresolved */
+			}
+		}
+
 		if (collectErrors && (!ns.locMatch || !vs.locMatch)) {
 			errorRows.push({
 				input: row.input,
@@ -738,6 +857,10 @@ async function main(): Promise<void> {
 		writeFileSync(arg("errors-json"), JSON.stringify(errorRows, null, 2))
 		console.error(`wrote ${errorRows.length} failure rows → ${arg("errors-json")}`)
 	}
+	if (collectRows) {
+		writeFileSync(arg("out-rows"), JSON.stringify(outRows))
+		console.error(`wrote ${outRows.length} per-row outcomes → ${arg("out-rows")}`)
+	}
 	if (collectResolvedDump) {
 		writeFileSync(arg("out-resolved"), JSON.stringify(resolvedRows))
 		console.error(`wrote ${resolvedRows.length} resolved rows → ${arg("out-resolved")}`)
@@ -759,20 +882,37 @@ async function main(): Promise<void> {
 		`| ${label} | ${pct(a.localityMatch, a.n)} | ${pct(a.regionMatch, a.n)} | ${pct(a.resolved, a.n)} | ${p(a.errs, 50)} | ${p(a.errs, 90)} | ${p(a.errs, 99)} |`
 	lines.push(overallRow("**neural**", agg.neural.overall))
 	lines.push(overallRow("v0 (Pelias)", agg.v0.overall))
+	if (runAssembled) {
+		lines.push(overallRow("assembled (no arb)", assembledAgg.overall))
+		lines.push(overallRow("**assembled + arb**", assembledArbAgg.overall))
+	}
 	if (useAnchor) lines.push(overallRow("**neural+anchor**", neuralAnchorAgg.overall))
-	if (addressPoints) {
+	if (runAddrPt) {
 		lines.push(overallRow("**neural+addrpt**", neuralAddrPtAgg.overall))
 		lines.push("")
 		lines.push(
 			`address-point hit rate: ${addressPointHits}/${neuralAddrPtAgg.overall.n} (${((100 * addressPointHits) / Math.max(1, neuralAddrPtAgg.overall.n)).toFixed(1)}%)`
 		)
 	}
-	if (interpolation) {
-		lines.push(overallRow("**neural+interp**", neuralInterpAgg.overall))
+	if (runInterp) {
+		lines.push(
+			overallRow(cascadeOn ? "**neural+cascade (SHIPPED coord)**" : "**neural+interp**", neuralInterpAgg.overall)
+		)
 		lines.push("")
 		lines.push(
 			`interpolation hit rate (interp coord, no exact point): ${interpHits}/${neuralInterpAgg.overall.n} (${((100 * interpHits) / Math.max(1, neuralInterpAgg.overall.n)).toFixed(1)}%)`
 		)
+		if (cascadeOn) {
+			const Nc = neuralInterpAgg.overall.n
+			const adminTier = Math.max(0, Nc - addressPointHits - interpHits)
+			const cerrs = neuralInterpAgg.overall.errs
+			const within = (m: number): string =>
+				`${((100 * cerrs.filter((e) => e <= m / 1000).length) / Math.max(1, cerrs.length)).toFixed(1)}%`
+			lines.push("")
+			lines.push(
+				`**neural+cascade** is the PRODUCTION coordinate (mailwoman/geocode-core.ts: address_point > interpolated > admin, per-state shards) — what mailwoman actually ships, vs the admin-centroid **neural** row above. Tier share: address_point ${pct(addressPointHits, Nc)}, interpolated ${pct(interpHits, Nc)}, admin ${pct(adminTier, Nc)}. Within 100 m: ${within(100)} · within 1 km: ${within(1000)} (n=${cerrs.length}).`
+			)
+		}
 		if (diagInterp) {
 			const N = neuralInterpAgg.overall.n
 			lines.push("")
@@ -805,6 +945,23 @@ async function main(): Promise<void> {
 				for (const m of diagMisses.slice(0, 12)) lines.push(`  - ${m}`)
 			}
 		}
+	}
+	if (runAssembled) {
+		const N = agg.neural.overall.n
+		lines.push("")
+		lines.push(`### Arbitration coordinate gate (#478 leg 2)`)
+		lines.push("")
+		lines.push(
+			"`assembled (no arb)` is the pipeline through the same neural+resolver (comparability check vs `neural`); `assembled + arb` adds per-component arbitration. The street+house_number **precondition** (parsed both, the thing #566 broke) per arm:"
+		)
+		lines.push("")
+		lines.push(
+			`- neural: ${pct(neuralPrecond, N)} · assembled (no arb): ${pct(asmPrecond, N)} · **assembled + arb: ${pct(arbPrecond, N)}** (of ${N} rows)`
+		)
+		lines.push("")
+		lines.push(
+			"Gate: arbitration PASSES leg 2 iff the precondition does not regress and coord p50/p90 + locality/region Acc@1 hold vs `neural`."
+		)
 	}
 	lines.push("")
 	lines.push(`## Neural per-state (locality-match)`)

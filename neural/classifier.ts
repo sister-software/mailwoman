@@ -23,13 +23,15 @@ import {
 import { proposeSpans, type ProposedSpan, type SpanProposerLexicon } from "@mailwoman/core/pipeline"
 
 import { detectAddressSystem } from "./address-system.js"
-import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.js"
+import type { AnchorLookup } from "./anchor-inference.js"
+import { normalizeInputCase } from "./case-normalize.js"
 import { buildFstEmissionPriors, type FstMatcherLike } from "./fst-prior.js"
-import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.js"
+import type { GazetteerLexicon } from "./gazetteer-inference.js"
 import { STAGE2_BIO_LABELS } from "./labels.js"
 import type { InferResult } from "./onnx-runner.js"
-import { repairPostcodeLabels } from "./postcode-repair.js"
+import { repairLeadingHouseNumber, repairPostcodeLabels } from "./postcode-repair.js"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.js"
+import { buildSoftFeatures } from "./soft-features.js"
 import { bridgePunctuationGaps } from "./span-bridge.js"
 import { buildSpanProposalPriors, type SpanProposalPriorOpts } from "./span-proposal-prior.js"
 import { buildCodexSpanLexicon } from "./span-proposer-lexicon.js"
@@ -38,6 +40,7 @@ import { MailwomanTokenizer } from "./tokenizer.js"
 import { repairUnitLabels } from "./unit-repair.js"
 import { buildBioEndMask, buildBioStartMask, buildBioTransitionMask, softmax, viterbi } from "./viterbi.js"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.js"
+import { enforceWordConsistency } from "./word-consistency.js"
 
 /**
  * Structural type the classifier needs from a runner. Lets callers swap the Node-side `OnnxRunner`
@@ -136,6 +139,14 @@ export interface NeuralAddressClassifierConfig {
 	 * (the pre-2026-06-12 byte-stable default).
 	 */
 	spanProposer?: SpanProposerConfig | false
+
+	/**
+	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Default off →
+	 * byte-identical. When true, every `▁`-delimited word's pieces are forced to ONE tag by a
+	 * confidence-weighted vote over the post-prior emissions (see word-consistency.ts). Per-parse
+	 * `ParseOptions.enforceWordConsistency` overrides this default.
+	 */
+	enforceWordConsistency?: boolean
 }
 
 /**
@@ -198,9 +209,20 @@ export class NeuralAddressClassifier {
 		// + node:fs) and throws cleanly in a browser if called. Without the directive, webpack
 		// pulls onnx-runner / weights into the browser chunk graph + then chokes on the Node-only
 		// builtins they reference.
-		const [{ OnnxRunner }, { resolveWeights, readLabelsFromModelCard, readCrfTransitions }] = await Promise.all([
+		const [
+			{ OnnxRunner },
+			{ resolveWeights, readLabelsFromModelCard, readCrfTransitions, readRequiredChannels },
+			{ parseAnchorLookup },
+			{ parseGazetteerLexicon },
+			{ PostcodeBinaryResolver },
+			fs,
+		] = await Promise.all([
 			import(/* webpackIgnore: true */ "./onnx-runner.js"),
 			import(/* webpackIgnore: true */ "./weights.js"),
+			import(/* webpackIgnore: true */ "./anchor-inference.js"),
+			import(/* webpackIgnore: true */ "./gazetteer-inference.js"),
+			import(/* webpackIgnore: true */ "./postcode-binary-resolver.js"),
+			import(/* webpackIgnore: true */ "node:fs"),
 		])
 		const resolved: ResolvedWeights = resolveWeights(opts)
 		const labels = readLabelsFromModelCard(resolved.modelCardPath)
@@ -209,6 +231,62 @@ export class NeuralAddressClassifier {
 			MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
 			OnnxRunner.create(resolved.modelPath),
 		])
+
+		// --- Soft-feed (#718 D1): feed the channels the SHIPPED model was trained against ----------
+		// The anchor-trained en-us model goes OOD when scored anchor-OFF (the #566/#685 crater: country
+		// ~0, region 71, locality 57 vs the server-tier 68/90/77). The browser loader already feeds the
+		// channels from URLs; this is the Node-side mirror so EVERY consumer (ResolveRouter,
+		// GeocodeRouter, geocode.tsx, the CLI) transparently gains them with no callsite change.
+		//
+		// SOFT: each channel is best-effort. A caller-passed `postcodeAnchorLookup` always wins. When
+		// the model-card declares a channel REQUIRED but the package didn't ship its data, we warn ONCE
+		// (mirroring neural-web's `warnOnUnfedTrainedChannels`) and run that channel OFF — never crash.
+		const declared = readRequiredChannels(resolved.modelCardPath)
+
+		let postcodeAnchorLookup = opts.postcodeAnchorLookup
+		if (!postcodeAnchorLookup && resolved.anchorLookupPath) {
+			try {
+				postcodeAnchorLookup = resolved.anchorLookupPath.binary
+					? new PostcodeBinaryResolver(new Uint8Array(fs.readFileSync(resolved.anchorLookupPath.path))).toAnchorLookup()
+					: parseAnchorLookup(JSON.parse(fs.readFileSync(resolved.anchorLookupPath.path, "utf8")))
+			} catch (err) {
+				warnUnfedChannel("anchor", `failed to parse ${resolved.anchorLookupPath.path}: ${(err as Error).message}`)
+			}
+		}
+		if (declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size > 0)) {
+			warnUnfedChannel(
+				"anchor",
+				resolved.anchorLookupPath
+					? `parsed lookup at ${resolved.anchorLookupPath.path} is empty`
+					: `no postcode-<cc>.bin / anchor-lookup.json found in the weights package`
+			)
+		}
+
+		let gazetteerLexicon: GazetteerLexicon | undefined
+		if (resolved.gazetteerLexiconPath) {
+			try {
+				gazetteerLexicon = parseGazetteerLexicon(JSON.parse(fs.readFileSync(resolved.gazetteerLexiconPath, "utf8")))
+			} catch (err) {
+				warnUnfedChannel("gazetteer", `failed to parse ${resolved.gazetteerLexiconPath}: ${(err as Error).message}`)
+			}
+		}
+		// Pocket tier is anchor-only: `resolveWeights` already withholds the gazetteer path, so a
+		// declared-required gazetteer is EXPECTED to be unfed there — don't warn. Otherwise warn.
+		if (declared?.gazetteer?.required && !gazetteerLexicon && opts.tier !== "pocket") {
+			warnUnfedChannel(
+				"gazetteer",
+				resolved.gazetteerLexiconPath
+					? `lexicon at ${resolved.gazetteerLexiconPath} could not be parsed`
+					: `no anchor-lexicon-v1.json found in the weights package`
+			)
+		}
+
+		// Near-postcode gazetteer choreography + conventions mode: drive them off the card's declared
+		// SHIP-CONFIG (mirrors createScorer / the browser loader defaults), inert when the source
+		// channel is absent. Byte-stable for a non-anchor card (no `requires` → all undefined/false).
+		const suppressGazetteerNearPostcode = declared?.suppress_gazetteer_near_postcode ?? false
+		const addressSystemConventions = declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : undefined
+
 		return new NeuralAddressClassifier({
 			tokenizer,
 			runner,
@@ -216,15 +294,23 @@ export class NeuralAddressClassifier {
 			transitions: crf?.transitions,
 			startTransitions: crf?.startTransitions,
 			endTransitions: crf?.endTransitions,
-			...(opts.postcodeAnchorLookup ? { postcodeAnchorLookup: opts.postcodeAnchorLookup } : {}),
+			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
+			...(gazetteerLexicon ? { gazetteerLexicon } : {}),
+			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
+			...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" } : {}),
 		})
 	}
 
 	/** Tokenize → infer → Viterbi (or argmax) → decoder tree. */
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
 		if (text.length === 0) return { raw: text, roots: [] }
-		const { tokens } = await this.#decode(text, opts)
-		return buildAddressTree(text, tokens, opts?.calibrate ? { calibrate: opts.calibrate } : undefined)
+		// #690: title-case all-caps ASCII input so the mixed-case-trained model doesn't go OOD.
+		// Detection-gated (mixed-case + non-ASCII untouched), opt-in. ASCII title-case is char-for-char
+		// length-preserving, so token offsets are unaffected; the tree is built from the normalized text
+		// (values come out title-cased — the SHOUTING is gone, the resolver name-matches case-insensitively).
+		const modelText = opts?.normalizeCase ? normalizeInputCase(text) : text
+		const { tokens } = await this.#decode(modelText, opts)
+		return buildAddressTree(modelText, tokens, opts?.calibrate ? { calibrate: opts.calibrate } : undefined)
 	}
 
 	/**
@@ -261,19 +347,17 @@ export class NeuralAddressClassifier {
 		pieces: ReturnType<MailwomanTokenizer["encode"]>["pieces"]
 	}> {
 		const { pieces, ids } = this.cfg.tokenizer.encode(text)
-		// Postcode-anchor channel (#239/#240): build per-piece anchor features from the same lookup the
-		// model trained on, fed alongside the ids. No-op when no lookup is configured.
-		const anchor = this.cfg.postcodeAnchorLookup
-			? buildAnchorFeatures(text, pieces, this.cfg.postcodeAnchorLookup)
-			: undefined
-		const gazetteer = this.cfg.gazetteerLexicon
-			? buildGazetteerFeatures(text, pieces, this.cfg.gazetteerLexicon)
-			: undefined
-		const gazFed =
-			gazetteer && anchor && this.cfg.suppressGazetteerNearPostcode
-				? suppressGazetteerNearPostcode(gazetteer, anchor.confidence)
-				: gazetteer
-		const { logits, localeLogits } = await this.cfg.runner.infer(ids, anchor, gazFed)
+		// Soft-feature channels (#718): the postcode-anchor (#239/#240) + gazetteer-anchor (#464) clues
+		// the model conditions on alongside the ids, plus the near-postcode gazetteer choreography. The
+		// build + choreography is the single PURE `buildSoftFeatures` (soft-features.ts) — both this
+		// decode path and the ProductionScorer feed channels identically, so there is exactly one
+		// choreography. Each channel is undefined when its source is unconfigured (no-op).
+		const soft = buildSoftFeatures(text, pieces, {
+			postcodeAnchorLookup: this.cfg.postcodeAnchorLookup,
+			gazetteerLexicon: this.cfg.gazetteerLexicon,
+			suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
+		})
+		const { logits, localeLogits } = await this.cfg.runner.infer(ids, soft.anchor, soft.gazetteer)
 
 		this.assertEmissionWidth(logits)
 
@@ -281,12 +365,16 @@ export class NeuralAddressClassifier {
 		// system, or the model's own locale-head detection under a high confidence bar. Null = no
 		// constraints; the parse below is byte-identical to the pre-conventions path.
 		const conventionsOpt = opts?.addressSystemConventions ?? this.cfg.addressSystemConventions
-		const conventions =
+		// The resolved system code, captured so the US-only leading-house-number repair below can gate on
+		// it (see repairLeadingHouseNumber). null when conventions are off → no system, no repair
+		// (byte-stable). "auto" reads the model's locale head; a pinned SystemCode wins.
+		const detectedSystem: SystemCode | null =
 			conventionsOpt === undefined
 				? null
-				: conventionsForSystem(
-						conventionsOpt === "auto" ? (detectAddressSystem(localeLogits)?.system ?? null) : conventionsOpt
-					)
+				: conventionsOpt === "auto"
+					? (detectAddressSystem(localeLogits)?.system ?? null)
+					: conventionsOpt
+		const conventions = conventionsForSystem(detectedSystem)
 
 		let emissions = opts?.queryShape
 			? addEmissionMatrix(
@@ -348,7 +436,7 @@ export class NeuralAddressClassifier {
 			}
 		}
 
-		const labelIndices =
+		let labelIndices =
 			this.decodeMode === "viterbi"
 				? viterbi({
 						emissions,
@@ -358,6 +446,17 @@ export class NeuralAddressClassifier {
 					}).path
 				: emissions.map((row) => argmaxSoftmax(row).idx)
 
+		// Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Opt-in — default
+		// OFF → byte-identical. Heals words whose pieces disagree (e.g. `VERMONT`→VER[loc]+MONT[region],
+		// `Lozère`→Loz[loc]+ère[region]) via a confidence-weighted vote over the post-prior emissions; a
+		// word whose pieces already agree is untouched. See word-consistency.ts.
+		let healedConfidence: Map<number, number> | null = null
+		if (opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? false) {
+			const wc = enforceWordConsistency(pieces, emissions, this.labels, labelIndices)
+			labelIndices = wc.labelIndices
+			healedConfidence = wc.healedConfidence
+		}
+
 		let tokens: DecoderToken[] = pieces.map((p, i) => {
 			const idx = labelIndices[i]!
 			const probs = softmax(logits[i]!)
@@ -366,7 +465,9 @@ export class NeuralAddressClassifier {
 				start: p.start,
 				end: p.end,
 				label: (this.labels[idx] ?? "O") as DecoderToken["label"],
-				confidence: probs[idx]!,
+				// Healed words carry the vote's mean p(type) (length-invariant); unchanged pieces keep
+				// the model's per-piece softmax confidence.
+				confidence: healedConfidence?.get(i) ?? probs[idx]!,
 			}
 		})
 
@@ -375,6 +476,12 @@ export class NeuralAddressClassifier {
 		// snap-only truncation class the pass exists for ("47110" decoded as "4711" + a digit-split).
 		if (opts?.postcodeRepair || conventions?.postcodePattern) {
 			tokens = repairPostcodeLabels(text, tokens).tokens
+		}
+		// US leading-house-number repair (#723): the model labels a big rural house number as a ZIP
+		// ("24588 Outback Trl" → [postcode], no house_number). US-GATED — a leading 5-digit before a
+		// street is a POSTCODE in reversed-order FR (the #560 shard), so only when the detected system is US.
+		if (detectedSystem === "us") {
+			tokens = repairLeadingHouseNumber(text, tokens).tokens
 		}
 		if (opts?.unitRepair) {
 			tokens = repairUnitLabels(text, tokens).tokens
@@ -475,6 +582,13 @@ export interface ParseOpts {
 	 * v0.7 gate confirms it. See `./postcode-repair.ts`.
 	 */
 	postcodeRepair?: boolean
+
+	/**
+	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Overrides the
+	 * classifier's `enforceWordConsistency` config default for this parse. See word-consistency.ts.
+	 */
+	enforceWordConsistency?: boolean
+
 	/**
 	 * When true, run the deterministic secondary-unit regex repair pass on the decoded label sequence
 	 * before tree-building. Detects designator-shaped substrings ("Apt 4B", "Ste 12", "Unit 9400",
@@ -483,6 +597,16 @@ export interface ParseOpts {
 	 * v0.7.2 arena re-run quantifies its delta. See `./unit-repair.ts`.
 	 */
 	unitRepair?: boolean
+	/**
+	 * When true AND the input is detected ALL-CAPS (registry/compliance data like `214 JONES RD,
+	 * ELKHART, TX 75839`), title-case the input before the model sees it. The model trains on
+	 * mixed-case text, so all-caps is partly OOD — it drops/mis-bounds tokens (#690: `PALESTINE` →
+	 * locality `ALESTINE`; all-caps locality 3/5 vs title-case 5/5). Detection-gated, so MIXED-case
+	 * input is untouched (byte-stable). Off by default. On all-caps input the output values are
+	 * title-cased (the SHOUTING is normalized away — better, and the resolver name-matches
+	 * case-insensitively regardless).
+	 */
+	normalizeCase?: boolean
 	/**
 	 * Optional span-confidence calibrator (task #59). When provided, each decoded span's `conf=` is
 	 * mapped through it (isotonic lookup table → calibrated probability of correctness). OPT-IN —
@@ -514,6 +638,25 @@ export interface ParseOpts {
 	 * parses (`street_suffix: "Rue"`) and digit-splits corrupted leading FR postcodes.
 	 */
 	addressSystemConventions?: "auto" | SystemCode
+}
+
+/**
+ * Loud-degrade warning for the `loadFromWeights` soft-feed (#718 D1) — the Node mirror of
+ * neural-web's `warnOnUnfedTrainedChannels`. Fired ONCE per channel per process: a model-card that
+ * declares a channel REQUIRED, paired with a package that didn't ship (or could not parse) its
+ * data, runs that channel OFF. Structural fallback (the parse still works), loud console (a
+ * silently anchor-OFF anchor-trained model is the #566/#685 OOD crater this fix exists to
+ * surface).
+ */
+const warnedUnfedChannels = new Set<string>()
+function warnUnfedChannel(channel: "anchor" | "gazetteer", detail: string): void {
+	if (warnedUnfedChannels.has(channel)) return
+	warnedUnfedChannels.add(channel)
+	console.error(
+		`[mailwoman/neural] loadFromWeights: model-card declares the ${channel} channel REQUIRED but ${detail} — ` +
+			`running ${channel}-OFF, parses degraded (train/inference mismatch). Ship the ${channel} artifact in the ` +
+			`weights package (postcode-<cc>.bin / anchor-lexicon-v1.json), or pass an explicit lookup.`
+	)
 }
 
 function argmaxSoftmax(row: number[]): { idx: number; conf: number } {

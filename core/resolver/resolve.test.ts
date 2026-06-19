@@ -12,6 +12,7 @@ import { decodeAsXml } from "../decoder/serialize-xml.js"
 import type { AddressNode, AddressTree, ComponentTag } from "../decoder/types.js"
 import { createWofResolver } from "./resolve.js"
 import type { Ancestor, CoincidentLocality, InterpolationLookup, ResolvedPlace, ResolverBackend } from "./types.js"
+import { expandPlacetypeFilter } from "./types.js"
 
 function node(
 	tag: ComponentTag,
@@ -51,7 +52,10 @@ class FakeResolverBackend implements ResolverBackend {
 	async findPlace(query: Parameters<ResolverBackend["findPlace"]>[0]): Promise<ResolvedPlace[]> {
 		this.calls.push(query)
 		const text = query.text.toLowerCase()
-		const types = Array.isArray(query.placetype) ? query.placetype : query.placetype ? [query.placetype] : null
+		const requested = Array.isArray(query.placetype) ? query.placetype : query.placetype ? [query.placetype] : null
+		// Mirror the concrete backends (lookup.ts / wasm): expand the placetype filter through the
+		// shared PLACETYPE_FILTER_GROUPS so a `region` query also reaches `macroregion`, etc. (#718).
+		const types = expandPlacetypeFilter(requested)
 		return this.#places
 			.filter((p) => p.name.toLowerCase().includes(text))
 			.filter((p) => !types || types.includes(p.placetype))
@@ -497,6 +501,65 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		expect(on.roots[0]!.placeId).toBe("wof:1") // US exact wins: tier primary, then US posterior
 	})
 
+	// Macro-tier equivalence groups + fallback observability (#718). WOF models some countries'
+	// top-level civil division as `macroregion` (Italian regions; the post-2016 French régions) rather
+	// than `region`; likewise `macrocounty` above `county` (FR/DE/GB). The region/county placetype
+	// filter now expands through PLACETYPE_FILTER_GROUPS to reach them, but the EXACT type is still
+	// preferred, and a macro-only resolution is annotated `resolution_quality: "fallback"`.
+	test("region span resolves to a macroregion fallback when no exact region exists (#718)", async () => {
+		// Only a macroregion matches "Veneto" — the region-only filter would have returned nothing.
+		const places: ResolvedPlace[] = [
+			{ id: 404227501, name: "Veneto", placetype: "macroregion", country: "IT", lat: 45.65, lon: 11.86, score: 9 },
+		]
+		const input = tree("Veneto", [node("region", "Veneto", 0, 6)])
+		const out = await createWofResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "IT" })
+		const r = out.roots[0]!
+		expect(r.placeId).toBe("wof:404227501")
+		expect(r.sourceId).toBe("macroregion:404227501")
+		expect(r.metadata?.["resolution_quality"]).toBe("fallback")
+	})
+
+	test("exact region is preferred over a same-name macroregion — no fallback annotation (#718)", async () => {
+		// Both an exact region and a macroregion namesake match; the real region must win and carry no
+		// fallback marker, even when the macroregion scores higher (the exact-type partition is primary).
+		const places: ResolvedPlace[] = [
+			{ id: 1, name: "Foo", placetype: "macroregion", country: "IT", lat: 45, lon: 11, score: 9 },
+			{ id: 2, name: "Foo", placetype: "region", country: "IT", lat: 46, lon: 12, score: 7 },
+		]
+		const input = tree("Foo", [node("region", "Foo", 0, 3)])
+		const out = await createWofResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "IT" })
+		const r = out.roots[0]!
+		expect(r.sourceId).toBe("region:2") // exact region wins despite lower score
+		expect(r.metadata?.["resolution_quality"]).toBeUndefined()
+		// The displaced macroregion survives as an alternative.
+		expect((r.alternatives as ResolvedPlace[])[0]!.id).toBe(1)
+	})
+
+	test("county/subregion span resolves to a macrocounty fallback (#718)", async () => {
+		// `subregion` maps to `county` via DEFAULT_PLACETYPE_MAP; a DE Regierungsbezirk is a macrocounty.
+		const places: ResolvedPlace[] = [
+			{ id: 404227567, name: "Oberbayern", placetype: "macrocounty", country: "DE", lat: 48, lon: 11.5, score: 8 },
+		]
+		const input = tree("Oberbayern", [node("subregion", "Oberbayern", 0, 10)])
+		const out = await createWofResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "DE" })
+		const r = out.roots[0]!
+		expect(r.sourceId).toBe("macrocounty:404227567")
+		expect(r.metadata?.["resolution_quality"]).toBe("fallback")
+	})
+
+	test("borough/localadmin under a locality query are NOT fallbacks (#718 scope guard)", async () => {
+		// The locality equivalence group's borough/localadmin are genuine peers (Brooklyn-the-borough),
+		// NOT macro fallbacks — they must resolve normally with no resolution_quality annotation.
+		const places: ResolvedPlace[] = [
+			{ id: 421205765, name: "Brooklyn", placetype: "borough", country: "US", lat: 40.65, lon: -73.95, score: 8 },
+		]
+		const input = tree("Brooklyn", [node("locality", "Brooklyn", 0, 8)])
+		const out = await createWofResolver(new FakeResolverBackend(places)).resolveTree(input, { defaultCountry: "US" })
+		const r = out.roots[0]!
+		expect(r.sourceId).toBe("borough:421205765")
+		expect(r.metadata?.["resolution_quality"]).toBeUndefined()
+	})
+
 	// Dual-role hierarchy completion (#405/#415). In `…, Berlin, Berlin <PC>` the parser drops the
 	// locality (city == region), leaving a region but no locality. Completion records the dropped
 	// locality as a `locality` INTERPRETATION on the resolved region node (one node, one span, two
@@ -798,6 +861,47 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
 		await resolver.resolveTree(nested, { interpolation: recorder })
 		expect(queried).toBe("East Sheldon Rd")
+	})
+
+	test("folds a directional quadrant mis-tagged `unit` into the street key (#718 admin-tail)", async () => {
+		let queried: string | undefined
+		const recorder: InterpolationLookup = {
+			find: ({ street }) => {
+				queried = street
+				return null
+			},
+		}
+		// The model often tags the trailing quadrant of a directional street as `unit` ("Taylor Street
+		// NE" → [unit] "NE"), so the bare key misses the shard's "taylor street northeast". The
+		// directional unit folds back into the key by span order; the lookup normalizer expands "Ne".
+		const dirTree = tree("1532 Taylor Street Ne 20018", [
+			node("house_number", "1532", 0, 4),
+			node("street", "Taylor Street", 5, 18),
+			node("unit", "Ne", 19, 21),
+			node("postcode", "20018", 22, 27),
+		])
+		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		await resolver.resolveTree(dirTree, { interpolation: recorder })
+		expect(queried).toBe("Taylor Street Ne")
+	})
+
+	test("a non-directional `unit` is NOT folded into the street key (byte-stable)", async () => {
+		let queried: string | undefined
+		const recorder: InterpolationLookup = {
+			find: ({ street }) => {
+				queried = street
+				return null
+			},
+		}
+		const aptTree = tree("1532 Taylor Street Apt 4 20018", [
+			node("house_number", "1532", 0, 4),
+			node("street", "Taylor Street", 5, 18),
+			node("unit", "Apt 4", 19, 24),
+			node("postcode", "20018", 25, 30),
+		])
+		const resolver = createWofResolver(new FakeResolverBackend(FIXTURE_PLACES))
+		await resolver.resolveTree(aptTree, { interpolation: recorder })
+		expect(queried).toBe("Taylor Street")
 	})
 
 	test("no house_number → tier never fires", async () => {

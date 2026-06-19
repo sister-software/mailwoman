@@ -92,10 +92,11 @@ jobs:
       # Fetch the weight binaries from the PUBLIC Hugging Face bucket (the same
       # files the demo loads at runtime — no auth needed). This replaces the old
       # R2 pull and means the whole release, weights included, publishes from CI
-      # via OIDC: no npm credentials anywhere. Requires the model to already be
-      # staged on HF for this version (push it with scripts/publish-release-to-hf.mjs
-      # before dispatching a real run). Skipped on dry runs so a preview doesn't
-      # depend on HF staging.
+      # via OIDC: no npm credentials anywhere. Requires the model AND the #718
+      # soft-feed postcode binaries to be staged on HF for this version (push them
+      # with scripts/publish-release-to-hf.mjs --postcodes postcode-us.bin,postcode-fr.bin
+      # before dispatching a real run; the gazetteer lexicon is a checked-in repo
+      # file). Skipped on dry runs so a preview doesn't depend on HF staging.
       - name: Fetch weight binaries from Hugging Face
         if: ${{ !inputs.dry_run }}
         run: | # shell
@@ -107,13 +108,26 @@ jobs:
           CURL="curl -fSL --retry 6 --retry-delay 5 --retry-all-errors"
           $CURL "${BASE}/model.onnx" -o neural-weights-en-us/model.onnx
           $CURL "${BASE}/tokenizer.model" -o neural-weights-en-us/tokenizer.model
+          # Soft-feed artifacts (#718/#720): the anchor channels loadFromWeights feeds by DEFAULT —
+          # without them the published package warns + runs anchor-OFF (the #566/#685 OOD crater). The
+          # per-country PCB1 postcode binaries are built from the WOF shard (not buildable on CI), so
+          # they ride the bucket; both land under en-us/v<version>/ by basename via
+          # `publish-release-to-hf.mjs --postcodes postcode-us.bin,postcode-fr.bin`.
+          $CURL "${BASE}/postcode-us.bin" -o neural-weights-en-us/postcode-us.bin
+          $CURL "${BASE}/postcode-fr.bin" -o neural-weights-fr-fr/postcode-fr.bin
           # fr-fr shares the en-us model for now (locale-specific weights are future work).
           cp neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx
           cp neural-weights-en-us/tokenizer.model neural-weights-fr-fr/tokenizer.model
-          for f in neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx; do
-              [ -s "$f" ] || { echo "::error::missing/empty $f — is v${MODEL_VERSION} staged on HF?"; exit 1; }
+          # The gazetteer-anchor lexicon is a checked-in repo artifact — copy it into both packages
+          # (no bucket dependency); matches release.config.json softFeed.gazetteerLexicon + copy-weights.
+          cp data/gazetteer/anchor-lexicon-v1.json neural-weights-en-us/anchor-lexicon-v1.json
+          cp data/gazetteer/anchor-lexicon-v1.json neural-weights-fr-fr/anchor-lexicon-v1.json
+          for f in neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx \
+                   neural-weights-en-us/postcode-us.bin neural-weights-fr-fr/postcode-fr.bin \
+                   neural-weights-en-us/anchor-lexicon-v1.json neural-weights-fr-fr/anchor-lexicon-v1.json; do
+              [ -s "$f" ] || { echo "::error::missing/empty $f — is v${MODEL_VERSION} fully staged on HF (model + tokenizer + --postcodes postcode-us.bin,postcode-fr.bin)?"; exit 1; }
           done
-          ls -lh neural-weights-en-us/model.onnx
+          ls -lh neural-weights-en-us/model.onnx neural-weights-en-us/postcode-us.bin
 
       - name: Release
         if: ${{ !inputs.publish_only }}

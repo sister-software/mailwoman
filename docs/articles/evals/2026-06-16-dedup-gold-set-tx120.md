@@ -15,11 +15,11 @@ adjudicated "same real-world entity? yes/no" (LLM-as-judge — flagged as such; 
 
 ## Result
 
-| | count |
-|---|---:|
-| **Same real-world entity** (correct to merge) | **120 / 120 (100%)** |
-| **Genuinely distinct** (a TRUE over-merge) | **0** |
-| Programmatic "distinct" verdicts that are actually the SAME org | 44 (37%) |
+|                                                                 |                count |
+| --------------------------------------------------------------- | -------------------: |
+| **Same real-world entity** (correct to merge)                   | **120 / 120 (100%)** |
+| **Genuinely distinct** (a TRUE over-merge)                      |                **0** |
+| Programmatic "distinct" verdicts that are actually the SAME org |             44 (37%) |
 
 Every hard pair is **one organization under multiple NPIs** — unflagged subparts, legal-form variants
 (`WAL-MART STORES TEXAS LLC` vs `… LP`), state/site qualifiers (`… EL PASO`), abbreviations, or
@@ -29,7 +29,7 @@ Associates** (×3), county hospital districts and MHMR centers (×2 each), **UT 
 is two unrelated companies wrongly fused.
 
 And the programmatic entity-truth (subpart-flag + authorized-official) is itself **too conservative**:
-**44 of 120 (37%)** are the same org with a *different* authorized official, which the heuristic reads
+**44 of 120 (37%)** are the same org with a _different_ authorized official, which the heuristic reads
 as "distinct." A real entity-truth must collapse by **org-name + address**, not just the flag.
 
 ## What this means for #625
@@ -38,10 +38,10 @@ as "distinct." A real entity-truth must collapse by **org-name + address**, not 
    org-resolution; NPI-truth (and even subpart-truth) scores them as errors. This is why the **A/B
    showed the corroboration features didn't move precision** — there is essentially no genuine
    over-merge to cut. Optimizing the model for precision here optimizes a phantom; cost-sensitive
-   training would only *hurt* (un-merge correct same-org pairs).
+   training would only _hurt_ (un-merge correct same-org pairs).
 
 2. **The real dedup lever is the YARDSTICK, not the model.** A better entity-truth that collapses
-   same-org-same-address NPIs by org-name lifts the *measured* F1 toward the real ceiling (the ceiling
+   same-org-same-address NPIs by org-name lifts the _measured_ F1 toward the real ceiling (the ceiling
    doc's ~1.6% irreducible) — because it stops charging correct merges as errors. The next build is an
    org-name-aware entity truth + re-scoring at that grain, not more scorer features.
 

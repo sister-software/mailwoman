@@ -158,7 +158,7 @@ Add "Who this is for" blocks to top-level and operator-heavy docs:
 - Concepts: implementer/technical evaluator.
 - Plan/reference: contributor/operator; historical unless status page says current.
 - Evals: model-quality reviewer.
-- Retrospectives/blog: narrative history.
+- Retrospectives/research: narrative history.
 
 `TRAINING_ENV.md`, `VERDICT_SMOKES.md`, `OPERATIONS.md`, and most phase files should be visually marked as operator docs.
 
@@ -181,7 +181,7 @@ Examples found during review:
 - `how-it-works-now` says locale gate workspace exists but factory default falls back to caller trust; `STAGES.md` says it is wired as default; `mailwoman/runtime-pipeline.ts` still does not wire `@mailwoman/locale-gate` by default.
 - `STAGES.md` status says candidate-list API is scaffold-only/designed, then later says `AddressNode.alternatives` shipped.
 - `ARCHITECTURE.md` still references a `packages/` layout and 47-label vocabulary, while current docs/code discuss root workspaces and 21 BIO labels.
-- `v0-5-0-shipped.md` says B2 is still cooking; later docs/blogs say B2 landed.
+- `v0-5-0-shipped.md` says B2 is still cooking; later docs/researchs say B2 landed.
 - Some code comments in `mailwoman/runtime-pipeline.ts` describe kind classifier as not production-ready while it is wired by default.
 
 Fix with one sweep after `/docs/status` exists. Do not try to make every historical doc timeless; date-stamp and redirect to status.

@@ -29,11 +29,11 @@ Retrain (34s CPU, same SGD recipe), evaluate against the shipped model.
 
 ## Results
 
-| group                                    | shipped (M2) | M3 retrain |
-| ---------------------------------------- | -----------: | ---------: |
+| group                                           | shipped (M2) | M3 retrain |
+| ----------------------------------------------- | -----------: | ---------: |
 | **in-distribution** (held-out PL/BR/MX/PT rows) |        23.1% | **100.0%** |
 | **held-out** (CZ / CA / LI, never trained)      |        23.3% |      25.0% |
-| overall                                  |        23.3% |      31.4% |
+| overall                                         |        23.3% |      31.4% |
 
 Per held-out country: CZ 39.5 → 42.8%, CA 7.0 → 7.4%, LI 19.5 → 20.6%.
 
@@ -44,9 +44,9 @@ Pareto improvement.
 ## What this says
 
 The mechanism is real: train a country on OTHER and it goes to **100%** handled, at **zero** in-map
-cost. But the model learns *those countries' n-grams → OTHER*, not a general "off my map" concept —
+cost. But the model learns _those countries' n-grams → OTHER_, not a general "off my map" concept —
 the held-out countries barely move (+1.7pp overall), and the near-twins (CA looks like US, and for a
-*coarse* placer that's arguably not even wrong) stay where they are. General Latin off-map handling
+_coarse_ placer that's arguably not even wrong) stay where they are. General Latin off-map handling
 needs **broad country coverage** — dozens of off-map countries in the OTHER class, not four.
 
 That breadth is the wall. Of the 12 off-map countries requested from Overture's addresses theme

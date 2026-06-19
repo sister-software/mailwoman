@@ -12,7 +12,7 @@ paired-delimiter span proposer if the numbers say it earns its keep. They don't.
 (quoted venue, parenthetical annotation, parenthetical component, bracketed, `c/o`, dotted abbreviations,
 hyphenated names, slash/fraction, apostrophe, "mixed-hard", and unbalanced delimiters). Gold convention:
 delimiters are **excluded** from component values unless postal-meaningful (the `#` in a unit, the dots in
-`P.O.`); apostrophes and hyphens *inside* a token are kept (`O'Brien`, `Winston-Salem`). Conventions in
+`P.O.`); apostrophes and hyphens _inside_ a token are kept (`O'Brien`, `Winston-Salem`). Conventions in
 `data/eval/external/punctuation-stress.README.md`.
 
 Scored by `scripts/eval/score-punctuation-stress.ts` (per-component exact match, case-insensitive, on each
@@ -28,21 +28,21 @@ fails every component, which is exactly what the unbalanced-delimiter rows exist
 
 ## Results
 
-| class             |   v0 | neural | +SP (default) | +SP (bias 2) | +SP (bias 4 / ann 4) |
-| ----------------- | ---: | -----: | ------------: | -----------: | -------------------: |
-| apostrophe        | 89.0 |   80.8 |          80.8 |         80.8 |                 80.8 |
-| bracketed *       | 80.3 |   85.6 |          85.6 |         85.6 |             **76.5** |
-| care-of           | 60.8 |   72.5 |          72.5 |         72.5 |                 72.5 |
-| dotted            | 82.3 |   74.0 |          74.0 |         74.0 |                 74.0 |
-| hyphen            | 86.9 |   80.8 |          80.8 |         80.8 |                 80.8 |
-| mixed-hard        | 58.2 |   72.7 |          72.7 |         70.0 |                 66.4 |
-| paren-annotation *| 78.4 |   87.5 |          87.5 |         87.5 |             **68.2** |
-| paren-component * | 76.5 |   82.4 |          82.4 |         82.4 |                 82.4 |
-| quoted-venue *    | 75.3 |   74.1 |          74.1 |         74.1 |                 72.8 |
-| slash             | 71.8 |   61.5 |          61.5 |         58.1 |                 59.8 |
-| unbalanced *      | 68.3 |   82.5 |          82.5 |         82.5 |                 84.1 |
-| **overall**       | **75.7** | **77.3** |     **77.3** |     **76.6** |             **73.4** |
-| **parse deaths**  |  **2** |  **0** |         **0** |        **0** |                **0** |
+| class               |       v0 |   neural | +SP (default) | +SP (bias 2) | +SP (bias 4 / ann 4) |
+| ------------------- | -------: | -------: | ------------: | -----------: | -------------------: |
+| apostrophe          |     89.0 |     80.8 |          80.8 |         80.8 |                 80.8 |
+| bracketed \*        |     80.3 |     85.6 |          85.6 |         85.6 |             **76.5** |
+| care-of             |     60.8 |     72.5 |          72.5 |         72.5 |                 72.5 |
+| dotted              |     82.3 |     74.0 |          74.0 |         74.0 |                 74.0 |
+| hyphen              |     86.9 |     80.8 |          80.8 |         80.8 |                 80.8 |
+| mixed-hard          |     58.2 |     72.7 |          72.7 |         70.0 |                 66.4 |
+| paren-annotation \* |     78.4 |     87.5 |          87.5 |         87.5 |             **68.2** |
+| paren-component \*  |     76.5 |     82.4 |          82.4 |         82.4 |                 82.4 |
+| quoted-venue \*     |     75.3 |     74.1 |          74.1 |         74.1 |                 72.8 |
+| slash               |     71.8 |     61.5 |          61.5 |         58.1 |                 59.8 |
+| unbalanced \*       |     68.3 |     82.5 |          82.5 |         82.5 |                 84.1 |
+| **overall**         | **75.7** | **77.3** |      **77.3** |     **76.6** |             **73.4** |
+| **parse deaths**    |    **2** |    **0** |         **0** |        **0** |                **0** |
 
 `*` = paired-delimiter classes (the proposer's target). Component accuracy %, 200 rows, folded gold.
 
@@ -54,9 +54,9 @@ classes it was built for:
 - **Default (no bias): exactly zero effect** — `+0.0pp` on every class. As wired, the proposer contributes
   no bias unless `--sp-bias` is set, so the shipped default does literally nothing.
 - **Gentle (bias 2): −0.7pp overall, no help** — the four paired-delimiter classes are unchanged; the only
-  movement is slash and mixed-hard going *down*.
+  movement is slash and mixed-hard going _down_.
 - **Strong (bias 4 / annotation 4): −3.9pp overall, actively harmful** — paren-annotation collapses 87.5 →
-  68.2 and bracketed 85.6 → 76.5, because the annotation bias pushes the **wrong direction**: it *merges*
+  68.2 and bracketed 85.6 → 76.5, because the annotation bias pushes the **wrong direction**: it _merges_
   the delimited content into the adjacent span (`Wallaby Way (rear entrance`, `Water St [SE corner`) instead
   of stripping it.
 

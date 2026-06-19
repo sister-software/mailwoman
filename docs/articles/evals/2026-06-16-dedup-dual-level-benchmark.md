@@ -51,10 +51,13 @@ NPI-as-truth OVER-SEGMENTS: one org holds many NPIs, so the matcher's correct co
 | GBT (shipped default) | site                 |     38.9% |  95.7% | **55.3%** |     +1.7pp | 0.553 |         208 |
 | GBT (shipped default) | **org-name**         |     53.3% |  70.4% | **60.7%** |     +7.1pp | 0.606 |          92 |
 | GBT (shipped default) | **org-name (coord)** |     64.6% |  72.0% | **68.1%** |    +14.5pp | 0.680 |          76 |
+| GBT (shipped default) | org-name (H3 res 11) |     64.6% |  72.0% | **68.1%** |    +14.5pp | 0.680 |          76 |
 
 The F1 **climbs as the yardstick gets honest**: GBT **53.6% (NPI) → 55.3% (site) → 60.7% (org-name)**, the over-merge collapsing (109 → 92) and precision rising (43.7% → 53.3%). The clusters are IDENTICAL across the three columns — the climb is purely the ruler ceasing to charge the matcher for the correct same-org merges the gold set proved (`2026-06-16-dedup-gold-set-tx120.md`: 120/120 same org, 0 genuine over-merges).
 
 **Tier 2D — tightening the org-name ruler with the geocode coordinate.** The org-name truth above blocks by the address STRING (`addressFrequencyKey`), so two records at one building whose text differs — `1504 Taub LOOP` vs `1504 Taub LP STE 100` — key apart and the merge is still charged as an error. Block by the GEOCODED BUILDING instead (union co-located NPIs within 50 m whose org names agree, same Jaccard gate) and the truth tightens further: GBT **org-name 60.7% → org-name-coord 68.1%** (+7.4pp), 956 → 928 classes, over 1000/1000 geocoded NPIs. The string org-name F1 is a conservative LOWER bound; the coordinate one is tighter (the Jaccard gate still blocks distinct co-located orgs). Both are honest — the coordinate is the geocode-first key.
+
+**Task 4 (#109) — H3-cell robustness check.** Re-keying the same building-grain co-location on an H3 cell (res 11) instead of the 50 m haversine radius — the deterministic, O(n) "geocode-first cell" the issue suggested — gives GBT **org-name-h3 68.1%** (928 classes), vs the haversine 68.1% (928). Within noise of the haversine grain — the ~68.1% coord-grain F1 is robust to the co-location method, not an artifact of the 50 m threshold.
 
 **Takeaways:** (1) The dedup model's REAL quality is the **org-name F1 ~60.7%**, not the NPI-level 53.6% — the difference was NPI over-segmentation, not model error. (2) The #625 lever was the YARDSTICK, not the scorer: the corroboration-feature experiment (reverted) couldn't move precision because the over-merge was mostly correct. (3) The remaining org-name over-merge (92 clusters) is the genuine frontier — small, approaching the ceiling's ~1.6% irreducible (`2026-06-16-dedup-ceiling.md`). (4) Trust the large eval: a 50-NPI smoke misled on the site delta (+5–7pp vs this run's ±2pp).
 

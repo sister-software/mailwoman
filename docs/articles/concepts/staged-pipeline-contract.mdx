@@ -10,7 +10,7 @@ tags:
 
 # The pipeline contract
 
-You don't have to take Mailwoman's pipeline as-is. The runtime coordinator (`createRuntimePipeline`) accepts each of the six stages as an injectable function or interface; an integrator can swap any of them for a custom implementation without forking the core.
+You don't have to take Mailwoman's pipeline as-is. The runtime coordinator (`createRuntimePipeline`) accepts each pipeline stage as an injectable function or interface; an integrator can swap any of them for a custom implementation without forking the core.
 
 This article is the practical "how do I plug in" companion to:
 
@@ -29,6 +29,9 @@ interface RuntimePipelineStages {
 	computeQueryShape?: (input: NormalizedInputLite | string, opts?: { locale?: string }) => QueryShapeLite
 	detectLocale?: (input: NormalizedInputLite, shape: QueryShapeLite, opts?: { hint?: LocaleTag }) => Promise<LocaleHint>
 	classifyKind?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<QueryKindResult>
+	// Coarse country router (#244). Soft prior for the resolver's re-rank, never the classifier;
+	// off in the bare core coordinator (byte-stable), wired on by default in the `mailwoman` package.
+	placeCountry?: (normalizedText: string) => { country: string | null; confidence: number; posterior?: Record&lt;string, number&gt; }
 	groupPhrases?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise&lt;PhraseProposal[]&gt;
 	classifier?: { parse(text: string, opts?: ClassifierOpts): Promise&lt;AddressTree&gt; }
 	fst?: FstMatcherLike  // FST gazetteer matcher — produces emission biases during classification
@@ -36,7 +39,7 @@ interface RuntimePipelineStages {
 }
 ```
 
-Every stage is **optional**. When you omit one, the coordinator either substitutes a no-op stub (`normalize`, `computeQueryShape`, `detectLocale`, `classifyKind`) or skips the stage entirely (`classifier`, `resolver`).
+Every stage is **optional**. When you omit one, the coordinator either substitutes a no-op stub (`normalize`, `computeQueryShape`, `detectLocale`, `classifyKind`) or skips the stage entirely (`classifier`, `placeCountry`, `resolver`).
 
 ### Decode-time constraint layers (v4.3.0+)
 

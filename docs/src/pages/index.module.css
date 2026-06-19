@@ -5,9 +5,10 @@
 .heroBanner {
 	padding: 5rem 0 4rem;
 	text-align: center;
-	/* Brand gradient: magenta → electric blue. Same in both themes — this is the
-	   hero surface, not chrome, so it stays full-saturation regardless of mode. */
-	background: linear-gradient(135deg, hsl(318.62deg 100% 50%) 0%, hsl(249.43deg 100% 50%) 100%);
+	background:
+		linear-gradient(135deg, hsl(318.62deg 100% 50.01% / 55%), hsl(267.59deg 100% 50% / 34%)) repeat scroll 0% 0% / auto
+			padding-box border-box,
+		rgb(33, 36, 44) none repeat scroll 0% 0% / auto padding-box border-box;
 	color: #fff;
 	overflow: hidden;
 }

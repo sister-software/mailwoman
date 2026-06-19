@@ -20,7 +20,7 @@ outright rather than papered over.
 **Pipeline.** The tokenizer is a TR-29 lexer that emits typed tokens — including punctuation
 types (`COMMA`, `HYPHEN`, `DASH`, `SEMICOLON`, `PERIOD`, `COLON`, `PUNCT_OPEN`, `PUNCT_CLOSE`)
 ([github.com/openvenues/libpostal](https://github.com/openvenues/libpostal),
-[mapzen.com/blog/inside-libpostal](https://www.mapzen.com/blog/inside-libpostal/)). Before the
+[mapzen.com/research/inside-libpostal](https://www.mapzen.com/research/inside-libpostal/)). Before the
 CRF, the input string gets NFC compose + lowercase + simple Latin-ASCII
 (`ADDRESS_PARSER_NORMALIZE_STRING_OPTIONS` in `src/address_parser.h`), and each token gets
 `NORMALIZE_TOKEN_DELETE_FINAL_PERIOD | NORMALIZE_TOKEN_DELETE_ACRONYM_PERIODS |
@@ -60,7 +60,7 @@ i.e. for _matching_, libpostal's answer is "emit every variant," not "pick the r
 **Training data.** Generated from OSM/OpenAddresses via the OpenCage address-formatting
 templates, which include each country's native separators; the stated goal was that the parser
 should handle input "potentially without the commas"
-([Inside Libpostal](https://www.mapzen.com/blog/inside-libpostal/)). The parser trains on
+([Inside Libpostal](https://www.mapzen.com/research/inside-libpostal/)). The parser trains on
 multiple surface variants (accents kept, stripped, transliterated) rather than one canonical
 form ([part 2](https://medium.com/@albarrentine/statistical-nlp-on-openstreetmap-part-2-80405b988718)).
 Exact separator-dropout probabilities are not documented; inferred from the issue record below,
