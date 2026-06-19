@@ -183,8 +183,8 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover, scal
 	const isLog = scaleMode === "log"
 
 	// In log mode, we map y through log10 and work in log-space.
-	const { xMin, xMax, yMin, yMax, yMinData, yMaxData } = useMemo(() => {
-		if (allPoints.length === 0) return { xMin: 0, xMax: 1, yMin: 0, yMax: 1, yMinData: 0, yMaxData: 1 }
+	const { xMin, xMax, yMin, yMax, yMinData } = useMemo(() => {
+		if (allPoints.length === 0) return { xMin: 0, xMax: 1, yMin: 0, yMax: 1, yMinData: 0 }
 		let xmn = Infinity,
 			xmx = -Infinity,
 			ymn = Infinity,
@@ -198,16 +198,26 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover, scal
 		const yPad = (ymx - ymn) * 0.05 || 0.01
 		const yMinData = ymn - yPad
 		const yMaxData = ymx + yPad
-		if (!isLog) return { xMin: xmn, xMax: xmx, yMin: yMinData, yMax: yMaxData, yMinData, yMaxData }
-		// Log scale: clamp floor above zero, map to log10 space
-		const logFloor = Math.max(yMinData, 1e-9)
+		if (!isLog) return { xMin: xmn, xMax: xmx, yMin: yMinData, yMax: yMaxData, yMinData }
+		// Log scale: the floor must come from the smallest *positive* data value, not the
+		// linearly-padded minimum — otherwise a metric that touches/approaches zero (F1 scores
+		// start near 0, val_loss can be tiny) drags the floor to ~0 and the axis spans many
+		// empty decades, squashing the real data into a sliver. Pad in log-space, not linear.
+		let posMin = Infinity
+		for (const p of allPoints) {
+			if (p.value > 0 && p.value < posMin) posMin = p.value
+		}
+		if (!Number.isFinite(posMin)) posMin = 1e-6 // all values non-positive; nominal floor
+		const posMax = Math.max(ymx, posMin * 10)
+		const logMin = Math.log10(posMin)
+		const logMax = Math.log10(posMax)
+		const logPad = (logMax - logMin) * 0.05 || 0.05
 		return {
 			xMin: xmn,
 			xMax: xmx,
-			yMin: Math.log10(logFloor),
-			yMax: Math.log10(Math.max(yMaxData, logFloor * 1.01)),
-			yMinData: logFloor,
-			yMaxData: yMaxData,
+			yMin: logMin - logPad,
+			yMax: logMax + logPad,
+			yMinData: posMin,
 		}
 	}, [allPoints, isLog])
 
@@ -220,7 +230,8 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover, scal
 	)
 	const yScale = useCallback(
 		(y: number) => {
-			const vy = isLog ? Math.log10(Math.max(y, yMinData * 1e-3)) : y
+			// Clamp ≤0 values to the positive floor so they rest on the axis bottom (log10(0) = -∞).
+			const vy = isLog ? Math.log10(Math.max(y, yMinData)) : y
 			return SVG_PAD.top + plotH - ((vy - yMin) / (yMax - yMin || 1)) * plotH
 		},
 		[yMin, yMax, plotH, isLog, yMinData]
