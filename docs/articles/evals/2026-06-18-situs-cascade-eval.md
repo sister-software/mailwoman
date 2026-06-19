@@ -49,6 +49,17 @@ admin, per-state shards). **Tier share: address_point 79.8%, interpolated 8.2%, 
 12% admin tail — rows in places with no situs/interpolation point coverage, where the centroid is
 the honest best estimate.
 
+**Update (post-fix, 2026-06-19):** characterizing that 12% admin tail (#723) found 54% of it
+recoverable with no new data, and two fixes from this diagnostic's follow-up landed it on the same
+10k rows — the directional-quadrant street-key fold (`d1b8bcbe`: a quadrant the model mis-tagged
+`unit`, "Taylor Street NE") and the US-gated 5-digit-house-number-as-ZIP relabel (`5977ce4d`:
+"24588 Outback Trl" → house_number, with the FR reversed-order #560 shard left untouched, gate-
+verified `fr.house_number` flat). Re-measured: **address_point 79.8 → 83.5%, interpolated 8.2 →
+9.7%, admin 12.0 → 6.8%; within 100 m 85.9 → 90.0%, within 1 km 90.0 → 94.8%, cascade p99 18.3 →
+10.9 km.** The admin tail is now under 7%, and the remaining bulk is a situs shard theme-reselect
+(the SD/IL holes are in Overture's OpenAddresses theme, not the sparser NAD theme we ingested), not
+a coverage gap — #723.
+
 ## Why this matters
 
 This is the same trap as the #375 localadmin scoring artifact and the #566 reconcile regression:

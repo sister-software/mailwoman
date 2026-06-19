@@ -37,10 +37,10 @@ model-index:
             value: 0.0
             name: coordinate p50 km — full geocode cascade (with situs + interpolation data layer)
           - type: distance
-            value: 1.0
+            value: 0.1
             name: coordinate p90 km — full geocode cascade (with situs + interpolation data layer)
           - type: accuracy
-            value: 0.859
+            value: 0.900
             name: within 100 m — full geocode cascade (with situs + interpolation data layer)
 ---
 
@@ -126,15 +126,15 @@ anchor-on, currently shipped model:**
 | region-match | 99.9% |
 | coordinate p50 — admin-centroid tier | 3.3 km |
 | coordinate p50 — full geocode cascade | **0.0 km** |
-| coordinate p90 — full geocode cascade | **1.0 km** |
-| within 100 m — full geocode cascade | **85.9%** |
+| coordinate p90 — full geocode cascade | **0.1 km** |
+| within 100 m — full geocode cascade | **90.0%** |
 
 **The two coordinate tiers matter.** The parser plus the admin gazetteer alone
 resolve to the locality **centroid** — legitimately a few km from an edge address
 (p50 3.3 km). The full geocode pipeline (`mailwoman`'s `geocode` cascade) wires a
 per-state situs + interpolation data layer on top and resolves the actual point:
-**79.8% of US addresses land on an exact address-point, 8.2% on a street
-interpolation, and only 12% fall back to the centroid — p50 0.0 km, 85.9% within
+**83.5% of US addresses land on an exact address-point, 9.7% on a street
+interpolation, and under 7% fall back to the centroid — p50 0.0 km, 90.0% within
 100 m.** That data layer is the released data the geocoder consumes, not part of
 this weights package; see the situs-cascade eval under
 [`docs/articles/evals/`](https://mailwoman.sister.software) for the breakdown.
