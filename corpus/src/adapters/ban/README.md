@@ -37,7 +37,7 @@ One `CanonicalRow` per BAN record:
 - `components`: `{ house_number, street, postcode, locality }`
 - `country`: `"FR"`
 - `locale`: `"fr-FR"`
-- `license`: `"ODbL-1.0"` (Licence Ouverte 2.0 / ODbL-compatible)
+- `license`: `"Licence Ouverte 2.0"` — BAN is dual-licensed (Licence Ouverte 2.0 OR ODbL); we elect Licence Ouverte (#26 Tier B, allowed for training with attribution). Model card must attribute BAN.
 - `source_id`: `"ban-<csv-id>"` (BAN's native `id` column is stable)
 
 `region` is **not** populated — BAN doesn't carry it. The wof-admin /

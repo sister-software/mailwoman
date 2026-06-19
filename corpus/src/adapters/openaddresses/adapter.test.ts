@@ -40,10 +40,11 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
-		// CC-BY-SA-4.0 row is filtered by default → 5 rows
-		expect(manifest.yielded).toBe(5)
+		// Default-include (2026-06-19 flip): the CC-BY-SA-4.0 row is KEPT — exclusion is a deliberate
+		// build-level act now (`--exclude-share-alike`), not a silent adapter default (#26) → 6 rows.
+		expect(manifest.yielded).toBe(6)
 		const rows = await loadRows()
-		expect(rows).toHaveLength(5)
+		expect(rows).toHaveLength(6)
 		expect(rows.every((r) => r.country === "US")).toBe(true)
 		expect(rows.every((r) => r.source === OPENADDRESSES_ADAPTER_ID)).toBe(true)
 	})
@@ -244,20 +245,26 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		expect(a.sha256).toBe(b.sha256)
 	})
 
-	it("filters share-alike licenses (ODbL, CC-BY-SA, CC-SA) by default", async () => {
+	it("INCLUDES share-alike by default; drops only on explicit allowShareAlike:false (#26 exclusion is deliberate)", async () => {
+		// Default-include (2026-06-19 flip): the CC-BY-SA-4.0 row (e5f6…) is PRESENT — no silent drop.
+		// Exclusion is now a deliberate BUILD-level act (`--exclude-share-alike`), not an adapter default.
 		await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
 			outputDir: scratch,
 			corpusVersion: "0.1.0",
 		})
-		const rows = await loadRows()
-		// CC-BY-SA-4.0 row (e5f6…) must be absent by default
-		expect(rows.find((r) => r.source_id === "openaddresses-e5f6071829304152")).toBeUndefined()
-		// All surviving rows must have non-share-alike licenses
-		for (const r of rows) {
-			expect(r.license).not.toMatch(/^ODbL|^CC-BY-SA|^CC-SA/i)
-		}
+		expect((await loadRows()).find((r) => r.source_id === "openaddresses-e5f6071829304152")).toBeDefined()
+		// The explicit adapter-scoped drop still works (vestigial escape hatch; build-level is the norm).
+		await runAdapter({
+			adapter: createOpenaddressesAdapter({ allowShareAlike: false }),
+			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
+			outputDir: scratch,
+			corpusVersion: "0.1.0",
+		})
+		const dropped = await loadRows()
+		expect(dropped.find((r) => r.source_id === "openaddresses-e5f6071829304152")).toBeUndefined()
+		for (const r of dropped) expect(r.license).not.toMatch(/^ODbL|^CC-BY-SA|^CC-SA/i)
 	})
 
 	it("passes share-alike rows through when allowShareAlike is set", async () => {

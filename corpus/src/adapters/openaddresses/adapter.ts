@@ -40,6 +40,7 @@ import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
 import { stableSourceId } from "../../adapter.js"
 import { formatAddress, reconcileComponents } from "../../format.js"
+import { SHARE_ALIKE_PATTERN } from "../../license.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
 
 export const OPENADDRESSES_ADAPTER_ID = "openaddresses"
@@ -89,13 +90,6 @@ function parseFeatureLine(line: string): OaProperties | null {
 	return normalizeProperties(obj.properties)
 }
 
-/**
- * Licenses that require share-alike or create a copyleft obligation on derived works. Rows carrying
- * any of these licenses are dropped by default because they would contaminate proprietary-weights
- * training. Per the licensing strategy (#26).
- */
-const SHARE_ALIKE_PATTERN = /^ODbL|^Open Database License|^CC-BY-SA|^CC-SA/i
-
 export interface OpenaddressesAdapterOptions {
 	/**
 	 * Per-row license used when a Feature lacks an explicit `LICENSE` property. Defaults to
@@ -105,8 +99,11 @@ export interface OpenaddressesAdapterOptions {
 	defaultLicense?: string
 
 	/**
-	 * When true, rows with share-alike licenses (ODbL, CC-BY-SA, CC-SA) are NOT filtered. Default
-	 * false — share-alike rows are dropped per the licensing strategy (#26).
+	 * Per-adapter share-alike drop. Default **true** (include) as of 2026-06-19: exclusion is a
+	 * deliberate BUILD-level act (`buildCorpus({ excludeLicenses })` / `--exclude-share-alike`), NOT
+	 * a silent adapter default (#26 — "purposely exclude, don't opt in to include"). Set false only
+	 * for an explicit adapter-scoped drop; the build-level `--exclude-share-alike` is the normal
+	 * path.
 	 */
 	allowShareAlike?: boolean
 }
@@ -117,7 +114,7 @@ export interface OpenaddressesAdapterOptions {
  */
 export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {}): CorpusAdapter {
 	const defaultLicense = opts.defaultLicense ?? OPENADDRESSES_DEFAULT_LICENSE
-	const allowShareAlike = opts.allowShareAlike ?? false
+	const allowShareAlike = opts.allowShareAlike ?? true
 
 	return {
 		id: OPENADDRESSES_ADAPTER_ID,

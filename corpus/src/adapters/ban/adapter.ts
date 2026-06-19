@@ -18,8 +18,12 @@
  *   left for the wof-postalcode + wof-admin cross-reference at corpus build time (a future pass;
  *   for Phase 1 the row's region is simply absent).
  *
- *   License: ODbL / Licence Ouverte. Stamped onto every row as `ODbL-1.0` (the OpenStreetMap-
- *   compatible label most consumers expect).
+ *   License: the official BAN (adresse.data.gouv.fr) is DUAL-licensed — Licence Ouverte 2.0 (Etalab,
+ *   attribution-only) OR ODbL (share-alike). We ELECT Licence Ouverte 2.0 (issue #26 Tier B:
+ *   allowed for training with attribution; the ODbL option's share-alike obligation would defeat
+ *   the proprietary-weights goal). Stamped onto every row as `Licence Ouverte 2.0` — NOT the older
+ *   conservative `ODbL-1.0` label, which wrongly read as Tier-C-denied in the corpus license audit.
+ *   The model card MUST carry the BAN attribution (Tier B obligation).
  *
  *   The adapter is streaming-aware: it uses `csv-parse` in streaming mode so a 25M-row dump never
  *   sits in memory. Honors `opts.limit` for fixture / smoke runs, `opts.signal` for cancellation,
@@ -80,7 +84,7 @@ function composeRaw(house: string, street: string, postcode: string, locality: s
 export function createBanAdapter(): CorpusAdapter {
 	return {
 		id: BAN_ADAPTER_ID,
-		defaultLicense: "ODbL-1.0",
+		defaultLicense: "Licence Ouverte 2.0",
 		description: "Base Adresse Nationale (FR): house-number-level street addresses (~25M rows).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
@@ -140,7 +144,7 @@ export function createBanAdapter(): CorpusAdapter {
 						source: BAN_ADAPTER_ID,
 						source_id: sourceId,
 						corpus_version: "",
-						license: "ODbL-1.0",
+						license: "Licence Ouverte 2.0",
 					}
 					emitted++
 				}

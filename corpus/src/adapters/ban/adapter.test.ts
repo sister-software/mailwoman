@@ -25,7 +25,7 @@ afterEach(async () => {
 })
 
 describe("ban adapter against fixture sample.csv", () => {
-	it("emits a row per CSV record with FR country + ODbL license", async () => {
+	it("emits a row per CSV record with FR country + Licence Ouverte (the elected BAN license, #26)", async () => {
 		const manifest = await runAdapter({
 			adapter: createBanAdapter(),
 			adapterOptions: { inputPath: fixtureCsv },
@@ -41,7 +41,7 @@ describe("ban adapter against fixture sample.csv", () => {
 		expect(rows).toHaveLength(7)
 		expect(rows.every((r) => r.country === "FR")).toBe(true)
 		expect(rows.every((r) => r.locale === "fr-FR")).toBe(true)
-		expect(rows.every((r) => r.license === "ODbL-1.0")).toBe(true)
+		expect(rows.every((r) => r.license === "Licence Ouverte 2.0")).toBe(true)
 		expect(rows.every((r) => r.source === BAN_ADAPTER_ID)).toBe(true)
 	})
 

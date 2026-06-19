@@ -9,6 +9,7 @@
 
 import { defaultAdapterRegistry } from "../src/adapter.js"
 import { buildCorpus } from "../src/build.js"
+import { compileLicenseExcludes, SHARE_ALIKE_PATTERN } from "../src/license.js"
 // Import adapters so they self-register
 import "../src/adapters/index.js"
 
@@ -42,9 +43,23 @@ const adapterInputs: Record<string, { inputPath: string; country?: string }> = {
 
 async function main() {
 	const start = Date.now()
+	// Deliberate license exclusion (#26): default includes EVERYTHING. Pass `--exclude-share-alike`
+	// for a proprietary-weights build (drops ODbL/CC-BY-SA/CC-SA), or `--exclude-licenses "X,Y"` to
+	// purposely drop named license prefixes. Exclusion is an explicit operator act, never a default.
+	const argv = process.argv.slice(2)
+	const excludeLicenses: RegExp[] = []
+	const exIdx = argv.indexOf("--exclude-licenses")
+	if (exIdx >= 0 && argv[exIdx + 1]) excludeLicenses.push(...compileLicenseExcludes(argv[exIdx + 1]!))
+	if (argv.includes("--exclude-share-alike")) excludeLicenses.push(SHARE_ALIKE_PATTERN)
+
 	process.stderr.write(`=== Corpus v${CORPUS_VERSION} build ===\n`)
 	process.stderr.write(`Output: ${OUTPUT}\n`)
-	process.stderr.write(`Adapters: ${Object.keys(adapterInputs).join(", ")}\n\n`)
+	process.stderr.write(`Adapters: ${Object.keys(adapterInputs).join(", ")}\n`)
+	process.stderr.write(
+		excludeLicenses.length > 0
+			? `License exclusion: ${excludeLicenses.map((r) => r.source).join(" | ")}\n\n`
+			: `License exclusion: NONE — all licenses included (#26: pass --exclude-share-alike for proprietary weights)\n\n`
+	)
 
 	const manifest = await buildCorpus({
 		outputDir: OUTPUT,
@@ -52,6 +67,7 @@ async function main() {
 		adapterInputs,
 		adapters: defaultAdapterRegistry.list(),
 		synthesize: true,
+		excludeLicenses,
 	})
 
 	const elapsed = ((Date.now() - start) / 1000 / 60).toFixed(1)
