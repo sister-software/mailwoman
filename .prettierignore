@@ -2,6 +2,7 @@
 
 ## Static Files
 **/LICENSE
+**/LICENSE.md
 
 ## Build asset directories
 /build
