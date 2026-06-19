@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Input-shape router (#478 increment 2) — the arbitration *prior*.
+ *   Input-shape router (#478 increment 2) — the arbitration _prior_.
  *
- *   A pure, deterministic classification of the input's *shape* into a default {@link PolicyMode}
- *   that seeds the whole per-component policy table before per-tag config overlays. The intuition
- *   (the parity capstone, #478): the old rules system owns clean structured Latin addresses (the
- *   arena's `v0-only` column), neural owns noisy / off-map / non-Latin input, and when both signals
- *   are weak the honest move is to *abstain* rather than emit a confident-wrong parse.
+ *   A pure, deterministic classification of the input's _shape_ into a default {@link PolicyMode} that
+ *   seeds the whole per-component policy table before per-tag config overlays. The intuition (the
+ *   parity capstone, #478): the old rules system owns clean structured Latin addresses (the arena's
+ *   `v0-only` column), neural owns noisy / off-map / non-Latin input, and when both signals are
+ *   weak the honest move is to _abstain_ rather than emit a confident-wrong parse.
  *
  *   This module is the decision logic only. It does NOT wire itself into a pipeline: the consumer
  *   (`policyRegistryFromRoute` → the proposal pipeline) decides whether to apply it, and the
@@ -17,7 +17,7 @@
  *   unified (#478 increment 3). Keeping the prior pure and exhaustively unit-tested here de-risks
  *   that wiring — the prior is proven correct in isolation before any behavior changes.
  *
- *   Inputs are deliberately *structural lite* types (not the concrete `QueryKindResult` /
+ *   Inputs are deliberately _structural lite_ types (not the concrete `QueryKindResult` /
  *   `QueryShapeLite` / `CoarsePrediction`) so this file has zero imports beyond `PolicyMode` and is
  *   safe to import from anywhere. The real signals satisfy these shapes by construction.
  */
@@ -34,7 +34,8 @@ export interface RouterKindSignal {
 
 /** Minimal query-shape signal. Compatible with `QueryShapeLite` (`core/pipeline/types.ts`). */
 export interface RouterShapeSignal {
-	/** Broad character category: `numeric` | `alpha` | `alphanumeric` | `cjk` | `cyrillic` | `arabic` | `mixed`. */
+	/** Broad character category: `numeric` | `alpha` | `alphanumeric` | `cjk` | `cyrillic` | `arabic`
+| `mixed`. */
 	characterClass?: string
 }
 
@@ -61,10 +62,10 @@ export interface InputShapeRoute {
 	 */
 	defaultMode: PolicyMode
 	/**
-	 * True when both sources are weak (low kind confidence and/or the placer abstained on a
-	 * non-clean shape). A first-class outcome reserved for the resolver/admin honest-radius
-	 * downgrade — but it has NO consumer until #478 increment 3, so for now it is computed and
-	 * reported only. `defaultMode` is `both` when this is set (drop nothing).
+	 * True when both sources are weak (low kind confidence and/or the placer abstained on a non-clean
+	 * shape). A first-class outcome reserved for the resolver/admin honest-radius downgrade — but it
+	 * has NO consumer until #478 increment 3, so for now it is computed and reported only.
+	 * `defaultMode` is `both` when this is set (drop nothing).
 	 */
 	abstain: boolean
 	/** Human-readable trace of which branch fired — for telemetry and test assertions. */
@@ -72,14 +73,10 @@ export interface InputShapeRoute {
 }
 
 /** Kinds the rules system handles well when the rest of the shape is clean. */
-const RULE_CLEAN_KINDS: ReadonlySet<string> = new Set([
-	"structured_address",
-	"intersection",
-	"po_box",
-	"postcode_only",
-])
+const RULE_CLEAN_KINDS: ReadonlySet<string> = new Set(["structured_address", "intersection", "po_box", "postcode_only"])
 
-/** Non-Latin scripts where the Latin-centric rules system is weak — hand to neural regardless of kind. */
+/** Non-Latin scripts where the Latin-centric rules system is weak — hand to neural regardless of
+kind. */
 const OOD_SCRIPTS: ReadonlySet<string> = new Set(["cjk", "cyrillic", "arabic"])
 
 /** Character classes that count as "Latin / clean" for the `rule_preferred` guard. */
@@ -97,10 +94,11 @@ export const CLEAN_KIND_CONFIDENCE = 0.8
  *
  * The decision tree (first match wins):
  *
- * 0. **OOD script** (`cjk` / `cyrillic` / `arabic`) → `neural_preferred`. Script dominates — rules
- *    are Latin-centric, so non-Latin input is neural's regardless of kind.
- * 1. **Clean structured** — a {@link RULE_CLEAN_KINDS} kind at confidence ≥ {@link CLEAN_KIND_CONFIDENCE},
- *    a Latin/unknown character class, and the placer not abstained → `rule_preferred`. v0's home turf.
+ * 0. **OOD script** (`cjk` / `cyrillic` / `arabic`) → `neural_preferred`. Script dominates — rules are
+ *    Latin-centric, so non-Latin input is neural's regardless of kind.
+ * 1. **Clean structured** — a {@link RULE_CLEAN_KINDS} kind at confidence ≥
+ *    {@link CLEAN_KIND_CONFIDENCE}, a Latin/unknown character class, and the placer not abstained →
+ *    `rule_preferred`. v0's home turf.
  * 2. **Both weak** — the placer abstained, or kind confidence is below the cutoff → `abstain` (mode
  *    `both`, drop nothing).
  * 3. **Otherwise** (confident, Latin, placer-OK, but not a clean kind — `landmark`, `vague`,
@@ -125,7 +123,12 @@ export function routeInputShape(
 
 	// 1. Clean structured Latin address with a confident clean kind and no placer abstention → rules.
 	const latinOrUnknown = cc === undefined || LATIN_CLASSES.has(cc)
-	if (RULE_CLEAN_KINDS.has(kind.kind) && kind.confidence >= CLEAN_KIND_CONFIDENCE && latinOrUnknown && !placerAbstained) {
+	if (
+		RULE_CLEAN_KINDS.has(kind.kind) &&
+		kind.confidence >= CLEAN_KIND_CONFIDENCE &&
+		latinOrUnknown &&
+		!placerAbstained
+	) {
 		return {
 			defaultMode: "rule_preferred",
 			abstain: false,

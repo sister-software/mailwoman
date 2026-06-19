@@ -14,10 +14,10 @@ mean — `scripts/eval/overture-es-postcode-centroids.ts`, 10,850 ES postcodes) 
 ran the existing harness (`scripts/eval/postcode-anchor-accuracy.ts`) on the 3,000-row ES eval
 (`openaddresses-es-sample.jsonl`) for each source.
 
-| source | postcodes | placed (eval) | p50 km | p90 km | p99 km | within 10 km | within 25 km |
-| --- | --: | --: | --: | --: | --: | --: | --: |
-| GeoNames (shipped) | 11,331 | **98.5%** | 1.0 | 6.3 | 27.9 | 95.2% | 98.6% |
-| Overture | 10,850 | **100.0%** | 1.0 | 6.3 | 27.9 | 95.2% | 98.7% |
+| source             | postcodes | placed (eval) | p50 km | p90 km | p99 km | within 10 km | within 25 km |
+| ------------------ | --------: | ------------: | -----: | -----: | -----: | -----------: | -----------: |
+| GeoNames (shipped) |    11,331 |     **98.5%** |    1.0 |    6.3 |   27.9 |        95.2% |        98.6% |
+| Overture           |    10,850 |    **100.0%** |    1.0 |    6.3 |   27.9 |        95.2% |        98.7% |
 
 ## Reading
 

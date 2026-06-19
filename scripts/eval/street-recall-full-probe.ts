@@ -3,20 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #375 street-recall-on-FULL-addresses probe — DeepSeek's blind-spot guard (consult 2026-06-18) for the
- *   v1.7.0 balanced shard. Emphasizing `bare-locality` ("City, STATE" with no street) risks the model
- *   over-emitting locality and EATING the street's leading tokens on FULL addresses — a regression moderate
- *   enough to clear the coarse `us.street` floor while breaking the highest-traffic case. This measures
- *   street exact-match on the held-out US golden subset where gold has BOTH a street and a locality span,
- *   compares a baseline (v1.5.1) to a candidate, and tallies how often a street regression coincides with
- *   the gold street's leading token landing in the candidate's locality (the "eat" mechanism). The v1.7.0
- *   gate aborts/flags if the candidate drops >1pp below v1.5.1 here.
+ *   #375 street-recall-on-FULL-addresses probe — DeepSeek's blind-spot guard (consult 2026-06-18) for
+ *   the v1.7.0 balanced shard. Emphasizing `bare-locality` ("City, STATE" with no street) risks the
+ *   model over-emitting locality and EATING the street's leading tokens on FULL addresses — a
+ *   regression moderate enough to clear the coarse `us.street` floor while breaking the
+ *   highest-traffic case. This measures street exact-match on the held-out US golden subset where
+ *   gold has BOTH a street and a locality span, compares a baseline (v1.5.1) to a candidate, and
+ *   tallies how often a street regression coincides with the gold street's leading token landing in
+ *   the candidate's locality (the "eat" mechanism). The v1.7.0 gate aborts/flags if the candidate
+ *   drops >1pp below v1.5.1 here.
  *
- *   Run: node --experimental-strip-types scripts/eval/street-recall-full-probe.ts \
- *     --baseline /mnt/playpen/mailwoman-data/models/quantized/model-v151-step-40000-int8.onnx \
- *     --candidate ./out/v170/model.onnx \
- *     --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
- *     --model-card neural-weights-en-us/model-card.json --n 2660
+ *   Run: node --experimental-strip-types scripts/eval/street-recall-full-probe.ts\
+ *   --baseline /mnt/playpen/mailwoman-data/models/quantized/model-v151-step-40000-int8.onnx\
+ *   --candidate ./out/v170/model.onnx\
+ *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model-card neural-weights-en-us/model-card.json --n 2660
  */
 
 import { readFileSync } from "node:fs"
@@ -80,8 +81,14 @@ for (const row of rows) {
 }
 
 const pct = (n: number) => `${((100 * n) / full).toFixed(1)}%`
-console.log(`\n== street-recall-full probe — base ${args.baseline} vs cand ${args.candidate} (${full} full-address rows) ==`)
+console.log(
+	`\n== street-recall-full probe — base ${args.baseline} vs cand ${args.candidate} (${full} full-address rows) ==`
+)
 console.log(`  base street exact: ${baseOk}/${full} (${pct(baseOk)})`)
 console.log(`  cand street exact: ${candOk}/${full} (${pct(candOk)})`)
-console.log(`  delta: ${((100 * (candOk - baseOk)) / full).toFixed(2)}pp   regressions: ${regr}  (of which street→locality 'eaten': ${eaten})`)
-console.log(`  GUARD: candidate within 1pp of baseline (DeepSeek blind-spot: bare-locality eating the street's leading tokens)`)
+console.log(
+	`  delta: ${((100 * (candOk - baseOk)) / full).toFixed(2)}pp   regressions: ${regr}  (of which street→locality 'eaten': ${eaten})`
+)
+console.log(
+	`  GUARD: candidate within 1pp of baseline (DeepSeek blind-spot: bare-locality eating the street's leading tokens)`
+)

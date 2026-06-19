@@ -39,7 +39,7 @@ Everything must go through **R2 → a container-side `rclone` in a `sync_*` func
    ~30 GB base unless it's actually missing.
 5. **Run the sync:** `modal run scripts/modal/train_remote.py::sync_v0XX`. Confirm every verify line is `True`.
 6. **Tokenizer:** confirm the recipe's `tokenizer_dir` already exists on the volume (`modal volume ls
-   mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps it OUT of the variable
+mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps it OUT of the variable
    set; a new tokenizer is a separate, intended change.
 7. **Launch the GPU train (the real spend):**
    `modal run -d scripts/modal/train_remote.py --config <recipe>.yaml --resume none` (detached; A100).

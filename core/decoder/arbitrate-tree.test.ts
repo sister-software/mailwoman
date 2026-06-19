@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   #478 inc 3 fix-v1: containment-preserving arbitration. Verifies the edit rules (relabel same-span
- *   tag disagreements, add rule-only non-overlapping missing tags) and — the load-bearing case — that
- *   neural's street decomposition survives a coarser rule street (the leg-2 precondition bug).
+ *   tag disagreements, add rule-only non-overlapping missing tags) and — the load-bearing case —
+ *   that neural's street decomposition survives a coarser rule street (the leg-2 precondition
+ *   bug).
  */
 
 import { Span } from "@mailwoman/core/tokenization"
@@ -15,7 +16,14 @@ import { applyRuleArbitration } from "./arbitrate-tree.js"
 import type { AddressNode, AddressTree } from "./types.js"
 
 function rp(component: ComponentTag, body: string, start: number, confidence = 1): ClassificationProposal {
-	return { span: new Span(body, start), component, confidence, source: "rule", source_id: "v0", penalty: 0 } as ClassificationProposal
+	return {
+		span: new Span(body, start),
+		component,
+		confidence,
+		source: "rule",
+		source_id: "v0",
+		penalty: 0,
+	} as ClassificationProposal
 }
 function node(tag: ComponentTag, value: string, start: number, end: number, children: AddressNode[] = []): AddressNode {
 	return { tag, value, start, end, confidence: 0.9, children, source: "neural" }
@@ -37,17 +45,18 @@ describe("applyRuleArbitration — relabel (same span, different tag)", () => {
 	})
 
 	it("relabels nested children too (walks the whole tree)", () => {
-		const out = applyRuleArbitration(tree(node("venue", "Foo", 0, 3, [node("locality", "Bar", 5, 8)])), [rp("region", "Bar", 5)])
+		const out = applyRuleArbitration(tree(node("venue", "Foo", 0, 3, [node("locality", "Bar", 5, 8)])), [
+			rp("region", "Bar", 5),
+		])
 		expect(out.roots[0]!.children[0]).toMatchObject({ tag: "region", source: "rule" })
 	})
 })
 
 describe("applyRuleArbitration — preserves neural structure (the precondition fix)", () => {
 	it("keeps neural street + street_suffix; ignores the coarser rule street that subsumes them", () => {
-		const out = applyRuleArbitration(
-			tree(node("street", "Seminary", 4, 12), node("street_suffix", "Dr", 13, 15)),
-			[rp("street", "Seminary Dr", 4, 0.82)]
-		)
+		const out = applyRuleArbitration(tree(node("street", "Seminary", 4, 12), node("street_suffix", "Dr", 13, 15)), [
+			rp("street", "Seminary Dr", 4, 0.82),
+		])
 		const tags = out.roots.map((r) => r.tag)
 		expect(tags).toContain("street")
 		expect(tags).toContain("street_suffix") // not evicted
@@ -79,7 +88,10 @@ describe("applyRuleArbitration — add rule-only missing tags", () => {
 	})
 
 	it("adds a rule-only tag at most once and keeps roots in span order", () => {
-		const out = applyRuleArbitration(tree(node("street", "Main", 4, 8)), [rp("house_number", "12", 0), rp("house_number", "12", 0)])
+		const out = applyRuleArbitration(tree(node("street", "Main", 4, 8)), [
+			rp("house_number", "12", 0),
+			rp("house_number", "12", 0),
+		])
 		expect(out.roots.map((r) => r.tag)).toEqual(["house_number", "street"])
 	})
 })

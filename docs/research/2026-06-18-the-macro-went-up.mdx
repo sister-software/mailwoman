@@ -16,29 +16,29 @@ It wasn't, and it took three probes to prove it. The same model that scored high
 
 ## What we were trying to fix
 
-Mailwoman's biggest measured weakness is *boundary instability*: the model wobbling on where one part of an address ends and the next begins. A street suffix swallowed into the street name. A French house number that trails the street instead of leading it. The kind of thing that's invisible on a clean "123 Main St, Springfield, IL 62701" and falls apart the moment the punctuation goes missing.
+Mailwoman's biggest measured weakness is _boundary instability_: the model wobbling on where one part of an address ends and the next begins. A street suffix swallowed into the street name. A French house number that trails the street instead of leading it. The kind of thing that's invisible on a clean "123 Main St, Springfield, IL 62701" and falls apart the moment the punctuation goes missing.
 
 So we built a synthetic training shard that puts the gold boundary on exactly those hard cases, mixed it in at a conservative weight, and retrained. It worked — on the boundaries. French street-prefix recognition went from a coin flip (55%) to essentially perfect (99.7%). Every boundary shape moved up. The macro-F1 rose. We had the release notes half-written.
 
 ## The catch
 
-We don't ship on the macro. We ship on a battery of per-locale floors ("don't regress US locality below 72.9," that sort of thing), graded against the *assembled* output: the actual parse a user would get, not the per-token score the trainer optimizes.
+We don't ship on the macro. We ship on a battery of per-locale floors ("don't regress US locality below 72.9," that sort of thing), graded against the _assembled_ output: the actual parse a user would get, not the per-token score the trainer optimizes.
 
-One floor came back red. **US locality: 66.2, floor 72.9.** The retrain that aced the boundaries had dropped six and a half points on locality, on real held-out US addresses, while the aggregate went *up*. The gains were concentrated where we'd added training data; the loss was spread across everything else, and the average happily averaged it away.
+One floor came back red. **US locality: 66.2, floor 72.9.** The retrain that aced the boundaries had dropped six and a half points on locality, on real held-out US addresses, while the aggregate went _up_. The gains were concentrated where we'd added training data; the loss was spread across everything else, and the average happily averaged it away.
 
 This is the trap we've been burned by before, and it has a name on this project: **grade the assembled coordinate, never the label-F1.** We wrote it on the wall. We still almost walked past it.
 
 ## Three probes, one culprit
 
-A failing floor tells you *that* something regressed, not *what*. So we wrote probes.
+A failing floor tells you _that_ something regressed, not _what_. So we wrote probes.
 
-The first asked a simple question of every boundary the model got wrong: is it *confidently* wrong, or is it *uncertain*? If the model spreads its probability mass and shrugs, that's a capacity ceiling — you need a bigger model, and more data is wasted GPU. If it commits hard to the wrong answer, that's a signal problem — more of the right data can flip it. Every failure came back confident. Good: this is fixable with data.
+The first asked a simple question of every boundary the model got wrong: is it _confidently_ wrong, or is it _uncertain_? If the model spreads its probability mass and shrugs, that's a capacity ceiling — you need a bigger model, and more data is wasted GPU. If it commits hard to the wrong answer, that's a signal problem — more of the right data can flip it. Every failure came back confident. Good: this is fixable with data.
 
-The second probe went after the locality drop directly. It took the model *before* the retrain and the model *after*, ran both over 1,616 real US addresses, and isolated every row where locality went from right to wrong. Then it asked where the locality text *went*.
+The second probe went after the locality drop directly. It took the model _before_ the retrain and the model _after_, ran both over 1,616 real US addresses, and isolated every row where locality went from right to wrong. Then it asked where the locality text _went_.
 
-We expected the street to be eating it. It wasn't. That was 3% of the damage. **84% of the regression was the model dropping the locality entirely** on short, bare rows: "LaMoure, ND." "Frannie, Wyoming." "Buckhorn, Wyoming." A town and a state, nothing else, and the model now returned *nothing* for the town.
+We expected the street to be eating it. It wasn't. That was 3% of the damage. **84% of the regression was the model dropping the locality entirely** on short, bare rows: "LaMoure, ND." "Frannie, Wyoming." "Buckhorn, Wyoming." A town and a state, nothing else, and the model now returned _nothing_ for the town.
 
-The mechanism, once you see it, is almost funny. Every example in our hard-case shard had a street before the city — that's what made the boundary hard. So the model learned, a little too well, that *a city is the thing that comes after a street.* Take the street away, hand it a bare "LaMoure, ND," and it no longer recognized LaMoure as a place at all. We didn't teach it a new skill so much as we taught it a superstition.
+The mechanism, once you see it, is almost funny. Every example in our hard-case shard had a street before the city — that's what made the boundary hard. So the model learned, a little too well, that _a city is the thing that comes after a street._ Take the street away, hand it a bare "LaMoure, ND," and it no longer recognized LaMoure as a place at all. We didn't teach it a new skill so much as we taught it a superstition.
 
 ## The lesson we keep re-learning
 

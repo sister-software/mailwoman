@@ -8,37 +8,38 @@
  *   The structural fix for the D2/#719 bug-class (a conventions mask destroying a capability the
  *   model demonstrably HAS): the model card declares, PER TIER × PER address-system × PER tag, the
  *   model's measured per-tag F1 with the conventions mask OFF, plus the mask-ON F1 for any tag a
- *   codex `forbiddenTags` row would suppress. The `createScorer` loader (neural/scorer.ts) reads this
- *   `capabilities` block and FAILS CLOSED when a conventions mask would forbid a tag the model is
- *   CERTIFIED to emit — gated by a DELTA (`maskOffF1 − maskOnF1 > 5pp`), not an absolute floor, so a
- *   tag the model emits at 0.80 is still protected if the mask drops it to 0.0 (the exact #719 shape:
- *   FR `street_prefix` collapsed 80.0 → 0.0 under the old blanket prefix+suffix forbid).
+ *   codex `forbiddenTags` row would suppress. The `createScorer` loader (neural/scorer.ts) reads
+ *   this `capabilities` block and FAILS CLOSED when a conventions mask would forbid a tag the model
+ *   is CERTIFIED to emit — gated by a DELTA (`maskOffF1 − maskOnF1 > 5pp`), not an absolute floor,
+ *   so a tag the model emits at 0.80 is still protected if the mask drops it to 0.0 (the exact #719
+ *   shape: FR `street_prefix` collapsed 80.0 → 0.0 under the old blanket prefix+suffix forbid).
  *
  *   Tiers (the two SHIP-CONFIGs the model is fed under):
+ *
  *   - `server`: anchor + gazetteer channels ON (the production default — what `createScorer` builds).
  *   - `pocket`: anchor ON, gazetteer OFF (the lighter on-device feed; not yet a serving target).
  *
  *   For each tier × locale × {mask-off, mask-on} we run the model and compute UNFOLDED exact-match
  *   per-tag F1 (same machinery as `score-affix.ts` — split `street_prefix`/`street`/`street_suffix`
  *   so the affix capability is measurable, which the folded `per-locale-f1.ts` cannot see). The
- *   classifier is built via the canonical `createScorer` so the channel feed matches the ship config
- *   (the #566/#685 trap), with `overrides.conventions` toggling mask off/on and `overrides.gazetteer`
- *   selecting the tier.
+ *   classifier is built via the canonical `createScorer` so the channel feed matches the ship
+ *   config (the #566/#685 trap), with `overrides.conventions` toggling mask off/on and
+ *   `overrides.gazetteer` selecting the tier.
  *
  *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):
  *
- *     node --experimental-strip-types scripts/eval/gen-capability-manifest.ts \
- *       --model /mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx \
- *       --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
- *       --model-card neural-weights-en-us/model-card.json \
- *       --write
+ *   Node --experimental-strip-types scripts/eval/gen-capability-manifest.ts\
+ *   --model /mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx\
+ *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model-card neural-weights-en-us/model-card.json\
+ *   --write
  *
  *   `--write` patches the `capabilities` block into the card (additive metadata, tabs preserved);
  *   omit it for a dry run that only prints the block.
  */
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
 import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
+import { decodeAsJson } from "@mailwoman/core/decoder"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"

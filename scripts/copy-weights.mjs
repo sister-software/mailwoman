@@ -23,7 +23,8 @@
  *
  *   - `postcode-<cc>.bin` — the compact PCB1 postcode-anchor binary, built from the WOF postcode shard
  *       (`softFeed.postcodeDbByCountry[<cc>]`) via `scripts/build-postcode-binary.ts`.
- *   - `anchor-lexicon-v1.json` — the codex-generated gazetteer-anchor lexicon (`softFeed.gazetteerLexicon`).
+ *   - `anchor-lexicon-v1.json` — the codex-generated gazetteer-anchor lexicon
+ *       (`softFeed.gazetteerLexicon`).
  *
  *   Idempotent. Used by .release-it.json's before:init hook.
  * @import {PathLike} from "node:fs"
@@ -98,9 +99,10 @@ async function main() {
 }
 
 /**
- * Materialize the #718 D1 soft-feed artifacts into a weights workspace: the gazetteer-anchor lexicon
- * (a verbatim copy) + the per-country PCB1 postcode-anchor binary (built fresh from the WOF shard).
- * Both `removeIfPresent` first — same symlink-in-tarball trap the model/tokenizer copy guards against.
+ * Materialize the #718 D1 soft-feed artifacts into a weights workspace: the gazetteer-anchor
+ * lexicon (a verbatim copy) + the per-country PCB1 postcode-anchor binary (built fresh from the WOF
+ * shard). Both `removeIfPresent` first — same symlink-in-tarball trap the model/tokenizer copy
+ * guards against.
  *
  * @param {string} workspace
  * @param {string} dir
@@ -109,7 +111,9 @@ async function materializeSoftFeed(workspace, dir) {
 	// Gazetteer-anchor lexicon (#464) — a small JSON, copied verbatim from the repo source.
 	if (SOURCE_GAZETTEER) {
 		if (!(await exists(SOURCE_GAZETTEER))) {
-			throw new Error(`Missing gazetteer lexicon: ${SOURCE_GAZETTEER}\nSet softFeed.gazetteerLexicon in release.config.json.`)
+			throw new Error(
+				`Missing gazetteer lexicon: ${SOURCE_GAZETTEER}\nSet softFeed.gazetteerLexicon in release.config.json.`
+			)
 		}
 		const dest = resolve(dir, "anchor-lexicon-v1.json")
 		await removeIfPresent(dest)
@@ -122,12 +126,16 @@ async function materializeSoftFeed(workspace, dir) {
 	const country = workspace.replace(/^neural-weights-[a-z]+-/, "")
 	const dbRel = SOFT_FEED.postcodeDbByCountry?.[country]
 	if (!dbRel) {
-		process.stderr.write(`soft-feed: no postcodeDbByCountry entry for "${country}" — skipping ${workspace}/postcode-${country}.bin\n`)
+		process.stderr.write(
+			`soft-feed: no postcodeDbByCountry entry for "${country}" — skipping ${workspace}/postcode-${country}.bin\n`
+		)
 		return
 	}
 	const db = dbRel.startsWith("/") ? dbRel : resolve(dataRoot, "wof", dbRel)
 	if (!existsSync(db)) {
-		throw new Error(`Missing postcode shard for ${country}: ${db}\nSet MAILWOMAN_DATA_ROOT or softFeed.postcodeDbByCountry.`)
+		throw new Error(
+			`Missing postcode shard for ${country}: ${db}\nSet MAILWOMAN_DATA_ROOT or softFeed.postcodeDbByCountry.`
+		)
 	}
 	const binDest = resolve(dir, `postcode-${country}.bin`)
 	await removeIfPresent(binDest)

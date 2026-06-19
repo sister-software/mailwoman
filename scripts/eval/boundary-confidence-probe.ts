@@ -4,18 +4,20 @@
  * @author Teffen Ellis, et al.
  *
  *   #375 boundary CONFIDENCE PROBE — the cheap diagnostic (DeepSeek consult 2026-06-18) that decides,
- *   per shape, whether a missed boundary target is a SIGNAL problem (the model is confidently WRONG —
- *   augmentation fixes it) or a CAPACITY ceiling (the model is high-entropy/uncertain — only a bigger
- *   model fixes it). For each shape we locate the boundary token by char-offset, softmax its RAW
- *   per-token logits (pre-prior, pre-repair — the model's intrinsic belief), and read off:
- *     - P(correct tag) at the boundary token
- *     - the argmax label + its probability (when wrong: is it confidently wrong or smeared?)
- *     - the histogram of what the boundary gets confused FOR (e.g. locality -> I-street = "street ate it")
+ *   per shape, whether a missed boundary target is a SIGNAL problem (the model is confidently WRONG
+ *   — augmentation fixes it) or a CAPACITY ceiling (the model is high-entropy/uncertain — only a
+ *   bigger model fixes it). For each shape we locate the boundary token by char-offset, softmax its
+ *   RAW per-token logits (pre-prior, pre-repair — the model's intrinsic belief), and read off:
  *
- *   Run: node --experimental-strip-types scripts/eval/boundary-confidence-probe.ts \
- *     --model ./out/v160/model.onnx \
- *     --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
- *     --model-card neural-weights-en-us/model-card.json --n 200
+ *   - P(correct tag) at the boundary token
+ *   - The argmax label + its probability (when wrong: is it confidently wrong or smeared?)
+ *   - The histogram of what the boundary gets confused FOR (e.g. locality -> I-street = "street ate
+ *       it")
+ *
+ *   Run: node --experimental-strip-types scripts/eval/boundary-confidence-probe.ts\
+ *   --model ./out/v160/model.onnx\
+ *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model-card neural-weights-en-us/model-card.json --n 200
  */
 
 import { readFileSync } from "node:fs"
@@ -139,7 +141,9 @@ for (const template of Object.keys(PROBES) as BoundaryStressTemplate[]) {
 	else verdict = "MIXED — partly confident, partly smeared"
 	console.log(`\n## ${template}  (probe: B-${tag}, ${why})`)
 	console.log(`  located ${located}/${N}  ·  boundary acc ${acc.toFixed(1)}%  ·  mean P(correct) ${meanPc.toFixed(3)}`)
-	console.log(`  when WRONG: mean P(argmax) ${Number.isNaN(meanPwrong) ? "n/a" : meanPwrong.toFixed(3)}  ·  confused for: ${top || "n/a"}`)
+	console.log(
+		`  when WRONG: mean P(argmax) ${Number.isNaN(meanPwrong) ? "n/a" : meanPwrong.toFixed(3)}  ·  confused for: ${top || "n/a"}`
+	)
 	console.log(`  → ${verdict}`)
 }
 console.log()

@@ -132,8 +132,10 @@ export interface ResolvedHit {
 	 * Drives the "exact / ±N m" caption + the uncertainty circle.
 	 */
 	tier?: "address_point" | "interpolated"
-	/** Honest uncertainty radius in meters for a street-level tier (10 m situs floor; calibrated
-interp). */
+	/**
+	 * Honest uncertainty radius in meters for a street-level tier (10 m situs floor; calibrated
+	 * interp).
+	 */
 	uncertaintyM?: number
 }
 
@@ -219,8 +221,10 @@ const US_STATE_NAME_TO_SLUG: Record<string, string> = {
 	wyoming: "wy",
 }
 
-/** US state/territory name OR abbreviation → 2-letter shard slug, or null if not a US region we
-recognize. */
+/**
+ * US state/territory name OR abbreviation → 2-letter shard slug, or null if not a US region we
+ * recognize.
+ */
 export function regionToStateSlug(region: string | undefined): string | null {
 	if (!region) return null
 	const r = region.trim().toLowerCase()

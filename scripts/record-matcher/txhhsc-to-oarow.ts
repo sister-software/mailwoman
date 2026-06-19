@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   #619: convert the TX HHSC nursing-facilities source (which ships an authoritative `Geo Location`
- *   = `lat,lon` per facility) into the OaRow JSONL the resolver eval consumes — so our geocoder can be
- *   graded against the provided coordinates on real facility addresses (great-circle delta, tier
+ *   = `lat,lon` per facility) into the OaRow JSONL the resolver eval consumes — so our geocoder can
+ *   be graded against the provided coordinates on real facility addresses (great-circle delta, tier
  *   breakdown via `oa-resolver-eval --address-points`).
  *
  *   Neutral scope: this measures GEOCODER ACCURACY on real public addresses; it makes no claim about
  *   the facilities themselves.
  *
- *   Run: node --experimental-strip-types scripts/record-matcher/txhhsc-to-oarow.ts \
- *          --src <tsv> --out /tmp/txhhsc-oarow.jsonl
+ *   Run: node --experimental-strip-types scripts/record-matcher/txhhsc-to-oarow.ts\
+ *   --src <tsv> --out /tmp/txhhsc-oarow.jsonl
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
@@ -25,7 +25,9 @@ const arg = (name: string, fallback = "") => {
 const src = arg("src", "/mnt/playpen/mailwoman-data/record-matcher/sources/txhhsc_nursing-facilities_20260611.tsv")
 const out = arg("out", "/tmp/txhhsc-oarow.jsonl")
 
-const lines = readFileSync(src, "utf8").split("\n").filter((l) => l.trim())
+const lines = readFileSync(src, "utf8")
+	.split("\n")
+	.filter((l) => l.trim())
 const header = lines[0]!.split("\t")
 const col = (name: string) => header.indexOf(name)
 const cAddr = col("Physical Address")

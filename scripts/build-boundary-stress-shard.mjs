@@ -11,15 +11,15 @@
  *   Imports the COMPILED corpus (`corpus/out/src/*.js`) — `alignRow` has internal `.js` runtime
  *   imports the strip-types loader can't resolve from source, so `tsc -b` first.
  *
- *   Run: node scripts/build-boundary-stress-shard.mjs [--count 20000] [--seed 20260617]
- *        [--out data/corpus/shards/synth-boundary-stress.jsonl]
+ *   Run: node scripts/build-boundary-stress-shard.mjs [--count 20000] [--seed 20260617] [--out
+ *   data/corpus/shards/synth-boundary-stress.jsonl]
  */
 
 import { createWriteStream, mkdirSync } from "node:fs"
 import { dirname } from "node:path"
 
-import { alignRow } from "../corpus/out/src/align.js"
 import { stableSourceId } from "../corpus/out/src/adapter.js"
+import { alignRow } from "../corpus/out/src/align.js"
 import { synthesizeBoundaryStressRow } from "../corpus/out/src/synthesize-boundary-stress.js"
 
 const arg = (n, d) => {
@@ -97,5 +97,7 @@ for (let i = 0; i < COUNT; i++) {
 	out.write(JSON.stringify({ ...r.row, synth_method: `boundary-stress:${row.template}`, synth_base_id: null }) + "\n")
 }
 out.end()
-console.error(`wrote ${labeled} labeled rows (${quarantined} quarantined, ${((100 * quarantined) / COUNT).toFixed(1)}%) → ${OUT}`)
+console.error(
+	`wrote ${labeled} labeled rows (${quarantined} quarantined, ${((100 * quarantined) / COUNT).toFixed(1)}%) → ${OUT}`
+)
 console.error("by template:", JSON.stringify(byTemplate))

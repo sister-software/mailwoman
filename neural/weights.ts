@@ -68,11 +68,12 @@ export interface ResolvedWeights {
 	crfTransitionsPath?: string
 	/**
 	 * Path to the postcode→anchor source shipped beside the resolved model (#718 D1) — the soft-feed
-	 * `loadFromWeights` reads to feed the anchor channel without a callsite change. Prefer the compact
-	 * PCB1 binary (`postcode-<cc>.bin`, decoded via `PostcodeBinaryResolver.toAnchorLookup()`), else a
-	 * JSON anchor lookup (`anchor-lookup.json`, parsed via `parseAnchorLookup`). `undefined` when the
-	 * package ships neither (a plain/pre-#718 bundle) — the loader then runs anchor-OFF. The
-	 * `binary` flag tells the loader which parser to use.
+	 * `loadFromWeights` reads to feed the anchor channel without a callsite change. Prefer the
+	 * compact PCB1 binary (`postcode-<cc>.bin`, decoded via
+	 * `PostcodeBinaryResolver.toAnchorLookup()`), else a JSON anchor lookup (`anchor-lookup.json`,
+	 * parsed via `parseAnchorLookup`). `undefined` when the package ships neither (a plain/pre-#718
+	 * bundle) — the loader then runs anchor-OFF. The `binary` flag tells the loader which parser to
+	 * use.
 	 */
 	anchorLookupPath?: { path: string; binary: boolean }
 	/**
@@ -159,12 +160,15 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 
 /**
  * Locate the package's postcode→anchor source for the soft-feed (#718 D1), preferring the compact
- * PCB1 binary (`postcode-<cc>.bin`, ~0.66 MB) over the much larger JSON lookup (`anchor-lookup.json`,
- * the 3.2 MB pilot dump). Returns the path + a `binary` flag so the loader picks the right parser
- * (`PostcodeBinaryResolver.toAnchorLookup()` vs `parseAnchorLookup`). `undefined` when neither
- * ships.
+ * PCB1 binary (`postcode-<cc>.bin`, ~0.66 MB) over the much larger JSON lookup
+ * (`anchor-lookup.json`, the 3.2 MB pilot dump). Returns the path + a `binary` flag so the loader
+ * picks the right parser (`PostcodeBinaryResolver.toAnchorLookup()` vs `parseAnchorLookup`).
+ * `undefined` when neither ships.
  */
-function resolveAnchorLookupSibling(packageDir: string, country: string): { path: string; binary: boolean } | undefined {
+function resolveAnchorLookupSibling(
+	packageDir: string,
+	country: string
+): { path: string; binary: boolean } | undefined {
 	if (country) {
 		const binary = resolve(packageDir, `postcode-${country}.bin`)
 		if (existsSync(binary)) return { path: binary, binary: true }
@@ -319,8 +323,8 @@ export interface TagCapability {
  * The `capabilities` block of a `model-card.json` (#718/#719): per serving TIER (`server` =
  * anchor+gazetteer; `pocket` = anchor-only) × per codex address-system × per tag, the model's
  * certified per-tag capability. The `createScorer` loader reads this to FAIL CLOSED when a
- * conventions mask would forbid a tag the model is certified to emit — the structural fix that makes
- * the D2/#719 bug-class (a mask destroying a demonstrated capability) impossible.
+ * conventions mask would forbid a tag the model is certified to emit — the structural fix that
+ * makes the D2/#719 bug-class (a mask destroying a demonstrated capability) impossible.
  *
  * Shape: `capabilities[tier][system][tag] = { maskOffF1, maskOnF1? }`. A `$comment` provenance key
  * may sit alongside the tier keys and is ignored by readers.

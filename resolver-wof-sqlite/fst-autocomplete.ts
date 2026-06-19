@@ -57,8 +57,10 @@ interface BfsItem {
 /** Max accepting entries collected per BFS branch — keeps one dense branch from starving the search. */
 const PER_BRANCH = 4
 
-/** The top-`k` entries by importance (descending). Avoids sorting/allocating when `entries` is
-small. */
+/**
+ * The top-`k` entries by importance (descending). Avoids sorting/allocating when `entries` is
+ * small.
+ */
 function topByImportance(entries: readonly PlaceEntry[], k: number): PlaceEntry[] {
 	if (entries.length <= k) return [...entries]
 	return [...entries].sort((a, b) => b.importance - a.importance).slice(0, k)

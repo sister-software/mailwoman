@@ -45,11 +45,12 @@ export interface PolicyConfigEntry {
 export type PolicyConfig = Record<string, Record<string, PolicyConfigEntry>>
 
 /**
- * Build a registry from a parsed policy-config object. Starts from `withDefaults(defaultMode)` (every
- * tag at `defaultMode`, historically `rule_only`) and overlays the config's entries — so an absent
- * tag falls to `defaultMode`. The input-shape router (#478 increment 2) passes its shape-derived
- * default as `defaultMode` so config entries still win per-tag while un-configured tags follow the
- * route. Throws on ANY unrecognized key or value; the error names the offending JSON path.
+ * Build a registry from a parsed policy-config object. Starts from `withDefaults(defaultMode)`
+ * (every tag at `defaultMode`, historically `rule_only`) and overlays the config's entries — so an
+ * absent tag falls to `defaultMode`. The input-shape router (#478 increment 2) passes its
+ * shape-derived default as `defaultMode` so config entries still win per-tag while un-configured
+ * tags follow the route. Throws on ANY unrecognized key or value; the error names the offending
+ * JSON path.
  */
 export function policyRegistryFromConfig(
 	config: PolicyConfig,

@@ -4,38 +4,41 @@
  * @author Teffen Ellis, et al.
  *
  *   Per-release mask-regression gate (#718) — the "second lock", paired with the load-time
- *   capability-manifest delta-gate shipped in `neural/scorer.ts` (`assertConventionsRespectCapabilities`).
+ *   capability-manifest delta-gate shipped in `neural/scorer.ts`
+ *   (`assertConventionsRespectCapabilities`).
  *
  *   What it adds over the load-time delta-gate (and why two locks):
+ *
  *   - The LOAD-TIME delta-gate (createScorer) is REACTIVE + COARSE: it consults the model card's
- *     `capabilities` block and rejects only a conventions mask that forbids a tag the card CERTIFIES,
- *     at a 5pp `maskOffF1 − maskOnF1` threshold. It fires only on EXPLICITLY-forbidden tags, and only
- *     against pre-recorded numbers — it can't see a tag the mask harms INDIRECTLY (e.g. forbidding
- *     `street_suffix` shifts probability mass and depresses `street`), nor a regression on a tag no
- *     `forbiddenTags` row names.
+ *       `capabilities` block and rejects only a conventions mask that forbids a tag the card
+ *       CERTIFIES, at a 5pp `maskOffF1 − maskOnF1` threshold. It fires only on EXPLICITLY-forbidden
+ *       tags, and only against pre-recorded numbers — it can't see a tag the mask harms INDIRECTLY
+ *       (e.g. forbidding `street_suffix` shifts probability mass and depresses `street`), nor a
+ *       regression on a tag no `forbiddenTags` row names.
  *   - THIS gate is PROACTIVE + FINE: it RE-RUNS the model (mask-off vs mask-auto/on) per locale under
- *     the full SHIP-CONFIG (anchor-on + gazetteer-on) and FAILS if ANY tag's F1 drops by more than a
- *     TIGHTER 2pp threshold (per the DeepSeek consult) under the conventions mask — catching the
- *     subtler interaction harms the per-tag 5pp delta-gate would miss.
+ *       the full SHIP-CONFIG (anchor-on + gazetteer-on) and FAILS if ANY tag's F1 drops by more
+ *       than a TIGHTER 2pp threshold (per the DeepSeek consult) under the conventions mask —
+ *       catching the subtler interaction harms the per-tag 5pp delta-gate would miss.
  *
  *   It is WEIGHT-DEPENDENT (it runs the model), so it is a RELEASE GATE — run with weights on disk
- *   BEFORE publishing — NOT a weightless CI step (weight-dependent tests don't run in CI; #582). Hook
- *   it into the release path (scripts/eval/promotion-gate.sh / the publish flow), NOT into Test CI.
+ *   BEFORE publishing — NOT a weightless CI step (weight-dependent tests don't run in CI; #582).
+ *   Hook it into the release path (scripts/eval/promotion-gate.sh / the publish flow), NOT into
+ *   Test CI.
  *
  *   Mechanics: reuses the `gen-capability-manifest.ts` scoring machinery verbatim — `createScorer`
  *   (so the channel feed matches the ship config, the #566/#685 trap) with `overrides.conventions`
- *   toggling mask off vs auto, and the UNFOLDED exact-match per-tag F1 from `score-affix.ts` (street
- *   parts split, so an affix regression is visible — the folded `per-locale-f1.ts` can't see it). The
- *   DIFFERENCE from the manifest generator: that one records `maskOnF1` only for codex-forbidden tags
- *   (the only tags the LOAD-TIME gate reads); THIS gate computes the delta for EVERY tag, because a
- *   mask can harm a tag no `forbiddenTags` row names.
+ *   toggling mask off vs auto, and the UNFOLDED exact-match per-tag F1 from `score-affix.ts`
+ *   (street parts split, so an affix regression is visible — the folded `per-locale-f1.ts` can't
+ *   see it). The DIFFERENCE from the manifest generator: that one records `maskOnF1` only for
+ *   codex-forbidden tags (the only tags the LOAD-TIME gate reads); THIS gate computes the delta for
+ *   EVERY tag, because a mask can harm a tag no `forbiddenTags` row names.
  *
  *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):
  *
- *     node --experimental-strip-types scripts/eval/mask-regression-gate.ts \
- *       --model /mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx \
- *       --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
- *       --model-card neural-weights-en-us/model-card.json
+ *   Node --experimental-strip-types scripts/eval/mask-regression-gate.ts\
+ *   --model /mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx\
+ *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model-card neural-weights-en-us/model-card.json
  *
  *   Exit 0 = no tag regresses more than the threshold under the mask (PASS). Exit 1 = at least one
  *   tag regresses (the offending `(locale, tag, maskOff, maskOn, delta)` rows are printed).
@@ -44,8 +47,8 @@
  *   delta table (every locale × tag, not just violations) for the release record.
  */
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
 import type { SystemCode } from "@mailwoman/codex"
+import { decodeAsJson } from "@mailwoman/core/decoder"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
@@ -68,9 +71,9 @@ const GAZETTEER_LEXICON = arg("--gazetteer-lexicon", "data/gazetteer/anchor-lexi
 const JSON_OUT = arg("--json")
 
 /**
- * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than the
- * load-time delta-gate's 5pp, so subtler interaction harms surface at release. A tag whose mask-on F1
- * is within this band of its mask-off F1 is considered unharmed by the mask.
+ * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than
+ * the load-time delta-gate's 5pp, so subtler interaction harms surface at release. A tag whose
+ * mask-on F1 is within this band of its mask-off F1 is considered unharmed by the mask.
  */
 const THRESHOLD = Number(arg("--threshold", "0.02"))
 
@@ -181,7 +184,7 @@ interface Delta {
 	tag: string
 	maskOff: number
 	maskOn: number
-	/** maskOff − maskOn, in pp. Positive = the mask HURT the tag. */
+	/** MaskOff − maskOn, in pp. Positive = the mask HURT the tag. */
 	delta: number
 	/** Whether this tag is even in scope (any gold row carries it under this locale). */
 	inScope: boolean
@@ -276,7 +279,9 @@ async function run(): Promise<number> {
 	}
 
 	if (violations.length > 0) {
-		console.error(`\n✗ FAIL — ${violations.length} tag(s) regress more than ${thresholdPp.toFixed(1)}pp under the conventions mask:`)
+		console.error(
+			`\n✗ FAIL — ${violations.length} tag(s) regress more than ${thresholdPp.toFixed(1)}pp under the conventions mask:`
+		)
 		for (const v of violations) {
 			console.error(
 				`  (${v.locale}, ${v.tag}): maskOff ${v.maskOff} → maskOn ${v.maskOn}  Δ=${v.delta.toFixed(1)}pp > ${thresholdPp.toFixed(1)}pp`

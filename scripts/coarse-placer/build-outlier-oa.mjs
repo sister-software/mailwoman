@@ -98,9 +98,10 @@ function assemble(r) {
 	}
 }
 
-const duck = await (await DuckDBInstance.create()).connect()
-
-/** Read+assemble up to PER deduped rows for a country from its OA CSVs (glob under <oa>/**/<cc>/). */
+const duck =
+	(await (await DuckDBInstance.create()).connect()) <
+	/** Read+assemble up to PER deduped rows for a country from its OA CSVs (glob under <oa>/* */ cc >
+	/). */
 async function rowsFor(cc) {
 	const lc = cc.toLowerCase()
 	// OA collected layout: `<cc>/[<region>/]<source>.csv` (country at root; `summary/` excluded by

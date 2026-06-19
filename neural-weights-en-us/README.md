@@ -62,14 +62,14 @@ set over short strings, boring NER is a feature.
 
 The design splits the problem in two: **the model learns the grammar, the
 gazetteer knows the atlas.** The model never memorizes place names — postcode
-and gazetteer knowledge arrive at inference as *soft input features* (anchors)
+and gazetteer knowledge arrive at inference as _soft input features_ (anchors)
 retrieved from provenance-tracked databases that grow without retraining. If you
 know RAG from the LLM world, this is RAG for token classification; if you know
 speech recognition, it's contextual biasing with shallow fusion. Knowledge
 informs; it never overrides.
 
 - **Base model:** none. Trained **from scratch** (no pretrained checkpoint) —
-  see *Training*.
+  see _Training_.
 - **Architecture:** 6 layers, hidden 384, 6 heads, intermediate 1536, vocab
   48000, max sequence length 128. Linear-chain CRF at inference (Viterbi), CE
   loss only at training.
@@ -120,14 +120,14 @@ configuration on the currently shipped model (lineage `v1.5.0-fr-order`, step
 **Assembled coordinates — OpenAddresses US (real government address points),
 anchor-on, currently shipped model:**
 
-| metric | value |
-| --- | --: |
-| locality-match | 97.8% |
-| region-match | 99.9% |
-| coordinate p50 — admin-centroid tier | 3.3 km |
+| metric                                |      value |
+| ------------------------------------- | ---------: |
+| locality-match                        |      97.8% |
+| region-match                          |      99.9% |
+| coordinate p50 — admin-centroid tier  |     3.3 km |
 | coordinate p50 — full geocode cascade | **0.0 km** |
 | coordinate p90 — full geocode cascade | **0.1 km** |
-| within 100 m — full geocode cascade | **90.0%** |
+| within 100 m — full geocode cascade   |  **90.0%** |
 
 **The two coordinate tiers matter.** The parser plus the admin gazetteer alone
 resolve to the locality **centroid** — legitimately a few km from an edge address
@@ -181,7 +181,7 @@ inference.
 
 ## Limitations
 
-- **Expects its channels.** See *Ship-config requirement* — anchor-off is OOD.
+- **Expects its channels.** See _Ship-config requirement_ — anchor-off is OOD.
 - **All-caps / shouting input degrades** the admin tags (mixed-case training).
   `@mailwoman/neural`'s `normalizeCase` opt title-cases detected all-caps ASCII
   input before the model and recovers it (byte-stable for mixed-case / non-ASCII

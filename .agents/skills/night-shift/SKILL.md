@@ -150,7 +150,7 @@ carry different state:
 | `resume`    |      yes      |                             **yes**                             | continuing a run; recovering or extending a learned capability; any fragile, low-prevalence tag         |
 | `init_from` |      yes      |                               no                                | warm-starting a _new_ run with a fresh objective; fine-tune off a different base; A/B optimizer recipes |
 
-Why this matters: late-emergent splits (street_prefix/suffix in the
+Why this matters: late-emergent splits (`street_prefix/suffix` in the
 consolidation arc, the multi-locale country signal) sit in narrow basins that
 Adam's momentum is actively _in the middle of_ at checkpoint time. A fresh
 optimizer at the same weights is **not the same model**: it has no first/second

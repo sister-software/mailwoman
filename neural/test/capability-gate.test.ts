@@ -4,16 +4,17 @@
  * @author Teffen Ellis, et al.
  *
  *   Load-time capability delta-gate (#718/#719). The structural fix that makes the D2/#719 bug-class
- *   — a conventions `forbiddenTags` row destroying a tag the model demonstrably emits — impossible to
- *   ship: `createScorer` reads the model-card's `capabilities` block and FAILS CLOSED when a
+ *   — a conventions `forbiddenTags` row destroying a tag the model demonstrably emits — impossible
+ *   to ship: `createScorer` reads the model-card's `capabilities` block and FAILS CLOSED when a
  *   conventions row forbids a certified tag (`maskOffF1 − maskOnF1 > 5pp`).
  *
  *   Two load-bearing assertions:
+ *
  *   1. PASSES on the REAL post-D2 config — FR forbids only `street_suffix`, which the model does NOT
- *      emit (no capability entry → legal); the certified FR `street_prefix` (maskOff 80) is no longer
- *      forbidden, so nothing trips.
+ *        emit (no capability entry → legal); the certified FR `street_prefix` (maskOff 80) is no
+ *        longer forbidden, so nothing trips.
  *   2. THROWS when a synthetic FR forbid re-adds `street_prefix` (a CERTIFIED tag at maskOff 80) — the
- *      exact #719 shape. This proves the guard would have caught the original bug at LOAD time.
+ *        exact #719 shape. This proves the guard would have caught the original bug at LOAD time.
  *
  *   Requires the production v1.5.0 int8 + its real feed channels on disk; skips otherwise (mirrors
  *   weights.test.ts) so stripped-down CI still passes.

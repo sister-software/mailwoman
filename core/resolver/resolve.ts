@@ -134,8 +134,22 @@ function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressN
  * expands the abbreviation ("ne" → "northeast") so the shard's full street name matches.
  */
 const STREET_DIRECTIONAL_UNITS: ReadonlySet<string> = new Set([
-	"n", "s", "e", "w", "ne", "nw", "se", "sw",
-	"north", "south", "east", "west", "northeast", "northwest", "southeast", "southwest",
+	"n",
+	"s",
+	"e",
+	"w",
+	"ne",
+	"nw",
+	"se",
+	"sw",
+	"north",
+	"south",
+	"east",
+	"west",
+	"northeast",
+	"northwest",
+	"southeast",
+	"southwest",
 ])
 function isDirectionalUnit(value: string): boolean {
 	return STREET_DIRECTIONAL_UNITS.has(value.trim().toLowerCase().replace(/\./g, ""))
@@ -163,7 +177,12 @@ function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLookup): vo
 		stack.push(...n.children)
 	}
 	if (!street || !houseNumber) return
-	const hit = lookup.find({ street: assembleStreetValue(street, directionalUnit), number: houseNumber.value, postcode, locality })
+	const hit = lookup.find({
+		street: assembleStreetValue(street, directionalUnit),
+		number: houseNumber.value,
+		postcode,
+		locality,
+	})
 	if (!hit) return
 	street.metadata = {
 		...street.metadata,

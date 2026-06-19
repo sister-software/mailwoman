@@ -643,7 +643,9 @@ async function main(): Promise<void> {
 	}
 	const assembledPipeline = runAssembled
 		? createRuntimePipeline({
-				classifier: { parse: (text: string, o?: object) => neural.parse(text, { ...o, postcodeRepair: true }) } as never,
+				classifier: {
+					parse: (text: string, o?: object) => neural.parse(text, { ...o, postcodeRepair: true }),
+				} as never,
 				resolver: resolver as never,
 				placeCountry: false,
 			})
@@ -894,7 +896,9 @@ async function main(): Promise<void> {
 		)
 	}
 	if (runInterp) {
-		lines.push(overallRow(cascadeOn ? "**neural+cascade (SHIPPED coord)**" : "**neural+interp**", neuralInterpAgg.overall))
+		lines.push(
+			overallRow(cascadeOn ? "**neural+cascade (SHIPPED coord)**" : "**neural+interp**", neuralInterpAgg.overall)
+		)
 		lines.push("")
 		lines.push(
 			`interpolation hit rate (interp coord, no exact point): ${interpHits}/${neuralInterpAgg.overall.n} (${((100 * interpHits) / Math.max(1, neuralInterpAgg.overall.n)).toFixed(1)}%)`
@@ -952,7 +956,9 @@ async function main(): Promise<void> {
 			"`assembled (no arb)` is the pipeline through the same neural+resolver (comparability check vs `neural`); `assembled + arb` adds per-component arbitration. The street+house_number **precondition** (parsed both, the thing #566 broke) per arm:"
 		)
 		lines.push("")
-		lines.push(`- neural: ${pct(neuralPrecond, N)} · assembled (no arb): ${pct(asmPrecond, N)} · **assembled + arb: ${pct(arbPrecond, N)}** (of ${N} rows)`)
+		lines.push(
+			`- neural: ${pct(neuralPrecond, N)} · assembled (no arb): ${pct(asmPrecond, N)} · **assembled + arb: ${pct(arbPrecond, N)}** (of ${N} rows)`
+		)
 		lines.push("")
 		lines.push(
 			"Gate: arbitration PASSES leg 2 iff the precondition does not regress and coord p50/p90 + locality/region Acc@1 hold vs `neural`."

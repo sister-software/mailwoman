@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #478 leg-2 diagnosis: trace the arbitration path stage-by-stage on a handful of clean US addresses
- *   to find WHERE street/house_number is dropped (the precondition 100→48% regression). Replicates
- *   exactly what `runPipeline`'s `arbitrate` block does: route → neural proposals ∪ solved-v0 proposals
- *   → policy registry → coherence pass → (would-be) proposalsToTree.
+ *   #478 leg-2 diagnosis: trace the arbitration path stage-by-stage on a handful of clean US
+ *   addresses to find WHERE street/house_number is dropped (the precondition 100→48% regression).
+ *   Replicates exactly what `runPipeline`'s `arbitrate` block does: route → neural proposals ∪
+ *   solved-v0 proposals → policy registry → coherence pass → (would-be) proposalsToTree.
  *
  *   Run: node --experimental-strip-types scripts/eval/probe-arbitration.ts
  */
@@ -58,7 +58,9 @@ const fmt = (ps: readonly ClassificationProposal[]): string =>
 	ps.length === 0
 		? "(none)"
 		: ps
-				.map((p) => `${p.component}[${p.span.start},${p.span.end}]"${p.span.body}"·${p.source}·${p.confidence.toFixed(2)}`)
+				.map(
+					(p) => `${p.component}[${p.span.start},${p.span.end}]"${p.span.body}"·${p.source}·${p.confidence.toFixed(2)}`
+				)
 				.join("  ")
 
 for (const input of inputs) {
@@ -97,7 +99,9 @@ for (const input of inputs) {
 
 	if (verbose) {
 		console.log(`\n=== ${input}`)
-		console.log(`route:  ${route.defaultMode} (${route.reason}) | kind=${kind.kind}@${kind.confidence.toFixed(2)} cc=${shape.characterClass}`)
+		console.log(
+			`route:  ${route.defaultMode} (${route.reason}) | kind=${kind.kind}@${kind.confidence.toFixed(2)} cc=${shape.characterClass}`
+		)
 		console.log(`neural: ${fmt(nProps)}`)
 		console.log(`rule:   ${fmt(rProps)}`)
 		console.log(`arb:    ${fmt(arbitrated)}`)

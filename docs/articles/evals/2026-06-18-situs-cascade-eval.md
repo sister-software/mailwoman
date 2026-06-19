@@ -16,7 +16,7 @@ production coordinate.
 
 The eval builds a neural parse, resolves it through the WOF admin gazetteer, and takes the resolved
 place's centroid as the coordinate. That centroid is honest as far as it goes — a city centroid is
-legitimately tens of km from an edge address, which is exactly why we lead with admin-*match* rate
+legitimately tens of km from an edge address, which is exactly why we lead with admin-_match_ rate
 there, not the coordinate. The trouble is we then carried the 3.3 km admin number into the
 head-to-head, the model card, and the docs as if it were the coordinate the product delivers.
 
@@ -36,12 +36,12 @@ rewriting history.
 
 ## The numbers (self-emitted, `--cascade`, v1.5.0, anchor-on, 10k US OpenAddresses rows)
 
-| parser | locality-match | region-match | resolved | coord p50 km | coord p90 km | p99 km |
-|---|--:|--:|--:|--:|--:|--:|
-| **neural** (admin centroid) | 98.0% | 100.0% | 100.0% | 3.3 | 10.0 | 159.4 |
-| v0 (Pelias) | 95.5% | 99.5% | 99.7% | 3.4 | 11.0 | 259.1 |
-| **neural+addrpt** | 98.0% | 100.0% | 100.0% | 0.0 | 2.9 | 19.9 |
-| **neural+cascade (SHIPPED coord)** | 98.0% | 100.0% | 100.0% | 0.0 | 1.0 | 18.3 |
+| parser                             | locality-match | region-match | resolved | coord p50 km | coord p90 km | p99 km |
+| ---------------------------------- | -------------: | -----------: | -------: | -----------: | -----------: | -----: |
+| **neural** (admin centroid)        |          98.0% |       100.0% |   100.0% |          3.3 |         10.0 |  159.4 |
+| v0 (Pelias)                        |          95.5% |        99.5% |    99.7% |          3.4 |         11.0 |  259.1 |
+| **neural+addrpt**                  |          98.0% |       100.0% |   100.0% |          0.0 |          2.9 |   19.9 |
+| **neural+cascade (SHIPPED coord)** |          98.0% |       100.0% |   100.0% |          0.0 |          1.0 |   18.3 |
 
 `neural+cascade` is the production coordinate (`geocode-core.ts`: address_point > interpolated >
 admin, per-state shards). **Tier share: address_point 79.8%, interpolated 8.2%, admin 12.0%. Within
@@ -64,15 +64,15 @@ a coverage gap — #723.
 
 This is the same trap as the #375 localadmin scoring artifact and the #566 reconcile regression:
 **grade the assembled output the product actually ships, not an intermediate.** The new twist is the
-direction — every prior instance had us *over*-reporting (a metric looking better than the shipped
-behavior); this one had us *under*-reporting by three orders of magnitude. A model can win on labels
+direction — every prior instance had us _over_-reporting (a metric looking better than the shipped
+behavior); this one had us _under_-reporting by three orders of magnitude. A model can win on labels
 while the assembled address resolves wrong (the #566 case); it can also resolve street-accurate while
 the eval reports a city centroid (this case). Both are fixed by the same discipline: pull the rows,
 run what ships over them, grade that.
 
 It also retires "the US coordinate bottleneck is rural gazetteer coverage." The rural states aren't
 the laggards once you grade the cascade — SD and VT land their addresses at the address-point tier
-like everywhere else; their lower *locality-match* (VT 93.8%, IA 95.8%) is a separate, mostly
+like everywhere else; their lower _locality-match_ (VT 93.8%, IA 95.8%) is a separate, mostly
 naming-convention residual (civic suffixes like "Barre" vs "Barre Town", ~71% of the 2% miss), not a
 coordinate problem. The next US coordinate gain is point-data coverage for the 12% admin tail, not a
 retrain and not more gazetteer breadth.

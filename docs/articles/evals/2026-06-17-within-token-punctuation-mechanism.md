@@ -8,11 +8,11 @@ into four distinct mechanisms, three of which are already top-priority levers un
 
 ## What actually fails
 
-| class | rows with ≥1 miss | dominant missed components |
-| --- | --: | --- |
-| apostrophe | 7/16 | locality 3, region 3, street 3 |
-| hyphen | 13/23 | street 9, house_number 6, locality 5 |
-| slash | 17/22 | house_number 12, locality 10, region 10, unit 10 |
+| class      | rows with ≥1 miss | dominant missed components                       |
+| ---------- | ----------------: | ------------------------------------------------ |
+| apostrophe |              7/16 | locality 3, region 3, street 3                   |
+| hyphen     |             13/23 | street 9, house_number 6, locality 5             |
+| slash      |             17/22 | house_number 12, locality 10, region 10, unit 10 |
 
 The apostrophe **parses correctly** — `O'Connell`, `O'Fallon`, `Coeur d'Alene`, `Martha's Vineyard` all
 land in the right component. The misses in those rows are elsewhere in the address.
@@ -25,7 +25,7 @@ land in the right component. The misses in those rows are elsewhere in the addre
    is a specific, learnable convention (slash between unit and street-number in AU/NZ/UK).
 
 2. **Comma-less `City STATE` segmentation — the #694 family.** `North Sydney NSW 2060`, `Sydney NSW
-   2000`: with no comma, neural keeps `North Sydney NSW` as one locality and drops the region. This is
+2000`: with no comma, neural keeps `North Sydney NSW` as one locality and drops the region. This is
    the same delimiter-stripping failure root-caused on #694 (concatenated input loses segmentation) —
    delimited input fixes it.
 

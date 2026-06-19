@@ -20,10 +20,10 @@ So: a year in, did the neural net actually beat the rules parser? The honest ans
 
 We don't grade the two parsers against each other's labels — that just measures which one looks more like the other. We grade both through the **same resolver**, against real address points: take 2,000 [OpenAddresses](https://openaddresses.io/) US rows the model never trained on, parse each one, resolve it to a coordinate, and measure how often we land in the right city, the right state, and how far the resolved point is from the truth.
 
-| parser | locality match | region match | coord p50 | coord p90 | coord p99 |
-| --- | --: | --: | --: | --: | --: |
-| **neural** | **84.0%** | **99.9%** | 3.3 km | **10.7 km** | **239 km** |
-| v0 (Pelias port) | 82.1% | 99.5% | 3.3 km | 11.2 km | 277 km |
+| parser           | locality match | region match | coord p50 |   coord p90 |  coord p99 |
+| ---------------- | -------------: | -----------: | --------: | ----------: | ---------: |
+| **neural**       |      **84.0%** |    **99.9%** |    3.3 km | **10.7 km** | **239 km** |
+| v0 (Pelias port) |          82.1% |        99.5% |    3.3 km |     11.2 km |     277 km |
 
 On clean US addresses it is close. Neural is a couple of points ahead on locality, a hair ahead on region, dead even at the median coordinate — and the difference you can actually feel is in the **tail**: neural's p99 error is 239 km versus 277. Both parsers nail the easy ones; the neural net just throws fewer wild misses.
 

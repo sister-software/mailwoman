@@ -239,9 +239,7 @@ export class NeuralAddressClassifier {
 		if (!postcodeAnchorLookup && resolved.anchorLookupPath) {
 			try {
 				postcodeAnchorLookup = resolved.anchorLookupPath.binary
-					? new PostcodeBinaryResolver(
-							new Uint8Array(fs.readFileSync(resolved.anchorLookupPath.path))
-						).toAnchorLookup()
+					? new PostcodeBinaryResolver(new Uint8Array(fs.readFileSync(resolved.anchorLookupPath.path))).toAnchorLookup()
 					: parseAnchorLookup(JSON.parse(fs.readFileSync(resolved.anchorLookupPath.path, "utf8")))
 			} catch (err) {
 				warnUnfedChannel("anchor", `failed to parse ${resolved.anchorLookupPath.path}: ${(err as Error).message}`)
@@ -279,8 +277,7 @@ export class NeuralAddressClassifier {
 		// SHIP-CONFIG (mirrors createScorer / the browser loader defaults), inert when the source
 		// channel is absent. Byte-stable for a non-anchor card (no `requires` → all undefined/false).
 		const suppressGazetteerNearPostcode = declared?.suppress_gazetteer_near_postcode ?? false
-		const addressSystemConventions =
-			declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : undefined
+		const addressSystemConventions = declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : undefined
 
 		return new NeuralAddressClassifier({
 			tokenizer,
@@ -618,9 +615,10 @@ export interface ParseOpts {
 /**
  * Loud-degrade warning for the `loadFromWeights` soft-feed (#718 D1) — the Node mirror of
  * neural-web's `warnOnUnfedTrainedChannels`. Fired ONCE per channel per process: a model-card that
- * declares a channel REQUIRED, paired with a package that didn't ship (or could not parse) its data,
- * runs that channel OFF. Structural fallback (the parse still works), loud console (a silently
- * anchor-OFF anchor-trained model is the #566/#685 OOD crater this fix exists to surface).
+ * declares a channel REQUIRED, paired with a package that didn't ship (or could not parse) its
+ * data, runs that channel OFF. Structural fallback (the parse still works), loud console (a
+ * silently anchor-OFF anchor-trained model is the #566/#685 OOD crater this fix exists to
+ * surface).
  */
 const warnedUnfedChannels = new Set<string>()
 function warnUnfedChannel(channel: "anchor" | "gazetteer", detail: string): void {

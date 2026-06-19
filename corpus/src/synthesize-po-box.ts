@@ -210,12 +210,12 @@ export function synthesizePoBoxRow(
 }
 
 /**
- * The US military/diplomatic PO-box class (#517). A distinct shape the leader-based locale templates
- * can't express: a unit line (`PSC <id> Box <box>`, `CMR <id> Box <box>`, `Unit <id> [Box <box>]`)
- * tagged `po_box`, then the post-office code (APO/FPO/DPO) as the locality and the armed-forces region
- * (AA/AE/AP) as the region, with a theatre-specific ZIP. Authoritative reference + citations:
- * `@mailwoman/codex` `codex/us/military-address.ts`; the small constants are inlined here so the
- * generator is self-contained.
+ * The US military/diplomatic PO-box class (#517). A distinct shape the leader-based locale
+ * templates can't express: a unit line (`PSC <id> Box <box>`, `CMR <id> Box <box>`, `Unit <id> [Box
+ * <box>]`) tagged `po_box`, then the post-office code (APO/FPO/DPO) as the locality and the
+ * armed-forces region (AA/AE/AP) as the region, with a theatre-specific ZIP. Authoritative
+ * reference + citations: `@mailwoman/codex` `codex/us/military-address.ts`; the small constants are
+ * inlined here so the generator is self-contained.
  */
 const MIL_UNITS: ReadonlyArray<{ code: string; boxRequired: boolean }> = [
 	{ code: "PSC", boxRequired: true },

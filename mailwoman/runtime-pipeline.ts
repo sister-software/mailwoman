@@ -14,7 +14,7 @@
  *   See `docs/articles/plan/reference/STAGES.md` for the full contract.
  */
 
-import { type AddressParser, solutionToProposals } from "@mailwoman/core/parser"
+import { solutionToProposals, type AddressParser } from "@mailwoman/core/parser"
 import {
 	runPipeline,
 	type PipelineOpts,
@@ -76,17 +76,17 @@ export interface CreateRuntimePipelineOpts {
 	placeCountry?: RuntimePipelineStages["placeCountry"] | false
 	/**
 	 * The "rule source" for per-component arbitration (#478 increment 3). Defaults to a lazily-built
-	 * v0 `createAddressParser` whose solved output is projected to proposals via `solutionToProposals`
-	 * — constructed on the first `arbitrate: true` call and never if arbitration is never used.
-	 * Override to inject a custom rule parser or a fake in tests.
+	 * v0 `createAddressParser` whose solved output is projected to proposals via
+	 * `solutionToProposals` — constructed on the first `arbitrate: true` call and never if
+	 * arbitration is never used. Override to inject a custom rule parser or a fake in tests.
 	 *
 	 * @see RuntimePipelineStages.ruleProposer
 	 */
 	ruleProposer?: RuntimePipelineStages["ruleProposer"]
 	/**
-	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ASCII
-	 * input before the model (helps on all-caps registry/compliance data; detection-gated, mixed-case
-	 * untouched). Off by default. A per-call `runOpts.normalizeCase` overrides this.
+	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps
+	 * ASCII input before the model (helps on all-caps registry/compliance data; detection-gated,
+	 * mixed-case untouched). Off by default. A per-call `runOpts.normalizeCase` overrides this.
 	 */
 	normalizeCase?: boolean
 }
@@ -108,10 +108,7 @@ export function createRuntimePipeline(
 	// `arbitrate: true`), so non-arbitrating pipelines pay nothing. The solved v0 output — not raw
 	// classifier firings — is the coherent "rule" source projected to proposals.
 	let v0Parser: AddressParser | undefined
-	const defaultRuleProposer = async (
-		normalizedText: string,
-		locale: string
-	): Promise<ClassificationProposal[]> => {
+	const defaultRuleProposer = async (normalizedText: string, locale: string): Promise<ClassificationProposal[]> => {
 		v0Parser ??= createAddressParser()
 		const solutions = await v0Parser.parse(normalizedText, { locale })
 		const top = solutions[0]

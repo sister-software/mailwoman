@@ -10,9 +10,8 @@
  *   Run: node --experimental-strip-types scripts/eval/compare-parsers.ts
  */
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { decodeAsJson, proposalsToTree } from "@mailwoman/core/decoder"
 import { solutionToProposals } from "@mailwoman/core/parser"
-import { proposalsToTree } from "@mailwoman/core/decoder"
 import { createAddressParser } from "mailwoman"
 import { readFileSync } from "node:fs"
 

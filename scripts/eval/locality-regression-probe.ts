@@ -4,18 +4,19 @@
  * @author Teffen Ellis, et al.
  *
  *   #375 locality-REGRESSION probe — the v1.6.0 floors ship-blocker (us.locality 66.2 vs 72.9). The
- *   synthetic comma-less probe showed the locality START is clean; this asks the real question on the
- *   held-out US golden set: comparing the shard's BASE (v1.5.1) to v1.6.0, which rows had locality
- *   RIGHT before and WRONG after — and where did the locality text GO? The hypothesis is that the
- *   comma-less shape taught the model to over-extend street past where a comma normally stops it, so on
- *   real (comma'd) US addresses street now eats the locality. We confirm or refute by tabulating the
- *   regression rows' failure modes (absorbed-into-street / became-other-tag / dropped).
+ *   synthetic comma-less probe showed the locality START is clean; this asks the real question on
+ *   the held-out US golden set: comparing the shard's BASE (v1.5.1) to v1.6.0, which rows had
+ *   locality RIGHT before and WRONG after — and where did the locality text GO? The hypothesis is
+ *   that the comma-less shape taught the model to over-extend street past where a comma normally
+ *   stops it, so on real (comma'd) US addresses street now eats the locality. We confirm or refute
+ *   by tabulating the regression rows' failure modes (absorbed-into-street / became-other-tag /
+ *   dropped).
  *
- *   Run: node --experimental-strip-types scripts/eval/locality-regression-probe.ts \
- *     --baseline /mnt/playpen/mailwoman-data/models/quantized/model-v151-step-40000-int8.onnx \
- *     --candidate ./out/v160/model.onnx \
- *     --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
- *     --model-card neural-weights-en-us/model-card.json --n 800
+ *   Run: node --experimental-strip-types scripts/eval/locality-regression-probe.ts\
+ *   --baseline /mnt/playpen/mailwoman-data/models/quantized/model-v151-step-40000-int8.onnx\
+ *   --candidate ./out/v160/model.onnx\
+ *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model-card neural-weights-en-us/model-card.json --n 800
  */
 
 import { readFileSync } from "node:fs"
@@ -89,7 +90,9 @@ for (const row of rows) {
 		else mode = "other (org/venue name or unrelated span)"
 		failMode[mode] = (failMode[mode] ?? 0) + 1
 		if (examples.length < 10)
-			examples.push(`  [${mode.split(" ")[0]}] "${row.raw.slice(0, 70)}"  gold loc=${row.components.locality} | got loc='${cp.locality ?? ""}'`)
+			examples.push(
+				`  [${mode.split(" ")[0]}] "${row.raw.slice(0, 70)}"  gold loc=${row.components.locality} | got loc='${cp.locality ?? ""}'`
+			)
 	}
 }
 

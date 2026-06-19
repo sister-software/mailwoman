@@ -7,23 +7,23 @@ synthetic shapes the shard teaches (`scripts/eval/boundary-stress-baseline.ts`, 
 the current neural model, exact-match per tag). The shard is **base-locales-only (US/FR/DE)** — see the
 base-consistency section for why.
 
-| stress shape | stress tag | accuracy | street accuracy |
-| --- | --- | --: | --: |
-| street-eats-affix | street_suffix | **41.7%** | 39% |
-| comma-less City ST | street | **47%** | (locality 91, region 90) |
-| fr-prefix | street_prefix | **55.0%** | 39% |
-| house-number-after-street | house_number | **51.3%** | 53% |
+| stress shape              | stress tag    |  accuracy |          street accuracy |
+| ------------------------- | ------------- | --------: | -----------------------: |
+| street-eats-affix         | street_suffix | **41.7%** |                      39% |
+| comma-less City ST        | street        |   **47%** | (locality 91, region 90) |
+| fr-prefix                 | street_prefix | **55.0%** |                      39% |
+| house-number-after-street | house_number  | **51.3%** |                      53% |
 
 _(Measured on the base-consistent locality vocabulary — see the #511 section. Earlier drafts read
 street_suffix 40.7 / fr-prefix 47.7 on a vocab that contradicted the base; the numbers above are on the
 corrected vocab. house-number-after-street is now FR-only.)_
 
 (On the delimited shapes the uncontested tags read ~100% — the failures concentrate on the contested
-boundary, exactly as designed. US comma-less locality/region are easy at 91/100%; the *street* span is
+boundary, exactly as designed. US comma-less locality/region are easy at 91/100%; the _street_ span is
 the casualty there too.)
 
 **Diversity correction (the runbook's point, measured):** an initial thin-pool shard (~16 streets, ~7
-tuples) gave an *inflated* baseline — street_suffix read 48%, fr-prefix 70% — because the few lexemes
+tuples) gave an _inflated_ baseline — street_suffix read 48%, fr-prefix 70% — because the few lexemes
 were memorizable. Expanding the pools ~3× (≈100 distinct streets, 28 US / 12 FR / 10 DE tuples, ~100%
 unique rows) drops those to **40.7% / 47.7%** — the true gap on the real distribution. Exactly why
 CONTRIBUTING_MODEL_WORK gates on diversity: a thin shard teaches lexemes and a thin baseline hides the gap.
@@ -46,7 +46,7 @@ caught two things, only one of them a true problem:
   contradiction — `Madison` 96% street, `Portland` 95%, `Springfield IL` 84% (the "5th Avenue Theatre"
   class, well-sampled across ~23 US shards). Fixed: the US vocab is now **derived + verified
   locality-dominant** (Albuquerque 258584:8, Indianapolis 219700:29, Sacramento, Jacksonville…). The
-  **FR** flag, by contrast, was a *sampling artifact* — the all-shard scan barely touched the FR ban block
+  **FR** flag, by contrast, was a _sampling artifact_ — the all-shard scan barely touched the FR ban block
   (parts 180–209) and mixed in US street-contexts; the FR-block scan shows Paris (515605:24789), Marseille,
   Lyon are 95–99% **locality** in the FR data, so familiar dept-diverse FR cities are kept. **DE** yielded
   no locality-dominant towns (German cities are street-dominated too, "Berliner Straße"), so

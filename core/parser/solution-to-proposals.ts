@@ -7,9 +7,10 @@
  *
  *   The arbitration layer's "rule source" is NOT the raw firings of individual legacy classifiers —
  *   those are uncoordinated (every classifier fires on every span) and only become a coherent parse
- *   after the v0 solver chain (filters, penalties, declassifiers) runs. So the rule proposals fed to
- *   arbitration are derived from a *solved* `SerializedSolution` (the v0 parser's actual output), one
- *   proposal per surviving match — preserving the span offsets and confidence the solver settled on.
+ *   after the v0 solver chain (filters, penalties, declassifiers) runs. So the rule proposals fed
+ *   to arbitration are derived from a _solved_ `SerializedSolution` (the v0 parser's actual
+ *   output), one proposal per surviving match — preserving the span offsets and confidence the
+ *   solver settled on.
  *
  *   Spans are structural (`{ start, end, body }`) to avoid forcing the tokenization module's
  *   filesystem-bound init; downstream proposal consumers read only `start` / `end` / `body`.

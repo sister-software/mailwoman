@@ -6,22 +6,22 @@ _Self-emitted by `scripts/eval/per-type-report.ts`. Both parsers graded through 
 
 Both parsers through the same resolver, against real address points. Slices overlap (a row can be both directional and multi-word-locality); `plain` is the complement.
 
-| bucket | n | neural loc-match | v0 loc-match | neural coord p50 km | v0 coord p50 km |
-|---|--:|--:|--:|--:|--:|
-| all rows | 2000 | 84.0% | 82.1% | 3.3 | 3.3 |
-| directional street | 506 | 87.2% | 85.2% | 3.1 | 3.1 |
-| multi-word locality | 509 | 90.0% | 84.7% | 3.1 | 3.0 |
-| plain (neither) | 1152 | 81.5% | 80.9% | 3.4 | 3.4 |
+| bucket              |    n | neural loc-match | v0 loc-match | neural coord p50 km | v0 coord p50 km |
+| ------------------- | ---: | ---------------: | -----------: | ------------------: | --------------: |
+| all rows            | 2000 |            84.0% |        82.1% |                 3.3 |             3.3 |
+| directional street  |  506 |            87.2% |        85.2% |                 3.1 |             3.1 |
+| multi-word locality |  509 |            90.0% |        84.7% |                 3.1 |             3.0 |
+| plain (neither)     | 1152 |            81.5% |        80.9% |                 3.4 |             3.4 |
 
 ## Part B — parse-structure win-rate on the headline types (generated, 150 each)
 
 OpenAddresses has ~no PO boxes, intersections, or units, so these are templated from real OA cities; the truth is the known TYPE. We score whether each parser emits the correct STRUCTURE.
 
-| type | n | neural correct | v0 correct |
-|---|--:|--:|--:|
-| po_box | 150 | 100.0% | 0.0% |
-| intersection | 150 | 82.0% | 0.0% |
-| unit (keeps designator) | 150 | 100.0% | 0.0% |
+| type                    |   n | neural correct | v0 correct |
+| ----------------------- | --: | -------------: | ---------: |
+| po_box                  | 150 |         100.0% |       0.0% |
+| intersection            | 150 |          82.0% |       0.0% |
+| unit (keeps designator) | 150 |         100.0% |       0.0% |
 
 ## Reading
 

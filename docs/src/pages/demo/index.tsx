@@ -67,8 +67,10 @@ import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared
 const INTERP_RADIUS_BY_REGION: Record<string, number> = { dc: 1.44, ny: 1.53, ca: 1.87, mi: 1.93 }
 const INTERP_RADIUS_DEFAULT = 1.95
 
-/** Spans that together make up the street name — assembled in source order for the situs/interp
-query. */
+/**
+ * Spans that together make up the street name — assembled in source order for the situs/interp
+ * query.
+ */
 const STREET_COMPONENT_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
 /** The per-state street lookups, loaded together (lazy by region). */

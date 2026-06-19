@@ -3,45 +3,49 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Boundary-instability synthesizer (#375 — the highest-leverage parser lever). The failure taxonomy +
- *   the within-token-punctuation decomposition (#702) found one failure FAMILY surfacing under many
- *   names: the model mis-places token boundaries between adjacent components when the boundary is
- *   ambiguous or unmarked. This generator emits diverse BIO-labeled rows that put the gold boundary
- *   exactly where the model wobbles, so a retrain learns the boundary from context, not the lexeme.
+ *   Boundary-instability synthesizer (#375 — the highest-leverage parser lever). The failure taxonomy
+ *   + the within-token-punctuation decomposition (#702) found one failure FAMILY surfacing under
+ *   many names: the model mis-places token boundaries between adjacent components when the boundary
+ *   is ambiguous or unmarked. This generator emits diverse BIO-labeled rows that put the gold
+ *   boundary exactly where the model wobbles, so a retrain learns the boundary from context, not
+ *   the lexeme.
  *
- *   The four token-aligned stress shapes, all in BASE LOCALES (US/FR/DE) so the shard never introduces
- *   tokens the base corpus lacks (the #511 base-consistency lint flagged an earlier AU-bearing draft:
- *   AU 4-digit postcodes collide with US house numbers, and AU localities are absent from the US/FR/DE
- *   base — a real contradiction). Each component is a whitespace-separated token run, so `alignRow`
- *   labels it cleanly:
+ *   The four token-aligned stress shapes, all in BASE LOCALES (US/FR/DE) so the shard never
+ *   introduces tokens the base corpus lacks (the #511 base-consistency lint flagged an earlier
+ *   AU-bearing draft: AU 4-digit postcodes collide with US house numbers, and AU localities are
+ *   absent from the US/FR/DE base — a real contradiction). Each component is a whitespace-separated
+ *   token run, so `alignRow` labels it cleanly:
  *
  *   1. `street-eats-affix` — multi-word street + suffix (`Country Club Rd` → street + street_suffix),
  *        the #1 wobble: the model keeps the suffix in the street.
  *   2. `comma-less-city-state` — no comma between street / locality / region (`100 Main St Springfield
- *        IL 62701`), the #694 family: concatenated input loses the segmentation cue. US-only (US zips
- *        are base-consistent; the boundary is locale-agnostic).
- *   3. `fr-prefix` — FR street-type prefix split from the name (`Rue Jean-Baptiste Lebas` → street_prefix
- *        + street), postcode-first order.
+ *        IL 62701`), the #694 family: concatenated input loses the segmentation cue. US-only (US
+ *        zips are base-consistent; the boundary is locale-agnostic).
+ *   3. `fr-prefix` — FR street-type prefix split from the name (`Rue Jean-Baptiste Lebas` →
+ *        street_prefix
+ *
+ *        - Street), postcode-first order.
  *   4. `house-number-after-street` — FR/DE number-follows-street (`Neuve-des-Capucines 5` → street +
  *        house_number), the model absorbs the number into the street.
  *
- *   Two BALANCING shapes (added 2026-06-18 after the v1.6.0 probes). The first pass at weight 1.0 lifted
- *   the boundaries but over-fit a NARROW distribution — every row was a clean, full, structured address —
- *   so the model regressed on out-of-distribution real rows (held-out US locality 66.3→58.2%). These two
- *   widen the distribution the shard teaches over, per the diagnosis (scripts/eval/locality-regression-probe):
- *   5. `bare-locality` — locality with NO street (`Public Library, Lisbon ND`, `75003 Paris`), the
- *        ship-blocker: 84% of the v1.6.0 locality regression was DROPPED locality on bare "City, STATE"
- *        rows, because every other shape placed a street before the city. Bare / comma-less / postcode'd /
- *        venue-prefixed forms, US + FR.
- *   6. `house-number-before-street` — the confounding mirror of #4 (same FR vocab, number BEFORE the
- *        street). A balanced before:after mix breaks the positional shortcut behind the #4 order-bias.
+ *   Two BALANCING shapes (added 2026-06-18 after the v1.6.0 probes). The first pass at weight 1.0
+ *   lifted the boundaries but over-fit a NARROW distribution — every row was a clean, full,
+ *   structured address — so the model regressed on out-of-distribution real rows (held-out US
+ *   locality 66.3→58.2%). These two widen the distribution the shard teaches over, per the
+ *   diagnosis (scripts/eval/locality-regression-probe): 5. `bare-locality` — locality with NO
+ *   street (`Public Library, Lisbon ND`, `75003 Paris`), the ship-blocker: 84% of the v1.6.0
+ *   locality regression was DROPPED locality on bare "City, STATE" rows, because every other shape
+ *   placed a street before the city. Bare / comma-less / postcode'd / venue-prefixed forms, US +
+ *   FR. 6. `house-number-before-street` — the confounding mirror of #4 (same FR vocab, number
+ *   BEFORE the street). A balanced before:after mix breaks the positional shortcut behind the #4
+ *   order-bias.
  *
- *   EXCLUDED: the region+postcode glue (`NY14201` — sub-token, no punctuation to split) and the AU/NZ/UK
- *   slash unit-convention (`4/2A` → unit+house_number). The slash labels cleanly (the tokenizer splits
- *   `/`) and is the worst within-token class — but it inherently requires non-base AU/NZ/UK locales,
- *   which contradict the US/FR/DE base (the lint catch). It belongs in a separately-scoped AU/NZ/UK
- *   boundary-coverage shard that ALSO adds AU base coverage, not in this base-locale shard.
- *   `synthesize-boundary-stress.test.ts` proves the alignments.
+ *   EXCLUDED: the region+postcode glue (`NY14201` — sub-token, no punctuation to split) and the
+ *   AU/NZ/UK slash unit-convention (`4/2A` → unit+house_number). The slash labels cleanly (the
+ *   tokenizer splits `/`) and is the worst within-token class — but it inherently requires non-base
+ *   AU/NZ/UK locales, which contradict the US/FR/DE base (the lint catch). It belongs in a
+ *   separately-scoped AU/NZ/UK boundary-coverage shard that ALSO adds AU base coverage, not in this
+ *   base-locale shard. `synthesize-boundary-stress.test.ts` proves the alignments.
  */
 
 import type { CanonicalRow } from "./types.js"
@@ -85,40 +89,169 @@ function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
 // Multi-word names are what make the suffix boundary BITE (the model must not read the trailing
 // suffix word as part of the name). Kept diverse so the shard teaches the boundary, not the lexeme.
 const MULTIWORD_STREETS = [
-	"Country Club", "Martin Luther King", "Forest Hill", "Lake View", "Spring Valley", "Cedar Ridge",
-	"Old Mill", "Sunset Park", "Maple Grove", "Stone Creek", "Glen Cove", "Pine Bluff", "Fox Hollow",
-	"Briar Patch", "West End", "College Station", "Quail Hollow", "Eagle Ridge", "Deer Run", "Bear Creek",
-	"Willow Bend", "Cypress Point", "Laurel Oak", "Magnolia Park", "Cherry Hill", "Walnut Grove",
-	"Birch Hollow", "Aspen Grove", "Juniper Ridge", "Hidden Valley", "Rolling Hills", "Tanglewood",
-	"Meadow Brook", "Clover Field", "Sunrise Point", "Harbor View", "Bay Shore", "Ocean Breeze",
-	"Mountain View", "Valley Forge", "Liberty Square", "Washington Crossing", "Kings Highway",
-	"Queens Gate", "Princeton Junction",
+	"Country Club",
+	"Martin Luther King",
+	"Forest Hill",
+	"Lake View",
+	"Spring Valley",
+	"Cedar Ridge",
+	"Old Mill",
+	"Sunset Park",
+	"Maple Grove",
+	"Stone Creek",
+	"Glen Cove",
+	"Pine Bluff",
+	"Fox Hollow",
+	"Briar Patch",
+	"West End",
+	"College Station",
+	"Quail Hollow",
+	"Eagle Ridge",
+	"Deer Run",
+	"Bear Creek",
+	"Willow Bend",
+	"Cypress Point",
+	"Laurel Oak",
+	"Magnolia Park",
+	"Cherry Hill",
+	"Walnut Grove",
+	"Birch Hollow",
+	"Aspen Grove",
+	"Juniper Ridge",
+	"Hidden Valley",
+	"Rolling Hills",
+	"Tanglewood",
+	"Meadow Brook",
+	"Clover Field",
+	"Sunrise Point",
+	"Harbor View",
+	"Bay Shore",
+	"Ocean Breeze",
+	"Mountain View",
+	"Valley Forge",
+	"Liberty Square",
+	"Washington Crossing",
+	"Kings Highway",
+	"Queens Gate",
+	"Princeton Junction",
 ] as const
 const SINGLE_STREETS = [
-	"Main", "Oak", "Maple", "Park", "Washington", "Lincoln", "Church", "River", "Pine", "Cedar", "Elm",
-	"Jefferson", "Madison", "Adams", "Jackson", "Franklin", "Highland", "Sunset", "Lakeview", "Hillcrest",
-	"Cambridge", "Devonshire", "Sherwood", "Kingston", "Berkshire", "Aberdeen", "Belmont", "Carlisle",
-	"Dover", "Easton", "Fairfax", "Greenwood", "1st", "2nd", "3rd", "4th", "5th", "12th", "42nd",
+	"Main",
+	"Oak",
+	"Maple",
+	"Park",
+	"Washington",
+	"Lincoln",
+	"Church",
+	"River",
+	"Pine",
+	"Cedar",
+	"Elm",
+	"Jefferson",
+	"Madison",
+	"Adams",
+	"Jackson",
+	"Franklin",
+	"Highland",
+	"Sunset",
+	"Lakeview",
+	"Hillcrest",
+	"Cambridge",
+	"Devonshire",
+	"Sherwood",
+	"Kingston",
+	"Berkshire",
+	"Aberdeen",
+	"Belmont",
+	"Carlisle",
+	"Dover",
+	"Easton",
+	"Fairfax",
+	"Greenwood",
+	"1st",
+	"2nd",
+	"3rd",
+	"4th",
+	"5th",
+	"12th",
+	"42nd",
 ] as const
 const SUFFIXES = [
-	"St", "Street", "Ave", "Avenue", "Rd", "Road", "Blvd", "Boulevard", "Ln", "Lane", "Dr", "Drive",
-	"Pkwy", "Parkway", "Way", "Ct", "Court", "Pl", "Place", "Cir", "Circle", "Ter", "Terrace", "Hwy",
-	"Trail", "Loop", "Cres", "Crescent", "Row", "Walk",
+	"St",
+	"Street",
+	"Ave",
+	"Avenue",
+	"Rd",
+	"Road",
+	"Blvd",
+	"Boulevard",
+	"Ln",
+	"Lane",
+	"Dr",
+	"Drive",
+	"Pkwy",
+	"Parkway",
+	"Way",
+	"Ct",
+	"Court",
+	"Pl",
+	"Place",
+	"Cir",
+	"Circle",
+	"Ter",
+	"Terrace",
+	"Hwy",
+	"Trail",
+	"Loop",
+	"Cres",
+	"Crescent",
+	"Row",
+	"Walk",
 ] as const
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const
 
 // FR street-type prefixes + hyphenated honorific street names (the hyphen is incidental; the boundary
 // stress is the prefix↔name split + the number-after-street order).
 const FR_PREFIXES = [
-	"Rue", "Avenue", "Boulevard", "Place", "Impasse", "Chemin", "Quai", "Cours", "Allée", "Passage",
-	"Square", "Villa", "Sentier", "Promenade",
+	"Rue",
+	"Avenue",
+	"Boulevard",
+	"Place",
+	"Impasse",
+	"Chemin",
+	"Quai",
+	"Cours",
+	"Allée",
+	"Passage",
+	"Square",
+	"Villa",
+	"Sentier",
+	"Promenade",
 ] as const
 const FR_NAMES = [
-	"Jean-Baptiste Lebas", "Neuve-des-Capucines", "Charles-de-Gaulle", "du Général-Leclerc",
-	"de la République", "des Trois-Frères", "Victor-Hugo", "Jean-Jaurès", "de l'Abreuvoir",
-	"Émile-Zola", "Gambetta", "Jean-Moulin", "des Martyrs-de-la-Résistance", "du Maréchal-Foch",
-	"Pierre-et-Marie-Curie", "Antoine-de-Saint-Exupéry", "de la Liberté", "des Quatre-Vents",
-	"du Faubourg-Saint-Antoine", "Saint-Honoré", "de la Pompe", "des Petits-Champs", "Léon-Blum",
+	"Jean-Baptiste Lebas",
+	"Neuve-des-Capucines",
+	"Charles-de-Gaulle",
+	"du Général-Leclerc",
+	"de la République",
+	"des Trois-Frères",
+	"Victor-Hugo",
+	"Jean-Jaurès",
+	"de l'Abreuvoir",
+	"Émile-Zola",
+	"Gambetta",
+	"Jean-Moulin",
+	"des Martyrs-de-la-Résistance",
+	"du Maréchal-Foch",
+	"Pierre-et-Marie-Curie",
+	"Antoine-de-Saint-Exupéry",
+	"de la Liberté",
+	"des Quatre-Vents",
+	"du Faubourg-Saint-Antoine",
+	"Saint-Honoré",
+	"de la Pompe",
+	"des Petits-Champs",
+	"Léon-Blum",
 	"Aristide-Briand",
 ] as const
 
@@ -136,9 +269,20 @@ const FR_NAMES = [
 // Practice 98%, Dental 100%, Health 99%, Medical 88%, Community 92%, Department 90%, Group 87%, Center 65%,
 // School 70%, Public 89%, Elementary/Family 97% (all venue).
 const VENUES = [
-	"Community Center", "Health Center", "Medical Center", "Medical Clinic", "Family Clinic",
-	"Community Clinic", "Dental Clinic", "Family Practice", "Medical Practice", "Dental Group",
-	"Medical Group", "Health Department", "Elementary School", "Public School",
+	"Community Center",
+	"Health Center",
+	"Medical Center",
+	"Medical Clinic",
+	"Family Clinic",
+	"Community Clinic",
+	"Dental Clinic",
+	"Family Practice",
+	"Medical Practice",
+	"Dental Group",
+	"Medical Group",
+	"Health Department",
+	"Elementary School",
+	"Public School",
 ] as const
 
 // Localities DERIVED from the base corpus (#511): every name here is verified locality-DOMINANT in the
@@ -216,10 +360,10 @@ const ALL_TEMPLATES: readonly BoundaryStressTemplate[] = [
 ]
 
 /**
- * Synthesize one boundary-stress row. `base` is optional — when omitted, a locale-appropriate tuple is
- * drawn from the internal pools (so the generator is self-contained; a build script can pass real
- * tuples for scale + diversity). Every component value is a verbatim substring of `raw`, so `alignRow`
- * locates + BIO-labels it.
+ * Synthesize one boundary-stress row. `base` is optional — when omitted, a locale-appropriate tuple
+ * is drawn from the internal pools (so the generator is self-contained; a build script can pass
+ * real tuples for scale + diversity). Every component value is a verbatim substring of `raw`, so
+ * `alignRow` locates + BIO-labels it.
  */
 export function synthesizeBoundaryStressRow(
 	base: BoundaryStressBaseTuple | undefined,

@@ -39,24 +39,25 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
   locality regression got FIXED.
   **COMBINED VERDICT: NO-PROMOTE — but the diagnosis-driven fix WORKED.**
   - ✅ **The v1.6.0 ship-blocker is FIXED**: floors `us.locality` **80.0** (floor 72.9) — recovered from
-    v1.6.0's failing 66.2, now *above* v1.5.1. The bare-locality shape + cosine LR did exactly what the
+    v1.6.0's failing 66.2, now _above_ v1.5.1. The bare-locality shape + cosine LR did exactly what the
     probes predicted. Spine held end-to-end (no drift).
   - ✅ Blind-spot cleared: street-recall-full **35.0%** ≥ 32.7% floor (29 regressions, 4 "eaten" — small).
   - ✅ All other floors hold (us.street 75.7, fr.house_number 94.9, affix 98/93, arena 77, …).
   - ❌ **4-target boundary gate 1/4** — targets ~flat vs v1.6.0 (shard rebalanced, didn't advance them).
   - ❌ ONE red floor: `us.country_homograph_f1` 80.9 vs 83.3 — but the **v1.5.1 baseline (run after) reframed
-    this: it is NOT a v1.7.0 regression.** v1.5.1 scores the *identical* 80.9; the 83.3 floor is stale (from
+    this: it is NOT a v1.7.0 regression.** v1.5.1 scores the _identical_ 80.9; the 83.3 floor is stale (from
     the older v4.x 85-89 models). v1.7.0 didn't touch country.
   - Record-matcher 3-point curve FLAT: v1.5.1 68.0 / v1.6.0 67.9 / v1.7.0 68.0 (boundary lever ≠ dedup lever).
 
   **THE v1.5.1 → v1.7.0 FLOOR DELTA (the definitive comparison — most important number of the shift):**
-  locality **+5.1** (74.9→80.0), **fr.house_number +10.2** (84.7→94.9 — v1.5.1 was *failing* its own 87 floor),
+  locality **+5.1** (74.9→80.0), **fr.house_number +10.2** (84.7→94.9 — v1.5.1 was _failing_ its own 87 floor),
   fr.region +7.1, fr.cedex +2.5, unit +1.5, micro/region +~0.7; us.street **−4.3** (80.0→75.7, above floor —
   a locality/street tradeoff), street_suffix −1.6, de −1.0; country **±0.0**. **v1.7.0 is a NET IMPROVEMENT
   over v1.5.1**, not just a regression-fix. The gate FAILs only on (a) a stale country floor v1.5.1 also
   fails, and (b) the capacity-bound 4-target boundary gate. Candidate shipped beside the canonical
   (`./out/v170/model.onnx`); NOT auto-promoted (the wall). The diagnostic arc is validated AND v1.7.0 beats
   the current ship — a stronger outcome than "the fix worked."
+
 - **Stretch #1 — record-matcher curve** (`ed89dd4d` + reports): added a model-swap to `nppes-dedup-benchmark.ts`
   and ran the v1.5.1 + v1.6.0 baselines (TX, 300 NPIs). **Result: flat within noise** — org-name F1 68.0%
   (v1.5.1) vs 67.9% (v1.6.0), NPI 62.8 vs 62.6, spine 61.0 vs 60.9. The honest read: **the boundary-parse
@@ -66,11 +67,12 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
   joins as the 3rd point when it lands (expected ~flat).
 
 ### First eval (step 2000) — v1.7.0 vs v1.6.0
+
 macro_f1 0.656 vs 0.631 ; locality 0.691 vs 0.684 ; street 0.842 vs 0.819 ; hn 0.990 vs 0.994. The balanced
 shard isn't hurting the spine early; cosine LR should hold it at the end (the v1.6.0 drift fix).
 
 At step ~4000 the spine dipped slightly (locality 0.659, street 0.812 — below step-2000) while macro rose to
-0.666 — the normal mid-training re-balance. By step ~16000 it had RECOVERED and climbed *past* step-2000:
+0.666 — the normal mid-training re-balance. By step ~16000 it had RECOVERED and climbed _past_ step-2000:
 locality 0.740, street 0.834, macro 0.690. And it's tracking MUCH healthier than v1.6.0 at the same point —
 v1.6.0's locality had collapsed to ~0.61 by step ~14k; v1.7.0 is at 0.74. The balanced shard is holding the
 spine where v1.6.0 traded it away. Cosine LR decaying (lr ~0.00009) should consolidate it. The gate decides.
@@ -157,7 +159,7 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
 
 - **RECOMMENDATION: PROMOTE v1.7.0 (a net improvement over v1.5.1); do NOT bump the weight.** The v1.5.1
   baseline shows v1.7.0 wins the floors that matter — locality +5.1, **fr.house_number +10.2 (v1.5.1 was
-  *failing* its own floor)**, fr.region +7.1 — at the cost of us.street −4.3 (above floor). DeepSeek-confirmed:
+  _failing_ its own floor)**, fr.region +7.1 — at the cost of us.street −4.3 (above floor). DeepSeek-confirmed:
   weight 1.5 is unsafe (amplifies the flat boundary signal, re-risks the spine — the lever that cratered an
   affix tag) and the 4 boundary targets are capacity-bound; don't chase them. The record-matcher flatness
   confirms the boundary lever doesn't move real-world dedup. v1.7.0 is the better ship.
@@ -179,17 +181,17 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
 
 ## Numbers
 
-| metric | value |
-|---|---|
-| shift duration | 03:58–15:00 UTC (~11h) |
-| models trained | 1 (v1.7.0, full 40k after a mid-run resume) |
-| Modal GPU time | ~4h (train + stall window + resume + export/quant) |
-| local compute | shard builds, the gate + 5 probe evals (×2 models for the comparatives), 3 record-matcher runs, 3 lint runs |
-| NaN incidents | 0 |
-| training stalls | 1 (hung ~step 21k; recovered via `--resume auto` from step-020000, no training lost) |
-| CI failures | 0 (docs-build green on all commits) |
-| commits | 14 |
-| demo / production regressions | n/a (no promote — candidate shipped beside canonical) |
+| metric                        | value                                                                                                       |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| shift duration                | 03:58–15:00 UTC (~11h)                                                                                      |
+| models trained                | 1 (v1.7.0, full 40k after a mid-run resume)                                                                 |
+| Modal GPU time                | ~4h (train + stall window + resume + export/quant)                                                          |
+| local compute                 | shard builds, the gate + 5 probe evals (×2 models for the comparatives), 3 record-matcher runs, 3 lint runs |
+| NaN incidents                 | 0                                                                                                           |
+| training stalls               | 1 (hung ~step 21k; recovered via `--resume auto` from step-020000, no training lost)                        |
+| CI failures                   | 0 (docs-build green on all commits)                                                                         |
+| commits                       | 14                                                                                                          |
+| demo / production regressions | n/a (no promote — candidate shipped beside canonical)                                                       |
 
 ## Addendum — promote retracted on re-eval (2026-06-18)
 
@@ -272,7 +274,7 @@ coordinate is meter-grade.
 ### Decisions
 
 - **HOLD v1.5.0 confirmed.** The country −2.4 the night flagged is a single record (`Avenida Arequipa,
-  Lima 15046, Peru`) on a 27-row denominator — pulled the rows; not systematic.
+Lima 15046, Peru`) on a 27-row denominator — pulled the rows; not systematic.
 - **Overture ingest is NOT the coordinate lever.** The situs shards are already built from Overture;
   the SD/IL holes are a NAD-vs-OpenAddresses theme-selection bug, not missing data (#723).
 - **Banked the situs theme-reselect (#723).** The coordinate is in great shape; the shard rebuild

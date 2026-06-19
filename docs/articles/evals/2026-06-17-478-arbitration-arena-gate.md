@@ -22,12 +22,12 @@ overlaps (the coherence pass), and rebuilds the tree.
 
 ## Result — arbitration nearly halves the v0-only gap
 
-| graded arm | assembled/parser pass | **v0-only vs ASSEMBLED** (gate target → ~0) |
-| --- | ---: | ---: |
-| v0 (rules) | 100.0% | — |
-| raw neural | 43.1% | 56.9% |
-| assembled, no arbitration (inc 1 baseline) | 43.6% | 56.4% |
-| **assembled + arbitration** | **72.9%** | **27.1%** |
+| graded arm                                 | assembled/parser pass | **v0-only vs ASSEMBLED** (gate target → ~0) |
+| ------------------------------------------ | --------------------: | ------------------------------------------: |
+| v0 (rules)                                 |                100.0% |                                           — |
+| raw neural                                 |                 43.1% |                                       56.9% |
+| assembled, no arbitration (inc 1 baseline) |                 43.6% |                                       56.4% |
+| **assembled + arbitration**                |             **72.9%** |                                   **27.1%** |
 
 Against raw neural the arbitrated pipeline is **+122 / −10**: it captures 122 parses neural alone drops
 (the v0 wins, kept "by construction" — the router routes clean structured input to the rule source and
@@ -54,11 +54,11 @@ parse). The run is clean across all 376 assertions, no errors.
 neural classifier with postcodeRepair, `placeCountry` OFF for comparability, same resolver) — without
 (`assembled`) and with (`assembled + arb`) arbitration. 300 OpenAddresses US rows, admin-centroid tier:
 
-| arm | locality-match | region-match | coord p50 km | coord p90 km | street+hn precondition |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| neural | 83.0% | 99.7% | 3.3 | 12.5 | 100.0% |
-| assembled (no arb) | 83.0% | 99.7% | 3.3 | 12.5 | 100.0% |
-| **assembled + arb** | **57.0%** | 100.0% | **1069.4** | **3182.5** | **48.0%** |
+| arm                 | locality-match | region-match | coord p50 km | coord p90 km | street+hn precondition |
+| ------------------- | -------------: | -----------: | -----------: | -----------: | ---------------------: |
+| neural              |          83.0% |        99.7% |          3.3 |         12.5 |                 100.0% |
+| assembled (no arb)  |          83.0% |        99.7% |          3.3 |         12.5 |                 100.0% |
+| **assembled + arb** |      **57.0%** |       100.0% |   **1069.4** |   **3182.5** |              **48.0%** |
 
 The `assembled (no arb)` arm reproduces `neural` to the decimal — the **instrument is sound**, so the
 regression is fully attributable to arbitration (the only delta is `arbitrate: true`). Arbitration:
@@ -95,12 +95,12 @@ proposal/tree representation has no containment.
   `street_suffix`/`street_prefix` (e.g. `street[4,12]"Seminary"` + `street_suffix[13,15]"Dr"`); the
   solved v0 parse emits the combined `street[4,15]"Seminary Dr"`. Under `rule_preferred` both survive
   arbitration (v0 has no `street_suffix`), then the coherence pass — which only knows intervals, not
-  that a suffix is *part of* a street — sees `street_suffix` (conf 0.94) overlapping `street` (conf
+  that a suffix is _part of_ a street — sees `street_suffix` (conf 0.94) overlapping `street` (conf
   0.82) and **evicts the street**, leaving a dangling suffix and no street. Measured: 25/60 rows drop
   street, **25/25 by this overlap eviction**. (When v0's street outranks the neural suffix, it
   survives — the ~50/50.)
 - **Coordinate (locality resolves to a wrong-state namesake).** The probe shows locality/region
-  *values* are byte-identical to neural (**0/60** changed) — yet they resolve to the wrong place. The
+  _values_ are byte-identical to neural (**0/60** changed) — yet they resolve to the wrong place. The
   only difference is the tree: the nested neural argmax tree vs the **flat** `proposalsToTree`. The
   resolver loses the region→locality containment constraint and resolves the same `"Mill Valley"`
   string globally to a wrong-state namesake. (DeepSeek's flagged flat-tree risk — the resolver-output
@@ -128,24 +128,24 @@ relabel same-span tag disagreements + add rule-only non-overlapping missing tags
 
 **Coordinate leg (300 OA US rows) — regression ELIMINATED:**
 
-| arm | locality-match | coord p50 km | coord p90 km | street+hn precondition |
-| --- | ---: | ---: | ---: | ---: |
-| neural | 83.0% | 3.3 | 12.5 | 100.0% |
-| flatten+rebuild v1 (prior) | 57.0% | 1069.4 | 3182.5 | 48.0% |
-| **fix-v1 (edit-in-place)** | **83.0%** | **3.3** | **12.5** | **99.7%** |
+| arm                        | locality-match | coord p50 km | coord p90 km | street+hn precondition |
+| -------------------------- | -------------: | -----------: | -----------: | ---------------------: |
+| neural                     |          83.0% |          3.3 |         12.5 |                 100.0% |
+| flatten+rebuild v1 (prior) |          57.0% |       1069.4 |       3182.5 |                  48.0% |
+| **fix-v1 (edit-in-place)** |      **83.0%** |      **3.3** |     **12.5** |              **99.7%** |
 
 Fix-v1's `assembled + arb` matches `neural` to the decimal — the catastrophe is gone, containment holds.
 
 **Arena leg — collapses to a net wash:**
 
-| arena metric | flatten+rebuild v1 | fix-v1 |
-| --- | ---: | ---: |
-| assembled pass | 72.9% | 43.1% (= raw neural) |
-| `v0-only vs ASSEMBLED` | 27.1% | 56.9% (= raw neural) |
-| assembled vs raw-neural | +122 / −10 | **+21 / −21** |
+| arena metric            | flatten+rebuild v1 |               fix-v1 |
+| ----------------------- | -----------------: | -------------------: |
+| assembled pass          |              72.9% | 43.1% (= raw neural) |
+| `v0-only vs ASSEMBLED`  |              27.1% | 56.9% (= raw neural) |
+| assembled vs raw-neural |         +122 / −10 |        **+21 / −21** |
 
 The +122 was almost entirely the harmful decomposition-replacement (taking v0's coarser spans to match
-its labels) — the same edits the coordinate gate proved wreck resolution. The *safe* fix-v1 (no
+its labels) — the same edits the coordinate gate proved wreck resolution. The _safe_ fix-v1 (no
 restructure) nets nothing on the arena: +21 helpful relabels/adds offset by 21 harmful ones, the
 `v0-only` gap unmoved.
 
@@ -157,7 +157,7 @@ while every arbitrated parse pays the cost of a full v0 rule-parse. There is not
 latency. **Arbitration ships SAFE and default-OFF; it is not promoted.**
 
 The durable findings: (1) the `v0-only` arena column conflates "neural is wrong" with "neural is
-*differently right*" — arbitrating toward v0 captures both, and the second kind is harmful; (2) for a
+_differently right_" — arbitrating toward v0 captures both, and the second kind is harmful; (2) for a
 model this strong on the addresses we serve, rule-vs-neural arbitration toward v0 is not a quality
 lever. The machinery + the safe fix-v1 are banked behind the flag, with the gate instruments, should a
 weaker model, a new locale, or a per-tag config (where the data shows arbitration nets positive on a

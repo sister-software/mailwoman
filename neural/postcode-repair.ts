@@ -198,13 +198,14 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
  * (~3.8pts of the 12% US admin tail).
  *
  * When a bare 5-digit `postcode` span LEADS the address, no `house_number` was decoded, and a
- * `street` follows it, relabel that span to `house_number`. A trailing postcode (if any) is untouched.
+ * `street` follows it, relabel that span to `house_number`. A trailing postcode (if any) is
+ * untouched.
  *
- * **US ONLY — the caller MUST gate this on the detected address system === "us".** A leading 5-digit
- * before a street is a *postcode* in reversed-order FR ("75008 Rue de la Paix", the #560 shard), so
- * applying it outside US would re-break FR reversed-order house numbers. The "a street follows" check
- * is a second guard (FR/DE postcode-first puts a LOCALITY after the leading 5-digit, "08523 Plauen"),
- * but the locale gate is the load-bearing one.
+ * **US ONLY — the caller MUST gate this on the detected address system === "us".** A leading
+ * 5-digit before a street is a _postcode_ in reversed-order FR ("75008 Rue de la Paix", the #560
+ * shard), so applying it outside US would re-break FR reversed-order house numbers. The "a street
+ * follows" check is a second guard (FR/DE postcode-first puts a LOCALITY after the leading 5-digit,
+ * "08523 Plauen"), but the locale gate is the load-bearing one.
  */
 export function repairLeadingHouseNumber(text: string, input: readonly DecoderToken[]): RepairResult {
 	const tokens = input.map((t) => ({ ...t }))

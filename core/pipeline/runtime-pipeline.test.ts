@@ -645,7 +645,10 @@ describe("runPipeline — arbitration (#478 inc 3)", () => {
 		// neural: street[4,12]"Seminary" + street_suffix[13,15]"Dr"; rule: combined street[4,15]. fix-v1
 		// never restructures, so both neural nodes survive and the coarse rule street is ignored — the
 		// suffix is no longer able to evict the street (the leg-2 bug).
-		const ruleProposer = vi.fn(async () => [ruleProp("house_number", "109", 0, 1), ruleProp("street", "Seminary Dr", 4, 0.82)])
+		const ruleProposer = vi.fn(async () => [
+			ruleProp("house_number", "109", 0, 1),
+			ruleProp("street", "Seminary Dr", 4, 0.82),
+		])
 		const result = await runPipeline(
 			"109 Seminary Dr",
 			{
@@ -677,7 +680,9 @@ describe("runPipeline — arbitration (#478 inc 3)", () => {
 			{
 				computeQueryShape: alphaShape,
 				classifyKind: async () => cleanKind,
-				classifier: fakeClassifier(fakeTree("NYC", [{ tag: "locality", value: "NYC", start: 0, end: 3, confidence: 0.6, children: [] }])),
+				classifier: fakeClassifier(
+					fakeTree("NYC", [{ tag: "locality", value: "NYC", start: 0, end: 3, confidence: 0.6, children: [] }])
+				),
 				ruleProposer,
 			},
 			{ arbitrate: true }
@@ -694,7 +699,11 @@ describe("runPipeline — arbitration (#478 inc 3)", () => {
 			{
 				computeQueryShape: alphaShape,
 				classifyKind: async () => cleanKind,
-				classifier: fakeClassifier(fakeTree("Main St   USA", [{ tag: "street", value: "Main St", start: 0, end: 7, confidence: 0.9, children: [] }])),
+				classifier: fakeClassifier(
+					fakeTree("Main St   USA", [
+						{ tag: "street", value: "Main St", start: 0, end: 7, confidence: 0.9, children: [] },
+					])
+				),
 				ruleProposer,
 			},
 			{ arbitrate: true }
@@ -706,7 +715,9 @@ describe("runPipeline — arbitration (#478 inc 3)", () => {
 
 	it("neural_preferred (OOD script) passes the neural tree through unchanged", async () => {
 		const ruleProposer = vi.fn(async () => [ruleProp("street", "abc", 0, 0.95)])
-		const neuralRoots: AddressNode[] = [{ tag: "street", value: "abc", start: 0, end: 3, confidence: 0.5, children: [] }]
+		const neuralRoots: AddressNode[] = [
+			{ tag: "street", value: "abc", start: 0, end: 3, confidence: 0.5, children: [] },
+		]
 		const result = await runPipeline(
 			"abc",
 			{

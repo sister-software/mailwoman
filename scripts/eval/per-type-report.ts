@@ -5,19 +5,20 @@
  *
  *   Per-address-type head-to-head: neural vs v0 (the Pelias-port rules parser). Turns the
  *   state-of-affairs blog's anecdotes ("neural wins on PO boxes") into measured per-type rates, and
- *   surfaces where we LOSE, not just where we win. Two parts because OpenAddresses (the holdout with
- *   real coordinates) is almost entirely clean parcels:
+ *   surfaces where we LOSE, not just where we win. Two parts because OpenAddresses (the holdout
+ *   with real coordinates) is almost entirely clean parcels:
  *
  *   - **Part A — coordinate accuracy by bucket on real OA.** Reads the per-row dump from
- *     `oa-resolver-eval --out-rows` and slices neural-vs-v0 locality-match + coord error by input
- *     shape (directional street, multi-word locality, clean). Rigorous — real points, same resolver.
+ *       `oa-resolver-eval --out-rows` and slices neural-vs-v0 locality-match + coord error by input
+ *       shape (directional street, multi-word locality, clean). Rigorous — real points, same
+ *       resolver.
  *   - **Part B — parse-structure win-rate on the types OA lacks** (po_box / intersection / unit).
- *     Generates a realistic set templated from OA cities, parses through both, and measures whether
- *     each parser emits the correct STRUCTURE (a `po_box` tag, both intersection sides, a unit with
- *     its designator). The "ground truth" is the known type.
+ *       Generates a realistic set templated from OA cities, parses through both, and measures
+ *       whether each parser emits the correct STRUCTURE (a `po_box` tag, both intersection sides, a
+ *       unit with its designator). The "ground truth" is the known type.
  *
- *   Run: node --experimental-strip-types scripts/eval/per-type-report.ts \
- *          --rows /tmp/oa-rows.json --out docs/articles/evals/2026-06-17-per-type-headtohead.md
+ *   Run: node --experimental-strip-types scripts/eval/per-type-report.ts\
+ *   --rows /tmp/oa-rows.json --out docs/articles/evals/2026-06-17-per-type-headtohead.md
  */
 
 import { decodeAsJson, proposalsToTree } from "@mailwoman/core/decoder"
@@ -75,7 +76,9 @@ function partA(rowsPath: string): string[] {
 	const out: string[] = []
 	out.push(`## Part A — coordinate accuracy by bucket (real OpenAddresses US, ${rows.length} rows)`)
 	out.push("")
-	out.push("Both parsers through the same resolver, against real address points. Slices overlap (a row can be both directional and multi-word-locality); `plain` is the complement.")
+	out.push(
+		"Both parsers through the same resolver, against real address points. Slices overlap (a row can be both directional and multi-word-locality); `plain` is the complement."
+	)
 	out.push("")
 	out.push("| bucket | n | neural loc-match | v0 loc-match | neural coord p50 km | v0 coord p50 km |")
 	out.push("|---|--:|--:|--:|--:|--:|")
@@ -122,7 +125,11 @@ async function partB(): Promise<string[]> {
 		decodeAsJson(await neural.parse(s, { postcodeRepair: true })) as Record<string, string>
 
 	// type → (address generator, structure check per parser)
-	const types: Array<{ name: string; gen: (p: { city: string; state: string; zip: string }, i: number) => string; ok: (rec: Record<string, string>) => boolean }> = [
+	const types: Array<{
+		name: string
+		gen: (p: { city: string; state: string; zip: string }, i: number) => string
+		ok: (rec: Record<string, string>) => boolean
+	}> = [
 		{
 			name: "po_box",
 			gen: (p, i) => `PO Box ${100 + i * 7}, ${p.city}, ${p.state} ${p.zip}`,
@@ -135,7 +142,8 @@ async function partB(): Promise<string[]> {
 		},
 		{
 			name: "unit (keeps designator)",
-			gen: (p, i) => `${100 + i * 3} ${STREETS[i % STREETS.length]} St Apt ${1 + (i % 9)}, ${p.city}, ${p.state} ${p.zip}`,
+			gen: (p, i) =>
+				`${100 + i * 3} ${STREETS[i % STREETS.length]} St Apt ${1 + (i % 9)}, ${p.city}, ${p.state} ${p.zip}`,
 			ok: (rec) => !!rec.unit && /apt|unit|ste|#/i.test(rec.unit),
 		},
 	]
@@ -143,7 +151,9 @@ async function partB(): Promise<string[]> {
 	const out: string[] = []
 	out.push(`## Part B — parse-structure win-rate on the headline types (generated, ${places.length} each)`)
 	out.push("")
-	out.push("OpenAddresses has ~no PO boxes, intersections, or units, so these are templated from real OA cities; the truth is the known TYPE. We score whether each parser emits the correct STRUCTURE.")
+	out.push(
+		"OpenAddresses has ~no PO boxes, intersections, or units, so these are templated from real OA cities; the truth is the known TYPE. We score whether each parser emits the correct STRUCTURE."
+	)
 	out.push("")
 	out.push("| type | n | neural correct | v0 correct |")
 	out.push("|---|--:|--:|--:|")
@@ -185,7 +195,9 @@ function reading(): string[] {
 	out.push(
 		`- **Where we do NOT win:** nowhere does v0 beat neural per-bucket here, but the plain-address tie shows neural isn't meaningfully better on the simplest addresses, and the intersection miss is our internal frontier, not a v0 advantage.`
 	)
-	out.push(`- _Caveat:_ Part B is templated (real OA cities, synthetic forms) — it measures parse-structure capability, not real-world frequency.`)
+	out.push(
+		`- _Caveat:_ Part B is templated (real OA cities, synthetic forms) — it measures parse-structure capability, not real-world frequency.`
+	)
 	out.push("")
 	return out
 }
@@ -195,7 +207,9 @@ function reading(): string[] {
 const lines: string[] = []
 lines.push("# Per-address-type head-to-head — neural vs v0 (the Pelias port)")
 lines.push("")
-lines.push("_Self-emitted by `scripts/eval/per-type-report.ts`. Both parsers graded through the same resolver (Part A) or on parse structure (Part B). Turns the state-of-affairs blog's anecdotes into per-type rates._")
+lines.push(
+	"_Self-emitted by `scripts/eval/per-type-report.ts`. Both parsers graded through the same resolver (Part A) or on parse structure (Part B). Turns the state-of-affairs blog's anecdotes into per-type rates._"
+)
 lines.push("")
 const partALines = partA(arg("rows"))
 const partBLines = await partB()

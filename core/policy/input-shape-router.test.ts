@@ -6,12 +6,13 @@
  *   #478 increment 2 acceptance. Three layers:
  *
  *   1. `routeInputShape` — exhaustive coverage of the decision tree (every branch + the precedence
- *      edges: OOD script beats a clean kind; placer abstention beats a clean kind; the 0.8 cutoff).
+ *        edges: OOD script beats a clean kind; placer abstention beats a clean kind; the 0.8
+ *        cutoff).
  *   2. `policyRegistryFromRoute` — the routed prior becomes the table default; explicit config still
- *      wins per-tag.
+ *        wins per-tag.
  *   3. The seam (`filterByPolicy` with `routerPrior`) — the "flag-ON lane": the integration code is
- *      exercised end-to-end even though production ships it default-off (no caller passes a prior
- *      until #478 increment 3). Guards against the "default-off ⇒ never exercised" risk.
+ *        exercised end-to-end even though production ships it default-off (no caller passes a prior
+ *        until #478 increment 3). Guards against the "default-off ⇒ never exercised" risk.
  */
 
 import { Span } from "@mailwoman/core/tokenization"

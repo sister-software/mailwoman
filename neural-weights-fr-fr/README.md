@@ -55,7 +55,7 @@ boring NER is a feature.
 
 The design splits the problem in two: **the model learns the grammar, the
 gazetteer knows the atlas.** The model never memorizes place names — postcode
-and gazetteer knowledge arrive at inference as *soft input features* (anchors)
+and gazetteer knowledge arrive at inference as _soft input features_ (anchors)
 retrieved from provenance-tracked databases that grow without retraining.
 Knowledge informs; it never overrides.
 
@@ -125,10 +125,10 @@ card carries the full corpus + recipe provenance.
 
 ## Limitations
 
-- **Expects its channels.** See *Ship-config requirement* — anchor-off is OOD.
+- **Expects its channels.** See _Ship-config requirement_ — anchor-off is OOD.
 - **FR `region` is an open gap** (low F1, tracked).
 - **Reversed-order FR house numbers** are harder than canonical order (see
-  *Evaluation*).
+  _Evaluation_).
 - **All-caps / shouting input degrades** the admin tags (mixed-case training);
   `@mailwoman/neural`'s `normalizeCase` opt recovers detected all-caps ASCII.
 - **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens;

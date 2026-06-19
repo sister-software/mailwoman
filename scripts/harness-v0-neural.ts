@@ -366,8 +366,10 @@ interface AssertionResult {
 	neural_dropped: Partial<Record<ComponentTag, string>>
 	neural_tree_valid: boolean
 	neural_tree_violations: TreeViolation[]
-	/** #478 assembled-pipeline arm (only when `--assembled`): the full `runPipeline` parse, graded
-like neural. */
+	/**
+	 * #478 assembled-pipeline arm (only when `--assembled`): the full `runPipeline` parse, graded
+	 * like neural.
+	 */
 	assembled_pass?: boolean
 	assembled_actual?: ClassificationRecord
 }

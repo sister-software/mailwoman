@@ -10,23 +10,23 @@
  *
  *   Unlike the baseline (which hard-codes the dev weights), this accepts an explicit model so it can
  *   grade a freshly-trained checkpoint WITHOUT touching the neural-weights symlink (which yarn test
- *   re-creates). The classifier is built via the canonical `createScorer` (`@mailwoman/neural/scorer`,
- *   #718) in STRICT mode, so the model is fed the full SHIP-CONFIG it was TRAINED against — anchor +
- *   gazetteer + conventions, per the model-card's `requires` block — and the gate FAILS CLOSED if a
- *   declared channel can't be fed. This closes the #566/#685 trap the gate previously walked into: it
- *   built the classifier via `loadFromWeights` with NO anchor/gazetteer/conventions, so the
- *   anchor-trained STAGE3 model was scored ANCHOR-OFF (out-of-distribution on exactly the admin-
- *   adjacent boundary shapes this gate measures). The model-card is therefore MANDATORY for a custom
- *   model (`createScorer` reads its label vocab AND `requires`); without it the gate now throws rather
- *   than silently mis-decoding the 33-label STAGE3 model.
+ *   re-creates). The classifier is built via the canonical `createScorer`
+ *   (`@mailwoman/neural/scorer`, #718) in STRICT mode, so the model is fed the full SHIP-CONFIG it
+ *   was TRAINED against — anchor + gazetteer + conventions, per the model-card's `requires` block —
+ *   and the gate FAILS CLOSED if a declared channel can't be fed. This closes the #566/#685 trap
+ *   the gate previously walked into: it built the classifier via `loadFromWeights` with NO
+ *   anchor/gazetteer/conventions, so the anchor-trained STAGE3 model was scored ANCHOR-OFF
+ *   (out-of-distribution on exactly the admin- adjacent boundary shapes this gate measures). The
+ *   model-card is therefore MANDATORY for a custom model (`createScorer` reads its label vocab AND
+ *   `requires`); without it the gate now throws rather than silently mis-decoding the 33-label
+ *   STAGE3 model.
  *
- *   Run (baseline, dev weights):
- *     node --experimental-strip-types scripts/eval/boundary-stress-gate.ts
- *   Run (a fetched v1.6.0 bundle):
- *     node --experimental-strip-types scripts/eval/boundary-stress-gate.ts \
- *       --model  ./out/v160/model.onnx \
- *       --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
- *       --model-card ./out/v160/model-card.json   # crf-transitions.json beside --model is auto-picked
+ *   Run (baseline, dev weights): node --experimental-strip-types scripts/eval/boundary-stress-gate.ts
+ *   Run (a fetched v1.6.0 bundle): node --experimental-strip-types
+ *   scripts/eval/boundary-stress-gate.ts\
+ *   --model ./out/v160/model.onnx\
+ *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model-card ./out/v160/model-card.json # crf-transitions.json beside --model is auto-picked
  */
 
 import { parseArgs } from "node:util"
@@ -142,22 +142,18 @@ for (const template of Object.keys(TARGETS) as BoundaryStressTemplate[]) {
 const pad = (s: string, n: number) => s.padEnd(n)
 console.log(`\n== boundary-stress gate — model: ${args.model ?? "dev weights (en-US)"} (n=${N}/shape) ==\n`)
 console.log(
-	`  ${pad("shape", 28)} ${pad("tag", 14)} ${pad("base→target", 13)} ${pad("actual", 8)} ${pad("street", 8)} verdict`,
+	`  ${pad("shape", 28)} ${pad("tag", 14)} ${pad("base→target", 13)} ${pad("actual", 8)} ${pad("street", 8)} verdict`
 )
 for (const r of results) {
 	const street = Number.isNaN(r.streetPct) ? "  n/a " : `${r.streetPct.toFixed(1)}%`
 	console.log(
-		`  ${pad(r.template, 28)} ${pad(r.tag, 14)} ${pad(`${r.baseline}→${r.target}`, 13)} ${pad(`${r.stressPct.toFixed(1)}%`, 8)} ${pad(street, 8)} ${r.pass ? "✓ PASS" : "✗ MISS"}`,
+		`  ${pad(r.template, 28)} ${pad(r.tag, 14)} ${pad(`${r.baseline}→${r.target}`, 13)} ${pad(`${r.stressPct.toFixed(1)}%`, 8)} ${pad(street, 8)} ${r.pass ? "✓ PASS" : "✗ MISS"}`
 	)
 }
 const allPass = results.every((r) => r.pass)
-console.log(
-	`\n  street-span floor: ≥${STREET_SPAN_FLOOR}% on every shape  ·  targets: stress-tag ≥ per-shape`,
-)
+console.log(`\n  street-span floor: ≥${STREET_SPAN_FLOOR}% on every shape  ·  targets: stress-tag ≥ per-shape`)
 console.log(`\n  VERDICT: ${allPass ? "✅ PROMOTE (4-shape gate met)" : "⛔ NO-PROMOTE (target/floor miss above)"}`)
-console.log(
-	`  NOTE: this is the 4-shape TARGET gate only. The per-locale non-regression FLOORS (US street ≥80.4,`,
-)
+console.log(`  NOTE: this is the 4-shape TARGET gate only. The per-locale non-regression FLOORS (US street ≥80.4,`)
 console.log(`        locality ≥72.9, fr.house_number ≥87, FR postcode ≥99.5, affix, DE locality ≥83.8) are a`)
 console.log(`        SEPARATE gate — run scripts/promotion-gate.sh. Both must hold to ship.\n`)
 process.exit(allPass ? 0 : 1)

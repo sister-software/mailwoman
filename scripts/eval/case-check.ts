@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   #619 follow-up probe: does the neural parser degrade on ALL-CAPS input (the TX HHSC facility
- *   distribution) vs the same address in title case? Confirms/refutes the case-robustness gap.
- *   Run: node --experimental-strip-types scripts/eval/case-check.ts
+ *   distribution) vs the same address in title case? Confirms/refutes the case-robustness gap. Run:
+ *   node --experimental-strip-types scripts/eval/case-check.ts
  */
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
@@ -40,6 +40,8 @@ for (const caps of samples) {
 	const titleOk = (recTitle.locality ?? "").toUpperCase() === wantLoc
 	if (capsOk) capsLoc++
 	if (titleOk) titleLoc++
-	console.log(`CAPS  loc=${recCaps.locality ?? "—"}  | TITLE loc=${recTitle.locality ?? "—"}  (want ${wantLoc})  ${capsOk ? "" : "CAPS-MISS"}${titleOk ? "" : " TITLE-MISS"}`)
+	console.log(
+		`CAPS  loc=${recCaps.locality ?? "—"}  | TITLE loc=${recTitle.locality ?? "—"}  (want ${wantLoc})  ${capsOk ? "" : "CAPS-MISS"}${titleOk ? "" : " TITLE-MISS"}`
+	)
 }
 console.log(`\nlocality correct: ALL-CAPS ${capsLoc}/${samples.length}  vs  TITLE-CASE ${titleLoc}/${samples.length}`)

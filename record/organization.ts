@@ -57,8 +57,10 @@ export interface OrganizationName {
  */
 export type DesignationDomain = "general" | "healthcare"
 
-/** Context for {@link canonicalizeOrganizationName}. Omit both fields for the universal base
-behavior. */
+/**
+ * Context for {@link canonicalizeOrganizationName}. Omit both fields for the universal base
+ * behavior.
+ */
 export interface CanonicalizeOptions {
 	/**
 	 * ISO 3166-1 alpha-2 country code of the org's jurisdiction (typically the resolved address

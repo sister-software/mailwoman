@@ -79,10 +79,11 @@ export interface GeocodeDeps {
 	/** Country constraint passed to the resolver (e.g. `"US"`). */
 	defaultCountry?: string
 	/**
-	 * Title-case all-caps ASCII input before the model (#690), detection-gated so mixed-case + non-Latin
-	 * pass through untouched. **Default `true`** — validated-beneficial on this geocode/resolveTree path
-	 * (#619: TX-facility locality 90.1 → 99.7%). The #694 comma-less crater was the space-join, not the
-	 * casing, so on comma-joined input it is a clean win. Set `false` to restore the legacy raw-case parse.
+	 * Title-case all-caps ASCII input before the model (#690), detection-gated so mixed-case +
+	 * non-Latin pass through untouched. **Default `true`** — validated-beneficial on this
+	 * geocode/resolveTree path (#619: TX-facility locality 90.1 → 99.7%). The #694 comma-less crater
+	 * was the space-join, not the casing, so on comma-joined input it is a clean win. Set `false` to
+	 * restore the legacy raw-case parse.
 	 */
 	normalizeCase?: boolean
 	/**
@@ -260,7 +261,9 @@ export class ShardProvider {
  * parse/resolve error — callers doing batch work should catch per-row.
  */
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
-	const tree = recognizeUsRegions(await deps.classifier.parse(input, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true }))
+	const tree = recognizeUsRegions(
+		await deps.classifier.parse(input, { postcodeRepair: true, normalizeCase: deps.normalizeCase ?? true })
+	)
 	const stateSlug = regionSlugFromTree(tree)
 	const { addressPoints, interpolation } = deps.shards?.(stateSlug) ?? {}
 

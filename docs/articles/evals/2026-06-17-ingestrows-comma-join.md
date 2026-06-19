@@ -13,12 +13,12 @@ TX-scoped sources (TX HHSC facilities, FCC RHC posted-services, NPPES org NPIs, 
 1200 records, 300/source) through the real parser + resolver, and counts entities spanning ≥2 sources.
 Four configs, same script, same data:
 
-| config | join | #690 case-norm | geocode rate | rooftop (Σ of 1200) | entities | cross-source links |
-| --- | --- | --- | --: | --: | --: | --: |
-| A | space | off | **100%** | 579 (baseline) | 839 | 23 |
-| A+ | space | **on** | **39.2%** ⚠ | — | — | 12 |
-| B | comma | off | **100%** | 610 (+5%) | 837 | 23 |
-| C | comma | **on** | **100%** | **667 (+15%)** | 825 | **25** |
+| config | join  | #690 case-norm | geocode rate | rooftop (Σ of 1200) | entities | cross-source links |
+| ------ | ----- | -------------- | -----------: | ------------------: | -------: | -----------------: |
+| A      | space | off            |     **100%** |      579 (baseline) |      839 |                 23 |
+| A+     | space | **on**         |  **39.2%** ⚠ |                   — |        — |                 12 |
+| B      | comma | off            |     **100%** |           610 (+5%) |      837 |                 23 |
+| C      | comma | **on**         |     **100%** |      **667 (+15%)** |      825 |             **25** |
 
 ## What it says
 
@@ -35,12 +35,12 @@ alone lifts rooftop 579 → 610 (the parser segments better with commas); adding
 **667 (+15% over A)**, and cross-source links 23 → **25** (fcc-rhc ↔ nppes 1 → 3). The gain is
 concentrated exactly where it should be — the all-caps sources, where #690 fixes the OOD parse:
 
-| source | A (space) | B (comma) | C (comma + #690) | A→C |
-| --- | --: | --: | --: | --: |
-| txhhsc-nursing (100% all-caps) | 135 | 145 | **167** | **+32** |
-| nppes | 107 | 110 | **150** | **+43** |
-| fcc-rhc (~46% all-caps) | 132 | 147 | 142 | +10 |
-| fcc-rhc-commitments (mixed-case) | 205 | 208 | 208 | +3 (byte-stable) |
+| source                           | A (space) | B (comma) | C (comma + #690) |              A→C |
+| -------------------------------- | --------: | --------: | ---------------: | ---------------: |
+| txhhsc-nursing (100% all-caps)   |       135 |       145 |          **167** |          **+32** |
+| nppes                            |       107 |       110 |          **150** |          **+43** |
+| fcc-rhc (~46% all-caps)          |       132 |       147 |              142 |              +10 |
+| fcc-rhc-commitments (mixed-case) |       205 |       208 |              208 | +3 (byte-stable) |
 
 The mixed-case source barely moves (detection doesn't fire), and the all-caps sources gain the most
 rooftop precision — exactly the #690 contract, delivered cleanly once the input is delimited.

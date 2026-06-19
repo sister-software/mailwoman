@@ -284,8 +284,10 @@ export interface StreetResolution {
 	lat: number
 	lon: number
 	tier: "address_point" | "interpolated"
-	/** Calibrated uncertainty radius in meters (10 m situs floor; interp = uncertaintyM × the region
-factor). */
+	/**
+	 * Calibrated uncertainty radius in meters (10 m situs floor; interp = uncertaintyM × the region
+	 * factor).
+	 */
 	uncertaintyM: number
 }
 

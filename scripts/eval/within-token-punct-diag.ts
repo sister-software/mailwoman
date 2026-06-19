@@ -5,8 +5,9 @@
  *
  *   #375 follow-up: WHY does neural lose to v0 on within-token punctuation (apostrophe 81 vs 89,
  *   hyphen 81 vs 87, slash 62 vs 72 — `2026-06-14-punctuation-stress`)? This dumps neural's actual
- *   parse vs gold on the apostrophe/hyphen/slash classes so the failure MECHANISM is visible, not just
- *   the rate. Read-only diagnostic. Run: node --experimental-strip-types scripts/eval/within-token-punct-diag.ts
+ *   parse vs gold on the apostrophe/hyphen/slash classes so the failure MECHANISM is visible, not
+ *   just the rate. Read-only diagnostic. Run: node --experimental-strip-types
+ *   scripts/eval/within-token-punct-diag.ts
  */
 
 import { decodeAsJson } from "@mailwoman/core/decoder"

@@ -5,14 +5,14 @@
  *
  *   Locale-parity drift-guard (#721). `publish.yml` copies en-us's `model.onnx` into the fr-fr
  *   weights package ("one multi-locale model serves both"), so the PUBLISHED fr-fr package ships
- *   en-us's EXACT binary. Its model-card must therefore declare the same label geometry + ship-config
- *   — a drift (the #721 bug: fr-fr stuck at 21 labels while en-us shipped 33) means the card
- *   mis-describes its own weights and `createScorer` throws `model emits N logits ... configured with
- *   only M labels` at load.
+ *   en-us's EXACT binary. Its model-card must therefore declare the same label geometry +
+ *   ship-config — a drift (the #721 bug: fr-fr stuck at 21 labels while en-us shipped 33) means the
+ *   card mis-describes its own weights and `createScorer` throws `model emits N logits ...
+ *   configured with only M labels` at load.
  *
- *   This guard fails the moment en-us's labels / components / requires change without fr-fr following.
- *   Pure JSON (no weights) → CI-safe. If fr-fr ever ships its OWN model, relax this to the shared
- *   subset and drop the `cp` in publish.yml.
+ *   This guard fails the moment en-us's labels / components / requires change without fr-fr
+ *   following. Pure JSON (no weights) → CI-safe. If fr-fr ever ships its OWN model, relax this to
+ *   the shared subset and drop the `cp` in publish.yml.
  */
 
 import { readFileSync } from "node:fs"

@@ -11,11 +11,11 @@ Reproduce: `scripts/record-matcher/txhhsc-to-oarow.ts` → `scripts/eval/oa-reso
 
 ## Geocoder accuracy by tier (our pipeline: neural parse → resolver)
 
-| tier | coord p50 | coord p90 | coord p99 | tier hit rate |
-| --- | --: | --: | --: | --: |
-| admin-centroid (city) | 3.4 km | 27.2 km | 741.6 km | 100% (always) |
-| **+ address-point (rooftop)** | **0.7 km** | 13.5 km | 486.8 km | **47.0%** (551/1172) |
-| **+ interpolation (street)** | **0.1 km** | 8.2 km | 476.7 km | **12.5%** (146/1172) |
+| tier                          |  coord p50 | coord p90 | coord p99 |        tier hit rate |
+| ----------------------------- | ---------: | --------: | --------: | -------------------: |
+| admin-centroid (city)         |     3.4 km |   27.2 km |  741.6 km |        100% (always) |
+| **+ address-point (rooftop)** | **0.7 km** |   13.5 km |  486.8 km | **47.0%** (551/1172) |
+| **+ interpolation (street)**  | **0.1 km** |    8.2 km |  476.7 km | **12.5%** (146/1172) |
 
 **The finer tiers are the story.** The admin-centroid tier lands a facility in the right city — p50
 3.4 km, which is just "the city's middle is a few km from the facility." Switch in the **address-point**
@@ -44,13 +44,13 @@ normalizeCase: true })` title-cases a detected all-caps **ASCII** input before t
 strict: mixed-case and non-ASCII/accented input are left untouched, so the path is byte-stable by
 construction). Re-running this eval with `--normalize-case`:
 
-| metric | all-caps (default) | + `normalizeCase` (#690) |
-| --- | --: | --: |
-| neural locality-match | 90.1% | **99.7%** (now > v0's 96.8%) |
-| address-point hit rate | 47.0% | **61.8%** |
-| coord p50 (admin) | 3.4 km | 2.8 km |
-| coord p50 (+address-point) | 0.7 km | **0.1 km** |
-| coord p99 (+address-point) | 486.8 km | **20.7 km** |
+| metric                     | all-caps (default) |     + `normalizeCase` (#690) |
+| -------------------------- | -----------------: | ---------------------------: |
+| neural locality-match      |              90.1% | **99.7%** (now > v0's 96.8%) |
+| address-point hit rate     |              47.0% |                    **61.8%** |
+| coord p50 (admin)          |             3.4 km |                       2.8 km |
+| coord p50 (+address-point) |             0.7 km |                   **0.1 km** |
+| coord p99 (+address-point) |           486.8 km |                  **20.7 km** |
 
 The fix doesn't just close the gap — it **overtakes** v0 on locality (99.7 vs 96.8) and collapses the
 catastrophic-miss tail (p99 487 → 21 km), because correct localities resolve to the right place and the

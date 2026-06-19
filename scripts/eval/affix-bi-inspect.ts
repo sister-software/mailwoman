@@ -4,18 +4,18 @@
  * @author Teffen Ellis, et al.
  *
  *   #375 street-eats-affix B/I inspector. The confidence probe showed the model emits I-street_suffix
- *   (not B-) at the suffix token, confidently (P~0.92) — it KNOWS it's a suffix but starts the span as
- *   a continuation. This asks what the DECODE does with that orphan-I: does the suffix come out as a
- *   correct separate span, get merged into street, get dropped, or land somewhere else? Characterizing
- *   it says whether the fix is cheap (decode/CRF-transition/label) or wants augmentation like hn-after.
+ *   (not B-) at the suffix token, confidently (P~0.92) — it KNOWS it's a suffix but starts the span
+ *   as a continuation. This asks what the DECODE does with that orphan-I: does the suffix come out
+ *   as a correct separate span, get merged into street, get dropped, or land somewhere else?
+ *   Characterizing it says whether the fix is cheap (decode/CRF-transition/label) or wants
+ *   augmentation like hn-after.
  *
- *   Run: node --experimental-strip-types scripts/eval/affix-bi-inspect.ts \
- *     --model ./out/v160/model.onnx \
- *     --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
- *     --model-card neural-weights-en-us/model-card.json --n 300
+ *   Run: node --experimental-strip-types scripts/eval/affix-bi-inspect.ts\
+ *   --model ./out/v160/model.onnx\
+ *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model-card neural-weights-en-us/model-card.json --n 300
  */
 
-import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -39,7 +39,7 @@ const wordIncludes = (hay: string, needle: string) =>
 const classifier = await NeuralAddressClassifier.loadFromWeights(
 	args.model
 		? { locale: "en-US", modelPath: args.model, tokenizerPath: args.tokenizer, modelCardPath: args["model-card"] }
-		: { locale: "en-US" },
+		: { locale: "en-US" }
 )
 const random = (() => {
 	let a = 20260618 >>> 0
@@ -66,7 +66,9 @@ for (let i = 0; i < N; i++) {
 	else m = `other (suffix='${p.street_suffix}')`
 	mode[m] = (mode[m] ?? 0) + 1
 	if (examples.length < 6 && m.startsWith("merged"))
-		examples.push(`  "${row.raw}"\n     gold: street='${row.components.street}' suffix='${row.components.street_suffix}' | got: street='${p.street ?? ""}' suffix='${p.street_suffix ?? ""}'`)
+		examples.push(
+			`  "${row.raw}"\n     gold: street='${row.components.street}' suffix='${row.components.street_suffix}' | got: street='${p.street ?? ""}' suffix='${p.street_suffix ?? ""}'`
+		)
 }
 
 const total = Object.values(mode).reduce((a, b) => a + b, 0)

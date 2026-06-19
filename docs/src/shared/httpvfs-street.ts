@@ -29,8 +29,10 @@ export interface HttpvfsDb {
 	db: { exec(sql: string): Promise<Array<{ columns: string[]; values: unknown[][] }>> }
 }
 
-/** Inline a string literal for SQL (we inline rather than bind — avoids param marshaling over
-Comlink). */
+/**
+ * Inline a string literal for SQL (we inline rather than bind — avoids param marshaling over
+ * Comlink).
+ */
 const sqlStr = (s: string): string => `'${s.replace(/'/g, "''")}'`
 
 /** Sql.js exec result → row objects. */
@@ -47,8 +49,10 @@ export interface StreetPointHit {
 	release: string
 }
 
-/** Exact situs point — async twin of `AddressPointSqliteLookup`. Postcode scope first, locality
-fallback. */
+/**
+ * Exact situs point — async twin of `AddressPointSqliteLookup`. Postcode scope first, locality
+ * fallback.
+ */
 export class HttpvfsAddressPointLookup {
 	#worker: HttpvfsDb
 	#available: Promise<boolean> | undefined
@@ -57,8 +61,10 @@ export class HttpvfsAddressPointLookup {
 		this.#worker = worker
 	}
 
-	/** One round trip to confirm the shard carries `address_point` (graceful on a tableless shard,
-#568). */
+	/**
+	 * One round trip to confirm the shard carries `address_point` (graceful on a tableless shard,
+	 * #568).
+	 */
 	#hasTable(): Promise<boolean> {
 		if (!this.#available) {
 			this.#available = this.#worker.db
@@ -120,8 +126,10 @@ export interface StreetInterpHit {
 	release: string
 }
 
-/** TIGER-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped; abstains on
-cross-ZIP ambiguity. */
+/**
+ * TIGER-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped; abstains on
+ * cross-ZIP ambiguity.
+ */
 export class HttpvfsInterpolator {
 	#worker: HttpvfsDb
 	#available: Promise<boolean> | undefined
@@ -201,8 +209,10 @@ function clamp01(t: number): number {
 	return t < 0 ? 0 : t > 1 ? 1 : t
 }
 
-/** Point at fraction `t` of the polyline's arc length (haversine), + total length km. Mirrors
-StreetInterpolator. */
+/**
+ * Point at fraction `t` of the polyline's arc length (haversine), + total length km. Mirrors
+ * StreetInterpolator.
+ */
 function pointAlong(polyline: readonly [number, number][], t: number): [lon: number, lat: number, lengthKm: number] {
 	const legs: number[] = []
 	let total = 0

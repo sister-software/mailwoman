@@ -55,8 +55,7 @@ describe("treeToProposals", () => {
 				{ tag: "street", value: "Main", start: 4, end: 8, confidence: 0.9, children: [] },
 			],
 		}
-		const project = (t: AddressTree) =>
-			t.roots.map((r) => ({ tag: r.tag, value: r.value, start: r.start, end: r.end }))
+		const project = (t: AddressTree) => t.roots.map((r) => ({ tag: r.tag, value: r.value, start: r.start, end: r.end }))
 		const rebuilt = proposalsToTree(tree.raw, treeToProposals(tree, "neural"))
 		expect(project(rebuilt)).toEqual(project(tree))
 	})

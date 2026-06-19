@@ -44,8 +44,9 @@ import {
 /**
  * Delta threshold for the capability-manifest gate (#718/#719): a conventions row may forbid a tag
  * only if the mask does NOT provably destroy a real capability — i.e. `maskOffF1 − maskOnF1 ≤ 5pp`.
- * A DELTA, not an absolute floor: a tag the model emits at 0.80 is protected if the mask drops it to
- * 0.0, but a tag the mask leaves intact (small/zero delta) is legal regardless of its absolute F1.
+ * A DELTA, not an absolute floor: a tag the model emits at 0.80 is protected if the mask drops it
+ * to 0.0, but a tag the mask leaves intact (small/zero delta) is legal regardless of its absolute
+ * F1.
  */
 export const CAPABILITY_DELTA_THRESHOLD = 0.05
 
@@ -58,9 +59,9 @@ export const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 /**
  * Resolve the anchor lookup source the scorer feeds when the caller passes no `anchorLookupPath`
  * (#718 D1): prefer the operator's local pilot JSON (the eval's historical default — unchanged when
- * present), else fall back to the soft-feed sibling the weights package SHIPS (`postcode-<cc>.bin` /
- * `anchor-lookup.json`), so eval + serving read the SAME artifact. Returns `undefined` when neither
- * exists (the scorer then fails closed on a declared-required anchor, as before).
+ * present), else fall back to the soft-feed sibling the weights package SHIPS (`postcode-<cc>.bin`
+ * / `anchor-lookup.json`), so eval + serving read the SAME artifact. Returns `undefined` when
+ * neither exists (the scorer then fails closed on a declared-required anchor, as before).
  */
 function defaultAnchorSource(locale: string | undefined): { path: string; binary: boolean } | undefined {
 	if (existsSync(DEFAULT_ANCHOR_LOOKUP)) return { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
@@ -126,14 +127,14 @@ export interface CreateScorerOpts {
 	 */
 	anchorLookupPath?: string
 	/**
-	 * Gazetteer-anchor lexicon path. Default {@link DEFAULT_GAZETTEER_LEXICON} when it exists, else the
-	 * soft-feed sibling shipped in the weights package (#718 D1).
+	 * Gazetteer-anchor lexicon path. Default {@link DEFAULT_GAZETTEER_LEXICON} when it exists, else
+	 * the soft-feed sibling shipped in the weights package (#718 D1).
 	 */
 	gazetteerLexiconPath?: string
 	/**
 	 * Locale tag (e.g. `"en-us"`) used to resolve the weights-package soft-feed siblings when the
-	 * default `/mnt` / repo-relative paths are absent (#718 D1). Only consulted for that fallback; the
-	 * model/tokenizer/card are always explicit on this path.
+	 * default `/mnt` / repo-relative paths are absent (#718 D1). Only consulted for that fallback;
+	 * the model/tokenizer/card are always explicit on this path.
 	 */
 	locale?: string
 	/**
@@ -180,14 +181,16 @@ class CapabilityViolationError extends Error {
  * forbid is ILLEGAL — the mask provably destroys a real capability — when the model is certified to
  * emit the tag (`maskOffF1` present) and the mask measurably drops it:
  *
- *     maskOffF1 − (maskOnF1 ?? 0) > CAPABILITY_DELTA_THRESHOLD
+ * ```
+ * maskOffF1 − (maskOnF1 ?? 0) > CAPABILITY_DELTA_THRESHOLD
+ * ```
  *
  * A forbidden tag with NO capability entry (model not certified there), or one whose `maskOnF1`
  * shows the mask leaves it intact (small/zero/negative delta), is LEGAL. When `maskOnF1` is ABSENT
  * for a certified tag, the mask's effect was never measured — and since the mask is a hard −1e9
  * emission ban, we conservatively assume full destruction (delta = maskOffF1 − 0). That's the #719
- * shape: FR `street_prefix` certified at maskOff 80.0, no benign mask-on measurement → forbidding it
- * is rejected at load time.
+ * shape: FR `street_prefix` certified at maskOff 80.0, no benign mask-on measurement → forbidding
+ * it is rejected at load time.
  *
  * Back-compat: a card with no `capabilities` block (pre-#718) has no claims to consult, so the gate
  * is a one-time-warn no-op and the model still loads.
@@ -379,11 +382,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
  * `ErrorClass` defaults to {@link UnfedChannelError} (the channel-feed traps); the capability-gate
  * passes {@link CapabilityViolationError} so the two fail-closed families are distinguishable.
  */
-function fail(
-	strict: boolean,
-	message: string,
-	ErrorClass: new (message: string) => Error = UnfedChannelError
-): void {
+function fail(strict: boolean, message: string, ErrorClass: new (message: string) => Error = UnfedChannelError): void {
 	const full = `[createScorer] ${message}`
 	if (strict) throw new ErrorClass(full)
 	console.error(`${full}\n[createScorer] strict=false — continuing despite the violation.`)

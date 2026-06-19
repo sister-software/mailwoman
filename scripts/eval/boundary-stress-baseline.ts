@@ -4,10 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   #375: the "before" baseline for the boundary-instability stress shard (#703). Generates rows from
- *   each stress shape and parses them through the CURRENT neural model — how badly does today's model
- *   place these boundaries? Quantifies the #1-lever gap the shard targets + the lift a retrain should
- *   show. Per-shape, per-stress-tag exact-match accuracy (case-insensitive). Read-only.
- *   Run: node --experimental-strip-types scripts/eval/boundary-stress-baseline.ts [--n 300]
+ *   each stress shape and parses them through the CURRENT neural model — how badly does today's
+ *   model place these boundaries? Quantifies the #1-lever gap the shard targets + the lift a
+ *   retrain should show. Per-shape, per-stress-tag exact-match accuracy (case-insensitive).
+ *   Read-only. Run: node --experimental-strip-types scripts/eval/boundary-stress-baseline.ts [--n
+ *   300]
  */
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
@@ -61,7 +62,12 @@ for (const template of Object.keys(STRESS_TAG) as BoundaryStressTemplate[]) {
 			a.n++
 			if ((got[k] ?? "").toLowerCase().trim() === String(gold).toLowerCase().trim()) a.hit++
 		}
-		if ((got[tag] ?? "").toLowerCase().trim() === String(row.components[tag as keyof typeof row.components] ?? "").toLowerCase().trim())
+		if (
+			(got[tag] ?? "").toLowerCase().trim() ===
+			String(row.components[tag as keyof typeof row.components] ?? "")
+				.toLowerCase()
+				.trim()
+		)
 			stressHit++
 	}
 	console.log(`\n## ${template} (stress tag: ${tag})`)

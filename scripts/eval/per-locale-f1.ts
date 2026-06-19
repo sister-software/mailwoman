@@ -25,9 +25,10 @@
  *   The anchor + gazetteer feed channels are fed by DEFAULT (the standard paths, same as
  *   `score-country-homograph.ts` / `oa-resolver-eval`). The current 33-label STAGE3 models were
  *   trained with these channels live, so omitting them scores the model out-of-distribution and
- *   silently collapses the admin tags (country→0, region↔locality flips) while street/venue survive —
- *   the false "regression" this script used to report. Pass `--no-anchor` to measure the zero-feed
- *   (anchor-off) path on purpose, or `--model-anchor-lookup`/`--gazetteer-lexicon` to override paths.
+ *   silently collapses the admin tags (country→0, region↔locality flips) while street/venue survive
+ *   — the false "regression" this script used to report. Pass `--no-anchor` to measure the
+ *   zero-feed (anchor-off) path on purpose, or `--model-anchor-lookup`/`--gazetteer-lexicon` to
+ *   override paths.
  *
  *   Usage: node --experimental-strip-types scripts/eval/per-locale-f1.ts\
  *   --golden-dir data/eval/golden/v0.1.2/dev\
@@ -261,9 +262,7 @@ async function main(): Promise<void> {
 		// admin tags. `--no-anchor` opts out; an explicit `--model-anchor-lookup`/`--gazetteer-lexicon`
 		// overrides the default path. The runner harmlessly skips inputs a plainer ONNX doesn't declare.
 		const anchorLookupPath = args.noAnchor ? undefined : (args.modelAnchorLookupPath ?? DEFAULT_ANCHOR_LOOKUP)
-		const gazetteerLexiconPath = args.noAnchor
-			? undefined
-			: (args.gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON)
+		const gazetteerLexiconPath = args.noAnchor ? undefined : (args.gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON)
 		const postcodeAnchorLookup =
 			anchorLookupPath && existsSync(anchorLookupPath)
 				? parseAnchorLookup(JSON.parse(readFileSync(anchorLookupPath, "utf8")))

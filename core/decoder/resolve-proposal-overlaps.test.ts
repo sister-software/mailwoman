@@ -5,7 +5,8 @@
  *
  *   #478 increment 3 — the coherence pass. Verifies `resolveProposalOverlaps` produces a
  *   non-overlapping set (the invariant `proposalsToTree` needs) and that the selection policy
- *   (confidence desc → finer span → earlier start) preserves the street+house_number decomposition.
+ *   (confidence desc → finer span → earlier start) preserves the street+house_number
+ *   decomposition.
  */
 
 import { Span } from "@mailwoman/core/tokenization"

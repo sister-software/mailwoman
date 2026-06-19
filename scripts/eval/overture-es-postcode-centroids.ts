@@ -4,17 +4,18 @@
  * @author Teffen Ellis, et al.
  *
  *   #474: build ES postcode centroids from the local Overture addresses parquet (ES postcode fill =
- *   100%, 15.7M points) and emit a `spr`-table SQLite DB the existing postcode-anchor harness consumes
- *   (`WofPostcodeLookup` / `postcode-anchor-accuracy.ts`). Per-postcode centroid = mean after dropping
- *   points >3σ from the per-postcode mean (agency data carries geocoding errors). Lets us measure
- *   Overture-derived centroids vs the shipped GeoNames-backfilled ones (postalcode-intl.db) on the
- *   ES eval rows — does Overture's 15.7M-point density beat GeoNames on anchor accuracy?
+ *   100%, 15.7M points) and emit a `spr`-table SQLite DB the existing postcode-anchor harness
+ *   consumes (`WofPostcodeLookup` / `postcode-anchor-accuracy.ts`). Per-postcode centroid = mean
+ *   after dropping points >3σ from the per-postcode mean (agency data carries geocoding errors).
+ *   Lets us measure Overture-derived centroids vs the shipped GeoNames-backfilled ones
+ *   (postalcode-intl.db) on the ES eval rows — does Overture's 15.7M-point density beat GeoNames on
+ *   anchor accuracy?
  *
  *   IT is OUT: Overture IT postcode fill = 0% (the #474 ingest gate "≥80% else renegotiate" fails) —
  *   GeoNames stays IT's source; documented as an Overture gap.
  *
- *   Run: node --experimental-strip-types scripts/eval/overture-es-postcode-centroids.ts
- *        [--parquet <path>] [--out <db>] [--country ES]
+ *   Run: node --experimental-strip-types scripts/eval/overture-es-postcode-centroids.ts [--parquet
+ *   <path>] [--out <db>] [--country ES]
  */
 
 import { DuckDBInstance } from "@duckdb/node-api"
@@ -25,7 +26,10 @@ const arg = (n: string, d: string): string => {
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
 }
 const CC = arg("country", "ES")
-const PARQUET = arg("parquet", `/mnt/playpen/mailwoman-data/overture/2026-05-20.0/addresses-${CC.toLowerCase()}.parquet`)
+const PARQUET = arg(
+	"parquet",
+	`/mnt/playpen/mailwoman-data/overture/2026-05-20.0/addresses-${CC.toLowerCase()}.parquet`
+)
 const OUT_DB = arg("out", `/mnt/playpen/mailwoman-data/wof/postcode-${CC.toLowerCase()}-overture.db`)
 
 const instance = await DuckDBInstance.create()
@@ -33,7 +37,13 @@ const conn = await instance.connect()
 
 // Confirm the parquet columns first (the ingest output extracts ST_X/ST_Y → lat/lon).
 const desc = await conn.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${PARQUET}') LIMIT 1`)
-console.error("columns:", desc.getRowObjects().map((r) => String(r["column_name"])).join(", "))
+console.error(
+	"columns:",
+	desc
+		.getRowObjects()
+		.map((r) => String(r["column_name"]))
+		.join(", ")
+)
 
 // Per-postcode centroid: mean of points within 3σ of the per-postcode mean (population stddev).
 // ES postcodes are 5-digit; left-pad numeric codes so leading zeros survive (eval truth uses "01001").

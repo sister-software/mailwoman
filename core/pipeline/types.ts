@@ -56,9 +56,10 @@ export interface PipelineOpts {
 	 */
 	arbitrate?: boolean
 	/**
-	 * #690: title-case detected all-caps ASCII input before the Stage 3 classifier (helps on
-	 * all-caps registry/compliance data). Threaded to `ClassifierOpts.normalizeCase`. Detection-gated
-	 * + off by default → byte-stable for mixed-case input.
+	 * #690: title-case detected all-caps ASCII input before the Stage 3 classifier (helps on all-caps
+	 * registry/compliance data). Threaded to `ClassifierOpts.normalizeCase`. Detection-gated
+	 *
+	 * - Off by default → byte-stable for mixed-case input.
 	 */
 	normalizeCase?: boolean
 	signal?: AbortSignal
@@ -181,7 +182,8 @@ export interface ClassifierOpts {
 	postcodeRepair?: boolean
 	/**
 	 * #690: title-case a detected all-caps ASCII input before the model (all-caps registry/compliance
-	 * data is partly OOD). Detection-gated — mixed-case + non-ASCII input is untouched. Off by default.
+	 * data is partly OOD). Detection-gated — mixed-case + non-ASCII input is untouched. Off by
+	 * default.
 	 */
 	normalizeCase?: boolean
 }
@@ -241,9 +243,10 @@ export interface RuntimePipelineStages {
 	resolverBackend?: ResolverBackend
 	/**
 	 * The "rule source" for arbitration (#478 increment 3): `(normalizedText, locale) → rule
-	 * proposals`, derived from the SOLVED v0 parser (its solver-coordinated output, not raw classifier
-	 * firings). Invoked only when `opts.arbitrate` is set. Typically wired by `createRuntimePipeline`
-	 * from `createAddressParser` + `solutionToProposals`. Absent ⇒ arbitration is a no-op.
+	 * proposals`, derived from the SOLVED v0 parser (its solver-coordinated output, not raw
+	 * classifier firings). Invoked only when `opts.arbitrate` is set. Typically wired by
+	 * `createRuntimePipeline` from `createAddressParser` + `solutionToProposals`. Absent ⇒
+	 * arbitration is a no-op.
 	 */
 	ruleProposer?: (normalizedText: string, locale: string) => Promise<ClassificationProposal[]>
 }
