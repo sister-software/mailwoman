@@ -88,6 +88,128 @@ card's `training.tokenizer_version` is the source of truth (mismatches have ship
   model shipped as `4.0.0`). This replaces the old "weights versioned to the model" scheme, which the sync-mode
   plugin could never actually express — that mismatch is what produced the version drift before 4.0.0.
 
+## Promoting a NON-default model (the full promotion flow)
+
+Most releases are code-only (`yarn release` / the `publish` workflow at the next version, model unchanged).
+**Promoting a different trained model to be the new default is a bigger operation** — and it has bitten this
+pipeline more than once because the moving parts aren't obvious. This is the exact, ordered runbook
+(walked end-to-end for v4.11.0, the v1.8.0 fr-admin-split promotion). Do these in order; verify each.
+
+### Step 0 — figure out the version number (the divergence trap)
+
+The npm packages and the demo model **drift apart**: code-only cuts bump npm (`mailwoman` → 4.7, 4.8, … on
+npm) while the demo/HF model stays at whatever version last shipped a model (e.g. `v4.6.0`). They share a
+number namespace but are NOT in lockstep at any given moment. So:
+
+```bash
+curl -s https://registry.npmjs.org/mailwoman | jq -r '."dist-tags".latest'      # e.g. 4.10.0 (npm code)
+curl -s https://public.sister.software/mailwoman/en-us/releases.json | jq -r .defaultVersion  # e.g. v4.6.0 (demo model)
+```
+
+**The new release must exceed the npm `latest`** (npm refuses to republish an existing version), so the
+number is `max(npm-latest, demo-default) + one minor`. For v4.11.0: npm was at 4.10.0, demo at v4.6.0 → ship
+`4.11.0`. Do NOT assume the next number after the demo's model version — it will collide with npm.
+
+### Step 1 — promotion is a model-card REWRITE, not a relabel
+
+When the model you're shipping isn't the current default, the repo still describes the OLD model. Update,
+in `main`, before anything is staged:
+
+1. Place the int8 in the canonical dir: `cp <staged>/model.onnx /mnt/playpen/mailwoman-data/models/quantized/model-v<NNN>-step-<step>-int8.onnx` and confirm its md5 against the gate/postmortem.
+2. `release.config.json` — bump `version`, repoint `weights.model`, update `weights.lineage` + `weights.trainingStep`, and put the new int8 md5 in the lineage string.
+3. `neural-weights-en-us/model-card.json` — rewrite `version`, `model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block (the gate evidence), and `files_md5`. **State any regression that trips the 2pp gate** right in the card (no silent drift). `requires` (the ship-config) is usually unchanged if the model cloned the prior recipe.
+4. Regenerate the capabilities manifest (the fail-closed delta-gate reads it; the generator's `$comment` otherwise lies about which model it measured). The generator **refuses if a `capabilities` block already exists**, so rewrite the card WITHOUT that block first, then:
+   ```bash
+   yarn compile   # the generator imports COMPILED @mailwoman/neural/scorer from out/
+   node --experimental-strip-types scripts/eval/gen-capability-manifest.ts \
+     --model /mnt/playpen/.../model-v<NNN>-step-<step>-int8.onnx \
+     --tokenizer /mnt/playpen/.../tokenizer.model \
+     --model-card neural-weights-en-us/model-card.json --write
+   ```
+5. Commit + **push to main** — CI derives the HF fetch path from the model card on `main`, so it has to be pushed before the CI publish.
+
+### Step 2 — carry forward the resolver/gazetteer layer from the PRIOR bucket
+
+A release dir is self-contained: the demo fetches everything from `en-us/<version>/`. Only `model.onnx`,
+`tokenizer.model`, `model-card.json`, and (if it changed) `anchor-lexicon-v1.json` are NEW. The
+resolver/gazetteer layer — `fst-en-US.bin`, `wof-hot.db`, `wof-polygons.db`, `postcode-*.bin` — carries
+forward **unchanged**, and the safest source is the exact bytes the prior version already serves (not a
+local rebuild that might differ). Enumerate + pull from the prior R2 path, verify sizes:
+
+```bash
+B=https://public.sister.software/mailwoman/en-us/v<PRIOR>      # e.g. v4.6.0
+for f in fst-en-US.bin wof-hot.db wof-polygons.db postcode-us.bin postcode-de.bin postcode-fr.bin; do
+  curl -sI "$B/$f" | head -1   # confirm 200 + note Content-Length
+done
+```
+
+Assemble a staging dir mirroring the R2 layout: `<src>/en-us/v<NEW>/{the 10 artifacts}` plus
+`<src>/en-us/releases.json` (take the live R2 `releases.json`, prepend the new entry, set
+`defaultVersion`). `anchor-lexicon-v1.json` should be the **repo** copy (`data/gazetteer/anchor-lexicon-v1.json`)
+— that's the lexicon the model was gated against, which can differ by a few bytes from the prior bucket's.
+
+### Step 3 — stage HF, then R2, then verify BOTH backends agree
+
+```bash
+HF_TOKEN=$(cat ~/.cache/huggingface/token) node scripts/publish-release-to-hf.mjs \
+  --version v<NEW> --locale en-us --label "..." --description "..." \
+  --model <src>/.../model.onnx --tokenizer ... --model-card ... --fst <src>/.../fst-en-US.bin \
+  --wof-hot <src>/.../wof-hot.db --gazetteer-lexicon <src>/.../anchor-lexicon-v1.json \
+  --postcodes "<csv of postcode-*.bin>" --polygons <src>/.../wof-polygons.db --steps <step> --set-default
+
+set -a; . ./.env; set +a; python3 scripts/publish-demo-assets-to-r2.py --src <src>
+```
+
+Pass `--postcodes` + `--polygons` to the HF script too, or its `releases.json` gets `hasAnchor:false`
+/`hasPolygons:false` (it probes R2 for them, and R2 isn't staged yet). **A release is done only when BOTH
+backends agree** — CI's weight fetch reads HF; the demo reads R2:
+
+```bash
+curl -s .../en-us/releases.json | jq -r .defaultVersion         # HF and R2, both == v<NEW>
+curl -s .../en-us/v<NEW>/model.onnx | md5sum                     # HF and R2, both == the gated md5
+```
+
+### Step 4 — publish npm from CI, then verify registry-direct + a clean install
+
+```bash
+gh workflow run publish.yml -f version=<NEW> -f dry_run=false
+gh run watch <id> --exit-status
+```
+
+`npm view` caches for minutes — verify against the registry directly, then prove the WHOLE closure is
+installable (the #596 broken-clean-install class):
+
+```bash
+curl -s -o /dev/null -w '%{http_code}' https://registry.npmjs.org/mailwoman/<NEW>     # 200
+cd $(mktemp -d) && npm init -y >/dev/null && npm install mailwoman@<NEW> --dry-run     # exit 0, no 404
+```
+
+### Pitfall: `.release-it.json` must list EVERY runtime dep of `mailwoman`
+
+`mailwoman`'s `workspace:*` deps are translated to concrete `<NEW>` versions by `yarn pack`. If a dep
+workspace isn't in `.release-it.json`'s list it never gets bumped+published, so `<dep>@<NEW>` 404s and
+`npm install mailwoman` breaks. The record-matcher work added `formatter`/`record`/`match`/`address-id`/`registry`
+(and `spatial`) — they're in the list now; **any future runtime dep must join it too.** This is the same
+warning as the top of this doc, restated because it recurs.
+
+### Pitfall: partial release — use `publish_only`, never re-run the full workflow
+
+The CI publish can land most packages then die mid-publish (seen on v4.11.0: a transient npm OIDC
+`E401 … Failed to generate Web Auth URLs` hit `record` + `registry` while the other 15 published). Once that
+happens the commit + tag `v<NEW>` already exist, so **re-dispatching the full workflow trips on the tag.**
+Use the dedicated recovery input instead — it skips release-it's bump/tag and just re-publishes each
+workspace at its current version over OIDC with `--tolerate-republish` (already-published ones are no-ops):
+
+```bash
+gh workflow run publish.yml -f version=<NEW> -f publish_only=true -f dry_run=false
+```
+
+The E401/Web-Auth flavor was transient for v4.11.0 (the `publish_only` retry cleared it). If it recurs on the
+SAME packages, their npm Trusted Publisher is unconfigured — configure it on npmjs.com, or token-publish the
+stragglers in dependency order (`record` before `registry`). **Note:** despite older notes saying "the lab host
+has no npm credentials," it currently has an `~/.npmrc` authToken, so `node scripts/publish-workspace.mjs` per
+the recovery loop below can finish stragglers from here without OIDC.
+
 ## Common failures
 
 | Symptom                                   | Cause                                              | Fix                                                                                                              |
