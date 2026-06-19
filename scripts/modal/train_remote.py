@@ -359,6 +359,52 @@ def sync_v080():
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_v081():
+    """Pull the v0.8.1-fr-admin-split OVERLAY (the country-bearing shard — the v1.8.0 fr.country fix +
+    manifest) + latest code (configs incl. v1.8.1-fr-admin-split) from R2, container-side. Mirror of
+    sync_v080 (night shift 2026-06-19 — the v1.8.1 fr.country refinement, ready to launch on operator GO)."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.8.1-fr-admin-split overlay + latest code from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.8.1-fr-admin-split/corpus-v0.8.1-fr-admin-split/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.8.1-fr-admin-split/corpus-v0.8.1-fr-admin-split/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv0.8.1 overlay sync complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.8.1-fr-admin-split/corpus-v0.8.1-fr-admin-split"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.8.1-fr-admin-split.yaml"
+    print("  v1.8.1 config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  fr-admin-split shard present:", os.path.isfile(f"{cdir}/train/part-fr-admin-split-train.parquet"))
+    base0 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
+    print("  sample re-rooted base shard on volume:", os.path.isfile(base0))
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
     timeout=1800,
 )
 def push_artifact_r2(volume_path: str, r2_subpath: str):
