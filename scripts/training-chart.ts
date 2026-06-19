@@ -51,11 +51,12 @@ interface Args {
 	height: number
 	yMin?: number
 	yMax?: number
+	log: boolean
 }
 
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
-	const out: Partial<Args> = { inputs: [], width: 720, height: 380 }
+	const out: Partial<Args> = { inputs: [], width: 720, height: 380, log: false }
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 		if (a === "--input" && args[i + 1]) out.inputs!.push(args[++i])
@@ -66,6 +67,7 @@ function parseArgs(): Args {
 		else if (a === "--height" && args[i + 1]) out.height = Number(args[++i])
 		else if (a === "--y-min" && args[i + 1]) out.yMin = Number(args[++i])
 		else if (a === "--y-max" && args[i + 1]) out.yMax = Number(args[++i])
+		else if (a === "--log") out.log = true
 	}
 	if (!out.inputs || out.inputs.length === 0 || !out.metric || !out.output) {
 		console.error("Usage: training-chart.ts --input <json>... --metric val_loss|macro_f1|train_loss --output <svg>")
@@ -164,11 +166,34 @@ function renderSVG(args: Args, series: RunSeries[]): string {
 	if (args.yMin === undefined) yMin -= ySpan * 0.05
 	if (args.yMax === undefined) yMax += ySpan * 0.05
 
+	// Log-scale transformation: map y through log10, then to pixel space.
+	// Clamp near-zero values to avoid -Infinity.
+	const logYMin = Math.log10(Math.max(yMin, 1e-9))
+	const logYMax = Math.log10(yMax)
+	const logYSpan = logYMax - logYMin
 	const xToPx = (x: number) => padding.left + ((x - xMin) / (xMax - xMin)) * plotW
-	const yToPx = (y: number) => padding.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH
+	const yToPx = (y: number) => {
+		if (!args.log) return padding.top + plotH - ((y - yMin) / (yMax - yMin)) * plotH
+		const logY = Math.log10(Math.max(y, yMin > 0 ? yMin * 1e-3 : 1e-9))
+		return padding.top + plotH - ((logY - logYMin) / logYSpan) * plotH
+	}
 
 	const xTicks = niceTicks(xMin, xMax, 6)
-	const yTicks = niceTicks(yMin, yMax, 5)
+	const yTicks = args.log
+		? (() => {
+				const ticks: number[] = []
+				const lo = Math.floor(logYMin)
+				const hi = Math.ceil(logYMax)
+				for (let exp = lo; exp <= hi; exp++) {
+					ticks.push(Math.pow(10, exp))
+					for (const m of [2, 3, 5, 7]) {
+						const v = m * Math.pow(10, exp)
+						if (v >= Math.pow(10, logYMin) && v <= Math.pow(10, logYMax)) ticks.push(v)
+					}
+				}
+				return ticks.sort((a, b) => a - b)
+		  })()
+		: niceTicks(yMin, yMax, 5)
 
 	const parts: string[] = []
 	parts.push(
@@ -183,8 +208,8 @@ function renderSVG(args: Args, series: RunSeries[]): string {
 		)
 	}
 
-	// Axis labels — the metric name itself is the label.
-	const metricLabel = args.metric
+	// Axis labels — the metric name itself is the label, with "(log scale)" appended if --log.
+	const metricLabel = args.log ? args.metric + " (log scale)" : args.metric
 	parts.push(
 		`<text x="${padding.left + plotW / 2}" y="${H - 12}" text-anchor="middle" font-size="12">training step</text>`
 	)
