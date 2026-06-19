@@ -20,8 +20,10 @@ afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
 
-/** Write a per-country Overture corpus JSONL fixture (the shape `ingest-overture-addresses.ts
---corpus-jsonl` emits). */
+/**
+ * Write a per-country Overture corpus JSONL fixture (the shape `ingest-overture-addresses.ts
+ * --corpus-jsonl` emits).
+ */
 async function writeFixture(rows: Record<string, unknown>[]): Promise<string> {
 	const p = join(scratch, "overture-es.corpus.jsonl")
 	await writeFile(p, rows.map((r) => JSON.stringify(r)).join("\n") + "\n", "utf8")

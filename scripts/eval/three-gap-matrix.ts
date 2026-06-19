@@ -48,8 +48,10 @@ interface OaRow {
 	source: string
 }
 
-/** Normalize a place name for matching: lowercase, strip diacritics + punctuation, expand US
-abbrevs. */
+/**
+ * Normalize a place name for matching: lowercase, strip diacritics + punctuation, expand US
+ * abbrevs.
+ */
 const ABBREV: Record<string, string> = { st: "saint", ste: "sainte", mt: "mount", ft: "fort" }
 function normName(s: string | undefined): string {
 	if (!s) return ""

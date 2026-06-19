@@ -8,22 +8,22 @@
  *   #566-correct metric — instead of the admin-name-match arm `oa-resolver-eval` headlines.
  *
  *   Why a separate harness: `oa-resolver-eval`'s "neural" arm credits only the admin-centroid tier
- *   (resolved locality name → centroid). For a locale whose locality the model mis-parses (PT parses
- *   the street "Av Saboia" AS the locality), that arm reports 0% even though `resolveTree` still
- *   lands a correct coordinate via the postcode coordinate-first path. This harness takes the FINEST
- *   resolved coordinate (whatever tier produced it) so coverage and parse-quality don't get tangled,
- *   and separately reports the locality name-match rate so you can see which is which.
+ *   (resolved locality name → centroid). For a locale whose locality the model mis-parses (PT
+ *   parses the street "Av Saboia" AS the locality), that arm reports 0% even though `resolveTree`
+ *   still lands a correct coordinate via the postcode coordinate-first path. This harness takes the
+ *   FINEST resolved coordinate (whatever tier produced it) so coverage and parse-quality don't get
+ *   tangled, and separately reports the locality name-match rate so you can see which is which.
  *
- *   Usage:
- *     node --experimental-strip-types scripts/eval/eu-coord-direct.ts \
- *       --eval /tmp/reg/eu-eval-pt.jsonl --country PT \
- *       --wof-db /mnt/playpen/mailwoman-data/wof/admin-overture-eu.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db
+ *   Usage: node --experimental-strip-types scripts/eval/eu-coord-direct.ts\
+ *   --eval /tmp/reg/eu-eval-pt.jsonl --country PT\
+ *   --wof-db
+ *   /mnt/playpen/mailwoman-data/wof/admin-overture-eu.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db
  */
-import { readFileSync } from "node:fs"
-import { parseArgs } from "node:util"
 import { createWofResolver } from "@mailwoman/core/resolver"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { readFileSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 const { values: a } = parseArgs({
 	options: {
@@ -56,8 +56,7 @@ function haversineKm(la1: number, lo1: number, la2: number, lo2: number): number
 	const dLa = ((la2 - la1) * Math.PI) / 180
 	const dLo = ((lo2 - lo1) * Math.PI) / 180
 	const s =
-		Math.sin(dLa / 2) ** 2 +
-		Math.cos((la1 * Math.PI) / 180) * Math.cos((la2 * Math.PI) / 180) * Math.sin(dLo / 2) ** 2
+		Math.sin(dLa / 2) ** 2 + Math.cos((la1 * Math.PI) / 180) * Math.cos((la2 * Math.PI) / 180) * Math.sin(dLo / 2) ** 2
 	return 2 * R * Math.asin(Math.sqrt(s))
 }
 function pct(sorted: number[], p: number): number {
