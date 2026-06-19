@@ -225,3 +225,61 @@ won't change the coordinate picture and isn't worth the GPU.
 as a baseline — don't assume the latest training run is the default. And grade the assembled
 coordinate, not just the assembled per-locale F1. The shift fell into a one-level-deeper version of
 the same trap the blog post warns about.
+
+## Day session (2026-06-18 → 06-19) — the measurement-integrity campaign
+
+The night's Addendum corrected one wrong baseline. The collaborative day that followed found the eval
+lying in three more ways — and each time, pulling the actual records inverted the story. The theme of
+the day was measurement integrity; the headline was that our flagship US coordinate was meter-grade
+all along and the eval couldn't see it.
+
+### The eval was lying — and the records kept inverting it
+
+- **anchor-off scoring** — caught the night before (`d7b51748`).
+- **wrong baseline** — v1.5.1 vs the real v1.5.0 default (the Addendum above).
+- **the localadmin scoring artifact** — the "rural locality gap" (SD 62%, VT 31%) was the eval's
+  `scoreTree` discarding `localadmin` New England towns; the resolver was landing the right place all
+  along. Corrected → US locality-match 83.9 → 97.8% (`9f986ec3`).
+- **the coordinate cascade** (the big one) — `oa-resolver-eval` resolved to the admin centroid (p50
+  3.3 km) and never wired the situs cascade the geocoder actually ships. Graded against what ships,
+  the same 10k rows are **p50 0.0 km, 85.9% within 100 m** — three orders of magnitude tighter
+  ([situs-cascade-eval](./2026-06-18-situs-cascade-eval.md), `dd3628da`).
+
+### This RETRACTS the Addendum's "lever moved"
+
+The Addendum (above) concluded "the US coordinate misses are rural-gazetteer coverage (SD 62%, VT
+31%)." Both halves were measurement artifacts: the SD/VT locality-match was the localadmin scoring
+bug, and the coordinate "bottleneck" was the eval grading the admin centroid instead of the shipped
+cascade. The lever was never the model nor the gazetteer — it was the measurement. The shipped US
+coordinate is meter-grade.
+
+### Shipped
+
+- **#718 eval-integrity board:** the capability-manifest delta-gate + per-release mask-regression gate
+  (the D2/#719 destructive-conventions-mask bug-class is now structurally impossible to ship); D1
+  `loadFromWeights` soft-feeds the anchor + gazetteer channels by default; D3 re-derived the eval
+  floors from anchor-on numbers; D4 region/county placetype-equivalence groups + a fallback flag.
+- **Publish pipeline:** #720 (CI fetch places the soft-feed artifacts), #721 (the fr-fr card
+  mis-described the en-us model it ships — reconciled + a drift-guard test), #722 (the eval parses via
+  the canonical `createScorer` for ship-config parity).
+- **The coordinate:** `--cascade` (grade what ships) + three admin-tail fixes — the directional-quadrant
+  street-key fold, the US-gated 5-digit-house-number-as-ZIP relabel (FR reversed-order #560 verified
+  untouched), and the spelled-ordinal fold. **Admin tail 12.0 → ~6.7%, within-100 m 85.9 → ~89.5%.**
+- **Docs + outreach:** corrected the head-to-head, the HF card, and the situs-cascade doc to the
+  shipped numbers; published the methodology blog post ("Three times this week, our metrics undersold
+  us").
+
+### Decisions
+
+- **HOLD v1.5.0 confirmed.** The country −2.4 the night flagged is a single record (`Avenida Arequipa,
+  Lima 15046, Peru`) on a 27-row denominator — pulled the rows; not systematic.
+- **Overture ingest is NOT the coordinate lever.** The situs shards are already built from Overture;
+  the SD/IL holes are a NAD-vs-OpenAddresses theme-selection bug, not missing data (#723).
+- **Banked the situs theme-reselect (#723).** The coordinate is in great shape; the shard rebuild
+  (~+3.7 pts) is deferred, not launched.
+
+### The lesson (a memory now)
+
+Pull the records before a number changes a decision. This week the aggregate lied in both directions —
+it inflated a regression (Peru), invented a coverage gap (localadmin/rural), and hid a
+three-orders-of-magnitude win (the coordinate). Grade the thing the user actually receives.
