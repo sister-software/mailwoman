@@ -168,17 +168,23 @@ const SVG_PAD = { top: 30, right: 20, bottom: 40, left: 60 }
 const SVG_WIDTH = 720
 const SVG_HEIGHT = 380
 
+type ScaleMode = "linear" | "log"
+
 interface SvgChartProps {
 	series: ChartSeries[]
 	containerRef: React.RefObject<HTMLDivElement | null>
 	onHover: (d: TooltipDatum | null) => void
+	scaleMode: ScaleMode
 }
 
-const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover }) => {
+const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover, scaleMode }) => {
 	const allPoints = useMemo(() => series.flatMap((s) => s.points), [series])
 
-	const { xMin, xMax, yMin, yMax } = useMemo(() => {
-		if (allPoints.length === 0) return { xMin: 0, xMax: 1, yMin: 0, yMax: 1 }
+	const isLog = scaleMode === "log"
+
+	// In log mode, we map y through log10 and work in log-space.
+	const { xMin, xMax, yMin, yMax, yMinData, yMaxData } = useMemo(() => {
+		if (allPoints.length === 0) return { xMin: 0, xMax: 1, yMin: 0, yMax: 1, yMinData: 0, yMaxData: 1 }
 		let xmn = Infinity,
 			xmx = -Infinity,
 			ymn = Infinity,
@@ -189,10 +195,21 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover }) =>
 			if (p.value < ymn) ymn = p.value
 			if (p.value > ymx) ymx = p.value
 		}
-		// Add 5% padding on Y
 		const yPad = (ymx - ymn) * 0.05 || 0.01
-		return { xMin: xmn, xMax: xmx, yMin: ymn - yPad, yMax: ymx + yPad }
-	}, [allPoints])
+		const yMinData = ymn - yPad
+		const yMaxData = ymx + yPad
+		if (!isLog) return { xMin: xmn, xMax: xmx, yMin: yMinData, yMax: yMaxData, yMinData, yMaxData }
+		// Log scale: clamp floor above zero, map to log10 space
+		const logFloor = Math.max(yMinData, 1e-9)
+		return {
+			xMin: xmn,
+			xMax: xmx,
+			yMin: Math.log10(logFloor),
+			yMax: Math.log10(Math.max(yMaxData, logFloor * 1.01)),
+			yMinData: logFloor,
+			yMaxData: yMaxData,
+		}
+	}, [allPoints, isLog])
 
 	const plotW = SVG_WIDTH - SVG_PAD.left - SVG_PAD.right
 	const plotH = SVG_HEIGHT - SVG_PAD.top - SVG_PAD.bottom
@@ -202,11 +219,28 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover }) =>
 		[xMin, xMax, plotW]
 	)
 	const yScale = useCallback(
-		(y: number) => SVG_PAD.top + plotH - ((y - yMin) / (yMax - yMin || 1)) * plotH,
-		[yMin, yMax, plotH]
+		(y: number) => {
+			const vy = isLog ? Math.log10(Math.max(y, yMinData * 1e-3)) : y
+			return SVG_PAD.top + plotH - ((vy - yMin) / (yMax - yMin || 1)) * plotH
+		},
+		[yMin, yMax, plotH, isLog, yMinData]
 	)
 
-	const yTicks = useMemo(() => niceTicks(yMin, yMax, 6), [yMin, yMax])
+	const yTicks = useMemo(() => {
+		if (!isLog) return niceTicks(yMin, yMax, 6)
+		// Log-scale ticks: powers of 10 and multiples
+		const ticks: number[] = []
+		const lo = Math.floor(yMin)
+		const hi = Math.ceil(yMax)
+		for (let exp = lo; exp <= hi; exp++) {
+			ticks.push(Math.pow(10, exp))
+			for (const m of [2, 3, 5, 7]) {
+				const v = m * Math.pow(10, exp)
+				if (Math.log10(v) >= yMin && Math.log10(v) <= yMax) ticks.push(v)
+			}
+		}
+		return ticks.sort((a, b) => a - b)
+	}, [yMin, yMax, isLog])
 	const xTicks = useMemo(() => niceTicks(xMin, xMax, 8), [xMin, xMax])
 
 	// Generate polyline points strings once per series
@@ -303,7 +337,7 @@ const SvgChart: React.FC<SvgChartProps> = ({ series, containerRef, onHover }) =>
 
 			{/* Y-axis label */}
 			<text transform={`translate(14, ${SVG_HEIGHT / 2}) rotate(-90)`} textAnchor="middle" fontSize={12} fill="#374151">
-				value
+				{isLog ? "value (log scale)" : "value"}
 			</text>
 
 			{/* X-axis label */}
@@ -366,6 +400,7 @@ const TrainingChartsInner: React.FC = () => {
 	const [error, setError] = useState<string | null>(null)
 	const [pollCountdown, setPollCountdown] = useState(POLL_INTERVAL_MS / 1000)
 	const [tooltip, setTooltip] = useState<TooltipDatum | null>(null)
+	const [scaleMode, setScaleMode] = useState<ScaleMode>("linear")
 
 	const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 	const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -628,7 +663,24 @@ const TrainingChartsInner: React.FC = () => {
 
 			{/* Chart */}
 			<div ref={chartWrapperRef} className={styles.chartWrapper}>
-				<SvgChart series={chartSeries} containerRef={chartWrapperRef} onHover={handleTooltip} />
+				{/* Scale toggle */}
+				<div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+					<button
+						type="button"
+						onClick={() => setScaleMode("linear")}
+						className={`${styles.metricChip} ${scaleMode === "linear" ? styles.metricChipChecked : ""}`}
+					>
+						Linear
+					</button>
+					<button
+						type="button"
+						onClick={() => setScaleMode("log")}
+						className={`${styles.metricChip} ${scaleMode === "log" ? styles.metricChipChecked : ""}`}
+					>
+						Log
+					</button>
+				</div>
+				<SvgChart series={chartSeries} containerRef={chartWrapperRef} onHover={handleTooltip} scaleMode={scaleMode} />
 
 				{/* Tooltip overlay */}
 				{tooltip ? (
