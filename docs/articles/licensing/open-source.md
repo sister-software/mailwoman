@@ -41,4 +41,4 @@ If our work has helped you, please consider donating to Mailwoman's developer fu
 
 ## Commercial Usage
 
-A "[**commercial use license**](/license/commercial)" is mandatory as soon as you develop commercial activities involving the Mailwoman software without disclosing the source code of your own applications.
+A "[**commercial use license**](./commercial.md)" is mandatory as soon as you develop commercial activities involving the Mailwoman software without disclosing the source code of your own applications.
