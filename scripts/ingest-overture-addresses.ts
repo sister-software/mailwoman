@@ -56,6 +56,7 @@ const { values: args } = parseArgs({
 		limit: { type: "string" },
 		out: { type: "string", default: DEFAULT_OUT_ROOT },
 		"probe-only": { type: "boolean", default: false },
+		"corpus-jsonl": { type: "boolean", default: false },
 	},
 })
 
@@ -111,6 +112,37 @@ async function ingestCountry(cc: string): Promise<void> {
 	`)
 	const secs = ((Date.now() - started) / 1000).toFixed(0)
 	console.log(`[ingest] ${cc} -> ${dest} (${secs}s)`)
+}
+
+/**
+ * Emit the flattened corpus-input JSONL the `overture` corpus adapter consumes (`{ street, number,
+ * unit, postcode, locality }`), so `@mailwoman/corpus` — a runtime dep of the `mailwoman` CLI —
+ * stays free of the heavy native DuckDB binding. `street` is kept WHOLE (keyword included); the
+ * downstream affix-relabel splits `street_prefix`. `locality` flattens the `address_levels`
+ * municipality (the deepest level) with a `postal_city` fallback. The runner then labels it via
+ * `mailwoman corpus run overture --input <jsonl> --country <CC>`.
+ */
+async function emitCorpusJsonl(cc: string): Promise<void> {
+	const src = countryParquet(cc)
+	const dest = path.join(outDir, `overture-${cc.toLowerCase()}.corpus.jsonl`)
+	await db.run(`
+		COPY (
+			SELECT
+				street,
+				number,
+				unit,
+				postcode,
+				COALESCE(NULLIF(trim(postal_city), ''), address_levels[len(address_levels)].value) AS locality
+			FROM read_parquet('${src}')
+			WHERE street IS NOT NULL AND trim(street) <> ''
+				AND (
+					(postcode IS NOT NULL AND trim(postcode) <> '')
+					OR len(address_levels) > 0
+					OR (postal_city IS NOT NULL AND trim(postal_city) <> '')
+				)
+		) TO '${dest}' (FORMAT JSON)
+	`)
+	console.log(`[corpus-jsonl] ${cc} -> ${dest}`)
 }
 
 /** Probe one country's LOCAL Parquet for the fill-rate report. */
@@ -187,6 +219,7 @@ function renderMarkdown(probes: CountryProbe[]): string {
 const probes: CountryProbe[] = []
 for (const cc of countries) {
 	if (!args["probe-only"]) await ingestCountry(cc)
+	if (args["corpus-jsonl"]) await emitCorpusJsonl(cc)
 	const probe = await probeCountry(cc)
 	if (probe) {
 		probes.push(probe)

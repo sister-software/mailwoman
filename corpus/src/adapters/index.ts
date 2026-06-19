@@ -26,6 +26,7 @@ import { fccBdcAdapter } from "./fcc-bdc/adapter.js"
 import { geonamesPostalAdapter } from "./geonames-postal/adapter.js"
 import { geonamesAdapter } from "./geonames/adapter.js"
 import { openaddressesAdapter } from "./openaddresses/adapter.js"
+import { overtureAdapter } from "./overture/adapter.js"
 import { stateHiSchoolsAdapter } from "./state-hi-schools/adapter.js"
 import { stateIaContractorsAdapter } from "./state-ia-contractors/adapter.js"
 import { stateNyNotariesAdapter } from "./state-ny-notaries/adapter.js"
@@ -58,6 +59,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	banAdapter,
 	tigerAdapter,
 	openaddressesAdapter,
+	overtureAdapter,
 	fccBdcAdapter,
 	usgovHrsaFqhcAdapter,
 	usgovNppesAdapter,
