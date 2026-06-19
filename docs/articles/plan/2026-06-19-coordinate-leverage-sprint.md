@@ -104,6 +104,50 @@ admin-split on > 60% of ES/IT/AU → the reranker wins (build once, deploy globa
 parallel data track). Consult calibration: trust the structure, **test the numbers** — these are the
 numbers the diagnostic exists to check.
 
+### Workstream A — RESULT (US, 2026-06-19)
+
+Ran `scripts/eval/three-gap-matrix.ts` on 10,000 OA-US rows. Faithful query (region `parentId` +
+postcode + parent-fallback, two-shard admin + postcode-locality), coordinate/name bucketing (rank of
+the right PLACE, not a specific WOF id — the first pass over-counted ranking gaps because WOF carries
+duplicate ids for one place).
+
+| metric (k = 10)                | value      |
+| ------------------------------ | ---------- |
+| correct                        | **97.88%** |
+| ranking-gap (reranker ceiling) | **0.01%**  |
+| recall-gap                     | 0.06%      |
+| coverage-gap                   | **2.05%**  |
+| at-rank-1 among covered        | **100%**   |
+
+Identical at k = 5 / 10 / 20 → the retrieval beam is not the constraint. **Route: EXPAND_COVERAGE —
+the reranker is dead on arrival** (ranking-gap 0.01% ≪ the 10% bar). DeepSeek's structural bet
+(coverage > reranker) is **confirmed and sharpened**: ranking headroom is ~0 (it bet 3–5%), and the US
+coverage gap is ~2% on this sample (it bet 12–15%).
+
+**The sharpening — what the coverage gap actually IS.** The dumped coverage-gap rows are almost all
+**township / CDP / civil-division granularity**, not "rural towns missing from WOF": `Monroe Twp`,
+`Saylor Twp`, `Bertram Twp` (Iowa civil townships); `Barre City` vs `Barre Town`, `Essex Town` vs
+`Essex Junction Village`, `Saint Albans City` vs `Saint Albans Town` (VT town/city/village splits);
+`Dakota Dunes`, `Pennco` (SD CDPs); `Yankton County`. OpenAddresses' "city" field is frequently a civil
+township / village / CDP that WOF does not model as a `locality`. **So the first, lowest-cost US
+coverage lever is a granularity/alias mapping (OA-city → WOF place; CDP/localadmin resolution), NOT a
+WOF re-ingest** — the places largely exist, they're modelled at a different granularity.
+
+**Honest caveats (do not over-read):**
+
+- The OA sample is a **7-state, rural-skewed** set (VT/IA/SD/MT + IL/CA/DC, ~1429 each), deliberately
+  over-weighting the hard township states. A national, population-weighted coverage number is almost
+  certainly **lower** (urban volume resolves cleanly: CA/DC/IL coverage-gap ≈ 0–1%).
+- Input is **clean** OA (correct region + postcode). Ranking-gap ≈ 0 is measured _given_ clean
+  disambiguating context — which is exactly what a reranker would also have. The consult's
+  reranker-helps-on-ambiguity case (missing postcode / wrong region) is **not** exercised by clean OA;
+  if real traffic is noisier, ranking headroom could be higher. Worth a degraded-input probe before
+  fully closing the reranker door, but on clean data it is unambiguously DOA.
+
+**Net:** for US, do not build a reranker. The coordinate lever is coverage, and specifically the
+township/CDP granularity mapping. Whether US-coverage or EU-coverage is the sprint's priority is the
+strategic fork below.
+
 ## The strategic fork (operator's call — surfaced, not assumed)
 
 Volume-weighting is **circular** for us. "US is ~65% of queries" is an artifact of what we currently
