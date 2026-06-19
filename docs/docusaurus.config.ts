@@ -1,5 +1,6 @@
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
+import glossaryPlugin from "docusaurus-plugin-glossary"
 import { execSync } from "node:child_process"
 import { themes as prismThemes } from "prism-react-renderer"
 
@@ -89,7 +90,16 @@ const config: Config = {
 		locales: ["en"],
 	},
 
-	plugins: ["./plugins/demo-assets/plugin.mjs"],
+	plugins: [
+		"./plugins/demo-assets/plugin.mjs",
+		[
+			"docusaurus-plugin-glossary",
+			{
+				glossaryPath: "glossary/glossary.json",
+				routePath: "/glossary",
+			},
+		],
+	],
 
 	themes: ["@docusaurus/theme-mermaid"],
 
@@ -106,6 +116,16 @@ const config: Config = {
 					routeBasePath: "docs",
 					sidebarPath: "./sidebars.ts",
 					editUrl: "https://github.com/sister-software/mailwoman/tree/main/docs/",
+					remarkPlugins: [
+						[
+							glossaryPlugin.remarkPlugin,
+							{
+								glossaryPath: "glossary/glossary.json",
+								routePath: "/glossary",
+								siteDir: __dirname,
+							},
+						],
+					],
 				},
 				pages: {
 					// Files in src/pages/ are auto-routed. Co-located `.ts` helpers (e.g.
@@ -178,14 +198,19 @@ const config: Config = {
 			},
 			items: [
 				{
-					to: "/demo",
-					label: "Demo",
-					position: "left",
+				to: "/glossary",
+				label: "Glossary",
+				position: "left",
 				},
 				{
-					to: "/training",
-					label: "Training",
-					position: "left",
+				to: "/demo",
+				label: "Demo",
+				position: "left",
+				},
+				{
+				to: "/training",
+				label: "Training",
+				position: "left",
 				},
 				{
 					type: "docSidebar",

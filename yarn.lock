@@ -5135,6 +5135,7 @@ __metadata:
     ansi_up: "npm:^6.0.6"
     chalk: "npm:^5.6.2"
     csv-parse: "npm:^5.6.0"
+    docusaurus-plugin-glossary: "npm:^3.3.3"
     eslint: "npm:^9.39.4"
     eslint-plugin-html: "npm:^8.1.4"
     fast-glob: "npm:^3.3.3"
@@ -12701,6 +12702,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"docusaurus-plugin-glossary@npm:^3.3.3":
+  version: 3.3.3
+  resolution: "docusaurus-plugin-glossary@npm:3.3.3"
+  dependencies:
+    fs-extra: "npm:^11.0.0"
+    unist-util-visit: "npm:^5.0.0"
+    validate-peer-dependencies: "npm:^2.2.0"
+  peerDependencies:
+    "@docusaurus/core": ^3.0.0
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  checksum: 10/6434230ec1994074eec821da9880e409f11529e5b7bdc9c291bcd9a390cb05bbd2870f5c62ffd60ea43e9d1bd5da10526ef09dbdea8cb2f4c90e6288c6bb5ac7
+  languageName: node
+  linkType: hard
+
 "dom-accessibility-api@npm:^0.6.3":
   version: 0.6.3
   resolution: "dom-accessibility-api@npm:0.6.3"
@@ -14658,7 +14674,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fs-extra@npm:^11.1.1, fs-extra@npm:^11.2.0":
+"fs-extra@npm:^11.0.0, fs-extra@npm:^11.1.1, fs-extra@npm:^11.2.0":
   version: 11.3.5
   resolution: "fs-extra@npm:11.3.5"
   dependencies:
@@ -22782,6 +22798,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"resolve-package-path@npm:^4.0.3":
+  version: 4.0.3
+  resolution: "resolve-package-path@npm:4.0.3"
+  dependencies:
+    path-root: "npm:^0.1.1"
+  checksum: 10/90996616a8142daf6cc158eaf78f4e89dcb62eb6fe544e0d37aa33a231d133f8867bb514ba4c5e2e042c8f014852e977073f94df556ea76687437bbc74a33c20
+  languageName: node
+  linkType: hard
+
 "resolve-pathname@npm:^3.0.0":
   version: 3.0.0
   resolution: "resolve-pathname@npm:3.0.0"
@@ -23384,6 +23409,15 @@ __metadata:
   bin:
     semver: bin/semver.js
   checksum: 10/36b1fbe1a2b6f873559cd57b238f1094a053dbfd997ceeb8757d79d1d2089c56d1321b9f1069ce263dc64cfa922fa1d2ad566b39426fe1ac6c723c1487589e10
+  languageName: node
+  linkType: hard
+
+"semver@npm:^7.3.8":
+  version: 7.8.4
+  resolution: "semver@npm:7.8.4"
+  bin:
+    semver: bin/semver.js
+  checksum: 10/a9c139031d4143932adfacfd2165d6489848c3b84c26d5fc2beef88c6d54c01191ef553e3f71049ccc47df85f0df30748907f84005f46f326095003171c5b673
   languageName: node
   linkType: hard
 
@@ -25834,6 +25868,16 @@ __metadata:
     resolve-package-path: "npm:^3.1.0"
     semver: "npm:^7.3.2"
   checksum: 10/56b9e4e13e2a0d0128c0026fa68fe0047bd2e64c57134cf30e0c3d965ba81c328644fa5f8a4ebb2660d571ba2c4b77bf790688ed0bd49d7ae7d2cf5287a1ad8c
+  languageName: node
+  linkType: hard
+
+"validate-peer-dependencies@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "validate-peer-dependencies@npm:2.2.0"
+  dependencies:
+    resolve-package-path: "npm:^4.0.3"
+    semver: "npm:^7.3.8"
+  checksum: 10/2569ade8dd58391d8d6e2d57dfac2cd5ce1e32113d6b579c5059535054effbbff6db331f41aa35d38b4ea93580dc070be3d16a03d888d36edc1bdbd677f32a78
   languageName: node
   linkType: hard
 

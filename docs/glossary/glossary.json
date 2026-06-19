@@ -1,0 +1,325 @@
+{
+  "title": "Mailwoman Glossary",
+  "description": "Key terms and concepts in the Mailwoman address parser and geocoder.",
+  "terms": [
+    {
+      "term": "address parsing",
+      "definition": "The process of decomposing a free-text postal address string into structured components — house number, street name, locality, region, postcode, and country — so a geocoder can resolve them to coordinates.",
+      "aliases": ["parse", "parsing"],
+      "relatedTerms": ["sequence labeling", "BIO tagging", "token classification", "geocoding"]
+    },
+    {
+      "term": "BIO tagging",
+      "abbreviation": "Begin-Inside-Outside",
+      "definition": "A token-level labeling scheme where each token is tagged as B-X (beginning of an entity of type X), I-X (inside an entity of type X), or O (outside any entity). Mailwoman uses BIO over SentencePiece tokens to annotate address components.",
+      "aliases": ["BIO labels", "BIO encoding"],
+      "relatedTerms": ["sequence labeling", "token classification", "CRF"]
+    },
+    {
+      "term": "sequence labeling",
+      "definition": "A machine learning task where a model assigns a label to each element in a sequence. In Mailwoman, the sequence is the tokenized address string and the labels are address component types (street, locality, postcode, etc.).",
+      "aliases": ["token classification", "token-level classification"],
+      "relatedTerms": ["BIO tagging", "CRF", "neural classifier"]
+    },
+    {
+      "term": "CRF",
+      "abbreviation": "Conditional Random Field",
+      "definition": "A statistical modeling method that predicts structured outputs by modeling dependencies between adjacent labels. Mailwoman uses a linear-chain CRF as the Viterbi decoder at inference time to enforce BIO label consistency — a B-street must be followed by I-street or O, never I-locality.",
+      "aliases": ["conditional random field"],
+      "relatedTerms": ["BIO tagging", "Viterbi decoding", "sequence labeling"]
+    },
+    {
+      "term": "Viterbi decoding",
+      "definition": "A dynamic programming algorithm that finds the most likely sequence of hidden states (labels) given a sequence of observations (token emissions). Mailwoman uses Viterbi over a linear-chain CRF to produce globally coherent BIO label sequences from per-token model scores.",
+      "aliases": ["Viterbi", "Viterbi algorithm"],
+      "relatedTerms": ["CRF", "BIO tagging", "argmax decoding"]
+    },
+    {
+      "term": "argmax decoding",
+      "definition": "The simplest decoding strategy: pick the highest-scoring label independently for each token. Fast but can produce invalid BIO sequences (e.g., I-street without a preceding B-street). Mailwoman ships argmax as the default and Viterbi CRF as an option.",
+      "relatedTerms": ["Viterbi decoding", "CRF", "BIO tagging"]
+    },
+    {
+      "term": "SentencePiece",
+      "definition": "A language-independent subword tokenizer that splits text into pieces using a unigram language model. Mailwoman uses a SentencePiece tokenizer with a 48,000-token vocabulary and byte-fallback, trained on address data rather than general text.",
+      "relatedTerms": ["tokenizer", "byte fallback", "subword tokenization"]
+    },
+    {
+      "term": "tokenizer",
+      "definition": "The component that converts a raw address string into a sequence of numeric token IDs the model can process. Mailwoman's tokenizer is a SentencePiece unigram model trained specifically on postal addresses.",
+      "relatedTerms": ["SentencePiece", "subword tokenization", "byte fallback"]
+    },
+    {
+      "term": "byte fallback",
+      "definition": "A tokenization strategy where characters not seen during training are encoded as raw UTF-8 byte sequences rather than mapped to an unknown token. Mailwoman's tokenizer uses byte fallback so non-Latin scripts (CJK, Cyrillic) produce real token sequences even though training data was Latin-dominant.",
+      "relatedTerms": ["SentencePiece", "tokenizer"]
+    },
+    {
+      "term": "ONNX",
+      "abbreviation": "Open Neural Network Exchange",
+      "definition": "An open format for machine learning models that enables interoperability between training frameworks and inference runtimes. Mailwoman ships its trained model as an ONNX file so it can run in Node.js and the browser via onnxruntime.",
+      "aliases": ["ONNX runtime", "onnxruntime"],
+      "relatedTerms": ["neural classifier", "model weights", "int8 quantization"]
+    },
+    {
+      "term": "int8 quantization",
+      "definition": "A model compression technique that stores weights as 8-bit integers instead of 32-bit floats, reducing model size (~4×) with minimal accuracy loss. Mailwoman ships int8-quantized ONNX models (~30 MB) for fast loading in browsers.",
+      "relatedTerms": ["ONNX", "model weights"]
+    },
+    {
+      "term": "neural classifier",
+      "definition": "The machine learning model at the core of Mailwoman's parser — a transformer encoder (~30M parameters) trained from scratch to do BIO token classification over addresses. It learns the 'grammar' of address formats; the gazetteer supplies the 'atlas.'",
+      "aliases": ["model", "transformer"],
+      "relatedTerms": ["sequence labeling", "gazetteer", "anchor inference", "model weights"]
+    },
+    {
+      "term": "model weights",
+      "definition": "The learned parameters of the neural classifier, shipped as ONNX files in the @mailwoman/neural-weights-* packages. Weights are locale-specific bundles that include the model, tokenizer, and a model-card.json metadata file.",
+      "aliases": ["weights bundle"],
+      "relatedTerms": ["neural classifier", "ONNX", "model card"]
+    },
+    {
+      "term": "model card",
+      "definition": "A JSON metadata file (model-card.json) shipped with each weights bundle. It declares the model version, lineage, label set, required inference channels (anchor, gazetteer), calibration data, and training provenance.",
+      "relatedTerms": ["model weights", "weights bundle", "production scorer"]
+    },
+    {
+      "term": "gazetteer",
+      "definition": "A geographical index that maps place names and postcodes to real-world coordinates. Mailwoman uses a custom-built Who's On First (WOF) SQLite database as its gazetteer — the 'atlas' half of the grammar/atlas architecture.",
+      "relatedTerms": ["resolver", "anchor inference", "WOF", "geocoding"]
+    },
+    {
+      "term": "WOF",
+      "abbreviation": "Who's On First",
+      "definition": "An open-source gazetteer of places maintained by Mapzen/whosonfirst. Mailwoman builds a custom SQLite database from WOF GeoJSON repos, extended with postcode data, importance scores, and coincident-role relations.",
+      "aliases": ["Who's On First"],
+      "relatedTerms": ["gazetteer", "resolver", "placetype"]
+    },
+    {
+      "term": "resolver",
+      "definition": "The component that converts parsed address components (locality, region, postcode) into coordinates by looking them up in the gazetteer. The resolver ranks candidates by name match, population, and proximity, and returns the best-matching place with its centroid or polygon.",
+      "relatedTerms": ["gazetteer", "geocoding", "WOF", "locality resolution"]
+    },
+    {
+      "term": "geocoding",
+      "definition": "The process of converting an address into geographic coordinates (latitude and longitude). Mailwoman geocodes in a multi-tier cascade: exact address-point match → street interpolation → locality centroid. Each tier is progressively coarser but more widely available.",
+      "relatedTerms": ["resolver", "gazetteer", "situs data", "address parsing"]
+    },
+    {
+      "term": "anchor inference",
+      "definition": "A technique where structured knowledge (postcode locations, gazetteer place names) is injected into the model as soft input features — not as deterministic overrides. The model still decides the final labels, but the anchor signal biases it toward correct admin tags.",
+      "aliases": ["postcode anchor", "soft anchor"],
+      "relatedTerms": ["gazetteer", "soft features", "neural classifier"]
+    },
+    {
+      "term": "soft features",
+      "definition": "Auxiliary input signals fed to the neural classifier that inform but never override the model's decisions. Mailwoman's soft features include the postcode anchor (a coordinate centroid for recognized postcodes) and gazetteer lexicon hits (known place names).",
+      "relatedTerms": ["anchor inference", "gazetteer inference"]
+    },
+    {
+      "term": "production scorer",
+      "definition": "The canonical inference API in @mailwoman/neural. It reads the model-card.json requires block and fails closed if a declared channel (anchor, gazetteer) isn't fed — preventing silent degradation from running the model out-of-distribution.",
+      "relatedTerms": ["model card", "neural classifier", "anchor inference"]
+    },
+    {
+      "term": "staged pipeline",
+      "definition": "Mailwoman's runtime architecture: a sequence of pure-function stages (normalize → query-shape → locale-gate → kind-classifier → phrase-grouper → classifier → decoder) connected by typed handoffs. Each stage is published as its own npm package.",
+      "aliases": ["runtime pipeline", "pipeline"],
+      "relatedTerms": ["normalize", "query shape", "locale gate", "kind classifier", "phrase grouper"]
+    },
+    {
+      "term": "normalize",
+      "definition": "Stage 1 of the runtime pipeline: deterministic input preprocessing (Unicode NFC, punctuation normalization, whitespace collapse). Returns a NormalizedInput with an offsetMap that maps normalized positions back to the raw input.",
+      "relatedTerms": ["staged pipeline", "query shape", "offset map"]
+    },
+    {
+      "term": "query shape",
+      "definition": "Stage 1.5 of the runtime pipeline: computes a structural fingerprint of the input — script class, segmentation, known-format hits (postcode regexes, state abbreviations) — in microseconds without ML. Used by downstream stages for locale detection and kind classification.",
+      "relatedTerms": ["staged pipeline", "locale gate", "kind classifier"]
+    },
+    {
+      "term": "locale gate",
+      "definition": "Stage 2 of the runtime pipeline: rule-based locale detection from the query shape's script and known-format signals. Returns a LocaleHint with the top candidate and alternatives, surfacing disagreement with an explicit --locale flag.",
+      "relatedTerms": ["staged pipeline", "query shape", "locale tag"]
+    },
+    {
+      "term": "kind classifier",
+      "definition": "Stage 2.5 of the runtime pipeline: categorizes the input into one of seven query kinds (structured_address, postcode_only, locality_only, intersection, po_box, landmark, vague) so the coordinator can route to the right parsing strategy.",
+      "relatedTerms": ["staged pipeline", "query shape", "locale gate"]
+    },
+    {
+      "term": "phrase grouper",
+      "definition": "Stage 2.7 of the runtime pipeline: proposes coherent input units (street phrase, locality phrase, postcode, etc.) with structural kind hypotheses. Decouples boundary discovery from type classification so the classifier answers 'what type?' not 'where?'",
+      "relatedTerms": ["staged pipeline", "kind classifier", "neural classifier"]
+    },
+    {
+      "term": "offset map",
+      "definition": "A data structure that tracks how each position in a normalized string maps back to the original raw input. Essential for reporting parse results (spans) in the user's original text, not the internally normalized form.",
+      "aliases": ["offset mapping"],
+      "relatedTerms": ["normalize", "span"]
+    },
+    {
+      "term": "span",
+      "definition": "A contiguous range of characters or tokens in the input string, tagged with an address component type (street, locality, postcode, etc.). Parsed addresses are represented as collections of spans, possibly nested in a tree.",
+      "relatedTerms": ["BIO tagging", "tree projection", "component tag"]
+    },
+    {
+      "term": "component tag",
+      "definition": "One of the 33 labels in Mailwoman's address schema — street, locality, region, postcode, house_number, unit, po_box, country, venue, intersection, and others. Each parsed span carries exactly one component tag.",
+      "aliases": ["ComponentTag", "label"],
+      "relatedTerms": ["span", "BIO tagging", "classification"]
+    },
+    {
+      "term": "tree projection",
+      "definition": "The process of converting a flat list of labeled spans into a nested tree representation — street contains street_prefix and street_suffix, locality contains region. Enables hierarchical address operations like containment checks.",
+      "relatedTerms": ["span", "decoder", "containment"]
+    },
+    {
+      "term": "joint decoding",
+      "definition": "A decode strategy where the neural model's proposals and rule-based solver's output are reconciled into a single parse tree. Formerly the default (Route A Phase II), now retired in favor of argmax after it was found to break the street+house_number geocode precondition.",
+      "aliases": ["joint reconcile"],
+      "relatedTerms": ["argmax decoding", "rule-based classifier", "decoder"]
+    },
+    {
+      "term": "confidence calibration",
+      "definition": "The process of adjusting model confidence scores so that '0.6' actually means the model is right about 60% of the time. Mailwoman uses isotonic regression (PAVA) to calibrate per-span confidences against held-out data. Applied opt-in via createCalibrator.",
+      "relatedTerms": ["decoder", "ECE"]
+    },
+    {
+      "term": "ECE",
+      "abbreviation": "Expected Calibration Error",
+      "definition": "A metric that measures how well a model's confidence scores align with its actual accuracy. Lower is better. Mailwoman's held-out ECE drops from 0.067 (raw) to 0.0035 (calibrated).",
+      "relatedTerms": ["confidence calibration"]
+    },
+    {
+      "term": "placetype",
+      "definition": "The Who's On First hierarchical classification of places: planet → continent → country → region → county → locality → neighbourhood. The resolver uses placetype to rank candidates — an exact locality match outranks a county-level match.",
+      "relatedTerms": ["WOF", "resolver", "locality resolution"]
+    },
+    {
+      "term": "record matching",
+      "definition": "The process of determining whether two database records refer to the same real-world entity. Mailwoman's matcher uses a geocode-first approach (match the resolved place, not the address string) with Fellegi-Sunter probabilistic scoring.",
+      "aliases": ["entity resolution", "deduplication", "record linkage"],
+      "relatedTerms": ["blocking", "Fellegi-Sunter", "clustering", "geocode-first"]
+    },
+    {
+      "term": "geocode-first",
+      "definition": "The matcher's core design principle: resolve addresses to geographic coordinates first, then compare the resolved places — not the raw address strings. Two records at the same coordinates match even if one says '123 Main St' and the other says '123 MAIN STREET.'",
+      "relatedTerms": ["record matching", "blocking", "geocoding"]
+    },
+    {
+      "term": "blocking",
+      "definition": "The first stage of entity resolution: generate candidate record pairs using cheap, high-recall keys (geo cell, canonical address, phone) instead of comparing every record to every other (O(n²)). The matcher only scores pairs that survive blocking.",
+      "relatedTerms": ["record matching", "H3", "canonical key"]
+    },
+    {
+      "term": "Fellegi-Sunter",
+      "definition": "A probabilistic record linkage model that computes match probability from agreement-level log-likelihood ratios: log₂(m/u) where m is the probability of agreement given a true match and u is the probability of agreement by chance. Mailwoman learns m and u label-free via expectation-maximization.",
+      "aliases": ["FS model", "Fellegi-Sunter model"],
+      "relatedTerms": ["record matching", "scoring", "EM estimation"]
+    },
+    {
+      "term": "clustering",
+      "definition": "The final stage of entity resolution: resolve non-transitive pairwise match decisions (A↔B, B↔C, but not A↔C) into canonical entities via union-find with path compression. Each cluster of records becomes one resolved entity.",
+      "relatedTerms": ["record matching", "blocking", "scoring"]
+    },
+    {
+      "term": "expectation-maximization",
+      "definition": "An iterative algorithm that estimates model parameters when some variables are unobserved. In Mailwoman's matcher, EM learns the Fellegi-Sunter m and u parameters from unlabeled data — no training labels needed.",
+      "aliases": ["EM", "EM estimation"],
+      "relatedTerms": ["Fellegi-Sunter", "record matching"]
+    },
+    {
+      "term": "GBT",
+      "abbreviation": "Gradient Boosted Trees",
+      "definition": "A non-linear machine learning model that combines many weak decision trees into a strong predictor. Mailwoman uses a GBT as an optional learned scorer for single-dataset dedup, improving F1 by 5–7 percentage points over the Fellegi-Sunter baseline.",
+      "aliases": ["GBM", "gradient boosting"],
+      "relatedTerms": ["record matching", "scoring", "Fellegi-Sunter"]
+    },
+    {
+      "term": "H3",
+      "definition": "Uber's hexagonal hierarchical geospatial indexing system. Mailwoman uses H3 cells at resolution 9 (~0.03 km²) for geo-first blocking in the matcher and for stable address primary keys in @mailwoman/address-id.",
+      "aliases": ["H3 cell"],
+      "relatedTerms": ["blocking", "address ID", "spatial"]
+    },
+    {
+      "term": "address ID",
+      "definition": "A stable, parseable primary key for an address in the format <state>.<H3-cell>.<hash>. Content-addressed (derives from the data), jitter-stable (absorbs small geocode differences), and partitionable by state prefix.",
+      "relatedTerms": ["H3", "canonical key", "record matching"]
+    },
+    {
+      "term": "canonical key",
+      "definition": "A deterministic, normalized string representation of an address produced by @mailwoman/formatter. Lowercase, abbreviation-expanded, punctuation-stripped — so '123 Main St' and '123 MAIN STREET' produce the same key. Used for blocking in the matcher.",
+      "aliases": ["match key"],
+      "relatedTerms": ["formatter", "blocking", "address ID"]
+    },
+    {
+      "term": "situs data",
+      "definition": "A dataset of exact address-point coordinates (rooftop-level). Mailwoman's geocoder uses a national situs layer (124.9M US points built from state address-point sources) as the highest-precision tier of the geocode cascade.",
+      "aliases": ["address points", "rooftop data"],
+      "relatedTerms": ["geocoding", "geocode cascade"]
+    },
+    {
+      "term": "interpolation",
+      "definition": "A geocoding technique that estimates a coordinate along a street segment based on the house number range. Used as the middle tier of Mailwoman's geocode cascade when exact address-point data is unavailable.",
+      "relatedTerms": ["geocoding", "situs data", "geocode cascade"]
+    },
+    {
+      "term": "geocode cascade",
+      "definition": "Mailwoman's multi-tier coordinate resolution strategy: first try exact address-point match, then street interpolation, then locality centroid. Each tier is more widely available but progressively coarser.",
+      "relatedTerms": ["geocoding", "situs data", "interpolation", "resolver"]
+    },
+    {
+      "term": "parity campaign",
+      "definition": "The systematic effort to close the gap between Mailwoman's neural parser and the legacy rule-based v0 parser on every address component tag. Tracked through per-tag parity tables and gated by honest-eval probes.",
+      "relatedTerms": ["honest eval", "boundary instability", "negative space"]
+    },
+    {
+      "term": "honest eval",
+      "definition": "Mailwoman's evaluation discipline: grade the assembled pipeline output (resolved coordinate) against real-world ground truth, not raw neural label-F1 in isolation. A model can win on labels while resolving to the wrong city.",
+      "relatedTerms": ["parity campaign", "coord metric", "eval discipline"]
+    },
+    {
+      "term": "coord metric",
+      "definition": "The primary evaluation metric: distance from the resolved coordinate to the true address point. Measured at percentiles (p50, p90) and as 'within X meters.' Prevents the label-F1 trap where a model scores higher on token labels but geocodes worse.",
+      "aliases": ["coordinate metric", "assembled coordinate"],
+      "relatedTerms": ["honest eval", "geocoding", "parity campaign"]
+    },
+    {
+      "term": "boundary instability",
+      "definition": "A class of parser errors where the model wobbles on where one address component ends and the next begins — a street suffix swallowed into the street name, a French house number that trails instead of leads. Mailwoman's #1 weakness as of v1.5.0.",
+      "relatedTerms": ["parity campaign", "boundary stress shard", "phrase grouper"]
+    },
+    {
+      "term": "negative space",
+      "definition": "Address formats the neural model was never trained on because they're absent from the base training corpus — PO boxes, CEDEX, intersections, units. The parity campaign targets negative space through synthetic shards and corpus augmentation.",
+      "relatedTerms": ["parity campaign", "corpus", "synthetic shard"]
+    },
+    {
+      "term": "corpus",
+      "definition": "The BIO-labeled training data used to train Mailwoman's neural classifier. Assembled from real sources (OpenAddresses, National Address Database) and synthetic shards (boundary stress, order variants, negative space). Managed by @mailwoman/corpus.",
+      "relatedTerms": ["BIO tagging", "synthetic shard", "expand golden"]
+    },
+    {
+      "term": "synthetic shard",
+      "definition": "A machine-generated training dataset that augments the real-address corpus with targeted variations — reversed word order, missing punctuation, all-caps, boundary-stress patterns. Teaches the model to handle edge cases not present in the reference data.",
+      "relatedTerms": ["corpus", "parity campaign", "boundary instability"]
+    },
+    {
+      "term": "Modal",
+      "definition": "A cloud GPU platform (modal.com) where Mailwoman trains its neural models on NVIDIA A100 GPUs. Training runs are launched via scripts/modal/train_remote.py and typically complete in ~1 hour.",
+      "relatedTerms": ["neural classifier", "model weights", "training"]
+    },
+    {
+      "term": "rule-based classifier",
+      "definition": "Mailwoman's legacy v0 parser — a library of deterministic token classifiers (house number, street suffix, postcode, place name, etc.) composed by priority. Now primarily used for corpus labeling, fallback classification, and arbitration diagnostics.",
+      "aliases": ["v0 parser", "rules engine"],
+      "relatedTerms": ["neural classifier", "arbitration", "parity campaign"]
+    },
+    {
+      "term": "arbitration",
+      "definition": "A pipeline stage that compares rule-based (v0) and neural classifier output, resolving disagreements via a policy registry. Built and merged but not promoted — the coordinate gate showed label-F1 gains came at the cost of worse geocoding.",
+      "relatedTerms": ["rule-based classifier", "neural classifier", "joint decoding"]
+    }
+  ]
+}
