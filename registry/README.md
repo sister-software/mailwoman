@@ -39,7 +39,7 @@ CSV / SQLite → ingestRows → SourceRecord[] → resolveEntities → ResolvedE
 
 ```ts
 // Ingest — parse CSV / map columns → normalized records
-import { ingestRows, parseCsv, inferMapping } from "@mailwoman/registry";
+import { ingestRows, parseCsv, inferMapping } from "@mailwoman/registry"
 // {
 //   ingestRows(rows, opts): SourceRecord[]
 //   parseCsv(csvText): string[][]
@@ -47,15 +47,15 @@ import { ingestRows, parseCsv, inferMapping } from "@mailwoman/registry";
 // }
 
 // Resolve — run the full matcher pipeline
-import { resolveEntities } from "@mailwoman/registry";
+import { resolveEntities } from "@mailwoman/registry"
 // resolveEntities(records, config): ResolvedEntity[]
 // Config: { geocodeAddress?, scorer?, blockingKeys?, threshold?, discriminators? }
 
 // Export — GeoJSON, MapLibre HTML, reconciliation reports
-import { toGeoJSON, toMapHTML, reconcile } from "@mailwoman/registry";
+import { toGeoJSON, toMapHTML, reconcile } from "@mailwoman/registry"
 
 // Learned scorer — pre-trained GBT for single-dataset dedup
-import { dedupGbtEnUs } from "@mailwoman/registry";
+import { dedupGbtEnUs } from "@mailwoman/registry"
 ```
 
 ## Default configuration

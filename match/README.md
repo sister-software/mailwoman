@@ -2,22 +2,22 @@
 
 **The geocode-first record matcher** — a three-stage entity resolution pipeline:
 **block → score → cluster**. Resolves whether two records refer to the same
-real-world entity by matching the resolved *place* (not the address string),
+real-world entity by matching the resolved _place_ (not the address string),
 then comparing names and other fields.
 
 ```ts
-import { block, scorePair, cluster } from "@mailwoman/match";
+import { block, scorePair, cluster } from "@mailwoman/match"
 
 // Stage 1: Block — geo-first candidate generation
 const pairs = block(records, {
-  keys: [defaultBlockingKeys.geoCell, defaultBlockingKeys.canonical],
-});
+	keys: [defaultBlockingKeys.geoCell, defaultBlockingKeys.canonical],
+})
 
 // Stage 2: Score — Fellegi-Sunter probabilistic match
-const { probability } = scorePair(recordA, recordB, { model });
+const { probability } = scorePair(recordA, recordB, { model })
 
 // Stage 3: Cluster — connected-components resolution
-const entities = cluster(records, links, { threshold: 0.5 });
+const entities = cluster(records, links, { threshold: 0.5 })
 ```
 
 ## The three-stage pipeline

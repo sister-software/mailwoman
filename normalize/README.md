@@ -8,22 +8,22 @@ so downstream stages can map normalized-string spans back to raw-string characte
 offsets.
 
 ```ts
-import { normalize } from "@mailwoman/normalize";
+import { normalize } from "@mailwoman/normalize"
 
-const result = normalize("123  Main   St.");
+const result = normalize("123  Main   St.")
 // result.normalized → "123 Main St."
 // result.offsetMap  → maps each normalized char back to raw
 ```
 
 ## What it does
 
-| Transform | Purpose |
-|-----------|---------|
-| **NFC normalization** | Unicode canonical composition |
+| Transform                     | Purpose                                                                     |
+| ----------------------------- | --------------------------------------------------------------------------- |
+| **NFC normalization**         | Unicode canonical composition                                               |
 | **Punctuation normalization** | Smart-quotes → straight, fullwidth → ASCII, elision/apostrophe preservation |
-| **Whitespace collapse** | Multi-space, tab, non-breaking → single space; leading/trailing trim |
-| **Abbreviation expansion** | Opt-in — `"St."` → `"Street"`, `"Ave"` → `"Avenue"` etc. |
-| **CJK normalization** | CJK-specific whitespace and punctuation handling |
+| **Whitespace collapse**       | Multi-space, tab, non-breaking → single space; leading/trailing trim        |
+| **Abbreviation expansion**    | Opt-in — `"St."` → `"Street"`, `"Ave"` → `"Avenue"` etc.                    |
+| **CJK normalization**         | CJK-specific whitespace and punctuation handling                            |
 
 ## API
 

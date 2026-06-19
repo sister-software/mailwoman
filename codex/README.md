@@ -12,18 +12,18 @@ The parser, the resolver, and the synthesis layer all reach for the same tables
 instead of each carrying their own copy.
 
 ```ts
-import { us, fr, gb, de } from "@mailwoman/codex";
+import { us, fr, gb, de } from "@mailwoman/codex"
 
 // USPS street suffix lookup
-us.lookupStreetSuffix("PKWY"); // → { primary: "Parkway", standard: "Parkway", ... }
-us.lookupStreetSuffix("PKY");  // → { primary: "Parkway", standard: "Parkway", ... }
+us.lookupStreetSuffix("PKWY") // → { primary: "Parkway", standard: "Parkway", ... }
+us.lookupStreetSuffix("PKY") // → { primary: "Parkway", standard: "Parkway", ... }
 
 // French postcode pattern
-fr.postcodePattern; // → /^\d{5}$/
+fr.postcodePattern // → /^\d{5}$/
 
 // US ZIP code branded type
-import { us } from "@mailwoman/codex";
-const zip: us.ZipCode = "94043"; // branded, not just string
+import { us } from "@mailwoman/codex"
+const zip: us.ZipCode = "94043" // branded, not just string
 ```
 
 ## Supported address systems
@@ -31,31 +31,31 @@ const zip: us.ZipCode = "94043"; // branded, not just string
 Each system is exposed as a namespace and as a subpath import:
 
 ```ts
-import { us } from "@mailwoman/codex";
-import { lookupStreetSuffix } from "@mailwoman/codex/us";
+import { us } from "@mailwoman/codex"
+import { lookupStreetSuffix } from "@mailwoman/codex/us"
 ```
 
-| System | Scope |
-|--------|-------|
+| System   | Scope                                                                                |
+| -------- | ------------------------------------------------------------------------------------ |
 | **`us`** | USPS street suffixes, directional abbreviations, ZIP code types, state abbreviations |
-| **`fr`** | La Poste postcode format, CEDEX conventions, département codes |
-| **`gb`** | Royal Mail postcode format, post town conventions |
-| **`de`** | Deutsche Post postcode format, Bundesland abbreviations |
-| **`ca`** | Canada Post postcode format, province abbreviations |
-| **`au`** | Australia Post postcode format, state abbreviations |
+| **`fr`** | La Poste postcode format, CEDEX conventions, département codes                       |
+| **`gb`** | Royal Mail postcode format, post town conventions                                    |
+| **`de`** | Deutsche Post postcode format, Bundesland abbreviations                              |
+| **`ca`** | Canada Post postcode format, province abbreviations                                  |
+| **`au`** | Australia Post postcode format, state abbreviations                                  |
 
 ## Cross-system utilities
 
 ```ts
-import { candidateSystemsForPostcode } from "@mailwoman/codex";
+import { candidateSystemsForPostcode } from "@mailwoman/codex"
 
 // Which systems could "94043" belong to?
-candidateSystemsForPostcode("94043"); // → ["us"]
-candidateSystemsForPostcode("75008"); // → ["fr"]
-candidateSystemsForPostcode("10115"); // → ["de"]
+candidateSystemsForPostcode("94043") // → ["us"]
+candidateSystemsForPostcode("75008") // → ["fr"]
+candidateSystemsForPostcode("10115") // → ["de"]
 
 // Address system conventions (forbidden tags, expected shapes, etc.)
-import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "@mailwoman/codex";
+import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "@mailwoman/codex"
 ```
 
 ## Design

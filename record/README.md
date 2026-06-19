@@ -31,24 +31,21 @@ canonicalizeOrganizationName("Baylor Univ. Med. Ctr.");
 
 ```ts
 // Address record (the spine of the record system)
-import { PostalAddress, createPostalAddress } from "@mailwoman/record/address";
+import { PostalAddress, createPostalAddress } from "@mailwoman/record/address"
 
 // Person name parsing → structured components
-import { parsePersonName, type ParsedPersonName } from "@mailwoman/record/name";
+import { parsePersonName, type ParsedPersonName } from "@mailwoman/record/name"
 
 // Organization name canonicalization → matchable key
-import {
-  canonicalizeOrganizationName,
-  type CanonicalizeOrgOpts
-} from "@mailwoman/record/organization";
+import { canonicalizeOrganizationName, type CanonicalizeOrgOpts } from "@mailwoman/record/organization"
 ```
 
 ## What it normalizes
 
-| Field | Normalizer | Purpose |
-|-------|-----------|---------|
-| **Address** | `createPostalAddress` | Parse components + formatter key + geocode → canonical record |
-| **Person name** | `parsePersonName` | "Jane L. Smith" → `{given, middleInitial, surname}` |
+| Field            | Normalizer                     | Purpose                                                       |
+| ---------------- | ------------------------------ | ------------------------------------------------------------- |
+| **Address**      | `createPostalAddress`          | Parse components + formatter key + geocode → canonical record |
+| **Person name**  | `parsePersonName`              | "Jane L. Smith" → `{given, middleInitial, surname}`           |
 | **Organization** | `canonicalizeOrganizationName` | "Baylor Univ. Med. Ctr." → "baylor university medical center" |
 
 ## Design

@@ -9,9 +9,9 @@ list of candidates so the coordinator can surface disagreement when the
 caller's explicit `--locale` hint differs from what the input shape implies.
 
 ```ts
-import { detectLocale } from "@mailwoman/locale-gate";
+import { detectLocale } from "@mailwoman/locale-gate"
 
-const hint = detectLocale(queryShape, {});
+const hint = detectLocale(queryShape, {})
 // hint.primary → "en-US"
 // hint.alternatives → [{tag: "en-GB", confidence: 0.3}, ...]
 // hint.detectorDisagreement → false

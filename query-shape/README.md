@@ -8,9 +8,9 @@ any ML or place-name dictionaries. The `QueryShape` result informs later
 pipeline stages (locale detection, kind classification, phrase grouping).
 
 ```ts
-import { computeQueryShape } from "@mailwoman/query-shape";
+import { computeQueryShape } from "@mailwoman/query-shape"
 
-const shape = computeQueryShape("1600 Amphitheatre Parkway, Mountain View, CA 94043");
+const shape = computeQueryShape("1600 Amphitheatre Parkway, Mountain View, CA 94043")
 // shape.script → "Latin"
 // shape.hasDigits → true
 // shape.segments → [{text: "1600 Amphitheatre Parkway", ...}, {text: "Mountain View", ...}, ...]
@@ -19,13 +19,13 @@ const shape = computeQueryShape("1600 Amphitheatre Parkway, Mountain View, CA 94
 
 ## What it computes
 
-| Signal | Purpose |
-|--------|---------|
-| **Character class** | Per-codepoint and per-token script classification (Latin, CJK, Cyrillic, etc.) |
-| **Segmentation** | Split into punctuation-bounded segments (comma, newline, tab) |
-| **Known-format detection** | Regex hits for postcode patterns, state abbreviations, PO box formats |
-| **Region abbreviations** | US/CA/AU state/province abbreviation detection |
-| **Whitespace pattern** | Input shape (`structured`, `single_line`, `free_text`) |
+| Signal                     | Purpose                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------ |
+| **Character class**        | Per-codepoint and per-token script classification (Latin, CJK, Cyrillic, etc.) |
+| **Segmentation**           | Split into punctuation-bounded segments (comma, newline, tab)                  |
+| **Known-format detection** | Regex hits for postcode patterns, state abbreviations, PO box formats          |
+| **Region abbreviations**   | US/CA/AU state/province abbreviation detection                                 |
+| **Whitespace pattern**     | Input shape (`structured`, `single_line`, `free_text`)                         |
 
 ## API
 

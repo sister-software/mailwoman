@@ -8,24 +8,24 @@ alongside the top pick so the coordinator can fall back when the winning kind
 isn't actionable.
 
 ```ts
-import { classifyKind } from "@mailwoman/kind-classifier";
+import { classifyKind } from "@mailwoman/kind-classifier"
 
-const result = await classifyKind(queryShape, localeHint);
+const result = await classifyKind(queryShape, localeHint)
 // result.kind → "structured_address"
 // result.alternatives → [{kind: "intersection", confidence: 0.2}, ...]
 ```
 
 ## The seven query kinds
 
-| Kind | Example |
-|------|---------|
+| Kind                 | Example                                             |
+| -------------------- | --------------------------------------------------- |
 | `structured_address` | `"1600 Amphitheatre Pkwy, Mountain View, CA 94043"` |
-| `postcode_only` | `"94043"` or `"SW1A 1AA"` |
-| `locality_only` | `"Mountain View"` or `"San Francisco"` |
-| `intersection` | `"Market St & Van Ness Ave"` |
-| `po_box` | `"PO Box 12345"` |
-| `landmark` | `"Eiffel Tower"` |
-| `vague` | `"somewhere near the river"` |
+| `postcode_only`      | `"94043"` or `"SW1A 1AA"`                           |
+| `locality_only`      | `"Mountain View"` or `"San Francisco"`              |
+| `intersection`       | `"Market St & Van Ness Ave"`                        |
+| `po_box`             | `"PO Box 12345"`                                    |
+| `landmark`           | `"Eiffel Tower"`                                    |
+| `vague`              | `"somewhere near the river"`                        |
 
 ## API
 

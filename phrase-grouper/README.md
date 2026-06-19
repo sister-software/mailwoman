@@ -8,9 +8,9 @@ these proposals so it answers the simpler "what type is this proposed span?"
 rather than jointly discovering boundaries and types.
 
 ```ts
-import { groupPhrases } from "@mailwoman/phrase-grouper";
+import { groupPhrases } from "@mailwoman/phrase-grouper"
 
-const groups = groupPhrases(normalizedInput, queryShape, localeHint);
+const groups = groupPhrases(normalizedInput, queryShape, localeHint)
 // groups → [
 //   {text: "1600 Amphitheatre Parkway", kind: "street_phrase", confidence: 0.95},
 //   {text: "Mountain View", kind: "locality_phrase", confidence: 0.8},
@@ -21,15 +21,15 @@ const groups = groupPhrases(normalizedInput, queryShape, localeHint);
 
 ## What it proposes
 
-| Phrase kind | Triggers |
-|-------------|----------|
-| `street_phrase` | Number + capitalized words, hyphenated street names |
-| `locality_phrase` | Capitalized word sequence after comma, near region/postcode |
-| `venue_phrase` | Leading capitalized word sequence before a street phrase |
-| `postcode` | Known postcode format (ZIP5, UK outward, etc.) |
-| `region_abbreviation` | US state / CA province / AU state abbreviations |
-| `numeric` | Standalone number (potential house number) |
-| `hyphenated_compound` | Hyphenated pairs (`Jean-Jacques`, `Winston-Salem`) |
+| Phrase kind           | Triggers                                                    |
+| --------------------- | ----------------------------------------------------------- |
+| `street_phrase`       | Number + capitalized words, hyphenated street names         |
+| `locality_phrase`     | Capitalized word sequence after comma, near region/postcode |
+| `venue_phrase`        | Leading capitalized word sequence before a street phrase    |
+| `postcode`            | Known postcode format (ZIP5, UK outward, etc.)              |
+| `region_abbreviation` | US state / CA province / AU state abbreviations             |
+| `numeric`             | Standalone number (potential house number)                  |
+| `hyphenated_compound` | Hyphenated pairs (`Jean-Jacques`, `Winston-Salem`)          |
 
 ## API
 
@@ -56,7 +56,7 @@ kind-classifier → phrase-grouper → classifier (neural/rule-based) → ...
 ## Design
 
 - **Boundary discovery, not classification.** The phrase grouper answers "where
-  are the coherent units?" — the classifier answers "what *type* is each unit?"
+  are the coherent units?" — the classifier answers "what _type_ is each unit?"
   This separation makes both problems easier.
 - **Bitter-lesson-safe:** uses only universal structural cues (proximity,
   punctuation, capitalization, hyphenation, format-shape repetition). Never

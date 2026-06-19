@@ -13,57 +13,57 @@ production parsing, but they remain valuable for:
 - **Bootstrapping and corpus labeling**
 - **Fallback classification** for token types the model struggles with
 - **Arbitration** — comparing rule output against neural output to detect regressions
-- **Diagnostic tooling** — understanding *why* a token was classified a certain way
+- **Diagnostic tooling** — understanding _why_ a token was classified a certain way
 
 ```ts
-import { CompositeClassifier } from "@mailwoman/classifiers";
+import { CompositeClassifier } from "@mailwoman/classifiers"
 
-const classifier = new CompositeClassifier();
-const classification = classifier.classify(tokens);
+const classifier = new CompositeClassifier()
+const classification = classifier.classify(tokens)
 // tokens[0].classification → { house_number: "1600" }
 // tokens[1].classification → { street: "Amphitheatre" }
 ```
 
 ## Included classifiers
 
-| Classifier | Detects |
-|------------|---------|
-| `HouseNumberClassifier` | Numeric house/building numbers |
-| `PostcodeClassifier` | Postcode/ZIP patterns per locale |
-| `RoadTypeClassifier` | Street suffixes (St, Ave, Rd, Blvd, etc.) |
-| `DirectionalClassifier` | Cardinal directions (N, S, NE, Southwest, etc.) |
-| `PlaceClassifier` | Locality/region/country names (via WOF dictionary) |
-| `IntersectionClassifier` | Intersection connectors (&, at, and, @) |
-| `CompoundStreetClassifier` | Multi-word street names |
-| `CompoundUnitDesignatorClassifier` | Unit designators (Apt, Ste, Unit, #, etc.) |
-| `OrdinalClassifier` | Ordinal numbers (1st, 2nd, 3rd floor) |
-| `LevelClassifier` | Floor/level numbers |
-| `AlphaNumericClassifier` | Alphanumeric identifiers |
-| `StopWordClassifier` | Filler/stop words |
-| `PersonClassifier` | Person name components |
-| `GivenNameClassifier` | Given/first names |
-| `MiddleInitialClassifier` | Middle initials |
-| `PersonalTitleClassifier` | Titles (Mr, Mrs, Dr, etc.) |
-| `PersonalSuffixClassifier` | Name suffixes (Jr, Sr, III, etc.) |
-| `ChainClassifier` | Chain/business name patterns |
-| `CentralEuropeanStreetNameClassifier` | Central European street name conventions |
-| `AdjacencyClassifier` | Adjacency-based disambiguation |
+| Classifier                            | Detects                                            |
+| ------------------------------------- | -------------------------------------------------- |
+| `HouseNumberClassifier`               | Numeric house/building numbers                     |
+| `PostcodeClassifier`                  | Postcode/ZIP patterns per locale                   |
+| `RoadTypeClassifier`                  | Street suffixes (St, Ave, Rd, Blvd, etc.)          |
+| `DirectionalClassifier`               | Cardinal directions (N, S, NE, Southwest, etc.)    |
+| `PlaceClassifier`                     | Locality/region/country names (via WOF dictionary) |
+| `IntersectionClassifier`              | Intersection connectors (&, at, and, @)            |
+| `CompoundStreetClassifier`            | Multi-word street names                            |
+| `CompoundUnitDesignatorClassifier`    | Unit designators (Apt, Ste, Unit, #, etc.)         |
+| `OrdinalClassifier`                   | Ordinal numbers (1st, 2nd, 3rd floor)              |
+| `LevelClassifier`                     | Floor/level numbers                                |
+| `AlphaNumericClassifier`              | Alphanumeric identifiers                           |
+| `StopWordClassifier`                  | Filler/stop words                                  |
+| `PersonClassifier`                    | Person name components                             |
+| `GivenNameClassifier`                 | Given/first names                                  |
+| `MiddleInitialClassifier`             | Middle initials                                    |
+| `PersonalTitleClassifier`             | Titles (Mr, Mrs, Dr, etc.)                         |
+| `PersonalSuffixClassifier`            | Name suffixes (Jr, Sr, III, etc.)                  |
+| `ChainClassifier`                     | Chain/business name patterns                       |
+| `CentralEuropeanStreetNameClassifier` | Central European street name conventions           |
+| `AdjacencyClassifier`                 | Adjacency-based disambiguation                     |
 
 ## API
 
 ```ts
 // Compose all classifiers with default priority
-import { CompositeClassifier } from "@mailwoman/classifiers";
-const composite = new CompositeClassifier();
+import { CompositeClassifier } from "@mailwoman/classifiers"
+const composite = new CompositeClassifier()
 
 // Or pick specific classifiers
-import { HouseNumberClassifier, PostcodeClassifier } from "@mailwoman/classifiers";
+import { HouseNumberClassifier, PostcodeClassifier } from "@mailwoman/classifiers"
 
 // Base class for custom classifiers
-import { Classifier } from "@mailwoman/classifiers";
+import { Classifier } from "@mailwoman/classifiers"
 
 // Type adapter for pipeline integration
-import { classifierAdapter } from "@mailwoman/classifiers";
+import { classifierAdapter } from "@mailwoman/classifiers"
 ```
 
 ## Related

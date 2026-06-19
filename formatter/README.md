@@ -5,23 +5,23 @@ idiomatic, locale-aware address string, plus produce a canonical, normalized
 match key for record linkage.
 
 ```ts
-import { formatAddress, canonicalKey } from "@mailwoman/formatter";
+import { formatAddress, canonicalKey } from "@mailwoman/formatter"
 
 const components = {
-  house_number: "1600",
-  street: "Amphitheatre Parkway",
-  locality: "Mountain View",
-  region: "CA",
-  postcode: "94043",
-  country: "US",
-};
+	house_number: "1600",
+	street: "Amphitheatre Parkway",
+	locality: "Mountain View",
+	region: "CA",
+	postcode: "94043",
+	country: "US",
+}
 
 // Display format
-formatAddress(components, { locale: "en-US" });
+formatAddress(components, { locale: "en-US" })
 // → "1600 Amphitheatre Parkway, Mountain View, CA 94043"
 
 // Canonical match key (for blocking / dedup)
-canonicalKey(components);
+canonicalKey(components)
 // → "1600 amphitheatre pkwy mountain view ca 94043"
 ```
 
@@ -46,10 +46,10 @@ canonicalKey(components: ClassificationMap): string
 
 ## What it does
 
-| Function | Purpose |
-|----------|---------|
-| **`formatAddress`** | Render parsed components into a locale-appropriate address string using `@fragaria/address-formatter` templates. |
-| **`canonicalKey`** | Produce a lowercase, abbreviation-expanded, punctuation-stripped key that two records for the same place will match on, even if their original strings differ (`"123 Main St"` and `"123 MAIN STREET"` → same key). |
+| Function            | Purpose                                                                                                                                                                                                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`formatAddress`** | Render parsed components into a locale-appropriate address string using `@fragaria/address-formatter` templates.                                                                                                    |
+| **`canonicalKey`**  | Produce a lowercase, abbreviation-expanded, punctuation-stripped key that two records for the same place will match on, even if their original strings differ (`"123 Main St"` and `"123 MAIN STREET"` → same key). |
 
 ## Design
 

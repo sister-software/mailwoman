@@ -10,38 +10,38 @@ the data that trains `@mailwoman/neural-weights-*`.
 ```ts
 // The corpus pipeline is primarily build-time CLI tooling.
 // Key entry points:
-import { expandGolden } from "@mailwoman/corpus";       // Expand reference addresses
-import { synthesizeShard } from "@mailwoman/corpus";    // Generate synthetic training shards
-import { alignRow } from "@mailwoman/corpus";           // Align raw address → BIO tokens
-import { validateCorpus } from "@mailwoman/corpus";     // Validate corpus integrity
+import { expandGolden } from "@mailwoman/corpus" // Expand reference addresses
+import { synthesizeShard } from "@mailwoman/corpus" // Generate synthetic training shards
+import { alignRow } from "@mailwoman/corpus" // Align raw address → BIO tokens
+import { validateCorpus } from "@mailwoman/corpus" // Validate corpus integrity
 ```
 
 ## What it produces
 
 The corpus pipeline assembles training data from multiple sources:
 
-| Source | Description |
-|--------|-------------|
-| **OpenAddresses** | Real government address point data (US, FR, DE, …) |
-| **NAD** | National Address Database (US-specific) |
-| **libpostal** | Multilingual street/place name dictionaries |
+| Source               | Description                                                              |
+| -------------------- | ------------------------------------------------------------------------ |
+| **OpenAddresses**    | Real government address point data (US, FR, DE, …)                       |
+| **NAD**              | National Address Database (US-specific)                                  |
+| **libpostal**        | Multilingual street/place name dictionaries                              |
 | **Synthetic shards** | Generated address variations (boundary stress, order variants, all-caps) |
-| **Overture Maps** | Address theme ingestion (alpha) |
+| **Overture Maps**    | Address theme ingestion (alpha)                                          |
 
 Output format: TSV rows with `raw<TAB>BIO_labels` consumed by the Python
 training pipeline (`corpus-python/`).
 
 ## Key modules
 
-| Module | Purpose |
-|--------|---------|
-| **`expand-golden.ts`** | Expand reference addresses into training rows with alignment |
-| **`align.ts`** | Tokenize raw address → BIO label sequence |
-| **`validate.ts`** | Validate corpus integrity, label coverage, shard balance |
-| **`synthesize-*.ts`** | Synthetic shard generators (boundary stress, order variants, etc.) |
-| **`ingest/`** | Overture Maps + NAD ingestion |
-| **`shard-registry.ts`** | Shard metadata and composition |
-| **`stats.ts`** | Per-shard and per-tag statistics |
+| Module                  | Purpose                                                            |
+| ----------------------- | ------------------------------------------------------------------ |
+| **`expand-golden.ts`**  | Expand reference addresses into training rows with alignment       |
+| **`align.ts`**          | Tokenize raw address → BIO label sequence                          |
+| **`validate.ts`**       | Validate corpus integrity, label coverage, shard balance           |
+| **`synthesize-*.ts`**   | Synthetic shard generators (boundary stress, order variants, etc.) |
+| **`ingest/`**           | Overture Maps + NAD ingestion                                      |
+| **`shard-registry.ts`** | Shard metadata and composition                                     |
+| **`stats.ts`**          | Per-shard and per-tag statistics                                   |
 
 ## Build-time tooling
 

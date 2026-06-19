@@ -3,18 +3,18 @@
 **Stable, parseable address primary keys** — the deterministic, exact-match
 complement to the fuzzy matcher.
 
-Where `@mailwoman/match` decides whether two messy records are *probably* the
+Where `@mailwoman/match` decides whether two messy records are _probably_ the
 same entity, `@mailwoman/address-id` produces a content-addressed key you can
 `GROUP BY` or `JOIN ON` without running the matcher at all — for the common
 "same canonical address" case.
 
 ```ts
-import { createPostalAddressID } from "@mailwoman/address-id";
+import { createPostalAddressID } from "@mailwoman/address-id"
 
 const id = createPostalAddressID({
-  components: { street: "123 Main St", locality: "Austin", region: "TX", postcode: "78701" },
-  coordinate: { lat: 30.2672, lon: -97.7431 },
-});
+	components: { street: "123 Main St", locality: "Austin", region: "TX", postcode: "78701" },
+	coordinate: { lat: 30.2672, lon: -97.7431 },
+})
 // → "tx.882830829dfffff.abc123def456"
 ```
 
@@ -24,11 +24,11 @@ const id = createPostalAddressID({
 <state>.<H3-cell>.<content-hash>
 ```
 
-| Segment | Purpose |
-|---------|---------|
-| **State prefix** | Coarse region (`tx`, `ca`, `ny`, …) from a supplied state or plucked from the ZIP via `@mailwoman/codex`; `xx` when unknown. Makes the key region-sortable. |
-| **H3 cell** | Jitter-stable locality token from the resolved coordinate (`h3-js` `latLngToCell` at resolution 9). Coarse on purpose: two geocodes of the same place a few metres apart land in the same cell. |
-| **Content hash** | Hash of the address canonicalized by `@mailwoman/normalize`, so `123 Main St` and `123 MAIN STREET` hash identically. This is the identity; the cell + state localize and partition it. |
+| Segment          | Purpose                                                                                                                                                                                         |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **State prefix** | Coarse region (`tx`, `ca`, `ny`, …) from a supplied state or plucked from the ZIP via `@mailwoman/codex`; `xx` when unknown. Makes the key region-sortable.                                     |
+| **H3 cell**      | Jitter-stable locality token from the resolved coordinate (`h3-js` `latLngToCell` at resolution 9). Coarse on purpose: two geocodes of the same place a few metres apart land in the same cell. |
+| **Content hash** | Hash of the address canonicalized by `@mailwoman/normalize`, so `123 Main St` and `123 MAIN STREET` hash identically. This is the identity; the cell + state localize and partition it.         |
 
 ## API
 

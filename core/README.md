@@ -6,30 +6,24 @@ Ships ~9 MB of provenance-tracked reference dictionaries (libpostal, Who's On
 First, chromium-i18n) consumed by the resolver and classifiers.
 
 ```ts
-import {
-  createRuntimePipeline,
-  AddressParser,
-  ComponentTag,
-  Classification,
-  Span,
-} from "@mailwoman/core";
+import { createRuntimePipeline, AddressParser, ComponentTag, Classification, Span } from "@mailwoman/core"
 
-const pipeline = createRuntimePipeline({ locale: "en-US" });
-const result = pipeline.parse("1600 Amphitheatre Parkway, Mountain View, CA 94043");
+const pipeline = createRuntimePipeline({ locale: "en-US" })
+const result = pipeline.parse("1600 Amphitheatre Parkway, Mountain View, CA 94043")
 ```
 
 ## What's inside
 
-| Module | Purpose |
-|--------|---------|
-| **`types/`** | Core type system: `ComponentTag`, `Span`, `Classification`, `ClassificationMap`, `LocaleTag` |
-| **`tokenization/`** | Tokenizer primitives, whitespace/punctuation rules, token classification |
-| **`classification/`** | `Classification` data structure, `ClassificationMap`, span overlap resolution |
-| **`decoder/`** | Span proposal → tree projection, BIO decoding, reconcile/merge strategies, confidence calibration |
-| **`pipeline/`** | `createRuntimePipeline` — the staged pipeline coordinator that wires normalize → query-shape → locale-gate → ... → classifier → decoder |
-| **`solver/`** | Rule-based solver (the v0 rules engine), `Solution`, `Solver` |
-| **`parser/`** | `AddressParser` — high-level parse entry point (consumed by `mailwoman` CLI) |
-| **`resources/`** | ~9 MB of shipped reference data: libpostal dictionaries, WOF place data, chromium-i18n address formats |
+| Module                | Purpose                                                                                                                                 |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **`types/`**          | Core type system: `ComponentTag`, `Span`, `Classification`, `ClassificationMap`, `LocaleTag`                                            |
+| **`tokenization/`**   | Tokenizer primitives, whitespace/punctuation rules, token classification                                                                |
+| **`classification/`** | `Classification` data structure, `ClassificationMap`, span overlap resolution                                                           |
+| **`decoder/`**        | Span proposal → tree projection, BIO decoding, reconcile/merge strategies, confidence calibration                                       |
+| **`pipeline/`**       | `createRuntimePipeline` — the staged pipeline coordinator that wires normalize → query-shape → locale-gate → ... → classifier → decoder |
+| **`solver/`**         | Rule-based solver (the v0 rules engine), `Solution`, `Solver`                                                                           |
+| **`parser/`**         | `AddressParser` — high-level parse entry point (consumed by `mailwoman` CLI)                                                            |
+| **`resources/`**      | ~9 MB of shipped reference data: libpostal dictionaries, WOF place data, chromium-i18n address formats                                  |
 
 ## Key exports
 
@@ -75,6 +69,7 @@ independently testable, benchmarkable, and replaceable.
 
 This package ships immutable, provenance-tracked dictionaries consumed by the
 resolver and rule-based classifiers:
+
 - **libpostal** — multilingual street types, place names, directional/ordinal tokens
 - **Who's On First** — place hierarchy and geography
 - **chromium-i18n** — per-country address format templates

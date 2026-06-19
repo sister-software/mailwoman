@@ -5,27 +5,27 @@ ecosystem. Provides coordinate math, H3 hexagonal grid indexing, WKB geometry
 parsing, and coordinate-string parsing.
 
 ```ts
-import { haversineKm, latLngToCell, parseCoordinateString } from "@mailwoman/spatial";
+import { haversineKm, latLngToCell, parseCoordinateString } from "@mailwoman/spatial"
 
 // Great-circle distance
-const km = haversineKm(37.7749, -122.4194, 34.0522, -118.2437); // SF → LA
+const km = haversineKm(37.7749, -122.4194, 34.0522, -118.2437) // SF → LA
 
 // H3 grid cell
-const cell = latLngToCell(37.7749, -122.4194, 9); // resolution-9 H3 index
+const cell = latLngToCell(37.7749, -122.4194, 9) // resolution-9 H3 index
 
 // Parse coordinate strings
-const loc = parseCoordinateString("37.7749° N, 122.4194° W");
+const loc = parseCoordinateString("37.7749° N, 122.4194° W")
 ```
 
 ## What's inside
 
-| Capability | Implementation |
-|------------|----------------|
-| **Coordinate math** | Haversine distance, bearing, bounding-box containment |
-| **H3 indexing** | Hexagonal grid indexing via `h3-js` — spatial blocking for the matcher |
-| **WKB/WKT geometry** | Parse/format Well-Known Binary geometry via `wkx` |
+| Capability             | Implementation                                                              |
+| ---------------------- | --------------------------------------------------------------------------- |
+| **Coordinate math**    | Haversine distance, bearing, bounding-box containment                       |
+| **H3 indexing**        | Hexagonal grid indexing via `h3-js` — spatial blocking for the matcher      |
+| **WKB/WKT geometry**   | Parse/format Well-Known Binary geometry via `wkx`                           |
 | **Coordinate parsing** | Parse decimal, DMS, and UTM coordinate strings via `geo-coordinates-parser` |
-| **GeoJSON** | GeoJSON Feature/FeatureCollection types and utilities |
+| **GeoJSON**            | GeoJSON Feature/FeatureCollection types and utilities                       |
 
 ## Dependencies
 
