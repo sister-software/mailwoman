@@ -50,7 +50,7 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
   - Record-matcher 3-point curve FLAT: v1.5.1 68.0 / v1.6.0 67.9 / v1.7.0 68.0 (boundary lever ≠ dedup lever).
 
   **THE v1.5.1 → v1.7.0 FLOOR DELTA (the definitive comparison — most important number of the shift):**
-  locality **+5.1** (74.9→80.0), **fr.house_number +10.2** (84.7→94.9 — v1.5.1 was _failing_ its own 87 floor),
+  locality **+5.1** (74.9→80.0), **fr.house_number +10.2** (`84.7→94.9` — v1.5.1 was _failing_ its own 87 floor),
   fr.region +7.1, fr.cedex +2.5, unit +1.5, micro/region +~0.7; us.street **−4.3** (80.0→75.7, above floor —
   a locality/street tradeoff), street_suffix −1.6, de −1.0; country **±0.0**. **v1.7.0 is a NET IMPROVEMENT
   over v1.5.1**, not just a regression-fix. The gate FAILs only on (a) a stale country floor v1.5.1 also
@@ -158,8 +158,8 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
 ## 6. Concrete next steps
 
 - **RECOMMENDATION: PROMOTE v1.7.0 (a net improvement over v1.5.1); do NOT bump the weight.** The v1.5.1
-  baseline shows v1.7.0 wins the floors that matter — locality +5.1, **fr.house_number +10.2 (v1.5.1 was
-  _failing_ its own floor)**, fr.region +7.1 — at the cost of us.street −4.3 (above floor). DeepSeek-confirmed:
+  baseline shows v1.7.0 wins the floors that matter — locality +5.1, **fr.house*number +10.2 (v1.5.1 was
+  \_failing* its own floor)**, fr.region +7.1 — at the cost of us.street −4.3 (above floor). DeepSeek-confirmed:
   weight 1.5 is unsafe (amplifies the flat boundary signal, re-risks the spine — the lever that cratered an
   affix tag) and the 4 boundary targets are capacity-bound; don't chase them. The record-matcher flatness
   confirms the boundary lever doesn't move real-world dedup. v1.7.0 is the better ship.

@@ -40,7 +40,6 @@ export type ZipCodeDigit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
  *
  * @category Delivery
  * @category Postal
- * @type string
  * @see {@linkcode ZipCodePlusFour} for the extended ZIP code format.
  * @title ZIP Code
  * @pattern ^\d{5}$

@@ -4,11 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   Boundary-instability synthesizer (#375 — the highest-leverage parser lever). The failure taxonomy
- *   + the within-token-punctuation decomposition (#702) found one failure FAMILY surfacing under
- *   many names: the model mis-places token boundaries between adjacent components when the boundary
- *   is ambiguous or unmarked. This generator emits diverse BIO-labeled rows that put the gold
- *   boundary exactly where the model wobbles, so a retrain learns the boundary from context, not
- *   the lexeme.
+ *
+ *   The within-token-punctuation decomposition (#702) found one failure FAMILY surfacing under many
+ *   names: the model mis-places token boundaries between adjacent components when the boundary is
+ *   ambiguous or unmarked. This generator emits diverse BIO-labeled rows that put the gold boundary
+ *   exactly where the model wobbles, so a retrain learns the boundary from context, not the
+ *   lexeme.
  *
  *   The four token-aligned stress shapes, all in BASE LOCALES (US/FR/DE) so the shard never
  *   introduces tokens the base corpus lacks (the #511 base-consistency lint flagged an earlier

@@ -35,8 +35,10 @@ export function isAllCapsInput(text: string): boolean {
 	return upper >= 3
 }
 
-/** Title-case each ASCII alphabetic run (`PALESTINE` → `Palestine`). Length-preserving — token
-offsets unchanged. */
+/**
+ * Title-case each ASCII alphabetic run (`PALESTINE` → `Palestine`). Length-preserving — token
+ * offsets unchanged.
+ */
 export function titleCaseInput(text: string): string {
 	return text.replace(/[A-Za-z]+/g, (w) => w[0]!.toUpperCase() + w.slice(1).toLowerCase())
 }

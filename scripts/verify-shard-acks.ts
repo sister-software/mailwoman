@@ -25,16 +25,16 @@
  *
  *   ```json
  *   {
- *     "split": "train",
- *     "path": "/data/corpus/.../part-no-street-v063.parquet",
- *     "format": "parquet",
- *     "rows": 122011,
- *     "bytes": 5027210,
- *     "first_source_id": "synth-no-street-v063",
- *     "last_source_id": "synth-no-street-v063",
- *     "lint_flags": 24,
- *     "lint_acknowledged": true,
- *     "lint_ack_note": "Intentional adversarial venue training; digit+ordinal patterns removed."
+ *   	"split": "train",
+ *   	"path": "/data/corpus/.../part-no-street-v063.parquet",
+ *   	"format": "parquet",
+ *   	"rows": 122011,
+ *   	"bytes": 5027210,
+ *   	"first_source_id": "synth-no-street-v063",
+ *   	"last_source_id": "synth-no-street-v063",
+ *   	"lint_flags": 24,
+ *   	"lint_acknowledged": true,
+ *   	"lint_ack_note": "Intentional adversarial venue training; digit+ordinal patterns removed."
  *   }
  * ```
  *

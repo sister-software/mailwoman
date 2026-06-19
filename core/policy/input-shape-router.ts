@@ -34,8 +34,17 @@ export interface RouterKindSignal {
 
 /** Minimal query-shape signal. Compatible with `QueryShapeLite` (`core/pipeline/types.ts`). */
 export interface RouterShapeSignal {
-	/** Broad character category: `numeric` | `alpha` | `alphanumeric` | `cjk` | `cyrillic` | `arabic`
-| `mixed`. */
+	/**
+	 * Broad character category:
+	 *
+	 * - `numeric`
+	 * - `alpha`
+	 * - `alphanumeric`
+	 * - `cjk`
+	 * - `cyrillic`
+	 * - `arabic`
+	 * - `mixed`.
+	 */
 	characterClass?: string
 }
 
@@ -75,8 +84,10 @@ export interface InputShapeRoute {
 /** Kinds the rules system handles well when the rest of the shape is clean. */
 const RULE_CLEAN_KINDS: ReadonlySet<string> = new Set(["structured_address", "intersection", "po_box", "postcode_only"])
 
-/** Non-Latin scripts where the Latin-centric rules system is weak — hand to neural regardless of
-kind. */
+/**
+ * Non-Latin scripts where the Latin-centric rules system is weak — hand to neural regardless of
+ * kind.
+ */
 const OOD_SCRIPTS: ReadonlySet<string> = new Set(["cjk", "cyrillic", "arabic"])
 
 /** Character classes that count as "Latin / clean" for the `rule_preferred` guard. */
