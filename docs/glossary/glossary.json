@@ -1,0 +1,1598 @@
+{
+  "title": "Mailwoman Glossary",
+  "description": "Key terms and concepts in the Mailwoman address parser and geocoder.",
+  "terms": [
+    {
+      "term": "address parsing",
+      "definition": "The process of decomposing a free-text postal address string into structured components — house number, street name, locality, region, postcode, and country — so a geocoder can resolve them to coordinates.",
+      "aliases": ["parse", "parsing"],
+      "relatedTerms": ["sequence labeling", "BIO tagging", "token classification", "geocoding"]
+    },
+    {
+      "term": "BIO tagging",
+      "abbreviation": "Begin-Inside-Outside",
+      "definition": "A token-level labeling scheme where each token is tagged as B-X (beginning of an entity of type X), I-X (inside an entity of type X), or O (outside any entity). Mailwoman uses BIO over SentencePiece tokens to annotate address components.",
+      "aliases": ["BIO labels", "BIO encoding"],
+      "relatedTerms": ["sequence labeling", "token classification", "CRF"]
+    },
+    {
+      "term": "sequence labeling",
+      "definition": "A machine learning task where a model assigns a label to each element in a sequence. In Mailwoman, the sequence is the tokenized address string and the labels are address component types (street, locality, postcode, etc.).",
+      "aliases": ["token classification", "token-level classification"],
+      "relatedTerms": ["BIO tagging", "CRF", "neural classifier"]
+    },
+    {
+      "term": "CRF",
+      "abbreviation": "Conditional Random Field",
+      "definition": "A statistical modeling method that predicts structured outputs by modeling dependencies between adjacent labels. Mailwoman uses a linear-chain CRF as the Viterbi decoder at inference time to enforce BIO label consistency — a B-street must be followed by I-street or O, never I-locality.",
+      "aliases": ["conditional random field"],
+      "relatedTerms": ["BIO tagging", "Viterbi decoding", "sequence labeling"]
+    },
+    {
+      "term": "Viterbi decoding",
+      "definition": "A dynamic programming algorithm that finds the most likely sequence of hidden states (labels) given a sequence of observations (token emissions). Mailwoman uses Viterbi over a linear-chain CRF to produce globally coherent BIO label sequences from per-token model scores.",
+      "aliases": ["Viterbi", "Viterbi algorithm"],
+      "relatedTerms": ["CRF", "BIO tagging", "argmax decoding"]
+    },
+    {
+      "term": "argmax decoding",
+      "definition": "The simplest decoding strategy: pick the highest-scoring label independently for each token. Fast but can produce invalid BIO sequences (e.g., I-street without a preceding B-street). Mailwoman ships argmax as the default and Viterbi CRF as an option.",
+      "relatedTerms": ["Viterbi decoding", "CRF", "BIO tagging"]
+    },
+    {
+      "term": "SentencePiece",
+      "definition": "A language-independent subword tokenizer that splits text into pieces using a unigram language model. Mailwoman uses a SentencePiece tokenizer with a 48,000-token vocabulary and byte-fallback, trained on address data rather than general text.",
+      "relatedTerms": ["tokenizer", "byte fallback", "subword tokenization"]
+    },
+    {
+      "term": "tokenizer",
+      "definition": "The component that converts a raw address string into a sequence of numeric token IDs the model can process. Mailwoman's tokenizer is a SentencePiece unigram model trained specifically on postal addresses.",
+      "relatedTerms": ["SentencePiece", "subword tokenization", "byte fallback"]
+    },
+    {
+      "term": "byte fallback",
+      "definition": "A tokenization strategy where characters not seen during training are encoded as raw UTF-8 byte sequences rather than mapped to an unknown token. Mailwoman's tokenizer uses byte fallback so non-Latin scripts (CJK, Cyrillic) produce real token sequences even though training data was Latin-dominant.",
+      "relatedTerms": ["SentencePiece", "tokenizer"]
+    },
+    {
+      "term": "ONNX",
+      "abbreviation": "Open Neural Network Exchange",
+      "definition": "An open format for machine learning models that enables interoperability between training frameworks and inference runtimes. Mailwoman ships its trained model as an ONNX file so it can run in Node.js and the browser via onnxruntime.",
+      "aliases": ["ONNX runtime", "onnxruntime"],
+      "relatedTerms": ["neural classifier", "model weights", "int8 quantization"]
+    },
+    {
+      "term": "int8 quantization",
+      "definition": "A model compression technique that stores weights as 8-bit integers instead of 32-bit floats, reducing model size (~4×) with minimal accuracy loss. Mailwoman ships int8-quantized ONNX models (~30 MB) for fast loading in browsers.",
+      "relatedTerms": ["ONNX", "model weights"]
+    },
+    {
+      "term": "neural classifier",
+      "definition": "The machine learning model at the core of Mailwoman's parser — a transformer encoder (~30M parameters) trained from scratch to do BIO token classification over addresses. It learns the 'grammar' of address formats; the gazetteer supplies the 'atlas.'",
+      "aliases": ["model", "transformer"],
+      "relatedTerms": ["sequence labeling", "gazetteer", "anchor inference", "model weights"]
+    },
+    {
+      "term": "model weights",
+      "definition": "The learned parameters of the neural classifier, shipped as ONNX files in the @mailwoman/neural-weights-* packages. Weights are locale-specific bundles that include the model, tokenizer, and a model-card.json metadata file.",
+      "aliases": ["weights bundle"],
+      "relatedTerms": ["neural classifier", "ONNX", "model card"]
+    },
+    {
+      "term": "model card",
+      "definition": "A JSON metadata file (model-card.json) shipped with each weights bundle. It declares the model version, lineage, label set, required inference channels (anchor, gazetteer), calibration data, and training provenance.",
+      "relatedTerms": ["model weights", "weights bundle", "production scorer"]
+    },
+    {
+      "term": "gazetteer",
+      "definition": "A geographical index that maps place names and postcodes to real-world coordinates. Mailwoman uses a custom-built Who's On First (WOF) SQLite database as its gazetteer — the 'atlas' half of the grammar/atlas architecture.",
+      "relatedTerms": ["resolver", "anchor inference", "WOF", "geocoding"]
+    },
+    {
+      "term": "WOF",
+      "abbreviation": "Who's On First",
+      "definition": "An open-source gazetteer of places maintained by Mapzen/whosonfirst. Mailwoman builds a custom SQLite database from WOF GeoJSON repos, extended with postcode data, importance scores, and coincident-role relations.",
+      "aliases": ["Who's On First"],
+      "relatedTerms": ["gazetteer", "resolver", "placetype"]
+    },
+    {
+      "term": "resolver",
+      "definition": "The component that converts parsed address components (locality, region, postcode) into coordinates by looking them up in the gazetteer. The resolver ranks candidates by name match, population, and proximity, and returns the best-matching place with its centroid or polygon.",
+      "relatedTerms": ["gazetteer", "geocoding", "WOF", "locality resolution"]
+    },
+    {
+      "term": "geocoding",
+      "definition": "The process of converting an address into geographic coordinates (latitude and longitude). Mailwoman geocodes in a multi-tier cascade: exact address-point match → street interpolation → locality centroid. Each tier is progressively coarser but more widely available.",
+      "relatedTerms": ["resolver", "gazetteer", "situs data", "address parsing"]
+    },
+    {
+      "term": "anchor inference",
+      "definition": "A technique where structured knowledge (postcode locations, gazetteer place names) is injected into the model as soft input features — not as deterministic overrides. The model still decides the final labels, but the anchor signal biases it toward correct admin tags.",
+      "aliases": ["postcode anchor", "soft anchor"],
+      "relatedTerms": ["gazetteer", "soft features", "neural classifier"]
+    },
+    {
+      "term": "soft features",
+      "definition": "Auxiliary input signals fed to the neural classifier that inform but never override the model's decisions. Mailwoman's soft features include the postcode anchor (a coordinate centroid for recognized postcodes) and gazetteer lexicon hits (known place names).",
+      "relatedTerms": ["anchor inference", "gazetteer inference"]
+    },
+    {
+      "term": "production scorer",
+      "definition": "The canonical inference API in @mailwoman/neural. It reads the model-card.json requires block and fails closed if a declared channel (anchor, gazetteer) isn't fed — preventing silent degradation from running the model out-of-distribution.",
+      "relatedTerms": ["model card", "neural classifier", "anchor inference"]
+    },
+    {
+      "term": "staged pipeline",
+      "definition": "Mailwoman's runtime architecture: a sequence of pure-function stages (normalize → query-shape → locale-gate → kind-classifier → phrase-grouper → classifier → decoder) connected by typed handoffs. Each stage is published as its own npm package.",
+      "aliases": ["runtime pipeline", "pipeline"],
+      "relatedTerms": ["normalize", "query shape", "locale gate", "kind classifier", "phrase grouper"]
+    },
+    {
+      "term": "normalize",
+      "definition": "Stage 1 of the runtime pipeline: deterministic input preprocessing (Unicode NFC, punctuation normalization, whitespace collapse). Returns a NormalizedInput with an offsetMap that maps normalized positions back to the raw input.",
+      "relatedTerms": ["staged pipeline", "query shape", "offset map"]
+    },
+    {
+      "term": "query shape",
+      "definition": "Stage 1.5 of the runtime pipeline: computes a structural fingerprint of the input — script class, segmentation, known-format hits (postcode regexes, state abbreviations) — in microseconds without ML. Used by downstream stages for locale detection and kind classification.",
+      "relatedTerms": ["staged pipeline", "locale gate", "kind classifier"]
+    },
+    {
+      "term": "locale gate",
+      "definition": "Stage 2 of the runtime pipeline: rule-based locale detection from the query shape's script and known-format signals. Returns a LocaleHint with the top candidate and alternatives, surfacing disagreement with an explicit --locale flag.",
+      "relatedTerms": ["staged pipeline", "query shape", "locale tag"]
+    },
+    {
+      "term": "kind classifier",
+      "definition": "Stage 2.5 of the runtime pipeline: categorizes the input into one of seven query kinds (structured_address, postcode_only, locality_only, intersection, po_box, landmark, vague) so the coordinator can route to the right parsing strategy.",
+      "relatedTerms": ["staged pipeline", "query shape", "locale gate"]
+    },
+    {
+      "term": "phrase grouper",
+      "definition": "Stage 2.7 of the runtime pipeline: proposes coherent input units (street phrase, locality phrase, postcode, etc.) with structural kind hypotheses. Decouples boundary discovery from type classification so the classifier answers 'what type?' not 'where?'",
+      "relatedTerms": ["staged pipeline", "kind classifier", "neural classifier"]
+    },
+    {
+      "term": "offset map",
+      "definition": "A data structure that tracks how each position in a normalized string maps back to the original raw input. Essential for reporting parse results (spans) in the user's original text, not the internally normalized form.",
+      "aliases": ["offset mapping"],
+      "relatedTerms": ["normalize", "span"]
+    },
+    {
+      "term": "span",
+      "definition": "A contiguous range of characters or tokens in the input string, tagged with an address component type (street, locality, postcode, etc.). Parsed addresses are represented as collections of spans, possibly nested in a tree.",
+      "relatedTerms": ["BIO tagging", "tree projection", "component tag"]
+    },
+    {
+      "term": "component tag",
+      "definition": "One of the 33 labels in Mailwoman's address schema — street, locality, region, postcode, house_number, unit, po_box, country, venue, intersection, and others. Each parsed span carries exactly one component tag.",
+      "aliases": ["ComponentTag", "label"],
+      "relatedTerms": ["span", "BIO tagging", "classification"]
+    },
+    {
+      "term": "tree projection",
+      "definition": "The process of converting a flat list of labeled spans into a nested tree representation — street contains street_prefix and street_suffix, locality contains region. Enables hierarchical address operations like containment checks.",
+      "relatedTerms": ["span", "decoder", "containment"]
+    },
+    {
+      "term": "joint decoding",
+      "definition": "A decode strategy where the neural model's proposals and rule-based solver's output are reconciled into a single parse tree. Formerly the default (Route A Phase II), now retired in favor of argmax after it was found to break the street+house_number geocode precondition.",
+      "aliases": ["joint reconcile"],
+      "relatedTerms": ["argmax decoding", "rule-based classifier", "decoder"]
+    },
+    {
+      "term": "confidence calibration",
+      "definition": "The process of adjusting model confidence scores so that '0.6' actually means the model is right about 60% of the time. Mailwoman uses isotonic regression (PAVA) to calibrate per-span confidences against held-out data. Applied opt-in via createCalibrator.",
+      "relatedTerms": ["decoder", "ECE"]
+    },
+    {
+      "term": "ECE",
+      "abbreviation": "Expected Calibration Error",
+      "definition": "A metric that measures how well a model's confidence scores align with its actual accuracy. Lower is better. Mailwoman's held-out ECE drops from 0.067 (raw) to 0.0035 (calibrated).",
+      "relatedTerms": ["confidence calibration"]
+    },
+    {
+      "term": "placetype",
+      "definition": "The Who's On First hierarchical classification of places: planet → continent → country → region → county → locality → neighbourhood. The resolver uses placetype to rank candidates — an exact locality match outranks a county-level match.",
+      "relatedTerms": ["WOF", "resolver", "locality resolution"]
+    },
+    {
+      "term": "record matching",
+      "definition": "The process of determining whether two database records refer to the same real-world entity. Mailwoman's matcher uses a geocode-first approach (match the resolved place, not the address string) with Fellegi-Sunter probabilistic scoring.",
+      "aliases": ["entity resolution", "deduplication", "record linkage"],
+      "relatedTerms": ["blocking", "Fellegi-Sunter", "clustering", "geocode-first"]
+    },
+    {
+      "term": "geocode-first",
+      "definition": "The matcher's core design principle: resolve addresses to geographic coordinates first, then compare the resolved places — not the raw address strings. Two records at the same coordinates match even if one says '123 Main St' and the other says '123 MAIN STREET.'",
+      "relatedTerms": ["record matching", "blocking", "geocoding"]
+    },
+    {
+      "term": "blocking",
+      "definition": "The first stage of entity resolution: generate candidate record pairs using cheap, high-recall keys (geo cell, canonical address, phone) instead of comparing every record to every other (O(n²)). The matcher only scores pairs that survive blocking.",
+      "relatedTerms": ["record matching", "H3", "canonical key"]
+    },
+    {
+      "term": "Fellegi-Sunter",
+      "definition": "A probabilistic record linkage model that computes match probability from agreement-level log-likelihood ratios: log₂(m/u) where m is the probability of agreement given a true match and u is the probability of agreement by chance. Mailwoman learns m and u label-free via expectation-maximization.",
+      "aliases": ["FS model", "Fellegi-Sunter model"],
+      "relatedTerms": ["record matching", "scoring", "EM estimation"]
+    },
+    {
+      "term": "clustering",
+      "definition": "The final stage of entity resolution: resolve non-transitive pairwise match decisions (A↔B, B↔C, but not A↔C) into canonical entities via union-find with path compression. Each cluster of records becomes one resolved entity.",
+      "relatedTerms": ["record matching", "blocking", "scoring"]
+    },
+    {
+      "term": "expectation-maximization",
+      "definition": "An iterative algorithm that estimates model parameters when some variables are unobserved. In Mailwoman's matcher, EM learns the Fellegi-Sunter m and u parameters from unlabeled data — no training labels needed.",
+      "aliases": ["EM", "EM estimation"],
+      "relatedTerms": ["Fellegi-Sunter", "record matching"]
+    },
+    {
+      "term": "GBT",
+      "abbreviation": "Gradient Boosted Trees",
+      "definition": "A non-linear machine learning model that combines many weak decision trees into a strong predictor. Mailwoman uses a GBT as an optional learned scorer for single-dataset dedup, improving F1 by 5–7 percentage points over the Fellegi-Sunter baseline.",
+      "aliases": ["GBM", "gradient boosting"],
+      "relatedTerms": ["record matching", "scoring", "Fellegi-Sunter"]
+    },
+    {
+      "term": "H3",
+      "definition": "Uber's hexagonal hierarchical geospatial indexing system. Mailwoman uses H3 cells at resolution 9 (~0.03 km²) for geo-first blocking in the matcher and for stable address primary keys in @mailwoman/address-id.",
+      "aliases": ["H3 cell"],
+      "relatedTerms": ["blocking", "address ID", "spatial"]
+    },
+    {
+      "term": "address ID",
+      "definition": "A stable, parseable primary key for an address in the format <state>.<H3-cell>.<hash>. Content-addressed (derives from the data), jitter-stable (absorbs small geocode differences), and partitionable by state prefix.",
+      "relatedTerms": ["H3", "canonical key", "record matching"]
+    },
+    {
+      "term": "canonical key",
+      "definition": "A deterministic, normalized string representation of an address produced by @mailwoman/formatter. Lowercase, abbreviation-expanded, punctuation-stripped — so '123 Main St' and '123 MAIN STREET' produce the same key. Used for blocking in the matcher.",
+      "aliases": ["match key"],
+      "relatedTerms": ["formatter", "blocking", "address ID"]
+    },
+    {
+      "term": "situs data",
+      "definition": "A dataset of exact address-point coordinates (rooftop-level). Mailwoman's geocoder uses a national situs layer (124.9M US points built from state address-point sources) as the highest-precision tier of the geocode cascade.",
+      "aliases": ["address points", "rooftop data"],
+      "relatedTerms": ["geocoding", "geocode cascade"]
+    },
+    {
+      "term": "interpolation",
+      "definition": "A geocoding technique that estimates a coordinate along a street segment based on the house number range. Used as the middle tier of Mailwoman's geocode cascade when exact address-point data is unavailable.",
+      "relatedTerms": ["geocoding", "situs data", "geocode cascade"]
+    },
+    {
+      "term": "geocode cascade",
+      "definition": "Mailwoman's multi-tier coordinate resolution strategy: first try exact address-point match, then street interpolation, then locality centroid. Each tier is more widely available but progressively coarser.",
+      "relatedTerms": ["geocoding", "situs data", "interpolation", "resolver"]
+    },
+    {
+      "term": "parity campaign",
+      "definition": "The systematic effort to close the gap between Mailwoman's neural parser and the legacy rule-based v0 parser on every address component tag. Tracked through per-tag parity tables and gated by honest-eval probes.",
+      "relatedTerms": ["honest eval", "boundary instability", "negative space"]
+    },
+    {
+      "term": "honest eval",
+      "definition": "Mailwoman's evaluation discipline: grade the assembled pipeline output (resolved coordinate) against real-world ground truth, not raw neural label-F1 in isolation. A model can win on labels while resolving to the wrong city.",
+      "relatedTerms": ["parity campaign", "coord metric", "eval discipline"]
+    },
+    {
+      "term": "coord metric",
+      "definition": "The primary evaluation metric: distance from the resolved coordinate to the true address point. Measured at percentiles (p50, p90) and as 'within X meters.' Prevents the label-F1 trap where a model scores higher on token labels but geocodes worse.",
+      "aliases": ["coordinate metric", "assembled coordinate"],
+      "relatedTerms": ["honest eval", "geocoding", "parity campaign"]
+    },
+    {
+      "term": "boundary instability",
+      "definition": "A class of parser errors where the model wobbles on where one address component ends and the next begins — a street suffix swallowed into the street name, a French house number that trails instead of leads. Mailwoman's #1 weakness as of v1.5.0.",
+      "relatedTerms": ["parity campaign", "boundary stress shard", "phrase grouper"]
+    },
+    {
+      "term": "negative space",
+      "definition": "Address formats the neural model was never trained on because they're absent from the base training corpus — PO boxes, CEDEX, intersections, units. The parity campaign targets negative space through synthetic shards and corpus augmentation.",
+      "relatedTerms": ["parity campaign", "corpus", "synthetic shard"]
+    },
+    {
+      "term": "corpus",
+      "definition": "The BIO-labeled training data used to train Mailwoman's neural classifier. Assembled from real sources (OpenAddresses, National Address Database) and synthetic shards (boundary stress, order variants, negative space). Managed by @mailwoman/corpus.",
+      "relatedTerms": ["BIO tagging", "synthetic shard", "expand golden"]
+    },
+    {
+      "term": "synthetic shard",
+      "definition": "A machine-generated training dataset that augments the real-address corpus with targeted variations — reversed word order, missing punctuation, all-caps, boundary-stress patterns. Teaches the model to handle edge cases not present in the reference data.",
+      "relatedTerms": ["corpus", "parity campaign", "boundary instability"]
+    },
+    {
+      "term": "Modal",
+      "definition": "A cloud GPU platform (modal.com) where Mailwoman trains its neural models on NVIDIA A100 GPUs. Training runs are launched via scripts/modal/train_remote.py and typically complete in ~1 hour.",
+      "relatedTerms": ["neural classifier", "model weights", "training"]
+    },
+    {
+      "term": "rule-based classifier",
+      "definition": "Mailwoman's legacy v0 parser — a library of deterministic token classifiers (house number, street suffix, postcode, place name, etc.) composed by priority. Now primarily used for corpus labeling, fallback classification, and arbitration diagnostics.",
+      "aliases": ["v0 parser", "rules engine"],
+      "relatedTerms": ["neural classifier", "arbitration", "parity campaign"]
+    },
+    {
+      "term": "arbitration",
+      "definition": "A pipeline stage that compares rule-based (v0) and neural classifier output, resolving disagreements via a policy registry. Built and merged but not promoted — the coordinate gate showed label-F1 gains came at the cost of worse geocoding.",
+      "relatedTerms": ["rule-based classifier", "neural classifier", "joint decoding"]
+    },
+    {
+      "term": "alignment",
+      "definition": "The step in the corpus pipeline that takes a (raw, components) pair from an adapter and produces a (raw, tokens, BIO labels) row by finding each component's text inside the raw string and labeling the matching tokens.",
+      "relatedTerms": ["corpus", "BIO tagging", "token"]
+    },
+    {
+      "term": "attention",
+      "definition": "The core mechanism inside a transformer encoder. Each token's representation is updated by looking at every other token, with learned weights deciding how much each one matters.",
+      "relatedTerms": ["transformer", "encoder", "neural classifier"]
+    },
+    {
+      "term": "adversarial corpus",
+      "definition": "Eval entries chosen specifically to break the parser. Mailwoman's adversarial set covers cases like 'Buffalo Buffalo' (a venue named after a city), 'St. Petersburg' (a multi-word locality), and prefix-honorific names.",
+      "relatedTerms": ["golden set", "honest eval", "eval"]
+    },
+    {
+      "term": "bf16",
+      "abbreviation": "bfloat16",
+      "definition": "A 16-bit floating-point format used during training. Half the memory of fp32 with similar numeric range, which lets the training batch fit on the lab's GPU.",
+      "aliases": ["bfloat16"],
+      "relatedTerms": ["fp32 / fp16", "int8 quantization", "Modal"]
+    },
+    {
+      "term": "canonicalization",
+      "definition": "Mapping a span to its canonical value: 'St' and 'Street' both become the USPS suffix ST; 'USA' and 'United States' both become ISO US. The operation that handles synonymy. Canonical values come from @mailwoman/codex, not a hand-grown alias list.",
+      "relatedTerms": ["synonymy", "canonical key", "component tag"]
+    },
+    {
+      "term": "Cartographer",
+      "definition": "Mailwoman's mapping utilities. Composes MapLibre style specifications and builds vector source records for the demo's Protomaps basemap.",
+      "relatedTerms": ["geocoding"]
+    },
+    {
+      "term": "checkpoint",
+      "definition": "A saved snapshot of the model weights and optimizer state during training. Mailwoman saves a checkpoint periodically so training can resume after a GPU hang.",
+      "relatedTerms": ["model weights", "Modal"]
+    },
+    {
+      "term": "classification proposal",
+      "definition": "The shared shape that every classifier (rule or neural) writes. The solver consumes proposals without knowing which kind of classifier produced them.",
+      "relatedTerms": ["rule-based classifier", "neural classifier", "arbitration"]
+    },
+    {
+      "term": "conventions mask",
+      "definition": "A decode-time constraint layer keyed by the model's own address-system detection (the exported locale head): tags that are ungrammatical in the detected system are removed from the Viterbi vocabulary, and the system's postcode shape arms a snap-only repair pass. The first slice forbids USPS street-affix decomposition for French. Same knowledge-outside-the-weights property as the gazetteer anchor — add a codex conventions row, no retrain.",
+      "relatedTerms": ["Viterbi decoding", "gazetteer anchor", "locale gate"]
+    },
+    {
+      "term": "decoder",
+      "definition": "In a transformer encoder-decoder model, the part that produces output sequences. Mailwoman's classifier is encoder-only (no decoder); the 'CRF decoder' is a different thing — a structured-prediction layer that picks the best label sequence from the encoder's outputs.",
+      "relatedTerms": ["encoder", "CRF", "Viterbi decoding"]
+    },
+    {
+      "term": "encoder",
+      "definition": "The part of a transformer that turns input tokens into contextualized vector representations. Mailwoman's classifier is a small encoder-only transformer (~30M parameters).",
+      "relatedTerms": ["transformer", "attention", "neural classifier"]
+    },
+    {
+      "term": "eval",
+      "definition": "Running the model against a held-out golden dataset and computing per-component F1, exact-match, calibration, and resolved-coordinate error.",
+      "aliases": ["evaluation"],
+      "relatedTerms": ["golden set", "honest eval", "F1 score", "coord metric"]
+    },
+    {
+      "term": "F1 score",
+      "definition": "The harmonic mean of precision and recall — a single number between 0 and 1 summarizing how good a classifier is at a class. F1 = 2·P·R / (P + R).",
+      "relatedTerms": ["macro F1", "eval"]
+    },
+    {
+      "term": "fine label",
+      "definition": "The Tier 2 labels added to the model vocabulary — venue, street, house_number — as opposed to the coarse labels (country, region, locality, postcode).",
+      "aliases": ["coarse label"],
+      "relatedTerms": ["tier", "component tag"]
+    },
+    {
+      "term": "fp32 / fp16",
+      "definition": "32-bit and 16-bit floating-point formats. Mailwoman trains in bf16 (a 16-bit variant) and exports the ONNX model in int8 for size.",
+      "aliases": ["fp32", "fp16"],
+      "relatedTerms": ["bf16", "int8 quantization"]
+    },
+    {
+      "term": "gazetteer anchor",
+      "definition": "An input-layer feature channel that attaches a per-token candidate-tag set from the gazetteer/codex (e.g. 'this surface is a known country-and-region') so the model conditions on lexicon membership without being overruled by it. The knowledge lives outside the weights — extend the gazetteer, no retrain.",
+      "relatedTerms": ["gazetteer", "anchor inference", "soft features", "shallow fusion"]
+    },
+    {
+      "term": "golden set",
+      "definition": "A hand-labeled evaluation dataset of US, French, and adversarial addresses used as ground truth for evals.",
+      "relatedTerms": ["eval", "adversarial corpus", "honest eval"]
+    },
+    {
+      "term": "gradient clipping",
+      "definition": "A training trick: if the gradient norm exceeds a threshold, scale it down. Stops a single bad batch from blowing up the model weights.",
+      "relatedTerms": ["warmup", "label smoothing"]
+    },
+    {
+      "term": "homonymy",
+      "definition": "One surface, many referents: 'Georgia' is a US state in 'Atlanta, Georgia' and a country in 'Tbilisi, Georgia.' Handled by disambiguation, split across two stages — the parser resolves the tag from in-string context; the resolver late-binds the referent with geographic context.",
+      "aliases": ["homograph"],
+      "relatedTerms": ["synonymy", "resolver", "soft prior"]
+    },
+    {
+      "term": "iteration log",
+      "definition": "The running record of each model release — the canonical 'what shipped when' for the neural classifier.",
+      "relatedTerms": ["parity campaign", "model card"]
+    },
+    {
+      "term": "label smoothing",
+      "definition": "A training regularization technique: instead of putting 1.0 probability on the correct label, train to put 1 − ε on it and ε/(N−1) on each wrong label. Improves calibration; disabled in some Mailwoman runs for stability.",
+      "relatedTerms": ["confidence calibration", "gradient clipping"]
+    },
+    {
+      "term": "libpostal",
+      "definition": "An open-source C address parser used by Pelias. Mailwoman's rule-based v0 and neural classifier supersede it.",
+      "relatedTerms": ["Pelias", "rule-based classifier"]
+    },
+    {
+      "term": "locale",
+      "definition": "The combination of language and country an address comes from. en-US and fr-FR are the locales Mailwoman ships weights for.",
+      "relatedTerms": ["locale gate", "model weights"]
+    },
+    {
+      "term": "macro F1",
+      "definition": "The unweighted average of per-class F1 scores — treats every class equally. Mailwoman's primary label-level eval metric.",
+      "relatedTerms": ["F1 score", "eval"]
+    },
+    {
+      "term": "Mermaid",
+      "definition": "A Markdown-friendly diagram syntax used in these docs for flowcharts."
+    },
+    {
+      "term": "NAD",
+      "abbreviation": "National Address Database",
+      "definition": "A US Department of Transportation dataset of structured address points, added to the training corpus as a major source of real US addresses.",
+      "relatedTerms": ["corpus", "situs data", "TIGER"]
+    },
+    {
+      "term": "NLL",
+      "abbreviation": "Negative Log Likelihood",
+      "definition": "The standard form of a loss function in probability-based models: loss = −log P(correct label | input). The CRF uses the NLL of the entire label sequence.",
+      "relatedTerms": ["CRF", "label smoothing"]
+    },
+    {
+      "term": "oracle substitution",
+      "definition": "A diagnostic that hands one pipeline stage the ground-truth answer and measures the end-to-end result, to find which stage an error actually lives in. Oracle the model's tags to measure the resolver's ceiling; oracle the gazetteer hints to measure the model's. Always an optimistic upper bound.",
+      "aliases": ["ceiling analysis"],
+      "relatedTerms": ["honest eval", "resolver", "eval"]
+    },
+    {
+      "term": "orphan-I",
+      "definition": "A label-sequence bug where I-X appears without a matching preceding B-X (e.g. O, I-locality). Structurally invalid in BIO; the CRF prevents it.",
+      "relatedTerms": ["BIO tagging", "CRF", "Viterbi decoding"]
+    },
+    {
+      "term": "Pelias",
+      "definition": "An open-source geocoder, Mailwoman's spiritual predecessor.",
+      "relatedTerms": ["libpostal", "geocoding", "rule-based classifier"]
+    },
+    {
+      "term": "phase",
+      "definition": "A milestone in the implementation plan (Foundation, Corpus, Training, Integration, and forward-looking phases). Distinct from stage (runtime pipeline) and tier (model vocabulary).",
+      "relatedTerms": ["stage", "tier", "thread"]
+    },
+    {
+      "term": "postcode",
+      "definition": "The country-specific postal code (US ZIP, French code postal, etc.). Mailwoman handles postcode parsing entirely by rule classifier — a regex problem, not an ML one.",
+      "relatedTerms": ["component tag", "rule-based classifier", "anchor inference"]
+    },
+    {
+      "term": "policy registry",
+      "definition": "The per-component table that decides which classifier (rule or neural) has authority for each address component. The Ship-of-Theseus dial.",
+      "relatedTerms": ["arbitration", "rule-based classifier", "neural classifier", "Ship of Theseus"]
+    },
+    {
+      "term": "shallow fusion",
+      "definition": "Blending an external knowledge source (a gazetteer, an FST prior) into a model's decision as a signal, rather than retraining the model or overriding its output. Mailwoman applies it at the input layer (the gazetteer anchor as membership features) and at decode time (an FST prior biasing emissions). RAG-shaped, but the retrieval lands as feature vectors, not prompt text.",
+      "relatedTerms": ["gazetteer anchor", "anchor inference", "soft features"]
+    },
+    {
+      "term": "Ship of Theseus",
+      "definition": "The migration pattern Mailwoman uses: replace rule classifiers with the neural classifier one component at a time, only when metrics justify it. Named for the philosophical thought experiment.",
+      "relatedTerms": ["policy registry", "rule-based classifier", "neural classifier"]
+    },
+    {
+      "term": "soft prior",
+      "definition": "Outside knowledge fed to the model or resolver as overridable evidence (a feature, a score term) rather than a hard filter. A focus-country hint becomes an anchor feature; a focus-point becomes a ranking term.",
+      "relatedTerms": ["soft features", "anchor inference", "homonymy"]
+    },
+    {
+      "term": "synonymy",
+      "definition": "Many surfaces, one referent: '123 N Main St' and '123 North Main Street' are the same place. Handled by canonicalization, never by guessing which spelling is right. The dual of homonymy.",
+      "relatedTerms": ["canonicalization", "homonymy", "canonical key"]
+    },
+    {
+      "term": "shard",
+      "definition": "A partial output file of the corpus build, written in Parquet format. The training pipeline streams shards row by row.",
+      "relatedTerms": ["corpus", "synthetic shard"]
+    },
+    {
+      "term": "SQLite-wasm",
+      "definition": "An open-source build of the SQLite library compiled to WebAssembly. Mailwoman uses it to run the WOF resolver inside the browser.",
+      "relatedTerms": ["WOF", "resolver", "gazetteer"]
+    },
+    {
+      "term": "stage",
+      "definition": "One of the dataflow stages in the runtime pipeline (normalize, locale gate, kind classify, phrase group, token classify, sequence correct, reconcile, resolve). Distinct from tier (model vocabulary) and phase (plan milestone).",
+      "aliases": ["runtime stage"],
+      "relatedTerms": ["staged pipeline", "tier", "phase"]
+    },
+    {
+      "term": "tier",
+      "definition": "Internal versioning of which label classes the model emits. Tier 1 is the coarse components (country, region, locality, postcode); Tier 2 adds venue, street, house_number; Tier 3 (future) would add attention, po_box, and POI venue subtyping. Historically called 'Stage 1/2/3' before the runtime-pipeline naming made that ambiguous.",
+      "relatedTerms": ["fine label", "stage", "phase", "component tag"]
+    },
+    {
+      "term": "token",
+      "definition": "One word or subword in the tokenized input. For the neural classifier, tokens come from SentencePiece (subword units); for the rule classifiers, tokens are whitespace- and punctuation-separated words.",
+      "relatedTerms": ["tokenizer", "SentencePiece", "span"]
+    },
+    {
+      "term": "thread",
+      "definition": "A parallel workstream within a release. Threads compose; they are not sequential milestones like phases.",
+      "relatedTerms": ["phase", "parity campaign"]
+    },
+    {
+      "term": "transformer",
+      "definition": "A neural-network architecture introduced in 2017 ('Attention Is All You Need'), the basis of modern NLP models. Mailwoman uses a small, encoder-only transformer.",
+      "relatedTerms": ["encoder", "attention", "neural classifier"]
+    },
+    {
+      "term": "TIGER",
+      "definition": "The US Census Topologically Integrated Geographic Encoding and Referencing database. Used as a corpus source for street-segment data.",
+      "relatedTerms": ["corpus", "NAD", "interpolation"]
+    },
+    {
+      "term": "warmup",
+      "definition": "The early phase of training where the learning rate ramps up from 0 to its peak value before cosine decay. Mailwoman uses a linear warmup.",
+      "relatedTerms": ["gradient clipping", "Modal"]
+    },
+    {
+      "term": "CEDEX",
+      "abbreviation": "Courrier d'Entreprise à Distribution Exceptionnelle",
+      "definition": "A French postal routing for high-volume business mail: a CEDEX code delivers directly from a sorting centre, bypassing the local post office. A common negative-space format Mailwoman must parse.",
+      "relatedTerms": ["postcode", "negative space", "conventions mask"]
+    },
+    {
+      "term": "ZCTA",
+      "abbreviation": "ZIP Code Tabulation Area",
+      "definition": "The US Census Bureau's polygon approximation of a ZIP code, generalized from census blocks rather than USPS delivery routes. Explicitly not USPS ground truth and often wrong in rural areas.",
+      "relatedTerms": ["postcode", "carrier route", "sectional center facility"]
+    },
+    {
+      "term": "sectional center facility",
+      "abbreviation": "SCF",
+      "definition": "A USPS regional mail-processing hub. The first three digits of a 5-digit ZIP identify the SCF, of which there are roughly 900 nationwide.",
+      "relatedTerms": ["postcode", "carrier route", "delivery point code"]
+    },
+    {
+      "term": "carrier route",
+      "definition": "The delivery path one postal carrier covers on a shift. A ZIP code is fundamentally a set of carrier routes, not a geographic polygon, which is why ZIP boundaries are fuzzy and shift over time.",
+      "relatedTerms": ["postcode", "ZCTA", "sectional center facility"]
+    },
+    {
+      "term": "delivery point code",
+      "abbreviation": "DPBC — Delivery Point Barcode",
+      "definition": "The full 11-digit USPS code (5-digit ZIP + 4-digit extension + 2 delivery-point digits) that uniquely identifies a single mailbox, encoded as the barcode on an envelope for automated sorting.",
+      "relatedTerms": ["postcode", "block face", "sectional center facility"]
+    },
+    {
+      "term": "postal city",
+      "definition": "The city name the postal service uses for a ZIP, which can differ from the legal municipality a resident lives in — e.g. many suburbs share a larger city's postal name. A source of locality ambiguity.",
+      "aliases": ["mailing city", "USPS city name"],
+      "relatedTerms": ["City State Product", "locality", "postcode"]
+    },
+    {
+      "term": "City State Product",
+      "definition": "The USPS file mapping each ZIP to its 'preferred' and 'acceptable' city names. One ZIP can carry several city names because a post office serves multiple neighbourhoods and adjacent municipalities.",
+      "relatedTerms": ["postal city", "postcode"]
+    },
+    {
+      "term": "Address Management System",
+      "abbreviation": "AMS",
+      "definition": "The USPS's authoritative database of every deliverable US address (~165 million points). Licensed to commercial mailers under strict terms, not openly available — part of why an open parser can't just look every address up.",
+      "aliases": ["USPS AMS"],
+      "relatedTerms": ["gazetteer", "situs data", "Postcode Address File"]
+    },
+    {
+      "term": "Postcode Address File",
+      "abbreviation": "PAF",
+      "definition": "Royal Mail's authoritative database of valid UK postcodes and their delivery points. The UK equivalent of the USPS AMS.",
+      "aliases": ["UK postcode database"],
+      "relatedTerms": ["Address Management System", "postcode", "dependent street"]
+    },
+    {
+      "term": "APO/FPO",
+      "abbreviation": "Army Post Office / Fleet Post Office",
+      "definition": "US military postal addresses for personnel stationed overseas or aboard ship. They route through military postal hubs rather than geographic locations, so they break geographic parsing assumptions.",
+      "aliases": ["APO", "FPO"],
+      "relatedTerms": ["PO box", "negative space"]
+    },
+    {
+      "term": "PO box",
+      "definition": "A numbered mailbox at a post office used as a delivery address instead of a physical street location. Mailwoman tags it as the po_box component; structurally the same family as a subpremise.",
+      "aliases": ["post office box", "P.O. Box", "po_box"],
+      "relatedTerms": ["subpremise", "designator", "negative space"]
+    },
+    {
+      "term": "subpremise",
+      "definition": "A secondary address unit inside a single street address (apartment, suite, floor), typically a designator plus an identifier such as 'Apt 4B'. The same proposer family as PO box.",
+      "relatedTerms": ["unit", "designator", "PO box"]
+    },
+    {
+      "term": "designator",
+      "definition": "The closed-vocabulary leading word of a secondary-address phrase — 'Apt', 'Suite', 'Floor', 'PO Box', 'Level' — paired with an identifier to form a complete subpremise.",
+      "relatedTerms": ["subpremise", "unit", "PO box"]
+    },
+    {
+      "term": "dependent locality",
+      "definition": "A sub-locality (neighbourhood or borough) hierarchically inside a larger locality — e.g. Brooklyn within New York City. Provides finer geographic specification below the primary locality.",
+      "aliases": ["sub-locality"],
+      "relatedTerms": ["locality", "borough", "placetype"]
+    },
+    {
+      "term": "dependent street",
+      "definition": "A secondary street name required for delivery in some postal systems (notably Royal Mail), as in '6 Elm Avenue, Runcorn Road, Birmingham' where Runcorn Road is the dependent street.",
+      "relatedTerms": ["street", "Postcode Address File"]
+    },
+    {
+      "term": "block face",
+      "definition": "One side of a street between two intersections. Several postal systems specify delivery to block-face granularity — e.g. the USPS ZIP+4 extension.",
+      "relatedTerms": ["delivery point code", "interpolation", "street"]
+    },
+    {
+      "term": "borough",
+      "definition": "An administrative or historical division of a city — e.g. the five boroughs of New York City. May be postal, legal, or both, and complicates the locality hierarchy.",
+      "relatedTerms": ["dependent locality", "locality", "postal city"]
+    },
+    {
+      "term": "chōme",
+      "definition": "In Japanese addressing, a district-level subdivision in the block-based chōme / banchi / gō numbering scheme, which uses area-and-block numbers instead of street names.",
+      "relatedTerms": ["banchi", "gō", "named intersection"]
+    },
+    {
+      "term": "banchi",
+      "definition": "In Japanese addressing, a block within a chōme. The middle level of the chōme / banchi / gō hierarchy.",
+      "relatedTerms": ["chōme", "gō"]
+    },
+    {
+      "term": "gō",
+      "definition": "In Japanese addressing, a building or lot number within a banchi — the finest level of the chōme / banchi / gō block-based hierarchy.",
+      "relatedTerms": ["chōme", "banchi"]
+    },
+    {
+      "term": "intersection",
+      "definition": "An address that names a location by two crossing streets ('5th & Main') rather than a number and street. Mailwoman tags the two streets as intersection_a and intersection_b — a negative-space format that starved the early model.",
+      "aliases": ["cross-street", "corner address"],
+      "relatedTerms": ["named intersection", "negative space", "starved"]
+    },
+    {
+      "term": "named intersection",
+      "definition": "A crossing that is itself a named place — common in Japan, e.g. the Shibuya Station-front intersection — rather than a pair of street names.",
+      "relatedTerms": ["intersection", "chōme"]
+    },
+    {
+      "term": "formula address",
+      "definition": "A descriptive, relative address given by directions and landmarks ('two blocks past where the bakery used to be, half a block toward the lake') rather than a street and number. The hardest end of the parse-difficulty spectrum.",
+      "aliases": ["relational address", "landmark-based address"],
+      "relatedTerms": ["point of interest", "prominence signal"]
+    },
+    {
+      "term": "parcel",
+      "definition": "A property polygon or record carrying a situs (site) address and often a separate owner mailing address. County GIS parcel aggregations are a training source for address-point variety and situs-vs-owner divergence.",
+      "relatedTerms": ["situs", "situs data", "rooftop"]
+    },
+    {
+      "term": "situs",
+      "definition": "The physical site address of a property, as opposed to the owner's mailing address. Parcel records often carry both; the divergence is a real-world data-quality challenge.",
+      "relatedTerms": ["parcel", "situs data", "rooftop"]
+    },
+    {
+      "term": "E911",
+      "abbreviation": "Enhanced 911",
+      "definition": "County- and state-level emergency-dispatch address-point databases with full component breakdown. A lineage source for the situs and address-point layers used in geocoding.",
+      "relatedTerms": ["NG911", "situs data", "rooftop"]
+    },
+    {
+      "term": "NG911",
+      "abbreviation": "Next Generation 911",
+      "definition": "The modern 911 data standard. States and counties publish NG911 address-point layers that Mailwoman can ingest as address data.",
+      "relatedTerms": ["E911", "situs data"]
+    },
+    {
+      "term": "locality centroid",
+      "definition": "The representative centre point of a city or locality, used as a coarse coordinate when no exact address point is available — the coarsest tier of the geocode cascade.",
+      "aliases": ["city centroid"],
+      "relatedTerms": ["geocode cascade", "rooftop", "interpolation"]
+    },
+    {
+      "term": "rooftop",
+      "definition": "Geocoding precision at the building or parcel level — coordinates within a few metres — the highest tier of the geocode cascade. Sourced from address-point and situs data.",
+      "aliases": ["rooftop-level", "address-point geocoding"],
+      "relatedTerms": ["geocode cascade", "situs data", "locality centroid"]
+    },
+    {
+      "term": "diacritic",
+      "definition": "An accent mark that modifies a letter (é, ñ, ç). Address normalization must fold diacritics for matching without discarding the information a user typed.",
+      "aliases": ["accent mark"],
+      "relatedTerms": ["normalize", "transliteration", "canonicalization"]
+    },
+    {
+      "term": "transliteration",
+      "definition": "Converting a name from one writing system to another while preserving pronunciation (Cyrillic → Latin, for instance). Needed for multilingual address handling and corpus synthesis.",
+      "aliases": ["script conversion"],
+      "relatedTerms": ["diacritic", "byte fallback", "synthetic shard"]
+    },
+    {
+      "term": "check digit",
+      "definition": "A digit appended to a postcode or identifier and derived by modular arithmetic, used to detect transcription errors.",
+      "relatedTerms": ["postcode", "deterministic regex repair"]
+    },
+    {
+      "term": "toponym",
+      "definition": "A proper name for a geographic place.",
+      "aliases": ["place name"],
+      "relatedTerms": ["gazetteer", "venue", "locality"]
+    },
+    {
+      "term": "point of interest",
+      "abbreviation": "POI",
+      "definition": "A named place that is not strictly an address — landmark, transit stop, venue, amenity, or franchise. Mailwoman tags these as venue and resolves them through the gazetteer.",
+      "aliases": ["POI"],
+      "relatedTerms": ["venue", "amenity", "franchise query"]
+    },
+    {
+      "term": "amenity",
+      "definition": "A point of interest referenced by category ('gas station', 'pharmacy', 'ATM') rather than by name. Resolved by mapping the query onto a category taxonomy.",
+      "aliases": ["POI category"],
+      "relatedTerms": ["point of interest", "franchise query", "regional variant"]
+    },
+    {
+      "term": "franchise query",
+      "definition": "A point-of-interest query naming a brand or chain ('nearest Starbucks') rather than a category or an address.",
+      "aliases": ["brand query"],
+      "relatedTerms": ["sub-brand", "amenity", "point of interest"]
+    },
+    {
+      "term": "sub-brand",
+      "definition": "A branded variant within a larger franchise — Walmart Supercenter vs Walmart Neighborhood Market vs Sam's Club, all under Walmart.",
+      "aliases": ["brand variant"],
+      "relatedTerms": ["franchise query"]
+    },
+    {
+      "term": "regional variant",
+      "definition": "A local term for an amenity or brand differing from the global name — 'servo' for a gas station in Australia, 'bodega' for a corner store in NYC.",
+      "aliases": ["localism"],
+      "relatedTerms": ["amenity", "code-switching"]
+    },
+    {
+      "term": "code-switching",
+      "definition": "Mixing two languages in a single query, e.g. 'スタバ near Shibuya Station' (a Japanese brand name with an English location constraint).",
+      "relatedTerms": ["regional variant", "transliteration", "locale"]
+    },
+    {
+      "term": "IATA code",
+      "abbreviation": "International Air Transport Association code",
+      "definition": "A three-letter airport code (JFK, LHR, CDG). Globally unique and machine-friendly, useful for resolving airport queries.",
+      "aliases": ["airport code"],
+      "relatedTerms": ["point of interest", "station entrance"]
+    },
+    {
+      "term": "station entrance",
+      "definition": "One of several access points to a large transit station. Entrances at stations like Tokyo or Shibuya can be hundreds of metres apart, so entrance-level precision matters for navigation.",
+      "relatedTerms": ["point of interest", "named intersection"]
+    },
+    {
+      "term": "prominence signal",
+      "definition": "A ranking input that favours the better-known place among same-named candidates — the original Eiffel Tower in Paris over a replica in Las Vegas. Closely related to the importance score.",
+      "aliases": ["prominence score"],
+      "relatedTerms": ["importance score", "Wikipedia importance", "resolver"]
+    },
+    {
+      "term": "locality",
+      "definition": "The city / town / settlement component of an address: a populated place sitting between region and neighbourhood in the hierarchy.",
+      "aliases": ["city", "municipality"],
+      "relatedTerms": ["region", "dependent locality", "component tag"]
+    },
+    {
+      "term": "region",
+      "definition": "The first-level administrative subdivision of a country — a US state, a French region, a province. The component between country and locality.",
+      "aliases": ["state", "province"],
+      "relatedTerms": ["locality", "country", "component tag"]
+    },
+    {
+      "term": "house number",
+      "definition": "The numeric or alphanumeric identifier of a building on a street. Mailwoman's house_number component; its position relative to the street name flips between locales.",
+      "aliases": ["street number"],
+      "relatedTerms": ["street", "component tag", "interpolation"]
+    },
+    {
+      "term": "street",
+      "definition": "The named linear feature along which house numbers are ordered. Decomposes into a name plus street affixes; one of the Tier 2 fine labels.",
+      "relatedTerms": ["street affix", "house number", "fine label"]
+    },
+    {
+      "term": "street affix",
+      "definition": "A modifier on a street name indicating type or direction — Street, Avenue, rue, Calle, N, East. Mailwoman tags these as street_prefix / street_suffix, recognized via a morphology FST.",
+      "aliases": ["street suffix", "street prefix"],
+      "relatedTerms": ["street", "morphology FST", "conventions mask"]
+    },
+    {
+      "term": "unit",
+      "definition": "A subdivision of a building — apartment, suite, floor — that refines a street address. Mailwoman's unit component; a designator plus identifier forms a subpremise.",
+      "relatedTerms": ["subpremise", "designator", "component tag"]
+    },
+    {
+      "term": "country",
+      "definition": "The top-level address component (an ISO country). Closed-vocabulary, so it is best handled by a deterministic matcher feeding a proposal rather than a retrained model head.",
+      "relatedTerms": ["region", "component tag", "lever-shape taxonomy"]
+    },
+    {
+      "term": "venue",
+      "definition": "A named, non-address place — a business, building, park, or stadium. Mailwoman's free-text point-of-interest component, added as a Tier 2 fine label.",
+      "aliases": ["named place"],
+      "relatedTerms": ["point of interest", "component tag", "fine label"]
+    },
+    {
+      "term": "OpenAddresses",
+      "abbreviation": "OA",
+      "definition": "A global open aggregation of address points collected from many official sources. A primary source of component-supervised training data outside proprietary registries.",
+      "relatedTerms": ["corpus", "OpenStreetMap", "NAD"]
+    },
+    {
+      "term": "OpenStreetMap",
+      "abbreviation": "OSM",
+      "definition": "A community-curated global map database (ODbL-licensed) with addr:* tagged features and place hierarchies. A secondary corpus source and a source of street names.",
+      "aliases": ["OSM"],
+      "relatedTerms": ["OpenAddresses", "gazetteer", "interpolation"]
+    },
+    {
+      "term": "Overture Maps",
+      "definition": "An open consortium (Meta, Microsoft, AWS, TomTom) publishing Places and Addresses themes with GERS entity IDs. A candidate gazetteer source for POIs and street-level addresses.",
+      "relatedTerms": ["gazetteer", "point of interest", "OpenStreetMap"]
+    },
+    {
+      "term": "BAN",
+      "abbreviation": "Base Adresse Nationale",
+      "definition": "France's authoritative open national address register — the highest-quality training source for French addresses, with full component structure.",
+      "relatedTerms": ["corpus", "G-NAF", "OpenAddresses"]
+    },
+    {
+      "term": "G-NAF",
+      "abbreviation": "Geocoded National Address File",
+      "definition": "Australia's authoritative open address register (CC-BY-licensed), used as a training source for Australian addresses.",
+      "relatedTerms": ["BAN", "OpenAddresses", "corpus"]
+    },
+    {
+      "term": "GeoNames",
+      "definition": "A free global gazetteer combining administrative, postal, and POI data across 200+ countries. Supplements Who's On First for postcode centroids and places where WOF has gaps.",
+      "relatedTerms": ["WOF", "gazetteer", "locality centroid"]
+    },
+    {
+      "term": "WOF GeoJSON",
+      "definition": "The raw one-feature-per-file GeoJSON distributed by Who's On First repositories — the input that Mailwoman's WOF SQLite build consumes.",
+      "aliases": ["raw WOF"],
+      "relatedTerms": ["WOF", "SQLite-wasm", "placetype"]
+    },
+    {
+      "term": "microhood",
+      "definition": "A Who's On First placetype for a very fine-grained neighbourhood subdivision, sitting below neighbourhood in the hierarchy.",
+      "relatedTerms": ["placetype", "dependent locality", "WOF"]
+    },
+    {
+      "term": "FTS5",
+      "definition": "SQLite's built-in full-text-search module (with BM25 ranking). Mailwoman uses it for prefix and name matching against the gazetteer.",
+      "aliases": ["full-text search"],
+      "relatedTerms": ["resolver", "R*Tree", "SQLite-wasm"]
+    },
+    {
+      "term": "R*Tree",
+      "definition": "SQLite's spatial index of bounding boxes, enabling fast geographic range and nearest-neighbour queries in the resolver.",
+      "aliases": ["spatial index"],
+      "relatedTerms": ["resolver", "FTS5", "H3"]
+    },
+    {
+      "term": "coincident roles",
+      "definition": "A precomputed Who's On First relation that pairs a region with its same-named locality (Berlin city ↔ Berlin state) so the resolver can complete the hierarchy at resolution time.",
+      "aliases": ["coincident-roles relation"],
+      "relatedTerms": ["dual-role place", "hierarchy completion", "WOF"]
+    },
+    {
+      "term": "dual-role place",
+      "definition": "A place that is two placetypes at once — Berlin as both a city and a state, Washington DC as city and district. Resolved using the coincident-roles relation plus hierarchy completion.",
+      "aliases": ["city-state"],
+      "relatedTerms": ["coincident roles", "hierarchy completion", "placetype"]
+    },
+    {
+      "term": "hierarchy completion",
+      "definition": "The post-resolution step that synthesizes a dropped locality when a dual-role region resolves but the parser omitted the city (e.g. supplying 'Berlin' the city under 'Berlin' the state).",
+      "relatedTerms": ["dual-role place", "coincident roles", "parent chain"]
+    },
+    {
+      "term": "parent chain",
+      "definition": "The sequence of administrative parents above a place — Springfield → Sangamon County → Illinois → United States. Used to check the geographic coherence of a parse.",
+      "aliases": ["ancestor chain"],
+      "relatedTerms": ["concordance", "coherence", "placetype"]
+    },
+    {
+      "term": "Wikipedia importance",
+      "definition": "A place-notability score derived from the count and language spread of a place's Wikipedia articles, normalized to [0, 1]. A resolver ranking prior that helps pick the prominent same-named place.",
+      "aliases": ["Wikipedia rank"],
+      "relatedTerms": ["importance score", "prominence signal", "resolver"]
+    },
+    {
+      "term": "importance score",
+      "definition": "A precomputed per-place prominence score (blending Wikipedia importance with population) used to rank same-name gazetteer candidates.",
+      "relatedTerms": ["Wikipedia importance", "prominence signal", "resolver"]
+    },
+    {
+      "term": "logit",
+      "definition": "A raw, unnormalized per-label score the model outputs before softmax. Priors and biases are added in logit space, then softmax turns logits into probabilities.",
+      "aliases": ["raw score"],
+      "relatedTerms": ["emission logit", "softmax", "additive bias"]
+    },
+    {
+      "term": "emission logit",
+      "definition": "The per-token, per-label logit the transformer encoder emits before any external prior is added — the model's own evidence for each label at each position.",
+      "aliases": ["emission score"],
+      "relatedTerms": ["logit", "emission prior", "additive bias"]
+    },
+    {
+      "term": "softmax",
+      "definition": "The function that converts a vector of logits into a probability distribution summing to 1, applied after priors and biases are added to the emission logits.",
+      "relatedTerms": ["logit", "emission logit", "confidence calibration"]
+    },
+    {
+      "term": "additive bias",
+      "definition": "A logit adjustment added before softmax from a prior or external knowledge source, typically soft-capped so it influences but never overrides the model's prediction. The mechanism behind shallow fusion.",
+      "aliases": ["emission bias"],
+      "relatedTerms": ["emission prior", "shallow fusion", "logit"]
+    },
+    {
+      "term": "emission prior",
+      "definition": "A log-probability bias injected into the model's emission logits from an external signal — gazetteer frequency, an FST, a Wikipedia-importance score — combined with the learned weights at decode time.",
+      "relatedTerms": ["additive bias", "shallow fusion", "admin FST"]
+    },
+    {
+      "term": "FST",
+      "abbreviation": "finite-state transducer",
+      "definition": "A compact automaton that reads an input sequence and emits an output sequence. Mailwoman encodes gazetteer names and street affixes as FSTs for fast prefix matching and prior injection without search overhead.",
+      "aliases": ["finite-state transducer"],
+      "relatedTerms": ["admin FST", "morphology FST", "emission prior"]
+    },
+    {
+      "term": "admin FST",
+      "definition": "A finite-state transducer encoding Who's On First admin place names (countries, regions, localities, postcodes) for fast gazetteer lookup and emission priors at inference time. Ships to the browser (~9 MB for 94K US admin places).",
+      "aliases": ["gazetteer FST", "FST gazetteer"],
+      "relatedTerms": ["FST", "emission prior", "gazetteer anchor"]
+    },
+    {
+      "term": "morphology FST",
+      "definition": "A finite-state transducer encoding street-typing affixes (Avenue, rue, Calle) from libpostal dictionaries, for morphological street recognition.",
+      "aliases": ["street-affix FST"],
+      "relatedTerms": ["street affix", "FST", "street-supplement architecture"]
+    },
+    {
+      "term": "street-supplement architecture",
+      "definition": "The four-layer FST stack — morphology, candidacy, identity, schema — that fills the Who's On First street-level hierarchy gap, since WOF has no street node between locality and address.",
+      "relatedTerms": ["morphology FST", "street affix", "WOF"]
+    },
+    {
+      "term": "FiLM modulation",
+      "abbreviation": "Feature-wise Linear Modulation",
+      "definition": "A parameter-efficient adaptation that scales and shifts feature vectors by learned per-example multipliers and biases. Used in self-conditioning to make parsing decisions locale-aware without retraining the whole model.",
+      "relatedTerms": ["self-conditioning", "locale", "neural classifier"]
+    },
+    {
+      "term": "self-conditioning",
+      "definition": "An auxiliary model head that predicts the input's locale (language/country) and then FiLM-modulates the encoder so parsing adapts to the detected locale. Structural facts like word order still need explicit training on both orders.",
+      "aliases": ["locale-conditional decoding"],
+      "relatedTerms": ["FiLM modulation", "multi-order training", "locale gate"]
+    },
+    {
+      "term": "beam search",
+      "definition": "A decoding search that keeps the top-k partial candidates at each position. Used in Stage-5 reconciliation to explore the (phrase, tag, resolver) space with controlled pruning.",
+      "relatedTerms": ["joint decoding", "Viterbi decoding", "inclusion bonus"]
+    },
+    {
+      "term": "concordance",
+      "definition": "A joint-decode signal that rewards a parse whose spans form a consistent Who's On First parent-child chain and vetoes contradictory ones — a hard veto for conflicts, a log-space bonus for full agreement.",
+      "aliases": ["concordance bonus"],
+      "relatedTerms": ["coherence", "parent chain", "joint decoding"]
+    },
+    {
+      "term": "coherence",
+      "definition": "The property of a parse whose resolved places form a consistent geographic hierarchy — the resolved locality really does sit inside the resolved region.",
+      "relatedTerms": ["concordance", "parent chain", "joint decoding"]
+    },
+    {
+      "term": "inclusion bonus",
+      "definition": "A per-word credit added in log space to accepted spans during reconciliation, so an empty parse can't win on multiplicative scoring just by asserting nothing.",
+      "aliases": ["empty-parse bonus"],
+      "relatedTerms": ["beam search", "joint decoding"]
+    },
+    {
+      "term": "isotonic calibration",
+      "definition": "A post-hoc calibration that fits a monotonic map from raw model scores to true probabilities without retraining (via PAVA). Mailwoman's confidence calibrator.",
+      "aliases": ["isotonic regression"],
+      "relatedTerms": ["confidence calibration", "conformal calibration", "ECE"]
+    },
+    {
+      "term": "conformal calibration",
+      "definition": "A calibration method that adjusts per-prediction uncertainty so a target coverage (e.g. 90%) is guaranteed on held-out data, without retraining the model.",
+      "aliases": ["split-conformal"],
+      "relatedTerms": ["isotonic calibration", "confidence calibration"]
+    },
+    {
+      "term": "transition matrix",
+      "definition": "The CRF's learned table of per-label-pair scores. It encodes which BIO transitions are preferred or forbidden — e.g. that an I-tag must follow a matching B- or I-.",
+      "aliases": ["transition scores"],
+      "relatedTerms": ["CRF", "Viterbi decoding", "orphan-I"]
+    },
+    {
+      "term": "max sequence length",
+      "definition": "The maximum number of tokens the model can process at once. Inputs longer than the cap are truncated, dropping tail context.",
+      "relatedTerms": ["truncation", "tokenizer", "token"]
+    },
+    {
+      "term": "truncation",
+      "definition": "Cutting an input down to the max sequence length (or an LLM response to its token limit), discarding everything past the cap.",
+      "relatedTerms": ["max sequence length", "byte fallback"]
+    },
+    {
+      "term": "padding token",
+      "definition": "A filler token added to short sequences to reach a fixed length, masked out during attention so it carries no meaning.",
+      "aliases": ["PAD"],
+      "relatedTerms": ["tokenizer", "max sequence length", "attention"]
+    },
+    {
+      "term": "unknown token",
+      "definition": "A placeholder for input not in the tokenizer's vocabulary. Byte fallback largely removes the need for one by encoding unseen characters as raw bytes instead.",
+      "aliases": ["UNK", "OOV"],
+      "relatedTerms": ["byte fallback", "tokenizer", "SentencePiece"]
+    },
+    {
+      "term": "edit distance",
+      "definition": "The minimum number of single-character insertions, deletions, or substitutions needed to turn one string into another (Levenshtein distance). Used in corpus alignment and record matching.",
+      "aliases": ["Levenshtein distance"],
+      "relatedTerms": ["alignment", "canonical key", "record matching"]
+    },
+    {
+      "term": "deterministic regex repair",
+      "definition": "A post-parse pass that detects patterns the tokenizer fragmented — an alphanumeric postcode shredded into subword pieces, say — and snaps label spans onto regex-matched shapes, fixing zero-F1 cases the model can't recover without retraining.",
+      "relatedTerms": ["postcode", "conventions mask", "check digit"]
+    },
+    {
+      "term": "parse tree",
+      "definition": "The hierarchical address structure produced by decoding BIO labels into spans and nesting them per the schema's containment rules (house_number → street → locality → region → country).",
+      "aliases": ["AddressTree"],
+      "relatedTerms": ["tree projection", "component tag", "coherence"]
+    },
+    {
+      "term": "query kind",
+      "definition": "The coarse category the kind classifier assigns to the whole input — postcode_only, locality_only, structured_address, intersection, po_box, landmark, or vague — used to route processing.",
+      "aliases": ["QueryKind"],
+      "relatedTerms": ["kind classifier", "query shape", "input-shape router"]
+    },
+    {
+      "term": "character class",
+      "definition": "A token's character category — digit, alpha, CJK, Cyrillic, Arabic, mixed — used by the query-shape stage as a structural signal for locale and kind inference.",
+      "relatedTerms": ["query shape", "segment", "known format"]
+    },
+    {
+      "term": "segment",
+      "definition": "A punctuation-bounded chunk of the normalized input — the comma-separated parts of 'Portland, OR' — used to give downstream stages structural context.",
+      "relatedTerms": ["query shape", "character class", "normalize"]
+    },
+    {
+      "term": "known format",
+      "definition": "A recognized postcode or postal pattern (US ZIP, UK postcode, French code postal) detected by regex in the query-shape stage to arm fast paths and locale hints.",
+      "relatedTerms": ["query shape", "postcode", "locale gate"]
+    },
+    {
+      "term": "phrase kind",
+      "definition": "The structural category a phrase-grouper proposal carries — NUMERIC, STREET_PHRASE, LOCALITY_PHRASE, REGION_ABBREVIATION, POSTCODE, VENUE_PHRASE, HYPHENATED_COMPOUND — a 'where, not what' hypothesis.",
+      "aliases": ["PhraseKind"],
+      "relatedTerms": ["phrase grouper", "query kind", "component tag"]
+    },
+    {
+      "term": "coarse-placer",
+      "definition": "A lightweight int8 country classifier (~0.79 MB) that predicts which of a set of target countries an address belongs to, feeding a soft prior into resolver disambiguation.",
+      "relatedTerms": ["country posterior", "soft prior", "input-shape router"]
+    },
+    {
+      "term": "country posterior",
+      "definition": "A country → probability map (derived from postcodes or the coarse-placer) that re-ranks resolver candidates as a soft prior, never a hard filter.",
+      "aliases": ["anchorPosterior"],
+      "relatedTerms": ["coarse-placer", "soft prior", "soft signal"]
+    },
+    {
+      "term": "soft signal",
+      "definition": "An informative but non-authoritative input to ranking — user location, a language prior, a coarse-country guess — that biases the resolver but never hard-filters candidates. The resolver-side cousin of a soft prior.",
+      "relatedTerms": ["soft prior", "country posterior", "coarse-placer"]
+    },
+    {
+      "term": "input-shape router",
+      "definition": "An arbitration prior that reads kind-classifier, query-shape, and coarse-placer signals to set per-component defaults (rule_preferred, neural_preferred, or abstain) according to how clean or out-of-distribution the query is.",
+      "relatedTerms": ["arbitration", "policy registry", "query kind"]
+    },
+    {
+      "term": "gradient accumulation",
+      "definition": "Summing gradients over several minibatches before taking an optimizer step, to simulate a larger effective batch size under limited GPU memory.",
+      "relatedTerms": ["warmup", "gradient clipping", "Modal"]
+    },
+    {
+      "term": "divergence",
+      "definition": "A training failure where loss descends through warmup, plateaus low for a while, then climbs catastrophically back to its starting magnitude — the model unlearns everything despite no obvious component failure.",
+      "aliases": ["training divergence"],
+      "relatedTerms": ["verdict-smoke", "NaN protocol", "label smoothing"]
+    },
+    {
+      "term": "verdict-smoke",
+      "definition": "A short diagnostic training run (≈1,500–3,000 steps) that must match the full run's gradient-noise profile, used to catch recipe instability before committing to a full 50k-step launch.",
+      "aliases": ["smoke test"],
+      "relatedTerms": ["divergence", "NaN protocol", "gated promotion"]
+    },
+    {
+      "term": "NaN protocol",
+      "definition": "The NaN-recovery discipline: stop, change one variable, retry, document the hypothesis — never adjust two knobs at once during recovery, or you can't tell which change fixed it.",
+      "relatedTerms": ["NaN", "divergence", "verdict-smoke"]
+    },
+    {
+      "term": "NaN",
+      "abbreviation": "not a number",
+      "definition": "A floating-point result for an undefined operation (log of a negative, 0/0). Appearing in the training loss usually halts the run; recovering from it follows the NaN protocol.",
+      "relatedTerms": ["NaN protocol", "divergence", "fp32 / fp16"]
+    },
+    {
+      "term": "multi-order training",
+      "definition": "Synthesizing the same address in multiple word orders — native postcode-first vs international house-number-first — so the model learns to read both layouts rather than overfitting one direction.",
+      "relatedTerms": ["self-conditioning", "synthetic shard", "boundary instability"]
+    },
+    {
+      "term": "source weighting",
+      "definition": "Multiplicative per-source weights applied during training to oversample underrepresented corpus sources, balancing a corpus dominated by a few large datasets.",
+      "relatedTerms": ["corpus", "shard", "synthetic shard"]
+    },
+    {
+      "term": "label vacuum",
+      "definition": "A (token, label) pairing introduced by a synthetic shard with zero support in the existing corpus — a corpus-poisoning risk, since the model has no other evidence to anchor it.",
+      "relatedTerms": ["synthetic shard", "corpus", "starved"]
+    },
+    {
+      "term": "LLM-as-corpus-generator",
+      "definition": "Using a large language model to synthesize annotated training rows for low-data or multilingual cases, gated by alignment validation that rejects rows whose components don't substring-match the surface.",
+      "relatedTerms": ["synthetic shard", "reject rate", "alignment"]
+    },
+    {
+      "term": "reject rate",
+      "definition": "The fraction of generated or harvested rows that fail validation and are excluded from the corpus — a quality gauge for a synthesis source.",
+      "relatedTerms": ["LLM-as-corpus-generator", "alignment", "corpus"]
+    },
+    {
+      "term": "Parquet",
+      "definition": "The open columnar file format the corpus is written and streamed in. The training pipeline reads shards row-by-row from Parquet.",
+      "relatedTerms": ["shard", "corpus"]
+    },
+    {
+      "term": "leakage",
+      "definition": "Train/test contamination that inflates reported accuracy when eval data has effectively been seen in training. Mailwoman guards it with held-out-geography evals and locality-aware splits.",
+      "aliases": ["data leakage", "train-test leakage"],
+      "relatedTerms": ["locality-aware split", "honest eval", "generalization"]
+    },
+    {
+      "term": "locality-aware split",
+      "definition": "Partitioning the corpus so all rows from one locality land in the same train/val/test split, preventing the model from memorizing a place in training and being scored on it in test.",
+      "relatedTerms": ["leakage", "honest eval", "golden set"]
+    },
+    {
+      "term": "gated promotion",
+      "definition": "A release discipline where a model ships to production only if it passes pre-registered metrics (e.g. 'DE locality ≥ 70%, no tag regresses > 2pp'). Failing models can be uploaded as experiments but not promoted to default.",
+      "aliases": ["promotion gate"],
+      "relatedTerms": ["parity scorecard", "verdict-smoke", "night shift"]
+    },
+    {
+      "term": "night shift",
+      "definition": "An autonomous overnight agent session — training launches, evals, publishing, issue triage — that ends with a structured postmortem (what shipped, regressions, open questions) committed for handoff.",
+      "relatedTerms": ["gated promotion", "iteration log", "parity scorecard"]
+    },
+    {
+      "term": "p50 / p90 / p99",
+      "definition": "Coordinate-error percentiles: p50 is the median error, p90 the worst 10%, p99 the tail. Reported together so a high p50 (systematic error) is distinguished from a high p90/p99 with low p50 (concentrated edge-case error).",
+      "aliases": ["percentile metrics"],
+      "relatedTerms": ["coord metric", "honest eval", "Acc@1"]
+    },
+    {
+      "term": "Acc@1",
+      "abbreviation": "accuracy at 1",
+      "definition": "The share of eval rows whose top-ranked resolver candidate is the correct place, regardless of coordinate distance — 'did we pick the right place', independent of geocode precision.",
+      "aliases": ["top-1 accuracy"],
+      "relatedTerms": ["coord metric", "exact match", "resolver"]
+    },
+    {
+      "term": "exact match",
+      "definition": "The share of eval items whose every component is correct (compared per-span or per-token). Stricter than per-tag F1, which credits partial correctness.",
+      "relatedTerms": ["harness pass rate", "F1 score", "Acc@1"]
+    },
+    {
+      "term": "harness pass rate",
+      "definition": "Whether a full address parses end-to-end with every component correct and well-segmented and no orphan spans. Stricter than label F1 — a model can win on recall yet fail the harness if boundaries slip.",
+      "aliases": ["end-to-end accuracy"],
+      "relatedTerms": ["exact match", "boundary instability", "honest eval"]
+    },
+    {
+      "term": "per-locale F1",
+      "definition": "Per-tag accuracy computed separately for each locale (US, FR, DE…) rather than aggregated, surfacing locale-specific regressions that macro F1 would mask under the dominant locale.",
+      "relatedTerms": ["macro F1", "cross-pollution", "parity scorecard"]
+    },
+    {
+      "term": "delta F1",
+      "definition": "The F1 difference between two model versions for a tag, used to flag a regression or a gain step-over-step.",
+      "aliases": ["F1 delta"],
+      "relatedTerms": ["F1 score", "parity scorecard", "per-locale F1"]
+    },
+    {
+      "term": "parity scorecard",
+      "definition": "The authoritative per-tag table tracking neural-vs-v0/Pelias F1 and resolver accuracy across head-to-head arenas. It answers 'where are we at parity, where do we still bleed?' and governs the parity campaign's priorities.",
+      "relatedTerms": ["parity campaign", "arena", "lever-shape taxonomy"]
+    },
+    {
+      "term": "arena",
+      "definition": "A standardized test set probing one capability: libpostal (clean canonical), perturb (noisy and degraded), postal (edge formats). Each arena answers a different question about where rule vs neural wins.",
+      "relatedTerms": ["parity scorecard", "honest eval", "adversarial corpus"]
+    },
+    {
+      "term": "lever-shape taxonomy",
+      "definition": "A classification of parity-gap fixes by mechanism: distributional tags (street_prefix, unit, locality) need synthetic shards plus retraining; closed-vocab tags (country, po_box, cedex) respond better to deterministic matchers as proposal sources.",
+      "relatedTerms": ["parity campaign", "synthetic shard", "country"]
+    },
+    {
+      "term": "cross-pollution",
+      "definition": "An eval tripwire for unwanted tag bleed across locales — predicting a German city as a postcode because multi-locale training let one locale's patterns hurt another.",
+      "relatedTerms": ["per-locale F1", "multi-order training", "cumulative dilution"]
+    },
+    {
+      "term": "cumulative dilution",
+      "definition": "The effect where stacking many synthetic shards into one run spreads the step budget thin and weakens each shard's target tag. Shards are best proven solo, then consolidated with a larger step budget.",
+      "relatedTerms": ["synthetic shard", "source weighting", "parity campaign"]
+    },
+    {
+      "term": "starved",
+      "definition": "A tag with too little training representation to learn — near-zero F1 — because the corpus adapter never emits examples of it (intersection tags sat at 0% until an intersection synthesizer existed).",
+      "relatedTerms": ["negative space", "synthetic shard", "intersection"]
+    },
+    {
+      "term": "name-form variant",
+      "definition": "A resolver 'miss' that is really a measurement artifact: the right place is found but its gazetteer-canonical name differs from the eval's expected literal — 'St. Johnsbury' vs 'Saint Johnsbury'.",
+      "relatedTerms": ["canonicalization", "resolver", "honest eval"]
+    },
+    {
+      "term": "grouper-audit",
+      "definition": "A validation pass checking that phrase-grouper spans are internally consistent — no overlaps, no contradictions with BIO structural rules. Audit errors must be zero on a shipping model.",
+      "relatedTerms": ["phrase grouper", "orphan-I", "harness pass rate"]
+    },
+    {
+      "term": "exact-match tiering",
+      "definition": "A resolver ranking strategy that groups candidates by match quality (exact name/alias match vs partial) and ranks within each tier by secondary signals, so a strong population prior can't promote a poor name match.",
+      "relatedTerms": ["resolver", "Acc@1", "parent fallback"]
+    },
+    {
+      "term": "parent fallback",
+      "definition": "Retrying a zero-result parent-constrained resolver lookup ('find this locality inside this region') without the parent constraint but keeping the country, so a slightly-wrong parent doesn't produce silent zero results.",
+      "relatedTerms": ["resolver", "exact-match tiering", "parent chain"]
+    },
+    {
+      "term": "coverage",
+      "definition": "The fraction of a population or region for which a data source has real, non-placeholder entries — e.g. 47% rooftop coverage on Texas addresses. Distinct from accuracy on the rows that are present.",
+      "relatedTerms": ["rooftop", "situs data", "geocode cascade"]
+    },
+    {
+      "term": "annotation noise",
+      "definition": "Errors in human ground-truth labels (typically around 1%) that put an irreducible ceiling on eval metrics — no model can exceed the agreement of the labels it's graded against.",
+      "aliases": ["label noise"],
+      "relatedTerms": ["golden set", "honest eval", "F1 score"]
+    },
+    {
+      "term": "zero-shot",
+      "definition": "Evaluating or predicting on a class or geography the model never saw in training, with no in-context examples — the strongest test of generalization.",
+      "relatedTerms": ["generalization", "honest eval", "leakage"]
+    },
+    {
+      "term": "generalization",
+      "definition": "A trained model's performance on data unlike its training set — new regions, new input distributions. The property honest eval is designed to measure.",
+      "relatedTerms": ["honest eval", "leakage", "zero-shot"]
+    },
+    {
+      "term": "JSEP",
+      "abbreviation": "JavaScript Execution Provider",
+      "definition": "onnxruntime-web's older WebGPU backend. A kernel bug on slice operations with axis reversal corrupted int8 dequantization in the browser; it has been superseded by the native WebGPU execution provider.",
+      "relatedTerms": ["execution provider fallback", "ONNX", "int8 quantization"]
+    },
+    {
+      "term": "execution provider fallback",
+      "definition": "onnxruntime trying its requested backends in order (e.g. ['webgpu', 'wasm']) and silently falling back to the next on failure. Convenient, but it can mask a broken backend — headless Chromium lacks WebGPU, so tests silently ran on WASM.",
+      "relatedTerms": ["JSEP", "ONNX"]
+    },
+    {
+      "term": "WAL + Freeze",
+      "definition": "The SQLite build pattern for the gazetteer: ingest under WAL (write-ahead logging) for concurrent writes, then checkpoint, set journal_mode=DELETE, add indexes, ANALYZE, and VACUUM INTO to emit a clean read-only artifact with no sidecar files.",
+      "relatedTerms": ["SQLite-wasm", "WOF GeoJSON", "FTS5"]
+    },
+    {
+      "term": "bitter lesson",
+      "definition": "Sutton's observation that general methods which scale with compute and data ultimately beat hand-engineered systems. The rationale behind Mailwoman's Ship-of-Theseus migration from rule classifiers to a learned model.",
+      "relatedTerms": ["Ship of Theseus", "rule-based classifier", "neural classifier"]
+    },
+    {
+      "term": "Hidden Markov Model",
+      "abbreviation": "HMM",
+      "definition": "A probabilistic sequence model with unobserved (hidden) states that emit observable outputs. The classical predecessor to neural sequence labelers, and conceptual kin to the CRF's transition structure.",
+      "relatedTerms": ["CRF", "Viterbi decoding", "transition matrix"]
+    },
+    {
+      "term": "two-step floating catchment area",
+      "abbreviation": "2SFCA",
+      "definition": "A spatial-accessibility metric that measures provider supply against population demand within a distance threshold, with distance decay (the E2SFCA variant). Appears in Mailwoman's spatial-demand analysis of geocoded points.",
+      "aliases": ["2SFCA"],
+      "relatedTerms": ["HPSA", "MUA", "geocoding"]
+    },
+    {
+      "term": "HPSA",
+      "abbreviation": "Health Professional Shortage Area",
+      "definition": "A US federal designation identifying areas short of health providers relative to population and need, scored 0–25. An example downstream use of geocoded address data.",
+      "relatedTerms": ["MUA", "IMU", "two-step floating catchment area"]
+    },
+    {
+      "term": "MUA",
+      "abbreviation": "Medically Underserved Area",
+      "definition": "A US federal designation for inadequate primary-care access, scored using the Index of Medical Underservice. Another downstream consumer of accurate geocoding.",
+      "relatedTerms": ["IMU", "HPSA", "two-step floating catchment area"]
+    },
+    {
+      "term": "IMU",
+      "abbreviation": "Index of Medical Underservice",
+      "definition": "The composite score — provider-to-population ratio, poverty rate, infant mortality, and elderly-population share — behind the Medically Underserved Area designation.",
+      "relatedTerms": ["MUA", "HPSA"]
+    },
+    {
+      "term": "machine learning",
+      "abbreviation": "ML",
+      "definition": "Building systems that learn patterns from examples instead of following hand-written rules. Mailwoman's neural classifier is trained on millions of labeled addresses rather than programmed with parsing rules.",
+      "relatedTerms": ["neural classifier", "training", "rule-based classifier"]
+    },
+    {
+      "term": "neural network",
+      "definition": "A model made of layers of simple numeric units whose connection strengths (weights) are learned from data. The transformer encoder at Mailwoman's core is a neural network.",
+      "aliases": ["net"],
+      "relatedTerms": ["transformer", "parameter", "layer"]
+    },
+    {
+      "term": "training",
+      "definition": "The process of adjusting a model's parameters so its predictions match labeled examples, by repeatedly measuring error and nudging the weights to reduce it. Distinct from inference, when the trained model is run on new input.",
+      "relatedTerms": ["inference", "loss function", "gradient descent"]
+    },
+    {
+      "term": "inference",
+      "definition": "Running a trained model on new input to get predictions — as opposed to training, which produces the model. Mailwoman's inference path is the staged pipeline a user actually calls.",
+      "relatedTerms": ["training", "production scorer", "staged pipeline"]
+    },
+    {
+      "term": "parameter",
+      "definition": "A single learned number inside a model — one weight or bias. Mailwoman's encoder has roughly 30 million of them; training is the search for good values.",
+      "aliases": ["weight", "model parameter"],
+      "relatedTerms": ["neural network", "training", "encoder"]
+    },
+    {
+      "term": "hyperparameter",
+      "definition": "A training setting chosen by the engineer rather than learned by the model — learning rate, batch size, number of layers, label-smoothing strength. Tuning hyperparameters is much of the craft of training.",
+      "relatedTerms": ["learning rate", "batch size", "training"]
+    },
+    {
+      "term": "loss function",
+      "definition": "A number measuring how wrong the model's predictions are on a batch of examples. Training minimizes it. Mailwoman's loss combines per-token negative log-likelihood with the CRF sequence loss.",
+      "aliases": ["training objective", "loss"],
+      "relatedTerms": ["NLL", "cross-entropy", "gradient descent"]
+    },
+    {
+      "term": "cross-entropy",
+      "definition": "The standard classification loss: it penalizes a model for putting low probability on the correct label. Per-token negative log-likelihood is the cross-entropy of each token's label.",
+      "aliases": ["cross-entropy loss", "CE loss"],
+      "relatedTerms": ["NLL", "loss function", "softmax"]
+    },
+    {
+      "term": "gradient",
+      "definition": "The direction and rate at which the loss would change if each parameter were nudged. Training follows the gradient downhill to reduce error. Huge gradients are tamed by gradient clipping.",
+      "relatedTerms": ["gradient descent", "backpropagation", "gradient clipping"]
+    },
+    {
+      "term": "backpropagation",
+      "definition": "The algorithm that computes the gradient of the loss with respect to every parameter by applying the chain rule backward through the network. The engine behind neural-network training.",
+      "aliases": ["backprop"],
+      "relatedTerms": ["gradient", "gradient descent", "training"]
+    },
+    {
+      "term": "gradient descent",
+      "definition": "The optimization method behind training: repeatedly compute the gradient on a batch and step the parameters a small amount in the downhill direction. 'Stochastic' gradient descent uses one minibatch at a time.",
+      "aliases": ["SGD", "stochastic gradient descent"],
+      "relatedTerms": ["gradient", "optimizer", "learning rate"]
+    },
+    {
+      "term": "optimizer",
+      "definition": "The component that decides how to update parameters from the gradient — Adam/AdamW being the common choice, adding momentum and per-parameter scaling on top of plain gradient descent.",
+      "aliases": ["Adam", "AdamW"],
+      "relatedTerms": ["gradient descent", "learning rate", "gradient accumulation"]
+    },
+    {
+      "term": "learning rate",
+      "abbreviation": "LR",
+      "definition": "How big a step training takes along the gradient each update. Too high and training diverges; too low and it crawls. Mailwoman warms it up, then decays it on a cosine schedule.",
+      "relatedTerms": ["learning-rate schedule", "warmup", "divergence"]
+    },
+    {
+      "term": "learning-rate schedule",
+      "definition": "A plan for changing the learning rate over training — Mailwoman's is linear warmup to a peak, then cosine decay toward zero. Smooths early instability and lets the model settle at the end.",
+      "aliases": ["LR schedule", "cosine decay"],
+      "relatedTerms": ["learning rate", "warmup"]
+    },
+    {
+      "term": "batch size",
+      "definition": "How many examples the model processes before each parameter update. Larger batches give smoother gradients but cost more memory; gradient accumulation simulates a big batch on a small GPU.",
+      "aliases": ["batch", "minibatch"],
+      "relatedTerms": ["gradient accumulation", "hyperparameter", "training"]
+    },
+    {
+      "term": "overfitting",
+      "definition": "When a model memorizes quirks of its training set instead of learning general patterns, so it scores well in training but poorly on new data. Guarded against with held-out evals and regularization.",
+      "aliases": ["memorization"],
+      "relatedTerms": ["underfitting", "regularization", "leakage"]
+    },
+    {
+      "term": "underfitting",
+      "definition": "When a model is too simple or undertrained to capture the patterns in its data, so it performs poorly even on the training set. The opposite failure from overfitting.",
+      "relatedTerms": ["overfitting", "training"]
+    },
+    {
+      "term": "regularization",
+      "definition": "Techniques that discourage a model from overfitting — label smoothing, dropout, weight decay. They trade a little training accuracy for better generalization.",
+      "relatedTerms": ["overfitting", "label smoothing", "generalization"]
+    },
+    {
+      "term": "embedding",
+      "definition": "A vector of numbers representing a token (or other item) so that similar items sit near each other in vector space. The first thing the model does is turn each token into an embedding.",
+      "aliases": ["embedding vector"],
+      "relatedTerms": ["embedding space", "hidden state", "token"]
+    },
+    {
+      "term": "hidden state",
+      "definition": "The model's internal vector for a token after the encoder has mixed in surrounding context. The contextualized representation the classifier head reads to assign a label.",
+      "aliases": ["representation", "hidden representation"],
+      "relatedTerms": ["embedding", "encoder", "attention"]
+    },
+    {
+      "term": "embedding space",
+      "definition": "The high-dimensional space in which embeddings and hidden states live. Geometry there is meaningful — distance and direction encode similarity and relationships learned from data.",
+      "aliases": ["vector space", "representation space"],
+      "relatedTerms": ["embedding", "hidden state"]
+    },
+    {
+      "term": "layer",
+      "definition": "One transformer block — attention plus a feed-forward network, with normalization and residual connections — applied to every position. Stacking layers lets the model build up richer representations; Mailwoman's encoder has 6.",
+      "aliases": ["transformer block", "encoder layer"],
+      "relatedTerms": ["encoder", "attention", "feed-forward network"]
+    },
+    {
+      "term": "attention head",
+      "definition": "One of several parallel attention computations in a layer, each free to focus on a different kind of relationship between tokens. Their outputs are concatenated — 'multi-head attention'. Mailwoman uses 4 heads.",
+      "aliases": ["multi-head attention", "head"],
+      "relatedTerms": ["attention", "layer", "encoder"]
+    },
+    {
+      "term": "hidden dimension",
+      "definition": "The length of each token's vector inside the model — its representational width. Mailwoman's encoder uses 256. Wider models hold more information per token but cost more compute.",
+      "aliases": ["hidden size", "model dimension"],
+      "relatedTerms": ["embedding", "hidden state", "encoder"]
+    },
+    {
+      "term": "feed-forward network",
+      "definition": "The per-token transformation inside each transformer layer that follows attention: a small two-layer network applied independently at every position.",
+      "aliases": ["FFN", "MLP"],
+      "relatedTerms": ["layer", "attention", "encoder"]
+    },
+    {
+      "term": "layer normalization",
+      "definition": "A step that rescales a vector to a stable range before the next sublayer, keeping activations well-behaved and training stable. A standard ingredient of transformer layers.",
+      "aliases": ["layer norm", "LayerNorm"],
+      "relatedTerms": ["layer", "residual connection", "encoder"]
+    },
+    {
+      "term": "residual connection",
+      "definition": "A shortcut that adds a sublayer's input to its output, so information and gradients flow easily through deep stacks. Part of why deep transformers train at all.",
+      "aliases": ["skip connection"],
+      "relatedTerms": ["layer", "layer normalization", "backpropagation"]
+    },
+    {
+      "term": "dropout",
+      "definition": "A regularization trick that randomly zeroes a fraction of activations during training, forcing the model not to rely on any single feature. Disabled at inference.",
+      "relatedTerms": ["regularization", "overfitting", "training"]
+    },
+    {
+      "term": "bidirectional context",
+      "definition": "Letting each token attend to tokens on both its left and its right. Mailwoman's encoder is bidirectional — it reads the whole address at once, unlike a left-to-right language model.",
+      "aliases": ["bidirectional attention"],
+      "relatedTerms": ["attention", "encoder", "transformer"]
+    },
+    {
+      "term": "context window",
+      "definition": "The span of input a model can consider at once, bounded by its max sequence length. Everything in the window can influence every token's label via attention.",
+      "relatedTerms": ["max sequence length", "attention", "token"]
+    },
+    {
+      "term": "language model",
+      "abbreviation": "LM",
+      "definition": "A model that assigns probabilities to sequences of tokens. Used here mostly as a prior — an FST or n-gram model that biases the decoder toward plausible sequences via shallow fusion.",
+      "relatedTerms": ["n-gram", "shallow fusion", "emission prior"]
+    },
+    {
+      "term": "n-gram",
+      "definition": "A contiguous run of n tokens (a bigram is 2, a trigram is 3). Counting n-grams is a simple, pre-neural way to model which token sequences are common.",
+      "relatedTerms": ["language model", "token", "corpus"]
+    },
+    {
+      "term": "vocabulary",
+      "definition": "The fixed set of tokens a tokenizer can produce. Mailwoman's SentencePiece vocabulary is tens of thousands of subword pieces, with byte fallback for anything outside it.",
+      "aliases": ["vocab", "token inventory"],
+      "relatedTerms": ["tokenizer", "SentencePiece", "subword tokenization"]
+    },
+    {
+      "term": "subword tokenization",
+      "definition": "Splitting words into smaller learned pieces so a fixed vocabulary can spell any word — common words stay whole, rare ones break into parts. The approach SentencePiece implements.",
+      "relatedTerms": ["SentencePiece", "tokenizer", "byte fallback"]
+    },
+    {
+      "term": "one-hot encoding",
+      "definition": "Representing a category as a vector that is 1 at the category's index and 0 everywhere else. The 'hard target' a classifier is trained toward — until label smoothing softens it.",
+      "relatedTerms": ["label smoothing", "cross-entropy", "embedding"]
+    },
+    {
+      "term": "feature",
+      "definition": "An input signal a model conditions on. Beyond the raw tokens, Mailwoman feeds soft features — gazetteer-membership channels and the postcode anchor — that inform predictions without overriding them.",
+      "aliases": ["input feature"],
+      "relatedTerms": ["soft features", "gazetteer anchor", "anchor inference"]
+    },
+    {
+      "term": "ground truth",
+      "definition": "The correct answer for an example, used as the standard a prediction is graded against. Mailwoman's ground truth is the hand-labeled golden set; its quality caps achievable accuracy.",
+      "aliases": ["gold label"],
+      "relatedTerms": ["golden set", "annotation noise", "eval"]
+    },
+    {
+      "term": "precision",
+      "definition": "Of the spans the model labeled as a given tag, the fraction it got right. High precision means few false positives. Paired with recall to compute F1.",
+      "relatedTerms": ["recall", "F1 score", "macro F1"]
+    },
+    {
+      "term": "recall",
+      "definition": "Of the spans that truly are a given tag, the fraction the model found. High recall means few misses. Paired with precision to compute F1.",
+      "aliases": ["sensitivity"],
+      "relatedTerms": ["precision", "F1 score", "macro F1"]
+    },
+    {
+      "term": "ensemble",
+      "definition": "Combining several models' predictions to cut variance and improve robustness. A general ML technique, noted in the docs as a lever Mailwoman has not needed to pull.",
+      "relatedTerms": ["neural classifier", "generalization"]
+    }
+  ]
+}
