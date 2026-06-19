@@ -116,26 +116,39 @@ function render(random, c) {
 	const loc = random() < 0.1 ? c.commune.toUpperCase() : c.commune
 	const dep = c.departement
 	const pc = c.postcode
+	let out
 	if (r < 0.25) {
 		// 1. bare comma, NO postcode — the Thauron/#727 shape (anchor off)
-		return { raw: `${loc}, ${dep}`, components: { locality: loc, region: dep }, order: "bare-comma" }
+		out = { raw: `${loc}, ${dep}`, components: { locality: loc, region: dep }, order: "bare-comma" }
 	} else if (r < 0.5) {
 		// 2. bare comma + postcode — anchor ON
-		return {
+		out = {
 			raw: `${loc}, ${dep} ${pc}`,
 			components: { locality: loc, region: dep, postcode: pc },
 			order: "bare-comma-pc",
 		}
 	} else if (r < 0.7) {
 		// 3. space-delimited admin (the AU `CANBERRA ACT` fuse applied to FR) — anchor ON
-		return { raw: `${loc} ${dep} ${pc}`, components: { locality: loc, region: dep, postcode: pc }, order: "space-pc" }
+		out = { raw: `${loc} ${dep} ${pc}`, components: { locality: loc, region: dep, postcode: pc }, order: "space-pc" }
 	} else if (r < 0.85) {
 		// 4. canonical FR postcode-first (NO département) — preservation, anchor ON
-		return { raw: `${pc} ${loc}`, components: { postcode: pc, locality: loc }, order: "canonical-pc-first" }
+		out = { raw: `${pc} ${loc}`, components: { postcode: pc, locality: loc }, order: "canonical-pc-first" }
 	} else {
 		// 5. commune + postcode (NO département) — preservation, anchor ON
-		return { raw: `${loc} ${pc}`, components: { locality: loc, postcode: pc }, order: "commune-pc" }
+		out = { raw: `${loc} ${pc}`, components: { locality: loc, postcode: pc }, order: "commune-pc" }
 	}
+	// fr.country preservation (the v1.8.0 #728 finding): the v1.8.0 shard's bare rows carried NO country
+	// token, so the model under-emitted country on FR (fr.country −3.5pp). ~20% of rows now append an
+	// explicit "France" + a `country` component — the model relearns to emit country WHEN the token is
+	// present without over-firing it on the (still-majority) country-less rows. Substring invariant holds.
+	if (random() < 0.2) {
+		out = {
+			raw: `${out.raw}, France`,
+			components: { ...out.components, country: "France" },
+			order: `${out.order}+fr`,
+		}
+	}
+	return out
 }
 
 async function main() {
