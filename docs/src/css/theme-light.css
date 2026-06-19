@@ -30,16 +30,18 @@
 	--ifm-color-white: #fff;
 	--ifm-color-black: #000;
 	--ifm-color-gray-0: var(--ifm-color-white);
-	--ifm-color-gray-100: hwb(49 96% 3%);
-	--ifm-color-gray-200: hwb(43 92% 6%);
-	--ifm-color-gray-300: hwb(41 85% 12%);
-	--ifm-color-gray-400: hwb(40 80% 16%);
-	--ifm-color-gray-500: hwb(40 75% 21%);
-	--ifm-color-gray-600: hwb(42 55% 38%);
-	--ifm-color-gray-700: hwb(41 38% 56%);
-	--ifm-color-gray-800: hsl(42 8% 29%);
-	--ifm-color-gray-900: hwb(43 11% 87%);
+
+	--ifm-color-gray-100: oklch(92.8% 0.006 264.531);
+	--ifm-color-gray-200: oklch(87.2% 0.01 258.338);
+	--ifm-color-gray-300: oklch(70.7% 0.022 261.325);
+	--ifm-color-gray-400: oklch(55.1% 0.027 264.364);
+	--ifm-color-gray-500: oklch(44.6% 0.03 256.802);
+	--ifm-color-gray-600: oklch(37.3% 0.034 259.733);
+	--ifm-color-gray-700: oklch(27.8% 0.033 256.848);
+	--ifm-color-gray-800: oklch(21% 0.034 264.665);
+	--ifm-color-gray-900: oklch(13% 0.028 261.692);
 	--ifm-color-gray-1000: var(--ifm-color-black);
+
 	--ifm-color-content-secondary: rebeccapurple;
 
 	--ifm-global-border-width: 1px;
