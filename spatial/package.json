@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/spatial",
-	"version": "4.10.0",
+	"version": "4.11.0",
 	"description": "Spatial analysis, geocoding, and other geo-related utilities.",
 	"license": "AGPL-3.0-only",
 	"contributors": [
