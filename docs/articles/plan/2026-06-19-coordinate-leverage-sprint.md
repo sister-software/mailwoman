@@ -148,6 +148,47 @@ WOF re-ingest** — the places largely exist, they're modelled at a different gr
 township/CDP granularity mapping. Whether US-coverage or EU-coverage is the sprint's priority is the
 strategic fork below.
 
+### Workstream A — EU parse-blocker result (2026-06-19)
+
+Ran `scripts/eval/eu-parse-blocker.ts` on the in-repo OA samples (1500 rows/locale, ship-config
+v4.11.0 parse, `normalizeCase` on). The proxy is **gated on whether the admin token is actually IN the
+input** (the first cut wasn't, and wrongly flagged ES/IT/NL as parser-blocked — OA writes "street,
+postcode locality" and the province is implied by the postcode, NOT a token, so there is nothing to
+split). Corrected:
+
+| locale | region-in-input     | admin-split (when in input) | **loc-emit → loc-correct** | route                           |
+| ------ | ------------------- | --------------------------- | -------------------------- | ------------------------------- |
+| FR     | n/a (OA omits dépt) | — (v1.8.0 BAN gate: 99.6%)  | 100% → **97.7%**           | done                            |
+| DE     | **100%**            | **32.7%** (drops 67%)       | 66% → **36.3%**            | **PARSER_SHARD**                |
+| ES     | 8.6%                | —                           | 98% → **21.3%**            | parser (locality) then coverage |
+| IT     | 1.9%                | —                           | 100% → **58.7%**           | coverage + parser polish        |
+| NL     | 2.9%                | —                           | 99% → **64.0%**            | coverage + parser polish        |
+
+**The finding overturns the simple "coverage wins for EU" narrative — and DeepSeek's "just ingest WOF"
+bet. The binding EU constraint is the PARSER, not (yet) coverage.** The model emits a locality almost
+always (98%+) but gets it _right_ only 21–64% outside FR (vs FR 97.7%, US ~98%). It's en-us-centric;
+only FR got a dedicated shard. Per locale:
+
+- **DE — parser, and it's the cleanest next FR-style win.** The region is always in the input
+  (`Mülsen, Sachsen`; `Berlin, Berlin`) and the parser drops it 67% of the time _and_ drops the
+  locality on the city-state / `City, Region PLZ` format (loc-correct 36%). Crucially **DE is already in
+  the resolver DB** (US/DE/FR) — so a DE admin-split / `City,Region` shard (the FR template) moves the
+  DE coordinate immediately, no ingest required. Overlaps the known German city-state work.
+- **ES — a specific, likely-cheap parser bug.** loc-correct 21% because the Spanish street keyword
+  `CALLE` isn't recognized and bleeds into the locality (`CALLE HUERTA…` → locality `ALLE CA`). ES is
+  also zero-DB, so it needs coverage too — but the locality must parse first.
+- **IT / NL — coverage (zero-DB) primary**, with modest locality-parse polish (59% / 64%).
+
+**Caveats (loc-correct is a FLOOR):** strict `normName` equality under-counts multi-token / bilingual /
+variant names — ES is additionally depressed by bilingual slash-truth (`Sant Vicent del Raspeig/San
+Vicente del Raspeig`); DE by the city-state drop. The relative ordering (FR ≫ IT/NL > DE > ES) is the
+trustworthy signal, not the absolute floors. OA samples are clean-ish; real traffic may differ.
+
+**Routing implication:** the EU multi-locale bet is a bigger, more parser-shaped lift than "ingest WOF"
+— per-locale parser readiness gates the coordinate before coverage can pay off. The lowest-friction
+EU coordinate win is a **DE admin-split shard** (resolver already covers DE; clear, measured parse
+gap), directly reusing the FR-admin-split template.
+
 ## The strategic fork (operator's call — surfaced, not assumed)
 
 Volume-weighting is **circular** for us. "US is ~65% of queries" is an artifact of what we currently
