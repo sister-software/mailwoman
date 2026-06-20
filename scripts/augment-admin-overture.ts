@@ -23,10 +23,64 @@
  */
 
 import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
+import { buildPlaceSearchFts } from "@mailwoman/resolver-wof-sqlite/fts"
 import { createUnifiedIndexes, populateAncestors } from "@mailwoman/resolver-wof-sqlite/unified-schema"
-import { copyFileSync, existsSync, unlinkSync } from "node:fs"
+import { copyFileSync, existsSync, readFileSync, unlinkSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { ingestOvertureDivisions } from "./build-unified-wof.ts"
+
+function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
+	const R = 6371
+	const toRad = (d: number): number => (d * Math.PI) / 180
+	const dLat = toRad(bLat - aLat)
+	const dLon = toRad(bLon - aLon)
+	const x = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLon / 2) ** 2
+	return 2 * R * Math.asin(Math.sqrt(x))
+}
+
+/**
+ * Set `place_population` for Overture-backfilled cities from a GeoNames cities dump (tab-separated:
+ * geonameid, name, asciiname, altnames, lat, lon, fclass, fcode, country, …, population at index
+ * 14). Match each GeoNames city by name/asciiname + country against the `names` table, nearest
+ * centroid within 50 km. ONLY touches Overture rows (`id >= 2e9`; WOF ids are < 2e9, so their
+ * populations are left intact). This is what lets a major foreign city outrank its small US homonym
+ * — without a population the cascade ranks Moscow RU below Moscow, Idaho.
+ */
+function applyGeoNamesPopulation(db: DatabaseSync, citiesFile: string): number {
+	const findByName = db.prepare(
+		"SELECT n.id AS id, s.latitude AS lat, s.longitude AS lon FROM names n JOIN spr s ON n.id = s.id WHERE n.name = ? AND n.country = ? AND n.id >= 2000000000"
+	)
+	const setPop = db.prepare("INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)")
+	const lines = readFileSync(citiesFile, "utf8").split("\n")
+	let set = 0
+	db.exec("BEGIN")
+	for (const line of lines) {
+		if (!line) continue
+		const f = line.split("\t")
+		const lat = Number(f[4])
+		const lon = Number(f[5])
+		const country = f[8]
+		const pop = Number(f[14])
+		if (!pop || !country || !Number.isFinite(lat)) continue
+		let best: number | null = null
+		let bestD = Infinity
+		for (const nm of new Set([f[1], f[2]].filter(Boolean))) {
+			for (const r of findByName.all(nm, country) as Array<{ id: number; lat: number; lon: number }>) {
+				const d = haversineKm(lat, lon, Number(r.lat), Number(r.lon))
+				if (d < bestD) {
+					bestD = d
+					best = Number(r.id)
+				}
+			}
+		}
+		if (best != null && bestD < 50) {
+			setPop.run(best, pop)
+			set++
+		}
+	}
+	db.exec("COMMIT")
+	return set
+}
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
@@ -40,6 +94,7 @@ const COUNTRIES = arg("countries")
 	.map((c) => c.trim().toUpperCase())
 	.filter(Boolean)
 const RELEASE = arg("release", "2026-06-17.0")
+const GEONAMES = arg("geonames") // optional GeoNames cities dump → population for the backfilled cities
 
 if (!OUT || COUNTRIES.length === 0) {
 	console.error(
@@ -63,12 +118,24 @@ const idBase = Number((db.prepare("SELECT COALESCE(MAX(id), 0) AS m FROM spr").g
 const n = await ingestOvertureDivisions(db, COUNTRIES, RELEASE, idBase)
 console.error(`Ingested ${n.toLocaleString()} ${COUNTRIES.join(",")} divisions from Overture`)
 
+if (GEONAMES) {
+	console.error(`Applying GeoNames population from ${GEONAMES} ...`)
+	const set = applyGeoNamesPopulation(db, GEONAMES)
+	console.error(`  set population on ${set.toLocaleString()} Overture cities`)
+}
+
 console.error("Re-freezing: ancestors closure ...")
 populateAncestors(db)
 console.error("  coincident_roles ...")
 buildCoincidentRoles(db)
 console.error("  indexes ...")
 createUnifiedIndexes(db)
+// Rebuild the place_search FTS from the names table — the candidate's alias pass reads
+// place_search.alt_names, so without this the augmented places' aliases (incl. the multilingual
+// English names) never reach the candidate, and a non-Latin city resolves only by its local-script
+// primary. drop:true so it includes the newly-ingested rows.
+console.error("  place_search FTS (so the candidate's alias pass sees the new places) ...")
+buildPlaceSearchFts(db, { drop: true })
 db.exec("ANALYZE")
 db.exec("PRAGMA optimize")
 

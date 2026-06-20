@@ -63,6 +63,49 @@ test.describe("Demo — resolution cascade", () => {
 		demo.console.assertNoFailEvents()
 	})
 
+	test("Russian address — Moscow resolves to Russia, not Moscow, Idaho (-20g world coverage)", async ({ demo }) => {
+		// -20g folds ~70 countries' Overture divisions + GeoNames population + multilingual aliases. So
+		// the English "Moscow" (an alias of Москва) resolves, and the 10.4M-pop RU city outranks the
+		// 26k-pop US homonym. Grade the COORDINATE: Moscow ≈ 55.7, 37.6 — not Idaho (46.7, -117).
+		await demo.goto("Moscow, Russia")
+		await demo.submit()
+		const { resolved, markerCount } = await demo.readResult()
+		expect(markerCount).toBeGreaterThan(0)
+		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
+		expect(lat, `resolved lat ${lat} should be Moscow RU`).toBeGreaterThan(55.3)
+		expect(lat).toBeLessThan(56.1)
+		expect(lon).toBeGreaterThan(37.2)
+		expect(lon).toBeLessThan(38.0)
+		demo.console.assertNoFailEvents()
+	})
+
+	test("Egyptian address — Cairo resolves to Egypt via its English alias (-20g)", async ({ demo }) => {
+		// Cairo's Overture primary is القاهرة; the en alias + GeoNames population (9.6M) put it on the map.
+		await demo.goto("Cairo, Egypt")
+		await demo.submit()
+		const { resolved, markerCount } = await demo.readResult()
+		expect(markerCount).toBeGreaterThan(0)
+		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
+		expect(lat, `resolved lat ${lat} should be Cairo EG`).toBeGreaterThan(29.7)
+		expect(lat).toBeLessThan(30.4)
+		expect(lon).toBeGreaterThan(31.0)
+		expect(lon).toBeLessThan(31.6)
+		demo.console.assertNoFailEvents()
+	})
+
+	test("Australian address — Sydney resolves to NSW (-20g Latin-primary coverage)", async ({ demo }) => {
+		await demo.goto("Sydney, NSW, Australia")
+		await demo.submit()
+		const { resolved, markerCount } = await demo.readResult()
+		expect(markerCount).toBeGreaterThan(0)
+		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
+		expect(lat, `resolved lat ${lat} should be Sydney AU`).toBeGreaterThan(-34.3)
+		expect(lat).toBeLessThan(-33.5)
+		expect(lon).toBeGreaterThan(150.8)
+		expect(lon).toBeLessThan(151.5)
+		demo.console.assertNoFailEvents()
+	})
+
 	test("White House default — surfaces no fail-pattern errors even when resolver returns nothing", async ({ demo }) => {
 		// Postcode 20500 has lat=0/lon=0 in WOF; cascade filters it; raw text + locality may also
 		// miss. The test isn't asserting the resolution succeeds — it's asserting that the

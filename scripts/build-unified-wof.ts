@@ -238,13 +238,16 @@ export async function ingestOvertureDivisions(
 
 	const instance = await DuckDBInstance.create()
 	const con = await instance.connect()
-	await con.run("INSTALL httpfs; LOAD httpfs; INSTALL spatial; LOAD spatial; SET s3_region='us-west-2';")
+	await con.run(
+		"INSTALL httpfs; LOAD httpfs; INSTALL spatial; LOAD spatial; INSTALL json; LOAD json; SET s3_region='us-west-2';"
+	)
 	await con.run("SET memory_limit='4GB'; SET threads=4;")
 
 	console.error(`  Overture divisions: querying ${countries.join(",")} @ release ${release}...`)
 	const result = await con.runAndReadAll(`
 		SELECT id,
 			names.primary AS name,
+			to_json(names.common) AS common_json,
 			subtype,
 			country,
 			ST_Y(ST_Centroid(geometry)) AS lat,
@@ -272,6 +275,11 @@ export async function ingestOvertureDivisions(
 	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
 
 	const num = (v: unknown): number => (typeof v === "number" ? v : typeof v === "bigint" ? Number(v) : 0)
+	// Keep only Latin-script common-name aliases (English + major-language transliterations — the names a
+	// Latin-keyboard user actually queries: "Moscow", "Moscou", "Moskva"). The local-script primary
+	// (Москва, القاهرة) is kept separately; obscure non-Latin aliases (Armenian, Mingrelian, …) would
+	// bloat the candidate for ~zero query value.
+	const isLatin = (s: string): boolean => /^[\p{Script=Latin}\p{N}\p{P}\s]+$/u.test(s)
 
 	db.exec("BEGIN")
 	let n = 0
@@ -304,6 +312,23 @@ export async function ingestOvertureDivisions(
 			0
 		)
 		namesInsert.run(nid, name, subtype, country, "", 0)
+		// Multilingual aliases (names.common — language→name, incl. English / Latin transliterations) so a
+		// non-Latin-script place (Москва, القاهرة, กรุงเทพมหานคร) still resolves by its English/Latin name.
+		// The candidate build explodes every alias here into its own name_key.
+		if (r.common_json) {
+			try {
+				const common = JSON.parse(String(r.common_json)) as Record<string, string>
+				const seen = new Set([name])
+				for (const [lang, alias] of Object.entries(common)) {
+					if (typeof alias === "string" && alias.length > 0 && !seen.has(alias) && isLatin(alias)) {
+						seen.add(alias)
+						namesInsert.run(nid, alias, subtype, country, lang, 0)
+					}
+				}
+			} catch {
+				/* malformed common map — keep the primary, skip aliases */
+			}
+		}
 		const pop = num(r.population)
 		if (pop > 0) populationInsert.run(nid, pop)
 		n++

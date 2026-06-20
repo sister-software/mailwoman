@@ -172,7 +172,7 @@ export function streetShardUrl(slug: string, kind: "situs" | "interp"): string {
  * is rebuilt + re-uploaded (the immutable Cache-Control means a fresh DB needs a fresh URL). See
  * RELEASING.md "Rebuilding + swapping the canonical admin gazetteer".
  */
-export const ADMIN_GAZETTEER_VERSION = "2026-06-20f"
+export const ADMIN_GAZETTEER_VERSION = "2026-06-20g"
 
 /**
  * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~530 MB incl. US + intl
