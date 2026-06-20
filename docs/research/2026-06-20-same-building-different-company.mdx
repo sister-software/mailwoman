@@ -1,0 +1,78 @@
+---
+slug: same-building-different-company
+title: "Same building. Different company. Now what?"
+authors: [teffen]
+tags: [record-matching, geocoding, coordinate-first, motivation]
+date: 2026-06-20
+---
+
+You have a pile of records and no key to join them on. A clinic shows up in the federal provider registry, again in a state licensing export, a third time in a funding-program spreadsheet somebody keyed by hand. None of those files share an identifier. The provider number is internal to one publisher, the facility ID to another. So the join you actually want — *which of these are the same place* — isn't a join at all. It's a judgment call, repeated a few million times.
+
+The market hands you two tools for this, and each one solves a different half of the problem. Neither one finishes.
+
+{/* truncate */}
+
+## The two tools, and the halves they skip
+
+The first tool is a string matcher. Splink, Zingg, dedupe, the fuzzy-match block inside Tamr or Tilores: you feed them name and address columns and they score how similar the text is. This is the obvious move, and used as the *whole* answer it inherits an obvious flaw. Text similarity is not place similarity. Two doors down the same street is one character apart. The same building written two different ways can be string-distant. You spend the next month tuning a threshold that's too loose in the cities and too tight in the suburbs, and it's never right in both at once. (We took this apart line by line in [Match where it is, not how it's spelled](/research/match-where-it-is-not-how-its-spelled); the short version is that `Jyllandsgade 15` and `Jyllandsgade 75` score 0.96 similar and sit 650 metres apart, and no threshold saves you from that.)
+
+That doesn't make strings useless. Names are some of the best evidence you have, and in a minute I'm going to argue you should lean on them hard. The catch is narrower: a string only knows how a record is spelled, never where it sits, so it can't be the thing you *block* on. Hold that thought.
+
+The second tool is a join key. Placekey, SmartyKey, our own `@mailwoman/address-id`: they normalize the address, geocode it, and hand you back a deterministic identifier. Records that mint the same key are at the same place. This is genuinely better than string matching, because it keys on *where* instead of on *spelling*. Placekey will happily tell you those two records are the same building.
+
+And then it stops. Because same building is the easy eighty percent.
+
+## A key gets you to the doormat
+
+Here's the part the key vendors are quiet about. At `1504 Taub Loop` in Houston, four separate provider registrations resolve to the same rooftop, and all four are Baylor College of Medicine, one organization filed four ways. A deterministic key buckets them together, correctly. Good. But one address over, a single medical-office building holds a dozen genuinely distinct practices: different owners, different specialties, different everything except the street number. The key buckets *them* together too. Now it's wrong, and it can't tell you which case you're in, because a hexagon doesn't have an opinion.
+
+Placekey's own FAQ says it plainly: it "operates as a universal join key rather than a matching service… it doesn't perform record linkage itself." Read that as the spec, because it is one. A key is where the problem starts. Same building is where the interesting question begins: same building, different company name on the door, are these one entity or two?
+
+That question needs a probability, not a bucket.
+
+## The missing half: a number you can read, and the humility to abstain
+
+This is the half Mailwoman is built around. We resolve every record to a coordinate and a place hierarchy first, blocking on *where*, and then run a real probabilistic scorer over the candidates that share a place. It's Fellegi-Sunter. Every field agreement or disagreement contributes a weight in bits, the weights add up, and you get a calibrated probability that two records are the same entity, with the evidence laid out so you can see *why*. A shared rare street counts for more than a shared common one. A shared rooftop counts for more than a shared interpolated guess, because the geocoder tells the matcher how sure it was. The string comparison is right there in the score too: Jaro-Winkler over the names, a rare-token agreement on the organization name pulling hard while a shared `LLC` barely moves the needle. The names kept their job. We just moved them off deciding *where* and onto deciding *who*, which is what they were always good at. And when the number lands in the murky middle, the matcher doesn't flip a coin — it **abstains**, and routes the pair to a human, where it belongs.
+
+So the pitch, in one breath: *Placekey tells you two records are the same building. Mailwoman tells you, with a calibrated probability and a reason you can read, whether they're the same company, and says "I don't know, look at this one" when it shouldn't guess.* That's the linker the key vendors stop short of, the geography the string-only matchers skipped, and a place to put the name-matching that mattered all along.
+
+## When the string is the answer, normalize it first
+
+Which ought to settle the strings-versus-coordinates argument, because sometimes the string really is the answer. Reconciling the federal provider registry against the FCC's funding records is exactly that case. The same health system lands in one file as `BAYLOR COLLEGE OF MEDICINE` and in the other as `Baylor Coll. of Medicine`, or as a d/b/a, or with a `, LLC` that the other publisher dropped. Geography gets you into the same neighborhood, so the two records are plausibly the same place. What actually decides *same entity* is the name, once you stop treating it as a literal string and start treating it intelligently.
+
+So you normalize first. `canonicalizeOrganizationName` strips the legal-form noise (`LLC`, `Inc`, a leading `The`), splits the d/b/a, normalizes punctuation, and leans on the ISO 20275 entity-form list so `Coll` and `College` stop reading as different words. *Then* the names get compared, and a rare-token agreement on `Baylor` counts for a great deal more than a shared `Medical Center`. It's the same mechanism doing two opposite jobs at once. The building with a dozen distinct practices stays a dozen entities, same coordinate but different normalized names, while one facility filed twice under different operational names collapses into one. The coordinate does the blocking. The intelligent string match does the deciding. Neither one alone gets NPPES and the FCC to agree; together they do.
+
+## You don't have labels, and that's fine
+
+The other thing every ML-flavored matcher assumes is that you have training data. Zingg wants you to label thirty to fifty pairs to start; dedupe runs an active-learning loop that's all labeling; Tamr wants ongoing human curation. You don't have any of that. You have a pile of CSVs and a deadline.
+
+Mailwoman's scorer estimates its own parameters from the data, unsupervised, with expectation-maximization. That's the same label-free Fellegi-Sunter math Splink uses, which is the honest comparison here: Splink does this too, and does it at a scale we haven't matched. The difference is that Splink expects *you* to have already turned the addresses into coordinates, while Mailwoman owns the whole stack from raw string to resolved place to calibrated link. And when you *do* have labels, an optional gradient-boosted scorer picks up the non-linear interactions the hand-built weights miss, worth about six points of pairwise F1 and five of clustering F1 in our held-out tests, across every random seed we tried.
+
+## It travels
+
+The worry with any learned scorer is that it's just memorizing one dataset's quirks. So we trained the boosted scorer on Texas providers and turned it loose on states it had never seen. It beat the unsupervised baseline by 20.5 points of F1 on California and 21.9 on New York, held out. The signal it learns, what over-merging actually looks like, isn't Texas-shaped. It transfers.
+
+## Show your ruler
+
+One more thing, because it's the part that earns trust. "F1 of 68%" is meaningless until you say *against what*. Grade the exact same clusters against four different definitions of truth and the number walks from 53.6% to 68.1%. The clusters never changed; the only thing that moved was the ruler, as it got honest about what counts as one entity. We hand-adjudicated 120 of the hardest co-located, name-similar, distinct-ID pairs in Texas: all 120 were the same real-world organization under different registrations, and zero were unrelated companies wrongly fused. We report the ruler next to the number. Most vendors won't show you theirs.
+
+## Own it, and what it doesn't do
+
+It runs on your machine. Open source, your infrastructure, no per-record meter. That matters when the alternatives are AWS at $0.25 per thousand records billed on the non-matches too, Senzing starting around $58k a year, and Tamr, Quantexa, and Tilores all behind a "request a quote." Your data never leaves your control, which for compliance and healthcare records is frequently the whole requirement.
+
+And the honest boundaries, because the angles above only hold if I'm straight about these. Placekey *does* embody place-identity matching; angle four is the rebuttal, but the overlap is real. Melissa ships genuine, patented coordinate-proximity matching, so "nobody touches a coordinate" would be a lie; our narrower, true claim is that we make the *calibrated* coordinate the primary evidence in a probabilistic model. Splink has the label-free spine at far more scale. The enterprise incumbents beat us on raw volume, multi-domain mastering, support, and decades of name-matching lore. What none of them put together is open, label-free, geocode-first, with the geocoder and the linker in one auditable stack. That's the seam, and it's a real one.
+
+Whatever the matcher surfaces is a candidate for review, not a verdict. What a correlation means, and whether it means anything, is your call.
+
+```bash
+npm install @mailwoman/registry
+```
+
+```ts
+import { resolveEntities, toMapHTML } from "@mailwoman/registry"
+
+const entities = await resolveEntities(records, { /* sensible defaults */ })
+// → clustered entities, each with a coordinate, a cohesion score, and the records it merged
+```
+
+`resolveEntities` runs the whole block → score → cluster pipeline; `toMapHTML` drops the result on a map so you can see, dataset by dataset, what linked to what.

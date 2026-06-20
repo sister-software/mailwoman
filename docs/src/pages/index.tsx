@@ -9,27 +9,94 @@ import type { ReactNode } from "react"
 import styles from "./index.module.css"
 
 function HomepageHeader(): ReactNode {
-	const { siteConfig } = useDocusaurusContext()
 	return (
 		<header className={clsx("hero", styles.heroBanner)}>
 			<div className="container">
+				<p className={styles.heroEyebrow}>Open source · No API key · Runs in your browser</p>
 				<Heading as="h1" className={styles.heroTitle}>
-					{siteConfig.title}
+					Still assembling a geocoder from spare parts?
 				</Heading>
-				<p className={styles.heroSubtitle}>{siteConfig.tagline}</p>
+				<p className={styles.heroSubtitle}>
+					Mailwoman parses, geocodes, and resolves messy records to real places — so you can stop stitching tools
+					together and get back to the problem you were actually solving.
+				</p>
 				<div className={styles.heroButtons}>
 					<Link className="button button--primary button--lg" to="/demo">
 						Try the demo
 					</Link>
 					<Link className="button button--secondary button--lg" to="/docs/getting-started">
-						Get started
-					</Link>
-					<Link className="button button--secondary button--lg" to="/docs/plan">
-						Read the plan
+						Read the docs
 					</Link>
 				</div>
+				<p className={styles.heroTransform}>
+					<span className={styles.heroIn}>"1600 Pennsylvania Ave NW"</span>
+					<span className={styles.heroArrow}>→</span>
+					<span className={styles.heroOut}>38.8977, -77.0365</span>
+					<span className={styles.heroTier}>rooftop</span>
+				</p>
 			</div>
 		</header>
+	)
+}
+
+function Gallery(): ReactNode {
+	return (
+		<section className={styles.gallery}>
+			<div className="container">
+				<Heading as="h2" className={styles.galleryHeading}>
+					What you'd build with it
+				</Heading>
+				<p className={styles.gallerySub}>
+					Recognizable jobs you've lost a week to, done without the assembly tax — and every one runs on open data you
+					can audit.
+				</p>
+				<div className={clsx("row", styles.galleryRow)}>
+					<div className="col col--4">
+						<div className={styles.galleryCard}>
+							<p className={styles.cardJob}>Parse</p>
+							<h3 className={styles.cardTitle}>Untangle any address line</h3>
+							<p className={styles.cardBody}>
+								Paste a gnarly, half-formatted, mistyped address and watch the neural parser label every component —
+								house number, street, unit, city, postcode — across locales, live in the page.
+							</p>
+							<code className={styles.cardTransform}>"Apt 4, 12 Rue de Rivoli, 75001 Paris" → unit·house·street·postcode·city</code>
+							<p className={styles.cardLinks}>
+								<Link to="/demo">Open the playground →</Link>
+							</p>
+						</div>
+					</div>
+					<div className="col col--4">
+						<div className={styles.galleryCard}>
+							<p className={styles.cardJob}>Geocode</p>
+							<h3 className={styles.cardTitle}>Geocode on-device</h3>
+							<p className={styles.cardBody}>
+								Resolve an address to a real coordinate with no server, no API key, and no query leaving the machine. A
+								29.8 MB model and a byte-ranged global gazetteer do it in the tab.
+							</p>
+							<code className={styles.cardTransform}>"350 5th Ave, New York" → 40.7484, -73.9857 · rooftop</code>
+							<p className={styles.cardLinks}>
+								<Link to="/demo">Try the demo</Link> ·{" "}
+								<Link to="/research/geocoding-that-never-phones-home">Read the story →</Link>
+							</p>
+						</div>
+					</div>
+					<div className="col col--4">
+						<div className={styles.galleryCard}>
+							<p className={styles.cardJob}>Match</p>
+							<h3 className={styles.cardTitle}>Match records by place, not spelling</h3>
+							<p className={styles.cardBody}>
+								Resolve fragmented records with no shared key into entities. Block on the geocoded place, then match on
+								canonicalized names, with a calibrated score and an abstain band for review.
+							</p>
+							<code className={styles.cardTransform}>123 Main St + 123 Main Street Apt 2 → 1 entity</code>
+							<p className={styles.cardLinks}>
+								<Link to="/research/same-building-different-company">Read the story →</Link>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
 	)
 }
 
@@ -58,8 +125,9 @@ function FeatureStrip(): ReactNode {
 					<div className="col col--4">
 						<h3>Pure-TypeScript runtime</h3>
 						<p>
-							Mailwoman runs on Node 22+ today; the resolver + classifier are being ported to <code>sqlite-wasm</code> +{" "}
-							<code>onnxruntime-web</code> so the same pipeline can run client-side without an API server.
+							Mailwoman runs on Node 22+ and, as the <Link to="/demo">live demo</Link> shows, entirely in the browser —
+							the classifier on <code>onnxruntime-web</code>, the resolver on <code>sql.js-httpvfs</code> over a
+							byte-ranged gazetteer. The same pipeline client-side, no API server.
 						</p>
 					</div>
 				</div>
@@ -118,6 +186,7 @@ export default function Home(): ReactNode {
 		>
 			<HomepageHeader />
 			<main>
+				<Gallery />
 				<FeatureStrip />
 				<QuickStart />
 			</main>
