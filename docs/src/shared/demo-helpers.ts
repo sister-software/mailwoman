@@ -263,10 +263,12 @@ export async function runCascade(
 	}
 
 	// Resolve the locality FIRST: its population-ranked country (Berlin → Berlin DE 3.5M, not Berlin NH)
-	// gates the postcode below, so an ambiguous INTERNATIONAL postcode — 10115 is both Berlin DE and a New
-	// York US ZIP, and the candidate gazetteer carries US postcodes only — can't out-resolve the parsed
-	// city. The postcode still WINS when it resolves within the locality's country (the most precise tier);
-	// it just can't drag a German address to New York.
+	// gates the postcode below, so an ambiguous INTERNATIONAL postcode — 10115 is both a Berlin DE postcode
+	// and a New York US ZIP (the candidate gazetteer now carries US + DE/FR/EU postcodes) — can't out-
+	// resolve the parsed city across countries. The postcode still WINS when it resolves within the
+	// locality's country (the most precise tier — 10115 → the Berlin DE point); it just can't drag a German
+	// address to New York. A bare postcode with no parsed locality stays country-ambiguous (a known edge —
+	// see #153 follow-up); every demo example carries a gating locality.
 	const localityHits = await resolveLocality(regionBbox)
 
 	if (postcodeNode?.value) {

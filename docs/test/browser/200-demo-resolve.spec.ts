@@ -26,18 +26,22 @@ test.describe("Demo — resolution cascade", () => {
 		demo.console.assertNoFailEvents()
 	})
 
-	test("German address — postcode 10115 country-gates to Berlin, not New York", async ({ demo }) => {
+	test("German address — postcode 10115 country-gates into Berlin, not New York", async ({ demo }) => {
 		// Regression for the candidate-table cascade: 10115 is both a Berlin DE postcode and a New York US
-		// ZIP, and the gazetteer carries US postcodes only. Postcode-first-unconstrained used to short-
-		// circuit to NYC. The locality must resolve first (Berlin → DE by population) and country-gate the
-		// postcode, landing the result in Berlin.
+		// ZIP, and the gazetteer now carries US + DE/FR/EU postcodes. The locality must resolve first
+		// (Berlin → DE by population) and country-gate the postcode, so it resolves to the DE 10115 point —
+		// IN Berlin — never the NYC ZIP. Grade the COORDINATE (postcode-precise now): Berlin ≈ 52.5, 13.4,
+		// not Manhattan ≈ 40.8, -74.0.
 		await demo.goto("5 Hauptstraße, Berlin, Berlin 10115")
 		await demo.submit()
 
 		const { resolved, markerCount } = await demo.readResult()
 		expect(markerCount).toBeGreaterThan(0)
-		expect(resolved["name"]).toBe("Berlin")
-		expect(resolved["placetype"]).toBe("locality")
+		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
+		expect(lat, `resolved lat ${lat} should be in Berlin`).toBeGreaterThan(52.3)
+		expect(lat).toBeLessThan(52.7)
+		expect(lon, `resolved lon ${lon} should be in Berlin`).toBeGreaterThan(13.0)
+		expect(lon).toBeLessThan(13.8)
 		demo.console.assertNoFailEvents()
 	})
 

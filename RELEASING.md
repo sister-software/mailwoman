@@ -167,10 +167,15 @@ See `project-candidate-table-byte-range`.
 To get new admin coverage into the demo after a gazetteer rebuild:
 
 ```bash
-# 1. Build the candidate table from the (rebuilt) admin DB + the US postcode shard.
+# 1. Build the candidate table from the (rebuilt) admin DB + the postcode shards.
+#    --postcodes is repeatable: US + the intl shard (NL/FR/DE/ES/IT, real coords). Each ZIP becomes a
+#    `postalcode` candidate row so findPlace(postalcode) resolves directly; the demo cascade country-gates
+#    an ambiguous postcode (10115 = Berlin DE + NYC) by resolving the locality first. GB (2.6M full
+#    postcodes) is deliberately left out — it ~5×'s the file for marginal demo value.
 node resolver-wof-sqlite/out/build-candidate-cli.js \
   --in  /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
   --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-us.db \
+  --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-intl.db \
   --out /mnt/playpen/mailwoman-data/wof/candidate-global.db
 # 2. Bump ADMIN_GAZETTEER_VERSION in docs/src/shared/resources.tsx (the immutable cache needs a fresh URL).
 # 3. Upload to the new path:
