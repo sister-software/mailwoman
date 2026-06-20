@@ -21,7 +21,7 @@ import type {
 	MailwomanClassifierLike,
 	MailwomanLookupLike,
 } from "../shared/resources.tsx"
-import { assetUrl, loadFstGazetteer } from "../shared/resources.tsx"
+import { adminGazetteerUrl, assetUrl, loadFstGazetteer } from "../shared/resources.tsx"
 
 import type { ReleasesManifest } from "../shared/demo-helpers.ts"
 import { DEFAULT_LOCALE } from "../shared/demo-helpers.ts"
@@ -213,10 +213,10 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 
 				if (release?.hasWofDb) {
 					try {
-						const { loadHttpvfsDb, WofHttpvfsPlaceLookup } = await import("../shared/httpvfs-resolver")
-						const worker = await loadHttpvfsDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"), sqljsBaseUrl)
+						const { loadHttpvfsDb, WofCandidateTableLookup } = await import("../shared/httpvfs-resolver")
+						const worker = await loadHttpvfsDb(adminGazetteerUrl(), sqljsBaseUrl)
 						if (cancelled) return
-						const wofLookup = new WofHttpvfsPlaceLookup(worker)
+						const wofLookup = new WofCandidateTableLookup(worker)
 						// Fire-and-forget: pull the schema/FTS/dual-role pages through the VFS now so the
 						// first interactive query starts warm. The worker serializes execs, so a user query
 						// issued mid-warm-up simply queues behind pages it was going to need anyway.

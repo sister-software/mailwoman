@@ -25,6 +25,9 @@ import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
 // docs/plugins/demo-assets/resolve.mjs) — the shared alias-bag parser keeps this backend's exact
 // tier identical to the Node + WASM resolvers'.
 import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
+// THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
+// one-normalizer discipline that keeps the candidate table's keys reachable by construction.
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 import type { DualRole, MailwomanLookupLike } from "./resources"
 
@@ -389,6 +392,128 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 							}
 						: undefined,
 			}))
+	}
+}
+
+/** Cached id↔text maps from the candidate DB's tiny code tables (one probe, memoized). */
+interface CandidateCodeMaps {
+	countryToId: Map<string, number>
+	placetypeToId: Map<string, number>
+	idToPlacetype: Map<number, string>
+}
+
+/**
+ * PlaceLookup over the byte-range CANDIDATE table (`build-candidate.ts`) — the FTS-free gazetteer
+ * that replaces the slim `wof-hot.db` for the demo. A resolve is a single contiguous B-tree probe
+ * on `name_key` (the shared {@link normalizeLocalityForKey}, build/query-consistent): no FTS, no
+ * join — each row is denormalized (display `name`, centroid, bbox) and population rank is
+ * precomputed into `neg_rank`. Drop-in for {@link WofHttpvfsPlaceLookup} (same `MailwomanLookupLike`
+ * surface), but ~12 range fetches per session instead of 243 on the full DB, with GLOBAL coverage.
+ *
+ * Disambiguation rides the SAME mechanism the demo cascade already uses: a parsed region resolves
+ * to its stored bbox (returned in `findPlace`'s result), and the locality query is
+ * point-in-bbox-filtered on the candidate centroid — exactly what `runCascade` expects.
+ */
+export class WofCandidateTableLookup implements MailwomanLookupLike {
+	#worker: HttpvfsWorker
+	#codes: Promise<CandidateCodeMaps> | undefined
+
+	constructor(worker: HttpvfsWorker) {
+		this.#worker = worker
+	}
+
+	#codeMaps(): Promise<CandidateCodeMaps> {
+		if (!this.#codes) {
+			this.#codes = (async () => {
+				const cc = rowsFromExec(await this.#worker.db.exec("SELECT id, code FROM country_codes"))
+				const pt = rowsFromExec(await this.#worker.db.exec("SELECT id, placetype FROM placetype_codes"))
+				const countryToId = new Map<string, number>()
+				for (const r of cc) countryToId.set(String(r.code).toUpperCase(), Number(r.id))
+				const placetypeToId = new Map<string, number>()
+				const idToPlacetype = new Map<number, string>()
+				for (const r of pt) {
+					placetypeToId.set(String(r.placetype), Number(r.id))
+					idToPlacetype.set(Number(r.id), String(r.placetype))
+				}
+				return { countryToId, placetypeToId, idToPlacetype }
+			})()
+			this.#codes.catch(() => {
+				this.#codes = undefined
+			})
+		}
+		return this.#codes
+	}
+
+	/** Pull the code tables + a representative probe through the VFS during browser idle. */
+	async warmUp(): Promise<void> {
+		await this.#codeMaps()
+		await this.#worker.db.exec(
+			`SELECT spr_id, name, latitude, longitude FROM candidate WHERE name_key = 'springfield' ORDER BY neg_rank ASC LIMIT 3`
+		)
+	}
+
+	/** Total bytes range-fetched so far — surfaces live transfer progress in the demo UI. */
+	bytesRead(): Promise<number> {
+		return this.#worker.bytesRead()
+	}
+
+	async findPlace(query: Parameters<MailwomanLookupLike["findPlace"]>[0]) {
+		const text = (query.text ?? "").trim()
+		if (!text) return []
+		const nameKey = normalizeLocalityForKey(text)
+		if (!nameKey) return []
+		const limit = Math.max(1, query.limit ?? 10)
+		const { countryToId, placetypeToId, idToPlacetype } = await this.#codeMaps()
+
+		const conds = [`name_key = ${sqlStr(nameKey)}`]
+		if (query.country) {
+			const cid = countryToId.get(query.country.toUpperCase())
+			if (cid === undefined) return [] // a country the candidate table doesn't carry
+			conds.push(`country_id = ${cid}`)
+		}
+		if (query.placetype) {
+			// Shared placetype-equivalence expansion (a `locality` query must also reach borough /
+			// localadmin). `postalcode` maps to no admin placetype here → empty → no rows (postcodes
+			// live in a separate shard, resolved off the anchor bins, not this table).
+			const ids = expandPlacetypeFilter([query.placetype])
+				.map((t) => placetypeToId.get(t))
+				.filter((v): v is number => v !== undefined)
+			if (ids.length === 0) return []
+			conds.push(`placetype_id IN (${ids.join(",")})`)
+		}
+		if (query.bbox) {
+			const b = query.bbox
+			conds.push(
+				`latitude BETWEEN ${Number(b.minLat)} AND ${Number(b.maxLat)} AND longitude BETWEEN ${Number(b.minLon)} AND ${Number(b.maxLon)}`
+			)
+		}
+
+		const sql =
+			`SELECT spr_id, name, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank ` +
+			`FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ${limit}`
+		const rows = rowsFromExec(await this.#worker.db.exec(sql))
+		return rows.map((row) => {
+			const hasBbox = row.min_lat != null && row.max_lat != null && row.min_lon != null && row.max_lon != null
+			return {
+				id: Number(row.spr_id),
+				name: String(row.name ?? ""),
+				placetype: idToPlacetype.get(Number(row.placetype_id)) ?? "",
+				lat: Number(row.latitude),
+				lon: Number(row.longitude),
+				score: -(row.neg_rank as number),
+				// Every candidate row IS an exact normalized-name (or alias/abbrev) match — the cascade's
+				// exact tier accepts alias-exact hits ("New York City" → New York) the same as canonical.
+				exactMatch: true,
+				bbox: hasBbox
+					? {
+							minLat: Number(row.min_lat),
+							maxLat: Number(row.max_lat),
+							minLon: Number(row.min_lon),
+							maxLon: Number(row.max_lon),
+						}
+					: undefined,
+			}
+		})
 	}
 }
 

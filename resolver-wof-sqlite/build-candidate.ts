@@ -12,19 +12,20 @@
  *   resolve is one contiguous B-tree probe (a handful of pages → 1-2 chunk fetches, regardless of
  *   global volume).
  *
- *   A resolve is a single statement, no FTS, no join to spr: SELECT spr_id, latitude, longitude,
- *   population FROM candidate WHERE name_key = ? AND country_id = ? [AND region_id = ?] AND
- *   placetype_id IN (...) ORDER BY neg_rank ASC LIMIT K; `region_id` (the place's region-tier
- *   ancestor) disambiguates same-name collisions ("Springfield, IL") via a cheap 2-step (resolve
- *   the region first, then filter) at no extra fetch cost.
+ *   Each row is DENORMALIZED — it carries the place's display `name`, centroid (`latitude`/
+ *   `longitude`), and `min/max` bbox — so a resolve is one statement, no FTS, no join to spr:
+ *   SELECT spr_id, name, latitude, longitude, min_lat, ... FROM candidate WHERE name_key = ? AND
+ *   country_id = ? AND placetype_id IN (...) [AND latitude BETWEEN ...] ORDER BY neg_rank ASC LIMIT
+ *   K; The demo cascade resolves a parsed region first (its bbox), then constrains the locality to
+ *   that bbox; `region_id` (the place's region-tier ancestor) is also carried for a future region
+ *   2-step.
  *
  *   The name_key normalizer is the SHARED {@link normalizeLocalityForKey} — the query side (the demo
- *   resolver) MUST use the same function, the one-normalizer discipline the address-point shard
- *   uses.
+ *   resolver {@link WofCandidateTableLookup}) MUST use the same function, the one-normalizer
+ *   discipline the address-point shard uses, so build/query stay consistent by construction.
  *
- *   Measured (2026-06-20, vs the 2.6 GB full-DB FTS): ~5 M rows / ~270 MB; 13 range fetches / 0.9 MB
- *   per 8-query session (the full DB needs 243); US locality accuracy 96.8% with the region
- *   2-step.
+ *   Measured (2026-06-20, vs the 2.6 GB full-DB FTS): ~5 M rows; ~12 range fetches per 8-query
+ *   session (the full DB needs 243); US locality 96.8% (region bbox), EU coord parity 88.6%.
  */
 
 import { existsSync, rmSync } from "node:fs"
@@ -32,11 +33,10 @@ import { DatabaseSync } from "node:sqlite"
 import { normalizeLocalityForKey } from "./street-normalize.js"
 
 /** Boundary-preserving alias-bag separator (#523, U+E000). */
-const ALIAS_SEP = ""
+const ALIAS_SEP = "\u{E000}"
 
 export interface BuildCandidateOptions {
-	/** Source unified admin DB (e.g. admin-global-priority.db) — needs spr, place_population,
-place_search, place_abbr, ancestors. */
+	/** Source unified admin DB — needs spr, place_population, place_search, place_abbr, ancestors. */
 	input: string
 	/** Output candidate DB path (overwritten if present). */
 	output: string
@@ -56,8 +56,13 @@ interface PlaceAttrs {
 	cid: number
 	rid: number
 	ptid: number
+	name: string
 	lat: number
 	lon: number
+	mnLat: number
+	mnLon: number
+	mxLat: number
+	mxLon: number
 	pop: number
 	neg: number
 	pkey: string
@@ -74,7 +79,8 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		CREATE TABLE country_codes (id INTEGER PRIMARY KEY, code TEXT UNIQUE);
 		CREATE TABLE placetype_codes (id INTEGER PRIMARY KEY, placetype TEXT UNIQUE);
 		CREATE TABLE cand_stage (name_key TEXT, country_id INTEGER, region_id INTEGER, placetype_id INTEGER,
-			neg_rank REAL, spr_id INTEGER, latitude REAL, longitude REAL, population INTEGER, is_primary INTEGER);
+			neg_rank REAL, spr_id INTEGER, name TEXT, latitude REAL, longitude REAL,
+			min_lat REAL, min_lon REAL, max_lat REAL, max_lon REAL, population INTEGER, is_primary INTEGER);
 	`)
 
 	// --- compact code maps (country/placetype → small int, shrinks the clustered key) ---
@@ -111,7 +117,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	}
 	progress("region", `${regionOf.size.toLocaleString()} places carry a region`)
 
-	const insStage = out.prepare("INSERT INTO cand_stage VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	const insStage = out.prepare("INSERT INTO cand_stage VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 
 	// --- pass 1: primaries (and the per-place attrs the alias/abbrev passes reuse) ---
 	progress("primaries", "indexing place names")
@@ -121,7 +127,9 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	for (const r of src
 		.prepare(
 			`SELECT s.id AS id, s.name AS name, s.placetype AS placetype, s.country AS country,
-				s.latitude AS lat, s.longitude AS lon, COALESCE(pp.population,0) AS pop
+				s.latitude AS lat, s.longitude AS lon,
+				s.min_latitude AS mnlat, s.min_longitude AS mnlon, s.max_latitude AS mxlat, s.max_longitude AS mxlon,
+				COALESCE(pp.population,0) AS pop
 			 FROM spr s LEFT JOIN place_population pp ON pp.id = s.id
 			 WHERE s.is_current != 0 AND s.is_deprecated = 0`
 		)
@@ -132,17 +140,51 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		const rid = regionOf.get(sid) ?? 0
 		const pop = Number(r.pop) || 0
 		const neg = -Math.log10(pop + 1)
-		const pkey = normalizeLocalityForKey(String(r.name ?? ""))
-		const lat = r.lat as number
-		const lon = r.lon as number
-		attrs.set(sid, { cid, rid, ptid, lat, lon, pop, neg, pkey })
+		const name = String(r.name ?? "")
+		const pkey = normalizeLocalityForKey(name)
+		const a: PlaceAttrs = {
+			cid,
+			rid,
+			ptid,
+			name,
+			lat: r.lat as number,
+			lon: r.lon as number,
+			mnLat: r.mnlat as number,
+			mnLon: r.mnlon as number,
+			mxLat: r.mxlat as number,
+			mxLon: r.mxlon as number,
+			pop,
+			neg,
+			pkey,
+		}
+		attrs.set(sid, a)
 		if (pkey) {
-			insStage.run(pkey, cid, rid, ptid, neg, sid, lat, lon, pop, 1)
+			insStage.run(pkey, cid, rid, ptid, neg, sid, name, a.lat, a.lon, a.mnLat, a.mnLon, a.mxLat, a.mxLon, pop, 1)
 			nPrim++
 		}
 	}
 	out.exec("COMMIT")
 	progress("primaries", `${nPrim.toLocaleString()} primaries; ${attrs.size.toLocaleString()} places`)
+
+	const stageRow = (k: string, a: PlaceAttrs, sid: number, isPrimary: number): void => {
+		insStage.run(
+			k,
+			a.cid,
+			a.rid,
+			a.ptid,
+			a.neg,
+			sid,
+			a.name,
+			a.lat,
+			a.lon,
+			a.mnLat,
+			a.mnLon,
+			a.mxLat,
+			a.mxLon,
+			a.pop,
+			isPrimary
+		)
+	}
 
 	// --- pass 2: distinct normalized aliases from place_search.alt_names ---
 	progress("aliases", "exploding alias bags")
@@ -157,7 +199,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			const k = normalizeLocalityForKey(piece)
 			if (!k || seen.has(k)) continue
 			seen.add(k)
-			insStage.run(k, a.cid, a.rid, a.ptid, a.neg, Number(r.wof_id), a.lat, a.lon, a.pop, 0)
+			stageRow(k, a, Number(r.wof_id), 0)
 			nAlias++
 		}
 	}
@@ -172,7 +214,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		if (!a) continue
 		const k = normalizeLocalityForKey(String(r.abbr ?? ""))
 		if (!k) continue
-		insStage.run(k, a.cid, a.rid, a.ptid, a.neg, Number(r.id), a.lat, a.lon, a.pop, 1)
+		stageRow(k, a, Number(r.id), 1)
 		nAbbr++
 	}
 	out.exec("COMMIT")
@@ -184,12 +226,14 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		CREATE TABLE candidate (
 			name_key TEXT NOT NULL, country_id INTEGER NOT NULL, region_id INTEGER NOT NULL,
 			placetype_id INTEGER NOT NULL, neg_rank REAL NOT NULL, spr_id INTEGER NOT NULL,
-			latitude REAL, longitude REAL, population INTEGER, is_primary INTEGER,
+			name TEXT, latitude REAL, longitude REAL, min_lat REAL, min_lon REAL, max_lat REAL, max_lon REAL,
+			population INTEGER, is_primary INTEGER,
 			PRIMARY KEY (name_key, country_id, region_id, placetype_id, neg_rank, spr_id)
 		) WITHOUT ROWID;
 		-- OR IGNORE: an abbrev/alias can normalize to a place's primary key (same place, same rank) → any one row.
 		INSERT OR IGNORE INTO candidate
-			SELECT name_key, country_id, region_id, placetype_id, neg_rank, spr_id, latitude, longitude, population, is_primary
+			SELECT name_key, country_id, region_id, placetype_id, neg_rank, spr_id, name, latitude, longitude,
+				min_lat, min_lon, max_lat, max_lon, population, is_primary
 			FROM cand_stage ORDER BY name_key, country_id, region_id, placetype_id, neg_rank, spr_id;
 		DROP TABLE cand_stage;
 	`)

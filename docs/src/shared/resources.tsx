@@ -161,6 +161,27 @@ export function streetShardUrl(slug: string, kind: "situs" | "interp"): string {
 }
 
 /**
+ * Gazetteer (date) version for the byte-ranged admin DB. The admin gazetteer is MODEL-INDEPENDENT —
+ * it changes when WOF/Overture coverage is rebuilt, NOT on every model release — so it lives on its
+ * own dated path, not under `<locale>/<model-version>/`. Bump this when `admin-global-priority.db`
+ * is rebuilt + re-uploaded (the immutable Cache-Control means a fresh DB needs a fresh URL). See
+ * RELEASING.md "Rebuilding + swapping the canonical admin gazetteer".
+ */
+export const ADMIN_GAZETTEER_VERSION = "2026-06-20"
+
+/**
+ * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~490 MB) — the FTS-free,
+ * single-B-tree-probe lookup that replaces the slim per-model-version `wof-hot.db` AND the full-DB
+ * FTS. A resolve touches a handful of contiguous pages (~12 range fetches/session vs 243 on the
+ * full DB), with GLOBAL coverage and no `SLIM_COUNTRIES` upkeep. Resolved by
+ * {@link WofCandidateTableLookup} (build-candidate.ts). Hosted at
+ * `mailwoman/gazetteer/<date>/candidate.db`, version-independent like the street shards.
+ */
+export function adminGazetteerUrl(): string {
+	return `${ASSET_BASE_URL}gazetteer/${ADMIN_GAZETTEER_VERSION}/candidate.db`
+}
+
+/**
  * Slugs we host street shards for (byte-range on R2). A state not in this set falls through to the
  * WOF admin centroid. Extend as shards are published — NY/MI/CA is the launch trio (the spec's size
  * spread); DC is the dense-urban verification (the White House resolves to its exact building).

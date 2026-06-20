@@ -35,6 +35,7 @@ import { PermalinkButton } from "../../components/PermalinkButton/PermalinkButto
 import { ResultPanel } from "../../components/ResultPanel/ResultPanel.tsx"
 import { VersionCompare } from "../../components/VersionCompare/VersionCompare.tsx"
 import {
+	adminGazetteerUrl,
 	assetUrl,
 	type DemoResult,
 	type DualRole,
@@ -363,9 +364,9 @@ const DemoApp: React.FC = () => {
 				if (release?.hasWofDb) {
 					setLookupLoader(() => async (onProgress?: (bytesRead: number) => void) => {
 						// Range-load the DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
-						const { loadHttpvfsDb, WofHttpvfsPlaceLookup } = await import("../../shared/httpvfs-resolver")
-						const worker = await loadHttpvfsDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"), sqljsBaseUrl)
-						const wofLookup = new WofHttpvfsPlaceLookup(worker)
+						const { loadHttpvfsDb, WofCandidateTableLookup } = await import("../../shared/httpvfs-resolver")
+						const worker = await loadHttpvfsDb(adminGazetteerUrl(), sqljsBaseUrl)
+						const wofLookup = new WofCandidateTableLookup(worker)
 						// Warm the schema/FTS/abbr/dual-role pages now (idle or first submit) so the first
 						// real query starts from a warm page cache; report live transfer while it runs.
 						const poll = onProgress
