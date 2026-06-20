@@ -185,9 +185,23 @@ python3 scripts/publish-demo-assets-to-r2.py --src /tmp/stage --prefix mailwoman
 `hasWofDb: true` stays in `releases.json` — the demo gates the admin tier on it, and it now means "this
 version has admin resolution" (the version-independent candidate gazetteer always provides it). Validate
 with `cd docs && yarn build`, serve, and `MAILWOMAN_DEMO_URL=http://localhost:7770 yarn test:e2e
-test/browser/200-demo-resolve.spec.ts` (Chicago locality + ZIP-only marker must pass). Guard the ~490 MB R2
-object from full-file downloads with a Cloudflare WAF rule that blocks the `.db` path lacking a `Range`
-header (config, no Worker).
+test/browser/200-demo-resolve.spec.ts` (Chicago locality + ZIP-only marker must pass).
+
+**Guard the byte-ranged `.db` objects from full-file downloads** (the candidate table is ~490 MB) with a
+Cloudflare WAF custom rule — config, no Worker. In the `sister.software` zone → Security → WAF → Custom
+rules, block a plain `GET` of any `.db` under `/mailwoman/` that arrives without a `Range` header:
+
+```
+http.request.method eq "GET"
+and starts_with(http.request.uri.path, "/mailwoman/")
+and ends_with(http.request.uri.path, ".db")
+and len(http.request.headers["range"]) == 0
+```
+
+Action: **Block**. Legit `sql.js-httpvfs` traffic always sends `Range`, so it passes. Scope to `GET` on
+purpose — the VFS does a range-less **HEAD** to probe the file length on open, so blocking all methods would
+break the demo's cold start. (Covers the candidate, situs/interp street shards, and `wof-polygons.db`; use
+Managed Challenge instead of Block, or tighten to `contains "/mailwoman/gazetteer/"`, if you prefer.)
 
 ## Versioning policy
 
