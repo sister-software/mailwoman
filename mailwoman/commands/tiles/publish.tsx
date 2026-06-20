@@ -11,9 +11,13 @@
  *   So `--tileset coverage` lights up the demo's coverage source with zero further wiring.
  *
  *   Uploads via `rclone` (the RCLONE_S3_* env vars ARE its s3-backend config — source the repo .env
- *   first: `set -a; . ./.env; set +a`). rclone handles multipart for large archives; the documented
- *   anti-501 flags skip the post-PUT HEAD/checksum ops R2 rejects. The worker reads the object via its R2
- *   binding, so Content-Type/Cache-Control on the object don't affect serving.
+ *   first: `set -a; . ./.env; set +a`). rclone handles multipart for large archives (no 300 MiB cap,
+ *   unlike `wrangler r2 object put`); the documented anti-501 flags skip the post-PUT HEAD/checksum ops R2
+ *   rejects. The worker reads the object via its R2 binding, so Content-Type/Cache-Control don't matter.
+ *
+ *   CREDS for the `nexus-assets` bucket: the `RCLONE_S3_*` keys are scoped to `mailwoman-assets` (403 on
+ *   nexus-assets); the `RCLONE_S3_PUBLIC_*` keys write nexus-assets. Map them onto the on-the-fly `:s3:`
+ *   remote: `RCLONE_S3_ACCESS_KEY_ID=$RCLONE_S3_PUBLIC_ACCESS_KEY_ID` (+ SECRET/ENDPOINT) before running.
  */
 
 import { Spinner } from "@inkjs/ui"
