@@ -23,17 +23,20 @@
 import { createReadStream, createWriteStream } from "node:fs"
 import { createInterface } from "node:readline"
 
-import { alignRow, stableSourceId, synthesizePoBoxRow } from "@mailwoman/corpus"
+import { alignRow, stableSourceId, synthesizeMilitaryPoBoxRow, synthesizePoBoxRow } from "@mailwoman/corpus"
 
 function parseArgs() {
 	const args = process.argv.slice(2)
-	const out = { variants: 1, pmbRatio: 0.15, seed: Date.now() }
+	const out = { variants: 1, pmbRatio: 0.15, militaryRatio: 0, seed: Date.now() }
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 		if (a === "--input") out.input = args[++i]
 		else if (a === "--output") out.output = args[++i]
 		else if (a === "--variants") out.variants = parseInt(args[++i], 10)
 		else if (a === "--pmb-ratio") out.pmbRatio = parseFloat(args[++i])
+		// Per input line, also emit one self-contained US military/diplomatic row (#517) with this
+		// probability. Default 0 → byte-stable (random stream + output unchanged). Pass for #517 builds.
+		else if (a === "--military-ratio") out.militaryRatio = parseFloat(args[++i])
 		else if (a === "--seed") out.seed = parseInt(args[++i], 10)
 	}
 	if (!out.input || !out.output) {
@@ -79,7 +82,10 @@ async function main() {
 			skipped++
 			continue
 		}
-		if (!tuple.locality || !tuple.region || !tuple.postcode || !tuple.country) {
+		// Region required EXCEPT region-less locales (NZ: "Private Bag 12, Auckland 1010", #517).
+		// synthesizePoBoxRow handles region absence; the guard just must not discard those tuples.
+		const regionOptional = ["NZ", "NZL", "NEW ZEALAND"].includes(String(tuple.country || "").toUpperCase())
+		if (!tuple.locality || !tuple.postcode || !tuple.country || (!tuple.region && !regionOptional)) {
 			skipped++
 			continue
 		}
@@ -122,6 +128,36 @@ async function main() {
 
 			outStream.write(JSON.stringify(labeledRow) + "\n")
 			emitted++
+		}
+
+		// US military/diplomatic PO-box rows (#517): self-contained (draw nothing from the input
+		// tuple) — emit one per input line with probability --military-ratio (default 0 → byte-stable;
+		// random() isn't called when off, so the stream + output are unchanged). US-only.
+		if (opts.militaryRatio > 0 && random() < opts.militaryRatio) {
+			const mil = synthesizeMilitaryPoBoxRow({ random })
+			const canonical = {
+				raw: mil.raw,
+				components: mil.components,
+				country: "US",
+				locale: mil.locale,
+				source: "synth-po-box",
+				source_id: stableSourceId("synth-po-box", {
+					po_box: mil.components.po_box,
+					locality: mil.components.locality,
+					region: mil.components.region,
+					postcode: mil.components.postcode,
+					v: `mil${emitted}`,
+				}),
+				corpus_version: "0.4.0",
+				license: "Synthetic — derived from CC-BY / public-domain input tuples",
+			}
+			const aligned = alignRow(canonical)
+			if (aligned.row) {
+				outStream.write(JSON.stringify({ ...aligned.row, synth_method: mil.template, synth_base_id: null }) + "\n")
+				emitted++
+			} else {
+				skipped++
+			}
 		}
 	}
 
