@@ -195,13 +195,16 @@ rules, block a plain `GET` of any `.db` under `/mailwoman/` that arrives without
 http.request.method eq "GET"
 and starts_with(http.request.uri.path, "/mailwoman/")
 and ends_with(http.request.uri.path, ".db")
-and len(http.request.headers["range"]) == 0
+and not any(http.request.headers["range"][*] != "")
 ```
 
-Action: **Block**. Legit `sql.js-httpvfs` traffic always sends `Range`, so it passes. Scope to `GET` on
-purpose — the VFS does a range-less **HEAD** to probe the file length on open, so blocking all methods would
-break the demo's cold start. (Covers the candidate, situs/interp street shards, and `wof-polygons.db`; use
-Managed Challenge instead of Block, or tighten to `contains "/mailwoman/gazetteer/"`, if you prefer.)
+Action: **Block**. (DEPLOYED 2026-06-20 on the `sister.software` zone, `http_request_firewall_custom`
+phase — verified: scraper GET → 403, demo `Range` GET → 206, VFS `HEAD` → 200.) Legit `sql.js-httpvfs`
+traffic always sends `Range`, so it passes. Scope to `GET` on purpose — the VFS does a range-less **HEAD**
+to probe the file length on open, so blocking all methods would break the demo's cold start. (Covers the
+candidate, situs/interp street shards, and `wof-polygons.db`; use Managed Challenge instead of Block, or
+tighten to `contains "/mailwoman/gazetteer/"`, if you prefer.) Note: Cloudflare custom rules take a few
+minutes to propagate to all edges — don't conclude it's broken from a test in the first ~60 s.
 
 ## Versioning policy
 
