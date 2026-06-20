@@ -12,6 +12,12 @@ carry locality/region/county admin units with names + centroids + a parent hiera
 build-unified-wof is WOF-GeoJSON-only and the WOF SQLite bundles are gone, so Overture divisions is the
 fast, queryable source.
 
+SUPERSEDED FOR PRODUCTION (2026-06-20) by `build-unified-wof.ts --overture-countries <CC,...>`, which
+folds this same Overture-divisions ingest into the canonical unified build so the shipped admin DB
+carries global coverage in ONE file (no separate shard + no multi-shard routing). Retained as the
+standalone prototype: it builds an Overture-ONLY shard fast without cloning/scanning the WOF repos,
+which is handy for a quick per-locale coverage probe. Both paths share the 8e12 id base + schema.
+
 Schema: mirrors the live admin DB (spr + names + ancestors + place_population); FTS (place_search +
 place_bbox) is added afterward by `node resolver-wof-sqlite/out/build-fts-cli.js <db>`. Synthetic numeric
 ids are based at 8e12 (WOF ids are <~2e9, so no cross-shard collision).

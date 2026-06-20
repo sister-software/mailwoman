@@ -7,18 +7,25 @@
  *   brief (docs/articles/reviews/2026-05-28-sqlite-wal-strategy.md).
  *
  *   Phase 1: Enumerate GeoJSON files across one or more repo directories. Phase 2: Ingest — parallel
- *   file reads (asyncParallelIterator), single-thread writer, WAL mode. Phase 3: Freeze —
- *   checkpoint, journal_mode DELETE, indexes, ANALYZE, VACUUM INTO.
+ *   file reads (asyncParallelIterator), single-thread writer, WAL mode. Phase 2b (optional):
+ *   backfill the Overture `divisions` theme for locales the WOF repos don't cover
+ *   (`--overture-countries`). Phase 3: Freeze — checkpoint, journal_mode DELETE, indexes, ANALYZE,
+ *   VACUUM INTO.
  *
  *   Usage: node scripts/build-unified-wof.js\
  *   --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data\
  *   --output /mnt/playpen/mailwoman-data/wof/admin-global.db\
- *   [--concurrency 64] [--batch 500]
+ *   [--concurrency 64] [--batch 500] [--overture-countries PT,PL,CZ,NO,FI,HR]
  *
  *   Accepts a parent directory containing multiple whosonfirst-data-admin-* subdirectories, or a
- *   single repo directory.
+ *   single repo directory. `--overture-countries` folds the zero-DB-locale coverage (proven in the
+ *   2026-06-20 sprint, project-eu-coverage-not-retrain) into the canonical build so the shipped
+ *   admin DB carries global admin coverage in one file — superseding the standalone
+ *   scripts/build-overture-divisions-gazetteer.py prototype. The Overture FTS rides the same
+ *   `build-fts` step as the WOF rows.
  */
 
+import { DuckDBInstance } from "@duckdb/node-api"
 import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
 import {
 	createUnifiedIndexes,
@@ -31,6 +38,17 @@ import { readFile } from "node:fs/promises"
 import { DatabaseSync } from "node:sqlite"
 import { asyncParallelIterator } from "spliterator"
 
+/**
+ * Synthetic id base for Overture-sourced rows — above any real WOF id (WOF ids are <~2e9), so a
+ * combined DB never collides across sources. Matches scripts/build-overture-divisions-gazetteer.py
+ * (the standalone falsification prototype this folds into the unified build).
+ */
+const OVERTURE_ID_BASE = 8_000_000_000_000
+/** Overture division subtypes that map to the resolver's admin placetypes. */
+const OVERTURE_DIVISION_SUBTYPES = ["locality", "region", "county", "localadmin"]
+/** Pinned Overture release for the divisions theme (the release the EU coverage was validated on). */
+const DEFAULT_OVERTURE_RELEASE = "2026-06-17.0"
+
 interface Args {
 	dataDir: string
 	outputPath: string
@@ -42,6 +60,15 @@ interface Args {
 	 * repos.
 	 */
 	placetypes?: string[]
+	/**
+	 * Comma-separated ISO 3166-1 alpha-2 codes to backfill from the Overture `divisions` theme AFTER
+	 * the WOF GeoJSON ingest — the zero-DB locales the WOF repos don't cover (PT/PL/CZ/NO/FI/HR/…).
+	 * Rows land in the SAME spr/names/place_population tables with synthetic ids, so the Freeze phase
+	 * indexes them uniformly. Off unless provided. See project-eu-coverage-not-retrain.
+	 */
+	overtureCountries?: string[]
+	/** Overture release for `--overture-countries` (the divisions theme is pinned per release). */
+	overtureRelease: string
 }
 
 function parseArgs(): Args {
@@ -51,6 +78,8 @@ function parseArgs(): Args {
 	let concurrency = 64
 	let batchCommitSize = 500
 	let placetypes: string[] | undefined
+	let overtureCountries: string[] | undefined
+	let overtureRelease = DEFAULT_OVERTURE_RELEASE
 
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === "--data" && args[i + 1]) dataDir = args[++i]
@@ -61,16 +90,21 @@ function parseArgs(): Args {
 			placetypes = args[++i]!.split(",")
 				.map((s) => s.trim())
 				.filter(Boolean)
+		else if (args[i] === "--overture-countries" && args[i + 1])
+			overtureCountries = args[++i]!.split(",")
+				.map((s) => s.trim().toUpperCase())
+				.filter(Boolean)
+		else if (args[i] === "--overture-release" && args[i + 1]) overtureRelease = args[++i]!
 	}
 
 	if (!dataDir || !outputPath) {
 		console.error(
-			"Usage: node scripts/build-unified-wof.js --data <wof-repos-dir> --output <output.db> [--concurrency 64] [--batch 500] [--placetypes postalcode]"
+			"Usage: node scripts/build-unified-wof.js --data <wof-repos-dir> --output <output.db> [--concurrency 64] [--batch 500] [--placetypes postalcode] [--overture-countries PT,PL,CZ] [--overture-release 2026-06-17.0]"
 		)
 		process.exit(1)
 	}
 
-	return { dataDir, outputPath, concurrency, batchCommitSize, placetypes }
+	return { dataDir, outputPath, concurrency, batchCommitSize, placetypes, overtureCountries, overtureRelease }
 }
 
 const ADMIN_PLACETYPES = new Set([
@@ -171,8 +205,106 @@ function parseFeature(text: string, placetypes: Set<string>): ParsedFeature | nu
 	}
 }
 
+/**
+ * Backfill the Overture `divisions` theme into an already-open unified ingest DB, for locales the
+ * WOF GeoJSON repos don't cover (the 2026-06-20 zero-DB EU set). Writes the SAME spr/names/
+ * place_population tables the WOF path uses — with synthetic ids based at {@link OVERTURE_ID_BASE}
+ * so the two sources never collide — so the caller's Freeze phase (ancestors closure,
+ * coincident_roles, indexes, FTS) treats them uniformly. The Overture sub-tree is self-contained
+ * (locality → region → county via `parent_division_id`); a division whose parent we didn't ingest
+ * tops out at -1. Country scoping rides `spr.country` (set on every row), not the ancestry, so no
+ * WOF country node is needed.
+ *
+ * The heavy native `@duckdb/node-api` dependency lives here in `scripts/` only — never in
+ * `@mailwoman/corpus` (a runtime dep of the `mailwoman` CLI) — the same split as
+ * `ingest-overture-addresses.ts`.
+ *
+ * @returns The number of divisions ingested.
+ */
+async function ingestOvertureDivisions(db: DatabaseSync, countries: string[], release: string): Promise<number> {
+	const inlist = countries.map((c) => `'${c.replace(/'/g, "''")}'`).join(",")
+	const subtypes = OVERTURE_DIVISION_SUBTYPES.map((s) => `'${s}'`).join(",")
+	const glob = `s3://overturemaps-us-west-2/release/${release}/theme=divisions/type=division/*`
+
+	const instance = await DuckDBInstance.create()
+	const con = await instance.connect()
+	await con.run("INSTALL httpfs; LOAD httpfs; INSTALL spatial; LOAD spatial; SET s3_region='us-west-2';")
+	await con.run("SET memory_limit='4GB'; SET threads=4;")
+
+	console.error(`  Overture divisions: querying ${countries.join(",")} @ release ${release}...`)
+	const result = await con.runAndReadAll(`
+		SELECT id,
+			names.primary AS name,
+			subtype,
+			country,
+			ST_Y(ST_Centroid(geometry)) AS lat,
+			ST_X(ST_Centroid(geometry)) AS lon,
+			bbox.ymin AS min_lat, bbox.ymax AS max_lat, bbox.xmin AS min_lon, bbox.xmax AS max_lon,
+			parent_division_id,
+			population
+		FROM read_parquet('${glob}')
+		WHERE country IN (${inlist}) AND subtype IN (${subtypes})
+			AND names.primary IS NOT NULL AND geometry IS NOT NULL
+	`)
+	const rows = result.getRowObjects() as Array<Record<string, unknown>>
+	console.error(`  Overture divisions: ${rows.length.toLocaleString()} pulled`)
+
+	// GERS string id → synthetic int, sequential and unique within this run.
+	const idmap = new Map<string, number>()
+	rows.forEach((r, i) => idmap.set(String(r.id), OVERTURE_ID_BASE + i))
+
+	const sprInsert = db.prepare(
+		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	)
+	const namesInsert = db.prepare(
+		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, ?, ?, ?, ?)`
+	)
+	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
+
+	const num = (v: unknown): number => (typeof v === "number" ? v : typeof v === "bigint" ? Number(v) : 0)
+
+	db.exec("BEGIN")
+	let n = 0
+	for (const r of rows) {
+		const nid = idmap.get(String(r.id))!
+		const pgers = r.parent_division_id == null ? null : String(r.parent_division_id)
+		const pid = (pgers && idmap.get(pgers)) || -1
+		const name = String(r.name)
+		const subtype = String(r.subtype)
+		const country = String(r.country ?? "").toUpperCase()
+		// SELECT aliases: min_lat=ymin, min_lon=xmin, max_lat=ymax, max_lon=xmax → spr (lat, lon,
+		// min_latitude, min_longitude, max_latitude, max_longitude).
+		sprInsert.run(
+			nid,
+			pid,
+			name,
+			subtype,
+			country,
+			num(r.lat),
+			num(r.lon),
+			num(r.min_lat),
+			num(r.min_lon),
+			num(r.max_lat),
+			num(r.max_lon),
+			1,
+			0,
+			0,
+			0,
+			0,
+			0
+		)
+		namesInsert.run(nid, name, subtype, country, "", 0)
+		const pop = num(r.population)
+		if (pop > 0) populationInsert.run(nid, pop)
+		n++
+	}
+	db.exec("COMMIT")
+	return n
+}
+
 async function main() {
-	const { dataDir, outputPath, concurrency, batchCommitSize, placetypes } = parseArgs()
+	const { dataDir, outputPath, concurrency, batchCommitSize, placetypes, overtureCountries, overtureRelease } =
+		parseArgs()
 	const activePlacetypes = placetypes ? new Set(placetypes) : ADMIN_PLACETYPES
 	console.error(`Ingesting placetypes: ${[...activePlacetypes].join(", ")}`)
 	const t0 = performance.now()
@@ -300,6 +432,16 @@ async function main() {
 	)
 
 	// -----------------------------------------------------------------------
+	// Phase 2b: Overture divisions backfill (zero-DB locales the WOF repos miss)
+	// -----------------------------------------------------------------------
+	let overtureIngested = 0
+	if (overtureCountries && overtureCountries.length > 0) {
+		console.error(`Backfilling Overture divisions for ${overtureCountries.join(",")}...`)
+		overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease)
+		console.error(`  Overture divisions ingested: ${overtureIngested.toLocaleString()}`)
+	}
+
+	// -----------------------------------------------------------------------
 	// Phase 3: Freeze
 	// -----------------------------------------------------------------------
 	console.error("Freezing...")
@@ -369,6 +511,7 @@ async function main() {
 	const totalElapsed = ((performance.now() - t0) / 1000).toFixed(1)
 	console.error(`\nDone in ${totalElapsed}s:`)
 	console.error(`  Places:  ${processed.toLocaleString()}`)
+	if (overtureIngested > 0) console.error(`  Overture: ${overtureIngested.toLocaleString()}`)
 	console.error(`  Skipped: ${skipped.toLocaleString()}`)
 	console.error(`  Output:  ${outputPath} (${finalSize} MB)`)
 }
