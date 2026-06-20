@@ -20,6 +20,7 @@ A no-GPU coverage + hardening night, continuing the day's candidate-gazetteer ar
 - **#555 — closed (non-Latin quarantine resolved by #519 NFC).** The Bengali `দক্ষিণ কোরিয়া` row that quarantined as `span-out-of-bounds` now aligns. Root cause: the precomposed `য়` (U+09DF) is NFC-composition-excluded, so NFC decomposes it (13→14 code units). Already fixed upstream of locateSpan by the #519 NFC normalization (`align.ts:90` — added after the issue): `raw` is NFC-normalized before span location and the NFC raw is stored, so the span is in-bounds. Added the combining-mark regression test (29/29 align tests green).
 - **#630 — triaged (Dependabot, left open).** Verified **zero consumer-facing exposure**: no vulnerable package is a dependency of any published `@mailwoman` package — all are dev/build/docs/release/ingest tooling. The high-severity ones (tar, serialize-javascript) are major-bump-blocked by parent `^6` ranges; the clean fix is attended intermediate-dep bumps + a release dry-run, not unattended resolution-forcing. Reframed the urgency from "security incident" to "build-tooling hygiene".
 - **#620 — done (record-matcher data catalog).** `registry/configs/record-matcher-sources.json` (machine-readable provenance + the JSON-able `ColumnMapping` per source) + `docs/articles/concepts/record-matcher-data-catalog.md` (prose: the geocode-first / no-shared-key join model, per-source schema, refresh procedure). Mappings are now version-controlled, not folklore. Neutral framing throughout.
+- **EU qualifier-strip fallback (the night's genuinely-NEW build, shipped query-side).** With the backlog cleared, diagnosed the remaining EU recall gap (the lever-2 residual) as OA-form-vs-gazetteer-form mismatch — Austrian `Kraubath/Mur` / `Hart b.Graz`, Swiss `Lenk im Simmental` / `Roche VD`, Danish `Odense S` / `Hurup Thy`, where the gazetteer carries the bare base name. Added `stripLocalityQualifier` (the shared normalizer module) + a fallback in `WofCandidateTableLookup.findPlace`: on an exact-name miss, retry the stripped base (the region bbox disambiguates). Measured via a new `candidate-recall.ts --strip-fallback` mode: **AT 74.1→88.2% (+14.1pp), DK 91.5→96.2%, CH 90.4→92.6%**; +1.3pp overall (diluted by the already-100% locales). **Purely query-side — no DB rebuild, no version bump**; default-on; 15/15 normalize unit tests + 4/4 e2e green. Distinct from the falsified alias-widening (lever 2) — query-side normalization, not gazetteer aliases.
 
 ## What went well
 
@@ -54,13 +55,14 @@ A no-GPU coverage + hardening night, continuing the day's candidate-gazetteer ar
 
 ## Numbers
 
-|                               | value                                                     |
-| ----------------------------- | --------------------------------------------------------- |
-| candidate DB                  | 494 → 529 MB (+435 k intl postcodes), promoted `-20c`     |
-| EU locality recall (measured) | 93.4% (headline 87.8% was an LT-eval-artifact)            |
-| browser e2e                   | 4/4 green (incl. coordinate-graded Berlin)                |
-| GPU spent                     | 0 (no-GPU night; $20 contingency unspent)                 |
-| issues closed                 | **5** — #582, #694, #719, #555, #728                      |
-| issues triaged / filed        | #630 triaged (left open); #734 filed                      |
-| docs shipped                  | #620 data catalog + the candidate-table blog (day) + this |
-| demo production               | promoted to candidate `-20c` (intl postcodes)             |
+|                                    | value                                                         |
+| ---------------------------------- | ------------------------------------------------------------- |
+| candidate DB                       | 494 → 529 MB (+435 k intl postcodes), promoted `-20c`         |
+| EU locality recall (measured)      | 93.4%; +strip-fallback AT 74→88%, DK 91.5→96%, CH 90→93%      |
+| browser e2e                        | 4/4 green (incl. coordinate-graded Berlin)                    |
+| GPU spent                          | 0 (no-GPU night; $20 contingency unspent)                     |
+| issues closed                      | **5** — #582, #694, #719, #555, #728                          |
+| issues triaged / filed / re-scoped | #630 triaged; #734 filed + refined; #625 re-scoped            |
+| docs shipped                       | #620 data catalog + this postmortem                           |
+| demo production                    | candidate `-20c` (intl postcodes) + query-side strip-fallback |
+| genuinely-new builds               | lever-1 intl postcodes + the EU strip-fallback                |
