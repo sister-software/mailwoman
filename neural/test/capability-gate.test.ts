@@ -84,14 +84,16 @@ describe.skipIf(!haveAll)("createScorer capability delta-gate (#718/#719)", () =
 	})
 
 	test("pocket tier is gated against its own certified capabilities", async () => {
-		// The pocket tier (anchor-only) ALSO certifies FR street_prefix at maskOff 80; a forbid there is
-		// equally illegal. Confirms the tier selector actually reads the pocket cell.
+		// The pocket tier (anchor-only) ALSO certifies FR street_prefix with a non-zero maskOff F1; a
+		// forbid there is equally illegal. Confirms the tier selector actually reads the pocket cell.
+		// Don't pin the F1 literal — it's model-card-dependent (v1.8.0 certifies ~78, not the older 80),
+		// so match the message shape, not the number.
 		;(ADDRESS_SYSTEM_CONVENTIONS as Record<string, AddressSystemConventions | undefined>).fr = {
 			...savedFr,
 			forbiddenTags: ["street_prefix"],
 		}
 		await expect(createScorer({ ...baseOpts, tier: "pocket", overrides: { gazetteer: false } })).rejects.toThrow(
-			/tier `pocket`.*maskOff F1 80/s
+			/tier `pocket`.*maskOff F1 \d/s
 		)
 	})
 })
