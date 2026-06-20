@@ -57,14 +57,33 @@ A no-GPU coverage + hardening night, continuing the day's candidate-gazetteer ar
 
 ## Numbers
 
-|                                    | value                                                         |
-| ---------------------------------- | ------------------------------------------------------------- |
-| candidate DB                       | 494 → 529 MB (+435 k intl postcodes), promoted `-20c`         |
-| EU locality recall (measured)      | 93.4%; +strip-fallback AT 74→88%, DK 91.5→96%, CH 90→93%      |
-| browser e2e                        | 4/4 green (incl. coordinate-graded Berlin)                    |
-| GPU spent                          | 0 (no-GPU night; $20 contingency unspent)                     |
-| issues closed                      | **5** — #582, #694, #719, #555, #728                          |
-| issues triaged / filed / re-scoped | #630 triaged; #734 filed + refined; #625 re-scoped            |
-| docs shipped                       | #620 data catalog + this postmortem                           |
-| demo production                    | candidate `-20c` (intl postcodes) + query-side strip-fallback |
-| genuinely-new builds               | lever-1 intl postcodes + the EU strip-fallback                |
+|                           | value                                                                                                           |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| candidate DB              | 494 → ~530 MB; promoted `-20c` (intl postcodes) → `-20d` (EU postcodes)                                         |
+| EU resolution (measured)  | locality 93.4% (+strip-fallback AT 74→88%); **postcodes 100% @ ~1-2 km** (LT 0→100%, NO 75→100%, FI/SK 80→100%) |
+| browser e2e               | 6/6 green (4 resolve + 2 autocomplete)                                                                          |
+| GPU spent                 | 0 (no-GPU night; $20 contingency unspent)                                                                       |
+| verify-before-verdict     | **7** — #582/#694/#719/#555/#728 closed; #625/#587 re-scoped                                                    |
+| triaged / filed / flagged | #630 triaged; #734 filed+refined; **#735 filed** (national US street tier — operator call)                      |
+| genuinely-new builds      | **3** — intl postcodes (`-20c`), EU strip-fallback, EU postcode coverage (`-20d`)                               |
+| demo production           | candidate `-20d` (US + intl + 13 EU-locale Overture postcodes; strip-fallback; autocomplete e2e)                |
+
+## EU coordinate resolution after `-20d` (measured, `postcode-vs-locality-probe.ts`)
+
+Per-locale, against the OA rooftop truth — the locality-centroid path (where `-20c` left it) vs the new postcode path. The postcode path resolves **100%** everywhere (PT excepted) at postcode-precision, catching every address the locality path missed:
+
+| locale | locality resolve / mean | **postcode resolve / mean**            |
+| ------ | ----------------------- | -------------------------------------- |
+| AT     | 88.2% / 19.1 km         | **100% / 1.6 km**                      |
+| CH     | 92.6% / 1.2 km          | **100% / 0.9 km**                      |
+| DK     | 96.2% / 3.1 km          | **100% / 2.9 km**                      |
+| BE     | 97.5% / 2.2 km          | **100% / 1.5 km**                      |
+| FI     | 80.5% / 12.9 km         | **100% / 3.3 km**                      |
+| HR     | 95.9% / 4.9 km          | **100% / 2.4 km**                      |
+| LT     | 0.0% / —                | **100% / 0.5 km**                      |
+| LU     | 99.7% / 0.9 km          | **100% / 0.2 km**                      |
+| LV     | 100% / 12.6 km          | **100% / 2.8 km**                      |
+| NO     | 74.8% / 33.2 km         | **100% / 1.5 km**                      |
+| PT     | 86.3% / 7.0 km          | 0.8% (sparse Overture fill — excluded) |
+| SI     | 89.5% / 3.6 km          | **100% / 2.0 km**                      |
+| SK     | 78.1% / 2.6 km          | **100% / 1.1 km**                      |
