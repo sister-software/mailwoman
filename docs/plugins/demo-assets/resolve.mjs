@@ -113,6 +113,7 @@ export function buildWorkspaceAliases() {
 	if (cartographerDir) {
 		aliases["@mailwoman/cartographer/base"] = resolveWorkspaceDirEntry(cartographerDir, "base")
 		aliases["@mailwoman/cartographer/styles"] = resolveWorkspaceDirEntry(cartographerDir, "styles")
+		aliases["@mailwoman/cartographer/coverage"] = resolveWorkspaceDirEntry(cartographerDir, "coverage")
 	}
 
 	// @mailwoman/resolver-wof-sqlite — browser-safe subpaths only (the FST modules plus fts.ts,
@@ -153,6 +154,16 @@ export function buildWorkspaceAliases() {
 			"formatter",
 			"types",
 			"resources",
+			// `pipeline` + `errors` MUST be here: the demo imports `runPipeline` from
+			// `@mailwoman/core/pipeline` directly. Without a source alias, webpack resolves the package
+			// `exports` to the COMPILED `core/out/pipeline/index.js` — which `yarn start` never rebuilds
+			// (only CI's `build-site` runs `yarn compile` first). A `core/out` left over from before the
+			// #566 reconcile retirement then serves the old joint-reconcile-default pipeline, which mangles
+			// the parse (house number bundled into the street) so the street/situs tier can't fire and the
+			// geocode falls back to the admin centroid. Aliasing to source keeps dev on current code +
+			// hot-reloads core edits, exactly like the bare `@mailwoman/core$` alias already does.
+			"pipeline",
+			"errors",
 		]) {
 			aliases[`@mailwoman/core/${sub}`] = resolveWorkspaceDirEntry(coreDir, sub)
 		}
@@ -166,6 +177,9 @@ export function buildWorkspaceAliases() {
 		// `createWofResolver` is never bundled. This alias is webpack-only — `tsc` still resolves the
 		// package barrel, so type-only imports (`CoincidentLocality`, `Ancestor`) keep working.
 		aliases["@mailwoman/core/resolver"] = resolveWorkspaceFile(coreDir, "resolver/types")
+		// `objects` is a SINGLE-file entry (`core/objects.ts`, exports `./out/objects.js`), so it needs the
+		// flat-file resolver, not the dir-style loop above. Same staleness rationale as `pipeline`/`errors`.
+		aliases["@mailwoman/core/objects"] = resolveWorkspaceFile(coreDir, "objects")
 		aliases["@mailwoman/core/environment/load"] = resolveWorkspaceFile(coreDir, "environment/load")
 		aliases["@mailwoman/core/kysley/dialect"] = resolveWorkspaceFile(coreDir, "kysley/dialect")
 	}
