@@ -1,0 +1,43 @@
+---
+slug: keep-the-receipt
+title: "We keep the receipt on every coordinate"
+authors: [teffen]
+tags: [geocoding, coordinate-first, motivation]
+date: 2026-06-20
+---
+
+Every geocoder turns an address into a coordinate. Almost none of them will tell you where that coordinate came from. You get a latitude, a longitude, and a vague confidence enum, and when it's wrong you have no thread to pull — no way to know whether the point came from a federal data release, a county GIS office, or a straight line drawn down the middle of a street. Mailwoman keeps the source on every point. Here's New York, every dot colored by the open dataset it came from.
+
+{/* truncate */}
+
+![Address points across New York, each colored by its source dataset: green for the federal National Address Database statewide, orange for OpenAddresses (the city's own NYC Open Data) concentrated in New York City.](/img/address-provenance-ny.png)
+
+Green is the National Address Database; orange is OpenAddresses, which for New York means the city's own NYC Open Data. You can [explore the interactive version](pathname:///maps/address-provenance-ny.html) and click any dot to see its publisher.
+
+## The split is geography you can see
+
+The federal release blankets the state. New York City sits in its own color because the city publishes its own address file, and OpenAddresses carries it. Nothing was guessed about which is which — the source rode along on every point, from ingest all the way to this map. That's the whole trick, and it's a boring one: a `source` column that nobody dropped.
+
+## Credit where the data's due
+
+None of this is our data. The National Address Database is a federal release; OpenAddresses is a decade of county and municipal publishers doing the unglamorous work of putting their address files online; the street network underneath is Census TIGER. They're free, they're open, and they're good. The lookup was never the hard part of geocoding. Assembling these sources, keeping them fresh, and not sanding off the provenance somewhere along the way — that's the work, and the provenance is the first thing most pipelines lose. We made a rule of keeping it, so that when a coordinate is wrong you can see exactly which dataset and release to take it up with.
+
+## The layers under the dots
+
+This map shows the rooftop-point sources. Where there's no rooftop point, the geocoder falls back to TIGER street interpolation, a position estimated along the block, and below that to an administrative centroid from Who's On First. Each tier is a different open dataset, and every coordinate records which rung it landed on, so a rooftop in Manhattan and a block-interpolated guess in a thinly-covered county never get mistaken for each other.
+
+## See it, build it
+
+[Explore the interactive map](pathname:///maps/address-provenance-ny.html) — serve it over localhost, since the basemap tiles are CORS-scoped to the house domains. The provenance is a plain column on the address-point table:
+
+```sql
+SELECT lat, lon, source FROM address_point WHERE locality_norm = 'brooklyn' LIMIT 1;
+-- 40.6782 | -73.9442 | overture:OpenAddresses/NY/NYC Open Data
+```
+
+Point the same map at any state:
+
+```bash
+node --experimental-strip-types \
+  scripts/record-matcher/viz/source-provenance-map.ts --state ny
+```

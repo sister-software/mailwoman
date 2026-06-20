@@ -231,9 +231,16 @@
 	border-top: 1px solid var(--ifm-color-emphasis-200);
 	border-bottom: 1px solid var(--ifm-color-emphasis-200);
 }
+.featuredSectionHeading {
+	font-size: 1.65rem;
+	margin-bottom: 1.75rem;
+}
 .featuredRow {
 	align-items: center;
 	row-gap: 1.5rem;
+}
+.featuredRowAlt {
+	margin-top: 2.5rem;
 }
 .featuredImageLink {
 	display: block;

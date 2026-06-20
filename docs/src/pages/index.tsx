@@ -100,10 +100,13 @@ function Gallery(): ReactNode {
 	)
 }
 
-function FeaturedExample(): ReactNode {
+function FeaturedWork(): ReactNode {
 	return (
 		<section className={styles.featured}>
 			<div className="container">
+				<Heading as="h2" className={styles.featuredSectionHeading}>
+					Worked examples, on real public data
+				</Heading>
 				<div className={clsx("row", styles.featuredRow)}>
 					<div className="col col--6">
 						<Link to="/research/provider-registry-meets-usf" className={styles.featuredImageLink}>
@@ -116,8 +119,8 @@ function FeaturedExample(): ReactNode {
 						</Link>
 					</div>
 					<div className="col col--6">
-						<p className={styles.cardJob}>Worked example</p>
-						<Heading as="h2" className={styles.featuredTitle}>
+						<p className={styles.cardJob}>Coverage reconciliation</p>
+						<Heading as="h3" className={styles.featuredTitle}>
 							The provider registry meets the Universal Service Fund
 						</Heading>
 						<p className={styles.featuredBody}>
@@ -128,6 +131,32 @@ function FeaturedExample(): ReactNode {
 						<p className={styles.cardLinks}>
 							<Link to="/research/provider-registry-meets-usf">See how it's done →</Link>
 						</p>
+					</div>
+				</div>
+				<div className={clsx("row", styles.featuredRow, styles.featuredRowAlt)}>
+					<div className="col col--6">
+						<p className={styles.cardJob}>Data provenance</p>
+						<Heading as="h3" className={styles.featuredTitle}>
+							We keep the receipt on every coordinate
+						</Heading>
+						<p className={styles.featuredBody}>
+							Every point Mailwoman resolves to remembers which open dataset it came from. Here's New York: the federal
+							National Address Database statewide, OpenAddresses (the city's own data) in New York City. Most geocoders
+							sand that provenance off. We keep it on the point.
+						</p>
+						<p className={styles.cardLinks}>
+							<Link to="/research/keep-the-receipt">See how it's done →</Link>
+						</p>
+					</div>
+					<div className="col col--6">
+						<Link to="/research/keep-the-receipt" className={styles.featuredImageLink}>
+							<img
+								src="/img/address-provenance-ny.png"
+								alt="Address points across New York, each colored by its source dataset: the federal National Address Database statewide, OpenAddresses (the city's own NYC Open Data) concentrated in New York City."
+								className={styles.featuredImage}
+								loading="lazy"
+							/>
+						</Link>
 					</div>
 				</div>
 			</div>
@@ -222,7 +251,7 @@ export default function Home(): ReactNode {
 			<HomepageHeader />
 			<main>
 				<Gallery />
-				<FeaturedExample />
+				<FeaturedWork />
 				<FeatureStrip />
 				<QuickStart />
 			</main>
