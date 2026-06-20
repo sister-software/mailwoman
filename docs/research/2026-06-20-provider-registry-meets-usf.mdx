@@ -1,0 +1,45 @@
+---
+slug: provider-registry-meets-usf
+title: "The provider registry meets the Universal Service Fund"
+authors: [teffen]
+tags: [record-matching, geocoding, coordinate-first]
+date: 2026-06-20
+---
+
+Three public datasets land on your desk. The national provider registry — NPPES, every NPI in the country. A federal telecom-funding file from the FCC's Rural Health Care program, one slice of the Universal Service Fund. A state list of licensed nursing facilities from Texas HHSC. You want to know which records describe the same provider, and not one of the three shares an identifier with the other two. The NPI is internal to NPPES. The funding file keys on its own SPIN. The state list has its own facility ID. There's no crosswalk, because nobody ever built one.
+
+So you do what everyone does: you start a spreadsheet, you sort by name, and you give up around row 400.
+
+{/* truncate */}
+
+Here's what resolving them anyway looks like, scoped to Texas:
+
+![Providers resolved across the NPPES registry, the FCC Rural Health Care funding file, and the Texas HHSC licensing list — on the geocoded place, with no shared key.](/img/provider-registry-usf.png)
+
+Every dot is an entity that resolved across at least two of those datasets. Their identifiers didn't match, because there are none to match; they resolved because the records geocoded to the same place and their names agreed once you normalized them. The resolved location is the key the three publishers never agreed on.
+
+## How you join files that share no key
+
+The trick is to stop matching strings and start matching places. Each record's address goes through the neural parser, resolves to a coordinate and a place in the hierarchy, and gets blocked by *where it is*. Only then do the names come in, canonicalized — legal-form noise stripped, abbreviations expanded — and scored with label-free Fellegi-Sunter weights ([the geocode-first record-matching story](/research/same-building-different-company) walks through this). "Baylor Coll. of Medicine" and "Baylor College of Medicine" stop being different strings; "123 Main St" and "123 Main Street, Ste 400" stop being different places. The geocode does the blocking, the normalized name does the deciding, and neither file had to carry the other's ID.
+
+## The numbers, and exactly what they are
+
+219 entities resolved across two or more of these sources. Twenty-eight of them span different *agencies* — CMS's provider registry, the FCC's funding program, Texas's licensing list — and those are the hard ones, because inside a single agency you can sometimes lean on an internal ID, while across agencies you have nothing but the place and the name. (The other 191 links are FCC-internal: Rural Health Care filings matched back to their own commitment records.) You can see the cross-agency slice on its own in the [interactive map](pathname:///maps/provider-registry-usf-crossagency.html); the [full set is here](pathname:///maps/provider-registry-usf.html).
+
+Then the coverage reconciliation. Of the 2,771 entities carrying an eligibility record — an NPPES organization or a TX HHSC facility — 22 also resolve to a funding record. That's 0.8%, and it's a floor, not a coverage rate. Imperfect resolution and a capped sample only ever miss links; they never invent them. The set is the deliverable; the percentage is just how big it happens to be.
+
+## Read this part before you read anything into it
+
+This is a set-membership reconciliation, not a determination. The 2,749 eligibility entities that didn't resolve to a funding record are a candidate set for review, and nothing more. A missing funding link can mean the entity didn't apply, applied under a name the resolver didn't catch, isn't eligible, or simply that its funding record fell outside this capped 2,000-row sample — a sampling artifact, not a finding. At full scale the set tightens, and it's still only a set of candidates.
+
+What we produce is the reconciled join and the candidate set. What a gap means, and whether it means anything at all, is the data consumer's call, not the tool's. Nothing here is an allegation, and the map makes no claim about any provider on it beyond "these records appear to describe the same place."
+
+## Run it on your own files
+
+The map above is the same `toMapHTML` the record matcher ships, on the house MapLibre and Protomaps stack. The whole thing is one command over a config that tags each file with a role:
+
+```bash
+mailwoman registry --sources sources.json --reconcile --map-out map.html
+```
+
+Point it at your own pile of registries. The resolved place is the key they forgot to share.
