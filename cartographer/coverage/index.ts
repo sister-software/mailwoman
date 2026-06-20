@@ -49,8 +49,8 @@ export const CoverageLayerID = {
 } as const
 
 /**
- * Build the coverage source spec. `url` is either the production TileJSON endpoint
- * (`https://tiles.sister.software/coverage.json`) or a `pmtiles://…` URL for a local single-state bake.
+ * Build the coverage source spec. `url` is a `pmtiles://…` URL — the national archive on the public CDN
+ * (read byte-range via the pmtiles protocol, like the demo's other assets) or a local single-state bake.
  */
 export function createCoverageSource(url: string): VectorSourceSpecification {
 	return { type: "vector", url }

@@ -187,6 +187,17 @@ export function adminGazetteerUrl(): string {
 }
 
 /**
+ * Address-coverage "fog of war" overlay PMTiles (national, ~848 MB). Hosted at
+ * `mailwoman/coverage/coverage-us.pmtiles` and loaded CLIENT-SIDE via the pmtiles protocol (byte-range,
+ * like the other demo assets) — a view fetches only the tiles in frame, not the whole archive, so it's
+ * served from the same public CDN rather than the basemap tile worker. Version-independent (re-baked on
+ * data refresh; immutable Cache-Control means a refresh needs a fresh path — bump the segment then).
+ */
+export function coverageTilesUrl(): string {
+	return `${ASSET_BASE_URL}coverage/coverage-us.pmtiles`
+}
+
+/**
  * Slugs we host street shards for (byte-range on R2). A state not in this set falls through to the
  * WOF admin centroid. Extend as shards are published — NY/MI/CA is the launch trio (the spec's size
  * spread); DC is the dense-urban verification (the White House resolves to its exact building).
