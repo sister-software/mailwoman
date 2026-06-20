@@ -116,3 +116,24 @@ The operator returned and directed "promote `-20e`." Ran the safe `-20d` playboo
 **The real gap is the admin layer, not the postcode layer.** `-20e` solved the wrong tier. Canadian coverage needs CA **admin** first: fold CA Overture divisions into `admin-global-priority.db` (exactly what #151 did for the EU set), rebuild the candidate gazetteer with CA admin + postcodes together, e2e, promote — a canonical admin-DB rebuild, operator-scoped.
 
 **Lesson (the recurring one).** I validated the _artifact_ (the postcode DB — every coordinate correct, no regression) and not the _assembled coordinate_ (the pin the user sees). Every green check was honest and beside the point. The e2e gate — the one thing that grades the pin — caught what data-validation couldn't. Same discipline as the #566 reconcile retirement and the per-tag-F1-vs-coordinate traps: grade the assembled output, not the component. Written up: `docs/research/2026-06-20-843000-postcodes-and-no-canada.mdx`.
+
+## Day shift: Canadian (and major-country) coverage shipped (`-20f` → `-20g`)
+
+The morning epilogue's "real fix" — fold CA **admin** — got built and **promoted** (operator-directed). The arc:
+
+**The under-utilization finding (the answer to "do we take full advantage of WOF/Overture?").** No. `admin-global-priority.db` is built (`build-unified-wof.ts`) from the **cloned** WOF repos (`whosonfirst-data` meta-repo: CN/DE/ES/FR/GB/IT/JP/KR/NL/US + sibling `admin-{jp,kr,tw,us}`) **plus a hand-typed `--overture-countries` list** (the EU set). The Overture `divisions` theme is **global on public S3** (`read_parquet('s3://overturemaps-us-west-2/.../theme=divisions/...')`) — we just filter `WHERE country IN (<the list>)`. So coverage = (cloned repos) ∪ (that list) = **26 countries**, and CA was on neither net.
+
+**The reusable fix — `scripts/augment-admin-overture.ts`.** Rather than a full `build-unified-wof` rebuild (reproducing the exact WOF-repo inputs is error-prone — a sibling repo not re-globbed silently drops coverage, e.g. the TW discrepancy), it COPIES the frozen live DB (every existing country preserved by construction), backfills any country list from Overture's global divisions reusing the build's own `ingestOvertureDivisions`, re-freezes, VACUUMs to a new file. The genuine "add a country" capability: `--countries CA,AU,BR,…`.
+
+**`-20f` (Canada).** Augmented CA admin (**14,488 places** — Toronto/Montréal/Vancouver/Ottawa/Calgary; **+14,488 spr, zero regression**), rebuilt the candidate with CA admin + the 843 k CA postcodes, uploaded, **browser e2e 5/5** (the Toronto case green: CA Toronto top by population, neg_rank −6.44 vs Ohio −3.72; + no regression on Chicago/Berlin/ZIP/White House), committed `4dfffb1d` (`ADMIN_GAZETTEER_VERSION → 2026-06-20f`).
+
+**Two bugs caught mid-flight (both by validation, not luck):**
+
+- **ID collision in the augment.** `ingestOvertureDivisions` numbered synthetic ids `OVERTURE_ID_BASE + i` from `i=0` _every_ run, so the first CA pass `INSERT OR REPLACE`'d straight over the existing EU Overture rows (spr count `+0`, not `+14k`, with `CA=14,488` — the tell). Fixed: pass `idBase = max(spr.id) + 1` for an incremental augment. Added the `idBase` param + an `import.meta.main` guard so the build module is importable without triggering a build.
+- **CORS false alarm.** I'd moved the e2e serve to port `7771`, which isn't in R2's CORS allowlist (`localhost:7770` + the prod origin are), so the browser `ERR_FAILED`'d on _every_ `public.sister.software` fetch — and I briefly suspected `-20f`. It was the port; back on `7770` it's 5/5. The shell reaching R2 (206) while the browser couldn't is the CORS signature.
+
+**Cold-start correction (operator-caught).** My earlier "going global would balloon the file and hurt cold-load" was wrong, and it contradicted our own design: the candidate table is a `WITHOUT ROWID` B-tree read by byte-range, so a lookup is ~12 contiguous page fetches **whether the file is 600 MB or 6 GB** (the "243 round trips" win). Cold-start is decoupled from total size; the only real costs of going broad are build time + per-country Overture quality. So the expansion is a clean decision, not a tradeoff.
+
+**`-20g` (the rest of the major world).** With cold-start no longer a constraint, augmented **~70 major countries** absent from the gazetteer — Americas (BR/MX/AR/CO/…), Oceania (AU/NZ), South + SE Asia (IN/ID/TH/VN/PH/…), Middle East (SA/AE/IL/TR/…), Africa (ZA/NG/EG/…), the rest of Europe (IE/SE/GR/RO/…), Russia/Ukraine — in one augment off the canonical base, then rebuild the candidate → e2e (new-country cases) → promote.
+
+**Follow-ups:** the Node resolver's `admin-global-priority.db` (server/CLI) still needs the same CA/world augment to match the demo; the dormant `-20e` R2 object is superseded by `-20f` (deletable).
