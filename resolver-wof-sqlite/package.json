@@ -24,7 +24,8 @@
 		"./unified-schema": "./out/unified-schema.js",
 		"./coincident-roles": "./out/coincident-roles.js",
 		"./geo": "./out/geo.js",
-		"./street-normalize": "./out/street-normalize.js"
+		"./street-normalize": "./out/street-normalize.js",
+		"./build-candidate": "./out/build-candidate.js"
 	},
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
@@ -39,6 +40,7 @@
 		"README.md"
 	],
 	"bin": {
+		"mailwoman-wof-build-candidate": "./out/build-candidate-cli.js",
 		"mailwoman-wof-build-coincident-roles": "./out/build-coincident-roles-cli.js",
 		"mailwoman-wof-build-fts": "./out/build-fts-cli.js",
 		"mailwoman-wof-build-slim": "./out/build-slim-cli.js"
