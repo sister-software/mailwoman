@@ -235,3 +235,55 @@ pipeline per the existing national-situs / Overture work; or the FR-admin-split 
 3. The reranker-vs-coverage-vs-multi-locale route is chosen — with the strategic fork resolved by the
    operator if the two weightings diverge.
 4. DeepSeek's numeric bet is confirmed or refuted against the actual matrix (logged, not hand-waved).
+
+## Outcome (2026-06-20): coverage, confirmed at full scale
+
+The route chosen was **coverage**, and the falsification held end-to-end. We built an Overture-divisions
+gazetteer for the 15 zero-DB EU locales, folded the ingest into the canonical build
+(`build-unified-wof.ts --overture-countries`, commit `8b018366`), rebuilt the whole admin DB to a
+staging path (1.81M WOF + 299k Overture places, one Freeze, `integrity_check = ok`), and graded the
+assembled coordinate against held-out Overture rooftop truth with `scripts/eval/eu-coord-direct.ts`.
+No model was retrained — the v1.8.0 parser is unchanged.
+
+Coordinate p50 / resolve-rate / locality-name-match, 300 held-out rows each, sorted by p50 (`*` =
+already-covered ES/IT/NL control, from the global WOF path):
+
+| locale | resolve | **p50 km** | p90 km | name-match |
+| ------ | ------: | ---------: | -----: | ---------: |
+| LU     |     69% |    **0.4** |    1.0 |        69% |
+| LV     |     34% |    **0.7** |   52.0 |        31% |
+| CH     |     69% |    **0.7** |   30.1 |        55% |
+| HR     |     83% |    **0.8** |   87.4 |        73% |
+| SK     |     57% |    **1.0** |    2.3 |        54% |
+| PT     |     83% |    **1.4** |    4.9 |        76% |
+| IT \*  |     95% |    **1.5** |  118.2 |        82% |
+| NL \*  |     97% |    **1.5** |    4.5 |        59% |
+| SI     |     55% |    **1.6** |   56.1 |        36% |
+| CZ     |     71% |    **1.7** |  146.1 |        55% |
+| AT     |     54% |    **1.9** |  109.8 |        43% |
+| BE     |     89% |    **1.9** |    5.5 |        85% |
+| PL     |     82% |    **2.1** |  367.4 |        58% |
+| ES \*  |     95% |    **2.2** |   10.5 |        65% |
+| DK     |     53% |    **2.3** |   12.0 |        48% |
+| FI     |     70% |    **3.4** |   19.3 |        68% |
+| NO     |     53% |    **7.1** |  280.7 |        43% |
+| LT     |      6% |   **78.5** |  226.8 |         0% |
+
+**The median coordinate is solved for 14 of 15 — interleaved with the ES/IT/NL control (1.5–2.2 km).**
+Built from the Overture divisions gazetteer plus the postcode anchor, zero GPU.
+
+The one outlier is **LT**, and it's an eval-data artifact, not a coverage gap: the DB carries 20,960
+Lithuanian localities and `Vilnius` / `Kaunas` / `Klaipėda` resolve perfectly, but the LT _address_
+locality field carries settlement-type suffixes (`mstl.` / `m.` / `k.` = miestelis / miestas / kaimas),
+Lithuanian genitive declension (`Rumšiškių` vs the gazetteer's nominative `Rumšiškės`), and an `LT-`
+postcode prefix — so the held-out strings don't match the gazetteer names. Real LT input would need
+that normalization (or the model to learn it); the gazetteer itself is fine.
+
+The control rows (ES/IT/NL) are unchanged from the global WOF path — the Overture backfill regressed
+nothing. The remaining levers are **resolve-rate** (the 34–70% locales: more Overture/postcode
+coverage on the unresolved fraction) and the **p90 tail** (wrong-place name collisions — note IT, a
+covered control, also tails to 118 km, so this is a general resolver-ranking job: population tiebreak /
+postcode constraint, not specific to the new locales). Neither is a parser-retrain lever.
+
+The staging DB (`admin-global-priority-eu.db`) is built and validated; promoting it to the shipped
+`admin-global-priority.db` is the gated canonical-DB swap awaiting operator GO.
