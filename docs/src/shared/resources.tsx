@@ -39,6 +39,9 @@ export interface MailwomanLookupLike {
 			id: number
 			name: string
 			placetype: string
+			/** ISO country code of the resolved place — lets the cascade country-gate an ambiguous
+postcode. */
+			country?: string
 			lat: number
 			lon: number
 			score: number
@@ -167,7 +170,7 @@ export function streetShardUrl(slug: string, kind: "situs" | "interp"): string {
  * is rebuilt + re-uploaded (the immutable Cache-Control means a fresh DB needs a fresh URL). See
  * RELEASING.md "Rebuilding + swapping the canonical admin gazetteer".
  */
-export const ADMIN_GAZETTEER_VERSION = "2026-06-20a"
+export const ADMIN_GAZETTEER_VERSION = "2026-06-20b"
 
 /**
  * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~490 MB) — the FTS-free,

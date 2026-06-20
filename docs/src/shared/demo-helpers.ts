@@ -262,14 +262,26 @@ export async function runCascade(
 		if (entry.warning) console.warn(entry.warning)
 	}
 
+	// Resolve the locality FIRST: its population-ranked country (Berlin → Berlin DE 3.5M, not Berlin NH)
+	// gates the postcode below, so an ambiguous INTERNATIONAL postcode — 10115 is both Berlin DE and a New
+	// York US ZIP, and the candidate gazetteer carries US postcodes only — can't out-resolve the parsed
+	// city. The postcode still WINS when it resolves within the locality's country (the most precise tier);
+	// it just can't drag a German address to New York.
+	const localityHits = await resolveLocality(regionBbox)
+
 	if (postcodeNode?.value) {
 		const cs = usable(
-			await lookup.findPlace({ text: String(postcodeNode.value), placetype: "postalcode", bbox: regionBbox, limit: 5 })
+			await lookup.findPlace({
+				text: String(postcodeNode.value),
+				placetype: "postalcode",
+				bbox: regionBbox,
+				country: localityHits[0]?.country,
+				limit: 5,
+			})
 		)
 		if (cs.length > 0) return cs
 	}
 
-	const localityHits = await resolveLocality(regionBbox)
 	if (localityHits.length > 0) return localityHits
 
 	return usable(await lookup.findPlace({ text: rawText, bbox: regionBbox, limit: 5 }))

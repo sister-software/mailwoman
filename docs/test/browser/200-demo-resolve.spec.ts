@@ -26,6 +26,21 @@ test.describe("Demo — resolution cascade", () => {
 		demo.console.assertNoFailEvents()
 	})
 
+	test("German address — postcode 10115 country-gates to Berlin, not New York", async ({ demo }) => {
+		// Regression for the candidate-table cascade: 10115 is both a Berlin DE postcode and a New York US
+		// ZIP, and the gazetteer carries US postcodes only. Postcode-first-unconstrained used to short-
+		// circuit to NYC. The locality must resolve first (Berlin → DE by population) and country-gate the
+		// postcode, landing the result in Berlin.
+		await demo.goto("5 Hauptstraße, Berlin, Berlin 10115")
+		await demo.submit()
+
+		const { resolved, markerCount } = await demo.readResult()
+		expect(markerCount).toBeGreaterThan(0)
+		expect(resolved["name"]).toBe("Berlin")
+		expect(resolved["placetype"]).toBe("locality")
+		demo.console.assertNoFailEvents()
+	})
+
 	test("White House default — surfaces no fail-pattern errors even when resolver returns nothing", async ({ demo }) => {
 		// Postcode 20500 has lat=0/lon=0 in WOF; cascade filters it; raw text + locality may also
 		// miss. The test isn't asserting the resolution succeeds — it's asserting that the

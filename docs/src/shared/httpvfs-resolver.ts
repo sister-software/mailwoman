@@ -398,6 +398,7 @@ export class WofHttpvfsPlaceLookup implements MailwomanLookupLike {
 /** Cached id↔text maps from the candidate DB's tiny code tables (one probe, memoized). */
 interface CandidateCodeMaps {
 	countryToId: Map<string, number>
+	idToCountry: Map<number, string>
 	placetypeToId: Map<string, number>
 	idToPlacetype: Map<number, string>
 }
@@ -428,14 +429,18 @@ export class WofCandidateTableLookup implements MailwomanLookupLike {
 				const cc = rowsFromExec(await this.#worker.db.exec("SELECT id, code FROM country_codes"))
 				const pt = rowsFromExec(await this.#worker.db.exec("SELECT id, placetype FROM placetype_codes"))
 				const countryToId = new Map<string, number>()
-				for (const r of cc) countryToId.set(String(r.code).toUpperCase(), Number(r.id))
+				const idToCountry = new Map<number, string>()
+				for (const r of cc) {
+					countryToId.set(String(r.code).toUpperCase(), Number(r.id))
+					idToCountry.set(Number(r.id), String(r.code).toUpperCase())
+				}
 				const placetypeToId = new Map<string, number>()
 				const idToPlacetype = new Map<number, string>()
 				for (const r of pt) {
 					placetypeToId.set(String(r.placetype), Number(r.id))
 					idToPlacetype.set(Number(r.id), String(r.placetype))
 				}
-				return { countryToId, placetypeToId, idToPlacetype }
+				return { countryToId, idToCountry, placetypeToId, idToPlacetype }
 			})()
 			this.#codes.catch(() => {
 				this.#codes = undefined
@@ -463,7 +468,7 @@ export class WofCandidateTableLookup implements MailwomanLookupLike {
 		const nameKey = normalizeLocalityForKey(text)
 		if (!nameKey) return []
 		const limit = Math.max(1, query.limit ?? 10)
-		const { countryToId, placetypeToId, idToPlacetype } = await this.#codeMaps()
+		const { countryToId, idToCountry, placetypeToId, idToPlacetype } = await this.#codeMaps()
 
 		const conds = [`name_key = ${sqlStr(nameKey)}`]
 		if (query.country) {
@@ -489,7 +494,7 @@ export class WofCandidateTableLookup implements MailwomanLookupLike {
 		}
 
 		const sql =
-			`SELECT spr_id, name, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank ` +
+			`SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank ` +
 			`FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ${limit}`
 		const rows = rowsFromExec(await this.#worker.db.exec(sql))
 		return rows.map((row) => {
@@ -498,6 +503,9 @@ export class WofCandidateTableLookup implements MailwomanLookupLike {
 				id: Number(row.spr_id),
 				name: String(row.name ?? ""),
 				placetype: idToPlacetype.get(Number(row.placetype_id)) ?? "",
+				// Surfaced so the cascade can country-gate a postcode by the resolved locality (an ambiguous
+				// international postcode like 10115 = Berlin DE AND New York US must not out-resolve the city).
+				country: idToCountry.get(Number(row.country_id)),
 				lat: Number(row.latitude),
 				lon: Number(row.longitude),
 				score: -(row.neg_rank as number),

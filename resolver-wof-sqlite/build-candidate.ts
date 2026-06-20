@@ -290,6 +290,10 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			FROM cand_stage ORDER BY name_key, country_id, region_id, placetype_id, neg_rank, spr_id;
 		DROP TABLE cand_stage;
 	`)
+	// page_size MUST be set right before VACUUM: node:sqlite initializes the file at the 4096 default on
+	// `new DatabaseSync`, so the creation-time pragma is a no-op — only a VACUUM rebuilds at the new size.
+	// 8192 matches the sql.js-httpvfs 64 KiB request chunk cleanly (8 pages) and shallows the B-tree.
+	out.exec("PRAGMA page_size=8192")
 	out.exec("VACUUM")
 
 	const rows = Number((out.prepare("SELECT count(*) AS n FROM candidate").get() as { n: number }).n)
