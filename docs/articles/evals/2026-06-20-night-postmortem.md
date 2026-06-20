@@ -59,6 +59,12 @@ A no-GPU coverage + hardening night, continuing the day's candidate-gazetteer ar
 - #734 follow-ups: fix the LT eval extraction; base-name aliasing for qualified OA names (measure with `candidate-recall.ts`).
 - #630 attended dependency hygiene: intermediate-dep bumps (node-gyp, webpack plugins, release-it) + a release dry-run.
 - #727 diacritic residual: a decode/tokenizer look.
+- **#473/#294 TW resolver multilingual lookup** — the data is ready (TW admin in the gazetteer); the gap is the resolver querying the `names` table (Chinese forms) for CJK + the CJK parser. A grounded next step that needs no new data.
+- **#723 rural-US coverage = a raw-OpenAddresses shard**, not an Overture flag — the only path to denser SD/IL rooftop is ingesting the raw OA project as a separate shard (a real pipeline, scope accordingly) or accepting the admin-centroid fallback for the ~12% rural tail.
+- **#517 is retrain-ready**: both synth paths emit military + NZ; the build recipe just needs `--military-ratio` set, then the #148 retrain (HOLD) learns the AU/NZ/military po_box vocab (closes the postal-arena 0% class).
+- **#718 diagnostic-tail migration**: ~18 raw-`new NeuralAddressClassifier` diag scripts are still anchor-off (low-stakes, non-decision-gating) — migrate opportunistically; the promote gates + yardsticks are already faithful.
+- **#482 part 5**: cross-links + backfill the 4.5.0–4.10.0 releases-matrix rows from the ledger.
+- **The synth-po-box .mjs/adapter loop duplication** is worth consolidating (the .mjs reimplements `createSynthPoBoxAdapter`'s generation) — a verifiable refactor, best done attended (verify po_box-shard byte-equivalence).
 
 ## Numbers
 
