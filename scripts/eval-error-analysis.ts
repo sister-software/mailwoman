@@ -14,14 +14,26 @@
  *   4. Near-class confusion — city↔state, street↔venue swaps
  *   5. Structural violations — illegal BIO transitions (I after O)
  *
+ *   This is the pre-publish 2pp promote gate (night-shift skill: "run the full per-tag error analysis
+ *   and compare against the current default release; abort the upload if any tag regresses >2pp").
+ *   It therefore builds the classifier via the canonical `createScorer`
+ *   (`@mailwoman/neural/scorer`, #718) in STRICT mode, so the model is fed the full SHIP-CONFIG it
+ *   was TRAINED against — anchor + gazetteer + conventions, per the model-card's `requires` block.
+ *   The prior `--model` path built a RAW `new NeuralAddressClassifier` with NO anchor/gazetteer, so
+ *   a freshly-trained STAGE3 checkpoint was graded ANCHOR-OFF (admin tags collapse) while the
+ *   no-`--model` default (loadFromWeights) was anchor-ON — the candidate was scored OOD against an
+ *   in-distribution baseline, the #566/#685 trap this very gate exists to prevent. `--no-strict`
+ *   warns-and-continues for ad-hoc/legacy (pre-anchor) models instead of failing closed.
+ *
  *   Usage: node --experimental-strip-types scripts/eval-error-analysis.ts\
- *   --golden data/eval/golden/v0.1.2
+ *   --golden data/eval/golden/v0.1.2 Grade a candidate: ... --model ./out/v.../model.onnx --tokenizer
+ *   <spm> --model-card <json>
  */
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
-import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { createScorer } from "@mailwoman/neural/scorer"
+import { resolveWeights } from "@mailwoman/neural/weights"
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
@@ -43,11 +55,13 @@ interface Args {
 	tokenizerPath?: string
 	modelCardPath?: string
 	postcodeRepair: boolean
+	/** STRICT ship-config feed (#718): fail closed if a model-card-declared channel can't be fed. */
+	strict: boolean
 }
 
 function parseArgs(): Args {
 	const args = process.argv.slice(2)
-	const out: Partial<Args> = { postcodeRepair: false }
+	const out: Partial<Args> = { postcodeRepair: false, strict: true }
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
 		if (a === "--golden" && args[i + 1]) out.goldenDir = args[++i]
@@ -55,6 +69,7 @@ function parseArgs(): Args {
 		else if (a === "--tokenizer" && args[i + 1]) out.tokenizerPath = args[++i]
 		else if (a === "--model-card" && args[i + 1]) out.modelCardPath = args[++i]
 		else if (a === "--postcode-repair") out.postcodeRepair = true
+		else if (a === "--no-strict") out.strict = false
 	}
 	if (!out.goldenDir) {
 		console.error(
@@ -97,13 +112,21 @@ async function main() {
 	const parseOpts = args.postcodeRepair
 		? ({ postcodeRepair: true } as Parameters<NeuralAddressClassifier["parse"]>[1])
 		: undefined
-	const classifier = args.modelPath
-		? new NeuralAddressClassifier({
-				tokenizer: await MailwomanTokenizer.loadFromFile(args.tokenizerPath!),
-				runner: await OnnxRunner.create(args.modelPath),
-				labels: JSON.parse(readFileSync(args.modelCardPath!, "utf8")).labels,
-			})
-		: await NeuralAddressClassifier.loadFromWeights()
+	// Full SHIP-CONFIG via the canonical ProductionScorer (#718) — feed the anchor + gazetteer +
+	// conventions channels the model was trained against (per the model-card `requires` block) so a
+	// `--model` candidate is graded in-distribution, the same as the dev-weights default. createScorer
+	// fails closed in strict mode if a declared channel can't actually be fed; `--no-strict` opts out.
+	const resolved = args.modelPath
+		? { modelPath: args.modelPath, tokenizerPath: args.tokenizerPath!, modelCardPath: args.modelCardPath! }
+		: resolveWeights({ locale: "en-us" })
+	if (!resolved.modelPath || !resolved.tokenizerPath || !resolved.modelCardPath)
+		throw new Error("createScorer needs model + tokenizer + model-card; resolveWeights returned incomplete paths")
+	const classifier = await createScorer({
+		modelPath: resolved.modelPath,
+		tokenizerPath: resolved.tokenizerPath,
+		modelCardPath: resolved.modelCardPath,
+		strict: args.strict,
+	})
 
 	const missed: CategoryStats = { total: 0, examples: [] }
 	const hallucinated: CategoryStats = { total: 0, examples: [] }
