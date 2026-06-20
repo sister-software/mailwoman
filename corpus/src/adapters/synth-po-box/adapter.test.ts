@@ -135,4 +135,44 @@ describe("synth-po-box adapter", () => {
 		expect(ids.size).toBe(2)
 		expect([...ids].every((id) => id.startsWith(SYNTH_PO_BOX_ADAPTER_ID + "-"))).toBe(true)
 	})
+
+	it("militaryRatio emits a US military/diplomatic PO-box row per input (#517)", async () => {
+		const path = writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
+		const adapter = createSynthPoBoxAdapter({ seed: 42, militaryRatio: 1.0 })
+		const rows = await collect(path, adapter)
+		// One standard po_box row + one self-contained military row.
+		expect(rows).toHaveLength(2)
+		const mil = rows.find((r) => /^(PSC|CMR|Unit) /.test(String(r.components.po_box)))
+		expect(mil).toBeDefined()
+		expect(["APO", "FPO", "DPO"]).toContain(mil!.components.locality)
+		expect(["AA", "AE", "AP"]).toContain(mil!.components.region)
+		expect(mil!.country).toBe("US")
+		expect(mil!.locale).toBe("en-US")
+	})
+
+	it("militaryRatio defaults off — byte-stable (one row per input, no military)", async () => {
+		const path = writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
+		const rows = await collect(path)
+		expect(rows).toHaveLength(1)
+		expect(/^(PSC|CMR|Unit) /.test(String(rows[0]!.components.po_box))).toBe(false)
+	})
+
+	it("emits region-less NZ tuples — Private Bag / Box, no region token (#517)", async () => {
+		const path = writeFixture([{ locality: "Auckland", region: "", postcode: "1010", country: "NZ" }])
+		const rows = await collect(path)
+		expect(rows).toHaveLength(1)
+		expect(rows[0]!.locale).toBe("en-NZ")
+		expect(rows[0]!.components.po_box).toMatch(/^(PO Box|P\.O\. Box|Post Office Box|Private Bag|Private Box) /)
+		expect(rows[0]!.components.region).toBeUndefined()
+		expect(rows[0]!.country).toBe("NZ")
+	})
+
+	it("military rows are US-only — suppressed under a non-US country filter", async () => {
+		const path = writeFixture([{ locality: "Lyon", region: "Auvergne-Rhône-Alpes", postcode: "69001", country: "FR" }])
+		const adapter = createSynthPoBoxAdapter({ seed: 5, militaryRatio: 1.0 })
+		const rows = []
+		for await (const row of adapter.rows({ inputPath: path, country: "FR" })) rows.push(row)
+		expect(rows.length).toBeGreaterThanOrEqual(1)
+		expect(rows.every((r) => !/^(PSC|CMR|Unit) /.test(String(r.components.po_box)))).toBe(true)
+	})
 })

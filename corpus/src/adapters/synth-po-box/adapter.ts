@@ -23,7 +23,13 @@
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
 import { stableSourceId } from "../../adapter.js"
-import { synthesizePoBoxRow, type PoBoxBaseTuple } from "../../synthesize-po-box.js"
+import {
+	countryToLocale,
+	REGION_OPTIONAL_LOCALES,
+	synthesizeMilitaryPoBoxRow,
+	synthesizePoBoxRow,
+	type PoBoxBaseTuple,
+} from "../../synthesize-po-box.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
 
 export const SYNTH_PO_BOX_ADAPTER_ID = "synth-po-box"
@@ -49,6 +55,14 @@ export interface SynthPoBoxAdapterOptions {
 	 * Deterministic seed for reproducible synthesis. Default Date.now().
 	 */
 	seed?: number
+	/**
+	 * Probability (0..1), evaluated per input tuple, of ALSO emitting one US military/diplomatic
+	 * PO-box row (`PSC/CMR/Unit <id> Box <box>, APO/FPO/DPO AA/AE/AP <zip>`, #517). These rows are
+	 * self-contained — they draw no field from the input tuple, so military volume scales with the
+	 * input stream size. Default 0 (off) — the adapter's contract is "one row per input"; the corpus
+	 * build recipe opts in to seed the rare-but-real military class without changing the default.
+	 */
+	militaryRatio?: number
 }
 
 function makeRandom(seed: number): () => number {
@@ -62,6 +76,7 @@ function makeRandom(seed: number): () => number {
 export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): CorpusAdapter {
 	const variantsPerInput = opts.variantsPerInput ?? 1
 	const pmbRatio = opts.pmbRatio ?? 0.15
+	const militaryRatio = opts.militaryRatio ?? 0
 
 	return {
 		id: SYNTH_PO_BOX_ADAPTER_ID,
@@ -77,6 +92,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 
 			let emitted = 0
 			let skipped = 0
+			let militarySeq = 0
 
 			for await (const line of rl) {
 				if (options.signal?.aborted) break
@@ -93,7 +109,11 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 					continue
 				}
 
-				if (!input.locality || !input.region || !input.postcode || !input.country) {
+				// Region is required EXCEPT for region-less locales (NZ: `Private Bag 12, Auckland 1010`
+				// has no region token, #517). synthesizePoBoxRow handles region absence; the guard just
+				// must not discard those tuples as "missing region".
+				const regionOptional = input.country ? REGION_OPTIONAL_LOCALES.has(countryToLocale(input.country)) : false
+				if (!input.locality || !input.postcode || !input.country || (!input.region && !regionOptional)) {
 					skipped++
 					continue
 				}
@@ -126,6 +146,38 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 					emitted++
 
 					if (options.limit !== undefined && emitted >= options.limit) break
+				}
+
+				// US military/diplomatic PO-box rows (#517): self-contained — draw nothing from the input
+				// tuple — emitted per input line with probability `militaryRatio` (off by default, so the
+				// default random stream and output are byte-identical). Military volume scales with the
+				// stream rather than the US-tuple count. US-only: suppressed under a non-US country filter
+				// and counted against `limit` like any other row.
+				const militaryAllowed = !options.country || options.country === "US"
+				if (
+					militaryRatio > 0 &&
+					militaryAllowed &&
+					(options.limit === undefined || emitted < options.limit) &&
+					random() < militaryRatio
+				) {
+					const mil = synthesizeMilitaryPoBoxRow({ random })
+					const sourceId = stableSourceId(SYNTH_PO_BOX_ADAPTER_ID, {
+						po_box: `${mil.components.po_box}#mil${militarySeq++}`,
+						locality: mil.components.locality!,
+						region: mil.components.region!,
+						postcode: mil.components.postcode!,
+					})
+					yield {
+						raw: mil.raw,
+						components: mil.components,
+						country: "US",
+						locale: mil.locale,
+						source: SYNTH_PO_BOX_ADAPTER_ID,
+						source_id: sourceId,
+						corpus_version: "",
+						license: SYNTH_PO_BOX_LICENSE,
+					}
+					emitted++
 				}
 			}
 		},

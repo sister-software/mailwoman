@@ -277,3 +277,11 @@ export function countryToLocale(country: string): string {
 export function supportedLocales(): ReadonlyArray<string> {
 	return PO_BOX_LOCALE_TEMPLATES.map((t) => t.locale)
 }
+
+/**
+ * Locales whose standard PO-box delivery line carries NO region token — the address reads
+ * `<po_box>, <locality> <postcode>` with nothing between locality and postcode (#517). NZ is the
+ * canonical case (`Private Bag 12, Auckland 1010`). Consumers (e.g. the synth-po-box adapter) use
+ * this to avoid discarding region-less input tuples for these locales as "missing region".
+ */
+export const REGION_OPTIONAL_LOCALES: ReadonlySet<string> = new Set(["en-NZ"])
