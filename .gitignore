@@ -70,8 +70,14 @@ dist
 !.yarn/sdks
 !.yarn/versions
 
-# Coverage
+# Coverage (vitest/istanbul report dirs). The bare rule matches any dir named `coverage` at any depth,
+# which also swallows SOURCE dirs that legitimately carry the name — the `mailwoman coverage` CLI command
+# and the cartographer `coverage` (fog-of-war) style module. Re-include those (source, not report output).
 coverage
+!/mailwoman/commands/coverage/
+!/mailwoman/commands/coverage/**
+!/cartographer/coverage/
+!/cartographer/coverage/**
 playwright-report
 playwright-traces
 test-results

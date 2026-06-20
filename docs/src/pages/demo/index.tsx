@@ -23,6 +23,7 @@ import BrowserOnly from "@docusaurus/BrowserOnly"
 import Head from "@docusaurus/Head"
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
+import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
 import Layout from "@theme/Layout"
 import type { Map as MapLibreMap } from "maplibre-gl"
 import type React from "react"
@@ -241,6 +242,13 @@ const DemoApp: React.FC = () => {
 		let cancelled = false
 		void (async () => {
 			try {
+				// Address-coverage "fog of war" overlay (#coverage). Default-off; surfaced via the layer
+				// toggle. Default source = the production tileset on tiles.sister.software (404s harmlessly
+				// until the national bake is uploaded — layers are off, so nothing renders). Local
+				// single-state preview: open /demo?coverage=<pmtiles-url> (e.g. a localhost bake).
+				const coverageOverride =
+					typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("coverage") : null
+
 				const [manifestRes, maplibre, basemapSource] = await Promise.all([
 					// `cache: "reload"` bypasses the HTTP cache for the version pointer. releases.json was
 					// historically served with an immutable Cache-Control (the publish script applied it to
@@ -259,6 +267,13 @@ const DemoApp: React.FC = () => {
 				if (manifestRes) {
 					setManifest(manifestRes)
 					setSelectedVersion(manifestRes.defaultVersion)
+				}
+
+				// Register the pmtiles protocol only for a LOCAL single-state preview (?coverage=…); the
+				// production coverage tileset is served as plain XYZ vector tiles by the tile worker.
+				if (coverageOverride) {
+					const { Protocol } = await import("pmtiles")
+					maplibre.addProtocol("pmtiles", new Protocol().tile)
 				}
 
 				if (mapContainerRef.current) {
@@ -299,6 +314,30 @@ const DemoApp: React.FC = () => {
 						}
 					}
 					map.on("load", wireTerrain)
+
+					// Add the coverage "fog of war" source + default-off fill layers once the basemap style is
+					// ready. The fills sit beneath the first symbol layer so place labels stay legible.
+					const coverageSourceUrl = coverageOverride
+						? `pmtiles://${coverageOverride}`
+						: `https://tiles.sister.software/${CoverageTileSetID}.json`
+					const wireCoverage = (): void => {
+						if (!map.isStyleLoaded()) {
+							map.once("styledata", wireCoverage)
+							return
+						}
+						try {
+							if (!map.getSource(CoverageTileSetID)) {
+								map.addSource(CoverageTileSetID, createCoverageSource(coverageSourceUrl))
+							}
+							const firstSymbolID = map.getStyle().layers?.find((l) => l.type === "symbol")?.id
+							for (const layer of CoverageLayers) {
+								if (!map.getLayer(layer.id)) map.addLayer(layer, firstSymbolID)
+							}
+						} catch (error) {
+							console.warn("coverage overlay wiring failed", error)
+						}
+					}
+					map.on("load", wireCoverage)
 				}
 			} catch (error) {
 				if (cancelled) return

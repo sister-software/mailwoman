@@ -4918,6 +4918,7 @@ __metadata:
     clsx: "npm:^2.1.1"
     docusaurus-plugin-glossary: "npm:^3.3.3"
     maplibre-gl: "npm:^5.24.0"
+    pmtiles: "npm:^4.4.1"
     prism-react-renderer: "npm:^2.4.1"
     react: "npm:^19.2.7"
     react-dom: "npm:^19.2.7"
@@ -17785,8 +17786,11 @@ __metadata:
     zod: "npm:^4.4.3"
     zx: "npm:^8.8.5"
   peerDependencies:
+    "@duckdb/node-api": 1.5.3-r.3
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   peerDependenciesMeta:
+    "@duckdb/node-api":
+      optional: true
     "@inkjs/ui":
       optional: true
     "@mailwoman/resolver-wof-sqlite":
