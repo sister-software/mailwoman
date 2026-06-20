@@ -210,7 +210,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			classifier,
 			resolver,
 			shards,
-			defaultCountry: resolverDefaultCountry(options) || undefined,
+			defaultCountry: resolverDefaultCountry(options, !!candidateDb) || undefined,
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).

@@ -19,7 +19,7 @@
 import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/core/resolver"
 import { type RequestHandler, Router } from "express"
 import { existsSync } from "node:fs"
-import { createResolverBackend } from "../resolver-backend.js"
+import { createResolverBackend, resolveCandidateDbPath } from "../resolver-backend.js"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
@@ -84,7 +84,9 @@ async function getDeps(): Promise<GeocodeDepsBundle | null> {
 		const backend = createResolverBackend(resolverMod, { wofPaths: paths })
 		const resolver = createWofResolver(backend as unknown as ResolverBackend)
 		const shards = new ShardProvider(resolverMod, DATA_ROOT)
-		return { classifier, resolver, shards, defaultCountry: "US" }
+		// Candidate backend → country-agnostic default (demo's global, population-first behavior); a
+		// per-request `country` still scopes. FTS backend keeps the US default. (#170)
+		return { classifier, resolver, shards, defaultCountry: resolveCandidateDbPath() ? undefined : "US" }
 	})()
 	return depsPromise
 }

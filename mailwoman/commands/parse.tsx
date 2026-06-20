@@ -227,12 +227,22 @@ export function localeToCountry(locale: string | undefined): string | undefined 
  * The resolver's `defaultCountry` for this invocation: the explicit `--default-country` if set
  * (with `none` meaning "no filter"), otherwise inferred from `--locale`. Without it, a bare region
  * abbreviation (`NY`) resolves to whatever the gazetteer ranks highest globally — often a foreign
- * homonym (a Scottish locality) rather than the US state. The demo passes `country: "US"`; this
- * gives the CLI parity.
+ * homonym (a Scottish locality) rather than the US state. The FTS backend therefore needs the
+ * locale default to match the demo.
+ *
+ * `candidateActive` flips that off: the candidate-table backend resolves population-first AND
+ * country-agnostic (the demo's GLOBAL behavior — bare "Moscow" → the Russian city), so when it's
+ * the backend AND the user gave no explicit country we impose NO default. An explicit
+ * `--default-country` (or `none`) still wins. This is what makes the candidate-backed CLI match the
+ * demo out of the box.
  */
-export function resolverDefaultCountry(options: { defaultCountry?: string; locale?: string }): string | undefined {
+export function resolverDefaultCountry(
+	options: { defaultCountry?: string; locale?: string },
+	candidateActive = false
+): string | undefined {
 	if (options.defaultCountry === "none") return undefined
-	return options.defaultCountry ?? localeToCountry(options.locale)
+	if (options.defaultCountry) return options.defaultCountry
+	return candidateActive ? undefined : localeToCountry(options.locale)
 }
 
 function resolveWofPath(options: zod.infer<typeof ParseConfigSchema>): string {
@@ -275,7 +285,7 @@ async function resolveWithCandidates(
 ): Promise<AddressTree> {
 	const opts: { candidatesPerLookup?: number; defaultCountry?: string } = {}
 	if (options.candidates !== undefined) opts.candidatesPerLookup = options.candidates + 1
-	const dc = resolverDefaultCountry(options)
+	const dc = resolverDefaultCountry(options, !!resolveCandidateDbPath())
 	if (dc) opts.defaultCountry = dc
 	return resolver.resolveTree(tree, opts)
 }
@@ -364,7 +374,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	// rather than a higher-priority foreign homonym. Inferred from --locale unless --default-country
 	// overrides (or is `none`). Only meaningful on the --resolve path; harmless otherwise.
 	if (options.resolve) {
-		const dc = resolverDefaultCountry(options)
+		const dc = resolverDefaultCountry(options, !!resolveCandidateDbPath())
 		if (dc) resolveOpts.defaultCountry = dc
 	}
 	const pipelineOpts: { locale?: string; resolveOpts?: { candidatesPerLookup?: number; defaultCountry?: string } } = {
