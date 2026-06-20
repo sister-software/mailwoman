@@ -4,7 +4,7 @@ title: "Night shift 2026-06-20 — candidate-gazetteer internationalization + ha
 
 # Night shift 2026-06-20 — postmortem
 
-_Living document — sketched during the shift, finalized at 15:00 UTC hand-off._
+_Drafted during the shift; finalized at hand-off when the operator returned ~13:22 UTC (ahead of the planned 15:00)._
 
 A no-GPU coverage + hardening night, continuing the day's candidate-gazetteer arc. Primary: internationalize the byte-range candidate gazetteer + harden the builder, each graded on the assembled coordinate. Operator granted push + promote authority (gates bind); $20 Modal as contingency (unspent — the plan is no-GPU).
 
