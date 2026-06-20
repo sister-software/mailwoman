@@ -1,0 +1,96 @@
+{
+	"$comment": "Version-controlled source catalog + column mappings for the cross-dataset record-matcher (#620, part of #615). These are PUBLIC compliance/reporting datasets published per-program in a fragmented, non-deduplicated shape; the matcher resolves them by geocoded location + name/organization agreement (there is no shared key across publishers). Scope = entity resolution; interpretation of any resulting correlation is the data consumer's, not ours. The `mapping` here is the JSON-able ColumnMapping; the per-source in-state filter + row `explode` logic lives in scripts/record-matcher/cross-dataset-correlation.ts SPECS (they're predicates, not data). Snapshot dates + the persistent home are in docs/articles/concepts/record-matcher-data-catalog.md.",
+	"sourceRoot": "/mnt/playpen/mailwoman-data/record-matcher/sources",
+	"sources": [
+		{
+			"source": "txhhsc-nursing",
+			"publisher": "Texas Health and Human Services Commission",
+			"program": "Long-term care facility registry",
+			"file": "txhhsc_nursing-facilities_20260611.tsv",
+			"snapshot": "2026-06-11",
+			"rows": 1176,
+			"columns": 43,
+			"withinSourceKey": "Facility ID",
+			"hasCoordinate": false,
+			"mapping": {
+				"id": "Facility ID",
+				"organization": "Facility Name",
+				"address": ["Physical Address", "Physical Address CITY", "Physical Address State", "Physical Address Zipcode"],
+				"phone": "Facility Phone Number",
+				"source": "txhhsc-nursing"
+			}
+		},
+		{
+			"source": "fcc-rhc",
+			"publisher": "Federal Communications Commission",
+			"program": "Rural Health Care — posted services (Form 461/465)",
+			"file": "fcc-rhc_posted-services_form461-465_20260615.tsv",
+			"snapshot": "2026-06-15",
+			"rows": 94350,
+			"columns": 71,
+			"withinSourceKey": "HCP Number",
+			"hasCoordinate": false,
+			"mapping": {
+				"id": "HCP Number",
+				"organization": "HCP Name",
+				"address": ["Site Address Line 1", "Site City", "Site State", "Site ZIP Code"],
+				"phone": "Contact Phone",
+				"email": "Contact E-mail",
+				"source": "fcc-rhc"
+			}
+		},
+		{
+			"source": "fcc-rhc-commitments",
+			"publisher": "Federal Communications Commission",
+			"program": "Rural Health Care — funding commitments/disbursements (Form 462/466/466a)",
+			"file": "fcc-rhc_commitments-disbursements_form462-466-466a_20260615.tsv",
+			"snapshot": "2026-06-15",
+			"rows": 470647,
+			"columns": 53,
+			"withinSourceKey": "Filing HCP / Participating HCP (two addressable entities per row — exploded)",
+			"hasCoordinate": false,
+			"mapping": {
+				"id": "hcpId",
+				"organization": "hcpName",
+				"address": ["hcpStreet", "hcpCity", "hcpState", "hcpZip"],
+				"source": "fcc-rhc-commitments"
+			},
+			"$explode": "Each row carries a Filing HCP and a Participating HCP; cross-dataset-correlation.ts explodes each in-state HCP into its own record (the #618 two-entity-per-row case) with id `${role}-${HCP}`."
+		},
+		{
+			"source": "nppes",
+			"publisher": "Centers for Medicare & Medicaid Services (NPPES)",
+			"program": "National Provider Identifier registry",
+			"file": "nppes_npi-registry_20260607.tsv",
+			"snapshot": "2026-06-07",
+			"rows": 8000000,
+			"rowsNote": "~8.0M (full registry, 5.1 GB); the matcher samples Entity Type 2 (organization) NPIs in-state with a non-empty legal business name",
+			"columns": 330,
+			"withinSourceKey": "NPI",
+			"hasCoordinate": false,
+			"mapping": {
+				"id": "NPI",
+				"organization": "Provider Organization Name (Legal Business Name)",
+				"address": [
+					"Provider First Line Business Practice Location Address",
+					"Provider Business Practice Location Address City Name",
+					"Provider Business Practice Location Address State Name",
+					"Provider Business Practice Location Address Postal Code"
+				],
+				"phone": "Provider Business Practice Location Address Telephone Number",
+				"source": "nppes"
+			}
+		}
+	],
+	"auxiliary": [
+		{ "file": "nppes_other-names_20260607.tsv", "purpose": "NPI → other organization names (alias bag for an NPI)" },
+		{ "file": "nppes_practice-locations_20260607.tsv", "purpose": "NPI → secondary practice-location addresses" },
+		{ "file": "fcc-rhc_spin-lookup_20260615.tsv", "purpose": "SPIN → service-provider name / DBA" },
+		{ "file": "txhhsc_nursing-facility-closures_20260608.tsv", "purpose": "TX HHSC closed nursing facilities" },
+		{
+			"file": "txhhsc_hospital-based-nursing-facilities_20260611.tsv",
+			"purpose": "TX HHSC hospital-based nursing facilities"
+		}
+	],
+	"join": "No shared key across publishers (NPI is NPPES-internal; HCP Number is FCC-internal; Facility ID is TX-HHSC-internal). The matcher joins on the GEOCODED location (mailwoman parse → resolve) + name/organization agreement — the geocode-first, label-free premise of #615/#598."
+}
