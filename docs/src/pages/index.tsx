@@ -100,6 +100,41 @@ function Gallery(): ReactNode {
 	)
 }
 
+function FeaturedExample(): ReactNode {
+	return (
+		<section className={styles.featured}>
+			<div className="container">
+				<div className={clsx("row", styles.featuredRow)}>
+					<div className="col col--6">
+						<Link to="/research/provider-registry-meets-usf" className={styles.featuredImageLink}>
+							<img
+								src="/img/provider-registry-usf.png"
+								alt="Health providers resolved across the NPPES registry, the FCC Rural Health Care funding file, and the Texas HHSC licensing list, plotted across Texas — matched on the geocoded place, with no shared key."
+								className={styles.featuredImage}
+								loading="lazy"
+							/>
+						</Link>
+					</div>
+					<div className="col col--6">
+						<p className={styles.cardJob}>Worked example</p>
+						<Heading as="h2" className={styles.featuredTitle}>
+							The provider registry meets the Universal Service Fund
+						</Heading>
+						<p className={styles.featuredBody}>
+							Three public datasets — a national provider registry, an FCC funding file, a state licensing list — that
+							share no identifier. Resolved onto one map by matching the geocoded place, not the key none of them carry.
+							Every dot is a real entity that turned up in more than one of them.
+						</p>
+						<p className={styles.cardLinks}>
+							<Link to="/research/provider-registry-meets-usf">See how it's done →</Link>
+						</p>
+					</div>
+				</div>
+			</div>
+		</section>
+	)
+}
+
 function FeatureStrip(): ReactNode {
 	return (
 		<section className={styles.features}>
@@ -187,6 +222,7 @@ export default function Home(): ReactNode {
 			<HomepageHeader />
 			<main>
 				<Gallery />
+				<FeaturedExample />
 				<FeatureStrip />
 				<QuickStart />
 			</main>
