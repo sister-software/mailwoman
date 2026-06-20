@@ -40,6 +40,13 @@ export interface BuildCandidateOptions {
 	input: string
 	/** Output candidate DB path (overwritten if present). */
 	output: string
+	/**
+	 * Optional postcode shards (`spr` rows with `placetype='postalcode'` + real coords, e.g.
+	 * postalcode-us.db) — folded in as `postalcode` candidate rows so `findPlace(postalcode)`
+	 * resolves a ZIP directly (the demo's primary postcode path; the postcode-*.bin anchor stays the
+	 * fallback). Matches the slim wof-hot.db, which took one such postcode DB.
+	 */
+	postcodes?: string[]
 	/** Optional progress callback for CLI / test introspection. */
 	onProgress?: (phase: string, message: string) => void
 }
@@ -50,6 +57,7 @@ export interface BuildCandidateResult {
 	primaries: number
 	aliases: number
 	abbrevs: number
+	postcodes: number
 }
 
 interface PlaceAttrs {
@@ -220,6 +228,51 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	out.exec("COMMIT")
 	progress("abbrevs", `${nAbbr.toLocaleString()} abbrevs`)
 
+	// --- pass 4: postcodes (separate shards: spr placetype='postalcode' with real coords) ---
+	let nPostcode = 0
+	for (const pcDb of opts.postcodes ?? []) {
+		progress("postcodes", `reading ${pcDb}`)
+		const pc = new DatabaseSync(pcDb, { readOnly: true })
+		const pcPtid = ptId("postalcode")
+		out.exec("BEGIN")
+		for (const r of pc
+			.prepare(
+				`SELECT id, name, country, latitude, longitude,
+					min_latitude AS mnlat, min_longitude AS mnlon, max_latitude AS mxlat, max_longitude AS mxlon
+				 FROM spr WHERE placetype='postalcode' AND latitude != 0 AND longitude != 0`
+			)
+			.iterate()) {
+			const name = String(r.name ?? "")
+			const key = normalizeLocalityForKey(name)
+			if (!key) continue
+			const lat = r.latitude as number
+			const lon = r.longitude as number
+			// region_id 0 (a postcode is unique by name+country — no same-name disambiguation); neg_rank 0
+			// (no population). bbox = the postcode's own min/max (falls back to the centroid point).
+			insStage.run(
+				key,
+				ccId(r.country as string | null),
+				0,
+				pcPtid,
+				0,
+				Number(r.id),
+				name,
+				lat,
+				lon,
+				(r.mnlat as number) || lat,
+				(r.mnlon as number) || lon,
+				(r.mxlat as number) || lat,
+				(r.mxlon as number) || lon,
+				0,
+				1
+			)
+			nPostcode++
+		}
+		out.exec("COMMIT")
+		pc.close()
+	}
+	if (nPostcode > 0) progress("postcodes", `${nPostcode.toLocaleString()} postcodes`)
+
 	// --- materialize the clustered WITHOUT ROWID table (sorted insert → contiguous leaves) ---
 	progress("cluster", "building clustered candidate table + VACUUM")
 	out.exec(`
@@ -242,5 +295,5 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	const rows = Number((out.prepare("SELECT count(*) AS n FROM candidate").get() as { n: number }).n)
 	src.close()
 	out.close()
-	return { rows, places: attrs.size, primaries: nPrim, aliases: nAlias, abbrevs: nAbbr }
+	return { rows, places: attrs.size, primaries: nPrim, aliases: nAlias, abbrevs: nAbbr, postcodes: nPostcode }
 }
