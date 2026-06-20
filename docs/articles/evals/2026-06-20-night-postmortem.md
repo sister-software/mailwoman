@@ -104,3 +104,15 @@ Per-locale, against the OA rooftop truth — the locality-centroid path (where `
 | PT     | 86.3% / 7.0 km          | 0.8% (sparse Overture fill — excluded) |
 | SI     | 89.5% / 3.6 km          | **100% / 2.0 km**                      |
 | SK     | 78.1% / 2.6 km          | **100% / 1.1 km**                      |
+
+## Morning epilogue (2026-06-20 day shift) — the `-20e` promote attempt, and why we held
+
+The operator returned and directed "promote `-20e`." Ran the safe `-20d` playbook: uploaded `-20e` to R2 **dormant** (598.8 MB, range-GET 206), bumped `ADMIN_GAZETTEER_VERSION` → `2026-06-20e` locally, and ran the browser e2e-gate **before** committing the flip. The gate earned its keep: **4/5 green** (Chicago, the Berlin postcode country-gate, the White House — no regression), and the **CA case FAILED** — `100 Queen Street West, Toronto, ON M5H 2N2` resolved to **40.458, −80.6 = Toronto, _Ohio_**, not Toronto, Ontario.
+
+**Root cause — a coverage-scope gap, not a regression.** The admin gazetteer (`admin-global-priority.db`) holds **1,739,725 places across 26 countries** (the EU set + US + CN/JP/KR/TW) and **zero Canada** — Montréal, Vancouver, Toronto, all absent. So the CA postcodes I built into `-20e` (843,739, correct — `M5H2N2` → 43.652) are **unreachable**: with no CA localities, "Toronto" resolves to the only Toronto in the gazetteer (Ohio, pop 5,190, lowest `neg_rank`), and the Berlin-style country-gate then **suppresses** the correct CA postcode as a US-vs-CA mismatch. CA resolves to Ohio in **both `-20d` and `-20e`** — `-20e` adds postcodes the cascade can't reach.
+
+**Decision: held the promote** (it's a no-op for CA users). Reverted the version bump — **live stays `-20d`**, tree clean. The `-20e` DB is parked dormant on R2 (superseded by the real fix; deletable on the operator's word). The 843 k centroids + the `overture-es-postcode-centroids.ts` tooling are ready.
+
+**The real gap is the admin layer, not the postcode layer.** `-20e` solved the wrong tier. Canadian coverage needs CA **admin** first: fold CA Overture divisions into `admin-global-priority.db` (exactly what #151 did for the EU set), rebuild the candidate gazetteer with CA admin + postcodes together, e2e, promote — a canonical admin-DB rebuild, operator-scoped.
+
+**Lesson (the recurring one).** I validated the _artifact_ (the postcode DB — every coordinate correct, no regression) and not the _assembled coordinate_ (the pin the user sees). Every green check was honest and beside the point. The e2e gate — the one thing that grades the pin — caught what data-validation couldn't. Same discipline as the #566 reconcile retirement and the per-tag-F1-vs-coordinate traps: grade the assembled output, not the component. Written up: `docs/research/2026-06-20-843000-postcodes-and-no-canada.mdx`.
