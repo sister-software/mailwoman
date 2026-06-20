@@ -448,3 +448,28 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 		expect(span_starts![regionIdx]).toBe(9)
 	})
 })
+
+describe("alignRow — combining-mark / non-Latin name variants (#555)", () => {
+	it("aligns a Bengali country variant instead of quarantining (NFC over-run guard)", () => {
+		// দক্ষিণ কোরিয়া (South Korea, name:ben variant — the row that crashed the v0.5.0 build). The
+		// precomposed য় (U+09DF) is a Bengali nukta combination EXCLUDED from NFC composition, so NFC
+		// *decomposes* it — the source's 13-code-unit form becomes 14. alignRow NFC-normalizes `raw`
+		// BEFORE locating spans (#519) and stores the NFC raw, so the country span stays in-bounds vs
+		// the stored raw and the row ALIGNS rather than quarantining as `span-out-of-bounds` (the
+		// build's tens-of-thousands non-Latin coverage nick).
+		const precomposed = "দক্ষিণ কোরিয়া"
+		for (const input of [precomposed, precomposed.normalize("NFC")]) {
+			const result = alignRow(baseRow({ raw: input, country: "KR", components: { country: input } }))
+			expect(result.kind).toBe("labeled")
+			if (result.kind !== "labeled") return
+			const { raw, span_starts, span_ends, span_tags } = result.row
+			expect(raw).toBe(input.normalize("NFC")) // stored raw is the single NFC form
+			const ci = span_tags!.indexOf("country")
+			expect(ci).toBeGreaterThanOrEqual(0)
+			// the whole string is the country — span covers [0, raw.length), in-bounds (no over-run)
+			expect(span_starts![ci]).toBe(0)
+			expect(span_ends![ci]).toBe(raw.length)
+			expect(raw.slice(span_starts![ci]!, span_ends![ci]!)).toBe(raw)
+		}
+	})
+})
