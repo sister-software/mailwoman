@@ -45,6 +45,24 @@ test.describe("Demo — resolution cascade", () => {
 		demo.console.assertNoFailEvents()
 	})
 
+	test("Canadian address — postcode M5H 2N2 resolves into Toronto (the -20f CA coverage)", async ({ demo }) => {
+		// -20f folds Canada's Overture divisions into the admin gazetteer (Toronto, Montréal, … — absent
+		// before) PLUS 843k CA postcode centroids. So "Toronto" resolves to Ontario (top by population),
+		// the cascade country-gates to CA, and the CA postcode is reachable. Grade the COORDINATE:
+		// downtown Toronto ≈ 43.6, -79.4 — not Toronto, Ohio (40.46), where it landed pre-CA-admin.
+		await demo.goto("100 Queen Street West, Toronto, ON M5H 2N2")
+		await demo.submit()
+
+		const { resolved, markerCount } = await demo.readResult()
+		expect(markerCount).toBeGreaterThan(0)
+		const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
+		expect(lat, `resolved lat ${lat} should be in Toronto`).toBeGreaterThan(43.5)
+		expect(lat).toBeLessThan(43.9)
+		expect(lon, `resolved lon ${lon} should be in Toronto`).toBeGreaterThan(-79.7)
+		expect(lon).toBeLessThan(-79.1)
+		demo.console.assertNoFailEvents()
+	})
+
 	test("White House default — surfaces no fail-pattern errors even when resolver returns nothing", async ({ demo }) => {
 		// Postcode 20500 has lat=0/lon=0 in WOF; cascade filters it; raw text + locality may also
 		// miss. The test isn't asserting the resolution succeeds — it's asserting that the

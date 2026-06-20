@@ -221,7 +221,17 @@ function parseFeature(text: string, placetypes: Set<string>): ParsedFeature | nu
  *
  * @returns The number of divisions ingested.
  */
-async function ingestOvertureDivisions(db: DatabaseSync, countries: string[], release: string): Promise<number> {
+export async function ingestOvertureDivisions(
+	db: DatabaseSync,
+	countries: string[],
+	release: string,
+	/**
+	 * Starting synthetic id. Defaults to {@link OVERTURE_ID_BASE} (a single full build). An
+	 * INCREMENTAL augment of a DB that ALREADY holds Overture rows MUST pass `max(spr.id) + 1` so the
+	 * new ids don't collide with — and `INSERT OR REPLACE` clobber — the existing ones.
+	 */
+	idBase: number = OVERTURE_ID_BASE
+): Promise<number> {
 	const inlist = countries.map((c) => `'${c.replace(/'/g, "''")}'`).join(",")
 	const subtypes = OVERTURE_DIVISION_SUBTYPES.map((s) => `'${s}'`).join(",")
 	const glob = `s3://overturemaps-us-west-2/release/${release}/theme=divisions/type=division/*`
@@ -251,7 +261,7 @@ async function ingestOvertureDivisions(db: DatabaseSync, countries: string[], re
 
 	// GERS string id → synthetic int, sequential and unique within this run.
 	const idmap = new Map<string, number>()
-	rows.forEach((r, i) => idmap.set(String(r.id), OVERTURE_ID_BASE + i))
+	rows.forEach((r, i) => idmap.set(String(r.id), idBase + i))
 
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -516,7 +526,11 @@ async function main() {
 	console.error(`  Output:  ${outputPath} (${finalSize} MB)`)
 }
 
-main().catch((err) => {
-	console.error(err)
-	process.exit(1)
-})
+// Only run the full build when executed directly — importing this module (e.g. to reuse
+// `ingestOvertureDivisions` for an incremental single-country augment) must not trigger a build.
+if (import.meta.main) {
+	main().catch((err) => {
+		console.error(err)
+		process.exit(1)
+	})
+}
