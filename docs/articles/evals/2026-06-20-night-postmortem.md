@@ -16,39 +16,51 @@ A no-GPU coverage + hardening night, continuing the day's candidate-gazetteer ar
 - **#582 — closed (verified resolved).** `locale-flag.test.ts` was reworked model-independent (`--isolated` rule-only + ZIP fast-path + non-emptiness assert); CI runs the full `ci:test` green with no skip guards, so it runs and passes without weights. The durable `skipIf` pattern is already the idiom for the genuinely data-dependent suites.
 - **#694 — closed (record-matcher geocode drop resolved).** The geocode-core normalize-case leg is shipped as the default (#713, `geocode-core.ts:265`). Added per-source geocode-rate logging (the issue's decisive diagnostic, commit `dc497b0b`) and re-ran the exact config: **both the baseline and the corpus-frequency-on run geocode 100% per source (1200/1200)** with normalize-case on. The night-16 "100→39.2%" aggregate drop no longer reproduces — it was an artifact of the since-reverted uncommitted wiring, superseded by #713.
 - **#728 — closed (v1.8.0 confirmed already promoted).** A planned "promote prep" became a verify: the production releases manifest `defaultVersion` = `v4.11.0`, and the published `en-us/v4.11.0/model.onnx` md5 = `d163396c` = the v180 / v1.8.0 int8 artifact. So v1.8.0 (FR coord p50 42→2.2 km, US assembled coordinate flat) was already released. No re-release — verify-before-verdict avoided shipping an already-shipped model. Memory corrected.
+- **#719 — closed (comma-less FR street_prefix resolved by v1.8.0).** Ran `boundary-stress-gate.ts` on the shipped v180: the fr-prefix shape scores street_prefix **80% at conventions=auto** (PASS, target 70), vs the **0%** the issue documented for v1.7.0. The v1.8.0 fr-admin-split shard teaches FR `street_prefix` robustly enough that the ship-config no longer craters it — the catastrophic auto-mask destruction is gone.
+- **#555 — closed (non-Latin quarantine resolved by #519 NFC).** The Bengali `দক্ষিণ কোরিয়া` row that quarantined as `span-out-of-bounds` now aligns. Root cause: the precomposed `য়` (U+09DF) is NFC-composition-excluded, so NFC decomposes it (13→14 code units). Already fixed upstream of locateSpan by the #519 NFC normalization (`align.ts:90` — added after the issue): `raw` is NFC-normalized before span location and the NFC raw is stored, so the span is in-bounds. Added the combining-mark regression test (29/29 align tests green).
+- **#630 — triaged (Dependabot, left open).** Verified **zero consumer-facing exposure**: no vulnerable package is a dependency of any published `@mailwoman` package — all are dev/build/docs/release/ingest tooling. The high-severity ones (tar, serialize-javascript) are major-bump-blocked by parent `^6` ranges; the clean fix is attended intermediate-dep bumps + a release dry-run, not unattended resolution-forcing. Reframed the urgency from "security incident" to "build-tooling hygiene".
+- **#620 — done (record-matcher data catalog).** `registry/configs/record-matcher-sources.json` (machine-readable provenance + the JSON-able `ColumnMapping` per source) + `docs/articles/concepts/record-matcher-data-catalog.md` (prose: the geocode-first / no-shared-key join model, per-source schema, refresh procedure). Mappings are now version-controlled, not folklore. Neutral framing throughout.
 
 ## What went well
 
-- **Verify-before-verdict, twice.** The LT=0% "catastrophe" was a broken eval holdout (the gazetteer has the data); #582 was already resolved by a different route than the issue proposed. Both would have been wasted effort if taken at face value.
-- **Diagnostic-before-fix on lever 2.** Measuring the recall first falsified the "widen aliases" premise before any builder change — the gap is eval noise + coverage, not aliases.
+- **Verify-before-verdict resolved FIVE issues.** #582, #694, #719, #555, #728 all turned out already-fixed or stale on verification — #582 (reworked model-independent), #694 (superseded by #713), #719 (fixed by v1.8.0's shard, 0→80%), #555 (fixed by the #519 NFC normalization), #728 (already promoted as v4.11.0). Measuring/checking first turned "fix these bugs" into "confirm + close," saving the effort of re-fixing already-fixed work — and in #728's case, avoiding a wasteful re-release of an already-shipped model.
+- **Diagnostic-before-fix on lever 2.** Measuring the recall first falsified the "widen aliases" premise before any builder change — the gap is eval noise (a broken LT holdout) + coverage, not aliases. The LT=0% "catastrophe" was the gazetteer having the data while the eval asked for genitive fragments.
 - **The gate held the promote honest.** Lever 1 shipped only after the coordinate-graded e2e went 4/4 green against the staged DB.
 
 ## What could've gone better
 
-- _(to be filled as the shift continues)_
+- **Backlog staleness.** Five issues I touched were fixed by intervening work but never closed — the backlog carried resolved items as open bugs. A "close on supersede" habit (when a PR fixes an issue's root cause, close it then) would keep the backlog honest and save the re-verification.
+- **Issue-authored fix hypotheses pointed at the wrong place.** #719 proposed "improve auto detection"; the real resolution was the v1.8.0 shard. #555 proposed "fix locateSpan's boundary logic"; the real fix was the upstream #519 NFC normalization. The issue's proposed fix is a starting point, not a spec — verify the _current_ behavior before implementing it.
 
 ## Decisions made autonomously
 
 - **Promoted lever 1** (demo asset swap to `-20c`) under the granted promote authority, gated on the 4/4 e2e + US guardrail.
-- **Stopped lever 2** rather than grind a falsified alias-widening — filed #734 with the real findings + the harness instead.
+- **Closed 5 issues + triaged 1** under the granted authority, each with verification evidence in the thread (reopenable if the operator disagrees). Filed #734 for the real candidate-recall findings.
+- **Stopped lever 2** rather than grind a falsified alias-widening; **left #630 open** rather than force risky unattended dependency resolutions.
 - **GB postcodes excluded** from the candidate table (2.6 M rows would ~5× the file for marginal demo value).
 
 ## Open questions
 
-- _(to be filled)_
+- **v1.8.0's residual #727 diacritic** (~24 tokenizer-level cases) stays open — a decode/tokenizer look, not shard data.
+- **A separate toLowerCase-length over-run class** (distinct from #555's combining-mark/NFC): if `raw.toLowerCase()` ever changes length vs the NFC raw (ß→ss, İ), locateSpan's haystack offsets could desync — not observed, safe-quarantined, worth a guard if it surfaces.
+- **#734 LT eval holdout is broken** (genitive fragments + `m.`/`k.` abbreviations) — a corpus-side extraction fix; real LT recall is unmeasurable until it's fixed.
 
 ## Concrete next steps
 
-- #694 record-matcher root-cause (in progress), then v1.8.0 (#728) promote prep.
-- Extra issues: #630 (Dependabot), #719 (comma-less FR), #620 (registry docs).
-- #734 follow-ups: fix the LT eval extraction; consider base-name aliasing for qualified OA names.
+- **#625 (comparison-model v2 — the record-matcher over-merge frontier)** is the next deferred stretch; the cross-dataset harness now has per-source geocode logging.
+- #734 follow-ups: fix the LT eval extraction; base-name aliasing for qualified OA names (measure with `candidate-recall.ts`).
+- #630 attended dependency hygiene: intermediate-dep bumps (node-gyp, webpack plugins, release-it) + a release dry-run.
+- #727 diacritic residual: a decode/tokenizer look.
 
 ## Numbers
 
-|                               | value                                       |
-| ----------------------------- | ------------------------------------------- |
-| candidate DB                  | 494 → 529 MB (+435 k intl postcodes)        |
-| EU locality recall (measured) | 93.4% (headline 87.8% was LT-eval-artifact) |
-| browser e2e                   | 4/4 green (incl. coordinate-graded Berlin)  |
-| GPU spent                     | 0                                           |
-| issues closed / filed         | #582 closed; #734 filed                     |
+|                               | value                                                     |
+| ----------------------------- | --------------------------------------------------------- |
+| candidate DB                  | 494 → 529 MB (+435 k intl postcodes), promoted `-20c`     |
+| EU locality recall (measured) | 93.4% (headline 87.8% was an LT-eval-artifact)            |
+| browser e2e                   | 4/4 green (incl. coordinate-graded Berlin)                |
+| GPU spent                     | 0 (no-GPU night; $20 contingency unspent)                 |
+| issues closed                 | **5** — #582, #694, #719, #555, #728                      |
+| issues triaged / filed        | #630 triaged (left open); #734 filed                      |
+| docs shipped                  | #620 data catalog + the candidate-table blog (day) + this |
+| demo production               | promoted to candidate `-20c` (intl postcodes)             |
