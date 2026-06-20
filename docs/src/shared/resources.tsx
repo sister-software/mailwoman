@@ -172,14 +172,14 @@ export function streetShardUrl(slug: string, kind: "situs" | "interp"): string {
  * is rebuilt + re-uploaded (the immutable Cache-Control means a fresh DB needs a fresh URL). See
  * RELEASING.md "Rebuilding + swapping the canonical admin gazetteer".
  */
-export const ADMIN_GAZETTEER_VERSION = "2026-06-20c"
+export const ADMIN_GAZETTEER_VERSION = "2026-06-20d"
 
 /**
- * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~530 MB incl. US + intl postcodes) — the FTS-free,
- * single-B-tree-probe lookup that replaces the slim per-model-version `wof-hot.db` AND the full-DB
- * FTS. A resolve touches a handful of contiguous pages (~12 range fetches/session vs 243 on the
- * full DB), with GLOBAL coverage and no `SLIM_COUNTRIES` upkeep. Resolved by
- * {@link WofCandidateTableLookup} (build-candidate.ts). Hosted at
+ * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~530 MB incl. US + intl
+ * postcodes) — the FTS-free, single-B-tree-probe lookup that replaces the slim per-model-version
+ * `wof-hot.db` AND the full-DB FTS. A resolve touches a handful of contiguous pages (~12 range
+ * fetches/session vs 243 on the full DB), with GLOBAL coverage and no `SLIM_COUNTRIES` upkeep.
+ * Resolved by {@link WofCandidateTableLookup} (build-candidate.ts). Hosted at
  * `mailwoman/gazetteer/<date>/candidate.db`, version-independent like the street shards.
  */
 export function adminGazetteerUrl(): string {
