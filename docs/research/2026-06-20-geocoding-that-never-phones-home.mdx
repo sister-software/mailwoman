@@ -1,0 +1,59 @@
+---
+slug: geocoding-that-never-phones-home
+title: "Geocoding that never phones home"
+authors: [teffen]
+tags: [browser, geocoding, demo, motivation]
+date: 2026-06-20
+---
+
+Open the [demo](/demo), open your browser's network tab, and type an address. You'll watch it resolve to a rooftop coordinate — `1600 Pennsylvania Ave` lands on the actual building, within about ten metres — and then you'll notice what's missing from the network tab: a request carrying your address. There isn't one. The parser ran in the page. The gazetteer it resolved against is a file on a CDN that the page read a few kilobytes at a time. The query never left your machine.
+
+That's the pitch, and it's worth being honest about why it's unusual, because the three things the rest of the market hands you each ask you to give something up.
+
+{/* truncate */}
+
+## The three options, and what each one costs you
+
+Start with a cloud API: Google, Mapbox, HERE, AWS, Azure. You send the address over the wire and get coordinates back, which is fast and globally accurate and, depending on who you signed with, comes with strings. Google's terms let you cache a coordinate for thirty days, then you must delete it, so if you geocode the same ten thousand delivery addresses every morning, you pay for them every morning. AWS won't let you cache autocomplete results at all, and bills storage at a higher tier when you do cache. The address always leaves your infrastructure, which is a non-starter the moment the address is the sensitive part: a shelter, a clinic, a protected residence.
+
+Or self-host one: Nominatim, Pelias, Photon, all real software, free, and yours. The license was never the catch; the machine room is. Nominatim wants a Postgres/PostGIS install north of a terabyte of disk and a planet import measured in days. Pelias is Elasticsearch plus five supporting services and a 450 GB index. Photon is OpenSearch and a 64 GB heap. You own your data, absolutely. You just have to operate a search cluster to use it, and none of them run anywhere near a browser.
+
+Or run a parser by itself. libpostal is the open address parser everyone embeds, and it's genuinely good. It's also a 1.8 GB trained model (2.2 GB for the Senzing variant), written in C with no supported path to the browser, and it stops at parsing. It tells you which token is the street; it doesn't tell you where the street is.
+
+So the menu is: rent it and leak the query, host it and run a cluster, or parse it and stop halfway. Mailwoman is the entry that wasn't on the menu.
+
+## What if it just ran on the device
+
+The whole pipeline, parse and then resolve to a coordinate, runs client-side. The parser is a 29.8 MB int8 ONNX model executed by `onnxruntime-web`. The gazetteer is a single global SQLite file, around 530 MB covering every country we resolve against, and the page never downloads it. It reads it over HTTP range requests, pulling roughly a dozen small slices to answer a query instead of fetching the file. No Elasticsearch, no PostGIS, no native module to compile: the resolver is plain `node:sqlite`, and the same code runs in Node and in a tab.
+
+The "dozen slices instead of the whole file" part has its own story. It used to take 243 round trips, and getting it down to twelve meant rethinking how the database is indexed rather than how it's fetched. That's [a whole separate post](/research/243-round-trips-to-find-a-city). The point here is the consequence: a global geocoder that fits through a straw, with no server at the other end of it.
+
+## A neural parser the size of a photo
+
+Worth dwelling on the 29.8 MB, because the comparison is stark: roughly sixty times smaller than libpostal's default model, seventy-odd times smaller than the Senzing one. And the smaller model is the *better* parser on the input that actually shows up in a search box, the typos, the half-finished lines, the prefix you've typed so far. A transformer trained on degraded queries reads `123 Penslyvania Av NW` the way you meant it; a CRF over hand-built features tends not to. Small enough to ship to a browser, and better where browsers get used. You rarely get both.
+
+## Your queries never leave, and the results are yours forever
+
+This is the part that sells itself to anyone holding addresses they can't send to a third party. There's no storage clause because there's no server: nothing to retain, nothing to delete on a thirty-day clock, nothing to leak. You geocode once and keep the coordinate as long as you like. For healthcare, for anything touching protected addresses, "the data never leaves the device" stops being a feature and becomes the entire procurement requirement.
+
+I'll be fair about the boundary here: geocode.earth's hosted Pelias and Smarty both already give you generous own-your-data terms, so this argument bites hardest against the rent-and-delete crowd, Google, AWS, and HERE. Against them it's decisive.
+
+## The bill is zero
+
+Google's geocoder runs five dollars per thousand requests after the free cap. That's five thousand dollars a month at a million addresses, six figures a year once you're past ten million. On-device, the marginal cost of a query is nothing — it's running on hardware you already paid for, which is the user's. Again, in fairness: a self-hosted geocoder is also zero-marginal-cost, so this one is really aimed at the cloud APIs, where on-device kills both the per-call meter *and* the server you'd otherwise stand up.
+
+## Where it stops
+
+I'd rather you hear the limits from me than discover them in production.
+
+Rooftop precision, the actual building rather than the neighborhood, currently fires only where we've shipped per-state address-point data: California, New York, Michigan, and DC. Everywhere else, the resolver lands you at an administrative or postcode centroid, which is the right town and the right ZIP but not the right doorstep. The big cloud vendors beat us on global rooftop coverage, decisively, and I'm not going to pretend otherwise. If you need a rooftop in Lagos today, call Google.
+
+Mapbox, to its credit, does ship genuine on-device geocoding, but it's their native mobile SDK, and it's reverse geocoding (coordinate to address) rather than forward. So I'll keep the claim precise: the only geocoder that runs the full forward pipeline, in a browser, with no server. Narrow as that sounds, it's a space nobody else occupies. And there's no batch endpoint and no SLA yet; this is infrastructure you embed, not a hosted service you page.
+
+None of which changes the thing in the network tab. You typed an address, you got a building, and nobody else saw it.
+
+```bash
+npm install mailwoman @mailwoman/neural-web
+```
+
+Or just open the [demo](/demo) and watch the requests that aren't there.
