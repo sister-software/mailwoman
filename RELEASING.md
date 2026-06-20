@@ -148,37 +148,46 @@ add a `notes` entry + (for a new source) a section to `scripts/wof-build-manifes
 manifest is the reproducibility record, and a rebuild that isn't pinned there has bitten us before (the
 deleted admin-fr repo).
 
-### Step 5 — propagating to the demo/browser (the slim DB is NOT the live DB)
+### Step 5 — propagating to the demo/browser (rebuild the candidate gazetteer)
 
 The swap above updates the **full** local gazetteer — every Node eval and the Node resolver see the new
-coverage immediately. The **browser demo does not.** It loads two things over `sql.js-httpvfs` (byte-range
-SQLite over HTTP):
+coverage immediately. The **browser demo does not.** It loads, over `sql.js-httpvfs` (byte-range SQLite):
 
-- **admin tier** (locality/region): the slim `wof-hot.db` — `docs/src/contexts/DemoEmbed.tsx`.
+- **admin tier** (locality/region/postcode): the global **candidate table** — `WofCandidateTableLookup`,
+  `docs/src/shared/httpvfs-resolver.ts` → `adminGazetteerUrl()` in `resources.tsx`.
 - **street tier** (address points / interpolation): per-state `situs-<state>.db` / `interp-<state>.db`
   shards byte-ranged off R2 — `docs/src/pages/demo/index.tsx`. (Night-15, #583/#585/#638.)
 
-`wof-hot.db` is **derived** from `admin-global-priority.db` by the slim build (`build-slim-cli`, run by the
-`docs/plugins/demo-assets/` Docusaurus plugin during `yarn build`; the old `build-demo-assets.sh` is
-deprecated). It keeps the top-N localities per country for a **hardcoded `SLIM_COUNTRIES` (US/DE/FR today)**,
-drops the `names` table, and lands ~53 MB. It ships to HF per release (`publish-release-to-hf.mjs --wof-hot`,
-`hasWofDb: true` in `releases.json`). So new admin coverage reaches the demo only after the slim DB is
-rebuilt + republished — and only for countries in `SLIM_COUNTRIES`.
+The candidate table (`build-candidate.ts`, 2026-06-20) **retired the slim `wof-hot.db`**: it's an FTS-free,
+`WITHOUT ROWID` B-tree keyed on `name_key` so a resolve is one contiguous probe (~12 range fetches/session
+vs 243 on the full DB), with **global** coverage in one ~490 MB file — no `SLIM_COUNTRIES` upkeep. It's
+**model-independent**, so it's hosted on its own dated, version-independent path (not a per-release asset).
+See `project-candidate-table-byte-range`.
 
-**Two ways to get the new coverage into the demo, and the choice is real:**
+To get new admin coverage into the demo after a gazetteer rebuild:
 
-1. **Extend the slim build** — add the locales to `SLIM_COUNTRIES`, rebuild `wof-hot.db`, republish to HF.
-   Keeps the ~53 MB admin DB. The cost is a standing per-locale maintenance step (and the file grows with
-   each added country).
-2. **Byte-range the full DB** — point the demo's admin tier at `admin-global-priority.db` (2.6 GB) over
-   `sql.js-httpvfs` directly, the same way the street tier already serves the 3.3 GB CA shard (~24 KB/lookup,
-   B-tree depth 4 — night-15 proved a file this size is fine). This drops the slim build entirely, gives the
-   demo **global** admin coverage with zero `SLIM_COUNTRIES` upkeep, at the cost of a larger R2 object (egress
-   is per-range, so unchanged) and a slightly deeper cold-start B-tree.
+```bash
+# 1. Build the candidate table from the (rebuilt) admin DB + the US postcode shard.
+node resolver-wof-sqlite/out/build-candidate-cli.js \
+  --in  /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
+  --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-us.db \
+  --out /mnt/playpen/mailwoman-data/wof/candidate-global.db
+# 2. Bump ADMIN_GAZETTEER_VERSION in docs/src/shared/resources.tsx (the immutable cache needs a fresh URL).
+# 3. Upload to the new path:
+mkdir -p /tmp/stage/gazetteer/<NEW_VERSION>
+ln -s /mnt/playpen/mailwoman-data/wof/candidate-global.db /tmp/stage/gazetteer/<NEW_VERSION>/candidate.db
+set -a; . ./.env; set +a
+python3 scripts/publish-demo-assets-to-r2.py --src /tmp/stage --prefix mailwoman
+# 4. The map-highlight sibling (wof-polygons.db) builds from --admin now (the --points wof-hot.db source is
+#    gone): node scripts/build-wof-polygons.mjs --admin <admin.db> [--countries US,DE,FR] --out wof-polygons.db
+```
 
-The slim build is **not legacy** — it's the current admin-tier mechanism. But once byte-range was proven on
-multi-GB shards, option 2 became viable, and the `SLIM_COUNTRIES=US/DE/FR` limit is exactly the upkeep it
-would remove. Pick deliberately; don't add a 16th country to `SLIM_COUNTRIES` on autopilot.
+`hasWofDb: true` stays in `releases.json` — the demo gates the admin tier on it, and it now means "this
+version has admin resolution" (the version-independent candidate gazetteer always provides it). Validate
+with `cd docs && yarn build`, serve, and `MAILWOMAN_DEMO_URL=http://localhost:7770 yarn test:e2e
+test/browser/200-demo-resolve.spec.ts` (Chicago locality + ZIP-only marker must pass). Guard the ~490 MB R2
+object from full-file downloads with a Cloudflare WAF rule that blocks the `.db` path lacking a `Range`
+header (config, no Worker).
 
 ## Versioning policy
 

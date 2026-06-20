@@ -4,10 +4,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the crisp-polygon sibling of the demo points DB (`wof-hot.db`, built by the geojson-free
- *   `build-slim` / `mailwoman-wof-build-slim`). The demo's map draws the WOF bounding RECTANGLE
- *   (`place_bbox`) today; this packs the real admin geometry — simplified — so the demo can draw an
- *   actual boundary, loaded lazily only when a result is shown.
+ *   Build the crisp-polygon sibling for the demo's map. (The slim `wof-hot.db` points source is
+ *   RETIRED 2026-06-20 — the admin tier resolves against the candidate table now; build polygons
+ *   with `--admin` below, keyed by the same WOF spr ids the candidate table returns.) The demo's
+ *   map draws the WOF RECTANGLE (`place_bbox`) today; this packs the real admin geometry —
+ *   simplified — so the demo can draw an actual boundary, loaded lazily only when a result is
+ *   shown.
  *
  *   Source: the per-id WOF GeoJSON repos at
  *   `repos/whosonfirst-data/whosonfirst-data-admin-<cc>/data/<id-sharded>/<id>.geojson`, where the

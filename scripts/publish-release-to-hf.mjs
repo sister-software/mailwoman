@@ -25,7 +25,6 @@
  *   --tokenizer /path/to/tokenizer.model\
  *   --model-card /path/to/model-card.json\
  *   --fst /path/to/fst-en-US.bin\
- *   --wof-hot /path/to/wof-hot.db\
  *   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json\
  *   --label "v0.5.4 — multi-script tokenizer"\
  *   --description "Multi-script tokenizer..."\
@@ -42,7 +41,11 @@ const REQUIRED_FILES = [
 	{ flag: "--tokenizer", remoteName: "tokenizer.model", description: "SentencePiece tokenizer" },
 	{ flag: "--model-card", remoteName: "model-card.json", description: "Model card JSON" },
 	{ flag: "--fst", remoteName: "fst-en-US.bin", description: "FST gazetteer (filename varies by locale)" },
-	{ flag: "--wof-hot", remoteName: "wof-hot.db", description: "Slim WOF DB for browser resolver" },
+	// The slim wof-hot.db was RETIRED 2026-06-20: the demo's admin tier now byte-range-resolves
+	// against the global candidate table, hosted version-independently at
+	// mailwoman/gazetteer/<ver>/candidate.db (NOT a per-release asset — it's model-independent). See
+	// RELEASING.md + project-candidate-table-byte-range. `hasWofDb` in releases.json stays true (it now
+	// means "this version has admin resolution", which the version-independent gazetteer always provides).
 ]
 
 const BUCKET_PATH = "hf://buckets/sister-software/mailwoman"
@@ -157,7 +160,8 @@ async function main() {
 
 	// Optional crisp-polygon DB (build-wof-polygons.mjs): a single --polygons path. Uploaded as
 	// wof-polygons.db; the demo draws the real admin boundary instead of the bbox when `hasPolygons`
-	// is set. Sibling of wof-hot.db, keyed by the same WOF ids.
+	// is set. Keyed by WOF id (the candidate table returns the same spr ids), built from the admin DB
+	// via build-wof-polygons.mjs --admin (the --points wof-hot.db source is retired).
 	const polygonsDb = args.polygons || null
 	if (polygonsDb && (!existsSync(polygonsDb) || statSync(polygonsDb).size === 0)) {
 		fail(`polygon DB ${polygonsDb} missing/empty`)
