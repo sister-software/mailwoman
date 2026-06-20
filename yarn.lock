@@ -5048,6 +5048,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     kysely: "npm:^0.29.2"
   bin:
+    mailwoman-wof-build-candidate: ./out/build-candidate-cli.js
     mailwoman-wof-build-coincident-roles: ./out/build-coincident-roles-cli.js
     mailwoman-wof-build-fts: ./out/build-fts-cli.js
     mailwoman-wof-build-slim: ./out/build-slim-cli.js
