@@ -81,6 +81,10 @@ console.error(`extracted ${rows.length} ${CC} postcode centroids from Overture`)
 // Emit the spr table the WofPostcodeLookup query consumes:
 //   SELECT country, latitude, longitude FROM spr WHERE name=? AND placetype='postalcode' AND is_current!=0
 const out = new DatabaseSync(OUT_DB)
+// Throwaway build artifact — no durability needed; OFF journal + a single transaction around the
+// inserts makes large locales (CA = 843k rows) finish in seconds instead of one implicit
+// transaction (with its own journal write) per row, which is slow enough to be killed by a timeout.
+out.exec(`PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;`)
 out.exec(`
 DROP TABLE IF EXISTS spr;
 CREATE TABLE spr (
@@ -100,7 +104,9 @@ const ins = out.prepare(
 	 VALUES (?, ?, 'postalcode', ?, ?, ?, 1, 'overture:2026-05-20.0', ?)`
 )
 let id = 1
+out.exec("BEGIN")
 for (const r of rows) ins.run(id++, String(r.postcode), CC, Number(r.lat), Number(r.lon), Number(r.n))
+out.exec("COMMIT")
 out.exec(`CREATE INDEX spr_by_name ON spr(name); CREATE INDEX spr_by_country ON spr(country);`)
 out.close()
 console.error(`wrote ${rows.length} rows → ${OUT_DB}`)
