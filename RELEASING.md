@@ -77,6 +77,109 @@ The binaries are gitignored in the workspace dirs (`neural-weights-*/.gitignore`
 `copy-weights` and the post-publish cleanup. **Always confirm the tokenizer matches the model** — the model
 card's `training.tokenizer_version` is the source of truth (mismatches have shipped before).
 
+## Rebuilding + swapping the canonical admin gazetteer (`admin-global-priority.db`)
+
+The resolver's gazetteer is the custom WOF SQLite DB at
+`/mnt/playpen/mailwoman-data/wof/admin-global-priority.db` — **never** an off-the-shelf geocode.earth dump
+(different WOF ids; see `feedback-custom-wof-db-only`). It is not part of the npm/HF release; it ships
+separately (the demo's slim derivative — see the next section). You rebuild it when you add locale
+coverage. `scripts/wof-build-manifest.json` is the source of truth for the build inputs — read it first; it
+pins the repo commits and records every prior rebuild.
+
+This runbook is the exact sequence walked for the 2026-06-20 Overture-EU swap (+15 zero-DB EU locales). Do
+the steps in order; the post-build steps and the gate are not optional — skipping them silently regresses US
+region resolution (the #440 honest-eval fix lives in steps 1–2).
+
+### Step 1 — build to a STAGING path, never over the live DB
+
+```bash
+node --experimental-strip-types scripts/build-unified-wof.ts \
+  --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data \
+  --overture-countries PT,PL,BE,AT,CH,CZ,DK,NO,FI,SK,SI,HR,LU,LV,LT \
+  --output /mnt/playpen/mailwoman-data/wof/admin-global-priority-eu.db
+```
+
+`whosonfirst-data` is a meta-repo nesting the admin subrepos; the sibling `whosonfirst-data-admin-us`
+carries the real US data (the nested admin-us is empty). `--overture-countries` folds the Overture
+`divisions` theme for locales the WOF repos miss (synthetic ids @ 8e12 — see the `overture_divisions_supplement`
+section of the manifest). Build to `*-eu.db`, not the live name.
+
+### Step 2 — the three post-build steps, IN ORDER
+
+```bash
+DB=/mnt/playpen/mailwoman-data/wof/admin-global-priority-eu.db
+node --experimental-strip-types scripts/add-region-abbrevs.ts "$DB"                 # names: VT->Vermont (~184 rows)
+node --experimental-strip-types scripts/backfill-ancestors-from-hierarchy.ts "$DB"  # NYC-style multi-parent ancestry
+node resolver-wof-sqlite/out/build-fts-cli.js --drop "$DB"                          # rebuild place_search AFTER abbrevs
+```
+
+Step 1 (abbrevs) must precede the FTS rebuild — `place_search` concatenates the `names` rows, so build FTS
+last. Use `--drop` because the staging build already has an FTS to replace.
+
+### Step 3 — the no-regression gate (do not swap without it)
+
+Diff the new DB against the live one on the same US eval, same model. The two `**neural**` rows must match:
+
+```bash
+PC=/mnt/playpen/mailwoman-data/wof/postalcode-us.db
+for db in admin-global-priority.db admin-global-priority-eu.db; do
+  node --experimental-strip-types scripts/eval/oa-resolver-eval.ts \
+    --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000 --default-country US \
+    --model <v.onnx> --tokenizer <tok.model> --model-card neural-weights-en-us/model-card.json \
+    --model-anchor-lookup <anchor.json> \
+    --wof-db "/mnt/playpen/mailwoman-data/wof/$db,$PC" 2>/dev/null | grep '\*\*neural'
+done
+```
+
+Also confirm: priority-country locality counts unchanged (`SELECT country, count(*) FROM spr WHERE
+placetype='locality' GROUP BY country` on both), the `names language='abbr'` count is unchanged, and a
+direct `findPlace('VT', region, US)` returns Vermont. If anything regresses, stop — don't swap.
+
+### Step 4 — swap + record
+
+```bash
+cd /mnt/playpen/mailwoman-data/wof
+mv admin-global-priority.db admin-global-priority.db.pre-<change>-bak   # back up the live DB
+mv admin-global-priority-eu.db admin-global-priority.db                 # promote (instant; same fs)
+```
+
+The build freezes to `journal_mode=delete` + VACUUM, so there are no `-wal`/`-shm` sidecars to carry. Then
+add a `notes` entry + (for a new source) a section to `scripts/wof-build-manifest.json`, and commit it — the
+manifest is the reproducibility record, and a rebuild that isn't pinned there has bitten us before (the
+deleted admin-fr repo).
+
+### Step 5 — propagating to the demo/browser (the slim DB is NOT the live DB)
+
+The swap above updates the **full** local gazetteer — every Node eval and the Node resolver see the new
+coverage immediately. The **browser demo does not.** It loads two things over `sql.js-httpvfs` (byte-range
+SQLite over HTTP):
+
+- **admin tier** (locality/region): the slim `wof-hot.db` — `docs/src/contexts/DemoEmbed.tsx`.
+- **street tier** (address points / interpolation): per-state `situs-<state>.db` / `interp-<state>.db`
+  shards byte-ranged off R2 — `docs/src/pages/demo/index.tsx`. (Night-15, #583/#585/#638.)
+
+`wof-hot.db` is **derived** from `admin-global-priority.db` by the slim build (`build-slim-cli`, run by the
+`docs/plugins/demo-assets/` Docusaurus plugin during `yarn build`; the old `build-demo-assets.sh` is
+deprecated). It keeps the top-N localities per country for a **hardcoded `SLIM_COUNTRIES` (US/DE/FR today)**,
+drops the `names` table, and lands ~53 MB. It ships to HF per release (`publish-release-to-hf.mjs --wof-hot`,
+`hasWofDb: true` in `releases.json`). So new admin coverage reaches the demo only after the slim DB is
+rebuilt + republished — and only for countries in `SLIM_COUNTRIES`.
+
+**Two ways to get the new coverage into the demo, and the choice is real:**
+
+1. **Extend the slim build** — add the locales to `SLIM_COUNTRIES`, rebuild `wof-hot.db`, republish to HF.
+   Keeps the ~53 MB admin DB. The cost is a standing per-locale maintenance step (and the file grows with
+   each added country).
+2. **Byte-range the full DB** — point the demo's admin tier at `admin-global-priority.db` (2.6 GB) over
+   `sql.js-httpvfs` directly, the same way the street tier already serves the 3.3 GB CA shard (~24 KB/lookup,
+   B-tree depth 4 — night-15 proved a file this size is fine). This drops the slim build entirely, gives the
+   demo **global** admin coverage with zero `SLIM_COUNTRIES` upkeep, at the cost of a larger R2 object (egress
+   is per-range, so unchanged) and a slightly deeper cold-start B-tree.
+
+The slim build is **not legacy** — it's the current admin-tier mechanism. But once byte-range was proven on
+multi-GB shards, option 2 became viable, and the `SLIM_COUNTRIES=US/DE/FR` limit is exactly the upkeep it
+would remove. Pick deliberately; don't add a 16th country to `SLIM_COUNTRIES` on autopilot.
+
 ## Versioning policy
 
 - **Full sync** — every package in `.release-it.json` shares one version per release, the model included. The
