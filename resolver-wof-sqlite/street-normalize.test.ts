@@ -10,7 +10,12 @@
 
 import { describe, expect, it } from "vitest"
 
-import { canonicalizeRouteKey, normalizeLocalityForKey, normalizeStreetForKey } from "./street-normalize.js"
+import {
+	canonicalizeRouteKey,
+	normalizeLocalityForKey,
+	normalizeStreetForKey,
+	stripLocalityQualifier,
+} from "./street-normalize.js"
 
 describe("normalizeStreetForKey", () => {
 	it("collides USPS suffix variants", () => {
@@ -90,5 +95,26 @@ describe("canonicalizeRouteKey", () => {
 		expect(canonicalizeRouteKey(normalizeStreetForKey("Old Route 100"))).toEqual("old route 100")
 		// Bare "Route N" stays unfolded — the designator (US vs state) is unknown.
 		expect(canonicalizeRouteKey(normalizeStreetForKey("Route 100"))).toEqual("route 100")
+	})
+})
+
+describe("stripLocalityQualifier (query-side fallback)", () => {
+	it("strips an OA locality qualifier to the gazetteer base name", () => {
+		expect(stripLocalityQualifier("Kraubath/Mur")).toBe("Kraubath") // AT slash-qualifier
+		expect(stripLocalityQualifier("St.Kanzian/Klopeiner See")).toBe("St.Kanzian")
+		expect(stripLocalityQualifier("Hart b.Graz")).toBe("Hart") // abbreviated bei
+		expect(stripLocalityQualifier("Feistritz o.Bleiburg")).toBe("Feistritz") // abbreviated ob
+		expect(stripLocalityQualifier("Lenk im Simmental")).toBe("Lenk") // CH spelled qualifier
+		expect(stripLocalityQualifier("Roche VD")).toBe("Roche") // CH canton code
+		expect(stripLocalityQualifier("Odense S")).toBe("Odense") // DK postal direction
+		expect(stripLocalityQualifier("Hurup Thy")).toBe("Hurup") // DK region suffix
+	})
+
+	it("returns '' when nothing is stripped (no wasted re-probe)", () => {
+		expect(stripLocalityQualifier("Paris")).toBe("")
+		expect(stripLocalityQualifier("San Francisco")).toBe("")
+		// "am Main" is part of the canonical name — must NOT be over-stripped.
+		expect(stripLocalityQualifier("Frankfurt am Main")).toBe("")
+		expect(stripLocalityQualifier("New York")).toBe("")
 	})
 })

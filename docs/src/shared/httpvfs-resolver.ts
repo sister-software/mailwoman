@@ -27,7 +27,7 @@ import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
 import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
 // THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
 // one-normalizer discipline that keeps the candidate table's keys reachable by construction.
-import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 import type { DualRole, MailwomanLookupLike } from "./resources"
 
@@ -470,11 +470,12 @@ export class WofCandidateTableLookup implements MailwomanLookupLike {
 		const limit = Math.max(1, query.limit ?? 10)
 		const { countryToId, idToCountry, placetypeToId, idToPlacetype } = await this.#codeMaps()
 
-		const conds = [`name_key = ${sqlStr(nameKey)}`]
+		// Filter conds shared by the exact + the strip-fallback probe (everything but name_key).
+		const filters: string[] = []
 		if (query.country) {
 			const cid = countryToId.get(query.country.toUpperCase())
 			if (cid === undefined) return [] // a country the candidate table doesn't carry
-			conds.push(`country_id = ${cid}`)
+			filters.push(`country_id = ${cid}`)
 		}
 		if (query.placetype) {
 			// Shared placetype-equivalence expansion (a `locality` query must also reach borough /
@@ -484,19 +485,31 @@ export class WofCandidateTableLookup implements MailwomanLookupLike {
 				.map((t) => placetypeToId.get(t))
 				.filter((v): v is number => v !== undefined)
 			if (ids.length === 0) return []
-			conds.push(`placetype_id IN (${ids.join(",")})`)
+			filters.push(`placetype_id IN (${ids.join(",")})`)
 		}
 		if (query.bbox) {
 			const b = query.bbox
-			conds.push(
+			filters.push(
 				`latitude BETWEEN ${Number(b.minLat)} AND ${Number(b.maxLat)} AND longitude BETWEEN ${Number(b.minLon)} AND ${Number(b.maxLon)}`
 			)
 		}
 
-		const sql =
-			`SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank ` +
-			`FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ${limit}`
-		const rows = rowsFromExec(await this.#worker.db.exec(sql))
+		const probe = async (nk: string) => {
+			const conds = [`name_key = ${sqlStr(nk)}`, ...filters]
+			const sql =
+				`SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank ` +
+				`FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ${limit}`
+			return rowsFromExec(await this.#worker.db.exec(sql))
+		}
+
+		let rows = await probe(nameKey)
+		if (rows.length === 0) {
+			// Query-side qualifier-strip fallback: an OA locality with a qualifier the gazetteer's
+			// canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD", "Odense S", "Hart b.Graz").
+			// Tried ONLY on an exact miss; the cascade's region bbox disambiguates any base-name ambiguity.
+			const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
+			if (strippedKey && strippedKey !== nameKey) rows = await probe(strippedKey)
+		}
 		return rows.map((row) => {
 			const hasBbox = row.min_lat != null && row.max_lat != null && row.min_lon != null && row.max_lon != null
 			return {

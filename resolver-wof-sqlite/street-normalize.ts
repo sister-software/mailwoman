@@ -132,6 +132,31 @@ export function normalizeLocalityForKey(locality: string): string {
 }
 
 /**
+ * Strip a locality QUALIFIER for a query-side fallback — when an OA locality's exact normalized
+ * name misses the gazetteer's canonical name, retry with the qualifier removed. OA address data
+ * carries disambiguating qualifiers the gazetteer's canonical name omits: Austrian `Kraubath/Mur`
+ * and `Hart b.Graz` → `Hart`; Swiss `Lenk im Simmental` → `Lenk`, `Roche VD` → `Roche`; Danish
+ * `Odense S`, `Hurup Thy`. A FALLBACK ONLY — the exact name is tried first, and the region-bbox
+ * disambiguation resolves any base-name ambiguity downstream. The candidate table is unchanged
+ * (this is purely query-side); feed the result back through {@link normalizeLocalityForKey}. Returns
+ * "" when nothing was stripped (no point re-probing the identical key).
+ *
+ * Measured (`scripts/eval/candidate-recall.ts --strip-fallback`, EU OA holdouts): recovers AT
+ * 74.1→88.2% (+14.1pp), DK 91.5→96.2%, CH 90.4→92.6%; +1.3pp overall (diluted by the already-100%
+ * locales). Conservative by design — only the qualifier forms above; FI/PT/SI misses are
+ * untouched.
+ */
+export function stripLocalityQualifier(locality: string): string {
+	let s = locality.trim()
+	if (s.includes("/")) s = s.split("/")[0]!.trim() // "Kraubath/Mur", "St.Kanzian/Klopeiner See"
+	s = s.replace(/\s+[a-zà-ÿ]\.\s*\S.*$/iu, "") // abbreviated " b.Graz" / " o.Bleiburg" / " a.d. …"
+	s = s.replace(/\s+(im|an der|ob|bei|in der|unter|vor)\s+\S.*$/iu, "") // " im Simmental", " bei Graz"
+	s = s.replace(/\s+(S|N|E|W|V|Ø|Sø|Fyn|Thy|Sjælland|Jylland|[A-ZÅÄÖ]{2})$/u, "") // " S", " VD", " Thy"
+	s = s.trim()
+	return s === locality.trim() ? "" : s
+}
+
+/**
  * Fold numbered-route designators to a canonical key, applied AFTER {@link normalizeStreetForKey}.
  * Sources disagree systematically on how they spell a route: TIGER says `State Rte 100` / `US Hwy
  * 5` where E911/Overture say `VT ROUTE 100` / `US ROUTE 5` — the dominant street-name miss class in
