@@ -59,17 +59,17 @@ A no-GPU coverage + hardening night, continuing the day's candidate-gazetteer ar
 
 ## Numbers
 
-|                           | value                                                                                                           |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| candidate DB              | 494 → ~530 MB; promoted `-20c` (intl postcodes) → `-20d` (EU postcodes)                                         |
-| EU resolution (measured)  | locality 93.4% (+strip-fallback AT 74→88%); **postcodes 100% @ ~1-2 km** (LT 0→100%, NO 75→100%, FI/SK 80→100%) |
-| browser e2e               | 6/6 green (4 resolve + 2 autocomplete)                                                                          |
-| GPU spent                 | 0 (no-GPU night; $20 contingency unspent)                                                                       |
+|                           | value                                                                                                                                                           |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| candidate DB              | 494 → ~530 MB; promoted `-20c` (intl postcodes) → `-20d` (EU postcodes)                                                                                         |
+| EU resolution (measured)  | locality 93.4% (+strip-fallback AT 74→88%); **postcodes 100% @ ~1-2 km** (LT 0→100%, NO 75→100%, FI/SK 80→100%)                                                 |
+| browser e2e               | 6/6 green (4 resolve + 2 autocomplete)                                                                                                                          |
+| GPU spent                 | 0 (no-GPU night; $20 contingency unspent)                                                                                                                       |
 | verify-before-verdict     | **7** closed/re-scoped (#582/#694/#719/#555/#728/#625/#587) + the #718 audit (load-bearing parts already shipped) + #397/#190 (already-closed stale #488 boxes) |
-| triaged / filed / flagged | #630 triaged; #734 filed+refined; **#735 filed** (national US street tier — operator call)                      |
-| genuinely-new builds      | **3** — intl postcodes (`-20c`), EU strip-fallback, EU postcode coverage (`-20d`)                               |
-| hardening / docs          | #718 pre-publish gate → ship-config faithful (`ac0d9bec`); #482 status+releases refreshed 4.4.0→4.11.0 (`74c7646c`) |
-| demo production           | candidate `-20d` (US + intl + 13 EU-locale Overture postcodes; strip-fallback; autocomplete e2e)                |
+| triaged / filed / flagged | #630 triaged; #734 filed+refined; **#735 filed** (national US street tier — operator call)                                                                      |
+| genuinely-new builds      | **3** — intl postcodes (`-20c`), EU strip-fallback, EU postcode coverage (`-20d`)                                                                               |
+| hardening / docs          | #718 pre-publish gate → ship-config faithful (`ac0d9bec`); #482 status+releases refreshed 4.4.0→4.11.0 (`74c7646c`)                                             |
+| demo production           | candidate `-20d` (US + intl + 13 EU-locale Overture postcodes; strip-fallback; autocomplete e2e)                                                                |
 
 ## EU coordinate resolution after `-20d` (measured, `postcode-vs-locality-probe.ts`)
 
