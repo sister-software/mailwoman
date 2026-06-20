@@ -19,6 +19,7 @@ import { type AddressTree, decodeAsXml } from "@mailwoman/core/decoder"
 import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/core/resolver"
 import { type RequestHandler, Router } from "express"
 import { existsSync } from "node:fs"
+import { createResolverBackend } from "../resolver-backend.js"
 
 /** One node in the response's flat list — what the UI renders for each resolved component. */
 export interface ResolveResponseNode {
@@ -104,10 +105,8 @@ async function getResolverPipeline() {
 		}
 
 		const neural = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-		const lookup = new resolverMod.WofSqlitePlaceLookup({
-			databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths,
-		})
-		// `WofSqlitePlaceLookup` is structurally compatible with `ResolverBackend` — same shape.
+		const lookup = createResolverBackend(resolverMod, { wofPaths })
+		// The lookup is structurally compatible with `ResolverBackend` — same shape.
 		const resolver = createWofResolver(lookup as unknown as ResolverBackend)
 		return {
 			parse: (text: string) => neural.parse(text),

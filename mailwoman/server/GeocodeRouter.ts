@@ -19,6 +19,7 @@
 import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/core/resolver"
 import { type RequestHandler, Router } from "express"
 import { existsSync } from "node:fs"
+import { createResolverBackend } from "../resolver-backend.js"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ResolveOpts } from "@mailwoman/core/resolver"
@@ -80,7 +81,7 @@ async function getDeps(): Promise<GeocodeDepsBundle | null> {
 			return null
 		}
 		const classifier = await neuralMod.NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-		const backend = new resolverMod.WofSqlitePlaceLookup({ databasePath: paths.length === 1 ? paths[0]! : paths })
+		const backend = createResolverBackend(resolverMod, { wofPaths: paths })
 		const resolver = createWofResolver(backend as unknown as ResolverBackend)
 		const shards = new ShardProvider(resolverMod, DATA_ROOT)
 		return { classifier, resolver, shards, defaultCountry: "US" }

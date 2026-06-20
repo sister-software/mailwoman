@@ -10,6 +10,8 @@ export type { AncestorsTable, GeojsonTable, NamesTable, PlaceSearchTable, SprTab
 
 export { WofSqlitePlaceLookup, type RankingWeights, type WofSqlitePlaceLookupOpts } from "./lookup.js"
 
+export { WofCandidateTableLookup, type WofCandidateTableLookupOpts } from "./candidate-lookup.js"
+
 export {
 	ADDRESS_CONVENTION_TABLE,
 	BUILTIN_STRATEGY_NAMES,

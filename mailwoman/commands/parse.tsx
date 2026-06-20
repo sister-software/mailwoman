@@ -16,6 +16,7 @@ import { createAddressParser, createDiagnosticReport, createRuntimePipeline } fr
 import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
+import { createResolverBackend, resolveCandidateDbPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
@@ -295,7 +296,10 @@ async function withResolver<T>(
 		)
 	}
 
-	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: resolveWofPath(options) })
+	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend (no WOF admin path required); else FTS.
+	const lookup = createResolverBackend(mod, {
+		wofPaths: resolveCandidateDbPath() ? "" : resolveWofPath(options),
+	})
 	try {
 		// PlaceLookup is structurally compatible with ResolverBackend — the cast is just to satisfy
 		// the type, no runtime conversion.

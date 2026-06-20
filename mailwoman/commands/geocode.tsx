@@ -36,6 +36,7 @@ import { useEffect, useState } from "react"
 import zod from "zod"
 import { geocodeAddress, ShardProvider, type GeocodeResult, type ShardResolver } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
+import { createResolverBackend, resolveCandidateDbPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
 import { resolverDefaultCountry } from "./parse.js"
 
@@ -64,6 +65,14 @@ const OptionsSchema = zod.object({
 		.string()
 		.optional()
 		.describe("Path to a WOF admin SQLite distribution. Defaults to $MAILWOMAN_WOF_DB; errors if neither is set."),
+	candidateDb: zod
+		.string()
+		.optional()
+		.describe(
+			"Path to a byte-range candidate.db (build-candidate.ts) — the SAME gazetteer + population-first " +
+				"ranking the browser demo uses. When set (or via $MAILWOMAN_CANDIDATE_DB), the resolver matches the " +
+				"demo (e.g. bare 'Moscow' → Russia, not a US township) and --resolve-db is not required."
+		),
 	dataRoot: zod
 		.string()
 		.optional()
@@ -140,10 +149,13 @@ function resolveWofPath(options: zod.infer<typeof OptionsSchema>): string {
 // ---------------------------------------------------------------------------
 
 async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
-	// Resolve the WOF admin path FIRST — it's the most common missing prerequisite and the cheapest to
+	// Resolve the gazetteer path FIRST — it's the most common missing prerequisite and the cheapest to
 	// check, so surface that error before the (slower) weights load. (Order matters for the CLI contract:
-	// a missing WOF DB must report the WOF error even when the weights are also absent.)
-	const wofPath = resolveWofPath(options)
+	// a missing gazetteer must report the gazetteer error even when the weights are also absent.) A
+	// candidate.db (--candidate-db / $MAILWOMAN_CANDIDATE_DB) is the demo-parity backend; when present it
+	// stands alone and a WOF admin path isn't required.
+	const candidateDb = resolveCandidateDbPath(options.candidateDb)
+	const wofPath = candidateDb ? "" : resolveWofPath(options)
 
 	// Load the neural classifier (required for street-level; weights must be present).
 	let classifier: NeuralAddressClassifier
@@ -166,7 +178,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 		)
 	}
 
-	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: wofPath })
+	const lookup = createResolverBackend(mod, { candidateDb: options.candidateDb, wofPaths: wofPath })
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
 	// specific file); an unset tier still falls back to the region-derived per-state shard.

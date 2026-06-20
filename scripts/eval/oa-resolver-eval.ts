@@ -339,8 +339,15 @@ async function main(): Promise<void> {
 	// real "neural vs Pelias parser" head-to-head on non-circular addresses.
 	const v0 = createAddressParser()
 
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const backend = new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
+	// `--candidate-db <candidate.db>` swaps the FTS backend for the byte-range candidate-table lookup
+	// (the SAME backend + ranking the browser demo uses). This is the "CLI matches demo" gate: run the
+	// eval both ways and confirm US locality/coord don't regress before defaulting the CLI to it.
+	const candidateDb = arg("candidate-db", "")
+	const { WofSqlitePlaceLookup, WofCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const backend = candidateDb
+		? new WofCandidateTableLookup({ databasePath: candidateDb })
+		: new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
+	if (candidateDb) console.error(`[backend] candidate-table lookup over ${candidateDb} (demo-parity ranking)`)
 	const resolver = createWofResolver(backend as never)
 
 	// Gazetteer-alias locality matching. A resolved place counts as a locality match if OA's
