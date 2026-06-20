@@ -50,6 +50,27 @@ export class DemoFixture {
 		await input.fill(text)
 	}
 
+	/**
+	 * Type a partial address to trigger the place-autocomplete typeahead (#587), then read the "Did
+	 * you mean" suggestion texts once the debounced FST walk renders them.
+	 */
+	async readSuggestions(text: string): Promise<string[]> {
+		await this.setAddress(text)
+		const list = this.page.locator("#addr-suggest-list")
+		await list.waitFor({ state: "visible", timeout: 5000 }).catch(() => {})
+		return this.page.locator("#addr-suggest-list [role='option']").allTextContents()
+	}
+
+	/** Click the autocomplete suggestion whose text contains `name`. */
+	async pickSuggestion(name: string): Promise<void> {
+		await this.page.locator("#addr-suggest-list [role='option']", { hasText: name }).first().click()
+	}
+
+	/** Current value of the address input. */
+	async addressValue(): Promise<string> {
+		return this.page.locator("#addr-input").inputValue()
+	}
+
 	async clickExample(label: string): Promise<void> {
 		await this.page.locator(`button:has-text("${label}")`).first().click()
 	}
