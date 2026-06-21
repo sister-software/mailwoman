@@ -16,8 +16,9 @@
  *   uses), keeping one normalizer in one place.
  */
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { DatabaseSync } from "node:sqlite"
-import type { PostalCityAliasTable } from "./postal-city-alias-schema.js"
+import type { PostalCityAliasDatabase } from "./postal-city-alias-schema.js"
 
 export interface WofPostalCityAliasLookupOpts {
 	/** Path to a `postal-city-alias-<cc>.db` built by `build-postal-city-alias.ts`. Opened read-only. */
@@ -36,17 +37,15 @@ export interface PostalCityAlias {
 	n: number
 }
 
-/** The columns the reader projects — a typed slice of {@link PostalCityAliasTable} (writer↔reader). */
-type AliasRow = Pick<PostalCityAliasTable, "postal_city" | "geo_locality" | "n">
-
 /**
  * Reader over `postal_city_alias`. The only query is a postcode-scoped probe for DIVERGENT rows
- * (where the postal name differs from the geographic name — the rows that carry alias signal).
+ * (where the postal name differs from the geographic name — the rows that carry alias signal),
+ * issued via the typed Kysely query builder against {@link PostalCityAliasDatabase}.
  */
 export class WofPostalCityAliasLookup {
 	#db: DatabaseSync
+	#kdb: DatabaseClient<PostalCityAliasDatabase>
 	#ownsDb: boolean
-	#stmt: ReturnType<DatabaseSync["prepare"]>
 
 	constructor(opts: WofPostalCityAliasLookupOpts) {
 		if (opts.database) {
@@ -58,9 +57,8 @@ export class WofPostalCityAliasLookup {
 		} else {
 			throw new Error("WofPostalCityAliasLookup needs `databasePath` or `database`")
 		}
-		this.#stmt = this.#db.prepare(
-			"SELECT postal_city, geo_locality, n FROM postal_city_alias WHERE postcode = ? AND divergent = 1"
-		)
+		// `#kdb` wraps `#db` for the typed query; close() owns the raw handle directly (sync).
+		this.#kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: this.#db })
 	}
 
 	/**
@@ -68,10 +66,15 @@ export class WofPostalCityAliasLookup {
 	 * scorer groups these by normalized `geoLocality` and appends the `postalCity` surfaces to the
 	 * matching candidate locality's alias set.
 	 */
-	getDivergentAliases(postcode: string): PostalCityAlias[] {
+	async getDivergentAliases(postcode: string): Promise<PostalCityAlias[]> {
 		const pc = postcode.trim()
 		if (!pc) return []
-		const rows = this.#stmt.all(pc) as unknown as AliasRow[]
+		const rows = await this.#kdb
+			.selectFrom("postal_city_alias")
+			.select(["postal_city", "geo_locality", "n"])
+			.where("postcode", "=", pc)
+			.where("divergent", "=", 1)
+			.execute()
 		return rows.map((r) => ({ postalCity: String(r.postal_city), geoLocality: String(r.geo_locality), n: Number(r.n) }))
 	}
 
