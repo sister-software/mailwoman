@@ -140,7 +140,7 @@ populateAncestors(db)
 console.error("  coincident_roles ...")
 buildCoincidentRoles(db)
 console.error("  indexes ...")
-createUnifiedIndexes(db)
+await createUnifiedIndexes(db)
 // Rebuild the place_search FTS from the names table — the candidate's alias pass reads
 // place_search.alt_names, so without this the augmented places' aliases (incl. the multilingual
 // English names) never reach the candidate, and a non-Latin city resolves only by its local-script

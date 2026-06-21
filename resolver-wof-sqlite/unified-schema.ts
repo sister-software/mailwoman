@@ -12,76 +12,83 @@
  *   `place_search` FTS5 + `place_bbox` R*Tree are built separately by `build-fts` (fts.ts).
  */
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { DatabaseSync } from "node:sqlite"
+import type { WofDatabase } from "./schema.js"
 
-export function createUnifiedSchema(db: DatabaseSync): void {
+export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
+	// PRAGMAs stay raw — not Kysely-modelled, and these tune the bulk build.
 	db.exec("PRAGMA journal_mode = WAL")
 	db.exec("PRAGMA busy_timeout = 10000")
 	db.exec("PRAGMA synchronous = OFF")
 
-	db.exec(`
-		CREATE TABLE IF NOT EXISTS spr (
-			id INTEGER PRIMARY KEY,
-			parent_id INTEGER NOT NULL DEFAULT -1,
-			name TEXT NOT NULL DEFAULT '',
-			placetype TEXT NOT NULL DEFAULT '',
-			country TEXT NOT NULL DEFAULT '',
-			latitude REAL NOT NULL DEFAULT 0,
-			longitude REAL NOT NULL DEFAULT 0,
-			min_latitude REAL NOT NULL DEFAULT 0,
-			min_longitude REAL NOT NULL DEFAULT 0,
-			max_latitude REAL NOT NULL DEFAULT 0,
-			max_longitude REAL NOT NULL DEFAULT 0,
-			is_current INTEGER NOT NULL DEFAULT 1,
-			is_deprecated INTEGER NOT NULL DEFAULT 0,
-			is_ceased INTEGER NOT NULL DEFAULT 0,
-			is_superseded INTEGER NOT NULL DEFAULT 0,
-			is_superseding INTEGER NOT NULL DEFAULT 0,
-			lastmodified INTEGER NOT NULL DEFAULT 0
-		)
-	`)
+	// `kdb` wraps `db` for the DDL (the house idiom); the caller owns `db`'s lifecycle, so we don't
+	// destroy it here. The bulk INSERTs (populateAncestors + build-unified-wof) stay on the raw handle.
+	const kdb = new DatabaseClient<WofDatabase>({ database: db })
 
-	db.exec(`
-		CREATE TABLE IF NOT EXISTS names (
-			id INTEGER NOT NULL,
-			name TEXT NOT NULL,
-			placetype TEXT NOT NULL DEFAULT '',
-			country TEXT NOT NULL DEFAULT '',
-			language TEXT NOT NULL DEFAULT '',
-			privateuse TEXT NOT NULL DEFAULT '',
-			lastmodified INTEGER NOT NULL DEFAULT 0
-		)
-	`)
+	await kdb.schema
+		.createTable("spr")
+		.ifNotExists()
+		.addColumn("id", "integer", (c) => c.primaryKey())
+		.addColumn("parent_id", "integer", (c) => c.notNull().defaultTo(-1))
+		.addColumn("name", "text", (c) => c.notNull().defaultTo(""))
+		.addColumn("placetype", "text", (c) => c.notNull().defaultTo(""))
+		.addColumn("country", "text", (c) => c.notNull().defaultTo(""))
+		.addColumn("latitude", "real", (c) => c.notNull().defaultTo(0))
+		.addColumn("longitude", "real", (c) => c.notNull().defaultTo(0))
+		.addColumn("min_latitude", "real", (c) => c.notNull().defaultTo(0))
+		.addColumn("min_longitude", "real", (c) => c.notNull().defaultTo(0))
+		.addColumn("max_latitude", "real", (c) => c.notNull().defaultTo(0))
+		.addColumn("max_longitude", "real", (c) => c.notNull().defaultTo(0))
+		.addColumn("is_current", "integer", (c) => c.notNull().defaultTo(1))
+		.addColumn("is_deprecated", "integer", (c) => c.notNull().defaultTo(0))
+		.addColumn("is_ceased", "integer", (c) => c.notNull().defaultTo(0))
+		.addColumn("is_superseded", "integer", (c) => c.notNull().defaultTo(0))
+		.addColumn("is_superseding", "integer", (c) => c.notNull().defaultTo(0))
+		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
+		.execute()
 
-	db.exec(`
-		CREATE TABLE IF NOT EXISTS concordances (
-			id INTEGER NOT NULL,
-			other_id TEXT NOT NULL,
-			other_source TEXT NOT NULL,
-			lastmodified INTEGER NOT NULL DEFAULT 0
-		)
-	`)
+	await kdb.schema
+		.createTable("names")
+		.ifNotExists()
+		.addColumn("id", "integer", (c) => c.notNull())
+		.addColumn("name", "text", (c) => c.notNull())
+		.addColumn("placetype", "text", (c) => c.notNull().defaultTo(""))
+		.addColumn("country", "text", (c) => c.notNull().defaultTo(""))
+		.addColumn("language", "text", (c) => c.notNull().defaultTo(""))
+		.addColumn("privateuse", "text", (c) => c.notNull().defaultTo(""))
+		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
+		.execute()
 
-	db.exec(`
-		CREATE TABLE IF NOT EXISTS place_population (
-			id INTEGER PRIMARY KEY,
-			population INTEGER NOT NULL DEFAULT 0
-		)
-	`)
+	await kdb.schema
+		.createTable("concordances")
+		.ifNotExists()
+		.addColumn("id", "integer", (c) => c.notNull())
+		.addColumn("other_id", "text", (c) => c.notNull())
+		.addColumn("other_source", "text", (c) => c.notNull())
+		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
+		.execute()
+
+	await kdb.schema
+		.createTable("place_population")
+		.ifNotExists()
+		.addColumn("id", "integer", (c) => c.primaryKey())
+		.addColumn("population", "integer", (c) => c.notNull().defaultTo(0))
+		.execute()
 
 	// `ancestors` maps each place to every place above it in the hierarchy (and itself). The
 	// resolver's parent-constraint scopes a child lookup to a parent's descendants via
 	// `spr.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?)`. The off-the-shelf WOF dumps
 	// ship this table; our build derives it from the parent_id chain (see populateAncestors) since
 	// we don't capture `wof:hierarchy`.
-	db.exec(`
-		CREATE TABLE IF NOT EXISTS ancestors (
-			id INTEGER NOT NULL,
-			ancestor_id INTEGER NOT NULL,
-			ancestor_placetype TEXT NOT NULL DEFAULT '',
-			lastmodified INTEGER NOT NULL DEFAULT 0
-		)
-	`)
+	await kdb.schema
+		.createTable("ancestors")
+		.ifNotExists()
+		.addColumn("id", "integer", (c) => c.notNull())
+		.addColumn("ancestor_id", "integer", (c) => c.notNull())
+		.addColumn("ancestor_placetype", "text", (c) => c.notNull().defaultTo(""))
+		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
+		.execute()
 }
 
 /**
@@ -122,16 +129,27 @@ export function populateAncestors(db: DatabaseSync): number {
 	return count
 }
 
-export function createUnifiedIndexes(db: DatabaseSync): void {
-	db.exec("CREATE INDEX IF NOT EXISTS spr_by_placetype ON spr (placetype)")
-	db.exec("CREATE INDEX IF NOT EXISTS spr_by_country ON spr (country)")
-	db.exec("CREATE INDEX IF NOT EXISTS spr_by_parent ON spr (parent_id)")
-	db.exec("CREATE INDEX IF NOT EXISTS names_by_id ON names (id)")
-	db.exec("CREATE INDEX IF NOT EXISTS names_by_name ON names (name)")
-	db.exec("CREATE INDEX IF NOT EXISTS concordances_by_id ON concordances (id, lastmodified)")
-	db.exec("CREATE INDEX IF NOT EXISTS concordances_by_other_id ON concordances (other_source, other_id)")
+export async function createUnifiedIndexes(db: DatabaseSync): Promise<void> {
+	const kdb = new DatabaseClient<WofDatabase>({ database: db })
+	await kdb.schema.createIndex("spr_by_placetype").ifNotExists().on("spr").column("placetype").execute()
+	await kdb.schema.createIndex("spr_by_country").ifNotExists().on("spr").column("country").execute()
+	await kdb.schema.createIndex("spr_by_parent").ifNotExists().on("spr").column("parent_id").execute()
+	await kdb.schema.createIndex("names_by_id").ifNotExists().on("names").column("id").execute()
+	await kdb.schema.createIndex("names_by_name").ifNotExists().on("names").column("name").execute()
+	await kdb.schema
+		.createIndex("concordances_by_id")
+		.ifNotExists()
+		.on("concordances")
+		.columns(["id", "lastmodified"])
+		.execute()
+	await kdb.schema
+		.createIndex("concordances_by_other_id")
+		.ifNotExists()
+		.on("concordances")
+		.columns(["other_source", "other_id"])
+		.execute()
 	// ancestor_id is the hot column (parent-constraint queries `WHERE ancestor_id = ?`); id supports
 	// the reverse lookup.
-	db.exec("CREATE INDEX IF NOT EXISTS ancestors_by_ancestor ON ancestors (ancestor_id)")
-	db.exec("CREATE INDEX IF NOT EXISTS ancestors_by_id ON ancestors (id)")
+	await kdb.schema.createIndex("ancestors_by_ancestor").ifNotExists().on("ancestors").column("ancestor_id").execute()
+	await kdb.schema.createIndex("ancestors_by_id").ifNotExists().on("ancestors").column("id").execute()
 }
