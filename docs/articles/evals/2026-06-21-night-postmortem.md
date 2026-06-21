@@ -104,17 +104,26 @@ Combined ~6.1pts of the 12% admin tail, already in. **Remaining open:** the spel
 - **#739 (tiger-fetch) — BLOCKED on release-ordering, flagged on the PR.** Code is clean (corpus 444/444); CI red on the `ci:smoke` clean-install guard (#596) because the new `@mailwoman/tiger` workspace isn't on npm, so the published CLI 404s on it. Needs an operator call: publish `@mailwoman/tiger` in the same release, OR make it private/bundled. Not force-merged.
 - **#531 (typo-tolerant retrieval) — scoped, not built.** The FTS path already has trigram-Jaccard fuzzy; the candidate path (now the demo/CLI default) has none, and its `WITHOUT ROWID` B-tree clusters alphabetically (not by edit-distance), so a fuzzy fallback needs a NEW trigram/spellfix side-index + a candidate rebuild + a browser fetch-cost measurement — bigger than a night-shift item. Design follow-up. **#530 (the parser-side half — teach the MODEL to tolerate typos in the surface) is now SHIPPED** (above); #531 is the retrieval-side half (recover the gazetteer hit when the *parsed* token is itself misspelled). They're complementary, not substitutes.
 
-## Concrete next steps
+## Concrete next steps (operator)
 
-- Finish the upload → run the `210` e2e gate (build with the 52-slug `resources.tsx`, serve :7770) → if green, commit `resources.tsx` + the spec → push (deploy) → live-verify a TX rooftop on production.
-- Then the secondary stack: typed-schema follow-through, #739 merge, #531 typo-tolerant, #475 postal_city, #734 EU-recall, hygiene.
+In rough priority order — all the remaining levers hit a gate I shouldn't cross unattended:
+1. **Merge PR #740** (the night's bundle). It carries the #530 default-OFF correction — **merge before any corpus build** so the default distribution stays byte-stable. The 3 workstreams (#475 / #530-fix / docs) review independently; #738's `build-address-point-shard.ts` edit may need a trivial merge with the #175 change there.
+2. **#475 default-on decision** — the aggregate (500 fixed / 0 regressed / p90 278→10 km) is a strong signal; promotion to default-on is your call. Then **#741** (candidate-path build-time fold, region-scoped design in the issue) to reach the demo/CLI candidate default.
+3. **#739** (tiger-fetch) — publish `@mailwoman/tiger` in the same release, or bundle/private it, to clear the `ci:smoke` 404.
+4. **#734** — richer name/coverage ingestion (GeoNames alternate-names for FI bilingual + sub-locality coverage for SK) into `build-unified-wof`, then a candidate rebuild. The diagnostic names the exact lever per country; AT needs nothing.
+5. **#442** → close as a duplicate of #630 (same Dependabot pool).
 
 ## Numbers
 
-| metric                      | value                 |
-| --------------------------- | --------------------- |
-| shift window                | 02:55 UTC → 15:00 UTC |
-| states hosted (street tier) | 4 → 52 (in flight)    |
-| situs upload                | 33 GB, 48 states      |
-| Modal $ / GPU               | $0 (no-GPU plan)      |
-| CI failures / regressions   | 0 so far              |
+| metric                      | value                                  |
+| --------------------------- | -------------------------------------- |
+| shift window                | 02:55 UTC → 15:00 UTC                   |
+| issues shipped/measured     | #475 (full arc), #530, #175, #723 audit |
+| issues diagnosed/filed      | #734 (3-lever), #741 + candidate-fold filed |
+| PRs reviewed                | #736, #738                             |
+| PR opened (review-ready)    | #740                                   |
+| new eval harness            | `scripts/eval/postal-city-alias-eval.ts` |
+| new data artifact           | `postcode-locality-us.db` (US coord-first) |
+| Modal $ / GPU               | $0 (no-GPU plan)                       |
+| regressions shipped         | 0                                      |
+| canonical-DB swaps          | 0 (all gated work flagged, not crossed) |
