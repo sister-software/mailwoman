@@ -51,6 +51,9 @@ interface ResolutionState {
 	anchorPosterior?: Record<string, number>
 	/** Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set. */
 	anchorWeight: number
+	/** #743/#194 confident-placer country as a HARD filter (empty→unresolved, no global retry). Off =
+undefined. */
+	hardCountry?: string
 	/** Dual-role hierarchy completion (#405). Off by default → byte-stable. */
 	hierarchyCompletion: boolean
 	/** Attach ancestor lineage to each resolved node (#404). Off by default → byte-stable. */
@@ -254,6 +257,7 @@ class WofResolver implements Resolver {
 			postcode: firstPostcodeValue(tree.roots),
 			anchorPosterior: opts.anchorPosterior,
 			anchorWeight: opts.anchorWeight ?? 2.0,
+			hardCountry: opts.hardCountry,
 			// Default-ON (#402): completion only fires for a dual-role region whose locality the parser
 			// dropped, and no-ops entirely when the backend has no relation (the browser WASM resolver, or
 			// a gazetteer without `coincident_roles`). Pass `hierarchyCompletion: false` to opt out.
@@ -373,7 +377,15 @@ class WofResolver implements Resolver {
 		// multi-country gazetteer fuzzy-matches a foreign place (e.g. a French region) — see the
 		// Direction-C resolver eval.
 		if (parentResolved && typeof parentResolved.id === "number") query.parentId = parentResolved.id
-		const country = parentResolved?.country ?? state.defaultCountry
+		// #194: a resolved parent's country wins, then the caller's `defaultCountry`, then the confident
+		// placer `hardCountry`. All three are a HARD candidate filter. The placer's `hardCountry` is gated
+		// upstream on high confidence (so it only fires when the model is sure), and on a miss the node is
+		// left UNRESOLVED rather than re-resolved globally: the off-continent rows are precisely the ones
+		// whose locality isn't in the country's gazetteer slice, so a global retry would just re-admit the
+		// wrong-continent guess the hard filter exists to drop ("in-region or unresolved"). Measured: a
+		// global fallback collapses back to the soft-prior baseline (FI p90 3050, PL p90 1078); pure-hard
+		// collapses the tail (FI 18 km, PL p99 8172→494) at a coverage-bounded recall cost.
+		const country = parentResolved?.country ?? state.defaultCountry ?? state.hardCountry
 		if (country) query.country = country
 		// Coordinate-first: hand the sibling postcode to locality lookups so the backend can inject
 		// postcode-proximal candidates the name-match would miss. Only for locality (the placetype both

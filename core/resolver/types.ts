@@ -256,6 +256,19 @@ export interface ResolveOpts {
 	 */
 	anchorWeight?: number
 	/**
+	 * #743/#194 — a CONFIDENT coarse-placer country applied as a HARD candidate filter
+	 * (`query.country`), not the soft {@link anchorPosterior} boost. This collapses the off-continent
+	 * tail for LOW-population places the soft prior can't move (FI/PL — their towns lose to a
+	 * high-pop namesake in the population-first gazetteer even when the country is pinned). On a miss
+	 * the node is left UNRESOLVED ("in-region or unresolved") rather than re-resolved globally — the
+	 * off-continent rows are precisely the ones whose locality isn't in the country's gazetteer
+	 * slice, so a global fallback just re-admits the wrong-continent guess (measured: it collapses
+	 * back to the soft-prior baseline). The win is coverage-bounded: tail collapse at a recall cost
+	 * set by how complete the country's gazetteer is (PL −9.5pp, FI −32pp). Undefined (default) →
+	 * byte-stable. Ignored when a resolved parent or {@link defaultCountry} already pins the country.
+	 */
+	hardCountry?: string
+	/**
 	 * Recover the dropped locality in a DUAL-ROLE-place address (#405, epic #402). Many places occupy
 	 * multiple admin tiers under one name — city-states (Berlin/Hamburg/Bremen = city == state),
 	 * capital-seat provinces (Milano, Madrid), UK unitary authorities — and in the
