@@ -62,7 +62,7 @@ Postal-arena edge classes where BOTH are 0% (the parity frontier): `po-box` (4),
 
 ³ v4.1.0 lumps "Wacker Dr" into one `street` span; the affix retrain teaches the split (7/10 → split, perfect precision).
 
-> **METHODOLOGY GOTCHA (load-bearing for the campaign):** `per-locale-f1.ts`'s `foldToComponents` JOINS street_prefix+street+street_suffix into one `street` string — so it **cannot** measure the affix split and reports 0% even when the model splits perfectly. Use **`scripts/eval/score-affix.ts`** (unfolded `decodeAsJson`) for street_prefix/street_suffix. The folded `street` is still the right no-regression metric (the fold recomposes → golden street holds/rises).
+> **METHODOLOGY GOTCHA (critical for the campaign):** `per-locale-f1.ts`'s `foldToComponents` JOINS street_prefix+street+street_suffix into one `street` string — so it **cannot** measure the affix split and reports 0% even when the model splits perfectly. Use **`scripts/eval/score-affix.ts`** (unfolded `decodeAsJson`) for street_prefix/street_suffix. The folded `street` is still the right no-regression metric (the fold recomposes → golden street holds/rises).
 
 ---
 
@@ -83,7 +83,7 @@ Common tags (postcode/house_number/street/locality/region/venue-US) are at usabl
 | FR             | venue/region         | ⏳ (#330; cedex now resolved deterministically above)                                                                                                                                                                                                                                                                                                                                           |
 | consolidation  | —                    | ⏳ v1.0 (bake winners + full regression gate) — **needs > 20k steps**: see dilution note                                                                                                                                                                                                                                                                                                        |
 
-> **CUMULATIVE-DILUTION LESSON (load-bearing for consolidation):** stacking synth shards into one 20k-step run dilutes each tag vs its solo run — the country run (base+unit+affix+country) dropped affix street_suffix 67→59 and street_prefix 78→75 while still under-serving country. Each added shard spreads a fixed step budget thinner. **Prove each lever solo, then consolidate with a larger step budget** (the v2-vs-v3 unit lesson, re-confirmed). Don't read a cumulative run's per-tag number as that lever's ceiling.
+> **CUMULATIVE-DILUTION LESSON (critical for consolidation):** stacking synth shards into one 20k-step run dilutes each tag vs its solo run — the country run (base+unit+affix+country) dropped affix street_suffix 67→59 and street_prefix 78→75 while still under-serving country. Each added shard spreads a fixed step budget thinner. **Prove each lever solo, then consolidate with a larger step budget** (the v2-vs-v3 unit lesson, re-confirmed). Don't read a cumulative run's per-tag number as that lever's ceiling.
 
 ### Lever-shape taxonomy (why not everything is a retrain)
 

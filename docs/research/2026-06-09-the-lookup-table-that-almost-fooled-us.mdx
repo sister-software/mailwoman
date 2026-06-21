@@ -18,7 +18,7 @@ the entire premise of the project.
 
 {/* truncate */}
 
-## The score was real. The fight was rigged.
+## The score held. The fight was rigged.
 
 Here's what the morning's comparison actually was. In one corner: a flat lookup,
 matching the trailing chunk of an address against the ISO country list. In the other: a
@@ -33,7 +33,7 @@ fifty-four addresses where a lookup table cannot lose.
 A crippled model, an unloseable eval, and a perfect score. We looked at that 100% and
 wrote down a design principle. You've done this too — a benchmark hands you a clean
 number, the number agrees with the architecture you were already tempted by, and the
-question "what exactly did this measure?" quietly leaves the room.
+question "what exactly did this measure?" slips out of the room.
 
 ## The objection that reopened it
 
@@ -55,13 +55,13 @@ France; Kingston, New York against Kingston, Jamaica; person-named countries; th
 
 ## The fair fight
 
-The retrained model's first result: country recognition went from literally zero to
+The retrained model's first result: country recognition went from zero to
 alive — at **100% precision, with zero over-fires**. Not one city promoted to a nation.
 Not one "Georgia" guessed wrong. Region accuracy _improved_ while the new tag came
 online. The contrast pairs did exactly what the theory said: the model learned that the
 label is contextual, because we finally showed it contexts that disagree.
 
-What it missed, it missed honestly: Eswatini. Timor-Leste. Bhutan. Countries the
+What it missed, it missed for a plain reason: Eswatini. Timor-Leste. Bhutan. Countries the
 training data mentions a handful of times. That failure mode is recognition, a
 vocabulary problem, and vocabulary is what gazetteers are for.
 
@@ -82,8 +82,8 @@ of an eval that only contained the easy half of the problem.
 
 When a benchmark tells you the simple thing beats the learned thing, before you
 celebrate, check who the learned thing was that day, and check what the benchmark left
-out. Sometimes the simple thing genuinely wins. Ours lost the rematch the moment the
-hard cases showed up — and the model, given one honest shot at the data, did the thing
+out. Sometimes the simple thing does win. Ours lost the rematch the moment the
+hard cases showed up — and the model, given one fair shot at the data, did the thing
 we built it to do.
 
 Trust the model. Feed it better.

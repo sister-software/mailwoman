@@ -3,7 +3,7 @@
 _2026-06-14. The arbitration capstone, re-specced after the reconcile retirement (#566), the grouper
 fix (#565), and the coarse-placer (#244) reshaped the landscape. The original #478 issue is substantially
 stale — its "untested / unwired / mock" framing predates this work. This is the current state, the
-design, and — the load-bearing correction — the gate the reconcile retirement proved we need._
+design, and — the critical correction — the gate the reconcile retirement proved we need._
 
 ## Why this matters (unchanged)
 
@@ -96,7 +96,7 @@ original re-gate (#427) omitted.
 ## Scope guard (unchanged)
 
 No retrain. No new classifiers. Wiring + tests + config over machinery that exists. The coarse-placer
-(#244) is the one genuinely-new model and it is already built (M1+M2); here it is consumed as a routing
+(#244) is the one new model and it is already built (M1+M2); here it is consumed as a routing
 signal, not trained.
 
 _References: `2026-06-10-DEEP-DIVE-REVIEW.md` §2; the reconcile retirement

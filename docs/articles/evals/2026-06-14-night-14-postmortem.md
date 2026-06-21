@@ -34,7 +34,7 @@ All six merged to `main`:
 
 - **Audit-first discipline paid off enormously.** The reconcile regression was a ~weeks-old, catastrophic,
   eval-invisible bug. Running the precondition audit on real holdout truth — not trusting the green
-  scorecards — is what surfaced it. The lesson is now load-bearing: grade the _assembled pipeline_ against
+  scorecards — is what surfaced it. The lesson is now firm: grade the _assembled pipeline_ against
   truth, never raw-neural per-tag F1.
 - **Probe-before-implement corrected two plans.** The licensing probe (zero OSM in US Overture) killed the
   "filter to NAD" action item that would have dropped a third of coverage for no benefit. The DuckDB

@@ -62,7 +62,7 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
   eval records): FS spine F1 55.3%±3.2, LR 56.7% (+1.4pp), GBT 60.5%±2.7 (+5.2pp, 4/4 seeds)** — driven by a
   large precision gain that **cuts the over-merge** (P 45→61%, over-merged clusters 94→69, the #625 problem).
   The pairwise gain (#640) DOES translate to clustering; the #603 GBM is a **real dedup lever**, greenlit.
-  **Two methodology catches en route** (both load-bearing — the result inverted without them): (1) a 300-NPI
+  **Two methodology catches en route** (both decisive — the result inverted without them): (1) a 300-NPI
   smoke MISLED (FS ahead by 5pp) — too few co-located collisions to exhibit the over-merge, which only bites
   at scale → trust the larger eval; (2) a coarse 6-point threshold sweep understated the learned scorers by
   ~9pp — a fine 33-point sweep corrected it. _Always sweep finely + size the eval to the phenomenon before
@@ -88,7 +88,7 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
   fully client-side, byte-ranged — green against both local and prod. **But it caught the fatal trap (#638):**
   the sql.js-httpvfs `serverMode: "full"` _open_ path downloads the **entire shard once** to learn the file
   length (a redundant 114 MB GET for DC, **~3.2 GB for CA → demo-breaking**), on top of the efficient ranged
-  lookup reads (5 × 64 KB). Confirmed load-bearing + live in prod; `config.fileLength` does NOT fix it (tried,
+  lookup reads (5 × 64 KB). Confirmed critical + live in prod; `config.fileLength` does NOT fix it (tried,
   reverted). Filed #638 with the diagnosis + fix options (chunked serverMode + per-shard config.json — touches
   the shipped demo + R2 hosting, so flagged not self-fixed). The spec ships the correctness assertion green +
   a `test.fixme` efficiency guard that goes green when #638 lands.
@@ -127,7 +127,7 @@ circumvented).
 - **#672 — the cross-dataset linking map (bonus).** The marquee proof on a map: 219 entities resolved
   across sources with no shared key, on the HOUSE stack (MapLibre + Protomaps via `toMapHTML`, rendered
   with `render-map.mjs` — SwiftShader WebGL + the localhost-serve the tile CORS requires). **Generator
-  only, not embedded:** 191/219 links are FCC-internal (RHC ↔ commitments, same agency); the genuinely
+  only, not embedded:** 191/219 links are FCC-internal (RHC ↔ commitments, same agency); the
   cross-_agency_ links are **28, all pairwise (2 agencies); ZERO span all three agencies** (no entity
   resolves across provider + funder + facility at once). The "10 spanning all three source kinds" framing
   counted 3 sources where 2 are FCC. A `--cross-agency-only` flag renders the honest 28-link slice; the

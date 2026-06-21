@@ -81,7 +81,7 @@ Three pipeline placements, decided by the **router** (see coarse placer), by que
 | Distinctive street in an address | `350 Fifth Avenue`, `10 Downing Street`              | Anchor **conditions** the parser (strong city/country prior); parser still runs.           |
 | Distinctive district / component | `Ginza`, `2-Chōme`                                   | Locality/neighbourhood anchor; conditions parser + resolver.                               |
 
-**Guardrails (these are load-bearing):**
+**Guardrails (these are critical):**
 
 1. **Salience is data-driven, never a hand-curated VIP list.** "Champs-Élysées is special" must fall out
    of OSM/WOF popularity + uniqueness scores, not a hardcoded entry. A hand-maintained famous-list is the

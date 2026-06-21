@@ -33,7 +33,7 @@ falls over because one record out of nearly 700 million arrived in the wrong nor
 
 ## The assertion was right
 
-Here's the uncomfortable part. That assertion is correct, and I'd write it again.
+Here's the awkward part. That assertion is correct, and I'd write it again.
 
 Our labels are character offsets. When the corpus says the postcode lives at `[10, 15)`, it
 means code units 10 through 15 of the raw string. Those numbers only mean one thing if everyone
@@ -41,12 +41,12 @@ agrees on how the string is spelled at the byte level — and Unicode lets you s
 visible text more than one way. The letter `é` can be one code unit (NFC, precomposed) or two
 (NFD, a bare `e` followed by a combining acute accent). A span of `[10, 15)` lands in a
 different place depending on which spelling you're holding. Feed the model offsets computed over
-one form and raw text stored in another, and every label is quietly, invisibly off by however
+one form and raw text stored in another, and every label is invisibly off by however
 many combining marks came before it. There is no error message for that. There's just a model
 that slowly learns garbage.
 
 So the assertion guards something real: char-offset labels are only meaningful under a single
-normalization form. The principle is sound. The _blast radius_ is the bug. A correct guard that
+normalization form. The principle is sound. The way it fails is the bug. A correct guard that
 takes down the entire build the first time it meets a row it doesn't like is a guard that has
 confused being right with being safe.
 
@@ -77,7 +77,7 @@ short component from stealing a longer one's word — logic that is perfectly be
 script — took one step too far across the combining sequence and handed back an offset that
 couldn't exist. The span-invariant check caught it and threw, which is how we found out.
 
-And this is the honest lesson buried in the wreck: we had validated the build on nine of the
+And this is the lesson buried in the wreck: we had validated the build on nine of the
 eleven sources, every Latin-script shape we could think of, and they were spotless. The two we'd
 skipped the full dress rehearsal on were the WOF adapters — which is precisely where every
 non-Latin name variant on Earth lives. The long tail wasn't hiding. We just hadn't walked all
@@ -85,7 +85,7 @@ the way down it.
 
 ## Stop trusting the row
 
-The tempting fix is to chase the off-by-one. It's a real bug, and there's a real version of the
+The tempting fix is to chase the off-by-one. It's a bug, and there's a proper version of the
 fix that teaches the boundary logic about combining marks and _keeps_ every one of those non-Latin
 rows. We filed it (issue #555) and we'll do it properly. But chasing it at 3 a.m., mid-recovery,
 to unblock a multi-hour build, is how you ship a worse bug at 4.
@@ -154,4 +154,4 @@ names a correct offset, and #555 is where we go pay them back. But the build tha
 South Korea finished its night, and the next time something runs for hours in the dark, one bad
 row is going to cost us a line in a log instead of the morning.
 
-Go make your long jobs survivable. The one that crashes at hour two will thank you. 👏
+Go make your long jobs survivable. The one that crashes at hour two will thank you.

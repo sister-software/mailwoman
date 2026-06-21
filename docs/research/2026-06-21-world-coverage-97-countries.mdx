@@ -10,7 +10,7 @@ Open the [demo](/demo), type an address in Kabul, and watch nothing happen. Not 
 
 {/* truncate */}
 
-I want to be honest about how that happens, because it didn't happen through some dramatic mistake. It happened the quiet way — the way most data gaps happen — and the most useful part of the story is the trick that finally made it visible.
+I want to be clear about how that happens, because it didn't happen through some dramatic mistake. It happened the quiet way — the way most data gaps happen — and the most useful part of the story is the trick that finally made it visible.
 
 ## A missing place never files a complaint
 
@@ -48,8 +48,8 @@ Out the other side: **4.6 million town-level localities across 248 countries**, 
 
 ## The cost, named
 
-I told you the house rule is to name the tradeoff, so here it is. Full town-level depth turns the gazetteer from 811 MB into 1.26 GB. That's free on a server and not free in the browser, where the demo streams the database a few kilobytes at a time over byte-range requests — and a 50%-bigger file is a 50%-bigger thing to range over. So the honest shape of the fix is two builds, not one: the major cities go to the browser (light, covers the overwhelming majority of what anyone types), and the full town depth goes to the CLI and server, where the bytes are cheap. One builder, two depths, your call which artifact gets which.
+I told you the house rule is to name the tradeoff, so here it is. Full town-level depth turns the gazetteer from 811 MB into 1.26 GB. That's free on a server and not free in the browser, where the demo streams the database a few kilobytes at a time over byte-range requests — and a 50%-bigger file is a 50%-bigger thing to range over. So the fix is two builds, not one: the major cities go to the browser (light, covers the overwhelming majority of what anyone types), and the full town depth goes to the CLI and server, where the bytes are cheap. One builder, two depths, your call which artifact gets which.
 
 And the boundary I'd be lying to skip: a place *resolving* is not the same as a full address *parsing*. Putting Kandahar in the gazetteer means that when something hands the resolver the word "Kandahar," it now lands in Afghanistan instead of nowhere. Whether our parser reliably pulls "Kandahar" out of a raw Afghan address string is a different question with a different answer — and a different post. Coverage was the necessary half. We did the necessary half.
 
-So: go find your invisible gap. Hold your data up to a yardstick you didn't make, count the disagreements, and look hard at the zeros. Ours had been hiding in plain sight, passing every test, for weeks. Now get to work — yours is in there too. 👏
+So: go find your invisible gap. Hold your data up to a yardstick you didn't make, count the disagreements, and look hard at the zeros. Ours had been hiding in plain sight, passing every test, for weeks. Now get to work — yours is in there too.

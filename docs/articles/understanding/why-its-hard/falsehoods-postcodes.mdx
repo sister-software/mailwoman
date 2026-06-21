@@ -26,7 +26,7 @@ The format diversity is deeper than alphanumeric vs. numeric. UK postcodes have 
 
 `02109` (Boston, MA), `07737` (Jena, Germany), `0800` (Darwin, Australia), `00002` (Helsinki, Finland). Brazilian and Israeli postcodes also start with zero. A parser that stores postcodes as integers strips leading zeros. A system that sorts postcodes numerically puts `02109` before `10001`. A form field that rejects `0` as the first character rejects real addresses.
 
-French postcodes are particularly dangerous: `06130` (Grasse, département 06) and `6130` (routed to département 61, Orne) are different places. The leading zero is load-bearing. A parser that strips it routes Grasse to the wrong département.
+French postcodes are particularly dangerous: `06130` (Grasse, département 06) and `6130` (routed to département 61, Orne) are different places. The leading zero matters. A parser that strips it routes Grasse to the wrong département.
 
 ### "A postcode maps to a single city."
 

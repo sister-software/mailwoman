@@ -57,7 +57,7 @@ false pairs and missing real ones, and ours did.
 
 _Both surfaces are `P(match)` over the same record-pair space — string similarity
 (x) against geographic distance (y) — scored by the **same** Fellegi-Sunter model
-([below](#the-spine-fellegi-sunter-without-labels)) with the **real** per-level
+([below](#the-foundation-fellegi-sunter-without-labels)) with the **real** per-level
 Bayes factors (`NAME_LEVELS`, `DEFAULT_DISTANCE_LEVELS`); the only difference is
 which evidence each model may see. **String-first** sees the name alone — a
 vertical wall at high similarity, blind to where the records are. It fuses
@@ -101,14 +101,14 @@ et al., 2021):
 3. **Cluster** — pairwise scores are _not transitive_ (A~B at 0.6 and B~C at 0.6
    does not make A~C a match), so a separate stage closes pairs into canonical
    entities. Skip it and your "entities" quietly fracture or fuse (Dedupe; the
-   non-transitivity is load-bearing, not a footnote).
+   non-transitivity is essential, not a footnote).
 
 Upstream of all three is **canonicalize**: parse the name, sanitize the org name,
 geocode the address, normalize the phone and email. That's mostly salvage — the
 old `isp-nexus` contact/organization/postal bones, re-pointed at mailwoman's
 geocoder.
 
-## The spine: Fellegi-Sunter, without labels
+## The foundation: Fellegi-Sunter, without labels
 
 The matcher's core is the classical probabilistic-linkage model, and it's the
 right core for one decisive reason: **it trains without labeled data.** The
@@ -125,7 +125,7 @@ interpretable by construction: a total match weight is a prior plus a sum of
 per-field log-Bayes-factors (`M = M_prior + Σ log₂(mᵢ/uᵢ)`), so every decision is
 attributable to the fields that drove it. You can _read_ why two records linked.
 The match-weight threshold is the single precision/recall knob, with a
-clerical-review band in the middle for the genuinely ambiguous — the abstain zone,
+clerical-review band in the middle for the ambiguous — the abstain zone,
 the same move the geocoder makes when its radius blows up.
 
 ## Geography is the blocking key — the bet, and its tax
@@ -170,9 +170,9 @@ Calibrate the thresholds against mailwoman's _own_ measured error distribution,
 not the literature's older-geocoder constants. Our rooftop tier is tighter; the
 shape of the lesson holds, the numbers are ours to measure.
 
-## Where a model genuinely earns its place
+## Where a model earns its place
 
-The classical spine is the v1. Models are selective levers bolted on where the
+The classical core is the v1. Models are selective levers bolted on where the
 evidence says they pay — never the foundation:
 
 - **Org-name embeddings** for fuzzy blocking and similarity. Regex can't see
@@ -185,17 +185,17 @@ evidence says they pay — never the foundation:
   neural moonshot. **This one is shipped, and on by default**: a pure-Node
   gradient-boosted tree over the agreement pattern plus the over-merge interaction
   (co-located × name-disagree), trained on the NPPES NPI-truth set. It beat the
-  Fellegi-Sunter spine by ~5pp dedup F1 held-out within a state and by ~+22pp on
+  Fellegi-Sunter core by ~5pp dedup F1 held-out within a state and by ~+22pp on
   states it never trained on (TX→CA, TX→NY), cutting the co-located over-merge — so
   it earns the default slot, shipped with a calibrated link threshold (its logit
   isn't in FS-weight units). The model is NPPES/US-trained; for a very different
-  domain, A/B it or drop back to the hand-weighted spine with
+  domain, A/B it or drop back to the hand-weighted core with
   `resolveEntities({ learnedScorer: false })`. One sharp caveat we measured: the GBT
   is calibrated for **dedup** — where "same address, different name" means distinct
   co-located providers, so it's trained to _reject_ that. **Cross-dataset link
   discovery is the opposite objective** — that same pattern is the prototypical
   signal of one facility under different operational names across sources — so the
-  cross-dataset and reconciliation flows pin the FS spine (`learnedScorer: false`),
+  cross-dataset and reconciliation flows pin the FS core (`learnedScorer: false`),
   where recall, not over-merge precision, is what matters. Same model, opposite
   objective: pick the scorer by the question you're asking.
 - **An LLM in the gray zone, never on the easy 95%.** Framed as in-context
@@ -203,7 +203,7 @@ evidence says they pay — never the foundation:
   improves quality (LLM-CER, 2025). Spend it only on the clerical-review band the
   calibrated scorer abstained on.
 - **An LLM for ingest.** The messy-data reality — "it came as a SQLite dump" — is
-  where an LLM is genuinely, cheaply excellent: read a header row plus a few
+  where an LLM is cheaply excellent: read a header row plus a few
   samples, infer the column→field mapping, cache it. One call per _source schema_,
   not per row. The most painful onboarding step, deleted.
 
@@ -257,7 +257,7 @@ layer is salvage. The match layer is the part that imploded last time, now
 standing on coordinates instead of strings. The address-id is the cheap certainty
 beside the probabilistic match: when two records resolve to the same place _and_
 share a canonical address, they collapse on a deterministic key — no scoring, no
-threshold — and the matcher spends its effort only on the genuinely-messy rest.
+threshold — and the matcher spends its effort only on the messy rest.
 
 ## Why you can't find the comparable project
 

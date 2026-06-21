@@ -27,7 +27,7 @@ honest non-circular signal. 101 rows had a miss from one or both parsers.
 | bucket                    |  count | what it is                                                                  |
 | ------------------------- | -----: | --------------------------------------------------------------------------- |
 | **(A) name-form variant** | **40** | resolver found the RIGHT place; the eval's name-matcher rejects the form    |
-| (B) genuinely wrong place |     13 | resolved to a real but incorrect admin — the resolver-disambiguation target |
+| (B) wrong place |     13 | resolved to a real but incorrect admin — the resolver-disambiguation target |
 | (C) no locality resolved  |     23 | parser mis-segment, `<Null>` tokens, or WOF coverage gap                    |
 
 > **If bucket (A) were credited, neural locality on these 1500 rows is ≈97.6%, not 94.9%.**

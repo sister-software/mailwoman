@@ -15,6 +15,6 @@ The **bundled** row is the actual shipped `DEDUP_GBT_MODEL` (the default-on cand
 
 **The GBT win GENERALIZES across states** — trained on TX, it still beats the FS spine on NY clustering F1 (38.2% vs 18.6%, +19.6pp). The learned scorer isn't fitting TX-specific structure; the over-merge signal it learns transfers. This is the strongest evidence yet for the #603 production GBM — one model, trained once, helps a state it never saw.
 
-## Honest caveats
+## Caveats
 
 A single train/eval state pair (TX→NY), one geocoded sample each, a compact pure-Node GBT (120 rounds, depth 3). The FS arm is the benchmark spine (same model), so the comparison is fair. Absolute F1 differs from the within-state A/B because the eval population + over-merge density differ by state. NPI-as-truth is conservative. The within-state held-out-NPI A/B (`learned-scorer-clustering-eval.ts`) is the companion; together they bound the generalization question a production GBM must answer.\_

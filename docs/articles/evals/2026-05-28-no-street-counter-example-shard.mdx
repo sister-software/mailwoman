@@ -21,7 +21,7 @@ counter-distribution shard.
 - `corpus/src/synthesize-no-street.ts` — six-template synthesizer:
   - `venue-adversarial` (35% weight) — venues whose names contain street-typing
     tokens (`Wall Street Industries`, `5th Avenue Theatre`, `Park Avenue Dental`,
-    `Highway 61 Diner`, etc.). The load-bearing slice: these are exactly the rows
+    `Highway 61 Diner`, etc.). The critical slice: these are exactly the rows
     that v0.6.1's "decompose mode" mis-tags. Explicit B-venue / I-venue labels
     on tokens like `Street`/`Avenue`/`Highway` teach the model to suppress
     street-side predictions when the surrounding context is venue-shaped.
@@ -55,7 +55,7 @@ template distribution:
 Critical check — **0 street-side BIO labels across all 20 synthesized rows**. The
 contract holds.
 
-Sample of the load-bearing adversarial output:
+Sample of the critical adversarial output:
 
 ```
 raw: 7th Street Bistro, Boston, MA 02101

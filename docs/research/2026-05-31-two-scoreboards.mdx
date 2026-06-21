@@ -67,7 +67,7 @@ Three different stories:
 
 ## The scoreboard that matters
 
-A geocoder's job is to put a real address on the map. So the honest test is end-to-end:
+A geocoder's job is to put a real address on the map. So the test that matters is end-to-end:
 take 10,000 real US addresses with real government
 coordinates, run each parser through the _same_ resolver, and ask which one lands on the right
 city.
@@ -95,6 +95,6 @@ addresses — and there, the learned model is ahead.
 
 The full breakdown is in the
 [v0.7–v0.8 retrospective](/docs/retrospectives/v0-7-v0-8-neural-vs-rules-retrospective): every
-arena, the genuine neural deficits (it does truncate `Belle Fourche` to `Belle`), the masked-LM
+arena, the neural deficits (it does truncate `Belle Fourche` to `Belle`), the masked-LM
 pre-training experiment that turned into a clean negative result, and what's next (street-level
 geometry, to go from "right city" to "right spot").

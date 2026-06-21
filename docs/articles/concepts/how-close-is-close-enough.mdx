@@ -42,13 +42,13 @@ When a finer tier fires, the geocoder is street-to-rooftop accurate — **98.8% 
 
 So the first half of "close enough" is **which tier did we reach**, because the tier _is_ the grain. A matcher that needs buildings should treat an `admin`-tier result as a building it hasn't actually located, even though the centroid happens to sit a mere 3 km away.
 
-## The honest part is the radius, not the point
+## Trust the radius, not the point
 
 A tier label is coarse. The per-parse answer to "how close is this one?" is the **calibrated uncertainty radius** the geocoder reports alongside the coordinate. The discipline here is absolute, and it's the whole reason the number is trustworthy ([`2026-06-14-interp-radius-calibration`](../evals/2026-06-14-interp-radius-calibration.md)):
 
 > A radius is only meaningful if it's calibrated. If we say ±87 m it must contain the truth ~90% of the time — not 72%. Otherwise the number is decoration.
 
-The raw half-segment interpolation radius covered only ~72% of true errors; a split-conformal calibration (Q̂ ≈ 1.70, per-region) makes it a real 90% bound. That turns "±87 m" from a guess into a promise: _the true point is within this radius ~90% of the time._ The consumer can then make the call honestly: "my tolerance is 50 m, your 90% radius is 87 m, so this one isn't close enough, abstain." That beats trusting a bare point that is secretly a city centroid.
+The raw half-segment interpolation radius covered only ~72% of true errors; a split-conformal calibration (Q̂ ≈ 1.70, per-region) makes it a real 90% bound. That turns "±87 m" from a guess into a promise: _the true point is within this radius ~90% of the time._ The consumer can then make the call: "my tolerance is 50 m, your 90% radius is 87 m, so this one isn't close enough, abstain." That beats trusting a bare point that is secretly a city centroid.
 
 This is the same move the parser makes with [confidence calibration](./confidence-calibration.mdx): a number you can act on, not a vibe.
 
@@ -61,8 +61,8 @@ Where the finer tiers fire, accuracy is solved (0.1–0.7 km, calibrated). The o
 We don't decide it — we **report enough that the consumer can**. Every resolved address carries:
 
 1. a **tier** (the grain we actually reached), and
-2. a **calibrated radius** (the honest 90% bound), so that
-3. the consumer compares the radius to **their** tolerance and either uses the point or **abstains** — the same honest-radius downgrade the resolver already makes when its candidates scatter.
+2. a **calibrated radius** (the calibrated 90% bound), so that
+3. the consumer compares the radius to **their** tolerance and either uses the point or **abstains** — the same calibrated-radius downgrade the resolver already makes when its candidates scatter.
 
 "Close enough" is not a property of the geocoder. It's a comparison, and our job is to make that comparison truthful: never a bare point, always a point with a tier and a radius that means what it says.
 

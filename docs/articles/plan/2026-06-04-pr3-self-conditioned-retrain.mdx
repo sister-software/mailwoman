@@ -22,7 +22,7 @@ The architecture is grounded in `corpus-python/src/mailwoman_train/model.py` (`M
 
 ## The staging — prove the free thing first
 
-The design doc bundled self-conditioning and the anchor channel into one pilot. The grounding argues for separating them, because they have very different costs and the probe already told us which one is load-bearing.
+The design doc bundled self-conditioning and the anchor channel into one pilot. The grounding argues for separating them, because they have very different costs and the probe already told us which one is essential.
 
 **Pilot A — self-conditioning only. No corpus rebuild.** Pieces 1 and 2 above. The locale target is the existing `country` column; nothing in the data pipeline changes. From scratch on US + FR + DE, balanced, against the v0.7.2 recipe with exactly one variable added (self-conditioning). Stop at the 20k-step gate. This is the cheapest possible test of the core hypothesis — does a model that infers locale globally and conditions on it parse better and stop the German cross-tag collapse — and it needs no new data engineering. If self-conditioning alone does nothing, the anchor channel is unlikely to rescue it, and we have spent a few dollars to learn that.
 

@@ -85,7 +85,7 @@ The reconciler works by re-ranking — it takes the classifier's top-K, then con
 
 ### 3. Golden v0.1.2 is too small to be a trustworthy regression guard
 
-4,535 entries. A 1pt macro_F1 regression is ~45 entries flipping. At typical 1% annotator error rate in human-labeled NER data, that's another ~45 entries of noise. The "regression" signal has a ~10% false-positive rate from annotation noise alone — you could ship joint decode that's genuinely better and still "fail" the golden gate.
+4,535 entries. A 1pt macro_F1 regression is ~45 entries flipping. At typical 1% annotator error rate in human-labeled NER data, that's another ~45 entries of noise. The "regression" signal has a ~10% false-positive rate from annotation noise alone — you could ship joint decode that's better and still "fail" the golden gate.
 
 **Mitigation:** if golden regression lands in the 0.5–1.5pt band, manually inspect all disagreement entries before deciding. If >half are debatable or clearly wrong in golden, expand the gate tolerance. If they are genuine (concordance damage), the matrix stands.
 
@@ -146,7 +146,7 @@ A second six-turn conversation reframed the diagnosis: not "dual-loss decoupling
 - **Cooperative regime, loss &gt; 0.41.** Model starts at high entropy; both CE and CRF point downhill toward the same broad basin ("become less random"). Training descends cleanly.
 - **Conflict regime, loss &gt; 0.41.** Model exits the high-entropy basin and enters fine-grained per-token decisions. CE and CRF now point in opposing directions on this data. CRF's 8–20× gradient magnitude wins. The optimiser follows CRF; CE is dragged uphill.
 
-The 0.41 boundary isn't a magic number — it's where the cooperative-vs-conflict transition happens on this specific architecture + corpus. The structure of the failure is the load-bearing observation, not the threshold.
+The 0.41 boundary isn't a magic number — it's where the cooperative-vs-conflict transition happens on this specific architecture + corpus. The structure of the failure is the key observation, not the threshold.
 
 ### Why standard repairs don't fix this
 

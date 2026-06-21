@@ -32,7 +32,7 @@ Progression: v0.9.10 balanced shard 57.9 → v0.9.11 +class-weight 65.0 → v0.9
 `B-region → B-postcode` CRF transition (US-only; FR's postcode precedes the
 locality, so it never sees this). The fix is **train-time channel choreography**:
 zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, at _both_ train
-and inference (the pairing is load-bearing — the harm is weight-baked, so an
+and inference (the pairing is essential — the harm is weight-baked, so an
 inference-only patch can't undo it). Operator decision: **accept v0.9.12/13 as the
 country lever and carry the choreography into the consolidation retrain** (move 4),
 where the dip washes out — no standalone fix-retrain. Choreography ships

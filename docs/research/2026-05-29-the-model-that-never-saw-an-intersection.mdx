@@ -51,7 +51,7 @@ Alphanumeric postcodes (`SW1A 1AA`, `M5V 2T6`) get shredded by the subword token
 
 Here the fix wasn't training at all. A **deterministic regex repair** runs _after_ the model decodes: detect a postcode-shaped substring, and snap the label span to it. On the postcode harness that single pass fixed **135 cases and regressed zero**, taking GB/CA/DE/PT to 100%. Sometimes the right tool is a retrain. Sometimes it's eight lines of pattern-matching and a careful "longest-match-wins" rule so a US ZIP+4 doesn't get mistaken for a Dutch postcode.
 
-## What we actually learned
+## What we learned
 
 A few lessons we're keeping:
 
@@ -60,6 +60,6 @@ A few lessons we're keeping:
 - **Structural validity is its own signal.** A checker that flags incoherent parses — a house number with no street, an orphaned unit — caught a mid-training regression that the headline accuracy number completely hid.
 - **You can't learn what you never see.** The most expensive-sounding problem of the night had the cheapest root cause: a missing synthesizer.
 
-So the real fix for intersections is mundane: a couple thousand synthetic `X & Y St` examples, labeled and dropped into the corpus as a small targeted supplement, plus a retrain that finally gives the model something to learn from. That run is training as we publish this.
+So the fix for intersections is mundane: a couple thousand synthetic `X & Y St` examples, labeled and dropped into the corpus as a small targeted supplement, plus a retrain that finally gives the model something to learn from. That run is training as we publish this.
 
-We'll report what the model does once it has, for the first time, actually seen an intersection.
+We'll report what the model does once it has, for the first time, seen an intersection.

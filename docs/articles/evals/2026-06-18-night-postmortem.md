@@ -60,7 +60,7 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
 
 - **Stretch #1 — record-matcher curve** (`ed89dd4d` + reports): added a model-swap to `nppes-dedup-benchmark.ts`
   and ran the v1.5.1 + v1.6.0 baselines (TX, 300 NPIs). **Result: flat within noise** — org-name F1 68.0%
-  (v1.5.1) vs 67.9% (v1.6.0), NPI 62.8 vs 62.6, spine 61.0 vs 60.9. The honest read: **the boundary-parse
+  (v1.5.1) vs 67.9% (v1.6.0), NPI 62.8 vs 62.6, spine 61.0 vs 60.9. The read: **the boundary-parse
   lever does NOT move the NPPES dedup F1** — the benchmark's own pre-registered finding is "config dominates
   the model," and dedup is bottlenecked on org-name over-merge (#625/#603), not parse boundaries. So the
   synthetic boundary wins are real for the PARSE but don't translate to this real-world dedup task. v1.7.0
@@ -86,11 +86,11 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
 - **The #511 lint paid for itself the first time it ran** — 9 contradictions caught before they could
   fight the base. My first venue draft was naive; the discipline (scan the source block, tally per token)
   worked exactly as designed. Strong argument for stretch-goal #4 (generalize the lint).
-- **The DeepSeek consult was load-bearing AND self-correcting** — it caught the street-recall blind spot I
+- **The DeepSeek consult was decisive and self-correcting** — it caught the street-recall blind spot I
   missed, and corrected my own walk-back (1:1 → 7:3) on the FR number ratio.
 - **The runbook held** — every Modal gotcha (volume-put blindness, R2 501s, the zero-padded step) was
   already documented from the v1.6.0 run; Phase 5 went clean on the first try.
-- **Pace** — Phases 1–5 in ~35 min of work; the prep was genuinely turnkey.
+- **Pace** — Phases 1–5 in ~35 min of work; the prep was turnkey.
 
 ## 3. What could've gone better
 

@@ -34,7 +34,7 @@ This has names at three altitudes:
 The softmax at each token position is a competition: every tag's probability is
 normalised against all the others, and the mass has to land _somewhere_. When a
 real category has no training signal, the model never learns a detector for it —
-so tokens that genuinely belong to that category get dumped into the nearest tag
+so tokens that belong to that category get dumped into the nearest tag
 it _did_ learn. That tag becomes a **catch-all** (or "dumping-ground") label.
 
 This is not hypothetical for us. The v0-parity assessment caught it directly:
@@ -50,11 +50,11 @@ moment `unit` becomes a trained category, those tokens have a home: their
 probability mass moves off `street` and onto `unit`, and `street` gets sharper as
 a _side effect_ — we improved a tag by teaching its neighbours.
 
-## The honest caveat
+## The caveat
 
 This is usually net-positive but not guaranteed monotonic. Adding a class is free
 when it's a genuine category the old label was wrongly swallowing (our case). It
-can backfire when two categories are genuinely ambiguous (you trade one confusion
+can backfire when two categories are truly ambiguous (you trade one confusion
 for another), or through capacity and label-noise effects — Mailwoman has scar
 tissue here, where adding a locale _interfered_ with an existing one on some
 retrains. So negative space is a strong **hypothesis**, not a theorem.

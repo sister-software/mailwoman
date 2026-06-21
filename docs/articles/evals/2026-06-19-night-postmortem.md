@@ -4,7 +4,7 @@ title: "Night shift 2026-06-19 — v1.8.0 international admin-split (surpass-v1.
 
 # Night shift 2026-06-19 — the international admin-split retrain
 
-_Goal: produce a candidate that genuinely beats the production default **v1.5.0** on the **assembled
+_Goal: produce a candidate that beats the production default **v1.5.0** on the **assembled
 anchor-ON coordinate** (not label-F1), by fixing the one admin-deciding, coordinate-coupled failure
 class — on non-US formats the model fuses the trailing admin token into the locality. NOT promoted
 without operator GO (merge wall)._
@@ -118,7 +118,7 @@ over the 2pp gate — a clean v1.8.1 refinement is to mix in FR rows that DO car
 ## Verdict — v1.8.0 is a net win on the shipped coordinate; RECOMMEND promote (operator GO), with two flagged label deltas
 
 **FR coordinate massively up (p50 42→2 km, −40% mean), US coordinate flat.** This is the first model
-in the arc (v1.6.0 and v1.7.0 both HOLD) to genuinely surpass v1.5.0 on the metric we ship. **Two
+in the arc (v1.6.0 and v1.7.0 both HOLD) to surpass v1.5.0 on the metric we ship. **Two
 label deltas exceed the 2pp gate, and both are coordinate-invisible:** us.locality −2.2pp
 (precision-only — 0 recall misses; spurious-fp on fragment rows) and fr.country −3.5pp (the resolver
 is given the country, so it doesn't reach the coordinate). No silent drift — both are stated here and
