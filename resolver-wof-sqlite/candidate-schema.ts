@@ -29,8 +29,10 @@ export interface CandidateTable {
 	region_id: number
 	/** Small int from {@link PlacetypeCodeTable}. */
 	placetype_id: number
-	/** `-log10(population + 1)` — ASC order = highest-population first. 0 for postcodes (no
-population). */
+	/**
+	 * `-log10(population + 1)` — ASC order = highest-population first. 0 for postcodes (no
+	 * population).
+	 */
 	neg_rank: number
 	/** WOF id of the place this row resolves to. */
 	spr_id: number
