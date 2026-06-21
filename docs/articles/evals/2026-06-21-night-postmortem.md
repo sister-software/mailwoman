@@ -73,7 +73,18 @@ Ran the candidate-recall harness on the AT/FI/SK holdout against the promoted `-
 
 **Source-feasibility probe (06:2x UTC).** Checked what's on disk to scope the ingestion: GeoNames `cities15000.txt` carries the FI bilingual pairs in its `alternatenames` column (e.g. Väståboland → `Parainen,Pargas`) for **103 FI cities** — but **0 SK entries** (all SK places fall below the pop-15k cutoff). So an on-disk FI fix would be partial (bigger cities only) and need a fiddly GeoNames↔WOF coord-match; SK needs the full `SK.txt` dump. No `FI.txt`/`SK.txt`/`alternateNames` on disk → the real fix is a ~400MB GeoNames acquisition (`FI.zip` + `SK.zip` + `alternateNamesV2.zip`) ingested via the existing GeoNames tooling (cf. `build-postcode-locality-cjk.py`), then a rebuild. Confirmed download-gated, not a clean unattended-tonight piece.
 
-**Conclusion — #734 is a data-coverage problem, not a parser/build one.** AT is already solved (strip-fallback, shipped). FI and SK both come down to data the current sources don't carry (FI's second official name; SK's city districts) — so the fix is richer ingestion (GeoNames alternate-names for the bilingual pairs + sub-locality coverage, or deeper Overture) into `build-unified-wof`, then a candidate rebuild + R2 republish (operator-gated, canonical-DB swap). This reinforces `project-eu-coverage-not-retrain`: the EU tail is coverage/resolver, **#148 retrain stays unnecessary**. The diagnostic names the exact lever so the operator's ingest work is targeted, not exploratory.
+**Conclusion — #734 is a data-coverage problem, and I BUILT + measured the fix (non-gated).** AT is already solved (strip-fallback, shipped). FI and SK come down to data the current sources don't carry. **DeepSeek consult** (cron-invited) pressure-tested my over-conservative "this is gated" framing and was right: a GeoNames download is a file fetch, not a gate (gates = GPU / canonical swap). So I built the supplemental gap-fill (`scripts/build-supplemental-gazetteer.ts`, `1ee27e3c`): parse GeoNames `FI.txt`/`SK.txt` populated places (+ the dump's own bilingual `alternatenames` column — no 400MB alternateNames file needed), add the MISSING `name_key`s as candidate rows (gap-fill only → zero regression on existing names; synthetic spr_id; `-log10(pop+1)` rank).
+
+Measured on a copy of `candidate-global-20g.db` (26,107 gap-fill rows):
+
+| | recall | absent misses | newly resolved | coord-accurate (≤25 km) | coord p50/p90 |
+| --- | --- | --- | --- | --- | --- |
+| **FI** | 80.5% → **97.3%** | 212 → 31 | **+202** | **97%** | 3.3→3.1 / 11.9→12.0 km |
+| **SK** | 78.1% → **95.3%** | 114 → 27 | **+103** | **88%** | 0.8→0.8 / 1.9→1.9 km |
+
+**Coord-validated, not recall-only** (grade-the-coordinate, the #566 trap): 97% (FI) / 88% (SK) of recoveries land within 25 km of the real address point, and the resolved-coord p50/p90 distribution is stable — the new resolutions are as accurate as the existing ones. The 12% of SK recoveries beyond 25 km are GeoNames district-centroids (still better than a miss; flag low-pop rows for review). Reinforces `project-eu-coverage-not-retrain`: the EU tail is coverage, **#148 retrain stays unnecessary**.
+
+**Operator follow-up:** this is the build-on-a-copy MVP that proves + measures the lever. The provenance-clean path is to fold GeoNames into `build-unified-wof` (so it flows through the canonical candidate build with proper provenance), then rebuild + R2 republish.
 
 ## #175 typed-schema arc — extended to two more DBs
 
