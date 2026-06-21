@@ -5,3 +5,5 @@
  */
 
 export * from "./state/index.js"
+export * from "./schema.js"
+export * from "./fetch.js"

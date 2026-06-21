@@ -11,8 +11,11 @@ import { Kysely, type KyselyConfig } from "kysely"
 
 /**
  * A Kysely client for SQLite that uses the `node:sqlite` library.
+ *
+ * Generic over the schema: pass a concrete `Database` interface (`new DatabaseClient<MySchema>(...)`)
+ * for compile-time table typing, or omit it for the empty default. See `core/db/schema.ts`.
  */
-export class DatabaseClient extends Kysely<Database> implements Disposable {
+export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposable {
 	constructor(dialectConfig: SqliteDialectConfig, config?: Partial<KyselyConfig>) {
 		super({
 			...config,
