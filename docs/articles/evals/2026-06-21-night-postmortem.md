@@ -137,10 +137,10 @@ Combined ~6.1pts of the 12% admin tail, already in. **Remaining open:** the spel
 
 ## Concrete next steps (operator)
 
-In rough priority order. Two big levers are built + measured on a copy (the *apply* — a candidate rebuild + R2 republish — is the only gated part); the rest is review/release.
-1. **Merge PR #740** (22 commits). It carries the #530 default-OFF correction — **merge before any corpus build** so the default distribution stays byte-stable. Workstreams review independently; #738's `build-address-point-shard.ts` edit may need a trivial merge with the #175 change there.
-2. **Postal-city default-on + demo activation** — built across all 3 resolvers (FTS #475 / Node candidate #741 / browser #741), measured (FTS 500 fixed/0 regr p90 278→10km; candidate 2221/3 p90 1635→768km). To activate on the demo: run `build-postal-city-candidate.ts` into the canonical candidate build + R2 republish (the only gated step).
-3. **#734 EU recall — fold GeoNames into `build-unified-wof`** + candidate rebuild. The lever is BUILT + coord-validated (`build-supplemental-gazetteer.ts`): non-LT EU recall ~93.4→~96.5%, 562 localities recovered, 95% within 25km. Same one rebuild+republish activates this AND postal-city. (Global extension needs a non-EU recall eval to verify — currently unmeasurable.)
+All the big levers are built + measured on a copy; the *apply* (one `build-unified-wof` + candidate rebuild + R2 republish) is the only gated part — and it activates ALL of them at once.
+1. **🌍 Global coverage (#742) — the headline.** The gazetteer was missing ~98 countries (97/195 covered). Gap-fill (cities15000) → 244 countries, coord-verified. **Fold GeoNames into `build-unified-wof`** (cities15000 → major-city MVP; `allCountries` with a quality filter → full town depth + region tier), rebuild, republish. This is the highest-value action of the shift.
+2. **Merge PR #740** (25 commits). Carries the #530 default-OFF correction — **merge before any corpus build** so the default distribution stays byte-stable. #738's `build-address-point-shard.ts` edit may need a trivial merge with the #175 change there.
+3. **The single canonical rebuild ships THREE wins** — folding GeoNames into `build-unified-wof` + running `build-postal-city-candidate.ts` into the candidate build + one R2 republish activates: **postal-city** (FTS 500 fixed/p90 278→10km; candidate 2221/p90 1635→768km), **EU recall** (non-LT ~93.4→~96.5%, 95% coord-accurate), AND **global coverage** (97→244 countries).
 4. **#739** (tiger-fetch) — publish `@mailwoman/tiger` in the same release, or bundle/private it, to clear the `ci:smoke` 404.
 5. **#442** → close as a duplicate of #630 (same Dependabot pool).
 
@@ -149,9 +149,10 @@ In rough priority order. Two big levers are built + measured on a copy (the *app
 | metric                      | value                                  |
 | --------------------------- | -------------------------------------- |
 | shift window                | 02:55 UTC → 15:00 UTC                   |
-| features built + measured   | postal-city (3 resolvers, US) · #734 EU-recall gap-fill (coord-validated) |
+| 🌍 headline finding         | gazetteer covered only 97/195 countries → gap-fill to **244**, coord-verified (#742) |
+| features built + measured   | postal-city (3 resolvers) · #734 EU recall (coord-validated) · global coverage (97→244 countries) |
 | also shipped                | #530 + default-OFF fix · #175 typed-schema ×2 · #723 audit |
-| diagnosed / filed           | #734 (3-lever→fixed) · #741 (filed→built) |
+| diagnosed / filed           | #734 (3-lever→fixed) · #741 (filed→built) · #742 (global coverage) |
 | PRs reviewed                | #736, #738                             |
 | PR (review-ready)           | #740 (22 commits, mergeable, CI green on code) |
 | new harnesses / builders    | postal-city-alias-eval · build-postal-city-candidate · build-supplemental-gazetteer |
