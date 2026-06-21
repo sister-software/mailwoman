@@ -94,7 +94,9 @@ Chasing the EU tail surfaced something far bigger. A coverage audit (candidate `
 
 The same gap-fill builder (taught to register a new `country_code` when GeoNames has a country the gazetteer lacks) closes it from on-disk `cities15000.txt` (no download): **208,590 locality rows added across 147 newly-registered countries; coverage 97 → 244 countries.** Coord-verified by construction (0 → N) + a spot-check — **9/9 major cities in formerly-zero-coverage countries resolve within 30 km of truth** (Kabul/Tirana/Tripoli/Chisinau/Sarajevo/Yerevan/Kandahar all 0 km; Hong Kong 5 km, Baku 4 km).
 
-This reframes the day-shift "-20g world coverage" promote: it was *97-country* coverage, not world. **Highest-value operator follow-up of the shift** — fold GeoNames (`cities15000` for the major-city MVP, `allCountries` for full depth) into `build-unified-wof`, rebuild, republish. Filed as its own issue.
+This reframes the day-shift "-20g world coverage" promote: it was *97-country* coverage, not world. **Highest-value operator follow-up of the shift** — fold GeoNames into `build-unified-wof`, rebuild, republish. Filed as #742.
+
+**Full-depth run (definitive scope).** Beyond the cities15000 MVP, ran the full `allCountries.txt` (13.4M places, quality-filtered to drop historical/abandoned `PPLH/PPLQ/PPLW/PPLCH`): **4,642,285 town-tier localities added across 151 newly-registered countries → 248 countries with coverage; candidate ~13M rows.** Town-tier sanity: 200/200 sampled rows each for AF/HK/AL land inside the country bbox (no mis-mapping) — and the major-city tier was coord-spot-checked 9/9 within 30km, so the coverage is verified at both tiers. **Demo-size tradeoff (operator's call):** the full-depth candidate is 1.26 GB vs 811 MB — heavier for the byte-range demo. So the likely shipped split is `cities15000` (major cities, light) to the demo + `allCountries` (full depth) to the CLI/server, or a population threshold; the builder takes whatever depth the operator chooses. The proof is that the lever scales cleanly to full global depth.
 
 ## #175 typed-schema arc — extended to two more DBs
 
