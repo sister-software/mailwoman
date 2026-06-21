@@ -19,15 +19,22 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { AddressPointHit, AddressPointLookup } from "@mailwoman/core/resolver"
 
+import type { AddressPointTable } from "./address-point-schema.js"
 import { hasTable } from "./sqlite-utils.js"
 import { normalizeLocalityForKey, normalizeStreetForKey } from "./street-normalize.js"
 
-interface AddressPointRow {
-	lat: number
-	lon: number
-	source: string
-	release: string
-}
+/**
+ * The columns this lookup projects — a typed slice of the SHARED {@link AddressPointTable}, so a
+ * column rename in `build-address-point-shard.ts` (the writer) is a compile error here (the
+ * reader).
+ */
+type AddressPointRow = Pick<AddressPointTable, "lat" | "lon" | "source" | "release">
+
+/**
+ * The 4 columns the reader SELECTs, in the schema's order — referenced by the prepared SELECTs so
+ * the projected `AddressPointRow` stays in lockstep with the shared schema.
+ */
+const SELECT_COLS = "lat, lon, source, release"
 
 export class AddressPointSqliteLookup implements AddressPointLookup {
 	readonly #db: DatabaseSync
@@ -40,11 +47,11 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 		// `address_point` table this lookup is a no-op miss, not a crash that loses the whole state (#568).
 		if (hasTable(this.#db, "address_point")) {
 			this.#byPostcode = this.#db.prepare(
-				`SELECT lat, lon, source, release FROM address_point
+				`SELECT ${SELECT_COLS} FROM address_point
 				 WHERE postcode = ? AND street_norm = ? AND number = ? LIMIT 1`
 			)
 			this.#byLocality = this.#db.prepare(
-				`SELECT lat, lon, source, release FROM address_point
+				`SELECT ${SELECT_COLS} FROM address_point
 				 WHERE locality_norm = ? AND street_norm = ? AND number = ? LIMIT 1`
 			)
 		}

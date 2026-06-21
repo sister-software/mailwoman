@@ -13,6 +13,7 @@
 import { DatabaseSync } from "node:sqlite"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { AddressPointInterpolator } from "./address-point-interpolation.js"
+import { ADDRESS_POINT_DDL } from "./address-point-schema.js"
 import { StreetInterpolator } from "./interpolation.js"
 
 interface SeedPoint {
@@ -24,21 +25,9 @@ interface SeedPoint {
 }
 
 function seedPoints(db: DatabaseSync, points: SeedPoint[]): void {
-	db.exec(`
-		CREATE TABLE address_point (
-			street_norm   TEXT NOT NULL,
-			street_key    TEXT NOT NULL,
-			number        TEXT NOT NULL,
-			unit          TEXT,
-			postcode      TEXT,
-			locality_norm TEXT,
-			street_raw    TEXT NOT NULL,
-			lat           REAL NOT NULL,
-			lon           REAL NOT NULL,
-			source        TEXT NOT NULL,
-			release       TEXT NOT NULL
-		)
-	`)
+	// Shared DDL (the same `scripts/build-address-point-shard.ts` builds) so this fixture can't drift
+	// from the production table shape.
+	db.exec(ADDRESS_POINT_DDL)
 	const ins = db.prepare(
 		`INSERT INTO address_point (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
 		 VALUES (?, ?, ?, NULL, ?, NULL, ?, ?, ?, 'overture:test', '2026-05-20.0')`
