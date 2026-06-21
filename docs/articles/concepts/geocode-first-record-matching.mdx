@@ -57,7 +57,7 @@ false pairs and missing real ones, and ours did.
 
 _Both surfaces are `P(match)` over the same record-pair space — string similarity
 (x) against geographic distance (y) — scored by the **same** Fellegi-Sunter model
-([below](#the-spine-fellegi-sunter-without-labels)) with the **real** per-level
+([below](#the-foundation-fellegi-sunter-without-labels)) with the **real** per-level
 Bayes factors (`NAME_LEVELS`, `DEFAULT_DISTANCE_LEVELS`); the only difference is
 which evidence each model may see. **String-first** sees the name alone — a
 vertical wall at high similarity, blind to where the records are. It fuses
@@ -108,7 +108,7 @@ geocode the address, normalize the phone and email. That's mostly salvage — th
 old `isp-nexus` contact/organization/postal bones, re-pointed at mailwoman's
 geocoder.
 
-## The spine: Fellegi-Sunter, without labels
+## The foundation: Fellegi-Sunter, without labels
 
 The matcher's core is the classical probabilistic-linkage model, and it's the
 right core for one decisive reason: **it trains without labeled data.** The
@@ -172,7 +172,7 @@ shape of the lesson holds, the numbers are ours to measure.
 
 ## Where a model earns its place
 
-The classical spine is the v1. Models are selective levers bolted on where the
+The classical core is the v1. Models are selective levers bolted on where the
 evidence says they pay — never the foundation:
 
 - **Org-name embeddings** for fuzzy blocking and similarity. Regex can't see
@@ -185,17 +185,17 @@ evidence says they pay — never the foundation:
   neural moonshot. **This one is shipped, and on by default**: a pure-Node
   gradient-boosted tree over the agreement pattern plus the over-merge interaction
   (co-located × name-disagree), trained on the NPPES NPI-truth set. It beat the
-  Fellegi-Sunter spine by ~5pp dedup F1 held-out within a state and by ~+22pp on
+  Fellegi-Sunter core by ~5pp dedup F1 held-out within a state and by ~+22pp on
   states it never trained on (TX→CA, TX→NY), cutting the co-located over-merge — so
   it earns the default slot, shipped with a calibrated link threshold (its logit
   isn't in FS-weight units). The model is NPPES/US-trained; for a very different
-  domain, A/B it or drop back to the hand-weighted spine with
+  domain, A/B it or drop back to the hand-weighted core with
   `resolveEntities({ learnedScorer: false })`. One sharp caveat we measured: the GBT
   is calibrated for **dedup** — where "same address, different name" means distinct
   co-located providers, so it's trained to _reject_ that. **Cross-dataset link
   discovery is the opposite objective** — that same pattern is the prototypical
   signal of one facility under different operational names across sources — so the
-  cross-dataset and reconciliation flows pin the FS spine (`learnedScorer: false`),
+  cross-dataset and reconciliation flows pin the FS core (`learnedScorer: false`),
   where recall, not over-merge precision, is what matters. Same model, opposite
   objective: pick the scorer by the question you're asking.
 - **An LLM in the gray zone, never on the easy 95%.** Framed as in-context
