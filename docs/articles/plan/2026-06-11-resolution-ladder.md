@@ -32,7 +32,7 @@ problems, not architecture problems, from here on.
 ## Stack positions (reaffirmed, not open)
 
 The musings recommended OpenSearch/Elasticsearch for search and PostGIS for the spatial layer.
-We decline both, on existing grounds: the north star explicitly excludes Elasticsearch
+We decline both, on existing grounds: the stated goal explicitly excludes Elasticsearch
 (hierarchy lives in-DB via the `ancestors` table), and the deployment story — slim DBs over
 httpvfs, the browser tier, static-asset hosting — depends on sqlite everywhere. Our search
 layer is FTS5 + the FST + the typo-tolerant retrieval tier now scoped in #531; our spatial
@@ -113,7 +113,7 @@ assembly.
 
 ## Phase 6 — learned placement (research track, strictly gated)
 
-The genuinely novel idea in the musings: replace linear interpolation with a model that
+The novel idea in the musings: replace linear interpolation with a model that
 predicts where addresses sit on a block. Verdict from review: keep it, as research, with two
 corrections. First, drop the location-encoder framing — GeoCLIP/SatCLIP encode _global_
 position for geo-localization; this problem is _where along a 200 m segment_, and the

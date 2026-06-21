@@ -62,7 +62,7 @@ Properties:
 - The January Chevrotain experiment's output contract (typed char-offset spans) and Stage 2.7's
   `PhraseProposal` both become directly storable as supervision if ever wanted.
 
-## Blast radius (the honest list)
+## What this change touches (the full list)
 
 1. **Corpus schema + every shard builder** (affix, unit, intersection, po_box/cedex, country,
    german, base adapters): emit spans instead of token labels. Mechanical per builder; the
@@ -84,7 +84,7 @@ Properties:
    form matches what alignment saw (NFC throughout, verified per row) — a code-point-counting
    mismatch corrupts offsets silently, and "silently" is the operative word.
 8. **The per-piece channels** (consult keeper): `realign_anchor_to_pieces` and the gazetteer
-   clue painting both key off `whitespace_spans` — the migration touches their substrate, so
+   clue painting both key off `whitespace_spans` — the migration touches their foundation, so
    each needs its OWN invariance assertion (identical channel tensors on converted rows), not
    just the label-stream gate.
 

@@ -57,7 +57,7 @@ WOF is an excellent **admin** gazetteer (the in-DB hierarchy + ancestors table i
 - **Postcode → centroid.** **GeoNames postal** (`download.geonames.org/export/zip`, CC-BY 4.0, ~80+ countries) is a ready-made postcode → place + admin + lat/lon table, the cheapest fill for the DE/ES/IT gap with no point-cloud math (coarser than OA in places, often locality-level). **OpenAddresses** point aggregation (median centroid per postcode) is higher-fidelity where we have the points. National authorities are the gold standard but fragmented: UK **Code-Point Open** (OS, OGL), France **BAN**, NL via PDOK.
 - **Street / rooftop coords.** **OpenAddresses** (primary), **OSM** `addr:*` on buildings (great in DE/NL, patchy elsewhere), national registries — France **BAN**, Australia **G-NAF** (CC-BY; backlog #31).
 - **POIs / landmarks / salience** (the generalized-anchor and exotic-POI layer). **OSM** is the richest open POI source. **Wikidata / Wikipedia** is the right home for the data-driven _salience_ signal the anchor guardrail demands (notability + coordinates + multilingual names), and we already pull `wikimedia-importance.csv` in `build-importance`, so the path has precedent.
-- **Admin (the spine).** Keep WOF. Alternatives if it is ever reconsidered: GeoNames admin, **Overture Divisions**, geoBoundaries.
+- **Admin (the anchor).** Keep WOF. Alternatives if it is ever reconsidered: GeoNames admin, **Overture Divisions**, geoBoundaries.
 
 ### Probe: GeoNames vs the WOF postcode gap (2026-06-03)
 
@@ -92,7 +92,7 @@ So the gradient argues for **GeoNames + Overture + OpenAddresses** as the supple
 
 ### Integrity discipline
 
-Attach supplemental data as **attributes on WOF-keyed entities** (a centroid here, a popularity score there), not as imported foreign-id entities. WOF stays the spine and the eval keys; the coordinates and the long tail come from elsewhere. Mixing in Overture's GERS ids (or any parallel id space) as primary keys is what would quietly break the WOF-id-keyed resolver evals, which is the reason behind the "extend the custom WOF build, never a prebuilt dump" rule. OA centroid aggregation passes this test because the postcode keeps its WOF id; only its coordinate comes from OA.
+Attach supplemental data as **attributes on WOF-keyed entities** (a centroid here, a popularity score there), not as imported foreign-id entities. WOF stays the anchor and the eval keys; the coordinates and the long tail come from elsewhere. Mixing in Overture's GERS ids (or any parallel id space) as primary keys is what would break the WOF-id-keyed resolver evals, which is the reason behind the "extend the custom WOF build, never a prebuilt dump" rule. OA centroid aggregation passes this test because the postcode keeps its WOF id; only its coordinate comes from OA.
 
 ---
 

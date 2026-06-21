@@ -11,7 +11,7 @@ _Defined 2026-06-19, after the v4.11.0 ship (FR-admin-split), the research-romp 
 We grade the **assembled geocoded coordinate**, never label-F1 — the discipline that has paid off
 all month (the "#566 trap": label wins that never reach the coordinate). This sprint applies that
 discipline to the question "what do we build next," and the answer is **measure before you commit**:
-a single zero-GPU diagnostic routes the entire cycle, with the one genuinely strategic choice surfaced
+a single zero-GPU diagnostic routes the entire cycle, with the one strategic choice surfaced
 for the operator rather than buried in an assumption.
 
 ## The reframe — what we are NOT doing, and why
@@ -26,7 +26,7 @@ overhaul aimed at a defect that does not move the metric we ship on. That is the
 good-paper disguise.
 
 **Decision: the span-head / tokenizer thread is PARKED as future-enablement** for CJK/Cyrillic locales
-(where byte-fallback fertility genuinely blocks coverage we don't yet serve), not next-cycle work. If
+(where byte-fallback fertility blocks coverage we don't yet serve), not next-cycle work. If
 and when we commit to those scripts, the fertility diagnostic + GLiNER-style head come off the shelf.
 
 ## The decision this sprint resolves

@@ -59,7 +59,7 @@ Output the canonical WOF name (that's what geocodes), and echo the parsed string
 
 - **Transposed/alias city names** — _skip the dedicated table._ WOF ships `alt_name`/`name:*`; edit-distance + double-metaphone over a 5-item candidate set catches the rest on the fly (see #189 for splitting alt-names into their own FTS table).
 - **Misappropriated postcode → target** — _don't build a table of user mistakes_ (intent is unsourceable). But fold the _sourceable_ half — WOF/`postal-cities` postcode→multiple-postal-city aliases — into the candidate table. That covers "the postal city differs from the admin city"; the genuine mistakes are caught by the conflict flag.
-- **Abutting/adjacent postcodes** — _a radius, not a table._ Candidate generation within ~10 km already captures the neighbour; an optional build-time `is_adjacent` boolean only if the data demands it. The containment metric handles it for free: if the gold point is genuinely in the next town, the next town is the right answer.
+- **Abutting/adjacent postcodes** — _a radius, not a table._ Candidate generation within ~10 km already captures the neighbour; an optional build-time `is_adjacent` boolean only if the data demands it. The containment metric handles it for free: if the gold point is in the next town, the next town is the right answer.
 
 ## Falsehoods: the part Pelias and Airmail skip
 
