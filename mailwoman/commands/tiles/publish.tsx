@@ -4,24 +4,28 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman tiles publish` — upload a PMTiles archive to the Cloudflare R2 bucket the tile worker
- *   serves from (nexus-assets → https://tiles.sister.software/...). The worker (`tile-worker`) reads the
- *   key `<prefix>/<tileset>.pmtiles` (prefix "tiles" per its wrangler config) and exposes:
- *     - https://tiles.sister.software/<tileset>.json            (TileJSON)
- *     - https://tiles.sister.software/<tileset>/{z}/{x}/{y}.{ext}  (vector tiles)
- *   So `--tileset coverage` lights up the demo's coverage source with zero further wiring.
+ *   serves from (nexus-assets → https://tiles.sister.software/...). The worker (`tile-worker`)
+ *   reads the key `<prefix>/<tileset>.pmtiles` (prefix "tiles" per its wrangler config) and
+ *   exposes:
+ *
+ *   - https://tiles.sister.software/<tileset>.json (TileJSON)
+ *   - https://tiles.sister.software/<tileset>/{z}/{x}/{y}.{ext} (vector tiles) So `--tileset coverage`
+ *       lights up the demo's coverage source with zero further wiring.
  *
  *   Uploads via `rclone` (the RCLONE_S3_* env vars ARE its s3-backend config — source the repo .env
- *   first: `set -a; . ./.env; set +a`). rclone handles multipart for large archives (no 300 MiB cap,
- *   unlike `wrangler r2 object put`); the documented anti-501 flags skip the post-PUT HEAD/checksum ops R2
- *   rejects. The worker reads the object via its R2 binding, so Content-Type/Cache-Control don't matter.
+ *   first: `set -a; . ./.env; set +a`). rclone handles multipart for large archives (no 300 MiB
+ *   cap, unlike `wrangler r2 object put`); the documented anti-501 flags skip the post-PUT
+ *   HEAD/checksum ops R2 rejects. The worker reads the object via its R2 binding, so
+ *   Content-Type/Cache-Control don't matter.
  *
- *   CREDS for the `nexus-assets` bucket: the `RCLONE_S3_*` keys are scoped to `mailwoman-assets` (403 on
- *   nexus-assets); the `RCLONE_S3_PUBLIC_*` keys write nexus-assets. Map them onto the on-the-fly `:s3:`
- *   remote: `RCLONE_S3_ACCESS_KEY_ID=$RCLONE_S3_PUBLIC_ACCESS_KEY_ID` (+ SECRET/ENDPOINT) before running.
+ *   CREDS for the `nexus-assets` bucket: the `RCLONE_S3_*` keys are scoped to `mailwoman-assets` (403
+ *   on nexus-assets); the `RCLONE_S3_PUBLIC_*` keys write nexus-assets. Map them onto the
+ *   on-the-fly `:s3:` remote: `RCLONE_S3_ACCESS_KEY_ID=$RCLONE_S3_PUBLIC_ACCESS_KEY_ID` (+
+ *   SECRET/ENDPOINT) before running.
  */
 
 import { Spinner } from "@inkjs/ui"
-import { Box, Text } from "ink"
+import { Text } from "ink"
 import { existsSync, statSync } from "node:fs"
 import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"

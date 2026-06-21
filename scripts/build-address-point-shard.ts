@@ -149,8 +149,7 @@ let totalReturned = 0
 // OA conformed CSV → the same intermediate column shape as the Overture SELECT (all_varchar so a
 // house number like "123-A" or an empty lat survives the scan; JS coerces + drops non-finite coords).
 const oaCsvList = OA_MODE
-	? args["oa-csv"]!
-			.split(",")
+	? args["oa-csv"]!.split(",")
 			.map((p) => `'${p.trim()}'`)
 			.join(", ")
 	: ""

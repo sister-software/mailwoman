@@ -3,16 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Transforms an existing linear-scale training-chart SVG into a log10-scale version.
- *   Reads the pixel coordinates from path/circle elements, reverses the linear mapping
- *   using the axis tick labels, applies log10, and writes a new SVG with log-scale axis
- *   labels and grid.
+ *   Transforms an existing linear-scale training-chart SVG into a log10-scale version. Reads the
+ *   pixel coordinates from path/circle elements, reverses the linear mapping using the axis tick
+ *   labels, applies log10, and writes a new SVG with log-scale axis labels and grid.
  *
  *   Usage:
  *
- *   node --experimental-strip-types scripts/log-scale-chart.ts \
- *     --input docs/articles/evals/charts/v06x-val-loss.svg \
- *     --output docs/articles/evals/charts/v06x-val-loss-log.svg
+ *   Node --experimental-strip-types scripts/log-scale-chart.ts\
+ *   --input docs/articles/evals/charts/v06x-val-loss.svg\
+ *   --output docs/articles/evals/charts/v06x-val-loss-log.svg
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
@@ -98,27 +97,22 @@ function transformSVG(svg: string): string {
 
 	// Build inverse mapping function: pixelY → original value → log value → new pixelY
 	const pixelToValue = (py: number) => yMin + ((padding.top + plotH - py) / plotH) * (yMax - yMin)
-	const valueToLogPixel = (v: number) => padding.top + plotH - ((Math.log10(Math.max(v, yMin * 1e-3)) - logMin) / (logMax - logMin)) * plotH
+	const valueToLogPixel = (v: number) =>
+		padding.top + plotH - ((Math.log10(Math.max(v, yMin * 1e-3)) - logMin) / (logMax - logMin)) * plotH
 
 	// Transform all y-coordinates in path data
-	let result = svg.replace(
-		/([ML])([\d.]+),([\d.]+)/g,
-		(_, cmd: string, xStr: string, yStr: string) => {
-			const y = parseFloat(yStr)
-			const newY = valueToLogPixel(pixelToValue(y))
-			return `${cmd}${xStr},${newY.toFixed(1)}`
-		}
-	)
+	let result = svg.replace(/([ML])([\d.]+),([\d.]+)/g, (_, cmd: string, xStr: string, yStr: string) => {
+		const y = parseFloat(yStr)
+		const newY = valueToLogPixel(pixelToValue(y))
+		return `${cmd}${xStr},${newY.toFixed(1)}`
+	})
 
 	// Transform y-coordinates in circle elements
-	result = result.replace(
-		/cy="([\d.]+)"/g,
-		(_, yStr: string) => {
-			const y = parseFloat(yStr)
-			const newY = valueToLogPixel(pixelToValue(y))
-			return `cy="${newY.toFixed(1)}"`
-		}
-	)
+	result = result.replace(/cy="([\d.]+)"/g, (_, yStr: string) => {
+		const y = parseFloat(yStr)
+		const newY = valueToLogPixel(pixelToValue(y))
+		return `cy="${newY.toFixed(1)}"`
+	})
 
 	// Transform y-coordinates in grid lines and y-axis tick text positions
 	result = result.replace(

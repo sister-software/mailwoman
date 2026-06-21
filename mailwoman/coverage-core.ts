@@ -3,30 +3,32 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Builder for the demo map's "fog of war" address-COVERAGE overlay — an H3 hexbin tileset that shades
- *   each area by how much address-point data we hold (covered → clear, empty → gray fog). Backs the
- *   `mailwoman coverage build` command; kept React-free here so the logic is testable and the command is
- *   a thin Ink wrapper (mirrors `geocode-core.ts`).
+ *   Builder for the demo map's "fog of war" address-COVERAGE overlay — an H3 hexbin tileset that
+ *   shades each area by how much address-point data we hold (covered → clear, empty → gray fog).
+ *   Backs the `mailwoman coverage build` command; kept React-free here so the logic is testable and
+ *   the command is a thin Ink wrapper (mirrors `geocode-core.ts`).
  *
- *   Pipeline: ATTACH the per-state address-point shards (+ interpolation shards) read-only → DuckDB's H3
- *   community extension bins points to a fine resolution and rolls up to coarser ones → boundaries stream
- *   to NDJSON → `tippecanoe` bakes one `coverage` source-layer into a single PMTiles. Publish the result
- *   with `mailwoman tiles publish`.
+ *   Pipeline: ATTACH the per-state address-point shards (+ interpolation shards) read-only → DuckDB's
+ *   H3 community extension bins points to a fine resolution and rolls up to coarser ones →
+ *   boundaries stream to NDJSON → `tippecanoe` bakes one `coverage` source-layer into a single
+ *   PMTiles. Publish the result with `mailwoman tiles publish`.
  *
- *   FOG MODEL — each cell carries TWO baked values in [0,1] (0 = covered/clear, 1 = empty/gray):
- *     • fine cell:  fog = 1 − blended coverage score (address-point density, plus a weaker street-segment
- *       interpolation signal so a street-only cell reads as partial coverage, never a full gap).
- *     • coarse cell: fog = 1 − the MEAN child coverage — "on average, how covered are the blocks here" —
- *       so a region reads clear when zoomed out and the specific gaps surface as you zoom into the fine res.
- *     • `fog_opt = fog ** OPTIMISTIC_GAMMA` (γ>1) lifts partial coverage toward clear for an optimistic
- *       "looks covered until you zoom in" reading; the demo toggles between `fog` and `fog_opt`.
+ *   FOG MODEL — each cell carries TWO baked values in [0,1] (0 = covered/clear, 1 = empty/gray): •
+ *   fine cell: fog = 1 − blended coverage score (address-point density, plus a weaker
+ *   street-segment interpolation signal so a street-only cell reads as partial coverage, never a
+ *   full gap). • coarse cell: fog = 1 − the MEAN child coverage — "on average, how covered are the
+ *   blocks here" — so a region reads clear when zoomed out and the specific gaps surface as you
+ *   zoom into the fine res. • `fog_opt = fog ** OPTIMISTIC_GAMMA` (γ>1) lifts partial coverage
+ *   toward clear for an optimistic "looks covered until you zoom in" reading; the demo toggles
+ *   between `fog` and `fog_opt`.
  *
- *   Each resolution is baked in its own non-overlapping zoom band (per-feature tippecanoe minzoom/maxzoom);
- *   the finest is baked at a single tile-max level and MapLibre overzooms above it (hexes are identical
- *   geometry at every zoom), so we don't duplicate millions of hexes across z13–22.
+ *   Each resolution is baked in its own non-overlapping zoom band (per-feature tippecanoe
+ *   minzoom/maxzoom); the finest is baked at a single tile-max level and MapLibre overzooms above
+ *   it (hexes are identical geometry at every zoom), so we don't duplicate millions of hexes across
+ *   z13–22.
  *
- *   DuckDB is a dynamic import (dev/maintainer-only dep) so the published CLI doesn't force a heavy native
- *   dependency on end users who only ever run parse/geocode.
+ *   DuckDB is a dynamic import (dev/maintainer-only dep) so the published CLI doesn't force a heavy
+ *   native dependency on end users who only ever run parse/geocode.
  */
 
 import { createWriteStream, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs"
@@ -109,7 +111,8 @@ function resolveStates(opts: CoverageBuildOptions): StateShard[] {
 		})
 }
 
-/** Contiguous, gap-free zoom bands across the chosen resolutions (finest baked at the single tile-max). */
+/** Contiguous, gap-free zoom bands across the chosen resolutions (finest baked at the single
+tile-max). */
 function buildBands(allRes: number[], tileMaxZoom: number): Map<number, [number, number]> {
 	const asc = [...allRes].sort((a, b) => a - b)
 	return new Map(
@@ -260,12 +263,18 @@ export async function buildCoverageTiles(
 	// --- tippecanoe → PMTiles ---
 	onProgress("tile", `tiling ${featureCount.toLocaleString()} features → pmtiles…`)
 	const tipArgs = [
-		"-o", opts.out,
-		"-l", "coverage",
-		"-n", "Mailwoman address coverage",
-		"-A", "© Sister Software · Overture / OpenAddresses / TIGER",
-		"--minimum-zoom", "0",
-		"--maximum-zoom", String(opts.tileMaxZoom),
+		"-o",
+		opts.out,
+		"-l",
+		"coverage",
+		"-n",
+		"Mailwoman address coverage",
+		"-A",
+		"© Sister Software · Overture / OpenAddresses / TIGER",
+		"--minimum-zoom",
+		"0",
+		"--maximum-zoom",
+		String(opts.tileMaxZoom),
 		"--no-tile-size-limit",
 		"--no-feature-limit",
 		"--read-parallel",

@@ -3,28 +3,28 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * TrainingChart — wraps a training-run SVG chart with a linear/log scale toggle.
+ *   TrainingChart — wraps a training-run SVG chart with a linear/log scale toggle.
  *
- * Place a linear-scale SVG at `path/to/chart.svg` and its log-scale variant at
- * `path/to/chart-log.svg` (generated via `scripts/log-scale-chart.ts` or
- * `scripts/training-chart.ts --log`). The component automatically derives the
- * log URL and renders a toggle button.
+ *   Place a linear-scale SVG at `path/to/chart.svg` and its log-scale variant at
+ *   `path/to/chart-log.svg` (generated via `scripts/log-scale-chart.ts` or
+ *   `scripts/training-chart.ts --log`). The component automatically derives the log URL and renders
+ *   a toggle button.
  *
- * Usage in MDX:
+ *   Usage in MDX:
  *
- * ```mdx
- * import TrainingChart from "@site/src/components/TrainingChart"
+ *   ```mdx
+ *   import TrainingChart from "@site/src/components/TrainingChart"
  *
- * <TrainingChart src={require("../evals/charts/v06x-val-loss.svg").default} />
+ *   <TrainingChart src={require("../evals/charts/v06x-val-loss.svg").default} />
  * ```
  *
- * Or with a pre-resolved logSrc:
+ *   Or with a pre-resolved logSrc:
  *
- * ```mdx
- * <TrainingChart
+ *   ```mdx
+ *   <TrainingChart
  *   src={require("../evals/charts/v06x-val-loss.svg").default}
  *   logSrc={require("../evals/charts/v06x-val-loss-log.svg").default}
- * />
+ *   />
  * ```
  */
 
@@ -87,11 +87,7 @@ export default function TrainingChart({ src, logSrc, alt }: TrainingChartProps):
 					Log
 				</button>
 			</div>
-			<img
-				src={currentSrc}
-				alt={alt ?? "Training chart"}
-				style={{ maxWidth: "100%", display: "block" }}
-			/>
+			<img src={currentSrc} alt={alt ?? "Training chart"} style={{ maxWidth: "100%", display: "block" }} />
 		</div>
 	)
 }

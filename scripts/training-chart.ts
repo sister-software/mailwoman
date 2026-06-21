@@ -192,7 +192,7 @@ function renderSVG(args: Args, series: RunSeries[]): string {
 					}
 				}
 				return ticks.sort((a, b) => a - b)
-		  })()
+			})()
 		: niceTicks(yMin, yMax, 5)
 
 	const parts: string[] = []

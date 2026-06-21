@@ -22,15 +22,19 @@
 import type { PlaceLookup, WofCandidateTableLookup, WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { existsSync } from "node:fs"
 
-/** Resolve the candidate-db path from an explicit option then `$MAILWOMAN_CANDIDATE_DB`; undefined
-if unset or missing. */
+/**
+ * Resolve the candidate-db path from an explicit option then `$MAILWOMAN_CANDIDATE_DB`; undefined
+ * if unset or missing.
+ */
 export function resolveCandidateDbPath(explicit?: string): string | undefined {
 	const p = explicit ?? process.env["MAILWOMAN_CANDIDATE_DB"]
 	return p && existsSync(p) ? p : undefined
 }
 
-/** The lookup constructors this selector needs — a structural subset of
-`@mailwoman/resolver-wof-sqlite`. */
+/**
+ * The lookup constructors this selector needs — a structural subset of
+ * `@mailwoman/resolver-wof-sqlite`.
+ */
 interface ResolverLookupModule {
 	WofSqlitePlaceLookup: typeof WofSqlitePlaceLookup
 	WofCandidateTableLookup: typeof WofCandidateTableLookup

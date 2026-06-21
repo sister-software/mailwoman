@@ -29,8 +29,10 @@ const ALIAS_SEP = "\u{E000}"
 let scratch: string
 let candidatePath: string
 
-/** Minimal admin WOF (the tables `buildCandidateTable` reads) with a population homonym + alias +
-qualifier case. */
+/**
+ * Minimal admin WOF (the tables `buildCandidateTable` reads) with a population homonym + alias +
+ * qualifier case.
+ */
 function buildFixtureAdmin(path: string): void {
 	const db = new DatabaseSync(path)
 	db.exec(`
@@ -63,8 +65,10 @@ function buildFixtureAdmin(path: string): void {
 	db.close()
 }
 
-/** A postcode shard: one real-coord ZIP + one placeholder 0,0 (dropped at build, the White House
-20500 case). */
+/**
+ * A postcode shard: one real-coord ZIP + one placeholder 0,0 (dropped at build, the White House
+ * 20500 case).
+ */
 function buildFixturePostcodes(path: string): void {
 	const db = new DatabaseSync(path)
 	db.exec(`
