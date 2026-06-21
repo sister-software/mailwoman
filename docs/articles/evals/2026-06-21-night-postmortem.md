@@ -84,7 +84,9 @@ Measured on a copy of `candidate-global-20g.db` (26,107 gap-fill rows):
 
 **Coord-validated, not recall-only** (grade-the-coordinate, the #566 trap): 97% (FI) / 88% (SK) of recoveries land within 25 km of the real address point, and the resolved-coord p50/p90 distribution is stable — the new resolutions are as accurate as the existing ones. The 12% of SK recoveries beyond 25 km are GeoNames district-centroids (still better than a miss; flag low-pop rows for review). Reinforces `project-eu-coverage-not-retrain`: the EU tail is coverage, **#148 retrain stays unnecessary**.
 
-**Operator follow-up:** this is the build-on-a-copy MVP that proves + measures the lever. The provenance-clean path is to fold GeoNames into `build-unified-wof` (so it flows through the canonical candidate build with proper provenance), then rebuild + R2 republish.
+**Extended EU-wide** — the same builder, the remaining weak countries (`AT/PT/SI/CH/DK/HR` dumps, +63,793 gap-fill rows). EU-wide recall **87.8% → 90.7%**; excluding LT (the eval-format artifact at 0% — morphological suffixes the gazetteer never uses, real ≈93.7%), **non-LT EU recall ~93.4% → ~96.5%**. Per-country closes: CH 90.4→97.5, DK 91.5→97.3, HR 95.9→98.5, PT 88.9→93.3, SI 89.8→91.8, AT 88.2→92.8 (strip). Coord-validated EU-wide: **562 localities recovered, 95% within 25 km** of the real address point (DK/HR/PT/SI 100%, FI 97%, CH 96%, AT 93%, SK 88%). The residual tail (SI/PT/AT) is the deepest sub-localities GeoNames itself doesn't carry — OSM would reach them but at 50× the size (DeepSeek's call: not worth it unless GeoNames misses persist).
+
+**Operator follow-up:** this is the build-on-a-copy MVP that proves + measures the lever (EU recall tail closed, coord-validated, zero GPU). The provenance-clean path is to fold GeoNames into `build-unified-wof` (so it flows through the canonical candidate build with proper provenance), then rebuild + R2 republish.
 
 ## #175 typed-schema arc — extended to two more DBs
 
