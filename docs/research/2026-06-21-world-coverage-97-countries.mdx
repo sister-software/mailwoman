@@ -1,0 +1,55 @@
+---
+slug: world-coverage-97-countries
+title: "We shipped 'world coverage.' It covered 97 countries."
+authors: [teffen]
+tags: [geocoding, gazetteer, coverage, data]
+date: 2026-06-21
+---
+
+Open the [demo](/demo), type an address in Kabul, and watch nothing happen. Not a wrong pin a few streets off. Not a city-center fallback. Nothing — the gazetteer has never heard of the place. Try Hong Kong. Try Tirana, or Chişinău, or anywhere in the Democratic Republic of the Congo. Same silence. We had been calling this gazetteer "world coverage" for weeks, and it covered **97 of the world's ~195 countries**. The other ninety-odd were simply not in the file.
+
+{/* truncate */}
+
+I want to be honest about how that happens, because it didn't happen through some dramatic mistake. It happened the quiet way — the way most data gaps happen — and the most useful part of the story is the trick that finally made it visible.
+
+## A missing place never files a complaint
+
+Here's the thing that makes coverage gaps so good at hiding: a missing place doesn't error. When your parser mislabels a token you get a wrong field you can see in a diff. When your resolver picks the wrong Springfield you get a pin in the wrong state and an angry test. But when a place isn't in the gazetteer at all, the system does exactly what it does for a typo or a fictional street — it shrugs and returns nothing, politely, every single time. Afghanistan returning nothing looks identical to "Hgsdfgh Street" returning nothing.
+
+So you can run your eval suite, watch it pass, ship the thing, and announce world coverage, and every number you're looking at is true. Your US accuracy is real. Your German coord error is real. They're just measured against the places that *are* in the file, and the file quietly decides what gets measured. We were grading ourselves on the 97 countries we had, and the missing half of the planet never showed up to the exam to lower the average.
+
+This is the part I'd flag for anyone building on top of open geodata: **your coverage is whatever your sources' coverage is, and you inherit it silently.** We build the gazetteer from Who's On First plus Overture's administrative divisions — both excellent, both things we'd choose again. But "excellent" and "complete" aren't the same word, and the admin DB those two produce carries localities for 97 countries. We never decided to drop Libya. We just never had it, and nothing in the pipeline was shaped to notice the absence.
+
+## The trick: audit against a yardstick you didn't build
+
+You cannot find an invisible gap by staring at what you have — what you have looks fine, by definition. You find it by holding it up against something independent and asking where the two disagree.
+
+So we did the cheapest possible version of that. GeoNames publishes `cities15000` — every populated place on Earth above 15,000 people, a flat file we already had on disk. For each country, we counted the localities in our gazetteer and counted the cities GeoNames knows about, and printed the ratio. The audit took about a minute to write. Most countries came back sensible. And then a long, ugly column of zeros:
+
+```
+country  ours  GeoNames cities>15k
+AF       0     54
+HK       0     141
+KP       0     97
+CD       0     114
+AL       0     25
+...
+```
+
+Hong Kong: a hundred and forty-one cities in the reference, zero in ours. That's not a tuning problem, that's a hole you could drive a continent through. We checked whether it was the candidate build filtering them out — maybe the data was there and we were dropping it — and no, the source admin DB itself stops at 97 countries. The gap was real and it was upstream.
+
+I'll editorialize for a second: this audit-against-an-external-yardstick move is the single most productive hour of the whole effort, and it's almost embarrassingly simple. We didn't need a model or a clever metric. We needed to stop trusting our own file and compare it to someone else's count. If you take one thing from this post, take that. Go diff your coverage against a reference you didn't build, per whatever dimension matters to you, *today*. The gap you can't see is the one that's been quietly setting your ceiling.
+
+## Fixing it without retraining anything
+
+The good news about a pure data gap is that the fix is pure data. No GPU, no model, no retrain — GeoNames already has the places, with coordinates and per-language names, for every country we were missing. We taught our gap-fill builder one new trick (register a country code it had never seen) and pointed it at the full `allCountries` dump, keeping only current populated places and dropping the historical and abandoned ones.
+
+Out the other side: **4.6 million town-level localities across 248 countries**, up from 97. And because "it resolves" and "it resolves *correctly*" are different claims, we checked the second one too, and pulled a handful of major cities in formerly-empty countries to confirm the coordinates land where they should. Kabul resolves to Kabul, within a few hundred metres. Hong Kong, Tirana, Tripoli, Sarajevo, Yerevan — all home. Nine out of nine within thirty kilometres, most of them dead on. A spot-check of the long tail of small towns put them inside the right country's bounding box two hundred times out of two hundred.
+
+## The cost, named
+
+I told you the house rule is to name the tradeoff, so here it is. Full town-level depth turns the gazetteer from 811 MB into 1.26 GB. That's free on a server and not free in the browser, where the demo streams the database a few kilobytes at a time over byte-range requests — and a 50%-bigger file is a 50%-bigger thing to range over. So the honest shape of the fix is two builds, not one: the major cities go to the browser (light, covers the overwhelming majority of what anyone types), and the full town depth goes to the CLI and server, where the bytes are cheap. One builder, two depths, your call which artifact gets which.
+
+And the boundary I'd be lying to skip: a place *resolving* is not the same as a full address *parsing*. Putting Kandahar in the gazetteer means that when something hands the resolver the word "Kandahar," it now lands in Afghanistan instead of nowhere. Whether our parser reliably pulls "Kandahar" out of a raw Afghan address string is a different question with a different answer — and a different post. Coverage was the necessary half. We did the necessary half.
+
+So: go find your invisible gap. Hold your data up to a yardstick you didn't make, count the disagreements, and look hard at the zeros. Ours had been hiding in plain sight, passing every test, for weeks. Now get to work — yours is in there too. 👏
