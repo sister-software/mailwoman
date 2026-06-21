@@ -129,11 +129,11 @@ Combined ~6.1pts of the 12% admin tail, already in. **Remaining open:** the spel
 
 ## Concrete next steps (operator)
 
-In rough priority order — all the remaining levers hit a gate I shouldn't cross unattended:
-1. **Merge PR #740** (the night's bundle). It carries the #530 default-OFF correction — **merge before any corpus build** so the default distribution stays byte-stable. The 3 workstreams (#475 / #530-fix / docs) review independently; #738's `build-address-point-shard.ts` edit may need a trivial merge with the #175 change there.
-2. **#475 default-on decision** — the aggregate (500 fixed / 0 regressed / p90 278→10 km) is a strong signal; promotion to default-on is your call. Then **#741** (candidate-path build-time fold, region-scoped design in the issue) to reach the demo/CLI candidate default.
-3. **#739** (tiger-fetch) — publish `@mailwoman/tiger` in the same release, or bundle/private it, to clear the `ci:smoke` 404.
-4. **#734** — richer name/coverage ingestion (GeoNames alternate-names for FI bilingual + sub-locality coverage for SK) into `build-unified-wof`, then a candidate rebuild. The diagnostic names the exact lever per country; AT needs nothing.
+In rough priority order. Two big levers are built + measured on a copy (the *apply* — a candidate rebuild + R2 republish — is the only gated part); the rest is review/release.
+1. **Merge PR #740** (22 commits). It carries the #530 default-OFF correction — **merge before any corpus build** so the default distribution stays byte-stable. Workstreams review independently; #738's `build-address-point-shard.ts` edit may need a trivial merge with the #175 change there.
+2. **Postal-city default-on + demo activation** — built across all 3 resolvers (FTS #475 / Node candidate #741 / browser #741), measured (FTS 500 fixed/0 regr p90 278→10km; candidate 2221/3 p90 1635→768km). To activate on the demo: run `build-postal-city-candidate.ts` into the canonical candidate build + R2 republish (the only gated step).
+3. **#734 EU recall — fold GeoNames into `build-unified-wof`** + candidate rebuild. The lever is BUILT + coord-validated (`build-supplemental-gazetteer.ts`): non-LT EU recall ~93.4→~96.5%, 562 localities recovered, 95% within 25km. Same one rebuild+republish activates this AND postal-city. (Global extension needs a non-EU recall eval to verify — currently unmeasurable.)
+4. **#739** (tiger-fetch) — publish `@mailwoman/tiger` in the same release, or bundle/private it, to clear the `ci:smoke` 404.
 5. **#442** → close as a duplicate of #630 (same Dependabot pool).
 
 ## Numbers
@@ -141,12 +141,14 @@ In rough priority order — all the remaining levers hit a gate I shouldn't cros
 | metric                      | value                                  |
 | --------------------------- | -------------------------------------- |
 | shift window                | 02:55 UTC → 15:00 UTC                   |
-| issues shipped/measured     | #475 (full arc), #530, #175, #723 audit |
-| issues diagnosed/filed      | #734 (3-lever), #741 + candidate-fold filed |
+| features built + measured   | postal-city (3 resolvers, US) · #734 EU-recall gap-fill (coord-validated) |
+| also shipped                | #530 + default-OFF fix · #175 typed-schema ×2 · #723 audit |
+| diagnosed / filed           | #734 (3-lever→fixed) · #741 (filed→built) |
 | PRs reviewed                | #736, #738                             |
-| PR opened (review-ready)    | #740                                   |
-| new eval harness            | `scripts/eval/postal-city-alias-eval.ts` |
-| new data artifact           | `postcode-locality-us.db` (US coord-first) |
+| PR (review-ready)           | #740 (22 commits, mergeable, CI green on code) |
+| new harnesses / builders    | postal-city-alias-eval · build-postal-city-candidate · build-supplemental-gazetteer |
+| new data artifact           | `postcode-locality-us.db` (US coord-first shard) |
+| DeepSeek consults           | 1 (next-lever direction — drove the #734 EU win) |
 | Modal $ / GPU               | $0 (no-GPU plan)                       |
 | regressions shipped         | 0                                      |
-| canonical-DB swaps          | 0 (all gated work flagged, not crossed) |
+| canonical-DB swaps          | 0 (all gated work built-on-a-copy + flagged) |
