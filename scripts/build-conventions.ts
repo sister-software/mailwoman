@@ -21,6 +21,7 @@
  *   --src data/conventions/conventions.json\
  *   --output /mnt/playpen/mailwoman-data/wof/conventions.db
  */
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
@@ -69,23 +70,33 @@ function validate(rows: AuthoredConvention[]): void {
 	if (errors.length) throw new Error(`convention validation failed:\n  - ${errors.join("\n  - ")}`)
 }
 
-function build(src: string, output: string): void {
+async function build(src: string, output: string): Promise<void> {
 	const rows = JSON.parse(readFileSync(src, "utf8")) as AuthoredConvention[]
 	if (!Array.isArray(rows)) throw new Error(`${src} must be a JSON array of authored conventions`)
 	validate(rows)
 
 	const db = new DatabaseSync(output)
-	db.exec("DROP TABLE IF EXISTS address_convention; DROP TABLE IF EXISTS meta")
-	db.exec(`CREATE TABLE address_convention (
-		wof_id INTEGER PRIMARY KEY,   -- the WOF admin polygon this profile attaches to
-		convention TEXT NOT NULL,     -- the Convention JSON
-		source TEXT NOT NULL          -- provenance: why this row exists / where it came from
-	)`)
+	// DDL via the Kysely schema-builder; the row INSERTs below stay on the raw `db` handle.
+	const kdb = new DatabaseClient({ database: db })
+	await kdb.schema.dropTable("address_convention").ifExists().execute()
+	await kdb.schema.dropTable("meta").ifExists().execute()
+	await kdb.schema
+		.createTable("address_convention")
+		// wof_id: the WOF admin polygon this profile attaches to. convention: the Convention JSON.
+		// source: provenance — why this row exists / where it came from.
+		.addColumn("wof_id", "integer", (c) => c.primaryKey())
+		.addColumn("convention", "text", (c) => c.notNull())
+		.addColumn("source", "text", (c) => c.notNull())
+		.execute()
 	const ins = db.prepare("INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)")
 	for (const r of rows) ins.run(r.wof_id, JSON.stringify(r.convention), r.source)
 
 	// Freeze into the read-only distributable asset — same discipline as our other WOF tables.
-	db.exec("CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT)")
+	await kdb.schema
+		.createTable("meta")
+		.addColumn("key", "text", (c) => c.primaryKey())
+		.addColumn("value", "text")
+		.execute()
 	const meta: Record<string, string> = {
 		name: "mailwoman-conventions",
 		description: "Geographic Rule Engine convention profiles, keyed by WOF polygon id (Direction E)",
@@ -103,8 +114,8 @@ function build(src: string, output: string): void {
 	const ok = (db.prepare("PRAGMA integrity_check").get() as { integrity_check: string }).integrity_check
 	if (ok !== "ok") throw new Error(`integrity_check failed: ${ok}`)
 	db.exec("VACUUM")
-	db.close()
+	await kdb.destroy() // closes the underlying `db` handle
 	console.log(`built ${output}: ${rows.length} convention(s), integrity=ok`)
 }
 
-build(argval("--src", "data/conventions/conventions.json"), argval("--output"))
+await build(argval("--src", "data/conventions/conventions.json"), argval("--output"))

@@ -239,6 +239,8 @@ async function ingestCSV(opts: IngestOptions): Promise<void> {
 
 	// --- Generate SQL ---
 	const colDefs = columns.map((c) => `"${c.name}" ${c.type}`).join(",\n  ")
+	// Raw DDL by design: the column set + types are INFERRED from the CSV at runtime (colDefs above),
+	// so a Kysely builder loop would just wrap the same dynamic strings with ceremony and no type safety.
 	const createTableSQL = `CREATE TABLE IF NOT EXISTS "${opts.tableName}" (\n  ${colDefs}\n);`
 
 	const tempCols = columns.map((c) => `"${c.name}"`).join(", ")

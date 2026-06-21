@@ -75,6 +75,8 @@ export function fillPlaceholderCentroids(
 	zcta: ReadonlyMap<string, ZctaCentroid>,
 	source: string = ZCTA_SOURCE
 ): number {
+	// Raw DDL by design: this is a sync helper that borrows `db` and is exercised by a sync, heavily-
+	// asserted test, so routing one IF-NOT-EXISTS provenance table through async Kysely isn't worth it.
 	db.exec(`CREATE TABLE IF NOT EXISTS centroid_source (id INTEGER PRIMARY KEY, source TEXT NOT NULL)`)
 
 	const placeholders = db
@@ -155,6 +157,8 @@ export function fillGeonamesPlaceholders(
 	geonames: ReadonlyMap<string, ZctaCentroid>,
 	source: string = GEONAMES_US_SOURCE
 ): number {
+	// Raw DDL by design: this is a sync helper that borrows `db` and is exercised by a sync, heavily-
+	// asserted test, so routing one IF-NOT-EXISTS provenance table through async Kysely isn't worth it.
 	db.exec(`CREATE TABLE IF NOT EXISTS centroid_source (id INTEGER PRIMARY KEY, source TEXT NOT NULL)`)
 
 	const placeholders = db
