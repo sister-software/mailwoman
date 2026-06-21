@@ -125,7 +125,7 @@ component.
 motivated by "10 Boulevard Saint-Germain Paris": the graph holds `Saint-Germain` _and_
 `Saint` + `Germain`, and solvers (`ExclusiveCartesianSolver` + penalty/filter passes) pick
 whichever composition yields a valid solution. The same split function covers `/`, which is
-what gives Pelias a shot at slash forms — but note honestly: we found no test or issue
+what gives Pelias a shot at slash forms — but note plainly: we found no test or issue
 demonstrating it resolves the Australian `1/123` unit/house convention specifically.
 
 **pelias/api sanitizers.** Read from
@@ -297,7 +297,7 @@ the fused token and the split alternative alive simultaneously, and let a downst
 with more context choose. Photon reaches the same end state in Elasticsearch
 (`preserve_original`). libpostal demonstrates the failure mode of the single-path alternative:
 slash sub-premise forms have no dedicated handling, and issue #573 ("Flat 2/19", "FLAT 6-20")
-is the result. The OSM data section adds the crucial constraint: the slash reading is
+is the result. The OSM data section adds the key constraint: the slash reading is
 **locale-conditional** (CZ conscription/orientation vs AU unit/house vs USPS half-address),
 so the choice must be made where locale knowledge lives — not in the tokenizer.
 
@@ -387,7 +387,7 @@ inference-side.
 why a CRF from 2016 is solid on dotted forms; Nominatim #2569/#2571 (U+02BC) shows the
 equivalence-class bug; Photon PR #311 shows symmetric folding fixing apostrophe names.
 **vs Stage 2.7 doc:** orthogonal — neither confirms nor contradicts; it's the featurization
-substrate the proposer's matchers should also use.
+base the proposer's matchers should also use.
 
 ### M5. Resolver-side punctuation variant aliases (the Nominatim move, on our gazetteer)
 

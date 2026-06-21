@@ -85,7 +85,7 @@ The reconciler works by re-ranking — it takes the classifier's top-K, then con
 
 ### 3. Golden v0.1.2 is too small to be a trustworthy regression guard
 
-4,535 entries. A 1pt macro_F1 regression is ~45 entries flipping. At typical 1% annotator error rate in human-labeled NER data, that's another ~45 entries of noise. The "regression" signal has a ~10% false-positive rate from annotation noise alone — you could ship joint decode that's genuinely better and still "fail" the golden gate.
+4,535 entries. A 1pt macro_F1 regression is ~45 entries flipping. At typical 1% annotator error rate in human-labeled NER data, that's another ~45 entries of noise. The "regression" signal has a ~10% false-positive rate from annotation noise alone — you could ship joint decode that's better and still "fail" the golden gate.
 
 **Mitigation:** if golden regression lands in the 0.5–1.5pt band, manually inspect all disagreement entries before deciding. If >half are debatable or clearly wrong in golden, expand the gate tolerance. If they are genuine (concordance damage), the matrix stands.
 

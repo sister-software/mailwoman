@@ -12,7 +12,7 @@ Mailwoman is a TypeScript-first address parser that runs in Node and the browser
 
 ## What is strong
 
-### The architecture is genuinely well-decomposed
+### The architecture is well-decomposed
 
 The Knowledge Ladder — "learn distributions, look up the world, compose constraints" — is the correct decomposition for address parsing. The line between what the model should learn (per-token semantic type distributions, contextual disambiguation) and what should be looked up (world hierarchy, place IDs, parent chains) is drawn in the right place. The phrase grouper (boundary discovery as a pre-classification stage) closes a structural weakness in BIO-only tagging that most NER systems in this domain don't address.
 
