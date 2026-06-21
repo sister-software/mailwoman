@@ -30,7 +30,7 @@ The win and the loss have the same root. The reconciler decodes over the spans t
 "Las Palmas de Gran Canaria"  argmax → "de Gran Canaria"          joint → "CALLE MAYOR"   (grabbed the street)
 ```
 
-Italian, Spanish, and Dutch are dense with multi-word localities, so they take the full brunt; US and French, mostly single-word, barely move. The improvement column confirms the upside is real (DE 26.8%, IT 9.8%, ES 8.8% of rows get _better_) — joint decoding genuinely recovers cases argmax can't — but it's swamped by the fragmentation it introduces.
+Italian, Spanish, and Dutch are dense with multi-word localities, so they take the full brunt; US and French, mostly single-word, barely move. The improvement column confirms the upside is real (DE 26.8%, IT 9.8%, ES 8.8% of rows get _better_) — joint decoding recovers cases argmax can't — but it's swamped by the fragmentation it introduces.
 
 Latency is a non-issue: p50 is unchanged across the board and p99 sits at 1.5–2.1×, comfortably under the 3.0× ceiling. The blocker is purely quality.
 

@@ -52,7 +52,7 @@ is a property of the calibration set, not the geometry), and the caller supplies
 - The **`geocode` CLI** passes the TX-derived **1.70** by default (`--interp-calibration`, pass `1` to
   report the raw radius). Verified: Concord NH 3 → 5 m, Honolulu HI 75 → 128 m; situs hits unaffected.
 
-## Honest caveats / next
+## Caveats / next
 
 - **The 1.70 is TX-calibrated.** TIGER's segment methodology is uniform nationwide, so it's a sound first
   approximation, but the true Q̂ likely varies with road-network density (rural long segments vs urban

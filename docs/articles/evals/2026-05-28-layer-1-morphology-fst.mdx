@@ -58,7 +58,7 @@ small: even at −6.0 penalty (3× the default), only 19/1063 hallucinations get
 suppress more, you'd need to push the penalty higher — at which point it starts corrupting
 legitimate decisions on other tokens.
 
-The model's confidence on its synth-street-induced dep_loc predictions is genuinely high. Per
+The model's confidence on its synth-street-induced dep_loc predictions is high. Per
 the [v0.6.1 calibration probe design](2026-05-28-night-2-postmortem.mdx): when the hallucinations
 are high-confidence, **retraining is required, not just a decoder-time threshold or bias**.
 

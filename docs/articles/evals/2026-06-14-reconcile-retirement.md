@@ -89,7 +89,7 @@ sprint), not a deletion.
 The destructive piece is the **phrase grouper bundling the house number into `STREET_PHRASE`**. Fixing
 that — so the grouper proposes the bare street phrase and reconcile can separate the number — is the
 prerequisite to ever re-enabling reconcile for the multi-locale work, where its OOD street-intactness is
-genuinely useful. Filed as a tracked issue.
+useful. Filed as a tracked issue.
 
 ## Reproduce
 

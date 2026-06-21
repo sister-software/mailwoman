@@ -60,7 +60,7 @@ of its own competence. That's milestone 2.
 The data unlock: the WOF `names` table carries native-script alternate names in dozens of languages
 (rus/ukr/ara/ell/heb/hin/tha/kat/hye/…) — exactly the off-map scripts the model needs to learn to
 abstain on. `scripts/coarse-placer/build-outlier-exposure.mjs` extracts ~44k of them, balanced
-per-language and filtered to a genuinely off-map dominant script, PLUS an address-shaped sibling for each
+per-language and filtered to a off-map dominant script, PLUS an address-shaped sibling for each
 (name + a house number) — because real off-map input mixes the script with Latin digits/abbreviations
 ("ул. Тверская, д. 1"), and the bare place name alone left a gap. Added as a 12th class, `OTHER`.
 

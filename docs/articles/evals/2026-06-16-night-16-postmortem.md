@@ -127,7 +127,7 @@ circumvented).
 - **#672 — the cross-dataset linking map (bonus).** The marquee proof on a map: 219 entities resolved
   across sources with no shared key, on the HOUSE stack (MapLibre + Protomaps via `toMapHTML`, rendered
   with `render-map.mjs` — SwiftShader WebGL + the localhost-serve the tile CORS requires). **Generator
-  only, not embedded:** 191/219 links are FCC-internal (RHC ↔ commitments, same agency); the genuinely
+  only, not embedded:** 191/219 links are FCC-internal (RHC ↔ commitments, same agency); the
   cross-_agency_ links are **28, all pairwise (2 agencies); ZERO span all three agencies** (no entity
   resolves across provider + funder + facility at once). The "10 spanning all three source kinds" framing
   counted 3 sources where 2 are FCC. A `--cross-agency-only` flag renders the honest 28-link slice; the

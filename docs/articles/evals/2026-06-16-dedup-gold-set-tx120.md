@@ -7,7 +7,7 @@ slice and settles it._
 ## Method
 
 `scripts/record-matcher/gold-set-sample.ts` over the full TX registry (geocode-free): find the
-genuinely-hard pairs — co-located (same `addressFrequencyKey`), name-similar (token Jaccard ≥ 0.7),
+hard pairs — co-located (same `addressFrequencyKey`), name-similar (token Jaccard ≥ 0.7),
 **distinct NPIs**, and **NOT** NPPES-flagged subparts of the same parent (so the programmatic entity
 truth can't already collapse them). **11,843** such pairs exist in TX; a stride-spread **120** were
 adjudicated "same real-world entity? yes/no" (LLM-as-judge — flagged as such; the frozen set is
@@ -18,7 +18,7 @@ adjudicated "same real-world entity? yes/no" (LLM-as-judge — flagged as such; 
 |                                                                 |                count |
 | --------------------------------------------------------------- | -------------------: |
 | **Same real-world entity** (correct to merge)                   | **120 / 120 (100%)** |
-| **Genuinely distinct** (a TRUE over-merge)                      |                **0** |
+| **Distinct** (a TRUE over-merge)                      |                **0** |
 | Programmatic "distinct" verdicts that are actually the SAME org |             44 (37%) |
 
 Every hard pair is **one organization under multiple NPIs** — unflagged subparts, legal-form variants
