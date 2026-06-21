@@ -16,6 +16,8 @@
  *   signal — the only rows the resolver consumes).
  */
 
+import type { Kysely } from "kysely"
+
 /**
  * One observed postal-city aggregate. The natural key is `(postcode, postal_city, geo_locality)`;
  * the builder enforces a `MIN_COUNT` floor on `n`, so every row is a non-trivial usage.
@@ -54,19 +56,21 @@ export const POSTAL_CITY_ALIAS_COLUMNS = [
 ] as const
 
 /**
- * DDL for the `postal_city_alias` table + the two probe indexes. Kept here (not only in the
- * builder) so tests can stand up a fixture DB with the exact production shape.
+ * Create the `postal_city_alias` table + its two probe indexes. Kept here (not only in the builder)
+ * so tests can stand up a fixture DB with the exact production shape. Pass a {@link DatabaseClient}
+ * (or any `Kysely`) over the alias DB.
  */
-export const POSTAL_CITY_ALIAS_DDL = /* sql */ `
-CREATE TABLE postal_city_alias (
-	postcode     TEXT NOT NULL,
-	postal_city  TEXT NOT NULL,
-	geo_locality TEXT NOT NULL,
-	n            INTEGER NOT NULL,
-	divergent    INTEGER NOT NULL,
-	source       TEXT NOT NULL,
-	release      TEXT NOT NULL
-);
-CREATE INDEX idx_pca_postcode ON postal_city_alias (postcode);
-CREATE INDEX idx_pca_pair ON postal_city_alias (postal_city, geo_locality);
-`
+export async function createPostalCityAliasTable(db: Kysely<PostalCityAliasDatabase>): Promise<void> {
+	await db.schema
+		.createTable("postal_city_alias")
+		.addColumn("postcode", "text", (c) => c.notNull())
+		.addColumn("postal_city", "text", (c) => c.notNull())
+		.addColumn("geo_locality", "text", (c) => c.notNull())
+		.addColumn("n", "integer", (c) => c.notNull())
+		.addColumn("divergent", "integer", (c) => c.notNull())
+		.addColumn("source", "text", (c) => c.notNull())
+		.addColumn("release", "text", (c) => c.notNull())
+		.execute()
+	await db.schema.createIndex("idx_pca_postcode").on("postal_city_alias").column("postcode").execute()
+	await db.schema.createIndex("idx_pca_pair").on("postal_city_alias").columns(["postal_city", "geo_locality"]).execute()
+}

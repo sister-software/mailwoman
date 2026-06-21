@@ -17,14 +17,18 @@
 import { DatabaseSync } from "node:sqlite"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { WofSqlitePlaceLookup } from "./lookup.js"
 import { WofPostalCityAliasLookup } from "./postal-city-alias-lookup.js"
-import { POSTAL_CITY_ALIAS_DDL } from "./postal-city-alias-schema.js"
+import { createPostalCityAliasTable, type PostalCityAliasDatabase } from "./postal-city-alias-schema.js"
 
 /** A `postal_city_alias` fixture DB with the production DDL + a divergent and a non-divergent row. */
-function buildAliasDb(): DatabaseSync {
+async function buildAliasDb(): Promise<DatabaseSync> {
 	const db = new DatabaseSync(":memory:")
-	db.exec(POSTAL_CITY_ALIAS_DDL)
+	// `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle (reader.close()/aliasDb.close()),
+	// so we don't destroy `kdb`.
+	const kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: db })
+	await createPostalCityAliasTable(kdb)
 	const ins = db.prepare(
 		"INSERT INTO postal_city_alias (postcode, postal_city, geo_locality, n, divergent, source, release) VALUES (?,?,?,?,?,?,?)"
 	)
@@ -64,8 +68,8 @@ function buildMainDb(): DatabaseSync {
 
 describe("WofPostalCityAliasLookup (#475 reader)", () => {
 	let reader: WofPostalCityAliasLookup
-	beforeEach(() => {
-		reader = new WofPostalCityAliasLookup({ database: buildAliasDb() })
+	beforeEach(async () => {
+		reader = new WofPostalCityAliasLookup({ database: await buildAliasDb() })
 	})
 	afterEach(() => reader.close())
 
@@ -102,7 +106,7 @@ describe("postal-city alias coordinate-first wiring (#475)", () => {
 	})
 
 	it("WITH the reader, the postal city resolves to its geographic locality (the fix)", async () => {
-		aliasDb = buildAliasDb()
+		aliasDb = await buildAliasDb()
 		const lookup = new WofSqlitePlaceLookup({
 			database: buildMainDb(),
 			buildFts: true,
@@ -119,7 +123,7 @@ describe("postal-city alias coordinate-first wiring (#475)", () => {
 	it("an unrelated postcode (no alias) is byte-stable with the reader attached", async () => {
 		// Reader attached, but 37013 isn't queried — a postcode with no divergent alias must behave
 		// exactly as without the reader. Here the distractor still wins (no alias rescues Nashville).
-		aliasDb = buildAliasDb()
+		aliasDb = await buildAliasDb()
 		const lookup = new WofSqlitePlaceLookup({
 			database: buildMainDb(),
 			buildFts: true,

@@ -11,10 +11,12 @@
  *
  *   The builder's hot INSERT (tens of millions of rows per state) stays a POSITIONAL prepared
  *   statement for throughput — but its column list is derived from {@link ADDRESS_POINT_COLUMNS}
- *   here, and its DDL is {@link ADDRESS_POINT_DDL}, so the positional order can't silently drift
- *   from what the reader expects. (Same convention as the candidate build: typed schema guards the
- *   contract; positional inserts keep the speed.)
+ *   here, and its table comes from {@link createAddressPointTable}, so the positional order can't
+ *   silently drift from what the reader expects. (Same convention as the candidate build: typed
+ *   schema guards the contract; positional inserts keep the speed.)
  */
+
+import type { Kysely } from "kysely"
 
 /**
  * One rooftop address point. `(street_norm, number)` within a `postcode` (preferred) or
@@ -66,26 +68,36 @@ export const ADDRESS_POINT_COLUMNS = [
 	"release",
 ] as const
 
-/** DDL for the `address_point` table — created before the streaming bulk load. */
-export const ADDRESS_POINT_DDL = /* sql */ `
-CREATE TABLE address_point (
-	street_norm   TEXT NOT NULL,
-	street_key    TEXT NOT NULL, -- canonicalizeRouteKey(street_norm): the route-fold key (#483 Method 2)
-	number        TEXT NOT NULL,
-	unit          TEXT,
-	postcode      TEXT,
-	locality_norm TEXT,
-	street_raw    TEXT NOT NULL,
-	lat           REAL NOT NULL,
-	lon           REAL NOT NULL,
-	source        TEXT NOT NULL,
-	release       TEXT NOT NULL
-);
-`
+/** Create the `address_point` table — called before the streaming bulk load. */
+export async function createAddressPointTable(db: Kysely<AddressPointDatabase>): Promise<void> {
+	await db.schema
+		.createTable("address_point")
+		.addColumn("street_norm", "text", (c) => c.notNull())
+		// `street_key` = canonicalizeRouteKey(street_norm): the route-fold key (#483 Method 2).
+		.addColumn("street_key", "text", (c) => c.notNull())
+		.addColumn("number", "text", (c) => c.notNull())
+		.addColumn("unit", "text")
+		.addColumn("postcode", "text")
+		.addColumn("locality_norm", "text")
+		.addColumn("street_raw", "text", (c) => c.notNull())
+		.addColumn("lat", "real", (c) => c.notNull())
+		.addColumn("lon", "real", (c) => c.notNull())
+		.addColumn("source", "text", (c) => c.notNull())
+		.addColumn("release", "text", (c) => c.notNull())
+		.execute()
+}
 
-/** The three probe indexes the reader relies on (postcode-scope, locality-scope, route-key). */
-export const ADDRESS_POINT_INDEX_DDL = /* sql */ `
-CREATE INDEX idx_ap_postcode ON address_point (postcode, street_norm, number);
-CREATE INDEX idx_ap_locality ON address_point (locality_norm, street_norm, number);
-CREATE INDEX idx_ap_streetkey ON address_point (postcode, street_key);
-`
+/** Create the three probe indexes the reader relies on (postcode-scope, locality-scope, route-key). */
+export async function createAddressPointIndexes(db: Kysely<AddressPointDatabase>): Promise<void> {
+	await db.schema
+		.createIndex("idx_ap_postcode")
+		.on("address_point")
+		.columns(["postcode", "street_norm", "number"])
+		.execute()
+	await db.schema
+		.createIndex("idx_ap_locality")
+		.on("address_point")
+		.columns(["locality_norm", "street_norm", "number"])
+		.execute()
+	await db.schema.createIndex("idx_ap_streetkey").on("address_point").columns(["postcode", "street_key"]).execute()
+}

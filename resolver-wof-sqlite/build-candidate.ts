@@ -33,8 +33,8 @@ import { existsSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import {
 	CANDIDATE_COLUMNS,
-	CANDIDATE_STAGE_DDL,
-	CANDIDATE_TABLE_DDL,
+	createCandidateStagingTables,
+	createCandidateTable,
 	type CandidateDatabase,
 } from "./candidate-schema.js"
 import { normalizeLocalityForKey } from "./street-normalize.js"
@@ -92,8 +92,8 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// Build-tuning pragmas (raw — Kysely doesn't model PRAGMA). The code dictionaries + the transient
 	// staging table come from the SHARED schema DDL, so they can't drift from {@link CandidateDatabase}.
 	out.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	out.exec(CANDIDATE_STAGE_DDL)
 	const kdb = new DatabaseClient<CandidateDatabase>({ database: out })
+	await createCandidateStagingTables(kdb)
 
 	// --- compact code maps (country/placetype → small int, shrinks the clustered key). The ids are
 	// assigned here; the rows are bulk-inserted via kdb once the passes have discovered every code. ---
@@ -294,15 +294,15 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// --- materialize the clustered WITHOUT ROWID table (sorted insert → contiguous leaves) ---
 	progress("cluster", "building clustered candidate table + VACUUM")
 	// Column list + clustered-key order are sourced from CANDIDATE_COLUMNS (the first 6 ARE the PRIMARY
-	// KEY) so the SELECT, the ORDER BY, and the table can't drift. The DDL is the shared CANDIDATE_TABLE_DDL.
+	// KEY) so the SELECT, the ORDER BY, and the table can't drift. The table comes from the shared
+	// createCandidateTable().
 	const cols = CANDIDATE_COLUMNS.join(", ")
 	const keyOrder = CANDIDATE_COLUMNS.slice(0, 6).join(", ")
-	out.exec(
-		CANDIDATE_TABLE_DDL +
-			// OR IGNORE: an abbrev/alias can normalize to a place's primary key (same place, same rank) → any one row.
-			`INSERT OR IGNORE INTO candidate (${cols}) SELECT ${cols} FROM cand_stage ORDER BY ${keyOrder};` +
-			`DROP TABLE cand_stage;`
-	)
+	await createCandidateTable(kdb)
+	// OR IGNORE: an abbrev/alias can normalize to a place's primary key (same place, same rank) → any one
+	// row. The bulk sorted INSERT…SELECT (clustered materialization) stays raw — a single hot bulk statement.
+	out.exec(`INSERT OR IGNORE INTO candidate (${cols}) SELECT ${cols} FROM cand_stage ORDER BY ${keyOrder};`)
+	await kdb.schema.dropTable("cand_stage").execute()
 	// page_size MUST be set right before VACUUM: node:sqlite initializes the file at the 4096 default on
 	// `new DatabaseSync`, so the creation-time pragma is a no-op — only a VACUUM rebuilds at the new size.
 	// 8192 matches the sql.js-httpvfs 64 KiB request chunk cleanly (8 pages) and shallows the B-tree.

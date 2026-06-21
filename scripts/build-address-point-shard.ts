@@ -30,13 +30,15 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { DuckDBInstance } from "@duckdb/node-api"
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
 // Cross-tree source import (.ts explicit): this script runs via --experimental-strip-types,
 // not from compiled out/ — the lookup tier imports the same module intra-package.
 import {
 	ADDRESS_POINT_COLUMNS,
-	ADDRESS_POINT_DDL,
-	ADDRESS_POINT_INDEX_DDL,
+	type AddressPointDatabase,
+	createAddressPointIndexes,
+	createAddressPointTable,
 } from "../resolver-wof-sqlite/address-point-schema.ts"
 import {
 	canonicalizeRouteKey,
@@ -121,7 +123,10 @@ const db = new DatabaseSync(OUT)
 // DDL + column order come from the SHARED schema (address-point-schema.ts) so the writer can't drift
 // from AddressPointSqliteLookup (the reader). The INSERT stays a POSITIONAL prepared statement —
 // tens of millions of rows per state — but its column list is derived from ADDRESS_POINT_COLUMNS.
-db.exec(`PRAGMA journal_mode = WAL;${ADDRESS_POINT_DDL}`)
+db.exec("PRAGMA journal_mode = WAL;")
+// DDL via the Kysely schema-builder; the hot positional INSERT below stays on the raw `db` handle.
+const kdb = new DatabaseClient<AddressPointDatabase>({ database: db })
+await createAddressPointTable(kdb)
 
 const insert = db.prepare(
 	`INSERT INTO address_point (${ADDRESS_POINT_COLUMNS.join(", ")})
@@ -203,16 +208,14 @@ for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk =
 }
 db.exec("COMMIT")
 console.log(`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : path.basename(PARQUET)}`)
-db.exec(`${ADDRESS_POINT_INDEX_DDL}
-	PRAGMA wal_checkpoint(TRUNCATE);
-	VACUUM;
-`)
+await createAddressPointIndexes(kdb)
+db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
 const stats = db
 	.prepare(
 		"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM address_point"
 	)
 	.get() as Record<string, number>
-db.close()
+await kdb.destroy() // closes the underlying `db` handle
 console.log(`${kept} points → ${OUT}`)
 console.log(`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`)
 
