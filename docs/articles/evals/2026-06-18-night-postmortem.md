@@ -33,14 +33,14 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
 - **Phase 7 — gate**: run finished (step-040000, after the resume). Exported → quantized → fetched
   (`./out/v170/model.onnx`). **4-target gate: NO-PROMOTE (1/4), targets ~flat vs v1.6.0** — fr-prefix 99.3
   (✓), street_suffix 55.3 (tag at target, street-span short), comma-less 57.0 (✗), hn-after 53.7 (✗). The
-  balanced shard rebalanced (held the spine) but did NOT lift the boundary targets — they're flat, so the
+  balanced shard rebalanced (held the guardrail) but did NOT lift the boundary targets — they're flat, so the
   boundary lever needs more than rebalancing (weight, or capacity). Floors gate + locality-regression +
   street-recall probes + the record-matcher 3rd point running — the decisive question is whether the v1.6.0
   locality regression got FIXED.
   **COMBINED VERDICT: NO-PROMOTE — but the diagnosis-driven fix WORKED.**
   - ✅ **The v1.6.0 ship-blocker is FIXED**: floors `us.locality` **80.0** (floor 72.9) — recovered from
     v1.6.0's failing 66.2, now _above_ v1.5.1. The bare-locality shape + cosine LR did exactly what the
-    probes predicted. Spine held end-to-end (no drift).
+    probes predicted. Guardrail held end-to-end (no drift).
   - ✅ Blind-spot cleared: street-recall-full **35.0%** ≥ 32.7% floor (29 regressions, 4 "eaten" — small).
   - ✅ All other floors hold (us.street 75.7, fr.house_number 94.9, affix 98/93, arena 77, …).
   - ❌ **4-target boundary gate 1/4** — targets ~flat vs v1.6.0 (shard rebalanced, didn't advance them).
@@ -60,7 +60,7 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
 
 - **Stretch #1 — record-matcher curve** (`ed89dd4d` + reports): added a model-swap to `nppes-dedup-benchmark.ts`
   and ran the v1.5.1 + v1.6.0 baselines (TX, 300 NPIs). **Result: flat within noise** — org-name F1 68.0%
-  (v1.5.1) vs 67.9% (v1.6.0), NPI 62.8 vs 62.6, spine 61.0 vs 60.9. The read: **the boundary-parse
+  (v1.5.1) vs 67.9% (v1.6.0), NPI 62.8 vs 62.6, baseline 61.0 vs 60.9. The read: **the boundary-parse
   lever does NOT move the NPPES dedup F1** — the benchmark's own pre-registered finding is "config dominates
   the model," and dedup is bottlenecked on org-name over-merge (#625/#603), not parse boundaries. So the
   synthetic boundary wins are real for the PARSE but don't translate to this real-world dedup task. v1.7.0
@@ -69,16 +69,16 @@ _(Living document — sketched as the shift runs; final numbers + verdict at the
 ### First eval (step 2000) — v1.7.0 vs v1.6.0
 
 macro_f1 0.656 vs 0.631 ; locality 0.691 vs 0.684 ; street 0.842 vs 0.819 ; hn 0.990 vs 0.994. The balanced
-shard isn't hurting the spine early; cosine LR should hold it at the end (the v1.6.0 drift fix).
+shard isn't hurting the guardrail early; cosine LR should hold it at the end (the v1.6.0 drift fix).
 
-At step ~4000 the spine dipped slightly (locality 0.659, street 0.812 — below step-2000) while macro rose to
+At step ~4000 the guardrail dipped slightly (locality 0.659, street 0.812 — below step-2000) while macro rose to
 0.666 — the normal mid-training re-balance. By step ~16000 it had RECOVERED and climbed _past_ step-2000:
 locality 0.740, street 0.834, macro 0.690. And it's tracking MUCH healthier than v1.6.0 at the same point —
 v1.6.0's locality had collapsed to ~0.61 by step ~14k; v1.7.0 is at 0.74. The balanced shard is holding the
-spine where v1.6.0 traded it away. Cosine LR decaying (lr ~0.00009) should consolidate it. The gate decides.
+guardrail where v1.6.0 traded it away. Cosine LR decaying (lr ~0.00009) should consolidate it. The gate decides.
 
 Confirmed post-resume at step ~28-30k: locality 0.731, street 0.819, macro 0.702 (highest yet), cosine LR
-down to 0.000022 — the spine is HOLDING through the decay, no end-drift (v1.6.0 had drifted locality to 0.656
+down to 0.000022 — the guardrail is HOLDING through the decay, no end-drift (v1.6.0 had drifted locality to 0.656
 by its end). A noisy 0.623 reading near step 20k was a transient. The gate is the authoritative check.
 
 ## 2. What went well
@@ -152,7 +152,7 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
   country-context addition to the shard recover it? **Operator call: worth a v1.7.1 to clear this one floor?**
 - **The boundary targets are stuck (1/4).** The shard at weight 1.0 rebalanced but didn't ADVANCE the four
   shapes. The confidence probe said signal-not-capacity, so the next lever is more boundary signal — sweep
-  the shard weight up (the recipe's pre-registered 1.5), now that the spine is protected by the bare-locality
+  the shard weight up (the recipe's pre-registered 1.5), now that the guardrail is protected by the bare-locality
   balance. Or accept that 29.6M params caps these shapes (the #492 ceiling) and bank the regression fix.
 
 ## 6. Concrete next steps
@@ -160,7 +160,7 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
 - **RECOMMENDATION: PROMOTE v1.7.0 (a net improvement over v1.5.1); do NOT bump the weight.** The v1.5.1
   baseline shows v1.7.0 wins the floors that matter — locality +5.1, **fr.house*number +10.2 (v1.5.1 was
   \_failing* its own floor)**, fr.region +7.1 — at the cost of us.street −4.3 (above floor). DeepSeek-confirmed:
-  weight 1.5 is unsafe (amplifies the flat boundary signal, re-risks the spine — the lever that cratered an
+  weight 1.5 is unsafe (amplifies the flat boundary signal, re-risks the guardrail — the lever that cratered an
   affix tag) and the 4 boundary targets are capacity-bound; don't chase them. The record-matcher flatness
   confirms the boundary lever doesn't move real-world dedup. v1.7.0 is the better ship.
 - **Two stated gate decisions the promote needs (operator's call, not autonomous — the no-silent-drift rule):**
@@ -168,7 +168,7 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
   it's not a v1.7.0 regression); (2) **re-frame the 4 capacity-bound boundary targets as WATCH-items**, not
   blockers. With both, v1.7.0 promotes with NO retrain.
 - **Weigh the us.street −4.3 tradeoff.** Locality up / street down is the bare-locality emphasis (11%) shifting
-  the spine. It's above floor and the gains outweigh it, but if street matters more, a future iteration could
+  the guardrail. It's above floor and the gains outweigh it, but if street matters more, a future iteration could
   trim bare-locality to ~8-9% (less street erosion, keep most of the locality recovery). Tuning note, not a blocker.
 - **Country PATCH staged (optional, not a must-fix)** — a country-bearing bare-locality variant (~12%
   "…, United States"/"…, France"; #511-linted, "USA" DROPPED as locality-dominant). Pushes country UP if the

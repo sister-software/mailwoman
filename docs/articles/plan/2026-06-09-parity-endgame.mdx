@@ -25,7 +25,7 @@ order follows from them.
 
 Move 1 is **done**. The general gazetteer anchor took `country` from 0 (starved in
 v4.1.0) to **83.3 F1** on the hard homograph gate (recall 74.1, precision 95.2,
-**over-fire 0**), and lifted the spine with it (region US +11.7, locality +14.9).
+**over-fire 0**), and lifted the guardrail with it (region US +11.7, locality +14.9).
 Progression: v0.9.10 balanced shard 57.9 → v0.9.11 +class-weight 65.0 → v0.9.12
 +gazetteer anchor 83.3. The one cost was US postcode −3.7 — the region clue ("CA",
 "GA") sitting next to the US ZIP strengthens `B-region` and weakens the
@@ -71,7 +71,7 @@ the bendable version of the crutch rules systems can't drop.
    input-layer mechanics as the postcode anchor and phrase priors. Country was the
    first consumer (its long-tail recall — Eswatini, Timor-Leste, multi-word names —
    was the measured gap); region/locality/street membership come nearly free later.
-   Gate cleared: country 0 → 83.3 F1, precision/over-fire intact, spine lifted. See
+   Gate cleared: country 0 → 83.3 F1, precision/over-fire intact, guardrail lifted. See
    the status section above; po_box/cedex ride the same channel for free.
 2. **Promote the affix lever via the multi-locale reroll (#466 step 1).** v0.9.8's
    only blemish is FR-postcode dilution from a US-only shard; the multi-locale country

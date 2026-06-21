@@ -18,7 +18,7 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
 - **#623 merged** (42959fe3) — NPPES dedup benchmark + inverse-address-frequency fix (#617). F1 63.9%.
 - **#614 merged** (3760911c) — `mailwoman registry <csv>` CLI.
 - **#626 merged** (comparison-model v2, #625) — A1 spatial collapse (shipped, +0.1pp) + A2/A3
-  corroboration/phone as tested default-off options + documented negative. Spine holds at F1 63.9%.
+  corroboration/phone as tested default-off options + documented negative. Baseline holds at F1 63.9%.
 - **#627 merged** (cross-dataset correlation #618 + source catalog #620) — **the marquee proof: 27 entities
   resolve across NPPES ↔ FCC RHC ↔ TX HHSC** with no shared key, on geocoded location + name agreement,
   pure Node. Rural TX hospitals correctly linked across the funding program and the provider registry.
@@ -30,7 +30,7 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
   fix [13× faster] + CA generalization + geocode-first research blog draft).
 - **#626 / #632 / #633 merged** (the #625 comparison-model lever search: A1 collapse + A2/A3 corroboration
   - A4 average-linkage + the secondary-identifier mechanism — auth-official is the **first lever past the
-    spine, F1 64.7%**).
+    baseline, F1 64.7%**).
 - **#634 merged** — `mailwoman registry --sources` full-pipeline multi-source CLI (the product surface),
   verified end-to-end (resolves a provider + facility across two sources into one cross-dataset link).
 - **#635 merged** — `--infer-mapping` best-effort auto column-mapping ("point it at any CSV").
@@ -59,7 +59,7 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
 - **#603 clustering A/B (the definitive Tier-2 test) — the GBM WINS on the assembled metric.** Built the
   leakage-free clustering A/B (`scorer?` hook in `resolveEntities` + a train-NPI / eval-NPI split, held-out
   records clustered three ways through the same pipeline; multi-seed). **Result (2000 NPIs, 4 seeds, ~1917
-  eval records): FS spine F1 55.3%±3.2, LR 56.7% (+1.4pp), GBT 60.5%±2.7 (+5.2pp, 4/4 seeds)** — driven by a
+  eval records): FS baseline F1 55.3%±3.2, LR 56.7% (+1.4pp), GBT 60.5%±2.7 (+5.2pp, 4/4 seeds)** — driven by a
   large precision gain that **cuts the over-merge** (P 45→61%, over-merged clusters 94→69, the #625 problem).
   The pairwise gain (#640) DOES translate to clustering; the #603 GBM is a **real dedup lever**, greenlit.
   **Two methodology catches en route** (both decisive — the result inverted without them): (1) a 300-NPI
@@ -69,14 +69,14 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
   declaring a clustering verdict._
 - **#603 cross-STATE generalization (folds into #641) — the GBT win TRANSFERS, strongly.** Built
   `learned-scorer-crossstate-eval.ts` (train on TX, evaluate dedup clustering F1 on held-out **CA** — a state
-  the model never saw). **Result (2000 TX-train / 2000 CA-eval, ~5.6K records each): FS spine F1 15.0% (P 10%,
+  the model never saw). **Result (2000 TX-train / 2000 CA-eval, ~5.6K records each): FS baseline F1 15.0% (P 10%,
   239 over-merged!), LR 13.9% (−1.0pp, collapses to over-merging), GBT 35.5% (+20.5pp, P 59%, over-merged
   239→47).** The GBT — trained only on TX — generalizes and _fixes CA's severe over-merge_; the over-merge
   signal it learns is transferable, not TX-specific. The LR does NOT generalize. **Confirmed on a SECOND
   independent held-out state — TX→NY: GBT +19.6pp** (38.2% vs FS 18.6%), ≈ the +20.5pp on CA. Two states,
   same ~+20pp result → the generalization is robust, not a CA artifact. **Strongest evidence yet for the
   production GBM.** Honest framing: single seed per state pair, and the absolute FS F1 (15–19%) is far below
-  TX's 55% because the eval states' over-merge is denser — so the ~+20pp is **directional** (the FS spine
+  TX's 55% because the eval states' over-merge is denser — so the ~+20pp is **directional** (the FS baseline
   _craters_ as over-merge scales, the GBT holds), not a precise production number. **The 250-NPI smokes
   misled THREE times** (FS-ahead / LR-ahead / attenuation; the 2000-NPI runs all showed the GBT winning) —
   the unmistakable shift lesson: _the over-merge only manifests at scale; smokes systematically understate
@@ -95,7 +95,7 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
 
 **The whole hypothesis is demonstrated end-to-end:** dedup (held-out NPI truth) → cross-dataset correlation
 (no shared key) → reconciliation anti-join (the product) → geocoder validation → scale (500K in 68s, pure
-Node) → generalization (2nd state). Tier-1 spine complete + Tier-3 scale/honesty.
+Node) → generalization (2nd state). Tier-1 baseline complete + Tier-3 scale/honesty.
 
 ## Continuation — docs visualization, designations, cross-source feasibility (PRs #669–673)
 
@@ -196,13 +196,13 @@ Two more landed while closing the shift with the operator:
 | + inverse-address-frequency (#617) |     55.7% |  74.6% |     63.8% | 0.637 |          36 |
 | + collapsed spatial (A1)           |     55.8% |  74.6% | **63.9%** | 0.638 |          36 |
 
-**The spine holds at F1 63.9%.** A2 (corroboration) and A3 (phone) were investigated and are documented
+**The baseline holds at F1 63.9%.** A2 (corroboration) and A3 (phone) were investigated and are documented
 negatives on NPPES — not in this table, not promoted (full detail in #625):
 
 - A2 as a name/org-**only** gate: −20pp (recall 74.6% → 40.5%) — kills name-drift recall.
 - A3 phone as the secondary corroborator: backfires because NPPES practice phones are shared institutional
   switchboard lines → phone-blocking over-groups, connected-components fuses, phone-corroboration falsely
-  rescues co-phone distinct providers. Best phone-regime F1 47.1% < the 63.8% spine.
+  rescues co-phone distinct providers. Best phone-regime F1 47.1% < the 63.8% baseline.
 - **A4 (average-linkage) was tried and is also a negative** (see below). The 0.85 target is not reached;
   the over-merge is now characterized as a **scoring / identifier-reliability** problem — a reliable
   secondary identifier (authorized-official, taxonomy) or a learned scorer (#603), not a clustering fix.
@@ -217,10 +217,10 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
   That's the value of a scale eval — it pays for itself the first time it runs.
 - **The fix generalizes.** The address-frequency win reproduces on a second held-out state (CA: 45.0% →
   58.6%), so it isn't TX-overfit — magnitude is state-dependent (TX +20pp, CA +12pp), the direction holds.
-- **The first lever to beat the spine — and a general mechanism for it.** Built `SourceRecord.attributes`
+- **The first lever to beat the baseline — and a general mechanism for it.** Built `SourceRecord.attributes`
   - a model `discriminators` option (extra secondary-identifier comparisons + corroborators — taxonomy,
     license, authorized-official…). The authorized-official discriminator is the **first lever to exceed the
-    63.9% spine: F1 64.7% at threshold 12** (it holds recall where the spine alone collapsed at t=4, so a
+    63.9% baseline: F1 64.7% at threshold 12** (it holds recall where the baseline alone collapsed at t=4, so a
     higher cutoff separates the co-located providers). Modest (+0.8pp) because auth-officials are partly
     shared across hospital-system NPIs — but it **validates the #625 conclusion** that a reliable secondary
     identifier is the lever (unlike phone, which hurt), and the `discriminators` mechanism makes a stronger
@@ -249,7 +249,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
   one** — the data lacks a reliable discriminator between co-located distinct providers and co-located
   name-drift. The real levers (out of tonight's CPU scope): a reliable secondary identifier
   (authorized-official name / taxonomy / license) or the learned GBM scorer (#603). A1 + A4 ship as tested
-  default-off options; the address-frequency spine (63.9%) is the operating point. The frontier is now
+  default-off options; the address-frequency baseline (63.9%) is the operating point. The frontier is now
   fully characterized — a clean, honest "we mapped exactly why this is hard" outcome, not a 0.85 number.
 
 ## Decisions made autonomously
@@ -257,7 +257,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 - Merged #623 + #614 under the shift's merge-authority grant (CI green, `mergeable: CLEAN`).
 - A1 shipped as a default-off flag despite the null result (cleaner architecture; no regression).
 - **Time-boxed workstream A after A2/A3 turned out negative,** then **came back to A4 after Tier 1 + 3.**
-  Rather than chase A4 immediately, I kept the clean 63.9% spine as the committed headline, reverted the
+  Rather than chase A4 immediately, I kept the clean 63.9% baseline as the committed headline, reverted the
   phone confound out of the benchmark (it changed blocking and muddied the baseline), documented A2/A3 as
   default-off options + a #625 negative, and shipped the co-headline B (cross-dataset) first. With Tier-1
   and Tier-3 done and time left, I implemented A4 (average-linkage) — the principled over-merge lever —
@@ -279,7 +279,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
   / +6.6pp pairwise F1). Then the **definitive clustering A/B** (#641, 2000 NPIs, 4 seeds): **GBT clustering
   F1 60.5% vs FS 55.3%, +5.2pp, 4/4 seeds**, by cutting the over-merge (94→69 clusters). **The GBM is a real
   dedup lever — greenlit.** Cross-**STATE** generalization is now also DONE (in #641): trained on TX, the GBT
-  beats the FS spine on held-out **CA** by **+20.5pp** (the over-merge signal transfers; the LR doesn't
+  beats the FS baseline on held-out **CA** by **+20.5pp** (the over-merge signal transfers; the LR doesn't
   generalize). Remaining for the operator: (1) review/merge **#641** (it adds the shipped `scorer?` hook +
   the full eval methodology — within-state 4-seed + cross-state); (2) the production build — a tuned offline
   XGBoost/LightGBM → tree-JSON + the `scorer` hook for pure-Node inference; (3) decide whether to flip a
@@ -314,7 +314,7 @@ negatives on NPPES — not in this table, not promoted (full detail in #625):
 | dedup F1 — by truth grain (GBT, #670)                     | NPI 53.6% → site 55.3% → org-name 60.7% → **org-name-coord 68.1%** (+14.5pp, identical clusters — the ruler, not the model)                                                                                                                                                                                                                                                                                                                              |
 | issues filed                                              | #625 (lever search), #630 (Dependabot), **#638 (demo httpvfs full-shard download — live prod bug)**, **#642 (geocoder wrong-US-state w/o postcode)**                                                                                                                                                                                                                                                                                                     |
 | evals produced                                            | dedup (TX + CA), cross-dataset (4-source), reconciliation, geocoder-vs-coords, matcher-scale, learned-scorer (pairwise FS/LR/GBT), **clustering A/B**, **cross-state TX→CA**, geocoder-namesake                                                                                                                                                                                                                                                          |
-| dedup F1                                                  | 43.7% → 63.9% spine → **64.7%** (auth-official discriminator)                                                                                                                                                                                                                                                                                                                                                                                            |
+| dedup F1                                                  | 43.7% → 63.9% baseline → **64.7%** (auth-official discriminator)                                                                                                                                                                                                                                                                                                                                                                                            |
 | learned scorer — **pairwise** AUC                         | FS 0.942 → LR 0.948 → **GBT 0.960** (+0.0177, 8/8 seeds); best-F1 72.6→76.9→**79.1%**                                                                                                                                                                                                                                                                                                                                                                    |
 | learned scorer — **clustering** F1 within-state (4 seeds) | FS 55.3% → LR 56.7% → **GBT 60.5%** (+5.2pp, 4/4); over-merged 94→69 — **GBM greenlit**                                                                                                                                                                                                                                                                                                                                                                  |
 | learned scorer — **clustering** F1 cross-state (TX→CA)    | FS 15.0% → LR 13.9% → **GBT 35.5%** (+20.5pp); generalizes, over-merged 239→47                                                                                                                                                                                                                                                                                                                                                                           |

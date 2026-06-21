@@ -37,7 +37,7 @@ Scored with `score-affix` (fp32, ship-config channels), real-affix eval (n=32):
 | street_prefix F1               | 93.6             | 91.3             | —               |
 | street_suffix F1               | 96.7             | **100.0**        | ~59             |
 | street F1                      | 87.5             | 87.5             | —               |
-| spine (hn/loc/region/postcode) | 100 each         | 100 each         | —               |
+| guardrail (hn/loc/region/postcode) | 100 each         | 100 each         | —               |
 
 Honest reading of the strict criterion: we pre-registered "drop ≤ 2pts +2k→+4k"; prefix recall
 dropped 4.0 (F1 2.3). That is exactly ONE flipped instance (tp 22→21) on a 25-instance eval —

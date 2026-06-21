@@ -34,7 +34,7 @@ Phase 4 ships in three slices, each independently mergeable:
 | **4.2 — WOF SQLite loader package**   | New package `@mailwoman/resolver-wof-sqlite` (or fold into `@mailwoman/neural`? decide in 4.2). Loads a WOF SQLite distribution, exposes an FTS5-backed lookup `findPlace({ locality, region, country, locale })` returning candidate WOF places with confidence. | Yes — usable standalone for "what's the WOF id for Paris, FR?" without going through the full parser. |
 | **4.3 — Resolver integration**        | `Resolver` interface + `WofSqliteResolver` impl + `resolveTree(tree, resolver)` that walks the `AddressTree`, queries the resolver per node, decorates with `src="wof-admin:<id>"`, `lat`, `lon`, `wof_id`. CLI `--resolve` flag.                                 | Closes the loop — outputs gain real-world identifiers.                                                |
 
-Sub-phases 4.2 and 4.3 will each get their own plan doc (`PHASE_4_2_*.md`, `PHASE_4_3_*.md`) written when they begin. This doc is the spine.
+Sub-phases 4.2 and 4.3 will each get their own plan doc (`PHASE_4_2_*.md`, `PHASE_4_3_*.md`) written when they begin. This doc is the canonical reference.
 
 ## Phase 4.1 — Source provenance (current)
 

@@ -1,9 +1,9 @@
-# Consolidation session — 2026-06-10 (gate complete: spine won, affix capacity fork)
+# Consolidation session — 2026-06-10 (gate complete: guardrail won, affix capacity fork)
 
 A full-day session that closed the **country** and **affix** levers, ran the **v1.0.0
 consolidation** (every proven lever in one model), and then ran three corrective
 iterations (Runs A/B/C) under two DeepSeek consults. **The campaign is now STOPPED at the
-treadmill guard with a decisive result:** the consolidation's spine win is large, real,
+treadmill guard with a decisive result:** the consolidation's guardrail win is large, real,
 and stable across every variant — and the affix split has a demonstrated **stability
 ceiling at 29M params** that no sampling-weight recipe clears. A ship/re-baseline/escalate
 decision is pending operator review (see "The fork" below).
@@ -25,7 +25,7 @@ the open question, **negatively and informatively**:
   the diagnostic, confirming Run B's `init_from` (fresh optimizer) was a real confound:
   momentum (resume) is required to enter the affix basin at all.
 - **At step-055000 (15k in):** prefix **decayed 75 → 52.9**, suffix 48.8, and the
-  prolonged 20× density **damaged the spine**: FR region collapsed to **5.3** (from ~25),
+  prolonged 20× density **damaged the guardrail**: FR region collapsed to **5.3** (from ~25),
   US postcode 97.4 → **94.9**, unit 92.1 → 88.5.
 
 **Conclusion: the affix-75 peak is a TRANSIENT, not an equilibrium.** The model can
@@ -55,7 +55,7 @@ capacity-competition hypothesis were right.)
 | DE native loc        |       ≥83.8 |       90.7 ✓ |      90.7 ✓ |                 90.7 ✓ |           — |                           — |
 
 **No variant passes the full canonical gate.** The misses are consistent: affix below the
-solo 78/67 everywhere stable, and US street −4 to −6 vs v0.9.8 everywhere (a real spine
+solo 78/67 everywhere stable, and US street −4 to −6 vs v0.9.8 everywhere (a real guardrail
 regression of the consolidation itself, likely the affix-split pressure costing plain
 `street` precision).
 
@@ -77,7 +77,7 @@ Per the treadmill guard, no further recipe iteration. Three options, stated:
    the queue (#478) and revisit after the architecture work.
 
 Recommendation: **1 + queue 2**, with the US-street −2.3-vs-shipped called out to review
-as the main ship-risk. The spine win (locality +13–16, region +11, country 0→89.8, FR/DE
+as the main ship-risk. The guardrail win (locality +13–16, region +11, country 0→89.8, FR/DE
 recovered, micro +4.6) is too large to shelve over tags that were 0 in the shipped model.
 
 **Eval-procedure note (for whoever reruns these):** the gaz-trained models MUST be
@@ -116,7 +116,7 @@ region 80.1 · micro 81.6 · FR hn 92.0.
   wrote ≥85; it was reconciled DOWN to the config's 83.3 — recorded here, not silent.
 - **affix ≥78/67** (hold v0.9.8's solo level) and **US street ≥80.4** are the two REAL open gaps.
   Across v1.0.0/A/B, affix sits ~65 (Run C aims to clear via resume+density) and **US street is stuck
-  at ~76 (−4.4 vs v0.9.8) in every run** — a genuine spine regression the relaxed table had hidden.
+  at ~76 (−4.4 vs v0.9.8) in every run** — a genuine guardrail regression the relaxed table had hidden.
 - **Any future relaxation of these numbers is a STATED decision with a reason, made here.** As of now,
   none is approved: the config gate stands. If Run C lands affix ~75/63 and street ~76, that is a
   GATE MISS to confront (re-baseline-with-reason, or iterate), not a pass.
@@ -125,7 +125,7 @@ region 80.1 · micro 81.6 · FR hn 92.0.
 this tree governed Runs A–C and terminated at its STOP branch. Run C's transient-decay
 result (affix 75→52.9 + FR-region collapse under sustained density, vs the stable ~65
 ceiling at moderate density) is the two-opposite-directions fork in its sharpest form:
-density high enough for affix destroys the spine; density low enough for the spine caps
+density high enough for affix destroys the guardrail; density low enough for the guardrail caps
 affix at ~65. Per the guard, all recipe iteration stopped; the live decision is "The fork"
 section at the top of this doc. (Historical note: DeepSeek's pre-named capacity-tell —
 suffix under 55 AND country under 84.5 at step-8000 — was framed for a steady-state miss and did
@@ -135,7 +135,7 @@ not anticipate the transient-then-decay shape; the guard caught what the tell di
 The flag-plant claim is made on the artifact users get, with resolver-coupled behavior verified:
 
 - **Honest-eval (VT holdout)** — this model moved locality +14 / region +10; resolver behavior
-  changed and the per-tag spine evals don't see resolver interactions. Run `scripts/eval/honest-eval.sh`;
+  changed and the per-tag guardrail evals don't see resolver interactions. Run `scripts/eval/honest-eval.sh`;
   **region-match + coord p50/p90 must hold** vs v4.1.0 ([[project-honest-eval-region-fix]]).
 - **Demo presets** — functional tests before verdicts (house law, [[feedback-functional-before-verdict]]).
 - **int8 spot-check** — quantize, then RE-RUN country + affix + per-locale on the **int8** artifact
@@ -167,13 +167,13 @@ in **epic #488**, not an ad-hoc grab.
   FR-postcode fix (95.6→99.7) but was a lateral move on FR solo → carried into consolidation.
   #462 closed.
 - **Consolidation v1.0.0** (corpus v0.4.12-consolidation, config `v1.0.0-consolidation.yaml`,
-  40k): the strongest spine yet — **US micro 81.6→85.5**, region +10, locality +14, country
+  40k): the strongest guardrail yet — **US micro 81.6→85.5**, region +10, locality +14, country
   **87.5**, FR postcode+house_number recovered, DE native loc **90.7** (beats Pelias 85.9).
   BUT **affix split crashed** (prefix 75→27.6) and **US postcode −2.5** (98.3→95.8).
 - **DeepSeek consult + diagnostic → consensus** (session
   `consolidation-tradeoff-2026-06-10`; notes in `.agents/skills/deepseek-consult/`):
   - Affix is **scheduling-bound, not capacity-bound** (diagnostic: prefix 27.6→75 in 2k
-    steps @ affix 20×, postcode even +1.6, spine flat). _[SUPERSEDED by Run C: the 75 is a
+    steps @ affix 20×, postcode even +1.6, guardrail flat). _[SUPERSEDED by Run C: the 75 is a
     transient that decays under sustained density — it IS a capacity/stability constraint;
     see "Final result" above.]_
   - **Weight-merge is unsound** for our from-scratch (non-fine-tune) solo models — would

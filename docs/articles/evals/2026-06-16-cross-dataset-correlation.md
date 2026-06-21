@@ -15,7 +15,7 @@ Combined: **6927 records**, geocoded 100.0%. Resolved to **3584 entities** from 
 
 Matched with the proven levers default-on (#86): collapsed spatial (A1) + inverse-address-frequency, fed a corpus-wide table built from the full source files (**119,613** distinct addresses over **208,856** TX rows — a crowded shared campus is down-weighted as weak identity evidence).
 
-Scored with the Fellegi-Sunter spine (`learnedScorer: false`): cross-dataset link discovery is recall-oriented — the same facility under different operational names across sources is the signal — so the dedup-calibrated GBT default (#603), which is trained to REJECT "same place, different name," is pinned off here. A cross-objective GBT threshold is the follow-up (#655).
+Scored with the Fellegi-Sunter baseline (`learnedScorer: false`): cross-dataset link discovery is recall-oriented — the same facility under different operational names across sources is the signal — so the dedup-calibrated GBT default (#603), which is trained to REJECT "same place, different name," is pinned off here. A cross-objective GBT threshold is the follow-up (#655).
 
 ## Cross-dataset links (entities spanning ≥2 sources)
 

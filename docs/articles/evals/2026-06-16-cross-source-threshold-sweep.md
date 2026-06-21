@@ -1,4 +1,4 @@
-# #655 — can a re-thresholded dedup GBT beat the FS spine on cross-source linking?
+# #655 — can a re-thresholded dedup GBT beat the FS baseline on cross-source linking?
 
 _Measurement for #655. The default-on GBT (#603) is pinned **off** for cross-dataset flows
 (cross-dataset-correlation, coverage-reconciliation, `registry --sources`) because it suppresses the
@@ -11,7 +11,7 @@ cross-objective **retrain** (option 2) is the only lever)? This settles it with 
 
 `scripts/record-matcher/cross-source-threshold-sweep.ts`. TX-scoped, ≤2000 rows/source (NPPES org
 NPIs + TX HHSC nursing facilities + FCC-RHC filings), geocoded **once**, then resolved repeatedly:
-the FS spine (the recall-correct baseline the flows currently pin) and the bundled dedup GBT swept
+the FS baseline (the recall-correct baseline the flows currently pin) and the bundled dedup GBT swept
 across link thresholds from −8 up through its dedup threshold (2.71). The GBT logit **replaces** the
 FS weight, so lowering the threshold is the only knob.
 
@@ -24,7 +24,7 @@ the join key, so a match is independent evidence of same-facility. (Small-N + no
 
 | arm          | threshold | total entities | cross-source links | triple | phone-corrob (of checkable) |
 | ------------ | --------: | -------------: | -----------------: | -----: | --------------------------- |
-| **FS spine** |         0 |       **3343** |             **27** |      0 | **10/27 (37%)**             |
+| **FS baseline** |         0 |       **3343** |             **27** |      0 | **10/27 (37%)**             |
 | GBT @ −8     |        −8 |            115 |                 52 |      3 | 17/52 (33%)                 |
 | GBT @ −6     |        −6 |            115 |                 52 |      3 | 17/52 (33%)                 |
 | GBT @ −5     |        −5 |            115 |                 52 |      3 | 17/52 (33%)                 |

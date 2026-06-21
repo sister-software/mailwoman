@@ -212,7 +212,7 @@ friction that ends with "did we just ship a regression?" The
 `feedback-no-silent-gate-drift` memory exists; this rule is what keeps the
 next doc from triggering it.
 
-When a regression is genuinely the right thing to ship (e.g. spine gains that
+When a regression is genuinely the right thing to ship (e.g. guardrail gains that
 justify a tag dip), the path is: state the trade-off in the doc, file the
 gate revision separately, and the operator promotes — not the agent silently
 lowering the bar in the table.
