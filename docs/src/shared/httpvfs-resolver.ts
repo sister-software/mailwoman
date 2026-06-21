@@ -32,8 +32,10 @@ import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/reso
 // too) — so this browser reader's row accesses are type-checked against the same column contract.
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 
-/** The candidate columns this reader probes — a typed projection of the shared
-{@link CandidateTable}. */
+/**
+ * The candidate columns this reader probes — a typed projection of the shared
+ * {@link CandidateTable}.
+ */
 type CandidateProbeRow = Pick<
 	CandidateTable,
 	| "spr_id"
@@ -438,9 +440,28 @@ interface CandidateCodeMaps {
 export class WofCandidateTableLookup implements MailwomanLookupLike {
 	#worker: HttpvfsWorker
 	#codes: Promise<CandidateCodeMaps> | undefined
+	/** Memoized presence of the #741 `postal_city_candidate` side-index (one worker round trip). */
+	#hasPostalCity: Promise<boolean> | undefined
 
 	constructor(worker: HttpvfsWorker) {
 		this.#worker = worker
+	}
+
+	/**
+	 * Whether this candidate.db carries the #741 postal-city side-index. Memoized — absent (today's
+	 * production demo DB) the postal-city probe never fires, so resolution is byte-identical to
+	 * pre-#741. Mirrors the Node `WofCandidateTableLookup`'s existence-gated probe.
+	 */
+	#postalCityPresent(): Promise<boolean> {
+		if (!this.#hasPostalCity) {
+			this.#hasPostalCity = this.#worker.db
+				.exec(`SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='postal_city_candidate'`)
+				.then((res) => Number(rowsFromExec(res)[0]?.n ?? 0) > 0)
+			this.#hasPostalCity.catch(() => {
+				this.#hasPostalCity = undefined
+			})
+		}
+		return this.#hasPostalCity
 	}
 
 	#codeMaps(): Promise<CandidateCodeMaps> {
@@ -487,6 +508,38 @@ export class WofCandidateTableLookup implements MailwomanLookupLike {
 		if (!text) return []
 		const nameKey = normalizeLocalityForKey(text)
 		if (!nameKey) return []
+
+		// #741: postcode-keyed postal-city alias. An exact (name_key, postcode) hit resolves a
+		// user-typed POSTAL city ("Antioch", 37013) to the geographic locality the postcode sits in
+		// ("Nashville"), bypassing the population/region ranking that can't see the postcode. Gated on
+		// the side-index being present, a postcode in the query, and a locality-tier request — so the
+		// common path is byte-identical, and inert on a candidate.db built without the side-index
+		// (today's production demo). Mirrors the Node WofCandidateTableLookup probe.
+		const wantsLocality = !query.placetype || expandPlacetypeFilter([query.placetype]).includes("locality")
+		if (query.postcode && wantsLocality && (await this.#postalCityPresent())) {
+			const hit = rowsFromExec(
+				await this.#worker.db.exec(
+					`SELECT spr_id, name, latitude, longitude FROM postal_city_candidate ` +
+						`WHERE name_key = ${sqlStr(nameKey)} AND postcode = ${sqlStr(query.postcode.trim())} LIMIT 1`
+				)
+			)[0]
+			if (hit) {
+				return [
+					{
+						id: Number(hit.spr_id),
+						name: String(hit.name ?? ""),
+						placetype: "locality",
+						country: query.country?.toUpperCase(),
+						lat: Number(hit.latitude),
+						lon: Number(hit.longitude),
+						score: 1,
+						exactMatch: true,
+						bbox: undefined,
+					},
+				]
+			}
+		}
+
 		const limit = Math.max(1, query.limit ?? 10)
 		const { countryToId, idToCountry, placetypeToId, idToPlacetype } = await this.#codeMaps()
 
