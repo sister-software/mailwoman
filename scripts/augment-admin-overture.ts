@@ -120,7 +120,17 @@ console.error(`Copying ${IN} → ${WORK} (preserves all existing coverage) ...`)
 copyFileSync(IN, WORK)
 
 const db = new DatabaseSync(WORK)
-const before = Number((db.prepare("SELECT count(*) AS n FROM spr").get() as { n: number }).n)
+// `kdb` wraps `db` for the typed read stats below (the bulk INSERTs in ingestOvertureDivisions +
+// populateAncestors stay raw on the handle). MAX(COALESCE)/PRAGMA/VACUUM below also stay raw.
+const kdb = new DatabaseClient<WofDatabase>({ database: db })
+const before = Number(
+	(
+		await kdb
+			.selectFrom("spr")
+			.select((eb) => eb.fn.countAll<number>().as("n"))
+			.executeTakeFirstOrThrow()
+	).n
+)
 
 // Start synthetic ids ABOVE every id already in the DB (WOF or a prior Overture backfill) so this
 // augment never collides with existing rows — a flat OVERTURE_ID_BASE would `INSERT OR REPLACE`
@@ -150,12 +160,20 @@ buildPlaceSearchFts(db, { drop: true })
 db.exec("ANALYZE")
 db.exec("PRAGMA optimize")
 
-const after = Number((db.prepare("SELECT count(*) AS n FROM spr").get() as { n: number }).n)
-const added = db
-	.prepare(
-		`SELECT country, count(*) AS n FROM spr WHERE country IN (${COUNTRIES.map(() => "?").join(",")}) GROUP BY country`
-	)
-	.all(...COUNTRIES) as Array<{ country: string; n: number }>
+const after = Number(
+	(
+		await kdb
+			.selectFrom("spr")
+			.select((eb) => eb.fn.countAll<number>().as("n"))
+			.executeTakeFirstOrThrow()
+	).n
+)
+const added = await kdb
+	.selectFrom("spr")
+	.select((eb) => ["country", eb.fn.countAll<number>().as("n")])
+	.where("country", "in", COUNTRIES)
+	.groupBy("country")
+	.execute()
 console.error(`spr: ${before.toLocaleString()} → ${after.toLocaleString()} (+${(after - before).toLocaleString()})`)
 console.error(`  added: ${added.map((r) => `${r.country}=${Number(r.n).toLocaleString()}`).join(", ")}`)
 
