@@ -17785,8 +17785,11 @@ __metadata:
     zod: "npm:^4.4.3"
     zx: "npm:^8.8.5"
   peerDependencies:
+    "@duckdb/node-api": 1.5.3-r.3
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   peerDependenciesMeta:
+    "@duckdb/node-api":
+      optional: true
     "@inkjs/ui":
       optional: true
     "@mailwoman/resolver-wof-sqlite":

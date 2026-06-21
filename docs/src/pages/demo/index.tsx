@@ -23,6 +23,7 @@ import BrowserOnly from "@docusaurus/BrowserOnly"
 import Head from "@docusaurus/Head"
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
+import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
 import Layout from "@theme/Layout"
 import type { Map as MapLibreMap } from "maplibre-gl"
 import type React from "react"
@@ -299,6 +300,29 @@ const DemoApp: React.FC = () => {
 						}
 					}
 					map.on("load", wireTerrain)
+
+					// Add the coverage "fog of war" source + default-off fill layers once the basemap style is
+					// ready. Served as XYZ vector tiles by the tile worker; the fills sit beneath the first
+					// symbol layer so place labels stay legible.
+					const coverageSourceUrl = `https://tiles.sister.software/${CoverageTileSetID}.json`
+					const wireCoverage = (): void => {
+						if (!map.isStyleLoaded()) {
+							map.once("styledata", wireCoverage)
+							return
+						}
+						try {
+							if (!map.getSource(CoverageTileSetID)) {
+								map.addSource(CoverageTileSetID, createCoverageSource(coverageSourceUrl))
+							}
+							const firstSymbolID = map.getStyle().layers?.find((l) => l.type === "symbol")?.id
+							for (const layer of CoverageLayers) {
+								if (!map.getLayer(layer.id)) map.addLayer(layer, firstSymbolID)
+							}
+						} catch (error) {
+							console.warn("coverage overlay wiring failed", error)
+						}
+					}
+					map.on("load", wireCoverage)
 				}
 			} catch (error) {
 				if (cancelled) return
