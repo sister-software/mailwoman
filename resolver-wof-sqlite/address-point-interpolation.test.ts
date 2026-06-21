@@ -10,10 +10,11 @@
  *   its cap, route-key folding, and the no-bracket fall-through to the TIGER segment fallback.
  */
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { DatabaseSync } from "node:sqlite"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { AddressPointInterpolator } from "./address-point-interpolation.js"
-import { ADDRESS_POINT_DDL } from "./address-point-schema.js"
+import { type AddressPointDatabase, createAddressPointTable } from "./address-point-schema.js"
 import { StreetInterpolator } from "./interpolation.js"
 
 interface SeedPoint {
@@ -24,10 +25,12 @@ interface SeedPoint {
 	lon: number
 }
 
-function seedPoints(db: DatabaseSync, points: SeedPoint[]): void {
-	// Shared DDL (the same `scripts/build-address-point-shard.ts` builds) so this fixture can't drift
-	// from the production table shape.
-	db.exec(ADDRESS_POINT_DDL)
+async function seedPoints(db: DatabaseSync, points: SeedPoint[]): Promise<void> {
+	// Shared table builder (the same `scripts/build-address-point-shard.ts` uses) so this fixture can't
+	// drift from the production shape. `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle
+	// (closed in afterAll), so we don't destroy `kdb`.
+	const kdb = new DatabaseClient<AddressPointDatabase>({ database: db })
+	await createAddressPointTable(kdb)
 	const ins = db.prepare(
 		`INSERT INTO address_point (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
 		 VALUES (?, ?, ?, NULL, ?, NULL, ?, ?, ?, 'overture:test', '2026-05-20.0')`
@@ -42,9 +45,9 @@ function seedPoints(db: DatabaseSync, points: SeedPoint[]): void {
 let db: DatabaseSync
 let interpolator: AddressPointInterpolator
 
-beforeAll(() => {
+beforeAll(async () => {
 	db = new DatabaseSync(":memory:")
-	seedPoints(db, [
+	await seedPoints(db, [
 		// Both-sided bracket fixture: known points at 100 and 200.
 		{ street_key: "main street", number: "100", postcode: "05601", lat: 0, lon: 0 },
 		{ street_key: "main street", number: "200", postcode: "05601", lat: 0, lon: 0.001 },

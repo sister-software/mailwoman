@@ -15,6 +15,8 @@
  *   `WITHOUT ROWID` B-tree it's materialized into (same columns). The reader queries `candidate`.
  */
 
+import { sql, type Kysely } from "kysely"
+
 /**
  * One candidate row. `name_key` + the four small int keys + `neg_rank` + `spr_id` form the
  * clustered primary key; the rest is denormalized so a resolve is one probe (no join to `spr`).
@@ -93,24 +95,73 @@ export const CANDIDATE_COLUMNS = [
 	"is_primary",
 ] as const
 
-/** DDL for the code dictionaries + the staging table — created before the build's load passes. */
-export const CANDIDATE_STAGE_DDL = /* sql */ `
-CREATE TABLE country_codes (id INTEGER PRIMARY KEY, code TEXT UNIQUE);
-CREATE TABLE placetype_codes (id INTEGER PRIMARY KEY, placetype TEXT UNIQUE);
-CREATE TABLE cand_stage (
-	name_key TEXT, country_id INTEGER, region_id INTEGER, placetype_id INTEGER,
-	neg_rank REAL, spr_id INTEGER, name TEXT, latitude REAL, longitude REAL,
-	min_lat REAL, min_lon REAL, max_lat REAL, max_lon REAL, population INTEGER, is_primary INTEGER
-);
-`
+/**
+ * Create the code dictionaries + the transient staging table — called before the build's load
+ * passes. `cand_stage` mirrors {@link CandidateTable} but every column is nullable (the loader fills
+ * them positionally). Pass a {@link DatabaseClient} (or any `Kysely`) over the candidate DB.
+ */
+export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>): Promise<void> {
+	await db.schema
+		.createTable("country_codes")
+		.addColumn("id", "integer", (c) => c.primaryKey())
+		.addColumn("code", "text", (c) => c.unique())
+		.execute()
+	await db.schema
+		.createTable("placetype_codes")
+		.addColumn("id", "integer", (c) => c.primaryKey())
+		.addColumn("placetype", "text", (c) => c.unique())
+		.execute()
+	await db.schema
+		.createTable("cand_stage")
+		.addColumn("name_key", "text")
+		.addColumn("country_id", "integer")
+		.addColumn("region_id", "integer")
+		.addColumn("placetype_id", "integer")
+		.addColumn("neg_rank", "real")
+		.addColumn("spr_id", "integer")
+		.addColumn("name", "text")
+		.addColumn("latitude", "real")
+		.addColumn("longitude", "real")
+		.addColumn("min_lat", "real")
+		.addColumn("min_lon", "real")
+		.addColumn("max_lat", "real")
+		.addColumn("max_lon", "real")
+		.addColumn("population", "integer")
+		.addColumn("is_primary", "integer")
+		.execute()
+}
 
-/** DDL for the clustered `WITHOUT ROWID` lookup table — created after staging, before the VACUUM. */
-export const CANDIDATE_TABLE_DDL = /* sql */ `
-CREATE TABLE candidate (
-	name_key TEXT NOT NULL, country_id INTEGER NOT NULL, region_id INTEGER NOT NULL,
-	placetype_id INTEGER NOT NULL, neg_rank REAL NOT NULL, spr_id INTEGER NOT NULL,
-	name TEXT, latitude REAL, longitude REAL, min_lat REAL, min_lon REAL, max_lat REAL, max_lon REAL,
-	population INTEGER, is_primary INTEGER,
-	PRIMARY KEY (name_key, country_id, region_id, placetype_id, neg_rank, spr_id)
-) WITHOUT ROWID;
-`
+/**
+ * Create the clustered `WITHOUT ROWID` lookup table — called after staging, before the VACUUM. The
+ * first six columns form the clustered primary key (population-ranked via `neg_rank`).
+ */
+export async function createCandidateTable(db: Kysely<CandidateDatabase>): Promise<void> {
+	await db.schema
+		.createTable("candidate")
+		.addColumn("name_key", "text", (c) => c.notNull())
+		.addColumn("country_id", "integer", (c) => c.notNull())
+		.addColumn("region_id", "integer", (c) => c.notNull())
+		.addColumn("placetype_id", "integer", (c) => c.notNull())
+		.addColumn("neg_rank", "real", (c) => c.notNull())
+		.addColumn("spr_id", "integer", (c) => c.notNull())
+		.addColumn("name", "text")
+		.addColumn("latitude", "real")
+		.addColumn("longitude", "real")
+		.addColumn("min_lat", "real")
+		.addColumn("min_lon", "real")
+		.addColumn("max_lat", "real")
+		.addColumn("max_lon", "real")
+		.addColumn("population", "integer")
+		.addColumn("is_primary", "integer")
+		.addPrimaryKeyConstraint("candidate_pk", [
+			"name_key",
+			"country_id",
+			"region_id",
+			"placetype_id",
+			"neg_rank",
+			"spr_id",
+		])
+		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic escape hatch.
+		.modifyEnd(sql`without rowid`)
+		.execute()
+}

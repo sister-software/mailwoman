@@ -23,7 +23,7 @@ export { WofSqlitePlaceLookup, type RankingWeights, type WofSqlitePlaceLookupOpt
 
 export { WofCandidateTableLookup, type WofCandidateTableLookupOpts } from "./candidate-lookup.js"
 
-export { ADDRESS_POINT_COLUMNS, ADDRESS_POINT_DDL, ADDRESS_POINT_INDEX_DDL } from "./address-point-schema.js"
+export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "./address-point-schema.js"
 export type { AddressPointDatabase, AddressPointTable } from "./address-point-schema.js"
 export {
 	WofPostalCityAliasLookup,
