@@ -16,8 +16,9 @@
  *   We expose each as its OWN default-off fill layer (`coverage-opt-fog`, `coverage-honest-fog`) so the
  *   demo's LayerToggleControl gives each its own checkbox — pick the reading you want, no extra UI.
  *
- *   Source URL is supplied by the consumer (`createCoverageSource`): the production tileset on
- *   `tiles.sister.software`, or a local `pmtiles://…` for previewing a single-state bake.
+ *   Served as XYZ vector tiles by the tile worker from `nexus-assets/tiles/coverage-us-v4.pmtiles` (same
+ *   as `basemap-v4`); the consumer passes its TileJSON URL (`tiles.sister.software/coverage-us-v4.json`)
+ *   to `createCoverageSource`.
  */
 
 import type {
@@ -54,8 +55,8 @@ export const CoverageLayerID = {
 } as const
 
 /**
- * Build the coverage source spec. `url` is either the production TileJSON endpoint
- * (`https://tiles.sister.software/coverage.json`) or a `pmtiles://…` URL for a local single-state bake.
+ * Build the coverage source spec from the tile worker's TileJSON endpoint
+ * (`https://tiles.sister.software/coverage-us-v4.json`).
  */
 export function createCoverageSource(url: string): VectorSourceSpecification {
 	return { type: "vector", url }

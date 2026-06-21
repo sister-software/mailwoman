@@ -62,8 +62,6 @@ export interface CoverageBuildOptions {
 	out: string
 	/** Keep the intermediate NDJSON (for re-tiling without re-aggregating). */
 	keepNdjson: boolean
-	/** Emit a standalone HTML preview next to the pmtiles. */
-	preview: boolean
 	/** DuckDB worker-thread cap (omit for all cores). */
 	threads?: number
 }
@@ -285,10 +283,6 @@ export async function buildCoverageTiles(
 	const pmtilesBytes = statSync(opts.out).size
 
 	if (!opts.keepNdjson) rmSync(ndjsonPath, { force: true })
-	if (opts.preview) {
-		const { writeFileSync } = await import("node:fs")
-		writeFileSync(opts.out.replace(/\.pmtiles$/, "") + "-preview.html", coveragePreviewHTML(path.basename(opts.out)))
-	}
 
 	return {
 		out: opts.out,
@@ -300,83 +294,4 @@ export async function buildCoverageTiles(
 		features: featureCount,
 		pmtilesBytes,
 	}
-}
-
-/** Standalone MapLibre + pmtiles HTML for previewing a bake over the production basemap (serve via localhost). */
-export function coveragePreviewHTML(pmtilesBasename: string): string {
-	return `<!doctype html>
-<html>
-<head>
-<meta charset="utf-8" />
-<title>Mailwoman address coverage — fog of war</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
-<link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
-<script src="https://unpkg.com/pmtiles@4.4.1/dist/pmtiles.js"></script>
-<style>
-  body { margin: 0; font: 13px system-ui, sans-serif; }
-  #map { position: absolute; inset: 0; }
-  #panel { position: absolute; top: 10px; left: 10px; z-index: 1; background: rgba(255,255,255,.92);
-    padding: 10px 12px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
-  #panel label { display: block; margin: 4px 0; }
-</style>
-</head>
-<body>
-<div id="map"></div>
-<div id="panel">
-  <div>zoom <span id="z">—</span></div>
-  <label>mode
-    <select id="mode">
-      <option value="fog_opt">optimistic (looks covered, reveals on zoom)</option>
-      <option value="fog">honest (true coverage fraction)</option>
-    </select>
-  </label>
-  <label>fog opacity <input id="op" type="range" min="0" max="1" step="0.05" value="0.85" /></label>
-  <label><input id="outline" type="checkbox" /> cell outlines</label>
-</div>
-<script>
-const proto = new pmtiles.Protocol();
-maplibregl.addProtocol("pmtiles", proto.tile);
-const FOG_COLOR = "#10162e";
-const map = new maplibregl.Map({
-  container: "map", center: [-96, 38], zoom: 4, hash: true,
-  style: {
-    version: 8,
-    glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
-    sources: {
-      basemap: { type: "vector", url: "https://tiles.sister.software/basemap-v4.json" },
-      coverage: { type: "vector", url: "pmtiles://./${pmtilesBasename}" },
-    },
-    layers: [
-      { id: "bg", type: "background", paint: { "background-color": "#e9e6df" } },
-      { id: "earth", type: "fill", source: "basemap", "source-layer": "earth", paint: { "fill-color": "#d8d4cb" } },
-      { id: "water", type: "fill", source: "basemap", "source-layer": "water", paint: { "fill-color": "#a9c8e0" } },
-      { id: "roads", type: "line", source: "basemap", "source-layer": "roads",
-        paint: { "line-color": "#ffffff", "line-width": ["interpolate", ["linear"], ["zoom"], 6, 0.3, 14, 2] } },
-      { id: "fog", type: "fill", source: "coverage", "source-layer": "coverage",
-        paint: { "fill-color": FOG_COLOR, "fill-opacity": ["*", ["get", "fog_opt"], 0.85] } },
-      { id: "fog-outline", type: "line", source: "coverage", "source-layer": "coverage", layout: { visibility: "none" },
-        paint: { "line-color": FOG_COLOR, "line-opacity": 0.25, "line-width": 0.5 } },
-    ],
-  },
-});
-window.map = map;
-map.addControl(new maplibregl.NavigationControl());
-const zEl = document.getElementById("z");
-const upd = () => (zEl.textContent = map.getZoom().toFixed(1));
-map.on("zoom", upd); map.on("load", upd);
-let fogProp = "fog_opt";
-const applyOpacity = () => map.setPaintProperty("fog", "fill-opacity", ["*", ["get", fogProp], +document.getElementById("op").value]);
-document.getElementById("op").addEventListener("input", applyOpacity);
-document.getElementById("mode").addEventListener("change", (e) => { fogProp = e.target.value; applyOpacity(); });
-document.getElementById("outline").addEventListener("change", (e) =>
-  map.setLayoutProperty("fog-outline", "visibility", e.target.checked ? "visible" : "none"));
-map.on("click", "fog", (e) => {
-  const p = e.features[0].properties;
-  new maplibregl.Popup().setLngLat(e.lngLat).setHTML("res " + p.res + "<br>pts " + p.pt + "<br>seg " + p.seg + "<br>fog " + p.fog).addTo(map);
-});
-</script>
-</body>
-</html>
-`
 }

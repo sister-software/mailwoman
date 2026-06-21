@@ -45,7 +45,6 @@ const OptionsSchema = zod.object({
 		.default("/mnt/playpen/mailwoman-data/coverage/coverage-us.pmtiles")
 		.describe("Output .pmtiles path"),
 	keepNdjson: zod.coerce.boolean().optional().default(false).describe("Keep the intermediate NDJSON"),
-	preview: zod.coerce.boolean().optional().default(false).describe("Emit a standalone HTML preview next to the pmtiles"),
 	threads: zod.coerce.number().int().positive().optional().describe("DuckDB worker-thread cap (default: all cores)"),
 })
 
@@ -82,7 +81,6 @@ const CoverageBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 				tileMaxZoom: options.maxZoom,
 				out: options.out,
 				keepNdjson: options.keepNdjson,
-				preview: options.preview,
 				threads: options.threads,
 			},
 			(name, message) => setStage({ name, message })
