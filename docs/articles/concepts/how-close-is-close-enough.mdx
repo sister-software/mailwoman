@@ -48,7 +48,7 @@ A tier label is coarse. The per-parse answer to "how close is this one?" is the 
 
 > A radius is only meaningful if it's calibrated. If we say ±87 m it must contain the truth ~90% of the time — not 72%. Otherwise the number is decoration.
 
-The raw half-segment interpolation radius covered only ~72% of true errors; a split-conformal calibration (Q̂ ≈ 1.70, per-region) makes it a real 90% bound. That turns "±87 m" from a guess into a promise: _the true point is within this radius ~90% of the time._ The consumer can then make the call honestly: "my tolerance is 50 m, your 90% radius is 87 m, so this one isn't close enough, abstain." That beats trusting a bare point that is secretly a city centroid.
+The raw half-segment interpolation radius covered only ~72% of true errors; a split-conformal calibration (Q̂ ≈ 1.70, per-region) makes it a real 90% bound. That turns "±87 m" from a guess into a promise: _the true point is within this radius ~90% of the time._ The consumer can then make the call: "my tolerance is 50 m, your 90% radius is 87 m, so this one isn't close enough, abstain." That beats trusting a bare point that is secretly a city centroid.
 
 This is the same move the parser makes with [confidence calibration](./confidence-calibration.mdx): a number you can act on, not a vibe.
 

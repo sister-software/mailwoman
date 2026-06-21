@@ -108,7 +108,7 @@ regex/rules system" — is demonstrated here, not merely asserted.
 (Coordinate accuracy is still admin-centroid tier: p50 2.4 km, p90 10.6 km. That is the
 _geometry_ gap, not a parsing gap — addressed in the roadmap below.)
 
-## Where neural is genuinely worse at parsing — and why
+## Where neural is worse at parsing — and why
 
 Stripping out the harness bias, the real neural deficits are:
 
@@ -164,7 +164,7 @@ possible future larger model — the negative result is specific to this 29M-par
    the system you're trying to beat scores that system at 100% by construction. Use it as a
    regression gate; judge quality on independent arenas + the product metric.
 2. **Pick the metric that matches the product.** Per-tag agreement is not geocoding
-   accuracy. The resolver-on-real-points number is the one that tracks the north star, and
+   accuracy. The resolver-on-real-points number is the one that tracks the metric that matters, and
    it tells the opposite story from the harness.
 3. **Pre-register kill-points.** The MLM track stayed alive on a 40k mirage; the
    pre-registered "ship only if the gains hold at ceiling" rule is what killed it cleanly

@@ -125,7 +125,7 @@ interpretable by construction: a total match weight is a prior plus a sum of
 per-field log-Bayes-factors (`M = M_prior + Σ log₂(mᵢ/uᵢ)`), so every decision is
 attributable to the fields that drove it. You can _read_ why two records linked.
 The match-weight threshold is the single precision/recall knob, with a
-clerical-review band in the middle for the genuinely ambiguous — the abstain zone,
+clerical-review band in the middle for the ambiguous — the abstain zone,
 the same move the geocoder makes when its radius blows up.
 
 ## Geography is the blocking key — the bet, and its tax
@@ -170,7 +170,7 @@ Calibrate the thresholds against mailwoman's _own_ measured error distribution,
 not the literature's older-geocoder constants. Our rooftop tier is tighter; the
 shape of the lesson holds, the numbers are ours to measure.
 
-## Where a model genuinely earns its place
+## Where a model earns its place
 
 The classical spine is the v1. Models are selective levers bolted on where the
 evidence says they pay — never the foundation:
@@ -203,7 +203,7 @@ evidence says they pay — never the foundation:
   improves quality (LLM-CER, 2025). Spend it only on the clerical-review band the
   calibrated scorer abstained on.
 - **An LLM for ingest.** The messy-data reality — "it came as a SQLite dump" — is
-  where an LLM is genuinely, cheaply excellent: read a header row plus a few
+  where an LLM is cheaply excellent: read a header row plus a few
   samples, infer the column→field mapping, cache it. One call per _source schema_,
   not per row. The most painful onboarding step, deleted.
 
@@ -257,7 +257,7 @@ layer is salvage. The match layer is the part that imploded last time, now
 standing on coordinates instead of strings. The address-id is the cheap certainty
 beside the probabilistic match: when two records resolve to the same place _and_
 share a canonical address, they collapse on a deterministic key — no scoring, no
-threshold — and the matcher spends its effort only on the genuinely-messy rest.
+threshold — and the matcher spends its effort only on the messy rest.
 
 ## Why you can't find the comparable project
 

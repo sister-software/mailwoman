@@ -44,7 +44,7 @@ honest:
 
 - **NPI** — one entity per registration. Over-segments every multi-subpart org.
 - **site** — collapse NPPES-flagged subparts back into their parent, then split
-  an NPI's genuinely-distinct addresses (mailing vs practice). Closer, but the
+  an NPI's distinct addresses (mailing vs practice). Closer, but the
   subpart flag is conservative: it misses the 37% of same-org pairs that aren't
   flagged.
 - **org-name** — the gold-set-validated truth: same NPI implies same entity
@@ -77,7 +77,7 @@ changing.
 ## Why we trust the org-name ruler
 
 A ruler you invent to make your number go up is worthless unless it's _right_. So
-the org-name collapse was validated against a frozen gold set: the genuinely-hard
+the org-name collapse was validated against a frozen gold set: the hardest
 slice — co-located, name-similar, **distinct** NPIs that are **not** flagged
 subparts — adjudicated one pair at a time. The verdict was unanimous:
 [**120 of 120**](../evals/2026-06-16-dedup-gold-set-tx120.md) were the same
