@@ -25,7 +25,8 @@
 		"./coincident-roles": "./out/coincident-roles.js",
 		"./geo": "./out/geo.js",
 		"./street-normalize": "./out/street-normalize.js",
-		"./build-candidate": "./out/build-candidate.js"
+		"./build-candidate": "./out/build-candidate.js",
+		"./candidate-schema": "./out/candidate-schema.js"
 	},
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
