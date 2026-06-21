@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/tiger",
-	"version": "1.0.0",
+	"version": "4.12.0",
 	"description": "US Census TIGER/Line data processing and analysis.",
 	"license": "AGPL-3.0",
 	"contributors": [
