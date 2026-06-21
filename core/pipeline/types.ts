@@ -62,6 +62,17 @@ export interface PipelineOpts {
 	 * - Off by default → byte-stable for mixed-case input.
 	 */
 	normalizeCase?: boolean
+	/**
+	 * #743/#194: promote a CONFIDENT coarse-placer guess from the soft `anchorPosterior` boost to a
+	 * HARD country filter (empty→unresolved) — see {@link ResolveOpts.hardCountry}. Only fires when
+	 * the placer's confidence clears `HARD_PLACE_COUNTRY_MIN_CONF`, so ambiguous neighbour cases
+	 * (DK↔NO) stay soft. Off by default → byte-stable (the soft prior alone). The lever for the
+	 * low-population EU tail (FI/PL) the soft prior can't move — it trades the off-continent guess
+	 * for "in-region or unresolved", so enabling it IS the precision/recall choice (tail collapse at
+	 * a coverage-bounded recall cost). Pairs with the widened placer (#759), which is what lets the
+	 * placer emit FI/PL confidently.
+	 */
+	hardPlaceCountry?: boolean
 	signal?: AbortSignal
 }
 

@@ -60,6 +60,13 @@ function isPostcodeFormat(format: string): boolean {
  */
 const COARSE_PLACER_ANCHOR_WEIGHT = 1.0
 
+// #194: minimum placer confidence to promote the soft country prior to a HARD filter (with fallback).
+// The placer already abstains below 0.9 in-map MASS (open-set rule), but the per-country argmax prob
+// can still be split across neighbours (DK↔NO, EE↔LT↔LV); requiring a high argmax confidence keeps the
+// hard filter to the cases the model is sure of (FI/PL routinely score ~1.0) and leaves the ambiguous
+// ones on the soft path. Deliberately strict — a wrong hard country is the #244 M2 misroute failure.
+const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
+
 function isPostcodeFormatHit(hit: { format: string }): boolean {
 	return isPostcodeFormat(hit.format)
 }
@@ -207,6 +214,16 @@ export async function runPipeline(
 		placedPrediction = placed
 		timing["place-country"] = performance.now() - tPlace
 		if (placed.country && placed.country !== "OTHER" && !opts?.resolveOpts?.anchorPosterior) {
+			// #194: promote a CONFIDENT placement to a HARD country filter (with empty→global fallback) when
+			// the caller opts in AND the confidence clears the bar. The soft posterior alone can't move a
+			// LOW-population place (a FI town loses to a high-pop namesake even when FI is pinned); the hard
+			// filter does. Gated on confidence so ambiguous neighbour placements (DK↔NO) stay soft. The
+			// caller's own `hardCountry`/`defaultCountry` is never overwritten.
+			const hard =
+				opts?.hardPlaceCountry &&
+				placed.confidence >= HARD_PLACE_COUNTRY_MIN_CONF &&
+				!opts?.resolveOpts?.hardCountry &&
+				!opts?.resolveOpts?.defaultCountry
 			effectiveOpts = {
 				...opts,
 				resolveOpts: {
@@ -215,6 +232,7 @@ export async function runPipeline(
 					// one-hot argmax (the M2 behavior).
 					anchorPosterior: placed.posterior ?? { [placed.country]: placed.confidence },
 					anchorWeight: opts?.resolveOpts?.anchorWeight ?? COARSE_PLACER_ANCHOR_WEIGHT,
+					...(hard ? { hardCountry: placed.country } : {}),
 				},
 			}
 		}
