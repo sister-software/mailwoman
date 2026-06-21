@@ -12,7 +12,6 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { fetchRedistricting } from "@mailwoman/tiger/sdk"
 import { Box, Text } from "ink"
 import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
@@ -43,6 +42,17 @@ const TIGERRedistricting: CommandComponent<typeof OptionsSchema> = ({ options })
 		}
 
 		;(async () => {
+			// Optional `@mailwoman/tiger` (operator street-tier tooling) — lazy-imported so the geocoding
+			// CLI never loads it at startup and a missing optional dep degrades gracefully. See fetch.tsx.
+			let fetchRedistricting: typeof import("@mailwoman/tiger/sdk").fetchRedistricting
+			try {
+				;({ fetchRedistricting } = await import("@mailwoman/tiger/sdk"))
+			} catch {
+				setError(
+					"`tiger redistricting` needs the optional @mailwoman/tiger package — install it with: npm install @mailwoman/tiger"
+				)
+				return
+			}
 			const gen = fetchRedistricting({
 				stateFIPS: options.state,
 				vintage: options.vintage,

@@ -17788,6 +17788,9 @@ __metadata:
   peerDependencies:
     "@duckdb/node-api": 1.5.3-r.3
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+  dependenciesMeta:
+    "@mailwoman/tiger":
+      optional: true
   peerDependenciesMeta:
     "@duckdb/node-api":
       optional: true

@@ -44,7 +44,6 @@
 		"@mailwoman/phrase-grouper": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
-		"@mailwoman/tiger": "workspace:*",
 		"chalk": "^5.6.2",
 		"change-case": "^5.4.4",
 		"d3-scale-chromatic": "^3.1.0",
@@ -66,6 +65,9 @@
 	"peerDependencies": {
 		"@duckdb/node-api": "1.5.3-r.3",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*"
+	},
+	"optionalDependencies": {
+		"@mailwoman/tiger": "workspace:*"
 	},
 	"files": [
 		"!out/test/**/*",

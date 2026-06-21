@@ -12,7 +12,6 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { fetchTIGER } from "@mailwoman/tiger/sdk"
 import { Box, Text } from "ink"
 import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
@@ -47,6 +46,19 @@ const TIGERFetch: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		}
 
 		;(async () => {
+			// `@mailwoman/tiger` is an OPTIONAL dependency (the census-TIGER fetch tooling is for
+			// operators building the street tier, not end-user geocoding) — imported lazily here so a
+			// clean geocoding-only install of the CLI never loads it at startup, and a missing optional
+			// dep degrades to a friendly message instead of crashing the whole CLI.
+			let fetchTIGER: typeof import("@mailwoman/tiger/sdk").fetchTIGER
+			try {
+				;({ fetchTIGER } = await import("@mailwoman/tiger/sdk"))
+			} catch {
+				setError(
+					"`tiger fetch` needs the optional @mailwoman/tiger package — install it with: npm install @mailwoman/tiger"
+				)
+				return
+			}
 			const gen = fetchTIGER({
 				stateFIPS: options.state,
 				level: options.level,
