@@ -48,6 +48,7 @@
 
 import { lookupGermanState } from "@mailwoman/codex/de"
 import { lookupFrenchRegion } from "@mailwoman/codex/fr"
+import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver, expandPlacetypeFilter } from "@mailwoman/core/resolver"
 import {
@@ -655,10 +656,14 @@ async function main(): Promise<void> {
 	// #743 EU country-constraint integrity fix: without it the assembled EU coords are not what a real
 	// caller sees (ambiguous EU names without a country constraint land off-continent).
 	const runAssembled = process.argv.includes("--assembled")
-	// `--place-country-hard` (#194) promotes a CONFIDENT placer guess to a HARD country filter (with
-	// empty→global fallback) — the lever for the low-pop EU tail (FI/PL) the soft prior can't move. It
-	// implies the placer is loaded.
-	const useHardCountry = process.argv.includes("--place-country-hard")
+	// `--place-country-hard` (#194/#743) promotes a CONFIDENT placer guess to a HARD country filter
+	// (empty→unresolved) — the lever for the low-pop EU tail the soft prior can't move. Production-
+	// representative: gated by the built-in coverage safelist (only well-covered countries hard-filter).
+	// `--place-country-hard-all` measures UNGATED (every confident country hard-filters, via a safelist
+	// override of the full in-map set) — how per-country hard-resolve-rates are measured to GROW the
+	// safelist. Both imply the placer is loaded.
+	const useHardCountryAll = process.argv.includes("--place-country-hard-all")
+	const useHardCountry = process.argv.includes("--place-country-hard") || useHardCountryAll
 	const usePlaceCountry = process.argv.includes("--place-country") || useHardCountry
 	const evalPlacer = runAssembled && usePlaceCountry ? await loadDefaultPlaceCountry() : null
 	if (usePlaceCountry && !evalPlacer) {
@@ -689,6 +694,12 @@ async function main(): Promise<void> {
 				resolver: resolver as never,
 				placeCountry: evalPlacer ?? false,
 				hardPlaceCountry: useHardCountry && !!evalPlacer,
+				// `--place-country-hard-all` overrides the production coverage safelist with the full in-map
+				// set, so EVERY confident country hard-filters (ungated measurement). Plain `--place-country-hard`
+				// leaves it undefined → the built-in safelist (production-representative).
+				...(useHardCountryAll
+					? { hardCountrySafelist: new Set(COARSE_CLASSES.filter((c) => c !== "OTHER")) as ReadonlySet<string> }
+					: {}),
 			})
 		: null
 

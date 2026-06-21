@@ -23,6 +23,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { hardCountryFor } from "@mailwoman/core/pipeline"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } from "@mailwoman/core/resolver"
 import { existsSync } from "node:fs"
 
@@ -108,6 +109,15 @@ export interface GeocodeDeps {
 	 * - `false` → disabled (no prior; the pre-M2 byte-stable behavior).
 	 */
 	placeCountry?: PlaceCountryFn | false
+	/**
+	 * #743/#194: promote a CONFIDENT placer guess to a HARD country filter (empty→unresolved) for
+	 * coverage-safelisted countries — see {@link hardCountryFor}. **DEFAULT-ON** (#743): a pure win on
+	 * well-covered countries (US/ES/IT/NL/DE/FR), soft (no-op) for the rest. Pass `false` to opt
+	 * out.
+	 */
+	hardPlaceCountry?: boolean
+	/** #743/#194: override the coverage safelist gating {@link hardPlaceCountry}. Undefined → built-in. */
+	hardCountrySafelist?: ReadonlySet<string>
 }
 
 /**
@@ -280,6 +290,16 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			// The full in-map distribution when supplied (resolver breaks ties); else the one-hot argmax.
 			opts.anchorPosterior = placed.posterior ?? { [placed.country]: placed.confidence }
 			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
+			// #743/#194: default-on coverage-guarded HARD country filter (same gate as the runtime pipeline,
+			// via the shared helper so the two production paths can't drift).
+			const hardCountry = hardCountryFor(
+				placed.country,
+				placed.confidence,
+				opts,
+				deps.hardPlaceCountry ?? true,
+				deps.hardCountrySafelist
+			)
+			if (hardCountry) opts.hardCountry = hardCountry
 		}
 	}
 	if (addressPoints) opts.addressPoints = addressPoints

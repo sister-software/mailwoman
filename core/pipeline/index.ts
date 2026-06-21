@@ -16,7 +16,7 @@ export type {
 	ResolverCandidatesLookup,
 	ScoreBreakdown,
 } from "./reconcile.js"
-export { runPipeline } from "./runtime-pipeline.js"
+export { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, runPipeline } from "./runtime-pipeline.js"
 export { aggregateSpanLogits } from "./span-logit-aggregation.js"
 export type { SpanBounds, TokenPiece } from "./span-logit-aggregation.js"
 export { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans } from "./span-proposer.js"
