@@ -31,6 +31,7 @@
  *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
  */
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { existsSync, readFileSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
@@ -132,7 +133,13 @@ const rows = src
 src.close()
 
 const out = new DatabaseSync(opts.output)
-out.exec(`CREATE TABLE polygons (id INTEGER PRIMARY KEY, geom TEXT NOT NULL);`)
+// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `out` handle.
+const kdb = new DatabaseClient({ database: out })
+await kdb.schema
+	.createTable("polygons")
+	.addColumn("id", "integer", (c) => c.primaryKey())
+	.addColumn("geom", "text", (c) => c.notNull())
+	.execute()
 const insert = out.prepare(`INSERT OR IGNORE INTO polygons (id, geom) VALUES (?, ?)`)
 
 let done = 0
@@ -163,7 +170,7 @@ for (const r of rows) {
 out.exec("COMMIT")
 out.exec("VACUUM")
 const bytes = out.prepare(`SELECT count(*) n, sum(length(geom)) b FROM polygons`).get()
-out.close()
+await kdb.destroy() // closes the underlying `out` handle
 console.error(
 	`✓ ${opts.output}: ${done} polygons (${missing} no-geometry, ${dropped} dropped), ~${Math.round((bytes.b || 0) / 1024 / 1024)} MB geom`
 )

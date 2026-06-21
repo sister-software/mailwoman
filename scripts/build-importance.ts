@@ -11,6 +11,7 @@
  *   scripts/build-importance.ts --db /path/to/wof.db --tsv /path/to/wikimedia-importance.csv.gz
  */
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { createReadStream, existsSync, writeFileSync } from "node:fs"
 import { get as httpsGet } from "node:https"
 import { tmpdir } from "node:os"
@@ -101,6 +102,8 @@ async function main() {
 	}
 
 	const db = new DatabaseSync(dbPath, { open: true })
+	// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `db` handle.
+	const kdb = new DatabaseClient({ database: db })
 
 	// Step 1: Load Wikidata concordances from WOF
 	console.error("Loading Wikidata concordances from WOF...")
@@ -164,8 +167,12 @@ async function main() {
 
 	// Step 4: Build place_importance table
 	console.error("Building place_importance table...")
-	db.exec("DROP TABLE IF EXISTS place_importance")
-	db.exec("CREATE TABLE place_importance (id INTEGER PRIMARY KEY, importance REAL NOT NULL)")
+	await kdb.schema.dropTable("place_importance").ifExists().execute()
+	await kdb.schema
+		.createTable("place_importance")
+		.addColumn("id", "integer", (c) => c.primaryKey())
+		.addColumn("importance", "real", (c) => c.notNull())
+		.execute()
 
 	const insertStmt = db.prepare("INSERT INTO place_importance (id, importance) VALUES (?, ?)")
 	let importanceCount = 0
@@ -201,7 +208,7 @@ async function main() {
 		console.error("  No place_population table — skipping fallback")
 	}
 
-	db.close()
+	await kdb.destroy() // closes the underlying `db` handle
 
 	const elapsed = ((performance.now() - t0) / 1000).toFixed(1)
 	console.error(`\nDone in ${elapsed}s:`)
