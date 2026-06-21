@@ -36,9 +36,15 @@ const OUT_DIR = path.resolve(import.meta.dirname, "../../data/coarse-placer")
 // #743: the EU expansion. The v0.5.0 corpus carries zero rows for these locales, so they're drawn
 // from the Overture per-country addresses theme (the same source build-eu-eval-set.ts uses). They
 // were previously OTHER outlier exposure (PL/PT/CZ) or simply unrepresentable; here they become
-// first-class in-map countries so the soft country prior can pin them. DE/NL/IT/ES/GB are excluded
-// (already in COUNTRIES, drawn from the rich corpus).
+// first-class in-map countries so the soft country prior can pin them.
 const NEW_EU = ["AT", "BE", "CH", "CZ", "DK", "EE", "FI", "HR", "LT", "LU", "LV", "NO", "PL", "PT", "SI", "SK"]
+// #743 in-map dilution fix: DE/ES/IT/NL are already in COUNTRIES (corpus format), but the eu-eval
+// sets + every NEW_EU country are Overture format. Without an Overture sample of their OWN, their
+// Overture-format eval rows scatter to the Overture-trained neighbours (measured: only 63% of ES
+// eval rows routed ES, ~26% leaked to CH/PT/HR/IT/FR/CZ). SUPPLEMENT their corpus rows with an
+// Overture sample so each owns its own format shape; the format then stops being discriminative and
+// the model falls back to the linguistic n-grams. GB excluded — its Overture parquet is empty.
+const IN_MAP_EU = ["DE", "ES", "IT", "NL"]
 const OVERTURE_DIR = "/mnt/playpen/mailwoman-data/overture/2026-06-17.0"
 mkdirSync(OUT_DIR, { recursive: true })
 
@@ -94,7 +100,7 @@ function formatEu(street, number, postcode, loc, t) {
 			return `${s}${num}, ${pc ? `${pc} ` : ""}${loc}` // {street number, postcode locality}
 	}
 }
-for (const country of NEW_EU) {
+for (const country of [...NEW_EU, ...IN_MAP_EU]) {
 	const parquet = `${OVERTURE_DIR}/addresses-${country.toLowerCase()}.parquet`
 	const q = `SELECT street, number, postcode,
 			COALESCE(NULLIF(trim(postal_city), ''), address_levels[len(address_levels)].value) AS loc
