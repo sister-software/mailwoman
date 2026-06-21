@@ -20,11 +20,18 @@ import type { CommandComponent } from "../../sdk/cli.js"
 
 const OptionsSchema = zod.object({
 	state: zod.string().describe("Two-digit state FIPS, e.g. 06 (California)."),
-	vintage: zod.number().default(2020).describe("TIGER vintage. Default 2020 (matches the 2020 P.L. 94-171 blocks)."),
+	level: zod
+		.enum(["tabblock20", "place", "addrfeat"])
+		.default("tabblock20")
+		.describe("TIGER level: tabblock20 (blocks+geometry), place, or addrfeat (streets, per county)."),
+	vintage: zod
+		.number()
+		.optional()
+		.describe("TIGER vintage. Default 2020 for blocks (matches the P.L.), 2024 for place/addrfeat."),
 	county: zod
 		.string()
 		.optional()
-		.describe("Optional three-digit county FIPS filter, e.g. 059 — loads only that county's blocks."),
+		.describe("Optional three-digit county FIPS filter (blocks only)."),
 	out: zod.string().optional().describe("Output .db path. Default <dataRoot>/tiger/tiger-<vintage>.db."),
 })
 
@@ -32,7 +39,7 @@ export { OptionsSchema as options }
 
 const TIGERFetch: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const [status, setStatus] = useState("Starting…")
-	const [result, setResult] = useState<{ inserted: number; outPath: string } | null>(null)
+	const [result, setResult] = useState<{ inserted: number; outPath: string; table: string } | null>(null)
 	const [error, setError] = useState<string>()
 
 	useEffect(() => {
@@ -44,6 +51,7 @@ const TIGERFetch: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		;(async () => {
 			const gen = fetchTIGER({
 				stateFIPS: options.state,
+				level: options.level,
 				vintage: options.vintage,
 				county: options.county,
 				outPath: options.out,
@@ -59,7 +67,7 @@ const TIGERFetch: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 				next = await gen.next()
 			}
 
-			setResult({ inserted: next.value.inserted, outPath: next.value.outPath })
+			setResult({ inserted: next.value.inserted, outPath: next.value.outPath, table: next.value.table })
 		})().catch((err) => setError((err as Error).message))
 	}, [options.state, options.vintage, options.county, options.out])
 
@@ -80,7 +88,8 @@ const TIGERFetch: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		return (
 			<Box flexDirection="column">
 				<Text>
-					Loaded <Text bold>{result.inserted.toLocaleString()}</Text> blocks into <Text bold>{result.outPath}</Text>.
+					Loaded <Text bold>{result.inserted.toLocaleString()}</Text> rows into <Text bold>{result.table}</Text> (
+					{result.outPath}).
 				</Text>
 			</Box>
 		)

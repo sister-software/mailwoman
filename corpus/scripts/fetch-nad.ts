@@ -9,7 +9,7 @@
  *   US Public Domain (17 U.S.C. § 105).
  *
  *   Replaces the bash `fetch-sources/fetch-nad.sh` with a TypeScript pipeline matching the style of
- *   the other corpus scripts (build-tiger-db, ingest-csv, run-corpus-build). Adds:
+ *   the other corpus scripts (ingest-csv, run-corpus-build). Adds:
  *
  *   - Bounded per-chunk page concurrency (4× speedup at safe pressure)
  *   - 5× larger page size (5 000 vs. bash's 2 000) — fewer round-trips per chunk

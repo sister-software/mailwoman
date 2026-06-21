@@ -21,6 +21,9 @@ const adapterInputs: Record<string, { inputPath: string; country?: string }> = {
 	"wof-admin": { inputPath: `${ROOT}/wof/whosonfirst-data/` },
 	"wof-postalcode": { inputPath: `${ROOT}/wof/whosonfirst-data/` },
 	ban: { inputPath: `${ROOT}/ban/ban-national.csv` },
+	// tiger.db (tiger_streets + tiger_places) is built by the mailwoman CLI:
+	//   mailwoman tiger fetch --state <fips> --level place    --out <ROOT>/tiger/tiger.db
+	//   mailwoman tiger fetch --state <fips> --level addrfeat --out <ROOT>/tiger/tiger.db
 	tiger: { inputPath: `${ROOT}/tiger/tiger.db` },
 	"usgov-hrsa-fqhc": { inputPath: `${ROOT}/usgov-hrsa-fqhc/Health_Center_Service_Delivery_and_LookAlike_Sites.csv` },
 	"usgov-nppes": { inputPath: `${ROOT}/usgov-nppes/npidata_pfile_20050523-20260510.csv` },

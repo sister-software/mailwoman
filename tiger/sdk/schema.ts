@@ -48,10 +48,31 @@ export interface PLBlockTable {
 	multi: number
 }
 
+/** Kysely row type for `tiger_streets` (ADDRFEAT — named street segments + ZIPs, per county). */
+export interface TIGERStreetTable {
+	linearid: string
+	fullname: string
+	zipl: string | null
+	zipr: string | null
+	statefp: string
+}
+
+/** Kysely row type for `tiger_places` (PLACE — incorporated/census places, per state). */
+export interface TIGERPlaceTable {
+	geoid: string
+	name: string
+	statefp: string
+	lsad: string | null
+	namelsad: string | null
+	classfp: string | null
+}
+
 /** The TIGER database schema, for `new DatabaseClient<TIGERDatabase>(...)`. */
 export interface TIGERDatabase {
 	tabblock20: TIGERBlockTable
 	pl_block: PLBlockTable
+	tiger_streets: TIGERStreetTable
+	tiger_places: TIGERPlaceTable
 }
 
 /** Marker so callers can opt into `Generated` columns later without importing kysely here. */
@@ -114,4 +135,25 @@ CREATE TABLE IF NOT EXISTS "pl_block" (
 	"other" integer NOT NULL,
 	"multi" integer NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS "tiger_streets" (
+	"linearid" text NOT NULL,
+	"fullname" text NOT NULL,
+	"zipl" text,
+	"zipr" text,
+	"statefp" text(2) NOT NULL
+);
+CREATE INDEX IF NOT EXISTS "idx_tiger_streets_statefp" ON "tiger_streets" ("statefp");
+CREATE INDEX IF NOT EXISTS "idx_tiger_streets_linearid" ON "tiger_streets" ("linearid");
+
+CREATE TABLE IF NOT EXISTS "tiger_places" (
+	"geoid" text NOT NULL,
+	"name" text NOT NULL,
+	"statefp" text(2) NOT NULL,
+	"lsad" text,
+	"namelsad" text,
+	"classfp" text
+);
+CREATE INDEX IF NOT EXISTS "idx_tiger_places_statefp" ON "tiger_places" ("statefp");
+CREATE INDEX IF NOT EXISTS "idx_tiger_places_geoid" ON "tiger_places" ("geoid");
 `
