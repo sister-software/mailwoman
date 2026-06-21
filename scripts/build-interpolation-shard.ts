@@ -29,10 +29,17 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { DuckDBInstance } from "@duckdb/node-api"
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
 // Cross-tree source import (.ts explicit): this script runs via --experimental-strip-types,
 // not from compiled out/ — the lookup tier imports the same module intra-package.
 import { canonicalizeRouteKey, normalizeStreetForKey } from "../resolver-wof-sqlite/street-normalize.ts"
+import {
+	createStreetSegmentIndexes,
+	createStreetSegmentTable,
+	STREET_SEGMENT_COLUMNS,
+	type StreetSegmentDatabase,
+} from "../resolver-wof-sqlite/street-segment-schema.ts"
 
 /** State abbreviation → state FIPS prefix, for picking county files out of --edges-dir. */
 const STATE_FIPS: Record<string, string> = {
@@ -117,28 +124,14 @@ mkdirSync(path.dirname(OUT), { recursive: true })
 rmSync(OUT, { force: true }) // idempotent rebuild — never append across releases
 
 const db = new DatabaseSync(OUT)
-db.exec(`
-	PRAGMA journal_mode = WAL;
-	CREATE TABLE street_segment (
-		street_norm  TEXT NOT NULL,
-		side         TEXT NOT NULL,
-		from_hn      INTEGER NOT NULL,
-		to_hn        INTEGER NOT NULL,
-		min_hn       INTEGER NOT NULL,
-		max_hn       INTEGER NOT NULL,
-		parity       TEXT NOT NULL,
-		postcode     TEXT,
-		county_fips  TEXT NOT NULL,
-		street_raw   TEXT NOT NULL,
-		geometry     TEXT NOT NULL,
-		source       TEXT NOT NULL,
-		release      TEXT NOT NULL
-	);
-`)
+db.exec("PRAGMA journal_mode = WAL;")
+// DDL via the SHARED street-segment-schema builder (the table the reader + tests use) so this
+// producer can't drift. DuckDB above is the raw spatial reader; the hot INSERT stays on `db`.
+const kdb = new DatabaseClient<StreetSegmentDatabase>({ database: db })
+await createStreetSegmentTable(kdb)
 const insert = db.prepare(
-	`INSERT INTO street_segment
-	 (street_norm, side, from_hn, to_hn, min_hn, max_hn, parity, postcode, county_fips, street_raw, geometry, source, release)
-	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	`INSERT INTO street_segment (${STREET_SEGMENT_COLUMNS.join(", ")})
+	 VALUES (${STREET_SEGMENT_COLUMNS.map(() => "?").join(", ")})`
 )
 
 /** Strictly-numeric house number → integer, else null (hyphenated/alphanumeric skipped). */
@@ -220,18 +213,14 @@ for (const shp of shapefiles) {
 	console.log(`  ${countyFips}: done (${sides} sides so far)`)
 }
 db.exec("COMMIT")
-db.exec(`
-	CREATE INDEX idx_seg_postcode ON street_segment (postcode, street_norm, min_hn);
-	CREATE INDEX idx_seg_street   ON street_segment (street_norm, min_hn);
-	PRAGMA wal_checkpoint(TRUNCATE);
-	VACUUM;
-`)
+await createStreetSegmentIndexes(kdb)
+db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
 const stats = db
 	.prepare(
 		"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM street_segment"
 	)
 	.get() as Record<string, number>
-db.close()
+await kdb.destroy()
 
 console.log(`${sides} segment-sides → ${OUT}`)
 console.log(`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`)

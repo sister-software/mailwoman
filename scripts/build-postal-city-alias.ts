@@ -29,6 +29,11 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { DuckDBInstance } from "@duckdb/node-api"
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import {
+	createPostalCityAliasTable,
+	type PostalCityAliasDatabase,
+} from "../resolver-wof-sqlite/postal-city-alias-schema.ts"
 
 const { values: args } = parseArgs({
 	options: {
@@ -61,18 +66,12 @@ const result = await duck.runAndReadAll(`
 const rows = result.getRowObjects() as { postcode: string; postal_city: string; geo_locality: string; n: bigint }[]
 
 const db = new DatabaseSync(args.out!)
-db.exec(`
-	PRAGMA journal_mode = WAL;
-	CREATE TABLE postal_city_alias (
-		postcode     TEXT NOT NULL,
-		postal_city  TEXT NOT NULL,
-		geo_locality TEXT NOT NULL,
-		n            INTEGER NOT NULL,
-		divergent    INTEGER NOT NULL, -- 1 when postal_city != geo_locality (the alias signal)
-		source       TEXT NOT NULL,
-		release      TEXT NOT NULL
-	);
-`)
+db.exec("PRAGMA journal_mode = WAL;")
+// DDL via the SHARED createPostalCityAliasTable builder — the exact table the reader + tests use, so
+// this producer can't drift from postal-city-alias-schema.ts. DuckDB above is the raw parquet reader;
+// the hot INSERT below stays on the raw `db` handle.
+const kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: db })
+await createPostalCityAliasTable(kdb)
 const insert = db.prepare(
 	"INSERT INTO postal_city_alias (postcode, postal_city, geo_locality, n, divergent, source, release) VALUES (?, ?, ?, ?, ?, ?, ?)"
 )
@@ -84,12 +83,8 @@ for (const r of rows) {
 	insert.run(r.postcode, r.postal_city, r.geo_locality, Number(r.n), isDivergent, "overture:US", String(args.release))
 }
 db.exec("COMMIT")
-db.exec(`
-	CREATE INDEX idx_pca_postcode ON postal_city_alias (postcode);
-	CREATE INDEX idx_pca_pair ON postal_city_alias (postal_city, geo_locality);
-	PRAGMA wal_checkpoint(TRUNCATE);
-	VACUUM;
-`)
-db.close()
+// Indexes were created by createPostalCityAliasTable above; just checkpoint + compact.
+db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
+await kdb.destroy()
 console.log(`${rows.length} (postcode, postal_city, geo_locality) pairs (n >= ${MIN_COUNT}) → ${args.out}`)
 console.log(`divergent pairs: ${divergent} (${((100 * divergent) / Math.max(1, rows.length)).toFixed(1)}%)`)
