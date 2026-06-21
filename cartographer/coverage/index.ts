@@ -26,11 +26,11 @@ import type {
 } from "@maplibre/maplibre-gl-style-spec"
 import { TileSetSourceID } from "../styles/sources.js"
 
-/** Identifier for the address-coverage ("fog of war") tile set — served by the tile worker from
- * `nexus-assets/tiles/coverage-us-v4.pmtiles` (versioned name, like `basemap-v4`). */
 export const CoverageTileSetID = TileSetSourceID("coverage-us-v4")
 
-/** The single source-layer the coverage PMTiles ships (see `build-coverage-tiles.ts` → tippecanoe `-l`). */
+/**
+ * The single source-layer the coverage PMTiles ships (see `build-coverage-tiles.ts` → tippecanoe `-l`).
+ */
 export const COVERAGE_SOURCE_LAYER = "coverage"
 
 /**
@@ -38,12 +38,16 @@ export const COVERAGE_SOURCE_LAYER = "coverage"
  * holds contrast over the demo's terrain+hillshade basemap, which is itself dark-green over forest where
  * a lighter fog would simply vanish.
  */
-export const COVERAGE_FOG_COLOR = "#05070f"
+export const COVERAGE_FOG_COLOR = "#663399" // Rebecca Purple
 
-/** Opacity of a fully-empty (`fog = 1`) cell. Covered cells scale down from here toward transparent. */
+/**
+ * Opacity of a fully-empty (`fog = 1`) cell. Covered cells scale down from here toward transparent.
+ */
 export const COVERAGE_MAX_FOG_OPACITY = 0.9
 
-/** Layer IDs, exported so the demo (toggle wiring, imperative add) and tests can reference them. */
+/**
+ * Layer IDs, exported so the demo (toggle wiring, imperative add) and tests can reference them.
+ */
 export const CoverageLayerID = {
 	optimistic: "coverage-opt-fog",
 	honest: "coverage-honest-fog",
