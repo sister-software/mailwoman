@@ -34,7 +34,7 @@ import { DatabaseSync } from "node:sqlite"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable } from "./schema.js"
-import { TIGER_INITIALIZE_SQL } from "./schema.js"
+import { initializeTIGERSchema, TIGER_PRAGMAS } from "./schema.js"
 
 const CENSUS_HOST = "https://www2.census.gov"
 const DEFAULT_DATA_ROOT = process.env.MAILWOMAN_DATA_ROOT ?? "/mnt/playpen/mailwoman-data"
@@ -92,7 +92,7 @@ function blockSelectSQL(layer: string, county?: string): string {
 	const where = county ? ` WHERE COUNTYFP20 = '${county}'` : ""
 	return (
 		`SELECT GEOID20 AS GEOID, STATEFP20 AS state_code, COUNTYFP20 AS county_code, ` +
-		`SUBSTR(GEOID20, 6, 5) AS county_sub_division_code, SUBSTR(GEOID20, 6, 6) AS tract_code, ` +
+		`SUBSTR(GEOID20, 6, 6) AS tract_code, ` +
 		`SUBSTR(GEOID20, 12, 1) AS block_group_code, BLOCKCE20 AS block_code, ` +
 		`UACE20 AS urbanized_area_code, UR20 AS urban_rural_code, ` +
 		`HOUSING20 AS housing_unit_count, ALAND20 AS land_area_sqm, AWATER20 AS water_area_sqm, ` +
@@ -138,7 +138,6 @@ function buildRow(level: TIGERFetchLevel, p: Record<string, unknown>, geometry: 
 				GEOID: String(p.GEOID),
 				state_code: String(p.state_code),
 				county_code: String(p.county_code),
-				county_sub_division_code: String(p.county_sub_division_code ?? ""),
 				tract_code: String(p.tract_code ?? ""),
 				block_group_code: String(p.block_group_code ?? ""),
 				block_code: String(p.block_code ?? ""),
@@ -223,8 +222,9 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	}
 
 	const db = new DatabaseSync(outPath)
-	db.exec(TIGER_INITIALIZE_SQL)
+	db.exec(TIGER_PRAGMAS)
 	const kdb = new DatabaseClient<TIGERDatabase>({ database: db })
+	await initializeTIGERSchema(kdb)
 
 	const insertBatch = async (rows: Row[]): Promise<void> => {
 		if (level === "tabblock20")

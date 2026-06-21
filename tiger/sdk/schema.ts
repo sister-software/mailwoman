@@ -10,14 +10,13 @@
  *   back with `JSON.parse`).
  */
 
-import type { Generated } from "kysely"
+import { sql, type Generated, type Kysely } from "kysely"
 
 /** Kysely row type for `tabblock20`. Geometry is a GeoJSON string. */
 export interface TIGERBlockTable {
 	GEOID: string
 	state_code: string
 	county_code: string
-	county_sub_division_code: string
 	tract_code: string
 	block_group_code: string
 	block_code: string
@@ -78,82 +77,127 @@ export interface TIGERDatabase {
 /** Marker so callers can opt into `Generated` columns later without importing kysely here. */
 export type { Generated }
 
-export const TIGER_INITIALIZE_SQL = /* sql */ `
+/**
+ * Build-tuning PRAGMAs, run raw before any table is created (`page_size`/`auto_vacuum` only take
+ * effect on an empty DB, and PRAGMA has no Kysely builder). The consumer execs this, then calls
+ * {@link initializeTIGERSchema} for the tables + indexes.
+ */
+export const TIGER_PRAGMAS = /* sql */ `
 PRAGMA auto_vacuum = INCREMENTAL;
 PRAGMA page_size = 4096;
 PRAGMA cache_size = 10000;
 PRAGMA journal_mode = WAL;
-
-CREATE TABLE IF NOT EXISTS "us_state" (
-	"state_code" text(2) PRIMARY KEY NOT NULL,
-	"abbreviation" text NOT NULL,
-	"display_name" text NOT NULL,
-	"geometry" text NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS "tract" (
-	"GEOID" text(11) PRIMARY KEY NOT NULL,
-	"state_code" text(2) NOT NULL,
-	"county_code" text(3) NOT NULL,
-	"county_sub_division_code" text(5) NOT NULL,
-	"tract_code" text(6) NOT NULL,
-	"geometry" text NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS "tabblock20" (
-	"GEOID" text(15) PRIMARY KEY NOT NULL,
-	"state_code" text(2) NOT NULL,
-	"county_code" text(3) NOT NULL,
-	"county_sub_division_code" text(5) NOT NULL,
-	"tract_code" text(6) NOT NULL,
-	"block_group_code" text(1) NOT NULL,
-	"block_code" text(4) NOT NULL,
-	"urbanized_area_code" text(5),
-	"urban_rural_code" text(1),
-	"housing_unit_count" integer NOT NULL,
-	"land_area_sqm" integer NOT NULL,
-	"water_area_sqm" integer NOT NULL,
-	"population" integer NOT NULL,
-	"geometry" text NOT NULL
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_tabblock20_geoid" ON "tabblock20" ("GEOID");
-CREATE INDEX IF NOT EXISTS "idx_tabblock20_state_code" ON "tabblock20" ("state_code");
-CREATE INDEX IF NOT EXISTS "idx_tabblock20_state_county" ON "tabblock20" ("state_code", "county_code");
-CREATE INDEX IF NOT EXISTS "idx_tabblock20_state_county_tract" ON "tabblock20" ("state_code", "county_code", "tract_code");
-CREATE INDEX IF NOT EXISTS "idx_tabblock20_population" ON "tabblock20" ("population");
-
-CREATE TABLE IF NOT EXISTS "pl_block" (
-	"GEOID" text(15) PRIMARY KEY NOT NULL,
-	"pop_total" integer NOT NULL,
-	"hispanic" integer NOT NULL,
-	"white" integer NOT NULL,
-	"black" integer NOT NULL,
-	"aian" integer NOT NULL,
-	"asian" integer NOT NULL,
-	"nhpi" integer NOT NULL,
-	"other" integer NOT NULL,
-	"multi" integer NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS "tiger_streets" (
-	"linearid" text NOT NULL,
-	"fullname" text NOT NULL,
-	"zipl" text,
-	"zipr" text,
-	"statefp" text(2) NOT NULL
-);
-CREATE INDEX IF NOT EXISTS "idx_tiger_streets_statefp" ON "tiger_streets" ("statefp");
-CREATE INDEX IF NOT EXISTS "idx_tiger_streets_linearid" ON "tiger_streets" ("linearid");
-
-CREATE TABLE IF NOT EXISTS "tiger_places" (
-	"geoid" text NOT NULL,
-	"name" text NOT NULL,
-	"statefp" text(2) NOT NULL,
-	"lsad" text,
-	"namelsad" text,
-	"classfp" text
-);
-CREATE INDEX IF NOT EXISTS "idx_tiger_places_statefp" ON "tiger_places" ("statefp");
-CREATE INDEX IF NOT EXISTS "idx_tiger_places_geoid" ON "tiger_places" ("geoid");
 `
+
+/**
+ * Create the TIGER tables + indexes via the Kysely schema-builder (the house idiom). Idempotent
+ * (`IF NOT EXISTS`). Pass a {@link DatabaseClient} (or any `Kysely`) over the TIGER DB; run
+ * {@link TIGER_PRAGMAS} first. `us_state`/`tract` aren't in {@link TIGERDatabase} (created here but
+ * not queried via Kysely) — `createTable` takes any table name, so that's fine.
+ *
+ * The `text(N)` length hints in the prior raw DDL were documentary only (SQLite uses TEXT affinity
+ * regardless); the lengths live on the {@link TIGERBlockTable} interface instead.
+ */
+export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<void> {
+	await db.schema
+		.createTable("us_state")
+		.ifNotExists()
+		.addColumn("state_code", "text", (c) => c.primaryKey().notNull())
+		.addColumn("abbreviation", "text", (c) => c.notNull())
+		.addColumn("display_name", "text", (c) => c.notNull())
+		.addColumn("geometry", "text", (c) => c.notNull())
+		.execute()
+
+	await db.schema
+		.createTable("tract")
+		.ifNotExists()
+		.addColumn("GEOID", "text", (c) => c.primaryKey().notNull())
+		.addColumn("state_code", "text", (c) => c.notNull())
+		.addColumn("county_code", "text", (c) => c.notNull())
+		.addColumn("tract_code", "text", (c) => c.notNull())
+		.addColumn("geometry", "text", (c) => c.notNull())
+		.execute()
+
+	await db.schema
+		.createTable("tabblock20")
+		.ifNotExists()
+		.addColumn("GEOID", "text", (c) => c.primaryKey().notNull())
+		.addColumn("state_code", "text", (c) => c.notNull())
+		.addColumn("county_code", "text", (c) => c.notNull())
+		.addColumn("tract_code", "text", (c) => c.notNull())
+		.addColumn("block_group_code", "text", (c) => c.notNull())
+		.addColumn("block_code", "text", (c) => c.notNull())
+		.addColumn("urbanized_area_code", "text")
+		.addColumn("urban_rural_code", "text")
+		.addColumn("housing_unit_count", "integer", (c) => c.notNull())
+		.addColumn("land_area_sqm", "integer", (c) => c.notNull())
+		.addColumn("water_area_sqm", "integer", (c) => c.notNull())
+		.addColumn("population", "integer", (c) => c.notNull())
+		.addColumn("geometry", "text", (c) => c.notNull())
+		.execute()
+
+	// No index on GEOID alone — it's the PRIMARY KEY, which already carries a unique index. The prior
+	// schema's idx_tabblock20_geoid duplicated that for nothing (double insert cost, double footprint).
+	await db.schema.createIndex("idx_tabblock20_state_code").ifNotExists().on("tabblock20").column("state_code").execute()
+	await db.schema
+		.createIndex("idx_tabblock20_state_county")
+		.ifNotExists()
+		.on("tabblock20")
+		.columns(["state_code", "county_code"])
+		.execute()
+	await db.schema
+		.createIndex("idx_tabblock20_state_county_tract")
+		.ifNotExists()
+		.on("tabblock20")
+		.columns(["state_code", "county_code", "tract_code"])
+		.execute()
+	await db.schema.createIndex("idx_tabblock20_population").ifNotExists().on("tabblock20").column("population").execute()
+
+	await db.schema
+		.createTable("pl_block")
+		.ifNotExists()
+		.addColumn("GEOID", "text", (c) => c.primaryKey().notNull())
+		.addColumn("pop_total", "integer", (c) => c.notNull())
+		.addColumn("hispanic", "integer", (c) => c.notNull())
+		.addColumn("white", "integer", (c) => c.notNull())
+		.addColumn("black", "integer", (c) => c.notNull())
+		.addColumn("aian", "integer", (c) => c.notNull())
+		.addColumn("asian", "integer", (c) => c.notNull())
+		.addColumn("nhpi", "integer", (c) => c.notNull())
+		.addColumn("other", "integer", (c) => c.notNull())
+		.addColumn("multi", "integer", (c) => c.notNull())
+		// pl_block is small (no geometry) and always probed by its GEOID PK (1:1 join to tabblock20), so
+		// cluster it WITHOUT ROWID — one B-tree probe per join, no separate rowid + PK-index pair.
+		.modifyEnd(sql`without rowid`)
+		.execute()
+
+	await db.schema
+		.createTable("tiger_streets")
+		.ifNotExists()
+		.addColumn("linearid", "text", (c) => c.notNull())
+		.addColumn("fullname", "text", (c) => c.notNull())
+		.addColumn("zipl", "text")
+		.addColumn("zipr", "text")
+		.addColumn("statefp", "text", (c) => c.notNull())
+		.execute()
+	await db.schema.createIndex("idx_tiger_streets_statefp").ifNotExists().on("tiger_streets").column("statefp").execute()
+	await db.schema
+		.createIndex("idx_tiger_streets_linearid")
+		.ifNotExists()
+		.on("tiger_streets")
+		.column("linearid")
+		.execute()
+
+	await db.schema
+		.createTable("tiger_places")
+		.ifNotExists()
+		.addColumn("geoid", "text", (c) => c.notNull())
+		.addColumn("name", "text", (c) => c.notNull())
+		.addColumn("statefp", "text", (c) => c.notNull())
+		.addColumn("lsad", "text")
+		.addColumn("namelsad", "text")
+		.addColumn("classfp", "text")
+		.execute()
+	await db.schema.createIndex("idx_tiger_places_statefp").ifNotExists().on("tiger_places").column("statefp").execute()
+	await db.schema.createIndex("idx_tiger_places_geoid").ifNotExists().on("tiger_places").column("geoid").execute()
+}
