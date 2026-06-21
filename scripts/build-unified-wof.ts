@@ -371,7 +371,7 @@ async function main() {
 		PRAGMA temp_store = MEMORY;
 		PRAGMA cache_size = -200000;
 	`)
-	createUnifiedSchema(db)
+	await createUnifiedSchema(db)
 
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -509,7 +509,7 @@ async function main() {
 	console.error(`  coincident_roles: ${roles.rowCount} rows`)
 
 	console.error("  Creating indexes...")
-	createUnifiedIndexes(db)
+	await createUnifiedIndexes(db)
 
 	console.error("  ANALYZE...")
 	db.exec("ANALYZE")

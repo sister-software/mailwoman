@@ -25,10 +25,10 @@ import { DatabaseSync } from "node:sqlite"
 const dbPath = process.argv[2] ?? "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
 console.error(`Adding ancestors to ${dbPath} ...`)
 const db = new DatabaseSync(dbPath)
-createUnifiedSchema(db) // CREATE TABLE IF NOT EXISTS — adds `ancestors`, leaves existing tables intact
+await createUnifiedSchema(db) // CREATE TABLE IF NOT EXISTS — adds `ancestors`, leaves existing tables intact
 const t0 = performance.now()
 const rows = populateAncestors(db)
-createUnifiedIndexes(db)
+await createUnifiedIndexes(db)
 db.exec("ANALYZE")
 // Restore the frozen single-file state (createUnifiedSchema put us in WAL).
 db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
