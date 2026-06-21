@@ -49,6 +49,22 @@ p50 barely moves (3.2→3.1 km) because most divergent postcodes already resolve
 
 **Why not the standard OA eval:** the OA US sample's inputs use the GEOGRAPHIC locality name (matching `expected`), so the postal-city lever never fires on it — running it would read FLAT, a misleading non-result (the verify-before-verdict trap). The faithful measurement is the postal-city-input spot-check above; a full aggregate eval would need a postal-city-input corpus graded against independent geography — the operator follow-up alongside the candidate-path build-time fold.
 
+## #734 EU-recall — diagnosed into three distinct per-country levers (no rebuild tonight)
+
+Ran the candidate-recall harness on the AT/FI/SK holdout against the promoted `-20g` DB, then verified the buckets. Findings sharpen #734 from a lumped "coverage depth + bilingual aliases" into three separable levers — and correct one number:
+
+| country | exact recall | +strip-fallback | misses absent / wrong-pt | lever |
+| --- | --- | --- | --- | --- |
+| AT | 74.1% | **88.2%** (+14.1) | 311 / 0 | **already solved in production** |
+| FI | 80.5% | 80.5% | 212 / 22 | **bilingual Finnish↔Swedish alt-names** |
+| SK | 78.1% | 78.1% | 114 / 17 | **city-district sub-locality depth** |
+
+- **AT — the "74%" was a measurement artifact.** Nearly all AT misses are `Place/Qualifier` / `b.Graz` (bei) / `o.Bleiburg` (ob) forms, and `stripLocalityQualifier` recovers 169 of them (→88.2%). The candidate lookup does that strip on a miss **in both the Node CLI and the browser demo** (`httpvfs-resolver.ts:527`), so production AT is already ~88%, not 74%. This **overturns the earlier "NOT qualifier-strip widening" note** for AT — strip is worth +14pp and is already shipped. (`feedback-scar-tissue-conditional`: the scar held only for the exact-only measurement.)
+- **FI — bilingual alt-name gap (enrichable).** Strip recovers 0; the misses are the Finnish official name where the candidate table carries only the Swedish one — verified: `Pargas`/`Houtskär` are PRESENT (FI) but `Parainen`/`Houtskari` are absent. Fix = ingest both official names as alias rows in the candidate build. (Some, e.g. `Pinjainen`/`Billnäs`, are genuinely-missing villages — coverage, not alias.)
+- **SK — sub-locality depth.** Misses are Nitra/Trenčín city districts (`Klokočina`, `Chrenová`, `Janíkovce`, `Zlatovce`) — the sub-locality tier isn't in the gazetteer.
+
+**Why no fix tonight:** FI alt-name ingestion + SK sub-locality depth are candidate-build changes → a candidate rebuild + R2 republish (operator-gated, canonical-DB swap). The diagnostic de-risks that work by naming the exact per-country lever. The AT lever needs nothing.
+
 ## #175 typed-schema arc — extended to two more DBs
 
 The operator's day-shift question ("any other sqlite DBs for the kysley treatment?") — candidate + unified-admin were done then; this shift added two more:
