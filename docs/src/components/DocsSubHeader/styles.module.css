@@ -1,0 +1,87 @@
+/**
+ * Styling for the docs section sub-header (see ./index.tsx). The band reuses the
+ * navbar's chrome — navy ground, pale-slate links, teal hover, magenta active —
+ * so it reads as an extension of the top chrome rather than a second toolbar. The
+ * layout offsets that keep this band from overlapping the sidebar/TOC live in
+ * src/css/docs-subheader.css (global, theme-class-scoped); only the band's own
+ * look lives here.
+ */
+
+.subHeader {
+	position: sticky;
+	top: var(--ifm-navbar-height);
+	z-index: calc(var(--ifm-z-index-fixed) - 1);
+	height: var(--mm-docs-subheader-height);
+	background-color: var(--ifm-navbar-background-color);
+	border-bottom: 1px solid var(--ifm-toc-border-color);
+	/* Hairline highlight to separate the band from the navbar stacked above it. */
+	box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%);
+	transition: transform var(--ifm-transition-fast) ease;
+	will-change: transform;
+}
+
+/* Scrolled down: slide the band up behind the navbar (it sits a z-index below).
+   The parent layout drops its sidebar/TOC offsets in sync (styles.subHeaderHidden
+   in the DocRoot/Layout module) so no blank gap is left where the band was. */
+.hidden {
+	transform: translateY(calc(-1 * (var(--ifm-navbar-height) + var(--mm-docs-subheader-height))));
+}
+
+.list {
+	display: flex;
+	align-items: stretch;
+	height: 100%;
+	margin: 0;
+	padding-inline: var(--ifm-navbar-padding-horizontal, 1rem);
+	list-style: none;
+	overflow-x: auto;
+	overflow-y: hidden;
+	white-space: nowrap;
+	/* Hide the scrollbar; the bar is a chrome element, not a scroll region. */
+	scrollbar-width: none;
+	-webkit-overflow-scrolling: touch;
+}
+
+.list::-webkit-scrollbar {
+	display: none;
+}
+
+.item {
+	display: flex;
+	align-items: stretch;
+	flex: 0 0 auto;
+}
+
+.link {
+	display: inline-flex;
+	align-items: center;
+	height: 100%;
+	padding-inline: 0.85rem;
+	font-family: var(--ifm-font-family-monospace);
+	font-size: 0.82rem;
+	font-weight: var(--ifm-font-weight-semibold);
+	letter-spacing: 0.02em;
+	color: var(--ifm-navbar-link-color);
+	text-decoration: none;
+	border-bottom: 2px solid transparent;
+	transition-property: color, background-color, border-color;
+	transition-duration: var(--ifm-transition-fast);
+	transition-timing-function: var(--ifm-transition-timing-default);
+}
+
+.link:hover {
+	color: var(--ifm-navbar-link-hover-color);
+	background-color: rgb(255 255 255 / 6%);
+	text-decoration: none;
+}
+
+.link:focus-visible {
+	outline: 2px solid var(--ifm-color-secondary);
+	outline-offset: -2px;
+}
+
+.linkActive,
+.linkActive:hover {
+	color: #fff;
+	border-bottom-color: var(--ifm-color-primary);
+}
