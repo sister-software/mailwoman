@@ -42,11 +42,11 @@ import type { Tagged } from "type-fest"
 export type Postcode = Tagged<string, "UkPostcode">
 
 /**
- * UK postcode shape. A permissive form of the Royal Mail / UK-gov regex: one or
- * two leading letters (the area), a district digit, an optional district letter-or-digit, then the
- * inward sector digit and two unit letters, with the inward space optional so an un-spaced
- * `SW1A1AA` still validates. The full UK-gov pattern additionally whitelists the British Overseas
- * Territory codes (`ASCN`, `STHL`, `BBND`, …); those are rare enough to leave to the gazetteer.
+ * UK postcode shape. A permissive form of the Royal Mail / UK-gov regex: one or two leading letters
+ * (the area), a district digit, an optional district letter-or-digit, then the inward sector digit
+ * and two unit letters, with the inward space optional so an un-spaced `SW1A1AA` still validates.
+ * The full UK-gov pattern additionally whitelists the British Overseas Territory codes (`ASCN`,
+ * `STHL`, `BBND`, …); those are rare enough to leave to the gazetteer.
  */
 export const UK_POSTCODE_PATTERN = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i
 

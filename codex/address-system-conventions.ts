@@ -9,8 +9,8 @@
  *   detection instead of merely being nudged by it.
  *
  *   Every row is a provenance-carrying claim about a national addressing convention — the same
- *   provenance-first discipline as the rest of the codex. Add rows with a source, not from
- *   vibes; an absent row means "no constraints known", never "no constraints exist".
+ *   provenance-first discipline as the rest of the codex. Add rows with a source, not from vibes;
+ *   an absent row means "no constraints known", never "no constraints exist".
  *
  *   First consumer: `@mailwoman/neural`'s decoder applies `forbiddenTags` as a hard emission mask
  *   before Viterbi and treats `postcodePattern` as the system's canonical shape for the snap-only
@@ -44,18 +44,18 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 	 * suffix decomposition has no French counterpart).
 	 *
 	 * Provenance / why this is NOT a blanket prefix+suffix forbid (#719, 2026-06-18): an earlier
-	 * model mis-tagged the leading "Rue" as a US-style `street_suffix` (RUE is a Pub-28
-	 * suffix variant) — the 2026-06-10 v1.1.0 gate — so #511 forbade BOTH affix tags to stop that
-	 * leakage. That forbid was correct for THAT model but became a live production bug for the
-	 * current one: the shipped model (v1.5.0) emits the FR `street_prefix` correctly, but the
-	 * conventions mask was a hard −1e9 on every B-/I-street_prefix emission, so the detected-FR parse
-	 * could never KEEP a prefix — it destroyed `street_prefix` wholesale (measured on
-	 * data/eval/external/ fr-street-prefix-real.jsonl at conventions=auto: F1 0.0 with the forbid on
-	 * → 80.0 with it off; the larger real-FR eval reported the same collapse, ~96 → ~0.6). We keep
-	 * ONLY `street_suffix` forbidden: the current model with the forbid OFF shows zero FR
-	 * street_suffix leakage (fp=0 on that same slice) and FR has no trailing street suffix,
-	 * so the constraint costs nothing while still guarding against any future suffix mis-tag.
-	 * Postcode: exactly five digits (NF Z 10-011; see fr/code-postal).
+	 * model mis-tagged the leading "Rue" as a US-style `street_suffix` (RUE is a Pub-28 suffix
+	 * variant) — the 2026-06-10 v1.1.0 gate — so #511 forbade BOTH affix tags to stop that leakage.
+	 * That forbid was correct for THAT model but became a live production bug for the current one:
+	 * the shipped model (v1.5.0) emits the FR `street_prefix` correctly, but the conventions mask was
+	 * a hard −1e9 on every B-/I-street_prefix emission, so the detected-FR parse could never KEEP a
+	 * prefix — it destroyed `street_prefix` wholesale (measured on data/eval/external/
+	 * fr-street-prefix-real.jsonl at conventions=auto: F1 0.0 with the forbid on → 80.0 with it off;
+	 * the larger real-FR eval reported the same collapse, ~96 → ~0.6). We keep ONLY `street_suffix`
+	 * forbidden: the current model with the forbid OFF shows zero FR street_suffix leakage (fp=0 on
+	 * that same slice) and FR has no trailing street suffix, so the constraint costs nothing while
+	 * still guarding against any future suffix mis-tag. Postcode: exactly five digits (NF Z 10-011;
+	 * see fr/code-postal).
 	 */
 	fr: {
 		forbiddenTags: ["street_suffix"],
