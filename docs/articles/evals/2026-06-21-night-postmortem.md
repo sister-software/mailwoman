@@ -1,6 +1,6 @@
-# Night shift — 2026-06-21 (national rooftop + resolver/typed-schema stack)
+# Night shift — 2026-06-21 (national rooftop → postal-city → the world-coverage gap)
 
-_Living document — sketched during the shift. Window: started ~02:55 UTC, ends 15:00 UTC._
+_Drafted during the shift; finalized at hand-off (operator returned ~11:08 UTC, early). Window: 02:55 → 11:08 UTC. The arc bent from the planned secondary stack into a much bigger find — see "Global coverage gap" below._
 
 ## What shipped
 
@@ -159,7 +159,9 @@ All the big levers are built + measured on a copy; the *apply* (one `build-unifi
 
 | metric                      | value                                  |
 | --------------------------- | -------------------------------------- |
-| shift window                | 02:55 UTC → 15:00 UTC                   |
+| shift window                | 02:55 → 11:08 UTC (closed early on operator return) |
+| GPU lost to error           | 0 (no GPU used)                        |
+| verify-before-verdict saves | 2 (--default-country test: EU failure is country-constraint, NOT the parser; CLI test: EU not broken, the 7000km was an eval `placeCountry:false` artifact) |
 | 🌍 headline finding         | gazetteer covered only 97/195 countries → gap-fill to **244**, coord-verified (#742) |
 | features built + measured   | postal-city (3 resolvers) · #734 EU recall (coord-validated) · global coverage (97→244 countries) |
 | also shipped                | #530 + default-OFF fix · #175 typed-schema ×2 · #723 audit |
