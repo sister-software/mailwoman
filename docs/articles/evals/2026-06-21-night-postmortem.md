@@ -4,7 +4,9 @@ _Living document — sketched during the shift. Window: started ~02:55 UTC, ends
 
 ## What shipped
 
-- **#735 national US rooftop rollout — IN FLIGHT.** Hosting the 50-state situs (#476/#567, 124.9M US address points, 29 GB) + TIGER interp shards on R2 so any US address resolves to its building (`address_point`, ≤10 m) instead of the WOF admin city centroid. Staged 48 unhosted states (skipping the already-hosted ca/ny/mi/dc), uploading 33 GB to `mailwoman/street/us/<slug>/{situs,interp}.db`. `HOSTED_STREET_SLUGS` extended to all 52 slugs (50 states + dc + vi).
+- **#735 national US rooftop rollout — ✅ SHIPPED + LIVE-VERIFIED (`99b8c5a4`).** Hosted the 50-state situs (#476/#567, 124.9M US address points) + TIGER interp shards on R2 (33 GB, 95 objects, `mailwoman/street/us/<slug>/{situs,interp}.db`) and extended `HOSTED_STREET_SLUGS` to all 52 slugs (50 states + dc + vi). Any US address now resolves to its building (`address_point`, ≤10 m) instead of the WOF admin city centroid. Deploy green; **live e2e 4/4** on production (TX/GA/WA/MT resolve to the building, ≤600 m of the situs truth). The flagship "type any US address, get the building" experience is national.
+- **#734 EU-recall characterization — ✅ posted to the issue.** Quantified the candidate EU recall (18-country holdout, 20,056 rows): TOTAL 87.8%, but **LT = 0% is a pure eval-format artifact** (33k LT rows exist; the holdout carries Lithuanian type-suffixes `mstl./m./k.` + genitive case the gazetteer never uses) — excluding LT, recall ≈ **93.7%**, matching the issue's claim. Corrected the lever: the real residual (AT 74%, FI 80%, SK 78%) is **coverage DEPTH** (city districts/sub-localities) + **bilingual-name aliases** (Koper-Capodistria), NOT qualifier-strip widening.
+- **#175 typed-schema arc closed — ✅ browser reader typed.** `httpvfs-resolver.ts`'s candidate rows now project the shared `CandidateTable` (via the exported `@mailwoman/resolver-wof-sqlite/candidate-schema`), so the writer↔reader column contract is compile-checked on all three consumers (build / Node / browser). The hot writers (`build-unified-wof` 1.5M-row ingest + backfills) stay positional on purpose — perf, same call as `build-candidate`'s clustered load.
 
 ## What went well
 
@@ -23,6 +25,8 @@ _Living document — sketched during the shift. Window: started ~02:55 UTC, ends
 ## Open questions
 
 - `il-cook` provenance — is it a higher-quality Cook source meant to replace `il`'s Cook rows, or a redundant build? (File an issue; not blocking.)
+- **#739 (tiger-fetch) — BLOCKED on release-ordering, flagged on the PR.** Code is clean (corpus 444/444); CI red on the `ci:smoke` clean-install guard (#596) because the new `@mailwoman/tiger` workspace isn't on npm, so the published CLI 404s on it. Needs an operator call: publish `@mailwoman/tiger` in the same release, OR make it private/bundled. Not force-merged.
+- **#531 (typo-tolerant) — scoped, not built.** The FTS path already has trigram-Jaccard fuzzy; the candidate path (now the demo/CLI default) has none, and its `WITHOUT ROWID` B-tree clusters alphabetically (not by edit-distance), so a fuzzy fallback needs a NEW trigram/spellfix side-index + a candidate rebuild + a browser fetch-cost measurement — bigger than a night-shift item. Design follow-up; #530's typo-inject augmentation is the cleaner independent piece.
 
 ## Concrete next steps
 

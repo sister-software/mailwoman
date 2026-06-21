@@ -28,6 +28,26 @@ import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sql
 // THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
 // one-normalizer discipline that keeps the candidate table's keys reachable by construction.
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+// The SHARED candidate schema (build-candidate.ts writes it; the Node WofCandidateTableLookup reads it
+// too) — so this browser reader's row accesses are type-checked against the same column contract.
+import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+
+/** The candidate columns this reader probes — a typed projection of the shared
+{@link CandidateTable}. */
+type CandidateProbeRow = Pick<
+	CandidateTable,
+	| "spr_id"
+	| "name"
+	| "country_id"
+	| "placetype_id"
+	| "latitude"
+	| "longitude"
+	| "min_lat"
+	| "min_lon"
+	| "max_lat"
+	| "max_lon"
+	| "neg_rank"
+>
 
 import type { DualRole, MailwomanLookupLike } from "./resources"
 
@@ -494,12 +514,12 @@ export class WofCandidateTableLookup implements MailwomanLookupLike {
 			)
 		}
 
-		const probe = async (nk: string) => {
+		const probe = async (nk: string): Promise<CandidateProbeRow[]> => {
 			const conds = [`name_key = ${sqlStr(nk)}`, ...filters]
 			const sql =
 				`SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank ` +
 				`FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ${limit}`
-			return rowsFromExec(await this.#worker.db.exec(sql))
+			return rowsFromExec(await this.#worker.db.exec(sql)) as unknown as CandidateProbeRow[]
 		}
 
 		let rows = await probe(nameKey)
