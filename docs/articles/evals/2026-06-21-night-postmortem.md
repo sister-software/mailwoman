@@ -35,6 +35,18 @@ The chronic postal-vs-geographic-city split (37013 is filed `Antioch` but sits i
 
 The lever fixes the hard cases — a postal-city name that matches a far same-named distractor (~3000 km / ~1000 km coordinate error → correct, false mismatch flag cleared) — and is inert where the name-match already lands right. Non-circular: the geographic truth (Nashville/Phoenix coords) is independent of the alias table.
 
+**Aggregate (the promote-grade number).** Turned the spot-check into a permanent eval harness (`scripts/eval/postal-city-alias-eval.ts`) — for every divergent alias edge it resolves the postal-city input on/off and grades the resolved coordinate against the postcode's own centroid (independent truth). Over the **full US divergent set (10,155 edges)**:
+
+| metric | OFF | ON |
+| --- | --- | --- |
+| **fixed** (>50 km → ≤50 km) | — | **500** |
+| **regressed** (≤50 km → >50 km) | — | **0** |
+| mismatch flags | 925 | **425** (−54%) |
+| coord p90 — all divergent | 278.1 km | **10.1 km** |
+| coord p90 — lever-active (2,444) | 1080.3 km | **8.8 km** |
+
+p50 barely moves (3.2→3.1 km) because most divergent postcodes already resolve near-right; the lever fixes the **catastrophic tail** (p90 278 → 10 km) with **zero regressions** — exactly the behavior the opt-in/byte-stable design promises. This is non-circular (truth = postcode centroid, not the alias table) and a strong promote signal for default-on (operator's call).
+
 **Why not the standard OA eval:** the OA US sample's inputs use the GEOGRAPHIC locality name (matching `expected`), so the postal-city lever never fires on it — running it would read FLAT, a misleading non-result (the verify-before-verdict trap). The faithful measurement is the postal-city-input spot-check above; a full aggregate eval would need a postal-city-input corpus graded against independent geography — the operator follow-up alongside the candidate-path build-time fold.
 
 ## Hygiene (PR reviews + Dependabot)
