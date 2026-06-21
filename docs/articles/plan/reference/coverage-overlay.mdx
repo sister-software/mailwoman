@@ -1,0 +1,110 @@
+# Address-coverage "fog of war" overlay
+
+:::tip[Audience]
+
+🧪 **Operator / agent runbook.** Everything you need to rebuild, republish, extend, or debug the demo map's coverage overlay with **zero prior context**. Shipped via PR #737 (merged to `main`).
+
+:::
+
+## What it is
+
+A demo-map overlay that shades each area by **how much address-point data we actually hold** — covered → clear (basemap shows through), empty → gray fog. It answers "where do we need more data," and reveals the "looks covered until you zoom in, then the gaps go gray" holes.
+
+- **Live:** `https://tiles.sister.software/coverage-us-v4.json` (XYZ vector tiles via the tile worker).
+- **In the demo:** the **Layers** panel (top-right) has two **default-off** toggle groups — _Coverage · optimistic fog_ and _Coverage · honest fog_. The user picks one.
+- **Coverage today:** 48 states + DC + VI (Overture) + HI (OpenAddresses, rooftop) + NH (street-level only). **AK is excluded** (antimeridian hex-wrap). National res-9 archive ≈ 848 MiB, 58.85M features.
+
+## Architecture (read this before touching anything)
+
+It is an **H3 hexbin** tileset. Each cell carries **two baked fog values** in `[0,1]` (0 = covered/clear, 1 = empty/gray):
+
+- `fog` — **honest**: fine cells use point density; coarse cells use the mean child coverage fraction.
+- `fog_opt` — **optimistic**: `fog ** gamma` (γ>1) lifts partial coverage toward clear, so a region "looks covered" zoomed out and the gaps surface on zoom-in.
+
+The demo's two fill layers (`coverage-opt-fog`, `coverage-honest-fog`) just point `fill-opacity` at one prop or the other — **no rebake needed to switch readings**. Each H3 resolution is baked in its own non-overlapping zoom band; the finest is baked at a single tile-max zoom and MapLibre **overzooms** above it (hexes are identical geometry at every zoom).
+
+**Serving is XYZ via the tile worker — NOT client-side PMTiles.** The `.pmtiles` archive lives at `nexus-assets/tiles/coverage-us-v4.pmtiles` and the `tile-worker/` Cloudflare Worker serves it as `tiles.sister.software/coverage-us-v4/{z}/{x}/{y}.mvt` (exactly like `basemap-v4`). A previous iteration served the PMTiles directly through the `pmtiles://` protocol — **that was wrong and was removed** (`524f78a8`). Don't bring it back.
+
+## Code map
+
+| File | Role |
+| --- | --- |
+| `mailwoman/coverage-core.ts` | The build pipeline (React-free): DuckDB H3 aggregation → NDJSON → `tippecanoe` → PMTiles. The fog model lives here. |
+| `mailwoman/commands/coverage/build.tsx` | `mailwoman coverage build` — thin Ink wrapper over `coverage-core`. |
+| `mailwoman/commands/tiles/publish.tsx` | `mailwoman tiles publish` — rclone upload of a PMTiles to an R2 bucket (multipart). |
+| `cartographer/coverage/index.ts` | `CoverageTileSetID` (= `"coverage-us-v4"`), the two fog fill layers, fog color/opacity, `createCoverageSource`. |
+| `docs/src/pages/demo/index.tsx` | Demo wiring — registers the coverage source + adds the default-off layers on map load. |
+| `docs/src/components/LayerToggleControl/LayerToggleControl.tsx` | The toggle-group patterns (`coverage-opt`, `coverage-honest`). |
+| `scripts/build-address-point-shard.ts` | Per-state situs shard builder. `--oa-csv` mode reads OpenAddresses for states Overture omits (HI). |
+
+Source data (per-state shards, NOT in git): `/mnt/playpen/mailwoman-data/address-points/address-points-us-<st>.db` (124.9M US points) + `…/interpolation/interpolation-us-<st>.db` (TIGER street segments).
+
+## Runbook: rebuild + republish
+
+**1. Build the tileset** (maintainer-only — needs the local shards + `tippecanoe` on PATH + the `@duckdb/node-api` dev dep):
+
+```bash
+mailwoman coverage build --states all --exclude-states AK \
+  --out /mnt/playpen/mailwoman-data/coverage/coverage-us.pmtiles
+# ~minutes; res-9 national ≈ 848 MiB. --keep-ndjson to re-tile without re-aggregating.
+```
+
+**2. Publish to the tile-worker bucket** (`nexus-assets`):
+
+```bash
+set -a; . ./.env; set +a
+# nexus-assets is written by the *_PUBLIC_* R2 keys (see gotcha below):
+RCLONE_S3_ACCESS_KEY_ID="$RCLONE_S3_PUBLIC_ACCESS_KEY_ID" \
+RCLONE_S3_SECRET_ACCESS_KEY="$RCLONE_S3_PUBLIC_SECRET_ACCESS_KEY" \
+RCLONE_S3_ENDPOINT="$RCLONE_S3_PUBLIC_ENDPOINT" \
+RCLONE_S3_PROVIDER=Cloudflare RCLONE_S3_REGION=auto \
+mailwoman tiles publish --file /mnt/playpen/mailwoman-data/coverage/coverage-us.pmtiles --tileset coverage-us-v4
+```
+
+**3. Verify:** `curl -s -o /dev/null -w '%{http_code}' https://tiles.sister.software/coverage-us-v4.json` → `200`.
+
+**Re-versioning:** the object is at a versioned path (`coverage-us-v4`). To ship a fresh bake, bump `CoverageTileSetID` in `cartographer/coverage/index.ts` to `coverage-us-v5`, upload to `tiles/coverage-us-v5.pmtiles`, and the demo follows automatically. (Versioning avoids R2 cache-staleness; same pattern as `basemap-v4`.)
+
+### Credential + upload gotchas (this cost a whole session — read it)
+
+- **Which keys write `nexus-assets`:** the `RCLONE_S3_PUBLIC_*` keys. The plain `RCLONE_S3_*` keys are scoped to `mailwoman-assets` and **403 on nexus-assets** (read *and* write). `CF_AUTH_TOKEN` is the Cloudflare API token (wrangler).
+- **`wrangler r2 object put` hard-caps at 300 MiB** — useless for these archives. **rclone does multipart with no cap** — that's why `tiles publish` uses rclone, not wrangler.
+- **`nexus-public` ≠ `nexus-assets`.** `nexus-public` (`public.sister.software/mailwoman/`, the `scripts/publish-demo-assets-to-r2.py` target) hosts the demo's model/DBs/shards. The tile worker reads `nexus-assets`. Don't put tiles in `nexus-public`.
+
+## Data state + the HI/NH situation
+
+| State group | Source | Notes |
+| --- | --- | --- |
+| 48 states + DC + VI | Overture addresses `2026-05-20.0` | `build-address-point-shard.ts` (default). |
+| **HI** | **OpenAddresses** | Overture omits Hawaii entirely (verified at the S3 source — 0 rows in both releases). Built via `build-address-point-shard.ts --oa-csv <4 county CSVs>` → 348K rooftop points. |
+| **NH** | TIGER interpolation only | No rooftop source exists — OA's only NH run is coordinate-only (0 usable of 610K), Overture absent. NH renders **street-level** (visibly a less-covered region — honest). Real NH rooftop points = **NH GRANIT** (not yet done). |
+| AK | _excluded_ | Antimeridian: `h3_cell_to_boundary_wkt` emits unwrapped lon for Aleutian cells. Needs antimeridian splitting before inclusion. |
+
+To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s) from `results.openaddresses.io/latest/run/us/<st>/<source>.zip`, then `build-address-point-shard.ts --state <ST> --oa-csv <csv1>,<csv2>,…`. The shard is picked up automatically on the next `coverage build`.
+
+## Tuning knobs (`coverage build`)
+
+| Flag | Default | Effect |
+| --- | --- | --- |
+| `--fine-res` | 9 (≈174 m, street/block) | Finest grid. **Dominates size.** res-8 ≈ 460 m, res-7 ≈ 1.2 km. |
+| `--domain-res` | 6 (≈3.2 km) | Fog-halo extent around coverage. Tighter (7, 8) → smaller but hugs coverage. |
+| `--saturation` / `--sat-seg` | 25 / 8 | Point / segment count at which a cell fully clears. |
+| `--interp-weight` | 0.4 | Weight of the TIGER street signal vs address points (`< 1`, so street-only never fully clears). |
+| `--optimistic-gamma` | 2.0 | The `fog_opt = fog ** gamma` exponent. |
+| `--max-zoom` | 12 | Highest baked zoom; overzoom above. |
+
+**National size by `--fine-res`** (res-9 d6 measured): res-9 ≈ **848 MiB**, res-8 ≈ 364 MiB, res-7 ≈ 55 MiB. Only res-7 fits wrangler's 300 MiB cap — irrelevant now that rclone-multipart works, so we ship the full res-9.
+
+## Gotchas (learned the hard way)
+
+- **DuckDB multi-ATTACH mis-binds.** `ATTACH`ing N sqlite DBs and `UNION ALL`-ing structurally-identical *aggregating* subqueries (`h3_latlng_to_cell(…) … GROUP BY 1` per arm) silently binds every arm to the **first** attached DB (a 49-state build reported 3× CA's points in CA's cells). **Fix:** `UNION ALL` the **raw** columns, aggregate **once** in the outer query. (Already done in `coverage-core.ts` — don't undo it.)
+- **`.gitignore` bare `coverage` rule** (the vitest report dir) matches any dir named `coverage` at any depth — it was silently swallowing `mailwoman/commands/coverage/` and `cartographer/coverage/`. Scoped `!`-negations are in `.gitignore`; keep them or the command + module vanish from git/npm-publish.
+- **Don't serve PMTiles client-side.** XYZ via the tile worker only.
+
+## Follow-ups / open work
+
+1. **NH rooftop points** via NH GRANIT (state address portal) — separate fetch + ingest. NH is street-level only today.
+2. **AK** — needs antimeridian boundary splitting in `coverage-core.ts` before it can be included.
+3. **International coverage** — currently US-only. Overture has intl addresses (FR/DE/etc.); the build is US-shard-shaped, so this is real work.
+4. **Re-bake cadence / versioning** — bump to `coverage-us-v5` on the next data refresh.
+5. **Browser perf** — the 848 MiB / 58M-feature archive serves per-tile (fine in practice), but worth watching dense-metro z12 tile sizes if it feels slow.
