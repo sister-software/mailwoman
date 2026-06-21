@@ -91,12 +91,21 @@ export interface CreateRuntimePipelineOpts {
 	normalizeCase?: boolean
 	/**
 	 * #743/#194: default for `PipelineOpts.hardPlaceCountry` on every call — promote a CONFIDENT
-	 * coarse-placer guess from the soft prior to a HARD country filter (empty→unresolved), the lever
-	 * for the low-population EU tail (FI/PL) the soft prior can't move. Off by default → byte-stable.
-	 * A per-call `runOpts.hardPlaceCountry` overrides this. Best paired with the widened placer (#759),
-	 * which is what lets the placer emit FI/PL confidently in the first place.
+	 * coarse-placer guess from the soft prior to a HARD country filter (empty→unresolved).
+	 * **DEFAULT-ON** (#743, 2026-06-22): the built-in coverage safelist
+	 * (`HARD_PLACE_COUNTRY_SAFELIST`) confines the hard filter to well-covered countries
+	 * (US/ES/IT/NL/DE/FR), so it's a pure win there and a no-op (soft prior) for the low-coverage
+	 * tail (FI/PL) — no recall regression. Pass `false` to opt out entirely; a per-call
+	 * `runOpts.hardPlaceCountry` overrides this.
 	 */
 	hardPlaceCountry?: boolean
+	/**
+	 * #743/#194: default for `PipelineOpts.hardCountrySafelist` — override the coverage safelist that
+	 * gates the hard country filter. Undefined → the built-in `HARD_PLACE_COUNTRY_SAFELIST`. Used by
+	 * the resolver eval to measure ungated hard-resolve-rates (the full in-map set) when growing the
+	 * list.
+	 */
+	hardCountrySafelist?: ReadonlySet<string>
 }
 
 /**
@@ -160,14 +169,20 @@ export function createRuntimePipeline(
 			const fn = await loadDefaultPlaceCountry()
 			if (fn) stages.placeCountry = fn
 		}
-		// Apply factory-level defaults (#690 normalizeCase, #194 hardPlaceCountry); a per-call runOpts
-		// value overrides each.
+		// Apply factory-level defaults (#690 normalizeCase, #743/#194 hardPlaceCountry); a per-call
+		// runOpts value overrides each. hardPlaceCountry is DEFAULT-ON (#743, 2026-06-22): the coverage
+		// safelist confines the hard filter to well-covered countries, so this is a pure win there and a
+		// no-op (soft) for the rest. A caller passes `hardPlaceCountry: false` to opt back out entirely.
+		const factoryHardPlaceCountry = opts.hardPlaceCountry ?? true
 		let effectiveRunOpts = runOpts
 		if (opts.normalizeCase && effectiveRunOpts?.normalizeCase === undefined) {
 			effectiveRunOpts = { ...effectiveRunOpts, normalizeCase: true }
 		}
-		if (opts.hardPlaceCountry && effectiveRunOpts?.hardPlaceCountry === undefined) {
+		if (factoryHardPlaceCountry && effectiveRunOpts?.hardPlaceCountry === undefined) {
 			effectiveRunOpts = { ...effectiveRunOpts, hardPlaceCountry: true }
+		}
+		if (opts.hardCountrySafelist && effectiveRunOpts?.hardCountrySafelist === undefined) {
+			effectiveRunOpts = { ...effectiveRunOpts, hardCountrySafelist: opts.hardCountrySafelist }
 		}
 		return runPipeline(raw, stages, effectiveRunOpts)
 	}

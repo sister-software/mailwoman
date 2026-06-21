@@ -60,12 +60,44 @@ function isPostcodeFormat(format: string): boolean {
  */
 const COARSE_PLACER_ANCHOR_WEIGHT = 1.0
 
-// #194: minimum placer confidence to promote the soft country prior to a HARD filter (with fallback).
+// #194: minimum placer confidence to promote the soft country prior to a HARD filter (empty→unresolved).
 // The placer already abstains below 0.9 in-map MASS (open-set rule), but the per-country argmax prob
 // can still be split across neighbours (DK↔NO, EE↔LT↔LV); requiring a high argmax confidence keeps the
 // hard filter to the cases the model is sure of (FI/PL routinely score ~1.0) and leaves the ambiguous
 // ones on the soft path. Deliberately strict — a wrong hard country is the #244 M2 misroute failure.
 const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
+
+// #743/#194 coverage guard: countries whose candidate gazetteer is complete enough that hard-filtering
+// is a PURE WIN — measured hard-resolve-rate ≥ 95% on held-out OpenAddresses points, so a hard-filter
+// "miss → unresolved" is rare and almost always a genuine non-match, not a coverage gap. A confident
+// placement OUTSIDE this set stays on the SOFT prior, so the low-coverage tail (FI/PL/…) keeps its
+// recall until its gazetteer is filled (#193) — the win for covered countries, no recall regression
+// for the rest (DeepSeek-advised, 2026-06-22). Measured resolve-rate under hard: US 100, FR 100, DE
+// 100, ES 99.8, NL 97.3, IT 96.8 (in); FI 69.5, PL 77.8 (out). Grow as more countries clear the bar.
+// Override per-call with `PipelineOpts.hardCountrySafelist` (the eval measures ungated to grow it).
+export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set(["US", "ES", "IT", "NL", "DE", "FR"])
+
+/**
+ * #743/#194: the shared coverage-guard gate — decide whether a confident coarse-placer country
+ * should become a HARD candidate filter. Exported so the two production placeCountry call sites
+ * (the runtime pipeline AND `geocodeAddress`) apply the SAME three gates and can't drift:
+ * confidence ≥ {@link HARD_PLACE_COUNTRY_MIN_CONF}, country in the safelist (override or the default
+ * {@link HARD_PLACE_COUNTRY_SAFELIST}), and no caller-set hard/default country to respect. Returns
+ * the country to hard-filter, or `undefined` to stay on the soft prior.
+ */
+export function hardCountryFor(
+	placedCountry: string,
+	placedConfidence: number,
+	existing: { hardCountry?: string; defaultCountry?: string },
+	hardPlaceCountry: boolean | undefined,
+	safelist: ReadonlySet<string> | undefined
+): string | undefined {
+	if (!hardPlaceCountry) return undefined
+	if (placedConfidence < HARD_PLACE_COUNTRY_MIN_CONF) return undefined
+	if (!(safelist ?? HARD_PLACE_COUNTRY_SAFELIST).has(placedCountry)) return undefined
+	if (existing.hardCountry || existing.defaultCountry) return undefined
+	return placedCountry
+}
 
 function isPostcodeFormatHit(hit: { format: string }): boolean {
 	return isPostcodeFormat(hit.format)
@@ -214,16 +246,21 @@ export async function runPipeline(
 		placedPrediction = placed
 		timing["place-country"] = performance.now() - tPlace
 		if (placed.country && placed.country !== "OTHER" && !opts?.resolveOpts?.anchorPosterior) {
-			// #194: promote a CONFIDENT placement to a HARD country filter (with empty→global fallback) when
-			// the caller opts in AND the confidence clears the bar. The soft posterior alone can't move a
-			// LOW-population place (a FI town loses to a high-pop namesake even when FI is pinned); the hard
-			// filter does. Gated on confidence so ambiguous neighbour placements (DK↔NO) stay soft. The
-			// caller's own `hardCountry`/`defaultCountry` is never overwritten.
-			const hard =
-				opts?.hardPlaceCountry &&
-				placed.confidence >= HARD_PLACE_COUNTRY_MIN_CONF &&
-				!opts?.resolveOpts?.hardCountry &&
-				!opts?.resolveOpts?.defaultCountry
+			// #194/#743: promote a CONFIDENT placement to a HARD country filter (empty→unresolved) when the
+			// caller opts in, the confidence clears the bar, AND the country is in the coverage SAFELIST. The
+			// soft posterior alone can't move a LOW-population place (a FI town loses to a high-pop namesake
+			// even when FI is pinned); the hard filter does. Three gates: confidence (ambiguous DK↔NO stay
+			// soft), the safelist (only well-covered countries — where a miss is a genuine non-match, not a
+			// coverage gap — hard-filter; the low-coverage tail keeps its recall on the soft path), and the
+			// caller's own hardCountry/defaultCountry is never overwritten. Pass `hardCountrySafelist` to
+			// override the default set (the eval measures ungated to grow it).
+			const hardCountry = hardCountryFor(
+				placed.country,
+				placed.confidence,
+				opts?.resolveOpts ?? {},
+				opts?.hardPlaceCountry,
+				opts?.hardCountrySafelist
+			)
 			effectiveOpts = {
 				...opts,
 				resolveOpts: {
@@ -232,7 +269,7 @@ export async function runPipeline(
 					// one-hot argmax (the M2 behavior).
 					anchorPosterior: placed.posterior ?? { [placed.country]: placed.confidence },
 					anchorWeight: opts?.resolveOpts?.anchorWeight ?? COARSE_PLACER_ANCHOR_WEIGHT,
-					...(hard ? { hardCountry: placed.country } : {}),
+					...(hardCountry ? { hardCountry } : {}),
 				},
 			}
 		}

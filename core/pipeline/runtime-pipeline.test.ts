@@ -12,7 +12,7 @@ import type { AddressNode, AddressTree } from "../decoder/types.js"
 import type { Resolver } from "../resolver/types.js"
 import type { Span } from "../tokenization/index.js"
 import type { ClassificationProposal, ComponentTag } from "../types/index.js"
-import { runPipeline } from "./runtime-pipeline.js"
+import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, runPipeline } from "./runtime-pipeline.js"
 import type {
 	AddressClassifier,
 	LocaleHint,
@@ -33,6 +33,33 @@ function fakeClassifier(tree: AddressTree): AddressClassifier {
 function fakeResolver(decorator: (tree: AddressTree) => AddressTree): Resolver {
 	return { resolveTree: vi.fn(async (tree: AddressTree) => decorator(tree)) }
 }
+
+describe("hardCountryFor — #743/#194 coverage-guarded hard country filter", () => {
+	const ON = true
+	it("returns the country when confident AND safelisted (the pure-win case)", () => {
+		expect(hardCountryFor("ES", 0.99, {}, ON, undefined)).toBe("ES")
+		expect(HARD_PLACE_COUNTRY_SAFELIST.has("ES")).toBe(true)
+	})
+	it("stays SOFT (undefined) for a confident but NON-safelisted country — the low-coverage tail", () => {
+		expect(HARD_PLACE_COUNTRY_SAFELIST.has("FI")).toBe(false)
+		expect(hardCountryFor("FI", 1.0, {}, ON, undefined)).toBeUndefined()
+	})
+	it("stays SOFT below the confidence bar even when safelisted", () => {
+		expect(hardCountryFor("ES", 0.5, {}, ON, undefined)).toBeUndefined()
+	})
+	it("is OFF when hardPlaceCountry is false/undefined", () => {
+		expect(hardCountryFor("ES", 0.99, {}, false, undefined)).toBeUndefined()
+		expect(hardCountryFor("ES", 0.99, {}, undefined, undefined)).toBeUndefined()
+	})
+	it("never overwrites a caller's own hardCountry / defaultCountry", () => {
+		expect(hardCountryFor("ES", 0.99, { defaultCountry: "US" }, ON, undefined)).toBeUndefined()
+		expect(hardCountryFor("ES", 0.99, { hardCountry: "US" }, ON, undefined)).toBeUndefined()
+	})
+	it("honours a safelist override (how the eval measures ungated to grow the list)", () => {
+		expect(hardCountryFor("FI", 0.99, {}, ON, new Set(["FI"]))).toBe("FI")
+		expect(hardCountryFor("ES", 0.99, {}, ON, new Set(["FI"]))).toBeUndefined()
+	})
+})
 
 describe("runPipeline — defaults", () => {
 	it("runs with all stages absent — empty result, no throw", async () => {
