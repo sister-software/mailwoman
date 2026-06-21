@@ -38,6 +38,7 @@ import {
 	placeSearchFtsExists,
 } from "./fts.js"
 import { bboxAround, haversineKm } from "./geo.js"
+import type { WofPostalCityAliasLookup } from "./postal-city-alias-lookup.js"
 import type { WofDatabase } from "./schema.js"
 import { pickShardForPlacetype, resolveShards, type ResolvedShard, type ShardConfig } from "./sharding.js"
 import { SqliteConventionSource } from "./sqlite-convention-source.js"
@@ -81,6 +82,14 @@ export interface WofSqlitePlaceLookupOpts {
 	 * add rows; #290 wires a build-from-source sqlite-backed source here.
 	 */
 	conventions?: ConventionSource | Record<number, Convention>
+	/**
+	 * Opt-in postal-city alias reader (#475). When supplied, the coordinate-first locality scorer
+	 * treats an observed `postal_city` ("Antioch", postcode 37013) as a name-match alias for the
+	 * geographic locality the postcode sits in ("Nashville"), recovering the chronic postal-vs-
+	 * geographic-city mismatch. Absent (the default), the resolver is byte-identical — every alias
+	 * code path is gated on this being non-null, so an unprovided reader changes no score.
+	 */
+	postalCityAliases?: WofPostalCityAliasLookup
 }
 
 /**
@@ -321,6 +330,11 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	#coincidentRolesCache: Map<number, CoincidentLocality[]> | null = null
 	/** Per-id memoized ancestor lineages (#404) — a hot chain is queried once. */
 	readonly #ancestorsCache = new Map<number, Ancestor[]>()
+	/**
+	 * Opt-in postal-city alias reader (#475). `null` unless `opts.postalCityAliases` was supplied —
+	 * every alias code path is gated on this, so the default resolver is byte-identical.
+	 */
+	readonly #postalCityAliases: WofPostalCityAliasLookup | null
 
 	constructor(opts: WofSqlitePlaceLookupOpts, weights?: Partial<RankingWeights>) {
 		if (opts.database && opts.databasePath) {
@@ -372,6 +386,10 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// `postcode-locality-<cc>.db`). Find the first shard that has it; null = coord-first disabled.
 		this.#postcodeLocalityShard =
 			this.#shards.find((s) => this.#shardHasTable(s.schemaName, POSTCODE_LOCALITY_TABLE))?.schemaName ?? null
+
+		// Opt-in postal-city alias reader (#475). Construction-time present-or-not is the gate: null
+		// keeps the coordinate-first scorer byte-identical to pre-#475.
+		this.#postalCityAliases = opts.postalCityAliases ?? null
 
 		// The Geographic Rule Engine convention source. Precedence: an explicit `opts.conventions`
 		// (a ready source or a seed map) wins; else the build-from-source convention asset if one is
@@ -837,6 +855,21 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 			pcInfo.set(r.id, { dist: r.dist, containing: r.containing === 1, aliases: r.aliases ? r.aliases.split("|") : [] })
 		}
 
+		// #475 (opt-in): observed postal-city aliases for this postcode, keyed by the geographic
+		// locality name they map to. A user-typed postal city ("Antioch", 37013) becomes a name-match
+		// alias for the geographic locality the postcode sits in ("Nashville"). Empty when the reader
+		// isn't supplied → the scoring loop below is byte-identical to pre-#475.
+		const postalAliasByGeo = new Map<string, string[]>()
+		if (this.#postalCityAliases) {
+			for (const a of this.#postalCityAliases.getDivergentAliases(pc)) {
+				const key = cfNormalize(a.geoLocality)
+				if (!key) continue
+				const bag = postalAliasByGeo.get(key)
+				if (bag) bag.push(a.postalCity)
+				else postalAliasByGeo.set(key, [a.postalCity])
+			}
+		}
+
 		const merged = new Map<number, PlaceCandidate>()
 		for (const c of ftsCands) merged.set(c.id as number, c)
 		const missing = [...pcInfo.keys()].filter((id) => !merged.has(id))
@@ -846,7 +879,15 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		for (const cand of merged.values()) {
 			const info = pcInfo.get(cand.id as number)
 			const sPc = info ? (info.containing ? 1 : Math.exp(-info.dist / CF_PC_DECAY_KM)) : 0
-			const sName = softNameScore(query.text, cand.name, info?.aliases ?? [])
+			// Fold any postal-city aliases for this candidate's geographic name into the soft name match
+			// (#475). `postalAliasByGeo` is empty unless the opt-in reader was supplied, so when off this
+			// reduces to the original `info?.aliases ?? []` and the score is unchanged.
+			const wofAliases = info?.aliases ?? []
+			const aliases =
+				postalAliasByGeo.size > 0
+					? [...wofAliases, ...(postalAliasByGeo.get(cfNormalize(cand.name)) ?? [])]
+					: wofAliases
+			const sName = softNameScore(query.text, cand.name, aliases)
 			const sPop = cand.population && cand.population > 0 ? Math.min(1, Math.log10(1 + cand.population) / 6) : 0
 			scored.push({ ...cand, score: w.pc * sPc + w.name * sName + w.pop * sPop, exact: sName >= 1 })
 		}

@@ -19,9 +19,11 @@
  *   - `base_source_id`: the source_id of the un-augmented (or upstream-augmented) row, so ancestry is
  *       traceable.
  *
- *   Phase 1 implements the locale-agnostic + most useful US/FR augmentations. Typo injection and
- *   other stochastic augmentations are intentionally deferred — they need a seed-aware API and are
- *   most useful at training time, not corpus build time.
+ *   Phase 1 implements the locale-agnostic + most useful US/FR augmentations. Typo injection (#530)
+ *   is now implemented ({@link typoInject}) — the "seed-aware API" the deferral asked for is
+ *   resolved by seeding the PRNG from each row's `source_id`. It ships in {@link AUGMENTATIONS} but
+ *   is kept OUT of the default set ({@link defaultAugmentationsForCountry}) until its on-model
+ *   effect is measured; see the note there.
  */
 
 import {
@@ -164,12 +166,16 @@ const QWERTY_ADJACENCY: Record<string, string> = {
 	z: "asx",
 }
 
-/** A component value eligible for a typo: a pure-letter name of ≥4 chars (excludes
-numbers/postcodes/units). */
+/**
+ * A component value eligible for a typo: a pure-letter name of ≥4 chars (excludes
+ * numbers/postcodes/units).
+ */
 const ALPHA_NAME = /^[\p{L}][\p{L} '.\-]{3,}$/u
 
-/** Djb2 → uint32 seed. Deterministic; no `Math.random` (banned here and breaks corpus
-reproducibility). */
+/**
+ * Djb2 → uint32 seed. Deterministic; no `Math.random` (banned here and breaks corpus
+ * reproducibility).
+ */
 function hashString(s: string): number {
 	let h = 5381
 	for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0
@@ -555,7 +561,12 @@ export const AUGMENTATIONS: Record<string, Augmentation> = {
 
 /** Default augmentation set, by country. Phase 1: US + FR; others get the locale-agnostic set. */
 export function defaultAugmentationsForCountry(country: string): readonly Augmentation[] {
-	const universal = [caseUpper, caseLower, dropCommas, doubleSpace, typoInject]
+	// `typoInject` (#530) is deliberately NOT in the default set. It is implemented, tested, and
+	// registered in {@link AUGMENTATIONS} so callers can opt in (add it here or compose it directly),
+	// but it changes the synthesized corpus distribution and its effect on the trained model is not
+	// yet measured. Per the project's default-OFF discipline, promotion into the default build is an
+	// operator call once an A/B vs the current corpus exists — keeping the default byte-stable.
+	const universal = [caseUpper, caseLower, dropCommas, doubleSpace]
 	switch (country) {
 		case "US":
 			return [
