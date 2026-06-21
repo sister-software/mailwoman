@@ -95,7 +95,7 @@ Reducing the failure rate from 10% to 5% halves the manual-correction cost. Redu
 
 Mailwoman does not target 100% accuracy. No parser does. It targets:
 
-- **Honest confidence.** When the parser is uncertain, it says so, instead of returning a confident wrong answer. The downstream system can decide: escalate to manual review, surface the ambiguity to the user, or accept the best guess with a caveat.
+- **Calibrated confidence.** When the parser is uncertain, it says so, instead of returning a confident wrong answer. The downstream system can decide: escalate to manual review, surface the ambiguity to the user, or accept the best guess with a caveat.
 - **Retrainability.** When a specific address class fails, you can add it to the corpus and retrain. The corpus pipeline is designed for this — the adapter pattern makes adding a new data source a few hundred lines of TypeScript.
 - **Component-level improvement.** The policy registry lets you improve one component at a time. If the neural model is weak on `region` but strong on `street`, you can use the neural model for `street` and keep the rule classifier for `region`. You don't have to wait for every component to beat the baseline before shipping.
 

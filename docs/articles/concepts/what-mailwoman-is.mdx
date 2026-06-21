@@ -77,7 +77,7 @@ A calibrated model inverts this. Mailwoman doesn't ask _"which of my patterns
 does this string match?"_ — it asks _"what is the most probable reading of
 this string as an address, given what the atlas says exists?"_ Parsing as
 inference instead of template matching. The practical consequence is that
-uncertainty becomes an honest, actionable measurement: the resolver can
+uncertainty becomes an actionable measurement: the resolver can
 abstain on it, soft-score with it, or fall back to rules because of it. The
 capability difference shows up exactly where the
 [arena evals](../evals/parity-scorecard-2026-06-09.md) say it does: on noisy,
@@ -113,20 +113,20 @@ best architectural decision twice over:
    instead of absorbing them into parameters. A bigger model would have
    masked those bugs, not fixed them.
 
-The honest cost: the _data_ doesn't fit the pocket even though the model
+The cost: the _data_ doesn't fit the pocket even though the model
 does. So the constraint resolves into **two tiers, same code, different
 payloads** — Tier A ("pocket"): parser + anchors + the slim hot gazetteer;
 full parse quality, coarse resolution, offline, address data never leaves the
 device. Tier B ("library"): the identical pipeline with full SQLite payloads
 on a server or desktop, where street-level data lives. The pocket claim stays
 true because it's scoped, not because we stopped checking. There is also
-real headroom: the model could grow severalfold before challenging a
+headroom: the model could grow severalfold before challenging a
 conservative mobile budget — the constraint that actually binds is iteration
 cost, and that's the one worth defending.
 
 ## The discipline that keeps it honest
 
-Two failure modes can quietly un-make this architecture, and both have names
+Two failure modes can un-make this architecture, and both have names
 in our history:
 
 - **The override.** Letting a lookup table seize the wheel from the model
@@ -148,5 +148,5 @@ independent efforts reached the same conclusion about transformers beating
 CRFs on degraded input. But the published systems are parser-only. Nobody
 couples calibrated neural parsing, gazetteer fusion at inference time, and
 coordinate-first resolution into one system. If you've been struggling to
-explain Mailwoman by analogy, that's why: it isn't failing to match the
-reference implementation. It is the reference implementation.
+explain Mailwoman by analogy, that's why: nothing else combines all three,
+so there's no reference implementation to match it against.

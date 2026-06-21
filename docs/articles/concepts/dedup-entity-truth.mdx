@@ -64,14 +64,14 @@ multi-address NPIs) then _contracts_ below the NPI count (org-name fuses the
 co-located subparts, the coordinate fusing a few more) — the shape of
 over-segmentation being corrected.
 
-![The dedup F1 climbs as the entity-truth gets honest: a slope chart of entity-resolution F1 across four rulers (NPI, site, org-name, org-name-coord) for the shipped GBT scorer and the FS baseline. The GBT F1 climbs 53.6% → 55.3% → 60.7% → 68.1% across the same clusters.](../evals/charts/dedup-yardstick.svg)
+![The dedup F1 climbs as the entity-truth gets more precise: a slope chart of entity-resolution F1 across four rulers (NPI, site, org-name, org-name-coord) for the shipped GBT scorer and the FS baseline. The GBT F1 climbs 53.6% → 55.3% → 60.7% → 68.1% across the same clusters.](../evals/charts/dedup-yardstick.svg)
 
 Grade the shipped GBT scorer's clusters against each ruler and the F1 climbs
 **53.6% (NPI) → 55.3% (site) → 60.7% (org-name) → 68.1% (coordinate)** — a
 **+14.5pp** swing with the clusters held _identical_. The over-merge count falls
 (109 → 76) and precision rises (43.7% → 64.6%) for the same reason: the ruler stops
 counting correct same-org merges as errors, and the geocode-first building key
-catches the most of them. The climb is the yardstick getting honest, not the model
+catches the most of them. The climb is the yardstick getting more precise, not the model
 changing.
 
 ## Why we trust the org-name ruler
