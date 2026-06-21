@@ -118,7 +118,7 @@ Two cautions:
 - **It is an upper bound, always optimistic.** The oracle is perfect; the real stage never is. "Oracle locality → coord p50 1km" means _1km is the best the resolver could do given perfect parsing_, not a number you will ship.
 - **Inject at the right interface.** A gold locality _string_ (the model's output level) tests the resolver; a gold resolved _place-ID_ (skipping the resolver) tests only the coordinate math. Match the injection point to the stage you want to isolate.
 
-The negative form of the same experiment is worth naming, because it bit us: _removing_ a signal and watching a metric crater tells you how hard a stage leans on that signal. Scoring an anchor-trained model with its retrieval channels _absent_ collapsed the admin tags (country, region, locality, postcode) to near-zero — which, read backwards, measured how load-bearing those channels are (the [v1.5.0-vs-v1.7.0 head-to-head](../evals/2026-06-18-v150-vs-v170-head-to-head.md) is where that surfaced). Oracle substitution is the same idea run forwards: add a perfect signal and read the ceiling.
+The negative form of the same experiment is worth naming, because it bit us: _removing_ a signal and watching a metric crater tells you how hard a stage leans on that signal. Scoring an anchor-trained model with its retrieval channels _absent_ collapsed the admin tags (country, region, locality, postcode) to near-zero — which, read backwards, measured how essential those channels are (the [v1.5.0-vs-v1.7.0 head-to-head](../evals/2026-06-18-v150-vs-v170-head-to-head.md) is where that surfaced). Oracle substitution is the same idea run forwards: add a perfect signal and read the ceiling.
 
 ## Verdict smokes and eval infrastructure
 

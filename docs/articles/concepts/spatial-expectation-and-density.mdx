@@ -114,7 +114,7 @@ Population is already in the system. The admin hierarchy is already in the syste
 
 The density model is not on the critical path. The critical path is: get the classical Fellegi-Sunter spine working, grade it on the NPI benchmark (#615), and produce the eligibility ↔ enrollment anti-join (#621). Those are the deliverables.
 
-Two specific pieces are worth building early because they're load-bearing for the anti-join's interpretability, not just analytical color:
+Two specific pieces are worth building early because they're essential to the anti-join's interpretability, not just analytical color:
 
 1. **Attach HRSA HPSA/MUA designation to each resolved entity.** The FCC RHC forms already reference whether the HCP is in a designated shortage area. Cross-referencing the resolved entity cluster against the HRSA designation data (available via `data.hrsa.gov`) gives the anti-join output a "designated shortage area" column — a standard federal signal the data consumer can use to prioritize. This is a join, not a model.
 

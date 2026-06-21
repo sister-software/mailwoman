@@ -119,7 +119,7 @@ flowchart TB
     class venue,attention,po_box venueLayer
 ```
 
-The orange `street_*` layer is the load-bearing piece WOF doesn't have. Mailwoman's schema promises that `street_prefix` nests in `street`, and `street` nests in `dependent_locality`/`locality`. That promise is honored by the containment decoder at parse time. It is **not** reinforced by the gazetteer at inference time.
+The orange `street_*` layer is the critical piece WOF doesn't have. Mailwoman's schema promises that `street_prefix` nests in `street`, and `street` nests in `dependent_locality`/`locality`. That promise is honored by the containment decoder at parse time. It is **not** reinforced by the gazetteer at inference time.
 
 ## Where the gap shows up at inference
 

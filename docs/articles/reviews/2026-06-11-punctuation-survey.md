@@ -395,7 +395,7 @@ substrate the proposer's matchers should also use.
 ("Halle (Saale)" → also "Halle"), apostrophe-folded, period-folded — so the resolver tolerates
 both a parse that kept an annotation and a query that dropped punctuation the canonical name
 has. Provenance-tracked rows (each variant points at its source name + transform), consistent
-with the no-load-bearing-trivia rule.
+with the no-make-or-break-trivia rule.
 **Quadrant:** bracketed + apostrophe, at the resolver layer — it converts residual parser
 misses into resolver saves, and protects against Nominatim-#3754-style asymmetry between our
 data normalization and query reality.

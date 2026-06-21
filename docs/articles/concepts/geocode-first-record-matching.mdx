@@ -101,7 +101,7 @@ et al., 2021):
 3. **Cluster** — pairwise scores are _not transitive_ (A~B at 0.6 and B~C at 0.6
    does not make A~C a match), so a separate stage closes pairs into canonical
    entities. Skip it and your "entities" quietly fracture or fuse (Dedupe; the
-   non-transitivity is load-bearing, not a footnote).
+   non-transitivity is essential, not a footnote).
 
 Upstream of all three is **canonicalize**: parse the name, sanitize the org name,
 geocode the address, normalize the phone and email. That's mostly salvage — the

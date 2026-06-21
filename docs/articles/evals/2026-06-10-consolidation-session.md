@@ -162,7 +162,7 @@ in **epic #488**, not an ad-hoc grab.
 
 - **Country lever resolved, bookkept.** v0.9.12 gazetteer anchor = country **83.3 F1**
   (homograph, P95/over-fire 0). Choreography = **PR #468**. #464 closed; plan doc + memory
-  updated. (Choreography later found NON-load-bearing for the postcode dip — see below.)
+  updated. (Choreography later found not decisive for the postcode dip — see below.)
 - **Affix multi-locale reroll = PR #469** (v0.9.14, corpus v0.4.11-affix-ml). Proved the
   FR-postcode fix (95.6→99.7) but was a lateral move on FR solo → carried into consolidation.
   #462 closed.
@@ -179,7 +179,7 @@ in **epic #488**, not an ad-hoc grab.
   - **Weight-merge is unsound** for our from-scratch (non-fine-tune) solo models — would
     wreck the CRF transition matrix. _(Stands.)_
   - **US postcode needed convergence, not a structural fix** — improved +1.6 with zero
-    postcode-position changes; the #468 choreography is not load-bearing for it. _(Stands;
+    postcode-position changes; the #468 choreography is not decisive for it. _(Stands;
     Run B confirmed 97.3 at moderate density.)_
   - Fix = **continue-resume** (cheaper than fresh) with affix 5× + tag-weights → **Run A**.
 - **Runs A/B/C — the affix-recovery arc** (full scorecard in "Final result"): A (5×,

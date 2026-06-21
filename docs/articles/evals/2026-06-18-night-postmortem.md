@@ -86,7 +86,7 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
 - **The #511 lint paid for itself the first time it ran** — 9 contradictions caught before they could
   fight the base. My first venue draft was naive; the discipline (scan the source block, tally per token)
   worked exactly as designed. Strong argument for stretch-goal #4 (generalize the lint).
-- **The DeepSeek consult was load-bearing AND self-correcting** — it caught the street-recall blind spot I
+- **The DeepSeek consult was decisive and self-correcting** — it caught the street-recall blind spot I
   missed, and corrected my own walk-back (1:1 → 7:3) on the FR number ratio.
 - **The runbook held** — every Modal gotcha (volume-put blindness, R2 501s, the zero-padded step) was
   already documented from the v1.6.0 run; Phase 5 went clean on the first try.

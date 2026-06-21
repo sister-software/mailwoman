@@ -3,7 +3,7 @@
 _2026-06-14. The arbitration capstone, re-specced after the reconcile retirement (#566), the grouper
 fix (#565), and the coarse-placer (#244) reshaped the landscape. The original #478 issue is substantially
 stale — its "untested / unwired / mock" framing predates this work. This is the current state, the
-design, and — the load-bearing correction — the gate the reconcile retirement proved we need._
+design, and — the critical correction — the gate the reconcile retirement proved we need._
 
 ## Why this matters (unchanged)
 

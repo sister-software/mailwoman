@@ -13,7 +13,7 @@ control: prefix 81.0 at +2k decaying to 61.1 at +4k with relabel off.
 
 The relabel pass (`corpus-python/src/mailwoman_train/relabel.py`) applies the affix shard
 builder's exact split semantics to every street span at load time, after augmentation. Builder
-parity is the load-bearing property — "W Park Ave" gets NO split because the builder rejects
+parity is the critical property — "W Park Ave" gets NO split because the builder rejects
 affix-shaped names, and a looser pass would introduce a third labeling. Vocab is codex-derived
 (`scripts/build-affix-relabel-lexicon.mjs`, 16 directional + 549 suffix variants). Pre-train
 audit on 250K real base rows across five shards: every sampled split correct, per-shard split

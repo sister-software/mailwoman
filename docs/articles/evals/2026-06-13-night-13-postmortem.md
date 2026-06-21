@@ -112,7 +112,7 @@ The orchestrator session became unresponsive (network) mid-shift after launching
 
 - **What recovers fr.house_number past the ~87% plateau, if not weight?** Falsified: weight (6.0 < 3.0). Untested candidates, for the operator to prioritize: (a) more _real_ reversed-order data from BAN rather than synth (the synth↔real distribution gap is the leading suspect); (b) a postcode-anchor / position-aware signal that protects the postcode span from being raided for a leading house number; (c) accept ~87% as the honest intrinsic floor and re-baseline the gate. **Do NOT bump shard mass blindly** — v1.5.1 shows the synth shard can actively destabilize; more of it is not obviously safe.
 - **Ship v1.5.0 (87.4%) as v4.6.0, or hold v4.5.0?** It misses the 91 floor by 3.6pp but is +32.9pp over the shipped model on the hard golden. Operator's explicit call (re-baseline-and-ship vs hold). See "Ship decision" above.
-- **`__isCompiledTree` off-by-one?** The gate-integrity fix bridged `core/out/data` locally; the deeper question (does repo.ts's compiled-tree detection resolve FALSE when it should be TRUE?) is load-bearing and deferred to daylight review (#481).
+- **`__isCompiledTree` off-by-one?** The gate-integrity fix bridged `core/out/data` locally; the deeper question (does repo.ts's compiled-tree detection resolve FALSE when it should be TRUE?) is critical and deferred to daylight review (#481).
 
 ## Concrete next steps
 

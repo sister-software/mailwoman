@@ -107,7 +107,7 @@ The musings proposed static weights (rooftop 0.95, interpolated 0.50, …). We k
 as a prior and reject the constants: this project has a calibration discipline (the isotonic
 work), and tier confidence should be **measured** — P(error < X m) per tier per density
 stratum, fitted from the evals we already run, recalibrated when shards rebuild. Hand-assigned
-constants are load-bearing trivia in number form. Provenance extends to a structured chain
+constants are make-or-break trivia in number form. Provenance extends to a structured chain
 (dataset, release, tier, fallback flag) — the fields already exist per row; the chain is
 assembly.
 

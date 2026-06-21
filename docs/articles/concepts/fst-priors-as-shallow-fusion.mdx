@@ -130,7 +130,7 @@ an address, not a venue name):
   bias toward `B-street` AND a NEGATIVE bias against
   `B-dependent_locality`.
 
-The negative-bias-on-adjacent is the load-bearing piece. It's what
+The negative-bias-on-adjacent is the critical piece. It's what
 prevents the v0.6.1-style dep_loc hallucinations: when synth-street
 training pushed the model toward "decompose mode," the morphology
 prior at inference says "the token next to an affix is street-shaped,

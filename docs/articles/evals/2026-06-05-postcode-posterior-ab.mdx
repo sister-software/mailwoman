@@ -5,7 +5,7 @@
 
 The postcode anchor turns a code like `75001` into a distribution over the countries it could belong to. The shipped version uses a **uniform** posterior: `1/k` over the countries a code exists in. `75001` is in both France and the US, so it comes back `{FR: 0.5, US: 0.5}` — an honest shrug that leaves the disambiguation to the parser and the resolver.
 
-That shrug throws away real information, and we knew it. The _true_ posterior is `P(country | postcode) ∝ N_c(x)` — the actual address-count ratio. `75001` is the 1st arrondissement of Paris, dense and central; it is also Addison, Texas, a quiet suburb. Those don't have equal address counts, so the honest answer isn't 50/50. A de-biased Bayesian posterior — within-country frequency times a real-world address-volume prior — targets that ratio directly, and on paper it's the more correct shape. So we went to adopt it. Then we did the thing our earlier postcode-country investigation was entirely about: we measured the load-bearing assumption before building on it.
+That shrug throws away real information, and we knew it. The _true_ posterior is `P(country | postcode) ∝ N_c(x)` — the actual address-count ratio. `75001` is the 1st arrondissement of Paris, dense and central; it is also Addison, Texas, a quiet suburb. Those don't have equal address counts, so the honest answer isn't 50/50. A de-biased Bayesian posterior — within-country frequency times a real-world address-volume prior — targets that ratio directly, and on paper it's the more correct shape. So we went to adopt it. Then we did the thing our earlier postcode-country investigation was entirely about: we measured the make-or-break assumption before building on it.
 
 ## The measurement
 

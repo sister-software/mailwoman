@@ -47,7 +47,7 @@ one metric instead of averaging over different resolved subsets. n=200 per strat
 
 Three findings, all the same direction:
 
-1. **The région tag is load-bearing.** Collision communes drop 172 → 67 km (p50 132 → 0). Without
+1. **The région tag is decisive.** Collision communes drop 172 → 67 km (p50 132 → 0). Without
    the région, the resolver picks the wrong same-named commune about half the time — exactly the
    disambiguation the split restores.
 2. **The merge failure is catastrophic, not cosmetic.** `locality = "Villeneuve Creuse"` resolves to

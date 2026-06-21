@@ -91,7 +91,7 @@ Places get deprecated: a neighbourhood is absorbed by a neighbouring one, a coun
 
 A query that assumes every record has a valid parent chain will fail silently on these cases.
 
-### Name normalisation is load-bearing
+### Name normalisation is critical
 
 WOF stores "São Paulo" with the accent. User input might arrive as "Sao Paulo" or "SAO PAULO". Case folding and accent stripping are not optional — they are required for matching. The resolver's placename index normalises all names to a canonical form (NFC, lowercase, accent-stripped) before insertion.
 

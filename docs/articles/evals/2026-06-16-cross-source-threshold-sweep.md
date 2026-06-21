@@ -74,7 +74,7 @@ non-co-located pairs as negatives). That is a project, not a tweak; it is **not*
   FS-vs-GBT comparison (same config, same data, same run) and the entity-collapse pattern — both
   robust regardless of absolute scale.
 - **The phone proxy is noisy** at N=27 (only 10–29 checkable per arm). It corroborates the conclusion
-  but isn't load-bearing; the entity-collapse evidence (point 2) is.
+  but isn't decisive; the entity-collapse evidence (point 2) is.
 - A higher-cap run would tighten the precision proxy but cannot change the structural finding: the
   GBT only yields more cross-source links by over-merging.
 

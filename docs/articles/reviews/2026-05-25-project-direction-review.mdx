@@ -89,7 +89,7 @@ To be fair: the v0.5.0 threads were designed to be parallel where possible, and 
 
 ### Synthetic corpus validation catches alignment but not semantics
 
-The substring-match validator (which caught ~1.1% of LLM-generated transliteration rows as misaligned) is correctly treated as load-bearing. But it only proves annotated values appear in raw strings — it does not prove labels are complete, semantically correct, or distributionally sane. The ~73K DeepSeek-generated transliteration pairs are the most likely destabilizer in the v0.5.0 training divergence (they're the one remaining untested variable in the bisect), and they entered the corpus with only alignment validation, not semantic spot-checking.
+The substring-match validator (which caught ~1.1% of LLM-generated transliteration rows as misaligned) is correctly treated as critical. But it only proves annotated values appear in raw strings — it does not prove labels are complete, semantically correct, or distributionally sane. The ~73K DeepSeek-generated transliteration pairs are the most likely destabilizer in the v0.5.0 training divergence (they're the one remaining untested variable in the bisect), and they entered the corpus with only alignment validation, not semantic spot-checking.
 
 LLM data is useful for adversarial cases and transliteration coverage, but it should enter as a controlled curriculum with explicit batch-weight caps, source-specific gradient monitoring, and semantic spot-check sampling — not as 73K rows mixed uniformly into the training distribution.
 

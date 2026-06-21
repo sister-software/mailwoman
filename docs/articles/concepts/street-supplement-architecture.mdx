@@ -161,7 +161,7 @@ Country-level granularity is the right v0.7 scope. Within-country variations (US
 **Inference:** `neural/street-morphology-prior.ts` — two-pass bias function:
 
 1. **Pass 1.** For each token that matches an affix entry, bias toward `B/I-street_prefix` (if affix is locale-prefix-position) or `B/I-street_suffix` (if locale-suffix-position).
-2. **Pass 2.** For each matched affix span, identify the adjacent name-token (preceding for suffix-position, following for prefix-position). Bias adjacent token toward `B/I-street` AND **away from** `B/I-dependent_locality`. The negative bias is the load-bearing piece — it closes the vacuum identified in the [v0.6.1 failure mechanism](../evals/2026-05-28-night-2-postmortem.mdx).
+2. **Pass 2.** For each matched affix span, identify the adjacent name-token (preceding for suffix-position, following for prefix-position). Bias adjacent token toward `B/I-street` AND **away from** `B/I-dependent_locality`. The negative bias is the critical piece — it closes the vacuum identified in the [v0.6.1 failure mechanism](../evals/2026-05-28-night-2-postmortem.mdx).
 
 **Wiring:** Add `fstStreetMorphology?: FstMatcherLike` to `ParseOpts` in `neural/classifier.ts`. Apply via `addEmissionMatrix` after the existing admin FST bias. Same 3.0-logit cap.
 
