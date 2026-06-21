@@ -30,9 +30,28 @@ export interface TIGERBlockTable {
 	geometry: string
 }
 
+/**
+ * Kysely row type for `pl_block` — Census 2020 P.L. 94-171 table P2 (Hispanic-or-Latino by race),
+ * one row per tabulation block, keyed on the same 15-char `GEOID` as {@link TIGERBlockTable}. The
+ * eight category columns partition `pop_total`.
+ */
+export interface PLBlockTable {
+	GEOID: string
+	pop_total: number
+	hispanic: number
+	white: number
+	black: number
+	aian: number
+	asian: number
+	nhpi: number
+	other: number
+	multi: number
+}
+
 /** The TIGER database schema, for `new DatabaseClient<TIGERDatabase>(...)`. */
 export interface TIGERDatabase {
 	tabblock20: TIGERBlockTable
+	pl_block: PLBlockTable
 }
 
 /** Marker so callers can opt into `Generated` columns later without importing kysely here. */
@@ -82,4 +101,17 @@ CREATE INDEX IF NOT EXISTS "idx_tabblock20_state_code" ON "tabblock20" ("state_c
 CREATE INDEX IF NOT EXISTS "idx_tabblock20_state_county" ON "tabblock20" ("state_code", "county_code");
 CREATE INDEX IF NOT EXISTS "idx_tabblock20_state_county_tract" ON "tabblock20" ("state_code", "county_code", "tract_code");
 CREATE INDEX IF NOT EXISTS "idx_tabblock20_population" ON "tabblock20" ("population");
+
+CREATE TABLE IF NOT EXISTS "pl_block" (
+	"GEOID" text(15) PRIMARY KEY NOT NULL,
+	"pop_total" integer NOT NULL,
+	"hispanic" integer NOT NULL,
+	"white" integer NOT NULL,
+	"black" integer NOT NULL,
+	"aian" integer NOT NULL,
+	"asian" integer NOT NULL,
+	"nhpi" integer NOT NULL,
+	"other" integer NOT NULL,
+	"multi" integer NOT NULL
+);
 `
