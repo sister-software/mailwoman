@@ -24,6 +24,7 @@ import {
 	streetSuffixAbbreviate,
 	streetSuffixExpand,
 	synthesizeRow,
+	typoInject,
 	unitDesignatorAbbreviate,
 	unitDesignatorExpand,
 	zipPlus4DashDrop,
@@ -566,6 +567,8 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 		// drop-commas deliberately deletes the commas BETWEEN spans; the dots inside the span stay.
 		["drop-commas", poBoxRow(), "P.O. Box 5"],
 		["double-space", poBoxRow(), "P.O.  Box  5"],
+		// typo-inject edits the locality ("Portland"); the po_box span (digits → never eligible) survives.
+		["typo-inject", poBoxRow(), "P.O. Box 5"],
 		[
 			"accent-strip",
 			poBoxRow({
@@ -936,5 +939,65 @@ describe("composeAdversarialRow", () => {
 		const a = composeAdversarialRow("Buffalo Health Clinic", address, { pattern: "place-name-venue" })
 		const b = composeAdversarialRow("Buffalo Health Clinic", address, { pattern: "place-name-venue" })
 		expect(a).toEqual(b)
+	})
+})
+
+describe("typoInject (#530)", () => {
+	const row = baseRow({
+		raw: "123 Cupertino Avenue, Cupertino, CA 95014",
+		components: {
+			house_number: "123",
+			street: "Cupertino Avenue",
+			locality: "Cupertino",
+			region: "CA",
+			postcode: "95014",
+		},
+		source_id: "typo-fixture",
+	})
+
+	it("injects exactly one typo into an alpha-name component, applied to raw + the component", () => {
+		const out = typoInject(row)
+		expect(out).not.toBeNull()
+		expect(out!.synth?.method).toBe("typo-inject")
+		const changed = (Object.keys(row.components) as ComponentTag[]).filter(
+			(k) => row.components[k] !== out!.components[k]
+		)
+		expect(changed).toHaveLength(1)
+		const tag = changed[0]!
+		expect(tag).not.toBe("house_number")
+		expect(tag).not.toBe("postcode")
+		// substring contract: the typo'd value is present in the new raw
+		expect(out!.raw).toContain(out!.components[tag]!)
+		// changed, and same length (a transpose or a single-char substitution)
+		expect(out!.components[tag]).not.toBe(row.components[tag])
+		expect(out!.components[tag]!.length).toBe(row.components[tag]!.length)
+	})
+
+	it("is deterministic — the same source_id yields the same typo (reproducible corpus)", () => {
+		expect(typoInject(row)).toEqual(typoInject(row))
+	})
+
+	it("never touches digit components — number + postcode survive verbatim", () => {
+		const out = typoInject(row)!
+		expect(out.components.house_number).toBe("123")
+		expect(out.components.postcode).toBe("95014")
+	})
+
+	it("returns null when there is no eligible alpha component", () => {
+		const out = typoInject(
+			baseRow({ raw: "123 95014", components: { house_number: "123", postcode: "95014" }, source_id: "n" })
+		)
+		expect(out).toBeNull()
+	})
+
+	it("the augmented row still aligns — every span addresses raw exactly (end-to-end substring contract)", () => {
+		const out = typoInject(row)!
+		const aligned = alignRow(out)
+		expect(aligned.kind, `typo'd row should align (got ${JSON.stringify(aligned.row)})`).toBe("labeled")
+		if (aligned.kind !== "labeled") throw new Error("unreachable")
+		const { raw, span_starts, span_ends, span_tags } = aligned.row
+		for (let i = 0; i < span_tags!.length; i++) {
+			expect(raw.slice(span_starts![i]!, span_ends![i]!)).toBe(out.components[span_tags![i]!])
+		}
 	})
 })
