@@ -24,6 +24,13 @@ export { WofSqlitePlaceLookup, type RankingWeights, type WofSqlitePlaceLookupOpt
 export { WofCandidateTableLookup, type WofCandidateTableLookupOpts } from "./candidate-lookup.js"
 
 export {
+	WofPostalCityAliasLookup,
+	type PostalCityAlias,
+	type WofPostalCityAliasLookupOpts,
+} from "./postal-city-alias-lookup.js"
+export type { PostalCityAliasDatabase, PostalCityAliasTable } from "./postal-city-alias-schema.js"
+
+export {
 	ADDRESS_CONVENTION_TABLE,
 	BUILTIN_STRATEGY_NAMES,
 	SeedConventionSource,
