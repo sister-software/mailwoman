@@ -16,9 +16,14 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { buildCandidateTable } from "./build-candidate.js"
 import { WofCandidateTableLookup } from "./candidate-lookup.js"
-import { POSTAL_CITY_CANDIDATE_DDL, POSTAL_CITY_CANDIDATE_TABLE } from "./postal-city-candidate-schema.js"
+import {
+	createPostalCityCandidateTable,
+	POSTAL_CITY_CANDIDATE_TABLE,
+	type PostalCityCandidateDatabase,
+} from "./postal-city-candidate-schema.js"
 
 let scratch: string
 let candidatePath: string
@@ -47,14 +52,22 @@ function buildFixtureAdmin(path: string): void {
 }
 
 /** Attach the #741 side-index with one edge: the postal city "Antioch" at 37013 → Nashville (id 1). */
-function attachPostalCityIndex(path: string): void {
-	const db = new DatabaseSync(path)
-	db.exec(POSTAL_CITY_CANDIDATE_DDL)
-	db.prepare(
-		`INSERT INTO ${POSTAL_CITY_CANDIDATE_TABLE} (name_key, postcode, spr_id, name, latitude, longitude)
-		 VALUES ('antioch', '37013', 1, 'Nashville', 36.17, -86.78)`
-	).run()
-	db.close()
+async function attachPostalCityIndex(path: string): Promise<void> {
+	const raw = new DatabaseSync(path)
+	const kdb = new DatabaseClient<PostalCityCandidateDatabase>({ database: raw })
+	await createPostalCityCandidateTable(kdb)
+	await kdb
+		.insertInto(POSTAL_CITY_CANDIDATE_TABLE)
+		.values({
+			name_key: "antioch",
+			postcode: "37013",
+			spr_id: 1,
+			name: "Nashville",
+			latitude: 36.17,
+			longitude: -86.78,
+		})
+		.execute()
+	await kdb.destroy() // closes the underlying `raw` handle
 }
 
 beforeEach(async () => {
@@ -82,7 +95,7 @@ describe("WofCandidateTableLookup postal-city side-index (#741)", () => {
 	})
 
 	test("WITH the side-index, an exact (name_key, postcode) hit resolves to the geographic locality", async () => {
-		attachPostalCityIndex(candidatePath)
+		await attachPostalCityIndex(candidatePath)
 		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
 		try {
 			const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
@@ -96,7 +109,7 @@ describe("WofCandidateTableLookup postal-city side-index (#741)", () => {
 	})
 
 	test("a BARE query (no postcode) is untouched — bare 'Antioch' still resolves to the CA distractor", async () => {
-		attachPostalCityIndex(candidatePath)
+		await attachPostalCityIndex(candidatePath)
 		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
 		try {
 			// No postcode → the side-index probe is gated off → normal population-first ranking. There is
@@ -111,7 +124,7 @@ describe("WofCandidateTableLookup postal-city side-index (#741)", () => {
 	})
 
 	test("a postcode NOT in the side-index falls through to the normal probe", async () => {
-		attachPostalCityIndex(candidatePath)
+		await attachPostalCityIndex(candidatePath)
 		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
 		try {
 			const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "99999", country: "US" })
@@ -122,7 +135,7 @@ describe("WofCandidateTableLookup postal-city side-index (#741)", () => {
 	})
 
 	test("a NON-locality request (region) does not consult the locality side-index", async () => {
-		attachPostalCityIndex(candidatePath)
+		await attachPostalCityIndex(candidatePath)
 		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
 		try {
 			// region query + postcode must NOT return the locality alias (Nashville).

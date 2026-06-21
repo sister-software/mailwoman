@@ -9,10 +9,10 @@
  *   keyed exactly by `(name_key, postcode)`.
  *
  *   Bridge (no admin-DB join): for each DIVERGENT `(postcode, postal_city)` in the alias DB, the
- *   `postcode_locality` shard gives the postcode's CONTAINING `locality_id`; that locality's coord
- *   + name come straight from the candidate table's own row for that `spr_id`. So a postal-city
- *   query with the postcode resolves to exactly the geographic locality the FTS coordinate-first
- *   path would pick — but via one exact probe, no population/region ranking.
+ *   `postcode_locality` shard gives the postcode's CONTAINING `locality_id`; that locality's
+ *   coordinate and name come straight from the candidate table's own row for that `spr_id`. So a
+ *   postal-city query with the postcode resolves to exactly the geographic locality the FTS
+ *   coordinate-first path would pick — but via one exact probe, no population/region ranking.
  *
  *   Idempotent: drops + recreates the table each run. Modifies the candidate DB IN PLACE — run it on
  *   a COPY to validate, then fold it into the canonical candidate build before republish.
@@ -23,12 +23,14 @@
  *   --postcode-locality-db /mnt/playpen/mailwoman-data/wof/postcode-locality-us.db
  */
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 import {
+	createPostalCityCandidateTable,
 	POSTAL_CITY_CANDIDATE_COLUMNS,
-	POSTAL_CITY_CANDIDATE_DDL,
 	POSTAL_CITY_CANDIDATE_TABLE,
+	type PostalCityCandidateDatabase,
 } from "../resolver-wof-sqlite/postal-city-candidate-schema.ts"
 import { normalizeLocalityForKey } from "../resolver-wof-sqlite/street-normalize.ts"
 
@@ -71,7 +73,11 @@ const edges = alias
 	.all() as unknown as Array<{ postcode: string; postal_city: string }>
 alias.close()
 
-db.exec(`DROP TABLE IF EXISTS ${POSTAL_CITY_CANDIDATE_TABLE};${POSTAL_CITY_CANDIDATE_DDL}`)
+// DDL via the Kysely schema-builder (the house idiom); the hot INSERT loop below stays on the raw
+// `node:sqlite` handle for speed. `kdb` wraps `db` — the two share the one connection.
+const kdb = new DatabaseClient<PostalCityCandidateDatabase>({ database: db })
+await kdb.schema.dropTable(POSTAL_CITY_CANDIDATE_TABLE).ifExists().execute()
+await createPostalCityCandidateTable(kdb)
 const insert = db.prepare(
 	`INSERT OR IGNORE INTO ${POSTAL_CITY_CANDIDATE_TABLE} (${POSTAL_CITY_CANDIDATE_COLUMNS.join(", ")})
 	 VALUES (${POSTAL_CITY_CANDIDATE_COLUMNS.map(() => "?").join(", ")})`
@@ -98,8 +104,8 @@ for (const e of edges) {
 	inserted++
 }
 db.exec("COMMIT")
-db.exec(`CREATE INDEX IF NOT EXISTS idx_pcc_spr ON ${POSTAL_CITY_CANDIDATE_TABLE} (spr_id);`)
-db.close()
+await kdb.schema.createIndex("idx_pcc_spr").ifNotExists().on(POSTAL_CITY_CANDIDATE_TABLE).column("spr_id").execute()
+await kdb.destroy() // closes the underlying `db` handle
 
 console.log(
 	`postal_city_candidate built: ${inserted} edges inserted ` +
