@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./state/index.js"
-export * from "./schema.js"
 export * from "./fetch.js"
 export * from "./redistricting.js"
+export * from "./schema.js"
+export * from "./state/index.js"

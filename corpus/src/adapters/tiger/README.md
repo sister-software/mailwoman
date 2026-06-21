@@ -28,8 +28,9 @@ mailwoman dep would be opinionated. Pick whichever fits your pipeline.
 ### Recommended ingest: `mailwoman tiger fetch`
 
 Build `tiger.db` with the CLI. It downloads, extracts, and loads `tiger_streets`
-+ `tiger_places` in exactly the schema this adapter reads, and handles the two
-wrinkles by itself:
+
+- `tiger_places` in exactly the schema this adapter reads, and handles the two
+  wrinkles by itself:
 
 1. **ADDRFEAT is published per-COUNTY** (`tl_2024_<5-digit-FIPS>_addrfeat.zip`,
    ~3 county zips for DC to ~250 for Texas), so the CLI discovers a state's

@@ -3,23 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pull TIGER geometry/attributes into a `node:sqlite` database via the Kysely {@link DatabaseClient}.
+ *   Pull TIGER geometry/attributes into a `node:sqlite` database via the Kysely
+ *   {@link DatabaseClient}.
  *
  *   Replaces the ad-hoc wget and the retired corpus TIGER build script. Pared down from isp-nexus's
- *   `generate-tiger-tiles.ts` (its per-level column mapping is the spec) into the playpen `repo-tools`
- *   idiom: an async generator of progress events, idempotent, no SpatiaLite.
+ *   `generate-tiger-tiles.ts` (its per-level column mapping is the spec) into the playpen
+ *   `repo-tools` idiom: an async generator of progress events, idempotent, no SpatiaLite.
  *
  *   Three levels:
- *     - `tabblock20` (per state) — tabulation blocks → `tabblock20`, geometry as GeoJSON text.
- *     - `place`      (per state) — incorporated/census places → `tiger_places` (attribute-only).
- *     - `addrfeat`   (per county) — named street segments + ZIPs → `tiger_streets` (attribute-only).
+ *
+ *   - `tabblock20` (per state) — tabulation blocks → `tabblock20`, geometry as GeoJSON text.
+ *   - `place` (per state) — incorporated/census places → `tiger_places` (attribute-only).
+ *   - `addrfeat` (per county) — named street segments + ZIPs → `tiger_streets` (attribute-only).
  *
  *   `tiger_streets` + `tiger_places` match the schema the corpus `tiger` adapter reads, so this is a
  *   drop-in replacement for the retired corpus TIGER build script.
  *
- *   Flow per source unit: download (skips a valid cached zip) → unzip → stream `ogr2ogr -f GeoJSONSeq`
- *   (mapping shapefile columns to the schema, WGS84 for geometry levels) → batched inserts. Re-running
- *   a state replaces its rows.
+ *   Flow per source unit: download (skips a valid cached zip) → unzip → stream `ogr2ogr -f
+ *   GeoJSONSeq` (mapping shapefile columns to the schema, WGS84 for geometry levels) → batched
+ *   inserts. Re-running a state replaces its rows.
  */
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
@@ -37,7 +39,10 @@ import { TIGER_INITIALIZE_SQL } from "./schema.js"
 const CENSUS_HOST = "https://www2.census.gov"
 const DEFAULT_DATA_ROOT = process.env.MAILWOMAN_DATA_ROOT ?? "/mnt/playpen/mailwoman-data"
 
-/** Supported TIGER levels. `tabblock20` is per state + carries geometry; `place`/`addrfeat` are attribute-only. */
+/**
+ * Supported TIGER levels. `tabblock20` is per state + carries geometry; `place`/`addrfeat` are
+ * attribute-only.
+ */
 export type TIGERFetchLevel = "tabblock20" | "place" | "addrfeat"
 
 const LEVEL_DIR: Record<TIGERFetchLevel, string> = {
@@ -58,7 +63,10 @@ export interface FetchTIGEROptions {
 	level?: TIGERFetchLevel
 	/** Vintage. Default 2020 for blocks (matches the 2020 P.L.), 2024 for place/addrfeat (current). */
 	vintage?: number
-	/** Output SQLite path. Default `<dataRoot>/tiger/tiger-<vintage>.db`. */
+	/**
+	 * Output SQLite path. Default `<dataRoot>/tiger/tiger.db` (the name the corpus `tiger` adapter
+	 * reads).
+	 */
 	outPath?: string
 	/** Download cache + default output root. */
 	dataRoot?: string
@@ -154,7 +162,7 @@ function runCapture(cmd: string, args: string[]): Promise<string> {
 		child.stderr.on("data", (d) => (err += d))
 		child.on("error", reject)
 		child.on("close", (code) =>
-			code === 0 ? resolve(out) : reject(new Error(`${cmd} exited ${code}: ${err.slice(0, 500)}`)),
+			code === 0 ? resolve(out) : reject(new Error(`${cmd} exited ${code}: ${err.slice(0, 500)}`))
 		)
 	})
 }
@@ -188,7 +196,8 @@ async function discoverCounties(state: string, vintage: number): Promise<string[
 }
 
 /**
- * Fetch one state's TIGER data at `level` into a SQLite DB. Yields progress; returns the final tally.
+ * Fetch one state's TIGER data at `level` into a SQLite DB. Yields progress; returns the final
+ * tally.
  */
 export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<FetchTIGEREvent, FetchTIGERResult> {
 	const level = options.level ?? "tabblock20"
@@ -199,7 +208,11 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	const table = LEVEL_TABLE[level]
 
 	const cacheDir = join(dataRoot, "tiger", String(vintage), state)
-	const outPath = options.outPath ?? join(dataRoot, "tiger", `tiger-${vintage}.db`)
+	// Default to a stable, vintage-agnostic `tiger.db` — the filename the corpus `tiger` adapter reads
+	// (run-corpus-build → `${ROOT}/tiger/tiger.db`). The vintage is a content detail, not a path one;
+	// the per-table idempotent delete keeps a re-fetch (newer vintage) clean. The download CACHE stays
+	// vintage-partitioned below so zips don't collide across vintages.
+	const outPath = options.outPath ?? join(dataRoot, "tiger", "tiger.db")
 	await mkdir(cacheDir, { recursive: true })
 	await mkdir(dirname(outPath), { recursive: true })
 
@@ -214,9 +227,21 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	const kdb = new DatabaseClient<TIGERDatabase>({ database: db })
 
 	const insertBatch = async (rows: Row[]): Promise<void> => {
-		if (level === "tabblock20") await kdb.insertInto("tabblock20").values(rows as TIGERBlockTable[]).execute()
-		else if (level === "place") await kdb.insertInto("tiger_places").values(rows as TIGERPlaceTable[]).execute()
-		else await kdb.insertInto("tiger_streets").values(rows as TIGERStreetTable[]).execute()
+		if (level === "tabblock20")
+			await kdb
+				.insertInto("tabblock20")
+				.values(rows as TIGERBlockTable[])
+				.execute()
+		else if (level === "place")
+			await kdb
+				.insertInto("tiger_places")
+				.values(rows as TIGERPlaceTable[])
+				.execute()
+		else
+			await kdb
+				.insertInto("tiger_streets")
+				.values(rows as TIGERStreetTable[])
+				.execute()
 	}
 
 	try {
@@ -251,8 +276,17 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 			const child = spawn(
 				"ogr2ogr",
-				["-f", "GeoJSONSeq", "-t_srs", "EPSG:4326", "-sql", selectSQL(level, layer, options.county), "/vsistdout/", shpPath],
-				{ stdio: ["ignore", "pipe", "pipe"] },
+				[
+					"-f",
+					"GeoJSONSeq",
+					"-t_srs",
+					"EPSG:4326",
+					"-sql",
+					selectSQL(level, layer, options.county),
+					"/vsistdout/",
+					shpPath,
+				],
+				{ stdio: ["ignore", "pipe", "pipe"] }
 			)
 			let stderr = ""
 			child.stderr.on("data", (d) => (stderr += d))

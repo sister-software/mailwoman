@@ -4,10 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman tiger redistricting --state <FIPS>` — download a state's Census 2020 P.L. 94-171 block
- *   race counts (table P2) into the `pl_block` table, keyed on the same block GEOID as `tiger fetch`'s
- *   `tabblock20`. Join the two for block-level race + geometry.
+ *   race counts (table P2) into the `pl_block` table, keyed on the same block GEOID as `tiger
+ *   fetch`'s `tabblock20`. Join the two for block-level race + geometry.
  *
- *   Idempotent: a valid cached ZIP is reused, and re-running a state (or `--county`) replaces its rows.
+ *   Idempotent: a valid cached ZIP is reused, and re-running a state (or `--county`) replaces its
+ *   rows.
  */
 
 import { Spinner } from "@inkjs/ui"
@@ -25,7 +26,7 @@ const OptionsSchema = zod.object({
 		.string()
 		.optional()
 		.describe("Optional three-digit county FIPS filter, e.g. 059 — loads only that county's blocks."),
-	out: zod.string().optional().describe("Output .db path. Default <dataRoot>/tiger/tiger-<vintage>.db."),
+	out: zod.string().optional().describe("Output .db path. Default <dataRoot>/tiger/tiger.db."),
 })
 
 export { OptionsSchema as options }
@@ -56,7 +57,9 @@ const TIGERRedistricting: CommandComponent<typeof OptionsSchema> = ({ options })
 				else if (ev.phase === "extract") setStatus(`Extracted ${ev.file}`)
 				else if (ev.phase === "header") setStatus(`Header parsed: ${ev.blocks.toLocaleString()} blocks`)
 				else if (ev.phase === "load")
-					setStatus(`Loading counts… ${ev.inserted.toLocaleString()}${ev.total ? ` / ${ev.total.toLocaleString()}` : ""}`)
+					setStatus(
+						`Loading counts… ${ev.inserted.toLocaleString()}${ev.total ? ` / ${ev.total.toLocaleString()}` : ""}`
+					)
 				next = await gen.next()
 			}
 

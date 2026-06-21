@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   Pull a state's Census 2020 P.L. 94-171 redistricting counts (table P2 — Hispanic-or-Latino by
- *   race, per block) into the `pl_block` table of a TIGER {@link DatabaseClient} DB, keyed on the same
- *   15-char block `GEOID` as {@link fetchTIGER}'s `tabblock20`. Join the two for block-level race +
- *   geometry (e.g. a dot-density map).
+ *   race, per block) into the `pl_block` table of a TIGER {@link DatabaseClient} DB, keyed on the
+ *   same 15-char block `GEOID` as {@link fetchTIGER}'s `tabblock20`. Join the two for block-level
+ *   race + geometry (e.g. a dot-density map).
  *
- *   Keyless public data. The per-state ZIP holds a pipe-delimited geographic header (`<st>geo<yr>.pl`)
- *   and three data segments; segment 1 (`<st>00001<yr>.pl`) carries P1 + P2. We join the header
- *   (filtered to SUMLEV 750 = block) to segment 1 by LOGRECNO. Field offsets are fixed by the 2020 P.L.
- *   layout (verified against the real files).
+ *   Keyless public data. The per-state ZIP holds a pipe-delimited geographic header
+ *   (`<st>geo<yr>.pl`) and three data segments; segment 1 (`<st>00001<yr>.pl`) carries P1 + P2. We
+ *   join the header (filtered to SUMLEV 750 = block) to segment 1 by LOGRECNO. Field offsets are
+ *   fixed by the 2020 P.L. layout (verified against the real files).
  *
  *   https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/
  */
@@ -59,7 +59,7 @@ export interface FetchRedistrictingOptions {
 	stateFIPS: string
 	/** Decennial vintage. Default 2020 (the only P.L. 94-171 release this parses). */
 	vintage?: number
-	/** Output SQLite path. Default `<dataRoot>/tiger/tiger-<vintage>.db` (same DB as `fetchTIGER`). */
+	/** Output SQLite path. Default `<dataRoot>/tiger/tiger.db` (same DB as `fetchTIGER`). */
 	outPath?: string
 	/** Download cache + default output root. */
 	dataRoot?: string
@@ -90,7 +90,7 @@ function runCapture(cmd: string, args: string[]): Promise<string> {
 		child.stderr.on("data", (d) => (err += d))
 		child.on("error", reject)
 		child.on("close", (code) =>
-			code === 0 ? resolve(out) : reject(new Error(`${cmd} exited ${code}: ${err.slice(0, 500)}`)),
+			code === 0 ? resolve(out) : reject(new Error(`${cmd} exited ${code}: ${err.slice(0, 500)}`))
 		)
 	})
 }
@@ -119,10 +119,11 @@ async function eachLine(path: string, fn: (line: string) => void): Promise<void>
 }
 
 /**
- * Fetch one state's P.L. 94-171 block race counts into `pl_block`. Yields progress; returns the tally.
+ * Fetch one state's P.L. 94-171 block race counts into `pl_block`. Yields progress; returns the
+ * tally.
  */
 export async function* fetchRedistricting(
-	options: FetchRedistrictingOptions,
+	options: FetchRedistrictingOptions
 ): AsyncGenerator<FetchRedistrictingEvent, FetchRedistrictingResult> {
 	const vintage = options.vintage ?? 2020
 	const dataRoot = options.dataRoot ?? DEFAULT_DATA_ROOT
@@ -136,7 +137,8 @@ export async function* fetchRedistricting(
 	const fileAbbr = abbr.toLowerCase()
 
 	const cacheDir = join(dataRoot, "census", "redistricting", String(vintage), state)
-	const outPath = options.outPath ?? join(dataRoot, "tiger", `tiger-${vintage}.db`)
+	// Same stable `tiger.db` default as fetchTIGER — pl_block lives alongside tabblock20 in one DB.
+	const outPath = options.outPath ?? join(dataRoot, "tiger", "tiger.db")
 	await mkdir(cacheDir, { recursive: true })
 	await mkdir(dirname(outPath), { recursive: true })
 
@@ -171,7 +173,10 @@ export async function* fetchRedistricting(
 
 	try {
 		// Idempotent re-run: drop the rows we're about to (re)load.
-		await kdb.deleteFrom("pl_block").where("GEOID", "like", prefix + "%").execute()
+		await kdb
+			.deleteFrom("pl_block")
+			.where("GEOID", "like", prefix + "%")
+			.execute()
 
 		let inserted = 0
 		let batch: PLBlockTable[] = []

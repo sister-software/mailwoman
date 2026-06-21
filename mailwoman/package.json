@@ -1,109 +1,109 @@
 {
-  "name": "mailwoman",
-  "version": "4.11.0",
-  "description": "Utilities for working with contacts for email, phone, and postal addresses.",
-  "license": "AGPL-3.0-only",
-  "contributors": [
-    {
-      "name": "Teffen Ellis",
-      "email": "teffen@sister.software"
-    },
-    {
-      "name": "Pelias Contributors"
-    }
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/sister-software/mailwoman.git",
-    "directory": "mailwoman"
-  },
-  "bugs": {
-    "url": "https://github.com/sister-software/mailwoman/issues"
-  },
-  "homepage": "https://github.com/sister-software/mailwoman",
-  "type": "module",
-  "exports": {
-    "./package.json": "./package.json",
-    ".": "./out/index.js",
-    "./geocode-core": "./out/geocode-core.js",
-    "./server": "./out/server/index.js",
-    "./sdk/test": "./out/sdk/test/index.js",
-    "./sdk/repo": "./out/sdk/repo.js",
-    "./sdk/cli": "./out/sdk/cli.js"
-  },
-  "dependencies": {
-    "@fragaria/address-formatter": "^6.7.1",
-    "@inkjs/ui": "^2.0.0",
-    "@mailwoman/classifiers": "workspace:*",
-    "@mailwoman/core": "workspace:*",
-    "@mailwoman/corpus": "workspace:*",
-    "@mailwoman/kind-classifier": "workspace:*",
-    "@mailwoman/locale-gate": "workspace:*",
-    "@mailwoman/neural": "workspace:*",
-    "@mailwoman/normalize": "workspace:*",
-    "@mailwoman/phrase-grouper": "workspace:*",
-    "@mailwoman/query-shape": "workspace:*",
-    "@mailwoman/registry": "workspace:*",
-    "@mailwoman/tiger": "workspace:*",
-    "chalk": "^5.6.2",
-    "change-case": "^5.4.4",
-    "d3-scale-chromatic": "^3.1.0",
-    "express": "^5.2.1",
-    "fast-glob": "^3.3.3",
-    "geojson": "^0.5.0",
-    "ink": "^7.0.5",
-    "ioredis": "^5.11.1",
-    "pastel": "^4.0.1",
-    "path-ts": "^1.0.5",
-    "piscina": "^5.2.0",
-    "pluralize": "^8.0.0",
-    "react": "^19.2.7",
-    "regenerate": "^1.4.2",
-    "spliterator": "^2.0.0",
-    "zod": "^4.4.3",
-    "zx": "^8.8.5"
-  },
-  "peerDependencies": {
-    "@duckdb/node-api": "1.5.3-r.3",
-    "@mailwoman/resolver-wof-sqlite": "workspace:*"
-  },
-  "files": [
-    "!out/test/**/*",
-    "!**/*.ts",
-    "out/**/*.js",
-    "out/**/*.mjs",
-    "out/**/*.js.map",
-    "out/**/*.mjs.map",
-    "out/**/*.d.ts",
-    "out/**/*.d.ts.map",
-    "out/**/*.json"
-  ],
-  "keywords": [
-    "address",
-    "parser",
-    "usps",
-    "postal",
-    "pelias"
-  ],
-  "bin": "./out/cli.js",
-  "peerDependenciesMeta": {
-    "@duckdb/node-api": {
-      "optional": true
-    },
-    "@inkjs/ui": {
-      "optional": true
-    },
-    "@mailwoman/resolver-wof-sqlite": {
-      "optional": true
-    },
-    "ink": {
-      "optional": true
-    },
-    "react": {
-      "optional": true
-    }
-  },
-  "publishConfig": {
-    "access": "public"
-  }
+	"name": "mailwoman",
+	"version": "4.11.0",
+	"description": "Utilities for working with contacts for email, phone, and postal addresses.",
+	"license": "AGPL-3.0-only",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		},
+		{
+			"name": "Pelias Contributors"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "mailwoman"
+	},
+	"bugs": {
+		"url": "https://github.com/sister-software/mailwoman/issues"
+	},
+	"homepage": "https://github.com/sister-software/mailwoman",
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js",
+		"./geocode-core": "./out/geocode-core.js",
+		"./server": "./out/server/index.js",
+		"./sdk/test": "./out/sdk/test/index.js",
+		"./sdk/repo": "./out/sdk/repo.js",
+		"./sdk/cli": "./out/sdk/cli.js"
+	},
+	"dependencies": {
+		"@fragaria/address-formatter": "^6.7.1",
+		"@inkjs/ui": "^2.0.0",
+		"@mailwoman/classifiers": "workspace:*",
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/corpus": "workspace:*",
+		"@mailwoman/kind-classifier": "workspace:*",
+		"@mailwoman/locale-gate": "workspace:*",
+		"@mailwoman/neural": "workspace:*",
+		"@mailwoman/normalize": "workspace:*",
+		"@mailwoman/phrase-grouper": "workspace:*",
+		"@mailwoman/query-shape": "workspace:*",
+		"@mailwoman/registry": "workspace:*",
+		"@mailwoman/tiger": "workspace:*",
+		"chalk": "^5.6.2",
+		"change-case": "^5.4.4",
+		"d3-scale-chromatic": "^3.1.0",
+		"express": "^5.2.1",
+		"fast-glob": "^3.3.3",
+		"geojson": "^0.5.0",
+		"ink": "^7.0.5",
+		"ioredis": "^5.11.1",
+		"pastel": "^4.0.1",
+		"path-ts": "^1.0.5",
+		"piscina": "^5.2.0",
+		"pluralize": "^8.0.0",
+		"react": "^19.2.7",
+		"regenerate": "^1.4.2",
+		"spliterator": "^2.0.0",
+		"zod": "^4.4.3",
+		"zx": "^8.8.5"
+	},
+	"peerDependencies": {
+		"@duckdb/node-api": "1.5.3-r.3",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*"
+	},
+	"files": [
+		"!out/test/**/*",
+		"!**/*.ts",
+		"out/**/*.js",
+		"out/**/*.mjs",
+		"out/**/*.js.map",
+		"out/**/*.mjs.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"out/**/*.json"
+	],
+	"keywords": [
+		"address",
+		"parser",
+		"usps",
+		"postal",
+		"pelias"
+	],
+	"bin": "./out/cli.js",
+	"peerDependenciesMeta": {
+		"@duckdb/node-api": {
+			"optional": true
+		},
+		"@inkjs/ui": {
+			"optional": true
+		},
+		"@mailwoman/resolver-wof-sqlite": {
+			"optional": true
+		},
+		"ink": {
+			"optional": true
+		},
+		"react": {
+			"optional": true
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	}
 }

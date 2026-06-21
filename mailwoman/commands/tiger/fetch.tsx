@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman tiger fetch --state <FIPS>` — download a state's TIGER tabulation blocks (2020) into a
- *   SQLite database via the Kysely `DatabaseClient`. Geometry is stored as GeoJSON text (no SpatiaLite).
+ *   SQLite database via the Kysely `DatabaseClient`. Geometry is stored as GeoJSON text (no
+ *   SpatiaLite).
  *
  *   Idempotent: a valid cached ZIP is reused, and re-running a state replaces its rows. Pass
  *   `--county <FIPS3>` to load just one county (handy for downstream per-county work).
@@ -28,11 +29,8 @@ const OptionsSchema = zod.object({
 		.number()
 		.optional()
 		.describe("TIGER vintage. Default 2020 for blocks (matches the P.L.), 2024 for place/addrfeat."),
-	county: zod
-		.string()
-		.optional()
-		.describe("Optional three-digit county FIPS filter (blocks only)."),
-	out: zod.string().optional().describe("Output .db path. Default <dataRoot>/tiger/tiger-<vintage>.db."),
+	county: zod.string().optional().describe("Optional three-digit county FIPS filter (blocks only)."),
+	out: zod.string().optional().describe("Output .db path. Default <dataRoot>/tiger/tiger.db."),
 })
 
 export { OptionsSchema as options }
@@ -63,7 +61,9 @@ const TIGERFetch: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 				if (ev.phase === "download") setStatus(ev.cached ? `Using cached ${ev.file}` : `Downloaded ${ev.file}`)
 				else if (ev.phase === "extract") setStatus(`Extracted ${ev.file}`)
 				else if (ev.phase === "load")
-					setStatus(`Loading blocks… ${ev.inserted.toLocaleString()}${ev.total ? ` / ${ev.total.toLocaleString()}` : ""}`)
+					setStatus(
+						`Loading blocks… ${ev.inserted.toLocaleString()}${ev.total ? ` / ${ev.total.toLocaleString()}` : ""}`
+					)
 				next = await gen.next()
 			}
 
