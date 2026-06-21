@@ -127,6 +127,10 @@ export function buildCoincidentRoles(
 		db.exec(`DROP TABLE ${COINCIDENT_ROLES_TABLE}`)
 	}
 	onProgress("creating", COINCIDENT_ROLES_TABLE)
+	// Raw DDL by design: this is a sync builder consumed by a sync CLI (build-coincident-roles-cli) and
+	// 6 sync unit tests, so routing one table through async Kysely would cascade async through all of
+	// them for no real gain. See AGENTS.md "Database / inline SQL". (The SELECT + INSERT loop below are
+	// likewise the raw hot path.)
 	db.exec(`
 		CREATE TABLE IF NOT EXISTS ${COINCIDENT_ROLES_TABLE} (
 			admin_id INTEGER NOT NULL,

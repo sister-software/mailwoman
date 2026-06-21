@@ -86,6 +86,27 @@ If a release fails partway through publishing:
 - `core/utils/repo.ts` has a `__isCompiledTree` flag that distinguishes source mode from compiled mode for path-builder math. Don't reach across that boundary without reading the comment.
 - The **bare-import + subpath-import cycle** is a fragility surface. When a test file imports `@mailwoman/core` bare AND a subpath, Vite can leave the bare re-exports unbound while the slices interleave — classifier base classes evaluate as `undefined`. (`core/resources/libpostal.ts` had a top-level `await readdir` that contributed until #481 made it a lazy `getAvailableLanguages()` getter; the cycle turned out to be **structural** — Vite's bare/subpath interleaving — not TLA-driven, so it persists after the TLA removal.) Workaround: a side-effect `import "@mailwoman/core"` at the top of the affected test file forces full init first. See `classifiers/adapter.test.ts`. Full fix = import-graph hygiene (tracked on #481).
 
+## Database / inline SQL
+
+Table DDL goes through Kysely's schema-builder, not raw `db.exec("CREATE TABLE …")`. The idiom, established across #745–#749:
+
+- A schema module owns both the typed `Database` interface AND a co-located `createXTable(db)` function built with `db.schema.createTable(...)`. The interface is the read/write contract; the builder creates the table; a column added to one is a compile error against the other. See `resolver-wof-sqlite/{candidate,address-point,postal-city-candidate,postal-city-alias}-schema.ts`, `resolver-wof-sqlite/unified-schema.ts`, and `tiger/sdk/schema.ts`.
+- `DatabaseClient` (`@mailwoman/core/kysley/client`) extends `Kysely` over `node:sqlite`. A build script constructs the raw `DatabaseSync` for its **hot positional INSERTs** (the bulk-load fast path) and wraps that _same_ handle in a `DatabaseClient` for the DDL — one connection, shared; `kdb.destroy()` owns the close. The schema-builder is async, so the DDL functions and their callers are `async`.
+- `WITHOUT ROWID` has no first-class builder — use the ``.modifyEnd(sql`without rowid`)`` raw modifier. It's a win only for small-row, PK-probed tables (the candidate gazetteer, `pl_block`); never for a table carrying a large blob like geometry, where clustering the row into the B-tree _hurts_.
+
+### What deliberately stays raw — don't "finish the job" on these
+
+Some inline SQL is raw on purpose. If you migrate one of these thinking it was missed, you'll regress it. Each has a reason:
+
+- **FTS5 virtual tables + `MATCH`** (`fts.ts`, `lookup.ts`, `sharding.ts`) — Kysely can't express `CREATE VIRTUAL TABLE … USING fts5` or the `MATCH` operator.
+- **ogr2ogr / GDAL-dialect SQL** (`tiger/sdk/fetch.ts`) — runs inside ogr2ogr against shapefiles, not the app DB.
+- **Hot bulk writes** — the positional prepared-statement INSERT loops, their `BEGIN`/`COMMIT`, and the candidate clustering `INSERT … SELECT … ORDER BY`. Plus `PRAGMA`, `VACUUM`, `ANALYZE`, `ATTACH` — none are Kysely-modelled, and the inserts are the throughput path.
+- **Runtime-dynamic schemas** (`corpus/scripts/ingest-csv.ts`) — columns + types are inferred from the CSV at runtime; a builder loop wraps the same dynamic strings with ceremony and no added type safety.
+- **Introspect-and-replay** (`resolver-wof-sqlite/build-slim.ts`) — it execs the _source_ DB's own `CREATE TABLE` strings read from `sqlite_master`; a static builder can't express a copied schema.
+- **Async-into-sync walls** — `PlacetypeDataSource.ts` runs its DDL in a synchronous class constructor; `zcta-centroids.ts` and `coincident-roles.ts` are sync, heavily-tested helpers (the latter behind a sync CLI). Kysely's builder is async, so migrating cascades `async` through a sync call graph and rewrites the tests, all for one small table — not worth it.
+
+Two threads are still open, not "raw forever": the DuckDB sites want `@oorabona/kysely-duckdb` (a separate dialect), and the bulk read/write `.prepare("SELECT …" / "INSERT …")` query sites are a later query-builder sweep.
+
 ## When in doubt
 
 Read the workspace-local docstrings before changing infrastructure files. The headers in `scripts/*.mjs`, `.release-it.json`, and `.github/workflows/*.yml` explain why each piece exists. If a file's purpose isn't documented inline and you're about to touch it, add the docstring as part of your change — future-you (or future-claude) will thank you.

@@ -155,6 +155,8 @@ export async function buildSlimWofDatabase(opts: BuildSlimOptions): Promise<Buil
 					.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?`)
 					.get(table) as { sql?: string } | undefined
 				if (createSql?.sql) {
+					// Raw DDL by design (introspect-and-replay): we exec the SOURCE DB's own CREATE TABLE
+					// string read from sqlite_master, so a static Kysely builder can't express it. See AGENTS.md.
 					out.exec(createSql.sql)
 				} else if (table === PLACE_POPULATION_TABLE) {
 					// Older source builds may predate the aux table — create it empty so the per-source
