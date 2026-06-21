@@ -30,7 +30,7 @@ The "dozen slices instead of the whole file" part has its own story. It used to 
 
 ## A neural parser the size of a photo
 
-Worth dwelling on the 29.8 MB, because the comparison is stark: roughly sixty times smaller than libpostal's default model, seventy-odd times smaller than the Senzing one. And the smaller model is the *better* parser on the input that actually shows up in a search box, the typos, the half-finished lines, the prefix you've typed so far. A transformer trained on degraded queries reads `123 Penslyvania Av NW` the way you meant it; a CRF over hand-built features tends not to. Small enough to ship to a browser, and better where browsers get used. You rarely get both.
+Worth dwelling on the 29.8 MB, because the comparison is stark: roughly sixty times smaller than libpostal's default model, seventy-odd times smaller than the Senzing one. And the smaller model is the _better_ parser on the input that actually shows up in a search box, the typos, the half-finished lines, the prefix you've typed so far. A transformer trained on degraded queries reads `123 Penslyvania Av NW` the way you meant it; a CRF over hand-built features tends not to. Small enough to ship to a browser, and better where browsers get used. You rarely get both.
 
 ## Your queries never leave, and the results are yours forever
 
@@ -40,7 +40,7 @@ I'll be fair about the boundary here: geocode.earth's hosted Pelias and Smarty b
 
 ## The bill is zero
 
-Google's geocoder runs five dollars per thousand requests after the free cap. That's five thousand dollars a month at a million addresses, six figures a year once you're past ten million. On-device, the marginal cost of a query is nothing — it's running on hardware you already paid for, which is the user's. Again, in fairness: a self-hosted geocoder is also zero-marginal-cost, so this one is really aimed at the cloud APIs, where on-device kills both the per-call meter *and* the server you'd otherwise stand up.
+Google's geocoder runs five dollars per thousand requests after the free cap. That's five thousand dollars a month at a million addresses, six figures a year once you're past ten million. On-device, the marginal cost of a query is nothing — it's running on hardware you already paid for, which is the user's. Again, in fairness: a self-hosted geocoder is also zero-marginal-cost, so this one is really aimed at the cloud APIs, where on-device kills both the per-call meter _and_ the server you'd otherwise stand up.
 
 ## Where it stops
 

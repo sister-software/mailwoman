@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Contract tests for punctuation-gap span bridging (the v4.4.0 corrective). Essential
- *   properties: dotted fragments merge through their punctuation O-tokens; space-only gaps NEVER
- *   merge (the Saint-Albans guard); different tags never merge; the merged confidence is the
- *   minimum of the fragments.
+ *   Contract tests for punctuation-gap span bridging (the v4.4.0 corrective). Essential properties:
+ *   dotted fragments merge through their punctuation O-tokens; space-only gaps NEVER merge (the
+ *   Saint-Albans guard); different tags never merge; the merged confidence is the minimum of the
+ *   fragments.
  */
 
 import { describe, expect, it } from "vitest"

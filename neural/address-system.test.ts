@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Contract tests for address-system detection + the conventions mask (#511 Tier A). The
- *   essential properties: detection never acts below threshold or off-vocabulary, the mask
- *   removes forbidden tags from the decodable vocabulary, and models without a locale head are
- *   byte-identical no-ops.
+ *   Contract tests for address-system detection + the conventions mask (#511 Tier A). The essential
+ *   properties: detection never acts below threshold or off-vocabulary, the mask removes forbidden
+ *   tags from the decodable vocabulary, and models without a locale head are byte-identical
+ *   no-ops.
  */
 
 import { describe, expect, it } from "vitest"

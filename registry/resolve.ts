@@ -267,9 +267,9 @@ export interface ResolveConfig {
 	 * Override the Fellegi-Sunter link weight with a LEARNED score (#603). When set, a candidate
 	 * pair's match weight is this function's return value (same threshold-comparable units as the FS
 	 * weight) instead of {@link scorePair}'s. Default undefined (pure FS). The blocking + clustering
-	 * are unchanged, so a trained scorer can be A/B'd against the FS baseline on the identical pipeline.
-	 * The function is responsible for its own feature computation (e.g. the agreement pattern, which
-	 * is EM-independent, plus any corpus statistics it captured).
+	 * are unchanged, so a trained scorer can be A/B'd against the FS baseline on the identical
+	 * pipeline. The function is responsible for its own feature computation (e.g. the agreement
+	 * pattern, which is EM-independent, plus any corpus statistics it captured).
 	 *
 	 * INTERACTION with {@link requireCorroboration}: the two are independent and compose, but the
 	 * corroboration gate is still evaluated on the Fellegi-Sunter `contributions` (NOT the learned
@@ -281,12 +281,12 @@ export interface ResolveConfig {
 	/**
 	 * **#603: the LEARNED gradient-boosted-tree scorer — DEFAULT-ON.** Omitted or `true` uses the
 	 * bundled {@link DEDUP_GBT_MODEL} (trained on the NPPES NPI-truth set; beats the Fellegi-Sunter
-	 * baseline ~+5pp dedup F1 held-out within a state and ~+22pp on states it never trained on, cutting
-	 * the co-located over-merge). `false` opts out to the pure FS baseline; pass your own {@link GBT} for
-	 * a custom model. The scorer is built over the SAME collapsed-spatial + address-frequency feature
-	 * model as training (via the resolved {@link addressFrequency}), independent of this call's
-	 * comparison config. An explicit {@link scorer} takes precedence. When the bundled model is active
-	 * and you don't set {@link threshold}, its CALIBRATED link threshold
+	 * baseline ~+5pp dedup F1 held-out within a state and ~+22pp on states it never trained on,
+	 * cutting the co-located over-merge). `false` opts out to the pure FS baseline; pass your own
+	 * {@link GBT} for a custom model. The scorer is built over the SAME collapsed-spatial +
+	 * address-frequency feature model as training (via the resolved {@link addressFrequency}),
+	 * independent of this call's comparison config. An explicit {@link scorer} takes precedence. When
+	 * the bundled model is active and you don't set {@link threshold}, its CALIBRATED link threshold
 	 * ({@link DEDUP_GBT_META}.recommendedThreshold) is used — the GBT logit isn't in FS-weight units,
 	 * so 0 would over-merge. The model is NPPES/US-trained; for a very different domain, A/B it or
 	 * pass `false`.

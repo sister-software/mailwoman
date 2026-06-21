@@ -59,7 +59,9 @@ function Gallery(): ReactNode {
 								Paste a gnarly, half-formatted, mistyped address and watch the neural parser label every component —
 								house number, street, unit, city, postcode — across locales, live in the page.
 							</p>
-							<code className={styles.cardTransform}>"Apt 4, 12 Rue de Rivoli, 75001 Paris" → unit·house·street·postcode·city</code>
+							<code className={styles.cardTransform}>
+								"Apt 4, 12 Rue de Rivoli, 75001 Paris" → unit·house·street·postcode·city
+							</code>
 							<p className={styles.cardLinks}>
 								<Link to="/demo">Open the playground →</Link>
 							</p>

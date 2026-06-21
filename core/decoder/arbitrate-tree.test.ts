@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   #478 inc 3 fix-v1: containment-preserving arbitration. Verifies the edit rules (relabel same-span
- *   tag disagreements, add rule-only non-overlapping missing tags) and — the decisive case —
- *   that neural's street decomposition survives a coarser rule street (the leg-2 precondition
- *   bug).
+ *   tag disagreements, add rule-only non-overlapping missing tags) and — the decisive case — that
+ *   neural's street decomposition survives a coarser rule street (the leg-2 precondition bug).
  */
 
 import { Span } from "@mailwoman/core/tokenization"

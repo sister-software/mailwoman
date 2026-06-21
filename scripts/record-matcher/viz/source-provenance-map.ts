@@ -5,16 +5,16 @@
  *
  *   The address-point provenance map — the "show your work" proof, on a map.
  *
- *   Every coordinate Mailwoman resolves to comes from an open dataset, and we keep the provenance
- *   on the point. This samples the per-state address-point DB (`address_point.source`) and renders
- *   it on the house MapLibre + Protomaps stack via {@link toMapHTML}, each dot COLORED BY its
- *   upstream open-data source — the National Address Database (a federal release) vs OpenAddresses
- *   (county / municipal open-data publishers). New York is the clean example: NAD blankets the
- *   state, and New York City arrives separately from NYC Open Data, so the source split is visible
- *   as a geography.
+ *   Every coordinate Mailwoman resolves to comes from an open dataset, and we keep the provenance on
+ *   the point. This samples the per-state address-point DB (`address_point.source`) and renders it
+ *   on the house MapLibre + Protomaps stack via {@link toMapHTML}, each dot COLORED BY its upstream
+ *   open-data source — the National Address Database (a federal release) vs OpenAddresses (county /
+ *   municipal open-data publishers). New York is the clean example: NAD blankets the state, and New
+ *   York City arrives separately from NYC Open Data, so the source split is visible as a
+ *   geography.
  *
- *   No competitor in this space will tell you which open dataset a given coordinate came from —
- *   for them the assembled pipeline is the moat. Here the provenance is the point of the map.
+ *   No competitor in this space will tell you which open dataset a given coordinate came from — for
+ *   them the assembled pipeline is the moat. Here the provenance is the point of the map.
  *
  *   Streets without a rooftop point are covered by TIGER interpolation (`tiger:edges`), a separate
  *   layer not plotted here; this map is the rooftop-point sources only.
@@ -28,8 +28,8 @@
  */
 
 import { toMapHTML } from "@mailwoman/registry"
-import { DatabaseSync } from "node:sqlite"
 import { writeFileSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
@@ -66,7 +66,7 @@ const sample = (where: string, mod: number): Row[] =>
 		.prepare(
 			`SELECT lat, lon, source, number, street_raw FROM address_point
 			 WHERE ${where} AND lat IS NOT NULL AND lon IS NOT NULL AND abs(random()) % ${mod} = 0
-			 LIMIT ${CAP}`,
+			 LIMIT ${CAP}`
 		)
 		.all() as Row[]
 

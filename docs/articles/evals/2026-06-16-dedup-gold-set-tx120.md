@@ -18,7 +18,7 @@ adjudicated "same real-world entity? yes/no" (LLM-as-judge — flagged as such; 
 |                                                                 |                count |
 | --------------------------------------------------------------- | -------------------: |
 | **Same real-world entity** (correct to merge)                   | **120 / 120 (100%)** |
-| **Distinct** (a TRUE over-merge)                      |                **0** |
+| **Distinct** (a TRUE over-merge)                                |                **0** |
 | Programmatic "distinct" verdicts that are actually the SAME org |             44 (37%) |
 
 Every hard pair is **one organization under multiple NPIs** — unflagged subparts, legal-form variants

@@ -28,10 +28,10 @@ In our current data that's Vermont: 1,428 addresses the model trained around, no
 Here is what the held-out slice said, next to the number we'd been quoting:
 
 | metric                 | what we quoted | the measured number |
-| ---------------------- | -------------: | ----------------: |
-| locality name-match    |          93.7% |             93.7% |
-| region-match           |              — |              0.0% |
-| coordinate error (p50) |              — |            326 km |
+| ---------------------- | -------------: | ------------------: |
+| locality name-match    |          93.7% |               93.7% |
+| region-match           |              — |                0.0% |
+| coordinate error (p50) |              — |              326 km |
 
 Region-match: zero. Not low. Zero. The resolver was getting the state right essentially never, and the name-match metric had no way to tell us, because "Sheldon, Vermont" and "Sheldon, Iowa" are the same word.
 

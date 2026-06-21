@@ -35,8 +35,8 @@ export type ZipCodeDigit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
  *           (City)
  * ```
  *
- * Note that ZIP codes are not areas, but rather a group of deliverable addresses, which can
- * and do change over time.
+ * Note that ZIP codes are not areas, but rather a group of deliverable addresses, which can and do
+ * change over time.
  *
  * @category Delivery
  * @category Postal
@@ -63,8 +63,8 @@ export type ZipCode = Tagged<string, "ZipCode">
  *                (Post Office)
  * ```
  *
- * Note that ZIP codes are not areas, but rather a group of deliverable addresses, which can
- * and do change over time.
+ * Note that ZIP codes are not areas, but rather a group of deliverable addresses, which can and do
+ * change over time.
  *
  * @category Delivery
  * @category Postal

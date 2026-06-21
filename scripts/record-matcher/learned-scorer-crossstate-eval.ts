@@ -4,18 +4,18 @@
  * @author Teffen Ellis, et al.
  *
  *   Learned-scorer CROSS-STATE generalization (#603 Tier 2, the next axis after the held-out-NPI A/B
- *   in `learned-scorer-clustering-eval.ts`). The held-out-NPI A/B showed the GBT beats the FS baseline
- *   on clustering by +5.2pp — but the GBT was trained and evaluated within ONE state (TX). The
- *   production question is whether that win GENERALIZES: train on one state, evaluate the dedup
+ *   in `learned-scorer-clustering-eval.ts`). The held-out-NPI A/B showed the GBT beats the FS
+ *   baseline on clustering by +5.2pp — but the GBT was trained and evaluated within ONE state (TX).
+ *   The production question is whether that win GENERALIZES: train on one state, evaluate the dedup
  *   clustering F1 on a DIFFERENT state the model never saw. If it holds, the GBM is
  *   production-worthy; if it collapses, the scorer is fitting state-specific structure and needs
  *   per-state training (a finding either way).
  *
  *   One registry pass builds the global address-frequency table + a TRAIN-state sample + an
  *   EVAL-state sample; both are geocoded; the GBT + LR are trained on the train state's pairs and
- *   used to cluster the eval state's records through the same `resolveEntities` pipeline (FS baseline
- *   / GBT scorer / LR scorer), best F1 over a fine per-scorer threshold sweep. The metric is the
- *   dedup benchmark's clustering F1.
+ *   used to cluster the eval state's records through the same `resolveEntities` pipeline (FS
+ *   baseline / GBT scorer / LR scorer), best F1 over a fine per-scorer threshold sweep. The metric
+ *   is the dedup benchmark's clustering F1.
  *
  *   Run: node --experimental-strip-types scripts/record-matcher/learned-scorer-crossstate-eval.ts\
  *   [--train-state TX] [--eval-state CA] [--npis 2000] [--out-md <md>]

@@ -17,10 +17,10 @@
  *        highest-priority entry in this span's `PARENT_OF` list. Distance is the tiebreaker only.
  *        Spans with no found parent become roots.
  *
- *   The "nearest" rule (vs "most-recent-prior") is intentional: it makes the decoder independent of source
- *   ordering — e.g. "75004 Paris" attaches postcode to locality even though postcode came first.
- *   Source order is still preserved in the `start`/`end` fields, which the XML serializer exposes
- *   as attributes.
+ *   The "nearest" rule (vs "most-recent-prior") is intentional: it makes the decoder independent of
+ *   source ordering — e.g. "75004 Paris" attaches postcode to locality even though postcode came
+ *   first. Source order is still preserved in the `start`/`end` fields, which the XML serializer
+ *   exposes as attributes.
  */
 
 import type { BioLabel, ComponentTag } from "../types/component.js"

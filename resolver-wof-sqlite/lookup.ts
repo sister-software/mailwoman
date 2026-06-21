@@ -526,10 +526,10 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 	/**
 	 * Surface an unknown strategy name LOUDLY (once per name) rather than swallowing it silently — an
-	 * invisible no-op is exactly the hidden-dependency failure mode we avoid (see the provenance-first
-	 * design value). We warn rather than throw so a convention asset built against a newer code
-	 * revision (one that adds a strategy) degrades gracefully on an older build instead of taking
-	 * down resolution.
+	 * invisible no-op is exactly the hidden-dependency failure mode we avoid (see the
+	 * provenance-first design value). We warn rather than throw so a convention asset built against a
+	 * newer code revision (one that adds a strategy) degrades gracefully on an older build instead of
+	 * taking down resolution.
 	 */
 	#warnUnknownStrategy(name: string): void {
 		if (this.#warnedUnknownStrategies.has(name)) return

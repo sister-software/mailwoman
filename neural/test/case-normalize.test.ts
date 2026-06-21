@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #690 input case-normalization — detection + transform. The essential guarantees: mixed-case
- *   and non-ASCII input are NEVER touched (byte-stable, the no-regression-by-construction), and the
+ *   #690 input case-normalization — detection + transform. The essential guarantees: mixed-case and
+ *   non-ASCII input are NEVER touched (byte-stable, the no-regression-by-construction), and the
  *   transform is length-preserving (token offsets survive).
  */
 

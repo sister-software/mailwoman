@@ -10,8 +10,8 @@
  *   a threshold can't trivially separate them. This quantifies that.
  *
  *   Geocode the three sources ONCE (NPPES + FCC-RHC + TX HHSC, TX-scoped), then resolve repeatedly:
- *   the FS baseline (the recall-correct baseline) and the bundled GBT at a fine threshold sweep. For
- *   each arm, report cross-source links (entities spanning ≥2 sources), triple-source entities,
+ *   the FS baseline (the recall-correct baseline) and the bundled GBT at a fine threshold sweep.
+ *   For each arm, report cross-source links (entities spanning ≥2 sources), triple-source entities,
  *   total entities (an over-merge proxy — fewer = more collapsing), and a LABEL-FREE precision
  *   proxy: PHONE corroboration — the fraction of cross-source entities in which two records from
  *   DIFFERENT sources carry the same phone number (strong same-facility evidence the scorer didn't

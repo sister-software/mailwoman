@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The canonical address record — the matcher's unit of address identity, and the canonical record the
- *   organization and contact records build on.
+ *   The canonical address record — the matcher's unit of address identity, and the canonical record
+ *   the organization and contact records build on.
  *
  *   It is plain data: parser components + the formatter's match key + an optional resolved geocode,
  *   composed into one object. No ORM, no decorators, no schema-generation machinery — if we need a
