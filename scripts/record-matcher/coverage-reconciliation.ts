@@ -177,7 +177,7 @@ async function main(): Promise<void> {
 	console.error("[D] resolving + reconciling…")
 	// learnedScorer:false — reconciliation joins eligibility ↔ funding ACROSS datasets (recall-oriented):
 	// the same facility under different operational names is the signal we want, which the dedup-calibrated
-	// GBT default rejects (measured: "enrolled" overlap 22→6). Use the FS spine for this cross-dataset join.
+	// GBT default rejects (measured: "enrolled" overlap 22→6). Use the FS baseline for this cross-dataset join.
 	const { entities } = resolveEntities(records, { trainEM: true, collapseSpatial: true, learnedScorer: false })
 
 	// --- Reconcile across sources via the shared @mailwoman/registry library — the SAME code path as
@@ -194,7 +194,7 @@ async function main(): Promise<void> {
 			`**funding/enrollment** = FCC Rural Health Care filings. Each resolved entity is classified by which kinds ` +
 			`of source its records span.`,
 		scorerNote:
-			`Scored with the Fellegi-Sunter spine (\`learnedScorer: false\`): this is a cross-dataset eligibility ↔ ` +
+			`Scored with the Fellegi-Sunter baseline (\`learnedScorer: false\`): this is a cross-dataset eligibility ↔ ` +
 			`funding join (recall-oriented), so the dedup-calibrated GBT default (#603) — trained to reject the ` +
 			`"same place, different operational name" pattern that IS the cross-source signal — is pinned off. See #655.`,
 		sampleNote:

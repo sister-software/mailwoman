@@ -500,7 +500,7 @@ async function main(): Promise<void> {
 	lines.push("")
 	lines.push(
 		`In-domain (${STATE} only), ${kept.size} NPIs, PAIRWISE ranking (not the assembled clustering metric the dedup ` +
-			`benchmark reports against the 64.7% spine — a better pairwise scorer need not translate 1:1 to cluster F1). The GBT ` +
+			`benchmark reports against the 64.7% baseline — a better pairwise scorer need not translate 1:1 to cluster F1). The GBT ` +
 			`is a compact pure-Node implementation (120 boosting rounds, depth 3), a faithful stand-in for an offline ` +
 			`XGBoost/LightGBM but not tuned. The split is by NPI so there's no record-level leakage, but the address-frequency ` +
 			`feature is a corpus statistic over all NPIs (a population prior, not per-pair leakage), and the FS scorer is EM-fit ` +

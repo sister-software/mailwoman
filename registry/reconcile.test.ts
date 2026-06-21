@@ -122,12 +122,12 @@ describe("reconciliationReport", () => {
 		const md = reconciliationReport(result, {
 			title: "TX coverage",
 			scopeNote: "TX-scoped, ≤2000 rows/source.",
-			scorerNote: "Scored with the Fellegi-Sunter spine.",
+			scorerNote: "Scored with the Fellegi-Sunter baseline.",
 			spotCheckLimit: 5,
 		})
 		expect(md).toContain("# TX coverage")
 		expect(md).toContain("_TX-scoped, ≤2000 rows/source._")
-		expect(md).toContain("Scored with the Fellegi-Sunter spine.")
+		expect(md).toContain("Scored with the Fellegi-Sunter baseline.")
 		expect(md).toContain('first 5 "eligible, not enrolled"')
 		expect(md).toContain("Org b") // the anti-join member shows in the spot-check
 	})

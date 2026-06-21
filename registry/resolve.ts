@@ -267,7 +267,7 @@ export interface ResolveConfig {
 	 * Override the Fellegi-Sunter link weight with a LEARNED score (#603). When set, a candidate
 	 * pair's match weight is this function's return value (same threshold-comparable units as the FS
 	 * weight) instead of {@link scorePair}'s. Default undefined (pure FS). The blocking + clustering
-	 * are unchanged, so a trained scorer can be A/B'd against the FS spine on the identical pipeline.
+	 * are unchanged, so a trained scorer can be A/B'd against the FS baseline on the identical pipeline.
 	 * The function is responsible for its own feature computation (e.g. the agreement pattern, which
 	 * is EM-independent, plus any corpus statistics it captured).
 	 *
@@ -281,8 +281,8 @@ export interface ResolveConfig {
 	/**
 	 * **#603: the LEARNED gradient-boosted-tree scorer — DEFAULT-ON.** Omitted or `true` uses the
 	 * bundled {@link DEDUP_GBT_MODEL} (trained on the NPPES NPI-truth set; beats the Fellegi-Sunter
-	 * spine ~+5pp dedup F1 held-out within a state and ~+22pp on states it never trained on, cutting
-	 * the co-located over-merge). `false` opts out to the pure FS spine; pass your own {@link GBT} for
+	 * baseline ~+5pp dedup F1 held-out within a state and ~+22pp on states it never trained on, cutting
+	 * the co-located over-merge). `false` opts out to the pure FS baseline; pass your own {@link GBT} for
 	 * a custom model. The scorer is built over the SAME collapsed-spatial + address-frequency feature
 	 * model as training (via the resolved {@link addressFrequency}), independent of this call's
 	 * comparison config. An explicit {@link scorer} takes precedence. When the bundled model is active
@@ -331,7 +331,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 	const blockingKeys = config.blockingKeys ?? defaultBlockingKeys()
 
 	// #603: the learned scorer is DEFAULT-ON. An explicit `scorer` overrides everything; otherwise
-	// `learnedScorer === false` opts out to the FS spine, a GBT supplies a custom model, and
+	// `learnedScorer === false` opts out to the FS baseline, a GBT supplies a custom model, and
 	// `true`/omitted uses the bundled DEDUP_GBT_MODEL. The scorer is built over the FIXED
 	// collapsed-spatial + address-frequency feature model (matching training, independent of this call's
 	// comparison config), using the resolved address-frequency table.
@@ -348,7 +348,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 		})
 	}
 	// Threshold: an explicit value wins; else the bundled model's CALIBRATED threshold when it's active
-	// (its logit isn't in FS-weight units, so 0 would over-merge); else 0 (FS spine or a custom model).
+	// (its logit isn't in FS-weight units, so 0 would over-merge); else 0 (FS baseline or a custom model).
 	const threshold = config.threshold ?? (usingBundledModel ? DEDUP_GBT_META.recommendedThreshold : 0)
 
 	const { pairs, droppedBlocks } = block(records, blockingKeys, { maxBlockSize: config.maxBlockSize })

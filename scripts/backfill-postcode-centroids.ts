@@ -18,7 +18,7 @@
  *   3. The WOF admin parent-borrow (`--admin`, `--repos`): a coarse "which city/region" approximation,
  *        last resort for postcodes GeoNames does not cover.
  *
- *   Source/integrity note: WOF ids stay the spine and the eval keys — GeoNames only supplies a
+ *   Source/integrity note: WOF ids stay canonical and the eval keys — GeoNames only supplies a
  *   COORDINATE keyed by the postcode string, never an entity id, so the eval-WOF-id integrity
  *   behind the custom-WOF rule is preserved (delegated-authority consult, 2026-06-03). GeoNames is
  *   CC-BY 4.0: any DB that ships GeoNames-sourced coordinates must attribute "GeoNames (CC-BY

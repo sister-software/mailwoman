@@ -532,7 +532,7 @@ async function main(): Promise<void> {
 	// input-scoped address-frequency table + collapsed spatial. On this deliberately-sub-sampled corpus the
 	// auto table is sparse (few repeats), so the inverse-frequency signal is near-inert and F1 collapses to
 	// ≈baseline — NOT a regression, just the honest truth that IDF is a corpus statistic you can't synthesize
-	// from a slice. On a FULL-dataset dedup the input IS the corpus and this default reaches the spine; the
+	// from a slice. On a FULL-dataset dedup the input IS the corpus and this default reaches the baseline; the
 	// CLI passes a corpus-wide table built from the full source files so even a geocoded sub-sample benefits.
 	const defaultOutOfBox = (() => {
 		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0 })
@@ -643,10 +643,10 @@ async function main(): Promise<void> {
 		`Inverse-frequency weighting uses the corpus-wide table (${addrCounts.size.toLocaleString()} distinct addresses ` +
 			`over ${addrTotal.toLocaleString()} providers) to down-weight a crowded shared address; collapsing the redundant ` +
 			`address-key + distance comparisons into one spatial signal (A1) removes the double-count that let a shared address ` +
-			`over-vote a disagreeing name. The address-frequency + A1 spine is F1 ${pct(progression[2]!.score.f1)}% at the ` +
+			`over-vote a disagreeing name. The address-frequency + A1 baseline is F1 ${pct(progression[2]!.score.f1)}% at the ` +
 			`default threshold; the **authorized-official discriminator** is roughly neutral there (${signed(100 * (bestLever.score.f1 - progression[2]!.score.f1))}) ` +
-			`but enables a higher cutoff — it holds recall where the spine alone collapses, reaching **${pct(best.score.f1)}%** at ` +
-			`threshold ${best.t} (below), the first config past the spine (#625).`
+			`but enables a higher cutoff — it holds recall where the baseline alone collapses, reaching **${pct(best.score.f1)}%** at ` +
+			`threshold ${best.t} (below), the first config past the baseline (#625).`
 	)
 	lines.push("")
 	lines.push(
@@ -656,8 +656,8 @@ async function main(): Promise<void> {
 			`that table is too sparse to carry the inverse-frequency signal (a corpus statistic you can't synthesize from a ` +
 			`slice). It's **not a regression** (≥ baseline, no over-merge added) — it's the honest floor when the input isn't ` +
 			`corpus-scale. Fed the corpus-wide table (the \`+ inverse-address-frequency\` row above, what the CLI builds from ` +
-			`the full source files) the SAME default reaches the **${pct(progression[2]!.score.f1)}%** spine. On a full-dataset ` +
-			`dedup the input IS the corpus, so zero-config reaches the spine on its own.`
+			`the full source files) the SAME default reaches the **${pct(progression[2]!.score.f1)}%** baseline. On a full-dataset ` +
+			`dedup the input IS the corpus, so zero-config reaches the baseline on its own.`
 	)
 	lines.push("")
 	lines.push(`## With all levers on, across the link threshold (the secondary lever)`)
@@ -782,7 +782,7 @@ async function main(): Promise<void> {
 	lines.push(
 		`The geocode-first **foundation works**: **${pct(geo / N)}%** of addresses placed, blocking + clustering clean — the ` +
 			`geocoding (the Pelias/Nominatim-can't-do-this part) is not the bottleneck. The comparison-model levers reach the ` +
-			`address-frequency + A1 spine at F1 **${pct(progression[2]!.score.f1)}%** (${signed(100 * (progression[2]!.score.f1 - baseline.score.f1))} over baseline): ` +
+			`address-frequency + A1 baseline at F1 **${pct(progression[2]!.score.f1)}%** (${signed(100 * (progression[2]!.score.f1 - baseline.score.f1))} over baseline): ` +
 			`inverse-frequency weighting restores full weight to a *rare* shared address (stitching a provider's name-drifted ` +
 			`records together — mostly recall) while down-weighting a *crowded* one, and the collapsed spatial signal (A1) drops ` +
 			`the address+distance double-count. What remains is **precision / over-merge** — ${bestLever.score.overMergedClusters} ` +
@@ -792,7 +792,7 @@ async function main(): Promise<void> {
 			`switchboard lines), so it over-links and falsely corroborates co-phone distinct providers; and **average-linkage ` +
 			`clustering** (A4) — the over-merged clusters are joined by STRONG shared-address edges, not weak bridges, so ` +
 			`average-linkage can't split them and only trades away name-drift recall. The over-merge is a **scoring** problem ` +
-			`this data can't resolve, not a clustering-topology one. The **authorized-official discriminator** is the first lever to beat the spine — a reliable secondary identifier holds recall so a higher threshold separates the co-located providers; a still-more-distinctive identifier ` +
+			`this data can't resolve, not a clustering-topology one. The **authorized-official discriminator** is the first lever to beat the baseline — a reliable secondary identifier holds recall so a higher threshold separates the co-located providers; a still-more-distinctive identifier ` +
 			`(taxonomy / license) or a learned scorer over the FS feature vector (#603) goes further. Config ` +
 			`dominates the model (the pre-registered finding) — tracked as #625 / the selective-model work (#602 / #603).`
 	)

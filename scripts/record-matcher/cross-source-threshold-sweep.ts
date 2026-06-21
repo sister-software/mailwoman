@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #655 measurement — can a RE-THRESHOLDED dedup GBT beat the FS spine on the cross-SOURCE link
+ *   #655 measurement — can a RE-THRESHOLDED dedup GBT beat the FS baseline on the cross-SOURCE link
  *   discovery objective? The dedup GBT (#603) is pinned OFF for cross-dataset flows because its
  *   over-merge features (`spatial-exact × name/org-disagree`) push true "same facility, different
  *   operational name across sources" pairs NEGATIVE — and the GBT logit REPLACES the FS weight, so
  *   a threshold can't trivially separate them. This quantifies that.
  *
  *   Geocode the three sources ONCE (NPPES + FCC-RHC + TX HHSC, TX-scoped), then resolve repeatedly:
- *   the FS spine (the recall-correct baseline) and the bundled GBT at a fine threshold sweep. For
+ *   the FS baseline (the recall-correct baseline) and the bundled GBT at a fine threshold sweep. For
  *   each arm, report cross-source links (entities spanning ≥2 sources), triple-source entities,
  *   total entities (an over-merge proxy — fewer = more collapsing), and a LABEL-FREE precision
  *   proxy: PHONE corroboration — the fraction of cross-source entities in which two records from
@@ -260,10 +260,10 @@ async function main(): Promise<void> {
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const gbtScorer = createGbtScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
 
-	// --- Arm 1: the FS spine (the recall-correct baseline cross-source flows currently pin). ---
-	console.error("[D] resolving — FS spine baseline…")
+	// --- Arm 1: the FS baseline (the recall-correct baseline cross-source flows currently pin). ---
+	console.error("[D] resolving — FS baseline baseline…")
 	const fs = measure(
-		"FS spine",
+		"FS baseline",
 		0,
 		resolveEntities(records, { trainEM: true, collapseSpatial: true, addressFrequency, learnedScorer: false }).entities
 	)
@@ -318,7 +318,7 @@ async function main(): Promise<void> {
 	lines.push(`## Verdict`)
 	lines.push("")
 	lines.push(
-		`FS spine: **${fs.crossSource}** cross-source links (${fs.tripleSource} triple), ` +
+		`FS baseline: **${fs.crossSource}** cross-source links (${fs.tripleSource} triple), ` +
 			`phone-corrob ${pct(fs.phoneCorrob, fs.phoneCheckable)} (${fs.phoneCorrob}/${fs.phoneCheckable}).`
 	)
 	if (!dominating) {

@@ -278,7 +278,7 @@ async function main(): Promise<void> {
 	// objective: "same address + different name" is the prototypical signal of the SAME facility under a
 	// different operational name across sources. The dedup GBT rejects exactly those true cross-source
 	// links (measured: cross-source 219→166, triple-source 10→1), so this flow uses the recall-appropriate
-	// FS spine. (A cross-objective GBT threshold is the documented follow-up — #655.)
+	// FS baseline. (A cross-objective GBT threshold is the documented follow-up — #655.)
 	const { entities, candidatePairs } = resolveEntities(records, {
 		trainEM: true,
 		learnedScorer: false,
@@ -350,7 +350,7 @@ async function main(): Promise<void> {
 	)
 	lines.push("")
 	lines.push(
-		`Scored with the Fellegi-Sunter spine (\`learnedScorer: false\`): cross-dataset link discovery is ` +
+		`Scored with the Fellegi-Sunter baseline (\`learnedScorer: false\`): cross-dataset link discovery is ` +
 			`recall-oriented — the same facility under different operational names across sources is the signal — so the ` +
 			`dedup-calibrated GBT default (#603), which is trained to REJECT "same place, different name," is pinned off ` +
 			`here. A cross-objective GBT threshold is the follow-up (#655).`

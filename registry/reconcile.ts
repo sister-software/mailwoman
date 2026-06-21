@@ -134,7 +134,7 @@ export interface ReconciliationReportOptions {
 	title?: string
 	/** An italic scope paragraph under the title (what the sources are, how they were scoped). */
 	scopeNote?: string
-	/** A paragraph about the scorer choice (e.g. why the FS spine, not the dedup GBT). */
+	/** A paragraph about the scorer choice (e.g. why the FS baseline, not the dedup GBT). */
 	scorerNote?: string
 	/** A paragraph about sampling/capping, woven into the caveat. */
 	sampleNote?: string

@@ -12,7 +12,7 @@
  *
  *   Unlike the eval, this trains on ALL sampled NPIs (no held-out split) — the held-out F1 is the
  *   eval's job; this produces the shipped artifact. The eval (`learned-scorer-clustering-eval.ts`)
- *   then re-measures generalization against the FS spine.
+ *   then re-measures generalization against the FS baseline.
  *
  *   Run: node --experimental-strip-types scripts/record-matcher/train-gbt.ts\
  *   [--state TX] [--npis 3000] [--wof <admin.db>] [--data-root <dir>]\
