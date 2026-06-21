@@ -17767,6 +17767,7 @@ __metadata:
     "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/registry": "workspace:*"
+    "@mailwoman/tiger": "workspace:*"
     chalk: "npm:^5.6.2"
     change-case: "npm:^5.4.4"
     d3-scale-chromatic: "npm:^3.1.0"
@@ -17787,6 +17788,9 @@ __metadata:
   peerDependencies:
     "@duckdb/node-api": 1.5.3-r.3
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+  dependenciesMeta:
+    "@mailwoman/tiger":
+      optional: true
   peerDependenciesMeta:
     "@duckdb/node-api":
       optional: true

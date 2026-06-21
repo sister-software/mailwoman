@@ -66,6 +66,9 @@
 		"@duckdb/node-api": "1.5.3-r.3",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*"
 	},
+	"optionalDependencies": {
+		"@mailwoman/tiger": "workspace:*"
+	},
 	"files": [
 		"!out/test/**/*",
 		"!**/*.ts",

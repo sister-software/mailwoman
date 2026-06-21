@@ -137,7 +137,7 @@ export function createTigerAdapter(): CorpusAdapter {
 		id: TIGER_ADAPTER_ID,
 		defaultLicense: TIGER_DEFAULT_LICENSE,
 		description:
-			"US Census TIGER/Line streets + places consumer (public-domain); SQLite DB the operator builds via ogr2ogr.",
+			"US Census TIGER/Line streets + places consumer (public-domain); SQLite DB built via `mailwoman tiger fetch`.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			if (opts.country && opts.country !== "US") {
