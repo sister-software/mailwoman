@@ -49,6 +49,13 @@ p50 barely moves (3.2→3.1 km) because most divergent postcodes already resolve
 
 **Why not the standard OA eval:** the OA US sample's inputs use the GEOGRAPHIC locality name (matching `expected`), so the postal-city lever never fires on it — running it would read FLAT, a misleading non-result (the verify-before-verdict trap). The faithful measurement is the postal-city-input spot-check above; a full aggregate eval would need a postal-city-input corpus graded against independent geography — the operator follow-up alongside the candidate-path build-time fold.
 
+## #175 typed-schema arc — extended to two more DBs
+
+The operator's day-shift question ("any other sqlite DBs for the kysley treatment?") — candidate + unified-admin were done then; this shift added two more:
+- **postal-city-alias** (`postal-city-alias-schema.ts`, part of #475 above).
+- **address-point shards** (`address-point-schema.ts`) — the #735 national-rooftop tier's data path. Reader (`AddressPointSqliteLookup`) projects `Pick<AddressPointTable, …>`; writer (`build-address-point-shard.ts`) derives its DDL + index DDL + INSERT column list from the shared module (the hot positional INSERT stays for throughput, per the candidate convention — only its column list is shared); the interpolation test fixture builds off the shared DDL too. tsc clean, resolver suite 249✓/0✗.
+- **Remaining (minor follow-up):** the TIGER `street_segment` interpolation table still has inline DDL in a couple of places — a further small typed-schema target, noted not done.
+
 ## Hygiene (PR reviews + Dependabot)
 
 - **PR #736 (use-case-first homepage + 4 posts) — reviewed, ship-ready.** The two record-matcher posts (`same-building-different-company`, `provider-registry-meets-usf`) hold the neutral-framing line exactly — set-membership reconciliation, "candidate for review not a verdict," "nothing here is an allegation… the data consumer's call." House voice on-target (question-vs-statement titles correct, no contrastive-negation-as-structure, no engagement bait). Cross-links validated by CI (`onBrokenLinks: "throw"` + green build). No changes requested.
