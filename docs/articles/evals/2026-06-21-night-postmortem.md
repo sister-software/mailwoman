@@ -13,11 +13,29 @@ _Living document — sketched during the shift. Window: started ~02:55 UTC, ends
 
 - **Real rooftop, validated locally before the e2e.** Pulled a real address from each test state's shard (TX/GA/WA/MT), and all four resolve `address_point` with the building coord = the shard coord exactly (TX 29.7747,-95.3350 1 m). The e2e (`210-national-rooftop.spec.ts`) grades the assembled coordinate within ~600 m — tight enough to fail a centroid fallback.
 
+## #475 postal-city alias resolver integration — ✅ BUILT (branch `night-shift-2026-06-21`, `bb206b1d`)
+
+The chronic postal-vs-geographic-city split (37013 is filed `Antioch` but sits in `Nashville`; 34.9% of US rows diverge) had a **built alias DB** (`postal-city-alias-us.db`, 19.9k rows / 10.2k divergent, from `build-postal-city-alias.ts`) that **nothing consumed**. Added the missing resolver consumption, completing #475 acceptance criteria 2-3:
+- **`postal-city-alias-schema.ts`** — typed kysely schema (the #175 writer↔reader treatment on a third DB).
+- **`WofPostalCityAliasLookup`** — postcode-scoped reader, divergent rows only.
+- **scorer wiring** — folds a postcode's postal-city aliases into the EXISTING `softNameScore` alias machinery in `#findLocalityCoordFirst`. A user-typed postal city becomes a name-match alias for the geographic locality the postcode sits in → the right place tiers over a same-named distractor, and the false postcode/city mismatch flag stops firing.
+- **`resolver-backend.ts`** — opt-in via `MAILWOMAN_POSTAL_CITY_ALIAS_DB` (FTS path).
+
+**OPT-IN / DEFAULT-OFF, byte-stable** (every alias path gated on the reader; the unchanged coord-first suite + a byte-stability test pin it). Verified: 7 new tests incl. the decisive before/after on the **real** antioch→nashville edge (without reader: top=Antioch + mismatch; with: top=Nashville, no mismatch); resolver-wof-sqlite 249 passed / 0 failed; tsc clean. **Promote-gate not yet run:** the full oa-resolver-eval (US+DE on/off) needs the `postcode_locality` shard (`build-postcode-locality.py`), which isn't on this box. The candidate-path build-time fold (to reach the demo/CLI candidate default) is the second follow-up.
+
 ## Hygiene (PR reviews + Dependabot)
 
 - **PR #736 (use-case-first homepage + 4 posts) — reviewed, ship-ready.** The two record-matcher posts (`same-building-different-company`, `provider-registry-meets-usf`) hold the neutral-framing line exactly — set-membership reconciliation, "candidate for review not a verdict," "nothing here is an allegation… the data consumer's call." House voice on-target (question-vs-statement titles correct, no contrastive-negation-as-structure, no engagement bait). Cross-links validated by CI (`onBrokenLinks: "throw"` + green build). No changes requested.
 - **PR #738 (coverage-overlay cold-start runbook + code) — reviewed, LGTM.** Despite the docs label it carries real code (coverage CLI + shard `--oa-csv` mode). The high-risk `build-address-point-shard.ts` is byte-identical on the Overture path when `--oa-csv` is absent; the dep-hoisting footgun (v4.8.0 class) is clean (`@duckdb/node-api` optional peerDep + dynamic import); `.gitignore` re-includes correct; zoom math gap-free. Three low non-blocking notes posted (DuckDB handle close, `--license-filter`+`--oa-csv` combo, the finite-coord guard as a latent Overture robustness fix).
 - **Dependabot re-triage (#630).** Alert pool 37 (1 crit/6 high) → **6 (0 crit / 0 high / 4 med / 2 low)** — crit + all high resolved. All 6 remaining are dev/build-chain transitive with **zero runtime exposure** in the published packages (`undici`←release-it, `http-proxy-middleware`←webpack-dev-server, `js-yaml`←docusaurus, `tar`←node-gyp). Recommended downgrade-urgency + a batched `resolutions:` PR (operator-gated, touches the build chain). **#442 is a duplicate tracking issue for the same pool → recommend closing as dup of #630** (couldn't post the cross-ref comment — classifier walled the write; operator action).
+
+## #723 admin-tail levers — status confirmed (no new work needed tonight)
+
+Mapped the resolver-fold surface to go after the biggest open lever, and found **both top levers are already shipped on main**:
+- **directional quadrant fold** (2.33pts) — `d1b8bcbe`, `core/resolver/resolve.ts::assembleStreetValue` (folds a directional `unit` into the situs street key), +2 resolver tests.
+- **5-digit-HN repair** (3.76pts) — `5977ce4d`, `neural/postcode-repair.ts::repairLeadingHouseNumber`, US-gated, wired at `classifier.ts:484`, tested. And done the *model-first-respecting* way — a post-decode parse repair, not a resolver override (the false postcode never enters the tree, so the postcode-anchor sees the true trailing postcode; zero anchor interference).
+
+Combined ~6.1pts of the 12% admin tail, already in. **Remaining open:** the spelled-ordinal fold (0.44pts — marginal, and needs the situs canonical-form checked before a fold can normalize toward it) and the NAD→OpenAddresses situs theme-reselect (3.69pts — a multi-state shard rebuild, **partially in-flight via PR #738's new `--oa-csv` shard mode**). Decision: no new #723 code tonight — the cheap levers are banked and the big remaining one is data-pipeline work riding #738.
 
 ## What could've gone better / friction
 
