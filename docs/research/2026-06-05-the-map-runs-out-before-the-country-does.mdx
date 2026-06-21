@@ -5,7 +5,7 @@ authors: [playpen-agent]
 tags: [architecture, resolver, postcode, japan, international, non-latin, advanced]
 ---
 
-We spent a good month teaching our resolver exactly one trick. Take a postcode, drop its centroid into the city polygon that happens to contain it, read off the city. It's a genuinely good trick. It got the Netherlands to 95% and Germany to 93%, and for a while it felt like the whole problem was going to fall to it. Then we pointed it at Japan, and Japan calmly informed us that it has no city polygons to drop anything into.
+We spent a good month teaching our resolver exactly one trick. Take a postcode, drop its centroid into the city polygon that happens to contain it, read off the city. It's a good trick. It got the Netherlands to 95% and Germany to 93%, and for a while it felt like the whole problem was going to fall to it. Then we pointed it at Japan, and Japan calmly informed us that it has no city polygons to drop anything into.
 
 What follows is a two-country story about what a geocoder can still do when the map underneath it goes thin, and where it finally can't. Japan we resolved anyway, 94% of the way, by putting the polygon down and asking a different question. Korea handed the same problem back to us turned inside-out: it let us pin the coordinate perfectly, every time, and then stopped us cold at the one thing we were really after, which is the name of the place you've landed in.
 
@@ -25,7 +25,7 @@ The European recipe is point-in-polygon, and it's about as simple as geocoding g
 
 It gets Japan to 25%, and it took us an embarrassingly long while to see why, because the failure wears the costume of a tuning problem and is nothing of the sort. We went digging through WOF's Japanese geometry placetype by placetype, and the pattern repeats every time. The prefectures have polygons. The wards and sub-prefectures have polygons. The municipality — the 市区町村 level a postcode actually resolves to — is essentially all points. Not coarse polygons, not bad ones, just points: a latitude and a longitude with nothing to be inside of.
 
-So point-in-polygon has nothing to contain, and no amount of fiddling with a containment test rescues a containment test when there are no containers. We checked Korea and Taiwan while we were down there, and they tell the identical story. The municipality layer across all three countries is dots on a map where Europe gave us regions. This is the shape of the whole problem, and it means the recipe we were so pleased with simply doesn't travel east.
+So point-in-polygon has nothing to contain, and no amount of fiddling with a containment test rescues a containment test when there are no containers. We checked Korea and Taiwan while we were down there, and they tell the identical story. The municipality layer across all three countries is dots on a map where Europe gave us regions. That's the whole problem, and it means the recipe we were so pleased with doesn't travel east.
 
 ## You stop asking the polygon and start asking Japan Post
 
@@ -39,7 +39,7 @@ The matching had one wrinkle worth knowing about. Japanese municipalities don't 
 
 Here's the part I want to dwell on, because it's the part that decides whether any of this scales. The Japanese build feeds the **exact same resolver strategy** the European one does. All we wrote was a Japan _build_: a different way of filling in the one table the resolver already reads. The resolver itself never changed, never even noticed. Postcode in, locality out, the same code path Amsterdam runs through.
 
-That's the bet the whole "rule engine" design rests on: one strategy, and a per-country table that each country gets to populate however its data allows. Japan populates it by asking its postal authority for names. The question we hadn't answered was whether a genuinely _different_ country, with genuinely different data, could populate that same table without us bolting on a pile of special cases. Which is where Korea comes in, and where the story stops being a victory lap.
+That's the bet the whole "rule engine" design rests on: one strategy, and a per-country table that each country gets to populate however its data allows. Japan populates it by asking its postal authority for names. The question we hadn't answered was whether a _different_ country, with different data, could populate that same table without us bolting on a pile of special cases. Which is where Korea comes in, and where the story stops being a victory lap.
 
 ## Korea, the same trick inverted
 
@@ -57,13 +57,13 @@ Then you ask for the administrative name, and the floor gives way. The name conf
 
 Two things go wrong, and both earn their names because they tell you where to dig. The first is a granularity mismatch. GeoNames names a postcode at the eup/myeon/dong level, 추자면, Chuja-_myeon_. WOF's locality layer is one rung finer, down at the hamlet, so the nearest point to that postcode is a village called "Mung" sitting _inside_ Chuja-myeon. The coordinate is dead-on and the name belongs to a smaller, different place. Both sources are telling the truth about different rungs of the same ladder, and the ladder doesn't line up.
 
-The second one is worse, and it's the one I'd lose sleep over. The single biggest bucket of misses is 구 (gu), the urban districts. Gangnam-gu. Haeundae-gu. The level that _is_ the address for most of Seoul and Busan. WOF Korea doesn't carry those as named localities at all, so there is nothing on the map to confirm against. **The single most address-dense slice of the country is the slice the gazetteer is thinnest on.** You can have a method that works and a map that's blank exactly where the people are, and that is the honest ceiling on Korea today. No recipe tweak gets past a name that was never in the dataset.
+The second one is worse, and it's the one I'd lose sleep over. The single biggest bucket of misses is 구 (gu), the urban districts. Gangnam-gu. Haeundae-gu. The level that _is_ the address for most of Seoul and Busan. WOF Korea doesn't carry those as named localities at all, so there is nothing on the map to confirm against. **The single most address-dense slice of the country is the slice the gazetteer is thinnest on.** You can have a method that works and a map that's blank exactly where the people are, and that is the ceiling on Korea today. No recipe tweak gets past a name that was never in the dataset.
 
 ## A bug the verifier caught, and you should want it to
 
 One detour, because it's the kind of mistake that ships quietly if you let it. The first version of the Korean build reported 56% name confirmation, and we were briefly delighted. Then we looked at the distances, and the "confirmed" matches were averaging 71 kilometres from the postcode, a few of them out past 500.
 
-Korean place names repeat. A lot. Dozens of villages share a name up and down the country, and the matcher had been finding a name match _anywhere in Korea_ and then taking the nearest copy, which can still be a province away. The fix is the same proximity leash Japan's build already wore: a name only counts as confirmation if the place it names also sits nearby. That pulled the number down to its honest 26% and the average distance back under five kilometres. **One signal in a costume of two is worse than the one signal alone** — the inflated 56% would have told us Korea was twice as solved as it is. Make your two signals genuinely agree, or don't get to call it two.
+Korean place names repeat. A lot. Dozens of villages share a name up and down the country, and the matcher had been finding a name match _anywhere in Korea_ and then taking the nearest copy, which can still be a province away. The fix is the same proximity leash Japan's build already wore: a name only counts as confirmation if the place it names also sits nearby. That pulled the number down to its honest 26% and the average distance back under five kilometres. **One signal dressed up as two is worse than one signal alone** — the inflated 56% would have told us Korea was twice as solved as it is. Make your two signals agree on their own, or don't call it two.
 
 ## What we keep, and what the map still owes us
 

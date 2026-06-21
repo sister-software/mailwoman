@@ -1,13 +1,13 @@
 ---
 title: "The right name in the wrong state"
-description: "Our resolver scored 93.7% on the metric we'd been quoting for months. On the same addresses, its median answer was 326 kilometers from the truth. Both numbers were correct. Only one of them was honest."
+description: "Our resolver scored 93.7% on the metric we'd been quoting for months. On the same addresses, its median answer was 326 kilometers from the truth. Both numbers were correct. Only one of them told the truth."
 authors: [playpen-agent]
 tags: [eval, resolver, wof, coordinate-first, methodology, advanced]
 ---
 
 Our resolver scored 93.7% on the metric we'd been quoting for months. On the same addresses, its median answer was 326 kilometers from the truth.
 
-Both numbers are correct. That's the uncomfortable part.
+Both numbers are correct. That's the awkward part.
 
 {/* truncate */}
 
@@ -21,13 +21,13 @@ So we built a harness that asks the second question, and pointed it at the one s
 
 ## Leakage-free, or it's just a memory test
 
-The honest slice matters as much as the honest metric. Our model trains on a corpus that covers the same towns the eval tests, so a random evaluation partly measures memorization: the model recalling a place it has already seen rather than generalizing to one it hasn't. The corpus deliberately holds a few regions out of training entirely. Evaluate only on those held-out places and you're testing the model on geography it has genuinely never met.
+The slice you measure on matters as much as the metric you measure with. Our model trains on a corpus that covers the same towns the eval tests, so a random evaluation partly measures memorization: the model recalling a place it has already seen rather than generalizing to one it hasn't. The corpus deliberately holds a few regions out of training entirely. Evaluate only on those held-out places and you're testing the model on geography it has never met.
 
 In our current data that's Vermont: 1,428 addresses the model trained around, not on. We ran the full pipeline on them and stopped grading by name. We measured **region-match**, the great-circle distance from the gold point to the resolved one, and **PIP-containment** (whether the gold coordinate actually falls inside the resolved place's polygon). None of those can be fooled by a matching string.
 
-Here is what the honest slice said, next to the number we'd been quoting:
+Here is what the held-out slice said, next to the number we'd been quoting:
 
-| metric                 | what we quoted | the honest number |
+| metric                 | what we quoted | the measured number |
 | ---------------------- | -------------: | ----------------: |
 | locality name-match    |          93.7% |             93.7% |
 | region-match           |              — |              0.0% |
@@ -62,8 +62,8 @@ The ancestry was never actually missing. NYC's source record carries the full hi
 
 ## What we're keeping
 
-Two things, and they're the same shape.
+Two things, and they're the same lesson twice.
 
-The first is about metrics. A measurement that grades by name can be gamed by coincidence and will flatter you right up until a customer geocodes into the wrong state. The coordinate can't be gamed: a point is either inside the right boundary or it isn't. We lead with region-match and distance now, and we report containment honestly, point geometry and all. The yardstick comes before the optimization, because every win you book against a dishonest yardstick is a win you might have to give back.
+The first is about metrics. A measurement that grades by name can be gamed by coincidence and will flatter you right up until a customer geocodes into the wrong state. The coordinate can't be gamed: a point is either inside the right boundary or it isn't. We lead with region-match and distance now, and we report containment in full, point geometry and all. The yardstick comes before the optimization, because every win you book against a dishonest yardstick is a win you might have to give back.
 
 The second is about trust. The aggregate loved the abbreviation fix. The eight addresses we read with our own eyes caught the regression the aggregate buried, and chasing _why_ those eight disagreed is what surfaced the ancestry bug underneath. Numbers scale and that is exactly their weakness; they average away the one case that would have embarrassed you. Keep reading the addresses by hand. The disagreement is where the bug lives.

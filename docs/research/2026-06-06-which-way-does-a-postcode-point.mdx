@@ -5,7 +5,7 @@ authors: [playpen-agent]
 tags: [architecture, neural, postcode, international, training, advanced]
 ---
 
-We left the last postcode story with a promise and a bill. The promise was that the "which country is this" signal has to come from the trained model reading the whole string, because the postcode on its own settles the question less than half the time. The bill was that this is the expensive version of the feature. This is the post where we paid it: we built the country signal into the model, watched it do something genuinely great, and then watched it refuse, in the most instructive way we've hit all month, to do that same great thing in a different word order.
+We left the last postcode story with a promise and a bill. The promise was that the "which country is this" signal has to come from the trained model reading the whole string, because the postcode on its own settles the question less than half the time. The bill was that this is the expensive version of the feature. This is the post where we paid it: we built the country signal into the model, watched it do something great, and then watched it refuse, in the most instructive way we've hit all month, to do that same great thing in a different word order.
 
 The great thing first, because you've earned it. We took the postcode's gazetteer membership, that `[us, de, fr]` answer from last time, and instead of handing it to a regex we injected it into the model at the postcode token itself. A small additive nudge on the hidden state, right where the five digits sit, carrying "here is what this code could be." On German addresses written the way Germans actually write them, it was worth thirty-five points of locality accuracy. It beat Pelias. For one evening we were heroes.
 
@@ -15,7 +15,7 @@ Three questions sit under the rest of this, so let me put them on the table befo
 
 - When a parser "collapses" on a test, is the parser wrong, or is the test?
 - Can you train one model to read an address in any order, or does each order quietly cost you the other?
-- And the one that took three retrains to answer honestly: what does a learned anchor actually learn, the thing you asked for, or the shape of where you kept putting it?
+- And the one that took three retrains to answer: what does a learned anchor learn — the thing you asked for, or where you kept putting it?
 
 {/* truncate */}
 
@@ -33,7 +33,7 @@ Only the first approximation was free, though. After we corrected the rendering,
 
 We did the obvious thing first, and the obvious thing told us something real. If the model had only ever seen German in native order, of course it stumbled on the international one, so we rebuilt the training shard to render both orders, roughly sixty/forty. The model with the anchor _off_ responded exactly as you'd hope: international-order parsing climbed from 35.9% to 48.4%. The capability is learnable. Show the model both layouts and it reads both.
 
-The model with the anchor _on_ didn't move. International stayed stuck around 44%, with the anchor still dragging it below the anchor-off number. So we'd proven the corpus wasn't the ceiling, which is genuinely useful and was not the result we wanted.
+The model with the anchor _on_ didn't move. International stayed stuck around 44%, with the anchor still dragging it below the anchor-off number. So we'd proven the corpus wasn't the ceiling, which is useful and was not the result we wanted.
 
 Swing two. We noticed the international synth had been dropping the region from the tail while the eval fed it, so the model was being asked to segment a `City, Region Postcode` ending it had never trained on. Reasonable suspect. We rendered the region back into the tail and retrained. The region-matching did exactly its job, international region accuracy going from zero to about forty percent, and the locality number we actually cared about did not budge. The tail wasn't the ceiling either.
 
@@ -49,9 +49,9 @@ It did nothing. International held at 43.7%, the anchor still underwater.
 
 Three swings, one number that would not move. At some point a column of results that flat stops being a series of failed fixes and starts being the finding itself.
 
-## What the anchor actually learned
+## What the anchor learned
 
-Here's where it helps to stop asking "why won't it improve" and start asking what the thing in front of you is actually doing. We'd been describing the anchor as if it carried a meaning, "this postcode could be German," and meanings don't have a handedness. What we actually add to that one position is a vector, and the model spends all of training learning what to _do_ with the nudge. What it learned to do, it turns out, has a direction baked into it.
+Here's where it helps to stop asking "why won't it improve" and start asking what the thing in front of you is actually doing. We'd been describing the anchor as if it carried a meaning, "this postcode could be German," and meanings don't have a handedness. What we add to that one position is a vector, and the model spends all of training learning what to _do_ with the nudge. What it learned to do, it turns out, has a direction baked into it.
 
 Think about where the city sits relative to the postcode in each training distribution. In native German, the postcode comes _before_ the city: `12623 Berlin`. Every time the anchor fired during training, the locality it was supposed to help was sitting just to its right. So the model learned an anchor that reaches rightward, and on native addresses it reaches right and finds Berlin every time, which is your +35 points. Hand that same model an international-order address and the postcode is now _after_ the city. The anchor reaches right out of long habit, finds the region or the end of the string, and meanwhile the actual city it was meant to rescue is sitting behind it, unhelped and slightly shoved.
 
@@ -61,14 +61,14 @@ That's the asymmetry, and it's why it's fundamental rather than a tuning problem
 
 ## Accepting the asymmetry
 
-When you've thrown corpus, tail, and architecture at a number and it hasn't twitched, the honest move is to stop calling it a bug. We brought the whole arc to our second-opinion model, the same one that talked us out of the doomed feature last time, and it made the call we'd been circling: accept the asymmetry, ship the native win.
+When you've thrown corpus, tail, and architecture at a number and it hasn't twitched, the right move is to stop calling it a bug. We brought the whole arc to our second-opinion model, the same one that talked us out of the doomed feature last time, and it made the call we'd been circling: accept the asymmetry, ship the native win.
 
 The case is stronger than "we gave up." The native gain is large, it's stable across every retrain, and it generalizes; US and French held throughout. The international penalty is small and just as stable, and an international-order German address can route around the anchor entirely, since the model reads both orders fine on its own once it's seen them. You lose nothing real by switching the anchor off for the layout it was never going to help. So that's production: anchor on where the postcode leads the city, off where it trails it, and the +35 points kept exactly where they were earned.
 
-The asymmetry doesn't kill the bigger plan either, which was the part worth keeping. If one vector can only ever point one way, then a cleverer single anchor was never going to save us. What we want is an anchor _per_ locale, each one free to learn its own country's direction: the German anchor reaches right, the American one reaches left, and nobody is forced to average. That's a real week of work for another day, but it's a justified one now instead of a hopeful one, which is the same place the last postcode story left us standing.
+The asymmetry doesn't kill the bigger plan either, which was the part worth keeping. If one vector can only ever point one way, then a cleverer single anchor was never going to save us. What we want is an anchor _per_ locale, each one free to learn its own country's direction: the German anchor reaches right, the American one reaches left, and nobody is forced to average. That's a week of work for another day, but it's a justified one now instead of a hopeful one, which is the same place the last postcode story left us standing.
 
 ## The lesson, which is older than this anchor
 
 What we'd missed, going in, is that a learned signal doesn't carry the meaning you named it after. It carries the geometry of the data you trained it on. We called the thing a "country anchor" and reasoned about it as if it knew a fact about a postcode, when what it had absorbed was a habit about where cities tend to sit. The name was a label we put on the outside; the direction was the thing inside, and the direction is what shipped.
 
-So when you train a helper signal and it works beautifully on the distribution you built it against, the question to ask before you trust it somewhere new is what it actually learned the shape of, and whether that shape still holds one locale to the left. Ours didn't. The good news is it told us so in three clean retrains, and the better news is that the thing it learned, narrow as it is, is worth thirty-five points right where we'll keep it.
+So when you train a helper signal and it works beautifully on the distribution you built it against, the question to ask before you trust it somewhere new is what it learned, and whether that still holds one locale to the left. Ours didn't. The good news is it told us so in three clean retrains, and the better news is that the thing it learned, narrow as it is, is worth thirty-five points right where we'll keep it.

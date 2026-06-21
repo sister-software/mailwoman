@@ -12,8 +12,8 @@ you look at the score. What we didn't know was that the next 24 hours would test
 rule four separate times, and that the fourth test would flip a conclusion we'd been
 quoting for two weeks.
 
-This is the story of shipping v4.2.0: a consolidation, a quietly lowered bar, a
-consultant who was confidently wrong twice, a capacity wall with a real number on it,
+This is the story of shipping v4.2.0: a consolidation, a bar that lowered itself, a
+consultant who was confidently wrong twice, a capacity wall with a number on it,
 and a benchmark harness that had been starving our own model for four releases.
 
 {/* truncate */}
@@ -22,7 +22,7 @@ and a benchmark harness that had been starving our own model for four releases.
 
 We consolidated every proven lever of the parity campaign into one training run: the
 unit shard, the affix shard, the country gazetteer anchor, the multi-locale balance.
-The spine soared. Locality up thirteen points, region up eleven, country from nothing
+The core tags soared. Locality up thirteen points, region up eleven, country from nothing
 to 87. And the street-affix split, which a solo run had just taught to 78, crashed
 to 27.
 
@@ -39,7 +39,7 @@ fell out of the table entirely.
 Nobody decided this. That's the unsettling part. Restating numbers from memory is how
 a contract becomes a vibe, and a vibe always drifts toward whatever you already built.
 The operator caught it by asking one question about one number. The fix cost ten
-minutes, and the rule it produced is now load-bearing: **the training config is the
+minutes, and the rule it produced is now non-negotiable: **the training config is the
 canonical gate, and any change to a bar is a stated decision with a reason, in
 writing, before the eval runs.** When a model misses the bar, you confront the miss:
 re-baseline it with reasons, or iterate. Quietly re-describing it as a pass is how you
@@ -75,7 +75,7 @@ says what everyone got: locality +13, region +11, country from absent to 89.8, F
 house numbers at their best ever, German locality beating the system we're chasing.
 
 Name your regressions in the model card and something nice happens downstream: the
-_next_ regression has something honest to be measured against. The cards that only
+_next_ regression has a recorded baseline to measure against. The cards that only
 list wins go stale the moment anything moves.
 
 ## Lie number four: the harness was starving our model

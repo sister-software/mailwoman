@@ -28,26 +28,6 @@ Now imagine a string-similarity matcher looking at those same four lines. The fi
 
 ## An address is a location wearing a costume
 
-The string-similarity tool gets both of these backwards:
-
-```
-123 Main Street, Suite 400, Springfield IL 62704
-123 Main St #400, Springfield, Illinois
-```
-
-Same place, low score — different punctuation, "Street" versus "St", reordered unit.
-
-```
-Jyllandsgade 15, 9000 Aalborg
-Jyllandsgade 75, 9000 Aalborg
-```
-
-Different places by 650 metres. One character apart. Score: 0.96.
-
-This isn't a tuning problem you can threshold your way out of. It's the wrong coordinate system.
-
-## An address is a location wearing a costume
-
 An address is not text. It is a point on the Earth that happens to be written down, and the writing is lossy, inconsistent, and adversarially formatted by a hundred different intake forms. "650 metres apart" is a fact about the world. "One character apart" is a fact about the costume.
 
 Here is the same matching decision, scored two ways:
@@ -70,13 +50,13 @@ Three things change, and they drive the rest.
 
 We pointed this at real public data: the national provider registry (NPPES), the FCC's Rural Health Care funding filings, and a state nursing-facility registry. Three datasets with no shared key, each published in the fragmented shape compliance data typically arrives in.
 
-Resolving within the provider registry, we used the registry's own entity ID as held-out ground truth. The result was an honest, unflattering number — and then a surprise about that number, which gets its own section below. We also have detail on which levers move real errors and which backfire. Honest negatives are still results.
+Resolving within the provider registry, we used the registry's own entity ID as held-out ground truth. The result was an unflattering number — and then a surprise about that number, which gets its own section below. We also have detail on which levers move real errors and which backfire. Negative results are still results.
 
 Resolving across the three datasets is where the architecture shows its purpose. With no shared ID — purely on geocoded location plus name agreement — the matcher links rural Texas hospitals across the funding program and the provider registry: Hunt Memorial Hospital District, Uvalde County Hospital Authority, Winkler County Memorial Hospital. Each is a record that says "I exist" in one dataset and a record that says "I got funding" in another, stitched because they are the same building, which is a thing you can only know if you geocode first.
 
 Once stitched, you can ask the question the fragmented data was hiding: which entities appear in the eligibility sources but not the funding ones? That anti-join is what someone currently finds by squinting at a map. We produce it as a layer that drops onto the map directly.
 
-A careful word on that, because it matters. We produce the reconciliation, not the conclusion. An entity in the "eligible, not enrolled" set is a candidate for review, not an allegation. A gap can mean the entity did not apply, applied under a name we did not resolve, is not actually eligible, or any number of mundane things. The tool's job is to resolve public records into an analyzable shape and surface candidates honestly. What a correlation means is the analyst's call.
+A careful word on that, because it matters. We produce the reconciliation, not the conclusion. An entity in the "eligible, not enrolled" set is a candidate for review, not an allegation. A gap can mean the entity did not apply, applied under a name we did not resolve, is not actually eligible, or any number of mundane things. The tool's job is to resolve public records into an analyzable shape and surface candidates. What a correlation means is the analyst's call.
 
 ## The number was lying too
 
@@ -86,15 +66,15 @@ It is also wrong, and wrong in the direction that makes you look bad. That ID is
 
 Grade the same clusters — identical output, not a different model — against a ruler that collapses same-organization records at the same building, and the F1 climbs without touching a line of code:
 
-![Dedup F1 climbing across four truth grains — NPI 53.6%, site 55.3%, org-name 60.7%, coordinate 68.1% — for the shipped scorer, on identical clusters. The climb is the ruler getting honest, not the model changing.](/img/dedup-yardstick.svg)
+![Dedup F1 climbing across four truth grains — NPI 53.6%, site 55.3%, org-name 60.7%, coordinate 68.1% — for the shipped scorer, on identical clusters. The climb is the ruler getting more precise, not the model changing.](/img/dedup-yardstick.svg)
 
-We froze the genuinely hard cases — co-located records with near-identical names that the registration ID splits apart — and adjudicated them one at a time: **120 of 120 were the same real-world organization.** Zero were two unrelated outfits wrongly fused. The thing we had been logging as our biggest error class was, almost entirely, the matcher being right and the yardstick being too literal.
+We froze the hardest cases — co-located records with near-identical names that the registration ID splits apart — and adjudicated them one at a time: **120 of 120 were the same real-world organization.** Zero were two unrelated outfits wrongly fused. The thing we had been logging as our biggest error class was, almost entirely, the matcher being right and the yardstick being too literal.
 
-Believing the first number cost us real work. We built corroboration features to cut that over-merge, and they moved precision not at all — because there was no real over-merge to cut. We optimized against a phantom.
+Believing the first number cost us work. We built corroboration features to cut that over-merge, and they moved precision not at all — because there was no over-merge to cut. We optimized against a phantom.
 
 So the lesson: a matching F1 with no named truth-grain is unreadable. State the ruler next to the number, every single time. When the number is unflattering, check the ruler before you blame the model.
 
-And 68.1% is still a C-grade F1. The yardstick argument contextualizes the number; it does not excuse it. The matcher still misclusters. Rural route addresses and PO boxes defeat the geocoder — a shared box at a post office reads as the same rooftop coordinate for every resident, and the distance feature becomes noise. Rooftop interpolation can place a strip-mall suite on the wrong unit. The honest performance table includes those rows. We are working on them.
+And 68.1% is still a C-grade F1. The yardstick argument contextualizes the number; it does not excuse it. The matcher still misclusters. Rural route addresses and PO boxes defeat the geocoder — a shared box at a post office reads as the same rooftop coordinate for every resident, and the distance feature becomes noise. Rooftop interpolation can place a strip-mall suite on the wrong unit. The performance table includes those rows. We are working on them.
 
 ## Why pure Node matters
 

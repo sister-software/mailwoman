@@ -9,21 +9,21 @@ We set out to fix a small wart in our address parser and came away with a number
 
 Here is the wart. When our postcode extractor sees a five-digit run and wants to know whether it's a real postcode or just a house number that happens to look like one, it peeks at the words sitting next to it and checks them against every country's street vocabulary we know — American, German, French, all at once. That "all at once" is fine at three countries. At twenty it gets loud, and a German street suffix starts shadowing an English word by sheer coincidence. So we went looking for the clean way to tell the extractor _which_ country's words to bother with.
 
-That question has a much bigger sibling, and chasing the sibling is where the story actually is.
+That question has a much bigger sibling, and chasing the sibling is where the story is.
 
 {/* truncate */}
 
-## The thing we actually wanted
+## The thing we wanted
 
 Our resolver, the part that turns a parsed address into a point on Earth, takes a `--default-country` flag. You hand it `US` and it searches the American gazetteer; you hand it `DE` and it searches the German one. It works, and we hate it, because in production nobody hands you the country. The whole reason you're parsing the address is that you _don't_ know where it is yet. A flag that makes you supply the answer up front is a flag that solves the easy half of the problem and leaves the hard half on the floor.
 
 So here's the dream, and it's a good one. The postcode is the most information-dense token in an address: five or six characters that encode a routing hierarchy, a region, often a neighbourhood. We already extract it before the neural parser runs. What if the postcode just _told_ the resolver which country to search? Delete the flag, let the address speak for itself, and as a bonus we'd have the locale signal the street-vocabulary check was asking for in the first place. One stone, several birds.
 
-You can probably feel the shape of the questions piling up:
+You can probably feel the questions piling up:
 
 - Where _should_ that "which country" signal come from: the extractor, the resolver, the model?
 - Is the street-vocabulary blindness even a real problem, or a tidy-minded itch?
-- And the load-bearing one: is a postcode actually a strong enough signal to retire the flag?
+- And the decisive one: is a postcode a strong enough signal to retire the flag?
 
 We brought all three to a second opinion before touching anything.
 
@@ -33,7 +33,7 @@ When a decision feels heavier than it looks, we run it past a second model (a di
 
 The street-vocabulary blindness, our second opinion argued, is a symptom wearing the costume of a bug. Conditioning that one helper on a locale would scratch the itch and teach us nothing. The actual gap underneath is that there is no _single, early, reliable place_ where "which country is this" gets decided once and shared. We had three half-answers scattered across the codebase: the extractor computing a country posterior from the gazetteer, a rule-based stage guessing locale from the postcode's shape, the model's eventual learned guess. No one agreed which was the source of truth, or how they were supposed to relate. The blind helper was just the loose thread you could see.
 
-That reframe pointed at a clean design, and I'll give you the one idea worth keeping: **unify the data, not the modules.** Every address system in our reference package already owns its own postcode shape. So the one new thing we built is the _inverse_ of those shapes — a function that takes a postcode and asks every system at once, "is this yours?" A bare `68161` comes back `[us, de, fr]`, because a five-digit shape genuinely belongs to all three. Both the extractor and the rule-based stage read from that one function instead of keeping their own divergent copies. Nobody calls anybody; they share a table. That's the part that scales.
+That reframe pointed at a clean design, and I'll give you the one idea worth keeping: **unify the data, not the modules.** Every address system in our reference package already owns its own postcode shape. So the one new thing we built is the _inverse_ of those shapes — a function that takes a postcode and asks every system at once, "is this yours?" A bare `68161` comes back `[us, de, fr]`, because a five-digit shape belongs to all three. Both the extractor and the rule-based stage read from that one function instead of keeping their own divergent copies. Nobody calls anybody; they share a table. That's the part that scales.
 
 The rest of the design followed from there: a small fused "locale prior" object, and a clean rule that the resolver always takes that prior's _shape_ while the thing _producing_ it can be swapped (a cheap pre-pass today, the trained model later). It's tidy. It's the kind of architecture you sketch on a whiteboard and feel good about.
 
@@ -54,11 +54,11 @@ Here's the part that doesn't.
 
 A US postcode pins its own country a little over a quarter of the time. A German one, not quite half. The rest of the time the strongest signal in the address shrugs and offers you a menu.
 
-The reason is the most ordinary thing in the world: a five-digit code is five digits in a lot of places. `75001` is the first arrondissement of Paris. It is also Addison, Texas. The gazetteer, asked in good faith, reports both, and a uniform posterior over `{FR, US}` is an honest answer to a question the postcode simply cannot settle. Same script, same length, two continents. Multiply that across every numeric-postcode country and the confident cases are the minority.
+The reason is the most ordinary thing in the world: a five-digit code is five digits in a lot of places. `75001` is the first arrondissement of Paris. It is also Addison, Texas. The gazetteer, asked in good faith, reports both, and a uniform posterior over `{FR, US}` is a fair answer to a question the postcode cannot settle. Same script, same length, two continents. Multiply that across every numeric-postcode country and the confident cases are the minority.
 
-(One trap worth flagging, since I nearly fell in it: an early version of the probe looked far rosier because of an alphabetical tie-break. When the posterior is a flat `{DE, US}`, "DE" sorts first and quietly wins, so the German numbers looked almost perfect. They were an artifact of the sort order, not the signal. The honest reading is the confident-single-country rate above, and only that.)
+(One trap worth flagging, since I nearly fell in it: an early version of the probe looked far rosier because of an alphabetical tie-break. When the posterior is a flat `{DE, US}`, "DE" sorts first and quietly wins, so the German numbers looked almost perfect. They were an artifact of the sort order, not the signal. The right reading is the confident-single-country rate above, and only that.)
 
-## What the number was actually telling us
+## What the number was telling us
 
 A weak result is still a clue, so it's worth being precise about what it ruled out and what it confirmed.
 
@@ -72,4 +72,4 @@ So we shipped the piece that survived contact with the evidence. The street-voca
 
 And we left the flag alone, on purpose, with a number to point at. `--default-country` stays until the country signal comes from where the evidence says it has to: the trained model, conditioning on the full address. That's a heavier piece of work, and now it's a justified one rather than a hopeful one.
 
-The cheaper lesson is the one I'd actually press on you. We came within one satisfying afternoon of building a clean, well-argued, doomed feature. What stopped us wasn't taste or a code review — it was a few hours of measurement aimed squarely at the assumption everything else rested on. Find the load-bearing assumption in whatever you're about to build, and go try to break it before you write the part that depends on it. The probe that saves you a week looks, going in, exactly like the probe that wastes you an afternoon. Run it anyway.
+The cheaper lesson is the one I'd actually press on you. We came within one satisfying afternoon of building a clean, well-argued, doomed feature. What stopped us wasn't taste or a code review — it was a few hours of measurement aimed squarely at the assumption everything else rested on. Find the make-or-break assumption in whatever you're about to build, and go try to break it before you write the part that depends on it. The probe that saves you a week looks, going in, exactly like the probe that wastes you an afternoon. Run it anyway.
