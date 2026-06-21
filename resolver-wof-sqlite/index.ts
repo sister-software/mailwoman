@@ -6,7 +6,18 @@
 
 export type { FindPlaceQuery, GeoBbox, GeoPoint, PlaceCandidate, PlaceLookup, WofPlacetype } from "./types.js"
 
-export type { AncestorsTable, GeojsonTable, NamesTable, PlaceSearchTable, SprTable, WofDatabase } from "./schema.js"
+export type {
+	AncestorsTable,
+	CoincidentRolesTable,
+	ConcordancesTable,
+	GeojsonTable,
+	NamesTable,
+	PlaceAbbrTable,
+	PlacePopulationTable,
+	PlaceSearchTable,
+	SprTable,
+	WofDatabase,
+} from "./schema.js"
 
 export { WofSqlitePlaceLookup, type RankingWeights, type WofSqlitePlaceLookupOpts } from "./lookup.js"
 

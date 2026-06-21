@@ -110,8 +110,54 @@ export interface AncestorsTable {
 }
 
 /**
- * The full schema we hand to `Kysely<WofDatabase>`. Tables not listed here will fail type-checked
- * queries — by design.
+ * `place_population` — `id → wof:population`, split off `spr` so a population-rank join is a single
+ * indexed probe. Written by the build/augment ingest + the GeoNames backfill; read by the candidate
+ * build's `neg_rank`. WOF carries population for ~15% of localities; absent = unknown, not zero.
+ */
+export interface PlacePopulationTable {
+	id: number
+	population: number
+}
+
+/**
+ * `place_abbr` — `id → abbreviation` (e.g. `IL → Illinois`), derived from `names` rows whose
+ * `language = 'abbr'`. Lets the resolver accept a 2-letter region abbreviation as an exact match.
+ */
+export interface PlaceAbbrTable {
+	id: number
+	abbr: string
+}
+
+/**
+ * `concordances` — external-id cross-references per place (`id → (other_source, other_id)`), e.g. a
+ * GeoNames or Overture GERS id. Metadata only; not part of the resolve path.
+ */
+export interface ConcordancesTable {
+	id: number
+	other_id: string
+	other_source: string
+	lastmodified: number
+}
+
+/**
+ * `coincident_roles` (#402) — the dual-role relation: a place that is BOTH an admin region AND a
+ * locality (Berlin the city-state). One row per (admin, locality) pair the resolver can complete a
+ * hierarchy with. Surfaced by {@link MailwomanLookupLike.coincidentRolesFor}.
+ */
+export interface CoincidentRolesTable {
+	admin_id: number
+	locality_id: number
+	relationship_type: string
+	admin_placetype: string
+	distance_km: number
+	locality_population: number
+}
+
+/**
+ * The full schema we hand to `Kysely<WofDatabase>` / `new DatabaseClient<WofDatabase>(...)`. Tables
+ * not listed here will fail type-checked queries — by design. The reader
+ * ({@link WofSqlitePlaceLookup}) already consumes this; the build/augment WRITERS adopt it so a
+ * column rename is a compile error on both sides (the drift that bit the corpus TIGER adapter).
  */
 export interface WofDatabase {
 	place_search: PlaceSearchTable
@@ -119,4 +165,8 @@ export interface WofDatabase {
 	names: NamesTable
 	geojson: GeojsonTable
 	ancestors: AncestorsTable
+	place_population: PlacePopulationTable
+	place_abbr: PlaceAbbrTable
+	concordances: ConcordancesTable
+	coincident_roles: CoincidentRolesTable
 }
