@@ -30,7 +30,7 @@ canonicalizeOrganizationName("Baylor Univ. Med. Ctr.");
 ## API
 
 ```ts
-// Address record (the spine of the record system)
+// Address record (the core of the record system)
 import { PostalAddress, createPostalAddress } from "@mailwoman/record/address"
 
 // Person name parsing → structured components

@@ -1,6 +1,6 @@
 """Gazetteer-anchor matcher tests (#464). Hermetic — inline lexicon fixture, no generated JSON.
 
-The load-bearing assertions: the clue is SYMMETRIC on homographs (the same bits fire on "Georgia"
+The critical assertions: the clue is SYMMETRIC on homographs (the same bits fire on "Georgia"
 in Atlanta-context and Tbilisi-context — the MODEL disambiguates, the clue only says "look"),
 short codes match uppercase-only (lowercase "in"/"ca" are English words), multi-word countries
 paint every word, and the char→piece projection mirrors the postcode anchor's first-non-ws rule.

@@ -110,7 +110,7 @@ export function isJapanesePrefectureCode(input: unknown): input is JapanesePrefe
  *
  * The suffix is only stripped when it is a genuine appendage — separated by a
  * hyphen/space/middle-dot (`Tokyo-to`, `Osaka fu`) or trailing the macron-bearing long-vowel form.
- * That guard is load-bearing: four bare romaji names already END in a suffix syllable (Kyo**to**,
+ * That guard is essential: four bare romaji names already END in a suffix syllable (Kyo**to**,
  * Gi**fu**, Hokkai**do**, Kumamo**to**), and a blind trailing-strip would maim them. We never strip
  * from an unseparated bare name, so `kyoto` stays `kyoto`.
  */

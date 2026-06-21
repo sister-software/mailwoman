@@ -15,7 +15,7 @@
  *   - `Montredon, Lozère` → région = "ère" (the diacritic subword split, #727)
  *   - (AU analog) `CANBERRA ACT` → the space-delimited admin fuse
  *
- *   The département is the load-bearing admin unit for FR postal geography and maps to the `region`
+ *   The département is the essential admin unit for FR postal geography and maps to the `region`
  *   component tag in our schema (gold `region` = `Creuse`/`Lozère` in the golden fr set). We derive
  *   it DETERMINISTICALLY from the real postcode via codex `departementForCodePostal` (first two
  *   digits = département) — salvage-first, no re-derived table.

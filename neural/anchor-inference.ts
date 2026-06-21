@@ -10,7 +10,7 @@
  *   lookup the model trained against (`scripts/build-pilot-anchor-lookup.py`), so the feature
  *   layout matches byte-for-byte.
  *
- *   The layout is LOAD-BEARING and cross-language: a wrong locale order or centroid scale feeds the
+ *   The layout is ESSENTIAL and cross-language: a wrong locale order or centroid scale feeds the
  *   model garbage. `anchor-inference.test.ts` pins both `LOCALE_ORDER` and the vector to values
  *   emitted by the Python `anchor_feature_vector` — any drift fails the test.
  */

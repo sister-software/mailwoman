@@ -31,7 +31,7 @@
  *   never enters the resolver hot path.
  *
  *   `relationship_type` is recorded for debuggability / deferred per-type behavior; v1 completion is
- *   uniform (see #405). It's a coarse classification, not load-bearing.
+ *   uniform (see #405). It's a coarse classification, not critical.
  *
  *   Mirrors the derived-table builder pattern in `fts.ts` (`buildPlaceSearchFts`). Run incrementally
  *   against an existing `admin-global-priority.db` via `build-coincident-roles-cli.ts`; should also

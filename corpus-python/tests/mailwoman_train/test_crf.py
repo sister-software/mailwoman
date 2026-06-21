@@ -113,7 +113,7 @@ def test_per_token_reduction_matches_sum_over_tokens():
     # mean (over 2 sequences) = sum / 2
     assert torch.allclose(nll_mean, nll_sum / 2.0)
     # And mean ≠ per_token whenever total_tokens != batch_size — verifies they're
-    # genuinely different reductions.
+    # different reductions.
     assert not torch.allclose(nll_mean, nll_per_token)
 
 

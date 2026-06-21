@@ -25,14 +25,14 @@ labels lists to match; the expanded form inherits the original token's BIO label
 ``" ".join(tokens)`` rebuild destroys whatever the tokens don't carry (newlines,
 double spaces) and re-quantizes spans to token boundaries (a trailing comma inside
 a ``"123,"`` token would get absorbed into the po_box span). v0.5.0 (#519) makes
-that punctuation load-bearing, so every augmented copy must keep the source raw's
+that punctuation essential, so every augmented copy must keep the source raw's
 characters except for the deliberate edit (PR #534 open question 3).
 
 **Char-offset spans** (#519, v0.5.0): rows from a v0.5.0 corpus carry
 ``span_starts``/``span_ends``/``span_tags`` beside tokens/labels, and every augmented COPY this
 module yields must re-target them by the same splice arithmetic — offsets after the edit shift by
 the replacement's length delta, a span containing the edit grows/shrinks at its end, and a span
-boundary falling strictly INSIDE the edited token is genuinely impossible to re-target (the
+boundary falling strictly INSIDE the edited token is impossible to re-target (the
 replaced surface no longer exists) and raises loudly. Yielding a mutated raw with the source
 row's spans would corrupt the labels silently — the exact hazard that put the augmentation
 re-target in the same change as the loader wiring. Rows without spans (frozen pre-v0.5.0

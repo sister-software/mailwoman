@@ -24,7 +24,7 @@
  *   The cheap insurance is this indirection: callers ask `containmentFor(system)` rather than
  *   importing one global constant. Today every system resolves to `WESTERN_PARENT_OF` (the
  *   historical map, behavior-identical), and `PARENT_OF` is kept as an alias so existing imports
- *   don't break. When a genuinely distinct system map lands (Phase 6 JP), it slots in here with
+ *   don't break. When a distinct system map lands (Phase 6 JP), it slots in here with
  *   zero call-site churn. See `AddressSystem` in `./types.ts`.
  */
 

@@ -5,7 +5,7 @@
 # parses better and stops the Saint-Albans cross-tag collapse — WITHOUT regressing US/FR. The
 # probe behind PR3 (docs/articles/plan/2026-06-04-pr3-self-conditioned-retrain.md) showed the
 # postcode alone pins the country only 28-44% of the time, so the city/street evidence the model
-# reads is genuinely load-bearing.
+# reads is essential.
 #
 # SINGLE VARIABLE: this is the v0.7.2-PROVEN recipe (1.5e-4 constant / 1k warmup, ls 0.1, CRF off,
 # bf16) with self-conditioning the ONLY addition. Any delta is attributable to the conditioning,

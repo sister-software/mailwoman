@@ -451,7 +451,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 	test("anchor posterior re-ranks REGION candidates by country (#369), off by default", async () => {
 		// The region analogue of the locality re-rank — the collision class #447's over-fetch fix
-		// couldn't reach. A bare region abbreviation is genuinely shared across countries ("VT" is both
+		// couldn't reach. A bare region abbreviation is shared across countries ("VT" is both
 		// Vermont and Viterbo; "ME" both Maine and Messina); modeled here as two same-named regions so
 		// the fake backend's name-substring match returns both. The non-US region scores higher on
 		// name/BM25, so without a signal the wrong country wins — and because resolveTree resolves region

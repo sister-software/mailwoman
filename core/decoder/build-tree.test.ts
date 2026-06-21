@@ -233,7 +233,7 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 	})
 
 	test("GUARD: comma between same-tag spans keeps them distinct (no merge)", () => {
-		// Two genuinely separate localities, comma in the gap (no intervening O token).
+		// Two separate localities, comma in the gap (no intervening O token).
 		const raw = "Dallas, Austin"
 		const tokens: DecoderToken[] = [tok("Dallas", 0, 6, "B-locality"), tok("Austin", 8, 14, "B-locality")]
 		const locs = localitySpans(buildAddressTree(raw, tokens).roots)

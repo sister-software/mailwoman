@@ -500,7 +500,7 @@ describe("registry + defaults", () => {
 // Every augmentation transforms `raw` by direct string splicing (replace/case-map on the raw
 // itself — never a rebuild from a token list), and the build pipeline re-runs `alignRow` on each
 // augmented copy, deriving the char-offset span triple from the AUGMENTED raw. These probes pin
-// the property v0.5.0 makes load-bearing: intra-span punctuation (the dotted `P.O. Box` is the
+// the property v0.5.0 makes essential: intra-span punctuation (the dotted `P.O. Box` is the
 // canonical case) survives onto the augmented copy, and every span addresses the new raw exactly.
 // A future refactor that rebuilds raw from tokens would fail these.
 

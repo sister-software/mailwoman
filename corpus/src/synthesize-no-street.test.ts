@@ -137,7 +137,7 @@ describe("synthesizeNoStreetRow", () => {
 			const row = synthesizeNoStreetRow(SAMPLE_BASE, { random: rng })
 			counts[row!.template]++
 		}
-		// venue-adversarial is the load-bearing slice — should be the largest single bucket.
+		// venue-adversarial is the critical slice — should be the largest single bucket.
 		expect(counts["venue-adversarial"]).toBeGreaterThan(counts["venue-plain"])
 		// All templates should fire at least once at this sample size.
 		for (const t of Object.keys(counts) as NoStreetTemplate[]) {

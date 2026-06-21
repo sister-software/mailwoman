@@ -210,7 +210,7 @@ def test_glue_default_off_preserves_rng_stream():
 
 
 def test_glued_raw_projects_split_labels_onto_pieces():
-    """The load-bearing property (#513): the fused surface with SPLIT tokens/labels projects
+    """The critical property (#513): the fused surface with SPLIT tokens/labels projects
     B-region onto the letter pieces and B/I-postcode onto the digit pieces via char offsets.
     Mock pieces mirror the v0.6.0-a0 tokenizer's letter/digit split (verified empirically:
     1020 fused state+ZIP rows, zero pieces straddling the letter→digit boundary)."""
@@ -429,7 +429,7 @@ def test_splice_expansion_leaves_the_source_row_alone():
 
 def test_splice_expansion_boundary_inside_edited_token_raises():
     """A span boundary strictly inside the expanded token addresses a surface the splice
-    destroys — genuinely impossible to re-target, so it raises rather than guesses."""
+    destroys — impossible to re-target, so it raises rather than guesses."""
     row = {
         "raw": "Buffalo NY 14201",
         "tokens": ["Buffalo", "NY", "14201"],

@@ -13,7 +13,7 @@
  *   - **Affix-token (the matched span):** toward `B/I-street_prefix` AND `B/I-street_suffix` (position
  *       unknown — let the model + context disambiguate).
  *   - **Adjacent token (one before AND one after each match):** toward `B/I-street`, AWAY from
- *       `B/I-dependent_locality`. The negative bias on `dependent_locality` is the load-bearing
+ *       `B/I-dependent_locality`. The negative bias on `dependent_locality` is the essential
  *       piece — it closes the inference-time vacuum that caused v0.6.1's 1066 dep_locality
  *       hallucinations (see [[project-v061-failure-mechanism]]).
  *
@@ -42,7 +42,7 @@ export interface StreetMorphologyPriorOpts {
 	maxNeighbourStreetBias?: number
 	/**
 	 * Magnitude of the negative bias applied to `dependent_locality` BIO labels on the adjacent
-	 * tokens. Default 2.0. This is the load-bearing piece.
+	 * tokens. Default 2.0. This is the essential piece.
 	 */
 	dependentLocalityPenalty?: number
 }

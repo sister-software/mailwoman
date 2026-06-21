@@ -78,7 +78,7 @@ export async function createPostalCityCandidateTable(db: Kysely<PostalCityCandid
 		.addColumn("latitude", "real", (c) => c.notNull())
 		.addColumn("longitude", "real", (c) => c.notNull())
 		.addPrimaryKeyConstraint("postal_city_candidate_pk", ["name_key", "postcode"])
-		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic escape hatch.
+		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

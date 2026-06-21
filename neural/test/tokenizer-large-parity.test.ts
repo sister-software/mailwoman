@@ -11,7 +11,7 @@
  *
  *   Two assertions:
  *
- *   1. Byte-for-byte pieces+ids equality on EVERY entry — the load-bearing Phase 3 invariant.
+ *   1. Byte-for-byte pieces+ids equality on EVERY entry — the essential Phase 3 invariant.
  *   2. Offset reconstruction correctness on entries that don't contain documented unsupported cases
  *        (byte-fallback pieces + zero-width joiners). Those gaps are documented in tokenizer.ts;
  *        the sweep confirms the 99%+ population is correctly handled, and surfaces which

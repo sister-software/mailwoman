@@ -24,7 +24,7 @@
  *       existing cross-word merge still joins them.
  *
  *   Safety: a word whose pieces already agree is left byte-identical (no change). The vote includes
- *   `O`, so a genuinely-`O` word stays `O` (no spurious spans).
+ *   `O`, so an all-`O` word stays `O` (no spurious spans).
  *
  *   Gate outcome (2026-06-19, fr-admin-split-gate + per-locale-f1, MAILWOMAN_WORD_CONSISTENCY=1): NOT
  *   a clean win, so this ships DEFAULT-OFF. It heals clean-latin fragments (`PRUNIÈRES LOZÈRE

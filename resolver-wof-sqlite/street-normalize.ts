@@ -172,7 +172,7 @@ export function stripLocalityQualifier(locality: string): string {
  *
  * A same-numbered US and state route stay DISTINCT keys (`us route 5` vs `state route 5`); only the
  * BARE `route N` form is ambiguous (designator unknown) and it stays unfolded — a bare-route query
- * therefore misses, honestly, rather than guessing a designator.
+ * therefore misses rather than guessing a designator.
  */
 export function canonicalizeRouteKey(streetNorm: string): string {
 	const match = /^(us|state|[a-z]{2}) (?:route|rte|rt|highway|hwy) (\d.*)$/.exec(streetNorm)

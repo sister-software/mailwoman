@@ -210,7 +210,7 @@ class MailwomanCoarseEncoder(nn.Module):
         # where gazetteer_features is the per-token multi-hot candidate-tag set (country/region/
         # po_box/cedex/homograph) painted from the RAW SURFACE by the codex lexicon — never from
         # labels, so train and inference share one computation. The clue INFORMS, the model decides
-        # (model-first; the homograph bit explicitly marks "context is load-bearing here"). c=0
+        # (model-first; the homograph bit explicitly marks "context is critical here"). c=0
         # tokens get g_i=0 — no regime switch, same continuum argument as the postcode anchor.
         self.use_gazetteer_anchor = use_gazetteer_anchor
         self.gazetteer_feature_dim = int(gazetteer_feature_dim) if use_gazetteer_anchor else 0

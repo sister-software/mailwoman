@@ -216,7 +216,7 @@ function locateSpan(args: {
 	// Pass 1: verbatim substring. Word-boundary-aligned matches are PREFERRED over intra-word ones
 	// — leftmost-substring alone let a short value claim the inside of an earlier word (region "AK"
 	// matched inside "Umak"/"Lake", scrambling every later span; caught by the v0.5.0 pilot build).
-	// Intra-word matches stay allowed as the fallback because they are load-bearing for affix
+	// Intra-word matches stay allowed as the fallback because they are essential for affix
 	// supervision (street_suffix "straße" inside "Hauptstraße" has no boundary-aligned occurrence —
 	// sub-word spans are the point of the char-offset format).
 	let intraWord: { start: number; end: number } | undefined

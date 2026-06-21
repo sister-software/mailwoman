@@ -152,7 +152,7 @@ const DEFAULTS = {
  * Scaling the bonus by the slot's word count makes coverage the thing being rewarded:
  * equal-coverage interpretations collect equal bonus (the classifier/phrase/resolver factors alone
  * decide), and an interpretation that explains more of the input out-scores one that silently drops
- * words unless the extra evidence is genuinely weak (per-word factor mean < 0.4).
+ * words unless the extra evidence is weak (per-word factor mean < 0.4).
  *
  * The choice of 2.5 is a tuning constant, not a free parameter we expose — exposing it would invite
  * callers to disable inclusion entirely (defeating the purpose of the reconciler) and the sensible

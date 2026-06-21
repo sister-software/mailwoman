@@ -98,7 +98,7 @@ export const dropCommas: Augmentation = (row) => {
 
 /**
  * Replace single spaces with double spaces in `raw` AND in every component value. The component
- * update is load-bearing for alignment: `alignRow` substring-searches each component's surface form
+ * update is essential for alignment: `alignRow` substring-searches each component's surface form
  * inside `raw`, so doubling the spaces in `raw` only would leave single-spaced components
  * unfindable (this was the bug behind v0.1.1's first build attempt — 99.9% of quarantined rows
  * traced back to this augmentation). Doubling both keeps the substring contract intact.

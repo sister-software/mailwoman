@@ -66,7 +66,7 @@ export interface WofRecord {
  *
  * Real WOF postalcode distros tag every row `-1` ("unknown but treated as active"); the Pelias
  * importer accepts `-1` alongside `1`. The previous SpatiaLite-backed adapters filtered on `= 1`
- * only and silently emitted zero rows from the corpus — this loosened predicate is the load-bearing
+ * only and silently emitted zero rows from the corpus — this loosened predicate is the critical
  * fix.
  */
 export function isCurrentFeature(props: Record<string, unknown>): boolean {

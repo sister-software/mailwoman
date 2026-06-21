@@ -321,7 +321,7 @@ primitive could not fit that mold.
 
 **Chosen:** option 2.
 
-**Rationale:** the two operations differ in three load-bearing ways
+**Rationale:** the two operations differ in three essential ways
 that make a shared signature wrong, not just inconvenient:
 
 1. **Output shape.** Augmentations emit `CanonicalRow` and defer
@@ -342,7 +342,7 @@ that make a shared signature wrong, not just inconvenient:
    single row's `base_source_id`. Compositions cite the address
    row's `base_source_id` and carry the venue string on a
    `venue` component the address adapter didn't emit. The
-   provenance graph is genuinely two-source.
+   provenance graph is two-source.
 
 The compose primitive lives in `synthesize.ts` alongside the
 augmentations (one stop for "things that mutate corpus rows"), but
@@ -768,7 +768,7 @@ purpose — or (b) implementing an external mergesort in JS, which is
 non-trivial. `sort(1)` is universally available on Linux/macOS and
 handles disk spill automatically.
 
-`LC_ALL=C` is load-bearing: without it, locale-aware sorting can
+`LC_ALL=C` is essential: without it, locale-aware sorting can
 produce different byte order across machines with different `LANG`
 settings, breaking the cross-host determinism guarantee the manifests
 exist to provide.

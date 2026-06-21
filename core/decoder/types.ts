@@ -23,7 +23,7 @@
  *   provenance via `src="<source>:<sourceId>"`. The neural pipeline stamps these via
  *   `BuildTreeOpts`; the proposal-derived path threads them through from `ClassificationProposal`.
  *   JSON / tuple projections deliberately do not surface provenance — libpostal compat is
- *   load-bearing.
+ *   essential.
  */
 
 import type { BioLabel, ComponentTag } from "../types/component.js"
@@ -150,7 +150,7 @@ export interface AddressTree {
 	 *
 	 * This is forward-compat insurance, not yet a behavioral switch: every system currently resolves
 	 * to the same map, so an absent or present `system` produces identical trees today. It exists so
-	 * that when a genuinely distinct system lands (e.g. Japanese block addressing, where
+	 * that when a distinct system lands (e.g. Japanese block addressing, where
 	 * `building_number` nests under `sub_block`/`block` with no `street` parent), consumers and the
 	 * tree builder already carry the discriminator — no `AddressTree` shape change later. A locale
 	 * pre-classifier (Phase 6+) is the intended source of this value.

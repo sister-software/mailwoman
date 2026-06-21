@@ -1,7 +1,7 @@
 """ModelCard + README rendering tests for the Stage 2 (v0.3.0) ship.
 
 Frozen-string tests would couple the prose to every minor wording change, so the
-asserts target the load-bearing facts: phase string, component list, target
+asserts target the essential facts: phase string, component list, target
 status, smoke-disclaimer presence.
 """
 
@@ -50,7 +50,7 @@ def test_model_card_lists_all_active_components():
 def test_model_card_carries_bio_labels_in_emission_order():
     # v0.4.0 issue #116 §5(a): the trained label vocabulary travels with the bundle so
     # the JS-side classifier can read it at runtime instead of hardcoding STAGE2_BIO_LABELS.
-    # Order is load-bearing — emission logits map positionally onto this array.
+    # Order is critical — emission logits map positionally onto this array.
     card = build_model_card(
         locale="en-us",
         corpus_version="0.3.0",

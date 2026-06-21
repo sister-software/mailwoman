@@ -42,7 +42,7 @@ Any other column the HRSA export carries is ignored.
 ## Output
 
 One `CanonicalRow` per CSV record. Component insertion order is
-load-bearing — `venue` is placed first so downstream alignment claims
+essential — `venue` is placed first so downstream alignment claims
 its surface span before `locality` does its own search. This is the
 kryptonite-defending invariant: a row like
 `"Buffalo Health Center Inc., 123 Main St, Buffalo, NY 14201"` would

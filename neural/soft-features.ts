@@ -9,7 +9,7 @@
  *   anchor, build the gazetteer clue, and (when paired with the matching train-time half) suppress
  *   the gazetteer clue adjacent to a postcode-anchor hit.
  *
- *   It is the LOAD-BEARING contract surface for the ProductionScorer (#718): the scorer asserts which
+ *   It is the essential contract surface for the ProductionScorer (#718): the scorer asserts which
  *   channels are fed, this function decides HOW they are fed. Keeping it a pure function means both
  *   the classifier and any harness build features identically — there is exactly one choreography.
  *
@@ -49,7 +49,7 @@ export interface SoftFeatureSources {
 	/**
 	 * Channel choreography (#464, v0.9.13 postcode fix): zero the gazetteer clue on pieces adjacent
 	 * to a postcode-anchor hit. Needs BOTH a `gazetteerLexicon` and a `postcodeAnchorLookup` to take
-	 * effect (the suppression is keyed off the anchor's confidence). PAIRING IS LOAD-BEARING — enable
+	 * effect (the suppression is keyed off the anchor's confidence). PAIRING IS ESSENTIAL — enable
 	 * this IFF the model was trained with the matching train-time choreography. See
 	 * `suppressGazetteerNearPostcode` in `gazetteer-inference.ts`.
 	 */

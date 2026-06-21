@@ -16,7 +16,7 @@
  *
  *   Recall is the priority — a pair the blocker never proposes can never match, the most dangerous
  *   silent failure in record linkage. So the spatial grid is generous and neighbour-expanded by
- *   default, and any block too large to scan is _reported_, never quietly dropped.
+ *   default, and any block too large to scan is _reported_, never silently dropped.
  */
 
 /** Maps a record to zero or more block keys. Two records sharing any key become a candidate pair. */

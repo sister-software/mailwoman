@@ -8,7 +8,7 @@
  *   to ship: `createScorer` reads the model-card's `capabilities` block and FAILS CLOSED when a
  *   conventions row forbids a certified tag (`maskOffF1 − maskOnF1 > 5pp`).
  *
- *   Two load-bearing assertions:
+ *   Two essential assertions:
  *
  *   1. PASSES on the REAL post-D2 config — FR forbids only `street_suffix`, which the model does NOT
  *        emit (no capability entry → legal); the certified FR `street_prefix` (maskOff 80) is no

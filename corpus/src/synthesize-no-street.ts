@@ -195,7 +195,7 @@ function countryToLocale(country: string): string {
 
 /**
  * Generate one no-street counter-example row for a base (locality, region, postcode, country)
- * tuple. Picks a template by weighted random; the venue templates are the load-bearing
+ * tuple. Picks a template by weighted random; the venue templates are the critical
  * counter-distribution against synth-street's decompose-mode pressure.
  */
 export function synthesizeNoStreetRow(
@@ -294,7 +294,7 @@ export function synthesizeNoStreetRow(
  */
 function pickTemplate(random: () => number): NoStreetTemplate {
 	const r = random()
-	if (r < 0.35) return "venue-adversarial" // 35% — the load-bearing slice
+	if (r < 0.35) return "venue-adversarial" // 35% — the critical slice
 	if (r < 0.6) return "venue-plain" // 25%
 	if (r < 0.8) return "locality-region-postcode" // 20%
 	if (r < 0.92) return "locality-region" // 12%

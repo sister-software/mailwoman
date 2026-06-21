@@ -51,7 +51,7 @@ const UNIT_DESIGNATORS =
 const UNIT_PATTERNS: Array<{ label: string; re: RegExp }> = [
 	// Designator + optional "#"/"No." + identifier, e.g. "Apt 4B", "Ste 12", "STE D",
 	// "Unit 9400", "Suite 100", "Rm 5", "Flat 2", "Apartment #3", "Bldg C".
-	// The `\b` after the designator is load-bearing: it stops "Unit" matching inside
+	// The `\b` after the designator is essential: it stops "Unit" matching inside
 	// "United", "Fl" inside "Florida", etc. The trailing `\b` on the identifier stops
 	// "Apt Main" capturing the "M" of "Main" (single-letter ident only fires on a
 	// standalone token like "STE D").

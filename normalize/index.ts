@@ -6,7 +6,7 @@
  *   `@mailwoman/normalize` — Stage 1 of the runtime pipeline.
  *
  *   Deterministic input preprocessing: NFC, punctuation, whitespace, optional case-fold +
- *   abbreviation expansion. Pure functions. Produces a `NormalizedInput` with a load-bearing
+ *   abbreviation expansion. Pure functions. Produces a `NormalizedInput` with a critical
  *   `offsetMap` so downstream stages can map normalized-string spans back to raw-string character
  *   offsets.
  *

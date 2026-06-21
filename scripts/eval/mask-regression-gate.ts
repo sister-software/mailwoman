@@ -89,7 +89,7 @@ interface LocaleEvalSpec {
 }
 
 // Same eval specs as the manifest generator. FR uses the dedicated street-prefix slice
-// (`fr-street-prefix-real.jsonl`, the #719 reproduction) so the LOAD-BEARING affix capability is
+// (`fr-street-prefix-real.jsonl`, the #719 reproduction) so the essential affix capability is
 // measurable — on the broad golden FR set the unfolded `street_prefix` F1 is dominated by absent-gold
 // rows and would under-measure the very capability this gate protects.
 const LOCALES: LocaleEvalSpec[] = [

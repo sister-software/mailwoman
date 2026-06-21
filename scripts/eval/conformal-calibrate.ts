@@ -419,7 +419,7 @@ async function main(): Promise<void> {
 			`  Combined Q̂ = ${Q.toFixed(4)} > 1: the heuristic radius UNDERESTIMATES the true spread — multiply by ${Q.toFixed(2)}× for ${(alpha * 100).toFixed(0)}% coverage.`
 		)
 		console.log(
-			`  Uncalibrated coverage is only ${(uncalCoverage * 100).toFixed(1)}%; the conformal correction is load-bearing.`
+			`  Uncalibrated coverage is only ${(uncalCoverage * 100).toFixed(1)}%; the conformal correction is essential.`
 		)
 		console.log(`  Use Q̂ × claimed_radius as the reported interval at inference.`)
 	} else {

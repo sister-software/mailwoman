@@ -20,7 +20,7 @@
  *   the README documents the expected set.
  *
  *   Output: one row per CSV record, with `venue` component carrying the site name and the address
- *   quad on `(house_number, street, locality, region, postcode)`. Component order is load-bearing:
+ *   quad on `(house_number, street, locality, region, postcode)`. Component order is critical:
  *   `venue` is inserted FIRST so alignment claims its surface span before `locality` searches for
  *   its own (the kryptonite case "Buffalo Health Clinic, …, Buffalo, NY" relies on `venue`
  *   consuming the first "Buffalo" so locality lands on the second).

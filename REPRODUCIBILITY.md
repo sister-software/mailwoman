@@ -46,7 +46,7 @@ before trusting anything.
 
 `torch==2.12.0 · transformers==5.9.0 · onnx==1.21.0 · onnxruntime==1.26.0 · onnxscript==0.7.0`
 (the v4.1.0 set; source of truth is `scripts/modal/train_remote.py`'s training image).
-**This set is load-bearing**: opset ≤17 + the `value_info` strip in `quantize.py` are what
+**This set is essential**: opset ≤17 + the `value_info` strip in `quantize.py` are what
 keep the int8 graph Safari-WebGPU-safe. Check your local env against it:
 
 ```bash

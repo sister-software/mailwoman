@@ -15,7 +15,7 @@
  *
  *   The fix is deterministic: AFTER decode, merge adjacent same-label spans whose gap consists only
  *   of punctuation/whitespace, contains at least one non-space character, and is short (≤ 3 chars).
- *   The non-space requirement is load-bearing — space-only gaps ("Saint Paul" as two locality
+ *   The non-space requirement is essential — space-only gaps ("Saint Paul" as two locality
  *   spans) are NOT bridged, because a space between two same-tag spans is often a real boundary
  *   (the Saint-Albans fragmentation wants this fix too, but it must come with its own evidence;
  *   this pass stays conservative by construction).

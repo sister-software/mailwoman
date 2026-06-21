@@ -8,7 +8,7 @@
  *   The pairwise scorer treats each pair independently, and its scores are NOT transitive: A~B at a
  *   high weight and B~C at a high weight does not guarantee A~C is a match. So a distinct stage is
  *   required to turn the graph of above-threshold links into coherent groups — skip it and your
- *   "entities" quietly fracture or fuse.
+ *   "entities" silently fracture or fuse.
  *
  *   This ships the standard baseline: connected components of the link graph (union-find), with the
  *   link threshold as the precision/recall knob — raise it for tighter, purer clusters, lower it

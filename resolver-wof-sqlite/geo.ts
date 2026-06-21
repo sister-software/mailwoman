@@ -75,7 +75,7 @@ export function bboxAround(lat: number, lon: number, radiusKm: number): Bbox {
  */
 export type GeojsonPosition = [number, number, ...number[]]
 
-/** The two areal GeoJSON geometry types PIP can test, plus an open escape hatch (Point etc.). */
+/** The two areal GeoJSON geometry types PIP can test, plus an open fallback (Point etc.). */
 export interface GeojsonPolygon {
 	type: "Polygon"
 	/** `[outerRing, hole1, hole2, …]` — each ring a closed list of positions. */

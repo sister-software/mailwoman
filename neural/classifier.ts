@@ -104,7 +104,7 @@ export interface NeuralAddressClassifierConfig {
 	 * adjacent to a postcode-anchor hit (needs both `gazetteerLexicon` and `postcodeAnchorLookup`).
 	 * Targets the region-clue→postcode CRF interference (~3pp US postcode).
 	 *
-	 * PAIRING IS LOAD-BEARING: set this IFF the model was TRAINED with the matching train-time
+	 * PAIRING IS ESSENTIAL: set this IFF the model was TRAINED with the matching train-time
 	 * choreography (`data.gazetteer_choreography`). The 2026-06-10 diagnostic showed the harm is
 	 * WEIGHT-BAKED — applying this at inference on a model trained _without_ train-choreography does
 	 * NOT recover postcode and adds train/inference skew. Only enable for a consolidation-era model

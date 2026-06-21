@@ -123,7 +123,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			//
 			// Guard: only merge when the text in `raw` between the two spans is whitespace-only. A
 			// comma or any other separator keeps them distinct, and an intervening O/different-tag
-			// token already nulls/replaces `open` above — so two genuinely separate same-tag spans
+			// token already nulls/replaces `open` above — so two separate same-tag spans
 			// (e.g. "Springfield, Chicago") are never merged.
 			if (prefix === "B" && open !== null && open.tag === tag && /^\s*$/.test(raw.slice(open.end, tok.start))) {
 				open.end = tok.end

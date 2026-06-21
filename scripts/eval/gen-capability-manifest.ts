@@ -86,7 +86,7 @@ interface LocaleEvalSpec {
 // manifest (the folded `per-locale-f1.ts` joins the three street parts and cannot see it).
 //
 // FR uses the dedicated street-prefix slice (`fr-street-prefix-real.jsonl`, the #719 reproduction),
-// NOT the broad golden dev set, for the LOAD-BEARING tags: golden FR carries only ~7 `street_prefix`
+// NOT the broad golden dev set, for the essential tags: golden FR carries only ~7 `street_prefix`
 // rows against ~1535 without it, so the unfolded `street_prefix` F1 there is dominated by absent-gold
 // rows (measured 5.3) — it would UNDER-certify the very capability the gate exists to protect. On the
 // purpose-built slice the model emits FR `street_prefix` at F1 80.0 (the figure the #719 fix cites),
@@ -237,7 +237,7 @@ async function buildManifest(): Promise<Capabilities> {
 			}
 			capabilities[tier]![spec.system] = perTag
 
-			// Diagnostic: surface the forbidden-tag deltas (the load-bearing rows).
+			// Diagnostic: surface the forbidden-tag deltas (the decisive rows).
 			for (const t of FORBIDDEN_TAGS) {
 				if (perTag[t]) {
 					const delta = (perTag[t]!.maskOffF1 - (perTag[t]!.maskOnF1 ?? 0)).toFixed(1)

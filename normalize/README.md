@@ -3,7 +3,7 @@
 **Stage 1 of the Mailwoman runtime pipeline** — deterministic input preprocessing.
 
 Pure-function text normalization that prepares free-text address strings for
-downstream parsing stages. Every transform produces a load-bearing `offsetMap`
+downstream parsing stages. Every transform produces an essential `offsetMap`
 so downstream stages can map normalized-string spans back to raw-string character
 offsets.
 
@@ -54,7 +54,7 @@ Stage 1 in the [Staged Pipeline Contract](https://mailwoman.sister.software/arti
 ## Design
 
 - **Pure functions, no side effects, no ML.** The output is byte-for-byte deterministic for the same input.
-- **`offsetMap` is load-bearing.** Every transform tracks how normalized positions map back to raw input positions. This is essential for the parser to report spans in the original string.
+- **`offsetMap` is critical.** Every transform tracks how normalized positions map back to raw input positions. This is essential for the parser to report spans in the original string.
 - **Configurable via `NormalizeOpts`:** toggle `expandAbbreviations`, `normalizeCase`, and `cjk`.
 
 ## Related

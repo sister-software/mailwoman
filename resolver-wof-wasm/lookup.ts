@@ -129,7 +129,7 @@ export class WofWasmPlaceLookup implements PlaceLookup {
 		}
 
 		// Over-fetch a pool ordered by raw BM25, then re-rank in JS (exact-name tier, then
-		// population-weighted bm25). The over-fetch is load-bearing: a famous place can sit a few rows
+		// population-weighted bm25). The over-fetch is essential: a famous place can sit a few rows
 		// below a tiny same-name town on raw BM25 ("New York" loses to "West New York" by a hair), so a
 		// tight LIMIT on bm25 alone would truncate it before the re-rank could pull it up. This mirrors
 		// the post-scoring tier + population boost in resolver-wof-sqlite/lookup.ts. (v1 issued pure

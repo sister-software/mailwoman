@@ -5,7 +5,7 @@
  *
  *   Mirror of `packages/corpus-python/src/mailwoman_train/labels.py`.
  *
- *   Index ↔ label parity is load-bearing: the model emits logits in one canonical order on both sides
+ *   Index ↔ label parity is essential: the model emits logits in one canonical order on both sides
  *   and any drift here silently corrupts BIO decoding. STAGE2 strictly extends STAGE1 — the first
  *   15 indices are identical, so reading a v0.2.0 (Stage 1) model with the Stage 2 label vocabulary
  *   stays correct; the extra entries are unused.

@@ -6,7 +6,7 @@
  *   The 101 French départements (96 metropolitan including Corsica's 2A/2B, plus the 5 overseas DOM),
  *   each mapped to its région.
  *
- *   The département is the load-bearing admin unit for French postal geography: a code postal's first
+ *   The département is the key admin unit for French postal geography: a code postal's first
  *   two digits ARE the département number (see `code-postal.ts`), and the région is derived from
  *   the département. This table is therefore the hinge between `code-postal.ts` and `region.ts`.
  */
