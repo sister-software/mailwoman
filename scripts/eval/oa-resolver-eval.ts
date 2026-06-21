@@ -343,11 +343,23 @@ async function main(): Promise<void> {
 	// (the SAME backend + ranking the browser demo uses). This is the "CLI matches demo" gate: run the
 	// eval both ways and confirm US locality/coord don't regress before defaulting the CLI to it.
 	const candidateDb = arg("candidate-db", "")
-	const { WofSqlitePlaceLookup, WofCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	// `--postal-city-alias-db <db>` (#475) attaches the opt-in postal-city alias scorer on the FTS
+	// path: a user-typed postal city resolves to its geographic locality. Run the eval with and
+	// without to measure the lift. No-op on the candidate backend (it folds aliases at build time).
+	const postalCityAliasDb = arg("postal-city-alias-db", "")
+	const { WofSqlitePlaceLookup, WofCandidateTableLookup, WofPostalCityAliasLookup } =
+		await import("@mailwoman/resolver-wof-sqlite")
+	const postalCityAliases = postalCityAliasDb
+		? new WofPostalCityAliasLookup({ databasePath: postalCityAliasDb })
+		: undefined
 	const backend = candidateDb
 		? new WofCandidateTableLookup({ databasePath: candidateDb })
-		: new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
+		: new WofSqlitePlaceLookup({
+				databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths,
+				postalCityAliases,
+			})
 	if (candidateDb) console.error(`[backend] candidate-table lookup over ${candidateDb} (demo-parity ranking)`)
+	if (postalCityAliases) console.error(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDb}`)
 	const resolver = createWofResolver(backend as never)
 
 	// Gazetteer-alias locality matching. A resolved place counts as a locality match if OA's

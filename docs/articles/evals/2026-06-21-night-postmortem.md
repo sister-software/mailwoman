@@ -21,7 +21,21 @@ The chronic postal-vs-geographic-city split (37013 is filed `Antioch` but sits i
 - **scorer wiring** — folds a postcode's postal-city aliases into the EXISTING `softNameScore` alias machinery in `#findLocalityCoordFirst`. A user-typed postal city becomes a name-match alias for the geographic locality the postcode sits in → the right place tiers over a same-named distractor, and the false postcode/city mismatch flag stops firing.
 - **`resolver-backend.ts`** — opt-in via `MAILWOMAN_POSTAL_CITY_ALIAS_DB` (FTS path).
 
-**OPT-IN / DEFAULT-OFF, byte-stable** (every alias path gated on the reader; the unchanged coord-first suite + a byte-stability test pin it). Verified: 7 new tests incl. the decisive before/after on the **real** antioch→nashville edge (without reader: top=Antioch + mismatch; with: top=Nashville, no mismatch); resolver-wof-sqlite 249 passed / 0 failed; tsc clean. **Promote-gate not yet run:** the full oa-resolver-eval (US+DE on/off) needs the `postcode_locality` shard (`build-postcode-locality.py`), which isn't on this box. The candidate-path build-time fold (to reach the demo/CLI candidate default) is the second follow-up.
+**OPT-IN / DEFAULT-OFF, byte-stable** (every alias path gated on the reader; the unchanged coord-first suite + a byte-stability test pin it). Verified: 7 new tests incl. the decisive before/after on the **real** antioch→nashville edge; resolver-wof-sqlite 249 passed / 0 failed; tsc clean.
+
+**MEASURED on the production resolver (not just unit-tested).** Built `postcode-locality-us.db` (the missing US coord-first shard — 45,902 locality polygons PIP'd against 42,318 postcode centroids; 19,560 postcodes get a containing locality, the rural/PO-box rest don't) and ran a real-resolver `findPlace` spot-check (real admin DB + the new US shard + the real alias DB), aliases OFF vs ON:
+
+| input | OFF | ON |
+| --- | --- | --- |
+| Antioch 37013 | **Antioch, CA** (37.98,-121.80) ⚠ mismatch | **Nashville** (36.17,-86.78) ✅ |
+| Cactus 85032 | **Cactus, TX** (36.04,-102.01) ⚠ mismatch | **Phoenix** (33.57,-112.09) ✅ |
+| Woodbridge 22191 | Woodbridge (38.66,-77.24) | Woodbridge — _unchanged_ |
+| Mesa Four Peaks 85212 | Mesa | Mesa — _unchanged_ |
+| Scottsdale Kachina 85255 | Scottsdale | Scottsdale — _unchanged_ |
+
+The lever fixes the hard cases — a postal-city name that matches a far same-named distractor (~3000 km / ~1000 km coordinate error → correct, false mismatch flag cleared) — and is inert where the name-match already lands right. Non-circular: the geographic truth (Nashville/Phoenix coords) is independent of the alias table.
+
+**Why not the standard OA eval:** the OA US sample's inputs use the GEOGRAPHIC locality name (matching `expected`), so the postal-city lever never fires on it — running it would read FLAT, a misleading non-result (the verify-before-verdict trap). The faithful measurement is the postal-city-input spot-check above; a full aggregate eval would need a postal-city-input corpus graded against independent geography — the operator follow-up alongside the candidate-path build-time fold.
 
 ## Hygiene (PR reviews + Dependabot)
 
