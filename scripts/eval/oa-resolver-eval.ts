@@ -655,7 +655,11 @@ async function main(): Promise<void> {
 	// #743 EU country-constraint integrity fix: without it the assembled EU coords are not what a real
 	// caller sees (ambiguous EU names without a country constraint land off-continent).
 	const runAssembled = process.argv.includes("--assembled")
-	const usePlaceCountry = process.argv.includes("--place-country")
+	// `--place-country-hard` (#194) promotes a CONFIDENT placer guess to a HARD country filter (with
+	// empty→global fallback) — the lever for the low-pop EU tail (FI/PL) the soft prior can't move. It
+	// implies the placer is loaded.
+	const useHardCountry = process.argv.includes("--place-country-hard")
+	const usePlaceCountry = process.argv.includes("--place-country") || useHardCountry
 	const evalPlacer = runAssembled && usePlaceCountry ? await loadDefaultPlaceCountry() : null
 	if (usePlaceCountry && !evalPlacer) {
 		console.warn("--place-country requested but the bundled coarse-placer failed to load; running placeCountry OFF.")
@@ -684,6 +688,7 @@ async function main(): Promise<void> {
 				} as never,
 				resolver: resolver as never,
 				placeCountry: evalPlacer ?? false,
+				hardPlaceCountry: useHardCountry && !!evalPlacer,
 			})
 		: null
 

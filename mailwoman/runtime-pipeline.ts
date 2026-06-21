@@ -89,6 +89,14 @@ export interface CreateRuntimePipelineOpts {
 	 * mixed-case untouched). Off by default. A per-call `runOpts.normalizeCase` overrides this.
 	 */
 	normalizeCase?: boolean
+	/**
+	 * #743/#194: default for `PipelineOpts.hardPlaceCountry` on every call — promote a CONFIDENT
+	 * coarse-placer guess from the soft prior to a HARD country filter (empty→unresolved), the lever
+	 * for the low-population EU tail (FI/PL) the soft prior can't move. Off by default → byte-stable.
+	 * A per-call `runOpts.hardPlaceCountry` overrides this. Best paired with the widened placer (#759),
+	 * which is what lets the placer emit FI/PL confidently in the first place.
+	 */
+	hardPlaceCountry?: boolean
 }
 
 /**
@@ -152,9 +160,15 @@ export function createRuntimePipeline(
 			const fn = await loadDefaultPlaceCountry()
 			if (fn) stages.placeCountry = fn
 		}
-		// #690: apply the factory-level normalizeCase default; a per-call runOpts value overrides it.
-		const effectiveRunOpts =
-			opts.normalizeCase && runOpts?.normalizeCase === undefined ? { ...runOpts, normalizeCase: true } : runOpts
+		// Apply factory-level defaults (#690 normalizeCase, #194 hardPlaceCountry); a per-call runOpts
+		// value overrides each.
+		let effectiveRunOpts = runOpts
+		if (opts.normalizeCase && effectiveRunOpts?.normalizeCase === undefined) {
+			effectiveRunOpts = { ...effectiveRunOpts, normalizeCase: true }
+		}
+		if (opts.hardPlaceCountry && effectiveRunOpts?.hardPlaceCountry === undefined) {
+			effectiveRunOpts = { ...effectiveRunOpts, hardPlaceCountry: true }
+		}
 		return runPipeline(raw, stages, effectiveRunOpts)
 	}
 }

@@ -228,6 +228,44 @@ describe("resolveTree", () => {
 		expect(result.roots[0]?.children[0]?.placeId).toBe("wof:101727113")
 	})
 
+	test("#194 hardCountry: a confident placer country is a HARD filter, winning over a higher-scored foreign namesake", async () => {
+		// Two same-name localities; the foreign one scores higher (the population-first collision #743 is about).
+		const places: ResolvedPlace[] = [
+			{ id: 1, name: "Pori", placetype: "locality", country: "FI", lat: 61.48, lon: 21.79, score: 8 },
+			{ id: 2, name: "Pori", placetype: "locality", country: "US", lat: 40.0, lon: -90.0, score: 9 },
+		]
+		const backend = new FakeResolverBackend(places)
+		const resolver = createWofResolver(backend)
+
+		const input = tree("Pori", [node("locality", "Pori", 0, 4)])
+		const result = await resolver.resolveTree(input, { hardCountry: "FI" })
+
+		// The FI Pori wins despite the US one's higher score — the hard country filter excludes it.
+		expect(result.roots[0]).toMatchObject({ placeId: "wof:1", lat: 61.48 })
+		expect(backend.calls).toHaveLength(1)
+		expect(backend.calls[0]).toMatchObject({ country: "FI" })
+	})
+
+	test("#194 hardCountry miss → node left UNRESOLVED, with NO global retry (the in-region-or-unresolved contract)", async () => {
+		// The locality exists only in FR; a hardCountry of FI must NOT fall back to it globally.
+		const places: ResolvedPlace[] = [
+			{ id: 3, name: "Lyon", placetype: "locality", country: "FR", lat: 45.76, lon: 4.84, score: 9 },
+		]
+		const backend = new FakeResolverBackend(places)
+		const resolver = createWofResolver(backend)
+
+		const input = tree("Lyon", [node("locality", "Lyon", 0, 4, [], "neural", "v1")])
+		const result = await resolver.resolveTree(input, { hardCountry: "FI" })
+
+		// Unresolved — the classifier attribution survives, no coordinate, no global fallback to the FR Lyon.
+		expect(result.roots[0]?.placeId).toBeUndefined()
+		expect(result.roots[0]?.lat).toBeUndefined()
+		expect(result.roots[0]?.source).toBe("neural")
+		// Exactly one lookup, and it carried the FI filter — there is no second, country-less retry.
+		expect(backend.calls).toHaveLength(1)
+		expect(backend.calls.every((c) => c.country === "FI")).toBe(true)
+	})
+
 	test("respects maxLookups budget", async () => {
 		const backend = new FakeResolverBackend(FIXTURE_PLACES)
 		const resolver = createWofResolver(backend)
