@@ -861,7 +861,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// isn't supplied → the scoring loop below is byte-identical to pre-#475.
 		const postalAliasByGeo = new Map<string, string[]>()
 		if (this.#postalCityAliases) {
-			for (const a of this.#postalCityAliases.getDivergentAliases(pc)) {
+			for (const a of await this.#postalCityAliases.getDivergentAliases(pc)) {
 				const key = cfNormalize(a.geoLocality)
 				if (!key) continue
 				const bag = postalAliasByGeo.get(key)

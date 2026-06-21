@@ -73,22 +73,22 @@ describe("WofPostalCityAliasLookup (#475 reader)", () => {
 	})
 	afterEach(() => reader.close())
 
-	it("returns the divergent alias for a known postcode", () => {
-		const aliases = reader.getDivergentAliases("37013")
+	it("returns the divergent alias for a known postcode", async () => {
+		const aliases = await reader.getDivergentAliases("37013")
 		expect(aliases).toHaveLength(1)
 		expect(aliases[0]).toMatchObject({ postalCity: "Antioch", geoLocality: "Nashville", n: 47389 })
 	})
 
-	it("excludes non-divergent rows (postal name == geo name)", () => {
-		expect(reader.getDivergentAliases("90210")).toHaveLength(0)
+	it("excludes non-divergent rows (postal name == geo name)", async () => {
+		expect(await reader.getDivergentAliases("90210")).toHaveLength(0)
 	})
 
-	it("returns [] for a postcode not in the table", () => {
-		expect(reader.getDivergentAliases("00000")).toEqual([])
+	it("returns [] for a postcode not in the table", async () => {
+		expect(await reader.getDivergentAliases("00000")).toEqual([])
 	})
 
-	it("trims the queried postcode", () => {
-		expect(reader.getDivergentAliases("  22191 ")).toHaveLength(1)
+	it("trims the queried postcode", async () => {
+		expect(await reader.getDivergentAliases("  22191 ")).toHaveLength(1)
 	})
 })
 
