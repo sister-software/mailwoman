@@ -9,7 +9,7 @@
  *   despite the codex matcher being P=R=100, and `cedex` has a single golden row and no training
  *   mass at all).
  *
- *   Surface vocabulary is NOT invented here (no-load-bearing-trivia): the US designators come from
+ *   Surface vocabulary is NOT invented here (provenance-first): the US designators come from
  *   `@mailwoman/codex/us` (`US_PO_BOX_DESIGNATORS`, USPS Pub 28 §29) and every codex-covered US
  *   phrase must round-trip `isPOBox`; the non-US leaders come from the corpus
  *   `PO_BOX_LOCALE_TEMPLATES` (the DeepSeek-signed list in corpus/src/synthesize-po-box.ts);

@@ -5,7 +5,7 @@
 # License: MIXED — OpenAddresses aggregates hundreds of upstream sources with
 #   per-source licenses (CC-BY, CC0, PDDL, ODbL, CC-BY-SA, and proprietary
 #   attribution-only). The per-row LICENSE filter in the openaddresses adapter
-#   is load-bearing for proprietary-weights training: Tier-C rows (ODbL,
+#   is essential for proprietary-weights training: Tier-C rows (ODbL,
 #   CC-BY-SA, CC-SA) are dropped at ingest by default. This script downloads
 #   the raw collection; the adapter does the license gating.
 #

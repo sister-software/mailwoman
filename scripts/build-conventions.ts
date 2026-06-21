@@ -10,7 +10,7 @@
  *
  *   The authored JSON is the human-editable source of truth (diffable, code-reviewed); the `.db` is
  *   the queryable, immutable compiled form the resolver reads ON DEMAND (one indexed lookup per id,
- *   not the whole table paged into memory). Per the no-load-bearing-trivia design value: every row
+ *   not the whole table paged into memory). Per the provenance-first design value: every row
  *   carries `source` provenance, and a convention that names a strategy this build doesn't register
  *   is rejected HERE, loudly, rather than silently no-opping at runtime.
  *

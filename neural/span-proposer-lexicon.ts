@@ -10,7 +10,7 @@
  *   delivery-service types. Which systems are loaded conditions the proposer's locale-dependent
  *   readings (the AU/NZ `Flat 2/14` split exists only when those tables are present).
  *
- *   No entry here is hand-invented (the no-load-bearing-trivia rule): every token/pattern derives
+ *   No entry here is hand-invented (the provenance-first rule): every token/pattern derives
  *   from a codex table row. AU `MS` (Mail Service) and the identifier-less counter types (CARE PO,
  *   CMA, CPA, Counter Delivery, Poste Restante) are excluded from the mid-text SCAN regex — a bare
  *   two-letter designator with no required number is exactly the false-positive shape ("Ms Smith")

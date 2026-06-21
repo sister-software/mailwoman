@@ -9,7 +9,7 @@
  *   contract is a Kysely `Database` interface plus the table DDL as a string, so a column rename in
  *   the builder is a compile error in the reader.
  *
- *   Provenance discipline (no-load-bearing-trivia): this is a SIBLING table to the PIP-derived
+ *   Provenance discipline (provenance-first): this is a SIBLING table to the PIP-derived
  *   `postcode_locality` data, never mixed into it — one table, one provenance class. Each row is an
  *   OBSERVED `(postcode, postal_city, geo_locality)` aggregate from Overture's `postal_city` field
  *   with a usage count `n`; `divergent = 1` exactly when `postal_city != geo_locality` (the alias

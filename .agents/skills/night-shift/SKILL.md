@@ -131,7 +131,7 @@ First instinct was "CRF / feature-channel interference, build choreography to
 zero the gazetteer clue near postcodes" (which became PR #468). The cheap
 diagnostic (resume + raise affix-sampling weight, 2k steps) later showed US
 postcode improved +1.6 with _zero_ postcode-position changes — the regression
-was under-convergence, not interference. **Choreography wasn't load-bearing for
+was under-convergence, not interference. **Choreography wasn't essential for
 the nail it was built for.** Default-off/byte-stable saved face; the diagnostic
 would have saved the build cycle.
 

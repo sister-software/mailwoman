@@ -387,7 +387,7 @@ async function main(): Promise<void> {
 	// Hierarchy-aware regional-qualifier credit (#386). OpenAddresses tags many German localities with
 	// a disambiguating district suffix WOF's canonical name drops — gold `Plauen Vogtl`/`Chemnitz Sachs`
 	// resolve to `Plauen`/`Chemnitz` (the point lands inside; PIP confirms it), but a bare string compare
-	// reads a miss. Rather than a hardcoded suffix blacklist (the no-load-bearing-trivia smell), credit
+	// reads a miss. Rather than a hardcoded suffix blacklist (a provenance-first violation), credit
 	// the qualifier ONLY when it matches the resolved place's OWN WOF ancestry: `Vogtl`→county `Vogtland`,
 	// `Sachs`→region `Sachsen`. List-free and non-gameable — a genuinely wrong place won't carry the
 	// gold's qualifier among its ancestors. `und`/non-latin ancestor names normalize to empty under

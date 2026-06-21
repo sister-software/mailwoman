@@ -9,7 +9,7 @@
  *   detection instead of merely being nudged by it.
  *
  *   Every row is a provenance-carrying claim about a national addressing convention — the same
- *   no-load-bearing-trivia discipline as the rest of the codex. Add rows with a source, not from
+ *   provenance-first discipline as the rest of the codex. Add rows with a source, not from
  *   vibes; an absent row means "no constraints known", never "no constraints exist".
  *
  *   First consumer: `@mailwoman/neural`'s decoder applies `forbiddenTags` as a hard emission mask

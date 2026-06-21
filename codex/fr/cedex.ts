@@ -11,7 +11,7 @@
  *
  *   This slice closes the gap PR #516 documented: the shard builder sourced the shape from SCHEMA.mdx
  *   prose because codex had no cedex home. Now it does — the builder and any future consumer import
- *   from here (the no-load-bearing-trivia discipline: one provenanced source).
+ *   from here (the provenance-first discipline: one provenanced source).
  */
 
 /** Matches a CEDEX phrase: the keyword plus an optional 1–2 digit office number. */
