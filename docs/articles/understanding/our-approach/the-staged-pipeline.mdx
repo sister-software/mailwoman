@@ -45,7 +45,7 @@ The interfaces between stages matter as much as the stages themselves. Each hand
 - Tokenization and whitespace traps ([#3 in the failure catalogue](../why-its-hard/addresses-that-break-geocoders.mdx#3-tokenization-and-whitespace-traps)) — `"12 1/2 Main St"` and `"12½ Main St"` collapse to a canonical form before the tokenizer sees them.
 - Unicode/transliteration encoding half ([#6](../why-its-hard/addresses-that-break-geocoders.mdx#6-unicode-and-transliteration-traps)) — NFC ensures the resolver does not miss `"São"` because the input was NFD-encoded.
 
-**Today.** `@mailwoman/normalize` workspace shipped 2026-05-23. Public `normalize(raw, opts?)` function with NFC + punctuation + whitespace collapse (always) plus optional case-fold + abbreviation expansion. Output carries a load-bearing `offsetMap` so downstream stages map normalized spans back to raw characters.
+**Today.** `@mailwoman/normalize` workspace shipped 2026-05-23. Public `normalize(raw, opts?)` function with NFC + punctuation + whitespace collapse (always) plus optional case-fold + abbreviation expansion. Output carries an essential `offsetMap` so downstream stages map normalized spans back to raw characters.
 
 **Future.** Share dictionaries with corpus synthesis (synthesis is the inverse direction). Locale-aware case-folding for Turkish `İ` + Greek final sigma. Bidirectional offset map.
 

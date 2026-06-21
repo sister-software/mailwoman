@@ -131,7 +131,7 @@ First instinct was "CRF / feature-channel interference, build choreography to
 zero the gazetteer clue near postcodes" (which became PR #468). The cheap
 diagnostic (resume + raise affix-sampling weight, 2k steps) later showed US
 postcode improved +1.6 with _zero_ postcode-position changes — the regression
-was under-convergence, not interference. **Choreography wasn't load-bearing for
+was under-convergence, not interference. **Choreography wasn't essential for
 the nail it was built for.** Default-off/byte-stable saved face; the diagnostic
 would have saved the build cycle.
 
@@ -212,7 +212,7 @@ friction that ends with "did we just ship a regression?" The
 `feedback-no-silent-gate-drift` memory exists; this rule is what keeps the
 next doc from triggering it.
 
-When a regression is genuinely the right thing to ship (e.g. spine gains that
+When a regression is genuinely the right thing to ship (e.g. guardrail gains that
 justify a tag dip), the path is: state the trade-off in the doc, file the
 gate revision separately, and the operator promotes — not the agent silently
 lowering the bar in the table.

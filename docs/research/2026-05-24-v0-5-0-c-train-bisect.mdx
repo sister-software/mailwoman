@@ -113,12 +113,12 @@ Both lessons will land in `VERDICT_SMOKES.md` as a follow-up. The current text d
 
 Most of the v0.5.0 fresh-slate work survives this episode intact:
 
-- **A1 tokenizer's byte-fallback wins are real.** Multi-script eval went from 36.7% to 18.2%, with B2's targeted scripts (CJK, Cyrillic, Hangul, Han, Armenian) all hitting or beating their v0.1.0 leakage baselines. That's a tokenizer that's actually fit for non-Latin addresses. It works fine for inference even though the classifier we'd train on top of it diverges.
+- **A1 tokenizer's byte-fallback wins are real.** Multi-script eval went from 36.7% to 18.2%, with B2's targeted scripts (CJK, Cyrillic, Hangul, Han, Armenian) all hitting or beating their v0.1.0 leakage baselines. That's a tokenizer that's fit for non-Latin addresses. It works fine for inference even though the classifier we'd train on top of it diverges.
 - **`corpus-v0.4.0` is sound.** corpus-audit passes; the substring-match validator caught the LLM's alignment failures; both adapter additions land cleanly via the new MANIFEST.json-driven harness. Whatever destabilises the train, it isn't a corpus integrity problem.
 - **Stage 5 reconcile + phrase grouper + verdict-smoke discipline** all shipped and live in `main`. They run on v0.4.0 weights right now and produce correct output on the kryptonite catalogue. They'll keep working when v0.5.0 weights land.
 - **`TRAINING_ENV.md`** documents the playpen container's ROCm bootstrap recipe so the next training spawn doesn't re-discover the wall. ~15min one-time setup that took us most of an hour to invent the first time.
 
-## The honest read
+## Where v0.5.0 stands
 
 We spent roughly four hours of GPU time on four diverging training runs, learned what isn't the destabilizer, and stopped before we burned a fifth shot at it. v0.5.0's classifier weights aren't shipping today.
 

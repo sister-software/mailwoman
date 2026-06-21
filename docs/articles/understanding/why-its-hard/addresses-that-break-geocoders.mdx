@@ -229,7 +229,7 @@ flowchart TD
 
 The compounding is what makes geocoding hard. A small parser error becomes a large resolver error because the resolver has many places to choose from. A small resolver error becomes a large consumer-visible error because coordinates are precise.
 
-Geocoders that report their failures honestly — surface low confidence, return candidate lists instead of a single answer, expose the disambiguating context they used — are easier to work with than ones that always return a confident point. Mailwoman's demo includes a `FailureDiagnostic` panel that surfaces "why is this empty / wrong" precisely because the alternative is silent miss.
+Geocoders that report their failures openly — surface low confidence, return candidate lists instead of a single answer, expose the disambiguating context they used — are easier to work with than ones that always return a confident point. Mailwoman's demo includes a `FailureDiagnostic` panel that surfaces "why is this empty / wrong" precisely because the alternative is silent miss.
 
 ## Summary — what mostly defeats geocoders
 

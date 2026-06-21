@@ -8,16 +8,20 @@ description: What ships today, what's behind a flag, and what's still experiment
 
 This page is the single source of truth for what works in Mailwoman right now.
 
-:::info[Verified as of 2026-06-11 (night-11) — release 4.4.0]
-Numbers below are sourced from the shipped `model-card.json` and the
-[v4.4.0 ship gate](./evals/2026-06-11-v4.4.0-ship-gate.md), which carries the
-authoritative per-tag table for this release. For which release added which capability, see
-[Releases & capabilities](./releases.mdx).
+:::info[Verified as of 2026-06-20 — release 4.11.0]
+The package version + model lineage below are from the shipped `model-card.json` (v4.11.0 =
+`v1.8.0-fr-admin-split`). v4.11.0's headline is the **assembled coordinate**, not label-F1: it's the
+first model to surpass v1.5.0 on the shipped anchor-ON coordinate — held-out FR golden **coord p50
+42.5 → 2.2 km (−95%)**, region-emit 39.6 → 99.6%, with the US coordinate flat (locality 97.5 → 97.6,
+p50 3.3 = 3.3 km). The per-tag **F1 tables below are from the v4.4.0 ship gate** (2026-06-11) — the
+last full per-tag scorecard; treat them as the v4.4.0 baseline, not v4.11.0. The
+[parity scorecard](./evals/parity-scorecard-2026-06-11.md) is the live per-tag truth; for which
+release added which capability, see [Releases & capabilities](./releases.mdx).
 :::
 
 ## Packages
 
-All publishable workspaces release in lockstep; the current npm version is **4.4.0**.
+All publishable workspaces release in lockstep; the current npm version is **4.11.0**.
 
 | Package                                                                                       | Description                                                         |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -31,18 +35,18 @@ All publishable workspaces release in lockstep; the current npm version is **4.4
 | `@mailwoman/resolver-wof-sqlite` / `-wasm`                                                    | WOF gazetteer resolver (Node SQLite / browser WASM)                 |
 | `@mailwoman/neural-web`                                                                       | Browser-side neural classifier (onnxruntime-web)                    |
 
-## Model weights (4.4.0)
+## Model weights (4.11.0)
 
-| Property             | Value                                                                                                                                                                                          |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Lineage**          | `v1.3.0-boundary-consolidation` @ step 40k, from scratch — the boundary consolidation (glue + intersections + po_box/cedex on the label-consistent mix), corpus `v0.4.15`                      |
-| **Architecture**     | 29.3M params — 6-layer encoder, 384 hidden, 6 heads, 48K-vocab SentencePiece embedding                                                                                                         |
-| **Label vocabulary** | 33 BIO labels over 16 component tags (incl. `unit`, `po_box`, `street_prefix`/`_suffix`, `intersection_a/b`)                                                                                   |
-| **Training corpus**  | `corpus-v0.4.12-consolidation` · tokenizer `v0.6.0-a0`                                                                                                                                         |
-| **Anchors**          | Postcode anchor (PCB1) + gazetteer soft anchor (country candidate-tags), both live at inference                                                                                                |
-| **Conventions**      | Locale head exported (`locale_logits`) → conventions mask (fr row) + punctuation-gap span bridge — BOTH required ship config (`addressSystemConventions:'auto'`, `bridgePunctuationGaps:true`) |
-| **Decode**           | Viterbi with frozen BIO structural mask (CRF at inference; CE-only training)                                                                                                                   |
-| **Size**             | 29.8 MB int8 ONNX (118.4 MB fp32) · opset 17 · max sequence 128                                                                                                                                |
+| Property             | Value                                                                                                                                                                                                                                                                        |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lineage**          | `v1.8.0-fr-admin-split` @ step 40k, from scratch — clones `v1.5.0-fr-order` + one lever: the fr-admin-split shard (real BAN commune+postcode, locality split from its département). First to beat v1.5.0 on the shipped coordinate: FR coord p50 42 → 2.2 km, US flat (#728) |
+| **Architecture**     | 29.3M params — 6-layer encoder, 384 hidden, 6 heads, 48K-vocab SentencePiece embedding                                                                                                                                                                                       |
+| **Label vocabulary** | 33 BIO labels over 16 component tags (incl. `unit`, `po_box`, `street_prefix`/`_suffix`, `intersection_a/b`)                                                                                                                                                                 |
+| **Training corpus**  | `corpus-v0.5.0` (char-offset span labels #519) + synth-fr-order + the fr-admin-split shard (real BAN commune+postcode+département) · tokenizer `v0.6.0-a0` (byte-identical to v1.5.0)                                                                                        |
+| **Anchors**          | Postcode anchor (PCB1) + gazetteer soft anchor (country candidate-tags), both live at inference                                                                                                                                                                              |
+| **Conventions**      | Locale head exported (`locale_logits`) → conventions mask (fr row) + punctuation-gap span bridge — BOTH required ship config (`addressSystemConventions:'auto'`, `bridgePunctuationGaps:true`)                                                                               |
+| **Decode**           | Viterbi with frozen BIO structural mask (CRF at inference; CE-only training)                                                                                                                                                                                                 |
+| **Size**             | 29.8 MB int8 ONNX (118.4 MB fp32) · opset 17 · max sequence 128                                                                                                                                                                                                              |
 
 ### Per-tag health (summary)
 
@@ -105,23 +109,31 @@ weights bundle as `calibration.json`) to make those scores honest probabilities 
 ## Browser demo
 
 The live demo at [mailwoman.sister.software/demo](https://mailwoman.sister.software/demo) runs the
-int8 model (29.8 MB) via `@mailwoman/neural-web` plus a slim WOF "hot" database via
-`@mailwoman/resolver-wof-wasm`, with artifacts served from a versioned `releases.json` pointer.
-It calls the classifier's argmax path directly; joint reconcile is not active in the demo.
+int8 model (29.8 MB) via `@mailwoman/neural-web` plus a **byte-range global gazetteer** — the
+FTS-free "candidate" table (~530 MB, queried over `sql.js-httpvfs`; a resolve touches ~12 range
+fetches regardless of file size) with global admin coverage + **US + EU postcode resolution** and a
+debounced FST place-autocomplete in the search box. US **street-level (rooftop)** resolves for
+CA/NY/MI/DC via per-state situs/interp shards. Artifacts are served byte-range from R2. The demo
+calls the classifier's argmax path directly; joint reconcile is not active in the demo.
 
 ## Model line (June 2026)
 
-The shipped weights are **4.4.0** — the boundary consolidation: every starved tag alive, the arena debt closed, two decode-side constraint layers shipping as declared config. The parity campaign's remaining gaps are quality gradients, not missing capabilities. Next: the post-parity agenda — arbitration ([#478](https://github.com/sister-software/mailwoman/issues/478)), geocoder table stakes (interpolation, reverse), and the char-offset corpus format (the structural cure for what the span bridge contains). The ordered
+The shipped weights are **4.11.0** — `v1.8.0-fr-admin-split`: the first model in the arc to beat v1.5.0 on the **shipped assembled coordinate** (not label-F1), by teaching the locality↔adjacent-admin-token split on non-US formats. Held-out FR golden: coord p50 42 → 2.2 km (−95%), region-emit 39.6 → 99.6%; US coordinate flat (#728). It builds on the v4.4.0 boundary consolidation (every starved tag alive, the arena debt closed). The parity campaign's remaining gaps are quality gradients, not missing capabilities. Next: the post-parity agenda — arbitration ([#478](https://github.com/sister-software/mailwoman/issues/478)), geocoder table stakes (interpolation, reverse), and the char-offset corpus format (the structural cure for what the span bridge contains). The ordered
 work queue to the full geocoder is
 [epic #488](https://github.com/sister-software/mailwoman/issues/488).
 
 ## What is not supported today
 
-- Rooftop / address-point geocoding — the resolver returns place-level candidates. The
-  address-point tier ([#476](https://github.com/sister-software/mailwoman/issues/476)) and
-  interpolation ([#483](https://github.com/sister-software/mailwoman/issues/483)) are queued.
-- Reverse geocoding ([#484](https://github.com/sister-software/mailwoman/issues/484)) and
-  autocomplete-as-a-product ([#190](https://github.com/sister-software/mailwoman/issues/190)).
+- Rooftop / address-point geocoding **nationwide** — available for **CA/NY/MI/DC** (per-state
+  situs + interp shards, [#476](https://github.com/sister-software/mailwoman/issues/476) /
+  [#483](https://github.com/sister-software/mailwoman/issues/483)). The 50-state layer is built
+  ([#567](https://github.com/sister-software/mailwoman/issues/567)) but only those four are hosted;
+  the national rollout is [#735](https://github.com/sister-software/mailwoman/issues/735). Other
+  states resolve to the admin centroid.
+- Reverse geocoding ([#484](https://github.com/sister-software/mailwoman/issues/484)). _(Place
+  autocomplete IS now shipped — the demo search box + the CLI `autocomplete` command,
+  [#190](https://github.com/sister-software/mailwoman/issues/190) /
+  [#587](https://github.com/sister-software/mailwoman/issues/587).)_
 - Multi-locale ensemble (en-US + fr-FR weights in the same runtime).
 - Korean addresses (no open data path). Japanese addresses **are** supported via the
   postcode-route resolver (Geographic Rule Engine).

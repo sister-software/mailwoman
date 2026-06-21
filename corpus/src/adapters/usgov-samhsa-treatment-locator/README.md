@@ -128,7 +128,7 @@ Any other column SAMHSA's export carries is ignored.
 ## Output
 
 One `CanonicalRow` per CSV record. Component insertion order is
-load-bearing — `venue` first, same kryptonite-defending invariant as
+essential — `venue` first, same kryptonite-defending invariant as
 HRSA: `"Buffalo Treatment Services, …, Buffalo, NY"` would otherwise
 mis-label venue's "Buffalo" as locality.
 

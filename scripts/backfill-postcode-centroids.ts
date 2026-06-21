@@ -17,7 +17,7 @@
  *   3. The WOF admin parent-borrow (`--admin`, `--repos`): a coarse "which city/region" approximation,
  *        last resort for postcodes GeoNames does not cover.
  *
- *   Source/integrity note: WOF ids stay the spine and the eval keys — GeoNames only supplies a
+ *   Source/integrity note: WOF ids stay canonical and the eval keys — GeoNames only supplies a
  *   COORDINATE keyed by the postcode string, never an entity id, so the eval-WOF-id integrity
  *   behind the custom-WOF rule is preserved (delegated-authority consult, 2026-06-03). GeoNames is
  *   CC-BY 4.0: any DB that ships GeoNames-sourced coordinates must attribute "GeoNames (CC-BY
@@ -31,6 +31,7 @@
  *   /mnt/playpen/mailwoman-data/wof/repos
  */
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
@@ -70,10 +71,12 @@ function parseArgs(): Args {
  * centroid. Matched by the postcode string only — the WOF id is untouched, so the eval keys stay
  * WOF's.
  */
-function geonamesFill(db: DatabaseSync, geonamesDir: string): number {
+async function geonamesFill(db: DatabaseSync, geonamesDir: string): Promise<number> {
 	// The GeoNames UPDATE matches on (country, name); the build only indexes placetype/country/parent,
-	// so without this the per-postcode UPDATEs scan each country's rows (minutes on 400k+ rows).
-	db.exec(`CREATE INDEX IF NOT EXISTS spr_by_country_name ON spr (country, name)`)
+	// so without this the per-postcode UPDATEs scan each country's rows (minutes on 400k+ rows). `kdb`
+	// wraps `db` for the DDL; main() owns `db`'s lifecycle, so we don't destroy it here.
+	const kdb = new DatabaseClient({ database: db })
+	await kdb.schema.createIndex("spr_by_country_name").ifNotExists().on("spr").columns(["country", "name"]).execute()
 
 	const countries = (
 		db
@@ -175,7 +178,7 @@ function ancestorFallback(db: DatabaseSync, reposDir: string): number {
 	return fixed
 }
 
-function main(): void {
+async function main(): Promise<void> {
 	const { dbPath, adminPath, reposDir, geonamesDir } = parseArgs()
 	for (const p of [dbPath, adminPath]) {
 		if (!existsSync(p)) {
@@ -196,7 +199,7 @@ function main(): void {
 	let geonamesFixed = 0
 	if (geonamesDir) {
 		if (!existsSync(geonamesDir)) console.error(`Missing geonames dir, skipping: ${geonamesDir}`)
-		else geonamesFixed = geonamesFill(db, geonamesDir)
+		else geonamesFixed = await geonamesFill(db, geonamesDir)
 	}
 
 	// Priority 3: borrow the parent locality's centroid for every coordinate-less postcode whose parent
@@ -261,4 +264,4 @@ function main(): void {
 	}
 }
 
-main()
+await main()

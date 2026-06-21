@@ -168,7 +168,7 @@ solid baseline; org _matching_ needs a follow-up pass. Full detail in
 6576e4a2 docs(concepts): the north-star strategy
 3047ee7f feat(formatter): scaffold @mailwoman/formatter (#599)
 b8c8a803 refactor(corpus): consume @mailwoman/formatter (#599)
-d9182b12 feat(record): PostalAddress address-spine (#600)
+d9182b12 feat(record): PostalAddress address-baseline (#600)
 12701c27 feat(record): person-name parser + org-name canonicalizer (#600)
 082e7db1 feat(match): Jaro/Jaro-Winkler comparators (#601)
 9f9c1bbf feat(match): Fellegi-Sunter scorer (#601)

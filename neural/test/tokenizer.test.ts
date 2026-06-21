@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tokenizer parity test — the single load-bearing assertion in Phase 3.
+ *   Tokenizer parity test — the single essential assertion in Phase 3.
  *
  *   Loads `tokenizer-v0.1.0.model` (the same file that Phase 2 used to tokenize the corpus) and a
  *   Python-generated fixture of `(raw, pieces, ids)` triples. Asserts that the TS tokenizer

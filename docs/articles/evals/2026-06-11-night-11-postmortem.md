@@ -87,7 +87,7 @@
   as a morning item when it was already-granted night work.
 - #517 (Commonwealth/military po_box): needs codex au/nz slices first — queue position?
 - The char-offset label format (the structural cure for what the bridge contains): a corpus-
-  format change with wide blast radius — deserves a day-session design, not a night slot.
+  format change with wide impact — deserves a day-session design, not a night slot.
 - FR house_number 97.7→97.2 and fr.postcode 99.7→99.6: both within single-row noise, both
   recorded in the card's known-regressions — flagging per the no-silent-drift habit.
 

@@ -67,7 +67,7 @@ The result is a hand-rolled `MailwomanCoarseEncoder` class in `corpus-python/src
 
 ## Self-attention in 90 seconds
 
-The math of self-attention is genuinely simple. For each token, the encoder:
+The math of self-attention is simple. For each token, the encoder:
 
 1. Computes three vectors from the token's representation: a **query** `Q`, a **key** `K`, and a **value** `V`. These come from three learned linear projections.
 2. Computes a similarity score between this token's query and every token's key: `score[i, j] = Q[i] · K[j]`.

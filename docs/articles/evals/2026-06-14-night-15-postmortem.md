@@ -24,7 +24,7 @@ closures, zero self-merges** (PR-and-flag throughout); the operator returned ~13
   a path that only exists once something creates the `core/out/data → ../data` bridge. Locally that's a
   side-effect of `promotion-gate.sh`; CI never ran the gate, so the first rule-path parse `ENOENT`s and
   every `parse` fails (the same bridge issue behind night-13's `arena.perturb NOT FOUND`). Fix: mirror
-  the sanctioned bridge as a Test-workflow step after compile — makes the suite genuinely pass **without**
+  the sanctioned bridge as a Test-workflow step after compile — makes the suite pass **without**
   provisioning weights. Validated locally (pull the symlink → 5 fail; restore → 5 pass). The proper
   `repo.ts`-detection fix stays deferred to daylight review (#481). **This greens CI fully (225/225).**
 

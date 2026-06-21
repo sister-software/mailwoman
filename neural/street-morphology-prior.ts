@@ -12,9 +12,9 @@
  *   - **Affix-token (the matched span):** toward `B/I-street_prefix` AND `B/I-street_suffix` (position
  *       unknown — let the model + context disambiguate).
  *   - **Adjacent token (one before AND one after each match):** toward `B/I-street`, AWAY from
- *       `B/I-dependent_locality`. The negative bias on `dependent_locality` is the load-bearing
- *       piece — it closes the inference-time vacuum that caused v0.6.1's 1066 dep_locality
- *       hallucinations (see [[project-v061-failure-mechanism]]).
+ *       `B/I-dependent_locality`. The negative bias on `dependent_locality` is the essential piece
+ *       — it closes the inference-time vacuum that caused v0.6.1's 1066 dep_locality hallucinations
+ *       (see [[project-v061-failure-mechanism]]).
  *
  *   The morphology FST itself is built by `resolver-wof-sqlite/street-morphology-fst-builder.ts` and
  *   ships as a separate binary (`fst-street-morphology.bin`) loaded into a second `FstMatcher`
@@ -41,7 +41,7 @@ export interface StreetMorphologyPriorOpts {
 	maxNeighbourStreetBias?: number
 	/**
 	 * Magnitude of the negative bias applied to `dependent_locality` BIO labels on the adjacent
-	 * tokens. Default 2.0. This is the load-bearing piece.
+	 * tokens. Default 2.0. This is the essential piece.
 	 */
 	dependentLocalityPenalty?: number
 }

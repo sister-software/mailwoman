@@ -5,7 +5,7 @@ are ungrammatical in a detected system; this module supplies the TRAIN-TIME pair
 gold country has a conventions row, the forbidden label columns are masked out of the CE loss
 (logits to -1e9 → softmax excludes them), so the model learns "this context → these tags do not
 exist" instead of merely being decode-blocked. The v0.9.13 choreography lesson says the pairing is
-load-bearing; this is the same discipline applied to grammar.
+essential; this is the same discipline applied to grammar.
 
 MIRROR CONTRACT: the table below mirrors ``codex/address-system-conventions.ts`` (the provenance-
 carrying source of truth). Rows are added there first, with evidence; this mirror follows. Same

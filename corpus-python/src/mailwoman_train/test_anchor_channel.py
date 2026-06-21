@@ -1,6 +1,6 @@
 """Tests for the postcode-anchor conditioning channel (#239/#240 de-risk pilot).
 
-The load-bearing property is the NO-REGIME-SWITCH guarantee: a per-token confidence of 0 (an absent
+The critical property is the NO-REGIME-SWITCH guarantee: a per-token confidence of 0 (an absent
 postcode, or a confidence-zeroed anchor under the training curriculum) must make the injection an
 EXACT identity. That is what lets "absent" be the continuous c=0 tail of a spectrum instead of a
 discrete [NO-ANCHOR] mode (DeepSeek 2026-06-05) — and it is the reason no separate dropout token is
@@ -102,7 +102,7 @@ def _dual_fixture():
 
 
 def test_dual_injection_zero_confidence_is_exact_identity():
-    """The load-bearing property must survive dual-injection: c=0 everywhere → exact no-anchor identity
+    """The critical property must survive dual-injection: c=0 everywhere → exact no-anchor identity
     (the max-confidence gate makes the position-0 add 0 when there's no anchor)."""
     _, dual, ids, mask, feats = _dual_fixture()
     with_zero = dual(ids, attention_mask=mask, anchor_features=feats, anchor_confidence=torch.zeros(2, 8))

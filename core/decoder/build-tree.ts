@@ -16,10 +16,10 @@
  *        highest-priority entry in this span's `PARENT_OF` list. Distance is the tiebreaker only.
  *        Spans with no found parent become roots.
  *
- *   The "nearest" rule (vs "most-recent-prior") is intentional: it makes the decoder robust to source
- *   ordering — e.g. "75004 Paris" attaches postcode to locality even though postcode came first.
- *   Source order is still preserved in the `start`/`end` fields, which the XML serializer exposes
- *   as attributes.
+ *   The "nearest" rule (vs "most-recent-prior") is intentional: it makes the decoder independent of
+ *   source ordering — e.g. "75004 Paris" attaches postcode to locality even though postcode came
+ *   first. Source order is still preserved in the `start`/`end` fields, which the XML serializer
+ *   exposes as attributes.
  */
 
 import type { BioLabel, ComponentTag } from "../types/component.js"
@@ -122,7 +122,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			//
 			// Guard: only merge when the text in `raw` between the two spans is whitespace-only. A
 			// comma or any other separator keeps them distinct, and an intervening O/different-tag
-			// token already nulls/replaces `open` above — so two genuinely separate same-tag spans
+			// token already nulls/replaces `open` above — so two separate same-tag spans
 			// (e.g. "Springfield, Chicago") are never merged.
 			if (prefix === "B" && open !== null && open.tag === tag && /^\s*$/.test(raw.slice(open.end, tok.start))) {
 				open.end = tok.end

@@ -3,7 +3,7 @@
 **Record schema and per-field normalizers** for the geocode-first entity
 resolution matcher. Address-first design: the canonical `PostalAddress` record
 composes parsed address components, the formatter's match key, and a resolved
-geocode. Organization and contact records build on the same spine.
+geocode. Organization and contact records build on the same canonical record.
 
 ```ts
 import { PostalAddress, parsePersonName, canonicalizeOrganizationName } from "@mailwoman/record";
@@ -30,7 +30,7 @@ canonicalizeOrganizationName("Baylor Univ. Med. Ctr.");
 ## API
 
 ```ts
-// Address record (the spine of the record system)
+// Address record (the core of the record system)
 import { PostalAddress, createPostalAddress } from "@mailwoman/record/address"
 
 // Person name parsing → structured components
@@ -52,7 +52,7 @@ import { canonicalizeOrganizationName, type CanonicalizeOrgOpts } from "@mailwom
 
 - **Plain data, no classes.** Records are plain TypeScript objects with
   branded types where needed.
-- **Address-first.** The `PostalAddress` is the spine — the geocode-first
+- **Address-first.** The `PostalAddress` is the canonical record — the geocode-first
   matcher resolves places, not strings.
 - **Domain-scoped.** Organization canonicalization supports jurisdiction and
   domain context (e.g., `{jurisdiction: "ID"}` for Indonesian legal designations,

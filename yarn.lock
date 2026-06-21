@@ -5048,6 +5048,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     kysely: "npm:^0.29.2"
   bin:
+    mailwoman-wof-build-candidate: ./out/build-candidate-cli.js
     mailwoman-wof-build-coincident-roles: ./out/build-coincident-roles-cli.js
     mailwoman-wof-build-fts: ./out/build-fts-cli.js
     mailwoman-wof-build-slim: ./out/build-slim-cli.js
@@ -5099,6 +5100,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@turf/boolean-contains": "npm:^7.3.5"
+    kysely: "npm:^0.29.2"
     shapefile-parser: "npm:^1.0.3"
     type-fest: "npm:^5.7.0"
   languageName: unknown
@@ -17766,6 +17768,7 @@ __metadata:
     "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/registry": "workspace:*"
+    "@mailwoman/tiger": "workspace:*"
     chalk: "npm:^5.6.2"
     change-case: "npm:^5.4.4"
     d3-scale-chromatic: "npm:^3.1.0"
@@ -17784,8 +17787,14 @@ __metadata:
     zod: "npm:^4.4.3"
     zx: "npm:^8.8.5"
   peerDependencies:
+    "@duckdb/node-api": 1.5.3-r.3
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+  dependenciesMeta:
+    "@mailwoman/tiger":
+      optional: true
   peerDependenciesMeta:
+    "@duckdb/node-api":
+      optional: true
     "@inkjs/ui":
       optional: true
     "@mailwoman/resolver-wof-sqlite":

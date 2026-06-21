@@ -46,7 +46,7 @@ import sentencepiece as spm  # type: ignore[import-not-found]
 logger = logging.getLogger(__name__)
 
 # Byte-fallback pieces in a SentencePiece model are surface-form ``<0xNN>`` (one literal
-# token per byte). Matching the surface form is more robust than matching piece id ranges:
+# token per byte). Matching the surface form is more reliable than matching piece id ranges:
 # the id range depends on where SP placed the byte block in the unigram vocab.
 _BYTE_FALLBACK_RE = re.compile(r"^<0x[0-9A-Fa-f]{2}>$")
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Phase 4.1 — source provenance threading through the decoder.
+ *   Phase 4.1 — source provenance flowing through the decoder.
  */
 
 import { describe, expect, test } from "vitest"

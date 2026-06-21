@@ -298,7 +298,7 @@ The original phase plan (`phases/PHASE_2_training.md`) targeted a **single train
 
 Why the change:
 
-- **>95% F1 in one shot was aspirational.** Address parsing from scratch on a noisy real-world corpus is harder than that target acknowledged. Real ship gates are lower (~0.85 F1 on coarse components is genuinely useful in production with proper calibration).
+- **>95% F1 in one shot was aspirational.** Address parsing from scratch on a noisy real-world corpus is harder than that target acknowledged. Real ship gates are lower (~0.85 F1 on coarse components is useful in production with proper calibration).
 - **Shipping below-target IS the bitter-lesson framing.** Per [[project-mailwoman-graceful-failure]], the success metric is graceful failure, not max F1. A 0.85-F1 model with 0.88 calibration in its conf>0.9 bucket is more useful than a 0.95-F1 model with 0.33 calibration (the v0.1.0 situation).
 - **Ship-of-Theseus coexistence makes shipping safe.** The neural classifier adds proposals alongside the rule classifiers via the policy registry; we don't have to wait for parity to start using it.
 - **Iteration > single-run.** Each cycle produces real artifacts: ONNX weights, model card, eval report, npm package shape, demo updates. Compounding wins.
@@ -333,7 +333,7 @@ Not "did F1 hit 95%" but "is the artifact independently shippable and a measurab
 
 - **Classifier-as-plugin** preserves Mailwoman's existing extensibility. New rule classifiers, new neural variants, future learned rankers all conform to the same interface.
 - **Per-component policy** allows incremental rollout without big-bang risk. A regression in neural `street` parsing doesn't affect `country` parsing.
-- **Locale profiles** prevent the architecture from quietly Anglocentric-by-default. If the abstractions can't express a non-Anglo locale cleanly, we fix the abstractions, not the locale.
+- **Locale profiles** prevent the architecture from being Anglocentric by default. If the abstractions can't express a non-Anglo locale cleanly, we fix the abstractions, not the locale.
 - **Separate weights packages** keep npm install times sane and let users opt in to languages they need.
 - **Training in Python, inference in TS** uses each ecosystem for what it's best at and avoids the dual-language maintenance tax in production code.
 

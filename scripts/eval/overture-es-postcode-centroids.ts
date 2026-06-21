@@ -25,6 +25,8 @@ const arg = (n: string, d: string): string => {
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
 }
 const CC = arg("country", "ES")
+// Postcode digit length for the leading-zero-preserving lpad: 5 for ES/DE/FR/IT/NL, 4 for AT/CH/DK.
+const PC_LEN = Number(arg("pc-len", "5"))
 const PARQUET = arg(
 	"parquet",
 	`/mnt/playpen/mailwoman-data/overture/2026-05-20.0/addresses-${CC.toLowerCase()}.parquet`
@@ -46,12 +48,18 @@ console.error(
 
 // Per-postcode centroid: mean of points within 3σ of the per-postcode mean (population stddev).
 // ES postcodes are 5-digit; left-pad numeric codes so leading zeros survive (eval truth uses "01001").
+// --pc-len 0 = no lpad (use the raw Overture form). Correct when BOTH the candidate shard AND the
+// eval/query come from Overture (same surface form), and the only safe choice for non-numeric formats
+// (PT "XXXX-XXX", SK/CZ "XXX XX", LV "LV-XXXX"). A positive --pc-len left-pads numeric codes to that
+// width (the GeoNames-comparison case the ES build used).
+const pcExpr =
+	PC_LEN > 0
+		? `CASE WHEN regexp_full_match(trim(CAST(postcode AS VARCHAR)), '[0-9]{1,${PC_LEN}}') THEN lpad(trim(CAST(postcode AS VARCHAR)), ${PC_LEN}, '0') ELSE trim(CAST(postcode AS VARCHAR)) END`
+		: `trim(CAST(postcode AS VARCHAR))`
 const sql = `
 WITH base AS (
   SELECT
-    CASE WHEN regexp_full_match(trim(CAST(postcode AS VARCHAR)), '[0-9]{1,5}')
-         THEN lpad(trim(CAST(postcode AS VARCHAR)), 5, '0')
-         ELSE trim(CAST(postcode AS VARCHAR)) END AS pc,
+    ${pcExpr} AS pc,
     lat, lon
   FROM read_parquet('${PARQUET}')
   WHERE postcode IS NOT NULL AND trim(CAST(postcode AS VARCHAR)) != '' AND lat IS NOT NULL AND lon IS NOT NULL
@@ -72,6 +80,10 @@ console.error(`extracted ${rows.length} ${CC} postcode centroids from Overture`)
 // Emit the spr table the WofPostcodeLookup query consumes:
 //   SELECT country, latitude, longitude FROM spr WHERE name=? AND placetype='postalcode' AND is_current!=0
 const out = new DatabaseSync(OUT_DB)
+// Throwaway build artifact — no durability needed; OFF journal + a single transaction around the
+// inserts makes large locales (CA = 843k rows) finish in seconds instead of one implicit
+// transaction (with its own journal write) per row, which is slow enough to be killed by a timeout.
+out.exec(`PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF;`)
 out.exec(`
 DROP TABLE IF EXISTS spr;
 CREATE TABLE spr (
@@ -91,7 +103,9 @@ const ins = out.prepare(
 	 VALUES (?, ?, 'postalcode', ?, ?, ?, 1, 'overture:2026-05-20.0', ?)`
 )
 let id = 1
+out.exec("BEGIN")
 for (const r of rows) ins.run(id++, String(r.postcode), CC, Number(r.lat), Number(r.lon), Number(r.n))
+out.exec("COMMIT")
 out.exec(`CREATE INDEX spr_by_name ON spr(name); CREATE INDEX spr_by_country ON spr(country);`)
 out.close()
 console.error(`wrote ${rows.length} rows → ${OUT_DB}`)

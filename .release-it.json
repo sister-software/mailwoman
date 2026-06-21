@@ -21,6 +21,7 @@
 				"match",
 				"address-id",
 				"registry",
+				"tiger",
 				"mailwoman"
 			],
 			"publish": true,

@@ -19,6 +19,7 @@
 		"./tiles/coords": "./out/tiles/coords.js",
 		"./base": "./out/base/index.js",
 		"./bdc": "./out/bdc/index.js",
+		"./coverage": "./out/coverage/index.js",
 		".": "./out/index.js"
 	},
 	"dependencies": {

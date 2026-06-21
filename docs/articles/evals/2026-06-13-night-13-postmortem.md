@@ -34,7 +34,7 @@ The gate ran on the diversified golden (n=1546, 56 localities, both orders). Key
 
 **Miss diagnosis (MAILWOMAN_DUMP_MISS_TAG=house_number):** Every single one of the 93 FR misses is the `47110 Sainte-Livrade-sur-Lot, <HN> <street>` format — the model still predicts `47110` (postcode) as house_number. The BAN canonical-order prior at weight=3.0 dominates. The shard is correct; the signal is just too weak.
 
-Bridge retirement HOLDS (po_box 90.3%), German order HOLDS (native+anchor 90.8%). The rest of the US/FR spine is clean.
+Bridge retirement HOLDS (po_box 90.3%), German order HOLDS (native+anchor 90.8%). The rest of the US/FR guardrail is clean.
 
 ### v1.5.1 launch decision (autonomous)
 
@@ -52,7 +52,7 @@ The weight-bump hypothesis is **falsified**. v1.5.1 (weight 6.0) scored fr.house
 
 **And it introduced a NEW failure mode: postcode fragmentation.** The v1.5.0 misses were clean ("47110 …" → predict `47110` as house*number — wrong span, intact tokens). v1.5.1's miss dump shows the model now \_splits the postcode*: `47110` → house*number `4` + postcode `7110`, and sometimes \_merges* it (`pred="47110 85"`). Over-weighting the both-order synth shard pushed the model to over-eagerly hunt for a leading house number, destabilizing the postcode boundary itself. Strictly worse.
 
-**Conclusion — the both-order synth recipe plateaus at ~87% on this golden, and louder weight is actively harmful.** Likely mechanism: the generated synth distribution diverges from the real OA golden's reversed-order distribution; overweighting fits synth quirks at the expense of real rows. The German precedent (6.0) did NOT transfer — German's number is always _last_ (one position to learn); FR postcode-first makes the house_number position genuinely ambiguous (it can collide with the leading postcode), so more synth mass amplifies the collision.
+**Conclusion — the both-order synth recipe plateaus at ~87% on this golden, and louder weight is actively harmful.** Likely mechanism: the generated synth distribution diverges from the real OA golden's reversed-order distribution; overweighting fits synth quirks at the expense of real rows. The German precedent (6.0) did NOT transfer — German's number is always _last_ (one position to learn); FR postcode-first makes the house_number position ambiguous (it can collide with the leading postcode), so more synth mass amplifies the collision.
 
 **This closes the v1.5.x weight thread** (committed to the operator: "the last weight experiment"). No third training run tonight. The lever for a _future_ run is NOT weight — candidates: (a) more _real_ reversed-order data (BAN-sourced, not synth), (b) a postcode-anchor / position-aware signal that protects the postcode span, (c) accept ~87% as the honest intrinsic floor.
 
@@ -85,7 +85,7 @@ So both engines that turn the parser into a geocoder — street-level forward co
 - **Clean fan-out → verify → merge loop.** Three agents returned PR-ready branches; each verified by the orchestrator before merge. No worktree leaks — every diff single-file/single-concern.
 - **The centerpiece overlapped the agents.** Retrain launched the moment Task 2 verified; Tasks 3/4 build-verify-merge ran while the retrain stepped.
 - **Verify-the-self-report paid off.** Task 3's agent mis-reported its Sainte-Livrade baseline (claimed 503; actual 582). The DATA was sound; orchestrator caught the number error before it propagated.
-- **Bridge retirement held clean.** po_box 90.3% with bridge OFF, every US floor passed — the v4.5.0 spine is solid.
+- **Bridge retirement held clean.** po_box 90.3% with bridge OFF, every US floor passed — the v4.5.0 guardrail is solid.
 - **Actual-vs-actual grading revealed the golden shift.** The diversified golden (#563) changed the baseline: v4.5.0 at 54.5% (not 89.6%) on the same n=1546 set makes the +32.9pp gain visible and attributable.
 - **Caught a silent gate-integrity bug.** `arena.perturb` (a pre-registered floor, 71.0) was reporting `NOT FOUND` on every v0.5.0 gate — the compiled v0 arena parser couldn't find libpostal dicts (`core/out/data` vs `core/data` path mismatch). Root-caused, locally bridged (symlink + gate-script guard, commit `ab2a029`), and re-measured: the real perturb pass-rate is **78%** (neural) vs 39% (v0) — a clean pass that had been masked. Order-robustness is _already_ paying off in the arena: the perturb arena IS delimiter/case/order perturbation, and neural doubles the rules parser.
 - **The negative result is clean and attributable.** Two runs isolated one variable (weight 3.0 vs 6.0); the falsification is unambiguous and the failure mode (postcode fragmentation) is diagnosed, not mysterious. That's $-worth of signal: we now know weight is the wrong lever and _why_.
@@ -112,7 +112,7 @@ The orchestrator session became unresponsive (network) mid-shift after launching
 
 - **What recovers fr.house_number past the ~87% plateau, if not weight?** Falsified: weight (6.0 < 3.0). Untested candidates, for the operator to prioritize: (a) more _real_ reversed-order data from BAN rather than synth (the synth↔real distribution gap is the leading suspect); (b) a postcode-anchor / position-aware signal that protects the postcode span from being raided for a leading house number; (c) accept ~87% as the honest intrinsic floor and re-baseline the gate. **Do NOT bump shard mass blindly** — v1.5.1 shows the synth shard can actively destabilize; more of it is not obviously safe.
 - **Ship v1.5.0 (87.4%) as v4.6.0, or hold v4.5.0?** It misses the 91 floor by 3.6pp but is +32.9pp over the shipped model on the hard golden. Operator's explicit call (re-baseline-and-ship vs hold). See "Ship decision" above.
-- **`__isCompiledTree` off-by-one?** The gate-integrity fix bridged `core/out/data` locally; the deeper question (does repo.ts's compiled-tree detection resolve FALSE when it should be TRUE?) is load-bearing and deferred to daylight review (#481).
+- **`__isCompiledTree` off-by-one?** The gate-integrity fix bridged `core/out/data` locally; the deeper question (does repo.ts's compiled-tree detection resolve FALSE when it should be TRUE?) is critical and deferred to daylight review (#481).
 
 ## Concrete next steps
 

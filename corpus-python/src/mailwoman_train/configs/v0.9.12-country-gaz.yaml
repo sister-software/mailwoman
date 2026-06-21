@@ -9,7 +9,7 @@
 # recall 40.7. v0.9.11 (class-weight 3.5) lifted recall to 48.1, STILL P=100/over-fire 0. The
 # remaining misses are ALL recognition-limited (Eswatini, Timor-Leste, Bhutan, multi-word, leading
 # position) — the model cannot recognize a surface it saw ~3 times, which is exactly the lexicon's
-# job. The clue INFORMS (the homograph bit says "context is load-bearing here"); the model decides.
+# job. The clue INFORMS (the homograph bit says "context is critical here"); the model decides.
 # See docs/articles/plan/reference/closed-vocab-fields-model-first.mdx + the knowledge ladder.
 #
 # PRE-REGISTERED GATE (stop at 20k) — data/eval/external/country-homograph-real.jsonl (n=54):

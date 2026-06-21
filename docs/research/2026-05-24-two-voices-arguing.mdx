@@ -13,7 +13,7 @@ This post is a beginner-friendly debugging story — no ML background needed. If
 
 :::
 
-This is the third post in a series about a training problem we've been chasing. The [first two](/research/v0-5-0-c-train-bisect) [were](/research/v0-5-0-bisect-by-elimination) written for software engineers. This one is for someone who is just starting to learn about AI and machine learning — no jargon assumed, no math beyond high-school algebra. The point is to show you what real ML debugging looks like, using a problem we actually had this week.
+This is the third post in a series about a training problem we've been chasing. The [first two](/research/v0-5-0-c-train-bisect) [were](/research/v0-5-0-bisect-by-elimination) written for software engineers. This one is for someone who is just starting to learn about AI and machine learning — no jargon assumed, no math beyond high-school algebra. The point is to show you what ML debugging looks like, using a problem we ran into this week.
 
 If you've been programming for a while but ML feels opaque, this post is for you. The core technique we used — figuring out which of two instructions our model was listening to — turns out to be much more like ordinary debugging than the field usually makes it sound.
 
@@ -25,7 +25,7 @@ Mailwoman is a piece of software that reads address strings (`"350 5th Avenue, N
 
 We don't need a giant model because the task is narrow: addresses follow patterns, and we just need to identify which parts of a string are which (`350` is a house number, `5th Avenue` is a street, etc.).
 
-## What "training a model" actually looks like
+## What "training a model" looks like
 
 Forget everything you've seen about AI in movies. Training a model is, mechanically, this:
 
@@ -81,7 +81,7 @@ loss
 
 The model descends nicely for 500 steps (warmup), settles at a low loss for a bit — and then climbs back up. By the end, it's worse than when it started. We trained it on 50,000 examples and it got _worse_.
 
-Every training engineer's heart sinks at this curve. It means something is wrong, and the model isn't telling us what. There's no stack trace. There's no exception. There's just a chart that says "I learned, and then I unlearned."
+Every training engineer's heart sinks at this curve. It means something is wrong, and the model isn't telling us what: no stack trace, no exception, just a chart that says "I learned, and then I unlearned."
 
 We saw this exact shape in nine different runs. Different learning speeds, different model sizes, different feature combinations. Every time: clean descent, then catastrophic climb.
 
@@ -125,16 +125,16 @@ Wait. Voice B was supposed to be scaled to 5%. But the raw gradient was 16× lar
 
 ## The cooperative-vs-conflict picture
 
-Here's the framing that made it all click.
+Here's the picture that made sense of it.
 
 Imagine you're a hiker on a foggy hill, trying to walk to the lowest point in the landscape. You can't see far, so you have two GPS devices that each tell you "go downhill, that way."
 
 - **At the top of the hill (high loss),** both GPSes agree: every direction is downhill, so they both point you roughly the same way. You make progress. Loss decreases.
 - **As you descend into a specific valley (loss gets lower),** the landscape becomes more detailed. Suddenly the two GPSes start disagreeing: Voice A says the valley floor is to the left; Voice B says it's to the right. They don't see the same valley.
 
-When that happens, your hiking direction is mostly determined by **whichever GPS is shouting louder**. With Voice B shouting 16× louder than Voice A, you stop following Voice A's instructions and start following Voice B's — even though Voice A was correct about where the valley floor actually was. You climb out of one valley toward a different point that Voice B prefers, and Voice A's loss (the per-word accuracy) gets worse.
+When that happens, your hiking direction is mostly determined by **whichever GPS is shouting louder**. With Voice B shouting 16× louder than Voice A, you stop following Voice A's instructions and start following Voice B's — even though Voice A was correct about where the valley floor was. You climb out of one valley toward a different point that Voice B prefers, and Voice A's loss (the per-word accuracy) gets worse.
 
-That's literally what happened to our model. Above loss 0.41 (high up on the hill), both voices agreed and the model descended cleanly. Below 0.41, they started disagreeing, and Voice B's louder gradient pulled the model away from the basin Voice A had been guiding it toward. The model's per-word accuracy got worse and worse, which we saw as loss climbing back up.
+That's what happened to our model. Above loss 0.41 (high up on the hill), both voices agreed and the model descended cleanly. Below 0.41, they started disagreeing, and Voice B's louder gradient pulled the model away from the basin Voice A had been guiding it toward. The model's per-word accuracy got worse and worse, which we saw as loss climbing back up.
 
 ## The fix
 
@@ -159,7 +159,7 @@ A few things stand out:
 - [The bisect-by-elimination post](/research/v0-5-0-bisect-by-elimination) — what we ruled out before the diagnostic.
 - [The technical writeup](/docs/concepts/dual-loss-curvature-conflict) — for engineers who want the gradient math and the cooperative-vs-conflict framing in detail.
 
-If you're starting out in ML and any of this helped, the mailbox is open: `contact@sister.software`. We'd genuinely like to hear what gaps the existing intro material still leaves.
+If you're starting out in ML and any of this helped, the mailbox is open: `contact@sister.software`. We'd like to hear what gaps the existing intro material still leaves.
 
 ## Update — it worked
 

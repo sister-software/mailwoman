@@ -3,10 +3,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build the crisp-polygon sibling of the demo points DB (`wof-hot.db`, built by the geojson-free
- *   `build-slim` / `mailwoman-wof-build-slim`). The demo's map draws the WOF bounding RECTANGLE
- *   (`place_bbox`) today; this packs the real admin geometry — simplified — so the demo can draw an
- *   actual boundary, loaded lazily only when a result is shown.
+ *   Build the crisp-polygon sibling for the demo's map. (The slim `wof-hot.db` points source is
+ *   RETIRED 2026-06-20 — the admin tier resolves against the candidate table now; build polygons
+ *   with `--admin` below, keyed by the same WOF spr ids the candidate table returns.) The demo's
+ *   map draws the WOF RECTANGLE (`place_bbox`) today; this packs the real admin geometry —
+ *   simplified — so the demo can draw an actual boundary, loaded lazily only when a result is
+ *   shown.
  *
  *   Source: the per-id WOF GeoJSON repos at
  *   `repos/whosonfirst-data/whosonfirst-data-admin-<cc>/data/<id-sharded>/<id>.geojson`, where the
@@ -28,6 +30,7 @@
  *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
  */
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { existsSync, readFileSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
@@ -129,7 +132,13 @@ const rows = src
 src.close()
 
 const out = new DatabaseSync(opts.output)
-out.exec(`CREATE TABLE polygons (id INTEGER PRIMARY KEY, geom TEXT NOT NULL);`)
+// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `out` handle.
+const kdb = new DatabaseClient({ database: out })
+await kdb.schema
+	.createTable("polygons")
+	.addColumn("id", "integer", (c) => c.primaryKey())
+	.addColumn("geom", "text", (c) => c.notNull())
+	.execute()
 const insert = out.prepare(`INSERT OR IGNORE INTO polygons (id, geom) VALUES (?, ?)`)
 
 let done = 0
@@ -160,7 +169,7 @@ for (const r of rows) {
 out.exec("COMMIT")
 out.exec("VACUUM")
 const bytes = out.prepare(`SELECT count(*) n, sum(length(geom)) b FROM polygons`).get()
-out.close()
+await kdb.destroy() // closes the underlying `out` handle
 console.error(
 	`✓ ${opts.output}: ${done} polygons (${missing} no-geometry, ${dropped} dropped), ~${Math.round((bytes.b || 0) / 1024 / 1024)} MB geom`
 )

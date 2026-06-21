@@ -12,13 +12,13 @@ We went looking at Japan to learn what the non-Latin story costs us, and the pro
 - **(A) The model is out-of-distribution.** Romaji in Western order parses almost correctly (`1-1-1 Ginza, Chuo-ku, Tokyo 104-0061` → house*number / street / locality / postcode, all roughly right). Native kanji scatters the labels. This is a coverage problem — trainable — and in the meantime the postcode is a clean regex hit in \_every* sample, so coordinate-first resolution carries Japan exactly the way it carried out-of-distribution Dutch to 94.9%. The coarse win needs no parser change at all.
 - **(B) The schema cannot represent the address.** There is no tag for 丁目/番/号 — chōme/banchi/gō, the district/block/building _coordinates_ that most of Japan uses instead of streets. The model jams them into `house_number`/`street`/`postcode` because those are the only slots that exist. A _perfectly_ trained model still couldn't emit a correct structure. Training can never fix this; it's a vocabulary gap.
 
-That distinction is the spine of everything below. (A) lives in the resolver. (B) is the one thing that has to change in the parser — and we're going to change it the smallest way that works.
+That distinction is the foundation of everything below. (A) lives in the resolver. (B) is the one thing that has to change in the parser — and we're going to change it the smallest way that works.
 
 ## The thesis
 
 The machinery after the parse is not one monolithic resolver, and it is not a Matryoshka of nested resolver _objects_ either (orthogonal concerns — grid morphology vs postal schema vs alias lists — don't fit a single inheritance tree, and adding a city shouldn't mean a code deploy). It's a flat **Geographic Rule Engine**:
 
-> A `convention` table keyed by Who's-On-First polygon id, deep-merged up the ancestor chain (Sapporo's row inherits Hokkaidō's inherits Japan's), that dispatches a short ordered sequence of named **strategy functions**. The data carries the routing and parameters; the strategies are a small registry of code primitives. "Plug in and out as needed" means a row in a table plus a pick from existing primitives — new code only for a genuinely novel spatial system.
+> A `convention` table keyed by Who's-On-First polygon id, deep-merged up the ancestor chain (Sapporo's row inherits Hokkaidō's inherits Japan's), that dispatches a short ordered sequence of named **strategy functions**. The data carries the routing and parameters; the strategies are a small registry of code primitives. "Plug in and out as needed" means a row in a table plus a pick from existing primitives — new code only for a novel spatial system.
 
 Two things fall out for free:
 
@@ -45,9 +45,9 @@ Building only for Japan would bake Japanese quirks into something we'd call "gen
 
 **Phase 2 — parser-side, additive, gated.** Teach the parser to emit `locator[]` from a handful of JP/KR/TW examples. Existing tags untouched, model rollback-able. This inherits every retrain fragility we've hit (the German end-of-string collapse, the PR3 negative), so it's gated on per-locale-F1 + resolver utility exactly like every other retrain, and Phase 1 must prove the engine first.
 
-**Phase 3 — deferred, decision-only.** Revisit `L0…Ln` _only_ if onboarding more systems (India, China, …) proves the additive scheme genuinely insufficient — by then with real data and a mature engine, as a migration rather than a leap.
+**Phase 3 — deferred, decision-only.** Revisit `L0…Ln` _only_ if onboarding more systems (India, China, …) proves the additive scheme insufficient — by then with real data and a mature engine, as a migration rather than a leap.
 
-The coarse/fine split maps onto a safe/risky split: Phase 1 is cheap and near-certain; building-level precision (Phase 2+) is a separate, genuinely harder bet, and we may live on Phase 1 for a good while.
+The coarse/fine split maps onto a safe/risky split: Phase 1 is cheap and near-certain; building-level precision (Phase 2+) is a separate, harder bet, and we may live on Phase 1 for a good while.
 
 ## The datasets, as strategy primitives
 

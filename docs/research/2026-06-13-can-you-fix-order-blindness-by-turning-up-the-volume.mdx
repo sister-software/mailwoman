@@ -6,7 +6,7 @@ tags: [neural, parsing, training, evaluation]
 date: 2026-06-13
 ---
 
-Two days ago we retired a piece of decode-time machinery we'd been quietly leaning on,
+Two days ago we retired a piece of decode-time machinery we'd been leaning on,
 and it exposed something the crutch had been hiding: our parser can't read a French
 address backwards. Last night we tried to teach it to. We got most of the way, hit a
 wall at 87%, and did the obvious thing and turned the training signal up, fully expecting
@@ -82,7 +82,7 @@ problem we can outspend. The model needs reordered examples that look like the r
 or a signal that protects the postcode from being raided, and neither of those is a
 bigger number in a config file.
 
-So we held. The 87% model is a real, honest gain over what's live, and we'll likely put
+So we held. The 87% model is a solid gain over what's live, and we'll likely put
 it in front of people once we decide how to price a number that beats the old one but
 misses its own bar. The recovery itself waits for the right lever, which we now know is
 not this one. Two training runs and about ten dollars of GPU bought us a clean _no_ —

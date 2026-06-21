@@ -11,7 +11,7 @@ converged on the same answers. Sources are listed at the end._
 
 1. **The 91% floor is mis-calibrated for the postcode-first case.** It was inherited from a
    canonical-order eval where house*number is the \_easiest* field (published SOTA 99–100% F1). On the
-   genuinely hard reordered/international case, the nearest published SOTA — Chinese flexible-order
+   hard reordered/international case, the nearest published SOTA — Chinese flexible-order
    address parsing — reports house-number F1 of **~90–91%**, and neural parsers _collapse_ on reorder
    (deepparse: 100% → 28%; libpostal overall 0.992 → 0.781). **87.4% is respectable-to-SOTA for this
    slice, not a failure.** Both the literature and DeepSeek independently call the 91% bar wrong for

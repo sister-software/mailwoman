@@ -8,7 +8,7 @@ items 6 + 8, plus the positive case the migration exists for):
     accented FR row (NFC ``é``), multi-span DE row, all-O row.
 (b) **Channel invariance** — the anchor channel (``realign_anchor_to_pieces`` vs the spans
     sibling) and the gazetteer painting must produce IDENTICAL tensors under both paths on those
-    fixtures (the per-piece channels key off the same substrate the migration touches).
+    fixtures (the per-piece channels key off the same underlying data the migration touches).
 (c) **The punctuation win** — a row WITH intra-span punctuation ("P.O. Box 19", one po_box span
     over chars [0, 11)) must produce the punctuation-covering label stream the token path
     structurally cannot: continuous B/I over the period pieces instead of O-fragmented.

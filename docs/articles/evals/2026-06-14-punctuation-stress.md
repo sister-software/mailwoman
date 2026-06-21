@@ -108,6 +108,6 @@ node --experimental-strip-types scripts/eval/score-punctuation-stress.ts \
 - Folded-gold view (affixes → `street`) for the head-to-head; per-engine vocabularies graded on their own
   view of identical gold (stated in the scorer header).
 - Neural numbers are the shipped int8 v140 / `v0.6.0-a0` tokenizer. Don't compare these absolute figures
-  across tokenizer versions — the head-to-head and the span-proposer deltas are what's load-bearing here.
+  across tokenizer versions — the head-to-head and the span-proposer deltas are what matter here.
 - Three span-proposer bias configs, not an exhaustive sweep. The verdict is "doesn't clear the #518 bar as
   implemented," not "no parameterization could ever help."

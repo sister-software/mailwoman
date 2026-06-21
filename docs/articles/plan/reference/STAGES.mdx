@@ -85,7 +85,7 @@ export interface NormalizedInput {
 	/**
 	 * Character-offset map: `normalized[i]` came from `raw[offsetMap[i]]`.
 	 *
-	 * Load-bearing: every downstream stage that emits spans uses this to translate normalized offsets
+	 * Essential: every downstream stage that emits spans uses this to translate normalized offsets
 	 * back to raw offsets for the consumer.
 	 */
 	offsetMap: number[]
@@ -110,7 +110,7 @@ export interface NormalizeOpts {
 export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput
 ```
 
-**Today.** `@mailwoman/normalize` workspace shipped 2026-05-22 (Slice B of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). Public `normalize()` function with NFC + punctuation + whitespace (always) + abbreviation expansion + case-fold (opt-in). Load-bearing `offsetMap` composed across transforms. Small en-US + fr-FR abbreviation dictionaries.
+**Today.** `@mailwoman/normalize` workspace shipped 2026-05-22 (Slice B of [PHASE_7](../phases/PHASE_7_stage_1_normalize_and_query_shape.mdx)). Public `normalize()` function with NFC + punctuation + whitespace (always) + abbreviation expansion + case-fold (opt-in). Essential `offsetMap` composed across transforms. Small en-US + fr-FR abbreviation dictionaries.
 
 **Future.** Share dictionaries with corpus synthesis (synthesis is the _inverse_ — canonical → variants; normalize is variants → canonical). Add per-locale case-folding edge cases (Turkish `İ`, Greek final sigma). Bidirectional offset lookup (`raw[i] → normalized[i]`).
 

@@ -42,7 +42,7 @@ mirror at `docs/docs/projects/mailwoman/licensing-strategy.md`). Sources here
 are all Tier A except `fetch-openaddresses.sh`, which is a **Tier-mixed**
 source: the downloaded collection includes CC0, CC-BY, OGL, and ODbL/CC-BY-SA
 rows. The per-row `LICENSE` filter in the `openaddresses` adapter is
-load-bearing — Tier-C (ODbL, CC-BY-SA) rows are dropped at ingest by default
+essential — Tier-C (ODbL, CC-BY-SA) rows are dropped at ingest by default
 to protect proprietary-weights training.
 
 ### OpenAddresses authentication (as of 2026-05-18)

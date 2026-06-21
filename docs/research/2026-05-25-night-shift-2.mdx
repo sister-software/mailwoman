@@ -63,7 +63,7 @@ A few things jump out:
 
 **The reconciler fixes the honesty problem.** It drops overconfident-wrong from 54.5% to 0.1% by checking whether parsed components form a coherent real-world hierarchy. It also eliminates empty parses entirely (0.0% vs rules' 6.3%): it always produces something, even if conservative.
 
-**The rules are a ceiling. The neural model is a ramp.** Rule-only at 30.8% exact match is a mature system, hand-tuned over years. Each additional percentage point costs engineering time. The neural model at 6.0% (hybrid-joint) after one stable training run is learning from data, which means each new training run can improve across every component and every locale simultaneously. The 68% improvement from v0.4.0 to v0.5.0 is the trend that matters — and the ramp just proved it can climb.
+**The rules are a ceiling. The neural model is a ramp.** Rule-only at 30.8% exact match is a mature system, hand-tuned over years. Each additional percentage point costs engineering time. The neural model at 6.0% (hybrid-joint) after one stable training run is learning from data, which means each new training run can improve across every component and every locale simultaneously. The 68% improvement from v0.4.0 to v0.5.0 is the trend that matters.
 
 ## The infrastructure lesson
 

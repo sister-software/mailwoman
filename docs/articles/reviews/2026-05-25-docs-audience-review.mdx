@@ -7,7 +7,7 @@
 
 ## Executive summary
 
-The Mailwoman documentation is **genuinely strong in depth** but **confused about who it's for and what state it's in**. The domain-education articles (Tier 0, the falsehoods, the alternatives) are thoughtful and well-structured. The blog posts are unusually honest and readable. The architecture documentation (the Knowledge Ladder, the staged pipeline, the Ship of Theseus migration) is the project's best intellectual contribution.
+The Mailwoman documentation is **strong in depth** but **confused about who it's for and what state it's in**. The domain-education articles (Tier 0, the falsehoods, the alternatives) are thoughtful and well-structured. The blog posts are unusually honest and readable. The architecture documentation (the Knowledge Ladder, the staged pipeline, the Ship of Theseus migration) is the project's best intellectual contribution.
 
 But the docs oscillate between beginning-friendly explainers and dense operator-internal logs, with no clear boundary between the two. Status information is scattered across a dozen files with contradictory markers. The naming conventions — Tier vs Stage vs Phase vs Thread — require a decoder ring to follow. And the blog posts, while individually strong, form a narrative that only makes sense if read in sequence by someone already immersed in the project.
 
@@ -21,7 +21,7 @@ The fix is not to rewrite everything. It's to add **curatorial structure**: a st
 
 The "Understanding Mailwoman" track opens with articles that establish the problem before proposing the solution. This is the correct order. The six Tier 0 articles — from "How mail delivery actually works" through "The 90% trap" — build a careful economic and structural case for why address parsing is harder than it looks and why a neural approach is justified. The "case for simple geocoders" appendix is especially well done: it steel-mans the alternatives rather than dismissing them, which gives the project intellectual credibility.
 
-The Tier 0.5 postal concept articles (postcode, ZIP code, concordance, intersection, dual-address) add domain grounding that most geocoding documentation skips. These are concrete, well-exemplified, and genuinely educational.
+The Tier 0.5 postal concept articles (postcode, ZIP code, concordance, intersection, dual-address) add domain grounding that most geocoding documentation skips. These are concrete, well-exemplified, and educational.
 
 ### 2. The Knowledge Ladder / staged pipeline
 
@@ -284,6 +284,6 @@ The most honest sentence in the entire documentation is in `CONTEXT.md`:
 
 That gap is the project's reason to exist. The docs should make this sentence louder — it's the answer to the first question every visitor has: "why should I care about this project?"
 
-The second question is "can I use it today?" The docs should answer that honestly too: "yes, with these caveats, and here's what's coming." The status page is the vehicle for that answer.
+The second question is "can I use it today?" The docs should answer that plainly too: "yes, with these caveats, and here's what's coming." The status page is the vehicle for that answer.
 
 The third question is "should I bet on this?" The Knowledge Ladder architecture, the Ship of Theseus migration, the honest retrospectives, and the browser-first constraint all make a strong case. The docs just need to present that case more directly to someone who isn't already inside the project's reasoning.

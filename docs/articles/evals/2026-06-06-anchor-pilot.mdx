@@ -34,7 +34,7 @@ We then built the inference-side channel — ONNX export with the anchor inputs,
 | **anchor-on @20k, anchor fed**     |    **45.8%** |
 | v0 (Pelias) / target               | 83.4% / ~77% |
 
-The clean, unconfounded number is the **same checkpoint with the anchor off vs on**: `35.9% → 45.8%`, **+9.9pp purely from feeding the anchor**, nothing else changed. The model genuinely leans on the signal — the architecture's premise holds, end to end.
+The clean, unconfounded number is the **same checkpoint with the anchor off vs on**: `35.9% → 45.8%`, **+9.9pp purely from feeding the anchor**, nothing else changed. The model leans on the signal — the architecture's premise holds, end to end.
 
 It is a **partial** fix. 45.8% is well short of ~77%, so the anchor helps real and measurably but doesn't fully reverse the collapse at this pilot scale.
 
@@ -66,7 +66,7 @@ Berlin's postcodes still collide with US ZIPs in German order. Nothing about the
 
 ### So what was the anchor actually fixing?
 
-We should be honest about what this does to the +9.9pp. The anchor's win was measured entirely on US-order German, the broken rendering, and it was real: same weights, off versus on, nothing else moved. It genuinely helped the model survive an order it wasn't trained for. But its value in the order that matters is now an open question we haven't measured. The 83.8% run had the anchor fed throughout, and we never ran native-order anchor-off to isolate it. The anchor earns its place elsewhere — the resolver-side centroid already cut coord p99 from 330 to 46 km — yet "the anchor recovers German" needs re-testing against an eval that isn't rendering the language wrong.
+We should be clear about what this does to the +9.9pp. The anchor's win was measured entirely on US-order German, the broken rendering, and it was real: same weights, off versus on, nothing else moved. It helped the model survive an order it wasn't trained for. But its value in the order that matters is now an open question we haven't measured. The 83.8% run had the anchor fed throughout, and we never ran native-order anchor-off to isolate it. The anchor earns its place elsewhere — the resolver-side centroid already cut coord p99 from 330 to 46 km — yet "the anchor recovers German" needs re-testing against an eval that isn't rendering the language wrong.
 
 ### Premodel or training?
 
@@ -80,7 +80,7 @@ Cheapest first: fix the eval (done, that's the table above), then ship the both-
 
 ### What it means for multi-locale
 
-It un-blocks it. The German "wall" that survived three retrains — the order-shard collapse, two self-conditioning attempts, and this anchor pilot — was substantially a mirror: our eval reflecting a layout we built. The parser reads native German better than Pelias, which is the north-star target, hit in the locale we'd written off as our worst. The honest caveat is that native order is the easy direction; international-order German, the genuinely out-of-distribution case, is still 45%, and the both-order retrain is what closes it. The ceiling sits far higher than the collapse let us see.
+It un-blocks it. The German "wall" that survived three retrains — the order-shard collapse, two self-conditioning attempts, and this anchor pilot — was substantially a mirror: our eval reflecting a layout we built. The parser reads native German better than Pelias, which is the target, hit in the locale we'd written off as our worst. The caveat is that native order is the easy direction; international-order German, the out-of-distribution case, is still 45%, and the both-order retrain is what closes it. The ceiling sits far higher than the collapse let us see.
 
 ## Next levers
 

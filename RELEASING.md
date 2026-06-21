@@ -77,6 +77,145 @@ The binaries are gitignored in the workspace dirs (`neural-weights-*/.gitignore`
 `copy-weights` and the post-publish cleanup. **Always confirm the tokenizer matches the model** — the model
 card's `training.tokenizer_version` is the source of truth (mismatches have shipped before).
 
+## Rebuilding + swapping the canonical admin gazetteer (`admin-global-priority.db`)
+
+The resolver's gazetteer is the custom WOF SQLite DB at
+`/mnt/playpen/mailwoman-data/wof/admin-global-priority.db` — **never** an off-the-shelf geocode.earth dump
+(different WOF ids; see `feedback-custom-wof-db-only`). It is not part of the npm/HF release; it ships
+separately (the demo's slim derivative — see the next section). You rebuild it when you add locale
+coverage. `scripts/wof-build-manifest.json` is the source of truth for the build inputs — read it first; it
+pins the repo commits and records every prior rebuild.
+
+This runbook is the exact sequence walked for the 2026-06-20 Overture-EU swap (+15 zero-DB EU locales). Do
+the steps in order; the post-build steps and the gate are not optional — skipping them silently regresses US
+region resolution (the #440 honest-eval fix lives in steps 1–2).
+
+### Step 1 — build to a STAGING path, never over the live DB
+
+```bash
+node --experimental-strip-types scripts/build-unified-wof.ts \
+  --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data \
+  --overture-countries PT,PL,BE,AT,CH,CZ,DK,NO,FI,SK,SI,HR,LU,LV,LT \
+  --output /mnt/playpen/mailwoman-data/wof/admin-global-priority-eu.db
+```
+
+`whosonfirst-data` is a meta-repo nesting the admin subrepos; the sibling `whosonfirst-data-admin-us`
+carries the real US data (the nested admin-us is empty). `--overture-countries` folds the Overture
+`divisions` theme for locales the WOF repos miss (synthetic ids @ 8e12 — see the `overture_divisions_supplement`
+section of the manifest). Build to `*-eu.db`, not the live name.
+
+### Step 2 — the three post-build steps, IN ORDER
+
+```bash
+DB=/mnt/playpen/mailwoman-data/wof/admin-global-priority-eu.db
+node --experimental-strip-types scripts/add-region-abbrevs.ts "$DB"                 # names: VT->Vermont (~184 rows)
+node --experimental-strip-types scripts/backfill-ancestors-from-hierarchy.ts "$DB"  # NYC-style multi-parent ancestry
+node resolver-wof-sqlite/out/build-fts-cli.js --drop "$DB"                          # rebuild place_search AFTER abbrevs
+```
+
+Step 1 (abbrevs) must precede the FTS rebuild — `place_search` concatenates the `names` rows, so build FTS
+last. Use `--drop` because the staging build already has an FTS to replace.
+
+### Step 3 — the no-regression gate (do not swap without it)
+
+Diff the new DB against the live one on the same US eval, same model. The two `**neural**` rows must match:
+
+```bash
+PC=/mnt/playpen/mailwoman-data/wof/postalcode-us.db
+for db in admin-global-priority.db admin-global-priority-eu.db; do
+  node --experimental-strip-types scripts/eval/oa-resolver-eval.ts \
+    --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000 --default-country US \
+    --model <v.onnx> --tokenizer <tok.model> --model-card neural-weights-en-us/model-card.json \
+    --model-anchor-lookup <anchor.json> \
+    --wof-db "/mnt/playpen/mailwoman-data/wof/$db,$PC" 2>/dev/null | grep '\*\*neural'
+done
+```
+
+Also confirm: priority-country locality counts unchanged (`SELECT country, count(*) FROM spr WHERE
+placetype='locality' GROUP BY country` on both), the `names language='abbr'` count is unchanged, and a
+direct `findPlace('VT', region, US)` returns Vermont. If anything regresses, stop — don't swap.
+
+### Step 4 — swap + record
+
+```bash
+cd /mnt/playpen/mailwoman-data/wof
+mv admin-global-priority.db admin-global-priority.db.pre-<change>-bak   # back up the live DB
+mv admin-global-priority-eu.db admin-global-priority.db                 # promote (instant; same fs)
+```
+
+The build freezes to `journal_mode=delete` + VACUUM, so there are no `-wal`/`-shm` sidecars to carry. Then
+add a `notes` entry + (for a new source) a section to `scripts/wof-build-manifest.json`, and commit it — the
+manifest is the reproducibility record, and a rebuild that isn't pinned there has bitten us before (the
+deleted admin-fr repo).
+
+### Step 5 — propagating to the demo/browser (rebuild the candidate gazetteer)
+
+The swap above updates the **full** local gazetteer — every Node eval and the Node resolver see the new
+coverage immediately. The **browser demo does not.** It loads, over `sql.js-httpvfs` (byte-range SQLite):
+
+- **admin tier** (locality/region/postcode): the global **candidate table** — `WofCandidateTableLookup`,
+  `docs/src/shared/httpvfs-resolver.ts` → `adminGazetteerUrl()` in `resources.tsx`.
+- **street tier** (address points / interpolation): per-state `situs-<state>.db` / `interp-<state>.db`
+  shards byte-ranged off R2 — `docs/src/pages/demo/index.tsx`. (Night-15, #583/#585/#638.)
+
+The candidate table (`build-candidate.ts`, 2026-06-20) **retired the slim `wof-hot.db`**: it's an FTS-free,
+`WITHOUT ROWID` B-tree keyed on `name_key` so a resolve is one contiguous probe (~12 range fetches/session
+vs 243 on the full DB), with **global** coverage in one ~490 MB file — no `SLIM_COUNTRIES` upkeep. It's
+**model-independent**, so it's hosted on its own dated, version-independent path (not a per-release asset).
+See `project-candidate-table-byte-range`.
+
+To get new admin coverage into the demo after a gazetteer rebuild:
+
+```bash
+# 1. Build the candidate table from the (rebuilt) admin DB + the postcode shards.
+#    --postcodes is repeatable: US + the WOF intl shard (NL/FR/DE/ES/IT) + Overture-derived postcode
+#    centroids for the EU-coverage locales, each built with
+#      node scripts/eval/overture-es-postcode-centroids.ts --country <CC> --pc-len 0 --parquet <addresses-cc.parquet>
+#    (--pc-len 0 = no lpad, the Overture-to-Overture / non-numeric-format case). Each ZIP becomes a
+#    `postalcode` candidate row so findPlace(postalcode) resolves directly, and postcodes resolve ~100%
+#    at ~1-2km even where the locality misses (LT 0→100%, NO 75→100%, FI/SK 80→100%). The demo cascade
+#    country-gates an ambiguous postcode (10115 = Berlin DE + NYC) by resolving the locality first. GB
+#    (2.6M) and PT (sparse Overture "XXXX-XXX" fill) are left out.
+node resolver-wof-sqlite/out/build-candidate-cli.js \
+  --in  /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
+  --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-us.db \
+  --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-intl.db \
+  $(for cc in at ch dk be fi hr lt lu lv no si sk; do echo --postcodes /mnt/playpen/mailwoman-data/wof/postcode-$cc-overture.db; done) \
+  --out /mnt/playpen/mailwoman-data/wof/candidate-global.db
+# 2. Bump ADMIN_GAZETTEER_VERSION in docs/src/shared/resources.tsx (the immutable cache needs a fresh URL).
+# 3. Upload to the new path:
+mkdir -p /tmp/stage/gazetteer/<NEW_VERSION>
+ln -s /mnt/playpen/mailwoman-data/wof/candidate-global.db /tmp/stage/gazetteer/<NEW_VERSION>/candidate.db
+set -a; . ./.env; set +a
+python3 scripts/publish-demo-assets-to-r2.py --src /tmp/stage --prefix mailwoman
+# 4. The map-highlight sibling (wof-polygons.db) builds from --admin now (the --points wof-hot.db source is
+#    gone): node scripts/build-wof-polygons.mjs --admin <admin.db> [--countries US,DE,FR] --out wof-polygons.db
+```
+
+`hasWofDb: true` stays in `releases.json` — the demo gates the admin tier on it, and it now means "this
+version has admin resolution" (the version-independent candidate gazetteer always provides it). Validate
+with `cd docs && yarn build`, serve, and `MAILWOMAN_DEMO_URL=http://localhost:7770 yarn test:e2e
+test/browser/200-demo-resolve.spec.ts` (Chicago locality + ZIP-only marker must pass).
+
+**Guard the byte-ranged `.db` objects from full-file downloads** (the candidate table is ~490 MB) with a
+Cloudflare WAF custom rule — config, no Worker. In the `sister.software` zone → Security → WAF → Custom
+rules, block a plain `GET` of any `.db` under `/mailwoman/` that arrives without a `Range` header:
+
+```
+http.request.method eq "GET"
+and starts_with(http.request.uri.path, "/mailwoman/")
+and ends_with(http.request.uri.path, ".db")
+and not any(http.request.headers["range"][*] != "")
+```
+
+Action: **Block**. (DEPLOYED 2026-06-20 on the `sister.software` zone, `http_request_firewall_custom`
+phase — verified: scraper GET → 403, demo `Range` GET → 206, VFS `HEAD` → 200.) Legit `sql.js-httpvfs`
+traffic always sends `Range`, so it passes. Scope to `GET` on purpose — the VFS does a range-less **HEAD**
+to probe the file length on open, so blocking all methods would break the demo's cold start. (Covers the
+candidate, situs/interp street shards, and `wof-polygons.db`; use Managed Challenge instead of Block, or
+tighten to `contains "/mailwoman/gazetteer/"`, if you prefer.) Note: Cloudflare custom rules take a few
+minutes to propagate to all edges — don't conclude it's broken from a test in the first ~60 s.
+
 ## Versioning policy
 
 - **Full sync** — every package in `.release-it.json` shares one version per release, the model included. The
@@ -87,6 +226,128 @@ card's `training.tokenizer_version` is the source of truth (mismatches have ship
   `model_lineage`; the published `version` is just the unified release number (e.g. the Stage-3 / step-100000
   model shipped as `4.0.0`). This replaces the old "weights versioned to the model" scheme, which the sync-mode
   plugin could never actually express — that mismatch is what produced the version drift before 4.0.0.
+
+## Promoting a NON-default model (the full promotion flow)
+
+Most releases are code-only (`yarn release` / the `publish` workflow at the next version, model unchanged).
+**Promoting a different trained model to be the new default is a bigger operation** — and it has bitten this
+pipeline more than once because the moving parts aren't obvious. This is the exact, ordered runbook
+(walked end-to-end for v4.11.0, the v1.8.0 fr-admin-split promotion). Do these in order; verify each.
+
+### Step 0 — figure out the version number (the divergence trap)
+
+The npm packages and the demo model **drift apart**: code-only cuts bump npm (`mailwoman` → 4.7, 4.8, … on
+npm) while the demo/HF model stays at whatever version last shipped a model (e.g. `v4.6.0`). They share a
+number namespace but are NOT in lockstep at any given moment. So:
+
+```bash
+curl -s https://registry.npmjs.org/mailwoman | jq -r '."dist-tags".latest'      # e.g. 4.10.0 (npm code)
+curl -s https://public.sister.software/mailwoman/en-us/releases.json | jq -r .defaultVersion  # e.g. v4.6.0 (demo model)
+```
+
+**The new release must exceed the npm `latest`** (npm refuses to republish an existing version), so the
+number is `max(npm-latest, demo-default) + one minor`. For v4.11.0: npm was at 4.10.0, demo at v4.6.0 → ship
+`4.11.0`. Do NOT assume the next number after the demo's model version — it will collide with npm.
+
+### Step 1 — promotion is a model-card REWRITE, not a relabel
+
+When the model you're shipping isn't the current default, the repo still describes the OLD model. Update,
+in `main`, before anything is staged:
+
+1. Place the int8 in the canonical dir: `cp <staged>/model.onnx /mnt/playpen/mailwoman-data/models/quantized/model-v<NNN>-step-<step>-int8.onnx` and confirm its md5 against the gate/postmortem.
+2. `release.config.json` — bump `version`, repoint `weights.model`, update `weights.lineage` + `weights.trainingStep`, and put the new int8 md5 in the lineage string.
+3. `neural-weights-en-us/model-card.json` — rewrite `version`, `model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block (the gate evidence), and `files_md5`. **State any regression that trips the 2pp gate** right in the card (no silent drift). `requires` (the ship-config) is usually unchanged if the model cloned the prior recipe.
+4. Regenerate the capabilities manifest (the fail-closed delta-gate reads it; the generator's `$comment` otherwise lies about which model it measured). The generator **refuses if a `capabilities` block already exists**, so rewrite the card WITHOUT that block first, then:
+   ```bash
+   yarn compile   # the generator imports COMPILED @mailwoman/neural/scorer from out/
+   node --experimental-strip-types scripts/eval/gen-capability-manifest.ts \
+     --model /mnt/playpen/.../model-v<NNN>-step-<step>-int8.onnx \
+     --tokenizer /mnt/playpen/.../tokenizer.model \
+     --model-card neural-weights-en-us/model-card.json --write
+   ```
+5. Commit + **push to main** — CI derives the HF fetch path from the model card on `main`, so it has to be pushed before the CI publish.
+
+### Step 2 — carry forward the resolver/gazetteer layer from the PRIOR bucket
+
+A release dir is self-contained: the demo fetches everything from `en-us/<version>/`. Only `model.onnx`,
+`tokenizer.model`, `model-card.json`, and (if it changed) `anchor-lexicon-v1.json` are NEW. The
+resolver/gazetteer layer — `fst-en-US.bin`, `wof-hot.db`, `wof-polygons.db`, `postcode-*.bin` — carries
+forward **unchanged**, and the safest source is the exact bytes the prior version already serves (not a
+local rebuild that might differ). Enumerate + pull from the prior R2 path, verify sizes:
+
+```bash
+B=https://public.sister.software/mailwoman/en-us/v<PRIOR>      # e.g. v4.6.0
+for f in fst-en-US.bin wof-hot.db wof-polygons.db postcode-us.bin postcode-de.bin postcode-fr.bin; do
+  curl -sI "$B/$f" | head -1   # confirm 200 + note Content-Length
+done
+```
+
+Assemble a staging dir mirroring the R2 layout: `<src>/en-us/v<NEW>/{the 10 artifacts}` plus
+`<src>/en-us/releases.json` (take the live R2 `releases.json`, prepend the new entry, set
+`defaultVersion`). `anchor-lexicon-v1.json` should be the **repo** copy (`data/gazetteer/anchor-lexicon-v1.json`)
+— that's the lexicon the model was gated against, which can differ by a few bytes from the prior bucket's.
+
+### Step 3 — stage HF, then R2, then verify BOTH backends agree
+
+```bash
+HF_TOKEN=$(cat ~/.cache/huggingface/token) node scripts/publish-release-to-hf.mjs \
+  --version v<NEW> --locale en-us --label "..." --description "..." \
+  --model <src>/.../model.onnx --tokenizer ... --model-card ... --fst <src>/.../fst-en-US.bin \
+  --wof-hot <src>/.../wof-hot.db --gazetteer-lexicon <src>/.../anchor-lexicon-v1.json \
+  --postcodes "<csv of postcode-*.bin>" --polygons <src>/.../wof-polygons.db --steps <step> --set-default
+
+set -a; . ./.env; set +a; python3 scripts/publish-demo-assets-to-r2.py --src <src>
+```
+
+Pass `--postcodes` + `--polygons` to the HF script too, or its `releases.json` gets `hasAnchor:false`
+/`hasPolygons:false` (it probes R2 for them, and R2 isn't staged yet). **A release is done only when BOTH
+backends agree** — CI's weight fetch reads HF; the demo reads R2:
+
+```bash
+curl -s .../en-us/releases.json | jq -r .defaultVersion         # HF and R2, both == v<NEW>
+curl -s .../en-us/v<NEW>/model.onnx | md5sum                     # HF and R2, both == the gated md5
+```
+
+### Step 4 — publish npm from CI, then verify registry-direct + a clean install
+
+```bash
+gh workflow run publish.yml -f version=<NEW> -f dry_run=false
+gh run watch <id> --exit-status
+```
+
+`npm view` caches for minutes — verify against the registry directly, then prove the WHOLE closure is
+installable (the #596 broken-clean-install class):
+
+```bash
+curl -s -o /dev/null -w '%{http_code}' https://registry.npmjs.org/mailwoman/<NEW>     # 200
+cd $(mktemp -d) && npm init -y >/dev/null && npm install mailwoman@<NEW> --dry-run     # exit 0, no 404
+```
+
+### Pitfall: `.release-it.json` must list EVERY runtime dep of `mailwoman`
+
+`mailwoman`'s `workspace:*` deps are translated to concrete `<NEW>` versions by `yarn pack`. If a dep
+workspace isn't in `.release-it.json`'s list it never gets bumped+published, so `<dep>@<NEW>` 404s and
+`npm install mailwoman` breaks. The record-matcher work added `formatter`/`record`/`match`/`address-id`/`registry`
+(and `spatial`) — they're in the list now; **any future runtime dep must join it too.** This is the same
+warning as the top of this doc, restated because it recurs.
+
+### Pitfall: partial release — use `publish_only`, never re-run the full workflow
+
+The CI publish can land most packages then die mid-publish (seen on v4.11.0: a transient npm OIDC
+`E401 … Failed to generate Web Auth URLs` hit `record` + `registry` while the other 15 published). Once that
+happens the commit + tag `v<NEW>` already exist, so **re-dispatching the full workflow trips on the tag.**
+Use the dedicated recovery input instead — it skips release-it's bump/tag and just re-publishes each
+workspace at its current version over OIDC with `--tolerate-republish` (already-published ones are no-ops):
+
+```bash
+gh workflow run publish.yml -f version=<NEW> -f publish_only=true -f dry_run=false
+```
+
+The E401/Web-Auth flavor was transient for v4.11.0 (the `publish_only` retry cleared it). If it recurs on the
+SAME packages, their npm Trusted Publisher is unconfigured — configure it on npmjs.com, or token-publish the
+stragglers in dependency order (`record` before `registry`). **Note:** despite older notes saying "the lab host
+has no npm credentials," it currently has an `~/.npmrc` authToken, so `node scripts/publish-workspace.mjs` per
+the recovery loop below can finish stragglers from here without OIDC.
 
 ## Common failures
 

@@ -72,7 +72,7 @@ The probe results are consistent with a specific story about why dual-loss train
 
 The optimiser follows whichever loss has the larger gradient. With CRF at 16× CE magnitude, the CRF wins. The model gets dragged off its CE-preferred basin toward a CRF-preferred attractor that CE actively disagrees with. CE loss climbs as collateral damage.
 
-The "below 0.41" boundary is specific to this data and architecture: it marks the level where the cooperative-vs-conflict transition happens. Different corpora, label spaces, or model sizes would shift it. The structure of the failure is the load-bearing observation.
+The "below 0.41" boundary is specific to this data and architecture: it marks the level where the cooperative-vs-conflict transition happens. Different corpora, label spaces, or model sizes would shift it. The structure of the failure is the key observation.
 
 ## Why the standard repairs don't help
 

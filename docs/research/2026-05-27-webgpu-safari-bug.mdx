@@ -33,7 +33,7 @@ Every automated test we ran passed. The reason: headless Chromium does not have 
 
 We had a `verify` skill that launched a real headless browser, navigated to the live demo, typed an address, and checked the parse output. It ran after every deployment. It passed every time. And it was useless for catching this bug, because it could never exercise the code path that was broken.
 
-## The real cause
+## The cause
 
 onnxruntime-web ships two WebGPU execution providers in the same npm package:
 
@@ -66,7 +66,7 @@ The diagnostic path that would have saved hours:
 3. Check the import path. `grep "onnxruntime-web"` in your source. If you're importing the bare package, you're on the JSEP.
 4. Test on Safari. If it fails on Safari but works on Chrome, the JSEP is the prime suspect.
 
-The deeper lesson: test infrastructure that lacks GPU access will never catch GPU-specific bugs. Headless browsers are not real browsers when it comes to hardware acceleration. If your product runs on GPUs, you need at least one test that exercises the GPU path on a device that has one.
+The deeper lesson: test infrastructure that lacks GPU access will never catch GPU-specific bugs. Headless browsers are not real browsers for hardware acceleration. If your product runs on GPUs, you need at least one test that exercises the GPU path on a device that has one.
 
 ## References
 

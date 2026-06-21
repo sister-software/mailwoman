@@ -29,9 +29,16 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { DuckDBInstance } from "@duckdb/node-api"
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
 // Cross-tree source import (.ts explicit): this script runs via --experimental-strip-types,
 // not from compiled out/ — the lookup tier imports the same module intra-package.
+import {
+	ADDRESS_POINT_COLUMNS,
+	type AddressPointDatabase,
+	createAddressPointIndexes,
+	createAddressPointTable,
+} from "../resolver-wof-sqlite/address-point-schema.ts"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
@@ -53,8 +60,16 @@ const { values: args } = parseArgs({
 		// cores). The national driver passes a low value so N concurrent state builds don't each
 		// grab every core (N × threads ≈ core count).
 		threads: { type: "string" },
+		// Alternate source: comma-separated OpenAddresses conformed-CSV path(s) (LON,LAT,NUMBER,STREET,
+		// UNIT,CITY,DISTRICT,REGION,POSTCODE,...). When set, the shard is built from these instead of the
+		// Overture parquet — for states Overture's US addresses theme does NOT carry (HI, NH). The CSVs
+		// are already state-scoped (us/<st>/*), so no state/county filter applies. --state still names the
+		// output. Same address_point schema + shared normalizer as the Overture path.
+		"oa-csv": { type: "string" },
 	},
 })
+// OA mode: build from OpenAddresses CSV(s) rather than the Overture parquet.
+const OA_MODE = Boolean(args["oa-csv"])
 if (!args.state) {
 	console.error("--state required (US state abbreviation, e.g. VT)")
 	process.exit(1)
@@ -104,26 +119,17 @@ const datasetFilter =
 		: ""
 
 const db = new DatabaseSync(OUT)
-db.exec(`
-	PRAGMA journal_mode = WAL;
-	CREATE TABLE address_point (
-		street_norm   TEXT NOT NULL,
-		street_key    TEXT NOT NULL, -- canonicalizeRouteKey(street_norm): the route-fold key (#483 Method 2)
-		number        TEXT NOT NULL,
-		unit          TEXT,
-		postcode      TEXT,
-		locality_norm TEXT,
-		street_raw    TEXT NOT NULL,
-		lat           REAL NOT NULL,
-		lon           REAL NOT NULL,
-		source        TEXT NOT NULL,
-		release       TEXT NOT NULL
-	);
-`)
+// DDL + column order come from the SHARED schema (address-point-schema.ts) so the writer can't drift
+// from AddressPointSqliteLookup (the reader). The INSERT stays a POSITIONAL prepared statement —
+// tens of millions of rows per state — but its column list is derived from ADDRESS_POINT_COLUMNS.
+db.exec("PRAGMA journal_mode = WAL;")
+// DDL via the Kysely schema-builder; the hot positional INSERT below stays on the raw `db` handle.
+const kdb = new DatabaseClient<AddressPointDatabase>({ database: db })
+await createAddressPointTable(kdb)
 
 const insert = db.prepare(
-	`INSERT INTO address_point (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
-	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	`INSERT INTO address_point (${ADDRESS_POINT_COLUMNS.join(", ")})
+	 VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
 )
 
 // Provenance accounting: per-dataset counts across ALL rows returned by DuckDB (pre-JS-normalisation
@@ -137,19 +143,34 @@ let totalReturned = 0
 // result with runAndReadAll().getRowObjects() — a 13.5M-row state (CA/FL/TX) blows the ~4GB V8 heap
 // that way (OOM observed 2026-06-14). stream()+fetchChunk() keeps JS memory bounded to one chunk; the
 // growing data lives in the on-disk SQLite WAL inside a single transaction.
-const stream = await duck.stream(`
-	SELECT
-		number, street, unit, postcode,
-		coalesce(nullif(trim(address_levels[2].value), ''), nullif(trim(postal_city), '')) AS locality,
-		sources[1].dataset AS dataset,
-		lat, lon
-	FROM read_parquet('${PARQUET}')
-	WHERE address_levels[1].value = '${STATE}'
-		AND nullif(trim(street), '') IS NOT NULL
-		AND nullif(trim(number), '') IS NOT NULL
-		${countyFilter}
-		${datasetFilter}
-`)
+// OA conformed CSV → the same intermediate column shape as the Overture SELECT (all_varchar so a
+// house number like "123-A" or an empty lat survives the scan; JS coerces + drops non-finite coords).
+const oaCsvList = OA_MODE
+	? args["oa-csv"]!.split(",")
+			.map((p) => `'${p.trim()}'`)
+			.join(", ")
+	: ""
+const streamSql = OA_MODE
+	? `SELECT
+			NUMBER AS number, STREET AS street, NULLIF(trim(UNIT), '') AS unit,
+			NULLIF(trim(POSTCODE), '') AS postcode,
+			NULLIF(trim(CITY), '') AS locality,
+			'openaddresses' AS dataset,
+			LAT AS lat, LON AS lon
+		FROM read_csv([${oaCsvList}], header = true, all_varchar = true)
+		WHERE nullif(trim(STREET), '') IS NOT NULL AND nullif(trim(NUMBER), '') IS NOT NULL`
+	: `SELECT
+			number, street, unit, postcode,
+			coalesce(nullif(trim(address_levels[2].value), ''), nullif(trim(postal_city), '')) AS locality,
+			sources[1].dataset AS dataset,
+			lat, lon
+		FROM read_parquet('${PARQUET}')
+		WHERE address_levels[1].value = '${STATE}'
+			AND nullif(trim(street), '') IS NOT NULL
+			AND nullif(trim(number), '') IS NOT NULL
+			${countyFilter}
+			${datasetFilter}`
+const stream = await duck.stream(streamSql)
 // A streamed DataChunk carries no column names of its own (only the materialised reader sets them),
 // so pull them off the result once and hand them to each chunk's getRowObjects().
 const colNames = stream.columnNames()
@@ -164,6 +185,9 @@ for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk =
 		const streetRaw = String(r.street)
 		const streetNorm = normalizeStreetForKey(streetRaw)
 		if (!streetNorm) continue
+		const lat = Number(r.lat)
+		const lon = Number(r.lon)
+		if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue // OA rows can carry empty coords
 		const locality = r.locality ? normalizeLocalityForKey(String(r.locality)) : null
 		insert.run(
 			streetNorm,
@@ -173,29 +197,24 @@ for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk =
 			r.postcode ? String(r.postcode).trim() : null,
 			locality,
 			streetRaw,
-			Number(r.lat),
-			Number(r.lon),
-			`overture:${r.dataset}`,
-			String(args.release)
+			lat,
+			lon,
+			OA_MODE ? "openaddresses" : `overture:${r.dataset}`,
+			OA_MODE ? "openaddresses-latest" : String(args.release)
 		)
 		kept++
 	}
 }
 db.exec("COMMIT")
-console.log(`${totalReturned} ${STATE} rows from ${path.basename(PARQUET)}`)
-db.exec(`
-	CREATE INDEX idx_ap_postcode ON address_point (postcode, street_norm, number);
-	CREATE INDEX idx_ap_locality ON address_point (locality_norm, street_norm, number);
-	CREATE INDEX idx_ap_streetkey ON address_point (postcode, street_key);
-	PRAGMA wal_checkpoint(TRUNCATE);
-	VACUUM;
-`)
+console.log(`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : path.basename(PARQUET)}`)
+await createAddressPointIndexes(kdb)
+db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
 const stats = db
 	.prepare(
 		"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM address_point"
 	)
 	.get() as Record<string, number>
-db.close()
+await kdb.destroy() // closes the underlying `db` handle
 console.log(`${kept} points → ${OUT}`)
 console.log(`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}`)
 
@@ -204,7 +223,7 @@ console.log(`distinct streets: ${stats.streets} · postcodes: ${stats.postcodes}
 console.log(`\nprovenance (${STATE}, release ${args.release}):`)
 const sortedDatasets = [...datasetCounts.entries()].sort((a, b) => b[1] - a[1])
 for (const [dataset, count] of sortedDatasets) {
-	console.log(`  overture:${dataset.padEnd(20)} ${count.toLocaleString()} rows`)
+	console.log(`  ${(OA_MODE ? dataset : `overture:${dataset}`).padEnd(28)} ${count.toLocaleString()} rows`)
 }
 if (allowedDatasets.size > 0) {
 	// The DuckDB query already excluded non-allowed rows, so rows.length is the kept count.

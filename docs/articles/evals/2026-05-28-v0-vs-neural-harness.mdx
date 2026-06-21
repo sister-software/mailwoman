@@ -175,7 +175,7 @@ parser succeeds and the rule-based pipeline fails:
 2. `R 5, 6-13, D-68161 Mannheim` — grid address with no street. v0's classifiers force a
    street-shaped reading that doesn't fit; neural correctly produces just locality + postcode.
 
-The pattern: **neural is sometimes BETTER on formats it has truly never seen**, because v0's
+The pattern: **neural is sometimes BETTER on formats it has never seen**, because v0's
 hand-tuned rules actively misclassify them. The "ambiguous-but-common" cases (rue de Rivoli,
 Broadway, place de la Concorde, Avenue Road) is where v0's rules dominate — neural lacks the
 training distribution.

@@ -26,6 +26,7 @@ Source files live at each workspace's root (no `src/` nesting). The repo root ho
 - **[`docs/articles/plan/README.mdx`](./docs/articles/plan/README.mdx)** — the implementation plan that drove the neural classifier work. Phases 0–3 are substantially shipped; Phases 4–6 are the forward roadmap. Read this first if you're working on anything model-related.
 - **[`docs/articles/plan/reference/`](./docs/articles/plan/reference/)** — design rationale, schema source of truth, TS contracts, operations playbook, address-data-sources catalog. `SCHEMA.mdx` is the single source of truth for the `ComponentTag` union.
 - **[`docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx`](./docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx)** — the model-work runbook: which evals gate a change, the lever-shape taxonomy, how to add a shard. Read before touching the model, a shard recipe, or an eval.
+- **[`docs/articles/plan/reference/coverage-overlay.mdx`](./docs/articles/plan/reference/coverage-overlay.mdx)** — the demo-map address-coverage ("fog of war") overlay runbook: rebuild/republish (the `coverage build` + `tiles publish` CLIs), the `mailwoman-tiles` upload/credential gotchas, the HI/NH data situation, tuning knobs. Read before touching the coverage overlay, the `tile-worker`, or `coverage build`.
 - **[`RELEASING.md`](./RELEASING.md)** — local and CI release flows. Read before cutting a release.
 - **[`docs/articles/evals/`](./docs/articles/evals/)** — eval reports per training step. The per-model score ledger lives at `evals/scores-by-version.json` (repo root), schema in `docs/articles/plan/reference/eval-ledger.schema.json`. The authoritative per-tag parity table is the latest `parity-scorecard-*.md`.
 
@@ -84,6 +85,28 @@ If a release fails partway through publishing:
 - Each workspace has its own `tsconfig.json` + (for `core/` and `neural/`) a `vitest.config.ts` that aliases sibling `@mailwoman/*` subpath imports to source. This lets `yarn test` run without a precompile step. The cross-package aliases are fiddly — see the file headers for the resolution rules.
 - `core/utils/repo.ts` has a `__isCompiledTree` flag that distinguishes source mode from compiled mode for path-builder math. Don't reach across that boundary without reading the comment.
 - The **bare-import + subpath-import cycle** is a fragility surface. When a test file imports `@mailwoman/core` bare AND a subpath, Vite can leave the bare re-exports unbound while the slices interleave — classifier base classes evaluate as `undefined`. (`core/resources/libpostal.ts` had a top-level `await readdir` that contributed until #481 made it a lazy `getAvailableLanguages()` getter; the cycle turned out to be **structural** — Vite's bare/subpath interleaving — not TLA-driven, so it persists after the TLA removal.) Workaround: a side-effect `import "@mailwoman/core"` at the top of the affected test file forces full init first. See `classifiers/adapter.test.ts`. Full fix = import-graph hygiene (tracked on #481).
+
+## Database / inline SQL
+
+Table DDL goes through Kysely's schema-builder, not raw `db.exec("CREATE TABLE …")`. The idiom, established across #745–#749:
+
+- A schema module owns both the typed `Database` interface AND a co-located `createXTable(db)` function built with `db.schema.createTable(...)`. The interface is the read/write contract; the builder creates the table; a column added to one is a compile error against the other. See `resolver-wof-sqlite/{candidate,address-point,postal-city-candidate,postal-city-alias}-schema.ts`, `resolver-wof-sqlite/unified-schema.ts`, and `tiger/sdk/schema.ts`.
+- `DatabaseClient` (`@mailwoman/core/kysley/client`) extends `Kysely` over `node:sqlite`. A build script constructs the raw `DatabaseSync` for its **hot positional INSERTs** (the bulk-load fast path) and wraps that _same_ handle in a `DatabaseClient` for the DDL — one connection, shared; `kdb.destroy()` owns the close. The schema-builder is async, so the DDL functions and their callers are `async`.
+- `WITHOUT ROWID` has no first-class builder — use the ``.modifyEnd(sql`without rowid`)`` raw modifier. It's a win only for small-row, PK-probed tables (the candidate gazetteer, `pl_block`); never for a table carrying a large blob like geometry, where clustering the row into the B-tree _hurts_.
+
+### What deliberately stays raw — don't "finish the job" on these
+
+Some inline SQL is raw on purpose. If you migrate one of these thinking it was missed, you'll regress it. Each has a reason:
+
+- **FTS5 virtual tables + `MATCH`** (`fts.ts`, `lookup.ts`, `sharding.ts`) — Kysely can't express `CREATE VIRTUAL TABLE … USING fts5` or the `MATCH` operator.
+- **ogr2ogr / GDAL-dialect SQL** (`tiger/sdk/fetch.ts`) — runs inside ogr2ogr against shapefiles, not the app DB.
+- **Hot bulk writes** — the positional prepared-statement INSERT loops, their `BEGIN`/`COMMIT`, and the candidate clustering `INSERT … SELECT … ORDER BY`. Plus `PRAGMA`, `VACUUM`, `ANALYZE`, `ATTACH` — none are Kysely-modelled, and the inserts are the throughput path.
+- **Runtime-dynamic schemas** (`corpus/scripts/ingest-csv.ts`) — columns + types are inferred from the CSV at runtime; a builder loop wraps the same dynamic strings with ceremony and no added type safety.
+- **Introspect-and-replay** (`resolver-wof-sqlite/build-slim.ts`) — it execs the _source_ DB's own `CREATE TABLE` strings read from `sqlite_master`; a static builder can't express a copied schema.
+- **Async-into-sync walls** — `PlacetypeDataSource.ts` runs its DDL in a synchronous class constructor; `zcta-centroids.ts` and `coincident-roles.ts` are sync, heavily-tested helpers (the latter behind a sync CLI). Kysely's builder is async, so migrating cascades `async` through a sync call graph and rewrites the tests, all for one small table — not worth it.
+- **Sync-by-interface resolver readers** — the resolution ladder is synchronous by design: `AddressPointLookup.find()`, `InterpolationLookup.find()`, `PostcodeResolver.lookup()`, and `ConventionSource.get()` (`core/resolver/types.ts`) return values synchronously, and `PostcodeResolver` is called from `@mailwoman/neural`. So the readers implementing them — `address-point.ts`, `interpolation.ts`, `postcode-point-lookup.ts`, `sqlite-convention-source.ts`, `ancestry.ts`, and the hot per-keystroke `candidate-lookup` probe — stay on raw `.prepare()`. Converting one to async Kysely doesn't cascade a few call sites; it forces the shared interface async, rippling through every implementer and across the package boundary — a structural architecture change, not a query swap. (#752's `postal-city-alias` reader was the one exception: not interface-bound, and its sole caller was already inside the async `findPlace`.)
+
+On the query side, the migratable remainder is the cold, already-`async` `SELECT`/`INSERT` sites in the build / eval / corpus scripts — typing there is a free win with no hot-path or interface concern. The DuckDB builders need no `@oorabona/kysely-duckdb` dialect: their SQL is `read_parquet`/`ST_Read` (raw); only the SQLite output tables migrate, and those reuse the shared schema builders (see `build-postal-city-alias.ts`).
 
 ## When in doubt
 

@@ -338,8 +338,27 @@ async function main(): Promise<void> {
 	// real "neural vs Pelias parser" head-to-head on non-circular addresses.
 	const v0 = createAddressParser()
 
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const backend = new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })
+	// `--candidate-db <candidate.db>` swaps the FTS backend for the byte-range candidate-table lookup
+	// (the SAME backend + ranking the browser demo uses). This is the "CLI matches demo" gate: run the
+	// eval both ways and confirm US locality/coord don't regress before defaulting the CLI to it.
+	const candidateDb = arg("candidate-db", "")
+	// `--postal-city-alias-db <db>` (#475) attaches the opt-in postal-city alias scorer on the FTS
+	// path: a user-typed postal city resolves to its geographic locality. Run the eval with and
+	// without to measure the lift. No-op on the candidate backend (it folds aliases at build time).
+	const postalCityAliasDb = arg("postal-city-alias-db", "")
+	const { WofSqlitePlaceLookup, WofCandidateTableLookup, WofPostalCityAliasLookup } =
+		await import("@mailwoman/resolver-wof-sqlite")
+	const postalCityAliases = postalCityAliasDb
+		? new WofPostalCityAliasLookup({ databasePath: postalCityAliasDb })
+		: undefined
+	const backend = candidateDb
+		? new WofCandidateTableLookup({ databasePath: candidateDb })
+		: new WofSqlitePlaceLookup({
+				databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths,
+				postalCityAliases,
+			})
+	if (candidateDb) console.error(`[backend] candidate-table lookup over ${candidateDb} (demo-parity ranking)`)
+	if (postalCityAliases) console.error(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDb}`)
 	const resolver = createWofResolver(backend as never)
 
 	// Gazetteer-alias locality matching. A resolved place counts as a locality match if OA's
@@ -367,7 +386,7 @@ async function main(): Promise<void> {
 	// Hierarchy-aware regional-qualifier credit (#386). OpenAddresses tags many German localities with
 	// a disambiguating district suffix WOF's canonical name drops — gold `Plauen Vogtl`/`Chemnitz Sachs`
 	// resolve to `Plauen`/`Chemnitz` (the point lands inside; PIP confirms it), but a bare string compare
-	// reads a miss. Rather than a hardcoded suffix blacklist (the no-load-bearing-trivia smell), credit
+	// reads a miss. Rather than a hardcoded suffix blacklist (a provenance-first violation), credit
 	// the qualifier ONLY when it matches the resolved place's OWN WOF ancestry: `Vogtl`→county `Vogtland`,
 	// `Sachs`→region `Sachsen`. List-free and non-gameable — a genuinely wrong place won't carry the
 	// gold's qualifier among its ancestors. `und`/non-latin ancestor names normalize to empty under

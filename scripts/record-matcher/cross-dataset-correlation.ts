@@ -252,7 +252,14 @@ async function main(): Promise<void> {
 	const records: SourceRecord[] = []
 	for (const spec of SPECS) {
 		const rows = rawBySource.get(spec.source)!
+		// Per-source geocode-rate snapshot (#694 diagnostic): the seam counters are global, so delta
+		// them across each source to see WHERE nulls concentrate in the aggregate run.
+		const g0 = geo
+		const t0 = total
 		const recs = await ingestRows(rows, spec.mapping, { geocodeAddress: seam })
+		const dg = geo - g0
+		const dt = total - t0
+		console.error(`    ${spec.source}: geocoded ${dg}/${dt} (${dt ? ((100 * dg) / dt).toFixed(1) : "0"}%)`)
 		// Namespace ids by source so cross-source ids never collide.
 		for (const r of recs) r.id = `${spec.source}:${r.id}`
 		records.push(...recs)
@@ -270,7 +277,7 @@ async function main(): Promise<void> {
 	// objective: "same address + different name" is the prototypical signal of the SAME facility under a
 	// different operational name across sources. The dedup GBT rejects exactly those true cross-source
 	// links (measured: cross-source 219→166, triple-source 10→1), so this flow uses the recall-appropriate
-	// FS spine. (A cross-objective GBT threshold is the documented follow-up — #655.)
+	// FS baseline. (A cross-objective GBT threshold is the documented follow-up — #655.)
 	const { entities, candidatePairs } = resolveEntities(records, {
 		trainEM: true,
 		learnedScorer: false,
@@ -342,7 +349,7 @@ async function main(): Promise<void> {
 	)
 	lines.push("")
 	lines.push(
-		`Scored with the Fellegi-Sunter spine (\`learnedScorer: false\`): cross-dataset link discovery is ` +
+		`Scored with the Fellegi-Sunter baseline (\`learnedScorer: false\`): cross-dataset link discovery is ` +
 			`recall-oriented — the same facility under different operational names across sources is the signal — so the ` +
 			`dedup-calibrated GBT default (#603), which is trained to REJECT "same place, different name," is pinned off ` +
 			`here. A cross-objective GBT threshold is the follow-up (#655).`

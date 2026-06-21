@@ -13,7 +13,7 @@ tags: [training, retrospective]
 
 `@mailwoman/neural-weights-en-us@v0.4.0` (and the fr-fr sibling) shipped today as packaged artifacts (the npm publish is a separate step we do by hand). It is a mixed-result release: one clear win on fine-grained labels, two regressions on coarse labels that turned out to be mostly artifacts of how we measured. Almost everything we set out to do — combine three orthogonal training improvements into one ship — was empirically falsified by a divergence pattern we hadn't seen before.
 
-This is a writeup of how the campaign went. We're publishing it for two reasons: to be honest about what the headline numbers mean, and because the way the failures stacked up is worth thinking about if you train your own NER-style models.
+This is a writeup of how the campaign went. We're publishing it for two reasons: to be clear about what the headline numbers mean, and because the way the failures stacked up is worth thinking about if you train your own NER-style models.
 
 {/* truncate */}
 
@@ -79,7 +79,7 @@ The §4-only recipe. Source rebalance layered on top of v0.3.0's existing dual-l
 
 The shipped checkpoint is `v0_4_0-stableLR-source-only/step-002200`. Architecture is unchanged from v0.3.0 (256-dim, 6 layers, 9M params). The label vocabulary is unchanged (the same 21 BIO classes). The only thing that's different is which shards the training loader oversamples.
 
-## The honest read on the eval numbers
+## Reading the eval numbers
 
 Per-tag F1 on golden v0.1.2 (4535 entries):
 
@@ -118,9 +118,9 @@ These are v0.3.0's documented known-failure modes. The bytefallback tokenizer tr
 | House number confused for postcode |     11% | `47110 Sainte-Livrade-sur-Lot, 22 Rue Jasmin` → predicts `22` |
 | BIO span boundary slip             |      6% | `LE TRÉPORT, 76470` → predicts `", 7647"`                     |
 
-The empty-prediction slice is the real story. NAD's downweight was the most aggressive change in the §4 source rebalance: it carried a lot of "postcode comes first" patterns (`47110 Sainte-Livrade-sur-Lot`, `ND 58701, 44th Ave`) and reducing its share removed that positional exposure. The model now defaults to tagging mid-position numeric tokens as house_number instead of postcode.
+The empty-prediction slice is the one worth acting on. NAD's downweight was the most aggressive change in the §4 source rebalance: it carried a lot of "postcode comes first" patterns (`47110 Sainte-Livrade-sur-Lot`, `ND 58701, 44th Ave`) and reducing its share removed that positional exposure. The model now defaults to tagging mid-position numeric tokens as house_number instead of postcode.
 
-That's a real fix that v0.4.1 should target. It is not the same problem as the headline regression number suggests. The 6% boundary-slip slice is a different bug — the model gets the tag right but emits a span that includes the preceding comma+space. That's a decoder fix, no retraining required, and it has already landed on `main` as commit `c72ab4c`. The decoder now trims spans past leading/trailing non-word characters.
+That's a fix v0.4.1 should target. It is not the same problem as the headline regression number suggests. The 6% boundary-slip slice is a different bug — the model gets the tag right but emits a span that includes the preceding comma+space. That's a decoder fix, no retraining required, and it has already landed on `main` as commit `c72ab4c`. The decoder now trims spans past leading/trailing non-word characters.
 
 ## What didn't get fixed (the v0.4.1 list)
 
@@ -140,7 +140,7 @@ A few things this campaign made obvious that we'd want to put on the shelf for t
 
 1. **Verdict smokes need to test the same conditions as the full run.** If the full run will spend thousands of steps near peak LR, the smoke needs to spend several thousand steps near peak LR too. Cosine decay is a perfectly reasonable training schedule and a terrible verdict schedule.
 2. **Look at failure modes before trusting the F1 delta.** The country regression looked real until we bucketed the failures. 92% of the "regression" was the golden set holding v0.4.0 accountable for v0.3.0's known failure modes. Always categorize before reporting.
-3. **One change at a time.** v0.4.0 stacked three orthogonal training changes — per-token CRF, class weights, source rebalance — and shipped them together. The campaign spent most of its time un-stacking them. Next time, ship one per release. The risk asymmetry (one change destabilizing, vs three changes each needing isolation) just isn't worth it.
+3. **One change at a time.** v0.4.0 stacked three orthogonal training changes — per-token CRF, class weights, source rebalance — and shipped them together. The campaign spent most of its time un-stacking them. Next time, ship one per release. The risk asymmetry (one change destabilizing, vs three changes each needing isolation) isn't worth it.
 4. **Diagnostic tooling early.** The `corpus-audit` and `diagnose_regression.py` tools we built during the campaign would have saved most of v0.3.0's investigation time if they'd existed earlier. We're keeping them in the tree.
 
 ## Where to look

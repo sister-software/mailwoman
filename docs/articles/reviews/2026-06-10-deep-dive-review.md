@@ -18,7 +18,7 @@ One calibration note from the research: the incumbent moved. Senzing retrained l
 
 ## 1. Documentation
 
-**Strong:** the concept layer is genuinely rich — 34 concept articles, the "Understanding" section (falsehoods, why-neural, alternatives-rejected), and the decision-record spine from #467 (`closed-vocab-fields-model-first.mdx` + parity-endgame + knowledge-ladder) form a coherent, current narrative around model-first + soft anchors. Architecture documentation scores ~8/10.
+**Strong:** the concept layer is rich — 34 concept articles, the "Understanding" section (falsehoods, why-neural, alternatives-rejected), and the decision-record chain from #467 (`closed-vocab-fields-model-first.mdx` + parity-endgame + knowledge-ladder) form a coherent, current narrative around model-first + soft anchors. Architecture documentation scores ~8/10.
 
 **Weak:** the _entry points_ and _operational_ layers.
 

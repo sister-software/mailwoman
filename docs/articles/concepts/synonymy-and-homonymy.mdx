@@ -67,13 +67,13 @@ country tag still felt hard. The size is not the problem. ~180 country names col
 with nothing and are trivial; the difficulty is the **~12 surfaces that overlap the
 other closed sets** (Georgia/Jordan/Lebanon/Mexico/Peru/Turkey ↔ US places; CA/GA/IN
 ↔ state codes; Jordan/Chad ↔ given names). So "differentiate 195 countries" is
-really "make ~12 _binary_ sense calls against the other vocabularies", every one
+"make ~12 _binary_ sense calls against the other vocabularies", every one
 decidable from in-string context.
 
 ## Never drop a span
 
 Many geocoders' parsers are **lossy by design**: a span that does not fit the winning
-interpretation is quietly demoted to "accessory" information and folded into the
+interpretation is demoted to "accessory" information and folded into the
 resolver. That is fine if your only goal is "resolve to a point", and fatal the
 moment you want to do anything _adjacent_ to geocoding — chiefly **record linkage**:
 deciding whether two rows from two datasets are the same entity.

@@ -17,7 +17,7 @@ If you've ever tried to answer "what city is this address in?" programmatically,
 
 {/* truncate */}
 
-## What Who's On First actually is
+## What Who's On First is
 
 WOF is a gazetteer — a structured database of places. Not addresses, not roads, not buildings. _Places_: countries, regions, counties, cities, neighbourhoods, venues. Each one gets a stable numeric ID, a parent-child hierarchy, multilingual name variants, and a polygon geometry.
 
@@ -151,7 +151,7 @@ Three things, in priority order:
 
 1. **Finish the SQLite migration.** The worker targets Redis; it should target `PlacetypeDataSource`. The `pluckPlacetypeSpec` output already matches the schema. The remaining work is plumbing, not design.
 2. **Wire PlacetypeDataSource into the reconciler.** The concordance scoring currently uses the raw WOF `spr` SQLite table (from Geocode Earth's distribution). It should use our per-placetype/per-language DBs, which carry the name variants the raw table doesn't expose. This fixes the "Saint Petersburg not found" class of lookup failures.
-3. **Benchmark the in-memory-then-consolidate pattern.** If 120K individual writes to the same few DB files from N concurrent workers bottlenecks on SQLite's WAL writer (likely), the in-memory-SQLite-per-worker → ATTACH-and-merge pattern is the escape hatch. Whether it's actually needed depends on whether step 1 is fast enough without it.
+3. **Benchmark the in-memory-then-consolidate pattern.** If 120K individual writes to the same few DB files from N concurrent workers bottlenecks on SQLite's WAL writer (likely), the in-memory-SQLite-per-worker → ATTACH-and-merge pattern is the fallback. Whether it's needed at all depends on whether step 1 is fast enough without it.
 
 ## So why put up with WOF?
 

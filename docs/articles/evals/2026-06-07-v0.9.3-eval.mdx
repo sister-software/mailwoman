@@ -15,11 +15,11 @@ vs v0.9.2 (both-order, no region tail): native 82.1 → **83.6** (+1.5, still be
 
 ## What moved, and what didn't
 
-The region tail is rendered correctly. A direct look at the synth confirms it: `Davoser Straße, Berlin, Berlin 14199` tokenizes to `Berlin/B-locality Berlin/B-region 14199/B-postcode`, region labeled and aligned. So the "rendering is broken" escape hatch in the pre-registered gate doesn't apply here.
+The region tail is rendered correctly. A direct look at the synth confirms it: `Davoser Straße, Berlin, Berlin 14199` tokenizes to `Berlin/B-locality Berlin/B-region 14199/B-postcode`, region labeled and aligned. So the "rendering is broken" exception in the pre-registered gate doesn't apply here.
 
 And it worked, for region. International region-match rose from 30.8% (anchor off) to 38.3% (anchor on): the model is now learning to segment a `City, Region Postcode` tail it never saw before. But international locality-match sat flat at 44.7% with the anchor on, against 83.6% native. The region tail taught region. It did not teach locality.
 
-PIP-containment (gold point inside the resolved polygon) confirms this is a real geographic miss, not a name-match artifact: 57% on international order against 96% native. The model is genuinely placing international-order German localities in the wrong spot, and the anchor isn't rescuing it.
+PIP-containment (gold point inside the resolved polygon) confirms this is a real geographic miss, not a name-match artifact: 57% on international order against 96% native. The model is placing international-order German localities in the wrong spot, and the anchor isn't rescuing it.
 
 ## Why the gate fails, and where it points
 

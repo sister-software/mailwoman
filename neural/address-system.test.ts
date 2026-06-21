@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Contract tests for address-system detection + the conventions mask (#511 Tier A). The
- *   load-bearing properties: detection never acts below threshold or off-vocabulary, the mask
- *   removes forbidden tags from the decodable vocabulary, and models without a locale head are
- *   byte-identical no-ops.
+ *   Contract tests for address-system detection + the conventions mask (#511 Tier A). The essential
+ *   properties: detection never acts below threshold or off-vocabulary, the mask removes forbidden
+ *   tags from the decodable vocabulary, and models without a locale head are byte-identical
+ *   no-ops.
  */
 
 import { describe, expect, it } from "vitest"
@@ -51,7 +51,7 @@ describe("detectAddressSystem", () => {
 
 describe("conventions table", () => {
 	it("fr forbids only the trailing street_suffix (NOT street_prefix) and pins the 5-digit shape", () => {
-		// Post-#719: FR genuinely has a LEADING street_prefix ("Rue de Rivoli") that the model emits, so
+		// Post-#719: FR has a LEADING street_prefix ("Rue de Rivoli") that the model emits, so
 		// the conventions row forbids only the trailing USPS-style street_suffix — forbidding the prefix
 		// destroyed real capability (see address-system-conventions.ts provenance + the load-time gate).
 		const fr = conventionsForSystem("fr")!

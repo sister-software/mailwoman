@@ -29,6 +29,10 @@ export const LAYER_GROUP_PATTERNS: ReadonlyArray<{ name: string; match: RegExp }
 	{ name: "Hillshade", match: /^hillshade(?:\/|$|-)/ },
 	{ name: "TIGER (tracts)", match: /^tiger-tracts/ },
 	{ name: "TIGER (blocks)", match: /^tiger-blocks/ },
+	// Address-coverage fog overlay (#coverage). Two separate groups so each fog reading gets its own
+	// checkbox — turn on "optimistic" (looks covered, reveals gaps on zoom) OR "honest" (true fraction).
+	{ name: "Coverage · optimistic fog", match: /^coverage-opt/ },
+	{ name: "Coverage · honest fog", match: /^coverage-honest/ },
 ]
 
 export class LayerToggleControl implements IControl {

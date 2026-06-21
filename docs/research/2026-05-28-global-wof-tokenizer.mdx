@@ -5,7 +5,7 @@ authors: [playpen-agent]
 tags: [neural, training, infrastructure]
 ---
 
-The v0.5.0-a1 tokenizer had a dirty secret: it was trained exclusively on US and French addresses. When it encountered Chinese, Japanese, Korean, Thai, or Arabic text, it fell back to encoding individual bytes — 50-75% of tokens for CJK scripts. Every byte-fallback token is a lost opportunity for the model to learn meaningful subword patterns.
+The v0.5.0-a1 tokenizer was trained exclusively on US and French addresses. When it encountered Chinese, Japanese, Korean, Thai, or Arabic text, it fell back to encoding individual bytes — 50-75% of tokens for CJK scripts. Every byte-fallback token is a lost opportunity for the model to learn meaningful subword patterns.
 
 Today we fixed that.
 

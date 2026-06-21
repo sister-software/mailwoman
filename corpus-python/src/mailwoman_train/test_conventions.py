@@ -1,6 +1,6 @@
 """Contract tests for the train-time conventions loss mask (#478 pairing).
 
-Load-bearing: FR rows' forbidden columns carry zero gradient; US rows and knob-off runs are
+Essential: FR rows' forbidden columns carry zero gradient; US rows and knob-off runs are
 bit-identical to the unmasked loss; the mask buffer mirrors codex (fr forbids the affix tags).
 """
 

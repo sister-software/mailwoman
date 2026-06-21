@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "4.11.0",
+	"version": "4.12.0",
 	"description": "Utilities for working with contacts for email, phone, and postal addresses.",
 	"license": "AGPL-3.0-only",
 	"contributors": [
@@ -63,7 +63,11 @@
 		"zx": "^8.8.5"
 	},
 	"peerDependencies": {
+		"@duckdb/node-api": "1.5.3-r.3",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*"
+	},
+	"optionalDependencies": {
+		"@mailwoman/tiger": "workspace:*"
 	},
 	"files": [
 		"!out/test/**/*",
@@ -85,6 +89,9 @@
 	],
 	"bin": "./out/cli.js",
 	"peerDependenciesMeta": {
+		"@duckdb/node-api": {
+			"optional": true
+		},
 		"@inkjs/ui": {
 			"optional": true
 		},

@@ -98,7 +98,7 @@ flowchart LR
 
 The FST never picks between interpretations. It hands the neural model and the Viterbi decoder _all_ of them, weighted by importance, and lets the joint decode resolve the ambiguity using surrounding context.
 
-The `parent_chain` is the load-bearing piece of structure. It's how a match on `"Brooklyn"` becomes evidence that the next token _should_ be one of `{New York, NY, US, 11201, 11202, ...}` — anything coherent with that chain — rather than an unrelated place like `Houston`.
+The `parent_chain` is the critical piece of structure. It's how a match on `"Brooklyn"` becomes evidence that the next token _should_ be one of `{New York, NY, US, 11201, 11202, ...}` — anything coherent with that chain — rather than an unrelated place like `Houston`.
 
 ## How the prior composes with the rest of the pipeline
 

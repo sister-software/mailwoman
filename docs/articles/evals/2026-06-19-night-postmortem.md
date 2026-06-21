@@ -4,7 +4,7 @@ title: "Night shift 2026-06-19 — v1.8.0 international admin-split (surpass-v1.
 
 # Night shift 2026-06-19 — the international admin-split retrain
 
-_Goal: produce a candidate that genuinely beats the production default **v1.5.0** on the **assembled
+_Goal: produce a candidate that beats the production default **v1.5.0** on the **assembled
 anchor-ON coordinate** (not label-F1), by fixing the one admin-deciding, coordinate-coupled failure
 class — on non-US formats the model fuses the trailing admin token into the locality. NOT promoted
 without operator GO (merge wall)._
@@ -118,7 +118,7 @@ over the 2pp gate — a clean v1.8.1 refinement is to mix in FR rows that DO car
 ## Verdict — v1.8.0 is a net win on the shipped coordinate; RECOMMEND promote (operator GO), with two flagged label deltas
 
 **FR coordinate massively up (p50 42→2 km, −40% mean), US coordinate flat.** This is the first model
-in the arc (v1.6.0 and v1.7.0 both HOLD) to genuinely surpass v1.5.0 on the metric we ship. **Two
+in the arc (v1.6.0 and v1.7.0 both HOLD) to surpass v1.5.0 on the metric we ship. **Two
 label deltas exceed the 2pp gate, and both are coordinate-invisible:** us.locality −2.2pp
 (precision-only — 0 recall misses; spurious-fp on fragment rows) and fr.country −3.5pp (the resolver
 is given the country, so it doesn't reach the coordinate). No silent drift — both are stated here and
@@ -187,13 +187,13 @@ a subword) and wants a separate decode/tokenizer look, not more shard data.
 
 ## Numbers table
 
-|                   |                                                                                                                                                                                    |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Shift window      | 2026-06-19 02:00→15:00 UTC                                                                                                                                                         |
-| Models trained    | 1 (v1.8.0-fr-admin-split, from scratch, 40k steps)                                                                                                                                 |
-| Modal $           | ≈ $5 (1× A100-40GB ~2h train + export/quantize/sync)                                                                                                                               |
-| NaN incidents     | 0                                                                                                                                                                                  |
-| Loss-abort gate   | PASSED (loss 5.0 → ~0.7, decreasing)                                                                                                                                               |
-| GPU lost to error | ~0 (one failed export attempt, CPU-side, seconds)                                                                                                                                  |
-| Verdict           | v1.8.0 = net win on shipped coordinate (FR −40%, US flat); 2 coordinate-invisible label deltas (us.locality −2.2 precision-only, fr.country −3.5); RECOMMEND promote (operator GO) |
-| Promoted          | NO (merge wall — staged + flagged)                                                                                                                                                 |
+|                   |                                                                                                                                                                                                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Shift window      | 2026-06-19 02:00→15:00 UTC                                                                                                                                                                                                                                                           |
+| Models trained    | 1 (v1.8.0-fr-admin-split, from scratch, 40k steps)                                                                                                                                                                                                                                   |
+| Modal $           | ≈ $5 (1× A100-40GB ~2h train + export/quantize/sync)                                                                                                                                                                                                                                 |
+| NaN incidents     | 0                                                                                                                                                                                                                                                                                    |
+| Loss-abort gate   | PASSED (loss 5.0 → ~0.7, decreasing)                                                                                                                                                                                                                                                 |
+| GPU lost to error | ~0 (one failed export attempt, CPU-side, seconds)                                                                                                                                                                                                                                    |
+| Verdict           | v1.8.0 = net win on shipped coordinate (FR −40%, US flat); 2 coordinate-invisible label deltas (us.locality −2.2 precision-only, fr.country −3.5); RECOMMEND promote (operator GO)                                                                                                   |
+| Promoted          | YES — shipped as **v4.11.0** (2026-06-19 PM, operator GO with the two coordinate-invisible deltas); HF + R2 + npm verified at md5 `d163396c`, clean `npm install mailwoman@4.11.0` resolves; npm leg needed one `publish_only` retry (transient OIDC E401). Runbook in RELEASING.md. |

@@ -137,7 +137,7 @@ The full pipeline with all inference-time enhancements active:
 
 The neural-only path (4/6) appears to outperform the full pipeline (1/6), but this is misleading. The neural-only JSON output hides unclassified spans — `decodeAsJson` only shows tags the model emitted, silently dropping all-O regions. For example, on `1600 Pennsylvania Ave NW, Washington, DC 20500`, the neural model produces ONLY `region=Washington` and `region=DC`. The entire street + house number + postcode region (positions 0-25 and 41-46) is unclassified.
 
-The pipeline path reveals the truth: the grouper-audit fills those gaps with provisional nodes, making the missing tags visible. The grouper-audit is working as designed — it only fills genuinely empty spans. The problem is:
+The pipeline path reveals the truth: the grouper-audit fills those gaps with provisional nodes, making the missing tags visible. The grouper-audit is working as designed — it only fills empty spans. The problem is:
 
 1. **The v0.5.2 model barely emits non-region tags.** On the Washington preset, 2 of ~16 tokens get typed. The rest are O. This is the tag collapse caused by the wof-admin downweight.
 2. **The phrase grouper's structural proposals are low quality for these gaps.** It proposes `LOCALITY_PHRASE("Pennsylvania")` based on capitalization, not semantics. When injected at 0.55 × grouper confidence, these wrong provisional nodes appear in the output.

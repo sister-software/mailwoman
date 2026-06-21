@@ -19,7 +19,7 @@ land in the right component. The misses in those rows are elsewhere in the addre
 
 ## The four real mechanisms
 
-1. **The AU/UK slash unit-convention (the one genuinely-new, addressable gap).** `4/2A Princes St` is
+1. **The AU/UK slash unit-convention (the one new, addressable gap).** `4/2A Princes St` is
    unit 4 + number 2A; `Penthouse 1/2 Pacific Hwy` is unit "Penthouse 1" + number 2. Neural keeps the
    `X/Y` glued as one `house_number` and never splits it. This is the bulk of the slash class's 62% and
    is a specific, learnable convention (slash between unit and street-number in AU/NZ/UK).

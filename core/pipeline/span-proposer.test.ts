@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Contract tests for the Stage 2.7 span proposer (M2 + M3). Load-bearing properties: unbalanced
+ *   Contract tests for the Stage 2.7 span proposer (M2 + M3). Essential properties: unbalanced
  *   delimiters NEVER propose; annotation confidence follows content shape (trailing-country groups
  *   stay below consumer floors); dual-path numeric readings emit BOTH alternatives under one group;
  *   designator proposals are codex-conditioned and suppressed inside confident annotations.

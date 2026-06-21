@@ -45,6 +45,7 @@ import { useEffect, useState } from "react"
 import zod from "zod"
 import { geocodeAddress, ShardProvider, type ShardResolver } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
+import { createResolverBackend, resolveCandidateDbPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
 import { resolverDefaultCountry } from "./parse.js"
 
@@ -226,10 +227,11 @@ async function buildGeocoder(
 		throw new Error("registry requires `@mailwoman/resolver-wof-sqlite` to be installed.")
 	}
 
-	const lookup = new mod.WofSqlitePlaceLookup({ databasePath: wofPath })
+	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend; else FTS over wofPath.
+	const lookup = createResolverBackend(mod, { wofPaths: wofPath })
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	const shards: ShardResolver = shardProvider.for
-	const defaultCountry = resolverDefaultCountry(options) || undefined
+	const defaultCountry = resolverDefaultCountry(options, !!resolveCandidateDbPath()) || undefined
 	const resolver = createWofResolver(lookup as unknown as ResolverBackend)
 
 	const seam = geocodeAddressVia({

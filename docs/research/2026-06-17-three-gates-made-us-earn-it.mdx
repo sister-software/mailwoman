@@ -9,7 +9,7 @@ date: 2026-06-17
 Our failure taxonomy finally has a line at the very top: of everything wrong with the parser,
 boundary instability is the one worth fixing first. So we spent a night building the training
 data to fix it. And then we didn't retrain. Three separate gates each caught a step that looked
-completely reasonable and was quietly wrong, and that's the story worth telling, more than the
+completely reasonable and was wrong underneath, and that's the story worth telling, more than the
 shard ever was. Those gates are the only reason you can move fast on your worst weakness without
 shipping a fix that looks great on the headline and rots underneath.
 
@@ -21,7 +21,7 @@ Boundary instability is what you get when two address components meet and the mo
 seam in the wrong place. Give it `Country Club Rd` and the street swallows its own suffix. Give
 it `North Sydney NSW 2060` with the commas stripped out and the city and the state melt into
 each other. Hand it a French street like `Neuve-des-Capucines 5` and the house number gets
-quietly absorbed into the name.
+absorbed into the name.
 
 For a while we filed a lot of this under "within-token punctuation" and blamed the apostrophes
 and hyphens. Then we actually measured that class, and the punctuation turned out to be innocent
@@ -46,7 +46,7 @@ the suffix boundary and 70% on the French prefix. Respectable. Encouraging, even
 
 Then we tripled the vocabulary, a hundred streets and real cities with every row unique, and the
 same model scored 41 and 48. So the thin data had done two things at once: it taught the lexeme
-instead of the seam, and it quietly graded its own exam on a curve. The runbook already warns
+instead of the seam, and it graded its own exam on a curve. The runbook already warns
 that thin diversity teaches the pattern-matcher and skips the boundary. Now there's a number
 sitting next to the warning.
 

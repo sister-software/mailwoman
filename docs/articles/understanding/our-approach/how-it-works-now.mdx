@@ -118,7 +118,7 @@ Joint decode is **opt-in**, off by default. It was briefly the default and then 
 
 Looks up parsed components against the WOF SQLite gazetteer. Returns place IDs, coordinates, parent chains, and alternate names. The resolver surfaces top-K candidates per administrative span (locality, region) so downstream systems can handle ambiguity.
 
-This is where "which Paris?" gets answered — never by the model, which only tagged "Paris" as a place. The resolver walks the parsed tree top-down and narrows each name with everything around it: a resolved parent constrains its children (a locality must sit inside the region that resolved above it), the country constrains the search, an exact-name match outranks a fuzzy one, and the coarse-placer's country guess (Stage 1.5) re-ranks candidates within a tier. Only when all of that still leaves a genuine tie does population break it — "Paris" with nothing else resolves to France because more people mean that one, the same shortcut a person on the street uses. See [the resolver and WOF](../../concepts/resolver-and-wof.mdx) and [importance vs population](../../concepts/importance-vs-population.mdx).
+This is where "which Paris?" gets answered — never by the model, which only tagged "Paris" as a place. The resolver walks the parsed tree top-down and narrows each name with everything around it: a resolved parent constrains its children (a locality must sit inside the region that resolved above it), the country constrains the search, an exact-name match outranks a fuzzy one, and the coarse-placer's country guess (Stage 1.5) re-ranks candidates within a tier. Only when all of that still leaves a tie does population break it — "Paris" with nothing else resolves to France because more people mean that one, the same shortcut a person on the street uses. See [the resolver and WOF](../../concepts/resolver-and-wof.mdx) and [importance vs population](../../concepts/importance-vs-population.mdx).
 
 ## The Ship-of-Theseus dial
 
@@ -146,7 +146,7 @@ import { PipelineExplorer } from "@site/src/components/PipelineExplorer/Pipeline
 	<PipelineExplorer />
 </DemoEmbedProvider>
 
-## What is honest to admit about today (May 2026)
+## Where it stands today (May 2026)
 
 - **CE-only training resolved the divergence problem.** The v0.5.2 model ships from a stable 100K-step CE-only training run on an A100. The dual-loss CRF-NLL + CE divergence that blocked v0.4.0 and v0.5.0 was resolved by setting `crf_loss_weight: 0.0` — CRF is used at inference only, not training. v0.5.3 diagnostic training is in progress with per-tag F1 visibility.
 - **The FST gazetteer prior is shipped but not yet in the browser.** The FST builder, Wikipedia importance scoring, and emission prior compose with the QueryShape soft prior in the Node.js pipeline. The browser `/demo` page runs the neural classifier directly without the FST — it would need a browser-compatible FST loader (Phase 4).

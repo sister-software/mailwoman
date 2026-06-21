@@ -99,7 +99,7 @@ lifted, the page↔worker contract is:
 - **Per-tier timeout with admin-centroid fallback.** If the situs/interp byte-range walk stalls (cold
   cache, slow link), abandon the street tier and return the admin-centroid result the WOF resolve
   already produced — a coarse pin beats a spinner. The tier field tells the UI to widen the radius and
-  caption it honestly. The cascade already degrades tier-by-tier; the worker adds the wall-clock guard.
+  caption it plainly. The cascade already degrades tier-by-tier; the worker adds the wall-clock guard.
 - **Warm-up on idle**, mirroring `WofHttpvfsPlaceLookup.warmUp()` — pull the situs index root + the
   hot WOF pages during browser idle so the first submit isn't paying cold serial RTTs.
 

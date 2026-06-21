@@ -29,7 +29,7 @@ Tiering (same schema/semantics as the JP builder):
   - is_containing=1  : Hangul name-confirmed locality (the precise tier; correct granularity, authoritative)
   - is_containing=0  : point-nearest fallback (province + coordinate are right; the unit may be finer/renamed)
 
-The province (admin1 -> WOF region, Hangul-exact, 100%) is recorded in `meta` as the robust coarse anchor.
+The province (admin1 -> WOF region, Hangul-exact, 100%) is recorded in `meta` as the reliable coarse anchor.
 
 Build-from-source: GeoNames postal KR (already an in-project source for DE/ES/IT/NL) + our custom WOF
 admin-kr.db (built from the whosonfirst-data-admin-kr repo, never a prebuilt geocode.earth dump).

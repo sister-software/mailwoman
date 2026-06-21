@@ -105,7 +105,7 @@ Synthesis is **on by default** but can be disabled (`synthesize: false` in the b
 
 Once aligned + synthesized, rows go through the **split** step. Three groups: train (~90%), val (a few percent for in-training eval), test (held out).
 
-The split is **locality-aware**: rows that share a locality stay in the same split. This is critical for honest evaluation. Without it, a model could memorize "Brooklyn = locality" from a training row and recover it on a val row, looking better than it really is.
+The split is **locality-aware**: rows that share a locality stay in the same split. This is critical for honest evaluation. Without it, a model could memorize "Brooklyn = locality" from a training row and recover it on a val row, looking better than it is.
 
 The split assignment is written to `SPLIT_MANIFEST.json` — every later step can reproduce which rows went where. If the same input goes through two different build runs, it ends up in the same split (deterministic hash on `source_id`).
 

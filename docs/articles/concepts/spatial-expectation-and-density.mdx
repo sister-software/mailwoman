@@ -112,9 +112,9 @@ Population is already in the system. The admin hierarchy is already in the syste
 
 ## What to build, and in what order
 
-The density model is not on the critical path. The critical path is: get the classical Fellegi-Sunter spine working, grade it on the NPI benchmark (#615), and produce the eligibility ↔ enrollment anti-join (#621). Those are the deliverables.
+The density model is not on the critical path. The critical path is: get the classical Fellegi-Sunter core working, grade it on the NPI benchmark (#615), and produce the eligibility ↔ enrollment anti-join (#621). Those are the deliverables.
 
-Two specific pieces are worth building early because they're load-bearing for the anti-join's interpretability, not just analytical color:
+Two specific pieces are worth building early because they're essential to the anti-join's interpretability, not just analytical color:
 
 1. **Attach HRSA HPSA/MUA designation to each resolved entity.** The FCC RHC forms already reference whether the HCP is in a designated shortage area. Cross-referencing the resolved entity cluster against the HRSA designation data (available via `data.hrsa.gov`) gives the anti-join output a "designated shortage area" column — a standard federal signal the data consumer can use to prioritize. This is a join, not a model.
 
@@ -128,7 +128,7 @@ The 2SFCA accessibility index and a full Central Place Theory-based expected-fac
 
 Every number this system produces — the accessibility index, the anti-join membership, the deviation from expected facility density — is a measurement. What a coverage gap means, what causes it, or what should be done about it is the data consumer's domain, not ours. We surface candidate links and reconciled entity sets; the analyst decides what the deviation implies.
 
-That line is not squeamishness. It is the correct division of labor for a system that resolves fragmented public data into an analyzable shape. The coverage product (#621) is worth building precisely because it makes that analysis tractable — not because it answers the question for the analyst, but because it asks the question cleanly and honestly.
+That line is not squeamishness. It is the correct division of labor for a system that resolves fragmented public data into an analyzable shape. The coverage product (#621) is worth building precisely because it makes that analysis tractable — not because it answers the question for the analyst, but because it asks the question cleanly.
 
 The spatial expectation model, at both scales, is how we make "honest" mean something precise: given what we know about the population and the data sources, here is what we'd expect to see, and here is how much the observed data departs from it. The rest is theirs.
 
@@ -136,6 +136,6 @@ The spatial expectation model, at both scales, is how we make "honest" mean some
 
 ## See also
 
-- [Geocode-first record matching](./geocode-first-record-matching.mdx) — the full matcher strategy, including the Fellegi-Sunter spine and the geocode-first blocking bet
+- [Geocode-first record matching](./geocode-first-record-matching.mdx) — the full matcher strategy, including the Fellegi-Sunter core and the geocode-first blocking bet
 - [Importance vs population](./importance-vs-population.mdx) — the two signals the resolver uses, and why population dominates the resolver tier
 - [Confidence calibration](./confidence-calibration.mdx) — how "calibrated" becomes a precise claim about probabilities rather than a general reassurance

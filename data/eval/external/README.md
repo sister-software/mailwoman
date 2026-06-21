@@ -55,7 +55,7 @@ Frank's guide / UPU instead.
 ## The highest-value runnable benchmark: libpostal
 
 `openvenues/libpostal` (MIT) — the canonical _statistical_ address parser, a
-genuinely different architecture from Pelias. Its `test/test_parser.c` (~60
+different architecture from Pelias. Its `test/test_parser.c` (~60
 hand-curated, deliberately adversarial cases: house-number ranges `912-914`,
 `92-10`; `Mc Carroll` splits; `apt. 3a`/`#104`/`6th Floor` sub-premise;
 venue+org prefixes; multilingual) is NOT in our suite and converts mechanically

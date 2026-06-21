@@ -36,6 +36,11 @@ export interface MailwomanLookupLike {
 			id: number
 			name: string
 			placetype: string
+			/**
+			 * ISO country code of the resolved place — lets the cascade country-gate an ambiguous
+			 * postcode.
+			 */
+			country?: string
 			lat: number
 			lon: number
 			score: number
@@ -158,11 +163,87 @@ export function streetShardUrl(slug: string, kind: "situs" | "interp"): string {
 }
 
 /**
- * Slugs we host street shards for (byte-range on R2). A state not in this set falls through to the
- * WOF admin centroid. Extend as shards are published — NY/MI/CA is the launch trio (the spec's size
- * spread); DC is the dense-urban verification (the White House resolves to its exact building).
+ * Gazetteer (date) version for the byte-ranged admin DB. The admin gazetteer is MODEL-INDEPENDENT —
+ * it changes when WOF/Overture coverage is rebuilt, NOT on every model release — so it lives on its
+ * own dated path, not under `<locale>/<model-version>/`. Bump this when `admin-global-priority.db`
+ * is rebuilt + re-uploaded (the immutable Cache-Control means a fresh DB needs a fresh URL). See
+ * RELEASING.md "Rebuilding + swapping the canonical admin gazetteer".
  */
-export const HOSTED_STREET_SLUGS = new Set(["dc", "mi", "ny", "ca"])
+export const ADMIN_GAZETTEER_VERSION = "2026-06-20g"
+
+/**
+ * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~530 MB incl. US + intl
+ * postcodes) — the FTS-free, single-B-tree-probe lookup that replaces the slim per-model-version
+ * `wof-hot.db` AND the full-DB FTS. A resolve touches a handful of contiguous pages (~12 range
+ * fetches/session vs 243 on the full DB), with GLOBAL coverage and no `SLIM_COUNTRIES` upkeep.
+ * Resolved by {@link WofCandidateTableLookup} (build-candidate.ts). Hosted at
+ * `mailwoman/gazetteer/<date>/candidate.db`, version-independent like the street shards.
+ */
+export function adminGazetteerUrl(): string {
+	return `${ASSET_BASE_URL}gazetteer/${ADMIN_GAZETTEER_VERSION}/candidate.db`
+}
+
+/**
+ * Slugs we host street shards for (byte-range on R2). A state not in this set falls through to the
+ * WOF admin centroid. National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US
+ * address points) + TIGER interp shards are hosted, so any US address resolves to its building
+ * (`address_point`, ≤10 m) or a calibrated interp estimate — not a city centroid. `vi` = US Virgin
+ * Islands. (`il` is the whole state incl. Cook; the separate `il-cook` build shard is not hosted.)
+ */
+export const HOSTED_STREET_SLUGS = new Set([
+	"ak",
+	"al",
+	"ar",
+	"az",
+	"ca",
+	"co",
+	"ct",
+	"dc",
+	"de",
+	"fl",
+	"ga",
+	"hi",
+	"ia",
+	"id",
+	"il",
+	"in",
+	"ks",
+	"ky",
+	"la",
+	"ma",
+	"md",
+	"me",
+	"mi",
+	"mn",
+	"mo",
+	"ms",
+	"mt",
+	"nc",
+	"nd",
+	"ne",
+	"nh",
+	"nj",
+	"nm",
+	"nv",
+	"ny",
+	"oh",
+	"ok",
+	"or",
+	"pa",
+	"ri",
+	"sc",
+	"sd",
+	"tn",
+	"tx",
+	"ut",
+	"va",
+	"vi",
+	"vt",
+	"wa",
+	"wi",
+	"wv",
+	"wy",
+])
 
 const US_STATE_NAME_TO_SLUG: Record<string, string> = {
 	alabama: "al",

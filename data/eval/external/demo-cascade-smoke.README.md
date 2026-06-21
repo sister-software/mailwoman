@@ -30,7 +30,7 @@ skips with a loud note when it isn't.
   runner's own output — that bakes the current behavior in as truth, which is
   exactly the failure mode this eval exists to catch.
 - **Do not massage a failing row.** A FAIL here is a finding (it may be a real
-  bug — that is the point). If the gazetteer itself changes (a WOF id genuinely
+  bug — that is the point). If the gazetteer itself changes (a WOF id
   supersedes another), update the row with a note explaining the re-verification.
 
 ## Row schema

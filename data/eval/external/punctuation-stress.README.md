@@ -18,7 +18,7 @@ Gold conventions, decided once here:
 4. **Unbalanced delimiters** (operator ruling 2026-06-11): a stray, unpaired delimiter is
    EXCLUDED from the component value (`Joe's "Pizza` → `venue: Joe's Pizza`), and the component is
    still graded — never omitted. BALANCED quotes that are part of a name as written stay
-   (`Joe's "Famous" Deli`, `Office "B"`). The load-bearing read remains parse SURVIVAL + neighbor
+   (`Joe's "Famous" Deli`, `Office "B"`). The essential read remains parse SURVIVAL + neighbor
    accuracy, captured per-row by the scorer (a thrown parse fails every component in the row).
 5. **Dotted abbreviations**: values keep their dots as written (`P.O. Box 19`, `St. Louis`,
    `Washington D.C.`) — the span-bridge regression lens.

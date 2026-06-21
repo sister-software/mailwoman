@@ -11,7 +11,7 @@ carries no gazetteer dependency. This is the offline, deterministic precompute D
 - **centroid**: taken from the first source that has a real centroid, in DE→FR→US order, so the
   collapse-relevant European rows get a European centroid on a collision. The centroid is the
   secondary signal (the posterior + the categorical anchor cue do the work).
-- **source** (#525, the no-load-bearing-trivia rule): names the dataset the centroid came from —
+- **source** (#525, the provenance-first rule): names the dataset the centroid came from —
   ``wof`` (our WOF postcode shards, which may themselves carry provenanced backfills; see the
   ``centroid_source`` table), ``census-zcta-2024`` (Census ZCTA Gazetteer fill, either already in
   the DB or joined here via ``--zcta``), or ``null`` for a placeholder (membership only). Loaders

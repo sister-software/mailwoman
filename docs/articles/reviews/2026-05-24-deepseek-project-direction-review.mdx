@@ -102,7 +102,7 @@ The model metrics are not yet a green light:
 
 ### 5. Synthetic corpus validation catches alignment, not semantics
 
-The substring validator is correctly treated as load-bearing — it proves annotated values appear in raw strings. But it does not prove labels are complete, semantically correct, or distributionally sane. Given the v0.5.0 divergence, B2's ~73K DeepSeek-generated transliteration pairs need more scrutiny before they become a major training signal:
+The substring validator is correctly treated as critical — it proves annotated values appear in raw strings. But it does not prove labels are complete, semantically correct, or distributionally sane. Given the v0.5.0 divergence, B2's ~73K DeepSeek-generated transliteration pairs need more scrutiny before they become a major training signal:
 
 - Cap synthetic mass as a controlled percentage of batches.
 - Stratify by template family and script.

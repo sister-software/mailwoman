@@ -22,6 +22,7 @@ import BrowserOnly from "@docusaurus/BrowserOnly"
 import Head from "@docusaurus/Head"
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
+import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
 import Layout from "@theme/Layout"
 import type { Map as MapLibreMap } from "maplibre-gl"
 import type React from "react"
@@ -34,6 +35,7 @@ import { PermalinkButton } from "../../components/PermalinkButton/PermalinkButto
 import { ResultPanel } from "../../components/ResultPanel/ResultPanel.tsx"
 import { VersionCompare } from "../../components/VersionCompare/VersionCompare.tsx"
 import {
+	adminGazetteerUrl,
 	assetUrl,
 	type DemoResult,
 	type DualRole,
@@ -297,6 +299,29 @@ const DemoApp: React.FC = () => {
 						}
 					}
 					map.on("load", wireTerrain)
+
+					// Add the coverage "fog of war" source + default-off fill layers once the basemap style is
+					// ready. Served as XYZ vector tiles by the tile worker; the fills sit beneath the first
+					// symbol layer so place labels stay legible.
+					const coverageSourceUrl = `https://tiles.sister.software/${CoverageTileSetID}.json`
+					const wireCoverage = (): void => {
+						if (!map.isStyleLoaded()) {
+							map.once("styledata", wireCoverage)
+							return
+						}
+						try {
+							if (!map.getSource(CoverageTileSetID)) {
+								map.addSource(CoverageTileSetID, createCoverageSource(coverageSourceUrl))
+							}
+							const firstSymbolID = map.getStyle().layers?.find((l) => l.type === "symbol")?.id
+							for (const layer of CoverageLayers) {
+								if (!map.getLayer(layer.id)) map.addLayer(layer, firstSymbolID)
+							}
+						} catch (error) {
+							console.warn("coverage overlay wiring failed", error)
+						}
+					}
+					map.on("load", wireCoverage)
 				}
 			} catch (error) {
 				if (cancelled) return
@@ -362,9 +387,9 @@ const DemoApp: React.FC = () => {
 				if (release?.hasWofDb) {
 					setLookupLoader(() => async (onProgress?: (bytesRead: number) => void) => {
 						// Range-load the DB via sql.js-httpvfs — ~5 MB/session vs the whole 53 MB.
-						const { loadHttpvfsDb, WofHttpvfsPlaceLookup } = await import("../../shared/httpvfs-resolver")
-						const worker = await loadHttpvfsDb(assetUrl(DEFAULT_LOCALE, selectedVersion, "wof-hot.db"), sqljsBaseUrl)
-						const wofLookup = new WofHttpvfsPlaceLookup(worker)
+						const { loadHttpvfsDb, WofCandidateTableLookup } = await import("../../shared/httpvfs-resolver")
+						const worker = await loadHttpvfsDb(adminGazetteerUrl(), sqljsBaseUrl)
+						const wofLookup = new WofCandidateTableLookup(worker)
 						// Warm the schema/FTS/abbr/dual-role pages now (idle or first submit) so the first
 						// real query starts from a warm page cache; report live transfer while it runs.
 						const poll = onProgress

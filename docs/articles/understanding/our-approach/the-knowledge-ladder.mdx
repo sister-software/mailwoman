@@ -112,7 +112,7 @@ Three properties make this the right home for "the model should know place names
   tokenizer for generalization; attach membership as a feature for knowledge.)
 - **The multi-hot encoding gives homograph awareness for free.** A token whose
   candidate set has more than one entry ("Georgia" → `[country, region]`) is _flagged as
-  ambiguous by construction_ — the model learns "context is load-bearing here."
+  ambiguous by construction_ — the model learns "context decides here."
 - **The over-reliance risk is handled by training, not architecture.** The measured
   failure mode of closed-vocab tags is a model that echoes a cheap correlation (the
   country retrain that learned "trailing token ⇒ country"). Homograph-contrast
@@ -140,7 +140,7 @@ particles ("Rue de Rivoli"), so `street_suffix` is not a tag that can occur in a
 parse — and RUE being a genuine USPS Pub-28 suffix variant means a model trained on
 consistent US splits will happily emit it on French soil (measured: the v4.3.0 gate's
 FAIL→corrective→PASS story). The conventions mask is the rung that makes the model's own
-address-system detection load-bearing: detected system → the codex conventions row →
+address-system detection essential: detected system → the codex conventions row →
 forbidden tags removed from the Viterbi vocabulary outright, and the system's postcode
 shape arms the snap-only repair pass. Same knowledge-outside-the-weights property as the
 gazetteer anchor: add a `de` or `gb` row to `codex/address-system-conventions.ts` and the

@@ -89,6 +89,16 @@
 		"tables": ["spr", "names", "concordances", "place_population", "ancestors", "place_search", "place_bbox"],
 		"spr_has_bbox_columns": true
 	},
+	"overture_divisions_supplement": {
+		"_comment": "2026-06-20: the canonical admin DB gained coverage for 15 zero-DB EU locales the WOF repos don't carry, sourced from the Overture Maps `divisions` theme and folded into the SAME build via build-unified-wof.ts --overture-countries (project-eu-coverage-not-retrain; docs/articles/plan/2026-06-19-coordinate-leverage-sprint.md). Coordinate p50 solved for 14/15 at ES/IT/NL parity, zero GPU. Rows carry synthetic ids based at 8e12 (no collision with WOF ids <~2e9); the post-build + FTS steps treat them uniformly. NOT the off-the-shelf Overture-everything — only divisions for these locales, alongside the custom WOF DB.",
+		"build_command": "node --experimental-strip-types scripts/build-unified-wof.ts --data /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data --overture-countries PT,PL,BE,AT,CH,CZ,DK,NO,FI,SK,SI,HR,LU,LV,LT --output <out>.db  (then the same 3 post_build steps IN ORDER)",
+		"overture_release": "2026-06-17.0",
+		"countries": ["PT", "PL", "BE", "AT", "CH", "CZ", "DK", "NO", "FI", "SK", "SI", "HR", "LU", "LV", "LT"],
+		"divisions_ingested": 299027,
+		"id_base": 8000000000000,
+		"also_added": "TW (16,750 localities) from the sibling whosonfirst-data-admin-tw repo — a previously-deferred gap, additive, Taipei resolves.",
+		"verified": "US resolver eval byte-identical to the pre-swap shipped DB (loc 97.6% / region 99.9% / coord p50 3.3km); priority-country locality counts unchanged; 184 region abbrevs unchanged."
+	},
 	"postcode_build": {
 		"_comment": "US postcodes live in a SEPARATE shard DB (the resolver routes postalcode queries to it via multi-shard ATTACH). Built with the same build-unified-wof.ts using --placetypes postalcode.",
 		"artifact": "postalcode-us.db",
@@ -135,7 +145,8 @@
 		"admin-fr was missing from the cloned repos when this manifest was created (only the built admin-fr.db artifact remained); re-cloned 2026-05-30 at the commit above.",
 		"Clones are shallow (git clone --depth 1) for the data; the commit hash still pins the snapshot.",
 		"Postcodes: US (admin shard) + GB (postcode-build-gb) + DE/ES/FR/IT/NL (postalcode-intl.db) for the coordinate-first table.",
-		"2026-06-04: rebuilt admin-global-priority.db to add ES/IT/NL localities (NL coord-first now resolves). DE/FR/GB unchanged + DE PIP-containment held at 92.6% (no regression). Prior DB backed up as admin-global-priority.db.pre-nl-bak."
+		"2026-06-04: rebuilt admin-global-priority.db to add ES/IT/NL localities (NL coord-first now resolves). DE/FR/GB unchanged + DE PIP-containment held at 92.6% (no regression). Prior DB backed up as admin-global-priority.db.pre-nl-bak.",
+		"2026-06-20: swapped in the Overture-divisions supplement (see overture_divisions_supplement) — +15 EU locales (299,027 divisions) + TW (16,750). US resolver eval byte-identical to the prior DB; priority counts + 184 abbrevs unchanged. Prior DB backed up as admin-global-priority.db.pre-overture-eu-bak."
 	],
 	"postcode_locality_cjk": {
 		"_comment": "CJK postcode→locality via authoritative NAME-MATCH (not PIP — WOF CJK has no municipality polygons). Same postcode_locality table, consumed by the same postcode_area_resolution strategy. See resolver-wof-sqlite/POSTCODE-LOCALITY.md (CJK section) + docs/articles/evals/2026-06-05-cjk-arena.md.",

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Boundary-instability synthesizer (#375 — the highest-leverage parser lever). The failure taxonomy
+ *   Boundary-instability synthesizer (#375 — the highest-impact parser lever). The failure taxonomy
  *
  *   The within-token-punctuation decomposition (#702) found one failure FAMILY surfacing under many
  *   names: the model mis-places token boundaries between adjacent components when the boundary is
