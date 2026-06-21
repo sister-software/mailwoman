@@ -33,8 +33,8 @@ export {
 export type { PostalCityAliasDatabase, PostalCityAliasTable } from "./postal-city-alias-schema.js"
 export {
 	POSTAL_CITY_CANDIDATE_COLUMNS,
-	POSTAL_CITY_CANDIDATE_DDL,
 	POSTAL_CITY_CANDIDATE_TABLE,
+	createPostalCityCandidateTable,
 } from "./postal-city-candidate-schema.js"
 export type { PostalCityCandidateDatabase, PostalCityCandidateTable } from "./postal-city-candidate-schema.js"
 

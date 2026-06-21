@@ -18,6 +18,8 @@
  *   untouched.
  */
 
+import { sql, type Kysely } from "kysely"
+
 /**
  * One postal-city → geo-locality edge, keyed exactly by `(name_key, postcode)`. The probe returns
  * the geographic locality directly; the denormalized name/coord avoid a join back to `candidate`.
@@ -35,14 +37,18 @@ export interface PostalCityCandidateTable {
 	longitude: number
 }
 
-/** The postal-city-candidate database schema for `new
-DatabaseClient<PostalCityCandidateDatabase>(...)`. */
+/**
+ * The postal-city-candidate database schema for `new
+ * DatabaseClient<PostalCityCandidateDatabase>(...)`.
+ */
 export interface PostalCityCandidateDatabase {
 	postal_city_candidate: PostalCityCandidateTable
 }
 
-/** The table name the lookup probes (existence-gated, so an old candidate.db without it is
-byte-stable). */
+/**
+ * The table name the lookup probes (existence-gated, so an old candidate.db without it is
+ * byte-stable).
+ */
 export const POSTAL_CITY_CANDIDATE_TABLE = "postal_city_candidate"
 
 /** Column order for the builder's positional INSERT. */
@@ -56,17 +62,23 @@ export const POSTAL_CITY_CANDIDATE_COLUMNS = [
 ] as const
 
 /**
- * DDL for the side-index — a clustered `WITHOUT ROWID` B-tree on `(name_key, postcode)` so the
- * resolve is a single exact probe.
+ * Create the side-index — a clustered `WITHOUT ROWID` B-tree on `(name_key, postcode)` so the
+ * resolve is a single exact probe. Idempotent (`IF NOT EXISTS`); pass a {@link DatabaseClient} (or
+ * any `Kysely`) over the candidate DB. The Kysely schema-builder is the house idiom for table
+ * creation — see `AGENTS.md` (inline-SQL → Kysely).
  */
-export const POSTAL_CITY_CANDIDATE_DDL = /* sql */ `
-CREATE TABLE IF NOT EXISTS postal_city_candidate (
-	name_key  TEXT NOT NULL,
-	postcode  TEXT NOT NULL,
-	spr_id    INTEGER NOT NULL,
-	name      TEXT NOT NULL,
-	latitude  REAL NOT NULL,
-	longitude REAL NOT NULL,
-	PRIMARY KEY (name_key, postcode)
-) WITHOUT ROWID;
-`
+export async function createPostalCityCandidateTable(db: Kysely<PostalCityCandidateDatabase>): Promise<void> {
+	await db.schema
+		.createTable(POSTAL_CITY_CANDIDATE_TABLE)
+		.ifNotExists()
+		.addColumn("name_key", "text", (c) => c.notNull())
+		.addColumn("postcode", "text", (c) => c.notNull())
+		.addColumn("spr_id", "integer", (c) => c.notNull())
+		.addColumn("name", "text", (c) => c.notNull())
+		.addColumn("latitude", "real", (c) => c.notNull())
+		.addColumn("longitude", "real", (c) => c.notNull())
+		.addPrimaryKeyConstraint("postal_city_candidate_pk", ["name_key", "postcode"])
+		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic escape hatch.
+		.modifyEnd(sql`without rowid`)
+		.execute()
+}
