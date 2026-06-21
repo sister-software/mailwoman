@@ -26,7 +26,7 @@ import { DatabaseSync } from "node:sqlite"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "../state.js"
-import { TIGER_INITIALIZE_SQL, type PLBlockTable, type TIGERDatabase } from "./schema.js"
+import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERDatabase } from "./schema.js"
 
 const REDISTRICTING_BASE =
 	"https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171"
@@ -168,8 +168,9 @@ export async function* fetchRedistricting(
 	yield { phase: "header", blocks: total }
 
 	const db = new DatabaseSync(outPath)
-	db.exec(TIGER_INITIALIZE_SQL)
+	db.exec(TIGER_PRAGMAS)
 	const kdb = new DatabaseClient<TIGERDatabase>({ database: db })
+	await initializeTIGERSchema(kdb)
 
 	try {
 		// Idempotent re-run: drop the rows we're about to (re)load.
