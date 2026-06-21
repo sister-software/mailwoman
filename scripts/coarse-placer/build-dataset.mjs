@@ -32,9 +32,18 @@ const TEST_FRAC = 0.1
 const COUNTRIES = ["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW"]
 const TRAIN_GLOB = "/mnt/playpen/mailwoman-data/corpus/versioned/v0.5.0/corpus-v0.5.0/train/*.parquet"
 const OUT_DIR = path.resolve(import.meta.dirname, "../../data/coarse-placer")
+
+// #743: the EU expansion. The v0.5.0 corpus carries zero rows for these locales, so they're drawn
+// from the Overture per-country addresses theme (the same source build-eu-eval-set.ts uses). They
+// were previously OTHER outlier exposure (PL/PT/CZ) or simply unrepresentable; here they become
+// first-class in-map countries so the soft country prior can pin them. DE/NL/IT/ES/GB are excluded
+// (already in COUNTRIES, drawn from the rich corpus).
+const NEW_EU = ["AT", "BE", "CH", "CZ", "DK", "EE", "FI", "HR", "LT", "LU", "LV", "NO", "PL", "PT", "SI", "SK"]
+const OVERTURE_DIR = "/mnt/playpen/mailwoman-data/overture/2026-06-17.0"
 mkdirSync(OUT_DIR, { recursive: true })
 
 const duck = await (await DuckDBInstance.create()).connect()
+await duck.run("SET memory_limit='4GB'; SET threads=4;")
 
 const train = [],
 	val = [],
@@ -63,6 +72,59 @@ for (const country of COUNTRIES) {
 	for (const raw of valRows) val.push({ raw, country })
 	for (const raw of testRows) test.push({ raw, country })
 	console.log(`  ${country}: train ${trainRows.length}  val ${valRows.length}  test ${testRows.length}`)
+}
+
+// #743 EU expansion: draw the new in-map countries from the Overture per-country addresses theme.
+// The raw fields are formatted into native address strings with FORMAT VARIETY (4 templates picked
+// deterministically per row) so the model can't shortcut on a single template shape — it must use
+// the actual street-type words + locality n-grams (Finnish "katu/tie", Polish "ul.", Norwegian
+// "veien") that carry the country signal. Same 80/10/10 dedup split as the corpus path.
+function formatEu(street, number, postcode, loc, t) {
+	const s = String(street).trim()
+	const num = number != null && String(number).trim() !== "" ? ` ${String(number).trim()}` : ""
+	const pc = postcode != null && String(postcode).trim() !== "" ? String(postcode).trim() : ""
+	switch (t) {
+		case 1:
+			return `${s}${num} ${loc}` // no postcode, no comma
+		case 2:
+			return `${s}${num}, ${loc}${pc ? `, ${pc}` : ""}` // postcode trailing
+		case 3:
+			return `${s}, ${pc ? `${pc} ` : ""}${loc}` // no house number
+		default:
+			return `${s}${num}, ${pc ? `${pc} ` : ""}${loc}` // {street number, postcode locality}
+	}
+}
+for (const country of NEW_EU) {
+	const parquet = `${OVERTURE_DIR}/addresses-${country.toLowerCase()}.parquet`
+	const q = `SELECT street, number, postcode,
+			COALESCE(NULLIF(trim(postal_city), ''), address_levels[len(address_levels)].value) AS loc
+		FROM read_parquet('${parquet}')
+		WHERE street IS NOT NULL AND trim(street) <> ''
+		USING SAMPLE ${Math.ceil(PER * 1.4)} ROWS`
+	let res
+	try {
+		res = await duck.runAndReadAll(q)
+	} catch (e) {
+		console.error(`  ${country}: SKIPPED — ${e.message}`)
+		continue
+	}
+	const seen = new Set()
+	const rows = []
+	for (const r of res.getRowObjects()) {
+		if (rows.length >= PER) break
+		const loc = r.loc == null ? "" : String(r.loc).trim()
+		if (!loc) continue
+		const raw = formatEu(r.street, r.number, r.postcode, loc, hash(`${r.street}|${loc}`) % 4)
+		if (!raw || seen.has(raw)) continue
+		seen.add(raw)
+		rows.push(raw)
+	}
+	const nVal = Math.floor(rows.length * VAL_FRAC)
+	const nTest = Math.floor(rows.length * TEST_FRAC)
+	for (const raw of rows.slice(0, nVal)) val.push({ raw, country })
+	for (const raw of rows.slice(nVal, nVal + nTest)) test.push({ raw, country })
+	for (const raw of rows.slice(nVal + nTest)) train.push({ raw, country })
+	console.log(`  ${country} (overture): train ${rows.length - nVal - nTest}  val ${nVal}  test ${nTest}`)
 }
 
 for (const [name, rows] of [
