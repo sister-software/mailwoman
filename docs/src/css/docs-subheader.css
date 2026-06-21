@@ -1,0 +1,8 @@
+/* Shared height token for the docs section sub-header. The band's height (set in
+   src/components/DocsSubHeader/styles.module.css) and the layout offsets that keep
+   it from overlapping the sidebar/TOC (in src/theme/DocRoot/Layout/styles.module.css)
+   both read this so the two stay in lockstep. Kept global — and out of a CSS
+   module — so the value is a plain authored token, not a hashed name. */
+:root {
+	--mm-docs-subheader-height: 3rem;
+}

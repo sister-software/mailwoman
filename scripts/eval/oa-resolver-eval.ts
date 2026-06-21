@@ -47,9 +47,15 @@
 
 import { lookupGermanState } from "@mailwoman/codex/de"
 import { lookupFrenchRegion } from "@mailwoman/codex/fr"
+import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver, expandPlacetypeFilter } from "@mailwoman/core/resolver"
-import { type ClassificationRecord, createAddressParser, createRuntimePipeline } from "mailwoman"
+import {
+	type ClassificationRecord,
+	createAddressParser,
+	createRuntimePipeline,
+	loadDefaultPlaceCountry,
+} from "mailwoman"
 import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { v0RecordToTree } from "./v0-tree-adapter.ts"
@@ -637,11 +643,31 @@ async function main(): Promise<void> {
 	const diagMisses: string[] = []
 
 	// #478 inc 3 leg 2 — the ASSEMBLED arms. Route each row through `createRuntimePipeline` using the
-	// SAME neural classifier (postcodeRepair on, for comparability with the neural arm), placeCountry
-	// OFF (so we isolate arbitration from the #244 coarse prior), and the SAME resolver — without
-	// (`assembled`) and with (`assembled+arb`) per-component arbitration. The street+house_number
-	// precondition (the thing #566 broke) is counted per arm so a regression is visible directly.
+	// SAME neural classifier (postcodeRepair on, for comparability with the neural arm) and the SAME
+	// resolver — without (`assembled`) and with (`assembled+arb`) per-component arbitration. The
+	// street+house_number precondition (the thing #566 broke) is counted per arm so a regression is
+	// visible directly.
+	//
+	// placeCountry default is OFF here (`false`) so the assembled arm isolates arbitration from the
+	// #244 coarse prior. But the SHIPPED `createRuntimePipeline`/`geocodeAddress` default IS the
+	// bundled placer (on, open-set @ 0.9). `--place-country` flips this eval to the production-
+	// representative config — load the same bundled placer and feed it to the pipeline — which is the
+	// #743 EU country-constraint integrity fix: without it the assembled EU coords are not what a real
+	// caller sees (ambiguous EU names without a country constraint land off-continent).
 	const runAssembled = process.argv.includes("--assembled")
+	// `--place-country-hard` (#194/#743) promotes a CONFIDENT placer guess to a HARD country filter
+	// (empty→unresolved) — the lever for the low-pop EU tail the soft prior can't move. Production-
+	// representative: gated by the built-in coverage safelist (only well-covered countries hard-filter).
+	// `--place-country-hard-all` measures UNGATED (every confident country hard-filters, via a safelist
+	// override of the full in-map set) — how per-country hard-resolve-rates are measured to GROW the
+	// safelist. Both imply the placer is loaded.
+	const useHardCountryAll = process.argv.includes("--place-country-hard-all")
+	const useHardCountry = process.argv.includes("--place-country-hard") || useHardCountryAll
+	const usePlaceCountry = process.argv.includes("--place-country") || useHardCountry
+	const evalPlacer = runAssembled && usePlaceCountry ? await loadDefaultPlaceCountry() : null
+	if (usePlaceCountry && !evalPlacer) {
+		console.warn("--place-country requested but the bundled coarse-placer failed to load; running placeCountry OFF.")
+	}
 	const assembledAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
 	const assembledArbAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
 	let neuralPrecond = 0
@@ -665,7 +691,14 @@ async function main(): Promise<void> {
 					parse: (text: string, o?: object) => neural.parse(text, { ...o, postcodeRepair: true }),
 				} as never,
 				resolver: resolver as never,
-				placeCountry: false,
+				placeCountry: evalPlacer ?? false,
+				hardPlaceCountry: useHardCountry && !!evalPlacer,
+				// `--place-country-hard-all` overrides the production coverage safelist with the full in-map
+				// set, so EVERY confident country hard-filters (ungated measurement). Plain `--place-country-hard`
+				// leaves it undefined → the built-in safelist (production-representative).
+				...(useHardCountryAll
+					? { hardCountrySafelist: new Set(COARSE_CLASSES.filter((c) => c !== "OTHER")) as ReadonlySet<string> }
+					: {}),
 			})
 		: null
 

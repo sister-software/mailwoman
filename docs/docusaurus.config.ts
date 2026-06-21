@@ -168,6 +168,7 @@ const config: Config = {
 						"./src/css/theme-dark.css",
 						"./src/css/markdown.css",
 						"./src/css/sidebar.css",
+						"./src/css/docs-subheader.css",
 						"./src/css/toc-mobile.css",
 						"./src/css/mermaid.css",
 						"./src/css/custom.css",
@@ -210,8 +211,9 @@ const config: Config = {
 					position: "left",
 				},
 				{
+					// Lands on the "Start here" section; the docs sub-header switches sections from there.
 					type: "docSidebar",
-					sidebarId: "docs",
+					sidebarId: "startHere",
 					position: "left",
 					label: "Docs",
 				},

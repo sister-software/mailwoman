@@ -9,6 +9,15 @@
 			"email": "teffen@sister.software"
 		}
 	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "tiger"
+	},
+	"bugs": {
+		"url": "https://github.com/sister-software/mailwoman/issues"
+	},
+	"homepage": "https://github.com/sister-software/mailwoman",
 	"scripts": {
 		"test": "node ./out/sdk/TIGERService.test.js"
 	},

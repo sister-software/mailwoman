@@ -10,7 +10,7 @@
 :root {
 	/* === Brand anchors (canonical — match the design tokens) =============== */
 	--mw-magenta: hsl(318.62deg 100% 50%); /* #ff00b0 — primary brand        */
-	--mw-blue: hsl(249.43deg 100% 50%); /* #1a00ff — link + sidebar slab  */
+	--mw-blue: hsl(249.43deg 100% 36.39%); /* #1a00ff — link + sidebar slab  */
 	--mw-navy: hsl(230.21deg 100% 11.41%); /* #00093a — navbar chrome        */
 	--mw-amber: hsl(39deg 100% 50%); /* secondary accent              */
 	--mw-teal: hsl(97.78deg 100% 50%); /* success / positive accent     */

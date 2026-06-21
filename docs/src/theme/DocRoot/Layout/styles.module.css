@@ -1,0 +1,65 @@
+/**
+ * Layout shell for the ejected theme/DocRoot/Layout (see ./index.tsx).
+ * `.docRoot` and `.docsWrapper` are copied verbatim from @docusaurus/theme-classic;
+ * `.docsViewport` is the added column wrapper that lets <DocsSubHeader/> sit above
+ * the sidebar+content row.
+ */
+
+.docsViewport {
+	display: flex;
+	flex-direction: column;
+	flex: 1 0 auto;
+}
+
+.docRoot {
+	display: flex;
+	width: 100%;
+}
+
+.docsWrapper {
+	display: flex;
+	flex: 1 0 auto;
+}
+
+/* Layout offsets applied only when the sub-header band is mounted (see ./index.tsx).
+   The band is a sticky element between the navbar and the sidebar/content row; these
+   rules keep it from overlapping the sticky sidebar menu and right-hand TOC (both
+   descendants of this wrapper). Scoped to this wrapper (not a global html class) so
+   it can't fight Docusaurus's Helmet-managed <html> classList, and so single-section
+   sidebars keep the stock offsets. The shared height token lives in
+   src/css/docs-subheader.css. */
+@media (min-width: 997px) {
+	/* Upstream pulls the sidebar column up by the navbar height (its sticky viewport
+	   then spans full height under the navbar). The in-flow band adds its own height
+	   to that column's offset at rest, so without this it'd be double-counted — a
+	   ~48px dead gap above the first item. Pull up by navbar + band to cancel it. */
+	.withSubHeader :global(.theme-doc-sidebar-container) {
+		margin-top: calc(-1 * (var(--ifm-navbar-height) + var(--mm-docs-subheader-height)));
+	}
+
+	/* Clear the band when stuck (scrolled): the sidebar menu scrolls inside a viewport
+	   pinned to the top, so its first item needs the band's height of top padding. */
+	.withSubHeader :global(.theme-doc-sidebar-menu) {
+		padding-top: var(--mm-docs-subheader-height);
+		transition: padding-top var(--ifm-transition-fast) ease;
+	}
+
+	.withSubHeader :global(.theme-doc-toc-desktop) {
+		top: calc(var(--ifm-navbar-height) + 1rem + var(--mm-docs-subheader-height));
+		max-height: calc(100vh - (var(--ifm-navbar-height) + 2rem + var(--mm-docs-subheader-height)));
+		transition: top var(--ifm-transition-fast) ease;
+	}
+
+	/* Band slid away (scrolled down): the sidebar/TOC reclaim its space in sync with
+	   the band's slide-up, so the sticky columns don't leave a blank strip up top.
+	   The container margin above only affects the at-rest (band-visible) position, so
+	   it needs no hidden-state variant. */
+	.subHeaderHidden :global(.theme-doc-sidebar-menu) {
+		padding-top: 0;
+	}
+
+	.subHeaderHidden :global(.theme-doc-toc-desktop) {
+		top: calc(var(--ifm-navbar-height) + 1rem);
+		max-height: calc(100vh - (var(--ifm-navbar-height) + 2rem));
+	}
+}

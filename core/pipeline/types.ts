@@ -61,6 +61,24 @@ export interface PipelineOpts {
 	 * - Off by default → byte-stable for mixed-case input.
 	 */
 	normalizeCase?: boolean
+	/**
+	 * #743/#194: promote a CONFIDENT coarse-placer guess from the soft `anchorPosterior` boost to a
+	 * HARD country filter (empty→unresolved) — see {@link ResolveOpts.hardCountry}. Gated three ways:
+	 * the placer's confidence ≥ `HARD_PLACE_COUNTRY_MIN_CONF` (ambiguous DK↔NO stay soft), the
+	 * country is in the coverage `HARD_PLACE_COUNTRY_SAFELIST` (or a {@link hardCountrySafelist}
+	 * override), and no caller `hardCountry`/`defaultCountry` is already set. **Default-ON** in the
+	 * shipped `createRuntimePipeline`/`geocodeAddress` (#743, 2026-06-22) — but the safelist confines
+	 * the hard filter to well-covered countries, so the low-coverage tail (FI/PL) keeps its recall on
+	 * the soft path with no regression. Pass `false` to force the pre-#194 soft-only behavior.
+	 */
+	hardPlaceCountry?: boolean
+	/**
+	 * #743/#194: override the coverage safelist that gates {@link hardPlaceCountry}. Undefined → the
+	 * built-in `HARD_PLACE_COUNTRY_SAFELIST` (production). Supply a set to test/measure a different
+	 * coverage frontier — the resolver eval passes the full in-map country set to measure ungated
+	 * hard-resolve-rates (which is how the production safelist is grown).
+	 */
+	hardCountrySafelist?: ReadonlySet<string>
 	signal?: AbortSignal
 }
 
