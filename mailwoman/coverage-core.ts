@@ -111,8 +111,10 @@ function resolveStates(opts: CoverageBuildOptions): StateShard[] {
 		})
 }
 
-/** Contiguous, gap-free zoom bands across the chosen resolutions (finest baked at the single
-tile-max). */
+/**
+ * Contiguous, gap-free zoom bands across the chosen resolutions (finest baked at the single
+ * tile-max).
+ */
 function buildBands(allRes: number[], tileMaxZoom: number): Map<number, [number, number]> {
 	const asc = [...allRes].sort((a, b) => a - b)
 	return new Map(

@@ -188,10 +188,65 @@ export function adminGazetteerUrl(): string {
 
 /**
  * Slugs we host street shards for (byte-range on R2). A state not in this set falls through to the
- * WOF admin centroid. Extend as shards are published — NY/MI/CA is the launch trio (the spec's size
- * spread); DC is the dense-urban verification (the White House resolves to its exact building).
+ * WOF admin centroid. National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US
+ * address points) + TIGER interp shards are hosted, so any US address resolves to its building
+ * (`address_point`, ≤10 m) or a calibrated interp estimate — not a city centroid. `vi` = US Virgin
+ * Islands. (`il` is the whole state incl. Cook; the separate `il-cook` build shard is not hosted.)
  */
-export const HOSTED_STREET_SLUGS = new Set(["dc", "mi", "ny", "ca"])
+export const HOSTED_STREET_SLUGS = new Set([
+	"ak",
+	"al",
+	"ar",
+	"az",
+	"ca",
+	"co",
+	"ct",
+	"dc",
+	"de",
+	"fl",
+	"ga",
+	"hi",
+	"ia",
+	"id",
+	"il",
+	"in",
+	"ks",
+	"ky",
+	"la",
+	"ma",
+	"md",
+	"me",
+	"mi",
+	"mn",
+	"mo",
+	"ms",
+	"mt",
+	"nc",
+	"nd",
+	"ne",
+	"nh",
+	"nj",
+	"nm",
+	"nv",
+	"ny",
+	"oh",
+	"ok",
+	"or",
+	"pa",
+	"ri",
+	"sc",
+	"sd",
+	"tn",
+	"tx",
+	"ut",
+	"va",
+	"vi",
+	"vt",
+	"wa",
+	"wi",
+	"wv",
+	"wy",
+])
 
 const US_STATE_NAME_TO_SLUG: Record<string, string> = {
 	alabama: "al",

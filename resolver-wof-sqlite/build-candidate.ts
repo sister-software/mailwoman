@@ -28,8 +28,15 @@
  *   session (the full DB needs 243); US locality 96.8% (region bbox), EU coord parity 88.6%.
  */
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { existsSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import {
+	CANDIDATE_COLUMNS,
+	CANDIDATE_STAGE_DDL,
+	CANDIDATE_TABLE_DDL,
+	type CandidateDatabase,
+} from "./candidate-schema.js"
 import { normalizeLocalityForKey } from "./street-normalize.js"
 
 /** Boundary-preserving alias-bag separator (#523, U+E000). */
@@ -82,27 +89,22 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	const src = new DatabaseSync(opts.input, { readOnly: true })
 	const out = new DatabaseSync(opts.output)
-	out.exec(`
-		PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;
-		CREATE TABLE country_codes (id INTEGER PRIMARY KEY, code TEXT UNIQUE);
-		CREATE TABLE placetype_codes (id INTEGER PRIMARY KEY, placetype TEXT UNIQUE);
-		CREATE TABLE cand_stage (name_key TEXT, country_id INTEGER, region_id INTEGER, placetype_id INTEGER,
-			neg_rank REAL, spr_id INTEGER, name TEXT, latitude REAL, longitude REAL,
-			min_lat REAL, min_lon REAL, max_lat REAL, max_lon REAL, population INTEGER, is_primary INTEGER);
-	`)
+	// Build-tuning pragmas (raw — Kysely doesn't model PRAGMA). The code dictionaries + the transient
+	// staging table come from the SHARED schema DDL, so they can't drift from {@link CandidateDatabase}.
+	out.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
+	out.exec(CANDIDATE_STAGE_DDL)
+	const kdb = new DatabaseClient<CandidateDatabase>({ database: out })
 
-	// --- compact code maps (country/placetype → small int, shrinks the clustered key) ---
+	// --- compact code maps (country/placetype → small int, shrinks the clustered key). The ids are
+	// assigned here; the rows are bulk-inserted via kdb once the passes have discovered every code. ---
 	const ccodes = new Map<string, number>()
 	const ptcodes = new Map<string, number>()
-	const insCc = out.prepare("INSERT INTO country_codes VALUES (?, ?)")
-	const insPt = out.prepare("INSERT INTO placetype_codes VALUES (?, ?)")
 	const ccId = (code: string | null): number => {
 		const c = (code || "??").toUpperCase()
 		let id = ccodes.get(c)
 		if (id === undefined) {
 			id = ccodes.size
 			ccodes.set(c, id)
-			insCc.run(id, c)
 		}
 		return id
 	}
@@ -112,7 +114,6 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		if (id === undefined) {
 			id = ptcodes.size
 			ptcodes.set(p, id)
-			insPt.run(id, p)
 		}
 		return id
 	}
@@ -125,7 +126,10 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	}
 	progress("region", `${regionOf.size.toLocaleString()} places carry a region`)
 
-	const insStage = out.prepare("INSERT INTO cand_stage VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+	// The hot path — millions of clustered rows. Kept a single positional prepared statement (the fastest
+	// node:sqlite insert) rather than a per-row query builder. Placeholders come from CANDIDATE_COLUMNS so
+	// the column COUNT can't drift; the positional run() args below MUST stay in CANDIDATE_COLUMNS order.
+	const insStage = out.prepare(`INSERT INTO cand_stage VALUES (${CANDIDATE_COLUMNS.map(() => "?").join(", ")})`)
 
 	// --- pass 1: primaries (and the per-place attrs the alias/abbrev passes reuse) ---
 	progress("primaries", "indexing place names")
@@ -273,31 +277,43 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	}
 	if (nPostcode > 0) progress("postcodes", `${nPostcode.toLocaleString()} postcodes`)
 
+	// --- code dictionaries: typed batch inserts via kdb (a few hundred rows — Kysely is clean here) ---
+	if (ccodes.size > 0) {
+		await kdb
+			.insertInto("country_codes")
+			.values([...ccodes].map(([code, id]) => ({ id, code })))
+			.execute()
+	}
+	if (ptcodes.size > 0) {
+		await kdb
+			.insertInto("placetype_codes")
+			.values([...ptcodes].map(([placetype, id]) => ({ id, placetype })))
+			.execute()
+	}
+
 	// --- materialize the clustered WITHOUT ROWID table (sorted insert → contiguous leaves) ---
 	progress("cluster", "building clustered candidate table + VACUUM")
-	out.exec(`
-		CREATE TABLE candidate (
-			name_key TEXT NOT NULL, country_id INTEGER NOT NULL, region_id INTEGER NOT NULL,
-			placetype_id INTEGER NOT NULL, neg_rank REAL NOT NULL, spr_id INTEGER NOT NULL,
-			name TEXT, latitude REAL, longitude REAL, min_lat REAL, min_lon REAL, max_lat REAL, max_lon REAL,
-			population INTEGER, is_primary INTEGER,
-			PRIMARY KEY (name_key, country_id, region_id, placetype_id, neg_rank, spr_id)
-		) WITHOUT ROWID;
-		-- OR IGNORE: an abbrev/alias can normalize to a place's primary key (same place, same rank) → any one row.
-		INSERT OR IGNORE INTO candidate
-			SELECT name_key, country_id, region_id, placetype_id, neg_rank, spr_id, name, latitude, longitude,
-				min_lat, min_lon, max_lat, max_lon, population, is_primary
-			FROM cand_stage ORDER BY name_key, country_id, region_id, placetype_id, neg_rank, spr_id;
-		DROP TABLE cand_stage;
-	`)
+	// Column list + clustered-key order are sourced from CANDIDATE_COLUMNS (the first 6 ARE the PRIMARY
+	// KEY) so the SELECT, the ORDER BY, and the table can't drift. The DDL is the shared CANDIDATE_TABLE_DDL.
+	const cols = CANDIDATE_COLUMNS.join(", ")
+	const keyOrder = CANDIDATE_COLUMNS.slice(0, 6).join(", ")
+	out.exec(
+		CANDIDATE_TABLE_DDL +
+			// OR IGNORE: an abbrev/alias can normalize to a place's primary key (same place, same rank) → any one row.
+			`INSERT OR IGNORE INTO candidate (${cols}) SELECT ${cols} FROM cand_stage ORDER BY ${keyOrder};` +
+			`DROP TABLE cand_stage;`
+	)
 	// page_size MUST be set right before VACUUM: node:sqlite initializes the file at the 4096 default on
 	// `new DatabaseSync`, so the creation-time pragma is a no-op — only a VACUUM rebuilds at the new size.
 	// 8192 matches the sql.js-httpvfs 64 KiB request chunk cleanly (8 pages) and shallows the B-tree.
 	out.exec("PRAGMA page_size=8192")
 	out.exec("VACUUM")
 
-	const rows = Number((out.prepare("SELECT count(*) AS n FROM candidate").get() as { n: number }).n)
+	const { n: rows } = await kdb
+		.selectFrom("candidate")
+		.select((eb) => eb.fn.countAll<number>().as("n"))
+		.executeTakeFirstOrThrow()
 	src.close()
-	out.close()
+	await kdb.destroy() // closes the underlying `out` connection
 	return { rows, places: attrs.size, primaries: nPrim, aliases: nAlias, abbrevs: nAbbr, postcodes: nPostcode }
 }

@@ -34,6 +34,11 @@ import { DuckDBInstance } from "@duckdb/node-api"
 // Cross-tree source import (.ts explicit): this script runs via --experimental-strip-types,
 // not from compiled out/ — the lookup tier imports the same module intra-package.
 import {
+	ADDRESS_POINT_COLUMNS,
+	ADDRESS_POINT_DDL,
+	ADDRESS_POINT_INDEX_DDL,
+} from "../resolver-wof-sqlite/address-point-schema.ts"
+import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
 	normalizeStreetForKey,
@@ -113,26 +118,14 @@ const datasetFilter =
 		: ""
 
 const db = new DatabaseSync(OUT)
-db.exec(`
-	PRAGMA journal_mode = WAL;
-	CREATE TABLE address_point (
-		street_norm   TEXT NOT NULL,
-		street_key    TEXT NOT NULL, -- canonicalizeRouteKey(street_norm): the route-fold key (#483 Method 2)
-		number        TEXT NOT NULL,
-		unit          TEXT,
-		postcode      TEXT,
-		locality_norm TEXT,
-		street_raw    TEXT NOT NULL,
-		lat           REAL NOT NULL,
-		lon           REAL NOT NULL,
-		source        TEXT NOT NULL,
-		release       TEXT NOT NULL
-	);
-`)
+// DDL + column order come from the SHARED schema (address-point-schema.ts) so the writer can't drift
+// from AddressPointSqliteLookup (the reader). The INSERT stays a POSITIONAL prepared statement —
+// tens of millions of rows per state — but its column list is derived from ADDRESS_POINT_COLUMNS.
+db.exec(`PRAGMA journal_mode = WAL;${ADDRESS_POINT_DDL}`)
 
 const insert = db.prepare(
-	`INSERT INTO address_point (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
-	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	`INSERT INTO address_point (${ADDRESS_POINT_COLUMNS.join(", ")})
+	 VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
 )
 
 // Provenance accounting: per-dataset counts across ALL rows returned by DuckDB (pre-JS-normalisation
@@ -210,10 +203,7 @@ for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk =
 }
 db.exec("COMMIT")
 console.log(`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : path.basename(PARQUET)}`)
-db.exec(`
-	CREATE INDEX idx_ap_postcode ON address_point (postcode, street_norm, number);
-	CREATE INDEX idx_ap_locality ON address_point (locality_norm, street_norm, number);
-	CREATE INDEX idx_ap_streetkey ON address_point (postcode, street_key);
+db.exec(`${ADDRESS_POINT_INDEX_DDL}
 	PRAGMA wal_checkpoint(TRUNCATE);
 	VACUUM;
 `)

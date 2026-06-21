@@ -6,11 +6,37 @@
 
 export type { FindPlaceQuery, GeoBbox, GeoPoint, PlaceCandidate, PlaceLookup, WofPlacetype } from "./types.js"
 
-export type { AncestorsTable, GeojsonTable, NamesTable, PlaceSearchTable, SprTable, WofDatabase } from "./schema.js"
+export type {
+	AncestorsTable,
+	CoincidentRolesTable,
+	ConcordancesTable,
+	GeojsonTable,
+	NamesTable,
+	PlaceAbbrTable,
+	PlacePopulationTable,
+	PlaceSearchTable,
+	SprTable,
+	WofDatabase,
+} from "./schema.js"
 
 export { WofSqlitePlaceLookup, type RankingWeights, type WofSqlitePlaceLookupOpts } from "./lookup.js"
 
 export { WofCandidateTableLookup, type WofCandidateTableLookupOpts } from "./candidate-lookup.js"
+
+export { ADDRESS_POINT_COLUMNS, ADDRESS_POINT_DDL, ADDRESS_POINT_INDEX_DDL } from "./address-point-schema.js"
+export type { AddressPointDatabase, AddressPointTable } from "./address-point-schema.js"
+export {
+	WofPostalCityAliasLookup,
+	type PostalCityAlias,
+	type WofPostalCityAliasLookupOpts,
+} from "./postal-city-alias-lookup.js"
+export type { PostalCityAliasDatabase, PostalCityAliasTable } from "./postal-city-alias-schema.js"
+export {
+	POSTAL_CITY_CANDIDATE_COLUMNS,
+	POSTAL_CITY_CANDIDATE_DDL,
+	POSTAL_CITY_CANDIDATE_TABLE,
+} from "./postal-city-candidate-schema.js"
+export type { PostalCityCandidateDatabase, PostalCityCandidateTable } from "./postal-city-candidate-schema.js"
 
 export {
 	ADDRESS_CONVENTION_TABLE,

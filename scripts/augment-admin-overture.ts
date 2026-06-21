@@ -22,6 +22,8 @@
  *   --countries CA [--release 2026-06-17.0]
  */
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import type { WofDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
 import { buildPlaceSearchFts } from "@mailwoman/resolver-wof-sqlite/fts"
 import { createUnifiedIndexes, populateAncestors } from "@mailwoman/resolver-wof-sqlite/unified-schema"
@@ -46,14 +48,18 @@ function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): nu
  * populations are left intact). This is what lets a major foreign city outrank its small US homonym
  * — without a population the cascade ranks Moscow RU below Moscow, Idaho.
  */
-function applyGeoNamesPopulation(db: DatabaseSync, citiesFile: string): number {
+async function applyGeoNamesPopulation(db: DatabaseSync, citiesFile: string): Promise<number> {
+	// The match probe stays a reused prepared statement (read-heavy loop). The WRITE goes through a
+	// typed DatabaseClient<WofDatabase> upsert, so `place_population`'s columns are checked against the
+	// shared schema the reader uses.
+	const kdb = new DatabaseClient<WofDatabase>({ database: db })
 	const findByName = db.prepare(
 		"SELECT n.id AS id, s.latitude AS lat, s.longitude AS lon FROM names n JOIN spr s ON n.id = s.id WHERE n.name = ? AND n.country = ? AND n.id >= 2000000000"
 	)
-	const setPop = db.prepare("INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)")
 	const lines = readFileSync(citiesFile, "utf8").split("\n")
-	let set = 0
-	db.exec("BEGIN")
+	// id → population; last write wins, matching the original INSERT OR REPLACE (also dedupes two
+	// GeoNames cities that match the same place).
+	const pops = new Map<number, number>()
 	for (const line of lines) {
 		if (!line) continue
 		const f = line.split("\t")
@@ -73,13 +79,18 @@ function applyGeoNamesPopulation(db: DatabaseSync, citiesFile: string): number {
 				}
 			}
 		}
-		if (best != null && bestD < 50) {
-			setPop.run(best, pop)
-			set++
-		}
+		if (best != null && bestD < 50) pops.set(best, pop)
 	}
-	db.exec("COMMIT")
-	return set
+
+	const rows = [...pops].map(([id, population]) => ({ id, population }))
+	for (let i = 0; i < rows.length; i += 1000) {
+		await kdb
+			.insertInto("place_population")
+			.values(rows.slice(i, i + 1000))
+			.onConflict((oc) => oc.column("id").doUpdateSet({ population: (eb) => eb.ref("excluded.population") }))
+			.execute()
+	}
+	return pops.size
 }
 
 function arg(name: string, fallback = ""): string {
@@ -120,7 +131,7 @@ console.error(`Ingested ${n.toLocaleString()} ${COUNTRIES.join(",")} divisions f
 
 if (GEONAMES) {
 	console.error(`Applying GeoNames population from ${GEONAMES} ...`)
-	const set = applyGeoNamesPopulation(db, GEONAMES)
+	const set = await applyGeoNamesPopulation(db, GEONAMES)
 	console.error(`  set population on ${set.toLocaleString()} Overture cities`)
 }
 

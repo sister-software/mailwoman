@@ -19,9 +19,11 @@
  *   - `base_source_id`: the source_id of the un-augmented (or upstream-augmented) row, so ancestry is
  *       traceable.
  *
- *   Phase 1 implements the locale-agnostic + most useful US/FR augmentations. Typo injection and
- *   other stochastic augmentations are intentionally deferred — they need a seed-aware API and are
- *   most useful at training time, not corpus build time.
+ *   Phase 1 implements the locale-agnostic + most useful US/FR augmentations. Typo injection (#530)
+ *   is now implemented ({@link typoInject}) — the "seed-aware API" the deferral asked for is
+ *   resolved by seeding the PRNG from each row's `source_id`. It ships in {@link AUGMENTATIONS} but
+ *   is kept OUT of the default set ({@link defaultAugmentationsForCountry}) until its on-model
+ *   effect is measured; see the note there.
  */
 
 import {
@@ -127,6 +129,116 @@ export const accentStrip: Augmentation = (row) => {
 
 function stripAccents(s: string): string {
 	return s.normalize("NFD").replace(/\p{M}/gu, "")
+}
+
+// --- typo injection (#530) -------------------------------------------------
+// The Phase-1 deferral asked for a "seed-aware API" so the corpus stays reproducible. Resolution:
+// seed the PRNG from the row's own `source_id` — deterministic per row, no global state, fits the
+// existing `(row) => CanonicalRow | null` signature unchanged.
+
+/** QWERTY adjacency for realistic single-key substitutions (lowercase; case is restored on apply). */
+const QWERTY_ADJACENCY: Record<string, string> = {
+	a: "qwsz",
+	b: "vghn",
+	c: "xdfv",
+	d: "serfcx",
+	e: "wsdr",
+	f: "drtgvc",
+	g: "ftyhbv",
+	h: "gyujnb",
+	i: "ujko",
+	j: "huikmn",
+	k: "jiolm",
+	l: "kop",
+	m: "njk",
+	n: "bhjm",
+	o: "iklp",
+	p: "ol",
+	q: "wa",
+	r: "edft",
+	s: "awedxz",
+	t: "rfgy",
+	u: "yhji",
+	v: "cfgb",
+	w: "qase",
+	x: "zsdc",
+	y: "tghu",
+	z: "asx",
+}
+
+/**
+ * A component value eligible for a typo: a pure-letter name of ≥4 chars (excludes
+ * numbers/postcodes/units).
+ */
+const ALPHA_NAME = /^[\p{L}][\p{L} '.\-]{3,}$/u
+
+/**
+ * Djb2 → uint32 seed. Deterministic; no `Math.random` (banned here and breaks corpus
+ * reproducibility).
+ */
+function hashString(s: string): number {
+	let h = 5381
+	for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0
+	return h >>> 0
+}
+
+/** Mulberry32 — a tiny seeded PRNG. Same seed → same stream → reproducible typos. */
+function mulberry32(seed: number): () => number {
+	let a = seed >>> 0
+	return () => {
+		a = (a + 0x6d2b79f5) | 0
+		let t = Math.imul(a ^ (a >>> 15), 1 | a)
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+	}
+}
+
+/**
+ * Inject ONE realistic typo — an adjacent-QWERTY-key substitution OR an adjacent-character
+ * transposition — into a single alpha name component (street/locality/region…), teaching the model
+ * to recover from real-world misspellings ("Cupertino" → "Cupertimo"). The edit is applied to BOTH
+ * `raw` and the component so the substring contract `alignRow` depends on holds. Number / postcode
+ * / unit components are never touched (they fail {@link ALPHA_NAME}). Deterministic per row (seeded
+ * from `source_id`). Returns `null` when no eligible component exists or the edit is a no-op.
+ */
+export const typoInject: Augmentation = (row) => {
+	const rng = mulberry32(hashString(`${row.source_id}:typo`))
+	// Count occurrences so we only edit an UNAMBIGUOUS target — a value that appears exactly once in
+	// raw and isn't a substring of another component. (e.g. "Cupertino" the locality is a substring of
+	// "Cupertino Avenue" the street; editing it would `replace` the street's occurrence and break the
+	// span. The substring contract `alignRow` enforces is why we filter rather than guess the position.)
+	const occurs = (needle: string): number => {
+		let n = 0
+		for (let i = row.raw.indexOf(needle); i >= 0; i = row.raw.indexOf(needle, i + needle.length)) n++
+		return n
+	}
+	const values = Object.values(row.components).filter(Boolean) as string[]
+	const eligible = (Object.entries(row.components) as Array<[ComponentTag, string]>).filter(
+		([, v]) => v && ALPHA_NAME.test(v) && occurs(v) === 1 && !values.some((o) => o !== v && o.includes(v))
+	)
+	if (eligible.length === 0) return null
+	const [tag, value] = eligible[Math.floor(rng() * eligible.length)]!
+	// Interior alpha positions only — keep the first char (most real typos are interior) + a right neighbour.
+	const positions: number[] = []
+	for (let i = 1; i < value.length - 1; i++) if (/\p{L}/u.test(value[i]!)) positions.push(i)
+	if (positions.length === 0) return null
+	const i = positions[Math.floor(rng() * positions.length)]!
+	const ch = value[i]!
+	let typed: string
+	if (rng() < 0.5) {
+		const next = value[i + 1]!
+		if (ch === next) return null // transposing equal chars is a no-op
+		typed = value.slice(0, i) + next + ch + value.slice(i + 2)
+	} else {
+		const lower = ch.toLowerCase()
+		const adj = QWERTY_ADJACENCY[lower]
+		if (!adj) return null
+		const sub = adj[Math.floor(rng() * adj.length)]!
+		typed = value.slice(0, i) + (ch !== lower ? sub.toUpperCase() : sub) + value.slice(i + 1)
+	}
+	if (typed === value) return null
+	const newRaw = row.raw.replace(value, typed) // first occurrence; `replace(string, …)` is literal, not regex
+	return withAugmentation(row, "typo-inject", newRaw, { ...row.components, [tag]: typed })
 }
 
 // ===========================================================================
@@ -444,10 +556,16 @@ export const AUGMENTATIONS: Record<string, Augmentation> = {
 	"us-unit-designator-expand": unitDesignatorExpand,
 	"zip-plus4-dash-drop": zipPlus4DashDrop,
 	"particle-strip": particleStrip,
+	"typo-inject": typoInject,
 }
 
 /** Default augmentation set, by country. Phase 1: US + FR; others get the locale-agnostic set. */
 export function defaultAugmentationsForCountry(country: string): readonly Augmentation[] {
+	// `typoInject` (#530) is deliberately NOT in the default set. It is implemented, tested, and
+	// registered in {@link AUGMENTATIONS} so callers can opt in (add it here or compose it directly),
+	// but it changes the synthesized corpus distribution and its effect on the trained model is not
+	// yet measured. Per the project's default-OFF discipline, promotion into the default build is an
+	// operator call once an A/B vs the current corpus exists — keeping the default byte-stable.
 	const universal = [caseUpper, caseLower, dropCommas, doubleSpace]
 	switch (country) {
 		case "US":
