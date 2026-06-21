@@ -26,6 +26,8 @@
 import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
 import { DatabaseSync } from "node:sqlite"
 import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.js"
+import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.js"
+import { hasTable } from "./sqlite-utils.js"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.js"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "./types.js"
 
@@ -67,6 +69,12 @@ export class WofCandidateTableLookup implements PlaceLookup {
 	readonly #idToCountry = new Map<number, string>()
 	readonly #placetypeToId = new Map<string, number>()
 	readonly #idToPlacetype = new Map<number, string>()
+	/**
+	 * Prepared `(name_key, postcode)` probe for the #741 postal-city side-index — `undefined` when
+	 * the `postal_city_candidate` table isn't present, so a candidate.db built without it is
+	 * byte-stable.
+	 */
+	readonly #postalCityProbe: ReturnType<DatabaseSync["prepare"]> | undefined
 
 	constructor(opts: WofCandidateTableLookupOpts) {
 		if (opts.database) {
@@ -92,6 +100,21 @@ export class WofCandidateTableLookup implements PlaceLookup {
 			this.#placetypeToId.set(String(r.placetype), Number(r.id))
 			this.#idToPlacetype.set(Number(r.id), String(r.placetype))
 		}
+
+		// #741 postal-city side-index: prepare the exact probe only if the table is present. Absent →
+		// `#postalCityProbe` stays undefined → findPlace skips the postal-city path → byte-stable.
+		if (hasTable(this.#db, POSTAL_CITY_CANDIDATE_TABLE)) {
+			this.#postalCityProbe = this.#db.prepare(
+				`SELECT spr_id, name, latitude, longitude FROM ${POSTAL_CITY_CANDIDATE_TABLE} WHERE name_key = ? AND postcode = ? LIMIT 1`
+			)
+		}
+	}
+
+	/** Does this query want a locality-tier place? Postal-city aliases (#741) are all localities. */
+	#wantsLocality(placetype: FindPlaceQuery["placetype"]): boolean {
+		if (!placetype) return true
+		const want = Array.isArray(placetype) ? placetype : [placetype]
+		return expandPlacetypeFilter(want as readonly string[]).includes("locality")
 	}
 
 	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
@@ -99,6 +122,33 @@ export class WofCandidateTableLookup implements PlaceLookup {
 		if (!text) return []
 		const nameKey = normalizeLocalityForKey(text)
 		if (!nameKey) return []
+
+		// #741: postcode-keyed postal-city alias. An exact `(name_key, postcode)` hit resolves a
+		// user-typed POSTAL city ("Antioch", 37013) to the geographic locality the postcode sits in
+		// ("Nashville"), bypassing the population/region ranking that can't see the postcode. Gated on
+		// the side-index being present, a postcode in the query, and a locality-tier request — so the
+		// common (no-postcode / non-locality) path is untouched. A hit short-circuits: the postcode is
+		// an exact, high-confidence disambiguator, so we return the single geographic locality.
+		if (query.postcode && this.#postalCityProbe && this.#wantsLocality(query.placetype)) {
+			const hit = this.#postalCityProbe.get(nameKey, query.postcode.trim()) as
+				| Pick<PostalCityCandidateTable, "spr_id" | "name" | "latitude" | "longitude">
+				| undefined
+			if (hit) {
+				return [
+					{
+						id: Number(hit.spr_id),
+						name: String(hit.name ?? ""),
+						placetype: "locality" as WofPlacetype,
+						country: query.country?.toUpperCase() ?? "",
+						lat: Number(hit.latitude),
+						lon: Number(hit.longitude),
+						score: 1,
+						exactMatch: true,
+					},
+				]
+			}
+		}
+
 		const limit = Math.max(1, query.limit ?? 10)
 
 		// Filter conds shared by the exact-key + strip-fallback probes (everything but name_key).
