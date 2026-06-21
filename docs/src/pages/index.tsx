@@ -18,7 +18,7 @@ function HomepageHeader(): ReactNode {
 				</Heading>
 				<p className={styles.heroSubtitle}>
 					Mailwoman parses, geocodes, and resolves messy records to real places — so you can stop stitching tools
-					together and get back to the problem you were actually solving.
+					together and get back to the problem you set out to solve.
 				</p>
 				<div className={styles.heroButtons}>
 					<Link className="button button--primary button--lg" to="/demo">

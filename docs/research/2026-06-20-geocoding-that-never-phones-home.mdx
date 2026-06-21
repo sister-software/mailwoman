@@ -8,7 +8,7 @@ date: 2026-06-20
 
 Open the [demo](/demo), open your browser's network tab, and type an address. You'll watch it resolve to a rooftop coordinate — `1600 Pennsylvania Ave` lands on the actual building, within about ten metres — and then you'll notice what's missing from the network tab: a request carrying your address. There isn't one. The parser ran in the page. The gazetteer it resolved against is a file on a CDN that the page read a few kilobytes at a time. The query never left your machine.
 
-That's the pitch, and it's worth being honest about why it's unusual, because the three things the rest of the market hands you each ask you to give something up.
+That's the pitch, and it's worth being clear about why it's unusual, because the three things the rest of the market hands you each ask you to give something up.
 
 {/* truncate */}
 
@@ -18,7 +18,7 @@ Start with a cloud API: Google, Mapbox, HERE, AWS, Azure. You send the address o
 
 Or self-host one: Nominatim, Pelias, Photon, all real software, free, and yours. The license was never the catch; the machine room is. Nominatim wants a Postgres/PostGIS install north of a terabyte of disk and a planet import measured in days. Pelias is Elasticsearch plus five supporting services and a 450 GB index. Photon is OpenSearch and a 64 GB heap. You own your data, absolutely. You just have to operate a search cluster to use it, and none of them run anywhere near a browser.
 
-Or run a parser by itself. libpostal is the open address parser everyone embeds, and it's genuinely good. It's also a 1.8 GB trained model (2.2 GB for the Senzing variant), written in C with no supported path to the browser, and it stops at parsing. It tells you which token is the street; it doesn't tell you where the street is.
+Or run a parser by itself. libpostal is the open address parser everyone embeds, and it's good. It's also a 1.8 GB trained model (2.2 GB for the Senzing variant), written in C with no supported path to the browser, and it stops at parsing. It tells you which token is the street; it doesn't tell you where the street is.
 
 So the menu is: rent it and leak the query, host it and run a cluster, or parse it and stop halfway. Mailwoman is the entry that wasn't on the menu.
 
@@ -48,7 +48,7 @@ I'd rather you hear the limits from me than discover them in production.
 
 Rooftop precision, the actual building rather than the neighborhood, currently fires only where we've shipped per-state address-point data: California, New York, Michigan, and DC. Everywhere else, the resolver lands you at an administrative or postcode centroid, which is the right town and the right ZIP but not the right doorstep. The big cloud vendors beat us on global rooftop coverage, decisively, and I'm not going to pretend otherwise. If you need a rooftop in Lagos today, call Google.
 
-Mapbox, to its credit, does ship genuine on-device geocoding, but it's their native mobile SDK, and it's reverse geocoding (coordinate to address) rather than forward. So I'll keep the claim precise: the only geocoder that runs the full forward pipeline, in a browser, with no server. Narrow as that sounds, it's a space nobody else occupies. And there's no batch endpoint and no SLA yet; this is infrastructure you embed, not a hosted service you page.
+Mapbox, to its credit, does ship on-device geocoding, but it's their native mobile SDK, and it's reverse geocoding (coordinate to address) rather than forward. So I'll keep the claim precise: the only geocoder that runs the full forward pipeline, in a browser, with no server. Narrow as that sounds, it's a space nobody else occupies. And there's no batch endpoint and no SLA yet; this is infrastructure you embed, not a hosted service you page.
 
 None of which changes the thing in the network tab. You typed an address, you got a building, and nobody else saw it.
 
