@@ -88,6 +88,14 @@ Measured on a copy of `candidate-global-20g.db` (26,107 gap-fill rows):
 
 **Operator follow-up:** this is the build-on-a-copy MVP that proves + measures the lever (EU recall tail closed, coord-validated, zero GPU). The provenance-clean path is to fold GeoNames into `build-unified-wof` (so it flows through the canonical candidate build with proper provenance), then rebuild + R2 republish.
 
+## 🌍 Global coverage gap — the gazetteer was missing ~half the world's countries (the night's headline finding)
+
+Chasing the EU tail surfaced something far bigger. A coverage audit (candidate `-20g` locality count vs GeoNames `cities15000` per country) found **entire countries with ZERO rows at any placetype**: Afghanistan (0 vs 54 pop>15k cities), Hong Kong (0 vs 141!), North Korea (0 vs 97), DR Congo (0 vs 114), plus Albania, Armenia, Azerbaijan, Bosnia, Burkina Faso, Libya, Moldova, … Verified it's a **source** gap, not a build filter — the unified admin DB (WOF + Overture) carries localities for only **97 of the world's ~195 countries**. Every other country was 100% unresolvable in the demo's gazetteer.
+
+The same gap-fill builder (taught to register a new `country_code` when GeoNames has a country the gazetteer lacks) closes it from on-disk `cities15000.txt` (no download): **208,590 locality rows added across 147 newly-registered countries; coverage 97 → 244 countries.** Coord-verified by construction (0 → N) + a spot-check — **9/9 major cities in formerly-zero-coverage countries resolve within 30 km of truth** (Kabul/Tirana/Tripoli/Chisinau/Sarajevo/Yerevan/Kandahar all 0 km; Hong Kong 5 km, Baku 4 km).
+
+This reframes the day-shift "-20g world coverage" promote: it was *97-country* coverage, not world. **Highest-value operator follow-up of the shift** — fold GeoNames (`cities15000` for the major-city MVP, `allCountries` for full depth) into `build-unified-wof`, rebuild, republish. Filed as its own issue.
+
 ## #175 typed-schema arc — extended to two more DBs
 
 The operator's day-shift question ("any other sqlite DBs for the kysley treatment?") — candidate + unified-admin were done then; this shift added two more:
