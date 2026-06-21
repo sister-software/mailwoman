@@ -12,4 +12,5 @@
 export * from "@mailwoman/core"
 export * from "@mailwoman/classifiers"
 export * from "./runtime-pipeline.js"
+export * from "./default-placer.js"
 export * from "./utils/index.js"
