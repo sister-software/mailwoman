@@ -14,7 +14,7 @@ Then we looked at the international numbers and the floor gave way. Same model, 
 Three questions sit under the rest of this, so let me put them on the table before we start:
 
 - When a parser "collapses" on a test, is the parser wrong, or is the test?
-- Can you train one model to read an address in any order, or does each order quietly cost you the other?
+- Can you train one model to read an address in any order, or does each order cost you the other?
 - And the one that took three retrains to answer: what does a learned anchor learn — the thing you asked for, or where you kept putting it?
 
 {/* truncate */}
@@ -23,7 +23,7 @@ Three questions sit under the rest of this, so let me put them on the table befo
 
 Before you can fix a collapse you have to be sure it's real, and ours mostly wasn't. The number that scared us, German international addresses parsing around 45% while native ones sat in the eighties, turned out to be measuring our test harness as much as our model.
 
-Here's the thing we'd quietly done to ourselves. Our German evaluation set is rendered from OpenAddresses in the layout our US-trained tooling defaults to: `27 Straußstraße, Berlin, Berlin 12623`. House number first, postcode after the city, region hanging off the tail. No German has ever written an address that way. They write `Straußstraße 27, 12623 Berlin`, street then number, postcode _before_ the city. The model had trained on the German order and we were grading it on the American one, then reading the low score as a model failure.
+Here's what we'd done to ourselves. Our German evaluation set is rendered from OpenAddresses in the layout our US-trained tooling defaults to: `27 Straußstraße, Berlin, Berlin 12623`. House number first, postcode after the city, region hanging off the tail. No German has ever written an address that way. They write `Straußstraße 27, 12623 Berlin`, street then number, postcode _before_ the city. The model had trained on the German order and we were grading it on the American one, then reading the low score as a model failure.
 
 So we re-rendered the same cities in their native order and measured again. The "collapsing" model read them at 83.8%, comfortably past Pelias's 78.7. The collapse was, to a first approximation, us holding the test sideways. That's worth saying plainly because it's the cheap half of the lesson: when a model falls over on exactly one slice of your data, suspect the slice before you suspect the model. We've now been burned by eval-order twice, and both times the fix was free.
 
@@ -55,7 +55,7 @@ Here's where it helps to stop asking "why won't it improve" and start asking wha
 
 Think about where the city sits relative to the postcode in each training distribution. In native German, the postcode comes _before_ the city: `12623 Berlin`. Every time the anchor fired during training, the locality it was supposed to help was sitting just to its right. So the model learned an anchor that reaches rightward, and on native addresses it reaches right and finds Berlin every time, which is your +35 points. Hand that same model an international-order address and the postcode is now _after_ the city. The anchor reaches right out of long habit, finds the region or the end of the string, and meanwhile the actual city it was meant to rescue is sitting behind it, unhelped and slightly shoved.
 
-The clean confirmation was hiding in the data the whole time, in the one locale that never suffered. American addresses put the postcode after the city, `Seattle WA 98101`, and the US anchor never hurt anything; US held at 96, 97%. Of course it did. US training is consistently postcode-after-city, so the US anchor learned to reach _left_, toward the city behind it, and it's right every time because the layout never varies. Same architecture, same injection point, opposite learned direction, because the two countries write their addresses in opposite orders and the anchor simply absorbed whichever one it was fed.
+The clean confirmation was hiding in the data the whole time, in the one locale that never suffered. American addresses put the postcode after the city, `Seattle WA 98101`, and the US anchor never hurt anything; US held at 96, 97%. Of course it did. US training is consistently postcode-after-city, so the US anchor learned to reach _left_, toward the city behind it, and it's right every time because the layout never varies. Same architecture, same injection point, opposite learned direction, because the two countries write their addresses in opposite orders and the anchor absorbed whichever one it was fed.
 
 That's the asymmetry, and it's why it's fundamental rather than a tuning problem. A single added vector can encode "reach toward the city." It cannot encode "reach toward the city, which is sometimes to my left and sometimes to my right." Mix both orders into one shard and you're asking one direction to point two ways; it settles on the average and serves the dominant order, which is exactly the flat international number we kept retraining into. To check we weren't chasing a name-matching mirage, we ran a containment metric, does the resolved point land inside the right city's polygon, and the gap held: 96% on native German, 57% on the international order. The miss is geographic and real, not a scoreboard artifact.
 

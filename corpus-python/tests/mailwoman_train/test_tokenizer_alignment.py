@@ -24,7 +24,7 @@ def test_whitespace_spans_handles_repeats():
     spans = whitespace_spans(raw, tokens)
     # First "Buffalo" is at index 0; second is the trailing "Buffalo," token.
     assert spans[0] == (0, 7)
-    # The "Buffalo," span: locate it explicitly from the raw to keep the test robust to
+    # The "Buffalo," span: locate it explicitly from the raw to keep the test independent of
     # changes in upstream whitespace handling.
     second_buffalo_idx = raw.index("Buffalo,")
     assert spans[6] == (second_buffalo_idx, second_buffalo_idx + len("Buffalo,"))

@@ -56,7 +56,7 @@ A US postcode pins its own country a little over a quarter of the time. A German
 
 The reason is the most ordinary thing in the world: a five-digit code is five digits in a lot of places. `75001` is the first arrondissement of Paris. It is also Addison, Texas. The gazetteer, asked in good faith, reports both, and a uniform posterior over `{FR, US}` is a fair answer to a question the postcode cannot settle. Same script, same length, two continents. Multiply that across every numeric-postcode country and the confident cases are the minority.
 
-(One trap worth flagging, since I nearly fell in it: an early version of the probe looked far rosier because of an alphabetical tie-break. When the posterior is a flat `{DE, US}`, "DE" sorts first and quietly wins, so the German numbers looked almost perfect. They were an artifact of the sort order, not the signal. The right reading is the confident-single-country rate above, and only that.)
+(One trap worth flagging, since I nearly fell in it: an early version of the probe looked far rosier because of an alphabetical tie-break. When the posterior is a flat `{DE, US}`, "DE" sorts first and wins, so the German numbers looked almost perfect. They were an artifact of the sort order, not the signal. The right reading is the confident-single-country rate above, and only that.)
 
 ## What the number was telling us
 

@@ -72,7 +72,7 @@ The quarantine pile catches data quality issues. `corpus-v0.3.0` quarantined 214
 
 Aligned rows are split into three groups: **train** (about 90%), **val** (a few percent, used during training to monitor progress), and **test** (held out for the final eval).
 
-The split is **locality-aware**: rows that share a locality stay in the same split. This prevents leakage — if "Brooklyn, NY" appears in training, no Brooklyn row appears in val or test. Without this, the model can memorize specific locality strings and look better on eval than it really is.
+The split is **locality-aware**: rows that share a locality stay in the same split. This prevents leakage — if "Brooklyn, NY" appears in training, no Brooklyn row appears in val or test. Without this, the model can memorize specific locality strings and look better on eval than it is.
 
 The split assignment is written to `SPLIT_MANIFEST.json` so any later step can reproduce which rows went where.
 

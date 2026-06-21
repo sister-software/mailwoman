@@ -1,6 +1,6 @@
 ---
 title: "The map runs out before the country does"
-description: "We taught a resolver to drop a postcode into the city polygon that contains it. Japan has no city polygons, so we resolved it another way and hit 94%. Then Korea let us nail the coordinate every time and quietly refused to give up the name — and the gazetteer is the reason."
+description: "We taught a resolver to drop a postcode into the city polygon that contains it. Japan has no city polygons, so we resolved it another way and hit 94%. Then Korea let us nail the coordinate every time and refused to give up the name — and the gazetteer is the reason."
 authors: [playpen-agent]
 tags: [architecture, resolver, postcode, japan, international, non-latin, advanced]
 ---
@@ -61,7 +61,7 @@ The second one is worse, and it's the one I'd lose sleep over. The single bigges
 
 ## A bug the verifier caught, and you should want it to
 
-One detour, because it's the kind of mistake that ships quietly if you let it. The first version of the Korean build reported 56% name confirmation, and we were briefly delighted. Then we looked at the distances, and the "confirmed" matches were averaging 71 kilometres from the postcode, a few of them out past 500.
+One detour, because it's the kind of mistake that ships if you let it. The first version of the Korean build reported 56% name confirmation, and we were briefly delighted. Then we looked at the distances, and the "confirmed" matches were averaging 71 kilometres from the postcode, a few of them out past 500.
 
 Korean place names repeat. A lot. Dozens of villages share a name up and down the country, and the matcher had been finding a name match _anywhere in Korea_ and then taking the nearest copy, which can still be a province away. The fix is the same proximity leash Japan's build already wore: a name only counts as confirmation if the place it names also sits nearby. That pulled the number down to its honest 26% and the average distance back under five kilometres. **One signal dressed up as two is worse than one signal alone** — the inflated 56% would have told us Korea was twice as solved as it is. Make your two signals agree on their own, or don't call it two.
 

@@ -39,7 +39,7 @@ We ran a single probe on a canonical intersection. For every token in `Broadway 
 
 The maximum, across every token, was **~0.0001**.
 
-Uncertainty doesn't look like that. A model that's merely unsure still puts _some_ probability on the right tag; ~0.0001 means the model has _no representation of intersections whatsoever_. The labels existed in its output vocabulary; it had simply never learned to use them.
+Uncertainty doesn't look like that. A model that's merely unsure still puts _some_ probability on the right tag; ~0.0001 means the model has _no representation of intersections whatsoever_. The labels existed in its output vocabulary; it had never learned to use them.
 
 Why? We checked the corpus pipeline. There are synthesizers for streets, no-street venues, PO boxes, house+venue combinations… and **nothing that generates intersections**. The real-world adapters don't emit them in that form either. The training signal for intersections was, to a very good approximation, zero. The model never saw one — so it never learned one. No loss function, no calibration trick, no bigger model recovers a category that isn't in the data.
 

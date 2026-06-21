@@ -14,7 +14,7 @@ I want to be clear about how that happens, because it didn't happen through some
 
 ## A missing place never files a complaint
 
-Here's the thing that makes coverage gaps so good at hiding: a missing place doesn't error. When your parser mislabels a token you get a wrong field you can see in a diff. When your resolver picks the wrong Springfield you get a pin in the wrong state and an angry test. But when a place isn't in the gazetteer at all, the system does exactly what it does for a typo or a fictional street — it shrugs and returns nothing, politely, every single time. Afghanistan returning nothing looks identical to "Hgsdfgh Street" returning nothing.
+What makes coverage gaps so good at hiding: a missing place doesn't error. When your parser mislabels a token you get a wrong field you can see in a diff. When your resolver picks the wrong Springfield you get a pin in the wrong state and an angry test. But when a place isn't in the gazetteer at all, the system does exactly what it does for a typo or a fictional street — it shrugs and returns nothing, politely, every single time. Afghanistan returning nothing looks identical to "Hgsdfgh Street" returning nothing.
 
 So you can run your eval suite, watch it pass, ship the thing, and announce world coverage, and every number you're looking at is true. Your US accuracy is real. Your German coord error is real. They're just measured against the places that *are* in the file, and the file quietly decides what gets measured. We were grading ourselves on the 97 countries we had, and the missing half of the planet never showed up to the exam to lower the average.
 

@@ -50,7 +50,7 @@ const LAMBDA = Number(arg("lambda", "0.02"))
 const OUT_HTML = arg("out-html", "/tmp/geocode-first-surface.html")
 
 // ── Real Bayes-factor weights, transcribed from source (values kept in sync by comment, not import,
-//    so this generator is self-contained / robust to the match package's build state). ───────────
+//    so this generator is self-contained / independent of the match package's build state). ───────────
 
 interface Level {
 	label: string
@@ -253,7 +253,7 @@ Plotly.newPlot("contour", [
     {x:0.015, y:0.05, text:"same-building", showarrow:false, font:{size:9,color:"#eee"}, xanchor:"left", yanchor:"bottom"},
     {x:0.015, y:0.5, text:"same-block", showarrow:false, font:{size:9,color:"#eee"}, xanchor:"left", yanchor:"bottom"},
     {x:0.015, y:5, text:"same-area", showarrow:false, font:{size:9,color:"#ddd"}, xanchor:"left", yanchor:"bottom"},
-    // Paper-anchored callout boxes (robust placement), each tied to its ①/② marker, with a paper→data arrow.
+    // Paper-anchored callout boxes (stable placement), each tied to its ①/② marker, with a paper→data arrow.
     {xref:"paper", yref:"paper", x:0.30, y:0.86, ax:trapX[0], ay:trapY[0], axref:"x", ayref:"y",
      text:"① "+D.traps[0].label+"<br>"+D.traps[0].detail+"<br><b>string-first: MATCH ✗ · geocode-first: reject ✓</b>",
      showarrow:true, arrowhead:2, arrowcolor:"#b3402a", align:"left", font:{size:10,color:"#111"}, bgcolor:"rgba(255,255,255,0.94)", bordercolor:"#b3402a", borderpad:3},

@@ -18,13 +18,13 @@ For a long while, ours wasn't.
 
 Think about a weather forecaster. A good one who says "70% chance of rain" should be right on about seven of every ten days they say it. That's the whole contract: the number means what it says. If it rains on nineteen of every twenty "70%" days, the forecaster is sandbagging; if it rains on half, they're overselling. Either way you stop trusting the percentage, and the percentage was the useful part.
 
-A neural classifier makes the same promise implicitly, every time it hands you a softmax probability. And like a lot of cross-entropy-trained models, ours quietly broke it: confident in some bands, timid in others, with no single knob that lined the number up with reality.
+A neural classifier makes the same promise implicitly, every time it hands you a softmax probability. And like a lot of cross-entropy-trained models, ours broke it: confident in some bands, timid in others, with no single knob that lined the number up with reality.
 
 We measured the gap with Expected Calibration Error. Bucket the predictions by stated confidence, and in each bucket compare the average confidence to how often those predictions were actually right. Average the gaps, weighted by how many predictions land in each bucket. Zero is a forecaster you can trust. Ours sat around 0.067, about seven points of slack between what the model claimed and what it delivered.
 
 ## A correction sticker, not a new model
 
-The fix doesn't touch the model. It's the same move you'd make with a cheap kitchen thermometer that reads ten degrees low. You don't crack it open and re-machine the probe; you tape a little card to the handle that says "reads 340, it's really 350."
+The fix doesn't touch the model. It's the same move you'd make with a cheap kitchen thermometer that reads ten degrees low. You don't crack it open and re-machine the probe; you tape a little card to the handle that says "reads 340, it is 350."
 
 We build that card by running the shipped model over a pile of addresses where we already know the answer, watching where its stated confidence drifts from how often it turns out correct, and fitting a lookup table that translates raw confidence into an honest one. The fit is _isotonic_, which is a fancy word for a simple promise: the translation never runs backwards, so a raw 0.9 always maps to at least as much corrected confidence as a raw 0.8. Twenty bins, monotone, nothing exotic. And we calibrate the number you actually read, the per-span `conf=` aggregated across a span's tokens, rather than some internal per-token probability you'd never see.
 
