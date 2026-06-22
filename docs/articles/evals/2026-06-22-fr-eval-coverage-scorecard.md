@@ -66,7 +66,10 @@ OA carries truth coordinates, so held-out sets for IT/PT/PL/AU (150 rows each, a
 | PT | **52%** | 1.2 km | 216 km | mid |
 | PL | **53%** | 5.8 km | 405 km | mid |
 | AT | **50%** | 5.2 km | 171 km | mid |
+| LU | **57%** | 0.3 km | 2 km | mid (small dense country — rooftop-tight) |
 | AU | **28%** | 234 km | 2366 km | low (collisions) |
+
+_(DE/BE OA lack postcodes → no clean coordinate eval; ES is a cadastral schema → label-only. The pattern is robust across 7 resolvable locales: top tier FR/IT ~80%, mid tier PT/PL/AT/LU ~50–57% with city-to-rooftop-tight resolved coords, low AU 28%.)_
 
 **This is the night's load-bearing finding — two axes, and it reframes #148.**
 
