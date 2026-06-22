@@ -1,14 +1,14 @@
 {
 	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode — see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to `weights.dataRoot` (override the root with MAILWOMAN_DATA_ROOT, or the individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.mjs, the ship script, and the model card all read this instead of hardcoding the numbers.",
-	"version": "4.11.0",
+	"version": "4.13.0",
 	"locales": ["en-us", "fr-fr"],
 	"weights": {
 		"dataRoot": "/mnt/playpen/mailwoman-data",
-		"model": "models/quantized/model-v180-step-40000-int8.onnx",
+		"model": "models/quantized/model-v191-step-40000-int8.onnx",
 		"tokenizer": "models/tokenizer/v0.6.0-a0/tokenizer.model",
 		"tokenizerVersion": "0.6.0-a0",
 		"trainingStep": 40000,
-		"lineage": "v1.8.0-fr-admin-split (char-offset corpus #519 + synth-fr-order shard #561 @ wt 3.0 + fr-admin-split shard @ wt 6.0, step 40000) — the FIRST model to surpass v1.5.0 on the SHIPPED assembled anchor-ON coordinate. Teaches the locality↔adjacent-admin-token split on non-US formats (FR département → région): held-out FR coord p50 42→2 km (−95%), mean −40%, région-emit 40→99.6%; US assembled coordinate FLAT. Tokenizer 0.6.0-a0 (byte-identical to v1.5.0). Two coordinate-invisible label deltas trip the 2pp gate, STATED + operator-approved (#728): us.locality −2.2 (precision-only) and fr.country −3.5 (resolver given country). Span bridge stays RETIRED. int8 md5 d163396ce30869e117bf29ffb939177b."
+		"lineage": "v1.9.1-multilocale-3order (v1.8.0-fr-admin-split + the overture-multilocale 3-ORDER shard @ source-weight 3.0, step 40000) — the FIRST multi-locale retrain to improve EU parse-recall on the SHIPPED assembled coordinate. 2.4M real Overture rows across 16 EU locales rendered in 3 word orders (canonical/pc-first/locality-first); held-out OA resolve rate IT 79→92.7, PT 52→82, PL 53→62, AT 50→81.3, CZ 43→52. Guardrails held on the shipped coordinate: US locality-match 83.4→84.1 (44-state holdout), FR flat / p50 1.28→1.22km. Predecessor v1.9.0 (same shard ALL-CANONICAL) regressed via order-overfit; the 3-order rendering is the one-knob fix (source_weights is a multinomial over sources → the rendering, not the weight, was the lever). US label-F1 dips (country −6.6, locality −2.2, venue −1.2) confirmed coordinate-invisible. Ship-config UNCHANGED from v1.8.0. Tokenizer 0.6.0-a0 (byte-identical). int8 md5 0b150efb2e595d9997f42b74b0c556cf."
 	},
 	"softFeed": {
 		"$comment": "Soft-feed artifacts (#718 D1) materialized into each neural-weights-<locale> workspace at publish time by copy-weights.mjs so the library default `loadFromWeights` feeds the channels the anchor+gazetteer-trained model expects (closing the anchor-OFF crater). The PCB1 postcode binary is built from the WOF postcode shard (per locale's country code); the gazetteer lexicon is the codex-generated repo file. Paths under `db` are relative to weights.dataRoot/wof. Like the weights binaries, these are skipped in CI (MAILWOMAN_SKIP_WEIGHTS_COPY) — the publish workflow places them via the HF fetch step.",
