@@ -499,6 +499,9 @@ async function main(): Promise<void> {
 		addressFrequency?: typeof addressFrequency | false
 		collapseSpatial?: boolean
 		discriminators?: string[]
+		requireCorroboration?: boolean
+		usePhone?: boolean
+		linkage?: "single" | "average"
 	}
 	// The proven levers are now DEFAULT-ON in resolveEntities (#86). Each row sets BOTH `collapseSpatial`
 	// and `addressFrequency` EXPLICITLY so the progression isolates one lever at a time — otherwise the
@@ -514,8 +517,37 @@ async function main(): Promise<void> {
 		{ label: "+ inverse-address-frequency (#617, corpus-wide)", config: { collapseSpatial: false, addressFrequency } },
 		{ label: "+ collapsed spatial signal (A1, #625)", config: { collapseSpatial: true, addressFrequency } },
 		{
-			label: "+ authorized-official discriminator (#625, full stack)",
+			label: "+ authorized-official discriminator (#625)",
 			config: { collapseSpatial: true, addressFrequency, discriminators: ["authorizedOfficial"] },
+		},
+		// A2–A4 (#625): the built-but-unmeasured over-merge levers. Each builds on the A1 + discriminator
+		// stack so the marginal effect is isolated. A2 (require name/org corroboration) is the direct
+		// over-merge precision lever; A3 (phone) is the recall-tail corroborator that should keep A2 from
+		// killing name-drift links; A4 (average-linkage) splits a component joined only by a weak bridge.
+		{
+			label: "+ require name/org corroboration (A2, #625)",
+			config: { collapseSpatial: true, addressFrequency, discriminators: ["authorizedOfficial"], requireCorroboration: true },
+		},
+		{
+			label: "+ phone comparison (A3, #625)",
+			config: {
+				collapseSpatial: true,
+				addressFrequency,
+				discriminators: ["authorizedOfficial"],
+				requireCorroboration: true,
+				usePhone: true,
+			},
+		},
+		{
+			label: "+ average-linkage clustering (A4, #625, full A1–A4 stack)",
+			config: {
+				collapseSpatial: true,
+				addressFrequency,
+				discriminators: ["authorizedOfficial"],
+				requireCorroboration: true,
+				usePhone: true,
+				linkage: "average",
+			},
 		},
 	]
 	// learnedScorer:false throughout — this benchmark studies the FS COMPARISON-MODEL levers (#617/#625).
