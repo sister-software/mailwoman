@@ -4,7 +4,7 @@ _Living document — sketched during the shift, finalized at hand-off (15:00 UTC
 
 ## What shipped
 
-- **#229 Phase-A scorecard — `docs/articles/evals/2026-06-22-fr-eval-coverage-scorecard.md`.** Graded the production model (v1.8.0) per-locale per-tag with support-size reliability flags + a failure taxonomy + a data-acquisition plan. The honest read: FR reliable floors hold (postcode 99.7 / house_number 99.6 / street 90.1 / locality 86.4); the real coordinate-relevant FR gap is **région recall 34.7%** on OOD formats (not country, which is precision-bound + coordinate-invisible); **venue (n=1) and unit (n=0) are unmeasured**, not failing — an absence of FR test data, not a model verdict.
+- **#229 Phase-A scorecard — `docs/articles/evals/2026-06-22-fr-eval-coverage-scorecard.md`.** Graded the production model (v1.8.0) per-locale per-tag with support-size reliability flags + a failure taxonomy + a data-acquisition plan. The honest read: FR reliable floors hold (postcode 99.7 / house_number 99.6 / street 90.1 / locality 86.4); **venue (n=1) and unit (n=0) are unmeasured**, not failing — an absence of FR test data, not a model verdict; and (corrected on inspection) the **région floor 43.3 is an adversarial-stress number**, not a real-FR gap — the 219 rows are synthetic multi-script + order-permutations, and the model does 99.6% on the in-distribution format, so real-FR région is *unmeasured*. `country` is genuinely coordinate-invisible (the resolver sources it from the placer). Net: there is no representative real-FR fine-component eval — the in-distribution numbers are gamed, the OOD ones adversarial.
 
 ### Levers retired with evidence (verify-before-verdict — stops re-attempts)
 
@@ -56,7 +56,7 @@ Tonight probed ~six levers across the geocoder core and the record-matcher. The 
 
 ## Concrete next steps
 
-- **Data acquisition (unblocks the real work):** (a) re-download OA FR (BAN) → OOD-région eval stratum (région recall 34.7% is the real coordinate-relevant FR gap) + thicken street/house_number; (b) Overture-places FR / OSM → venue eval + T2 shard; (c) an FR unit source (or fold US `unit-real-designators.jsonl` into the golden).
+- **Data acquisition (unblocks the real work):** (a) re-download OA FR (BAN) → a **representative real-FR** held-out set (natural orders, Latin) for région + street + house_number — the prerequisite to even state the FR fine-component gaps honestly (the current eval is either in-distribution-gamed or adversarial-stress); (b) Overture-places FR / OSM → venue eval + T2 shard; (c) an FR unit source (or fold US `unit-real-designators.jsonl` into the golden).
 - **Research, not tuning:** FR région-recall is OOD-format (model overfit `Locality, Département`) — fix is diverse région-bearing data, not a knob. CJK remains the Geographic-Rule-Engine epic.
 - **Files:** `2026-06-22-fr-eval-coverage-scorecard.md` (floors + data plan), `2026-06-22-nppes-dedup-lever-ladder.md` (#625), PR #767, PR #768.
 
