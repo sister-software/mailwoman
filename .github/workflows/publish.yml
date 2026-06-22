@@ -165,8 +165,15 @@ jobs:
         run: | # shell
           set -uo pipefail
           yarn compile
+          # #756: derive the workspace set from .release-it.json — the SAME list release-it publishes on a
+          # normal run — so this recovery loop can't drift from it (the v4.12.0 tiger-skip: tiger was in
+          # .release-it.json but missing from the hardcoded list here, so publish_only silently skipped it).
+          # The order (core … mailwoman) is the dependency order release-it already uses. The #757 test
+          # asserts every entry carries a repository field, so a new workspace can't reach release malformed.
+          WORKSPACES=$(node -p "require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces.join(' ')")
+          echo "publish_only workspaces (from .release-it.json): ${WORKSPACES}"
           FAILED=()
-          for ws in core spatial normalize query-shape kind-classifier locale-gate phrase-grouper codex classifiers corpus neural neural-weights-en-us neural-weights-fr-fr formatter record match address-id registry tiger mailwoman; do
+          for ws in ${WORKSPACES}; do
             echo "::group::publish ${ws}"
             if RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE="./${ws}" node scripts/publish-workspace.mjs; then
               echo "  ✓ ${ws}"
