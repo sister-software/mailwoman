@@ -51,8 +51,10 @@ interface ResolutionState {
 	anchorPosterior?: Record<string, number>
 	/** Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set. */
 	anchorWeight: number
-	/** #743/#194 confident-placer country as a HARD filter (empty→unresolved, no global retry). Off =
-undefined. */
+	/**
+	 * #743/#194 confident-placer country as a HARD filter (empty→unresolved, no global retry). Off =
+	 * undefined.
+	 */
 	hardCountry?: string
 	/** Dual-role hierarchy completion (#405). Off by default → byte-stable. */
 	hierarchyCompletion: boolean

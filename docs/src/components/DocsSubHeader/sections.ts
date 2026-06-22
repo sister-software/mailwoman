@@ -5,11 +5,10 @@
  */
 
 /**
- * The docs sub-header's section list, in display order. Each `id` must match a
- * sidebar id in `sidebars.ts`; the `label` is the switcher's display text (the
- * sidebars themselves no longer carry a section label, since they render their
- * contents at the top level). Destination URLs are resolved at runtime from each
- * sidebar's entry link, so a doc rename can't desync them.
+ * The docs sub-header's section list, in display order. Each `id` must match a sidebar id in
+ * `sidebars.ts`; the `label` is the switcher's display text (the sidebars themselves no longer
+ * carry a section label, since they render their contents at the top level). Destination URLs are
+ * resolved at runtime from each sidebar's entry link, so a doc rename can't desync them.
  */
 export interface DocsSectionDef {
 	id: string

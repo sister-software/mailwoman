@@ -78,9 +78,9 @@ interface Args {
 	/** Overture release for `--overture-countries` (the divisions theme is pinned per release). */
 	overtureRelease: string
 	/**
-	 * #743/#193: comma-separated ISO codes to backfill GeoNames place ALIASES (the bilingual / alt-name
-	 * class — Karjaa↔Karis) AFTER the WOF + Overture ingest. Reads `<CC>.txt` from {@link geonamesDir}.
-	 * Off unless provided.
+	 * #743/#193: comma-separated ISO codes to backfill GeoNames place ALIASES (the bilingual /
+	 * alt-name class — Karjaa↔Karis) AFTER the WOF + Overture ingest. Reads `<CC>.txt` from
+	 * {@link geonamesDir}. Off unless provided.
 	 */
 	geonamesCountries?: string[]
 	/** Directory of GeoNames per-country dumps (`<CC>.txt`). Default {@link DEFAULT_GEONAMES_DIR}. */

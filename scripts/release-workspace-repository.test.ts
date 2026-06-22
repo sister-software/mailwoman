@@ -7,10 +7,10 @@
  *
  *   Since the repo went public (v4.8.0) every npm publish is provenance-signed, and sigstore
  *   provenance verification REJECTS (HTTP 422) any workspace whose `package.json` lacks a
- *   `repository.url` matching the source repo. This is invisible until release, and has bitten twice
- *   on new/edited workspaces — `spatial` (#660, v4.10.0) and `tiger` (#739, v4.12.0) — each costing a
- *   recovery cycle. (Writing this test immediately caught a third + fourth: the two `neural-weights-*`
- *   workspaces had a `.git`-less url and no `directory`.)
+ *   `repository.url` matching the source repo. This is invisible until release, and has bitten
+ *   twice on new/edited workspaces — `spatial` (#660, v4.10.0) and `tiger` (#739, v4.12.0) — each
+ *   costing a recovery cycle. (Writing this test immediately caught a third + fourth: the two
+ *   `neural-weights-*` workspaces had a `.git`-less url and no `directory`.)
  *
  *   This asserts EVERY workspace in the `.release-it.json` publish set carries the canonical
  *   `repository` block, so a drift fails at PR/CI time instead of mid-release.

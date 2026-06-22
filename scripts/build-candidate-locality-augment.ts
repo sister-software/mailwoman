@@ -7,10 +7,10 @@
  *   theme. The candidate table sources its localities from Overture DIVISIONS (formal admin units),
  *   but real addresses use postal localities. This was the first hypothesis for the FI hard-filter
  *   recall gap (#194/#762) — but it proved MARGINAL: with the correct key normalizer most postal
- *   localities are already present (FI coverage 74.4%, not the 52% a naïve `.lower()` suggested), and
- *   this fold added +141 FI localities with ZERO resolve-rate lift. The real FI gap was bilingual
- *   ALT-NAMES (see build-candidate-geonames-aliases.ts). This companion stays useful where a
- *   country's gap genuinely IS missing postal localities rather than alt-names.
+ *   localities are already present (FI coverage 74.4%, not the 52% a naïve `.lower()` suggested),
+ *   and this fold added +141 FI localities with ZERO resolve-rate lift. The real FI gap was
+ *   bilingual ALT-NAMES (see build-candidate-geonames-aliases.ts). This companion stays useful
+ *   where a country's gap genuinely IS missing postal localities rather than alt-names.
  *
  *   This extracts the distinct deepest-`address_levels` value per country from the per-country
  *   Overture addresses parquet (the SAME source build-eu-eval-set.ts uses), with the address

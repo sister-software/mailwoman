@@ -3,16 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Ejected from @docusaurus/theme-classic (v3.10) so we can mount <DocsSubHeader/>
- * — the sticky switcher for the docs' top-level categories — as a full-width band
- * above the sidebar+content row. The body mirrors upstream verbatim except for:
+ *   Ejected from @docusaurus/theme-classic (v3.10) so we can mount <DocsSubHeader/> — the sticky
+ *   switcher for the docs' top-level categories — as a full-width band above the sidebar+content
+ *   row. The body mirrors upstream verbatim except for:
  *
- *   1. the extra `styles.docsViewport` column wrapper, so the sub-header stacks on
- *      top of the flex-row `docsWrapper` instead of becoming a column beside the
- *      sidebar; and
- *   2. the <DocsSubHeader/> mount + its hide-on-scroll wiring.
+ *   1. The extra `styles.docsViewport` column wrapper, so the sub-header stacks on top of the flex-row
+ *        `docsWrapper` instead of becoming a column beside the sidebar; and
+ *   2. The <DocsSubHeader/> mount + its hide-on-scroll wiring.
  *
- * Re-diff against upstream when bumping Docusaurus.
+ *   Re-diff against upstream when bumping Docusaurus.
  */
 
 import { useDocsSidebar } from "@docusaurus/plugin-content-docs/client"
@@ -44,7 +43,7 @@ export default function DocRootLayout({ children }: Props): ReactNode {
 			className={clsx(
 				styles.docsViewport,
 				showSubHeader && styles.withSubHeader,
-				subHeaderHidden && styles.subHeaderHidden,
+				subHeaderHidden && styles.subHeaderHidden
 			)}
 		>
 			{showSubHeader && <DocsSubHeader navbarRef={navbarRef} hidden={subHeaderHidden} />}
