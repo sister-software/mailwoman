@@ -20,11 +20,12 @@
  *
  *   Usage: node --experimental-strip-types scripts/build-candidate-geonames-aliases.ts\
  *   --src /mnt/playpen/mailwoman-data/wof/candidate-global-intl.db\
- *   --out /mnt/playpen/mailwoman-data/wof/candidate-aug-193.db\
- *   --geonames /mnt/playpen/mailwoman-data/geonames/FI.txt --country FI
+ *   --out /mnt/playpen/mailwoman-data/wof/candidate-global-intl-v193.db\
+ *   --countries FI,PL,NO,CZ,AT,LT,LV,SI,SK,HR,DK,BE,CH,LU [--geonames-dir <dir>]
  */
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
-import { copyFileSync, readFileSync } from "node:fs"
+import { copyFileSync, existsSync, readFileSync } from "node:fs"
+import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
@@ -32,13 +33,16 @@ const { values: a } = parseArgs({
 	options: {
 		src: { type: "string", default: "/mnt/playpen/mailwoman-data/wof/candidate-global-intl.db" },
 		out: { type: "string", default: "/mnt/playpen/mailwoman-data/wof/candidate-aug-193.db" },
-		geonames: { type: "string" },
-		country: { type: "string", default: "FI" },
+		"geonames-dir": { type: "string", default: "/mnt/playpen/mailwoman-data/geonames" },
+		countries: { type: "string", default: "FI" },
 		"min-pop": { type: "string", default: "0" },
 	},
 })
-if (!a.geonames) throw new Error("--geonames <country dump TSV> is required")
-const cc = a.country!.toUpperCase()
+const countries = a
+	.countries!.split(",")
+	.map((c) => c.trim().toUpperCase())
+	.filter(Boolean)
+const geonamesDir = a["geonames-dir"]!
 const minPop = Number(a["min-pop"])
 
 // Latin-only, no bracket/paren noise (GeoNames packs things like "(( Karis Landskommun ))" + airport
@@ -53,9 +57,6 @@ const cleanName = (s: string): string | null => {
 
 copyFileSync(a.src!, a.out!)
 const db = new DatabaseSync(a.out!)
-const ccRow = db.prepare("SELECT id FROM country_codes WHERE code = ?").get(cc) as { id: number } | undefined
-if (!ccRow) throw new Error(`candidate DB has no country code ${cc}`)
-const cid = ccRow.id
 const localityPt = (db.prepare("SELECT id FROM placetype_codes WHERE placetype = 'locality'").get() as { id: number })
 	.id
 const exists = db.prepare("SELECT 1 FROM candidate WHERE name_key = ? AND country_id = ? LIMIT 1")
@@ -66,42 +67,59 @@ const ins = db.prepare(
 )
 
 let sprBase = 9_600_000_000_000
-let nIns = 0
-let nSkip = 0
-let nPlaces = 0
-const insertedKeys = new Set<string>() // de-dupe within this run too
-
-db.exec("BEGIN")
-for (const line of readFileSync(a.geonames!, "utf8").split("\n")) {
-	if (!line) continue
-	// GeoNames dump columns: 1 name, 2 asciiname, 3 alternatenames, 4 lat, 5 lon, 6 feature_class, 14 pop
-	const f = line.split("\t")
-	if (f[6] !== "P") continue // populated places only
-	const lat = Number(f[4])
-	const lon = Number(f[5])
-	if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue
-	const pop = Number(f[14]) || 0
-	if (pop < minPop) continue
-	nPlaces++
-	const names = [f[1], f[2], ...(f[3] ? f[3].split(",") : [])]
-	const neg = -Math.log10(pop + 1)
-	for (const raw of names) {
-		const name = cleanName(raw)
-		if (!name) continue
-		const key = normalizeLocalityForKey(name)
-		if (!key || insertedKeys.has(key) || exists.get(key, cid)) {
-			if (key && exists.get(key, cid)) nSkip++
-			continue
-		}
-		insertedKeys.add(key)
-		ins.run(key, cid, localityPt, neg, sprBase++, name, lat, lon, lat, lon, lat, lon, pop)
-		nIns++
+let grandIns = 0
+for (const cc of countries) {
+	const ccRow = db.prepare("SELECT id FROM country_codes WHERE code = ?").get(cc) as { id: number } | undefined
+	if (!ccRow) {
+		console.error(`  ${cc}: not in candidate country_codes — skipped`)
+		continue
 	}
+	const cid = ccRow.id
+	const file = join(geonamesDir, `${cc}.txt`)
+	if (!existsSync(file)) {
+		console.error(`  ${cc}: ${file} missing (download.geonames.org/export/dump/${cc}.zip) — skipped`)
+		continue
+	}
+	let nIns = 0
+	let nSkip = 0
+	let nPlaces = 0
+	// De-dupe name_keys within a country (the same key appears across nearby GeoNames places).
+	const insertedKeys = new Set<string>()
+	db.exec("BEGIN")
+	for (const line of readFileSync(file, "utf8").split("\n")) {
+		if (!line) continue
+		// GeoNames dump columns: 1 name, 2 asciiname, 3 alternatenames, 4 lat, 5 lon, 6 feature_class, 14 pop
+		const f = line.split("\t")
+		if (f[6] !== "P") continue // populated places only
+		const lat = Number(f[4])
+		const lon = Number(f[5])
+		if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue
+		const pop = Number(f[14]) || 0
+		if (pop < minPop) continue
+		nPlaces++
+		const names = [f[1], f[2], ...(f[3] ? f[3].split(",") : [])]
+		const neg = -Math.log10(pop + 1)
+		for (const raw of names) {
+			const name = cleanName(raw)
+			if (!name) continue
+			const key = normalizeLocalityForKey(name)
+			if (!key || insertedKeys.has(key) || exists.get(key, cid)) {
+				if (key && exists.get(key, cid)) nSkip++
+				continue
+			}
+			insertedKeys.add(key)
+			ins.run(key, cid, localityPt, neg, sprBase++, name, lat, lon, lat, lon, lat, lon, pop)
+			nIns++
+		}
+	}
+	db.exec("COMMIT")
+	console.log(
+		`  ${cc}: ${nPlaces.toLocaleString()} populated places → +${nIns.toLocaleString()} aliases (${nSkip.toLocaleString()} already present)`
+	)
+	grandIns += nIns
 }
-db.exec("COMMIT")
 db.exec("ANALYZE candidate")
 db.close()
 console.log(
-	`${cc}: scanned ${nPlaces} populated places; +${nIns} alias localities inserted, ${nSkip} names already present`
+	`\n→ ${a.out}: +${grandIns.toLocaleString()} alias localities across ${countries.length} countries. Validate with --candidate-db ${a.out} --place-country-hard-all`
 )
-console.log(`→ ${a.out}: validate with  --candidate-db ${a.out} --place-country-hard-all`)
