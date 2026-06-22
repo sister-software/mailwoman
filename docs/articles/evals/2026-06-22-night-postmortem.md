@@ -31,23 +31,34 @@ _Living document — sketched during the shift, finalized at hand-off (15:00 UTC
 
 So the build targets, in priority order: **venue** (unblocks GPU-stretch T2), **region thickening** (firms T1's gate), then **unit** if a real source exists. Discipline: REAL data only (BAN/OA + Overture POIs + codex `departementForCodePostal`), never hand-invented streets/postcodes.
 
-- _(in progress)_
+**Outcome: largely data-blocked on disk.** The OA FR cache (`/tmp/oa-cache`) is gone, the Overture *places* (POI) theme isn't materialized locally (only addresses/divisions/postcodes), and there's no FR unit source. The on-disk BAN region rows (the `fr-admin-split-golden`, 2104) are *in-distribution* for v1.8.0 (it was trained on `Locality, Département`) — using them would game the floor to ~96%, not measure the honest OOD gap (43.3). So the deliverable shrank, honestly, to the **scorecard + the data-acquisition plan** (PR #767) rather than a new built stratum. The fetch path is named for the next shift.
 
 ## What went well
 
-- _(tbd)_
+- **Verify-before-verdict fired three times and each changed the call:** v1.8.1 looked promotable on the coord gate until the per-tag tripwire; the #734 fold looked obvious until it added +0 aliases; #625's A2/A3/A4 looked open until the baseline prose showed them measured. Each cheap check saved a wasted build/GPU run.
+- **Grade-the-coordinate held the line on GPU.** The training stretch was greenlit, but T1 (fr.country) failing the coordinate-relevance test kept $20 unspent on a label-only fix — the discipline that correctly shipped v1.8.0 over its fr.country regression.
+- **Two clean PRs + an issue concluded** (#767 scorecard, #768 #625 ladder), all branch-and-PR, CI-gated.
+
+## The meta-finding — a mature system, gated on data + research
+
+Tonight probed ~six levers across the geocoder core and the record-matcher. The throughline: **the quick on-disk wins are exhausted.** Nearly every lever resolved to *concluded* (#625 lever search, EU name coverage), *coordinate-invisible* (fr.country), or *data-blocked* (FR venue/unit/OOD-région eval; FR rooftop; the venue training shard). The remaining gaps need **new data or research**, not tuning — so the shift's value was measurement + honest retirement (stopping wasted re-attempts) + one real deliverable, not a capability bump.
 
 ## What could've gone better
 
-- _(tbd)_
+- **The plan over-assumed on-disk data.** #229 (FR-fine stratum) and the GPU stretch (T2 venue) both needed data that isn't local — catchable in pre-flight with a sharper "what does each lever's data look like on disk?" audit before ratifying. I found it ~40 min in, not at minute 5.
+- **The consult's "venue 0% / région 19%" stale numbers seeded a venue-shaped plan** the scorecard then corrected (venue is *unmeasured*, n=1 — not 0%-failing).
 
-## Open questions
+## Open questions (operator)
 
-- _(tbd)_
+1. **Greenlight the venue/POI ingest?** The single highest-leverage unblock — one fetch (Overture places FR / OSM) yields *both* the #229 venue eval stratum *and* the T2 training shard. Held tonight (unattended + the Overture-OOM history); wants a supervised run with the OOM-safe streaming pattern, not ad-hoc duckdb.
+2. **Re-scope or close #625?** Lever search concluded; the NPI-truth target is unreachable (over-segmentation); org-name-coord has the GBT at 74.9%.
+3. **Is fr.country ever worth a label-only fix?** Coordinate-invisible, so by our discipline no — unless a downstream consumer needs the country label for parity. If so, T1 is specced (suppress-country-without-token).
 
 ## Concrete next steps
 
-- _(tbd)_
+- **Data acquisition (unblocks the real work):** (a) re-download OA FR (BAN) → OOD-région eval stratum (région recall 34.7% is the real coordinate-relevant FR gap) + thicken street/house_number; (b) Overture-places FR / OSM → venue eval + T2 shard; (c) an FR unit source (or fold US `unit-real-designators.jsonl` into the golden).
+- **Research, not tuning:** FR région-recall is OOD-format (model overfit `Locality, Département`) — fix is diverse région-bearing data, not a knob. CJK remains the Geographic-Rule-Engine epic.
+- **Files:** `2026-06-22-fr-eval-coverage-scorecard.md` (floors + data plan), `2026-06-22-nppes-dedup-lever-ladder.md` (#625), PR #767, PR #768.
 
 ---
 
