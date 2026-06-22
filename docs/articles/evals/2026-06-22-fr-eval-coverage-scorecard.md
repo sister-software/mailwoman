@@ -41,6 +41,20 @@ Reliability: **✓ reliable** (n ≥ 100) · **~ thin** (10 ≤ n < 100) · **�
 3. **`country` is precision-bound and coordinate-invisible.** FR country precision 43.0 (recall 92.5) — the model *over-emits* country, hallucinating it on rows with no country token. This is global (US precision 52.3 too). It's the exact tag tonight's shelved v1.8.1 tried to fix by adding France examples (recall↑/precision↓ — wrong direction, falsified). Fixing it is a **label-only** win.
 4. **`venue` and `unit` are unmeasured for FR** (n = 1 and 0). The "venue 0%" that's haunted the FR narrative since #330 is measured on a **single row** — it is not a reliable signal, it's an absence of test data. US proves the model can emit venue (90.8); the FR gap is that the model was never trained on FR venue **and** we have no FR venue/unit truth to grade it.
 
+## Spot-check — the shipped model on REAL Spanish addresses (novel, #148)
+
+Since OA-ES is on disk (`oa-cache/es__countrywide.zip`), a 120-row held-out set was built from real Spanish cadastral addresses (52 provinces, named-street-types only, rendered in three natural orders) and graded on the production model — a locale the model has **never been trained on** (it's en-us + fr). The honest result:
+
+| tag | n | F1 | read |
+| --- | --: | --: | --- |
+| postcode | 120 | **86.3** | numeric — the one thing that transfers |
+| locality | 119 | **49.6** | half-right |
+| house_number | 120 | **38.4** | trailing-number position (ES `Calle X 1`) trips the US/FR lead-number prior |
+| street | 120 | **24.9** | genuinely weak |
+| region/unit/venue | — | 0 | not in OA-ES |
+
+Macro-F1 **28.5%**. **Verify-before-verdict applied:** the low street score is NOT a `Calle`-prefix labeling artifact — re-grading with a bare-name gold (street_prefix split out) drops street to **2.0%**, i.e. the model does not emit `Calle` as a prefix; the weakness is real OOD. This **quantifies the cost of the held #148 multi-locale retrain** on a real, third locale (not FR): a Latin-script EU locale the model wasn't trained on resolves its postcode but mangles street/house_number/locality. The OA-ES builder is a spot-check here; a committed `build-oa-golden` (ES + IT, both on disk) is the follow-up that would make this a standing non-US floor.
+
 ## Failure taxonomy (#375) — what kind of gap each is
 
 | stratum | gap class | fix lever |
