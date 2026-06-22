@@ -405,6 +405,56 @@ def sync_v081():
     image=training_image,
     volumes={VOL_MOUNT: vol},
     secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_v090():
+    """Pull the v0.9.0-multilocale OVERLAY (#148 multi-locale parse-recall shard: 2.4M real Overture
+    address rows across ~19 EU locales) + latest code (configs incl. v1.9.0-multilocale) from R2,
+    container-side. Mirror of sync_v081. The base v0.5.0 + v0.8.0-fr-admin-split shards the overlay
+    manifest references already persist on the volume from prior runs (verified below)."""
+    import shutil
+    import subprocess
+
+    print("Syncing v0.9.0-multilocale overlay + latest code from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.9.0-multilocale/corpus-v0.9.0-multilocale/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.9.0-multilocale/corpus-v0.9.0-multilocale/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv0.9.0 overlay sync complete. Volume committed.")
+
+    cdir9 = f"{VOL_MOUNT}/corpus/versioned/v0.9.0-multilocale/corpus-v0.9.0-multilocale"
+    cfg9 = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.0-multilocale.yaml"
+    print("  v1.9.0 config present:", os.path.isfile(cfg9))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir9}/MANIFEST.json"))
+    print("  overture shard present:", os.path.isfile(f"{cdir9}/train/part-overture-multilocale-train.parquet"))
+    base09 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
+    base89 = f"{VOL_MOUNT}/corpus/versioned/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split/train/part-fr-admin-split-train.parquet"
+    print("  base v0.5.0 shard on volume:", os.path.isfile(base09))
+    print("  base v0.8.0 fr-admin-split shard on volume:", os.path.isfile(base89))
+    print("  tokenizer v0.6.0-a0 on volume:", os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.6.0-a0/tokenizer.model"))
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
     timeout=1800,
 )
 def push_artifact_r2(volume_path: str, r2_subpath: str):
