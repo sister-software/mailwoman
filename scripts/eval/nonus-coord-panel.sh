@@ -65,8 +65,12 @@ for cc in "$@"; do
 	fi
 	[ "$BUILD_ONLY" = 1 ] && continue
 	json="/tmp/nonus-panel-${cc}.json"
-	node --experimental-strip-types scripts/eval/fr-admin-split-gate.ts \
+	# A grade failure for one locale must not abort the whole panel (set -e), so guard it.
+	if node --experimental-strip-types scripts/eval/fr-admin-split-gate.ts \
 		--model "$MODEL" --tokenizer "$TOK" --model-card "$CARD" --anchor-lookup "$ANCHOR" \
-		--golden "$out" --default-country "$CC" --label "$cc" --out "$json" >/dev/null 2>&1
-	node -e "const s=require('./$json'); console.log([s.label.padEnd(4), String(s.resolve_rate).padEnd(7), String(s.coord_p50_resolved_km).padEnd(13), String(s.coord_p90_resolved_km)].join(' '))"
+		--golden "$out" --default-country "$CC" --label "$cc" --out "$json" >/dev/null 2>&1; then
+		jq -r '"\(.label)\t\(.resolve_rate)\t\(.coord_p50_resolved_km)\t\(.coord_p90_resolved_km)"' "$json"
+	else
+		echo "${cc}	GRADE-FAILED (see gate output)"
+	fi
 done

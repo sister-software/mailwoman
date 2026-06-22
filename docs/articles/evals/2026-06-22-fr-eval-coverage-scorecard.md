@@ -65,6 +65,7 @@ OA carries truth coordinates, so held-out sets for IT/PT/PL/AU (150 rows each, a
 | IT | **79%** | 2.1 km | 272 km | top (in #149 EU shards) |
 | PT | **52%** | 1.2 km | 216 km | mid |
 | PL | **53%** | 5.8 km | 405 km | mid |
+| AT | **50%** | 5.2 km | 171 km | mid |
 | AU | **28%** | 234 km | 2366 km | low (collisions) |
 
 **This is the night's load-bearing finding — two axes, and it reframes #148.**
