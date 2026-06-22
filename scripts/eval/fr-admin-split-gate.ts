@@ -110,9 +110,10 @@ async function main() {
 	})
 	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const resolver = createWofResolver(new WofSqlitePlaceLookup({ databasePath: wofDb }) as never)
-	const resolveOpts = { defaultCountry: "FR" }
+	const resolveOpts = { defaultCountry: arg("default-country", "FR") }
 
 	const errs: number[] = []
+	const resolvedErrs: number[] = [] // coordinate error over RESOLVED rows only (unconfounded by the unresolved penalty)
 	let resolved = 0,
 		regionEmitted = 0,
 		regionCorrect = 0,
@@ -143,7 +144,9 @@ async function main() {
 		const best = mostSpecific(collectResolved(await resolver.resolveTree(tree, resolveOpts)))
 		if (best) {
 			resolved++
-			errs.push(haversineKm(best.lat, best.lon, row.lat, row.lon))
+			const e = haversineKm(best.lat, best.lon, row.lat, row.lon)
+			errs.push(e)
+			resolvedErrs.push(e)
 		} else {
 			errs.push(haversineKm(FR_CENTROID.lat, FR_CENTROID.lon, row.lat, row.lon))
 		}
@@ -156,6 +159,10 @@ async function main() {
 		coord_mean_km: +mean(errs).toFixed(2),
 		coord_p50_km: +pct(errs, 50).toFixed(2),
 		coord_p90_km: +pct(errs, 90).toFixed(2),
+		// RESOLVED-ONLY coordinate: the quality WHERE the address resolves, separated from the
+		// unresolved penalty (which pins to FR_CENTROID and is meaningless for non-FR locales).
+		coord_p50_resolved_km: resolvedErrs.length ? +pct(resolvedErrs, 50).toFixed(2) : null,
+		coord_p90_resolved_km: resolvedErrs.length ? +pct(resolvedErrs, 90).toFixed(2) : null,
 		resolve_rate: +(resolved / n).toFixed(4),
 		region_emit_rate: hasGoldRegion ? +(regionEmitted / hasGoldRegion).toFixed(4) : null,
 		region_correct_rate: hasGoldRegion ? +(regionCorrect / hasGoldRegion).toFixed(4) : null,
