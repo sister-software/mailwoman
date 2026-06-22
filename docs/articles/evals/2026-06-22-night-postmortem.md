@@ -2,6 +2,15 @@
 
 _Living document — sketched during the shift, finalized at hand-off (15:00 UTC). Plan: `nightshift/2026-06-22-NIGHT-SHIFT-PLAN.md`. The arc: a 4-turn DeepSeek consult set the next major effort as a two-phase eval→capability arc; tonight builds Phase A (non-US/fine held-out eval coverage, #229) and rides the corrected FR levers as a gated GPU stretch._
 
+## 🌅 Morning handoff — needs your eyes (priority order)
+
+1. **Merge PR #767 + #768** — both green, CLEAN, mergeable. #767 is the night's centerpiece (#229 non-US coordinate panel + scorecard + eval infra + this postmortem); #768 completes the #625 lever ladder. Left for you per the PR-merge-to-main wall.
+2. **#148 multi-locale retrain — decision is now data-backed.** Tonight reframed it: the non-US gap is **parse recall**, not coordinate precision or gazetteer coverage, and it tracks **training representation** — FR/IT (trained) ~80% resolve / city-tight, vs PT/PL/AT/LU ~50–57%, CZ 43%, AU 28%. So a retrain's value is lifting parse recall on the mid/low tier (FR — the priority locale — is already fine). The eval to gate it now exists (`nonus-coord-panel.sh`). Your call on scope; I did NOT launch (a 2k-step probe can't cleanly falsify a data-coverage lever, and scope is yours).
+3. **Greenlight the venue/POI ingest** — the top fine-component unblock (one Overture-places-FR / OSM fetch → both the #229 venue eval *and* the T2 training shard). Held all night on the OOM history + the "use the CLI not ad-hoc duckdb" rule; wants a supervised run.
+4. **Re-scope or close #625** — the lever search is concluded (GBT is the answer; NPI-truth target unreachable).
+
+**Production: unchanged** — everything behind PRs; **$0 / $20 GPU**; no demo/model/canonical swap; 0 regressions. **Hardware note:** the lab box idles hot (~88 °C, summer ambient) — local ONNX eval grades spiked it to ~90 °C, so the full ~20-locale sweep was paced/deferred (it's also data-limited: only postcode-bearing OA locales are coordinate-gradeable).
+
 ## What shipped
 
 - **🎯 The keystone — a 4-locale assembled-coordinate panel reframes #148 (PR #767).** Built IT/PT/PL/AU held-out sets (real OA, truth coords, `build-oa-coord-golden.py`) and graded the shipped model on the metric we ship, separating **resolve rate** from the **resolved-only coordinate**:
