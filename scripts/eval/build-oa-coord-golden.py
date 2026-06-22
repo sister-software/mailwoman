@@ -29,6 +29,7 @@
 
 import argparse
 import csv
+import glob as globmod
 import io
 import json
 import random
@@ -55,8 +56,9 @@ def titlecase_if_upper(s: str) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--country", required=True, help="ISO-3166 alpha-2, e.g. IT")
-    ap.add_argument("--zip", required=True)
-    ap.add_argument("--entry", required=True, help="the .csv path inside the zip")
+    ap.add_argument("--zip", help="OA countrywide zip (with --entry)")
+    ap.add_argument("--entry", help="the .csv path inside the zip")
+    ap.add_argument("--csv-glob", help="alternative to --zip: a glob of loose OA CSVs (e.g. extracted/<cc>/*.csv)")
     ap.add_argument("--out", required=True)
     ap.add_argument("--n", type=int, default=150)
     ap.add_argument("--per-bucket", type=int, default=8)
@@ -65,35 +67,47 @@ def main() -> None:
 
     rng = random.Random(a.seed)
     buckets: dict[str, list] = defaultdict(list)
-    with zipfile.ZipFile(a.zip) as z, z.open(a.entry) as f:
-        reader = csv.DictReader(io.TextIOWrapper(f, "utf-8"))
-        for row in reader:
-            num = (row.get("NUMBER") or "").strip()
-            street = (row.get("STREET") or "").strip()
-            city = (row.get("CITY") or "").strip()
-            cp = (row.get("POSTCODE") or "").strip()
-            region = (row.get("REGION") or "").strip()
-            try:
-                lat = float(row.get("LAT", ""))
-                lon = float(row.get("LON", ""))
-            except ValueError:
-                continue
-            if not (num and street and city and cp and num != "0" and street[:1].isalpha()):
-                continue
-            key = region or cp[:2]  # geographic diversity bucket
-            if len(buckets[key]) < a.per_bucket:
-                buckets[key].append(
-                    {
-                        "street": titlecase_if_upper(street),
-                        "num": num,
-                        "cp": cp,
-                        "city": titlecase_if_upper(city),
-                        "lat": lat,
-                        "lon": lon,
-                    }
-                )
-            if sum(len(v) for v in buckets.values()) >= a.n * 2:
-                break
+
+    def row_streams():
+        """Yield csv.DictReader-compatible row dicts from either a zip entry or a CSV glob."""
+        if a.zip:
+            with zipfile.ZipFile(a.zip) as z, z.open(a.entry) as f:
+                yield from csv.DictReader(io.TextIOWrapper(f, "utf-8"))
+        else:
+            for path in sorted(globmod.glob(a.csv_glob)):
+                with open(path, encoding="utf-8") as f:
+                    yield from csv.DictReader(f)
+
+    done = False
+    for row in row_streams():
+        if done:
+            break
+        num = (row.get("NUMBER") or "").strip()
+        street = (row.get("STREET") or "").strip()
+        city = (row.get("CITY") or "").strip()
+        cp = (row.get("POSTCODE") or "").strip()
+        region = (row.get("REGION") or "").strip()
+        try:
+            lat = float(row.get("LAT", ""))
+            lon = float(row.get("LON", ""))
+        except ValueError:
+            continue
+        if not (num and street and city and cp and num != "0" and street[:1].isalpha()):
+            continue
+        key = region or cp[:2]  # geographic diversity bucket
+        if len(buckets[key]) < a.per_bucket:
+            buckets[key].append(
+                {
+                    "street": titlecase_if_upper(street),
+                    "num": num,
+                    "cp": cp,
+                    "city": titlecase_if_upper(city),
+                    "lat": lat,
+                    "lon": lon,
+                }
+            )
+        if sum(len(v) for v in buckets.values()) >= a.n * 2:
+            done = True
 
     rows = []
     i = 0

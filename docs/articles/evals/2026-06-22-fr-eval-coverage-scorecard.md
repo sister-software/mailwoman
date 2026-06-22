@@ -55,23 +55,25 @@ Since OA-ES is on disk (`oa-cache/es__countrywide.zip`), a 120-row held-out set 
 
 Macro-F1 **28.5%**. **Verify-before-verdict applied:** the low street score is NOT a `Calle`-prefix labeling artifact — re-grading with a bare-name gold (street_prefix split out) drops street to **2.0%**, i.e. the model does not emit `Calle` as a prefix; the weakness is real OOD. This **quantifies the cost of the held #148 multi-locale retrain** on a real, third locale (not FR): a Latin-script EU locale the model wasn't trained on resolves its postcode but mangles street/house_number/locality. The OA-ES builder is a spot-check here; a committed `build-oa-golden` (ES + IT, both on disk) is the follow-up that would make this a standing non-US floor.
 
-## The honest non-US measurement — IT on the ASSEMBLED COORDINATE (the headline)
+## The honest non-US measurement — a 4-locale ASSEMBLED-COORDINATE panel (the headline)
 
-OA-IT carries truth coordinates (`LAT`/`LON`), so a 150-row held-out set (all 20 Italian regions, natural orders, `build-oa-coord-golden.py`) can be graded on the **metric we ship** — parse → resolve → great-circle error — not label-F1. This is the honest read, immune to the labeling-convention noise that sank the ES label score.
+OA carries truth coordinates, so held-out sets for IT/PT/PL/AU (150 rows each, all real, natural orders, `build-oa-coord-golden.py`) can be graded on the **metric we ship** — parse → resolve → great-circle error — separating the **resolve rate** (did it produce a resolvable parse?) from the **resolved-only coordinate** (how accurate when it does). This is the honest dial; label-F1 is confounded (the ES street 24.9% is a `Calle`-boundary artifact, confirmed by a bare-name A/B that drops it to 2.0%).
 
-| metric | IT (v1.8.0, 150 rows, 20 regions) |
-| --- | --: |
-| **coord p50** | **3.0 km** — the median real Italian address resolves to the right city |
-| coord p90 | 909 km — the tail: ~10% misresolve (wrong region/country — the genuinely-OOD parses) |
-| coord mean | 240 km (tail-dominated) |
-| resolve rate | 79.3% |
+| locale | resolve rate | p50 (resolved) | p90 (resolved) |
+| --- | --: | --: | --: |
+| IT | **79%** | 2.1 km | 272 km |
+| PT | **52%** | 1.2 km | 216 km |
+| PL | **53%** | 5.8 km | 405 km |
+| AU | **28%** | 234 km | 2366 km |
 
-**This is the night's load-bearing finding, and it reframes #148.** The ES label-F1 looked dire (macro 28.5%, street 24.9%) — but the IT **coordinate** shows the median non-US address geocodes correctly (3 km, city grain — we don't host IT rooftop). The model parses `locality` + `postcode` well enough to resolve the right city *even when it mis-tags street boundaries*; label-F1 charges those boundary errors, the coordinate doesn't. So:
+**This is the night's load-bearing finding — two axes, and it reframes #148.**
 
-- **Label-F1 systematically understates non-US capability** — the same #566 / v1.7.0 lesson ("grade the assembled coordinate"), now confirmed on a non-US locale with hard coordinate truth. Any non-US eval that leads with label-F1 is reading the wrong dial.
-- **The #148 multi-locale gap is the TAIL, not the median.** The value of a retrain is closing the ~10% p90 misresolve + the ~20% unresolved — the genuinely-OOD parses — not fixing a broadly-broken model. That is a far more targeted (and cheaper-to-justify) case than "the model can't do non-US," and it's now quantified on real data.
+- **Precision is good where it resolves (EU).** A resolved EU address lands city-accurate (p50 1–6 km) — so the parse + resolution quality, *conditional on resolving*, is fine. This is why label-F1 misleads: the model gets `locality` + `postcode` right enough to geocode the right city even when it mis-tags street boundaries, and label-F1 charges those boundary errors while the coordinate doesn't. (The #566 / v1.7.0 "grade the coordinate" lesson, confirmed on non-US with hard coordinate truth.)
+- **The real gap is resolve RATE (recall), and it varies hugely by locale.** IT 79% (the best case — likely best-represented in the #149 EU training shards + gazetteer) → PT/PL ~52% → AU 28%. The model fails to produce a resolvable parse for ~half of non-IT EU addresses and ~72% of AU. AU also *misplaces* what it resolves (p50 234 km — cross-state name collisions like Windsor).
 
-Artifacts: `scripts/eval/build-oa-coord-golden.py`, `data/eval/external/oa-it-coord-150.jsonl`, `scripts/eval/fr-admin-split-gate.ts --default-country IT`.
+So the #148 multi-locale retrain's value is **lifting parse recall on the non-IT locales** (+ AU collision handling), **not** fixing coordinate precision — a more precise, cheaper-to-justify target than "the model can't do non-US," now quantified across four real locales. ⚠ *Earlier-in-the-night caveat (verify-before-verdict): the IT-only read (p50 3 km → "median non-US geocodes well") was the BEST case; the panel corrected it — IT is the exception, not the rule.*
+
+Artifacts: `scripts/eval/build-oa-coord-golden.py`, `data/eval/external/oa-{it,pt,au,pl}-coord-150.jsonl`, `scripts/eval/fr-admin-split-gate.ts --default-country <CC>` (+ resolved-only metric).
 
 ## Failure taxonomy (#375) — what kind of gap each is
 

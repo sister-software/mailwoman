@@ -4,7 +4,16 @@ _Living document — sketched during the shift, finalized at hand-off (15:00 UTC
 
 ## What shipped
 
-- **🎯 The keystone — IT assembled-coordinate eval reframes #148 (PR #767).** OA-IT carries truth coordinates, so a 150-row held-out set (all 20 regions, `build-oa-coord-golden.py`) graded the shipped model on the **metric we ship**: **coord p50 3.0 km** (median real Italian address → right city), p90 909 km (OOD tail), resolve 79.3%. An ES label-F1 spot-check looked dire (macro 28.5%, street 24.9%) — but that's a labeling-convention confound. So **label-F1 systematically understates non-US capability** (the #566 lesson, now confirmed on a non-US locale with hard coordinate truth), and **the #148 multi-locale gap is the TAIL (~10% p90 + ~20% unresolved), not a broadly-broken model** — a targeted, cheaper-to-justify retrain case. Commented #148 + #625 with the data. Shipped reusable infra: the builder, the committed IT golden, and `fr-admin-split-gate.ts --default-country`.
+- **🎯 The keystone — a 4-locale assembled-coordinate panel reframes #148 (PR #767).** Built IT/PT/PL/AU held-out sets (real OA, truth coords, `build-oa-coord-golden.py`) and graded the shipped model on the metric we ship, separating **resolve rate** from the **resolved-only coordinate**:
+
+  | locale | resolve | p50 (resolved) |
+  | --- | --: | --: |
+  | IT | 79% | 2.1 km |
+  | PT | 52% | 1.2 km |
+  | PL | 53% | 5.8 km |
+  | AU | 28% | 234 km |
+
+  Two axes: **(1) precision is good where it resolves (EU)** — a resolved EU address is city-accurate (1–6 km), so label-F1 (ES 28.5%) understates non-US capability (it charges street-boundary mis-tags the coordinate ignores — the #566 lesson on hard coordinate truth). **(2) The real gap is resolve RATE (recall), varying hugely** — IT 79% (best case) → PT/PL ~52% → AU 28%. So #148's value is **lifting parse recall on non-IT locales**, not coordinate precision. ⚠ **verify-before-verdict, live:** my first IT-only read (p50 3 km → "median non-US geocodes well") was the BEST case; the panel corrected it (IT is the exception). I'd commented #148 on the IT-only read, then **superseded it** with the panel. Commented #148 / #625 / #734 / #330. Infra: the builder (`--csv-glob`), `data/eval/external/oa-{it,pt,au,pl}-coord-150.jsonl`, the gate's `--default-country` + resolved-only metric.
 - **#229 Phase-A scorecard — `docs/articles/evals/2026-06-22-fr-eval-coverage-scorecard.md`.** Graded the production model (v1.8.0) per-locale per-tag with support-size reliability flags + a failure taxonomy + a data-acquisition plan. The honest read: FR reliable floors hold (postcode 99.7 / house_number 99.6 / street 90.1 / locality 86.4); **venue (n=1) and unit (n=0) are unmeasured**, not failing — an absence of FR test data, not a model verdict; and (corrected on inspection) the **région floor 43.3 is an adversarial-stress number**, not a real-FR gap — the 219 rows are synthetic multi-script + order-permutations, and the model does 99.6% on the in-distribution format, so real-FR région is *unmeasured*. `country` is genuinely coordinate-invisible (the resolver sources it from the placer). Net: there is no representative real-FR fine-component eval — the in-distribution numbers are gamed, the OOD ones adversarial.
 
 ### Levers retired with evidence (verify-before-verdict — stops re-attempts)
