@@ -1,0 +1,165 @@
+# === v1.9.0-multilocale (the multi-locale parse-recall lever, #148) ============================
+# Clone of v1.8.0-fr-admin-split (production-default lineage) with ONE added lever: the
+# `overture-multilocale` shard — ~150k real Overture address rows EACH across 20 EU locales
+# (ES/IT/NL/PT/BE/PL/DE/AT/CH/CZ/DK/NO/SE/FI/IE/GB/SK/SI/HR/HU), ~3M rows total. The model is
+# en-us/fr-trained and never saw non-en/fr street + locality formats; the 8-locale assembled-
+# COORDINATE panel (docs/articles/evals/2026-06-22-fr-eval-coverage-scorecard.md) showed RESOLVE
+# RATE tracks training representation — FR/IT (trained) ~80%, vs mid-tier PT/PL/AT/CZ ~50% — and
+# root-caused the gap to PARSE (the model fails to emit a resolvable locality), not gazetteer
+# coverage. This shard feeds the missing locales.
+#
+# CRITICAL (data_loader.py:244): country_weights.get(country) is None -> the row is EXCLUDED. The
+# v1.8.0 config listed only US/FR/DE, which would silently drop every EU overture row. ALL 22
+# countries are listed below at 1.0 (an acceptance filter relative to max_weight, NOT a 1/N split,
+# so US/FR are not starved — every 1.0 row is accepted).
+#
+# GOAL / GATE: grade the ASSEMBLED coordinate, never label-F1 (the panel's whole lesson). Diagnostic-
+# first: at the step-2000/4000 checkpoint, run scripts/eval/nonus-coord-panel.sh — mid-tier resolve
+# (PT/PL/AT/CZ, pre-registered ~50%) must MOVE UP, AND the US/FR golden guardrail must hold (US
+# per-locale-f1 not worse >1pp; FR centroid flat). If mid-tier resolve is flat at 2-4k, KILL (the
+# lever or the weight is wrong) before the full 40k. NOT promoted without operator GO (model swap).
+# CORPUS: corpus-v0.8.0 (base, incl. fr-admin-split) + overture-multilocale overlay -> R2 -> sync.
+# Launch: modal run -d scripts/modal/train_remote.py --config v1.9.0-multilocale.yaml --resume none
+data:
+  corpus_dir: /data/corpus/versioned/v0.9.0-multilocale/corpus-v0.9.0-multilocale
+  tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
+  max_length: 128
+  country_weights:
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+    ES: 1.0
+    IT: 1.0
+    NL: 1.0
+    PT: 1.0
+    BE: 1.0
+    PL: 1.0
+    AT: 1.0
+    CH: 1.0
+    CZ: 1.0
+    DK: 1.0
+    NO: 1.0
+    SE: 1.0
+    FI: 1.0
+    IE: 1.0
+    GB: 1.0
+    SK: 1.0
+    SI: 1.0
+    HR: 1.0
+    HU: 1.0
+  source_weights:
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    synth-fr-order: 3.0
+    synth-fr-admin-split: 6.0
+    synth-unit: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+    # #148 lever: the multi-locale EU shard. Weight 3.0 — solid EU exposure (each locale's ~150k rows
+    # get comparable weighted mass to fr-admin-split's 60k*6.0) without dominating the US-heavy base;
+    # the step-2000 diagnostic gate adjudicates dilution (lower if US/FR regress, raise if mid-tier flat).
+    overture: 3.0
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 0.3
+    I-dependent_locality: 0.3
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v190-multilocale-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.5e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 40000
+  eval_every_steps: 2000
+  save_every_steps: 2000
+  log_every_steps: 50
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: constant
+  gazetteer_curriculum: false
+  trackio_project: mailwoman
+  trackio_run_name: v1.9.0-multilocale-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""
