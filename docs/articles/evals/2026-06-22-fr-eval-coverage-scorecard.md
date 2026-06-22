@@ -55,22 +55,24 @@ Since OA-ES is on disk (`oa-cache/es__countrywide.zip`), a 120-row held-out set 
 
 Macro-F1 **28.5%**. **Verify-before-verdict applied:** the low street score is NOT a `Calle`-prefix labeling artifact — re-grading with a bare-name gold (street_prefix split out) drops street to **2.0%**, i.e. the model does not emit `Calle` as a prefix; the weakness is real OOD. This **quantifies the cost of the held #148 multi-locale retrain** on a real, third locale (not FR): a Latin-script EU locale the model wasn't trained on resolves its postcode but mangles street/house_number/locality. The OA-ES builder is a spot-check here; a committed `build-oa-golden` (ES + IT, both on disk) is the follow-up that would make this a standing non-US floor.
 
-## The honest non-US measurement — a 4-locale ASSEMBLED-COORDINATE panel (the headline)
+## The honest non-US measurement — an 8-locale ASSEMBLED-COORDINATE panel (the headline)
 
-OA carries truth coordinates, so held-out sets for IT/PT/PL/AU (150 rows each, all real, natural orders, `build-oa-coord-golden.py`) can be graded on the **metric we ship** — parse → resolve → great-circle error — separating the **resolve rate** (did it produce a resolvable parse?) from the **resolved-only coordinate** (how accurate when it does). This is the honest dial; label-F1 is confounded (the ES street 24.9% is a `Calle`-boundary artifact, confirmed by a bare-name A/B that drops it to 2.0%).
+OA carries truth coordinates, so held-out sets for eight locales (150 rows each, all real, natural orders, `build-oa-coord-golden.py`; provenance + filters in the builder docstring) can be graded on the **metric we ship** — parse → resolve → great-circle error — separating the **resolve rate** (did it produce a resolvable parse?) from the **resolved-only coordinate** (how accurate when it does). This is the honest dial; label-F1 is confounded (the ES street 24.9% is a `Calle`-boundary artifact, confirmed by a bare-name A/B that drops it to 2.0%).
 
-| locale | resolve rate | p50 (resolved) | p90 (resolved) | tier |
-| --- | --: | --: | --: | --- |
-| FR | **80%** | 1.3 km | 191 km | top (trained) |
-| IT | **79%** | 2.1 km | 272 km | top (in #149 EU shards) |
-| PT | **52%** | 1.2 km | 216 km | mid |
-| PL | **53%** | 5.8 km | 405 km | mid |
-| AT | **50%** | 5.2 km | 171 km | mid |
-| LU | **57%** | 0.3 km | 2 km | mid (small dense country — rooftop-tight) |
-| CZ | **43%** | 44 km | 278 km | low-mid (loose resolve too) |
-| AU | **28%** | 234 km | 2366 km | low (collisions) |
+| locale | resolve rate | n resolved | p50 (resolved) | p90 (resolved) | tier |
+| --- | --: | --: | --: | --: | --- |
+| FR | **80%** | 120 / 150 | 1.3 km | 191 km | top (trained) |
+| IT | **79%** | 119 / 150 | 2.1 km | 272 km | top (in #149 EU shards) |
+| LU | **57%** | 86 / 150 | 0.3 km | 2 km | mid (small dense country — rooftop-tight) |
+| PL | **53%** | 79 / 150 | 5.8 km | 405 km | mid |
+| PT | **52%** | 78 / 150 | 1.2 km | 216 km | mid |
+| AT | **50%** | 75 / 150 | 5.2 km | 171 km | mid |
+| CZ | **43%** | 64 / 150 | 44 km | 278 km | low-mid (loose resolve too) |
+| AU | **28%** | 20 / 72 | 234 km | 2366 km | low (collisions) |
 
-_8 resolvable locales — the panel is now ~complete for postcode-bearing OA. Tiers: top FR/IT ~80%, mid PT/PL/AT/LU ~50–57%, low-mid CZ 43%, low AU 28%. **Most resolved coords are city-to-rooftop tight (0.3–6 km)** — the "where it resolves, it's accurate" rule — **except CZ (44 km) and AU (234 km), which resolve loosely too** (wrong same-name place; the dual-axis-worst locales). DE/BE/DK/FI OA lack a POSTCODE column → not cleanly coordinate-gradeable (the resolve path needs the postcode anchor); ES is cadastral → label-only. So the postcode-bearing set is essentially mapped; broadening further needs postcode-complete sources._
+> **Read the right column as a ceiling, not an average.** The resolved-only coordinate is over only the addresses the model *chose* to resolve, and the ones it drops are disproportionately harder — so the resolved coord flatters the model, most of all where the resolve rate is low (AU's 234 km is on **20 points**, CZ's 44 km on 64 — treat both as noisy). The unbiased signal is the resolve **rate**, which is over the full sample. 150/locale also carries a ±~8% band — rank the tiers, don't over-read small mid-tier deltas.
+
+_8 resolvable locales — the panel is ~complete for postcode-bearing OA. Tiers: top FR/IT ~80%, mid LU/PL/PT/AT ~50–57%, low-mid CZ 43%, low AU 28%. **Most resolved coords are city-to-rooftop tight (0.3–6 km)** — the "where it resolves, it's accurate" rule — **except CZ (44 km) and AU (234 km), which resolve loosely too** (wrong same-name place; the dual-axis-worst locales). DE/BE/DK/FI OA lack a POSTCODE column → not cleanly coordinate-gradeable (the resolve path needs the postcode anchor); ES is cadastral → label-only. So the postcode-bearing set is essentially mapped; broadening further needs postcode-complete sources._
 
 **This is the night's load-bearing finding — two axes, and it reframes #148.**
 
