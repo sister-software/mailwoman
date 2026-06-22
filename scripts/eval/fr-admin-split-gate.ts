@@ -110,7 +110,7 @@ async function main() {
 	})
 	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const resolver = createWofResolver(new WofSqlitePlaceLookup({ databasePath: wofDb }) as never)
-	const resolveOpts = { defaultCountry: "FR" }
+	const resolveOpts = { defaultCountry: arg("default-country", "FR") }
 
 	const errs: number[] = []
 	let resolved = 0,

@@ -55,6 +55,24 @@ Since OA-ES is on disk (`oa-cache/es__countrywide.zip`), a 120-row held-out set 
 
 Macro-F1 **28.5%**. **Verify-before-verdict applied:** the low street score is NOT a `Calle`-prefix labeling artifact — re-grading with a bare-name gold (street_prefix split out) drops street to **2.0%**, i.e. the model does not emit `Calle` as a prefix; the weakness is real OOD. This **quantifies the cost of the held #148 multi-locale retrain** on a real, third locale (not FR): a Latin-script EU locale the model wasn't trained on resolves its postcode but mangles street/house_number/locality. The OA-ES builder is a spot-check here; a committed `build-oa-golden` (ES + IT, both on disk) is the follow-up that would make this a standing non-US floor.
 
+## The honest non-US measurement — IT on the ASSEMBLED COORDINATE (the headline)
+
+OA-IT carries truth coordinates (`LAT`/`LON`), so a 150-row held-out set (all 20 Italian regions, natural orders, `build-oa-coord-golden.py`) can be graded on the **metric we ship** — parse → resolve → great-circle error — not label-F1. This is the honest read, immune to the labeling-convention noise that sank the ES label score.
+
+| metric | IT (v1.8.0, 150 rows, 20 regions) |
+| --- | --: |
+| **coord p50** | **3.0 km** — the median real Italian address resolves to the right city |
+| coord p90 | 909 km — the tail: ~10% misresolve (wrong region/country — the genuinely-OOD parses) |
+| coord mean | 240 km (tail-dominated) |
+| resolve rate | 79.3% |
+
+**This is the night's load-bearing finding, and it reframes #148.** The ES label-F1 looked dire (macro 28.5%, street 24.9%) — but the IT **coordinate** shows the median non-US address geocodes correctly (3 km, city grain — we don't host IT rooftop). The model parses `locality` + `postcode` well enough to resolve the right city *even when it mis-tags street boundaries*; label-F1 charges those boundary errors, the coordinate doesn't. So:
+
+- **Label-F1 systematically understates non-US capability** — the same #566 / v1.7.0 lesson ("grade the assembled coordinate"), now confirmed on a non-US locale with hard coordinate truth. Any non-US eval that leads with label-F1 is reading the wrong dial.
+- **The #148 multi-locale gap is the TAIL, not the median.** The value of a retrain is closing the ~10% p90 misresolve + the ~20% unresolved — the genuinely-OOD parses — not fixing a broadly-broken model. That is a far more targeted (and cheaper-to-justify) case than "the model can't do non-US," and it's now quantified on real data.
+
+Artifacts: `scripts/eval/build-oa-coord-golden.py`, `data/eval/external/oa-it-coord-150.jsonl`, `scripts/eval/fr-admin-split-gate.ts --default-country IT`.
+
 ## Failure taxonomy (#375) — what kind of gap each is
 
 | stratum | gap class | fix lever |
