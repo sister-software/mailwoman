@@ -33,8 +33,9 @@ import {
 	populateAncestors,
 } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import FastGlob from "fast-glob"
-import { existsSync, statSync, unlinkSync } from "node:fs"
+import { existsSync, readFileSync, statSync, unlinkSync } from "node:fs"
 import { readFile } from "node:fs/promises"
+import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import { asyncParallelIterator } from "spliterator"
 
@@ -46,6 +47,13 @@ import { asyncParallelIterator } from "spliterator"
 const OVERTURE_ID_BASE = 8_000_000_000_000
 /** Overture division subtypes that map to the resolver's admin placetypes. */
 const OVERTURE_DIVISION_SUBTYPES = ["locality", "region", "county", "localadmin"]
+/**
+ * Synthetic id base for GeoNames-sourced alias rows (#743/#193) — above Overture's 8e12 so the
+ * three sources (WOF real ids, Overture, GeoNames) never collide in a combined DB.
+ */
+const GEONAMES_ID_BASE = 9_000_000_000_000
+/** Default GeoNames per-country dump directory (`<CC>.txt`, from download.geonames.org/export/dump). */
+const DEFAULT_GEONAMES_DIR = "/mnt/playpen/mailwoman-data/geonames"
 /** Pinned Overture release for the divisions theme (the release the EU coverage was validated on). */
 const DEFAULT_OVERTURE_RELEASE = "2026-06-17.0"
 
@@ -69,6 +77,14 @@ interface Args {
 	overtureCountries?: string[]
 	/** Overture release for `--overture-countries` (the divisions theme is pinned per release). */
 	overtureRelease: string
+	/**
+	 * #743/#193: comma-separated ISO codes to backfill GeoNames place ALIASES (the bilingual / alt-name
+	 * class — Karjaa↔Karis) AFTER the WOF + Overture ingest. Reads `<CC>.txt` from {@link geonamesDir}.
+	 * Off unless provided.
+	 */
+	geonamesCountries?: string[]
+	/** Directory of GeoNames per-country dumps (`<CC>.txt`). Default {@link DEFAULT_GEONAMES_DIR}. */
+	geonamesDir: string
 }
 
 function parseArgs(): Args {
@@ -80,6 +96,8 @@ function parseArgs(): Args {
 	let placetypes: string[] | undefined
 	let overtureCountries: string[] | undefined
 	let overtureRelease = DEFAULT_OVERTURE_RELEASE
+	let geonamesCountries: string[] | undefined
+	let geonamesDir = DEFAULT_GEONAMES_DIR
 
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === "--data" && args[i + 1]) dataDir = args[++i]
@@ -95,16 +113,31 @@ function parseArgs(): Args {
 				.map((s) => s.trim().toUpperCase())
 				.filter(Boolean)
 		else if (args[i] === "--overture-release" && args[i + 1]) overtureRelease = args[++i]!
+		else if (args[i] === "--geonames-countries" && args[i + 1])
+			geonamesCountries = args[++i]!.split(",")
+				.map((s) => s.trim().toUpperCase())
+				.filter(Boolean)
+		else if (args[i] === "--geonames-dir" && args[i + 1]) geonamesDir = args[++i]!
 	}
 
 	if (!dataDir || !outputPath) {
 		console.error(
-			"Usage: node scripts/build-unified-wof.js --data <wof-repos-dir> --output <output.db> [--concurrency 64] [--batch 500] [--placetypes postalcode] [--overture-countries PT,PL,CZ] [--overture-release 2026-06-17.0]"
+			"Usage: node scripts/build-unified-wof.js --data <wof-repos-dir> --output <output.db> [--concurrency 64] [--batch 500] [--placetypes postalcode] [--overture-countries PT,PL,CZ] [--overture-release 2026-06-17.0] [--geonames-countries FI,EE,LV] [--geonames-dir <dir>]"
 		)
 		process.exit(1)
 	}
 
-	return { dataDir, outputPath, concurrency, batchCommitSize, placetypes, overtureCountries, overtureRelease }
+	return {
+		dataDir,
+		outputPath,
+		concurrency,
+		batchCommitSize,
+		placetypes,
+		overtureCountries,
+		overtureRelease,
+		geonamesCountries,
+		geonamesDir,
+	}
 }
 
 const ADMIN_PLACETYPES = new Set([
@@ -337,9 +370,102 @@ export async function ingestOvertureDivisions(
 	return n
 }
 
+/**
+ * Backfill GeoNames per-country place ALIASES (#743/#193) into an already-open unified ingest DB.
+ * The candidate gazetteer's hard-filter recall gap on BILINGUAL countries (Finland: the address
+ * says "Karjaa" but the table holds the Swedish "Karis") is missing alt-LANGUAGE names, not missing
+ * places: the WOF/Overture `names` carried only the primary, so the candidate build's Latin-alias
+ * explode (build-candidate pass 2) had nothing to widen. GeoNames' per-country dump carries the
+ * variants inline (the Karis row's `alternatenames` includes "Karjaa").
+ *
+ * For each POPULATED place (feature class `P`) this writes an spr row + names rows (primary + Latin
+ * alt-names) + population into the SAME tables the WOF/Overture paths use — synthetic ids based at
+ * {@link GEONAMES_ID_BASE} so the three sources never collide — so the Freeze phase
+ * (place_search/FTS/indexes) treats them uniformly and the candidate rebuild carries Karjaa↔Karis.
+ * Proven on a copy first (scripts/build-candidate-geonames-aliases.ts): FI hard-resolve 69.5 →
+ * 85.8%, coverage 74.4 → 94.0%, coords still tight. Duplicating a place already held under another
+ * source is benign — the extra rows share the same name_key+coord and the candidate ranking dedupes
+ * by score.
+ *
+ * GeoNames dump = `download.geonames.org/export/dump/<CC>.zip` → `<CC>.txt` (TSV). Plain text, so
+ * no DuckDB — a streamed read. Country-scoped (`--geonames-countries`) like the Overture backfill.
+ *
+ * @returns The number of GeoNames places ingested.
+ */
+export function ingestGeonamesAliases(db: DatabaseSync, countries: string[], geonamesDir: string): number {
+	// Latin-only, no bracket/paren noise GeoNames packs into `alternatenames` ("(( Karis Landskommun ))",
+	// airport codes), 2–60 chars, at least one letter (drops bare postcodes/numbers).
+	const LATIN_NAME = /^[\p{Script=Latin}\p{M}\s\-'.]{2,60}$/u
+	const clean = (s: string): string | null => {
+		const t = s.trim()
+		return t && LATIN_NAME.test(t) && /\p{L}/u.test(t) ? t : null
+	}
+	const sprInsert = db.prepare(
+		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	)
+	const namesInsert = db.prepare(
+		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, ?, ?, ?, ?)`
+	)
+	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
+
+	let id = GEONAMES_ID_BASE
+	let total = 0
+	db.exec("BEGIN")
+	for (const cc of countries) {
+		const file = join(geonamesDir, `${cc}.txt`)
+		if (!existsSync(file)) {
+			console.error(
+				`  GeoNames ${cc}: ${file} missing — download from download.geonames.org/export/dump/${cc}.zip; skipped`
+			)
+			continue
+		}
+		let nc = 0
+		// GeoNames dump columns: 1 name, 2 asciiname, 3 alternatenames, 4 lat, 5 lon, 6 feature_class, 14 pop.
+		for (const line of readFileSync(file, "utf8").split("\n")) {
+			if (!line) continue
+			const f = line.split("\t")
+			if (f[6] !== "P") continue // populated places only
+			const lat = Number(f[4])
+			const lon = Number(f[5])
+			if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue
+			const name = clean(f[1] ?? "")
+			if (!name) continue
+			const nid = id++
+			// Point bbox — a GeoNames row is a centroid; the candidate's region-bbox disambiguation just
+			// sees it as contained in itself, fine for a locality.
+			sprInsert.run(nid, -1, name, "locality", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
+			namesInsert.run(nid, name, "locality", cc, "", 0)
+			const seen = new Set([name])
+			for (const raw of [f[2] ?? "", ...(f[3] ? f[3].split(",") : [])]) {
+				const alt = clean(raw)
+				if (alt && !seen.has(alt)) {
+					seen.add(alt)
+					namesInsert.run(nid, alt, "locality", cc, "", 0)
+				}
+			}
+			const pop = Number(f[14]) || 0
+			if (pop > 0) populationInsert.run(nid, pop)
+			nc++
+		}
+		console.error(`  GeoNames ${cc}: ${nc.toLocaleString()} populated places (+ Latin alt-names)`)
+		total += nc
+	}
+	db.exec("COMMIT")
+	return total
+}
+
 async function main() {
-	const { dataDir, outputPath, concurrency, batchCommitSize, placetypes, overtureCountries, overtureRelease } =
-		parseArgs()
+	const {
+		dataDir,
+		outputPath,
+		concurrency,
+		batchCommitSize,
+		placetypes,
+		overtureCountries,
+		overtureRelease,
+		geonamesCountries,
+		geonamesDir,
+	} = parseArgs()
 	const activePlacetypes = placetypes ? new Set(placetypes) : ADMIN_PLACETYPES
 	console.error(`Ingesting placetypes: ${[...activePlacetypes].join(", ")}`)
 	const t0 = performance.now()
@@ -474,6 +600,16 @@ async function main() {
 		console.error(`Backfilling Overture divisions for ${overtureCountries.join(",")}...`)
 		overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease)
 		console.error(`  Overture divisions ingested: ${overtureIngested.toLocaleString()}`)
+	}
+
+	// -----------------------------------------------------------------------
+	// Phase 2c: GeoNames bilingual / alt-name backfill (#743/#193 — the Karjaa↔Karis class)
+	// -----------------------------------------------------------------------
+	let geonamesIngested = 0
+	if (geonamesCountries && geonamesCountries.length > 0) {
+		console.error(`Backfilling GeoNames aliases for ${geonamesCountries.join(",")} from ${geonamesDir}...`)
+		geonamesIngested = ingestGeonamesAliases(db, geonamesCountries, geonamesDir)
+		console.error(`  GeoNames places ingested: ${geonamesIngested.toLocaleString()}`)
 	}
 
 	// -----------------------------------------------------------------------
