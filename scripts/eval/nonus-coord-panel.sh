@@ -25,6 +25,12 @@
 # zips, entries inside `openaddresses/europe.zip`, and loose CSVs under
 # `openaddresses/extracted/<cc>/`. This encodes which form each locale uses (the
 # non-obvious part); extend SRC for new locales.
+#
+# Per-locale data quirks found 2026-06-22: DE (`de/nw/statewide.csv`) has an EMPTY
+# POSTCODE column → the builder filters every row (the resolve path needs the postcode
+# anchor) → 0 rows. Not a bug; DE needs a postcode-bearing source (or a no-postcode
+# eval variant). ES (`oa-cache`) is a cadastral schema (tipo_vial/nombre_via), not the
+# standard columns this builder reads — label-only spot-check, not coordinate.
 
 set -euo pipefail
 
