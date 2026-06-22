@@ -67,9 +67,10 @@ OA carries truth coordinates, so held-out sets for IT/PT/PL/AU (150 rows each, a
 | PL | **53%** | 5.8 km | 405 km | mid |
 | AT | **50%** | 5.2 km | 171 km | mid |
 | LU | **57%** | 0.3 km | 2 km | mid (small dense country — rooftop-tight) |
+| CZ | **43%** | 44 km | 278 km | low-mid (loose resolve too) |
 | AU | **28%** | 234 km | 2366 km | low (collisions) |
 
-_(DE/BE OA lack postcodes → no clean coordinate eval; ES is a cadastral schema → label-only. The pattern is robust across 7 resolvable locales: top tier FR/IT ~80%, mid tier PT/PL/AT/LU ~50–57% with city-to-rooftop-tight resolved coords, low AU 28%.)_
+_8 resolvable locales — the panel is now ~complete for postcode-bearing OA. Tiers: top FR/IT ~80%, mid PT/PL/AT/LU ~50–57%, low-mid CZ 43%, low AU 28%. **Most resolved coords are city-to-rooftop tight (0.3–6 km)** — the "where it resolves, it's accurate" rule — **except CZ (44 km) and AU (234 km), which resolve loosely too** (wrong same-name place; the dual-axis-worst locales). DE/BE/DK/FI OA lack a POSTCODE column → not cleanly coordinate-gradeable (the resolve path needs the postcode anchor); ES is cadastral → label-only. So the postcode-bearing set is essentially mapped; broadening further needs postcode-complete sources._
 
 **This is the night's load-bearing finding — two axes, and it reframes #148.**
 
