@@ -67,8 +67,8 @@ Tonight probed ~six levers across the geocoder core and the record-matcher. The 
 
 ## Concrete next steps
 
-- **The multi-locale coordinate panel is buildable NOW (the immediate next eval).** `openaddresses/extracted/` already holds ~20 locales (AT BE CZ DK EE FI GR IL IS LT LU LV NZ PL PT AU …) + DE/NL/SE in `europe.zip`, all coordinate-bearing. `build-oa-coord-golden.py` + the parameterized gate turn each into a 30-min assembled-coordinate measurement. Generalizing the IT p50-3km finding across a panel ("the shipped model geocodes the median EU/AU address to the right city, gap is the tail") is the strongest possible input to #148 — **deferred tonight only on the 87 °C heat cap** (grading is local ONNX inference); resume on cooldown or run on Modal.
-- **Data acquisition (unblocks the *fine*-component work):** (a) OA FR (BAN, or the `europe.zip` FR slices) → a representative real-FR région/street/house_number set (the FR eval is in-distribution-gamed or adversarial-stress); (b) Overture-places FR / OSM → venue eval + T2 shard; (c) an FR unit source (or fold US `unit-real-designators.jsonl`).
+- **Extend the coordinate panel to the rest of the ~20 on-disk locales (the strongest #148 input).** 5 are done (FR/IT/PT/PL/AU); `openaddresses/extracted/` holds ~15 more (AT BE CZ DK EE FI GR IL IS LT LU LV NZ + SE) + DE/NL in `europe.zip`, all coordinate-bearing. `build-oa-coord-golden.py` + the gate make each a one-command add. **Deferred tonight on the heat cap** — each local ONNX grade spikes the lab box to ~90 °C (cools fast when idle), so a full 20-locale sweep wants Modal or paced cooldowns. (DE came back 0 rows from `de/nw/statewide.csv` — a schema/empty-field quirk to debug before adding DE.)
+- **Data acquisition (the genuinely-blocked strata):** (a) **venue** — Overture-places FR / OSM → venue eval + the T2 training shard (the top unblock; held tonight on the OOM history); (b) **unit** — a real unit source, or fold US `unit-real-designators.jsonl` into the golden; (c) a **real-FR `region`** set (OA-FR's `REGION` column is empty — needs a postcode→département derive via codex or another source). NB: FR *address* data is NOT blocked (it's `europe.zip`); FR core geocodes top-tier.
 - **Research, not tuning:** FR région-recall is OOD-format (model overfit `Locality, Département`) — fix is diverse région-bearing data, not a knob. CJK remains the Geographic-Rule-Engine epic.
 - **Files:** `2026-06-22-fr-eval-coverage-scorecard.md` (floors + data plan), `2026-06-22-nppes-dedup-lever-ladder.md` (#625), PR #767, PR #768.
 
@@ -77,8 +77,13 @@ Tonight probed ~six levers across the geocoder core and the record-matcher. The 
 | metric | value |
 | --- | --- |
 | shift window | 02:58 UTC → (15:00 UTC) |
-| models trained | 0 (so far) |
-| Modal $ spent | $0 / $20 |
+| PRs opened | 2 (#767 #229 panel/scorecard, #768 #625 ladder) |
+| issues commented/reframed | 5 (#148, #625, #734, #330, #435) |
+| levers retired with evidence | 4 (v1.8.1, #734 fold, GPU T1/T2, #564) |
+| self-corrections (verify-before-verdict) | 3 (FR région adversarial, IT-only→panel, FR-not-blocked) |
+| models trained | 0 |
+| Modal $ spent | **$0 / $20** (no GPU cleared the coordinate bar) |
 | NaN incidents | 0 |
 | CI failures | 0 |
 | demo/prod regressions shipped | 0 |
+| heat events | local ONNX grades spiked the box to ~90 °C; paced + deferred the full panel sweep |
