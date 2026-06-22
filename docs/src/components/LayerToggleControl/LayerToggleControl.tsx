@@ -33,6 +33,13 @@ export const LAYER_GROUP_PATTERNS: ReadonlyArray<{ name: string; match: RegExp }
 	// checkbox — turn on "optimistic" (looks covered, reveals gaps on zoom) OR "honest" (true fraction).
 	{ name: "Coverage · optimistic fog", match: /^coverage-opt/ },
 	{ name: "Coverage · honest fog", match: /^coverage-honest/ },
+	// Race-by-dot-density overlay (#race-dots). Per-category default-off layers → one checkbox each, so
+	// you can show the full mosaic or isolate a single group's geography.
+	{ name: "Race · White", match: /^race-dots-white/ },
+	{ name: "Race · Black", match: /^race-dots-black/ },
+	{ name: "Race · Hispanic", match: /^race-dots-hispanic/ },
+	{ name: "Race · Asian", match: /^race-dots-asian/ },
+	{ name: "Race · Other", match: /^race-dots-other/ },
 ]
 
 export class LayerToggleControl implements IControl {
