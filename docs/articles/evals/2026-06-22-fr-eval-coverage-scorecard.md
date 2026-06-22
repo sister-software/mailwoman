@@ -59,17 +59,18 @@ Macro-F1 **28.5%**. **Verify-before-verdict applied:** the low street score is N
 
 OA carries truth coordinates, so held-out sets for IT/PT/PL/AU (150 rows each, all real, natural orders, `build-oa-coord-golden.py`) can be graded on the **metric we ship** — parse → resolve → great-circle error — separating the **resolve rate** (did it produce a resolvable parse?) from the **resolved-only coordinate** (how accurate when it does). This is the honest dial; label-F1 is confounded (the ES street 24.9% is a `Calle`-boundary artifact, confirmed by a bare-name A/B that drops it to 2.0%).
 
-| locale | resolve rate | p50 (resolved) | p90 (resolved) |
-| --- | --: | --: | --: |
-| IT | **79%** | 2.1 km | 272 km |
-| PT | **52%** | 1.2 km | 216 km |
-| PL | **53%** | 5.8 km | 405 km |
-| AU | **28%** | 234 km | 2366 km |
+| locale | resolve rate | p50 (resolved) | p90 (resolved) | tier |
+| --- | --: | --: | --: | --- |
+| FR | **80%** | 1.3 km | 191 km | top (trained) |
+| IT | **79%** | 2.1 km | 272 km | top (in #149 EU shards) |
+| PT | **52%** | 1.2 km | 216 km | mid |
+| PL | **53%** | 5.8 km | 405 km | mid |
+| AU | **28%** | 234 km | 2366 km | low (collisions) |
 
 **This is the night's load-bearing finding — two axes, and it reframes #148.**
 
 - **Precision is good where it resolves (EU).** A resolved EU address lands city-accurate (p50 1–6 km) — so the parse + resolution quality, *conditional on resolving*, is fine. This is why label-F1 misleads: the model gets `locality` + `postcode` right enough to geocode the right city even when it mis-tags street boundaries, and label-F1 charges those boundary errors while the coordinate doesn't. (The #566 / v1.7.0 "grade the coordinate" lesson, confirmed on non-US with hard coordinate truth.)
-- **The real gap is resolve RATE (recall), and it varies hugely by locale.** IT 79% (the best case — likely best-represented in the #149 EU training shards + gazetteer) → PT/PL ~52% → AU 28%. The model fails to produce a resolvable parse for ~half of non-IT EU addresses and ~72% of AU. AU also *misplaces* what it resolves (p50 234 km — cross-state name collisions like Windsor).
+- **The real gap is resolve RATE (recall), and it tracks TRAINING REPRESENTATION.** The split is clean: **FR 80% / IT 79%** (the trained / well-represented locales — FR is v1.8.0's home turf, IT rode the #149 EU shards) resolve at ~80% with city-tight coords, while **PT/PL ~52%** (present but under-represented) and **AU 28%** (barely represented, + cross-state name collisions like Windsor) fall off. The model fails to produce a resolvable parse for ~half of mid-tier EU addresses and ~72% of AU. So the gap is *coverage of the training distribution*, exactly the #148 lever.
 
 So the #148 multi-locale retrain's value is **lifting parse recall on the non-IT locales** (+ AU collision handling), **not** fixing coordinate precision — a more precise, cheaper-to-justify target than "the model can't do non-US," now quantified across four real locales.
 
@@ -88,7 +89,7 @@ Artifacts: `scripts/eval/build-oa-coord-golden.py`, `data/eval/external/oa-{it,p
 
 ## Data-acquisition plan (the real Phase-A unblock)
 
-The honest bottleneck: **building new FR fine-component held-out sets is data-blocked on disk.** The OA FR cache (`/tmp/oa-cache/fr__countrywide.zip`) is gone, the Overture **places** (POI) theme isn't materialized locally (only addresses + divisions + postcodes), and there's no FR unit source. To close the thin strata, the next shift fetches, via the mailwoman CLI (never ad-hoc duckdb — the Overture OOM lesson):
+⚠ **Correction (verify-before-verdict, my own miss): FR address data is NOT blocked.** `fr/countrywide.csv` (BAN) is in `openaddresses/europe.zip` all along — I checked only the empty `/tmp/oa-cache` and wrongly called it gone. The FR **coordinate** eval is now built from it (`oa-fr-coord-150.jsonl`, FR 80% / p50 1.3 km — top tier). The genuinely-blocked FR strata are narrower: **venue/unit** (no POI/unit source — OA carries neither) and a **real-FR `region`** stratum (the OA-FR `REGION` column is empty, unlike OA-IT). For those, the next shift fetches, via the mailwoman CLI (never ad-hoc duckdb — the Overture OOM lesson):
 
 - **FR venue** → Overture **places** theme for FR (POI name + address) or OSM FR POIs → render `Venue, NN Street, PPPPP City`, venue = POI name. Unblocks both the held-out venue set **and** the T2 venue training shard.
 - **FR OOD région** → re-fetch OA FR (BAN) and render `département` in the varied real-world orders the model misses (NOT the in-distribution admin-split format, which would game the floor to ~96%).
