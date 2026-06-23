@@ -13,9 +13,35 @@ coordinate-graded._
    so the first entity in each bucket never counted (enrolled read 0 not 1; registry/reconcile.test.ts
    red, blocking every PR). Restored the plain increment; test 8/8. **Self-merged once CI green** (a
    red main blocks all night work — flagged here, not silent).
-2. _(in progress — benchmark + confidence demo; filled at hand-off)_
+2. **Three PRs to review + merge, all CI-green, suggested order:**
+   - **#775** — competitive benchmark + scorecard. The honest verdict: **we win US (99 vs Nominatim
+     84), trail EU on coverage.** Read the scorecard before the trade show — the precise claim is "more
+     accurate than Nominatim on US," never "globally" (false on EU). _Also: our internal resolve-rate
+     was overstating EU ~15–22 pp; grade right-place @25 km going forward._
+   - **#776** — calibrated-confidence showcase (the differentiator). Re-fit on the shipped v4.13.0
+     (ECE 0.060→0.0055), live reliability + abstention curves on the calibration concept page,
+     render-verified. The trade-show centerpiece: the one thing a search index can't show.
+   - **#777** — #370 span-rescore + postcode gate (the EU-coverage lever). Default-off, eval-validated:
+     lifts 53% of the EU no-result tail to right-place @25 km. _Eval infra + the gated lever, no
+     production wiring._
+3. **The postmortem PR (this doc)** — `docs/night-2026-06-23-postmortem` branch.
 
-**Production: unchanged** — everything behind PRs; $0 GPU; no model/demo/canonical swap.
+### Proposed follow-ups (your call — not done tonight, on purpose)
+- **#370 production wiring.** Wire the gated `spanRescore` into `resolveTree` behind a default-off
+  flag, then widen postcode coverage so the gate reaches CZ/AU (it reaches IT today). Left for you
+  because it touches the hot path + the gate's reach is a coverage decision.
+- **Demo confidence toggle.** The main demo page shows *raw* per-span confidence. A "calibrated"
+  toggle (default raw) would let a visitor flip to honest confidence and watch the under-confident
+  spans correct upward — compelling on the floor. Not shipped unilaterally because it changes what
+  numbers the demo shows (a presentation call), and the tiering thresholds (0.5/0.8) were tuned for raw.
+- **Pelias benchmark cells.** geocode.earth was rate-limited/403 all night; the US-Pelias + messy-Pelias
+  cells are unmeasured. Re-run on fresh quota (the harness handles it; diag stays git-excluded).
+- **G-NAF (#208).** License is clear (CC-BY-4.0 per the data-sources catalog); the ingest is the work
+  (~5 GB AU, backlog #31). Lower priority than EU for the trade show.
+
+**Production: unchanged** — everything behind PRs; $0 GPU; no model/demo/canonical swap. R2 got one
+new object: the fresh v4.13.0 `calibration.json` (the demo doesn't read it until #776 deploys, so no
+live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
 
 ## What shipped (running)
 - **Un-red main (#774)** — lockfile sync + the reconcile regression fix. The pre-flight earned its keep:
@@ -73,20 +99,50 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails BOTH co
 - **Respecting the diag** — the geocode.earth integration stays in the operator's uncommitted file
   (git-excluded via `.git/info/exclude`); fixed only its `import` → `import type` (uncommitted) so it
   runs under the repo's strip-types loader. The committed harness never references geocode.earth.
+- **Verify-before-verdict fired live, repeatedly, and was always right to.** It killed the false
+  "Pelias collapses on messy" headline (a 429 artifact), ruled out the config-handicap theory for the
+  EU loss, reframed the #370 build's "49% wrong" as a coordinate-graded 78%-right (the gold *string*
+  understated it), and caught the off-canvas SVG bug before it shipped.
+- **Falsify-then-build kept #370 honest.** The cheap falsifier (gold→truth p50 1.8 km) greenlit the
+  build with evidence; the build then surfaced its own surprise (shortest-wins backwards), fixed by a
+  one-knob diagnostic, not a guess.
+- **The centerpiece got render-verified, not just build-verified** — Playwright with an intercepted
+  R2 fetch drew the real SVGs (24 circles, 2 polylines, zero errors); production CORS confirmed by header.
 
 ## What could've gone better
-- _(TBD)_
+- **The #370 build shipped a backwards heuristic in its first cut.** Shortest-span-wins (lifted from
+  DeepSeek's over-merge guard) was wrong for real OA, where the gold locality is the *longer* name.
+  The diagnostic caught it in one pass, but a moment's thought about the data ("gold is `Tomaszów
+  Mazowiecki`, not `Tomaszów`") would have predicted it before the run.
+- **Couldn't render-verify the showcase against live R2 locally** — R2's CORS allowlist excludes
+  `localhost`, so the first Playwright pass hit the component's error state. Resolved by intercepting
+  the fetch, but a few minutes were spent proving it was a localhost artifact, not a bug.
+- **The #370 gate's reach is data-limited and I found that late** — the postcode→point lookup the gate
+  needs only covers IT among the swap locales (CZ/AU resolve ~none). The lever is still net-positive,
+  but the gate is more "proof of the mechanism" than "broad fix" until postcode coverage widens.
 
 ## Decisions made autonomously
 - **Self-merge #774** (un-red main) — broad-trust grant + the "root-cause CI failures before piling on"
   mandate; a red main blocks every deliverable. Behavior/model PRs still wall-respected (operator GO).
 - **Bundled the reconcile regression fix into the lockfile PR** — both are "un-red main" hygiene.
-
-## Open questions / next steps
-- The benchmark result decides the night's emphasis: if it confirms we clear Nominatim broadly, the
-  marginal hour goes to PRIMARY B (the calibration-curve demo) over #370.
-- PRIMARY B: the demo already tiers spans by confidence (`SpanHighlight.tier`); the new piece is the
-  **calibration-curve** visualization + messy-input presets + the "Nominatim: no result" side-by-side.
+- **Re-fit the calibration on v4.13.0 + staged it on R2** — the bundled table was the stale v4.0.0 fit
+  (wrong mapping for the shipped model). The R2 object isn't read by the live demo until #776 deploys,
+  so no production effect; staging now was required for local + render verification.
+- **Built the #370 gate into the same PR rather than deferring it** — once the data path (candidate-DB
+  postcode rows) turned out to exist for IT, the gate was a clean, conditional, never-hurts addition;
+  shipping it default-off with honest reach limits beat leaving it as a TODO.
+- **Did NOT ship the demo confidence toggle or the #370 production wiring** — both are presentation /
+  hot-path judgment calls; flagged as proposed follow-ups instead (see the handoff section).
 
 ## Numbers
-_(filled at hand-off)_
+| metric | value |
+| --- | --- |
+| shift window | 04:56 → (ongoing, ends 15:00) UTC |
+| PRs opened | 4 (#774 merged, #775/#776/#777 open, + postmortem branch) |
+| models trained | 0 (zero-GPU night by design) |
+| Modal $ spent | $0 |
+| GPU lost to error | 0 |
+| local ONNX eval runs | ~6 (benchmark, calibration collect, #370 ceiling/falsifier/build/gate) |
+| CI failures shipped | 0 (all PRs green) |
+| demo/model/canonical regressions | 0 (everything default-off / behind PRs) |
+| production changes | 1 R2 object staged (fresh calibration.json, no live effect pre-deploy) |
