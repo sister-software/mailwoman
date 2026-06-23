@@ -102,7 +102,16 @@ EU coord panel (n=972, @25km right-place), spanRescore off → on:
   ~17% of new resolutions land >25km — the mis-fire rate, trimmed by the gate where postcodes resolve.
 ```
 
-The strategic read: #775 ran Nominatim on these _same_ panels at ~79% EU @25km, so with the flag on mailwoman reaches **near-parity with Nominatim on EU** — the benchmark's EU weakness is largely a default-off flag away from closed, not a model deficiency. (Honest caveat: the e2e and #775 harnesses' mailwoman _baselines_ differ ~4 pp — 63.2 vs 59 — so it's near-parity pending a single-harness confirm; the **+16 pp lift itself is a clean A/B** and not subject to that caveat.) One process note: the first e2e run reported **+0.0 pp** because `@mailwoman/core` resolves to the _compiled_ `out/` (stale, pre-#780) while the unit tests alias to _source_ — `yarn compile`, then the real +16. Grade the wired path on compiled code, not only source unit tests.
+The strategic read, stated precisely (a trade-show claim has to survive a hostile check). The **clean, defensible result is the +16 pp lift** — a flag-only A/B that substantially narrows the EU no-result tail. What it does to the standing-vs-Nominatim is more nuanced than "parity," and the per-locale picture is the honest version. Against #775's Nominatim on the same panels:
+
+| | IT | PT | FR | PL | AT | CZ | AU |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| mailwoman + lever | 99 | 73 | 81 | 85 | 85 | 71 | 42 |
+| Nominatim (#775) | 75 | 47 | 59 | 96 | 97 | 88 | 97 |
+
+So with the lever on, mailwoman **leads** on IT/PT/FR and still **trails** on PL/AT/CZ (narrowed, not closed) and AU (the cross-state problem the country gate can't touch). The aggregates land ~79% each — but that's a _mix_ (the IT/PT/FR leads offset the Slavic/German/AU trails), **not** a uniform catch-up. And it's a **cross-harness** comparison: the e2e grades mailwoman more leniently than #775 did (e2e IT 99 vs #775's 92), so a same-harness run could put mailwoman-with-lever _below_ 79%. **The honest claim: the lever makes mailwoman competitive on EU aggregate and ahead on several countries — not "matches Nominatim across EU."** Confirm the aggregate standing with a single-harness mailwoman-vs-Nominatim run before claiming parity.
+
+One process note: the first e2e run reported **+0.0 pp** because `@mailwoman/core` resolves to the _compiled_ `out/` (stale, pre-#780) while the unit tests alias to _source_ — `yarn compile`, then the real +16. Grade the wired path on compiled code, not only source unit tests.
 
 ## What stays off
 
