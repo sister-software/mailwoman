@@ -1,0 +1,11 @@
+{
+	"extends": "@sister.software/tsconfig",
+	"compilerOptions": {
+		"outDir": "./out",
+		"emitDeclarationOnly": false,
+		"allowImportingTsExtensions": false
+	},
+	"references": [{ "path": "../core" }, { "path": "../spatial" }, { "path": "../codex" }],
+	"include": ["./**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"]
+}
