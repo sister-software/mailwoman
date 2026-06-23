@@ -24,6 +24,7 @@ import Head from "@docusaurus/Head"
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
+import { createRaceDotsSource, RaceDotsLayers, RaceDotsTileSetID } from "@mailwoman/cartographer/race-dots"
 import Layout from "@theme/Layout"
 import type { Map as MapLibreMap } from "maplibre-gl"
 import type React from "react"
@@ -323,6 +324,29 @@ const DemoApp: React.FC = () => {
 						}
 					}
 					map.on("load", wireCoverage)
+
+					// Race-by-dot-density overlay (default-off per-category circle layers), wired like coverage
+					// above — but deliberately WITHOUT the `isStyleLoaded()` defer. This handler runs on
+					// `load`, when the style *document* is ready, which is all `addSource`/`addLayer` needs.
+					// `isStyleLoaded()` ALSO returns false whenever any source's tiles are still streaming, and
+					// wireCoverage (which runs first) calls addSource — so on the globe basemap, where tiles
+					// stream continuously, gating here would defer on `styledata` forever and the dots would
+					// never wire. Coverage gets away with the guard only because it's the first overlay added.
+					const raceDotsSourceUrl = `https://tiles.sister.software/${RaceDotsTileSetID}.json`
+					const wireRaceDots = (): void => {
+						try {
+							if (!map.getSource(RaceDotsTileSetID)) {
+								map.addSource(RaceDotsTileSetID, createRaceDotsSource(raceDotsSourceUrl))
+							}
+							const firstSymbolID = map.getStyle().layers?.find((l) => l.type === "symbol")?.id
+							for (const layer of RaceDotsLayers) {
+								if (!map.getLayer(layer.id)) map.addLayer(layer, firstSymbolID)
+							}
+						} catch (error) {
+							console.warn("race-dots overlay wiring failed", error)
+						}
+					}
+					map.on("load", wireRaceDots)
 				}
 			} catch (error) {
 				if (cancelled) return
