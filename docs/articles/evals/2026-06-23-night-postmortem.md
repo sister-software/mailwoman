@@ -1,10 +1,10 @@
 # Night shift — 2026-06-23 (trade-show readiness: prove the bar + the category difference)
 
-_Living document — sketched during the shift, finalized at hand-off (15:00 UTC). Plan:
-`nightshift/2026-06-23-NIGHT-SHIFT-PLAN.md`. The arc: a DeepSeek consult reframed the night from an
-internal-metric push (#370's +12pp) to a competition plan — a fair head-to-head benchmark vs
-Nominatim/Pelias + the one capability they structurally lack (calibrated confidence). Zero-GPU,
-coordinate-graded._
+_Drafted during the shift; finalized at hand-off. Window: 04:56–11:45 UTC (operator returned early; the
+shift was closed + day-work kicked off then). Plan: `nightshift/2026-06-23-NIGHT-SHIFT-PLAN.md`. The arc:
+a DeepSeek consult reframed the night from an internal-metric push (#370's +12pp) to a competition plan —
+a fair head-to-head benchmark vs Nominatim/Pelias + the one capability they structurally lack (calibrated
+confidence). Zero-GPU, coordinate-graded._
 
 ## 🌅 Morning handoff — needs your eyes (priority order)
 1. **Merge #774 — un-reds main.** Two fixes: the yarn.lock `@mailwoman/spatial` sync (pre-flight
@@ -195,7 +195,7 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails BOTH co
 ## Numbers
 | metric | value |
 | --- | --- |
-| shift window | 04:56 → (ongoing, ends 15:00) UTC |
+| shift window | 04:56 → 11:45 UTC (operator returned early; closed + kicked off then) |
 | PRs opened | 6 (#774 merged; #775/#776/#777/#778/#780 open; + the postmortem PR) |
 | models trained | 0 (zero-GPU night by design) |
 | Modal $ spent | $0 |
