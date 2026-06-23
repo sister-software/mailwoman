@@ -58,7 +58,7 @@
 		"pluralize": "^8.0.0",
 		"react": "^19.2.7",
 		"regenerate": "^1.4.2",
-		"spliterator": "^2.0.0",
+		"spliterator": "^2.2.1",
 		"zod": "^4.4.3",
 		"zx": "^8.8.5"
 	},

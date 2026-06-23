@@ -4865,7 +4865,7 @@ __metadata:
     pino-pretty: "npm:^13.1.3"
     pluralize: "npm:^8.0.0"
     regenerate: "npm:^1.4.2"
-    spliterator: "npm:^2.0.0"
+    spliterator: "npm:^2.2.1"
     table: "npm:^6.9.0"
   languageName: unknown
   linkType: soft
@@ -4883,7 +4883,7 @@ __metadata:
     fast-glob: "npm:^3.3.3"
     fastest-levenshtein: "npm:^1.0.16"
     lru-cache: "npm:^10.4.3"
-    spliterator: "npm:^2.0.0"
+    spliterator: "npm:^2.2.1"
   languageName: unknown
   linkType: soft
 
@@ -5037,7 +5037,7 @@ __metadata:
     "@protomaps/basemaps": "npm:^5.7.2"
     "@types/node": "npm:^25.9.2"
     csv-parse: "npm:^5.6.0"
-    spliterator: "npm:^2.0.0"
+    spliterator: "npm:^2.2.1"
   languageName: unknown
   linkType: soft
 
@@ -5152,7 +5152,7 @@ __metadata:
     prettier-plugin-packagejson: "npm:^3.0.2"
     react: "npm:^19.2.7"
     release-it: "npm:^19.2.4"
-    spliterator: "npm:^2.0.0"
+    spliterator: "npm:^2.2.1"
     tap-difflet: "npm:^0.7.2"
     typescript: "npm:^6.0.3"
     typescript-eslint: "npm:^8.60.1"
@@ -17784,7 +17784,7 @@ __metadata:
     pluralize: "npm:^8.0.0"
     react: "npm:^19.2.7"
     regenerate: "npm:^1.4.2"
-    spliterator: "npm:^2.0.0"
+    spliterator: "npm:^2.2.1"
     zod: "npm:^4.4.3"
     zx: "npm:^8.8.5"
   peerDependencies:
@@ -24107,9 +24107,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"spliterator@npm:^2.0.0":
-  version: 2.1.0
-  resolution: "spliterator@npm:2.1.0"
+"spliterator@npm:^2.2.1":
+  version: 2.2.1
+  resolution: "spliterator@npm:2.2.1"
   dependencies:
     yargs: "npm:^18.0.0"
   peerDependencies:
@@ -24122,7 +24122,7 @@ __metadata:
       optional: true
   bin:
     spliterator: out/node/cli/index.js
-  checksum: 10/0c92e3b3a118cd6f5211bb1f6edad0481c8f85ba3feb3a355547d4a4519c88591f9262295e6494979dec2fc67759ec1641d33e1f3ead529ba3ca70524e40cd53
+  checksum: 10/50895a43470c5b527a30accd720fd562e71b017252895575ed6a6c2cd7c52e0bd7bdd1ec2fce9e1354696ca3ed9100ff34f28f0075d572c3b4de39383ec27033
   languageName: node
   linkType: hard
 
