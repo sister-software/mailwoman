@@ -121,7 +121,11 @@ async function spanRescore(
 	roots: unknown[],
 	lookup: Lookup,
 	country: string,
-	postcode: string | undefined
+	postcode: string | undefined,
+	/** Postcode→point anchor for the consistency gate, resolved by the caller (null when unavailable). */
+	anchor: { lat: number; lon: number } | null,
+	/** Reject a candidate match farther than this from the postcode anchor. 0 disables the gate. */
+	gateKm: number
 ): Promise<{ text: string; start: number; end: number; lat: number; lon: number } | null> {
 	const toks = tokenizeRaw(raw)
 	// Confident constituents to never absorb into a locality span (the load-bearing parse parts).
@@ -154,8 +158,12 @@ async function spanRescore(
 		if (key.length < 2 || /^\d+$/.test(key)) continue // skip bare numbers / empties
 		const hits = await lookup.findPlace({ text: sp.text, country, postcode, limit: 5 })
 		const exact = hits.filter((h) => h.exactMatch && norm(h.name) === key && (h.lat !== 0 || h.lon !== 0))
-		if (exact.length) {
-			const h = exact[0]!
+		for (const h of exact) {
+			// Postcode-consistency gate: when the postcode resolves to a point, reject a match that lands
+			// nowhere near it — the coverage-gap false-positive ("Pereiro" 200 km from the postcode is the
+			// wrong Pereiro). When the postcode doesn't resolve (PL/PT/AU here), the gate can't fire and the
+			// rescore falls through to longest-exact-match — so it never HURTS the locales it can't gate.
+			if (anchor && gateKm > 0 && haversineKm(anchor.lat, anchor.lon, h.lat, h.lon) > gateKm) continue
 			return { text: sp.text, start: sp.start, end: sp.end, lat: h.lat, lon: h.lon }
 		}
 	}
@@ -164,10 +172,15 @@ async function spanRescore(
 
 async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const { WofSqlitePlaceLookup, WofCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const lookup = new WofSqlitePlaceLookup({ databasePath: WOF }) as unknown as Lookup & {
 		findPlace: Lookup["findPlace"]
 	}
+	// Postcode→point anchor for the consistency gate. The candidate gazetteer folds postcodes as
+	// queryable rows (the demo's resolver); IT/CZ postcodes resolve here, PL/PT/AU don't (gate no-ops there).
+	const GATE_KM = Number(arg("gate", "50")) // 0 disables the gate
+	const CAND = arg("candidate-db", "/mnt/playpen/mailwoman-data/wof/candidate-global-20h.db")
+	const pcLookup = new WofCandidateTableLookup({ databasePath: CAND }) as unknown as Lookup
 	const resolver = createWofResolver(lookup as never)
 	const model = await createScorer({
 		modelPath: MODEL,
@@ -192,7 +205,14 @@ async function main() {
 			if ((r.roots as N9[]).some(hasWof)) continue
 			s.unres++
 			const pc = ((row.components?.postcode ?? "") as string).toString().trim() || undefined
-			const hit = await spanRescore(row.raw, (tree as { roots: unknown[] }).roots, lookup, cc, pc)
+			// Resolve the postcode anchor for the consistency gate (once per row).
+			let anchor: { lat: number; lon: number } | null = null
+			if (pc && GATE_KM > 0) {
+				const pcHits = await pcLookup.findPlace({ text: pc, country: cc, limit: 2 })
+				const a = pcHits.find((h) => h.lat !== 0 || h.lon !== 0)
+				if (a) anchor = { lat: a.lat, lon: a.lon }
+			}
+			const hit = await spanRescore(row.raw, (tree as { roots: unknown[] }).roots, lookup, cc, pc, anchor, GATE_KM)
 			if (!hit) continue
 			s.recov++
 			const gold = ((row.components?.locality as string) ?? "").toString().trim()

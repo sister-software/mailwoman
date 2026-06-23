@@ -75,8 +75,21 @@ coordinate quality of the 175 recoveries:
 
 **The rescore lifts 136 of 259 unresolved EU rows — 53% of the entire no-result tail — to a right-place coordinate (@25 km).** That's a direct dent in the one number the benchmark said we lose on. The cost is 33 mis-fires past 100 km, and they aren't spread evenly: they're the coverage-gap locales (IT, AU) where the gold locality isn't in the gazetteer at all, so the rescore latches onto some other token that happens to name a far-off town. AU adds its own wrinkle — same-name towns across states (Springfield QLD/NSW/VIC) that need state agreement, not just country.
 
-## What's next, and what stays off
+## The consistency gate
 
-The mis-fires share a cause: nothing checks that the recovered locality is _geographically consistent_ with the rest of the address. A postcode-region gate — reject a recovery whose coordinate is nowhere near where the postcode says — would reject most of the 33 without touching the 136. It needs the postcode→point lookup that lives in the postcode-locality shard, not the admin gazetteer this panel ran against (the admin DB returns nothing for an EU postcode), so it's the next build, not this one.
+The mis-fires share a cause: nothing checks that the recovered locality is _geographically consistent_ with the rest of the address. So the validator carries a postcode-region gate — resolve the row's postcode to a point and reject any candidate match that lands more than 50 km from it. The postcode→point lookup the admin gazetteer can't do (it returns nothing for an EU postcode) the **candidate gazetteer** can: it folds postcodes in as queryable rows. The gate is conditional by construction — when the postcode doesn't resolve, it can't fire and the rescore falls through unchanged, so it never _hurts_ a locale it can't help.
 
-Until that gate exists, the rescore stays **default-off**. The lever is real and the path to default-on is concrete: add the consistency gate, re-measure the >100 km mis-fires, then wire it into the resolver behind a flag. The probe (`scripts/eval/rescore-ceiling-probe.ts`, with the falsifier) and the validator (`scripts/eval/span-rescore-validate.ts`, the buildable `spanRescore`) are the harness that will grade it.
+With the gate on, the IT story flips cleanly: from 4 recoveries all wrong (p50 207 km) to 2 recoveries both near (p50 22 km) — it killed the far false-positives and kept the near matches. Aggregate p90 drops 206 → 145 km; the >100 km mis-fires fall 33 → 29; the right-place count holds (136 → 137).
+
+| metric (175→172 recovered) | gate off | gate on (50 km) |
+| --- | ---: | ---: |
+| right-place @25 km | 136 | 137 |
+| coord p50 | 3.0 km | 2.9 km |
+| coord p90 | 206 km | **145 km** |
+| >100 km mis-fires | 33 | **29** |
+
+The gate's reach is bounded by where the candidate gazetteer has postcodes: IT resolves 97% of them, so its false-positives get caught; CZ and AU resolve ~none, so their mis-fires survive (AU's are the cross-state same-name problem — Springfield in three states — that needs state agreement the country gate can't supply). That's a coverage limit, not a design flaw: the gate's reach grows automatically as the postcode gazetteer fills in, with no code change.
+
+## What stays off
+
+The rescore stays **default-off**. The lever is proven and the gate is built and measured; what remains before default-on is the resolver wiring (the gate lives in the eval validator today, not the production `resolveTree`) and widening postcode coverage so the gate reaches CZ/AU. The probe (`scripts/eval/rescore-ceiling-probe.ts`, with the falsifier) and the validator (`scripts/eval/span-rescore-validate.ts`, the buildable gated `spanRescore`) are the harness that will grade the wire-up.
