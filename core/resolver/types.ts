@@ -332,6 +332,19 @@ export interface ResolveOpts {
 	 * coverage (else no anchor, no gate). Default 50.
 	 */
 	spanRescoreGateKm?: number
+	/**
+	 * Postcode-disambiguated locality selection (#370 "Lever A"). When set, AND a locality resolves far
+	 * from a resolved sibling postcode, re-pick the same-named candidate (from the lookup's already-
+	 * captured `alternatives`) nearest the postcode; if none reconciles within the gate, fall the
+	 * coordinate back to the postcode point and flag `postcode_city_mismatch`. Targets the dominant
+	 * failure mode on the EU/AU panel — a same-named town resolved to the wrong instance while the
+	 * postcode that would disambiguate it sits resolved in the same tree (e.g. "06260 Saint-Pierre" →
+	 * 617 km off, postcode 06260 correct). Only bites where the backend resolved the postcode to a point
+	 * (so it composes with postcode coverage, #193). Default-off + byte-stable when unset.
+	 */
+	postcodeConsistency?: boolean
+	/** Gate radius (km) for {@link postcodeConsistency} — a locality farther than this from the resolved postcode is re-picked or demoted. Default 50. */
+	postcodeConsistencyGateKm?: number
 	hierarchyCompletion?: boolean
 	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */
 	cityStateFallback?: boolean

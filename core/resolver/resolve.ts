@@ -273,6 +273,85 @@ async function applySpanRescore(roots: AddressNode[], raw: string, backend: Reso
 	roots.push(node)
 }
 
+const haversineKm = (aLat: number, aLon: number, bLat: number, bLon: number): number => {
+	const R = 6371
+	const dLat = ((bLat - aLat) * Math.PI) / 180
+	const dLon = ((bLon - aLon) * Math.PI) / 180
+	const la1 = (aLat * Math.PI) / 180
+	const la2 = (bLat * Math.PI) / 180
+	const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2
+	return 2 * R * Math.asin(Math.sqrt(h))
+}
+
+/** A resolved node carries a real coordinate (placeId set + non-zero lat/lon). */
+function isResolvedWithCoord(n: AddressNode): boolean {
+	return !!(n.placeId && typeof n.lat === "number" && typeof n.lon === "number" && (n.lat !== 0 || n.lon !== 0))
+}
+
+/**
+ * Postcode-disambiguated locality selection (#370 "Lever A"). The single biggest miss on the EU/AU
+ * panel is a same-named town resolved to the WRONG instance — "06260 Saint-Pierre" lands 617 km off —
+ * while the postcode that would disambiguate it (06260 → Alpes-Maritimes) sits resolved in the same
+ * tree, discarded because the coordinate-picker prefers the (wrong) locality node and never cross-
+ * checks it. This post-walk pass closes that loop, backend-agnostically and with no extra query:
+ *
+ *   1. Find the resolved postcode's coordinate (the trustworthy anchor — a postcode is unambiguous
+ *      within a country in a way a town name is not).
+ *   2. For each resolved locality node farther than `gateKm` from it: re-pick the same-named candidate
+ *      from the node's already-captured `alternatives` that is NEAREST the postcode and within the
+ *      gate. This keeps locality granularity at the CORRECT instance.
+ *   3. If no alternative reconciles, the locality instance is unreliable — fall its coordinate back to
+ *      the postcode point (right area, the safe answer) and flag `postcode_city_mismatch`.
+ *
+ *   Only fires where the postcode resolved to a point, so it composes with postcode coverage (#193) —
+ *   add a country's postcodes and this immediately disambiguates its same-named towns. Default-off via
+ *   `opts.postcodeConsistency`; byte-stable when unset.
+ */
+function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number): void {
+	// The resolved postcode anchor (first one with a real coordinate).
+	let anchor: { lat: number; lon: number } | null = null
+	const findAnchor: AddressNode[] = [...roots]
+	while (findAnchor.length > 0) {
+		const n = findAnchor.pop()!
+		if (n.tag === "postcode" && isResolvedWithCoord(n)) {
+			anchor = { lat: n.lat!, lon: n.lon! }
+			break
+		}
+		findAnchor.push(...n.children)
+	}
+	if (!anchor) return // no postcode→point — nothing to disambiguate against (gate can't fire)
+
+	const stack: AddressNode[] = [...roots]
+	while (stack.length > 0) {
+		const node = stack.pop()!
+		stack.push(...node.children)
+		if ((node.tag !== "locality" && node.tag !== "dependent_locality") || !isResolvedWithCoord(node)) continue
+		if (haversineKm(anchor.lat, anchor.lon, node.lat!, node.lon!) <= gateKm) continue // already consistent
+
+		// Re-pick: the same-named candidate nearest the postcode, within the gate. `alternatives` is
+		// typed `unknown[]` on the node (decoder/types.ts can't import resolver types) — they ARE the
+		// `ResolvedPlace` runner-ups decorateNode attached, so the cast is sound.
+		const alts = (node.alternatives as ResolvedPlace[] | undefined) ?? []
+		const reconciling = alts
+			.filter((a) => a.lat !== 0 || a.lon !== 0)
+			.map((a) => ({ a, d: haversineKm(anchor!.lat, anchor!.lon, a.lat, a.lon) }))
+			.filter((x) => x.d <= gateKm)
+			.sort((x, y) => x.d - y.d)[0]
+		if (reconciling) {
+			// Swap to the consistent instance; the displaced winner becomes an alternative.
+			const displaced: ResolvedPlace = { id: 0, name: String(node.metadata?.["resolver_name"] ?? node.value), placetype: "locality", country: reconciling.a.country, lat: node.lat!, lon: node.lon!, score: 0 }
+			const rest = alts.filter((a) => a !== reconciling.a)
+			decorateNode(node, reconciling.a, [displaced, ...rest])
+			node.metadata = { ...(node.metadata ?? {}), postcode_repicked: true }
+			continue
+		}
+		// No same-named instance near the postcode → the town is unreliable; trust the postcode's area.
+		node.lat = anchor.lat
+		node.lon = anchor.lon
+		node.metadata = { ...(node.metadata ?? {}), postcode_city_mismatch: true, coordinate_source: "postcode_fallback" }
+	}
+}
+
 class WofResolver implements Resolver {
 	readonly #backend: ResolverBackend
 
@@ -318,6 +397,12 @@ class WofResolver implements Resolver {
 			this.#completeRegionRole(state.resolvedRegion, state.resolvedRegionNode)
 		}
 
+		// Postcode-consistency (#370 "Lever A"): opt-in. After the admin walk (needs both the locality
+		// and the postcode resolved) and before the street tiers (which key off the postcode/street, not
+		// the locality coordinate this adjusts). Byte-stable when opts.postcodeConsistency is unset.
+		if (opts.postcodeConsistency) {
+			applyPostcodeConsistency(newRoots, opts.postcodeConsistencyGateKm ?? 50)
+		}
 		// Address-point tier (#476): opt-in street-level exact match. After the admin walk so the
 		// tier can never disturb admin attribution — it only ADDS the precise coordinate. Byte-stable
 		// when opts.addressPoints is absent.
