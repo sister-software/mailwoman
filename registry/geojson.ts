@@ -10,7 +10,8 @@
  *   a coordinate are omitted (a Point feature needs one).
  */
 
-import type { GeoJsonFeature, GeoJsonFeatureCollection, ResolvedEntity, SourceRecord } from "./types.js"
+import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
+import type { EntityGeoData, ResolvedEntity, SourceRecord } from "./types.js"
 
 /** Assemble a display name from a record's parsed person name, if any. */
 function displayName(record: SourceRecord): string | null {
@@ -24,10 +25,11 @@ function displayName(record: SourceRecord): string | null {
 }
 
 /** One entity → one GeoJSON Point feature. */
-function toFeature(entity: ResolvedEntity): GeoJsonFeature {
+function toFeature(entity: ResolvedEntity): GeoFeature<PointLiteral, EntityGeoData> {
 	const rep = entity.representative
 	return {
 		type: "Feature",
+		id: undefined, // Consider using entity.id here.
 		geometry: {
 			type: "Point",
 			coordinates: [entity.coordinate!.longitude, entity.coordinate!.latitude],
@@ -51,7 +53,7 @@ function toFeature(entity: ResolvedEntity): GeoJsonFeature {
  * Convert resolved entities into a GeoJSON `FeatureCollection` of points, ready for QGIS. Entities
  * with no resolved coordinate are skipped.
  */
-export function toGeoJSON(entities: readonly ResolvedEntity[]): GeoJsonFeatureCollection {
+export function toGeoJSON(entities: readonly ResolvedEntity[]): GeoFeatureCollection<PointLiteral, EntityGeoData> {
 	return {
 		type: "FeatureCollection",
 		features: entities.filter((entity) => entity.coordinate).map(toFeature),

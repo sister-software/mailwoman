@@ -7,7 +7,7 @@
  *   comes out. Plain interfaces over the `@mailwoman/record` types.
  */
 
-import type { OrganizationName, PersonName, PostalAddress } from "@mailwoman/record"
+import type { OrganizationName, PersonName, PostalAddress, ResolutionTier } from "@mailwoman/record"
 
 /** A single source record: one row of a messy contact/organization dataset, after normalization. */
 export interface SourceRecord {
@@ -51,23 +51,22 @@ export interface ResolvedEntity {
 	cohesion: number | null
 }
 
-//#region Minimal GeoJSON (Point features) — no external dependency.
+/**
+ * The three reconciliation buckets an entity can fall into.
+ */
+export type ReconciliationBucket = "enrolled" | "eligible-not-enrolled" | "funded-not-eligible"
 
-export interface GeoJsonPoint {
-	type: "Point"
-	/** `[longitude, latitude]`, per the GeoJSON spec. */
-	coordinates: [number, number]
-}
-
-export interface GeoJsonFeature {
-	type: "Feature"
-	geometry: GeoJsonPoint
-	properties: Record<string, unknown>
-}
-
-export interface GeoJsonFeatureCollection {
-	type: "FeatureCollection"
-	features: GeoJsonFeature[]
+export interface EntityGeoData {
+	entityId: string
+	sourceIds?: string[]
+	recordCount?: number
+	cohesion?: number | null
+	sources: string[]
+	name: string | null
+	organization?: string | null
+	address?: string | null
+	geocodeTier?: ResolutionTier | null
+	bucket?: ReconciliationBucket
 }
 
 //#endregion

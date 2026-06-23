@@ -27,10 +27,8 @@
  *   which the map auto-detects and colors categorically.
  */
 
-import type { GeoJsonFeatureCollection, ResolvedEntity } from "./types.js"
-
-/** The three reconciliation buckets an entity can fall into. */
-export type ReconciliationBucket = "enrolled" | "eligible-not-enrolled" | "funded-not-eligible"
+import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
+import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "./types.js"
 
 /** Which source labels denote eligibility vs funding/enrollment. */
 export interface ReconcileConfig {
@@ -88,9 +86,14 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 	for (const entity of entities) {
 		const sources = [...new Set(entity.records.map((r) => r.source).filter((s): s is string => !!s))].sort()
 		const bucket = bucketOf(sources, config)
+
 		if (!bucket) continue
+
 		reconciled.push({ entity, sources, bucket })
-		counts[bucket]++
+
+		if (counts[bucket]) {
+			counts[bucket]++
+		}
 	}
 	return { reconciled, counts }
 }
@@ -107,25 +110,30 @@ function repName(entity: ResolvedEntity): string {
  * the shape {@link toMapHTML} colors categorically by bucket. Entities without a coordinate are
  * skipped.
  */
-export function reconciliationGeoJSON(result: ReconciliationResult): GeoJsonFeatureCollection {
+export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureCollection<PointLiteral, EntityGeoData> {
 	return {
 		type: "FeatureCollection",
 		features: result.reconciled
 			.filter((c) => c.entity.coordinate)
-			.map((c) => ({
-				type: "Feature" as const,
-				geometry: {
-					type: "Point" as const,
-					coordinates: [c.entity.coordinate!.longitude, c.entity.coordinate!.latitude] as [number, number],
-				},
-				properties: {
-					entityId: c.entity.id,
-					bucket: c.bucket,
-					sources: c.sources,
-					name: repName(c.entity),
-					recordCount: c.entity.records.length,
-				},
-			})),
+			.map((c) => {
+				const foo: GeoFeature<PointLiteral, EntityGeoData> = {
+					type: "Feature" as const,
+					id: undefined,
+					geometry: {
+						type: "Point" as const,
+						coordinates: [c.entity.coordinate!.longitude, c.entity.coordinate!.latitude] as [number, number],
+					},
+					properties: {
+						entityId: c.entity.id,
+						bucket: c.bucket,
+						sources: c.sources,
+						name: repName(c.entity),
+						recordCount: c.entity.records.length,
+					},
+				}
+
+				return foo
+			}),
 	}
 }
 

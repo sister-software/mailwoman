@@ -25,8 +25,9 @@
  *   Bucket labels render verbatim from the data, never editorialized.
  */
 
+import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { layers, namedFlavor } from "@protomaps/basemaps"
-import type { GeoJsonFeatureCollection } from "./types.js"
+import type { EntityGeoData } from "./types.js"
 
 /** MapLibre GL release the page pins (CDN + SRI). Matches the workspace's `maplibre-gl` major. */
 const MAPLIBRE_VERSION = "5.24.0"
@@ -87,7 +88,7 @@ function escapeHtml(text: string): string {
 	return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
 }
 
-function sourceCount(props: Record<string, unknown>): number {
+function sourceCount(props: EntityGeoData): number {
 	return Array.isArray(props["sources"]) ? props["sources"].length : 0
 }
 
@@ -96,7 +97,10 @@ function sourceCount(props: Record<string, unknown>): number {
  * standalone HTML document. Entities without a coordinate are already absent from those
  * collections; an empty collection renders a friendly empty state rather than a broken map.
  */
-export function toMapHTML(geojson: GeoJsonFeatureCollection, options: MapHTMLOptions = {}): string {
+export function toMapHTML(
+	geojson: GeoFeatureCollection<PointLiteral, EntityGeoData>,
+	options: MapHTMLOptions = {}
+): string {
 	const title = options.title ?? "Mailwoman — resolved entities"
 	const flavorName = options.flavor ?? "light"
 	const colorBy = options.colorBy ?? "auto"
@@ -114,7 +118,7 @@ export function toMapHTML(geojson: GeoJsonFeatureCollection, options: MapHTMLOpt
 		}
 	}
 
-	const colorFor = (props: Record<string, unknown>): string => {
+	const colorFor = (props: EntityGeoData): string => {
 		if (mode === "bucket") {
 			const b = props["bucket"] != null ? String(props["bucket"]) : "—"
 			return bucketColors[b] ?? SINGLE_COLOR
