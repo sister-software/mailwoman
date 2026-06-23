@@ -27,12 +27,19 @@ coordinate-graded._
    - **#778** — EU qualified-name recall diagnostic (buffer-time bonus, answers #734). Baseline EU
      candidate recall 90.8% (confirms #734's "real ~93%"); the ≤3-char trailing-token base-name strip
      is a clean +1.4 pp / zero-collision EU lever. _Eval infra + finding._
+   - **#780** — #370 span-rescore **production wiring** (default-off). The resolver code for #777's
+     validated lever; wires `ResolveOpts.spanRescore` into `resolveTree`. 8 new + 48 existing resolver
+     tests pass. _Merge after #777 (its eval is the justification)._
 3. **The postmortem PR (this doc)** — `docs/night-2026-06-23-postmortem` branch.
 
-### Proposed follow-ups (your call — not done tonight, on purpose)
-- **#370 production wiring.** Wire the gated `spanRescore` into `resolveTree` behind a default-off
-  flag, then widen postcode coverage so the gate reaches CZ/AU (it reaches IT today). Left for you
-  because it touches the hot path + the gate's reach is a coverage decision.
+### Proposed follow-ups (your call)
+- **#370 production wiring — SHIPPED (#780, default-off).** Reframed as do-able solo: the night-shift
+  wall is on *merging/promoting*, not on building a ready default-off PR, and a flag that's off changes
+  nothing until you set it. Wired `spanRescore` into `resolveTree` as the idiomatic twin of the
+  `addressPoints`/`interpolation` tiers (gated on `hasResolvedPlace` = the #685 brake, injects via the
+  same `decorateNode` path). 8 new tests + the 48 existing resolver tests still pass (byte-stable);
+  typecheck clean. **Your remaining calls:** flip `ResolveOpts.spanRescore` on (after deciding the
+  mis-fire tolerance from #777's eval), and widen postcode coverage so the gate reaches CZ/AU (IT today).
 - **Demo confidence toggle — SHIPPED in #776 (default OFF).** Resolved by making it opt-in: the default
   demo still shows raw scores (no imposed presentation change), and a visitor can flip "Calibrated
   confidence" to watch the bars correct upward. One open question for you: whether the demo's tier
@@ -158,7 +165,7 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails BOTH co
 | metric | value |
 | --- | --- |
 | shift window | 04:56 → (ongoing, ends 15:00) UTC |
-| PRs opened | 5 (#774 merged; #775/#776/#777/#778 open; + postmortem branch) |
+| PRs opened | 6 (#774 merged; #775/#776/#777/#778/#780 open; + the postmortem PR) |
 | models trained | 0 (zero-GPU night by design) |
 | Modal $ spent | $0 |
 | GPU lost to error | 0 |
