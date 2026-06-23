@@ -13,7 +13,6 @@
  */
 
 import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "../decoder/types.js"
-import { haversineKm } from "../spatial.js"
 import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
 import {
 	type AddressPointLookup,
@@ -272,6 +271,18 @@ async function applySpanRescore(roots: AddressNode[], raw: string, backend: Reso
 	// (high-precision); false = ungated (no postcode→point coverage for this country, ~83%-precision).
 	node.metadata = { ...(node.metadata ?? {}), span_rescore: true, rescore_gated: hit.gated }
 	roots.push(node)
+}
+
+// TODO(resolver-extraction): this is @mailwoman/spatial's `haversine`. core can't import spatial (spatial
+// → core cycle); fold into the shared package once the resolver is lifted out of core to its own root pkg.
+const haversineKm = (aLat: number, aLon: number, bLat: number, bLon: number): number => {
+	const R = 6371
+	const dLat = ((bLat - aLat) * Math.PI) / 180
+	const dLon = ((bLon - aLon) * Math.PI) / 180
+	const la1 = (aLat * Math.PI) / 180
+	const la2 = (bLat * Math.PI) / 180
+	const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2
+	return 2 * R * Math.asin(Math.sqrt(h))
 }
 
 /** A resolved node carries a real coordinate (placeId set + non-zero lat/lon). */

@@ -24,7 +24,6 @@
  */
 
 import type { AddressNode } from "../decoder/types.js"
-import { haversineKm } from "../spatial.js"
 import type { ResolvedPlace, ResolverBackend } from "./types.js"
 
 export interface SpanRescoreOptions {
@@ -63,6 +62,18 @@ export interface RescoreCandidate {
 	 * must not be confused with a rescore plug-in estimate).
 	 */
 	gated: boolean
+}
+
+// TODO(resolver-extraction): this is @mailwoman/spatial's `haversine`. core can't import spatial (spatial
+// → core cycle); fold into the shared package once the resolver is lifted out of core to its own root pkg.
+const haversineKm = (aLat: number, aLon: number, bLat: number, bLon: number): number => {
+	const R = 6371
+	const dLat = ((bLat - aLat) * Math.PI) / 180
+	const dLon = ((bLon - aLon) * Math.PI) / 180
+	const la1 = (aLat * Math.PI) / 180
+	const la2 = (bLat * Math.PI) / 180
+	const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2
+	return 2 * R * Math.asin(Math.sqrt(h))
 }
 
 /** Normalize for exact comparison: lowercase, strip diacritics + punctuation, collapse whitespace. */
