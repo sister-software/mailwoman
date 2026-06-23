@@ -36,7 +36,13 @@ const arg = (k: string, d = ""): string => {
 const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const CARD = "neural-weights-en-us/model-card.json"
 const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
-const WOF = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
+// Production-representative resolver: admin gazetteer + the intl postcode→locality shard (the
+// oa-resolver-eval default). admin-ONLY handicaps mailwoman — the postcode-coordinate-first path
+// resolves localities the admin gazetteer misses. --wof overrides (comma-separated shard paths).
+const WOF = arg(
+	"wof",
+	"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db",
+).split(",")
 const MODEL = arg("model", "out/v191/model.onnx") // v4.13.0 int8
 const N = Number(arg("n", "40"))
 const LOCALES = arg("locales", "it,pt,pl,at,cz,fr,au").split(",")
@@ -44,6 +50,19 @@ const SYSTEMS = arg("systems", "mailwoman,nominatim,pelias").split(",")
 const OUT = arg("out", "")
 const THRESHOLDS = [1, 5, 25] // km — coarse "right-place" tiers
 const NOMINATIM_UA = "mailwoman-benchmark/1.0 (teffen@sister.software)"
+const MESSY = process.argv.includes("--messy")
+// Real-world degradation — the slice where a calibrated parser should beat a search index that leans
+// on exact tokens + the comma structure + the postcode. SAFE: drops commas/dash-postcodes + lowercases
+// + abbreviates common street words; never touches the house number.
+function messify(raw: string): string {
+	let s = raw.toLowerCase()
+	s = s.replace(/\b\d{2,4}-\d{2,3}\b/g, " ") // dash-postcodes (PT 7920-031, PL 59-920) — unambiguously postcodes
+	s = s
+		.replace(/\brua\b/g, "r").replace(/\bavenida\b/g, "av").replace(/\bestrada\b/g, "estr")
+		.replace(/\bstra(?:ss|ß)e\b/g, "str").replace(/\bstreet\b/g, "st").replace(/\bvia\b/g, "v").replace(/\bavenue\b/g, "ave")
+	s = s.replace(/,/g, " ").replace(/\s+/g, " ").trim() // drop the comma structure, collapse spaces
+	return s
+}
 
 const PLACETYPE_RANK: Record<string, number> = {
 	country: 0, region: 1, macrocounty: 2, county: 3, localadmin: 4, locality: 5,
@@ -121,8 +140,12 @@ function record(t: Tally, err: number | null) {
 
 async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const resolver = createWofResolver(new WofSqlitePlaceLookup({ databasePath: WOF }) as never)
+	const { WofSqlitePlaceLookup, WofCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	// --candidate-db <path> uses the DEMO's resolver (the byte-range candidate gazetteer, with the
+	// promoted EU postcode/GeoNames coverage); else the CLI shards (admin + postcode-locality-intl).
+	const CAND = arg("candidate-db", "")
+	const lookup = CAND ? new WofCandidateTableLookup({ databasePath: CAND }) : new WofSqlitePlaceLookup({ databasePath: WOF })
+	const resolver = createWofResolver(lookup as never)
 	const model = SYSTEMS.includes("mailwoman")
 		? await createScorer({ modelPath: MODEL, tokenizerPath: TOK, modelCardPath: CARD, anchorLookupPath: ANCHOR, strict: true, tier: "server" })
 		: null
@@ -145,19 +168,20 @@ async function main() {
 		let i = 0
 		for (const row of rows) {
 			const truth = { lat: row.lat, lon: row.lon }
+			const input = MESSY ? messify(row.raw) : row.raw
 			if (model) {
-				const tree = await model.parse(row.raw, { postcodeRepair: true })
+				const tree = await model.parse(input, { postcodeRepair: true })
 				const r = await resolver.resolveTree(tree as never, { defaultCountry: cc.toUpperCase() })
 				const c = mostSpecificCoord(r as never)
 				record(tallies["mailwoman"]![cc]!, c ? haversineKm(c, truth) : null)
 			}
 			if (sys.includes("nominatim")) {
-				const c = await queryNominatim(row.raw, cc)
+				const c = await queryNominatim(input, cc)
 				record(tallies["nominatim"]![cc]!, c ? haversineKm(c, truth) : null)
 				await sleep(1100) // respect Nominatim's ~1 req/s policy
 			}
 			if (pelias) {
-				const c = await pelias(row.raw)
+				const c = await pelias(input)
 				record(tallies["pelias"]![cc]!, c ? haversineKm(c, truth) : null)
 			}
 			if (++i % 10 === 0) console.error(`  ${i}/${rows.length}`)
