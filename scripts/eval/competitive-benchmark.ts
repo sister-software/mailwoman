@@ -48,6 +48,9 @@ const N = Number(arg("n", "40"))
 const LOCALES = arg("locales", "it,pt,pl,at,cz,fr,au").split(",")
 const SYSTEMS = arg("systems", "mailwoman,nominatim,pelias").split(",")
 const OUT = arg("out", "")
+// --span-rescore grades mailwoman TWICE per row — base (lever off) AND #370 spanRescore (lever on) — from
+// the SAME parse, so the off→on lift sits in the same harness as Nominatim/Pelias without doubling API calls.
+const RESCORE = process.argv.includes("--span-rescore")
 const THRESHOLDS = [1, 5, 25] // km — coarse "right-place" tiers
 const NOMINATIM_UA = "mailwoman-benchmark/1.0 (teffen@sister.software)"
 const MESSY = process.argv.includes("--messy")
@@ -106,15 +109,15 @@ async function queryNominatim(raw: string, cc: string): Promise<Coord> {
 		return null
 	}
 }
-async function loadPelias(): Promise<((q: string) => Promise<Coord>) | null> {
+async function loadPelias(): Promise<((q: string, country: string) => Promise<Coord>) | null> {
 	if (!process.env.GEOCODE_EARTH_API_KEY) return null
 	try {
 		const mod = await import("../diag-geocode-earth.ts")
-		const fetchGeocodeData = (mod as { fetchGeocodeData?: (q: string) => Promise<{ features?: Array<{ geometry?: { coordinates?: [number, number] } }> }> }).fetchGeocodeData
+		const fetchGeocodeData = (mod as { fetchGeocodeData?: (q: string, country?: string) => Promise<{ features?: Array<{ geometry?: { coordinates?: [number, number] } }> }> }).fetchGeocodeData
 		if (!fetchGeocodeData) return null
-		return async (q: string) => {
+		return async (q: string, country: string) => {
 			try {
-				const fc = await fetchGeocodeData(q)
+				const fc = await fetchGeocodeData(q, country)
 				const c = fc.features?.[0]?.geometry?.coordinates
 				return c ? { lat: c[1], lon: c[0] } : null
 			} catch {
@@ -125,6 +128,8 @@ async function loadPelias(): Promise<((q: string) => Promise<Coord>) | null> {
 		return null
 	}
 }
+// geocode.earth's free dev key is rate-limited (1000/day, 10/s). Be graceful — well under the cap.
+const PELIAS_GRACE_MS = 400
 
 type Tally = { n: number; within: Record<number, number>; resolvedErrs: number[]; noResult: number }
 const newTally = (): Tally => ({ n: 0, within: Object.fromEntries(THRESHOLDS.map((t) => [t, 0])), resolvedErrs: [], noResult: 0 })
@@ -151,7 +156,11 @@ async function main() {
 		: null
 	const pelias = SYSTEMS.includes("pelias") ? await loadPelias() : null
 	if (SYSTEMS.includes("pelias") && !pelias) console.error("⚠ pelias: GEOCODE_EARTH_API_KEY or diag-geocode-earth.ts unavailable — skipping that row")
-	const sys = SYSTEMS.filter((s) => s !== "pelias" || pelias)
+	const sys0 = SYSTEMS.filter((s) => s !== "pelias" || pelias)
+	// Inject the lever-on column right after the base mailwoman column.
+	const sys = RESCORE && sys0.includes("mailwoman")
+		? sys0.flatMap((s) => (s === "mailwoman" ? ["mailwoman", "mailwoman+rescore"] : [s]))
+		: sys0
 
 	const tallies: Record<string, Record<string, Tally>> = {} // system -> locale -> tally
 	for (const s of sys) tallies[s] = {}
@@ -171,9 +180,15 @@ async function main() {
 			const input = MESSY ? messify(row.raw) : row.raw
 			if (model) {
 				const tree = await model.parse(input, { postcodeRepair: true })
-				const r = await resolver.resolveTree(tree as never, { defaultCountry: cc.toUpperCase() })
-				const c = mostSpecificCoord(r as never)
-				record(tallies["mailwoman"]![cc]!, c ? haversineKm(c, truth) : null)
+				// resolveTree decorates in place — clone per config so base + lever are independent.
+				const base = await resolver.resolveTree(structuredClone(tree) as never, { defaultCountry: cc.toUpperCase() })
+				const cBase = mostSpecificCoord(base as never)
+				record(tallies["mailwoman"]![cc]!, cBase ? haversineKm(cBase, truth) : null)
+				if (RESCORE) {
+					const lever = await resolver.resolveTree(structuredClone(tree) as never, { defaultCountry: cc.toUpperCase(), spanRescore: true })
+					const cLever = mostSpecificCoord(lever as never)
+					record(tallies["mailwoman+rescore"]![cc]!, cLever ? haversineKm(cLever, truth) : null)
+				}
 			}
 			if (sys.includes("nominatim")) {
 				const c = await queryNominatim(input, cc)
@@ -181,8 +196,9 @@ async function main() {
 				await sleep(1100) // respect Nominatim's ~1 req/s policy
 			}
 			if (pelias) {
-				const c = await pelias(input)
+				const c = await pelias(input, cc)
 				record(tallies["pelias"]![cc]!, c ? haversineKm(c, truth) : null)
+				await sleep(PELIAS_GRACE_MS) // graceful: stay well under geocode.earth's 10/s + 1000/day
 			}
 			if (++i % 10 === 0) console.error(`  ${i}/${rows.length}`)
 		}
