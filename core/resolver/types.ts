@@ -317,6 +317,21 @@ export interface ResolveOpts {
 	 * Report: docs/articles/evals/2026-06-14-interp-radius-calibration.md.
 	 */
 	interpolationRadiusCalibration?: number
+	/**
+	 * Span-rescore tier (#370). When set, AND the tree resolved nothing, recover a dropped/fragmented
+	 * locality from the raw text: enumerate raw-token spans, exact-match the same-country gazetteer
+	 * (longest-wins + postcode-consistency gate), and inject the recovered locality as a resolved node.
+	 * Targets the EU no-result tail the model leaves when it fragments an accented locality token
+	 * ("Grudziądz" → "Grudzi"+"dz", #555). Default-off + byte-stable when unset; never disturbs a tree
+	 * that already resolved (the #685 brake). Validated in `docs/articles/evals/2026-06-23-370-span-rescore.mdx`.
+	 */
+	spanRescore?: boolean
+	/**
+	 * Postcode-consistency gate radius (km) for the span-rescore tier — reject a recovered locality
+	 * farther than this from where the postcode resolves. Only bites when the backend has postcode
+	 * coverage (else no anchor, no gate). Default 50.
+	 */
+	spanRescoreGateKm?: number
 	hierarchyCompletion?: boolean
 	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */
 	cityStateFallback?: boolean

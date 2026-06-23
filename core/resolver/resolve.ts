@@ -13,6 +13,7 @@
  */
 
 import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "../decoder/types.js"
+import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
 import {
 	type AddressPointLookup,
 	type CoincidentLocality,
@@ -239,6 +240,35 @@ function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup, r
 	}
 }
 
+/**
+ * Span-rescore tier (#370): opt-in last-resort locality recovery. Runs ONLY when the tree resolved
+ * NOTHING (the #685 brake — never disturb a working coordinate). Enumerates raw-token spans, exact-
+ * matches the same-country gazetteer (longest-wins + postcode-consistency gate; see `span-rescore.ts`),
+ * and on a hit INJECTS a resolved `locality` node decorated exactly like a normally-resolved one.
+ * Byte-stable when `opts.spanRescore` is unset. Async (it queries the backend), so it's awaited.
+ */
+async function applySpanRescore(roots: AddressNode[], raw: string, backend: ResolverBackend, opts: ResolveOpts): Promise<void> {
+	if (hasResolvedPlace(roots)) return // already resolved — never second-guess a working coordinate
+	const hit = await findRescoreCandidate(raw, roots, backend, {
+		country: opts.defaultCountry,
+		postcode: firstPostcodeValue(roots),
+		gateKm: opts.spanRescoreGateKm,
+	})
+	if (!hit) return
+	const node: AddressNode = {
+		tag: "locality",
+		value: hit.text,
+		start: hit.start,
+		end: hit.end,
+		// No model confidence for a post-hoc recovery; a mid-tier value marks it as recovered, not asserted.
+		confidence: 0.5,
+		children: [],
+	}
+	decorateNode(node, hit.place, [])
+	node.metadata = { ...(node.metadata ?? {}), span_rescore: true }
+	roots.push(node)
+}
+
 class WofResolver implements Resolver {
 	readonly #backend: ResolverBackend
 
@@ -295,6 +325,11 @@ class WofResolver implements Resolver {
 		// byte-stable when opts.interpolation is absent.
 		if (opts.interpolation) {
 			applyInterpolation(newRoots, opts.interpolation, opts.interpolationRadiusCalibration)
+		}
+		// Span-rescore tier (#370): opt-in, last (so it only fires when every other tier left the tree
+		// unresolved). Byte-stable when opts.spanRescore is unset.
+		if (opts.spanRescore) {
+			await applySpanRescore(newRoots, tree.raw, this.#backend, opts)
 		}
 		return { raw: tree.raw, roots: newRoots }
 	}
