@@ -30,10 +30,10 @@ coordinate-graded._
 - **#370 production wiring.** Wire the gated `spanRescore` into `resolveTree` behind a default-off
   flag, then widen postcode coverage so the gate reaches CZ/AU (it reaches IT today). Left for you
   because it touches the hot path + the gate's reach is a coverage decision.
-- **Demo confidence toggle.** The main demo page shows *raw* per-span confidence. A "calibrated"
-  toggle (default raw) would let a visitor flip to honest confidence and watch the under-confident
-  spans correct upward — compelling on the floor. Not shipped unilaterally because it changes what
-  numbers the demo shows (a presentation call), and the tiering thresholds (0.5/0.8) were tuned for raw.
+- **Demo confidence toggle — SHIPPED in #776 (default OFF).** Resolved by making it opt-in: the default
+  demo still shows raw scores (no imposed presentation change), and a visitor can flip "Calibrated
+  confidence" to watch the bars correct upward. One open question for you: whether the demo's tier
+  thresholds (0.5/0.8, tuned for raw) want re-tuning for the calibrated view, or default the toggle ON.
 - **Pelias benchmark cells.** geocode.earth was rate-limited/403 all night; the US-Pelias + messy-Pelias
   cells are unmeasured. Re-run on fresh quota (the harness handles it; diag stays git-excluded).
 - **G-NAF (#208).** License is clear (CC-BY-4.0 per the data-sources catalog); the ingest is the work
@@ -63,6 +63,11 @@ live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
   component draws 24 circles (14 reliability dots + 10 abstention markers) + 2 polylines, zero page
   errors; and R2 serves `access-control-allow-origin: https://mailwoman.sister.software` on
   calibration.json (same as the working model-card.json), so it renders live in production too.
+  Also added an **opt-in "Calibrated confidence" toggle on the live demo** (default OFF — raw scores,
+  so the default presentation is unchanged): flipping it maps each span's displayed `conf=` through the
+  isotonic calibrator, shifting the under-confident bars upward (raw 0.92 → 0.99 — visible proof the
+  number means something). Display-only (the resolver reads the raw nodes); build clean, calibrator
+  direction verified numerically.
 - **#370 — span-rescore, falsify then build (#777).** The benchmark localized the EU loss to *no-result*,
   not precision, so this attacks the no-result tail. Falsifier PASSED (the swap-case gold locality,
   postcode-disambiguated, lands p50 1.8 km from truth — real recall, not a same-name mirage). Built the
@@ -131,8 +136,11 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails BOTH co
 - **Built the #370 gate into the same PR rather than deferring it** — once the data path (candidate-DB
   postcode rows) turned out to exist for IT, the gate was a clean, conditional, never-hurts addition;
   shipping it default-off with honest reach limits beat leaving it as a TODO.
-- **Did NOT ship the demo confidence toggle or the #370 production wiring** — both are presentation /
-  hot-path judgment calls; flagged as proposed follow-ups instead (see the handoff section).
+- **Shipped the demo confidence toggle as opt-in (default OFF), did NOT ship the #370 production
+  wiring.** The toggle's only judgment-call risk was *changing the default presentation* — making it
+  opt-in removes that (default stays raw), so it's safe to ship; the visitor opts into the calibrated
+  view. The #370 resolveTree wiring touches the hot path and depends on a coverage decision, so it
+  stays a flagged follow-up.
 
 ## Numbers
 | metric | value |
