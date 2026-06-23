@@ -36,9 +36,11 @@ import {
 	toGeoJSON,
 	toMapHTML,
 	type ColumnMapping,
+	type EntityGeoData,
 	type GeocodeAddress,
 	type SourceRecord,
 } from "@mailwoman/registry"
+import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 import { readFileSync, writeFileSync } from "node:fs"
 import { setImmediate } from "node:timers/promises"
@@ -296,7 +298,10 @@ export function loadSources(option: string): MultiSourceSpec[] {
  * returning the lines to append to the run summary. Returns `null` when neither is set — the signal
  * to dump GeoJSON to stdout (the original default). Shared by both pipeline paths.
  */
-function writeOutputs(geojson: ReturnType<typeof toGeoJSON>, options: zod.infer<typeof OptionsSchema>): string | null {
+function writeOutputs(
+	geojson: GeoFeatureCollection<PointLiteral, EntityGeoData>,
+	options: zod.infer<typeof OptionsSchema>
+): string | null {
 	if (!options.out && !options.mapOut) return null
 	const lines: string[] = []
 	if (options.out) {

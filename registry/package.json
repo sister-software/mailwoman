@@ -20,6 +20,7 @@
 		"@mailwoman/address-id": "workspace:*",
 		"@mailwoman/match": "workspace:*",
 		"@mailwoman/record": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",
 		"csv-parse": "^5.6.0",
 		"spliterator": "^2.0.0"
