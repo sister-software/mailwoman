@@ -24,6 +24,9 @@ coordinate-graded._
    - **#777** — #370 span-rescore + postcode gate (the EU-coverage lever). Default-off, eval-validated:
      lifts 53% of the EU no-result tail to right-place @25 km. _Eval infra + the gated lever, no
      production wiring._
+   - **#778** — EU qualified-name recall diagnostic (buffer-time bonus, answers #734). Baseline EU
+     candidate recall 90.8% (confirms #734's "real ~93%"); the ≤3-char trailing-token base-name strip
+     is a clean +1.4 pp / zero-collision EU lever. _Eval infra + finding._
 3. **The postmortem PR (this doc)** — `docs/night-2026-06-23-postmortem` branch.
 
 ### Proposed follow-ups (your call — not done tonight, on purpose)
@@ -83,6 +86,15 @@ live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
   that lifts as the gazetteer fills. Stays **default-off**; remaining before default-on = wire the gated
   `spanRescore` into production `resolveTree` + widen postcode coverage. _Operator merge; eval infra +
   the gated lever, no production wiring._
+- **EU qualified-name recall — #734's "measure first," answered (#778).** Buffer-time diagnostic, same
+  root cause as the #370 swap tail (OA's qualified locality forms vs gazetteer base names). Coordinate-
+  graded: baseline EU candidate recall **90.8%** (confirms #734's "real ~93%, not 88%" — the 88% was a
+  Lithuanian eval-extraction artifact, LT absent here). The lever #734 called "collision-risky" — a
+  trailing-token base-name strip — is the **safe** one when bounded to **≤3 chars**: +14 PT *freguesia*-
+  code recoveries (`Santa Eulália Viz`→`Santa Eulália`, 1 km), **zero collisions** (the bound spares real
+  name parts `Cravo`/`Chão`/`Cruz`, all ≥4 chars). The "low-risk" structural suffixes (`b.`/`im`) recover
+  0 here — AT/CH forms absent from the panel; needs an AT/CH holdout to grade (data-blocked). _Operator
+  merge; eval infra + finding, no production wiring. Wiring it (additive fallback) is a clean next lever._
 - **Competitive benchmark harness** (`scripts/eval/competitive-benchmark.ts`, PRIMARY A) — mailwoman vs
   Nominatim (public API) vs Pelias (geocode.earth, via the operator's git-excluded diag, dynamically
   imported so the committed harness degrades gracefully). Two-axis: resolve-rate @ coarse km threshold
@@ -146,7 +158,7 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails BOTH co
 | metric | value |
 | --- | --- |
 | shift window | 04:56 → (ongoing, ends 15:00) UTC |
-| PRs opened | 4 (#774 merged, #775/#776/#777 open, + postmortem branch) |
+| PRs opened | 5 (#774 merged; #775/#776/#777/#778 open; + postmortem branch) |
 | models trained | 0 (zero-GPU night by design) |
 | Modal $ spent | $0 |
 | GPU lost to error | 0 |
