@@ -1,0 +1,57 @@
+---
+sidebar_position: 1
+title: "EU qualified-name recall — measuring #734's collision-risky lever"
+tags:
+  - eval
+  - resolver
+  - multi-locale
+---
+
+# EU qualified-name recall — measuring #734's collision-risky lever
+
+Two threads this shift kept pointing at the same thing. The span-rescore investigation (#370, PR #777) found its swap tail full of Portuguese localities the model emitted as `Santa Eulália Viz` and `Nogueira Do Cravo Ohp`. And #734, profiling the candidate gazetteer's EU recall, had already named the pattern: OpenAddresses writes the locality in its **qualified** form — `Hart b.Graz`, `Roche VD`, `Lenk im Simmental`, `Santa Eulália Viz` — while the gazetteer holds the base name. #734 proposed a base-name normalization to close the gap and flagged it: _"collision-risky, measure first."_
+
+This measures it.
+
+## The setup
+
+For each EU coord-golden row (the same 7-locale panel #370 ran on), take the gold locality and exact-match it against the candidate gazetteer, country-constrained. For a miss, strip the qualifier and re-match — but grade the recovery by **coordinate**, not string (the #566 discipline): the recovered place must land ≤25 km from the row's truth point. A near hit is a real recovery; a far hit is a same-name collision where the strip ate too much and matched a different place. Grading the string alone would score both as wins, which is exactly the failure mode "measure first" is guarding against.
+
+Two normalization tiers, measured separately because their risk is not the same:
+
+- **Structural** — strip `/X`, ` b.X` (German _bei_), ` im/an der/ob der X`. Unambiguous Austrian/Swiss disambiguation suffixes; the base token survives intact.
+- **Trailing-token** — additionally strip a trailing short capitalized token (`VD`, `S`, `Viz`, `Ohp`), bounded to ≤3 characters. This is the one #734 called risky: it recovers `Roche VD` but could eat a real name part (`Santa Cruz` → `Santa`).
+
+## The result
+
+```
+baseline exact recall          = 883/972 (90.8%)
++ structural (/  b.  im/an der) = +0 near, 1 collision   → 90.8%  (low-risk)
++ trailing-token (VD/S/Viz/Ohp) = +14 near, 0 collisions → 92.3%  ("risky")
+```
+
+Two things flip the intuition.
+
+First, the headline recall is **90.8%, not the recorded 88%** — confirming #734's read that the old number was depressed by a Lithuanian eval-extraction artifact, not a real coverage hole. (Lithuania isn't in this panel, so it can't drag the number here.)
+
+Second, the **risky lever is the safe one, and the safe lever does nothing.** The structural suffixes (`b.`, `im`) recover zero rows here — those are Austrian/Swiss forms that don't appear in this panel (an AT/CH panel would be needed to measure them). The trailing-token strip, the one flagged collision-risky, recovers **14 Portuguese localities at zero collisions**:
+
+```
+"Ferreiros Amr"        → "Ferreiros"        (0 km)
+"Santa Eulália Viz"    → "Santa Eulália"    (1 km)
+"Nogueira Do Cravo Ohp" → "Nogueira Do Cravo" (1 km)   ← strips "Ohp", keeps "Do Cravo"
+"Vilar Chão Afe"       → "Vilar Chão"       (0 km)
+"Pereiro Act"          → "Pereiro"          (0 km)
+"Paradela Mdr"         → "Paradela"         (0 km)
+```
+
+These are Portuguese _freguesia_/_concelho_ abbreviations — a 3-letter administrative code OA appends for disambiguation (`Viz` = Viseu, `Amr` = Amares, `Ohp`…). The base name resolves on top of the truth point. And the collision the "risky" framing feared — eating `Cruz` off `Santa Cruz` — doesn't happen, because the **≤3-character bound** separates the codes (`Viz`, `Ohp`) from real name parts (`Cravo`, `Chão`, `Cruz`, all ≥4). The bound is the whole game; without it the lever would be risky, with it the measured collision rate is 0/14.
+
+## What this says
+
+- The candidate gazetteer's EU locality recall is **already ~91% on this panel** (matching #734's "real ~93%"); the qualified-name gap is real but small.
+- A trailing-token base-name normalization bounded to **≤3-char codes** is a clean, collision-free lever worth **+1.4 pp** here — almost entirely Portuguese freguesia codes. It is the resolver-side twin of what #370's span-rescore (PR #777) does parse-side: both recover the same `Santa Eulália Viz` rows.
+- The structural suffixes (`b.`, `im`, `an der`) are unmeasured here for lack of an AT/CH panel; #734's examples suggest they exist, so a follow-up should grade them on Austrian/Swiss holdouts before building.
+- **Don't widen this past ≤3 chars without re-measuring** — the safety is entirely in the bound, and a 4-char allowance would start eating `Cruz`.
+
+The harness (`scripts/eval/eu-qualified-name-recall.ts`) reports per-country recall, both tiers, and the coordinate-graded collision count; `DEBUG=1` dumps each recovery. Reusable for the AT/CH follow-up and any future candidate rebuild.
