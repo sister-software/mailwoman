@@ -12,12 +12,15 @@
  *   were order-robust). EU survives the same eval because its postcodes are format-distinctive (a
  *   hyphenated `26-300` reads as a postcode anywhere); a bare AU `3053` only disambiguates by position.
  *
- *   So this adapter renders each assembled G-NAF tuple (from {@link ./assemble}) in MULTIPLE orders —
- *   the proven both-order lever (`synthesize-german.ts`, #323), widened to AU's three real layouts:
- *   real-AU canonical (number-first, postcode-trailing), postcode-first, and locality-first. Training
- *   the postcode in every position teaches the model a leading 4-digit can still be a postcode. Each
- *   emitted order is a separate row; the corpus aligner BIO-labels each (every component surface form
- *   occurs verbatim in `raw`, so alignment lands).
+ *   So this adapter renders each assembled G-NAF tuple (from {@link ./assemble}) in one of three real
+ *   AU layouts — real-AU canonical (number-first, postcode-trailing), postcode-first, locality-first —
+ *   ROTATED by row index (`i % 3`), so the locality + postcode each land in every position across the
+ *   shard. This is the exact mechanism that fixed #148's v1.9.0 order-overfit for the 16 EU locales
+ *   (`scripts/rerender-overture-multiorder.mjs`, v1.9.1 → shipped v4.13.0); AU was simply never in that
+ *   train (`country_weights` had no AU, and `data_loader.py` excludes unlisted countries). Rotating one
+ *   order per row (rather than emitting all three) keeps this a clean single-variable extension of the
+ *   proven recipe + matches its source-mass structure. The corpus aligner BIO-labels each (every
+ *   component surface form occurs verbatim in `raw`, so alignment lands).
  *
  *   Input: the assembled component JSONL (one `{house_number,street,locality,region,postcode}` per
  *   line). Open G-NAF licence — attribute "Geoscape Australia".
@@ -73,6 +76,7 @@ export function createGnafAdapter(): CorpusAdapter {
 			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
 			const lines = createInterface({ input: stream, crlfDelay: Infinity })
 			let emitted = 0
+			let idx = 0 // rotates the render order (i % 3), matching v1.9.1's rerender
 			try {
 				for await (const line of lines) {
 					if (opts.signal?.aborted) break
@@ -87,32 +91,33 @@ export function createGnafAdapter(): CorpusAdapter {
 					}
 					if (!t.house_number || !t.street || !t.locality || !t.postcode) continue
 
+					const orders = renderOrders(t)
+					const order = idx % orders.length
+					idx++
+					const raw = orders[order]!
 					const components: CanonicalRow["components"] = {
 						house_number: t.house_number,
 						street: t.street,
 						locality: t.locality,
 						postcode: t.postcode,
 					}
-					// region (state) rides only the canonical render (index 0); the postcode-leading layouts
-					// the eval uses omit it, so keep it off them for verbatim alignment.
+					// region (state) rides only the canonical render (order 0); the postcode-leading layouts
+					// omit it (matching the eval's serialization) so it never breaks verbatim alignment.
+					if (order === 0 && t.region) components.region = t.region
 
-					for (const [i, raw] of renderOrders(t).entries()) {
-						if (opts.limit !== undefined && emitted >= opts.limit) break
-						const comps = i === 0 && t.region ? { ...components, region: t.region } : components
-						const aligned = reconcileComponents(comps, raw)
-						if (Object.keys(aligned).length === 0) continue
-						yield {
-							raw,
-							components: aligned,
-							country: "AU",
-							locale: "en-AU",
-							source: GNAF_ADAPTER_ID,
-							source_id: `${stableSourceId(GNAF_ADAPTER_ID, aligned)}-o${i}`,
-							corpus_version: "",
-							license: GNAF_DEFAULT_LICENSE,
-						}
-						emitted++
+					const aligned = reconcileComponents(components, raw)
+					if (Object.keys(aligned).length === 0) continue
+					yield {
+						raw,
+						components: aligned,
+						country: "AU",
+						locale: "en-AU",
+						source: GNAF_ADAPTER_ID,
+						source_id: `${stableSourceId(GNAF_ADAPTER_ID, aligned)}-o${order}`,
+						corpus_version: "",
+						license: GNAF_DEFAULT_LICENSE,
 					}
+					emitted++
 				}
 			} finally {
 				lines.close()
