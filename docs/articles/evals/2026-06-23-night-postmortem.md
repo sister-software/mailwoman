@@ -38,8 +38,12 @@ coordinate-graded._
   nothing until you set it. Wired `spanRescore` into `resolveTree` as the idiomatic twin of the
   `addressPoints`/`interpolation` tiers (gated on `hasResolvedPlace` = the #685 brake, injects via the
   same `decorateNode` path). 8 new tests + the 48 existing resolver tests still pass (byte-stable);
-  typecheck clean. **Your remaining calls:** flip `ResolveOpts.spanRescore` on (after deciding the
-  mis-fire tolerance from #777's eval), and widen postcode coverage so the gate reaches CZ/AU (IT today).
+  typecheck clean. **Then validated end-to-end** (`scripts/eval/span-rescore-e2e.ts`, on #780): flipping
+  the flag through the *real* `resolveTree` + candidate backend lifts EU right-place **@25km 63.2 → 79.2%
+  (+16pp)** and resolved 76 → 95% — PL +42, CZ +42, PT +11; ~17% of new resolutions land >25km (the
+  mis-fire rate #777 measured). So the wired lever delivers the EU coordinate lift in production, not
+  just in the standalone validator. **Your remaining calls:** flip `ResolveOpts.spanRescore` on (the
+  +16pp vs the 17% mis-fire is the trade), and widen postcode coverage so the gate reaches CZ/AU (IT today).
 - **Demo confidence toggle — SHIPPED in #776 (default OFF).** Resolved by making it opt-in: the default
   demo still shows raw scores (no imposed presentation change), and a visitor can flip "Calibrated
   confidence" to watch the bars correct upward. One open question for you: whether the demo's tier
@@ -132,6 +136,10 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails BOTH co
   one-knob diagnostic, not a guess.
 - **The centerpiece got render-verified, not just build-verified** — Playwright with an intercepted
   R2 fetch drew the real SVGs (24 circles, 2 polylines, zero errors); production CORS confirmed by header.
+- **The #780 wiring got end-to-end-verified, and it caught a stale-compile lie.** The unit tests pass on
+  *source*; production resolves the *compiled* `out/`. The first e2e run reported +0.0pp — the lever
+  looked dead. Recompiling revealed the real **+16pp EU @25km**. Grading the wired path on compiled code
+  (not just source unit tests) is what turned a false negative into the lever's production proof.
 
 ## What could've gone better
 - **The #370 build shipped a backwards heuristic in its first cut.** Shortest-span-wins (lifted from
