@@ -54,6 +54,12 @@ coordinate-graded._
   (~5 GB AU, backlog #31). Lower priority than EU for the trade show.
 
 ### ⭐ Strategic upshot — the lever substantially narrows the EU gap (claim it precisely)
+**Crispest accurate one-liner:** the rescore narrows the EU @25km gap from **−20pp** (#775 same-harness:
+mailwoman 59 vs Nominatim 79, no rescore) to an estimated **~−4pp** (59 + the clean +16pp lift ≈ 75 vs
+79) — most of the gap closed, and mailwoman now *ahead* of Nominatim on IT/PT/FR. Not parity, but close,
+and honestly stated. (The ~−4pp is an estimate combining #775's same-harness baseline with the e2e lift;
+a single same-harness run with the flag on confirms the exact standing.)
+
 The benchmark's bad news was EU @25km: mailwoman ~59–63% vs Nominatim ~79% (no-result, not precision).
 The **#370 span-rescore (#780) attacks exactly that tail**, and the end-to-end e2e gives the clean,
 defensible number: enabling the flag lifts mailwoman EU **@25km 63.2 → 79.2% (+16pp)** — a flag-only A/B,
