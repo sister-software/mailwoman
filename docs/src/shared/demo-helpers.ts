@@ -163,6 +163,57 @@ export function flattenTree(
 }
 
 // ---------------------------------------------------------------------------
+// Confidence calibration (browser-safe mirror)
+// ---------------------------------------------------------------------------
+
+/** Maps a raw span confidence in [0, 1] to its calibrated probability of correctness. */
+export type Calibrator = (raw: number) => number
+
+interface CalibrationBin {
+	center: number
+	calibrated: number
+}
+
+/**
+ * Browser-safe twin of `@mailwoman/core/decoder/calibration`'s `createCalibrator`. The canonical
+ * lives in core for the Node parse path; we can't import it into the docs webpack bundle (the
+ * `core/decoder` barrel pulls in node-only siblings like `build-tree`, and the deep subpath isn't
+ * a published export), so the ~15-line piecewise-linear interp is mirrored here verbatim. Keep the
+ * two in sync — both are pure, monotone, and clamp to the table's range outside it.
+ */
+export function createCalibrator(table: { table: CalibrationBin[] } | CalibrationBin[]): Calibrator {
+	const bins = Array.isArray(table) ? table : table.table
+	if (!bins || bins.length === 0) throw new Error("createCalibrator: empty calibration table")
+	const sorted = [...bins].sort((a, b) => a.center - b.center)
+	const centers = sorted.map((b) => b.center)
+	const cals = sorted.map((b) => clamp01(b.calibrated))
+	const n = centers.length
+	return (raw: number): number => {
+		const x = clamp01(raw)
+		if (x <= centers[0]!) return cals[0]!
+		if (x >= centers[n - 1]!) return cals[n - 1]!
+		let lo = 0
+		let hi = n - 1
+		while (hi - lo > 1) {
+			const mid = (lo + hi) >> 1
+			if (centers[mid]! <= x) lo = mid
+			else hi = mid
+		}
+		const x0 = centers[lo]!
+		const x1 = centers[hi]!
+		const t = x1 === x0 ? 0 : (x - x0) / (x1 - x0)
+		return cals[lo]! + t * (cals[hi]! - cals[lo]!)
+	}
+}
+
+function clamp01(v: number): number {
+	if (Number.isNaN(v)) return 0
+	if (v < 0) return 0
+	if (v > 1) return 1
+	return v
+}
+
+// ---------------------------------------------------------------------------
 // WOF cascade lookup
 // ---------------------------------------------------------------------------
 

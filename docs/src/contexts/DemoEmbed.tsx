@@ -23,8 +23,8 @@ import type {
 } from "../shared/resources.tsx"
 import { adminGazetteerUrl, assetUrl, loadFstGazetteer } from "../shared/resources.tsx"
 
-import type { ReleasesManifest } from "../shared/demo-helpers.ts"
-import { DEFAULT_LOCALE } from "../shared/demo-helpers.ts"
+import type { Calibrator, ReleasesManifest } from "../shared/demo-helpers.ts"
+import { createCalibrator, DEFAULT_LOCALE } from "../shared/demo-helpers.ts"
 import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../shared/register-range-sw.ts"
 
 // ---------------------------------------------------------------------------
@@ -46,6 +46,13 @@ export interface DemoEmbedState {
 	fstProvenance: FstProvenanceLike | null
 	/** The instantiated, cached WOF HTTP-VFS lookup. Loaded eagerly by the provider. */
 	lookup: MailwomanLookupLike | null
+	/**
+	 * Maps a raw span confidence → its calibrated probability of correctness, built from the
+	 * version's `calibration.json` (isotonic table). `null` while loading or for a release that
+	 * ships no calibration table. The demo applies it so a displayed "97%" means ~97% correct —
+	 * the capability a search index can't offer (`docs/articles/evals/*-calibration-*.md`).
+	 */
+	calibrator: Calibrator | null
 	/** Human-readable loading progress string. */
 	loadingProgress: string
 	/** Current loading step index (0-based). Used by staged LoadingIndicator. */
@@ -102,6 +109,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 	const [forceWasm, setForceWasm] = useState(false)
 	const [activeBackend, setActiveBackend] = useState<string>("")
 	const [lookup, setLookup] = useState<MailwomanLookupLike | null>(null)
+	const [calibrator, setCalibrator] = useState<Calibrator | null>(null)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
 	// Mount: register the range-chunk service worker (persists validated DB range chunks across
@@ -151,6 +159,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				setFstMatcher(null)
 				setFstProvenance(null)
 				setLookup(null)
+				setCalibrator(null)
 				setLoadingStepIndex(-1)
 				setLoadingStepLabels([])
 				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
@@ -197,6 +206,20 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 				setLoadingStepIndex(0)
 
 				if (cancelled) return
+
+				// Isotonic confidence calibration (#59): turns the version's `calibration.json` table
+				// into a (raw)=>calibrated map. Tolerate a 404 — pre-v4.0.0 bundles ship no table, in
+				// which case the demo shows raw softmax scores (and says so). The table is the model's
+				// OWN held-out reliability, so it must match the loaded version.
+				try {
+					const calRes = await fetch(assetUrl(DEFAULT_LOCALE, selectedVersion, "calibration.json"))
+					if (calRes.ok) {
+						const calTable = await calRes.json()
+						if (!cancelled) setCalibrator(() => createCalibrator(calTable))
+					}
+				} catch {
+					// No calibration table for this version — raw scores it is.
+				}
 
 				if (release?.hasFst) {
 					try {
@@ -260,6 +283,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 			fstMatcher,
 			fstProvenance,
 			lookup,
+			calibrator,
 			loadingProgress,
 			loadingStepIndex,
 			loadingStepLabels,
@@ -277,6 +301,7 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 			fstMatcher,
 			fstProvenance,
 			lookup,
+			calibrator,
 			loadingProgress,
 			loadingStepIndex,
 			loadingStepLabels,
