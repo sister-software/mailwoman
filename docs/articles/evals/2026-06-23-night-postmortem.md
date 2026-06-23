@@ -53,6 +53,18 @@ coordinate-graded._
 - **G-NAF (#208).** License is clear (CC-BY-4.0 per the data-sources catalog); the ingest is the work
   (~5 GB AU, backlog #31). Lower priority than EU for the trade show.
 
+### ⭐ Strategic upshot — the lever likely closes most of the EU gap the benchmark exposed
+The benchmark's bad news was EU @25km: mailwoman ~59–63% vs Nominatim ~79% (no-result, not precision).
+The **#370 span-rescore (#780) addresses exactly that tail** — and the end-to-end e2e proves it on the
+SAME coord-150 EU panels #775 ran Nominatim on: enabling the flag lifts mailwoman EU **@25km 63.2 → 79.2%
+(+16pp)**, and #775's Nominatim on those panels was **~79%**. So with the lever on, mailwoman reaches
+**~Nominatim parity on EU @25km** — the trade-show EU weakness is largely a *default-off flag away from
+closed*, not a model deficiency.
+_Honest caveat:_ the two numbers come from different harnesses whose mailwoman *baselines* differ ~4pp
+(e2e 63.2 vs #775 59), so treat it as **near-parity pending a same-harness confirm** (run mailwoman-with-
+lever + Nominatim through one harness, reusing #775's saved Nominatim rows — no need to re-hammer their
+free API). The +16pp lift itself is a clean A/B (flag the only variable) and not subject to the caveat.
+
 **Production: unchanged** — everything behind PRs; $0 GPU; no model/demo/canonical swap. R2 got one
 new object: the fresh v4.13.0 `calibration.json` (the demo doesn't read it until #776 deploys, so no
 live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
