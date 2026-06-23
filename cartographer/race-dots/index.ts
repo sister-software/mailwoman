@@ -3,19 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Race-by-dot-density overlay — the Cooper Center "Racial Dot Map" reading, on the demo. One dot per
- *   ~N people, placed at random inside its Census block (built by `scripts/census/race-dots.ts` +
- *   tippecanoe), colored by 2020 P.L. 94-171 race/ethnicity category.
+ *   Race-by-dot-density overlay — the Cooper Center "Racial Dot Map" reading, on the demo. One dot
+ *   per ~N people, placed at random inside its Census block (built by `scripts/census/race-dots.ts`
+ *   + tippecanoe), colored by 2020 P.L. 94-171 race/ethnicity category.
  *
  *   The PMTiles ships a single `dots` source-layer carrying a `cat` property; we expose each category
- *   as its OWN default-off circle layer (filtered on `cat`) so the demo's LayerToggleControl gives each
- *   its own checkbox — show the full mosaic, or isolate one group's geography, no extra UI. Same idiom
- *   as the coverage overlay.
+ *   as its OWN default-off circle layer (filtered on `cat`) so the demo's LayerToggleControl gives
+ *   each its own checkbox — show the full mosaic, or isolate one group's geography, no extra UI.
+ *   Same idiom as the coverage overlay.
  *
  *   Served as XYZ vector tiles by the tile worker from `nexus-assets/tiles/race-dots-la.pmtiles`; the
- *   consumer passes its TileJSON URL (`tiles.sister.software/race-dots-la.json`) to `createRaceDotsSource`.
+ *   consumer passes its TileJSON URL (`tiles.sister.software/race-dots-la.json`) to
+ *   `createRaceDotsSource`.
  *
- *   The dot is a *representation*, not a record: a random position inside the block, standing in for
+ *   The dot is a _representation_, not a record: a random position inside the block, standing in for
  *   ~N real people of that category. It says nothing about any individual address.
  */
 
@@ -59,9 +60,9 @@ function dotLayer(id: string, color: string, cats: readonly string[]): CircleLay
 }
 
 /**
- * One default-off circle layer per category. Plain MapLibre specs — the demo adds them imperatively on
- * map-load with a `beforeId` of the first symbol layer, so the dots sit beneath place labels.
+ * One default-off circle layer per category. Plain MapLibre specs — the demo adds them imperatively
+ * on map-load with a `beforeId` of the first symbol layer, so the dots sit beneath place labels.
  */
 export const RaceDotsLayers: CircleLayerSpecification[] = RaceDotsCategories.map((c) =>
-	dotLayer(c.id, c.color, c.match),
+	dotLayer(c.id, c.color, c.match)
 )

@@ -27,10 +27,22 @@ const WOF = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
 async function main() {
 	const n = Number(arg("n", "30"))
 	const cc = arg("default-country", "PT")
-	const rows = readFileSync(arg("golden"), "utf8").trim().split("\n").slice(0, n).map((l) => JSON.parse(l))
+	const rows = readFileSync(arg("golden"), "utf8")
+		.trim()
+		.split("\n")
+		.slice(0, n)
+		.map((l) => JSON.parse(l))
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const mk = (m: string) => createScorer({ modelPath: m, tokenizerPath: TOK, modelCardPath: CARD, anchorLookupPath: ANCHOR, strict: true, tier: "server" })
+	const mk = (m: string) =>
+		createScorer({
+			modelPath: m,
+			tokenizerPath: TOK,
+			modelCardPath: CARD,
+			anchorLookupPath: ANCHOR,
+			strict: true,
+			tier: "server",
+		})
 	const base = await mk(arg("base"))
 	const cand = await mk(arg("cand"))
 	const resolver = createWofResolver(new WofSqlitePlaceLookup({ databasePath: WOF }) as never)
@@ -38,11 +50,14 @@ async function main() {
 	const didResolve = async (tree: unknown): Promise<boolean> => {
 		const r = await resolver.resolveTree(tree as never, opts)
 		const has = (n: { placeId?: string; children: unknown[] }): boolean =>
-			(!!n.placeId?.startsWith("wof:")) || (n.children as { placeId?: string; children: unknown[] }[]).some(has)
+			!!n.placeId?.startsWith("wof:") || (n.children as { placeId?: string; children: unknown[] }[]).some(has)
 		return (r.roots as { placeId?: string; children: unknown[] }[]).some(has)
 	}
 
-	let diff = 0, baseRes = 0, candRes = 0, candLostThatBaseHad = 0
+	let diff = 0,
+		baseRes = 0,
+		candRes = 0,
+		candLostThatBaseHad = 0
 	for (const row of rows) {
 		const bt = await base.parse(row.raw, { postcodeRepair: true })
 		const ct = await cand.parse(row.raw, { postcodeRepair: true })
@@ -55,9 +70,13 @@ async function main() {
 		if (cr) candRes++
 		if (br && !cr) candLostThatBaseHad++
 		const flag = br && !cr ? " <<< base resolved, cand DIDN'T" : ""
-		console.log(`gold=${(row.components.locality ?? "").padEnd(22)} | v180="${bl}"[${br ? "R" : "-"}]  v190="${cl}"[${cr ? "R" : "-"}]${flag}`)
+		console.log(
+			`gold=${(row.components.locality ?? "").padEnd(22)} | v180="${bl}"[${br ? "R" : "-"}]  v190="${cl}"[${cr ? "R" : "-"}]${flag}`
+		)
 	}
-	console.log(`\n${cc}: n=${rows.length} | locality differs v180≠v190: ${diff} (${((100 * diff) / rows.length).toFixed(0)}%)`)
+	console.log(
+		`\n${cc}: n=${rows.length} | locality differs v180≠v190: ${diff} (${((100 * diff) / rows.length).toFixed(0)}%)`
+	)
 	console.log(`resolve: v180=${baseRes} v190=${candRes} | rows v180-resolved-but-v190-didn't: ${candLostThatBaseHad}`)
 }
 await main()

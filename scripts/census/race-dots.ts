@@ -8,20 +8,18 @@
  *
  *   Reads `tabblock20 ⋈ pl_block` (block geometry + Census 2020 P.L. 94-171 table P2 counts) and
  *   scatters one dot per `--per` people uniformly at random inside each block, tagged with its
- *   race/ethnicity category. Output is NDJSON (one GeoJSON Point Feature per line, with a `tippecanoe`
- *   layer hint) ready for `tippecanoe -o race-dots.pmtiles`.
+ *   race/ethnicity category. Output is NDJSON (one GeoJSON Point Feature per line, with a
+ *   `tippecanoe` layer hint) ready for `tippecanoe -o race-dots.pmtiles`.
  *
  *   Point-in-polygon uses `@turf/boolean-contains` (ships with `@mailwoman/tiger`). The dot is a
- *   *representation*, not a record: a random position inside the block it belongs to, standing in for
- *   `--per` real people of that category. It says nothing about any individual address.
+ *   _representation_, not a record: a random position inside the block it belongs to, standing in
+ *   for `--per` real people of that category. It says nothing about any individual address.
  *
- *   Build the input DB first:
- *     mailwoman tiger fetch --state 06 --county 059 --out tiger-oc.db
- *     mailwoman tiger redistricting --state 06 --county 059 --out tiger-oc.db
+ *   Build the input DB first: mailwoman tiger fetch --state 06 --county 059 --out tiger-oc.db
+ *   mailwoman tiger redistricting --state 06 --county 059 --out tiger-oc.db
  *
- *   Run:
- *     node --experimental-strip-types scripts/census/race-dots.ts \
- *       --db tiger-oc.db --per 10 --out /tmp/race-dots.ndjson
+ *   Run: node --experimental-strip-types scripts/census/race-dots.ts\
+ *   --db tiger-oc.db --per 10 --out /tmp/race-dots.ndjson
  */
 
 import booleanContains from "@turf/boolean-contains"
@@ -65,7 +63,11 @@ function randomPointIn(polys: PolygonCoords[], areas: number[], totalArea: numbe
 	let pick = 0
 	while (pick < polys.length - 1 && (r -= areas[pick]!) > 0) pick++
 	const poly = polys[pick]!
-	const polyFeature = { type: "Feature" as const, geometry: { type: "Polygon" as const, coordinates: poly }, properties: {} }
+	const polyFeature = {
+		type: "Feature" as const,
+		geometry: { type: "Polygon" as const, coordinates: poly },
+		properties: {},
+	}
 	const [minX, minY, maxX, maxY] = bbox(poly)
 	for (let tries = 0; tries < 60; tries++) {
 		const x = minX + Math.random() * (maxX - minX)
@@ -81,7 +83,7 @@ const rows = db
 	.prepare(
 		`SELECT b.geometry AS geometry, ${CATEGORIES.map((c) => `p.${c} AS ${c}`).join(", ")}
 		 FROM tabblock20 b JOIN pl_block p ON b.GEOID = p.GEOID
-		 WHERE p.pop_total > 0`,
+		 WHERE p.pop_total > 0`
 	)
 	.all() as Array<{ geometry: string } & Record<(typeof CATEGORIES)[number], number>>
 db.close()
@@ -98,7 +100,8 @@ for (const row of rows) {
 	} catch {
 		continue
 	}
-	const polys: PolygonCoords[] = geom.type === "Polygon" ? [geom.coordinates as PolygonCoords] : (geom.coordinates as PolygonCoords[])
+	const polys: PolygonCoords[] =
+		geom.type === "Polygon" ? [geom.coordinates as PolygonCoords] : (geom.coordinates as PolygonCoords[])
 	const areas = polys.map((p) => {
 		const [a, b, c, d] = bbox(p)
 		return Math.max((c - a) * (d - b), 1e-12)
@@ -122,7 +125,7 @@ for (const row of rows) {
 					tippecanoe: { layer: LAYER },
 					properties: { cat },
 					geometry: { type: "Point", coordinates: [Math.round(pt[0] * 1e5) / 1e5, Math.round(pt[1] * 1e5) / 1e5] },
-				}) + "\n",
+				}) + "\n"
 			)
 			dots++
 			totals.set(cat, (totals.get(cat) ?? 0) + 1)
@@ -132,4 +135,5 @@ for (const row of rows) {
 
 out.end()
 console.error(`[done] ${dots} dots from ${rows.length} blocks (1 dot ≈ ${PER} people); ${skipped} skipped`)
-for (const [cat, n] of [...totals.entries()].sort((a, b) => b[1] - a[1])) console.error(`  ${n.toString().padStart(7)}  ${cat}`)
+for (const [cat, n] of [...totals.entries()].sort((a, b) => b[1] - a[1]))
+	console.error(`  ${n.toString().padStart(7)}  ${cat}`)

@@ -12,8 +12,8 @@
  *   representation, not a record about any address. Serve over localhost (the house tile server
  *   CORS-restricts to localhost + the docs domains).
  *
- *   Run: node --experimental-strip-types scripts/census/race-dots-map.ts \
- *     --pmtiles-url http://localhost:8899/race-dots-oc.pmtiles --out /tmp/race-dots-oc.html
+ *   Run: node --experimental-strip-types scripts/census/race-dots-map.ts\
+ *   --pmtiles-url http://localhost:8899/race-dots-oc.pmtiles --out /tmp/race-dots-oc.html
  */
 
 import { layers, namedFlavor } from "@protomaps/basemaps"

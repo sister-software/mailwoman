@@ -526,7 +526,12 @@ async function main(): Promise<void> {
 		// killing name-drift links; A4 (average-linkage) splits a component joined only by a weak bridge.
 		{
 			label: "+ require name/org corroboration (A2, #625)",
-			config: { collapseSpatial: true, addressFrequency, discriminators: ["authorizedOfficial"], requireCorroboration: true },
+			config: {
+				collapseSpatial: true,
+				addressFrequency,
+				discriminators: ["authorizedOfficial"],
+				requireCorroboration: true,
+			},
 		},
 		{
 			label: "+ phone comparison (A3, #625)",

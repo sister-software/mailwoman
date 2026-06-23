@@ -5,8 +5,8 @@
  *
  *   Minimal static file server that honours HTTP Range requests (206) — Python's `http.server` does
  *   not, and PMTiles reads via Range, so it can't be served by it. Used to preview/render a local
- *   `.pmtiles` tileset (e.g. the race-dot map). Not for production; the deployed tiles go through the
- *   tile worker.
+ *   `.pmtiles` tileset (e.g. the race-dot map). Not for production; the deployed tiles go through
+ *   the tile worker.
  *
  *   Run: node scripts/census/serve-range.mjs [dir=/tmp] [port=8899]
  */
@@ -43,7 +43,11 @@ createServer((req, res) => {
 	if (m) {
 		const start = Number(m[1])
 		const end = m[2] ? Number(m[2]) : st.size - 1
-		res.writeHead(206, { ...base, "Content-Range": `bytes ${start}-${end}/${st.size}`, "Content-Length": end - start + 1 })
+		res.writeHead(206, {
+			...base,
+			"Content-Range": `bytes ${start}-${end}/${st.size}`,
+			"Content-Length": end - start + 1,
+		})
 		createReadStream(path, { start, end }).pipe(res)
 	} else {
 		res.writeHead(200, { ...base, "Content-Length": st.size })
