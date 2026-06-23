@@ -90,6 +90,20 @@ With the gate on, the IT story flips cleanly: from 4 recoveries all wrong (p50 2
 
 The gate's reach is bounded by where the candidate gazetteer has postcodes: IT resolves 97% of them, so its false-positives get caught; CZ and AU resolve ~none, so their mis-fires survive (AU's are the cross-state same-name problem — Springfield in three states — that needs state agreement the country gate can't supply). That's a coverage limit, not a design flaw: the gate's reach grows automatically as the postcode gazetteer fills in, with no code change.
 
+## Production wiring + the end-to-end result (#780)
+
+The wiring is now done (#780): `spanRescore` lives in `resolveTree` behind a default-off `ResolveOpts.spanRescore` — the idiomatic twin of the `addressPoints`/`interpolation` tiers, injecting the recovered locality via the same `decorateNode` path, gated on `hasResolvedPlace` (the #685 brake). And the wired path is graded end-to-end (`scripts/eval/span-rescore-e2e.ts`): parse → `resolveTree` with the flag off vs on, same model + candidate backend, the flag the only variable.
+
+```
+EU coord panel (n=972, @25km right-place), spanRescore off → on:
+  resolved:          76.0% → 95.2%   (+19.2pp)
+  right-place @25km: 63.2% → 79.2%   (+16.0pp)
+  PL 43→85 · CZ 29→71 · PT 62→73 · AT 79→85 · AU 35→42 · IT/FR flat
+  ~17% of new resolutions land >25km — the mis-fire rate, trimmed by the gate where postcodes resolve.
+```
+
+The strategic read: #775 ran Nominatim on these _same_ panels at ~79% EU @25km, so with the flag on mailwoman reaches **near-parity with Nominatim on EU** — the benchmark's EU weakness is largely a default-off flag away from closed, not a model deficiency. (Honest caveat: the e2e and #775 harnesses' mailwoman _baselines_ differ ~4 pp — 63.2 vs 59 — so it's near-parity pending a single-harness confirm; the **+16 pp lift itself is a clean A/B** and not subject to that caveat.) One process note: the first e2e run reported **+0.0 pp** because `@mailwoman/core` resolves to the _compiled_ `out/` (stale, pre-#780) while the unit tests alias to _source_ — `yarn compile`, then the real +16. Grade the wired path on compiled code, not only source unit tests.
+
 ## What stays off
 
-The rescore stays **default-off**. The lever is proven and the gate is built and measured; what remains before default-on is the resolver wiring (the gate lives in the eval validator today, not the production `resolveTree`) and widening postcode coverage so the gate reaches CZ/AU. The probe (`scripts/eval/rescore-ceiling-probe.ts`, with the falsifier) and the validator (`scripts/eval/span-rescore-validate.ts`, the buildable gated `spanRescore`) are the harness that will grade the wire-up.
+The rescore stays **default-off**. What remains before default-**on** is a decision, not a build: flip `ResolveOpts.spanRescore` (the +16 pp recall against the ~17% >25 km mis-fire is the trade), and widen postcode coverage so the gate reaches CZ/AU (IT today). The harness — `rescore-ceiling-probe.ts` (falsifier), `span-rescore-validate.ts` (standalone), `span-rescore-e2e.ts` (wired) — regrades any of those changes.
