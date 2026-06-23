@@ -7,30 +7,32 @@
  *
  *   The model mis-parses Australian addresses in their native postcode-first / house-number-last
  *   order: it tags a leading 4-digit postcode as a house number (its US/EU prior) and swaps street
- *   ↔ locality with it. `scripts/eval/au-order-probe.ts` proved this is a word-ORDER coverage gap, not
- *   capability — the same addresses parse perfectly in canonical order (65% → 87% @25km if the parse
- *   were order-robust). EU survives the same eval because its postcodes are format-distinctive (a
- *   hyphenated `26-300` reads as a postcode anywhere); a bare AU `3053` only disambiguates by position.
+ *   ↔ locality with it. `scripts/eval/au-order-probe.ts` proved this is a word-ORDER coverage gap,
+ *   not capability — the same addresses parse perfectly in canonical order (65% → 87% @25km if the
+ *   parse were order-robust). EU survives the same eval because its postcodes are
+ *   format-distinctive (a hyphenated `26-300` reads as a postcode anywhere); a bare AU `3053` only
+ *   disambiguates by position.
  *
  *   So this adapter renders each assembled G-NAF tuple (from {@link ./assemble}) in one of three real
- *   AU layouts — real-AU canonical (number-first, postcode-trailing), postcode-first, locality-first —
- *   ROTATED by row index (`i % 3`), so the locality + postcode each land in every position across the
- *   shard. This is the exact mechanism that fixed #148's v1.9.0 order-overfit for the 16 EU locales
- *   (`scripts/rerender-overture-multiorder.mjs`, v1.9.1 → shipped v4.13.0); AU was simply never in that
- *   train (`country_weights` had no AU, and `data_loader.py` excludes unlisted countries). Rotating one
- *   order per row (rather than emitting all three) keeps this a clean single-variable extension of the
- *   proven recipe + matches its source-mass structure. The corpus aligner BIO-labels each (every
- *   component surface form occurs verbatim in `raw`, so alignment lands).
+ *   AU layouts — real-AU canonical (number-first, postcode-trailing), postcode-first,
+ *   locality-first — ROTATED by row index (`i % 3`), so the locality + postcode each land in every
+ *   position across the shard. This is the exact mechanism that fixed #148's v1.9.0 order-overfit
+ *   for the 16 EU locales (`scripts/rerender-overture-multiorder.mjs`, v1.9.1 → shipped v4.13.0);
+ *   AU was simply never in that train (`country_weights` had no AU, and `data_loader.py` excludes
+ *   unlisted countries). Rotating one order per row (rather than emitting all three) keeps this a
+ *   clean single-variable extension of the proven recipe + matches its source-mass structure. The
+ *   corpus aligner BIO-labels each (every component surface form occurs verbatim in `raw`, so
+ *   alignment lands).
  *
  *   Input: the assembled component JSONL (one `{house_number,street,locality,region,postcode}` per
  *   line). Open G-NAF licence — attribute "Geoscape Australia".
  */
 
+import { createReadStream } from "node:fs"
+import { createInterface } from "node:readline"
 import { stableSourceId } from "../../adapter.js"
 import { reconcileComponents } from "../../format.js"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.js"
-import { createReadStream } from "node:fs"
-import { createInterface } from "node:readline"
 
 export const GNAF_ADAPTER_ID = "gnaf"
 /** Open G-NAF is freely redistributable with attribution to Geoscape Australia (CC-BY-style). */
@@ -45,9 +47,9 @@ interface GnafTuple {
 }
 
 /**
- * The address layouts an AU address actually arrives in. The model already handles postcode-TRAILING
- * (canonical); the two postcode-LEADING forms are the ones it fails, so they carry the lever. We keep
- * the canonical form too so the retrain doesn't forget it.
+ * The address layouts an AU address actually arrives in. The model already handles
+ * postcode-TRAILING (canonical); the two postcode-LEADING forms are the ones it fails, so they
+ * carry the lever. We keep the canonical form too so the retrain doesn't forget it.
  */
 function renderOrders(c: GnafTuple): string[] {
 	const region = c.region ? ` ${c.region}` : ""

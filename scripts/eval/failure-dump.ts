@@ -11,8 +11,8 @@
  *   Run: node --experimental-strip-types scripts/eval/failure-dump.ts \
  *          --candidate-db /mnt/playpen/mailwoman-data/wof/candidate-global-20i.db [--n 60] [--show 10]
  */
-import { createWofResolver } from "@mailwoman/core/resolver"
 import type { AddressNode, AddressTree } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/core/resolver"
 import { existsSync, readFileSync } from "node:fs"
 
 const arg = (k: string, d = ""): string => {
@@ -33,22 +33,46 @@ const haversineKm = (a: { lat: number; lon: number }, b: { lat: number; lon: num
 	const R = 6371
 	const dLat = ((b.lat - a.lat) * Math.PI) / 180
 	const dLon = ((b.lon - a.lon) * Math.PI) / 180
-	const h = Math.sin(dLat / 2) ** 2 + Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
+	const h =
+		Math.sin(dLat / 2) ** 2 +
+		Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
 	return 2 * R * Math.asin(Math.sqrt(h))
 }
 const PLACETYPE_RANK: Record<string, number> = {
-	country: 0, region: 1, macrocounty: 2, county: 3, localadmin: 4, locality: 5,
-	borough: 6, macrohood: 6, neighbourhood: 7, microhood: 8, street: 9, address: 10, venue: 10,
+	country: 0,
+	region: 1,
+	macrocounty: 2,
+	county: 3,
+	localadmin: 4,
+	locality: 5,
+	borough: 6,
+	macrohood: 6,
+	neighbourhood: 7,
+	microhood: 8,
+	street: 9,
+	address: 10,
+	venue: 10,
 }
-interface NodeInfo { tag: string; value: string; resolved: boolean; placetype: string }
+interface NodeInfo {
+	tag: string
+	value: string
+	resolved: boolean
+	placetype: string
+}
 function walk(tree: AddressTree): { best: { lat: number; lon: number; placetype: string } | null; nodes: NodeInfo[] } {
 	let best: { lat: number; lon: number; placetype: string } | null = null
 	const nodes: NodeInfo[] = []
 	const visit = (n: AddressNode): void => {
 		const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
-		const resolved = !!(n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined && (n.lat !== 0 || n.lon !== 0))
+		const resolved = !!(
+			n.placeId?.startsWith("wof:") &&
+			n.lat !== undefined &&
+			n.lon !== undefined &&
+			(n.lat !== 0 || n.lon !== 0)
+		)
 		if (n.tag) nodes.push({ tag: String(n.tag), value: String(n.value ?? ""), resolved, placetype })
-		if (resolved && (!best || (PLACETYPE_RANK[placetype] ?? 5) > (PLACETYPE_RANK[best.placetype] ?? 5))) best = { lat: n.lat!, lon: n.lon!, placetype }
+		if (resolved && (!best || (PLACETYPE_RANK[placetype] ?? 5) > (PLACETYPE_RANK[best.placetype] ?? 5)))
+			best = { lat: n.lat!, lon: n.lon!, placetype }
 		for (const c of n.children ?? []) visit(c)
 	}
 	for (const r of tree.roots) visit(r)
@@ -65,9 +89,11 @@ function classify(nodes: NodeInfo[], best: { placetype: string } | null, dist: n
 	const locResolved = resolvedTag("locality") || resolvedTag("city")
 	if (dist !== null && best) {
 		// resolved but too far — what placed it, and was it a coarse fallback?
-		if (best.placetype === "country" || best.placetype === "region") return "WRONG_coarse-only (no locality/postcode resolved → coarse fallback)"
+		if (best.placetype === "country" || best.placetype === "region")
+			return "WRONG_coarse-only (no locality/postcode resolved → coarse fallback)"
 		// Did a postcode ALSO resolve? If so this is lever-A-fixable: prefer/disambiguate by the postcode.
-		if (best.placetype !== "postalcode" && pcResolved) return "WRONG_locality_postcode-AVAILABLE (lever A: prefer/disambiguate by the resolved postcode)"
+		if (best.placetype !== "postalcode" && pcResolved)
+			return "WRONG_locality_postcode-AVAILABLE (lever A: prefer/disambiguate by the resolved postcode)"
 		return `WRONG_${best.placetype}_no-postcode (no postcode anchor to disambiguate)`
 	}
 	// no-result
@@ -82,19 +108,34 @@ async function main() {
 	const { WofCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const lookup = new WofCandidateTableLookup({ databasePath: CAND })
 	const resolver = createWofResolver(lookup as never)
-	const model = await createScorer({ modelPath: MODEL, tokenizerPath: TOK, modelCardPath: CARD, anchorLookupPath: ANCHOR, strict: true, tier: "server" })
+	const model = await createScorer({
+		modelPath: MODEL,
+		tokenizerPath: TOK,
+		modelCardPath: CARD,
+		anchorLookupPath: ANCHOR,
+		strict: true,
+		tier: "server",
+	})
 
 	const globalTally: Record<string, number> = {}
 	for (const cc of LOCALES) {
 		const file = `data/eval/external/oa-${cc}-coord-150.jsonl`
 		if (!existsSync(file)) continue
-		const rows = readFileSync(file, "utf8").trim().split("\n").slice(0, N).map((l) => JSON.parse(l)) as Array<{ raw: string; lat: number; lon: number }>
+		const rows = readFileSync(file, "utf8")
+			.trim()
+			.split("\n")
+			.slice(0, N)
+			.map((l) => JSON.parse(l)) as Array<{ raw: string; lat: number; lon: number }>
 		const tally: Record<string, number> = {}
 		const samples: string[] = []
 		for (const row of rows) {
 			const truth = { lat: row.lat, lon: row.lon }
 			const tree = await model.parse(row.raw, { postcodeRepair: true })
-			const r = await resolver.resolveTree(tree as never, { defaultCountry: cc.toUpperCase(), spanRescore: true, postcodeConsistency: PC_CONSISTENCY })
+			const r = await resolver.resolveTree(tree as never, {
+				defaultCountry: cc.toUpperCase(),
+				spanRescore: true,
+				postcodeConsistency: PC_CONSISTENCY,
+			})
 			const { best, nodes } = walk(r as never)
 			const dist = best ? haversineKm(best, truth) : null
 			if (dist !== null && dist <= 25) continue // hit — skip
@@ -103,10 +144,14 @@ async function main() {
 			globalTally[cat] = (globalTally[cat] ?? 0) + 1
 			if (samples.length < SHOW) {
 				const parse = nodes.map((n) => `${n.tag}=${JSON.stringify(n.value)}${n.resolved ? "✓" : "✗"}`).join(" ")
-				samples.push(`  [${cat.split(" ")[0]}] ${JSON.stringify(row.raw)}\n      → ${dist === null ? "NO-RESULT" : dist.toFixed(0) + "km off via " + best!.placetype} | parse: ${parse}`)
+				samples.push(
+					`  [${cat.split(" ")[0]}] ${JSON.stringify(row.raw)}\n      → ${dist === null ? "NO-RESULT" : dist.toFixed(0) + "km off via " + best!.placetype} | parse: ${parse}`
+				)
 			}
 		}
-		console.log(`\n=== ${cc.toUpperCase()} misses (${Object.values(tally).reduce((a, b) => a + b, 0)}/${rows.length}) ===`)
+		console.log(
+			`\n=== ${cc.toUpperCase()} misses (${Object.values(tally).reduce((a, b) => a + b, 0)}/${rows.length}) ===`
+		)
 		for (const [k, v] of Object.entries(tally).sort((a, b) => b[1] - a[1])) console.log(`  ${v}  ${k}`)
 		if (samples.length) console.log(samples.join("\n"))
 	}

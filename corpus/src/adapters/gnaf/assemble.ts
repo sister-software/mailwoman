@@ -5,24 +5,25 @@
  *
  *   Assemble a sampled, component-labeled Australian address set from G-NAF (the Geocoded National
  *   Address File — Geoscape Australia, Open G-NAF licence; any derived artifact must attribute
- *   "Geoscape Australia"). G-NAF is a relational PSV distribution (~16.9M addresses); reconstructing a
- *   street address joins three tables — ADDRESS_DETAIL (number, postcode, the PIDs) → STREET_LOCALITY
- *   (street name + type) → LOCALITY (suburb). State is the per-file prefix (ACT/NSW/…).
+ *   "Geoscape Australia"). G-NAF is a relational PSV distribution (~16.9M addresses);
+ *   reconstructing a street address joins three tables — ADDRESS_DETAIL (number, postcode, the
+ *   PIDs) → STREET_LOCALITY (street name + type) → LOCALITY (suburb). State is the per-file prefix
+ *   (ACT/NSW/…).
  *
  *   Streaming + in-memory join via the house {@link PSVSpliterator} (pipe-separated; `mode: "object"`
  *   keys each row by its header) — NOT raw `read_csv` SQL, which a flat-file join doesn't need and
  *   which the #183–190 cleanup retired. The two lookup tables (STREET_LOCALITY ~765k rows, LOCALITY
- *   ~16k) fit as Maps; ADDRESS_DETAIL is streamed once and reservoir-sampled, so memory stays bounded
- *   (the OOM lesson from the Overture ingest).
+ *   ~16k) fit as Maps; ADDRESS_DETAIL is streamed once and reservoir-sampled, so memory stays
+ *   bounded (the OOM lesson from the Overture ingest).
  *
  *   No coordinates: the output feeds the PARSER ({@link ../gnaf/adapter}, #208) — teaching the model
  *   AU's postcode-first / house-number-last word order, the gap `scripts/eval/au-order-probe.ts`
- *   pinned (65%→87% if the parse were order-robust). The parser needs the address string + component
- *   labels, not lat/lon.
+ *   pinned (65%→87% if the parse were order-robust). The parser needs the address string +
+ *   component labels, not lat/lon.
  *
  *   Output: component tuples as JSONL, consumed by the `gnaf` corpus adapter (which renders them in
- *   multiple orders + the corpus aligner BIO-labels them). An optional held-out eval set is excluded
- *   by (street, locality, postcode) so the training shard never overlaps the benchmark.
+ *   multiple orders + the corpus aligner BIO-labels them). An optional held-out eval set is
+ *   excluded by (street, locality, postcode) so the training shard never overlaps the benchmark.
  */
 
 import { createWriteStream } from "node:fs"
@@ -37,7 +38,8 @@ export interface GnafAssembleOptions {
 	sampleSize: number
 	/** Output JSONL path. */
 	out: string
-	/** Optional held-out eval JSONL (rows with a `components` field) — its (street,locality,postcode) are excluded. */
+	/** Optional held-out eval JSONL (rows with a `components` field) — its (street,locality,postcode)
+are excluded. */
 	holdoutPath?: string
 	/** Progress sink (the CLI passes a setter). */
 	onProgress?: (message: string) => void
@@ -119,7 +121,8 @@ export async function assembleGnaf(opts: GnafAssembleOptions): Promise<GnafAssem
 	const localityMap = await loadMap(localityPaths, "LOCALITY_PID", (r) => String(r.LOCALITY_NAME ?? ""))
 	progress(`streets=${streetMap.size.toLocaleString()} localities=${localityMap.size.toLocaleString()}`)
 
-	const reservoir: Array<{ house_number: string; street: string; locality: string; region: string; postcode: string }> = []
+	const reservoir: Array<{ house_number: string; street: string; locality: string; region: string; postcode: string }> =
+		[]
 	let seen = 0
 	let heldOut = 0
 	for (const p of addressPaths) {

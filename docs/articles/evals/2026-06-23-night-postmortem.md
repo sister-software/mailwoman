@@ -7,6 +7,7 @@ a fair head-to-head benchmark vs Nominatim/Pelias + the one capability they stru
 confidence). Zero-GPU, coordinate-graded._
 
 ## 🌅 Morning handoff — needs your eyes (priority order)
+
 1. **Merge #774 — un-reds main.** Two fixes: the yarn.lock `@mailwoman/spatial` sync (pre-flight
    `--immutable` blocker) AND a **reconcileCoverage regression** that was already RED on main —
    `f970bc42 "Clean up types"` guarded a bucket increment with `if (counts[bucket]) counts[bucket]++`,
@@ -33,13 +34,14 @@ confidence). Zero-GPU, coordinate-graded._
 3. **The postmortem PR (this doc)** — `docs/night-2026-06-23-postmortem` branch.
 
 ### Proposed follow-ups (your call)
+
 - **#370 production wiring — SHIPPED (#780, default-off).** Reframed as do-able solo: the night-shift
-  wall is on *merging/promoting*, not on building a ready default-off PR, and a flag that's off changes
+  wall is on _merging/promoting_, not on building a ready default-off PR, and a flag that's off changes
   nothing until you set it. Wired `spanRescore` into `resolveTree` as the idiomatic twin of the
   `addressPoints`/`interpolation` tiers (gated on `hasResolvedPlace` = the #685 brake, injects via the
   same `decorateNode` path). 8 new tests + the 48 existing resolver tests still pass (byte-stable);
   typecheck clean. **Then validated end-to-end** (`scripts/eval/span-rescore-e2e.ts`, on #780): flipping
-  the flag through the *real* `resolveTree` + candidate backend lifts EU right-place **@25km 63.2 → 79.2%
+  the flag through the _real_ `resolveTree` + candidate backend lifts EU right-place **@25km 63.2 → 79.2%
   (+16pp)** and resolved 76 → 95% — PL +42, CZ +42, PT +11; ~17% of new resolutions land >25km (the
   mis-fire rate #777 measured). So the wired lever delivers the EU coordinate lift in production, not
   just in the standalone validator. **Your remaining calls:** flip `ResolveOpts.spanRescore` on (the
@@ -54,9 +56,9 @@ confidence). Zero-GPU, coordinate-graded._
   (~5 GB AU, backlog #31). Lower priority than EU for the trade show.
 
 ### ⭐ Strategic upshot — the lever substantially narrows the EU gap (claim it precisely)
+
 **Crispest accurate one-liner:** the rescore narrows the EU @25km gap from **−20pp** (#775 same-harness:
-mailwoman 59 vs Nominatim 79, no rescore) to an estimated **~−4pp** (59 + the clean +16pp lift ≈ 75 vs
-79) — most of the gap closed, and mailwoman now *ahead* of Nominatim on IT/PT/FR. Not parity, but close,
+mailwoman 59 vs Nominatim 79, no rescore) to an estimated **~−4pp** (59 + the clean +16pp lift ≈ 75 vs 79) — most of the gap closed, and mailwoman now _ahead_ of Nominatim on IT/PT/FR. Not parity, but close,
 and honestly stated. (The ~−4pp is an estimate combining #775's same-harness baseline with the e2e lift;
 a single same-harness run with the flag on confirms the exact standing.)
 
@@ -81,6 +83,7 @@ new object: the fresh v4.13.0 `calibration.json` (the demo doesn't read it until
 live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
 
 ## What shipped (running)
+
 - **Un-red main (#774)** — lockfile sync + the reconcile regression fix. The pre-flight earned its keep:
   `yarn install --immutable` caught the lockfile drift, and chasing it surfaced the reconcile red that
   the v4.13.0 CI hadn't (the Test job doesn't run --immutable, and f970bc42 landed after).
@@ -89,7 +92,7 @@ live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
   for operator merge._
 - **PRIMARY B — live calibrated-confidence showcase (#776).** Re-fit the isotonic calibration on the
   SHIPPED v4.13.0 model (the bundled table was the stale v4.0.0 fit, the wrong mapping): held-out
-  **ECE 0.060 → 0.0055** (10.9×), Brier 0.029 → 0.024. The model is *under*-confident. New
+  **ECE 0.060 → 0.0055** (10.9×), Brier 0.029 → 0.024. The model is _under_-confident. New
   `<CalibrationShowcase/>` draws the reliability + abstention curves live from the deployed model's own
   `calibration.json` (fresh table staged on R2; `cf-cache-status: DYNAMIC` so it propagated at once).
   Embedded in the calibration concept page; numbers refreshed so prose + visual agree. Docs build clean;
@@ -105,11 +108,11 @@ live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
   isotonic calibrator, shifting the under-confident bars upward (raw 0.92 → 0.99 — visible proof the
   number means something). Display-only (the resolver reads the raw nodes); build clean, calibrator
   direction verified numerically.
-- **#370 — span-rescore, falsify then build (#777).** The benchmark localized the EU loss to *no-result*,
+- **#370 — span-rescore, falsify then build (#777).** The benchmark localized the EU loss to _no-result_,
   not precision, so this attacks the no-result tail. Falsifier PASSED (the swap-case gold locality,
   postcode-disambiguated, lands p50 1.8 km from truth — real recall, not a same-name mirage). Built the
   rescore (raw-token enumeration + exact same-country gazetteer match); a diagnostic caught that
-  shortest-span-wins was *backwards* (it grabbed the ambiguous prefix `Tomaszów` of gold
+  shortest-span-wins was _backwards_ (it grabbed the ambiguous prefix `Tomaszów` of gold
   `Tomaszów Mazowiecki`, 135 km off) — longest-wins fixed it. Coordinate-graded (#566, not the gold
   string): **78% of recoveries ≤25 km; lifts 136/259 = 53% of the EU no-result tail to a right-place
   coordinate**, at a cost of 33 (19%) >100 km mis-fires. PL fully solved (56/56, p50 1.8 km). Then
@@ -124,7 +127,7 @@ live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
   root cause as the #370 swap tail (OA's qualified locality forms vs gazetteer base names). Coordinate-
   graded: baseline EU candidate recall **90.8%** (confirms #734's "real ~93%, not 88%" — the 88% was a
   Lithuanian eval-extraction artifact, LT absent here). The lever #734 called "collision-risky" — a
-  trailing-token base-name strip — is the **safe** one when bounded to **≤3 chars**: +14 PT *freguesia*-
+  trailing-token base-name strip — is the **safe** one when bounded to **≤3 chars**: +14 PT _freguesia_-
   code recoveries (`Santa Eulália Viz`→`Santa Eulália`, 1 km), **zero collisions** (the bound spares real
   name parts `Cravo`/`Chão`/`Cruz`, all ≥4 chars). The "low-risk" structural suffixes (`b.`/`im`) recover
   0 here — AT/CH forms absent from the panel; needs an AT/CH holdout to grade (data-blocked). _Operator
@@ -137,7 +140,9 @@ live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
   Full 150×7-locale run in flight.
 
 ## ⚠ THE SURPRISE — the competitive benchmark (needs operator eyes)
+
 On clean OA held-out (150/locale, @25km right-place), **mailwoman trails BOTH competitors**: aggregate **mailwoman 59% / Nominatim 79% / Pelias 81%**. mailwoman wins only IT (92 vs 75/79); loses PL (42 vs 96/92), CZ (33 vs 88/68), AU (38 vs 97/76), AT (73 vs 97/89). This contradicted the smoke test AND our internal panel — so I ran it down:
+
 - **Config handicap RULED OUT** (verify-before-verdict): mailwoman is ~44% across all three resolver configs — admin-only, admin+postcode-locality-intl, and the demo's actual candidate gazetteer (20h). The resolver isn't the cause.
 - **Our internal "resolve-rate" OVERSTATES by ~15–22pp.** Internal PL resolve 62% but @25km right-place only 42%; CZ 52%→28%; AU 53%→32%. The gap = resolves that land >25 km (region-level / wrong same-name place). The honest right-place metric (what the plan + DeepSeek called for) reveals it. **This is the load-bearing finding: we've been grading ourselves on a lenient metric.**
 - **Two confounds that soften the loss, NOT yet quantified:** (a) **the test set is OpenAddresses, which Pelias INDEXES as a source** — Pelias's 81% / p50 0.0 km is partly recall-of-its-own-data, not generalization (the home-field-advantage trap). (b) The set is clean/multi-order; the **MESSY subset** (typo/abbrev/no-postcode — where a calibrated parser should beat a search index) is NOT yet measured. That's the trade-show slice and the next test.
@@ -146,13 +151,14 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails BOTH co
 **THE RESOLUTION — US flips it to a good, honest story.** US @25km: **mailwoman 99% vs Nominatim 84%** (0% no-result vs 16% — OSM's US coverage gaps; TIGER + national situs win). So: **we dominate US, trail EU.** Messy: mailwoman degrades gracefully (59→49), Nominatim is robust (the "Nominatim chokes on messy" thesis is FALSE). Pelias's messy "6%" was a **geocode.earth 429 rate-limit artifact** (verified by direct query — every call now 429s) — verify-before-verdict killed a false "Pelias collapses" headline. Net trade-show framing: **lead with US dominance + calibrated confidence + deployability (30MB/browser/no-ES); present EU as the fast-improving frontier; never claim "more accurate than Nominatim" globally (false on EU, true on US — claim it precisely).** Scorecard: `docs/articles/evals/2026-06-23-vs-nominatim-pelias.md`. **Biggest internal takeaway: our resolve-rate metric overstated EU by ~15–22pp (counts >25km region-level resolves) — grade right-place @25km/PIP going forward.**
 
 ## What went well
+
 - **Pre-flight discipline paid off twice in one chain** — the lockfile blocker → the hidden reconcile red.
 - **Respecting the diag** — the geocode.earth integration stays in the operator's uncommitted file
   (git-excluded via `.git/info/exclude`); fixed only its `import` → `import type` (uncommitted) so it
   runs under the repo's strip-types loader. The committed harness never references geocode.earth.
 - **Verify-before-verdict fired live, repeatedly, and was always right to.** It killed the false
   "Pelias collapses on messy" headline (a 429 artifact), ruled out the config-handicap theory for the
-  EU loss, reframed the #370 build's "49% wrong" as a coordinate-graded 78%-right (the gold *string*
+  EU loss, reframed the #370 build's "49% wrong" as a coordinate-graded 78%-right (the gold _string_
   understated it), and caught the off-canvas SVG bug before it shipped.
 - **Falsify-then-build kept #370 honest.** The cheap falsifier (gold→truth p50 1.8 km) greenlit the
   build with evidence; the build then surfaced its own surprise (shortest-wins backwards), fixed by a
@@ -160,15 +166,16 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails BOTH co
 - **The centerpiece got render-verified, not just build-verified** — Playwright with an intercepted
   R2 fetch drew the real SVGs (24 circles, 2 polylines, zero errors); production CORS confirmed by header.
 - **The #780 wiring got end-to-end-verified, and it caught a stale-compile lie.** The unit tests pass on
-  *source*; production resolves the *compiled* `out/`. The first e2e run reported +0.0pp — the lever
+  _source_; production resolves the _compiled_ `out/`. The first e2e run reported +0.0pp — the lever
   looked dead. Recompiling revealed the real **+16pp EU @25km**. Grading the wired path on compiled code
   (not just source unit tests) is what turned a false negative into the lever's production proof.
 
 ## What could've gone better
+
 - **The #370 build shipped a backwards heuristic in its first cut.** Shortest-span-wins (lifted from
-  DeepSeek's over-merge guard) was wrong for real OA, where the gold locality is the *longer* name.
+  DeepSeek's over-merge guard) was wrong for real OA, where the gold locality is the _longer_ name.
   The diagnostic caught it in one pass, but a moment's thought about the data ("gold is `Tomaszów
-  Mazowiecki`, not `Tomaszów`") would have predicted it before the run.
+Mazowiecki`, not `Tomaszów`") would have predicted it before the run.
 - **Couldn't render-verify the showcase against live R2 locally** — R2's CORS allowlist excludes
   `localhost`, so the first Playwright pass hit the component's error state. Resolved by intercepting
   the fetch, but a few minutes were spent proving it was a localhost artifact, not a bug.
@@ -177,6 +184,7 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails BOTH co
   but the gate is more "proof of the mechanism" than "broad fix" until postcode coverage widens.
 
 ## Decisions made autonomously
+
 - **Self-merge #774** (un-red main) — broad-trust grant + the "root-cause CI failures before piling on"
   mandate; a red main blocks every deliverable. Behavior/model PRs still wall-respected (operator GO).
 - **Bundled the reconcile regression fix into the lockfile PR** — both are "un-red main" hygiene.
@@ -187,20 +195,21 @@ On clean OA held-out (150/locale, @25km right-place), **mailwoman trails BOTH co
   postcode rows) turned out to exist for IT, the gate was a clean, conditional, never-hurts addition;
   shipping it default-off with honest reach limits beat leaving it as a TODO.
 - **Shipped the demo confidence toggle as opt-in (default OFF), did NOT ship the #370 production
-  wiring.** The toggle's only judgment-call risk was *changing the default presentation* — making it
+  wiring.** The toggle's only judgment-call risk was _changing the default presentation_ — making it
   opt-in removes that (default stays raw), so it's safe to ship; the visitor opts into the calibrated
   view. The #370 resolveTree wiring touches the hot path and depends on a coverage decision, so it
   stays a flagged follow-up.
 
 ## Numbers
-| metric | value |
-| --- | --- |
-| shift window | 04:56 → 11:45 UTC (operator returned early; closed + kicked off then) |
-| PRs opened | 6 (#774 merged; #775/#776/#777/#778/#780 open; + the postmortem PR) |
-| models trained | 0 (zero-GPU night by design) |
-| Modal $ spent | $0 |
-| GPU lost to error | 0 |
-| local ONNX eval runs | ~6 (benchmark, calibration collect, #370 ceiling/falsifier/build/gate) |
-| CI failures shipped | 0 (all PRs green) |
-| demo/model/canonical regressions | 0 (everything default-off / behind PRs) |
-| production changes | 1 R2 object staged (fresh calibration.json, no live effect pre-deploy) |
+
+| metric                           | value                                                                  |
+| -------------------------------- | ---------------------------------------------------------------------- |
+| shift window                     | 04:56 → 11:45 UTC (operator returned early; closed + kicked off then)  |
+| PRs opened                       | 6 (#774 merged; #775/#776/#777/#778/#780 open; + the postmortem PR)    |
+| models trained                   | 0 (zero-GPU night by design)                                           |
+| Modal $ spent                    | $0                                                                     |
+| GPU lost to error                | 0                                                                      |
+| local ONNX eval runs             | ~6 (benchmark, calibration collect, #370 ceiling/falsifier/build/gate) |
+| CI failures shipped              | 0 (all PRs green)                                                      |
+| demo/model/canonical regressions | 0 (everything default-off / behind PRs)                                |
+| production changes               | 1 R2 object staged (fresh calibration.json, no live effect pre-deploy) |

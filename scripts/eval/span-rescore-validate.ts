@@ -25,7 +25,6 @@
  *
  *   Run: node --experimental-strip-types scripts/eval/span-rescore-validate.ts [--n 150]
  */
-import { decodeAsJson } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/core/resolver"
 import { existsSync, readFileSync } from "node:fs"
 
@@ -114,7 +113,8 @@ interface Lookup {
 
 /**
  * The production span-rescore. Returns the recovered locality {text, span, lat, lon} or null. Pure
- * post-hoc: it does not touch the existing parse beyond reading it for confident-constituent ranges.
+ * post-hoc: it does not touch the existing parse beyond reading it for confident-constituent
+ * ranges.
  */
 async function spanRescore(
 	raw: string,
@@ -196,7 +196,11 @@ async function main() {
 	const recovKm: number[] = []
 	for (const [cc, file] of LOCALES) {
 		if (!existsSync(file)) continue
-		const rows = readFileSync(file, "utf8").trim().split("\n").slice(0, N).map((l) => JSON.parse(l))
+		const rows = readFileSync(file, "utf8")
+			.trim()
+			.split("\n")
+			.slice(0, N)
+			.map((l) => JSON.parse(l))
 		const s = { unres: 0, recov: 0, gold: 0 }
 		const km: number[] = []
 		for (const row of rows) {

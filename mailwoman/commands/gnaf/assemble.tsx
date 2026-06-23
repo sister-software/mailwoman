@@ -7,13 +7,13 @@
  *
  *   Assemble a sampled, component-labeled Australian address set from the G-NAF (Geocoded National
  *   Address File) relational PSV distribution — joining ADDRESS_DETAIL → STREET_LOCALITY → LOCALITY
- *   and reservoir-sampling across states. Streams via the house `PSVSpliterator`; memory stays bounded
- *   (the two lookup tables as Maps, the 16.9M address rows sampled in one pass).
+ *   and reservoir-sampling across states. Streams via the house `PSVSpliterator`; memory stays
+ *   bounded (the two lookup tables as Maps, the 16.9M address rows sampled in one pass).
  *
  *   The output JSONL is the input to the `gnaf` corpus adapter (`mailwoman corpus build`), which
- *   renders each tuple in multiple word orders to teach the model AU's postcode-first layout (#208).
- *   `--holdout` excludes the benchmark addresses by (street, locality, postcode) so the training shard
- *   never overlaps the eval. Open G-NAF licence — attribute "Geoscape Australia".
+ *   renders each tuple in multiple word orders to teach the model AU's postcode-first layout
+ *   (#208). `--holdout` excludes the benchmark addresses by (street, locality, postcode) so the
+ *   training shard never overlaps the eval. Open G-NAF licence — attribute "Geoscape Australia".
  */
 
 import { assembleGnaf, type GnafAssembleResult } from "@mailwoman/corpus"
@@ -24,15 +24,21 @@ import zod from "zod"
 import type { CommandComponent } from "../../sdk/cli.js"
 
 const OptionsSchema = zod.object({
-	standardDir: zod
-		.string()
-		.describe("G-NAF `Standard` directory holding the per-state *_psv.psv tables"),
-	n: zod.coerce.number().int().positive().optional().default(150_000).describe("Sample size (reservoir; population-proportional across states)"),
+	standardDir: zod.string().describe("G-NAF `Standard` directory holding the per-state *_psv.psv tables"),
+	n: zod.coerce
+		.number()
+		.int()
+		.positive()
+		.optional()
+		.default(150_000)
+		.describe("Sample size (reservoir; population-proportional across states)"),
 	out: zod.string().describe("Output JSONL path (component tuples, consumed by the `gnaf` corpus adapter)"),
 	holdout: zod
 		.string()
 		.optional()
-		.describe("Eval JSONL whose (street,locality,postcode) are excluded so the training shard never overlaps the benchmark"),
+		.describe(
+			"Eval JSONL whose (street,locality,postcode) are excluded so the training shard never overlaps the benchmark"
+		),
 })
 
 export { OptionsSchema as options }
@@ -65,11 +71,15 @@ const GnafAssemble: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		return (
 			<Box flexDirection="column">
 				<Text>
-					<Text color="green">✓</Text> {done.written.toLocaleString()} tuples sampled (of {done.seen.toLocaleString()} valid
+					<Text color="green">✓</Text> {done.written.toLocaleString()} tuples sampled (of {done.seen.toLocaleString()}{" "}
+					valid
 					{done.heldOut ? `, ${done.heldOut.toLocaleString()} held out` : ""})
 				</Text>
 				<Text dimColor>
-					by state: {Object.entries(done.byState).map(([s, n]) => `${s}=${n}`).join(" ")}
+					by state:{" "}
+					{Object.entries(done.byState)
+						.map(([s, n]) => `${s}=${n}`)
+						.join(" ")}
 				</Text>
 			</Box>
 		)

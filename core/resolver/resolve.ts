@@ -243,11 +243,17 @@ function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup, r
 /**
  * Span-rescore tier (#370): opt-in last-resort locality recovery. Runs ONLY when the tree resolved
  * NOTHING (the #685 brake — never disturb a working coordinate). Enumerates raw-token spans, exact-
- * matches the same-country gazetteer (longest-wins + postcode-consistency gate; see `span-rescore.ts`),
- * and on a hit INJECTS a resolved `locality` node decorated exactly like a normally-resolved one.
- * Byte-stable when `opts.spanRescore` is unset. Async (it queries the backend), so it's awaited.
+ * matches the same-country gazetteer (longest-wins + postcode-consistency gate; see
+ * `span-rescore.ts`), and on a hit INJECTS a resolved `locality` node decorated exactly like a
+ * normally-resolved one. Byte-stable when `opts.spanRescore` is unset. Async (it queries the
+ * backend), so it's awaited.
  */
-async function applySpanRescore(roots: AddressNode[], raw: string, backend: ResolverBackend, opts: ResolveOpts): Promise<void> {
+async function applySpanRescore(
+	roots: AddressNode[],
+	raw: string,
+	backend: ResolverBackend,
+	opts: ResolveOpts
+): Promise<void> {
 	if (hasResolvedPlace(roots)) return // already resolved — never second-guess a working coordinate
 	const hit = await findRescoreCandidate(raw, roots, backend, {
 		country: opts.defaultCountry,
@@ -292,22 +298,23 @@ function isResolvedWithCoord(n: AddressNode): boolean {
 
 /**
  * Postcode-disambiguated locality selection (#370 "Lever A"). The single biggest miss on the EU/AU
- * panel is a same-named town resolved to the WRONG instance — "06260 Saint-Pierre" lands 617 km off —
- * while the postcode that would disambiguate it (06260 → Alpes-Maritimes) sits resolved in the same
- * tree, discarded because the coordinate-picker prefers the (wrong) locality node and never cross-
- * checks it. This post-walk pass closes that loop, backend-agnostically and with no extra query:
+ * panel is a same-named town resolved to the WRONG instance — "06260 Saint-Pierre" lands 617 km off
+ * — while the postcode that would disambiguate it (06260 → Alpes-Maritimes) sits resolved in the
+ * same tree, discarded because the coordinate-picker prefers the (wrong) locality node and never
+ * cross- checks it. This post-walk pass closes that loop, backend-agnostically and with no extra
+ * query:
  *
- *   1. Find the resolved postcode's coordinate (the trustworthy anchor — a postcode is unambiguous
- *      within a country in a way a town name is not).
- *   2. For each resolved locality node farther than `gateKm` from it: re-pick the same-named candidate
- *      from the node's already-captured `alternatives` that is NEAREST the postcode and within the
- *      gate. This keeps locality granularity at the CORRECT instance.
- *   3. If no alternative reconciles, the locality instance is unreliable — fall its coordinate back to
- *      the postcode point (right area, the safe answer) and flag `postcode_city_mismatch`.
+ * 1. Find the resolved postcode's coordinate (the trustworthy anchor — a postcode is unambiguous
+ *    within a country in a way a town name is not).
+ * 2. For each resolved locality node farther than `gateKm` from it: re-pick the same-named candidate
+ *    from the node's already-captured `alternatives` that is NEAREST the postcode and within the
+ *    gate. This keeps locality granularity at the CORRECT instance.
+ * 3. If no alternative reconciles, the locality instance is unreliable — fall its coordinate back to
+ *    the postcode point (right area, the safe answer) and flag `postcode_city_mismatch`.
  *
- *   Only fires where the postcode resolved to a point, so it composes with postcode coverage (#193) —
- *   add a country's postcodes and this immediately disambiguates its same-named towns. Default-off via
- *   `opts.postcodeConsistency`; byte-stable when unset.
+ * Only fires where the postcode resolved to a point, so it composes with postcode coverage (#193) —
+ * add a country's postcodes and this immediately disambiguates its same-named towns. Default-off
+ * via `opts.postcodeConsistency`; byte-stable when unset.
  */
 function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number): void {
 	// The resolved postcode anchor (first one with a real coordinate).
@@ -341,7 +348,15 @@ function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number)
 			.sort((x, y) => x.d - y.d)[0]
 		if (reconciling) {
 			// Swap to the consistent instance; the displaced winner becomes an alternative.
-			const displaced: ResolvedPlace = { id: 0, name: String(node.metadata?.["resolver_name"] ?? node.value), placetype: "locality", country: reconciling.a.country, lat: node.lat!, lon: node.lon!, score: 0 }
+			const displaced: ResolvedPlace = {
+				id: 0,
+				name: String(node.metadata?.["resolver_name"] ?? node.value),
+				placetype: "locality",
+				country: reconciling.a.country,
+				lat: node.lat!,
+				lon: node.lon!,
+				score: 0,
+			}
 			const rest = alts.filter((a) => a !== reconciling.a)
 			decorateNode(node, reconciling.a, [displaced, ...rest])
 			node.metadata = { ...(node.metadata ?? {}), postcode_repicked: true }

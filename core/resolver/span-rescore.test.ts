@@ -25,10 +25,37 @@ const norm = (s: string): string =>
 
 /** A tiny gazetteer: exact-normalized-name matches only (so the walk can't fuzzy-resolve fragments). */
 const PLACES: ResolvedPlace[] = [
-	{ id: 1, name: "Grudziądz", placetype: "locality", country: "PL", lat: 53.48, lon: 18.75, score: 10, exactMatch: true },
+	{
+		id: 1,
+		name: "Grudziądz",
+		placetype: "locality",
+		country: "PL",
+		lat: 53.48,
+		lon: 18.75,
+		score: 10,
+		exactMatch: true,
+	},
 	// Two same-prefix localities far apart — the longest-wins + gate test.
-	{ id: 2, name: "Tomaszów", placetype: "locality", country: "PL", lat: 50.45, lon: 23.42, score: 30, exactMatch: true },
-	{ id: 3, name: "Tomaszów Mazowiecki", placetype: "locality", country: "PL", lat: 51.53, lon: 20.0, score: 5, exactMatch: true },
+	{
+		id: 2,
+		name: "Tomaszów",
+		placetype: "locality",
+		country: "PL",
+		lat: 50.45,
+		lon: 23.42,
+		score: 30,
+		exactMatch: true,
+	},
+	{
+		id: 3,
+		name: "Tomaszów Mazowiecki",
+		placetype: "locality",
+		country: "PL",
+		lat: 51.53,
+		lon: 20.0,
+		score: 5,
+		exactMatch: true,
+	},
 	// A postcode → point, near Tomaszów Mazowiecki (the gate anchor).
 	{ id: 900, name: "97-200", placetype: "postalcode", country: "PL", lat: 51.53, lon: 20.01, score: 1 },
 ]
@@ -88,7 +115,11 @@ describe("findRescoreCandidate", () => {
 	it("postcode gate rejects a match far from where the postcode resolves", async () => {
 		// "Tomaszów" alone exact-matches the FAR Tomaszów (id 2); the 97-200 postcode anchors near the
 		// Mazowiecki one (~240 km away), so the gate rejects it → no recovery.
-		const hit = await findRescoreCandidate("Tomaszów", [], makeBackend(), { country: "PL", postcode: "97-200", gateKm: 50 })
+		const hit = await findRescoreCandidate("Tomaszów", [], makeBackend(), {
+			country: "PL",
+			postcode: "97-200",
+			gateKm: 50,
+		})
 		expect(hit).toBeNull()
 	})
 
@@ -141,10 +172,13 @@ describe("resolveTree + spanRescore", () => {
 	it("does not fire when the tree already resolved (the #685 brake)", async () => {
 		const resolver = createWofResolver(makeBackend())
 		// "Grudziądz" as a single locality node resolves in the walk → already has a coordinate.
-		const out = await resolver.resolveTree(tree("Grudziądz", [node({ tag: "locality", value: "Grudziądz", start: 0, end: 9 })]), {
-			defaultCountry: "PL",
-			spanRescore: true,
-		})
+		const out = await resolver.resolveTree(
+			tree("Grudziądz", [node({ tag: "locality", value: "Grudziądz", start: 0, end: 9 })]),
+			{
+				defaultCountry: "PL",
+				spanRescore: true,
+			}
+		)
 		// Exactly one locality node (the resolved original), no injected duplicate.
 		expect(out.roots.filter((n) => n.tag === "locality")).toHaveLength(1)
 	})

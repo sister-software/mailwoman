@@ -74,7 +74,9 @@ export const DirectionalNameVariations = [
 
 export type DirectionalNameVariation = (typeof DirectionalNameVariations)[number]
 
-/** Abbreviation → full name. */
+/**
+ * Abbreviation → full name.
+ */
 export const DirectionalAbbreviationRecord = {
 	N: "NORTH",
 	E: "EAST",
@@ -88,7 +90,9 @@ export const DirectionalAbbreviationRecord = {
 
 export type DirectionalAbbreviationRecord = typeof DirectionalAbbreviationRecord
 
-/** Name (and its variations) → abbreviation. */
+/**
+ * Name (and its variations) → abbreviation.
+ */
 export const DirectionAbbreviationRecord = {
 	NORTH: DirectionalAbbreviation.NORTH,
 	EAST: DirectionalAbbreviation.EAST,
@@ -106,23 +110,31 @@ export const DirectionAbbreviationRecord = {
 
 export type DirectionAbbreviationRecord = typeof DirectionAbbreviationRecord
 
-/** Abbreviation (verbatim or normalized) → full name. */
+/**
+ * Abbreviation (verbatim or normalized) → full name.
+ */
 export const AbbreviationToDirectional: ReadonlyMap<string, DirectionalName> = new Map(
 	Object.entries(DirectionalAbbreviationRecord)
 )
 
-/** Name (verbatim or normalized) → abbreviation. */
+/**
+ * Name (verbatim or normalized) → abbreviation.
+ */
 export const DirectionalToAbbreviationMap: ReadonlyMap<string, DirectionalAbbreviation> = new Map(
 	Object.entries(DirectionAbbreviationRecord)
 )
 
-/** Given a possible directional abbreviation, return the corresponding full name (or null). */
+/**
+ * Given a possible directional abbreviation, return the corresponding full name (or null).
+ */
 export function pluckDirectionalName(input: unknown): DirectionalName | null {
 	if (!input || typeof input !== "string") return null
 	return AbbreviationToDirectional.get(input) || AbbreviationToDirectional.get(input.trim().toUpperCase()) || null
 }
 
-/** Given a possible directional name, return the corresponding abbreviation (or null). */
+/**
+ * Given a possible directional name, return the corresponding abbreviation (or null).
+ */
 export function lookupDirectionalAbbreviation(input: unknown): DirectionalAbbreviation | null {
 	if (!input || typeof input !== "string") return null
 	return (
@@ -132,7 +144,9 @@ export function lookupDirectionalAbbreviation(input: unknown): DirectionalAbbrev
 	)
 }
 
-/** Result of a directional lookup: the canonical full name + its preferred abbreviation. */
+/**
+ * Result of a directional lookup: the canonical full name + its preferred abbreviation.
+ */
 export interface DirectionalMatch {
 	/** The matched directional name, e.g. "NORTH", "NORTH EAST". */
 	directional: DirectionalName
@@ -140,7 +154,9 @@ export interface DirectionalMatch {
 	abbreviation: DirectionalAbbreviation
 }
 
-/** Look up a directional by abbreviation OR name (any variation), returning both forms. */
+/**
+ * Look up a directional by abbreviation OR name (any variation), returning both forms.
+ */
 export function lookupDirectional(input: unknown): DirectionalMatch | null {
 	if (!input || typeof input !== "string") return null
 	const abbreviation = lookupDirectionalAbbreviation(input)

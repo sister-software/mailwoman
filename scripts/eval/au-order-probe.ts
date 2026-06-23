@@ -13,8 +13,8 @@
  *
  *   Run: node --experimental-strip-types scripts/eval/au-order-probe.ts --candidate-db <db> [--n 60]
  */
-import { createWofResolver } from "@mailwoman/core/resolver"
 import type { AddressNode, AddressTree } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/core/resolver"
 import { existsSync, readFileSync } from "node:fs"
 
 const arg = (k: string, d = ""): string => {
@@ -25,10 +25,9 @@ const CAND = arg("candidate-db", "/mnt/playpen/mailwoman-data/wof/candidate-glob
 const N = Number(arg("n", "60"))
 
 /**
- * Reorder an AU postcode-first row to canonical (street, suburb postcode). Two native shapes:
- *   "PPPP Suburb, Street HN"        → "Street HN, Suburb PPPP"
- *   "Suburb, PPPP, Street HN"       → "Street HN, Suburb PPPP"
- * Anything else is left as-written (already canonical-ish, or unrecognized).
+ * Reorder an AU postcode-first row to canonical (street, suburb postcode). Two native shapes: "PPPP
+ * Suburb, Street HN" → "Street HN, Suburb PPPP" "Suburb, PPPP, Street HN" → "Street HN, Suburb
+ * PPPP" Anything else is left as-written (already canonical-ish, or unrecognized).
  */
 function toCanonical(raw: string): string {
 	let m = raw.match(/^\s*(\d{4})\s+([^,]+),\s*(.+)$/)
@@ -42,10 +41,21 @@ const haversineKm = (a: { lat: number; lon: number }, b: { lat: number; lon: num
 	const R = 6371
 	const dLat = ((b.lat - a.lat) * Math.PI) / 180
 	const dLon = ((b.lon - a.lon) * Math.PI) / 180
-	const h = Math.sin(dLat / 2) ** 2 + Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
+	const h =
+		Math.sin(dLat / 2) ** 2 +
+		Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
 	return 2 * R * Math.asin(Math.sqrt(h))
 }
-const RANK: Record<string, number> = { country: 0, region: 1, county: 3, localadmin: 4, locality: 5, neighbourhood: 7, street: 9, address: 10 }
+const RANK: Record<string, number> = {
+	country: 0,
+	region: 1,
+	county: 3,
+	localadmin: 4,
+	locality: 5,
+	neighbourhood: 7,
+	street: 9,
+	address: 10,
+}
 function bestCoord(tree: AddressTree): { lat: number; lon: number } | null {
 	let best: { lat: number; lon: number; r: number } | null = null
 	const visit = (n: AddressNode): void => {
@@ -74,18 +84,29 @@ async function main() {
 	})
 	const file = "data/eval/external/oa-au-coord-150.jsonl"
 	if (!existsSync(file)) throw new Error(`missing ${file}`)
-	const rows = readFileSync(file, "utf8").trim().split("\n").slice(0, N).map((l) => JSON.parse(l)) as Array<{ raw: string; lat: number; lon: number }>
+	const rows = readFileSync(file, "utf8")
+		.trim()
+		.split("\n")
+		.slice(0, N)
+		.map((l) => JSON.parse(l)) as Array<{ raw: string; lat: number; lon: number }>
 
-	let nativeHit = 0, canonHit = 0, reordered = 0, n = 0
+	let nativeHit = 0,
+		canonHit = 0,
+		reordered = 0,
+		n = 0
 	const opts = { defaultCountry: "AU", spanRescore: true, postcodeConsistency: true } as never
 	for (const row of rows) {
 		const truth = { lat: row.lat, lon: row.lon }
 		n++
-		const native = bestCoord((await resolver.resolveTree((await model.parse(row.raw, { postcodeRepair: true })) as never, opts)) as never)
+		const native = bestCoord(
+			(await resolver.resolveTree((await model.parse(row.raw, { postcodeRepair: true })) as never, opts)) as never
+		)
 		if (native && haversineKm(truth, native) <= 25) nativeHit++
 		const canon = toCanonical(row.raw)
 		if (canon !== row.raw) reordered++
-		const c = bestCoord((await resolver.resolveTree((await model.parse(canon, { postcodeRepair: true })) as never, opts)) as never)
+		const c = bestCoord(
+			(await resolver.resolveTree((await model.parse(canon, { postcodeRepair: true })) as never, opts)) as never
+		)
 		if (c && haversineKm(truth, c) <= 25) canonHit++
 	}
 	const pct = (x: number) => ((100 * x) / Math.max(n, 1)).toFixed(0)

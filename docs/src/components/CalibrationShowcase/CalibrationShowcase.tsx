@@ -5,20 +5,20 @@
  *
  *   CalibrationShowcase — the "our confidence means something" panel.
  *
- *   A geocoder that returns a result and a search index that returns a result look the same until
- *   one of them is wrong. The difference a calibrated parser offers is that its confidence is a
- *   probability you can route on: a span marked 90% is right ~90% of the time. This component proves
- *   that property visually, live, from the deployed model's own held-out reliability.
+ *   A geocoder that returns a result and a search index that returns a result look the same until one
+ *   of them is wrong. The difference a calibrated parser offers is that its confidence is a
+ *   probability you can route on: a span marked 90% is right ~90% of the time. This component
+ *   proves that property visually, live, from the deployed model's own held-out reliability.
  *
  *   It fetches the version's `calibration.json` (the same isotonic table the decoder calibrator
  *   reads) and hand-draws two SVGs — no chart library:
  *
  *   1. Reliability diagram — mean confidence (x) vs measured accuracy (y), per bin, before and after
- *      calibration. Perfect calibration sits on the diagonal; the raw points drift off it, the
- *      calibrated points snap back. Dot area ∝ bin population, so the eye weights the bins that hold
- *      the mass instead of the single-sample noise in the tail.
- *   2. Abstention curve — as you raise the auto-accept threshold, coverage falls and precision
- *      climbs. This is the deployable artifact: "auto-accept above T, send the rest to review."
+ *        calibration. Perfect calibration sits on the diagonal; the raw points drift off it, the
+ *        calibrated points snap back. Dot area ∝ bin population, so the eye weights the bins that
+ *        hold the mass instead of the single-sample noise in the tail.
+ *   2. Abstention curve — as you raise the auto-accept threshold, coverage falls and precision climbs.
+ *        This is the deployable artifact: "auto-accept above T, send the rest to review."
  *
  *   Data contract: `reliability_raw` / `reliability_cal` (arrays of `{n, conf, acc}`),
  *   `abstention_curve` (`{threshold, coverage, precision}`), and `metrics.ece_{raw,cal}_eval`, all
@@ -158,23 +158,34 @@ function ReliabilityDiagram({ raw, cal }: { raw: ReliabilityBin[]; cal: Reliabil
 			<svg width={W} height={H} role="img" aria-label="Reliability diagram: confidence vs accuracy, raw vs calibrated">
 				{/* axes */}
 				<line x1={pad.l} y1={pad.t} x2={pad.l} y2={pad.t + plotH} stroke="var(--ifm-color-emphasis-300)" />
-				<line x1={pad.l} y1={pad.t + plotH} x2={pad.l + plotW} y2={pad.t + plotH} stroke="var(--ifm-color-emphasis-300)" />
-				{/* perfect-calibration diagonal */}
 				<line
-					x1={x(lo)}
-					y1={y(lo)}
-					x2={x(1)}
-					y2={y(1)}
-					stroke="var(--ifm-color-emphasis-500)"
-					strokeDasharray="4 3"
+					x1={pad.l}
+					y1={pad.t + plotH}
+					x2={pad.l + plotW}
+					y2={pad.t + plotH}
+					stroke="var(--ifm-color-emphasis-300)"
 				/>
-				<text x={x(0.82)} y={y(0.82) - 6} fontSize={10} fill="var(--ifm-color-emphasis-600)" transform={`rotate(-33 ${x(0.82)} ${y(0.82)})`}>
+				{/* perfect-calibration diagonal */}
+				<line x1={x(lo)} y1={y(lo)} x2={x(1)} y2={y(1)} stroke="var(--ifm-color-emphasis-500)" strokeDasharray="4 3" />
+				<text
+					x={x(0.82)}
+					y={y(0.82) - 6}
+					fontSize={10}
+					fill="var(--ifm-color-emphasis-600)"
+					transform={`rotate(-33 ${x(0.82)} ${y(0.82)})`}
+				>
 					perfectly calibrated
 				</text>
 				{/* ticks */}
 				{ticks.map((t) => (
 					<g key={`xt-${t}`}>
-						<text x={x(t)} y={pad.t + plotH + 16} fontSize={10} textAnchor="middle" fill="var(--ifm-color-emphasis-600)">
+						<text
+							x={x(t)}
+							y={pad.t + plotH + 16}
+							fontSize={10}
+							textAnchor="middle"
+							fill="var(--ifm-color-emphasis-600)"
+						>
 							{t.toFixed(1)}
 						</text>
 						<text x={pad.l - 8} y={y(t) + 3} fontSize={10} textAnchor="end" fill="var(--ifm-color-emphasis-600)">
@@ -236,7 +247,13 @@ function AbstentionCurve({ points }: { points: AbstentionPoint[] }): React.React
 		<figure style={{ margin: 0 }}>
 			<svg width={W} height={H} role="img" aria-label="Abstention curve: coverage and precision vs accept threshold">
 				<line x1={pad.l} y1={pad.t} x2={pad.l} y2={pad.t + plotH} stroke="var(--ifm-color-emphasis-300)" />
-				<line x1={pad.l} y1={pad.t + plotH} x2={pad.l + plotW} y2={pad.t + plotH} stroke="var(--ifm-color-emphasis-300)" />
+				<line
+					x1={pad.l}
+					y1={pad.t + plotH}
+					x2={pad.l + plotW}
+					y2={pad.t + plotH}
+					stroke="var(--ifm-color-emphasis-300)"
+				/>
 				{yTicks.map((t) => (
 					<g key={`yt-${t}`}>
 						<line x1={pad.l} y1={y(t)} x2={pad.l + plotW} y2={y(t)} stroke="var(--ifm-color-emphasis-200)" />
@@ -246,7 +263,14 @@ function AbstentionCurve({ points }: { points: AbstentionPoint[] }): React.React
 					</g>
 				))}
 				{points.map((p) => (
-					<text key={`xt-${p.threshold}`} x={x(p.threshold)} y={pad.t + plotH + 16} fontSize={10} textAnchor="middle" fill="var(--ifm-color-emphasis-600)">
+					<text
+						key={`xt-${p.threshold}`}
+						x={x(p.threshold)}
+						y={pad.t + plotH + 16}
+						fontSize={10}
+						textAnchor="middle"
+						fill="var(--ifm-color-emphasis-600)"
+					>
 						{p.threshold}
 					</text>
 				))}

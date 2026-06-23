@@ -24,8 +24,8 @@
  *   Run: GEOCODE_EARTH_API_KEY=… node --experimental-strip-types scripts/eval/competitive-benchmark.ts \
  *          [--n 40] [--locales it,pt,pl,at,cz,fr,au] [--systems mailwoman,nominatim,pelias] [--out <md>]
  */
-import { createWofResolver } from "@mailwoman/core/resolver"
 import type { AddressNode, AddressTree } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/core/resolver"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { setTimeout as sleep } from "node:timers/promises"
 
@@ -41,7 +41,7 @@ const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
 // resolves localities the admin gazetteer misses. --wof overrides (comma-separated shard paths).
 const WOF = arg(
 	"wof",
-	"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db",
+	"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db"
 ).split(",")
 const MODEL = arg("model", "out/v191/model.onnx") // v4.13.0 int8
 const N = Number(arg("n", "40"))
@@ -61,15 +61,31 @@ function messify(raw: string): string {
 	let s = raw.toLowerCase()
 	s = s.replace(/\b\d{2,4}-\d{2,3}\b/g, " ") // dash-postcodes (PT 7920-031, PL 59-920) — unambiguously postcodes
 	s = s
-		.replace(/\brua\b/g, "r").replace(/\bavenida\b/g, "av").replace(/\bestrada\b/g, "estr")
-		.replace(/\bstra(?:ss|ß)e\b/g, "str").replace(/\bstreet\b/g, "st").replace(/\bvia\b/g, "v").replace(/\bavenue\b/g, "ave")
+		.replace(/\brua\b/g, "r")
+		.replace(/\bavenida\b/g, "av")
+		.replace(/\bestrada\b/g, "estr")
+		.replace(/\bstra(?:ss|ß)e\b/g, "str")
+		.replace(/\bstreet\b/g, "st")
+		.replace(/\bvia\b/g, "v")
+		.replace(/\bavenue\b/g, "ave")
 	s = s.replace(/,/g, " ").replace(/\s+/g, " ").trim() // drop the comma structure, collapse spaces
 	return s
 }
 
 const PLACETYPE_RANK: Record<string, number> = {
-	country: 0, region: 1, macrocounty: 2, county: 3, localadmin: 4, locality: 5,
-	borough: 6, macrohood: 6, neighbourhood: 7, microhood: 8, street: 9, address: 10, venue: 10,
+	country: 0,
+	region: 1,
+	macrocounty: 2,
+	county: 3,
+	localadmin: 4,
+	locality: 5,
+	borough: 6,
+	macrohood: 6,
+	neighbourhood: 7,
+	microhood: 8,
+	street: 9,
+	address: 10,
+	venue: 10,
 }
 type Resolved = { placetype: string; lat: number; lon: number }
 function mostSpecificCoord(tree: AddressTree): { lat: number; lon: number } | null {
@@ -77,7 +93,8 @@ function mostSpecificCoord(tree: AddressTree): { lat: number; lon: number } | nu
 	const visit = (n: AddressNode): void => {
 		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
 			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
-			if (!best || (PLACETYPE_RANK[placetype] ?? 5) > (PLACETYPE_RANK[best.placetype] ?? 5)) best = { placetype, lat: n.lat, lon: n.lon }
+			if (!best || (PLACETYPE_RANK[placetype] ?? 5) > (PLACETYPE_RANK[best.placetype] ?? 5))
+				best = { placetype, lat: n.lat, lon: n.lon }
 		}
 		for (const c of n.children) visit(c)
 	}
@@ -88,7 +105,9 @@ function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: num
 	const R = 6371
 	const dLat = ((b.lat - a.lat) * Math.PI) / 180
 	const dLon = ((b.lon - a.lon) * Math.PI) / 180
-	const h = Math.sin(dLat / 2) ** 2 + Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
+	const h =
+		Math.sin(dLat / 2) ** 2 +
+		Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
 	return 2 * R * Math.asin(Math.sqrt(h))
 }
 const p50 = (xs: number[]): number => (xs.length ? [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]! : NaN)
@@ -113,7 +132,14 @@ async function loadPelias(): Promise<((q: string, country: string) => Promise<Co
 	if (!process.env.GEOCODE_EARTH_API_KEY) return null
 	try {
 		const mod = await import("../diag-geocode-earth.ts")
-		const fetchGeocodeData = (mod as { fetchGeocodeData?: (q: string, country?: string) => Promise<{ features?: Array<{ geometry?: { coordinates?: [number, number] } }> }> }).fetchGeocodeData
+		const fetchGeocodeData = (
+			mod as {
+				fetchGeocodeData?: (
+					q: string,
+					country?: string
+				) => Promise<{ features?: Array<{ geometry?: { coordinates?: [number, number] } }> }>
+			}
+		).fetchGeocodeData
 		if (!fetchGeocodeData) return null
 		return async (q: string, country: string) => {
 			try {
@@ -132,7 +158,12 @@ async function loadPelias(): Promise<((q: string, country: string) => Promise<Co
 const PELIAS_GRACE_MS = 400
 
 type Tally = { n: number; within: Record<number, number>; resolvedErrs: number[]; noResult: number }
-const newTally = (): Tally => ({ n: 0, within: Object.fromEntries(THRESHOLDS.map((t) => [t, 0])), resolvedErrs: [], noResult: 0 })
+const newTally = (): Tally => ({
+	n: 0,
+	within: Object.fromEntries(THRESHOLDS.map((t) => [t, 0])),
+	resolvedErrs: [],
+	noResult: 0,
+})
 function record(t: Tally, err: number | null) {
 	t.n++
 	if (err === null) {
@@ -149,18 +180,29 @@ async function main() {
 	// --candidate-db <path> uses the DEMO's resolver (the byte-range candidate gazetteer, with the
 	// promoted EU postcode/GeoNames coverage); else the CLI shards (admin + postcode-locality-intl).
 	const CAND = arg("candidate-db", "")
-	const lookup = CAND ? new WofCandidateTableLookup({ databasePath: CAND }) : new WofSqlitePlaceLookup({ databasePath: WOF })
+	const lookup = CAND
+		? new WofCandidateTableLookup({ databasePath: CAND })
+		: new WofSqlitePlaceLookup({ databasePath: WOF })
 	const resolver = createWofResolver(lookup as never)
 	const model = SYSTEMS.includes("mailwoman")
-		? await createScorer({ modelPath: MODEL, tokenizerPath: TOK, modelCardPath: CARD, anchorLookupPath: ANCHOR, strict: true, tier: "server" })
+		? await createScorer({
+				modelPath: MODEL,
+				tokenizerPath: TOK,
+				modelCardPath: CARD,
+				anchorLookupPath: ANCHOR,
+				strict: true,
+				tier: "server",
+			})
 		: null
 	const pelias = SYSTEMS.includes("pelias") ? await loadPelias() : null
-	if (SYSTEMS.includes("pelias") && !pelias) console.error("⚠ pelias: GEOCODE_EARTH_API_KEY or diag-geocode-earth.ts unavailable — skipping that row")
+	if (SYSTEMS.includes("pelias") && !pelias)
+		console.error("⚠ pelias: GEOCODE_EARTH_API_KEY or diag-geocode-earth.ts unavailable — skipping that row")
 	const sys0 = SYSTEMS.filter((s) => s !== "pelias" || pelias)
 	// Inject the lever-on column right after the base mailwoman column.
-	const sys = RESCORE && sys0.includes("mailwoman")
-		? sys0.flatMap((s) => (s === "mailwoman" ? ["mailwoman", "mailwoman+rescore"] : [s]))
-		: sys0
+	const sys =
+		RESCORE && sys0.includes("mailwoman")
+			? sys0.flatMap((s) => (s === "mailwoman" ? ["mailwoman", "mailwoman+rescore"] : [s]))
+			: sys0
 
 	const tallies: Record<string, Record<string, Tally>> = {} // system -> locale -> tally
 	for (const s of sys) tallies[s] = {}
@@ -171,7 +213,11 @@ async function main() {
 			console.error(`${cc}: golden missing — skipped`)
 			continue
 		}
-		const rows = readFileSync(file, "utf8").trim().split("\n").slice(0, N).map((l) => JSON.parse(l)) as Array<{ raw: string; lat: number; lon: number }>
+		const rows = readFileSync(file, "utf8")
+			.trim()
+			.split("\n")
+			.slice(0, N)
+			.map((l) => JSON.parse(l)) as Array<{ raw: string; lat: number; lon: number }>
 		for (const s of sys) tallies[s]![cc] = newTally()
 		console.error(`\n[${cc.toUpperCase()}] ${rows.length} rows…`)
 		let i = 0
@@ -185,7 +231,10 @@ async function main() {
 				const cBase = mostSpecificCoord(base as never)
 				record(tallies["mailwoman"]![cc]!, cBase ? haversineKm(cBase, truth) : null)
 				if (RESCORE) {
-					const lever = await resolver.resolveTree(structuredClone(tree) as never, { defaultCountry: cc.toUpperCase(), spanRescore: true })
+					const lever = await resolver.resolveTree(structuredClone(tree) as never, {
+						defaultCountry: cc.toUpperCase(),
+						spanRescore: true,
+					})
 					const cLever = mostSpecificCoord(lever as never)
 					record(tallies["mailwoman+rescore"]![cc]!, cLever ? haversineKm(cLever, truth) : null)
 				}
@@ -207,7 +256,9 @@ async function main() {
 	// ── scorecard ────────────────────────────────────────────────────────────
 	const lines: string[] = []
 	lines.push(`# Competitive benchmark — mailwoman vs Nominatim vs Pelias (${new Date().toISOString().slice(0, 10)})`)
-	lines.push(`\n_Identical real held-out OA addresses (truth lat/lon), ${N} rows/locale. PRIMARY metric: **resolve-rate @ coarse km threshold** (within Xkm of truth; "no result" = miss) — the honest denominator, fair to centroids. SECONDARY: conditional median error (resolved rows only). Systems: ${sys.join(", ")}._\n`)
+	lines.push(
+		`\n_Identical real held-out OA addresses (truth lat/lon), ${N} rows/locale. PRIMARY metric: **resolve-rate @ coarse km threshold** (within Xkm of truth; "no result" = miss) — the honest denominator, fair to centroids. SECONDARY: conditional median error (resolved rows only). Systems: ${sys.join(", ")}._\n`
+	)
 	lines.push(`## Resolve-rate @ 25 km (right-locality-area — the headline)\n`)
 	const head = `| locale | ${sys.map((s) => s).join(" | ")} |`
 	lines.push(head, `|${"---|".repeat(sys.length + 1)}`)
@@ -224,13 +275,17 @@ async function main() {
 		})
 		lines.push(`| ${cc.toUpperCase()} | ${cells.join(" | ")} |`)
 	}
-	lines.push(`| **ALL** | ${sys.map((s) => (agg[s]!.n ? `**${((100 * agg[s]!.within[25]!) / agg[s]!.n).toFixed(0)}%**` : "—")).join(" | ")} |`)
+	lines.push(
+		`| **ALL** | ${sys.map((s) => (agg[s]!.n ? `**${((100 * agg[s]!.within[25]!) / agg[s]!.n).toFixed(0)}%**` : "—")).join(" | ")} |`
+	)
 	lines.push(`\n## Full two-axis (aggregate)\n`)
 	lines.push(`| system | n | @1km | @5km | @25km | cond. p50 (km) | no-result |`)
 	lines.push(`|---|--:|--:|--:|--:|--:|--:|`)
 	for (const s of sys) {
 		const t = agg[s]!
-		lines.push(`| ${s} | ${t.n} | ${((100 * t.within[1]!) / t.n).toFixed(0)}% | ${((100 * t.within[5]!) / t.n).toFixed(0)}% | ${((100 * t.within[25]!) / t.n).toFixed(0)}% | ${p50(t.resolvedErrs).toFixed(1)} | ${((100 * t.noResult) / t.n).toFixed(0)}% |`)
+		lines.push(
+			`| ${s} | ${t.n} | ${((100 * t.within[1]!) / t.n).toFixed(0)}% | ${((100 * t.within[5]!) / t.n).toFixed(0)}% | ${((100 * t.within[25]!) / t.n).toFixed(0)}% | ${p50(t.resolvedErrs).toFixed(1)} | ${((100 * t.noResult) / t.n).toFixed(0)}% |`
+		)
 	}
 	const md = lines.join("\n") + "\n"
 	console.log(md)

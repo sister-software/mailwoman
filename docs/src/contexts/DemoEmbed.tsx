@@ -48,9 +48,9 @@ export interface DemoEmbedState {
 	lookup: MailwomanLookupLike | null
 	/**
 	 * Maps a raw span confidence → its calibrated probability of correctness, built from the
-	 * version's `calibration.json` (isotonic table). `null` while loading or for a release that
-	 * ships no calibration table. The demo applies it so a displayed "97%" means ~97% correct —
-	 * the capability a search index can't offer (`docs/articles/evals/*-calibration-*.md`).
+	 * version's `calibration.json` (isotonic table). `null` while loading or for a release that ships
+	 * no calibration table. The demo applies it so a displayed "97%" means ~97% correct — the
+	 * capability a search index can't offer (`docs/articles/evals/*-calibration-*.md`).
 	 */
 	calibrator: Calibrator | null
 	/** Human-readable loading progress string. */

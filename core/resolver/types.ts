@@ -320,10 +320,11 @@ export interface ResolveOpts {
 	/**
 	 * Span-rescore tier (#370). When set, AND the tree resolved nothing, recover a dropped/fragmented
 	 * locality from the raw text: enumerate raw-token spans, exact-match the same-country gazetteer
-	 * (longest-wins + postcode-consistency gate), and inject the recovered locality as a resolved node.
-	 * Targets the EU no-result tail the model leaves when it fragments an accented locality token
-	 * ("Grudziądz" → "Grudzi"+"dz", #555). Default-off + byte-stable when unset; never disturbs a tree
-	 * that already resolved (the #685 brake). Validated in `docs/articles/evals/2026-06-23-370-span-rescore.mdx`.
+	 * (longest-wins + postcode-consistency gate), and inject the recovered locality as a resolved
+	 * node. Targets the EU no-result tail the model leaves when it fragments an accented locality
+	 * token ("Grudziądz" → "Grudzi"+"dz", #555). Default-off + byte-stable when unset; never disturbs
+	 * a tree that already resolved (the #685 brake). Validated in
+	 * `docs/articles/evals/2026-06-23-370-span-rescore.mdx`.
 	 */
 	spanRescore?: boolean
 	/**
@@ -333,17 +334,19 @@ export interface ResolveOpts {
 	 */
 	spanRescoreGateKm?: number
 	/**
-	 * Postcode-disambiguated locality selection (#370 "Lever A"). When set, AND a locality resolves far
-	 * from a resolved sibling postcode, re-pick the same-named candidate (from the lookup's already-
-	 * captured `alternatives`) nearest the postcode; if none reconciles within the gate, fall the
-	 * coordinate back to the postcode point and flag `postcode_city_mismatch`. Targets the dominant
-	 * failure mode on the EU/AU panel — a same-named town resolved to the wrong instance while the
-	 * postcode that would disambiguate it sits resolved in the same tree (e.g. "06260 Saint-Pierre" →
-	 * 617 km off, postcode 06260 correct). Only bites where the backend resolved the postcode to a point
-	 * (so it composes with postcode coverage, #193). Default-off + byte-stable when unset.
+	 * Postcode-disambiguated locality selection (#370 "Lever A"). When set, AND a locality resolves
+	 * far from a resolved sibling postcode, re-pick the same-named candidate (from the lookup's
+	 * already- captured `alternatives`) nearest the postcode; if none reconciles within the gate,
+	 * fall the coordinate back to the postcode point and flag `postcode_city_mismatch`. Targets the
+	 * dominant failure mode on the EU/AU panel — a same-named town resolved to the wrong instance
+	 * while the postcode that would disambiguate it sits resolved in the same tree (e.g. "06260
+	 * Saint-Pierre" → 617 km off, postcode 06260 correct). Only bites where the backend resolved the
+	 * postcode to a point (so it composes with postcode coverage, #193). Default-off + byte-stable
+	 * when unset.
 	 */
 	postcodeConsistency?: boolean
-	/** Gate radius (km) for {@link postcodeConsistency} — a locality farther than this from the resolved postcode is re-picked or demoted. Default 50. */
+	/** Gate radius (km) for {@link postcodeConsistency} — a locality farther than this from the
+resolved postcode is re-picked or demoted. Default 50. */
 	postcodeConsistencyGateKm?: number
 	hierarchyCompletion?: boolean
 	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */

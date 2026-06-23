@@ -17,12 +17,12 @@ This is the story of one lever against that tail: a post-hoc **span-rescore** (#
 
 Run the shipped v4.13.0 model over a 7-locale coordinate-golden panel (IT/PT/PL/AT/CZ/FR/AU, real OpenAddresses points) and 259 of 972 rows come back unresolved. Bucket each one by _why_:
 
-| bucket | meaning | count |
-| --- | --- | ---: |
-| **swap** | gold locality IS in the gazetteer, but the model emitted a different/fragmented token | 116 |
-| **needsK** | gold in gazetteer, model emitted no locality at all | 34 |
-| **coverage-gap** | gold NOT in the gazetteer — nothing to recover | 104 |
-| emitted-but-unresolved | model emitted the gold locality, resolver still missed | 5 |
+| bucket                 | meaning                                                                               | count |
+| ---------------------- | ------------------------------------------------------------------------------------- | ----: |
+| **swap**               | gold locality IS in the gazetteer, but the model emitted a different/fragmented token |   116 |
+| **needsK**             | gold in gazetteer, model emitted no locality at all                                   |    34 |
+| **coverage-gap**       | gold NOT in the gazetteer — nothing to recover                                        |   104 |
+| emitted-but-unresolved | model emitted the gold locality, resolver still missed                                |     5 |
 
 The 116 swaps are the prize. A representative one: `86-300 Grudziądz, Daliowa 4`. The gold locality is **Grudziądz**, which is in the gazetteer — but the model splits it into `Grudzi` + `dz` on the `ą` combining mark (the #555 fragmentation), so neither fragment resolves. The full word sits right there in the raw text, intact. The model's subword tokenizer mangled it; a whitespace tokenizer wouldn't.
 
@@ -53,11 +53,11 @@ gold "Póvoa De Rio De Moinhos" → recovered "Póvoa"   (207 km)
 
 On real OpenAddresses the gold locality is the _longer, more specific_ name, and shortest-wins kept grabbing its ambiguous prefix. Flip it to **longest exact match wins** and the specific name beats its own prefix:
 
-| metric | shortest-wins | longest-wins |
-| --- | ---: | ---: |
-| right locality (gold string) | 49% | **71%** |
-| coord p50 | 5.7 km | **3.0 km** |
-| coord p90 | 359 km | 206 km |
+| metric                       | shortest-wins | longest-wins |
+| ---------------------------- | ------------: | -----------: |
+| right locality (gold string) |           49% |      **71%** |
+| coord p50                    |        5.7 km |   **3.0 km** |
+| coord p90                    |        359 km |       206 km |
 
 PL — the biggest swap locale — goes to **56 of 56 recovered, all gold, p50 1.8 km, p90 8 km**. Solved.
 
@@ -82,11 +82,11 @@ The mis-fires share a cause: nothing checks that the recovered locality is _geog
 With the gate on, the IT story flips cleanly: from 4 recoveries all wrong (p50 207 km) to 2 recoveries both near (p50 22 km) — it killed the far false-positives and kept the near matches. Aggregate p90 drops 206 → 145 km; the >100 km mis-fires fall 33 → 29; the right-place count holds (136 → 137).
 
 | metric (175→172 recovered) | gate off | gate on (50 km) |
-| --- | ---: | ---: |
-| right-place @25 km | 136 | 137 |
-| coord p50 | 3.0 km | 2.9 km |
-| coord p90 | 206 km | **145 km** |
-| >100 km mis-fires | 33 | **29** |
+| -------------------------- | -------: | --------------: |
+| right-place @25 km         |      136 |             137 |
+| coord p50                  |   3.0 km |          2.9 km |
+| coord p90                  |   206 km |      **145 km** |
+| >100 km mis-fires          |       33 |          **29** |
 
 The gate's reach is bounded by where the candidate gazetteer has postcodes: IT resolves 97% of them, so its false-positives get caught; CZ and AU resolve ~none, so their mis-fires survive (AU's are the cross-state same-name problem — Springfield in three states — that needs state agreement the country gate can't supply). That's a coverage limit, not a design flaw: the gate's reach grows automatically as the postcode gazetteer fills in, with no code change.
 
@@ -104,10 +104,10 @@ EU coord panel (n=972, @25km right-place), spanRescore off → on:
 
 The strategic read, stated precisely (a trade-show claim has to survive a hostile check). The **clean, defensible result is the +16 pp lift** — a flag-only A/B that substantially narrows the EU no-result tail. What it does to the standing-vs-Nominatim is more nuanced than "parity," and the per-locale picture is the honest version. Against #775's Nominatim on the same panels:
 
-| | IT | PT | FR | PL | AT | CZ | AU |
-|---|--:|--:|--:|--:|--:|--:|--:|
-| mailwoman + lever | 99 | 73 | 81 | 85 | 85 | 71 | 42 |
-| Nominatim (#775) | 75 | 47 | 59 | 96 | 97 | 88 | 97 |
+|                   |  IT |  PT |  FR |  PL |  AT |  CZ |  AU |
+| ----------------- | --: | --: | --: | --: | --: | --: | --: |
+| mailwoman + lever |  99 |  73 |  81 |  85 |  85 |  71 |  42 |
+| Nominatim (#775)  |  75 |  47 |  59 |  96 |  97 |  88 |  97 |
 
 So with the lever on, mailwoman **leads** on IT/PT/FR and still **trails** on PL/AT/CZ (narrowed, not closed) and AU (the cross-state problem the country gate can't touch). The aggregates land ~79% each — but that's a _mix_ (the IT/PT/FR leads offset the Slavic/German/AU trails), **not** a uniform catch-up. And it's a **cross-harness** comparison: the e2e grades mailwoman more leniently than #775 did (e2e IT 99 vs #775's 92), so a same-harness run could put mailwoman-with-lever _below_ 79%. **The honest claim: the lever makes mailwoman competitive on EU aggregate and ahead on several countries — not "matches Nominatim across EU."** Confirm the aggregate standing with a single-harness mailwoman-vs-Nominatim run before claiming parity.
 

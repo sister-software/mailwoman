@@ -177,8 +177,8 @@ interface CalibrationBin {
 /**
  * Browser-safe twin of `@mailwoman/core/decoder/calibration`'s `createCalibrator`. The canonical
  * lives in core for the Node parse path; we can't import it into the docs webpack bundle (the
- * `core/decoder` barrel pulls in node-only siblings like `build-tree`, and the deep subpath isn't
- * a published export), so the ~15-line piecewise-linear interp is mirrored here verbatim. Keep the
+ * `core/decoder` barrel pulls in node-only siblings like `build-tree`, and the deep subpath isn't a
+ * published export), so the ~15-line piecewise-linear interp is mirrored here verbatim. Keep the
  * two in sync — both are pure, monotone, and clamp to the table's range outside it.
  */
 export function createCalibrator(table: { table: CalibrationBin[] } | CalibrationBin[]): Calibrator {

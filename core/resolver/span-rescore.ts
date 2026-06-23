@@ -4,42 +4,48 @@
  * @author Teffen Ellis, et al.
  *
  *   #370 span-rescore — recover a dropped/fragmented locality from the RAW text when a parse fails to
- *   resolve. The model sometimes fragments an accented or non-ASCII locality token ("Grudziądz" splits
- *   into "Grudzi" + "dz" on the ą combining mark, #555), so neither fragment resolves and the address
- *   comes back with no coordinate. But the whole word sits intact in the raw input — a whitespace
- *   tokenizer sees it where the model's subword tokenizer didn't.
+ *   resolve. The model sometimes fragments an accented or non-ASCII locality token ("Grudziądz"
+ *   splits into "Grudzi" + "dz" on the ą combining mark, #555), so neither fragment resolves and
+ *   the address comes back with no coordinate. But the whole word sits intact in the raw input — a
+ *   whitespace tokenizer sees it where the model's subword tokenizer didn't.
  *
  *   This module is the PURE, backend-agnostic core: enumerate contiguous raw-token spans, exact-match
  *   them against the same-country gazetteer, and return the best locality candidate. The resolver
- *   (`resolve.ts` → `applySpanRescore`) owns the integration: it runs this ONLY on an unresolved tree
- *   (the #685 brake — never second-guess a working coordinate) and injects the recovered locality as a
- *   resolved node. Opt-in via `ResolveOpts.spanRescore`; default-off + byte-stable when unset.
+ *   (`resolve.ts` → `applySpanRescore`) owns the integration: it runs this ONLY on an unresolved
+ *   tree (the #685 brake — never second-guess a working coordinate) and injects the recovered
+ *   locality as a resolved node. Opt-in via `ResolveOpts.spanRescore`; default-off + byte-stable
+ *   when unset.
  *
  *   The design + thresholds are validated on a 7-locale coordinate panel
- *   (`scripts/eval/span-rescore-validate.ts`, eval `docs/articles/evals/2026-06-23-370-span-rescore.mdx`):
- *   longest-exact-match-wins (the gold locality is usually the LONGER, more-specific name — shortest-
- *   wins grabs the ambiguous prefix "Tomaszów" of "Tomaszów Mazowiecki", 135 km off), and a postcode-
- *   consistency gate that rejects a match far from where the postcode resolves (kills coverage-gap
- *   false-positives where the backend has postcode coverage).
+ *   (`scripts/eval/span-rescore-validate.ts`, eval
+ *   `docs/articles/evals/2026-06-23-370-span-rescore.mdx`): longest-exact-match-wins (the gold
+ *   locality is usually the LONGER, more-specific name — shortest- wins grabs the ambiguous prefix
+ *   "Tomaszów" of "Tomaszów Mazowiecki", 135 km off), and a postcode- consistency gate that rejects
+ *   a match far from where the postcode resolves (kills coverage-gap false-positives where the
+ *   backend has postcode coverage).
  */
 
 import type { AddressNode } from "../decoder/types.js"
 import type { ResolvedPlace, ResolverBackend } from "./types.js"
 
 export interface SpanRescoreOptions {
-	/** ISO-3166 alpha-2 country to constrain the gazetteer match (the parse's detected/ default country). */
+	/** ISO-3166 alpha-2 country to constrain the gazetteer match (the parse's detected/ default
+country). */
 	country?: string
-	/** Sibling postcode — used both as the backend disambiguation hint AND the consistency-gate anchor. */
+	/** Sibling postcode — used both as the backend disambiguation hint AND the consistency-gate
+anchor. */
 	postcode?: string
 	/**
-	 * Reject a candidate whose coordinate is farther than this (km) from the postcode anchor. The gate
-	 * only fires when the postcode resolves to a point in the backend; otherwise it can't and the match
-	 * is accepted (so it never penalizes a backend without postcode coverage). 0 disables. Default 50.
+	 * Reject a candidate whose coordinate is farther than this (km) from the postcode anchor. The
+	 * gate only fires when the postcode resolves to a point in the backend; otherwise it can't and
+	 * the match is accepted (so it never penalizes a backend without postcode coverage). 0 disables.
+	 * Default 50.
 	 */
 	gateKm?: number
 	/** Max contiguous raw tokens to treat as one locality span. Default 4. */
 	maxSpanTokens?: number
-	/** Min confidence for a street/house_number/postcode node to count as a span-blocking constituent. Default 0.7. */
+	/** Min confidence for a street/house_number/postcode node to count as a span-blocking constituent.
+Default 0.7. */
 	confidentThreshold?: number
 }
 
@@ -55,11 +61,12 @@ export interface RescoreCandidate {
 	/**
 	 * Whether the postcode-consistency gate FIRED for this recovery — i.e. the postcode resolved to a
 	 * point and the match was validated within `gateKm` of it. `true` = high-precision (postcode-
-	 * consistent); `false` = ungated (no postcode→point coverage for this country, so the match wasn't
-	 * geo-validated — the ~83%-precision case). The caller surfaces this as `metadata.rescore_gated` so
-	 * a consumer can threshold on it WITHOUT a hidden per-country coverage map. Deliberately NOT folded
-	 * into the calibrated `confidence` — that would break the isotonic guarantee (a true calibrated 0.83
-	 * must not be confused with a rescore plug-in estimate).
+	 * consistent); `false` = ungated (no postcode→point coverage for this country, so the match
+	 * wasn't geo-validated — the ~83%-precision case). The caller surfaces this as
+	 * `metadata.rescore_gated` so a consumer can threshold on it WITHOUT a hidden per-country
+	 * coverage map. Deliberately NOT folded into the calibrated `confidence` — that would break the
+	 * isotonic guarantee (a true calibrated 0.83 must not be confused with a rescore plug-in
+	 * estimate).
 	 */
 	gated: boolean
 }
@@ -110,7 +117,8 @@ export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
 	return false
 }
 
-/** Char ranges of confident street/house_number/postcode constituents — a locality span must not overlap them. */
+/** Char ranges of confident street/house_number/postcode constituents — a locality span must not
+overlap them. */
 function confidentRanges(roots: readonly AddressNode[], threshold: number): Array<[number, number]> {
 	const out: Array<[number, number]> = []
 	const stack: AddressNode[] = [...roots]
@@ -181,9 +189,7 @@ export async function findRescoreCandidate(
 		const key = norm(sp.text)
 		if (key.length < 2 || /^\d+$/.test(key)) continue // skip bare numbers / empties
 		const hits = await backend.findPlace({ text: sp.text, country, postcode, placetype: "locality", limit: 5 })
-		const exact = hits.filter(
-			(h) => h.exactMatch && norm(h.name) === key && (h.lat !== 0 || h.lon !== 0)
-		)
+		const exact = hits.filter((h) => h.exactMatch && norm(h.name) === key && (h.lat !== 0 || h.lon !== 0))
 		for (const h of exact) {
 			if (anchor && gateKm > 0 && haversineKm(anchor.lat, anchor.lon, h.lat, h.lon) > gateKm) continue
 			// gated = the postcode anchor existed AND validated this match (within gateKm). When no anchor

@@ -63,7 +63,14 @@ async function main() {
 	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const lookup = new WofSqlitePlaceLookup({ databasePath: WOF })
 	const resolver = createWofResolver(lookup as never)
-	const model = await createScorer({ modelPath: MODEL, tokenizerPath: TOK, modelCardPath: CARD, anchorLookupPath: ANCHOR, strict: true, tier: "server" })
+	const model = await createScorer({
+		modelPath: MODEL,
+		tokenizerPath: TOK,
+		modelCardPath: CARD,
+		anchorLookupPath: ANCHOR,
+		strict: true,
+		tier: "server",
+	})
 
 	console.log(`loc | n   res  unres | swap needsK emitUnres covGap | swapKm p50/p90 (top1·best5)`)
 	const T = { n: 0, res: 0, unres: 0, swap: 0, needsK: 0, emitUn: 0, cov: 0 }
@@ -77,7 +84,11 @@ async function main() {
 			console.log(`${cc}: golden missing — skipped`)
 			continue
 		}
-		const rows = readFileSync(file, "utf8").trim().split("\n").slice(0, N).map((l) => JSON.parse(l))
+		const rows = readFileSync(file, "utf8")
+			.trim()
+			.split("\n")
+			.slice(0, N)
+			.map((l) => JSON.parse(l))
 		const s = { n: 0, res: 0, unres: 0, swap: 0, needsK: 0, emitUn: 0, cov: 0 }
 		const sT1: number[] = []
 		const sB5: number[] = []
@@ -134,7 +145,7 @@ async function main() {
 		`\n#370 CEILING: of ${T.unres} unresolved → recoverable (gold-in-gazetteer) = ${recoverable} ` +
 			`(${((100 * recoverable) / Math.max(T.unres, 1)).toFixed(0)}% of the tail) [swap=${T.swap}, needsK=${T.needsK}]\n` +
 			`              emitted-but-unresolved (resolver-side) = ${T.emitUn}\n` +
-			`              coverage-gap (rescore can't help)      = ${T.cov} (${((100 * T.cov) / Math.max(T.unres, 1)).toFixed(0)}%)`,
+			`              coverage-gap (rescore can't help)      = ${T.cov} (${((100 * T.cov) / Math.max(T.unres, 1)).toFixed(0)}%)`
 	)
 	// FALSIFIER VERDICT (DeepSeek-specified): does the gold-locality swap recover a REAL coordinate?
 	const t1p50 = pctile(swapTop1, 50),
@@ -153,7 +164,7 @@ async function main() {
 		`\n#370 FALSIFIER (swap-case gold→truth great-circle, n=${swapTop1.length}):\n` +
 			`   top-1 (resolver-ranked, postcode-disambiguated): p50 ${t1p50.toFixed(1)} km · p90 ${t1p90.toFixed(0)} km\n` +
 			`   best-of-5 (ceiling if disambiguation is perfect):  p50 ${b5p50.toFixed(1)} km · p90 ${b5p90.toFixed(0)} km\n` +
-			`   → ${verdict}`,
+			`   → ${verdict}`
 	)
 }
 await main()

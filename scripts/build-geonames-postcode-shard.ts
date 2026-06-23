@@ -4,41 +4,40 @@
  * @author Teffen Ellis, et al.
  *
  *   Build a postcode → point shard from GeoNames postal data, for countries WhosOnFirst does not
- *   cover (#193). The existing pipeline (`scripts/backfill-postcode-centroids.ts`) treats GeoNames as
- *   a COORDINATE source keyed by string onto WOF-sourced postcode *records*. That works wherever WOF
- *   ships the postcode entities (US/NL/FR/DE/IT/ES…). For PL/CZ/PT/AU and the rest of the #193 gap,
- *   WOF has zero postcode records — there's nothing to backfill onto — so GeoNames must supply the
- *   RECORD too, not just the coordinate.
+ *   cover (#193). The existing pipeline (`scripts/backfill-postcode-centroids.ts`) treats GeoNames
+ *   as a COORDINATE source keyed by string onto WOF-sourced postcode _records_. That works wherever
+ *   WOF ships the postcode entities (US/NL/FR/DE/IT/ES…). For PL/CZ/PT/AU and the rest of the #193
+ *   gap, WOF has zero postcode records — there's nothing to backfill onto — so GeoNames must supply
+ *   the RECORD too, not just the coordinate.
  *
  *   This emits a standalone `spr` shard in the exact schema `build-candidate`'s `--postcodes` pass
  *   consumes (placetype='postalcode', real centroid + bbox), so it drops into a candidate rebuild
  *   alongside `postalcode-intl.db` with no other change:
  *
- *     build-candidate ... --postcodes postalcode-intl.db --postcodes <this shard>
+ *   Build-candidate ... --postcodes postalcode-intl.db --postcodes <this shard>
  *
  *   Provenance: GeoNames postal is CC-BY 4.0 — any DB shipping these coordinates must attribute
  *   "GeoNames (CC-BY 4.0)". These records carry NO WOF id (GeoNames is the source, not just the
- *   coordinate), so they get synthetic ids in a high range (`SYNTH_ID_BASE`, well above WOF's
- *   ~907M ceiling) that can never be mistaken for — or collide with — a WOF entity id. This keeps
- *   the eval-WOF-id integrity rule intact for the WOF-sourced countries while filling the gap.
+ *   coordinate), so they get synthetic ids in a high range (`SYNTH_ID_BASE`, well above WOF's ~907M
+ *   ceiling) that can never be mistaken for — or collide with — a WOF entity id. This keeps the
+ *   eval-WOF-id integrity rule intact for the WOF-sourced countries while filling the gap.
  *
  *   Separator variants: a postcode is stored under BOTH its written forms so the candidate name_key
  *   matches whichever form the parse emits — PL writes "26-300" (hyphen), CZ writes "58001" (no
  *   space) though GeoNames stores "580 01". Each distinct `fold()`-form gets its own row (same
  *   coordinate), so the lookup hits regardless of how the address spelled the code.
  *
- *   Optionally folds the shard straight into a COPY of an existing candidate gazetteer
- *   (`--fold-into <src> --fold-out <dst>`), mirroring `build-candidate` pass-4's row construction, so
- *   a demo-ready DB falls out without a full (heavy) rebuild. The shard itself is the durable artifact
- *   for the canonical rebuild; the fold is the fast path to verify + stage.
+ *   Optionally folds the shard straight into a COPY of an existing candidate gazetteer (`--fold-into
+ *   <src> --fold-out <dst>`), mirroring `build-candidate` pass-4's row construction, so a
+ *   demo-ready DB falls out without a full (heavy) rebuild. The shard itself is the durable
+ *   artifact for the canonical rebuild; the fold is the fast path to verify + stage.
  *
- *   Usage:
- *     node --experimental-strip-types scripts/build-geonames-postcode-shard.ts \
- *       --geonames /mnt/playpen/mailwoman-data/geonames/allCountries-postal.txt \
- *       --countries PL,CZ \
- *       --out /mnt/playpen/mailwoman-data/wof/postalcode-geonames-intl.db \
- *       [--fold-into /mnt/playpen/mailwoman-data/wof/candidate-global-20h.db \
- *        --fold-out  /mnt/playpen/mailwoman-data/wof/candidate-global-20i.db]
+ *   Usage: node --experimental-strip-types scripts/build-geonames-postcode-shard.ts\
+ *   --geonames /mnt/playpen/mailwoman-data/geonames/allCountries-postal.txt\
+ *   --countries PL,CZ\
+ *   --out /mnt/playpen/mailwoman-data/wof/postalcode-geonames-intl.db\
+ *   [--fold-into /mnt/playpen/mailwoman-data/wof/candidate-global-20h.db\
+ *   --fold-out /mnt/playpen/mailwoman-data/wof/candidate-global-20i.db]
  */
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
@@ -64,7 +63,10 @@ function parseArgs(): Args {
 	let foldOut: string | undefined
 	for (let i = 0; i < a.length; i++) {
 		if (a[i] === "--geonames" && a[i + 1]) geonames = a[++i]!
-		else if (a[i] === "--countries" && a[i + 1]) countries = a[++i]!.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean)
+		else if (a[i] === "--countries" && a[i + 1])
+			countries = a[++i]!.split(",")
+				.map((s) => s.trim().toUpperCase())
+				.filter(Boolean)
 		else if (a[i] === "--out" && a[i + 1]) out = a[++i]!
 		else if (a[i] === "--fold-into" && a[i + 1]) foldInto = a[++i]!
 		else if (a[i] === "--fold-out" && a[i + 1]) foldOut = a[++i]!
@@ -72,7 +74,8 @@ function parseArgs(): Args {
 	return { geonames, countries, out, foldInto, foldOut }
 }
 
-/** Synthetic id base — above WOF's ~907M ceiling, so these GeoNames-sourced records never collide with a WOF id. */
+/** Synthetic id base — above WOF's ~907M ceiling, so these GeoNames-sourced records never collide
+with a WOF id. */
 const SYNTH_ID_BASE = 8_000_000_000
 
 /** One postcode's accumulated GeoNames points (one row per place sharing the code). */
@@ -119,7 +122,8 @@ async function readGeonames(file: string, want: Set<string>): Promise<Map<string
 	return acc
 }
 
-/** The distinct written forms of a postcode that should resolve: the raw form + a separator-stripped form. */
+/** The distinct written forms of a postcode that should resolve: the raw form + a separator-stripped
+form. */
 function nameVariants(pc: string): string[] {
 	const stripped = pc.replace(/[\s-]/g, "")
 	const variants = [pc]
@@ -135,9 +139,23 @@ function nameVariants(pc: string): string[] {
 }
 
 const SPR_COLUMNS = [
-	"id", "parent_id", "name", "placetype", "country", "latitude", "longitude",
-	"min_latitude", "min_longitude", "max_latitude", "max_longitude",
-	"is_current", "is_deprecated", "is_ceased", "is_superseded", "is_superseding", "lastmodified",
+	"id",
+	"parent_id",
+	"name",
+	"placetype",
+	"country",
+	"latitude",
+	"longitude",
+	"min_latitude",
+	"min_longitude",
+	"max_latitude",
+	"max_longitude",
+	"is_current",
+	"is_deprecated",
+	"is_ceased",
+	"is_superseded",
+	"is_superseding",
+	"lastmodified",
 ] as const
 
 async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string): Promise<number> {
@@ -173,7 +191,9 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string): Promi
 		.execute()
 
 	// Hot bulk write — positional prepared statement (the leave-as-raw fast path), columns from SPR_COLUMNS.
-	const ins = db.prepare(`INSERT INTO spr (${SPR_COLUMNS.join(", ")}) VALUES (${SPR_COLUMNS.map(() => "?").join(", ")})`)
+	const ins = db.prepare(
+		`INSERT INTO spr (${SPR_COLUMNS.join(", ")}) VALUES (${SPR_COLUMNS.map(() => "?").join(", ")})`
+	)
 	let id = SYNTH_ID_BASE
 	let rows = 0
 	db.exec("BEGIN")
@@ -181,11 +201,7 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string): Promi
 		const lat = a.sumLat / a.n
 		const lon = a.sumLon / a.n
 		for (const name of nameVariants(a.pc)) {
-			ins.run(
-				++id, -1, name, "postalcode", a.cc, lat, lon,
-				a.minLat, a.minLon, a.maxLat, a.maxLon,
-				1, 0, 0, 0, 0, 0
-			)
+			ins.run(++id, -1, name, "postalcode", a.cc, lat, lon, a.minLat, a.minLon, a.maxLat, a.maxLon, 1, 0, 0, 0, 0, 0)
 			rows++
 		}
 	}
@@ -196,15 +212,18 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string): Promi
 
 /**
  * Fold the freshly-built shard into a COPY of an existing candidate gazetteer, mirroring
- * `build-candidate` pass-4's row construction (placetype_id=9, region_id=0, neg_rank=0, is_primary=1,
- * bbox falls back to the centroid). The fast path to a demo-ready DB without a full rebuild.
+ * `build-candidate` pass-4's row construction (placetype_id=9, region_id=0, neg_rank=0,
+ * is_primary=1, bbox falls back to the centroid). The fast path to a demo-ready DB without a full
+ * rebuild.
  */
 async function foldIntoCandidate(shardPath: string, srcPath: string, dstPath: string): Promise<number> {
 	copyFileSync(srcPath, dstPath)
 	const out = new DatabaseSync(dstPath)
 	const shard = new DatabaseSync(shardPath, { readOnly: true })
 
-	const ptRow = out.prepare("SELECT id FROM placetype_codes WHERE placetype='postalcode'").get() as { id: number } | undefined
+	const ptRow = out.prepare("SELECT id FROM placetype_codes WHERE placetype='postalcode'").get() as
+		| { id: number }
+		| undefined
 	if (!ptRow) throw new Error("candidate DB has no 'postalcode' placetype_code")
 	const pcPtid = ptRow.id
 
@@ -246,9 +265,21 @@ async function foldIntoCandidate(shardPath: string, srcPath: string, dstPath: st
 		const lat = r.latitude as number
 		const lon = r.longitude as number
 		ins.run(
-			key, ccId(r.country as string), 0, pcPtid, 0, Number(r.id), name, lat, lon,
-			(r.mnlat as number) || lat, (r.mnlon as number) || lon, (r.mxlat as number) || lat, (r.mxlon as number) || lon,
-			0, 1
+			key,
+			ccId(r.country as string),
+			0,
+			pcPtid,
+			0,
+			Number(r.id),
+			name,
+			lat,
+			lon,
+			(r.mnlat as number) || lat,
+			(r.mnlon as number) || lon,
+			(r.mxlat as number) || lat,
+			(r.mxlon as number) || lon,
+			0,
+			1
 		)
 		n++
 	}
@@ -284,7 +315,9 @@ async function main(): Promise<void> {
 		const n = await foldIntoCandidate(out, foldInto, foldOut)
 		console.error(`Inserted ${n} postcode candidate rows → ${foldOut}`)
 	} else {
-		console.error(`(no --fold-into/--fold-out: shard only — feed it to build-candidate via --postcodes for the canonical rebuild)`)
+		console.error(
+			`(no --fold-into/--fold-out: shard only — feed it to build-candidate via --postcodes for the canonical rebuild)`
+		)
 	}
 }
 

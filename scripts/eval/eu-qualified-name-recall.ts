@@ -111,7 +111,11 @@ async function main() {
 	const T = { n: 0, base: 0, sNear: 0, sColl: 0, tNear: 0, tColl: 0 }
 	for (const [cc, file] of LOCALES) {
 		if (!existsSync(file)) continue
-		const rows = readFileSync(file, "utf8").trim().split("\n").slice(0, N).map((l) => JSON.parse(l))
+		const rows = readFileSync(file, "utf8")
+			.trim()
+			.split("\n")
+			.slice(0, N)
+			.map((l) => JSON.parse(l))
 		const s = { n: 0, base: 0, sNear: 0, sColl: 0, tNear: 0, tColl: 0 }
 		for (const row of rows) {
 			const gold = ((row.components?.locality as string) ?? "").toString().trim()

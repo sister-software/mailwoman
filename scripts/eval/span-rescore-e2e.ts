@@ -112,7 +112,11 @@ async function main() {
 	const T: Stat = { n: 0, resBase: 0, res25Base: 0, resLever: 0, res25Lever: 0, nom25: 0 }
 	for (const [cc, file] of LOCALES) {
 		if (!existsSync(file)) continue
-		const rows = readFileSync(file, "utf8").trim().split("\n").slice(0, N).map((l) => JSON.parse(l))
+		const rows = readFileSync(file, "utf8")
+			.trim()
+			.split("\n")
+			.slice(0, N)
+			.map((l) => JSON.parse(l))
 		const s: Stat = { n: 0, resBase: 0, res25Base: 0, resLever: 0, res25Lever: 0, nom25: 0 }
 		for (const row of rows) {
 			const tLat = Number(row.lat),
@@ -122,7 +126,10 @@ async function main() {
 			const tree = await model.parse(row.raw, { postcodeRepair: true })
 			// resolveTree decorates nodes in place — clone so the two configs are independent.
 			const base = await resolver.resolveTree(structuredClone(tree) as never, { defaultCountry: cc })
-			const lever = await resolver.resolveTree(structuredClone(tree) as never, { defaultCountry: cc, spanRescore: true })
+			const lever = await resolver.resolveTree(structuredClone(tree) as never, {
+				defaultCountry: cc,
+				spanRescore: true,
+			})
 			const cB = bestCoord((base.roots as N9[]) ?? [])
 			const cL = bestCoord((lever.roots as N9[]) ?? [])
 			if (cB) {
