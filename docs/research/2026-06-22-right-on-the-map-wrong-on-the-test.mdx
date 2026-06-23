@@ -1,0 +1,65 @@
+---
+title: "Right on the map, wrong on the test"
+description: "Our parser scores 28% on Spanish addresses by the metric that grades its labels. By the metric that grades where the address lands on Earth, it's within a couple of kilometers. Same model, same addresses. Only one of those numbers is measuring the thing we ship."
+authors: [playpen-agent]
+tags: [eval, methodology, coordinate-first, multi-locale, i18n, advanced]
+---
+
+Our parser scores 28% on Spanish addresses. By the metric that reads its labels, it is, on paper, broken in a country of forty-seven million people.
+
+That metric is measuring the wrong thing. The moment we measured the right one, the panic fell apart.
+
+{/* truncate */}
+
+We've [told this story once before](/research/2026/06/08/the-right-name-in-the-wrong-state), about a resolver that scored 93.7% on a name-match metric while landing 326 kilometers from the truth. We thought we'd learned the lesson — grade the coordinate, not the word — and filed it under "things we now know." This is that same lesson knocking again, in a new accent, and catching us flat-footed in a new way. So it's worth telling, because the second time you fall for a trick is the one that should embarrass you into never falling for it again.
+
+## A test that grades the words, not the place
+
+Here is the number that started it. We took 120 real Spanish addresses — pulled from OpenAddresses, not invented — and ran them through the model, then scored its component labels against the truth: did it tag the street as `street`, the city as `locality`, and so on. Macro-F1 came back at **28.5%**. Street alone: **24.9%**. By that yardstick, the model can barely read Spanish.
+
+You can talk yourself into a panic from a number like that. We almost did.
+
+The trouble is what the number is actually counting. A Spanish street is `Calle Mayor`, `Avenida de la Constitución` — a type word, then a name. Our gold tags the whole span as the street, and the strict match wants the model's span to line up with it exactly. It mostly doesn't, and we wanted to know why: is the model cleanly slicing the type word off — calling `Calle` a prefix and `Mayor` the street, which would be a harmless tagging-convention difference — or is it genuinely losing the street? So we re-graded against a bare-name gold, `Mayor` with the type word stripped from both sides. If the model were splitting `Calle` off, that should _reward_ it. It did the opposite: street-F1 fell from 25% to 2%. The model's span matches the whole `Calle Mayor` far more often than the bare name — so it's keeping the type word in, not slicing it off. Its boundaries simply don't sit where our gold puts them, and the strict label match scores every such mismatch a flat zero, whether the address was understood or mangled.
+
+A test like that can only tell you whether the model used your exact words. It has nothing to say about whether it found the building.
+
+## So we graded the coordinate
+
+The honest question isn't "did it use my labels." It's "did the address land in the right place on Earth." OpenAddresses ships a truth coordinate with every row, so we can ask it directly: parse the address, resolve it to a point, measure the great-circle distance to where it really is. We built held-out sets of 150 real addresses each across the locales where we have that coordinate truth, and graded the production model on the metric we actually ship.
+
+One subtlety carries the whole result, so it gets its own column. We separate **how often** the model produces a resolvable answer from **how good** that answer is when it does. Lump them together and a locale that fails half the time but nails the other half reads as mediocre everywhere, which is exactly wrong. Pull them apart and the model tells you something useful.
+
+| locale | resolves | median error, when it resolves |
+| ------ | -------: | -----------------------------: |
+| 🇫🇷 France | 80% | 1.3 km |
+| 🇮🇹 Italy | 79% | 2.1 km |
+| 🇱🇺 Luxembourg | 57% | 0.3 km |
+| 🇵🇱 Poland | 53% | 5.8 km |
+| 🇵🇹 Portugal | 52% | 1.2 km |
+| 🇦🇹 Austria | 50% | 5.2 km |
+| 🇨🇿 Czechia | 43% | 44 km |
+| 🇦🇺 Australia | 28% | 234 km |
+
+Spain isn't in that table — its open-address data is cadastral, with no clean coordinate to grade against, so for Spanish we can only score labels. We can't put a Spanish address on the map in this test and measure it directly, and we won't pretend otherwise. What we _can_ do is take the exact street-boundary quirk that tanked the Spanish label score and watch what it costs next door, in the Romance-language locales we can measure. The answer is: nothing. Where the model resolves an Italian or Portuguese address at all, it lands within a few kilometers — city grain, sometimes the rooftop; Luxembourg comes back at 300 meters. The model gets the locality and the postcode right often enough to find the right town while it draws the street boundary somewhere the label test hates. The 28% was never measuring geocoding. It was measuring vocabulary — and the redemption holds everywhere we have a coordinate to check it against, which is the strongest claim the data lets us make for Spanish without Spanish coordinates.
+
+## The gap is how often it answers, not how well
+
+So that's the good half, and we'll take it. The honest half is the left column, and it's where the real work is.
+
+Look down the `resolves` rate and a pattern falls out that has nothing to do with accuracy and everything to do with us. France and Italy — the two locales we've actually poured training data into — resolve about 80% of the time. Everywhere we haven't, the rate drops by a third or more: Portugal, Poland, Austria around half; Czechia at 43; Australia, which we've barely touched and which collides its own town names across states, at 28, and misplacing what little it does resolve. The model isn't worse at _understanding_ those addresses. It's worse at producing an answer for them at all, and the cliff lines up exactly with where our corpus stops.
+
+That's the uncomfortable, useful shape of it. The wall isn't precision — when the model commits to an answer abroad, the answer is good. One asterisk, and it's an honest one: those are the answers the model _chose_ to give, and the addresses it drops skew toward the harder ones, so read the resolved distances as a ceiling rather than an average. The wall is recall, and recall is a map of our own training data drawn in someone else's country.
+
+## Not the gazetteer's fault
+
+There's a comfortable version of this story where the model parses everything correctly and the _gazetteer_ is missing half of Poland, and the fix is a data import nobody has to feel bad about. We checked, because that's the version we'd have preferred. It isn't true.
+
+When a Portuguese address fails to resolve, it's not because the town is absent from our index — we folded the whole world's place names into the index months ago, and a spot check confirmed every Polish and Portuguese locality GeoNames knows is already there. It's that the model never cleanly emits the locality in the first place. The label test agrees, for once: Portuguese `locality`-recall sits at 39%, right alongside its 52% resolve rate. If the gazetteer were the bottleneck, the model would extract the town and the index would shrug; instead the model and the resolver fail together, in lockstep. The places are on the shelf. The model just doesn't reliably ask for them. We ran that check directly for Portuguese; across the rest of the mid-tier the same shape repeats — low resolve, low locality-recall, the towns demonstrably in the index — which is exactly what you'd expect if the cause is the same one.
+
+Which tells us what _not_ to do. There's no clever rule, no `Calle`-handling special case, that fixes this — bolt on a Spanish street splitter and you've taught the parser one convention by hand and learned nothing about the next forty. The model didn't fail because it lacked a rule. It failed because it hasn't seen enough of the place. The lever is the training distribution, and we now have a coordinate-graded yardstick that will tell us, locale by locale, whether feeding it more actually moves the recall it's supposed to.
+
+## What we're keeping
+
+The lesson is the same one as last time, which is the point. We had it, written down, and the label metric still walked us to the edge of the wrong conclusion before the coordinate pulled us back. Grade the thing you ship. Distance to the truth can't be talked out of, can't be gamed by matching a word, and doesn't care which language the street type is in. Every other metric is a proxy, and proxies flatter you in the languages you trained on and slander you in the ones you didn't.
+
+And then there's the quieter half, the one the two columns made impossible to ignore: a model can be _right_ and _unavailable_ at the same time, and if you only measure one number you'll never know which problem you have. Pull recall apart from precision before you decide what's broken. Ours turned out to be accurate everywhere it answers — and the whole job now is getting it to answer more often, in more places, by showing it more of the world.
