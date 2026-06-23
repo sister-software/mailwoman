@@ -52,6 +52,16 @@ export interface RescoreCandidate {
 	end: number
 	/** The resolved gazetteer place (decorate a node with this). */
 	place: ResolvedPlace
+	/**
+	 * Whether the postcode-consistency gate FIRED for this recovery — i.e. the postcode resolved to a
+	 * point and the match was validated within `gateKm` of it. `true` = high-precision (postcode-
+	 * consistent); `false` = ungated (no postcode→point coverage for this country, so the match wasn't
+	 * geo-validated — the ~83%-precision case). The caller surfaces this as `metadata.rescore_gated` so
+	 * a consumer can threshold on it WITHOUT a hidden per-country coverage map. Deliberately NOT folded
+	 * into the calibrated `confidence` — that would break the isotonic guarantee (a true calibrated 0.83
+	 * must not be confused with a rescore plug-in estimate).
+	 */
+	gated: boolean
 }
 
 const haversineKm = (aLat: number, aLon: number, bLat: number, bLon: number): number => {
@@ -174,7 +184,9 @@ export async function findRescoreCandidate(
 		)
 		for (const h of exact) {
 			if (anchor && gateKm > 0 && haversineKm(anchor.lat, anchor.lon, h.lat, h.lon) > gateKm) continue
-			return { text: sp.text, start: sp.start, end: sp.end, place: h }
+			// gated = the postcode anchor existed AND validated this match (within gateKm). When no anchor
+			// (no postcode→point coverage), the match is ungated — returned, but flagged lower-precision.
+			return { text: sp.text, start: sp.start, end: sp.end, place: h, gated: anchor !== null }
 		}
 	}
 	return null

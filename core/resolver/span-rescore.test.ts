@@ -62,6 +62,8 @@ describe("findRescoreCandidate", () => {
 		const hit = await findRescoreCandidate(raw, roots, makeBackend(), { country: "PL", postcode: "86-300" })
 		expect(hit?.text).toBe("Grudziądz")
 		expect(hit?.place.id).toBe(1)
+		// 86-300 isn't in the fixture → no anchor → ungated (flagged lower-precision).
+		expect(hit?.gated).toBe(false)
 	})
 
 	it("prefers the LONGEST exact match (specific name beats its own prefix)", async () => {
@@ -69,6 +71,18 @@ describe("findRescoreCandidate", () => {
 		const hit = await findRescoreCandidate(raw, [], makeBackend(), { country: "PL", gateKm: 0 })
 		expect(hit?.text).toBe("Tomaszów Mazowiecki")
 		expect(hit?.place.id).toBe(3)
+		expect(hit?.gated).toBe(false) // gate disabled (gateKm 0)
+	})
+
+	it("flags a recovery GATED when the postcode resolves and the match is within range", async () => {
+		// 97-200 resolves (fixture) near Tomaszów Mazowiecki; the longest match lands within 50km → gated.
+		const hit = await findRescoreCandidate("Tomaszów Mazowiecki", [], makeBackend(), {
+			country: "PL",
+			postcode: "97-200",
+			gateKm: 50,
+		})
+		expect(hit?.place.id).toBe(3)
+		expect(hit?.gated).toBe(true)
 	})
 
 	it("postcode gate rejects a match far from where the postcode resolves", async () => {
@@ -112,6 +126,8 @@ describe("resolveTree + spanRescore", () => {
 		expect(injected?.value).toBe("Grudziądz")
 		expect(injected?.lat).toBe(53.48)
 		expect(injected?.metadata?.span_rescore).toBe(true)
+		// No postcode node in this tree → no anchor → ungated, flagged so the consumer can threshold.
+		expect(injected?.metadata?.rescore_gated).toBe(false)
 	})
 
 	it("is byte-stable when spanRescore is unset (no injection)", async () => {
