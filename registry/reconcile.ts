@@ -91,9 +91,7 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 
 		reconciled.push({ entity, sources, bucket })
 
-		if (counts[bucket]) {
-			counts[bucket]++
-		}
+		counts[bucket]++
 	}
 	return { reconciled, counts }
 }
