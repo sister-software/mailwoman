@@ -64,6 +64,8 @@ import {
 	runCascade,
 } from "../../shared/demo-helpers.ts"
 
+import { findRescoreCandidate } from "@mailwoman/core/resolver"
+
 import type { HttpvfsAddressPointLookup, HttpvfsInterpolator } from "../../shared/httpvfs-street.ts"
 import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
 
@@ -979,6 +981,26 @@ const DemoApp: React.FC = () => {
 				const tBeforeResolve = performance.now()
 				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNodes, stateNode, text)
 				const tResolve = performance.now()
+				// Span-rescore fallback (#370 — the demo opts the lever ON). When the admin cascade resolved
+				// NOTHING, recover a dropped/fragmented locality from the RAW text — the model splits accented
+				// towns ("Grudziądz" → "Grudzi"+"dz") so they never resolve, but the word is intact in the input.
+				// Tried before the US-postcode anchor fallback: it recovers the actual locality (not just a
+				// postcode centroid) and it's where the EU recovery lives. Recovered places are marked
+				// "(recovered)"; ungated ones (no postcode→point coverage to verify against) say "unverified".
+				if (cascadeHits.length === 0) {
+					const pc = postcodeNode?.value ? String(postcodeNode.value).trim() : undefined
+					const rescued = await findRescoreCandidate(text, tree.roots as never, wofLookup as never, { postcode: pc })
+					if (rescued) {
+						cascadeHits.push({
+							id: rescued.place.id,
+							name: `${rescued.place.name} (recovered${rescued.gated ? "" : ", unverified"})`,
+							placetype: "locality",
+							lat: rescued.place.lat,
+							lon: rescued.place.lon,
+							score: 0,
+						} as (typeof cascadeHits)[number])
+					}
+				}
 				// Anchor-centroid fallback (postcode-only dead ends): WOF ships placeholder (0,0) for
 				// ~22% of US postcodes and the cascade rightly drops those — but postcode-us.bin (the
 				// model's anchor channel, already loaded) carries a real centroid for every US ZIP.
