@@ -5,6 +5,7 @@
  */
 
 export * from "./adapter.js"
+export * from "./adapters/gnaf/assemble.js"
 export * from "./adapters/index.js"
 export * from "./align.js"
 export * from "./build.js"
