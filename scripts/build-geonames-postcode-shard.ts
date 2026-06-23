@@ -146,6 +146,9 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string): Promi
 	}
 	const db = new DatabaseSync(outPath)
 	const kdb = new DatabaseClient({ database: db })
+	// Regenerated artifact — drop any prior table so a re-run with a different country set fully
+	// replaces it (and synthetic ids restart cleanly without colliding with stale rows).
+	await kdb.schema.dropTable("spr").ifExists().execute()
 	// Schema mirrors postalcode-intl.db's `spr` exactly — a drop-in `--postcodes` input for build-candidate.
 	await kdb.schema
 		.createTable("spr")

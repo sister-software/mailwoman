@@ -64,6 +64,40 @@ incumbents.
    word-recovery (#370) both close the "silence," by different mechanisms — the postcode does most of the
    work where we now have it; the rescore catches the no-postcode tail (PT, AU).
 
+## Levers A + B (post-benchmark, default-off — measured on the same grader)
+
+The benchmark's failure dump (`scripts/eval/failure-dump.ts`) classified the 82 misses and pointed at
+two compounding levers. Both are default-off; numbers are mailwoman+rescore on the same harness/grader,
+candidate gazetteer noted.
+
+- **Lever A — postcode-disambiguated locality selection** (`ResolveOpts.postcodeConsistency`, resolver-
+  only, no data/GPU): when a same-named locality resolves far from a resolved sibling postcode, re-pick
+  the instance nearest the postcode (or fall back to the postcode point). Fixed the 16 "postcode-
+  available-but-ignored" misses with ZERO regressions.
+- **Lever B — extend the #193 GeoNames postcode fill to PT/AU/AT** (`candidate-global-20j`): converts
+  uncovered postcodes into anchors, which Lever A then disambiguates. AU 35→65 (+30pp), PT 78→88.
+
+| locale | baseline (-20h) | +A (-20i) | +A+B (-20j) | Nominatim | Pelias |
+|---|--:|--:|--:|--:|--:|
+| IT | 100 | 100 | 100 | 75 | 85 |
+| PT | 67 | 78 | 88 | 48 | 82 |
+| PL | 88 | 98 | 98 | 97 | 92 |
+| AT | 73 | 87 | 87 | 98 | 100 |
+| CZ | 85 | 92 | 92 | 87 | 78 |
+| FR | 93 | 100 | 100 | 65 | 98 |
+| AU | 32 | 35 | 65 | 97 | 78 |
+| **EU (6)** | **66** | **92.5** | **94.2** | **78** | **89** |
+| **ALL (7)** | **61** | **84** | **90.0** | **81** | **88** |
+
+With both levers, mailwoman leads BOTH incumbents on the @25km right-area metric — EU 94.2 and all-panel
+90.0 — from a 30 MB browser model, no Elasticsearch. The @1km precision gap (centroids vs rooftops)
+stands; this is right-AREA, not rooftop.
+
+Residuals after A+B (the next levers): AU's remaining misses are mostly a PARSE issue — the model emits a
+house number as a second postcode ("Grantson Street 51" → postcode=51), and the anchor picks the first
+postcode (51) not the real one (4030); a Lever-A-v2 anchoring on the postcode that RESOLVES would catch
+them. AT's 5 EMPTY are postcodes GeoNames AT doesn't carry.
+
 ## Caveats / next
 
 - **Clean input only.** This run is clean OA strings. The "calibrated parser degrades better than a token-
