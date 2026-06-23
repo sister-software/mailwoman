@@ -27,6 +27,27 @@ const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
 const MODEL = arg("model", "out/v191/model.onnx")
 const CAND = arg("candidate-db", "/mnt/playpen/mailwoman-data/wof/candidate-global-20h.db")
 const N = Number(arg("n", "150"))
+// Same-harness confirm (#780): also grade Nominatim on the same rows + grading, so mailwoman-with-lever
+// vs Nominatim is apples-to-apples (no cross-harness baseline gap). Opt-in — the public API is rate-
+// limited to ~1 req/s, so only run when explicitly confirming. Reuses #775's queryNominatim verbatim.
+const NOM = process.argv.includes("--nominatim")
+const NOMINATIM_UA = "mailwoman-eval/1.0 (https://mailwoman.sister.software)"
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+async function queryNominatim(raw: string, cc: string): Promise<{ lat: number; lon: number } | null> {
+	try {
+		const u = new URL("https://nominatim.openstreetmap.org/search")
+		u.searchParams.set("q", raw)
+		u.searchParams.set("format", "jsonv2")
+		u.searchParams.set("limit", "1")
+		u.searchParams.set("countrycodes", cc.toLowerCase())
+		const r = await fetch(u, { headers: { "User-Agent": NOMINATIM_UA } })
+		if (!r.ok) return null
+		const j = (await r.json()) as Array<{ lat: string; lon: string }>
+		return j[0] ? { lat: Number(j[0].lat), lon: Number(j[0].lon) } : null
+	} catch {
+		return null
+	}
+}
 const LOCALES: [string, string][] = [
 	["IT", "data/eval/external/oa-it-coord-150.jsonl"],
 	["PT", "data/eval/external/oa-pt-coord-150.jsonl"],
@@ -70,6 +91,7 @@ interface Stat {
 	res25Base: number
 	resLever: number
 	res25Lever: number
+	nom25: number
 }
 
 async function main() {
@@ -86,12 +108,12 @@ async function main() {
 		tier: "server",
 	})
 
-	console.log(`loc |  n  | resolved% base→lever | @25km% base→lever`)
-	const T: Stat = { n: 0, resBase: 0, res25Base: 0, resLever: 0, res25Lever: 0 }
+	console.log(`loc |  n  | @25km% base → lever${NOM ? " | nominatim" : ""}`)
+	const T: Stat = { n: 0, resBase: 0, res25Base: 0, resLever: 0, res25Lever: 0, nom25: 0 }
 	for (const [cc, file] of LOCALES) {
 		if (!existsSync(file)) continue
 		const rows = readFileSync(file, "utf8").trim().split("\n").slice(0, N).map((l) => JSON.parse(l))
-		const s: Stat = { n: 0, resBase: 0, res25Base: 0, resLever: 0, res25Lever: 0 }
+		const s: Stat = { n: 0, resBase: 0, res25Base: 0, resLever: 0, res25Lever: 0, nom25: 0 }
 		for (const row of rows) {
 			const tLat = Number(row.lat),
 				tLon = Number(row.lon)
@@ -111,10 +133,15 @@ async function main() {
 				s.resLever++
 				if (haversineKm(tLat, tLon, cL.lat, cL.lon) <= 25) s.res25Lever++
 			}
+			if (NOM) {
+				const cN = await queryNominatim(row.raw, cc)
+				if (cN && haversineKm(tLat, tLon, cN.lat, cN.lon) <= 25) s.nom25++
+				await sleep(1100) // Nominatim ~1 req/s policy
+			}
 		}
 		const pct = (x: number) => `${((100 * x) / Math.max(s.n, 1)).toFixed(0)}%`
 		console.log(
-			`${cc.padEnd(3)} | ${String(s.n).padStart(3)} | ${pct(s.resBase).padStart(4)} → ${pct(s.resLever).padStart(4)}        | ${pct(s.res25Base).padStart(4)} → ${pct(s.res25Lever).padStart(4)}`
+			`${cc.padEnd(3)} | ${String(s.n).padStart(3)} | ${pct(s.res25Base).padStart(4)} → ${pct(s.res25Lever).padStart(4)}${NOM ? ` | ${pct(s.nom25).padStart(4)}` : ""}`
 		)
 		for (const k of Object.keys(s) as (keyof Stat)[]) T[k] += s[k]
 	}
@@ -122,8 +149,11 @@ async function main() {
 	console.log(
 		`\n#370 span-rescore E2E (wired resolveTree, candidate gazetteer, coord-graded @25km, n=${T.n}):\n` +
 			`   resolved:        baseline ${p(T.resBase)}% → spanRescore ${p(T.resLever)}%  (+${(Number(p(T.resLever)) - Number(p(T.resBase))).toFixed(1)}pp)\n` +
-			`   right-place @25km: baseline ${p(T.res25Base)}% → spanRescore ${p(T.res25Lever)}%  (+${(Number(p(T.res25Lever)) - Number(p(T.res25Base))).toFixed(1)}pp)\n` +
-			`   → the production flag's real EU coordinate lift, end-to-end through resolveTree + the gate.`
+			`   right-place @25km: baseline ${p(T.res25Base)}% → spanRescore ${p(T.res25Lever)}%  (+${(Number(p(T.res25Lever)) - Number(p(T.res25Base))).toFixed(1)}pp)` +
+			(NOM
+				? `\n   SAME-HARNESS vs Nominatim @25km: mailwoman+lever ${p(T.res25Lever)}% vs Nominatim ${p(T.nom25)}%  (Δ ${(Number(p(T.res25Lever)) - Number(p(T.nom25))).toFixed(1)}pp)`
+				: "") +
+			`\n   → the production flag's real EU coordinate lift, end-to-end through resolveTree + the gate.`
 	)
 }
 await main()
