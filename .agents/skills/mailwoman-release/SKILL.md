@@ -135,13 +135,42 @@ npm view @mailwoman/neural-weights-en-us@<target> --json | jq '.dist.attestation
 ```
 Then fast-forward local main: `git merge --ff-only origin/main`.
 
-## Step 5 — the demo is SEPARATE (do not conflate with the npm ship)
-The npm publish leaves the browser demo (mailwoman.sister.software/demo) on the OLD model.
-`publish-release-to-hf.mjs` without `--set-default` leaves HF `releases.json` `defaultVersion`
-unchanged. To repoint the demo: set HF default (`--set-default` or patch `releases.json`), upload the
-model to R2 (`public.sister.software/mailwoman/en-us/v<target>/`), and bump the demo version constant
-in `docs/src/`. Heed the `hasPolygons=false` warning (demo degrades to rectangles/anchor-off if the
-R2 side is incomplete). This is its own task — surface it, don't assume it.
+## Step 5 — repoint the demo (SEPARATE from the npm ship; pure R2, no code change)
+The npm publish leaves the demo (mailwoman.sister.software/demo) on the OLD model — it reads its version
+from **R2**, not HF or npm. `docs/src/contexts/DemoEmbed.tsx` fetches
+`public.sister.software/mailwoman/en-us/releases.json`, takes `.defaultVersion`, and lazy-loads that
+version's assets from R2. **There is NO version constant in `docs/src/` — it's fully dynamic**, so the
+repoint is pure R2: no code change, no PR. Only `model.onnx` + `model-card.json` are new per release; the
+gazetteer layer (tokenizer, fst-en-US.bin, postcode-us.bin, anchor-lexicon-v1.json, wof-polygons.db) is
+carried unchanged. The tool is `scripts/publish-demo-assets-to-r2.py` (boto3, `RCLONE_S3_PUBLIC_*` from
+`.env`, bucket `nexus-public`, uploads everything under `--src`).
+
+```bash
+set -a; source .env; set +a
+S=/tmp/r2-stage; mkdir -p "$S/en-us/v<target>"
+cp neural-weights-en-us/{model.onnx,model-card.json,tokenizer.model,postcode-us.bin} "$S/en-us/v<target>/"
+cp /tmp/fst-en-US.bin "$S/en-us/v<target>/fst-en-US.bin"            # the FST you pulled in Step 2
+cp data/gazetteer/anchor-lexicon-v1.json "$S/en-us/v<target>/"
+python3 scripts/publish-demo-assets-to-r2.py --src "$S" --dry-run   # then again WITHOUT --dry-run
+```
+1. **Upload the assets FIRST** (the 6 model-layer files), pointer LAST — never flip `releases.json` to a
+   version whose assets aren't up yet.
+2. **Server-side copy `wof-polygons.db`** v<prev>→v<target> — you can't fetch it over plain HTTP (range-only
+   / 403), so a boto3 `copy_object` within `nexus-public` (same `RCLONE_S3_PUBLIC_*` creds). Skip it only if
+   you accept `hasPolygons:false` (demo draws bbox rectangles, not crisp boundaries).
+3. **Flip `releases.json` LAST**: fetch the live one, prepend the new entry + set defaultVersion, re-upload:
+   ```bash
+   curl -s .../en-us/releases.json | jq --slurpfile e entry.json \
+     '.defaultVersion="v<target>" | .releases=($e + .releases)' > $S2/en-us/releases.json
+   python3 scripts/publish-demo-assets-to-r2.py --src $S2   # releases.json gets the mutable 60s cache
+   ```
+   The entry carries `hasFst/hasWofDb/hasAnchor/hasPolygons` (all true for a normal model bump).
+4. **Verify live**: `curl '.../releases.json?cb=$(date +%s)'` → defaultVersion=v<target>; download
+   `.../v<target>/model.onnx` + md5 (== the int8 md5); range-GET `wof-polygons.db` → 206.
+
+The candidate gazetteer (`gazetteer/<ADMIN_GAZETTEER_VERSION>/candidate.db`) is version-INDEPENDENT — a
+model repoint never touches it. `hasWofDb` stays true (it means "has admin resolution," which the
+version-independent candidate table always provides).
 
 ## Gotcha index (each cost real time on a prior cut)
 - **Code-only release burns the next number** without bumping the card → `npm view` + `git tag` FIRST.
@@ -150,5 +179,5 @@ R2 side is incomplete). This is its own task — surface it, don't assume it.
 - **Local npm is E401** → CI only; the OIDC path needs no token.
 - **The materialized `model.onnx` can read stale** (post-dry-run cleanup) → verify the PUBLISHED tarball.
 - **The FST is model-independent** → reuse the prior version's; don't rebuild it for a model bump.
-- **Demo ≠ npm** → `--set-default` + R2 + demo constant are a separate repoint.
+- **Demo ≠ npm** → the demo reads **R2** `releases.json` (not HF/npm), version is dynamic (no `docs/src/` constant); repoint = upload R2 assets + server-side polygons copy + flip the pointer last (Step 5).
 - **Stage binaries BESIDE the canonical** (new filename); the operator gates the actual swap = the merge + dispatch.
