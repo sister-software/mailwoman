@@ -53,8 +53,9 @@ import {
 	streetShardUrl,
 } from "../../shared/resources.tsx"
 
-import type { ReleasesManifest, StreetResolution } from "../../shared/demo-helpers.ts"
+import type { Calibrator, ReleasesManifest, StreetResolution } from "../../shared/demo-helpers.ts"
 import {
+	createCalibrator,
 	DEFAULT_ADDRESS,
 	DEFAULT_LOCALE,
 	EXAMPLE_ADDRESSES,
@@ -153,6 +154,12 @@ const DemoApp: React.FC = () => {
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
 	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
+	// Confidence calibration (#59): an OPT-IN view toggle. The raw softmax `conf=` is what the model
+	// emits; the calibrator (the version's isotonic table) maps it to an honest probability-of-correct.
+	// Default OFF so the demo's default presentation is unchanged; flipping it on lets a visitor watch
+	// the under-confident spans correct upward. Display-only — never touches the resolver's inputs.
+	const [calibrator, setCalibrator] = useState<Calibrator | null>(null)
+	const [calibrateConfidence, setCalibrateConfidence] = useState(false)
 
 	// ── Compare mode ──────────────────────────────────────────────────────
 	const [compareMode, setCompareMode] = useState(false)
@@ -192,6 +199,19 @@ const DemoApp: React.FC = () => {
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 	const [compareErrorMessage, setCompareErrorMessage] = useState<string | null>(null)
+
+	// Display-only calibrated view of the result: map each span's `conf=` through the calibrator when
+	// the toggle is on. A fresh copy — never mutates `result` (the resolver + compare read the raw nodes).
+	const displayResult = useMemo(() => {
+		if (!result || !calibrateConfidence || !calibrator) return result
+		return {
+			...result,
+			nodes: result.nodes.map((n) => ({
+				...n,
+				confidence: n.confidence != null ? calibrator(n.confidence) : n.confidence,
+			})),
+		}
+	}, [result, calibrateConfidence, calibrator])
 
 	// Parse stage labels depend on whether WOF lookup is available for the selected release.
 	const parseStageLabels = useMemo(
@@ -381,6 +401,7 @@ const DemoApp: React.FC = () => {
 				lookupPromiseRef.current = null
 				polygonDbRef.current = null
 				setResult(null)
+				setCalibrator(null)
 				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
 
 				const neuralWeb = await import("@mailwoman/neural-web")
@@ -431,6 +452,20 @@ const DemoApp: React.FC = () => {
 
 				setClassifier(cls as unknown as MailwomanClassifierLike)
 				anchorLookupRef.current = postcodeAnchorLookup ?? null
+
+				// Load the version's calibration table (opt-in display toggle). Tolerate a 404 — older
+				// bundles ship none, in which case the toggle stays hidden and the demo shows raw scores.
+				try {
+					const calRes = await fetch(assetUrl(DEFAULT_LOCALE, selectedVersion, "calibration.json"))
+					if (calRes.ok) {
+						const calTable = await calRes.json()
+						// Functional updater: setState would otherwise CALL a bare function arg as an updater.
+						if (!cancelled) setCalibrator(() => createCalibrator(calTable))
+					}
+				} catch {
+					// No calibration table for this version.
+				}
+
 				setLoadingProgress("")
 			} catch (error) {
 				if (cancelled) return
@@ -1237,9 +1272,33 @@ const DemoApp: React.FC = () => {
 				{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
 				{errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
 				{compareErrorMessage ? <p className={styles.error}>{compareErrorMessage}</p> : null}
+				{result && calibrator ? (
+					<label
+						style={{
+							display: "inline-flex",
+							alignItems: "center",
+							gap: 6,
+							fontSize: 13,
+							margin: "8px 0",
+							cursor: "pointer",
+							color: "var(--ifm-color-emphasis-800)",
+						}}
+						title="Map each span's raw softmax confidence to its calibrated probability of being correct (isotonic, held-out ECE 0.0055). The model is under-confident, so most spans shift upward."
+					>
+						<input
+							type="checkbox"
+							checked={calibrateConfidence}
+							onChange={(e) => setCalibrateConfidence(e.target.checked)}
+						/>
+						Calibrated confidence
+						<span style={{ color: "var(--ifm-color-emphasis-600)" }}>
+							{calibrateConfidence ? "— honest probability of correct" : "— raw softmax scores"}
+						</span>
+					</label>
+				) : null}
 				{result ? (
 					<ResultPanel
-						result={result}
+						result={displayResult ?? result}
 						selectedCandidateIndex={selectedCandidateIndex}
 						onSelectCandidate={setSelectedCandidateIndex}
 					/>
