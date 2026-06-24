@@ -199,6 +199,7 @@ async function main() {
 	const tallies: Record<string, Record<string, Tally>> = {} // system -> locale -> tally
 	for (const s of sys) tallies[s] = {}
 
+	let totalParses = 0 // global across locales — the periodic-GC trigger (see the loop body)
 	for (const cc of LOCALES) {
 		const file = `data/eval/external/oa-${cc}-coord-150.jsonl`
 		if (!existsSync(file)) {
@@ -244,6 +245,10 @@ async function main() {
 				record(tallies["pelias"]![cc]!, c ? haversineKm(c.lat, c.lon, truth.lat, truth.lon) : null)
 				await sleep(PELIAS_GRACE_MS) // graceful: stay well under geocode.earth's 10/s + 1000/day
 			}
+			// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
+			// (~380-parse SIGKILL on the lab box). Periodic forced GC reclaims it; run with `node
+			// --expose-gc` for long panels. No-op without the flag.
+			if (++totalParses % 50 === 0) (globalThis as { gc?: () => void }).gc?.()
 			if (++i % 10 === 0) console.error(`  ${i}/${rows.length}`)
 		}
 	}
