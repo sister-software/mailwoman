@@ -106,6 +106,31 @@ test.describe("Demo — resolution cascade", () => {
 		demo.console.assertNoFailEvents()
 	})
 
+	// -20j (2026-06-24a) adds postcodes for PT/PL/CZ/AU — absent from the prior -20h build, so these
+	// countries had no postcode tier on the demo at all. Each case feeds locality + postcode + country
+	// and grades the resolved coordinate against the city bbox: the cascade country-gates and the new
+	// postcode (or its locality) is reachable. Pairs with the v4.14.0 AU model (postcode-first format).
+	const newPostcodeCases: { name: string; query: string; lat: [number, number]; lon: [number, number] }[] = [
+		{ name: "Portuguese postcode 1000-001 → Lisbon", query: "Lisboa 1000-001, Portugal", lat: [38.6, 38.9], lon: [-9.3, -9.0] },
+		{ name: "Polish postcode 00-002 → Warsaw", query: "Warszawa 00-002, Poland", lat: [52.1, 52.4], lon: [20.9, 21.2] },
+		{ name: "Czech postcode 100 00 → Prague", query: "Praha 100 00, Czechia", lat: [49.9, 50.2], lon: [14.3, 14.6] },
+		{ name: "Australian postcode 2000 → Sydney", query: "Sydney NSW 2000, Australia", lat: [-34.0, -33.7], lon: [151.0, 151.4] },
+	]
+	for (const c of newPostcodeCases) {
+		test(`-20j postcode coverage — ${c.name}`, async ({ demo }) => {
+			await demo.goto(c.query)
+			await demo.submit()
+			const { resolved, markerCount } = await demo.readResult()
+			expect(markerCount).toBeGreaterThan(0)
+			const [lat, lon] = (resolved["coords"] ?? "").split(",").map((s) => Number.parseFloat(s.trim()))
+			expect(lat, `resolved lat ${lat} for "${c.query}"`).toBeGreaterThan(c.lat[0])
+			expect(lat).toBeLessThan(c.lat[1])
+			expect(lon, `resolved lon ${lon} for "${c.query}"`).toBeGreaterThan(c.lon[0])
+			expect(lon).toBeLessThan(c.lon[1])
+			demo.console.assertNoFailEvents()
+		})
+	}
+
 	test("White House default — surfaces no fail-pattern errors even when resolver returns nothing", async ({ demo }) => {
 		// Postcode 20500 has lat=0/lon=0 in WOF; cascade filters it; raw text + locality may also
 		// miss. The test isn't asserting the resolution succeeds — it's asserting that the

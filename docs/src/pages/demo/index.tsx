@@ -64,7 +64,12 @@ import {
 	runCascade,
 } from "../../shared/demo-helpers.ts"
 
-import { findRescoreCandidate } from "@mailwoman/resolver"
+// Imported from the `./span-rescore` SUBPATH, not the `@mailwoman/resolver` barrel: the barrel mixes
+// `export * from "@mailwoman/core/resolver"` with this re-export, and the demo also imports
+// `@mailwoman/core/*` subpaths elsewhere — the bare-barrel + subpath interleave (#481) leaves this
+// re-export unbound at runtime (`findRescoreCandidate is not a function`). The direct subpath gives it
+// its own binding, untouched by the barrel cycle.
+import { findRescoreCandidate } from "@mailwoman/resolver/span-rescore"
 
 import type { HttpvfsAddressPointLookup, HttpvfsInterpolator } from "../../shared/httpvfs-street.ts"
 import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"

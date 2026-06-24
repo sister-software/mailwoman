@@ -176,12 +176,25 @@ export function buildWorkspaceAliases() {
 		// imports from this barrel is `expandPlacetypeFilter` (the resolver-wof-* lookups + this demo);
 		// `createWofResolver` is never bundled. This alias is webpack-only — `tsc` still resolves the
 		// package barrel, so type-only imports (`CoincidentLocality`, `Ancestor`) keep working.
-		aliases["@mailwoman/resolver"] = resolveWorkspaceFile(coreDir, "resolver/types")
+		// EXACT match (`$`): the bare `@mailwoman/resolver` import resolves to core's types module, but a
+		// SUBPATH like `@mailwoman/resolver/span-rescore` must NOT — it has to reach the real package
+		// (aliased just below). Without the `$` this prefix-matched the subpath too, sending it to
+		// `core/resolver/types/span-rescore` → "Can't resolve" / `findRescoreCandidate is not a function`.
+		aliases["@mailwoman/resolver$"] = resolveWorkspaceFile(coreDir, "resolver/types")
 		// `objects` is a SINGLE-file entry (`core/objects.ts`, exports `./out/objects.js`), so it needs the
 		// flat-file resolver, not the dir-style loop above. Same staleness rationale as `pipeline`/`errors`.
 		aliases["@mailwoman/core/objects"] = resolveWorkspaceFile(coreDir, "objects")
 		aliases["@mailwoman/core/environment/load"] = resolveWorkspaceFile(coreDir, "environment/load")
 		aliases["@mailwoman/core/kysley/dialect"] = resolveWorkspaceFile(coreDir, "kysley/dialect")
+	}
+
+	// @mailwoman/resolver/span-rescore — the #370 rescue. The bare-barrel alias above points at CORE's
+	// types module (for `expandPlacetypeFilter`), which has no `findRescoreCandidate`; so the demo
+	// imports the rescue from this SUBPATH, aliased straight to the real resolver package's source
+	// (browser-safe: span-rescore.ts pulls only `@mailwoman/spatial` haversine + type-only core imports).
+	const resolverDir = resolveWorkspaceDir("@mailwoman/resolver")
+	if (resolverDir) {
+		aliases["@mailwoman/resolver/span-rescore"] = resolveWorkspaceFile(resolverDir, "span-rescore")
 	}
 
 	return aliases
