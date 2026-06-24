@@ -72,6 +72,7 @@ const MODEL = arg("model", "out/v191/model.onnx") // shipped v4.13.0 int8
 const LOCALES = arg("locales", "us,it,pt,pl,fr,au").split(",")
 const N = Number(arg("n", "80"))
 const MESSY = !process.argv.includes("--no-messy")
+const NO_NOMINATIM = process.argv.includes("--no-nominatim") // skip the competitor fetch (canary/regression use)
 const AGG = arg("agg", "min") as "node" | "min"
 const TAU_GRID = [0, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.92, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 0.995]
 const THRESH_KM = 25
@@ -216,7 +217,9 @@ async function collect(): Promise<ScoredRow[]> {
 				const c = resolvedResult(resolved as never)
 				const errKm = c ? haversineKm(c.lat, c.lon, truth.lat, truth.lon) : null
 
-				const { coord: nom, hit } = await queryNominatim(input, cc, cache)
+				const { coord: nom, hit } = NO_NOMINATIM
+					? { coord: null as Coord, hit: true }
+					: await queryNominatim(input, cc, cache)
 				const nomRight = nom ? haversineKm(nom.lat, nom.lon, truth.lat, truth.lon) <= THRESH_KM : false
 
 				append({
