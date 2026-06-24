@@ -238,6 +238,11 @@ async function collect(): Promise<ScoredRow[]> {
 				console.error(`  ⚠ row failed (${cc} "${input.slice(0, 40)}"): ${(e as Error).message}`)
 				append({ cc, mwAnswered: false, errKm: null, nodeConf: 0, minConf: 0, nomAnswered: false, nomRight: false })
 			}
+			// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims
+			// it (~380-parse SIGKILL on the lab box). A periodic forced GC reclaims it; run the harness
+			// with `node --expose-gc` to enable. No-op without the flag (the checkpoint+resume still
+			// covers a crash). Keyed off the GLOBAL row count, not the per-locale `i`.
+			if (rows.length % 50 === 0) (globalThis as { gc?: () => void }).gc?.()
 			if (i % 20 === 0) {
 				console.error(`  ${i}/${goldens.length}`)
 				writeFileSync(cachePath, JSON.stringify(cache))
