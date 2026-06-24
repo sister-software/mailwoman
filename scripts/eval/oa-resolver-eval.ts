@@ -729,6 +729,10 @@ async function main(): Promise<void> {
 	for (const row of rows) {
 		i++
 		if (i % 500 === 0) console.error(`  ${i}/${rows.length}`)
+		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
+		// (~380-parse SIGKILL on the lab box — it crashed the promotion-gate's de-order step tonight).
+		// Periodic forced GC reclaims it; run with `node --expose-gc`. No-op without the flag. (#787 pattern.)
+		if (i % 50 === 0) (globalThis as { gc?: () => void }).gc?.()
 
 		// --cascade: per-row per-state shards (the production geocode cascade); falls back to the
 		// single-state --address-points/--interpolation when --cascade is off (byte-stable default).

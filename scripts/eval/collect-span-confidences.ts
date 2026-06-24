@@ -168,6 +168,10 @@ async function main(): Promise<void> {
 	for (const row of rows) {
 		i++
 		if (i % 1000 === 0) console.error(`  ${i}/${rows.length}  (${records.length} gradable spans)`)
+		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
+		// (~380-parse SIGKILL on the lab box). Periodic forced GC reclaims it; run with `node
+		// --expose-gc` for full calibration sets (8000 rows). No-op without the flag. (#787 pattern.)
+		if (i % 50 === 0) (globalThis as { gc?: () => void }).gc?.()
 		let tree: AddressTree
 		try {
 			tree = await neural.parse(row.raw, parseOpts)
