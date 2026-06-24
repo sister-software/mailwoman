@@ -75,7 +75,7 @@ async function main() {
 	const { WofCandidateTableLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const resolver = createWofResolver(new WofCandidateTableLookup({ databasePath: CAND }) as never)
 	const model = await createScorer({
-		modelPath: "out/v191/model.onnx",
+		modelPath: arg("model", "out/v191/model.onnx"),
 		tokenizerPath: "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model",
 		modelCardPath: "neural-weights-en-us/model-card.json",
 		anchorLookupPath: "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json",
