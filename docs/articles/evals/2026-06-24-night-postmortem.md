@@ -19,6 +19,9 @@ The real publish ran **alphabetically + fail-fast**: 21 workspaces reached 4.14.
 ### SECONDARY (bonus): #370 rescore reach with the -20j gazetteer
 Measured the span-rescore lever (#370) with the `-20j` candidate gazetteer (CZ/PT/AU/AT postcodes) on clean EU+AU OA coords (demo resolver, n=40/locale, leak-bounded). The lever now reaches **beyond IT**: rescore lifts PT 80→83, PL 85→88, AT 70→73, CZ 93→95 @25km (IT/AU flat); aggregate **83→85%**, no-result 5→3%. The -20j postcodes give the rescore gate the coverage it lacked. **Validates re-staging `-20j` to R2 (#213)** — the lever + the data together close EU coverage. (Standing run vs Nominatim + the R2 re-stage remain, operator-gated.)
 
+### Validated: the shipped v192's calibration (the precision-lever thesis transfers)
+PRIMARY A's precision-lever was measured on v191; the now-shipped v192 is a from-scratch retrain carrying forward v4.13.0's isotonic table (card flags "re-fit recommended"). Bounded check (300-address subsample, 1357 spans, under the leak threshold): v192's **raw ECE 0.072** — the same under-confidence pattern as v4.13.0 (raw 0.060) — calibrates to **0.009 combined / 0.017 OA-only**, comparable to v4.13.0 (0.0055 / 0.0193). Since v192's raw confidence curve nearly matches v4.13.0's, the carried-forward table fits it; the routable-confidence thesis transfers to what's actually live. No re-fit needed (a fresh fit would be a marginal gain). Verify-before-verdict on the headline.
+
 ### Caught + fixed a broken published state
 The resolver bootstrap-publish (DeepSeek, from post-haversine-dedup code) had skewed against the pre-dedup `spatial@4.13.0` (no `haversineKm` export) → `mailwoman@4.13.0` was transiently uninstallable. The v4.14.0 release republished spatial+resolver+all consistently, restoring a working set. Final state: all 22 workspaces at 4.14.0, `mailwoman@4.14.0` installs + runs.
 
