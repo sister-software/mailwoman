@@ -191,46 +191,11 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 	return { tokens, changed }
 }
 
-/**
- * US leading-house-number repair (#723, admin-tail diagnostic). The model reads a big rural house
- * number as a ZIP and labels it `postcode` ("24588 Outback Trl, Hermosa SD" → [postcode] "24588",
- * no house_number) — so the situs key loses its number and the row falls back to the admin centroid
- * (~3.8pts of the 12% US admin tail).
- *
- * When a bare 5-digit `postcode` span LEADS the address, no `house_number` was decoded, and a
- * `street` follows it, relabel that span to `house_number`. A trailing postcode (if any) is
- * untouched.
- *
- * **US ONLY — the caller MUST gate this on the detected address system === "us".** A leading
- * 5-digit before a street is a _postcode_ in reversed-order FR ("75008 Rue de la Paix", the #560
- * shard), so applying it outside US would re-break FR reversed-order house numbers. The "a street
- * follows" check is a second guard (FR/DE postcode-first puts a LOCALITY after the leading 5-digit,
- * "08523 Plauen"), but the locale gate is the decisive one.
- */
-export function repairLeadingHouseNumber(text: string, input: readonly DecoderToken[]): RepairResult {
-	const tokens = input.map((t) => ({ ...t }))
-	// The model already placed a house number — leave the postcode alone.
-	if (tokens.some((t) => tagOf(t.label) === "house_number")) return { tokens, changed: 0 }
-	// The first contiguous postcode run.
-	const first = tokens.findIndex((t) => isPostcodeLabel(t.label))
-	if (first === -1) return { tokens, changed: 0 }
-	const run = [first]
-	for (let i = first + 1; i < tokens.length && isPostcodeLabel(tokens[i]!.label); i++) run.push(i)
-	// It must be a bare 5-digit (the rural-house-number-as-ZIP shape) — not ZIP+4 or alphanumeric.
-	const spanEnd = tokens[run[run.length - 1]!]!.end
-	if (!/^\d{5}$/.test(text.slice(tokens[first]!.start, spanEnd).trim())) return { tokens, changed: 0 }
-	// A street must FOLLOW the leading number (the house-number position). Rejects the postcode-first
-	// "5-digit + locality" shape; the US gate already rejects FR reversed-order.
-	const street = tokens.find((t) => tagOf(t.label) === "street")
-	if (!street || street.start < spanEnd) return { tokens, changed: 0 }
-	// Relabel the leading postcode run → house_number.
-	let changed = 0
-	run.forEach((i, k) => {
-		const label = (k === 0 ? "B-house_number" : "I-house_number") as DecoderToken["label"]
-		if (tokens[i]!.label !== label) {
-			tokens[i]!.label = label
-			changed++
-		}
-	})
-	return { tokens, changed }
-}
+// repairLeadingHouseNumber (#723) was removed 2026-06-24. It RELABELLED a leading 5-digit postcode →
+// house_number under conventions=auto (US) — an OVERRIDE that contradicted the model's own label,
+// which the project's repair discipline forbids (a repair may add spans on O-tokens or snap
+// boundaries, never re-classify a token from one entity to another). Net on the US golden set it was
+// −302 postcode / +16 house_number; an anchor-ablation probe showed the model is 100% correct on the
+// target slice once the binary postcode anchor (which fires on a leading number that is a valid ZIP
+// elsewhere) is removed. The disambiguation is being absorbed model-side: a region-congruence anchor
+// upgrade + augmented postcode-leading shards. See the 2026-06-24 postmortem + DeepSeek consult 019ef789.

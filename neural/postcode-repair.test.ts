@@ -11,7 +11,7 @@
 
 import type { BioLabel, DecoderToken } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
-import { repairLeadingHouseNumber, repairPostcodeLabels } from "./postcode-repair.js"
+import { repairPostcodeLabels } from "./postcode-repair.js"
 
 /** Build a char-aligned token. */
 function tok(piece: string, start: number, end: number, label: BioLabel): DecoderToken {
@@ -146,42 +146,5 @@ describe("repairPostcodeLabels", () => {
 		const { tokens: out, changed } = repairPostcodeLabels(text, tokens)
 		expect(changed).toBe(0)
 		expect(out.map((t) => t.label)).toEqual(tokens.map((t) => t.label))
-	})
-})
-
-describe("repairLeadingHouseNumber (#723, US-gated)", () => {
-	it("relabels a leading 5-digit postcode before a street → house_number (no house_number decoded)", () => {
-		const text = "24588 Outback Trl Hermosa SD"
-		const tokens = [
-			tok("24588", 0, 5, "B-postcode"),
-			tok("Outback", 6, 13, "B-street"),
-			tok("Trl", 14, 17, "I-street"),
-			tok("Hermosa", 18, 25, "B-locality"),
-			tok("SD", 26, 28, "B-region"),
-		]
-		const { tokens: out, changed } = repairLeadingHouseNumber(text, tokens)
-		expect(changed).toBe(1)
-		expect(out[0]!.label).toBe("B-house_number")
-	})
-
-	it("leaves the postcode alone when a house_number was already decoded", () => {
-		const text = "100 Main St 24588"
-		const tokens = [
-			tok("100", 0, 3, "B-house_number"),
-			tok("Main", 4, 8, "B-street"),
-			tok("St", 9, 11, "I-street"),
-			tok("24588", 12, 17, "B-postcode"),
-		]
-		const { tokens: out, changed } = repairLeadingHouseNumber(text, tokens)
-		expect(changed).toBe(0)
-		expect(out[3]!.label).toBe("B-postcode")
-	})
-
-	it("does NOT fire on the postcode-first shape (5-digit + locality, no street) — the FR/DE guard", () => {
-		const text = "08523 Plauen"
-		const tokens = [tok("08523", 0, 5, "B-postcode"), tok("Plauen", 6, 12, "B-locality")]
-		const { tokens: out, changed } = repairLeadingHouseNumber(text, tokens)
-		expect(changed).toBe(0)
-		expect(out[0]!.label).toBe("B-postcode")
 	})
 })

@@ -65,6 +65,24 @@ if [[ -d core/out ]] && [[ -n "$(find core -maxdepth 2 -name '*.ts' -newer core/
 	echo "⚠ core/ sources newer than core/out — run 'yarn compile' or the harness grades stale code" >&2
 fi
 
+# --- lore guard: artifact provenance ----------------------------------------
+# A FAIL is only trustworthy if you know WHICH bytes were graded. v1.9.2's first gate run
+# false-FAILed (us.postcode 86.9) because it graded a stale/mislabeled artifact — the real model
+# scored 97.5 under every config. Record md5 + the dynamic-quant fingerprint (count of
+# DynamicQuantizeLinear nodes; 0 = fp32, >0 = int8) of every graded artifact, and hard-assert the
+# obvious mislabels: --model must be fp32, --int8 must actually be quantized and differ from --model.
+dql() { grep -c -a "DynamicQuantizeLinear" "$1" 2>/dev/null || true; } # grep -c prints 0 + exits 1 on no-match; || true keeps the single "0"
+{
+	echo "graded at $(date -u +%FT%TZ)"
+	echo "MODEL  $(md5sum "$MODEL" | cut -d' ' -f1)  dql=$(dql "$MODEL")  $MODEL"
+	[[ -n "$INT8" ]] && echo "INT8   $(md5sum "$INT8" | cut -d' ' -f1)  dql=$(dql "$INT8")  $INT8"
+} | tee "$OUT_DIR/provenance.txt"
+[[ "$(dql "$MODEL")" == "0" ]] || { echo "✗ --model '$MODEL' carries int8 quant nodes — it is not an fp32 artifact" >&2; exit 2; }
+if [[ -n "$INT8" ]]; then
+	[[ "$(dql "$INT8")" != "0" ]] || { echo "✗ --int8 '$INT8' has no quant nodes — it is not a quantized artifact" >&2; exit 2; }
+	[[ "$(md5sum "$MODEL" | cut -d' ' -f1)" != "$(md5sum "$INT8" | cut -d' ' -f1)" ]] || { echo "✗ --model and --int8 are byte-identical — one is mislabeled" >&2; exit 2; }
+fi
+
 GAZ_ARGS=()
 if [[ "$(node -e "console.log(JSON.parse(require('fs').readFileSync('$GATE','utf8')).requires_gazetteer_lexicon === true)")" == "true" ]]; then
 	GAZ_ARGS=(--gazetteer-lexicon "$GAZ" --suppress-gaz-near-postcode)
