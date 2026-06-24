@@ -12,7 +12,7 @@
  *     --golden data/eval/external/oa-pt-coord-150.jsonl --default-country PT --n 30
  */
 import { decodeAsJson } from "@mailwoman/core/decoder"
-import { createWofResolver } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/resolver"
 import { readFileSync } from "node:fs"
 
 const arg = (k: string, d = "") => {

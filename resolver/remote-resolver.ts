@@ -21,8 +21,8 @@
  *   hierarchyCompletion, …) ride along.
  */
 
-import type { AddressTree } from "../decoder/types.js"
-import type { ResolveOpts, Resolver } from "./types.js"
+import type { AddressTree } from "@mailwoman/core/decoder"
+import type { ResolveOpts, Resolver } from "@mailwoman/core/resolver"
 
 /** `ResolveOpts` minus the non-serializable live lookup handles. What actually crosses the wire. */
 export type SerializableResolveOpts = Omit<ResolveOpts, "addressPoints" | "interpolation">

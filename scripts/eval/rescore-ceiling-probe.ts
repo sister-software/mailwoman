@@ -17,7 +17,7 @@
  *   Run: node --experimental-strip-types scripts/eval/rescore-ceiling-probe.ts [--model out/v191/model.onnx] [--n 150]
  */
 import { decodeAsJson } from "@mailwoman/core/decoder"
-import { createWofResolver } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/resolver"
 import { existsSync, readFileSync } from "node:fs"
 
 const arg = (k: string, d = "") => {

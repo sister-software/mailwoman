@@ -83,7 +83,7 @@ describeIfStack("GeocodeRouter — success path against real WOF + TX shards", (
 
 	test("RemoteResolver round-trips a parsed tree → street-level via /api/resolve-tree", async () => {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-		const { RemoteResolver } = await import("@mailwoman/core/resolver")
+		const { RemoteResolver } = await import("@mailwoman/resolver")
 		const server = buildApp().listen(0)
 		try {
 			const port = (server.address() as { port: number }).port

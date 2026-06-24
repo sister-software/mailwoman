@@ -27,7 +27,7 @@
  */
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
+import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { haversineKm, type GBT } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {

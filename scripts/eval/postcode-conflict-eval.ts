@@ -17,7 +17,7 @@
  *   admin-global-priority.db + postcode-locality-intl.db — coord-first on.)
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { createWofResolver } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/resolver"
 import { readFileSync, writeFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {

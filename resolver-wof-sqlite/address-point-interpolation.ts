@@ -35,7 +35,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import type { InterpolationLookup } from "@mailwoman/core/resolver"
+import type { InterpolationLookup } from "@mailwoman/resolver"
 
 import { haversineKm } from "./geo.js"
 import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "./interpolation.js"

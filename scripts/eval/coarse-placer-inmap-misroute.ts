@@ -29,7 +29,7 @@
 
 import { CoarsePlacer, inMapPosterior } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { createWofResolver, type ResolveOpts } from "@mailwoman/core/resolver"
+import { createWofResolver, type ResolveOpts } from "@mailwoman/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"

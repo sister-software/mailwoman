@@ -7,5 +7,5 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../core" }, { "path": "../resolver-wof-sqlite" }]
+	"references": [{ "path": "../core" }, { "path": "../resolver" }, { "path": "../resolver-wof-sqlite" }]
 }

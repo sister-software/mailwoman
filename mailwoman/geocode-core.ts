@@ -24,7 +24,7 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { hardCountryFor } from "@mailwoman/core/pipeline"
-import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } from "@mailwoman/core/resolver"
+import type { AddressPointLookup, InterpolationLookup, ResolveOpts, Resolver } from "@mailwoman/resolver"
 import { existsSync } from "node:fs"
 
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.js"

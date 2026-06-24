@@ -180,7 +180,7 @@ export interface PhraseGrouper {
  * satisfies this.
  */
 /**
- * Structural type for the FST gazetteer matcher, compatible with @mailwoman/resolver-wof-sqlite's
+ * Structural type for the FST gazetteer matcher, compatible with @mailwoman/core/resolver-wof-sqlite's
  * FstMatcher.
  */
 export interface FstMatcherLike {

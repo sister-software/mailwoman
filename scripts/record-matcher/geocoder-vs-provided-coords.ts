@@ -20,7 +20,7 @@
  *   [--max 1176] [--wof <admin.db>] [--data-root <dir>] [--out-md docs/articles/evals/<date>-...md]
  */
 
-import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
+import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { streamRows } from "@mailwoman/registry"

@@ -34,7 +34,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import type { ResolvedPlace } from "@mailwoman/core/resolver"
+import type { ResolvedPlace } from "@mailwoman/resolver"
 import { readFileSync, writeFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {

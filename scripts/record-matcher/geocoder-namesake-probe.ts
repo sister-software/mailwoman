@@ -13,7 +13,7 @@
  *   Run: node --experimental-strip-types scripts/record-matcher/geocoder-namesake-probe.ts
  */
 
-import { createWofResolver, type ResolverBackend } from "@mailwoman/core/resolver"
+import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 

@@ -23,7 +23,7 @@
  *   `bbox` field on {@link FindPlaceQuery}).
  */
 
-import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
+import { expandPlacetypeFilter } from "@mailwoman/resolver"
 import { DatabaseSync } from "node:sqlite"
 import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.js"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.js"

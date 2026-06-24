@@ -167,7 +167,7 @@ export function buildWorkspaceAliases() {
 		]) {
 			aliases[`@mailwoman/core/${sub}`] = resolveWorkspaceDirEntry(coreDir, sub)
 		}
-		// Barrel-bypass for @mailwoman/core/resolver — resolve it straight to its `types` module (where
+		// Barrel-bypass for @mailwoman/resolver — resolve it straight to its `types` module (where
 		// `expandPlacetypeFilter`, `DEFAULT_PLACETYPE_MAP`, and `PLACETYPE_FILTER_GROUPS` are DIRECTLY
 		// defined) instead of the package barrel `resolver/index.ts`, which RE-EXPORTS them from
 		// `./types.js`. In the demo's production web build, webpack mis-wired that re-exported binding on
@@ -176,7 +176,7 @@ export function buildWorkspaceAliases() {
 		// imports from this barrel is `expandPlacetypeFilter` (the resolver-wof-* lookups + this demo);
 		// `createWofResolver` is never bundled. This alias is webpack-only — `tsc` still resolves the
 		// package barrel, so type-only imports (`CoincidentLocality`, `Ancestor`) keep working.
-		aliases["@mailwoman/core/resolver"] = resolveWorkspaceFile(coreDir, "resolver/types")
+		aliases["@mailwoman/resolver"] = resolveWorkspaceFile(coreDir, "resolver/types")
 		// `objects` is a SINGLE-file entry (`core/objects.ts`, exports `./out/objects.js`), so it needs the
 		// flat-file resolver, not the dir-style loop above. Same staleness rationale as `pipeline`/`errors`.
 		aliases["@mailwoman/core/objects"] = resolveWorkspaceFile(coreDir, "objects")

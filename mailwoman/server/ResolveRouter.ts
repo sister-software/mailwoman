@@ -16,7 +16,7 @@
  */
 
 import { type AddressTree, decodeAsXml } from "@mailwoman/core/decoder"
-import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/core/resolver"
+import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
 import { existsSync } from "node:fs"
 import { createResolverBackend } from "../resolver-backend.js"

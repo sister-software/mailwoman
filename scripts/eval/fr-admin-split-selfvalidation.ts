@@ -30,7 +30,7 @@
  */
 
 import { type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
-import { createWofResolver } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/resolver"
 import type { ClassificationRecord } from "mailwoman"
 import { DatabaseSync } from "node:sqlite"
 import { v0RecordToTree } from "./v0-tree-adapter.ts"

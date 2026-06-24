@@ -21,7 +21,7 @@
  */
 
 import { type AddressNode, type AddressTree, decodeAsJson } from "@mailwoman/core/decoder"
-import { createWofResolver } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/resolver"
 import { readFileSync, writeFileSync } from "node:fs"
 
 const PLACETYPE_RANK: Record<string, number> = {

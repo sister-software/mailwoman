@@ -20,7 +20,7 @@
  *   webpack — that's what keeps the Docusaurus build warning-free.
  */
 
-import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
+import { expandPlacetypeFilter } from "@mailwoman/resolver"
 // Browser-safe subpath (fts.ts's only node:sqlite import is type-only; aliased in
 // docs/plugins/demo-assets/resolve.mjs) — the shared alias-bag parser keeps this backend's exact
 // tier identical to the Node + WASM resolvers'.

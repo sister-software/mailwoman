@@ -49,7 +49,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { createWofResolver } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/resolver"
 import { readFileSync } from "node:fs"
 
 // ---------------------------------------------------------------------------

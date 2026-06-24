@@ -20,7 +20,7 @@
 
 import type { Database } from "@sqlite.org/sqlite-wasm"
 
-import { expandPlacetypeFilter, type CoincidentLocality } from "@mailwoman/core/resolver"
+import { expandPlacetypeFilter, type CoincidentLocality } from "@mailwoman/resolver"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WofPlacetype } from "@mailwoman/resolver-wof-sqlite"
 // Browser-safe subpath import (fts.ts's only node:sqlite import is type-only) — the shared
 // alias-bag parser keeps this backend's exact tier byte-identical to the Node resolver's.

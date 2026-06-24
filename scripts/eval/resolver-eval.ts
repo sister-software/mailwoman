@@ -34,7 +34,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { createWofResolver } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/resolver"
 import { type ClassificationRecord, createAddressParser } from "mailwoman"
 import { readFileSync, writeFileSync } from "node:fs"
 import { v0RecordToTree } from "./v0-tree-adapter.ts"

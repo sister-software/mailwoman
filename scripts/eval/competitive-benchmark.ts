@@ -24,8 +24,8 @@
  *   Run: GEOCODE_EARTH_API_KEY=… node --experimental-strip-types scripts/eval/competitive-benchmark.ts \
  *          [--n 40] [--locales it,pt,pl,at,cz,fr,au] [--systems mailwoman,nominatim,pelias] [--out <md>]
  */
-import type { AddressNode, AddressTree } from "@mailwoman/core/resolver"
-import { createWofResolver } from "@mailwoman/core/resolver"
+import type { AddressNode, AddressTree } from "@mailwoman/resolver"
+import { createWofResolver } from "@mailwoman/resolver"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { setTimeout as sleep } from "node:timers/promises"
 

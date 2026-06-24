@@ -64,7 +64,7 @@ import {
 	runCascade,
 } from "../../shared/demo-helpers.ts"
 
-import { findRescoreCandidate } from "@mailwoman/core/resolver"
+import { findRescoreCandidate } from "@mailwoman/resolver"
 
 import type { HttpvfsAddressPointLookup, HttpvfsInterpolator } from "../../shared/httpvfs-street.ts"
 import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"

@@ -4904,6 +4904,7 @@ __metadata:
     "@mailwoman/neural-web": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
+    "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
     "@mdx-js/react": "npm:^3.1.1"
     "@playwright/test": "npm:^1.60.0"
@@ -5047,6 +5048,7 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/resolver": "workspace:*"
     kysely: "npm:^0.29.2"
   bin:
     mailwoman-wof-build-candidate: ./out/build-candidate-cli.js
@@ -5061,8 +5063,19 @@ __metadata:
   resolution: "@mailwoman/resolver-wof-wasm@workspace:resolver-wof-wasm"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@sqlite.org/sqlite-wasm": "npm:^3.53.0-build1"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/resolver@workspace:*, @mailwoman/resolver@workspace:resolver":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/resolver@workspace:resolver"
+  dependencies:
+    "@mailwoman/codex": "workspace:*"
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -17769,6 +17782,7 @@ __metadata:
     "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/registry": "workspace:*"
+    "@mailwoman/resolver": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     chalk: "npm:^5.6.2"
     change-case: "npm:^5.4.4"

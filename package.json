@@ -76,6 +76,7 @@
 	"workspaces": [
 		"mailwoman",
 		"core",
+		"resolver",
 		"spatial",
 		"tiger",
 		"cartographer",

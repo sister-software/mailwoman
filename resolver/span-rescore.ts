@@ -25,8 +25,9 @@
  *   backend has postcode coverage).
  */
 
-import type { AddressNode } from "../decoder/types.js"
-import type { ResolvedPlace, ResolverBackend } from "./types.js"
+import type { AddressNode } from "@mailwoman/core/decoder"
+import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import { haversine } from "@mailwoman/spatial"
 
 export interface SpanRescoreOptions {
 	/** ISO-3166 alpha-2 country to constrain the gazetteer match (the parse's detected/ default
@@ -71,17 +72,9 @@ export interface RescoreCandidate {
 	gated: boolean
 }
 
-// TODO(resolver-extraction): this is @mailwoman/spatial's `haversine`. core can't import spatial (spatial
-// → core cycle); fold into the shared package once the resolver is lifted out of core to its own root pkg.
-const haversineKm = (aLat: number, aLon: number, bLat: number, bLon: number): number => {
-	const R = 6371
-	const dLat = ((bLat - aLat) * Math.PI) / 180
-	const dLon = ((bLon - aLon) * Math.PI) / 180
-	const la1 = (aLat * Math.PI) / 180
-	const la2 = (bLat * Math.PI) / 180
-	const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(h))
-}
+// Thin scalar adapter over @mailwoman/spatial's haversine — the formula's one true home (#215).
+const haversineKm = (aLat: number, aLon: number, bLat: number, bLon: number): number =>
+	haversine({ lat: aLat, lng: aLon }, { lat: bLat, lng: bLon })
 
 /** Normalize for exact comparison: lowercase, strip diacritics + punctuation, collapse whitespace. */
 const norm = (s: string): string =>

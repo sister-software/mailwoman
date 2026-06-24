@@ -2,22 +2,15 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ *
+ *   The resolver TYPE CONTRACT — `ResolverBackend`, `Resolver`, `ResolveOpts`, `ResolvedPlace`, the
+ *   lookup interfaces, the placetype map. Pure types + tiny helpers; NO implementation, so `core` stays
+ *   a dependency-free leaf and `core/pipeline` can compose the resolver structurally without a cycle.
+ *   The IMPLEMENTATION (`createWofResolver`, `RemoteResolver`, span-rescore) lives in
+ *   `@mailwoman/core/resolver` (#215), which depends on this + `@mailwoman/spatial` + `@mailwoman/codex`.
  */
 
-export { RemoteResolver, serializableResolveOpts } from "./remote-resolver.js"
-export type {
-	RemoteResolverOpts,
-	ResolveTreeRequest,
-	ResolveTreeResponse,
-	SerializableResolveOpts,
-} from "./remote-resolver.js"
-export { createWofResolver } from "./resolve.js"
-// #370 span-rescore — the pure, backend-agnostic recovery (raw-token enumeration + exact same-country
-// gazetteer match + postcode gate). Exported so consumers off the `resolveTree` path — e.g. the demo's
-// browser httpvfs cascade — can reuse it instead of re-deriving. No node deps; browser-safe.
-export { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
-export type { RescoreCandidate, SpanRescoreOptions } from "./span-rescore.js"
-export { DEFAULT_PLACETYPE_MAP, PLACETYPE_FILTER_GROUPS, expandPlacetypeFilter } from "./types.js"
+export { DEFAULT_PLACETYPE_MAP, PLACETYPE_FILTER_GROUPS, expandPlacetypeFilter, isPlacetypeFallback } from "./types.js"
 export type {
 	AddressPointHit,
 	AddressPointLookup,

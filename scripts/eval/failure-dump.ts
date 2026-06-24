@@ -11,8 +11,8 @@
  *   Run: node --experimental-strip-types scripts/eval/failure-dump.ts \
  *          --candidate-db /mnt/playpen/mailwoman-data/wof/candidate-global-20i.db [--n 60] [--show 10]
  */
-import type { AddressNode, AddressTree } from "@mailwoman/core/resolver"
-import { createWofResolver } from "@mailwoman/core/resolver"
+import type { AddressNode, AddressTree } from "@mailwoman/resolver"
+import { createWofResolver } from "@mailwoman/resolver"
 import { existsSync, readFileSync } from "node:fs"
 
 const arg = (k: string, d = ""): string => {

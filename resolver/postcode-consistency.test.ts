@@ -12,9 +12,9 @@
 
 import { describe, expect, it } from "vitest"
 
-import type { AddressNode, AddressTree } from "../decoder/types.js"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver } from "./resolve.js"
-import type { ResolvedPlace, ResolverBackend } from "./types.js"
+import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 
 const PC = {
 	id: 900,

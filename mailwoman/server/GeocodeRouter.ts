@@ -16,13 +16,13 @@
  *   opens CA's situs shard once, not per row.
  */
 
-import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/core/resolver"
+import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
 import { existsSync } from "node:fs"
 import { createResolverBackend, resolveCandidateDbPath } from "../resolver-backend.js"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import type { ResolveOpts } from "@mailwoman/core/resolver"
+import type { ResolveOpts } from "@mailwoman/resolver"
 
 import {
 	geocodeAddress,

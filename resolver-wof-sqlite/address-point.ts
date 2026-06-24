@@ -17,7 +17,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import type { AddressPointHit, AddressPointLookup } from "@mailwoman/core/resolver"
+import type { AddressPointHit, AddressPointLookup } from "@mailwoman/resolver"
 
 import type { AddressPointTable } from "./address-point-schema.js"
 import { hasTable } from "./sqlite-utils.js"

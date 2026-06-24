@@ -19,7 +19,7 @@
  *   --wof-db
  *   /mnt/playpen/mailwoman-data/wof/admin-overture-eu.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db
  */
-import { createWofResolver } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/resolver"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { readFileSync } from "node:fs"

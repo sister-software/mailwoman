@@ -7,7 +7,7 @@
  *   lookup backend.
  *
  *   The interface is deliberately decoupled from any specific resolver implementation. The first
- *   shipped impl is `@mailwoman/resolver-wof-sqlite`, but the same contract supports a future
+ *   shipped impl is `@mailwoman/core/resolver-wof-sqlite`, but the same contract supports a future
  *   `RemoteResolver` adapter (Phase 4.4 — Pelias / BAN / Nominatim) without a public-API break.
  *
  *   See `docs/plan/phases/PHASE_4_3_resolver_integration.md` for the design intent.
@@ -17,7 +17,7 @@ import type { AddressTree, ComponentTag } from "../decoder/types.js"
 
 /**
  * One candidate place returned by a resolver. Mirrors the shape used by
- * `@mailwoman/resolver-wof-sqlite`'s `PlaceCandidate` — kept structurally compatible so a callsite
+ * `@mailwoman/core/resolver-wof-sqlite`'s `PlaceCandidate` — kept structurally compatible so a callsite
  * holding a `PlaceCandidate` can be passed where a `ResolvedPlace` is expected.
  */
 export interface ResolvedPlace {
@@ -72,7 +72,7 @@ export interface ResolvedPlace {
  * Pull-based contract for a single resolver query. The resolver knows nothing about `AddressTree` —
  * it just answers "what place is named X, optionally constrained by Y?"
  *
- * Structurally compatible with `PlaceLookup` from `@mailwoman/resolver-wof-sqlite` so the latter
+ * Structurally compatible with `PlaceLookup` from `@mailwoman/core/resolver-wof-sqlite` so the latter
  * satisfies this interface without an adapter shim.
  */
 export interface ResolverBackend {
@@ -416,7 +416,7 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
  *   candidate (which is QA-visible). Same exact-type preference applies.
  *
  * This table is the single source of truth for that expansion, shared by every lookup backend
- * (`@mailwoman/resolver-wof-sqlite`, `@mailwoman/resolver-wof-wasm`, and the demo's httpvfs lookup)
+ * (`@mailwoman/core/resolver-wof-sqlite`, `@mailwoman/core/resolver-wof-wasm`, and the demo's httpvfs lookup)
  * so the Node and browser resolvers can't drift. Keyed by the REQUESTED placetype. Placetypes
  * without an entry pass through unchanged — an explicit `placetype: "borough"` query stays narrow.
  */

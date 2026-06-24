@@ -476,7 +476,7 @@ function emptyParseTree(raw: string): ParseTree {
 }
 
 function placeIdPrefix(place: ResolvedPlace): string {
-	// Mirror the convention used by @mailwoman/resolver-wof-sqlite (`wof:<id>`). Resolver
+	// Mirror the convention used by @mailwoman/core/resolver-wof-sqlite (`wof:<id>`). Resolver
 	// backends that don't carry an implicit vendor in `id` get a neutral `place:` prefix.
 	return typeof place.id === "number" ? "wof" : "place"
 }

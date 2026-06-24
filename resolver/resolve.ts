@@ -12,7 +12,9 @@
  *   not the MA one.
  */
 
-import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "../decoder/types.js"
+import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@mailwoman/core/decoder"
+import { isStreetDirectionalToken } from "@mailwoman/codex/us"
+import { haversine } from "@mailwoman/spatial"
 import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
 import {
 	type AddressPointLookup,
@@ -25,7 +27,7 @@ import {
 	type ResolveOpts,
 	type Resolver,
 	type ResolverBackend,
-} from "./types.js"
+} from "@mailwoman/core/resolver"
 
 /**
  * Build a `Resolver` backed by a `ResolverBackend`. The backend can be any concrete impl
@@ -139,27 +141,8 @@ function assembleStreetValue(streetNode: AddressNode, directionalUnit?: AddressN
  * into the street lookup key by {@link assembleStreetValue}; the situs/interp lookup normalizer
  * expands the abbreviation ("ne" → "northeast") so the shard's full street name matches.
  */
-const STREET_DIRECTIONAL_UNITS: ReadonlySet<string> = new Set([
-	"n",
-	"s",
-	"e",
-	"w",
-	"ne",
-	"nw",
-	"se",
-	"sw",
-	"north",
-	"south",
-	"east",
-	"west",
-	"northeast",
-	"northwest",
-	"southeast",
-	"southwest",
-])
-function isDirectionalUnit(value: string): boolean {
-	return STREET_DIRECTIONAL_UNITS.has(value.trim().toLowerCase().replace(/\./g, ""))
-}
+// The 8 USPS cardinals/intercardinals (abbrev or name) — @codex/us owns the canonical table (#215).
+const isDirectionalUnit = (value: string): boolean => isStreetDirectionalToken(value.replace(/\./g, ""))
 
 /**
  * Address-point tier (#476): find `street` + `house_number` in the tree (first occurrence,
@@ -279,17 +262,9 @@ async function applySpanRescore(
 	roots.push(node)
 }
 
-// TODO(resolver-extraction): this is @mailwoman/spatial's `haversine`. core can't import spatial (spatial
-// → core cycle); fold into the shared package once the resolver is lifted out of core to its own root pkg.
-const haversineKm = (aLat: number, aLon: number, bLat: number, bLon: number): number => {
-	const R = 6371
-	const dLat = ((bLat - aLat) * Math.PI) / 180
-	const dLon = ((bLon - aLon) * Math.PI) / 180
-	const la1 = (aLat * Math.PI) / 180
-	const la2 = (bLat * Math.PI) / 180
-	const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(h))
-}
+// Thin scalar adapter over @mailwoman/spatial's haversine — the formula's one true home (#215).
+const haversineKm = (aLat: number, aLon: number, bLat: number, bLon: number): number =>
+	haversine({ lat: aLat, lng: aLon }, { lat: bLat, lng: bLon })
 
 /** A resolved node carries a real coordinate (placeId set + non-zero lat/lon). */
 function isResolvedWithCoord(n: AddressNode): boolean {
