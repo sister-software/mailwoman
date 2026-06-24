@@ -13,6 +13,7 @@
  */
 import type { AddressNode, AddressTree } from "@mailwoman/resolver"
 import { createWofResolver } from "@mailwoman/resolver"
+import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
 
 const arg = (k: string, d = ""): string => {
@@ -29,15 +30,6 @@ const SHOW = Number(arg("show", "10")) // misses to print per locale
 const LOCALES = arg("locales", "it,pt,pl,at,cz,fr,au").split(",")
 const PC_CONSISTENCY = process.argv.includes("--postcode-consistency") // #370 Lever A probe
 
-const haversineKm = (a: { lat: number; lon: number }, b: { lat: number; lon: number }): number => {
-	const R = 6371
-	const dLat = ((b.lat - a.lat) * Math.PI) / 180
-	const dLon = ((b.lon - a.lon) * Math.PI) / 180
-	const h =
-		Math.sin(dLat / 2) ** 2 +
-		Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(h))
-}
 const PLACETYPE_RANK: Record<string, number> = {
 	country: 0,
 	region: 1,
@@ -137,7 +129,7 @@ async function main() {
 				postcodeConsistency: PC_CONSISTENCY,
 			})
 			const { best, nodes } = walk(r as never)
-			const dist = best ? haversineKm(best, truth) : null
+			const dist = best ? haversineKm(best.lat, best.lon, truth.lat, truth.lon) : null
 			if (dist !== null && dist <= 25) continue // hit — skip
 			const cat = classify(nodes, best, dist)
 			tally[cat] = (tally[cat] ?? 0) + 1

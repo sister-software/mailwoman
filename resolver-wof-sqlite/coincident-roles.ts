@@ -38,6 +38,7 @@
  *   be wired as a post-step of the main `scripts/build-unified-wof.ts`.
  */
 
+import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseSync } from "node:sqlite"
 
 export const COINCIDENT_ROLES_TABLE = "coincident_roles"
@@ -74,17 +75,6 @@ export interface BuildCoincidentRolesResult {
 	rowCount: number
 	byCountry: Record<string, number>
 	durationMs: number
-}
-
-/** Great-circle distance in km between two WGS-84 points. */
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-	const R = 6371
-	const dLat = ((lat2 - lat1) * Math.PI) / 180
-	const dLon = ((lon2 - lon1) * Math.PI) / 180
-	const s =
-		Math.sin(dLat / 2) ** 2 +
-		Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(s))
 }
 
 interface CandidateRow {

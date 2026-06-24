@@ -18,27 +18,13 @@
  *   The R*Tree index name + schema are centralized in `fts.ts` (alongside the FTS5 build).
  */
 
-const EARTH_RADIUS_KM = 6371
+// haversineKm is the canonical implementation in @mailwoman/spatial; re-exported so this package's
+// readers keep importing it from "./geo.js" (the spatial dep is transitive via @mailwoman/resolver).
+export { haversineKm } from "@mailwoman/spatial"
 
 /** WGS-84 degrees → radians. */
 function toRad(deg: number): number {
 	return (deg * Math.PI) / 180
-}
-
-/**
- * Great-circle distance between two (lat, lon) points in kilometers.
- *
- * Haversine formula — accurate to ~0.5% over arbitrary distances on Earth. Good enough for a
- * geocoding-ranking score; we'd pick Vincenty if we needed sub-meter accuracy at antipodes.
- */
-export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
-	const dLat = toRad(bLat - aLat)
-	const dLon = toRad(bLon - aLon)
-	const lat1 = toRad(aLat)
-	const lat2 = toRad(bLat)
-
-	const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2
-	return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)))
 }
 
 /**

@@ -11,6 +11,7 @@
  *   Run: node --experimental-strip-types scripts/eval/postcode-vs-locality-probe.ts\
  *   --db <candidate.db> --eval /tmp/reg/eu-eval-at.jsonl --country AT
  */
+import { haversineKm } from "@mailwoman/spatial"
 import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
@@ -26,13 +27,6 @@ if (!a.db || !a.eval || !a.country) {
 }
 const CC = a.country.toUpperCase()
 
-function haversineKm(la1: number, lo1: number, la2: number, lo2: number): number {
-	const R = 6371,
-		d = Math.PI / 180
-	const s =
-		Math.sin(((la2 - la1) * d) / 2) ** 2 + Math.cos(la1 * d) * Math.cos(la2 * d) * Math.sin(((lo2 - lo1) * d) / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(s))
-}
 function pct(xs: number[], p: number): number {
 	if (!xs.length) return NaN
 	const s = [...xs].sort((x, y) => x - y)

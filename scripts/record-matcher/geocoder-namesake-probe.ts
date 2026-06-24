@@ -15,6 +15,7 @@
 
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { haversineKm } from "@mailwoman/spatial"
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 function arg(name: string, fallback = ""): string {
@@ -41,15 +42,6 @@ const TX_BBOX = { latMin: 25.8, latMax: 36.6, lonMin: -106.7, lonMax: -93.4 }
 const inTexas = (lat: number, lon: number) =>
 	lat >= TX_BBOX.latMin && lat <= TX_BBOX.latMax && lon >= TX_BBOX.lonMin && lon <= TX_BBOX.lonMax
 
-function haversineKm(a: [number, number], b: [number, number]): number {
-	const R = 6371
-	const dLat = ((b[0] - a[0]) * Math.PI) / 180
-	const dLon = ((b[1] - a[1]) * Math.PI) / 180
-	const lat1 = (a[0] * Math.PI) / 180
-	const lat2 = (b[0] * Math.PI) / 180
-	const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(h))
-}
 
 async function main(): Promise<void> {
 	console.error("[A] building the geocoder…")
@@ -80,7 +72,7 @@ async function main(): Promise<void> {
 				continue
 			}
 			const ok = inTexas(g.lat, g.lon)
-			const km = haversineKm(c.tx, [g.lat, g.lon])
+			const km = haversineKm(c.tx[0], c.tx[1], g.lat, g.lon)
 			if (!ok) wrongRegion++
 			console.log(
 				`  ${ok ? "✓" : "✗ WRONG-REGION"}  "${variant}"  → ${g.lat.toFixed(3)},${g.lon.toFixed(3)} ` +

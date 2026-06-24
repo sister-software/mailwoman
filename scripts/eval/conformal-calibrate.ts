@@ -50,6 +50,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/resolver"
+import { haversine } from "@mailwoman/spatial"
 import { readFileSync } from "node:fs"
 
 // ---------------------------------------------------------------------------
@@ -59,19 +60,6 @@ import { readFileSync } from "node:fs"
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
-
-// ---------------------------------------------------------------------------
-// Haversine (in METERS for the street-level tier)
-// ---------------------------------------------------------------------------
-
-function haversineM(lat1: number, lon1: number, lat2: number, lon2: number): number {
-	const R = 6_371_000 // metres
-	const p = Math.PI / 180
-	const dLat = (lat2 - lat1) * p
-	const dLon = (lon2 - lon1) * p
-	const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * p) * Math.cos(lat2 * p) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(a))
 }
 
 // ---------------------------------------------------------------------------
@@ -244,7 +232,7 @@ async function main(): Promise<void> {
 				nNoStreetHit++
 				continue
 			}
-			const errorM = haversineM(hit.lat, hit.lon, row.lat, row.lon)
+			const errorM = haversine({ lat: hit.lat, lng: hit.lon }, { lat: row.lat, lng: row.lon }, "meters")
 			resolved.push({ errorM, claimedRadiusM: hit.claimedRadiusM, tier: hit.tier })
 		} catch {
 			nNoStreetHit++

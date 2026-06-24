@@ -27,18 +27,10 @@ import type { WofDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
 import { buildPlaceSearchFts } from "@mailwoman/resolver-wof-sqlite/fts"
 import { createUnifiedIndexes, populateAncestors } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { haversineKm } from "@mailwoman/spatial"
 import { copyFileSync, existsSync, readFileSync, unlinkSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { ingestOvertureDivisions } from "./build-unified-wof.ts"
-
-function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
-	const R = 6371
-	const toRad = (d: number): number => (d * Math.PI) / 180
-	const dLat = toRad(bLat - aLat)
-	const dLon = toRad(bLon - aLon)
-	const x = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(x))
-}
 
 /**
  * Set `place_population` for Overture-backfilled cities from a GeoNames cities dump (tab-separated:

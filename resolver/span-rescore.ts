@@ -27,7 +27,7 @@
 
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
-import { haversine } from "@mailwoman/spatial"
+import { haversineKm } from "@mailwoman/spatial"
 
 export interface SpanRescoreOptions {
 	/** ISO-3166 alpha-2 country to constrain the gazetteer match (the parse's detected/ default
@@ -71,10 +71,6 @@ export interface RescoreCandidate {
 	 */
 	gated: boolean
 }
-
-// Thin scalar adapter over @mailwoman/spatial's haversine — the formula's one true home (#215).
-const haversineKm = (aLat: number, aLon: number, bLat: number, bLon: number): number =>
-	haversine({ lat: aLat, lng: aLon }, { lat: bLat, lng: bLon })
 
 /** Normalize for exact comparison: lowercase, strip diacritics + punctuation, collapse whitespace. */
 const norm = (s: string): string =>

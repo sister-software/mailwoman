@@ -26,6 +26,7 @@
  */
 import type { AddressNode, AddressTree } from "@mailwoman/resolver"
 import { createWofResolver } from "@mailwoman/resolver"
+import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { setTimeout as sleep } from "node:timers/promises"
 
@@ -100,15 +101,6 @@ function mostSpecificCoord(tree: AddressTree): { lat: number; lon: number } | nu
 	}
 	for (const r of tree.roots) visit(r)
 	return best ? { lat: best.lat, lon: best.lon } : null
-}
-function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
-	const R = 6371
-	const dLat = ((b.lat - a.lat) * Math.PI) / 180
-	const dLon = ((b.lon - a.lon) * Math.PI) / 180
-	const h =
-		Math.sin(dLat / 2) ** 2 +
-		Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(h))
 }
 const p50 = (xs: number[]): number => (xs.length ? [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)]! : NaN)
 
@@ -229,24 +221,27 @@ async function main() {
 				// resolveTree decorates in place — clone per config so base + lever are independent.
 				const base = await resolver.resolveTree(structuredClone(tree) as never, { defaultCountry: cc.toUpperCase() })
 				const cBase = mostSpecificCoord(base as never)
-				record(tallies["mailwoman"]![cc]!, cBase ? haversineKm(cBase, truth) : null)
+				record(tallies["mailwoman"]![cc]!, cBase ? haversineKm(cBase.lat, cBase.lon, truth.lat, truth.lon) : null)
 				if (RESCORE) {
 					const lever = await resolver.resolveTree(structuredClone(tree) as never, {
 						defaultCountry: cc.toUpperCase(),
 						spanRescore: true,
 					})
 					const cLever = mostSpecificCoord(lever as never)
-					record(tallies["mailwoman+rescore"]![cc]!, cLever ? haversineKm(cLever, truth) : null)
+					record(
+						tallies["mailwoman+rescore"]![cc]!,
+						cLever ? haversineKm(cLever.lat, cLever.lon, truth.lat, truth.lon) : null
+					)
 				}
 			}
 			if (sys.includes("nominatim")) {
 				const c = await queryNominatim(input, cc)
-				record(tallies["nominatim"]![cc]!, c ? haversineKm(c, truth) : null)
+				record(tallies["nominatim"]![cc]!, c ? haversineKm(c.lat, c.lon, truth.lat, truth.lon) : null)
 				await sleep(1100) // respect Nominatim's ~1 req/s policy
 			}
 			if (pelias) {
 				const c = await pelias(input, cc)
-				record(tallies["pelias"]![cc]!, c ? haversineKm(c, truth) : null)
+				record(tallies["pelias"]![cc]!, c ? haversineKm(c.lat, c.lon, truth.lat, truth.lon) : null)
 				await sleep(PELIAS_GRACE_MS) // graceful: stay well under geocode.earth's 10/s + 1000/day
 			}
 			if (++i % 10 === 0) console.error(`  ${i}/${rows.length}`)

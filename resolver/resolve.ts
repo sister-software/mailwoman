@@ -14,7 +14,7 @@
 
 import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@mailwoman/core/decoder"
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
-import { haversine } from "@mailwoman/spatial"
+import { haversineKm } from "@mailwoman/spatial"
 import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
 import {
 	type AddressPointLookup,
@@ -261,10 +261,6 @@ async function applySpanRescore(
 	node.metadata = { ...(node.metadata ?? {}), span_rescore: true, rescore_gated: hit.gated }
 	roots.push(node)
 }
-
-// Thin scalar adapter over @mailwoman/spatial's haversine — the formula's one true home (#215).
-const haversineKm = (aLat: number, aLon: number, bLat: number, bLon: number): number =>
-	haversine({ lat: aLat, lng: aLon }, { lat: bLat, lng: bLon })
 
 /** A resolved node carries a real coordinate (placeId set + non-zero lat/lon). */
 function isResolvedWithCoord(n: AddressNode): boolean {

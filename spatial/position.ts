@@ -241,19 +241,9 @@ const RADII = {
  *
  * @returns The distance between the two points in the specified unit.
  */
-export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: EarthRadiusUnit = "km"): number {
-	const p1 = GeoPoint.from(point1)
-	const p2 = GeoPoint.from(point2)
-
-	if (!p1 || !p2) return NaN
-
-	const lat1 = p1.latitude
-	const lon1 = p1.longitude
-	const lat2 = p2.latitude
-	const lon2 = p2.longitude
-
+/** Shared great-circle math (no sentinel handling). `unit` selects the Earth radius. */
+function greatCircle(lat1: number, lon1: number, lat2: number, lon2: number, unit: EarthRadiusUnit): number {
 	const dLat = (lat2 - lat1) * ConversionFactor.DegreesToRadians
-
 	const dLon = (lon2 - lon1) * ConversionFactor.DegreesToRadians
 
 	const a =
@@ -262,8 +252,29 @@ export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: Ea
 			Math.cos(lat2 * ConversionFactor.DegreesToRadians) *
 			Math.pow(Math.sin(dLon / 2), 2)
 
-	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-	const radius = RADII[unit]
+	return RADII[unit] * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
 
-	return radius * c
+export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: EarthRadiusUnit = "km"): number {
+	const p1 = GeoPoint.from(point1)
+	const p2 = GeoPoint.from(point2)
+
+	if (!p1 || !p2) return NaN
+
+	return greatCircle(p1.latitude, p1.longitude, p2.latitude, p2.longitude, unit)
+}
+
+/**
+ * Great-circle distance in kilometres between two lat/lon pairs given as raw scalars. The formula's
+ * one true home — every resolver + eval consumer of the `(aLat, aLon, bLat, bLon)` shape imports this
+ * instead of re-declaring it.
+ *
+ * Unlike {@link haversine}, this is pure math with NO Null-Island sentinel: `(0, 0)` is the Gulf of
+ * Guinea — a real point, not "missing coordinate". That sentinel convention belongs to the
+ * `GeoPointInput` object form (where a 0/0 input means "no coordinate"), not to a raw scalar distance.
+ *
+ * @category Position
+ */
+export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
+	return greatCircle(aLat, aLon, bLat, bLon, "km")
 }

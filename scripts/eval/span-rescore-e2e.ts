@@ -15,6 +15,7 @@
  *   Run: node --experimental-strip-types scripts/eval/span-rescore-e2e.ts [--n 150]
  */
 import { createWofResolver } from "@mailwoman/resolver"
+import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
 
 const arg = (k: string, d = "") => {
@@ -58,15 +59,6 @@ const LOCALES: [string, string][] = [
 	["AU", "data/eval/external/oa-au-coord-150.jsonl"],
 ]
 
-const haversineKm = (aLat: number, aLon: number, bLat: number, bLon: number): number => {
-	const R = 6371
-	const dLat = ((bLat - aLat) * Math.PI) / 180
-	const dLon = ((bLon - aLon) * Math.PI) / 180
-	const la1 = (aLat * Math.PI) / 180
-	const la2 = (bLat * Math.PI) / 180
-	const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(h))
-}
 
 type N9 = { tag?: string; lat?: number; lon?: number; placeId?: string; children?: N9[] }
 const RANK: Record<string, number> = { house_number: 5, street: 4, locality: 3, city: 3, region: 2, country: 1 }

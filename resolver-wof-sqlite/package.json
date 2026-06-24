@@ -32,6 +32,7 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
 		"kysely": "^0.29.2"
 	},
 	"files": [

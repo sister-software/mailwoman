@@ -15,6 +15,7 @@
  */
 import type { AddressNode, AddressTree } from "@mailwoman/resolver"
 import { createWofResolver } from "@mailwoman/resolver"
+import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
 
 const arg = (k: string, d = ""): string => {
@@ -37,15 +38,6 @@ function toCanonical(raw: string): string {
 	return raw
 }
 
-const haversineKm = (a: { lat: number; lon: number }, b: { lat: number; lon: number }): number => {
-	const R = 6371
-	const dLat = ((b.lat - a.lat) * Math.PI) / 180
-	const dLon = ((b.lon - a.lon) * Math.PI) / 180
-	const h =
-		Math.sin(dLat / 2) ** 2 +
-		Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(h))
-}
 const RANK: Record<string, number> = {
 	country: 0,
 	region: 1,
@@ -101,13 +93,13 @@ async function main() {
 		const native = bestCoord(
 			(await resolver.resolveTree((await model.parse(row.raw, { postcodeRepair: true })) as never, opts)) as never
 		)
-		if (native && haversineKm(truth, native) <= 25) nativeHit++
+		if (native && haversineKm(truth.lat, truth.lon, native.lat, native.lon) <= 25) nativeHit++
 		const canon = toCanonical(row.raw)
 		if (canon !== row.raw) reordered++
 		const c = bestCoord(
 			(await resolver.resolveTree((await model.parse(canon, { postcodeRepair: true })) as never, opts)) as never
 		)
-		if (c && haversineKm(truth, c) <= 25) canonHit++
+		if (c && haversineKm(truth.lat, truth.lon, c.lat, c.lon) <= 25) canonHit++
 	}
 	const pct = (x: number) => ((100 * x) / Math.max(n, 1)).toFixed(0)
 	console.log(`\nAU word-order ceiling (n=${n}, ${reordered} rows reordered to canonical):`)

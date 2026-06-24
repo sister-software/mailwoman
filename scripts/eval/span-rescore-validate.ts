@@ -26,6 +26,7 @@
  *   Run: node --experimental-strip-types scripts/eval/span-rescore-validate.ts [--n 150]
  */
 import { createWofResolver } from "@mailwoman/resolver"
+import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
 
 const arg = (k: string, d = "") => {
@@ -51,15 +52,6 @@ const LOCALES: [string, string][] = [
 type N9 = { placeId?: string; children?: unknown[] }
 const hasWof = (n: N9): boolean => !!n.placeId?.startsWith("wof:") || ((n.children as N9[]) ?? []).some(hasWof)
 
-const haversineKm = (aLat: number, aLon: number, bLat: number, bLon: number): number => {
-	const R = 6371
-	const dLat = ((bLat - aLat) * Math.PI) / 180
-	const dLon = ((bLon - aLon) * Math.PI) / 180
-	const la1 = (aLat * Math.PI) / 180
-	const la2 = (bLat * Math.PI) / 180
-	const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(h))
-}
 const pctile = (xs: number[], p: number): number => {
 	if (!xs.length) return NaN
 	const s = [...xs].sort((a, b) => a - b)

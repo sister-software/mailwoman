@@ -18,23 +18,17 @@
  *   refinement.
  */
 
+import { haversineKm as greatCircleKm } from "@mailwoman/spatial"
 import type { LatLon } from "./blocking.js"
 import type { Comparison, ComparisonLevel } from "./fellegi-sunter.js"
 
-/** Mean Earth radius in km (IUGG). */
-const EARTH_RADIUS_KM = 6371.0088
-
-/** Great-circle (haversine) distance in km between two coordinates. */
-export function haversineKm(a: LatLon, b: LatLon): number {
-	const toRad = (degrees: number): number => (degrees * Math.PI) / 180
-	const dLat = toRad(b.latitude - a.latitude)
-	const dLon = toRad(b.longitude - a.longitude)
-	const lat1 = toRad(a.latitude)
-	const lat2 = toRad(b.latitude)
-
-	const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2
-	return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)))
-}
+/**
+ * Great-circle (haversine) distance in km between two coordinates. The formula's one true home is
+ * `@mailwoman/spatial`; this is a thin domain-typed adapter from `match`'s `LatLon`
+ * ({ latitude, longitude }) onto the canonical scalar helper — not a second implementation.
+ */
+export const haversineKm = (a: LatLon, b: LatLon): number =>
+	greatCircleKm(a.latitude, a.longitude, b.latitude, b.longitude)
 
 /**
  * A geo-distance comparison: bucket the great-circle distance between two records' coordinates into

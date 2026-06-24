@@ -22,6 +22,7 @@
 import { createWofResolver } from "@mailwoman/resolver"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { haversineKm } from "@mailwoman/spatial"
 import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
@@ -51,14 +52,6 @@ if (!a.eval || !a.country || !a["wof-db"]) {
 	process.exit(1)
 }
 
-function haversineKm(la1: number, lo1: number, la2: number, lo2: number): number {
-	const R = 6371
-	const dLa = ((la2 - la1) * Math.PI) / 180
-	const dLo = ((lo2 - lo1) * Math.PI) / 180
-	const s =
-		Math.sin(dLa / 2) ** 2 + Math.cos((la1 * Math.PI) / 180) * Math.cos((la2 * Math.PI) / 180) * Math.sin(dLo / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(s))
-}
 function pct(sorted: number[], p: number): number {
 	if (sorted.length === 0) return NaN
 	return sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))]!

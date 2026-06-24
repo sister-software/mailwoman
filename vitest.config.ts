@@ -34,6 +34,9 @@ export default defineConfig({
 			// coarse-placer (#244) is a single-file subpath (no index.ts), so the generic core/$1/index.ts
 			// rule below would mis-resolve it. Map it to the file directly.
 			{ find: "@mailwoman/core/coarse-placer", replacement: resolve(here, "core/coarse-placer/coarse-placer.ts") },
+			// `objects` is a bare file (core/objects.ts), so it must beat the generic dir rule below — a
+			// transitive import (e.g. @mailwoman/spatial → @mailwoman/core/objects) hits this from any test.
+			{ find: /^@mailwoman\/core\/objects$/, replacement: resolve(here, "core/objects.ts") },
 			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolve(here, "core/$1/index.ts") },
 			{ find: /^@mailwoman\/core$/, replacement: resolve(here, "core/index.ts") },
 			// Sibling workspaces.
@@ -48,6 +51,8 @@ export default defineConfig({
 			{ find: /^@mailwoman\/record$/, replacement: resolve(here, "record/index.ts") },
 			{ find: /^@mailwoman\/match\/(.+)$/, replacement: resolve(here, "match/$1.ts") },
 			{ find: /^@mailwoman\/match$/, replacement: resolve(here, "match/index.ts") },
+			{ find: /^@mailwoman\/spatial\/sdk$/, replacement: resolve(here, "spatial/sdk/index.ts") },
+			{ find: /^@mailwoman\/spatial$/, replacement: resolve(here, "spatial/index.ts") },
 			{ find: /^@mailwoman\/registry\/(.+)$/, replacement: resolve(here, "registry/$1.ts") },
 			{ find: /^@mailwoman\/registry$/, replacement: resolve(here, "registry/index.ts") },
 			{ find: "@mailwoman/neural/tokenizer", replacement: resolve(here, "neural/tokenizer.ts") },
