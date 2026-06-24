@@ -75,7 +75,10 @@ function collect(tag: "fp32" | "int8"): Record<string, number | undefined> {
 	const pobox = maybeRead(`${tag}-pobox.md`)
 	const intersection = maybeRead(`${tag}-intersection.md`)
 	const deorder = read(`${tag}-deorder.md`)
-	const deNative = deorder.match(/native DE\s*\|\s*[\d.]+%\s*\|\s*([\d.]+)%/)
+	// Capture the anchor-ON native-DE locality (the gated value) regardless of the anchor-OFF cell —
+	// the OFF cell is a diagnostic and is empty when the zeroed-anchor run can't satisfy the card's
+	// `anchor.required` strict scorer (`[^|]*` tolerates that empty cell instead of false-failing).
+	const deNative = deorder.match(/native DE\s*\|[^|]*\|\s*([\d.]+)%/)
 	// Locale summary row: `| us | <n> | <macro>% | <micro>% | <exact>% |`
 	const micro = pl.match(/\|\s*us\s*\|\s*\d+\s*\|\s*[\d.]+%\s*\|\s*([\d.]+)%/)
 	return {

@@ -36,8 +36,10 @@ run() {
   node --experimental-strip-types scripts/eval/oa-resolver-eval.ts \
     --eval "$1" --model "$MODEL" --model-card "$CARD" --tokenizer "$TOK" \
     --model-anchor-lookup "$2" --default-country "$3" \
-    > "$OUT/$4.md" 2> "$OUT/$4.log"
-}
+    > "$OUT/$4.md" 2> "$OUT/$4.log" || true
+} # || true: oa-resolver-eval exits non-zero on its own internal regression signal even when it wrote
+  # a valid report; this is a MEASUREMENT harness (loc() reads the .md), so under `set -e` we must not
+  # let that exit code abort the script before the 2x2 summary prints (it false-failed de.native_locality).
 # Pull the neural locality-match % out of a result .md (the "| **neural** | XX.X% |" row).
 loc() { grep -E '\*\*neural\*\*' "$OUT/$1.md" | grep -oE '[0-9]+\.[0-9]+%' | head -1; }
 
