@@ -101,7 +101,7 @@ Fast-path routing: bare postcodes and single localities skip the neural classifi
 The resolver turns parsed components into place IDs and coordinates:
 
 ```ts
-import { createWofResolver } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/resolver"
 
 const resolver = await createWofResolver({ dbPath: "./wof.sqlite" })
 const pipeline = createRuntimePipeline({ classifier, resolver })

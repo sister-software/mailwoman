@@ -11,7 +11,7 @@
 
 ## Status
 
-**Shipped (2026-05-20).** Implementation matches the design below, with three deviations called out in the changelog. The `Resolver` interface + `resolveTree` live in `@mailwoman/core/resolver`; the WOF backing is provided through `@mailwoman/resolver-wof-sqlite` as an **optional peer dep** that the CLI dynamic-imports only when `--resolve` is set.
+**Shipped (2026-05-20).** Implementation matches the design below, with three deviations called out in the changelog. The `Resolver` interface (type contract) lives in `@mailwoman/core/resolver`; `resolveTree` + `createWofResolver` moved to the root `@mailwoman/resolver` package in #215 (so the resolver can depend on `@mailwoman/spatial` + `@mailwoman/codex` while `@mailwoman/core` stays a leaf). The WOF backing is provided through `@mailwoman/resolver-wof-sqlite` as an **optional peer dep** that the CLI dynamic-imports only when `--resolve` is set.
 
 ## What "integration" means here
 
