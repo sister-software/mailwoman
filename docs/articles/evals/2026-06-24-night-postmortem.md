@@ -1,6 +1,6 @@
 # Night-shift postmortem — 2026-06-24
 
-_Living document, sketched during the shift. Window: 04:37 UTC → 15:00 UTC. Autonomous-promote authority granted for the shift (permission wall down; quality gates + ~200-address canary + rehearsed rollback intact)._
+_Drafted during the shift, finalized at the morning hand-off. Night-shift window: 04:37 → 15:00 UTC (substantive work + all merges complete by ~12:00; held a green board through the close). Autonomous-promote authority granted for the shift (permission wall down; quality gates + ~200-address canary + rehearsed rollback intact)._
 
 Plan: `nightshift/2026-06-24-NIGHT-SHIFT-PLAN.md`. Lead with the differentiator (a confidence you can route on), ship the AU model.
 
