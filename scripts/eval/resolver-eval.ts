@@ -100,7 +100,6 @@ function extractResolution(tree: AddressTree): Resolution | null {
 	return best
 }
 
-
 function pct(x: number, n: number): string {
 	return n ? `${((100 * x) / n).toFixed(1)}%` : "—"
 }

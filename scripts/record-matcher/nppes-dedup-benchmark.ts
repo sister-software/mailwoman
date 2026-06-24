@@ -27,7 +27,6 @@
  */
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { haversineKm, type GBT } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
@@ -40,6 +39,7 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
+import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { latLngToCell } from "h3-js"
 import { writeFileSync } from "node:fs"
 import { resolve as resolvePath } from "node:path"

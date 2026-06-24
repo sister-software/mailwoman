@@ -13,8 +13,8 @@
  *   Run: node --experimental-strip-types scripts/record-matcher/geocoder-namesake-probe.ts
  */
 
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
@@ -41,7 +41,6 @@ const CASES: Array<{ city: string; zip: string; tx: [number, number]; namesake: 
 const TX_BBOX = { latMin: 25.8, latMax: 36.6, lonMin: -106.7, lonMax: -93.4 }
 const inTexas = (lat: number, lon: number) =>
 	lat >= TX_BBOX.latMin && lat <= TX_BBOX.latMax && lon >= TX_BBOX.lonMin && lon <= TX_BBOX.lonMax
-
 
 async function main(): Promise<void> {
 	console.error("[A] building the geocoder…")

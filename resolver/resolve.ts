@@ -12,10 +12,8 @@
  *   not the MA one.
  */
 
-import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@mailwoman/core/decoder"
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
-import { haversineKm } from "@mailwoman/spatial"
-import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
+import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@mailwoman/core/decoder"
 import {
 	type AddressPointLookup,
 	type CoincidentLocality,
@@ -28,6 +26,8 @@ import {
 	type Resolver,
 	type ResolverBackend,
 } from "@mailwoman/core/resolver"
+import { haversineKm } from "@mailwoman/spatial"
+import { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.js"
 
 /**
  * Build a `Resolver` backed by a `ResolverBackend`. The backend can be any concrete impl

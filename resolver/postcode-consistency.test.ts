@@ -13,8 +13,8 @@
 import { describe, expect, it } from "vitest"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { createWofResolver } from "./resolve.js"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import { createWofResolver } from "./resolve.js"
 
 const PC = {
 	id: 900,
@@ -47,8 +47,10 @@ const SP_NEAR = {
 	exactMatch: true,
 } // ~6 km from PC
 
-/** A backend that returns the given places in order, filtered by name-substring + placetype +
-country. */
+/**
+ * A backend that returns the given places in order, filtered by name-substring + placetype +
+ * country.
+ */
 function makeBackend(places: ResolvedPlace[]): ResolverBackend {
 	return {
 		async findPlace(query) {

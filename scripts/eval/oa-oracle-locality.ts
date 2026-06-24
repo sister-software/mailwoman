@@ -89,7 +89,6 @@ const PLACETYPE_RANK: Record<string, number> = {
 
 // --- helpers shared with oa-resolver-eval.ts (kept in sync; standalone to avoid a fragile import) ---
 
-
 const ABBR: Record<string, string> = { st: "saint", ste: "sainte", mt: "mount", ft: "fort" }
 const normName = (s: string | undefined): string => {
 	if (!s) return ""

@@ -28,8 +28,8 @@
 
 import { Spinner } from "@inkjs/ui"
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { Text } from "ink"
 import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"

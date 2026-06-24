@@ -17,8 +17,8 @@ import type { AddressTree, ComponentTag } from "../decoder/types.js"
 
 /**
  * One candidate place returned by a resolver. Mirrors the shape used by
- * `@mailwoman/core/resolver-wof-sqlite`'s `PlaceCandidate` — kept structurally compatible so a callsite
- * holding a `PlaceCandidate` can be passed where a `ResolvedPlace` is expected.
+ * `@mailwoman/core/resolver-wof-sqlite`'s `PlaceCandidate` — kept structurally compatible so a
+ * callsite holding a `PlaceCandidate` can be passed where a `ResolvedPlace` is expected.
  */
 export interface ResolvedPlace {
 	/** Resolver-specific place identifier (e.g. WOF id). */
@@ -72,8 +72,8 @@ export interface ResolvedPlace {
  * Pull-based contract for a single resolver query. The resolver knows nothing about `AddressTree` —
  * it just answers "what place is named X, optionally constrained by Y?"
  *
- * Structurally compatible with `PlaceLookup` from `@mailwoman/core/resolver-wof-sqlite` so the latter
- * satisfies this interface without an adapter shim.
+ * Structurally compatible with `PlaceLookup` from `@mailwoman/core/resolver-wof-sqlite` so the
+ * latter satisfies this interface without an adapter shim.
  */
 export interface ResolverBackend {
 	findPlace(query: {
@@ -345,8 +345,10 @@ export interface ResolveOpts {
 	 * when unset.
 	 */
 	postcodeConsistency?: boolean
-	/** Gate radius (km) for {@link postcodeConsistency} — a locality farther than this from the
-resolved postcode is re-picked or demoted. Default 50. */
+	/**
+	 * Gate radius (km) for {@link postcodeConsistency} — a locality farther than this from the
+	 * resolved postcode is re-picked or demoted. Default 50.
+	 */
 	postcodeConsistencyGateKm?: number
 	hierarchyCompletion?: boolean
 	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */
@@ -416,9 +418,10 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
  *   candidate (which is QA-visible). Same exact-type preference applies.
  *
  * This table is the single source of truth for that expansion, shared by every lookup backend
- * (`@mailwoman/core/resolver-wof-sqlite`, `@mailwoman/core/resolver-wof-wasm`, and the demo's httpvfs lookup)
- * so the Node and browser resolvers can't drift. Keyed by the REQUESTED placetype. Placetypes
- * without an entry pass through unchanged — an explicit `placetype: "borough"` query stays narrow.
+ * (`@mailwoman/core/resolver-wof-sqlite`, `@mailwoman/core/resolver-wof-wasm`, and the demo's
+ * httpvfs lookup) so the Node and browser resolvers can't drift. Keyed by the REQUESTED placetype.
+ * Placetypes without an entry pass through unchanged — an explicit `placetype: "borough"` query
+ * stays narrow.
  */
 export const PLACETYPE_FILTER_GROUPS: Readonly<Record<string, readonly string[]>> = {
 	locality: ["locality", "borough", "localadmin"],

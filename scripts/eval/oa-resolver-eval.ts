@@ -161,7 +161,6 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 	return best
 }
 
-
 const norm = (s: string | undefined): string => (s ?? "").toLowerCase().trim()
 
 /**

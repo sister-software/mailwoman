@@ -30,7 +30,6 @@
  */
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	geocodeAddressVia,
@@ -44,6 +43,7 @@ import {
 	type ReconcileConfig,
 	type SourceRecord,
 } from "@mailwoman/registry"
+import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { writeFileSync } from "node:fs"
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 

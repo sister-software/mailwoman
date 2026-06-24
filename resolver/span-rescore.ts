@@ -30,11 +30,15 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 export interface SpanRescoreOptions {
-	/** ISO-3166 alpha-2 country to constrain the gazetteer match (the parse's detected/ default
-country). */
+	/**
+	 * ISO-3166 alpha-2 country to constrain the gazetteer match (the parse's detected/ default
+	 * country).
+	 */
 	country?: string
-	/** Sibling postcode — used both as the backend disambiguation hint AND the consistency-gate
-anchor. */
+	/**
+	 * Sibling postcode — used both as the backend disambiguation hint AND the consistency-gate
+	 * anchor.
+	 */
 	postcode?: string
 	/**
 	 * Reject a candidate whose coordinate is farther than this (km) from the postcode anchor. The
@@ -45,8 +49,10 @@ anchor. */
 	gateKm?: number
 	/** Max contiguous raw tokens to treat as one locality span. Default 4. */
 	maxSpanTokens?: number
-	/** Min confidence for a street/house_number/postcode node to count as a span-blocking constituent.
-Default 0.7. */
+	/**
+	 * Min confidence for a street/house_number/postcode node to count as a span-blocking constituent.
+	 * Default 0.7.
+	 */
 	confidentThreshold?: number
 }
 
@@ -106,8 +112,10 @@ export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
 	return false
 }
 
-/** Char ranges of confident street/house_number/postcode constituents — a locality span must not
-overlap them. */
+/**
+ * Char ranges of confident street/house_number/postcode constituents — a locality span must not
+ * overlap them.
+ */
 function confidentRanges(roots: readonly AddressNode[], threshold: number): Array<[number, number]> {
 	const out: Array<[number, number]> = []
 	const stack: AddressNode[] = [...roots]

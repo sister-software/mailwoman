@@ -10,8 +10,8 @@
  *   scripts/eval/geocode-case-diag.ts
  */
 
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
 
 const titleCaseInput = (t: string) => t.replace(/[A-Za-z]+/g, (w) => w[0]!.toUpperCase() + w.slice(1).toLowerCase())

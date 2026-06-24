@@ -52,7 +52,6 @@ interface OaRow {
 	source: string
 }
 
-
 function median(xs: number[]): number | null {
 	if (xs.length === 0) return null
 	const s = [...xs].sort((a, b) => a - b)

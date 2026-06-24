@@ -68,7 +68,6 @@ function normName(s: string | undefined): string {
 		.trim()
 }
 
-
 type Bucket = "correct" | "ranking_gap" | "recall_gap" | "coverage_gap"
 
 async function main(): Promise<void> {

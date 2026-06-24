@@ -11,8 +11,8 @@
 import { describe, expect, test, vi } from "vitest"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { RemoteResolver, serializableResolveOpts } from "./remote-resolver.js"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts } from "@mailwoman/core/resolver"
+import { RemoteResolver, serializableResolveOpts } from "./remote-resolver.js"
 
 const tree: AddressTree = {
 	raw: "100 Main St, Austin, TX",

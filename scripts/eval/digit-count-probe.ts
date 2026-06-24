@@ -45,7 +45,8 @@ interface Row {
 	components: Record<string, string>
 }
 
-/** Fold neural Stage-3 tags into the golden component vocab (street parts → street). Mirrors per-locale-f1. */
+/** Fold neural Stage-3 tags into the golden component vocab (street parts → street). Mirrors
+per-locale-f1. */
 function foldPostcode(flat: Partial<Record<ComponentTag, string>>): string | undefined {
 	return flat.postcode
 }
@@ -55,10 +56,10 @@ const norm = (v: string | undefined): string => (v ?? "").trim().toLowerCase()
 async function main() {
 	const card = JSON.parse(readFileSync(CARD, "utf8"))
 	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(MODEL)])
-	const postcodeAnchorLookup =
-		existsSync(ANCHOR) ? parseAnchorLookup(JSON.parse(readFileSync(ANCHOR, "utf8"))) : undefined
-	const gazetteerLexicon =
-		existsSync(GAZ) ? parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) : undefined
+	const postcodeAnchorLookup = existsSync(ANCHOR)
+		? parseAnchorLookup(JSON.parse(readFileSync(ANCHOR, "utf8")))
+		: undefined
+	const gazetteerLexicon = existsSync(GAZ) ? parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) : undefined
 	const neural = new NeuralAddressClassifier({
 		tokenizer,
 		runner,

@@ -37,7 +37,6 @@ function arg(name: string, fallback = ""): string {
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
-
 const pct = (xs: number[], p: number): number => {
 	if (xs.length === 0) return NaN
 	const s = [...xs].sort((a, b) => a - b)

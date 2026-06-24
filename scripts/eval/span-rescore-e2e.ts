@@ -59,7 +59,6 @@ const LOCALES: [string, string][] = [
 	["AU", "data/eval/external/oa-au-coord-150.jsonl"],
 ]
 
-
 type N9 = { tag?: string; lat?: number; lon?: number; placeId?: string; children?: N9[] }
 const RANK: Record<string, number> = { house_number: 5, street: 4, locality: 3, city: 3, region: 2, country: 1 }
 /** Most-specific resolved coordinate in the tree (highest placetype rank with a real lat/lon). */

@@ -21,7 +21,6 @@
 
 import { Spinner } from "@inkjs/ui"
 import { decodeAsJson } from "@mailwoman/core/decoder"
-import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	geocodeAddressVia,
@@ -40,6 +39,7 @@ import {
 	type GeocodeAddress,
 	type SourceRecord,
 } from "@mailwoman/registry"
+import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 import { readFileSync, writeFileSync } from "node:fs"

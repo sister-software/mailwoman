@@ -30,7 +30,16 @@ const CAND = arg("candidate-db", "/mnt/playpen/mailwoman-data/wof/candidate-glob
 const N = Number(arg("n", "150"))
 const FILE = arg("file", "data/eval/external/overture-us-nad-holdout.jsonl")
 
-const RANK: Record<string, number> = { country: 0, region: 1, county: 3, localadmin: 4, locality: 5, neighbourhood: 7, street: 9, address: 10 }
+const RANK: Record<string, number> = {
+	country: 0,
+	region: 1,
+	county: 3,
+	localadmin: 4,
+	locality: 5,
+	neighbourhood: 7,
+	street: 9,
+	address: 10,
+}
 function bestCoord(tree: AddressTree): { lat: number; lon: number } | null {
 	let best: { lat: number; lon: number; r: number } | null = null
 	const visit = (n: AddressNode): void => {
@@ -69,7 +78,10 @@ async function main() {
 	const on = await createScorer({ ...base, overrides: { conventions: "auto" } } as never)
 	const off = await createScorer({ ...base, overrides: { conventions: false } } as never)
 
-	const all = readFileSync(FILE, "utf8").trim().split("\n").map((l) => JSON.parse(l) as Row)
+	const all = readFileSync(FILE, "utf8")
+		.trim()
+		.split("\n")
+		.map((l) => JSON.parse(l) as Row)
 	// Only rows whose leading token is a 5-digit house number (the bare-5-digit shape the repair gates on)
 	// and that carry a postcode + region, so both renders are well-formed.
 	const rows: Array<{ hn: string; street: string; state: string; zip: string; lat: number; lon: number }> = []
@@ -77,13 +89,16 @@ async function main() {
 		const m = r.input.match(/^(\d{5})\s+([^,]+),/)
 		const state = r.expected.region ?? r.state ?? ""
 		const zip = r.expected.postcode ?? ""
-		if (m && state && /^\d{5}$/.test(zip)) rows.push({ hn: m[1]!, street: m[2]!.trim(), state, zip, lat: r.lat, lon: r.lon })
+		if (m && state && /^\d{5}$/.test(zip))
+			rows.push({ hn: m[1]!, street: m[2]!.trim(), state, zip, lat: r.lat, lon: r.lon })
 		if (rows.length >= N) break
 	}
 
 	const opts = { defaultCountry: "US", spanRescore: true, postcodeConsistency: true } as never
 	const score = async (raw: string, scorer: { parse: (t: string, o?: unknown) => Promise<unknown> }) => {
-		const c = bestCoord((await resolver.resolveTree((await scorer.parse(raw, { postcodeRepair: true })) as never, opts)) as never)
+		const c = bestCoord(
+			(await resolver.resolveTree((await scorer.parse(raw, { postcodeRepair: true })) as never, opts)) as never
+		)
 		return c
 	}
 	const strata = {
@@ -96,21 +111,39 @@ async function main() {
 		n++
 		const ruralRaw = `${row.hn} ${row.street}, ${row.state}` // leading = house number
 		const pcRaw = `${row.zip} ${row.street}, ${row.state}` // leading = postcode
-		for (const [key, raw] of [["rural", ruralRaw], ["pclead", pcRaw]] as const) {
+		for (const [key, raw] of [
+			["rural", ruralRaw],
+			["pclead", pcRaw],
+		] as const) {
 			const cOn = await score(raw, on as never)
 			const cOff = await score(raw, off as never)
-			if (cOn) { const d = haversineKm(truth.lat, truth.lon, cOn.lat, cOn.lon); if (d <= 25) strata[key].on25++; if (d <= 5) strata[key].on5++ }
-			if (cOff) { const d = haversineKm(truth.lat, truth.lon, cOff.lat, cOff.lon); if (d <= 25) strata[key].off25++; if (d <= 5) strata[key].off5++ }
+			if (cOn) {
+				const d = haversineKm(truth.lat, truth.lon, cOn.lat, cOn.lon)
+				if (d <= 25) strata[key].on25++
+				if (d <= 5) strata[key].on5++
+			}
+			if (cOff) {
+				const d = haversineKm(truth.lat, truth.lon, cOff.lat, cOff.lon)
+				if (d <= 25) strata[key].off25++
+				if (d <= 5) strata[key].off5++
+			}
 		}
 	}
 	const pct = (x: number) => ((100 * x) / Math.max(n, 1)).toFixed(0)
 	console.log(`\n#723 net-COORD probe — ${MODEL}  (n=${n} real US rows, rendered in 2 repair-triggering shapes)`)
 	console.log(`  repair ON = conventions=auto (the live config) | repair OFF = the kill state\n`)
-	for (const [key, label] of [["rural", 'rural  "{hn5} {street}, {state}"  (leading = HOUSE#; repair helps)'], ["pclead", 'pclead "{zip} {street}, {state}"   (leading = POSTCODE; repair hurts)']] as const) {
+	for (const [key, label] of [
+		["rural", 'rural  "{hn5} {street}, {state}"  (leading = HOUSE#; repair helps)'],
+		["pclead", 'pclead "{zip} {street}, {state}"   (leading = POSTCODE; repair hurts)'],
+	] as const) {
 		const s = strata[key]
 		console.log(`  ${label}`)
-		console.log(`     @25km  repairON ${pct(s.on25)}%  repairOFF ${pct(s.off25)}%   kill Δ ${s.off25 - s.on25 >= 0 ? "+" : ""}${pct(s.off25 - s.on25)}pp`)
-		console.log(`     @5km   repairON ${pct(s.on5)}%  repairOFF ${pct(s.off5)}%   kill Δ ${s.off5 - s.on5 >= 0 ? "+" : ""}${pct(s.off5 - s.on5)}pp`)
+		console.log(
+			`     @25km  repairON ${pct(s.on25)}%  repairOFF ${pct(s.off25)}%   kill Δ ${s.off25 - s.on25 >= 0 ? "+" : ""}${pct(s.off25 - s.on25)}pp`
+		)
+		console.log(
+			`     @5km   repairON ${pct(s.on5)}%  repairOFF ${pct(s.off5)}%   kill Δ ${s.off5 - s.on5 >= 0 ? "+" : ""}${pct(s.off5 - s.on5)}pp`
+		)
 	}
 	console.log(`\n  NOTE: candidate-gazetteer resolver = admin/postcode centroids; the rural ROOFTOP win #723 bought`)
 	console.log(`  (within-1km) is below this resolution and not captured here — that is the known +3.8pt #723 trade.`)

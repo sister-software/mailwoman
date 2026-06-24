@@ -40,8 +40,8 @@ export type WofPlacetype =
  * defined. Callers should treat it as ordinal, not absolute.
  *
  * `id` is the WOF place id. It's named generically (not `wof_id`) so the shape stays structurally
- * compatible with `@mailwoman/resolver`'s `ResolvedPlace` — `WofSqlitePlaceLookup` satisfies
- * the generic `ResolverBackend` contract without an adapter shim.
+ * compatible with `@mailwoman/resolver`'s `ResolvedPlace` — `WofSqlitePlaceLookup` satisfies the
+ * generic `ResolverBackend` contract without an adapter shim.
  *
  * `distanceKm` is populated only when the query carried `near` (and the place has a centroid).
  * Useful for downstream UIs that want to show "X km from you" alongside the result.

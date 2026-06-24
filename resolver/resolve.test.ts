@@ -9,11 +9,17 @@
 
 import { describe, expect, test, vi } from "vitest"
 
-import { decodeAsXml } from "@mailwoman/core/decoder"
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
-import { createWofResolver } from "./resolve.js"
-import type { Ancestor, CoincidentLocality, InterpolationLookup, ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import { decodeAsXml } from "@mailwoman/core/decoder"
+import type {
+	Ancestor,
+	CoincidentLocality,
+	InterpolationLookup,
+	ResolvedPlace,
+	ResolverBackend,
+} from "@mailwoman/core/resolver"
 import { expandPlacetypeFilter } from "@mailwoman/core/resolver"
+import { createWofResolver } from "./resolve.js"
 
 function node(
 	tag: ComponentTag,

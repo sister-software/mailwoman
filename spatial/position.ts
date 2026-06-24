@@ -266,12 +266,13 @@ export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: Ea
 
 /**
  * Great-circle distance in kilometres between two lat/lon pairs given as raw scalars. The formula's
- * one true home — every resolver + eval consumer of the `(aLat, aLon, bLat, bLon)` shape imports this
- * instead of re-declaring it.
+ * one true home — every resolver + eval consumer of the `(aLat, aLon, bLat, bLon)` shape imports
+ * this instead of re-declaring it.
  *
  * Unlike {@link haversine}, this is pure math with NO Null-Island sentinel: `(0, 0)` is the Gulf of
  * Guinea — a real point, not "missing coordinate". That sentinel convention belongs to the
- * `GeoPointInput` object form (where a 0/0 input means "no coordinate"), not to a raw scalar distance.
+ * `GeoPointInput` object form (where a 0/0 input means "no coordinate"), not to a raw scalar
+ * distance.
  *
  * @category Position
  */
