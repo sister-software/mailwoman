@@ -49,7 +49,8 @@ import { lookupGermanState } from "@mailwoman/codex/de"
 import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { createWofResolver, expandPlacetypeFilter } from "@mailwoman/core/resolver"
+import { createWofResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
+import { haversineKm } from "@mailwoman/spatial"
 import {
 	type ClassificationRecord,
 	createAddressParser,
@@ -157,16 +158,6 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) best = r
 	}
 	return best
-}
-
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-	const R = 6371
-	const dLat = ((lat2 - lat1) * Math.PI) / 180
-	const dLon = ((lon2 - lon1) * Math.PI) / 180
-	const a =
-		Math.sin(dLat / 2) ** 2 +
-		Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(a))
 }
 
 const norm = (s: string | undefined): string => (s ?? "").toLowerCase().trim()
@@ -465,7 +456,7 @@ async function main(): Promise<void> {
 	// resolveOpts; the `neural+addrpt` row keeps neural's admin flags but takes the COORDINATE from
 	// the address-point hit when present (the tier's whole contribution is "where", street-level).
 	const addressPointsDb = arg("address-points", "")
-	let addressPoints: import("@mailwoman/core/resolver").AddressPointLookup | null = null
+	let addressPoints: import("@mailwoman/resolver").AddressPointLookup | null = null
 	if (addressPointsDb) {
 		const { AddressPointSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite")
 		addressPoints = new AddressPointSqliteLookup(addressPointsDb)
@@ -476,7 +467,7 @@ async function main(): Promise<void> {
 	// full street-level coordinate cascade. The delta vs `neural+addrpt` is interpolation's lift on the
 	// long tail of valid-but-unlisted numbers the exact tier misses.
 	const interpolationDb = arg("interpolation", "")
-	let interpolation: import("@mailwoman/core/resolver").InterpolationLookup | null = null
+	let interpolation: import("@mailwoman/resolver").InterpolationLookup | null = null
 	if (interpolationDb) {
 		const { StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
 		interpolation = new StreetInterpolator({ dbPath: interpolationDb })

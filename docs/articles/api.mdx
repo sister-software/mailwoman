@@ -52,7 +52,7 @@ const { tree, logits, pieces } = await classifier.parseWithLogits("350 5th Ave, 
 Creates a resolver backed by a Who's On First SQLite distribution.
 
 ```ts
-import { createWofResolver } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/resolver"
 
 const resolver = await createWofResolver({
 	dbPath: "./wof.sqlite",

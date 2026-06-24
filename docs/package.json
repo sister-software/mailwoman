@@ -38,6 +38,7 @@
 		"@mailwoman/neural-web": "workspace:*",
 		"@mailwoman/phrase-grouper": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
+		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@mdx-js/react": "^3.1.1",
 		"classnames": "^2.5.1",

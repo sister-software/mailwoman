@@ -19,10 +19,10 @@
  *   --default-country DE --out-json /tmp/joint-de.json
  */
 import { decodeAsJson } from "@mailwoman/core/decoder"
-import { createWofResolver } from "@mailwoman/core/resolver"
 import { NeuralAddressClassifier, parseAnchorLookup } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { createWofResolver } from "@mailwoman/resolver"
 import { createRuntimePipeline } from "mailwoman"
 import { readFileSync, writeFileSync } from "node:fs"
 

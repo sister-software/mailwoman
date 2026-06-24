@@ -216,6 +216,11 @@ def main() -> None:
         "per_tag_ece": per_tag,
         "per_locale_ece": per_locale,
         "abstention_curve": abstention,
+        # Per-bin reliability on the held-out eval split (mean conf vs accuracy per equal-width bin),
+        # before + after calibration. The data behind the reliability diagram the demo draws —
+        # serialized so the front-end is self-contained (no need to re-derive from the raw conf set).
+        "reliability_raw": rel_raw,
+        "reliability_cal": rel_cal,
         "table": table,
     }
     out_path = Path(args.out)

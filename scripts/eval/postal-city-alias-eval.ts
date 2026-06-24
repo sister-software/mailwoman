@@ -28,21 +28,12 @@
  */
 
 import { WofPostalCityAliasLookup, WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseSync } from "node:sqlite"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
-
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-	const R = 6371
-	const dLat = ((lat2 - lat1) * Math.PI) / 180
-	const dLon = ((lon2 - lon1) * Math.PI) / 180
-	const a =
-		Math.sin(dLat / 2) ** 2 +
-		Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
-	return 2 * R * Math.asin(Math.sqrt(a))
 }
 
 const pct = (xs: number[], p: number): number => {

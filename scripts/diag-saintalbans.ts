@@ -1,4 +1,4 @@
-import { createWofResolver } from "@mailwoman/core/resolver"
+import { createWofResolver } from "@mailwoman/resolver"
 import { type ClassificationRecord, createAddressParser } from "mailwoman"
 import { readFileSync } from "node:fs"
 

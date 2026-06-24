@@ -20,6 +20,7 @@
 		"./base": "./out/base/index.js",
 		"./bdc": "./out/bdc/index.js",
 		"./coverage": "./out/coverage/index.js",
+		"./race-dots": "./out/race-dots/index.js",
 		".": "./out/index.js"
 	},
 	"dependencies": {

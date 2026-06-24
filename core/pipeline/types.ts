@@ -179,8 +179,8 @@ export interface PhraseGrouper {
  * satisfies this.
  */
 /**
- * Structural type for the FST gazetteer matcher, compatible with @mailwoman/resolver-wof-sqlite's
- * FstMatcher.
+ * Structural type for the FST gazetteer matcher, compatible with
+ * @mailwoman/core/resolver-wof-sqlite's FstMatcher.
  */
 export interface FstMatcherLike {
 	walk(tokens: string[]): { stateId: number; accepted: boolean; depth: number } | null

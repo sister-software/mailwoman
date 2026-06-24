@@ -11,6 +11,8 @@
 				"locale-gate",
 				"phrase-grouper",
 				"codex",
+				"resolver",
+				"resolver-wof-sqlite",
 				"classifiers",
 				"corpus",
 				"neural",

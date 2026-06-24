@@ -23,6 +23,7 @@ import Head from "@docusaurus/Head"
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext"
 import { MailwomanBaseTileSetID, StyleSpecificationComposer } from "@mailwoman/cartographer/base"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
+import { createRaceDotsSource, RaceDotsLayers, RaceDotsTileSetID } from "@mailwoman/cartographer/race-dots"
 import Layout from "@theme/Layout"
 import type { Map as MapLibreMap } from "maplibre-gl"
 import type React from "react"
@@ -51,8 +52,9 @@ import {
 	streetShardUrl,
 } from "../../shared/resources.tsx"
 
-import type { ReleasesManifest, StreetResolution } from "../../shared/demo-helpers.ts"
+import type { Calibrator, ReleasesManifest, StreetResolution } from "../../shared/demo-helpers.ts"
 import {
+	createCalibrator,
 	DEFAULT_ADDRESS,
 	DEFAULT_LOCALE,
 	EXAMPLE_ADDRESSES,
@@ -60,6 +62,8 @@ import {
 	resolveStreet,
 	runCascade,
 } from "../../shared/demo-helpers.ts"
+
+import { findRescoreCandidate } from "@mailwoman/resolver"
 
 import type { HttpvfsAddressPointLookup, HttpvfsInterpolator } from "../../shared/httpvfs-street.ts"
 import { pruneDbRangeCache, registerRangeCacheServiceWorker } from "../../shared/register-range-sw.ts"
@@ -151,6 +155,12 @@ const DemoApp: React.FC = () => {
 	const [selectedVersion, setSelectedVersion] = useState<string | null>(null)
 	const [loadingProgress, setLoadingProgress] = useState<string>("Loading releases…")
 	const [classifier, setClassifier] = useState<MailwomanClassifierLike | null>(null)
+	// Confidence calibration (#59): an OPT-IN view toggle. The raw softmax `conf=` is what the model
+	// emits; the calibrator (the version's isotonic table) maps it to an honest probability-of-correct.
+	// Default OFF so the demo's default presentation is unchanged; flipping it on lets a visitor watch
+	// the under-confident spans correct upward. Display-only — never touches the resolver's inputs.
+	const [calibrator, setCalibrator] = useState<Calibrator | null>(null)
+	const [calibrateConfidence, setCalibrateConfidence] = useState(false)
 
 	// ── Compare mode ──────────────────────────────────────────────────────
 	const [compareMode, setCompareMode] = useState(false)
@@ -190,6 +200,19 @@ const DemoApp: React.FC = () => {
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
 	const [compareErrorMessage, setCompareErrorMessage] = useState<string | null>(null)
+
+	// Display-only calibrated view of the result: map each span's `conf=` through the calibrator when
+	// the toggle is on. A fresh copy — never mutates `result` (the resolver + compare read the raw nodes).
+	const displayResult = useMemo(() => {
+		if (!result || !calibrateConfidence || !calibrator) return result
+		return {
+			...result,
+			nodes: result.nodes.map((n) => ({
+				...n,
+				confidence: n.confidence != null ? calibrator(n.confidence) : n.confidence,
+			})),
+		}
+	}, [result, calibrateConfidence, calibrator])
 
 	// Parse stage labels depend on whether WOF lookup is available for the selected release.
 	const parseStageLabels = useMemo(
@@ -322,6 +345,29 @@ const DemoApp: React.FC = () => {
 						}
 					}
 					map.on("load", wireCoverage)
+
+					// Race-by-dot-density overlay (default-off per-category circle layers), wired like coverage
+					// above — but deliberately WITHOUT the `isStyleLoaded()` defer. This handler runs on
+					// `load`, when the style *document* is ready, which is all `addSource`/`addLayer` needs.
+					// `isStyleLoaded()` ALSO returns false whenever any source's tiles are still streaming, and
+					// wireCoverage (which runs first) calls addSource — so on the globe basemap, where tiles
+					// stream continuously, gating here would defer on `styledata` forever and the dots would
+					// never wire. Coverage gets away with the guard only because it's the first overlay added.
+					const raceDotsSourceUrl = `https://tiles.sister.software/${RaceDotsTileSetID}.json`
+					const wireRaceDots = (): void => {
+						try {
+							if (!map.getSource(RaceDotsTileSetID)) {
+								map.addSource(RaceDotsTileSetID, createRaceDotsSource(raceDotsSourceUrl))
+							}
+							const firstSymbolID = map.getStyle().layers?.find((l) => l.type === "symbol")?.id
+							for (const layer of RaceDotsLayers) {
+								if (!map.getLayer(layer.id)) map.addLayer(layer, firstSymbolID)
+							}
+						} catch (error) {
+							console.warn("race-dots overlay wiring failed", error)
+						}
+					}
+					map.on("load", wireRaceDots)
 				}
 			} catch (error) {
 				if (cancelled) return
@@ -356,6 +402,7 @@ const DemoApp: React.FC = () => {
 				lookupPromiseRef.current = null
 				polygonDbRef.current = null
 				setResult(null)
+				setCalibrator(null)
 				setLoadingProgress(`Loading ${selectedVersion} model (~${release?.modelSize ?? "?"})…`)
 
 				const neuralWeb = await import("@mailwoman/neural-web")
@@ -406,6 +453,20 @@ const DemoApp: React.FC = () => {
 
 				setClassifier(cls as unknown as MailwomanClassifierLike)
 				anchorLookupRef.current = postcodeAnchorLookup ?? null
+
+				// Load the version's calibration table (opt-in display toggle). Tolerate a 404 — older
+				// bundles ship none, in which case the toggle stays hidden and the demo shows raw scores.
+				try {
+					const calRes = await fetch(assetUrl(DEFAULT_LOCALE, selectedVersion, "calibration.json"))
+					if (calRes.ok) {
+						const calTable = await calRes.json()
+						// Functional updater: setState would otherwise CALL a bare function arg as an updater.
+						if (!cancelled) setCalibrator(() => createCalibrator(calTable))
+					}
+				} catch {
+					// No calibration table for this version.
+				}
+
 				setLoadingProgress("")
 			} catch (error) {
 				if (cancelled) return
@@ -919,6 +980,26 @@ const DemoApp: React.FC = () => {
 				const tBeforeResolve = performance.now()
 				const cascadeHits = await runCascade(wofLookup, postcodeNode, localityNodes, stateNode, text)
 				const tResolve = performance.now()
+				// Span-rescore fallback (#370 — the demo opts the lever ON). When the admin cascade resolved
+				// NOTHING, recover a dropped/fragmented locality from the RAW text — the model splits accented
+				// towns ("Grudziądz" → "Grudzi"+"dz") so they never resolve, but the word is intact in the input.
+				// Tried before the US-postcode anchor fallback: it recovers the actual locality (not just a
+				// postcode centroid) and it's where the EU recovery lives. Recovered places are marked
+				// "(recovered)"; ungated ones (no postcode→point coverage to verify against) say "unverified".
+				if (cascadeHits.length === 0) {
+					const pc = postcodeNode?.value ? String(postcodeNode.value).trim() : undefined
+					const rescued = await findRescoreCandidate(text, tree.roots as never, wofLookup as never, { postcode: pc })
+					if (rescued) {
+						cascadeHits.push({
+							id: rescued.place.id,
+							name: `${rescued.place.name} (recovered${rescued.gated ? "" : ", unverified"})`,
+							placetype: "locality",
+							lat: rescued.place.lat,
+							lon: rescued.place.lon,
+							score: 0,
+						} as (typeof cascadeHits)[number])
+					}
+				}
 				// Anchor-centroid fallback (postcode-only dead ends): WOF ships placeholder (0,0) for
 				// ~22% of US postcodes and the cascade rightly drops those — but postcode-us.bin (the
 				// model's anchor channel, already loaded) carries a real centroid for every US ZIP.
@@ -1212,9 +1293,33 @@ const DemoApp: React.FC = () => {
 				{loadingProgress ? <p className={styles.status}>{loadingProgress}</p> : null}
 				{errorMessage ? <p className={styles.error}>{errorMessage}</p> : null}
 				{compareErrorMessage ? <p className={styles.error}>{compareErrorMessage}</p> : null}
+				{result && calibrator ? (
+					<label
+						style={{
+							display: "inline-flex",
+							alignItems: "center",
+							gap: 6,
+							fontSize: 13,
+							margin: "8px 0",
+							cursor: "pointer",
+							color: "var(--ifm-color-emphasis-800)",
+						}}
+						title="Map each span's raw softmax confidence to its calibrated probability of being correct (isotonic, held-out ECE 0.0055). The model is under-confident, so most spans shift upward."
+					>
+						<input
+							type="checkbox"
+							checked={calibrateConfidence}
+							onChange={(e) => setCalibrateConfidence(e.target.checked)}
+						/>
+						Calibrated confidence
+						<span style={{ color: "var(--ifm-color-emphasis-600)" }}>
+							{calibrateConfidence ? "— honest probability of correct" : "— raw softmax scores"}
+						</span>
+					</label>
+				) : null}
 				{result ? (
 					<ResultPanel
-						result={result}
+						result={displayResult ?? result}
 						selectedCandidateIndex={selectedCandidateIndex}
 						onSelectCandidate={setSelectedCandidateIndex}
 					/>

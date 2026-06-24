@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/match",
-	"version": "4.13.0",
+	"version": "4.14.0",
 	"description": "The geocode-first record matcher: block → score → cluster. This first cut ships the string comparators (Jaro / Jaro-Winkler + an edit-distance fallback for compound surnames) that the Fellegi-Sunter scorer is built on.",
 	"license": "AGPL-3.0-only",
 	"repository": {
@@ -21,6 +21,7 @@
 		"./tf": "./out/tf.js"
 	},
 	"dependencies": {
+		"@mailwoman/spatial": "workspace:*",
 		"fastest-levenshtein": "^1.0.16"
 	},
 	"devDependencies": {

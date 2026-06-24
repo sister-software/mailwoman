@@ -1,15 +1,16 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-export { RemoteResolver, serializableResolveOpts } from "./remote-resolver.js"
-export type {
-	RemoteResolverOpts,
-	ResolveTreeRequest,
-	ResolveTreeResponse,
-	SerializableResolveOpts,
-} from "./remote-resolver.js"
-export { createWofResolver } from "./resolve.js"
-export { DEFAULT_PLACETYPE_MAP, PLACETYPE_FILTER_GROUPS, expandPlacetypeFilter } from "./types.js"
+/**
+ *   The resolver TYPE CONTRACT — `ResolverBackend`, `Resolver`, `ResolveOpts`, `ResolvedPlace`, the
+ *   lookup interfaces, the placetype map. Pure types + tiny helpers; NO implementation, so `core`
+ *   stays a dependency-free leaf and `core/pipeline` can compose the resolver structurally without
+ *   a cycle. The IMPLEMENTATION (`createWofResolver`, `RemoteResolver`, span-rescore) lives in
+ *   `@mailwoman/resolver` (#215), which depends on this + `@mailwoman/spatial` +
+ *   `@mailwoman/codex`.
+ */
+
+export { DEFAULT_PLACETYPE_MAP, PLACETYPE_FILTER_GROUPS, expandPlacetypeFilter, isPlacetypeFallback } from "./types.js"
 export type {
 	AddressPointHit,
 	AddressPointLookup,

@@ -20,6 +20,7 @@
 	"include": [],
 	"references": [
 		{ "path": "./core" },
+		{ "path": "./resolver" },
 		{ "path": "./spatial" },
 		{ "path": "./tiger" },
 		{ "path": "./cartographer" },

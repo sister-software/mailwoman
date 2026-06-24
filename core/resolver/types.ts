@@ -6,7 +6,7 @@
  *   lookup backend.
  *
  *   The interface is deliberately decoupled from any specific resolver implementation. The first
- *   shipped impl is `@mailwoman/resolver-wof-sqlite`, but the same contract supports a future
+ *   shipped impl is `@mailwoman/core/resolver-wof-sqlite`, but the same contract supports a future
  *   `RemoteResolver` adapter (Phase 4.4 — Pelias / BAN / Nominatim) without a public-API break.
  *
  *   See `docs/plan/phases/PHASE_4_3_resolver_integration.md` for the design intent.
@@ -16,8 +16,8 @@ import type { AddressTree, ComponentTag } from "../decoder/types.js"
 
 /**
  * One candidate place returned by a resolver. Mirrors the shape used by
- * `@mailwoman/resolver-wof-sqlite`'s `PlaceCandidate` — kept structurally compatible so a callsite
- * holding a `PlaceCandidate` can be passed where a `ResolvedPlace` is expected.
+ * `@mailwoman/core/resolver-wof-sqlite`'s `PlaceCandidate` — kept structurally compatible so a
+ * callsite holding a `PlaceCandidate` can be passed where a `ResolvedPlace` is expected.
  */
 export interface ResolvedPlace {
 	/** Resolver-specific place identifier (e.g. WOF id). */
@@ -71,8 +71,8 @@ export interface ResolvedPlace {
  * Pull-based contract for a single resolver query. The resolver knows nothing about `AddressTree` —
  * it just answers "what place is named X, optionally constrained by Y?"
  *
- * Structurally compatible with `PlaceLookup` from `@mailwoman/resolver-wof-sqlite` so the latter
- * satisfies this interface without an adapter shim.
+ * Structurally compatible with `PlaceLookup` from `@mailwoman/core/resolver-wof-sqlite` so the
+ * latter satisfies this interface without an adapter shim.
  */
 export interface ResolverBackend {
 	findPlace(query: {
@@ -316,6 +316,39 @@ export interface ResolveOpts {
 	 * Report: docs/articles/evals/2026-06-14-interp-radius-calibration.md.
 	 */
 	interpolationRadiusCalibration?: number
+	/**
+	 * Span-rescore tier (#370). When set, AND the tree resolved nothing, recover a dropped/fragmented
+	 * locality from the raw text: enumerate raw-token spans, exact-match the same-country gazetteer
+	 * (longest-wins + postcode-consistency gate), and inject the recovered locality as a resolved
+	 * node. Targets the EU no-result tail the model leaves when it fragments an accented locality
+	 * token ("Grudziądz" → "Grudzi"+"dz", #555). Default-off + byte-stable when unset; never disturbs
+	 * a tree that already resolved (the #685 brake). Validated in
+	 * `docs/articles/evals/2026-06-23-370-span-rescore.mdx`.
+	 */
+	spanRescore?: boolean
+	/**
+	 * Postcode-consistency gate radius (km) for the span-rescore tier — reject a recovered locality
+	 * farther than this from where the postcode resolves. Only bites when the backend has postcode
+	 * coverage (else no anchor, no gate). Default 50.
+	 */
+	spanRescoreGateKm?: number
+	/**
+	 * Postcode-disambiguated locality selection (#370 "Lever A"). When set, AND a locality resolves
+	 * far from a resolved sibling postcode, re-pick the same-named candidate (from the lookup's
+	 * already- captured `alternatives`) nearest the postcode; if none reconciles within the gate,
+	 * fall the coordinate back to the postcode point and flag `postcode_city_mismatch`. Targets the
+	 * dominant failure mode on the EU/AU panel — a same-named town resolved to the wrong instance
+	 * while the postcode that would disambiguate it sits resolved in the same tree (e.g. "06260
+	 * Saint-Pierre" → 617 km off, postcode 06260 correct). Only bites where the backend resolved the
+	 * postcode to a point (so it composes with postcode coverage, #193). Default-off + byte-stable
+	 * when unset.
+	 */
+	postcodeConsistency?: boolean
+	/**
+	 * Gate radius (km) for {@link postcodeConsistency} — a locality farther than this from the
+	 * resolved postcode is re-picked or demoted. Default 50.
+	 */
+	postcodeConsistencyGateKm?: number
 	hierarchyCompletion?: boolean
 	/** @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored. */
 	cityStateFallback?: boolean
@@ -384,9 +417,10 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
  *   candidate (which is QA-visible). Same exact-type preference applies.
  *
  * This table is the single source of truth for that expansion, shared by every lookup backend
- * (`@mailwoman/resolver-wof-sqlite`, `@mailwoman/resolver-wof-wasm`, and the demo's httpvfs lookup)
- * so the Node and browser resolvers can't drift. Keyed by the REQUESTED placetype. Placetypes
- * without an entry pass through unchanged — an explicit `placetype: "borough"` query stays narrow.
+ * (`@mailwoman/core/resolver-wof-sqlite`, `@mailwoman/core/resolver-wof-wasm`, and the demo's
+ * httpvfs lookup) so the Node and browser resolvers can't drift. Keyed by the REQUESTED placetype.
+ * Placetypes without an entry pass through unchanged — an explicit `placetype: "borough"` query
+ * stays narrow.
  */
 export const PLACETYPE_FILTER_GROUPS: Readonly<Record<string, readonly string[]>> = {
 	locality: ["locality", "borough", "localadmin"],
