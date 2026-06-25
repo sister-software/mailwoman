@@ -1,19 +1,19 @@
 {
 	"name": "@mailwoman/cartographer",
-	"version": "1.0.0",
+	"version": "4.15.0",
 	"description": "Mapping utilities for the Mailwoman geo-spatial data pipeline.",
 	"license": "AGPL-3.0",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/sister-software/mailwoman.git",
-		"directory": "cartographer"
-	},
 	"contributors": [
 		{
 			"name": "Teffen Ellis",
 			"email": "teffen@sister.software"
 		}
 	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "cartographer"
+	},
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
