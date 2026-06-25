@@ -13,8 +13,8 @@
  *   them against the same-country gazetteer, and return the best locality candidate. The resolver
  *   (`resolve.ts` → `applySpanRescore`) owns the integration: it runs this ONLY on an unresolved
  *   tree (the #685 brake — never second-guess a working coordinate) and injects the recovered
- *   locality as a resolved node. Opt-in via `ResolveOpts.spanRescore`; default-off + byte-stable
- *   when unset.
+ *   locality as a resolved node. Default-ON (#370, promoted 2026-06-25 — same-harness EU+AU +1pp
+ *   @25km, zero regressions); explicit opt-out via `ResolveOpts.spanRescore: false`, byte-stable then.
  *
  *   The design + thresholds are validated on a 7-locale coordinate panel
  *   (`scripts/eval/span-rescore-validate.ts`, eval

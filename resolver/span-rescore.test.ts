@@ -161,10 +161,21 @@ describe("resolveTree + spanRescore", () => {
 		expect(injected?.metadata?.rescore_gated).toBe(false)
 	})
 
-	it("is byte-stable when spanRescore is unset (no injection)", async () => {
+	it("injects by default when spanRescore is unset (#370 promoted to default-on 2026-06-25)", async () => {
+		const resolver = createWofResolver(makeBackend())
+		const input = tree("86-300 Grudziądz, Daliowa 4", [
+			node({ tag: "locality", value: "Grudzi", start: 7, end: 13 }),
+			node({ tag: "locality", value: "dz", start: 14, end: 16 }),
+		])
+		// No `spanRescore` in opts — the default (ON) must still recover the locality.
+		const out = await resolver.resolveTree(input, { defaultCountry: "PL" })
+		expect(out.roots.find((n) => n.placeId === "wof:1")?.value).toBe("Grudziądz")
+	})
+
+	it("is byte-stable when spanRescore is false (explicit opt-out — the #685/byte-stable contract)", async () => {
 		const resolver = createWofResolver(makeBackend())
 		const roots = [node({ tag: "locality", value: "Grudzi", start: 7, end: 13 })]
-		const out = await resolver.resolveTree(tree("86-300 Grudziądz", roots), { defaultCountry: "PL" })
+		const out = await resolver.resolveTree(tree("86-300 Grudziądz", roots), { defaultCountry: "PL", spanRescore: false })
 		expect(out.roots.some((n) => n.placeId)).toBe(false)
 		expect(out.roots).toHaveLength(1)
 	})
