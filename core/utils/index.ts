@@ -4,4 +4,5 @@
  * @author Teffen Ellis, et al.
  */
 
+export * from "./data-root.js"
 export * from "./repo.js"

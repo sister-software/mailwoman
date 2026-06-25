@@ -24,6 +24,7 @@
 import { existsSync, readFileSync } from "node:fs"
 
 import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 import { parseAnchorLookup, type AnchorLookup } from "./anchor-inference.js"
 import { NeuralAddressClassifier } from "./classifier.js"
@@ -51,7 +52,7 @@ import {
 export const CAPABILITY_DELTA_THRESHOLD = 0.05
 
 /** Default postcode→anchor lookup (the pilot lookup the shipped en-us model trained against). */
-export const DEFAULT_ANCHOR_LOOKUP = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
+export const DEFAULT_ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
 /** Default gazetteer-anchor lexicon (codex-generated, repo-relative). */
 export const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"

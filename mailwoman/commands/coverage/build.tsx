@@ -14,6 +14,7 @@ import { Box, Text } from "ink"
 import { setImmediate } from "node:timers/promises"
 import { useEffect, useState } from "react"
 import zod from "zod"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { buildCoverageTiles, type CoverageBuildResult } from "../../coverage-core.js"
 import type { CommandComponent } from "../../sdk/cli.js"
 
@@ -23,13 +24,13 @@ const OptionsSchema = zod.object({
 	dataRoot: zod
 		.string()
 		.optional()
-		.default("/mnt/playpen/mailwoman-data/address-points")
+		.default(dataRootPath("address-points"))
 		.describe("Root holding address-points-us-<st>.db shards"),
 	interp: zod.coerce.boolean().optional().default(true).describe("Blend the TIGER street-segment signal (--no-interp to disable)"),
 	interpRoot: zod
 		.string()
 		.optional()
-		.default("/mnt/playpen/mailwoman-data/interpolation")
+		.default(dataRootPath("interpolation"))
 		.describe("Root holding interpolation-us-<st>.db shards"),
 	fineRes: zod.coerce.number().int().min(0).max(15).optional().default(9).describe("Finest H3 resolution (fog floor; 9 ≈ 174 m)"),
 	rollup: zod.string().optional().default("7,5").describe("Coarser rollup resolutions (comma-separated)"),
@@ -42,12 +43,12 @@ const OptionsSchema = zod.object({
 	geonamesPostal: zod
 		.string()
 		.optional()
-		.default("/mnt/playpen/mailwoman-data/geonames/allCountries-postal.txt")
+		.default(dataRootPath("geonames", "allCountries-postal.txt"))
 		.describe("GeoNames postal file (12-col) — the global postcode COVERAGE signal"),
 	wofDb: zod
 		.string()
 		.optional()
-		.default("/mnt/playpen/mailwoman-data/wof/admin-global-priority-importance.db")
+		.default(dataRootPath("wof", "admin-global-priority-importance.db"))
 		.describe("WOF DB (spr + place_importance) — the civilization/salience backdrop"),
 	postcodeCeiling: zod.coerce.number().min(0).max(1).optional().default(0.85).describe("Coverage a postcode cell contributes (clears the hole; ≤ 1)"),
 	salienceFloor: zod.coerce.number().min(0).max(1).optional().default(0.15).describe("Min place importance to flag as a hole (noise floor)"),
@@ -56,7 +57,7 @@ const OptionsSchema = zod.object({
 	out: zod
 		.string()
 		.optional()
-		.default("/mnt/playpen/mailwoman-data/coverage/coverage-us.pmtiles")
+		.default(dataRootPath("coverage", "coverage-us.pmtiles"))
 		.describe("Output .pmtiles path"),
 	keepNdjson: zod.coerce.boolean().optional().default(false).describe("Keep the intermediate NDJSON"),
 	threads: zod.coerce.number().int().positive().optional().describe("DuckDB worker-thread cap (default: all cores)"),

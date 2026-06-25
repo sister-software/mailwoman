@@ -36,7 +36,7 @@ import { useEffect, useState } from "react"
 import zod from "zod"
 import { geocodeAddress, ShardProvider, type GeocodeResult, type ShardResolver } from "../geocode-core.js"
 import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.js"
-import { createResolverBackend, resolveCandidateDbPath } from "../resolver-backend.js"
+import { createResolverBackend, mailwomanDataRoot, resolveCandidateDbPath } from "../resolver-backend.js"
 import type { CommandComponent } from "../sdk/cli.js"
 import { resolverDefaultCountry } from "./parse.js"
 
@@ -76,11 +76,11 @@ const OptionsSchema = zod.object({
 	dataRoot: zod
 		.string()
 		.optional()
-		.default("/mnt/playpen/mailwoman-data")
+		.default(mailwomanDataRoot())
 		.describe(
 			"Root directory for per-state address-point and interpolation shards. " +
 				"Shards are expected at <dataRoot>/address-points/address-points-us-<state>.db " +
-				"and <dataRoot>/interpolation/interpolation-us-<state>.db. Default: /mnt/playpen/mailwoman-data."
+				"and <dataRoot>/interpolation/interpolation-us-<state>.db. Defaults to $MAILWOMAN_DATA_ROOT."
 		),
 	addressPointsDb: zod
 		.string()
