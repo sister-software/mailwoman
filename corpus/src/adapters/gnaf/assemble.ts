@@ -38,8 +38,10 @@ export interface GnafAssembleOptions {
 	sampleSize: number
 	/** Output JSONL path. */
 	out: string
-	/** Optional held-out eval JSONL (rows with a `components` field) — its (street,locality,postcode)
-are excluded. */
+	/**
+	 * Optional held-out eval JSONL (rows with a `components` field) — its (street,locality,postcode)
+	 * are excluded.
+	 */
 	holdoutPath?: string
 	/** Progress sink (the CLI passes a setter). */
 	onProgress?: (message: string) => void

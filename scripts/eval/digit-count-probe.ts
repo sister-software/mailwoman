@@ -45,8 +45,10 @@ interface Row {
 	components: Record<string, string>
 }
 
-/** Fold neural Stage-3 tags into the golden component vocab (street parts → street). Mirrors
-per-locale-f1. */
+/**
+ * Fold neural Stage-3 tags into the golden component vocab (street parts → street). Mirrors
+ * per-locale-f1.
+ */
 function foldPostcode(flat: Partial<Record<ComponentTag, string>>): string | undefined {
 	return flat.postcode
 }

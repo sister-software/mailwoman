@@ -367,8 +367,10 @@ function analyze(rows: ScoredRow[]): string {
 	return L.join("\n") + "\n"
 }
 
-/** Minimal self-contained precision–recall SVG: mailwoman curve (recall x, precision y) + Nominatim
-point. */
+/**
+ * Minimal self-contained precision–recall SVG: mailwoman curve (recall x, precision y) + Nominatim
+ * point.
+ */
 function renderSvg(
 	curve: Array<{ precision: number; recall: number }>,
 	nom: { precision: number; recall: number }

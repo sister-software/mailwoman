@@ -74,8 +74,10 @@ function parseArgs(): Args {
 	return { geonames, countries, out, foldInto, foldOut }
 }
 
-/** Synthetic id base — above WOF's ~907M ceiling, so these GeoNames-sourced records never collide
-with a WOF id. */
+/**
+ * Synthetic id base — above WOF's ~907M ceiling, so these GeoNames-sourced records never collide
+ * with a WOF id.
+ */
 const SYNTH_ID_BASE = 8_000_000_000
 
 /** One postcode's accumulated GeoNames points (one row per place sharing the code). */
@@ -122,8 +124,10 @@ async function readGeonames(file: string, want: Set<string>): Promise<Map<string
 	return acc
 }
 
-/** The distinct written forms of a postcode that should resolve: the raw form + a separator-stripped
-form. */
+/**
+ * The distinct written forms of a postcode that should resolve: the raw form + a separator-stripped
+ * form.
+ */
 function nameVariants(pc: string): string[] {
 	const stripped = pc.replace(/[\s-]/g, "")
 	const variants = [pc]

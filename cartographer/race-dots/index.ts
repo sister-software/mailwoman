@@ -4,8 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Race-by-dot-density overlay — the Cooper Center "Racial Dot Map" reading, on the demo. One dot
- *   per ~N people, placed at random inside its Census block (built by `scripts/census/race-dots.ts`
- *   + tippecanoe), colored by 2020 P.L. 94-171 race/ethnicity category.
+ *   per ~N people, placed at random inside its Census block (built by
+ *   `scripts/census/race-dots.ts`
+ *
+ *   - Tippecanoe), colored by 2020 P.L. 94-171 race/ethnicity category.
  *
  *   The PMTiles ships a single `dots` source-layer carrying a `cat` property; we expose each category
  *   as its OWN default-off circle layer (filtered on `cat`) so the demo's LayerToggleControl gives

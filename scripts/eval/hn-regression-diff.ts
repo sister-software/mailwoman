@@ -57,8 +57,10 @@ async function build(model: string) {
 	})
 }
 
-/** Which tag did the model assign the gold house-number VALUE to? (postcode / street / … /
-"DROPPED"). */
+/**
+ * Which tag did the model assign the gold house-number VALUE to? (postcode / street / … /
+ * "DROPPED").
+ */
 function whereDidItGo(pred: Record<string, string>, goldHn: string): string {
 	const g = norm(goldHn)
 	for (const [tag, val] of Object.entries(pred)) {
