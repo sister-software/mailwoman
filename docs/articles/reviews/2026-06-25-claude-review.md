@@ -109,9 +109,8 @@ Ordered by what actually blocks the flip. Effort in agent-nights.
 - Add unit tests for `HashMapSolver`/`BaseSolver` and the eval-gate logic; fix the two prettier-drift files.
 - On the flip: set `MAILWOMAN_NPM_PROVENANCE=1` so tarballs carry sigstore provenance.
 
-<strike>
-**Total to clear P0 + P1: roughly 5–6 agent-nights.** P0 alone is a single focused night.
-</strike> We can get this done in a single night. Agents are bad at estimating time. -- Operator.
+~~**Total to clear P0 + P1: roughly 5–6 agent-nights.** P0 alone is a single focused night.~~ We can get this done in a single night. Agents are bad at estimating time. -- Operator.
+
 ---
 
 ## Progress since the last reviews
