@@ -234,6 +234,26 @@ Most releases are code-only (`yarn release` / the `publish` workflow at the next
 pipeline more than once because the moving parts aren't obvious. This is the exact, ordered runbook
 (walked end-to-end for v4.11.0, the v1.8.0 fr-admin-split promotion). Do these in order; verify each.
 
+### Fast-path cheat sheet (lessons from the v4.15.0 promotion)
+
+Read this first — it's the 30-minute version once you know the shape. Three backends, decoupled, and a
+"promote" isn't done until all three agree on one md5:
+
+| backend       | tool                              | what it feeds                          |
+| ------------- | --------------------------------- | -------------------------------------- |
+| **npm**       | `publish.yml` (CI, OIDC)          | library consumers — **fetches the binary from HF**, so HF must be staged FIRST |
+| **HF bucket** | `scripts/publish-release-to-hf.mjs` | the npm fetch source + HF-direct `loadFromWeights` |
+| **R2/demo**   | `scripts/publish-demo-assets-to-r2.py` | the browser demo (reads `public.sister.software`, NOT HF) |
+
+The end-to-end order that worked: **gate (revised if needed) → commit card+config to main → HF stage → `publish.yml` (real) → verify npm md5 → R2 demo repoint.** Time-savers and traps, each cost real minutes once:
+
+- **Only TWO model-card fields are pipeline-breaking**: `version` (publish.yml derives `MODEL_VERSION` from it) and `files_md5.model.onnx` (re-verified at `yarn pack`). Everything else in the card (`model_lineage`, `phase`, `training`, `notes`, `base_relpath`, the `eval` block) is provenance — get it honest, but a typo there won't break the publish. Move fast on the prose, slow on those two.
+- **The `neural-weights-fr-fr` card silently drifts.** It is NOT auto-bumped (release-it only touches `package.json`), so its `version` + `model_lineage` rot — found it stuck at `4.6.0` / "v1.5.0-fr-order" while it had long shipped the en-us binary. Reconcile both fields every model promotion.
+- **Gate floor comparison is `>=`** (`scripts/eval/promotion-gate.sh`). A floor set exactly AT the measured value passes (95.0 ≥ 95.0) — no need to set it below, and no re-run to find out. A gate that needs a floor lowered gets a **new gate file** with a stated `$revision_*` reason (no silent drift); the full gate is ~12–15 min, so set the floors right the first time.
+- **The R2 demo repoint is "carry-forward + overwrite 2 files."** Between model versions ONLY `model.onnx` and `model-card.json` change — tokenizer, `fst-en-US.bin`, `postcode-*.bin`, `wof-polygons.db`, `anchor-lexicon-v1.json`, `calibration.json` are byte-identical. Fastest path: boto3-`download` ALL of the prior `en-us/v<PRIOR>/` (the exact serving bytes), `cp` the new `model.onnx` + `model-card.json` over them, rebuild `releases.json` (prepend entry + `defaultVersion`), one `publish-demo-assets-to-r2.py --src`. ~60 MB, two commands. (The bucket is `nexus-public`, creds are `RCLONE_S3_PUBLIC_*`.)
+- **npm CDN tarball lags ~10 min behind the version metadata.** Right after publish, `npm view <pkg>@<ver> version` already returns the new version but `npm pack` 404s and a raw tarball `curl` returns a tiny error JSON — that's CDN propagation, NOT a failed publish. Verify meanwhile via `npm view … dist.unpackedSize` (a code-only pkg is <1 MB; a model-bundled one is ~33 MB) and the md5 chain `/mnt/playpen source == HF upload == R2 staging`. Re-`npm pack` to close the loop once the CDN catches up.
+- **Canonical artifact paths** (so you don't hunt): model int8 → `/mnt/playpen/mailwoman-data/models/quantized/model-v<NNN>-step-<step>-int8.onnx`; tokenizer → `/mnt/playpen/mailwoman-data/models/tokenizer/<ver>/tokenizer.model`; FST → `/mnt/playpen/mailwoman-data/wof/fst-per-locale/fst-<locale>.bin` (HF stage renames it to BCP-47 `fst-en-US.bin`); postcode soft-feeds → `neural-weights-<locale>/postcode-<cc>.bin`; gazetteer lexicon → `data/gazetteer/anchor-lexicon-v1.json` (the repo copy the gate ran against — use this, not the prior bucket's).
+
 ### Step 0 — figure out the version number (the divergence trap)
 
 The npm packages and the demo model **drift apart**: code-only cuts bump npm (`mailwoman` → 4.7, 4.8, … on
