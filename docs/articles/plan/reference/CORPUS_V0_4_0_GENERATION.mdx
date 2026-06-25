@@ -48,7 +48,7 @@ corpus-v0.4.0/kryptonite/.kryptonite-checkpoint.json    (resumable batches)
   │    streams JSONL → alignRow (BIO labels) → parquet shard
   │    composes MANIFEST = v0.3.0.shards + new shard
   ▼
-/mnt/playpen/mailwoman-data/corpus/versioned/v0.4.0/corpus-v0.4.0/
+$MAILWOMAN_DATA_ROOT/corpus/versioned/v0.4.0/corpus-v0.4.0/
   ├── MANIFEST.json
   └── train/part-0000.parquet          ← new kryptonite shard
 ```
@@ -161,7 +161,7 @@ ships its own hand-curated fixture set. See [`PHASE_8 §D`](../phases/PHASE_8_v0
 
 ```bash
 npx tsx corpus/scripts/audit.ts \
-  /mnt/playpen/mailwoman-data/corpus/versioned/v0.4.0/corpus-v0.4.0 \
+  $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.4.0/corpus-v0.4.0 \
   --config corpus-python/src/mailwoman_train/configs/v0_5_0.yaml
 ```
 
@@ -254,7 +254,7 @@ rows fit comfortably.
    one parquet shard per script (`train/part-translit-<slug>.parquet`).
 3. Composes the new MANIFEST as `(v0.3.0 base shards) + (Thread B kryptonite shard) +
 (Thread B2 translit-<slug> shards)`.
-4. Migrates v0.3.0 shard descriptors in MANIFEST from `/mnt/playpen/mailwoman-data/...`
+4. Migrates v0.3.0 shard descriptors in MANIFEST from `$MAILWOMAN_DATA_ROOT/...`
    to `/data/...`, the form that container loaders resolve at training time. The on-disk
    bytes are unchanged; only the path strings in MANIFEST move. (Thread B's MANIFEST mixed
    the two forms; this PR canonicalizes.)
@@ -280,4 +280,4 @@ rows fit comfortably.
 | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-05-23 | Initial doc + kryptonite slice generation (5K rows, deepseek-v4-flash).                                                                                                                                                                                                                                                                                                                                  |
-| 2026-05-24 | Transliteration slice generation shipped under Thread B2: 73,319 rows from 5 scripts × 14,978 seeds (en-US + fr-FR), `max_tokens=60000`, 5.2 rps sustained, ~234 min wall-clock at conc=15. 73,316 rows aligned (3 quarantined). 5 shards added: `part-translit-{armn,cyrl,hang,hans,jpan}.parquet`. v0.3.0 shard paths in MANIFEST canonicalized from `/mnt/playpen/mailwoman-data/...` to `/data/...`. |
+| 2026-05-24 | Transliteration slice generation shipped under Thread B2: 73,319 rows from 5 scripts × 14,978 seeds (en-US + fr-FR), `max_tokens=60000`, 5.2 rps sustained, ~234 min wall-clock at conc=15. 73,316 rows aligned (3 quarantined). 5 shards added: `part-translit-{armn,cyrl,hang,hans,jpan}.parquet`. v0.3.0 shard paths in MANIFEST canonicalized from `$MAILWOMAN_DATA_ROOT/...` to `/data/...`. |
