@@ -24,7 +24,7 @@
  *   Run: GEOCODE_EARTH_API_KEY=… node --experimental-strip-types scripts/eval/competitive-benchmark.ts \
  *          [--n 40] [--locales it,pt,pl,at,cz,fr,au] [--systems mailwoman,nominatim,pelias] [--out <md>]
  */
-import type { AddressNode, AddressTree } from "@mailwoman/resolver"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
@@ -90,7 +90,7 @@ const PLACETYPE_RANK: Record<string, number> = {
 }
 type Resolved = { placetype: string; lat: number; lon: number }
 function mostSpecificCoord(tree: AddressTree): { lat: number; lon: number } | null {
-	let best: Resolved | null = null
+	let best: Resolved | null = null as Resolved | null
 	const visit = (n: AddressNode): void => {
 		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
 			const placetype = String(n.sourceId ?? "").split(":")[0] ?? ""
@@ -163,7 +163,7 @@ function record(t: Tally, err: number | null) {
 		return
 	}
 	t.resolvedErrs.push(err)
-	for (const th of THRESHOLDS) if (err <= th) t.within[th]++
+	for (const th of THRESHOLDS) if (err <= th) t.within[th]!++
 }
 
 async function main() {

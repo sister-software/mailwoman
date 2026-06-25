@@ -50,6 +50,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import type { ParseOpts } from "@mailwoman/neural"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { readFileSync, writeFileSync } from "node:fs"
@@ -184,8 +185,8 @@ async function main(): Promise<void> {
 	// --- model (CURRENT arm). `--oracle-only` skips the model entirely (fast bucketing iteration; the
 	// `current` column is then blank — the oracle arms + buckets don't depend on the model). ---
 	const oracleOnly = process.argv.includes("--oracle-only")
-	let neural: { parse: (text: string, o?: object) => Promise<AddressTree> } | null = null
-	let parseOpts: object = {}
+	let neural: { parse: (text: string, opts?: ParseOpts) => Promise<AddressTree> } | null = null
+	let parseOpts: ParseOpts = {}
 	if (!oracleOnly) {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 		const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
@@ -197,7 +198,7 @@ async function main(): Promise<void> {
 			),
 			OnnxRunner.create(arg("model", "/mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx")),
 		])
-		neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels }) as never
+		neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 		parseOpts = { postcodeRepair: true }
 	}
 

@@ -17,7 +17,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 // import { Presets, SingleBar } from "cli-progress"
-import { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
+import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import { resourceDictionaryPathBuilder } from "@mailwoman/core/utils"
 import { mkdir, writeFile } from "node:fs/promises"
 
@@ -49,7 +49,7 @@ if (process.argv.length !== 3) {
 	process.exit(1)
 }
 
-const databasePath = process.argv[2]
+const databasePath = process.argv[2]!
 
 console.log(`Opening database... ${databasePath}`)
 const db = new DatabaseSync(databasePath, {

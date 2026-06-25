@@ -59,7 +59,7 @@ function parseArgs(): Args {
 	const out: Partial<Args> = { inputs: [], width: 720, height: 380, log: false }
 	for (let i = 0; i < args.length; i++) {
 		const a = args[i]
-		if (a === "--input" && args[i + 1]) out.inputs!.push(args[++i])
+		if (a === "--input" && args[i + 1]) out.inputs!.push(args[++i]!)
 		else if (a === "--metric" && args[i + 1]) out.metric = args[++i] as Metric
 		else if (a === "--title" && args[i + 1]) out.title = args[++i]
 		else if (a === "--output" && args[i + 1]) out.output = args[++i]

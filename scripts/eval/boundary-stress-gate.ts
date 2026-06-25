@@ -53,7 +53,9 @@ const N = Number(args.n)
 // The pre-registered gate (v1.6.0-boundary-stress.yaml). Per shape: the stress tag it teaches, the
 // re-baselined "before" number, and the target the retrain must clear. PLUS the shared street-span
 // floor (≥65 on all four shapes) — the street is the common casualty across every shape.
-const TARGETS: Record<BoundaryStressTemplate, { tag: string; baseline: number; target: number }> = {
+// Partial: this v1.6.0-era gate has pre-registered baselines only for the original 4 templates.
+// The 2 added 2026-06-18 ("bare-locality", "house-number-before-street") have no measured baseline here.
+const TARGETS: Partial<Record<BoundaryStressTemplate, { tag: string; baseline: number; target: number }>> = {
 	"street-eats-affix": { tag: "street_suffix", baseline: 41.7, target: 55 },
 	"comma-less-city-state": { tag: "street", baseline: 47, target: 65 },
 	"fr-prefix": { tag: "street_prefix", baseline: 55, target: 70 },
@@ -110,7 +112,7 @@ type ShapeResult = {
 const results: ShapeResult[] = []
 
 for (const template of Object.keys(TARGETS) as BoundaryStressTemplate[]) {
-	const { tag, baseline, target } = TARGETS[template]
+	const { tag, baseline, target } = TARGETS[template]!
 	let stressHit = 0
 	const perKey: Record<string, { hit: number; n: number }> = {}
 	for (let i = 0; i < N; i++) {

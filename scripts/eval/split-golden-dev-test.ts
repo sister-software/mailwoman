@@ -32,7 +32,7 @@ import { join } from "node:path"
 
 function arg(name: string, fallback: string): string {
 	const i = process.argv.indexOf(`--${name}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback
+	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
 const GOLDEN_DIR = arg("golden", "data/eval/golden/v0.1.2")
@@ -62,7 +62,7 @@ function shuffledIndices(n: number, rng: () => number): number[] {
 	const idx = Array.from({ length: n }, (_, i) => i)
 	for (let i = n - 1; i > 0; i--) {
 		const j = Math.floor(rng() * (i + 1))
-		;[idx[i], idx[j]] = [idx[j], idx[i]]
+		;[idx[i], idx[j]] = [idx[j]!, idx[i]!]
 	}
 	return idx
 }
@@ -98,8 +98,8 @@ function splitFile(name: string, fileSeed: number): FileSplit {
 	const devLines: string[] = []
 	const testLines: string[] = []
 	for (let i = 0; i < n; i++) {
-		if (testSet.has(i)) testLines.push(lines[i])
-		else devLines.push(lines[i])
+		if (testSet.has(i)) testLines.push(lines[i]!)
+		else devLines.push(lines[i]!)
 	}
 
 	const devText = devLines.join("\n") + "\n"

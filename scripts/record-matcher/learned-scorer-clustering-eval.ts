@@ -250,7 +250,7 @@ async function main(): Promise<void> {
 		const { pairs: trainPairs } = block(trainRecords, defaultBlockingKeys())
 		const trainX = trainPairs.map(([a, b]) => featurize(a, b))
 		const trainY = trainPairs.map(([a, b]) => (a.id === b.id ? 1 : 0))
-		const posRate = trainY.reduce((s, v) => s + v, 0) / Math.max(1, trainY.length)
+		const posRate = trainY.reduce<number>((s, v) => s + v, 0) / Math.max(1, trainY.length)
 		const trainW = trainY.map((y) => (y === 1 ? 1 - posRate : posRate))
 		const dim = trainX[0]?.length ?? 0
 		const gbt = trainGBT(trainX, trainY, trainW, { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 })

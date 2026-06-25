@@ -97,7 +97,7 @@ for (const cc of countries) {
 		const pop = Number(f[14]) || 0
 		if (pop < minPop) continue
 		nPlaces++
-		const names = [f[1], f[2], ...(f[3] ? f[3].split(",") : [])]
+		const names = [f[1]!, f[2]!, ...(f[3] ? f[3].split(",") : [])]
 		const neg = -Math.log10(pop + 1)
 		for (const raw of names) {
 			const name = cleanName(raw)

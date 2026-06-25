@@ -62,7 +62,7 @@ async function applyGeoNamesPopulation(db: DatabaseSync, citiesFile: string): Pr
 		if (!pop || !country || !Number.isFinite(lat)) continue
 		let best: number | null = null
 		let bestD = Infinity
-		for (const nm of new Set([f[1], f[2]].filter(Boolean))) {
+		for (const nm of new Set([f[1], f[2]].filter((x): x is string => Boolean(x)))) {
 			for (const r of findByName.all(nm, country) as Array<{ id: number; lat: number; lon: number }>) {
 				const d = haversineKm(lat, lon, Number(r.lat), Number(r.lon))
 				if (d < bestD) {

@@ -192,7 +192,7 @@ async function main(): Promise<void> {
 	}
 
 	// --- derive baselines per subset ---
-	const subsets: Record<string, RowResult[]> = {
+	const subsets = {
 		canonical: results.filter((r) => r.perturb === "canonical"),
 		perturbed: results.filter((r) => r.perturb !== "canonical"),
 		all: results,

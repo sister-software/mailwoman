@@ -16,7 +16,7 @@
  *   Run: node --experimental-strip-types scripts/eval/repair-net-coord-probe.ts --model out/v192/model.onnx \
  *        --candidate-db /mnt/playpen/mailwoman-data/wof/candidate-global-20j.db --n 150
  */
-import type { AddressNode, AddressTree } from "@mailwoman/resolver"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { readFileSync } from "node:fs"
@@ -40,8 +40,9 @@ const RANK: Record<string, number> = {
 	street: 9,
 	address: 10,
 }
+type RankedCoord = { lat: number; lon: number; r: number }
 function bestCoord(tree: AddressTree): { lat: number; lon: number } | null {
-	let best: { lat: number; lon: number; r: number } | null = null
+	let best: RankedCoord | null = null as RankedCoord | null
 	const visit = (n: AddressNode): void => {
 		const pt = String(n.sourceId ?? "").split(":")[0] ?? ""
 		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined && (n.lat !== 0 || n.lon !== 0)) {

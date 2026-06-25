@@ -34,7 +34,8 @@
 		"test": "vitest",
 		"test:coverage": "vitest --coverage",
 		"test:integration": "vitest --dir ./mailwoman/test",
-		"test:unit": "vitest --exclude ./mailwoman/test"
+		"test:unit": "vitest --exclude ./mailwoman/test",
+		"typecheck:scripts": "tsc -p scripts/tsconfig.json --noEmit"
 	},
 	"type": "module",
 	"devDependencies": {

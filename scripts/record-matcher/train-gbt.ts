@@ -221,7 +221,7 @@ async function main(): Promise<void> {
 	const { pairs } = block(records, defaultBlockingKeys())
 	const X = pairs.map(([a, b]) => featurize(a, b))
 	const Y = pairs.map(([a, b]) => (a.id === b.id ? 1 : 0))
-	const posRate = Y.reduce((s, v) => s + v, 0) / Math.max(1, Y.length)
+	const posRate = Y.reduce<number>((s, v) => s + v, 0) / Math.max(1, Y.length)
 	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate * COST)) // class-balanced; COST up-weights negatives
 	const hyperparams = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 	if (COST !== 1) console.error(`    cost-sensitive: negative class weighted ×${COST} (penalize over-merge)`)

@@ -157,7 +157,7 @@ async function main(): Promise<void> {
 	const results: ResultRow[] = []
 
 	for (let i = 0; i < bothFail.length; i++) {
-		const c = bothFail[i]
+		const c = bothFail[i]!
 		const q = encodeURIComponent(c.input)
 		// Harness expected values are string[] (e.g. {"street":["Main St"]}); flatten to strings.
 		const expected: Rec = {}

@@ -44,7 +44,7 @@ if (args.model && !args.tokenizer) throw new Error("--tokenizer required with --
 // The boundary token we probe per shape, and where it sits relative to the street (for disambiguating
 // duplicate substrings). For comma-less we probe the LOCALITY start — that's the regression site
 // (us.locality 66.2/72.9): does the model confidently extend street INTO the locality?
-const PROBES: Record<BoundaryStressTemplate, { tag: string; prefer: "first" | "last"; why: string }> = {
+const PROBES: Partial<Record<BoundaryStressTemplate, { tag: string; prefer: "first" | "last"; why: string }>> = {
 	"street-eats-affix": { tag: "street_suffix", prefer: "last", why: "suffix swallowed into street?" },
 	"comma-less-city-state": { tag: "locality", prefer: "first", why: "street eats the locality start?" },
 	"fr-prefix": { tag: "street_prefix", prefer: "first", why: "leading particle (the shape that PASSED)" },
@@ -95,7 +95,7 @@ const random = (() => {
 console.log(`\n== boundary confidence probe — ${args.model ?? "dev weights"} (raw logits, n=${N}/shape) ==`)
 
 for (const template of Object.keys(PROBES) as BoundaryStressTemplate[]) {
-	const { tag, prefer, why } = PROBES[template]
+	const { tag, prefer, why } = PROBES[template]!
 	const bIdx = idxOf(`B-${tag}`)
 	let located = 0
 	let correct = 0

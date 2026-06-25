@@ -13,7 +13,7 @@
  *
  *   Run: node --experimental-strip-types scripts/eval/au-order-probe.ts --candidate-db <db> [--n 60]
  */
-import type { AddressNode, AddressTree } from "@mailwoman/resolver"
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
@@ -32,9 +32,9 @@ const N = Number(arg("n", "60"))
  */
 function toCanonical(raw: string): string {
 	let m = raw.match(/^\s*(\d{4})\s+([^,]+),\s*(.+)$/)
-	if (m) return `${m[3].trim()}, ${m[2].trim()} ${m[1]}`
+	if (m) return `${m[3]!.trim()}, ${m[2]!.trim()} ${m[1]}`
 	m = raw.match(/^\s*([^,]+),\s*(\d{4}),\s*(.+)$/)
-	if (m) return `${m[3].trim()}, ${m[1].trim()} ${m[2]}`
+	if (m) return `${m[3]!.trim()}, ${m[1]!.trim()} ${m[2]}`
 	return raw
 }
 
@@ -48,8 +48,9 @@ const RANK: Record<string, number> = {
 	street: 9,
 	address: 10,
 }
+type RankedCoord = { lat: number; lon: number; r: number }
 function bestCoord(tree: AddressTree): { lat: number; lon: number } | null {
-	let best: { lat: number; lon: number; r: number } | null = null
+	let best: RankedCoord | null = null as RankedCoord | null
 	const visit = (n: AddressNode): void => {
 		const pt = String(n.sourceId ?? "").split(":")[0] ?? ""
 		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined && (n.lat !== 0 || n.lon !== 0)) {

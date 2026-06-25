@@ -21,7 +21,7 @@
  *   from `core/data/libpostal/dictionaries/`.
  */
 
-import { decodeAsJson } from "@mailwoman/core/decoder"
+import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"

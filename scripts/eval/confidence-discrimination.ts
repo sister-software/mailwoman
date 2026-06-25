@@ -44,8 +44,8 @@
  *   [--rows-out <jsonl>] [--rows-in <jsonl>] [--out <md>] [--svg <svg>]\
  *   [--cache /tmp/nominatim-messy-cache.json] [--agg node|min]
  */
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createCalibrator } from "@mailwoman/core/decoder"
-import type { AddressNode, AddressTree } from "@mailwoman/resolver"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs"
@@ -119,7 +119,8 @@ const PLACETYPE_RANK: Record<string, number> = {
 export function resolvedResult(
 	tree: AddressTree
 ): { lat: number; lon: number; nodeConf: number; minConf: number } | null {
-	let best: { rank: number; lat: number; lon: number; conf: number } | null = null
+	type RankedNode = { rank: number; lat: number; lon: number; conf: number }
+	let best: RankedNode | null = null as RankedNode | null
 	const confs: number[] = []
 	const visit = (n: AddressNode): void => {
 		if (n.placeId?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {

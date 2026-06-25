@@ -22,7 +22,7 @@ import { join } from "node:path"
 
 function arg(name: string, fallback: string): string {
 	const i = process.argv.indexOf(`--${name}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback
+	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
 const GOLDEN = arg("golden", "data/eval/golden/v0.1.2")
