@@ -111,6 +111,16 @@ Ordered by what actually blocks the flip. Effort in agent-nights.
 
 ~~**Total to clear P0 + P1: roughly 5–6 agent-nights.** P0 alone is a single focused night.~~ We can get this done in a single night. Agents are bad at estimating time. -- Operator.
 
+### Cleared in the 2026-06-25 night shift
+
+The follow-up shift cleared most of P1 + several P2 items (P0 landed in the day session: `f609dead`):
+
+- **P1 — done:** community-health files (`SECURITY`/`CONTRIBUTING`/`CODE_OF_CONDUCT`); `CHANGELOG.md`; SPDX normalized to `AGPL-3.0-only` across all published packages (the MIT-Pelias claim was already attribution-only); `mailwoman --version` now reads `package.json`; `engines.node ≥ 22.5.1`; `AGENTS.md` orientation table refreshed (9 → 28 workspaces); `status.mdx` synced 4.11.0 → 4.15.0; `.gitignore HANDOFF-*.md`; the score-ledger v4.4.0-freeze noted in `AGENTS.md`.
+- **P2 — done:** `HashMapSolver` tests (extended across the whole solver pipeline + `core/classification`/`spatial`/`codex`/`normalize` — ~130 tests on previously-0-coverage logic), which **surfaced + fixed a real bug** (`is2DBBox` returned the inverse of reality, `13e5ed6e`).
+- **Also (beyond this review):** `scripts/` brought under the type checker (`yarn typecheck:scripts` + CI), the `arg()` argv-helper deduped (29 copies → one lib), and the data-root / WOF-shard-list consolidated across the 3 server routers.
+- **Deferred — model-gated (need a model/training-available session to behavior-diff):** the neural-path clean-install ONNX assertion; the Python→TS ports (`jsonl-to-parquet` is also tangled — its python can't be cleanly removed, so a port would add duplication); the `mailwoman eval`/`gazetteer` command-ification.
+- **Deferred — operator call:** the internal-docs public-rendering gating; the `/mnt/playpen` default in shipped code; `MAILWOMAN_NPM_PROVENANCE` (flip once the repo is public); the `variant-aliases` privatize-vs-wire decision. The other "orphans" were verified non-issues (`spike` is private + doesn't ship; `apps/web-demo` is stray non-workspace files).
+
 ---
 
 ## Progress since the last reviews
