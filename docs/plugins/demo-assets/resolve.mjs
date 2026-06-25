@@ -157,7 +157,7 @@ export function buildWorkspaceAliases() {
 			// `pipeline` + `errors` MUST be here: the demo imports `runPipeline` from
 			// `@mailwoman/core/pipeline` directly. Without a source alias, webpack resolves the package
 			// `exports` to the COMPILED `core/out/pipeline/index.js` — which `yarn start` never rebuilds
-			// (only CI's `build-site` runs `yarn compile` first). A `core/out` left over from before the
+			// (only CI's `ci:docs` runs `yarn compile` first). A `core/out` left over from before the
 			// #566 reconcile retirement then serves the old joint-reconcile-default pipeline, which mangles
 			// the parse (house number bundled into the street) so the street/situs tier can't fire and the
 			// geocode falls back to the admin centroid. Aliasing to source keeps dev on current code +

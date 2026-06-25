@@ -15,13 +15,14 @@
 		"url": "https://github.com/sister-software/mailwoman.git"
 	},
 	"scripts": {
-		"build-docs": "yarn workspace @mailwoman/docs build",
-		"build-site": "run-s compile build-docs",
+		"ci:docs": "run-s compile docs:build",
 		"ci:smoke": "node scripts/smoke-clean-install.mjs",
 		"ci:test": "vitest --run",
 		"ci:test:fast": "vitest --run --exclude './mailwoman/test/**' --exclude './resolver-wof-sqlite/fst-serialize.test.ts' --exclude './resolver-wof-sqlite/fst-builder.test.ts' --exclude './resolver-wof-sqlite/fst-autocomplete.test.ts' --exclude './neural-web/web-onnx-runner.test.ts'",
+		"ci:tile-worker": "run-s compile",
 		"compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
 		"compile:clean": "tsc -b --clean",
+		"docs:build": "yarn workspace @mailwoman/docs build",
 		"lint": "run-s lint:prettier:check lint:eslint:check",
 		"lint:eslint:check": "eslint .",
 		"lint:eslint:fix": "eslint --fix .",
