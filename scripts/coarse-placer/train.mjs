@@ -9,10 +9,11 @@
  *   Writes a `meta.json` + `weights.bin` (Float32, row-major [class][feature]) artifact.
  *
  *   Usage: node scripts/coarse-placer/train.mjs [--epochs 12] [--lr 0.1] [--l2 1e-6] [--out
- *   /mnt/playpen/mailwoman-data/coarse-placer/model] Requires `yarn compile` first (imports the
+ *   $MAILWOMAN_DATA_ROOT/coarse-placer/model] Requires `yarn compile` first (imports the
  *   compiled featurizer).
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 import { parseArgs } from "node:util"
@@ -27,7 +28,7 @@ const { values: args } = parseArgs({
 		epochs: { type: "string", default: "12" },
 		lr: { type: "string", default: "0.1" },
 		l2: { type: "string", default: "0.000001" },
-		out: { type: "string", default: "/mnt/playpen/mailwoman-data/coarse-placer/model" },
+		out: { type: "string", default: dataRootPath("coarse-placer", "model") },
 		data: { type: "string", default: path.resolve(import.meta.dirname, "../../data/coarse-placer") },
 	},
 })

@@ -31,7 +31,7 @@
  *   Run (after `yarn compile`):
  *
  *   Node --experimental-strip-types scripts/eval/reverse-geocode-eval.ts\
- *   --admin-db /mnt/playpen/mailwoman-data/wof/admin-global-priority.db\
+ *   --admin-db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db\
  *   --polygons-db /tmp/v440-stage/en-us/v4.4.0/wof-polygons.db\
  *   --states VT
  */
@@ -41,13 +41,14 @@ import { createInterface } from "node:readline"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { placetypeDepth, WofReverseGeocoder } from "@mailwoman/resolver-wof-sqlite"
 
 const { values: args } = parseArgs({
 	options: {
 		eval: { type: "string", default: "data/eval/external/openaddresses-us-sample.jsonl" },
 		states: { type: "string", default: "VT" },
-		"admin-db": { type: "string", default: "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db" },
+		"admin-db": { type: "string", default: dataRootPath("wof", "admin-global-priority.db") },
 		"polygons-db": { type: "string", default: "/tmp/v440-stage/en-us/v4.4.0/wof-polygons.db" },
 		limit: { type: "string" },
 		"max-approx-km": { type: "string" },

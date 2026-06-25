@@ -17,15 +17,16 @@
  *   Run: node --experimental-strip-types scripts/eval/rescore-ceiling-probe.ts [--model out/v191/model.onnx] [--n 150]
  */
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
 
-const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
+const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
-const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
-const WOF = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
+const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
+const WOF = dataRootPath("wof", "admin-global-priority.db")
 const MODEL = arg("model", "out/v191/model.onnx")
 const N = Number(arg("n", "150"))
 const LOCALES: [string, string][] = [

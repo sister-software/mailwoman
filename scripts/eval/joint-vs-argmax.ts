@@ -16,10 +16,11 @@
  *   scripts/eval/joint-vs-argmax.ts\
  *   --eval data/eval/external/openaddresses-de-sample.jsonl --limit 500\
  *   --model /tmp/v094-eval/model.onnx --model-card neural-weights-en-us/model-card.json\
- *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --default-country DE --out-json /tmp/joint-de.json
  */
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -77,11 +78,11 @@ async function main(): Promise<void> {
 	const dc = arg("default-country", "")
 	const modelPath = arg("model")
 	const cardPath = arg("model-card")
-	const tokPath = arg("tokenizer", "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model")
+	const tokPath = arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
 	const anchorPath = arg("model-anchor-lookup")
 	const wof = arg(
 		"wof",
-		"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db"
+		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	)
 	if (!evalPath || !modelPath || !cardPath) throw new Error("need --eval, --model, --model-card")
 

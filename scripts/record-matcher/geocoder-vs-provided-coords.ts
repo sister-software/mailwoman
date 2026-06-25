@@ -20,6 +20,7 @@
  *   [--max 1176] [--wof <admin.db>] [--data-root <dir>] [--out-md docs/articles/evals/<date>-...md]
  */
 
+import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { streamRows } from "@mailwoman/registry"
@@ -32,10 +33,10 @@ function arg(name: string, fallback = ""): string {
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
-const SOURCES = arg("sources", "/mnt/playpen/mailwoman-data/record-matcher/sources")
+const SOURCES = arg("sources", dataRootPath("record-matcher", "sources"))
 const MAX = Number(arg("max", "2000"))
-const WOF = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
-const DATA_ROOT = arg("data-root", "/mnt/playpen/mailwoman-data")
+const WOF = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
+const DATA_ROOT = arg("data-root", mailwomanDataRoot())
 const OUT_MD = arg("out-md", "")
 
 const FILE = `${SOURCES}/txhhsc_nursing-facilities_20260611.tsv`

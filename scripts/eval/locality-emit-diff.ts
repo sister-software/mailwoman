@@ -12,14 +12,15 @@
  *     --golden data/eval/external/oa-pt-coord-150.jsonl --default-country PT --n 30
  */
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { readFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
 
-const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
+const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
-const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
-const WOF = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
+const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
+const WOF = dataRootPath("wof", "admin-global-priority.db")
 
 async function main() {
 	const n = Number(arg("n", "30"))

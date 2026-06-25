@@ -26,12 +26,13 @@
  *
  *   Run: node --experimental-strip-types scripts/eval/eu-qualified-name-recall.ts [--n 150]
  */
+import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
 
 const N = Number(arg("n", "150"))
-const CAND = arg("candidate-db", "/mnt/playpen/mailwoman-data/wof/candidate-global-20h.db")
+const CAND = arg("candidate-db", dataRootPath("wof", "candidate-global-20h.db"))
 const GATE_KM = Number(arg("gate", "25"))
 const LOCALES: [string, string][] = [
 	["IT", "data/eval/external/oa-it-coord-150.jsonl"],

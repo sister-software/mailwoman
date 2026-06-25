@@ -25,6 +25,7 @@ import { writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import { DuckDBInstance } from "@duckdb/node-api"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 const { values: args } = parseArgs({
 	options: {
@@ -35,7 +36,7 @@ const { values: args } = parseArgs({
 	},
 })
 
-const PARQUET = `/mnt/playpen/mailwoman-data/overture/${args.release}/addresses-us.parquet`
+const PARQUET = `${dataRootPath("overture")}/${args.release}/addresses-us.parquet`
 const PER_STATE = Number(args["per-state"])
 
 const instance = await DuckDBInstance.create()

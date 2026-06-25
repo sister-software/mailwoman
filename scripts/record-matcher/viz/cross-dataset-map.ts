@@ -27,6 +27,7 @@
  *   [--in <links.geojson>] [--out-html /tmp/cross-dataset-map.html] [--cross-agency-only]
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 import { readFileSync, writeFileSync } from "node:fs"
 
@@ -35,7 +36,7 @@ function arg(name: string, fallback = ""): string {
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
-const IN = arg("in", "/mnt/playpen/mailwoman-data/record-matcher/2026-06-16-cross-dataset-links.geojson")
+const IN = arg("in", dataRootPath("record-matcher", "2026-06-16-cross-dataset-links.geojson"))
 const OUT = arg("out-html", "/tmp/cross-dataset-map.html")
 
 const SOURCE_LABELS: Record<string, string> = {

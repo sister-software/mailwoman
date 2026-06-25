@@ -43,6 +43,7 @@ import {
 	type ResolvedEntity,
 	type SourceRecord,
 } from "@mailwoman/registry"
+import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { writeFileSync } from "node:fs"
 import { geocodeAddress, ShardProvider } from "../../mailwoman/out/geocode-core.js"
@@ -52,11 +53,11 @@ function arg(name: string, fallback = ""): string {
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
-const SOURCES = arg("sources", "/mnt/playpen/mailwoman-data/record-matcher/sources")
+const SOURCES = arg("sources", dataRootPath("record-matcher", "sources"))
 const CAP = Number(arg("cap", "2000"))
 const STATE = arg("state", "TX").toUpperCase()
-const WOF = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
-const DATA_ROOT = arg("data-root", "/mnt/playpen/mailwoman-data")
+const WOF = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
+const DATA_ROOT = arg("data-root", mailwomanDataRoot())
 const OUT_MD = arg("out-md", "")
 
 const norm = (s: string | undefined) => (s ?? "").trim()

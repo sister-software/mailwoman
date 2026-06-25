@@ -28,6 +28,7 @@
  *   Usage: node scripts/coarse-placer/build-outlier-oa.mjs --oa-dir <extracted-OA-root>
  *   [--per-country 6000] [--data data/coarse-placer]
  */
+import { dataRootPath } from "@mailwoman/core/utils"
 import { appendFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 import { parseArgs } from "node:util"
@@ -36,7 +37,7 @@ import { DuckDBInstance } from "@duckdb/node-api"
 
 const { values: args } = parseArgs({
 	options: {
-		"oa-dir": { type: "string", default: "/mnt/playpen/mailwoman-data/openaddresses/extracted" },
+		"oa-dir": { type: "string", default: dataRootPath("openaddresses", "extracted") },
 		"per-country": { type: "string", default: "6000" },
 		data: { type: "string", default: path.resolve(import.meta.dirname, "../../data/coarse-placer") },
 	},
@@ -98,10 +99,9 @@ function assemble(r) {
 	}
 }
 
-const duck =
-	(await (await DuckDBInstance.create()).connect()) <
-	/** Read+assemble up to PER deduped rows for a country from its OA CSVs (glob under <oa>/* */ cc >
-	/). */
+const duck = await (await DuckDBInstance.create()).connect()
+
+/** Read+assemble up to PER deduped rows for a country from its OA CSVs (glob under the per-country dir). */
 async function rowsFor(cc) {
 	const lc = cc.toLowerCase()
 	// OA collected layout: `<cc>/[<region>/]<source>.csv` (country at root; `summary/` excluded by

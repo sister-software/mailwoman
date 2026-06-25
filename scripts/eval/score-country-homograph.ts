@@ -4,6 +4,7 @@
 // (the "trailing token = country" failure), and how often gold country is missed.
 // Usage: node --experimental-strip-types scripts/eval/score-country-homograph.ts --model <onnx> [--file <jsonl>]
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -11,8 +12,8 @@ import { existsSync, readFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
 
 const argv = process.argv.slice(2)
-const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
-const LK = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
+const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
+const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 // Gazetteer-anchor lexicon (#464): fed when present so a gazetteer-trained model (v0.9.12+) gets its
 // candidate-tag clues; harmless for older models (the runner skips inputs the ONNX doesn't declare).
 const GAZ = arg("gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")!

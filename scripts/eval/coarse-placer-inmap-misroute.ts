@@ -29,6 +29,7 @@
 
 import { CoarsePlacer, inMapPosterior } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -85,7 +86,7 @@ function resolvedWofNodes(tree: AddressTree): Array<{ id: number; rank: number }
 
 async function main(): Promise<void> {
 	const evalPath = arg("eval", "data/coarse-placer/test.jsonl")
-	const wofPath = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
+	const wofPath = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
 	const modelPath = arg("model", "neural-weights-en-us/model.onnx")
 	const tokPath = arg("tokenizer", "neural-weights-en-us/tokenizer.model")
 	const cardPath = arg("model-card", "neural-weights-en-us/model-card.json")

@@ -18,6 +18,7 @@
  *   data/coarse-placer/{train,val,test}.jsonl (rows: {raw, country})
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { mkdirSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 import { parseArgs } from "node:util"
@@ -30,7 +31,7 @@ const VAL_FRAC = 0.1
 const TEST_FRAC = 0.1
 
 const COUNTRIES = ["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW"]
-const TRAIN_GLOB = "/mnt/playpen/mailwoman-data/corpus/versioned/v0.5.0/corpus-v0.5.0/train/*.parquet"
+const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
 const OUT_DIR = path.resolve(import.meta.dirname, "../../data/coarse-placer")
 
 // #743: the EU expansion. The v0.5.0 corpus carries zero rows for these locales, so they're drawn
@@ -45,7 +46,7 @@ const NEW_EU = ["AT", "BE", "CH", "CZ", "DK", "EE", "FI", "HR", "LT", "LU", "LV"
 // Overture sample so each owns its own format shape; the format then stops being discriminative and
 // the model falls back to the linguistic n-grams. GB excluded — its Overture parquet is empty.
 const IN_MAP_EU = ["DE", "ES", "IT", "NL"]
-const OVERTURE_DIR = "/mnt/playpen/mailwoman-data/overture/2026-06-17.0"
+const OVERTURE_DIR = dataRootPath("overture", "2026-06-17.0")
 mkdirSync(OUT_DIR, { recursive: true })
 
 const duck = await (await DuckDBInstance.create()).connect()

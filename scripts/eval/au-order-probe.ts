@@ -14,12 +14,13 @@
  *   Run: node --experimental-strip-types scripts/eval/au-order-probe.ts --candidate-db <db> [--n 60]
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
 
-const CAND = arg("candidate-db", "/mnt/playpen/mailwoman-data/wof/candidate-global-20j.db")
+const CAND = arg("candidate-db", dataRootPath("wof", "candidate-global-20j.db"))
 const N = Number(arg("n", "60"))
 
 /**
@@ -66,9 +67,9 @@ async function main() {
 	const resolver = createWofResolver(new WofCandidateTableLookup({ databasePath: CAND }) as never)
 	const model = await createScorer({
 		modelPath: arg("model", "out/v191/model.onnx"),
-		tokenizerPath: "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model",
+		tokenizerPath: dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"),
 		modelCardPath: "neural-weights-en-us/model-card.json",
-		anchorLookupPath: "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json",
+		anchorLookupPath: dataRootPath("anchor", "pilot-anchor-lookup.json"),
 		strict: true,
 		tier: "server",
 	})

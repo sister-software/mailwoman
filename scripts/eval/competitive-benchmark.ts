@@ -25,21 +25,22 @@
  *          [--n 40] [--locales it,pt,pl,at,cz,fr,au] [--systems mailwoman,nominatim,pelias] [--out <md>]
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { setTimeout as sleep } from "node:timers/promises"
 import { arg } from "../lib/cli-args.ts"
 
-const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
+const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
-const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
+const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
 // Production-representative resolver: admin gazetteer + the intl postcode→locality shard (the
 // oa-resolver-eval default). admin-ONLY handicaps mailwoman — the postcode-coordinate-first path
 // resolves localities the admin gazetteer misses. --wof overrides (comma-separated shard paths).
 const WOF = arg(
 	"wof",
-	"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db"
+	`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 ).split(",")
 const MODEL = arg("model", "out/v191/model.onnx") // v4.13.0 int8
 const N = Number(arg("n", "40"))

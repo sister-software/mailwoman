@@ -18,6 +18,7 @@
  *   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm, WofPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 import { readFileSync } from "node:fs"
 
@@ -32,8 +33,8 @@ function parseArgs(): Args {
 	let evalPath = "data/eval/external/openaddresses-de-sample.jsonl"
 	let country = "DE"
 	const shards = [
-		"/mnt/playpen/mailwoman-data/wof/postalcode-us.db",
-		"/mnt/playpen/mailwoman-data/wof/postalcode-intl.db",
+		dataRootPath("wof", "postalcode-us.db"),
+		dataRootPath("wof", "postalcode-intl.db"),
 	]
 	for (let i = 0; i < args.length; i++) {
 		if (args[i] === "--eval" && args[i + 1]) evalPath = args[++i]!

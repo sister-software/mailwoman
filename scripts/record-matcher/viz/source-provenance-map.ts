@@ -27,6 +27,7 @@
  *   [--nad-mod 700] [--oa-mod 120] [--cap 7000]
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 import { writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
@@ -37,7 +38,7 @@ function arg(name: string, fallback = ""): string {
 }
 
 const STATE = arg("state", "ny").toLowerCase()
-const DB = arg("db", `/mnt/playpen/mailwoman-data/address-points/address-points-us-${STATE}.db`)
+const DB = arg("db", `${dataRootPath("address-points")}/address-points-us-${STATE}.db`)
 const OUT = arg("out-html", "/tmp/source-provenance.html")
 const NAD_MOD = Number(arg("nad-mod", "700")) // keep ~1/700 of NAD points
 const OA_MOD = Number(arg("oa-mod", "120")) // keep ~1/120 of OpenAddresses points

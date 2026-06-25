@@ -14,16 +14,17 @@
  *
  *   Run: node --experimental-strip-types scripts/eval/span-rescore-e2e.ts [--n 150]
  */
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
 
-const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
+const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
-const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
+const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const MODEL = arg("model", "out/v191/model.onnx")
-const CAND = arg("candidate-db", "/mnt/playpen/mailwoman-data/wof/candidate-global-20h.db")
+const CAND = arg("candidate-db", dataRootPath("wof", "candidate-global-20h.db"))
 const N = Number(arg("n", "150"))
 // Same-harness confirm (#780): also grade Nominatim on the same rows + grading, so mailwoman-with-lever
 // vs Nominatim is apples-to-apples (no cross-harness baseline gap). Opt-in — the public API is rate-

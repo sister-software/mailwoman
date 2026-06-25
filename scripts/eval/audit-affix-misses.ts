@@ -18,12 +18,13 @@ import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
-const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
-const LK = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
+const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
+const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 
 const { values: args } = parseArgs({
 	options: {

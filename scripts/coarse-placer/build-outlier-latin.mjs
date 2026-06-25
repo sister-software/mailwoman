@@ -20,8 +20,9 @@
  *   splits without rebuilding train/val).
  *
  *   Usage: node scripts/coarse-placer/build-outlier-latin.mjs [--per-country 6000] [--overture
- *   /mnt/playpen/mailwoman-data/overture/2026-05-20.0]
+ *   $MAILWOMAN_DATA_ROOT/overture/2026-05-20.0]
  */
+import { dataRootPath } from "@mailwoman/core/utils"
 import { appendFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 import { parseArgs } from "node:util"
@@ -31,7 +32,7 @@ import { DuckDBInstance } from "@duckdb/node-api"
 const { values: args } = parseArgs({
 	options: {
 		"per-country": { type: "string", default: "6000" },
-		overture: { type: "string", default: "/mnt/playpen/mailwoman-data/overture/2026-05-20.0" },
+		overture: { type: "string", default: dataRootPath("overture", "2026-05-20.0") },
 		data: { type: "string", default: path.resolve(import.meta.dirname, "../../data/coarse-placer") },
 	},
 })

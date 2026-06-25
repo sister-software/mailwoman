@@ -44,11 +44,12 @@
  *   node_modules to a build without this module.
  *
  *   Usage: yarn compile && node scripts/eval/interpolation-eval.ts\
- *   [--points /mnt/playpen/mailwoman-data/address-points/address-points-us-vt.db]\
- *   [--segments /mnt/playpen/mailwoman-data/interpolation/interpolation-us-vt.db]\
+ *   [--points $MAILWOMAN_DATA_ROOT/address-points/address-points-us-vt.db]\
+ *   [--segments $MAILWOMAN_DATA_ROOT/interpolation/interpolation-us-vt.db]\
  *   [--mode tiger|ladder] [--sample 5000] [--seed 42]
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createHash } from "node:crypto"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
@@ -61,11 +62,11 @@ const { values: args } = parseArgs({
 	options: {
 		points: {
 			type: "string",
-			default: "/mnt/playpen/mailwoman-data/address-points/address-points-us-vt.db",
+			default: dataRootPath("address-points", "address-points-us-vt.db"),
 		},
 		segments: {
 			type: "string",
-			default: "/mnt/playpen/mailwoman-data/interpolation/interpolation-us-vt.db",
+			default: dataRootPath("interpolation", "interpolation-us-vt.db"),
 		},
 		mode: { type: "string", default: "tiger" },
 		sample: { type: "string", default: "5000" },

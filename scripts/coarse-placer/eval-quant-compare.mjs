@@ -12,6 +12,7 @@
  *   Usage: node scripts/coarse-placer/eval-quant-compare.mjs [--fp32 <dir>] [--int8 <dir>] [--abstain
  *   0.5]
  */
+import { dataRootPath } from "@mailwoman/core/utils"
 import { readFileSync } from "node:fs"
 import * as path from "node:path"
 import { parseArgs } from "node:util"
@@ -21,8 +22,8 @@ const { CoarsePlacer } = await import(new URL("core/out/coarse-placer/coarse-pla
 
 const { values: args } = parseArgs({
 	options: {
-		fp32: { type: "string", default: "/mnt/playpen/mailwoman-data/coarse-placer/model" },
-		int8: { type: "string", default: "/mnt/playpen/mailwoman-data/coarse-placer/model-int8" },
+		fp32: { type: "string", default: dataRootPath("coarse-placer", "model") },
+		int8: { type: "string", default: dataRootPath("coarse-placer", "model-int8") },
 		abstain: { type: "string", default: "0.5" },
 		data: { type: "string", default: path.resolve(import.meta.dirname, "../../data/coarse-placer") },
 	},

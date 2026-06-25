@@ -16,16 +16,17 @@
  *   held-out OA sample. No go/no-go decision is made here — the orchestrator reads the table.
  *
  *   Usage: node --experimental-strip-types scripts/eval/parser-coverage-audit.ts\
- *   --model /mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx\
- *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v150-step-40000-int8.onnx\
+ *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json\
  *   [--eval data/eval/external/openaddresses-us-sample.jsonl]\
  *   [--per-state-cap 300]\
- *   [--model-anchor-lookup /mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json]\
+ *   [--model-anchor-lookup $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json]\
  *   [--gazetteer-lexicon <path>]
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -40,8 +41,8 @@ function arg(name: string, fallback = ""): string {
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
-const DEFAULT_MODEL = "/mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx"
-const DEFAULT_TOKENIZER = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
+const DEFAULT_MODEL = dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")
+const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const DEFAULT_MODEL_CARD = "neural-weights-en-us/model-card.json"
 const DEFAULT_EVAL = "data/eval/external/openaddresses-us-sample.jsonl"
 const DEFAULT_CAP = 300

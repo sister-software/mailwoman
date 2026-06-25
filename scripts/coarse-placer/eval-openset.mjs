@@ -31,6 +31,7 @@
  *   `yarn compile` (imports the compiled featurizer).
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 import { parseArgs } from "node:util"
@@ -40,7 +41,7 @@ const { featurize, COARSE_CLASSES } = await import(new URL("core/out/coarse-plac
 
 const { values: args } = parseArgs({
 	options: {
-		model: { type: "string", default: "/mnt/playpen/mailwoman-data/coarse-placer/model" },
+		model: { type: "string", default: dataRootPath("coarse-placer", "model") },
 		data: { type: "string", default: path.resolve(import.meta.dirname, "../../data/coarse-placer") },
 		"fit-per-class": { type: "string", default: "2000" },
 		"out-md": { type: "string", default: "" },

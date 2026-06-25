@@ -16,14 +16,15 @@
  *
  *   Usage: node scripts/coarse-placer/quantize.mjs [--in <fp32 dir>] [--out <int8 dir>]
  */
+import { dataRootPath } from "@mailwoman/core/utils"
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 import { parseArgs } from "node:util"
 
 const { values: args } = parseArgs({
 	options: {
-		in: { type: "string", default: "/mnt/playpen/mailwoman-data/coarse-placer/model" },
-		out: { type: "string", default: "/mnt/playpen/mailwoman-data/coarse-placer/model-int8" },
+		in: { type: "string", default: dataRootPath("coarse-placer", "model") },
+		out: { type: "string", default: dataRootPath("coarse-placer", "model-int8") },
 	},
 })
 

@@ -9,19 +9,20 @@
  *   No external API — this is mailwoman against itself, so it's free + fast.
  *
  *   Run: node --experimental-strip-types scripts/eval/failure-dump.ts \
- *          --candidate-db /mnt/playpen/mailwoman-data/wof/candidate-global-20i.db [--n 60] [--show 10]
+ *          --candidate-db $MAILWOMAN_DATA_ROOT/wof/candidate-global-20i.db [--n 60] [--show 10]
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
 
-const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
+const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
-const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
+const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const MODEL = arg("model", "out/v191/model.onnx")
-const CAND = arg("candidate-db", "/mnt/playpen/mailwoman-data/wof/candidate-global-20i.db")
+const CAND = arg("candidate-db", dataRootPath("wof", "candidate-global-20i.db"))
 const N = Number(arg("n", "60"))
 const SHOW = Number(arg("show", "10")) // misses to print per locale
 const LOCALES = arg("locales", "it,pt,pl,at,cz,fr,au").split(",")

@@ -19,6 +19,7 @@
  */
 
 import { DuckDBInstance } from "@duckdb/node-api"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { DatabaseSync } from "node:sqlite"
 import { arg } from "../lib/cli-args.ts"
 
@@ -27,9 +28,9 @@ const CC = arg("country", "ES")
 const PC_LEN = Number(arg("pc-len", "5"))
 const PARQUET = arg(
 	"parquet",
-	`/mnt/playpen/mailwoman-data/overture/2026-05-20.0/addresses-${CC.toLowerCase()}.parquet`
+	dataRootPath("overture", "2026-05-20.0", `addresses-${CC.toLowerCase()}.parquet`)
 )
-const OUT_DB = arg("out", `/mnt/playpen/mailwoman-data/wof/postcode-${CC.toLowerCase()}-overture.db`)
+const OUT_DB = arg("out", dataRootPath("wof", `postcode-${CC.toLowerCase()}-overture.db`))
 
 const instance = await DuckDBInstance.create()
 const conn = await instance.connect()

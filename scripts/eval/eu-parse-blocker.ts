@@ -27,14 +27,15 @@
  *
  *   Run (resolver/neural compiled — `yarn compile`): node --experimental-strip-types
  *   scripts/eval/eu-parse-blocker.ts\
- *   --model /mnt/playpen/mailwoman-data/models/quantized/model-v180-step-40000-int8.onnx\
- *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v180-step-40000-int8.onnx\
+ *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json\
- *   --anchor-lookup /mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json\
+ *   --anchor-lookup $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json\
  *   --limit 1500 --out /tmp/reg/eu-parse-blocker.json
  */
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
 
@@ -58,11 +59,11 @@ const LOCALES = ["fr", "de", "es", "it", "nl"] as const
 
 async function main(): Promise<void> {
 	const limit = parseInt(arg("limit", "1500"), 10)
-	const anchorPath = arg("anchor-lookup", "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json")
+	const anchorPath = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const neural = await createScorer({
-		modelPath: arg("model", "/mnt/playpen/mailwoman-data/models/quantized/model-v180-step-40000-int8.onnx"),
-		tokenizerPath: arg("tokenizer", "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"),
+		modelPath: arg("model", dataRootPath("models", "quantized", "model-v180-step-40000-int8.onnx")),
+		tokenizerPath: arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")),
 		modelCardPath: arg("model-card", "neural-weights-en-us/model-card.json"),
 		...(anchorPath ? { anchorLookupPath: anchorPath } : {}),
 		strict: true,

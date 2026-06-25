@@ -25,15 +25,16 @@
  *
  *   Run: node --experimental-strip-types scripts/eval/span-rescore-validate.ts [--n 150]
  */
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
 
-const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
+const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
-const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
-const WOF = "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db"
+const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
+const WOF = dataRootPath("wof", "admin-global-priority.db")
 const MODEL = arg("model", "out/v191/model.onnx")
 const N = Number(arg("n", "150"))
 const LOCALES: [string, string][] = [
@@ -168,7 +169,7 @@ async function main() {
 	// Postcode→point anchor for the consistency gate. The candidate gazetteer folds postcodes as
 	// queryable rows (the demo's resolver); IT/CZ postcodes resolve here, PL/PT/AU don't (gate no-ops there).
 	const GATE_KM = Number(arg("gate", "50")) // 0 disables the gate
-	const CAND = arg("candidate-db", "/mnt/playpen/mailwoman-data/wof/candidate-global-20h.db")
+	const CAND = arg("candidate-db", dataRootPath("wof", "candidate-global-20h.db"))
 	const pcLookup = new WofCandidateTableLookup({ databasePath: CAND }) as unknown as Lookup
 	const resolver = createWofResolver(lookup as never)
 	const model = await createScorer({

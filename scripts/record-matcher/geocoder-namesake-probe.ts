@@ -13,6 +13,7 @@
  *   Run: node --experimental-strip-types scripts/record-matcher/geocoder-namesake-probe.ts
  */
 
+import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -22,8 +23,8 @@ function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
-const WOF = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
-const DATA_ROOT = arg("data-root", "/mnt/playpen/mailwoman-data")
+const WOF = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
+const DATA_ROOT = arg("data-root", mailwomanDataRoot())
 
 // TX namesake cities with their real Texas coordinates + the famous foreign/other namesake to watch for.
 const CASES: Array<{ city: string; zip: string; tx: [number, number]; namesake: string }> = [

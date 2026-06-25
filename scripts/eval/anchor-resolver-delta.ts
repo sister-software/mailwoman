@@ -34,6 +34,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import type { ResolvedPlace } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { readFileSync, writeFileSync } from "node:fs"
@@ -119,13 +120,13 @@ async function main(): Promise<void> {
 	const K = Number(arg("candidates", "10"))
 	const wofPaths = arg(
 		"wof",
-		"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db"
+		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	)
 		.split(",")
 		.map((s) => s.trim())
 	const shards = arg(
 		"postcode-shards",
-		"/mnt/playpen/mailwoman-data/wof/postalcode-us.db,/mnt/playpen/mailwoman-data/wof/postalcode-intl.db"
+		`${dataRootPath("wof", "postalcode-us.db")},${dataRootPath("wof", "postalcode-intl.db")}`
 	)
 		.split(",")
 		.map((s) => s.trim())

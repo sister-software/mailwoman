@@ -27,6 +27,7 @@
  */
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { haversineKm, type GBT } from "@mailwoman/match"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
@@ -51,11 +52,11 @@ function arg(name: string, fallback = ""): string {
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
-const SOURCES = arg("sources", "/mnt/playpen/mailwoman-data/record-matcher/sources")
+const SOURCES = arg("sources", dataRootPath("record-matcher", "sources"))
 const STATE = arg("state", "TX").toUpperCase()
 const MAX_NPIS = Number(arg("max-npis", "300"))
-const WOF = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
-const DATA_ROOT = arg("data-root", "/mnt/playpen/mailwoman-data")
+const WOF = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
+const DATA_ROOT = arg("data-root", mailwomanDataRoot())
 const OUT_MD = arg("out-md", "")
 const TRAIN_EM = !process.argv.includes("--no-train-em")
 // #694 A/B: `--legacy-join` reproduces the pre-flip ingest (space-joined address columns + normalizeCase

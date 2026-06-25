@@ -13,9 +13,9 @@
  *   dropped).
  *
  *   Run: node --experimental-strip-types scripts/eval/locality-regression-probe.ts\
- *   --baseline /mnt/playpen/mailwoman-data/models/quantized/model-v151-step-40000-int8.onnx\
+ *   --baseline $MAILWOMAN_DATA_ROOT/models/quantized/model-v151-step-40000-int8.onnx\
  *   --candidate ./out/v160/model.onnx\
- *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json --n 800
  */
 

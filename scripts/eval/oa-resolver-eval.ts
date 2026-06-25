@@ -37,7 +37,7 @@
  *   Run: node --experimental-strip-types scripts/eval/oa-resolver-eval.ts\
  *   --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000\
  *   --model /tmp/v072-eval/model.onnx\
- *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card /tmp/v072-eval/model-card.json
  *
  *   `--wof` defaults to `admin-global-priority.db,postcode-locality-intl.db` — coordinate-first
@@ -50,6 +50,7 @@ import { lookupGermanState } from "@mailwoman/codex/de"
 import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { createWofResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import {
@@ -296,7 +297,7 @@ async function main(): Promise<void> {
 	// Override `--wof` to measure the admin-only baseline.
 	const wofPaths = arg(
 		"wof",
-		"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db"
+		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	)
 		.split(",")
 		.map((s) => s.trim())
@@ -483,7 +484,7 @@ async function main(): Promise<void> {
 	// with multi-state per-row selection. --data-root locates the shards (<root>/address-points/,
 	// <root>/interpolation/).
 	const cascadeOn = process.argv.includes("--cascade")
-	const dataRoot = arg("data-root", "/mnt/playpen/mailwoman-data")
+	const dataRoot = arg("data-root", mailwomanDataRoot())
 	let cascadeProvider: import("mailwoman/geocode-core").ShardProvider | null = null
 	if (cascadeOn) {
 		const { ShardProvider } = await import("mailwoman/geocode-core")
@@ -506,7 +507,7 @@ async function main(): Promise<void> {
 	if (useAnchor || anchorRerank) {
 		const shards = arg(
 			"postcode-shards",
-			"/mnt/playpen/mailwoman-data/wof/postalcode-us.db,/mnt/playpen/mailwoman-data/wof/postalcode-intl.db"
+			`${dataRootPath("wof", "postalcode-us.db")},${dataRootPath("wof", "postalcode-intl.db")}`
 		)
 			.split(",")
 			.map((s) => s.trim())

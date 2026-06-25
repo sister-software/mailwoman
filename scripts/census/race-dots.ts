@@ -22,6 +22,7 @@
  *   --db tiger-oc.db --per 10 --out /tmp/race-dots.ndjson
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import booleanContains from "@turf/boolean-contains"
 import { createWriteStream } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
@@ -31,7 +32,7 @@ function arg(name: string, fb = ""): string {
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fb
 }
 
-const DB = arg("db", "/mnt/playpen/mailwoman-data/tiger/tiger-oc.db")
+const DB = arg("db", dataRootPath("tiger", "tiger-oc.db"))
 const OUT = arg("out", "/tmp/race-dots.ndjson")
 const PER = Number(arg("per", "10")) // people represented by one dot
 const LAYER = arg("layer", "dots")

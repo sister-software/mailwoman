@@ -16,6 +16,7 @@
  *   [--per-lang 2500]
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { appendFileSync } from "node:fs"
 import * as path from "node:path"
 import { parseArgs } from "node:util"
@@ -25,7 +26,7 @@ import { DatabaseSync } from "node:sqlite"
 const { values: args } = parseArgs({
 	options: {
 		"per-lang": { type: "string", default: "2500" },
-		wof: { type: "string", default: "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db" },
+		wof: { type: "string", default: dataRootPath("wof", "admin-global-priority.db") },
 		data: { type: "string", default: path.resolve(import.meta.dirname, "../../data/coarse-placer") },
 	},
 })

@@ -20,6 +20,7 @@
  */
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
 	addressFrequencyKey,
@@ -44,11 +45,11 @@ function hasFlag(name: string): boolean {
 	return process.argv.includes(`--${name}`)
 }
 
-const SOURCES = arg("sources", "/mnt/playpen/mailwoman-data/record-matcher/sources")
+const SOURCES = arg("sources", dataRootPath("record-matcher", "sources"))
 const CAP = Number(arg("cap", "300")) // rows kept per source for geocoding (TX-scoped)
 const STATE = arg("state", "TX").toUpperCase()
-const WOF = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
-const DATA_ROOT = arg("data-root", "/mnt/playpen/mailwoman-data")
+const WOF = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
+const DATA_ROOT = arg("data-root", mailwomanDataRoot())
 const OUT_MD = arg("out-md", "")
 const OUT_GEOJSON = arg("out-geojson", "") // the reconciliation artifact (FeatureCollection, QGIS-ready)
 // The inverse-address-frequency lever is a CORPUS statistic — it can't be synthesized from the geocoded

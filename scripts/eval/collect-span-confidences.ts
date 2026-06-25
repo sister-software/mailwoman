@@ -40,6 +40,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { readFileSync, writeFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
@@ -148,7 +149,7 @@ async function main(): Promise<void> {
 	// Ship-config channels (v4.4.0): the calibrator must describe the model AS DEPLOYED — anchor +
 	// gazetteer (+ suppression), conventions, and the span bridge all change span confidences.
 	const { parseAnchorLookup, parseGazetteerLexicon } = await import("@mailwoman/neural")
-	const anchorPath = arg("anchor-lookup", "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json")
+	const anchorPath = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))
 	const gazPath = arg("gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")
 	const neural = new NeuralAddressClassifier({
 		tokenizer,

@@ -11,7 +11,7 @@
  *   (#531).
  *
  *   Usage: node --experimental-strip-types scripts/eval/candidate-recall.ts\
- *   --db /mnt/playpen/mailwoman-data/wof/candidate-global-intl.db\
+ *   --db $MAILWOMAN_DATA_ROOT/wof/candidate-global-intl.db\
  *   --eval '/tmp/reg/eu-eval-*.jsonl' [--sample 15]
  */
 import { execSync } from "node:child_process"

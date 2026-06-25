@@ -30,6 +30,7 @@
  *   [--cap 50000] [--state TX] [--sources <dir>] [--tau 0.7] [--out-md <md>]
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
 import { writeFileSync } from "node:fs"
 
@@ -38,7 +39,7 @@ function arg(name: string, fallback = ""): string {
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
-const SOURCES = arg("sources", "/mnt/playpen/mailwoman-data/record-matcher/sources")
+const SOURCES = arg("sources", dataRootPath("record-matcher", "sources"))
 const CAP = Number(arg("cap", "50000"))
 const STATE = arg("state", "TX").toUpperCase()
 const TAU = Number(arg("tau", "0.7"))

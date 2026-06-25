@@ -11,6 +11,7 @@
 //   [--engine neural|v0] [--file data/eval/external/punctuation-stress.jsonl] [--no-ship-config]
 //   [--span-proposer]  — enable the Stage 2.7 span proposer (#518 M2+M3; default-off, NOT ship config)
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	buildCodexSpanLexicon,
 	NeuralAddressClassifier,
@@ -24,8 +25,8 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
 
 const argv = process.argv.slice(2)
-const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
-const LK = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
+const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
+const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const file = arg("file", "data/eval/external/punctuation-stress.jsonl")!
 
 const engine = arg("engine", "neural")!

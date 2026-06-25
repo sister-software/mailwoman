@@ -24,6 +24,7 @@
  *   Run: node --experimental-strip-types scripts/eval/digit-count-probe.ts --model out/v192/model.onnx
  */
 import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -31,10 +32,10 @@ import { existsSync, readFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
 
 const MODEL = arg("model", "out/v192/model.onnx")
-const TOK = arg("tokenizer", "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model")
+const TOK = arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
 const CARD = arg("model-card", "neural-weights-en-us/model-card.json")
-const ANCHOR = arg("anchor", "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json")
-const GAZ = arg("gazetteer-lexicon", "/mnt/playpen/mailwoman-data/anchor/gazetteer-lexicon.json")
+const ANCHOR = arg("anchor", dataRootPath("anchor", "pilot-anchor-lookup.json"))
+const GAZ = arg("gazetteer-lexicon", dataRootPath("anchor", "gazetteer-lexicon.json"))
 const FILE = arg("file", "data/eval/golden/v0.1.2/dev/us.jsonl")
 
 interface Row {

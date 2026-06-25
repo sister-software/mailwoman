@@ -42,13 +42,14 @@
  *   [--model neural-weights-en-us/model.onnx]\
  *   [--tokenizer neural-weights-en-us/tokenizer.model]\
  *   [--model-card neural-weights-en-us/model-card.json]\
- *   [--wof /mnt/playpen/mailwoman-data/wof/admin-global-priority.db,…]\
+ *   [--wof $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db,…]\
  *   [--cal-frac 0.5] [--alpha 0.9] [--seed 20260614]
  *
  *   DO NOT change the resolver or parser — this script only READS stamped metadata.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 import { readFileSync } from "node:fs"
@@ -168,7 +169,7 @@ async function main(): Promise<void> {
 	const modelCardPath = arg("model-card", "neural-weights-en-us/model-card.json")
 	const wofPaths = arg(
 		"wof",
-		"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db"
+		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	)
 		.split(",")
 		.map((s) => s.trim())

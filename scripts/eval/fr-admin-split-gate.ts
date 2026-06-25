@@ -16,11 +16,12 @@
  *
  *   Run: node --experimental-strip-types scripts/eval/fr-admin-split-gate.ts\
  *   --model <int8.onnx> --tokenizer <tok> --model-card neural-weights-en-us/model-card.json\
- *   --anchor-lookup /mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json\
+ *   --anchor-lookup $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json\
  *   --golden /tmp/reg/fr-admin-split-golden.jsonl --label v1.5.0 --out /tmp/reg/gate-v150.json
  */
 
 import { type AddressNode, type AddressTree, decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { readFileSync, writeFileSync } from "node:fs"
@@ -80,14 +81,14 @@ const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 async function main() {
 	const goldenPath = arg("golden", "/tmp/reg/fr-admin-split-golden.jsonl")
 	const label = arg("label", "model")
-	const wofDb = arg("wof-db", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
+	const wofDb = arg("wof-db", dataRootPath("wof", "admin-global-priority.db"))
 	const rows = readFileSync(goldenPath, "utf8")
 		.trim()
 		.split("\n")
 		.map((l) => JSON.parse(l))
 
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const anchorPath = arg("anchor-lookup", "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json")
+	const anchorPath = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))
 	const neural = await createScorer({
 		modelPath: arg("model"),
 		tokenizerPath: arg("tokenizer"),

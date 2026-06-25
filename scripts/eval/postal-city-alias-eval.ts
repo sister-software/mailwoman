@@ -21,13 +21,14 @@
  *   subset (rows where ON ≠ OFF) as well as the full divergent set.
  *
  *   Run: node --experimental-strip-types scripts/eval/postal-city-alias-eval.ts\
- *   --alias-db /mnt/playpen/mailwoman-data/wof/postal-city-alias-us.db\
- *   --postcode-db /mnt/playpen/mailwoman-data/wof/postalcode-us.db\
+ *   --alias-db $MAILWOMAN_DATA_ROOT/wof/postal-city-alias-us.db\
+ *   --postcode-db $MAILWOMAN_DATA_ROOT/wof/postalcode-us.db\
  *   --wof
- *   /mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-us.db\
+ *   $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db,$MAILWOMAN_DATA_ROOT/wof/postcode-locality-us.db\
  *   --country US [--limit 0] [--near-km 50]
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { WofPostalCityAliasLookup, WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseSync } from "node:sqlite"
@@ -44,11 +45,11 @@ const pct = (xs: number[], p: number): number => {
 }
 
 async function main(): Promise<void> {
-	const aliasDbPath = arg("alias-db", "/mnt/playpen/mailwoman-data/wof/postal-city-alias-us.db")
-	const postcodeDbPath = arg("postcode-db", "/mnt/playpen/mailwoman-data/wof/postalcode-us.db")
+	const aliasDbPath = arg("alias-db", dataRootPath("wof", "postal-city-alias-us.db"))
+	const postcodeDbPath = arg("postcode-db", dataRootPath("wof", "postalcode-us.db"))
 	const wof = arg(
 		"wof",
-		"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-us.db"
+		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-us.db")}`
 	).split(",")
 	const country = arg("country", "US")
 	const limit = Number(arg("limit", "0")) // 0 = all

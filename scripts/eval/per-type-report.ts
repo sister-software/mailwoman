@@ -23,12 +23,13 @@
 
 import { decodeAsJson, proposalsToTree } from "@mailwoman/core/decoder"
 import { solutionToProposals } from "@mailwoman/core/parser"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createAddressParser } from "mailwoman"
 import { readFileSync, writeFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
 
-const MODEL = "/mnt/playpen/mailwoman-data/models/quantized/model-v140-step-40000-int8.onnx"
-const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
+const MODEL = dataRootPath("models", "quantized", "model-v140-step-40000-int8.onnx")
+const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
 
 type RowOutcome = { loc: boolean; reg: boolean; resolved: boolean; err: number | null }

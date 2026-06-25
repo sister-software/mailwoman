@@ -14,16 +14,17 @@
  *   number and is flagged, not re-measured here.
  *
  *   Run: node --experimental-strip-types scripts/eval/repair-net-coord-probe.ts --model out/v192/model.onnx \
- *        --candidate-db /mnt/playpen/mailwoman-data/wof/candidate-global-20j.db --n 150
+ *        --candidate-db $MAILWOMAN_DATA_ROOT/wof/candidate-global-20j.db --n 150
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { readFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
 
 const MODEL = arg("model", "out/v192/model.onnx")
-const CAND = arg("candidate-db", "/mnt/playpen/mailwoman-data/wof/candidate-global-20j.db")
+const CAND = arg("candidate-db", dataRootPath("wof", "candidate-global-20j.db"))
 const N = Number(arg("n", "150"))
 const FILE = arg("file", "data/eval/external/overture-us-nad-holdout.jsonl")
 
@@ -66,9 +67,9 @@ async function main() {
 	const resolver = createWofResolver(new WofCandidateTableLookup({ databasePath: CAND }) as never)
 	const base = {
 		modelPath: MODEL,
-		tokenizerPath: "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model",
+		tokenizerPath: dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"),
 		modelCardPath: "neural-weights-en-us/model-card.json",
-		anchorLookupPath: "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json",
+		anchorLookupPath: dataRootPath("anchor", "pilot-anchor-lookup.json"),
 		strict: true,
 		tier: "server" as const,
 	}

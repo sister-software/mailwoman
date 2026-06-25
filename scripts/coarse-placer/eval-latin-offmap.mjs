@@ -12,6 +12,7 @@
  *
  *   Usage: node scripts/coarse-placer/eval-latin-offmap.mjs --model <dir> [--abstain 0.5]
  */
+import { dataRootPath } from "@mailwoman/core/utils"
 import { readFileSync } from "node:fs"
 import * as path from "node:path"
 import { parseArgs } from "node:util"
@@ -21,7 +22,7 @@ const { CoarsePlacer } = await import(new URL("core/out/coarse-placer/coarse-pla
 
 const { values: args } = parseArgs({
 	options: {
-		model: { type: "string", default: "/mnt/playpen/mailwoman-data/coarse-placer/model" },
+		model: { type: "string", default: dataRootPath("coarse-placer", "model") },
 		abstain: { type: "string", default: "0.5" },
 		data: { type: "string", default: path.resolve(import.meta.dirname, "../../data/coarse-placer") },
 	},

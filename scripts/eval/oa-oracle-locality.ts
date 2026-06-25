@@ -43,13 +43,14 @@
  *
  *   Run: node --experimental-strip-types scripts/eval/oa-oracle-locality.ts\
  *   --eval data/eval/external/openaddresses-us-sample.jsonl\
- *   --model /mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx\
- *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v150-step-40000-int8.onnx\
+ *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json\
  *   --default-country US [--limit N] [--oracle-only] [--out-md <path>] [--examples-json <path>]
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import type { ParseOpts } from "@mailwoman/neural"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -173,7 +174,7 @@ const localityExpanded = (rs: Resolved[]): Resolved | undefined => {
 async function main(): Promise<void> {
 	const evalPath = arg("eval", "data/eval/external/openaddresses-us-sample.jsonl")
 	const limit = Number(arg("limit", "0")) || Infinity
-	const dbPath = arg("wof", "/mnt/playpen/mailwoman-data/wof/admin-global-priority.db")
+	const dbPath = arg("wof", dataRootPath("wof", "admin-global-priority.db"))
 	const dc = arg("default-country", "US")
 
 	const rows: OaRow[] = readFileSync(evalPath, "utf8")
@@ -194,9 +195,9 @@ async function main(): Promise<void> {
 		const modelCard = JSON.parse(readFileSync(arg("model-card", "neural-weights-en-us/model-card.json"), "utf8"))
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(
-				arg("tokenizer", "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model")
+				arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
 			),
-			OnnxRunner.create(arg("model", "/mnt/playpen/mailwoman-data/models/quantized/model-v150-step-40000-int8.onnx")),
+			OnnxRunner.create(arg("model", dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))),
 		])
 		neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 		parseOpts = { postcodeRepair: true }

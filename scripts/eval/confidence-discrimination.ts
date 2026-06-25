@@ -46,6 +46,7 @@
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createCalibrator } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs"
@@ -58,12 +59,12 @@ import { arg } from "../lib/cli-args.ts"
 process.on("unhandledRejection", (e) => console.error("UNHANDLED REJECTION:", e))
 process.on("uncaughtException", (e) => console.error("UNCAUGHT EXCEPTION:", e))
 
-const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
+const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "neural-weights-en-us/model-card.json"
-const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
+const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const WOF = [
-	"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db",
-	"/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db",
+	dataRootPath("wof", "admin-global-priority.db"),
+	dataRootPath("wof", "postcode-locality-intl.db"),
 ]
 const CALIB = "data/eval/calibration/isotonic-en-us-v4.13.0.json"
 const MODEL = arg("model", "out/v191/model.onnx") // shipped v4.13.0 int8

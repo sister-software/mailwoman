@@ -12,7 +12,7 @@
  *
  *   Run: node --experimental-strip-types scripts/eval/affix-bi-inspect.ts\
  *   --model ./out/v160/model.onnx\
- *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card neural-weights-en-us/model-card.json --n 300
  */
 

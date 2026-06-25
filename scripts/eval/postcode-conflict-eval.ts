@@ -17,6 +17,7 @@
  *   admin-global-priority.db + postcode-locality-intl.db — coord-first on.)
  */
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createWofResolver } from "@mailwoman/resolver"
 import { readFileSync, writeFileSync } from "node:fs"
 
@@ -57,7 +58,7 @@ const rows: Row[] = readFileSync(arg("eval", "data/eval/falsehoods/postcode-city
 
 const wofPaths = arg(
 	"wof",
-	"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db,/mnt/playpen/mailwoman-data/wof/postcode-locality-intl.db"
+	`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 ).split(",")
 const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 const backend = new WofSqlitePlaceLookup({ databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths })

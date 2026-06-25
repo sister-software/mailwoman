@@ -18,10 +18,11 @@
  *   Run: node --experimental-strip-types scripts/eval/de-duplicate-locality-diag.ts\
  *   --eval data/eval/external/openaddresses-de-sample.jsonl\
  *   --model /tmp/v093-eval/model.onnx --model-card neural-weights-en-us/model-card.json\
- *   [--anchor-lookup /mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json]
+ *   [--anchor-lookup $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json]
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { readFileSync } from "node:fs"
 
 function arg(name: string, fallback = ""): string {
@@ -73,11 +74,11 @@ async function main(): Promise<void> {
 	const { OnnxRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 	const modelCard = JSON.parse(readFileSync(arg("model-card", "neural-weights-en-us/model-card.json"), "utf8"))
-	const anchorPath = arg("anchor-lookup", "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json")
+	const anchorPath = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))
 	const postcodeAnchorLookup = anchorPath ? parseAnchorLookup(JSON.parse(readFileSync(anchorPath, "utf8"))) : undefined
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(
-			arg("tokenizer", "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model")
+			arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
 		),
 		OnnxRunner.create(arg("model", "/tmp/v093-eval/model.onnx")),
 	])

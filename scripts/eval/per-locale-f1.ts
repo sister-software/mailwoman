@@ -33,13 +33,14 @@
  *   Usage: node --experimental-strip-types scripts/eval/per-locale-f1.ts\
  *   --golden-dir data/eval/golden/v0.1.2/dev\
  *   --model /tmp/v072-eval/model.onnx\
- *   --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model\
+ *   --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model\
  *   --model-card /tmp/v072-eval/model-card.json\
  *   --files us.jsonl,fr.jsonl,adversarial.jsonl\
  *   --out-json /tmp/per-locale-f1.json
  */
 
 import { type ComponentTag, decodeAsJson } from "@mailwoman/core/decoder"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -59,7 +60,7 @@ import { basename, resolve } from "node:path"
 // the anchor channel survive. The result LOOKS like a per-version model regression but is purely a
 // harness OOD artifact: BOTH v1.5.0 and v1.7.0 crater identically without the feed and recover
 // identically with it. Pass `--no-anchor` to deliberately measure the anchor-off (zero-feed) path.
-const DEFAULT_ANCHOR_LOOKUP = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
+const DEFAULT_ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 
 // -------------------------------------------------------------------------------------------------

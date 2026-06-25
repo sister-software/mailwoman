@@ -20,6 +20,7 @@ import { join } from "node:path"
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -29,12 +30,12 @@ function arg(name: string, fallback = ""): string {
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
-const BASE = arg("base", "/mnt/playpen/mailwoman-data/models/quantized/model-v192-step-40000-int8.onnx")
+const BASE = arg("base", dataRootPath("models", "quantized", "model-v192-step-40000-int8.onnx"))
 const CAND = arg("candidate", "./out/v193a2/model.onnx")
 const GOLDEN = arg("golden", "data/eval/golden/v0.1.2")
-const TOK = arg("tokenizer", "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model")
+const TOK = arg("tokenizer", dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
 const CARD = arg("model-card", "neural-weights-en-us/model-card.json")
-const ANCHOR = arg("anchor", "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json")
+const ANCHOR = arg("anchor", dataRootPath("anchor", "pilot-anchor-lookup.json"))
 const GAZ = arg("gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")
 
 interface Row {

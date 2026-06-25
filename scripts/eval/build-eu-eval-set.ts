@@ -18,6 +18,7 @@
  *   --countries BE,AT,CH,DK,SK,SI,LU,LV,LT --release 2026-06-17.0 --limit 1200 --out-dir /tmp/reg
  */
 import { DuckDBInstance } from "@duckdb/node-api"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { mkdirSync } from "node:fs"
 import { parseArgs } from "node:util"
 
@@ -25,7 +26,7 @@ const { values: a } = parseArgs({
 	options: {
 		countries: { type: "string" },
 		release: { type: "string", default: "2026-06-17.0" },
-		"overture-dir": { type: "string", default: "/mnt/playpen/mailwoman-data/overture" },
+		"overture-dir": { type: "string", default: dataRootPath("overture") },
 		"out-dir": { type: "string", default: "/tmp/reg" },
 		limit: { type: "string", default: "1200" },
 		seed: { type: "string", default: "100" },
