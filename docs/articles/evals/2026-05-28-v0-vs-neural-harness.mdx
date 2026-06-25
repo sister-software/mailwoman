@@ -10,7 +10,7 @@ acceptance criteria. The 4561-entry golden set at `data/eval/golden/v0.1.2/` mea
 neural on what it was trained for; the 376 assertions in `mailwoman/test/*.test.ts` measure
 the rule-based parser on what it was hand-tuned for. This eval bridges the two.
 
-Per [DeepSeek consult turn 6](2026-05-28-night-2-postmortem.mdx): without this harness,
+Per DeepSeek consult turn 6: without this harness,
 v0.6.2's corpus augmentation is "try something and hope." With it, augmentation becomes
 "fix the specific assertions that fail."
 
@@ -206,5 +206,5 @@ Total runtime: ~5 seconds for 376 assertions.
   established the decoder-only fix is insufficient
 - [Falsehoods about street names](../understanding/why-its-hard/falsehoods-streets.mdx) — the
   edge cases the harness's falsehoods row source captures
-- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.mdx) — postmortem that triggered
+- 2026-05-28 night-2 postmortem — postmortem that triggered
   this assessment

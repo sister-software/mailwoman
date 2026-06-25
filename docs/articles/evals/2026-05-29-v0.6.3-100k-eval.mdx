@@ -54,8 +54,8 @@ The original v0.6.1 problem came back. 844 hallucinations vs v0.6.2's 0.
 Rate: 2110% of expected occurrences (40 expected dep_loc spans in the
 golden set; the model emitted 844 hallucinations).
 
-This was DeepSeek's [turn 10 dilution
-diagnosis](2026-05-28-night-2-postmortem.mdx): dropping
+This was DeepSeek's turn 10 dilution
+diagnosis: dropping
 synth-no-street weight 1.0 → 0.5 AND adding 32K rows of synth-house-venue at
 weight 1.0 changed the anti-decompose:companion-shard ratio from v0.6.2's
 1.0:0 to v0.6.3's 0.5:1.0. The anti-decompose signal got proportionally

@@ -6,7 +6,7 @@ title: "2026-05-28 No-street counter-example corpus shard"
 # No-street counter-example corpus shard — 2026-05-28
 
 The corpus-side fix for v0.6.1's `dependent_locality` regression. Per the
-[2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.mdx) and the
+2026-05-28 night-2 postmortem and the
 [Layer 1 morphology FST eval](2026-05-28-layer-1-morphology-fst.mdx): the
 morphology FST as a decoder-only fix is insufficient because the model is too
 overconfident on its synth-street-induced dep_loc predictions. The recipe per
@@ -110,7 +110,7 @@ runnable:
   the failure clusters this shard addresses
 - [Layer 1 morphology FST eval](2026-05-28-layer-1-morphology-fst.mdx) — proves
   the decoder-only fix is insufficient and the corpus side is required
-- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.mdx) — original
+- 2026-05-28 night-2 postmortem — original
   postmortem driving the v0.6.2 recipe
 - [Street-supplement architecture](../concepts/street-supplement-architecture.mdx)
   — the layered design context

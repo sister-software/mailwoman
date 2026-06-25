@@ -59,7 +59,7 @@ suppress more, you'd need to push the penalty higher — at which point it start
 legitimate decisions on other tokens.
 
 The model's confidence on its synth-street-induced dep_loc predictions is high. Per
-the [v0.6.1 calibration probe design](2026-05-28-night-2-postmortem.mdx): when the hallucinations
+the v0.6.1 calibration probe design: when the hallucinations
 are high-confidence, **retraining is required, not just a decoder-time threshold or bias**.
 
 ### Default morphology bias is over-aggressive and causes collateral street_suffix damage
@@ -87,7 +87,7 @@ just needs a backbone model that wasn't trained to be wrong about dep_loc.
 
 ## What this means for v0.6.2
 
-Per [DeepSeek's turn 2 recipe](2026-05-28-night-2-postmortem.mdx#deepseeks-three-rubrics-for-a-night-shift-skill)
+Per DeepSeek's turn 2 recipe
 and the [street-supplement architecture doc](../concepts/street-supplement-architecture.mdx):
 
 1. **Retrain with synth-street weight 0.5** (down from 2.0) — reduces the gradient pressure
@@ -136,5 +136,5 @@ node --experimental-strip-types scripts/eval-morphology-fst.ts \
   this eval validates against
 - [WOF hierarchy gap](../concepts/wof-hierarchy-gap.mdx) — the structural cause
 - [v0.6.1 error analysis](v0.6.1-error-analysis.mdx) — the original regression
-- [2026-05-28 night-2 postmortem](2026-05-28-night-2-postmortem.mdx) — the postmortem that drove
+- 2026-05-28 night-2 postmortem — the postmortem that drove
   the design consult
