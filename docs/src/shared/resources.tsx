@@ -176,11 +176,11 @@ export const ADMIN_GAZETTEER_VERSION = "2026-06-24a"
 
 /**
  * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~871 MB; US + intl postcodes
- * incl. PT/PL/CZ/AU as of 2026-06-24a) — the FTS-free, single-B-tree-probe lookup that replaces the slim per-model-version
- * `wof-hot.db` AND the full-DB FTS. A resolve touches a handful of contiguous pages (~12 range
- * fetches/session vs 243 on the full DB), with GLOBAL coverage and no `SLIM_COUNTRIES` upkeep.
- * Resolved by {@link WofCandidateTableLookup} (build-candidate.ts). Hosted at
- * `mailwoman/gazetteer/<date>/candidate.db`, version-independent like the street shards.
+ * incl. PT/PL/CZ/AU as of 2026-06-24a) — the FTS-free, single-B-tree-probe lookup that replaces the
+ * slim per-model-version `wof-hot.db` AND the full-DB FTS. A resolve touches a handful of
+ * contiguous pages (~12 range fetches/session vs 243 on the full DB), with GLOBAL coverage and no
+ * `SLIM_COUNTRIES` upkeep. Resolved by {@link WofCandidateTableLookup} (build-candidate.ts). Hosted
+ * at `mailwoman/gazetteer/<date>/candidate.db`, version-independent like the street shards.
  */
 export function adminGazetteerUrl(): string {
 	return `${ASSET_BASE_URL}gazetteer/${ADMIN_GAZETTEER_VERSION}/candidate.db`

@@ -5,14 +5,14 @@
  *
  *   CONFIDENCE-DISCRIMINATION — the differentiator a search index cannot draw.
  *
- *   mailwoman returns a coordinate AND a calibrated per-result confidence (the decoder's per-span
+ *   Mailwoman returns a coordinate AND a calibrated per-result confidence (the decoder's per-span
  *   `conf=`, mapped through the shipped isotonic table to a probability of correctness). Nominatim
  *   returns one best guess with no probability you can route on. This harness measures the
- *   operational payoff of that confidence on the inputs that matter — the messy ones — by sweeping a
- *   confidence threshold τ:
+ *   operational payoff of that confidence on the inputs that matter — the messy ones — by sweeping
+ *   a confidence threshold τ:
  *
- *     precision(τ) = right-place @25km among the answers mailwoman is ≥τ confident about
- *     recall(τ)    = fraction of all rows mailwoman answers at ≥τ confidence
+ *   Precision(τ) = right-place @25km among the answers mailwoman is ≥τ confident about recall(τ) =
+ *   fraction of all rows mailwoman answers at ≥τ confidence
  *
  *   As τ rises mailwoman trades recall for precision: it abstains when unsure. Nominatim is a SINGLE
  *   (precision, recall) point on the identical messy set — no threshold to sweep, no way to know
@@ -20,9 +20,9 @@
  *   calibrated parser buys precision by abstaining; a search index cannot.
  *
  *   Honesty (the judge-proof part): the curve is the SHIPPED model's measured calibration, and the
- *   discrimination is verified on a HELD-OUT messy slice (50/50 by row index) the curve is not drawn
- *   on. If the low-confidence bucket does not actually err more out-of-sample, the story is staged
- *   and the harness says so.
+ *   discrimination is verified on a HELD-OUT messy slice (50/50 by row index) the curve is not
+ *   drawn on. If the low-confidence bucket does not actually err more out-of-sample, the story is
+ *   staged and the harness says so.
  *
  *   Grading is coordinate-first: right-place @25km against the OA truth lat/lon, the same honest
  *   denominator as `competitive-benchmark.ts` ("no result" = miss). A slice where mailwoman loses
@@ -30,26 +30,27 @@
  *
  *   TWO per-result confidence aggregations are captured from one collection so the better
  *   discriminator can be chosen transparently:
- *     - `node` — calibrated conf of the most-specific RESOLVED node (the answer's own component).
- *     - `min`  — min calibrated conf across ALL resolved nodes (the weakest driving component; "the
- *                answer is only as trustworthy as its least-sure part").
+ *
+ *   - `node` — calibrated conf of the most-specific RESOLVED node (the answer's own component).
+ *   - `min` — min calibrated conf across ALL resolved nodes (the weakest driving component; "the answer
+ *       is only as trustworthy as its least-sure part").
  *
  *   Collection (parse + resolve + Nominatim) is separated from analysis (sweep + plot): pass
  *   `--rows-out <jsonl>` to persist the graded rows, then `--rows-in <jsonl>` to re-sweep / re-plot
  *   instantly without re-parsing. Nominatim is disk-cached and only rate-limited on a cache miss.
  *
- *   Run: node --experimental-strip-types scripts/eval/confidence-discrimination.ts \
- *          [--locales us,it,pt,pl,fr,au] [--n 80] [--model out/v191/model.onnx] [--no-messy] \
- *          [--rows-out <jsonl>] [--rows-in <jsonl>] [--out <md>] [--svg <svg>] \
- *          [--cache /tmp/nominatim-messy-cache.json] [--agg node|min]
+ *   Run: node --experimental-strip-types scripts/eval/confidence-discrimination.ts\
+ *   [--locales us,it,pt,pl,fr,au] [--n 80] [--model out/v191/model.onnx] [--no-messy]\
+ *   [--rows-out <jsonl>] [--rows-in <jsonl>] [--out <md>] [--svg <svg>]\
+ *   [--cache /tmp/nominatim-messy-cache.json] [--agg node|min]
  */
+import { createCalibrator } from "@mailwoman/core/decoder"
 import type { AddressNode, AddressTree } from "@mailwoman/resolver"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { createCalibrator } from "@mailwoman/core/decoder"
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs"
-import { pathToFileURL } from "node:url"
 import { setTimeout as sleep } from "node:timers/promises"
+import { pathToFileURL } from "node:url"
 
 // The first collection died silently at PL ~60/80 (no JS stack → a process-level kill). Surface it
 // next time instead of exiting blind; the incremental --rows-out checkpoint makes a crash recoverable.
@@ -96,8 +97,19 @@ export function messify(raw: string): string {
 }
 
 const PLACETYPE_RANK: Record<string, number> = {
-	country: 0, region: 1, macrocounty: 2, county: 3, localadmin: 4, locality: 5,
-	borough: 6, macrohood: 6, neighbourhood: 7, microhood: 8, street: 9, address: 10, venue: 10,
+	country: 0,
+	region: 1,
+	macrocounty: 2,
+	county: 3,
+	localadmin: 4,
+	locality: 5,
+	borough: 6,
+	macrohood: 6,
+	neighbourhood: 7,
+	microhood: 8,
+	street: 9,
+	address: 10,
+	venue: 10,
 }
 
 /**
@@ -105,7 +117,7 @@ const PLACETYPE_RANK: Record<string, number> = {
  * min calibrated confidence across ALL resolved nodes (`minConf`, the weakest driving component).
  */
 export function resolvedResult(
-	tree: AddressTree,
+	tree: AddressTree
 ): { lat: number; lon: number; nodeConf: number; minConf: number } | null {
 	let best: { rank: number; lat: number; lon: number; conf: number } | null = null
 	const confs: number[] = []
@@ -180,9 +192,14 @@ async function collect(): Promise<ScoredRow[]> {
 	// Incremental row checkpoint: append every scored row so a mid-run crash (the silent SIGKILL the
 	// first attempt hit at PL ~60/80) loses nothing. --rows-out resumes from here if present.
 	const ckpt = arg("rows-out", "")
-	const rows: ScoredRow[] = ckpt && existsSync(ckpt)
-		? readFileSync(ckpt, "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l) as ScoredRow)
-		: []
+	const rows: ScoredRow[] =
+		ckpt && existsSync(ckpt)
+			? readFileSync(ckpt, "utf8")
+					.trim()
+					.split("\n")
+					.filter(Boolean)
+					.map((l) => JSON.parse(l) as ScoredRow)
+			: []
 	const done = new Set(rows.map((r) => r.cc)) // locales already fully collected in a prior partial run
 	const append = (r: ScoredRow): void => {
 		rows.push(r)
@@ -195,7 +212,11 @@ async function collect(): Promise<ScoredRow[]> {
 			console.error(`${cc}: golden missing — skipped`)
 			continue
 		}
-		const goldens = readFileSync(file, "utf8").trim().split("\n").slice(0, N).map((l) => JSON.parse(l)) as Array<{
+		const goldens = readFileSync(file, "utf8")
+			.trim()
+			.split("\n")
+			.slice(0, N)
+			.map((l) => JSON.parse(l)) as Array<{
 			raw: string
 			lat: number
 			lon: number
@@ -285,7 +306,10 @@ function analyze(rows: ScoredRow[]): string {
 	const nom = nomPoint(draw)
 
 	// honesty: split at the median confidence on DRAW, verify the low bucket errs more on HELD.
-	const confs = draw.filter((r) => r.mwAnswered).map(confOf).sort((a, b) => a - b)
+	const confs = draw
+		.filter((r) => r.mwAnswered)
+		.map(confOf)
+		.sort((a, b) => a - b)
 	const medConf = confs.length ? confs[Math.floor(confs.length / 2)]! : 0
 	const heldAns = held.filter((r) => r.mwAnswered)
 	const heldLow = heldAns.filter((r) => confOf(r) < medConf)
@@ -300,7 +324,7 @@ function analyze(rows: ScoredRow[]): string {
 			`${rows.length} rows across ${LOCALES.join("/")}, ≤${N}/locale. Right-place @${THRESH_KM}km, coordinate-graded ` +
 			`("no result" = miss). Confidence aggregation: **${AGG}** ${
 				AGG === "min" ? "(min calibrated conf across resolved nodes)" : "(most-specific resolved node)"
-			}. Curve on a 50% draw split (${draw.length} rows); low-confidence bucket re-checked on the held-out 50% (${held.length} rows)._\n`,
+			}. Curve on a 50% draw split (${draw.length} rows); low-confidence bucket re-checked on the held-out 50% (${held.length} rows)._\n`
 	)
 	L.push(`## Precision–recall by confidence threshold τ (mailwoman, draw split)\n`)
 	L.push(`| τ | accepted | precision @25km | recall |`)
@@ -315,10 +339,12 @@ function analyze(rows: ScoredRow[]): string {
 		L.push(
 			`At **τ=${head.tau.toFixed(3)}**, mailwoman holds **${pct(head.precision)}** precision while still answering ` +
 				`**${pct(head.recall)}** of rows — vs Nominatim's single **${pct(nom.precision)}** precision at ` +
-				`**${pct(nom.recall)}** recall. mailwoman abstains where it is unsure; the search index cannot.\n`,
+				`**${pct(nom.recall)}** recall. mailwoman abstains where it is unsure; the search index cannot.\n`
 		)
 	} else {
-		L.push(`> No τ clears Nominatim's precision at ≥25% recall on this set (agg=${AGG}). Investigate / try --agg node.\n`)
+		L.push(
+			`> No τ clears Nominatim's precision at ≥25% recall on this set (agg=${AGG}). Investigate / try --agg node.\n`
+		)
 	}
 
 	L.push(`## Honesty check (held-out 50%, low- vs high-confidence)\n`)
@@ -330,7 +356,7 @@ function analyze(rows: ScoredRow[]): string {
 	const honest = acc(heldHigh) > acc(heldLow)
 	L.push(
 		`\n${honest ? "✓" : "✗"} The high-confidence bucket ${honest ? "outperforms" : "does NOT outperform"} the ` +
-			`low-confidence bucket out-of-sample — the discrimination ${honest ? "holds" : "FAILS"} on held-out data.\n`,
+			`low-confidence bucket out-of-sample — the discrimination ${honest ? "holds" : "FAILS"} on held-out data.\n`
 	)
 
 	const svgPath = arg("svg", "")
@@ -341,12 +367,15 @@ function analyze(rows: ScoredRow[]): string {
 	return L.join("\n") + "\n"
 }
 
-/** Minimal self-contained precision–recall SVG: mailwoman curve (recall x, precision y) + Nominatim point. */
+/** Minimal self-contained precision–recall SVG: mailwoman curve (recall x, precision y) + Nominatim
+point. */
 function renderSvg(
 	curve: Array<{ precision: number; recall: number }>,
-	nom: { precision: number; recall: number },
+	nom: { precision: number; recall: number }
 ): string {
-	const W = 520, H = 360, P = 56
+	const W = 520,
+		H = 360,
+		P = 56
 	const xs = (r: number) => P + r * (W - 2 * P)
 	const ys = (p: number) => H - P - p * (H - 2 * P)
 	const pts = curve
@@ -355,7 +384,8 @@ function renderSvg(
 		.join(" ")
 	const grid = [0, 0.25, 0.5, 0.75, 1]
 		.map((t) => {
-			const x = xs(t), y = ys(t)
+			const x = xs(t),
+				y = ys(t)
 			return (
 				`<line x1="${x}" y1="${ys(0)}" x2="${x}" y2="${ys(1)}" stroke="#eee"/>` +
 				`<line x1="${xs(0)}" y1="${y}" x2="${xs(1)}" y2="${y}" stroke="#eee"/>` +
@@ -381,7 +411,10 @@ function renderSvg(
 async function main(): Promise<void> {
 	const rowsIn = arg("rows-in", "")
 	const rows: ScoredRow[] = rowsIn
-		? readFileSync(rowsIn, "utf8").trim().split("\n").map((l) => JSON.parse(l) as ScoredRow)
+		? readFileSync(rowsIn, "utf8")
+				.trim()
+				.split("\n")
+				.map((l) => JSON.parse(l) as ScoredRow)
 		: await collect()
 	const rowsOut = arg("rows-out", "")
 	if (rowsOut && !rowsIn) {

@@ -6,25 +6,28 @@
  *
  *   Build the anchor-absorption counter-augmentation shard (#220/#723, Probe A1). Renders the 6-slice
  *   `synthesizeAnchorAbsorptionRow` mix (CASE-H / CASE-P-us-rural / CASE-P-de / anchor-fp /
- *   locale-ambig / standard), aligns each to BIO, writes a labeled JSONL ready for parquet. The LEADING
- *   5-digit on CASE-H/anchor-fp/locale-ambig is sampled from the REAL US ZIPs in the postcode anchor
- *   lookup, so the shaped-painted anchor (`anchor_paint_mode=shaped`) fires on it exactly as inference
- *   does — that's the whole point: the model must learn to OVERRIDE a present anchor from context.
+ *   locale-ambig / standard), aligns each to BIO, writes a labeled JSONL ready for parquet. The
+ *   LEADING 5-digit on CASE-H/anchor-fp/locale-ambig is sampled from the REAL US ZIPs in the
+ *   postcode anchor lookup, so the shaped-painted anchor (`anchor_paint_mode=shaped`) fires on it
+ *   exactly as inference does — that's the whole point: the model must learn to OVERRIDE a present
+ *   anchor from context.
  *
- *   This is the A1 amplifier for the Probe A0 finding: shaped-painting ALONE flipped the leading-5-digit
- *   default to house_number (recovered CASE-H, eroded CASE-P postcode 99.3→86.5). The heavy CASE-P floor
- *   (35%) + the CASE-H/CASE-P contrast teaches the context discriminator instead of a flipped default.
+ *   This is the A1 amplifier for the Probe A0 finding: shaped-painting ALONE flipped the
+ *   leading-5-digit default to house_number (recovered CASE-H, eroded CASE-P postcode 99.3→86.5).
+ *   The heavy CASE-P floor (35%) + the CASE-H/CASE-P contrast teaches the context discriminator
+ *   instead of a flipped default.
  *
  *   Pipeline (mirrors build-german-shard.mjs):
- *     1. node scripts/build-anchor-absorption-shard.mjs --output /tmp/anchor-absorption-labeled.jsonl --count 50000
- *     2. python3 scripts/jsonl-to-parquet.py --input /tmp/anchor-absorption-labeled.jsonl \
- *          --output /tmp/part-anchor-absorption-train.parquet
- *     3. assemble the overlay manifest (base v0.9.2-multilocale-au + this shard, re-rooted to /data)
- *     4. push to R2, sync, add `synth-anchor-absorption: 6.0` to source_weights, train.
+ *
+ *   1. Node scripts/build-anchor-absorption-shard.mjs --output /tmp/anchor-absorption-labeled.jsonl
+ *        --count 50000
+ *   2. Python3 scripts/jsonl-to-parquet.py --input /tmp/anchor-absorption-labeled.jsonl\
+ *        --output /tmp/part-anchor-absorption-train.parquet
+ *   3. Assemble the overlay manifest (base v0.9.2-multilocale-au + this shard, re-rooted to /data)
+ *   4. Push to R2, sync, add `synth-anchor-absorption: 6.0` to source_weights, train.
  */
 
-import { createWriteStream } from "node:fs"
-import { readFileSync } from "node:fs"
+import { createWriteStream, readFileSync } from "node:fs"
 
 import { alignRow, stableSourceId, synthesizeAnchorAbsorptionRow } from "@mailwoman/corpus"
 

@@ -175,7 +175,10 @@ describe("resolveTree + spanRescore", () => {
 	it("is byte-stable when spanRescore is false (explicit opt-out — the #685/byte-stable contract)", async () => {
 		const resolver = createWofResolver(makeBackend())
 		const roots = [node({ tag: "locality", value: "Grudzi", start: 7, end: 13 })]
-		const out = await resolver.resolveTree(tree("86-300 Grudziądz", roots), { defaultCountry: "PL", spanRescore: false })
+		const out = await resolver.resolveTree(tree("86-300 Grudziądz", roots), {
+			defaultCountry: "PL",
+			spanRescore: false,
+		})
 		expect(out.roots.some((n) => n.placeId)).toBe(false)
 		expect(out.roots).toHaveLength(1)
 	})

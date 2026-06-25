@@ -318,14 +318,15 @@ export interface ResolveOpts {
 	 */
 	interpolationRadiusCalibration?: number
 	/**
-	 * Span-rescore tier (#370). When the tree resolved nothing, recover a dropped/fragmented
-	 * locality from the raw text: enumerate raw-token spans, exact-match the same-country gazetteer
+	 * Span-rescore tier (#370). When the tree resolved nothing, recover a dropped/fragmented locality
+	 * from the raw text: enumerate raw-token spans, exact-match the same-country gazetteer
 	 * (longest-wins + postcode-consistency gate), and inject the recovered locality as a resolved
 	 * node. Targets the EU no-result tail the model leaves when it fragments an accented locality
 	 * token ("Grudziądz" → "Grudzi"+"dz", #555). **Default-ON** (promoted 2026-06-25 — same-harness
 	 * EU+AU +1pp @25km, zero regressions); set `false` to opt out (byte-stable then). Never disturbs
 	 * a tree that already resolved (the #685 brake). Validated in
-	 * `docs/articles/evals/2026-06-23-370-span-rescore.mdx` + `2026-06-25-eu-competitive-standing.md`.
+	 * `docs/articles/evals/2026-06-23-370-span-rescore.mdx` +
+	 * `2026-06-25-eu-competitive-standing.md`.
 	 */
 	spanRescore?: boolean
 	/**

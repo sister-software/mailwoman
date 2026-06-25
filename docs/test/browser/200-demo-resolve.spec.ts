@@ -111,10 +111,20 @@ test.describe("Demo — resolution cascade", () => {
 	// and grades the resolved coordinate against the city bbox: the cascade country-gates and the new
 	// postcode (or its locality) is reachable. Pairs with the v4.14.0 AU model (postcode-first format).
 	const newPostcodeCases: { name: string; query: string; lat: [number, number]; lon: [number, number] }[] = [
-		{ name: "Portuguese postcode 1000-001 → Lisbon", query: "Lisboa 1000-001, Portugal", lat: [38.6, 38.9], lon: [-9.3, -9.0] },
+		{
+			name: "Portuguese postcode 1000-001 → Lisbon",
+			query: "Lisboa 1000-001, Portugal",
+			lat: [38.6, 38.9],
+			lon: [-9.3, -9.0],
+		},
 		{ name: "Polish postcode 00-002 → Warsaw", query: "Warszawa 00-002, Poland", lat: [52.1, 52.4], lon: [20.9, 21.2] },
 		{ name: "Czech postcode 100 00 → Prague", query: "Praha 100 00, Czechia", lat: [49.9, 50.2], lon: [14.3, 14.6] },
-		{ name: "Australian postcode 2000 → Sydney", query: "Sydney NSW 2000, Australia", lat: [-34.0, -33.7], lon: [151.0, 151.4] },
+		{
+			name: "Australian postcode 2000 → Sydney",
+			query: "Sydney NSW 2000, Australia",
+			lat: [-34.0, -33.7],
+			lon: [151.0, 151.4],
+		},
 	]
 	for (const c of newPostcodeCases) {
 		test(`-20j postcode coverage — ${c.name}`, async ({ demo }) => {

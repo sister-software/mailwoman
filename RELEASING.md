@@ -239,11 +239,11 @@ pipeline more than once because the moving parts aren't obvious. This is the exa
 Read this first — it's the 30-minute version once you know the shape. Three backends, decoupled, and a
 "promote" isn't done until all three agree on one md5:
 
-| backend       | tool                              | what it feeds                          |
-| ------------- | --------------------------------- | -------------------------------------- |
-| **npm**       | `publish.yml` (CI, OIDC)          | library consumers — **fetches the binary from HF**, so HF must be staged FIRST |
-| **HF bucket** | `scripts/publish-release-to-hf.mjs` | the npm fetch source + HF-direct `loadFromWeights` |
-| **R2/demo**   | `scripts/publish-demo-assets-to-r2.py` | the browser demo (reads `public.sister.software`, NOT HF) |
+| backend       | tool                                   | what it feeds                                                                  |
+| ------------- | -------------------------------------- | ------------------------------------------------------------------------------ |
+| **npm**       | `publish.yml` (CI, OIDC)               | library consumers — **fetches the binary from HF**, so HF must be staged FIRST |
+| **HF bucket** | `scripts/publish-release-to-hf.mjs`    | the npm fetch source + HF-direct `loadFromWeights`                             |
+| **R2/demo**   | `scripts/publish-demo-assets-to-r2.py` | the browser demo (reads `public.sister.software`, NOT HF)                      |
 
 The end-to-end order that worked: **gate (revised if needed) → commit card+config to main → HF stage → `publish.yml` (real) → verify npm md5 → R2 demo repoint.** Time-savers and traps, each cost real minutes once:
 

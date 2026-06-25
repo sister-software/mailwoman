@@ -5,28 +5,29 @@
  *
  *   Anchor-absorption counter-augmentation (#220/#723, Probe A1). Teaches the model the CONTEXT-
  *   DEPENDENT leading-5-digit disambiguation that the killed #723 override was faking, AND that the
- *   `anchor_paint_mode=shaped` WHERE fix alone over-corrected on (Probe A0: it flipped the default to
- *   house_number, recovering CASE-H but ERODING CASE-P — postcode F1 99.3→86.5 on leading-postcode
- *   rows like "05764 Finel Hollow Road, VT").
+ *   `anchor_paint_mode=shaped` WHERE fix alone over-corrected on (Probe A0: it flipped the default
+ *   to house_number, recovering CASE-H but ERODING CASE-P — postcode F1 99.3→86.5 on
+ *   leading-postcode rows like "05764 Finel Hollow Road, VT").
  *
- *   THE DISCRIMINATOR the model must learn (from the CASE-H vs CASE-P contrast, NOT a flipped default):
- *     - a leading 5-digit WITH a trailing postcode + street context  → it is the HOUSE NUMBER (CASE-H)
- *     - a leading 5-digit with NO trailing postcode (US-rural / DE)   → it IS the POSTCODE   (CASE-P)
- *   Both leading tokens are real ZIPs (so the painted anchor fires on both); only the surrounding
- *   context separates them. The model attends to the trailing token to decide the leading one.
+ *   THE DISCRIMINATOR the model must learn (from the CASE-H vs CASE-P contrast, NOT a flipped
+ *   default):
+ *
+ *   - A leading 5-digit WITH a trailing postcode + street context → it is the HOUSE NUMBER (CASE-H)
+ *   - A leading 5-digit with NO trailing postcode (US-rural / DE) → it IS the POSTCODE (CASE-P) Both
+ *       leading tokens are real ZIPs (so the painted anchor fires on both); only the surrounding
+ *       context separates them. The model attends to the trailing token to decide the leading one.
  *
  *   Slice mix (the A0 learning sets a HEAVY CASE-P floor so the default doesn't flip — DeepSeek's
- *   ≥35% CASE-P; here CASE-P total = 35%):
- *     H-adversarial   30%  US street, leading real-ZIP house# + TRAILING postcode → house_number
- *     P-us-rural      20%  US rural, leading postcode, NO trailing → postcode   (the A0-erosion fix)
- *     P-de            15%  German leading postcode "{pc} {city}, {street} {hn}" → postcode
- *     anchor-fp       10%  leading 5-digit that is NOT a real ZIP + trailing postcode → house_number
- *     locale-ambig    15%  minimal context; the local token (street-type vs none) decides
- *     standard        10%  normal small house# + trailing postcode → house_number (baseline)
+ *   ≥35% CASE-P; here CASE-P total = 35%): H-adversarial 30% US street, leading real-ZIP house# +
+ *   TRAILING postcode → house_number P-us-rural 20% US rural, leading postcode, NO trailing →
+ *   postcode (the A0-erosion fix) P-de 15% German leading postcode "{pc} {city}, {street} {hn}" →
+ *   postcode anchor-fp 10% leading 5-digit that is NOT a real ZIP + trailing postcode →
+ *   house_number locale-ambig 15% minimal context; the local token (street-type vs none) decides
+ *   standard 10% normal small house# + trailing postcode → house_number (baseline)
  *
  *   Real ZIPs for the leading-5-digit are sampled from the postcode anchor lookup at build time
- *   (passed via opts.realZips) so the shaped anchor fires on them exactly as at inference; fake ZIPs
- *   (anchor-fp) are 5-digit strings deliberately absent from the lookup.
+ *   (passed via opts.realZips) so the shaped anchor fires on them exactly as at inference; fake
+ *   ZIPs (anchor-fp) are 5-digit strings deliberately absent from the lookup.
  */
 
 import type { ComponentTag } from "@mailwoman/core/types"
@@ -49,8 +50,11 @@ export type AnchorAbsorptionTemplate =
 export interface AnchorAbsorptionSynthesisOpts {
 	random?: () => number
 	forceTemplate?: AnchorAbsorptionTemplate
-	/** Real US ZIPs (in the anchor lookup) to use as the LEADING 5-digit house number — so the painted
-	 * anchor fires on it, the CASE-H/anchor-fp trigger. Builder loads these from pilot-anchor-lookup.json. */
+	/**
+	 * Real US ZIPs (in the anchor lookup) to use as the LEADING 5-digit house number — so the painted
+	 * anchor fires on it, the CASE-H/anchor-fp trigger. Builder loads these from
+	 * pilot-anchor-lookup.json.
+	 */
 	realZips?: ReadonlyArray<string>
 }
 
@@ -65,8 +69,10 @@ function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
 	return arr[Math.floor(random() * arr.length)]!
 }
 
-/** A realistic US house number: mostly 1–4 digits (the common range), 25% a real 5-digit ZIP (the HARD
- * case — a 5-digit leading number that is still a house number when a locality is present). */
+/**
+ * A realistic US house number: mostly 1–4 digits (the common range), 25% a real 5-digit ZIP (the
+ * HARD case — a 5-digit leading number that is still a house number when a locality is present).
+ */
 function houseNum(random: () => number, realZips: ReadonlyArray<string>): string {
 	if (random() < 0.25) return pick(realZips, random)
 	return String(1 + Math.floor(random() * 9999))
@@ -75,8 +81,24 @@ function houseNum(random: () => number, realZips: ReadonlyArray<string>): string
 // Curated, provenance-light reference vocab (real US street/city/state + DE). Surface forms must appear
 // in `raw` for alignRow; these are plain ASCII tokens that align cleanly.
 const STREET_NAMES = [
-	"Main", "Oak", "Elm", "Maple", "Cedar", "Pine", "Washington", "Lincoln", "Park", "Hill",
-	"Finel Hollow", "Mt Tabor", "Swasey", "Camperdown", "Mellville", "Rhone", "Westpark", "Crescent Meadow",
+	"Main",
+	"Oak",
+	"Elm",
+	"Maple",
+	"Cedar",
+	"Pine",
+	"Washington",
+	"Lincoln",
+	"Park",
+	"Hill",
+	"Finel Hollow",
+	"Mt Tabor",
+	"Swasey",
+	"Camperdown",
+	"Mellville",
+	"Rhone",
+	"Westpark",
+	"Crescent Meadow",
 ]
 const STREET_TYPES = ["St", "Ave", "Rd", "Dr", "Ln", "Blvd", "Ct", "Way", "Road", "Drive"]
 const US_TUPLES: ReadonlyArray<AnchorAbsorptionBaseTuple> = [
@@ -169,7 +191,12 @@ export function synthesizeAnchorAbsorptionRow(
 			return { raw: `${zip} ${street}`, components: { house_number: zip, street }, locale: "en-US", template }
 		}
 		const t = pick(US_TUPLES, random)
-		return { raw: `${zip} ${t.locality}`, components: { postcode: zip, locality: t.locality }, locale: "en-US", template }
+		return {
+			raw: `${zip} ${t.locality}`,
+			components: { postcode: zip, locality: t.locality },
+			locale: "en-US",
+			template,
+		}
 	}
 	if (template === "h-no-trailing-locality") {
 		// The A3 fix (#220): the common US format "{house#} {street}, {locality}, {STATE}" with NO trailing

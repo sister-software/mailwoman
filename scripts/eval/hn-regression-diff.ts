@@ -4,24 +4,25 @@
  * @author Teffen Ellis, et al.
  *
  *   #220 diagnostic — WHERE did the anchor-absorption shard cost house_number? eval-error-analysis
- *   showed v192 95.8 -> A2 92.8 (51 more FN) but its capped example list never surfaces the house_number
- *   FNs. This diffs two models ROW-BY-ROW over the golden US rows: for every gold house_number, parse
- *   with BOTH (anchor-ON, the production config), collect the rows where the BASE model is right and the
- *   CANDIDATE is wrong, and report WHAT the candidate labeled the house-number value instead (postcode /
- *   street / dropped). Both run anchor-ON + gazetteer + suppression, exactly as production.
+ *   showed v192 95.8 -> A2 92.8 (51 more FN) but its capped example list never surfaces the
+ *   house_number FNs. This diffs two models ROW-BY-ROW over the golden US rows: for every gold
+ *   house_number, parse with BOTH (anchor-ON, the production config), collect the rows where the
+ *   BASE model is right and the CANDIDATE is wrong, and report WHAT the candidate labeled the
+ *   house-number value instead (postcode / street / dropped). Both run anchor-ON + gazetteer +
+ *   suppression, exactly as production.
  *
- *   Run: node --experimental-strip-types --expose-gc scripts/eval/hn-regression-diff.ts \
- *     --base <v192 int8> --candidate <A2 int8> [--golden data/eval/golden/v0.1.2]
+ *   Run: node --experimental-strip-types --expose-gc scripts/eval/hn-regression-diff.ts\
+ *   --base <v192 int8> --candidate <A2 int8> [--golden data/eval/golden/v0.1.2]
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
-import type { ComponentTag } from "@mailwoman/core/types"
 import { decodeAsJson } from "@mailwoman/core/decoder"
+import type { ComponentTag } from "@mailwoman/core/types"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
+import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 
 function arg(name: string, fallback = ""): string {
 	const i = process.argv.indexOf(`--${name}`)
@@ -56,7 +57,8 @@ async function build(model: string) {
 	})
 }
 
-/** Which tag did the model assign the gold house-number VALUE to? (postcode / street / … / "DROPPED"). */
+/** Which tag did the model assign the gold house-number VALUE to? (postcode / street / … /
+"DROPPED"). */
 function whereDidItGo(pred: Record<string, string>, goldHn: string): string {
 	const g = norm(goldHn)
 	for (const [tag, val] of Object.entries(pred)) {
@@ -111,8 +113,12 @@ async function main() {
 		}
 	}
 
-	console.log(`\n=== house_number: base ${baseRight}/${rows.length} right, candidate ${candRight}/${rows.length} right ===`)
-	console.log(`REGRESSIONS (base right, candidate wrong): ${baseRight - candRight} net; ${regressions.length}+ examples`)
+	console.log(
+		`\n=== house_number: base ${baseRight}/${rows.length} right, candidate ${candRight}/${rows.length} right ===`
+	)
+	console.log(
+		`REGRESSIONS (base right, candidate wrong): ${baseRight - candRight} net; ${regressions.length}+ examples`
+	)
 	console.log(`Where the candidate sent the house number instead:`, JSON.stringify(wentCounts))
 	console.log(`\n--- regressed rows (gold house_number → what the candidate called it) ---`)
 	for (const r of regressions) console.log(`  [${r.went}]  gold.hn=${r.gold}  raw=${JSON.stringify(r.raw)}`)

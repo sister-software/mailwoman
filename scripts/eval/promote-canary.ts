@@ -6,34 +6,35 @@
  *   PROMOTE-CANARY — the autonomous-promote safeguard.
  *
  *   With the operator away and the permission wall down, a model promote no longer gets the human
- *   "does this look right on real queries" check a static held-out eval can miss. This rebuilds that
- *   check: diff a CANDIDATE model against the SHIPPED model on a set of tricky, failure-mode-rich
- *   REAL inputs, and BLOCK the promote on a right-place regression or an overconfidence spike — even
- *   when the golden eval is green.
+ *   "does this look right on real queries" check a static held-out eval can miss. This rebuilds
+ *   that check: diff a CANDIDATE model against the SHIPPED model on a set of tricky,
+ *   failure-mode-rich REAL inputs, and BLOCK the promote on a right-place regression or an
+ *   overconfidence spike — even when the golden eval is green.
  *
  *   The canary set is the held-out OA coordinate goldens (real truth lat/lon) put through the
- *   perturbations that expose the known failure modes: messy (abbreviated / lowercased / reordered /
- *   dash-postcode-dropped, via `messify`) and ALL-CAPS (the OOD case #690 addressed). Each
+ *   perturbations that expose the known failure modes: messy (abbreviated / lowercased / reordered
+ *   / dash-postcode-dropped, via `messify`) and ALL-CAPS (the OOD case #690 addressed). Each
  *   perturbation preserves the truth coordinate, so every variant is gradeable right-place @25km.
  *   (cross-state same-name is a documented gap — it needs a curated pair set, not a perturbation.)
  *
  *   Two block conditions (either fires → BLOCK):
- *     1. **Right-place regression** — candidate aggregate right@25km drops > AGG_TOL pp vs shipped,
- *        OR any single locale drops > LOCALE_TOL pp.
- *     2. **Overconfidence spike** — the candidate becomes newly-high-confidence (≥0.9) AND WRONG on
- *        rows the shipped model was either unsure (<0.9) or right about, beyond OVERCONF_TOL of the
+ *
+ *   1. **Right-place regression** — candidate aggregate right@25km drops > AGG_TOL pp vs shipped, OR any
+ *        single locale drops > LOCALE_TOL pp.
+ *   2. **Overconfidence spike** — the candidate becomes newly-high-confidence (≥0.9) AND WRONG on rows
+ *        the shipped model was either unsure (<0.9) or right about, beyond OVERCONF_TOL of the
  *        answered set. This is the "confident on hard inputs" failure the static eval can't see.
  *
  *   Reuses the shipped model's scored rows if `--shipped-rows <jsonl>` (a confidence-discrimination
  *   `--rows-out`) matches the canary input set, to avoid re-parsing.
  *
- *   Run: node --experimental-strip-types scripts/eval/promote-canary.ts \
- *          --shipped out/v191/model.onnx --candidate out/v192/model-int8.onnx \
- *          [--locales us,it,pt,pl,fr,au] [--n 60] [--allcaps] [--out <md>]
+ *   Run: node --experimental-strip-types scripts/eval/promote-canary.ts\
+ *   --shipped out/v191/model.onnx --candidate out/v192/model-int8.onnx\
+ *   [--locales us,it,pt,pl,fr,au] [--n 60] [--allcaps] [--out <md>]
  */
+import { createCalibrator } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { createCalibrator } from "@mailwoman/core/decoder"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { setTimeout as sleep } from "node:timers/promises"
 import { messify, resolvedResult } from "./confidence-discrimination.ts"
@@ -69,7 +70,10 @@ interface CanaryRow {
 	conf: number
 }
 
-async function collectModel(modelPath: string, inputs: Array<{ cc: string; variant: string; input: string; lat: number; lon: number }>): Promise<CanaryRow[]> {
+async function collectModel(
+	modelPath: string,
+	inputs: Array<{ cc: string; variant: string; input: string; lat: number; lon: number }>
+): Promise<CanaryRow[]> {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const calibrate = createCalibrator(JSON.parse(readFileSync(CALIB, "utf8")))
@@ -104,7 +108,11 @@ function buildInputs(): Array<{ cc: string; variant: string; input: string; lat:
 	for (const cc of LOCALES) {
 		const file = `data/eval/external/oa-${cc}-coord-150.jsonl`
 		if (!existsSync(file)) continue
-		const goldens = readFileSync(file, "utf8").trim().split("\n").slice(0, N).map((l) => JSON.parse(l)) as Array<{
+		const goldens = readFileSync(file, "utf8")
+			.trim()
+			.split("\n")
+			.slice(0, N)
+			.map((l) => JSON.parse(l)) as Array<{
 			raw: string
 			lat: number
 			lon: number
@@ -123,7 +131,9 @@ function rightRate(rows: CanaryRow[]): number {
 
 async function main(): Promise<void> {
 	const inputs = buildInputs()
-	console.error(`canary set: ${inputs.length} inputs (${LOCALES.join("/")}, ≤${N}/locale${ALLCAPS ? ", +allcaps" : ""})`)
+	console.error(
+		`canary set: ${inputs.length} inputs (${LOCALES.join("/")}, ≤${N}/locale${ALLCAPS ? ", +allcaps" : ""})`
+	)
 
 	console.error(`\ncollecting CANDIDATE ${CANDIDATE}…`)
 	const cand = await collectModel(CANDIDATE, inputs)
@@ -137,7 +147,7 @@ async function main(): Promise<void> {
 	L.push(
 		`_Candidate ${CANDIDATE} vs shipped ${SHIPPED}. ${inputs.length} inputs (${LOCALES.join("/")}, ≤${N}/locale` +
 			`${ALLCAPS ? ", messy+allcaps" : ", messy"}), real OA truth coords, right-place @${THRESH_KM}km. Confidence = ` +
-			`min calibrated conf across resolved nodes._\n`,
+			`min calibrated conf across resolved nodes._\n`
 	)
 
 	// aggregate
@@ -177,7 +187,7 @@ async function main(): Promise<void> {
 	L.push(`\n## Overconfidence spike\n`)
 	L.push(
 		`Candidate rows newly ≥${HIGH_CONF}-confident AND wrong (where shipped was unsure or right): ` +
-			`**${overconf}** = ${pct(overconfFrac)} of answered (${answered.length}).\n`,
+			`**${overconf}** = ${pct(overconfFrac)} of answered (${answered.length}).\n`
 	)
 
 	// verdict
@@ -185,9 +195,15 @@ async function main(): Promise<void> {
 	const spike = overconfFrac > OVERCONF_TOL
 	const block = regress || spike
 	L.push(`## Verdict\n`)
-	L.push(`- right-place regression: ${regress ? `**BLOCK** (agg Δ ${aggDelta.toFixed(1)}pp, worst locale ${worstLocaleDrop.toFixed(1)}pp; tol −${AGG_TOL}/−${LOCALE_TOL})` : `pass (agg Δ ${aggDelta.toFixed(1)}pp, worst locale ${worstLocaleDrop.toFixed(1)}pp)`}`)
-	L.push(`- overconfidence spike: ${spike ? `**BLOCK** (${pct(overconfFrac)} > ${pct(OVERCONF_TOL)})` : `pass (${pct(overconfFrac)} ≤ ${pct(OVERCONF_TOL)})`}`)
-	L.push(`\n### ${block ? "🚫 CANARY BLOCKS PROMOTE" : "✅ CANARY CLEARS — promote may proceed (subject to the eval gate)"}\n`)
+	L.push(
+		`- right-place regression: ${regress ? `**BLOCK** (agg Δ ${aggDelta.toFixed(1)}pp, worst locale ${worstLocaleDrop.toFixed(1)}pp; tol −${AGG_TOL}/−${LOCALE_TOL})` : `pass (agg Δ ${aggDelta.toFixed(1)}pp, worst locale ${worstLocaleDrop.toFixed(1)}pp)`}`
+	)
+	L.push(
+		`- overconfidence spike: ${spike ? `**BLOCK** (${pct(overconfFrac)} > ${pct(OVERCONF_TOL)})` : `pass (${pct(overconfFrac)} ≤ ${pct(OVERCONF_TOL)})`}`
+	)
+	L.push(
+		`\n### ${block ? "🚫 CANARY BLOCKS PROMOTE" : "✅ CANARY CLEARS — promote may proceed (subject to the eval gate)"}\n`
+	)
 
 	const md = L.join("\n") + "\n"
 	const out = arg("out", "")

@@ -10,14 +10,14 @@ A geocoder that returns a best guess gives you one number and no way to know whi
 
 Sweep τ; at each, precision is right-place @25km among the answers at or above τ, recall is the fraction of all rows answered at or above τ.
 
-| τ | accepted | precision @25km | recall |
-| --: | --: | --: | --: |
-| 0.00 | 159 | 84.3% | 67.4% |
-| 0.70 | 147 | 85.0% | 62.3% |
-| 0.80 | 115 | 92.2% | 48.7% |
-| 0.90 | 79 | 93.7% | 33.5% |
-| 0.94 | 37 | 97.3% | 15.7% |
-| 0.97 | 29 | 96.6% | 12.3% |
+|    τ | accepted | precision @25km | recall |
+| ---: | -------: | --------------: | -----: |
+| 0.00 |      159 |           84.3% |  67.4% |
+| 0.70 |      147 |           85.0% |  62.3% |
+| 0.80 |      115 |           92.2% |  48.7% |
+| 0.90 |       79 |           93.7% |  33.5% |
+| 0.94 |       37 |           97.3% |  15.7% |
+| 0.97 |       29 |           96.6% |  12.3% |
 
 Precision climbs from 84.3% to 97.3% as the threshold rises; recall is the price, falling from 67% to 16%. The confidence is not decoration — it ranks answers by how likely they are to be right.
 
@@ -25,23 +25,23 @@ Precision climbs from 84.3% to 97.3% as the threshold rises; recall is the price
 
 A confidence story a judge can break is worse than none. Split the rows at the draw-split median confidence (0.900) and re-measure right-place on the **held-out** half:
 
-| held-out bucket | n | right-place @25km |
-| --- | --: | --: |
-| confidence < 0.900 (low) | 68 | 72.1% |
-| confidence ≥ 0.900 (high) | 92 | 85.9% |
+| held-out bucket           |   n | right-place @25km |
+| ------------------------- | --: | ----------------: |
+| confidence < 0.900 (low)  |  68 |             72.1% |
+| confidence ≥ 0.900 (high) |  92 |             85.9% |
 
 The high-confidence bucket outperforms the low-confidence bucket by 13.8pp out-of-sample. The discrimination is a property of the shipped model, not of the slice the curve was fit on.
 
 ## Where the confidence comes from (per-locale, τ=0)
 
-| locale | n | precision @25km | recall | reads as |
-| --- | --: | --: | --: | --- |
-| US | 80 | 94% | 85% | covered — precise and confident |
-| IT | 80 | 94% | 99% | covered |
-| FR | 80 | 91% | 100% | covered |
-| PT | 80 | 76% | 31% | building — correctly less confident |
-| PL | 80 | 28% | 36% | building — correctly low confidence |
-| AU | 72 | 63% | 53% | building |
+| locale |   n | precision @25km | recall | reads as                            |
+| ------ | --: | --------------: | -----: | ----------------------------------- |
+| US     |  80 |             94% |    85% | covered — precise and confident     |
+| IT     |  80 |             94% |    99% | covered                             |
+| FR     |  80 |             91% |   100% | covered                             |
+| PT     |  80 |             76% |    31% | building — correctly less confident |
+| PL     |  80 |             28% |    36% | building — correctly low confidence |
+| AU     |  72 |             63% |    53% | building                            |
 
 The discrimination is the model flagging its own coverage. Where mailwoman has gazetteer depth (US, IT, FR) it is both precise and confident; where coverage is still being built (PL, PT, AU) it is correctly unsure, so a τ threshold removes exactly those answers. That is the asset: for a caller who must avoid wrong answers — a record-matcher deduping compliance data, say — the threshold cuts the error rate by trusting only the answers the model stands behind. Coverage breadth is a separate axis, tracked elsewhere.
 
