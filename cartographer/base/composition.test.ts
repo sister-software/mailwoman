@@ -177,4 +177,14 @@ test("Composer.toJS: is an alias of toJSON", () => {
 	expect(composer.toJS()).toEqual(composer.toJSON())
 })
 
+test("Composer: two instances from the shared BaseLayers have independent layer lists", () => {
+	// Regression for the shared-mutable-link bug: LayerSpecificationList now copies its input, so
+	// constructing a second composer no longer rewrites the first's kNext/kPrev links in place.
+	const a = new StyleSpecificationComposer({ sources: {} })
+	const baseCount = a.layers.length
+	const b = new StyleSpecificationComposer({ sources: {} })
+	expect(b.layers.length).toBe(baseCount) // b built a full list, not a corrupted remnant
+	expect(a.layers.length).toBe(baseCount) // a's list wasn't mutated by b's construction
+})
+
 //#endregion

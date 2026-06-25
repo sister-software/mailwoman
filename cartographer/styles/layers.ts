@@ -32,10 +32,15 @@ export class LayerSpecificationList {
 	#layersByID = new Map<string, LayerSpecificationListItem>()
 	#headLayer: LayerSpecificationListItem | undefined
 
-	constructor(layers: LayerSpecification[]) {
-		if (layers.length === 0) {
+	constructor(inputLayers: LayerSpecification[]) {
+		if (inputLayers.length === 0) {
 			throw new Error("No layers provided")
 		}
+
+		// Copy each layer so the kNext/kPrev link symbols below are set on THIS list's own items.
+		// Passing a shared array (e.g. the module-level BaseLayers) to two lists otherwise mutates the
+		// same layer objects' links in place, corrupting each other's traversal.
+		const layers: LayerSpecificationListItem[] = inputLayers.map((layer) => ({ ...layer }))
 
 		layers.forEach((item, index) => {
 			const prev: LayerSpecificationListItem | undefined = layers[index - 1]
