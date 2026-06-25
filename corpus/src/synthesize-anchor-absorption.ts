@@ -37,7 +37,14 @@ export interface AnchorAbsorptionBaseTuple {
 	postcode: string
 }
 
-export type AnchorAbsorptionTemplate = "h-adversarial" | "p-us-rural" | "p-de" | "anchor-fp" | "locale-ambig" | "standard"
+export type AnchorAbsorptionTemplate =
+	| "h-adversarial"
+	| "h-no-trailing-locality"
+	| "p-us-rural"
+	| "p-de"
+	| "anchor-fp"
+	| "locale-ambig"
+	| "standard"
 
 export interface AnchorAbsorptionSynthesisOpts {
 	random?: () => number
@@ -56,6 +63,13 @@ export interface SynthesizedAnchorAbsorptionRow {
 
 function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
 	return arr[Math.floor(random() * arr.length)]!
+}
+
+/** A realistic US house number: mostly 1–4 digits (the common range), 25% a real 5-digit ZIP (the HARD
+ * case — a 5-digit leading number that is still a house number when a locality is present). */
+function houseNum(random: () => number, realZips: ReadonlyArray<string>): string {
+	if (random() < 0.25) return pick(realZips, random)
+	return String(1 + Math.floor(random() * 9999))
 }
 
 // Curated, provenance-light reference vocab (real US street/city/state + DE). Surface forms must appear
@@ -157,8 +171,26 @@ export function synthesizeAnchorAbsorptionRow(
 		const t = pick(US_TUPLES, random)
 		return { raw: `${zip} ${t.locality}`, components: { postcode: zip, locality: t.locality }, locale: "en-US", template }
 	}
-	// standard: normal small house number + trailing postcode → house_number (baseline, keeps the common case).
-	const hn = pick(HOUSE_NUMS, random)
+	if (template === "h-no-trailing-locality") {
+		// The A3 fix (#220): the common US format "{house#} {street}, {locality}, {STATE}" with NO trailing
+		// postcode → the leading number is the HOUSE NUMBER. The CONTRAST to p-us-rural (same no-trailing,
+		// state-bearing shape) is the LOCALITY: present here, absent there. The A2 shard lacked this slice,
+		// so p-us-rural's "leading-number + STATE → postcode" rule over-generalized to 98 golden house#
+		// rows ("36 Oxbow Dr, Bradford, VT" → postcode). The house# spans 1-4 digits AND real 5-digit ZIPs
+		// (the hard case: 5-digit + locality is STILL a house number, distinct from p-us-rural's no-locality).
+		const hn = houseNum(random, realZips)
+		const t = pick(US_TUPLES, random)
+		const region = random() < 0.5 ? pick(RURAL_REGIONS, random) : t.region
+		const raw = `${hn} ${street}, ${t.locality}, ${region}`
+		return {
+			raw,
+			components: { house_number: hn, street, locality: t.locality, region },
+			locale: "en-US",
+			template,
+		}
+	}
+	// standard: normal house number + trailing postcode → house_number (baseline, keeps the common case).
+	const hn = houseNum(random, realZips)
 	const t = pick(US_TUPLES, random)
 	const raw = `${hn} ${street}, ${t.locality}, ${t.region} ${t.postcode}`
 	return {
@@ -169,13 +201,23 @@ export function synthesizeAnchorAbsorptionRow(
 	}
 }
 
-// Weighted template bag — the slice mix (CASE-P total 35%, H-adversarial 30%). Expanded to a flat array
-// so `pick` draws at the target frequencies (matches the boundary-stress ALL_TEMPLATES idiom).
+// Weighted template bag — the slice mix. Expanded to a flat array so `pick` draws at the target
+// frequencies (matches the boundary-stress ALL_TEMPLATES idiom).
+//
+// A3 (#220, after the per-row diagnostic on the A2 probe): A1/A2 both held SLICE-H (100) + postcode
+// (~98) but cost house_number (95.8->92.8), and the A2 mix-rebalance did NOT move it — so it was never a
+// CASE-P-quantity problem. The row-by-row v192-vs-A2 diff (hn-regression-diff.ts) pinned it: 132/132 house#
+// regressions were house#->POSTCODE on "{house#} {street}, {locality}, {STATE}" no-trailing rows — the
+// p-us-rural rule ("leading-number + STATE + no-trailing -> postcode") OVER-GENERALIZED because the shard
+// had NO counter-slice for the common locality-bearing house# case. A3 ADDS h-no-trailing-locality (15%)
+// to teach the LOCALITY discriminator (present -> house#, absent + 5-digit -> postcode = p-us-rural) and
+// trims p-us-rural 16->13. Goal: house_number recovers WITHOUT re-eroding postcode/SLICE-H. CASE-P = 26%.
 export const ALL_TEMPLATES: ReadonlyArray<AnchorAbsorptionTemplate> = [
-	...Array<AnchorAbsorptionTemplate>(30).fill("h-adversarial"),
-	...Array<AnchorAbsorptionTemplate>(20).fill("p-us-rural"),
-	...Array<AnchorAbsorptionTemplate>(15).fill("p-de"),
-	...Array<AnchorAbsorptionTemplate>(10).fill("anchor-fp"),
-	...Array<AnchorAbsorptionTemplate>(15).fill("locale-ambig"),
-	...Array<AnchorAbsorptionTemplate>(10).fill("standard"),
+	...Array<AnchorAbsorptionTemplate>(25).fill("h-adversarial"),
+	...Array<AnchorAbsorptionTemplate>(15).fill("h-no-trailing-locality"),
+	...Array<AnchorAbsorptionTemplate>(13).fill("p-us-rural"),
+	...Array<AnchorAbsorptionTemplate>(13).fill("p-de"),
+	...Array<AnchorAbsorptionTemplate>(8).fill("anchor-fp"),
+	...Array<AnchorAbsorptionTemplate>(14).fill("locale-ambig"),
+	...Array<AnchorAbsorptionTemplate>(12).fill("standard"),
 ]

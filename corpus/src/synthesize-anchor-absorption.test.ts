@@ -34,7 +34,7 @@ function leadingTag(aligned: ReturnType<typeof alignRow>): string | null {
 }
 
 describe("synthesize-anchor-absorption", () => {
-	const templates: AnchorAbsorptionTemplate[] = ["h-adversarial", "p-us-rural", "p-de", "anchor-fp", "locale-ambig", "standard"]
+	const templates: AnchorAbsorptionTemplate[] = ["h-adversarial", "h-no-trailing-locality", "p-us-rural", "p-de", "anchor-fp", "locale-ambig", "standard"]
 
 	it("every slice aligns cleanly (no quarantine) across seeds", () => {
 		for (const t of templates) {
@@ -55,6 +55,15 @@ describe("synthesize-anchor-absorption", () => {
 		const { synth, aligned } = rowFor("p-us-rural", 3)
 		expect(synth.components.house_number).toBeUndefined() // no house number — the leading IS the postcode
 		expect(leadingTag(aligned)).toBe("postcode")
+	})
+
+	it("h-no-trailing-locality: leading number + LOCALITY + state, no trailing → house_number (the A3 fix)", () => {
+		// The contrast to p-us-rural: same no-trailing state-bearing shape, but a LOCALITY is present, so the
+		// leading number is the house number — the discriminator the A2 shard lacked (98 house#->postcode).
+		const { synth, aligned } = rowFor("h-no-trailing-locality", 3)
+		expect(synth.components.locality).toBeTruthy() // a locality IS present (vs p-us-rural's none)
+		expect(synth.components.postcode).toBeUndefined() // no trailing postcode
+		expect(leadingTag(aligned)).toBe("house_number")
 	})
 
 	it("CASE-P (DE): German leading postcode → postcode", () => {
