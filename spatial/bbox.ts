@@ -109,15 +109,15 @@ export type BBox3DLiteral = [
 //#region Type Predicates
 
 /**
- * Type-predicate for 3-dimensional bounding boxes.
+ * Type-predicate for 2-dimensional bounding boxes (`[west, south, east, north]`).
  *
  * This is useful when determining the type of bounding box in a GeoJSON object.
  *
  * @category GeoJSON
  * @category Bounding Box
  */
-export function is2DBBox(input: unknown): input is BBox3DLiteral {
-	return Array.isArray(input) && input.length === 6
+export function is2DBBox(input: unknown): input is BBox2DLiteral {
+	return Array.isArray(input) && input.length === 4
 }
 
 /**
