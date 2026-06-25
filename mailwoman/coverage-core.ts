@@ -59,19 +59,24 @@ export interface CoverageBuildOptions {
 	/** Optimistic-mode exponent for `fog_opt = fog ** gamma`. */
 	optimisticGamma: number
 	/**
-	 * GeoNames postal file (12-col tab-separated) — the GLOBAL postcode COVERAGE signal that clears the
-	 * "where do we need data" holes. Null to skip. A postcode is area-scale, so centroids bin at the
-	 * domain resolution and a domain cell holding ≥1 postcode reads as postcode-resolvable (covered).
+	 * GeoNames postal file (12-col tab-separated) — the GLOBAL postcode COVERAGE signal that clears
+	 * the "where do we need data" holes. Null to skip. A postcode is area-scale, so centroids bin at
+	 * the domain resolution and a domain cell holding ≥1 postcode reads as postcode-resolvable
+	 * (covered).
 	 */
 	geonamesPostalFile: string | null
 	/**
-	 * WOF SQLite DB (the admin gazetteer) holding `spr` (place coords + placetype) + `place_population`
-	 * / `place_importance` — the CIVILIZATION/salience backdrop. Settlement places, weighted by salience,
-	 * mark "where civilization is": a salient place we DON'T cover is a gray hole = work to do. Null to
-	 * skip the global holes layer (US rooftop fine map is independent of it).
+	 * WOF SQLite DB (the admin gazetteer) holding `spr` (place coords + placetype) +
+	 * `place_population` / `place_importance` — the CIVILIZATION/salience backdrop. Settlement
+	 * places, weighted by salience, mark "where civilization is": a salient place we DON'T cover is a
+	 * gray hole = work to do. Null to skip the global holes layer (US rooftop fine map is independent
+	 * of it).
 	 */
 	wofDb: string | null
-	/** Coverage a postcode cell contributes (≤ 1) — how much it clears the hole (rooftop is the full 1). */
+	/**
+	 * Coverage a postcode cell contributes (≤ 1) — how much it clears the hole (rooftop is the full
+	 * 1).
+	 */
 	postcodeCeiling: number
 	/** Minimum place importance (∈ [0,1]) to count as civilization worth flagging — the noise floor. */
 	salienceFloor: number
@@ -150,9 +155,9 @@ function buildBands(allRes: number[], tileMaxZoom: number): Map<number, [number,
 
 /**
  * True if a GeoJSON polygon's outer ring spans >180° of longitude — the antimeridian-wrap artifact.
- * `h3_cell_to_boundary_wkt` emits UNWRAPPED lon for cells straddling ±180, smearing a polygon across
- * the whole map; a normal hex spans a fraction of a degree, so a >180° span is unambiguously a wrap.
- * Cheaper than round-tripping through the spatial extension; covers AK/RU/FJ/NZ-Chathams.
+ * `h3_cell_to_boundary_wkt` emits UNWRAPPED lon for cells straddling ±180, smearing a polygon
+ * across the whole map; a normal hex spans a fraction of a degree, so a >180° span is unambiguously
+ * a wrap. Cheaper than round-tripping through the spatial extension; covers AK/RU/FJ/NZ-Chathams.
  */
 function antimeridianWrapped(geojson: string): boolean {
 	let min = Infinity

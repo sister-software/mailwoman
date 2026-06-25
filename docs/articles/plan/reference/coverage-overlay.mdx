@@ -111,14 +111,14 @@ To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s
 
 **Global holes layer** (`fog = salience·(1 − coverage)`, res-domain hexes, US-excluded):
 
-| Flag                  | Default                                | Effect                                                                                            |
-| --------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `--no-postcode`       | (on)                                   | Disable the global holes layer entirely — US rooftop fine map only.                               |
-| `--geonames-postal`   | `…/geonames/allCountries-postal.txt`   | The postcode COVERAGE signal — a postcode present in a domain cell clears its hole.                |
-| `--wof-db`            | `…/wof/admin-global-priority-importance.db` | The civilization backdrop — `spr` + `place_importance` (settlement salience).                 |
-| `--postcode-ceiling`  | 0.85                                   | How much a postcode cell clears the hole (≤ 1; rooftop is the full 1).                            |
-| `--salience-floor`    | 0.15                                   | Min place importance to flag as a hole — the noise floor (raise to keep only the notable holes).  |
-| `--postcode-exclude`  | `US`                                   | Countries the holes layer skips (handled by the rooftop fine map).                                |
+| Flag                 | Default                                     | Effect                                                                                           |
+| -------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `--no-postcode`      | (on)                                        | Disable the global holes layer entirely — US rooftop fine map only.                              |
+| `--geonames-postal`  | `…/geonames/allCountries-postal.txt`        | The postcode COVERAGE signal — a postcode present in a domain cell clears its hole.              |
+| `--wof-db`           | `…/wof/admin-global-priority-importance.db` | The civilization backdrop — `spr` + `place_importance` (settlement salience).                    |
+| `--postcode-ceiling` | 0.85                                        | How much a postcode cell clears the hole (≤ 1; rooftop is the full 1).                           |
+| `--salience-floor`   | 0.15                                        | Min place importance to flag as a hole — the noise floor (raise to keep only the notable holes). |
+| `--postcode-exclude` | `US`                                        | Countries the holes layer skips (handled by the rooftop fine map).                               |
 
 The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible gray while keeping big cities darkest. Holes below 0.05 residual fog (covered or trivial) are dropped, so the layer is just the holes (~290 K res-6 cells); covered + empty stay clear.
 
