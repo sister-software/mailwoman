@@ -54,7 +54,7 @@ One calibration note from the research: the incumbent moved. Senzing retrained l
 
 **The five risks, ranked:**
 
-1. **No clone-and-train path.** Corpus shards, tokenizer, anchor/gazetteer lookups all live on R2/Modal/`/mnt/playpen` with hardcoded paths. A fresh agent cannot reproduce v0.9.12 from the repo. → `REPRODUCIBILITY.md` + publish corpus snapshots beside model releases.
+1. **No clone-and-train path.** Corpus shards, tokenizer, anchor/gazetteer lookups all live on R2/Modal/`$MAILWOMAN_DATA_ROOT` with hardcoded paths. A fresh agent cannot reproduce v0.9.12 from the repo. → `REPRODUCIBILITY.md` + publish corpus snapshots beside model releases.
 2. **Gate scatter.** Each config carries its own pre-registered gate comment; execution is manual night-shift discipline, not CI. One `promotion-gate.sh` that parses the config's gate block and runs the listed scripts would turn lore into enforcement — and auto-append to the ledger on pass.
 3. **Curriculum state unlogged.** Anchor/gazetteer confidence ramps are step-aware; a resume mid-ramp silently changes training dynamics and nothing records which curriculum a checkpoint saw. Stamp curriculum state into the model card; assert on resume.
 4. **Overlay shard resolution fails silently.** Overlay manifests cross-reference base corpora by absolute path; the loader's glob fallback means a moved base corpus trains on the wrong data without erroring (the v0.7.1 trap, still open). Add strict mode + explicit `base_corpus_version` lineage.

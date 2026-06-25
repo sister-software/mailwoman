@@ -96,7 +96,7 @@ only when confident). The rule — not the threshold — is the M2 lever (+5.9pp
 ```bash
 yarn compile
 # Phase 1 — post-hoc score comparison on the frozen model:
-node scripts/coarse-placer/eval-openset.mjs --model /mnt/playpen/mailwoman-data/coarse-placer/model \
+node scripts/coarse-placer/eval-openset.mjs --model $MAILWOMAN_DATA_ROOT/coarse-placer/model \
   --out-md docs/articles/evals/2026-06-14-coarse-placer-m2-openset.md
 # Phase 3 — assembled-pipeline gate with the open-set rule (bundled int8 model):
 node --experimental-strip-types scripts/eval/coarse-placer-country-disambig.ts --openset --abstain-below 0.9 \

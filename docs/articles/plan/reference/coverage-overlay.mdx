@@ -43,16 +43,16 @@ The **global holes layer** is decoupled from the US rooftop pipeline (its own Du
 | `docs/src/components/LayerToggleControl/LayerToggleControl.tsx` | The toggle-group patterns (`coverage-opt`, `coverage-honest`).                                                      |
 | `scripts/build-address-point-shard.ts`                          | Per-state situs shard builder. `--oa-csv` mode reads OpenAddresses for states Overture omits (HI).                  |
 
-Source data (NOT in git): the per-state US rooftop shards `/mnt/playpen/mailwoman-data/address-points/address-points-us-<st>.db` (124.9M points) + `…/interpolation/interpolation-us-<st>.db` (TIGER segments); the global postcode signal `…/geonames/allCountries-postal.txt` (GeoNames postal, 121 countries); and the civilization backdrop `…/wof/admin-global-priority-importance.db` (WOF `spr` + `place_importance`, built by `scripts/build-importance.ts`).
+Source data (NOT in git): the per-state US rooftop shards `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<st>.db` (124.9M points) + `…/interpolation/interpolation-us-<st>.db` (TIGER segments); the global postcode signal `…/geonames/allCountries-postal.txt` (GeoNames postal, 121 countries); and the civilization backdrop `…/wof/admin-global-priority-importance.db` (WOF `spr` + `place_importance`, built by `scripts/build-importance.ts`).
 
 ## Runbook: rebuild + republish
 
 **0. Refresh the civilization backdrop** (only when WOF or the importance data changes) — `place_importance` keys the holes layer's salience. Build it onto a COPY of the canonical WOF DB so the gazetteer the resolver uses stays untouched:
 
 ```bash
-cp /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
-   /mnt/playpen/mailwoman-data/wof/admin-global-priority-importance.db
-npx tsx scripts/build-importance.ts --db /mnt/playpen/mailwoman-data/wof/admin-global-priority-importance.db
+cp $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db \
+   $MAILWOMAN_DATA_ROOT/wof/admin-global-priority-importance.db
+npx tsx scripts/build-importance.ts --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority-importance.db
 # Downloads Nominatim's wikimedia-importance.csv.gz (needs a browser User-Agent — it 403s curl's default).
 ```
 
@@ -60,7 +60,7 @@ npx tsx scripts/build-importance.ts --db /mnt/playpen/mailwoman-data/wof/admin-g
 
 ```bash
 mailwoman coverage build --states all --exclude-states AK \
-  --out /mnt/playpen/mailwoman-data/coverage/coverage-global-v5.pmtiles
+  --out $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.pmtiles
 # ~10–15 min; archive ≈ 1 GiB. The global holes layer is on by default (--no-postcode to skip it).
 # --keep-ndjson to re-tile without re-aggregating.
 ```
@@ -74,7 +74,7 @@ RCLONE_S3_ACCESS_KEY_ID="$RCLONE_S3_PUBLIC_ACCESS_KEY_ID" \
 RCLONE_S3_SECRET_ACCESS_KEY="$RCLONE_S3_PUBLIC_SECRET_ACCESS_KEY" \
 RCLONE_S3_ENDPOINT="$RCLONE_S3_PUBLIC_ENDPOINT" \
 RCLONE_S3_PROVIDER=Cloudflare RCLONE_S3_REGION=auto \
-mailwoman tiles publish --file /mnt/playpen/mailwoman-data/coverage/coverage-global-v5.pmtiles --tileset coverage-v5
+mailwoman tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.pmtiles --tileset coverage-v5
 ```
 
 **3. Verify:** `curl -s -o /dev/null -w '%{http_code}' https://tiles.sister.software/coverage-v5.json` → `200`.

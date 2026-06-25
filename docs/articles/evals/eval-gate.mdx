@@ -59,10 +59,10 @@ holds up.
 
    ```bash
    node --experimental-strip-types scripts/eval-morphology-fst.ts \
-     --model /mnt/playpen/.../model-v060.onnx \
-     --tokenizer /mnt/playpen/.../v0.6.0-a0/tokenizer.model \
+     --model $MAILWOMAN_DATA_ROOT/.../model-v060.onnx \
+     --tokenizer $MAILWOMAN_DATA_ROOT/.../v0.6.0-a0/tokenizer.model \
      --model-card neural-weights-en-us/model-card.json \
-     --admin-fst /mnt/playpen/.../fst-en-us.bin \
+     --admin-fst $MAILWOMAN_DATA_ROOT/.../fst-en-us.bin \
      --golden data/eval/golden/v0.1.2 \
      --name v0.6.0-default \
      --out-json /tmp/eval-v060.json

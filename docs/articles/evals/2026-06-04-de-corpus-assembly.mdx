@@ -23,7 +23,7 @@ In `v0.9.0-pilot-selfcond.yaml`, `synth-german` is weighted 6.0 of a ~34 source-
 
 ## Reproduce + deploy
 
-Built locally at `/mnt/playpen/mailwoman-data/corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/`. Validated: the data loader reads `country=DE` / `locale_id=2` rows from both splits. To deploy to the Modal volume the trainer reads:
+Built locally at `$MAILWOMAN_DATA_ROOT/corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/`. Validated: the data loader reads `country=DE` / `locale_id=2` rows from both splits. To deploy to the Modal volume the trainer reads:
 
 ```bash
 node scripts/build-german-shard.mjs --output /tmp/german-train.jsonl --count 200000 --seed 42

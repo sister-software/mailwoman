@@ -120,7 +120,7 @@ disagreement found Cause B.
 2. **Promotion of the region fix.** When you merge #441 and want it live: run the two build steps
    (`add-region-abbrevs.ts` + `backfill-ancestors-from-hierarchy.ts`) on the canonical
    `admin-global-priority.db`, rebuild FTS, rebuild the slim `wof-hot.db`, and re-publish to R2.
-   Or just promote the validated copy at `/mnt/playpen/mailwoman-data/wof/admin-abbrev-test.db`
+   Or just promote the validated copy at `$MAILWOMAN_DATA_ROOT/wof/admin-abbrev-test.db`
    (region+ancestry already applied) after a glance. Backup: `admin-global-priority.db.pre-abbrev-bak`
    was NOT created (swap blocked) — the canonical is untouched.
 3. The model-card.json lineage/md5 divergence (does the npm en-us bundle ship v0.9.3 like R2?).

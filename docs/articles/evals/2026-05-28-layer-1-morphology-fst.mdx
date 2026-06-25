@@ -105,27 +105,27 @@ will use.
 ```bash
 # Baseline: v0.6.1 + admin FST only
 node --experimental-strip-types scripts/eval-morphology-fst.ts \
-  --model /mnt/playpen/mailwoman-data/models/quantized/model-v061-step-100000-int8.onnx \
-  --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
+  --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v061-step-100000-int8.onnx \
+  --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model \
   --model-card neural-weights-en-us/model-card.json \
-  --admin-fst /mnt/playpen/mailwoman-data/wof/fst-per-locale/fst-en-us.bin \
+  --admin-fst $MAILWOMAN_DATA_ROOT/wof/fst-per-locale/fst-en-us.bin \
   --golden data/eval/golden/v0.1.2 \
   --no-morphology
 
 # With morphology FST (defaults)
 node --experimental-strip-types scripts/eval-morphology-fst.ts \
-  --model /mnt/playpen/mailwoman-data/models/quantized/model-v061-step-100000-int8.onnx \
-  --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
+  --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v061-step-100000-int8.onnx \
+  --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model \
   --model-card neural-weights-en-us/model-card.json \
-  --admin-fst /mnt/playpen/mailwoman-data/wof/fst-per-locale/fst-en-us.bin \
+  --admin-fst $MAILWOMAN_DATA_ROOT/wof/fst-per-locale/fst-en-us.bin \
   --golden data/eval/golden/v0.1.2
 
 # Tuned (low affix bias, strong dep_loc penalty)
 node --experimental-strip-types scripts/eval-morphology-fst.ts \
-  --model /mnt/playpen/mailwoman-data/models/quantized/model-v061-step-100000-int8.onnx \
-  --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
+  --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v061-step-100000-int8.onnx \
+  --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model \
   --model-card neural-weights-en-us/model-card.json \
-  --admin-fst /mnt/playpen/mailwoman-data/wof/fst-per-locale/fst-en-us.bin \
+  --admin-fst $MAILWOMAN_DATA_ROOT/wof/fst-per-locale/fst-en-us.bin \
   --golden data/eval/golden/v0.1.2 \
   --max-affix-bias 1.0 --max-neighbour-street-bias 1.0 --dep-locality-penalty 6.0
 ```

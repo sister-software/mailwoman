@@ -72,5 +72,5 @@ sqlite3 /tmp/empty-situs.db "CREATE TABLE address_point (street_norm TEXT NOT NU
 node --experimental-strip-types scripts/eval/conformal-calibrate.ts \
   --holdout /tmp/ood-truth.jsonl \
   --address-points /tmp/empty-situs.db \
-  --interpolation /mnt/playpen/mailwoman-data/interpolation/interpolation-us-tx.db
+  --interpolation $MAILWOMAN_DATA_ROOT/interpolation/interpolation-us-tx.db
 ```

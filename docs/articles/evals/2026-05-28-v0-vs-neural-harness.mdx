@@ -189,10 +189,10 @@ falsehoods catalog is the right capability-boundary regression suite for any fut
 ```bash
 node --experimental-strip-types scripts/harness-v0-neural.ts \
   --tests mailwoman/test \
-  --model /mnt/playpen/mailwoman-data/models/quantized/model-v060-step-100000-int8.onnx \
-  --tokenizer /mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model \
+  --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v060-step-100000-int8.onnx \
+  --tokenizer $MAILWOMAN_DATA_ROOT/models/tokenizer/v0.6.0-a0/tokenizer.model \
   --model-card neural-weights-en-us/model-card.json \
-  --admin-fst /mnt/playpen/mailwoman-data/wof/fst-per-locale/fst-en-us.bin \
+  --admin-fst $MAILWOMAN_DATA_ROOT/wof/fst-per-locale/fst-en-us.bin \
   --out-json /tmp/harness-full.json \
   > /tmp/harness-full-report.md
 ```
