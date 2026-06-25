@@ -123,7 +123,12 @@ async function queryNominatim(raw: string, cc: string): Promise<Coord> {
 async function loadPelias(): Promise<((q: string, country: string) => Promise<Coord>) | null> {
 	if (!process.env.GEOCODE_EARTH_API_KEY) return null
 	try {
-		const mod = await import("../diag-geocode-earth.ts")
+		// `diag-geocode-earth.ts` is the operator's local, git-excluded geocode.earth probe — present
+		// only when GEOCODE_EARTH_API_KEY is set, absent in a clean checkout / CI. Indirect the
+		// specifier through a variable so the type-checker doesn't resolve a file that isn't there
+		// (the result is cast structurally below regardless).
+		const earthDiagModule = "../diag-geocode-earth.ts"
+		const mod = await import(earthDiagModule)
 		const fetchGeocodeData = (
 			mod as {
 				fetchGeocodeData?: (
