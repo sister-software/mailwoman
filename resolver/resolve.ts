@@ -228,8 +228,8 @@ function applyInterpolation(roots: AddressNode[], lookup: InterpolationLookup, r
  * NOTHING (the #685 brake — never disturb a working coordinate). Enumerates raw-token spans, exact-
  * matches the same-country gazetteer (longest-wins + postcode-consistency gate; see
  * `span-rescore.ts`), and on a hit INJECTS a resolved `locality` node decorated exactly like a
- * normally-resolved one. Byte-stable when `opts.spanRescore` is unset. Async (it queries the
- * backend), so it's awaited.
+ * normally-resolved one. Default-ON (#370, promoted 2026-06-25); byte-stable opt-out via
+ * `opts.spanRescore: false`. Async (it queries the backend), so it's awaited.
  */
 async function applySpanRescore(
 	roots: AddressNode[],
@@ -238,11 +238,18 @@ async function applySpanRescore(
 	opts: ResolveOpts
 ): Promise<void> {
 	if (hasResolvedPlace(roots)) return // already resolved — never second-guess a working coordinate
-	const hit = await findRescoreCandidate(raw, roots, backend, {
-		country: opts.defaultCountry,
-		postcode: firstPostcodeValue(roots),
-		gateKm: opts.spanRescoreGateKm,
-	})
+	// Default-ON since 2026-06-25, so this runs on every unresolved tree — a backend hiccup here must
+	// degrade to no-rescore, never crash the resolve (the same fall-through the main walk gives).
+	let hit
+	try {
+		hit = await findRescoreCandidate(raw, roots, backend, {
+			country: opts.defaultCountry,
+			postcode: firstPostcodeValue(roots),
+			gateKm: opts.spanRescoreGateKm,
+		})
+	} catch {
+		return
+	}
 	if (!hit) return
 	const node: AddressNode = {
 		tag: "locality",
@@ -403,9 +410,11 @@ class WofResolver implements Resolver {
 		if (opts.interpolation) {
 			applyInterpolation(newRoots, opts.interpolation, opts.interpolationRadiusCalibration)
 		}
-		// Span-rescore tier (#370): opt-in, last (so it only fires when every other tier left the tree
-		// unresolved). Byte-stable when opts.spanRescore is unset.
-		if (opts.spanRescore) {
+		// Span-rescore tier (#370): default-ON (promoted 2026-06-25 — same-harness EU+AU +1pp @25km,
+		// zero regressions: CZ 90→95, AT 70→73, PL 88→90, IT/PT/FR/AU flat, no-result 4→3%; fires last
+		// so it only runs when every other tier left the tree unresolved, hence inert on the well-resolved
+		// US path). Explicit opt-OUT via `spanRescore: false`; byte-stable then.
+		if (opts.spanRescore !== false) {
 			await applySpanRescore(newRoots, tree.raw, this.#backend, opts)
 		}
 		return { raw: tree.raw, roots: newRoots }

@@ -261,7 +261,9 @@ describe("resolveTree", () => {
 		const resolver = createWofResolver(backend)
 
 		const input = tree("Lyon", [node("locality", "Lyon", 0, 4, [], "neural", "v1")])
-		const result = await resolver.resolveTree(input, { hardCountry: "FI" })
+		// spanRescore:false isolates the #194 contract — rescore is default-on and would add a second
+		// (recovery) lookup on the unresolved tree, which this test is not about.
+		const result = await resolver.resolveTree(input, { hardCountry: "FI", spanRescore: false })
 
 		// Unresolved — the classifier attribution survives, no coordinate, no global fallback to the FR Lyon.
 		expect(result.roots[0]?.placeId).toBeUndefined()
@@ -304,7 +306,9 @@ describe("resolveTree", () => {
 		const resolver = createWofResolver(backend)
 
 		const input = tree("Texas", [node("region", "Texas", 0, 5)])
-		await resolver.resolveTree(input, { placetypeMap: { country: "country" } }) // omits region
+		// spanRescore:false isolates the placetypeMap behavior — rescore is default-on and would issue
+		// a recovery lookup on the (now unresolved) tree.
+		await resolver.resolveTree(input, { placetypeMap: { country: "country" }, spanRescore: false }) // omits region
 
 		// With region dropped, no backend call should fire.
 		expect(backend.calls).toHaveLength(0)
