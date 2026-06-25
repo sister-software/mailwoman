@@ -11,7 +11,7 @@
 			"@mailwoman/mailwoman/sdk/*": ["./sdk/*"]
 		}
 	},
-	"exclude": ["./out/**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		// ---
 		{ "path": "../core" },
