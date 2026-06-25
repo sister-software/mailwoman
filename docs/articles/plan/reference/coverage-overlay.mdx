@@ -8,11 +8,14 @@
 
 ## What it is
 
-A demo-map overlay that shades each area by **how much address-point data we actually hold** — covered → clear (basemap shows through), empty → gray fog. It answers "where do we need more data," and reveals the "looks covered until you zoom in, then the gaps go gray" holes.
+A demo-map overlay that answers **"where do we need data"** at a glance — covered → clear (basemap shows through), uncovered → gray fog. Two layers in one tileset:
 
-- **Live:** `https://tiles.sister.software/coverage-us-v4.json` (XYZ vector tiles via the tile worker).
+1. **US rooftop fine map** — shades each US area by address-point density (street/block detail). The original overlay; reveals the "looks covered until you zoom in, then the gaps go gray" holes.
+2. **Global "work to do" holes** (`fog = salience·(1 − coverage)`) — populated places worldwide that we **can't geocode yet** show as gray-fog holes, weighted by importance (big uncovered cities are darkest). Postcode/rooftop coverage **clears** the hole, so the holes land where civilization exists but our data doesn't — Africa, the Middle East, C/S Asia, South America, and gaps like UK/Ireland (Royal Mail isn't in open GeoNames).
+
+- **Live:** `https://tiles.sister.software/coverage-v5.json` (XYZ vector tiles via the tile worker).
 - **In the demo:** the **Layers** panel (top-right) has two **default-off** toggle groups — _Coverage · optimistic fog_ and _Coverage · honest fog_. The user picks one.
-- **Coverage today:** 48 states + DC + VI (Overture) + HI (OpenAddresses, rooftop) + NH (street-level only). **AK is excluded** (antimeridian hex-wrap). National res-9 archive ≈ 848 MiB, 58.85M features.
+- **Coverage today:** US rooftop = 48 states + DC + VI (Overture) + HI (OpenAddresses) + NH (street-level), **AK excluded** (antimeridian). Global postcode coverage = GeoNames `allCountries` postal (121 countries) clearing the holes; civilization backdrop = WOF settlement places weighted by `place_importance`.
 
 ## Architecture (read this before touching anything)
 
@@ -23,7 +26,9 @@ It is an **H3 hexbin** tileset. Each cell carries **two baked fog values** in `[
 
 The demo's two fill layers (`coverage-opt-fog`, `coverage-honest-fog`) just point `fill-opacity` at one prop or the other — **no rebake needed to switch readings**. Each H3 resolution is baked in its own non-overlapping zoom band; the finest is baked at a single tile-max zoom and MapLibre **overzooms** above it (hexes are identical geometry at every zoom).
 
-**Serving is XYZ via the tile worker — NOT client-side PMTiles.** The `.pmtiles` archive lives at `nexus-assets/tiles/coverage-us-v4.pmtiles` and the `tile-worker/` Cloudflare Worker serves it as `tiles.sister.software/coverage-us-v4/{z}/{x}/{y}.mvt` (exactly like `basemap-v4`). A previous iteration served the PMTiles directly through the `pmtiles://` protocol — **that was wrong and was removed** (`524f78a8`). Don't bring it back.
+**Serving is XYZ via the tile worker — NOT client-side PMTiles.** The `.pmtiles` archive lives at `nexus-assets/tiles/coverage-v5.pmtiles` and the `tile-worker/` Cloudflare Worker serves it as `tiles.sister.software/coverage-v5/{z}/{x}/{y}.mvt` (exactly like `basemap-v4`). A previous iteration served the PMTiles directly through the `pmtiles://` protocol — **that was wrong and was removed** (`524f78a8`). Don't bring it back.
+
+The **global holes layer** is decoupled from the US rooftop pipeline (its own DuckDB stage, US-excluded) but rides the SAME `coverage` source-layer + `fog`/`fog_opt` props, so the demo's two fill layers render it with zero wiring changes. It emits res-domain hexes at `[onset…max]` + a res-4 low-zoom rollup; the US tiers are untouched.
 
 ## Code map
 
@@ -32,21 +37,32 @@ The demo's two fill layers (`coverage-opt-fog`, `coverage-honest-fog`) just poin
 | `mailwoman/coverage-core.ts`                                    | The build pipeline (React-free): DuckDB H3 aggregation → NDJSON → `tippecanoe` → PMTiles. The fog model lives here. |
 | `mailwoman/commands/coverage/build.tsx`                         | `mailwoman coverage build` — thin Ink wrapper over `coverage-core`.                                                 |
 | `mailwoman/commands/tiles/publish.tsx`                          | `mailwoman tiles publish` — rclone upload of a PMTiles to an R2 bucket (multipart).                                 |
-| `cartographer/coverage/index.ts`                                | `CoverageTileSetID` (= `"coverage-us-v4"`), the two fog fill layers, fog color/opacity, `createCoverageSource`.     |
+| `cartographer/coverage/index.ts`                                | `CoverageTileSetID` (= `"coverage-v5"`), the two fog fill layers, fog color/opacity, `createCoverageSource`.        |
+| `scripts/build-importance.ts`                                   | Builds `place_importance` (Wikipedia importance + population fallback) — the holes-layer salience source.           |
 | `docs/src/pages/demo/index.tsx`                                 | Demo wiring — registers the coverage source + adds the default-off layers on map load.                              |
 | `docs/src/components/LayerToggleControl/LayerToggleControl.tsx` | The toggle-group patterns (`coverage-opt`, `coverage-honest`).                                                      |
 | `scripts/build-address-point-shard.ts`                          | Per-state situs shard builder. `--oa-csv` mode reads OpenAddresses for states Overture omits (HI).                  |
 
-Source data (per-state shards, NOT in git): `/mnt/playpen/mailwoman-data/address-points/address-points-us-<st>.db` (124.9M US points) + `…/interpolation/interpolation-us-<st>.db` (TIGER street segments).
+Source data (NOT in git): the per-state US rooftop shards `/mnt/playpen/mailwoman-data/address-points/address-points-us-<st>.db` (124.9M points) + `…/interpolation/interpolation-us-<st>.db` (TIGER segments); the global postcode signal `…/geonames/allCountries-postal.txt` (GeoNames postal, 121 countries); and the civilization backdrop `…/wof/admin-global-priority-importance.db` (WOF `spr` + `place_importance`, built by `scripts/build-importance.ts`).
 
 ## Runbook: rebuild + republish
+
+**0. Refresh the civilization backdrop** (only when WOF or the importance data changes) — `place_importance` keys the holes layer's salience. Build it onto a COPY of the canonical WOF DB so the gazetteer the resolver uses stays untouched:
+
+```bash
+cp /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
+   /mnt/playpen/mailwoman-data/wof/admin-global-priority-importance.db
+npx tsx scripts/build-importance.ts --db /mnt/playpen/mailwoman-data/wof/admin-global-priority-importance.db
+# Downloads Nominatim's wikimedia-importance.csv.gz (needs a browser User-Agent — it 403s curl's default).
+```
 
 **1. Build the tileset** (maintainer-only — needs the local shards + `tippecanoe` on PATH + the `@duckdb/node-api` dev dep):
 
 ```bash
 mailwoman coverage build --states all --exclude-states AK \
-  --out /mnt/playpen/mailwoman-data/coverage/coverage-us.pmtiles
-# ~minutes; res-9 national ≈ 848 MiB. --keep-ndjson to re-tile without re-aggregating.
+  --out /mnt/playpen/mailwoman-data/coverage/coverage-global-v5.pmtiles
+# ~10–15 min; archive ≈ 1 GiB. The global holes layer is on by default (--no-postcode to skip it).
+# --keep-ndjson to re-tile without re-aggregating.
 ```
 
 **2. Publish to the tile-worker bucket** (`nexus-assets`):
@@ -58,12 +74,12 @@ RCLONE_S3_ACCESS_KEY_ID="$RCLONE_S3_PUBLIC_ACCESS_KEY_ID" \
 RCLONE_S3_SECRET_ACCESS_KEY="$RCLONE_S3_PUBLIC_SECRET_ACCESS_KEY" \
 RCLONE_S3_ENDPOINT="$RCLONE_S3_PUBLIC_ENDPOINT" \
 RCLONE_S3_PROVIDER=Cloudflare RCLONE_S3_REGION=auto \
-mailwoman tiles publish --file /mnt/playpen/mailwoman-data/coverage/coverage-us.pmtiles --tileset coverage-us-v4
+mailwoman tiles publish --file /mnt/playpen/mailwoman-data/coverage/coverage-global-v5.pmtiles --tileset coverage-v5
 ```
 
-**3. Verify:** `curl -s -o /dev/null -w '%{http_code}' https://tiles.sister.software/coverage-us-v4.json` → `200`.
+**3. Verify:** `curl -s -o /dev/null -w '%{http_code}' https://tiles.sister.software/coverage-v5.json` → `200`.
 
-**Re-versioning:** the object is at a versioned path (`coverage-us-v4`). To ship a fresh bake, bump `CoverageTileSetID` in `cartographer/coverage/index.ts` to `coverage-us-v5`, upload to `tiles/coverage-us-v5.pmtiles`, and the demo follows automatically. (Versioning avoids R2 cache-staleness; same pattern as `basemap-v4`.)
+**Re-versioning:** the object is at a versioned path (`coverage-v5`). To ship a fresh bake, bump `CoverageTileSetID` in `cartographer/coverage/index.ts` to `coverage-v6`, upload to `tiles/coverage-v6.pmtiles`, and the demo follows automatically. (Versioning avoids R2 cache-staleness; same pattern as `basemap-v4`.)
 
 ### Credential + upload gotchas (this cost a whole session — read it)
 
@@ -93,6 +109,19 @@ To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s
 | `--optimistic-gamma`         | 2.0                      | The `fog_opt = fog ** gamma` exponent.                                                          |
 | `--max-zoom`                 | 12                       | Highest baked zoom; overzoom above.                                                             |
 
+**Global holes layer** (`fog = salience·(1 − coverage)`, res-domain hexes, US-excluded):
+
+| Flag                  | Default                                | Effect                                                                                            |
+| --------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `--no-postcode`       | (on)                                   | Disable the global holes layer entirely — US rooftop fine map only.                               |
+| `--geonames-postal`   | `…/geonames/allCountries-postal.txt`   | The postcode COVERAGE signal — a postcode present in a domain cell clears its hole.                |
+| `--wof-db`            | `…/wof/admin-global-priority-importance.db` | The civilization backdrop — `spr` + `place_importance` (settlement salience).                 |
+| `--postcode-ceiling`  | 0.85                                   | How much a postcode cell clears the hole (≤ 1; rooftop is the full 1).                            |
+| `--salience-floor`    | 0.15                                   | Min place importance to flag as a hole — the noise floor (raise to keep only the notable holes).  |
+| `--postcode-exclude`  | `US`                                   | Countries the holes layer skips (handled by the rooftop fine map).                                |
+
+The salience is `sqrt(importance)` — lifts modest uncovered towns to a visible gray while keeping big cities darkest. Holes below 0.05 residual fog (covered or trivial) are dropped, so the layer is just the holes (~290 K res-6 cells); covered + empty stay clear.
+
 **National size by `--fine-res`** (res-9 d6 measured): res-9 ≈ **848 MiB**, res-8 ≈ 364 MiB, res-7 ≈ 55 MiB. Only res-7 fits wrangler's 300 MiB cap — irrelevant now that rclone-multipart works, so we ship the full res-9.
 
 ## Gotchas (learned the hard way)
@@ -100,11 +129,12 @@ To add an Overture-gap state from OpenAddresses: download the OA conformed CSV(s
 - **DuckDB multi-ATTACH mis-binds.** `ATTACH`ing N sqlite DBs and `UNION ALL`-ing structurally-identical _aggregating_ subqueries (`h3_latlng_to_cell(…) … GROUP BY 1` per arm) silently binds every arm to the **first** attached DB (a 49-state build reported 3× CA's points in CA's cells). **Fix:** `UNION ALL` the **raw** columns, aggregate **once** in the outer query. (Already done in `coverage-core.ts` — don't undo it.)
 - **`.gitignore` bare `coverage` rule** (the vitest report dir) matches any dir named `coverage` at any depth — it was silently swallowing `mailwoman/commands/coverage/` and `cartographer/coverage/`. Scoped `!`-negations are in `.gitignore`; keep them or the command + module vanish from git/npm-publish.
 - **Don't serve PMTiles client-side.** XYZ via the tile worker only.
+- **The holes layer is res-domain-coarse on purpose.** Postcode/importance is area-scale; it does NOT subdivide to res-9 (that would multiply the archive ~343×). EU/global reads at ~3.2 km granularity, overzoomed above z12 — honest, since a postcode IS coarse. Don't "finish" it to street level.
 
 ## Follow-ups / open work
 
-1. **NH rooftop points** via NH GRANIT (state address portal) — separate fetch + ingest. NH is street-level only today.
-2. **AK** — needs antimeridian boundary splitting in `coverage-core.ts` before it can be included.
-3. **International coverage** — currently US-only. Overture has intl addresses (FR/DE/etc.); the build is US-shard-shaped, so this is real work.
-4. **Re-bake cadence / versioning** — bump to `coverage-us-v5` on the next data refresh.
-5. **Browser perf** — the 848 MiB / 58M-feature archive serves per-tile (fine in practice), but worth watching dense-metro z12 tile sizes if it feels slow.
+1. **Close real holes with rooftop/postcode data.** The map now NAMES the gaps — biggest wins: UK/Ireland (Royal Mail isn't in open GeoNames; needs Code-Point Open or OA), and the Overture-EU address parquets already on disk (`…/overture/<rel>/addresses-<cc>.parquet`) → real EU **rooftop** shards (would upgrade EU from postcode-coarse to street-level + clear more holes).
+2. **NH rooftop points** via NH GRANIT — NH is street-level only today.
+3. **AK** — the antimeridian guard now DROPS wrapped hexes (so AK partial-renders if its shard is included); a proper fix splits the boundary at ±180 in `coverage-core.ts` instead of dropping.
+4. **Importance refresh cadence** — `place_importance` is built onto a WOF-DB copy; re-run `build-importance` when WOF or the Nominatim importance dump refreshes, then re-bake.
+5. **Browser perf** — the ~1 GiB / 59M-feature archive serves per-tile (fine in practice), but worth watching dense-metro z12 tile sizes if it feels slow.

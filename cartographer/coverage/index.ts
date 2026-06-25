@@ -3,10 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The "fog of war" address-COVERAGE overlay. An H3 hexbin tileset (built by
- *   `scripts/build-coverage-tiles.ts`) shades each area by how much address-point data we hold:
- *   covered → clear (the basemap shows through), empty → opaque gray fog. Answers "where do we need
- *   more data" at a glance, and reveals the "looks covered until you zoom in, then it goes gray" gaps.
+ *   The "fog of war" address-COVERAGE overlay. An H3 hexbin tileset (built by `mailwoman coverage
+ *   build`) shading "where do we need data" at a glance. Two layers in one tileset: the US rooftop
+ *   fine map (address-point density, street/block detail) and a GLOBAL "work to do" layer — populated
+ *   places (WOF, importance-weighted) we can't geocode yet show as gray-fog holes, and postcode/rooftop
+ *   coverage clears them. Covered → clear (basemap shows through), uncovered civilization → gray fog.
  *
  *   Each cell carries TWO baked fog values in [0,1] (0 = covered, 1 = empty), so the same tiles drive
  *   either reading without a rebuild:
@@ -16,8 +17,8 @@
  *   We expose each as its OWN default-off fill layer (`coverage-opt-fog`, `coverage-honest-fog`) so the
  *   demo's LayerToggleControl gives each its own checkbox — pick the reading you want, no extra UI.
  *
- *   Served as XYZ vector tiles by the tile worker from `nexus-assets/tiles/coverage-us-v4.pmtiles` (same
- *   as `basemap-v4`); the consumer passes its TileJSON URL (`tiles.sister.software/coverage-us-v4.json`)
+ *   Served as XYZ vector tiles by the tile worker from `nexus-assets/tiles/coverage-v5.pmtiles` (same
+ *   as `basemap-v4`); the consumer passes its TileJSON URL (`tiles.sister.software/coverage-v5.json`)
  *   to `createCoverageSource`.
  */
 
@@ -27,7 +28,7 @@ import type {
 } from "@maplibre/maplibre-gl-style-spec"
 import { TileSetSourceID } from "../styles/sources.js"
 
-export const CoverageTileSetID = TileSetSourceID("coverage-us-v4")
+export const CoverageTileSetID = TileSetSourceID("coverage-v5")
 
 /**
  * The single source-layer the coverage PMTiles ships (see `build-coverage-tiles.ts` → tippecanoe `-l`).
@@ -56,7 +57,7 @@ export const CoverageLayerID = {
 
 /**
  * Build the coverage source spec from the tile worker's TileJSON endpoint
- * (`https://tiles.sister.software/coverage-us-v4.json`).
+ * (`https://tiles.sister.software/coverage-v5.json`).
  */
 export function createCoverageSource(url: string): VectorSourceSpecification {
 	return { type: "vector", url }
