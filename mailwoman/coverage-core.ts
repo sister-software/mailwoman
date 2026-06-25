@@ -58,6 +58,25 @@ export interface CoverageBuildOptions {
 	interpWeight: number
 	/** Optimistic-mode exponent for `fog_opt = fog ** gamma`. */
 	optimisticGamma: number
+	/**
+	 * GeoNames postal file (12-col tab-separated) — the GLOBAL postcode COVERAGE signal that clears the
+	 * "where do we need data" holes. Null to skip. A postcode is area-scale, so centroids bin at the
+	 * domain resolution and a domain cell holding ≥1 postcode reads as postcode-resolvable (covered).
+	 */
+	geonamesPostalFile: string | null
+	/**
+	 * WOF SQLite DB (the admin gazetteer) holding `spr` (place coords + placetype) + `place_population`
+	 * / `place_importance` — the CIVILIZATION/salience backdrop. Settlement places, weighted by salience,
+	 * mark "where civilization is": a salient place we DON'T cover is a gray hole = work to do. Null to
+	 * skip the global holes layer (US rooftop fine map is independent of it).
+	 */
+	wofDb: string | null
+	/** Coverage a postcode cell contributes (≤ 1) — how much it clears the hole (rooftop is the full 1). */
+	postcodeCeiling: number
+	/** Minimum place importance (∈ [0,1]) to count as civilization worth flagging — the noise floor. */
+	salienceFloor: number
+	/** Country codes the global holes/postcode layer skips (US is handled by the rooftop fine map). */
+	postcodeExcludeCountries: string[]
 	/** Highest zoom baked; MapLibre overzooms above it. */
 	tileMaxZoom: number
 	/** Output `.pmtiles` path. */
@@ -77,6 +96,7 @@ export interface CoverageBuildResult {
 	domainCells: number
 	withPoints: number
 	streetOnly: number
+	postcodeCells: number
 	features: number
 	pmtilesBytes: number
 }
@@ -128,6 +148,26 @@ function buildBands(allRes: number[], tileMaxZoom: number): Map<number, [number,
 	)
 }
 
+/**
+ * True if a GeoJSON polygon's outer ring spans >180° of longitude — the antimeridian-wrap artifact.
+ * `h3_cell_to_boundary_wkt` emits UNWRAPPED lon for cells straddling ±180, smearing a polygon across
+ * the whole map; a normal hex spans a fraction of a degree, so a >180° span is unambiguously a wrap.
+ * Cheaper than round-tripping through the spatial extension; covers AK/RU/FJ/NZ-Chathams.
+ */
+function antimeridianWrapped(geojson: string): boolean {
+	let min = Infinity
+	let max = -Infinity
+	// Each coordinate pair is `[lon,lat]`; capture the lon (first number after a `[`). `[[[` won't
+	// match (no digit follows the inner `[`), so only real vertices are scanned.
+	const re = /\[\s*(-?\d+(?:\.\d+)?)\s*,/g
+	for (let m = re.exec(geojson); m; m = re.exec(geojson)) {
+		const lon = Number(m[1])
+		if (lon < min) min = lon
+		if (lon > max) max = lon
+	}
+	return max - min > 180
+}
+
 export async function buildCoverageTiles(
 	opts: CoverageBuildOptions,
 	onProgress: CoverageProgress = () => {}
@@ -158,6 +198,8 @@ export async function buildCoverageTiles(
 		await duck.run(`ATTACH '${s.file}' AS st${i} (TYPE sqlite, READ_ONLY)`)
 		if (s.interp) await duck.run(`ATTACH '${s.interp}' AS ip${i} (TYPE sqlite, READ_ONLY)`)
 	}
+	// ATTACH the WOF gazetteer read-only for the global civilization/salience backdrop (if requested).
+	if (opts.wofDb) await duck.run(`ATTACH '${opts.wofDb}' AS wof (TYPE sqlite, READ_ONLY)`)
 
 	// data_pt: res-FINE address-point counts. UNION ALL the RAW (lat, lon) across states and bin + count
 	// ONCE in the outer query. Do NOT pre-aggregate per UNION arm: DuckDB mis-binds structurally-identical
@@ -214,6 +256,7 @@ export async function buildCoverageTiles(
 	const domainCells = Number(summary.domain)
 	const withPoints = Number(summary.pt_cov)
 	const streetOnly = Number(summary.seg_only)
+	let postcodeCells = 0
 	onProgress(
 		"domain",
 		`${domainCells.toLocaleString()} cells · ${withPoints.toLocaleString()} with points · ${streetOnly.toLocaleString()} street-only`
@@ -224,20 +267,22 @@ export async function buildCoverageTiles(
 	const ndjsonPath = opts.out.replace(/\.pmtiles$/, "") + ".ndjson"
 	const sink = createWriteStream(ndjsonPath)
 	let featureCount = 0
-	const emitResolution = async (res: number, sql: string): Promise<void> => {
-		const [minzoom, maxzoom] = bands.get(res) ?? [0, opts.tileMaxZoom]
+	const emitResolution = async (res: number, sql: string, bandOverride?: [number, number]): Promise<void> => {
+		const [minzoom, maxzoom] = bandOverride ?? bands.get(res) ?? [0, opts.tileMaxZoom]
 		const prefix = `{"type":"Feature","tippecanoe":{"layer":"coverage","minzoom":${minzoom},"maxzoom":${maxzoom}},"properties":`
 		const stream = await duck.stream(sql)
 		const cols = stream.columnNames()
 		for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
 			for (const r of chunk.getRowObjects(cols) as Record<string, unknown>[]) {
 				if (r.geom == null) continue
+				if (antimeridianWrapped(String(r.geom))) continue
 				const fog = Number(r.fog)
 				const props = {
 					fog: Math.round(fog * 1000) / 1000,
 					fog_opt: Math.round(fog ** opts.optimisticGamma * 1000) / 1000,
 					pt: Number(r.pt ?? 0),
 					seg: Number(r.seg ?? 0),
+					pc: Number(r.pc ?? 0),
 					res,
 				}
 				sink.write(`${prefix}${JSON.stringify(props)},"geometry":${String(r.geom)}}\n`)
@@ -260,6 +305,84 @@ export async function buildCoverageTiles(
 			 SELECT pt, seg, 1.0 - cov AS fog, ST_AsGeoJSON(ST_GeomFromText(h3_cell_to_boundary_wkt(cellR))) AS geom FROM agg`
 		)
 	}
+
+	// --- Global "where do we need data" holes layer (civilization − coverage) ---
+	// The map's job worldwide: make it obvious where human civilization is AND whether we cover it. A
+	// SALIENT place we don't cover is a gray hole = work to do. We model it as fog = salience·(1−cov):
+	//   • salience ∈ [0,1] — WOF settlement places weighted by population/importance (a 1-ring halo), so
+	//     a big uncovered city is a dark hole, a hamlet a faint one, the empty steppe nothing.
+	//   • cov ∈ [0,1] — postcode presence (GeoNames) clears the hole (a postcode = we can geocode here).
+	//     US is excluded — the rooftop fine map above already covers it at street level.
+	// Only cells with residual fog (uncovered salient places) are emitted, so the layer is just the
+	// HOLES — covered + empty stay clear (basemap). Same `coverage` layer + fog props as the US tier, so
+	// the demo renders it unchanged, at res-domainRes [onset…max] + a res-4 low-zoom rollup.
+	if (opts.geonamesPostalFile && opts.wofDb) {
+		const exclude = opts.postcodeExcludeCountries.map((c) => `'${c.toUpperCase()}'`).join(", ") || "''"
+		onProgress("holes", "postcode coverage + civilization salience → holes…")
+		// pc_cov: postcode COVERAGE per domain cell — flat presence (postcode ∪ 1-ring), clears the hole.
+		await duck.run(`
+			CREATE TEMP TABLE pc_cov AS
+			WITH data_pc AS (
+				SELECT h3_latlng_to_cell(lat, lon, ${opts.domainRes}) AS cell
+				FROM (
+					SELECT column00 AS cc, TRY_CAST(column09 AS DOUBLE) AS lat, TRY_CAST(column10 AS DOUBLE) AS lon
+					FROM read_csv('${opts.geonamesPostalFile}', delim='\t', header=false, quote='', ignore_errors=true, all_varchar=true)
+				)
+				WHERE lat IS NOT NULL AND lon IS NOT NULL AND lat BETWEEN -90 AND 90 AND lon BETWEEN -180 AND 180
+					AND cc NOT IN (${exclude})
+			)
+			SELECT DISTINCT UNNEST(h3_grid_disk(cell, 1)) AS cell, ${opts.postcodeCeiling}::DOUBLE AS cov FROM data_pc
+		`)
+		// sal: CIVILIZATION salience per domain cell — WOF settlement places weighted by IMPORTANCE
+		// (Wikipedia notability via place_importance, with a population fallback baked in by
+		// build-importance). importance is already ∈ [0,1] with major cities ≈ 0.85–0.99, so it IS the
+		// salience: a big uncovered city → dark hole, a hamlet → faint. Only places carrying a signal
+		// count as "civilization" (the unknown long tail is dropped, not flagged as work-to-do). Each
+		// place spreads to a 1-ring halo; a cell's salience is the strongest place touching it.
+		await duck.run(`
+			CREATE TEMP TABLE sal AS
+			WITH places AS (
+				-- sqrt lifts the mid-range so even modest uncovered towns read as a visible hole while
+				-- keeping the importance ORDER (big cities stay darkest) — "obvious work to do".
+				SELECT s.latitude AS lat, s.longitude AS lon, sqrt(imp.importance) AS sal
+				FROM wof.spr s JOIN wof.place_importance imp ON imp.id = s.id
+				WHERE s.placetype IN ('locality','localadmin','borough','neighbourhood','macrohood','microhood')
+					AND s.is_current = 1 AND s.country NOT IN (${exclude})
+					AND s.latitude BETWEEN -90 AND 90 AND s.longitude BETWEEN -180 AND 180
+					AND imp.importance >= ${opts.salienceFloor}
+			),
+			spread AS (SELECT UNNEST(h3_grid_disk(h3_latlng_to_cell(lat, lon, ${opts.domainRes}), 1)) AS cell, sal FROM places)
+			SELECT cell, max(sal) AS salience FROM spread GROUP BY cell
+		`)
+		// holes: fog = salience·(1−cov). Keep only residual fog > 0.05 (the actual holes); covered +
+		// empty cells are dropped → clear basemap.
+		await duck.run(`
+			CREATE TEMP TABLE pc_cells AS
+			SELECT s.cell AS cell, 0::BIGINT AS pc,
+			       s.salience * (1.0 - COALESCE(c.cov, 0)) AS fog
+			FROM sal s LEFT JOIN pc_cov c USING (cell)
+			WHERE s.salience * (1.0 - COALESCE(c.cov, 0)) > 0.05
+		`)
+		postcodeCells = Number(
+			(await duck.runAndReadAll("SELECT count(*) AS n FROM pc_cells")).getRowObjects()[0]!.n as bigint
+		)
+		const pcOnset = RES_ONSET_ZOOM[opts.domainRes] ?? 5
+		onProgress("holes", `${postcodeCells.toLocaleString()} uncovered-civilization holes → res ${opts.domainRes}`)
+		// res-domainRes holes, visible from their onset zoom up through the tile max (overzoomed above).
+		await emitResolution(
+			opts.domainRes,
+			`SELECT pc, fog, ST_AsGeoJSON(ST_GeomFromText(h3_cell_to_boundary_wkt(cell))) AS geom FROM pc_cells`,
+			[pcOnset, opts.tileMaxZoom]
+		)
+		// res-4 low-zoom rollup (mean child fog) for the world/continent view.
+		await emitResolution(
+			4,
+			`WITH agg AS (SELECT h3_cell_to_parent(cell, 4) AS cellR, avg(fog) AS fog FROM pc_cells GROUP BY 1)
+			 SELECT 0::BIGINT AS pc, fog, ST_AsGeoJSON(ST_GeomFromText(h3_cell_to_boundary_wkt(cellR))) AS geom FROM agg`,
+			[0, pcOnset - 1]
+		)
+	}
+
 	await new Promise<void>((resolve, reject) => sink.end((err?: Error | null) => (err ? reject(err) : resolve())))
 
 	// --- tippecanoe → PMTiles ---
@@ -272,7 +395,7 @@ export async function buildCoverageTiles(
 		"-n",
 		"Mailwoman address coverage",
 		"-A",
-		"© Sister Software · Overture / OpenAddresses / TIGER",
+		"© Sister Software · Overture / OpenAddresses / TIGER / GeoNames",
 		"--minimum-zoom",
 		"0",
 		"--maximum-zoom",
@@ -302,6 +425,7 @@ export async function buildCoverageTiles(
 		domainCells,
 		withPoints,
 		streetOnly,
+		postcodeCells,
 		features: featureCount,
 		pmtilesBytes,
 	}
