@@ -399,6 +399,34 @@ def _project_anchor_chars_to_pieces(
     return feats, confs
 
 
+def realign_anchor_to_pieces_shaped(
+    raw: str,
+    pieces: Sequence[PieceSpan],
+    anchor_lookup: "dict[str, tuple[dict[str, float], float, float]]",
+) -> tuple[list[list[float]], list[float]]:
+    """Shape-detected sibling of ``realign_anchor_to_pieces`` (#220/#723, ``anchor_paint_mode="shaped"``).
+
+    Paints the anchor on postcode-SHAPED spans detected over the RAW text (``postcode_shapes.collect_matches``
+    — the train-side mirror of inference's ``neural/postcode-anchor.ts``), NOT on gold ``postcode`` labels.
+    So at TRAIN the anchor fires on the SAME spans inference paints — INCLUDING a house-number-that-looks-
+    like-a-ZIP ("12345 Main St") — which the gold paths never did (the #723 train/inference mismatch that
+    let the anchor pollute leading-5-digit house numbers). A shaped span that MISSES ``anchor_lookup`` paints
+    nothing (confidence 0), exactly like inference. Lookup normalization + char->piece projection are SHARED
+    with the gold paths via ``_paint_anchor_chars`` / ``_project_anchor_chars_to_pieces`` — so this can only
+    differ from gold in WHERE it paints, never in WHAT it paints or HOW it lands on pieces. (The rare DE
+    ``D-`` / Dutch-spaced shapes inherit the gold path's space-strip+upper normalization — a pre-existing
+    minor gap, not introduced here; the dominant NUM5/ZIP4/EU-numeric shapes normalize identically.)
+    """
+    from .postcode_shapes import collect_matches
+
+    zero = [0.0] * ANCHOR_FEATURE_DIM
+    char_feat: list[list[float]] = [zero] * len(raw)
+    char_conf: list[float] = [0.0] * len(raw)
+    for m in collect_matches(raw):
+        _paint_anchor_chars(raw, m.start, m.end, anchor_lookup, char_feat, char_conf)
+    return _project_anchor_chars_to_pieces(raw, char_feat, char_conf, pieces)
+
+
 def encode_row(
     tokenizer: Tokenizer,
     raw: str,
@@ -406,6 +434,7 @@ def encode_row(
     labels: Sequence[str],
     max_length: int,
     anchor_lookup: "dict[str, tuple[dict[str, float], float, float]] | None" = None,
+    anchor_paint_mode: str = "gold",
     gazetteer_lexicon=None,
     gazetteer_choreography: bool = False,
     span_starts: Sequence[int] | None = None,
@@ -460,7 +489,12 @@ def encode_row(
     out: dict[str, list] = {"input_ids": ids, "attention_mask": attention, "labels": label_ids}
 
     if anchor_lookup is not None:
-        if has_spans:
+        if anchor_paint_mode == "shaped":
+            # #220/#723: paint on postcode-SHAPED spans (mirror inference's neural/postcode-anchor.ts),
+            # NOT gold postcode labels — so the model trains on the anchor firing on house-numbers-that-
+            # look-like-ZIPs and learns to override it. Ignores tokens/labels/spans (shape from raw text).
+            feats, confs = realign_anchor_to_pieces_shaped(raw, list(spans), anchor_lookup)
+        elif has_spans:
             feats, confs = realign_anchor_to_pieces_from_spans(
                 raw, span_starts, span_ends, span_tags, list(spans), anchor_lookup
             )

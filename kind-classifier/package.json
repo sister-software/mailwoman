@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/kind-classifier",
-	"version": "4.14.0",
+	"version": "4.15.0",
 	"description": "Stage 2.5 of the runtime pipeline — categorize inputs by query shape (postcode_only / locality_only / structured_address / intersection / po_box / landmark / vague). Rule-based for v1.",
 	"license": "AGPL-3.0-only",
 	"repository": {

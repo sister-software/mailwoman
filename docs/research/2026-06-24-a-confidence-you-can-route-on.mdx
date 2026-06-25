@@ -1,0 +1,47 @@
+---
+slug: a-confidence-you-can-route-on
+title: "A confidence you can route on"
+authors: [teffen]
+tags: [geocoding, confidence, calibration, record-matching, motivation]
+date: 2026-06-24
+---
+
+You've got a hundred thousand addresses to reconcile. Two databases, the same clinics and providers scattered across both, each one spelled a dozen ways: abbreviated here, reordered there, a postcode dropped, a suite number glued to the street. You run them through a geocoder, match on the resolved coordinate, and it works. Mostly. Some fraction land on the wrong building, the wrong block, the wrong town, and the geocoder won't tell you which fraction. It hands back a pin for every row and the same silent confidence for all of them: none.
+
+That's the gap we set out to close. Every geocoder chases accuracy, be-right-more-often, and so do we. The piece almost nobody hands you is the one underneath it: a number on each answer that tells you *which* ones to trust, so you can keep the good ones and send the rest to a human.
+
+{/* truncate */}
+
+## The forecaster's contract
+
+Think about a weather forecaster. A good one who says "70% chance of rain" is right on about seven of every ten days they say it. That's the whole contract: the number means what it says. A neural model makes the same promise implicitly every time it hands you a softmax probability, and for a long while ours quietly broke it, confident in some bands and timid in others, with no single number you could lean on.
+
+We fixed that part first (it's [its own story](/docs/concepts/confidence-calibration)). The short version: a small post-hoc correction maps the model's raw confidence onto an honest one, so when a parsed span reads `conf="0.94"` it's right about 94% of the time, measured on addresses the fit never saw. When the model says it's sure, now you can believe it.
+
+A calibrated number per *span* still isn't a number you can act on per *answer*, though. So we carried it the last step, to the resolved coordinate.
+
+## Dialing precision
+
+Here's the move that makes it pay rent. mailwoman returns a coordinate and a confidence you can put a threshold on. Set a bar (call it τ) and accept only the answers the model is at least that sure about; route everything below it to review.
+
+On a deliberately messy held-out set (lowercased, abbreviated, postcodes stripped, the real-world soup), graded by whether the resolved point lands within 25 km of the truth, the dial does what you'd want:
+
+| accept above…    | right-place @25km | share of rows answered |
+| ---------------- | ----------------: | ---------------------: |
+| anything (τ=0)   |               84% |                    67% |
+| 0.80             |               92% |                    49% |
+| 0.94             |               97% |                    16% |
+
+Raise the bar and the precision of what you keep climbs from 84% to 97%. The price is coverage: you answer fewer rows, and you pay it knowingly, because the number is honest about where it stands. A search index returns one best guess and one confidence, which is to say no dial at all. You take what it gives and hope.
+
+The part that makes this trustworthy rather than a nice-looking curve is that it holds on data we didn't draw the curve on. Split the messy set in half, fit nothing new, and the high-confidence answers still beat the low-confidence ones out-of-sample by fourteen points. The model is most unsure exactly where it ought to be: the locales whose coverage we're still building. It has some sense of what it doesn't know.
+
+## What you do with it
+
+Go back to the hundred thousand records. With a threshold you can finally split them in two: the answers the model stands behind, which you auto-accept and move past, and the ones it's hedging on, which a person looks at. The threshold means what you set it to. Set it at 0.95 and your auto-accepted set is right about that often, a rate you can put in a report and defend rather than a hope you re-check by hand.
+
+That's the difference between a vibe and a number. A pin with a vibe attached is a thing you re-litigate on every row. A pin with a calibrated confidence is a thing you build a pipeline around.
+
+It's a lever, not a wand. Crank the threshold and you hand more rows to humans; that's the cost, stated plainly, and it's yours to set against your own tolerance for a wrong match. What we've done is make the trade legible and put an honest number on both sides of it.
+
+It's live now in `mailwoman@4.14.0`. Pass a calibrator to the parser, read the `conf=` off the resolved tree, pick your bar. Then stop guessing which answers to trust, and start knowing.

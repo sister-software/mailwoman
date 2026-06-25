@@ -1,17 +1,17 @@
 {
 	"name": "neural-weights-en-us",
-	"version": "4.14.0",
-	"model_lineage": "v1.9.2-multilocale-au / step 40000 — the AU word-order fix on top of v1.9.1-multilocale-3order (shipped v4.13.0). ONE added variable: the G-NAF Australia 3-order shard (source-weight 6.0, country_weights += AU:1.0; #208/#148), 150k real G-NAF rows rendered canonical / postcode-first / locality-first (the same i%3 rotation the v1.9.1 overture shard proved). From-scratch 40k on A100 — the v1.9.1 recipe verbatim plus this one lever. RESULT (held-out AU OA coordinate, right-place @25km): 65→87 on the demo resolver (candidate-20j + #370 span-rescore + #194 Lever A, n=60/locale) — hits the reorder-probe ceiling (the model learned AU's postcode-first order; au-order-probe shows as-written == reordered). On the CLI resolver shard (admin + postcode-locality-intl), oa-au-coord 37.5→51.4 @25km (+13.9pp), recall 38→49 of 72. All-panel @25km 90.0→93.1%. Guardrails HELD on the shipped coordinate (gate-clean re-grade on a clean compile, scripts/eval/gates/v4.4.0-boundary.json): us.postcode 97.5, us.locality 73.1, us.region 87.7, us.street 78.2, de.native_locality 90.7, fr.postcode 99.5, fr.house_number 99.3, affix prefix 98.0 / suffix 94.9; mask-regression gate (#718) PASS (no tag regresses >2pp under the conventions mask); int8↔fp32 delta 0. Ship-config (requires) UNCHANGED from v1.9.1/v1.8.0. The US per-locale-F1 guardrail that gated the #208 probe's promotion is now confirmed.",
-	"phase": "v1.9.2 multi-locale + AU — adds the G-NAF Australia 3-order shard (gnaf source-weight 6.0) on top of v1.9.1; AU right-place @25km 65→87 (demo config) / 37.5→51.4 (CLI shard) at zero US/FR coordinate cost; all-panel 90→93%",
+	"version": "4.15.0",
+	"model_lineage": "v1.9.3a3-anchor-absorption / step 80000 — the #220/#723 postcode-anchor-pollution fix on top of v1.9.2-multilocale-au (shipped v4.14.0). Pre-seeded from the v1.9.2 step-040000 checkpoint, continued to 80k on A100. TWO coordinated levers: (1) anchor_paint_mode=shaped — the postcode anchor is painted at TRAIN time on the same postcode-SHAPED spans inference fires on (neural/postcode-anchor.ts collectMatches), closing the #723 WHERE gap (training only ever saw the anchor on GOLD postcode spans, so the model never learned to OVERRIDE a present anchor when a leading 5-digit token is a house number that looks like a ZIP); (2) the synth-anchor-absorption counter-shard (source-weight 6.0) carrying the locality discriminator — leading-5-digit + trailing-postcode → house_number, + locality → house_number, + NO locality + state → postcode (the VT E911 format). RESULT: SLICE-H anchor-ON 20→100 (the #723 leading-5-digit house# bug fixed) at ZERO coordinate cost, confirmed by the non-circular oa-resolver-eval (2000 real OA-US points, full ship-config, v192 vs v1.9.3a3): whole-US locality-match 97.7→97.8 (+0.1), region 99.9 flat, coord p50 3.4 flat, p90 10.7 flat, p99 275.3→259.1; VT — the E911 leading-postcode state where the entire trade lives — FLAT at the coordinate (loc 92.6=92.6), SD +1.0. Trades us.postcode LABEL-F1 −2 (95.0) + fr.postcode −0.2 (99.3), both coordinate-invisible; gate revised (scripts/eval/gates/v4.15.0-boundary.json) with a stated reason, operator-approved. mask-regression gate (#718) PASS; int8↔fp32 delta 0. Ship-config (requires) UNCHANGED from v1.9.2.",
+	"phase": "v1.9.3a3 anchor-absorption — the #220/#723 anchor-pollution fix (anchor_paint_mode=shaped + the locality-discriminator counter-shard). Leading-5-digit house# (SLICE-H) anchor-ON 20→100 at zero coordinate cost (oa-resolver-eval whole-US locality 97.7→97.8, VT flat); trades us.postcode label −2 (coordinate-invisible)",
 	"license": "AGPL-3.0-only",
 	"locale": "en-us",
 	"training": {
-		"corpus_version": "corpus-v0.9.1-multilocale (verbatim: char-offset base #519 + synth-fr-order #561 + fr-admin-split + overture-multilocale 3-order shard @ 3.0) + gnaf-AU 3-order overlay (#208, source-weight 6.0)",
+		"corpus_version": "corpus-v0.9.3a3 = v0.9.2-multilocale-au base + synth-anchor-absorption counter-shard @ source-weight 6.0 (the #220/#723 leading-5-digit discriminator, built by scripts/build-anchor-absorption-shard.mjs from 42,312 real US ZIPs)",
 		"tokenizer_version": "0.6.0-a0",
-		"steps": 40000,
-		"best_step": 40000,
+		"steps": 80000,
+		"best_step": 80000,
 		"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-		"recipe": "v1.9.2-multilocale-au: cloned v1.9.1-multilocale-3order verbatim (from-scratch 40k on the char-offset corpus + overture-multilocale 3-order shard @ source-weight 3.0) plus ONE added variable — the G-NAF Australia 3-order shard (gnaf source-weight 6.0, country_weights += AU:1.0; #208). The gnaf shard is the SAME i%3 canonical/pc-first/city-first rotation overture used, built by `mailwoman gnaf assemble` (G-NAF PSV join, 150k rows, held-out from the AU eval). conventions loss-mask OFF; CE-only; lr=1.5e-4 constant, warmup 1000, seed 42. The step-2000 dilution gate adjudicated (US/EU held, AU climbing). Loss-abort gate PASSED."
+		"recipe": "v1.9.3a3-anchor-absorption: RESUMED from the v1.9.2-multilocale-au step-040000 checkpoint (pre-seeded into the run's output dir, --resume auto) and continued to 80k. TWO coordinated levers, converged via the A0→A3 probe ladder: (1) anchor_paint_mode=shaped (a LOAD-TIME transform in encode_row — no corpus rebuild; realign_anchor_to_pieces_shaped paints the anchor on collect_matches postcode-shaped spans, mirroring neural/postcode-anchor.ts inference, so the model trains on the anchor firing on a house-number-that-looks-like-a-ZIP); (2) the synth-anchor-absorption counter-shard (source-weight 6.0) carrying the CASE-H/CASE-P locality discriminator (the A3 fix the A2 shard lacked — A2 cost house# by flipping leading-5-digit→postcode on locality-bearing no-trailing rows; hn-regression-diff.ts diagnosed 132/132). conventions loss-mask OFF; CE-only; lr=1.5e-4 constant, warmup 1000, seed 42. ANCHOR_FEATURE_DIM=11 unchanged (resume-safe). Loss-abort gate PASSED; the A0→A3 probe ladder + the full-run grade adjudicated the locality discriminator."
 	},
 	"architecture": {
 		"hidden_size": 384,
@@ -87,7 +87,7 @@
 		"intersection_a",
 		"intersection_b"
 	],
-	"notes": "v4.14.0 / v1.9.2-multilocale-au — adds the G-NAF Australia 3-order shard on top of v1.9.1's overture-multilocale 3-order recipe. The v1.9.1 model resolved AU at ~65% @25km because it never saw AU's postcode-first street-address FORMAT; the #208 lever is 150k real G-NAF rows rendered canonical/pc-first/locality-first (the same i%3 rotation overture used, `mailwoman gnaf assemble`) at source-weight 6.0 (the TARGETED-fix weight, matching synth-german/fr-admin-split; overture's 3.0 was for broad 16-locale exposure). RESULT: AU right-place @25km 65→87 on the demo resolver (candidate-20j + #370 rescore + #194 Lever A) — hits the reorder-probe ceiling (au-order-probe: as-written == reordered, the model learned the order); on the CLI shard 37.5→51.4 @25km (+13.9pp), recall 38→49/72. All-panel @25km 90.0→93.1% (AU misses 21→8, CZ 5→3, PT/PL/FR held, IT/AT each −1 row n=60 noise). Guardrails HELD on the shipped US/FR coordinate (gate-clean re-grade on a clean compile): us.postcode 97.5, us.locality 73.1, us.region 87.7, us.street 78.2, de.native_locality 90.7, fr.postcode 99.5, fr.house_number 99.3; mask-regression gate (#718) PASS; int8↔fp32 delta 0. Validated by an autonomous-promote canary (v192 vs v191 on perturbed real goldens): aggregate +1.7pp right-place, 0.6% new-overconfidence (no spike). Ship-config (requires) UNCHANGED from v1.9.1 — anchor+gazetteer+conventions(auto). Tokenizer 0.6.0-a0 (byte-identical). The G-NAF data is provenance-tracked (PSM/CC-BY-4.0 G-NAF, 150k held-out from the AU eval). KNOWN: int8 max fp32↔int8 delta ~0.3pp.",
+	"notes": "v4.15.0 / v1.9.3a3-anchor-absorption — the #220/#723 postcode-anchor-pollution fix on top of v1.9.2-multilocale-au (v4.14.0). The #723 bug: the postcode anchor fired on a leading 5-digit token even when it was a US house number that happens to be a real ZIP (12345 Main St). A decode-time override was killed (project-723); the model had to LEARN the disambiguation. Root cause was a TRAIN/INFERENCE WHERE-mismatch — training painted the anchor on GOLD postcode spans, but inference (neural/postcode-anchor.ts collectMatches) paints on postcode-SHAPED spans, so the model never trained on the anchor firing on a house-number-that-looks-like-a-ZIP. Fix: anchor_paint_mode=shaped (a load-time transform, no corpus rebuild) + the synth-anchor-absorption counter-shard @ source-weight 6.0 carrying the CASE-H/CASE-P LOCALITY discriminator (the A3 fix; converged via the A0→A3 probe ladder, hn-regression-diff.ts diagnosing the A2 house# regression as 132/132 house#→postcode on locality-bearing no-trailing rows). RESULT: leading-5-digit house# (SLICE-H) anchor-ON 20→100, at ZERO coordinate cost — non-circular oa-resolver-eval (2000 real OA-US points, full ship-config, v192 vs v1.9.3a3): whole-US locality-match 97.7→97.8 (+0.1), region 99.9 flat, coord p50 3.4 flat, p90 10.7 flat, p99 275.3→259.1; per-state VT (the E911 leading-postcode format where the postcode trade lives) FLAT at the coordinate (loc 92.6=92.6), SD 96.5→97.5. The fix trades us.postcode LABEL-F1 −2 (95.0) + fr.postcode −0.2 (99.3) — both coordinate-invisible, gate revised (scripts/eval/gates/v4.15.0-boundary.json, stated reason) and operator-approved. mask-regression gate (#718) PASS; int8↔fp32 delta 0. Ship-config (requires) UNCHANGED — anchor+gazetteer+conventions(auto). Tokenizer 0.6.0-a0 (byte-identical). KNOWN: int8 max fp32↔int8 delta ~0.3pp.",
 	"format": {
 		"model": "ONNX int8 dynamic (quantized from fp32, max fp32↔int8 delta 0.3pp)",
 		"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=48000",
@@ -109,8 +109,28 @@
 		"held_out_ece_calibrated": 0.0035,
 		"note": "calibration.json + calibration-per-locale.json carried forward from v4.4.0 (architecture + label space unchanged across v1.5.0→v1.8.0). Re-fit recommended next train. Apply via @mailwoman/core/decoder's createCalibrator; default parse output is byte-stable when omitted."
 	},
-	"base_relpath": "/data/output-v1.9.2-multilocale-au-s42/checkpoints/step-040000",
+	"base_relpath": "/data/output-v193a3-anchor-absorption-s42/checkpoints/step-080000",
 	"eval": {
+		"gate_2026_06_25_v415_anchor_absorption": {
+			"promotion_gate": "v4.15.0-boundary gate PASS after a stated, operator-approved revision of two postcode floors (us.postcode 97→95, fr.postcode 99.5→99.3). The #723 fix (SLICE-H anchor-ON 20→100) trades −2pp us.postcode LABEL-F1 on the rare leading-5-digit-postcode (VT E911) case. The trade is COORDINATE-INVISIBLE — proven by the non-circular oa-resolver-eval below, not asserted. Every other floor holds with margin (us.locality 76.7/62.2, us.street 82.3/74, us.region 88.6/80.1, de.native_locality 89.3/83.8, arena.perturb 78/71); mask-regression gate (#718) PASS; int8↔fp32 delta 0. No silent drift: the revision is in scripts/eval/gates/v4.15.0-boundary.json with the reason, mirrored here and in the promotion doc.",
+			"gate_doc": "docs/articles/evals/2026-06-25-v4.15.0-promotion.md",
+			"slice_h_anchor_on": { "v192": 20, "v193a3": 100, "$note": "leading-5-digit house# correctly labeled house_number (not postcode) with the anchor ON — the #723 production bug" },
+			"oa_resolver_eval_us": {
+				"n": 2000,
+				"$note": "non-circular: real OA gov lat/lon vs resolved admin centroid, full ship-config (anchor+gazetteer+suppress)",
+				"locality_match": { "v192": 0.977, "v193a3": 0.978 },
+				"region_match": { "v192": 0.999, "v193a3": 0.999 },
+				"coord_p50_km": { "v192": 3.4, "v193a3": 3.4 },
+				"coord_p90_km": { "v192": 10.7, "v193a3": 10.7 },
+				"coord_p99_km": { "v192": 275.3, "v193a3": 259.1 },
+				"vt_locality_match": { "v192": 0.926, "v193a3": 0.926, "$note": "VT = the E911 leading-postcode state where the postcode label trade lives — FLAT at the coordinate" },
+				"sd_locality_match": { "v192": 0.965, "v193a3": 0.975 }
+			},
+			"label_deltas_coordinate_invisible": [
+				"us.postcode -2.0 (95.0) — rare leading-5-digit-postcode VT E911 case; VT coordinate flat (92.6=92.6)",
+				"fr.postcode -0.2 (99.3) — eval noise"
+			]
+		},
 		"gate_2026_06_19_fr_admin_split": {
 			"promotion_gate": "FR centroid gate PASS — surpasses v1.5.0 on the SHIPPED assembled anchor-ON coordinate (held-out FR golden, 3000 disjoint communes): coord p50 42.5→2.2 km, mean 175→105.5 km (−40%), région-emit 39.6→99.6%. US assembled coordinate FLAT (oa-resolver-eval, 2000 OA-US rows: locality-match 97.5→97.6, p50 3.3=3.3). Two label deltas trip the 2pp pre-publish gate, BOTH coordinate-invisible and operator-approved (#728): us.locality −2.2 (precision-only, 0 recall misses) and fr.country −3.5 (resolver given --default-country FR). No silent drift — both stated here + on #728 + the night postmortem.",
 			"gate_doc": "docs/articles/evals/2026-06-19-night-postmortem.md",
@@ -169,8 +189,8 @@
 		}
 	},
 	"files_md5": {
-		"$comment": "Source int8 artifact md5 (out/v192/model-int8.onnx). The PUBLISHED model.onnx md5 is re-verified against this at release Step 4 (npm pack); update if the publish pipeline post-processes the graph.",
-		"model.onnx": "ff37551c990e541be48b060a8f7c94f8",
+		"$comment": "Source int8 artifact md5 (out/v193a3-full/model.onnx). The PUBLISHED model.onnx md5 is re-verified against this at release Step 4 (npm pack); update if the publish pipeline post-processes the graph.",
+		"model.onnx": "4dec4f460a934949580d8e7b43adae7e",
 		"tokenizer.model": "b6137e8c52914c9715374268ecaa4bc6"
 	},
 	"capabilities": {

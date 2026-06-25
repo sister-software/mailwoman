@@ -60,6 +60,30 @@ class DataConfig:
     # street_suffix, leading directional -> street_prefix), AFTER augmentation — ending the
     # base-vs-shard label contradiction the #492 ladder measured at >=1,000:1. None -> off.
     affix_relabel_lexicon_path: str | None = None
+    # --- #220/#723 anchor-absorption knobs. Defaults preserve v1.9.2 behavior exactly. ---
+    # WHERE the postcode anchor is painted at TRAINING:
+    #   "gold"   (default) — on GOLD B/I-postcode spans only (the v1.9.2 behavior, the #723 root cause:
+    #                        the model never saw the anchor fire on a house# at train, but inference
+    #                        paints on SHAPE, so it faceplants on "12345 Main St").
+    #   "shaped"           — on postcode-SHAPED spans (the per-country POSTCODE_PATTERNS, mirroring
+    #                        inference's neural/postcode-anchor.ts), so the model sees + learns to
+    #                        override the anchor on house-numbers-that-look-like-postcodes. THE fix.
+    anchor_paint_mode: str = "gold"
+    # WHAT the anchor encodes:
+    #   "posterior_latlon"        (default) — the v1.9.2 country-posterior + normalized centroid vector.
+    #   "region_agnostic_mindist"           — DEMOTE to a weak scalar log(1 + min_km from the token's
+    #                                         postcode centroid to the NEAREST gazetteer region centroid),
+    #                                         placed in feat[0], rest zeroed; non-real-postcode -> the
+    #                                         large constant. Train/inference-congruent (no detected
+    #                                         region -> no circularity). Keeps ANCHOR_FEATURE_DIM so the
+    #                                         resumed projection layer carries over (re-learns the weaker
+    #                                         input). The model learns congruence INTERNALLY (model-first).
+    anchor_value_mode: str = "posterior_latlon"
+    # Region-centroid table {region_key: [lat, lon]} for region_agnostic_mindist. None -> mode unavailable.
+    # NOTE: anchor DROPOUT is NOT a new field — it's the EXISTING train.py curriculum
+    # (perturb_anchor_confidence, ANCHOR_ZERO_OUT_MAX). To probe a harder mask, bump that constant; do
+    # not add a parallel knob (the review's no-reinvent conclusion).
+    region_centroids_path: str | None = None
 
 
 @dataclass

@@ -13,6 +13,7 @@
 				"codex",
 				"resolver",
 				"resolver-wof-sqlite",
+				"resolver-wof-wasm",
 				"classifiers",
 				"corpus",
 				"neural",
@@ -24,6 +25,9 @@
 				"address-id",
 				"registry",
 				"tiger",
+				"cartographer",
+				"neural-web",
+				"variant-aliases",
 				"mailwoman"
 			],
 			"publish": true,

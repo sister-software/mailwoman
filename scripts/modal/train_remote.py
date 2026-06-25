@@ -557,6 +557,255 @@ def sync_v092():
     secrets=[r2_secret],
     timeout=1800,
 )
+def sync_v193():
+    """#220/#723 Probe A0 (anchor-absorption, anchor_paint_mode=shaped). Syncs ONLY the code+config —
+    A0 reuses v192's corpus-v0.9.2-multilocale-au (already on the volume); the ONLY data change is the
+    LOAD-TIME anchor_paint_mode=shaped in encode_row, so no corpus rebuild/sync. Then PRE-SEEDS v192's
+    step-040000 into the v193 output dir so `--resume auto` continues from v192 (the absorption fine-tune
+    GROWS v192's capability — RESUME, not init_from). The v193 architecture is identical to v192, so the
+    optimizer/scheduler/weights resume cleanly; only the painted-anchor distribution differs."""
+    import shutil
+    import subprocess
+
+    print("Syncing v1.9.3 code+config from R2 + pre-seeding v192 ckpt (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmd = f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}"
+    print(f"\n{cmd[:90]}...")
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"STDERR: {result.stderr[:800]}")
+        raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+    if result.stdout:
+        print(result.stdout[-300:])
+
+    # Pre-seed v192 step-040000 -> the v193 output dir so `--resume auto` continues from v192.
+    src = f"{VOL_MOUNT}/output-v192-multilocale-au-s42/checkpoints/step-040000"
+    dst = f"{VOL_MOUNT}/output-v193-anchor-absorption-s42/checkpoints/step-040000"
+    if not os.path.isdir(src):
+        raise RuntimeError(f"v192 checkpoint missing at {src} — cannot resume")
+    if os.path.isdir(dst):
+        print(f"  v193 pre-seed already present at {dst} (skip copy)")
+    else:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copytree(src, dst)
+        print(f"  pre-seeded v192 step-040000 -> {dst}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv1.9.3 code+config sync + pre-seed complete. Volume committed.")
+
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.3-anchor-absorption.yaml"
+    shapes = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/postcode_shapes.py"
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au"
+    print("  v1.9.3 config present:", os.path.isfile(cfg))
+    print("  postcode_shapes.py present (the WHERE-fix code):", os.path.isfile(shapes))
+    print("  v192 corpus MANIFEST present (reused, no rebuild):", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  v193 pre-seed ckpt files:", sorted(os.listdir(dst)) if os.path.isdir(dst) else "MISSING")
+    print("  tokenizer v0.6.0-a0 on volume:", os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.6.0-a0/tokenizer.model"))
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
+def sync_v193a1():
+    """#220/#723 Probe A1 (anchor-absorption + the synth-anchor-absorption counter-aug shard). Unlike A0,
+    A1 has a NEW corpus (the v0.9.3-anchor-absorption OVERLAY = v0.9.2-multilocale-au's 693 base shards
+    VERBATIM + the 1 counter-aug shard), so this pulls that overlay (small — base shards persist on the
+    volume, referenced by the re-rooted manifest) + the code+config, then pre-seeds v192 step-040000 into
+    the v193a1 output dir for `--resume auto` (RESUME, not init_from). Heavy CASE-P (35%) to stop the A0
+    default-flip; gate = SLICE-H recovered AND postcode guardrail held."""
+    import shutil
+    import subprocess
+
+    print("Syncing v1.9.3a1 overlay corpus + code+config from R2 + pre-seeding v192 ckpt...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.9.3-anchor-absorption/corpus-v0.9.3-anchor-absorption/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.9.3-anchor-absorption/corpus-v0.9.3-anchor-absorption/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    src = f"{VOL_MOUNT}/output-v192-multilocale-au-s42/checkpoints/step-040000"
+    dst = f"{VOL_MOUNT}/output-v193a1-anchor-absorption-s42/checkpoints/step-040000"
+    if not os.path.isdir(src):
+        raise RuntimeError(f"v192 checkpoint missing at {src} — cannot resume")
+    if os.path.isdir(dst):
+        print(f"  v193a1 pre-seed already present (skip copy)")
+    else:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copytree(src, dst)
+        print(f"  pre-seeded v192 step-040000 -> {dst}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv1.9.3a1 sync + pre-seed complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.9.3-anchor-absorption/corpus-v0.9.3-anchor-absorption"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.3a1-anchor-absorption.yaml"
+    print("  v1.9.3a1 config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  counter-aug shard present:", os.path.isfile(f"{cdir}/train/part-anchor-absorption-train.parquet"))
+    # A re-rooted BASE shard must resolve on the volume (the v1.6.0 re-root gotcha — fail loud here, not at train).
+    base05 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
+    gnaf = f"{VOL_MOUNT}/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/train/part-gnaf-au-train.parquet"
+    print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base05))
+    print("  gnaf AU shard on volume (manifest-referenced):", os.path.isfile(gnaf))
+    print("  v193a1 pre-seed ckpt files:", sorted(os.listdir(dst)) if os.path.isdir(dst) else "MISSING")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
+def sync_v193a2():
+    """#220/#723 Probe A1 (anchor-absorption + the synth-anchor-absorption counter-aug shard). Unlike A0,
+    A1 has a NEW corpus (the v0.9.3a2-anchor-absorption OVERLAY = v0.9.2-multilocale-au's 693 base shards
+    VERBATIM + the 1 counter-aug shard), so this pulls that overlay (small — base shards persist on the
+    volume, referenced by the re-rooted manifest) + the code+config, then pre-seeds v192 step-040000 into
+    the v193a2 output dir for `--resume auto` (RESUME, not init_from). Heavy CASE-P (35%) to stop the A0
+    default-flip; gate = SLICE-H recovered AND postcode guardrail held."""
+    import shutil
+    import subprocess
+
+    print("Syncing v1.9.3a2 overlay corpus + code+config from R2 + pre-seeding v192 ckpt...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.9.3a2-anchor-absorption/corpus-v0.9.3a2-anchor-absorption/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.9.3a2-anchor-absorption/corpus-v0.9.3a2-anchor-absorption/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    src = f"{VOL_MOUNT}/output-v192-multilocale-au-s42/checkpoints/step-040000"
+    dst = f"{VOL_MOUNT}/output-v193a2-anchor-absorption-s42/checkpoints/step-040000"
+    if not os.path.isdir(src):
+        raise RuntimeError(f"v192 checkpoint missing at {src} — cannot resume")
+    if os.path.isdir(dst):
+        print(f"  v193a2 pre-seed already present (skip copy)")
+    else:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copytree(src, dst)
+        print(f"  pre-seeded v192 step-040000 -> {dst}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv1.9.3a2 sync + pre-seed complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.9.3a2-anchor-absorption/corpus-v0.9.3a2-anchor-absorption"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.3a2-anchor-absorption.yaml"
+    print("  v1.9.3a2 config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  counter-aug shard present:", os.path.isfile(f"{cdir}/train/part-anchor-absorption-train.parquet"))
+    # A re-rooted BASE shard must resolve on the volume (the v1.6.0 re-root gotcha — fail loud here, not at train).
+    base05 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
+    gnaf = f"{VOL_MOUNT}/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/train/part-gnaf-au-train.parquet"
+    print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base05))
+    print("  gnaf AU shard on volume (manifest-referenced):", os.path.isfile(gnaf))
+    print("  v193a2 pre-seed ckpt files:", sorted(os.listdir(dst)) if os.path.isdir(dst) else "MISSING")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
+def sync_v193a3():
+    """#220/#723 Probe A1 (anchor-absorption + the synth-anchor-absorption counter-aug shard). Unlike A0,
+    A1 has a NEW corpus (the v0.9.3a3-anchor-absorption OVERLAY = v0.9.2-multilocale-au's 693 base shards
+    VERBATIM + the 1 counter-aug shard), so this pulls that overlay (small — base shards persist on the
+    volume, referenced by the re-rooted manifest) + the code+config, then pre-seeds v192 step-040000 into
+    the v193a3 output dir for `--resume auto` (RESUME, not init_from). Heavy CASE-P (35%) to stop the A0
+    default-flip; gate = SLICE-H recovered AND postcode guardrail held."""
+    import shutil
+    import subprocess
+
+    print("Syncing v1.9.3a3 overlay corpus + code+config from R2 + pre-seeding v192 ckpt...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.9.3a3-anchor-absorption/corpus-v0.9.3a3-anchor-absorption/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.9.3a3-anchor-absorption/corpus-v0.9.3a3-anchor-absorption/ {R}",
+    ]
+    for i, cmd in enumerate(commands):
+        print(f"\n[{i+1}/{len(commands)}] {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+        if result.stdout:
+            print(result.stdout[-300:])
+
+    src = f"{VOL_MOUNT}/output-v192-multilocale-au-s42/checkpoints/step-040000"
+    dst = f"{VOL_MOUNT}/output-v193a3-anchor-absorption-s42/checkpoints/step-040000"
+    if not os.path.isdir(src):
+        raise RuntimeError(f"v192 checkpoint missing at {src} — cannot resume")
+    if os.path.isdir(dst):
+        print(f"  v193a3 pre-seed already present (skip copy)")
+    else:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copytree(src, dst)
+        print(f"  pre-seeded v192 step-040000 -> {dst}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv1.9.3a3 sync + pre-seed complete. Volume committed.")
+
+    cdir = f"{VOL_MOUNT}/corpus/versioned/v0.9.3a3-anchor-absorption/corpus-v0.9.3a3-anchor-absorption"
+    cfg = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v1.9.3a3-anchor-absorption.yaml"
+    print("  v1.9.3a3 config present:", os.path.isfile(cfg))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
+    print("  counter-aug shard present:", os.path.isfile(f"{cdir}/train/part-anchor-absorption-train.parquet"))
+    # A re-rooted BASE shard must resolve on the volume (the v1.6.0 re-root gotcha — fail loud here, not at train).
+    base05 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
+    gnaf = f"{VOL_MOUNT}/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/train/part-gnaf-au-train.parquet"
+    print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base05))
+    print("  gnaf AU shard on volume (manifest-referenced):", os.path.isfile(gnaf))
+    print("  v193a3 pre-seed ckpt files:", sorted(os.listdir(dst)) if os.path.isdir(dst) else "MISSING")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
 def push_artifact_r2(volume_path: str, r2_subpath: str):
     """Push a volume artifact (e.g. an exported model.onnx) OUT to R2, container-side.
 

@@ -591,6 +591,7 @@ def iter_encoded(
             row["labels"],
             max_length=cfg_data.max_length,
             anchor_lookup=anchor_lookup,
+            anchor_paint_mode=getattr(cfg_data, "anchor_paint_mode", "gold"),
             gazetteer_lexicon=gazetteer_lexicon,
             gazetteer_choreography=getattr(cfg_data, "gazetteer_choreography", False),
             # v0.5.0 char-offset labels (#519): rows from a span-schema shard train FROM the
