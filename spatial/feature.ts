@@ -8,7 +8,7 @@
 import { type GeometryLiteral } from "./geometries/index.js"
 
 export interface IdentifiableGeoFeature {
-	GEOID: any
+	GEOID: string | number
 }
 
 /**
@@ -16,7 +16,7 @@ export interface IdentifiableGeoFeature {
  *
  * @see https://tools.ietf.org/html/rfc7946#section-3.2
  */
-export interface GeoFeature<G = GeometryLiteral, P extends object | null = null> {
+export interface GeoFeature<G = GeometryLiteral, P extends object | null = never> {
 	/**
 	 * Declares the type of GeoJSON object as a `Feature`.
 	 */
@@ -31,7 +31,7 @@ export interface GeoFeature<G = GeometryLiteral, P extends object | null = null>
 	/**
 	 * A unique identifier for the feature, such as a UUID, a serial number, or a name.
 	 */
-	id: P extends IdentifiableGeoFeature ? P["GEOID"] : string | number | undefined | null
+	id?: P extends IdentifiableGeoFeature ? P["GEOID"] : never
 
 	/**
 	 * Additional properties associated with a GeoJSON object.

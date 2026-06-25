@@ -6,7 +6,7 @@
 
 import type { RouteContext } from "./routing.js"
 
-const CACHE_NAME = "2024-09-15-00-00-05"
+const CACHE_NAME = "2026-26-15-00-00-00"
 
 export async function retrieveCachedResponse(request: Request): Promise<Response | null> {
 	const cache = await caches.open(CACHE_NAME)
