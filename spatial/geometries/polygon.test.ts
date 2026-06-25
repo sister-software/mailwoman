@@ -37,10 +37,10 @@ test("isPolygonLiteral: only a {type:'Polygon', coordinates: []} object qualifie
 
 test("isSolidPolygonPath: one ring = solid, more rings = has holes", () => {
 	expect(isSolidPolygonPath(SOLID)).toBe(true)
-	const withHole: PolygonLiteral = {
+	const withHole = {
 		type: "Polygon",
-		coordinates: [SOLID.coordinates[0], SOLID.coordinates[0]] as PolygonLiteral["coordinates"],
-	}
+		coordinates: [SOLID.coordinates[0], SOLID.coordinates[0]],
+	} as unknown as PolygonLiteral
 	expect(isSolidPolygonPath(withHole)).toBe(false)
 })
 

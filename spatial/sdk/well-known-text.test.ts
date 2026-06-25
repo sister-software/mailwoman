@@ -32,7 +32,8 @@ const POLYGON: GeometryLiteral = {
 	],
 }
 
-const MULTIPOLYGON: GeometryLiteral = {
+// The 4-level MultiPolygon literal doesn't narrow against the GeometryLiteral union; cast it.
+const MULTIPOLYGON = {
 	type: "MultiPolygon",
 	coordinates: [
 		[
@@ -53,7 +54,7 @@ const MULTIPOLYGON: GeometryLiteral = {
 			],
 		],
 	],
-}
+} as unknown as GeometryLiteral
 
 test("wellKnownGeometryToGeoJSON: parses a WKT POINT into exact GeoJSON coordinates", () => {
 	const geo = wellKnownGeometryToGeoJSON<GeometryLiteral>("POINT(30 10)")

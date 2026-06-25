@@ -18,7 +18,10 @@ const HEADER_SIZE = 32
 const EDGE_ENTRY_SIZE = 8
 const PLACE_ENTRY_SIZE = 56
 const MAGIC_BYTES = [0x46, 0x53, 0x54, 0x00] // "FST\0"
-const MAX_VERSION = 2
+// Must track the serializer's VERSION (fst-serialize.ts, currently 4). The v3 provenance + v4
+// 16-byte-state/u32-count layout logic below already matches the Node deserializer; only this gate
+// was left stale at 2, so the browser FST loader rejected every real (v4) artifact.
+const MAX_VERSION = 4
 
 const PLACETYPE_ORDER: readonly PlacetypeId[] = [
 	"country",
