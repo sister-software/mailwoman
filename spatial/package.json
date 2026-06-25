@@ -37,7 +37,7 @@
 		"@types/google.maps": "^3.65.1"
 	},
 	"engines": {
-		"node": ">=22.5.1"
+		"node": ">=24.18.0"
 	},
 	"keywords": [
 		"geo",

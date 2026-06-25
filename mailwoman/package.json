@@ -82,7 +82,7 @@
 		"out/**/*.json"
 	],
 	"engines": {
-		"node": ">=22.5.1"
+		"node": ">=24.18.0"
 	},
 	"keywords": [
 		"address",

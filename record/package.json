@@ -20,7 +20,7 @@
 		"@mailwoman/formatter": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "^25.9.2"
+		"@types/node": ">=24.18.0"
 	},
 	"files": [
 		"out/**/*.js",
