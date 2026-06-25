@@ -1,7 +1,7 @@
 {
 	"name": "mailwoman",
 	"version": "4.15.0",
-	"description": "Utilities for working with contacts for email, phone, and postal addresses.",
+	"description": "A calibrated, retrieval-augmented postal-address parser — CLI + library.",
 	"license": "AGPL-3.0-only",
 	"contributors": [
 		{
