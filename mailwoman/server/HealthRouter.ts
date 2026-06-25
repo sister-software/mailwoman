@@ -17,9 +17,10 @@ import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { createRequire } from "node:module"
 
 import { readReleaseManifest } from "../data-release.js"
+import { mailwomanDataRoot, wofShardPaths } from "../resolver-backend.js"
 import { metricsSnapshot } from "./metrics.js"
 
-const DATA_ROOT = process.env["MAILWOMAN_DATA_ROOT"] ?? "/mnt/playpen/mailwoman-data"
+const DATA_ROOT = mailwomanDataRoot()
 const startedAt = Date.now()
 
 /** Best-effort model-card read: env override → installed weights package → dev-tree fallback. */
@@ -59,7 +60,7 @@ function wofPaths(): string[] {
 				.split(",")
 				.map((p) => p.trim())
 				.filter(Boolean)
-		: ["/mnt/playpen/mailwoman-data/wof/admin-global-priority.db", "/mnt/playpen/mailwoman-data/wof/postalcode-us.db"]
+		: wofShardPaths()
 	return paths.filter((p) => existsSync(p))
 }
 

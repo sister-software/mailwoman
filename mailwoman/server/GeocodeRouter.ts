@@ -19,7 +19,7 @@
 import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
 import { existsSync } from "node:fs"
-import { createResolverBackend, resolveCandidateDbPath } from "../resolver-backend.js"
+import { createResolverBackend, mailwomanDataRoot, resolveCandidateDbPath, wofShardPaths } from "../resolver-backend.js"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ResolveOpts } from "@mailwoman/resolver"
@@ -35,7 +35,7 @@ import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "../interp
 import { recordGeocode } from "./metrics.js"
 
 /** Default per-state shard root + interp calibration — mirror the CLI defaults. */
-const DATA_ROOT = process.env["MAILWOMAN_DATA_ROOT"] ?? "/mnt/playpen/mailwoman-data"
+const DATA_ROOT = mailwomanDataRoot()
 /** Bounded concurrency for `/api/batch`. Override with MAILWOMAN_BATCH_CONCURRENCY. */
 const BATCH_CONCURRENCY = Math.max(1, Number(process.env["MAILWOMAN_BATCH_CONCURRENCY"] ?? "8"))
 /** Hard cap on batch size — a guardrail against unbounded request bodies. */
@@ -55,10 +55,7 @@ function wofPaths(): string[] {
 			.split(",")
 			.map((p) => p.trim())
 			.filter(Boolean)
-	return [
-		"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db",
-		"/mnt/playpen/mailwoman-data/wof/postalcode-us.db",
-	].filter((p) => existsSync(p))
+	return wofShardPaths().filter((p) => existsSync(p))
 }
 
 let depsPromise: Promise<GeocodeDepsBundle | null> | null = null

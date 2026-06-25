@@ -19,7 +19,7 @@ import { type AddressTree, decodeAsXml } from "@mailwoman/core/decoder"
 import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
 import { existsSync } from "node:fs"
-import { createResolverBackend } from "../resolver-backend.js"
+import { createResolverBackend, wofShardPaths } from "../resolver-backend.js"
 
 /** One node in the response's flat list — what the UI renders for each resolved component. */
 export interface ResolveResponseNode {
@@ -64,11 +64,7 @@ function resolveWofPaths(): string[] {
 	// ids; see the feedback-custom-wof-db-only memory + scripts/wof-build-manifest.json). Multi-shard:
 	// admin (7 priority countries) + US postcodes; the resolver routes postalcode queries to the
 	// postcode shard. Override with MAILWOMAN_WOF_DB.
-	const candidates = [
-		"/mnt/playpen/mailwoman-data/wof/admin-global-priority.db",
-		"/mnt/playpen/mailwoman-data/wof/postalcode-us.db",
-	]
-	return candidates.filter((p) => existsSync(p))
+	return wofShardPaths().filter((p) => existsSync(p))
 }
 
 /**

@@ -47,6 +47,25 @@ export function resolvePostalCityAliasDbPath(explicit?: string): string | undefi
 }
 
 /**
+ * The Mailwoman data root — every shard, manifest, and weights bundle lives under here. Defaults to
+ * the lab path; override with `$MAILWOMAN_DATA_ROOT`. Two of the three server routers already
+ * honored this env; routing all of them through here makes the third honor it too, and gives the
+ * hardcoded `/mnt/playpen/...` string a single home (see the review's `rel-5` operator-path leak).
+ */
+export function mailwomanDataRoot(): string {
+	return process.env["MAILWOMAN_DATA_ROOT"] ?? "/mnt/playpen/mailwoman-data"
+}
+
+/**
+ * The default WOF shard list the FTS backend probes when no single `--wof-db` is given: the global
+ * admin-priority shard + the US postalcode shard, both under {@link mailwomanDataRoot}. Returned as
+ * a fresh array each call so callers may mutate/filter without aliasing.
+ */
+export function wofShardPaths(dataRoot: string = mailwomanDataRoot()): [string, string] {
+	return [`${dataRoot}/wof/admin-global-priority.db`, `${dataRoot}/wof/postalcode-us.db`]
+}
+
+/**
  * The lookup constructors this selector needs — a structural subset of
  * `@mailwoman/resolver-wof-sqlite`.
  */
