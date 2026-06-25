@@ -1,0 +1,30 @@
+{
+	"name": "@mailwoman/photon",
+	"version": "4.15.0",
+	"description": "Photon drop-in — a Photon-compatible autocomplete/type-ahead geocoding API (GeoJSON FeatureCollection over /api + /reverse) on the Mailwoman engine. Run it with `npx @mailwoman/photon serve`.",
+	"license": "AGPL-3.0-only",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "photon"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
+	"dependencies": {
+		"express": "^5.2.1"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md"
+	],
+	"bin": "./out/cli.js",
+	"publishConfig": {
+		"access": "public"
+	}
+}

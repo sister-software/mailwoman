@@ -4999,9 +4999,29 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/nominatim@workspace:nominatim":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/nominatim@workspace:nominatim"
+  dependencies:
+    express: "npm:^5.2.1"
+  bin:
+    nominatim: ./out/cli.js
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/normalize@workspace:*, @mailwoman/normalize@workspace:normalize":
   version: 0.0.0-use.local
   resolution: "@mailwoman/normalize@workspace:normalize"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/photon@workspace:photon":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/photon@workspace:photon"
+  dependencies:
+    express: "npm:^5.2.1"
+  bin:
+    photon: ./out/cli.js
   languageName: unknown
   linkType: soft
 

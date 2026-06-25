@@ -76,6 +76,8 @@
 	},
 	"workspaces": [
 		"mailwoman",
+		"nominatim",
+		"photon",
 		"core",
 		"resolver",
 		"spatial",
