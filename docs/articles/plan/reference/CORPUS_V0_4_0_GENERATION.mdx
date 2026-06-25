@@ -99,9 +99,8 @@ Three artifacts pin the generation:
    constants (`KRYPTONITE_SYSTEM`, `KRYPTONITE_USER_TEMPLATE`, `TRANSLIT_SYSTEM`,
    `KRYPTONITE_CATEGORIES`). Version-pinned through git history.
 2. **Raw responses** — every chat-completion is persisted to
-   `raw-deepseek-kryptonite.jsonl` with `{batch_id, category, n_requested, model,
-finish_reason, usage, response_content}`. Regenerating from this raw log requires
-   only the JSON validator, not another DeepSeek call.
+   `raw-deepseek-kryptonite.jsonl` with `{batch_id, category, n_requested, model, finish_reason, usage, response_content}`.
+   Regenerating from this raw log requires only the JSON validator, not another DeepSeek call.
 3. **Checkpoint** — `.kryptonite-checkpoint.json` records the set of completed
    `batch_id`s. Reruns with identical args skip done batches.
 
