@@ -25,6 +25,7 @@
  */
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { spawn } from "node:child_process"
 import { createWriteStream, existsSync } from "node:fs"
 import { mkdir, rename } from "node:fs/promises"
@@ -37,7 +38,7 @@ import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable 
 import { initializeTIGERSchema, TIGER_PRAGMAS } from "./schema.js"
 
 const CENSUS_HOST = "https://www2.census.gov"
-const DEFAULT_DATA_ROOT = process.env.MAILWOMAN_DATA_ROOT ?? "/mnt/playpen/mailwoman-data"
+const DEFAULT_DATA_ROOT = mailwomanDataRoot()
 
 /**
  * Supported TIGER levels. `tabblock20` is per state + carries geometry; `place`/`addrfeat` are

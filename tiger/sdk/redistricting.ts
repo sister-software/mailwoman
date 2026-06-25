@@ -17,6 +17,7 @@
  */
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { spawn } from "node:child_process"
 import { createReadStream, createWriteStream, existsSync } from "node:fs"
 import { mkdir, rename } from "node:fs/promises"
@@ -30,7 +31,7 @@ import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERData
 
 const REDISTRICTING_BASE =
 	"https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171"
-const DEFAULT_DATA_ROOT = process.env.MAILWOMAN_DATA_ROOT ?? "/mnt/playpen/mailwoman-data"
+const DEFAULT_DATA_ROOT = mailwomanDataRoot()
 
 // P.L. 94-171 (2020) pipe-delimited field offsets (0-based).
 // Geographic header: …|SUMLEV(2)|…|LOGRECNO(7)|GEOID(8)|GEOCODE(9)|… — GEOCODE is the bare 15-char

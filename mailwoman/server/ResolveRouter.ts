@@ -19,7 +19,7 @@ import { type AddressTree, decodeAsXml } from "@mailwoman/core/decoder"
 import { createWofResolver, type Resolver, type ResolverBackend } from "@mailwoman/resolver"
 import { type RequestHandler, Router } from "express"
 import { existsSync } from "node:fs"
-import { createResolverBackend, wofShardPaths } from "../resolver-backend.js"
+import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.js"
 
 /** One node in the response's flat list — what the UI renders for each resolved component. */
 export interface ResolveResponseNode {
@@ -95,7 +95,7 @@ async function getResolverPipeline() {
 		const wofPaths = resolveWofPaths()
 		if (wofPaths.length === 0) {
 			console.error(
-				"ResolveRouter: no WOF DBs found. Set MAILWOMAN_WOF_DB or place shards at /mnt/playpen/mailwoman-data/wof/"
+				`ResolveRouter: no WOF DBs found. Set MAILWOMAN_WOF_DB or place shards at ${dataRootPath("wof")}/`
 			)
 			return null
 		}
