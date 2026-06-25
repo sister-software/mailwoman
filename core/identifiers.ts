@@ -17,7 +17,7 @@ export function smartSnakeCase<T extends string>(name: T): T extends Uppercase<T
 
 	if (normalizedName.toUpperCase() === normalizedName) {
 		return (
-			name
+			normalizedName
 				// Replace all non-word characters with underscores...
 				.replace(/\W{1,}/g, "_")
 				// ...and then replace all sequences of underscores with a single underscore.
