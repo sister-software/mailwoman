@@ -138,6 +138,7 @@ output-*/
 *-NIGHT-SHIFT-*.log
 *-NIGHT-SHIFT-*.sh
 *-SESSION-HANDOFF.md
+HANDOFF-*.md
 *-SESSION-RECAP.md
 *-DEEP-DIVE-REVIEW.md
 

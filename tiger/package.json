@@ -2,7 +2,7 @@
 	"name": "@mailwoman/tiger",
 	"version": "4.15.0",
 	"description": "US Census TIGER/Line data processing and analysis.",
-	"license": "AGPL-3.0",
+	"license": "AGPL-3.0-only",
 	"contributors": [
 		{
 			"name": "Teffen Ellis",

@@ -53,7 +53,7 @@ Source files live at each workspace's root (no `src/` nesting). The repo root ho
 - **[`docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx`](./docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx)** — the model-work runbook: which evals gate a change, the lever-shape taxonomy, how to add a shard. Read before touching the model, a shard recipe, or an eval.
 - **[`docs/articles/plan/reference/coverage-overlay.mdx`](./docs/articles/plan/reference/coverage-overlay.mdx)** — the demo-map address-coverage ("fog of war") overlay runbook: rebuild/republish (the `coverage build` + `tiles publish` CLIs), the `nexus-assets` upload/credential gotchas, the HI/NH data situation, tuning knobs. Read before touching the coverage overlay, the `tile-worker`, or `coverage build`.
 - **[`RELEASING.md`](./RELEASING.md)** — local and CI release flows. Read before cutting a release.
-- **[`docs/articles/evals/`](./docs/articles/evals/)** — eval reports per training step. The per-model score ledger lives at `evals/scores-by-version.json` (repo root), schema in `docs/articles/plan/reference/eval-ledger.schema.json`. The authoritative per-tag parity table is the latest `parity-scorecard-*.md`.
+- **[`docs/articles/evals/`](./docs/articles/evals/)** — eval reports per training step. The per-model score ledger lives at `evals/scores-by-version.json` (repo root), schema in `docs/articles/plan/reference/eval-ledger.schema.json`. **Note:** the ledger's full per-tag rows are frozen at the v4.4.0 ship gate (the last full re-score); per-release headlines since (4.5–4.15) live in [`docs/articles/releases.mdx`](./docs/articles/releases.mdx) + each version's `model-card.json`. The authoritative per-tag parity table is the latest `parity-scorecard-*.md`.
 
 ## Release pipeline pitfalls
 

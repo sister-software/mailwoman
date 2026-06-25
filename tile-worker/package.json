@@ -2,7 +2,7 @@
 	"name": "@mailwoman/tile-worker",
 	"version": "1.0.0",
 	"description": "Tile Worker for Mailwoman",
-	"license": "AGPL-3.0",
+	"license": "AGPL-3.0-only",
 	"private": true,
 	"contributors": [
 		{
