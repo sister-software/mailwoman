@@ -51,16 +51,13 @@ import { haversineKm } from "@mailwoman/spatial"
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs"
 import { setTimeout as sleep } from "node:timers/promises"
 import { pathToFileURL } from "node:url"
+import { arg } from "../lib/cli-args.ts"
 
 // The first collection died silently at PL ~60/80 (no JS stack → a process-level kill). Surface it
 // next time instead of exiting blind; the incremental --rows-out checkpoint makes a crash recoverable.
 process.on("unhandledRejection", (e) => console.error("UNHANDLED REJECTION:", e))
 process.on("uncaughtException", (e) => console.error("UNCAUGHT EXCEPTION:", e))
 
-const arg = (k: string, d = ""): string => {
-	const i = process.argv.indexOf(`--${k}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
-}
 const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const CARD = "neural-weights-en-us/model-card.json"
 const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"

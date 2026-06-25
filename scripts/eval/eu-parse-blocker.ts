@@ -36,11 +36,7 @@
 
 import { decodeAsJson } from "@mailwoman/core/decoder"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
-
-const arg = (k: string, d = ""): string => {
-	const i = process.argv.indexOf(`--${k}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
-}
+import { arg } from "../lib/cli-args.ts"
 
 interface OaRow {
 	input: string

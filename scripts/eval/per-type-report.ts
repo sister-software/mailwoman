@@ -25,11 +25,7 @@ import { decodeAsJson, proposalsToTree } from "@mailwoman/core/decoder"
 import { solutionToProposals } from "@mailwoman/core/parser"
 import { createAddressParser } from "mailwoman"
 import { readFileSync, writeFileSync } from "node:fs"
-
-const arg = (name: string, fallback = "") => {
-	const i = process.argv.indexOf(`--${name}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
+import { arg } from "../lib/cli-args.ts"
 
 const MODEL = "/mnt/playpen/mailwoman-data/models/quantized/model-v140-step-40000-int8.onnx"
 const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"

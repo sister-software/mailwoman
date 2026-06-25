@@ -15,11 +15,8 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
+import { arg } from "../lib/cli-args.ts"
 
-const arg = (k: string, d = ""): string => {
-	const i = process.argv.indexOf(`--${k}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
-}
 const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const CARD = "neural-weights-en-us/model-card.json"
 const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"

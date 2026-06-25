@@ -20,11 +20,8 @@
 
 import { DuckDBInstance } from "@duckdb/node-api"
 import { DatabaseSync } from "node:sqlite"
+import { arg } from "../lib/cli-args.ts"
 
-const arg = (n: string, d: string): string => {
-	const i = process.argv.indexOf(`--${n}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
-}
 const CC = arg("country", "ES")
 // Postcode digit length for the leading-zero-preserving lpad: 5 for ES/DE/FR/IT/NL, 4 for AT/CH/DK.
 const PC_LEN = Number(arg("pc-len", "5"))

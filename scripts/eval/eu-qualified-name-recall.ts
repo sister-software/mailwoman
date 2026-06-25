@@ -28,11 +28,8 @@
  */
 import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
+import { arg } from "../lib/cli-args.ts"
 
-const arg = (k: string, d = "") => {
-	const i = process.argv.indexOf(`--${k}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
-}
 const N = Number(arg("n", "150"))
 const CAND = arg("candidate-db", "/mnt/playpen/mailwoman-data/wof/candidate-global-20h.db")
 const GATE_KM = Number(arg("gate", "25"))

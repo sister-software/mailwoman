@@ -17,11 +17,8 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { existsSync, readFileSync } from "node:fs"
+import { arg } from "../lib/cli-args.ts"
 
-const arg = (k: string, d = ""): string => {
-	const i = process.argv.indexOf(`--${k}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
-}
 const CAND = arg("candidate-db", "/mnt/playpen/mailwoman-data/wof/candidate-global-20j.db")
 const N = Number(arg("n", "60"))
 

@@ -45,6 +45,7 @@ import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { deserializeFst } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
+import { arg } from "../lib/cli-args.ts"
 
 // The demo's own composition helpers — imported (read-only) from the demo source so the smoke eval
 // measures the REAL cascade, not a re-implementation that can drift from it.
@@ -52,20 +53,16 @@ import { flattenTree, runCascade } from "../../docs/src/shared/demo-helpers.ts"
 import { parseSmokeRows, type SmokeRow } from "./demo-cascade-rows.ts"
 
 const argv = process.argv.slice(2)
-const arg = (k: string, d?: string) => {
-	const i = argv.indexOf(k)
-	return i >= 0 ? argv[i + 1] : d
-}
 
-const STAGE = arg("--stage-dir", "/tmp/v440-stage/en-us/v4.4.0")!
-const DB = arg("--db", process.env.MAILWOMAN_WOF_HOT_DB ?? path.join(STAGE, "wof-hot.db"))!
-const MODEL = arg("--model", path.join(STAGE, "model.onnx"))!
-const TOK = arg("--tokenizer", path.join(STAGE, "tokenizer.model"))!
-const CARD = arg("--card", path.join(STAGE, "model-card.json"))!
-const FST = arg("--fst", path.join(STAGE, "fst-en-US.bin"))!
-const GAZ = arg("--gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")!
-const FILE = arg("--file", "data/eval/external/demo-cascade-smoke.jsonl")!
-const JSON_OUT = arg("--json")
+const STAGE = arg("stage-dir", "/tmp/v440-stage/en-us/v4.4.0")!
+const DB = arg("db", process.env.MAILWOMAN_WOF_HOT_DB ?? path.join(STAGE, "wof-hot.db"))!
+const MODEL = arg("model", path.join(STAGE, "model.onnx"))!
+const TOK = arg("tokenizer", path.join(STAGE, "tokenizer.model"))!
+const CARD = arg("card", path.join(STAGE, "model-card.json"))!
+const FST = arg("fst", path.join(STAGE, "fst-en-US.bin"))!
+const GAZ = arg("gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")!
+const FILE = arg("file", "data/eval/external/demo-cascade-smoke.jsonl")!
+const JSON_OUT = arg("json")
 const EXPLAIN = argv.includes("--explain")
 
 // ── Preflight: every artifact loud-missing, never a vague ENOENT mid-run ────────────────────────

@@ -24,6 +24,7 @@ import { type AddressNode, type AddressTree, decodeAsJson } from "@mailwoman/cor
 import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { readFileSync, writeFileSync } from "node:fs"
+import { arg } from "../lib/cli-args.ts"
 
 const PLACETYPE_RANK: Record<string, number> = {
 	postalcode: 6,
@@ -73,11 +74,6 @@ const pct = (xs: number[], p: number): number => {
 }
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN)
 const norm = (s: string | undefined): string => (s ?? "").normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase().trim()
-
-const arg = (k: string, d = ""): string => {
-	const i = process.argv.indexOf(`--${k}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
-}
 
 const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 

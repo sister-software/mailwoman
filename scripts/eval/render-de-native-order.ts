@@ -23,6 +23,7 @@
  *   --out data/eval/external/openaddresses-de-sample-native-order.jsonl
  */
 import { readFileSync, writeFileSync } from "node:fs"
+import { arg } from "../lib/cli-args.ts"
 
 interface DeRow {
 	input: string
@@ -31,11 +32,6 @@ interface DeRow {
 	expected: { locality?: string; region?: string; postcode?: string }
 	state: string
 	source: string
-}
-
-const arg = (name: string, fallback: string): string => {
-	const i = process.argv.indexOf(`--${name}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
 }
 
 const inPath = arg("in", "data/eval/external/openaddresses-de-sample.jsonl")

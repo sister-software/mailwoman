@@ -16,11 +16,7 @@
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
-
-const arg = (name: string, fallback = "") => {
-	const i = process.argv.indexOf(`--${name}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : fallback
-}
+import { arg } from "../lib/cli-args.ts"
 
 const src = arg("src", "/mnt/playpen/mailwoman-data/record-matcher/sources/txhhsc_nursing-facilities_20260611.tsv")
 const out = arg("out", "/tmp/txhhsc-oarow.jsonl")

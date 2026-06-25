@@ -7,15 +7,12 @@ import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } fro
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { readFileSync } from "node:fs"
+import { arg } from "../lib/cli-args.ts"
 
 const argv = process.argv.slice(2)
-const arg = (k: string, d?: string) => {
-	const i = argv.indexOf(k)
-	return i >= 0 ? argv[i + 1] : d
-}
 const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const LK = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
-const file = arg("--file", "data/eval/external/street-affix-real.jsonl")!
+const file = arg("file", "data/eval/external/street-affix-real.jsonl")!
 const TAGS = [
 	"street_prefix",
 	"street",
@@ -33,14 +30,11 @@ const TAGS = [
 
 // A gazetteer-trained model MUST be fed the lexicon (+ the paired postcode suppression) at inference,
 // else the zero-filled clue is a train/inference mismatch that wrecks segmentation. Pass for v1.0.0+.
-const GAZ = arg("--gazetteer-lexicon")
+const GAZ = arg("gazetteer-lexicon")
 const suppressGaz = argv.includes("--suppress-gaz-near-postcode")
 
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
-const [tokenizer, runner] = await Promise.all([
-	MailwomanTokenizer.loadFromFile(TOK),
-	OnnxRunner.create(arg("--model")!),
-])
+const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("model")!)])
 const neural = new NeuralAddressClassifier({
 	tokenizer,
 	runner,
@@ -49,7 +43,7 @@ const neural = new NeuralAddressClassifier({
 	...(GAZ ? { gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) } : {}),
 	suppressGazetteerNearPostcode: suppressGaz,
 	// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
-	...(arg("--conventions") ? { addressSystemConventions: arg("--conventions") as "auto" } : {}),
+	...(arg("conventions") ? { addressSystemConventions: arg("conventions") as "auto" } : {}),
 	// v4.4.0 corrective: --bridge-gaps merges same-tag spans split at unlabeled punctuation.
 	...(argv.includes("--bridge-gaps") ? { bridgePunctuationGaps: true } : {}),
 })
@@ -75,7 +69,7 @@ for (const row of rows) {
 		}
 	}
 }
-console.log(`# affix per-tag (unfolded) — ${arg("--model")!.split("/").slice(-2).join("/")} · n=${rows.length}`)
+console.log(`# affix per-tag (unfolded) — ${arg("model")!.split("/").slice(-2).join("/")} · n=${rows.length}`)
 console.log("| tag | P | R | F1 | tp/fp/fn |\n| --- | --: | --: | --: | --- |")
 const sidecar: Record<string, { p: number; r: number; f1: number; tp: number; fp: number; fn: number }> = {}
 for (const t of TAGS) {
@@ -91,7 +85,7 @@ for (const t of TAGS) {
 // JSON sidecar (--json <path>): the machine-readable contract the gate verdict reads — the
 // markdown above is presentation. Codex-review follow-up: regex-parsing scorer tables was the
 // gate's one brittle joint.
-const jsonOut = arg("--json")
+const jsonOut = arg("json")
 if (jsonOut) {
 	const { writeFileSync } = await import("node:fs")
 	writeFileSync(jsonOut, JSON.stringify({ n: rows.length, file, tags: sidecar }, null, "\t") + "\n")

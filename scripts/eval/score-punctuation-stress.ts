@@ -21,22 +21,19 @@ import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { createAddressParser } from "mailwoman"
 import { readFileSync, writeFileSync } from "node:fs"
+import { arg } from "../lib/cli-args.ts"
 
 const argv = process.argv.slice(2)
-const arg = (k: string, d?: string) => {
-	const i = argv.indexOf(k)
-	return i >= 0 ? argv[i + 1] : d
-}
 const TOK = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
 const LK = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
-const file = arg("--file", "data/eval/external/punctuation-stress.jsonl")!
+const file = arg("file", "data/eval/external/punctuation-stress.jsonl")!
 
-const engine = arg("--engine", "neural")!
+const engine = arg("engine", "neural")!
 
 const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] =
 	engine === "neural"
-		? await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("--model")!)])
+		? await Promise.all([MailwomanTokenizer.loadFromFile(TOK), OnnxRunner.create(arg("model")!)])
 		: [undefined!, undefined!]
 const shipConfig = !argv.includes("--no-ship-config")
 const v0 = engine === "v0" ? createAddressParser() : undefined
@@ -51,7 +48,7 @@ const neural =
 				...(shipConfig
 					? {
 							gazetteerLexicon: parseGazetteerLexicon(
-								JSON.parse(readFileSync(arg("--gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")!, "utf8"))
+								JSON.parse(readFileSync(arg("gazetteer-lexicon", "data/gazetteer/anchor-lexicon-v1.json")!, "utf8"))
 							),
 							suppressGazetteerNearPostcode: true,
 							addressSystemConventions: "auto" as const,
@@ -62,8 +59,8 @@ const neural =
 					? {
 							spanProposer: {
 								lexicon: buildCodexSpanLexicon(),
-								...(arg("--sp-bias") ? { biasScale: +arg("--sp-bias")! } : {}),
-								...(arg("--sp-ann-bias") ? { annotationBiasScale: +arg("--sp-ann-bias")! } : {}),
+								...(arg("sp-bias") ? { biasScale: +arg("sp-bias")! } : {}),
+								...(arg("sp-ann-bias") ? { annotationBiasScale: +arg("sp-ann-bias")! } : {}),
 							},
 						}
 					: {}),
@@ -127,7 +124,7 @@ for (const row of rows) {
 }
 
 console.log(
-	`# punctuation-stress — engine=${engine}${engine === "neural" ? ` · ${arg("--model")!.split("/").slice(-1)} · ship-config=${shipConfig}` : " (folded gold view)"} · ${rows.length} rows`
+	`# punctuation-stress — engine=${engine}${engine === "neural" ? ` · ${arg("model")!.split("/").slice(-1)} · ship-config=${shipConfig}` : " (folded gold view)"} · ${rows.length} rows`
 )
 console.log("| class | rows | died | component acc |\n| --- | --: | --: | --: |")
 const sidecar: Record<string, { rows: number; died: number; acc: number }> = {}
@@ -146,5 +143,5 @@ console.log(
 console.log("\n## sample misses (≤2/class)")
 for (const [cls, c] of Object.entries(byClass).sort()) for (const s of c.samples) console.log(`- [${cls}] ${s}`)
 
-const jsonOut = arg("--json")
+const jsonOut = arg("json")
 if (jsonOut) writeFileSync(jsonOut, JSON.stringify({ n: rows.length, classes: sidecar }, null, "\t") + "\n")

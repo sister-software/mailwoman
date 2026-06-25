@@ -28,11 +28,8 @@ import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } fro
 import { OnnxRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { existsSync, readFileSync } from "node:fs"
+import { arg } from "../lib/cli-args.ts"
 
-const arg = (k: string, d = ""): string => {
-	const i = process.argv.indexOf(`--${k}`)
-	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1]! : d
-}
 const MODEL = arg("model", "out/v192/model.onnx")
 const TOK = arg("tokenizer", "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model")
 const CARD = arg("model-card", "neural-weights-en-us/model-card.json")
