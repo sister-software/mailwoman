@@ -59,6 +59,12 @@ and Beijing resolve. The placer-namesake gap survives the candidate DB (populati
 US-namesake tie without a country prior), so #822 is robust; the percentages are withdrawn pending a
 re-run on the operator's canonical candidate config. Report carries the full caveat.
 
+**Robustness hardening (all 3 drop-ins).** An edge-case probe of the shipped servers found 500 crashes
+on input a real client sends: whitespace-only query, out-of-range reverse coordinates, and a 5000-char
+query each faulted the process. Fixed systematically — a `safe()` wrapper so an engine throw becomes a
+clean JSON error (never a stack-trace 500), `/reverse` lat/lon range validation (→ 400), and a forward
+query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness now gates on them.
+
 ## What went well
 
 - **The harness earned its keep immediately.** It existed to prove the geopy contract; it surfaced the
@@ -115,6 +121,8 @@ re-run on the operator's canonical candidate config. Report carries the full cav
   first OIDC publish (same gotcha as the resolver packages in v4.14.0).
 - **#822 / #781.** The placer next-tranche and the EU recall lever are GPU model work — promote
   decisions are yours.
+- **Candidate DB for the drop-in (#824).** Pin the canonical `candidate-global*.db` build; it gates any
+  real non-US measurement and is the drop-in's biggest non-US limitation (unbundled + undocumented).
 - **Ship it?** The vertical is publish-ready (ci:smoke green). A release is your call.
 
 ## Concrete next steps
@@ -122,6 +130,8 @@ re-run on the operator's canonical candidate config. Report carries the full cav
 - Operator: configure Trusted Publishing for the 7 packages, then `yarn release` (or the publish
   workflow) to ship the drop-in surface.
 - Decide the `recipes/` structure so #818 can land.
+- #824: pin the canonical candidate DB, then re-run `scripts/eval/frontier-gap.mjs` with it set to get
+  the production-representative non-US numbers (and surface `--candidate-db` on the drop-in CLIs).
 - #822: grow the coarse-placer country coverage (GB/CA/AU/AT first); re-run
   `scripts/eval/nominatim-dropin-parity.mjs` to watch the frontier rows flip green per placer version.
 - libpostal `/expand` multi-variant (St → Saint AND Street) is a real feature if libpostal-expand parity
@@ -132,11 +142,11 @@ re-run on the operator's canonical candidate config. Report carries the full cav
 | Metric           | Value                                          |
 | ---------------- | ---------------------------------------------- |
 | Duration         | ~14 h (02:00–16:00 UTC)                        |
-| Commits          | 45                                             |
+| Commits          | 52                                             |
 | New npm packages | 7                                              |
 | Modal spend      | $0 (local shift)                               |
 | GPU time         | 0                                              |
-| Issues filed     | 2 (#822, #823)                                 |
+| Issues filed     | 3 (#822, #823, #824)                           |
 | CI failures      | 1 (pre-flight cartographer DEM tests — parked) |
 | Models trained   | 0                                              |
 | Demo regressions | 0                                              |
