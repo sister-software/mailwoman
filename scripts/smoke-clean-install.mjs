@@ -46,7 +46,26 @@ const WORKSPACES = {
 	"@mailwoman/address-id": "address-id",
 	"@mailwoman/corpus": "corpus",
 	mailwoman: "mailwoman",
+	// The annotations layer + drop-in API packages (the "replace Nominatim" surface).
+	"@mailwoman/annotations": "annotations",
+	"@mailwoman/timezone-lookup": "timezone-lookup",
+	"@mailwoman/un-locode-lookup": "un-locode-lookup",
+	"@mailwoman/nuts-lookup": "nuts-lookup",
+	"@mailwoman/libpostal": "libpostal",
+	"@mailwoman/photon": "photon",
+	"@mailwoman/nominatim": "nominatim",
 }
+
+// Drop-in + annotation packages whose entrypoint we import to catch undeclared deps (the #596 trap).
+const IMPORT_CHECK = [
+	"@mailwoman/annotations",
+	"@mailwoman/timezone-lookup",
+	"@mailwoman/un-locode-lookup",
+	"@mailwoman/nuts-lookup",
+	"@mailwoman/libpostal",
+	"@mailwoman/photon",
+	"@mailwoman/nominatim",
+]
 
 const tmp = mkdtempSync(join(tmpdir(), "mw-smoke-"))
 const tarDir = join(tmp, "tarballs")
@@ -81,6 +100,11 @@ try {
 	const out = run("node", [cli, "parse", "--isolated", "350 5th Ave, New York, NY 10118"], proj)
 	if (!out.includes("New York") || !out.includes("10118"))
 		throw new Error(`parse output unexpected:\n${out.slice(0, 400)}`)
+
+	console.log("[smoke] importing the drop-in + annotation package entrypoints…")
+	for (const pkg of IMPORT_CHECK) {
+		run("node", ["--input-type=module", "-e", `await import("${pkg}")`], proj)
+	}
 
 	console.log("\n[smoke] ✅ clean install + CLI run succeeded")
 } catch (err) {
