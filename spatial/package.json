@@ -22,7 +22,6 @@
 		".": "./out/index.js"
 	},
 	"dependencies": {
-		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"geo-coordinates-parser": "^1.7.4",
 		"h3-js": "^4.4.0",
@@ -30,6 +29,7 @@
 	},
 	"devDependencies": {
 		"@googlemaps/google-maps-services-js": "^3.4.2",
+		"@mailwoman/annotations": "workspace:*",
 		"@types/google.maps": "^3.65.1",
 		"type-fest": "^5.7.0"
 	},
