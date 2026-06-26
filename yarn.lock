@@ -5021,7 +5021,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/nominatim@workspace:nominatim"
   dependencies:
+    "@mailwoman/neural": "workspace:*"
+    "@mailwoman/resolver": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
     express: "npm:^5.2.1"
+    mailwoman: "workspace:*"
   bin:
     nominatim: ./out/cli.js
   languageName: unknown
@@ -5037,7 +5041,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/photon@workspace:photon"
   dependencies:
+    "@mailwoman/neural": "workspace:*"
+    "@mailwoman/resolver": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
     express: "npm:^5.2.1"
+    mailwoman: "workspace:*"
   bin:
     photon: ./out/cli.js
   languageName: unknown

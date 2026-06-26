@@ -159,3 +159,13 @@ export function createPhotonRouter(engine: PhotonEngine): Router {
 
 	return router
 }
+
+/** Build a Photon `Feature` from a coordinate + properties. */
+export function photonFeature(lon: number, lat: number, properties: PhotonProperties): PhotonFeature {
+	return { type: "Feature", geometry: { type: "Point", coordinates: [lon, lat] }, properties }
+}
+
+/** Wrap features in a Photon `FeatureCollection`. */
+export function photonCollection(features: PhotonFeature[]): PhotonFeatureCollection {
+	return { type: "FeatureCollection", features }
+}

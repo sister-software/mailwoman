@@ -14,7 +14,11 @@
 		".": "./out/index.js"
 	},
 	"dependencies": {
-		"express": "^5.2.1"
+		"@mailwoman/neural": "workspace:*",
+		"@mailwoman/resolver": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"express": "^5.2.1",
+		"mailwoman": "workspace:*"
 	},
 	"files": [
 		"out/**/*.js",
