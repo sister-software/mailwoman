@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Country-reference annotators derivable with no data table. The flag emoji is a pure function of
- *   the ISO 3166-1 alpha-2 code (two Regional Indicator Symbols), and the alpha-2 itself is the ISO
- *   annotation. Calling code + currency need standard ISO/ITU tables and are tracked as a separate
- *   provenance-built data task — deliberately not hand-typed here (the no-load-bearing-trivia
- *   rule).
+ *   Country-reference annotators. The flag emoji is a pure function of the ISO 3166-1 alpha-2 code
+ *   (two Regional Indicator Symbols); calling code + currency come from {@link COUNTRY_REFERENCE}, a
+ *   table generated from mledoze/countries (provenance-tracked, not hand-typed — the
+ *   no-load-bearing-trivia rule).
  */
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
+import { COUNTRY_REFERENCE } from "./reference-data.js"
 
 const REGIONAL_INDICATOR_BASE = 0x1f1e6
 const A_UPPER = "A".charCodeAt(0)
@@ -26,12 +26,18 @@ export function countryFlag(alpha2: string): string {
 }
 
 /**
- * Fill the country-reference slice (flag + ISO 3166 alpha-2) from a resolved country code. Calling
- * code + currency are added once their provenance-built tables land.
+ * Fill the country-reference slice (ISO 3166 alpha-2, flag, calling code, currency) from a resolved
+ * country code. Abstains on anything that isn't two ASCII letters.
  */
 export const countryReferenceAnnotator: Annotator = ({ countryCode }): Partial<AnnotationSet> => {
 	if (!countryCode || !/^[A-Za-z]{2}$/.test(countryCode)) return {}
 	const alpha2 = countryCode.toUpperCase()
+	const ref = COUNTRY_REFERENCE[alpha2]
 	const flag = countryFlag(alpha2)
-	return { iso3166: { alpha2 }, ...(flag ? { flag } : {}) }
+	return {
+		iso3166: { alpha2 },
+		...(flag ? { flag } : {}),
+		...(ref?.callingCode != null ? { callingCode: ref.callingCode } : {}),
+		...(ref?.currency ? { currency: ref.currency } : {}),
+	}
 }
