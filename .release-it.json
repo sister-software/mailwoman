@@ -4,6 +4,7 @@
 		"@release-it-plugins/workspaces": {
 			"workspaces": [
 				"core",
+				"annotations",
 				"spatial",
 				"normalize",
 				"query-shape",
@@ -28,7 +29,11 @@
 				"cartographer",
 				"neural-web",
 				"variant-aliases",
-				"mailwoman"
+				"mailwoman",
+				"timezone-lookup",
+				"libpostal",
+				"photon",
+				"nominatim"
 			],
 			"publish": true,
 			"publishCommand": "node scripts/publish-workspace.mjs",
