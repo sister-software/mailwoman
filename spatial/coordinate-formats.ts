@@ -4,11 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Coordinate-format conversions — the pure-math annotators OpenCage exposes (DMS, geohash,
- *   Maidenhead, Web Mercator, qibla bearing, sun times). No data, no I/O; each is a deterministic
- *   function of a `{lat, lon}`. {@link coordinateFormatAnnotator} packages them as an
+ *   Maidenhead, MGRS, Web Mercator, qibla bearing, sun times). No data, no I/O; each is a
+ *   deterministic function of a `{lat, lon}`. {@link coordinateFormatAnnotator} packages them as an
  *   `@mailwoman/annotations` `Annotator`.
- *
- *   MGRS is deliberately not here yet (it needs full UTM + grid lettering) — tracked as a follow-up.
  */
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
