@@ -23,6 +23,7 @@ import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
 import { makeUnLocodeAnnotator, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
 import express from "express"
+import { createAddressParser } from "mailwoman"
 import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geocode-core"
 import {
 	createResolverBackend,
@@ -57,6 +58,24 @@ const PLACETYPE_TO_KEY: Record<string, keyof NominatimAddressDetails> = {
 
 function joinNonEmpty(...parts: Array<string | undefined>): string {
 	return parts.filter(Boolean).join(", ")
+}
+
+/**
+ * The resolver returns admin labels + a coordinate (often rooftop/interpolated via the situs
+ * shards) but drops the street. Recover house_number + road from the parse so the result carries
+ * the full address — Nominatim populates both `addressdetails` and `display_name` down to the house
+ * number.
+ */
+async function streetParts(
+	parser: ReturnType<typeof createAddressParser>,
+	query: string
+): Promise<{ houseNumber?: string; road?: string }> {
+	const solution = (await parser.parse(query, { verbose: true })).solutions[0]
+	const matches = (solution?.toJSON() as { matches?: Array<{ classification: string; value: string }> })?.matches ?? []
+	return {
+		houseNumber: matches.find((m) => m.classification === "house_number")?.value,
+		road: matches.find((m) => m.classification === "street")?.value,
+	}
 }
 
 /** Map a forward geocode result (admin + coordinate) into the formatter's neutral shape. */
@@ -94,6 +113,7 @@ async function serve(): Promise<void> {
 	const adminDbPath = wofPaths[0]
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+	const parser = createAddressParser()
 	const backend = createResolverBackend(resolverMod, { wofPaths })
 	const resolver = createWofResolver(backend as unknown as ResolverBackend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
@@ -122,13 +142,38 @@ async function serve(): Promise<void> {
 			if (!query) return []
 			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for })
 			if (result.lat == null || result.lon == null) return []
-			const out = toNominatimResult(forwardToResolved(result), { addressdetails: params.addressdetails })
-			// Country tag isn't always in the hierarchy (US admin results omit it); fall back to the
-			// US-centric-data default so US results still get a flag / calling code / currency.
+			const resolved = forwardToResolved(result)
+			// Recover the street the resolver drops, so addressdetails + display_name carry it.
+			const { houseNumber, road } = await streetParts(parser, query)
+			if (houseNumber) resolved.address.house_number = houseNumber
+			if (road) resolved.address.road = road
+			// The country tag isn't always in the hierarchy (US admin results omit it); backfill from the
+			// US-centric-data default so the address, display_name, and flag/currency/calling-code agree.
 			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? annotationCountryFallback
-			const countryCode = matchCountry(countryName)?.iso2
+			const country = matchCountry(countryName)
+			if (country) {
+				if (!resolved.address.country) resolved.address.country = country.canonical
+				resolved.address.country_code = country.iso2.toLowerCase()
+			}
+			if (houseNumber || road) {
+				resolved.displayName =
+					joinNonEmpty(
+						houseNumber,
+						road,
+						resolved.address.city,
+						resolved.address.state,
+						resolved.address.postcode,
+						resolved.address.country
+					) || resolved.displayName
+			}
+			const out = toNominatimResult(resolved, { addressdetails: params.addressdetails })
 			out.annotations = toOpenCage(
-				await annotate({ lat: result.lat, lon: result.lon, countryCode, placeName: result.locality ?? undefined })
+				await annotate({
+					lat: result.lat,
+					lon: result.lon,
+					countryCode: country?.iso2,
+					placeName: result.locality ?? undefined,
+				})
 			)
 			return [out].slice(0, params.limit)
 		},
