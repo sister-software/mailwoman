@@ -8,6 +8,7 @@ import { expect, test } from "vitest"
 import {
 	coordinateFormatAnnotator,
 	qiblaBearing,
+	sunTimes,
 	toDMS,
 	toGeohash,
 	toMaidenhead,
@@ -47,6 +48,22 @@ test("qiblaBearing: from DC the Kaaba is ~58° (ENE)", () => {
 	const b = qiblaBearing(LAT, LON)
 	expect(b).toBeGreaterThan(54)
 	expect(b).toBeLessThan(62)
+})
+
+test("sunTimes: NYC summer solstice — sunrise ~09:26 UTC, ordered, ~15h day", () => {
+	const s = sunTimes(40.7128, -74.006, new Date("2026-06-21T12:00:00Z"))
+	const expectedRise = new Date("2026-06-21T09:26:00Z").getTime() / 1000
+	expect(Math.abs(s.rise! - expectedRise)).toBeLessThan(600) // within 10 min
+	expect(s.rise!).toBeLessThan(s.noon)
+	expect(s.noon).toBeLessThan(s.set!)
+	expect((s.set! - s.rise!) / 3600).toBeGreaterThan(14.5)
+})
+
+test("sunTimes: polar day has no sunrise/sunset, only solar noon", () => {
+	const s = sunTimes(80, 0, new Date("2026-06-21T12:00:00Z"))
+	expect(s.rise).toBeUndefined()
+	expect(s.set).toBeUndefined()
+	expect(typeof s.noon).toBe("number")
 })
 
 test("coordinateFormatAnnotator: fills the coordinate-format slice of an AnnotationSet", () => {

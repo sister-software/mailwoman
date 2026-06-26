@@ -17,8 +17,10 @@ import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 const toRad = (d: number): number => (d * Math.PI) / 180
 const toDeg = (r: number): number => (r * 180) / Math.PI
 
-/** Render a single signed degree as `D° M′ S″ H` with the given hemisphere letters `[positive,
-negative]`. */
+/**
+ * Render a single signed degree as `D° M′ S″ H` with the given hemisphere letters `[positive,
+ * negative]`.
+ */
 function dmsComponent(value: number, hemispheres: [string, string], secondsDp = 2): string {
 	const hemisphere = value >= 0 ? hemispheres[0] : hemispheres[1]
 	const abs = Math.abs(value)
@@ -117,11 +119,44 @@ export function toMaidenhead(lat: number, lon: number, pairs = 3): string {
 	return out.slice(0, pairs * 2).join("")
 }
 
+const J2000 = 2451545.0
+const unixEpochJulian = 2440587.5
+
+/**
+ * Sunrise / solar-noon / sunset for a coordinate on a date, as UTC epoch seconds, via the standard
+ * sunrise equation. `rise` and `set` are absent during polar day or polar night (the sun never
+ * crosses the horizon); `noon` (solar transit) is always present.
+ */
+export function sunTimes(
+	lat: number,
+	lon: number,
+	date: Date = new Date()
+): { rise?: number; set?: number; noon: number } {
+	const julian = date.getTime() / 86400000 + unixEpochJulian
+	const n = Math.round(julian - J2000 - 0.0009 + lon / 360)
+	const meanSolarTime = n + 0.0009 - lon / 360
+	const M = (357.5291 + 0.98560028 * meanSolarTime) % 360
+	const Mr = toRad(M)
+	const center = 1.9148 * Math.sin(Mr) + 0.02 * Math.sin(2 * Mr) + 0.0003 * Math.sin(3 * Mr)
+	const lambda = toRad((M + center + 180 + 102.9372) % 360)
+	const transit = J2000 + meanSolarTime + 0.0053 * Math.sin(Mr) - 0.0069 * Math.sin(2 * lambda)
+	const declination = Math.asin(Math.sin(lambda) * Math.sin(toRad(23.4397)))
+	const latR = toRad(lat)
+	const cosH =
+		(Math.sin(toRad(-0.833)) - Math.sin(latR) * Math.sin(declination)) / (Math.cos(latR) * Math.cos(declination))
+	const toEpoch = (j: number): number => Math.round((j - unixEpochJulian) * 86400)
+	const noon = toEpoch(transit)
+	if (cosH >= 1 || cosH <= -1) return { noon }
+	const hourAngle = toDeg(Math.acos(cosH))
+	return { rise: toEpoch(transit - hourAngle / 360), set: toEpoch(transit + hourAngle / 360), noon }
+}
+
 /** Fill the coordinate-format slice of an {@link AnnotationSet} from a `{lat, lon}`. */
-export const coordinateFormatAnnotator: Annotator = ({ lat, lon }): Partial<AnnotationSet> => ({
+export const coordinateFormatAnnotator: Annotator = ({ lat, lon, date }): Partial<AnnotationSet> => ({
 	dms: toDMS(lat, lon),
 	geohash: toGeohash(lat, lon),
 	maidenhead: toMaidenhead(lat, lon),
 	mercator: toMercator(lat, lon),
 	qiblaBearing: qiblaBearing(lat, lon),
+	sun: sunTimes(lat, lon, date),
 })
