@@ -4810,7 +4810,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/annotations@workspace:annotations":
+"@mailwoman/annotations@workspace:*, @mailwoman/annotations@workspace:annotations":
   version: 0.0.0-use.local
   resolution: "@mailwoman/annotations@workspace:annotations"
   languageName: unknown
@@ -5132,6 +5132,7 @@ __metadata:
   resolution: "@mailwoman/spatial@workspace:spatial"
   dependencies:
     "@googlemaps/google-maps-services-js": "npm:^3.4.2"
+    "@mailwoman/annotations": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@types/google.maps": "npm:^3.65.1"
     geo-coordinates-parser: "npm:^1.7.4"

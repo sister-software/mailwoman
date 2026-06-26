@@ -10,6 +10,7 @@
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		// ---
+		{ "path": "../annotations" },
 		{ "path": "../core" }
 	]
 }
