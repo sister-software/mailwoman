@@ -1,0 +1,161 @@
+#!/usr/bin/env node
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Drop-in parity harness for `@mailwoman/nominatim` (#806 + #807). Complements the engine-level
+ *   `competitive-benchmark.ts` by testing the PACKAGED server endpoint, two ways:
+ *
+ *   CONTRACT (#806) — every `/search` result is geopy-parseable: `place_id`, `lat`, `lon`,
+ *   `display_name`, and (with `addressdetails=1`) an `address` object. This is the shape a real
+ *   Nominatim client (geopy, geocoder, …) depends on. ACCURACY (#807) — resolve-rate + coordinate
+ *   error (haversine vs a known centroid) over a fixed US + EU query set. "No result" is a miss. A
+ *   `nominatim` column is left for recorded baselines (do NOT hit live Nominatim from CI).
+ *
+ *   Engine-bound (loads the model + gazetteer), so this is a LOCAL tool, not a CI test.
+ *
+ *   Run (after `yarn compile`, with the WOF gazetteer present): node
+ *   scripts/eval/nominatim-dropin-parity.mjs [--port 8099] [--out scorecard.md]
+ */
+
+import { spawn } from "node:child_process"
+import { writeFileSync } from "node:fs"
+
+const PORT = Number(arg("--port", "8099"))
+const OUT = arg("--out", "")
+const THRESHOLD_KM = 25 // coarse "right place" — the drop-in resolves to admin/centroid, not rooftop
+
+// Fixed query set: city, country, and the city's known centroid (truth). Coarse error = right city.
+//
+// Two groups. The supported set GATES the harness (a miss is a regression): US queries, which the
+// default-on #244 placer routes via the state, and the #743 hard-safelist EU countries (US/ES/IT/NL/
+// DE/FR). The `frontier` rows are NOT gated — they track the recall edge: countries the coarse placer
+// doesn't yet confidently emit, so a same-name US place wins the resolve (Vienna→Vienna VA). Widening
+// `hardCountrySafelist` does NOT move them (measured) — the lever is the placer's country emission
+// (#743/#781), GPU model work. As the placer grows, flip a row out of `frontier`.
+const FIXTURE = [
+	{ q: "Boston, MA", lat: 42.3601, lon: -71.0589 },
+	{ q: "Washington, DC", lat: 38.9072, lon: -77.0369 },
+	{ q: "Seattle, WA", lat: 47.6062, lon: -122.3321 },
+	{ q: "Austin, TX", lat: 30.2672, lon: -97.7431 },
+	{ q: "Berlin, Germany", lat: 52.52, lon: 13.405 },
+	{ q: "Paris, France", lat: 48.8566, lon: 2.3522 },
+	{ q: "Rotterdam, Netherlands", lat: 51.9244, lon: 4.4777 },
+	{ q: "Madrid, Spain", lat: 40.4168, lon: -3.7038 },
+	{ q: "Rome, Italy", lat: 41.9028, lon: 12.4964 },
+	{ q: "Tokyo, Japan", lat: 35.6762, lon: 139.6503 },
+	{ q: "Vienna, Austria", lat: 48.2082, lon: 16.3738, frontier: true },
+	{ q: "Sydney, Australia", lat: -33.8688, lon: 151.2093, frontier: true },
+	{ q: "London, UK", lat: 51.5074, lon: -0.1278, frontier: true },
+	{ q: "Toronto, Canada", lat: 43.6532, lon: -79.3832, frontier: true },
+]
+
+function arg(flag, fallback) {
+	const i = process.argv.indexOf(flag)
+	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback
+}
+
+function haversineKm(aLat, aLon, bLat, bLon) {
+	const R = 6371
+	const dLat = ((bLat - aLat) * Math.PI) / 180
+	const dLon = ((bLon - aLon) * Math.PI) / 180
+	const s =
+		Math.sin(dLat / 2) ** 2 +
+		Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
+	return 2 * R * Math.asin(Math.sqrt(s))
+}
+
+/** Resolve once the server answers /status, or throw after the deadline. */
+async function waitForServer(port, deadlineMs) {
+	const start = Date.now()
+	for (;;) {
+		try {
+			const res = await fetch(`http://127.0.0.1:${port}/status`)
+			if (res.ok) return
+		} catch {
+			/* not up yet */
+		}
+		if (Date.now() - start > deadlineMs) throw new Error("server did not start within the deadline")
+		await new Promise((r) => setTimeout(r, 1000))
+	}
+}
+
+const CONTRACT_FIELDS = ["place_id", "lat", "lon", "display_name"]
+
+function checkContract(result, addressdetails) {
+	const missing = CONTRACT_FIELDS.filter((f) => result[f] == null)
+	if (addressdetails && (typeof result.address !== "object" || result.address == null)) missing.push("address")
+	return missing
+}
+
+const server = spawn("node", ["nominatim/out/cli.js", "serve", "--port", String(PORT)], {
+	stdio: ["ignore", "ignore", "inherit"],
+})
+
+try {
+	console.error(`[parity] starting @mailwoman/nominatim on :${PORT} (loads model + gazetteer)…`)
+	await waitForServer(PORT, 120_000)
+
+	const rows = []
+	for (const fx of FIXTURE) {
+		const url = `http://127.0.0.1:${PORT}/search?q=${encodeURIComponent(fx.q)}&addressdetails=1`
+		let result
+		try {
+			const res = await fetch(url)
+			const body = await res.json()
+			result = Array.isArray(body) ? body[0] : undefined
+		} catch (err) {
+			result = undefined
+		}
+		if (!result) {
+			rows.push({ q: fx.q, frontier: !!fx.frontier, resolved: false, contractOk: false, km: null })
+			continue
+		}
+		const missing = checkContract(result, true)
+		const km = haversineKm(Number(result.lat), Number(result.lon), fx.lat, fx.lon)
+		rows.push({ q: fx.q, frontier: !!fx.frontier, resolved: true, contractOk: missing.length === 0, missing, km })
+	}
+
+	const supported = rows.filter((r) => !r.frontier)
+	const frontier = rows.filter((r) => r.frontier)
+	const placedIn = (set) => set.filter((r) => r.resolved && r.km <= THRESHOLD_KM)
+	const contractPass = rows.filter((r) => r.contractOk)
+	const errors = placedIn(supported)
+		.map((r) => r.km)
+		.sort((a, b) => a - b)
+	const median = errors.length ? errors[Math.floor(errors.length / 2)] : null
+
+	const lines = []
+	lines.push("# @mailwoman/nominatim drop-in parity")
+	lines.push("")
+	lines.push(`- Contract pass (#806): **${contractPass.length}/${rows.length}** results are geopy-parseable`)
+	lines.push(
+		`- Resolve-rate @ ${THRESHOLD_KM} km — supported (US + #743 safelist): **${placedIn(supported).length}/${supported.length}**`
+	)
+	lines.push(`- Conditional median error (supported, placed): **${median == null ? "—" : `${median.toFixed(1)} km`}**`)
+	lines.push(`- Placer frontier (#743/#781, not gated): **${placedIn(frontier).length}/${frontier.length}** resolve`)
+	lines.push("")
+	lines.push("| Query | Group | Resolved | Contract | Error (km) |")
+	lines.push("| --- | --- | :---: | :---: | ---: |")
+	for (const r of rows) {
+		lines.push(
+			`| ${r.q} | ${r.frontier ? "frontier" : "supported"} | ${r.resolved ? "✅" : "❌"} | ${
+				r.contractOk ? "✅" : `❌ ${(r.missing ?? []).join(",")}`
+			} | ${r.km == null ? "—" : r.km.toFixed(1)} |`
+		)
+	}
+	const report = lines.join("\n")
+	console.log(`\n${report}\n`)
+	if (OUT) {
+		writeFileSync(OUT, `${report}\n`)
+		console.error(`[parity] wrote ${OUT}`)
+	}
+
+	// Gate on the contract (all rows) + the supported set resolving. Frontier misses are expected and
+	// tracked, not failures.
+	const failed = contractPass.length < rows.length || placedIn(supported).length < supported.length
+	process.exitCode = failed ? 1 : 0
+} finally {
+	server.kill()
+}

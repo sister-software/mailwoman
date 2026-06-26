@@ -17,12 +17,7 @@
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
-import {
-	createResolverBackend,
-	mailwomanDataRoot,
-	resolveCandidateDbPath,
-	wofShardPaths,
-} from "mailwoman/resolver-backend"
+import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "mailwoman/resolver-backend"
 import { existsSync } from "node:fs"
 import { parseArgs } from "node:util"
 import {
@@ -64,12 +59,14 @@ async function serve(): Promise<void> {
 	const backend = createResolverBackend(resolverMod, { wofPaths })
 	const resolver = createWofResolver(backend as unknown as ResolverBackend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
-	const defaultCountry = resolveCandidateDbPath() ? undefined : "US"
 	const reverseGeo = adminDbPath ? new resolverMod.WofReverseGeocoder({ adminDbPath }) : undefined
 
 	const engine: PhotonEngine = {
 		async search(params) {
-			const result = await geocodeAddress(params.q, { classifier, resolver, shards: shards.for, defaultCountry })
+			// No country constraint: the default-on #244 placer routes the query's country (Berlin→DE,
+			// Boston→US). Forcing "US" here is a HARD override (geocode-core.ts:102) that resolved every
+			// non-US query to its US namesake — wrong for a global autocomplete front.
+			const result = await geocodeAddress(params.q, { classifier, resolver, shards: shards.for })
 			if (result.lat == null || result.lon == null) return photonCollection([])
 			const properties: PhotonProperties = {
 				name: result.locality ?? result.region ?? undefined,

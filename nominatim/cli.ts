@@ -97,7 +97,14 @@ async function serve(): Promise<void> {
 	const backend = createResolverBackend(resolverMod, { wofPaths })
 	const resolver = createWofResolver(backend as unknown as ResolverBackend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
-	const defaultCountry = resolveCandidateDbPath() ? undefined : "US"
+	// NOT a geocode country constraint. The default-on #244 placer already routes the query's country
+	// (Berlin→DE, Boston→US) and `defaultCountry` is a HARD override that beats it (geocode-core.ts:102),
+	// so forcing "US" resolved every non-US query to its US namesake (Berlin→Berlin NH). We let the
+	// placer decide instead. This is the fallback used ONLY to annotate the flag/currency/calling-code
+	// when the resolved hierarchy omits the country tag — which on US-centric data (no candidate DB)
+	// happens for US results, where "US" is the right guess. Non-US results carry the country tag, so
+	// the fallback never mislabels them.
+	const annotationCountryFallback = resolveCandidateDbPath() ? undefined : "US"
 	const reverseGeo = adminDbPath ? new resolverMod.WofReverseGeocoder({ adminDbPath }) : undefined
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
 	const tzDbPath = join(mailwomanDataRoot(), "timezone", "timezone.db")
@@ -113,12 +120,12 @@ async function serve(): Promise<void> {
 			const query =
 				params.q ?? joinNonEmpty(params.street, params.city, params.state, params.postalcode, params.country)
 			if (!query) return []
-			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for, defaultCountry })
+			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for })
 			if (result.lat == null || result.lon == null) return []
 			const out = toNominatimResult(forwardToResolved(result), { addressdetails: params.addressdetails })
 			// Country tag isn't always in the hierarchy (US admin results omit it); fall back to the
-			// resolver's country constraint, which is the country the result resolved under.
-			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? defaultCountry
+			// US-centric-data default so US results still get a flag / calling code / currency.
+			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? annotationCountryFallback
 			const countryCode = matchCountry(countryName)?.iso2
 			out.annotations = toOpenCage(
 				await annotate({ lat: result.lat, lon: result.lon, countryCode, placeName: result.locality ?? undefined })
