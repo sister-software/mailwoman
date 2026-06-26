@@ -98,10 +98,14 @@ const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 const resolvesWithin = async (query, opts, c) => {
 	try {
 		const r = await geocodeAddress(query, { classifier, resolver, shards: shards.for, ...opts })
-		if (r.lat == null || r.lon == null) return { ok: false, us: false }
-		return { ok: haversineKm(r.lat, r.lon, c.lat, c.lon) <= RESOLVE_KM, us: c.cc !== "US" && inUs(r.lat, r.lon) }
+		if (r.lat == null || r.lon == null) return { ok: false, us: false, got: false }
+		return {
+			ok: haversineKm(r.lat, r.lon, c.lat, c.lon) <= RESOLVE_KM,
+			us: c.cc !== "US" && inUs(r.lat, r.lon),
+			got: true,
+		}
 	} catch {
-		return { ok: false, us: false }
+		return { ok: false, us: false, got: false }
 	}
 }
 
@@ -111,11 +115,14 @@ for (const c of sample) {
 	const query = `${c.name}, ${c.countryName}`
 	const bare = await resolvesWithin(query, {}, c)
 	const hint = await resolvesWithin(query, { defaultCountry: c.cc }, c)
-	const e = perCountry.get(c.cc) ?? { n: 0, bare: 0, withCc: 0, namesake: 0, name: c.countryName }
+	const e = perCountry.get(c.cc) ?? { n: 0, bare: 0, withCc: 0, namesake: 0, hintEmpty: 0, name: c.countryName }
 	e.n++
 	if (bare.ok) e.bare++
 	if (hint.ok) e.withCc++
 	if (bare.us) e.namesake++
+	// A hint that resolves nothing means the queried name matches no place in that country — the record
+	// is under another surface form (exonym). A hint that resolves the WRONG place is a coverage miss.
+	if (!hint.ok && !hint.got) e.hintEmpty++
 	perCountry.set(c.cc, e)
 	if (++done % 25 === 0) {
 		global.gc()
@@ -139,6 +146,11 @@ const bareSupported = rows.filter((r) => r.bareRate >= 0.5)
 const frontier = rows.filter((r) => r.bareRate < 0.5)
 const placerRecoverable = frontier.filter((r) => r.ccRate >= 0.5)
 const residual = frontier.filter((r) => r.ccRate < 0.5)
+// Within the residual, why did the hint fail? Mostly hint-empty (the name isn't in that country → the
+// record is under another surface form → the cheap alt-name/exonym fix) vs mostly hint-wrong-place
+// (coverage/disambiguation → needs more gazetteer data). misses = the hint-unresolved cities.
+const altNameLike = residual.filter((r) => r.hintEmpty > (r.n - r.withCc) / 2)
+const coverageLike = residual.filter((r) => r.hintEmpty <= (r.n - r.withCc) / 2)
 
 const L = []
 L.push("# #822 placer-frontier diagnostic — bare vs country-hint, by country")
@@ -154,7 +166,10 @@ L.push(
 )
 L.push(`- Bare US-namesake misroutes: **${pct(totalNs, totalN)}%** (${totalNs}/${totalN}) — undercounts the placer gap`)
 L.push(
-	`- Countries: **${bareSupported.length}** bare-supported · **${placerRecoverable.length}** placer-recoverable (#822) · **${residual.length}** residual (exonym/coverage)`
+	`- Countries: **${bareSupported.length}** bare-supported · **${placerRecoverable.length}** placer-recoverable (#822) · **${residual.length}** residual`
+)
+L.push(
+	`- Residual splits: **${altNameLike.length}** name-not-found (English name matches no in-country record — exonym fix where the record exists under a local name, else coverage-absence) · **${coverageLike.length}** wrong-place (coverage/disambiguation)`
 )
 L.push("")
 L.push(`> **How to read this.** Bare resolve-rate is the placer ceiling, not the geocoder's capability — a`)
@@ -170,12 +185,29 @@ for (const r of placerRecoverable) {
 	L.push(`| ${r.name} | ${r.cc} | ${r.bare}/${r.n} | ${r.withCc}/${r.n} |`)
 }
 L.push("")
-L.push(`## Residual (exonym / gazetteer coverage) — a hint does NOT fix it; a different lever`)
+L.push(`## Residual A — name-not-found (exonym fix, or coverage-absence)`)
 L.push("")
-L.push("| Country | ISO2 | Bare | +hint | bare→US |")
+L.push(`The hint returns NOTHING: the English query name matches no place in the country. Where the record`)
+L.push(`exists under a LOCAL name (\`Warsaw\` vs \`Warszawa\` — proven end-to-end), indexing alt-name surface forms`)
+L.push(`onto the candidate table fixes it cheaply (#823, no model change). Where the country has no candidate`)
+L.push(`records at all, it's coverage. European exonyms dominate; the per-country split needs a local-name probe.`)
+L.push(`\`hint→∅\` = of the hint-unresolved cities, how many returned no result (vs a wrong place).`)
+L.push("")
+L.push("| Country | ISO2 | Bare | +hint | hint→∅ |")
 L.push("| --- | --- | ---: | ---: | ---: |")
-for (const r of residual) {
-	L.push(`| ${r.name} | ${r.cc} | ${r.bare}/${r.n} | ${r.withCc}/${r.n} | ${r.namesake}/${r.n} |`)
+for (const r of altNameLike) {
+	L.push(`| ${r.name} | ${r.cc} | ${r.bare}/${r.n} | ${r.withCc}/${r.n} | ${r.hintEmpty}/${r.n - r.withCc} |`)
+}
+L.push("")
+L.push(`## Residual B — gazetteer coverage / disambiguation`)
+L.push("")
+L.push(`The hint returns a WRONG place: the country has a same-name match but the target city isn't in the`)
+L.push(`candidate gazetteer, or loses disambiguation. Needs more data, not alt-names (Beijing, Rio).`)
+L.push("")
+L.push("| Country | ISO2 | Bare | +hint | hint→∅ |")
+L.push("| --- | --- | ---: | ---: | ---: |")
+for (const r of coverageLike) {
+	L.push(`| ${r.name} | ${r.cc} | ${r.bare}/${r.n} | ${r.withCc}/${r.n} | ${r.hintEmpty}/${r.n - r.withCc} |`)
 }
 L.push("")
 L.push(`## Bare-supported (≥50% resolve with no hint) — US + the #743 safelist + tail`)
