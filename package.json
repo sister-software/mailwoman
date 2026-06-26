@@ -83,6 +83,7 @@
 		"libpostal",
 		"timezone-lookup",
 		"un-locode-lookup",
+		"nuts-lookup",
 		"core",
 		"resolver",
 		"spatial",

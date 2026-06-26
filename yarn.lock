@@ -5043,6 +5043,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/nuts-lookup@workspace:nuts-lookup":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/nuts-lookup@workspace:nuts-lookup"
+  dependencies:
+    "@mailwoman/annotations": "workspace:*"
+  bin:
+    nuts-lookup: ./out/cli.js
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/photon@workspace:photon":
   version: 0.0.0-use.local
   resolution: "@mailwoman/photon@workspace:photon"
