@@ -11,6 +11,7 @@
 		{ "path": "../annotations" },
 		{ "path": "../codex" },
 		{ "path": "../spatial" },
+		{ "path": "../timezone-lookup" },
 		{ "path": "../neural" },
 		{ "path": "../resolver" },
 		{ "path": "../resolver-wof-sqlite" },

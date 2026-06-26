@@ -5028,6 +5028,7 @@ __metadata:
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/timezone-lookup": "workspace:*"
     express: "npm:^5.2.1"
     mailwoman: "workspace:*"
   bin:
@@ -5186,7 +5187,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/timezone-lookup@workspace:timezone-lookup":
+"@mailwoman/timezone-lookup@workspace:*, @mailwoman/timezone-lookup@workspace:timezone-lookup":
   version: 0.0.0-use.local
   resolution: "@mailwoman/timezone-lookup@workspace:timezone-lookup"
   dependencies:

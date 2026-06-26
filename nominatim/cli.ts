@@ -18,6 +18,7 @@ import { countryReferenceAnnotator } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
+import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
 import express from "express"
 import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geocode-core"
 import {
@@ -27,6 +28,7 @@ import {
 	wofShardPaths,
 } from "mailwoman/resolver-backend"
 import { existsSync } from "node:fs"
+import { join } from "node:path"
 import { parseArgs } from "node:util"
 import {
 	createNominatimRouter,
@@ -94,7 +96,10 @@ async function serve(): Promise<void> {
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 	const defaultCountry = resolveCandidateDbPath() ? undefined : "US"
 	const reverseGeo = adminDbPath ? new resolverMod.WofReverseGeocoder({ adminDbPath }) : undefined
-	const annotate = composeAnnotators([coordinateFormatAnnotator, countryReferenceAnnotator])
+	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
+	const tzDbPath = join(mailwomanDataRoot(), "timezone", "timezone.db")
+	if (existsSync(tzDbPath)) annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDbPath })))
+	const annotate = composeAnnotators(annotators)
 
 	const engine: NominatimEngine = {
 		async search(params) {
