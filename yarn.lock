@@ -5025,6 +5025,7 @@ __metadata:
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/neural": "workspace:*"
+    "@mailwoman/nuts-lookup": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
@@ -5043,7 +5044,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/nuts-lookup@workspace:nuts-lookup":
+"@mailwoman/nuts-lookup@workspace:*, @mailwoman/nuts-lookup@workspace:nuts-lookup":
   version: 0.0.0-use.local
   resolution: "@mailwoman/nuts-lookup@workspace:nuts-lookup"
   dependencies:

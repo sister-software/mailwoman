@@ -16,6 +16,7 @@
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { countryReferenceAnnotator } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { makeNutsAnnotator, NutsLookup } from "@mailwoman/nuts-lookup"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
@@ -102,6 +103,8 @@ async function serve(): Promise<void> {
 	if (existsSync(tzDbPath)) annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDbPath })))
 	const ulDbPath = join(mailwomanDataRoot(), "un-locode", "un-locode.db")
 	if (existsSync(ulDbPath)) annotators.push(makeUnLocodeAnnotator(new UnLocodeLookup({ databasePath: ulDbPath })))
+	const nutsDbPath = join(mailwomanDataRoot(), "nuts", "nuts.db")
+	if (existsSync(nutsDbPath)) annotators.push(makeNutsAnnotator(new NutsLookup({ databasePath: nutsDbPath })))
 	const annotate = composeAnnotators(annotators)
 
 	const engine: NominatimEngine = {
