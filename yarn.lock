@@ -5029,6 +5029,7 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/timezone-lookup": "workspace:*"
+    "@mailwoman/un-locode-lookup": "workspace:*"
     express: "npm:^5.2.1"
     mailwoman: "workspace:*"
   bin:
@@ -5197,7 +5198,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/un-locode-lookup@workspace:un-locode-lookup":
+"@mailwoman/un-locode-lookup@workspace:*, @mailwoman/un-locode-lookup@workspace:un-locode-lookup":
   version: 0.0.0-use.local
   resolution: "@mailwoman/un-locode-lookup@workspace:un-locode-lookup"
   dependencies:

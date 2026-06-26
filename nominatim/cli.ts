@@ -19,6 +19,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
+import { makeUnLocodeAnnotator, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
 import express from "express"
 import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geocode-core"
 import {
@@ -99,6 +100,8 @@ async function serve(): Promise<void> {
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
 	const tzDbPath = join(mailwomanDataRoot(), "timezone", "timezone.db")
 	if (existsSync(tzDbPath)) annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDbPath })))
+	const ulDbPath = join(mailwomanDataRoot(), "un-locode", "un-locode.db")
+	if (existsSync(ulDbPath)) annotators.push(makeUnLocodeAnnotator(new UnLocodeLookup({ databasePath: ulDbPath })))
 	const annotate = composeAnnotators(annotators)
 
 	const engine: NominatimEngine = {

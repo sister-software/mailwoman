@@ -21,6 +21,7 @@
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/timezone-lookup": "workspace:*",
+		"@mailwoman/un-locode-lookup": "workspace:*",
 		"express": "^5.2.1",
 		"mailwoman": "workspace:*"
 	},

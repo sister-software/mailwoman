@@ -12,6 +12,7 @@
 		{ "path": "../codex" },
 		{ "path": "../spatial" },
 		{ "path": "../timezone-lookup" },
+		{ "path": "../un-locode-lookup" },
 		{ "path": "../neural" },
 		{ "path": "../resolver" },
 		{ "path": "../resolver-wof-sqlite" },
