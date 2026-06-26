@@ -13,7 +13,7 @@ import {
 } from "../styles/layers.js"
 import { type TileSetSourceRecord } from "../styles/sources.js"
 import { BaseLayers } from "./layers.js"
-import { createTerrainDEMSource, HillshadeTileSetID, TerrainTileSetID } from "./terrain.js"
+import { createTerrainDEMSource, HillshadeTileSetID } from "./terrain.js"
 
 //#endregion
 
@@ -64,21 +64,21 @@ export class StyleSpecificationComposer {
 	layersList: LayerSpecificationList
 	light: LightSpecification
 	sky: SkySpecification
-	terrain: TerrainSpecification
+	// terrain: TerrainSpecification
 	sources: TileSetSourceRecord
 
 	constructor(spec: StyleSpecificationComposition) {
 		this.light = createLightSpec(spec.light)
 		this.sky = createSkySpec(spec.sky)
 
-		this.terrain = {
-			source: TerrainTileSetID,
-			...spec.terrain,
-		}
+		// this.terrain = {
+		// 	source: TerrainTileSetID,
+		// 	...spec.terrain,
+		// }
 
 		this.sources = {
 			...spec.sources,
-			[TerrainTileSetID]: createTerrainDEMSource(),
+			// [TerrainTileSetID]: createTerrainDEMSource(),
 			[HillshadeTileSetID]: createTerrainDEMSource(),
 		}
 
@@ -103,7 +103,7 @@ export class StyleSpecificationComposer {
 			sprite: "https://public.sister.software/protomaps/sprites/v4/light",
 			light: createLightSpec(this.light),
 			sky: createSkySpec(this.sky),
-			terrain: this.terrain,
+			// terrain: this.terrain,
 			sources: this.sources,
 			layers: this.layers,
 		}

@@ -14,7 +14,8 @@
 
 import type { Map as MapLibreMap, VectorSourceSpecification } from "maplibre-gl"
 
-export const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
+export const TILE_WORKER_URL = "https://tiles.sister.software"
+export const BASEMAP_TILEJSON_URL = `${TILE_WORKER_URL}/basemap-v4.json`
 
 const BBOX_SOURCE = "mailwoman-bbox"
 const BBOX_FILL_LAYER = "mailwoman-bbox-fill"

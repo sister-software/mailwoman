@@ -4,12 +4,37 @@
  * @author Teffen Ellis, et al.
  */
 
-import { type FillExtrusionLayerSpecification, type LayerSpecification } from "@maplibre/maplibre-gl-style-spec"
-import { interpolateTurbo } from "d3-scale-chromatic"
+import {
+	type ExpressionSpecification,
+	type FillExtrusionLayerSpecification,
+	type LayerSpecification,
+} from "@maplibre/maplibre-gl-style-spec"
 import { LayerID } from "../styles/layers.js"
 import { MailwomanBaseTileSetID } from "./theme.js"
 
 const BuildingLayerID = LayerID.bind(null, "buildings")
+
+const POP_START = 12.5 // zoom where buildings start rising
+const POP_END = 13 // zoom where they reach full height (Protomaps fully loaded here)
+const ROOF_GAP = 0.1 // meters: tiny lift so the band clears the roof (kills z-fight)
+const ROOF_CAP = 1 // meters: band thickness
+
+const buildingHeight = (offset = 0): ExpressionSpecification => [
+	"+",
+	["coalesce", ["get", "height"], ["get", "minheight"], 10],
+	offset,
+]
+
+/** Wrap a target-height expression in the zoom-driven pop interpolation. */
+const popHeight = (target: ExpressionSpecification): ExpressionSpecification => [
+	"interpolate",
+	["linear"],
+	["zoom"],
+	POP_START,
+	0,
+	POP_END,
+	target,
+]
 
 /**
  * Layer definitions for building data.
@@ -19,27 +44,34 @@ export const BuildingLayers: LayerSpecification[] = [
 		id: BuildingLayerID("buildings-extruded"),
 
 		paint: {
-			"fill-extrusion-color": [
-				// ---
-				"interpolate",
-				// ["exponential", 0.25],
-				["linear"],
-				[
-					// --
-					"coalesce",
-					["get", "height"],
-					["get", "minheight"],
-					10,
-				],
-				...Array.from({ length: 10 }, (_, i) => {
-					const sizeScalingFactor = 250 - 250 / i
-
-					return [sizeScalingFactor, interpolateTurbo(sizeScalingFactor / 250)] as [number, string]
-				}).flat(),
-			],
+			"fill-extrusion-color": "hsl(276.52deg 10.83% 10.31%)",
 			"fill-extrusion-translate": [0.1, 0.1],
+			"fill-extrusion-opacity": ["interpolate", ["linear"], ["zoom"], 14, 0, 14.5, 1],
 		},
 	}),
+
+	// Roof-edge outline: thin extruded band sitting at the top of each building.
+	{
+		id: "basemap-buildings-roof-outline",
+		type: "fill-extrusion",
+		source: MailwomanBaseTileSetID,
+		"source-layer": "buildings",
+		minzoom: 10,
+		paint: {
+			// "fill-extrusion-color": "hsl(240deg 100% 80%)", // match footprint outline
+			"fill-extrusion-color": "hsl(276.52deg 13% 12.31%)",
+
+			"fill-extrusion-vertical-gradient": false,
+			"fill-extrusion-translate-anchor": "map",
+			"fill-extrusion-opacity": 1,
+			// top of the band = full building height
+			// "fill-extrusion-height": popHeight(buildingHeight()),
+			// // base of the band = full height minus the cap thickness (clamped ≥ 0)
+			// "fill-extrusion-base": popHeight([ "max", [ "-", buildingHeight(), ROOF_CAP ], 0 ]),
+			"fill-extrusion-height": popHeight(["+", buildingHeight(), ROOF_GAP, ROOF_CAP]),
+			"fill-extrusion-base": popHeight(["+", buildingHeight(), ROOF_GAP]),
+		},
+	},
 
 	{
 		id: "basemap-buildings-outline",
@@ -89,34 +121,14 @@ function createBuildingFillStyleLayer(fillStyleSpec: BuildingFillStyleSpec): Lay
 		type: "fill-extrusion",
 		source: MailwomanBaseTileSetID,
 		"source-layer": "buildings",
-		minzoom: 12,
+		minzoom: 10,
 		paint: {
 			...fillStyleSpec.paint,
 			"fill-extrusion-vertical-gradient": true,
-
-			"fill-extrusion-height": [
-				"+",
-				[
-					// --
-					"coalesce",
-					["get", "height"],
-					["get", "minheight"],
-					10,
-				],
-				fillStyleSpec.heightOffset || 0,
-			],
+			"fill-extrusion-height": popHeight(buildingHeight(fillStyleSpec.heightOffset)),
+			"fill-extrusion-base": 0,
 			"fill-extrusion-translate-anchor": "map",
-			// "fill-extrusion-opacity": 0.7,
-			"fill-extrusion-opacity": [
-				// We fade out the outline at higher zoom levels
-				"interpolate",
-				["linear"],
-				["zoom"],
-				11,
-				0.6,
-				16,
-				0.95,
-			],
+			"fill-extrusion-opacity": 0.95,
 		},
 	}
 

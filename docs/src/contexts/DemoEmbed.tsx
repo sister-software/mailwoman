@@ -236,7 +236,8 @@ export const DemoEmbedProvider: React.FC<DemoEmbedProviderProps> = ({ sqljsBaseU
 
 				if (release?.hasWofDb) {
 					try {
-						const { loadHttpvfsDb, WofCandidateTableLookup } = await import("../shared/httpvfs-resolver")
+						const { loadHttpvfsDb, WofCandidateTableLookup: WOFCandidateTableLookup } =
+							await import("../shared/httpvfs-resolver")
 						const worker = await loadHttpvfsDb(adminGazetteerUrl(), sqljsBaseUrl)
 						if (cancelled) return
 						const wofLookup = new WofCandidateTableLookup(worker)

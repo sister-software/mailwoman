@@ -13,7 +13,7 @@
 import { DatabaseSync } from "node:sqlite"
 import { afterEach, describe, expect, test } from "vitest"
 
-import { WofCandidateTableLookup } from "./httpvfs-resolver.js"
+import { WOFCandidateTableLookup } from "./httpvfs-resolver.js"
 
 /** Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape). */
 function stubWorker(db: DatabaseSync) {
@@ -66,7 +66,7 @@ afterEach(() => {
 
 describe("browser WofCandidateTableLookup postal-city side-index (#741)", () => {
 	test("WITH the side-index, a postal-city + postcode resolves to the geographic locality", async () => {
-		const lk = new WofCandidateTableLookup(stubWorker(makeDb(true)))
+		const lk = new WOFCandidateTableLookup(stubWorker(makeDb(true)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 		expect(hits).toHaveLength(1)
 		expect(hits[0]!.name).toBe("Nashville")
@@ -75,20 +75,20 @@ describe("browser WofCandidateTableLookup postal-city side-index (#741)", () => 
 	})
 
 	test("a BARE query (no postcode) is untouched — bare 'Antioch' resolves to the CA distractor", async () => {
-		const lk = new WofCandidateTableLookup(stubWorker(makeDb(true)))
+		const lk = new WOFCandidateTableLookup(stubWorker(makeDb(true)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch")
 		expect(hits[0]!.lat).toBeCloseTo(38.0, 1)
 	})
 
 	test("a postcode NOT in the side-index falls through to the normal probe", async () => {
-		const lk = new WofCandidateTableLookup(stubWorker(makeDb(true)))
+		const lk = new WOFCandidateTableLookup(stubWorker(makeDb(true)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "99999", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch")
 	})
 
 	test("a candidate.db WITHOUT the side-index is byte-stable (today's production demo)", async () => {
-		const lk = new WofCandidateTableLookup(stubWorker(makeDb(false)))
+		const lk = new WOFCandidateTableLookup(stubWorker(makeDb(false)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch") // no probe → normal population-first ranking
 	})

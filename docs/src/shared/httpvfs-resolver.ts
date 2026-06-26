@@ -437,7 +437,7 @@ interface CandidateCodeMaps {
  * to its stored bbox (returned in `findPlace`'s result), and the locality query is
  * point-in-bbox-filtered on the candidate centroid — exactly what `runCascade` expects.
  */
-export class WofCandidateTableLookup implements MailwomanLookupLike {
+export class WOFCandidateTableLookup implements MailwomanLookupLike {
 	#worker: HttpvfsWorker
 	#codes: Promise<CandidateCodeMaps> | undefined
 	/** Memoized presence of the #741 `postal_city_candidate` side-index (one worker round trip). */

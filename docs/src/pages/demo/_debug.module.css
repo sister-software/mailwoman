@@ -1,0 +1,29 @@
+.featureTargets {
+	font-family: var(--ifm-font-family-monospace);
+	color: var(--ifm-color-content-inverse);
+	-webkit-text-stroke: 3px var(--ifm-color-content);
+	paint-order: stroke;
+}
+
+.positionDetails,
+.coordDetails {
+	display: flex;
+	gap: 1em;
+}
+
+.featureProperties {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 2px 8px;
+	margin: 0;
+	background: var(--ifm-hover-overlay);
+	backdrop-filter: blur(2px);
+}
+.featureProperties dt {
+	font-weight: 600;
+}
+.featureProperties dd {
+	margin: 0;
+	white-space: pre-wrap;
+	word-break: break-word;
+}

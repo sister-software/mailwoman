@@ -22,7 +22,6 @@
 
 import { type AddressNode, type AddressTree, decodeAsJson } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWofResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { readFileSync, writeFileSync } from "node:fs"
 import { arg } from "../lib/cli-args.ts"
@@ -87,7 +86,12 @@ async function main() {
 		.split("\n")
 		.map((l) => JSON.parse(l))
 
-	const { createScorer } = await import("@mailwoman/neural/scorer")
+	const [{ WofSqlitePlaceLookup }, { createScorer }, { createWofResolver }] = await Promise.all([
+		import("@mailwoman/resolver-wof-sqlite"),
+		import("@mailwoman/neural/scorer"),
+		import("@mailwoman/resolver"),
+	])
+
 	const anchorPath = arg("anchor-lookup", dataRootPath("anchor", "pilot-anchor-lookup.json"))
 	const neural = await createScorer({
 		modelPath: arg("model"),
@@ -97,7 +101,6 @@ async function main() {
 		strict: true,
 		tier: "server",
 	})
-	const { WofSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const resolver = createWofResolver(new WofSqlitePlaceLookup({ databasePath: wofDb }) as never)
 	const resolveOpts = { defaultCountry: arg("default-country", "FR") }
 

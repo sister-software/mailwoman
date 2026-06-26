@@ -34,6 +34,7 @@ export interface MailwomanLookupLike {
 		/** Point-in-bbox filter — constrains candidates to a parsed region/state's bounds. */
 		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		limit?: number
+		postcode?: string
 	}) => Promise<
 		Array<{
 			id: number

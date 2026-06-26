@@ -20,7 +20,7 @@
 		"@mailwoman/core": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": ">=24.18.0"
+		"@types/node": ">=26.0.1"
 	},
 	"files": [
 		"out/**/*.js",

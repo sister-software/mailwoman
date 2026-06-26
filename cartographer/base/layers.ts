@@ -6,9 +6,9 @@
 
 import { layers } from "@protomaps/basemaps"
 import { type LayerSpecification } from "maplibre-gl"
-import { BuildingLayers } from "../base/buildings.js"
 import { MailwomanBaseFlavor, MailwomanBaseTileSetID } from "../base/theme.js"
 import { LayerID } from "../styles/layers.js"
+import { BuildingLayers } from "./buildings.js"
 import { HillshadeTileSetID } from "./terrain.js"
 
 export const HillsLayerID = LayerID(HillshadeTileSetID, "hills")
@@ -41,10 +41,12 @@ export const BaseLayers: LayerSpecification[] = [
 		id: HillsLayerID,
 		type: "hillshade",
 		source: HillshadeTileSetID,
+		minzoom: 7,
 		paint: {
 			"hillshade-exaggeration": 0.25,
 			"hillshade-accent-color": "hsl(240deg 100% 95%)",
 			"hillshade-shadow-color": "hsl(240deg 100% 5%)",
+			"hillshade-highlight-color": "hsl(240deg 100% 75%)",
 		},
 	},
 	...BuildingLayers,
