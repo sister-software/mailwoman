@@ -25,6 +25,14 @@
  *   CPU-only; calls global.gc() periodically to dodge the onnxruntime batch-eval leak (#787/#792,
  *   ~380-parse SIGKILL) — REQUIRES --expose-gc. Two geocodes per city (bare + hint).
  *
+ *   ⚠ CONFIG-DEPENDENT (#824). Non-US resolution depends on `MAILWOMAN_CANDIDATE_DB`. With it UNSET
+ *   (the default drop-in / `npx serve`) this measures the admin-only path. With a candidate DB set,
+ *   the backend is population-first and IGNORES the country hint (the "+hint" column collapses to
+ *   the bare one), and builds vary. For production-representative numbers, set it to the operator's
+ *   CANONICAL candidate build; state which config a given report ran on. The earlier admin-only run
+ *   over-stated the non-US picture (see the caveat in
+ *   `docs/articles/evals/2026-06-26-frontier-gap.md`).
+ *
  *   Run: node --expose-gc scripts/eval/frontier-gap.mjs [--per-country 3] [--min-pop 50000] [--out
  *   <md>]
  */
