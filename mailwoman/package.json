@@ -26,6 +26,7 @@
 		"./package.json": "./package.json",
 		".": "./out/index.js",
 		"./geocode-core": "./out/geocode-core.js",
+		"./resolver-backend": "./out/resolver-backend.js",
 		"./server": "./out/server/index.js",
 		"./sdk/test": "./out/sdk/test/index.js",
 		"./sdk/repo": "./out/sdk/repo.js",

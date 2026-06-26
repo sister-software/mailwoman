@@ -212,3 +212,58 @@ export function createNominatimRouter(engine: NominatimEngine): Router {
 
 	return router
 }
+
+/**
+ * A resolved address in a neutral shape, the input to {@link toNominatimResult}. The engine maps its
+ * native geocode/reverse result into this; the formatter renders it as a Nominatim result. This is
+ * the #804 mapping seam, kept dependency-free (no `@mailwoman/*` import) so it stays
+ * unit-testable.
+ */
+export interface ResolvedAddress {
+	lat: number | null
+	lon: number | null
+	address: NominatimAddressDetails
+	/** Pre-rendered display name; falls back to the address values joined by ", ". */
+	displayName?: string
+	category?: string
+	type?: string
+	importance?: number
+	placeRank?: number
+	boundingbox?: [string, string, string, string]
+	/** A stable id from the resolver (WOF/GERS); a deterministic hash is used when absent. */
+	placeId?: string | number
+}
+
+/** The attribution string emitted as `licence` (the data sources Mailwoman resolves over). */
+export const MAILWOMAN_LICENCE = "Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER"
+
+function stableId(seed: string): number {
+	let h = 5381
+	for (let i = 0; i < seed.length; i++) h = (h * 33) ^ seed.charCodeAt(i)
+	return h >>> 0
+}
+
+/**
+ * Render a {@link ResolvedAddress} as a Nominatim result. `addressdetails` gates the `address`
+ * block, matching Nominatim. The `annotations` block is attached by the caller (empty until the
+ * annotations layer lands).
+ */
+export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: boolean } = {}): NominatimResult {
+	const displayName = r.displayName ?? Object.values(r.address).filter(Boolean).join(", ")
+	const lat = r.lat != null ? String(r.lat) : ""
+	const lon = r.lon != null ? String(r.lon) : ""
+	const result: NominatimResult = {
+		place_id: r.placeId ?? stableId(`${lat},${lon},${displayName}`),
+		licence: MAILWOMAN_LICENCE,
+		lat,
+		lon,
+		display_name: displayName,
+	}
+	if (r.category != null) result.class = r.category
+	if (r.type != null) result.type = r.type
+	if (r.importance != null) result.importance = r.importance
+	if (r.placeRank != null) result.place_rank = r.placeRank
+	if (r.boundingbox) result.boundingbox = r.boundingbox
+	if (opts.addressdetails) result.address = r.address
+	return result
+}
