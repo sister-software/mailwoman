@@ -150,11 +150,67 @@ export function sunTimes(
 	return { rise: toEpoch(transit - hourAngle / 360), set: toEpoch(transit + hourAngle / 360), noon }
 }
 
+// MGRS / UTM (WGS84). The forward Transverse Mercator series + the military grid lettering.
+const UTM_A = 6378137.0
+const UTM_F = 1 / 298.257223563
+const UTM_K0 = 0.9996
+const UTM_E2 = UTM_F * (2 - UTM_F)
+const UTM_EP2 = UTM_E2 / (1 - UTM_E2)
+
+function latLonToUtm(lat: number, lon: number): { zone: number; easting: number; northing: number } {
+	const zone = Math.floor((lon + 180) / 6) + 1
+	const lon0 = toRad((zone - 1) * 6 - 180 + 3)
+	const phi = toRad(lat)
+	const N = UTM_A / Math.sqrt(1 - UTM_E2 * Math.sin(phi) ** 2)
+	const T = Math.tan(phi) ** 2
+	const C = UTM_EP2 * Math.cos(phi) ** 2
+	const A = Math.cos(phi) * (toRad(lon) - lon0)
+	const M =
+		UTM_A *
+		((1 - UTM_E2 / 4 - (3 * UTM_E2 ** 2) / 64 - (5 * UTM_E2 ** 3) / 256) * phi -
+			((3 * UTM_E2) / 8 + (3 * UTM_E2 ** 2) / 32 + (45 * UTM_E2 ** 3) / 1024) * Math.sin(2 * phi) +
+			((15 * UTM_E2 ** 2) / 256 + (45 * UTM_E2 ** 3) / 1024) * Math.sin(4 * phi) -
+			((35 * UTM_E2 ** 3) / 3072) * Math.sin(6 * phi))
+	const easting =
+		UTM_K0 * N * (A + ((1 - T + C) * A ** 3) / 6 + ((5 - 18 * T + T ** 2 + 72 * C - 58 * UTM_EP2) * A ** 5) / 120) +
+		500000
+	let northing =
+		UTM_K0 *
+		(M +
+			N *
+				Math.tan(phi) *
+				(A ** 2 / 2 +
+					((5 - T + 9 * C + 4 * C ** 2) * A ** 4) / 24 +
+					((61 - 58 * T + T ** 2 + 600 * C - 330 * UTM_EP2) * A ** 6) / 720))
+	if (lat < 0) northing += 10000000
+	return { zone, easting, northing }
+}
+
+const MGRS_LAT_BANDS = "CDEFGHJKLMNPQRSTUVWX"
+const MGRS_COL_SETS = ["ABCDEFGH", "JKLMNPQR", "STUVWXYZ"]
+const MGRS_ROW_LETTERS = "ABCDEFGHJKLMNPQRSTUV"
+
+/** Military Grid Reference System for a coordinate (`"18SUJ2340806479"`); `""` outside MGRS bands
+(±80°/84°). */
+export function toMGRS(lat: number, lon: number): string {
+	if (lat < -80 || lat > 84) return ""
+	const band = MGRS_LAT_BANDS[Math.floor((lat + 80) / 8)]!
+	const { zone, easting, northing } = latLonToUtm(lat, lon)
+	const colLetter = MGRS_COL_SETS[(zone - 1) % 3]![Math.floor(easting / 100000) - 1]!
+	let row = Math.floor(northing / 100000) % 20
+	if (zone % 2 === 0) row = (row + 5) % 20
+	const rowLetter = MGRS_ROW_LETTERS[row]!
+	const e = String(Math.floor(easting % 100000)).padStart(5, "0")
+	const n = String(Math.floor(northing % 100000)).padStart(5, "0")
+	return `${zone}${band}${colLetter}${rowLetter}${e}${n}`
+}
+
 /** Fill the coordinate-format slice of an {@link AnnotationSet} from a `{lat, lon}`. */
 export const coordinateFormatAnnotator: Annotator = ({ lat, lon, date }): Partial<AnnotationSet> => ({
 	dms: toDMS(lat, lon),
 	geohash: toGeohash(lat, lon),
 	maidenhead: toMaidenhead(lat, lon),
+	mgrs: toMGRS(lat, lon) || undefined,
 	mercator: toMercator(lat, lon),
 	qiblaBearing: qiblaBearing(lat, lon),
 	sun: sunTimes(lat, lon, date),
