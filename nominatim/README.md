@@ -47,7 +47,8 @@ of these.
 ## Status
 
 Shipped. `/search` and `/reverse` resolve over the live engine and return the enriched block; `/lookup`
-is not yet implemented (returns `501`). The forward `addressdetails` is admin-grained today (city / state
-/ postcode / country + coordinate); street-level is a refinement.
+is not yet implemented (returns `501`). `addressdetails` goes down to the house number and road when the
+query carries them — `1600 Pennsylvania Avenue NW, Washington, DC 20500` resolves to the rooftop
+(`38.897, -77.037`) with `house_number`, `road`, `city`, `state`, `postcode`, and `country_code`.
 
 For autocomplete / type-ahead, see the companion [`@mailwoman/photon`](../photon).

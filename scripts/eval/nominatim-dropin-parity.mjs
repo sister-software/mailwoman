@@ -51,6 +51,15 @@ const FIXTURE = [
 	{ q: "Toronto, Canada", lat: 43.6532, lon: -79.3832, frontier: true },
 ]
 
+// /reverse (geopy's geo.reverse): known coordinate → expected country_code. Exercises the
+// WofReverseGeocoder PIP path, a different code path than /search.
+const REVERSE_FIXTURE = [
+	{ lat: 38.8977, lon: -77.0365, cc: "us" },
+	{ lat: 42.3601, lon: -71.0589, cc: "us" },
+	{ lat: 52.52, lon: 13.405, cc: "de" },
+	{ lat: 48.8566, lon: 2.3522, cc: "fr" },
+]
+
 function arg(flag, fallback) {
 	const i = process.argv.indexOf(flag)
 	return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback
@@ -117,6 +126,28 @@ try {
 		rows.push({ q: fx.q, frontier: !!fx.frontier, resolved: true, contractOk: missing.length === 0, missing, km })
 	}
 
+	// /reverse — contract + did it land in the expected country (PIP over the admin polygons)?
+	const revRows = []
+	for (const fx of REVERSE_FIXTURE) {
+		let result
+		try {
+			const res = await fetch(`http://127.0.0.1:${PORT}/reverse?lat=${fx.lat}&lon=${fx.lon}&addressdetails=1`)
+			result = await res.json()
+		} catch {
+			result = undefined
+		}
+		const ok = result && typeof result === "object" && !Array.isArray(result)
+		const missing = ok ? checkContract(result, true) : ["(no result)"]
+		const cc = ok ? result.address?.country_code : undefined
+		revRows.push({
+			ll: `${fx.lat},${fx.lon}`,
+			contractOk: ok && missing.length === 0,
+			ccOk: cc === fx.cc,
+			cc,
+			expect: fx.cc,
+		})
+	}
+
 	const supported = rows.filter((r) => !r.frontier)
 	const frontier = rows.filter((r) => r.frontier)
 	const placedIn = (set) => set.filter((r) => r.resolved && r.km <= THRESHOLD_KM)
@@ -125,16 +156,18 @@ try {
 		.map((r) => r.km)
 		.sort((a, b) => a - b)
 	const median = errors.length ? errors[Math.floor(errors.length / 2)] : null
+	const revPass = revRows.filter((r) => r.contractOk && r.ccOk)
 
 	const lines = []
 	lines.push("# @mailwoman/nominatim drop-in parity")
 	lines.push("")
-	lines.push(`- Contract pass (#806): **${contractPass.length}/${rows.length}** results are geopy-parseable`)
+	lines.push(`- Forward contract (#806): **${contractPass.length}/${rows.length}** results are geopy-parseable`)
 	lines.push(
 		`- Resolve-rate @ ${THRESHOLD_KM} km — supported (US + #743 safelist): **${placedIn(supported).length}/${supported.length}**`
 	)
 	lines.push(`- Conditional median error (supported, placed): **${median == null ? "—" : `${median.toFixed(1)} km`}**`)
 	lines.push(`- Placer frontier (#743/#781, not gated): **${placedIn(frontier).length}/${frontier.length}** resolve`)
+	lines.push(`- Reverse contract + country (geo.reverse): **${revPass.length}/${revRows.length}**`)
 	lines.push("")
 	lines.push("| Query | Group | Resolved | Contract | Error (km) |")
 	lines.push("| --- | --- | :---: | :---: | ---: |")
@@ -145,6 +178,14 @@ try {
 			} | ${r.km == null ? "—" : r.km.toFixed(1)} |`
 		)
 	}
+	lines.push("")
+	lines.push("| Reverse (lat,lon) | Contract | Country |")
+	lines.push("| --- | :---: | :---: |")
+	for (const r of revRows) {
+		lines.push(
+			`| ${r.ll} | ${r.contractOk ? "✅" : "❌"} | ${r.ccOk ? `✅ ${r.cc}` : `❌ ${r.cc ?? "—"}≠${r.expect}`} |`
+		)
+	}
 	const report = lines.join("\n")
 	console.log(`\n${report}\n`)
 	if (OUT) {
@@ -152,9 +193,12 @@ try {
 		console.error(`[parity] wrote ${OUT}`)
 	}
 
-	// Gate on the contract (all rows) + the supported set resolving. Frontier misses are expected and
-	// tracked, not failures.
-	const failed = contractPass.length < rows.length || placedIn(supported).length < supported.length
+	// Gate on the forward contract (all rows) + the supported set resolving + reverse contract/country.
+	// Frontier misses are expected and tracked, not failures.
+	const failed =
+		contractPass.length < rows.length ||
+		placedIn(supported).length < supported.length ||
+		revPass.length < revRows.length
 	process.exitCode = failed ? 1 : 0
 } finally {
 	server.kill()
