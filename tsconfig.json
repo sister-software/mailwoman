@@ -48,6 +48,7 @@
 		{ "path": "./photon" },
 		{ "path": "./libpostal" },
 		{ "path": "./timezone-lookup" },
+		{ "path": "./un-locode-lookup" },
 		{ "path": "./tile-worker" }
 	]
 }

@@ -1,0 +1,32 @@
+{
+	"name": "@mailwoman/un-locode-lookup",
+	"version": "4.15.0",
+	"description": "Place → UN/LOCODE (UNECE Code for Trade and Transport Locations), by country + name or nearest coordinate. node:sqlite over the UNECE code list. An @mailwoman/annotations Annotator.",
+	"license": "AGPL-3.0-only",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "un-locode-lookup"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js",
+		"./build": "./out/build.js"
+	},
+	"dependencies": {
+		"@mailwoman/annotations": "workspace:*",
+		"csv-parse": "^5.6.0"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md"
+	],
+	"bin": "./out/cli.js",
+	"publishConfig": {
+		"access": "public"
+	}
+}

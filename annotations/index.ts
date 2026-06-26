@@ -98,6 +98,8 @@ export interface AnnotatorInput {
 	place?: unknown
 	/** ISO 3166-1 alpha-2 of the resolved country, when known — feeds country-reference annotators. */
 	countryCode?: string
+	/** The resolved place's name (locality), when known — feeds name-keyed annotators (UN/LOCODE). */
+	placeName?: string
 	/** The queried date for time-dependent annotations (sun times); defaults to "now" per annotator. */
 	date?: Date
 }

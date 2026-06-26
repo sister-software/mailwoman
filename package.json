@@ -82,6 +82,7 @@
 		"photon",
 		"libpostal",
 		"timezone-lookup",
+		"un-locode-lookup",
 		"core",
 		"resolver",
 		"spatial",

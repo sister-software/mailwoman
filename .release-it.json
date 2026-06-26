@@ -31,6 +31,7 @@
 				"variant-aliases",
 				"mailwoman",
 				"timezone-lookup",
+				"un-locode-lookup",
 				"libpostal",
 				"photon",
 				"nominatim"

@@ -5197,6 +5197,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/un-locode-lookup@workspace:un-locode-lookup":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/un-locode-lookup@workspace:un-locode-lookup"
+  dependencies:
+    "@mailwoman/annotations": "workspace:*"
+    csv-parse: "npm:^5.6.0"
+  bin:
+    un-locode-lookup: ./out/cli.js
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/universe@workspace:.":
   version: 0.0.0-use.local
   resolution: "@mailwoman/universe@workspace:."
