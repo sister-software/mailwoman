@@ -42,9 +42,10 @@ Parameters honored: `q`, the structured set (`street`, `city`, `county`, `state`
 ## What's different
 
 - **Better, not just equal: annotations.** Every result carries an `annotations` block — coordinate
-  formats (DMS, geohash, Maidenhead, Mercator, qibla bearing), the country flag, and the IANA timezone with its
-  current (DST-correct) offset. Nominatim returns none of these. It's the same block
-  [OpenCage](./how-mailwoman-compares) charges for.
+  formats (DMS, MGRS, geohash, Maidenhead, Mercator), qibla bearing, sun times, the country flag, calling
+  code, and currency, plus the IANA timezone with its current (DST-correct) offset and, where the data
+  bundles are present, the UN/LOCODE and EU NUTS codes. Nominatim returns none of these. It's the same
+  block [OpenCage](./how-mailwoman-compares) charges for.
 - **Ids.** Nominatim returns `osm_id` / `osm_type`. Mailwoman resolves over Who's On First and Overture,
   so the id scheme is ours; a `place_id` is always present and stable for a given result.
 - **Attribution.** The `licence` field names the data sources (Who's On First, Overture, OpenAddresses,
@@ -52,11 +53,16 @@ Parameters honored: `q`, the structured set (`street`, `city`, `county`, `state`
 
 ## The honest gaps
 
-- **Street-level `addressdetails` on forward search** is admin-grained today (city / state / postcode /
-  country + the coordinate); house-number and road land as a refinement. Reverse geocoding returns the
-  full admin chain.
-- **EU recall** trails Nominatim in places — it's a no-result gap, not a wrong-result one, and it's the
-  active work. US coverage leads.
+- **Coordinate precision varies by coverage.** Where the address-point and street shards reach,
+  `/search` returns the rooftop or an interpolated point — `1600 Pennsylvania Avenue NW` resolves to the
+  building, with `addressdetails` down to `house_number` and `road`. Where they don't, you get the admin
+  centroid: the right place, not the right doorstep. The `addressdetails` always reflect what was parsed.
+- **Some countries don't resolve yet.** The coarse country router confidently routes the US and the
+  well-covered EU set (ES / IT / NL / DE / FR), so `Berlin, Germany` lands in Berlin. It does not yet
+  emit Austria, Australia, the UK, or Canada, so `Vienna, Austria` collides with the US `Vienna` and
+  resolves there. That's the model's country coverage still growing
+  ([#822](https://github.com/sister-software/mailwoman/issues/822)), not a parser limit. US coverage
+  leads; the EU recall work is active.
 
 See [how Mailwoman compares](./how-mailwoman-compares) for the capability matrix across Nominatim,
 Photon, OpenCage, Pelias, and libpostal — including the two rows the hosted services can't check.
