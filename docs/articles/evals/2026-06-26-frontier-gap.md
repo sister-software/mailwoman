@@ -1,5 +1,22 @@
 # #822 placer-frontier diagnostic — bare vs country-hint, by country
 
+> ⚠ **Config caveat + correction (added after the fact).** These numbers were measured on the
+> **default drop-in config — the admin gazetteer (`admin-global-priority.db`) with NO candidate-ranking
+> DB** (`MAILWOMAN_CANDIDATE_DB` unset, which is exactly what `npx @mailwoman/nominatim serve` gives).
+> They are valid for that config, but resolution is **highly config-dependent** and I over-framed them
+> as the general non-US recall truth. With a candidate DB loaded, large distinctive cities that read as
+> "coverage" misses here actually resolve (London 553→2 km, Beijing 1661→9 km), so the "residual
+> coverage" framing below conflated true coverage with a missing candidate table. The candidate backend
+> is population-first and **ignores the country hint**, and the builds vary (the `-intl` build even
+> regressed the aggregate to ~12.8%), so the precise bare/+hint percentages and the exonym-vs-coverage
+> split are NOT settled — they need the operator's canonical candidate config pinned, then a re-run.
+>
+> **What survives, config-independent:** the **placer-namesake gap is real** — `Vienna, Austria`,
+> `Sydney`, `Warsaw`, `Toronto` resolve to their US namesakes _even with a candidate DB loaded_, because
+> the population-first ranking can't break the tie without a country prior. That's #822. And the
+> **default drop-in's non-US recall is poor** without a candidate DB. A separate exonym-sizing pass
+> (try-the-alternatenames) was withdrawn — it was both cap-buggy and confounded by this same config gap.
+
 _geonames cities15000, top 3/country by population (≥ 50000). "Resolved" = within
 50 km of the city's true coordinate. **Bare** = no country constraint (what the drop-in sends
 for a bare query); **+hint** = with the country as a `countrycodes` constraint. The bare→hint lift is
