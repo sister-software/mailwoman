@@ -45,6 +45,16 @@ supported set (US + the #743 safelist), tracks the placer frontier non-gated.
 collisions resolve to the US. Measured that widening `hardCountrySafelist` does nothing; the lever is
 the placer's emission (GPU model work).
 
+**Frontier diagnostic (#822/#823).** With the scoped theme done and Phase 6 GPU-gated, a DeepSeek
+consult steered the remaining hours to a CPU-only measured artifact the operator needs before
+greenlighting the GPU placer work. `scripts/eval/frontier-gap.mjs` forward-geocodes the top-3
+cities/country from geonames cities15000 (187 countries, 506 cities) twice — bare and with a country
+hint — and splits the non-US gap into two levers. Result: bare resolve **29.2% → +hint 46.6%** (the
+placer prize is **+17.4 pp / 36 countries**), but **97 countries fail even with a hint** — exonym
+(`Warsaw` vs the gazetteer's `Warszawa`, proven end-to-end) + non-US coverage, a larger and likely
+non-GPU lever. Filed #823 for that residual with the validated data path (index geonames/WOF alt-name
+surface forms onto the candidate table). Report: `docs/articles/evals/2026-06-26-frontier-gap.md`.
+
 ## What went well
 
 - **The harness earned its keep immediately.** It existed to prove the geopy contract; it surfaced the
@@ -56,6 +66,10 @@ the placer's emission (GPU model work).
 - **Verify-before-verdict fired repeatedly and correctly:** caught the countrycodes no-op against the
   guide's own claim; caught a stale-buildinfo compile that would have validated the wrong binary; caught
   the placer-vs-safelist distinction (the wide-safelist probe changed nothing).
+- **DeepSeek consult turned a gate into evidence.** With Phase 6 GPU-blocked, instead of forcing risky
+  work or idling, the consult reframed the remaining hours toward a CPU-only diagnostic — which produced
+  the bare-vs-hint split (#822 = +17.4 pp / 36 countries, #823 = the larger 97-country data lever) and a
+  proven exonym mechanism. A measured artifact for a decision the operator hadn't been able to size.
 
 ## What could have gone better
 
@@ -105,11 +119,11 @@ the placer's emission (GPU model work).
 | Metric           | Value                                          |
 | ---------------- | ---------------------------------------------- |
 | Duration         | ~14 h (02:00–16:00 UTC)                        |
-| Commits          | 41                                             |
+| Commits          | 45                                             |
 | New npm packages | 7                                              |
 | Modal spend      | $0 (local shift)                               |
 | GPU time         | 0                                              |
-| Issues filed     | 1 (#822)                                       |
+| Issues filed     | 2 (#822, #823)                                 |
 | CI failures      | 1 (pre-flight cartographer DEM tests — parked) |
 | Models trained   | 0                                              |
 | Demo regressions | 0                                              |
