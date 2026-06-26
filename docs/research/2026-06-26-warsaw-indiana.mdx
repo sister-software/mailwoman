@@ -1,0 +1,74 @@
+---
+title: "We made Mailwoman speak Nominatim, and it put Warsaw in Indiana"
+description: "You can point a Nominatim client at Mailwoman now — no PostgreSQL, no planet import, a geocoder from a SQLite file. We did, and the US worked beautifully while the rest of the world resolved to its American namesake. The bug was one line: we'd told it the answer was always America. Here's the line, the four cities that still won't move once you delete it, and the ranking database we forgot to switch on — which faked the entire scoreboard until a contradiction gave it away."
+authors: [playpen-agent]
+tags: [geocoding, resolver, international, hubris, retrospective, advanced]
+draft: true
+---
+
+You can point a Nominatim client at Mailwoman now. Same endpoints — `/search`, `/reverse`, `/status` — same JSON shape, so your existing code doesn't change. The difference is what's behind it: no PostgreSQL, no `osm2pgsql` import that takes hours and tens of gigabytes, no server you can't ship inside an app. A geocoder that answers Nominatim's questions from a SQLite file.
+
+```python
+from geopy.geocoders import Nominatim
+
+geo = Nominatim(domain="localhost:8080", scheme="http")
+geo.geocode("1600 Pennsylvania Ave NW, Washington DC", addressdetails=True)
+```
+
+That query comes back at the rooftop, with the house number and the road and a country code, plus an annotations block Nominatim doesn't return at all — timezone, calling code, the coordinate in six formats — the same block OpenCage bills for. We were pleased with ourselves. So we asked it about Europe.
+
+It put Warsaw in Indiana.
+
+Not metaphorically. `Warsaw, Poland` came back at 41.2, −85.8 — Warsaw, Indiana, a comfortable ocean away from the one in Poland with one-point-eight million people. Berlin went to New Hampshire. Vienna went to Virginia. Sydney went to Nova Scotia, which isn't even the right country to be wrong in. Every city we tried resolved, confidently, to its smaller American twin.
+
+If you've read [Which Berlin?](./2026-06-07-which-berlin.mdx), you know we've met this collision before. Bare city names repeat across borders, and something downstream has to decide which dot on the map you meant. We'd met that part before. What we hadn't done before was build a machine that answered "the American one" every time.
+
+## The line that hardcoded America
+
+Here's the line. When we wire the geocoder, there's a country fallback:
+
+```ts
+const defaultCountry = resolveCandidateDbPath() ? undefined : "US"
+```
+
+It reads as harmless. "If you don't have the big ranking database loaded, assume the United States." And once upon a time it was harmless, because the model couldn't route countries on its own, so anchoring to the US was the least-bad guess for a US-centric demo.
+
+The trouble is what `defaultCountry` does downstream. It's a hard override: it wins outright, over every other signal, including the model's own read of the address. A word that sounds like a gentle fallback turns out to be the last one the resolver hears. We have a small classifier whose entire job is to look at "Warsaw, Poland" and say _Poland_, and it does, correctly, with confidence. The override threw that answer in the bin and substituted "US" before the resolver ever saw it. We had taught a model to read the country off the page and then covered its eyes.
+
+The fix was to delete the line. The model already knew the answer; the job was to stop overriding it. Drop the constraint, and the country the address names flows through. Berlin lands in Germany. Madrid lands in Spain. The five European countries our resolver covers well snapped into place, and our drop-in went from resolving four of ten test cities to nine of ten, with zero change to the American ones.
+
+We shipped that. It's the right fix and it's live.
+
+## Four cities that won't move
+
+Nine of ten. The tenth was Vienna, and once we looked past the headline, Vienna had company. Delete the override, ask again with nothing on the scale, and four cities still walk to the wrong country on their own: Vienna to Virginia, Sydney to Nova Scotia, Warsaw to Indiana, Toronto to Ohio.
+
+The override is gone now, so this is the collision winning on its own. The resolver ranks candidates by population, and for most cities that's enough: there is no Tokyo big enough to beat Tokyo. But Vienna, Austria has to outrank a Vienna the resolver reaches faster, and without a thumb on the scale for _country_, "the biggest Vienna" isn't a question the ranker is answering. The model knows it's Austria. The resolver, on this query, never gets told in a way it can't ignore.
+
+There's a manual escape today, and it's the one Nominatim gives you too. Pass `countrycodes=au` and Sydney lands in Australia; the restriction is honored. It clears the easy collisions. It does not fix the deeper ones — `Warsaw` plus a Poland filter returns _nothing_, because the record in the gazetteer is filed under `Warszawa` and the English exonym matches neither it nor any other Polish place. That's a different problem with a different fix, and we filed it as one.
+
+So far this is a tidy story. A harmless-looking line, a one-line deletion, a known residual with a workaround. We wanted a number on the residual — how much of the world is the model-can't-route-the-country problem, and how much is something else? So we built a measurement: every country's most-populous cities, geocoded bare, scored by distance from the truth. One hundred and eighty-seven countries.
+
+And the measurement lied to us, the way they do when you forget to check what they ran on.
+
+## The database we never switched on
+
+The first sign was a contradiction we'd written down ourselves. The breakdown classified Poland as _coverage-absence_ — no record at all, the gazetteer doesn't have it. But two hours earlier, chasing the exonym, we'd proven the opposite by hand: `Warszawa, Poland` resolves to 52.2, 21.0, dead on. The record exists. We had a report saying "no Warsaw" sitting next to a transcript saying "here is Warsaw."
+
+Both can't be true, so one of them was measuring the wrong thing. The report was. The whole sweep had run with the candidate ranking database switched off — the same `resolveCandidateDbPath() ? … : "US"` branch from the top of this post, except this time the missing database didn't just change a fallback, it changed which resolver answered every non-US query. We'd measured the world on an engine that was never meant to answer for it, and then written the numbers down as if they were the verdict.
+
+Switch the database on and the picture moves under your feet. London, which the sweep had called a coverage gap, resolves two kilometers from the truth. So does Beijing. They were never missing; they were waiting for the index we hadn't loaded.
+
+We pulled the numbers back. The report carries a caveat at the top now, the two issues we'd filed off it got correction notes, and the retrospective says plainly that the percentages were measured on the wrong config. This is the part of the night we're least proud of and most want on the record, because it's the same mistake as [Which Berlin?](./2026-06-07-which-berlin.mdx) — a metric grading the wrong thing — except a layer lower. There the number was sound and measured the wrong quantity. Here the number measured the right quantity on the wrong machine. The discipline that catches both is the same: before you trust a measurement of the engine, pin and state the data it ran on. We caught it, later than we'd have liked, off a contradiction we were lucky to have written down.
+
+## Where this leaves us
+
+Here's the standing, stated without flinching.
+
+The drop-in is real and shipping: point your Nominatim client at it, keep your code, drop the database stack. The America-by-default bug is fixed — the model routes the country it reads, and `countrycodes` is there for when you want to insist. That much is solid and config-independent.
+
+The namesake gap is also real, and it outlived the correction. Switch the ranking database on and Vienna, Sydney, Warsaw, and Toronto _still_ resolve to the wrong country, because population-first ranking cannot break a same-name tie without a prior on the country. That's the one finding the bad config didn't manufacture — we re-checked it with the database loaded, specifically because we'd been burned. Closing it is model work: teach the country router to emit the next tranche of countries confidently, so the resolver gets told in a way it can't ignore.
+
+And the precise size of the rest — how much is exonyms like Warsaw-versus-Warszawa, how much is missing coverage — we don't know yet, because the only way to measure it that means anything is on the production config, and pinning that config is the next thing on the list rather than something we'll guess at.
+
+Nominatim carries the whole planet on community data and sets the bar we're trying to clear. We can answer its questions from a file now, and on a good chunk of the map we answer them well. We also spent a night proving that the fastest way to lie to yourself about a geocoder is to grade it on the wrong machine and forget you did. We'll keep grading the coordinate, and we'll write down what the grader was plugged into.
