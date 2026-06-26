@@ -49,11 +49,15 @@ the placer's emission (GPU model work).
 consult steered the remaining hours to a CPU-only measured artifact the operator needs before
 greenlighting the GPU placer work. `scripts/eval/frontier-gap.mjs` forward-geocodes the top-3
 cities/country from geonames cities15000 (187 countries, 506 cities) twice — bare and with a country
-hint — and splits the non-US gap into two levers. Result: bare resolve **29.2% → +hint 46.6%** (the
-placer prize is **+17.4 pp / 36 countries**), but **97 countries fail even with a hint** — exonym
-(`Warsaw` vs the gazetteer's `Warszawa`, proven end-to-end) + non-US coverage, a larger and likely
-non-GPU lever. Filed #823 for that residual with the validated data path (index geonames/WOF alt-name
-surface forms onto the candidate table). Report: `docs/articles/evals/2026-06-26-frontier-gap.md`.
+hint — and splits the non-US gap into two levers. Result (default drop-in config): bare resolve
+**29.2% → +hint 46.6%**, with a **placer-namesake gap** (Vienna/Sydney/Warsaw/Toronto → US namesakes)
+and a residual that's part exonym (`Warsaw` vs the gazetteer's `Warszawa`, proven end-to-end) + part
+coverage. Filed #823 for the exonym/coverage lever. **Caveat (caught after posting):** the run used the
+default drop-in config (admin gazetteer, no `MAILWOMAN_CANDIDATE_DB`), so the precise percentages and
+the exonym-vs-coverage split are config-dependent — with a candidate DB, "coverage" cities like London
+and Beijing resolve. The placer-namesake gap survives the candidate DB (population-first can't break the
+US-namesake tie without a country prior), so #822 is robust; the percentages are withdrawn pending a
+re-run on the operator's canonical candidate config. Report carries the full caveat.
 
 ## What went well
 
@@ -68,8 +72,9 @@ surface forms onto the candidate table). Report: `docs/articles/evals/2026-06-26
   the placer-vs-safelist distinction (the wide-safelist probe changed nothing).
 - **DeepSeek consult turned a gate into evidence.** With Phase 6 GPU-blocked, instead of forcing risky
   work or idling, the consult reframed the remaining hours toward a CPU-only diagnostic — which produced
-  the bare-vs-hint split (#822 = +17.4 pp / 36 countries, #823 = the larger 97-country data lever) and a
-  proven exonym mechanism. A measured artifact for a decision the operator hadn't been able to size.
+  the bare-vs-hint diagnostic, the proven exonym mechanism, and #822/#823 as separable levers. The
+  specific percentages were later caveated for config-dependence (below), but the structural findings
+  hold.
 
 ## What could have gone better
 
@@ -78,6 +83,14 @@ surface forms onto the candidate table). Report: `docs/articles/evals/2026-06-26
   re-learned: grade the compiled tree, confirm the symbol is in `out/` before testing.
 - **Over-checkpointed early.** Spent too much attention pacing to the hourly cron until DeepSeek
   relayed the operator's intent — continuous momentum, not cron-paced. Corrected and drove the list.
+- **Published the frontier numbers before checking the resolver config.** The diagnostic ran on the
+  default drop-in (no candidate DB) but I framed the percentages as the general non-US recall truth, and
+  committed the report + commented #822/#823 before realizing resolution is config-dependent. A probe
+  ("does a candidate DB change this?") would have caught it _before_ publishing, not after. Caught it on
+  the exonym follow-up (a false "Poland = absence" against the proven Warszawa result was the thread to
+  pull), corrected the report + both issues + this doc. Lesson: for a measured claim about the engine,
+  pin and state the data/config it ran on _before_ treating the numbers as settled — the same
+  verify-before-verdict discipline, applied one layer earlier.
 
 ## Decisions made autonomously
 
