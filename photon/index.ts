@@ -144,6 +144,10 @@ export function createPhotonRouter(engine: PhotonEngine): Router {
 			res.status(400).json({ ...EMPTY, message: "lat and lon are required" })
 			return
 		}
+		if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+			res.status(400).json({ ...EMPTY, message: "lat must be in [-90, 90] and lon in [-180, 180]" })
+			return
+		}
 		const params: PhotonReverseParams = {
 			lat,
 			lon,
@@ -154,8 +158,19 @@ export function createPhotonRouter(engine: PhotonEngine): Router {
 		res.json(await engine.reverse(params))
 	}
 
-	router.get("/api", search)
-	router.get("/reverse", reverse)
+	// Safety net: malformed input or an engine fault returns an empty FeatureCollection, never a crash.
+	const safe =
+		(fn: RequestHandler): RequestHandler =>
+		async (req, res, next) => {
+			try {
+				await fn(req, res, next)
+			} catch {
+				if (!res.headersSent) res.status(500).json({ ...EMPTY, message: "internal error" })
+			}
+		}
+
+	router.get("/api", safe(search))
+	router.get("/reverse", safe(reverse))
 
 	return router
 }

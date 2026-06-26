@@ -38,6 +38,9 @@ const PLACETYPE_TO_KEY: Record<string, keyof PhotonProperties> = {
 	country: "country",
 }
 
+/** A real address fits comfortably; longer is malformed input (and would exceed the model's window). */
+const MAX_QUERY_LEN = 512
+
 async function serve(): Promise<void> {
 	const { values } = parseArgs({
 		options: {
@@ -63,10 +66,13 @@ async function serve(): Promise<void> {
 
 	const engine: PhotonEngine = {
 		async search(params) {
+			// Empty/whitespace → no query; absurdly long → not an address (and would blow the model's input).
+			const query = params.q?.trim()
+			if (!query || query.length > MAX_QUERY_LEN) return photonCollection([])
 			// No country constraint: the default-on #244 placer routes the query's country (Berlin→DE,
 			// Boston→US). Forcing "US" here is a HARD override (geocode-core.ts:102) that resolved every
 			// non-US query to its US namesake — wrong for a global autocomplete front.
-			const result = await geocodeAddress(params.q, { classifier, resolver, shards: shards.for })
+			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for })
 			if (result.lat == null || result.lon == null) return photonCollection([])
 			const properties: PhotonProperties = {
 				name: result.locality ?? result.region ?? undefined,

@@ -176,6 +176,10 @@ export function createNominatimRouter(engine: NominatimEngine): Router {
 			res.status(400).json({ error: "lat and lon are required" })
 			return
 		}
+		if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+			res.status(400).json({ error: "lat must be in [-90, 90] and lon in [-180, 180]" })
+			return
+		}
 		const params: NominatimReverseParams = {
 			lat,
 			lon,
@@ -208,10 +212,23 @@ export function createNominatimRouter(engine: NominatimEngine): Router {
 		res.json(await engine.status())
 	}
 
-	router.get("/search", search)
-	router.get("/reverse", reverse)
-	router.get("/lookup", lookup)
-	router.get("/status", status)
+	// Safety net: a malformed query (whitespace-only, absurdly long, control chars) or an engine fault
+	// must never crash the process into a stack-trace 500. Wrap every handler so an unexpected throw
+	// becomes a clean JSON error.
+	const safe =
+		(fn: RequestHandler): RequestHandler =>
+		async (req, res, next) => {
+			try {
+				await fn(req, res, next)
+			} catch {
+				if (!res.headersSent) res.status(500).json({ error: "internal error" })
+			}
+		}
+
+	router.get("/search", safe(search))
+	router.get("/reverse", safe(reverse))
+	router.get("/lookup", safe(lookup))
+	router.get("/status", safe(status))
 
 	return router
 }

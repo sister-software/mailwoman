@@ -71,7 +71,9 @@ export function createLibpostalRouter(engine: LibpostalEngine): Router {
 	const router = Router()
 
 	const parse: RequestHandler = async (req, res) => {
-		const query = (req.body?.query ?? req.query?.query ?? req.body?.address ?? req.query?.address) as string | undefined
+		const query = (
+			(req.body?.query ?? req.query?.query ?? req.body?.address ?? req.query?.address) as string | undefined
+		)?.trim()
 		if (!query) {
 			res.status(400).json({ error: "query is required" })
 			return
@@ -84,7 +86,7 @@ export function createLibpostalRouter(engine: LibpostalEngine): Router {
 			res.status(501).json({ error: "expand not implemented" })
 			return
 		}
-		const address = (req.body?.address ?? req.query?.address) as string | undefined
+		const address = ((req.body?.address ?? req.query?.address) as string | undefined)?.trim()
 		if (!address) {
 			res.status(400).json({ error: "address is required" })
 			return
@@ -92,10 +94,21 @@ export function createLibpostalRouter(engine: LibpostalEngine): Router {
 		res.json({ expansions: await engine.expand(address) })
 	}
 
-	router.post("/parse", parse)
-	router.get("/parse", parse)
-	router.post("/expand", expand)
-	router.get("/expand", expand)
+	// Safety net: a malformed body or an engine fault returns a clean JSON error, never a crash.
+	const safe =
+		(fn: RequestHandler): RequestHandler =>
+		async (req, res, next) => {
+			try {
+				await fn(req, res, next)
+			} catch {
+				if (!res.headersSent) res.status(500).json({ error: "internal error" })
+			}
+		}
+
+	router.post("/parse", safe(parse))
+	router.get("/parse", safe(parse))
+	router.post("/expand", safe(expand))
+	router.get("/expand", safe(expand))
 
 	return router
 }
