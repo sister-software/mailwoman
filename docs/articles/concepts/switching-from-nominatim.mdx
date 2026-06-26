@@ -1,0 +1,62 @@
+---
+title: Switching from Nominatim
+sidebar_label: Switching from Nominatim
+description: Point your existing Nominatim client at Mailwoman — the endpoint map, the response differences, and the honest gaps.
+---
+
+# Switching from Nominatim
+
+You run Nominatim because it's free and self-hosted. You also run PostgreSQL, an `osm2pgsql` import that
+takes hours and tens of gigabytes, and a server you can't ship inside an app or run in a browser.
+Mailwoman gives you the same HTTP contract from a SQLite file — so you can move your client without
+rewriting it, then drop the database stack.
+
+## One command
+
+```bash
+npx @mailwoman/nominatim serve --port 8080
+```
+
+Point your client at it. With [geopy](https://geopy.readthedocs.io):
+
+```python
+from geopy.geocoders import Nominatim
+
+geo = Nominatim(domain="localhost:8080", scheme="http")
+geo.geocode("1600 Pennsylvania Ave NW, Washington DC", addressdetails=True)
+geo.reverse((38.8977, -77.0365))
+```
+
+## Endpoint map
+
+| Nominatim      | Mailwoman      | Notes                                                    |
+| -------------- | -------------- | -------------------------------------------------------- |
+| `GET /search`  | `GET /search`  | free-text `q` and the structured fields                  |
+| `GET /reverse` | `GET /reverse` | `lat` / `lon`, point-in-polygon over the same admin data |
+| `GET /lookup`  | `GET /lookup`  | by id (see the id-scheme note below)                     |
+| `GET /status`  | `GET /status`  | `{ status: 0, message: "OK" }`                           |
+
+Parameters honored: `q`, the structured set (`street`, `city`, `county`, `state`, `country`,
+`postalcode`), `countrycodes`, `limit`, `addressdetails`, `format`.
+
+## What's different
+
+- **Better, not just equal: annotations.** Every result carries an `annotations` block — coordinate
+  formats (DMS, MGRS, geohash, Maidenhead, Mercator), the country flag, and the IANA timezone with its
+  current (DST-correct) offset. Nominatim returns none of these. It's the same block
+  [OpenCage](./how-mailwoman-compares) charges for.
+- **Ids.** Nominatim returns `osm_id` / `osm_type`. Mailwoman resolves over Who's On First and Overture,
+  so the id scheme is ours; a `place_id` is always present and stable for a given result.
+- **Attribution.** The `licence` field names the data sources (Who's On First, Overture, OpenAddresses,
+  TIGER) rather than OSM.
+
+## The honest gaps
+
+- **Street-level `addressdetails` on forward search** is admin-grained today (city / state / postcode /
+  country + the coordinate); house-number and road land as a refinement. Reverse geocoding returns the
+  full admin chain.
+- **EU recall** trails Nominatim in places — it's a no-result gap, not a wrong-result one, and it's the
+  active work. US coverage leads.
+
+See [how Mailwoman compares](./how-mailwoman-compares) for the capability matrix across Nominatim,
+Photon, OpenCage, Pelias, and libpostal — including the two rows the hosted services can't check.
