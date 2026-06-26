@@ -5186,6 +5186,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/timezone-lookup@workspace:timezone-lookup":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/timezone-lookup@workspace:timezone-lookup"
+  dependencies:
+    "@mailwoman/annotations": "workspace:*"
+  bin:
+    timezone-lookup: ./out/cli.js
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/universe@workspace:.":
   version: 0.0.0-use.local
   resolution: "@mailwoman/universe@workspace:."

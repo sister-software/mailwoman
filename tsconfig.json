@@ -47,6 +47,7 @@
 		{ "path": "./nominatim" },
 		{ "path": "./photon" },
 		{ "path": "./libpostal" },
+		{ "path": "./timezone-lookup" },
 		{ "path": "./tile-worker" }
 	]
 }

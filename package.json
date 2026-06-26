@@ -81,6 +81,7 @@
 		"nominatim",
 		"photon",
 		"libpostal",
+		"timezone-lookup",
 		"core",
 		"resolver",
 		"spatial",
