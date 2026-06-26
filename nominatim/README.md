@@ -16,12 +16,12 @@ geo.reverse((38.8977, -77.0365))
 
 ## Endpoints
 
-| Endpoint   | Nominatim contract                                         | Status       |
-| ---------- | ---------------------------------------------------------- | ------------ |
-| `/search`  | free-text `q` + structured forward geocoding               | #802         |
-| `/reverse` | `lat`/`lon` → nearest address (wires `WofReverseGeocoder`) | #803         |
-| `/lookup`  | resolve known place ids                                    | #805         |
-| `/status`  | health + data version                                      | scaffolded ✓ |
+| Endpoint   | Nominatim contract                                       | Status  |
+| ---------- | -------------------------------------------------------- | ------- |
+| `/search`  | free-text `q` + structured forward geocoding             | ✓       |
+| `/reverse` | `lat`/`lon` → nearest address (`WofReverseGeocoder` PIP) | ✓       |
+| `/status`  | health + data version                                    | ✓       |
+| `/lookup`  | resolve known place ids                                  | planned |
 
 ## Library use
 
@@ -37,11 +37,17 @@ const engine: NominatimEngine = {
 express().use(createNominatimRouter(engine)).listen(8080)
 ```
 
+## Annotations
+
+Every result carries an OpenCage-style `annotations` block — coordinate formats (DMS, MGRS, geohash,
+Maidenhead, Mercator), qibla bearing, sun times, country flag, calling code, and currency, plus the IANA
+timezone, UN/LOCODE, and EU NUTS codes when their data bundles are present. Plain Nominatim returns none
+of these.
+
 ## Status
 
-**Scaffold** (epic [#801](https://github.com/sister-software/mailwoman/issues/801)). The router, parameter
-parsing, and response types are in place; the server boots and answers `/status`. The real engine
-wiring + the Nominatim result formatter are tracked in #802–#805 and #809. See
-["Migrating from Nominatim"](https://mailwoman.sister.software) (#808) once published.
+Shipped. `/search` and `/reverse` resolve over the live engine and return the enriched block; `/lookup`
+is not yet implemented (returns `501`). The forward `addressdetails` is admin-grained today (city / state
+/ postcode / country + coordinate); street-level is a refinement.
 
 For autocomplete / type-ahead, see the companion [`@mailwoman/photon`](../photon).

@@ -34,6 +34,7 @@ express().use(createPhotonRouter(engine)).listen(2322)
 
 ## Status
 
-**Scaffold** (epic [#801](https://github.com/sister-software/mailwoman/issues/801)). Router, parameter
-parsing, and the Photon GeoJSON types are in place; the engine wiring (FST autocomplete + reverse) is
-the next step. Pairs with [`@mailwoman/nominatim`](../nominatim) for the structured-lookup shape.
+Shipped. `/api` and `/reverse` resolve over the live engine and return Photon GeoJSON. `/api` runs the
+query through the geocoder today; the dedicated prefix-first FST front (the last bit of Photon's tuned
+type-ahead ordering) is a refinement. Pairs with [`@mailwoman/nominatim`](../nominatim) for the
+structured-lookup shape and the OpenCage-style annotations block.
