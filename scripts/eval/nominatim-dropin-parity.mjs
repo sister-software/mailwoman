@@ -165,6 +165,25 @@ try {
 		overrideRows.push({ q: fx.q, cc: fx.cc, km, ok: km != null && km <= THRESHOLD_KM })
 	}
 
+	// Robustness: malformed input must degrade (200/4xx), never crash the server (500). These were live
+	// 500s before the safe()-wrapper + range/trim guards; gate on them so a regression is caught.
+	const robustnessCases = [
+		{ label: "search whitespace", url: `/search?q=%20%20` },
+		{ label: "search 5000-char", url: `/search?q=${"a".repeat(5000)}` },
+		{ label: "reverse out-of-range", url: `/reverse?lat=999&lon=999` },
+		{ label: "reverse non-numeric", url: `/reverse?lat=x&lon=y` },
+	]
+	const robustnessRows = []
+	for (const c of robustnessCases) {
+		let status = 0
+		try {
+			status = (await fetch(`http://127.0.0.1:${PORT}${c.url}`)).status
+		} catch {
+			/* network error counts as failure */
+		}
+		robustnessRows.push({ label: c.label, status, ok: status > 0 && status < 500 })
+	}
+
 	const supported = rows.filter((r) => !r.frontier)
 	const frontier = rows.filter((r) => r.frontier)
 	const placedIn = (set) => set.filter((r) => r.resolved && r.km <= THRESHOLD_KM)
@@ -187,6 +206,9 @@ try {
 	lines.push(`- Reverse contract + country (geo.reverse): **${revPass.length}/${revRows.length}**`)
 	lines.push(
 		`- countrycodes override on frontier (#822 manual escape): **${overrideRows.filter((r) => r.ok).length}/${overrideRows.length}** resolve`
+	)
+	lines.push(
+		`- Robustness — malformed input degrades, never 500: **${robustnessRows.filter((r) => r.ok).length}/${robustnessRows.length}**`
 	)
 	lines.push("")
 	lines.push("| Query | Group | Resolved | Contract | Error (km) |")
@@ -212,6 +234,12 @@ try {
 	for (const r of overrideRows) {
 		lines.push(`| ${r.q} + cc=${r.cc} | ${r.ok ? "✅" : "❌"} | ${r.km == null ? "—" : r.km.toFixed(1)} |`)
 	}
+	lines.push("")
+	lines.push("| Malformed input | HTTP | OK |")
+	lines.push("| --- | ---: | :---: |")
+	for (const r of robustnessRows) {
+		lines.push(`| ${r.label} | ${r.status || "—"} | ${r.ok ? "✅" : "❌"} |`)
+	}
 	const report = lines.join("\n")
 	console.log(`\n${report}\n`)
 	if (OUT) {
@@ -224,7 +252,8 @@ try {
 	const failed =
 		contractPass.length < rows.length ||
 		placedIn(supported).length < supported.length ||
-		revPass.length < revRows.length
+		revPass.length < revRows.length ||
+		robustnessRows.some((r) => !r.ok)
 	process.exitCode = failed ? 1 : 0
 } finally {
 	server.kill()
