@@ -1,0 +1,51 @@
+---
+title: Switching from Photon
+sidebar_label: Switching from Photon
+description: A Photon-compatible autocomplete API without the Elasticsearch cluster.
+---
+
+# Switching from Photon
+
+[Photon](https://photon.komoot.io) is the type-ahead geocoder — search-as-you-type, GeoJSON out. It's
+also an Elasticsearch cluster you feed a Photon import before it answers anything. Mailwoman speaks the
+same `/api` contract from a SQLite file, so your autocomplete keeps working without the cluster.
+
+## One command
+
+```bash
+npx @mailwoman/photon serve --port 2322
+```
+
+```bash
+curl "http://localhost:2322/api?q=berlin&limit=5&lat=52.5&lon=13.4"
+curl "http://localhost:2322/reverse?lat=52.52&lon=13.405"
+```
+
+## Endpoint map
+
+| Photon         | Mailwoman      | Notes                                             |
+| -------------- | -------------- | ------------------------------------------------- |
+| `GET /api`     | `GET /api`     | `q`, `limit`, `lat`/`lon` bias, `lang`, `osm_tag` |
+| `GET /reverse` | `GET /reverse` | `lat` / `lon`                                     |
+
+Both return a GeoJSON `FeatureCollection` of `Point` features with `properties` (`name`, `street`,
+`postcode`, `city`, `county`, `state`, `country`, `countrycode`, …) — the shape a Photon client already
+parses.
+
+## What's different
+
+- **No Elasticsearch.** Resolution runs over the same SQLite gazetteer the rest of Mailwoman uses, and
+  `/api` is backed by the FST autocomplete tier plus the neural parser.
+- **Properties** come from the Who's On First / Overture placetype chain rather than raw OSM tags, mapped
+  to Photon's key names.
+
+## The honest gaps
+
+- **Prefix ranking** is its own art. Mailwoman's `/api` resolves the query through the geocoder today;
+  the dedicated prefix-first FST front is the refinement that closes the last gap with Photon's tuned
+  type-ahead ordering.
+- **Coverage** mirrors the gazetteer — strong in the US, improving across the EU.
+
+See [how Mailwoman compares](./how-mailwoman-compares) for the full capability matrix. For structured
+lookup (the Nominatim shape) instead of autocomplete, see [Switching from
+Nominatim](./switching-from-nominatim).
