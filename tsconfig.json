@@ -43,6 +43,7 @@
 		{ "path": "./resolver-wof-sqlite" },
 		{ "path": "./resolver-wof-wasm" },
 		{ "path": "./mailwoman" },
+		{ "path": "./annotations" },
 		{ "path": "./nominatim" },
 		{ "path": "./photon" },
 		{ "path": "./tile-worker" }

@@ -4810,6 +4810,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/annotations@workspace:annotations":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/annotations@workspace:annotations"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/cartographer@workspace:*, @mailwoman/cartographer@workspace:cartographer":
   version: 0.0.0-use.local
   resolution: "@mailwoman/cartographer@workspace:cartographer"
