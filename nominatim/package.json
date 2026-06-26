@@ -15,6 +15,7 @@
 	},
 	"dependencies": {
 		"@mailwoman/annotations": "workspace:*",
+		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",

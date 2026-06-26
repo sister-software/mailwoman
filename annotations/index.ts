@@ -96,6 +96,8 @@ export interface AnnotatorInput {
 	lon: number
 	/** The resolved place (ancestry, country, region…); shape owned by the resolver. */
 	place?: unknown
+	/** ISO 3166-1 alpha-2 of the resolved country, when known — feeds country-reference annotators. */
+	countryCode?: string
 	/** The queried date for time-dependent annotations (sun times); defaults to "now" per annotator. */
 	date?: Date
 }

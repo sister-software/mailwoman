@@ -14,6 +14,7 @@
  */
 
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
+import { countryReferenceAnnotator } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
@@ -93,7 +94,7 @@ async function serve(): Promise<void> {
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 	const defaultCountry = resolveCandidateDbPath() ? undefined : "US"
 	const reverseGeo = adminDbPath ? new resolverMod.WofReverseGeocoder({ adminDbPath }) : undefined
-	const annotate = composeAnnotators([coordinateFormatAnnotator])
+	const annotate = composeAnnotators([coordinateFormatAnnotator, countryReferenceAnnotator])
 
 	const engine: NominatimEngine = {
 		async search(params) {
@@ -134,7 +135,9 @@ async function serve(): Promise<void> {
 					: undefined,
 			}
 			const out = toNominatimResult(resolved, { addressdetails: params.addressdetails })
-			out.annotations = toOpenCage(await annotate({ lat: params.lat, lon: params.lon }))
+			out.annotations = toOpenCage(
+				await annotate({ lat: params.lat, lon: params.lon, countryCode: address.country_code })
+			)
 			return out
 		},
 

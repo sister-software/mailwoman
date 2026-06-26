@@ -4845,6 +4845,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/codex@workspace:codex"
   dependencies:
+    "@mailwoman/annotations": "workspace:*"
     type-fest: "npm:^5.7.0"
   languageName: unknown
   linkType: soft
@@ -5022,6 +5023,7 @@ __metadata:
   resolution: "@mailwoman/nominatim@workspace:nominatim"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/codex": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"

@@ -23,6 +23,7 @@
 		"./nz": "./out/nz/index.js"
 	},
 	"dependencies": {
+		"@mailwoman/annotations": "workspace:*",
 		"type-fest": "^5.7.0"
 	},
 	"files": [

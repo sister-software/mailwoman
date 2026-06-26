@@ -9,6 +9,7 @@
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		{ "path": "../annotations" },
+		{ "path": "../codex" },
 		{ "path": "../spatial" },
 		{ "path": "../neural" },
 		{ "path": "../resolver" },
