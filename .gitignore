@@ -146,8 +146,6 @@ HANDOFF-*.md
 # all other files (conversation transcripts, session notes, plans) are AI-agent
 # scratch and not project source (#379).
 .agents/skills/deepseek-consult/*
-!.agents/skills/deepseek-consult/SKILL.md
-!.agents/skills/deepseek-consult/ds-consult.sh
 
 # Diagnostic scripts — one-off investigation scripts that aren't part of the shipped
 # toolchain. Keepers cited by docs/memories stay tracked; this only hides untracked
