@@ -9,8 +9,9 @@
  *
  *   Wires the real engine: `/search` over `geocodeAddress` (parse → resolve), `/reverse` over
  *   `WofReverseGeocoder` (point-in-polygon over WOF admin polygons), reusing the same
- *   resolver-backend selector GeocodeRouter uses. The `annotations` block is empty until the
- *   annotations layer lands.
+ *   resolver-backend selector GeocodeRouter uses. Results carry the OpenCage-style `annotations`
+ *   block — coordinate formats, flag, calling code, currency, and (when their DBs are present)
+ *   timezone, UN/LOCODE, NUTS — composed from the `@mailwoman/*` annotators.
  */
 
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
