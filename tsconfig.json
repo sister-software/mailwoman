@@ -46,6 +46,7 @@
 		{ "path": "./annotations" },
 		{ "path": "./nominatim" },
 		{ "path": "./photon" },
+		{ "path": "./libpostal" },
 		{ "path": "./tile-worker" }
 	]
 }

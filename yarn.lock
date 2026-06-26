@@ -4954,6 +4954,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/libpostal@workspace:libpostal":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/libpostal@workspace:libpostal"
+  dependencies:
+    "@mailwoman/normalize": "workspace:*"
+    express: "npm:^5.2.1"
+    mailwoman: "workspace:*"
+  bin:
+    libpostal: ./out/cli.js
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/locale-gate@workspace:*, @mailwoman/locale-gate@workspace:locale-gate":
   version: 0.0.0-use.local
   resolution: "@mailwoman/locale-gate@workspace:locale-gate"
@@ -17803,7 +17815,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mailwoman@workspace:mailwoman":
+"mailwoman@workspace:*, mailwoman@workspace:mailwoman":
   version: 0.0.0-use.local
   resolution: "mailwoman@workspace:mailwoman"
   dependencies:

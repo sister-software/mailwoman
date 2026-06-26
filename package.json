@@ -80,6 +80,7 @@
 		"annotations",
 		"nominatim",
 		"photon",
+		"libpostal",
 		"core",
 		"resolver",
 		"spatial",

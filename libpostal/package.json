@@ -1,0 +1,32 @@
+{
+	"name": "@mailwoman/libpostal",
+	"version": "4.15.0",
+	"description": "libpostal drop-in — a libpostal-compatible parse/expand HTTP API over Mailwoman's neural address parser. The lowest-dependency drop-in: parse needs no gazetteer. Run it with `npx @mailwoman/libpostal serve`.",
+	"license": "AGPL-3.0-only",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "libpostal"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": "./out/index.js"
+	},
+	"dependencies": {
+		"@mailwoman/normalize": "workspace:*",
+		"express": "^5.2.1",
+		"mailwoman": "workspace:*"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md"
+	],
+	"bin": "./out/cli.js",
+	"publishConfig": {
+		"access": "public"
+	}
+}
