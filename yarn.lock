@@ -5021,9 +5021,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/nominatim@workspace:nominatim"
   dependencies:
+    "@mailwoman/annotations": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     express: "npm:^5.2.1"
     mailwoman: "workspace:*"
   bin:

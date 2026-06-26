@@ -13,8 +13,10 @@
  *   annotations layer lands.
  */
 
+import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
+import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import express from "express"
 import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geocode-core"
 import {
@@ -91,6 +93,7 @@ async function serve(): Promise<void> {
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 	const defaultCountry = resolveCandidateDbPath() ? undefined : "US"
 	const reverseGeo = adminDbPath ? new resolverMod.WofReverseGeocoder({ adminDbPath }) : undefined
+	const annotate = composeAnnotators([coordinateFormatAnnotator])
 
 	const engine: NominatimEngine = {
 		async search(params) {
@@ -98,11 +101,10 @@ async function serve(): Promise<void> {
 				params.q ?? joinNonEmpty(params.street, params.city, params.state, params.postalcode, params.country)
 			if (!query) return []
 			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for, defaultCountry })
-			if (result.lat == null) return []
-			return [toNominatimResult(forwardToResolved(result), { addressdetails: params.addressdetails })].slice(
-				0,
-				params.limit
-			)
+			if (result.lat == null || result.lon == null) return []
+			const out = toNominatimResult(forwardToResolved(result), { addressdetails: params.addressdetails })
+			out.annotations = toOpenCage(await annotate({ lat: result.lat, lon: result.lon }))
+			return [out].slice(0, params.limit)
 		},
 
 		async reverse(params) {
@@ -131,7 +133,9 @@ async function serve(): Promise<void> {
 						]
 					: undefined,
 			}
-			return toNominatimResult(resolved, { addressdetails: params.addressdetails })
+			const out = toNominatimResult(resolved, { addressdetails: params.addressdetails })
+			out.annotations = toOpenCage(await annotate({ lat: params.lat, lon: params.lon }))
+			return out
 		},
 
 		async status() {

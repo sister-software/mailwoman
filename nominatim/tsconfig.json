@@ -8,6 +8,8 @@
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
+		{ "path": "../annotations" },
+		{ "path": "../spatial" },
 		{ "path": "../neural" },
 		{ "path": "../resolver" },
 		{ "path": "../resolver-wof-sqlite" },

@@ -15,6 +15,7 @@
  *   `/reverse`, #805 `/lookup` + `/status`. Routes whose engine method is absent answer `501`.
  */
 
+import type { OpenCageAnnotations } from "@mailwoman/annotations"
 import { type RequestHandler, Router } from "express"
 
 /** Output serialization formats Nominatim supports. `jsonv2` is the modern default. */
@@ -59,6 +60,8 @@ export interface NominatimResult {
 	address?: NominatimAddressDetails
 	/** Present when `format=geojson` or `polygon_geojson=1`. */
 	geojson?: unknown
+	/** OpenCage-style enrichment block (timezone, coordinate formats, …); attached by the engine. */
+	annotations?: OpenCageAnnotations
 }
 
 /** Parsed `/search` parameters (free-text OR structured; never both). */
