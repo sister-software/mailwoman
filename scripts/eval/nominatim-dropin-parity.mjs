@@ -45,10 +45,10 @@ const FIXTURE = [
 	{ q: "Madrid, Spain", lat: 40.4168, lon: -3.7038 },
 	{ q: "Rome, Italy", lat: 41.9028, lon: 12.4964 },
 	{ q: "Tokyo, Japan", lat: 35.6762, lon: 139.6503 },
-	{ q: "Vienna, Austria", lat: 48.2082, lon: 16.3738, frontier: true },
-	{ q: "Sydney, Australia", lat: -33.8688, lon: 151.2093, frontier: true },
-	{ q: "London, UK", lat: 51.5074, lon: -0.1278, frontier: true },
-	{ q: "Toronto, Canada", lat: 43.6532, lon: -79.3832, frontier: true },
+	{ q: "Vienna, Austria", lat: 48.2082, lon: 16.3738, frontier: true, cc: "at" },
+	{ q: "Sydney, Australia", lat: -33.8688, lon: 151.2093, frontier: true, cc: "au" },
+	{ q: "London, UK", lat: 51.5074, lon: -0.1278, frontier: true, cc: "gb" },
+	{ q: "Toronto, Canada", lat: 43.6532, lon: -79.3832, frontier: true, cc: "ca" },
 ]
 
 // /reverse (geopy's geo.reverse): known coordinate → expected country_code. Exercises the
@@ -148,6 +148,23 @@ try {
 		})
 	}
 
+	// countrycodes override: re-query each frontier row WITH its country code (the #822 manual escape).
+	// Shows how many the explicit restriction recovers — partial, since exonyms (Wien/Vienna) + coverage
+	// still bite.
+	const overrideRows = []
+	for (const fx of FIXTURE.filter((f) => f.cc)) {
+		let km = null
+		try {
+			const res = await fetch(`http://127.0.0.1:${PORT}/search?q=${encodeURIComponent(fx.q)}&countrycodes=${fx.cc}`)
+			const body = await res.json()
+			const r = Array.isArray(body) ? body[0] : undefined
+			if (r) km = haversineKm(Number(r.lat), Number(r.lon), fx.lat, fx.lon)
+		} catch {
+			/* no result */
+		}
+		overrideRows.push({ q: fx.q, cc: fx.cc, km, ok: km != null && km <= THRESHOLD_KM })
+	}
+
 	const supported = rows.filter((r) => !r.frontier)
 	const frontier = rows.filter((r) => r.frontier)
 	const placedIn = (set) => set.filter((r) => r.resolved && r.km <= THRESHOLD_KM)
@@ -168,6 +185,9 @@ try {
 	lines.push(`- Conditional median error (supported, placed): **${median == null ? "—" : `${median.toFixed(1)} km`}**`)
 	lines.push(`- Placer frontier (#743/#781, not gated): **${placedIn(frontier).length}/${frontier.length}** resolve`)
 	lines.push(`- Reverse contract + country (geo.reverse): **${revPass.length}/${revRows.length}**`)
+	lines.push(
+		`- countrycodes override on frontier (#822 manual escape): **${overrideRows.filter((r) => r.ok).length}/${overrideRows.length}** resolve`
+	)
 	lines.push("")
 	lines.push("| Query | Group | Resolved | Contract | Error (km) |")
 	lines.push("| --- | --- | :---: | :---: | ---: |")
@@ -185,6 +205,12 @@ try {
 		lines.push(
 			`| ${r.ll} | ${r.contractOk ? "✅" : "❌"} | ${r.ccOk ? `✅ ${r.cc}` : `❌ ${r.cc ?? "—"}≠${r.expect}`} |`
 		)
+	}
+	lines.push("")
+	lines.push("| Frontier + countrycodes | Resolves | Error (km) |")
+	lines.push("| --- | :---: | ---: |")
+	for (const r of overrideRows) {
+		lines.push(`| ${r.q} + cc=${r.cc} | ${r.ok ? "✅" : "❌"} | ${r.km == null ? "—" : r.km.toFixed(1)} |`)
 	}
 	const report = lines.join("\n")
 	console.log(`\n${report}\n`)

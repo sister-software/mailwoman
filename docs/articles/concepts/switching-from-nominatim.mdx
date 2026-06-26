@@ -61,8 +61,10 @@ Parameters honored: `q`, the structured set (`street`, `city`, `county`, `state`
   well-covered EU set (ES / IT / NL / DE / FR), so `Berlin, Germany` lands in Berlin. It does not yet
   emit Austria, Australia, the UK, or Canada, so `Vienna, Austria` collides with the US `Vienna` and
   resolves there. That's the model's country coverage still growing
-  ([#822](https://github.com/sister-software/mailwoman/issues/822)), not a parser limit. US coverage
-  leads; the EU recall work is active.
+  ([#822](https://github.com/sister-software/mailwoman/issues/822)), not a parser limit. You can force
+  the right answer with `countrycodes` — `?q=Sydney&countrycodes=au` lands in Australia. It clears the
+  namesake collisions; an exonym like `Wien`/`Vienna` still needs the model. US coverage leads; the EU
+  recall work is active.
 
 See [how Mailwoman compares](./how-mailwoman-compares) for the capability matrix across Nominatim,
 Photon, OpenCage, Pelias, and libpostal — including the two rows the hosted services can't check.

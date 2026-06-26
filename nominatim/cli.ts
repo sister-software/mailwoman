@@ -140,7 +140,17 @@ async function serve(): Promise<void> {
 			const query =
 				params.q ?? joinNonEmpty(params.street, params.city, params.state, params.postalcode, params.country)
 			if (!query) return []
-			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for })
+			// A caller-supplied `countrycodes` is an explicit hard restriction (Nominatim semantics): honor
+			// it as the country constraint, even to the point of no result. It doubles as the manual override
+			// for the #822 placer frontier — `countrycodes=au` lands Sydney in Australia. One country is the
+			// common (geopy) case; for a list we apply the first.
+			const userCountry = params.countrycodes?.[0]?.toUpperCase()
+			const result = await geocodeAddress(query, {
+				classifier,
+				resolver,
+				shards: shards.for,
+				defaultCountry: userCountry,
+			})
 			if (result.lat == null || result.lon == null) return []
 			const resolved = forwardToResolved(result)
 			// Recover the street the resolver drops, so addressdetails + display_name carry it.
