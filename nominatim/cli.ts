@@ -15,7 +15,7 @@
  */
 
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
-import { countryReferenceAnnotator } from "@mailwoman/codex/country"
+import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { makeNutsAnnotator, NutsLookup } from "@mailwoman/nuts-lookup"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
@@ -116,7 +116,13 @@ async function serve(): Promise<void> {
 			const result = await geocodeAddress(query, { classifier, resolver, shards: shards.for, defaultCountry })
 			if (result.lat == null || result.lon == null) return []
 			const out = toNominatimResult(forwardToResolved(result), { addressdetails: params.addressdetails })
-			out.annotations = toOpenCage(await annotate({ lat: result.lat, lon: result.lon }))
+			// Country tag isn't always in the hierarchy (US admin results omit it); fall back to the
+			// resolver's country constraint, which is the country the result resolved under.
+			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? defaultCountry
+			const countryCode = matchCountry(countryName)?.iso2
+			out.annotations = toOpenCage(
+				await annotate({ lat: result.lat, lon: result.lon, countryCode, placeName: result.locality ?? undefined })
+			)
 			return [out].slice(0, params.limit)
 		},
 
