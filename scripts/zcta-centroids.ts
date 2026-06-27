@@ -25,7 +25,7 @@
  *   4.0)").
  *
  *   This module owns the parse + fill logic; `scripts/fill-zcta-centroids.ts` is the CLI and
- *   `scripts/build-pilot-anchor-lookup.py` mirrors the same join for lookup-build-time fills.
+ *   `scripts/build-pilot-anchor-lookup.ts` mirrors the same join for lookup-build-time fills.
  *   Tested by `scripts/zcta-centroids.test.ts`.
  */
 

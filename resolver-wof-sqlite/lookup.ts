@@ -212,7 +212,7 @@ interface RawSearchRow {
 }
 
 /**
- * The coordinate-first candidate table (scripts/build-postcode-locality.py): postcode → containing
+ * The coordinate-first candidate table (scripts/build-postcode-locality.ts): postcode → containing
  *
  * - Nearby localities with WOF alt-name aliases.
  */
@@ -302,7 +302,7 @@ export class WofSqlitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #hasPopulationIndex: Map<string, boolean>
 	/**
 	 * Per-shard probe for the `postcode_locality` table (the coordinate-first candidate table, built
-	 * by scripts/build-postcode-locality.py). Cached at construction; null'd out when absent so the
+	 * by scripts/build-postcode-locality.ts). Cached at construction; null'd out when absent so the
 	 * coord-first path silently no-ops on a deployment that didn't ship the table.
 	 */
 	readonly #postcodeLocalityShard: string | null

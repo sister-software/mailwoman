@@ -12,7 +12,7 @@
  *
  *   The PIP implementation here is the CANONICAL port of the even-odd ray cast that previously lived
  *   only in Python (`scripts/eval/pip-containment.py`, with a second copy in
- *   `scripts/build-postcode-locality.py`). Keep the three in sync if the algorithm ever changes —
+ *   `scripts/build-postcode-locality.ts`). Keep the three in sync if the algorithm ever changes —
  *   the eval-side Python copies grade the same containment truth this one resolves with.
  *
  *   The R*Tree index name + schema are centralized in `fts.ts` (alongside the FTS5 build).

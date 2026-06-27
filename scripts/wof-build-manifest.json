@@ -133,7 +133,7 @@
 	"postcode_locality_asset": {
 		"_comment": "Coordinate-first candidate table (postcode → containing + nearby WOF localities). Read-only distributable asset; see resolver-wof-sqlite/POSTCODE-LOCALITY.md.",
 		"artifact": "postcode-locality-intl.db",
-		"build": "scripts/build-postcode-locality.py --country <CC> --admin-repo <admin-<cc>> --postcode-db <postalcode source> --output postcode-locality-intl.db  (per country), then --finalize",
+		"build": "node --experimental-strip-types scripts/build-postcode-locality.ts --country <CC> --admin-repo <admin-<cc>> --postcode-db <postalcode source> --output postcode-locality-intl.db  (per country), then --finalize",
 		"countries": ["DE", "ES", "FR", "GB", "IT", "NL", "JP"],
 		"postcode_sources": {
 			"DE/ES/FR/IT/NL": "postalcode-intl.db",
@@ -151,7 +151,7 @@
 	"postcode_locality_cjk": {
 		"_comment": "CJK postcode→locality via authoritative NAME-MATCH (not PIP — WOF CJK has no municipality polygons). Same postcode_locality table, consumed by the same postcode_area_resolution strategy. See resolver-wof-sqlite/POSTCODE-LOCALITY.md (CJK section) + docs/articles/evals/2026-06-05-cjk-arena.md.",
 		"artifact": "postcode-locality-intl.db (JP rows merged in)",
-		"build": "scripts/build-postcode-locality-cjk.py --country JP --postal-names KEN_ALL_ROME.CSV --geonames geonames/JP.txt --admin-db admin-global-priority.db --output postcode-locality-jp.db ; then merge into postcode-locality-intl.db",
+		"build": "node --experimental-strip-types scripts/build-postcode-locality-cjk.ts --country JP --postal-names KEN_ALL_ROME.CSV --geonames geonames/JP.txt --admin-db admin-global-priority.db --output postcode-locality-jp.db ; then merge into postcode-locality-intl.db",
 		"repos": {
 			"whosonfirst-data-admin-jp": "6ac4e1339705",
 			"whosonfirst-data-admin-kr": "132b675fea1e",

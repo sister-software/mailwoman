@@ -48,4 +48,38 @@ export class SeededRandom {
 		for (let i = 0; i < k; i++) out.push(this.choice(seq))
 		return out
 	}
+
+	/**
+	 * In-place Fisher-Yates shuffle. Mirrors Python `random.shuffle(x)` — distribution-correct, but
+	 * NOT bit-identical to CPython's `_randbelow` stream (see the module header on the
+	 * seeded-but-not- MT19937 tradeoff).
+	 */
+	shuffle<T>(arr: T[]): void {
+		for (let i = arr.length - 1; i > 0; i--) {
+			const j = this.randint(0, i)
+			const tmp = arr[i]!
+			arr[i] = arr[j]!
+			arr[j] = tmp
+		}
+	}
+
+	/**
+	 * `k` distinct elements without replacement, as a NEW array. Mirrors Python `random.sample(seq,
+	 * k)` semantics (uniform, no mutation of the input); the selection ORDER is partial-Fisher-Yates,
+	 * which — like {@link shuffle} — is uniform but not CPython-bit-identical. `k` must be `<=
+	 * seq.length`.
+	 */
+	sample<T>(seq: readonly T[], k: number): T[] {
+		const pool = seq.slice()
+		const n = pool.length
+		const out: T[] = []
+		for (let i = 0; i < k; i++) {
+			const j = this.randint(i, n - 1)
+			const tmp = pool[i]!
+			pool[i] = pool[j]!
+			pool[j] = tmp
+			out.push(pool[i]!)
+		}
+		return out
+	}
 }

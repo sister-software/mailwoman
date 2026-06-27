@@ -7,7 +7,7 @@
  *   (`mailwoman_train/tokenizer.py::anchor_feature_vector` + `realign_anchor_to_pieces`). At
  *   inference the model conditions on per-piece anchor features fed alongside `input_ids`; this
  *   builds them from a raw address + its SentencePiece pieces, using the SAME postcode→anchor
- *   lookup the model trained against (`scripts/build-pilot-anchor-lookup.py`), so the feature
+ *   lookup the model trained against (`scripts/build-pilot-anchor-lookup.ts`), so the feature
  *   layout matches byte-for-byte.
  *
  *   The layout is ESSENTIAL and cross-language: a wrong locale order or centroid scale feeds the

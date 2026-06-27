@@ -23,7 +23,7 @@ node -e "const {DatabaseSync}=require('node:sqlite'); const d=new DatabaseSync('
 for slug in ${STATES[@]}; do
 	reg=$(echo "$slug" | tr '[:lower:]' '[:upper:]')
 	echo "######## $reg ########"
-	node scripts/eval/build-situs-holdout.mjs --shard "$AP/address-points-us-$slug.db" --region "$reg" --n "$N" >/dev/null
+	node --experimental-strip-types scripts/eval/build-situs-holdout.ts --shard "$AP/address-points-us-$slug.db" --region "$reg" --n "$N" >/dev/null
 	node --experimental-strip-types scripts/eval/conformal-calibrate.ts \
 		--holdout "/tmp/$slug-situs-holdout.jsonl" \
 		--address-points "$EMPTY" \
