@@ -17,8 +17,14 @@
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWofResolver, type ResolverBackend } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
-import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "mailwoman/resolver-backend"
+import {
+	createResolverBackend,
+	mailwomanDataRoot,
+	resolveCandidateDbPath,
+	wofShardPaths,
+} from "mailwoman/resolver-backend"
 import { existsSync } from "node:fs"
+import { join } from "node:path"
 import { parseArgs } from "node:util"
 import {
 	createPhotonRouter,
@@ -46,7 +52,7 @@ async function serve(): Promise<void> {
 		options: {
 			port: { type: "string", default: "2322" },
 			host: { type: "string", default: "0.0.0.0" },
-			data: { type: "string" },
+			"candidate-db": { type: "string" },
 		},
 		allowPositionals: true,
 	})
@@ -58,8 +64,15 @@ async function serve(): Promise<void> {
 	const wofPaths = wofShardPaths().filter(existsSync)
 	const adminDbPath = wofPaths[0]
 
+	// Candidate gazetteer = worldwide resolution (see @mailwoman/nominatim). --candidate-db /
+	// $MAILWOMAN_CANDIDATE_DB, else auto-use one fetched to `<data-root>/wof/candidate.db`; absent → admin-only.
+	const conventionCandidate = join(mailwomanDataRoot(), "wof", "candidate.db")
+	const candidateDb =
+		resolveCandidateDbPath(values["candidate-db"]) ??
+		(existsSync(conventionCandidate) ? conventionCandidate : undefined)
+
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-	const backend = createResolverBackend(resolverMod, { wofPaths })
+	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
 	const resolver = createWofResolver(backend as unknown as ResolverBackend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 	const reverseGeo = adminDbPath ? new resolverMod.WofReverseGeocoder({ adminDbPath }) : undefined
@@ -104,6 +117,11 @@ async function serve(): Promise<void> {
 		.listen(port, host, () => {
 			console.error(`[@mailwoman/photon] listening on http://${host}:${port}`)
 			console.error(`  wof: ${adminDbPath ?? "(none found — set MAILWOMAN_WOF_DB)"}`)
+			console.error(
+				candidateDb
+					? `  resolver: candidate gazetteer (worldwide) — ${candidateDb}`
+					: `  resolver: admin-only (US-optimized) — point --candidate-db / $MAILWOMAN_CANDIDATE_DB at a candidate gazetteer for worldwide`
+			)
 			console.error(`  endpoints: GET /api  GET /reverse`)
 		})
 }
@@ -115,6 +133,6 @@ switch (command) {
 		await serve()
 		break
 	default:
-		console.error("Usage: mailwoman-photon serve [--port 2322] [--host 0.0.0.0] [--data <path>]")
+		console.error("Usage: mailwoman-photon serve [--port 2322] [--host 0.0.0.0] [--candidate-db <path>]")
 		process.exit(command ? 1 : 0)
 }

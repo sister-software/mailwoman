@@ -106,7 +106,7 @@ async function serve(): Promise<void> {
 		options: {
 			port: { type: "string", default: "8080" },
 			host: { type: "string", default: "0.0.0.0" },
-			data: { type: "string" },
+			"candidate-db": { type: "string" },
 		},
 		allowPositionals: true,
 	})
@@ -118,9 +118,18 @@ async function serve(): Promise<void> {
 	const wofPaths = wofShardPaths().filter(existsSync)
 	const adminDbPath = wofPaths[0]
 
+	// Candidate gazetteer = worldwide resolution (population-first ranking + global coverage + the
+	// FTS5-trigram typo fallback). Resolve it from --candidate-db / $MAILWOMAN_CANDIDATE_DB, else auto-use
+	// one already fetched to the data root (`mailwoman fetch-gazetteer` writes `<data-root>/wof/candidate.db`).
+	// Absent → admin-only (US-optimized) — the no-download default.
+	const conventionCandidate = join(mailwomanDataRoot(), "wof", "candidate.db")
+	const candidateDb =
+		resolveCandidateDbPath(values["candidate-db"]) ??
+		(existsSync(conventionCandidate) ? conventionCandidate : undefined)
+
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 	const parser = createAddressParser()
-	const backend = createResolverBackend(resolverMod, { wofPaths })
+	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
 	const resolver = createWofResolver(backend as unknown as ResolverBackend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 	// NOT a geocode country constraint. The default-on #244 placer already routes the query's country
@@ -130,7 +139,7 @@ async function serve(): Promise<void> {
 	// when the resolved hierarchy omits the country tag — which on US-centric data (no candidate DB)
 	// happens for US results, where "US" is the right guess. Non-US results carry the country tag, so
 	// the fallback never mislabels them.
-	const annotationCountryFallback = resolveCandidateDbPath() ? undefined : "US"
+	const annotationCountryFallback = candidateDb ? undefined : "US"
 	const reverseGeo = adminDbPath ? new resolverMod.WofReverseGeocoder({ adminDbPath }) : undefined
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
 	const tzDbPath = join(mailwomanDataRoot(), "timezone", "timezone.db")
@@ -239,6 +248,11 @@ async function serve(): Promise<void> {
 		.listen(port, host, () => {
 			console.error(`[@mailwoman/nominatim] listening on http://${host}:${port}`)
 			console.error(`  wof: ${adminDbPath ?? "(none found — set MAILWOMAN_WOF_DB)"}`)
+			console.error(
+				candidateDb
+					? `  resolver: candidate gazetteer (worldwide) — ${candidateDb}`
+					: `  resolver: admin-only (US-optimized) — point --candidate-db / $MAILWOMAN_CANDIDATE_DB at a candidate gazetteer for worldwide`
+			)
 			console.error(`  endpoints: GET /search  GET /reverse  GET /lookup  GET /status`)
 		})
 }
@@ -250,6 +264,6 @@ switch (command) {
 		await serve()
 		break
 	default:
-		console.error("Usage: mailwoman-nominatim serve [--port 8080] [--host 0.0.0.0] [--data <path>]")
+		console.error("Usage: mailwoman-nominatim serve [--port 8080] [--host 0.0.0.0] [--candidate-db <path>]")
 		process.exit(command ? 1 : 0)
 }
