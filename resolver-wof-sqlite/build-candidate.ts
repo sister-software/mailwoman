@@ -31,6 +31,7 @@
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { existsSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { createCandidateFts } from "./candidate-fts.js"
 import {
 	CANDIDATE_COLUMNS,
 	createCandidateStagingTables,
@@ -303,6 +304,10 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// row. The bulk sorted INSERT…SELECT (clustered materialization) stays raw — a single hot bulk statement.
 	out.exec(`INSERT OR IGNORE INTO candidate (${cols}) SELECT ${cols} FROM cand_stage ORDER BY ${keyOrder};`)
 	await kdb.schema.dropTable("cand_stage").execute()
+	// Typo-tolerant fallback index (the unified gazetteer's second mode): the exact name_key probe can't
+	// recover misspellings, so FTS5-trigram over `name` lets the reader fuzzy-match on an exact+strip miss.
+	progress("fts", "building FTS5-trigram fuzzy index")
+	createCandidateFts(out)
 	// page_size MUST be set right before VACUUM: node:sqlite initializes the file at the 4096 default on
 	// `new DatabaseSync`, so the creation-time pragma is a no-op — only a VACUUM rebuilds at the new size.
 	// 8192 matches the sql.js-httpvfs 64 KiB request chunk cleanly (8 pages) and shallows the B-tree.

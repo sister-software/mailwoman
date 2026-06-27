@@ -25,7 +25,9 @@
 
 import { expandPlacetypeFilter } from "@mailwoman/resolver"
 import { DatabaseSync } from "node:sqlite"
+import { CANDIDATE_FTS_TABLE } from "./candidate-fts.js"
 import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.js"
+import { trigramJaccard } from "./lookup.js"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.js"
 import { hasTable } from "./sqlite-utils.js"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.js"
@@ -59,6 +61,28 @@ type CandidateRow = Pick<
 >
 
 /**
+ * FTS5-trigram over-fetch before the trigram-Jaccard re-rank, and the minimum similarity to count
+ * as a fuzzy hit (below it the trigram overlap is noise, e.g. unrelated same-trigram names).
+ * Tunable.
+ */
+const FUZZY_FETCH = 40
+const FUZZY_MIN = 0.34
+
+/**
+ * Unpadded character-trigrams of `s`, OR'd into an FTS5 trigram MATCH query (each quoted so FTS
+ * treats it as a literal term). Returns "" when `s` is shorter than a trigram or yields no clean
+ * grams — the caller then skips the fuzzy probe.
+ */
+function ftsTrigramQuery(s: string): string {
+	const grams = new Set<string>()
+	for (let i = 0; i + 3 <= s.length; i++) {
+		const g = s.slice(i, i + 3)
+		if (/^[\p{L}\p{N} ]{3}$/u.test(g)) grams.add(g)
+	}
+	return [...grams].map((g) => `"${g}"`).join(" OR ")
+}
+
+/**
  * Node {@link PlaceLookup} over `candidate.db`. Drop-in for {@link WofSqlitePlaceLookup} in
  * `createWofResolver(backend)` — same `findPlace` contract, population-first ranking.
  */
@@ -75,6 +99,12 @@ export class WofCandidateTableLookup implements PlaceLookup {
 	 * byte-stable.
 	 */
 	readonly #postalCityProbe: ReturnType<DatabaseSync["prepare"]> | undefined
+	/**
+	 * Prepared FTS5-trigram MATCH probe for the typo-tolerant fallback — `undefined` when the
+	 * `candidate_fts` index isn't present, so a candidate.db built without it is byte-stable (the
+	 * fuzzy path is skipped, exactly like today).
+	 */
+	readonly #ftsProbe: ReturnType<DatabaseSync["prepare"]> | undefined
 
 	constructor(opts: WofCandidateTableLookupOpts) {
 		if (opts.database) {
@@ -106,6 +136,14 @@ export class WofCandidateTableLookup implements PlaceLookup {
 		if (hasTable(this.#db, POSTAL_CITY_CANDIDATE_TABLE)) {
 			this.#postalCityProbe = this.#db.prepare(
 				`SELECT spr_id, name, latitude, longitude FROM ${POSTAL_CITY_CANDIDATE_TABLE} WHERE name_key = ? AND postcode = ? LIMIT 1`
+			)
+		}
+
+		// FTS5-trigram fuzzy fallback: prepare the MATCH probe only if the index is present (the unified
+		// gazetteer carries it; an older candidate.db doesn't → the fuzzy path is skipped, byte-stable).
+		if (hasTable(this.#db, CANDIDATE_FTS_TABLE)) {
+			this.#ftsProbe = this.#db.prepare(
+				`SELECT name_key FROM ${CANDIDATE_FTS_TABLE} WHERE ${CANDIDATE_FTS_TABLE} MATCH ? ORDER BY bm25(${CANDIDATE_FTS_TABLE}) LIMIT ?`
 			)
 		}
 	}
@@ -192,6 +230,30 @@ export class WofCandidateTableLookup implements PlaceLookup {
 			// miss; the cascade's region bbox disambiguates any base-name ambiguity.
 			const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
 			if (strippedKey && strippedKey !== nameKey) rows = probe(strippedKey)
+		}
+
+		// Typo-tolerant fallback (the unified gazetteer's fuzzy mode): an exact + strip miss may be a
+		// misspelling the normalized key can't reach. FTS5-trigram fetches a loose set; we re-rank by
+		// trigram-Jaccard (the admin backend's measure) and probe the best name_keys, so a typo resolves
+		// the same on either backend. The country/placetype/bbox filters still apply via `probe`. Skipped
+		// when the index is absent (byte-stable for an older candidate.db).
+		if (rows.length === 0 && this.#ftsProbe) {
+			const match = ftsTrigramQuery(nameKey)
+			if (match) {
+				const hits = this.#ftsProbe.all(match, FUZZY_FETCH) as unknown as Array<{ name_key: string }>
+				const ranked = hits
+					.map((h) => ({ nk: String(h.name_key), s: trigramJaccard(nameKey, String(h.name_key)) }))
+					.filter((h) => h.s >= FUZZY_MIN)
+					.sort((a, b) => b.s - a.s)
+				const seen = new Set<string>()
+				for (const h of ranked) {
+					if (seen.has(h.nk)) continue
+					seen.add(h.nk)
+					rows.push(...probe(h.nk))
+					if (rows.length >= limit) break
+				}
+				rows = rows.slice(0, limit)
+			}
 		}
 
 		return rows.map((row): PlaceCandidate => {

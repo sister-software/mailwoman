@@ -246,7 +246,7 @@ function cfNormalize(s: string): string {
 }
 
 /** Padded character-trigram set (a leading/trailing space pads short tokens). */
-function trigrams(s: string): Set<string> {
+export function trigrams(s: string): Set<string> {
 	const t = ` ${s} `
 	const out = new Set<string>()
 	for (let i = 0; i + 3 <= t.length; i++) out.add(t.slice(i, i + 3))
@@ -255,9 +255,10 @@ function trigrams(s: string): Set<string> {
 
 /**
  * Character-trigram Jaccard ∈ [0,1] — tolerant of the swallowed-leading-char fragments ("auen" vs
- * "plauen") and minor misspellings without a heavyweight edit-distance pass.
+ * "plauen") and minor misspellings without a heavyweight edit-distance pass. Shared with the
+ * candidate backend's FTS5-trigram fuzzy fallback so both lookups rank typos identically.
  */
-function trigramJaccard(a: string, b: string): number {
+export function trigramJaccard(a: string, b: string): number {
 	const A = trigrams(a)
 	const B = trigrams(b)
 	if (A.size === 0 || B.size === 0) return 0

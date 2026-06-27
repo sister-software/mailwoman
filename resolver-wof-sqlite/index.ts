@@ -21,6 +21,7 @@ export type {
 
 export { WofSqlitePlaceLookup, type RankingWeights, type WofSqlitePlaceLookupOpts } from "./lookup.js"
 
+export { CANDIDATE_FTS_TABLE, createCandidateFts } from "./candidate-fts.js"
 export { WofCandidateTableLookup, type WofCandidateTableLookupOpts } from "./candidate-lookup.js"
 
 export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "./address-point-schema.js"

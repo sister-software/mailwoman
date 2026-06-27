@@ -219,4 +219,19 @@ describe("WofCandidateTableLookup", () => {
 			lk.close()
 		}
 	})
+
+	test("FTS5-trigram fuzzy fallback recovers a misspelled locality on an exact miss", async () => {
+		const lk = new WofCandidateTableLookup({ databasePath: candidatePath })
+		try {
+			// "Chicgo"/"Moscw" aren't a name_key — the exact + strip probes miss, so the trigram fallback
+			// recovers the right place by name similarity, still country/placetype-filtered and ranked like
+			// the admin backend. (The fixture's buildCandidateTable now materializes the candidate_fts index.)
+			expect((await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" }))[0]?.name).toBe("Chicago")
+			expect((await lk.findPlace({ text: "Moscw", placetype: "locality", country: "RU" }))[0]?.name).toBe("Moscow")
+			// Garbage stays a miss — the trigram-Jaccard threshold filters noise (no false fuzzy hit).
+			expect(await lk.findPlace({ text: "Zzzqqx", placetype: "locality", country: "US" })).toHaveLength(0)
+		} finally {
+			lk.close()
+		}
+	})
 })
