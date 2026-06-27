@@ -18,15 +18,17 @@
  *   browser and the server.
  *
  *   Raw SQL on purpose: Kysely can't express `CREATE VIRTUAL TABLE … USING fts5` (the repo's
- *   FTS5-stays-raw rule). Indexing DISTINCT `(name, name_key)` keeps the index to unique surface
- *   forms (a name_key has many candidate rows — placetypes, regions, aliases — but one FTS row per
- *   name).
+ *   FTS5-stays-raw rule). Indexing DISTINCT `name_key` keeps the index to unique normalized forms
+ *   (a name_key fans out to many candidate rows — placetypes, regions, aliases — but the fuzzy
+ *   fallback only needs to recover the name_key, then re-probes the B-tree for its rows).
  */
 
 import type { DatabaseSync } from "node:sqlite"
 
-/** Name of the FTS5 trigram virtual table this module owns. The reader gates its fuzzy fallback on
-it. */
+/**
+ * Name of the FTS5 trigram virtual table this module owns. The reader gates its fuzzy fallback on
+ * it.
+ */
 export const CANDIDATE_FTS_TABLE = "candidate_fts"
 
 /**

@@ -105,6 +105,15 @@ export class WofCandidateTableLookup implements PlaceLookup {
 	 * fuzzy path is skipped, exactly like today).
 	 */
 	readonly #ftsProbe: ReturnType<DatabaseSync["prepare"]> | undefined
+	/**
+	 * Prepared UNFILTERED existence probe (`name_key` present anywhere, ignoring
+	 * country/placetype/bbox). Gates the fuzzy fallback: fuzzy is a TYPO corrector, so it engages
+	 * only when the name doesn't exist in the gazetteer at all. A name that DOES exist but missed
+	 * under the active filter is a filter miss (e.g. a placer misroute "Vienna, Austria"→IT), not a
+	 * spelling miss — fuzzing it would scrape an unrelated same-country place and defeat the
+	 * cascade's country-agnostic retry. Prepared only alongside `#ftsProbe`.
+	 */
+	readonly #nameKeyExistsProbe: ReturnType<DatabaseSync["prepare"]> | undefined
 
 	constructor(opts: WofCandidateTableLookupOpts) {
 		if (opts.database) {
@@ -145,6 +154,7 @@ export class WofCandidateTableLookup implements PlaceLookup {
 			this.#ftsProbe = this.#db.prepare(
 				`SELECT name_key FROM ${CANDIDATE_FTS_TABLE} WHERE ${CANDIDATE_FTS_TABLE} MATCH ? ORDER BY bm25(${CANDIDATE_FTS_TABLE}) LIMIT ?`
 			)
+			this.#nameKeyExistsProbe = this.#db.prepare("SELECT 1 FROM candidate WHERE name_key = ? LIMIT 1")
 		}
 	}
 
@@ -237,7 +247,13 @@ export class WofCandidateTableLookup implements PlaceLookup {
 		// trigram-Jaccard (the admin backend's measure) and probe the best name_keys, so a typo resolves
 		// the same on either backend. The country/placetype/bbox filters still apply via `probe`. Skipped
 		// when the index is absent (byte-stable for an older candidate.db).
-		if (rows.length === 0 && this.#ftsProbe) {
+		//
+		// Gate: only when the name doesn't exist in the gazetteer AT ALL (unfiltered). A name that exists
+		// but missed under the active country/placetype/bbox filter is a FILTER miss, not a spelling miss
+		// — fuzzing it scrapes an unrelated same-filter place ("Vienna, Austria" misrouted to IT would
+		// pull a tiny Italian name_key near Siena) and masks the cascade's country-agnostic retry that
+		// correctly lands population-first Vienna AT. The exact/strip probes already covered the real name.
+		if (rows.length === 0 && this.#ftsProbe && this.#nameKeyExistsProbe && !this.#nameKeyExistsProbe.get(nameKey)) {
 			const match = ftsTrigramQuery(nameKey)
 			if (match) {
 				const hits = this.#ftsProbe.all(match, FUZZY_FETCH) as unknown as Array<{ name_key: string }>
