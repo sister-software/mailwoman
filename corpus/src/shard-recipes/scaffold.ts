@@ -1,0 +1,139 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Shared scaffolding for the synthetic-corpus SHARD RECIPES — the common bits the 16
+ *   `build-*-shard.mjs` scripts each re-implemented: the seeded LCG PRNG, the tuple reader, and the
+ *   canonical → `alignRow` → `LabeledRow` JSONL emit step. A recipe ({@link ShardRecipe}) supplies
+ *   only its synthesis + filter; the `mailwoman corpus shard <recipe>` command supplies the I/O.
+ */
+
+import { stableSourceId } from "../adapter.js"
+import { alignRow } from "../align.js"
+
+/**
+ * {@link stableSourceId}, but accepting arbitrary disambiguator keys (e.g. a variant index `v`) that
+ * aren't `ComponentTag`s. `stableSourceId` sorts + hashes EVERY key it's given, so passing extra
+ * keys is how the legacy builders kept per-variant ids unique — the strict typing is just too
+ * narrow for that. Centralizes the one cast.
+ */
+export function shardSourceId(adapterId: string, parts: Record<string, string | undefined>): string {
+	return stableSourceId(adapterId, parts as unknown as Parameters<typeof stableSourceId>[1])
+}
+
+/** A (locality, region, postcode, country) source tuple — the input to tuples-mode recipes. */
+export interface ShardTuple {
+	locality?: string
+	region?: string
+	postcode?: string
+	country?: string
+	[k: string]: unknown
+}
+
+/**
+ * The deterministic LCG every `build-*-shard` used (`s = s*1664525 + 1013904223 mod 2^32`). Same
+ * constants → byte-identical streams to the legacy scripts for a given seed.
+ */
+export function makeRandom(seed: number): () => number {
+	let s = seed >>> 0
+	return () => {
+		s = (s * 1664525 + 1013904223) % 4294967296
+		return s / 4294967296
+	}
+}
+
+/** Stream-parse a tuples JSONL file, yielding each parsed object (blank/invalid lines skipped). */
+export async function* readTuples(input: string): AsyncGenerator<ShardTuple> {
+	const { createReadStream } = await import("node:fs")
+	const { createInterface } = await import("node:readline")
+	const rl = createInterface({ input: createReadStream(input, { encoding: "utf8" }), crlfDelay: Infinity })
+	for await (const line of rl) {
+		const trimmed = line.trim()
+		if (!trimmed) continue
+		try {
+			yield JSON.parse(trimmed) as ShardTuple
+		} catch {
+			// skip malformed line
+		}
+	}
+}
+
+/** A canonical row as the recipes assemble it, before `alignRow` turns it into a `LabeledRow`. */
+export interface CanonicalShardRow {
+	raw: string
+	components: Record<string, string>
+	country: string
+	locale?: string
+	source: string
+	source_id: string
+	corpus_version?: string
+	license?: string
+}
+
+/**
+ * Run a canonical row through `alignRow` and, on success, write the `LabeledRow` (+ `synth_method`
+ * / `synth_base_id`) as one JSONL line. Returns true if emitted, false if alignment quarantined
+ * it.
+ */
+export function alignAndWrite(
+	write: (line: string) => void,
+	canonical: CanonicalShardRow,
+	synthMethod: string,
+	synthBaseId: string | null = null
+): boolean {
+	const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
+	if (!aligned.row) return false
+	write(JSON.stringify({ ...aligned.row, synth_method: synthMethod, synth_base_id: synthBaseId }) + "\n")
+	return true
+}
+
+/** Parsed options a recipe's `run` receives. Common fields + the union of recipe-specific flags. */
+export interface ShardRecipeOpts {
+	output: string
+	seed: number
+	variants: number
+	input?: string
+	count?: number
+	golden?: boolean
+	sourceName?: string
+	// recipe-specific (each recipe reads only what it needs):
+	houseNumberProb?: number
+	pmbRatio?: number
+	militaryRatio?: number
+	reversedFraction?: number
+	edgesDir?: string
+	country?: string
+	intlFraction?: number
+	bareProb?: number
+	hnProb?: number
+	communes?: string
+	multilocaleCount?: number
+}
+
+/** Tally a recipe returns. */
+export interface ShardStats {
+	read?: number
+	emitted: number
+	skipped: number
+}
+
+/** A single declared recipe-specific option flag (for the command's --help). */
+export interface ShardRecipeOption {
+	flag: string
+	description: string
+}
+
+/** A shard recipe: its identity, input mode, and its synthesis `run`. */
+export interface ShardRecipe {
+	/** Recipe id, e.g. "street", "po-box" — the `<recipe>` positional. */
+	name: string
+	/** One-line description for `--list` / help. */
+	description: string
+	/** `tuples` reads `--input` JSONL; `generate` self-generates `--count` rows. */
+	mode: "tuples" | "generate"
+	/** Recipe-specific flags this recipe honors (documentation only). */
+	options?: ShardRecipeOption[]
+	/** Do the build: synthesize + `alignAndWrite` each row via `write`, using the seeded `random`. */
+	run(opts: ShardRecipeOpts, write: (line: string) => void, random: () => number): Promise<ShardStats>
+}
