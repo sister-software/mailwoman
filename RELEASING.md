@@ -167,20 +167,34 @@ See `project-candidate-table-byte-range`.
 To get new admin coverage into the demo after a gazetteer rebuild:
 
 ```bash
-# 1. Build the candidate table from the (rebuilt) admin DB + the postcode shards.
-#    --postcodes is repeatable: US + the WOF intl shard (NL/FR/DE/ES/IT) + Overture-derived postcode
-#    centroids for the EU-coverage locales, each built with
+# 0. DURABLE upstream GeoNames-alias fold (#743/#193). Fold the bilingual / alt-language place-names
+#    into a COPY of the admin DB's canonical spr/names so the candidate build carries Karjaa↔Karis
+#    natively (FI hard-resolve 69.5→85.8%, coverage 74.4→94.0%) — the alt-name attaches to the real
+#    WOF place ("Karjaa" → Karis), not a duplicate row. Reuses ingestGeonamesAliases +
+#    buildPlaceSearchFts; the canonical admin DB is never mutated. Supersedes the candidate-side
+#    stopgap scripts/build-candidate-geonames-aliases.ts (which patched a built candidate.db to MEASURE
+#    the lift before this became the durable home).
+node --experimental-strip-types scripts/build-admin-geonames-fold.ts \
+  --in  /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
+  --out /mnt/playpen/mailwoman-data/wof/admin-global-priority-geonames.db \
+  --countries FI,PL,NO,CZ,AT,LT,LV,SI,SK,HR,DK,BE,CH,LU
+# 1. Build the candidate table from the FOLDED admin DB + the postcode shards. The FTS5-trigram fuzzy
+#    index (typo tolerance — Manchestr→Manchester) is baked in by build-candidate now; no separate step.
+#    --postcodes is repeatable: US + the WOF intl shard (NL/FR/DE/ES/IT) + the GeoNames intl shard (PT/AU)
+#    + Overture-derived postcode centroids (CA + the EU-coverage locales), each built with
 #      node scripts/eval/overture-es-postcode-centroids.ts --country <CC> --pc-len 0 --parquet <addresses-cc.parquet>
 #    (--pc-len 0 = no lpad, the Overture-to-Overture / non-numeric-format case). Each ZIP becomes a
 #    `postalcode` candidate row so findPlace(postalcode) resolves directly, and postcodes resolve ~100%
 #    at ~1-2km even where the locality misses (LT 0→100%, NO 75→100%, FI/SK 80→100%). The demo cascade
 #    country-gates an ambiguous postcode (10115 = Berlin DE + NYC) by resolving the locality first. GB
-#    (2.6M) and PT (sparse Overture "XXXX-XXX" fill) are left out.
+#    (2.6M) is left out for size.
 node resolver-wof-sqlite/out/build-candidate-cli.js \
-  --in  /mnt/playpen/mailwoman-data/wof/admin-global-priority.db \
+  --in  /mnt/playpen/mailwoman-data/wof/admin-global-priority-geonames.db \
   --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-us.db \
   --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-intl.db \
-  $(for cc in at ch dk be fi hr lt lu lv no si sk; do echo --postcodes /mnt/playpen/mailwoman-data/wof/postcode-$cc-overture.db; done) \
+  --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-geonames-intl.db \
+  --postcodes /mnt/playpen/mailwoman-data/wof/postcode-ca-overture.db \
+  $(for cc in at be ch cz dk es fi hr lt lu lv no pl pt si sk; do echo --postcodes /mnt/playpen/mailwoman-data/wof/postcode-$cc-overture.db; done) \
   --out /mnt/playpen/mailwoman-data/wof/candidate-global.db
 # 2. Bump ADMIN_GAZETTEER_VERSION in docs/src/shared/resources.tsx (the immutable cache needs a fresh URL).
 # 3. Upload to the new path:
