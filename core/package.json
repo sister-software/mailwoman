@@ -46,7 +46,8 @@
 	},
 	"imports": {
 		"#*": {
-			"import": "./*.ts"
+			"development": "./*.ts",
+			"default": "./out/*.js"
 		}
 	},
 	"dependencies": {
