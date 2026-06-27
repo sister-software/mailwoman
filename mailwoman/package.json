@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "4.16.0",
+	"version": "4.16.1",
 	"description": "A calibrated, retrieval-augmented postal-address parser — CLI + library.",
 	"license": "AGPL-3.0-only",
 	"contributors": [

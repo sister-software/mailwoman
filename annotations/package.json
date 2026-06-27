@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/annotations",
-	"version": "4.16.0",
+	"version": "4.16.1",
 	"description": "The annotations composer — a native typed AnnotationSet, the Annotator interface, and OpenCage/native serializers. Each recipe package (timezone, un-locode, coordinate formats, country reference) implements Annotator; this composes them into the block the drop-in APIs return.",
 	"license": "AGPL-3.0-only",
 	"repository": {
