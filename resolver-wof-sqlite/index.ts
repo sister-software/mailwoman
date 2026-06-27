@@ -24,6 +24,8 @@ export { WofSqlitePlaceLookup, type RankingWeights, type WofSqlitePlaceLookupOpt
 export { CANDIDATE_FTS_TABLE, createCandidateFts } from "./candidate-fts.js"
 export { WofCandidateTableLookup, type WofCandidateTableLookupOpts } from "./candidate-lookup.js"
 
+export { GEONAMES_ID_BASE, ingestGeonamesAliases, type GeonamesIngestProgress } from "./geonames-aliases.js"
+
 export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "./address-point-schema.js"
 export type { AddressPointDatabase, AddressPointTable } from "./address-point-schema.js"
 export {

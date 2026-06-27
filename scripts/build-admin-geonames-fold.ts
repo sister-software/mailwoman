@@ -30,12 +30,10 @@
  *   folded admin DB: node resolver-wof-sqlite/out/build-candidate-cli.js --in <out> --postcodes
  *   <...> --out candidate-global-<v>.db
  */
-import { buildPlaceSearchFts } from "@mailwoman/resolver-wof-sqlite"
+import { buildPlaceSearchFts, ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite"
 import { copyFileSync, existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
-
-import { ingestGeonamesAliases } from "./build-unified-wof.ts"
 
 const { values: a } = parseArgs({
 	options: {

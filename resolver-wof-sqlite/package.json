@@ -23,6 +23,7 @@
 		"./fst-deserialize-web": "./out/fst-deserialize-web.js",
 		"./unified-schema": "./out/unified-schema.js",
 		"./coincident-roles": "./out/coincident-roles.js",
+		"./geonames-aliases": "./out/geonames-aliases.js",
 		"./geo": "./out/geo.js",
 		"./street-normalize": "./out/street-normalize.js",
 		"./build-candidate": "./out/build-candidate.js",

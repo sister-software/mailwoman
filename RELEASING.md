@@ -166,6 +166,20 @@ See `project-candidate-table-byte-range`.
 
 To get new admin coverage into the demo after a gazetteer rebuild:
 
+**Turnkey:** the whole pipeline below is wrapped as `mailwoman gazetteer` commands — every decision baked in as a default (fold countries, postcode set, FTS, the dated version):
+
+```bash
+# fold + build + promote + publish + demo bump, one shot (source .env for the R2 creds first):
+set -a; . ./.env; set +a
+mailwoman gazetteer release                     # add --dry-run to preview the R2 upload
+# …or run the stages independently:
+mailwoman gazetteer build                       # durable fold → candidate build (FTS baked in)
+mailwoman gazetteer promote                      # symlink <data-root>/wof/candidate.db → the build
+mailwoman gazetteer publish [--gazetteer-version 2026-06-27a]   # R2 upload + demo ADMIN_GAZETTEER_VERSION bump
+```
+
+The manual recipe below is the same thing, step by step, for reference / one-off variations:
+
 ```bash
 # 0. DURABLE upstream GeoNames-alias fold (#743/#193). Fold the bilingual / alt-language place-names
 #    into a COPY of the admin DB's canonical spr/names so the candidate build carries Karjaa↔Karis
